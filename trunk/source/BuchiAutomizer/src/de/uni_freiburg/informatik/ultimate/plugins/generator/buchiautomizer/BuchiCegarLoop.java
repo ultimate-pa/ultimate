@@ -338,7 +338,7 @@ public class BuchiCegarLoop {
 				if (m_ConstructTermcompProof) {
 					m_TermcompProofBenchmark.reportNoRemainderModule();
 				}
-				m_BenchmarkGenerator.setResult(Result.TIMEOUT);
+				m_BenchmarkGenerator.setResult(Result.TERMINATING);
 				return Result.TERMINATING;
 			}
 
