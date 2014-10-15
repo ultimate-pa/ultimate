@@ -31,7 +31,8 @@ public class CodeCheckBenchmarks implements ICsvProviderProvider<Object> {
 			columnTitles.add(CodeCheckObserver.s_SizeOfPredicates);
 			columnTitles.add(CodeCheckObserver.s_ConjunctsInSSA);
 			columnTitles.add(CodeCheckObserver.s_ConjunctsInUnsatCore);
-			columnTitles.add("InterPolantCoveringCapability");
+			columnTitles.add("InterpolantCoveringCapability");
+			columnTitles.add("ICC %");
 			mCsvP = new SimpleCsvProvider<Object>(columnTitles);
 		}
 		return mCsvP;

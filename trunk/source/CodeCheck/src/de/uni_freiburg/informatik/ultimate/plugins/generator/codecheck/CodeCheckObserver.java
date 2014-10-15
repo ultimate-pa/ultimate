@@ -452,6 +452,8 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 			values.add(-1);
 		}
 		values.add(bwCoveringInfo);
+		values.add(((double) bwCoveringInfo.getSuccessfullBackwardCoverings())
+				/bwCoveringInfo.getPotentialBackwardCoverings());
 		ccbcsvp.addRow(values);
 		reportBenchmark(ccb);
 

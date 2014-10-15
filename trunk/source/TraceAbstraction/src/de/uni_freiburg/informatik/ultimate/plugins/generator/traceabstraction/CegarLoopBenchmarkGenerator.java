@@ -89,6 +89,8 @@ public class CegarLoopBenchmarkGenerator extends BenchmarkGeneratorWithStopwatch
 			return m_BiggestAbstraction;
 		case CegarLoopBenchmarkType.s_InterpolantCoveringCapability:
 			return m_BCI;
+		case CegarLoopBenchmarkType.s_ICCPercentage:
+			return ((double) m_BCI.getSuccessfullBackwardCoverings())/m_BCI.getPotentialBackwardCoverings();
 		default:
 			throw new AssertionError("unknown data");
 		}
