@@ -59,6 +59,8 @@ public class UltimateCore implements IApplication, ICore, IUltimatePlugin {
 
 	private LoggingService mLoggingService;
 
+	private JobChangeAdapter mJobChangeAdapter;
+
 	/**
 	 * This Default-Constructor is needed to start up the application
 	 */
@@ -205,7 +207,7 @@ public class UltimateCore implements IApplication, ICore, IUltimatePlugin {
 		mLogger.info("Initializing application");
 
 		final Logger tmp = mLogger;
-		Job.getJobManager().addJobChangeListener(new JobChangeAdapter() {
+		mJobChangeAdapter = new JobChangeAdapter() {
 
 			@Override
 			public void done(IJobChangeEvent event) {
@@ -216,7 +218,8 @@ public class UltimateCore implements IApplication, ICore, IUltimatePlugin {
 				}
 			}
 
-		});
+		};
+		Job.getJobManager().addJobChangeListener(mJobChangeAdapter);
 		mLogger.info("--------------------------------------------------------------------------------");
 
 		// loading classes exported by plugins
@@ -234,13 +237,22 @@ public class UltimateCore implements IApplication, ICore, IUltimatePlugin {
 			mSettingsManager.loadPreferencesFromFile(settingsfile);
 		}
 
-		// at this point a controller is already selected. We delegate control
-		// to this controller.
-		Object rtrCode = activateController();
+		try {
+			// at this point a controller is already selected. We delegate
+			// control
+			// to this controller.
+			Object rtrCode = activateController();
 
-		// Ultimate is closing here
-		mToolchainManager.close();
-		return rtrCode;
+			// Ultimate is closing here
+			mToolchainManager.close();
+			return rtrCode;
+		} finally {
+			// we have to ensure that the JobChangeAdapter is properly removed,
+			// because he implicitly holds references to UltimateCore and may
+			// produce memory leaks
+			Job.getJobManager().removeJobChangeListener(mJobChangeAdapter);
+			mJobChangeAdapter = null;
+		}
 	}
 
 	@Override
