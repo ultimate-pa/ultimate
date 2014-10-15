@@ -277,7 +277,12 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		int iterationsCount = 0;
 		long startTime = System.nanoTime();
 		BackwardCoveringInformation bwCoveringInfo = null;
-		
+		boolean weHaveSPWPInterpolation =  GlobalSettings._instance._solverAndInterpolator == SolverAndInterpolator.Z3SPWP;
+		long noCBs = 0;
+		long[] soPreds = new long[] { 0L, 0L };
+		long conjsInSSA = 0;
+		long conjsInUC = 0;	
+
 		TraceChecker traceChecker = null;
 
 		for (AnnotatedProgramPoint procRoot : procRootsToCheck) {
@@ -378,6 +383,16 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 							bwCoveringInfo = bci;
 						else
 							bwCoveringInfo = new BackwardCoveringInformation(bwCoveringInfo, bci);
+						noCBs += (Integer) traceChecker.getTraceCheckerBenchmark().getValue(s_NumberOfCodeBlocks);
+						if (weHaveSPWPInterpolation) {
+							long[] curRes = (long[]) traceChecker.getTraceCheckerBenchmark().getValue(s_SizeOfPredicates);
+							for (int i = 0; i < 2; i++) {
+								soPreds[i] = soPreds[i] + curRes[i];
+							}
+							conjsInSSA += (Integer) traceChecker.getTraceCheckerBenchmark().getValue(s_ConjunctsInSSA);
+							conjsInUC += (Integer) traceChecker.getTraceCheckerBenchmark().getValue(s_ConjunctsInUnsatCore);	
+						}
+						
 
 						IPredicate[] interpolants = traceChecker.getInterpolants();
 						if (GlobalSettings._instance._memoizeNormalEdgeChecks
@@ -427,30 +442,29 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		
 		//inserted by alex: we should return this kind of benchmark result
 		
-		boolean weHaveSPWPInterpolation =  GlobalSettings._instance._solverAndInterpolator == SolverAndInterpolator.Z3SPWP;
 //		CodeCheckBenchmarks ccb = new CodeCheckBenchmarks(traceChecker instanceof TraceCheckerSpWp);
 		CodeCheckBenchmarks ccb = new CodeCheckBenchmarks();
 		ICsvProvider<Object> ccbcsvp = ccb.createCvsProvider();
 		ArrayList<Object> values = new ArrayList<>();
 		values.add((int) ((System.nanoTime() - startTime)/1000000));
 		values.add(iterationsCount);
-		if (traceChecker != null) {
-			values.add(traceChecker.getTraceCheckerBenchmark().getValue(s_NumberOfCodeBlocks));
+//		if (traceChecker != null) {
+			values.add(noCBs);
 			if (weHaveSPWPInterpolation) {
-				values.add(traceChecker.getTraceCheckerBenchmark().getValue(s_SizeOfPredicates));
-				values.add(traceChecker.getTraceCheckerBenchmark().getValue(s_ConjunctsInSSA));
-				values.add(traceChecker.getTraceCheckerBenchmark().getValue(s_ConjunctsInUnsatCore));
+				values.add(soPreds);
+				values.add(conjsInSSA);
+				values.add(conjsInUC);
 			} else {
 				values.add(-1);
 				values.add(-1);
 				values.add(-1);
 			}
-		} else {
-			values.add(-1);
-			values.add(-1);
-			values.add(-1);
-			values.add(-1);
-		}
+//		} else {
+//			values.add(-1);
+//			values.add(-1);
+//			values.add(-1);
+//			values.add(-1);
+//		}
 		values.add(bwCoveringInfo);
 		values.add(((double) bwCoveringInfo.getSuccessfullBackwardCoverings())
 				/bwCoveringInfo.getPotentialBackwardCoverings());
