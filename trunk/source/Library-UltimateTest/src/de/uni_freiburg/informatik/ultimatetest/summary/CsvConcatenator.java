@@ -71,7 +71,7 @@ public class CsvConcatenator implements ITestSummary {
 		if (resultService == null) {
 			return;
 		}
-		for (ICsvProviderProvider<?> benchmarkResultWildcard : Util.filterBenchmarks(resultService.getResults(),
+		for (ICsvProviderProvider<?> benchmarkResultWildcard : Util.getCsvProviderProviderFromUltimateResults(resultService.getResults(),
 				m_Benchmark)) {
 			ICsvProviderProvider<Object> benchmarkResult = (ICsvProviderProvider<Object>) benchmarkResultWildcard;
 			ICsvProvider<Object> benchmarkCsv = benchmarkResult.createCvsProvider();

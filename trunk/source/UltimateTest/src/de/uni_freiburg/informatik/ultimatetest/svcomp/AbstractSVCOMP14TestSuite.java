@@ -221,7 +221,7 @@ public abstract class AbstractSVCOMP14TestSuite extends UltimateTestSuite {
 					continue;
 				}
 				String regex = ".*" + line.replace(".", "\\.").replace("*", ".*");
-				currentFiles.addAll(Util.filter(allFiles, regex));
+				currentFiles.addAll(Util.filterFiles(allFiles, regex));
 			}
 			in.close();
 		} catch (Exception e) {

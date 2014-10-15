@@ -63,7 +63,7 @@ public class AutomataScriptTestSummary implements ITestSummary {
 	@Override
 	public void addResult(UltimateRunDefinition ultimateRunDefinition, TestResult threeValuedResult,
 			String category, String message, String testname, IResultService resultService) {
-		Collection<Benchmark> benchmarkSingleton = Util.filterBenchmarks(resultService.getResults(), Benchmark.class);
+		Collection<Benchmark> benchmarkSingleton = Util.getCsvProviderProviderFromUltimateResults(resultService.getResults(), Benchmark.class);
 		if (benchmarkSingleton.size() != 1) {
 			throw new AssertionError("expected single benchmark result");
 		} else {

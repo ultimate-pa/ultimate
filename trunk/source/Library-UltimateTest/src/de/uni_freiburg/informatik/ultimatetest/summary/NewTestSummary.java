@@ -1,17 +1,15 @@
 package de.uni_freiburg.informatik.ultimatetest.summary;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map.Entry;
-import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.services.IResultService;
 import de.uni_freiburg.informatik.ultimatetest.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestSuite;
 import de.uni_freiburg.informatik.ultimatetest.decider.ITestResultDecider.TestResult;
+import de.uni_freiburg.informatik.ultimatetest.util.Util.IPredicate;
+import de.uni_freiburg.informatik.ultimatetest.util.Util.IReduce;
 
 /**
  * 
@@ -47,33 +45,6 @@ public abstract class NewTestSummary implements ITestSummary {
 	public void addResult(UltimateRunDefinition ultimateRunDefinition, TestResult threeValuedResult, String category,
 			String message, String testname, IResultService resultService) {
 		mResults.put(ultimateRunDefinition, new ExtendedResult(threeValuedResult, message, category, testname));
-	}
-
-	protected Collection<Entry<UltimateRunDefinition, ExtendedResult>> getResultsWhere(
-			Collection<Entry<UltimateRunDefinition, ExtendedResult>> map, IPredicate predicate) {
-		ArrayList<Entry<UltimateRunDefinition, ExtendedResult>> rtr = new ArrayList<>();
-		for (Entry<UltimateRunDefinition, ExtendedResult> entry : map) {
-			if (predicate.check(entry)) {
-				rtr.add(entry);
-			}
-		}
-		return rtr;
-	}
-
-	protected <T> Set<T> getDistinct(Collection<Entry<UltimateRunDefinition, ExtendedResult>> map, IReduce<T> reducer) {
-		Set<T> rtr = new HashSet<>();
-		for (Entry<UltimateRunDefinition, ExtendedResult> entry : map) {
-			rtr.add(reducer.reduce(entry));
-		}
-		return rtr;
-	}
-
-	protected interface IPredicate {
-		public boolean check(Entry<UltimateRunDefinition, ExtendedResult> entry);
-	}
-
-	protected interface IReduce<T> {
-		public T reduce(Entry<UltimateRunDefinition, ExtendedResult> entry);
 	}
 
 	protected class ExtendedResult {
@@ -138,6 +109,12 @@ public abstract class NewTestSummary implements ITestSummary {
 		}
 
 	
+	}
+
+	protected interface IMyReduce<T> extends IReduce<T, Entry<UltimateRunDefinition, ExtendedResult>> {
+	}
+
+	protected interface IMyPredicate extends IPredicate<Entry<UltimateRunDefinition, ExtendedResult>> {
 	}
 
 }

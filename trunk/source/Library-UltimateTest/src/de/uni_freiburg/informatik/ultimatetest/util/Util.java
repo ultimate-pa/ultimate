@@ -17,8 +17,10 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.Map.Entry;
 
 import org.apache.log4j.Logger;
@@ -33,6 +35,11 @@ import de.uni_freiburg.informatik.ultimatetest.decider.overallResult.Termination
 import de.uni_freiburg.informatik.ultimatetest.summary.ITestLogfile;
 import de.uni_freiburg.informatik.ultimatetest.summary.ITestSummary;
 
+/**
+ * 
+ * @author dietsch@informatik.uni-freiburg.de
+ * 
+ */
 public class Util {
 
 	private static String sPlatformLineSeparator = System.getProperty("line.separator");
@@ -141,6 +148,46 @@ public class Util {
 		return relative.getAbsolutePath();
 	}
 
+	/**
+	 * Returns all elements of a collection that match the check defined by
+	 * predicate.
+	 * 
+	 * @param collection
+	 *            The collection you want to filter. May not be null.
+	 * @param predicate
+	 *            The predicate you want to use to filter said collection. May
+	 *            not be null.
+	 * @return A new collection that only contains elements for which
+	 *         {@link IPredicate#check(Object)} returned true.
+	 */
+	public static <E> Collection<E> where(Collection<E> collection, IPredicate<E> predicate) {
+		ArrayList<E> rtr = new ArrayList<>();
+		for (E entry : collection) {
+			if (predicate.check(entry)) {
+				rtr.add(entry);
+			}
+		}
+		return rtr;
+	}
+
+	/**
+	 * Returns a {@link Set} of elements that are created by applying the
+	 * reducer to every element in the collection.
+	 * 
+	 * @param collection
+	 *            May not be null.
+	 * @param reducer
+	 *            May not be null.
+	 * @return
+	 */
+	public static <T, E> Set<T> reduceDistinct(Collection<E> collection, IReduce<T, E> reducer) {
+		Set<T> rtr = new HashSet<>();
+		for (E entry : collection) {
+			rtr.add(reducer.reduce(entry));
+		}
+		return rtr;
+	}
+
 	/***
 	 * Filters a list of files based on a given regex. Returns a collection of
 	 * files of which the path matches the regex.
@@ -149,7 +196,7 @@ public class Util {
 	 * @param regex
 	 * @return
 	 */
-	public static Collection<File> filter(Collection<File> files, String regex) {
+	public static Collection<File> filterFiles(Collection<File> files, String regex) {
 		ArrayList<File> singleFiles = new ArrayList<File>();
 
 		for (File f : files) {
@@ -513,7 +560,7 @@ public class Util {
 	 * in the BenchmarkResults benchmarkResults.
 	 */
 	@SuppressWarnings("rawtypes")
-	private static <E extends ICsvProviderProvider> Collection<E> filterBenchmarks(
+	private static <E extends ICsvProviderProvider> Collection<E> getCsvProviderProviderFromBenchmarkResults(
 			Collection<BenchmarkResult> benchmarkResults, Class<E> benchmarkClass) {
 		ArrayList<E> filteredList = new ArrayList<E>();
 		for (BenchmarkResult<?> benchmarkResult : benchmarkResults) {
@@ -531,10 +578,10 @@ public class Util {
 	 * in the BenchmarkResults of ultimateIResults.
 	 */
 	@SuppressWarnings("rawtypes")
-	public static <E extends ICsvProviderProvider<?>> Collection<E> filterBenchmarks(
+	public static <E extends ICsvProviderProvider<?>> Collection<E> getCsvProviderProviderFromUltimateResults(
 			Map<String, List<IResult>> ultimateIResults, Class<E> benchmarkClass) {
 		Collection<BenchmarkResult> benchmarks = filterResults(ultimateIResults, BenchmarkResult.class);
-		return filterBenchmarks(benchmarks, benchmarkClass);
+		return getCsvProviderProviderFromBenchmarkResults(benchmarks, benchmarkClass);
 	}
 
 	/**
@@ -653,6 +700,14 @@ public class Util {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+	}
+
+	public interface IReduce<T, K> {
+		public T reduce(K entry);
+	}
+	
+	public interface IPredicate<T> {
+		public boolean check(T entry);
 	}
 
 }

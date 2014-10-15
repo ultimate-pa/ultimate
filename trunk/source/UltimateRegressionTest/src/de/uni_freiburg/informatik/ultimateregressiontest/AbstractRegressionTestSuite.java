@@ -59,10 +59,10 @@ public abstract class AbstractRegressionTestSuite extends UltimateTestSuite {
 		Collection<File> toolchainFiles = Util.getFiles(root, new String[] { ".xml" });
 		Collection<File> settingsFiles = Util.getFiles(root, new String[] { ".epf" });
 
-		toolchainFiles = Util.filter(toolchainFiles, ".*regression.*");
-		toolchainFiles = Util.filter(toolchainFiles, mFilterRegex);
-		settingsFiles = Util.filter(settingsFiles, ".*regression.*");
-		settingsFiles = Util.filter(settingsFiles, mFilterRegex);
+		toolchainFiles = Util.filterFiles(toolchainFiles, ".*regression.*");
+		toolchainFiles = Util.filterFiles(toolchainFiles, mFilterRegex);
+		settingsFiles = Util.filterFiles(settingsFiles, ".*regression.*");
+		settingsFiles = Util.filterFiles(settingsFiles, mFilterRegex);
 
 		for (File toolchain : toolchainFiles) {
 			String toolchainName = toolchain.getName().replaceAll("\\..*", "");

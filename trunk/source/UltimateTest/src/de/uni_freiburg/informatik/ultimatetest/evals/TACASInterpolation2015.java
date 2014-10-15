@@ -18,6 +18,7 @@ import de.uni_freiburg.informatik.ultimatetest.summary.ExtendedCsvConcatenator;
 import de.uni_freiburg.informatik.ultimatetest.summary.IIncrementalLog;
 import de.uni_freiburg.informatik.ultimatetest.summary.ITestSummary;
 import de.uni_freiburg.informatik.ultimatetest.summary.IncrementalLogWithVMParameters;
+import de.uni_freiburg.informatik.ultimatetest.util.Util;
 
 /**
  * 
@@ -34,22 +35,22 @@ public class TACASInterpolation2015 extends AbstractModelCheckerTestSuite {
 	private IncrementalLogWithVMParameters mIncrementalLog;
 
 	private static final String[] mDirectories = {
-			// Contains pointers
-			// "examples/svcomp/loops/",
-			// "examples/svcomp/loop-lit/",
-			// Contains arrays
-			// "examples/svcomp/loop-acceleration/",
+	// Contains pointers
+	// "examples/svcomp/loops/",
+	// "examples/svcomp/loop-lit/",
+	// Contains arrays
+	// "examples/svcomp/loop-acceleration/",
 
-			// conains no pointers or arrays
-			"examples/svcomp/ssh-simplified/",
-//			"examples/svcomp/eca-rers2012/", 
-			"examples/svcomp/loop-invgen/",
-			"examples/svcomp/locks/",
-			"examples/svcomp/loop-new/", 
-			"examples/svcomp/ntdrivers-simplified/", 
-			"examples/svcomp/recursive/",
-			"examples/svcomp/systemc/", 
-			};
+	// conains no pointers or arrays
+	"examples/svcomp/ssh-simplified/",
+	// "examples/svcomp/eca-rers2012/",
+	// "examples/svcomp/loop-invgen/",
+	// "examples/svcomp/locks/",
+	// "examples/svcomp/loop-new/",
+	// "examples/svcomp/ntdrivers-simplified/",
+	// "examples/svcomp/recursive/",
+	// "examples/svcomp/systemc/",
+	};
 
 	// Time out for each test case in milliseconds
 	private final static int mTimeout = 60 * 1000;
@@ -58,25 +59,26 @@ public class TACASInterpolation2015 extends AbstractModelCheckerTestSuite {
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
 		if (mTestCases.size() == 0) {
-			addTestCases("AutomizerC.xml", "TACASInterpolation2015/ForwardPredicates.epf", mDirectories, mFileEndings,
-					mTimeout);
+			// addTestCases("AutomizerC.xml",
+			// "TACASInterpolation2015/ForwardPredicates.epf", mDirectories,
+			// mFileEndings,
+			// mTimeout);
+			//
+			// addTestCases("AutomizerC.xml",
+			// "TACASInterpolation2015/TreeInterpolation.epf", mDirectories,
+			// mFileEndings,
+			// mTimeout);
 
-			addTestCases("AutomizerC.xml", "TACASInterpolation2015/TreeInterpolation.epf", mDirectories, mFileEndings,
-					mTimeout);
+			addTestCases("CodeCheckWithBE_C.xml", "TACASInterpolation2015/svComp-32bit-precise-BE-Kojak-FP.epf",
+					mDirectories, mFileEndings, mTimeout);
 
-//			addTestCases("CodeCheckWithBE_C.xml", "TACASInterpolation2015/svComp-32bit-precise-BE-Kojak.epf",
-//					mDirectories, mFileEndings, mTimeout);
-//
-//			addTestCases("CodeCheckWithBE_C.xml",
-//					"TACASInterpolation2015/svComp-32bit-precise-BE-Kojak-SmtInterpol.epf", mDirectories, mFileEndings,
-//					mTimeout);
+			addTestCases("CodeCheckWithBE_C.xml",
+					"TACASInterpolation2015/svComp-32bit-precise-BE-Kojak-TreeInterpolation.epf", mDirectories,
+					mFileEndings, mTimeout);
 
-//			addTestCases("CodeCheckWithBE_C.xml",
-//					"TACASInterpolation2015/blabla-fp.epf", mDirectories, mFileEndings,
-//					mTimeout);
-			
 			mIncrementalLog.setCountTotal(mTestCases.size());
 		}
+		// Util.filter(files, regex)
 		// return Util.firstN(super.createTestCases(), 3);
 		return super.createTestCases();
 	}

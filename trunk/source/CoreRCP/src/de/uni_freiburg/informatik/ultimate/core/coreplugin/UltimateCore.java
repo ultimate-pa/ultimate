@@ -206,15 +206,16 @@ public class UltimateCore implements IApplication, ICore, IUltimatePlugin {
 		mLogger = mLoggingService.getLogger(Activator.s_PLUGIN_ID);
 		mLogger.info("Initializing application");
 
-		final Logger tmp = mLogger;
+		final Logger tmpLogger = mLogger;
 		mJobChangeAdapter = new JobChangeAdapter() {
 
 			@Override
 			public void done(IJobChangeEvent event) {
 				if (event.getResult().getException() != null) {
-					tmp.error("Error during toolchain job processing:", event.getResult().getException());
-					if (Platform.inDebugMode() || Platform.inDevelopmentMode())
+					tmpLogger.error("Error during toolchain job processing:", event.getResult().getException());
+					if (Platform.inDebugMode() || Platform.inDevelopmentMode()) {
 						event.getResult().getException().printStackTrace();
+					}
 				}
 			}
 

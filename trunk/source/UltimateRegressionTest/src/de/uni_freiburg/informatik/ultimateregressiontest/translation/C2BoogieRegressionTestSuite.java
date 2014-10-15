@@ -34,7 +34,7 @@ public class C2BoogieRegressionTestSuite extends AbstractRegressionTestSuite {
 		File root = getRootFolder(sRootFolder);
 
 		Collection<File> files = Util.getFiles(root, new String[] { ".bpl" });
-		files = Util.filter(files, ".*regression.*BoogiePrinter_.*UID.*");
+		files = Util.filterFiles(files, ".*regression.*BoogiePrinter_.*UID.*");
 
 		System.out.println("---");
 		System.out.println(String.format("Begin cleanup of %s", sRootFolder));

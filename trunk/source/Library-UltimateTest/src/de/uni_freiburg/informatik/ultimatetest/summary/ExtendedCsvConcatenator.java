@@ -47,7 +47,7 @@ public class ExtendedCsvConcatenator extends NewTestSummary {
 		}
 		ICsvProvider<Object> aggregate = new SimpleCsvProvider<Object>(new ArrayList<String>());
 		for (Class<? extends ICsvProviderProvider<? extends Object>> benchmark : mBenchmarks) {
-			for (ICsvProviderProvider<?> benchmarkResultWildcard : Util.filterBenchmarks(resultService.getResults(),
+			for (ICsvProviderProvider<?> benchmarkResultWildcard : Util.getCsvProviderProviderFromUltimateResults(resultService.getResults(),
 					benchmark)) {
 				aggregate = CsvUtils.concatenateRows(aggregate,
 						(ICsvProvider<Object>) benchmarkResultWildcard.createCvsProvider());
@@ -74,8 +74,8 @@ public class ExtendedCsvConcatenator extends NewTestSummary {
 	@Override
 	public String getSummaryLog() {
 		StringBuilder sb = new StringBuilder();
-		Collection<Entry<UltimateRunDefinition, ExtendedResult>> goodResults = getResultsWhere(mResults.entrySet(),
-				new IPredicate() {
+		Collection<Entry<UltimateRunDefinition, ExtendedResult>> goodResults = Util.where(mResults.entrySet(),
+				new IMyPredicate() {
 					@Override
 					public boolean check(Entry<UltimateRunDefinition, ExtendedResult> entry) {
 						return entry.getValue().Result == TestResult.SUCCESS
@@ -83,8 +83,8 @@ public class ExtendedCsvConcatenator extends NewTestSummary {
 										.contains("Timeout"));
 					}
 				});
-		Collection<Entry<UltimateRunDefinition, ExtendedResult>> badResults = getResultsWhere(mResults.entrySet(),
-				new IPredicate() {
+		Collection<Entry<UltimateRunDefinition, ExtendedResult>> badResults = Util.where(mResults.entrySet(),
+				new IMyPredicate() {
 					@Override
 					public boolean check(Entry<UltimateRunDefinition, ExtendedResult> entry) {
 						return !(entry.getValue().Result == TestResult.SUCCESS || (entry.getValue().Result == TestResult.UNKNOWN && entry

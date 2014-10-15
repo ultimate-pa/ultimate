@@ -15,6 +15,8 @@ import de.uni_freiburg.informatik.ultimatetest.UltimateTestSuite;
 import de.uni_freiburg.informatik.ultimatetest.decider.ITestResultDecider.TestResult;
 import de.uni_freiburg.informatik.ultimatetest.summary.NewTestSummary;
 import de.uni_freiburg.informatik.ultimatetest.util.Util;
+import de.uni_freiburg.informatik.ultimatetest.util.Util.IPredicate;
+import de.uni_freiburg.informatik.ultimatetest.util.Util.IReduce;
 
 /**
  * This summary should only be used with {@link SVCOMP15TestSuite}, because it
@@ -33,14 +35,14 @@ public class SVCOMP15TestSummary extends NewTestSummary {
 	@Override
 	public String getSummaryLog() {
 
-		Set<TCS> tcs = getDistinct(mResults.entrySet(), new IReduce<TCS>() {
+		Set<TCS> tcs = Util.reduceDistinct(mResults.entrySet(), new IMyReduce<TCS>() {
 			@Override
 			public TCS reduce(Entry<UltimateRunDefinition, ExtendedResult> entry) {
 				return new TCS(entry.getKey().getToolchain(), entry.getKey().getSettings());
 			}
 		});
 
-		Set<String> svcompCategories = getDistinct(mResults.entrySet(), new IReduce<String>() {
+		Set<String> svcompCategories = Util.reduceDistinct(mResults.entrySet(), new IMyReduce<String>() {
 			@Override
 			public String reduce(Entry<UltimateRunDefinition, ExtendedResult> entry) {
 				return entry.getValue().Testname.split(" ")[0];
@@ -51,8 +53,8 @@ public class SVCOMP15TestSummary extends NewTestSummary {
 		String indent = "\t";
 		for (final TCS atcs : tcs) {
 			for (final String svcompCategory : svcompCategories) {
-				Collection<Entry<UltimateRunDefinition, ExtendedResult>> results = getResultsWhere(mResults.entrySet(),
-						new IPredicate() {
+				Collection<Entry<UltimateRunDefinition, ExtendedResult>> results = Util.where(mResults.entrySet(),
+						new IMyPredicate() {
 							@Override
 							public boolean check(Entry<UltimateRunDefinition, ExtendedResult> entry) {
 								return entry.getKey().getToolchain().equals(atcs.Toolchain)
@@ -79,8 +81,8 @@ public class SVCOMP15TestSummary extends NewTestSummary {
 				// write the result type and the content (SUCCESS, UNKNOWN,
 				// FAIL)
 				for (final TestResult tResult : TestResult.values()) {
-					Collection<Entry<UltimateRunDefinition, ExtendedResult>> specificResults = getResultsWhere(results,
-							new IPredicate() {
+					Collection<Entry<UltimateRunDefinition, ExtendedResult>> specificResults = Util.where(results,
+							new IMyPredicate() {
 								@Override
 								public boolean check(Entry<UltimateRunDefinition, ExtendedResult> entry) {
 									return entry.getValue().Result == tResult;
@@ -99,7 +101,7 @@ public class SVCOMP15TestSummary extends NewTestSummary {
 					sb.append(tResult);
 					sb.append(" =====").append(Util.getPlatformLineSeparator());
 
-					Set<String> resultCategories = getDistinct(specificResults, new IReduce<String>() {
+					Set<String> resultCategories = Util.reduceDistinct(specificResults, new IMyReduce<String>() {
 						@Override
 						public String reduce(Entry<UltimateRunDefinition, ExtendedResult> entry) {
 							return entry.getValue().Category;
@@ -109,8 +111,8 @@ public class SVCOMP15TestSummary extends NewTestSummary {
 					for (final String resultCategory : resultCategories) {
 						// group by result category
 						sb.append(indent).append(resultCategory).append(Util.getPlatformLineSeparator());
-						Collection<Entry<UltimateRunDefinition, ExtendedResult>> resultsByCategory = getResultsWhere(
-								results, new IPredicate() {
+						Collection<Entry<UltimateRunDefinition, ExtendedResult>> resultsByCategory = Util.where(
+								results, new IMyPredicate() {
 									@Override
 									public boolean check(Entry<UltimateRunDefinition, ExtendedResult> entry) {
 										return entry.getValue().Category.equals(resultCategory);
@@ -182,8 +184,8 @@ public class SVCOMP15TestSummary extends NewTestSummary {
 		sb.append("Fail").append(indent);
 		sb.append(Util.getPlatformLineSeparator());
 		for (final TCS toolchainAndSettings : tcs) {
-			Collection<Entry<UltimateRunDefinition, ExtendedResult>> specificResults = getResultsWhere(
-					mResults.entrySet(), new IPredicate() {
+			Collection<Entry<UltimateRunDefinition, ExtendedResult>> specificResults = Util.where(mResults.entrySet(),
+					new IMyPredicate() {
 						@Override
 						public boolean check(Entry<UltimateRunDefinition, ExtendedResult> entry) {
 							return entry.getKey().getToolchain().equals(toolchainAndSettings.Toolchain)
@@ -206,8 +208,8 @@ public class SVCOMP15TestSummary extends NewTestSummary {
 		sb.append(Util.getPlatformLineSeparator());
 		for (final TCS toolchainAndSettings : tcs) {
 			for (final String svcompCategory : svcompCategories) {
-				Collection<Entry<UltimateRunDefinition, ExtendedResult>> specificResults = getResultsWhere(
-						mResults.entrySet(), new IPredicate() {
+				Collection<Entry<UltimateRunDefinition, ExtendedResult>> specificResults = Util.where(
+						mResults.entrySet(), new IMyPredicate() {
 							@Override
 							public boolean check(Entry<UltimateRunDefinition, ExtendedResult> entry) {
 								return entry.getKey().getToolchain().equals(toolchainAndSettings.Toolchain)
@@ -227,21 +229,21 @@ public class SVCOMP15TestSummary extends NewTestSummary {
 	private void appendComparison(StringBuilder sb, String indent, final TCS toolchainAndSettings,
 			Collection<Entry<UltimateRunDefinition, ExtendedResult>> specificResults) {
 
-		int success = getResultsWhere(specificResults, new IPredicate() {
+		int success = Util.where(specificResults, new IMyPredicate() {
 			@Override
 			public boolean check(Entry<UltimateRunDefinition, ExtendedResult> entry) {
 				return entry.getValue().Result.equals(TestResult.SUCCESS);
 			}
 		}).size();
 
-		int unknown = getResultsWhere(specificResults, new IPredicate() {
+		int unknown = Util.where(specificResults, new IMyPredicate() {
 			@Override
 			public boolean check(Entry<UltimateRunDefinition, ExtendedResult> entry) {
 				return entry.getValue().Result.equals(TestResult.UNKNOWN);
 			}
 		}).size();
 
-		int fail = getResultsWhere(specificResults, new IPredicate() {
+		int fail = Util.where(specificResults, new IMyPredicate() {
 			@Override
 			public boolean check(Entry<UltimateRunDefinition, ExtendedResult> entry) {
 				return entry.getValue().Result.equals(TestResult.FAIL);
@@ -259,4 +261,5 @@ public class SVCOMP15TestSummary extends NewTestSummary {
 		sb.append(fail);
 		sb.append(Util.getPlatformLineSeparator());
 	}
+
 }
