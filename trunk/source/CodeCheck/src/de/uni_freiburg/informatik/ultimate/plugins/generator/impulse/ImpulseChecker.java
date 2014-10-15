@@ -28,7 +28,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
 
 public class ImpulseChecker extends CodeChecker {
 	
-	private HashMap <AnnotatedProgramPoint, AnnotatedProgramPoint> _cloneNode;
+	//private HashMap <AnnotatedProgramPoint, AnnotatedProgramPoint> _cloneNode;
 	public ImpulseChecker(IElement root, SmtManager m_smtManager, TAPreferences m_taPrefs, RootNode m_originalRoot, ImpRootNode m_graphRoot,
 			GraphWriter m_graphWriter, EdgeChecker edgeChecker, PredicateUnifier predicateUnifier, Logger logger) {
 		super(root, m_smtManager, m_taPrefs, m_originalRoot, m_graphRoot,
@@ -46,35 +46,37 @@ public class ImpulseChecker extends CodeChecker {
 		edge.disconnect();
 	}
 	
-	public boolean defaultRedirecting(AnnotatedProgramPoint[] nodes) {
+	public boolean defaultRedirecting(AnnotatedProgramPoint[] nodes, AnnotatedProgramPoint[] clones) {
 		
 		boolean errorReached = false;
 		for (int i = 0; i + 1 < nodes.length; ++i) {
 			if (nodes[i + 1].isErrorLocation()) {
-				_cloneNode.get(nodes[i]).getEdge(nodes[i + 1]).disconnect();
+				clones[i].getEdge(nodes[i + 1]).disconnect();
 				errorReached = true;
 			} else {
+				/*
 				System.err.println("HERE1 : " + nodes[i] + " {{{ " + nodes[i].getEdge(nodes[i + 1]) + " }}}  " + nodes[i + 1]);
 				System.err.println("HERE2 : " + _cloneNode.get(nodes[i]) + " {{{ " + _cloneNode.get(nodes[i]).getEdge(nodes[i + 1]) + " }}}  " + nodes[i + 1]);
-				replaceEdge(_cloneNode.get(nodes[i]).getEdge(nodes[i + 1]), _cloneNode.get(nodes[i + 1]));
+				*/
+				replaceEdge(clones[i].getEdge(nodes[i + 1]), clones[i + 1]);
 			}
 		}
 		
 		return errorReached;
 	}
 
-	public boolean redirectEdges(AnnotatedProgramPoint[] nodes) {
-		for (AnnotatedProgramPoint node : nodes) {
-			if (node.isErrorLocation())
+	public boolean redirectEdges(AnnotatedProgramPoint[] nodes, AnnotatedProgramPoint[] clones) {
+		for (int i = 0; i < nodes.length; ++i) {
+			if (nodes[i].isErrorLocation())
 				continue;
-			AppEdge[] prevEdges = node.getIncomingEdges().toArray(new AppEdge[]{});
+			AppEdge[] prevEdges = nodes[i].getIncomingEdges().toArray(new AppEdge[]{});
 			for (AppEdge prevEdge : prevEdges) {
 				if (prevEdge instanceof AppHyperEdge) {
-					if (connectOutgoingReturnIfValid(prevEdge.getSource(), ((AppHyperEdge) prevEdge).getHier(), (Return) prevEdge.getStatement(), _cloneNode.get(node))) {
+					if (connectOutgoingReturnIfValid(prevEdge.getSource(), ((AppHyperEdge) prevEdge).getHier(), (Return) prevEdge.getStatement(), clones[i])) {
 						prevEdge.disconnect();
 					}
 				} else {
-					if (connectOutgoingIfValid(prevEdge.getSource(), prevEdge.getStatement(), _cloneNode.get(node))) {
+					if (connectOutgoingIfValid(prevEdge.getSource(), prevEdge.getStatement(), clones[i])) {
 						prevEdge.disconnect();
 					}
 				}
@@ -106,22 +108,24 @@ public class ImpulseChecker extends CodeChecker {
 		Collections.addAll(interpolantsDBG, interpolants);
 		System.err.println(String.format("Inters: %s\n", interpolantsDBG));
 		
-		
-		_cloneNode = new HashMap <AnnotatedProgramPoint, AnnotatedProgramPoint>();
+		AnnotatedProgramPoint[] clones = new AnnotatedProgramPoint[nodes.length];
+		//_cloneNode = new HashMap <AnnotatedProgramPoint, AnnotatedProgramPoint>();
 		
 		AnnotatedProgramPoint newRoot = new AnnotatedProgramPoint(nodes[0], nodes[0].getPredicate(), true);
 		
-		_cloneNode.put(newRoot, nodes[0]);
+		clones[0] = nodes[0];
+		//_cloneNode.put(newRoot, nodes[0]);
 		nodes[0] = newRoot;
 		
 		for (int i = 0; i < interpolants.length; ++i) {
-			_cloneNode.put(nodes[i + 1], new AnnotatedProgramPoint(nodes[i + 1], conjugatePredicates(nodes[i + 1].getPredicate(), interpolants[i]), true));
+			//_cloneNode.put(nodes[i + 1], new AnnotatedProgramPoint(nodes[i + 1], conjugatePredicates(nodes[i + 1].getPredicate(), interpolants[i]), true));
+			clones[i + 1] = new AnnotatedProgramPoint(nodes[i + 1], conjugatePredicates(nodes[i + 1].getPredicate(), interpolants[i]), true);
 		}
 		
-		if (!defaultRedirecting(nodes))
+		if (!defaultRedirecting(nodes, clones))
 			throw new AssertionError("The error location hasn't been reached.");
 		//improveAnnotations(newRoot);
-		redirectEdges(nodes);
+		redirectEdges(nodes, clones);
 
 		return true;
 	}
