@@ -26,7 +26,7 @@ public class CodeCheckBenchmarks implements ICsvProviderProvider<Object> {
 		if (mCsvP == null) {
 			ArrayList<String> columnTitles = new ArrayList<>();
 			columnTitles.add("time (ms)");
-			columnTitles.add("#iterations");
+			columnTitles.add("Overall iterations");
 			columnTitles.add(CodeCheckObserver.s_NumberOfCodeBlocks);
 			columnTitles.add(CodeCheckObserver.s_SizeOfPredicates);
 			columnTitles.add(CodeCheckObserver.s_ConjunctsInSSA);

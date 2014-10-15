@@ -12,6 +12,8 @@ public interface ICsvProvider<T> {
 	List<String> getColumnTitles();
 
 	List<String> getRowHeaders();
+	
+	void renameColumnTitle(String oldName, String newName);
 
 	void addRow(String rowName, List<T> values);
 

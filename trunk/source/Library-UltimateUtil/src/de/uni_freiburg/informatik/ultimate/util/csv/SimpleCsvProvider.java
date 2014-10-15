@@ -168,4 +168,17 @@ public class SimpleCsvProvider<T> implements ICsvProvider<T> {
 		return mTable.get(index);
 	}
 
+	@Override
+	public void renameColumnTitle(String oldName, String newName) {
+		ArrayList<String> names = new ArrayList<>();
+		for (String title : getColumnTitles()) {
+			if (title.equals(oldName)) {
+				names.add(newName);
+			} else {
+				names.add(title);
+			}
+		}
+		mColumnTitles = names;
+	}
+
 }

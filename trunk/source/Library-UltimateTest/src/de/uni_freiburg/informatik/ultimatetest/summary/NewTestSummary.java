@@ -114,7 +114,7 @@ public abstract class NewTestSummary implements ITestSummary {
 	protected interface IMyReduce<T> extends IReduce<T, Entry<UltimateRunDefinition, ExtendedResult>> {
 	}
 
-	protected interface IMyPredicate extends IPredicate<Entry<UltimateRunDefinition, ExtendedResult>> {
+	protected interface ITestSummaryResultPredicate extends IPredicate<Entry<UltimateRunDefinition, ExtendedResult>> {
 	}
 
 }

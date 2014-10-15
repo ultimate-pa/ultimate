@@ -122,6 +122,10 @@ public class UltimateTestCase {
 			}
 		}
 	}
+	
+	public UltimateRunDefinition getUltimateRunDefinition(){
+		return mUltimateRunDefinition;
+	}
 
 	@Override
 	public String toString() {

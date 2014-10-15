@@ -349,7 +349,7 @@ public class CsvUtils {
 			cellDecorator = new IExplicitConverter<T, String>() {
 				@Override
 				public String convert(T something) {
-					if(something == null){
+					if (something == null) {
 						return "-";
 					}
 					return something.toString();
@@ -423,17 +423,18 @@ public class CsvUtils {
 		}
 		return false;
 	}
-	
-//	public class NumbersFormatter implements IExplicitConverter<Object, String>
-//	{
-//		public NumbersFormatter(){
-//			
-//		}
-//		@Override
-//		public String convert(Object something) {
-//			return null;
-//		}
-//		
-//	}
+
+	// public class NumbersFormatter implements IExplicitConverter<Object,
+	// String>
+	// {
+	// public NumbersFormatter(){
+	//
+	// }
+	// @Override
+	// public String convert(Object something) {
+	// return null;
+	// }
+	//
+	// }
 
 }

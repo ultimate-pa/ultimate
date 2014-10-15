@@ -54,7 +54,7 @@ public class SVCOMP15TestSummary extends NewTestSummary {
 		for (final TCS atcs : tcs) {
 			for (final String svcompCategory : svcompCategories) {
 				Collection<Entry<UltimateRunDefinition, ExtendedResult>> results = Util.where(mResults.entrySet(),
-						new IMyPredicate() {
+						new ITestSummaryResultPredicate() {
 							@Override
 							public boolean check(Entry<UltimateRunDefinition, ExtendedResult> entry) {
 								return entry.getKey().getToolchain().equals(atcs.Toolchain)
@@ -82,7 +82,7 @@ public class SVCOMP15TestSummary extends NewTestSummary {
 				// FAIL)
 				for (final TestResult tResult : TestResult.values()) {
 					Collection<Entry<UltimateRunDefinition, ExtendedResult>> specificResults = Util.where(results,
-							new IMyPredicate() {
+							new ITestSummaryResultPredicate() {
 								@Override
 								public boolean check(Entry<UltimateRunDefinition, ExtendedResult> entry) {
 									return entry.getValue().Result == tResult;
@@ -112,7 +112,7 @@ public class SVCOMP15TestSummary extends NewTestSummary {
 						// group by result category
 						sb.append(indent).append(resultCategory).append(Util.getPlatformLineSeparator());
 						Collection<Entry<UltimateRunDefinition, ExtendedResult>> resultsByCategory = Util.where(
-								results, new IMyPredicate() {
+								results, new ITestSummaryResultPredicate() {
 									@Override
 									public boolean check(Entry<UltimateRunDefinition, ExtendedResult> entry) {
 										return entry.getValue().Category.equals(resultCategory);
@@ -185,7 +185,7 @@ public class SVCOMP15TestSummary extends NewTestSummary {
 		sb.append(Util.getPlatformLineSeparator());
 		for (final TCS toolchainAndSettings : tcs) {
 			Collection<Entry<UltimateRunDefinition, ExtendedResult>> specificResults = Util.where(mResults.entrySet(),
-					new IMyPredicate() {
+					new ITestSummaryResultPredicate() {
 						@Override
 						public boolean check(Entry<UltimateRunDefinition, ExtendedResult> entry) {
 							return entry.getKey().getToolchain().equals(toolchainAndSettings.Toolchain)
@@ -209,7 +209,7 @@ public class SVCOMP15TestSummary extends NewTestSummary {
 		for (final TCS toolchainAndSettings : tcs) {
 			for (final String svcompCategory : svcompCategories) {
 				Collection<Entry<UltimateRunDefinition, ExtendedResult>> specificResults = Util.where(
-						mResults.entrySet(), new IMyPredicate() {
+						mResults.entrySet(), new ITestSummaryResultPredicate() {
 							@Override
 							public boolean check(Entry<UltimateRunDefinition, ExtendedResult> entry) {
 								return entry.getKey().getToolchain().equals(toolchainAndSettings.Toolchain)
@@ -229,21 +229,21 @@ public class SVCOMP15TestSummary extends NewTestSummary {
 	private void appendComparison(StringBuilder sb, String indent, final TCS toolchainAndSettings,
 			Collection<Entry<UltimateRunDefinition, ExtendedResult>> specificResults) {
 
-		int success = Util.where(specificResults, new IMyPredicate() {
+		int success = Util.where(specificResults, new ITestSummaryResultPredicate() {
 			@Override
 			public boolean check(Entry<UltimateRunDefinition, ExtendedResult> entry) {
 				return entry.getValue().Result.equals(TestResult.SUCCESS);
 			}
 		}).size();
 
-		int unknown = Util.where(specificResults, new IMyPredicate() {
+		int unknown = Util.where(specificResults, new ITestSummaryResultPredicate() {
 			@Override
 			public boolean check(Entry<UltimateRunDefinition, ExtendedResult> entry) {
 				return entry.getValue().Result.equals(TestResult.UNKNOWN);
 			}
 		}).size();
 
-		int fail = Util.where(specificResults, new IMyPredicate() {
+		int fail = Util.where(specificResults, new ITestSummaryResultPredicate() {
 			@Override
 			public boolean check(Entry<UltimateRunDefinition, ExtendedResult> entry) {
 				return entry.getValue().Result.equals(TestResult.FAIL);

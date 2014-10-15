@@ -25,6 +25,15 @@ public class Utils {
 		String pre = (si ? "kMGTPE" : "KMGTPE").charAt(exp - 1) + (si ? "" : "i");
 		return String.format("%.1f %sB", bytes / Math.pow(unit, exp), pre);
 	}
+	
+	public static String humanReadableNumber(long number) {
+		int unit = 1000 ;
+		if (number < unit)
+			return number + "";
+		int exp = (int) (Math.log(number) / Math.log(unit));
+		String pre = ("KMGTPE").charAt(exp - 1)+"";
+		return String.format("%.1f %s", number / Math.pow(unit, exp), pre);
+	}
 
 	/***
 	 * Returns a String representation of a collection by calling toString on

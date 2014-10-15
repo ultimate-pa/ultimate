@@ -2,6 +2,8 @@ package de.uni_freiburg.informatik.ultimatetest.evals;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.TimingBenchmark;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.CodeCheckBenchmarks;
@@ -14,11 +16,12 @@ import de.uni_freiburg.informatik.ultimatetest.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
 import de.uni_freiburg.informatik.ultimatetest.decider.ITestResultDecider;
 import de.uni_freiburg.informatik.ultimatetest.decider.SafetyCheckTestResultDecider;
-import de.uni_freiburg.informatik.ultimatetest.summary.ExtendedCsvConcatenator;
 import de.uni_freiburg.informatik.ultimatetest.summary.IIncrementalLog;
 import de.uni_freiburg.informatik.ultimatetest.summary.ITestSummary;
 import de.uni_freiburg.informatik.ultimatetest.summary.IncrementalLogWithVMParameters;
 import de.uni_freiburg.informatik.ultimatetest.util.Util;
+import de.uni_freiburg.informatik.ultimatetest.util.Util.IPredicate;
+import de.uni_freiburg.informatik.ultimatetest.util.Util.IReduce;
 
 /**
  * 
@@ -35,52 +38,96 @@ public class TACASInterpolation2015 extends AbstractModelCheckerTestSuite {
 	private IncrementalLogWithVMParameters mIncrementalLog;
 
 	private static final String[] mDirectories = {
-	// Contains pointers
-	// "examples/svcomp/loops/",
-	// "examples/svcomp/loop-lit/",
-	// Contains arrays
-	// "examples/svcomp/loop-acceleration/",
+			// Contains pointers
+			// "examples/svcomp/loops/",
+			// "examples/svcomp/loop-lit/",
+			// Contains arrays
+			// "examples/svcomp/loop-acceleration/",
 
-	// conains no pointers or arrays
-	"examples/svcomp/ssh-simplified/",
-	// "examples/svcomp/eca-rers2012/",
-	// "examples/svcomp/loop-invgen/",
-	// "examples/svcomp/locks/",
-	// "examples/svcomp/loop-new/",
-	// "examples/svcomp/ntdrivers-simplified/",
-	// "examples/svcomp/recursive/",
-	// "examples/svcomp/systemc/",
+			// conains no pointers or arrays
+			 "examples/svcomp/ssh-simplified/",
+//			 "examples/svcomp/eca-rers2012/",
+			 "examples/svcomp/loop-invgen/",
+			 "examples/svcomp/locks/",
+			 "examples/svcomp/loop-new/",
+			 "examples/svcomp/ntdrivers-simplified/",
+			 "examples/svcomp/recursive/",
+			 "examples/svcomp/systemc/",
+
+//			"examples/svcomp/A/", "examples/svcomp/AA/", 
+			
 	};
 
 	// Time out for each test case in milliseconds
 	private final static int mTimeout = 60 * 1000;
 	private final static String[] mFileEndings = new String[] { ".c" };
 
+	// if -1 use all
+	private final int mFilesPerCategory = 20;
+
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
 		if (mTestCases.size() == 0) {
-			// addTestCases("AutomizerC.xml",
-			// "TACASInterpolation2015/ForwardPredicates.epf", mDirectories,
-			// mFileEndings,
-			// mTimeout);
-			//
-			// addTestCases("AutomizerC.xml",
-			// "TACASInterpolation2015/TreeInterpolation.epf", mDirectories,
-			// mFileEndings,
-			// mTimeout);
+			List<UltimateTestCase> testcases = new ArrayList<>();
+			addTestCases("AutomizerC.xml", "TACASInterpolation2015/ForwardPredicates.epf", mDirectories, mFileEndings,
+					mTimeout);
+			testcases.addAll(limitTestFiles());
 
-			addTestCases("CodeCheckWithBE_C.xml", "TACASInterpolation2015/svComp-32bit-precise-BE-Kojak-FP.epf",
-					mDirectories, mFileEndings, mTimeout);
+			addTestCases("AutomizerC.xml", "TACASInterpolation2015/TreeInterpolation.epf", mDirectories, mFileEndings,
+					mTimeout);
+			testcases.addAll(limitTestFiles());
 
-			addTestCases("CodeCheckWithBE_C.xml",
-					"TACASInterpolation2015/svComp-32bit-precise-BE-Kojak-TreeInterpolation.epf", mDirectories,
+			addTestCases("CodeCheckWithBE_C.xml", "TACASInterpolation2015/Kojak-FP.epf", mDirectories, mFileEndings,
+					mTimeout);
+			testcases.addAll(limitTestFiles());
+
+			addTestCases("CodeCheckWithBE_C.xml", "TACASInterpolation2015/Kojak-TreeInterpolation.epf", mDirectories,
 					mFileEndings, mTimeout);
+			testcases.addAll(limitTestFiles());
+
+			if (mFilesPerCategory != -1) {
+				mTestCases = testcases;
+			}
 
 			mIncrementalLog.setCountTotal(mTestCases.size());
 		}
 		// Util.filter(files, regex)
 		// return Util.firstN(super.createTestCases(), 3);
 		return super.createTestCases();
+	}
+
+	@SuppressWarnings("unused")
+	private List<UltimateTestCase> limitTestFiles() {
+		if (mFilesPerCategory == -1) {
+			return new ArrayList<>();
+		}
+		List<UltimateTestCase> testcases = new ArrayList<>();
+
+		Set<String> categories = Util.reduceDistinct(mTestCases, new IReduce<String, UltimateTestCase>() {
+			@Override
+			public String reduce(UltimateTestCase entry) {
+				return entry.getUltimateRunDefinition().getInput().getParentFile().getName();
+			}
+		});
+
+		for (final String category : categories) {
+			testcases.addAll(Util.where(mTestCases, new IPredicate<UltimateTestCase>() {
+				int i = 0;
+
+				@Override
+				public boolean check(UltimateTestCase entry) {
+					if (entry.getUltimateRunDefinition().getInput().getParentFile().getName().equals(category)) {
+						if (i < mFilesPerCategory) {
+							i++;
+							return true;
+						}
+					}
+					return false;
+				}
+			}));
+		}
+		mTestCases = new ArrayList<>();
+		return testcases;
 	}
 
 	@Override
@@ -96,7 +143,7 @@ public class TACASInterpolation2015 extends AbstractModelCheckerTestSuite {
 		benchmarks.add(TraceAbstractionBenchmarks.class);
 		benchmarks.add(CodeCheckBenchmarks.class);
 
-		return new ITestSummary[] { new ExtendedCsvConcatenator(getClass(), benchmarks),
+		return new ITestSummary[] { new TACAS2015Summary(getClass(), benchmarks),
 				new TraceAbstractionTestSummary(getClass()) };
 	}
 
