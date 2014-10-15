@@ -10,6 +10,16 @@ import de.uni_freiburg.informatik.ultimate.util.csv.SimpleCsvProvider;
 public class CodeCheckBenchmarks implements ICsvProviderProvider<Object> {
 
 	private SimpleCsvProvider<Object> mCsvP;
+	
+//	/**
+//	 * true, if we are benchmarking a TraceCheckerSPWP ("Betim interpolation"),
+//	 * false for a normal TraceChecker (SMTInterpol interpolation)
+//	 */
+//	private boolean weHaveTraceCheckerSPWP;
+//
+//	public CodeCheckBenchmarks(boolean b) {
+//		weHaveTraceCheckerSPWP = b;
+//	}
 
 	@Override
 	public ICsvProvider<Object> createCvsProvider() {

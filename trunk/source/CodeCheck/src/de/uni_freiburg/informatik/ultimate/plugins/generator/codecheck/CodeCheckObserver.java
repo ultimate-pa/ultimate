@@ -426,6 +426,9 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		mLogger.debug("MemoizationReturnHitsUnsat: " + codeChecker.memoizationReturnHitsUnsat);
 		
 		//inserted by alex: we should return this kind of benchmark result
+		
+		boolean weHaveSPWPInterpolation =  GlobalSettings._instance._solverAndInterpolator == SolverAndInterpolator.Z3SPWP;
+//		CodeCheckBenchmarks ccb = new CodeCheckBenchmarks(traceChecker instanceof TraceCheckerSpWp);
 		CodeCheckBenchmarks ccb = new CodeCheckBenchmarks();
 		ICsvProvider<Object> ccbcsvp = ccb.createCvsProvider();
 		ArrayList<Object> values = new ArrayList<>();
@@ -433,9 +436,15 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		values.add(iterationsCount);
 		if (traceChecker != null) {
 			values.add(traceChecker.getTraceCheckerBenchmark().getValue(s_NumberOfCodeBlocks));
-			values.add(traceChecker.getTraceCheckerBenchmark().getValue(s_SizeOfPredicates));
-			values.add(traceChecker.getTraceCheckerBenchmark().getValue(s_ConjunctsInSSA));
-			values.add(traceChecker.getTraceCheckerBenchmark().getValue(s_ConjunctsInUnsatCore));
+			if (weHaveSPWPInterpolation) {
+				values.add(traceChecker.getTraceCheckerBenchmark().getValue(s_SizeOfPredicates));
+				values.add(traceChecker.getTraceCheckerBenchmark().getValue(s_ConjunctsInSSA));
+				values.add(traceChecker.getTraceCheckerBenchmark().getValue(s_ConjunctsInUnsatCore));
+			} else {
+				values.add(-1);
+				values.add(-1);
+				values.add(-1);
+			}
 		} else {
 			values.add(-1);
 			values.add(-1);
