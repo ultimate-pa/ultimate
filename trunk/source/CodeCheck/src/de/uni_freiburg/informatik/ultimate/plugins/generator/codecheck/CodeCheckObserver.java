@@ -322,18 +322,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 					switch (GlobalSettings._instance._solverAndInterpolator) {
 					case SMTINTERPOL:
 						traceChecker = new TraceChecker(_predicateUnifier.getTruePredicate(),
-						// checks
-						// whether
-						// the
-						// trace
-						// is
-						// feasible,
-						// i.e.
-						// the
-						// formula
-						// is
-						// satisfiable
-								_predicateUnifier.getFalsePredicate(), // return LBool.UNSAT if trace
+							_predicateUnifier.getFalsePredicate(), // return LBool.UNSAT if trace
 													// is infeasible
 								new TreeMap<Integer, IPredicate>(), errorRun.getWord(), m_smtManager, m_originalRoot
 										.getRootAnnot().getModGlobVarManager(),
@@ -347,17 +336,6 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 						break;
 					case Z3SPWP:
 						traceChecker = new TraceCheckerSpWp(_predicateUnifier.getTruePredicate(),
-						// checks
-						// whether
-						// the
-						// trace
-						// is
-						// feasible,
-						// i.e.
-						// the
-						// formula
-						// is
-						// satisfiable
 								_predicateUnifier.getFalsePredicate(), // return LBool.UNSAT if trace
 								new TreeMap<Integer, IPredicate>(), // is
 																	// infeasible
@@ -453,10 +431,17 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		ArrayList<Object> values = new ArrayList<>();
 		values.add((int) ((System.nanoTime() - startTime)/1000000));
 		values.add(iterationsCount);
-		values.add(traceChecker.getTraceCheckerBenchmark().getValue(s_NumberOfCodeBlocks));
-		values.add(traceChecker.getTraceCheckerBenchmark().getValue(s_SizeOfPredicates));
-		values.add(traceChecker.getTraceCheckerBenchmark().getValue(s_ConjunctsInSSA));
-		values.add(traceChecker.getTraceCheckerBenchmark().getValue(s_ConjunctsInUnsatCore));
+		if (traceChecker != null) {
+			values.add(traceChecker.getTraceCheckerBenchmark().getValue(s_NumberOfCodeBlocks));
+			values.add(traceChecker.getTraceCheckerBenchmark().getValue(s_SizeOfPredicates));
+			values.add(traceChecker.getTraceCheckerBenchmark().getValue(s_ConjunctsInSSA));
+			values.add(traceChecker.getTraceCheckerBenchmark().getValue(s_ConjunctsInUnsatCore));
+		} else {
+			values.add(-1);
+			values.add(-1);
+			values.add(-1);
+			values.add(-1);
+		}
 		values.add(bwCoveringInfo);
 		ccbcsvp.addRow(values);
 		reportBenchmark(ccb);
