@@ -179,7 +179,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		case FPandBP:
 			m_TraceChecker = new TraceCheckerSpWp(truePredicate, falsePredicate, new TreeMap<Integer, IPredicate>(),
 					NestedWord.nestedWord(m_Counterexample.getWord()), m_SmtManager, m_RootNode.getRootAnnot()
-							.getModGlobVarManager(), m_AssertCodeBlocksIncrementally, m_UnsatCores, true, mServices);
+							.getModGlobVarManager(), m_AssertCodeBlocksIncrementally, m_UnsatCores, m_UseLiveVariables, mServices);
 			break;
 		default:
 			throw new UnsupportedOperationException("unsupported interpolation");
