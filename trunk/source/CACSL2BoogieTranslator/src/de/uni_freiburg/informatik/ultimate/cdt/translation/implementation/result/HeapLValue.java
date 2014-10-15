@@ -29,6 +29,6 @@ public class HeapLValue extends LRValue {
 	}
 	
 	public Expression getValue() {
-		throw new UnsupportedOperationException("HeapLValues must be converted to RValue before their value can be queried.");
+		throw new AssertionError("HeapLValues must be converted to RValue before their value can be queried.");
 	}
 }

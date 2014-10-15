@@ -179,6 +179,12 @@ public final class SFO {
 	    * Auxiliary variable used to initialize array values.
 	    */
 	   ARRAYINIT("init"),
+
+	   /**
+	    * Auxiliary variable used for a helper array (serves the same purpose as a struct constructor
+	    *  when a whole array is copied.
+	    */
+	   ARRAYCOPY("arrayCopy"),
 	   
 	   /**
 	    * Auxiliary variable used to define a pointer with constant value, 

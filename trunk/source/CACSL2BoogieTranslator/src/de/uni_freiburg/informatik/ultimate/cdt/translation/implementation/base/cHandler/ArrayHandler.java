@@ -61,6 +61,8 @@ public class ArrayHandler {
 	 * When going up again the ResultExpressions are popped/used.
 	 */
 	Stack<ResultExpression> mCollectedSubscripts = new Stack<ResultExpression>();
+	
+	
 	public ResultExpression handleArraySubscriptExpression(Dispatcher main,
 			MemoryHandler memoryHandler, StructHandler structHandler,
 			IASTArraySubscriptExpression node) {		

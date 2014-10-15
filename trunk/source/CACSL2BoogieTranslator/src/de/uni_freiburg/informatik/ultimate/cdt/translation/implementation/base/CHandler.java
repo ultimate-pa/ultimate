@@ -874,8 +874,8 @@ public class CHandler implements ICHandler {
 			return new ResultExpression(new RValue(new IntegerLiteral(loc, val), new CPrimitive(PRIMITIVE.CHAR)));
 		case IASTLiteralExpression.lk_integer_constant:
 			val = new String(node.getValue());
-			val = ISOIEC9899TC3.handleIntegerConstant(val, loc, main);
-			return new ResultExpression(new RValue(new IntegerLiteral(loc, val), new CPrimitive(PRIMITIVE.INT)));
+			RValue rVal = ISOIEC9899TC3.handleIntegerConstant(val, loc, main);
+			return new ResultExpression(rVal);
 		case IASTLiteralExpression.lk_string_literal:
 			// Translate string to uninitialized char pointer
 			String tId = main.nameHandler.getTempVarUID(SFO.AUXVAR.NONDET);
@@ -1130,9 +1130,9 @@ public class CHandler implements ICHandler {
 				return new ResultExpression(rop.stmt, new HeapLValue(addr, newCType), rop.decl, rop.auxVars,
 						rop.overappr);
 			} else {
-				assert rop.lrVal.cType instanceof CPointer : "type error: expected pointer , got "
+				assert rop.lrVal.cType.getUnderlyingType() instanceof CPointer : "type error: expected pointer , got "
 						+ rop.lrVal.cType.toString();
-				return new ResultExpression(rop.stmt, new HeapLValue(addr, ((CPointer) rop.lrVal.cType).pointsToType),
+				return new ResultExpression(rop.stmt, new HeapLValue(addr, ((CPointer) rop.lrVal.cType.getUnderlyingType()).pointsToType),
 						rop.decl, rop.auxVars, rop.overappr);
 			}
 		}
@@ -1148,11 +1148,12 @@ public class CHandler implements ICHandler {
 				throw new AssertionError("Address of something that is not on the heap.");
 			}
 		case IASTUnaryExpression.op_tilde:
+			ResultExpression rop = o.switchToRValueIfNecessary(main, mMemoryHandler, mStructHandler, loc);
 			List<Overapprox> overappr = new ArrayList<Overapprox>();
-			overappr.addAll(o.overappr);
+			overappr.addAll(rop.overappr);
 			overappr.add(new Overapprox(Overapprox.BITVEC, loc));
-			Expression bwexpr = createBitwiseExpression(node.getOperator(), null, o.lrVal.getValue(), loc);
-			return new ResultExpression(o.stmt, new RValue(bwexpr, o.lrVal.cType), o.decl, o.auxVars, overappr);
+			Expression bwexpr = createBitwiseExpression(node.getOperator(), null, rop.lrVal.getValue(), loc);
+			return new ResultExpression(rop.stmt, new RValue(bwexpr, rop.lrVal.cType), rop.decl, rop.auxVars, overappr);
 		case IASTUnaryExpression.op_alignOf:
 		default:
 			String msg = "Unknown or unsupported unary operation: " + node.getOperator();
@@ -1459,12 +1460,12 @@ public class CHandler implements ICHandler {
 			// && ((CPrimitive) rType).getType() == PRIMITIVE.INT) {
 					&& ((CPrimitive) rType).getGeneralType() == GENERALPRIMITIVE.INTTYPE) {
 				rval = doPointerArithPointerAndInteger(main, node.getOperator(), loc, ((RValue) rlToInt.lrVal),
-						((RValue) rrToInt.lrVal), ((CPointer) rlToInt.lrVal.cType).pointsToType);
+						((RValue) rrToInt.lrVal), ((CPointer) rlToInt.lrVal.cType.getUnderlyingType()).pointsToType);
 			} else if (rType instanceof CPointer && lType instanceof CPrimitive
 			// && ((CPrimitive) lType).getType() == PRIMITIVE.INT) {
 					&& ((CPrimitive) lType).getGeneralType() == GENERALPRIMITIVE.INTTYPE) {
 				rval = doPointerArithPointerAndInteger(main, node.getOperator(), loc, (RValue) rrToInt.lrVal,
-						(RValue) rlToInt.lrVal, ((CPointer) rrToInt.lrVal.cType).pointsToType);
+						(RValue) rlToInt.lrVal, ((CPointer) rrToInt.lrVal.cType.getUnderlyingType()).pointsToType);
 			} else if (lType instanceof CPointer && rType instanceof CPointer) {
 				assert node.getOperator() == IASTBinaryExpression.op_minus : "only subtraction of two pointers is allowed";
 				assert ((CPointer) rlToInt.lrVal.cType).pointsToType
@@ -2218,46 +2219,35 @@ public class CHandler implements ICHandler {
 		 * handles integer literals and variables. This fixes most issues, but
 		 * is surely no general solution.
 		 */
-		CType lType = lrVal.cType.getUnderlyingType();
-		CType rType = rVal.cType.getUnderlyingType();
-		Expression rExpr = rVal.getValue();
-		boolean convertToPointer = false;
-		if (lType instanceof CPointer) { // TODO: not yet sure about this..
-			if (!(rType instanceof CPointer)) {
-				if (rExpr instanceof IntegerLiteral) {
-					convertToPointer = true;
-				} else if (rExpr instanceof IdentifierExpression) {
-					String varId = ((IdentifierExpression) rExpr).getIdentifier();
-					if (mSymbolTable.containsBoogieSymbol(varId)) {
-						String cId = mSymbolTable.getCID4BoogieID(varId, loc);
-						CType cType = mSymbolTable.get(cId, loc).getCVariable();
-						if (cType instanceof CPrimitive &&
-						// ((CPrimitive)cType).getType() == PRIMITIVE.INT) {
-								((CPrimitive) cType).getGeneralType() == GENERALPRIMITIVE.INTTYPE) {
-							convertToPointer = true;
-						}
-					}
-				} else if (rType instanceof CPrimitive && ((CPrimitive) rType).getType() == PRIMITIVE.INT) {
-					convertToPointer = true;
-				}
-			}
+//		CType lType = lrVal.cType.getUnderlyingType();
+//		CType rType = rVal.cType.getUnderlyingType();
+//		Expression rExpr = rVal.getValue();
+		rightHandSide = castToType(loc, rightHandSide, lrVal.cType);
+//		boolean convertToPointer = false;
+//		if (lType instanceof CPointer) { // TODO: not yet sure about this..
+//			if (!(rType instanceof CPointer)) {
+//				if (rExpr instanceof IntegerLiteral) {
+//					convertToPointer = true;
+//				} else if (rExpr instanceof IdentifierExpression) {
+//					String varId = ((IdentifierExpression) rExpr).getIdentifier();
+//					if (mSymbolTable.containsBoogieSymbol(varId)) {
+//						String cId = mSymbolTable.getCID4BoogieID(varId, loc);
+//						CType cType = mSymbolTable.get(cId, loc).getCVariable();
+//						if (cType instanceof CPrimitive &&
+//						// ((CPrimitive)cType).getType() == PRIMITIVE.INT) {
+//								((CPrimitive) cType).getGeneralType() == GENERALPRIMITIVE.INTTYPE) {
+//							convertToPointer = true;
+//						}
+//					}
+//				} else if (rType instanceof CPrimitive && ((CPrimitive) rType).getType() == PRIMITIVE.INT) {
+//					convertToPointer = true;
+//				}
+//			}
 //		} else if (lType instanceof CPrimitive
 //				&& ((CPrimitive) lType).getGeneralType() == GENERALPRIMITIVE.INTTYPE) {
 //			CPrimitive lPrim = (CPrimitive) lType;
-//			Integer exponentInBytes = null;
-//			switch (lPrim.getType()) {
-//			case UCHAR:
-//				exponentInBytes = mMemoryHandler.typeSizeConstants.sizeOfUCharType;
-//				break;
-//			case UINT:
-//				exponentInBytes = mMemoryHandler.typeSizeConstants.sizeOfUIntType;
-//				break;
-//			case ULONG:
-//				exponentInBytes = mMemoryHandler.typeSizeConstants.sizeOfULongType;
-//				break;
-//			default:
-//				break;
-//			}
+//			Integer exponentInBytes = mMemoryHandler.typeSizeConstants.CPrimitiveToTypeSizeConstant.get(lPrim);
+//
 //			if (exponentInBytes != null) {
 //				BigInteger maxValue = null;
 //				maxValue = new BigInteger("2")
@@ -2277,28 +2267,30 @@ public class CHandler implements ICHandler {
 //					stmt.add(new AssumeStatement(loc, biggerZero));
 //				}
 //			}
-		}
+//		}
 		
 		// convert to pointer
-		if (convertToPointer) {
-			if (((IntegerLiteral) rExpr).getValue().equals("0")) {
-				rightHandSide = new RValue(new IdentifierExpression(loc, SFO.NULL), new CPointer(new CPrimitive(
-						PRIMITIVE.VOID)));
-			} else {
-				rightHandSide = new RValue(MemoryHandler.constructPointerFromBaseAndOffset(
-						new IntegerLiteral(loc, "0"), rExpr, loc), new CPointer(new CPrimitive(PRIMITIVE.VOID)));
-			}
-		}
+//		if (convertToPointer) {
+//			if (rExpr instanceof IntegerLiteral
+//					&& ((IntegerLiteral) rExpr).getValue().equals("0")) {
+//				rightHandSide = new RValue(new IdentifierExpression(loc, SFO.NULL), new CPointer(new CPrimitive(
+//						PRIMITIVE.VOID)));
+//			} else {
+//				rightHandSide = new RValue(MemoryHandler.constructPointerFromBaseAndOffset(
+//						new IntegerLiteral(loc, "0"), rExpr, loc), new CPointer(new CPrimitive(PRIMITIVE.VOID)));
+//	->			rightHandSide = castToType(loc, rVal, new CPointer(new CPrimitive(PRIMITIVE.VOID)));
+//			}
+//		}
 		
-		if (rVal.isIntFromPointer) {
-			String lId = null;
-			if (lrVal instanceof HeapLValue) {
-				lId = ((IdentifierExpression ) ((HeapLValue) lrVal).getAddress()).getIdentifier();
-			} else {
-				lId = ((VariableLHS) ((LocalLValue) lrVal).getLHS()).getIdentifier();
-			}
-			mSymbolTable.get(mSymbolTable.getCID4BoogieID(lId, loc), loc).isIntFromPointer = true;
-		}
+//		if (rVal.isIntFromPointer) {
+//			String lId = null;
+//			if (lrVal instanceof HeapLValue) {
+//				lId = ((IdentifierExpression ) ((HeapLValue) lrVal).getAddress()).getIdentifier();
+//			} else {
+//				lId = ((VariableLHS) ((LocalLValue) lrVal).getLHS()).getIdentifier();
+//			}
+//			mSymbolTable.get(mSymbolTable.getCID4BoogieID(lId, loc), loc).isIntFromPointer = true;
+//		}
 
 		if (lrVal instanceof HeapLValue) {
 			HeapLValue hlv = (HeapLValue) lrVal;

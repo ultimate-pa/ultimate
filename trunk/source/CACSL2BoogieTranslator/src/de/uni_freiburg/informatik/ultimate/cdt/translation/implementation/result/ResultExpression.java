@@ -9,6 +9,11 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
+
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TypeHandler;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.ArrayHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.MemoryHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.StructHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
@@ -23,15 +28,25 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.except
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.model.annotation.Overapprox;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayAccessExpression;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayLHS;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayType;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssumeStatement;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IntegerLiteral;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StructConstructor;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StructLHS;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableDeclaration;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.UNSIGNED_TREATMENT;
 
@@ -256,7 +271,13 @@ public class ResultExpression extends Result {
 				newDecl.addAll(this.decl);
 				newAuxVars.putAll(this.auxVars);	
 				newValue = new RValue(hlv.getAddress(), this.lrVal.cType);
-			} else if (underlyingType instanceof CEnum) {
+			} else if (underlyingType instanceof CEnum) { //same as for an int
+				ResultExpression rex = memoryHandler.getReadCall(
+						main, addressRVal);
+				newStmt.addAll(rex.stmt);
+				newDecl.addAll(rex.decl);
+				newAuxVars.putAll(rex.auxVars);	
+				newValue = (RValue) rex.lrVal;
 			} else if (underlyingType instanceof CStruct) {
 				ResultExpression rex = readStructFromHeap(main, structHandler, memoryHandler, loc, 
 						addressRVal);
@@ -350,7 +371,7 @@ public class ResultExpression extends Result {
 		//everything for the new Result
 		ArrayList<Statement> newStmt = new ArrayList<Statement>();
 		ArrayList<Declaration> newDecl = new ArrayList<Declaration>();
-		LinkedHashMap<VariableDeclaration, ILocation> newAuxVars = new LinkedHashMap<VariableDeclaration, ILocation>();
+		Map<VariableDeclaration, ILocation> newAuxVars = new LinkedHashMap<VariableDeclaration, ILocation>();
 
 		String[] fieldIds = structType.getFieldIds();
 		CType[] fieldTypes = structType.getFieldTypes();
@@ -368,25 +389,98 @@ public class ResultExpression extends Result {
 			else
 				underlyingType = fieldTypes[i];
 
-			ResultExpression fieldRead = null; 
+//			ResultExpression fieldRead = null; 
+			RValue fieldRVal = null;
 			if(underlyingType instanceof CPrimitive) {
-				fieldRead = (ResultExpression) structHandler.readFieldInTheStructAtAddress(
+				ResultExpression fieldRead = (ResultExpression) structHandler.readFieldInTheStructAtAddress(
 						main, memoryHandler, loc, fieldIds[i], 
 						address);
+				fieldRVal = (RValue) fieldRead.lrVal;
 				newStmt.addAll(fieldRead.stmt);
 				newDecl.addAll(fieldRead.decl);
 				newAuxVars.putAll(fieldRead.auxVars);
 			} else if (underlyingType instanceof CPointer) {
-				fieldRead = (ResultExpression) structHandler.readFieldInTheStructAtAddress(
+				ResultExpression fieldRead = (ResultExpression) structHandler.readFieldInTheStructAtAddress(
 						main, memoryHandler, loc, fieldIds[i], 
 						address);
+				fieldRVal = (RValue) fieldRead.lrVal;
 				newStmt.addAll(fieldRead.stmt);
 				newDecl.addAll(fieldRead.decl);
 				newAuxVars.putAll(fieldRead.auxVars);
 			} else if (underlyingType instanceof CArray) {
-				throw new UnsupportedSyntaxException(loc, "..");
+				CArray arrayType = (CArray) underlyingType;
+				if (arrayType.getDimensions().length == 1
+						&& arrayType.getDimensions()[0] instanceof IntegerLiteral) {
+					int dim = Integer.parseInt(((IntegerLiteral) arrayType.getDimensions()[0]).getValue());
+
+					String newArrayId = main.nameHandler.getTempVarUID(SFO.AUXVAR.ARRAYCOPY);
+					VarList newArrayVl = new VarList(loc, new String[] { newArrayId }, 
+							new ArrayType(loc, new String[0], new ASTType[] { new PrimitiveType(loc, SFO.INT) }, 
+									main.typeHandler.ctype2asttype(loc, arrayType.getValueType())));
+					VariableDeclaration newArrayDec = new VariableDeclaration(loc, new Attribute[0], new VarList[] { newArrayVl });
+					fieldRVal = new RValue(new IdentifierExpression(loc, newArrayId), arrayType);
+					
+					newDecl.add(newArrayDec);
+					newAuxVars.put(newArrayDec, loc);
+					
+					
+					Expression arrayStartAddress = address.getValue();
+					Expression newStartAddressBase = null;
+					Expression newStartAddressOffset = null;
+					if (arrayStartAddress instanceof StructConstructor) {
+						newStartAddressBase = ((StructConstructor) arrayStartAddress).getFieldValues()[0];
+						newStartAddressOffset = ((StructConstructor) arrayStartAddress).getFieldValues()[1];
+					} else {
+						newStartAddressBase = MemoryHandler.getPointerBaseAddress(arrayStartAddress, loc);
+						newStartAddressOffset = MemoryHandler.getPointerOffset(arrayStartAddress, loc);
+					}
+
+					Expression valueTypeSize = memoryHandler.calculateSizeOf(arrayType.getValueType(), loc);
+
+					Expression arrayEntryAddressOffset = newStartAddressOffset;
+
+					for (int pos = 0; pos < dim; pos++) {
+						
+						ResultExpression readCall = memoryHandler.getReadCall(main, new RValue(
+								MemoryHandler.constructPointerFromBaseAndOffset(newStartAddressBase, arrayEntryAddressOffset, loc), 
+								arrayType.getValueType()));
+						newDecl.addAll(readCall.decl);
+						newStmt.addAll(readCall.stmt);
+						newAuxVars.putAll(readCall.auxVars);
+						
+						ArrayLHS aAcc = new ArrayLHS(loc, new VariableLHS(loc, newArrayId),
+								new Expression[] { new IntegerLiteral(loc, new Integer(pos).toString())} );
+						ResultExpression assRex = ((CHandler) main.cHandler).makeAssignment(main, loc, newStmt, new LocalLValue(aAcc, arrayType.getValueType()), (RValue) readCall.lrVal, newDecl, newAuxVars, overappr);
+						newDecl = assRex.decl;
+						newStmt = assRex.stmt;
+						newAuxVars = assRex.auxVars;
+
+						arrayEntryAddressOffset = CHandler.createArithmeticExpression(IASTBinaryExpression.op_plus, 
+								newStartAddressOffset, valueTypeSize, loc);
+					}
+				} else {
+					throw new UnsupportedSyntaxException(loc, "we need to generalize this to nested and/or variable length arrays");
+				}
+				
+				
+				
+//				fieldRead = (ResultExpression) structHandler.readFieldInTheStructAtAddress(
+//						main, memoryHandler, loc, fieldIds[i], 
+//						address);
+//				newStmt.addAll(fieldRead.stmt);
+//				newDecl.addAll(fieldRead.decl);
+//				newAuxVars.putAll(fieldRead.auxVars);
+//				throw new UnsupportedSyntaxException(loc, "..");
 			} else if (underlyingType instanceof CEnum) {
-				throw new UnsupportedSyntaxException(loc, "..");
+				//like CPrimitive..
+				ResultExpression fieldRead = (ResultExpression) structHandler.readFieldInTheStructAtAddress(
+						main, memoryHandler, loc, fieldIds[i], 
+						address);
+				fieldRVal = (RValue) fieldRead.lrVal;
+				newStmt.addAll(fieldRead.stmt);
+				newDecl.addAll(fieldRead.decl);
+				newAuxVars.putAll(fieldRead.auxVars);
+//				throw new UnsupportedSyntaxException(loc, "..");
 			} else if (underlyingType instanceof CStruct) {
 				Expression innerStructOffset = 
 						StructHandler.getStructOrUnionOffsetConstantExpression(loc, memoryHandler, fieldIds[i], structType);
@@ -400,9 +494,10 @@ public class ResultExpression extends Result {
 				newAddress.value = innerStructAddress;
 				newAddress.cType= underlyingType;
 
-				fieldRead = readStructFromHeap(main, structHandler, memoryHandler, 
+				ResultExpression fieldRead = readStructFromHeap(main, structHandler, memoryHandler, 
 						loc, newAddress);
 
+				fieldRVal = (RValue) fieldRead.lrVal;
 				newStmt.addAll(fieldRead.stmt);
 				newDecl.addAll(fieldRead.decl);
 				newAuxVars.putAll(fieldRead.auxVars);
@@ -413,8 +508,9 @@ public class ResultExpression extends Result {
 			}	
 
 
-			assert fieldRead.lrVal instanceof RValue; //should be guaranteed by readFieldInTheStructAtAddress(..)
-			fieldValues.add(((RValue) fieldRead.lrVal).getValue());
+//			assert fieldRead.lrVal instanceof RValue; //should be guaranteed by readFieldInTheStructAtAddress(..)
+//			fieldValues.add(((RValue) fieldRead.lrVal).getValue());
+			fieldValues.add(fieldRVal.getValue());
 
 		}
 		StructConstructor sc = new StructConstructor(loc, 

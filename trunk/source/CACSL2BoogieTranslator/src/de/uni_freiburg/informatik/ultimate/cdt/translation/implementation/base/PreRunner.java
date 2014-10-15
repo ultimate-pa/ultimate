@@ -271,9 +271,15 @@ public class PreRunner extends ASTVisitor {
                 if (!(d instanceof IASTFunctionDeclarator))
                 	sT.put(key, d);
 
-                if (d.getPointerOperators() != null
-                		&& d.getPointerOperators().length != 0) 
-                	isMMRequired = true;
+                IASTDeclarator nd = d;
+
+                do {
+                	if (nd.getPointerOperators() != null
+                			&& nd.getPointerOperators().length != 0) 
+                		isMMRequired = true;               	
+                	nd = nd.getNestedDeclarator();
+                } while (nd != null);
+
             }
 
         } else  if (declaration instanceof IASTFunctionDefinition) {

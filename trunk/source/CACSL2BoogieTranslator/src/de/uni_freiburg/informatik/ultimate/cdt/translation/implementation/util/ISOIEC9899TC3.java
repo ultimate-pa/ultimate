@@ -5,8 +5,13 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util;
 
 import java.math.BigInteger;
 
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.PRIMITIVE;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 
 /**
@@ -165,31 +170,74 @@ public final class ISOIEC9899TC3 {
 	 *            the location
 	 * @return the parsed value
 	 */
-	public static final String handleIntegerConstant(String val, ILocation loc, Dispatcher dispatch) {
+	public static final RValue handleIntegerConstant(String val, ILocation loc, Dispatcher dispatch) {
 		String value = val;
+		String suffix = "";
+		CType cType = null;
+		String valAsString = null;
 		// if there is a integer-suffix: throw it away
 		for (String s : SUFFIXES_INT) {
 			if (val.endsWith(s)) {
 				value = val.substring(0, val.length() - s.length());
-				String msg = IGNORED_SUFFIX + " " + "Integer suffix ignored: " + s;
-				dispatch.warn(loc, msg);
+				suffix = s;
 				break;
 			}
+		}
+		switch (suffix) {
+		case "ULL": 
+		case "Ull": 
+		case "ull": 
+		case "uLL":
+		case "llu":
+		case "llU":
+		case "LLu":
+		case "LLU":
+			cType = new CPrimitive(PRIMITIVE.ULONGLONG);
+			break;
+		case "ul":
+		case "uL":
+		case "Ul":
+		case "UL":
+		case "lu":
+		case "lU":
+		case "Lu":
+		case "LU":
+			cType = new CPrimitive(PRIMITIVE.ULONG);
+			break;
+		case "ll":
+		case "LL":
+			cType = new CPrimitive(PRIMITIVE.LONGLONG);
+			break;
+		case "u":
+		case "U":
+			cType = new CPrimitive(PRIMITIVE.UINT);
+			break;
+		case "l": 
+		case "L":
+			cType = new CPrimitive(PRIMITIVE.LONG);
+			break;
+		default:
+			cType = new CPrimitive(PRIMITIVE.INT);
+			break;
 		}
 		try {
 			// check for integer-prefix.
 			if (value.startsWith(HEX_L0X) || value.startsWith(HEX_U0X)) {
 				// val is a hexadecimal-constant
-				return new BigInteger(value.substring(2), 16).toString();
+//				return new BigInteger(value.substring(2), 16).toString();
+				valAsString = new BigInteger(value.substring(2), 16).toString();
 			} else if (value.startsWith(OCT_0)) {
 				// val is a octal-constant.
-				return new BigInteger(value, 8).toString();
+//				return new BigInteger(value, 8).toString();
+				valAsString =new BigInteger(value, 8).toString();
 			} else {
-				return new BigInteger(value).toString(); // check if correct!
+//				return new BigInteger(value).toString(); // check if correct!
+				valAsString = new BigInteger(value).toString(); // check if correct!
 			}
 		} catch (NumberFormatException nfe) {
 			String msg = "Unable to translate int!";
 			throw new IncorrectSyntaxException(loc, msg);
 		}
+		return new RValue(new IntegerLiteral(loc, valAsString), cType);
 	}
 }

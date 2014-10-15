@@ -1126,9 +1126,15 @@ public class MemoryHandler {
 			throw new UnsupportedSyntaxException(null, "non-heap type?: " + ct);
 		} else if (ut instanceof CArray) {
 			// we assume it is an Array on Heap
-			assert main.cHandler.isHeapVar(((IdentifierExpression) lrVal.getValue()).getIdentifier());
+//			assert main.cHandler.isHeapVar(((IdentifierExpression) lrVal.getValue()).getIdentifier());
+			//but it may not only be on heap, because it is addressoffed, but also because it is inside
+			// a struct that is addressoffed..
 			isPointerArrayRequiredInMM = true;
 			return MemoryHandler.POINTER_TYPE;
+		} else if (ut instanceof CEnum) { 
+			//enum is treated like an int
+			isIntArrayRequiredInMM = true;
+			return new PrimitiveType(lrVal.getValue().getLocation(), SFO.INT);
 		} else {
 			throw new UnsupportedSyntaxException(null, "non-heap type?: " + ct);
 		}
@@ -1208,9 +1214,50 @@ public class MemoryHandler {
         	}
         	
         } else if (rType instanceof CArray) {
-        	stmt.add(new AssignmentStatement(loc, new LeftHandSide[] { 
-        			new VariableLHS(loc, ((IdentifierExpression )hlv.getAddress()).getIdentifier()) }, 
-        			new Expression[] { rval.getValue()}) );
+//        	stmt.add(new AssignmentStatement(loc, new LeftHandSide[] { 
+//        			new VariableLHS(loc, ((IdentifierExpression )hlv.getAddress()).getIdentifier()) }, 
+//        			new Expression[] { rval.getValue()}) );
+        	isPointerArrayRequiredInMM = true;
+        	m_functionHandler.getModifiedGlobals().
+        			get(m_functionHandler.getCurrentProcedureID()).add(SFO.MEMORY_POINTER);
+        	
+        	CArray arrayType = (CArray) rType;
+        	Expression arrayStartAddress = hlv.getAddress();
+        	Expression newStartAddressBase = null;
+        	Expression newStartAddressOffset = null;
+        	if (arrayStartAddress instanceof StructConstructor) {
+        		newStartAddressBase = ((StructConstructor) arrayStartAddress).getFieldValues()[0];
+        		newStartAddressOffset = ((StructConstructor) arrayStartAddress).getFieldValues()[1];
+        	} else {
+        		newStartAddressBase = MemoryHandler.getPointerBaseAddress(arrayStartAddress, loc);
+        		newStartAddressOffset = MemoryHandler.getPointerOffset(arrayStartAddress, loc);
+        	}
+
+        	Expression valueTypeSize = calculateSizeOf(arrayType.getValueType(), loc);
+
+        	Expression arrayEntryAddressOffset = newStartAddressOffset;
+
+        	//can we assume here, that we have a boogie array, right??
+        	if (arrayType.getDimensions().length == 1
+        			&& arrayType.getDimensions()[0] instanceof IntegerLiteral) {
+
+					int dim = Integer.parseInt(((IntegerLiteral) arrayType.getDimensions()[0]).getValue());
+
+					for (int pos = 0; pos < dim; pos++) {
+						stmt.addAll(getWriteCall(loc, 
+								new HeapLValue(constructPointerFromBaseAndOffset(newStartAddressBase, arrayEntryAddressOffset, loc), arrayType.getValueType()), 
+								new RValue(
+										new ArrayAccessExpression(loc, rval.getValue(), new Expression[] { new IntegerLiteral(loc, new Integer(pos).toString()) }),
+												arrayType.getValueType() )));
+						arrayEntryAddressOffset = CHandler.createArithmeticExpression(IASTBinaryExpression.op_plus, 
+								newStartAddressOffset, valueTypeSize, loc);
+					}
+        	} else {
+        		throw new UnsupportedSyntaxException(loc, "we need to generalize this to nested and/or variable length arrays");
+        	}
+        	
+//        	stmt.add(new CallStatement(loc, false, new VariableLHS[0], "write~" + SFO.POINTER,
+//        			new Expression[] { rval.getValue(), hlv.getAddress(), this.calculateSizeOf(hlv.cType, loc) }));
         } else
         	throw new UnsupportedSyntaxException(loc, "we don't recognize this type");
 		
