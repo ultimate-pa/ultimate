@@ -571,13 +571,18 @@ public class TraceCheckerSpWp extends TraceChecker {
 							getForwardPredicateAtPosition(i, tracePrecondition, false), relevantVars[i + 1]);
 					m_InterpolantsFp[i] = m_PredicateUnifier.getOrConstructPredicate(fp.getFormula(), fp.getVars(),
 							fp.getProcedures());
-					if (m_CollectInformationAboutQuantifiedPredicates) {
-						if (sp != null && sp instanceof BasicPredicateExplicitQuantifier) {
-							numberOfQuantifiedPredicates[0]++;
-						}
-						if (fp instanceof BasicPredicateExplicitQuantifier) {
-							numberOfQuantifiedPredicates[1]++;
-						}
+					
+				} else {
+					m_InterpolantsFp[i] = m_InterpolantsSp[i];
+				}
+				if (m_CollectInformationAboutQuantifiedPredicates) {
+					IPredicate p = getForwardPredicateAtPosition(i, tracePrecondition, false);
+					if (p != null && p instanceof BasicPredicateExplicitQuantifier) {
+						numberOfQuantifiedPredicates[0]++;
+					}
+					p = getForwardPredicateAtPosition(i, tracePrecondition, true);
+					if (p != null && p instanceof BasicPredicateExplicitQuantifier) {
+						numberOfQuantifiedPredicates[1]++;
 					}
 				}
 
