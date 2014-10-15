@@ -42,7 +42,7 @@ public class TACASInterpolation2015 extends AbstractModelCheckerTestSuite {
 
 			// conains no pointers or arrays
 			"examples/svcomp/ssh-simplified/",
-			"examples/svcomp/eca-rers2012/", 
+//			"examples/svcomp/eca-rers2012/", 
 			"examples/svcomp/loop-invgen/",
 			"examples/svcomp/locks/",
 			"examples/svcomp/loop-new/", 
