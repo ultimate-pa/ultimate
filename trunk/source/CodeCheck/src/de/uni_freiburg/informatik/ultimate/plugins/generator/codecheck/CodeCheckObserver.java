@@ -366,8 +366,8 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 
 					LBool isSafe = traceChecker.isCorrect();
 					if (isSafe == LBool.UNSAT) { // trace is infeasible
-						//if (GlobalSettings._instance._predicateUnification == PredicateUnification.PER_ITERATION)
-							//_predicateUnifier = new PredicateUnifier(mServices, m_smtManager);//, m_truePredicate, m_falsePredicate);
+//						if (GlobalSettings._instance._predicateUnification == PredicateUnification.PER_ITERATION)
+//							_predicateUnifier = new PredicateUnifier(mServices, m_smtManager);//, m_truePredicate, m_falsePredicate);
 
 						switch (GlobalSettings._instance._solverAndInterpolator) {
 						case SMTINTERPOL:
@@ -466,6 +466,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 				values.add(conjsInSSA);
 				values.add(conjsInUC);
 			} else {
+				values.add(-1);
 				values.add(-1);
 				values.add(-1);
 				values.add(-1);
