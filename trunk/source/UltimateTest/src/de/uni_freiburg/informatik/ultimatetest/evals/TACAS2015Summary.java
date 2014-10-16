@@ -1,7 +1,6 @@
 package de.uni_freiburg.informatik.ultimatetest.evals;
 
 import java.math.BigDecimal;
-import java.math.MathContext;
 import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -288,9 +287,9 @@ public class TACAS2015Summary extends NewTestSummary {
 		sb.append(sep);
 
 		ICsvProvider<String> csv = makePrintCsvProviderFromResults(results);
-		csv = CsvUtils.projectColumn(csv, Arrays.asList(new String[] { "Runtime (ns)",
-				"Allocated memory end (bytes)", "Overall iterations", "NumberOfCodeBlocks", "SizeOfPredicates",
-				"Conjuncts in SSA", "Conjuncts in UnsatCore", "ICC" }));
+		csv = CsvUtils.projectColumn(csv, Arrays.asList(new String[] { "Runtime (ns)", "Allocated memory end (bytes)",
+				"Overall iterations", "NumberOfCodeBlocks", "SizeOfPredicates", "Conjuncts in SSA",
+				"Conjuncts in UnsatCore", "ICC" }));
 
 		csv = reduceProvider(csv, null, null, csv.getColumnTitles());
 		csv = makeHumanReadable(csv);
@@ -450,8 +449,7 @@ public class TACAS2015Summary extends NewTestSummary {
 		provider.renameColumnTitle("ICC %", "ICC");
 
 		ICsvProvider<String> newProvider = reduceProvider(provider, Arrays.asList(new String[] { "Runtime (ns)", }),
-				Arrays.asList(new String[] { "Allocated memory end (bytes)", "Max. memory available (bytes)", }),
-				null);
+				Arrays.asList(new String[] { "Allocated memory end (bytes)", "Max. memory available (bytes)", }), null);
 		newProvider = addUltimateRunDefinition(urd, message, newProvider);
 		return newProvider;
 	}
@@ -517,7 +515,7 @@ public class TACAS2015Summary extends NewTestSummary {
 										try {
 											numberValue = numberValue.add(new BigDecimal((String) cell));
 											finalValue = numberValue.toString();
-										} catch (NumberFormatException ex) {
+										} catch (Exception ex) {
 											finalValue = cell.toString();
 										}
 									} else {
@@ -545,7 +543,7 @@ public class TACAS2015Summary extends NewTestSummary {
 										try {
 											numberValue = numberValue.max(new BigDecimal((String) cell));
 											finalValue = numberValue.toString();
-										} catch (NumberFormatException ex) {
+										} catch (Exception ex) {
 											finalValue = cell.toString();
 										}
 									} else {
@@ -573,8 +571,9 @@ public class TACAS2015Summary extends NewTestSummary {
 									} else if (cell instanceof String) {
 										try {
 											numberValue = numberValue.add(new BigDecimal((String) cell));
-											finalValue = numberValue.divide(new BigDecimal(size)).toString();
-										} catch (NumberFormatException ex) {
+											finalValue = numberValue.divide(new BigDecimal(size), 5,
+													RoundingMode.HALF_UP).toString();
+										} catch (Exception ex) {
 											finalValue = cell.toString();
 										}
 									} else {
