@@ -13,7 +13,6 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.services.IResultService;
-import de.uni_freiburg.informatik.ultimate.util.Utils;
 import de.uni_freiburg.informatik.ultimate.util.csv.CsvUtils;
 import de.uni_freiburg.informatik.ultimate.util.csv.CsvUtils.IExplicitConverter;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProvider;
@@ -33,15 +32,39 @@ import de.uni_freiburg.informatik.ultimatetest.util.Util;
  */
 public class TACAS2015Summary extends NewTestSummary {
 
+	public enum Aggregate {
+		Sum, Max, Average, Ignore
+	}
+
 	private final Collection<Class<? extends ICsvProviderProvider<? extends Object>>> mBenchmarks;
 	private final LinkedHashMap<UltimateRunDefinition, ICsvProvider<?>> mCsvProvider;
 	private int mCsvConversionGoneWrong;
+	private final List<String> mColumnsToKeep;
+	private final List<String> mTableTitles;
+	private final List<ConversionContext> mConversionInfo;
+	private final List<Aggregate> mAggregationInfoSingleRunToOneRow;
+	private final List<Aggregate> mAggregationInfoManyRunsToOneRow;
 
 	public TACAS2015Summary(Class<? extends UltimateTestSuite> ultimateTestSuite,
-			Collection<Class<? extends ICsvProviderProvider<? extends Object>>> benchmarks) {
+			Collection<Class<? extends ICsvProviderProvider<? extends Object>>> benchmarks, String[] columnsToKeep,
+			String[] tableTitles, ConversionContext[] conversionInfo, Aggregate[] aggregationInfoSingleRunToOneRow,
+			Aggregate[] aggregationInfoManyRunsToOneRow) {
 		super(ultimateTestSuite);
 		mBenchmarks = benchmarks;
 		mCsvProvider = new LinkedHashMap<>();
+
+		mColumnsToKeep = Arrays.asList(columnsToKeep);
+		mTableTitles = Arrays.asList(tableTitles);
+		mConversionInfo = Arrays.asList(conversionInfo);
+		mAggregationInfoSingleRunToOneRow = Arrays.asList(aggregationInfoSingleRunToOneRow);
+		mAggregationInfoManyRunsToOneRow = Arrays.asList(aggregationInfoManyRunsToOneRow);
+
+		if (mColumnsToKeep.size() != mTableTitles.size() || mColumnsToKeep.size() != mConversionInfo.size()
+				|| mAggregationInfoSingleRunToOneRow.size() != mColumnsToKeep.size()
+				|| mAggregationInfoManyRunsToOneRow.size() != mColumnsToKeep.size()) {
+			throw new IllegalArgumentException(
+					"columnsToKeep, tableTitles, conversionInfo and aggregationInfo must have the same length");
+		}
 	}
 
 	@SuppressWarnings("unchecked")
@@ -121,22 +144,34 @@ public class TACAS2015Summary extends NewTestSummary {
 			sb.append("\\begin{table}").append(br);
 			sb.append("\\centering").append(br);
 			sb.append("\\resizebox{\\linewidth}{!}{%").append(br);
-			sb.append("\\begin{tabu} to \\linewidth {lcllcccccccccc}").append(br);
+			sb.append("\\begin{tabu} to \\linewidth {lcllc");
+			for (int i = 0; i < mTableTitles.size(); ++i) {
+				sb.append("c");
+			}
+			sb.append("}").append(br);
 			sb.append("\\toprule").append(br);
 			sb.append("  \\header{}& ").append(br);
-			sb.append("  \\header{Count}&").append(br);
+			sb.append("  \\header{\\#}&").append(br);
 			sb.append("  \\header{Result}&").append(br);
 			sb.append("  \\header{Variant}& ").append(br);
 			sb.append("  \\header{Count}&").append(br);
-			sb.append("  \\header{Avg. runtime}&").append(br);
-			sb.append("  \\header{Mem{-}ory}&").append(br);
-			sb.append("  \\header{Iter{-}ations}&").append(br);
-			sb.append("  \\header{Loc{-}ations}&").append(br);
-			sb.append("  \\header{Pred. size}&").append(br);
-			sb.append("  \\header{Conj. SSA}&").append(br);
-			sb.append("  \\header{Conj. IC}&").append(br);
-			sb.append("  \\header{ICC}\\\\").append(br);
-			sb.append("  \\cmidrule(r){2-14}").append(br);
+
+			int i = 0;
+			for (String title : mTableTitles) {
+				sb.append("  \\header{");
+				sb.append(title);
+				sb.append("}");
+				i++;
+				if (i < mTableTitles.size()) {
+					sb.append("&");
+				} else {
+					sb.append("\\\\");
+				}
+				sb.append(br);
+			}
+			sb.append("  \\cmidrule(r){2-");
+			sb.append(5 + mTableTitles.size());
+			sb.append("}").append(br);
 
 			// make table body
 			PartitionedResults resultsPerTool = partitionResults(Util.where(results.All,
@@ -182,6 +217,7 @@ public class TACAS2015Summary extends NewTestSummary {
 
 	private void makeFolderRow(StringBuilder sb, PartitionedResults results, String folder, boolean last) {
 		String br = Util.getPlatformLineSeparator();
+		final int resultRows = 4;
 
 		List<String> variants = new ArrayList<>(Util.reduceDistinct(results.All, new IMyReduce<String>() {
 			@Override
@@ -192,7 +228,7 @@ public class TACAS2015Summary extends NewTestSummary {
 
 		// folder name
 		sb.append("\\multirow{");
-		sb.append(variants.size() * 5);
+		sb.append(variants.size() * resultRows);
 		sb.append("}{*}{\\folder{");
 		sb.append(folder);
 		sb.append("}} &").append(br);
@@ -211,6 +247,9 @@ public class TACAS2015Summary extends NewTestSummary {
 		for (int i = 0; i < variants.size(); ++i) {
 			makeVariantEntry(sb, results.Unsafe, variants.get(i), i == 0);
 		}
+		sb.append("  \\cmidrule[0.01em](l){2-");
+		sb.append(mTableTitles.size()+5);
+		sb.append("}").append(br);
 
 		// count expected safe & row header safe
 		sb.append("& \\multirow{");
@@ -226,6 +265,9 @@ public class TACAS2015Summary extends NewTestSummary {
 		for (int i = 0; i < variants.size(); ++i) {
 			makeVariantEntry(sb, results.Safe, variants.get(i), i == 0);
 		}
+		sb.append("  \\cmidrule[0.01em](l){2-");
+		sb.append(mTableTitles.size()+5);
+		sb.append("}").append(br);
 
 		// row timeout
 		sb.append("& & \\multirow{");
@@ -234,14 +276,9 @@ public class TACAS2015Summary extends NewTestSummary {
 		for (int i = 0; i < variants.size(); ++i) {
 			makeVariantEntry(sb, results.Timeout, variants.get(i), i == 0);
 		}
-
-		// row error
-		sb.append("& & \\multirow{");
-		sb.append(variants.size());
-		sb.append("}{*}{\\folder{Error}} ").append(br);
-		for (int i = 0; i < variants.size(); ++i) {
-			makeVariantEntry(sb, results.Error, variants.get(i), i == 0);
-		}
+		sb.append("  \\cmidrule[0.01em](l){2-");
+		sb.append(mTableTitles.size()+5);
+		sb.append("}").append(br);
 
 		// count total & row header total
 		sb.append("& \\multirow{");
@@ -251,14 +288,23 @@ public class TACAS2015Summary extends NewTestSummary {
 		sb.append("} &").append(br);
 		sb.append("\\multirow{");
 		sb.append(variants.size());
-		sb.append("}{*}{\\folder{Total}} ").append(br);
+		sb.append("}{*}{\\folder{Completed}} ").append(br);
+		Collection<Entry<UltimateRunDefinition, ExtendedResult>> completed = new ArrayList<>();
+		completed.addAll(results.Safe);
+		completed.addAll(results.Unsafe);
+		completed.addAll(results.Timeout);
 		for (int i = 0; i < variants.size(); ++i) {
-			makeVariantEntry(sb, results.All, variants.get(i), i == 0);
+			// this is the last in the foldoer row, so it gets a different
+			// separator, hence false == isLast
+			makeVariantEntry(sb, completed, variants.get(i), i == 0);
 		}
 
 		if (last) {
 			sb.append("\\bottomrule").append(br);
-			sb.append("& & & & & & & & & & & & & \\\\").append(br);
+			for (int i = 0; i < mTableTitles.size() + 4; ++i) {
+				sb.append("& ");
+			}
+			sb.append("\\\\").append(br);
 		} else {
 			sb.append("\\midrule").append(br);
 		}
@@ -287,18 +333,18 @@ public class TACAS2015Summary extends NewTestSummary {
 		sb.append(sep);
 
 		ICsvProvider<String> csv = makePrintCsvProviderFromResults(results);
-		csv = CsvUtils.projectColumn(csv, Arrays.asList(new String[] { "Runtime (ns)", "Allocated memory end (bytes)",
-				"Overall iterations", "NumberOfCodeBlocks", "SizeOfPredicates", "Conjuncts in SSA",
-				"Conjuncts in UnsatCore", "ICC" }));
+		csv = CsvUtils.projectColumn(csv, mColumnsToKeep);
 
-		csv = reduceProvider(csv, null, null, csv.getColumnTitles());
+		csv = reduceProvider(csv, mAggregationInfoManyRunsToOneRow);
 		csv = makeHumanReadable(csv);
 		csv = CsvUtils.addColumn(csv, "Count", 0, Arrays.asList(new String[] { Integer.toString(results.size()) }));
+		// one more because of Count
+		int length = mColumnsToKeep.size() + 1;
 		int i = 0;
 		List<String> row = csv.getRow(0);
-		if (row == null || row.size() < 9) {
+		if (row == null || row.size() < length) {
 			// no results in this category, just fill with empty fields
-			for (; i < 9; ++i) {
+			for (; i < length; ++i) {
 				sb.append(sep);
 			}
 			sb.append("\\\\");
@@ -311,7 +357,7 @@ public class TACAS2015Summary extends NewTestSummary {
 					sb.append(cell);
 				}
 
-				if (i < 9) {
+				if (i < length) {
 					if (i < row.size() - 1) {
 						sb.append(sep);
 					} else {
@@ -336,72 +382,15 @@ public class TACAS2015Summary extends NewTestSummary {
 		ICsvProvider<String> newProvider = new SimpleCsvProvider<>(csv.getColumnTitles());
 		List<String> newRow = new ArrayList<>();
 		List<String> oldRow = csv.getRow(0);
-		// Runtime: ns to s
-		newRow.add(makeHumanReadableDivide(oldRow.get(0), "1000000000", " s"));
-		// Peak memory consumption: bytes to MB
-		newRow.add(makeHumanReadableDivide(oldRow.get(1), "1048576", " MB"));
-		// Overall iterations: convert to closest readable
-		newRow.add(makeHumanReadableNumber(oldRow.get(2)));
-		// NumberOfCodeBlocks: convert to closest readable
-		newRow.add(makeHumanReadableNumber(oldRow.get(3)));
-		// SizeOfPredicates: convert to closest readable
-		newRow.add(makeHumanReadableNumber(oldRow.get(4)));
-		// Conjuncts in SSA: convert to closest readable
-		newRow.add(makeHumanReadableNumber(oldRow.get(5)));
-		// Conjuncts in UnsatCore: convert to closest readable
-		newRow.add(makeHumanReadableNumber(oldRow.get(6)));
-		// ICC: make percent
-		newRow.add(makeHumanReadablePercent(oldRow.get(7)));
+
+		for (int i = 0; i < oldRow.size(); ++i) {
+			ConversionContext c = mConversionInfo.get(i);
+			String cell = oldRow.get(i);
+			newRow.add(c.makeHumanReadable(cell));
+		}
 
 		newProvider.addRow(newRow);
 		return newProvider;
-	}
-
-	private String makeHumanReadableDivide(String input, String divisor, String unit) {
-		BigDecimal current = convert(input);
-		if (current == null) {
-			return "-";
-		}
-
-		try {
-			return current.divide(new BigDecimal(divisor)).setScale(2, RoundingMode.HALF_UP).toString() + unit;
-		} catch (Exception ex) {
-			return "NaN";
-		}
-	}
-
-	private String makeHumanReadablePercent(String input) {
-		BigDecimal current = convert(input);
-		if (current == null) {
-			return "-";
-		}
-
-		try {
-			return current.multiply(new BigDecimal("100")).setScale(2, RoundingMode.HALF_UP).toString() + "\\%";
-		} catch (Exception ex) {
-			return "NaN";
-		}
-	}
-
-	private String makeHumanReadableNumber(String input) {
-		BigDecimal current = convert(input);
-		if (current == null) {
-			return "-";
-		}
-
-		try {
-			return Utils.humanReadableNumber(current.longValue());
-		} catch (Exception ex) {
-			return "NaN";
-		}
-	}
-
-	private BigDecimal convert(String input) {
-		try {
-			return new BigDecimal(input);
-		} catch (Exception ex) {
-			return null;
-		}
 	}
 
 	private boolean isInvalidForLatex(String cell) {
@@ -431,10 +420,6 @@ public class TACAS2015Summary extends NewTestSummary {
 		return current;
 	}
 
-	private String[] columnsToKeep = new String[] { "Runtime (ns)", "Allocated memory end (bytes)",
-			"Max. memory available (bytes)", "Overall iterations", "NumberOfCodeBlocks", "SizeOfPredicates",
-			"Conjuncts in SSA", "Conjuncts in UnsatCore", "ICC %" };
-
 	private ICsvProvider<String> preparePrintProvider(ICsvProvider<?> provider, UltimateRunDefinition urd,
 			String message) {
 		List<String> names = new ArrayList<>(provider.getColumnTitles());
@@ -445,37 +430,33 @@ public class TACAS2015Summary extends NewTestSummary {
 			}
 		}
 
-		provider = CsvUtils.projectColumn(provider, columnsToKeep);
+		provider = CsvUtils.projectColumn(provider, mColumnsToKeep);
 		provider.renameColumnTitle("ICC %", "ICC");
 
-		ICsvProvider<String> newProvider = reduceProvider(provider, Arrays.asList(new String[] { "Runtime (ns)", }),
-				Arrays.asList(new String[] { "Allocated memory end (bytes)", "Max. memory available (bytes)", }), null);
+		// transform from multiple rows per UltimateTestCase to one (e.g. merge
+		// the different benchmark types into one row)
+		ICsvProvider<String> newProvider = reduceProvider(provider, mAggregationInfoSingleRunToOneRow);
 		newProvider = addUltimateRunDefinition(urd, message, newProvider);
 		return newProvider;
 	}
 
-	private ICsvProvider<String> reduceProvider(ICsvProvider<?> provider, Collection<String> columnsToSum,
-			Collection<String> columnsToMax, Collection<String> columnsToAverage) {
+	private ICsvProvider<String> reduceProvider(ICsvProvider<?> provider, List<Aggregate> aggregate) {
 
-		final HashSet<String> sum;
-		if (columnsToSum != null) {
-			sum = new HashSet<>(columnsToSum);
-		} else {
-			sum = new HashSet<>();
-		}
+		final HashSet<String> sum = new HashSet<>();
+		final HashSet<String> max = new HashSet<>();
+		final HashSet<String> avg = new HashSet<>();
 
-		final HashSet<String> max;
-		if (columnsToSum != null) {
-			max = new HashSet<>(columnsToMax);
-		} else {
-			max = new HashSet<>();
-		}
-
-		final HashSet<String> avg;
-		if (columnsToAverage != null) {
-			avg = new HashSet<>(columnsToAverage);
-		} else {
-			avg = new HashSet<>();
+		for (int i = 0; i < aggregate.size(); ++i) {
+			switch (mAggregationInfoSingleRunToOneRow.get(i)) {
+			case Average:
+				avg.add(mColumnsToKeep.get(i));
+			case Max:
+				max.add(mColumnsToKeep.get(i));
+			case Sum:
+				sum.add(mColumnsToKeep.get(i));
+			default:
+				break;
+			}
 		}
 
 		ICsvProvider<String> newProvider = CsvUtils.convertComplete(provider,
@@ -600,15 +581,6 @@ public class TACAS2015Summary extends NewTestSummary {
 		return newProvider;
 	}
 
-	// private String[] columnsToKeep = new String[] { "Runtime (ns)",
-	// "Peak memory consumption (bytes)",
-	// "Max. memory available (bytes)", "Overall iterations",
-	// "TraceCheckerBenchmark_NumberOfCodeBlocks",
-	// "TraceCheckerBenchmark_SizeOfPredicates",
-	// "TraceCheckerBenchmark_Conjuncts in SSA",
-	// "TraceCheckerBenchmark_Conjuncts in UnsatCore",
-	// "InterpolantCoveringCapability", "#iterations" };
-
 	private ICsvProvider<String> addUltimateRunDefinition(UltimateRunDefinition ultimateRunDefinition, String message,
 			ICsvProvider<String> benchmark) {
 		List<String> resultColumns = new ArrayList<>();
@@ -728,7 +700,6 @@ public class TACAS2015Summary extends NewTestSummary {
 			sb.append("Total: ").append(All.size());
 			return sb.toString();
 		}
-
 	}
 
 }
