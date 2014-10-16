@@ -940,7 +940,8 @@ public class TraceCheckerSpWp extends TraceChecker {
 
 		private static TraceCheckerSpWpBenchmarkType s_Instance = new TraceCheckerSpWpBenchmarkType();
 
-		protected final static String s_SizeOfPredicates = "SizeOfPredicates";
+		protected final static String s_SizeOfPredicatesFP = "SizeOfPredicatesFP";
+		protected final static String s_SizeOfPredicatesBP = "SizeOfPredicatesBP";
 		protected final static String s_NumberOfQuantifiedPredicates = "NumberOfQuantifiedPredicates";
 		protected final static String s_ConjunctsInSSA = "Conjuncts in SSA";
 		protected final static String s_ConjunctsInUnsatCore = "Conjuncts in UnsatCore";
@@ -955,7 +956,8 @@ public class TraceCheckerSpWp extends TraceChecker {
 			for (String key : super.getKeys()) {
 				result.add(key);
 			}
-			result.add(s_SizeOfPredicates);
+			result.add(s_SizeOfPredicatesFP);
+			result.add(s_SizeOfPredicatesBP);
 			result.add(s_NumberOfQuantifiedPredicates);
 			result.add(s_ConjunctsInSSA);
 			result.add(s_ConjunctsInUnsatCore);
@@ -976,15 +978,11 @@ public class TraceCheckerSpWp extends TraceChecker {
 				}
 				return result;
 			}
-			case s_SizeOfPredicates:
-				long[] array1 = (long[]) value1;
-				long[] array2 = (long[]) value2;
-				assert array1.length == 2;
-				assert array2.length == 2;
-				long[] result = new long[2];
-				for (int i = 0; i < 2; i++) {
-					result[i] = array1[i] + array1[i];
-				}
+			case s_SizeOfPredicatesFP:
+			case s_SizeOfPredicatesBP:
+				long size1 = (long) value1;
+				long size2 = (long) value2;
+				long result = size1 + size2;
 				return result;
 			case s_ConjunctsInSSA: {
 				int numberConjuncts1 = (int) value1;
@@ -1024,10 +1022,10 @@ public class TraceCheckerSpWp extends TraceChecker {
 				sb.append("Num of quantified predicates BP: " + numberOfQuantifiedPredicates[3]);
 				sb.append(" ");
 			}
-			long[] sizeOfPredicates = (long[]) benchmarkData.getValue(s_SizeOfPredicates);
-			assert sizeOfPredicates.length == 2;
-			sb.append("Size of predicates FP: " + sizeOfPredicates[0] + " ");
-			sb.append("Size of predicates BP: " + sizeOfPredicates[1] + " ");
+			long sizeOfPredicatesFP = (long) benchmarkData.getValue(s_SizeOfPredicatesFP);
+			sb.append("Size of predicates FP: " + sizeOfPredicatesFP + " ");
+			long sizeOfPredicatesBP = (long) benchmarkData.getValue(s_SizeOfPredicatesBP);
+			sb.append("Size of predicates BP: " + sizeOfPredicatesBP + " ");
 			return sb.toString();
 		}
 	}
@@ -1099,8 +1097,10 @@ public class TraceCheckerSpWp extends TraceChecker {
 			switch (key) {
 			case TraceCheckerSpWpBenchmarkType.s_NumberOfQuantifiedPredicates:
 				return m_NumberOfQuantifiedPredicates;
-			case TraceCheckerSpWpBenchmarkType.s_SizeOfPredicates:
-				return m_SizeOfPredicates;
+			case TraceCheckerSpWpBenchmarkType.s_SizeOfPredicatesFP:
+				return m_SizeOfPredicates[0];
+			case TraceCheckerSpWpBenchmarkType.s_SizeOfPredicatesBP:
+				return m_SizeOfPredicates[1];
 			case TraceCheckerSpWpBenchmarkType.s_ConjunctsInSSA:
 				return m_ConjunctsInSSA;
 			case TraceCheckerSpWpBenchmarkType.s_ConjunctsInUnsatCore:
