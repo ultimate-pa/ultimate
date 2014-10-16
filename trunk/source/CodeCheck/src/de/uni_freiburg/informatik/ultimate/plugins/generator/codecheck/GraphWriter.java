@@ -23,11 +23,11 @@ public class GraphWriter {
 	//	int index = 0;
 	boolean m_annotateEdges = true;
 	boolean m_annotateNodes = true;
-	boolean m_showUnreachableEdges = true;
+	boolean m_showUnreachableEdges = false;
 	boolean m_rankByLocation = false;
 	boolean m_showNodeToCopy = true;
 	
-	boolean m_hideUnreachableOnce = false;
+	boolean m_hideUnreachableOnce = true;
 	//	boolean clusterWithCopy = false;
 
 	boolean m_edgesWithHash = false;

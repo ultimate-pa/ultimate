@@ -52,7 +52,7 @@ public class RedirectionTargetFinder {
 	 * @param codeChecker the code checker that uses this finder
 	 * @param findingStrategy specifies which finding algorithm will be used
 	 * @see RedirectionTargetFindingMethod
-	 */
+	 *
 	protected RedirectionTargetFinder(CodeChecker codeChecker, RedirectionTargetFindingMethod findingStrategy) {
 		this.codeChecker = codeChecker;
 		this.findingStrategy = findingStrategy;
@@ -66,7 +66,7 @@ public class RedirectionTargetFinder {
 	 * Constructor of a new Finder with RandomStrongest as the default finding strategy.
 	 * @param codeChecker the code checker that uses this finder
 	 * @see RedirectionTargetFindingMethod
-	 */
+	 *
 	protected RedirectionTargetFinder(CodeChecker codeChecker) {
 		this(codeChecker, RedirectionTargetFindingMethod.RandomStrongest);
 	}
@@ -76,7 +76,7 @@ public class RedirectionTargetFinder {
 	 * @param predecessorNode the source of the old edge
 	 * @param dest the destination of the old edge
 	 * @return returns a new destination, returns null if no valid destination is found
-	 */
+	 *
 	protected AnnotatedProgramPoint findRedirectionTarget(
 			AppEdge edge) {
 //			AnnotatedProgramPoint predecessorNode, AnnotatedProgramPoint dest) {
@@ -100,7 +100,7 @@ public class RedirectionTargetFinder {
 	 * @param callPred the call predecessor of the old hyper edge
 	 * @param dest the destination of the old edge
 	 * @return returns a new destination, returns null if no valid destination is found
-	 */
+	 *
 	protected AnnotatedProgramPoint findReturnRedirectionTarget(
 			AnnotatedProgramPoint predecessorNode, 
 			AnnotatedProgramPoint callPred, 
@@ -128,7 +128,7 @@ public class RedirectionTargetFinder {
 	 * @see #findRedirectionTarget(AnnotatedProgramPoint, AnnotatedProgramPoint)
 	 * @see RedirectionTargetFindingMethod#First
 	 * @see RedirectionTargetFindingMethod#Random
-	 */
+	 *
 	private AnnotatedProgramPoint findFirstRedirectionTarget(AppEdge edge) {
 //			AnnotatedProgramPoint predecessorNode, AnnotatedProgramPoint dest) {
 
@@ -158,7 +158,7 @@ public class RedirectionTargetFinder {
 	 * @see #findRedirectionTarget(AnnotatedProgramPoint, AnnotatedProgramPoint)
 	 * @see RedirectionTargetFindingMethod#FirstStrongest
 	 * @see RedirectionTargetFindingMethod#RandomStrongest
-	 */
+	 *
 	private AnnotatedProgramPoint findStrongestRedirectionTarget(AppEdge edge) {
 //			AnnotatedProgramPoint predecessorNode, AnnotatedProgramPoint dest) {
 
@@ -191,7 +191,7 @@ public class RedirectionTargetFinder {
 	 * @see #findReturnRedirectionTarget(AnnotatedProgramPoint, AnnotatedProgramPoint, AnnotatedProgramPoint)
 	 * @see RedirectionTargetFindingMethod#First
 	 * @see RedirectionTargetFindingMethod#Random
-	 */
+	 *
 	private AnnotatedProgramPoint findFirstReturnRedirectionTarget(
 			AnnotatedProgramPoint predecessorNode, 
 			AnnotatedProgramPoint callPred, 
@@ -222,7 +222,7 @@ public class RedirectionTargetFinder {
 	 * @see #findReturnRedirectionTarget(AnnotatedProgramPoint, AnnotatedProgramPoint, AnnotatedProgramPoint)
 	 * @see RedirectionTargetFindingMethod#FirstStrongest
 	 * @see RedirectionTargetFindingMethod#RandomStrongest
-	 */
+	 *
 	private AnnotatedProgramPoint findStrongestReturnRedirectionTarget(
 			AnnotatedProgramPoint predecessorNode, 
 			AnnotatedProgramPoint callPred, 
@@ -247,4 +247,5 @@ public class RedirectionTargetFinder {
 //		return res;
 		return null;
 	}
+	*/
 }

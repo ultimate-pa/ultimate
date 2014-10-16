@@ -10,14 +10,18 @@ import java.util.Queue;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
+import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.appgraph.AnnotatedProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.appgraph.AppEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.appgraph.AppHyperEdge;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.appgraph.DummyCodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.appgraph.ImpRootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.CodeChecker;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.GlobalSettings;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.GraphWriter;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
@@ -29,7 +33,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
 public class ImpulseChecker extends CodeChecker {
 	
 	//private HashMap <AnnotatedProgramPoint, AnnotatedProgramPoint> _cloneNode;
-	RedirectionFinder cloneFinder;
+	private final RedirectionFinder cloneFinder;
 	public ImpulseChecker(IElement root, SmtManager m_smtManager, TAPreferences m_taPrefs, RootNode m_originalRoot, ImpRootNode m_graphRoot,
 			GraphWriter m_graphWriter, EdgeChecker edgeChecker, PredicateUnifier predicateUnifier, Logger logger) {
 		super(root, m_smtManager, m_taPrefs, m_originalRoot, m_graphRoot,
@@ -77,6 +81,7 @@ public class ImpulseChecker extends CodeChecker {
 				
 				AnnotatedProgramPoint clone = cloneFinder.getStrongestValidCopy(prevEdge);
 				//AnnotatedProgramPoint clone = clones[i];
+				//System.err.println("Redirection of " + prevEdge.getSource() + " with " + prevEdge.getStatement());
 				if (clone == null)
 					continue;
 				redirectIfValid(prevEdge, clone);
@@ -158,7 +163,7 @@ public class ImpulseChecker extends CodeChecker {
 			throw new AssertionError("The error location hasn't been reached.");
 		//improveAnnotations(newRoot);
 		redirectEdges(nodes, clones);
-
+		
 		return true;
 	}
 	
@@ -202,6 +207,77 @@ public class ImpulseChecker extends CodeChecker {
 		}
 		
 		return true;
+	}
+	
+
+	public boolean isValidEdge(AnnotatedProgramPoint sourceNode, CodeBlock edgeLabel,
+			AnnotatedProgramPoint destinationNode) {
+		if (edgeLabel instanceof DummyCodeBlock)
+			return false;
+		// System.out.print(".");
+		
+
+		if (GlobalSettings._instance._memoizeNormalEdgeChecks) {
+			if (_satTriples.get(sourceNode.getPredicate()) != null && _satTriples.get(sourceNode.getPredicate()).get(edgeLabel) != null
+					&& _satTriples.get(sourceNode.getPredicate()).get(edgeLabel).contains(destinationNode.getPredicate())) {
+				memoizationHitsSat++;
+				return true;
+			}
+			if (_unsatTriples.get(sourceNode.getPredicate()) != null && _unsatTriples.get(sourceNode.getPredicate()).get(edgeLabel) != null
+					&& _unsatTriples.get(sourceNode.getPredicate()).get(edgeLabel).contains(destinationNode.getPredicate())) {
+				memoizationHitsUnsat++;
+				return false;
+			}
+		}
+
+		boolean result = true;
+		if (edgeLabel instanceof Call)
+			result = m_smtManager.isInductiveCall(sourceNode.getPredicate(), (Call) edgeLabel,
+					destinationNode.getPredicate()) == LBool.UNSAT;
+		else
+			result = m_smtManager.isInductive(sourceNode.getPredicate(), edgeLabel, destinationNode.getPredicate()) == LBool.UNSAT;
+	
+
+		if (GlobalSettings._instance._memoizeNormalEdgeChecks)
+			if (result)
+				addSatTriple(sourceNode.getPredicate(), edgeLabel, destinationNode.getPredicate());
+			else
+				addUnsatTriple(sourceNode.getPredicate(), edgeLabel, destinationNode.getPredicate());
+
+		return result;
+	}
+
+	public boolean isValidReturnEdge(AnnotatedProgramPoint sourceNode, CodeBlock edgeLabel,
+			AnnotatedProgramPoint destinationNode, AnnotatedProgramPoint callNode) {
+		if (GlobalSettings._instance._memoizeReturnEdgeChecks) {
+			if (_satQuadruples.get(sourceNode.getPredicate()) != null && _satQuadruples.get(sourceNode.getPredicate()).get(callNode) != null
+					&& _satQuadruples.get(sourceNode.getPredicate()).get(callNode).get(edgeLabel) != null
+					&& _satQuadruples.get(sourceNode.getPredicate()).get(callNode).get(edgeLabel).contains(destinationNode.getPredicate())) {
+				memoizationReturnHitsSat++;
+				return true;
+			}
+			if (_unsatQuadruples.get(sourceNode.getPredicate()) != null && _unsatQuadruples.get(sourceNode.getPredicate()).get(callNode) != null
+					&& _unsatQuadruples.get(sourceNode.getPredicate()).get(callNode).get(edgeLabel) != null
+					&& _unsatQuadruples.get(sourceNode.getPredicate()).get(callNode).get(edgeLabel).contains(destinationNode.getPredicate())) {
+				memoizationReturnHitsUnsat++;
+				return false;
+			}
+		}
+
+		boolean result = m_smtManager.isInductiveReturn(sourceNode.getPredicate(), callNode.getPredicate(), (Return) edgeLabel,
+				destinationNode.getPredicate()) == LBool.UNSAT;
+
+		if (GlobalSettings._instance._memoizeReturnEdgeChecks)
+			if (result)
+				addSatQuadruple(sourceNode.getPredicate(), callNode.getPredicate(), edgeLabel, destinationNode.getPredicate());
+			else
+				addUnsatQuadruple(sourceNode.getPredicate(), callNode.getPredicate(), edgeLabel, destinationNode.getPredicate());
+
+		return result;
+	}
+
+	public boolean isStrongerPredicate(AnnotatedProgramPoint strongerNode, AnnotatedProgramPoint weakerNode) {
+		return m_smtManager.isCovered(strongerNode.getPredicate(), weakerNode.getPredicate()) == LBool.UNSAT;
 	}
 	
 	@Override

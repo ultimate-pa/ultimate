@@ -16,7 +16,7 @@ public class RedirectionFinder {
 	private final Strategy strategy;
 	public RedirectionFinder(ImpulseChecker codeChecker) {
 		this.codeChecker = codeChecker;
-		strategy = Strategy.FIRST;
+		strategy = Strategy.RANDOM;
 	}
 	
 	public AnnotatedProgramPoint getStrongestValidCopy(AppEdge edge) {

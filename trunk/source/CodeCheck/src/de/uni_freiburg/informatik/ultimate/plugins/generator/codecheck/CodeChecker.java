@@ -121,28 +121,6 @@ public abstract class CodeChecker {
 		return m_smtManager.newPredicate(tvp.getFormula(), tvp.getProcedures(), tvp.getVars(), tvp.getClosedFormula());
 	}
 
-	public boolean isValidEdge(AnnotatedProgramPoint sourceNode, CodeBlock edgeLabel,
-			AnnotatedProgramPoint destinationNode) {
-		if (edgeLabel instanceof DummyCodeBlock)
-			return false;
-		// System.out.print(".");
-
-		if (edgeLabel instanceof Call)
-			return m_smtManager.isInductiveCall(sourceNode.getPredicate(), (Call) edgeLabel,
-					destinationNode.getPredicate()) == LBool.UNSAT;
-
-		return m_smtManager.isInductive(sourceNode.getPredicate(), edgeLabel, destinationNode.getPredicate()) == LBool.UNSAT;
-	}
-
-	public boolean isValidReturnEdge(AnnotatedProgramPoint sourceNode, CodeBlock edgeLabel,
-			AnnotatedProgramPoint destinationNode, AnnotatedProgramPoint callNode) {
-		return m_smtManager.isInductiveReturn(sourceNode.getPredicate(), callNode.getPredicate(), (Return) edgeLabel,
-				destinationNode.getPredicate()) == LBool.UNSAT;
-	}
-
-	public boolean isStrongerPredicate(AnnotatedProgramPoint strongerNode, AnnotatedProgramPoint weakerNode) {
-		return m_smtManager.isCovered(strongerNode.getPredicate(), weakerNode.getPredicate()) == LBool.UNSAT;
-	}
 
 	public static String objectReference(Object o) {
 		return Integer.toHexString(System.identityHashCode(o));
@@ -213,7 +191,6 @@ public abstract class CodeChecker {
 		return false;
 	}
 	
-
 
 	protected void addSatTriple(IPredicate pre, CodeBlock stm, IPredicate post) {
 		if (_satTriples.get(pre) == null)
