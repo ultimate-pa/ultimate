@@ -63,7 +63,7 @@ public class TACASInterpolation2015 extends AbstractModelCheckerTestSuite {
 	private final static String[] mFileEndings = new String[] { ".c" };
 
 	// if -1 use all
-	private final int mFilesPerCategory = 20;
+	private final int mFilesPerCategory = 5;
 
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
