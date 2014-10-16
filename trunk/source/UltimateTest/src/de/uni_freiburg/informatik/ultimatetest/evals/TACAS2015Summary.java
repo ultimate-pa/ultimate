@@ -484,10 +484,8 @@ public class TACAS2015Summary extends NewTestSummary {
 
 							if (cells.isEmpty()) {
 								finalValue = "-";
-								continue;
-							}
-
-							if (sum.contains(columnTitle)) {
+								
+							} else if (sum.contains(columnTitle)) {
 								for (String cell : cells) {
 									try {
 										numberValue = numberValue.add(new BigDecimal((String) cell));

@@ -34,75 +34,59 @@ import de.uni_freiburg.informatik.ultimatetest.util.Util.IReduce;
  * @author dietsch@informatik.uni-freiburg.de
  * 
  */
-public class TACASInterpolation2015 extends AbstractModelCheckerTestSuite {
+public abstract class TACASInterpolation2015 extends AbstractModelCheckerTestSuite {
 
 	private IncrementalLogWithVMParameters mIncrementalLog;
-	// @formatter:off
-	private static final String[] mDirectories = {
-			// not good for CodeCheck
-			 "examples/svcomp/eca-rers2012/",
-			 "examples/svcomp/ntdrivers-simplified/",
-
-			"examples/svcomp/ssh-simplified/", 
-//			"examples/svcomp/loop-invgen/", 
-			"examples/svcomp/locks/",
-//			"examples/svcomp/loop-new/",
-			"examples/svcomp/recursive/", 
-			"examples/svcomp/systemc/",
-			// "examples/svcomp/systemc/kundu2_false-unreach-call_false-termination.cil.c"
-
-	};
-	// @formatter:on
 
 	// Time out for each test case in milliseconds
 	private final static int mTimeout = 60 * 1000;
 	private final static String[] mFileEndings = new String[] { ".c" };
 
-	// if -1 use all
-	private final int mFilesPerCategory = 50;
-
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
 		if (mTestCases.size() == 0) {
 			List<UltimateTestCase> testcases = new ArrayList<>();
-//			addTestCasesFixed("AutomizerC.xml", "TACASInterpolation2015/BackwardPredicates.epf", testcases);
-			
-			addTestCasesFixed("AutomizerC.xml", "TACASInterpolation2015/ForwardPredicates.epf", testcases);
 
-			addTestCasesFixed("AutomizerC.xml", "TACASInterpolation2015/TreeInterpolation.epf", testcases);
+			createTestCasesForReal(testcases);
 
-//			
-//			addTestCasesFixed("CodeCheckWithBE-C.xml", "TACASInterpolation2015/Kojak-FP.epf", testcases);
-//
-//			addTestCasesFixed("CodeCheckWithBE-C.xml", "TACASInterpolation2015/Kojak-TreeInterpolation.epf", testcases);
-//
-//			addTestCasesFixed("ImpulseWithBE-C.xml", "TACASInterpolation2015/Impulse-FP.epf", testcases);
-//
-//			addTestCasesFixed("ImpulseWithBE-C.xml", "TACASInterpolation2015/Impulse-TreeInterpolation.epf",
-//					testcases);
-			
-//			addTestCasesFixed("CodeCheckNoBE-C.xml", "TACASInterpolation2015/Kojak-FP-nBE.epf", testcases);
-//
-//			addTestCasesFixed("CodeCheckNoBE-C.xml", "TACASInterpolation2015/Kojak-TreeInterpolation-nBE.epf", testcases);
-//
-//			addTestCasesFixed("ImpulseNoBE-C.xml", "TACASInterpolation2015/Impulse-FP-nBE.epf", testcases);
-//
-//			addTestCasesFixed("ImpulseNoBE-C.xml", "TACASInterpolation2015/Impulse-TreeInterpolation-nBE.epf",
-//					testcases);
-
-			if (mFilesPerCategory != -1) {
+			if (getFilesPerCategory() != -1) {
 				mTestCases = testcases;
 			}
 
 			mIncrementalLog.setCountTotal(mTestCases.size());
 		}
-		// Util.filter(files, regex)
-		// return Util.firstN(super.createTestCases(), 3);
 		return super.createTestCases();
 	}
 
-	private void addTestCasesFixed(String toolchain, String setting, List<UltimateTestCase> testcases) {
-		addTestCases(toolchain, setting, mDirectories, mFileEndings, mTimeout);
+	protected abstract void createTestCasesForReal(List<UltimateTestCase> testcases);
+
+	protected String[] getDirectories() {
+		// @formatter:off
+		String[] directories = {
+				// not good for CodeCheck
+			"examples/svcomp/eca-rers2012/",
+			"examples/svcomp/ntdrivers-simplified/",
+	
+   			"examples/svcomp/ssh-simplified/", 
+//				"examples/svcomp/loop-invgen/", 
+			"examples/svcomp/locks/",
+//				"examples/svcomp/loop-new/",
+			"examples/svcomp/recursive/", 
+			"examples/svcomp/systemc/",
+		};
+		return directories;
+		// @formatter:on
+	}
+
+	/**
+	 * if -1 use all
+	 * 
+	 * @return
+	 */
+	protected abstract int getFilesPerCategory();
+
+	protected void addTestCasesFixed(String toolchain, String setting, List<UltimateTestCase> testcases) {
+		addTestCases(toolchain, setting, getDirectories(), mFileEndings, mTimeout);
 		testcases.addAll(limitTestFiles());
 	}
 
@@ -188,9 +172,8 @@ public class TACASInterpolation2015 extends AbstractModelCheckerTestSuite {
 		return new IIncrementalLog[] { mIncrementalLog };
 	}
 
-	@SuppressWarnings("unused")
 	private List<UltimateTestCase> limitTestFiles() {
-		if (mFilesPerCategory == -1) {
+		if (getFilesPerCategory() == -1) {
 			return new ArrayList<>();
 		}
 		List<UltimateTestCase> testcases = new ArrayList<>();
@@ -209,7 +192,7 @@ public class TACASInterpolation2015 extends AbstractModelCheckerTestSuite {
 				@Override
 				public boolean check(UltimateTestCase entry) {
 					if (entry.getUltimateRunDefinition().getInput().getParentFile().getName().equals(category)) {
-						if (i < mFilesPerCategory) {
+						if (i < getFilesPerCategory()) {
 							i++;
 							return true;
 						}
