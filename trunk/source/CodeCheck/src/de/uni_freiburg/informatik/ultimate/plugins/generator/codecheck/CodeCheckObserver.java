@@ -210,6 +210,9 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		
 		GlobalSettings._instance._iterations = prefs.getInt(CodeCheckPreferenceInitializer.LABEL_ITERATIONS,
 				CodeCheckPreferenceInitializer.DEF_ITERATIONS);
+		
+		GlobalSettings._instance._dotGraphPath = prefs.getString(CodeCheckPreferenceInitializer.LABEL_GRAPHWRITERPATH, CodeCheckPreferenceInitializer.DEF_GRAPHWRITERPATH);
+
 	}
 
 	private void removeSummaryEdges() {

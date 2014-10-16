@@ -29,10 +29,12 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
 public class ImpulseChecker extends CodeChecker {
 	
 	//private HashMap <AnnotatedProgramPoint, AnnotatedProgramPoint> _cloneNode;
+	RedirectionFinder cloneFinder;
 	public ImpulseChecker(IElement root, SmtManager m_smtManager, TAPreferences m_taPrefs, RootNode m_originalRoot, ImpRootNode m_graphRoot,
 			GraphWriter m_graphWriter, EdgeChecker edgeChecker, PredicateUnifier predicateUnifier, Logger logger) {
 		super(root, m_smtManager, m_taPrefs, m_originalRoot, m_graphRoot,
 				m_graphWriter, edgeChecker, predicateUnifier, logger);
+		cloneFinder = new RedirectionFinder(this);
 	}
 	
 	public void replaceEdge(AppEdge edge, AnnotatedProgramPoint newTarget) {
@@ -66,23 +68,52 @@ public class ImpulseChecker extends CodeChecker {
 	}
 
 	public boolean redirectEdges(AnnotatedProgramPoint[] nodes, AnnotatedProgramPoint[] clones) {
+
 		for (int i = 0; i < nodes.length; ++i) {
 			if (nodes[i].isErrorLocation())
 				continue;
 			AppEdge[] prevEdges = nodes[i].getIncomingEdges().toArray(new AppEdge[]{});
 			for (AppEdge prevEdge : prevEdges) {
+				
+				AnnotatedProgramPoint clone = cloneFinder.getStrongestValidCopy(prevEdge);
+				//AnnotatedProgramPoint clone = clones[i];
+				if (clone == null)
+					continue;
+				redirectIfValid(prevEdge, clone);
+				/*
 				if (prevEdge instanceof AppHyperEdge) {
-					if (connectOutgoingReturnIfValid(prevEdge.getSource(), ((AppHyperEdge) prevEdge).getHier(), (Return) prevEdge.getStatement(), clones[i])) {
+					if (connectOutgoingReturnIfValid(prevEdge.getSource(), ((AppHyperEdge) prevEdge).getHier(), (Return) prevEdge.getStatement(), clone)) {
 						prevEdge.disconnect();
 					}
 				} else {
-					if (connectOutgoingIfValid(prevEdge.getSource(), prevEdge.getStatement(), clones[i])) {
+					if (connectOutgoingIfValid(prevEdge.getSource(), prevEdge.getStatement(), clone)) {
 						prevEdge.disconnect();
 					}
 				}
+				*/
 			}
 		}
 		return true;
+	}
+	protected void redirectIfValid(AppEdge edge, AnnotatedProgramPoint target) {
+		if (edge.getTarget() == target)
+			return ;
+		if (isValidRedirection(edge, target)) {
+			if (edge instanceof AppHyperEdge) {
+				edge.getSource().connectOutgoingReturn(((AppHyperEdge) edge).getHier(), (Return) edge.getStatement(), target);
+			} else {
+				edge.getSource().connectOutgoing(edge.getStatement(), target);
+				
+			}
+			edge.disconnect();
+		}
+	}
+	public boolean isValidRedirection(AppEdge edge, AnnotatedProgramPoint target) {
+		if (edge instanceof AppHyperEdge) {
+			return isValidReturnEdge(edge.getSource(), edge.getStatement(), target,((AppHyperEdge) edge).getHier());
+		} else {
+			return isValidEdge(edge.getSource(), edge.getStatement(), target);
+		}
 	}
 	@Override
 	public boolean codeCheck(
@@ -91,7 +122,7 @@ public class ImpulseChecker extends CodeChecker {
 
 		AnnotatedProgramPoint[] nodes = errorRun.getStateSequence().toArray(new AnnotatedProgramPoint[0]);
 		
-		
+		/*
 		System.err.println("vor DFS");
 		visited = new HashSet<AnnotatedProgramPoint>();
 		dfsDEBUG(m_graphRoot, true);
@@ -107,6 +138,7 @@ public class ImpulseChecker extends CodeChecker {
 		ArrayList<IPredicate> interpolantsDBG = new ArrayList<IPredicate>();
 		Collections.addAll(interpolantsDBG, interpolants);
 		System.err.println(String.format("Inters: %s\n", interpolantsDBG));
+		*/
 		
 		AnnotatedProgramPoint[] clones = new AnnotatedProgramPoint[nodes.length];
 		//_cloneNode = new HashMap <AnnotatedProgramPoint, AnnotatedProgramPoint>();

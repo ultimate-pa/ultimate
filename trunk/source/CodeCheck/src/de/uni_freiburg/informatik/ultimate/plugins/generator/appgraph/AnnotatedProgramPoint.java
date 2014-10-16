@@ -41,6 +41,7 @@ public class AnnotatedProgramPoint extends ModifiableExplicitEdgesMultigraph<Ann
 	public AnnotatedProgramPoint(IPredicate predicate, ProgramPoint programPoint) {
 		_predicate = predicate;
 		_programPoint = programPoint;
+		_copies = new ArrayList<AnnotatedProgramPoint> ();
 	}
 
 	/**
@@ -82,9 +83,13 @@ public class AnnotatedProgramPoint extends ModifiableExplicitEdgesMultigraph<Ann
 			for (AppHyperEdge oldOutHypEdge : oldApp.getOutgoingHyperEdges()) {
 				oldOutHypEdge.getSource().connectOutgoingReturn(this, (Return) oldOutHypEdge.getStatement(), oldOutHypEdge.getTarget());
 			}
+			oldApp._copies.add(this);
 		}
 	}
 
+	public ArrayList <AnnotatedProgramPoint> getNextClones() {
+		return _copies;
+	}
 
 	public IPredicate getPredicate() {
 		return _predicate;
@@ -155,6 +160,7 @@ public class AnnotatedProgramPoint extends ModifiableExplicitEdgesMultigraph<Ann
 		return null;
 	}
 	
+	private ArrayList <AnnotatedProgramPoint> _copies;
 //	public void disconnectOutgoing(AppEdge outEdge) {
 //		if (outEdge instanceof AppHyperEdge) {
 //			((AppHyperEdge) outEdge).hier._outgoingHyperEdges.remove(outEdge);
@@ -168,7 +174,7 @@ public class AnnotatedProgramPoint extends ModifiableExplicitEdgesMultigraph<Ann
 	private ArrayList<AnnotatedProgramPoint> copies = new ArrayList<AnnotatedProgramPoint>();
 	private ArrayList<AnnotatedProgramPoint> newCopies = new ArrayList<AnnotatedProgramPoint>();
 	private AnnotatedProgramPoint cloneSource;
-
+	
 	/**
 	 * Adds an APP to the list of new copies of this APP.
 	 * @param copy the APP that will be added as a copy to this APP
@@ -213,4 +219,5 @@ public class AnnotatedProgramPoint extends ModifiableExplicitEdgesMultigraph<Ann
 		ret.addAll(newCopies);
 		return ret;
 	}
+	
 }
