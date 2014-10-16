@@ -59,27 +59,27 @@ public class TACASInterpolation2015 extends AbstractModelCheckerTestSuite {
 	private final static String[] mFileEndings = new String[] { ".c" };
 
 	// if -1 use all
-	private final int mFilesPerCategory = 7;
+	private final int mFilesPerCategory = 20;
 
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
 		if (mTestCases.size() == 0) {
 			List<UltimateTestCase> testcases = new ArrayList<>();
-			addTestCasesFixed("AutomizerC.xml", "TACASInterpolation2015/BackwardPredicates.epf", testcases);
+//			addTestCasesFixed("AutomizerC.xml", "TACASInterpolation2015/BackwardPredicates.epf", testcases);
 			
 			addTestCasesFixed("AutomizerC.xml", "TACASInterpolation2015/ForwardPredicates.epf", testcases);
 
 			addTestCasesFixed("AutomizerC.xml", "TACASInterpolation2015/TreeInterpolation.epf", testcases);
 
-			
-			addTestCasesFixed("CodeCheckWithBE-C.xml", "TACASInterpolation2015/Kojak-FP.epf", testcases);
-
-			addTestCasesFixed("CodeCheckWithBE-C.xml", "TACASInterpolation2015/Kojak-TreeInterpolation.epf", testcases);
-
-			addTestCasesFixed("ImpulseWithBE-C.xml", "TACASInterpolation2015/Impulse-FP.epf", testcases);
-
-			addTestCasesFixed("ImpulseWithBE-C.xml", "TACASInterpolation2015/Impulse-TreeInterpolation.epf",
-					testcases);
+//			
+//			addTestCasesFixed("CodeCheckWithBE-C.xml", "TACASInterpolation2015/Kojak-FP.epf", testcases);
+//
+//			addTestCasesFixed("CodeCheckWithBE-C.xml", "TACASInterpolation2015/Kojak-TreeInterpolation.epf", testcases);
+//
+//			addTestCasesFixed("ImpulseWithBE-C.xml", "TACASInterpolation2015/Impulse-FP.epf", testcases);
+//
+//			addTestCasesFixed("ImpulseWithBE-C.xml", "TACASInterpolation2015/Impulse-TreeInterpolation.epf",
+//					testcases);
 			
 			addTestCasesFixed("CodeCheckNoBE-C.xml", "TACASInterpolation2015/Kojak-FP-nBE.epf", testcases);
 
