@@ -449,10 +449,13 @@ public class TACAS2015Summary extends NewTestSummary {
 			switch (aggregate.get(i)) {
 			case Average:
 				avg.add(mColumnsToKeep.get(i));
+				break;
 			case Max:
 				max.add(mColumnsToKeep.get(i));
+				break;
 			case Sum:
 				sum.add(mColumnsToKeep.get(i));
+				break;
 			default:
 				break;
 			}
