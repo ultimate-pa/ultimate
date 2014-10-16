@@ -141,6 +141,10 @@ public class ConversionVisitor implements IMinimizationVisitor {
 		if (!mRefNodeMap.containsKey(node)) {
 			mRefNodeMap.put(node, mStartNode);
 		}
+		
+//		if (!mServices.getProgressMonitorService().continueProcessing()) {
+//			return;
+//		}
 		// Start recursion here
 		internalVisitNode(node);
 	}
@@ -314,6 +318,9 @@ public class ConversionVisitor implements IMinimizationVisitor {
 	 * @return a converted CodeBlock
 	 */
 	private CodeBlock convertMinimizedEdge(IMinimizedEdge edge) {
+		if (!mServices.getProgressMonitorService().continueProcessing()) {
+			return null;
+		}
 		if (mCheckForMultipleFormula.containsKey(edge)) {
 			mCheckForMultipleFormula.put(edge, ((Integer) mCheckForMultipleFormula.get(edge)) + 1);
 		} else {
@@ -364,6 +371,8 @@ public class ConversionVisitor implements IMinimizationVisitor {
 						+ " / and there are no seq. edges to compose!");
 			}
 			if (edge instanceof ConjunctionEdge) {
+				
+				
 				// if the parent of this conjunction is also a conjunction we do
 				// not create a sequential composition here
 				// seqComposedBlocks.addAll(recConvEdges);

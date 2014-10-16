@@ -80,7 +80,6 @@ enum Result {
 
 public class CodeCheckObserver implements IUnmanagedObserver {
 
-//	protected final static String s_SizeOfPredicates = "SizeOfPredicates";
 	protected final static String s_SizeOfPredicatesFP = "SizeOfPredicatesFP";
 	protected final static String s_SizeOfPredicatesBP = "SizeOfPredicatesBP";
 	protected final static String s_NumberOfQuantifiedPredicates = "NumberOfQuantifiedPredicates";
@@ -96,8 +95,6 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 	ImpRootNode m_graphRoot;
 
 	SmtManager m_smtManager;
-//	IPredicate m_truePredicate;
-//	IPredicate m_falsePredicate;
 	PredicateUnifier _predicateUnifier;
 	EdgeChecker m_edgeChecker;
 
@@ -136,9 +133,6 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		m_smtManager = new SmtManager(rootAnnot.getBoogie2SMT(), rootAnnot.getModGlobVarManager(), mServices);
 
 		_predicateUnifier = new PredicateUnifier(mServices, m_smtManager);
-
-//		m_truePredicate = _predicateUnifier.getTruePredicate();
-//		m_falsePredicate = _predicateUnifier.getFalsePredicate();
 
 		m_edgeChecker = new EdgeChecker(m_smtManager, rootAnnot.getModGlobVarManager());
 
@@ -196,9 +190,6 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		GlobalSettings._instance._memoizeReturnEdgeChecks = prefs.getBoolean(
 				CodeCheckPreferenceInitializer.LABEL_MEMOIZERETURNEDGECHECKS,
 				CodeCheckPreferenceInitializer.DEF_MEMOIZERETURNEDGECHECKS);
-		// GlobalSettings._instance._checkOnlyMain = prefs.getBoolean(
-		// PreferenceInitializer.LABEL_ONLYMAINPROCEDURE,
-		// PreferenceInitializer.DEF_ONLYMAINPROCEDURE);
 
 		GlobalSettings._instance._solverAndInterpolator = prefs.getEnum(
 				CodeCheckPreferenceInitializer.LABEL_SOLVERANDINTERPOLATOR, SolverAndInterpolator.class);
@@ -262,16 +253,6 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 			}
 		}
 		if (procRootsToCheck.isEmpty()) { // -> no Ultimate.start present
-			// if (GlobalSettings._instance._checkOnlyMain) {
-			// for (AnnotatedProgramPoint procRoot : m_graphRoot
-			// .getOutgoingNodes()) {
-			// if (procRoot.getProgramPoint().getProcedure()
-			// .equalsIgnoreCase("main")) {
-			// procRootsToCheck.add(procRoot);
-			// break;
-			// }
-			// }
-			// } else
 			procRootsToCheck.addAll(m_graphRoot.getOutgoingNodes());
 		}
 
@@ -280,13 +261,12 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		boolean verificationInterrupted = false;
 		RcfgProgramExecution realErrorProgramExecution = null;
 		
-		//data collector variables
+		//benchmark data collector variables
 		int iterationsCount = 0;
 		long startTime = System.nanoTime();
 		BackwardCoveringInformation bwCoveringInfo = null;
 		boolean weHaveSPWPInterpolation =  GlobalSettings._instance._solverAndInterpolator == SolverAndInterpolator.Z3SPWP;
 		long noCBs = 0;
-//		long[] soPreds = new long[] { 0L, 0L };
 		long soPredsFP = 0;
 		long soPredsBP = 0;
 		long conjsInSSA = 0;
@@ -305,7 +285,6 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 
 			IEmptinessCheck emptinessCheck = new NWAEmptinessCheck();
 
-//			iterationsCount = 0;
 			if (DEBUG)
 				codeChecker.debug();
 			while (loop_forever | iterationsCount++ < iterationsLimit) {
@@ -394,11 +373,6 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 							bwCoveringInfo = new BackwardCoveringInformation(bwCoveringInfo, bci);
 						noCBs += (Integer) traceChecker.getTraceCheckerBenchmark().getValue(s_NumberOfCodeBlocks);
 						if (weHaveSPWPInterpolation) {
-////							long[] curRes = (long[]) traceChecker.getTraceCheckerBenchmark().getValue(s_SizeOfPredicates);
-//							long[] curRes = (long[]) traceChecker.getTraceCheckerBenchmark().getValue(s_SizeOfPredicatesFP);
-//							for (int i = 0; i < 2; i++) {
-//								soPreds[i] = soPreds[i] + curRes[i];
-//							}
 							soPredsFP += (Long) traceChecker.getTraceCheckerBenchmark().getValue(s_SizeOfPredicatesFP);
 							soPredsBP += (Long) traceChecker.getTraceCheckerBenchmark().getValue(s_SizeOfPredicatesBP);
 							conjsInSSA += (Integer) traceChecker.getTraceCheckerBenchmark().getValue(s_ConjunctsInSSA);
@@ -477,10 +451,19 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 			values.add(-1);
 		}
 
-		values.add(bwCoveringInfo);
-		values.add(((double) bwCoveringInfo.getSuccessfullBackwardCoverings())
-				/bwCoveringInfo.getPotentialBackwardCoverings());
-		ccbcsvp.addRow(values);
+		if (bwCoveringInfo != null) {
+			values.add(bwCoveringInfo);
+			if (bwCoveringInfo.getPotentialBackwardCoverings() != 0) {
+				values.add(((double) bwCoveringInfo.getSuccessfullBackwardCoverings())
+					/bwCoveringInfo.getPotentialBackwardCoverings());
+			} else {
+				values.add(1d);
+			}
+			ccbcsvp.addRow(values);
+		} else {
+			values.add(-1);
+			values.add(-1);
+		}
 		reportBenchmark(ccb);
 
 		if (overallResult == Result.CORRECT) {
