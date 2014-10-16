@@ -34,7 +34,7 @@ import de.uni_freiburg.informatik.ultimatetest.util.Util.IReduce;
  * @author dietsch@informatik.uni-freiburg.de
  * 
  */
-public class TACASInterpolation2015 extends AbstractModelCheckerTestSuite {
+public class TACASInterpolation2015Algo extends AbstractModelCheckerTestSuite {
 
 	private IncrementalLogWithVMParameters mIncrementalLog;
 	// @formatter:off
@@ -65,30 +65,14 @@ public class TACASInterpolation2015 extends AbstractModelCheckerTestSuite {
 	public Collection<UltimateTestCase> createTestCases() {
 		if (mTestCases.size() == 0) {
 			List<UltimateTestCase> testcases = new ArrayList<>();
-//			addTestCasesFixed("AutomizerC.xml", "TACASInterpolation2015/BackwardPredicates.epf", testcases);
 			
-			addTestCasesFixed("AutomizerC.xml", "TACASInterpolation2015/ForwardPredicates.epf", testcases);
+			addTestCasesFixed("AutomizerC.xml", "TACASInterpolation2015/SP.epf", testcases);
 
-			addTestCasesFixed("AutomizerC.xml", "TACASInterpolation2015/TreeInterpolation.epf", testcases);
-
-//			
-//			addTestCasesFixed("CodeCheckWithBE-C.xml", "TACASInterpolation2015/Kojak-FP.epf", testcases);
-//
-//			addTestCasesFixed("CodeCheckWithBE-C.xml", "TACASInterpolation2015/Kojak-TreeInterpolation.epf", testcases);
-//
-//			addTestCasesFixed("ImpulseWithBE-C.xml", "TACASInterpolation2015/Impulse-FP.epf", testcases);
-//
-//			addTestCasesFixed("ImpulseWithBE-C.xml", "TACASInterpolation2015/Impulse-TreeInterpolation.epf",
-//					testcases);
+			addTestCasesFixed("AutomizerC.xml", "TACASInterpolation2015/SP-IC.epf", testcases);
 			
-//			addTestCasesFixed("CodeCheckNoBE-C.xml", "TACASInterpolation2015/Kojak-FP-nBE.epf", testcases);
-//
-//			addTestCasesFixed("CodeCheckNoBE-C.xml", "TACASInterpolation2015/Kojak-TreeInterpolation-nBE.epf", testcases);
-//
-//			addTestCasesFixed("ImpulseNoBE-C.xml", "TACASInterpolation2015/Impulse-FP-nBE.epf", testcases);
-//
-//			addTestCasesFixed("ImpulseNoBE-C.xml", "TACASInterpolation2015/Impulse-TreeInterpolation-nBE.epf",
-//					testcases);
+			addTestCasesFixed("AutomizerC.xml", "TACASInterpolation2015/SP-LV.epf", testcases);
+			
+			addTestCasesFixed("AutomizerC.xml", "TACASInterpolation2015/SP-IC-LV.epf", testcases);
 
 			if (mFilesPerCategory != -1) {
 				mTestCases = testcases;

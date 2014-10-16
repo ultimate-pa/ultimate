@@ -472,105 +472,53 @@ public class TACAS2015Summary extends NewTestSummary {
 
 						for (String columnTitle : input.getColumnTitles()) {
 							String finalValue = null;
-							int intValue = 0;
-							double doubleValue = 0;
-							float floatValue = 0;
-							long longValue = 0;
 							BigDecimal numberValue = BigDecimal.ZERO;
+							List<String> cells = new ArrayList<>();
+
+							for (List<?> row : input.getTable()) {
+								Object cell = row.get(idx);
+								if (cell != null) {
+									cells.add(cell.toString());
+								}
+							}
+
+							if (cells.isEmpty()) {
+								finalValue = "-";
+								continue;
+							}
+
 							if (sum.contains(columnTitle)) {
-								for (List<?> row : input.getTable()) {
-									Object cell = row.get(idx);
-									if (cell == null) {
-										continue;
-									} else if (cell instanceof Double) {
-										doubleValue += (Double) cell;
-										finalValue = Double.toString(doubleValue);
-									} else if (cell instanceof Integer) {
-										intValue += (Integer) cell;
-										finalValue = Integer.toString(intValue);
-									} else if (cell instanceof Long) {
-										longValue += (Long) cell;
-										finalValue = Long.toString(longValue);
-									} else if (cell instanceof Float) {
-										floatValue += (Float) cell;
-										finalValue = Float.toString(floatValue);
-									} else if (cell instanceof String) {
-										try {
-											numberValue = numberValue.add(new BigDecimal((String) cell));
-											finalValue = numberValue.toString();
-										} catch (Exception ex) {
-											finalValue = cell.toString();
-										}
-									} else {
+								for (String cell : cells) {
+									try {
+										numberValue = numberValue.add(new BigDecimal((String) cell));
+										finalValue = numberValue.toString();
+									} catch (Exception ex) {
 										finalValue = cell.toString();
 									}
 								}
 							} else if (max.contains(columnTitle)) {
-								for (List<?> row : input.getTable()) {
-									Object cell = row.get(idx);
-									if (cell == null) {
-										continue;
-									} else if (cell instanceof Double) {
-										doubleValue = Math.max(doubleValue, (Double) cell);
-										finalValue = Double.toString(doubleValue);
-									} else if (cell instanceof Integer) {
-										intValue = Math.max(intValue, (Integer) cell);
-										finalValue = Integer.toString(intValue);
-									} else if (cell instanceof Long) {
-										longValue = Math.max(longValue, (Long) cell);
-										finalValue = Long.toString(longValue);
-									} else if (cell instanceof Float) {
-										floatValue = Math.max(floatValue, (Float) cell);
-										finalValue = Float.toString(floatValue);
-									} else if (cell instanceof String) {
-										try {
-											numberValue = numberValue.max(new BigDecimal((String) cell));
-											finalValue = numberValue.toString();
-										} catch (Exception ex) {
-											finalValue = cell.toString();
-										}
-									} else {
+								for (String cell : cells) {
+									try {
+										numberValue = numberValue.max(new BigDecimal((String) cell));
+										finalValue = numberValue.toString();
+									} catch (Exception ex) {
 										finalValue = cell.toString();
 									}
 								}
 							} else if (avg.contains(columnTitle)) {
-								int size = input.getTable().size();
-								for (List<?> row : input.getTable()) {
-									Object cell = row.get(idx);
-									if (cell == null) {
-										continue;
-									} else if (cell instanceof Double) {
-										doubleValue += (Double) cell;
-										finalValue = Double.toString(doubleValue / (double) size);
-									} else if (cell instanceof Integer) {
-										intValue += (Integer) cell;
-										finalValue = Integer.toString(intValue / size);
-									} else if (cell instanceof Long) {
-										longValue += (Long) cell;
-										finalValue = Long.toString(longValue / (long) size);
-									} else if (cell instanceof Float) {
-										floatValue += (Float) cell;
-										finalValue = Float.toString(floatValue / (float) size);
-									} else if (cell instanceof String) {
-										try {
-											numberValue = numberValue.add(new BigDecimal((String) cell));
-											finalValue = numberValue.divide(new BigDecimal(size), 5,
-													RoundingMode.HALF_UP).toString();
-										} catch (Exception ex) {
-											finalValue = cell.toString();
-										}
-									} else {
+								int size = cells.size();
+								for (String cell : cells) {
+									try {
+										numberValue = numberValue.add(new BigDecimal((String) cell));
+										finalValue = numberValue.divide(new BigDecimal(size), 5, RoundingMode.HALF_UP)
+												.toString();
+									} catch (Exception ex) {
 										finalValue = cell.toString();
 									}
 								}
 							} else {
-								for (List<?> row : input.getTable()) {
-									Object cell = row.get(idx);
-									if (cell == null) {
-										continue;
-									} else {
-										finalValue = cell.toString();
-									}
+								for (String cell : cells) {
+									finalValue = cell;
 								}
 							}
 							idx++;
