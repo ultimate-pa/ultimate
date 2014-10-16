@@ -1667,6 +1667,8 @@ public class CHandler implements ICHandler {
 				Body thenPart = (Body) (thenResult.node);
 				thenStmt.addAll(Arrays.asList(thenPart.getBlock()));
 				decl.addAll(Arrays.asList(thenPart.getLocalVars()));
+			} else if (thenResult instanceof ResultSkip) {
+				//add no statements or declarations
 			} else {
 				String msg = "Error: unexpected dispatch result";
 				throw new IncorrectSyntaxException(loc, msg);
