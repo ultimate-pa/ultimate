@@ -907,7 +907,10 @@ public class InitializationHandler {
 
 					fieldContents = new ResultExpression(fieldStmt, lrVal, fieldDecl, fieldAuxVars);
 				} else if (underlyingFieldType instanceof CEnum) {
-					throw new UnsupportedSyntaxException(loc, "..");
+					//like CPrimitive
+					fieldContents = main.cHandler.getInitHandler().initVar(loc, main, 
+							(VariableLHS) null, underlyingFieldType, 
+							i < rerl.list.size() ? rerl.list.get(i) : null);
 				} else if (underlyingFieldType instanceof CStruct) {
 					if (i < rerl.list.size())
 						fieldContents = makeStructConstructorFromRERL(main, loc,

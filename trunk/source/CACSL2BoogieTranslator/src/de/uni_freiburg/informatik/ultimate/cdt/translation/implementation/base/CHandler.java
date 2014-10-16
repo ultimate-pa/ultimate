@@ -1529,7 +1529,7 @@ public class CHandler implements ICHandler {
 			if (lType instanceof CPointer && rType instanceof CPrimitive
 					&& ((CPrimitive) rType).getType() == PRIMITIVE.INT) {
 				rightHandside = doPointerArithPointerAndInteger(main, node.getOperator(), loc, (RValue) rl.lrVal,
-						(RValue) rr.lrVal, ((CPointer) rl.lrVal.cType).pointsToType);
+						(RValue) rr.lrVal, ((CPointer) rl.lrVal.cType.getUnderlyingType()).pointsToType);
 			} else {
 				rightHandside = new RValue(createArithmeticExpression(node.getOperator(), rl.lrVal.getValue(),
 						rr.lrVal.getValue(), loc), rr.lrVal.cType);
@@ -2214,35 +2214,8 @@ public class CHandler implements ICHandler {
 			List<Overapprox> overappr, Map<StructLHS, CType> unionFieldsToCType) {
 		RValue rightHandSide = rVal; //we may change the content of the right hand side later
 
-		/*
-		 * implicit and some explicit casts here TODO Alex+Christian: Only
-		 * handles integer literals and variables. This fixes most issues, but
-		 * is surely no general solution.
-		 */
-//		CType lType = lrVal.cType.getUnderlyingType();
-//		CType rType = rVal.cType.getUnderlyingType();
-//		Expression rExpr = rVal.getValue();
+		//do implicit cast -- assume the types are compatible
 		rightHandSide = castToType(loc, rightHandSide, lrVal.cType);
-//		boolean convertToPointer = false;
-//		if (lType instanceof CPointer) { // TODO: not yet sure about this..
-//			if (!(rType instanceof CPointer)) {
-//				if (rExpr instanceof IntegerLiteral) {
-//					convertToPointer = true;
-//				} else if (rExpr instanceof IdentifierExpression) {
-//					String varId = ((IdentifierExpression) rExpr).getIdentifier();
-//					if (mSymbolTable.containsBoogieSymbol(varId)) {
-//						String cId = mSymbolTable.getCID4BoogieID(varId, loc);
-//						CType cType = mSymbolTable.get(cId, loc).getCVariable();
-//						if (cType instanceof CPrimitive &&
-//						// ((CPrimitive)cType).getType() == PRIMITIVE.INT) {
-//								((CPrimitive) cType).getGeneralType() == GENERALPRIMITIVE.INTTYPE) {
-//							convertToPointer = true;
-//						}
-//					}
-//				} else if (rType instanceof CPrimitive && ((CPrimitive) rType).getType() == PRIMITIVE.INT) {
-//					convertToPointer = true;
-//				}
-//			}
 //		} else if (lType instanceof CPrimitive
 //				&& ((CPrimitive) lType).getGeneralType() == GENERALPRIMITIVE.INTTYPE) {
 //			CPrimitive lPrim = (CPrimitive) lType;
@@ -2266,19 +2239,6 @@ public class CHandler implements ICHandler {
 //							lrVal.getValue(), new IntegerLiteral(loc, SFO.NR0));
 //					stmt.add(new AssumeStatement(loc, biggerZero));
 //				}
-//			}
-//		}
-		
-		// convert to pointer
-//		if (convertToPointer) {
-//			if (rExpr instanceof IntegerLiteral
-//					&& ((IntegerLiteral) rExpr).getValue().equals("0")) {
-//				rightHandSide = new RValue(new IdentifierExpression(loc, SFO.NULL), new CPointer(new CPrimitive(
-//						PRIMITIVE.VOID)));
-//			} else {
-//				rightHandSide = new RValue(MemoryHandler.constructPointerFromBaseAndOffset(
-//						new IntegerLiteral(loc, "0"), rExpr, loc), new CPointer(new CPrimitive(PRIMITIVE.VOID)));
-//	->			rightHandSide = castToType(loc, rVal, new CPointer(new CPrimitive(PRIMITIVE.VOID)));
 //			}
 //		}
 		

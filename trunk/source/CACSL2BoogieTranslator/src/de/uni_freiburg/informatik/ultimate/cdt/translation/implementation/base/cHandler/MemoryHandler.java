@@ -1179,6 +1179,13 @@ public class MemoryHandler {
         	default:
         		throw new UnsupportedSyntaxException(loc, "we don't recognize this type");
         	}
+        } else if (rType instanceof CEnum) {
+        	//treat like INT
+        	isIntArrayRequiredInMM = true;
+        	m_functionHandler.getModifiedGlobals().
+        	get(m_functionHandler.getCurrentProcedureID()).add(SFO.MEMORY_INT);
+        	stmt.add(new CallStatement(loc, false, new VariableLHS[0], "write~" + SFO.INT,
+        			new Expression[] { rval.getValue(), hlv.getAddress(), this.calculateSizeOf(hlv.cType, loc)}));
         } else if (rType instanceof CPointer) {
         	isPointerArrayRequiredInMM = true;
         	m_functionHandler.getModifiedGlobals().
