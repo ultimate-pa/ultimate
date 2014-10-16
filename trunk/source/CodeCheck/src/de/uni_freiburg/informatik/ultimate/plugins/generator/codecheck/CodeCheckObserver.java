@@ -62,6 +62,8 @@ import de.uni_freiburg.informatik.ultimate.result.BenchmarkResult;
 import de.uni_freiburg.informatik.ultimate.result.CounterExampleResult;
 import de.uni_freiburg.informatik.ultimate.result.GenericResult;
 import de.uni_freiburg.informatik.ultimate.result.IResult;
+import de.uni_freiburg.informatik.ultimate.result.ResultUtil;
+import de.uni_freiburg.informatik.ultimate.result.TimeoutResultAtElement;
 import de.uni_freiburg.informatik.ultimate.result.IResultWithSeverity.Severity;
 import de.uni_freiburg.informatik.ultimate.result.PositiveResult;
 import de.uni_freiburg.informatik.ultimate.result.UnprovableResult;
@@ -439,11 +441,14 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		if (DEBUG)
 			codeChecker.debug();
 
-		if (!verificationInterrupted)
+		if (!verificationInterrupted) {
 			if (allSafe)
 				overallResult = Result.CORRECT;
 			else
 				overallResult = Result.INCORRECT;
+		} else {
+			reportTimoutResult(mErrNodesOfAllProc);
+		}
 
 		mLogger.debug("MemoizationHitsSat: " + codeChecker.memoizationHitsSat);
 		mLogger.debug("MemoizationHitsUnsat: " + codeChecker.memoizationHitsUnsat);
@@ -458,25 +463,20 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		ArrayList<Object> values = new ArrayList<>();
 		values.add((int) ((System.nanoTime() - startTime)/1000000));
 		values.add(iterationsCount);
-//		if (traceChecker != null) {
-			values.add(noCBs);
-			if (weHaveSPWPInterpolation) {
-				values.add(soPredsFP);
-				values.add(soPredsBP);
-				values.add(conjsInSSA);
-				values.add(conjsInUC);
-			} else {
-				values.add(-1);
-				values.add(-1);
-				values.add(-1);
-				values.add(-1);
-			}
-//		} else {
-//			values.add(-1);
-//			values.add(-1);
-//			values.add(-1);
-//			values.add(-1);
-//		}
+
+		values.add(noCBs);
+		if (weHaveSPWPInterpolation) {
+			values.add(soPredsFP);
+			values.add(soPredsBP);
+			values.add(conjsInSSA);
+			values.add(conjsInUC);
+		} else {
+			values.add(-1);
+			values.add(-1);
+			values.add(-1);
+			values.add(-1);
+		}
+
 		values.add(bwCoveringInfo);
 		values.add(((double) bwCoveringInfo.getSuccessfullBackwardCoverings())
 				/bwCoveringInfo.getPotentialBackwardCoverings());
@@ -590,6 +590,20 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		CodeBlock last = rcfgProgramExecution.getTraceElement(lastPosition).getTraceElement();
 		ProgramPoint errorPP = (ProgramPoint) last.getTarget();
 		return errorPP;
+	}
+	
+	private void reportTimoutResult(Collection<ProgramPoint> errorLocs) {
+		for (ProgramPoint errorLoc : errorLocs) {
+			ILocation origin = errorLoc.getBoogieASTNode().getLocation().getOrigin();
+			String timeOutMessage = "Unable to prove that "
+					+ ResultUtil.getCheckedSpecification(errorLoc).getPositiveMessage();
+			timeOutMessage += " (line " + origin.getStartLine() + ")";
+			TimeoutResultAtElement<RcfgElement> timeOutRes = new TimeoutResultAtElement<RcfgElement>(errorLoc,
+					Activator.s_PLUGIN_NAME, mServices.getBacktranslationService(),
+					timeOutMessage);
+			reportResult(timeOutRes);
+			// s_Logger.warn(timeOutMessage);
+		}
 	}
 
 	// private void reportCounterexampleResult(CodeBlock position,
