@@ -293,7 +293,6 @@ public class TACAS2015Summary extends NewTestSummary {
 		Collection<Entry<UltimateRunDefinition, ExtendedResult>> completed = new ArrayList<>();
 		completed.addAll(results.Safe);
 		completed.addAll(results.Unsafe);
-		completed.addAll(results.Timeout);
 		for (int i = 0; i < variants.size(); ++i) {
 			// this is the last in the foldoer row, so it gets a different
 			// separator, hence false == isLast
@@ -430,7 +429,7 @@ public class TACAS2015Summary extends NewTestSummary {
 				provider.renameColumnTitle(name, name.substring(22));
 			}
 		}
-//		provider.renameColumnTitle("ICC %", "ICC");
+		// provider.renameColumnTitle("ICC %", "ICC");
 		provider = CsvUtils.projectColumn(provider, mColumnsToKeep);
 
 		// transform from multiple rows per UltimateTestCase to one (e.g. merge
@@ -447,7 +446,7 @@ public class TACAS2015Summary extends NewTestSummary {
 		final HashSet<String> avg = new HashSet<>();
 
 		for (int i = 0; i < aggregate.size(); ++i) {
-			switch (mAggregationInfoSingleRunToOneRow.get(i)) {
+			switch (aggregate.get(i)) {
 			case Average:
 				avg.add(mColumnsToKeep.get(i));
 			case Max:
