@@ -44,9 +44,9 @@ public class TACASInterpolation2015 extends AbstractModelCheckerTestSuite {
 			// "examples/svcomp/ntdrivers-simplified/",
 
 			"examples/svcomp/ssh-simplified/", 
-			"examples/svcomp/loop-invgen/", 
+//			"examples/svcomp/loop-invgen/", 
 			"examples/svcomp/locks/",
-			"examples/svcomp/loop-new/",
+//			"examples/svcomp/loop-new/",
 			"examples/svcomp/recursive/", 
 			"examples/svcomp/systemc/",
 			// "examples/svcomp/systemc/kundu2_false-unreach-call_false-termination.cil.c"
@@ -121,7 +121,8 @@ public class TACASInterpolation2015 extends AbstractModelCheckerTestSuite {
 				"Allocated memory end (bytes)", 
 				"Overall iterations",
 				"NumberOfCodeBlocks", 
-				"SizeOfPredicates", 
+				"SizeOfPredicatesFP",
+				"SizeOfPredicatesBP",
 				"Conjuncts in SSA", 
 				"Conjuncts in UnsatCore", 
 				"ICC %" 
@@ -131,14 +132,16 @@ public class TACASInterpolation2015 extends AbstractModelCheckerTestSuite {
 				"Mem{-}ory", 
 				"Iter{-}ations", 
 				"Loc{-}ations",
-				"Pred. size", 
+				"Pred. size FP",
+				"Pred. size BP",
 				"Conj. SSA", 
 				"Conj. IC", 
-				"ICC" 
+				"ICC %" 
 		};
 		ConversionContext[] conversionInfo = new ConversionContext[] { 
 				ConversionContext.Divide(1000000000, 2, " s"),
 				ConversionContext.Divide(1048576, 2, " MB"),
+				ConversionContext.BestFitNumber(),
 				ConversionContext.BestFitNumber(),
 				ConversionContext.BestFitNumber(),
 				ConversionContext.BestFitNumber(),
@@ -155,8 +158,10 @@ public class TACASInterpolation2015 extends AbstractModelCheckerTestSuite {
 				Aggregate.Ignore,
 				Aggregate.Ignore,
 				Aggregate.Ignore,
+				Aggregate.Ignore,
 		};
 		Aggregate[] aggregationInfoManyRunsToOneRow = new Aggregate[] {
+				Aggregate.Average,
 				Aggregate.Average,
 				Aggregate.Average,
 				Aggregate.Average,

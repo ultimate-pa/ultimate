@@ -76,11 +76,12 @@ public class TACAS2015Summary extends NewTestSummary {
 			return;
 		}
 		ICsvProvider<Object> aggregate = new SimpleCsvProvider<Object>(new ArrayList<String>());
+		ICsvProvider<Object> current = null;
 		for (Class<? extends ICsvProviderProvider<? extends Object>> benchmark : mBenchmarks) {
 			for (ICsvProviderProvider<?> benchmarkResultWildcard : Util.getCsvProviderProviderFromUltimateResults(
 					resultService.getResults(), benchmark)) {
-				aggregate = CsvUtils.concatenateRows(aggregate,
-						(ICsvProvider<Object>) benchmarkResultWildcard.createCvsProvider());
+				current = (ICsvProvider<Object>) benchmarkResultWildcard.createCvsProvider();
+				aggregate = CsvUtils.concatenateRows(aggregate, current);
 			}
 		}
 		add(urd, aggregate);
@@ -248,7 +249,7 @@ public class TACAS2015Summary extends NewTestSummary {
 			makeVariantEntry(sb, results.Unsafe, variants.get(i), i == 0);
 		}
 		sb.append("  \\cmidrule[0.01em](l){2-");
-		sb.append(mTableTitles.size()+5);
+		sb.append(mTableTitles.size() + 5);
 		sb.append("}").append(br);
 
 		// count expected safe & row header safe
@@ -266,7 +267,7 @@ public class TACAS2015Summary extends NewTestSummary {
 			makeVariantEntry(sb, results.Safe, variants.get(i), i == 0);
 		}
 		sb.append("  \\cmidrule[0.01em](l){2-");
-		sb.append(mTableTitles.size()+5);
+		sb.append(mTableTitles.size() + 5);
 		sb.append("}").append(br);
 
 		// row timeout
@@ -277,7 +278,7 @@ public class TACAS2015Summary extends NewTestSummary {
 			makeVariantEntry(sb, results.Timeout, variants.get(i), i == 0);
 		}
 		sb.append("  \\cmidrule[0.01em](l){2-");
-		sb.append(mTableTitles.size()+5);
+		sb.append(mTableTitles.size() + 5);
 		sb.append("}").append(br);
 
 		// count total & row header total
@@ -429,9 +430,8 @@ public class TACAS2015Summary extends NewTestSummary {
 				provider.renameColumnTitle(name, name.substring(22));
 			}
 		}
-
+//		provider.renameColumnTitle("ICC %", "ICC");
 		provider = CsvUtils.projectColumn(provider, mColumnsToKeep);
-		provider.renameColumnTitle("ICC %", "ICC");
 
 		// transform from multiple rows per UltimateTestCase to one (e.g. merge
 		// the different benchmark types into one row)
