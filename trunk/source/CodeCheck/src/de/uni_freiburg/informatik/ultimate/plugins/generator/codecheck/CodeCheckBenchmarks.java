@@ -28,7 +28,9 @@ public class CodeCheckBenchmarks implements ICsvProviderProvider<Object> {
 			columnTitles.add("time (ms)");
 			columnTitles.add("Overall iterations");
 			columnTitles.add(CodeCheckObserver.s_NumberOfCodeBlocks);
-			columnTitles.add(CodeCheckObserver.s_SizeOfPredicates);
+//			columnTitles.add(CodeCheckObserver.s_SizeOfPredicates);
+			columnTitles.add(CodeCheckObserver.s_SizeOfPredicatesFP);
+			columnTitles.add(CodeCheckObserver.s_SizeOfPredicatesBP);
 			columnTitles.add(CodeCheckObserver.s_ConjunctsInSSA);
 			columnTitles.add(CodeCheckObserver.s_ConjunctsInUnsatCore);
 			columnTitles.add("InterpolantCoveringCapability");

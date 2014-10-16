@@ -78,7 +78,9 @@ enum Result {
 
 public class CodeCheckObserver implements IUnmanagedObserver {
 
-	protected final static String s_SizeOfPredicates = "SizeOfPredicates";
+//	protected final static String s_SizeOfPredicates = "SizeOfPredicates";
+	protected final static String s_SizeOfPredicatesFP = "SizeOfPredicatesFP";
+	protected final static String s_SizeOfPredicatesBP = "SizeOfPredicatesBP";
 	protected final static String s_NumberOfQuantifiedPredicates = "NumberOfQuantifiedPredicates";
 	protected final static String s_ConjunctsInSSA = "Conjuncts in SSA";
 	protected final static String s_ConjunctsInUnsatCore = "Conjuncts in UnsatCore";
@@ -282,7 +284,9 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		BackwardCoveringInformation bwCoveringInfo = null;
 		boolean weHaveSPWPInterpolation =  GlobalSettings._instance._solverAndInterpolator == SolverAndInterpolator.Z3SPWP;
 		long noCBs = 0;
-		long[] soPreds = new long[] { 0L, 0L };
+//		long[] soPreds = new long[] { 0L, 0L };
+		long soPredsFP = 0;
+		long soPredsBP = 0;
 		long conjsInSSA = 0;
 		long conjsInUC = 0;	
 
@@ -388,10 +392,13 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 							bwCoveringInfo = new BackwardCoveringInformation(bwCoveringInfo, bci);
 						noCBs += (Integer) traceChecker.getTraceCheckerBenchmark().getValue(s_NumberOfCodeBlocks);
 						if (weHaveSPWPInterpolation) {
-							long[] curRes = (long[]) traceChecker.getTraceCheckerBenchmark().getValue(s_SizeOfPredicates);
-							for (int i = 0; i < 2; i++) {
-								soPreds[i] = soPreds[i] + curRes[i];
-							}
+////							long[] curRes = (long[]) traceChecker.getTraceCheckerBenchmark().getValue(s_SizeOfPredicates);
+//							long[] curRes = (long[]) traceChecker.getTraceCheckerBenchmark().getValue(s_SizeOfPredicatesFP);
+//							for (int i = 0; i < 2; i++) {
+//								soPreds[i] = soPreds[i] + curRes[i];
+//							}
+							soPredsFP += (Long) traceChecker.getTraceCheckerBenchmark().getValue(s_SizeOfPredicatesFP);
+							soPredsBP += (Long) traceChecker.getTraceCheckerBenchmark().getValue(s_SizeOfPredicatesBP);
 							conjsInSSA += (Integer) traceChecker.getTraceCheckerBenchmark().getValue(s_ConjunctsInSSA);
 							conjsInUC += (Integer) traceChecker.getTraceCheckerBenchmark().getValue(s_ConjunctsInUnsatCore);	
 						}
@@ -454,7 +461,8 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 //		if (traceChecker != null) {
 			values.add(noCBs);
 			if (weHaveSPWPInterpolation) {
-				values.add(soPreds);
+				values.add(soPredsFP);
+				values.add(soPredsBP);
 				values.add(conjsInSSA);
 				values.add(conjsInUC);
 			} else {
