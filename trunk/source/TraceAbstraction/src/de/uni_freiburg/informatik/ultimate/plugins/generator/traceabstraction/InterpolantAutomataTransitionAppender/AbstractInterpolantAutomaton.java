@@ -143,6 +143,10 @@ public abstract class AbstractInterpolantAutomaton implements INestedWordAutomat
 		if (m_AssertedHier != hier || m_AssertedState != state || m_AssertedCodeBlock != symbol) {
 			if (m_AssertedHier != null) {
 				m_EdgeChecker.unAssertHierPred();
+				// set the asserted hierarchical predecessor to null
+				// necessary because the quickcheck may cause a return of
+				// this procedure before a new m_AssertedHier has been set
+				m_AssertedHier = null;
 			}
 			if (m_AssertedState != state || m_AssertedCodeBlock != symbol) {
 				if (m_AssertedState != null) {
