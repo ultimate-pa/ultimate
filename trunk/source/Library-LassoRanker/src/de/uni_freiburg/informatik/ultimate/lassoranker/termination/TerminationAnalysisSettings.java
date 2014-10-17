@@ -97,7 +97,7 @@ public class TerminationAnalysisSettings implements Serializable {
 	 * Should we try to simplify the termination argument's
 	 * supporting invariants?
 	 */
-	public boolean simplify_supporting_invariants = true; // Default: true
+	public boolean simplify_supporting_invariants = false; // Default: true
 	
 	/**
 	 * Should we try to simplify the stem transition and reduce disjunctions?
