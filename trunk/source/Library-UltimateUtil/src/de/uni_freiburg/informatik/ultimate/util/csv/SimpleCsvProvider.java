@@ -130,7 +130,7 @@ public class SimpleCsvProvider<T> implements ICsvProvider<T> {
 			sb.append(rowTitle).append(separator);
 			for (T value : row) {
 				String cellString = String.valueOf(value);
-				cellString = cellString.replace(lineSeparator, "");
+				cellString = cellString.replace(lineSeparator, "").replace(separator, "");
 				checkForSeparators(cellString, separator, lineSeparator);
 				sb.append(cellString).append(separator);
 			}

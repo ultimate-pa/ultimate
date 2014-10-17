@@ -150,8 +150,20 @@ public class CsvTest {
 		Assert.assertTrue("something is not equal to A", contentAsStringIsEqual(B.getTable(), something.getTable()));
 	}
 
+	@Test
 	public void testWriteCsv() {
+		SimpleCsvProvider<Object> A = new SimpleCsvProvider<>(Arrays.asList(new String[] { "A", "B", "C" }));
+		A.addRow("Row 1", Arrays.asList(new Object[] { "1", "2,", "" }));
+		A.addRow("Row 2", Arrays.asList(new Object[] { "\n", "", null }));
 
+		boolean isOk = true;
+		StringBuilder sb = new StringBuilder();
+		try {
+			A.toCsv(sb, ",");
+		} catch (Exception ex) {
+			isOk = false;
+		}
+		Assert.assertTrue(isOk);
 	}
 
 	private <T> boolean contentAsStringIsEqual(List<List<T>> aList, List<List<T>> bList) {
