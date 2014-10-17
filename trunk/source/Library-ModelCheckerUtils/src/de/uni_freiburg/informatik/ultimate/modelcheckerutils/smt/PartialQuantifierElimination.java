@@ -36,8 +36,9 @@ import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
  */
 public class PartialQuantifierElimination {
 
-	static boolean USE_UPD = true;
-	static boolean USE_SOS = true;
+	static final boolean USE_UPD = true;
+	static final boolean USE_IRD = !true;
+	static final boolean USE_SOS = true;
 
 	/**
 	 * Returns equivalent formula. Quantifier is dropped if quantified variable
@@ -127,7 +128,7 @@ public class PartialQuantifierElimination {
 
 		// apply Infinity Restrictor Drop
 		Term termAfterIRD;
-		{
+		if (USE_IRD){
 			Term[] oldParams;
 			if (quantifier == QuantifiedFormula.EXISTS) {
 				oldParams = SmtUtils.getDisjuncts(result);
