@@ -54,6 +54,9 @@ public abstract class Xnf extends Nnf {
 				// for CNF we start with the empty disjunction (which is false)
 				resOuterSet.add(new HashSet<Term>());
 				for (Term inputInner : newArgs) {
+					if (!mServices.getProgressMonitorService().continueProcessing()) {
+						throw new ToolchainCanceledException();
+					}
 					//e.g. for CNF we iterate over each disjunct of the input
 					if ((inputInner instanceof ApplicationTerm) && 
 							((ApplicationTerm) inputInner).getFunction().getName().equals(outerConnectiveSymbol())) {
