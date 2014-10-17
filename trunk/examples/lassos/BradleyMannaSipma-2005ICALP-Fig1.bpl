@@ -1,12 +1,17 @@
-//#rTermination
+//#rTerminationDerivable
 /*
  * Date: 21.09.2013
  * Author: leike@informatik.uni-freiburg.de
+ *
+ * Updated: 2014-10-17
+ * (fixed a small error)
  *
  * This is the program "SIMPLE" from Fig.1 of
  * A. R. Bradley, Z. Manna, and H. B. Sipma.
  * The polyranking principle.
  * In ICALP, pages 1349–1361. Springer, 2005.
+ *
+ * This program has a 2-phase ranking function.
  */
 
 procedure main() returns ()
@@ -24,6 +29,7 @@ procedure main() returns ()
       assume(y >= y_old + 1);
     } else {
       assume(x >= x_old + 1);
+      assume(y == y_old);
     }
     
     havoc x_old;
