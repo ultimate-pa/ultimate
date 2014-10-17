@@ -171,10 +171,20 @@ public abstract class Xnf extends Nnf {
 			}
 			// for CNF: we iterate over all disjuncts
 			for (Term inputOuter : inputOuters) {
+				int loopCounter = 0;
 				for (Set<Term> oldOuter : oldResOuterSet) {
 					HashSet<Term> newOuter = new HashSet<Term>(oldOuter);
 					newOuter.add(inputOuter);
 					resOuterSet.add(newOuter);
+					if (loopCounter == 10000) {
+						if (!mServices.getProgressMonitorService().continueProcessing()) {
+							throw new ToolchainCanceledException();
+						} else {
+							loopCounter = 0; 
+						}
+					} 
+					loopCounter++;
+
 				}
 			}
 		}
