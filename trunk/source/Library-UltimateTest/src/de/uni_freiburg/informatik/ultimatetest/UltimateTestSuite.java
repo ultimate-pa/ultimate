@@ -85,11 +85,16 @@ public abstract class UltimateTestSuite {
 	@AfterClass
 	public final static void writeSummaries() {
 		if (sSummaries == null || sSummaries.size() == 0) {
+			System.out.println("No test summaries available");
 			return;
 		}
 
 		for (ITestSummary summary : sSummaries) {
-			Util.writeSummary(summary);
+			try {
+				Util.writeSummary(summary);
+			} catch (Exception ex) {
+				ex.printStackTrace();
+			}
 		}
 
 		sSummaries = null;
