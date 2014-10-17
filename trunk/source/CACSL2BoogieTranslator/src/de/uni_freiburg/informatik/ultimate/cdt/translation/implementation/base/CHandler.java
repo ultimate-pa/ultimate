@@ -663,9 +663,6 @@ public class CHandler implements ICHandler {
 						
 						if (onHeap) {
 							LocalLValue llVal = new LocalLValue(lhs, cDec.getType());
-//							((ResultExpression) result).stmt.add( //malloc is done by initvar
-//									mMemoryHandler.getMallocCall(main, mFunctionHandler, 
-//											mMemoryHandler.calculateSizeOf(cDec.getType(), loc), llVal, loc));
 							mMemoryHandler.addVariableToBeFreed(main, llVal);
 						}
 
@@ -1234,8 +1231,9 @@ public class CHandler implements ICHandler {
 			ResultExpression rrToInt = ConvExpr.rexBoolToIntIfNecessary(loc, rr);
 			ResultExpression rlToInt = ConvExpr.rexBoolToIntIfNecessary(loc, rl);
 			
-			doIntOverflowTreatment(main, loc, rrToInt);
-			doIntOverflowTreatment(main, loc, rlToInt);
+			doIntOverflowTreatmentInComparison(main, loc, rlToInt, rrToInt);
+//			doIntOverflowTreatment(main, loc, rrToInt);
+//			doIntOverflowTreatment(main, loc, rlToInt);
 			
 			stmt.addAll(rlToInt.stmt);
 			stmt.addAll(rrToInt.stmt);
@@ -1583,38 +1581,54 @@ public class CHandler implements ICHandler {
 			throw new UnsupportedSyntaxException(loc, msg);
 		}
 	}
+	
+	private void doIntOverflowTreatmentInComparison(Dispatcher main,
+			CACSLLocation loc, ResultExpression left,
+			ResultExpression right) {
+		if (main.cHandler.getUnsignedTreatment() != UNSIGNED_TREATMENT.IGNORE)
+			return;
+		
+		boolean isLeftUnsigned = left.lrVal.cType instanceof CPrimitive
+				&& ((CPrimitive) left.lrVal.cType).isUnsigned()
+				&& !left.lrVal.isIntFromPointer;
+		boolean isRightUnsigned = right.lrVal.cType instanceof CPrimitive
+				&& ((CPrimitive) right.lrVal.cType).isUnsigned()
+				&& !right.lrVal.isIntFromPointer;
 
-	public void doIntOverflowTreatment(Dispatcher main, CACSLLocation loc,
-			ResultExpression rrToInt) {
-		//special treatment for unsigned integer types
-		if (main.cHandler.getUnsignedTreatment() != UNSIGNED_TREATMENT.IGNORE
-				&& rrToInt != null
-				&& rrToInt.lrVal != null 
-				&& !rrToInt.lrVal.isIntFromPointer
-				&& rrToInt.lrVal.cType instanceof CPrimitive 
-				&& ((CPrimitive) rrToInt.lrVal.cType).isUnsigned()) {
-			int exponentInBytes = mMemoryHandler.typeSizeConstants
-						.CPrimitiveToTypeSizeConstant.get(((CPrimitive) rrToInt.lrVal.cType).getType());
-			BigInteger maxValue = new BigInteger("2")
-					.pow(exponentInBytes * 8);
-
-			if (main.cHandler.getUnsignedTreatment() == UNSIGNED_TREATMENT.ASSUME_ALL) {
-				AssumeStatement assumeGeq0 = new AssumeStatement(loc, new BinaryExpression(loc, BinaryExpression.Operator.COMPGEQ,
-						rrToInt.lrVal.getValue(), new IntegerLiteral(loc, SFO.NR0)));
-				rrToInt.stmt.add(assumeGeq0);
-				
-				AssumeStatement assumeLtMax = new AssumeStatement(loc, new BinaryExpression(loc, BinaryExpression.Operator.COMPLT,
-						rrToInt.lrVal.getValue(), new IntegerLiteral(loc, maxValue.toString())));
-				rrToInt.stmt.add(assumeLtMax);
-			} else if (main.cHandler.getUnsignedTreatment() == UNSIGNED_TREATMENT.WRAPAROUND) {
-				rrToInt.lrVal = new RValue(new BinaryExpression(loc, BinaryExpression.Operator.ARITHMOD, 
-							rrToInt.lrVal.getValue(), 
-							new IntegerLiteral(loc, maxValue.toString())), 
-						rrToInt.lrVal.cType, 
-						rrToInt.lrVal.isBoogieBool,
-						false);
-			}
+		//if one is unsigned, we convert the other to unsigned
+		// --> C99: "usual conversions"
+		if (isLeftUnsigned || isRightUnsigned) {
+			doIntOverflowTreatment(main, loc, left);
+			doIntOverflowTreatment(main, loc, right);
 		}
+		
+	}
+
+	private void doIntOverflowTreatment(Dispatcher main, CACSLLocation loc,
+			ResultExpression rex) {
+		//special treatment for unsigned integer types
+		int exponentInBytes = mMemoryHandler.typeSizeConstants
+				.CPrimitiveToTypeSizeConstant.get(((CPrimitive) rex.lrVal.cType).getType());
+		BigInteger maxValue = new BigInteger("2")
+			.pow(exponentInBytes * 8);
+
+		if (main.cHandler.getUnsignedTreatment() == UNSIGNED_TREATMENT.ASSUME_ALL) {
+			AssumeStatement assumeGeq0 = new AssumeStatement(loc, new BinaryExpression(loc, BinaryExpression.Operator.COMPGEQ,
+					rex.lrVal.getValue(), new IntegerLiteral(loc, SFO.NR0)));
+			rex.stmt.add(assumeGeq0);
+
+			AssumeStatement assumeLtMax = new AssumeStatement(loc, new BinaryExpression(loc, BinaryExpression.Operator.COMPLT,
+					rex.lrVal.getValue(), new IntegerLiteral(loc, maxValue.toString())));
+			rex.stmt.add(assumeLtMax);
+		} else if (main.cHandler.getUnsignedTreatment() == UNSIGNED_TREATMENT.WRAPAROUND) {
+			rex.lrVal = new RValue(new BinaryExpression(loc, BinaryExpression.Operator.ARITHMOD, 
+					rex.lrVal.getValue(), 
+					new IntegerLiteral(loc, maxValue.toString())), 
+					rex.lrVal.cType, 
+					rex.lrVal.isBoogieBool,
+					false);
+		}
+
 	}
 
 	@Override

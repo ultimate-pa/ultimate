@@ -328,7 +328,6 @@ public class InitializationHandler {
 						|| initializerUnderlyingType instanceof CArray) {
 					rhs = initializer.lrVal.getValue();
 				} else if (initializerUnderlyingType instanceof CPrimitive 
-						//						&& ((CPrimitive) initializerUnderlyingType).getType() == PRIMITIVE.INT){
 						&& ((CPrimitive) initializerUnderlyingType).getGeneralType() == GENERALPRIMITIVE.INTTYPE){
 					String offset = ((IntegerLiteral) initializer.lrVal.getValue()).getValue();
 					if (offset.equals("0")) {
@@ -358,22 +357,12 @@ public class InitializationHandler {
 				CallStatement mallocRex = mMemoryHandler.getMallocCall(main, mFunctionHandler,
 						mMemoryHandler.calculateSizeOf(lCType, loc), new LocalLValue(lhs, cType), loc);
 				stmt.add(mallocRex);
-//				stmt.addAll(mallocRex.stmt);
-//				decl.addAll(mallocRex.decl);
-//				auxVars.putAll(mallocRex.auxVars);
-//				Expression address = mallocRex.lrVal.getValue();
-
-//				Statement assign = new AssignmentStatement(loc, new LeftHandSide[] {lhs}, 
-//						new Expression[] { mallocRex.lrVal.getValue()});
-//				stmt.add(assign);
 
 				if (initializer == null) {
 					stmt.addAll(this.initArrayOnHeap(main, loc, 
-//							null, address, (CArray) lCType));				
 							null, arrayAddress, (CArray) lCType));				
 				} else if (initializer instanceof ResultExpressionListRec) {
 					stmt.addAll(this.initArrayOnHeap(main, loc, 
-//							((ResultExpressionListRec) initializer).list, address, (CArray) lCType));				
 							((ResultExpressionListRec) initializer).list, arrayAddress, (CArray) lCType));				
 				} else if (initializer instanceof ResultExpression) {// we have a variable length array and need the corresponding aux vars
 					//					stmt.addAll(initializer.stmt);
@@ -542,7 +531,7 @@ public class InitializationHandler {
 				}
 				blockOffset = 
 						CHandler.createArithmeticExpression(IASTBinaryExpression.op_multiply,
-								new IntegerLiteral(loc, new Integer(i).toString()),					blockOffset,
+								new IntegerLiteral(loc, new Integer(i).toString()),	blockOffset,
 								loc);	
 				newStartAddressOffsetInner = 
 						CHandler.createArithmeticExpression(IASTBinaryExpression.op_plus,
@@ -782,7 +771,11 @@ public class InitializationHandler {
 							null,
 							fieldDecl, fieldAuxVars);
 				} else if (underlyingFieldType instanceof CEnum) {
-					throw new UnsupportedSyntaxException(loc, "..");
+					//like CPrimitive (?)
+					fieldWrites = main.cHandler.getInitHandler().initVar(loc, main, 
+							fieldHlv, underlyingFieldType, 
+							i < rerl.list.size() ? rerl.list.get(i) : null);
+//					throw new UnsupportedSyntaxException(loc, "..");
 				} else if (underlyingFieldType instanceof CStruct) {
 					ResultExpressionListRec fieldRerl = i < rerl.list.size() ? 
 							rerl.list.get(i) : new ResultExpressionListRec();

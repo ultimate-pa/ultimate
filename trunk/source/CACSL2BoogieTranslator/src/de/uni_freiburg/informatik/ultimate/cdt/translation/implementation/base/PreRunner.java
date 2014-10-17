@@ -8,6 +8,7 @@ import java.util.LinkedHashSet;
 import org.eclipse.cdt.core.dom.ast.ASTVisitor;
 import org.eclipse.cdt.core.dom.ast.IASTArrayDeclarator;
 import org.eclipse.cdt.core.dom.ast.IASTArraySubscriptExpression;
+import org.eclipse.cdt.core.dom.ast.IASTCastExpression;
 import org.eclipse.cdt.core.dom.ast.IASTCompositeTypeSpecifier;
 import org.eclipse.cdt.core.dom.ast.IASTCompoundStatement;
 import org.eclipse.cdt.core.dom.ast.IASTDeclSpecifier;
@@ -22,10 +23,12 @@ import org.eclipse.cdt.core.dom.ast.IASTFunctionDefinition;
 import org.eclipse.cdt.core.dom.ast.IASTIdExpression;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 import org.eclipse.cdt.core.dom.ast.IASTParameterDeclaration;
+import org.eclipse.cdt.core.dom.ast.IASTPointerOperator;
 import org.eclipse.cdt.core.dom.ast.IASTSimpleDeclaration;
 import org.eclipse.cdt.core.dom.ast.IASTStatement;
 import org.eclipse.cdt.core.dom.ast.IASTSwitchStatement;
 import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
+import org.eclipse.cdt.core.dom.ast.IASTTypeId;
 import org.eclipse.cdt.core.dom.ast.IASTUnaryExpression;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTSimpleDeclaration;
 
@@ -217,6 +220,43 @@ public class PreRunner extends ASTVisitor {
             		this.isMMRequired = true;
             	}
             }
+        } else if (expression instanceof IASTCastExpression) {
+        	//if we cast an array to a pointer, the array must be onHeap
+        	IASTNode toBePutOnHeap = null;
+        	
+        	//is the operand an array?
+        	boolean isArray = false;
+        	IASTExpression operand = ((IASTCastExpression) expression).getOperand();
+        	String operandId = extraxtExpressionIdFromPossiblyComplexExpression(operand);
+//        	if (operand instanceof IASTIdExpression) {
+        	if (operandId != null) {
+//        		IASTNode stEntry = sT.get(((IASTIdExpression) operand).getName().toString());
+        		IASTNode stEntry = sT.get(operandId);
+        		if (stEntry instanceof IASTArrayDeclarator) {
+        			isArray = true;
+        			toBePutOnHeap = stEntry;
+        		} else {
+        			//TODO: are there other cases?
+        		}
+        	} else {
+        		//TODO: treat other cases
+        	}
+        	
+        	
+        	//do we cast to a pointer?
+        	boolean castToPointer = false;
+        	if (isArray) {
+        		IASTTypeId tId = ((IASTCastExpression) expression).getTypeId();
+        		IASTPointerOperator[] ptrOps = tId.getAbstractDeclarator().getPointerOperators();
+        		if (ptrOps != null && ptrOps.length >= 1) {
+        			castToPointer = true;
+        		}
+        	}
+        	
+        	if (isArray && castToPointer) {
+        		variablesOnHeap.add(toBePutOnHeap);
+        	}
+        	
         }
         return super.visit(expression);
     }
