@@ -81,7 +81,7 @@ public class NestedTemplate extends RankingTemplate {
 	}
 	
 	@Override
-	protected void init_template() {
+	protected void _init() {
 		m_delta = newDelta(s_name_delta);
 		for (int i = 0; i < m_Size; ++i) {
 			m_fgens[i] = new AffineFunctionGenerator(m_script, m_variables,

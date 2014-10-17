@@ -113,4 +113,10 @@ public class NestedRankingFunction extends RankingFunction {
 	public Ordinal evaluate(Map<RankVar, Rational> assignment) {
 		throw new UnsupportedOperationException("not yet implemented");
 	}
+	
+	@Override
+	public Ordinal codomain() {
+		// phases * omega
+		return Ordinal.fromInteger(BigInteger.valueOf(m_Ranking.length)).mult(Ordinal.OMEGA);
+	}
 }

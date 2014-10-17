@@ -101,4 +101,9 @@ public class LinearRankingFunction extends RankingFunction {
 		}
 		return Ordinal.fromInteger(i);
 	}
+	
+	@Override
+	public Ordinal codomain() {
+		return Ordinal.OMEGA;
+	}
 }

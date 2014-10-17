@@ -26,7 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.lassoranker.termination.templates;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -53,19 +52,19 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
  * 
  * @author Jan Leike
  */
-public class AffineTemplate extends RankingTemplate {
+public class AffineTemplate extends ComposableTemplate {
 	
-	private static final String s_name_delta = "delta";
-	private static final String s_name_function = "rank";
+	private static final String s_name_delta = "delta_";
+	private static final String s_name_function = "rank_";
 	
 	private Term m_delta;
 	private AffineFunctionGenerator m_fgen;
 	
 	@Override
-	protected void init_template() {
-		m_delta = newDelta(s_name_delta);
+	protected void _init() {
+		m_delta = newDelta(s_name_delta + getInstanceNumber());
 		m_fgen = new AffineFunctionGenerator(m_script, m_variables,
-				s_name_function);
+				s_name_function + getInstanceNumber());
 	}
 	
 	@Override
@@ -80,38 +79,62 @@ public class AffineTemplate extends RankingTemplate {
 	}
 	
 	@Override
-	public List<List<LinearInequality>> getConstraints(
+	public List<List<LinearInequality>> getConstraintsDec(
 			Map<RankVar, Term> inVars, Map<RankVar, Term> outVars) {
-		checkInitialized();
-		List<List<LinearInequality>> conjunction =
-				new ArrayList<List<LinearInequality>>();
-		
-		// f(x) > 0
-		{
-			LinearInequality li = m_fgen.generate(inVars);
-			li.setStrict(true);
-			li.motzkin_coefficient = sRedAtoms ?
-					PossibleMotzkinCoefficients.ONE
-					: PossibleMotzkinCoefficients.ANYTHING;
-			conjunction.add(Collections.singletonList(li));
-		}
-		
 		// f(x') < f(x) - delta
-		{
-			LinearInequality li = m_fgen.generate(inVars);
-			LinearInequality li2 = m_fgen.generate(outVars);
-			li2.negate();
-			li.add(li2);
-			AffineTerm a = new AffineTerm(m_delta, Rational.MONE);
-			li.add(a);
-			li.setStrict(true);
-			li.motzkin_coefficient = sRedAtoms ? PossibleMotzkinCoefficients.ONE
-					: PossibleMotzkinCoefficients.ANYTHING;
-			conjunction.add(Collections.singletonList(li));
-		}
+		LinearInequality li = m_fgen.generate(inVars);
+		LinearInequality li2 = m_fgen.generate(outVars);
+		li2.negate();
+		li.add(li2);
+		AffineTerm a = new AffineTerm(m_delta, Rational.MONE);
+		li.add(a);
+		li.setStrict(true);
+		li.motzkin_coefficient = sRedAtoms ? PossibleMotzkinCoefficients.ONE
+				: PossibleMotzkinCoefficients.ANYTHING;
 		
 		// delta > 0 is assured by RankingFunctionTemplate.newDelta
-		return conjunction;
+		return Collections.singletonList(Collections.singletonList(li));
+	}
+
+	@Override
+	public List<List<LinearInequality>> getConstraintsNonInc(
+			Map<RankVar, Term> inVars, Map<RankVar, Term> outVars) {
+		// f(x') ≤ f(x)
+		LinearInequality li = m_fgen.generate(inVars);
+		LinearInequality li2 = m_fgen.generate(outVars);
+		li2.negate();
+		li.add(li2);
+		li.setStrict(false);
+		li.motzkin_coefficient = sRedAtoms ? PossibleMotzkinCoefficients.ONE
+				: PossibleMotzkinCoefficients.ANYTHING;
+		return Collections.singletonList(Collections.singletonList(li));
+	}
+
+	@Override
+	public List<List<LinearInequality>> getConstraintsBounded(
+			Map<RankVar, Term> inVars, Map<RankVar, Term> outVars) {
+		// f(x) > 0
+		LinearInequality li = m_fgen.generate(inVars);
+		li.setStrict(true);
+		li.motzkin_coefficient = sRedAtoms ?
+				PossibleMotzkinCoefficients.ONE
+				: PossibleMotzkinCoefficients.ANYTHING;
+		return Collections.singletonList(Collections.singletonList(li));
+	}
+
+	@Override
+	public List<String> getAnnotationsDec() {
+		return Collections.singletonList("rank decreasing");
+	}
+
+	@Override
+	public List<String> getAnnotationsNonInc() {
+		return Collections.singletonList("rank nonincreasing");
+	}
+
+	@Override
+	public List<String> getAnnotationsBounded() {
+		return Collections.singletonList("rank bounded");
 	}
 
 	@Override
@@ -126,14 +149,6 @@ public class AffineTemplate extends RankingTemplate {
 			throws SMTLIBException {
 		AffineFunction f = m_fgen.extractAffineFunction(val);
 		return new LinearRankingFunction(f);
-	}
-	
-	@Override
-	public List<String> getAnnotations() {
-		List<String> annotations = new ArrayList<String>();
-		annotations.add("rank bounded");
-		annotations.add("rank decreasing");
-		return annotations;
 	}
 	
 	@Override

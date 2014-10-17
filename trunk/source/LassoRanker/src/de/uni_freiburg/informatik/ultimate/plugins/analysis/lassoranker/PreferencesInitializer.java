@@ -31,6 +31,8 @@ public class PreferencesInitializer extends UltimatePreferenceInitializer {
 	public static final boolean s_enable_piecewise_template = true;
 	public static final int     s_piecewise_template_size = 2;
 	public static final boolean s_enable_parallel_template = true;
+	public static final int     s_multilex_template_size = 2;
+	public static final boolean s_enable_multilex_template = false;
 	public static final int     s_parallel_template_size = 2;
 	
 	/*
@@ -74,6 +76,10 @@ public class PreferencesInitializer extends UltimatePreferenceInitializer {
 			"Parallel template";
 	public static final String LABEL_parallel_template_size =
 			"Parallel template size";
+	public static final String LABEL_enable_multilex_template =
+			"Multilex template";
+	public static final String LABEL_multilex_template_size =
+			"Multilex template size";
 	public static final String LABEL_use_external_solver =
 			"Use external SMT solver";
 	public static final String LABEL_smt_solver_command =
@@ -169,6 +175,14 @@ public class PreferencesInitializer extends UltimatePreferenceInitializer {
 				new UltimatePreferenceItem<Integer>(
 						LABEL_parallel_template_size,
 						s_parallel_template_size,
+						PreferenceType.Integer),
+				new UltimatePreferenceItem<Boolean>(
+						LABEL_enable_multilex_template,
+						s_enable_multilex_template,
+						PreferenceType.Boolean),
+				new UltimatePreferenceItem<Integer>(
+						LABEL_multilex_template_size,
+						s_multilex_template_size,
 						PreferenceType.Integer),
 				new UltimatePreferenceItem<Boolean>(
 						LABEL_use_external_solver,

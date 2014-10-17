@@ -138,4 +138,9 @@ public class PiecewiseRankingFunction extends RankingFunction {
 		}
 		return Ordinal.fromInteger(r.ceil().numerator());
 	}
+
+	@Override
+	public Ordinal codomain() {
+		return Ordinal.OMEGA;
+	}
 }

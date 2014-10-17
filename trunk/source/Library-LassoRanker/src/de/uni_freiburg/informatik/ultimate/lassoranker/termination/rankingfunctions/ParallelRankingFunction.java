@@ -115,4 +115,9 @@ public class ParallelRankingFunction extends RankingFunction {
 		}
 		return o;
 	}
+	
+	@Override
+	public Ordinal codomain() {
+		return Ordinal.OMEGA;
+	}
 }

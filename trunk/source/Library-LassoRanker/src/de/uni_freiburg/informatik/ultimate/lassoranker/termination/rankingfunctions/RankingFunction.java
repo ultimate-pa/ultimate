@@ -58,6 +58,11 @@ public abstract class RankingFunction implements Serializable {
 	public abstract Set<RankVar> getVariables();
 	
 	/**
+	 * @return the ranking function's codomain
+	 */
+	public abstract Ordinal codomain();
+	
+	/**
 	 * Evaluate the ranking function
 	 * @param assignment the variable assignment
 	 * @return value of the function as an ordinal

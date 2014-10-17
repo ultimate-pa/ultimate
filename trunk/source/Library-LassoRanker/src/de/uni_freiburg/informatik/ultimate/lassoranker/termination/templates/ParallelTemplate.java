@@ -91,7 +91,7 @@ public class ParallelTemplate extends RankingTemplate {
 	}
 	
 	@Override
-	protected void init_template() {
+	protected void _init() {
 		for (int i = 0; i < size; ++i) {
 			m_deltas[i] = newDelta(s_name_delta + i);
 			m_fgens[i] = new AffineFunctionGenerator(m_script, m_variables,

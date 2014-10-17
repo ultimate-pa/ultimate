@@ -26,12 +26,12 @@
  */
 package de.uni_freiburg.informatik.ultimate.lassoranker.termination.rankingfunctions;
 
-import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.lassoranker.termination.AffineFunction;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.RankVar;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
@@ -47,29 +47,27 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 public class LexicographicRankingFunction extends RankingFunction {
 	private static final long serialVersionUID = -7426526617632086331L;
 	
-	private final AffineFunction[] m_ranking;
-	public final int lex;
+	private final RankingFunction[] m_Parts;
 	
-	public LexicographicRankingFunction(AffineFunction[] ranking) {
-		m_ranking = ranking;
-		lex = ranking.length;
-		assert(lex > 0);
+	public LexicographicRankingFunction(RankingFunction[] parts) {
+		assert(parts.length >= 1);
+		m_Parts = parts;
 	}
 	
 	@Override
 	public String getName() {
-		return m_ranking.length + "-lex";
+		return m_Parts.length + "-lex";
 	}
 	
-	public AffineFunction[] getComponents() {
-		return m_ranking;
+	public RankingFunction[] getComponents() {
+		return m_Parts;
 	}
 	
 	@Override
 	public Set<RankVar> getVariables() {
 		Set<RankVar> vars = new LinkedHashSet<RankVar>();
-		for (AffineFunction af : m_ranking) {
-			vars.addAll(af.getVariables());
+		for (RankingFunction rf : m_Parts) {
+			vars.addAll(rf.getVariables());
 		}
 		return vars;
 	}
@@ -77,7 +75,7 @@ public class LexicographicRankingFunction extends RankingFunction {
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
-		sb.append(m_ranking.length);
+		sb.append(m_Parts.length);
 		sb.append("-lexicographic ranking function:\n");
 		sb.append("  f(");
 		boolean first = true;
@@ -89,11 +87,11 @@ public class LexicographicRankingFunction extends RankingFunction {
 			first = false;
 		}
 		sb.append(") = <");
-		for (int i = 0; i < lex; ++i) {
-			sb.append(m_ranking[i]);
-			if (i < lex - 1) {
+		for (int i = 0; i < m_Parts.length; ++i) {
+			if (i > 0) {
 				sb.append(",  ");
 			}
+			sb.append(m_Parts[i]);
 		}
 		sb.append(">");
 		return sb.toString();
@@ -101,25 +99,35 @@ public class LexicographicRankingFunction extends RankingFunction {
 	
 	@Override
 	public Term[] asLexTerm(Script script) throws SMTLIBException {
-		Term[] lex = new Term[m_ranking.length];
-		for (int i = 0; i < m_ranking.length; ++i) {
-			lex[i] = m_ranking[i].asTerm(script);
+		List<Term> lex = new ArrayList<Term>();
+		for (int i = 0; i < m_Parts.length; ++i) {
+			Term[] lex_part = m_Parts[i].asLexTerm(script);
+			for (int j = 0; j < lex_part.length; ++j) {
+				lex.add(lex_part[j]);
+			}
 		}
-		return lex;
+		return lex.toArray(new Term[0]);
 	}
 	
 	@Override
 	public Ordinal evaluate(Map<RankVar, Rational> assignment) {
 		Ordinal o = Ordinal.ZERO;
-		Ordinal w_pow = Ordinal.ONE;
-		for (int i = lex - 1; i >= 0; --i) {
-			Rational r = m_ranking[i].evaluate(assignment);
-			if (r.compareTo(Rational.ZERO) > 0) {
-				BigInteger k = r.ceil().numerator();
-				o = o.add(w_pow.mult(Ordinal.fromInteger(k)));
-			}
-			w_pow = w_pow.mult(Ordinal.OMEGA);
-		}
+		// TODO
+//		Ordinal w_pow = Ordinal.ONE;
+//		for (int i = m_Parts.length - 1; i >= 0; --i) {
+//			Ordinal a = m_Parts[i].evaluate(assignment);
+//			if (r.compareTo(Rational.ZERO) > 0) {
+//				BigInteger k = r.ceil().numerator();
+//				o = o.add(w_pow.mult(Ordinal.fromInteger(k)));
+//			}
+//			w_pow = w_pow.mult(Ordinal.OMEGA);
+//		}
 		return o;
+	}
+	
+	@Override
+	public Ordinal codomain() {
+		// TODO
+		return Ordinal.OMEGA;
 	}
 }

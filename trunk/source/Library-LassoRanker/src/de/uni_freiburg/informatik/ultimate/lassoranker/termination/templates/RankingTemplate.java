@@ -30,6 +30,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
+import de.uni_freiburg.informatik.ultimate.lassoranker.InstanceCounting;
 import de.uni_freiburg.informatik.ultimate.lassoranker.LinearInequality;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.TerminationArgumentSynthesizer;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.rankingfunctions.RankingFunction;
@@ -46,7 +47,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
  * @author Jan Leike
  *
  */
-public abstract class RankingTemplate {
+public abstract class RankingTemplate extends InstanceCounting {
 	/**
 	 * Fix Motzkin coefficients of the red atoms?
 	 */
@@ -75,14 +76,14 @@ public abstract class RankingTemplate {
 		m_tas = tas;
 		m_script = tas.getScript();
 		m_variables = tas.getRankVars();
-		init_template();
+		_init();
 		m_initialized = true;
 	}
 	
 	/**
 	 * Init method to be overwritten by the children
 	 */
-	protected abstract void init_template();
+	protected abstract void _init();
 	
 	/**
 	 * Check if the template was properly initialized using init()
@@ -101,7 +102,7 @@ public abstract class RankingTemplate {
 	public abstract String getName();
 	
 	/**
-	 * Generate the Farkas' Lemma applications for this template
+	 * Generate the constraints in form of linear inequalities in CNF
 	 * 
 	 * Must be initialized before calling this!
 	 * 
@@ -141,7 +142,6 @@ public abstract class RankingTemplate {
 	
 	/**
 	 * Extract the ranking function from a model
-	 * @param script The SMTLib interface script
 	 * @return ranking function
 	 * @throws SMTLIBException
 	 */
@@ -150,7 +150,6 @@ public abstract class RankingTemplate {
 	
 	/**
 	 * Create a new positive variable (as a nullary function symbol)
-	 * @param script current SMT script
 	 * @param name the new variable's name
 	 * @return the new variable as a term
 	 */

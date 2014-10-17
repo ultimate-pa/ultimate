@@ -38,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.LinearInequality.Possible
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.AffineFunction;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.AffineFunctionGenerator;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.rankingfunctions.LexicographicRankingFunction;
+import de.uni_freiburg.informatik.ultimate.lassoranker.termination.rankingfunctions.LinearRankingFunction;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.rankingfunctions.RankingFunction;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.RankVar;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
@@ -80,7 +81,7 @@ public class LexicographicTemplate extends RankingTemplate {
 	}
 	
 	@Override
-	protected void init_template() {
+	protected void _init() {
 		for (int i = 0; i < size; ++i) {
 			m_deltas[i] = newDelta(s_name_delta + i);
 			m_fgens[i] = new AffineFunctionGenerator(m_script, m_variables,
@@ -202,11 +203,12 @@ public class LexicographicTemplate extends RankingTemplate {
 	@Override
 	public RankingFunction extractRankingFunction(Map<Term, Rational> val)
 			throws SMTLIBException {
-		AffineFunction[] fs = new AffineFunction[size];
+		RankingFunction[] rfs = new RankingFunction[size];
 		for (int i = 0; i < size; ++i) {
-			fs[i] = m_fgens[i].extractAffineFunction(val);
+			AffineFunction af = m_fgens[i].extractAffineFunction(val);
+			rfs[i] = new LinearRankingFunction(af);
 		}
-		return new LexicographicRankingFunction(fs);
+		return new LexicographicRankingFunction(rfs);
 	}
 	
 	@Override

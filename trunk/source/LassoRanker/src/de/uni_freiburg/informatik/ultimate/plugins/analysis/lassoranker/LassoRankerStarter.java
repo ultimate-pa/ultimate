@@ -24,6 +24,7 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.termination.TerminationAn
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.TerminationArgument;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.rankingfunctions.RankingFunction;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.templates.AffineTemplate;
+import de.uni_freiburg.informatik.ultimate.lassoranker.termination.templates.ComposedLexicographicTemplate;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.templates.LexicographicTemplate;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.templates.MultiphaseTemplate;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.templates.NestedTemplate;
@@ -232,7 +233,11 @@ public class LassoRankerStarter {
 		if (store.getBoolean(PreferencesInitializer.LABEL_enable_lex_template)) {
 			int maxSize = store.getInt(PreferencesInitializer.LABEL_lex_template_size);
 			for (int i = 2; i <= maxSize; i++) {
-				templates.add(new LexicographicTemplate(i));
+				AffineTemplate[] parts = new AffineTemplate[i];
+				for (int j = 0; j < i; ++j) {
+					parts[j] = new AffineTemplate();
+				}
+				templates.add(new ComposedLexicographicTemplate(parts));
 			}
 		}
 		if (store.getBoolean(PreferencesInitializer.LABEL_enable_piecewise_template)) {
@@ -245,6 +250,16 @@ public class LassoRankerStarter {
 			int maxSize = store.getInt(PreferencesInitializer.LABEL_parallel_template_size);
 			for (int i = 2; i <= maxSize; i++) {
 				templates.add(new ParallelTemplate(i));
+			}
+		}
+		if (store.getBoolean(PreferencesInitializer.LABEL_enable_multilex_template)) {
+			int maxSize = store.getInt(PreferencesInitializer.LABEL_multilex_template_size);
+			for (int i = 2; i <= maxSize; i++) {
+				MultiphaseTemplate[] parts = new MultiphaseTemplate[i];
+				for (int j = 0; j < i; ++j) {
+					parts[j] = new MultiphaseTemplate(i);
+				}
+				templates.add(new ComposedLexicographicTemplate(parts));
 			}
 		}
 		return templates.toArray(new RankingTemplate[0]);

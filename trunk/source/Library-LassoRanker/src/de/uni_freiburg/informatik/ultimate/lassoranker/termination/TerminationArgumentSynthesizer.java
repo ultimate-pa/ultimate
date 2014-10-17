@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.lassoranker.termination;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -181,7 +182,8 @@ public class TerminationArgumentSynthesizer extends ArgumentSynthesizer {
 		List<Term> conj = new ArrayList<Term>(); // List of constraints
 
 		Collection<RankVar> siVars = getSIVars();
-		List<List<LinearInequality>> templateConstraints = template.getConstraints(loop.getInVars(), loop.getOutVars());
+		List<List<LinearInequality>> templateConstraints =
+				template.getConstraints(loop.getInVars(), loop.getOutVars());
 		List<String> annotations = template.getAnnotations();
 		assert annotations.size() == templateConstraints.size();
 
@@ -190,9 +192,23 @@ public class TerminationArgumentSynthesizer extends ArgumentSynthesizer {
 		mLogger.info(templateConstraints.size() + " template conjuncts.");
 
 		// Negate template inequalities
-		for (List<LinearInequality> templateDisj : templateConstraints) {
-			for (LinearInequality li : templateDisj) {
-				li.negate();
+		{
+			Set<LinearInequality> negated = new HashSet<LinearInequality>();
+			/*
+			 * The same linear inequality may occur multiple times in the
+			 * constraints if we use a composed template. That's why we have
+			 * to make sure that we are not negating the same linear inequality
+			 * twice.
+			 * 
+			 * Guess how much debugging it took me to find this error... :/
+			 */
+			for (List<LinearInequality> templateDisj : templateConstraints) {
+				for (LinearInequality li : templateDisj) {
+					if (!negated.contains(li)) {
+						li.negate();
+						negated.add(li);
+					}
+				}
 			}
 		}
 
@@ -310,6 +326,7 @@ public class TerminationArgumentSynthesizer extends ArgumentSynthesizer {
 		Collection<RankVar> rankVars = getRankVars();
 		Collection<RankVar> siVars = getSIVars();
 		m_template.init(this);
+		mLogger.info("Template has degree " + m_template.getDegree() + ".");
 		mLogger.debug("Variables for ranking functions: " + rankVars);
 		mLogger.debug("Variables for supporting invariants: " + siVars);
 		

@@ -226,7 +226,7 @@ public abstract class ArgumentSynthesizer implements Closeable {
 																// variables
 
 		int checkSat_calls = 0;
-		boolean unsat = false;
+		int unsat_calls = 0;
 		while (true) {
 			for (Map.Entry<Term, Rational> entry : val.entrySet()) {
 				if (entry.getValue().equals(Rational.ZERO)) {
@@ -257,12 +257,12 @@ public abstract class ArgumentSynthesizer implements Closeable {
 			if (sat == LBool.SAT) {
 				val = getValuation(not_zero_vars);
 			} else {
-				if (unsat) {
-					// unsat last time as well, so give up
+				++unsat_calls;
+				if (unsat_calls > 1) {
+					// too many unsuccessful calls, so give up
 					m_script.pop(1);
 					break;
 				}
-				unsat = true;
 			}
 			m_script.pop(1);
 		}

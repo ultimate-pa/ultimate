@@ -363,7 +363,6 @@ public class LassoAnalysis {
 			throws SMTLIBException, TermException {
 		// ignore stem
 		mLogger.info("Using template '" + template.getName() + "'.");
-		mLogger.info("Template has degree " + template.getDegree() + ".");
 		mLogger.debug(template);
 		long startTime = System.nanoTime();
 		

@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.lassoranker.termination.templates;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -59,12 +60,12 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
  * 
  * @author Jan Leike
  */
-public class MultiphaseTemplate extends RankingTemplate {
+public class MultiphaseTemplate extends ComposableTemplate {
 	
 	public final int size;
 	
-	private static final String s_name_delta = "delta";
-	private static final String s_name_function = "rank";
+	private static final String s_name_delta = "delta_";
+	private static final String s_name_function = "rank_";
 	
 	private Term[] m_deltas;
 	private AffineFunctionGenerator[] m_fgens;
@@ -80,11 +81,11 @@ public class MultiphaseTemplate extends RankingTemplate {
 	}
 	
 	@Override
-	protected void init_template() {
+	protected void _init() {
 		for (int i = 0; i < size; ++i) {
-			m_deltas[i] = newDelta(s_name_delta + i);
+			m_deltas[i] = newDelta(s_name_delta + getInstanceNumber() + "_" + i);
 			m_fgens[i] = new AffineFunctionGenerator(m_script, m_variables,
-					s_name_function + i);
+					s_name_function + getInstanceNumber() + "_" + i);
 		}
 	}
 	
@@ -120,56 +121,6 @@ public class MultiphaseTemplate extends RankingTemplate {
 		}
 		return sb.toString();
 	}
-	
-	@Override
-	public List<List<LinearInequality>> getConstraints(
-			Map<RankVar, Term> inVars, Map<RankVar, Term> outVars) {
-		checkInitialized();
-		List<List<LinearInequality>> conjunction =
-				new ArrayList<List<LinearInequality>>();
-		
-		// \/_i f_i(x) > 0
-		List<LinearInequality> disjunction = new ArrayList<LinearInequality>();
-		for (int i = 0; i < size; ++i) {
-			LinearInequality li = m_fgens[i].generate(inVars);
-			li.setStrict(true);
-			li.motzkin_coefficient = (i == 0 && sRedAtoms) || (i > 0 && sBlueAtoms) ?
-					PossibleMotzkinCoefficients.ZERO_AND_ONE
-					: PossibleMotzkinCoefficients.ANYTHING;
-			disjunction.add(li);
-		}
-		conjunction.add(disjunction);
-		
-		// f_0(x') < f_0(x) - δ_0
-		// /\ /\_{i>0} ( f_i(x') < f_i(x) - δ_i \/ f_{i-1}(x) > 0 )
-		for (int i = 0; i < size; ++i) {
-			disjunction = new ArrayList<LinearInequality>();
-			LinearInequality li = m_fgens[i].generate(inVars);
-			LinearInequality li2 = m_fgens[i].generate(outVars);
-			li2.negate();
-			li.add(li2);
-			AffineTerm a = new AffineTerm(m_deltas[i], Rational.MONE);
-			li.add(a);
-			li.setStrict(true);
-			li.motzkin_coefficient = sRedAtoms ?
-					PossibleMotzkinCoefficients.ZERO_AND_ONE
-					: PossibleMotzkinCoefficients.ANYTHING;
-			disjunction.add(li);
-			if (i > 0) {
-				LinearInequality li3 = m_fgens[i - 1].generate(inVars);
-				li3.setStrict(true);
-				li3.motzkin_coefficient = PossibleMotzkinCoefficients.ANYTHING;
-//				li3.motzkin_coefficient = blue_atoms ?
-//						PossibleMotzkinCoefficients.ZERO_AND_ONE
-//						: PossibleMotzkinCoefficients.ANYTHING;
-				disjunction.add(li3);
-			}
-			conjunction.add(disjunction);
-		}
-		
-		// delta_i > 0 is assured by RankingFunctionTemplate.newDelta
-		return conjunction;
-	}
 
 	@Override
 	public Collection<Term> getVariables() {
@@ -192,18 +143,112 @@ public class MultiphaseTemplate extends RankingTemplate {
 	}
 	
 	@Override
-	public List<String> getAnnotations() {
+	public int getDegree() {
+		assert(size > 0);
+		return size - 1;
+	}
+
+	@Override
+	public List<List<LinearInequality>> getConstraintsDec(
+			Map<RankVar, Term> inVars, Map<RankVar, Term> outVars) {
+		List<List<LinearInequality>> conjunction =
+				new ArrayList<List<LinearInequality>>();
+		// f_0(x') < f_0(x) - δ_0
+		// /\ /\_{i>0} ( f_i(x') < f_i(x) - δ_i \/ f_{i-1}(x) > 0 )
+		for (int i = 0; i < size; ++i) {
+			List<LinearInequality> disjunction = new ArrayList<LinearInequality>();
+			LinearInequality li = m_fgens[i].generate(inVars);
+			LinearInequality li2 = m_fgens[i].generate(outVars);
+			li2.negate();
+			li.add(li2);
+			AffineTerm a = new AffineTerm(m_deltas[i], Rational.MONE);
+			li.add(a);
+			li.setStrict(true);
+			li.motzkin_coefficient = sRedAtoms ?
+					PossibleMotzkinCoefficients.ZERO_AND_ONE
+					: PossibleMotzkinCoefficients.ANYTHING;
+			disjunction.add(li);
+			if (i > 0) {
+				LinearInequality li3 = m_fgens[i - 1].generate(inVars);
+				li3.setStrict(true);
+				li3.motzkin_coefficient = sBlueAtoms ?
+						PossibleMotzkinCoefficients.ZERO_AND_ONE
+						: PossibleMotzkinCoefficients.ANYTHING;
+				disjunction.add(li3);
+			}
+			conjunction.add(disjunction);
+		}
+		
+		// delta_i > 0 is assured by RankingFunctionTemplate.newDelta
+		return conjunction;
+	}
+
+	@Override
+	public List<List<LinearInequality>> getConstraintsNonInc(
+			Map<RankVar, Term> inVars, Map<RankVar, Term> outVars) {
+		List<List<LinearInequality>> conjunction =
+				new ArrayList<List<LinearInequality>>();
+		// f_0(x') ≤ f_0(x) /\ /\_{i>0} ( f_i(x') ≤ f_i(x) \/ f_{i-1}(x) > 0 )
+		for (int i = 0; i < size; ++i) {
+			List<LinearInequality> disjunction = new ArrayList<LinearInequality>();
+			LinearInequality li = m_fgens[i].generate(inVars);
+			LinearInequality li2 = m_fgens[i].generate(outVars);
+			li2.negate();
+			li.add(li2);
+			li.setStrict(false);
+			li.motzkin_coefficient = sRedAtoms ?
+					PossibleMotzkinCoefficients.ZERO_AND_ONE
+					: PossibleMotzkinCoefficients.ANYTHING;
+			disjunction.add(li);
+			if (i > 0) {
+				LinearInequality li3 = m_fgens[i - 1].generate(inVars);
+				li3.setStrict(true);
+				li3.motzkin_coefficient = sBlueAtoms ?
+						PossibleMotzkinCoefficients.ZERO_AND_ONE
+						: PossibleMotzkinCoefficients.ANYTHING;
+				disjunction.add(li3);
+			}
+			conjunction.add(disjunction);
+		}
+		return conjunction;
+	}
+
+	@Override
+	public List<List<LinearInequality>> getConstraintsBounded(
+			Map<RankVar, Term> inVars, Map<RankVar, Term> outVars) {
+		// \/_i f_i(x) > 0
+		List<LinearInequality> disjunction = new ArrayList<LinearInequality>();
+		for (int i = 0; i < size; ++i) {
+			LinearInequality li = m_fgens[i].generate(inVars);
+			li.setStrict(true);
+			li.motzkin_coefficient = (i == 0 && sRedAtoms) || (i > 0 && sBlueAtoms) ?
+					PossibleMotzkinCoefficients.ZERO_AND_ONE
+					: PossibleMotzkinCoefficients.ANYTHING;
+			disjunction.add(li);
+		}
+		return Collections.singletonList(disjunction);
+	}
+
+	@Override
+	public List<String> getAnnotationsDec() {
 		List<String> annotations = new ArrayList<String>();
-		annotations.add("one of the ranks is bounded");
 		for (int i = 0; i < size; ++i) {
 			annotations.add("rank f" + i + " is decreasing in phase " + i);
 		}
 		return annotations;
 	}
-	
+
 	@Override
-	public int getDegree() {
-		assert(size > 0);
-		return size - 1;
+	public List<String> getAnnotationsNonInc() {
+		List<String> annotations = new ArrayList<String>();
+		for (int i = 0; i < size; ++i) {
+			annotations.add("rank f" + i + " is nonincreasing in phase " + i);
+		}
+		return annotations;
+	}
+
+	@Override
+	public List<String> getAnnotationsBounded() {
+		return Collections.singletonList("one of the ranks is bounded");
 	}
 }

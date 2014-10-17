@@ -120,4 +120,10 @@ public class MultiphaseRankingFunction extends RankingFunction {
 		assert(false);
 		return o;
 	}
+	
+	@Override
+	public Ordinal codomain() {
+		// phases * omega
+		return Ordinal.fromInteger(BigInteger.valueOf(phases)).mult(Ordinal.OMEGA);
+	}
 }
