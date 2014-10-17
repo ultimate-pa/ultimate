@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimatetest;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -8,10 +9,10 @@ import java.util.Map.Entry;
 import de.uni_freiburg.informatik.ultimate.core.services.IResultService;
 import de.uni_freiburg.informatik.ultimate.result.BenchmarkResult;
 import de.uni_freiburg.informatik.ultimatetest.decider.ITestResultDecider.TestResult;
-import de.uni_freiburg.informatik.ultimatetest.summary.OldTestSummary;
+import de.uni_freiburg.informatik.ultimatetest.summary.NewTestSummary;
 import de.uni_freiburg.informatik.ultimatetest.util.Util;
 
-public class TraceAbstractionTestSummary extends OldTestSummary {
+public class TraceAbstractionTestSummary extends NewTestSummary {
 
 	private int mCount;
 
@@ -64,15 +65,17 @@ public class TraceAbstractionTestSummary extends OldTestSummary {
 		sb.append("################# ").append("Trace Abstraction Test Summary").append(" #################")
 				.append("\n");
 
-		sb.append(getSummaryLog(getSummaryMap(TestResult.SUCCESS), "SUCCESSFUL TESTS"));
+		PartitionedResults results = partitionResults(mResults.entrySet());
+
+		sb.append(getSummaryLog(results.Success, "SUCCESSFUL TESTS"));
 		int success = mCount;
 		total = total + mCount;
 		mCount = 0;
-		sb.append(getSummaryLog(getSummaryMap(TestResult.UNKNOWN), "UNKNOWN TESTS"));
+		sb.append(getSummaryLog(results.Unknown, "UNKNOWN TESTS"));
 		int unknown = mCount;
 		total = total + mCount;
 		mCount = 0;
-		sb.append(getSummaryLog(getSummaryMap(TestResult.FAIL), "FAILED TESTS"));
+		sb.append(getSummaryLog(results.Failure, "FAILED TESTS"));
 		int fail = mCount;
 		total = total + mCount;
 		sb.append("\n");
@@ -85,16 +88,31 @@ public class TraceAbstractionTestSummary extends OldTestSummary {
 
 	}
 
-	private String getSummaryLog(Map<String, Summary> map, String title) {
+	private String getSummaryLog(Collection<Entry<UltimateRunDefinition, ExtendedResult>> results, String title) {
 		StringBuilder sb = new StringBuilder();
 		sb.append("====== ").append(title).append(" =====").append("\n");
-		for (Entry<String, Summary> entry : map.entrySet()) {
+
+		// group by category
+		HashMap<String, Collection<Entry<UltimateRunDefinition, ExtendedResult>>> resultsByCategory = new HashMap<>();
+		for (Entry<UltimateRunDefinition, ExtendedResult> entry : results) {
+			Collection<Entry<UltimateRunDefinition, ExtendedResult>> coll = resultsByCategory
+					.get(entry.getValue().Category);
+			if (coll == null) {
+				coll = new ArrayList<>();
+				resultsByCategory.put(entry.getValue().Category, coll);
+			}
+			coll.add(entry);
+		}
+
+		for (Entry<String, Collection<Entry<UltimateRunDefinition, ExtendedResult>>> entry : resultsByCategory
+				.entrySet()) {
 			sb.append("\t").append(entry.getKey()).append("\n");
 
-			for (Entry<String, String> fileMsgPair : entry.getValue().getFileToMessage().entrySet()) {
-				sb.append("\t\t").append(fileMsgPair.getKey()).append(": ").append(fileMsgPair.getValue()).append("\n");
+			for (Entry<UltimateRunDefinition, ExtendedResult> currentResult : entry.getValue()) {
+				sb.append("\t\t").append(currentResult.getKey()).append(": ").append(currentResult.getValue().Message)
+						.append("\n");
 				// Add TraceAbstraction benchmarks
-				Collection<BenchmarkResult> benchmarks = m_TraceAbstractionBenchmarks.get(fileMsgPair.getKey());
+				Collection<BenchmarkResult> benchmarks = m_TraceAbstractionBenchmarks.get(currentResult.getKey());
 				if (benchmarks == null) {
 					sb.append("\t\t").append("No benchmark results available.").append("\n");
 				} else {
@@ -104,10 +122,10 @@ public class TraceAbstractionTestSummary extends OldTestSummary {
 				}
 			}
 
-			sb.append("\tCount for ").append(entry.getKey()).append(": ").append(entry.getValue().getCount())
+			sb.append("\tCount for ").append(entry.getKey()).append(": ").append(entry.getValue().size())
 					.append("\n");
 			sb.append("\t--------").append("\n");
-			mCount = mCount + entry.getValue().getCount();
+			mCount = mCount + entry.getValue().size();
 		}
 		sb.append("Count: ").append(mCount);
 		sb.append("\n\n");

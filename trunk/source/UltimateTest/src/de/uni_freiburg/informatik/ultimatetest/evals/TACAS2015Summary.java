@@ -7,7 +7,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -553,101 +552,6 @@ public class TACAS2015Summary extends NewTestSummary {
 		return result;
 	}
 
-	private PartitionedResults partitionResults(Collection<Entry<UltimateRunDefinition, ExtendedResult>> all) {
-		final LinkedHashSet<Entry<UltimateRunDefinition, ExtendedResult>> goodResults = new LinkedHashSet<>();
-		goodResults.addAll(Util.where(all, new ITestSummaryResultPredicate() {
-			@Override
-			public boolean check(Entry<UltimateRunDefinition, ExtendedResult> entry) {
-				return entry.getValue().Result == TestResult.SUCCESS;
-			}
-		}));
 
-		final LinkedHashSet<Entry<UltimateRunDefinition, ExtendedResult>> timeoutResults = new LinkedHashSet<>();
-		timeoutResults.addAll(Util.where(all, new ITestSummaryResultPredicate() {
-			@Override
-			public boolean check(Entry<UltimateRunDefinition, ExtendedResult> entry) {
-				return (entry.getValue().Result == TestResult.UNKNOWN && entry.getValue().Message.toLowerCase()
-						.contains("timeout"));
-			}
-		}));
-		Collection<Entry<UltimateRunDefinition, ExtendedResult>> errorResults = Util.where(all,
-				new ITestSummaryResultPredicate() {
-					@Override
-					public boolean check(Entry<UltimateRunDefinition, ExtendedResult> entry) {
-						return !goodResults.contains(entry) && !timeoutResults.contains(entry);
-					}
-				});
-
-		final LinkedHashSet<Entry<UltimateRunDefinition, ExtendedResult>> unsafeResults = new LinkedHashSet<>();
-		unsafeResults.addAll(Util.where(goodResults, new ITestSummaryResultPredicate() {
-			@Override
-			public boolean check(Entry<UltimateRunDefinition, ExtendedResult> entry) {
-				return entry.getValue().Message.contains("UNSAFE");
-			}
-		}));
-
-		Collection<Entry<UltimateRunDefinition, ExtendedResult>> safeResults = Util.where(goodResults,
-				new ITestSummaryResultPredicate() {
-					@Override
-					public boolean check(Entry<UltimateRunDefinition, ExtendedResult> entry) {
-						return !unsafeResults.contains(entry);
-					}
-				});
-		PartitionedResults rtr = new PartitionedResults();
-
-		int expectedSafe = 0;
-		int expectedUnsafe = 0;
-		for (Entry<UltimateRunDefinition, ExtendedResult> entry : all) {
-			if (entry.getValue().Message.contains("ExpectedResult: UNSAFE")) {
-				expectedUnsafe++;
-			}
-			if (entry.getValue().Message.contains("ExpectedResult: SAFE")) {
-				expectedSafe++;
-			}
-		}
-
-		rtr.All = all;
-		rtr.Timeout = timeoutResults;
-		rtr.Error = errorResults;
-		rtr.Unsafe = unsafeResults;
-		rtr.Safe = safeResults;
-		rtr.ExpectedSafe = expectedSafe;
-		rtr.ExpectedUnsafe = expectedUnsafe;
-
-		return rtr;
-	}
-
-	private class PartitionedResults {
-		Collection<Entry<UltimateRunDefinition, ExtendedResult>> All;
-		Collection<Entry<UltimateRunDefinition, ExtendedResult>> Timeout;
-		Collection<Entry<UltimateRunDefinition, ExtendedResult>> Error;
-		Collection<Entry<UltimateRunDefinition, ExtendedResult>> Unsafe;
-		Collection<Entry<UltimateRunDefinition, ExtendedResult>> Safe;
-		int ExpectedSafe;
-		int ExpectedUnsafe;
-
-		private PartitionedResults() {
-
-		}
-
-		@Override
-		public String toString() {
-			StringBuilder sb = new StringBuilder();
-			sb.append("Safe: ").append(Safe.size());
-			sb.append(Util.getPlatformLineSeparator());
-			sb.append("Unsafe: ").append(Unsafe.size());
-			sb.append(Util.getPlatformLineSeparator());
-			sb.append("Timeout: ").append(Timeout.size());
-			sb.append(Util.getPlatformLineSeparator());
-			sb.append("Error: ").append(Error.size());
-			sb.append(Util.getPlatformLineSeparator());
-			sb.append("Expected Safe: ").append(ExpectedSafe);
-			sb.append(Util.getPlatformLineSeparator());
-			sb.append("Expected Unsafe: ").append(ExpectedUnsafe);
-			sb.append(Util.getPlatformLineSeparator());
-			sb.append("Total: ").append(All.size());
-			return sb.toString();
-		}
-	}
 
 }
