@@ -23,8 +23,8 @@ public class TACAS2015Matthias extends TACASInterpolation2015 {
 
 	@Override
 	protected String[] getDirectories() {
-		return new String[] { "examples/svcomp/ntdrivers-simplified/" };
-//		 return super.getDirectories();
+//		return new String[] { "examples/svcomp/ntdrivers-simplified/" };
+		 return super.getDirectories();
 	}
 
 }
