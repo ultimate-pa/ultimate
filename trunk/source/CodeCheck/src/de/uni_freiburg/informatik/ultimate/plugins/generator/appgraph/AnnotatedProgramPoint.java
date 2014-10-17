@@ -41,7 +41,8 @@ public class AnnotatedProgramPoint extends ModifiableExplicitEdgesMultigraph<Ann
 	public AnnotatedProgramPoint(IPredicate predicate, ProgramPoint programPoint) {
 		_predicate = predicate;
 		_programPoint = programPoint;
-		_copies = new ArrayList<AnnotatedProgramPoint> ();
+		_copies = new HashSet<AnnotatedProgramPoint> ();
+		_cloneSource = null;
 	}
 
 	/**
@@ -84,10 +85,11 @@ public class AnnotatedProgramPoint extends ModifiableExplicitEdgesMultigraph<Ann
 				oldOutHypEdge.getSource().connectOutgoingReturn(this, (Return) oldOutHypEdge.getStatement(), oldOutHypEdge.getTarget());
 			}
 			oldApp._copies.add(this);
+			_cloneSource = oldApp;
 		}
 	}
 
-	public ArrayList <AnnotatedProgramPoint> getNextClones() {
+	public HashSet <AnnotatedProgramPoint> getNextClones() {
 		return _copies;
 	}
 
@@ -160,7 +162,16 @@ public class AnnotatedProgramPoint extends ModifiableExplicitEdgesMultigraph<Ann
 		return null;
 	}
 	
-	private ArrayList <AnnotatedProgramPoint> _copies;
+	public void isolateNode() {
+		AppEdge[] edges = getIncomingEdges().toArray(new AppEdge[]{});
+		for (AppEdge edge : edges)
+			edge.disconnect();
+		if (_cloneSource != null)
+			_cloneSource._copies.remove(this);
+	}
+	
+	private HashSet <AnnotatedProgramPoint> _copies;
+	private AnnotatedProgramPoint _cloneSource;
 //	public void disconnectOutgoing(AppEdge outEdge) {
 //		if (outEdge instanceof AppHyperEdge) {
 //			((AppHyperEdge) outEdge).hier._outgoingHyperEdges.remove(outEdge);

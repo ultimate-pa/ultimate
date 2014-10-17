@@ -168,6 +168,19 @@ public class ImpulseChecker extends CodeChecker {
 		//improveAnnotations(newRoot);
 		redirectEdges(nodes, clones);
 		
+		removeFalseNodes(nodes, clones);
+		
+		return true;
+	}
+	
+	public boolean removeFalseNodes(AnnotatedProgramPoint[] nodes, AnnotatedProgramPoint[] clones) {
+		for (int i = 0; i < nodes.length; ++i) {
+			if (nodes[i].isErrorLocation())
+				continue;
+            // TODO: Handle the false predicate properly.
+			if (clones[i].getPredicate().toString().endsWith("false"))
+				clones[i].isolateNode();
+		}
 		return true;
 	}
 	
