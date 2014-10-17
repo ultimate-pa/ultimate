@@ -403,6 +403,11 @@ public class TransFormula implements Serializable {
 		Map<TermVariable, Term> subsitutionMapping = new HashMap<TermVariable, Term>();
 		for (int i = transFormula.length - 1; i >= 0; i--) {
 			for (BoogieVar var : transFormula[i].getOutVars().keySet()) {
+				
+				if (!services.getProgressMonitorService().continueProcessing()) {
+					throw new RuntimeException("Unhandled Timeout");
+				}
+				
 				TermVariable outVar = transFormula[i].getOutVars().get(var);
 				TermVariable newOutVar;
 				if (inVars.containsKey(var)) {

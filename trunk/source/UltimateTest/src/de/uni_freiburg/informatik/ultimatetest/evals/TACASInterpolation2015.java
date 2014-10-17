@@ -64,7 +64,7 @@ public abstract class TACASInterpolation2015 extends AbstractModelCheckerTestSui
 		// @formatter:off
 		String[] directories = {
 				// not good for CodeCheck
-			"examples/svcomp/eca-rers2012/",
+//			"examples/svcomp/eca-rers2012/",
 			"examples/svcomp/ntdrivers-simplified/",
 	
    			"examples/svcomp/ssh-simplified/", 
