@@ -21,7 +21,7 @@ public class TACAS2015Alex extends TACASInterpolation2015 {
 	@Override
 	protected int getFilesPerCategory() {
 		// return -1 for all files
-		return -1;
+		return 25;
 	}
 
 	@Override

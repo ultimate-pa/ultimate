@@ -13,27 +13,27 @@ public class SoundnessBugs extends TACASInterpolation2015 {
 
 		addTestCasesFixed("AutomizerC.xml", "TACASInterpolation2015/TreeInterpolation.epf", testcases);
 
-		addTestCasesFixed("CodeCheckNoBE-C.xml", "TACASInterpolation2015/Kojak-FP-nBE.epf", testcases);
-
-		addTestCasesFixed("CodeCheckNoBE-C.xml", "TACASInterpolation2015/Kojak-TreeInterpolation-nBE.epf", testcases);
-
-		addTestCasesFixed("ImpulseNoBE-C.xml", "TACASInterpolation2015/Impulse-FP-nBE.epf", testcases);
-
-		addTestCasesFixed("ImpulseNoBE-C.xml", "TACASInterpolation2015/Impulse-TreeInterpolation-nBE.epf", testcases);
-
-		addTestCasesFixed("CodeCheckWithBE-C.xml", "TACASInterpolation2015/Kojak-FP.epf", testcases);
-
-		addTestCasesFixed("CodeCheckWithBE-C.xml", "TACASInterpolation2015/Kojak-TreeInterpolation.epf", testcases);
-
-		addTestCasesFixed("ImpulseWithBE-C.xml", "TACASInterpolation2015/Impulse-FP.epf", testcases);
-
-		addTestCasesFixed("ImpulseWithBE-C.xml", "TACASInterpolation2015/Impulse-TreeInterpolation.epf", testcases);
+//		addTestCasesFixed("CodeCheckNoBE-C.xml", "TACASInterpolation2015/Kojak-FP-nBE.epf", testcases);
+//
+//		addTestCasesFixed("CodeCheckNoBE-C.xml", "TACASInterpolation2015/Kojak-TreeInterpolation-nBE.epf", testcases);
+//
+//		addTestCasesFixed("ImpulseNoBE-C.xml", "TACASInterpolation2015/Impulse-FP-nBE.epf", testcases);
+//
+//		addTestCasesFixed("ImpulseNoBE-C.xml", "TACASInterpolation2015/Impulse-TreeInterpolation-nBE.epf", testcases);
+//
+//		addTestCasesFixed("CodeCheckWithBE-C.xml", "TACASInterpolation2015/Kojak-FP.epf", testcases);
+//
+//		addTestCasesFixed("CodeCheckWithBE-C.xml", "TACASInterpolation2015/Kojak-TreeInterpolation.epf", testcases);
+//
+//		addTestCasesFixed("ImpulseWithBE-C.xml", "TACASInterpolation2015/Impulse-FP.epf", testcases);
+//
+//		addTestCasesFixed("ImpulseWithBE-C.xml", "TACASInterpolation2015/Impulse-TreeInterpolation.epf", testcases);
 	}
 
 	@Override
 	protected int getFilesPerCategory() {
 		// return -1 for all files
-		return 2;
+		return -1;
 	}
 
 	@Override

@@ -128,7 +128,7 @@ public class PartialQuantifierElimination {
 
 		// apply Infinity Restrictor Drop
 		Term termAfterIRD;
-		if (USE_IRD){
+		if (USE_IRD) {
 			Term[] oldParams;
 			if (quantifier == QuantifiedFormula.EXISTS) {
 				oldParams = SmtUtils.getDisjuncts(result);
@@ -247,19 +247,21 @@ public class PartialQuantifierElimination {
 		return result;
 	}
 
-	public static Term sos(Script script, int quantifier, Term term, Set<TermVariable> eliminatees, Logger logger, IUltimateServiceProvider services) {
+	public static Term sos(Script script, int quantifier, Term term, Set<TermVariable> eliminatees, Logger logger,
+			IUltimateServiceProvider services) {
 		Term result = term;
 		Set<TermVariable> overallAuxVars = new HashSet<TermVariable>();
 		Iterator<TermVariable> it = eliminatees.iterator();
 		while (it.hasNext()) {
 			TermVariable tv = it.next();
 			if (tv.getSort().isArraySort()) {
-//				if (quantifier != QuantifiedFormula.EXISTS) {
-////					return term;
-//					throw new UnsupportedOperationException("QE for universal quantified arrays not implemented yet.");
-//				}
+				// if (quantifier != QuantifiedFormula.EXISTS) {
+				// // return term;
+				// throw new
+				// UnsupportedOperationException("QE for universal quantified arrays not implemented yet.");
+				// }
 				Set<TermVariable> thisIterationAuxVars = new HashSet<TermVariable>();
-				Term elim = (new ElimStore3(script,services)).elim(quantifier, tv, result, thisIterationAuxVars);
+				Term elim = (new ElimStore3(script, services)).elim(quantifier, tv, result, thisIterationAuxVars);
 				logger.debug(new DebugMessage("eliminated quantifier via SOS for {0}, additionally introduced {1}", tv,
 						thisIterationAuxVars));
 				overallAuxVars.addAll(thisIterationAuxVars);
@@ -372,8 +374,6 @@ public class PartialQuantifierElimination {
 			return result;
 		}
 	}
-
-
 
 	/**
 	 * Return true if connectedVars is a subset of quantifiedVars and the
@@ -601,7 +601,8 @@ public class PartialQuantifierElimination {
 	 * == t, such that t does not contain the subterm forbiddenTerm. If this is
 	 * the case return corresponding equality information, otherwise return
 	 * null. If forbiddenTerm is null all subterms in t are allowed.
-	 * @param logger 
+	 * 
+	 * @param logger
 	 */
 	public static EqualityInformation getEqinfo(Script script, Term givenTerm, Term[] context, Term forbiddenTerm,
 			int quantifier, Logger logger) {
@@ -713,7 +714,8 @@ public class PartialQuantifierElimination {
 
 	/**
 	 * Find term φ such that term implies tv == φ.
-	 * @param logger 
+	 * 
+	 * @param logger
 	 */
 	private static Term findEqualTermExists(TermVariable tv, Term term, Logger logger) {
 		if (term instanceof ApplicationTerm) {
@@ -746,7 +748,8 @@ public class PartialQuantifierElimination {
 
 	/**
 	 * Find term φ such that tv != φ implies term
-	 * @param logger 
+	 * 
+	 * @param logger
 	 */
 	private static Term findEqualTermForall(TermVariable tv, Term term, Logger logger) {
 		if (term instanceof ApplicationTerm) {
@@ -798,7 +801,8 @@ public class PartialQuantifierElimination {
 	 * contain tv
 	 * <li>-1 otherwise
 	 * </ul>
-	 * @param logger 
+	 * 
+	 * @param logger
 	 * 
 	 */
 	private static int tvOnOneSideOfEquality(TermVariable tv, Term[] params, Logger logger) {
