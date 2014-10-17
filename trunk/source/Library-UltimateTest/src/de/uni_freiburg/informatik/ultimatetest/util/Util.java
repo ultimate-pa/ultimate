@@ -180,12 +180,28 @@ public class Util {
 	 *            May not be null.
 	 * @return
 	 */
-	public static <T, E> Set<T> reduceDistinct(Collection<E> collection, IReduce<T, E> reducer) {
+	public static <T, E> Set<T> selectDistinct(Collection<E> collection, IReduce<T, E> reducer) {
 		Set<T> rtr = new HashSet<>();
 		for (E entry : collection) {
 			rtr.add(reducer.reduce(entry));
 		}
 		return rtr;
+	}
+	
+	public static <T, E> Collection<T> select(Collection<E> collection, IReduce<T, E> reducer) {
+		Collection<T> rtr = new ArrayList<>();
+		for (E entry : collection) {
+			rtr.add(reducer.reduce(entry));
+		}
+		return rtr;
+	}
+
+	public static <T, E> T reduce(Collection<E> collection, IMapReduce<T, E> reducer) {
+		T lastValue = null;
+		for (E entry : collection) {
+			lastValue = reducer.reduce(lastValue, entry);
+		}
+		return lastValue;
 	}
 
 	/***
@@ -705,7 +721,11 @@ public class Util {
 	public interface IReduce<T, K> {
 		public T reduce(K entry);
 	}
-	
+
+	public interface IMapReduce<T, K> {
+		public T reduce(T lastValue, K entry);
+	}
+
 	public interface IPredicate<T> {
 		public boolean check(T entry);
 	}

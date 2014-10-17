@@ -35,14 +35,14 @@ public class SVCOMP15TestSummary extends NewTestSummary {
 	@Override
 	public String getSummaryLog() {
 
-		Set<TCS> tcs = Util.reduceDistinct(mResults.entrySet(), new IMyReduce<TCS>() {
+		Set<TCS> tcs = Util.selectDistinct(mResults.entrySet(), new IMyReduce<TCS>() {
 			@Override
 			public TCS reduce(Entry<UltimateRunDefinition, ExtendedResult> entry) {
 				return new TCS(entry.getKey().getToolchain(), entry.getKey().getSettings());
 			}
 		});
 
-		Set<String> svcompCategories = Util.reduceDistinct(mResults.entrySet(), new IMyReduce<String>() {
+		Set<String> svcompCategories = Util.selectDistinct(mResults.entrySet(), new IMyReduce<String>() {
 			@Override
 			public String reduce(Entry<UltimateRunDefinition, ExtendedResult> entry) {
 				return entry.getValue().Testname.split(" ")[0];
@@ -101,7 +101,7 @@ public class SVCOMP15TestSummary extends NewTestSummary {
 					sb.append(tResult);
 					sb.append(" =====").append(Util.getPlatformLineSeparator());
 
-					Set<String> resultCategories = Util.reduceDistinct(specificResults, new IMyReduce<String>() {
+					Set<String> resultCategories = Util.selectDistinct(specificResults, new IMyReduce<String>() {
 						@Override
 						public String reduce(Entry<UltimateRunDefinition, ExtendedResult> entry) {
 							return entry.getValue().Category;

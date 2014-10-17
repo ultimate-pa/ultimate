@@ -22,6 +22,8 @@ import de.uni_freiburg.informatik.ultimatetest.UltimateTestSuite;
 import de.uni_freiburg.informatik.ultimatetest.decider.ITestResultDecider.TestResult;
 import de.uni_freiburg.informatik.ultimatetest.summary.NewTestSummary;
 import de.uni_freiburg.informatik.ultimatetest.util.Util;
+import de.uni_freiburg.informatik.ultimatetest.util.Util.IMapReduce;
+import de.uni_freiburg.informatik.ultimatetest.util.Util.IReduce;
 
 /**
  * 
@@ -38,32 +40,25 @@ public class TACAS2015Summary extends NewTestSummary {
 	private final Collection<Class<? extends ICsvProviderProvider<? extends Object>>> mBenchmarks;
 	private final LinkedHashMap<UltimateRunDefinition, ICsvProvider<?>> mCsvProvider;
 	private int mCsvConversionGoneWrong;
-	private final List<String> mColumnsToKeep;
-	private final List<String> mTableTitles;
-	private final List<ConversionContext> mConversionInfo;
-	private final List<Aggregate> mAggregationInfoSingleRunToOneRow;
-	private final List<Aggregate> mAggregationInfoManyRunsToOneRow;
+	private final List<ColumnDefinition> mColumnDefinitions;
+	private final int mLatexTableHeaderCount;
 
 	public TACAS2015Summary(Class<? extends UltimateTestSuite> ultimateTestSuite,
-			Collection<Class<? extends ICsvProviderProvider<? extends Object>>> benchmarks, String[] columnsToKeep,
-			String[] tableTitles, ConversionContext[] conversionInfo, Aggregate[] aggregationInfoSingleRunToOneRow,
-			Aggregate[] aggregationInfoManyRunsToOneRow) {
+			Collection<Class<? extends ICsvProviderProvider<? extends Object>>> benchmarks,
+			ColumnDefinition[] columnDefinitions) {
 		super(ultimateTestSuite);
 		mBenchmarks = benchmarks;
 		mCsvProvider = new LinkedHashMap<>();
-
-		mColumnsToKeep = Arrays.asList(columnsToKeep);
-		mTableTitles = Arrays.asList(tableTitles);
-		mConversionInfo = Arrays.asList(conversionInfo);
-		mAggregationInfoSingleRunToOneRow = Arrays.asList(aggregationInfoSingleRunToOneRow);
-		mAggregationInfoManyRunsToOneRow = Arrays.asList(aggregationInfoManyRunsToOneRow);
-
-		if (mColumnsToKeep.size() != mTableTitles.size() || mColumnsToKeep.size() != mConversionInfo.size()
-				|| mAggregationInfoSingleRunToOneRow.size() != mColumnsToKeep.size()
-				|| mAggregationInfoManyRunsToOneRow.size() != mColumnsToKeep.size()) {
-			throw new IllegalArgumentException(
-					"columnsToKeep, tableTitles, conversionInfo and aggregationInfo must have the same length");
-		}
+		mColumnDefinitions = Arrays.asList(columnDefinitions);
+		mLatexTableHeaderCount = Util.reduce(mColumnDefinitions, new IMapReduce<Integer, ColumnDefinition>() {
+			@Override
+			public Integer reduce(Integer lastValue, ColumnDefinition entry) {
+				if (lastValue == null) {
+					lastValue = 0;
+				}
+				return entry.getLatexTableTitle() != null ? lastValue + 1 : lastValue;
+			}
+		});
 	}
 
 	@SuppressWarnings("unchecked")
@@ -126,7 +121,7 @@ public class TACAS2015Summary extends NewTestSummary {
 
 	private void makeTables(StringBuilder sb, PartitionedResults results) {
 
-		Set<String> tools = Util.reduceDistinct(results.All, new IMyReduce<String>() {
+		Set<String> tools = Util.selectDistinct(results.All, new IMyReduce<String>() {
 			@Override
 			public String reduce(Entry<UltimateRunDefinition, ExtendedResult> entry) {
 				return entry.getKey().getToolchain().getName();
@@ -145,8 +140,8 @@ public class TACAS2015Summary extends NewTestSummary {
 			sb.append("\\centering").append(br);
 			sb.append("\\resizebox{\\linewidth}{!}{%").append(br);
 			sb.append("\\begin{tabu} to \\linewidth {lcllc");
-			for (int i = 0; i < mTableTitles.size(); ++i) {
-				sb.append("c");
+			for (int i = 0; i < mLatexTableHeaderCount; ++i) {
+				sb.append("r");
 			}
 			sb.append("}").append(br);
 			sb.append("\\toprule").append(br);
@@ -157,12 +152,15 @@ public class TACAS2015Summary extends NewTestSummary {
 			sb.append("  \\header{Count}&").append(br);
 
 			int i = 0;
-			for (String title : mTableTitles) {
+			for (ColumnDefinition cd : mColumnDefinitions) {
+				if (cd.getLatexTableTitle() == null) {
+					continue;
+				}
 				sb.append("  \\header{");
-				sb.append(title);
+				sb.append(cd.getLatexTableTitle());
 				sb.append("}");
 				i++;
-				if (i < mTableTitles.size()) {
+				if (i < mLatexTableHeaderCount) {
 					sb.append("&");
 				} else {
 					sb.append("\\\\");
@@ -170,7 +168,7 @@ public class TACAS2015Summary extends NewTestSummary {
 				sb.append(br);
 			}
 			sb.append("  \\cmidrule(r){2-");
-			sb.append(5 + mTableTitles.size());
+			sb.append(5 + mLatexTableHeaderCount);
 			sb.append("}").append(br);
 
 			// make table body
@@ -193,7 +191,7 @@ public class TACAS2015Summary extends NewTestSummary {
 	private void makeTableBody(StringBuilder sb, PartitionedResults results, String toolname) {
 		// make header
 
-		Set<String> folders = Util.reduceDistinct(results.All, new IMyReduce<String>() {
+		Set<String> folders = Util.selectDistinct(results.All, new IMyReduce<String>() {
 			@Override
 			public String reduce(Entry<UltimateRunDefinition, ExtendedResult> entry) {
 				return entry.getKey().getInput().getParentFile().getName();
@@ -219,7 +217,7 @@ public class TACAS2015Summary extends NewTestSummary {
 		String br = Util.getPlatformLineSeparator();
 		final int resultRows = 4;
 
-		List<String> variants = new ArrayList<>(Util.reduceDistinct(results.All, new IMyReduce<String>() {
+		List<String> variants = new ArrayList<>(Util.selectDistinct(results.All, new IMyReduce<String>() {
 			@Override
 			public String reduce(Entry<UltimateRunDefinition, ExtendedResult> entry) {
 				return entry.getKey().getSettings().getName();
@@ -248,7 +246,7 @@ public class TACAS2015Summary extends NewTestSummary {
 			makeVariantEntry(sb, results.Unsafe, variants.get(i), i == 0);
 		}
 		sb.append("  \\cmidrule[0.01em](l){2-");
-		sb.append(mTableTitles.size() + 5);
+		sb.append(mLatexTableHeaderCount + 5);
 		sb.append("}").append(br);
 
 		// count expected safe & row header safe
@@ -266,18 +264,7 @@ public class TACAS2015Summary extends NewTestSummary {
 			makeVariantEntry(sb, results.Safe, variants.get(i), i == 0);
 		}
 		sb.append("  \\cmidrule[0.01em](l){2-");
-		sb.append(mTableTitles.size() + 5);
-		sb.append("}").append(br);
-
-		// row timeout
-		sb.append("& & \\multirow{");
-		sb.append(variants.size());
-		sb.append("}{*}{\\folder{Timeout}} ").append(br);
-		for (int i = 0; i < variants.size(); ++i) {
-			makeVariantEntry(sb, results.Timeout, variants.get(i), i == 0);
-		}
-		sb.append("  \\cmidrule[0.01em](l){2-");
-		sb.append(mTableTitles.size() + 5);
+		sb.append(mLatexTableHeaderCount + 5);
 		sb.append("}").append(br);
 
 		// count total & row header total
@@ -297,10 +284,21 @@ public class TACAS2015Summary extends NewTestSummary {
 			// separator, hence false == isLast
 			makeVariantEntry(sb, completed, variants.get(i), i == 0);
 		}
+		sb.append("  \\cmidrule[0.01em](l){2-");
+		sb.append(mLatexTableHeaderCount + 5);
+		sb.append("}").append(br);
+
+		// row timeout
+		sb.append("& & \\multirow{");
+		sb.append(variants.size());
+		sb.append("}{*}{\\folder{Timeout}} ").append(br);
+		for (int i = 0; i < variants.size(); ++i) {
+			makeVariantEntry(sb, results.Timeout, variants.get(i), i == 0);
+		}
 
 		if (last) {
 			sb.append("\\bottomrule").append(br);
-			for (int i = 0; i < mTableTitles.size() + 4; ++i) {
+			for (int i = 0; i < mLatexTableHeaderCount + 4; ++i) {
 				sb.append("& ");
 			}
 			sb.append("\\\\").append(br);
@@ -332,44 +330,67 @@ public class TACAS2015Summary extends NewTestSummary {
 		sb.append(sep);
 
 		ICsvProvider<String> csv = makePrintCsvProviderFromResults(results);
-		csv = CsvUtils.projectColumn(csv, mColumnsToKeep);
 
-		csv = reduceProvider(csv, mAggregationInfoManyRunsToOneRow);
+		csv = CsvUtils.projectColumn(csv, Util.select(mColumnDefinitions, new IReduce<String, ColumnDefinition>() {
+			@Override
+			public String reduce(ColumnDefinition entry) {
+				return entry.getColumnToKeep();
+			}
+		}));
+
+		csv = reduceProvider(csv, Util.select(mColumnDefinitions, new IReduce<Aggregate, ColumnDefinition>() {
+			@Override
+			public Aggregate reduce(ColumnDefinition entry) {
+				return entry.getManyRunsToOneRow();
+			}
+		}));
+
 		csv = makeHumanReadable(csv);
 		csv = CsvUtils.addColumn(csv, "Count", 0, Arrays.asList(new String[] { Integer.toString(results.size()) }));
+
+		// make list of indices to ignore idx -> true / false
+		boolean[] idx = new boolean[csv.getColumnTitles().size()];
+		// because of count
+		idx[0] = true;
+		for (int i = 1; i < idx.length; ++i) {
+			String currentHeader = csv.getColumnTitles().get(i);
+			for (ColumnDefinition cd : mColumnDefinitions) {
+				if (cd.getColumnToKeep().equals(currentHeader)) {
+					idx[i] = (cd.getLatexTableTitle() != null);
+					break;
+				}
+			}
+		}
+
 		// one more because of Count
-		int length = mColumnsToKeep.size() + 1;
+		int length = mLatexTableHeaderCount + 1;
 		int i = 0;
 		List<String> row = csv.getRow(0);
-		if (row == null || row.size() < length) {
+		if (row == null || row.size() == 0) {
 			// no results in this category, just fill with empty fields
 			for (; i < length; ++i) {
 				sb.append(sep);
 			}
-			sb.append("\\\\");
-
 		} else {
 			for (String cell : row) {
+				if (!idx[i]) {
+					// skip this column, we dont want to print it
+					i++;
+					continue;
+				}
 				if (isInvalidForLatex(cell)) {
 					sb.append("-");
 				} else {
 					sb.append(cell);
 				}
 
-				if (i < length) {
-					if (i < row.size() - 1) {
-						sb.append(sep);
-					} else {
-						sb.append("\\\\");
-					}
-				} else {
-					// TODO: Too much stuff in csv provider
-					sb.append("\\\\");
-					break;
+				if (i < row.size() - 1) {
+					sb.append(sep);
 				}
 				i++;
 			}
 		}
+		sb.append("\\\\");
 		sb.append(br);
 	}
 
@@ -382,10 +403,18 @@ public class TACAS2015Summary extends NewTestSummary {
 		List<String> newRow = new ArrayList<>();
 		List<String> oldRow = csv.getRow(0);
 
-		for (int i = 0; i < oldRow.size(); ++i) {
-			ConversionContext c = mConversionInfo.get(i);
+		Collection<ConversionContext> conversionInfo = Util.select(mColumnDefinitions,
+				new IReduce<ConversionContext, ColumnDefinition>() {
+					@Override
+					public ConversionContext reduce(ColumnDefinition entry) {
+						return entry.getConversionContext();
+					}
+				});
+		int i = 0;
+		for (ConversionContext c : conversionInfo) {
 			String cell = oldRow.get(i);
 			newRow.add(c.makeHumanReadable(cell));
+			++i;
 		}
 
 		newProvider.addRow(newRow);
@@ -429,35 +458,57 @@ public class TACAS2015Summary extends NewTestSummary {
 			}
 		}
 		// provider.renameColumnTitle("ICC %", "ICC");
-		provider = CsvUtils.projectColumn(provider, mColumnsToKeep);
+		provider = CsvUtils.projectColumn(provider,
+				Util.select(mColumnDefinitions, new IReduce<String, ColumnDefinition>() {
+					@Override
+					public String reduce(ColumnDefinition entry) {
+						return entry.getColumnToKeep();
+					}
+				}));
 
 		// transform from multiple rows per UltimateTestCase to one (e.g. merge
 		// the different benchmark types into one row)
-		ICsvProvider<String> newProvider = reduceProvider(provider, mAggregationInfoSingleRunToOneRow);
+		ICsvProvider<String> newProvider = reduceProvider(provider,
+				Util.select(mColumnDefinitions, new IReduce<Aggregate, ColumnDefinition>() {
+					@Override
+					public Aggregate reduce(ColumnDefinition entry) {
+						return entry.getSingleRunToOneRow();
+					}
+				}));
 		newProvider = addUltimateRunDefinition(urd, message, newProvider);
 		return newProvider;
 	}
 
-	private ICsvProvider<String> reduceProvider(ICsvProvider<?> provider, List<Aggregate> aggregate) {
+	private ICsvProvider<String> reduceProvider(ICsvProvider<?> provider, Collection<Aggregate> aggregates) {
 
 		final HashSet<String> sum = new HashSet<>();
 		final HashSet<String> max = new HashSet<>();
 		final HashSet<String> avg = new HashSet<>();
 
-		for (int i = 0; i < aggregate.size(); ++i) {
-			switch (aggregate.get(i)) {
+		List<String> columnsToKeep = new ArrayList<>(Util.select(mColumnDefinitions,
+				new IReduce<String, ColumnDefinition>() {
+					@Override
+					public String reduce(ColumnDefinition entry) {
+						return entry.getColumnToKeep();
+					}
+				}));
+
+		int i = 0;
+		for (Aggregate aggregate : aggregates) {
+			switch (aggregate) {
 			case Average:
-				avg.add(mColumnsToKeep.get(i));
+				avg.add(columnsToKeep.get(i));
 				break;
 			case Max:
-				max.add(mColumnsToKeep.get(i));
+				max.add(columnsToKeep.get(i));
 				break;
 			case Sum:
-				sum.add(mColumnsToKeep.get(i));
+				sum.add(columnsToKeep.get(i));
 				break;
 			default:
 				break;
 			}
+			++i;
 		}
 
 		ICsvProvider<String> newProvider = CsvUtils.convertComplete(provider,
@@ -483,7 +534,7 @@ public class TACAS2015Summary extends NewTestSummary {
 
 							if (cells.isEmpty()) {
 								finalValue = "-";
-								
+
 							} else if (sum.contains(columnTitle)) {
 								for (String cell : cells) {
 									try {
@@ -551,7 +602,5 @@ public class TACAS2015Summary extends NewTestSummary {
 		}
 		return result;
 	}
-
-
 
 }

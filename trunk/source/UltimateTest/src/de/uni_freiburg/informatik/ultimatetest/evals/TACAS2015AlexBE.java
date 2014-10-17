@@ -14,18 +14,18 @@ public class TACAS2015AlexBE extends TACASInterpolation2015 {
 		 addTestCasesFixed("CodeCheckWithBE-C.xml",
 		 "TACASInterpolation2015/Kojak-TreeInterpolation.epf", testcases);
 		
-		 addTestCasesFixed("ImpulseWithBE-C.xml",
-		 "TACASInterpolation2015/Impulse-FP.epf", testcases);
-		
-		 addTestCasesFixed("ImpulseWithBE-C.xml",
-		 "TACASInterpolation2015/Impulse-TreeInterpolation.epf",
-		 testcases);
+//		 addTestCasesFixed("ImpulseWithBE-C.xml",
+//		 "TACASInterpolation2015/Impulse-FP.epf", testcases);
+//		
+//		 addTestCasesFixed("ImpulseWithBE-C.xml",
+//		 "TACASInterpolation2015/Impulse-TreeInterpolation.epf",
+//		 testcases);
 	}
 
 	@Override
 	protected int getFilesPerCategory() {
 		// return -1 for all files
-		return 25;
+		return 50;
 	}
 	
 	@Override

@@ -39,7 +39,7 @@ public abstract class TACASInterpolation2015 extends AbstractModelCheckerTestSui
 	private IncrementalLogWithVMParameters mIncrementalLog;
 
 	// Time out for each test case in milliseconds
-	private final static int mTimeout = 60 * 1000;
+	private final static int mTimeout = 300 * 1000;
 	private final static String[] mFileEndings = new String[] { ".c" };
 
 	@Override
@@ -100,65 +100,38 @@ public abstract class TACASInterpolation2015 extends AbstractModelCheckerTestSui
 		benchmarks.add(TraceAbstractionBenchmarks.class);
 		benchmarks.add(CodeCheckBenchmarks.class);
 
-		String[] columnsToKeep = new String[] { 
-				"Runtime (ns)", 
-				"Allocated memory end (bytes)", 
-				"Overall iterations",
-				"NumberOfCodeBlocks", 
-				"SizeOfPredicatesFP",
-				"SizeOfPredicatesBP",
-				"Conjuncts in SSA", 
-				"Conjuncts in UnsatCore", 
-				"ICC %" 
-		};
-		String[] tableTitles = new String[] { 
-				"Avg. runtime", 
-				"Mem{-}ory", 
-				"Iter{-}ations", 
-				"Loc{-}ations",
-				"Pred. size FP",
-				"Pred. size BP",
-				"Conj. SSA", 
-				"Conj. IC", 
-				"ICC %" 
-		};
-		ConversionContext[] conversionInfo = new ConversionContext[] { 
-				ConversionContext.Divide(1000000000, 2, " s"),
-				ConversionContext.Divide(1048576, 2, " MB"),
-				ConversionContext.BestFitNumber(),
-				ConversionContext.BestFitNumber(),
-				ConversionContext.BestFitNumber(),
-				ConversionContext.BestFitNumber(),
-				ConversionContext.BestFitNumber(),
-				ConversionContext.BestFitNumber(),
-				ConversionContext.Percent(true,2)
-		};
-		Aggregate[] aggregationInfoSingleRunToOneRow = new Aggregate[] {
-				Aggregate.Sum,
-				Aggregate.Max,
-				Aggregate.Ignore,
-				Aggregate.Ignore,
-				Aggregate.Ignore,
-				Aggregate.Ignore,
-				Aggregate.Ignore,
-				Aggregate.Ignore,
-				Aggregate.Ignore,
-		};
-		Aggregate[] aggregationInfoManyRunsToOneRow = new Aggregate[] {
-				Aggregate.Average,
-				Aggregate.Average,
-				Aggregate.Average,
-				Aggregate.Average,
-				Aggregate.Average,
-				Aggregate.Average,
-				Aggregate.Average,
-				Aggregate.Average,
-				Aggregate.Average,
+		ColumnDefinition[] columnDef = new ColumnDefinition[]{
+			new ColumnDefinition(
+					"Runtime (ns)", "Avg. runtime",
+					ConversionContext.Divide(1000000000, 2, " s"), Aggregate.Sum, Aggregate.Average),	
+			new ColumnDefinition(
+					"Allocated memory end (bytes)", "Mem{-}ory",
+					ConversionContext.Divide(1048576, 2, " MB"), Aggregate.Max, Aggregate.Average),
+			new ColumnDefinition(
+					"Overall iterations", "Iter{-}ations",
+					ConversionContext.BestFitNumber(), Aggregate.Ignore, Aggregate.Average),
+			new ColumnDefinition(
+					"NumberOfCodeBlocks", null,
+					ConversionContext.BestFitNumber(), Aggregate.Ignore, Aggregate.Average),
+			new ColumnDefinition(
+					"SizeOfPredicatesFP", null,
+					ConversionContext.BestFitNumber(), Aggregate.Ignore, Aggregate.Average),	
+			new ColumnDefinition(
+					"SizeOfPredicatesBP", null,
+					ConversionContext.BestFitNumber(), Aggregate.Ignore, Aggregate.Average),	
+			new ColumnDefinition(
+					"Conjuncts in SSA", null,
+					ConversionContext.BestFitNumber(), Aggregate.Ignore, Aggregate.Average),	
+			new ColumnDefinition(
+					"Conjuncts in UnsatCore", null,
+					ConversionContext.BestFitNumber(), Aggregate.Ignore, Aggregate.Average),
+			new ColumnDefinition(
+					"ICC %", "ICC",
+					ConversionContext.Percent(true,2), Aggregate.Ignore, Aggregate.Average),					
 		};
 
 		return new ITestSummary[] {
-				new TACAS2015Summary(getClass(), benchmarks, columnsToKeep, tableTitles, conversionInfo,
-						aggregationInfoSingleRunToOneRow, aggregationInfoManyRunsToOneRow),
+				new TACAS2015Summary(getClass(), benchmarks, columnDef),
 				new TraceAbstractionTestSummary(getClass()) };
 
 		// @formatter:on
@@ -178,7 +151,7 @@ public abstract class TACASInterpolation2015 extends AbstractModelCheckerTestSui
 		}
 		List<UltimateTestCase> testcases = new ArrayList<>();
 
-		Set<String> categories = Util.reduceDistinct(mTestCases, new IReduce<String, UltimateTestCase>() {
+		Set<String> categories = Util.selectDistinct(mTestCases, new IReduce<String, UltimateTestCase>() {
 			@Override
 			public String reduce(UltimateTestCase entry) {
 				return entry.getUltimateRunDefinition().getInput().getParentFile().getName();
