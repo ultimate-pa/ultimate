@@ -303,35 +303,35 @@ public class ResultExpression extends Result {
 				&& toReturn.lrVal != null)
 			toReturn.lrVal.isIntFromPointer = this.lrVal.isIntFromPointer; //FIXME niceer
 		
-		//special treatment for unsigned integer types
-		if (main.cHandler.getUnsignedTreatment() != UNSIGNED_TREATMENT.IGNORE
-				&& toReturn != null
-				&& toReturn.lrVal != null 
-				&& !toReturn.lrVal.isIntFromPointer
-				&& toReturn.lrVal.cType instanceof CPrimitive 
-				&& ((CPrimitive) toReturn.lrVal.cType).isUnsigned()) {
-			int exponentInBytes = memoryHandler.typeSizeConstants
-						.CPrimitiveToTypeSizeConstant.get(((CPrimitive) toReturn.lrVal.cType).getType());
-			BigInteger maxValue = new BigInteger("2")
-					.pow(exponentInBytes * 8);
-
-			if (main.cHandler.getUnsignedTreatment() == UNSIGNED_TREATMENT.ASSUME_ALL) {
-				AssumeStatement assumeGeq0 = new AssumeStatement(loc, new BinaryExpression(loc, BinaryExpression.Operator.COMPGEQ,
-						toReturn.lrVal.getValue(), new IntegerLiteral(loc, SFO.NR0)));
-				toReturn.stmt.add(assumeGeq0);
-				
-				AssumeStatement assumeLtMax = new AssumeStatement(loc, new BinaryExpression(loc, BinaryExpression.Operator.COMPLT,
-						toReturn.lrVal.getValue(), new IntegerLiteral(loc, maxValue.toString())));
-				toReturn.stmt.add(assumeLtMax);
-			} else if (main.cHandler.getUnsignedTreatment() == UNSIGNED_TREATMENT.WRAPAROUND) {
-				toReturn.lrVal = new RValue(new BinaryExpression(loc, BinaryExpression.Operator.ARITHMOD, 
-							toReturn.lrVal.getValue(), 
-							new IntegerLiteral(loc, maxValue.toString())), 
-						toReturn.lrVal.cType, 
-						toReturn.lrVal.isBoogieBool,
-						false);
-			}
-		}
+//		//special treatment for unsigned integer types
+//		if (main.cHandler.getUnsignedTreatment() != UNSIGNED_TREATMENT.IGNORE
+//				&& toReturn != null
+//				&& toReturn.lrVal != null 
+//				&& !toReturn.lrVal.isIntFromPointer
+//				&& toReturn.lrVal.cType instanceof CPrimitive 
+//				&& ((CPrimitive) toReturn.lrVal.cType).isUnsigned()) {
+//			int exponentInBytes = memoryHandler.typeSizeConstants
+//						.CPrimitiveToTypeSizeConstant.get(((CPrimitive) toReturn.lrVal.cType).getType());
+//			BigInteger maxValue = new BigInteger("2")
+//					.pow(exponentInBytes * 8);
+//
+//			if (main.cHandler.getUnsignedTreatment() == UNSIGNED_TREATMENT.ASSUME_ALL) {
+//				AssumeStatement assumeGeq0 = new AssumeStatement(loc, new BinaryExpression(loc, BinaryExpression.Operator.COMPGEQ,
+//						toReturn.lrVal.getValue(), new IntegerLiteral(loc, SFO.NR0)));
+//				toReturn.stmt.add(assumeGeq0);
+//				
+//				AssumeStatement assumeLtMax = new AssumeStatement(loc, new BinaryExpression(loc, BinaryExpression.Operator.COMPLT,
+//						toReturn.lrVal.getValue(), new IntegerLiteral(loc, maxValue.toString())));
+//				toReturn.stmt.add(assumeLtMax);
+//			} else if (main.cHandler.getUnsignedTreatment() == UNSIGNED_TREATMENT.WRAPAROUND) {
+//				toReturn.lrVal = new RValue(new BinaryExpression(loc, BinaryExpression.Operator.ARITHMOD, 
+//							toReturn.lrVal.getValue(), 
+//							new IntegerLiteral(loc, maxValue.toString())), 
+//						toReturn.lrVal.cType, 
+//						toReturn.lrVal.isBoogieBool,
+//						false);
+//			}
+//		}
 
 		return toReturn;
 	}

@@ -663,9 +663,9 @@ public class CHandler implements ICHandler {
 						
 						if (onHeap) {
 							LocalLValue llVal = new LocalLValue(lhs, cDec.getType());
-							((ResultExpression) result).stmt.add(
-									mMemoryHandler.getMallocCall(main, mFunctionHandler, 
-											mMemoryHandler.calculateSizeOf(cDec.getType(), loc), llVal, loc));
+//							((ResultExpression) result).stmt.add( //malloc is done by initvar
+//									mMemoryHandler.getMallocCall(main, mFunctionHandler, 
+//											mMemoryHandler.calculateSizeOf(cDec.getType(), loc), llVal, loc));
 							mMemoryHandler.addVariableToBeFreed(main, llVal);
 						}
 
@@ -1233,6 +1233,10 @@ public class CHandler implements ICHandler {
 			}
 			ResultExpression rrToInt = ConvExpr.rexBoolToIntIfNecessary(loc, rr);
 			ResultExpression rlToInt = ConvExpr.rexBoolToIntIfNecessary(loc, rl);
+			
+			doIntOverflowTreatment(main, loc, rrToInt);
+			doIntOverflowTreatment(main, loc, rlToInt);
+			
 			stmt.addAll(rlToInt.stmt);
 			stmt.addAll(rrToInt.stmt);
 			decl.addAll(rlToInt.decl);
@@ -1577,6 +1581,39 @@ public class CHandler implements ICHandler {
 		default:
 			String msg = "Unknown or unsupported unary operation";
 			throw new UnsupportedSyntaxException(loc, msg);
+		}
+	}
+
+	public void doIntOverflowTreatment(Dispatcher main, CACSLLocation loc,
+			ResultExpression rrToInt) {
+		//special treatment for unsigned integer types
+		if (main.cHandler.getUnsignedTreatment() != UNSIGNED_TREATMENT.IGNORE
+				&& rrToInt != null
+				&& rrToInt.lrVal != null 
+				&& !rrToInt.lrVal.isIntFromPointer
+				&& rrToInt.lrVal.cType instanceof CPrimitive 
+				&& ((CPrimitive) rrToInt.lrVal.cType).isUnsigned()) {
+			int exponentInBytes = mMemoryHandler.typeSizeConstants
+						.CPrimitiveToTypeSizeConstant.get(((CPrimitive) rrToInt.lrVal.cType).getType());
+			BigInteger maxValue = new BigInteger("2")
+					.pow(exponentInBytes * 8);
+
+			if (main.cHandler.getUnsignedTreatment() == UNSIGNED_TREATMENT.ASSUME_ALL) {
+				AssumeStatement assumeGeq0 = new AssumeStatement(loc, new BinaryExpression(loc, BinaryExpression.Operator.COMPGEQ,
+						rrToInt.lrVal.getValue(), new IntegerLiteral(loc, SFO.NR0)));
+				rrToInt.stmt.add(assumeGeq0);
+				
+				AssumeStatement assumeLtMax = new AssumeStatement(loc, new BinaryExpression(loc, BinaryExpression.Operator.COMPLT,
+						rrToInt.lrVal.getValue(), new IntegerLiteral(loc, maxValue.toString())));
+				rrToInt.stmt.add(assumeLtMax);
+			} else if (main.cHandler.getUnsignedTreatment() == UNSIGNED_TREATMENT.WRAPAROUND) {
+				rrToInt.lrVal = new RValue(new BinaryExpression(loc, BinaryExpression.Operator.ARITHMOD, 
+							rrToInt.lrVal.getValue(), 
+							new IntegerLiteral(loc, maxValue.toString())), 
+						rrToInt.lrVal.cType, 
+						rrToInt.lrVal.isBoogieBool,
+						false);
+			}
 		}
 	}
 
@@ -2218,41 +2255,28 @@ public class CHandler implements ICHandler {
 
 		//do implicit cast -- assume the types are compatible
 		rightHandSide = castToType(loc, rightHandSide, lrVal.cType);
-//		} else if (lType instanceof CPrimitive
-//				&& ((CPrimitive) lType).getGeneralType() == GENERALPRIMITIVE.INTTYPE) {
-//			CPrimitive lPrim = (CPrimitive) lType;
-//			Integer exponentInBytes = mMemoryHandler.typeSizeConstants.CPrimitiveToTypeSizeConstant.get(lPrim);
-//
-//			if (exponentInBytes != null) {
-//				BigInteger maxValue = null;
-//				maxValue = new BigInteger("2")
-//					.pow(exponentInBytes * 8);
-//				IntegerLiteral maxValIL = new IntegerLiteral(loc, maxValue.toString());
-//
-//				boolean doWrapAround = false;
-//				boolean insertAssume = true;
-//				if (doWrapAround) {
-//					BinaryExpression moduloExp = new BinaryExpression(loc, BinaryExpression.Operator.ARITHMOD, 
-//							rExpr, 
-//							maxValIL);
-//					rightHandSide = new RValue(moduloExp, rType);
-//				} else if (insertAssume) {
-//					BinaryExpression biggerZero = new BinaryExpression(loc, BinaryExpression.Operator.COMPGEQ,
-//							lrVal.getValue(), new IntegerLiteral(loc, SFO.NR0));
-//					stmt.add(new AssumeStatement(loc, biggerZero));
-//				}
-//			}
-//		}
 		
-//		if (rVal.isIntFromPointer) {
-//			String lId = null;
-//			if (lrVal instanceof HeapLValue) {
-//				lId = ((IdentifierExpression ) ((HeapLValue) lrVal).getAddress()).getIdentifier();
-//			} else {
-//				lId = ((VariableLHS) ((LocalLValue) lrVal).getLHS()).getIdentifier();
-//			}
-//			mSymbolTable.get(mSymbolTable.getCID4BoogieID(lId, loc), loc).isIntFromPointer = true;
-//		}
+		//for wraparound --> and avoiding it for ints that store pointers
+		if (rightHandSide.isIntFromPointer) {
+			if (lrVal instanceof HeapLValue) {
+				Expression address = ((HeapLValue) lrVal).getAddress();
+				if (address instanceof IdentifierExpression) {
+					String lId = ((IdentifierExpression ) ((HeapLValue) lrVal).getAddress()).getIdentifier();
+					mSymbolTable.get(mSymbolTable.getCID4BoogieID(lId, loc), loc).isIntFromPointer = true;
+				} else {
+					//TODO
+				}
+			} else if (lrVal instanceof LocalLValue){
+				String lId = null;
+				LeftHandSide value = ((LocalLValue) lrVal).getLHS();
+				if (value instanceof VariableLHS) {
+					lId = ((VariableLHS) value).getIdentifier();
+					mSymbolTable.get(mSymbolTable.getCID4BoogieID(lId, loc), loc).isIntFromPointer = true;
+				} else {
+					//TODO
+				}
+			}
+		}
 
 		if (lrVal instanceof HeapLValue) {
 			HeapLValue hlv = (HeapLValue) lrVal;
@@ -2990,7 +3014,9 @@ public class CHandler implements ICHandler {
 	}
 
 	@Override
-	public RValue castToType(ILocation loc, RValue rVal, CType expectedType) {
+	public RValue castToType(ILocation loc, RValue rValIn, CType expectedType) {
+		
+		RValue rVal = new RValue(rValIn); //better make a new one, right??
 
 		BigInteger maxPtrValue = new BigInteger("2").pow(mMemoryHandler.typeSizeConstants.sizeOfPointerType * 8);
 		IntegerLiteral max_Pointer = new IntegerLiteral(loc, maxPtrValue.toString());

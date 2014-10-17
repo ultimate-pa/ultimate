@@ -35,6 +35,7 @@ import de.uni_freiburg.informatik.ultimate.model.annotation.Overapprox;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayLHS;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Attribute;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IdentifierExpression;
@@ -354,23 +355,26 @@ public class InitializationHandler {
 				lhs = new VariableLHS(arrayAddress.getLocation(),
 						arrayAddress.getIdentifier());			
 
-				ResultExpression mallocRex = mMemoryHandler.getMallocCall(main, mFunctionHandler,
-						mMemoryHandler.calculateSizeOf(lCType, loc), loc);
-				stmt.addAll(mallocRex.stmt);
-				decl.addAll(mallocRex.decl);
-				auxVars.putAll(mallocRex.auxVars);
-				Expression address = mallocRex.lrVal.getValue();
+				CallStatement mallocRex = mMemoryHandler.getMallocCall(main, mFunctionHandler,
+						mMemoryHandler.calculateSizeOf(lCType, loc), new LocalLValue(lhs, cType), loc);
+				stmt.add(mallocRex);
+//				stmt.addAll(mallocRex.stmt);
+//				decl.addAll(mallocRex.decl);
+//				auxVars.putAll(mallocRex.auxVars);
+//				Expression address = mallocRex.lrVal.getValue();
 
-				Statement assign = new AssignmentStatement(loc, new LeftHandSide[] {lhs}, 
-						new Expression[] { mallocRex.lrVal.getValue()});
-				stmt.add(assign);
+//				Statement assign = new AssignmentStatement(loc, new LeftHandSide[] {lhs}, 
+//						new Expression[] { mallocRex.lrVal.getValue()});
+//				stmt.add(assign);
 
 				if (initializer == null) {
 					stmt.addAll(this.initArrayOnHeap(main, loc, 
-							null, address, (CArray) lCType));				
+//							null, address, (CArray) lCType));				
+							null, arrayAddress, (CArray) lCType));				
 				} else if (initializer instanceof ResultExpressionListRec) {
 					stmt.addAll(this.initArrayOnHeap(main, loc, 
-							((ResultExpressionListRec) initializer).list, address, (CArray) lCType));				
+//							((ResultExpressionListRec) initializer).list, address, (CArray) lCType));				
+							((ResultExpressionListRec) initializer).list, arrayAddress, (CArray) lCType));				
 				} else if (initializer instanceof ResultExpression) {// we have a variable length array and need the corresponding aux vars
 					//					stmt.addAll(initializer.stmt);
 					//					decl.addAll(initializer.decl);
