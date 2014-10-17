@@ -3,6 +3,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.preferences.CodeCheckPreferenceInitializer.Checker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.preferences.CodeCheckPreferenceInitializer.EdgeCheckOptimization;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.preferences.CodeCheckPreferenceInitializer.PredicateUnification;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.preferences.CodeCheckPreferenceInitializer.RedirectionStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.preferences.CodeCheckPreferenceInitializer.SolverAndInterpolator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.INTERPOLATION;
 
@@ -29,6 +30,7 @@ public class GlobalSettings {
 	public boolean _memoizeNormalEdgeChecks = true;
 	public boolean _memoizeReturnEdgeChecks = true;
 	public int _iterations = -1;
+	public RedirectionStrategy redirectionStrategy = RedirectionStrategy.No_Strategy;
 
 	public static void init() {
 		_instance = new GlobalSettings();

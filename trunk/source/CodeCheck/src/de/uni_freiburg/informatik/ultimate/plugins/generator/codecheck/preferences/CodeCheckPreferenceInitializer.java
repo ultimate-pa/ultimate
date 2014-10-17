@@ -46,7 +46,8 @@ public class CodeCheckPreferenceInitializer extends UltimatePreferenceInitialize
 				new UltimatePreferenceItem<Integer>(LABEL_ITERATIONS, DEF_ITERATIONS,
 						PreferenceType.Integer, new IUltimatePreferenceItemValidator.IntegerValidator(
 								-1, 1000000)),
-								
+				new UltimatePreferenceItem<RedirectionStrategy>(LABEL_REDIRECTION, DEF_REDIRECTION,
+						PreferenceType.Combo, RedirectionStrategy.values()),
 
 		};
 	}
@@ -80,6 +81,10 @@ public class CodeCheckPreferenceInitializer extends UltimatePreferenceInitialize
 	public enum Checker {
 		ULTIMATE, IMPULSE
 	}
+	
+	public enum RedirectionStrategy {
+		No_Strategy, FIRST, RANDOM, RANDOM_STRONGEST
+	}
 
 
 	/*
@@ -103,6 +108,7 @@ public class CodeCheckPreferenceInitializer extends UltimatePreferenceInitialize
 	
 	public static final String LABEL_ITERATIONS = "Limit maxmium number of iterations. (-1 for no limitations)";
 
+	public static final String LABEL_REDIRECTION = "The redirection strategy for Impulse";
 	// /*
 	// * default values for the different preferences
 	// */
@@ -122,5 +128,7 @@ public class CodeCheckPreferenceInitializer extends UltimatePreferenceInitialize
 	public static final int DEF_TIMEOUT = 1000;
 	
 	public static final int DEF_ITERATIONS = -1;
+	
+	public static final RedirectionStrategy DEF_REDIRECTION = RedirectionStrategy.No_Strategy;
 
 }

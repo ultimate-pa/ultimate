@@ -21,6 +21,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.appgraph.ImpRootNod
 import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.CodeChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.GlobalSettings;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.GraphWriter;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.preferences.CodeCheckPreferenceInitializer.RedirectionStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
@@ -33,7 +34,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
 public class ImpulseChecker extends CodeChecker {
 	
 	//private HashMap <AnnotatedProgramPoint, AnnotatedProgramPoint> _cloneNode;
+	
 	private final RedirectionFinder cloneFinder;
+	
 	public ImpulseChecker(IElement root, SmtManager m_smtManager, TAPreferences m_taPrefs, RootNode m_originalRoot, ImpRootNode m_graphRoot,
 			GraphWriter m_graphWriter, EdgeChecker edgeChecker, PredicateUnifier predicateUnifier, Logger logger) {
 		super(root, m_smtManager, m_taPrefs, m_originalRoot, m_graphRoot,
@@ -78,9 +81,10 @@ public class ImpulseChecker extends CodeChecker {
 				continue;
 			AppEdge[] prevEdges = nodes[i].getIncomingEdges().toArray(new AppEdge[]{});
 			for (AppEdge prevEdge : prevEdges) {
+				AnnotatedProgramPoint clone = clones[i];
 				
-				AnnotatedProgramPoint clone = cloneFinder.getStrongestValidCopy(prevEdge);
-				//AnnotatedProgramPoint clone = clones[i];
+				if (GlobalSettings._instance.redirectionStrategy != RedirectionStrategy.No_Strategy)
+					clone = cloneFinder.getStrongestValidCopy(prevEdge);
 				//System.err.println("Redirection of " + prevEdge.getSource() + " with " + prevEdge.getStatement());
 				if (clone == null)
 					continue;
