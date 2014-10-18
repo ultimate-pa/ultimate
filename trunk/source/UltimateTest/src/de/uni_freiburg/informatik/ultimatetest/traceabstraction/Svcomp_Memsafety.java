@@ -15,12 +15,12 @@ public class Svcomp_Memsafety extends
 		AbstractTraceAbstractionTestSuite {
 	private static final String[] m_Directories = { 
 		"examples/svcomp/memsafety",
-		"examples/svcomp/memsafety-ext",
-		"examples/svcomp/list-ext-properties"
+//		"examples/svcomp/memsafety-ext",
+//		"examples/svcomp/list-ext-properties"
 		};
 	
 	// Time out for each test case in milliseconds
-	private static int m_Timeout = 20000;
+	private static int m_Timeout = 300 * 1000;
 
 	private static final boolean m_AutomizerWithForwardPredicates = true;
 	private static final boolean m_AutomizerWithBackwardPredicates = !true;

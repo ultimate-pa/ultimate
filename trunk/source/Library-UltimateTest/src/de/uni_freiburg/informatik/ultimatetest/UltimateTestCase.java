@@ -43,7 +43,9 @@ public class UltimateTestCase {
 
 	@FactoryTestMethod
 	public void test() {
-
+		//call the garbage collector before starting a new test
+		System.gc();
+		
 		Throwable th = null;
 		TestResult result = TestResult.FAIL;
 		boolean livecycleFailure = false;
