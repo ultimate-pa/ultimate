@@ -486,8 +486,10 @@ public class Util {
 		map.put("_Unsafe", SafetyCheckerOverallResult.UNSAFE);
 		// true-unreach-call is the SV-COMP annotation for safe
 		map.put("_true-unreach-call", SafetyCheckerOverallResult.SAFE);
+		map.put("_true", SafetyCheckerOverallResult.SAFE); //hack
 		// false-unreach-call is the SV-COMP annotation for safe
 		map.put("_false-unreach-call", SafetyCheckerOverallResult.UNSAFE);
+		map.put("_false", SafetyCheckerOverallResult.UNSAFE); //hack
 		return map;
 	}
 
