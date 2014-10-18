@@ -109,14 +109,25 @@ public class ImpulseChecker extends CodeChecker {
 			return ;
 		if (isValidRedirection(edge, target)) {
 			if (edge instanceof AppHyperEdge) {
+				/*
+				System.err.printf("%s ^ %s ^ %s --> %s\n", edge.getSource().getPredicate(), ((AppHyperEdge) edge).getHier().getPredicate(),
+						(Return) edge.getStatement(), m_predicateUnifier.getFalsePredicate());
 				if (m_smtManager.isInductiveReturn(edge.getSource().getPredicate(), ((AppHyperEdge) edge).getHier().getPredicate(),
-						(Return) edge.getStatement(), m_predicateUnifier.getFalsePredicate()) == LBool.UNSAT)
+						(Return) edge.getStatement(), m_predicateUnifier.getFalsePredicate()) == LBool.UNSAT) {
+					System.err.println("#sat");
+					*/
 					edge.getSource().connectOutgoingReturn(((AppHyperEdge) edge).getHier(), (Return) edge.getStatement(), target);
+				//}
 			} else {
-
+				/*
+				System.err.printf("%s ^ %s --> %s\n", edge.getSource().getPredicate(),
+						edge.getStatement(), m_predicateUnifier.getFalsePredicate());
 				if (m_smtManager.isInductive(edge.getSource().getPredicate(), edge.getStatement(),
-						m_predicateUnifier.getFalsePredicate()) == LBool.UNSAT)
+						m_predicateUnifier.getFalsePredicate()) == LBool.UNSAT) {
+					System.err.println("#sat");
+					*/
 					edge.getSource().connectOutgoing(edge.getStatement(), target);
+				//}
 			}
 		
 			edge.disconnect();
@@ -173,7 +184,7 @@ public class ImpulseChecker extends CodeChecker {
 		//improveAnnotations(newRoot);
 		redirectEdges(nodes, clones);
 		
-		removeFalseNodes(nodes, clones);
+		//removeFalseNodes(nodes, clones);
 		
 		return true;
 	}
