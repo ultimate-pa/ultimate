@@ -11,7 +11,7 @@ public class SoundnessBugs extends TACASInterpolation2015 {
 
 		addTestCasesFixed("AutomizerC.xml", "TACASInterpolation2015/ForwardPredicates.epf", testcases);
 
-		addTestCasesFixed("AutomizerC.xml", "TACASInterpolation2015/TreeInterpolation.epf", testcases);
+//		addTestCasesFixed("AutomizerC.xml", "TACASInterpolation2015/TreeInterpolation.epf", testcases);
 
 //		addTestCasesFixed("CodeCheckNoBE-C.xml", "TACASInterpolation2015/Kojak-FP-nBE.epf", testcases);
 //
