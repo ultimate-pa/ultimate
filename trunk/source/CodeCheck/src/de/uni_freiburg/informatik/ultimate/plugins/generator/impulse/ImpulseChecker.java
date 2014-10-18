@@ -63,11 +63,8 @@ public class ImpulseChecker extends CodeChecker {
 				clones[i].getEdge(nodes[i + 1]).disconnect();
 				errorReached = true;
 			} else {
-				/*
-				System.err.println("HERE1 : " + nodes[i] + " {{{ " + nodes[i].getEdge(nodes[i + 1]) + " }}}  " + nodes[i + 1]);
-				System.err.println("HERE2 : " + _cloneNode.get(nodes[i]) + " {{{ " + _cloneNode.get(nodes[i]).getEdge(nodes[i + 1]) + " }}}  " + nodes[i + 1]);
-				*/
 				replaceEdge(clones[i].getEdge(nodes[i + 1]), clones[i + 1]);
+				//redirectIfValid(clones[i].getEdge(nodes[i + 1]), clones[i + 1]);
 			}
 		}
 		
@@ -85,21 +82,10 @@ public class ImpulseChecker extends CodeChecker {
 				
 				if (GlobalSettings._instance.redirectionStrategy != RedirectionStrategy.No_Strategy)
 					clone = cloneFinder.getStrongestValidCopy(prevEdge);
-				//System.err.println("Redirection of " + prevEdge.getSource() + " with " + prevEdge.getStatement());
+				
 				if (clone == null)
 					continue;
 				redirectIfValid(prevEdge, clone);
-				/*
-				if (prevEdge instanceof AppHyperEdge) {
-					if (connectOutgoingReturnIfValid(prevEdge.getSource(), ((AppHyperEdge) prevEdge).getHier(), (Return) prevEdge.getStatement(), clone)) {
-						prevEdge.disconnect();
-					}
-				} else {
-					if (connectOutgoingIfValid(prevEdge.getSource(), prevEdge.getStatement(), clone)) {
-						prevEdge.disconnect();
-					}
-				}
-				*/
 			}
 		}
 		return true;
@@ -110,24 +96,24 @@ public class ImpulseChecker extends CodeChecker {
 		if (isValidRedirection(edge, target)) {
 			if (edge instanceof AppHyperEdge) {
 				/*
-				System.err.printf("%s ^ %s ^ %s --> %s\n", edge.getSource().getPredicate(), ((AppHyperEdge) edge).getHier().getPredicate(),
-						(Return) edge.getStatement(), m_predicateUnifier.getFalsePredicate());
 				if (m_smtManager.isInductiveReturn(edge.getSource().getPredicate(), ((AppHyperEdge) edge).getHier().getPredicate(),
-						(Return) edge.getStatement(), m_predicateUnifier.getFalsePredicate()) == LBool.UNSAT) {
-					System.err.println("#sat");
-					*/
+						(Return) edge.getStatement(), m_predicateUnifier.getFalsePredicate()) != LBool.UNSAT)	
+				*/
 					edge.getSource().connectOutgoingReturn(((AppHyperEdge) edge).getHier(), (Return) edge.getStatement(), target);
-				//}
 			} else {
 				/*
-				System.err.printf("%s ^ %s --> %s\n", edge.getSource().getPredicate(),
-						edge.getStatement(), m_predicateUnifier.getFalsePredicate());
-				if (m_smtManager.isInductive(edge.getSource().getPredicate(), edge.getStatement(),
-						m_predicateUnifier.getFalsePredicate()) == LBool.UNSAT) {
-					System.err.println("#sat");
+				boolean result = false;
+				if (edge.getStatement() instanceof Call)
+					result = m_smtManager.isInductiveCall(edge.getSource().getPredicate(), (Call) edge.getStatement(),
+							m_predicateUnifier.getFalsePredicate()) != LBool.UNSAT;
+				else
+					result = m_smtManager.isInductive(edge.getSource().getPredicate(), edge.getStatement(),
+						m_predicateUnifier.getFalsePredicate()) != LBool.UNSAT;
+				
+				if (result)
 					*/
 					edge.getSource().connectOutgoing(edge.getStatement(), target);
-				//}
+				
 			}
 		
 			edge.disconnect();
@@ -184,7 +170,7 @@ public class ImpulseChecker extends CodeChecker {
 		//improveAnnotations(newRoot);
 		redirectEdges(nodes, clones);
 		
-		//removeFalseNodes(nodes, clones);
+		removeFalseNodes(nodes, clones);
 		
 		return true;
 	}
