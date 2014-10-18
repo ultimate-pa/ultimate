@@ -8,13 +8,8 @@ public class TACAS2015MatthiasAlgoMemSafety extends TACASInterpolation2015 {
 
 	@Override
 	protected void createTestCasesForReal(List<UltimateTestCase> testcases) {
-		addTestCasesFixed("AutomizerC.xml", "TACASInterpolation2015/SP-mem.epf", testcases);
 
-		addTestCasesFixed("AutomizerC.xml", "TACASInterpolation2015/SP-IC-mem.epf", testcases);
-		
-		addTestCasesFixed("AutomizerC.xml", "TACASInterpolation2015/SP-LV-mem.epf", testcases);
-		
-		addTestCasesFixed("AutomizerC.xml", "TACASInterpolation2015/SP-IC-LV-mem.epf", testcases);		
+		addTestCasesFixed("AutomizerC.xml", "TACASInterpolation2015/Automizer-FP-mem.epf", testcases);
 	}
 
 	@Override
