@@ -109,11 +109,16 @@ public class ImpulseChecker extends CodeChecker {
 			return ;
 		if (isValidRedirection(edge, target)) {
 			if (edge instanceof AppHyperEdge) {
-				edge.getSource().connectOutgoingReturn(((AppHyperEdge) edge).getHier(), (Return) edge.getStatement(), target);
+				if (m_smtManager.isInductiveReturn(edge.getSource().getPredicate(), ((AppHyperEdge) edge).getHier().getPredicate(),
+						(Return) edge.getStatement(), m_predicateUnifier.getFalsePredicate()) == LBool.UNSAT)
+					edge.getSource().connectOutgoingReturn(((AppHyperEdge) edge).getHier(), (Return) edge.getStatement(), target);
 			} else {
-				edge.getSource().connectOutgoing(edge.getStatement(), target);
-				
+
+				if (m_smtManager.isInductive(edge.getSource().getPredicate(), edge.getStatement(),
+						m_predicateUnifier.getFalsePredicate()) == LBool.UNSAT)
+					edge.getSource().connectOutgoing(edge.getStatement(), target);
 			}
+		
 			edge.disconnect();
 		}
 	}
@@ -178,7 +183,10 @@ public class ImpulseChecker extends CodeChecker {
 			if (nodes[i].isErrorLocation())
 				continue;
             // TODO: Handle the false predicate properly.
-			if (clones[i].getPredicate().toString().endsWith("false"))
+			//if (clones[i].getPredicate().toString().endsWith("false"))
+			IPredicate annotation = clones[i].getPredicate();
+			if (m_predicateUnifier.getOrConstructPredicate(annotation.getFormula(), annotation.getVars(), annotation.getProcedures())
+		        .equals(m_predicateUnifier.getFalsePredicate()))
 				clones[i].isolateNode();
 		}
 		return true;
