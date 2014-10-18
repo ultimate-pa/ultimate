@@ -4,22 +4,17 @@ import java.util.List;
 
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
 
-public class TACAS2015AlexBE extends TACASInterpolation2015 {
+public class TACAS2015AlexImpulseBE extends TACASInterpolation2015 {
 
 	@Override
 	protected void createTestCasesForReal(List<UltimateTestCase> testcases) {
-		 addTestCasesFixed("CodeCheckWithBE-C.xml",
-		 "TACASInterpolation2015/Kojak-FP.epf", testcases);
 		
-		 addTestCasesFixed("CodeCheckWithBE-C.xml",
-		 "TACASInterpolation2015/Kojak-TreeInterpolation.epf", testcases);
+		 addTestCasesFixed("ImpulseWithBE-C.xml",
+		 "TACASInterpolation2015/Impulse-FP.epf", testcases);
 		
-//		 addTestCasesFixed("ImpulseWithBE-C.xml",
-//		 "TACASInterpolation2015/Impulse-FP.epf", testcases);
-//		
-//		 addTestCasesFixed("ImpulseWithBE-C.xml",
-//		 "TACASInterpolation2015/Impulse-TreeInterpolation.epf",
-//		 testcases);
+		 addTestCasesFixed("ImpulseWithBE-C.xml",
+		 "TACASInterpolation2015/Impulse-TreeInterpolation.epf",
+		 testcases);
 	}
 
 	@Override

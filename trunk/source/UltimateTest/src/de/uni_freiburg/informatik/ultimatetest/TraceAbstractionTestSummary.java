@@ -136,19 +136,40 @@ public class TraceAbstractionTestSummary extends NewTestSummary {
 	}
 
 	private void appendProvider(StringBuilder sb, String ident, ICsvProvider<?> provider) {
+		if (provider == null) {
+			sb.append(ident);
+			sb.append("Provider is null");
+			return;
+		}
+
 		sb.append(ident);
 		for (String s : provider.getColumnTitles()) {
 			sb.append(s);
 			sb.append(", ");
 		}
 		sb.append(Util.getPlatformLineSeparator());
+
+		if (provider.getTable() == null || provider.getTable().size() == 0) {
+			sb.append(ident);
+			sb.append("Provider " + provider.getClass().getSimpleName() + " has no rows");
+			return;
+		}
+
+		List<String> rowHeaders = provider.getRowHeaders();
+		int i = 0;
 		for (List<?> row : provider.getTable()) {
 			sb.append(ident);
+			if (rowHeaders != null && i < rowHeaders.size()) {
+				String rowHeader = rowHeaders.get(i);
+				sb.append(rowHeader);
+				sb.append(", ");
+			}
 			for (Object cell : row) {
 				sb.append(cell);
 				sb.append(", ");
 			}
 			sb.append(Util.getPlatformLineSeparator());
+			i++;
 		}
 	}
 

@@ -19,7 +19,7 @@ public class TACAS2015MatthiasAlgo extends TACASInterpolation2015 {
 
 	@Override
 	protected int getFilesPerCategory() {
-		return 25;
+		return 50;
 	}
 
 }

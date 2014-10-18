@@ -9,9 +9,9 @@ public class TACAS2015Alex extends TACASInterpolation2015 {
 	@Override
 	protected void createTestCasesForReal(List<UltimateTestCase> testcases) {
 
-		addTestCasesFixed("CodeCheckNoBE-C.xml", "TACASInterpolation2015/Kojak-FP-nBE.epf", testcases);
-
-		addTestCasesFixed("CodeCheckNoBE-C.xml", "TACASInterpolation2015/Kojak-TreeInterpolation-nBE.epf", testcases);
+//		addTestCasesFixed("CodeCheckNoBE-C.xml", "TACASInterpolation2015/Kojak-FP-nBE.epf", testcases);
+//
+//		addTestCasesFixed("CodeCheckNoBE-C.xml", "TACASInterpolation2015/Kojak-TreeInterpolation-nBE.epf", testcases);
 
 //		addTestCasesFixed("ImpulseNoBE-C.xml", "TACASInterpolation2015/Impulse-FP-nBE.epf", testcases);
 //
