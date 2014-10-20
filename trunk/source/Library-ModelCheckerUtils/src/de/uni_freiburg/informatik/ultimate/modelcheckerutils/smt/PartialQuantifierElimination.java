@@ -37,7 +37,7 @@ import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 public class PartialQuantifierElimination {
 
 	static final boolean USE_UPD = true;
-	static final boolean USE_IRD = !true;
+	static final boolean USE_IRD = true;
 	static final boolean USE_SOS = true;
 
 	/**
