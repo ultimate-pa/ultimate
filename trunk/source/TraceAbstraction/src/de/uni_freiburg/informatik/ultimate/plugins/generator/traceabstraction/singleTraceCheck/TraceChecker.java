@@ -252,7 +252,8 @@ public class TraceChecker {
 		m_SmtManager.startTraceCheck();
 
 		m_TraceCheckerBenchmarkGenerator.start(TraceCheckerBenchmarkType.s_SsaConstruction);
-		m_Nsb = new NestedSsaBuilder(m_Trace, m_SmtManager, m_DefaultTransFormulas, mLogger);
+		m_Nsb = new NestedSsaBuilder(m_Trace, m_SmtManager, m_DefaultTransFormulas, 
+				m_DefaultTransFormulas.getModifiableGlobalVariableManager(), mLogger);
 		NestedFormulas<Term, Term> ssa = m_Nsb.getSsa();
 		m_TraceCheckerBenchmarkGenerator.stop(TraceCheckerBenchmarkType.s_SsaConstruction);
 

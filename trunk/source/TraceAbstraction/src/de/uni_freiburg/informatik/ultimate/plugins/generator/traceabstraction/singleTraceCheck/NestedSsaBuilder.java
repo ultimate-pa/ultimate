@@ -131,12 +131,13 @@ public class NestedSsaBuilder {
 	protected final Map<Integer, Integer> m_PendingContext2PendingReturn = new HashMap<Integer, Integer>();
 
 	public NestedSsaBuilder(NestedWord<CodeBlock> trace, SmtManager smtManager,
-			DefaultTransFormulas defaultTransFormulas, Logger logger) {
+			NestedFormulas<TransFormula, IPredicate> nestedTransFormulas, 
+			ModifiableGlobalVariableManager globModVarManager, Logger logger) {
 		mLogger = logger;
 		m_Script = smtManager.getScript();
 		m_SmtManager = smtManager;
-		m_Formulas = defaultTransFormulas;
-		m_ModGlobVarManager = defaultTransFormulas.getModifiableGlobalVariableManager();
+		m_Formulas = nestedTransFormulas;
+		m_ModGlobVarManager = globModVarManager;
 		m_Ssa = new ModifiableNestedFormulas<Term, Term>(trace, new TreeMap<Integer, Term>());
 		m_Variable2Constant = new ModifiableNestedFormulas<Map<TermVariable, Term>, Map<TermVariable, Term>>(trace,
 				new TreeMap<Integer, Map<TermVariable, Term>>());
