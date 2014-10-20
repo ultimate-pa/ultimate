@@ -157,7 +157,7 @@ public class TACAS2015Summary extends NewTestSummary {
 					continue;
 				}
 				sb.append("  \\header{");
-				sb.append(cd.getLatexTableTitle());
+				sb.append(removeInvalidCharsForLatex(cd.getLatexTableTitle()));
 				sb.append("}");
 				i++;
 				if (i < mLatexTableHeaderCount) {
@@ -183,7 +183,7 @@ public class TACAS2015Summary extends NewTestSummary {
 
 			// end table
 			sb.append("\\end{tabu}}").append(br);
-			sb.append("\\caption{Results for ").append(tool).append(".}").append(br);
+			sb.append("\\caption{Results for ").append(removeInvalidCharsForLatex(tool)).append(".}").append(br);
 			sb.append("\\end{table}").append(br);
 		}
 	}
@@ -326,7 +326,7 @@ public class TACAS2015Summary extends NewTestSummary {
 		} else {
 			sb.append(sep).append(sep).append(sep);
 		}
-		sb.append(variant);
+		sb.append(removeInvalidCharsForLatex(variant));
 		sb.append(sep);
 
 		ICsvProvider<String> csv = makePrintCsvProviderFromResults(results);
@@ -379,9 +379,9 @@ public class TACAS2015Summary extends NewTestSummary {
 					continue;
 				}
 				if (isInvalidForLatex(cell)) {
-					sb.append("-");
+					sb.append("-I-");
 				} else {
-					sb.append(cell);
+					sb.append(removeInvalidCharsForLatex(cell));
 				}
 
 				if (i < row.size() - 1) {
@@ -423,6 +423,10 @@ public class TACAS2015Summary extends NewTestSummary {
 
 	private boolean isInvalidForLatex(String cell) {
 		return cell == null || cell.contains("[");
+	}
+
+	private String removeInvalidCharsForLatex(String cell) {
+		return cell.replace("_", "\\_");
 	}
 
 	private void printCsv(StringBuilder sb, String header, ICsvProvider<String> provider) {

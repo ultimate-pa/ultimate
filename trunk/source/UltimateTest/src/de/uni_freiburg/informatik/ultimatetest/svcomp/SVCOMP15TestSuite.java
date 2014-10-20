@@ -10,8 +10,17 @@ import java.util.List;
  */
 public class SVCOMP15TestSuite extends AbstractSVCOMP15TestSuite {
 
-	// Timeout for each test case in milliseconds
-	private static long sTimeout = 60 * 1000;
+	@Override
+	protected long getTimeout() {
+		// Timeout for each test case in milliseconds
+		return 60 * 1000;
+	}
+
+	@Override
+	protected int getFilesPerCategory() {
+		// -1 or value larger than 0
+		return 150;
+	}
 
 	@Override
 	protected List<TestDefinition> getTestDefinitions() {
@@ -40,31 +49,31 @@ public class SVCOMP15TestSuite extends AbstractSVCOMP15TestSuite {
 
 		/* Automizer */
 		rtr.add(getTestDefinitionFromExamples("ControlFlowInteger", "AutomizerC.xml",
-				"svcomp2015/svComp-32bit-precise.epf", sTimeout));
+				"svcomp2015/svComp-32bit-precise.epf", getTimeout()));
 		rtr.add(getTestDefinitionFromExamples("DeviceDrivers64", "AutomizerC.xml",
-				"svcomp2015/svComp-64bit-simple.epf", sTimeout));
+				"svcomp2015/svComp-64bit-simple.epf", getTimeout()));
 		rtr.add(getTestDefinitionFromExamples("Simple", "AutomizerC.xml",
-				"automizer/ForwardPredicates_SvcompReachPreciseMM.epf", sTimeout));
+				"automizer/ForwardPredicates_SvcompReachPreciseMM.epf", getTimeout()));
 		rtr.add(getTestDefinitionFromExamples("Simple", "AutomizerC.xml",
-				"automizer/BackwardPredicates_SvcompReachPreciseMM.epf", sTimeout));
+				"automizer/BackwardPredicates_SvcompReachPreciseMM.epf", getTimeout()));
 		rtr.add(getTestDefinitionFromExamples("Simple", "AutomizerC.xml", "svcomp2015/svComp-32bit-simple.epf",
-				sTimeout));
+				getTimeout()));
 
 		/* Kojak */
 		rtr.add(getTestDefinitionFromExamples("ControlFlowInteger", "CodeCheckWithBE-C.xml",
-				"svcomp2015/svComp-32bit-precise-BE-Kojak.epf", sTimeout));
+				"svcomp2015/svComp-32bit-precise-BE-Kojak.epf", getTimeout()));
 		rtr.add(getTestDefinitionFromExamples("DeviceDrivers64", "CodeCheckWithBE-C.xml",
-				"svcomp2015/svComp-64bit-precise-BE-Kojak.epf", sTimeout));
+				"svcomp2015/svComp-64bit-precise-BE-Kojak.epf", getTimeout()));
 		rtr.add(getTestDefinitionFromExamples("Simple", "CodeCheckWithBE-C.xml",
-				"svcomp2015/svComp-32bit-precise-BE-Kojak.epf", sTimeout));
+				"svcomp2015/svComp-32bit-precise-BE-Kojak.epf", getTimeout()));
 
 		/* Impulse */
 		rtr.add(getTestDefinitionFromExamples("ControlFlowInteger", "CodeCheckWithBE-C.xml",
-				"svcomp2015/svComp-32bit-precise-BE-Impulse.epf", sTimeout));
+				"svcomp2015/svComp-32bit-precise-BE-Impulse.epf", getTimeout()));
 		rtr.add(getTestDefinitionFromExamples("DeviceDrivers64", "CodeCheckWithBE-C.xml",
-				"svcomp2015/svComp-64bit-precise-BE-Impulse.epf", sTimeout));
+				"svcomp2015/svComp-64bit-precise-BE-Impulse.epf", getTimeout()));
 		rtr.add(getTestDefinitionFromExamples("Simple", "CodeCheckWithBE-C.xml",
-				"svcomp2015/svComp-32bit-precise-BE-Impulse.epf", sTimeout));
+				"svcomp2015/svComp-32bit-precise-BE-Impulse.epf", getTimeout()));
 
 		return rtr;
 	}

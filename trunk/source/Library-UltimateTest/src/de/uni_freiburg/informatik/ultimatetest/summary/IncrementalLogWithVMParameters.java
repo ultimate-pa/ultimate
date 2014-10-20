@@ -10,12 +10,14 @@ public class IncrementalLogWithVMParameters extends DefaultIncrementalLogfile {
 	private boolean mFirstRun;
 	private int mCountTotal;
 	private int mCountCurrent;
+	private long mDeadline;
 
-	public IncrementalLogWithVMParameters(Class<? extends UltimateTestSuite> ultimateTestSuite) {
+	public IncrementalLogWithVMParameters(Class<? extends UltimateTestSuite> ultimateTestSuite, long deadline) {
 		super(ultimateTestSuite);
 		mFirstRun = true;
 		mCountCurrent = 0;
 		mCountTotal = 0;
+		mDeadline = deadline;
 	}
 
 	public void setCountTotal(int total) {
@@ -26,17 +28,20 @@ public class IncrementalLogWithVMParameters extends DefaultIncrementalLogfile {
 	public void addEntryPreStart(UltimateRunDefinition urd) {
 		mCountCurrent++;
 		StringBuilder sb = new StringBuilder();
-
+		String indent = "\t";
 		if (mFirstRun) {
 			sb.append(Util.getCurrentDateTimeAsString());
 			sb.append(" First run of ");
 			sb.append(getDescriptiveLogName());
 			sb.append(Util.getPlatformLineSeparator());
 			// add more stats here
-			sb.append("\t")
+			sb.append(indent)
 					.append(String.format("Parameters: heapMaxSize=%s",
 							Utils.humanReadableByteCount(Runtime.getRuntime().maxMemory(), true)))
 					.append(Util.getPlatformLineSeparator());
+			sb.append(indent).append(String.format("Test Suite Parameters: Timeout=%s s", mDeadline / 1000))
+					.append(Util.getPlatformLineSeparator());
+
 			mFirstRun = false;
 		}
 		sb.append(Util.getCurrentDateTimeAsString());

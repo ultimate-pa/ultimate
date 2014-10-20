@@ -58,7 +58,6 @@ file_export_version=3.0
 /instance/UltimateCore/Toolchain\ timeout\ in\ seconds=60
 \!/instance/UltimateCore=
 @UltimateCore=0.0.1
-/instance/UltimateCore/Generate\ benchmark\ results=false
 #Mon Oct 20 14:24:28 CEST 2014
 file_export_version=3.0
 \!/instance/de.uni_freiburg.informatik.ultimate.gui=

@@ -140,7 +140,7 @@ public abstract class TACASInterpolation2015 extends AbstractModelCheckerTestSui
 	@Override
 	protected IIncrementalLog[] constructIncrementalLog() {
 		if (mIncrementalLog == null) {
-			mIncrementalLog = new IncrementalLogWithVMParameters(this.getClass());
+			mIncrementalLog = new IncrementalLogWithVMParameters(this.getClass(), mTimeout);
 		}
 		return new IIncrementalLog[] { mIncrementalLog };
 	}

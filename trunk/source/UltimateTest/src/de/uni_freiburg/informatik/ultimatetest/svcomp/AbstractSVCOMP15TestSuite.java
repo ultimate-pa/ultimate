@@ -63,13 +63,21 @@ public abstract class AbstractSVCOMP15TestSuite extends UltimateTestSuite {
 			}
 
 			mTestCases = new ArrayList<>();
+			int filesPerCategory = getFilesPerCategory();
 
 			for (TestDefinition def : testDefs) {
+				List<UltimateTestCase> current = new ArrayList<>();
 				String setFilename = def.getSetName() + ".set";
 				for (File set : setFiles) {
 					if (setFilename.equals(set.getName())) {
-						addTestCases(def, set, allInputFiles, mTestCases, svcompRootDir);
+						addTestCases(def, set, allInputFiles, current, svcompRootDir);
 					}
+				}
+
+				if (filesPerCategory == -1) {
+					mTestCases.addAll(current);
+				} else if (filesPerCategory > 0) {
+					mTestCases.addAll(Util.firstN(current, filesPerCategory));
 				}
 			}
 
@@ -123,7 +131,7 @@ public abstract class AbstractSVCOMP15TestSuite extends UltimateTestSuite {
 	@Override
 	protected IIncrementalLog[] constructIncrementalLog() {
 		if (mIncrementalLog == null) {
-			mIncrementalLog = new IncrementalLogWithVMParameters(this.getClass());
+			mIncrementalLog = new IncrementalLogWithVMParameters(getClass(), getTimeout());
 		}
 		return new IIncrementalLog[] { mIncrementalLog };
 	}
@@ -191,6 +199,16 @@ public abstract class AbstractSVCOMP15TestSuite extends UltimateTestSuite {
 	 * @return
 	 */
 	protected abstract List<TestDefinition> getTestDefinitions();
+
+	/**
+	 * -1 if you want all files per category, a value larger than 0 if you want
+	 * to limit the number of files per TestDefinition.
+	 * 
+	 * @return
+	 */
+	protected abstract int getFilesPerCategory();
+
+	protected abstract long getTimeout();
 
 	private Collection<File> getFilesForSetFile(Collection<File> allFiles, File setFile) {
 		ArrayList<File> currentFiles = new ArrayList<File>();
