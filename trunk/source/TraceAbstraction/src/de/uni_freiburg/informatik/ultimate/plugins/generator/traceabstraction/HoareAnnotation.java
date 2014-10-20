@@ -82,7 +82,7 @@ public class HoareAnnotation extends SPredicate {
 			throw new UnsupportedOperationException("Once Formula has been"
 					+ " computed it is not allowed to add new Formulas");
 		}
-		if (SmtManager.isDontCare(procPrecond) || SmtManager.isDontCare(locInvar)) {
+		if (m_SmtManager.isDontCare(procPrecond) || m_SmtManager.isDontCare(locInvar)) {
 			this.m_IsUnknown = true;
 			return;
 		}

@@ -40,8 +40,6 @@ public class NestedWordAutomata implements IUltimatePlugin, IService {
 	private static final String s_PLUGIN_NAME = Activator.PLUGIN_NAME;
 	private static final String s_PLUGIN_ID = Activator.PLUGIN_ID;
 
-
-	private IUltimateServiceProvider mServices;
 	
 	/********************** Hacky shit ****************************/
 	// setServices(services) contains the rest  
@@ -85,8 +83,6 @@ public class NestedWordAutomata implements IUltimatePlugin, IService {
 
 	//@Override
 	public void setServices(IUltimateServiceProvider services) {
-		mServices = services;
-
 		// TODO: Huge hack, but real change has to be coordinated with Matthias
 		sProgress = services.getProgressMonitorService();
 		((NWALoggerProxy) getLogger()).setLogger(services.getLoggingService().getLogger(Activator.PLUGIN_ID));
@@ -94,12 +90,11 @@ public class NestedWordAutomata implements IUltimatePlugin, IService {
 
 	@Override
 	public void destroy() {
-		// TODO Auto-generated method stub
-		
+		sLoggerProxy = null;
+		sProgress = null;
 	}
 
 	public void init() {
-		// TODO Auto-generated method stub
 		
 	}
 }

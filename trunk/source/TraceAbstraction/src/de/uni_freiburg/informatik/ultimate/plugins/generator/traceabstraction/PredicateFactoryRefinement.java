@@ -40,7 +40,7 @@ public class PredicateFactoryRefinement extends PredicateFactory {
 	
 	public IPredicate intersection(IPredicate p1, IPredicate p2) {
 		if (p1 instanceof IMLPredicate) {
-			assert SmtManager.isDontCare(p2);
+			assert m_SmtManager.isDontCare(p2);
 			assert !m_Pref.computeHoareAnnotation();
 			return m_SmtManager.newMLDontCarePredicate(((IMLPredicate) p1).getProgramPoints());
 		}
@@ -49,7 +49,7 @@ public class PredicateFactoryRefinement extends PredicateFactory {
 
 		ProgramPoint pp = ((ISLPredicate) p1).getProgramPoint();
 
-		if (!m_Pref.computeHoareAnnotation() || SmtManager.isDontCare(p1) || SmtManager.isDontCare(p2)) {
+		if (!m_Pref.computeHoareAnnotation() || m_SmtManager.isDontCare(p1) || m_SmtManager.isDontCare(p2)) {
 			return m_SmtManager.newDontCarePredicate(pp);
 		}
 		TermVarsProc tvp = m_SmtManager.and(p1, p2);

@@ -16,7 +16,7 @@ import de.uni_freiburg.informatik.ultimatetest.summary.IIncrementalLog;
 import de.uni_freiburg.informatik.ultimatetest.summary.ITestSummary;
 
 /**
- * @author dietsch
+ * @author dietsch@informatik.uni-freiburg.de
  * 
  */
 public class UltimateTestCase {
@@ -43,9 +43,19 @@ public class UltimateTestCase {
 
 	@FactoryTestMethod
 	public void test() {
-		//call the garbage collector before starting a new test
+		// call the garbage collector before starting a new test
 		System.gc();
-		
+		System.runFinalization();
+		System.gc();
+
+		// start debug code: use this only in controlled situations!
+		// try {
+		// Thread.sleep(500);
+		// } catch (InterruptedException e1) {
+		// }
+		// HeapDumper.dumpHeap("F:\\tmp\\ultimate benchmarks\\heapdump", false);
+		// end debug ode
+
 		Throwable th = null;
 		TestResult result = TestResult.FAIL;
 		boolean livecycleFailure = false;
@@ -124,8 +134,8 @@ public class UltimateTestCase {
 			}
 		}
 	}
-	
-	public UltimateRunDefinition getUltimateRunDefinition(){
+
+	public UltimateRunDefinition getUltimateRunDefinition() {
 		return mUltimateRunDefinition;
 	}
 

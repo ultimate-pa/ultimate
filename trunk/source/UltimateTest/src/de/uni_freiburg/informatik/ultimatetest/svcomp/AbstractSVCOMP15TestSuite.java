@@ -9,11 +9,21 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.TimingBenchmark;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.CodeCheckBenchmarks;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionBenchmarks;
+import de.uni_freiburg.informatik.ultimate.util.Benchmark;
+import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
+import de.uni_freiburg.informatik.ultimatetest.TraceAbstractionTestSummary;
 import de.uni_freiburg.informatik.ultimatetest.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimatetest.UltimateStarter;
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestSuite;
 import de.uni_freiburg.informatik.ultimatetest.decider.SafetyCheckTestResultDecider;
+import de.uni_freiburg.informatik.ultimatetest.evals.ColumnDefinition;
+import de.uni_freiburg.informatik.ultimatetest.evals.ConversionContext;
+import de.uni_freiburg.informatik.ultimatetest.evals.TACAS2015Summary;
+import de.uni_freiburg.informatik.ultimatetest.evals.TACAS2015Summary.Aggregate;
 import de.uni_freiburg.informatik.ultimatetest.summary.IIncrementalLog;
 import de.uni_freiburg.informatik.ultimatetest.summary.ITestSummary;
 import de.uni_freiburg.informatik.ultimatetest.summary.IncrementalLogWithVMParameters;
@@ -47,8 +57,8 @@ public abstract class AbstractSVCOMP15TestSuite extends UltimateTestSuite {
 
 			if (allInputFiles == null || allInputFiles.isEmpty() || setFiles == null || setFiles.isEmpty()) {
 				System.err
-						.println("inputFiles or setFiles are null: did you specify the svcomp root directory correctly? Currently it is: "
-								+ svcompRootDir);
+						.println("inputFiles or setFiles are null: did you specify the svcomp root directory correctly?"
+								+ " Currently it is: " + svcompRootDir);
 				return new ArrayList<>();
 			}
 
@@ -112,7 +122,7 @@ public abstract class AbstractSVCOMP15TestSuite extends UltimateTestSuite {
 
 	@Override
 	protected IIncrementalLog[] constructIncrementalLog() {
-		if(mIncrementalLog == null){
+		if (mIncrementalLog == null) {
 			mIncrementalLog = new IncrementalLogWithVMParameters(this.getClass());
 		}
 		return new IIncrementalLog[] { mIncrementalLog };
@@ -120,7 +130,50 @@ public abstract class AbstractSVCOMP15TestSuite extends UltimateTestSuite {
 
 	@Override
 	protected ITestSummary[] constructTestSummaries() {
-		return new ITestSummary[] { new SVCOMP15TestSummary(this.getClass()) };
+		//@formatter:off
+		ArrayList<Class<? extends ICsvProviderProvider<? extends Object>>> benchmarks
+			= new ArrayList<Class<? extends ICsvProviderProvider<? extends Object>>>();
+		benchmarks.add(TimingBenchmark.class);
+		benchmarks.add(Benchmark.class);
+		benchmarks.add(TraceAbstractionBenchmarks.class);
+		benchmarks.add(CodeCheckBenchmarks.class);
+
+		ColumnDefinition[] columnDef = new ColumnDefinition[]{
+			new ColumnDefinition(
+					"Runtime (ns)", "Avg. runtime",
+					ConversionContext.Divide(1000000000, 2, " s"), Aggregate.Sum, Aggregate.Average),	
+			new ColumnDefinition(
+					"Allocated memory end (bytes)", "Mem{-}ory",
+					ConversionContext.Divide(1048576, 2, " MB"), Aggregate.Max, Aggregate.Average),
+			new ColumnDefinition(
+					"Overall iterations", "Iter{-}ations",
+					ConversionContext.BestFitNumber(), Aggregate.Ignore, Aggregate.Average),
+			new ColumnDefinition(
+					"NumberOfCodeBlocks", null,
+					ConversionContext.BestFitNumber(), Aggregate.Ignore, Aggregate.Average),
+			new ColumnDefinition(
+					"SizeOfPredicatesFP", null,
+					ConversionContext.BestFitNumber(), Aggregate.Ignore, Aggregate.Average),	
+			new ColumnDefinition(
+					"SizeOfPredicatesBP", null,
+					ConversionContext.BestFitNumber(), Aggregate.Ignore, Aggregate.Average),	
+			new ColumnDefinition(
+					"Conjuncts in SSA", null,
+					ConversionContext.BestFitNumber(), Aggregate.Ignore, Aggregate.Average),	
+			new ColumnDefinition(
+					"Conjuncts in UnsatCore", null,
+					ConversionContext.BestFitNumber(), Aggregate.Ignore, Aggregate.Average),
+			new ColumnDefinition(
+					"ICC %", "ICC",
+					ConversionContext.Percent(true,2), Aggregate.Ignore, Aggregate.Average),					
+		};
+	
+		return new ITestSummary[] { 
+				new SVCOMP15TestSummary(getClass()), 
+				new TraceAbstractionTestSummary(getClass()),
+				new TACAS2015Summary(getClass(), benchmarks, columnDef), 
+		};
+		//@formatter:on
 	}
 
 	/**

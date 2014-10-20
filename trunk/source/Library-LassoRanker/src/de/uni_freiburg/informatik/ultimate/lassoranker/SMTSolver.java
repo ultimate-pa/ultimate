@@ -38,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol;
 import de.uni_freiburg.informatik.ultimate.smtsolver.external.Scriptor;
 
@@ -70,14 +71,13 @@ public class SMTSolver {
 	 */
 	private static Script newScript(boolean useExternalSolver, String smt_solver_command, String dump_filename,
 			boolean produce_unsat_cores, IUltimateServiceProvider services, IToolchainStorage storage) {
-		Logger solverLogger = services.getLoggingService().getLoggerForExternalTool("constraintLogger");
 
 		Script script;
 		if (useExternalSolver) {
-			script = new Scriptor(smt_solver_command, solverLogger, services, storage);
+			script = SolverBuilder.createExternalSolver(services, storage, smt_solver_command);
 		} else {
 			int timeoutMilliseconds = 1099 * 1000;
-			script = new SMTInterpol(solverLogger);
+			script = SolverBuilder.createSMTInterpol(services, storage);
 			script.setOption(":timeout", String.valueOf(timeoutMilliseconds));
 		}
 

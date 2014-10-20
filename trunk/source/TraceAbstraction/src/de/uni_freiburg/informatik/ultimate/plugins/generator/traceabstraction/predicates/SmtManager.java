@@ -110,14 +110,15 @@ public class SmtManager {
 	 */
 	private final static boolean m_TestDataflow = false;
 
-	protected static Term m_DontCareTerm;
-	protected static Term m_EmptyStackTerm;
-	protected static String[] m_NoProcedure = new String[0];
+	protected Term m_DontCareTerm;
+	protected Term m_EmptyStackTerm;
+	protected String[] m_NoProcedure;
 
 	public SmtManager(Boogie2SMT boogie2smt, ModifiableGlobalVariableManager modifiableGlobals,
 			IUltimateServiceProvider services) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
+		m_NoProcedure = new String[0];
 		m_DontCareTerm = new AuxilliaryTerm("don't care");
 		m_EmptyStackTerm = new AuxilliaryTerm("emptyStack");
 		m_Boogie2Smt = boogie2smt;
@@ -149,7 +150,7 @@ public class SmtManager {
 		return m_Script.term("true");
 	}
 
-	public static Term getDontCareTerm() {
+	public Term getDontCareTerm() {
 		return m_DontCareTerm;
 	}
 
@@ -791,8 +792,7 @@ public class SmtManager {
 		// OldVars not renamed if modifiable.
 		// All variables get index 0.
 		String caller = ta.getPreceedingProcedure();
-		Set<BoogieVar> modifiableGlobalsCaller = m_ModifiableGlobals.
-				getModifiedBoogieVars(caller);
+		Set<BoogieVar> modifiableGlobalsCaller = m_ModifiableGlobals.getModifiedBoogieVars(caller);
 		Term ps1renamed = PredicateUtils.formulaWithIndexedVars(ps1, new HashSet<BoogieVar>(0), 4, 0,
 				Integer.MIN_VALUE, null, -5, 0, m_IndexedConstants, m_Script, modifiableGlobalsCaller);
 
@@ -805,8 +805,7 @@ public class SmtManager {
 		// GlobalVars renamed to index 0
 		// Other vars get index 1
 		String callee = ta.getSucceedingProcedure();
-		Set<BoogieVar> modifiableGlobalsCallee = m_ModifiableGlobals.
-				getModifiedBoogieVars(callee);
+		Set<BoogieVar> modifiableGlobalsCallee = m_ModifiableGlobals.getModifiedBoogieVars(callee);
 		Term ps2renamed = PredicateUtils.formulaWithIndexedVars(ps2, new HashSet<BoogieVar>(0), 4, 1, 0, null, 23, 0,
 				m_IndexedConstants, m_Script, modifiableGlobalsCallee);
 
@@ -862,14 +861,12 @@ public class SmtManager {
 		Term fCall = PredicateUtils.formulaWithIndexedVars(tfCall, 0, 1, assignedVarsOnCall, m_IndexedConstants,
 				m_Script, m_Boogie2Smt.getVariableManager());
 		// fCall = (new FormulaUnLet()).unlet(fCall);
-		
+
 		String callee = ta.getPreceedingProcedure();
-		Set<BoogieVar> modifiableGlobalsCallee = m_ModifiableGlobals.
-				getModifiedBoogieVars(callee);
+		Set<BoogieVar> modifiableGlobalsCallee = m_ModifiableGlobals.getModifiedBoogieVars(callee);
 
 		String caller = ta.getSucceedingProcedure();
-		Set<BoogieVar> modifiableGlobalsCaller = m_ModifiableGlobals.
-				getModifiedBoogieVars(caller);
+		Set<BoogieVar> modifiableGlobalsCaller = m_ModifiableGlobals.getModifiedBoogieVars(caller);
 
 		// oldVars not renamed if modifiable
 		// other variables get index 0
@@ -1466,8 +1463,8 @@ public class SmtManager {
 		return pred;
 	}
 
-	public static boolean isDontCare(IPredicate pred) {
-		return pred.getFormula() == SmtManager.m_DontCareTerm;
+	public boolean isDontCare(IPredicate pred) {
+		return pred.getFormula() == m_DontCareTerm;
 	}
 
 	// public SPredicate newTrueSPredicateWithHistory(ProgramPoint pp) {
@@ -1530,7 +1527,7 @@ public class SmtManager {
 	}
 
 	public UnknownState newDontCarePredicate(ProgramPoint pp) {
-		UnknownState pred = new UnknownState(pp, m_SerialNumber++);
+		UnknownState pred = new UnknownState(pp, m_SerialNumber++, m_DontCareTerm);
 		return pred;
 	}
 
@@ -1542,7 +1539,7 @@ public class SmtManager {
 	}
 
 	public DebugPredicate newDebugPredicate(String debugMessage) {
-		DebugPredicate pred = new DebugPredicate(debugMessage, m_SerialNumber++);
+		DebugPredicate pred = new DebugPredicate(debugMessage, m_SerialNumber++, m_DontCareTerm);
 		return pred;
 	}
 

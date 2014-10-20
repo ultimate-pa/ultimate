@@ -53,7 +53,7 @@ public class PredicateFactory extends StateFactory<IPredicate> {
 			List<IPredicate> upPredicates = new ArrayList<IPredicate>();
 			for (IPredicate caller : down2up.keySet()) {
 				for (IPredicate current : down2up.get(caller)) {
-					if (SmtManager.isDontCare(current)) {
+					if (m_SmtManager.isDontCare(current)) {
 						return m_SmtManager.newDontCarePredicate(null);
 					}
 					upPredicates.add(current);

@@ -11,10 +11,12 @@ public class UnknownState implements ISLPredicate {
 //	private static final long serialVersionUID = 9190582215913478152L;
 	private final ProgramPoint m_ProgramPoint;
 	private final int m_SerialNumber;
+	private final Term m_Term;
 	
-	protected UnknownState(ProgramPoint programPoint, int serialNumber) {
+	protected UnknownState(ProgramPoint programPoint, int serialNumber, Term term) {
 		m_ProgramPoint = programPoint;
 		m_SerialNumber = serialNumber;
+		m_Term = term;
 		
 //		super(programPoint, serialNumber, new String[0], term, null, null);
 	}
@@ -67,7 +69,7 @@ public class UnknownState implements ISLPredicate {
 	
 	@Override
 	public Term getFormula() {
-		return SmtManager.getDontCareTerm();
+		return m_Term;
 	}
 
 	@Override

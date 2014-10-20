@@ -637,10 +637,10 @@ public class TraceChecker {
 			tc.computeInterpolants_Recursive(interpolatedPositions, m_PredicateUnifier);
 			IPredicate[] interpolantSubsequence = tc.getInterpolants();
 
-			assert SmtManager.isDontCare(m_Interpolants[nonPendingCall]);
+			assert m_SmtManager.isDontCare(m_Interpolants[nonPendingCall]);
 			m_Interpolants[nonPendingCall] = precondition;
 			for (int i = 0; i < interpolantSubsequence.length; i++) {
-				assert SmtManager.isDontCare(m_Interpolants[nonPendingCall + 1 + i]);
+				assert m_SmtManager.isDontCare(m_Interpolants[nonPendingCall + 1 + i]);
 				m_Interpolants[nonPendingCall + 1 + i] = interpolantSubsequence[i];
 			}
 		}

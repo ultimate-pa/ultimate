@@ -16,4 +16,5 @@ Require-Bundle: UltimateCore,
  Library-SMTLIB,
  Library-UltimateUtil,
  BoogiePreprocessor,
- SMTInterpol
+ SMTInterpol,
+ SMTSolverBridge

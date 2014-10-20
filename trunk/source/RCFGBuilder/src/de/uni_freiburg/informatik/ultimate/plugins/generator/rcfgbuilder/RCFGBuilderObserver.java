@@ -23,7 +23,7 @@ public class RCFGBuilderObserver implements IUnmanagedObserver {
 	 * should be passed to the next plugin. The Sucessors of this node exactly
 	 * the initial nodes of procedures.
 	 */
-	private static RootNode m_graphroot;
+	private RootNode mGraphroot;
 
 	/**
 	 * Logger for this plugin.
@@ -45,7 +45,7 @@ public class RCFGBuilderObserver implements IUnmanagedObserver {
 	 * @return the root of the CFG.
 	 */
 	public RootNode getRoot() {
-		return RCFGBuilderObserver.m_graphroot;
+		return mGraphroot;
 	}
 
 	/**
@@ -66,8 +66,8 @@ public class RCFGBuilderObserver implements IUnmanagedObserver {
 			RCFGBacktranslator translator = new RCFGBacktranslator();
 			CfgBuilder recCFGBuilder = new CfgBuilder(unit, translator, mServices, mStorage);
 			try {
-				m_graphroot = recCFGBuilder.getRootNode(unit);
-				ModelUtils.mergeAnnotations(unit, m_graphroot);
+				mGraphroot = recCFGBuilder.getRootNode(unit);
+				ModelUtils.mergeAnnotations(unit, mGraphroot);
 				mServices.getBacktranslationService().addTranslator(translator);
 			} catch (SMTLIBException e) {
 				if (e.getMessage().equals("Cannot create quantifier in quantifier-free logic")) {

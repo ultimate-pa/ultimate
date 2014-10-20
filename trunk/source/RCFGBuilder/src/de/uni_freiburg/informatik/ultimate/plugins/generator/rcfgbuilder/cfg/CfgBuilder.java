@@ -49,6 +49,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieDeclarations;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.RCFGBacktranslator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.RCFGBuilder;
@@ -58,8 +59,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Sta
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.PreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.PreferenceInitializer.CodeBlockSize;
 import de.uni_freiburg.informatik.ultimate.result.Check;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol;
-import de.uni_freiburg.informatik.ultimate.smtsolver.external.Scriptor;
 import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
 
 /**
@@ -119,13 +118,13 @@ public class CfgBuilder {
 		m_CodeBlockSize = (new UltimatePreferenceStore(RCFGBuilder.s_PLUGIN_ID)).getEnum(
 				PreferenceInitializer.LABEL_CodeBlockSize, CodeBlockSize.class);
 
-		Logger solverLogger = mServices.getLoggingService().getLoggerForExternalTool("interpolLogger");
 		if (useExternalSolver) {
 			String command = (new UltimatePreferenceStore(RCFGBuilder.s_PLUGIN_ID))
 					.getString(PreferenceInitializer.LABEL_ExtSolverCommand);
-			m_Script = new Scriptor(command, solverLogger, mServices, storage);
+
+			m_Script = SolverBuilder.createExternalSolver(mServices, storage, command);
 		} else {
-			m_Script = new SMTInterpol(solverLogger, false);
+			m_Script = SolverBuilder.createSMTInterpol(mServices, storage);
 		}
 
 		boolean dumpToFile = (new UltimatePreferenceStore(RCFGBuilder.s_PLUGIN_ID))

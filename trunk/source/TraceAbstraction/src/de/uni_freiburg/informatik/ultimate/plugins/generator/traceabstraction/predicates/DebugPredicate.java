@@ -10,10 +10,12 @@ public class DebugPredicate implements IPredicate {
 	
 	private final String m_DebugMessage;
 	private final int m_SerialNumber;
+	private final Term m_Term;
 	
-	public DebugPredicate(String debugMessage, int serialNumber) {
+	public DebugPredicate(String debugMessage, int serialNumber, Term dontCareTerm) {
 		m_DebugMessage = debugMessage;
 		m_SerialNumber = serialNumber;
+		m_Term = dontCareTerm;
 	}
 
 	@Override
@@ -23,7 +25,7 @@ public class DebugPredicate implements IPredicate {
 
 	@Override
 	public Term getFormula() {
-		return SmtManager.getDontCareTerm();
+		return m_Term;
 	}
 
 	@Override
