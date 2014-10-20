@@ -1,29 +1,25 @@
 //
+// correctness cannot be proven using current methods because of the #t~short2
 implementation main() returns (main : int){
     var #t~malloc0 : $Pointer$;
     var #t~post3 : $Pointer$;
     var #t~mem1 : int;
     var #t~short2 : bool;
-    var ~p~1 : $Pointer$;
-    var ~q~1 : $Pointer$;
+    var p : $Pointer$;
+    var q : $Pointer$;
 
-    call #t~malloc0 := ~malloc(400);
-    ~p~1 := #t~malloc0;
-    ~q~1 := ~p~1;
+    call p := ~malloc(400);
+    q := p;
     while (true)
     {
-        #t~short2 := ~q~1!offset < { base: ~p~1!base, offset: ~p~1!offset + 400 }!offset;
+        #t~short2 := q!offset < p!offset + 400;
         if (#t~short2) {
-            assert 4 + ~q~1!offset <= #length[~q~1!base];
-//            call #t~mem1 := read~int(~q~1, 4);
-            #t~short2 := #t~mem1 >= 0;
-        }
-        if (!#t~short2) {
+            assert 4 + q!offset <= #length[q!base];
+        } else {
             break;
         } 
-        ~q~1 := { base: ~q~1!base, offset: ~q~1!offset + 4 };
+        q := { base: q!base, offset: q!offset + 4 };
     }
-    main := 0;
     return;
 }
 
