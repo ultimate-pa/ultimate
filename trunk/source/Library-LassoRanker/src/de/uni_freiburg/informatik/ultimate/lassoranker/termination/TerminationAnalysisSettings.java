@@ -107,7 +107,7 @@ public class TerminationAnalysisSettings implements Serializable {
 	public boolean overapproximate_stem = false; // Default: false
 	
 	/**
-	 * Default construction intializes default values
+	 * Default construction initializes default values
 	 */
 	public TerminationAnalysisSettings() {
 	}
