@@ -125,6 +125,8 @@ public class CfgBuilder {
 			m_Script = SolverBuilder.createExternalSolver(mServices, storage, command);
 		} else {
 			m_Script = SolverBuilder.createSMTInterpol(mServices, storage);
+			int timeoutMilliseconds = 30 * 1000;
+			m_Script.setOption(":timeout", String.valueOf(timeoutMilliseconds));
 		}
 
 		boolean dumpToFile = (new UltimatePreferenceStore(RCFGBuilder.s_PLUGIN_ID))
