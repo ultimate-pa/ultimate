@@ -9,10 +9,13 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.model.IType;
+import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieOldVar;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.model.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IdentifierExpression;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
@@ -132,18 +135,27 @@ public class RcfgProgramExecutionBuilder {
 	}
 
 	private RcfgProgramExecution computeRcfgProgramExecution() {
-		Map<Integer, ProgramState<Expression>> partialProgramStateMapping = new HashMap<Integer, ProgramState<Expression>>();
+		Map<Integer, ProgramState<Expression>> partialProgramStateMapping = 
+				new HashMap<Integer, ProgramState<Expression>>();
 		for (int i = 0; i < m_Trace.length(); i++) {
 			Map<BoogieVar, Expression> varValAtPos = varValAtPos(i);
-			Map<Expression, Collection<Expression>> variable2Values = new HashMap<Expression, Collection<Expression>>();
+			Map<Expression, Collection<Expression>> variable2Values = 
+					new HashMap<Expression, Collection<Expression>>();
 			for (Entry<BoogieVar, Expression> entry : varValAtPos.entrySet()) {
 				BoogieVar bv = entry.getKey();
 				ILocation loc = m_SymbolTable.getAstNode(bv).getLocation();
 				DeclarationInformation declInfo = 
 						m_SymbolTable.getDeclarationInformation(bv);
-				IdentifierExpression idExpr = new IdentifierExpression(loc, entry.getKey().getIType(), entry.getKey()
-						.getIdentifier(), declInfo);
-				variable2Values.put(idExpr, Collections.singleton(entry.getValue()));
+				IType iType = entry.getKey().getIType();
+				IdentifierExpression idExpr = new IdentifierExpression(
+						loc, iType, entry.getKey().getIdentifier(), declInfo);
+				Expression expr;
+				if (bv instanceof BoogieOldVar) {
+					expr = new UnaryExpression(loc, iType, UnaryExpression.Operator.OLD, idExpr);
+				} else {
+					expr = idExpr;
+				}
+				variable2Values.put(expr, Collections.singleton(entry.getValue()));
 			}
 			ProgramState<Expression> pps = new ProgramState<Expression>(variable2Values);
 			partialProgramStateMapping.put(i, pps);
