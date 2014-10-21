@@ -155,11 +155,29 @@ public class SmtUtils {
 	 * this method returns the term ("select" ("select" a 23) 42).  
 	 */
 	public static Term multiDimensionalSelect(Script script, Term a, ArrayIndex index) {
-		assert index.size() > 0;
+		assert index.size() >= 0;
 		assert a.getSort().isArraySort();
 		Term result = a;
 		for (int i=0; i<index.size(); i++) {
 			result = script.term("select", result, index.get(i));
+		}
+		return result;
+	}
+	
+	/**
+	 * Returns the term that stores the element at index from (possibly) multi
+	 * dimensional array a.
+	 * E.g. If the array has Sort (Int -> Int -> Int) and we store the value
+	 * val at index [23, 42], this method returns the term 
+	 * (store a 23 (store (select a 23) 42 val)).
+	 */
+	public static Term multiDimensionalStore(Script script, Term a, ArrayIndex index, Term value) {
+		assert index.size() > 0;
+		assert a.getSort().isArraySort();
+		Term result = value;
+		for (int i=index.size()-1; i>=0; i--) {
+			Term selectUpToI = multiDimensionalSelect(script, a, index.getFirst(i));
+			result = script.term("store", selectUpToI, index.get(i), result);
 		}
 		return result;
 	}

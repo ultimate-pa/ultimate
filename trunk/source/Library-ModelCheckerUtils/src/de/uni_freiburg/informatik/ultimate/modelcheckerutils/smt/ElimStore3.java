@@ -131,7 +131,7 @@ public class ElimStore3 {
 
 			for (Term conjunct : conjuncts) {
 				try {
-					ArrayUpdate au = new ArrayUpdate(conjunct, quantifier == QuantifiedFormula.FORALL, true);
+					ArrayUpdate au = new ArrayUpdate(conjunct, quantifier == QuantifiedFormula.FORALL, false);
 					if (au.getOldArray().equals(eliminatee)) {
 						if (writeInto != null) {
 							throw new UnsupportedOperationException("unsupported: write into several arrays");
@@ -202,6 +202,7 @@ public class ElimStore3 {
 
 		ArrayList<Term> additionalConjuncs = new ArrayList<Term>();
 		Term intermediateResult = subst.transform(othersT);
+		assert writtenFrom != null || !Arrays.asList(intermediateResult.getFreeVars()).contains(eliminatee) : "var is still there";
 		if (write) {
 			Term a_heir;
 			ArrayIndex idx_write;
@@ -216,18 +217,34 @@ public class ElimStore3 {
 				idx_write = writtenFrom.getIndex();
 				data = writtenFrom.getValue();
 			}
-			additionalConjuncs.addAll(disjointIndexImpliesValueEquality(quantifier, a_heir, idx_write, iav, subst));
+			additionalConjuncs.addAll(disjointIndexImpliesValueEquality(quantifier, a_heir, idx_write, iav, subst, eliminatee));
+			ArrayIndex idx_writeRenamed = new ArrayIndex(SmtUtils.substitutionElementwise(idx_write, subst));
+			Term dataRenamed = subst.transform(data);
 			if (writeInto != null) {
 				assert writeInto.getOldArray() == eliminatee : "array not eliminatee";
 				// if store is of the form
 				// a_heir == store(a_elim, idx_write, data)
 				// construct term a_heir[idx_write] == data
 				Term writtenCellHasNewValue;
-				ArrayIndex idx_writeRenamed = new ArrayIndex(SmtUtils.substitutionElementwise(idx_write, subst));
-				Term dataRenamed = subst.transform(data);
 				writtenCellHasNewValue = mScript.term("=",
 						SmtUtils.multiDimensionalSelect(mScript, a_heir, idx_writeRenamed), dataRenamed);
+				assert !Arrays.asList(writtenCellHasNewValue.getFreeVars()).contains(eliminatee) : "var is still there";
 				additionalConjuncs.add(writtenCellHasNewValue);
+			}
+			
+			/**
+			 * Special treatment for the case that the eliminatee to which we
+			 * write occurs also in a term somewhere else (which is not a
+			 * select term). Maybe we can avoid this if we eliminate variables
+			 * in a certain order. 
+			 */
+			final SafeSubstitution writtenFromSubst;
+			if (writtenFrom != null) {
+				Term storeRenamed = SmtUtils.multiDimensionalStore(script, a_heir, idx_writeRenamed, dataRenamed);
+				Map<Term, Term> mapping = Collections.singletonMap((Term) eliminatee, storeRenamed);
+				writtenFromSubst = new SafeSubstitution(script, mapping);
+			} else {
+				writtenFromSubst = null;
 			}
 			
 			if (quantifier == QuantifiedFormula.EXISTS) {
@@ -237,6 +254,10 @@ public class ElimStore3 {
 				assert quantifier == QuantifiedFormula.FORALL;
 				Term additionalConjuncts = Util.or(script, SmtUtils.negateElementwise(mScript, additionalConjuncs).toArray(new Term[additionalConjuncs.size()])); 
 				intermediateResult = Util.or(script, intermediateResult, additionalConjuncts); 
+			}
+			
+			if (writtenFromSubst != null) {
+				intermediateResult = writtenFromSubst.transform(intermediateResult); 
 			}
 		}
 
@@ -267,6 +288,7 @@ public class ElimStore3 {
 				for (int j = i; j < indices.size(); j++) {
 					Term newConjunct = SmtUtils.indexEqualityImpliesValueEquality(
 							mScript, indices.get(i), indices.get(j), values.get(i), values.get(j));
+					assert !Arrays.asList(newConjunct.getFreeVars()).contains(eliminatee) : "var is still there";
 					indexValueConstraintsFromEliminatee.add(newConjunct);
 				}
 			}
@@ -301,9 +323,10 @@ public class ElimStore3 {
 	 * arrayCells of a_heir have the same values than the arrayCells of
 	 * a_elim
 	 * @param subst 
+	 * @param eliminatee 
 	 */
 	private ArrayList<Term> disjointIndexImpliesValueEquality(int quantifier,
-			Term a_heir, ArrayIndex idx_write, IndicesAndValues iav, SafeSubstitution subst) {
+			Term a_heir, ArrayIndex idx_write, IndicesAndValues iav, SafeSubstitution subst, TermVariable eliminatee) {
 		ArrayList<Term> result = new ArrayList<Term>();
 		for (int i = 0; i < iav.getIndices().length; i++) {
 			// select term that represents the array cell a[]
@@ -313,6 +336,7 @@ public class ElimStore3 {
 			Term conjunct = ivc.getTerm();
 			conjunct = subst.transform(conjunct);
 			result.add(conjunct);
+			assert !Arrays.asList(conjunct.getFreeVars()).contains(eliminatee) : "var is still there";
 			if (ivc.indexInequality() && !ivc.valueEquality()) {
 				assert !ivc.valueInequality() : "term would be false!";
 				// case where we have valueEquality hat is not true

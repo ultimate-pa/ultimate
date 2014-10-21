@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
@@ -164,6 +165,16 @@ public class ArrayIndex implements List<Term> {
 	@Override
 	public String toString() {
 		return m_IndexEntries.toString();
+	}
+
+	/**
+	 * Returns an new ArrayIndex that consists of the first i entries of this
+	 * index.
+	 */
+	public ArrayIndex getFirst(int i) {
+		List<Term> indexEntries = new ArrayList<>(this);
+		indexEntries.remove(indexEntries.size()-1);
+		return new ArrayIndex(indexEntries);
 	}
 	
 	
