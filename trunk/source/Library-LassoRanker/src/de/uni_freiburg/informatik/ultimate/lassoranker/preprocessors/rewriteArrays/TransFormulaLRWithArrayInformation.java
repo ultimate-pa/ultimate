@@ -291,7 +291,7 @@ public class TransFormulaLRWithArrayInformation {
 			}
 
 			for (ArrayUpdate au : arrayUpdates) {
-				ArrayGeneration oldGeneration = getOrConstructArrayGeneration(au.getOldArray());
+				ArrayGeneration oldGeneration = getOrConstructArrayGeneration((TermVariable) au.getOldArray());
 				ArrayGeneration newGeneration = getOrConstructArrayGeneration(au.getNewArray());
 				putParentGeneration(newGeneration, oldGeneration);
 			}
@@ -308,7 +308,7 @@ public class TransFormulaLRWithArrayInformation {
 			}
 			for (ArrayUpdate au : arrayUpdates) {
 				determineRepresentative(au.getNewArray());
-				determineRepresentative(au.getOldArray());
+				determineRepresentative((TermVariable) au.getOldArray());
 			}
 		}
 
@@ -427,7 +427,7 @@ public class TransFormulaLRWithArrayInformation {
 			m_ArrayFirstGeneration2Indices = new HashRelation<TermVariable, ArrayIndex>();
 			for (int i = 0; i < sunnf.length; i++) {
 				for (ArrayUpdate au : m_ArrayUpdates.get(i)) {
-					TermVariable firstGeneration = m_ArrayGenealogy[i].getProgenitor(au.getOldArray());
+					TermVariable firstGeneration = m_ArrayGenealogy[i].getProgenitor((TermVariable) au.getOldArray());
 					ArrayIndex index = au.getIndex();
 					addFirstGenerationIndexPair(firstGeneration, index);
 				}

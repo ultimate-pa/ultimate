@@ -18,8 +18,9 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.Bin
  * arr' = (store, arr, index, value), 
  * where 
  * the array arr' is a TermVariable, and
- * (store, arr, index, value) is a multidimensional store where the array arr 
- * is a TermVariable.
+ * (store, arr, index, value) is a multidimensional store.
+ * A boolean flag allows to put the requirenment that also arr is a 
+ * TermVariable.
  * @author Matthias Heizmann
  */
 public class ArrayUpdate {
@@ -31,7 +32,8 @@ public class ArrayUpdate {
 	 * Construct ArrayUpdate wrapper from term. Throw an ArrayUpdateException if
 	 * term is no array update.
 	 */
-	public ArrayUpdate(Term term, boolean isNegated) throws ArrayUpdateException {
+	public ArrayUpdate(Term term, boolean isNegated, 
+			boolean oldArrayIsTermVariable) throws ArrayUpdateException {
 		BinaryEqualityRelation ber = null;
 		try {
 			ber = new BinaryEqualityRelation(term);
@@ -73,10 +75,13 @@ public class ArrayUpdate {
 		if (m_MultiDimensionalStore.getIndex().size() == 0) {
 			throw new ArrayUpdateException("no multidimensional array");
 		}
-		TermVariable oldArray = isArrayWithSort(
-				m_MultiDimensionalStore.getArray(), m_NewArray.getSort());
-		if (oldArray == null) {
-			throw new ArrayUpdateException("no term variable");
+		if (!m_MultiDimensionalStore.getArray().getSort().equals(m_NewArray.getSort())) {
+			throw new AssertionError("sort mismatch");
+		}
+		if (oldArrayIsTermVariable && 
+				!(m_MultiDimensionalStore.getArray() instanceof TermVariable)) {
+			throw new ArrayUpdateException("old array is no term variable");
+			
 		}
 	}
 	
@@ -122,8 +127,8 @@ public class ArrayUpdate {
 		}
 	}
 	
-	public TermVariable getOldArray() {
-		return (TermVariable) m_MultiDimensionalStore.getArray();
+	public Term getOldArray() {
+		return m_MultiDimensionalStore.getArray();
 	}
 	public TermVariable getNewArray() {
 		return m_NewArray;
@@ -172,11 +177,12 @@ public class ArrayUpdate {
 		 * If negatedUpdate is true we search for terms of the form
 		 * (not (= a (store a' b c)))
 		 */
-		public ArrayUpdateExtractor(boolean negatedUpdate, Term... terms) {
+		public ArrayUpdateExtractor(boolean negatedUpdate, 
+				boolean oldArrayIsTermVariable, Term... terms) {
 			for (Term term : terms) {
 				ArrayUpdate au;
 				try {
-					au = new ArrayUpdate(term, negatedUpdate);
+					au = new ArrayUpdate(term, negatedUpdate, oldArrayIsTermVariable);
 				} catch (ArrayUpdateException e) {
 					au = null;
 				}

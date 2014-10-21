@@ -24,6 +24,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.ModelCheckerUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.PartialQuantifierElimination.EqualityInformation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayIndex;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayUpdate;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayUpdate.ArrayUpdateExtractor;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSelect;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalStore;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayUpdate.ArrayUpdateException;
@@ -61,6 +62,21 @@ public class ElimStore3 {
 					throw new UnsupportedOperationException("unsupported: several stores");
 				} else {
 					result = asd;
+				}
+			}
+		}
+		return result;
+	}
+	
+	private ArrayUpdate getArrayUpdate(Term array, Term[] terms) {
+		ArrayUpdateExtractor aue = new ArrayUpdateExtractor(mQuantifier == QuantifiedFormula.FORALL, true, terms);
+		ArrayUpdate result = null;
+		for (ArrayUpdate au : aue.getArrayUpdates()) {
+			if (au.getNewArray().equals(array)) {
+				if (result != null && !result.equals(au)) {
+					throw new UnsupportedOperationException("unsupported: several updates");
+				} else {
+					result = au;
 				}
 			}
 		}
@@ -109,12 +125,13 @@ public class ElimStore3 {
 			}
 
 			MultiDimensionalStore store = getArrayStore(eliminatee, term);
+			ArrayUpdate update = getArrayUpdate(eliminatee, conjuncts);
 
 			HashSet<Term> others = new HashSet<Term>();
 
 			for (Term conjunct : conjuncts) {
 				try {
-					ArrayUpdate au = new ArrayUpdate(conjunct, quantifier == QuantifiedFormula.FORALL);
+					ArrayUpdate au = new ArrayUpdate(conjunct, quantifier == QuantifiedFormula.FORALL, true);
 					if (au.getOldArray().equals(eliminatee)) {
 						if (writeInto != null) {
 							throw new UnsupportedOperationException("unsupported: write into several arrays");
@@ -136,7 +153,7 @@ public class ElimStore3 {
 				}
 			}
 			if (writtenFrom != null) {
-//				throw new UnsupportedOperationException("not yet implemented: written from");
+				boolean breakpointHere = true;
 			}
 
 			if (quantifier == QuantifiedFormula.EXISTS) {
@@ -148,8 +165,11 @@ public class ElimStore3 {
 			
 
 
-			if (store != null && (writeInto == null && writtenFrom == null)) {
+			if ((store != null || update != null) && (writeInto == null && writtenFrom == null)) {
 				TermVariable auxArray = eliminatee.getTheory().createFreshTermVariable("arrayElim", eliminatee.getSort());
+				if (store == null) {
+					store = update.getMultiDimensionalStore();
+				}
 				Map<Term, Term> auxMap = Collections.singletonMap((Term) store.getStoreTerm(), (Term) auxArray);
 				SafeSubstitution subst = new SafeSubstitution(mScript, auxMap);
 				Term auxTerm = subst.transform(term);
@@ -183,7 +203,7 @@ public class ElimStore3 {
 		ArrayList<Term> additionalConjuncs = new ArrayList<Term>();
 		Term intermediateResult = subst.transform(othersT);
 		if (write) {
-			TermVariable a_heir;
+			Term a_heir;
 			ArrayIndex idx_write;
 			Term data;
 			if (writeInto != null) {
@@ -283,7 +303,7 @@ public class ElimStore3 {
 	 * @param subst 
 	 */
 	private ArrayList<Term> disjointIndexImpliesValueEquality(int quantifier,
-			TermVariable a_heir, ArrayIndex idx_write, IndicesAndValues iav, SafeSubstitution subst) {
+			Term a_heir, ArrayIndex idx_write, IndicesAndValues iav, SafeSubstitution subst) {
 		ArrayList<Term> result = new ArrayList<Term>();
 		for (int i = 0; i < iav.getIndices().length; i++) {
 			// select term that represents the array cell a[]

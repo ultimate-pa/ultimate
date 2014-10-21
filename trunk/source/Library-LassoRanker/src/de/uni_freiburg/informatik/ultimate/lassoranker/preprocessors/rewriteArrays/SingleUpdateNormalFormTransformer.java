@@ -68,7 +68,7 @@ public class SingleUpdateNormalFormTransformer {
 		m_ReplacementVarFactory = replacementVarFactory;
 		m_ArrayUpdates = new ArrayList<ArrayUpdate>();
 		Term[] conjuncts = SmtUtils.getConjuncts(input);
-		ArrayUpdateExtractor aue = new ArrayUpdateExtractor(false, conjuncts);
+		ArrayUpdateExtractor aue = new ArrayUpdateExtractor(false, true, conjuncts);
 		m_RemainderTerms = aue.getRemainingTerms();
 		m_ArrayUpdates.addAll(aue.getArrayUpdates());
 		m_Store2TermVariable = aue.getStore2TermVariable();
@@ -105,7 +105,7 @@ public class SingleUpdateNormalFormTransformer {
 				Collections.singletonMap((Term) mdStore.getStoreTerm(), (Term) auxArray);
 		{
 			Term newUpdate = m_Script.term("=", auxArray, mdStore.getStoreTerm());
-			ArrayUpdateExtractor aue = new ArrayUpdateExtractor(false, newUpdate);
+			ArrayUpdateExtractor aue = new ArrayUpdateExtractor(false, true, newUpdate);
 			assert aue.getArrayUpdates().size() == 1;
 			m_ArrayUpdates.add(aue.getArrayUpdates().get(0));
 		}
@@ -159,7 +159,7 @@ public class SingleUpdateNormalFormTransformer {
 		Map<Term, Term> newStore2TermVariable = new HashMap<Term, Term>();
 		for (Term term : m_RemainderTerms) {
 			Term newTerm = subst.transform(term);
-			ArrayUpdateExtractor aue = new ArrayUpdateExtractor(false, newTerm);
+			ArrayUpdateExtractor aue = new ArrayUpdateExtractor(false, true, newTerm);
 			assert aue.getArrayUpdates().size() == 0 || aue.getArrayUpdates().size() == 1;
 			if (aue.getArrayUpdates().isEmpty()) {
 				newRemainderTerms.add(newTerm);
@@ -175,7 +175,7 @@ public class SingleUpdateNormalFormTransformer {
 	
 	private MultiDimensionalStore getNonUpdateStore(Term term) {
 		Term[] conjuncts = SmtUtils.getConjuncts(term);
-		ArrayUpdateExtractor aue = new ArrayUpdateExtractor(false, conjuncts);
+		ArrayUpdateExtractor aue = new ArrayUpdateExtractor(false, true, conjuncts);
 		Term remainder = Util.and(m_Script, aue.getRemainingTerms().toArray(new Term[0]));
 		remainder = (new SafeSubstitution(m_Script, aue.getStore2TermVariable())).transform(remainder);
 		List<MultiDimensionalStore> mdStores = MultiDimensionalStore.extractArrayStoresDeep(remainder);

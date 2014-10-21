@@ -373,7 +373,7 @@ public class TransFormulaLRWithArrayCells {
 		Term[] conjuncts = new Term[arrayUpdates.size()];
 		int offset = 0;
 		for (ArrayUpdate au : arrayUpdates) {
-			conjuncts[offset] = buildArrayUpdateConstraints(au.getNewArray(), au.getOldArray(), au.getIndex(),
+			conjuncts[offset] = buildArrayUpdateConstraints(au.getNewArray(), (TermVariable) au.getOldArray(), au.getIndex(),
 					au.getValue(), select2CellVariable, equivalentCells);
 			offset++;
 		}
