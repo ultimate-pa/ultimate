@@ -82,7 +82,11 @@ public class DivisibilityPredicateGenerator {
 	}
 
 	private boolean isOffsetVar(BoogieVar bv) {
-		return bv.getIdentifier().contains("offset");
+		if (bv.getTermVariable().getSort().isNumericSort()) {
+			return bv.getIdentifier().contains("offset");
+		} else {
+			return false;
+		}
 	}
 	
 	private boolean isLengthArray(Term term) {
