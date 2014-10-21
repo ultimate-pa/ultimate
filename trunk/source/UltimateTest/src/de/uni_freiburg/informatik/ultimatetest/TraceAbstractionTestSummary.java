@@ -9,6 +9,7 @@ import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.core.services.IResultService;
 import de.uni_freiburg.informatik.ultimate.result.BenchmarkResult;
+import de.uni_freiburg.informatik.ultimate.util.Benchmark;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProvider;
 import de.uni_freiburg.informatik.ultimatetest.decider.ITestResultDecider.TestResult;
 import de.uni_freiburg.informatik.ultimatetest.summary.NewTestSummary;
@@ -111,16 +112,19 @@ public class TraceAbstractionTestSummary extends NewTestSummary {
 				.entrySet()) {
 			sb.append("\t").append(entry.getKey()).append(Util.getPlatformLineSeparator());
 
+			String indent = "\t\t\t";
 			for (Entry<UltimateRunDefinition, ExtendedResult> currentResult : entry.getValue()) {
-				sb.append("\t\t").append(currentResult.getKey()).append(": ").append(currentResult.getValue().Message)
-						.append(Util.getPlatformLineSeparator());
+				sb.append("\t\t").append(currentResult.getKey()).append(Util.getPlatformLineSeparator());
 				// Add TraceAbstraction benchmarks
 				Collection<BenchmarkResult> benchmarks = m_TraceAbstractionBenchmarks.get(currentResult.getKey());
 				if (benchmarks == null) {
-					sb.append("\t\t").append("No benchmark results available.").append(Util.getPlatformLineSeparator());
+					sb.append(indent).append("No benchmark results available.").append(Util.getPlatformLineSeparator());
 				} else {
 					for (BenchmarkResult<Object> benchmark : benchmarks) {
-						appendProvider(sb, "\t\t", benchmark.getBenchmark().createCvsProvider());
+						//exclude the extensive ultimate benchmark object
+						if (benchmark.getBenchmark().getClass() != Benchmark.class) {
+							appendProvider(sb, indent, benchmark.getBenchmark().createCvsProvider());
+						}
 					}
 				}
 			}
