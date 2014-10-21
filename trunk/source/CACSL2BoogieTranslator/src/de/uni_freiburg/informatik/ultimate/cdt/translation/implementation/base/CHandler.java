@@ -521,9 +521,7 @@ public class CHandler implements ICHandler {
 			main.warn(loc, msg);
 			return new ResultSkip();
 		}
-		/*
-		 * TODO Christian: to be modified/tested
-		 */
+
 		// enum case
 		if (node.getDeclSpecifier() instanceof IASTEnumerationSpecifier) {
 			return handleEnumDeclaration(main, node);

@@ -16,6 +16,7 @@ import org.eclipse.cdt.core.dom.ast.IASTCompoundStatement;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionCallExpression;
 import org.eclipse.cdt.core.dom.ast.IASTIdExpression;
 import org.eclipse.cdt.core.dom.ast.IASTInitializerClause;
+import org.eclipse.cdt.internal.core.model.Binary;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
@@ -42,9 +43,13 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.IT
 import de.uni_freiburg.informatik.ultimate.model.annotation.Overapprox;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssertStatement;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Attribute;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Body;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BooleanLiteral;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.GotoStatement;
@@ -52,12 +57,15 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.HavocStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IfStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IntegerLiteral;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.LeftHandSide;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.LoopInvariantSpecification;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.NamedType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableLHS;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.WhileStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.WildcardExpression;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.CACSL2BoogieBacktranslator;
@@ -186,21 +194,55 @@ public class SvComp14CHandler extends CHandler {
 			if (node.getParent().getParent() instanceof IASTCompoundStatement) {
 				return new ResultSkip();
 			}
-			InferredType type = new InferredType(Type.Integer);
-			ASTType tempType = new PrimitiveType(loc, type, type.toString());
+			ASTType tempType = new PrimitiveType(loc, SFO.INT);
 			String tId = main.nameHandler.getTempVarUID(SFO.AUXVAR.NONDET);
 			VariableDeclaration tVarDecl = new VariableDeclaration(loc, new Attribute[0], new VarList[] { new VarList(
 					loc, new String[] { tId }, tempType) });
 			auxVars.put(tVarDecl, loc);
 			decl.add(tVarDecl);
 			stmt.add(new HavocStatement(loc, new VariableLHS[] { new VariableLHS(loc, tId) }));
-			returnValue = new RValue(new IdentifierExpression(loc, type, tId, null), null);
+			returnValue = new RValue(new IdentifierExpression(loc, tId), null);
 			assert (main.isAuxVarMapcomplete(decl, auxVars));
 			return new ResultExpression(stmt, returnValue, decl, auxVars, overappr);
 		}
 //		this is a gcc-builtin function that helps with branch predication, it always returns the first argument.
 		if (methodName.equals("__builtin_expect")) { 
 			return main.dispatch(node.getArguments()[0]);
+		}
+		
+		if (methodName.equals("__builtin_memcpy")) {
+			((CHandler) main.cHandler).mMemoryHandler.setDeclareMemCpy();
+
+			assert node.getArguments().length == 3;
+			ResultExpression destRex = (ResultExpression) main.dispatch(node.getArguments()[0]);
+			ResultExpression srcRex = (ResultExpression) main.dispatch(node.getArguments()[1]);
+			ResultExpression sizeRex = (ResultExpression) main.dispatch(node.getArguments()[2]);
+			
+			destRex = destRex.switchToRValueIfNecessary(main, mMemoryHandler, mStructHandler, loc);
+			srcRex = srcRex.switchToRValueIfNecessary(main, mMemoryHandler, mStructHandler, loc);
+			sizeRex = sizeRex.switchToRValueIfNecessary(main, mMemoryHandler, mStructHandler, loc);
+			
+			stmt.addAll(destRex.stmt);
+			stmt.addAll(srcRex.stmt);
+			stmt.addAll(sizeRex.stmt);
+			decl.addAll(destRex.decl);
+			decl.addAll(srcRex.decl);
+			decl.addAll(sizeRex.decl);
+			auxVars.putAll(destRex.auxVars);
+			auxVars.putAll(srcRex.auxVars);
+			auxVars.putAll(sizeRex.auxVars);
+			
+			String tId = main.nameHandler.getTempVarUID(SFO.AUXVAR.MEMCPYRES);
+			VariableDeclaration tVarDecl = new VariableDeclaration(loc, new Attribute[0], new VarList[] { new VarList(
+					loc, new String[] { tId }, MemoryHandler.POINTER_TYPE) });
+			decl.add(tVarDecl);
+			auxVars.put(tVarDecl, loc);		
+			
+			Statement call = new CallStatement(loc, false, new VariableLHS[] { new VariableLHS(loc, tId) }, SFO.MEMCPY, 
+					new Expression[] { destRex.lrVal.getValue(), srcRex.lrVal.getValue(), sizeRex.lrVal.getValue() });
+			stmt.add(call);
+			
+			return new ResultExpression(stmt, new RValue(new IdentifierExpression(loc, tId), destRex.lrVal.cType), decl, auxVars);
 		}
 		
 		if (methodName.equals("abort")) {

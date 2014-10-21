@@ -3,6 +3,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util;
 
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO.AUXVAR;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VarList;
@@ -142,11 +143,22 @@ public final class SFO {
     public static final String MEMORY_INT = MEMORY + "_" + INT;
     public static final String MEMORY_REAL = MEMORY + "_" + REAL;
     public static final String MEMORY_POINTER = MEMORY + "_" + POINTER;
-    	
+
+	public static final String MEMCPY_DEST = "dest";
+	public static final String MEMCPY_SRC = "src";
+	public static final String MEMCPY_SIZE = "size";
+	public static final String MEMCPY = "#memcpy";
+    
+   	
    /**
     * Specifies purpose of an auxiliary temporary variable.
     */
    public enum AUXVAR {
+	   /**
+	    * variable used for a loop that we introduce through the translatino
+	    */
+	   LOOPCTR("loopctr"),
+	   
 	   /**
 	    *  Auxiliary variable used to store the result of a call of a function pointer.
 	    */
@@ -223,7 +235,12 @@ public final class SFO {
 	   /**
 	    * Auxiliary variable used for union initialisation.
 	    */
-	   UNION("union");
+	   UNION("union"), 
+	   
+	   /**
+	    * Auxiliary variable used for the result of a call to the 'builtin' memcpy function
+	    */
+	   MEMCPYRES("memcpy");
 	   
 	   String m_Id;
 	   

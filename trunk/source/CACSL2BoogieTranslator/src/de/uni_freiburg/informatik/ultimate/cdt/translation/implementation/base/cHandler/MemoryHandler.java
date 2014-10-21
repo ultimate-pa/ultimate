@@ -4,6 +4,7 @@
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -36,6 +37,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayAccessExpressio
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayLHS;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayStoreExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayType;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Attribute;
@@ -53,6 +55,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.HavocStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.LeftHandSide;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.LoopInvariantSpecification;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ModifiesSpecification;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.NamedType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.PrimitiveType;
@@ -68,6 +71,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableLHS;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.WhileStatement;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer;
@@ -144,8 +148,13 @@ public class MemoryHandler {
 	 */
 	LinkedScopedHashMap<LocalLValue, Integer> variablesToBeFreed;
 
-	private boolean noMemArrays;
+//	private boolean noMemArrays;
 	
+	private boolean declareMemCpy = false;
+	
+	public void setDeclareMemCpy() {
+		declareMemCpy = true;
+	}
 	
 	//constants for the sizes of the base types
 	public boolean useConstantTypeSizes = true; //using this in CHandler, too (for pointer/int cast)
@@ -241,10 +250,10 @@ public class MemoryHandler {
         String[] namesOfAllMemoryArrayTypes = allMMArrayNames.toArray(new String[0]);
         ASTType[] astTypesOfAllMemoryArrayTypes = allMMArrayTypes.toArray(new ASTType[0]);
         
-        if (namesOfAllMemoryArrayTypes.length == 0) { 
-        	noMemArrays = true;
-//        	return decl;//if we reach here, mmRequired == true --> we need valid + length (one usecase: we malloc but don't use something..)
-        }
+//        if (namesOfAllMemoryArrayTypes.length == 0) { 
+//        	noMemArrays = true;
+////        	return decl;//if we reach here, mmRequired == true --> we need valid + length (one usecase: we malloc but don't use something..)
+//        }
         
         decl.addAll(declareSomeMemoryArrays(tuLoc, main, namesOfAllMemoryArrayTypes, astTypesOfAllMemoryArrayTypes));
        
@@ -263,12 +272,186 @@ public class MemoryHandler {
                 new VarList[] { vlL }));
         decl.addAll(declareFree(tuLoc));
         decl.addAll(declareMalloc(tuLoc));
+        if (declareMemCpy) {
+        	decl.addAll(declareMemCpy(main, tuLoc, namesOfAllMemoryArrayTypes, astTypesOfAllMemoryArrayTypes));
+        }
         decl.addAll(constants);
         decl.addAll(axioms);
         return decl;
     }
 
     /**
+     * Adds our implementation of the memcpy procedure to the boogie code.
+     */
+    private Collection<? extends Declaration> declareMemCpy(Dispatcher main, ILocation loc, 
+    		String[] namesOfAllMemoryArrayTypes, ASTType[] astTypesOfAllMemoryArrayTypes) {
+    	ArrayList<Declaration> memCpyDecl = new ArrayList<>();
+    	
+    	VarList inPDest = new VarList(loc, new String[] { SFO.MEMCPY_DEST }, POINTER_TYPE);
+    	VarList inPSrc = new VarList(loc, new String[] { SFO.MEMCPY_SRC }, POINTER_TYPE);
+    	VarList	inPSize = new VarList(loc, new String[] { SFO.MEMCPY_SIZE }, new PrimitiveType(loc, SFO.INT));
+    	VarList[] inParams = new VarList[] { inPDest, inPSrc, inPSize };
+    	
+    	VarList[] outParams = new VarList[] { new VarList(loc, new String[] { SFO.RES }, POINTER_TYPE) };
+
+   			
+    	ArrayList<VariableDeclaration> decl = new ArrayList<>();
+    	ArrayList<Statement> stmt = new ArrayList<>();
+    	
+    	String loopCtr = main.nameHandler.getTempVarUID(SFO.AUXVAR.LOOPCTR);
+		VarList lcvl = new VarList(loc, new String[] { loopCtr }, new PrimitiveType(loc, SFO.INT));
+		VariableDeclaration loopCtrDec = new VariableDeclaration(loc, new Attribute[0], new VarList[] { lcvl });
+		decl.add(loopCtrDec);
+		//initialize the counter to 0
+		stmt.add(new AssignmentStatement(loc, new LeftHandSide[] { new VariableLHS(loc, loopCtr)}, 
+				new Expression[] { new IntegerLiteral(loc, SFO.NR0) }));
+		
+		IdentifierExpression ctrIdex = new IdentifierExpression(loc, loopCtr);
+		BinaryExpression condition = new BinaryExpression(loc, BinaryExpression.Operator.COMPLT, 
+				ctrIdex,
+				new IdentifierExpression(loc, SFO.MEMCPY_SIZE));
+		
+		
+		ArrayList<Statement> bodyStmt = new ArrayList<>();
+
+		//make the assigments on the arrays
+		RValue currentDest = ((CHandler) main.cHandler).doPointerArithPointerAndInteger(main, IASTBinaryExpression.op_plus, loc, 
+					new RValue(new IdentifierExpression(loc, SFO.MEMCPY_DEST), new CPointer(new CPrimitive(PRIMITIVE.VOID))), 
+					new RValue(ctrIdex, new CPrimitive(PRIMITIVE.INT)), 
+					null);
+		RValue currentSrc = ((CHandler) main.cHandler).doPointerArithPointerAndInteger(main, IASTBinaryExpression.op_plus, loc, 
+					new RValue(new IdentifierExpression(loc, SFO.MEMCPY_SRC), new CPointer(new CPrimitive(PRIMITIVE.VOID))), 
+					new RValue(ctrIdex, new CPrimitive(PRIMITIVE.INT)), 
+					null);
+
+		ArrayList<VariableLHS> modifiesLHSs = new ArrayList<>();
+		for (String name : namesOfAllMemoryArrayTypes) {
+			String memArrayName = SFO.MEMORY + "_" + name;
+			ArrayAccessExpression srcAcc = new ArrayAccessExpression(loc, new IdentifierExpression(loc, memArrayName), new Expression[] { currentSrc.getValue() });
+			ArrayLHS destAcc = new ArrayLHS(loc, new VariableLHS(loc, memArrayName), new Expression[] { currentDest.getValue() });
+			bodyStmt.add(new AssignmentStatement(loc, new LeftHandSide[] { destAcc }, new Expression[] { srcAcc }));
+			modifiesLHSs.add(new VariableLHS(loc, memArrayName));
+		}
+		
+		//increment counter
+		VariableLHS ctrLHS = new VariableLHS(loc, loopCtr);
+		bodyStmt.add(new AssignmentStatement(loc, new LeftHandSide[] { ctrLHS }, 
+				new Expression[] { new BinaryExpression(loc, 
+						BinaryExpression.Operator.ARITHPLUS, ctrIdex, new IntegerLiteral(loc, SFO.NR1)) }));
+
+		
+		Statement[] whileBody = bodyStmt.toArray(new Statement[bodyStmt.size()]);
+		
+		WhileStatement whileStm = new WhileStatement(loc, condition, new LoopInvariantSpecification[0], whileBody); 
+		stmt.add(whileStm);
+		
+		Body procBody = new Body(loc, 
+				decl.toArray(new VariableDeclaration[decl.size()]), 
+				stmt.toArray(new Statement[stmt.size()]));
+		
+		//make the specifications
+		ArrayList<Specification> specs = new ArrayList<>();
+		ModifiesSpecification modifies = new ModifiesSpecification(loc, false, 
+				 modifiesLHSs.toArray(new VariableLHS[modifiesLHSs.size()]));
+		specs.add(modifies);
+		
+		Expression srcBase = new StructAccessExpression(loc, new IdentifierExpression(loc, SFO.MEMCPY_SRC),
+                    SFO.POINTER_BASE);
+		Expression destBase = new StructAccessExpression(loc, new IdentifierExpression(loc, SFO.MEMCPY_DEST),
+                    SFO.POINTER_BASE);
+	
+		
+        Expression valid = new IdentifierExpression(loc, SFO.VALID);	
+		if (m_PointerBaseValidity == POINTER_CHECKMODE.ASSERTandASSUME 
+        		|| m_PointerBaseValidity == POINTER_CHECKMODE.ASSUME) {
+        	// requires #valid[#ptr!base];
+        	RequiresSpecification specValidSrc = null;
+        	RequiresSpecification specValidDest = null;
+        	if (m_PointerBaseValidity == POINTER_CHECKMODE.ASSERTandASSUME) {
+        		specValidSrc = new RequiresSpecification(loc, false,
+            			new ArrayAccessExpression(loc, valid,
+            					new Expression[] { srcBase }));
+        		specValidDest = new RequiresSpecification(loc, false,
+            			new ArrayAccessExpression(loc, valid,
+            					new Expression[] { destBase }));
+        	} else {
+        		assert m_PointerBaseValidity == POINTER_CHECKMODE.ASSUME;
+        		specValidSrc = new RequiresSpecification(loc, true,
+            			new ArrayAccessExpression(loc, valid,
+            					new Expression[] { srcBase }));
+        		specValidDest = new RequiresSpecification(loc, true,
+            			new ArrayAccessExpression(loc, valid,
+            					new Expression[] { destBase }));
+        	}
+        	Check check = new Check(Spec.MEMORY_DEREFERENCE);
+        	check.addToNodeAnnot(specValidSrc);
+        	specs.add(specValidSrc);
+        	check.addToNodeAnnot(specValidDest);
+        	specs.add(specValidDest);
+        }
+		Expression srcOffset = new StructAccessExpression(loc, new IdentifierExpression(loc, SFO.MEMCPY_SRC),
+                    SFO.POINTER_OFFSET);
+		Expression destOffset = new StructAccessExpression(loc, new IdentifierExpression(loc, SFO.MEMCPY_DEST),
+                    SFO.POINTER_OFFSET);
+//	
+		Expression lengthSrc = new ArrayAccessExpression(loc,
+				new IdentifierExpression(loc, SFO.LENGTH),
+				new Expression[] { srcBase });
+		Expression lengthDest = new ArrayAccessExpression(loc,
+				new IdentifierExpression(loc, SFO.LENGTH),
+				new Expression[] { srcBase });
+
+		if (m_PointerAllocated == POINTER_CHECKMODE.ASSERTandASSUME 
+				|| m_PointerAllocated == POINTER_CHECKMODE.ASSUME) {
+			// requires #sizeof~$Pointer$ + #ptr!offset <=
+					// #length[#ptr!base];
+        	RequiresSpecification specLengthSrc = null;
+        	RequiresSpecification specLengthDest = null;
+			if (m_PointerAllocated == POINTER_CHECKMODE.ASSERTandASSUME) {
+				specLengthSrc = new RequiresSpecification(loc, false,
+						new BinaryExpression(loc, Operator.COMPLEQ, //TODO LT or LEQ?? (also below..)
+								new BinaryExpression(loc, Operator.ARITHPLUS,
+										new IdentifierExpression(loc, SFO.MEMCPY_SIZE),
+										srcOffset), lengthSrc));
+				specLengthDest = new RequiresSpecification(loc, false,
+						new BinaryExpression(loc, Operator.COMPLEQ,
+								new BinaryExpression(loc, Operator.ARITHPLUS,
+										new IdentifierExpression(loc, SFO.MEMCPY_SIZE),
+										destOffset), lengthDest));
+			} else {
+				assert m_PointerAllocated == POINTER_CHECKMODE.ASSUME;
+				specLengthSrc = new RequiresSpecification(loc, true,
+						new BinaryExpression(loc, Operator.COMPLEQ,
+								new BinaryExpression(loc, Operator.ARITHPLUS,
+										new IdentifierExpression(loc, SFO.MEMCPY_SIZE),
+										srcOffset), lengthSrc));
+				specLengthDest = new RequiresSpecification(loc, true,
+						new BinaryExpression(loc, Operator.COMPLEQ,
+								new BinaryExpression(loc, Operator.ARITHPLUS,
+										new IdentifierExpression(loc, SFO.MEMCPY_SIZE),
+										destOffset), lengthDest));
+			}
+			Check check = new Check(Spec.MEMORY_DEREFERENCE);
+			check.addToNodeAnnot(specLengthSrc);
+			specs.add(specLengthSrc);
+			check.addToNodeAnnot(specLengthDest);
+			specs.add(specLengthDest);
+		}	
+   	
+		//add the procedure declaration
+     	Procedure memCpyProcDecl = new Procedure(loc, new Attribute[0], SFO.MEMCPY, new String[0], 
+    			inParams, outParams, specs.toArray(new Specification[specs.size()]), null);
+     	memCpyDecl.add(memCpyProcDecl);
+ 
+     	//add the procedure implementation
+     	Procedure memCpyProc = new Procedure(loc, new Attribute[0], SFO.MEMCPY, new String[0], 
+    			inParams, outParams, null, procBody);
+     	memCpyDecl.add(memCpyProc);
+    	
+		return memCpyDecl;
+	}
+
+	/**
      * Declare sizeof constants and add to the sizeOfConst set.
      * 
      * @param l the location.
