@@ -1583,7 +1583,7 @@ public class CHandler implements ICHandler {
 	private void doIntOverflowTreatmentInComparison(Dispatcher main,
 			CACSLLocation loc, ResultExpression left,
 			ResultExpression right) {
-		if (main.cHandler.getUnsignedTreatment() != UNSIGNED_TREATMENT.IGNORE)
+		if (main.cHandler.getUnsignedTreatment() == UNSIGNED_TREATMENT.IGNORE)
 			return;
 		
 		boolean isLeftUnsigned = left.lrVal.cType instanceof CPrimitive
