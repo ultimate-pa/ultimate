@@ -360,9 +360,9 @@ public class PartialQuantifierElimination {
 			logger.debug(new DebugMessage("eliminated quantifier via UPD for {0}", removeableTvs));
 			Term result;
 			if (quantifier == QuantifiedFormula.EXISTS) {
-				result = Util.and(script, unremoveableTerms.toArray(new Term[0]));
+				result = Util.and(script, unremoveableTerms.toArray(new Term[unremoveableTerms.size()]));
 			} else if (quantifier == QuantifiedFormula.FORALL) {
-				result = Util.or(script, unremoveableTerms.toArray(new Term[0]));
+				result = Util.or(script, unremoveableTerms.toArray(new Term[unremoveableTerms.size()]));
 			} else {
 				throw new AssertionError("unknown quantifier");
 			}
