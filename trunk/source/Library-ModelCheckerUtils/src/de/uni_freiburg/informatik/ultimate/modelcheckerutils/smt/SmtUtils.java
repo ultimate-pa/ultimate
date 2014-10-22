@@ -40,7 +40,7 @@ public class SmtUtils {
 		logger.debug(new DebugMessage(
 				"simplifying formula of DAG size {0}", 
 				new DagSizePrinter(formula)));
-		Term simplified = (new SimplifyDDA(script)).getSimplifiedTerm(formula);
+		Term simplified = (new SimplifyDDAWithTimeout(script, services)).getSimplifiedTerm(formula);
 		logger.debug(new DebugMessage(
 				"DAG size before simplification {0}, DAG size after simplification {1}", 
 				new DagSizePrinter(formula), new DagSizePrinter(simplified)));
