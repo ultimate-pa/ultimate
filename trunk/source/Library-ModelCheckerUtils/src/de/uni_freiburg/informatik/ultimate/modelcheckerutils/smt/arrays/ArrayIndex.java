@@ -168,12 +168,14 @@ public class ArrayIndex implements List<Term> {
 	}
 
 	/**
-	 * Returns an new ArrayIndex that consists of the first i entries of this
+	 * Returns an new ArrayIndex that consists of the first k entries of this
 	 * index.
 	 */
-	public ArrayIndex getFirst(int i) {
-		List<Term> indexEntries = new ArrayList<>(this);
-		indexEntries.remove(indexEntries.size()-1);
+	public ArrayIndex getFirst(int k) {
+		List<Term> indexEntries = new ArrayList<>();
+		for (int i=0; i<k; i++) {
+			indexEntries.add(m_IndexEntries.get(i));
+		}
 		return new ArrayIndex(indexEntries);
 	}
 	
