@@ -130,13 +130,7 @@ public class SvComp14CHandler extends CHandler {
 			AssertStatement assertStmt = new AssertStatement(loc, new BooleanLiteral(loc,
 					new InferredType(Type.Boolean), false));
 			check.addToNodeAnnot(assertStmt);
-			// We do not add the assert(false) directly, but add an
-			// nondeterministic if that contains this assert.
-			// Adding the assert(false) directly would leads to an unsound
-			// nontermination analysis.
-			IfStatement ifStatement = new IfStatement(loc, new WildcardExpression(loc), new Statement[] { assertStmt },
-					new Statement[0]);
-			stmt.add(ifStatement);
+			stmt.add(assertStmt);
 			return new ResultExpression(stmt, returnValue, decl, auxVars, overappr);
 		}
 		if (methodName.equals(ASSUME_STRING)) {
