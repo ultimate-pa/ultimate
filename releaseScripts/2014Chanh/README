@@ -24,13 +24,6 @@ heizmann@informatik.uni-freiburg.de
 
 
 
-Limitations:
-This version of the tool uses the SMT solver SMTInterpol and 
-- supports only C programs without pointers or arrays
-- supports only linear ranking functions.
-(For a version without these limitations, please have a look at our website.)
-
-
 Interesting Examples:
 Examples from the demonstration category on termination at the SV-COMP 2014
 http://sv-comp.sosy-lab.org/2014/
