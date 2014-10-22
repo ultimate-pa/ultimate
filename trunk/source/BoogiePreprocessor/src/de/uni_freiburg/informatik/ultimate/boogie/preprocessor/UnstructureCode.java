@@ -333,8 +333,9 @@ public class UnstructureCode extends BaseObserver {
 			}
 			if (changed) {
 				addStmtAndAnnots(assign, new AssignmentStatement(assign.getLocation(), lhs, rhs));
+			} else {
+				mFlatStatements.add(s);
 			}
-			mFlatStatements.add(s);
 		} else {
 			mFlatStatements.add(s);
 		}
