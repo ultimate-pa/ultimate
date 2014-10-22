@@ -63,7 +63,6 @@ public abstract class AbstractSVCOMP15TestSuite extends UltimateTestSuite {
 			}
 
 			mTestCases = new ArrayList<>();
-			int filesPerCategory = getFilesPerCategory();
 
 			for (TestDefinition def : testDefs) {
 				List<UltimateTestCase> current = new ArrayList<>();
@@ -73,12 +72,7 @@ public abstract class AbstractSVCOMP15TestSuite extends UltimateTestSuite {
 						addTestCases(def, set, allInputFiles, current, svcompRootDir);
 					}
 				}
-
-				if (filesPerCategory == -1) {
-					mTestCases.addAll(current);
-				} else if (filesPerCategory > 0) {
-					mTestCases.addAll(Util.firstN(current, filesPerCategory));
-				}
+				mTestCases.addAll(current);
 			}
 
 			mIncrementalLog.setCountTotal(mTestCases.size());
@@ -211,8 +205,8 @@ public abstract class AbstractSVCOMP15TestSuite extends UltimateTestSuite {
 	protected abstract long getTimeout();
 
 	private Collection<File> getFilesForSetFile(Collection<File> allFiles, File setFile) {
-		ArrayList<File> currentFiles = new ArrayList<File>();
 
+		List<String> regexes = new ArrayList<>();
 		try {
 			DataInputStream in = new DataInputStream(new FileInputStream(setFile));
 			BufferedReader br = new BufferedReader(new InputStreamReader(in));
@@ -221,13 +215,27 @@ public abstract class AbstractSVCOMP15TestSuite extends UltimateTestSuite {
 				if (line.isEmpty()) {
 					continue;
 				}
-				String regex = ".*" + line.replace(".", "\\.").replace("*", ".*");
-				currentFiles.addAll(Util.filterFiles(allFiles, regex));
+				regexes.add(".*" + line.replace(".", "\\.").replace("*", ".*"));
+
 			}
 			in.close();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+		ArrayList<File> currentFiles = new ArrayList<File>();
+		int filesPerCategory = getFilesPerCategory();
+		if (filesPerCategory == -1) {
+			for (String regex : regexes) {
+				currentFiles.addAll(Util.filterFiles(allFiles, regex));
+			}
+		} else if (filesPerCategory > 0) {
+			int filesPerSetLine = filesPerCategory / regexes.size();
+			filesPerSetLine = filesPerSetLine <= 0 ? 1 : filesPerSetLine;
+			for (String regex : regexes) {
+				currentFiles.addAll(Util.firstN(Util.filterFiles(allFiles, regex), filesPerSetLine));
+			}
+		}
+
 		return currentFiles;
 	}
 

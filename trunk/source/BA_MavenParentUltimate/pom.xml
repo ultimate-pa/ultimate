@@ -48,8 +48,9 @@
 		<!-- Jacoco version -->
 		<jacoco.version>0.7.2.201409121644</jacoco.version>
 
-		<!-- Global arguments for the VM used during junit tests -->
-		<test-argline>-Xmx6g -XX:+HeapDumpOnOutOfMemoryError</test-argline>
+		<!-- Global arguments for the VM used during junit tests depending on profile -->
+		<manualtest-argline>-Xmx6g -XX:+HeapDumpOnOutOfMemoryError</manualtest-argline>
+		<coverage-argline>-Xmx4g -XX:+HeapDumpOnOutOfMemoryError</coverage-argline>
 
 	</properties>
 
@@ -257,7 +258,7 @@
 							<failIfNoTests>false</failIfNoTests>
 							<trimStackTrace>false</trimStackTrace>
 							<!-- if you want to change the argLine, use the global property -->
-							<argLine>${tycho.testArgLine} ${test-argline}</argLine>
+							<argLine>${tycho.testArgLine} ${coverage-argline}</argLine>
 
 							<systemProperties>
 								<svcompdir>../svcomp</svcompdir>
@@ -341,7 +342,7 @@
 							<failIfNoTests>false</failIfNoTests>
 							<trimStackTrace>false</trimStackTrace>
 							<!-- if you want to change the argLine, use the global property -->
-							<argLine>${test-argline}</argLine>
+							<argLine>${manualtest-argline}</argLine>
 
 							<systemProperties>
 								<svcompdir>../svcomp</svcompdir>
