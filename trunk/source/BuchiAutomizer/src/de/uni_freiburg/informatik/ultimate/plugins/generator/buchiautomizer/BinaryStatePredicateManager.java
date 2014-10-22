@@ -25,6 +25,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieNonOldVar;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.AffineSubtermNormalizer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateUtils;
@@ -268,7 +269,7 @@ public class BinaryStatePredicateManager {
 		Term conjunction = Util.and(m_Script, siTerms);
 		Term si;
 		if (false) {
-			Term simplified = m_SmtManager.simplify(conjunction);
+			Term simplified = SmtUtils.simplify(m_SmtManager.getScript(), conjunction, mServices);   
 			Term normalized = (new AffineSubtermNormalizer(m_SmtManager.getScript(), mLogger)).transform(simplified);
 			si = normalized;
 		} else {
@@ -280,7 +281,7 @@ public class BinaryStatePredicateManager {
 
 	public IPredicate supportingInvariant2Predicate(SupportingInvariant si) {
 		Term formula = si.asTerm(m_SmtManager.getScript());
-		formula = m_SmtManager.simplify(formula);
+		formula = SmtUtils.simplify(m_SmtManager.getScript(), formula, mServices);
 		return term2Predicate(formula);
 	}
 

@@ -306,7 +306,7 @@ public class ElimStore3 {
 			result = Util.or(script, intermediateResult, newConjunctsFromSelect);
 		}
 
-		result = (new SimplifyDDA(script)).getSimplifiedTerm(result);
+		result = SmtUtils.simplify(script, result, mServices);
 		newAuxVars.addAll(iav.getNewAuxVars());
 
 		return result;

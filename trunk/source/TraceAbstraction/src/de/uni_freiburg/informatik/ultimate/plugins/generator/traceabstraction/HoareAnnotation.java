@@ -7,11 +7,13 @@ import java.util.Map.Entry;
 
 import org.apache.log4j.Logger;
 
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.AffineSubtermNormalizer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
@@ -33,6 +35,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 public class HoareAnnotation extends SPredicate {
 
 	private final Logger mLogger;
+	private final IUltimateServiceProvider m_Services;
 	/**
 	 * 
 	 */
@@ -46,10 +49,11 @@ public class HoareAnnotation extends SPredicate {
 
 	private boolean m_FormulaHasBeenComputed = false;
 
-	public HoareAnnotation(ProgramPoint programPoint, int serialNumber, SmtManager smtManager, Logger logger) {
+	public HoareAnnotation(ProgramPoint programPoint, int serialNumber, SmtManager smtManager, IUltimateServiceProvider services) {
 		super(programPoint, serialNumber, new String[] { programPoint.getProcedure() }, smtManager.getScript().term(
 				"true"), new HashSet<BoogieVar>(), null);
-		mLogger = logger;
+		mLogger = services.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
+		m_Services = services;
 		m_SmtManager = smtManager;
 	}
 
@@ -117,14 +121,14 @@ public class HoareAnnotation extends SPredicate {
 	private void computeFormula() {
 		for (Term precond : getPrecondition2Invariant().keySet()) {
 			Term invariant = getPrecondition2Invariant().get(precond);
-			invariant = m_SmtManager.simplify(invariant);
+			invariant = SmtUtils.simplify(m_SmtManager.getScript(), invariant, m_Services); 
 			Term precondTerm = Util.implies(m_SmtManager.getScript(), precond, invariant);
 			mLogger.debug("In " + this + " holds " + invariant + " for precond " + precond);
 			m_Formula = Util.and(m_SmtManager.getScript(), m_Formula, precondTerm);
 		}
 		m_Formula = m_SmtManager.substituteOldVarsOfNonModifiableGlobals(getProgramPoint().getProcedure(), m_Vars,
 				m_Formula);
-		m_Formula = m_SmtManager.simplify(m_Formula);
+		m_Formula = SmtUtils.simplify(m_SmtManager.getScript(), m_Formula, m_Services); 
 		m_Formula = getPositiveNormalForm(m_Formula);
 	}
 

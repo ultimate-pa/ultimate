@@ -36,6 +36,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.ModelCheckerUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Expression2Term.IdentifierTranslator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.NaiveDestructiveEqualityResolution;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 
 /**
  * Translates statements into TransFormulas. The resulting TransFormula encodes
@@ -121,7 +122,7 @@ public class Statements2TransFormula {
 
 		Infeasibility infeasibility = null;
 		if (simplify) {
-			formula = (new SimplifyDDA(m_Script)).getSimplifiedTerm(formula);
+			formula = SmtUtils.simplify(m_Script, formula, mServices);
 			if (formula == m_Script.term("false")) {
 				infeasibility = Infeasibility.INFEASIBLE;
 			}

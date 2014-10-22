@@ -180,7 +180,7 @@ public class PredicateUnifier {
 		if (p != null) {
 			return p;
 		}
-		Term simplifiedTerm = m_SmtManager.simplify(term);
+		Term simplifiedTerm = SmtUtils.simplify(m_SmtManager.getScript(), term, mServices); 
 		final IPredicate result;
 		if (simplifiedTerm == term) {
 			// no simplification possible

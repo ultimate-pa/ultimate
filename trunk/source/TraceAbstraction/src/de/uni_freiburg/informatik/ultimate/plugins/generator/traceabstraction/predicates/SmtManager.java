@@ -37,6 +37,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.VariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.PartialQuantifierElimination;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.BasicPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
@@ -490,10 +491,6 @@ public class SmtManager {
 		Term term = Util.not(m_Script, p.getFormula());
 		Term closedTerm = Util.not(m_Script, p.getClosedFormula());
 		return new TermVarsProc(term, p.getVars(), p.getProcedures(), closedTerm);
-	}
-
-	public Term simplify(Term term) {
-		return new SimplifyDDA(m_Script).getSimplifiedTerm(term);
 	}
 
 	// public Predicate simplify(Predicate ps) {
@@ -1207,7 +1204,7 @@ public class SmtManager {
 			}
 		}
 		Term renamedFormula = (new Substitution(substitutionMapping, m_Script)).transform(ps.getFormula());
-		renamedFormula = simplify(renamedFormula);
+		renamedFormula = SmtUtils.simplify(m_Script, renamedFormula, mServices);
 		TermVarsProc tvp = TermVarsProc.computeTermVarsProc(renamedFormula, m_Boogie2Smt);
 		IPredicate result = this.newPredicate(renamedFormula, tvp.getProcedures(), tvp.getVars(),
 				tvp.getClosedFormula());
@@ -1562,7 +1559,7 @@ public class SmtManager {
 	}
 
 	public HoareAnnotation getNewHoareAnnotation(ProgramPoint pp) {
-		return new HoareAnnotation(pp, m_SerialNumber++, this, mLogger);
+		return new HoareAnnotation(pp, m_SerialNumber++, this, mServices);
 	}
 
 	public IPredicate newBuchiPredicate(Set<IPredicate> inputPreds) {

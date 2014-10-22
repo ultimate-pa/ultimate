@@ -477,10 +477,7 @@ public class TransFormula implements Serializable {
 
 		formula = new FormulaUnLet().unlet(formula);
 		if (simplify) {
-			logger.debug(new DebugMessage("simplifying formula of DAG size {0}", new DagSizePrinter(formula)));
-			Term simplified = (new SimplifyDDA(script)).getSimplifiedTerm(formula);
-			logger.debug(new DebugMessage("DAG size before simplification {0}, DAG size after simplification {1}",
-					new DagSizePrinter(formula), new DagSizePrinter(simplified)));
+			Term simplified = SmtUtils.simplify(script, formula, services);
 			formula = simplified;
 		}
 		removesuperfluousVariables(inVars, outVars, auxVars, formula);
@@ -496,7 +493,7 @@ public class TransFormula implements Serializable {
 			formula = der.eliminate(auxVars, formula);
 		}
 		if (simplify) {
-			formula = (new SimplifyDDA(script)).getSimplifiedTerm(formula);
+			formula = SmtUtils.simplify(script, formula, services); 
 		} else {
 			LBool isSat = Util.checkSat(script, formula);
 			if (isSat == LBool.UNSAT) {

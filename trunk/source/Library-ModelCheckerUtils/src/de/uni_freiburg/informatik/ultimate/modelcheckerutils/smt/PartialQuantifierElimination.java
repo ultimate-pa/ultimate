@@ -230,7 +230,7 @@ public class PartialQuantifierElimination {
 		}
 
 		// simplification
-		result = SmtUtils.simplify(script, result, logger);
+		result = SmtUtils.simplify(script, result, services);
 
 		// (new SimplifyDDA(script)).getSimplifiedTerm(result);
 		eliminatees.retainAll(Arrays.asList(result.getFreeVars()));

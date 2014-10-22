@@ -128,9 +128,9 @@ public class TransFormulaLRWithArrayInformation {
 			m_ArrayFirstGeneration2Instances = null;
 		} else {
 			m_ContainsArrays = true;
-			Term term = SmtUtils.simplify(m_Script, m_TransFormulaLR.getFormula(), mLogger);
+			Term term = SmtUtils.simplify(m_Script, m_TransFormulaLR.getFormula(), mServices);
 			Term dnf = (new Dnf(m_Script, mServices)).transform(term);
-			dnf = SmtUtils.simplify(m_Script, dnf, mLogger);
+			dnf = SmtUtils.simplify(m_Script, dnf, mServices);
 			Term[] disjuncts = SmtUtils.getDisjuncts(dnf);
 			sunnf = new Term[disjuncts.length];
 			m_ArrayUpdates = new ArrayList<List<ArrayUpdate>>(disjuncts.length);
