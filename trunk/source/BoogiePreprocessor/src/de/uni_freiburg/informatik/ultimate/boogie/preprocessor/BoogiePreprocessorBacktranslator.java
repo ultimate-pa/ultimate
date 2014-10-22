@@ -90,10 +90,9 @@ public class BoogiePreprocessorBacktranslator extends
 			IProgramExecution<BoogieASTNode, Expression> programExecution) {
 
 		List<BoogieASTNode> newTrace = new ArrayList<>();
-		Map<Integer, ProgramState<Expression>> newPartialProgramStateMapping = new HashMap<>();
+		List<ProgramState<Expression>> newProgramStates = new ArrayList<>();
 
-		newPartialProgramStateMapping.put(-1, backtranslateProgramState(programExecution.getInitialProgramState()));
-
+		ProgramState<Expression> newInitialState = backtranslateProgramState(programExecution.getInitialProgramState());
 		int length = programExecution.getLength();
 		for (int i = 0; i < length; ++i) {
 			BoogieASTNode elem = programExecution.getTraceElement(i).getTraceElement();
@@ -101,12 +100,9 @@ public class BoogiePreprocessorBacktranslator extends
 			// but we keep them anyways s.t. the indices between newTrace and
 			// programExecution match
 			newTrace.add(backtranslateTraceElement(elem));
-
-			newPartialProgramStateMapping.put(i, backtranslateProgramState(programExecution.getProgramState(i)));
+			newProgramStates.add(backtranslateProgramState(programExecution.getProgramState(i)));
 		}
-
-		// return super.translateProgramExecution(programExecution);
-		return createProgramExecutionFromTrace(newTrace, newPartialProgramStateMapping, programExecution);
+		return createProgramExecutionFromTrace(newTrace, newInitialState, newProgramStates, programExecution);
 	}
 
 	private ProgramState<Expression> backtranslateProgramState(ProgramState<Expression> state) {
@@ -166,7 +162,8 @@ public class BoogiePreprocessorBacktranslator extends
 	}
 
 	private IProgramExecution<BoogieASTNode, Expression> createProgramExecutionFromTrace(
-			List<BoogieASTNode> translatedTrace, Map<Integer, ProgramState<Expression>> partialProgramStateMapping,
+			List<BoogieASTNode> translatedTrace, ProgramState<Expression> newInitialState,
+			List<ProgramState<Expression>> newProgramStates,
 			IProgramExecution<BoogieASTNode, Expression> programExecution) {
 
 		List<AtomicTraceElement<BoogieASTNode>> atomicTrace = new ArrayList<>();
@@ -177,6 +174,7 @@ public class BoogiePreprocessorBacktranslator extends
 			if (elem == null) {
 				// we kept the null values so that indices match between trace
 				// and inputProgramExecution
+				atomicTrace.add(null);
 				continue;
 			}
 
@@ -234,10 +232,17 @@ public class BoogiePreprocessorBacktranslator extends
 		// we need to clear the null values before creating the final
 		// BoogieProgramExecution
 		List<AtomicTraceElement<BoogieASTNode>> actualAtomicTrace = new ArrayList<>();
+		Map<Integer, ProgramState<Expression>> partialProgramStateMapping = new HashMap<>();
+		partialProgramStateMapping.put(-1, newInitialState);
+		int i = 0;
+		int j = 0;
 		for (AtomicTraceElement<BoogieASTNode> possibleNullElem : atomicTrace) {
 			if (possibleNullElem != null) {
 				actualAtomicTrace.add(possibleNullElem);
+				partialProgramStateMapping.put(j, newProgramStates.get(i));
+				j++;
 			}
+			i++;
 		}
 		return new BoogieProgramExecution(partialProgramStateMapping, actualAtomicTrace);
 	}
@@ -334,22 +339,25 @@ public class BoogiePreprocessorBacktranslator extends
 			if (expr instanceof IdentifierExpression) {
 				IdentifierExpression ident = (IdentifierExpression) expr;
 				if (((IdentifierExpression) expr).getDeclarationInformation() == null) {
-					reportUnfinishedBacktranslation("Identifier has no declaration information, using identity as back-translation of "
-							+ expr);
+					reportUnfinishedBacktranslation("Identifier has no declaration information, "
+							+ "using identity as back-translation of " + expr);
 					return expr;
 				}
 				Declaration decl = mSymbolTable.getDeclaration(ident);
 
 				if (decl == null) {
-					reportUnfinishedBacktranslation("No declaration in symboltable, using identity as back-translation of "
-							+ expr);
+					reportUnfinishedBacktranslation("No declaration in symboltable, using identity as "
+							+ "back-translation of " + expr);
 					return expr;
 				}
-				BoogieASTNode newDecl = mMapping.get(decl);
+				BoogieASTNode newDecl = getMapping(decl);
 				if (newDecl instanceof Declaration) {
 					return extractIdentifier((Declaration) newDecl, ident);
+				} else if (newDecl instanceof VarList) {
+					return extractIdentifier(newDecl.getLocation(), (VarList) newDecl, ident);
 				} else {
-					// this is ok
+					// this is ok, the expression wasnt changed during
+					// preprocessing
 					return expr;
 				}
 			}
@@ -357,11 +365,28 @@ public class BoogiePreprocessorBacktranslator extends
 			return super.processExpression(expr);
 		}
 
+		private BoogieASTNode getMapping(BoogieASTNode decl) {
+			BoogieASTNode newDecl = mMapping.get(decl);
+			if (newDecl != null) {
+				return newDecl;
+			} else if (decl instanceof VariableDeclaration) {
+				// it could be some kind of pointer type
+				VariableDeclaration varDecl = (VariableDeclaration) decl;
+				for (VarList vl : varDecl.getVariables()) {
+					newDecl = getMapping(vl);
+					if (newDecl != null) {
+						return newDecl;
+					}
+				}
+			}
+			return null;
+		}
+
 		private IdentifierExpression extractIdentifier(Declaration mappedDecl, IdentifierExpression inputExp) {
 			IdentifierExpression rtr = inputExp;
 			if (mappedDecl instanceof VariableDeclaration) {
 				VariableDeclaration mappedVarDecl = (VariableDeclaration) mappedDecl;
-				rtr = extractIdentifier(mappedVarDecl, mappedVarDecl.getVariables(), inputExp);
+				rtr = extractIdentifier(mappedVarDecl.getLocation(), mappedVarDecl.getVariables(), inputExp);
 				if (rtr != inputExp) {
 					return rtr;
 				}
@@ -371,11 +396,11 @@ public class BoogiePreprocessorBacktranslator extends
 
 			} else if (mappedDecl instanceof Procedure) {
 				Procedure proc = (Procedure) mappedDecl;
-				rtr = extractIdentifier(proc, proc.getInParams(), inputExp);
+				rtr = extractIdentifier(proc.getLocation(), proc.getInParams(), inputExp);
 				if (rtr != inputExp) {
 					return rtr;
 				}
-				rtr = extractIdentifier(proc, proc.getOutParams(), inputExp);
+				rtr = extractIdentifier(proc.getLocation(), proc.getOutParams(), inputExp);
 				if (rtr != inputExp) {
 					return rtr;
 				}
@@ -391,14 +416,14 @@ public class BoogiePreprocessorBacktranslator extends
 			return rtr;
 		}
 
-		private IdentifierExpression extractIdentifier(Declaration mappedDecl, VarList[] list,
+		private IdentifierExpression extractIdentifier(ILocation mappedLoc, VarList[] list,
 				IdentifierExpression inputExp) {
 			if (list == null || list.length == 0) {
 				return inputExp;
 			}
 			IdentifierExpression rtr = inputExp;
 			for (VarList lil : list) {
-				rtr = extractIdentifier(mappedDecl, lil, inputExp);
+				rtr = extractIdentifier(mappedLoc, lil, inputExp);
 				if (rtr != inputExp) {
 					return rtr;
 				}
@@ -406,8 +431,7 @@ public class BoogiePreprocessorBacktranslator extends
 			return rtr;
 		}
 
-		private IdentifierExpression extractIdentifier(Declaration mappedDecl, VarList list,
-				IdentifierExpression inputExp) {
+		private IdentifierExpression extractIdentifier(ILocation mappedLoc, VarList list, IdentifierExpression inputExp) {
 			if (list == null) {
 				return inputExp;
 			}
@@ -417,11 +441,11 @@ public class BoogiePreprocessorBacktranslator extends
 						+ bplType.getClass().getSimpleName() + " as type of VarList");
 			}
 			BoogieType type = (BoogieType) bplType;
-			return extractIdentifier(mappedDecl, list, inputExp, type);
+			return extractIdentifier(mappedLoc, list, inputExp, type);
 
 		}
 
-		private IdentifierExpression extractIdentifier(Declaration mappedDecl, VarList list,
+		private IdentifierExpression extractIdentifier(ILocation mappedLoc, VarList list,
 				IdentifierExpression inputExp, BoogieType type) {
 			if (type instanceof StructType) {
 				StructType st = (StructType) type;
@@ -431,8 +455,7 @@ public class BoogiePreprocessorBacktranslator extends
 					String inputName = inputExp.getIdentifier();
 					for (String name : list.getIdentifiers()) {
 						if (inputName.contains(name)) {
-							return new IdentifierExpression(mappedDecl.getLocation(), type, name,
-									inputExp.getDeclarationInformation());
+							return new IdentifierExpression(mappedLoc, type, name, inputExp.getDeclarationInformation());
 						}
 					}
 
@@ -451,8 +474,8 @@ public class BoogiePreprocessorBacktranslator extends
 						// if this worked, lets get the field name
 						for (String fieldName : st.getFieldIds()) {
 							if (inputNames[1].contains(fieldName)) {
-								return new IdentifierExpression(mappedDecl.getLocation(), type, structName + "!"
-										+ fieldName, inputExp.getDeclarationInformation());
+								return new IdentifierExpression(mappedLoc, type, structName + "!" + fieldName,
+										inputExp.getDeclarationInformation());
 							}
 						}
 					}
@@ -463,12 +486,12 @@ public class BoogiePreprocessorBacktranslator extends
 				}
 			} else if (type instanceof ConstructedType) {
 				ConstructedType ct = (ConstructedType) type;
-				return extractIdentifier(mappedDecl, list, inputExp, ct.getUnderlyingType());
+				return extractIdentifier(mappedLoc, list, inputExp, ct.getUnderlyingType());
 			} else if (type instanceof PrimitiveType) {
 				String inputName = inputExp.getIdentifier();
 				for (String name : list.getIdentifiers()) {
 					if (inputName.contains(name)) {
-						return new IdentifierExpression(mappedDecl.getLocation(), list.getType().getBoogieType(), name,
+						return new IdentifierExpression(mappedLoc, list.getType().getBoogieType(), name,
 								inputExp.getDeclarationInformation());
 					}
 				}

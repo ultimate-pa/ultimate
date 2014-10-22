@@ -15,269 +15,268 @@ import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
  * @date 16.08.2012
  */
 public final class SFO {
-	
-    /**
-     * String representing the result variable in Boogie.
-     */
-    public static final String RES = "#res";
-    /**
-     * String holding "int".
-     */
-    public static final String INT = "int";
-    /**
-     * String holding "unknown"
-     */
-    public static final String UNKNOWN = "unknown";
-    /**
-     * String holding "string".
-     */
-    public static final String STRING = "string";
-    /**
-     * String holding "bool".
-     */
-    public static final String BOOL = "bool";
-    /**
-     * String holding "real".
-     */
-    public static final String REAL = "real";
-    /**
-     * Temp variable name.
-     */
-    public static final String TEMP = "#t~";
-    /**
-     * In Param Prefix.
-     */
-    public static final String IN_PARAM = "#in~";
-    /**
-     * String holding "1".
-     */
-    public static final String NR1 = "1";
-    /**
-     * String holding "0".
-     */
-    public static final String NR0 = "0";
-    /**
-     * String holding "ULTIMATE.init".
-     */
-    public static final String INIT = "ULTIMATE.init";
-    /**
-     * String holding "ULTIMATE.start".
-     */
-    public static final String START = "ULTIMATE.start";
-    /**
-     * The empty String.
-     */
-    public static final String EMPTY = "";
-    /**
-     * Prefix for variables, not contained in the C code.
-     */
-    public static final String NO_REAL_C_VAR = "NO_REAL_C_VAR";
-    /**
-     * Prefix for unnamed in parameters.
-     */
-    public static final String UNNAMED = "unnamed~";
-    /**
-     * String holding "0.0".
-     */
-    public static final String NR0F = "0.0";
-    /**
-     * Identifier of malloc procedure.
-     */
-    public static final String MALLOC = "~malloc";
-    /**
-     * Identifier of free procedure.
-     */
-    public static final String FREE = "~free";
-    /**
-     * The "#length" array identifier.
-     */
-    public static final String LENGTH = "#length";
-    /**
-     * The "#valid" array identifier.
-     */
-    public static final String VALID = "#valid";
-    /**
-     * The "#memory" array identifier.
-     */
-    public static final String MEMORY = "#memory";
-    /**
-     * The "$Pointer$" type identifier.
-     */
-    public static final String POINTER = "$Pointer$";
-    /**
-     * The "offset" field of the pointer type.
-     */
-    public static final String POINTER_OFFSET = "offset";
-    /**
-     * The "base" field of the pointer type.
-     */
-    public static final String POINTER_BASE = "base";
-    /**
-     * Sizeof constant prefix "#sizeof~".
-     */
-    public static final String SIZEOF = "#sizeof~";
-    /**
-     * Offset constant prefix "#offset~".
-     */
-    public static final String OFFSET = "#offset~";
-    /**
-     * Identifier for the sizeof-pointer-constant.
-     */
-    public static final String SIZEOF_POINTER_ID = SFO.SIZEOF + SFO.POINTER;
-    /**
-     * Identifier of the null pointer.
-     */
-    public static final String NULL = "#NULL";
-    /**
-     * Identifier for function pointers. 
-     */
-    public static final String FUNCTION_ADDRESS = "#funAddr~";
-    /**
-     * Loop (entry/exit) labels are built with this.
-     */
-    public static final String LOOPLABEL = "Loop~";
-    
-    /**
-     * combined SFOs for memory arrays:
-     */
-    public static final String MEMORY_INT = MEMORY + "_" + INT;
-    public static final String MEMORY_REAL = MEMORY + "_" + REAL;
-    public static final String MEMORY_POINTER = MEMORY + "_" + POINTER;
+
+	/**
+	 * String representing the result variable in Boogie.
+	 */
+	public static final String RES = "#res";
+	/**
+	 * String holding "int".
+	 */
+	public static final String INT = "int";
+	/**
+	 * String holding "unknown"
+	 */
+	public static final String UNKNOWN = "unknown";
+	/**
+	 * String holding "string".
+	 */
+	public static final String STRING = "string";
+	/**
+	 * String holding "bool".
+	 */
+	public static final String BOOL = "bool";
+	/**
+	 * String holding "real".
+	 */
+	public static final String REAL = "real";
+	/**
+	 * Temp variable name.
+	 */
+	public static final String TEMP = "#t~";
+	/**
+	 * In Param Prefix.
+	 */
+	public static final String IN_PARAM = "#in~";
+	/**
+	 * String holding "1".
+	 */
+	public static final String NR1 = "1";
+	/**
+	 * String holding "0".
+	 */
+	public static final String NR0 = "0";
+	/**
+	 * String holding "ULTIMATE.init".
+	 */
+	public static final String INIT = "ULTIMATE.init";
+	/**
+	 * String holding "ULTIMATE.start".
+	 */
+	public static final String START = "ULTIMATE.start";
+	/**
+	 * The empty String.
+	 */
+	public static final String EMPTY = "";
+	/**
+	 * Prefix for variables, not contained in the C code.
+	 */
+	public static final String NO_REAL_C_VAR = "NO_REAL_C_VAR";
+	/**
+	 * Prefix for unnamed in parameters.
+	 */
+	public static final String UNNAMED = "unnamed~";
+	/**
+	 * String holding "0.0".
+	 */
+	public static final String NR0F = "0.0";
+	/**
+	 * Identifier of malloc procedure.
+	 */
+	public static final String MALLOC = "~malloc";
+	/**
+	 * Identifier of free procedure.
+	 */
+	public static final String FREE = "~free";
+	/**
+	 * The "#length" array identifier.
+	 */
+	public static final String LENGTH = "#length";
+	/**
+	 * The "#valid" array identifier.
+	 */
+	public static final String VALID = "#valid";
+	/**
+	 * The "#memory" array identifier.
+	 */
+	public static final String MEMORY = "#memory";
+	/**
+	 * The "$Pointer$" type identifier.
+	 */
+	public static final String POINTER = "$Pointer$";
+	/**
+	 * The "offset" field of the pointer type.
+	 */
+	public static final String POINTER_OFFSET = "offset";
+	/**
+	 * The "base" field of the pointer type.
+	 */
+	public static final String POINTER_BASE = "base";
+	/**
+	 * Sizeof constant prefix "#sizeof~".
+	 */
+	public static final String SIZEOF = "#sizeof~";
+	/**
+	 * Offset constant prefix "#offset~".
+	 */
+	public static final String OFFSET = "#offset~";
+	/**
+	 * Identifier for the sizeof-pointer-constant.
+	 */
+	public static final String SIZEOF_POINTER_ID = SFO.SIZEOF + SFO.POINTER;
+	/**
+	 * Identifier of the null pointer.
+	 */
+	public static final String NULL = "#NULL";
+	/**
+	 * Identifier for function pointers.
+	 */
+	public static final String FUNCTION_ADDRESS = "#funAddr~";
+	/**
+	 * Loop (entry/exit) labels are built with this.
+	 */
+	public static final String LOOPLABEL = "Loop~";
+
+	/**
+	 * combined SFOs for memory arrays:
+	 */
+	public static final String MEMORY_INT = MEMORY + "_" + INT;
+	public static final String MEMORY_REAL = MEMORY + "_" + REAL;
+	public static final String MEMORY_POINTER = MEMORY + "_" + POINTER;
 
 	public static final String MEMCPY_DEST = "dest";
 	public static final String MEMCPY_SRC = "src";
 	public static final String MEMCPY_SIZE = "size";
 	public static final String MEMCPY = "#memcpy";
-    
-   	
-   /**
-    * Specifies purpose of an auxiliary temporary variable.
-    */
-   public enum AUXVAR {
-	   /**
-	    * variable used for a loop that we introduce through the translatino
-	    */
-	   LOOPCTR("loopctr"),
-	   
-	   /**
-	    *  Auxiliary variable used to store the result of a call of a function pointer.
-	    */
-	   FUNCPTRRES("funptrres"),
-	   
-	   /**
-	    * Auxiliary variable used to get some value nondeterministically.
-	    */
-	   NONDET("nondet"),
-	   
-	   /**
-	    * Auxiliary variable used to represent the value before a postincrement
-	    * or postdecrement. E.g., the <i>t</i> in the sequence of Statements
-    	* t:=x;x:=x+1;y:=x+1; which we obtain by translating the statement x++.  
-	    */
-	   POST_MOD("post"),
-	   
-	   /**
-	    * Auxiliary variable used to store the returned value of a procedure 
-	    * call.
-	    */
-	   RETURNED("ret"),
-	   
-	   /**
-	    * Auxiliary variable used to specify the dimension of an array.
-	    */
-	   ARRAYDIM("dim"),
-	   
-	   /**
-	    * Auxiliary variable used to initialize array values.
-	    */
-	   ARRAYINIT("init"),
 
-	   /**
-	    * Auxiliary variable used for a helper array (serves the same purpose as a struct constructor
-	    *  when a whole array is copied.
-	    */
-	   ARRAYCOPY("arrayCopy"),
-	   
-	   /**
-	    * Auxiliary variable used to define a pointer with constant value, 
-	    * e.g., (int*) 1048. 
-	    */
-	   CONSTPOINTER("const"),
-	   
-	   /**
-	    * Auxiliary variable used to model the result of a malloc call.
-	    */
-	   MALLOC("malloc"),
-	   
-	   /**
-	    * Auxiliary variable used to store the result of a memory access. 
-	    */
-	   MEMREAD("mem"),
-	   
-	   /**
-	    * Auxiliary variable used to model temporary results of a short-circuit
-	    * evaluation, e.g., &&, or ||.
-	    */
-	   SHORTCIRCUIT("short"),
-	   
-	   /**
-	    * Auxiliary variable used to model temporary results of the ternary 
-	    * conditional expression, e.g., (x > 0) ? 23 : 42;
-	    */
-	   ITE("ite"),
-	   
-	   /**
-	    * Auxiliary variable used for arrow operator (field access of 
-	    * dereferenced pointer.
-	    */
-	   ARROW("arrow"),
-	   
-	   /**
-	    * Auxiliary variable used for union initialisation.
-	    */
-	   UNION("union"), 
-	   
-	   /**
-	    * Auxiliary variable used for the result of a call to the 'builtin' memcpy function
-	    */
-	   MEMCPYRES("memcpy");
-	   
-	   String m_Id;
-	   
-	   AUXVAR(String id) {
-		   m_Id = id;
-	   }
-	   
-	   /**
-	    * @return Identifier used in the variable name.
-	    */
-	   public String getId() {
-		   return m_Id;
-	   }
-	   
-   }
+	/**
+	 * Specifies purpose of an auxiliary temporary variable.
+	 */
+	public enum AUXVAR {
+		/**
+		 * variable used for a loop that we introduce through the translatino
+		 */
+		LOOPCTR("loopctr"),
 
+		/**
+		 * Auxiliary variable used to store the result of a call of a function
+		 * pointer.
+		 */
+		FUNCPTRRES("funptrres"),
 
-/**
- * Return Variable Declaration for single variable with name tmpName, 
- * InferredType tmpIType at location loc.
- */
-public static VariableDeclaration getTempVarVariableDeclaration(
-//		String tmpName, InferredType tmpIType, ILocation loc) {
-		String tmpName, ASTType astType, ILocation loc) {
-//	VarList tempVar;
-//	if (tmpIType.getType() == Type.Pointer) {
-//		tempVar = new VarList(loc, new String[] { tmpName },
-//                MemoryHandler.POINTER_TYPE);
-//	} else {
-//        ASTType tempType = new PrimitiveType(loc, tmpIType,
-//                tmpIType.toString());
-//		tempVar = new VarList(loc, new String[] { tmpName },
-//                pt);
-//	}
-	VarList tempVar = new VarList(loc, new String[] { tmpName }, astType);
-	return new VariableDeclaration(loc, new Attribute[0], new VarList[] { tempVar });
-};
+		/**
+		 * Auxiliary variable used to get some value nondeterministically.
+		 */
+		NONDET("nondet"),
 
-    	
+		/**
+		 * Auxiliary variable used to represent the value before a postincrement
+		 * or postdecrement. E.g., the <i>t</i> in the sequence of Statements
+		 * t:=x;x:=x+1;y:=x+1; which we obtain by translating the statement x++.
+		 */
+		POST_MOD("post"),
+
+		/**
+		 * Auxiliary variable used to store the returned value of a procedure
+		 * call.
+		 */
+		RETURNED("ret"),
+
+		/**
+		 * Auxiliary variable used to specify the dimension of an array.
+		 */
+		ARRAYDIM("dim"),
+
+		/**
+		 * Auxiliary variable used to initialize array values.
+		 */
+		ARRAYINIT("init"),
+
+		/**
+		 * Auxiliary variable used for a helper array (serves the same purpose
+		 * as a struct constructor when a whole array is copied.
+		 */
+		ARRAYCOPY("arrayCopy"),
+
+		/**
+		 * Auxiliary variable used to define a pointer with constant value,
+		 * e.g., (int*) 1048.
+		 */
+		CONSTPOINTER("const"),
+
+		/**
+		 * Auxiliary variable used to model the result of a malloc call.
+		 */
+		MALLOC("malloc"),
+
+		/**
+		 * Auxiliary variable used to store the result of a memory access.
+		 */
+		MEMREAD("mem"),
+
+		/**
+		 * Auxiliary variable used to model temporary results of a short-circuit
+		 * evaluation, e.g., &&, or ||.
+		 */
+		SHORTCIRCUIT("short"),
+
+		/**
+		 * Auxiliary variable used to model temporary results of the ternary
+		 * conditional expression, e.g., (x > 0) ? 23 : 42;
+		 */
+		ITE("ite"),
+
+		/**
+		 * Auxiliary variable used for arrow operator (field access of
+		 * dereferenced pointer.
+		 */
+		ARROW("arrow"),
+
+		/**
+		 * Auxiliary variable used for union initialisation.
+		 */
+		UNION("union"),
+
+		/**
+		 * Auxiliary variable used for the result of a call to the 'builtin'
+		 * memcpy function
+		 */
+		MEMCPYRES("memcpy");
+
+		String m_Id;
+
+		AUXVAR(String id) {
+			m_Id = id;
+		}
+
+		/**
+		 * @return Identifier used in the variable name.
+		 */
+		public String getId() {
+			return m_Id;
+		}
+
+	}
+
+	/**
+	 * Return Variable Declaration for single variable with name tmpName,
+	 * InferredType tmpIType at location loc.
+	 */
+	public static VariableDeclaration getTempVarVariableDeclaration(
+	// String tmpName, InferredType tmpIType, ILocation loc) {
+			String tmpName, ASTType astType, ILocation loc) {
+		// VarList tempVar;
+		// if (tmpIType.getType() == Type.Pointer) {
+		// tempVar = new VarList(loc, new String[] { tmpName },
+		// MemoryHandler.POINTER_TYPE);
+		// } else {
+		// ASTType tempType = new PrimitiveType(loc, tmpIType,
+		// tmpIType.toString());
+		// tempVar = new VarList(loc, new String[] { tmpName },
+		// pt);
+		// }
+		VarList tempVar = new VarList(loc, new String[] { tmpName }, astType);
+		return new VariableDeclaration(loc, new Attribute[0], new VarList[] { tempVar });
+	};
+
 }

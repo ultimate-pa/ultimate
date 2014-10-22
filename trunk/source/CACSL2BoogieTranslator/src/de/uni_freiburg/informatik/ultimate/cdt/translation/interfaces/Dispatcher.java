@@ -49,7 +49,7 @@ import de.uni_freiburg.informatik.ultimate.result.UnsupportedSyntaxResult;
  * @date 01.02.2012
  */
 public abstract class Dispatcher {
-	
+
 	protected final Logger mLogger;
 	/**
 	 * The side effect handler.
@@ -93,7 +93,7 @@ public abstract class Dispatcher {
 		this.backtranslator = backtranslator;
 		mLogger = logger;
 		mServices = services;
-		
+
 	}
 
 	/**
@@ -179,27 +179,28 @@ public abstract class Dispatcher {
 	 */
 	public abstract NextACSL nextACSLStatement() throws ParseException;
 
-//	/**
-//	 * Report a syntax error to Ultimate. This will cancel the toolchain.
-//	 * 
-//	 * @param loc
-//	 *            where did it happen?
-//	 * @param type
-//	 *            why did it happen?
-//	 * @param msg
-//	 *            description.
-//	 */
-//	public static void error(ILocation loc, SyntaxErrorType type, String msg) {
-//		SyntaxErrorResult<ILocation> result = new SyntaxErrorResult<ILocation>(
-//				loc, Activator.s_PLUGIN_NAME, UltimateServices.getInstance()
-//						.getTranslatorSequence(), loc, type);
-//		result.setLongDescription(msg);
-//		UltimateServices us = UltimateServices.getInstance();
-//		us.getLogger(Activator.s_PLUGIN_ID).warn(msg);
-//		us.reportResult(Activator.s_PLUGIN_ID, result);
-//		us.cancelToolchain();
-//	}
-	
+	// /**
+	// * Report a syntax error to Ultimate. This will cancel the toolchain.
+	// *
+	// * @param loc
+	// * where did it happen?
+	// * @param type
+	// * why did it happen?
+	// * @param msg
+	// * description.
+	// */
+	// public static void error(ILocation loc, SyntaxErrorType type, String msg)
+	// {
+	// SyntaxErrorResult<ILocation> result = new SyntaxErrorResult<ILocation>(
+	// loc, Activator.s_PLUGIN_NAME, UltimateServices.getInstance()
+	// .getTranslatorSequence(), loc, type);
+	// result.setLongDescription(msg);
+	// UltimateServices us = UltimateServices.getInstance();
+	// us.getLogger(Activator.s_PLUGIN_ID).warn(msg);
+	// us.reportResult(Activator.s_PLUGIN_ID, result);
+	// us.cancelToolchain();
+	// }
+
 	/**
 	 * Report a syntax error to Ultimate. This will cancel the toolchain.
 	 * 
@@ -211,13 +212,12 @@ public abstract class Dispatcher {
 	 *            description.
 	 */
 	public void syntaxError(ILocation loc, String msg) {
-		SyntaxErrorResult result = 
-				new SyntaxErrorResult(Activator.s_PLUGIN_NAME, loc, msg);
+		SyntaxErrorResult result = new SyntaxErrorResult(Activator.s_PLUGIN_NAME, loc, msg);
 		mLogger.warn(msg);
 		mServices.getResultService().reportResult(Activator.s_PLUGIN_ID, result);
 		mServices.getProgressMonitorService().cancelToolchain();
 	}
-	
+
 	/**
 	 * Report a unsupported syntax to Ultimate. This will cancel the toolchain.
 	 * 
@@ -229,14 +229,12 @@ public abstract class Dispatcher {
 	 *            description.
 	 */
 	public void unsupportedSyntax(ILocation loc, String msg) {
-		UnsupportedSyntaxResult<IElement> result = 
-				new UnsupportedSyntaxResult<IElement>(Activator.s_PLUGIN_NAME, loc, msg);
+		UnsupportedSyntaxResult<IElement> result = new UnsupportedSyntaxResult<IElement>(Activator.s_PLUGIN_NAME, loc,
+				msg);
 		mLogger.warn(msg);
 		mServices.getResultService().reportResult(Activator.s_PLUGIN_ID, result);
 		mServices.getProgressMonitorService().cancelToolchain();
 	}
-	
-	
 
 	/**
 	 * Report possible source of unsoundness to Ultimate.
@@ -247,16 +245,14 @@ public abstract class Dispatcher {
 	 *            description.
 	 */
 	public void warn(ILocation loc, String longDescription) {
-		UltimatePreferenceStore prefs = new UltimatePreferenceStore(
-				Activator.s_PLUGIN_ID);
-		boolean reportUnsoundnessWarning = prefs.getBoolean(
-				CACSLPreferenceInitializer.LABEL_REPORT_UNSOUNDNESS_WARNING);
+		UltimatePreferenceStore prefs = new UltimatePreferenceStore(Activator.s_PLUGIN_ID);
+		boolean reportUnsoundnessWarning = prefs
+				.getBoolean(CACSLPreferenceInitializer.LABEL_REPORT_UNSOUNDNESS_WARNING);
 		if (reportUnsoundnessWarning) {
 			String shortDescription = "Unsoundness Warning";
 			mLogger.warn(shortDescription + " " + longDescription);
-			GenericResultAtLocation result = new GenericResultAtLocation(
-					Activator.s_PLUGIN_NAME, loc, shortDescription, 
-					longDescription, Severity.WARNING);
+			GenericResultAtLocation result = new GenericResultAtLocation(Activator.s_PLUGIN_NAME, loc,
+					shortDescription, longDescription, Severity.WARNING);
 			mServices.getResultService().reportResult(Activator.s_PLUGIN_ID, result);
 		}
 	}
@@ -267,14 +263,12 @@ public abstract class Dispatcher {
 	 * @return the checked method's name.
 	 */
 	public String getCheckedMethod() {
-		UltimatePreferenceStore prefs = new UltimatePreferenceStore(
-				Activator.s_PLUGIN_ID);
+		UltimatePreferenceStore prefs = new UltimatePreferenceStore(Activator.s_PLUGIN_ID);
 		String checkMethod = SFO.EMPTY;
 		try {
 			checkMethod = prefs.getString(CACSLPreferenceInitializer.LABEL_MAINPROC);
 		} catch (Exception e) {
-			throw new IllegalArgumentException(
-					"Unable to determine specified checked method.");
+			throw new IllegalArgumentException("Unable to determine specified checked method.");
 		}
 		return checkMethod;
 	}
@@ -297,23 +291,19 @@ public abstract class Dispatcher {
 
 	/**
 	 * Create a havoc statement for each variable in auxVars. (Does not modify
-	 * this auxVars map).
-	 * We insert havocs for auxvars after the translation of a _statement_. This means
-	 * that the Expressions carry the auxVarMap outside (via the ResultExpression they
-	 * return), and that map is used for calling this procedure once we reach a (basic)
-	 * statement.
+	 * this auxVars map). We insert havocs for auxvars after the translation of
+	 * a _statement_. This means that the Expressions carry the auxVarMap
+	 * outside (via the ResultExpression they return), and that map is used for
+	 * calling this procedure once we reach a (basic) statement.
 	 */
-	public static List<HavocStatement> createHavocsForAuxVars(
-			Map<VariableDeclaration, ILocation> auxVars) {
+	public static List<HavocStatement> createHavocsForAuxVars(Map<VariableDeclaration, ILocation> auxVars) {
 		ArrayList<HavocStatement> result = new ArrayList<HavocStatement>();
 		for (VariableDeclaration varDecl : auxVars.keySet()) {
 			VarList[] varLists = varDecl.getVariables();
 			for (VarList varList : varLists) {
 				for (String varId : varList.getIdentifiers()) {
 					ILocation originloc = auxVars.get(varDecl);
-					result.add(new HavocStatement(originloc,
-							new VariableLHS[] { new VariableLHS(originloc,
-									varId) }));
+					result.add(new HavocStatement(originloc, new VariableLHS[] { new VariableLHS(originloc, varId) }));
 				}
 			}
 		}
@@ -323,8 +313,7 @@ public abstract class Dispatcher {
 	/**
 	 * Returns true iff all auxvars in decls are contained in auxVars
 	 */
-	public boolean isAuxVarMapcomplete(List<Declaration> decls,
-			Map<VariableDeclaration, ILocation> auxVars) {
+	public boolean isAuxVarMapcomplete(List<Declaration> decls, Map<VariableDeclaration, ILocation> auxVars) {
 		boolean result = true;
 		for (Declaration rExprdecl : decls) {
 			assert (rExprdecl instanceof VariableDeclaration);
@@ -338,7 +327,7 @@ public abstract class Dispatcher {
 
 	/**
 	 * Returns true if varDecl contains only auxiliary variables, returns false
-	 * if varDecl contrains only non-auxiliary variables, throws Exception
+	 * if varDecl contains only non-auxiliary variables, throws Exception
 	 * otherwise
 	 */
 	private boolean onlyAuxVars(VariableDeclaration varDecl) {

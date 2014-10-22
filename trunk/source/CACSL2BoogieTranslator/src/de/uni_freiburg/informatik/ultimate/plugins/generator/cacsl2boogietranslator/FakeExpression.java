@@ -156,5 +156,10 @@ public class FakeExpression implements IASTExpression {
 	public IASTExpression copy(CopyStyle style) {
 		return null;
 	}
+	
+	@Override
+	public String toString() {
+		return mName;
+	}
 
 }

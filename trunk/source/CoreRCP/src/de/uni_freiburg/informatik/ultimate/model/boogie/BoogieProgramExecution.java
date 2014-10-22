@@ -142,18 +142,18 @@ public class BoogieProgramExecution implements IProgramExecution<BoogieASTNode, 
 				break;
 			case CONDITION_EVAL_TRUE:
 				sb.append(BoogiePrettyPrinter.print((Expression) currentStep));
+				sb.append(" (").append(currentStepInfo.toString()).append(")");
 				break;
 			case CONDITION_EVAL_FALSE:
 				Expression exp = (Expression) currentStep;
 				sb.append(BoogiePrettyPrinter.print(new UnaryExpression(exp.getLocation(),
 						UnaryExpression.Operator.LOGICNEG, exp)));
+				sb.append(" (").append(currentStepInfo.toString()).append(")");
 				break;
 			case CALL:
 			case RETURN:
 				sb.append(BoogiePrettyPrinter.print((Statement) currentStep));
-				sb.append(" (");
-				sb.append(currentStepInfo.toString());
-				sb.append(")");
+				sb.append(" (").append(currentStepInfo.toString()).append(")");
 				break;
 			default:
 				throw new UnsupportedOperationException("Did not implement stepinfo " + currentStepInfo);

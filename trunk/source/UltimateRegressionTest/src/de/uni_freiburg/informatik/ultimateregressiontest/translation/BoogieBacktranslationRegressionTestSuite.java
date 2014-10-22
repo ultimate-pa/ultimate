@@ -13,7 +13,7 @@ public class BoogieBacktranslationRegressionTestSuite extends AbstractRegression
 
 	public BoogieBacktranslationRegressionTestSuite() {
 		super();
-		mTimeout = 5000;
+		mTimeout = 500000;
 		mRootFolder = sRootFolder;
 		mFiletypesToConsider = new String[] { sFileending };
 	}

@@ -30,10 +30,9 @@ public class SvComp14MainDispatcher extends MainDispatcher {
 		sideEffectHandler = new SideEffectHandler();
 		typeHandler = new SVCompTypeHandler();
 		acslHandler = new ACSLHandler();
-		nameHandler = new NameHandler();
+		nameHandler = new NameHandler(backtranslator);
 		cHandler = new SvComp14CHandler(this, backtranslator, mLogger, typeHandler);
 		preprocessorHandler = new SvComp14PreprocessorHandler();
-		backtranslator.setBoogie2C(nameHandler.getBoogie2C());
 		REPORT_WARNINGS = false;
 	}
 }

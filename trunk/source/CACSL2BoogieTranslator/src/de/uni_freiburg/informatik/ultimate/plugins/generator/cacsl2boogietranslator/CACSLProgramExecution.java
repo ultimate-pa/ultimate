@@ -14,13 +14,18 @@ import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
 import de.uni_freiburg.informatik.ultimate.result.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.result.IProgramExecution.AtomicTraceElement.StepInfo;
 
-public class CProgramExecution implements IProgramExecution<CACSLLocation, IASTExpression> {
+/**
+ * 
+ * @author dietsch@informatik.uni-freiburg.de
+ *
+ */
+public class CACSLProgramExecution implements IProgramExecution<CACSLLocation, IASTExpression> {
 
 	private final ProgramState<IASTExpression> mInitialState;
 	private final ArrayList<ProgramState<IASTExpression>> mProgramStates;
 	private final ArrayList<AtomicTraceElement<CACSLLocation>> mTrace;
 
-	public CProgramExecution(ProgramState<IASTExpression> initialState,
+	public CACSLProgramExecution(ProgramState<IASTExpression> initialState,
 			Collection<AtomicTraceElement<CACSLLocation>> trace, Collection<ProgramState<IASTExpression>> programStates) {
 		assert trace != null;
 		assert programStates != null;

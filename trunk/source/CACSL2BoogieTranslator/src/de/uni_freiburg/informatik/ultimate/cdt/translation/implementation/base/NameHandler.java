@@ -3,10 +3,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-
 import org.eclipse.cdt.core.dom.ast.IASTCompositeTypeSpecifier;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
@@ -16,6 +12,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.S
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.INameHandler;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.CACSL2BoogieBacktranslator;
 
 /**
  * @author Markus Lindenmann
@@ -27,10 +24,16 @@ public class NameHandler implements INameHandler {
 	/**
 	 * Counter for temporary variables.
 	 */
-	private int tmpUID;
+	private int mTmpUID;
 	
-	private int globalCounter;
+	private int mGlobalCounter;
+	
+	private final CACSL2BoogieBacktranslator mBacktranslator;
 
+	public NameHandler(CACSL2BoogieBacktranslator backtranslator){
+		mBacktranslator = backtranslator;
+	}
+	
 	/**
 	 * @deprecated is not supported in this handler! Do not use!
 	 */
@@ -49,7 +52,7 @@ public class NameHandler implements INameHandler {
 				"Implementation error: Use ACSL handler for " + node.getClass());
 	}
 	
-	private Boogie2C boogie2C = new Boogie2C();
+	
 
 	@Override
 	public String getUniqueIdentifier(IASTNode scope, String cId, int compCnt, boolean isOnHeap) {
@@ -63,7 +66,7 @@ public class NameHandler implements INameHandler {
 					&& !(curr.getParent() instanceof IASTTranslationUnit)) {
 				if (curr instanceof IASTCompositeTypeSpecifier) {
 					boogieId = cId;
-					boogie2C.putVar(boogieId, cId);
+					mBacktranslator.putVar(boogieId, cId);
 					return boogieId;
 				}
 				curr = curr.getParent();
@@ -83,7 +86,7 @@ public class NameHandler implements INameHandler {
 		} else {
 			boogieId = "~" + onHeapStr + cId;
 		}
-		boogie2C.putVar(boogieId, cId);
+		mBacktranslator.putVar(boogieId, cId);
 		return boogieId;
 	}
 	
@@ -92,93 +95,25 @@ public class NameHandler implements INameHandler {
 		//(alex:) in case of several unnamed parameters we need uniqueness 
 		//(still a little bit overkill, to make it precise we would need to check whether 
 		// the current method has more than one unnamed parameter)
-		final String boogieId = SFO.IN_PARAM + cId + (cId.isEmpty() ? tmpUID++ : ""); 
-		boogie2C.putInVar(boogieId, cId);
+		final String boogieId = SFO.IN_PARAM + cId + (cId.isEmpty() ? mTmpUID++ : ""); 
+		mBacktranslator.putInVar(boogieId, cId);
 		return boogieId;
 	}
 
 	@Override
 	public String getTempVarUID(SFO.AUXVAR purpose) {
-		final String boogieId = SFO.TEMP + purpose.getId() + tmpUID++;
-		boogie2C.putTempVar(boogieId, purpose);
+		final String boogieId = SFO.TEMP + purpose.getId() + mTmpUID++;
+		mBacktranslator.putTempVar(boogieId, purpose);
 		return boogieId;
-	}
-	
-	@Override
-	public Boogie2C getBoogie2C() {
-		return boogie2C;
-	}
-	
-	@Override
-	public boolean isTempVar(String boogieId) {
-		return boogie2C.getTempvar2obj().containsKey(boogieId);
-	}
-	
-	/**
-	 * Translates Boogie identifiers of variables and functions back to 
-	 * the identifiers of variables and operators in C.
-	 * 
-	 * This class is in an immature state and translates Strings to Strings.
-	 * 
-	 * @author heizmann@informatik.uni-freiburg.de
-	 *
-	 */
-	public static class Boogie2C {
-		
-		private final Map<String,String> invar2cvar;
-		private final Map<String,String> var2cvar;
-		private final Map<String,Object> tempvar2obj;
-		private final Map<String,String> functionId2operator;
-		
-		
-		public Boogie2C() {
-			super();
-			this.invar2cvar = new HashMap<String,String>();
-			this.var2cvar = new HashMap<String,String>();
-			this.tempvar2obj = new HashMap<String,Object>();
-			this.functionId2operator = new HashMap<String,String>();
-		}
-
-
-		public Map<String, String> getInvar2cvar() {
-			return Collections.unmodifiableMap(invar2cvar);
-		}
-
-
-		public Map<String, String> getVar2cvar() {
-			return Collections.unmodifiableMap(var2cvar);
-		}
-
-
-		public Map<String, Object> getTempvar2obj() {
-			return Collections.unmodifiableMap(tempvar2obj);
-		}
-
-
-		public Map<String, String> getFunctionId2operator() {
-			return Collections.unmodifiableMap(functionId2operator);
-		}
-
-
-		public void putFunction(String boogieId, String cId) {
-			functionId2operator.put(boogieId, cId);
-		}
-		
-		public void putVar(String boogieId, String cId) {
-			var2cvar.put(boogieId, cId);
-		}
-		
-		public void putInVar(String boogieId, String cId) {
-			invar2cvar.put(boogieId, cId);
-		}
-		
-		public void putTempVar(String boogieId, Object obj) {
-			tempvar2obj.put(boogieId, obj);
-		}
 	}
 
 	@Override
 	public String getGloballyUniqueIdentifier(String looplabel) {
-		return looplabel + globalCounter++;
+		return looplabel + mGlobalCounter++;
+	}
+
+	@Override
+	public boolean isTempVar(String boogieId) {
+		return mBacktranslator.isTempVar(boogieId);
 	}
 }

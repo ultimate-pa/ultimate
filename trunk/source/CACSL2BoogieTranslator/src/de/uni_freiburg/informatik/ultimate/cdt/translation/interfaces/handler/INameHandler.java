@@ -5,7 +5,6 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler;
 
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.NameHandler.Boogie2C;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO.AUXVAR;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.IHandler;
 
@@ -45,9 +44,7 @@ public interface INameHandler extends IHandler {
      */
 	String getInParamIdentifier(String cid);
 
-	Boogie2C getBoogie2C();
-
-	boolean isTempVar(String boogieId);
-
 	public String getGloballyUniqueIdentifier(String looplabel);
+
+	public boolean isTempVar(String id);
 }

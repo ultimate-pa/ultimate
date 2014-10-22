@@ -224,7 +224,7 @@ public class MainDispatcher extends Dispatcher {
 	private LinkedHashSet<VariableDeclaration> _boogieDeclarationsOfVariablesOnHeap;
 	private LinkedHashMap<String, Integer> functionToIndex;
 	private LinkedHashMap<Integer, String> indexToFunction;
-	
+
 	public HashMap<String, Integer> getFunctionToIndex() {
 		return functionToIndex;
 	}
@@ -232,7 +232,6 @@ public class MainDispatcher extends Dispatcher {
 	public HashMap<Integer, String> getIndexToFunction() {
 		return indexToFunction;
 	}
-
 
 	void addBoogieDeclarationOfVariableOnHeap(VariableDeclaration vd) {
 		if (_boogieDeclarationsOfVariablesOnHeap == null)
@@ -282,16 +281,19 @@ public class MainDispatcher extends Dispatcher {
 		PreRunner pr = new PreRunner(ftb.getFunctionTable());
 		tu.accept(pr);
 		variablesOnHeap = pr.getVarsForHeap();
-//		functionsOnHeap = pr.getFunctionPointers();
+		// functionsOnHeap = pr.getFunctionPointers();
 		functionToIndex = pr.getFunctionToIndex();
-		
+
 		indexToFunction = new LinkedHashMap<>();
 		for (Entry<String, Integer> en : functionToIndex.entrySet()) {
 			indexToFunction.put(en.getValue(), en.getKey());
 		}
-		
-//		if (functionsOnHeap.size() > 0) { //(alex:) I commented this out because function pointers are not subject to our memory model
-		if (functionToIndex.size() > 0) { //(alex:) functions are assiociated to quasi-pointers with base address -1
+
+		// if (functionsOnHeap.size() > 0) { //(alex:) I commented this out
+		// because function pointers are not subject to our memory model
+		if (functionToIndex.size() > 0) { // (alex:) functions are assiociated
+											// to quasi-pointers with base
+											// address -1
 			isMMRequired = true;
 		} else {
 			isMMRequired = pr.isMMRequired();
@@ -299,7 +301,7 @@ public class MainDispatcher extends Dispatcher {
 
 		boolean useDetNecessaryDeclarations = true;
 		if (useDetNecessaryDeclarations) {
-			DetermineNecessaryDeclarations dnd = new DetermineNecessaryDeclarations(this.getCheckedMethod(), this, 
+			DetermineNecessaryDeclarations dnd = new DetermineNecessaryDeclarations(this.getCheckedMethod(), this,
 					ftb.getFunctionTable(), functionToIndex);
 			tu.accept(dnd);
 
@@ -314,9 +316,8 @@ public class MainDispatcher extends Dispatcher {
 		sideEffectHandler = new SideEffectHandler();
 		typeHandler = new TypeHandler();
 		acslHandler = new ACSLHandler();
-		nameHandler = new NameHandler();
+		nameHandler = new NameHandler(backtranslator);
 		cHandler = new CHandler(this, backtranslator, true, mLogger, typeHandler);
-		backtranslator.setBoogie2C(nameHandler.getBoogie2C());
 		preprocessorHandler = new PreprocessorHandler();
 		REPORT_WARNINGS = true;
 	}

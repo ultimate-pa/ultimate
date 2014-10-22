@@ -84,14 +84,11 @@ public interface IProgramExecution<TE, E> {
 
 		@Override
 		public String toString() {
-			ArrayList<Entry<E, Collection<E>>> toSort = new ArrayList<>(
-					mVariable2Values.entrySet());
+			ArrayList<Entry<E, Collection<E>>> toSort = new ArrayList<>(mVariable2Values.entrySet());
 			Collections.sort(toSort, new Comparator<Entry<E, Collection<E>>>() {
 				@Override
-				public int compare(Entry<E, Collection<E>> arg0,
-						Entry<E, Collection<E>> arg1) {
-					return arg0.getKey().toString()
-							.compareToIgnoreCase(arg1.getKey().toString());
+				public int compare(Entry<E, Collection<E>> arg0, Entry<E, Collection<E>> arg1) {
+					return arg0.getKey().toString().compareToIgnoreCase(arg1.getKey().toString());
 				}
 			});
 			return toSort.toString();
@@ -177,9 +174,9 @@ public interface IProgramExecution<TE, E> {
 		 * 
 		 */
 		public enum StepInfo {
-			NONE, CONDITION_EVAL_TRUE, CONDITION_EVAL_FALSE, CALL, RETURN,
+			NONE, CONDITION_EVAL_TRUE, CONDITION_EVAL_FALSE, CALL, RETURN, ARG_EVAL
 		}
-		
+
 		@Override
 		public String toString() {
 			return getTraceElement().toString();
