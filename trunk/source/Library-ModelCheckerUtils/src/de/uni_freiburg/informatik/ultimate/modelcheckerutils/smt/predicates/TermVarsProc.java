@@ -59,7 +59,7 @@ public class TermVarsProc {
 			}
 		}
 		Term closedTerm = PredicateUtils.computeClosedFormula(term, vars, boogie2smt.getScript());
-		return new TermVarsProc(term, vars, procs.toArray(new String[0]), closedTerm);
+		return new TermVarsProc(term, vars, procs.toArray(new String[procs.size()]), closedTerm);
 	}
 
 }

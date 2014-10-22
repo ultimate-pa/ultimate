@@ -94,8 +94,8 @@ public class AffineRelation {
 				lhsSummands.add(m_AffineTerm.getConstant().toTerm(m_AffineTerm.getSort()));
 			}
 		}
-		Term lhsTerm = SmtUtils.sum(script, m_AffineTerm.getSort(), lhsSummands.toArray(new Term[0]));
-		Term rhsTerm = SmtUtils.sum(script, m_AffineTerm.getSort(), rhsSummands.toArray(new Term[0]));
+		Term lhsTerm = SmtUtils.sum(script, m_AffineTerm.getSort(), lhsSummands.toArray(new Term[lhsSummands.size()]));
+		Term rhsTerm = SmtUtils.sum(script, m_AffineTerm.getSort(), rhsSummands.toArray(new Term[rhsSummands.size()]));
 		Term result = script.term(m_RelationSymbol.toString(), lhsTerm, rhsTerm);
 		assert isEquivalent(script, m_OriginalTerm, result) == LBool.UNSAT : "transformation to positive normal form unsound";
 		return result;
@@ -140,7 +140,7 @@ public class AffineRelation {
 						+ "where desired variable is on left hand side");
 			}
 		}
-		Term rhsTerm = SmtUtils.sum(script, m_AffineTerm.getSort(), rhsSummands.toArray(new Term[0]));
+		Term rhsTerm = SmtUtils.sum(script, m_AffineTerm.getSort(), rhsSummands.toArray(new Term[rhsSummands.size()]));
 
 		// if coefficient is negative we have to use the "swapped"
 		// RelationSymbol

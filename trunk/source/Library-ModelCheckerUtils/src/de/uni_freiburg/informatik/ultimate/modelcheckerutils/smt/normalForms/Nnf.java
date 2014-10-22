@@ -47,7 +47,7 @@ public class Nnf {
 		m_QuantifiedVariables.add(firstQuantifierBlock);
 		Term result = m_NnfTransformerHelper.transform(term);
 		for (int i=0; i<m_QuantifiedVariables.size(); i++) {
-			TermVariable[] variables = m_QuantifiedVariables.get(i).toArray(new TermVariable[0]);
+			TermVariable[] variables = m_QuantifiedVariables.get(i).toArray(new TermVariable[m_QuantifiedVariables.size()]);
 			if (variables.length > 0) {
 				int quantor = i%2;
 				assert QuantifiedFormula.EXISTS == 0;

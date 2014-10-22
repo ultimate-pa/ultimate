@@ -173,7 +173,7 @@ public abstract class BinaryRelation {
 		return m_Rhs;
 	}
 	
-	public class NoRelationOfThisKindException extends Exception {
+	public static class NoRelationOfThisKindException extends Exception {
 
 		private static final long serialVersionUID = 1L;
 

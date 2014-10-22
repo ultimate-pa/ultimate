@@ -97,7 +97,7 @@ public abstract class Xnf extends Nnf {
 				int i = 0;
 				for (Set<Term> resInnerSet : tidyResOuterSet) {
 					resInnerTerms[i] = 
-							innerConnective(m_Script, resInnerSet.toArray(new Term[0]));
+							innerConnective(m_Script, resInnerSet.toArray(new Term[resInnerSet.size()]));
 					i++;
 				}
 				assert i==resInnerTerms.length;

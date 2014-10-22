@@ -55,7 +55,7 @@ public class PartialQuantifierElimination {
 		if (varSet.isEmpty()) {
 			return body;
 		} else {
-			return script.quantifier(quantifier, varSet.toArray(new TermVariable[0]), body, patterns);
+			return script.quantifier(quantifier, varSet.toArray(new TermVariable[varSet.size()]), body, patterns);
 		}
 
 	}
@@ -270,12 +270,7 @@ public class PartialQuantifierElimination {
 				// thisIterationAuxVars);
 				// }
 				assert !Arrays.asList(elim.getFreeVars()).contains(tv) : "var is still there";
-				if (elim != null) {
-					it.remove();
-					result = elim;
-				} else {
-					throw new UnsupportedOperationException("unable to eliminate array");
-				}
+				result = elim;
 			}
 		}
 		eliminatees.addAll(overallAuxVars);
@@ -382,7 +377,7 @@ public class PartialQuantifierElimination {
 	public static boolean isSuperfluousConjunction(Script script, Set<Term> terms, Set<TermVariable> connectedVars,
 			Set<TermVariable> quantifiedVars) {
 		if (quantifiedVars.containsAll(connectedVars)) {
-			Term conjunction = Util.and(script, terms.toArray(new Term[0]));
+			Term conjunction = Util.and(script, terms.toArray(new Term[terms.size()]));
 			if (Util.checkSat(script, conjunction) == LBool.SAT) {
 				return true;
 			}
@@ -397,7 +392,7 @@ public class PartialQuantifierElimination {
 	public static boolean isSuperfluousDisjunction(Script script, Set<Term> terms, Set<TermVariable> connectedVars,
 			Set<TermVariable> quantifiedVars) {
 		if (quantifiedVars.containsAll(connectedVars)) {
-			Term disjunction = Util.or(script, terms.toArray(new Term[0]));
+			Term disjunction = Util.or(script, terms.toArray(new Term[terms.size()]));
 			if (Util.checkSat(script, Util.not(script, disjunction)) == LBool.SAT) {
 				return true;
 			}
@@ -522,9 +517,9 @@ public class PartialQuantifierElimination {
 		}
 		Term result;
 		if (quantifier == QuantifiedFormula.EXISTS) {
-			result = Util.and(script, paramsWithoutTv.toArray(new Term[0]));
+			result = Util.and(script, paramsWithoutTv.toArray(new Term[paramsWithoutTv.size()]));
 		} else if (quantifier == QuantifiedFormula.FORALL) {
-			result = Util.or(script, paramsWithoutTv.toArray(new Term[0]));
+			result = Util.or(script, paramsWithoutTv.toArray(new Term[paramsWithoutTv.size()]));
 		} else {
 			throw new AssertionError("unknown quantifier");
 		}

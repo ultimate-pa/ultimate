@@ -1204,7 +1204,7 @@ public class TransFormula implements Serializable {
 		{
 			List<TransFormula> callAndBeforeList = new ArrayList<TransFormula>(Arrays.asList(beforeCall));
 			callAndBeforeList.add(callTf);
-			TransFormula[] callAndBeforeArray = callAndBeforeList.toArray(new TransFormula[0]);
+			TransFormula[] callAndBeforeArray = callAndBeforeList.toArray(new TransFormula[callAndBeforeList.size()]);
 			callAndBeforeTF = sequentialComposition(logger, services, boogie2smt, simplify, extPqe, transformToCNF,
 					callAndBeforeArray);
 

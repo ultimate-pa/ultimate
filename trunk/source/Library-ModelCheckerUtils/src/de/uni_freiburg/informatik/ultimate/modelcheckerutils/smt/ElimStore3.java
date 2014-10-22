@@ -406,7 +406,7 @@ public class ElimStore3 {
 					}
 				}
 			}
-			MultiDimensionalSelect[] arrayReads = set.toArray(new MultiDimensionalSelect[0]);
+			MultiDimensionalSelect[] arrayReads = set.toArray(new MultiDimensionalSelect[set.size()]);
 			m_SelectTerm = new Term[arrayReads.length];
 			m_Indices = new ArrayIndex[arrayReads.length];
 			m_Values = new Term[arrayReads.length];

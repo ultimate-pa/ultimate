@@ -98,7 +98,7 @@ public class SmtUtils {
 				conjuncts.add(script.term(functionName, params[i], params[j]));
 			}
 		}
-		return Util.and(script, conjuncts.toArray(new Term[0]));
+		return Util.and(script, conjuncts.toArray(new Term[conjuncts.size()]));
 	}
 	
 	public static boolean hasBooleanParams(ApplicationTerm term) {

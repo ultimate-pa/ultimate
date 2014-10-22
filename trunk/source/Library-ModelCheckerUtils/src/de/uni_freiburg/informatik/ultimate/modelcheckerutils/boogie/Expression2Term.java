@@ -117,7 +117,6 @@ public class Expression2Term {
 				Term indexiTerm = translate(indices[i]);
 				result = m_Script.term("select", result, indexiTerm);
 			}
-			assert (result.toString() instanceof Object);
 			return result;
 
 		} else if (exp instanceof ArrayStoreExpression) {

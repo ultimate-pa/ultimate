@@ -252,7 +252,6 @@ public class Statements2TransFormula {
 		if (s_ComputeAsserts) {
 			m_Asserts = Util.implies(m_Script, f, m_Asserts);
 		}
-		assert (m_Assumes.toString() instanceof Object);
 	}
 
 	private void addAssert(AssertStatement assertstmt) {
@@ -269,7 +268,6 @@ public class Statements2TransFormula {
 	}
 
 	private void addSummary(CallStatement call) {
-		assert (m_Assumes.toString() instanceof Object);
 		Procedure procedure = m_BoogieDeclarations.getProcSpecification().get(call.getMethodName());
 
 		HashMap<String, Term> substitution = new HashMap<String, Term>();
@@ -520,7 +518,7 @@ public class Statements2TransFormula {
 
 	}
 
-	public class SubstitutionTranslatorId implements IdentifierTranslator {
+	private class SubstitutionTranslatorId implements IdentifierTranslator {
 		private final Map<String, Term> m_Substitution;
 
 		public SubstitutionTranslatorId(Map<String, Term> substitution) {
