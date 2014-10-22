@@ -152,8 +152,10 @@ public class ElimStore3 {
 					others.add(conjunct);
 				}
 			}
-			if (writtenFrom != null) {
-				boolean breakpointHere = true;
+			// if both are available we take the writtenFrom
+			if (writtenFrom != null && writeInto != null) {
+				others.add(writeInto.getArrayUpdateTerm());
+				writeInto = null;
 			}
 
 			if (quantifier == QuantifiedFormula.EXISTS) {
