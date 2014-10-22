@@ -239,6 +239,11 @@ public class SvComp14CHandler extends CHandler {
 			return new ResultExpression(stmt, new RValue(new IdentifierExpression(loc, tId), destRex.lrVal.cType), decl, auxVars);
 		}
 		
+		if (methodName.equals("__builtin_object_size")) {
+			main.warn(loc, "used trivial implementation of __builtin_object_size");
+			return new ResultExpression(new RValue(new IntegerLiteral(loc, SFO.NR0), new CPrimitive(PRIMITIVE.INT)));
+		}
+
 		if (methodName.equals("abort")) {
 			stmt.add(new AssumeStatement(loc, new BooleanLiteral(loc, false)));
 			return new ResultExpression(stmt, null, decl, auxVars);

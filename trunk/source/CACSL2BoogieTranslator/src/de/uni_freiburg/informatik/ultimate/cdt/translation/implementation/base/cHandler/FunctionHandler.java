@@ -151,54 +151,6 @@ public class FunctionHandler {
 	}
 
 	/**
-	 * Adds searchString to modifiedGlobals iff searchString is a global
-	 * variable and the user has not defined a modifies clause.
-	 * 
-	 * @param main
-	 *            a reference to the main dispatcher.
-	 * 
-	 * @param searchString
-	 *            = boogieVarName!
-	 * @param errLoc
-	 *            the location for possible errors!
-	 */
-	public void checkIfModifiedGlobal(Dispatcher main, String searchString,
-			ILocation errLoc) {
-		String cName;
-		if (!main.cHandler.getSymbolTable().containsBoogieSymbol(searchString)) {
-			return; // temp variable!
-		}
-		cName = main.cHandler.getSymbolTable().getCID4BoogieID(searchString,
-				errLoc);
-		String cId = currentProcedure.getIdentifier();
-		SymbolTableValue stValue = main.cHandler.getSymbolTable().get(cName, errLoc);
-		CType cvar = stValue.getCVariable();
-		if (cvar != null && stValue.isStatic()) {
-			modifiedGlobals.get(cId).add(searchString);
-			return;
-		}
-		if (modifiedGlobalsIsUserDefined.contains(cId))
-			return;
-		boolean isLocal = false;
-		if (searchString.equals(SFO.RES)) {
-			// this variable is reserved for the return variable and
-			// therefore local!
-			isLocal = true;
-		} else {
-			isLocal = !main.cHandler.getSymbolTable().get(cName, errLoc)
-					.isBoogieGlobalVar();
-		}
-		if (!isLocal) {
-			// the variable is not local but could be a formal parameter
-			if (!searchString.startsWith(SFO.IN_PARAM)) { // variable is global!
-				modifiedGlobals.get(cId).add(searchString);
-			} else {
-				assert false;
-			}
-		}
-	}
-
-	/**
 	 * This is called from SimpleDeclaration and handles a C function declaration.
 	 * 
 	 * The effects are:
@@ -221,219 +173,278 @@ public class FunctionHandler {
 	}
 
 	/**
-	 * Add a procedure to procedures according to a given CFunction. 
-	 * I.e. do a procedure declaration.
-	 */
-	private void addAProcedure(Dispatcher main, ILocation loc,
-			List<ACSLNode> contract, String methodName,
-			CFunction funcType) {
-		// begin new scope for retranslation of ACSL specification
-		main.cHandler.beginScope();
-	
-		VarList[] in = processInParams(main, loc, funcType, methodName);
-		
-		// OUT VARLIST : only one out param in C
-		VarList[] out = new VarList[1];
-		
-		Attribute[] attr = new Attribute[0];
-		String[] typeParams = new String[0];
-		Specification[] spec = makeBoogieSpecFromACSLContract(main, contract,
-				methodName);
-
-        if (funcType.getResultType() instanceof CPrimitive && 
-        		((CPrimitive) funcType.getResultType()).getType() == PRIMITIVE.VOID &&
-                !(funcType.getResultType() instanceof CPointer)) {
-			if (methodsCalledBeforeDeclared.contains(methodName)) {
-				// this method was assumed to return int -> return int
-				out[0] = new VarList(loc, new String[] { SFO.RES },
-						new PrimitiveType(loc, /*new InferredType(Type.Integer),*/
-								SFO.INT));
-			} else {
-				// void, so there are no out vars
-				out = new VarList[0];
-			}
-		} else {
-			// we found a type, so node is type ASTType
-			ASTType type = main.typeHandler.ctype2asttype(loc, funcType.getResultType());
-			out[0] = new VarList(loc, new String[] { SFO.RES }, type);
-		}
-		if (!modifiedGlobals.containsKey(methodName)) {
-			modifiedGlobals.put(methodName, new LinkedHashSet<String>());
-		}
-		if (!callGraph.containsKey(methodName)) {
-			callGraph.put(methodName, new LinkedHashSet<String>());
-		}
-		
-
-		Procedure proc = procedures.get(methodName);
-		if (proc != null) {
-			//combine the specification from the definition with the one from the declaration
-			List<Specification> specFromDef = Arrays.asList(proc.getSpecification());
-			ArrayList<Specification> newSpecs = new ArrayList<Specification>(Arrays.asList(spec));
-			newSpecs.addAll(specFromDef);
-			spec = newSpecs.toArray(new Specification[0]);
-			//TODO something else to take over for a declaration after the definition?
-		}
-		proc = new Procedure(loc, attr, methodName, typeParams, in,
-				out, spec, null);
-					
-		procedures.put(methodName, proc);
-		updateCFunction(methodName, funcType.getResultType(), null, null, funcType.takesVarArgs());
-		// end scope for retranslation of ACSL specification
-		main.cHandler.endScope();
-	}
-
-	/**
-	 * takes the contract (we got from CHandler) and translates it into an array of Boogie
-	 * specifications
-	 * (this needs to be called after the procedure parameters have been added to the symboltable)
-	 * @param main
-	 * @param contract
-	 * @param methodName
-	 * @return
-	 */
-	private Specification[] makeBoogieSpecFromACSLContract(Dispatcher main,
-			List<ACSLNode> contract, String methodName) {
-		Specification[] spec;
-		if (contract == null) {
-			spec = new Specification[0];
-		} else {
-			List<Specification> specList = new ArrayList<Specification>();
-			for (int i = 0; i<contract.size(); i++) {
-					// retranslate ACSL specification needed e.g., in cases
-					// where ids of function parameters differ from is in ACSL
-					// expression
-					Result retranslateRes = main.dispatch(contract.get(i));
-					assert (retranslateRes instanceof ResultContract);
-					ResultContract resContr = (ResultContract) retranslateRes;
-					specList.addAll(Arrays.asList(resContr.specs));
-			}
-			spec = specList.toArray(new Specification[0]);
-			for (int i = 0; i<spec.length; i++) {
-				if (spec[i] instanceof ModifiesSpecification) {
-					modifiedGlobalsIsUserDefined.add(methodName);
-					ModifiesSpecification ms = (ModifiesSpecification) spec[i];
-					LinkedHashSet<String> modifiedSet = new LinkedHashSet<String>();
-					for (VariableLHS var : ms.getIdentifiers()) 
-						modifiedSet.add(var.getIdentifier());
-					modifiedGlobals.put(methodName, modifiedSet);
-				}
-			}
-
-			main.cHandler.clearContract(); // take care for behavior and
-												// completeness
-		}
-		return spec;
-	}
-
-	/**
-	 * Creates local variables for in parameters.
+	 * Handles translation of IASTFunctionDefinition.
+	 * 
+	 * Note that a C function definition may have an ACSL specification while
+	 * a Boogie procedure implementation does not have a specification (right?).
+	 * Therefore we have to add any ACSL specs to the procedures member where
+	 * the (Boogie) function declarations are stored.
+	 * 
+	 * The Result contains the Boogie procedure implementation.
 	 * 
 	 * @param main a reference to the main dispatcher.
-	 * @param loc the location
-	 * @param decl the declaration list to append to.
-	 * @param stmt the statement list to append to.
-	 * @param parent
+	 * @param node the node to translate.
+	 * @param contract 
+	 * @return the translation result.
 	 */
-	private void handleFunctionsInParams(Dispatcher main, ILocation loc, MemoryHandler memoryHandler,
-			ArrayList<Declaration> decl, ArrayList<Statement> stmt,
-			IASTFunctionDefinition parent) {
-	    VarList[] varListArray = currentProcedure.getInParams();
-	    IASTParameterDeclaration[] paramDecs;
-	    if (varListArray.length == 0) {
-	        /*
-	         * In C it is possible to write
-	         *    func(void) {
-	         *       ...
-	         *    }
-	         * This results in the empty name. (alex: what is an empty name??)
-	         */
-	        assert ((CASTFunctionDeclarator)parent.getDeclarator()).getParameters().length == 0 ||
-	                (((CASTFunctionDeclarator)parent.getDeclarator()).getParameters().length == 1 &&
-	                ((CASTFunctionDeclarator)parent.getDeclarator()).getParameters()[0].getDeclarator().getName().toString().equals(""));
-	        paramDecs = new IASTParameterDeclaration[0];
-	    }
-	    else {
-	        paramDecs = ((CASTFunctionDeclarator)parent.getDeclarator()).
-	                getParameters();
-	    }
-	    assert varListArray.length == paramDecs.length;
-		for (int i = 0; i < paramDecs.length; ++i) {
-		    VarList varList  = varListArray[i];
-		    IASTParameterDeclaration paramDec  = paramDecs[i];
-			for (final String bId : varList.getIdentifiers()) {
-				final String cId = main.cHandler.getSymbolTable()
-						.getCID4BoogieID(bId, loc);
-				
-				ASTType type = varList.getType();
-				CType cvar = main.cHandler.getSymbolTable().get(cId, loc)
-                        .getCVariable();
-				
-				//onHeap case for a function parameter means the parameter is addressoffed in the function body
-				final boolean isOnHeap = ((MainDispatcher) main).
-				        getVariablesForHeap().contains(paramDec);
-
-				// Copy of inparam that is writeable
-				String auxInvar = main.nameHandler.getUniqueIdentifier(parent,
-						cId, 0, isOnHeap);
-			
-				if (isOnHeap || cvar instanceof CArray) {
-				    type = MemoryHandler.POINTER_TYPE;
-	                ((CHandler)main.cHandler).addBoogieIdsOfHeapVars(
-	                        auxInvar);
+	public Result handleFunctionDefinition(Dispatcher main, MemoryHandler memoryHandler,
+			IASTFunctionDefinition node, 
+			CDeclaration cDec,
+			List<ACSLNode> contract) {
+		main.cHandler.beginScope();
+		
+		ILocation loc = new CACSLLocation(node);
+	    String methodName = cDec.getName();
+	    CType returnCType = ((CFunction) cDec.getType()).getResultType();
+	    boolean returnTypeIsVoid = returnCType instanceof CPrimitive && 
+				((CPrimitive) returnCType).getType() == PRIMITIVE.VOID;
+	
+		updateCFunction(methodName, returnCType, null, null, false);
+		
+		VarList[] in = processInParams(main, loc, (CFunction) cDec.getType(), methodName);
+	    
+		VarList[] out = new VarList[1];
+		ASTType type = main.typeHandler.ctype2asttype(loc, returnCType);
+		
+		if (returnTypeIsVoid) { // void, so there are no out vars
+			out = new VarList[0];
+		} else if (methodsCalledBeforeDeclared.contains(methodName)) { //TODO: defaulting to int -- but does this work on all examples?
+			out[0] = new VarList(loc, new String[] { SFO.RES },
+					new PrimitiveType(loc, SFO.INT));
+		} else { //"normal case"
+			assert type != null;
+			out[0] = new VarList(loc, new String[] { methodName }, type); // at most one out param in C
+		}
+		
+		Specification[] spec = makeBoogieSpecFromACSLContract(main, contract, methodName);
+		
+		Procedure proc = procedures.get(methodName);
+		if (proc == null) {
+			Attribute[] attr = new Attribute[0];
+			String[] typeParams = new String[0];
+			if (isInParamVoid(in)) {
+				in = new VarList[0]; // in parameter is "void"
+			}
+			proc = new Procedure(loc, attr, methodName, typeParams, in, out,
+					spec, null);
+			if (procedures.containsKey(methodName)) {
+				String msg = "Duplicated method identifier: " + methodName
+						+ ". C does not support function overloading!";
+				throw new IncorrectSyntaxException(loc, msg);
+			}
+			procedures.put(methodName, proc);
+		} else { // check declaration against its implementation
+			VarList[] declIn = proc.getInParams();
+			boolean checkInParams = true;
+			if (in.length != proc.getInParams().length
+					|| out.length != proc.getOutParams().length
+					|| isInParamVoid(proc.getInParams())) {
+				if (proc.getInParams().length == 0) {
+					// the implementation can have 0 to n in parameters!
+					// do not check, but use the in params of the implementation
+					// as we will take the ones of the implementation anyway
+					checkInParams = false;
+					declIn = in;
+				} else if (isInParamVoid(proc.getInParams())
+						&& (in.length == 0 || isInParamVoid(in))) {
+					declIn = new VarList[0];
+					in = new VarList[0];
+					checkInParams = false;
+				} else {
+					String msg = "Implementation does not match declaration!";
+					throw new IncorrectSyntaxException(loc, msg);
 				}
-				VarList var = new VarList(loc, new String[] { auxInvar }, type);
-				VariableDeclaration inVarDecl = new VariableDeclaration(loc,
-						new Attribute[0], new VarList[] { var });
-				
-				VariableLHS tempLHS = new VariableLHS(loc, auxInvar);
-				IdentifierExpression rhsId = new IdentifierExpression(loc, bId);
-				if (isOnHeap) {
-				    LocalLValue llv = new LocalLValue(tempLHS, cvar);
-				    // malloc
-				    memoryHandler.addVariableToBeMallocedAndFreed(main, llv);
-				    // dereference
-                    HeapLValue hlv = new HeapLValue(llv.getValue(), cvar);
-                    ArrayList<Declaration> decls = new ArrayList<Declaration>();
-                    ResultExpression assign = ((CHandler) main.cHandler).
-                        makeAssignment(main, loc, stmt, hlv,
-                        //convention: if a variable is put on heap or not, its ctype stays the same
-                            new RValue(rhsId, cvar),
-                            decls,
-                            new LinkedHashMap<VariableDeclaration, ILocation>(),
-                            new ArrayList<Overapprox>());
-                    stmt = assign.stmt;
-                } else {
-        			stmt.add(new AssignmentStatement(loc,
-        					new LeftHandSide[] { tempLHS },
-        					new Expression[] { rhsId }));
-                }
-				assert main.cHandler.getSymbolTable().containsCSymbol(cId);
-				// Overwrite the information in the symbolTable for cId, s.t. it
-				// points to the locally declared variable.
-				main.cHandler.getSymbolTable().put(cId,
-						new SymbolTableValue(auxInvar, inVarDecl, 
-								new CDeclaration(cvar, cId), false, 
-								StorageClass.UNSPECIFIED));
+			}
+			if (checkInParams) {
+				for (int i = 0; i < in.length; i++) {
+					if (!(in[i].getType().toString()
+							.equals(proc.getInParams()[i].getType().toString()))) {
+						String msg = "Implementation does not match declaration!"
+								+ "Type missmatch on in-parameters!";
+						throw new IncorrectSyntaxException(loc,msg);
+					}
+				}
+			}
+			
+			//combine the specification from the definition with the one from the declaration
+			List<Specification> specFromDec = Arrays.asList(proc.getSpecification());
+			ArrayList<Specification> newSpecs = new ArrayList<Specification>(Arrays.asList(spec));
+			newSpecs.addAll(specFromDec);
+			spec = newSpecs.toArray(new Specification[0]);
+			
+			proc = new Procedure(proc.getLocation(), proc.getAttributes(),
+					proc.getIdentifier(), proc.getTypeParams(), declIn,
+					proc.getOutParams(), spec, null);
+			procedures.put(methodName, proc);
+		}
+		Procedure declWithCorrectlyNamedInParams = new Procedure(
+				proc.getLocation(), proc.getAttributes(), proc.getIdentifier(),
+				proc.getTypeParams(), in, proc.getOutParams(),
+				proc.getSpecification(), null);
+		currentProcedure = declWithCorrectlyNamedInParams;
+		currentProcedureIsVoid = returnTypeIsVoid;
+		if (!modifiedGlobals.containsKey(currentProcedure.getIdentifier())) {
+			modifiedGlobals.put(currentProcedure.getIdentifier(),
+					new LinkedHashSet<String>());
+		}
+		if (!callGraph.containsKey(currentProcedure.getIdentifier())) {
+			callGraph.put(currentProcedure.getIdentifier(),
+					new LinkedHashSet<String>());
+		}
+		
+		/*
+		 * The structure is as follows:
+		 * 1) Preprocessing of the method body:
+		 *    - add new variables for parameters
+		 *    - havoc them
+		 *    - etc.
+		 * 2) dispatch body
+		 * 3) handle mallocs
+	     * 4) add statements and declarations to new body
+		 */
+		ArrayList<Statement> stmts = new ArrayList<Statement>();
+		ArrayList<Declaration> decls = new ArrayList<Declaration>();
+		// 1)
+		handleFunctionsInParams(main, loc, memoryHandler, decls, stmts, node);
+		// 2)
+		Body body = ((Body) main.dispatch(node.getBody()).node);
+		stmts.addAll(Arrays.asList(body.getBlock()));
+	    for (VariableDeclaration declaration : body.getLocalVars()) {
+	        decls.add(declaration);
+	    }
+		// 3)
+		stmts = memoryHandler.insertMallocs(main, loc, stmts);
+		// 4)
+		for (SymbolTableValue stv : main.cHandler.getSymbolTable().currentScopeValues()) {
+			//there may be a null declaration in case of foo(void)
+			if (!stv.isBoogieGlobalVar() && stv.getBoogieDecl() != null) { 
+				decls.add(stv.getBoogieDecl());
 			}
 		}
+	
+	    
+		body = new Body(loc, decls.toArray(new VariableDeclaration[decls.size()]),
+		        stmts.toArray(new Statement[stmts.size()]));
+		
+		proc = currentProcedure;
+		// Implementation -> Specification always null!
+		Procedure impl = new Procedure(loc, proc.getAttributes(), methodName,
+				proc.getTypeParams(), in, proc.getOutParams(), null, body);
+		currentProcedure = null;
+		currentProcedureIsVoid = false;
+		main.cHandler.endScope();
+		return new Result(impl);
 	}
 
 	/**
-	 * Checks, whether all procedures that are being called in C, were
-	 * eventually declared within the C program.
+	 * Handles translation of IASTFunctionCallExpression.
 	 * 
-	 * @return null if all called procedures were declared, otherwise the 
-	 * identifier of one procedure that was called but not declared.
+	 * @param main
+	 *            a reference to the main dispatcher.
+	 * @param memoryHandler
+	 *            a reference to the memory Handler.
+	 * @param node
+	 *            the node to translate.
+	 * @return the translation result.
 	 */
-	public String isEveryCalledProcedureDeclared() {
-		for (String s : methodsCalledBeforeDeclared) {
-			if (!procedures.containsKey(s)) {
-				return s;
-			}
+	public Result handleFunctionCallExpression(Dispatcher main,
+			MemoryHandler memoryHandler, StructHandler structHandler, 
+			IASTFunctionCallExpression node) {
+	    Check check = new Check(Check.Spec.PRE_CONDITION);
+		CACSLLocation loc = new CACSLLocation(node, check);
+		IASTExpression functionName = node.getFunctionNameExpression(); 
+		if (!(functionName instanceof IASTIdExpression)) {
+			return handleFunctionPointerCall(loc, main, memoryHandler, structHandler, functionName, node.getArguments());
 		}
-		return null;
+		//don't use getRawSignature because it refers to the code before preprocessing 
+		// f.i. we get a wrong methodname here in defineFunction.c, because of a #define in the original code
+		String methodName = ((IASTIdExpression) functionName).getName().toString();
+		
+		if (main.cHandler.getSymbolTable().containsCSymbol(methodName)) {
+			return handleFunctionPointerCall(loc, main, memoryHandler, structHandler, functionName, node.getArguments());
+		}
+		
+		IASTInitializerClause[] arguments = node.getArguments();
+		
+		return handleFunctionCallGivenNameAndArguments(main, memoryHandler,
+				structHandler, loc, methodName, arguments);
 	}
+
+	/**
+		 * Handles translation of return statements.
+		 * 
+		 * @param main
+		 *            a reference to the main dispatcher.
+		 * @param node
+		 *            the node to translate.
+		 * @return the translation result.
+		 */
+		public Result handleReturnStatement(Dispatcher main, MemoryHandler memoryHandler,
+				StructHandler structHandler, IASTReturnStatement node) {
+			ArrayList<Statement> stmt = new ArrayList<Statement>();
+			ArrayList<Declaration> decl = new ArrayList<Declaration>();
+			Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<VariableDeclaration, ILocation>();
+			// The ReturnValue could be empty!
+			CACSLLocation loc = new CACSLLocation(node);
+			VarList[] outParams = this.currentProcedure.getOutParams();
+			if (methodsCalledBeforeDeclared.contains(currentProcedure
+					.getIdentifier()) && currentProcedureIsVoid) {
+				// void method that was assumed to be returning int! -> return int
+				String id = outParams[0].getIdentifiers()[0];
+				VariableLHS lhs = new VariableLHS(loc, id);
+				Statement havoc = new HavocStatement(loc, new VariableLHS[] { lhs });
+				stmt.add(havoc);
+			} else if (node.getReturnValue() != null) {
+				ResultExpression exprResult = ((ResultExpression) main.dispatch(node
+						.getReturnValue())).switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
+				exprResult = ConvExpr.rexBoolToIntIfNecessary(loc, exprResult);
+				
+				//do some implicit casts
+				CType functionResultType = this.procedureToCFunctionType.get(currentProcedure.getIdentifier()).getResultType();
+				if (!exprResult.lrVal.cType.equals(functionResultType)) {
+					if (functionResultType instanceof CPointer 
+							&& exprResult.lrVal.cType instanceof CPrimitive
+							&& exprResult.lrVal.getValue() instanceof IntegerLiteral
+							&& ((IntegerLiteral) exprResult.lrVal.getValue()).getValue().equals("0")) {
+						exprResult.lrVal = new RValue(new IdentifierExpression(loc, SFO.NULL), functionResultType);
+					}
+				}
+				
+				stmt.addAll(exprResult.stmt);
+				decl.addAll(exprResult.decl);
+				auxVars.putAll(exprResult.auxVars);
+				if (outParams.length == 0) {
+					// void method which is returning something! We remove the
+					// return value!
+					String msg = "This method is declared to be void, but returning a value!";
+					main.syntaxError(loc, msg);
+				} else if (outParams.length != 1) {
+					String msg = "We do not support several output parameters for functions";
+					throw new UnsupportedSyntaxException(loc, msg);
+				} else {
+					String id = outParams[0].getIdentifiers()[0];
+					VariableLHS[] lhs = new VariableLHS[] { new VariableLHS(loc, id) };
+					RValue castExprResultRVal = main.cHandler.castToType(loc, (RValue) exprResult.lrVal, functionResultType);
+					stmt.add(new AssignmentStatement(loc, lhs,
+							new Expression[] { castExprResultRVal.getValue() }));
+	//				//assuming that we need no auxvars or overappr, here
+				}
+			}
+			stmt.addAll(CHandler.createHavocsForNonMallocAuxVars(auxVars));
+		
+			// we need to insert a free for each malloc of an auxvar before each return
+			for (Entry<LocalLValue, Integer> entry : memoryHandler.getVariablesToBeFreed().entrySet()) {  //frees are inserted in handleReturnStm
+				if (entry.getValue() >= 1) {
+					stmt.add(memoryHandler.getFreeCall(main, this, entry.getKey(), loc));
+					stmt.add(new HavocStatement(loc, new VariableLHS[] { (VariableLHS) entry.getKey().getLHS() }));
+				}
+			}
+			
+			stmt.add(new ReturnStatement(loc));
+			Map<VariableDeclaration, ILocation> emptyAuxVars =
+			        new LinkedHashMap<VariableDeclaration, ILocation>(0);
+			return new ResultExpression(stmt, null, decl, emptyAuxVars);
+		}
 
 	/**
 	 * Calculates transitive modifies clauses for all procedure declarations
@@ -489,7 +500,7 @@ public class FunctionHandler {
 		// This graph might not be complete! It is i.e. missing all procedures,
 		// that do not have incoming or outgoing edges!
 		// But: They don't need an update anyway!
-
+	
 		// calculate transitive modifies clause
 		LinkedHashMap<LinkedHashSet<String>, LinkedHashSet<String>> modGlobals = new LinkedHashMap<LinkedHashSet<String>, LinkedHashSet<String>>();
 		while (!deadEnds.isEmpty()) {
@@ -588,290 +599,150 @@ public class FunctionHandler {
 		return declarations;
 	}
 
-	/**
-	 * Handles translation of IASTFunctionDefinition.
-	 * 
-	 * Note that a C function definition may have an ACSL specification while
-	 * a Boogie procedure implementation does not have a specification (right?).
-	 * Therefore we have to add any ACSL specs to the procedures member where
-	 * the (Boogie) function declarations are stored.
-	 * 
-	 * The Result contains the Boogie procedure implementation.
-	 * 
-	 * @param main a reference to the main dispatcher.
-	 * @param node the node to translate.
-	 * @param contract 
-	 * @return the translation result.
-	 */
-	public Result handleFunctionDefinition(Dispatcher main, MemoryHandler memoryHandler,
-			IASTFunctionDefinition node, 
-			CDeclaration cDec,
-			List<ACSLNode> contract) {
-		main.cHandler.beginScope();
+	private Result handleFunctionCallGivenNameAndArguments(Dispatcher main,
+				MemoryHandler memoryHandler, StructHandler structHandler,
+				ILocation loc, String methodName,
+				IASTInitializerClause[] arguments) {
+			if (methodName.equals("malloc") || methodName.equals("alloca")) {
+				assert arguments.length == 1;
+				Result sizeRes = main.dispatch(arguments[0]);
+				assert sizeRes instanceof ResultExpression;
+				ResultExpression rex = ((ResultExpression) sizeRes)
+						.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
+	
+				ResultExpression mallocRex = memoryHandler.getMallocCall(main, this, rex.lrVal.getValue(), loc);		
+				
+				rex.addAll(mallocRex);
+				rex.lrVal = mallocRex.lrVal;
+	
+				// for alloc a we have to free the variable ourselves when the stackframe is closed, i.e. at a return
+				if (methodName.equals("alloca")) {
+					memoryHandler.addVariableToBeFreed(main, (LocalLValue) mallocRex.lrVal);
+				}
+				return rex;
+			} 
 		
-		ILocation loc = new CACSLLocation(node);
-        String methodName = cDec.getName();
-        CType returnCType = ((CFunction) cDec.getType()).getResultType();
-        boolean returnTypeIsVoid = returnCType instanceof CPrimitive && 
-				((CPrimitive) returnCType).getType() == PRIMITIVE.VOID;
-
-		updateCFunction(methodName, returnCType, null, null, false);
-		
-		VarList[] in = processInParams(main, loc, (CFunction) cDec.getType(), methodName);
-        
-		VarList[] out = new VarList[1];
-		ASTType type = main.typeHandler.ctype2asttype(loc, returnCType);
-		
-		if (returnTypeIsVoid) { // void, so there are no out vars
-			out = new VarList[0];
-		} else if (methodsCalledBeforeDeclared.contains(methodName)) { //TODO: defaulting to int -- but does this work on all examples?
-			out[0] = new VarList(loc, new String[] { SFO.RES },
-					new PrimitiveType(loc, SFO.INT));
-		} else { //"normal case"
-			assert type != null;
-			out[0] = new VarList(loc, new String[] { methodName }, type); // at most one out param in C
-		}
-		
-		Specification[] spec = makeBoogieSpecFromACSLContract(main, contract, methodName);
-		
-		Procedure proc = procedures.get(methodName);
-		if (proc == null) {
-			Attribute[] attr = new Attribute[0];
-			String[] typeParams = new String[0];
-			if (isInParamVoid(in)) {
-				in = new VarList[0]; // in parameter is "void"
+			if (methodName.equals("free")) {
+				assert arguments.length == 1;
+				Result pRes = main.dispatch(arguments[0]);
+				assert pRes instanceof ResultExpression;
+				ResultExpression pRex = ((ResultExpression) pRes)
+						.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
+				pRex.stmt.add(memoryHandler.getFreeCall(main, this, pRex.lrVal, loc));
+				return pRex;
 			}
-			proc = new Procedure(loc, attr, methodName, typeParams, in, out,
-					spec, null);
-			if (procedures.containsKey(methodName)) {
-				String msg = "Duplicated method identifier: " + methodName
-						+ ". C does not support function overloading!";
-				throw new IncorrectSyntaxException(loc, msg);
+			
+			ArrayList<Statement> stmt = new ArrayList<Statement>();
+			ArrayList<Declaration> decl = new ArrayList<Declaration>();
+			Map<VariableDeclaration, ILocation> auxVars = 
+					new LinkedHashMap<VariableDeclaration, ILocation>();
+			ArrayList<Overapprox> overappr = new ArrayList<Overapprox>();
+	
+			callGraph.get(currentProcedure.getIdentifier()).add(methodName);
+	
+			boolean procedureDeclaredWithOutInparamsButCalledWithInParams = 
+					procedures.get(methodName) != null 
+					&& (procedures.get(methodName).getBody() == null) 
+					&& procedures.get(methodName).getInParams().length == 0;
+			
+			//if the function has varArgs, we throw away all parameters that belong to the varArgs part and only keep the normal ones
+			IASTInitializerClause[] inParams = arguments;
+			if (procedureToCFunctionType.containsKey(methodName) 
+					&& procedureToCFunctionType.get(methodName).takesVarArgs()) {
+				int noParameterWOVarArgs = procedureToCFunctionType.get(methodName).getParameterTypes().length;
+				inParams = new IASTInitializerClause[noParameterWOVarArgs];
+				for (int i = 0; i < noParameterWOVarArgs; i++) {
+					inParams[i] = arguments[i];
+				}
+				// .. and if it is really called with more that its normal parameter number, we throw an exception, because we may be unsound
+				// (the code before this does not make so much sense, but maybe some day we want that solution again..
+				if (!(main instanceof SvComp14MainDispatcher)
+						&& inParams.length < arguments.length)
+					throw new UnsupportedSyntaxException(loc, "we cannot deal with varargs right now");
 			}
-			procedures.put(methodName, proc);
-		} else { // check declaration against its implementation
-			VarList[] declIn = proc.getInParams();
-			boolean checkInParams = true;
-			if (in.length != proc.getInParams().length
-					|| out.length != proc.getOutParams().length
-					|| isInParamVoid(proc.getInParams())) {
-				if (proc.getInParams().length == 0) {
-					// the implementation can have 0 to n in parameters!
-					// do not check, but use the in params of the implementation
-					// as we will take the ones of the implementation anyway
-					checkInParams = false;
-					declIn = in;
-				} else if (isInParamVoid(proc.getInParams())
-						&& (in.length == 0 || isInParamVoid(in))) {
-					declIn = new VarList[0];
-					in = new VarList[0];
-					checkInParams = false;
-				} else {
-					String msg = "Implementation does not match declaration!";
+		
+			
+	
+			if (procedures.containsKey(methodName)
+					&& inParams.length != procedures.get(methodName)
+							.getInParams().length) {
+				if (!(procedures.get(methodName).getInParams().length == 1
+						&& procedures.get(methodName).getInParams()[0].getType() == null && inParams.length == 0)
+						//ok, if the procedure is declared (and not implemented) as having no parameters --> then we may call it with parameters later
+							&& !procedureDeclaredWithOutInparamsButCalledWithInParams
+							) {
+					String msg = "Function call has incorrect number of in-params!";
+					throw new IncorrectSyntaxException(loc, msg);
+				} // else: this means param of declaration is void and parameter
+					// list of call is empty! --> OK
+			}
+	
+			//dispatch the inparams
+			ArrayList<Expression> args = new ArrayList<Expression>();
+			for (int i = 0; i < inParams.length; i++) {
+				IASTInitializerClause inParam = inParams[i];
+				ResultExpression in = ((ResultExpression) main.dispatch(inParam))
+						.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
+				if (in.lrVal.getValue() == null) {
+					String msg = "Incorrect or invalid in-parameter! "
+							+ loc.toString();
 					throw new IncorrectSyntaxException(loc, msg);
 				}
-			}
-			if (checkInParams) {
-				for (int i = 0; i < in.length; i++) {
-					if (!(in[i].getType().toString()
-							.equals(proc.getInParams()[i].getType().toString()))) {
-						String msg = "Implementation does not match declaration!"
-								+ "Type missmatch on in-parameters!";
-						throw new IncorrectSyntaxException(loc,msg);
-					}
-				}
-			}
-			
-			//combine the specification from the definition with the one from the declaration
-			List<Specification> specFromDec = Arrays.asList(proc.getSpecification());
-			ArrayList<Specification> newSpecs = new ArrayList<Specification>(Arrays.asList(spec));
-			newSpecs.addAll(specFromDec);
-			spec = newSpecs.toArray(new Specification[0]);
-			
-			proc = new Procedure(proc.getLocation(), proc.getAttributes(),
-					proc.getIdentifier(), proc.getTypeParams(), declIn,
-					proc.getOutParams(), spec, null);
-			procedures.put(methodName, proc);
-		}
-		Procedure declWithCorrectlyNamedInParams = new Procedure(
-				proc.getLocation(), proc.getAttributes(), proc.getIdentifier(),
-				proc.getTypeParams(), in, proc.getOutParams(),
-				proc.getSpecification(), null);
-		currentProcedure = declWithCorrectlyNamedInParams;
-		currentProcedureIsVoid = returnTypeIsVoid;
-		if (!modifiedGlobals.containsKey(currentProcedure.getIdentifier())) {
-			modifiedGlobals.put(currentProcedure.getIdentifier(),
-					new LinkedHashSet<String>());
-		}
-		if (!callGraph.containsKey(currentProcedure.getIdentifier())) {
-			callGraph.put(currentProcedure.getIdentifier(),
-					new LinkedHashSet<String>());
-		}
-		
-		/*
-		 * The structure is as follows:
-		 * 1) Preprocessing of the method body:
-		 *    - add new variables for parameters
-		 *    - havoc them
-		 *    - etc.
-		 * 2) dispatch body
-		 * 3) handle mallocs
-         * 4) add statements and declarations to new body
-		 */
-		ArrayList<Statement> stmts = new ArrayList<Statement>();
-		ArrayList<Declaration> decls = new ArrayList<Declaration>();
-		// 1)
-		handleFunctionsInParams(main, loc, memoryHandler, decls, stmts, node);
-		// 2)
-		Body body = ((Body) main.dispatch(node.getBody()).node);
-		stmts.addAll(Arrays.asList(body.getBlock()));
-        for (VariableDeclaration declaration : body.getLocalVars()) {
-            decls.add(declaration);
-        }
-		// 3)
-		stmts = memoryHandler.insertMallocs(main, loc, stmts);
-		// 4)
-		for (SymbolTableValue stv : main.cHandler.getSymbolTable().currentScopeValues()) {
-			//there may be a null declaration in case of foo(void)
-			if (!stv.isBoogieGlobalVar() && stv.getBoogieDecl() != null) { 
-				decls.add(stv.getBoogieDecl());
-			}
-		}
-
-        
-		body = new Body(loc, decls.toArray(new VariableDeclaration[decls.size()]),
-		        stmts.toArray(new Statement[stmts.size()]));
-		
-		proc = currentProcedure;
-		// Implementation -> Specification always null!
-		Procedure impl = new Procedure(loc, proc.getAttributes(), methodName,
-				proc.getTypeParams(), in, proc.getOutParams(), null, body);
-		currentProcedure = null;
-		currentProcedureIsVoid = false;
-		main.cHandler.endScope();
-		return new Result(impl);
-	}
-
-	/**
-	 * Take the parameter information from the CDeclaration. Make a Varlist from it.
-	 * Add the parameters to the symboltable. Also update procedureToParamCType member.
-	 * @return
-	 */
-	private VarList[] processInParams(Dispatcher main, ILocation loc,
-			CFunction cFun, String methodName) {
-        CDeclaration[] paramDecs =
-        		cFun.getParameterTypes();
-		VarList[] in  = new VarList[paramDecs.length];
-        for (int i = 0; i < paramDecs.length; ++i) {
-        	CDeclaration paramDec = paramDecs[i];
-        	
-        	ASTType type = null;
-        	if (paramDec.getType() instanceof CArray) {//arrays are passed as pointers in C -- so we pass a Pointer in Boogie
-        		type = MemoryHandler.POINTER_TYPE;
-        	} else {
-        		type = ((TypeHandler) main.typeHandler).ctype2asttype(loc, paramDec.getType());
-        	}
-        	
-        	String paramId = main.nameHandler.getInParamIdentifier(paramDec.getName());
-        	in[i] = new VarList(loc, new String[] { paramId }, type);
-            main.cHandler.getSymbolTable().put(paramDec.getName(), 
-            		new SymbolTableValue(paramId, null, paramDec, false, null));
-        }
-        updateCFunction(methodName, null, paramDecs, null, false);
-		return in;
-	}
-
-	/**
-	 * Update the map procedureToCFunctionType according to the given arguments
-	 * If a parameter is null, the corresponding value will not be changed. (for takesVarArgs, use "false" 
-	 * to change nothing).
-	 */
-	private void updateCFunction(String methodName, CType returnType,
-			CDeclaration[] allParamDecs, CDeclaration oneParamDec, boolean takesVarArgs) {
-		CFunction oldCFunction = procedureToCFunctionType.get(methodName);
-
-		CType oldRetType = oldCFunction == null ? null : oldCFunction.getResultType();
-		CDeclaration[] oldInParams = oldCFunction == null ? new CDeclaration[0] : oldCFunction.getParameterTypes();
-		boolean oldTakesVarArgs = oldCFunction == null ? false : oldCFunction.takesVarArgs();
-
-		CType newRetType = oldRetType;
-		CDeclaration[] newInParams = oldInParams;
-		boolean newTakesVarArgs = oldTakesVarArgs || takesVarArgs;
-
-		
-		if (allParamDecs != null) { //set a new parameter list
-			assert oneParamDec == null;
-			newInParams = allParamDecs;
-		} else if (oneParamDec != null) { //add a parameter to the list
-			assert allParamDecs == null;
-			
-			ArrayList<CDeclaration> ips = new ArrayList<>(Arrays.asList(oldInParams));
-			ips.add(oneParamDec);
-			newInParams = ips.toArray(new CDeclaration[ips.size()]);
-		}
-		if (returnType != null) {
-			newRetType = returnType;
-		}
-
-		procedureToCFunctionType.put(methodName, new CFunction(
-				newRetType,
-				newInParams, 
-				newTakesVarArgs));
-	}
-
-	void beginUltimateInit(Dispatcher main, ILocation loc, String startOrInit) {
-		main.cHandler.beginScope();
-		callGraph.put(startOrInit, new LinkedHashSet<String>());
-		currentProcedure = new Procedure(loc, new Attribute[0], startOrInit, new String[0], new VarList[0], new VarList[0], new Specification[0], null);
-		procedures.put(startOrInit, currentProcedure);
-		modifiedGlobals.put(currentProcedure.getIdentifier(),
-				new LinkedHashSet<String>());
-	}
 	
-	void endUltimateInit(Dispatcher main, Procedure initDecl, String startOrInit) {
-		procedures.put(startOrInit, initDecl);
-		main.cHandler.endScope();
-	}
-
-	/**
-	 * Handles translation of IASTFunctionCallExpression.
-	 * 
-	 * @param main
-	 *            a reference to the main dispatcher.
-	 * @param memoryHandler
-	 *            a reference to the memory Handler.
-	 * @param node
-	 *            the node to translate.
-	 * @return the translation result.
-	 */
-	public Result handleFunctionCallExpression(Dispatcher main,
-			MemoryHandler memoryHandler, StructHandler structHandler, 
-			IASTFunctionCallExpression node) {
-	    Check check = new Check(Check.Spec.PRE_CONDITION);
-		CACSLLocation loc = new CACSLLocation(node, check);
-		IASTExpression functionName = node.getFunctionNameExpression(); 
-		if (!(functionName instanceof IASTIdExpression)) {
-			return handleFunctionPointerCall(loc, main, memoryHandler, structHandler, functionName, node.getArguments());
+				//if the procedure is declared (and not implemented) as having no parameters --> then we may call it with parameters later
+				// --> but from then on we know its parameters
+				if (procedureDeclaredWithOutInparamsButCalledWithInParams) {
+					//add the current parameter to the procedure's signature
+					updateCFunction(methodName, null, null, new CDeclaration(in.lrVal.cType, SFO.IN_PARAM + i), false);
+				} else if (procedureToCFunctionType.containsKey(methodName)) { //we already know the parameters
+					//do implicit casts and bool/int conversion
+					CType expectedParamType = procedureToCFunctionType.get(methodName).getParameterTypes()[i].getType();
+					//bool/int conversion
+					if (expectedParamType instanceof CPrimitive &&
+							((CPrimitive) expectedParamType).getGeneralType() == GENERALPRIMITIVE.INTTYPE) {
+						in = ConvExpr.rexBoolToIntIfNecessary(loc, in);
+					} 
+					//implicit casts
+					if (in.lrVal.cType instanceof CPrimitive) {
+						if (((CPrimitive)in.lrVal.cType).getGeneralType() == GENERALPRIMITIVE.INTTYPE) {
+							if (expectedParamType instanceof	CPointer) {
+								in.lrVal = new RValue (
+										MemoryHandler.constructPointerFromBaseAndOffset(
+												new IntegerLiteral(loc, "0"), in.lrVal.getValue(), loc), in.lrVal.cType);
+							}
+						} 
+					} 
+				}
+				args.add(in.lrVal.getValue());
+				stmt.addAll(in.stmt);
+				decl.addAll(in.decl);
+				auxVars.putAll(in.auxVars);
+				overappr.addAll(in.overappr);
+			}
+			
+			if (procedureDeclaredWithOutInparamsButCalledWithInParams) {
+				VarList[] procParams = new VarList[procedureToCFunctionType.get(methodName).getParameterTypes().length];
+				for (int i = 0; i < procParams.length; i++) {
+					procParams[i] = new VarList(loc, 
+							new String[] { procedureToCFunctionType.get(methodName).getParameterTypes()[i].getName() }, 
+							((TypeHandler) main.typeHandler).ctype2asttype(loc, 
+									procedureToCFunctionType.get(methodName).getParameterTypes()[i].getType()));
+				}
+				Procedure currentProc = procedures.get(methodName);
+				Procedure newProc = new Procedure(currentProc.getLocation(), currentProc.getAttributes(), 
+						currentProc.getIdentifier(), currentProc.getTypeParams(), procParams, currentProc.getOutParams(), 
+						currentProc.getSpecification(), currentProc.getBody());
+				procedures.put(methodName, newProc);
+			}
+	
+			return makeTheFunctionCallItself(main, loc, methodName, stmt, decl,
+					auxVars, overappr, args);
 		}
-		//don't use getRawSignature because it refers to the code before preprocessing 
-		// f.i. we get a wrong methodname here in defineFunction.c, because of a #define in the original code
-		String methodName = ((IASTIdExpression) functionName).getName().toString();
-		
-		if (main.cHandler.getSymbolTable().containsCSymbol(methodName)) {
-			return handleFunctionPointerCall(loc, main, memoryHandler, structHandler, functionName, node.getArguments());
-		}
-		
-		IASTInitializerClause[] arguments = node.getArguments();
-		
-		return handleFunctionCallGivenNameAndArguments(main, memoryHandler,
-				structHandler, loc, methodName, arguments);
-	}
-
 
 	private Result handleFunctionPointerCall(ILocation loc, Dispatcher main,
 			MemoryHandler memoryHandler, StructHandler structHandler,
 			IASTExpression functionName, IASTInitializerClause[] arguments) {
-
+	
 		assert ((MainDispatcher) main).getFunctionToIndex().size() > 0;
 		ResultExpression funcNameRex = (ResultExpression) main.dispatch(functionName);
 		RValue calledFuncRVal = (RValue) funcNameRex.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc).lrVal;
@@ -898,7 +769,7 @@ public class FunctionHandler {
 		}
 		
 		functionSignaturesThatHaveAFunctionPointer.add(calledFuncCFunction);
-
+	
 		String procName = calledFuncCFunction.functionSignatureAsProcedureName();
 		
 		CFunction cFuncWithFP = addFPParamToCFunction(calledFuncCFunction);
@@ -914,6 +785,350 @@ public class FunctionHandler {
 		
 		return handleFunctionCallGivenNameAndArguments(main, memoryHandler, structHandler, loc, 
 				procName, newArgs);
+	}
+
+	/**
+	 * takes the contract (we got from CHandler) and translates it into an array of Boogie
+	 * specifications
+	 * (this needs to be called after the procedure parameters have been added to the symboltable)
+	 * @param main
+	 * @param contract
+	 * @param methodName
+	 * @return
+	 */
+	private Specification[] makeBoogieSpecFromACSLContract(Dispatcher main,
+			List<ACSLNode> contract, String methodName) {
+		Specification[] spec;
+		if (contract == null) {
+			spec = new Specification[0];
+		} else {
+			List<Specification> specList = new ArrayList<Specification>();
+			for (int i = 0; i<contract.size(); i++) {
+					// retranslate ACSL specification needed e.g., in cases
+					// where ids of function parameters differ from is in ACSL
+					// expression
+					Result retranslateRes = main.dispatch(contract.get(i));
+					assert (retranslateRes instanceof ResultContract);
+					ResultContract resContr = (ResultContract) retranslateRes;
+					specList.addAll(Arrays.asList(resContr.specs));
+			}
+			spec = specList.toArray(new Specification[0]);
+			for (int i = 0; i<spec.length; i++) {
+				if (spec[i] instanceof ModifiesSpecification) {
+					modifiedGlobalsIsUserDefined.add(methodName);
+					ModifiesSpecification ms = (ModifiesSpecification) spec[i];
+					LinkedHashSet<String> modifiedSet = new LinkedHashSet<String>();
+					for (VariableLHS var : ms.getIdentifiers()) 
+						modifiedSet.add(var.getIdentifier());
+					modifiedGlobals.put(methodName, modifiedSet);
+				}
+			}
+	
+			main.cHandler.clearContract(); // take care for behavior and
+												// completeness
+		}
+		return spec;
+	}
+
+	/**
+	 * Take the parameter information from the CDeclaration. Make a Varlist from it.
+	 * Add the parameters to the symboltable. Also update procedureToParamCType member.
+	 * @return
+	 */
+	private VarList[] processInParams(Dispatcher main, ILocation loc,
+			CFunction cFun, String methodName) {
+	    CDeclaration[] paramDecs =
+	    		cFun.getParameterTypes();
+		VarList[] in  = new VarList[paramDecs.length];
+	    for (int i = 0; i < paramDecs.length; ++i) {
+	    	CDeclaration paramDec = paramDecs[i];
+	    	
+	    	ASTType type = null;
+	    	if (paramDec.getType() instanceof CArray) {//arrays are passed as pointers in C -- so we pass a Pointer in Boogie
+	    		type = MemoryHandler.POINTER_TYPE;
+	    	} else {
+	    		type = ((TypeHandler) main.typeHandler).ctype2asttype(loc, paramDec.getType());
+	    	}
+	    	
+	    	String paramId = main.nameHandler.getInParamIdentifier(paramDec.getName());
+	    	in[i] = new VarList(loc, new String[] { paramId }, type);
+	        main.cHandler.getSymbolTable().put(paramDec.getName(), 
+	        		new SymbolTableValue(paramId, null, paramDec, false, null));
+	    }
+	    updateCFunction(methodName, null, paramDecs, null, false);
+		return in;
+	}
+
+	/**
+	 * Creates local variables for in parameters.
+	 * 
+	 * @param main a reference to the main dispatcher.
+	 * @param loc the location
+	 * @param decl the declaration list to append to.
+	 * @param stmt the statement list to append to.
+	 * @param parent
+	 */
+	private void handleFunctionsInParams(Dispatcher main, ILocation loc, MemoryHandler memoryHandler,
+			ArrayList<Declaration> decl, ArrayList<Statement> stmt,
+			IASTFunctionDefinition parent) {
+	    VarList[] varListArray = currentProcedure.getInParams();
+	    IASTParameterDeclaration[] paramDecs;
+	    if (varListArray.length == 0) {
+	        /*
+	         * In C it is possible to write
+	         *    func(void) {
+	         *       ...
+	         *    }
+	         * This results in the empty name. (alex: what is an empty name??)
+	         */
+	        assert ((CASTFunctionDeclarator)parent.getDeclarator()).getParameters().length == 0 ||
+	                (((CASTFunctionDeclarator)parent.getDeclarator()).getParameters().length == 1 &&
+	                ((CASTFunctionDeclarator)parent.getDeclarator()).getParameters()[0].getDeclarator().getName().toString().equals(""));
+	        paramDecs = new IASTParameterDeclaration[0];
+	    }
+	    else {
+	        paramDecs = ((CASTFunctionDeclarator)parent.getDeclarator()).
+	                getParameters();
+	    }
+	    assert varListArray.length == paramDecs.length;
+		for (int i = 0; i < paramDecs.length; ++i) {
+		    VarList varList  = varListArray[i];
+		    IASTParameterDeclaration paramDec  = paramDecs[i];
+			for (final String bId : varList.getIdentifiers()) {
+				final String cId = main.cHandler.getSymbolTable()
+						.getCID4BoogieID(bId, loc);
+				
+				ASTType type = varList.getType();
+				CType cvar = main.cHandler.getSymbolTable().get(cId, loc)
+	                    .getCVariable();
+				
+				//onHeap case for a function parameter means the parameter is addressoffed in the function body
+				final boolean isOnHeap = ((MainDispatcher) main).
+				        getVariablesForHeap().contains(paramDec);
+	
+				// Copy of inparam that is writeable
+				String auxInvar = main.nameHandler.getUniqueIdentifier(parent,
+						cId, 0, isOnHeap);
+			
+				if (isOnHeap || cvar instanceof CArray) {
+				    type = MemoryHandler.POINTER_TYPE;
+	                ((CHandler)main.cHandler).addBoogieIdsOfHeapVars(
+	                        auxInvar);
+				}
+				VarList var = new VarList(loc, new String[] { auxInvar }, type);
+				VariableDeclaration inVarDecl = new VariableDeclaration(loc,
+						new Attribute[0], new VarList[] { var });
+				
+				VariableLHS tempLHS = new VariableLHS(loc, auxInvar);
+				IdentifierExpression rhsId = new IdentifierExpression(loc, bId);
+				if (isOnHeap) {
+				    LocalLValue llv = new LocalLValue(tempLHS, cvar);
+				    // malloc
+				    memoryHandler.addVariableToBeMallocedAndFreed(main, llv);
+				    // dereference
+	                HeapLValue hlv = new HeapLValue(llv.getValue(), cvar);
+	                ArrayList<Declaration> decls = new ArrayList<Declaration>();
+	                ResultExpression assign = ((CHandler) main.cHandler).
+	                    makeAssignment(main, loc, stmt, hlv,
+	                    //convention: if a variable is put on heap or not, its ctype stays the same
+	                        new RValue(rhsId, cvar),
+	                        decls,
+	                        new LinkedHashMap<VariableDeclaration, ILocation>(),
+	                        new ArrayList<Overapprox>());
+	                stmt = assign.stmt;
+	            } else {
+	    			stmt.add(new AssignmentStatement(loc,
+	    					new LeftHandSide[] { tempLHS },
+	    					new Expression[] { rhsId }));
+	            }
+				assert main.cHandler.getSymbolTable().containsCSymbol(cId);
+				// Overwrite the information in the symbolTable for cId, s.t. it
+				// points to the locally declared variable.
+				main.cHandler.getSymbolTable().put(cId,
+						new SymbolTableValue(auxInvar, inVarDecl, 
+								new CDeclaration(cvar, cId), false, 
+								StorageClass.UNSPECIFIED));
+			}
+		}
+	}
+
+	/**
+	 * Update the map procedureToCFunctionType according to the given arguments
+	 * If a parameter is null, the corresponding value will not be changed. (for takesVarArgs, use "false" 
+	 * to change nothing).
+	 */
+	private void updateCFunction(String methodName, CType returnType,
+			CDeclaration[] allParamDecs, CDeclaration oneParamDec, boolean takesVarArgs) {
+		CFunction oldCFunction = procedureToCFunctionType.get(methodName);
+	
+		CType oldRetType = oldCFunction == null ? null : oldCFunction.getResultType();
+		CDeclaration[] oldInParams = oldCFunction == null ? new CDeclaration[0] : oldCFunction.getParameterTypes();
+		boolean oldTakesVarArgs = oldCFunction == null ? false : oldCFunction.takesVarArgs();
+	
+		CType newRetType = oldRetType;
+		CDeclaration[] newInParams = oldInParams;
+		boolean newTakesVarArgs = oldTakesVarArgs || takesVarArgs;
+	
+		
+		if (allParamDecs != null) { //set a new parameter list
+			assert oneParamDec == null;
+			newInParams = allParamDecs;
+		} else if (oneParamDec != null) { //add a parameter to the list
+			assert allParamDecs == null;
+			
+			ArrayList<CDeclaration> ips = new ArrayList<>(Arrays.asList(oldInParams));
+			ips.add(oneParamDec);
+			newInParams = ips.toArray(new CDeclaration[ips.size()]);
+		}
+		if (returnType != null) {
+			newRetType = returnType;
+		}
+	
+		procedureToCFunctionType.put(methodName, new CFunction(
+				newRetType,
+				newInParams, 
+				newTakesVarArgs));
+	}
+
+	/**
+	 * Add a procedure to procedures according to a given CFunction. 
+	 * I.e. do a procedure declaration.
+	 */
+	private void addAProcedure(Dispatcher main, ILocation loc,
+			List<ACSLNode> contract, String methodName,
+			CFunction funcType) {
+		// begin new scope for retranslation of ACSL specification
+		main.cHandler.beginScope();
+	
+		VarList[] in = processInParams(main, loc, funcType, methodName);
+		
+		// OUT VARLIST : only one out param in C
+		VarList[] out = new VarList[1];
+		
+		Attribute[] attr = new Attribute[0];
+		String[] typeParams = new String[0];
+		Specification[] spec = makeBoogieSpecFromACSLContract(main, contract,
+				methodName);
+	
+	    if (funcType.getResultType() instanceof CPrimitive && 
+	    		((CPrimitive) funcType.getResultType()).getType() == PRIMITIVE.VOID &&
+	            !(funcType.getResultType() instanceof CPointer)) {
+			if (methodsCalledBeforeDeclared.contains(methodName)) {
+				// this method was assumed to return int -> return int
+				out[0] = new VarList(loc, new String[] { SFO.RES },
+						new PrimitiveType(loc, /*new InferredType(Type.Integer),*/
+								SFO.INT));
+			} else {
+				// void, so there are no out vars
+				out = new VarList[0];
+			}
+		} else {
+			// we found a type, so node is type ASTType
+			ASTType type = main.typeHandler.ctype2asttype(loc, funcType.getResultType());
+			out[0] = new VarList(loc, new String[] { SFO.RES }, type);
+		}
+		if (!modifiedGlobals.containsKey(methodName)) {
+			modifiedGlobals.put(methodName, new LinkedHashSet<String>());
+		}
+		if (!callGraph.containsKey(methodName)) {
+			callGraph.put(methodName, new LinkedHashSet<String>());
+		}
+		
+	
+		Procedure proc = procedures.get(methodName);
+		if (proc != null) {
+			//combine the specification from the definition with the one from the declaration
+			List<Specification> specFromDef = Arrays.asList(proc.getSpecification());
+			ArrayList<Specification> newSpecs = new ArrayList<Specification>(Arrays.asList(spec));
+			newSpecs.addAll(specFromDef);
+			spec = newSpecs.toArray(new Specification[0]);
+			//TODO something else to take over for a declaration after the definition?
+		}
+		proc = new Procedure(loc, attr, methodName, typeParams, in,
+				out, spec, null);
+					
+		procedures.put(methodName, proc);
+		updateCFunction(methodName, funcType.getResultType(), null, null, funcType.takesVarArgs());
+		// end scope for retranslation of ACSL specification
+		main.cHandler.endScope();
+	}
+
+	/**
+	 * Adds searchString to modifiedGlobals iff searchString is a global
+	 * variable and the user has not defined a modifies clause.
+	 * 
+	 * @param main
+	 *            a reference to the main dispatcher.
+	 * 
+	 * @param searchString
+	 *            = boogieVarName!
+	 * @param errLoc
+	 *            the location for possible errors!
+	 */
+	public void checkIfModifiedGlobal(Dispatcher main, String searchString,
+			ILocation errLoc) {
+		String cName;
+		if (!main.cHandler.getSymbolTable().containsBoogieSymbol(searchString)) {
+			return; // temp variable!
+		}
+		cName = main.cHandler.getSymbolTable().getCID4BoogieID(searchString,
+				errLoc);
+		String cId = currentProcedure.getIdentifier();
+		SymbolTableValue stValue = main.cHandler.getSymbolTable().get(cName, errLoc);
+		CType cvar = stValue.getCVariable();
+		if (cvar != null && stValue.isStatic()) {
+			modifiedGlobals.get(cId).add(searchString);
+			return;
+		}
+		if (modifiedGlobalsIsUserDefined.contains(cId))
+			return;
+		boolean isLocal = false;
+		if (searchString.equals(SFO.RES)) {
+			// this variable is reserved for the return variable and
+			// therefore local!
+			isLocal = true;
+		} else {
+			isLocal = !main.cHandler.getSymbolTable().get(cName, errLoc)
+					.isBoogieGlobalVar();
+		}
+		if (!isLocal) {
+			// the variable is not local but could be a formal parameter
+			if (!searchString.startsWith(SFO.IN_PARAM)) { // variable is global!
+				modifiedGlobals.get(cId).add(searchString);
+			} else {
+				assert false;
+			}
+		}
+	}
+
+	/**
+	 * Checks, whether all procedures that are being called in C, were
+	 * eventually declared within the C program.
+	 * 
+	 * @return null if all called procedures were declared, otherwise the 
+	 * identifier of one procedure that was called but not declared.
+	 */
+	public String isEveryCalledProcedureDeclared() {
+		for (String s : methodsCalledBeforeDeclared) {
+			if (!procedures.containsKey(s)) {
+				return s;
+			}
+		}
+		return null;
+	}
+
+	void beginUltimateInit(Dispatcher main, ILocation loc, String startOrInit) {
+		main.cHandler.beginScope();
+		callGraph.put(startOrInit, new LinkedHashSet<String>());
+		currentProcedure = new Procedure(loc, new Attribute[0], startOrInit, new String[0], new VarList[0], new VarList[0], new Specification[0], null);
+		procedures.put(startOrInit, currentProcedure);
+		modifiedGlobals.put(currentProcedure.getIdentifier(),
+				new LinkedHashSet<String>());
+	}
+	
+	void endUltimateInit(Dispatcher main, Procedure initDecl, String startOrInit) {
+		procedures.put(startOrInit, initDecl);
+		main.cHandler.endScope();
 	}
 
 	public CFunction addFPParamToCFunction(CFunction calledFuncCFunction) {
@@ -1068,155 +1283,6 @@ public class FunctionHandler {
 		}
 	}
 
-	private Result handleFunctionCallGivenNameAndArguments(Dispatcher main,
-			MemoryHandler memoryHandler, StructHandler structHandler,
-			ILocation loc, String methodName,
-			IASTInitializerClause[] arguments) {
-		if (methodName.equals("malloc") || methodName.equals("alloca")) {
-			assert arguments.length == 1;
-			Result sizeRes = main.dispatch(arguments[0]);
-			assert sizeRes instanceof ResultExpression;
-			ResultExpression rex = ((ResultExpression) sizeRes)
-					.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
-
-			ResultExpression mallocRex = memoryHandler.getMallocCall(main, this, rex.lrVal.getValue(), loc);		
-			
-			rex.addAll(mallocRex);
-			rex.lrVal = mallocRex.lrVal;
-
-			// for alloc a we have to free the variable ourselves when the stackframe is closed, i.e. at a return
-			if (methodName.equals("alloca")) {
-				memoryHandler.addVariableToBeFreed(main, (LocalLValue) mallocRex.lrVal);
-			}
-			return rex;
-		} 
-	
-		if (methodName.equals("free")) {
-			assert arguments.length == 1;
-			Result pRes = main.dispatch(arguments[0]);
-			assert pRes instanceof ResultExpression;
-			ResultExpression pRex = ((ResultExpression) pRes)
-					.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
-			pRex.stmt.add(memoryHandler.getFreeCall(main, this, pRex.lrVal, loc));
-			return pRex;
-		}
-		
-		ArrayList<Statement> stmt = new ArrayList<Statement>();
-		ArrayList<Declaration> decl = new ArrayList<Declaration>();
-		Map<VariableDeclaration, ILocation> auxVars = 
-				new LinkedHashMap<VariableDeclaration, ILocation>();
-		ArrayList<Overapprox> overappr = new ArrayList<Overapprox>();
-
-		callGraph.get(currentProcedure.getIdentifier()).add(methodName);
-
-		boolean procedureDeclaredWithOutInparamsButCalledWithInParams = 
-				procedures.get(methodName) != null 
-				&& (procedures.get(methodName).getBody() == null) 
-				&& procedures.get(methodName).getInParams().length == 0;
-		
-		//if the function has varArgs, we throw away all parameters that belong to the varArgs part and only keep the normal ones
-		IASTInitializerClause[] inParams = arguments;
-		if (procedureToCFunctionType.containsKey(methodName) 
-				&& procedureToCFunctionType.get(methodName).takesVarArgs()) {
-			int noParameterWOVarArgs = procedureToCFunctionType.get(methodName).getParameterTypes().length;
-			inParams = new IASTInitializerClause[noParameterWOVarArgs];
-			for (int i = 0; i < noParameterWOVarArgs; i++) {
-				inParams[i] = arguments[i];
-			}
-//			CACSLPreferenceInitializer.T
-//		TranslationMode mode = TranslationMode.BASE;
-//		try {
-//			mode = prefs.getEnum(CACSLPreferenceInitializer.LABEL_MODE, TranslationMode.class);
-//		} catch (Exception e) {
-//			throw new IllegalArgumentException("Unable to determine preferred mode.");
-//		}
-
-			// .. and if it is really called with more that its normal parameter number, we throw an exception, because we may be unsound
-			// (the code before this does not make so much sense, but maybe some day we want that solution again..
-			if (//main.cHandler.getPreferences().getEnum(CACSLPreferenceInitializer.LABEL_MODE, TranslationMode.class) != TranslationMode
-					!(main instanceof SvComp14MainDispatcher)
-					&& inParams.length < arguments.length)
-				throw new UnsupportedSyntaxException(loc, "we cannot deal with varargs right now");
-		}
-	
-		
-
-		if (procedures.containsKey(methodName)
-				&& inParams.length != procedures.get(methodName)
-						.getInParams().length) {
-			if (!(procedures.get(methodName).getInParams().length == 1
-					&& procedures.get(methodName).getInParams()[0].getType() == null && inParams.length == 0)
-					//ok, if the procedure is declared (and not implemented) as having no parameters --> then we may call it with parameters later
-						&& !procedureDeclaredWithOutInparamsButCalledWithInParams
-						) {
-				String msg = "Function call has incorrect number of in-params!";
-				throw new IncorrectSyntaxException(loc, msg);
-			} // else: this means param of declaration is void and parameter
-				// list of call is empty! --> OK
-		}
-
-		//dispatch the inparams
-		ArrayList<Expression> args = new ArrayList<Expression>();
-		for (int i = 0; i < inParams.length; i++) {
-			IASTInitializerClause inParam = inParams[i];
-			ResultExpression in = ((ResultExpression) main.dispatch(inParam))
-					.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
-			if (in.lrVal.getValue() == null) {
-				String msg = "Incorrect or invalid in-parameter! "
-						+ loc.toString();
-				throw new IncorrectSyntaxException(loc, msg);
-			}
-
-			//if the procedure is declared (and not implemented) as having no parameters --> then we may call it with parameters later
-			// --> but from then on we know its parameters
-			if (procedureDeclaredWithOutInparamsButCalledWithInParams) {
-				//add the current parameter to the procedure's signature
-				updateCFunction(methodName, null, null, new CDeclaration(in.lrVal.cType, SFO.IN_PARAM + i), false);
-			} else if (procedureToCFunctionType.containsKey(methodName)) { //we already know the parameters
-				//do implicit casts and bool/int conversion
-				CType expectedParamType = procedureToCFunctionType.get(methodName).getParameterTypes()[i].getType();
-				//bool/int conversion
-				if (expectedParamType instanceof CPrimitive &&
-						((CPrimitive) expectedParamType).getGeneralType() == GENERALPRIMITIVE.INTTYPE) {
-					in = ConvExpr.rexBoolToIntIfNecessary(loc, in);
-				} 
-				//implicit casts
-				if (in.lrVal.cType instanceof CPrimitive) {
-					if (((CPrimitive)in.lrVal.cType).getGeneralType() == GENERALPRIMITIVE.INTTYPE) {
-						if (expectedParamType instanceof	CPointer) {
-							in.lrVal = new RValue (
-									MemoryHandler.constructPointerFromBaseAndOffset(
-											new IntegerLiteral(loc, "0"), in.lrVal.getValue(), loc), in.lrVal.cType);
-						}
-					} 
-				} 
-			}
-			args.add(in.lrVal.getValue());
-			stmt.addAll(in.stmt);
-			decl.addAll(in.decl);
-			auxVars.putAll(in.auxVars);
-			overappr.addAll(in.overappr);
-		}
-		
-		if (procedureDeclaredWithOutInparamsButCalledWithInParams) {
-			VarList[] procParams = new VarList[procedureToCFunctionType.get(methodName).getParameterTypes().length];
-			for (int i = 0; i < procParams.length; i++) {
-				procParams[i] = new VarList(loc, 
-						new String[] { procedureToCFunctionType.get(methodName).getParameterTypes()[i].getName() }, 
-						((TypeHandler) main.typeHandler).ctype2asttype(loc, 
-								procedureToCFunctionType.get(methodName).getParameterTypes()[i].getType()));
-			}
-			Procedure currentProc = procedures.get(methodName);
-			Procedure newProc = new Procedure(currentProc.getLocation(), currentProc.getAttributes(), 
-					currentProc.getIdentifier(), currentProc.getTypeParams(), procParams, currentProc.getOutParams(), 
-					currentProc.getSpecification(), currentProc.getBody());
-			procedures.put(methodName, newProc);
-		}
-
-		return makeTheFunctionCallItself(main, loc, methodName, stmt, decl,
-				auxVars, overappr, args);
-	}
-
 	public Result makeTheFunctionCallItself(Dispatcher main, ILocation loc,
 			String methodName, ArrayList<Statement> stmt,
 			ArrayList<Declaration> decl,
@@ -1271,82 +1337,6 @@ public class FunctionHandler {
 		assert (main.isAuxVarMapcomplete(decl, auxVars));
 		return new ResultExpression(stmt, new RValue(expr, returnCType), decl,
 		        auxVars, overappr);
-	}
-
-	/**
-	 * Handles translation of return statements.
-	 * 
-	 * @param main
-	 *            a reference to the main dispatcher.
-	 * @param node
-	 *            the node to translate.
-	 * @return the translation result.
-	 */
-	public Result handleReturnStatement(Dispatcher main, MemoryHandler memoryHandler,
-			StructHandler structHandler, IASTReturnStatement node) {
-		ArrayList<Statement> stmt = new ArrayList<Statement>();
-		ArrayList<Declaration> decl = new ArrayList<Declaration>();
-		Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<VariableDeclaration, ILocation>();
-		// The ReturnValue could be empty!
-		CACSLLocation loc = new CACSLLocation(node);
-		VarList[] outParams = this.currentProcedure.getOutParams();
-		if (methodsCalledBeforeDeclared.contains(currentProcedure
-				.getIdentifier()) && currentProcedureIsVoid) {
-			// void method that was assumed to be returning int! -> return int
-			String id = outParams[0].getIdentifiers()[0];
-			VariableLHS lhs = new VariableLHS(loc, id);
-			Statement havoc = new HavocStatement(loc, new VariableLHS[] { lhs });
-			stmt.add(havoc);
-		} else if (node.getReturnValue() != null) {
-			ResultExpression exprResult = ((ResultExpression) main.dispatch(node
-					.getReturnValue())).switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
-			exprResult = ConvExpr.rexBoolToIntIfNecessary(loc, exprResult);
-			
-			//do some implicit casts
-			CType functionResultType = this.procedureToCFunctionType.get(currentProcedure.getIdentifier()).getResultType();
-			if (!exprResult.lrVal.cType.equals(functionResultType)) {
-				if (functionResultType instanceof CPointer 
-						&& exprResult.lrVal.cType instanceof CPrimitive
-						&& exprResult.lrVal.getValue() instanceof IntegerLiteral
-						&& ((IntegerLiteral) exprResult.lrVal.getValue()).getValue().equals("0")) {
-					exprResult.lrVal = new RValue(new IdentifierExpression(loc, SFO.NULL), functionResultType);
-				}
-			}
-			
-			stmt.addAll(exprResult.stmt);
-			decl.addAll(exprResult.decl);
-			auxVars.putAll(exprResult.auxVars);
-			if (outParams.length == 0) {
-				// void method which is returning something! We remove the
-				// return value!
-				String msg = "This method is declared to be void, but returning a value!";
-				main.syntaxError(loc, msg);
-			} else if (outParams.length != 1) {
-				String msg = "We do not support several output parameters for functions";
-				throw new UnsupportedSyntaxException(loc, msg);
-			} else {
-				String id = outParams[0].getIdentifiers()[0];
-				VariableLHS[] lhs = new VariableLHS[] { new VariableLHS(loc, id) };
-				RValue castExprResultRVal = main.cHandler.castToType(loc, (RValue) exprResult.lrVal, functionResultType);
-				stmt.add(new AssignmentStatement(loc, lhs,
-						new Expression[] { castExprResultRVal.getValue() }));
-//				//assuming that we need no auxvars or overappr, here
-			}
-		}
-		stmt.addAll(CHandler.createHavocsForNonMallocAuxVars(auxVars));
-	
-		// we need to insert a free for each malloc of an auxvar before each return
-		for (Entry<LocalLValue, Integer> entry : memoryHandler.getVariablesToBeFreed().entrySet()) {  //frees are inserted in handleReturnStm
-			if (entry.getValue() >= 1) {
-				stmt.add(memoryHandler.getFreeCall(main, this, entry.getKey(), loc));
-				stmt.add(new HavocStatement(loc, new VariableLHS[] { (VariableLHS) entry.getKey().getLHS() }));
-			}
-		}
-		
-		stmt.add(new ReturnStatement(loc));
-		Map<VariableDeclaration, ILocation> emptyAuxVars =
-		        new LinkedHashMap<VariableDeclaration, ILocation>(0);
-		return new ResultExpression(stmt, null, decl, emptyAuxVars);
 	}
 
 	/**

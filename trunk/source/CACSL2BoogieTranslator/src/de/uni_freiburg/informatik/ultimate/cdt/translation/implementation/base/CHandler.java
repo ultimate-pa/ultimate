@@ -1230,8 +1230,6 @@ public class CHandler implements ICHandler {
 			ResultExpression rlToInt = ConvExpr.rexBoolToIntIfNecessary(loc, rl);
 			
 			doIntOverflowTreatmentInComparison(main, loc, rlToInt, rrToInt);
-//			doIntOverflowTreatment(main, loc, rrToInt);
-//			doIntOverflowTreatment(main, loc, rlToInt);
 			
 			stmt.addAll(rlToInt.stmt);
 			stmt.addAll(rrToInt.stmt);
@@ -1452,6 +1450,9 @@ public class CHandler implements ICHandler {
 				stmt.add(assertStmt);
 				check.addToNodeAnnot(assertStmt);
 				stmt.add(assertStmt);
+				
+				//modulo is not compatible with division..
+				this.doIntOverflowTreatment(main, loc, rlToInt);
 			}
 
 			RValue rval = null;
