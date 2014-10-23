@@ -20,6 +20,10 @@ public class LocationFactory {
 		return new CLocation(cNode, new Check(Check.Spec.UNKNOWN), true);
 	}
 
+	public static CACSLLocation createIgnoreCLocation() {
+		return new CLocation(null, new Check(Check.Spec.UNKNOWN), true);
+	}
+
 	public static CACSLLocation createACSLLocation(ACSLNode acslNode) {
 		return new ACSLLocation(acslNode, new Check(Check.Spec.UNKNOWN), false);
 	}

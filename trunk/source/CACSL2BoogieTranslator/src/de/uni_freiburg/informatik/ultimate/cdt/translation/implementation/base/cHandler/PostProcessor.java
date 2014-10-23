@@ -105,16 +105,14 @@ public class PostProcessor {
 				mDeclarationsGlobalInBoogie));
 		decl.addAll(createUltimateStartProcedure(main, loc, functionHandler));
 		decl.addAll(functions);
-//		decl.addAll(declareFunctionPointerProcedures(main, loc, functionHandler, memoryHandler, structHandler));
 		decl.addAll(declareFunctionPointerProcedures(main, functionHandler, memoryHandler, structHandler));
 		return decl;
 	}
 
 	private ArrayList<Declaration> declareFunctionPointerProcedures(
-			Dispatcher main, //ILocation loc, 
-			FunctionHandler functionHandler, 
+			Dispatcher main, FunctionHandler functionHandler, 
 			MemoryHandler memoryHandler, StructHandler structHandler) {
-		ILocation loc = LocationFactory.createIgnoreCLocation(null);
+		ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
 		ArrayList<Declaration> result = new ArrayList<>();
 		for (CFunction cFunc : functionHandler.functionSignaturesThatHaveAFunctionPointer) {
 			String procName = cFunc.functionSignatureAsProcedureName();
@@ -123,7 +121,7 @@ public class PostProcessor {
 			VarList[] inParams = functionHandler.getProcedures().get(procName).getInParams();
 			VarList[] outParams = functionHandler.getProcedures().get(procName).getOutParams();
 			assert outParams.length <= 1;
-			Procedure functionPointerMuxProc = new Procedure(loc, new Attribute[0], 
+			Procedure functionPointerMuxProc = new Procedure(ignoreLoc, new Attribute[0], 
 					procName, 
 					new String[0], 
 					inParams, 
@@ -132,7 +130,7 @@ public class PostProcessor {
 					//(instead of a procedure) in Boogie
 //					new Specification[0], 
 					null, 
-					functionHandler.getFunctionPointerFunctionBody(loc, main, memoryHandler, structHandler, procName, cFunc, inParams, outParams));
+					functionHandler.getFunctionPointerFunctionBody(ignoreLoc, main, memoryHandler, structHandler, procName, cFunc, inParams, outParams));
 			result.add(functionPointerMuxProc);
 		}
 		return result;
