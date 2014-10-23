@@ -6,6 +6,7 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.services.IResultService;
 import de.uni_freiburg.informatik.ultimate.result.AllSpecificationsHoldResult;
+import de.uni_freiburg.informatik.ultimate.result.Check.Spec;
 import de.uni_freiburg.informatik.ultimate.result.CounterExampleResult;
 import de.uni_freiburg.informatik.ultimate.result.ExceptionOrErrorResult;
 import de.uni_freiburg.informatik.ultimate.result.IResult;
@@ -47,6 +48,9 @@ public class SafetyCheckerOverallResultEvaluator implements IOverallResultEvalua
 				SafetyCheckerOverallResult.EXCEPTION_OR_ERROR,
 				SafetyCheckerOverallResult.SYNTAX_ERROR,
 				SafetyCheckerOverallResult.UNSUPPORTED_SYNTAX,
+				SafetyCheckerOverallResult.UNSAFE_DEREF,
+				SafetyCheckerOverallResult.UNSAFE_FREE,
+				SafetyCheckerOverallResult.UNSAFE_MEMTRACK,
 				SafetyCheckerOverallResult.UNSAFE,
 				SafetyCheckerOverallResult.UNKNOWN,
 				SafetyCheckerOverallResult.TIMEOUT,
@@ -71,7 +75,19 @@ public class SafetyCheckerOverallResultEvaluator implements IOverallResultEvalua
 		if (result instanceof AllSpecificationsHoldResult) {
 			return SafetyCheckerOverallResult.SAFE;
 		} else if (result instanceof CounterExampleResult) {
-			return SafetyCheckerOverallResult.UNSAFE;
+			CounterExampleResult<?,?,?> cer = (CounterExampleResult<?,?,?>) result;
+			Spec spec = cer.getCheckedSpecification().getSpec();
+			switch (spec) {
+			case ARRAY_INDEX:
+			case MEMORY_DEREFERENCE:
+				return SafetyCheckerOverallResult.UNSAFE_DEREF;
+			case MEMORY_FREE:
+				return SafetyCheckerOverallResult.UNSAFE_FREE;
+			case MEMORY_LEAK:
+				return SafetyCheckerOverallResult.UNSAFE_MEMTRACK;
+			default:
+				return SafetyCheckerOverallResult.UNSAFE;
+			}
 		} else if (result instanceof UnprovableResult) {
 			return SafetyCheckerOverallResult.UNKNOWN;
 		} else if (result instanceof TypeErrorResult) {
@@ -111,6 +127,9 @@ public class SafetyCheckerOverallResultEvaluator implements IOverallResultEvalua
 		case UNKNOWN:
 			return concatenateShortDescriptions(getMostSignificantResults());
 		case UNSAFE:
+		case UNSAFE_DEREF:
+		case UNSAFE_FREE:
+		case UNSAFE_MEMTRACK:
 			return concatenateShortDescriptions(getMostSignificantResults());
 		case UNSUPPORTED_SYNTAX:
 			return getMostSignificantResults().toString();

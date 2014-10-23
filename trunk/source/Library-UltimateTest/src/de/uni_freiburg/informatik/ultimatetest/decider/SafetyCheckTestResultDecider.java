@@ -111,7 +111,12 @@ public class SafetyCheckTestResultDecider extends
 					}
 					break;
 				case UNSAFE:
-					if (expectedResult == SafetyCheckerOverallResult.UNSAFE) {
+				case UNSAFE_DEREF:
+				case UNSAFE_FREE:
+				case UNSAFE_MEMTRACK:
+					if (expectedResult == overallResultDeterminer.getOverallResult()) {
+						m_TestResult = TestResult.SUCCESS;
+					} else if (expectedResult == SafetyCheckerOverallResult.UNSAFE) {
 						m_TestResult = TestResult.SUCCESS;
 					} else {
 						m_TestResult = TestResult.FAIL;

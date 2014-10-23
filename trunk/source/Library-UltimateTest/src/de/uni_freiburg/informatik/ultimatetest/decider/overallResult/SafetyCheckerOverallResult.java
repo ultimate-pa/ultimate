@@ -11,7 +11,10 @@ package de.uni_freiburg.informatik.ultimatetest.decider.overallResult;
  */
 public enum SafetyCheckerOverallResult {
 	SAFE, 
-	UNSAFE, 
+	UNSAFE,
+	UNSAFE_MEMTRACK,
+	UNSAFE_DEREF,
+	UNSAFE_FREE,
 	UNKNOWN, 
 	SYNTAX_ERROR, 
 	TIMEOUT, 
