@@ -19,6 +19,7 @@ import de.uni_freiburg.informatik.ultimate.model.IType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieProgramExecution;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieTransformer;
 import de.uni_freiburg.informatik.ultimate.model.boogie.DeclarationInformation.StorageClass;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BoogieASTNode;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.CallStatement;
@@ -30,6 +31,8 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IfStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.LoopInvariantSpecification;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Procedure;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.WhileStatement;
@@ -180,42 +183,16 @@ public class BoogiePreprocessorBacktranslator extends
 			}
 
 			if (elem instanceof WhileStatement) {
-				// check if the next statement in the error trace is part of the
-				// body of the WhileStatement. If so, the condition evaluated to
-				// true; if not or if the trace ends, the condition evaluated to
-				// false
+				AssumeStatement assumeStmt = (AssumeStatement) programExecution.getTraceElement(i).getTraceElement();
 				WhileStatement stmt = (WhileStatement) elem;
-				boolean condEval = false;
-				int nxt = i + 1;
-				if (nxt < translatedTrace.size()) {
-					BoogieASTNode nextStmt = translatedTrace.get(nxt);
-					for (Statement bodyStmt : stmt.getBody()) {
-						if (nextStmt == bodyStmt) {
-							condEval = true;
-						}
-					}
-				}
-				atomicTrace.add(new AtomicTraceElement<BoogieASTNode>(stmt, stmt.getCondition(),
-						condEval ? StepInfo.CONDITION_EVAL_TRUE : StepInfo.CONDITION_EVAL_FALSE));
+				StepInfo info = getStepInfoFromCondition(assumeStmt.getFormula(), stmt.getCondition());
+				atomicTrace.add(new AtomicTraceElement<BoogieASTNode>(stmt, stmt.getCondition(), info));
 
 			} else if (elem instanceof IfStatement) {
-				// check if the next statement in the error trace is part of the
-				// then-part of the IfStatement. If so, the condition evaluated
-				// to true; if not or if the trace ends, the condition evaluated
-				// to false
+				AssumeStatement assumeStmt = (AssumeStatement) programExecution.getTraceElement(i).getTraceElement();
 				IfStatement stmt = (IfStatement) elem;
-				boolean condEval = false;
-				int nxt = i + 1;
-				if (nxt < translatedTrace.size()) {
-					BoogieASTNode nextStmt = translatedTrace.get(nxt);
-					for (Statement bodyStmt : stmt.getThenPart()) {
-						if (nextStmt == bodyStmt) {
-							condEval = true;
-						}
-					}
-				}
-				atomicTrace.add(new AtomicTraceElement<BoogieASTNode>(stmt, stmt.getCondition(),
-						condEval ? StepInfo.CONDITION_EVAL_TRUE : StepInfo.CONDITION_EVAL_FALSE));
+				StepInfo info = getStepInfoFromCondition(assumeStmt.getFormula(), stmt.getCondition());
+				atomicTrace.add(new AtomicTraceElement<BoogieASTNode>(stmt, stmt.getCondition(), info));
 
 			} else if (elem instanceof CallStatement) {
 				// for call statements, we simply rely on the stepinfo of our
@@ -252,6 +229,42 @@ public class BoogiePreprocessorBacktranslator extends
 			i++;
 		}
 		return new BoogieProgramExecution(partialProgramStateMapping, actualAtomicTrace);
+	}
+
+	private StepInfo getStepInfoFromCondition(Expression input, Expression output) {
+		// compare the depth of UnaryExpression in the condition of the assume
+		// and the condition of the mapped conditional to determine if the
+		// condition
+		// evaluated to true or to false
+		if (!(input instanceof UnaryExpression)) {
+			// it is not even an unary expression, it surely evaluates to true
+			return StepInfo.CONDITION_EVAL_TRUE;
+		} else {
+			UnaryExpression inputCond = (UnaryExpression) input;
+			if (inputCond.getOperator() != Operator.LOGICNEG) {
+				// it is an unaryCond, but its no negation, so it must be true
+				return StepInfo.CONDITION_EVAL_TRUE;
+			}
+			// now it gets interesting: it is a negation, but is the real
+			// condition also a negation?
+
+			if (!(output instanceof UnaryExpression)) {
+				// nope, so that means it is false
+				return StepInfo.CONDITION_EVAL_FALSE;
+			} else {
+				UnaryExpression outputCond = (UnaryExpression) output;
+				if (inputCond.getOperator() != Operator.LOGICNEG) {
+					// it is an unaryCond, but its no negation, so it must be
+					// false
+					return StepInfo.CONDITION_EVAL_FALSE;
+				} else {
+					// both have outer unary expressions that are logicneg.
+					// now we recurse, because we already stripped the outer
+					// negations
+					return getStepInfoFromCondition(inputCond.getExpr(), outputCond.getExpr());
+				}
+			}
+		}
 	}
 
 	@Override
@@ -350,11 +363,12 @@ public class BoogiePreprocessorBacktranslator extends
 							+ "using identity as back-translation of " + expr);
 					return expr;
 				}
-				if(ident.getDeclarationInformation().getStorageClass() == StorageClass.QUANTIFIED){
-					//quantified variables do not occur in the program; we use identity
+				if (ident.getDeclarationInformation().getStorageClass() == StorageClass.QUANTIFIED) {
+					// quantified variables do not occur in the program; we use
+					// identity
 					return expr;
 				}
-				
+
 				Declaration decl = mSymbolTable.getDeclaration(ident);
 
 				if (decl == null) {

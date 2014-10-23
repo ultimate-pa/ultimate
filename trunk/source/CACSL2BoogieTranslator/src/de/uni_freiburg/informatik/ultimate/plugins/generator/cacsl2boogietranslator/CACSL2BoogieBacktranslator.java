@@ -94,21 +94,29 @@ public class CACSL2BoogieBacktranslator extends
 				// i = findMergeSequence(programExecution, i, loc);
 
 				CLocation cloc = (CLocation) loc;
+				if (cloc.ignoreDuringBacktranslation()) {
+					// we skip all clocs that can be ignored, i.e. things that
+					// belong to internal structures
+					continue;
+
+				}
+
 				IASTNode cnode = cloc.getNode();
+
 				if (cnode == null) {
 					reportUnfinishedBacktranslation(sUnfinishedBacktranslation
 							+ ": Skipping invalid CLocation because IASTNode is null");
 					continue;
 				}
-				// TODO: um while, if,call, return etc. kümmern
-				if (cnode instanceof CASTTranslationUnit) {
-					// we skip all CASTTranslationUnit locs because they
-					// correspond to Ultimate.init() and Ultimate.start()
-					// and we dont know how to backtranslate them meaningful
 
-					// but we should make the initial state here
+				if (cnode instanceof CASTTranslationUnit) {
+					// if it points to the TranslationUnit, it should be
+					// Ultimate.init or Ultimate.start and we make our
+					// initalstate right after them here
 					i = findMergeSequence(programExecution, i, loc);
-					initialState = translateProgramState(programExecution.getProgramState(i));
+					if (cnode instanceof CASTTranslationUnit) {
+						initialState = translateProgramState(programExecution.getProgramState(i));
+					}
 					continue;
 				} else if (cnode instanceof CASTIfStatement) {
 					// if its an if, we point to the condition
@@ -116,27 +124,47 @@ public class CACSL2BoogieBacktranslator extends
 					translatedAtomicTraceElements.add(new AtomicTraceElement<CACSLLocation>(cloc, LocationFactory
 							.createCLocation(ifstmt.getConditionExpression()), ate.getStepInfo()));
 				} else if (cnode instanceof CASTWhileStatement) {
-					// if its an while, we point to the condition
+					// if its an while, we know that it is not ignored and that
+					// it comes from the if(!cond)break; construct in Boogie.
+					// we therefore invert the stepinfo, i.e. from condevaltrue
+					// to condevalfalse
+					StepInfo newSi = invertConditionInStepInfo(ate.getStepInfo());
+					if (newSi == null) {
+						continue;
+					}
 					CASTWhileStatement whileStmt = (CASTWhileStatement) cnode;
 					translatedAtomicTraceElements.add(new AtomicTraceElement<CACSLLocation>(cloc, LocationFactory
-							.createCLocation(whileStmt.getCondition()), ate.getStepInfo()));
+							.createCLocation(whileStmt.getCondition()), newSi));
 				} else if (cnode instanceof CASTDoStatement) {
+					// same as while
 					CASTDoStatement doStmt = (CASTDoStatement) cnode;
+					StepInfo newSi = invertConditionInStepInfo(ate.getStepInfo());
+					if (newSi == null) {
+						continue;
+					}
 					translatedAtomicTraceElements.add(new AtomicTraceElement<CACSLLocation>(cloc, LocationFactory
-							.createCLocation(doStmt.getCondition()), ate.getStepInfo()));
+							.createCLocation(doStmt.getCondition()), newSi));
 				} else if (cnode instanceof CASTForStatement) {
+					// same as while
 					CASTForStatement forStmt = (CASTForStatement) cnode;
+					StepInfo newSi = invertConditionInStepInfo(ate.getStepInfo());
+					if (newSi == null) {
+						continue;
+					}
 					translatedAtomicTraceElements.add(new AtomicTraceElement<CACSLLocation>(cloc, LocationFactory
-							.createCLocation(forStmt.getConditionExpression()), ate.getStepInfo()));
+							.createCLocation(forStmt.getConditionExpression()), newSi));
 				} else if (cnode instanceof CASTFunctionCallExpression) {
 					// more complex, handled separately
 					i = handleCASTFunctionCallExpression(programExecution, i, (CASTFunctionCallExpression) cnode, cloc,
 							translatedAtomicTraceElements, translatedProgramStates);
 					continue;
 				} else {
-					// for now, just use C as it
+					// just use as it, all special cases should have been
+					// handled
+					// we merge all things in a row that point to the same
+					// location, as they only contain temporary stuff
 					i = findMergeSequence(programExecution, i, loc);
-					String raw = cnode.getRawSignature();
+					String raw = cnode.getRawSignature(); // debug
 					translatedAtomicTraceElements.add(new AtomicTraceElement<CACSLLocation>(cloc));
 				}
 				translatedProgramStates.add(translateProgramState(programExecution.getProgramState(i)));
@@ -155,6 +183,18 @@ public class CACSL2BoogieBacktranslator extends
 
 		return new CACSLProgramExecution(initialState, translatedAtomicTraceElements, translatedProgramStates);
 
+	}
+
+	private StepInfo invertConditionInStepInfo(StepInfo oldSi) {
+		switch (oldSi) {
+		case CONDITION_EVAL_FALSE:
+			return StepInfo.CONDITION_EVAL_TRUE;
+		case CONDITION_EVAL_TRUE:
+			return StepInfo.CONDITION_EVAL_FALSE;
+		default:
+			reportUnfinishedBacktranslation(sUnfinishedBacktranslation + ": Invalid StepInfo in Loop");
+			return null;
+		}
 	}
 
 	private int handleCASTFunctionCallExpression(IProgramExecution<BoogieASTNode, Expression> programExecution, int i,
@@ -314,15 +354,21 @@ public class CACSL2BoogieBacktranslator extends
 		}
 
 		ILocation loc = expression.getLocation();
-		if(loc instanceof ACSLLocation){
+		if (loc instanceof ACSLLocation) {
 			reportUnfinishedBacktranslation(sUnfinishedBacktranslation + ": Expression "
 					+ BoogiePrettyPrinter.print(expression) + " has an ACSLNode, but we do not support it yet");
 			return null;
-		
+
 		}
 		
 		if (loc instanceof CLocation) {
 			CLocation cloc = (CLocation) loc;
+			
+			if(cloc.ignoreDuringBacktranslation()){
+				//this should lead to nothing
+				return null;
+			}
+			
 			IASTNode cnode = cloc.getNode();
 
 			if (cnode == null) {
