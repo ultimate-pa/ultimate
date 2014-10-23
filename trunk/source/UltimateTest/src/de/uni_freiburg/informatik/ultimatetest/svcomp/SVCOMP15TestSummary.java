@@ -7,16 +7,14 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimatetest.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestSuite;
 import de.uni_freiburg.informatik.ultimatetest.decider.ITestResultDecider.TestResult;
 import de.uni_freiburg.informatik.ultimatetest.summary.NewTestSummary;
 import de.uni_freiburg.informatik.ultimatetest.util.Util;
-import de.uni_freiburg.informatik.ultimatetest.util.Util.IPredicate;
-import de.uni_freiburg.informatik.ultimatetest.util.Util.IReduce;
 
 /**
  * This summary should only be used with {@link SVCOMP15TestSuite}, because it
