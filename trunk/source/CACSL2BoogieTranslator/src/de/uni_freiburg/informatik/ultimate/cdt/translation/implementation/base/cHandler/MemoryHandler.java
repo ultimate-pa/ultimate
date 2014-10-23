@@ -12,6 +12,7 @@ import java.util.Map;
 
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CEnum;
@@ -272,7 +273,8 @@ public class MemoryHandler {
         decl.addAll(declareFree(tuLoc));
         decl.addAll(declareMalloc(tuLoc));
         if (declareMemCpy) {
-        	decl.addAll(declareMemCpy(main, tuLoc, namesOfAllMemoryArrayTypes, astTypesOfAllMemoryArrayTypes));
+//        	decl.addAll(declareMemCpy(main, tuLoc, namesOfAllMemoryArrayTypes, astTypesOfAllMemoryArrayTypes));
+        	decl.addAll(declareMemCpy(main, namesOfAllMemoryArrayTypes, astTypesOfAllMemoryArrayTypes));
         }
         decl.addAll(constants);
         decl.addAll(axioms);
@@ -282,9 +284,10 @@ public class MemoryHandler {
     /**
      * Adds our implementation of the memcpy procedure to the boogie code.
      */
-    private Collection<? extends Declaration> declareMemCpy(Dispatcher main, ILocation loc, 
+    private Collection<? extends Declaration> declareMemCpy(Dispatcher main, //ILocation loc, 
     		String[] namesOfAllMemoryArrayTypes, ASTType[] astTypesOfAllMemoryArrayTypes) {
     	ArrayList<Declaration> memCpyDecl = new ArrayList<>();
+    	ILocation loc = LocationFactory.createIgnoreCLocation(null);
     	
     	VarList inPDest = new VarList(loc, new String[] { SFO.MEMCPY_DEST }, POINTER_TYPE);
     	VarList inPSrc = new VarList(loc, new String[] { SFO.MEMCPY_SRC }, POINTER_TYPE);

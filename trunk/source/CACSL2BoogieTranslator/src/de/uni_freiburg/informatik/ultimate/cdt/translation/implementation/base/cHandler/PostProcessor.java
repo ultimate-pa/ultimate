@@ -10,6 +10,7 @@ import java.util.Set;
 
 import org.apache.log4j.Logger;
 
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CFunction;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.CDeclaration;
@@ -104,13 +105,16 @@ public class PostProcessor {
 				mDeclarationsGlobalInBoogie));
 		decl.addAll(createUltimateStartProcedure(main, loc, functionHandler));
 		decl.addAll(functions);
-		decl.addAll(declareFunctionPointerProcedures(main, loc, functionHandler, memoryHandler, structHandler));
+//		decl.addAll(declareFunctionPointerProcedures(main, loc, functionHandler, memoryHandler, structHandler));
+		decl.addAll(declareFunctionPointerProcedures(main, functionHandler, memoryHandler, structHandler));
 		return decl;
 	}
 
 	private ArrayList<Declaration> declareFunctionPointerProcedures(
-			Dispatcher main, ILocation loc, FunctionHandler functionHandler, 
+			Dispatcher main, //ILocation loc, 
+			FunctionHandler functionHandler, 
 			MemoryHandler memoryHandler, StructHandler structHandler) {
+		ILocation loc = LocationFactory.createIgnoreCLocation(null);
 		ArrayList<Declaration> result = new ArrayList<>();
 		for (CFunction cFunc : functionHandler.functionSignaturesThatHaveAFunctionPointer) {
 			String procName = cFunc.functionSignatureAsProcedureName();

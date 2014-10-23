@@ -2812,7 +2812,6 @@ public class CHandler implements ICHandler {
 				}
 				if (((IASTForStatement) node).getInitializerStatement() != null) {
 					bodyBlock = mMemoryHandler.insertMallocs(main, loc, bodyBlock);
-					// main.cHandler.getSymbolTable().endScope();
 					for (SymbolTableValue stv : mSymbolTable.currentScopeValues())
 						if (!stv.isBoogieGlobalVar()) {
 							decl.add(stv.getBoogieDecl());
@@ -2824,7 +2823,9 @@ public class CHandler implements ICHandler {
 			clearContract(); // take care for behavior and completeness
 		}
 
-		WhileStatement whileStmt = new WhileStatement(loc, new BooleanLiteral(loc, true), spec,
+		ILocation ignoreLocation = LocationFactory.createIgnoreCLocation(node);
+		WhileStatement whileStmt = new WhileStatement(ignoreLocation, 
+				new BooleanLiteral(ignoreLocation, true), spec,
 				bodyBlock.toArray(new Statement[0]));
 		Map<String, IAnnotations> annots = whileStmt.getPayload().getAnnotations();
 		for (Overapprox overapprItem : overappr) {
