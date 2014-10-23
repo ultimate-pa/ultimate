@@ -110,6 +110,7 @@ public class RelevantVariables {
 	private Set<BoogieVar> computeSuccessorRvCall(Set<BoogieVar> predRv, 
 			TransFormula localVarAssignment, TransFormula oldVarAssignment) {
 		Set<BoogieVar> result = new HashSet<BoogieVar>(predRv.size());
+		// TODO: maybe not optimal (global vars maybe not necessary???) 
 		for (BoogieVar bv : predRv) {
 			if (bv.isGlobal() && !oldVarAssignment.getInVars().containsKey(bv)) {
 				// is global var that can not be modfied by called procedure
@@ -133,20 +134,33 @@ public class RelevantVariables {
 			Set<BoogieVar> callPredRv,
 			TransFormula returnTF, TransFormula localVarAssignment) {
 		// add all vars that were relevant before the call
-		Set<BoogieVar> result = new HashSet<BoogieVar>(callPredRv);
+		Set<BoogieVar> result = new HashSet<BoogieVar>();
+		
+		for (BoogieVar bv : callPredRv) {
+			if (!isHavoced(bv, returnTF) && true) {
+				result.add(bv);
+			}
+		}
+		
 		// add all global vars that are relevant before the return
 		for (BoogieVar bv : returnPredRv) {
 			if (bv.isGlobal()) {
-				result.add(bv);
+				if (!isHavoced(bv, returnTF) && true) {
+					result.add(bv);
+				}
 			}
 		}
 		// add all vars that are assigned by the call
 		for (BoogieVar bv : returnTF.getOutVars().keySet()) {
-			result.add(bv);
+			if (!isHavoced(bv, returnTF) && true) {
+				result.add(bv);
+			}
 		}
 		// add all arguments of the call
 		for (BoogieVar bv : localVarAssignment.getInVars().keySet()) {
-			result.add(bv);
+			if (!isHavoced(bv, returnTF) && true) {
+				result.add(bv);
+			}
 		}
 		return result;
 	}
@@ -250,20 +264,22 @@ public class RelevantVariables {
 				result.add(bv);
 			}
 		}
-		if (true || containsSomeNonHavocedOutVar(succRv, tf)) {
-			result.addAll(tf.getInVars().keySet());
+		for (BoogieVar bv : tf.getInVars().keySet()) {
+			if (!isHavoced(bv,tf)) {
+				result.add(bv);
+			}
 		}
 		return result;
 	}
 	
-	private boolean containsSomeNonHavocedOutVar(Set<BoogieVar> bvs, TransFormula tf) {
-		for (BoogieVar bv : tf.getOutVars().keySet()) {
-			if (!isHavoced(bv, tf) &&  bvs.contains(bv)) {
-				return true;
-			}
-		}
-		return false;
-	}
+//	private boolean containsSomeNonHavocedOutVar(Set<BoogieVar> bvs, TransFormula tf) {
+//		for (BoogieVar bv : tf.getOutVars().keySet()) {
+//			if (!isHavoced(bv, tf) &&  bvs.contains(bv)) {
+//				return true;
+//			}
+//		}
+//		return false;
+//	}
 	
 	private Set<BoogieVar> computePredecessorRvCall_NonPending(Set<BoogieVar> callPredRv, 
 			Set<BoogieVar> returnPredRv,
@@ -299,20 +315,39 @@ public class RelevantVariables {
 		Set<BoogieVar> result = new HashSet<BoogieVar>(returnSuccRv.size());
 		for (BoogieVar bv : returnSuccRv) {
 			if (bv.isGlobal()) {
-				result.add(bv);
+				if (!isHavoced(bv, returnTf) && true) {
+					result.add(bv);
+				}
 			} else {
 				//do nothing
 			}
 		}
-		if (true || containsSomeNonHavocedOutVar(returnSuccRv, returnTf)) {
-			result.addAll(returnTf.getInVars().keySet());
+		for (BoogieVar bv : returnTf.getInVars().keySet()) {
+			if (!isHavoced(bv, returnTf) && true) {
+				result.add(bv);
+			}
 		}
-		result.addAll(oldVarAssignmentAtCall.getInVars().keySet());
-		result.addAll(oldVarAssignmentAtCall.getOutVars().keySet());
 		
-		result.addAll(localVarAssignmentAtCall.getOutVars().keySet());
+		for (BoogieVar bv : oldVarAssignmentAtCall.getInVars().keySet()) {
+			if (!isHavoced(bv, returnTf) && true) {
+				result.add(bv);
+			}
+		}
+		
+		for (BoogieVar bv : oldVarAssignmentAtCall.getOutVars().keySet()) {
+			if (!isHavoced(bv, returnTf) && true) {
+				result.add(bv);
+			}
+		}
+		
+		for (BoogieVar bv : localVarAssignmentAtCall.getOutVars().keySet()) {
+			if (!isHavoced(bv, returnTf) && true) {
+				result.add(bv);
+			}
+		}
 		return result;
-	}	
+	}
+
 	
 	
 	
