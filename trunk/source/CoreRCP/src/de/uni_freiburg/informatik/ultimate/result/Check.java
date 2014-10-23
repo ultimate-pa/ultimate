@@ -81,7 +81,7 @@ public class Check extends AbstractAnnotations {
 	    // add missing failure types...
 	}
 	
-	Spec m_Spec;
+	private Spec m_Spec;
 	
 	/**
 	 * The published attributes.  Update this and getFieldValue()
@@ -90,7 +90,10 @@ public class Check extends AbstractAnnotations {
 	private final static String[] s_AttribFields = {
 		"Check"
 	};
-
+	
+	public Spec getSpec() {
+		return m_Spec;
+	}
 	
 	public Check(Check.Spec spec) {
 		m_Spec = spec;

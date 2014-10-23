@@ -46,6 +46,10 @@ public class CounterExampleResult<ELEM extends IElement, TE extends IElement, E>
 			return mCheckedSpecification.getNegativeMessage();
 		}
 	}
+	
+	public Check getCheckedSpecification() {
+		return mCheckedSpecification;
+	}
 
 	@Override
 	public String getLongDescription() {
