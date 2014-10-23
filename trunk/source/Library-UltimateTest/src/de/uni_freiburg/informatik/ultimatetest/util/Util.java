@@ -488,6 +488,14 @@ public class Util {
 		map.put("_true-unreach-call", SafetyCheckerOverallResult.SAFE);
 		// false-unreach-call is the SV-COMP annotation for safe
 		map.put("_false-unreach-call", SafetyCheckerOverallResult.UNSAFE);
+		// true-valid-memsafety is the SV-COMP annotation for safe wrt. memory safety
+		map.put("_true-valid-memsafety", SafetyCheckerOverallResult.SAFE);
+		// false-valid-deref is the SV-COMP annotation for unsafe wrt. pointer dereference
+		map.put("_false-valid-deref", SafetyCheckerOverallResult.UNSAFE_DEREF);
+		// false-valid-free is the SV-COMP annotation for unsafe wrt. free
+		map.put("_false-valid-free", SafetyCheckerOverallResult.UNSAFE_FREE);
+		// false-valid-memtrack is the SV-COMP annotation for unsafe wrt. memory leaks
+		map.put("_false-valid-memtrack", SafetyCheckerOverallResult.UNSAFE_MEMTRACK);
 		return map;
 	}
 
