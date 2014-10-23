@@ -49,12 +49,12 @@ public class UnprovableResult<ELEM extends IElement, TE, E> extends AbstractResu
 
 	@Override
 	public String getShortDescription() {
-		return "Unable to prove that " + m_CheckedSpecification;
+		return "Unable to prove that " + m_CheckedSpecification.getPositiveMessage();
 	}
 
 	@Override
 	public String getLongDescription() {
-		return "Unable to prove that " + m_CheckedSpecification;
+		return "Unable to prove that " + m_CheckedSpecification.getPositiveMessage();
 	}
 
 	/**
