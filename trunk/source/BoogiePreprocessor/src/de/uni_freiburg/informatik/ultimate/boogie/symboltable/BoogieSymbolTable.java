@@ -165,6 +165,7 @@ public class BoogieSymbolTable {
 		case IMPLEMENTATION:
 		case GLOBAL:
 		case PROC_FUNC:
+//		case QUANTIFIED:
 			return scope.toString();
 		default:
 			break;

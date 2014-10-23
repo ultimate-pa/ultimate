@@ -5,7 +5,7 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base;
 
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
@@ -25,7 +25,7 @@ public class SideEffectHandler implements ISideEffectHandler {
     public Result visit(Dispatcher main, IASTNode node) {
         String msg = "SideEffectHandler: Not yet implemented: "
                 + node.toString();
-        ILocation loc = new CACSLLocation(node);
+        ILocation loc = LocationFactory.createCLocation(node);
         throw new UnsupportedSyntaxException(loc, msg);
     }
 
@@ -33,7 +33,7 @@ public class SideEffectHandler implements ISideEffectHandler {
     public Result visit(Dispatcher main, ACSLNode node) {
         String msg = "SideEffectHandler: Not yet implemented: "
                 + node.toString();
-        ILocation loc = new CACSLLocation(node);
+        ILocation loc = LocationFactory.createACSLLocation(node);
         throw new UnsupportedSyntaxException(loc, msg);
     }
 }

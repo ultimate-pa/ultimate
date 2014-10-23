@@ -37,7 +37,6 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayAccessExpressio
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayLHS;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayStoreExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayType;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Attribute;
@@ -982,17 +981,17 @@ public class MemoryHandler {
         return freeCall;
     }
     
-    /**
-     * Returns true iff ctype is
-     * <ul>
-     * <li> of type CPointer or
-     * <li> of type CNamed and the mapped type is CPointer.
-     * </ul>
-     */
-    private boolean isPointer(CType ctype) {
-    	CType ut = ctype.getUnderlyingType();
-    	return ut instanceof CPointer || ut instanceof CArray;
-    }
+//    /**
+//     * Returns true iff ctype is
+//     * <ul>
+//     * <li> of type CPointer or
+//     * <li> of type CNamed and the mapped type is CPointer.
+//     * </ul>
+//     */
+//    private boolean isPointer(CType ctype) {
+//    	CType ut = ctype.getUnderlyingType();
+//    	return ut instanceof CPointer || ut instanceof CArray;
+//    }
 
     /**
      * Creates a function call expression for the ~malloc(size) function!

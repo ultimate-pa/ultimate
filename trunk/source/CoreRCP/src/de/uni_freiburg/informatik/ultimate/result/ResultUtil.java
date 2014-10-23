@@ -61,7 +61,7 @@ public class ResultUtil {
 			IAnnotations check = element.getPayload().getAnnotations().get(Check.getIdentifier());
 			return (Check) check;
 		} else {
-			return element.getPayload().getLocation().getOrigin().checkedSpecification();
+			return element.getPayload().getLocation().getOrigin().getCheck();
 		}
 	}
 }

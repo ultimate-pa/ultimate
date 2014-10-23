@@ -113,7 +113,7 @@ public class BoogieLocation implements Serializable, ILocation {
 	}
 
 	@Override
-	public Check checkedSpecification() {
+	public Check getCheck() {
 		if (mBoogieASTNode instanceof AssertStatement) {
 			return new Check(Check.Spec.ASSERT);
 		} else if (mBoogieASTNode instanceof LoopInvariantSpecification) {

@@ -32,7 +32,7 @@ import org.eclipse.cdt.core.dom.ast.IASTTypeId;
 import org.eclipse.cdt.core.dom.ast.IASTUnaryExpression;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTSimpleDeclaration;
 
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IdentifierExpression;
@@ -159,7 +159,7 @@ public class PreRunner extends ASTVisitor {
     @Override
     public int visit(IASTExpression expression) {
     	if (expression instanceof IASTUnaryExpression) {
-    		ILocation loc = new CACSLLocation(expression);
+    		ILocation loc = LocationFactory.createCLocation(expression);
     		IASTUnaryExpression ue = (IASTUnaryExpression) expression;
     		if (ue.getOperator() == IASTUnaryExpression.op_amper) {// every variable that is addressoffed has to be on the heap
     			IASTNode operand = ue.getOperand();

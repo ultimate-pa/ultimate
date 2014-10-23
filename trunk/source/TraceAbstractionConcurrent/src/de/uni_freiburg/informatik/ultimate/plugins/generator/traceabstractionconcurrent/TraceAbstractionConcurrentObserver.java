@@ -191,7 +191,7 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 		for (ProgramPoint errorLoc : errorLocs) {
 			ILocation origin = errorLoc.getBoogieASTNode().getLocation().getOrigin();
 			String timeOutMessage = "Timout! Unable to prove that "
-					+ origin.checkedSpecification().getPositiveMessage();
+					+ origin.getCheck().getPositiveMessage();
 			timeOutMessage += " (line " + origin.getStartLine() + ")";
 			TimeoutResultAtElement<RcfgElement> timeOutRes = new TimeoutResultAtElement<RcfgElement>(errorLoc,
 					Activator.s_PLUGIN_NAME, mServices.getBacktranslationService(), timeOutMessage);
@@ -250,7 +250,7 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 			IAnnotations check = errorLoc.getPayload().getAnnotations().get(Check.getIdentifier());
 			return (Check) check;
 		}
-		return errorLoc.getBoogieASTNode().getLocation().getOrigin().checkedSpecification();
+		return errorLoc.getBoogieASTNode().getLocation().getOrigin().getCheck();
 	}
 
 	public ProgramPoint getErrorPP(RcfgProgramExecution rcfgProgramExecution) {

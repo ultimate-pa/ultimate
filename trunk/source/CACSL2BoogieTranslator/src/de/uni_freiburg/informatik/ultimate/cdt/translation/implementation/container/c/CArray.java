@@ -4,6 +4,7 @@
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.PRIMITIVE;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
@@ -130,7 +131,7 @@ public class CArray extends CType {
         }
         Check check = new Check(Check.Spec.ARRAY_INDEX);
         AssertStatement assertStmt = new AssertStatement(
-                new CACSLLocation(loc, check), conjunction);
+                LocationFactory.createLocation(loc, check), conjunction);
         check.addToNodeAnnot(assertStmt);
         return assertStmt;
     }

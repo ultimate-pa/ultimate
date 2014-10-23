@@ -15,6 +15,7 @@ import java.util.Set;
 import org.apache.log4j.Logger;
 import org.eclipse.cdt.codan.core.model.CheckerLaunchMode;
 import org.eclipse.cdt.codan.core.model.IProblemWorkingCopy;
+import org.eclipse.cdt.core.dom.ast.IASTNode;
 import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
 import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.filesystem.IFileStore;
@@ -31,6 +32,8 @@ import de.uni_freiburg.informatik.ultimate.cdt.Activator;
 import de.uni_freiburg.informatik.ultimate.cdt.codan.extension.AbstractFullAstChecker;
 import de.uni_freiburg.informatik.ultimate.cdt.preferences.PreferencePage;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CLocation;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.views.resultlist.ResultList;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 import de.uni_freiburg.informatik.ultimate.core.services.IToolchainStorage;
@@ -74,7 +77,6 @@ public class UltimateCChecker extends AbstractFullAstChecker {
 	private static IToolchainStorage sStorage;
 
 	private CDTController mController;
-
 
 	/**
 	 * The Constructor of this Checker
@@ -208,7 +210,7 @@ public class UltimateCChecker extends AbstractFullAstChecker {
 			return;
 		}
 
-		if (!(result.getLocation() instanceof CACSLLocation)) {
+		if (!(result.getLocation() instanceof LocationFactory)) {
 			log.warn("Result type has location, but no CACSLLocation: " + result.getShortDescription() + " ("
 					+ result.getClass() + ")");
 			return;
@@ -251,13 +253,15 @@ public class UltimateCChecker extends AbstractFullAstChecker {
 	}
 
 	private void reportProblem(String descriptorId, IResult result, CACSLLocation loc) {
-		if (loc.getCNode() != null) {
-			reportProblem(descriptorId, loc.getCNode(), result.getShortDescription(),
-					CDTResultStore.addHackyResult(result));
-		} else {
-			reportProblem(descriptorId, getFile(), loc.getStartLine(), result.getShortDescription(),
-					CDTResultStore.addHackyResult(result));
+		if (loc instanceof CLocation) {
+			IASTNode node = ((CLocation) loc).getNode();
+			if (node != null) {
+				reportProblem(descriptorId, node, result.getShortDescription(), CDTResultStore.addHackyResult(result));
+				return;
+			}
 		}
+		reportProblem(descriptorId, getFile(), loc.getStartLine(), result.getShortDescription(),
+				CDTResultStore.addHackyResult(result));
 	}
 
 	private String severityToCheckerDescriptor(Severity severity) {

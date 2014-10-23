@@ -50,14 +50,14 @@ public class SVCOMP15TestSuite extends AbstractSVCOMP15TestSuite {
 		/* Automizer */
 		rtr.add(getTestDefinitionFromExamples("ControlFlowInteger", "AutomizerC.xml",
 				"svcomp2015/svComp-32bit-precise.epf", getTimeout()));
-		rtr.add(getTestDefinitionFromExamples("ECA", "AutomizerC.xml",
-				"svcomp2015/svComp-32bit-precise.epf", getTimeout()));
-		rtr.add(getTestDefinitionFromExamples("Loops", "AutomizerC.xml",
-				"svcomp2015/svComp-32bit-precise.epf", getTimeout()));
-		rtr.add(getTestDefinitionFromExamples("ProductLines", "AutomizerC.xml",
-				"svcomp2015/svComp-32bit-precise.epf", getTimeout()));
-		rtr.add(getTestDefinitionFromExamples("Recursive", "AutomizerC.xml",
-				"svcomp2015/svComp-32bit-precise.epf", getTimeout()));
+		rtr.add(getTestDefinitionFromExamples("ECA", "AutomizerC.xml", "svcomp2015/svComp-32bit-precise.epf",
+				getTimeout()));
+		rtr.add(getTestDefinitionFromExamples("Loops", "AutomizerC.xml", "svcomp2015/svComp-32bit-precise.epf",
+				getTimeout()));
+		rtr.add(getTestDefinitionFromExamples("ProductLines", "AutomizerC.xml", "svcomp2015/svComp-32bit-precise.epf",
+				getTimeout()));
+		rtr.add(getTestDefinitionFromExamples("Recursive", "AutomizerC.xml", "svcomp2015/svComp-32bit-precise.epf",
+				getTimeout()));
 		rtr.add(getTestDefinitionFromExamples("Sequentialized", "AutomizerC.xml",
 				"svcomp2015/svComp-32bit-precise.epf", getTimeout()));
 		rtr.add(getTestDefinitionFromExamples("DeviceDrivers64", "AutomizerC.xml",
@@ -68,8 +68,8 @@ public class SVCOMP15TestSuite extends AbstractSVCOMP15TestSuite {
 				"automizer/BackwardPredicates_SvcompReachPreciseMM.epf", getTimeout()));
 		rtr.add(getTestDefinitionFromExamples("Simple", "AutomizerC.xml", "svcomp2015/svComp-32bit-simple.epf",
 				getTimeout()));
-		rtr.add(getTestDefinitionFromExamples("MemorySafety", "AutomizerC.xml", "svcomp2015/svComp-32bit-memsafety.epf",
-				getTimeout()));
+		rtr.add(getTestDefinitionFromExamples("MemorySafety", "AutomizerC.xml",
+				"svcomp2015/svComp-32bit-memsafety.epf", getTimeout()));
 
 		/* Kojak */
 		rtr.add(getTestDefinitionFromExamples("ControlFlowInteger", "CodeCheckWithBE-C.xml",
@@ -88,7 +88,7 @@ public class SVCOMP15TestSuite extends AbstractSVCOMP15TestSuite {
 				"svcomp2015/svComp-64bit-precise-BE-Kojak.epf", getTimeout()));
 		rtr.add(getTestDefinitionFromExamples("Simple", "CodeCheckWithBE-C.xml",
 				"svcomp2015/svComp-32bit-precise-BE-Kojak.epf", getTimeout()));
-		rtr.add(getTestDefinitionFromExamples("MemorySafety", "AutomizerC.xml", 
+		rtr.add(getTestDefinitionFromExamples("MemorySafety", "AutomizerC.xml",
 				"svcomp2015/svComp-32bit-memsafety-BE-Kojak.epf.epf", getTimeout()));
 
 		/* Impulse */
@@ -108,9 +108,8 @@ public class SVCOMP15TestSuite extends AbstractSVCOMP15TestSuite {
 				"svcomp2015/svComp-64bit-precise-BE-Impulse.epf", getTimeout()));
 		rtr.add(getTestDefinitionFromExamples("Simple", "CodeCheckWithBE-C.xml",
 				"svcomp2015/svComp-32bit-precise-BE-Impulse.epf", getTimeout()));
-		rtr.add(getTestDefinitionFromExamples("MemorySafety", "AutomizerC.xml", 
+		rtr.add(getTestDefinitionFromExamples("MemorySafety", "AutomizerC.xml",
 				"svcomp2015/svComp-32bit-memsafety-BE-Impulse.epf.epf", getTimeout()));
-
 
 		return rtr;
 	}

@@ -9,7 +9,9 @@ import java.util.List;
 import org.eclipse.cdt.core.dom.ast.IASTExpression;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.ACSLLocation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CLocation;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
 import de.uni_freiburg.informatik.ultimate.result.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.result.IProgramExecution.AtomicTraceElement.StepInfo;
@@ -17,7 +19,7 @@ import de.uni_freiburg.informatik.ultimate.result.IProgramExecution.AtomicTraceE
 /**
  * 
  * @author dietsch@informatik.uni-freiburg.de
- *
+ * 
  */
 public class CACSLProgramExecution implements IProgramExecution<CACSLLocation, IASTExpression> {
 
@@ -84,16 +86,12 @@ public class CACSLProgramExecution implements IProgramExecution<CACSLLocation, I
 			sb.append(i);
 			sb.append(": ");
 
-			if (currentStep.getCNode() != null && currentStep.getAcslNode() != null) {
-				throw new UnsupportedOperationException("Mixed nodes are not yet supported");
-			}
-
-			if (currentStep.getCNode() != null) {
-				IASTNode currentStepNode = currentStep.getCNode();
+			if (currentStep instanceof CLocation) {
+				IASTNode currentStepNode = ((CLocation) currentStep).getNode();
 				switch (currentStepInfo) {
-				case NONE:
 				case CONDITION_EVAL_TRUE:
 					sb.append(currentStepNode.getRawSignature());
+					sb.append(" (").append(currentStepInfo.toString()).append(")");
 					break;
 				case CONDITION_EVAL_FALSE:
 					// I couldnt build a printable CASTUnaryExpression, so I
@@ -102,23 +100,23 @@ public class CACSLProgramExecution implements IProgramExecution<CACSLLocation, I
 					sb.append("!(");
 					sb.append(exp.getRawSignature());
 					sb.append(")");
+					sb.append(" (").append(currentStepInfo.toString()).append(")");
 					break;
-				case CALL:
-				case RETURN:
+				case PROC_CALL:
+				case PROC_RETURN:
 					sb.append(currentStepNode.getRawSignature());
-					sb.append(" (");
-					sb.append(currentStepInfo.toString());
-					sb.append(")");
+					sb.append(" (").append(currentStepInfo.toString()).append(")");
 					break;
 				default:
-					throw new UnsupportedOperationException("Did not implement stepinfo " + currentStepInfo);
+					sb.append(currentStepNode.getRawSignature());
+					break;
 				}
-			} else if (currentStep.getAcslNode() != null) {
+			} else if (currentStep instanceof ACSLLocation) {
 				// do something if its an acsl node
-				ACSLNode currentStepNode = currentStep.getAcslNode();
+				ACSLNode currentStepNode = ((ACSLLocation) currentStep).getNode();
 				sb.append(currentStepNode.toString());
 			} else {
-				throw new IllegalArgumentException("Step has no actual nodes!");
+				throw new UnsupportedOperationException();
 			}
 
 			sb.append(lineSeparator);

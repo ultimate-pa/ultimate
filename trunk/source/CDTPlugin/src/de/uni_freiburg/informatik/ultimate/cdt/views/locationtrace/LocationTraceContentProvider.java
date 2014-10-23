@@ -11,7 +11,7 @@ import org.eclipse.jface.viewers.ITreeContentProvider;
 import org.eclipse.jface.viewers.TreeViewer;
 import org.eclipse.jface.viewers.Viewer;
 
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.result.CounterExampleResult;
 
@@ -98,7 +98,7 @@ public class LocationTraceContentProvider implements ITreeContentProvider {
 		int counterv2 = 0;
 		for (ILocation loc : failurePath) {
 			
-			if (loc instanceof CACSLLocation) {
+			if (loc instanceof LocationFactory) {
 				if (!loc.equals(actualLocation)) {
 					TraceNode tn = new TraceNode(loc, counterv2, counter);
 					newList.add(tn);

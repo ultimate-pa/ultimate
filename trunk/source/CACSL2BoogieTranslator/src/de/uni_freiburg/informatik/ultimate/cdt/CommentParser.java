@@ -16,7 +16,7 @@ import org.eclipse.cdt.core.dom.ast.IASTComment;
 
 import de.uni_freiburg.informatik.ultimate.acsl.parser.ACSLSyntaxErrorException;
 import de.uni_freiburg.informatik.ultimate.acsl.parser.Parser;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
@@ -115,7 +115,7 @@ public class CommentParser {
 				} catch (ACSLSyntaxErrorException e) {
 					ACSLNode node = e.getLocation();
 					node.setFileName(comment.getFileLocation().getFileName());
-					ILocation loc = new CACSLLocation(node);
+					ILocation loc = LocationFactory.createACSLLocation(node);
 					mDispatcher.syntaxError(loc, e.getMessageText());
 				} catch (Exception e) {
 					throw new IllegalArgumentException("Exception should be cached: " + e.getMessage());

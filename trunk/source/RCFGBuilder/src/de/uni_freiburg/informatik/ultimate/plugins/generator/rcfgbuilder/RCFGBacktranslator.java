@@ -82,10 +82,10 @@ public class RCFGBacktranslator extends DefaultTranslator<CodeBlock, BoogieASTNo
 			Map<TermVariable, Boolean> branchEncoders) {
 		if (cb instanceof Call) {
 			Statement st = ((Call) cb).getCallStatement();
-			trace.add(new AtomicTraceElement<BoogieASTNode>(st, st, StepInfo.CALL));
+			trace.add(new AtomicTraceElement<BoogieASTNode>(st, st, StepInfo.PROC_CALL));
 		} else if (cb instanceof Return) {
 			Statement st = ((Return) cb).getCallStatement();
-			trace.add(new AtomicTraceElement<BoogieASTNode>(st, st, StepInfo.RETURN));
+			trace.add(new AtomicTraceElement<BoogieASTNode>(st, st, StepInfo.PROC_RETURN));
 		} else if (cb instanceof Summary) {
 			Statement st = ((Summary) cb).getCallStatement();
 			//FIXME: Is summary call, return or something new?

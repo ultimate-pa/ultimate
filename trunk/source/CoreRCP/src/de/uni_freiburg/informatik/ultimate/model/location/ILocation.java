@@ -59,7 +59,7 @@ public interface ILocation {
 	 * E.g., "NullPointerException", "AssertStatement" etc.
 	 */
 	@Deprecated
-	public Check checkedSpecification();
+	public Check getCheck();
 	
 	
 	

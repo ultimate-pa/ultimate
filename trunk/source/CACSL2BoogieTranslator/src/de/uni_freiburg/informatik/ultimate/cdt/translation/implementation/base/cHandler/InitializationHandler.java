@@ -8,7 +8,6 @@ import java.util.Map;
 
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType.Type;
@@ -895,7 +894,7 @@ public class InitializationHandler {
 					VariableDeclaration tVarDecl = SFO.getTempVarVariableDeclaration(tmpId, 
 							main.typeHandler.ctype2asttype(loc, underlyingFieldType),
 							loc);
-					fieldAuxVars.put(tVarDecl, (CACSLLocation) loc);
+					fieldAuxVars.put(tVarDecl, (ILocation) loc);
 					fieldDecl.add(tVarDecl);
 					VariableLHS fieldLHS = new VariableLHS(loc, tmpId);
 					fieldStmt.addAll(main.cHandler.getInitHandler().initBoogieArray(main, loc, 

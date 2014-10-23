@@ -18,6 +18,7 @@ import de.uni_freiburg.informatik.ultimate.model.DefaultTranslator;
 import de.uni_freiburg.informatik.ultimate.model.IType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieProgramExecution;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieTransformer;
+import de.uni_freiburg.informatik.ultimate.model.boogie.DeclarationInformation.StorageClass;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BoogieASTNode;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.CallStatement;
@@ -218,9 +219,15 @@ public class BoogiePreprocessorBacktranslator extends
 
 			} else if (elem instanceof CallStatement) {
 				// for call statements, we simply rely on the stepinfo of our
-				// input
-				atomicTrace.add(new AtomicTraceElement<BoogieASTNode>(elem, elem, programExecution.getTraceElement(i)
-						.getStepInfo()));
+				// input: if its none, its a function call (so there will be no
+				// return), else its a procedure call with corresponding return
+
+				if (programExecution.getTraceElement(i).getStepInfo() == StepInfo.NONE) {
+					atomicTrace.add(new AtomicTraceElement<BoogieASTNode>(elem, elem, StepInfo.FUNC_CALL));
+				} else {
+					atomicTrace.add(new AtomicTraceElement<BoogieASTNode>(elem, elem, programExecution.getTraceElement(
+							i).getStepInfo()));
+				}
 
 			} else {
 				// it could be that we missed some cases... revisit this if you
@@ -338,11 +345,16 @@ public class BoogiePreprocessorBacktranslator extends
 
 			if (expr instanceof IdentifierExpression) {
 				IdentifierExpression ident = (IdentifierExpression) expr;
-				if (((IdentifierExpression) expr).getDeclarationInformation() == null) {
+				if (ident.getDeclarationInformation() == null) {
 					reportUnfinishedBacktranslation("Identifier has no declaration information, "
 							+ "using identity as back-translation of " + expr);
 					return expr;
 				}
+				if(ident.getDeclarationInformation().getStorageClass() == StorageClass.QUANTIFIED){
+					//quantified variables do not occur in the program; we use identity
+					return expr;
+				}
+				
 				Declaration decl = mSymbolTable.getDeclaration(ident);
 
 				if (decl == null) {
@@ -362,6 +374,7 @@ public class BoogiePreprocessorBacktranslator extends
 				}
 			}
 			// descend
+			String pretty = BoogiePrettyPrinter.print(expr);
 			return super.processExpression(expr);
 		}
 

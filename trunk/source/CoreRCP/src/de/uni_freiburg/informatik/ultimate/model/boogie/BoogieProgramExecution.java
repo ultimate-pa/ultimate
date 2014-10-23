@@ -131,15 +131,6 @@ public class BoogieProgramExecution implements IProgramExecution<BoogieASTNode, 
 			sb.append(": ");
 
 			switch (currentStepInfo) {
-			case NONE:
-				if (currentStep instanceof Statement) {
-					sb.append(BoogiePrettyPrinter.print((Statement) currentStep));
-				} else if (currentStep instanceof Specification) {
-					sb.append(BoogiePrettyPrinter.print((Specification) currentStep));
-				} else {
-					throw new IllegalArgumentException("current step is neither Statement nor Specification");
-				}
-				break;
 			case CONDITION_EVAL_TRUE:
 				sb.append(BoogiePrettyPrinter.print((Expression) currentStep));
 				sb.append(" (").append(currentStepInfo.toString()).append(")");
@@ -150,13 +141,20 @@ public class BoogieProgramExecution implements IProgramExecution<BoogieASTNode, 
 						UnaryExpression.Operator.LOGICNEG, exp)));
 				sb.append(" (").append(currentStepInfo.toString()).append(")");
 				break;
-			case CALL:
-			case RETURN:
+			case PROC_CALL:
+			case PROC_RETURN:
 				sb.append(BoogiePrettyPrinter.print((Statement) currentStep));
 				sb.append(" (").append(currentStepInfo.toString()).append(")");
 				break;
 			default:
-				throw new UnsupportedOperationException("Did not implement stepinfo " + currentStepInfo);
+				if (currentStep instanceof Statement) {
+					sb.append(BoogiePrettyPrinter.print((Statement) currentStep));
+				} else if (currentStep instanceof Specification) {
+					sb.append(BoogiePrettyPrinter.print((Specification) currentStep));
+				} else {
+					throw new IllegalArgumentException("current step is neither Statement nor Specification");
+				}
+				break;
 			}
 			sb.append(lineSeparator);
 			valuation = ppstoString(getProgramState(i));

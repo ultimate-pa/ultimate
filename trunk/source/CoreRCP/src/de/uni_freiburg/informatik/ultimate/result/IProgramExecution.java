@@ -174,7 +174,7 @@ public interface IProgramExecution<TE, E> {
 		 * 
 		 */
 		public enum StepInfo {
-			NONE, CONDITION_EVAL_TRUE, CONDITION_EVAL_FALSE, CALL, RETURN, ARG_EVAL
+			NONE, CONDITION_EVAL_TRUE, CONDITION_EVAL_FALSE, PROC_CALL, PROC_RETURN, ARG_EVAL, FUNC_CALL
 		}
 
 		@Override

@@ -1,12 +1,12 @@
-step0: call ULTIMATE.init(); (CALL)
+step0: call ULTIMATE.init(); (PROC_CALL)
 values0:  #NULL!base=1  #NULL!offset=2  old(#NULL!base)=1  old(#NULL!offset)=2
 step1: #NULL := { base: 0, offset: 0 };
 values1:  #NULL!base=0  #NULL!offset=0  old(#NULL!base)=1  old(#NULL!offset)=2
 step2: #valid[0] := false;
 values2:  #NULL!base=0  #NULL!offset=0  old(#NULL!base)=1  old(#NULL!offset)=2
-step3: call ULTIMATE.init(); (RETURN)
+step3: call ULTIMATE.init(); (PROC_RETURN)
 values3:  #NULL!base=0  #NULL!offset=0  old(#NULL!base)=0  old(#NULL!offset)=0
-step4: call #t~ret4 := main(); (CALL)
+step4: call #t~ret4 := main(); (PROC_CALL)
 values4:  #NULL!base=0  #NULL!offset=0  old(#NULL!base)=0  old(#NULL!offset)=0
 step5: call ~#a~4 := ~malloc(4);
 values5:  #NULL!base=0  #NULL!offset=0  old(#NULL!base)=0  old(#NULL!offset)=0  ~#a~4!base=7  ~#a~4!offset=0

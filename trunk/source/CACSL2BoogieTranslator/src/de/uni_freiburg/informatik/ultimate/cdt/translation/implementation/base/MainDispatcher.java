@@ -103,7 +103,7 @@ import org.eclipse.cdt.internal.core.dom.parser.c.CASTDesignatedInitializer;
 import org.eclipse.cdt.internal.core.dom.parser.cpp.IASTAmbiguousCondition;
 
 import de.uni_freiburg.informatik.ultimate.cdt.decorator.DecoratorNode;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
@@ -558,7 +558,7 @@ public class MainDispatcher extends Dispatcher {
 			return cHandler.visit(this, (IASTProblemTypeId) n);
 		}
 		String msg = "MainDispatcher: AST node type unknown: " + n.getClass();
-		ILocation loc = new CACSLLocation(n);
+		ILocation loc = LocationFactory.createCLocation(n);
 		throw new UnsupportedSyntaxException(loc, msg);
 	}
 
@@ -760,7 +760,7 @@ public class MainDispatcher extends Dispatcher {
 			return acslHandler.visit(this, (ACSLNode) n);
 		}
 		String msg = "MainDispatcher: ACSL node type unknown: " + n.getClass();
-		ILocation loc = new CACSLLocation(n);
+		ILocation loc = LocationFactory.createACSLLocation(n);
 		throw new UnsupportedSyntaxException(loc, msg);
 	}
 

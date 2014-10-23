@@ -39,7 +39,7 @@ import org.eclipse.ui.texteditor.ITextEditor;
 import org.osgi.framework.Bundle;
 
 import de.uni_freiburg.informatik.ultimate.cdt.Activator;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.views.resultlist.ResultList;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.result.CounterExampleResult;
@@ -152,7 +152,7 @@ public class LocationTrace extends ViewPart implements ISelectionListener {
 			Object first = ((ITreeSelection) selection).getFirstElement();
 			if (first instanceof TraceNode) {
 				TraceNode tn = (TraceNode) first;
-				CACSLLocation loc = (CACSLLocation) tn.getLocation();
+				ILocation loc = (ILocation) tn.getLocation();
 				IEditorPart editorPart = getSite().getPage().getActiveEditor();
 				markLine(editorPart,
 						getLineInformation(editorPart, loc.getStartLine()));
@@ -219,7 +219,7 @@ public class LocationTrace extends ViewPart implements ISelectionListener {
 		if (res instanceof CounterExampleResult
 				&& input instanceof IFileEditorInput) {
 			for (ILocation loc : ((CounterExampleResult<?,?,?>) res).getFailurePath()) {
-				if (loc instanceof CACSLLocation) {
+				if (loc instanceof LocationFactory) {
 					try {
 						IRegion lineInfo = getLineInformation(editorPart,
 								loc.getStartLine());

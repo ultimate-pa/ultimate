@@ -10,25 +10,30 @@ import org.apache.log4j.Logger;
 import org.eclipse.cdt.core.dom.ast.IASTDeclarator;
 import org.eclipse.cdt.core.dom.ast.IASTExpression;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
+import org.eclipse.cdt.internal.core.dom.parser.c.CASTDoStatement;
+import org.eclipse.cdt.internal.core.dom.parser.c.CASTForStatement;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTFunctionCallExpression;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTFunctionDefinition;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTIfStatement;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTSimpleDeclaration;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTTranslationUnit;
+import org.eclipse.cdt.internal.core.dom.parser.c.CASTWhileStatement;
 
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.ACSLLocation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CLocation;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.model.DefaultTranslator;
-import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieTransformer;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BoogieASTNode;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BooleanLiteral;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IntegerLiteral;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.RealLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression.Operator;
@@ -85,49 +90,60 @@ public class CACSL2BoogieBacktranslator extends
 			AtomicTraceElement<BoogieASTNode> ate = programExecution.getTraceElement(i);
 			ILocation loc = ate.getTraceElement().getLocation();
 
-			if (loc instanceof CACSLLocation) {
+			if (loc instanceof CLocation) {
 				// i = findMergeSequence(programExecution, i, loc);
 
-				CACSLLocation cloc = (CACSLLocation) loc;
-				IASTNode cnode = cloc.getCNode();
-				ACSLNode anode = cloc.getAcslNode();
-				if (cnode != null) {
-					// TODO: um while, if,call, return etc. kümmern
-					if (cnode instanceof CASTTranslationUnit) {
-						// we skip all CASTTranslationUnit locs because they
-						// correspond to Ultimate.init() and Ultimate.start()
-						// and we dont know how to backtranslate them meaningful
-
-						// but we should make the initial state here
-						i = findMergeSequence(programExecution, i, loc);
-						initialState = translateProgramState(programExecution.getProgramState(i));
-						continue;
-					} else if (cnode instanceof CASTIfStatement) {
-						// if its an if, we point to the condition
-						CASTIfStatement ifstmt = (CASTIfStatement) cnode;
-						IASTExpression expr = ifstmt.getConditionExpression();
-						translatedAtomicTraceElements.add(new AtomicTraceElement<CACSLLocation>(cloc,
-								new CACSLLocation(expr), ate.getStepInfo()));
-					} else if (cnode instanceof CASTFunctionCallExpression) {
-						i = handleCASTFunctionCallExpression(programExecution, i, (CASTFunctionCallExpression) cnode,
-								cloc, translatedAtomicTraceElements, translatedProgramStates);
-						continue;
-					} else {
-						// for now, just use C as it
-						i = findMergeSequence(programExecution, i, loc);
-						String raw = cnode.getRawSignature();
-						translatedAtomicTraceElements.add(new AtomicTraceElement<CACSLLocation>(cloc));
-					}
-				} else if (anode != null) {
-					// for now, just use ACSL as-it
-					translatedAtomicTraceElements.add(new AtomicTraceElement<CACSLLocation>(cloc));
-
-				} else {
+				CLocation cloc = (CLocation) loc;
+				IASTNode cnode = cloc.getNode();
+				if (cnode == null) {
 					reportUnfinishedBacktranslation(sUnfinishedBacktranslation
-							+ ": Invalid location (neither IASTNode nor ACSLNode present)");
-					// skip program state for this one
+							+ ": Skipping invalid CLocation because IASTNode is null");
 					continue;
 				}
+				// TODO: um while, if,call, return etc. kümmern
+				if (cnode instanceof CASTTranslationUnit) {
+					// we skip all CASTTranslationUnit locs because they
+					// correspond to Ultimate.init() and Ultimate.start()
+					// and we dont know how to backtranslate them meaningful
+
+					// but we should make the initial state here
+					i = findMergeSequence(programExecution, i, loc);
+					initialState = translateProgramState(programExecution.getProgramState(i));
+					continue;
+				} else if (cnode instanceof CASTIfStatement) {
+					// if its an if, we point to the condition
+					CASTIfStatement ifstmt = (CASTIfStatement) cnode;
+					translatedAtomicTraceElements.add(new AtomicTraceElement<CACSLLocation>(cloc, LocationFactory
+							.createCLocation(ifstmt.getConditionExpression()), ate.getStepInfo()));
+				} else if (cnode instanceof CASTWhileStatement) {
+					// if its an while, we point to the condition
+					CASTWhileStatement whileStmt = (CASTWhileStatement) cnode;
+					translatedAtomicTraceElements.add(new AtomicTraceElement<CACSLLocation>(cloc, LocationFactory
+							.createCLocation(whileStmt.getCondition()), ate.getStepInfo()));
+				} else if (cnode instanceof CASTDoStatement) {
+					CASTDoStatement doStmt = (CASTDoStatement) cnode;
+					translatedAtomicTraceElements.add(new AtomicTraceElement<CACSLLocation>(cloc, LocationFactory
+							.createCLocation(doStmt.getCondition()), ate.getStepInfo()));
+				} else if (cnode instanceof CASTForStatement) {
+					CASTForStatement forStmt = (CASTForStatement) cnode;
+					translatedAtomicTraceElements.add(new AtomicTraceElement<CACSLLocation>(cloc, LocationFactory
+							.createCLocation(forStmt.getConditionExpression()), ate.getStepInfo()));
+				} else if (cnode instanceof CASTFunctionCallExpression) {
+					// more complex, handled separately
+					i = handleCASTFunctionCallExpression(programExecution, i, (CASTFunctionCallExpression) cnode, cloc,
+							translatedAtomicTraceElements, translatedProgramStates);
+					continue;
+				} else {
+					// for now, just use C as it
+					i = findMergeSequence(programExecution, i, loc);
+					String raw = cnode.getRawSignature();
+					translatedAtomicTraceElements.add(new AtomicTraceElement<CACSLLocation>(cloc));
+				}
+				translatedProgramStates.add(translateProgramState(programExecution.getProgramState(i)));
+
+			} else if (loc instanceof ACSLLocation) {
+				// for now, just use ACSL as-it
+				translatedAtomicTraceElements.add(new AtomicTraceElement<CACSLLocation>((ACSLLocation) loc));
 				translatedProgramStates.add(translateProgramState(programExecution.getProgramState(i)));
 
 			} else {
@@ -142,7 +158,7 @@ public class CACSL2BoogieBacktranslator extends
 	}
 
 	private int handleCASTFunctionCallExpression(IProgramExecution<BoogieASTNode, Expression> programExecution, int i,
-			CASTFunctionCallExpression fcall, CACSLLocation cloc,
+			CASTFunctionCallExpression fcall, CLocation cloc,
 			List<AtomicTraceElement<CACSLLocation>> translatedAtomicTraceElements,
 			List<ProgramState<IASTExpression>> translatedProgramStates) {
 		// directly after the functioncall expression we find
@@ -151,6 +167,14 @@ public class CACSL2BoogieBacktranslator extends
 		// params are immutable)
 		// we throw them away
 		AtomicTraceElement<BoogieASTNode> origFuncCall = programExecution.getTraceElement(i);
+
+		if (!(origFuncCall.getTraceElement() instanceof CallStatement)) {
+			// this is some special case, e.g. an assert false
+			translatedAtomicTraceElements.add(new AtomicTraceElement<CACSLLocation>(cloc, cloc, origFuncCall
+					.getStepInfo()));
+			translatedProgramStates.add(translateProgramState(programExecution.getProgramState(i)));
+			return i;
+		}
 
 		if (origFuncCall.getStepInfo() == StepInfo.NONE) {
 			// this is some temp var stuff; we can safely ignore it
@@ -161,7 +185,7 @@ public class CACSL2BoogieBacktranslator extends
 				.add(new AtomicTraceElement<CACSLLocation>(cloc, cloc, origFuncCall.getStepInfo()));
 		translatedProgramStates.add(translateProgramState(programExecution.getProgramState(i)));
 
-		if (origFuncCall.getStepInfo() == StepInfo.RETURN) {
+		if (origFuncCall.getStepInfo() == StepInfo.PROC_RETURN) {
 			// if it is a return we are already finished.
 			return i;
 		}
@@ -181,7 +205,7 @@ public class CACSL2BoogieBacktranslator extends
 						+ origFuncDef.getTraceElement().getLocation().getClass().getSimpleName());
 				return i;
 			}
-			IASTNode cnode = ((CACSLLocation) origFuncDef.getTraceElement().getLocation()).getCNode();
+			IASTNode cnode = ((CLocation) origFuncDef.getTraceElement().getLocation()).getNode();
 			if (!(cnode instanceof CASTFunctionDefinition)) {
 				reportUnfinishedBacktranslation("After CASTFunctionCallExpression should follow a "
 						+ "CASTFunctionDefinition for each argument, but was: " + cnode.getClass().getSimpleName());
@@ -290,44 +314,50 @@ public class CACSL2BoogieBacktranslator extends
 		}
 
 		ILocation loc = expression.getLocation();
-		if (loc instanceof CACSLLocation) {
-			CACSLLocation cloc = (CACSLLocation) loc;
-			IASTNode cnode = cloc.getCNode();
-			if (cnode != null) {
-				if (cnode instanceof IASTExpression) {
-					return (IASTExpression) cnode;
-				} else if (cnode instanceof CASTTranslationUnit) {
-					// expressions that map to CASTTranslationUnit dont need to
-					// be backtranslated
-					return null;
-				} else if (cnode instanceof CASTSimpleDeclaration) {
-					return handleExpressionCASTSimpleDeclaration(expression, (CASTSimpleDeclaration) cnode);
-				} else if (cnode instanceof CASTFunctionDefinition) {
-					if (expression instanceof IdentifierExpression) {
-						IdentifierExpression orgidexp = (IdentifierExpression) expression;
-						String origName = translateIdentifierExpression(orgidexp);
-						if (origName != null) {
-							return new FakeExpression(origName);
-						}
-					}
-					reportUnfinishedBacktranslation(sUnfinishedBacktranslation + ": Expression "
-							+ BoogiePrettyPrinter.print(expression)
-							+ " has a CASTFunctionDefinition but is no IdentifierExpression: "
-							+ expression.getClass().getSimpleName());
-					return null;
-				} else {
-					reportUnfinishedBacktranslation(sUnfinishedBacktranslation + ": Expression "
-							+ BoogiePrettyPrinter.print(expression) + " has a C AST node but it is no IASTExpression: "
-							+ cnode.getClass());
-					return null;
-				}
-			} else {
+		if(loc instanceof ACSLLocation){
+			reportUnfinishedBacktranslation(sUnfinishedBacktranslation + ": Expression "
+					+ BoogiePrettyPrinter.print(expression) + " has an ACSLNode, but we do not support it yet");
+			return null;
+		
+		}
+		
+		if (loc instanceof CLocation) {
+			CLocation cloc = (CLocation) loc;
+			IASTNode cnode = cloc.getNode();
+
+			if (cnode == null) {
 				reportUnfinishedBacktranslation(sUnfinishedBacktranslation + ": Expression "
-						+ BoogiePrettyPrinter.print(expression)
-						+ " has no C AST node and ACSL nodes are not yet supported");
+						+ BoogiePrettyPrinter.print(expression) + " has no C AST node");
 				return null;
 			}
 
+			if (cnode instanceof IASTExpression) {
+				return (IASTExpression) cnode;
+			} else if (cnode instanceof CASTTranslationUnit) {
+				// expressions that map to CASTTranslationUnit dont need to
+				// be backtranslated
+				return null;
+			} else if (cnode instanceof CASTSimpleDeclaration) {
+				return handleExpressionCASTSimpleDeclaration(expression, (CASTSimpleDeclaration) cnode);
+			} else if (cnode instanceof CASTFunctionDefinition) {
+				if (expression instanceof IdentifierExpression) {
+					IdentifierExpression orgidexp = (IdentifierExpression) expression;
+					String origName = translateIdentifierExpression(orgidexp);
+					if (origName != null) {
+						return new FakeExpression(origName);
+					}
+				}
+				reportUnfinishedBacktranslation(sUnfinishedBacktranslation + ": Expression "
+						+ BoogiePrettyPrinter.print(expression)
+						+ " has a CASTFunctionDefinition but is no IdentifierExpression: "
+						+ expression.getClass().getSimpleName());
+				return null;
+			} else {
+				reportUnfinishedBacktranslation(sUnfinishedBacktranslation + ": Expression "
+						+ BoogiePrettyPrinter.print(expression) + " has a C AST node but it is no IASTExpression: "
+						+ cnode.getClass());
+				return null;
+			}
 		} else if (expression instanceof IntegerLiteral) {
 			IntegerLiteral lit = (IntegerLiteral) expression;
 			FakeExpression clit = new FakeExpression(lit.getValue());
@@ -344,6 +374,12 @@ public class CACSL2BoogieBacktranslator extends
 			FakeExpression clit = new FakeExpression(lit.getValue());
 			return clit;
 		} else {
+			// things that land here are typically synthesized contracts or
+			// things like that
+			Expression translated = new SynthesizedExpressionTransformer().processExpression(expression);
+			if (translated != null) {
+				return new FakeExpression(BoogiePrettyPrinter.print(translated));
+			}
 			reportUnfinishedBacktranslation(sUnfinishedBacktranslation + ": Expression "
 					+ BoogiePrettyPrinter.print(expression) + " has no CACSLLocation");
 			return null;
@@ -566,23 +602,24 @@ public class CACSL2BoogieBacktranslator extends
 		mBoogie2C.putTempVar(boogieId, obj);
 	}
 
-	private class LHSIdentifierExtractor extends BoogieTransformer {
-		private IdentifierExpression mResult;
-		private int mCount;
+	public boolean isTempVar(String boogieId) {
+		return mBoogie2C.getTempVar2Obj().containsKey(boogieId);
+	}
 
-		private IdentifierExpression extract(AssignmentStatement assign) {
-			mCount = 0;
-			processStatement(assign);
-			if (mCount > 1) {
-				throw new UnsupportedOperationException("Forgot one IdentifierExpression");
-			}
-			return mResult;
-		}
+	private class SynthesizedExpressionTransformer extends BoogieTransformer {
 
 		@Override
 		protected Expression processExpression(Expression expr) {
 			if (expr instanceof IdentifierExpression) {
-				mResult = (IdentifierExpression) expr;
+				IdentifierExpression ident = (IdentifierExpression) expr;
+				ILocation loc = ident.getLocation();
+				if (loc instanceof CACSLLocation) {
+					IASTExpression translated = translateExpression(ident);
+					if (translated != null) {
+						return new IdentifierExpression(ident.getLocation(), ident.getType(),
+								translated.getRawSignature(), ident.getDeclarationInformation());
+					}
+				}
 			}
 			return super.processExpression(expr);
 		}
@@ -642,10 +679,6 @@ public class CACSL2BoogieBacktranslator extends
 		private void putTempVar(String boogieId, Object obj) {
 			mTempVar2Obj.put(boogieId, obj);
 		}
-	}
-
-	public boolean isTempVar(String boogieId) {
-		return mBoogie2C.getTempVar2Obj().containsKey(boogieId);
 	}
 
 }

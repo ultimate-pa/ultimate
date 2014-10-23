@@ -122,7 +122,7 @@ public class AutomataScriptLocation implements ILocation {
 	 * @see de.uni_freiburg.informatik.ultimate.model.ILocation#checkedSpecification()
 	 */
 	@Override
-	public Check checkedSpecification() {
+	public Check getCheck() {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 	}

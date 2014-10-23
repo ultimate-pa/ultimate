@@ -36,9 +36,9 @@ public class RcfgProgramExecution implements IProgramExecution<CodeBlock, Expres
 		ArrayList<AtomicTraceElement<CodeBlock>> atomictrace = new ArrayList<>();
 		for (CodeBlock te : trace) {
 			if (te instanceof Call) {
-				atomictrace.add(new AtomicTraceElement<CodeBlock>(te, te, StepInfo.CALL));
+				atomictrace.add(new AtomicTraceElement<CodeBlock>(te, te, StepInfo.PROC_CALL));
 			} else if (te instanceof Return) {
-				atomictrace.add(new AtomicTraceElement<CodeBlock>(te, te, StepInfo.RETURN));
+				atomictrace.add(new AtomicTraceElement<CodeBlock>(te, te, StepInfo.PROC_RETURN));
 			} else {
 				atomictrace.add(new AtomicTraceElement<CodeBlock>(te));
 			}

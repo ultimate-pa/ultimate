@@ -111,7 +111,7 @@ public class ReqLocation implements Serializable, ILocation {
      * de.uni_freiburg.informatik.ultimate.model.Location#checkedSpecification()
      */
     @Override
-    public Check checkedSpecification() {
+    public Check getCheck() {
     	return m_CheckedSpecification;
     }
 

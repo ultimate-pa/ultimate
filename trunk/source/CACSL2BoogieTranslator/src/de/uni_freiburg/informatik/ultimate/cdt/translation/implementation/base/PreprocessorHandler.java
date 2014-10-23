@@ -16,7 +16,7 @@ import org.eclipse.cdt.core.dom.ast.IASTPreprocessorMacroDefinition;
 import org.eclipse.cdt.core.dom.ast.IASTPreprocessorPragmaStatement;
 import org.eclipse.cdt.core.dom.ast.IASTPreprocessorUndefStatement;
 
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
@@ -35,7 +35,7 @@ public class PreprocessorHandler implements IPreprocessorHandler {
     @Override
     public Result visit(Dispatcher main, IASTNode node) {
         String msg = "PreprocessorHandler: Not yet implemented: " + node.toString();
-        ILocation loc = new CACSLLocation(node);
+        ILocation loc = LocationFactory.createCLocation(node);
         throw new UnsupportedSyntaxException(loc, msg);
     }
 
@@ -51,7 +51,7 @@ public class PreprocessorHandler implements IPreprocessorHandler {
     @Override
     public Result visit(Dispatcher main, IASTPreprocessorElifStatement node) {
         String msg = "PreprocessorHandler: Not yet implemented: " + node.toString();
-        ILocation loc = new CACSLLocation(node);
+        ILocation loc = LocationFactory.createCLocation(node);
         main.unsupportedSyntax(loc, msg);
         return new ResultSkip();
     }
@@ -59,7 +59,7 @@ public class PreprocessorHandler implements IPreprocessorHandler {
     @Override
     public Result visit(Dispatcher main, IASTPreprocessorElseStatement node) {
         String msg = "PreprocessorHandler: Not yet implemented: " + node.toString();
-        ILocation loc = new CACSLLocation(node);
+        ILocation loc = LocationFactory.createCLocation(node);
         main.unsupportedSyntax(loc, msg);
         return new ResultSkip();
     }
@@ -67,7 +67,7 @@ public class PreprocessorHandler implements IPreprocessorHandler {
     @Override
     public Result visit(Dispatcher main, IASTPreprocessorEndifStatement node) {
         String msg = "PreprocessorHandler: Not yet implemented: " + node.toString();
-        ILocation loc = new CACSLLocation(node);
+        ILocation loc = LocationFactory.createCLocation(node);
         main.unsupportedSyntax(loc, msg);
         return new ResultSkip();
     }
@@ -75,14 +75,14 @@ public class PreprocessorHandler implements IPreprocessorHandler {
     @Override
     public Result visit(Dispatcher main, IASTPreprocessorErrorStatement node) {
         String msg = "PreprocessorHandler: There was an error while parsing the preprocessor statements!";
-        ILocation loc = new CACSLLocation(node);
+        ILocation loc = LocationFactory.createCLocation(node);
         throw new IncorrectSyntaxException(loc, msg);
     }
 
     @Override
     public Result visit(Dispatcher main, IASTPreprocessorIfdefStatement node) {
         String msg = "PreprocessorHandler: Not yet implemented: " + node.toString();
-        ILocation loc = new CACSLLocation(node);
+        ILocation loc = LocationFactory.createCLocation(node);
         main.unsupportedSyntax(loc, msg);
         return new ResultSkip();
     }
@@ -90,7 +90,7 @@ public class PreprocessorHandler implements IPreprocessorHandler {
     @Override
     public Result visit(Dispatcher main, IASTPreprocessorIfndefStatement node) {
         String msg = "PreprocessorHandler: Not yet implemented: " + node.toString();
-        ILocation loc = new CACSLLocation(node);
+        ILocation loc = LocationFactory.createCLocation(node);
         main.unsupportedSyntax(loc, msg);
         return new ResultSkip();
     }
@@ -98,7 +98,7 @@ public class PreprocessorHandler implements IPreprocessorHandler {
     @Override
     public Result visit(Dispatcher main, IASTPreprocessorIfStatement node) {
         String msg = "PreprocessorHandler: Not yet implemented: " + node.toString();
-        ILocation loc = new CACSLLocation(node);
+        ILocation loc = LocationFactory.createCLocation(node);
         main.unsupportedSyntax(loc, msg);
         return new ResultSkip();
     }
@@ -120,7 +120,7 @@ public class PreprocessorHandler implements IPreprocessorHandler {
     @Override
     public Result visit(Dispatcher main, IASTPreprocessorPragmaStatement node) {
         String msg = "PreprocessorHandler: Not yet implemented: " + node.toString();
-        ILocation loc = new CACSLLocation(node);
+        ILocation loc = LocationFactory.createCLocation(node);
         main.unsupportedSyntax(loc, msg);
         return new ResultSkip();
     }
@@ -128,7 +128,7 @@ public class PreprocessorHandler implements IPreprocessorHandler {
     @Override
     public Result visit(Dispatcher main, IASTPreprocessorUndefStatement node) {
         String msg = "PreprocessorHandler: Not yet implemented: " + node.toString();
-        ILocation loc = new CACSLLocation(node);
+        ILocation loc = LocationFactory.createCLocation(node);
         main.unsupportedSyntax(loc, msg);
         return new ResultSkip();
     }

@@ -22,7 +22,7 @@ import org.eclipse.cdt.core.dom.ast.ITypedef;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTTypedefNameSpecifier;
 import org.eclipse.cdt.internal.core.dom.parser.c.CPointerType;
 
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.SymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.MemoryHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType;
@@ -108,7 +108,7 @@ public class TypeHandler implements ITypeHandler {
     @Override
     public Result visit(Dispatcher main, IASTNode node) {
         String msg = "TypeHandler: Not yet implemented: " + node.toString();
-        ILocation loc = new CACSLLocation(node);
+        ILocation loc = LocationFactory.createCLocation(node);
         throw new UnsupportedSyntaxException(loc, msg);
     }
 
@@ -127,7 +127,7 @@ public class TypeHandler implements ITypeHandler {
         CType cvar = new CPrimitive(node);
         // we have model.boogie.ast.PrimitiveType, which should
         // only contain BOOL, INT, REAL ...
-        CACSLLocation loc = new CACSLLocation(node);
+        ILocation loc = LocationFactory.createCLocation(node);
 		switch (node.getType()) {
             case IASTSimpleDeclSpecifier.t_void:
                 // there is no void in Boogie,
@@ -173,7 +173,7 @@ public class TypeHandler implements ITypeHandler {
 
     @Override
     public Result visit(Dispatcher main, IASTNamedTypeSpecifier node) {
-        CACSLLocation loc = new CACSLLocation(node);
+        ILocation loc = LocationFactory.createCLocation(node);
         if (node instanceof CASTTypedefNameSpecifier) {
             node = (CASTTypedefNameSpecifier) node;
             String cId = node.getName().toString();
@@ -202,7 +202,7 @@ public class TypeHandler implements ITypeHandler {
 
     @Override
     public Result visit(Dispatcher main, IASTEnumerationSpecifier node) {
-        CACSLLocation loc = new CACSLLocation(node);
+        ILocation loc = LocationFactory.createCLocation(node);
         String cId = node.getName().toString();
         String enumId = main.nameHandler.getUniqueIdentifier(node, node.getName().toString(),
         		main.cHandler.getSymbolTable().getCompoundCounter(), false);
@@ -230,7 +230,7 @@ public class TypeHandler implements ITypeHandler {
     
     @Override
     public Result visit(Dispatcher main, IASTElaboratedTypeSpecifier node) {
-        CACSLLocation loc = new CACSLLocation(node);
+        ILocation loc = LocationFactory.createCLocation(node);
         if (node.getKind() == IASTElaboratedTypeSpecifier.k_struct
                 || node.getKind() == IASTElaboratedTypeSpecifier.k_enum
                 || node.getKind() == IASTElaboratedTypeSpecifier.k_union) {
@@ -312,7 +312,7 @@ public class TypeHandler implements ITypeHandler {
     
     @Override
     public Result visit(Dispatcher main, IASTCompositeTypeSpecifier node) {
-        CACSLLocation loc = new CACSLLocation(node);
+        ILocation loc = LocationFactory.createCLocation(node);
         ArrayList<VarList> fields = new ArrayList<VarList>();
         // TODO : include inactives? what are inactives?
         ArrayList<String> fNames = new ArrayList<String>();

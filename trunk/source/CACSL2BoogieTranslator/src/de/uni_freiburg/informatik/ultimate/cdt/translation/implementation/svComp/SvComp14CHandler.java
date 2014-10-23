@@ -18,7 +18,7 @@ import org.eclipse.cdt.core.dom.ast.IASTIdExpression;
 import org.eclipse.cdt.core.dom.ast.IASTInitializerClause;
 import org.eclipse.cdt.internal.core.model.Binary;
 
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.MemoryHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType;
@@ -112,7 +112,7 @@ public class SvComp14CHandler extends CHandler {
 
 	@Override
 	public Result visit(Dispatcher main, IASTFunctionCallExpression node) {
-		ILocation loc = new CACSLLocation(node);
+		ILocation loc = LocationFactory.createCLocation(node);
 
 		if (!(node.getFunctionNameExpression() instanceof IASTIdExpression))
 			return super.visit(main, node);
@@ -254,7 +254,7 @@ public class SvComp14CHandler extends CHandler {
 	
 	@Override
 	public Result visit(Dispatcher main, IASTIdExpression node) {
-		ILocation loc = new CACSLLocation(node);
+		ILocation loc = LocationFactory.createCLocation(node);
 		if (node.getName().toString().equals("null")) {
 			return new ResultExpression(
 					new RValue(new IdentifierExpression(loc, SFO.NULL),
