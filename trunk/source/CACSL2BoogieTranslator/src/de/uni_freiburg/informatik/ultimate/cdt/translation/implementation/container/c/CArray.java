@@ -42,7 +42,7 @@ public class CArray extends CType {
      * case where one dimension is only given via the initializer should be resolved right at 
      * initialization..)
      */
-    private final boolean variableLength;
+//    private final boolean variableLength;
     
     /**
      * Constructor.
@@ -59,17 +59,17 @@ public class CArray extends CType {
         super(false, false, false, false); //FIXME: integrate those flags
         this.dimensions = dimensions;
         this.valueType = valueType;
-        this.variableLength = false;
+//        this.variableLength = false;
     }
     
-    public CArray(Expression[] dimensions,
-            CType valueType, boolean varLength) {
-        super(false, false, false, false); //FIXME: integrate those flags
-        assert varLength : "use other constructor otherwise";
-        this.valueType = valueType;
-        this.dimensions = dimensions;
-        this.variableLength = true;
-    }
+//    public CArray(Expression[] dimensions,
+//            CType valueType, boolean varLength) {
+//        super(false, false, false, false); //FIXME: integrate those flags
+//        assert varLength : "use other constructor otherwise";
+//        this.valueType = valueType;
+//        this.dimensions = dimensions;
+//        this.variableLength = true;
+//    }
 
     /**
      * @return the dimensions
@@ -159,7 +159,8 @@ public class CArray extends CType {
             }
         }
         
-        if (variableLength) {
+//        if (variableLength) {
+        if (this.isVariableLength()) {
         	id.append("_VARLENGTH");
         }
 //        id.append(getDimensions().length);
@@ -171,7 +172,12 @@ public class CArray extends CType {
     }
     
     public boolean isVariableLength() {
-    	return this.variableLength;
+    	boolean varL = false;
+    	for (Expression sizeEx : this.dimensions) {
+    		varL |= !(sizeEx instanceof IntegerLiteral);
+    	}
+    	return varL;
+//    	return this.variableLength;
     }
     
     /**
@@ -287,6 +293,7 @@ public class CArray extends CType {
 	
 	@Override
 	public int hashCode() {
-		return HashUtils.hashJenkins(31, dimensions, valueType, variableLength);
+//		return HashUtils.hashJenkins(31, dimensions, valueType, variableLength);
+		return HashUtils.hashJenkins(31, dimensions, valueType);
 	}
 }

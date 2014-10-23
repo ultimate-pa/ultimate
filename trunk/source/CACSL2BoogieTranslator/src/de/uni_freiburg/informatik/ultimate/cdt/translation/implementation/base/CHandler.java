@@ -767,16 +767,28 @@ public class CHandler implements ICHandler {
 				if (!(overallSize instanceof IntegerLiteral)) { //size is given but variable --> a real variable length array
 					//introduce a new auxiliary variable storing the size of the array 
 					//(the variable used may change independently from the array)
-					String tmpName = main.nameHandler.getTempVarUID(SFO.AUXVAR.ARRAYDIM);
-					VariableDeclaration tmpVar = SFO.getTempVarVariableDeclaration(tmpName, new PrimitiveType(loc, SFO.INT) , loc);
 
 					ArrayList<Statement> initStmts = new ArrayList<>();
-					initStmts.add(new AssignmentStatement(loc, 
-							new LeftHandSide[] { new VariableLHS(loc, tmpName) }, new Expression[] { overallSize }));
 					ArrayList<Declaration> initDecls = new ArrayList<>();
-					initDecls.add(tmpVar);
 					HashMap<VariableDeclaration, ILocation> initAuxVars = new HashMap<>();
-					initAuxVars.put(tmpVar, loc);
+					
+					ArrayList<Expression> sizeExpressions = new ArrayList<>();
+
+					for (Expression sc : sizeConstants) {
+						if (!(sc instanceof IntegerLiteral)) {
+							String tmpName = main.nameHandler.getTempVarUID(SFO.AUXVAR.ARRAYDIM);
+							VariableDeclaration tmpVar = SFO.getTempVarVariableDeclaration(tmpName, new PrimitiveType(loc, SFO.INT) , loc);
+
+							initStmts.add(new AssignmentStatement(loc, 
+									new LeftHandSide[] { new VariableLHS(loc, tmpName) }, new Expression[] { overallSize }));
+							initDecls.add(tmpVar);
+							initAuxVars.put(tmpVar, loc);					
+							sizeExpressions.add(new IdentifierExpression(loc, tmpName));
+						} else {
+							sizeExpressions.add(sc);
+						}
+					}
+
 
 //					ResultExpression tmpInitializer = new ResultExpression(initStmts, 
 //							null, initDecls, initAuxVars);
@@ -786,11 +798,12 @@ public class CHandler implements ICHandler {
 							null, initDecls, initAuxVars);
 	
 //					arrayType = new CArray(sizeConstants.toArray(new Expression[sizeConstants.size()]), newResType.cType,
-					arrayType = new CArray(new Expression[] { new IdentifierExpression(loc, tmpName)}, newResType.cType,
-						true);
+//					arrayType = new CArray(new Expression[] { new IdentifierExpression(loc, tmpName)}, newResType.cType, true);
+//					arrayType = new CArray(sizeExpressions.toArray(new Expression[sizeExpressions.size()]), newResType.cType, true);
+					arrayType = new CArray(sizeExpressions.toArray(new Expression[sizeExpressions.size()]), newResType.cType);
 				} else { //something like int a[] -- no size given
-					arrayType = new CArray(sizeConstants.toArray(new Expression[sizeConstants.size()]), newResType.cType,
-						true);
+					arrayType = new CArray(sizeConstants.toArray(new Expression[sizeConstants.size()]), newResType.cType);
+//					arrayType = new CArray(sizeConstants.toArray(new Expression[sizeConstants.size()]), newResType.cType, true);
 				}
 			} else {
 				arrayType = new CArray(sizeConstants.toArray(new Expression[sizeConstants.size()]), newResType.cType);
