@@ -198,14 +198,17 @@ public class RelevantVariables {
 			result = computePredecessorRvInternal(currentRelevantVariables,tf);
 		} else if (m_TraceWithFormulas.getTrace().isCallPosition(i)) {
 			TransFormula localVarAssignment = m_TraceWithFormulas.getLocalVarAssignment(i);
+			TransFormula oldVarAssignment = m_TraceWithFormulas.getOldVarAssignment(i);
+			TransFormula globalVarAssignment = m_TraceWithFormulas.getGlobalVarAssignment(i);
 			if (m_TraceWithFormulas.getTrace().isPendingCall(i)) {
-				result = computePredecessorRvCall_Pending(currentRelevantVariables, localVarAssignment);
+				result = computePredecessorRvCall_Pending(currentRelevantVariables, localVarAssignment, oldVarAssignment, globalVarAssignment);
 			} else {
 				int correspondingReturnPosition = m_TraceWithFormulas.getTrace().getReturnPosition(i);
 				Set<BoogieVar> relevantVariablesAfterReturn = 
 						m_BackwardRelevantVariables[correspondingReturnPosition+1];
+				TransFormula returnTF = m_TraceWithFormulas.getFormulaFromNonCallPos(correspondingReturnPosition);
 				result = computePredecessorRvCall_NonPending(currentRelevantVariables, 
-						relevantVariablesAfterReturn, localVarAssignment);
+						relevantVariablesAfterReturn, localVarAssignment, returnTF, oldVarAssignment, globalVarAssignment);
 				addNonModifiableGlobalsAlongCalledProcedure(result,i);
 			}
 		} else if (m_TraceWithFormulas.getTrace().isReturnPosition(i)) {
@@ -283,25 +286,32 @@ public class RelevantVariables {
 	
 	private Set<BoogieVar> computePredecessorRvCall_NonPending(Set<BoogieVar> callPredRv, 
 			Set<BoogieVar> returnPredRv,
-			TransFormula localVarAssignment) {
+			TransFormula localVarAssignment, TransFormula returnTF, 
+			TransFormula oldVarAssignment, TransFormula globalVarAssignment) {
 		Set<BoogieVar> result = new HashSet<BoogieVar>();
-		result.addAll(returnPredRv);
-		result.addAll(localVarAssignment.getInVars().keySet());
-		for (BoogieVar bv : callPredRv) {
-			if (bv.isGlobal()) {
+		for (BoogieVar bv : returnPredRv) {
+			if (!isHavoced(bv, returnTF) && !isHavoced(bv, globalVarAssignment) && !isHavoced(bv, oldVarAssignment)) {
 				result.add(bv);
 			}
 		}
+		result.addAll(localVarAssignment.getInVars().keySet());
+//		for (BoogieVar bv : callPredRv) {
+//			if (bv.isGlobal()) {
+//				result.add(bv);
+//			}
+//		}
 		return result;
 	}
 	
 	private Set<BoogieVar> computePredecessorRvCall_Pending(Set<BoogieVar> callPredRv,
-			TransFormula localVarAssignment) {
+			TransFormula localVarAssignment, TransFormula oldVarAssignment, TransFormula globalVarAssignment) {
 		Set<BoogieVar> result = new HashSet<BoogieVar>();
 		result.addAll(localVarAssignment.getInVars().keySet());
 		for (BoogieVar bv : callPredRv) {
 			if (bv.isGlobal()) {
-				result.add(bv);
+				if (!isHavoced(bv, globalVarAssignment) && !isHavoced(bv, oldVarAssignment)) {
+					result.add(bv);
+				}
 			}
 		}
 		
