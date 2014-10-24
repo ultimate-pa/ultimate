@@ -1,10 +1,14 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck;
 
 import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.log4j.Logger;
 
+import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
+import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
@@ -22,6 +26,7 @@ public class AnnotateAndAssertConjunctsOfCodeBlocks extends AnnotateAndAssertCod
 	
 	Map<Term,Term> m_Annotated2Original = new HashMap<Term,Term>();
 	protected final DefaultTransFormulas m_DefaultTransFormulas;
+	private static boolean m_TransFormEqualities = false;
 
 	public AnnotateAndAssertConjunctsOfCodeBlocks(SmtManager smtManager, 
 			NestedFormulas<Term, Term> nestedSSA, DefaultTransFormulas defaultTransformulas, Logger logger) {
@@ -50,6 +55,28 @@ public class AnnotateAndAssertConjunctsOfCodeBlocks extends AnnotateAndAssertCod
 		Term[] indexedConjuncts = SmtUtils.getConjuncts(indexed);
 		assert originalConjuncts.length == indexedConjuncts.length : 
 			"number of original and indexed conjuncts differ";
+		
+		if (m_TransFormEqualities) {
+			List<Term> originalConjunctsEqualitiesTransformed = new LinkedList<Term>();
+			List<Term> indexedConjunctsEqualitiesTransformed = new LinkedList<Term>();
+			
+			for (int i = 0; i<originalConjuncts.length; i++) {
+				Term[] conjunctInequalities = transformEqualityToInequalities(originalConjuncts[i]);
+				Term[] indexedConjunctInequalities = transformEqualityToInequalities(indexedConjuncts[i]);
+				assert conjunctInequalities.length == indexedConjunctInequalities.length : 
+					"number of original and indexed conjuncts after transforming equalities to inequalities differ";
+
+				originalConjunctsEqualitiesTransformed.add(conjunctInequalities[0]);
+				indexedConjunctsEqualitiesTransformed.add(indexedConjunctInequalities[0]);
+				if (conjunctInequalities.length == 2) {
+					originalConjunctsEqualitiesTransformed.add(conjunctInequalities[1]);
+					indexedConjunctsEqualitiesTransformed.add(indexedConjunctInequalities[1]);
+				}
+			}
+			originalConjuncts = originalConjunctsEqualitiesTransformed.toArray(new Term[originalConjunctsEqualitiesTransformed.size()]);
+			indexedConjuncts = indexedConjunctsEqualitiesTransformed.toArray(new Term[indexedConjunctsEqualitiesTransformed.size()]);
+			
+		}
 		Term[] annotatedConjuncts = new Term[originalConjuncts.length];
 		for (int i=0; i<originalConjuncts.length; i++) {
 			Term originalConjunct = originalConjuncts[i];
@@ -160,7 +187,26 @@ public class AnnotateAndAssertConjunctsOfCodeBlocks extends AnnotateAndAssertCod
 	
 	protected Term annotateAndAssertTerm(Term term, String name, int conjunct) {
 		name += "_conjunct" + conjunct;
+		
 		return super.annotateAndAssertTerm(term, name);
+	}
+
+
+	private Term[] transformEqualityToInequalities(Term term) {
+		if (term instanceof ApplicationTerm) {
+			ApplicationTerm ap = (ApplicationTerm) term;
+			if (ap.getFunction().getName() == "=") {
+				Term[] params = ap.getParameters();
+				assert params.length == 2 : "only for binary \"=\" implemented";
+				if (params[0].getSort().isNumericSort() || 
+						params[1].getSort().isNumericSort()) {
+					Term firstConjunct = m_Script.term("<=", params[0], params[1]);
+					Term secondConjunct = m_Script.term("<=", params[1], params[0]);
+					return new Term[]{firstConjunct, secondConjunct};
+				}
+			}
+		}
+		return new Term[]{term};
 	}
 
 
