@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.EnumSet;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -111,7 +112,7 @@ public interface IProgramExecution<TE, E> {
 	public class AtomicTraceElement<TE> {
 		private final TE mElement;
 		private final TE mStep;
-		private final StepInfo mStepInfo;
+		private EnumSet<StepInfo> mStepInfo;
 
 		/**
 		 * Creates an instance where the trace element is evaluated atomically
@@ -136,7 +137,16 @@ public interface IProgramExecution<TE, E> {
 		public AtomicTraceElement(TE element, TE step, StepInfo info) {
 			mElement = element;
 			mStep = step;
+			mStepInfo = EnumSet.of(info);
+		}
+
+		public AtomicTraceElement(TE element, TE step, EnumSet<StepInfo> info) {
+			mElement = element;
+			mStep = step;
 			mStepInfo = info;
+			if (info.size() > 1 && info.contains(StepInfo.NONE)) {
+				throw new IllegalArgumentException("You cannot combine NONE with other values");
+			}
 		}
 
 		/**
@@ -159,8 +169,12 @@ public interface IProgramExecution<TE, E> {
 			return mStep;
 		}
 
-		public StepInfo getStepInfo() {
-			return mStepInfo;
+		public boolean hasStepInfo(StepInfo info) {
+			return mStepInfo.contains(info);
+		}
+
+		public EnumSet<StepInfo> getStepInfo() {
+			return EnumSet.copyOf(mStepInfo);
 		}
 
 		/**
@@ -174,7 +188,25 @@ public interface IProgramExecution<TE, E> {
 		 * 
 		 */
 		public enum StepInfo {
-			NONE, CONDITION_EVAL_TRUE, CONDITION_EVAL_FALSE, PROC_CALL, PROC_RETURN, ARG_EVAL, EXPR_EVAL, FUNC_CALL
+			NONE("NONE"), 
+			CONDITION_EVAL_TRUE("COND TRUE"), 
+			CONDITION_EVAL_FALSE("COND FALSE"), 
+			PROC_CALL("CALL"), 
+			PROC_RETURN("RET"), 
+			ARG_EVAL("ARG"), 
+			EXPR_EVAL("EXPR"), 
+			FUNC_CALL("FCALL");
+			
+			private final String mText;
+
+		    private StepInfo(final String text) {
+		    	mText = text;
+		    }
+
+		    @Override
+		    public String toString() {
+		        return mText;
+		    }
 		}
 
 		@Override

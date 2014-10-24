@@ -1,91 +1,91 @@
-step0: int a, b;
-step1: a = 12
-step2: b = 0
-values2:  a=12  b=0
-step3: a > 10 (CONDITION_EVAL_TRUE)
-step4: a--
-values4:  a=11  b=0
-step5: a > 10 (CONDITION_EVAL_TRUE)
-step6: a--
-values6:  a=10  b=0
-step7: !(a > 10) (CONDITION_EVAL_FALSE)
-values7:  a=10  b=0
-step8: a > 5 (CONDITION_EVAL_TRUE)
-step9: b++
-values9:  a=10  b=1
-step10: a > 7 (CONDITION_EVAL_TRUE)
-step11: a--
-values11:  a=9  b=1
-step12: a > 7 (CONDITION_EVAL_TRUE)
-step13: a--
-values13:  a=8  b=1
-step14: a > 7 (CONDITION_EVAL_TRUE)
-step15: a--
-values15:  a=7  b=1
-step16: !(a > 7) (CONDITION_EVAL_FALSE)
-values16:  a=7  b=1
-step17: a--
-values17:  a=6  b=1
-step18: a > 5 (CONDITION_EVAL_TRUE)
-step19: b++
-values19:  a=6  b=2
-step20: !(a > 7) (CONDITION_EVAL_FALSE)
-values20:  a=6  b=2
-step21: a--
-values21:  a=5  b=2
-step22: !(a > 5) (CONDITION_EVAL_FALSE)
-values22:  a=5  b=2
-step23: a>0 (CONDITION_EVAL_TRUE)
-step24: b++
-step25: a--
-values25:  a=4  b=3
-step26: a>0 (CONDITION_EVAL_TRUE)
-step27: b++
-step28: a--
-values28:  a=3  b=4
-step29: a>0 (CONDITION_EVAL_TRUE)
-step30: b++
-step31: a--
-values31:  a=2  b=5
-step32: a>0 (CONDITION_EVAL_TRUE)
-step33: b++
-step34: a--
-values34:  a=1  b=6
-step35: a>0 (CONDITION_EVAL_TRUE)
-step36: b++
-step37: a--
-values37:  a=0  b=7
-step38: !(a>0) (CONDITION_EVAL_FALSE)
-values38:  a=0  b=7
-step39: b--
-values39:  a=0  b=6
-step40: b>0 (CONDITION_EVAL_TRUE)
-values40:  a=0  b=6
-step41: b--
-values41:  a=0  b=5
-step42: b>0 (CONDITION_EVAL_TRUE)
-values42:  a=0  b=5
-step43: b--
-values43:  a=0  b=4
-step44: b>0 (CONDITION_EVAL_TRUE)
-values44:  a=0  b=4
-step45: b--
-values45:  a=0  b=3
-step46: b>0 (CONDITION_EVAL_TRUE)
-values46:  a=0  b=3
-step47: b--
-values47:  a=0  b=2
-step48: b>0 (CONDITION_EVAL_TRUE)
-values48:  a=0  b=2
-step49: b--
-values49:  a=0  b=1
-step50: b>0 (CONDITION_EVAL_TRUE)
-values50:  a=0  b=1
-step51: b--
-values51:  a=0  b=0
-step52: !(b>0) (CONDITION_EVAL_FALSE)
-values52:  a=0  b=0
-step53: b == 0 (CONDITION_EVAL_TRUE)
-values53:  a=0  b=0
-step54: __VERIFIER_error()
-values54:  a=0  b=0
+[L4]               int a, b;
+[L5]               a = 12
+[L6]               b = 0
+       VAL         [a=12, b=0]
+[L8]   COND TRUE   a > 10
+[L9]               a--
+       VAL         [a=11, b=0]
+[L8]   COND TRUE   a > 10
+[L9]               a--
+       VAL         [a=10, b=0]
+[L8]   COND FALSE  !(a > 10)
+       VAL         [a=10, b=0]
+[L12]  COND TRUE   a > 5
+[L13]              b++
+       VAL         [a=10, b=1]
+[L14]  COND TRUE   a > 7
+[L15]              a--
+       VAL         [a=9, b=1]
+[L14]  COND TRUE   a > 7
+[L15]              a--
+       VAL         [a=8, b=1]
+[L14]  COND TRUE   a > 7
+[L15]              a--
+       VAL         [a=7, b=1]
+[L14]  COND FALSE  !(a > 7)
+       VAL         [a=7, b=1]
+[L17]              a--
+       VAL         [a=6, b=1]
+[L12]  COND TRUE   a > 5
+[L13]              b++
+       VAL         [a=6, b=2]
+[L14]  COND FALSE  !(a > 7)
+       VAL         [a=6, b=2]
+[L17]              a--
+       VAL         [a=5, b=2]
+[L12]  COND FALSE  !(a > 5)
+       VAL         [a=5, b=2]
+[L20]  COND TRUE   a>0
+[L21]              b++
+[L20]              a--
+       VAL         [a=4, b=3]
+[L20]  COND TRUE   a>0
+[L21]              b++
+[L20]              a--
+       VAL         [a=3, b=4]
+[L20]  COND TRUE   a>0
+[L21]              b++
+[L20]              a--
+       VAL         [a=2, b=5]
+[L20]  COND TRUE   a>0
+[L21]              b++
+[L20]              a--
+       VAL         [a=1, b=6]
+[L20]  COND TRUE   a>0
+[L21]              b++
+[L20]              a--
+       VAL         [a=0, b=7]
+[L20]  COND FALSE  !(a>0)
+       VAL         [a=0, b=7]
+[L25]              b--
+       VAL         [a=0, b=6]
+[L26]  COND TRUE   b>0
+       VAL         [a=0, b=6]
+[L25]              b--
+       VAL         [a=0, b=5]
+[L26]  COND TRUE   b>0
+       VAL         [a=0, b=5]
+[L25]              b--
+       VAL         [a=0, b=4]
+[L26]  COND TRUE   b>0
+       VAL         [a=0, b=4]
+[L25]              b--
+       VAL         [a=0, b=3]
+[L26]  COND TRUE   b>0
+       VAL         [a=0, b=3]
+[L25]              b--
+       VAL         [a=0, b=2]
+[L26]  COND TRUE   b>0
+       VAL         [a=0, b=2]
+[L25]              b--
+       VAL         [a=0, b=1]
+[L26]  COND TRUE   b>0
+       VAL         [a=0, b=1]
+[L25]              b--
+       VAL         [a=0, b=0]
+[L26]  COND FALSE  !(b>0)
+       VAL         [a=0, b=0]
+[L29]  COND TRUE   b == 0
+       VAL         [a=0, b=0]
+[L35]              __VERIFIER_error()
+       VAL         [a=0, b=0]

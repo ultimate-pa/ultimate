@@ -199,7 +199,7 @@ public class BoogiePreprocessorBacktranslator extends
 				// input: if its none, its a function call (so there will be no
 				// return), else its a procedure call with corresponding return
 
-				if (programExecution.getTraceElement(i).getStepInfo() == StepInfo.NONE) {
+				if (programExecution.getTraceElement(i).hasStepInfo(StepInfo.NONE)) {
 					atomicTrace.add(new AtomicTraceElement<BoogieASTNode>(elem, elem, StepInfo.FUNC_CALL));
 				} else {
 					atomicTrace.add(new AtomicTraceElement<BoogieASTNode>(elem, elem, programExecution.getTraceElement(

@@ -124,38 +124,31 @@ public class BoogieProgramExecution implements IProgramExecution<BoogieASTNode, 
 		for (int i = 0; i < m_Trace.size(); i++) {
 			AtomicTraceElement<BoogieASTNode> currentATE = m_Trace.get(i);
 			BoogieASTNode currentStep = currentATE.getStep();
-			StepInfo currentStepInfo = currentATE.getStepInfo();
 
 			sb.append("step");
 			sb.append(i);
 			sb.append(": ");
 
-			switch (currentStepInfo) {
-			case CONDITION_EVAL_TRUE:
-				sb.append(BoogiePrettyPrinter.print((Expression) currentStep));
-				sb.append(" (").append(currentStepInfo.toString()).append(")");
-				break;
-			case CONDITION_EVAL_FALSE:
+			if (currentATE.hasStepInfo(StepInfo.CONDITION_EVAL_FALSE)) {
 				Expression exp = (Expression) currentStep;
 				sb.append(BoogiePrettyPrinter.print(new UnaryExpression(exp.getLocation(),
 						UnaryExpression.Operator.LOGICNEG, exp)));
-				sb.append(" (").append(currentStepInfo.toString()).append(")");
-				break;
-			case PROC_CALL:
-			case PROC_RETURN:
-				sb.append(BoogiePrettyPrinter.print((Statement) currentStep));
-				sb.append(" (").append(currentStepInfo.toString()).append(")");
-				break;
-			default:
+			} else {
 				if (currentStep instanceof Statement) {
 					sb.append(BoogiePrettyPrinter.print((Statement) currentStep));
 				} else if (currentStep instanceof Specification) {
 					sb.append(BoogiePrettyPrinter.print((Specification) currentStep));
+				} else if (currentStep instanceof Expression) {
+					sb.append(BoogiePrettyPrinter.print((Expression) currentStep));
 				} else {
-					throw new IllegalArgumentException("current step is neither Statement nor Specification");
+					throw new IllegalArgumentException(
+							"current step is neither Statement nor Specification nor Expression");
 				}
-				break;
 			}
+			if (!currentATE.hasStepInfo(StepInfo.NONE)) {
+				sb.append(" ").append(currentATE.getStepInfo().toString());
+			}
+
 			sb.append(lineSeparator);
 			valuation = ppstoString(getProgramState(i));
 			if (valuation != null) {

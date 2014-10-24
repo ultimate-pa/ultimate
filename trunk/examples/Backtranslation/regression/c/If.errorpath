@@ -1,9 +1,9 @@
-step0: int a, b;
-step1: !(a > 10) (CONDITION_EVAL_FALSE)
-step2: a < 5 (CONDITION_EVAL_TRUE)
-step3: b = 3
-values3:  a=4  b=3
-step4: b == 3 (CONDITION_EVAL_TRUE)
-values4:  a=4  b=3
-step5: __VERIFIER_error()
-values5:  a=4  b=3
+[L4]               int a, b;
+[L6]   COND FALSE  !(a > 10)
+[L13]  COND TRUE   a < 5
+[L14]              b = 3
+       VAL         [a=4, b=3]
+[L20]  COND TRUE   b == 3
+       VAL         [a=4, b=3]
+[L26]              __VERIFIER_error()
+       VAL         [a=4, b=3]

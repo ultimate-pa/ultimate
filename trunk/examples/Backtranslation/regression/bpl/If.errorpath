@@ -1,6 +1,6 @@
-step0: !(a > 10) (CONDITION_EVAL_FALSE)
+step0: !(a > 10) [COND FALSE]
 values0:  a=0
-step1: a < 5 (CONDITION_EVAL_TRUE)
+step1: a < 5 [COND TRUE]
 values1:  a=0
 step2: r := 3;
 values2:  a=0  r=3

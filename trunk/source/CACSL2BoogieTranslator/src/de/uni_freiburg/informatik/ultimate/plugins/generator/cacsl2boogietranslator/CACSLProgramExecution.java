@@ -72,46 +72,39 @@ public class CACSLProgramExecution implements IProgramExecution<CACSLLocation, I
 		StringBuilder sb = new StringBuilder();
 		String valuation = ppstoString(getInitialProgramState());
 		String lineSeparator = System.getProperty("line.separator");
+		String fillChar = " ";
+
+		List<String> lineNumerColumn = getLineNumberColumn(mTrace);
+		int lineNumberColumnLength = getMaxLength(lineNumerColumn) + 2;
+
+		List<String> stepInfoColum = getStepInfoColum(mTrace);
+		int stepInfoColumLength = getMaxLength(stepInfoColum) + 2;
+
 		if (valuation != null) {
-			sb.append("initial values:");
+			sb.append(fillWithChar(fillChar, lineNumberColumnLength));
+			addFixedLength(sb, "IVAL", stepInfoColumLength, fillChar);
 			sb.append(valuation);
 			sb.append(lineSeparator);
 		}
+
 		for (int i = 0; i < mTrace.size(); i++) {
 			AtomicTraceElement<CACSLLocation> currentATE = mTrace.get(i);
 			CACSLLocation currentStep = currentATE.getStep();
-			StepInfo currentStepInfo = currentATE.getStepInfo();
 
-			sb.append("step");
-			sb.append(i);
-			sb.append(": ");
+			String lineNumber = lineNumerColumn.get(i);
+			String stepInfo = stepInfoColum.get(i);
+
+			addFixedLength(sb, lineNumber, lineNumberColumnLength, fillChar);
+			addFixedLength(sb, stepInfo, stepInfoColumLength, fillChar);
 
 			if (currentStep instanceof CLocation) {
 				IASTNode currentStepNode = ((CLocation) currentStep).getNode();
-				switch (currentStepInfo) {
-				case CONDITION_EVAL_TRUE:
-				case EXPR_EVAL:
-				case ARG_EVAL:
-					sb.append(currentStepNode.getRawSignature());
-					sb.append(" (").append(currentStepInfo.toString()).append(")");
-					break;
-				case CONDITION_EVAL_FALSE:
-					// I couldnt build a printable CASTUnaryExpression, so I
-					// just fake one..
-					IASTExpression exp = (IASTExpression) currentStepNode;
+				if (currentATE.hasStepInfo(StepInfo.CONDITION_EVAL_FALSE)) {
 					sb.append("!(");
-					sb.append(exp.getRawSignature());
+					sb.append(currentStepNode.getRawSignature());
 					sb.append(")");
-					sb.append(" (").append(currentStepInfo.toString()).append(")");
-					break;
-				case PROC_CALL:
-				case PROC_RETURN:
+				} else {
 					sb.append(currentStepNode.getRawSignature());
-					sb.append(" (").append(currentStepInfo.toString()).append(")");
-					break;
-				default:
-					sb.append(currentStepNode.getRawSignature());
-					break;
 				}
 			} else if (currentStep instanceof ACSLLocation) {
 				// do something if its an acsl node
@@ -120,13 +113,11 @@ public class CACSLProgramExecution implements IProgramExecution<CACSLLocation, I
 			} else {
 				throw new UnsupportedOperationException();
 			}
-
 			sb.append(lineSeparator);
 			valuation = ppstoString(getProgramState(i));
 			if (valuation != null) {
-				sb.append("values");
-				sb.append(i);
-				sb.append(":");
+				sb.append(fillWithChar(fillChar, lineNumberColumnLength));
+				addFixedLength(sb, "VAL", stepInfoColumLength, fillChar);
 				sb.append(valuation);
 				sb.append(lineSeparator);
 			}
@@ -134,30 +125,91 @@ public class CACSLProgramExecution implements IProgramExecution<CACSLLocation, I
 		return sb.toString();
 	}
 
-	private String ppstoString(ProgramState<IASTExpression> pps) {
-		String result;
-		if (pps == null) {
-			result = null;
-		} else {
-			List<IASTExpression> keys = new ArrayList<>(pps.getVariables());
-			Collections.sort(keys, new Comparator<IASTExpression>() {
-				@Override
-				public int compare(IASTExpression arg0, IASTExpression arg1) {
-					return arg0.getRawSignature().compareToIgnoreCase(arg1.getRawSignature());
-				}
-			});
+	private void addFixedLength(StringBuilder sb, String actualString, int fillLength, String fillChar) {
+		sb.append(actualString);
+		sb.append(fillWithChar(fillChar, fillLength - actualString.length()));
+	}
 
-			StringBuilder sb = new StringBuilder();
-			for (IASTExpression variable : keys) {
-				IASTExpression value = pps.getValues(variable).iterator().next();
-				sb.append("  ");
-				String var = variable.getRawSignature();
-				String val = value.getRawSignature();
-				sb.append(var + "=" + val);
-			}
-			result = sb.toString();
+	private String fillWithChar(String string, int length) {
+		StringBuffer outputBuffer = new StringBuffer(length);
+		for (int i = 0; i < length; i++) {
+			outputBuffer.append(string);
 		}
-		return result;
+		return outputBuffer.toString();
+	}
+
+	private int getMaxLength(List<String> lineNumerColumn) {
+		int max = 0;
+		for (String s : lineNumerColumn) {
+			int length = s.length();
+			if (length > max) {
+				max = length;
+			}
+		}
+		return max;
+	}
+
+	private List<String> getStepInfoColum(List<AtomicTraceElement<CACSLLocation>> trace) {
+		List<String> rtr = new ArrayList<>();
+		for (AtomicTraceElement<CACSLLocation> elem : trace) {
+			if (elem.hasStepInfo(StepInfo.NONE)) {
+				rtr.add("");
+			} else {
+				String str = elem.getStepInfo().toString();
+				rtr.add(str.substring(1, str.length() - 1));
+			}
+		}
+		return rtr;
+	}
+
+	private List<String> getLineNumberColumn(ArrayList<AtomicTraceElement<CACSLLocation>> trace) {
+		List<String> rtr = new ArrayList<>();
+		for (AtomicTraceElement<CACSLLocation> elem : trace) {
+			StringBuilder sb = new StringBuilder();
+			sb.append("[L");
+			int start = elem.getStep().getStartLine();
+			int end = elem.getStep().getEndLine();
+			if (start == end) {
+				sb.append(start);
+			} else {
+				sb.append(start);
+				sb.append("-L");
+				sb.append(end);
+			}
+			sb.append("]");
+			rtr.add(sb.toString());
+		}
+		return rtr;
+	}
+
+	private String ppstoString(ProgramState<IASTExpression> pps) {
+		if (pps == null) {
+			return null;
+		}
+
+		List<IASTExpression> keys = new ArrayList<>(pps.getVariables());
+		Collections.sort(keys, new Comparator<IASTExpression>() {
+			@Override
+			public int compare(IASTExpression arg0, IASTExpression arg1) {
+				return arg0.getRawSignature().compareToIgnoreCase(arg1.getRawSignature());
+			}
+		});
+
+		StringBuilder sb = new StringBuilder();
+		sb.append("[");
+		int i = 0;
+		for (IASTExpression variable : keys) {
+			IASTExpression value = pps.getValues(variable).iterator().next();
+			sb.append(variable.getRawSignature());
+			sb.append("=");
+			sb.append(value.getRawSignature());
+			i++;
+			if (i < keys.size()) {
+				sb.append(", ");
+			}
+		}
+		sb.append("]");
+		return sb.toString();
 	}
 
 }

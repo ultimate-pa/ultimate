@@ -1,36 +1,36 @@
 step0: y := 0;
 values0:  y=0
-step1: call z := inc(y); (PROC_CALL)
+step1: call z := inc(y); [CALL]
 values1:  x=0
-step2: !(x > 10) (CONDITION_EVAL_FALSE)
+step2: !(x > 10) [COND FALSE]
 values2:  x=0
 step3: y := x + 5;
 values3:  x=0  y=5
-step4: call res := inc(y); (PROC_CALL)
+step4: call res := inc(y); [CALL]
 values4:  x=5
-step5: !(x > 10) (CONDITION_EVAL_FALSE)
+step5: !(x > 10) [COND FALSE]
 values5:  x=5
 step6: y := x + 5;
 values6:  x=5  y=10
-step7: call res := inc(y); (PROC_CALL)
+step7: call res := inc(y); [CALL]
 values7:  x=10
-step8: !(x > 10) (CONDITION_EVAL_FALSE)
+step8: !(x > 10) [COND FALSE]
 values8:  x=10
 step9: y := x + 5;
 values9:  x=10  y=15
-step10: call res := inc(y); (PROC_CALL)
+step10: call res := inc(y); [CALL]
 values10:  x=15
-step11: x > 10 (CONDITION_EVAL_TRUE)
+step11: x > 10 [COND TRUE]
 values11:  x=15
 step12: res := x + 1;
 values12:  res=16  x=15
-step13: call res := inc(y); (PROC_RETURN)
+step13: call res := inc(y); [RET]
 values13:  res=16  x=10  y=15
-step14: call res := inc(y); (PROC_RETURN)
+step14: call res := inc(y); [RET]
 values14:  res=16  x=5  y=10
-step15: call res := inc(y); (PROC_RETURN)
+step15: call res := inc(y); [RET]
 values15:  res=16  x=0  y=5
-step16: call z := inc(y); (PROC_RETURN)
+step16: call z := inc(y); [RET]
 values16:  y=0  z=16
 step17: assert z == 0;
 values17:  y=0  z=16

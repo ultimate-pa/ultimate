@@ -1,38 +1,38 @@
-step0: call ULTIMATE.init(); (PROC_CALL)
+step0: call ULTIMATE.init(); [CALL]
 values0:  #NULL!base=1  #NULL!offset=2  old(#NULL!base)=1  old(#NULL!offset)=2
 step1: #NULL := { base: 0, offset: 0 };
 values1:  #NULL!base=0  #NULL!offset=0  old(#NULL!base)=1  old(#NULL!offset)=2
 step2: #valid[0] := false;
 values2:  #NULL!base=0  #NULL!offset=0  old(#NULL!base)=1  old(#NULL!offset)=2
-step3: call ULTIMATE.init(); (PROC_RETURN)
+step3: call ULTIMATE.init(); [RET]
 values3:  #NULL!base=0  #NULL!offset=0  old(#NULL!base)=0  old(#NULL!offset)=0
-step4: call #t~ret4 := main(); (PROC_CALL)
+step4: call #t~ret4 := main(); [CALL]
 values4:  #NULL!base=0  #NULL!offset=0  old(#NULL!base)=0  old(#NULL!offset)=0
-step5: call ~#a~4 := ~malloc(4);
+step5: call ~#a~4 := ~malloc(4); [FCALL]
 values5:  #NULL!base=0  #NULL!offset=0  old(#NULL!base)=0  old(#NULL!offset)=0  ~#a~4!base=7  ~#a~4!offset=0
 step6: havoc ~p1~4;
 values6:  #NULL!base=0  #NULL!offset=0  old(#NULL!base)=0  old(#NULL!offset)=0  ~#a~4!base=7  ~#a~4!offset=0
 step7: ~p1~4 := ~#a~4;
 values7:  #NULL!base=0  #NULL!offset=0  old(#NULL!base)=0  old(#NULL!offset)=0  ~#a~4!base=7  ~#a~4!offset=0  ~p1~4!base=7  ~p1~4!offset=0
-step8: call write~int(5, ~#a~4, 4);
+step8: call write~int(5, ~#a~4, 4); [FCALL]
 values8:  #NULL!base=0  #NULL!offset=0  old(#NULL!base)=0  old(#NULL!offset)=0  ~#a~4!base=7  ~#a~4!offset=0  ~p1~4!base=7  ~p1~4!offset=0
-step9: call #t~mem1 := read~int(~#a~4, 4);
+step9: call #t~mem1 := read~int(~#a~4, 4); [FCALL]
 values9:  #NULL!base=0  #NULL!offset=0  #t~mem1=5  old(#NULL!base)=0  old(#NULL!offset)=0  ~#a~4!base=7  ~#a~4!offset=0  ~p1~4!base=7  ~p1~4!offset=0
 step10: #t~post2 := #t~mem1;
 values10:  #NULL!base=0  #NULL!offset=0  #t~mem1=5  #t~post2=5  old(#NULL!base)=0  old(#NULL!offset)=0  ~#a~4!base=7  ~#a~4!offset=0  ~p1~4!base=7  ~p1~4!offset=0
-step11: call write~int(#t~post2 - 1, ~#a~4, 4);
+step11: call write~int(#t~post2 - 1, ~#a~4, 4); [FCALL]
 values11:  #NULL!base=0  #NULL!offset=0  #t~mem1=5  #t~post2=5  old(#NULL!base)=0  old(#NULL!offset)=0  ~#a~4!base=7  ~#a~4!offset=0  ~p1~4!base=7  ~p1~4!offset=0
 step12: havoc #t~post2;
 values12:  #NULL!base=0  #NULL!offset=0  #t~mem1=5  old(#NULL!base)=0  old(#NULL!offset)=0  ~#a~4!base=7  ~#a~4!offset=0  ~p1~4!base=7  ~p1~4!offset=0
 step13: havoc #t~mem1;
 values13:  #NULL!base=0  #NULL!offset=0  old(#NULL!base)=0  old(#NULL!offset)=0  ~#a~4!base=7  ~#a~4!offset=0  ~p1~4!base=7  ~p1~4!offset=0
-step14: call #t~mem3 := read~int(~p1~4, 4);
+step14: call #t~mem3 := read~int(~p1~4, 4); [FCALL]
 values14:  #NULL!base=0  #NULL!offset=0  #t~mem3=4  old(#NULL!base)=0  old(#NULL!offset)=0  ~#a~4!base=7  ~#a~4!offset=0  ~p1~4!base=7  ~p1~4!offset=0
-step15: #t~mem3 == 4 (CONDITION_EVAL_TRUE)
+step15: #t~mem3 == 4 [COND TRUE]
 values15:  #NULL!base=0  #NULL!offset=0  #t~mem3=4  old(#NULL!base)=0  old(#NULL!offset)=0  ~#a~4!base=7  ~#a~4!offset=0  ~p1~4!base=7  ~p1~4!offset=0
 step16: havoc #t~mem3;
 values16:  #NULL!base=0  #NULL!offset=0  old(#NULL!base)=0  old(#NULL!offset)=0  ~#a~4!base=7  ~#a~4!offset=0  ~p1~4!base=7  ~p1~4!offset=0
-step17: call assert_fail();
+step17: call assert_fail(); [FCALL]
 values17:  #NULL!base=0  #NULL!offset=0  old(#NULL!base)=0  old(#NULL!offset)=0  ~#a~4!base=7  ~#a~4!offset=0  ~p1~4!base=7  ~p1~4!offset=0
 step18: assert false;
 values18:  #NULL!base=0  #NULL!offset=0  old(#NULL!base)=0  old(#NULL!offset)=0  ~#a~4!base=7  ~#a~4!offset=0  ~p1~4!base=7  ~p1~4!offset=0

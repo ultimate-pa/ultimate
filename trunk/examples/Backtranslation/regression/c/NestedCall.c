@@ -1,16 +1,11 @@
 extern void __VERIFIER_error() __attribute__ ((__noreturn__));
 
-void printf(char *format);
-void assert_fail(void);
-
 int main() {
     int a = 5;
 	
 	a = f(f(a++));
 	
-    if (a != 7) {
-        printf("ERROR\n");
-        assert_fail();
+    if (a != 8) {
         goto ERROR;
     }
 
@@ -20,6 +15,6 @@ int main() {
     return 1;
 }
 
-int f(int a) {
-	return a++;
+int f(int b) {
+	return ++b;
 }

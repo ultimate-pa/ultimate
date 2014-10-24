@@ -1,16 +1,16 @@
-step0: int a=0;
-step1: int b=0;
-step2: a++ (EXPR_EVAL)
-step3: b++ (EXPR_EVAL)
-step4: ++a (EXPR_EVAL)
-step5: ++b (EXPR_EVAL)
-step6: a = a++ + b++ + ++a + ++b
-step7: a-- (EXPR_EVAL)
-step8: b-- (EXPR_EVAL)
-step9: --a (EXPR_EVAL)
-step10: --b (EXPR_EVAL)
-step11: b = a-- - b-- - --a - --b
-step12: b == 0 (CONDITION_EVAL_TRUE)
-values12:  a=2  b=0
-step13: __VERIFIER_error()
-values13:  a=2  b=0
+[L4]              int a=0;
+[L5]              int b=0;
+[L7]   EXPR       a++
+[L7]   EXPR       b++
+[L7]   EXPR       ++a
+[L7]   EXPR       ++b
+[L7]              a = a++ + b++ + ++a + ++b
+[L8]   EXPR       a--
+[L8]   EXPR       b--
+[L8]   EXPR       --a
+[L8]   EXPR       --b
+[L8]              b = a-- - b-- - --a - --b
+[L11]  COND TRUE  b == 0
+       VAL        [a=2, b=0]
+[L17]             __VERIFIER_error()
+       VAL        [a=2, b=0]

@@ -2,12 +2,12 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietransl
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import org.apache.log4j.Logger;
-import org.eclipse.cdt.core.dom.ast.ASTGenericVisitor;
 import org.eclipse.cdt.core.dom.ast.IASTDeclarator;
 import org.eclipse.cdt.core.dom.ast.IASTExpression;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
@@ -28,6 +28,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.S
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.model.DefaultTranslator;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieTransformer;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BoogieASTNode;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BooleanLiteral;
@@ -118,9 +119,17 @@ public class CACSL2BoogieBacktranslator extends
 					// if it points to the TranslationUnit, it should be
 					// Ultimate.init or Ultimate.start and we make our
 					// initalstate right after them here
+					// if we already have some explicit declarations, we just
+					// skip the whole initial state business and use this as the last
+					// normal state
 					i = findMergeSequence(programExecution, i, loc);
 					if (cnode instanceof CASTTranslationUnit) {
-						initialState = translateProgramState(programExecution.getProgramState(i));
+						if (translatedAtomicTraceElements.size() > 0) {
+							translatedProgramStates.remove(translatedProgramStates.size()-1);
+							translatedProgramStates.add(translateProgramState(programExecution.getProgramState(i)));
+						} else {
+							initialState = translateProgramState(programExecution.getProgramState(i));
+						}
 					}
 					continue;
 				} else if (cnode instanceof CASTIfStatement) {
@@ -133,7 +142,7 @@ public class CACSL2BoogieBacktranslator extends
 					// it comes from the if(!cond)break; construct in Boogie.
 					// we therefore invert the stepinfo, i.e. from condevaltrue
 					// to condevalfalse
-					StepInfo newSi = invertConditionInStepInfo(ate.getStepInfo());
+					EnumSet<StepInfo> newSi = invertConditionInStepInfo(ate.getStepInfo());
 					if (newSi == null) {
 						continue;
 					}
@@ -143,7 +152,7 @@ public class CACSL2BoogieBacktranslator extends
 				} else if (cnode instanceof CASTDoStatement) {
 					// same as while
 					CASTDoStatement doStmt = (CASTDoStatement) cnode;
-					StepInfo newSi = invertConditionInStepInfo(ate.getStepInfo());
+					EnumSet<StepInfo> newSi = invertConditionInStepInfo(ate.getStepInfo());
 					if (newSi == null) {
 						continue;
 					}
@@ -152,7 +161,7 @@ public class CACSL2BoogieBacktranslator extends
 				} else if (cnode instanceof CASTForStatement) {
 					// same as while
 					CASTForStatement forStmt = (CASTForStatement) cnode;
-					StepInfo newSi = invertConditionInStepInfo(ate.getStepInfo());
+					EnumSet<StepInfo> newSi = invertConditionInStepInfo(ate.getStepInfo());
 					if (newSi == null) {
 						continue;
 					}
@@ -195,7 +204,7 @@ public class CACSL2BoogieBacktranslator extends
 			}
 		}
 
-		// replace all expr eval occurences with the right atomictraceelements 
+		// replace all expr eval occurences with the right atomictraceelements
 		CheckForSubtreeInclusion check = new CheckForSubtreeInclusion();
 		translatedAtomicTraceElements = check.check(translatedAtomicTraceElements);
 
@@ -203,16 +212,27 @@ public class CACSL2BoogieBacktranslator extends
 
 	}
 
-	private StepInfo invertConditionInStepInfo(StepInfo oldSi) {
-		switch (oldSi) {
-		case CONDITION_EVAL_FALSE:
-			return StepInfo.CONDITION_EVAL_TRUE;
-		case CONDITION_EVAL_TRUE:
-			return StepInfo.CONDITION_EVAL_FALSE;
-		default:
+	private EnumSet<StepInfo> invertConditionInStepInfo(EnumSet<StepInfo> oldSiSet) {
+		if (!oldSiSet.contains(StepInfo.CONDITION_EVAL_FALSE) && !oldSiSet.contains(StepInfo.CONDITION_EVAL_TRUE)) {
 			reportUnfinishedBacktranslation(sUnfinishedBacktranslation + ": Invalid StepInfo in Loop");
 			return null;
 		}
+		EnumSet<StepInfo> set = EnumSet.noneOf(StepInfo.class);
+		for (StepInfo oldSi : oldSiSet) {
+			switch (oldSi) {
+			case CONDITION_EVAL_FALSE:
+				set.add(StepInfo.CONDITION_EVAL_TRUE);
+				break;
+			case CONDITION_EVAL_TRUE:
+				set.add(StepInfo.CONDITION_EVAL_FALSE);
+				break;
+			default:
+				set.add(oldSi);
+				break;
+
+			}
+		}
+		return set;
 	}
 
 	private int handleCASTFunctionCallExpression(IProgramExecution<BoogieASTNode, Expression> programExecution, int i,
@@ -227,14 +247,25 @@ public class CACSL2BoogieBacktranslator extends
 		AtomicTraceElement<BoogieASTNode> origFuncCall = programExecution.getTraceElement(i);
 
 		if (!(origFuncCall.getTraceElement() instanceof CallStatement)) {
-			// this is some special case, e.g. an assert false
-			translatedAtomicTraceElements.add(new AtomicTraceElement<CACSLLocation>(cloc, cloc, origFuncCall
-					.getStepInfo()));
-			translatedProgramStates.add(translateProgramState(programExecution.getProgramState(i)));
+			// this is some special case, e.g. an assert false or an havoc
+			if (origFuncCall.getTraceElement() instanceof AssertStatement) {
+				translatedAtomicTraceElements.add(new AtomicTraceElement<CACSLLocation>(cloc, cloc, origFuncCall
+						.getStepInfo()));
+				translatedProgramStates.add(translateProgramState(programExecution.getProgramState(i)));
+			} else if (origFuncCall.getTraceElement() instanceof HavocStatement) {
+				HavocStatement havoc = (HavocStatement) origFuncCall.getTraceElement();
+				CheckForTempVars check = new CheckForTempVars();
+				check.processStatement(havoc);
+				if (!check.areAllTemp()) {
+					translatedAtomicTraceElements.add(new AtomicTraceElement<CACSLLocation>(cloc, cloc, origFuncCall
+							.getStepInfo()));
+					translatedProgramStates.add(translateProgramState(programExecution.getProgramState(i)));
+				}
+			}
 			return i;
 		}
 
-		if (origFuncCall.getStepInfo() == StepInfo.NONE) {
+		if (origFuncCall.hasStepInfo(StepInfo.NONE)) {
 			// this is some temp var stuff; we can safely ignore it
 			return i;
 		}
@@ -243,7 +274,7 @@ public class CACSL2BoogieBacktranslator extends
 				.add(new AtomicTraceElement<CACSLLocation>(cloc, cloc, origFuncCall.getStepInfo()));
 		translatedProgramStates.add(translateProgramState(programExecution.getProgramState(i)));
 
-		if (origFuncCall.getStepInfo() == StepInfo.PROC_RETURN) {
+		if (origFuncCall.hasStepInfo(StepInfo.PROC_RETURN)) {
 			// if it is a return we are already finished.
 			return i;
 		}
@@ -561,12 +592,12 @@ public class CACSL2BoogieBacktranslator extends
 				return ate;
 			}
 			IASTNode origNode = ((CLocation) ate.getStep()).getNode();
-			
-			if(!(origNode instanceof IASTExpression)){
-				//do nothing for statements 
+
+			if (!(origNode instanceof IASTExpression)) {
+				// do nothing for statements
 				return ate;
 			}
-			
+
 			IASTNode searchTarget = origNode.getParent();
 
 			while (searchTarget != null) {
@@ -577,8 +608,13 @@ public class CACSL2BoogieBacktranslator extends
 					}
 					IASTNode candidate = ((CLocation) current.getStep()).getNode();
 					if (searchTarget == candidate) {
-						return new AtomicTraceElement<CACSLLocation>(current.getStep(), ate.getStep(),
-								newSi);
+						EnumSet<StepInfo> set = ate.getStepInfo();
+						if (set.isEmpty() || set.contains(StepInfo.NONE)) {
+							set = EnumSet.of(newSi);
+						} else {
+							set.add(newSi);
+						}
+						return new AtomicTraceElement<CACSLLocation>(current.getStep(), ate.getStep(), set);
 					}
 				}
 				searchTarget = searchTarget.getParent();
