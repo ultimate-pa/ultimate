@@ -790,20 +790,12 @@ public class CHandler implements ICHandler {
 					}
 
 
-//					ResultExpression tmpInitializer = new ResultExpression(initStmts, 
-//							null, initDecls, initAuxVars);
-
-//					variableLengthArrayAuxVarCDec = new CDeclaration(new CPrimitive(PRIMITIVE.INT), tmpName, tmpInitializer);
 					variableLengthArrayAuxVarInitializer = new ResultExpression(initStmts, 
 							null, initDecls, initAuxVars);
 	
-//					arrayType = new CArray(sizeConstants.toArray(new Expression[sizeConstants.size()]), newResType.cType,
-//					arrayType = new CArray(new Expression[] { new IdentifierExpression(loc, tmpName)}, newResType.cType, true);
-//					arrayType = new CArray(sizeExpressions.toArray(new Expression[sizeExpressions.size()]), newResType.cType, true);
 					arrayType = new CArray(sizeExpressions.toArray(new Expression[sizeExpressions.size()]), newResType.cType);
 				} else { //something like int a[] -- no size given
 					arrayType = new CArray(sizeConstants.toArray(new Expression[sizeConstants.size()]), newResType.cType);
-//					arrayType = new CArray(sizeConstants.toArray(new Expression[sizeConstants.size()]), newResType.cType, true);
 				}
 			} else {
 				arrayType = new CArray(sizeConstants.toArray(new Expression[sizeConstants.size()]), newResType.cType);
@@ -839,8 +831,6 @@ public class CHandler implements ICHandler {
 			mCurrentDeclaredTypes.push(newResType);
 			ResultDeclaration result = (ResultDeclaration) main.dispatch(node.getNestedDeclarator());
 			mCurrentDeclaredTypes.pop();
-//			if (variableLengthArrayAuxVarInitializer != null)
-//				result.addDeclaration(variableLengthArrayAuxVarCDec);
 			if (node.getInitializer() != null) {
 				assert result.getDeclarations().size() == 1;
 				CDeclaration cdec = result.getDeclarations().remove(0);// have
@@ -852,14 +842,11 @@ public class CHandler implements ICHandler {
 																		// immutable,
 																		// right?
 				result.addDeclaration(cdec.getType(), cdec.getName(),
-				// (ResultExpression) main.dispatch(node.getInitializer()),
 						node.getInitializer(), variableLengthArrayAuxVarInitializer, cdec.isOnHeap());
 			}
 			return result;
 		} else {
 			ResultDeclaration result = new ResultDeclaration();
-//			if (variableLengthArrayAuxVarCDec != null)
-//				result.addDeclaration(variableLengthArrayAuxVarCDec);
 			result.addDeclaration(newResType.cType, node.getName().toString(), node.getInitializer(),
 					variableLengthArrayAuxVarInitializer, newResType.isOnHeap);
 			return result;
@@ -978,9 +965,31 @@ public class CHandler implements ICHandler {
 		case IASTUnaryExpression.op_minus: {
 			ResultExpression rop = o.switchToRValueIfNecessary(main, mMemoryHandler, mStructHandler, loc);
 			ResultExpression ropToInt = ConvExpr.rexBoolToIntIfNecessary(loc, rop);
-			return new ResultExpression(ropToInt.stmt, new RValue(new UnaryExpression(loc, ropToInt.lrVal.getValue()
-					.getType(), UnaryExpression.Operator.ARITHNEGATIVE, ropToInt.lrVal.getValue()),
-					ropToInt.lrVal.cType), ropToInt.decl, ropToInt.auxVars, ropToInt.overappr);
+			if (ropToInt.lrVal.cType instanceof CPrimitive) {
+				if (((CPrimitive) ropToInt.lrVal.cType).getGeneralType() == GENERALPRIMITIVE.INTTYPE) {
+					Expression newEx = new UnaryExpression(loc, 
+							UnaryExpression.Operator.ARITHNEGATIVE, ropToInt.lrVal.getValue());				
+					return new ResultExpression(ropToInt.stmt, new RValue(newEx, ropToInt.lrVal.cType), 
+							ropToInt.decl, ropToInt.auxVars, ropToInt.overappr);
+				} else if (((CPrimitive) ropToInt.lrVal.cType).getGeneralType() == GENERALPRIMITIVE.FLOATTYPE) {
+					//TODO: having boogie deal with negative real literals would be the nice solution..
+					Expression newEx = new BinaryExpression(loc, BinaryExpression.Operator.ARITHMINUS, 
+							new RealLiteral(loc, "0.0"), ropToInt.lrVal.getValue());				
+					return new ResultExpression(ropToInt.stmt, new RValue(newEx, ropToInt.lrVal.cType), 
+							ropToInt.decl, ropToInt.auxVars, ropToInt.overappr);
+				} else {
+					main.warn(loc, "-ex where ex is not a Primitive number type");
+					Expression newEx = new UnaryExpression(loc, 
+							UnaryExpression.Operator.ARITHNEGATIVE, ropToInt.lrVal.getValue());				
+					return new ResultExpression(ropToInt.stmt, new RValue(newEx, ropToInt.lrVal.cType), 
+							ropToInt.decl, ropToInt.auxVars, ropToInt.overappr);				
+				}
+				
+			}
+
+//			Expression newEx = new UnaryExpression(loc, ropToInt.lrVal.getValue().getType(), 
+//							UnaryExpression.Operator.ARITHNEGATIVE, ropToInt.lrVal.getValue());
+
 		}
 		case IASTUnaryExpression.op_not:
 		/** boolean <code>p</code> becomes <code>!p ? 1 : 0</code> */
@@ -1241,7 +1250,7 @@ public class CHandler implements ICHandler {
 			ResultExpression rrToInt = ConvExpr.rexBoolToIntIfNecessary(loc, rr);
 			ResultExpression rlToInt = ConvExpr.rexBoolToIntIfNecessary(loc, rl);
 			
-			doIntOverflowTreatmentInComparison(main, loc, rlToInt, rrToInt);
+			doIntOverflowTreatmentInComparisonIfApplicable(main, loc, rlToInt, rrToInt);
 			
 			stmt.addAll(rlToInt.stmt);
 			stmt.addAll(rrToInt.stmt);
@@ -1464,7 +1473,7 @@ public class CHandler implements ICHandler {
 				stmt.add(assertStmt);
 				
 				//modulo is not compatible with division..
-				this.doIntOverflowTreatment(main, loc, rlToInt);
+				this.doIntOverflowTreatmentIfApplicable(main, loc, rlToInt);
 			}
 
 			RValue rval = null;
@@ -1593,7 +1602,7 @@ public class CHandler implements ICHandler {
 		}
 	}
 	
-	private void doIntOverflowTreatmentInComparison(Dispatcher main,
+	private void doIntOverflowTreatmentInComparisonIfApplicable(Dispatcher main,
 			ILocation loc, ResultExpression left,
 			ResultExpression right) {
 		if (main.cHandler.getUnsignedTreatment() == UNSIGNED_TREATMENT.IGNORE)
@@ -1615,6 +1624,19 @@ public class CHandler implements ICHandler {
 		
 	}
 
+	private void doIntOverflowTreatmentIfApplicable(Dispatcher main,
+			ILocation loc, ResultExpression rex) {
+		if (main.cHandler.getUnsignedTreatment() == UNSIGNED_TREATMENT.IGNORE)
+			return;
+		
+		boolean isRexUnsigned = rex.lrVal.cType instanceof CPrimitive
+				&& ((CPrimitive) rex.lrVal.cType).isUnsigned()
+				&& !rex.lrVal.isIntFromPointer;
+		
+		if (isRexUnsigned)
+			doIntOverflowTreatment(main, loc, rex);
+	}
+	
 	private void doIntOverflowTreatment(Dispatcher main, ILocation loc,
 			ResultExpression rex) {
 		//special treatment for unsigned integer types
