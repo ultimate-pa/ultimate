@@ -23,9 +23,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvide
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.structure.WrapperNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.result.GenericResult;
 import de.uni_freiburg.informatik.ultimate.result.IResult;
-import de.uni_freiburg.informatik.ultimate.result.IResultWithSeverity.Severity;
 import de.uni_freiburg.informatik.ultimate.result.SyntaxErrorResult;
 import de.uni_freiburg.informatik.ultimate.result.UnsupportedSyntaxResult;
 
@@ -114,8 +112,8 @@ public class CACSL2BoogieTranslatorObserver implements IUnmanagedObserver {
 			mService.getBacktranslationService().addTranslator(backtranslator);
 		} catch (Exception t) {
 			final IResult result;
-			String message = "There was an error during the translation process! [" + t.getClass() + ", "
-					+ t.getMessage() + "]";
+//			String message = "There was an error during the translation process! [" + t.getClass() + ", "
+//					+ t.getMessage() + "]";
 			if (t instanceof IncorrectSyntaxException) {
 				result = new SyntaxErrorResult(Activator.s_PLUGIN_NAME, ((IncorrectSyntaxException) t).getLocation(),
 						t.getLocalizedMessage());
@@ -123,18 +121,29 @@ public class CACSL2BoogieTranslatorObserver implements IUnmanagedObserver {
 				result = new UnsupportedSyntaxResult<IElement>(Activator.s_PLUGIN_NAME,
 						((UnsupportedSyntaxException) t).getLocation(), t.getLocalizedMessage());
 			} else {
+				// DD: I fiddled with this branch
+				// DD: All of this is not necessary: The result wont be
+				// reported, because you throw an exception
+				// DD: You dont need to print the stacktrace, Ultimate does it
+				// for you
+				// DD: Throwing a new exception hides the stacktrace and masks
+				// all errors under one
+				
 				// something unexpected happened
 				// report it to the user ...
-				String shortDescription = t.getClass().getSimpleName();
-				String longDescription = t.getLocalizedMessage();
-				result = new GenericResult(Activator.s_PLUGIN_ID, shortDescription, longDescription, Severity.ERROR);
-				// Terminate the compile process with a "real" Exception,
-				// visible to the Ultimate toolchain executer! Something
-				// really went wrong! The core will decide what to do next!
-				if (m_ExtendedDebugOutput) {
-					t.printStackTrace();
-				}
-				throw new RuntimeException(message);
+				// String shortDescription = t.getClass().getSimpleName();
+				// String longDescription = t.getLocalizedMessage();
+				// result = new GenericResult(Activator.s_PLUGIN_ID,
+				// shortDescription, longDescription, Severity.ERROR);
+				//
+				// // Terminate the compile process with a "real" Exception,
+				// // visible to the Ultimate toolchain executer! Something
+				// // really went wrong! The core will decide what to do next!
+				// if (m_ExtendedDebugOutput) {
+				// t.printStackTrace();
+				// }
+				// throw new RuntimeException(message);
+				throw t;
 			}
 			mService.getResultService().reportResult(Activator.s_PLUGIN_ID, result);
 			mLogger.warn(result.getShortDescription() + " " + result.getLongDescription());

@@ -11,23 +11,35 @@ public class SoundnessBugs extends TACASInterpolation2015 {
 
 		addTestCasesFixed("AutomizerC.xml", "TACASInterpolation2015/ForwardPredicates.epf", testcases);
 
-//		addTestCasesFixed("AutomizerC.xml", "TACASInterpolation2015/TreeInterpolation.epf", testcases);
+		addTestCasesFixed("AutomizerC.xml", "automizer/BackwardPredicates_SvcompReachPreciseMM.epf", testcases);
 
-//		addTestCasesFixed("CodeCheckNoBE-C.xml", "TACASInterpolation2015/Kojak-FP-nBE.epf", testcases);
-//
-//		addTestCasesFixed("CodeCheckNoBE-C.xml", "TACASInterpolation2015/Kojak-TreeInterpolation-nBE.epf", testcases);
-//
-//		addTestCasesFixed("ImpulseNoBE-C.xml", "TACASInterpolation2015/Impulse-FP-nBE.epf", testcases);
-//
-//		addTestCasesFixed("ImpulseNoBE-C.xml", "TACASInterpolation2015/Impulse-TreeInterpolation-nBE.epf", testcases);
-//
-//		addTestCasesFixed("CodeCheckWithBE-C.xml", "TACASInterpolation2015/Kojak-FP.epf", testcases);
-//
-//		addTestCasesFixed("CodeCheckWithBE-C.xml", "TACASInterpolation2015/Kojak-TreeInterpolation.epf", testcases);
-//
-//		addTestCasesFixed("ImpulseWithBE-C.xml", "TACASInterpolation2015/Impulse-FP.epf", testcases);
-//
-//		addTestCasesFixed("ImpulseWithBE-C.xml", "TACASInterpolation2015/Impulse-TreeInterpolation.epf", testcases);
+		// addTestCasesFixed("AutomizerC.xml",
+		// "TACASInterpolation2015/TreeInterpolation.epf", testcases);
+
+		// addTestCasesFixed("CodeCheckNoBE-C.xml",
+		// "TACASInterpolation2015/Kojak-FP-nBE.epf", testcases);
+		//
+		// addTestCasesFixed("CodeCheckNoBE-C.xml",
+		// "TACASInterpolation2015/Kojak-TreeInterpolation-nBE.epf", testcases);
+		//
+		// addTestCasesFixed("ImpulseNoBE-C.xml",
+		// "TACASInterpolation2015/Impulse-FP-nBE.epf", testcases);
+		//
+		// addTestCasesFixed("ImpulseNoBE-C.xml",
+		// "TACASInterpolation2015/Impulse-TreeInterpolation-nBE.epf",
+		// testcases);
+		//
+		// addTestCasesFixed("CodeCheckWithBE-C.xml",
+		// "TACASInterpolation2015/Kojak-FP.epf", testcases);
+		//
+		// addTestCasesFixed("CodeCheckWithBE-C.xml",
+		// "TACASInterpolation2015/Kojak-TreeInterpolation.epf", testcases);
+		//
+		// addTestCasesFixed("ImpulseWithBE-C.xml",
+		// "TACASInterpolation2015/Impulse-FP.epf", testcases);
+		//
+		// addTestCasesFixed("ImpulseWithBE-C.xml",
+		// "TACASInterpolation2015/Impulse-TreeInterpolation.epf", testcases);
 	}
 
 	@Override
@@ -40,19 +52,23 @@ public class SoundnessBugs extends TACASInterpolation2015 {
 	protected String[] getDirectories() {
 		// @formatter:off
 		return new String[] { 
-			"examples/svcomp/eca-rers2012/Problem01_label15_false-unreach-call.c",
-			"examples/svcomp/ntdrivers-simplified/diskperf_simpl1_true-unreach-call_true-termination.cil.c",
-			"examples/svcomp/ntdrivers-simplified/floppy_simpl3_true-unreach-call_true-termination.cil.c",
-			"examples/svcomp/ntdrivers-simplified/floppy_simpl4_true-unreach-call_true-termination.cil.c",
-			"examples/svcomp/recursive/BallRajamani-SPIN2000-Fig1_false-unreach-call.c",
-			"examples/svcomp/systemc/kundu1_false-unreach-call_false-termination.cil.c",
-			"examples/svcomp/systemc/kundu2_false-unreach-call_false-termination.cil.c",
-			"examples/svcomp/systemc/pipeline_false-unreach-call_false-termination.cil.c",
-			"examples/svcomp/systemc/token_ring.01_false-unreach-call_false-termination.cil.c",
-			"examples/svcomp/systemc/token_ring.02_false-unreach-call_false-termination.cil.c",
-			"examples/svcomp/systemc/token_ring.03_false-unreach-call_false-termination.cil.c",
-			"examples/svcomp/systemc/token_ring.04_false-unreach-call_false-termination.cil.c",
-			"examples/svcomp/systemc/token_ring.05_false-unreach-call_false-termination.cil.c" 
+//			"examples/svcomp/eca-rers2012/Problem01_label15_false-unreach-call.c",
+//			"examples/svcomp/ntdrivers-simplified/diskperf_simpl1_true-unreach-call_true-termination.cil.c",
+//			"examples/svcomp/ntdrivers-simplified/floppy_simpl3_true-unreach-call_true-termination.cil.c",
+//			"examples/svcomp/ntdrivers-simplified/floppy_simpl4_true-unreach-call_true-termination.cil.c",
+//			"examples/svcomp/recursive/BallRajamani-SPIN2000-Fig1_false-unreach-call.c",
+//			"examples/svcomp/systemc/kundu1_false-unreach-call_false-termination.cil.c",
+//			"examples/svcomp/systemc/kundu2_false-unreach-call_false-termination.cil.c",
+//			"examples/svcomp/systemc/pipeline_false-unreach-call_false-termination.cil.c",
+//			"examples/svcomp/systemc/token_ring.01_false-unreach-call_false-termination.cil.c",
+//			"examples/svcomp/systemc/token_ring.02_false-unreach-call_false-termination.cil.c",
+//			"examples/svcomp/systemc/token_ring.03_false-unreach-call_false-termination.cil.c",
+//			"examples/svcomp/systemc/token_ring.04_false-unreach-call_false-termination.cil.c",
+//			"examples/svcomp/systemc/token_ring.05_false-unreach-call_false-termination.cil.c"
+			"examples/svcomp/ntdrivers/floppy_false-unreach-call.i.cil.c",
+			"examples/svcomp/ssh/s3_srvr.blast.02_true-unreach-call.i.cil.c",
+			"examples/svcomp/ssh/s3_srvr.blast.01_true-unreach-call.i.cil.c"
+				
 		};
 		// @formatter:on
 		// return super.getDirectories();
