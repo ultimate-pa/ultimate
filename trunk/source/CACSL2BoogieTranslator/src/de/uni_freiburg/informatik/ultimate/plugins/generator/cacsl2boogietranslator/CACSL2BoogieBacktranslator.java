@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.log4j.Logger;
+import org.eclipse.cdt.core.dom.ast.ASTGenericVisitor;
 import org.eclipse.cdt.core.dom.ast.IASTDeclarator;
 import org.eclipse.cdt.core.dom.ast.IASTExpression;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
@@ -32,11 +33,15 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BoogieASTNode;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.HavocStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IntegerLiteral;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.RealLiteral;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression.Operator;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.model.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.result.GenericResult;
@@ -165,6 +170,15 @@ public class CACSL2BoogieBacktranslator extends
 					// location, as they only contain temporary stuff
 					i = findMergeSequence(programExecution, i, loc);
 					String raw = cnode.getRawSignature(); // debug
+					if (ate.getTraceElement() instanceof HavocStatement) {
+						HavocStatement havoc = (HavocStatement) ate.getTraceElement();
+						CheckForTempVars check = new CheckForTempVars();
+						check.processStatement(havoc);
+						if (check.areAllTemp()) {
+							// we dont want to see no dirty temp havoc
+							continue;
+						}
+					}
 					translatedAtomicTraceElements.add(new AtomicTraceElement<CACSLLocation>(cloc));
 				}
 				translatedProgramStates.add(translateProgramState(programExecution.getProgramState(i)));
@@ -180,6 +194,10 @@ public class CACSL2BoogieBacktranslator extends
 						+ ": Invalid location (Location is no CACSLLocation)");
 			}
 		}
+
+		// replace all expr eval occurences with the right atomictraceelements 
+		CheckForSubtreeInclusion check = new CheckForSubtreeInclusion();
+		translatedAtomicTraceElements = check.check(translatedAtomicTraceElements);
 
 		return new CACSLProgramExecution(initialState, translatedAtomicTraceElements, translatedProgramStates);
 
@@ -360,15 +378,15 @@ public class CACSL2BoogieBacktranslator extends
 			return null;
 
 		}
-		
+
 		if (loc instanceof CLocation) {
 			CLocation cloc = (CLocation) loc;
-			
-			if(cloc.ignoreDuringBacktranslation()){
-				//this should lead to nothing
+
+			if (cloc.ignoreDuringBacktranslation()) {
+				// this should lead to nothing
 				return null;
 			}
-			
+
 			IASTNode cnode = cloc.getNode();
 
 			if (cnode == null) {
@@ -481,60 +499,6 @@ public class CACSL2BoogieBacktranslator extends
 				new GenericResult(Activator.s_PLUGIN_ID, sUnfinishedBacktranslation, message, Severity.WARNING));
 	}
 
-	// private String translateBinExpOp(BinaryExpression.Operator op) {
-	// switch (op) {
-	// case ARITHDIV:
-	// return "/";
-	// case ARITHMINUS:
-	// return "-";
-	// case ARITHMOD:
-	// return "%";
-	// case ARITHMUL:
-	// return "*";
-	// case ARITHPLUS:
-	// return "+";
-	// case BITVECCONCAT:
-	// throw new UnsupportedOperationException("Unsupported BITVECCONCAT");
-	// case COMPEQ:
-	// return "==";
-	// case COMPGEQ:
-	// return ">=";
-	// case COMPGT:
-	// return ">";
-	// case COMPLEQ:
-	// return "<=";
-	// case COMPLT:
-	// return "<";
-	// case COMPNEQ:
-	// return "!=";
-	// case COMPPO:
-	// throw new UnsupportedOperationException("Unsupported COMPPO");
-	// case LOGICAND:
-	// return "&&";
-	// case LOGICIFF:
-	// return "<==>";
-	// case LOGICIMPLIES:
-	// return "==>";
-	// case LOGICOR:
-	// return "||";
-	// default:
-	// throw new UnsupportedOperationException("Unknown binary operator");
-	// }
-	// }
-
-	// private String translateUnExpOp(UnaryExpression.Operator op) {
-	// switch (op) {
-	// case ARITHNEGATIVE:
-	// return "-";
-	// case LOGICNEG:
-	// return "!";
-	// case OLD:
-	// return "\\old";
-	// default:
-	// throw new UnsupportedOperationException("Unknown unary operator");
-	// }
-	// }
-
 	private String translateIdentifierExpression(IdentifierExpression expr) {
 		String boogieId = expr.getIdentifier();
 		String cId = null;
@@ -557,81 +521,6 @@ public class CACSL2BoogieBacktranslator extends
 		return cId;
 	}
 
-	// private String processExpression(Expression expr) {
-	// if (expr instanceof BinaryExpression) {
-	// BinaryExpression binexp = (BinaryExpression) expr;
-	// String left = processExpression(binexp.getLeft());
-	// String right = processExpression(binexp.getRight());
-	// if (binexp.getOperator() == BinaryExpression.Operator.LOGICAND) {
-	// return left + " " + translateBinExpOp(binexp.getOperator()) + " " +
-	// right;
-	// } else {
-	// return "(" + left + translateBinExpOp(binexp.getOperator()) + right +
-	// ")";
-	// }
-	// } else if (expr instanceof UnaryExpression) {
-	// UnaryExpression unexp = (UnaryExpression) expr;
-	// String subexpr = processExpression(unexp.getExpr());
-	// String operator = translateUnExpOp(unexp.getOperator());
-	// if (unexp.getOperator().equals(UnaryExpression.Operator.OLD)) {
-	// return operator + "(" + subexpr + ")";
-	// } else if (unexp.getOperator().equals(UnaryExpression.Operator.LOGICNEG))
-	// {
-	// if (!subexpr.startsWith("(")) {
-	// subexpr = "(" + subexpr + ")";
-	// }
-	// return operator + subexpr;
-	// } else if
-	// (unexp.getOperator().equals(UnaryExpression.Operator.ARITHNEGATIVE)) {
-	// return operator + subexpr;
-	// } else {
-	// throw new IllegalArgumentException("unknown unary operator");
-	// }
-	// } else if (expr instanceof ArrayAccessExpression) {
-	// ArrayAccessExpression aae = (ArrayAccessExpression) expr;
-	// String array = processExpression(aae.getArray());
-	// String indices[] = new String[aae.getIndices().length];
-	// for (int i = 0; i < indices.length; i++) {
-	// indices[i] = processExpression(aae.getIndices()[i]);
-	// }
-	// return array + Arrays.toString(indices);
-	// } else if (expr instanceof ArrayStoreExpression) {
-	// throw new
-	// UnsupportedOperationException("Unsupported ArrayStoreExpression");
-	// } else if (expr instanceof BitVectorAccessExpression) {
-	// throw new
-	// UnsupportedOperationException("Unsupported BitVectorAccessExpression");
-	// } else if (expr instanceof FunctionApplication) {
-	// throw new
-	// UnsupportedOperationException("Unsupported FunctionApplication");
-	// } else if (expr instanceof IfThenElseExpression) {
-	// IfThenElseExpression ite = (IfThenElseExpression) expr;
-	// String cond = processExpression(ite.getCondition());
-	// String thenPart = processExpression(ite.getThenPart());
-	// String elsePart = processExpression(ite.getElsePart());
-	// return "(" + cond + " ? " + thenPart + " : " + elsePart + ")";
-	// } else if (expr instanceof QuantifierExpression) {
-	// throw new
-	// UnsupportedOperationException("Unsupported QuantifierExpression");
-	// } else if (expr instanceof IdentifierExpression) {
-	// return translateIdentifierExpression((IdentifierExpression) expr);
-	// } else if (expr instanceof IntegerLiteral) {
-	// IntegerLiteral intLit = (IntegerLiteral) expr;
-	// return intLit.getValue();
-	// } else if (expr instanceof BooleanLiteral) {
-	// BooleanLiteral boolLit = (BooleanLiteral) expr;
-	// if (boolLit.getValue()) {
-	// return "\\true";
-	// } else {
-	// return "\\false";
-	// }
-	// } else if (expr instanceof RealLiteral) {
-	// RealLiteral realLit = (RealLiteral) expr;
-	// return realLit.getValue();
-	// }
-	// throw new UnsupportedOperationException("Unknown Expression");
-	// }
-
 	void putFunction(String boogieId, String cId) {
 		mBoogie2C.putFunction(boogieId, cId);
 	}
@@ -652,6 +541,53 @@ public class CACSL2BoogieBacktranslator extends
 		return mBoogie2C.getTempVar2Obj().containsKey(boogieId);
 	}
 
+	private class CheckForSubtreeInclusion {
+
+		protected List<AtomicTraceElement<CACSLLocation>> check(
+				List<AtomicTraceElement<CACSLLocation>> translatedAtomicTraceElements) {
+			List<AtomicTraceElement<CACSLLocation>> rtr = new ArrayList<>();
+			for (int i = 0; i < translatedAtomicTraceElements.size(); ++i) {
+				AtomicTraceElement<CACSLLocation> ate = translatedAtomicTraceElements.get(i);
+				rtr.add(check(ate, translatedAtomicTraceElements, i + 1, StepInfo.EXPR_EVAL));
+			}
+			return rtr;
+		}
+
+		private AtomicTraceElement<CACSLLocation> check(AtomicTraceElement<CACSLLocation> ate,
+				List<AtomicTraceElement<CACSLLocation>> translatedAtomicTraceElements, int start, StepInfo newSi) {
+
+			if (!(ate.getStep() instanceof CLocation)) {
+				// not implemented for ACSL
+				return ate;
+			}
+			IASTNode origNode = ((CLocation) ate.getStep()).getNode();
+			
+			if(!(origNode instanceof IASTExpression)){
+				//do nothing for statements 
+				return ate;
+			}
+			
+			IASTNode searchTarget = origNode.getParent();
+
+			while (searchTarget != null) {
+				for (int j = start; j < translatedAtomicTraceElements.size(); ++j) {
+					AtomicTraceElement<CACSLLocation> current = translatedAtomicTraceElements.get(j);
+					if (!(current.getStep() instanceof CLocation)) {
+						continue;
+					}
+					IASTNode candidate = ((CLocation) current.getStep()).getNode();
+					if (searchTarget == candidate) {
+						return new AtomicTraceElement<CACSLLocation>(current.getStep(), ate.getStep(),
+								newSi);
+					}
+				}
+				searchTarget = searchTarget.getParent();
+			}
+			return ate;
+		}
+
+	}
+
 	private class SynthesizedExpressionTransformer extends BoogieTransformer {
 
 		@Override
@@ -666,6 +602,36 @@ public class CACSL2BoogieBacktranslator extends
 								translated.getRawSignature(), ident.getDeclarationInformation());
 					}
 				}
+			}
+			return super.processExpression(expr);
+		}
+	}
+
+	private class CheckForTempVars extends BoogieTransformer {
+
+		private boolean mAllAreTemp = true;
+
+		protected boolean areAllTemp() {
+			return mAllAreTemp;
+		}
+
+		@Override
+		protected Statement processStatement(Statement statement) {
+			return super.processStatement(statement);
+		}
+
+		@Override
+		protected LeftHandSide processLeftHandSide(LeftHandSide lhs) {
+			if (lhs instanceof VariableLHS) {
+				mAllAreTemp = mAllAreTemp && isTempVar(((VariableLHS) lhs).getIdentifier());
+			}
+			return super.processLeftHandSide(lhs);
+		}
+
+		@Override
+		protected Expression processExpression(Expression expr) {
+			if (expr instanceof IdentifierExpression) {
+				mAllAreTemp = mAllAreTemp && isTempVar(((IdentifierExpression) expr).getIdentifier());
 			}
 			return super.processExpression(expr);
 		}

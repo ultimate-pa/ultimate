@@ -4,14 +4,19 @@ import java.util.List;
 
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
 
-public class SoundnessBugs extends TACASInterpolation2015 {
+public class Bugs extends TACASInterpolation2015 {
 
 	@Override
 	protected void createTestCasesForReal(List<UltimateTestCase> testcases) {
 
-		addTestCasesFixed("AutomizerC.xml", "TACASInterpolation2015/ForwardPredicates.epf", testcases);
+//		addTestCasesFixed("AutomizerC.xml", "TACASInterpolation2015/ForwardPredicates.epf", testcases);
+//
+//		addTestCasesFixed("AutomizerC.xml", "automizer/BackwardPredicates_SvcompReachPreciseMM.epf", testcases);
 
-		addTestCasesFixed("AutomizerC.xml", "automizer/BackwardPredicates_SvcompReachPreciseMM.epf", testcases);
+		/* MemSafety */
+		addTestCasesFixed("AutomizerC.xml", "svcomp2015/svComp-32bit-memsafety.epf", testcases);
+		addTestCasesFixed("CodeCheckWithBE-C.xml", "svcomp2015/svComp-32bit-memsafety-BE-Kojak.epf.epf", testcases);
+		addTestCasesFixed("CodeCheckWithBE-C.xml", "svcomp2015/svComp-32bit-memsafety-BE-Impulse.epf.epf", testcases);
 
 		// addTestCasesFixed("AutomizerC.xml",
 		// "TACASInterpolation2015/TreeInterpolation.epf", testcases);
@@ -65,9 +70,10 @@ public class SoundnessBugs extends TACASInterpolation2015 {
 //			"examples/svcomp/systemc/token_ring.03_false-unreach-call_false-termination.cil.c",
 //			"examples/svcomp/systemc/token_ring.04_false-unreach-call_false-termination.cil.c",
 //			"examples/svcomp/systemc/token_ring.05_false-unreach-call_false-termination.cil.c"
-			"examples/svcomp/ntdrivers/floppy_false-unreach-call.i.cil.c",
-			"examples/svcomp/ssh/s3_srvr.blast.02_true-unreach-call.i.cil.c",
-			"examples/svcomp/ssh/s3_srvr.blast.01_true-unreach-call.i.cil.c"
+//			"examples/svcomp/ntdrivers/floppy_false-unreach-call.i.cil.c",
+//			"examples/svcomp/ssh/s3_srvr.blast.02_true-unreach-call.i.cil.c",
+//			"examples/svcomp/ssh/s3_srvr.blast.01_true-unreach-call.i.cil.c"
+				"examples/svcomp/memsafety/960521-1_false-valid-deref.i"
 				
 		};
 		// @formatter:on

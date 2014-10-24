@@ -63,7 +63,15 @@ public class CLocation extends CACSLLocation {
 		if (mNode != null) {
 			sb.append("C: ");
 			sb.append(mNode.getRawSignature());
-			sb.append(" ");
+			sb.append(" [");
+			if (getStartLine() == getEndLine()) {
+				sb.append(getStartLine());
+			} else {
+				sb.append(getStartLine());
+				sb.append("-");
+				sb.append(getEndLine());
+			}
+			sb.append("]");
 		}
 
 		return sb.toString();

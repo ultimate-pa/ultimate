@@ -90,6 +90,8 @@ public class CACSLProgramExecution implements IProgramExecution<CACSLLocation, I
 				IASTNode currentStepNode = ((CLocation) currentStep).getNode();
 				switch (currentStepInfo) {
 				case CONDITION_EVAL_TRUE:
+				case EXPR_EVAL:
+				case ARG_EVAL:
 					sb.append(currentStepNode.getRawSignature());
 					sb.append(" (").append(currentStepInfo.toString()).append(")");
 					break;
