@@ -5,7 +5,10 @@ import java.util.HashSet;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieNonOldVar;
+import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieOldVar;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
+import de.uni_freiburg.informatik.ultimate.model.boogie.GlobalBoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 
@@ -94,12 +97,12 @@ public class RelevantVariables {
 	private Set<BoogieVar> computeSuccessorRvInternal(Set<BoogieVar> predRv, TransFormula tf) {
 		Set<BoogieVar> result = new HashSet<BoogieVar>(predRv.size());
 		for (BoogieVar bv : predRv) {
-			if (!isHavoced(bv,tf)) {
+			if (!tf.isHavocedOut(bv)) {
 				result.add(bv);
 			}
 		}
 		for (BoogieVar bv : tf.getOutVars().keySet()) {
-			if (!isHavoced(bv,tf)) {
+			if (!tf.isHavocedOut(bv)) {
 				result.add(bv);
 			}
 			
@@ -137,7 +140,7 @@ public class RelevantVariables {
 		Set<BoogieVar> result = new HashSet<BoogieVar>();
 		
 		for (BoogieVar bv : callPredRv) {
-			if (!isHavoced(bv, returnTF) && true) {
+			if (!returnTF.isHavocedOut(bv) && true) {
 				result.add(bv);
 			}
 		}
@@ -145,20 +148,20 @@ public class RelevantVariables {
 		// add all global vars that are relevant before the return
 		for (BoogieVar bv : returnPredRv) {
 			if (bv.isGlobal()) {
-				if (!isHavoced(bv, returnTF) && true) {
+				if (!returnTF.isHavocedOut(bv) && true) {
 					result.add(bv);
 				}
 			}
 		}
 		// add all vars that are assigned by the call
 		for (BoogieVar bv : returnTF.getOutVars().keySet()) {
-			if (!isHavoced(bv, returnTF) && true) {
+			if (!returnTF.isHavocedOut(bv) && true) {
 				result.add(bv);
 			}
 		}
 		// add all arguments of the call
 		for (BoogieVar bv : localVarAssignment.getInVars().keySet()) {
-			if (!isHavoced(bv, returnTF) && true) {
+			if (!returnTF.isHavocedOut(bv) && true) {
 				result.add(bv);
 			}
 		}
@@ -263,12 +266,12 @@ public class RelevantVariables {
 	private Set<BoogieVar> computePredecessorRvInternal(Set<BoogieVar> succRv, TransFormula tf) {
 		Set<BoogieVar> result = new HashSet<BoogieVar>(succRv.size());
 		for (BoogieVar bv : succRv) {
-			if (!isHavoced(bv,tf)) {
+			if (!tf.isHavocedIn(bv)) {
 				result.add(bv);
 			}
 		}
 		for (BoogieVar bv : tf.getInVars().keySet()) {
-			if (!isHavoced(bv,tf)) {
+			if (!tf.isHavocedIn(bv)) {
 				result.add(bv);
 			}
 		}
@@ -290,7 +293,8 @@ public class RelevantVariables {
 			TransFormula oldVarAssignment, TransFormula globalVarAssignment) {
 		Set<BoogieVar> result = new HashSet<BoogieVar>();
 		for (BoogieVar bv : returnPredRv) {
-			if (!isHavoced(bv, returnTF) && !isHavoced(bv, globalVarAssignment) && !isHavoced(bv, oldVarAssignment)) {
+			isHavoced(globalVarAssignment, oldVarAssignment, bv);
+			if (!returnTF.isHavocedIn(bv) && !isHavoced(globalVarAssignment, oldVarAssignment, bv)) {
 				result.add(bv);
 			}
 		}
@@ -303,13 +307,15 @@ public class RelevantVariables {
 		return result;
 	}
 	
+
+
 	private Set<BoogieVar> computePredecessorRvCall_Pending(Set<BoogieVar> callPredRv,
 			TransFormula localVarAssignment, TransFormula oldVarAssignment, TransFormula globalVarAssignment) {
 		Set<BoogieVar> result = new HashSet<BoogieVar>();
 		result.addAll(localVarAssignment.getInVars().keySet());
 		for (BoogieVar bv : callPredRv) {
 			if (bv.isGlobal()) {
-				if (!isHavoced(bv, globalVarAssignment) && !isHavoced(bv, oldVarAssignment)) {
+				if (!isHavoced(globalVarAssignment, oldVarAssignment, bv)) {
 					result.add(bv);
 				}
 			}
@@ -325,7 +331,7 @@ public class RelevantVariables {
 		Set<BoogieVar> result = new HashSet<BoogieVar>(returnSuccRv.size());
 		for (BoogieVar bv : returnSuccRv) {
 			if (bv.isGlobal()) {
-				if (!isHavoced(bv, returnTf) && true) {
+				if (!returnTf.isHavocedIn(bv) && true) {
 					result.add(bv);
 				}
 			} else {
@@ -333,25 +339,25 @@ public class RelevantVariables {
 			}
 		}
 		for (BoogieVar bv : returnTf.getInVars().keySet()) {
-			if (!isHavoced(bv, returnTf) && true) {
+			if (!returnTf.isHavocedIn(bv) && true) {
 				result.add(bv);
 			}
 		}
 		
 		for (BoogieVar bv : oldVarAssignmentAtCall.getInVars().keySet()) {
-			if (!isHavoced(bv, returnTf) && true) {
+			if (!returnTf.isHavocedIn(bv) && true) {
 				result.add(bv);
 			}
 		}
 		
 		for (BoogieVar bv : oldVarAssignmentAtCall.getOutVars().keySet()) {
-			if (!isHavoced(bv, returnTf) && true) {
+			if (!returnTf.isHavocedIn(bv) && true) {
 				result.add(bv);
 			}
 		}
 		
 		for (BoogieVar bv : localVarAssignmentAtCall.getOutVars().keySet()) {
-			if (!isHavoced(bv, returnTf) && true) {
+			if (!returnTf.isHavocedIn(bv) && true) {
 				result.add(bv);
 			}
 		}
@@ -364,25 +370,41 @@ public class RelevantVariables {
 	
 	
 	
-	
-	
-	
-	
-	
-	
-	
-	/**
-	 * Return true if this TransFormula modifies the BoogieVar bv, but after
-	 * executing the TransFormula every value of bv is possible. This is the 
-	 * case for a variable x and the TransFormula of the statement havoc x.
-	 */
-	private boolean isHavoced(BoogieVar bv, TransFormula tf) {
-		TermVariable outVar = tf.getOutVars().get(bv);
-		if (outVar == null) {
-			return false;
+	private boolean isHavoced(TransFormula globalVarAssignment,
+			TransFormula oldVarAssignment, BoogieVar bv) {
+		if (bv instanceof GlobalBoogieVar) {
+			boolean result;
+			if (bv instanceof BoogieOldVar) {
+				result = oldVarAssignment.isHavocedOut(bv);
+//				assert globalVarAssignment.isHavocedIn(bv) == result : "strange unsat core";
+			} else {
+				assert (bv instanceof BoogieNonOldVar);
+				result = globalVarAssignment.isHavocedOut(bv);
+//				assert oldVarAssignment.isHavocedIn(bv) == result : "strange unsat core";
+			}
+			return result;
 		} else {
-			return !Arrays.asList(tf.getFormula().getFreeVars()).contains(tf.getOutVars().get(bv)); 
+			return false;
 		}
 	}
+	
+	
+	
+	
+	
+//	
+//	/**
+//	 * Return true if this TransFormula modifies the BoogieVar bv, but after
+//	 * executing the TransFormula every value of bv is possible. This is the 
+//	 * case for a variable x and the TransFormula of the statement havoc x.
+//	 */
+//	private boolean isHavoced(BoogieVar bv, TransFormula tf) {
+//		TermVariable outVar = tf.getOutVars().get(bv);
+//		if (outVar == null) {
+//			return false;
+//		} else {
+//			return !Arrays.asList(tf.getFormula().getFreeVars()).contains(tf.getOutVars().get(bv)); 
+//		}
+//	}
 
 }

@@ -360,6 +360,41 @@ public class TransFormula implements Serializable {
 	public Infeasibility isInfeasible() {
 		return m_Infeasibility;
 	}
+	
+	/**
+	 * If this method returns true, the outVar of bv may have any value even
+	 * if the value of the inVar is restricted.
+	 * If the methods returns false there are constraints on the outVar or
+	 * syntactic check was not able to find out that there are no constraints. 
+	 */
+	public boolean isHavocedOut(BoogieVar bv) {
+		TermVariable inVar = m_InVars.get(bv);
+		TermVariable outVar = m_OutVars.get(bv);
+		if (inVar == outVar) {
+			return false;
+		} else {
+			if (Arrays.asList(m_Formula.getFreeVars()).contains(outVar)) {
+				return false;
+			} else {
+				return true;
+			}
+		}
+	}
+	
+	public boolean isHavocedIn(BoogieVar bv) {
+		TermVariable inVar = m_InVars.get(bv);
+		TermVariable outVar = m_OutVars.get(bv);
+		if (inVar == outVar) {
+			return false;
+		} else {
+			if (Arrays.asList(m_Formula.getFreeVars()).contains(inVar)) {
+				return false;
+			} else {
+				return true;
+			}
+		}
+	}
+
 
 	// public static TermVariable getFreshAuxVariable(Boogie2SMT boogie2smt,
 	// String id, Sort sort) {
