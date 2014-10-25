@@ -79,8 +79,8 @@ public class CACSLProgramExecution implements IProgramExecution<CACSLLocation, I
 
 		List<String> stepInfoColum = getStepInfoColum(mTrace);
 		int stepInfoColumLength = getMaxLength(stepInfoColum) + 2;
-		if(stepInfoColumLength < 6){
-			//because of IVAL+2
+		if (stepInfoColumLength < 6) {
+			// because of IVAL+2
 			stepInfoColumLength = 6;
 		}
 
@@ -135,6 +135,9 @@ public class CACSLProgramExecution implements IProgramExecution<CACSLLocation, I
 	}
 
 	private String fillWithChar(String string, int length) {
+		if (length <= 0) {
+			return "";
+		}
 		StringBuffer outputBuffer = new StringBuffer(length);
 		for (int i = 0; i < length; i++) {
 			outputBuffer.append(string);
