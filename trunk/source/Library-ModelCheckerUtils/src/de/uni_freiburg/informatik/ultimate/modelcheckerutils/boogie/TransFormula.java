@@ -441,14 +441,6 @@ public class TransFormula implements Serializable {
 		for (int i = transFormula.length - 1; i >= 0; i--) {
 			for (BoogieVar var : transFormula[i].getOutVars().keySet()) {
 
-				if (!services.getProgressMonitorService().continueProcessing()) {
-					// TODO: Matthias muss sagen, ob das so geht, speziell hier
-					// null zurückgeben
-					reportTimoutResult(services);
-					// throw new RuntimeException("Unhandled Timeout");
-					return null;
-				}
-
 				TermVariable outVar = transFormula[i].getOutVars().get(var);
 				TermVariable newOutVar;
 				if (inVars.containsKey(var)) {
