@@ -79,6 +79,10 @@ public class CACSLProgramExecution implements IProgramExecution<CACSLLocation, I
 
 		List<String> stepInfoColum = getStepInfoColum(mTrace);
 		int stepInfoColumLength = getMaxLength(stepInfoColum) + 2;
+		if(stepInfoColumLength < 6){
+			//because of IVAL+2
+			stepInfoColumLength = 6;
+		}
 
 		if (valuation != null) {
 			sb.append(fillWithChar(fillChar, lineNumberColumnLength));
