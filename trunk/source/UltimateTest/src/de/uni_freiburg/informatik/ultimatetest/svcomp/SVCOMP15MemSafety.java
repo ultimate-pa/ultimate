@@ -53,11 +53,11 @@ public class SVCOMP15MemSafety extends AbstractSVCOMP15TestSuite {
 
 		/* Kojak */
 		rtr.add(getTestDefinitionFromExamples("MemorySafety", "CodeCheckWithBE-C.xml",
-				"svcomp2015/svComp-32bit-memsafety-BE-Kojak.epf.epf", getTimeout()));
+				"svcomp2015/svComp-32bit-memsafety-BE-Kojak.epf", getTimeout()));
 
 		/* Impulse */
 		rtr.add(getTestDefinitionFromExamples("MemorySafety", "CodeCheckWithBE-C.xml",
-				"svcomp2015/svComp-32bit-memsafety-BE-Impulse.epf.epf", getTimeout()));
+				"svcomp2015/svComp-32bit-memsafety-BE-Impulse.epf", getTimeout()));
 
 		return rtr;
 	}
