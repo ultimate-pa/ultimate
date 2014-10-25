@@ -10,7 +10,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+
 import org.apache.log4j.Logger;
+
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
@@ -21,8 +23,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
-import de.uni_freiburg.informatik.ultimate.logic.simplification.SimplifyDDA;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.ModelCheckerUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ConstantFinder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.DagSizePrinter;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.NaiveDestructiveEqualityResolution;
@@ -30,6 +32,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.PartialQuantifi
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Cnf;
+import de.uni_freiburg.informatik.ultimate.result.TimeoutResult;
 import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 
 /**
@@ -54,8 +57,8 @@ import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
  * m_Formula by x
  * <li>then replacing for each x ∈ dom(outvar) the TermVariable onvar(x) in
  * m_Formula by x'
- * <li>finally, adding the conjunct x=x' for each x∈(dom(invar)⋂dom(outvar) such
- * that invar(x)=outvar(x)
+ * <li>finally, adding the conjunct x=x' for each x∈(dom(invar)⋂dom(outvar)
+ * such that invar(x)=outvar(x)
  * </ul>
  * 
  * 
@@ -120,10 +123,10 @@ public class TransFormula implements Serializable {
 		m_Constants = (new ConstantFinder()).findConstants(m_Formula);
 		// assert isSupersetOfOccurringConstants(m_Constants, m_Formula) :
 		// "forgotten constant";
-		
-//		if (!eachInVarOccursAsOutVar()) {
-//			System.out.println("Fixietest failed");
-//		}
+
+		// if (!eachInVarOccursAsOutVar()) {
+		// System.out.println("Fixietest failed");
+		// }
 	}
 
 	public TransFormula(Term formula, Map<BoogieVar, TermVariable> inVars, Map<BoogieVar, TermVariable> outVars,
@@ -306,7 +309,7 @@ public class TransFormula implements Serializable {
 		}
 		return result;
 	}
-	
+
 	private boolean eachInVarOccursAsOutVar() {
 		for (BoogieVar bv : m_InVars.keySet()) {
 			if (!m_OutVars.containsKey(bv)) {
@@ -360,12 +363,12 @@ public class TransFormula implements Serializable {
 	public Infeasibility isInfeasible() {
 		return m_Infeasibility;
 	}
-	
+
 	/**
-	 * If this method returns true, the outVar of bv may have any value even
-	 * if the value of the inVar is restricted.
-	 * If the methods returns false there are constraints on the outVar or
-	 * syntactic check was not able to find out that there are no constraints. 
+	 * If this method returns true, the outVar of bv may have any value even if
+	 * the value of the inVar is restricted. If the methods returns false there
+	 * are constraints on the outVar or syntactic check was not able to find out
+	 * that there are no constraints.
 	 */
 	public boolean isHavocedOut(BoogieVar bv) {
 		TermVariable inVar = m_InVars.get(bv);
@@ -380,7 +383,7 @@ public class TransFormula implements Serializable {
 			}
 		}
 	}
-	
+
 	public boolean isHavocedIn(BoogieVar bv) {
 		TermVariable inVar = m_InVars.get(bv);
 		TermVariable outVar = m_OutVars.get(bv);
@@ -394,7 +397,6 @@ public class TransFormula implements Serializable {
 			}
 		}
 	}
-
 
 	// public static TermVariable getFreshAuxVariable(Boogie2SMT boogie2smt,
 	// String id, Sort sort) {
@@ -438,11 +440,15 @@ public class TransFormula implements Serializable {
 		Map<TermVariable, Term> subsitutionMapping = new HashMap<TermVariable, Term>();
 		for (int i = transFormula.length - 1; i >= 0; i--) {
 			for (BoogieVar var : transFormula[i].getOutVars().keySet()) {
-				
+
 				if (!services.getProgressMonitorService().continueProcessing()) {
-					throw new RuntimeException("Unhandled Timeout");
+					// TODO: Matthias muss sagen, ob das so geht, speziell hier
+					// null zur�ckgeben
+					reportTimoutResult(services);
+					// throw new RuntimeException("Unhandled Timeout");
+					return null;
 				}
-				
+
 				TermVariable outVar = transFormula[i].getOutVars().get(var);
 				TermVariable newOutVar;
 				if (inVars.containsKey(var)) {
@@ -528,7 +534,7 @@ public class TransFormula implements Serializable {
 			formula = der.eliminate(auxVars, formula);
 		}
 		if (simplify) {
-			formula = SmtUtils.simplify(script, formula, services); 
+			formula = SmtUtils.simplify(script, formula, services);
 		} else {
 			LBool isSat = Util.checkSat(script, formula);
 			if (isSat == LBool.UNSAT) {
@@ -558,6 +564,12 @@ public class TransFormula implements Serializable {
 		assert freeVarsSubsetInOutAuxBranch(formula, inVars, outVars, auxVars, newBranchEncoders, logger);
 		return result;
 
+	}
+
+	private static void reportTimoutResult(IUltimateServiceProvider services) {
+		String timeOutMessage = "Timeout during computation of TransFormula";
+		TimeoutResult timeOutRes = new TimeoutResult(ModelCheckerUtils.sPluginID, timeOutMessage);
+		services.getResultService().reportResult(ModelCheckerUtils.sPluginID, timeOutRes);
 	}
 
 	private static void removesuperfluousVariables(Map<BoogieVar, TermVariable> inVars,
