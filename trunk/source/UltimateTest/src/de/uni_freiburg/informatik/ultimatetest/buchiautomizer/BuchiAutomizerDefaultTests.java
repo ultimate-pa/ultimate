@@ -14,16 +14,20 @@ import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
 public class BuchiAutomizerDefaultTests extends
 		AbstractBuchiAutomizerTestSuite {
 	private static final String[] m_Directories = {
-		"examples/lassos",
-		"examples/termination/TermCompOfficialBenchmarkSet/",
+//		"examples/lassos",
+		"examples/svcomp/termination-crafted",
+		"examples/svcomp/termination-crafted-lit",
+		"examples/svcomp/termination-memory_alloca",
+		"examples/svcomp/termination-numeric"
+//		"examples/termination/TermCompOfficialBenchmarkSet/aprove_memory",
 //		"examples/programs/quantifier",
-		"examples/programs/recursivePrograms",
+//		"examples/programs/recursivePrograms",
 //		"examples/programs/toy"
 //		"examples/termination/AProVE"
 	};
 	
 	// Time out for each test case in milliseconds
-	private static int m_Timeout = 300 * 1000;
+	private static int m_Timeout = 150 * 1000;
 
 	private static final boolean s_UseMediumBlockEncoding = true;
 	private static final String s_MediumBlockEncodingSetting = "buchiAutomizer/staged300Forward-Z3.epf";
