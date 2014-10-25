@@ -196,7 +196,8 @@ public class RewriteDivision extends TransformerPreProcessor {
 				Term dividend = newArgs[0];
 				Term divisor = newArgs[1];
 				TermVariable quotientAuxVar = m_VarFactory.getOrConstructAuxVar(
-						s_DivAuxPrefix, appTerm.getSort());
+						s_DivAuxPrefix + dividend.toString() + divisor.toString(),
+						appTerm.getSort());
 				m_auxVars.put(quotientAuxVar, appTerm);
 				Term divAuxTerm = computeDivAuxTerms(
 						dividend, divisor, quotientAuxVar);
@@ -208,12 +209,14 @@ public class RewriteDivision extends TransformerPreProcessor {
 				Term dividend = newArgs[0];
 				Term divisor = newArgs[1];
 				TermVariable quotientAuxVar = m_VarFactory.getOrConstructAuxVar(
-						s_DivAuxPrefix, appTerm.getSort());
+						s_DivAuxPrefix + dividend.toString() + divisor.toString(),
+						appTerm.getSort());
 				m_auxVars.put(quotientAuxVar,
 						m_Script.term("div", dividend, divisor));
 				TermVariable remainderAuxVar =
 						m_VarFactory.getOrConstructAuxVar(
-								s_ModAuxPrefix, appTerm.getSort());
+						s_ModAuxPrefix + dividend.toString() + divisor.toString(),
+						appTerm.getSort());
 				m_auxVars.put(remainderAuxVar, appTerm);
 				Term modAuxTerms = computeModAuxTerms(dividend,
 						divisor, quotientAuxVar, remainderAuxVar);
