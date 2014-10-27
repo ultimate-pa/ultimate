@@ -31,6 +31,12 @@ public class GlobalSettings {
 	public boolean _memoizeReturnEdgeChecks = true;
 	public int _iterations = -1;
 	public RedirectionStrategy redirectionStrategy = RedirectionStrategy.No_Strategy;
+	
+	public boolean defaultRedirection = true;
+	
+	public boolean removeFalseNodes = false;
+	
+	public boolean checkSatisfiability = false;
 
 	public static void init() {
 		_instance = new GlobalSettings();

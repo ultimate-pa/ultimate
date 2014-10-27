@@ -210,6 +210,11 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		GlobalSettings._instance._dotGraphPath = prefs.getString(CodeCheckPreferenceInitializer.LABEL_GRAPHWRITERPATH, CodeCheckPreferenceInitializer.DEF_GRAPHWRITERPATH);
 
 		GlobalSettings._instance.redirectionStrategy = prefs.getEnum(CodeCheckPreferenceInitializer.LABEL_REDIRECTION, RedirectionStrategy.class);
+
+		GlobalSettings._instance.defaultRedirection = prefs.getBoolean(CodeCheckPreferenceInitializer.LABEL_DEF_RED, CodeCheckPreferenceInitializer.DEF_DEF_RED);
+		GlobalSettings._instance.removeFalseNodes = prefs.getBoolean(CodeCheckPreferenceInitializer.LABEL_RM_FALSE, CodeCheckPreferenceInitializer.DEF_RM_FALSE);
+		GlobalSettings._instance.checkSatisfiability = prefs.getBoolean(CodeCheckPreferenceInitializer.LABEL_CHK_SAT, CodeCheckPreferenceInitializer.DEF_CHK_SAT);
+	
 	}
 
 	private void removeSummaryEdges() {

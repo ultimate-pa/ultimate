@@ -45,8 +45,6 @@ public class ImpulseChecker extends CodeChecker {
 	}
 	
 	public void replaceEdge(AppEdge edge, AnnotatedProgramPoint newTarget) {
-
-		//System.err.println("HERE " + edge);
 		if (edge instanceof AppHyperEdge)
 			edge.getSource().connectOutgoingReturn(((AppHyperEdge) edge).getHier(), (Return) edge.getStatement(), newTarget);
 		else
@@ -63,8 +61,21 @@ public class ImpulseChecker extends CodeChecker {
 				clones[i].getEdge(nodes[i + 1]).disconnect();
 				errorReached = true;
 			} else {
-				replaceEdge(clones[i].getEdge(nodes[i + 1]), clones[i + 1]);
-				//redirectIfValid(clones[i].getEdge(nodes[i + 1]), clones[i + 1]);
+				if (GlobalSettings._instance.defaultRedirection) {
+					if (GlobalSettings._instance.checkSatisfiability)
+						redirectIfValid(clones[i].getEdge(nodes[i + 1]), clones[i + 1]);
+					else
+						replaceEdge(clones[i].getEdge(nodes[i + 1]), clones[i + 1]);
+				} else {
+					AnnotatedProgramPoint clone = clones[i + 1];
+					AppEdge prevEdge = clones[i].getEdge(nodes[i + 1]);
+					if (GlobalSettings._instance.redirectionStrategy != RedirectionStrategy.No_Strategy)
+						clone = cloneFinder.getStrongestValidCopy(prevEdge);
+	
+					if (clone == null)
+						continue;
+					redirectIfValid(prevEdge, clone);
+				}
 			}
 		}
 		
@@ -95,23 +106,23 @@ public class ImpulseChecker extends CodeChecker {
 			return ;
 		if (isValidRedirection(edge, target)) {
 			if (edge instanceof AppHyperEdge) {
-				/*
-				if (m_smtManager.isInductiveReturn(edge.getSource().getPredicate(), ((AppHyperEdge) edge).getHier().getPredicate(),
+				
+				if (!GlobalSettings._instance.checkSatisfiability || m_smtManager.isInductiveReturn(edge.getSource().getPredicate(), ((AppHyperEdge) edge).getHier().getPredicate(),
 						(Return) edge.getStatement(), m_predicateUnifier.getFalsePredicate()) != LBool.UNSAT)	
-				*/
 					edge.getSource().connectOutgoingReturn(((AppHyperEdge) edge).getHier(), (Return) edge.getStatement(), target);
 			} else {
-				/*
-				boolean result = false;
-				if (edge.getStatement() instanceof Call)
-					result = m_smtManager.isInductiveCall(edge.getSource().getPredicate(), (Call) edge.getStatement(),
+				
+				boolean result = !GlobalSettings._instance.checkSatisfiability;
+				if (!result) {
+					if (edge.getStatement() instanceof Call)
+						result = m_smtManager.isInductiveCall(edge.getSource().getPredicate(), (Call) edge.getStatement(),
+								m_predicateUnifier.getFalsePredicate()) != LBool.UNSAT;
+					else
+						result = m_smtManager.isInductive(edge.getSource().getPredicate(), edge.getStatement(),
 							m_predicateUnifier.getFalsePredicate()) != LBool.UNSAT;
-				else
-					result = m_smtManager.isInductive(edge.getSource().getPredicate(), edge.getStatement(),
-						m_predicateUnifier.getFalsePredicate()) != LBool.UNSAT;
+				}
 				
 				if (result)
-					*/
 					edge.getSource().connectOutgoing(edge.getStatement(), target);
 				
 			}
@@ -149,8 +160,8 @@ public class ImpulseChecker extends CodeChecker {
 		ArrayList<IPredicate> interpolantsDBG = new ArrayList<IPredicate>();
 		Collections.addAll(interpolantsDBG, interpolants);
 		System.err.println(String.format("Inters: %s\n", interpolantsDBG));
-		*/
 		
+		*/
 		AnnotatedProgramPoint[] clones = new AnnotatedProgramPoint[nodes.length];
 		//_cloneNode = new HashMap <AnnotatedProgramPoint, AnnotatedProgramPoint>();
 		
@@ -170,7 +181,8 @@ public class ImpulseChecker extends CodeChecker {
 		//improveAnnotations(newRoot);
 		redirectEdges(nodes, clones);
 		
-		removeFalseNodes(nodes, clones);
+		if (GlobalSettings._instance.removeFalseNodes)
+			removeFalseNodes(nodes, clones);
 		
 		return true;
 	}
@@ -360,6 +372,12 @@ public class ImpulseChecker extends CodeChecker {
 				System.err.print(" , ");
 			}
 			System.err.println("]");
+			
+			System.err.print("\nCopied From " + node.getParentCopy() + "\nCopies :: { ");
+			for (AnnotatedProgramPoint copy : node.getNextClones()) {
+				System.err.print(copy + " , ");
+			}
+			System.err.println("}");
 		}
 		for (AnnotatedProgramPoint nextNode : node.getOutgoingNodes()) {
 			dfsDEBUG(nextNode, print);

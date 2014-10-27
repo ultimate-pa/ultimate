@@ -49,6 +49,17 @@ public class CodeCheckPreferenceInitializer extends UltimatePreferenceInitialize
 				new UltimatePreferenceItem<RedirectionStrategy>(LABEL_REDIRECTION, DEF_REDIRECTION,
 						PreferenceType.Combo, RedirectionStrategy.values()),
 
+				new UltimatePreferenceItem<Boolean>(
+						LABEL_DEF_RED,
+						DEF_DEF_RED, PreferenceType.Boolean),
+
+				new UltimatePreferenceItem<Boolean>(
+						LABEL_CHK_SAT,
+						DEF_CHK_SAT, PreferenceType.Boolean),
+
+				new UltimatePreferenceItem<Boolean>(
+						LABEL_RM_FALSE,
+						DEF_RM_FALSE, PreferenceType.Boolean),
 		};
 	}
 
@@ -109,6 +120,12 @@ public class CodeCheckPreferenceInitializer extends UltimatePreferenceInitialize
 	public static final String LABEL_ITERATIONS = "Limit maxmium number of iterations. (-1 for no limitations)";
 
 	public static final String LABEL_REDIRECTION = "The redirection strategy for Impulse";
+	
+	public static final String LABEL_DEF_RED = "Default Redirection";
+	
+	public static final String LABEL_RM_FALSE = "Remove False Nodes Manually";
+	
+	public static final String LABEL_CHK_SAT = "Check edges satisfiability";
 	// /*
 	// * default values for the different preferences
 	// */
@@ -130,5 +147,11 @@ public class CodeCheckPreferenceInitializer extends UltimatePreferenceInitialize
 	public static final int DEF_ITERATIONS = -1;
 	
 	public static final RedirectionStrategy DEF_REDIRECTION = RedirectionStrategy.No_Strategy;
+	
+	public static final boolean DEF_DEF_RED = true;
+	
+	public static final boolean DEF_RM_FALSE = false;
+	
+	public static final boolean DEF_CHK_SAT = false;
 
 }

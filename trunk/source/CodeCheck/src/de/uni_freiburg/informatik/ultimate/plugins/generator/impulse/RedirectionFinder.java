@@ -1,7 +1,9 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.impulse;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.appgraph.AnnotatedProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.appgraph.AppEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.GlobalSettings;
@@ -36,11 +38,33 @@ public class RedirectionFinder {
 			if (GlobalSettings._instance.redirectionStrategy == RedirectionStrategy.RANDOM)
 				ret = nodes.get((int) (Math.random() * nodes.size()));
 			if (GlobalSettings._instance.redirectionStrategy == RedirectionStrategy.RANDOM_STRONGEST)
-				ret = bipartiteMatching(nodes);
+				ret = strongRandomPickup(nodes);
 		}
 		return ret;
 	}
-	private AnnotatedProgramPoint bipartiteMatching(ArrayList<AnnotatedProgramPoint> nodes) {
-		return null;
+	private AnnotatedProgramPoint strongRandomPickup(ArrayList<AnnotatedProgramPoint> nodes) {
+		HashSet<AnnotatedProgramPoint> predicates = new HashSet<AnnotatedProgramPoint>();
+		for (AnnotatedProgramPoint node : nodes)
+			predicates.add(node);
+		
+		for (AnnotatedProgramPoint node : nodes) {
+			if (!predicates.contains(node))
+				continue;
+			AnnotatedProgramPoint[] comp = predicates.toArray(new AnnotatedProgramPoint[]{});
+			for (AnnotatedProgramPoint subNode : comp) {
+				if (subNode == node)
+					continue;
+				if (isStrongerPredicate(node.getPredicate(), subNode.getPredicate()))
+					predicates.remove(subNode);
+			}
+		}
+		AnnotatedProgramPoint[] best = predicates.toArray(new AnnotatedProgramPoint[]{});
+		return best[(int) (best.length * Math.random())];
+	}
+
+	private boolean isStrongerPredicate(IPredicate predicate,
+			IPredicate predicate2) {
+		// TODO Auto-generated method stub
+		return false;
 	}
 }

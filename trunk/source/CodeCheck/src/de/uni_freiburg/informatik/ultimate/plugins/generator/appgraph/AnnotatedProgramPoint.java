@@ -109,6 +109,9 @@ public class AnnotatedProgramPoint extends ModifiableExplicitEdgesMultigraph<Ann
 		return _outgoingHyperEdges;
 	}
 
+	public AnnotatedProgramPoint getParentCopy() {
+		return _cloneSource;
+	}
 //	private boolean noParallelReturns() {
 //		boolean result = true;
 //		for (int i = 0; i < this.getOutgoingNodes().size(); i++)
