@@ -33,7 +33,6 @@ import java.util.List;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.lassoranker.LinearInequality;
-import de.uni_freiburg.informatik.ultimate.lassoranker.LinearInequality.PossibleMotzkinCoefficients;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.rankingfunctions.LexicographicRankingFunction;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.rankingfunctions.RankingFunction;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.RankVar;
@@ -68,85 +67,6 @@ public class ComposedLexicographicTemplate extends ComposableTemplate {
 		for (ComposableTemplate t : m_Parts) {
 			t.init(m_tas);
 		}
-	}
-
-	/**
-	 * Build a CNF out of a /\ \/ /\ \/ -formula of linear inequalities
-	 * using the following rule:
-	 * 
-	 * <pre>
-	 * /\_{i ∈ I} \/_{j ∈ J_i} /\_{k ∈ K_{i,j}} \/_{l ∈ L_{i,j,k}} T(i, j, k, l)
-	 * = /\_{i ∈ I} /\_{f ∈ ⨂_{j ∈ J_i} K_{i,j}} \/_{j ∈ J_i} \/_{l ∈ L_{i,j,f(j)}} T(i,j,f(j),l)
-	 * </pre>
-	 * 
-	 * @return a CNF
-	 */
-	static<T> List<List<T>> distribute(
-			List<List<List<List<T>>>> constraints) {
-		List<List<T>> conjunction =
-				new ArrayList<List<T>>();
-		for (List<List<List<T>>> i : constraints) {
-			int[] f = new int[i.size()];
-			for (int j = 0; j < f.length; ++j) {
-				assert !i.get(j).isEmpty();
-				f[j] = 0;
-			}
-			while (true) {
-				List<T> disjuction =
-						new ArrayList<T>();
-				for (int j = 0; j < f.length; ++j) {
-					disjuction.addAll(i.get(j).get(f[j]));
-				}
-				
-				// advance counter
-				int j = 0;
-				while (j < f.length) {
-					++f[j];
-					if (f[j] >= i.get(j).size()) {
-						f[j] = 0;
-						++j;
-					} else {
-						break;
-					}
-				}
-				conjunction.add(disjuction);
-				if (j == f.length) {
-					break;
-				}
-			}
-		}
-		return conjunction;
-	}
-	
-	/**
-	 * Reset all possible Motzkin coefficients to ANYTHING
-	 * @param constraints the constraints
-	 */
-	static void resetMotzkin(List<List<LinearInequality>> constraints) {
-		for (List<LinearInequality> disjunction : constraints) {
-			for (LinearInequality li : disjunction) {
-				li.motzkin_coefficient = PossibleMotzkinCoefficients.ANYTHING;
-			}
-//			if (sRedAtoms && disjunction.size() > 0) {
-//				disjunction.get(0).motzkin_coefficient =
-//					PossibleMotzkinCoefficients.ZERO_AND_ONE;
-//			}
-		}
-	}
-	
-	/**
-	 * Calculate the degree from CNF constraints
-	 */
-	static int computeDegree(List<List<LinearInequality>> constraints) {
-		int degree = 0;
-		for (List<LinearInequality> disjunction : constraints) {
-			for (LinearInequality li : disjunction) {
-				if (!li.motzkin_coefficient.isFixed()) {
-					++degree;
-				}
-			}
-		}
-		return degree;
 	}
 	
 	@Override
@@ -192,8 +112,9 @@ public class ComposedLexicographicTemplate extends ComposableTemplate {
 			constraints.add(disjunction);
 		}
 		
-		List<List<LinearInequality>> cnf = distribute(constraints);
-		resetMotzkin(cnf);
+		List<List<LinearInequality>> cnf =
+				TemplateComposition.distribute(constraints);
+		TemplateComposition.resetMotzkin(cnf);
 		return cnf;
 	}
 
@@ -214,8 +135,9 @@ public class ComposedLexicographicTemplate extends ComposableTemplate {
 			constraints.add(disjunction);
 		}
 		
-		List<List<LinearInequality>> cnf = distribute(constraints);
-		resetMotzkin(cnf);
+		List<List<LinearInequality>> cnf =
+				TemplateComposition.distribute(constraints);
+		TemplateComposition.resetMotzkin(cnf);
 		return cnf;
 	}
 
@@ -231,8 +153,9 @@ public class ComposedLexicographicTemplate extends ComposableTemplate {
 					t.getConstraintsBounded(inVars, outVars)));
 		}
 		
-		List<List<LinearInequality>> cnf = distribute(constraints);
-		resetMotzkin(cnf);
+		List<List<LinearInequality>> cnf =
+				TemplateComposition.distribute(constraints);
+		TemplateComposition.resetMotzkin(cnf);
 		return cnf;
 	}
 
@@ -283,8 +206,8 @@ public class ComposedLexicographicTemplate extends ComposableTemplate {
 	@Override
 	public int getDegree() {
 		Map<RankVar, Term> empty = Collections.emptyMap();
-		return computeDegree(getConstraintsBounded(empty, empty))
-				+ computeDegree(getConstraintsDec(empty, empty));
+		return TemplateComposition.computeDegree(getConstraintsBounded(empty, empty))
+				+ TemplateComposition.computeDegree(getConstraintsDec(empty, empty));
 	}
 
 	@Override

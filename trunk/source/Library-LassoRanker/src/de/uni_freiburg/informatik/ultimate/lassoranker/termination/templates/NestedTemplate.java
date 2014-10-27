@@ -61,12 +61,12 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
  * 
  * @author Matthias Heizmann
  */
-public class NestedTemplate extends RankingTemplate {
+public class NestedTemplate extends ComposableTemplate {
 	
 	public final int m_Size;
 	
-	private static final String s_name_delta = "delta";
-	private static final String s_name_function = "rank";
+	private static final String s_name_delta = "delta_";
+	private static final String s_name_function = "rank_";
 	
 	private Term m_delta;
 	private AffineFunctionGenerator[] m_fgens;
@@ -82,10 +82,10 @@ public class NestedTemplate extends RankingTemplate {
 	
 	@Override
 	protected void _init() {
-		m_delta = newDelta(s_name_delta);
+		m_delta = newDelta(s_name_delta + getInstanceNumber());
 		for (int i = 0; i < m_Size; ++i) {
 			m_fgens[i] = new AffineFunctionGenerator(m_script, m_variables,
-					s_name_function + i);
+					s_name_function + getInstanceNumber() + "_" + i);
 		}
 	}
 	
@@ -115,12 +115,35 @@ public class NestedTemplate extends RankingTemplate {
 	}
 	
 	@Override
-	public List<List<LinearInequality>> getConstraints(
+	public Collection<Term> getVariables() {
+		Collection<Term> list = new ArrayList<Term>();
+		list.add(m_delta);
+		for (int i = 0; i < m_Size; ++i) {
+			list.addAll(m_fgens[i].getVariables());
+		}
+		return list;
+	}
+
+	@Override
+	public RankingFunction extractRankingFunction(Map<Term, Rational> val)
+			throws SMTLIBException {
+		AffineFunction[] fs = new AffineFunction[m_Size];
+		for (int i = 0; i < m_Size; ++i) {
+			fs[i] = m_fgens[i].extractAffineFunction(val);
+		}
+		return new NestedRankingFunction(fs);
+	}
+	
+	@Override
+	public int getDegree() {
+		return 0;
+	}
+
+	@Override
+	public List<List<LinearInequality>> getConstraintsDec(
 			Map<RankVar, Term> inVars, Map<RankVar, Term> outVars) {
-		checkInitialized();
 		List<List<LinearInequality>> conjunction =
 				new ArrayList<List<LinearInequality>>();
-		
 		// f_0(x') < f_0(x) - δ
 		{
 			LinearInequality li = m_fgens[0].generate(inVars);
@@ -151,53 +174,64 @@ public class NestedTemplate extends RankingTemplate {
 			conjunction.add(Collections.singletonList(li));
 		}
 		
-		// f_n(x) > 0
-		{
-			LinearInequality li = m_fgens[m_Size-1].generate(inVars);
-			li.setStrict(true);
-			li.motzkin_coefficient = sRedAtoms ?
-					PossibleMotzkinCoefficients.ONE
-					: PossibleMotzkinCoefficients.ANYTHING;
-			conjunction.add(Collections.singletonList(li));
-		}
-		
 		// delta > 0 is assured by RankingFunctionTemplate.newDelta
 		return conjunction;
 	}
 
 	@Override
-	public Collection<Term> getVariables() {
-		Collection<Term> list = new ArrayList<Term>();
-		list.add(m_delta);
+	public List<List<LinearInequality>> getConstraintsNonInc(
+			Map<RankVar, Term> inVars, Map<RankVar, Term> outVars) {
+		List<List<LinearInequality>> conjunction =
+				new ArrayList<List<LinearInequality>>();
+		// /\_i f_i(x') ≤ f_i(x)
 		for (int i = 0; i < m_Size; ++i) {
-			list.addAll(m_fgens[i].getVariables());
+			LinearInequality li = m_fgens[i].generate(inVars);
+			LinearInequality li2 = m_fgens[i].generate(outVars);
+			li2.negate();
+			li.add(li2);
+			li.setStrict(false);
+			li.motzkin_coefficient = sRedAtoms ?
+					PossibleMotzkinCoefficients.ONE
+					: PossibleMotzkinCoefficients.ANYTHING;
+			conjunction.add(Collections.singletonList(li));
 		}
-		return list;
+		return conjunction;
 	}
 
 	@Override
-	public RankingFunction extractRankingFunction(Map<Term, Rational> val)
-			throws SMTLIBException {
-		AffineFunction[] fs = new AffineFunction[m_Size];
-		for (int i = 0; i < m_Size; ++i) {
-			fs[i] = m_fgens[i].extractAffineFunction(val);
-		}
-		return new NestedRankingFunction(fs);
+	public List<List<LinearInequality>> getConstraintsBounded(
+			Map<RankVar, Term> inVars, Map<RankVar, Term> outVars) {
+		// f_n(x) > 0
+		LinearInequality li = m_fgens[m_Size-1].generate(inVars);
+		li.setStrict(true);
+		li.motzkin_coefficient = sRedAtoms ?
+				PossibleMotzkinCoefficients.ONE
+				: PossibleMotzkinCoefficients.ANYTHING;
+		return Collections.singletonList(Collections.singletonList(li));
 	}
-	
+
 	@Override
-	public List<String> getAnnotations() {
+	public List<String> getAnnotationsDec() {
 		List<String> annotations = new ArrayList<String>();
 		annotations.add("rank f_0 is decreasing");
 		for (int i = 0; i < m_Size-1; ++i) {
 			annotations.add("rank f_" + i + " is decreasing by at least -f_" + (i-1));
 		}
-		annotations.add("rank f_" + (m_Size - 1) + " is bounded");
 		return annotations;
 	}
-	
+
 	@Override
-	public int getDegree() {
-		return 0;
+	public List<String> getAnnotationsNonInc() {
+		List<String> annotations = new ArrayList<String>();
+		for (int i = 0; i < m_Size; ++i) {
+			annotations.add("rank f_" + i + " is nonincreasing");
+		}
+		return annotations;
+	}
+
+	@Override
+	public List<String> getAnnotationsBounded() {
+		return Collections.singletonList(
+				"rank f_" + (m_Size - 1) + " is bounded");
 	}
 }

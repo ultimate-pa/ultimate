@@ -7,15 +7,15 @@
  *
  */
 
-procedure main() returns (q: int, x: int, y: int)
+procedure main() returns (p: int, q: int, x: int)
 {
-	while (q >= 0) {
-		if (*) {
-			q := q - x;
-			x := x + 1;
+	while (p >= 0) {
+		if (q >= 0) {
+			q := q - 1;
 		} else {
-			q := q - y;
-			y := y + 1;
+			p := p - x;
+			x := x + 1;
+			havoc q;
 		}
 	}
 }
