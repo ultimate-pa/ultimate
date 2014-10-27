@@ -4,7 +4,9 @@
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation;
 
 import org.eclipse.cdt.core.dom.ast.IASTNode;
+
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
+import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.result.Check;
 
 /**
@@ -55,6 +57,18 @@ public class LocationFactory {
 		} else if (loc instanceof CLocation) {
 			CLocation realLoc = (CLocation) loc;
 			return new CLocation(realLoc.getNode(), type, realLoc.ignoreDuringBacktranslation());
+		} else {
+			throw new UnsupportedOperationException();
+		}
+	}
+	
+	public static CACSLLocation createIgnoreLocation(ILocation loc) {
+		if (loc instanceof ACSLLocation) {
+			ACSLLocation realLoc = (ACSLLocation) loc;
+			return new ACSLLocation(realLoc.getNode(), realLoc.getCheck(), true);
+		} else if (loc instanceof CLocation) {
+			CLocation realLoc = (CLocation) loc;
+			return new CLocation(realLoc.getNode(), realLoc.getCheck(), true);
 		} else {
 			throw new UnsupportedOperationException();
 		}

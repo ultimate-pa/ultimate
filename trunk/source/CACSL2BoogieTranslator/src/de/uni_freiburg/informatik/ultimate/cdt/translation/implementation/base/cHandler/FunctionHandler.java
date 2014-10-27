@@ -618,7 +618,8 @@ public class FunctionHandler {
 			// stackframe is closed, i.e. at a return
 			if (methodName.equals("alloca")) {
 				memoryHandler.addVariableToBeFreed(main, 
-						new LocalLValueILocationPair((LocalLValue) mallocRex.lrVal, loc));
+						new LocalLValueILocationPair((LocalLValue) mallocRex.lrVal, 
+								LocationFactory.createIgnoreLocation(loc)));
 			}
 			return rex;
 		}
@@ -918,7 +919,8 @@ public class FunctionHandler {
 				if (isOnHeap) {
 					LocalLValue llv = new LocalLValue(tempLHS, cvar);
 					// malloc
-					memoryHandler.addVariableToBeMallocedAndFreed(main, new LocalLValueILocationPair(llv, loc));
+					memoryHandler.addVariableToBeMallocedAndFreed(main, 
+							new LocalLValueILocationPair(llv, LocationFactory.createIgnoreLocation(loc)));
 					// dereference
 					HeapLValue hlv = new HeapLValue(llv.getValue(), cvar);
 					ArrayList<Declaration> decls = new ArrayList<Declaration>();

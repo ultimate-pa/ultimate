@@ -656,7 +656,7 @@ public class CHandler implements ICHandler {
 							((ResultExpression) result).auxVars.put(tmpVarDec, loc);
 
 							mMemoryHandler.addVariableToBeMallocedAndFreed(main, 
-									new LocalLValueILocationPair(llVal, loc));
+									new LocalLValueILocationPair(llVal, LocationFactory.createIgnoreLocation(loc)));
 						}
 					} else if (hasRealInitializer && !mFunctionHandler.noCurrentProcedure() && !mTypeHandler.isStructDeclaration()) { 
 						//in case of a local variable declaration with an initializer, the statements and delcs
