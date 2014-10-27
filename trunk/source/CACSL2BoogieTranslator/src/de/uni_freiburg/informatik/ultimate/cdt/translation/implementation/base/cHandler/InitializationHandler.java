@@ -504,7 +504,7 @@ public class InitializationHandler {
 						throw new AssertionError("this should not be the case as we are in the inner/outermost array right??");
 					} else if  (valueType instanceof CStruct) {
 						ResultExpression sInit = this.initStructOnHeapFromRERL(main, loc, 
-								writeLocation, list != null ? list.get(i) : null, (CStruct) valueType);
+								writeLocation, list != null && list.size() > i ? list.get(i) : null, (CStruct) valueType);
 						arrayWrites.addAll(sInit.stmt);
 						assert sInit.decl.size() == 0 && sInit.auxVars.size() == 0 : "==> change return type of initArray..";
 						val = (RValue) sInit.lrVal;

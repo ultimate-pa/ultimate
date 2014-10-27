@@ -80,6 +80,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.c
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.CastAndConversionHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.FunctionHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.InitializationHandler;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.LocalLValueILocationPair;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.MemoryHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.PostProcessor;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.StructHandler;
@@ -469,7 +470,7 @@ public class CHandler implements ICHandler {
 		}
 		checkForACSL(main, stmt, null, node);
 		if (isNewScopeRequired(parent)) {
-			stmt = mMemoryHandler.insertMallocs(main, loc, stmt);
+			stmt = mMemoryHandler.insertMallocs(main, stmt);
 			for (SymbolTableValue stv : mSymbolTable.currentScopeValues()) {
 				if (!stv.isBoogieGlobalVar()) {
 					decl.add(stv.getBoogieDecl());
@@ -636,17 +637,26 @@ public class CHandler implements ICHandler {
 								((ResultExpression) result).auxVars.putAll(cDec.getInitializer().auxVars);
 						}
 							
+						//no initializer --> essentially needs to be havoced f.i. in each loop iteration
 						if (!onHeap) {
 							((ResultExpression) result).stmt.add(
 									new HavocStatement(loc, new VariableLHS[] { lhs }));
 						} else {
-							
+							String tmpId = main.nameHandler.getTempVarUID(SFO.AUXVAR.NONDET);
 							LocalLValue llVal = new LocalLValue(lhs, cDec.getType());
-							((ResultExpression) result).stmt.add(mMemoryHandler.getMallocCall(main, mFunctionHandler, 
-									mMemoryHandler.calculateSizeOf(cDec.getType(), loc), llVal , loc));
-							mMemoryHandler.addVariableToBeMallocedAndFreed(main, llVal);
-							
+//							((ResultExpression) result).stmt.add(mMemoryHandler.getMallocCall(main, mFunctionHandler, 
+//									mMemoryHandler.calculateSizeOf(cDec.getType(), loc), llVal , loc));
+							VariableDeclaration tmpVarDec = new VariableDeclaration(loc, new Attribute[0], 
+									new VarList[] { new VarList(loc, new String[] { tmpId }, 
+											main.typeHandler.ctype2asttype(loc, cDec.getType())) });
+							((ResultExpression) result).decl.add(tmpVarDec);
+							((ResultExpression) result).stmt.addAll(mMemoryHandler.getWriteCall(loc, 
+									new HeapLValue(new IdentifierExpression(loc, bId), cDec.getType()), 
+									new RValue(new IdentifierExpression(loc, tmpId), cDec.getType())));
+							((ResultExpression) result).auxVars.put(tmpVarDec, loc);
 
+							mMemoryHandler.addVariableToBeMallocedAndFreed(main, 
+									new LocalLValueILocationPair(llVal, loc));
 						}
 					} else if (hasRealInitializer && !mFunctionHandler.noCurrentProcedure() && !mTypeHandler.isStructDeclaration()) { 
 						//in case of a local variable declaration with an initializer, the statements and delcs
@@ -662,7 +672,7 @@ public class CHandler implements ICHandler {
 						
 						if (onHeap) {
 							LocalLValue llVal = new LocalLValue(lhs, cDec.getType());
-							mMemoryHandler.addVariableToBeMallocedAndFreed(main, llVal);
+							mMemoryHandler.addVariableToBeMallocedAndFreed(main, new LocalLValueILocationPair(llVal, loc));
 						}
 
 						((ResultExpression) result).stmt.addAll(initRex.stmt);
@@ -691,6 +701,10 @@ public class CHandler implements ICHandler {
 						storageClass)); 
 			}
 			mCurrentDeclaredTypes.pop();
+			
+			if (result instanceof ResultExpression)
+				((ResultExpression) result).stmt.addAll(
+						Dispatcher.createHavocsForAuxVars(((ResultExpression) result).auxVars));
 			return result;
 		}
 		String msg = "Unknown result type: " + r.getClass();
@@ -2876,7 +2890,7 @@ public class CHandler implements ICHandler {
 					}
 				}
 				if (((IASTForStatement) node).getInitializerStatement() != null) {
-					bodyBlock = mMemoryHandler.insertMallocs(main, loc, bodyBlock);
+					bodyBlock = mMemoryHandler.insertMallocs(main, bodyBlock);
 					for (SymbolTableValue stv : mSymbolTable.currentScopeValues())
 						if (!stv.isBoogieGlobalVar()) {
 							decl.add(stv.getBoogieDecl());

@@ -315,7 +315,7 @@ public class FunctionHandler {
 			decls.add(declaration);
 		}
 		// 3)
-		stmts = memoryHandler.insertMallocs(main, loc, stmts);
+		stmts = memoryHandler.insertMallocs(main, stmts);
 		// 4)
 		for (SymbolTableValue stv : main.cHandler.getSymbolTable().currentScopeValues()) {
 			// there may be a null declaration in case of foo(void)
@@ -434,14 +434,14 @@ public class FunctionHandler {
 
 		// we need to insert a free for each malloc of an auxvar before each
 		// return
-		for (Entry<LocalLValue, Integer> entry : memoryHandler.getVariablesToBeFreed().entrySet()) { // frees
+		for (Entry<LocalLValueILocationPair, Integer> entry : memoryHandler.getVariablesToBeFreed().entrySet()) { // frees
 																										// are
 																										// inserted
 																										// in
 																										// handleReturnStm
 			if (entry.getValue() >= 1) {
-				stmt.add(memoryHandler.getFreeCall(main, this, entry.getKey(), loc));
-				stmt.add(new HavocStatement(loc, new VariableLHS[] { (VariableLHS) entry.getKey().getLHS() }));
+				stmt.add(memoryHandler.getFreeCall(main, this, entry.getKey().llv, entry.getKey().loc));
+				stmt.add(new HavocStatement(loc, new VariableLHS[] { (VariableLHS) entry.getKey().llv.getLHS() }));
 			}
 		}
 
@@ -617,7 +617,8 @@ public class FunctionHandler {
 			// for alloc a we have to free the variable ourselves when the
 			// stackframe is closed, i.e. at a return
 			if (methodName.equals("alloca")) {
-				memoryHandler.addVariableToBeFreed(main, (LocalLValue) mallocRex.lrVal);
+				memoryHandler.addVariableToBeFreed(main, 
+						new LocalLValueILocationPair((LocalLValue) mallocRex.lrVal, loc));
 			}
 			return rex;
 		}
@@ -917,7 +918,7 @@ public class FunctionHandler {
 				if (isOnHeap) {
 					LocalLValue llv = new LocalLValue(tempLHS, cvar);
 					// malloc
-					memoryHandler.addVariableToBeMallocedAndFreed(main, llv);
+					memoryHandler.addVariableToBeMallocedAndFreed(main, new LocalLValueILocationPair(llv, loc));
 					// dereference
 					HeapLValue hlv = new HeapLValue(llv.getValue(), cvar);
 					ArrayList<Declaration> decls = new ArrayList<Declaration>();
