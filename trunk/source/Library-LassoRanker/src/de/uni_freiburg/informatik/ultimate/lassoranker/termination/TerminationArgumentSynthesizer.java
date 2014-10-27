@@ -393,8 +393,8 @@ public class TerminationArgumentSynthesizer extends ArgumentSynthesizer {
 			
 			// Simplify supporting invariants
 			if (m_settings.simplify_supporting_invariants) {
-				TerminationArgumentSimplifier tas =
-						new TerminationArgumentSimplifier(m_preferences,
+				SupportingInvariantSimplifier tas =
+						new SupportingInvariantSimplifier(m_preferences,
 								m_services, m_storage);
 				mLogger.info("Simplifying supporting invariants...");
 				int before = m_supporting_invariants.size();

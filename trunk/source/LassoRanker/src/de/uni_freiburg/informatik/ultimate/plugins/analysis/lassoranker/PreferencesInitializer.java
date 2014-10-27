@@ -257,6 +257,9 @@ public class PreferencesInitializer extends UltimatePreferenceInitializer {
 		settings.simplify_termination_argument = store.getBoolean(
 				LABEL_simplify_result
 		);
+		settings.simplify_supporting_invariants = store.getBoolean(
+				LABEL_simplify_result
+		);
 		return settings;
 	}
 	
