@@ -338,7 +338,7 @@ public class TraceCheckerSpWp extends TraceChecker {
 					m_Nsb.getIndexedVarRepresentative(), m_SmtManager, m_ModifiedGlobals);
 			relevantVarsToUseForFPBP = lvar.getLiveVariables();
 		} else {
-			RelevantVariables rvar = new RelevantVariables(rtf);
+			RelevantVariables rvar = new RelevantVariables(rtf, m_ModifiedGlobals);
 			relevantVarsToUseForFPBP = rvar.getRelevantVariables();
 		}
 

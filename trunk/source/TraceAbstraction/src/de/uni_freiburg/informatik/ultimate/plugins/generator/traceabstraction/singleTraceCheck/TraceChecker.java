@@ -341,7 +341,7 @@ public class TraceChecker {
 	 * violated (result of trace check is SAT).
 	 */
 	private RcfgProgramExecution computeRcfgProgramExecutionCaseSAT(NestedSsaBuilder nsb) {
-		RelevantVariables relVars = new RelevantVariables(m_DefaultTransFormulas);
+		RelevantVariables relVars = new RelevantVariables(m_DefaultTransFormulas, m_ModifiedGlobals);
 		RcfgProgramExecutionBuilder rpeb = new RcfgProgramExecutionBuilder(m_ModifiedGlobals,
 				(NestedWord<CodeBlock>) m_Trace, relVars,m_SmtManager.getBoogie2Smt().getBoogie2SmtSymbolTable());
 		for (int i = 0; i < m_Trace.length(); i++) {
@@ -477,7 +477,7 @@ public class TraceChecker {
 
 	private boolean testRelevantVars() {
 		boolean result = true;
-		RelevantVariables rv = new RelevantVariables(m_DefaultTransFormulas);
+		RelevantVariables rv = new RelevantVariables(m_DefaultTransFormulas, m_ModifiedGlobals);
 		for (int i = 0; i < m_Interpolants.length; i++) {
 			IPredicate itp = m_Interpolants[i];
 			Set<BoogieVar> vars = itp.getVars();
