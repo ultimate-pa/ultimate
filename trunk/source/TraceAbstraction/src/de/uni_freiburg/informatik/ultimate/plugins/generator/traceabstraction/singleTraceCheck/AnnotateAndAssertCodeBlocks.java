@@ -90,8 +90,8 @@ public class AnnotateAndAssertCodeBlocks {
 
 	protected Term annotateAndAssertLocalVarAssignemntCall(int position) {
 		String name = localVarAssignemntCallAnnotation(position);
-		Term original = m_SSA.getLocalVarAssignment(position);
-		Term annotated = annotateAndAssertTerm(original, name);
+		Term indexed = m_SSA.getLocalVarAssignment(position);
+		Term annotated = annotateAndAssertTerm(indexed, name);
 		return annotated;
 	}
 
@@ -101,8 +101,8 @@ public class AnnotateAndAssertCodeBlocks {
 
 	protected Term annotateAndAssertGlobalVarAssignemntCall(int position) {
 		String name = globalVarAssignemntAnnotation(position);
-		Term original = m_SSA.getGlobalVarAssignment(position);
-		Term annotated = annotateAndAssertTerm(original, name);
+		Term indexed = m_SSA.getGlobalVarAssignment(position);
+		Term annotated = annotateAndAssertTerm(indexed, name);
 		return annotated;
 	}
 
@@ -112,8 +112,8 @@ public class AnnotateAndAssertCodeBlocks {
 
 	protected Term annotateAndAssertOldVarAssignemntCall(int position) {
 		String name = oldVarAssignemntCallAnnotation(position);
-		Term original = m_SSA.getOldVarAssignment(position);
-		Term annotated = annotateAndAssertTerm(original, name);
+		Term indexed = m_SSA.getOldVarAssignment(position);
+		Term annotated = annotateAndAssertTerm(indexed, name);
 		return annotated;
 	}
 
@@ -123,8 +123,8 @@ public class AnnotateAndAssertCodeBlocks {
 
 	protected Term annotateAndAssertPendingContext(int positionOfPendingContext, int pendingContextCode) {
 		String name = pendingContextAnnotation(pendingContextCode);
-		Term original = m_SSA.getPendingContext(positionOfPendingContext);
-		Term annotated = annotateAndAssertTerm(original, name);
+		Term indexed = m_SSA.getPendingContext(positionOfPendingContext);
+		Term annotated = annotateAndAssertTerm(indexed, name);
 		return annotated;
 	}
 
@@ -134,8 +134,8 @@ public class AnnotateAndAssertCodeBlocks {
 
 	protected Term annotateAndAssertLocalVarAssignemntPendingContext(int positionOfPendingReturn, int pendingContextCode) {
 		String name = localVarAssignemntPendingReturnAnnotation(pendingContextCode);
-		Term original = m_SSA.getLocalVarAssignment(positionOfPendingReturn);
-		Term annotated = annotateAndAssertTerm(original, name);
+		Term indexed = m_SSA.getLocalVarAssignment(positionOfPendingReturn);
+		Term annotated = annotateAndAssertTerm(indexed, name);
 		return annotated;
 	}
 
@@ -145,8 +145,8 @@ public class AnnotateAndAssertCodeBlocks {
 
 	protected Term annotateAndAssertOldVarAssignemntPendingContext(int positionOfPendingReturn, int pendingContextCode) {
 		String name = oldVarAssignemntPendingReturnAnnotation(pendingContextCode);
-		Term original = m_SSA.getOldVarAssignment(positionOfPendingReturn);
-		Term annotated = annotateAndAssertTerm(original, name);
+		Term indexed = m_SSA.getOldVarAssignment(positionOfPendingReturn);
+		Term annotated = annotateAndAssertTerm(indexed, name);
 		return annotated;
 	}
 
@@ -161,5 +161,34 @@ public class AnnotateAndAssertCodeBlocks {
 		m_SmtManager.assertTerm(annotTerm);
 		Term constantRepresentingAnnotatedTerm = m_Script.term(name);
 		return constantRepresentingAnnotatedTerm;
+	}
+	
+	
+	/**
+	 * Represents one conjunct in an annoted SSA.
+	 * The annotated term is the term submitted to the solver (we have to
+	 * use these named terms in order to obtain an unsatisfiable core).
+	 *
+	 */
+	public static class AnnotatedSsaConjunct {
+		private final Term m_AnnotedTerm;
+		private final Term m_OriginalTerm;
+		public AnnotatedSsaConjunct(Term annotedTerm, Term originalTerm) {
+			super();
+			m_AnnotedTerm = annotedTerm;
+			m_OriginalTerm = originalTerm;
+		}
+		public Term getAnnotedTerm() {
+			return m_AnnotedTerm;
+		}
+		public Term getOriginalTerm() {
+			return m_OriginalTerm;
+		}
+		@Override
+		public String toString() {
+			return "AnnotatedSsaConjunct [m_AnnotedTerm=" + m_AnnotedTerm
+					+ ", m_OriginalTerm=" + m_OriginalTerm + "]";
+		}
+
 	}
 }
