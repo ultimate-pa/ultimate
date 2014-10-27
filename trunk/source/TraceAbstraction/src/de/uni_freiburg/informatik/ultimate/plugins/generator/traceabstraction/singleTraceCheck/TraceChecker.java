@@ -252,7 +252,7 @@ public class TraceChecker {
 		m_SmtManager.startTraceCheck();
 
 		m_TraceCheckerBenchmarkGenerator.start(TraceCheckerBenchmarkType.s_SsaConstruction);
-		m_Nsb = new NestedSsaBuilder(m_Trace, m_SmtManager, m_DefaultTransFormulas, 
+		m_Nsb = new NestedSsaBuilder(m_Trace, m_SmtManager, m_DefaultTransFormulas,
 				m_DefaultTransFormulas.getModifiableGlobalVariableManager(), mLogger);
 		NestedFormulas<Term, Term> ssa = m_Nsb.getSsa();
 		m_TraceCheckerBenchmarkGenerator.stop(TraceCheckerBenchmarkType.s_SsaConstruction);
@@ -260,12 +260,13 @@ public class TraceChecker {
 		m_TraceCheckerBenchmarkGenerator.start(TraceCheckerBenchmarkType.s_SatisfiabilityAnalysis);
 		if (m_assertCodeBlocksIncrementally != AssertCodeBlockOrder.NOT_INCREMENTALLY) {
 			m_AAA = new AnnotateAndAsserterWithStmtOrderPrioritization(m_SmtManager, ssa,
-					getAnnotateAndAsserterCodeBlocks(ssa), m_TraceCheckerBenchmarkGenerator, m_assertCodeBlocksIncrementally, mLogger);
+					getAnnotateAndAsserterCodeBlocks(ssa), m_TraceCheckerBenchmarkGenerator,
+					m_assertCodeBlocksIncrementally, mLogger);
 		} else {
 			m_AAA = new AnnotateAndAsserter(m_SmtManager, ssa, getAnnotateAndAsserterCodeBlocks(ssa),
 					m_TraceCheckerBenchmarkGenerator, mLogger);
 			// Report the asserted code blocks
-			m_TraceCheckerBenchmarkGenerator.reportnewAssertedCodeBlocks(m_Trace.length()); 
+			m_TraceCheckerBenchmarkGenerator.reportnewAssertedCodeBlocks(m_Trace.length());
 		}
 		try {
 			m_AAA.buildAnnotatedSsaAndAssertTerms();
@@ -307,7 +308,8 @@ public class TraceChecker {
 						m_PendingContexts, m_ModifiedGlobals, true);
 				TraceChecker tc = new TraceChecker(m_DefaultTransFormulas.getPrecondition(),
 						m_DefaultTransFormulas.getPostcondition(), m_PendingContexts,
-						m_DefaultTransFormulas.getTrace(), m_SmtManager, m_ModifiedGlobals, withBE, AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices);
+						m_DefaultTransFormulas.getTrace(), m_SmtManager, m_ModifiedGlobals, withBE,
+						AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices);
 				assert tc.isCorrect() == LBool.SAT;
 				tc.computeRcfgProgramExecution();
 				m_RcfgProgramExecution = tc.getRcfgProgramExecution();
@@ -343,7 +345,7 @@ public class TraceChecker {
 	private RcfgProgramExecution computeRcfgProgramExecutionCaseSAT(NestedSsaBuilder nsb) {
 		RelevantVariables relVars = new RelevantVariables(m_DefaultTransFormulas, m_ModifiedGlobals);
 		RcfgProgramExecutionBuilder rpeb = new RcfgProgramExecutionBuilder(m_ModifiedGlobals,
-				(NestedWord<CodeBlock>) m_Trace, relVars,m_SmtManager.getBoogie2Smt().getBoogie2SmtSymbolTable());
+				(NestedWord<CodeBlock>) m_Trace, relVars, m_SmtManager.getBoogie2Smt().getBoogie2SmtSymbolTable());
 		for (int i = 0; i < m_Trace.length(); i++) {
 			CodeBlock cb = m_Trace.getSymbolAt(i);
 			TransFormula tf = cb.getTransitionFormulaWithBranchEncoders();

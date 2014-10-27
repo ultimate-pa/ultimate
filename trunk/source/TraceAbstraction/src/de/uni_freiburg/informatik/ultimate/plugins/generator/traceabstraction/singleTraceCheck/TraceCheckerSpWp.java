@@ -76,8 +76,8 @@ public class TraceCheckerSpWp extends TraceChecker {
 
 	public TraceCheckerSpWp(IPredicate precondition, IPredicate postcondition,
 			SortedMap<Integer, IPredicate> pendingContexts, NestedWord<CodeBlock> trace, SmtManager smtManager,
-			ModifiableGlobalVariableManager modifiedGlobals, AssertCodeBlockOrder assertCodeBlocksIncrementally, UnsatCores unsatCores,
-			boolean useLiveVariables, IUltimateServiceProvider services) {
+			ModifiableGlobalVariableManager modifiedGlobals, AssertCodeBlockOrder assertCodeBlocksIncrementally,
+			UnsatCores unsatCores, boolean useLiveVariables, IUltimateServiceProvider services) {
 		super(precondition, postcondition, pendingContexts, trace, smtManager, modifiedGlobals,
 				assertCodeBlocksIncrementally, services);
 		m_UnsatCores = unsatCores;
@@ -196,12 +196,14 @@ public class TraceCheckerSpWp extends TraceChecker {
 	 * @param call_pos
 	 * @return
 	 */
-	private ProcedureSummary computeProcedureSummary(NestedWord<CodeBlock> trace, TransFormula Call, TransFormula Return,
-			TransFormula oldVarsAssignment, NestedFormulas<TransFormula, IPredicate> rv, int call_pos, int return_pos) {
+	private ProcedureSummary computeProcedureSummary(NestedWord<CodeBlock> trace, TransFormula Call,
+			TransFormula Return, TransFormula oldVarsAssignment, NestedFormulas<TransFormula, IPredicate> rv,
+			int call_pos, int return_pos) {
 		TransFormula summaryOfInnerStatements = computeSummaryForInterproceduralTrace(trace, rv, call_pos + 1,
 				return_pos);
-		TransFormula summaryWithCallAndReturn = TransFormula.sequentialCompositionWithCallAndReturn(m_SmtManager.getBoogie2Smt(), true, false,
-				s_TransformToCNF, Call, oldVarsAssignment, summaryOfInnerStatements, Return, mLogger, mServices);
+		TransFormula summaryWithCallAndReturn = TransFormula.sequentialCompositionWithCallAndReturn(
+				m_SmtManager.getBoogie2Smt(), true, false, s_TransformToCNF, Call, oldVarsAssignment,
+				summaryOfInnerStatements, Return, mLogger, mServices);
 		return new ProcedureSummary(summaryWithCallAndReturn, summaryOfInnerStatements);
 	}
 
@@ -212,8 +214,8 @@ public class TraceCheckerSpWp extends TraceChecker {
 	 * @return - a summary for the statements from the given trace from position
 	 *         "start" to position "end"
 	 */
-	private TransFormula computeSummaryForInterproceduralTrace(NestedWord<CodeBlock> trace, NestedFormulas<TransFormula, IPredicate> rv,
-			int start, int end) {
+	private TransFormula computeSummaryForInterproceduralTrace(NestedWord<CodeBlock> trace,
+			NestedFormulas<TransFormula, IPredicate> rv, int start, int end) {
 		LinkedList<TransFormula> transformulasToComputeSummaryFor = new LinkedList<TransFormula>();
 		for (int i = start; i < end; i++) {
 			if (trace.getSymbol(i) instanceof Call) {
@@ -315,7 +317,8 @@ public class TraceCheckerSpWp extends TraceChecker {
 		}
 
 		if (m_UnsatCores == UnsatCores.IGNORE) {
-			rtf = new DefaultTransFormulas(m_Trace, m_Precondition, m_Postcondition, m_PendingContexts, m_ModifiedGlobals, false);
+			rtf = new DefaultTransFormulas(m_Trace, m_Precondition, m_Postcondition, m_PendingContexts,
+					m_ModifiedGlobals, false);
 		} else if (m_UnsatCores == UnsatCores.STATEMENT_LEVEL) {
 			boolean[] localVarAssignmentAtCallInUnsatCore = new boolean[trace.length()];
 			boolean[] oldVarAssignmentAtCallInUnsatCore = new boolean[trace.length()];
@@ -326,11 +329,11 @@ public class TraceCheckerSpWp extends TraceChecker {
 					codeBlocksInUnsatCore, m_ModifiedGlobals, localVarAssignmentAtCallInUnsatCore,
 					oldVarAssignmentAtCallInUnsatCore, m_SmtManager);
 		} else if (m_UnsatCores == UnsatCores.CONJUNCT_LEVEL) {
-			rtf = new RelevantTransFormulas(trace, m_Precondition, m_Postcondition, m_PendingContexts, unsat_coresAsSet,
-					m_ModifiedGlobals, m_SmtManager, m_AAA, m_AnnotateAndAsserterConjuncts);
+			rtf = new RelevantTransFormulas(trace, m_Precondition, m_Postcondition, m_PendingContexts,
+					unsat_coresAsSet, m_ModifiedGlobals, m_SmtManager, m_AAA, m_AnnotateAndAsserterConjuncts);
 			assert stillInfeasible(rtf);
 		}
-		
+
 		Set<BoogieVar>[] relevantVarsToUseForFPBP = null;
 
 		if (m_useLiveVariables) {
@@ -367,8 +370,8 @@ public class TraceCheckerSpWp extends TraceChecker {
 
 		if (m_ComputeInterpolantsBp) {
 			mLogger.debug("Computing backward relevant predicates...");
-			computeBackwardRelevantPredicates(relevantVarsToUseForFPBP, rtf, trace, tracePostcondition, m_LiveVariables,
-					numberOfQuantifiedPredicates);
+			computeBackwardRelevantPredicates(relevantVarsToUseForFPBP, rtf, trace, tracePostcondition,
+					m_LiveVariables, numberOfQuantifiedPredicates);
 			mLogger.debug("Checking inductivity of backward relevant predicates...");
 			assert checkInterpolantsCorrectBackwards(m_InterpolantsBp, trace, tracePrecondition, tracePostcondition,
 					"BP") : "invalid Hoare triple in BP";
@@ -392,8 +395,7 @@ public class TraceCheckerSpWp extends TraceChecker {
 			mLogger.debug("#quantifiedPredicates in WP: " + numberOfQuantifiedPredicates[2]);
 			mLogger.debug("#quantifiedPredicates in BP: " + numberOfQuantifiedPredicates[3]);
 		}
-		
-		
+
 		// Check the validity of the computed interpolants.
 		if (m_ComputeInterpolantsSp && m_ComputeInterpolantsWp) {
 			checkSPImpliesWP(m_InterpolantsSp, m_InterpolantsWp);
@@ -459,7 +461,8 @@ public class TraceCheckerSpWp extends TraceChecker {
 				new TreeMap<Integer, IPredicate>(), rv.getTrace(), m_SmtManager, m_ModifiedGlobals,
 				/*
 				 * TODO : When Matthias introduced this parameter he set the
-				 * argument to AssertCodeBlockOrder.NOT_INCREMENTALLY . Check if you want to set this to true .
+				 * argument to AssertCodeBlockOrder.NOT_INCREMENTALLY . Check if
+				 * you want to set this to true .
 				 */
 				AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices);
 		tc.unlockSmtManager();
@@ -519,9 +522,9 @@ public class TraceCheckerSpWp extends TraceChecker {
 	 * @param numberOfQuantifiedPredicates
 	 * 
 	 */
-	private void computeForwardRelevantPredicates(Set<BoogieVar>[] relevantVars, NestedFormulas<TransFormula, IPredicate> rv,
-			NestedWord<CodeBlock> trace, IPredicate tracePrecondition, boolean quantifyIrrelevantVariables,
-			int[] numberOfQuantifiedPredicates) {
+	private void computeForwardRelevantPredicates(Set<BoogieVar>[] relevantVars,
+			NestedFormulas<TransFormula, IPredicate> rv, NestedWord<CodeBlock> trace, IPredicate tracePrecondition,
+			boolean quantifyIrrelevantVariables, int[] numberOfQuantifiedPredicates) {
 		m_InterpolantsSp = new IPredicate[trace.length() - 1];
 		m_InterpolantsFp = new IPredicate[m_InterpolantsSp.length];
 
@@ -571,7 +574,7 @@ public class TraceCheckerSpWp extends TraceChecker {
 							getForwardPredicateAtPosition(i, tracePrecondition, false), relevantVars[i + 1]);
 					m_InterpolantsFp[i] = m_PredicateUnifier.getOrConstructPredicate(fp.getFormula(), fp.getVars(),
 							fp.getProcedures());
-					
+
 				} else {
 					m_InterpolantsFp[i] = m_InterpolantsSp[i];
 				}
@@ -602,9 +605,9 @@ public class TraceCheckerSpWp extends TraceChecker {
 	 * @param numberOfQuantifiedPredicates
 	 * 
 	 */
-	private void computeBackwardRelevantPredicates(Set<BoogieVar>[] relevantVars, NestedFormulas<TransFormula, IPredicate> rv,
-			NestedWord<CodeBlock> trace, IPredicate tracePostcondition, boolean quantifyIrrelevantVariables,
-			int[] numberOfQuantifiedPredicates) {
+	private void computeBackwardRelevantPredicates(Set<BoogieVar>[] relevantVars,
+			NestedFormulas<TransFormula, IPredicate> rv, NestedWord<CodeBlock> trace, IPredicate tracePostcondition,
+			boolean quantifyIrrelevantVariables, int[] numberOfQuantifiedPredicates) {
 		m_InterpolantsWp = new IPredicate[trace.length() - 1];
 		m_InterpolantsBp = new IPredicate[m_InterpolantsWp.length];
 
@@ -655,7 +658,8 @@ public class TraceCheckerSpWp extends TraceChecker {
 								rv.getFormulaFromNonCallPos(i + 1), oldVarAssignments, rv, call_pos, i + 1);
 						varsOccurringBetweenCallAndReturn = summary.computeVariableInInnerSummary();
 						callerPred = m_PredicateTransformer.weakestPrecondition(
-								getBackwardPredicateAtPosition(i + 1, tracePostcondition, true), summary.getWithCallAndReturn());
+								getBackwardPredicateAtPosition(i + 1, tracePostcondition, true),
+								summary.getWithCallAndReturn());
 						callerPredicatesComputed.put(
 								call_pos,
 								m_PredicateUnifier.getOrConstructPredicate(callerPred.getFormula(),
@@ -699,37 +703,28 @@ public class TraceCheckerSpWp extends TraceChecker {
 		}
 
 	}
-	
+
 	private class ProcedureSummary {
 		private final TransFormula m_WithCallAndReturn;
 		private final TransFormula m_WithoutCallAndReturn;
-		
-		
-		
-		public ProcedureSummary(TransFormula withCallAndReturn,
-				TransFormula withoutCallAndReturn) {
+
+		public ProcedureSummary(TransFormula withCallAndReturn, TransFormula withoutCallAndReturn) {
 			super();
 			m_WithCallAndReturn = withCallAndReturn;
 			m_WithoutCallAndReturn = withoutCallAndReturn;
 		}
 
-
-
 		public TransFormula getWithCallAndReturn() {
 			return m_WithCallAndReturn;
 		}
-
-
 
 		public TransFormula getWithoutCallAndReturn() {
 			return m_WithoutCallAndReturn;
 		}
 
-
-
 		/**
-		 * Returns a set that contains all variables that occur in the 
-		 * summary without call and return.
+		 * Returns a set that contains all variables that occur in the summary
+		 * without call and return.
 		 */
 		public Set<BoogieVar> computeVariableInInnerSummary() {
 			return new Set<BoogieVar>() {
@@ -751,8 +746,8 @@ public class TraceCheckerSpWp extends TraceChecker {
 
 				@Override
 				public boolean contains(Object o) {
-					return m_WithoutCallAndReturn.getInVars().containsKey(o) || 
-							m_WithoutCallAndReturn.getOutVars().containsKey(o);
+					return m_WithoutCallAndReturn.getInVars().containsKey(o)
+							|| m_WithoutCallAndReturn.getOutVars().containsKey(o);
 				}
 
 				@Override
@@ -801,7 +796,7 @@ public class TraceCheckerSpWp extends TraceChecker {
 				}
 			};
 		}
-		
+
 	}
 
 	/***

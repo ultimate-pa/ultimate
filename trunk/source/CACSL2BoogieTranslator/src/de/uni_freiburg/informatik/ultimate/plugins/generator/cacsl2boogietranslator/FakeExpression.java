@@ -23,72 +23,101 @@ import org.eclipse.cdt.core.parser.IToken;
  */
 public class FakeExpression implements IASTExpression {
 
-	public FakeExpression() {
-
-	}
+	private String mName;
+	private IASTNode mBackingNode;
 
 	public FakeExpression(String name) {
 		mName = name;
 	}
-
-	private String mName;
-
-	public void setNameOrValue(String name) {
+	
+	public FakeExpression(IASTNode actualNode, String name) {
+		mBackingNode = actualNode;
 		mName = name;
 	}
 
 	@Override
 	public IASTTranslationUnit getTranslationUnit() {
+		if(mBackingNode != null){
+			return mBackingNode.getTranslationUnit();
+		}
 		return null;
 	}
 
 	@Override
 	public IASTNodeLocation[] getNodeLocations() {
+		if(mBackingNode != null){
+			return mBackingNode.getNodeLocations();
+		}
 		return null;
 	}
 
 	@Override
 	public IASTFileLocation getFileLocation() {
+		if(mBackingNode != null){
+			return mBackingNode.getFileLocation();
+		}
 		return null;
 	}
 
 	@Override
 	public String getContainingFilename() {
+		if(mBackingNode!=null){
+			return mBackingNode.getContainingFilename();
+		}
 		return null;
 	}
 
 	@Override
 	public boolean isPartOfTranslationUnitFile() {
+		if(mBackingNode!=null){
+			return mBackingNode.isPartOfTranslationUnitFile();
+		}
 		return false;
 	}
 
 	@Override
 	public IASTNode getParent() {
+		if(mBackingNode!=null){
+			return mBackingNode.getParent();
+		}
 		return null;
 	}
 
 	@Override
 	public IASTNode[] getChildren() {
+		if(mBackingNode!=null){
+			return mBackingNode.getChildren();
+		}
 		return null;
 	}
 
 	@Override
 	public void setParent(IASTNode node) {
-
+		if(mBackingNode!=null){
+			mBackingNode.setParent(node);
+		}
 	}
 
 	@Override
 	public ASTNodeProperty getPropertyInParent() {
+		if(mBackingNode!=null){
+			return mBackingNode.getPropertyInParent();
+		}
 		return null;
 	}
 
 	@Override
 	public void setPropertyInParent(ASTNodeProperty property) {
-
+		if(mBackingNode!=null){
+			mBackingNode.setPropertyInParent(property);
+		}
 	}
 
 	@Override
 	public boolean accept(ASTVisitor visitor) {
+		if(mBackingNode!=null){
+			return mBackingNode.accept(visitor);
+		}
 		return false;
 	}
 
@@ -99,36 +128,57 @@ public class FakeExpression implements IASTExpression {
 
 	@Override
 	public boolean contains(IASTNode node) {
+		if(mBackingNode!=null){
+			return mBackingNode.contains(node);
+		}
 		return false;
 	}
 
 	@Override
 	public IToken getLeadingSyntax() throws ExpansionOverlapsBoundaryException, UnsupportedOperationException {
+		if(mBackingNode!=null){
+			return mBackingNode.getLeadingSyntax();
+		}
 		return null;
 	}
 
 	@Override
 	public IToken getTrailingSyntax() throws ExpansionOverlapsBoundaryException, UnsupportedOperationException {
+		if(mBackingNode!=null){
+			return mBackingNode.getTrailingSyntax();
+		}
 		return null;
 	}
 
 	@Override
 	public IToken getSyntax() throws ExpansionOverlapsBoundaryException {
+		if(mBackingNode!=null){
+			return mBackingNode.getSyntax();
+		}
 		return null;
 	}
 
 	@Override
 	public boolean isFrozen() {
-		return false;
+		if(mBackingNode!=null){
+			return mBackingNode.isFrozen();
+		}
+		return true;
 	}
 
 	@Override
 	public boolean isActive() {
+		if(mBackingNode!=null){
+			return mBackingNode.isActive();
+		}
 		return false;
 	}
 
 	@Override
 	public IASTNode getOriginalNode() {
+		if(mBackingNode!=null){
+			return mBackingNode.getOriginalNode();
+		}
 		return null;
 	}
 
@@ -156,7 +206,7 @@ public class FakeExpression implements IASTExpression {
 	public IASTExpression copy(CopyStyle style) {
 		return null;
 	}
-	
+
 	@Override
 	public String toString() {
 		return mName;

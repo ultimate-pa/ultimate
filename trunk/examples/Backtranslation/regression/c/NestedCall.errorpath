@@ -2,13 +2,11 @@
 [L6]   EXPR        a++
        VAL         [a=6, a++=5]
 [L6]   CALL, EXPR  f(a++)
-       VAL         [\old(b)=5]
 [L19]  EXPR        ++b
 [L19]              return ++b;
 [L6]   RET, EXPR   f(a++)
        VAL         [a=6, a++=5, f(a++)=6]
 [L6]   CALL, EXPR  f(f(a++))
-       VAL         [\old(b)=6]
 [L19]  EXPR        ++b
 [L19]              return ++b;
 [L6]   RET, EXPR   f(f(a++))

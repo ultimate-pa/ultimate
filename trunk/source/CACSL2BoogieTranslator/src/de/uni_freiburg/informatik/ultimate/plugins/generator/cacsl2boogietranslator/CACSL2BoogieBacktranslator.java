@@ -6,6 +6,7 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import org.apache.log4j.Logger;
 import org.eclipse.cdt.core.dom.ast.IASTDeclarator;
@@ -120,12 +121,13 @@ public class CACSL2BoogieBacktranslator extends
 					// Ultimate.init or Ultimate.start and we make our
 					// initalstate right after them here
 					// if we already have some explicit declarations, we just
-					// skip the whole initial state business and use this as the last
+					// skip the whole initial state business and use this as the
+					// last
 					// normal state
 					i = findMergeSequence(programExecution, i, loc);
 					if (cnode instanceof CASTTranslationUnit) {
 						if (translatedAtomicTraceElements.size() > 0) {
-							translatedProgramStates.remove(translatedProgramStates.size()-1);
+							translatedProgramStates.remove(translatedProgramStates.size() - 1);
 							translatedProgramStates.add(translateProgramState(programExecution.getProgramState(i)));
 						} else {
 							initialState = translateProgramState(programExecution.getProgramState(i));
@@ -317,7 +319,7 @@ public class CACSL2BoogieBacktranslator extends
 			// translatedProgramStates.add(translateProgramState(programExecution.getProgramState(j)));
 		}
 
-		i = j;
+		i = j-1;
 		return i;
 	}
 
@@ -361,6 +363,8 @@ public class CACSL2BoogieBacktranslator extends
 		if (programState != null) {
 			Map<IASTExpression, Collection<IASTExpression>> map = new HashMap<>();
 
+			programState = compressProgramState(programState);
+
 			for (Expression varName : programState.getVariables()) {
 				IASTExpression newVarName = translateExpression(varName);
 				if (newVarName == null) {
@@ -387,6 +391,83 @@ public class CACSL2BoogieBacktranslator extends
 		return null;
 	}
 
+	/**
+	 * Replace base and offset with one {@link TemporaryPointerExpression}
+	 * 
+	 * @param programState
+	 *            May not be null
+	 */
+	private ProgramState<Expression> compressProgramState(ProgramState<Expression> programState) {
+		List<Entry<Expression, Collection<Expression>>> oldEntries = new ArrayList<>();
+		List<Entry<Expression, Collection<Expression>>> newEntries = new ArrayList<>();
+
+		for (Expression var : programState.getVariables()) {
+			MyEntry<Expression, Collection<Expression>> entry = new MyEntry<>();
+			entry.Key = var;
+			entry.Value = programState.getValues(var);
+			oldEntries.add(entry);
+		}
+
+		int x = -1;
+		int y = 0;
+		while (x < y) {
+			// collect all pointer
+			x = newEntries.size();
+			extractTemporaryPointerExpression(oldEntries, newEntries);
+			y = newEntries.size();
+		}
+
+		newEntries.addAll(oldEntries);
+		Map<Expression, Collection<Expression>> map = new HashMap<>();
+		for (Entry<Expression, Collection<Expression>> entry : newEntries) {
+			map.put(entry.getKey(), entry.getValue());
+		}
+
+		return new ProgramState<>(map);
+	}
+
+	private void extractTemporaryPointerExpression(List<Entry<Expression, Collection<Expression>>> oldEntries,
+			List<Entry<Expression, Collection<Expression>>> newEntries) {
+		for (int i = oldEntries.size() - 1; i >= 0; i--) {
+			Entry<Expression, Collection<Expression>> entry = oldEntries.get(i);
+			String str = BoogiePrettyPrinter.print(entry.getKey());
+			if (entry.getKey() instanceof IdentifierExpression && str.endsWith(SFO.POINTER_BASE)) {
+				String name = str.substring(0, str.length() - SFO.POINTER_BASE.length());
+				for (int j = oldEntries.size() - 1; j >= 0; j--) {
+					Entry<Expression, Collection<Expression>> otherentry = oldEntries.get(j);
+					String other = BoogiePrettyPrinter.print(otherentry.getKey());
+					if (otherentry.getKey() instanceof IdentifierExpression && other.endsWith(SFO.POINTER_OFFSET)
+							&& other.startsWith(name)) {
+						TemporaryPointerExpression tmpPointerVar = new TemporaryPointerExpression(entry.getKey()
+								.getLocation());
+						tmpPointerVar.setBase(entry.getKey());
+						tmpPointerVar.setOffset(otherentry.getKey());
+						if (entry.getValue().size() != 1 || otherentry.getValue().size() != 1) {
+							reportUnfinishedBacktranslation(sUnfinishedBacktranslation
+									+ " Pointers with multiple values");
+						}
+						TemporaryPointerExpression tmpPointerValue = new TemporaryPointerExpression(entry.getKey()
+								.getLocation());
+						for (Expression baseValue : entry.getValue()) {
+							tmpPointerValue.setBase(baseValue);
+						}
+						for (Expression offsetValue : otherentry.getValue()) {
+							tmpPointerValue.setOffset(offsetValue);
+						}
+						MyEntry<Expression, Collection<Expression>> newEntry = new MyEntry<>();
+						newEntry.Key = tmpPointerVar;
+						newEntry.Value = new ArrayList<>();
+						newEntry.Value.add(tmpPointerValue);
+						newEntries.add(newEntry);
+						oldEntries.remove(entry);
+						oldEntries.remove(otherentry);
+						return;
+					}
+				}
+			}
+		}
+	}
+
 	@Override
 	public IASTExpression translateExpression(Expression expression) {
 		if (expression instanceof UnaryExpression) {
@@ -397,9 +478,13 @@ public class CACSL2BoogieBacktranslator extends
 				if (innerTrans == null) {
 					return null;
 				}
-				FakeExpression fexp = new FakeExpression("\\old(" + innerTrans.getRawSignature() + ")");
+				FakeExpression fexp = new FakeExpression(innerTrans, "\\old(" + innerTrans.getRawSignature() + ")");
 				return fexp;
 			}
+		}
+
+		if (expression instanceof TemporaryPointerExpression) {
+			return ((TemporaryPointerExpression) expression).translate();
 		}
 
 		ILocation loc = expression.getLocation();
@@ -427,6 +512,11 @@ public class CACSL2BoogieBacktranslator extends
 			}
 
 			if (cnode instanceof IASTExpression) {
+				// if (cnode instanceof IASTIdExpression) {
+				// // a read
+				// return new FakeExpression("\\read(" + cnode.getRawSignature()
+				// + ")");
+				// }
 				return (IASTExpression) cnode;
 			} else if (cnode instanceof CASTTranslationUnit) {
 				// expressions that map to CASTTranslationUnit dont need to
@@ -439,7 +529,7 @@ public class CACSL2BoogieBacktranslator extends
 					IdentifierExpression orgidexp = (IdentifierExpression) expression;
 					String origName = translateIdentifierExpression(orgidexp);
 					if (origName != null) {
-						return new FakeExpression(origName);
+						return new FakeExpression(cnode, origName);
 					}
 				}
 				reportUnfinishedBacktranslation(sUnfinishedBacktranslation + ": Expression "
@@ -496,10 +586,8 @@ public class CACSL2BoogieBacktranslator extends
 					+ " is mapped to a declaration without declarators.");
 		}
 
-		FakeExpression idexp = new FakeExpression();
 		if (decls.getDeclarators().length == 1) {
-			idexp.setNameOrValue(decls.getDeclarators()[0].getName().getRawSignature());
-			return idexp;
+			return new FakeExpression(decls, decls.getDeclarators()[0].getName().getRawSignature());
 		} else {
 			// ok, this is a declaration ala "int a,b;", so we use
 			// our backtranslation map to get the real name
@@ -512,8 +600,7 @@ public class CACSL2BoogieBacktranslator extends
 			}
 			for (IASTDeclarator decl : decls.getDeclarators()) {
 				if (origName.indexOf(decl.getName().getRawSignature()) != -1) {
-					idexp.setNameOrValue(decl.getName().getRawSignature());
-					return idexp;
+					return new FakeExpression(decl.getName().getRawSignature());
 				}
 			}
 		}
@@ -531,10 +618,11 @@ public class CACSL2BoogieBacktranslator extends
 	}
 
 	private String translateIdentifierExpression(IdentifierExpression expr) {
-		String boogieId = expr.getIdentifier();
-		String cId = null;
+		return translateBoogieIdentifier(expr.getIdentifier());
+	}
 
-		// TODO deal with base and offset
+	private String translateBoogieIdentifier(String boogieId) {
+		String cId = null;
 
 		if (boogieId.equals(SFO.RES)) {
 			cId = "\\result";
@@ -547,7 +635,16 @@ public class CACSL2BoogieBacktranslator extends
 		} else if (boogieId.equals(SFO.VALID)) {
 			cId = "\\valid";
 		} else {
-			reportUnfinishedBacktranslation("unknown boogie variable " + boogieId);
+			// if its base or offset, try again with them stripped
+			if (boogieId.endsWith(SFO.POINTER_BASE)) {
+				return translateBoogieIdentifier(boogieId.substring(0, boogieId.length() - SFO.POINTER_BASE.length()
+						- 1));
+			} else if (boogieId.endsWith(SFO.POINTER_OFFSET)) {
+				return translateBoogieIdentifier(boogieId.substring(0, boogieId.length() - SFO.POINTER_OFFSET.length()
+						- 1));
+			} else {
+				reportUnfinishedBacktranslation("unknown boogie variable " + boogieId);
+			}
 		}
 		return cId;
 	}
@@ -726,6 +823,65 @@ public class CACSL2BoogieBacktranslator extends
 
 		private void putTempVar(String boogieId, Object obj) {
 			mTempVar2Obj.put(boogieId, obj);
+		}
+	}
+
+	private class TemporaryPointerExpression extends Expression {
+
+		public TemporaryPointerExpression(ILocation loc) {
+			super(loc);
+		}
+
+		public IASTExpression translate() {
+			if (mBase instanceof IdentifierExpression) {
+				// its a declaration or an access
+				return translateExpression(mBase);
+			} else {
+				// some kind of value
+				IASTExpression base = translateExpression(mBase);
+				IASTExpression offset = translateExpression(mOffset);
+				return new FakeExpression(base, "{" + base.getRawSignature() + ":" + offset.getRawSignature() + "}");
+			}
+		}
+
+		private static final long serialVersionUID = 1L;
+		private Expression mBase;
+		private Expression mOffset;
+
+		public void setBase(Expression expr) {
+			mBase = expr;
+		}
+
+		public void setOffset(Expression expr) {
+			mOffset = expr;
+		}
+
+		@Override
+		public String toString() {
+			return mBase.toString() + " " + mOffset.toString();
+		}
+	}
+
+	private class MyEntry<K, T> implements Entry<K, T> {
+
+		private K Key;
+		private T Value;
+
+		@Override
+		public K getKey() {
+			return Key;
+		}
+
+		@Override
+		public T getValue() {
+			return Value;
+		}
+
+		@Override
+		public T setValue(T value) {
+			T oldValue = Value;
+			Value = value;
+			return oldValue;
 		}
 	}
 

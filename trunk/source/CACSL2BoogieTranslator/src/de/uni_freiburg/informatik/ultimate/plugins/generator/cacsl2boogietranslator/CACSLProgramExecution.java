@@ -8,6 +8,8 @@ import java.util.List;
 
 import org.eclipse.cdt.core.dom.ast.IASTExpression;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
+import org.eclipse.cdt.core.dom.ast.IPointerType;
+import org.eclipse.cdt.internal.core.dom.parser.c.CASTIdExpression;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.ACSLLocation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
@@ -103,12 +105,15 @@ public class CACSLProgramExecution implements IProgramExecution<CACSLLocation, I
 
 			if (currentStep instanceof CLocation) {
 				IASTNode currentStepNode = ((CLocation) currentStep).getNode();
+
+				String str = getStringFromIASTNode(currentStepNode);
+
 				if (currentATE.hasStepInfo(StepInfo.CONDITION_EVAL_FALSE)) {
 					sb.append("!(");
-					sb.append(currentStepNode.getRawSignature());
+					sb.append(str);
 					sb.append(")");
 				} else {
-					sb.append(currentStepNode.getRawSignature());
+					sb.append(str);
 				}
 			} else if (currentStep instanceof ACSLLocation) {
 				// do something if its an acsl node
@@ -127,6 +132,27 @@ public class CACSLProgramExecution implements IProgramExecution<CACSLLocation, I
 			}
 		}
 		return sb.toString();
+	}
+
+	private String getStringFromIASTNode(IASTNode currentStepNode) {
+		String str = currentStepNode.getRawSignature();
+		if (currentStepNode instanceof CASTIdExpression) {
+			CASTIdExpression id = (CASTIdExpression) currentStepNode;
+			if (id.getExpressionType() instanceof IPointerType) {
+				str = "\\read(" + getPointerStars((IPointerType) id.getExpressionType()) + str + ")";
+			} else {
+				str = "\\read(" + str + ")";
+			}
+		}
+		return str;
+	}
+
+	private String getPointerStars(IPointerType type) {
+		if (type.getType() instanceof IPointerType) {
+			return "*" + getPointerStars((IPointerType) type.getType());
+		} else {
+			return "*";
+		}
 	}
 
 	private void addFixedLength(StringBuilder sb, String actualString, int fillLength, String fillChar) {
@@ -198,7 +224,7 @@ public class CACSLProgramExecution implements IProgramExecution<CACSLLocation, I
 		Collections.sort(keys, new Comparator<IASTExpression>() {
 			@Override
 			public int compare(IASTExpression arg0, IASTExpression arg1) {
-				return arg0.getRawSignature().compareToIgnoreCase(arg1.getRawSignature());
+				return getStringFromIASTNode(arg0).compareToIgnoreCase(getStringFromIASTNode(arg1));
 			}
 		});
 
@@ -207,9 +233,9 @@ public class CACSLProgramExecution implements IProgramExecution<CACSLLocation, I
 		int i = 0;
 		for (IASTExpression variable : keys) {
 			IASTExpression value = pps.getValues(variable).iterator().next();
-			sb.append(variable.getRawSignature());
+			sb.append(getStringFromIASTNode(variable));
 			sb.append("=");
-			sb.append(value.getRawSignature());
+			sb.append(getStringFromIASTNode(value));
 			i++;
 			if (i < keys.size()) {
 				sb.append(", ");

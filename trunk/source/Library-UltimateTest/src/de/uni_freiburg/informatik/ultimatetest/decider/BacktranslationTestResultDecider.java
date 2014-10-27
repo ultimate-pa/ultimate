@@ -102,9 +102,6 @@ public class BacktranslationTestResultDecider extends TestResultDecider {
 				try {
 					String desiredCounterExample = Util.readFile(desiredCounterExampleFile);
 
-					desiredCounterExample = desiredCounterExample.trim();
-					actualCounterExample = actualCounterExample.trim();
-
 					// compare linewise
 					String platformLineSeparator = Util.getPlatformLineSeparator();
 					String[] desiredLines = desiredCounterExample.split(platformLineSeparator);
