@@ -60,7 +60,7 @@ public class TraceCheckerSpWp extends TraceChecker {
 
 	private final UnsatCores m_UnsatCores;
 	private final boolean m_LiveVariables;
-	private final static boolean m_useLiveVariables = true;
+	private final static boolean m_useLiveVariablesInsteadOfRelevantVariables = false;
 	private final static boolean m_LogInformation = true;
 	private final static boolean m_CollectInformationAboutQuantifiedPredicates = true;
 	private final static boolean m_CollectInformationAboutSizeOfPredicates = true;
@@ -336,10 +336,12 @@ public class TraceCheckerSpWp extends TraceChecker {
 
 		Set<BoogieVar>[] relevantVarsToUseForFPBP = null;
 
-		if (m_useLiveVariables) {
+		if (m_useLiveVariablesInsteadOfRelevantVariables) {
 			LiveVariables lvar = new LiveVariables(m_Nsb.getVariable2Constant(), m_Nsb.getConstants2BoogieVar(),
 					m_Nsb.getIndexedVarRepresentative(), m_SmtManager, m_ModifiedGlobals);
 			relevantVarsToUseForFPBP = lvar.getLiveVariables();
+			RelevantVariables rvar = new RelevantVariables(rtf, m_ModifiedGlobals);
+			rvar.toString();
 		} else {
 			RelevantVariables rvar = new RelevantVariables(rtf, m_ModifiedGlobals);
 			relevantVarsToUseForFPBP = rvar.getRelevantVariables();

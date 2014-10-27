@@ -51,8 +51,27 @@ public class RelevantVariables {
 		computeBackwardRelevantVariables();
 		m_RelevantVariables = new Set[m_TraceWithFormulas.getTrace().length()+1];
 		computeRelevantVariables();
+//		assert checkRelevantVariables();
 	}
 	
+	/**
+	 * Check if the sets of relevant variables are not too large.
+	 * Each relevant variable has to occur before and after position i.
+	 */
+	private boolean checkRelevantVariables() {
+		boolean result = true;
+		for (int i=0; i<m_TraceWithFormulas.getTrace().length(); i++) {
+			Set<BoogieVar> relevantVars = m_RelevantVariables[i+1];
+			for (BoogieVar bv : relevantVars) {
+				result &= m_Occurrence.occursBefore(bv, i);
+				assert result : "superfluous variable";
+				result &= m_Occurrence.occursAfter(bv, i);
+				assert result : "superfluous variable";
+			}
+		}
+		return result;
+	}
+
 	/**
 	 * Efficient data structure that stores where variable occurs.
 	 * Stores this separately for "in" and "out".
@@ -92,6 +111,31 @@ public class RelevantVariables {
 			result = result || containsNumberBetween(start, end-1, outSet);
 			return result;
 		}
+		
+		public boolean occursAfter(BoogieVar bv, int start) {
+			boolean result = false;
+			TreeSet<Integer> inSet = (TreeSet<Integer>) inRelation.getImage(bv);
+			result = result || inSet.ceiling(start+1) != null;
+			if (result == true) {
+				return result;
+			}
+			TreeSet<Integer> outSet = (TreeSet<Integer>) outRelation.getImage(bv);
+			result = result ||  outSet.ceiling(start) != null;
+			return result;
+		}
+		
+		public boolean occursBefore(BoogieVar bv, int end) {
+			boolean result = false;
+			TreeSet<Integer> inSet = (TreeSet<Integer>) inRelation.getImage(bv);
+			result = result || inSet.floor(end) != null;
+			if (result == true) {
+				return result;
+			}
+			TreeSet<Integer> outSet = (TreeSet<Integer>) outRelation.getImage(bv);
+			result = result ||  outSet.ceiling(end-1) != null;
+			return result;
+		}
+
 	
 		private void computeOccurrenceRelations() {
 			addVars(outRelation, -1, m_TraceWithFormulas.getPrecondition());
@@ -526,12 +570,14 @@ public class RelevantVariables {
 		// remove all that were reassigned
 		alternativeResult.removeAll(returnTF.getAssignedVars());
 		addAllNonModifiableGlobals(callPredRv, callee, alternativeResult);
+		ConstraintAnalysis globalVarAssignmentCa = 
+				m_NestedConstraintAnalysis.getGlobalVarAssignment(posOfCall);
+
+		alternativeResult.removeAll(globalVarAssignmentCa.getUnconstraintOut());
 		ConstraintAnalysis localVarAssignmentCa = 
 				m_NestedConstraintAnalysis.getLocalVarAssignment(posOfCall);
 		alternativeResult.addAll(localVarAssignmentCa.getConstraintIn());
-		ConstraintAnalysis globalVarAssignmentCa = 
-				m_NestedConstraintAnalysis.getGlobalVarAssignment(posOfCall);
-		alternativeResult.removeAll(globalVarAssignmentCa.getUnconstraintOut());
+
 		// add all (non-old) global vars that are used in the procedure
 		ConstraintAnalysis oldVarAssignmentCa = 
 				m_NestedConstraintAnalysis.getOldVarAssignment(posOfCall);
