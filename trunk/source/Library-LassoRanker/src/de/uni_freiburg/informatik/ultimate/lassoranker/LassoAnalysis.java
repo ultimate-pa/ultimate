@@ -91,9 +91,14 @@ public class LassoAnalysis {
 	private final TransFormula m_loop_transition;
 
 	/**
-	 * The lasso program that we are analyzing
+	 * The lasso program that we are analyzing (overapproximation)
 	 */
-	private Lasso m_lasso;
+	private Lasso m_lasso_t;
+	
+	/**
+	 * The lasso program that we are analyzing (underapproximation)
+	 */
+	private Lasso m_lasso_nt;
 
 	/**
 	 * SMT script that created the transition formulae
@@ -176,7 +181,7 @@ public class LassoAnalysis {
 		assert (m_loop_transition != null);
 		
 		// Preprocessing creates the Lasso object
-		m_lasso = this.preprocess();
+		this.preprocess();
 		
 		// This is now a good time to do garbage collection to free the memory
 		// allocated during preprocessing. Hopefully it is then available when
@@ -221,7 +226,7 @@ public class LassoAnalysis {
 	 * @see PreProcessor
 	 * @throws TermException if preprocessing fails
 	 */
-	protected Lasso preprocess() throws TermException {
+	protected void preprocess() throws TermException {
 		mLogger.info("Starting lasso preprocessing...");
 		LassoBuilder lassoBuilder = new LassoBuilder(m_old_script, m_Boogie2SMT,
 				m_stem_transition, m_loop_transition);
@@ -236,20 +241,24 @@ public class LassoAnalysis {
 		assert lassoBuilder.isSane();
 		
 		// Some debug messages
-		Lasso lasso = lassoBuilder.getLasso();
-		mLogger.debug(new DebugMessage("Stem transition:\n{0}",
+		m_lasso_t = lassoBuilder.getLassoTermination();
+		m_lasso_nt = lassoBuilder.getLassoNonTermination();
+		mLogger.debug(new DebugMessage("Original stem:\n{0}",
 				m_stem_transition));
-		mLogger.debug(new DebugMessage("Preprocessed stem:\n{0}",
-				lasso.getStem()));
-		mLogger.debug(new DebugMessage("Loop transition:\n{0}",
+		mLogger.debug(new DebugMessage("Original loop:\n{0}",
 				m_loop_transition));
-		mLogger.debug(new DebugMessage("Preprocessed loop:\n{0}",
-				lasso.getLoop()));
-		mLogger.info("Preprocessing complete.");
+		mLogger.debug("After preprocessing:");
+		mLogger.debug(new DebugMessage("Overapproximated stem:\n{0}",
+				m_lasso_t.getStem()));
+		mLogger.debug(new DebugMessage("Underapproximated stem:\n{0}",
+				m_lasso_nt.getStem()));
+		mLogger.debug(new DebugMessage("Overapproximated loop:\n{0}",
+				m_lasso_t.getLoop()));
+		mLogger.debug(new DebugMessage("Underapproximated loop:\n{0}",
+				m_lasso_nt.getLoop()));
 		mLogger.debug("Guesses for Motzkin coefficients: "
-				+ eigenvalueGuesses(lasso));
-		
-		return lasso;
+				+ eigenvalueGuesses(m_lasso_t));
+		mLogger.info("Preprocessing complete.");
 	}
 	
 	/**
@@ -271,7 +280,6 @@ public class LassoAnalysis {
 //						mServices
 //				),
 				new RewriteArrays2(true, m_stem_transition, m_loop_transition, mServices, m_ArrayIndexSupportingInvariants),
-//				new LassoPartitioneer(mServices),
 				new StemAndLoopPreProcessor(new RewriteDivision(lassoBuilder.getReplacementVarFactory())),
 				new StemAndLoopPreProcessor(new RewriteBooleans(lassoBuilder.getReplacementVarFactory(), lassoBuilder.getScript())),
 				new StemAndLoopPreProcessor(new RewriteIte()),
@@ -285,10 +293,17 @@ public class LassoAnalysis {
 	}
 	
 	/**
-	 * @return the preprocesses lasso
+	 * @return the preprocessed overapproximated lasso
 	 */
-	public Lasso getLasso() {
-		return m_lasso;
+	public Lasso getLassoTermination() {
+		return m_lasso_t;
+	}
+	
+	/**
+	 * @return the preprocessed underapproximated lasso
+	 */
+	public Lasso getLassoNonTermination() {
+		return m_lasso_nt;
 	}
 	
 	public TerminationAnalysisBenchmark getTerminationAnalysisBenchmark() {
@@ -334,12 +349,14 @@ public class LassoAnalysis {
 	 * @param services
 	 * @return the non-termination argument or null of none is found
 	 */
-	public NonTerminationArgument checkNonTermination(NonTerminationAnalysisSettings settings) throws SMTLIBException,
+	public NonTerminationArgument checkNonTermination(
+			NonTerminationAnalysisSettings settings) throws SMTLIBException,
 			TermException {
 		mLogger.info("Checking for nontermination...");
 
-		NonTerminationArgumentSynthesizer nas = new NonTerminationArgumentSynthesizer(m_lasso, m_preferences, settings,
-				mServices, mStorage);
+		NonTerminationArgumentSynthesizer nas =
+				new NonTerminationArgumentSynthesizer(m_lasso_nt, m_preferences,
+						settings, mServices, mStorage);
 		final LBool constraintSat = nas.synthesize();
 		if (constraintSat == LBool.SAT) {
 			mLogger.info("Proved nontermination.");
@@ -366,8 +383,10 @@ public class LassoAnalysis {
 		mLogger.debug(template);
 		long startTime = System.nanoTime();
 		
-		TerminationArgumentSynthesizer tas = new TerminationArgumentSynthesizer(m_lasso, template, m_preferences,
-				settings, m_ArrayIndexSupportingInvariants, mServices, mStorage);
+		TerminationArgumentSynthesizer tas =
+				new TerminationArgumentSynthesizer(m_lasso_t, template,
+						m_preferences, settings,
+						m_ArrayIndexSupportingInvariants, mServices, mStorage);
 		final LBool constraintSat = tas.synthesize();
 		if (constraintSat == LBool.SAT) {
 			mLogger.info("Proved termination.");
@@ -381,10 +400,11 @@ public class LassoAnalysis {
 		
 		long endTime = System.nanoTime();
 		m_LassoTerminationAnalysisBenchmark = new TerminationAnalysisBenchmark(
-				constraintSat, m_lasso.getStemVarNum(), m_lasso.getLoopVarNum(), 
-				m_lasso.getStemDisjuncts(), m_lasso.getLoopDisjuncts(), 
-				template.getName(), template.getDegree(), 
-				tas.getNumSIs(), tas.getNumMotzkin(), endTime - startTime);
+				constraintSat, m_lasso_t.getStemVarNum(),
+				m_lasso_t.getLoopVarNum(), m_lasso_t.getStemDisjuncts(),
+				m_lasso_t.getLoopDisjuncts(), template.getName(),
+				template.getDegree(), tas.getNumSIs(), tas.getNumMotzkin(),
+				endTime - startTime);
 		mLogger.debug(benchmarkScriptMessage(constraintSat, template));
 		tas.close();
 		return (constraintSat == LBool.SAT) ? tas.getArgument() : null;

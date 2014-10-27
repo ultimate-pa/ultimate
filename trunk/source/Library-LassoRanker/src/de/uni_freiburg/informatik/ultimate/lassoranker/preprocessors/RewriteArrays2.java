@@ -102,8 +102,10 @@ public class RewriteArrays2 extends LassoPreProcessor {
 		m_Script = lasso_builder.getScript();
 		ReplacementVarFactory replacementVarFactory = lasso_builder.getReplacementVarFactory();
 		
-		Collection<TransFormulaLR> old_stem_components = lasso_builder.getStemComponents();
-		Collection<TransFormulaLR> old_loop_components = lasso_builder.getLoopComponents();
+		Collection<TransFormulaLR> old_stem_components = lasso_builder.getStemComponentsTermination();
+		assert old_stem_components == lasso_builder.getStemComponentsNonTermination();
+		Collection<TransFormulaLR> old_loop_components = lasso_builder.getLoopComponentsTermination();
+		assert old_loop_components == lasso_builder.getLoopComponentsNonTermination();
 		List<TransFormulaLRWithArrayInformation> stemComponents1 = new ArrayList<TransFormulaLRWithArrayInformation>();
 		for (TransFormulaLR stemComponent : old_stem_components) {
 			TransFormulaLRWithArrayInformation test = new TransFormulaLRWithArrayInformation(mServices, stemComponent, replacementVarFactory, m_Script);
@@ -134,9 +136,10 @@ public class RewriteArrays2 extends LassoPreProcessor {
 			loopComponents2.add(test);
 			new_loop_components.add(test.getResult());
 		}
-		lasso_builder.setStemComponents(new_stem_components);
-		lasso_builder.setLoopComponents(new_loop_components);
-		
+		lasso_builder.setStemComponentsTermination(new_stem_components);
+		lasso_builder.setStemComponentsNonTermination(new_stem_components);
+		lasso_builder.setLoopComponentsTermination(new_loop_components);
+		lasso_builder.setLoopComponentsNonTermination(new_loop_components);
 	}
 
 

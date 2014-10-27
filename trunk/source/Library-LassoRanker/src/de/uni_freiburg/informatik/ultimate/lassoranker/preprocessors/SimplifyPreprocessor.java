@@ -26,10 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors;
 
-import org.apache.log4j.Logger;
-
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.lassoranker.Activator;
 import de.uni_freiburg.informatik.ultimate.lassoranker.exceptions.TermException;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaLR;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -63,7 +60,6 @@ public class SimplifyPreprocessor extends TransitionPreProcessor {
 	
 	@Override
 	protected TransFormulaLR process(Script script, TransFormulaLR tf) throws TermException {
-		Logger logger = mServices.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
 		Term simplified = SmtUtils.simplify(script, tf.getFormula(), mServices);
 		tf.setFormula(simplified);
 		return tf;

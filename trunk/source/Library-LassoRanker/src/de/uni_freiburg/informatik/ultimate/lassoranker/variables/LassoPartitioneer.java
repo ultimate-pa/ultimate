@@ -29,10 +29,8 @@ package de.uni_freiburg.informatik.ultimate.lassoranker.variables;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeSet;
@@ -116,12 +114,19 @@ public class LassoPartitioneer extends LassoPreProcessor {
 		m_Symbol2LoopConjuncts = new HashRelation<>();
 		m_StemSymbolsWithoutConjuncts = new HashSet<>();
 		m_LoopSymbolsWithoutConjuncts = new HashSet<>();
-		extractSymbols(Part.STEM, m_lassoBuilder.getStemComponents(), m_Symbol2StemConjuncts, m_StemSymbolsWithoutConjuncts);
-		extractSymbols(Part.LOOP, m_lassoBuilder.getLoopComponents(), m_Symbol2LoopConjuncts, m_LoopSymbolsWithoutConjuncts);
+		Collection<TransFormulaLR> stem_components =
+				m_lassoBuilder.getStemComponentsTermination();
+		assert stem_components == m_lassoBuilder.getStemComponentsNonTermination();
+		Collection<TransFormulaLR> loop_components =
+				m_lassoBuilder.getLoopComponentsTermination();
+		assert loop_components == m_lassoBuilder.getLoopComponentsNonTermination();
+		
+		extractSymbols(Part.STEM, stem_components, m_Symbol2StemConjuncts, m_StemSymbolsWithoutConjuncts);
+		extractSymbols(Part.LOOP, loop_components, m_Symbol2LoopConjuncts, m_LoopSymbolsWithoutConjuncts);
 		
 		for (RankVar rv : m_AllRankVars) {
 			Set<NonTheorySymbol<?>> symbols = new HashSet<NonTheorySymbol<?>>();
-			for (TransFormulaLR transFormulaLR : m_lassoBuilder.getStemComponents()) {
+			for (TransFormulaLR transFormulaLR : stem_components) {
 				Term inVar = transFormulaLR.getInVars().get(rv);
 				if (inVar != null) {
 					symbols.add(constructSymbol(inVar));
@@ -132,7 +137,7 @@ public class LassoPartitioneer extends LassoPreProcessor {
 				}
 				assert (inVar == null) == (outVar == null) : "both or none";
 			}
-			for (TransFormulaLR transFormulaLR : m_lassoBuilder.getLoopComponents()) {
+			for (TransFormulaLR transFormulaLR : loop_components) {
 				Term inVar = transFormulaLR.getInVars().get(rv);
 				if (inVar != null) {
 					symbols.add(constructSymbol(inVar));
@@ -180,21 +185,22 @@ public class LassoPartitioneer extends LassoPreProcessor {
 			m_NewStem.add(new TransFormulaLR(m_Script.term("true")));
 		}
 
-		String messageC = "Stem components before: " + m_lassoBuilder.getStemComponents().size()
-				+ " Loop components before: " + m_lassoBuilder.getLoopComponents().size()
+		String messageC = "Stem components before: " + stem_components.size()
+				+ " Loop components before: " + loop_components.size()
 				+ " Stem components after: " + m_NewStem.size()
 				+ " Loop components after: " + m_NewLoop.size();
 		m_Logger.info(messageC);
-		String messageS = "Stem maxDagSize before: " + computeMaxDagSize(m_lassoBuilder.getStemComponents())
-				+ " Loop maxDagSize before: " + computeMaxDagSize(m_lassoBuilder.getLoopComponents())
+		String messageS = "Stem maxDagSize before: " + computeMaxDagSize(stem_components)
+				+ " Loop maxDagSize before: " + computeMaxDagSize(loop_components)
 				+ " Stem maxDagSize after: " + computeMaxDagSize(m_NewStem)
 				+ " Loop maxDagSize after: " + computeMaxDagSize(m_NewLoop);
 		m_Logger.info(messageS);
 
 		if (!m_DryRun) {
-			m_lassoBuilder.setStemComponents(m_NewStem);
-			m_lassoBuilder.setLoopComponents(m_NewLoop);
-			
+			m_lassoBuilder.setStemComponentsTermination(m_NewStem);
+			m_lassoBuilder.setStemComponentsNonTermination(m_NewStem);
+			m_lassoBuilder.setLoopComponentsTermination(m_NewLoop);
+			m_lassoBuilder.setLoopComponentsNonTermination(m_NewLoop);
 		}
 	}
 	

@@ -46,6 +46,9 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula
 /**
  * 
  * The LassoBuilder class holds the lasso components during preprocessing.
+ * With the LassoBuilder we are building two lassos at the same time:
+ * an overapproximated lasso (for termination analysis) and
+ * an underapproximated lasso (fer nontermination analysis).`
  * 
  * This object is *not* immutable.
  * 
@@ -69,13 +72,27 @@ public class LassoBuilder {
 	
 	/**
 	 * Independent components of the stem transition
+	 * (possibly an overapproximation)
 	 */
-	private Collection<TransFormulaLR> m_stem_components;
+	private Collection<TransFormulaLR> m_stem_components_t;
+	
+	/**
+	 * Independent components of the stem transition
+	 * (possibly an underapproximation)
+	 */
+	private Collection<TransFormulaLR> m_stem_components_nt;
 	
 	/**
 	 * Independent components of the loop transition
+	 * (possibly an overapproximation)
 	 */
-	private Collection<TransFormulaLR> m_loop_components;
+	private Collection<TransFormulaLR> m_loop_components_t;
+	
+	/**
+	 * Independent components of the loop transition
+	 * (possibly an underapproximation)
+	 */
+	private Collection<TransFormulaLR> m_loop_components_nt;
 	
 	/**
 	 * The script used to create terms in the transition formulas
@@ -98,9 +115,12 @@ public class LassoBuilder {
 		m_boogie2smt = boogie2smt;
 		m_boogieWrappers = new LinkedHashMap<BoogieVar, BoogieVarWrapper>();
 		m_termVariables = new ArrayList<TermVariable>();
-		m_stem_components = new ArrayList<TransFormulaLR>();
-		m_loop_components = new ArrayList<TransFormulaLR>();
-		m_ReplacementVarFactory = new ReplacementVarFactory(m_boogie2smt.getVariableManager());
+		m_stem_components_t = new ArrayList<TransFormulaLR>();
+		m_stem_components_nt = m_stem_components_t;
+		m_loop_components_t = new ArrayList<TransFormulaLR>();
+		m_loop_components_nt = m_loop_components_t;
+		m_ReplacementVarFactory =
+				new ReplacementVarFactory(m_boogie2smt.getVariableManager());
 		
 	}
 	
@@ -115,8 +135,8 @@ public class LassoBuilder {
 	public LassoBuilder(Script script, Boogie2SMT boogie2smt, TransFormula stem,
 			TransFormula loop) {
 		this(script, boogie2smt);
-		m_stem_components.add(this.buildTransFormula(stem));
-		m_loop_components.add(this.buildTransFormula(loop));
+		m_stem_components_t.add(this.buildTransFormula(stem));
+		m_loop_components_t.add(this.buildTransFormula(loop));
 	}
 	
 	/**
@@ -145,31 +165,67 @@ public class LassoBuilder {
 	}
 	
 	/**
-	 * @return the stem's components
+	 * @return the stem's components (possibly overapproximation)
 	 */
-	public Collection<TransFormulaLR> getStemComponents() {
-		return m_stem_components;
+	public Collection<TransFormulaLR> getStemComponentsTermination() {
+		return m_stem_components_t;
 	}
 	
 	/**
-	 * @return the loop's components
+	 * @return the stem's components (possibly underapproximation)
 	 */
-	public Collection<TransFormulaLR> getLoopComponents() {
-		return m_loop_components;
+	public Collection<TransFormulaLR> getStemComponentsNonTermination() {
+		return m_stem_components_nt;
 	}
 	
 	/**
+	 * @return the loop's components (possibly overapproximation)
+	 */
+	public Collection<TransFormulaLR> getLoopComponentsTermination() {
+		return m_loop_components_t;
+	}
+	
+	/**
+	 * @return the loop's components (possibly underapproximation)
+	 */
+	public Collection<TransFormulaLR> getLoopComponentsNonTermination() {
+		return m_loop_components_nt;
+	}
+	
+	/**
+	 * Set new overapproximation for stem components
 	 * @param stem_components the new stem components
 	 */
-	public void setStemComponents(Collection<TransFormulaLR> stem_components) {
-		m_stem_components = stem_components;
+	public void setStemComponentsTermination(
+			Collection<TransFormulaLR> stem_components) {
+		m_stem_components_t = stem_components;
 	}
 	
 	/**
+	 * Set new underapproximation for stem components
+	 * @param stem_components the new stem components
+	 */
+	public void setStemComponentsNonTermination(
+			Collection<TransFormulaLR> stem_components) {
+		m_stem_components_nt = stem_components;
+	}
+	
+	/**
+	 * Set new overapproximation for loop components
 	 * @param loop_components the new loop components
 	 */
-	public void setLoopComponents(Collection<TransFormulaLR> loop_components) {
-		m_loop_components = loop_components;
+	public void setLoopComponentsTermination(
+			Collection<TransFormulaLR> loop_components) {
+		m_loop_components_t = loop_components;
+	}
+	
+	/**
+	 * Set new underapproximation for loop components
+	 * @param loop_components the new loop components
+	 */
+	public void setLoopComponentsNonTermination(
+			Collection<TransFormulaLR> loop_components) {
+		m_loop_components_nt = loop_components;
 	}
 	
 	/**
@@ -222,12 +278,22 @@ public class LassoBuilder {
 	 */
 	public boolean isSane() {
 		boolean sane = true;
-		for (TransFormulaLR tf : m_stem_components) {
+		for (TransFormulaLR tf : m_stem_components_t) {
 			sane = sane & tf.auxVarsDisjointFromInOutVars();
 			sane = sane &
 					tf.allAreInOutAux(tf.getFormula().getFreeVars()) == null;
 		}
-		for (TransFormulaLR tf : m_loop_components) {
+		for (TransFormulaLR tf : m_stem_components_nt) {
+			sane = sane & tf.auxVarsDisjointFromInOutVars();
+			sane = sane &
+					tf.allAreInOutAux(tf.getFormula().getFreeVars()) == null;
+		}
+		for (TransFormulaLR tf : m_loop_components_t) {
+			sane = sane & tf.auxVarsDisjointFromInOutVars();
+			sane = sane &
+					tf.allAreInOutAux(tf.getFormula().getFreeVars()) == null;
+		}
+		for (TransFormulaLR tf : m_loop_components_nt) {
 			sane = sane & tf.auxVarsDisjointFromInOutVars();
 			sane = sane &
 					tf.allAreInOutAux(tf.getFormula().getFreeVars()) == null;
@@ -236,24 +302,46 @@ public class LassoBuilder {
 	}
 	
 	/**
-	 * Extract the Lasso
+	 * Extract the Lasso overapproximation (for termination analysis)
 	 * 
 	 * Only succeeds if the transition formulas are of the required form,
 	 * i.e., if preprocessing has been completed.
+	 * 
+	 * TODO: For now only one component is supported
 	 * 
 	 * @return the lasso that was built using this LassoBuilder
 	 * @throws TermException if the transition formulas are not of the correct
 	 *                       form
 	 */
-	public Lasso getLasso() throws TermException {
-		// TODO: For now only one component is supported
-		assert m_stem_components.size() == 1;
-		assert m_loop_components.size() == 1;
-		TransFormulaLR stemTF = m_stem_components.iterator().next();
-		TransFormulaLR loopTF = m_loop_components.iterator().next();
+	public Lasso getLassoTermination() throws TermException {
+		assert m_stem_components_t.size() == 1;
+		assert m_loop_components_t.size() == 1;
+		TransFormulaLR stemTF = m_stem_components_t.iterator().next();
+		TransFormulaLR loopTF = m_loop_components_t.iterator().next();
 		LinearTransition stem = LinearTransition.fromTransFormulaLR(stemTF);
 		LinearTransition loop = LinearTransition.fromTransFormulaLR(loopTF);
 		return new Lasso(stem, loop);
 	}
 	
+	/**
+	 * Extract the Lasso underapproximation (for nontermination analysis)
+	 * 
+	 * Only succeeds if the transition formulas are of the required form,
+	 * i.e., if preprocessing has been completed.
+	 * 
+	 * TODO: For now only one component is supported
+	 * 
+	 * @return the lasso that was built using this LassoBuilder
+	 * @throws TermException if the transition formulas are not of the correct
+	 *                       form
+	 */
+	public Lasso getLassoNonTermination() throws TermException {
+		assert m_stem_components_nt.size() == 1;
+		assert m_loop_components_nt.size() == 1;
+		TransFormulaLR stemTF = m_stem_components_nt.iterator().next();
+		TransFormulaLR loopTF = m_loop_components_nt.iterator().next();
+		LinearTransition stem = LinearTransition.fromTransFormulaLR(stemTF);
+		LinearTransition loop = LinearTransition.fromTransFormulaLR(loopTF);
+		return new Lasso(stem, loop);
+	}
 }

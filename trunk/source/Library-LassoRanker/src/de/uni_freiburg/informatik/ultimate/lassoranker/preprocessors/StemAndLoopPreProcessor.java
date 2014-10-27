@@ -38,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 /**
  * Preprocessor for lassos that takes a preprocessor for TransFormulaLR to
  * translate stem and loop.
+ * 
  * @author Jan Leike, Matthias Heizmann
  */
 public class StemAndLoopPreProcessor extends LassoPreProcessor {
@@ -49,7 +50,23 @@ public class StemAndLoopPreProcessor extends LassoPreProcessor {
 		super();
 		m_TransitionPreProcessor = transitionPreProcessor;
 	}
-
+	
+	private Collection<TransFormulaLR> processStemOrLoop(
+			Collection<TransFormulaLR> old_components) throws TermException {
+		Script script = m_lassoBuilder.getScript();
+		Collection<TransFormulaLR> new_components =
+				new ArrayList<TransFormulaLR>(old_components.size());
+		for (TransFormulaLR tf : old_components) {
+			TransFormulaLR new_tf =
+					m_TransitionPreProcessor.process(script, tf);
+			assert checkSoundness(script, tf, new_tf)
+				: "Soundness check failed for preprocessor "
+				+ this.getClass().getSimpleName();
+			new_components.add(new_tf);
+		}
+		return new_components;
+	}
+	
 	/**
 	 * Apply the preprocessing step
 	 * @param script the SMT script to use 
@@ -57,43 +74,35 @@ public class StemAndLoopPreProcessor extends LassoPreProcessor {
 	 * @return the processed formula
 	 * @throws TermException if an error occurred while traversing the term
 	 */
-	public void process(LassoBuilder lasso_builder)
-			throws TermException {
+	public void process(LassoBuilder lasso_builder) throws TermException {
 		m_lassoBuilder = lasso_builder;
-		Script script = lasso_builder.getScript();
 		
 		// Process stem
-		{
-			Collection<TransFormulaLR> old_stem_components =
-					lasso_builder.getStemComponents();
-			Collection<TransFormulaLR> new_stem_components =
-					new ArrayList<TransFormulaLR>(old_stem_components.size());
-			for (TransFormulaLR tf : old_stem_components) {
-				TransFormulaLR new_tf =
-						m_TransitionPreProcessor.process(script, tf);
-				assert checkSoundness(script, tf, new_tf)
-					: "Soundness check failed for preprocessor "
-					+ this.getClass().getSimpleName();
-				new_stem_components.add(new_tf);
-			}
-			lasso_builder.setStemComponents(new_stem_components);
+		if (lasso_builder.getStemComponentsTermination()
+				== lasso_builder.getStemComponentsNonTermination()) {
+			Collection<TransFormulaLR> components =
+					processStemOrLoop(lasso_builder.getStemComponentsTermination());
+			lasso_builder.setStemComponentsTermination(components);
+			lasso_builder.setStemComponentsNonTermination(components);
+		} else {
+			lasso_builder.setStemComponentsTermination(
+					processStemOrLoop(lasso_builder.getStemComponentsTermination()));
+			lasso_builder.setStemComponentsNonTermination(
+					processStemOrLoop(lasso_builder.getStemComponentsNonTermination()));
 		}
 		
 		// Process loop
-		{
-			Collection<TransFormulaLR> old_loop_components =
-					lasso_builder.getLoopComponents();
-			Collection<TransFormulaLR> new_loop_components =
-					new ArrayList<TransFormulaLR>(old_loop_components.size());
-			for (TransFormulaLR tf : old_loop_components) {
-				TransFormulaLR new_tf =
-						m_TransitionPreProcessor.process(script, tf);
-				assert checkSoundness(script, tf, new_tf)
-					: "Soundness check failed for preprocessor "
-					+ this.getClass().getSimpleName();
-				new_loop_components.add(new_tf);
-			}
-			lasso_builder.setLoopComponents(new_loop_components);
+		if (lasso_builder.getLoopComponentsTermination()
+				== lasso_builder.getLoopComponentsNonTermination()) {
+			Collection<TransFormulaLR> components =
+					processStemOrLoop(lasso_builder.getLoopComponentsTermination());
+			lasso_builder.setLoopComponentsTermination(components);
+			lasso_builder.setLoopComponentsNonTermination(components);
+		} else {
+			lasso_builder.setLoopComponentsTermination(
+					processStemOrLoop(lasso_builder.getLoopComponentsTermination()));
+			lasso_builder.setLoopComponentsNonTermination(
+					processStemOrLoop(lasso_builder.getLoopComponentsNonTermination()));
 		}
 	}
 
