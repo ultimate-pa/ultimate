@@ -222,7 +222,8 @@ public class FunctionHandler {
 			out[0] = new VarList(loc, new String[] { SFO.RES }, new PrimitiveType(loc, SFO.INT));
 		} else { // "normal case"
 			assert type != null;
-			out[0] = new VarList(loc, new String[] { methodName }, type); // at
+//			out[0] = new VarList(loc, new String[] { methodName }, type); // at
+			out[0] = new VarList(loc, new String[] { SFO.RES }, type); // at
 																			// most
 																			// one
 																			// out
@@ -547,6 +548,9 @@ public class FunctionHandler {
 				assert mapping.get(mId) != null;
 				LinkedHashSet<String> currModClause = modGlobals.get(mapping.get(mId));
 				assert currModClause != null : "No modifies clause proc " + mId;
+//				if (currModClause == null) {
+//					currModClause = new LinkedHashSet<>();
+//				}
 				modifiedGlobals.put(mId, currModClause);
 				int nrSpec = spec.length;
 				spec = Arrays.copyOf(spec, nrSpec + 1);
@@ -1173,7 +1177,10 @@ public class FunctionHandler {
 
 		// generate the actual body
 		IdentifierExpression funcCallResult = null;
-		if (fittingFunctions.size() == 1) {
+		if (fittingFunctions.size() == 0) {
+			return new Body(loc, decl.toArray(new VariableDeclaration[decl.size()]), stmt.toArray(new Statement[stmt
+					.size()]));		
+		} else if (fittingFunctions.size() == 1) {
 			ResultExpression rex = (ResultExpression) makeTheFunctionCallItself(main, loc, fittingFunctions.get(0),
 					new ArrayList<Statement>(), new ArrayList<Declaration>(),
 					new LinkedHashMap<VariableDeclaration, ILocation>(), new ArrayList<Overapprox>(), args);

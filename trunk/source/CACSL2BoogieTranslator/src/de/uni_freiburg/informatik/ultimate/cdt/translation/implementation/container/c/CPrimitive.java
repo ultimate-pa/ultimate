@@ -259,13 +259,12 @@ public class CPrimitive extends CType {
 
 	@Override
 	public boolean isCompatibleWith(CType o) {
-		if (this.type == PRIMITIVE.VOID)
-			return true;
+//		if (this.type == PRIMITIVE.VOID)
+//			return true;
         CType oType = ((CType) o).getUnderlyingType();
         if (oType instanceof CPrimitive) {
             return type == ((CPrimitive)oType).type;
-        }
-        else {
+        } else {
             return false;
         }
 	}

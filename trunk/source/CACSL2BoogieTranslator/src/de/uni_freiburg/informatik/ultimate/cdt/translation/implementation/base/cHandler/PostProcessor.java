@@ -19,6 +19,8 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.BoogieASTUtil;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IfThenElseExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayLHS;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Attribute;
@@ -27,12 +29,14 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ConstDeclaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Declaration;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.EnsuresSpecification;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.FunctionDeclaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ModifiesSpecification;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Procedure;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Specification;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
@@ -106,7 +110,52 @@ public class PostProcessor {
 		decl.addAll(createUltimateStartProcedure(main, loc, functionHandler));
 		decl.addAll(functions);
 		decl.addAll(declareFunctionPointerProcedures(main, functionHandler, memoryHandler, structHandler));
+		decl.addAll(declareConversionFunctions(main, functionHandler, memoryHandler, structHandler));
 		return decl;
+	}
+	
+	private ArrayList<Declaration> declareConversionFunctions(
+			Dispatcher main, FunctionHandler functionHandler, 
+			MemoryHandler memoryHandler, StructHandler structHandler) {
+
+		ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
+
+		ArrayList<Declaration> decls = new ArrayList<>();
+		
+		
+		// function to_int
+		String inReal = "inReal";
+//		IdentifierExpression inRealIdex = new IdentifierExpression(ignoreLoc, inReal);
+		String outInt = "outInt";
+//		IdentifierExpression outIntIdex = new IdentifierExpression(ignoreLoc, outInt);
+		VarList realParam = new VarList(ignoreLoc, new String[] {  }, new PrimitiveType(ignoreLoc, SFO.REAL));
+		VarList[] oneRealParam = new VarList[] { realParam };
+		VarList intParam = new VarList(ignoreLoc, new String[] { outInt }, new PrimitiveType(ignoreLoc, SFO.INT));
+//		VarList[] oneIntParam = new VarList[] { intParam };
+//		Expression inRealGeq0 = new BinaryExpression(ignoreLoc, 
+//				BinaryExpression.Operator.COMPGEQ, inRealIdex, new IntegerLiteral(ignoreLoc, SFO.NR0));
+//		
+//		Expression roundDown = new BinaryExpression(ignoreLoc, BinaryExpression.Operator.LOGICAND,
+//				new BinaryExpression(ignoreLoc, BinaryExpression.Operator.COMPLEQ, 
+//						new BinaryExpression(ignoreLoc, BinaryExpression.Operator.ARITHMINUS, inRealIdex, new IntegerLiteral(ignoreLoc, SFO.NR1)),
+//						outIntIdex),
+//				new BinaryExpression(ignoreLoc, BinaryExpression.Operator.COMPLEQ, 
+//						outIntIdex,
+//						inRealIdex));
+//		Expression roundUp = new BinaryExpression(ignoreLoc, BinaryExpression.Operator.LOGICAND,
+//				new BinaryExpression(ignoreLoc, BinaryExpression.Operator.COMPLEQ, 
+//						inRealIdex,
+//						outIntIdex),
+//			new BinaryExpression(ignoreLoc, BinaryExpression.Operator.COMPLEQ, 
+//						new BinaryExpression(ignoreLoc, BinaryExpression.Operator.ARITHPLUS, inRealIdex, new IntegerLiteral(ignoreLoc, SFO.NR1)),
+//						outIntIdex));
+//			
+//		Specification toIntSpec = new EnsuresSpecification(ignoreLoc, false, new IfThenElseExpression(ignoreLoc, inRealGeq0, roundDown, roundUp));
+//		decls.add(new Procedure(ignoreLoc, new Attribute[0], SFO.TO_INT, new String[0], oneRealParam, oneIntParam, new Specification[] { toIntSpec }, null));
+
+		decls.add(new FunctionDeclaration(ignoreLoc, new Attribute[0], SFO.TO_INT, new String[0], oneRealParam, intParam));
+
+		return decls;
 	}
 
 	private ArrayList<Declaration> declareFunctionPointerProcedures(

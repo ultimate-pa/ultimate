@@ -479,26 +479,7 @@ public class InitializationHandler {
 
 			for (int i = 0; i < currentSizeInt; i++) {
 				CType valueType = arrayType.getValueType().getUnderlyingType();
-				//TODO: we may need to pass statements, decls, ...
-				if (list != null && list.size() > i && list.get(i).lrVal != null) {
-					val = (RValue) list.get(i).lrVal; 
-				} else {
-					if (valueType instanceof CArray) {
-						throw new AssertionError("this should not be the case as we are in the inner/outermost array right??");
-					} else if  (valueType instanceof CStruct) {
-						ResultExpression sInit = this.initStructOnHeapFromRERL(main, loc, 
-								null, null, (CStruct) valueType);
-						arrayWrites.addAll(sInit.stmt);
-						assert sInit.decl.size() == 0 && sInit.auxVars.size() == 0 : "==> change return type of initArray..";
-						val = (RValue) sInit.lrVal;
-					} else if (valueType instanceof CPrimitive 
-							|| valueType instanceof CPointer) {
-						val = (RValue) (main.cHandler.getInitHandler().initVar(loc, main, 
-								(VariableLHS) null, valueType, null)).lrVal;
-					} else {
-						throw new UnsupportedSyntaxException(loc, "trying to init unknown type");
-					}
-				}
+				
 
 				Expression writeOffset = CHandler.createArithmeticExpression(IASTBinaryExpression.op_multiply, 
 						new IntegerLiteral(null, new Integer(i).toString()), 
@@ -514,7 +495,28 @@ public class InitializationHandler {
 						writeOffset, 
 						loc);
 
-				arrayWrites.addAll(mMemoryHandler.getWriteCall(loc, new HeapLValue(writeLocation, valueType), val));
+//				TODO: we may need to pass statements, decls, ...
+				if (list != null && list.size() > i && list.get(i).lrVal != null) {
+					val = (RValue) list.get(i).lrVal; 
+					arrayWrites.addAll(mMemoryHandler.getWriteCall(loc, new HeapLValue(writeLocation, valueType), val));
+				} else {
+					if (valueType instanceof CArray) {
+						throw new AssertionError("this should not be the case as we are in the inner/outermost array right??");
+					} else if  (valueType instanceof CStruct) {
+						ResultExpression sInit = this.initStructOnHeapFromRERL(main, loc, 
+								writeLocation, list != null ? list.get(i) : null, (CStruct) valueType);
+						arrayWrites.addAll(sInit.stmt);
+						assert sInit.decl.size() == 0 && sInit.auxVars.size() == 0 : "==> change return type of initArray..";
+						val = (RValue) sInit.lrVal;
+					} else if (valueType instanceof CPrimitive 
+							|| valueType instanceof CPointer) {
+						val = (RValue) (main.cHandler.getInitHandler().initVar(loc, main, 
+								(VariableLHS) null, valueType, null)).lrVal;
+						arrayWrites.addAll(mMemoryHandler.getWriteCall(loc, new HeapLValue(writeLocation, valueType), val));
+					} else {
+						throw new UnsupportedSyntaxException(loc, "trying to init unknown type");
+					}
+				}
 			}
 		} else {
 			for (int i = 0; i < currentSizeInt; i++) { 
@@ -793,7 +795,7 @@ public class InitializationHandler {
 			newOverappr.addAll(fieldWrites.overappr);
 		}
 		ResultExpression result = new ResultExpression(newStmt,
-				null, newDecl, newAuxVars, newOverappr);
+				new RValue(MemoryHandler.constructPointerFromBaseAndOffset(newStartAddressBase, newStartAddressOffset, loc), structType), newDecl, newAuxVars, newOverappr);
 		return result;
 	} 
 

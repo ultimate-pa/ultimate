@@ -149,6 +149,8 @@ public final class SFO {
 	public static final String MEMCPY_SIZE = "size";
 	public static final String MEMCPY = "#memcpy";
 
+	public static final String TO_INT = "#to_int";
+
 	/**
 	 * Specifies purpose of an auxiliary temporary variable.
 	 */

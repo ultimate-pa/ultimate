@@ -77,6 +77,7 @@ import org.eclipse.cdt.internal.core.dom.parser.c.CASTFunctionDeclarator;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.SymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.ArrayHandler;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.CastAndConversionHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.FunctionHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.InitializationHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.MemoryHandler;
@@ -137,6 +138,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression.Ope
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Body;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BreakStatement;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ConstDeclaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
@@ -642,7 +644,7 @@ public class CHandler implements ICHandler {
 							LocalLValue llVal = new LocalLValue(lhs, cDec.getType());
 							((ResultExpression) result).stmt.add(mMemoryHandler.getMallocCall(main, mFunctionHandler, 
 									mMemoryHandler.calculateSizeOf(cDec.getType(), loc), llVal , loc));
-							mMemoryHandler.addVariableToBeFreed(main, llVal);
+							mMemoryHandler.addVariableToBeMallocedAndFreed(main, llVal);
 							
 
 						}
@@ -660,7 +662,7 @@ public class CHandler implements ICHandler {
 						
 						if (onHeap) {
 							LocalLValue llVal = new LocalLValue(lhs, cDec.getType());
-							mMemoryHandler.addVariableToBeFreed(main, llVal);
+							mMemoryHandler.addVariableToBeMallocedAndFreed(main, llVal);
 						}
 
 						((ResultExpression) result).stmt.addAll(initRex.stmt);
@@ -1208,15 +1210,16 @@ public class CHandler implements ICHandler {
 			auxVars.putAll(rr.auxVars);
 			overappr.addAll(l.overappr);
 			overappr.addAll(rr.overappr);
-			if (l.lrVal.cType instanceof CPrimitive
-					&& ((CPrimitive) l.lrVal.cType).getGeneralType() == GENERALPRIMITIVE.INTTYPE) {
-				ResultExpression rrToInt = ConvExpr.rexBoolToIntIfNecessary(loc, rr);
-				return makeAssignment(main, loc, stmt, l.lrVal, (RValue) rrToInt.lrVal, decl, auxVars, overappr,
-						l.unionFieldIdToCType);// , r.lrVal.cType);
-			} else {
-				return makeAssignment(main, loc, stmt, l.lrVal, (RValue) rr.lrVal, decl, auxVars, overappr,
-						l.unionFieldIdToCType);// , r.lrVal.cType);
-			}
+//			if (l.lrVal.cType instanceof CPrimitive
+//					&& ((CPrimitive) l.lrVal.cType).getGeneralType() == GENERALPRIMITIVE.INTTYPE) {
+			ResultExpression rrToInt = ConvExpr.rexBoolToIntIfNecessary(loc, rr);
+//			}
+			return makeAssignment(main, loc, stmt, l.lrVal, (RValue) rrToInt.lrVal, decl, auxVars, overappr,
+					l.unionFieldIdToCType);// , r.lrVal.cType);
+//			} else {
+//				return makeAssignment(main, loc, stmt, l.lrVal, (RValue) rr.lrVal, decl, auxVars, overappr,
+//						l.unionFieldIdToCType);// , r.lrVal.cType);
+//			}
 		}
 		case IASTBinaryExpression.op_equals:
 		case IASTBinaryExpression.op_greaterEqual:
@@ -1250,7 +1253,8 @@ public class CHandler implements ICHandler {
 			ResultExpression rrToInt = ConvExpr.rexBoolToIntIfNecessary(loc, rr);
 			ResultExpression rlToInt = ConvExpr.rexBoolToIntIfNecessary(loc, rl);
 			
-			doIntOverflowTreatmentInComparisonIfApplicable(main, loc, rlToInt, rrToInt);
+			CastAndConversionHandler.usualArithmeticConversions(main, loc, mMemoryHandler, rlToInt, rrToInt, true);
+			
 			
 			stmt.addAll(rlToInt.stmt);
 			stmt.addAll(rrToInt.stmt);
@@ -1337,6 +1341,7 @@ public class CHandler implements ICHandler {
 		case IASTBinaryExpression.op_logicalAnd: {
 			ResultExpression rlToBool = ConvExpr.rexIntToBoolIfNecessary(loc, rl);
 			ResultExpression rrToBool = ConvExpr.rexIntToBoolIfNecessary(loc, rr);
+			
 
 			stmt.addAll(rlToBool.stmt);
 			// NOTE: no rr.stmt
@@ -1449,15 +1454,7 @@ public class CHandler implements ICHandler {
 		case IASTBinaryExpression.op_divide: {
 			ResultExpression rlToInt = ConvExpr.rexBoolToIntIfNecessary(loc, rl);
 			ResultExpression rrToInt = ConvExpr.rexBoolToIntIfNecessary(loc, rr);
-			stmt.addAll(rlToInt.stmt);
-			stmt.addAll(rrToInt.stmt);
-			decl.addAll(rlToInt.decl);
-			decl.addAll(rrToInt.decl);
-			auxVars.putAll(rlToInt.auxVars);
-			auxVars.putAll(rrToInt.auxVars);
-			overappr.addAll(rlToInt.overappr);
-			overappr.addAll(rrToInt.overappr);
-
+			
 			if (node.getOperator() == IASTBinaryExpression.op_divide) {
 				Check check = new Check(Check.Spec.DIVISION_BY_ZERO);
 				ILocation assertLoc = LocationFactory.createCLocation(node, check);
@@ -1473,18 +1470,29 @@ public class CHandler implements ICHandler {
 				stmt.add(assertStmt);
 				
 				//modulo is not compatible with division..
-				this.doIntOverflowTreatmentIfApplicable(main, loc, rlToInt);
+				CastAndConversionHandler.usualArithmeticConversions(main, loc, mMemoryHandler, 
+						rlToInt, rrToInt, true);
+			} else {
+				CastAndConversionHandler.usualArithmeticConversions(main, loc, mMemoryHandler, 
+						rlToInt, rrToInt, false);
 			}
+			stmt.addAll(rlToInt.stmt);
+			stmt.addAll(rrToInt.stmt);
+			decl.addAll(rlToInt.decl);
+			decl.addAll(rrToInt.decl);
+			auxVars.putAll(rlToInt.auxVars);
+			auxVars.putAll(rrToInt.auxVars);
+			overappr.addAll(rlToInt.overappr);
+			overappr.addAll(rrToInt.overappr);
+
 
 			RValue rval = null;
 			// implicit casts
 			if (lType instanceof CPointer && rType instanceof CPrimitive
-			// && ((CPrimitive) rType).getType() == PRIMITIVE.INT) {
 					&& ((CPrimitive) rType).getGeneralType() == GENERALPRIMITIVE.INTTYPE) {
 				rval = doPointerArithPointerAndInteger(main, node.getOperator(), loc, ((RValue) rlToInt.lrVal),
 						((RValue) rrToInt.lrVal), ((CPointer) rlToInt.lrVal.cType.getUnderlyingType()).pointsToType);
 			} else if (rType instanceof CPointer && lType instanceof CPrimitive
-			// && ((CPrimitive) lType).getType() == PRIMITIVE.INT) {
 					&& ((CPrimitive) lType).getGeneralType() == GENERALPRIMITIVE.INTTYPE) {
 				rval = doPointerArithPointerAndInteger(main, node.getOperator(), loc, (RValue) rrToInt.lrVal,
 						(RValue) rlToInt.lrVal, ((CPointer) rrToInt.lrVal.cType.getUnderlyingType()).pointsToType);
@@ -1525,14 +1533,6 @@ public class CHandler implements ICHandler {
 		case IASTBinaryExpression.op_moduloAssign:
 		case IASTBinaryExpression.op_plusAssign: {
 			assert !rl.lrVal.isBoogieBool && !rr.lrVal.isBoogieBool;
-			stmt.addAll(rl.stmt);
-			stmt.addAll(rr.stmt);
-			decl.addAll(rl.decl);
-			decl.addAll(rr.decl);
-			auxVars.putAll(rl.auxVars);
-			auxVars.putAll(rr.auxVars);
-			overappr.addAll(rl.overappr);
-			overappr.addAll(rr.overappr);
 
 			if (node.getOperator() == IASTBinaryExpression.op_divideAssign) {
 				Check check = new Check(Check.Spec.DIVISION_BY_ZERO);
@@ -1545,7 +1545,23 @@ public class CHandler implements ICHandler {
 				}
 				check.addToNodeAnnot(assertStmt);
 				stmt.add(assertStmt);
+
+				//modulo is not compatible with division..
+				CastAndConversionHandler.usualArithmeticConversions(main, loc, mMemoryHandler, 
+						rl, rr, true);
+			} else {
+				CastAndConversionHandler.usualArithmeticConversions(main, loc, mMemoryHandler, 
+						rl, rr, false); 
 			}
+			stmt.addAll(rl.stmt);
+			stmt.addAll(rr.stmt);
+			decl.addAll(rl.decl);
+			decl.addAll(rr.decl);
+			auxVars.putAll(rl.auxVars);
+			auxVars.putAll(rr.auxVars);
+			overappr.addAll(rl.overappr);
+			overappr.addAll(rr.overappr);
+			
 			// handle pointer arithmetic.
 			RValue rightHandside = null;
 			if (lType instanceof CPointer && rType instanceof CPrimitive
@@ -1563,6 +1579,8 @@ public class CHandler implements ICHandler {
 		case IASTBinaryExpression.op_binaryXor:
 		case IASTBinaryExpression.op_shiftLeft:
 		case IASTBinaryExpression.op_shiftRight: {
+			CastAndConversionHandler.usualArithmeticConversions(main, loc, mMemoryHandler, 
+						rl, rr, false); 
 			stmt.addAll(rl.stmt);
 			stmt.addAll(rr.stmt);
 			decl.addAll(rl.decl);
@@ -1578,10 +1596,11 @@ public class CHandler implements ICHandler {
 		}
 		case IASTBinaryExpression.op_shiftLeftAssign:
 		case IASTBinaryExpression.op_shiftRightAssign:
-			// return main.sideEffectHandler.visit(main, node);
 		case IASTBinaryExpression.op_binaryAndAssign:
 		case IASTBinaryExpression.op_binaryOrAssign:
 		case IASTBinaryExpression.op_binaryXorAssign: {
+			CastAndConversionHandler.usualArithmeticConversions(main, loc, mMemoryHandler, 
+						rl, rr, false); 
 			stmt.addAll(rl.stmt);
 			stmt.addAll(rr.stmt);
 			decl.addAll(rl.decl);
@@ -1602,67 +1621,75 @@ public class CHandler implements ICHandler {
 		}
 	}
 	
-	private void doIntOverflowTreatmentInComparisonIfApplicable(Dispatcher main,
-			ILocation loc, ResultExpression left,
-			ResultExpression right) {
-		if (main.cHandler.getUnsignedTreatment() == UNSIGNED_TREATMENT.IGNORE)
-			return;
-		
-		boolean isLeftUnsigned = left.lrVal.cType instanceof CPrimitive
-				&& ((CPrimitive) left.lrVal.cType).isUnsigned()
-				&& !left.lrVal.isIntFromPointer;
-		boolean isRightUnsigned = right.lrVal.cType instanceof CPrimitive
-				&& ((CPrimitive) right.lrVal.cType).isUnsigned()
-				&& !right.lrVal.isIntFromPointer;
+//	public void doIntOverflowTreatmentInComparisonIfApplicable(Dispatcher main,
+//			ILocation loc, ResultExpression left,
+//			ResultExpression right) {
+//		if (main.cHandler.getUnsignedTreatment() == UNSIGNED_TREATMENT.IGNORE)
+//			return;
+//		
+//		boolean isLeftUnsigned = left.lrVal.cType instanceof CPrimitive
+//				&& ((CPrimitive) left.lrVal.cType).isUnsigned()
+//				&& !left.lrVal.isIntFromPointer;
+//		boolean isRightUnsigned = right.lrVal.cType instanceof CPrimitive
+//				&& ((CPrimitive) right.lrVal.cType).isUnsigned()
+//				&& !right.lrVal.isIntFromPointer;
+//
+//		//if one is unsigned, we convert the other to unsigned
+//		// --> C99: "usual conversions"
+//		if (isLeftUnsigned || isRightUnsigned) {
+//			CastAndConversionHandler.doIntOverflowTreatment(main, mMemoryHandler, loc, left);
+//			CastAndConversionHandler.doIntOverflowTreatment(main, mMemoryHandler, loc, right);
+//		}
+//		
+//	}
 
-		//if one is unsigned, we convert the other to unsigned
-		// --> C99: "usual conversions"
-		if (isLeftUnsigned || isRightUnsigned) {
-			doIntOverflowTreatment(main, loc, left);
-			doIntOverflowTreatment(main, loc, right);
-		}
-		
-	}
-
-	private void doIntOverflowTreatmentIfApplicable(Dispatcher main,
-			ILocation loc, ResultExpression rex) {
-		if (main.cHandler.getUnsignedTreatment() == UNSIGNED_TREATMENT.IGNORE)
-			return;
-		
-		boolean isRexUnsigned = rex.lrVal.cType instanceof CPrimitive
-				&& ((CPrimitive) rex.lrVal.cType).isUnsigned()
-				&& !rex.lrVal.isIntFromPointer;
-		
-		if (isRexUnsigned)
-			doIntOverflowTreatment(main, loc, rex);
-	}
-	
-	private void doIntOverflowTreatment(Dispatcher main, ILocation loc,
-			ResultExpression rex) {
-		//special treatment for unsigned integer types
-		int exponentInBytes = mMemoryHandler.typeSizeConstants
-				.CPrimitiveToTypeSizeConstant.get(((CPrimitive) rex.lrVal.cType).getType());
-		BigInteger maxValue = new BigInteger("2")
-			.pow(exponentInBytes * 8);
-
-		if (main.cHandler.getUnsignedTreatment() == UNSIGNED_TREATMENT.ASSUME_ALL) {
-			AssumeStatement assumeGeq0 = new AssumeStatement(loc, new BinaryExpression(loc, BinaryExpression.Operator.COMPGEQ,
-					rex.lrVal.getValue(), new IntegerLiteral(loc, SFO.NR0)));
-			rex.stmt.add(assumeGeq0);
-
-			AssumeStatement assumeLtMax = new AssumeStatement(loc, new BinaryExpression(loc, BinaryExpression.Operator.COMPLT,
-					rex.lrVal.getValue(), new IntegerLiteral(loc, maxValue.toString())));
-			rex.stmt.add(assumeLtMax);
-		} else if (main.cHandler.getUnsignedTreatment() == UNSIGNED_TREATMENT.WRAPAROUND) {
-			rex.lrVal = new RValue(new BinaryExpression(loc, BinaryExpression.Operator.ARITHMOD, 
-					rex.lrVal.getValue(), 
-					new IntegerLiteral(loc, maxValue.toString())), 
-					rex.lrVal.cType, 
-					rex.lrVal.isBoogieBool,
-					false);
-		}
-
-	}
+//	public void doIntOverflowTreatmentIfApplicable(Dispatcher main,
+//			ILocation loc, ResultExpression rex) {
+//		if (main.cHandler.getUnsignedTreatment() == UNSIGNED_TREATMENT.IGNORE)
+//			return;
+//		
+//		boolean isRexUnsigned = rex.lrVal.cType instanceof CPrimitive
+//				&& ((CPrimitive) rex.lrVal.cType).isUnsigned()
+//				&& !rex.lrVal.isIntFromPointer;
+//		
+//		if (isRexUnsigned)
+//			doIntOverflowTreatment(main, loc, rex);
+//	}
+//	
+//	public void doIntOverflowTreatment(Dispatcher main, ILocation loc,
+//			ResultExpression rex) {
+//		//FIXME  it is not always correct to take the size of rex's lrval's ctype, in case of a comparison we may need to take the
+//		// size of the other value's type
+//
+//		//special treatment for unsigned integer types
+//		int exponentInBytes = -1; 
+//		if (rex.lrVal.cType.getUnderlyingType() instanceof CEnum) {
+//			exponentInBytes = mMemoryHandler.typeSizeConstants.sizeOfEnumType;
+//		} else {
+//			//should be primitive
+//			exponentInBytes = mMemoryHandler.typeSizeConstants
+//				.CPrimitiveToTypeSizeConstant.get(((CPrimitive) rex.lrVal.cType.getUnderlyingType()).getType());
+//		}
+//		BigInteger maxValue = new BigInteger("2")
+//			.pow(exponentInBytes * 8);
+//
+//		if (main.cHandler.getUnsignedTreatment() == UNSIGNED_TREATMENT.ASSUME_ALL) {
+//			AssumeStatement assumeGeq0 = new AssumeStatement(loc, new BinaryExpression(loc, BinaryExpression.Operator.COMPGEQ,
+//					rex.lrVal.getValue(), new IntegerLiteral(loc, SFO.NR0)));
+//			rex.stmt.add(assumeGeq0);
+//
+//			AssumeStatement assumeLtMax = new AssumeStatement(loc, new BinaryExpression(loc, BinaryExpression.Operator.COMPLT,
+//					rex.lrVal.getValue(), new IntegerLiteral(loc, maxValue.toString())));
+//			rex.stmt.add(assumeLtMax);
+//		} else if (main.cHandler.getUnsignedTreatment() == UNSIGNED_TREATMENT.WRAPAROUND) {
+//			rex.lrVal = new RValue(new BinaryExpression(loc, BinaryExpression.Operator.ARITHMOD, 
+//					rex.lrVal.getValue(), 
+//					new IntegerLiteral(loc, maxValue.toString())), 
+//					rex.lrVal.cType, 
+//					rex.lrVal.isBoogieBool,
+//					false);
+//		}
+//	}
 
 	@Override
 	public Result visit(Dispatcher main, IASTEqualsInitializer node) {
@@ -2116,25 +2143,28 @@ public class CHandler implements ICHandler {
 		ResultExpression reNegative = (ResultExpression) rNegative;
 		reNegative = reNegative.switchToRValueIfNecessary(main, mMemoryHandler, mStructHandler, loc);
 		reNegative = ConvExpr.rexBoolToIntIfNecessary(loc, reNegative);
+		
+		CastAndConversionHandler.usualArithmeticConversions(main, loc, mMemoryHandler, rePositive, reNegative, false);
+		CastAndConversionHandler.doPrimitiveVsPointerConversions(main, loc, mMemoryHandler, rePositive, reNegative);
 
-		// implicit casting -- not very general
-		if (!rePositive.lrVal.cType.equals(reNegative.lrVal.cType)) {
-			if (rePositive.lrVal.getValue() instanceof IntegerLiteral
-					&& ((IntegerLiteral) rePositive.lrVal.getValue()).getValue().equals("0")
-					&& reNegative.lrVal.cType instanceof CPointer) {
-				rePositive.lrVal = new RValue(new IdentifierExpression(loc, SFO.NULL), reNegative.lrVal.cType);
-			} else if (reNegative.lrVal.getValue() instanceof IntegerLiteral
-					&& ((IntegerLiteral) reNegative.lrVal.getValue()).getValue().equals("0")
-					&& rePositive.lrVal.cType instanceof CPointer) {
-				reNegative.lrVal = new RValue(new IdentifierExpression(loc, SFO.NULL), rePositive.lrVal.cType);
-			} else if (reNegative.lrVal.getValue() == null
-					|| rePositive.lrVal.getValue() == null) {
-				// one of the values is void --> can only come from the call of a void function, i think..
-				//do nothing here.. (should crash later if the value is assigned..)
-			} else {
-				assert false : "types do not match";
-			}
-		}
+//		// implicit casting -- not very general
+//		if (!rePositive.lrVal.cType.equals(reNegative.lrVal.cType)) {
+//			if (rePositive.lrVal.getValue() instanceof IntegerLiteral
+//					&& ((IntegerLiteral) rePositive.lrVal.getValue()).getValue().equals("0")
+//					&& reNegative.lrVal.cType instanceof CPointer) {
+//				rePositive.lrVal = new RValue(new IdentifierExpression(loc, SFO.NULL), reNegative.lrVal.cType);
+//			} else if (reNegative.lrVal.getValue() instanceof IntegerLiteral
+//					&& ((IntegerLiteral) reNegative.lrVal.getValue()).getValue().equals("0")
+//					&& rePositive.lrVal.cType instanceof CPointer) {
+//				reNegative.lrVal = new RValue(new IdentifierExpression(loc, SFO.NULL), rePositive.lrVal.cType);
+//			} else if (reNegative.lrVal.getValue() == null
+//					|| rePositive.lrVal.getValue() == null) {
+//				// one of the values is void --> can only come from the call of a void function, i think..
+//				//do nothing here.. (should crash later if the value is assigned..)
+//			} else {
+//				assert false : "types do not match";
+//			}
+//		}
 
 		ArrayList<Statement> stmt = new ArrayList<Statement>();
 		ArrayList<Declaration> decl = new ArrayList<Declaration>();
@@ -2348,7 +2378,7 @@ public class CHandler implements ICHandler {
 					//do not havoc when the type of the field is "compatible"
 					if (rightHandSide.cType.equals(en.getValue())
 							|| (rightHandSide.cType instanceof CPrimitive && en.getValue() instanceof CPrimitive
-							 && ((CPrimitive) rightHandSide.cType).getGeneralType().equals(((CPrimitive) en.getValue()).getGeneralType())
+							 && ((CPrimitive) rightHandSide.cType.getUnderlyingType()).getGeneralType().equals(((CPrimitive) en.getValue()).getGeneralType())
 							 && (mMemoryHandler.calculateSizeOfWithGivenTypeSizes(loc, rightHandSide.cType) 
 									 == mMemoryHandler.calculateSizeOfWithGivenTypeSizes(loc, en.getValue())))) {
 						stmt.add(new AssignmentStatement(loc, new LeftHandSide[] { en.getKey() },
@@ -3062,15 +3092,16 @@ public class CHandler implements ICHandler {
 	}
 
 	@Override
-	public RValue castToType(ILocation loc, RValue rValIn, CType expectedType) {
+	public RValue castToType(ILocation loc, RValue rValIn, CType expectedTypeRaw) {
+		CType expectedType = expectedTypeRaw.getUnderlyingType();
 		
 		RValue rVal = new RValue(rValIn); //better make a new one, right??
 
 		BigInteger maxPtrValue = new BigInteger("2").pow(mMemoryHandler.typeSizeConstants.sizeOfPointerType * 8);
 		IntegerLiteral max_Pointer = new IntegerLiteral(loc, maxPtrValue.toString());
 		// cast pointer -> integer/other pointer
-		CType underlyingType = rVal.cType.getUnderlyingType();
-		if (underlyingType instanceof CPointer) {
+		CType rValUlType = rVal.cType.getUnderlyingType();
+		if (rValUlType instanceof CPointer) {
 			// cast from pointer to integer
 			if (expectedType instanceof CPrimitive &&
 					((CPrimitive) expectedType).getGeneralType() == GENERALPRIMITIVE.INTTYPE) {
@@ -3094,28 +3125,36 @@ public class CHandler implements ICHandler {
 			else {
 				rVal.cType = expectedType;
 			}
-		}
-		// cast integer -> pointer
-		else if (underlyingType instanceof CPrimitive) {
-			CPrimitive cprim = (CPrimitive) underlyingType;
-			if (cprim.getGeneralType() == GENERALPRIMITIVE.INTTYPE && expectedType instanceof CPointer) {
-				Expression e = null;
-				if (mMemoryHandler.useConstantTypeSizes) {
-					e = MemoryHandler.constructPointerFromBaseAndOffset(
-							createArithmeticExpression(IASTBinaryExpression.op_divide,
-									rVal.getValue(),
-									max_Pointer, 
-									loc),
-							createArithmeticExpression(IASTBinaryExpression.op_modulo,
-									rVal.getValue(),
-									max_Pointer, 
-									loc),
-							loc);
-				} else {
-					e = MemoryHandler.constructPointerFromBaseAndOffset(new IntegerLiteral(loc, "0"),
-						rVal.getValue(), loc);
+		} else if (rValUlType instanceof CPrimitive) {
+			CPrimitive cprim = (CPrimitive) rValUlType;
+			if (cprim.getGeneralType() == GENERALPRIMITIVE.INTTYPE) {
+				if (expectedType instanceof CPointer) {// cast integer -> pointer
+					Expression e = null;
+					if (mMemoryHandler.useConstantTypeSizes) {
+						e = MemoryHandler.constructPointerFromBaseAndOffset(
+								createArithmeticExpression(IASTBinaryExpression.op_divide,
+										rVal.getValue(),
+										max_Pointer, 
+										loc),
+										createArithmeticExpression(IASTBinaryExpression.op_modulo,
+												rVal.getValue(),
+												max_Pointer, 
+												loc),
+												loc);
+					} else {
+						e = MemoryHandler.constructPointerFromBaseAndOffset(new IntegerLiteral(loc, "0"),
+								rVal.getValue(), loc);
+					}
+					rVal = new RValue(e, expectedType);
 				}
-				rVal = new RValue(e, expectedType);
+			} else if (cprim.getGeneralType() == GENERALPRIMITIVE.FLOATTYPE) { 
+				if (expectedType instanceof CPrimitive) {
+					if (((CPrimitive) expectedType).getGeneralType() == GENERALPRIMITIVE.INTTYPE) {
+						rVal = new RValue(new FunctionApplication(loc, SFO.TO_INT, new Expression[] { rVal.getValue() }), 
+								expectedType);
+					}
+				}
+		
 			}
 		}
 		return rVal;
