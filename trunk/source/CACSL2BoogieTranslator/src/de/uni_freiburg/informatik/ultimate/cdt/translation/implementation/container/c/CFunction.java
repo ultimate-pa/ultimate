@@ -71,13 +71,13 @@ public class CFunction extends CType {
 		String times = "";
 		for (int i = 0; i < mParamTypes.length; i++) {
 			sb.append(times);
-			sb.append(mParamTypes[i].getType().toString());
+			sb.append(mParamTypes[i].getType().getUnderlyingType().toString());
 			times = "~X~";
 		}
 		if (mTakesVarArgs)
 			sb.append("X~varArgs~");
 		sb.append("~TO~");
-		sb.append(mResultType.toString());
+		sb.append(mResultType.getUnderlyingType().toString());
 		return sb.toString();
 	}
 

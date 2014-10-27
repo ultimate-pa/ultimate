@@ -372,9 +372,6 @@ public class InitializationHandler {
 				}
 
 			} else { //not on Heap
-				stmt.addAll(this.initBoogieArray(main, loc,
-						initializer == null ? null : ((ResultExpressionListRec) initializer).list,
-								lhs, (CArray) lCType));
 				if (initializer == null) {
 					stmt.addAll(this.initBoogieArray(main, loc,
 							null, lhs, (CArray) lCType));

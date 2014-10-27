@@ -8,6 +8,7 @@ import java.util.LinkedHashSet;
 import org.eclipse.cdt.core.dom.ast.ASTVisitor;
 import org.eclipse.cdt.core.dom.ast.IASTArrayDeclarator;
 import org.eclipse.cdt.core.dom.ast.IASTArraySubscriptExpression;
+import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 import org.eclipse.cdt.core.dom.ast.IASTCastExpression;
 import org.eclipse.cdt.core.dom.ast.IASTCompositeTypeSpecifier;
 import org.eclipse.cdt.core.dom.ast.IASTCompoundStatement;
@@ -35,6 +36,7 @@ import org.eclipse.cdt.internal.core.dom.parser.c.CASTSimpleDeclaration;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.util.LinkedScopedHashMap;
@@ -257,6 +259,26 @@ public class PreRunner extends ASTVisitor {
         		variablesOnHeap.add(toBePutOnHeap);
         	}
         	
+        } else if (expression instanceof IASTBinaryExpression) {
+        	IASTBinaryExpression binEx = (IASTBinaryExpression) expression;
+        	if (binEx.getOperator() == IASTBinaryExpression.op_assign) {
+        		if (binEx.getOperand1() instanceof IASTIdExpression) {
+        			String lId = ((IASTIdExpression) binEx.getOperand1()).getName().toString();
+        			IASTNode lDecl = sT.get(lId);
+        			String rId = extraxtExpressionIdFromPossiblyComplexExpression(binEx.getOperand2());
+        			IASTNode rDecl = sT.get(rId);
+        			if (lDecl instanceof IASTDeclarator) {
+        				if (((IASTDeclarator) lDecl).getPointerOperators() != null
+        						&& ((IASTDeclarator) lDecl).getPointerOperators().length > 0) {
+        					variablesOnHeap.add(rDecl);
+        				}
+        					
+        			}
+        			
+        		} else {
+        			//TODO: deal with array and struct access??
+        		}
+        	}
         }
         return super.visit(expression);
     }

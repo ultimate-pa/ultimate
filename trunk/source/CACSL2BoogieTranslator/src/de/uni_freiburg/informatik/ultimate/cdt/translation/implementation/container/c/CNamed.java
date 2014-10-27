@@ -84,7 +84,7 @@ public class CNamed extends CType {
 		if (!(o instanceof CType)) {
             return false;
         }
-        return getUnderlyingType().isCompatibleWith(o);
+        return getUnderlyingType().isCompatibleWith(o.getUnderlyingType());
 	}
 	
 	
