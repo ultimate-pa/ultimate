@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -27,9 +28,11 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
  */
 public class AnnotateAndAssertConjunctsOfCodeBlocks extends AnnotateAndAssertCodeBlocks {
 	
-	Map<Term,Term> m_Annotated2Original = new HashMap<Term,Term>();
 	protected final DefaultTransFormulas m_DefaultTransFormulas;
-	private static boolean m_SplitEqualities = false;
+	private final Map<Term,Term> m_Annotated2Original = new HashMap<Term,Term>();
+	private final SplitEqualityMapping m_SplitEqualityMapping = new SplitEqualityMapping();
+	
+	private final static boolean m_SplitEqualities = false;
 
 	public AnnotateAndAssertConjunctsOfCodeBlocks(SmtManager smtManager, 
 			NestedFormulas<Term, Term> nestedSSA, DefaultTransFormulas defaultTransformulas, Logger logger) {
@@ -237,6 +240,32 @@ public class AnnotateAndAssertConjunctsOfCodeBlocks extends AnnotateAndAssertCod
 	 */
 	public Map<Term, Term> getAnnotated2Original() {
 		return m_Annotated2Original;
+	}
+	
+	
+	public SplitEqualityMapping getSplitEqualityMapping() {
+		return m_SplitEqualityMapping;
+	}
+
+
+	public class SplitEqualityMapping {
+		private final Map<Term, Term> m_Inequality2CorrespondingInequality = new HashMap<>();
+		private final Map<Term, Term> m_Inequality2OriginalEquality = new HashMap<>();
+		
+		void add(Term firstInequality, Term secondInequality, Term orginalEquality) {
+			m_Inequality2CorrespondingInequality.put(firstInequality, secondInequality);
+			m_Inequality2CorrespondingInequality.put(secondInequality, firstInequality);
+			m_Inequality2OriginalEquality.put(firstInequality, orginalEquality);
+			m_Inequality2OriginalEquality.put(secondInequality, orginalEquality);
+		}
+
+		public Map<Term, Term> getInequality2CorrespondingInequality() {
+			return Collections.unmodifiableMap(m_Inequality2CorrespondingInequality);
+		}
+
+		public Map<Term, Term> getInequality2OriginalEquality() {
+			return Collections.unmodifiableMap(m_Inequality2OriginalEquality);
+		}
 	}
 	
 }
