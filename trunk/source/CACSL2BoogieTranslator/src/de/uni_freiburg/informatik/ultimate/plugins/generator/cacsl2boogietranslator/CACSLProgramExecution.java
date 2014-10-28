@@ -232,13 +232,16 @@ public class CACSLProgramExecution implements IProgramExecution<CACSLLocation, I
 		sb.append("[");
 		int i = 0;
 		for (IASTExpression variable : keys) {
-			IASTExpression value = pps.getValues(variable).iterator().next();
-			sb.append(getStringFromIASTNode(variable));
-			sb.append("=");
-			sb.append(getStringFromIASTNode(value));
 			i++;
-			if (i < keys.size()) {
-				sb.append(", ");
+			String varName = getStringFromIASTNode(variable);
+			Collection<IASTExpression> values = pps.getValues(variable);
+			for (IASTExpression value : values) {
+				sb.append(varName);
+				sb.append("=");
+				sb.append(getStringFromIASTNode(value));
+				if (i < keys.size()) {
+					sb.append(", ");
+				}
 			}
 		}
 		sb.append("]");

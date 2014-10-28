@@ -45,15 +45,6 @@ import de.uni_freiburg.informatik.ultimate.util.Benchmark;
  */
 public class ToolchainManager {
 
-	/*
-	 * Plan: - Define toolchain - Prepare toolchain storage - set storage and
-	 * services for each participating plugin - init plugin - create toolchain
-	 * walker for plugin - let toolchain run - ask controller what should happen
-	 * to toolchain - dispose toolchain
-	 * 
-	 * Many core fields belong to this class: modelmanager
-	 */
-
 	private final Logger mLogger;
 	private final PluginFactory mPluginFactory;
 	private final IController mCurrentController;
@@ -88,14 +79,6 @@ public class ToolchainManager {
 	}
 
 	public void close() {
-		// TODO: Old code in the core
-		// if (new UltimatePreferenceStore(Activator.s_PLUGIN_ID).getBoolean(
-		// CorePreferenceInitializer.LABEL_MM_DROP_MODELS, true)) {
-		// for (String s : mModelManager.getItemNames()) {
-		// mModelManager.removeItem(s);
-		// }
-		// }
-
 		// we should drop everything
 
 		if (mActiveToolchains.size() > 0) {

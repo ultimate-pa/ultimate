@@ -319,7 +319,7 @@ public class CACSL2BoogieBacktranslator extends
 			// translatedProgramStates.add(translateProgramState(programExecution.getProgramState(j)));
 		}
 
-		i = j-1;
+		i = j - 1;
 		return i;
 	}
 
@@ -380,7 +380,10 @@ public class CACSL2BoogieBacktranslator extends
 					}
 				}
 				if (newVarValues.size() > 0) {
-					map.put(newVarName, newVarValues);
+					Collection<IASTExpression> oldVarValues = map.put(newVarName, newVarValues);
+					if (oldVarValues != null) {
+						newVarValues.addAll(oldVarValues);
+					}
 				}
 			}
 			if (map.isEmpty()) {
@@ -420,7 +423,11 @@ public class CACSL2BoogieBacktranslator extends
 		newEntries.addAll(oldEntries);
 		Map<Expression, Collection<Expression>> map = new HashMap<>();
 		for (Entry<Expression, Collection<Expression>> entry : newEntries) {
-			map.put(entry.getKey(), entry.getValue());
+			Collection<Expression> newValues = entry.getValue();
+			Collection<Expression> oldValues = map.put(entry.getKey(), entry.getValue());
+			if (oldValues != null) {
+				newValues.addAll(oldValues);
+			}
 		}
 
 		return new ProgramState<>(map);
