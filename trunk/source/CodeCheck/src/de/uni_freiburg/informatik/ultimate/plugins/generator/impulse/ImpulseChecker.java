@@ -30,6 +30,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier.CoverageRelation;
 
 public class ImpulseChecker extends CodeChecker {
 	
@@ -382,5 +383,15 @@ public class ImpulseChecker extends CodeChecker {
 		for (AnnotatedProgramPoint nextNode : node.getOutgoingNodes()) {
 			dfsDEBUG(nextNode, print);
 		}
+	}
+	
+
+
+	boolean isStrongerPredicate(IPredicate predicate1,
+			IPredicate predicate2) {
+		
+		boolean result = m_predicateUnifier.getCoverageRelation().isCovered(predicate1, predicate2) == LBool.UNSAT;
+		System.err.printf("%s > %s  :: %s\n", predicate1, predicate2, result);
+		return result;
 	}
 }

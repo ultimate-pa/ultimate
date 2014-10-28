@@ -96,7 +96,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 	ImpRootNode m_graphRoot;
 
 	SmtManager m_smtManager;
-	PredicateUnifier _predicateUnifier;
+	public PredicateUnifier _predicateUnifier;
 	EdgeChecker m_edgeChecker;
 
 	GraphWriter _graphWriter;

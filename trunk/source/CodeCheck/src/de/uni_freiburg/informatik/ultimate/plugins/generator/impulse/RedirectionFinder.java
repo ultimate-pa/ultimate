@@ -54,17 +54,11 @@ public class RedirectionFinder {
 			for (AnnotatedProgramPoint subNode : comp) {
 				if (subNode == node)
 					continue;
-				if (isStrongerPredicate(node.getPredicate(), subNode.getPredicate()))
+				if (codeChecker.isStrongerPredicate(node.getPredicate(), subNode.getPredicate()))
 					predicates.remove(subNode);
 			}
 		}
 		AnnotatedProgramPoint[] best = predicates.toArray(new AnnotatedProgramPoint[]{});
 		return best[(int) (best.length * Math.random())];
-	}
-
-	private boolean isStrongerPredicate(IPredicate predicate,
-			IPredicate predicate2) {
-		// TODO Auto-generated method stub
-		return false;
 	}
 }
