@@ -36,6 +36,11 @@ public class ExceptionOrErrorResult extends AbstractResult {
 
 	@Override
 	public String getLongDescription() {
-		return getPlugin() + ": " + m_Throwable.toString();
+		StackTraceElement[] stacktrace = m_Throwable.getStackTrace();
+		if (stacktrace != null && stacktrace.length > 0) {
+			return getShortDescription() + ": " + stacktrace[0].toString();
+		} else {
+			return getShortDescription();
+		}
 	}
 }
