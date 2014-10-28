@@ -170,4 +170,9 @@ public class RcfgProgramExecution implements IProgramExecution<CodeBlock, Expres
 		return CodeBlock.class;
 	}
 
+	@Override
+	public String getSVCOMPWitnessString() {
+		return null;
+	}
+
 }

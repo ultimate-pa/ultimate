@@ -8,7 +8,9 @@ Require-Bundle: Library-log4j,
  UltimateCore,
  org.eclipse.cdt.core;bundle-version="5.3.1",
  ACSLParser,
- Library-UltimateUtil
+ Library-UltimateUtil,
+ Library-Jung,
+ Library-ApacheCommonsLang
 Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-1.7
 Export-Package: de.uni_freiburg.informatik.ultimate.cdt.translation.implementation,

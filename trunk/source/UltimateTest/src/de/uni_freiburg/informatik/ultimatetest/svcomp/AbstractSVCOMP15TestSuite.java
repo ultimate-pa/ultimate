@@ -232,7 +232,7 @@ public abstract class AbstractSVCOMP15TestSuite extends UltimateTestSuite {
 			int filesPerSetLine = filesPerCategory / regexes.size();
 			filesPerSetLine = filesPerSetLine <= 0 ? 1 : filesPerSetLine;
 			for (String regex : regexes) {
-				currentFiles.addAll(Util.firstN(Util.filterFiles(allFiles, regex), filesPerSetLine));
+				currentFiles.addAll(de.uni_freiburg.informatik.ultimate.core.util.Util.firstN(Util.filterFiles(allFiles, regex), filesPerSetLine));
 			}
 		}
 

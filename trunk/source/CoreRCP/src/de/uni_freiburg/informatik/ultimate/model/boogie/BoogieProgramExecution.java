@@ -207,4 +207,9 @@ public class BoogieProgramExecution implements IProgramExecution<BoogieASTNode, 
 	public Class<BoogieASTNode> getTraceElementClass() {
 		return BoogieASTNode.class;
 	}
+
+	@Override
+	public String getSVCOMPWitnessString() {
+		return null;
+	}
 }

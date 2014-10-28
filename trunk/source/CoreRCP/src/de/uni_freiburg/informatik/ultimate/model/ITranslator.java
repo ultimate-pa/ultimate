@@ -10,8 +10,7 @@ import de.uni_freiburg.informatik.ultimate.result.IProgramExecution;
  * program analysis constructs results (e.g., traces or expressions) for some
  * program model, but a user wants to see the results for the initial program
  * model (e.g., C programming language). We use ITranslater objects for a
- * backtranslation of the program transformations that were done by plugins.
- * <br>
+ * backtranslation of the program transformations that were done by plugins. <br>
  * Because {@link ITranslator} is used for <b>back-translation</b>,
  * <i>Source</i> describes the output of a tool and <i>Target</i> the input of a
  * tool.
@@ -35,7 +34,7 @@ public interface ITranslator<STE, TTE, SE, TE> {
 	public TE translateExpression(SE expression);
 
 	public String targetExpressionToString(TE expression);
-	
+
 	/**
 	 * Translate trace that is represented as a list of Source Trace Elements
 	 * (resp. list of Target Trace Elements).
@@ -43,7 +42,7 @@ public interface ITranslator<STE, TTE, SE, TE> {
 	public List<TTE> translateTrace(List<STE> trace);
 
 	public List<String> targetTraceToString(List<TTE> trace);
-	
+
 	public IProgramExecution<TTE, TE> translateProgramExecution(IProgramExecution<STE, SE> programExecution);
 
 	public Class<STE> getSourceTraceElementClass();

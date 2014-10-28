@@ -14,26 +14,26 @@ public class UtilsTest {
 		String lineSeparator = System.getProperty("line.separator");
 		String expectedResult = indent + "Ein String" + lineSeparator + indent + "so schön" + lineSeparator + indent
 				+ "er geht über 3 Zeilen" + lineSeparator + indent + "und benutzt irgendeinen Linebreak";
-		String actualResult = Util.indentMultilineString(s, indent, false).toString();
+		String actualResult = de.uni_freiburg.informatik.ultimate.core.util.Util.indentMultilineString(s, indent, false).toString();
 		Assert.assertEquals(expectedResult, actualResult);
 
 		s = s + "\n";
-		actualResult = Util.indentMultilineString(s, indent, true).toString();
+		actualResult = de.uni_freiburg.informatik.ultimate.core.util.Util.indentMultilineString(s, indent, true).toString();
 		Assert.assertEquals(expectedResult, actualResult);
 
 		expectedResult = expectedResult + lineSeparator;
-		actualResult = Util.indentMultilineString(s, indent, false).toString();
+		actualResult = de.uni_freiburg.informatik.ultimate.core.util.Util.indentMultilineString(s, indent, false).toString();
 		Assert.assertEquals(expectedResult, actualResult);
 
 		s = "Ein einfacher String ohne alles";
 		expectedResult = indent + s;
-		actualResult = Util.indentMultilineString(s, indent, false).toString();
+		actualResult = de.uni_freiburg.informatik.ultimate.core.util.Util.indentMultilineString(s, indent, false).toString();
 		Assert.assertEquals(expectedResult, actualResult);
 		
 		s = "Ein einfacher String ohne alles";
 		indent = "";
 		expectedResult = s;
-		actualResult = Util.indentMultilineString(s, indent, false).toString();
+		actualResult = de.uni_freiburg.informatik.ultimate.core.util.Util.indentMultilineString(s, indent, false).toString();
 		Assert.assertEquals(expectedResult, actualResult);
 	}
 	

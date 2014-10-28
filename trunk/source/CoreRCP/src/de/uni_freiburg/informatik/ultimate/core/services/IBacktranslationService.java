@@ -24,15 +24,15 @@ public interface IBacktranslationService {
 	public <STE, TTE, SE, TE> void addTranslator(ITranslator<STE, TTE, SE, TE> translator);
 
 	public <SE> Object translateExpression(SE expression, Class<SE> clazz);
-	
+
 	public <SE> String translateExpressionToString(SE expression, Class<SE> clazz);
 
 	public <STE> List<?> translateTrace(List<STE> trace, Class<STE> clazz);
-	
-	public <STE> List<String> translateTraceToString(List<STE> trace, Class<STE> clazz);
+
+	public <STE> List<String> translateTraceToHumanReadableString(List<STE> trace, Class<STE> clazz);
 
 	public <STE, SE> IProgramExecution<?, ?> translateProgramExecution(IProgramExecution<STE, SE> programExecution);
-	
+
 	public IBacktranslationService getTranslationServiceCopy();
 
 }

@@ -39,10 +39,10 @@ public class DefaultIncrementalLogfile implements IIncrementalLog {
 	@Override
 	public void addEntryPreStart(UltimateRunDefinition urd) {
 		StringBuilder sb = new StringBuilder();
-		sb.append(Util.getCurrentDateTimeAsString());
+		sb.append(de.uni_freiburg.informatik.ultimate.core.util.Util.getCurrentDateTimeAsString());
 		sb.append(" Starting test for ");
 		sb.append(urd);
-		sb.append(Util.getPlatformLineSeparator());
+		sb.append(de.uni_freiburg.informatik.ultimate.core.util.Util.getPlatformLineSeparator());
 		writeToFile(sb.toString());
 	}
 
@@ -50,7 +50,7 @@ public class DefaultIncrementalLogfile implements IIncrementalLog {
 	public void addEntryPostCompletion(UltimateRunDefinition urd, TestResult result,
 			String resultCategory, String resultMessage, IUltimateServiceProvider services) {
 		StringBuilder sb = new StringBuilder();
-		sb.append(Util.getCurrentDateTimeAsString());
+		sb.append(de.uni_freiburg.informatik.ultimate.core.util.Util.getCurrentDateTimeAsString());
 		sb.append(" Finishing test with ");
 		sb.append(result);
 		sb.append(" for ");
@@ -59,7 +59,7 @@ public class DefaultIncrementalLogfile implements IIncrementalLog {
 		sb.append(resultCategory);
 		sb.append(": ");
 		sb.append(resultMessage);
-		sb.append(Util.getPlatformLineSeparator());
+		sb.append(de.uni_freiburg.informatik.ultimate.core.util.Util.getPlatformLineSeparator());
 		writeToFile(sb.toString());
 	}
 

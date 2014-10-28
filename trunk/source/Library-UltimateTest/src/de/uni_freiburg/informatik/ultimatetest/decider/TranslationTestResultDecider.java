@@ -75,8 +75,8 @@ public class TranslationTestResultDecider extends TestResultDecider {
 			if (actualBplFile != null) {
 
 				try {
-					String desiredContent = Util.readFile(desiredBplFile);
-					String actualContent = Util.readFile(actualBplFile);
+					String desiredContent = de.uni_freiburg.informatik.ultimate.core.util.Util.readFile(desiredBplFile);
+					String actualContent = de.uni_freiburg.informatik.ultimate.core.util.Util.readFile(actualBplFile);
 
 					if (!desiredContent.equals(actualContent)) {
 						String message = "Desired content does not match actual content.";

@@ -5,6 +5,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.core.util.Util.IPredicate;
+import de.uni_freiburg.informatik.ultimate.core.util.Util.IReduce;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.TimingBenchmark;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.CodeCheckBenchmarks;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionBenchmarks;
@@ -21,8 +23,6 @@ import de.uni_freiburg.informatik.ultimatetest.summary.IIncrementalLog;
 import de.uni_freiburg.informatik.ultimatetest.summary.ITestSummary;
 import de.uni_freiburg.informatik.ultimatetest.summary.IncrementalLogWithVMParameters;
 import de.uni_freiburg.informatik.ultimatetest.util.Util;
-import de.uni_freiburg.informatik.ultimatetest.util.Util.IPredicate;
-import de.uni_freiburg.informatik.ultimatetest.util.Util.IReduce;
 
 /**
  * 
@@ -151,7 +151,7 @@ public abstract class TACASInterpolation2015 extends AbstractModelCheckerTestSui
 		}
 		List<UltimateTestCase> testcases = new ArrayList<>();
 
-		Set<String> categories = Util.selectDistinct(mTestCases, new IReduce<String, UltimateTestCase>() {
+		Set<String> categories = de.uni_freiburg.informatik.ultimate.core.util.Util.selectDistinct(mTestCases, new de.uni_freiburg.informatik.ultimate.core.util.Util.IReduce<String, UltimateTestCase>() {
 			@Override
 			public String reduce(UltimateTestCase entry) {
 				return entry.getUltimateRunDefinition().getInput().getParentFile().getName();
@@ -159,7 +159,7 @@ public abstract class TACASInterpolation2015 extends AbstractModelCheckerTestSui
 		});
 
 		for (final String category : categories) {
-			testcases.addAll(Util.where(mTestCases, new IPredicate<UltimateTestCase>() {
+			testcases.addAll(de.uni_freiburg.informatik.ultimate.core.util.Util.where(mTestCases, new de.uni_freiburg.informatik.ultimate.core.util.Util.IPredicate<UltimateTestCase>() {
 				int i = 0;
 
 				@Override

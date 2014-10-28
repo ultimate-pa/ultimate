@@ -211,7 +211,6 @@ public class CACSL2BoogieBacktranslator extends
 		translatedAtomicTraceElements = check.check(translatedAtomicTraceElements);
 
 		return new CACSLProgramExecution(initialState, translatedAtomicTraceElements, translatedProgramStates);
-
 	}
 
 	private EnumSet<StepInfo> invertConditionInStepInfo(EnumSet<StepInfo> oldSiSet) {

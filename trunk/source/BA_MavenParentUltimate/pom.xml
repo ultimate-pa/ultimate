@@ -231,6 +231,7 @@
 		<module>../BuchiProgramProduct</module>
 		<module>../LTL2aut</module>
 		<module>../ReachingDefinitions</module>
+		<module>../Library-ApacheCommonsLang</module>
 	</modules>
 
 	<profiles>

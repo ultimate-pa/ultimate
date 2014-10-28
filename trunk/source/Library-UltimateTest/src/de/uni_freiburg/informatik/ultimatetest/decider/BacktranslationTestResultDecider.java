@@ -100,10 +100,10 @@ public class BacktranslationTestResultDecider extends TestResultDecider {
 			if (desiredCounterExampleFile.canRead()) {
 
 				try {
-					String desiredCounterExample = Util.readFile(desiredCounterExampleFile);
+					String desiredCounterExample = de.uni_freiburg.informatik.ultimate.core.util.Util.readFile(desiredCounterExampleFile);
 
 					// compare linewise
-					String platformLineSeparator = Util.getPlatformLineSeparator();
+					String platformLineSeparator = de.uni_freiburg.informatik.ultimate.core.util.Util.getPlatformLineSeparator();
 					String[] desiredLines = desiredCounterExample.split(platformLineSeparator);
 					String[] actualLines = actualCounterExample.split(platformLineSeparator);
 
@@ -178,9 +178,9 @@ public class BacktranslationTestResultDecider extends TestResultDecider {
 	}
 
 	private boolean tryWritingActualResultToFile(File desiredCounterExampleFile, String actualCounterExample) {
-		String[] actualLines = actualCounterExample.split(Util.getPlatformLineSeparator());
+		String[] actualLines = actualCounterExample.split(de.uni_freiburg.informatik.ultimate.core.util.Util.getPlatformLineSeparator());
 		try {
-			Util.writeFile(desiredCounterExampleFile.getAbsolutePath() + "-actual", actualLines);
+			de.uni_freiburg.informatik.ultimate.core.util.Util.writeFile(desiredCounterExampleFile.getAbsolutePath() + "-actual", actualLines);
 			return true;
 		} catch (IOException e) {
 			return false;

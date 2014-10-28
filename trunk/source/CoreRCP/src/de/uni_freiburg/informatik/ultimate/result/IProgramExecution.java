@@ -58,6 +58,15 @@ public interface IProgramExecution<TE, E> {
 
 	public Class<TE> getTraceElementClass();
 
+	public String toString();
+
+	/**
+	 * @return null iff you do not support SVCOMP witnesses, a String
+	 *         representing the described program execution as SVCOMP GraphML
+	 *         otherwise.
+	 */
+	public String getSVCOMPWitnessString();
+
 	/**
 	 * Program state that is can be defined only partially. This class defines
 	 * for some variables of the program a Collection of possible values.
@@ -188,25 +197,19 @@ public interface IProgramExecution<TE, E> {
 		 * 
 		 */
 		public enum StepInfo {
-			NONE("NONE"), 
-			CONDITION_EVAL_TRUE("COND TRUE"), 
-			CONDITION_EVAL_FALSE("COND FALSE"), 
-			PROC_CALL("CALL"), 
-			PROC_RETURN("RET"), 
-			ARG_EVAL("ARG"), 
-			EXPR_EVAL("EXPR"), 
-			FUNC_CALL("FCALL");
-			
+			NONE("NONE"), CONDITION_EVAL_TRUE("COND TRUE"), CONDITION_EVAL_FALSE("COND FALSE"), PROC_CALL("CALL"), PROC_RETURN(
+					"RET"), ARG_EVAL("ARG"), EXPR_EVAL("EXPR"), FUNC_CALL("FCALL");
+
 			private final String mText;
 
-		    private StepInfo(final String text) {
-		    	mText = text;
-		    }
+			private StepInfo(final String text) {
+				mText = text;
+			}
 
-		    @Override
-		    public String toString() {
-		        return mText;
-		    }
+			@Override
+			public String toString() {
+				return mText;
+			}
 		}
 
 		@Override

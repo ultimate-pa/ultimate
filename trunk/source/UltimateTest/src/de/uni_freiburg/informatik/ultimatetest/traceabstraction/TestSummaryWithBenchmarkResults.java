@@ -28,7 +28,7 @@ public class TestSummaryWithBenchmarkResults extends DefaultIncrementalLogfile {
 
 	@Override
 	public void addEntryPreStart(UltimateRunDefinition runDef) {
-		writeToFile(runDef.getInput().getAbsolutePath() + Util.getPlatformLineSeparator());
+		writeToFile(runDef.getInput().getAbsolutePath() + de.uni_freiburg.informatik.ultimate.core.util.Util.getPlatformLineSeparator());
 	}
 
 	@Override
@@ -43,7 +43,7 @@ public class TestSummaryWithBenchmarkResults extends DefaultIncrementalLogfile {
 			sum = new Entry(result, resultMessage, runDef, null);
 		}
 
-		writeToFile(sum.toLogString(indent, lineSeparator).append(Util.getPlatformLineSeparator()).toString());
+		writeToFile(sum.toLogString(indent, lineSeparator).append(de.uni_freiburg.informatik.ultimate.core.util.Util.getPlatformLineSeparator()).toString());
 	}
 
 	private class Entry {
@@ -67,10 +67,10 @@ public class TestSummaryWithBenchmarkResults extends DefaultIncrementalLogfile {
 
 		private void interpretUltimateResults(IResultService resultService) {
 
-			for (IResult result : Util.filterResults(resultService.getResults(), BenchmarkResult.class)) {
+			for (IResult result : de.uni_freiburg.informatik.ultimate.core.util.Util.filterResults(resultService.getResults(), BenchmarkResult.class)) {
 				StringBuilder sb = new StringBuilder();
 				sb.append(result.getPlugin()).append(": ").append(result.getShortDescription()).append(": ")
-						.append(Util.flatten(result.getLongDescription(), " # "));
+						.append(de.uni_freiburg.informatik.ultimate.core.util.Util.flatten(result.getLongDescription(), " # "));
 				mFlattenedBenchmarkResults.add(sb.toString());
 			}
 		}
@@ -80,7 +80,7 @@ public class TestSummaryWithBenchmarkResults extends DefaultIncrementalLogfile {
 
 			sb.append(indent).append(mUltimateRunDefinition.getSettings()).append(lineSeparator);
 			sb.append(indent).append("Test result: ").append(mThreeValuedResult).append(lineSeparator);
-			sb.append(indent).append("Message:     ").append(Util.flatten(mMessage, " # ")).append(lineSeparator);
+			sb.append(indent).append("Message:     ").append(de.uni_freiburg.informatik.ultimate.core.util.Util.flatten(mMessage, " # ")).append(lineSeparator);
 			if (mFlattenedBenchmarkResults.size() > 0) {
 				sb.append(indent).append("Benchmarks:").append(lineSeparator);
 				for (String s : mFlattenedBenchmarkResults) {

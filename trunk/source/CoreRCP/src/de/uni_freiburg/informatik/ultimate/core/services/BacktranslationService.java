@@ -45,8 +45,8 @@ public class BacktranslationService implements IStorable, IBacktranslationServic
 	}
 
 	@Override
-	public <STE> List<String> translateTraceToString(List<STE> trace, Class<STE> clazz) {
-		return mTranslatorSequence.translateTraceToString(trace, clazz);
+	public <STE> List<String> translateTraceToHumanReadableString(List<STE> trace, Class<STE> clazz) {
+		return mTranslatorSequence.translateTraceToHumanReadableString(trace, clazz);
 	}
 
 	@Override
@@ -71,8 +71,6 @@ public class BacktranslationService implements IStorable, IBacktranslationServic
 
 	@Override
 	public void destroy() {
-		// TODO: it is unclear if we need to destroy anything in the back
-		// translators
+		mTranslatorSequence = null;
 	}
-
 }

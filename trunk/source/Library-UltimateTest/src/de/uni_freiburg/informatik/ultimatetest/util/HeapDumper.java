@@ -42,7 +42,7 @@ public class HeapDumper {
 	}
 
 	private static String prepareFilename(String filename) {
-		File f = new File(filename + Util.getCurrentDateTimeAsString() + ".hprof");
+		File f = new File(filename + de.uni_freiburg.informatik.ultimate.core.util.Util.getCurrentDateTimeAsString() + ".hprof");
 		return f.getAbsolutePath();
 	}
 

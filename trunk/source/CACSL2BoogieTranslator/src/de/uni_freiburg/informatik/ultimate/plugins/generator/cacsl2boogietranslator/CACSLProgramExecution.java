@@ -15,6 +15,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.ACSLLo
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CLocation;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.graphml.GraphMLConverter;
 import de.uni_freiburg.informatik.ultimate.result.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.result.IProgramExecution.AtomicTraceElement.StepInfo;
 
@@ -246,6 +247,15 @@ public class CACSLProgramExecution implements IProgramExecution<CACSLLocation, I
 		}
 		sb.append("]");
 		return sb.toString();
+	}
+
+	@Override
+	public String getSVCOMPWitnessString() {
+		// TODO: This call is just so I can explore methods to create the SVCOMP
+		// witness format
+		GraphMLConverter converter = new GraphMLConverter(this);
+		String converted = converter.makeGraphMLString();
+		return converted;
 	}
 
 }
