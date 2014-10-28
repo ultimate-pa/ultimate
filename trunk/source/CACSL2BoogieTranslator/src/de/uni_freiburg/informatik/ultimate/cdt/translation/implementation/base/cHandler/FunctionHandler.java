@@ -915,22 +915,24 @@ public class FunctionHandler {
 
 				VariableLHS tempLHS = new VariableLHS(loc, auxInvar);
 				IdentifierExpression rhsId = new IdentifierExpression(loc, bId);
+
+				ILocation igLoc = LocationFactory.createIgnoreLocation(loc);
 				if (isOnHeap && !(cvar instanceof CArray)) {//we treat an array argument as a pointer -- thus no onHeap treatment here
 					LocalLValue llv = new LocalLValue(tempLHS, cvar);
 					// malloc
 					memoryHandler.addVariableToBeMallocedAndFreed(main, 
-							new LocalLValueILocationPair(llv, LocationFactory.createIgnoreLocation(loc)));
+							new LocalLValueILocationPair(llv, igLoc));
 					// dereference
 					HeapLValue hlv = new HeapLValue(llv.getValue(), cvar);
 					ArrayList<Declaration> decls = new ArrayList<Declaration>();
-					ResultExpression assign = ((CHandler) main.cHandler).makeAssignment(main, loc, stmt, hlv,
+					ResultExpression assign = ((CHandler) main.cHandler).makeAssignment(main, igLoc, stmt, hlv,
 							// convention: if a variable is put on heap or not,
 							// its ctype stays the same
 							new RValue(rhsId, cvar), decls, new LinkedHashMap<VariableDeclaration, ILocation>(),
 							new ArrayList<Overapprox>());
 					stmt = assign.stmt;
 				} else {
-					stmt.add(new AssignmentStatement(loc, new LeftHandSide[] { tempLHS }, new Expression[] { rhsId }));
+					stmt.add(new AssignmentStatement(igLoc, new LeftHandSide[] { tempLHS }, new Expression[] { rhsId }));
 				}
 				assert main.cHandler.getSymbolTable().containsCSymbol(cId);
 				// Overwrite the information in the symbolTable for cId, s.t. it
