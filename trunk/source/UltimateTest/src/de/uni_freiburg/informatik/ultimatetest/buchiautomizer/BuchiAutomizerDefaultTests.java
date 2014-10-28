@@ -17,7 +17,7 @@ public class BuchiAutomizerDefaultTests extends
 //		"examples/lassos",
 		"examples/svcomp/termination-crafted",
 		"examples/svcomp/termination-crafted-lit",
-		"examples/svcomp/termination-memory_alloca",
+		"examples/svcomp/termination-memory-alloca",
 		"examples/svcomp/termination-numeric"
 //		"examples/termination/TermCompOfficialBenchmarkSet/aprove_memory",
 //		"examples/programs/quantifier",
