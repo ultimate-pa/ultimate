@@ -15,12 +15,13 @@ public class Svcomp_Memsafety extends
 		AbstractTraceAbstractionTestSuite {
 	private static final String[] m_Directories = { 
 		"examples/svcomp/memsafety",
-//		"examples/svcomp/memsafety-ext",
-//		"examples/svcomp/list-ext-properties"
+		"examples/svcomp/memsafety-ext",
+		"examples/svcomp/list-ext-properties",
+		"examples/svcomp/memory-alloca/"
 		};
 	
 	// Time out for each test case in milliseconds
-	private static int m_Timeout = 300 * 1000;
+	private static int m_Timeout = 30 * 1000;
 
 	private static final boolean m_AutomizerWithForwardPredicates = true;
 	private static final boolean m_AutomizerWithBackwardPredicates = !true;
@@ -30,7 +31,7 @@ public class Svcomp_Memsafety extends
 		if (m_AutomizerWithForwardPredicates) {
 			addTestCases(
 					"AutomizerC.xml",
-					"automizer/ForwardPredicates.epf",
+					"automizer/ForwardPredicates_SvcompMemsafety.epf",
 				    m_Directories,
 				    new String[] {".c", ".i"},
 //				    "Trace Abstraction via Forward Predicates (SP)",
@@ -40,7 +41,7 @@ public class Svcomp_Memsafety extends
 		if (m_AutomizerWithBackwardPredicates) {
 			addTestCases(
 					"AutomizerC.xml",
-					"automizer/BackwardPredicates.epf",
+					"automizer/BackwardPredicates_SvcompMemsafety.epf",
 				    m_Directories,
 				    new String[] {".c", ".i"},
 //				    "automizer/BackwardPredicates.epf",
