@@ -12,6 +12,9 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.BinaryNumericRelation;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.BinaryRelation.NoRelationOfThisKindException;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.BinaryRelation.RelationSymbol;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 
 
@@ -26,7 +29,7 @@ public class AnnotateAndAssertConjunctsOfCodeBlocks extends AnnotateAndAssertCod
 	
 	Map<Term,Term> m_Annotated2Original = new HashMap<Term,Term>();
 	protected final DefaultTransFormulas m_DefaultTransFormulas;
-	private static boolean m_TransFormEqualities = false;
+	private static boolean m_SplitEqualities = false;
 
 	public AnnotateAndAssertConjunctsOfCodeBlocks(SmtManager smtManager, 
 			NestedFormulas<Term, Term> nestedSSA, DefaultTransFormulas defaultTransformulas, Logger logger) {
@@ -56,7 +59,7 @@ public class AnnotateAndAssertConjunctsOfCodeBlocks extends AnnotateAndAssertCod
 		assert originalConjuncts.length == indexedConjuncts.length : 
 			"number of original and indexed conjuncts differ";
 		
-		if (m_TransFormEqualities) {
+		if (m_SplitEqualities) {
 			List<Term> originalConjunctsEqualitiesTransformed = new LinkedList<Term>();
 			List<Term> indexedConjunctsEqualitiesTransformed = new LinkedList<Term>();
 			
@@ -189,6 +192,24 @@ public class AnnotateAndAssertConjunctsOfCodeBlocks extends AnnotateAndAssertCod
 		name += "_conjunct" + conjunct;
 		
 		return super.annotateAndAssertTerm(term, name);
+	}
+	
+	/**
+	 * Returns a representation of Term as BinaryNumericRelation if term is
+	 * a binary equality whose parameters have a Sort that is numeric.
+	 */
+	private BinaryNumericRelation convertToBinaryNumericEquality(Term term) {
+		BinaryNumericRelation result;
+		try {
+			result = new BinaryNumericRelation(term);
+		} catch (NoRelationOfThisKindException e) {
+			return null;
+		}
+		if (result.getRelationSymbol() == RelationSymbol.EQ) {
+			return result;
+		} else {
+			return null;
+		}
 	}
 
 
