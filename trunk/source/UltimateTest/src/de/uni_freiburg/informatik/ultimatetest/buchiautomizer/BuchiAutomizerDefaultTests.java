@@ -31,8 +31,12 @@ public class BuchiAutomizerDefaultTests extends
 
 	private static final boolean s_UseMediumBlockEncoding = true;
 	private static final String s_MediumBlockEncodingSetting = "buchiAutomizer/staged300Forward-Z3.epf";
+
 	private static final boolean s_UseLargeBlockEncoding = false;
 	private static final String s_LargeBlockEncodingSetting = "buchiAutomizer/staged300Forward-Z3-LBE.epf";
+	
+	private static final boolean s_UseTasimp = true;
+	private static final String s_TasimpSetting = "buchiAutomizer/staged300Forward-Z3-Tasimp.epf";
 	
 	
 	@Override
@@ -61,6 +65,20 @@ public class BuchiAutomizerDefaultTests extends
 			addTestCases(
 					"BuchiAutomizerCWithBlockEncoding.xml",
 					s_LargeBlockEncodingSetting,
+					m_Directories,
+					new String[] {".c"},
+					m_Timeout);
+		}
+		if (s_UseTasimp) {
+			addTestCases(
+					"BuchiAutomizerBplWithBlockEncoding.xml",
+					s_TasimpSetting,
+					m_Directories,
+					new String[] {".bpl"},
+					m_Timeout);
+			addTestCases(
+					"BuchiAutomizerCWithBlockEncoding.xml",
+					s_TasimpSetting,
 					m_Directories,
 					new String[] {".c"},
 					m_Timeout);
