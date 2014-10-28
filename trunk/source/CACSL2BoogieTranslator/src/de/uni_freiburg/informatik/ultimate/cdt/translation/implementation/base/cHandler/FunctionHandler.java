@@ -446,8 +446,7 @@ public class FunctionHandler {
 		}
 
 		stmt.add(new ReturnStatement(loc));
-		Map<VariableDeclaration, ILocation> emptyAuxVars = new LinkedHashMap<VariableDeclaration, ILocation>(0);
-		return new ResultExpression(stmt, null, decl, emptyAuxVars);
+		return new ResultExpression(stmt, null, decl, auxVars);
 	}
 
 	/**
@@ -916,7 +915,7 @@ public class FunctionHandler {
 
 				VariableLHS tempLHS = new VariableLHS(loc, auxInvar);
 				IdentifierExpression rhsId = new IdentifierExpression(loc, bId);
-				if (isOnHeap) {
+				if (isOnHeap && !(cvar instanceof CArray)) {//we treat an array argument as a pointer -- thus no onHeap treatment here
 					LocalLValue llv = new LocalLValue(tempLHS, cvar);
 					// malloc
 					memoryHandler.addVariableToBeMallocedAndFreed(main, 
