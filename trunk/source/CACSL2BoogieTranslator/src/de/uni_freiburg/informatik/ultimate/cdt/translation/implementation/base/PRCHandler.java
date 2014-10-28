@@ -612,6 +612,37 @@ public class PRCHandler extends CHandler {
 			return result;
 		}
 	}
+
+	@Override
+	public Result visit(Dispatcher main, IASTBinaryExpression node) {
+		ArrayList<Declaration> decl = new ArrayList<Declaration>();
+		ArrayList<Statement> stmt = new ArrayList<Statement>();
+		Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<VariableDeclaration, ILocation>();
+		ILocation loc = LocationFactory.createCLocation(node);
+		List<Overapprox> overappr = new ArrayList<Overapprox>();
+
+		ResultExpression l = (ResultExpression) main.dispatch(node.getOperand1());
+		ResultExpression r = (ResultExpression) main.dispatch(node.getOperand2());
+
+		ResultExpression rl = l.switchToRValueIfNecessary(main, mMemoryHandler, mStructHandler, loc);
+		ResultExpression rr = r.switchToRValueIfNecessary(main, mMemoryHandler, mStructHandler, loc);
+
+		CType lType = l.lrVal.cType;
+		if (lType instanceof CNamed)
+			lType = ((CNamed) lType).getUnderlyingType();
+		CType rType = r.lrVal.cType;
+		if (rType instanceof CNamed)
+			rType = ((CNamed) rType).getUnderlyingType();
+
+		switch (node.getOperator()) {
+		case IASTBinaryExpression.op_assign: 
+			ResultExpression rrToInt = ConvExpr.rexBoolToIntIfNecessary(loc, rr);
+			return makeAssignment(main, loc, l.lrVal, (RValue) rrToInt.lrVal);
+			default:
+				return super.visit(main, node);
+		}
+	}
+
 	
 	@Override
 	public Result visit(Dispatcher main, IASTUnaryExpression node) {
@@ -936,7 +967,7 @@ public class PRCHandler extends CHandler {
 //	}
 
 	public ResultExpression makeAssignment(Dispatcher main, ILocation loc,  LRValue lrVal,
-			RValue rVal, IASTNode node) {
+			RValue rVal) {
 		RValue rightHandSide = rVal; //we may change the content of the right hand side later
 
 		//do implicit cast -- assume the types are compatible
@@ -950,32 +981,12 @@ public class PRCHandler extends CHandler {
 				variablesOnHeap.add(((PRSymbolTableValue) mSymbolTable.get(mSymbolTable.getCID4BoogieID(id, loc), loc)).decl);
 			}
 		}
-//		//for wraparound --> and avoiding it for ints that store pointers
-//		if (rightHandSide.isIntFromPointer) {
-//			if (lrVal instanceof HeapLValue) {
-//				Expression address = ((HeapLValue) lrVal).getAddress();
-//				if (address instanceof IdentifierExpression) {
-//					String lId = ((IdentifierExpression ) ((HeapLValue) lrVal).getAddress()).getIdentifier();
-//					mSymbolTable.get(mSymbolTable.getCID4BoogieID(lId, loc), loc).isIntFromPointer = true;
-//				} else {
-//					//TODO
-//				}
-//			} else if (lrVal instanceof LocalLValue){
-//				String lId = null;
-//				LeftHandSide value = ((LocalLValue) lrVal).getLHS();
-//				if (value instanceof VariableLHS) {
-//					lId = ((VariableLHS) value).getIdentifier();
-//					mSymbolTable.get(mSymbolTable.getCID4BoogieID(lId, loc), loc).isIntFromPointer = true;
-//				} else {
-//					//TODO
-//				}
-//			}
-//		}
 
 		if (lrVal instanceof HeapLValue) {
 			HeapLValue hlv = (HeapLValue) lrVal;
 //			stmt.addAll(mMemoryHandler.getWriteCall(loc, hlv, rightHandSide));
-			return new ResultExpression(null, rightHandSide, null, null, null);
+//			return new ResultExpression(rightHandSide);
+			return new ResultExpression(hlv);
 		} else if (lrVal instanceof LocalLValue) {
 			LocalLValue lValue = (LocalLValue) lrVal;
 //			AssignmentStatement assignStmt = new AssignmentStatement(loc, new LeftHandSide[] { lValue.getLHS() },
@@ -1014,7 +1025,7 @@ public class PRCHandler extends CHandler {
 //
 //			if (!mFunctionHandler.noCurrentProcedure())
 //				mFunctionHandler.checkIfModifiedGlobal(main, BoogieASTUtil.getLHSId(lValue.getLHS()), loc);
-			return new ResultExpression(null, lValue, null, null, null);
+			return new ResultExpression(lValue);
 		} else
 			throw new AssertionError("Type error: trying to assign to an RValue in Statement" + loc.toString());
 	}

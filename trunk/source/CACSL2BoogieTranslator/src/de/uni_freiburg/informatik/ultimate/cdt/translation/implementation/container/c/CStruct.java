@@ -64,8 +64,8 @@ public class CStruct extends CType {
 //        if (!isIncomplete) {
 //        	throw new AssertionError("use different constructor for non-incomplete types");
 //        }
-        this.fNames = null;
-        this.fTypes = null;
+        this.fNames = new String[0];
+        this.fTypes = new CType[0];
 //        this.isIncomplete = isIncomplete;
         this.incompleteName = name;
     }

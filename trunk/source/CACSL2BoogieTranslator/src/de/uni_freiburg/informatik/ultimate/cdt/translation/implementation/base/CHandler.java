@@ -1509,8 +1509,8 @@ public class CHandler implements ICHandler {
 						(RValue) rlToInt.lrVal, ((CPointer) rrToInt.lrVal.cType.getUnderlyingType()).pointsToType);
 			} else if (lType instanceof CPointer && rType instanceof CPointer) {
 				assert node.getOperator() == IASTBinaryExpression.op_minus : "only subtraction of two pointers is allowed";
-				assert ((CPointer) rlToInt.lrVal.cType).pointsToType
-						.equals(((CPointer) rrToInt.lrVal.cType).pointsToType);
+				assert ((CPointer) lType).pointsToType
+						.equals(((CPointer) rType).pointsToType);
 				// assert (in Boogie) that the base value of the pointers
 				// matches
 				if (this.mMemoryHandler.getPointerSubtractionAndComparisonValidityCheckMode() == POINTER_CHECKMODE.ASSERTandASSUME) {

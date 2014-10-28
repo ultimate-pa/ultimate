@@ -441,16 +441,24 @@ public class ResultExpression extends Result {
 
 					for (int pos = 0; pos < dim; pos++) {
 						
-						ResultExpression readCall = memoryHandler.getReadCall(main, new RValue(
-								MemoryHandler.constructPointerFromBaseAndOffset(newStartAddressBase, arrayEntryAddressOffset, loc), 
-								arrayType.getValueType()));
-						newDecl.addAll(readCall.decl);
-						newStmt.addAll(readCall.stmt);
-						newAuxVars.putAll(readCall.auxVars);
-						
+						ResultExpression readRex;
+						Expression readAddress = MemoryHandler.constructPointerFromBaseAndOffset(newStartAddressBase, arrayEntryAddressOffset, loc);
+						if (arrayType.getValueType().getUnderlyingType() instanceof CStruct) {
+							readRex = readStructFromHeap(main, structHandler, memoryHandler, loc, 
+									new RValue(readAddress, arrayType.getValueType().getUnderlyingType()));
+						} else {
+							readRex = memoryHandler.getReadCall(main, new RValue(
+									readAddress, 
+									arrayType.getValueType()));
+						}
+						newDecl.addAll(readRex.decl);
+						newStmt.addAll(readRex.stmt);
+						newAuxVars.putAll(readRex.auxVars);
+
 						ArrayLHS aAcc = new ArrayLHS(loc, new VariableLHS(loc, newArrayId),
 								new Expression[] { new IntegerLiteral(loc, new Integer(pos).toString())} );
-						ResultExpression assRex = ((CHandler) main.cHandler).makeAssignment(main, loc, newStmt, new LocalLValue(aAcc, arrayType.getValueType()), (RValue) readCall.lrVal, newDecl, newAuxVars, overappr);
+						ResultExpression assRex = ((CHandler) main.cHandler).makeAssignment(main, loc, newStmt, 
+								new LocalLValue(aAcc, arrayType.getValueType()), (RValue) readRex.lrVal, newDecl, newAuxVars, overappr);
 						newDecl = assRex.decl;
 						newStmt = assRex.stmt;
 						newAuxVars = assRex.auxVars;
