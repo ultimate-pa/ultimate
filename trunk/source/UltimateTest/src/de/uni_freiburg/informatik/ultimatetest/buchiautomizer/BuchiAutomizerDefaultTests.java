@@ -31,7 +31,7 @@ public class BuchiAutomizerDefaultTests extends
 
 	private static final boolean s_UseMediumBlockEncoding = true;
 	private static final String s_MediumBlockEncodingSetting = "buchiAutomizer/staged300Forward-Z3.epf";
-	private static final boolean s_UseLargeBlockEncoding = true;
+	private static final boolean s_UseLargeBlockEncoding = false;
 	private static final String s_LargeBlockEncodingSetting = "buchiAutomizer/staged300Forward-Z3-LBE.epf";
 	
 	
