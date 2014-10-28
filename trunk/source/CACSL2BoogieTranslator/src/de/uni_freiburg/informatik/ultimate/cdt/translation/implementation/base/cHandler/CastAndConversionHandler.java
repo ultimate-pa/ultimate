@@ -148,14 +148,14 @@ public class CastAndConversionHandler {
 			if (lUlType instanceof CPrimitive) {
 				if (left.getValue() instanceof IntegerLiteral
 						&& ((IntegerLiteral) left.getValue()).getValue().equals("0")) {
-					rightRex.lrVal = new RValue(new IdentifierExpression(loc, SFO.NULL), 
+					leftRex.lrVal = new RValue(new IdentifierExpression(loc, SFO.NULL), 
 							new CPointer(new CPrimitive(PRIMITIVE.VOID)));
 				}
 			}
 			if (rUlType instanceof CPrimitive) {
 				if (right.getValue() instanceof IntegerLiteral
 						&& ((IntegerLiteral) right.getValue()).getValue().equals("0")) {
-					leftRex.lrVal = new RValue(new IdentifierExpression(loc, SFO.NULL), 
+					rightRex.lrVal = new RValue(new IdentifierExpression(loc, SFO.NULL), 
 							new CPointer(new CPrimitive(PRIMITIVE.VOID)));
 				}
 
