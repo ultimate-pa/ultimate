@@ -32,10 +32,17 @@ public class RCFGBacktranslator extends DefaultTranslator<CodeBlock, BoogieASTNo
 		super(CodeBlock.class, BoogieASTNode.class, Expression.class, Expression.class);
 	}
 
-	private Map<Statement, BoogieASTNode> m_CodeBlock2Statement = 
-			new HashMap<Statement, BoogieASTNode>();
+	/**
+	 * Mapping from auxiliary CodeBlocks to source BoogieAstNodes.
+	 * For assert, the requires assumed at begin of procedure, and ensures
+	 * the result is a singleton. For the assert requires before the call
+	 * the result contains two elements: First, the call, afterwards the
+	 * requires.
+	 */
+	private Map<Statement, BoogieASTNode[]> m_CodeBlock2Statement = 
+			new HashMap<Statement, BoogieASTNode[]>();
 
-	public BoogieASTNode putAux(Statement aux, BoogieASTNode source) {
+	public BoogieASTNode[] putAux(Statement aux, BoogieASTNode[] source) {
 		return m_CodeBlock2Statement.put(aux, source);
 	}
 
@@ -94,8 +101,10 @@ public class RCFGBacktranslator extends DefaultTranslator<CodeBlock, BoogieASTNo
 			StatementSequence ss = (StatementSequence) cb;
 			for (Statement statement : ss.getStatements()) {
 				if (m_CodeBlock2Statement.containsKey(statement)) {
-					BoogieASTNode source = m_CodeBlock2Statement.get(statement);
-					trace.add(new AtomicTraceElement<BoogieASTNode>(source));
+					BoogieASTNode[] sources = m_CodeBlock2Statement.get(statement);
+					for (BoogieASTNode source : sources) {
+						trace.add(new AtomicTraceElement<BoogieASTNode>(source));
+					}
 				} else {
 					trace.add(new AtomicTraceElement<BoogieASTNode>(statement));
 				}
