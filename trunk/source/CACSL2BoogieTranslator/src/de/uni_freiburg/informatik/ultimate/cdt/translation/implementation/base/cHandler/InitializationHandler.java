@@ -353,9 +353,10 @@ public class InitializationHandler {
 				lhs = new VariableLHS(arrayAddress.getLocation(),
 						arrayAddress.getIdentifier());			
 
-				CallStatement mallocRex = mMemoryHandler.getMallocCall(main, mFunctionHandler,
-						mMemoryHandler.calculateSizeOf(lCType, loc), new LocalLValue(lhs, cType), loc);
-				stmt.add(mallocRex);
+				//done in simpleDec
+//				CallStatement mallocRex = mMemoryHandler.getMallocCall(main, mFunctionHandler,
+//						mMemoryHandler.calculateSizeOf(lCType, loc), new LocalLValue(lhs, cType), loc);
+//				stmt.add(mallocRex);
 
 				if (initializer == null) {
 					stmt.addAll(this.initArrayOnHeap(main, loc, 
