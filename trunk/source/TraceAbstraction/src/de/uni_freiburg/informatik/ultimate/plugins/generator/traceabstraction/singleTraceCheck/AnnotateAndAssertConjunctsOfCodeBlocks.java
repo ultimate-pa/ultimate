@@ -248,6 +248,17 @@ public class AnnotateAndAssertConjunctsOfCodeBlocks extends AnnotateAndAssertCod
 	}
 
 
+	/**
+	 * Provides two information for each equality a=b that was split into
+	 * two inequalities a>=b, a<=b.
+	 * For the equality a=b, the map m_Inequality2CorrespondingInequality 
+	 * contains the following two pairs:
+	 * (a>=b, a<=b) (a<=b, a>=b)
+	 * For the equality a=b, the map m_Inequality2OriginalEquality contains 
+	 * the following two pairs:
+	 * (a>=b, a=b) (a<=b, a=b)
+	 *
+	 */
 	public class SplitEqualityMapping {
 		private final Map<Term, Term> m_Inequality2CorrespondingInequality = new HashMap<>();
 		private final Map<Term, Term> m_Inequality2OriginalEquality = new HashMap<>();
