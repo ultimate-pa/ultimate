@@ -277,7 +277,6 @@ public class CHandler implements ICHandler {
 	
 	CACSLPreferenceInitializer.UNSIGNED_TREATMENT mUnsignedTreatment;
 
-	UltimatePreferenceStore mPreferences;
 
 	/**
 	 * Constructor.
@@ -293,15 +292,14 @@ public class CHandler implements ICHandler {
 		mLogger = logger;
 		this.mTypeHandler = typeHandler;
 
-		mPreferences= new UltimatePreferenceStore(Activator.s_PLUGIN_ID);
 		
-		this.mUnsignedTreatment = mPreferences.getEnum(CACSLPreferenceInitializer.LABEL_UNSIGNED_TREATMENT, 
+		this.mUnsignedTreatment = main.mPreferences.getEnum(CACSLPreferenceInitializer.LABEL_UNSIGNED_TREATMENT, 
 				CACSLPreferenceInitializer.UNSIGNED_TREATMENT.class);
 
 		this.mArrayHandler = new ArrayHandler();
 		this.mFunctionHandler = new FunctionHandler();
 		this.mStructHandler = new StructHandler();
-		boolean checkPointerValidity = mPreferences.getBoolean(CACSLPreferenceInitializer.LABEL_CHECK_POINTER_VALIDITY);
+		boolean checkPointerValidity = main.mPreferences.getBoolean(CACSLPreferenceInitializer.LABEL_CHECK_POINTER_VALIDITY);
 		this.mMemoryHandler = new MemoryHandler(mFunctionHandler, checkPointerValidity);
 		this.mInitHandler = new InitializationHandler(mFunctionHandler, mStructHandler, mMemoryHandler);
 		this.mPostProcessor = new PostProcessor(main, mLogger);
@@ -934,7 +932,7 @@ public class CHandler implements ICHandler {
 
 		// Christian: function name, handle separately
 		if (!mSymbolTable.containsCSymbol(cId)) {
-			if (((MainDispatcher) main).getFunctionToIndex().get(cId) != null) {
+			if (main.getFunctionToIndex().get(cId) != null) {
 				cType = new CPointer(new CFunction(null, null, false));
 				bId = SFO.FUNCTION_ADDRESS + cId;
 				useHeap = true;
@@ -2888,17 +2886,20 @@ public class CHandler implements ICHandler {
 						specList.add((LoopInvariantSpecification) retranslateRes.node);
 					}
 				}
-				if (((IASTForStatement) node).getInitializerStatement() != null) {
-					bodyBlock = mMemoryHandler.insertMallocs(main, bodyBlock);
-					for (SymbolTableValue stv : mSymbolTable.currentScopeValues())
-						if (!stv.isBoogieGlobalVar()) {
-							decl.add(stv.getBoogieDecl());
-						}
-					this.endScope();
-				}
 			}
 			spec = specList.toArray(new LoopInvariantSpecification[0]);
 			clearContract(); // take care for behavior and completeness
+		}
+		
+		if (node instanceof IASTForStatement) {
+			if (((IASTForStatement) node).getInitializerStatement() != null) {
+				bodyBlock = mMemoryHandler.insertMallocs(main, bodyBlock);
+				for (SymbolTableValue stv : mSymbolTable.currentScopeValues())
+					if (!stv.isBoogieGlobalVar()) {
+						decl.add(stv.getBoogieDecl());
+					}
+				this.endScope();
+			}
 		}
 
 		ILocation ignoreLocation = LocationFactory.createIgnoreCLocation(node);
@@ -3223,10 +3224,4 @@ public class CHandler implements ICHandler {
 	public InitializationHandler getInitHandler() {
 		return mInitHandler;
 	}
-
-	@Override
-	public UltimatePreferenceStore getPreferences() {
-		return mPreferences;
-	}
-
 }

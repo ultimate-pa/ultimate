@@ -5,6 +5,7 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces;
 
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -50,7 +51,12 @@ import de.uni_freiburg.informatik.ultimate.result.UnsupportedSyntaxResult;
  */
 public abstract class Dispatcher {
 
+	protected LinkedHashMap<String, Integer> mFunctionToIndex;
+
 	protected final Logger mLogger;
+
+	public UltimatePreferenceStore mPreferences;
+
 	/**
 	 * The side effect handler.
 	 */
@@ -93,7 +99,7 @@ public abstract class Dispatcher {
 		this.backtranslator = backtranslator;
 		mLogger = logger;
 		mServices = services;
-
+		mPreferences= new UltimatePreferenceStore(Activator.s_PLUGIN_ID);
 	}
 
 	/**
@@ -348,5 +354,9 @@ public abstract class Dispatcher {
 			assert (aux > 0 || nonAux > 0);
 			return aux > 0;
 		}
+	}
+	
+	public LinkedHashMap<String,Integer> getFunctionToIndex() {
+		return mFunctionToIndex;
 	}
 }

@@ -222,12 +222,12 @@ public class MainDispatcher extends Dispatcher {
 
 	// begin alex
 	private LinkedHashSet<VariableDeclaration> _boogieDeclarationsOfVariablesOnHeap;
-	private LinkedHashMap<String, Integer> functionToIndex;
+//	private LinkedHashMap<String, Integer> functionToIndex;
 	private LinkedHashMap<Integer, String> indexToFunction;
 
-	public HashMap<String, Integer> getFunctionToIndex() {
-		return functionToIndex;
-	}
+//	public HashMap<String, Integer> getFunctionToIndex() {
+//		return mFunctionToIndex;
+//	}
 
 	public HashMap<Integer, String> getIndexToFunction() {
 		return indexToFunction;
@@ -275,23 +275,33 @@ public class MainDispatcher extends Dispatcher {
 	protected void preRun(DecoratorNode node) {
 		assert node.getCNode() != null;
 		assert node.getCNode() instanceof IASTTranslationUnit;
+		
 		IASTTranslationUnit tu = (IASTTranslationUnit) node.getCNode();
+		
+		variablesOnHeap = new LinkedHashSet<>();
+	
 		FunctionTableBuilder ftb = new FunctionTableBuilder();
 		tu.accept(ftb);
 		PreRunner pr = new PreRunner(ftb.getFunctionTable());
 		tu.accept(pr);
-		variablesOnHeap = pr.getVarsForHeap();
+//		variablesOnHeap = pr.getVarsForHeap();
+		variablesOnHeap.addAll(pr.getVarsForHeap());
 		// functionsOnHeap = pr.getFunctionPointers();
-		functionToIndex = pr.getFunctionToIndex();
+		mFunctionToIndex = pr.getFunctionToIndex();
 
+		PRDispatcher prd = new PRDispatcher(backtranslator, mServices, mLogger, mFunctionToIndex);
+		prd.init();
+		prd.dispatch(node);
+		variablesOnHeap.addAll(((PRCHandler) prd.cHandler).getVarsForHeap());
+	
 		indexToFunction = new LinkedHashMap<>();
-		for (Entry<String, Integer> en : functionToIndex.entrySet()) {
+		for (Entry<String, Integer> en : mFunctionToIndex.entrySet()) {
 			indexToFunction.put(en.getValue(), en.getKey());
 		}
 
 		// if (functionsOnHeap.size() > 0) { //(alex:) I commented this out
 		// because function pointers are not subject to our memory model
-		if (functionToIndex.size() > 0) { // (alex:) functions are assiociated
+		if (mFunctionToIndex.size() > 0) { // (alex:) functions are assiociated
 											// to quasi-pointers with base
 											// address -1
 			isMMRequired = true;
@@ -302,7 +312,7 @@ public class MainDispatcher extends Dispatcher {
 		boolean useDetNecessaryDeclarations = true;
 		if (useDetNecessaryDeclarations) {
 			DetermineNecessaryDeclarations dnd = new DetermineNecessaryDeclarations(this.getCheckedMethod(), this,
-					ftb.getFunctionTable(), functionToIndex);
+					ftb.getFunctionTable(), mFunctionToIndex);
 			tu.accept(dnd);
 
 			reachableDeclarations = dnd.getReachableDeclarationsOrDeclarators();

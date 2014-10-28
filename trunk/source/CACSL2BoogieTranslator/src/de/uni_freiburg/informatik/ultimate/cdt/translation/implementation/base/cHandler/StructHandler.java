@@ -64,7 +64,7 @@ public class StructHandler {
 		ILocation loc = LocationFactory.createCLocation(node);
 		String field = node.getFieldName().toString();
 		
-		ResultExpression fieldOwner = (ResultExpression) main.dispatch(node.getFieldOwner());;
+		ResultExpression fieldOwner = (ResultExpression) main.dispatch(node.getFieldOwner());
 
 		LRValue newValue = null;
 		Map<StructLHS, CType> unionFieldToCType = fieldOwner.unionFieldIdToCType;

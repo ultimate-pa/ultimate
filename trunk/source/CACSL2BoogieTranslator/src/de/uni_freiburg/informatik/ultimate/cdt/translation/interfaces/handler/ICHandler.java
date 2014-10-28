@@ -615,8 +615,6 @@ public interface ICHandler extends IHandler {
 
 	FunctionHandler getFunctionHandler();
 
-	UltimatePreferenceStore getPreferences();
-
 //	public ResultExpression initVar(ILocation loc, Dispatcher main,
 //			LRValue lrVal, CType underlyingFieldType,
 //			ResultExpression resultExpression);
