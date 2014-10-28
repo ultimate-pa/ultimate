@@ -121,25 +121,57 @@ public class RewriteArrays2 extends LassoPreProcessor {
 		m_ArrayIndexSupportingInvariants.addAll(isia.getAdditionalConjunctsEqualities());
 		m_ArrayIndexSupportingInvariants.addAll(isia.getAdditionalConjunctsNotEquals());
 		
-		List<TransFormulaLRWithArrayCells> stemComponents2 = new ArrayList<TransFormulaLRWithArrayCells>();
-		Collection<TransFormulaLR> new_stem_components = new ArrayList<TransFormulaLR>(old_stem_components.size());
-		for (TransFormulaLRWithArrayInformation stemComponent : stemComponents1) {
-			TransFormulaLRWithArrayCells test = new TransFormulaLRWithArrayCells(mServices, replacementVarFactory, m_Script, stemComponent, isia, lasso_builder.getBoogie2SMT(), null, m_OverapproximateByOmmitingDisjointIndices);
-			stemComponents2.add(test);
-			new_stem_components.add(test.getResult());
+		// for termination, we overapproximate by ommiting disjoint indices
+		{
+			List<TransFormulaLRWithArrayCells> stemComponents2 = new ArrayList<TransFormulaLRWithArrayCells>();
+			Collection<TransFormulaLR> new_stem_components = new ArrayList<TransFormulaLR>(old_stem_components.size());
+			for (TransFormulaLRWithArrayInformation stemComponent : stemComponents1) {
+				TransFormulaLRWithArrayCells test = new TransFormulaLRWithArrayCells(mServices, replacementVarFactory, m_Script, stemComponent, isia, lasso_builder.getBoogie2SMT(), null, true);
+				stemComponents2.add(test);
+				new_stem_components.add(test.getResult());
+			}
+			lasso_builder.setStemComponentsTermination(new_stem_components);
 		}
 		
-		List<TransFormulaLRWithArrayCells> loopComponents2 = new ArrayList<TransFormulaLRWithArrayCells>();
-		Collection<TransFormulaLR> new_loop_components = new ArrayList<TransFormulaLR>(old_loop_components.size());
-		for (TransFormulaLRWithArrayInformation loopComponent : loopComponents1) {
-			TransFormulaLRWithArrayCells test = new TransFormulaLRWithArrayCells(mServices, replacementVarFactory, m_Script, loopComponent, isia, lasso_builder.getBoogie2SMT(), acrvc, m_OverapproximateByOmmitingDisjointIndices);
-			loopComponents2.add(test);
-			new_loop_components.add(test.getResult());
+		// for nontermination, we do not overapproximate
+		{
+			List<TransFormulaLRWithArrayCells> stemComponents2 = new ArrayList<TransFormulaLRWithArrayCells>();
+			Collection<TransFormulaLR> new_stem_components = new ArrayList<TransFormulaLR>(old_stem_components.size());
+			for (TransFormulaLRWithArrayInformation stemComponent : stemComponents1) {
+				TransFormulaLRWithArrayCells test = new TransFormulaLRWithArrayCells(mServices, replacementVarFactory, m_Script, stemComponent, isia, lasso_builder.getBoogie2SMT(), null, false);
+				stemComponents2.add(test);
+				new_stem_components.add(test.getResult());
+			}
+			lasso_builder.setStemComponentsNonTermination(new_stem_components);
 		}
-		lasso_builder.setStemComponentsTermination(new_stem_components);
-		lasso_builder.setStemComponentsNonTermination(new_stem_components);
-		lasso_builder.setLoopComponentsTermination(new_loop_components);
-		lasso_builder.setLoopComponentsNonTermination(new_loop_components);
+		
+		// for termination, we overapproximate by ommiting disjoint indices
+		{
+			List<TransFormulaLRWithArrayCells> loopComponents2 = new ArrayList<TransFormulaLRWithArrayCells>();
+			Collection<TransFormulaLR> new_loop_components = new ArrayList<TransFormulaLR>(old_loop_components.size());
+			for (TransFormulaLRWithArrayInformation loopComponent : loopComponents1) {
+				TransFormulaLRWithArrayCells test = new TransFormulaLRWithArrayCells(mServices, replacementVarFactory, m_Script, loopComponent, isia, lasso_builder.getBoogie2SMT(), acrvc, true);
+				loopComponents2.add(test);
+				new_loop_components.add(test.getResult());
+			}
+
+			lasso_builder.setLoopComponentsTermination(new_loop_components);
+		}
+		
+		// for nontermination, we do not overapproximate
+		{
+			List<TransFormulaLRWithArrayCells> loopComponents2 = new ArrayList<TransFormulaLRWithArrayCells>();
+			Collection<TransFormulaLR> new_loop_components = new ArrayList<TransFormulaLR>(old_loop_components.size());
+			for (TransFormulaLRWithArrayInformation loopComponent : loopComponents1) {
+				TransFormulaLRWithArrayCells test = new TransFormulaLRWithArrayCells(mServices, replacementVarFactory, m_Script, loopComponent, isia, lasso_builder.getBoogie2SMT(), acrvc, false);
+				loopComponents2.add(test);
+				new_loop_components.add(test.getResult());
+			}
+
+			lasso_builder.setLoopComponentsNonTermination(new_loop_components);
+		}
+		
+		
 	}
 
 
