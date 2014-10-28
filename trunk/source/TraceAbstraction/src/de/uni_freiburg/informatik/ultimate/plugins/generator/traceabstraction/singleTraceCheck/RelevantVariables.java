@@ -709,13 +709,13 @@ public class RelevantVariables {
 			boolean result;
 			if (bv instanceof BoogieOldVar) {
 				result = oldVarAssignment.isHavocedOut(bv);
-				assert globalVarAssignment.isHavocedOut(((BoogieOldVar) bv).getNonOldVar()) == result : 
-					"unexpected: unsat core contains only one of both, globalVarAssignment or oldVarAssignment";
+//				assert globalVarAssignment.isHavocedOut(((BoogieOldVar) bv).getNonOldVar()) == result : 
+//					"unexpected: unsat core contains only one of both, globalVarAssignment or oldVarAssignment";
 			} else {
 				assert (bv instanceof BoogieNonOldVar);
 				result = globalVarAssignment.isHavocedOut(bv);
-				assert oldVarAssignment.isHavocedOut(((BoogieNonOldVar) bv).getOldVar()) == result  : 
-					"unexpected: unsat core contains only one of both, globalVarAssignment or oldVarAssignment";
+//				assert oldVarAssignment.isHavocedOut(((BoogieNonOldVar) bv).getOldVar()) == result  : 
+//					"unexpected: unsat core contains only one of both, globalVarAssignment or oldVarAssignment";
 			}
 			return result;
 		} else {
