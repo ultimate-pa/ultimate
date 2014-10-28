@@ -146,9 +146,9 @@ public class CodeCheckPreferenceInitializer extends UltimatePreferenceInitialize
 	
 	public static final int DEF_ITERATIONS = -1;
 	
-	public static final RedirectionStrategy DEF_REDIRECTION = RedirectionStrategy.No_Strategy;
+	public static final RedirectionStrategy DEF_REDIRECTION = RedirectionStrategy.RANDOM_STRONGEST;
 	
-	public static final boolean DEF_DEF_RED = true;
+	public static final boolean DEF_DEF_RED = false;
 	
 	public static final boolean DEF_RM_FALSE = false;
 	
