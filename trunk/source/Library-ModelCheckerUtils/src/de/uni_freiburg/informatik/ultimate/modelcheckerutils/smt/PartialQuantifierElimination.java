@@ -21,6 +21,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSelect;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.AffineRelation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.BinaryEqualityRelation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.BinaryRelation.NoRelationOfThisKindException;
@@ -28,6 +29,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.Not
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Cnf;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Dnf;
 import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
+import de.uni_freiburg.informatik.ultimate.util.HashRelation;
 
 /**
  * Try to eliminate existentially quantified variables in terms. Therefore we
@@ -39,6 +41,7 @@ public class PartialQuantifierElimination {
 	static final boolean USE_UPD = true;
 	static final boolean USE_IRD = true;
 	static final boolean USE_SOS = true;
+	static final boolean USE_USR = !true;
 
 	/**
 	 * Returns equivalent formula. Quantifier is dropped if quantified variable
@@ -243,7 +246,21 @@ public class PartialQuantifierElimination {
 			// if SOS introduced more quantified variables.
 			result = elim(script, quantifier, eliminatees, result, services, logger);
 		}
+		
+		if (eliminatees.isEmpty()) {
+			return result;
+		}
+		
 		assert Arrays.asList(result.getFreeVars()).containsAll(eliminatees) : "superficial variables";
+		
+		if (USE_USR) {
+			Set<TermVariable> affectedEliminatees = new HashSet<TermVariable>();
+			result = usr(script, quantifier, result, eliminatees, affectedEliminatees , logger);
+			if (!affectedEliminatees.isEmpty()) {
+				result = elim(script, quantifier, eliminatees, result, services, logger);
+			}
+		}
+		
 		return result;
 	}
 
@@ -821,5 +838,46 @@ public class PartialQuantifierElimination {
 		}
 		return -1;
 	}
-
+	
+	
+	
+	public static Term usr(Script script, int quantifier, Term term, Collection<TermVariable> eliminatees, Set<TermVariable> affectedEliminatees, Logger logger) {
+		Term[] oldParams;
+		if (quantifier == QuantifiedFormula.EXISTS) {
+			oldParams = SmtUtils.getConjuncts(term);
+		} else if (quantifier == QuantifiedFormula.FORALL) {
+			oldParams = SmtUtils.getDisjuncts(term);
+		} else {
+			throw new AssertionError("unknown quantifier");
+		}
+		HashRelation<TermVariable, Term> var2arrays = new HashRelation<TermVariable, Term>();
+		HashRelation<TermVariable, Term> var2parameters = new HashRelation<TermVariable, Term>();
+		for (Term param : oldParams) {
+			List<MultiDimensionalSelect> slects = MultiDimensionalSelect.extractSelectDeep(param, false);
+			for (MultiDimensionalSelect mds : slects) {
+				Set<TermVariable> indexFreeVars = mds.getIndex().getFreeVars();
+				for (TermVariable tv : indexFreeVars) {
+					if (eliminatees.contains(tv)) {
+						var2arrays.addPair(tv, mds.getArray());
+						var2parameters.addPair(tv, param);
+					}
+				}
+			}
+		}
+		Set<Term> superfluousParams = new HashSet<Term>();
+		for (TermVariable eliminatee : var2arrays.getDomain()) {
+			if (var2arrays.getImage(eliminatee).size() == 1 &&
+					var2parameters.getImage(eliminatee).size() == 1) {
+				superfluousParams.addAll(var2parameters.getImage(eliminatee));
+				affectedEliminatees.add(eliminatee);
+			}
+		}
+		ArrayList<Term> resultParams = new ArrayList<Term>();
+		for (Term oldParam : oldParams) {
+			if (!superfluousParams.contains(oldParam)) {
+				resultParams.add(oldParam);
+			}
+		}
+		return Util.and(script, resultParams.toArray(new Term[resultParams.size()]));
+	}
 }

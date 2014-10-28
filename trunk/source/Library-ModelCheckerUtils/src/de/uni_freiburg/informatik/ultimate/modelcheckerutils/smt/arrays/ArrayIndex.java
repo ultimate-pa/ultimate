@@ -1,12 +1,16 @@
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 /**
  * Represents a multi-dimensional array index which is a List of terms.
@@ -177,6 +181,17 @@ public class ArrayIndex implements List<Term> {
 			indexEntries.add(m_IndexEntries.get(i));
 		}
 		return new ArrayIndex(indexEntries);
+	}
+	
+	/**
+	 * Returns the free variable of all entries.
+	 */
+	public Set<TermVariable> getFreeVars() {
+		Set<TermVariable> result = new HashSet<TermVariable>();
+		for (Term entry : m_IndexEntries) {
+			result.addAll(Arrays.asList(entry.getFreeVars()));
+		}
+		return result;
 	}
 	
 	
