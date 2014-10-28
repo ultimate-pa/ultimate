@@ -99,6 +99,14 @@ public abstract class BinaryRelation {
 	protected final RelationSymbol m_RelationSymbol;
 	protected final Term m_Lhs;
 	protected final Term m_Rhs;
+	
+
+	protected BinaryRelation(RelationSymbol relationSymbol, Term lhs, Term rhs) {
+		super();
+		m_RelationSymbol = relationSymbol;
+		m_Lhs = lhs;
+		m_Rhs = rhs;
+	}
 
 	public BinaryRelation(Term term) throws NoRelationOfThisKindException {
 		if (!(term instanceof ApplicationTerm)) {

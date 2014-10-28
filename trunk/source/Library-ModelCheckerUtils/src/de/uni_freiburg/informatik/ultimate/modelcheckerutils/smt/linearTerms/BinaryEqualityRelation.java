@@ -2,6 +2,13 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms;
 
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
+/**
+ * Objects of this class represent binary equals relations (i.e. terms of the
+ * form (= a b)) and their negations (i.e. terms of the form
+ * (not (= a b)) resp. (distinct a b)).
+ * @author Matthias Heizmann
+ *
+ */
 public class BinaryEqualityRelation extends BinaryRelation {
 
 	public BinaryEqualityRelation(Term term)

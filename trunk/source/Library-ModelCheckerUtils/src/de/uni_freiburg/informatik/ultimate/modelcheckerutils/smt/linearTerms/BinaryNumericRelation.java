@@ -16,6 +16,11 @@ public class BinaryNumericRelation extends BinaryRelation {
 	public BinaryNumericRelation(Term term) throws NoRelationOfThisKindException {
 		super(term);
 	}
+	
+	protected BinaryNumericRelation(RelationSymbol relationSymbol, Term lhs, Term rhs) {
+		super(relationSymbol, lhs, rhs);
+	}
+
 
 	@Override
 	protected void checkSort(Term[] params)
@@ -45,8 +50,13 @@ public class BinaryNumericRelation extends BinaryRelation {
 		}
 	}
 
-	
-	
+	/**
+	 * Returns a new BinaryNumericRelation that has the RelationSymbol relSymb
+	 * and the same lhs and rhs as this BinaryNumericRelation.
+	 */
+	public BinaryNumericRelation changeRelationSymbol(RelationSymbol relSymb) {
+		return new BinaryNumericRelation(relSymb, getLhs(), getRhs());
+	}
 
 
 	
