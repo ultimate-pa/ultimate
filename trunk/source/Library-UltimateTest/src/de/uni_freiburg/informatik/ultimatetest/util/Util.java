@@ -476,26 +476,26 @@ public class Util {
 	 */
 	public static Map<String, SafetyCheckerOverallResult> constructFilenameKeywordMap_SafetyChecker() {
 		Map<String, SafetyCheckerOverallResult> map = new HashMap<String, SafetyCheckerOverallResult>();
-		map.put("-safe", SafetyCheckerOverallResult.SAFE);
-		map.put("_safe", SafetyCheckerOverallResult.SAFE);
-		map.put("-Safe", SafetyCheckerOverallResult.SAFE);
-		map.put("_Safe", SafetyCheckerOverallResult.SAFE);
-		map.put("-unsafe", SafetyCheckerOverallResult.UNSAFE);
-		map.put("_unsafe", SafetyCheckerOverallResult.UNSAFE);
-		map.put("-Unsafe", SafetyCheckerOverallResult.UNSAFE);
-		map.put("_Unsafe", SafetyCheckerOverallResult.UNSAFE);
+		map.put(".*-safe.*", SafetyCheckerOverallResult.SAFE);
+		map.put(".*_safe.*", SafetyCheckerOverallResult.SAFE);
+		map.put(".*-Safe.*", SafetyCheckerOverallResult.SAFE);
+		map.put(".*_Safe.*", SafetyCheckerOverallResult.SAFE);
+		map.put(".*-unsafe.*", SafetyCheckerOverallResult.UNSAFE);
+		map.put(".*_unsafe.*?!(.*_false-valid-deref.*)", SafetyCheckerOverallResult.UNSAFE);
+		map.put(".*-Unsafe.*", SafetyCheckerOverallResult.UNSAFE);
+		map.put(".*_Unsafe.*", SafetyCheckerOverallResult.UNSAFE);
 		// true-unreach-call is the SV-COMP annotation for safe
-		map.put("_true-unreach-call", SafetyCheckerOverallResult.SAFE);
+		map.put(".*_true-unreach-call.*", SafetyCheckerOverallResult.SAFE);
 		// false-unreach-call is the SV-COMP annotation for safe
-		map.put("_false-unreach-call", SafetyCheckerOverallResult.UNSAFE);
+		map.put(".*_false-unreach-call.*", SafetyCheckerOverallResult.UNSAFE);
 		// true-valid-memsafety is the SV-COMP annotation for safe wrt. memory safety
-		map.put("_true-valid-memsafety", SafetyCheckerOverallResult.SAFE);
+		map.put(".*_true-valid-memsafety.*", SafetyCheckerOverallResult.SAFE);
 		// false-valid-deref is the SV-COMP annotation for unsafe wrt. pointer dereference
-		map.put("_false-valid-deref", SafetyCheckerOverallResult.UNSAFE_DEREF);
+		map.put(".*_false-valid-deref.*", SafetyCheckerOverallResult.UNSAFE_DEREF);
 		// false-valid-free is the SV-COMP annotation for unsafe wrt. free
-		map.put("_false-valid-free", SafetyCheckerOverallResult.UNSAFE_FREE);
+		map.put(".*_false-valid-free.*", SafetyCheckerOverallResult.UNSAFE_FREE);
 		// false-valid-memtrack is the SV-COMP annotation for unsafe wrt. memory leaks
-		map.put("_false-valid-memtrack", SafetyCheckerOverallResult.UNSAFE_MEMTRACK);
+		map.put(".*_false-valid-memtrack.*", SafetyCheckerOverallResult.UNSAFE_MEMTRACK);
 		return map;
 	}
 
@@ -522,9 +522,9 @@ public class Util {
 	public static Map<String, TerminationAnalysisOverallResult> constructFilenameKeywordMap_TerminationAnalysis() {
 		Map<String, TerminationAnalysisOverallResult> map = new HashMap<String, TerminationAnalysisOverallResult>();
 		// true-unreach-call is the SV-COMP annotation for safe
-		map.put("_true-termination", TerminationAnalysisOverallResult.TERMINATING);
+		map.put(".*_true-termination.*", TerminationAnalysisOverallResult.TERMINATING);
 		// false-unreach-call is the SV-COMP annotation for safe
-		map.put("_false-termination", TerminationAnalysisOverallResult.NONTERMINATING);
+		map.put(".*_false-termination.*", TerminationAnalysisOverallResult.NONTERMINATING);
 		return map;
 	}
 

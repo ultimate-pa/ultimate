@@ -65,7 +65,7 @@ public class KeywordBasedExpectedResultFinder<OVERALL_RESULT> implements
 		Set<OVERALL_RESULT> expectedResult= new HashSet<OVERALL_RESULT>();
 		String filename = file.getName();
 		for (Entry<String, OVERALL_RESULT> entry  : m_FilenameKeywords.entrySet()) {
-			if (filename.contains(entry.getKey())) {
+			if (filename.matches(entry.getKey())) {
 				expectedResult.add(entry.getValue());
 			}
 		}
