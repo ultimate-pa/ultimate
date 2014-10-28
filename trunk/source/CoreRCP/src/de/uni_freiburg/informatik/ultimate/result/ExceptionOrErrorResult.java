@@ -1,28 +1,41 @@
 package de.uni_freiburg.informatik.ultimate.result;
 
-
+import de.uni_freiburg.informatik.ultimate.core.coreplugin.ToolchainExceptionWrapper;
 
 /**
- * IResult that is reported if toolchain has thrown a Throwable (Error or 
+ * IResult that is reported if toolchain has thrown a Throwable (Error or
  * Exception). The Throwable stored in the result has to be the Throwable that
  * was thrown by the toolchain.
+ * 
  * @author Matthias Heizmann
  */
 public class ExceptionOrErrorResult extends AbstractResult {
-	Throwable m_Throwable;
+	private final Throwable m_Throwable;
 
 	public ExceptionOrErrorResult(String plugin, Throwable throwable) {
-		super(plugin);
-		m_Throwable = throwable;
+		super(getPluginName(plugin, throwable));
+		if (throwable instanceof ToolchainExceptionWrapper) {
+			m_Throwable = ((ToolchainExceptionWrapper) throwable).getWrappedThrowable();
+		} else {
+			m_Throwable = throwable;
+		}
+	}
+
+	private static String getPluginName(String plugin, Throwable throwable) {
+		if (throwable instanceof ToolchainExceptionWrapper) {
+			return ((ToolchainExceptionWrapper) throwable).getPluginId();
+		} else {
+			return plugin;
+		}
 	}
 
 	@Override
 	public String getShortDescription() {
-		return m_Throwable.getClass().getSimpleName();
+		return getPlugin() + ": " + m_Throwable.getClass().getSimpleName();
 	}
 
 	@Override
 	public String getLongDescription() {
-		return m_Throwable.toString();
+		return getPlugin() + ": " + m_Throwable.toString();
 	}
 }

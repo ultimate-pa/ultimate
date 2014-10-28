@@ -133,7 +133,7 @@ final class ToolchainWalker implements IToolchainCancel {
 						+ e.getMessage());
 			} else {
 				mLogger.error("The Plugin " + plugin.getId() + " has thrown an Exception!", e);
-				throw e;
+				throw new ToolchainExceptionWrapper(plugin.getId(), e);
 			}
 		} finally {
 			if (mBench != null) {
