@@ -1,8 +1,11 @@
 package de.uni_freiburg.informatik.ultimate.core.coreplugin.cexverifier;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.Collection;
 import java.util.Scanner;
 
@@ -130,20 +133,20 @@ public class WitnessManager {
 					cpaCheckerHome);
 
 			MonitoredProcess mp = MonitoredProcess.exec(command, cpaCheckerHome, null, mServices, mStorage);
-			InputStream errorStream = mp.getErrorStream();
-			InputStream outputStream = mp.getInputStream();
+			BufferedInputStream errorStream = new BufferedInputStream(mp.getErrorStream());
+			BufferedInputStream outputStream = new BufferedInputStream(mp.getInputStream());
 
 			boolean hitTimeout = false;
 			int timeoutInS = ups.getInt(CorePreferenceInitializer.LABEL_WITNESS_VERIFIER_TIMEOUT);
 			// wait for 10s for the witness checker
+			mLogger.info("Waiting for " + timeoutInS + "s for CPA Checker...");
 			if (mp.waitfor(timeoutInS * 1000).isRunning()) {
 				mp.forceShutdown();
 				hitTimeout = true;
 			}
 
-			String error = convertStreamToString(errorStream);
-			String output = convertStreamToString(outputStream);
-
+			String error = convertStreamToString2(errorStream);
+			String output = convertStreamToString2(outputStream);
 			// TODO: interpret error and output
 
 			if (output.startsWith("Verification result: FALSE.")) {
@@ -203,12 +206,26 @@ public class WitnessManager {
 	private static String convertStreamToString(InputStream is) {
 		Scanner s = null;
 		try {
-			s = new Scanner(is, "UTF-8").useDelimiter("\\A");
+			s = new Scanner(is).useDelimiter("\\A");
 			return s.hasNext() ? s.next() : "";
 		} finally {
 			if (s != null) {
 				s.close();
 			}
 		}
+	}
+
+	private static String convertStreamToString2(InputStream is) {
+		BufferedReader reader = new BufferedReader(new InputStreamReader(is));
+		StringBuilder out = new StringBuilder();
+		String line;
+		try {
+			while ((line = reader.readLine()) != null) {
+				out.append(line);
+			}
+			reader.close();
+		} catch (IOException e) {
+		}
+		return out.toString();
 	}
 }
