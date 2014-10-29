@@ -11,6 +11,7 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 
 /**
  * Represents a multi-dimensional array index which is a List of terms.
@@ -187,11 +188,7 @@ public class ArrayIndex implements List<Term> {
 	 * Returns the free variable of all entries.
 	 */
 	public Set<TermVariable> getFreeVars() {
-		Set<TermVariable> result = new HashSet<TermVariable>();
-		for (Term entry : m_IndexEntries) {
-			result.addAll(Arrays.asList(entry.getFreeVars()));
-		}
-		return result;
+		return SmtUtils.getFreeVars(m_IndexEntries);
 	}
 	
 	

@@ -382,7 +382,7 @@ public class SmtUtils {
 	/**
 	 * Return all free TermVariables that occur in a set of Terms.
 	 */
-	public static Set<TermVariable> getFreeVars(Set<Term> terms) {
+	public static Set<TermVariable> getFreeVars(Collection<Term> terms) {
 		Set<TermVariable> freeVars = new HashSet<TermVariable>();
 		for (Term term : terms) {
 			freeVars.addAll(Arrays.asList(term.getFreeVars()));
