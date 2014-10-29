@@ -47,7 +47,7 @@ public class WitnessManager {
 	}
 
 	@SuppressWarnings({ "rawtypes", "unchecked" })
-	public void run() {
+	public void run() throws IOException, InterruptedException {
 		UltimatePreferenceStore ups = new UltimatePreferenceStore(Activator.s_PLUGIN_ID);
 		Collection<CounterExampleResult> cexResults = CoreUtil.filterResults(mServices.getResultService().getResults(),
 				CounterExampleResult.class);
@@ -104,7 +104,8 @@ public class WitnessManager {
 	}
 
 	@SuppressWarnings("rawtypes")
-	private boolean checkWitness(String svcompWitnessFile, CounterExampleResult cex, String svcompWitness) {
+	private boolean checkWitness(String svcompWitnessFile, CounterExampleResult cex, String svcompWitness)
+			throws IOException, InterruptedException {
 		mLogger.info("Verifying witness for CEX: " + cex.getShortDescription());
 		UltimatePreferenceStore ups = new UltimatePreferenceStore(Activator.s_PLUGIN_ID);
 		CorePreferenceInitializer.WitnessVerifierType type = ups.getEnum(
@@ -121,70 +122,62 @@ public class WitnessManager {
 
 	@SuppressWarnings("rawtypes")
 	private boolean checkWitnessWithCPAChecker(String svcompWitnessFile, CounterExampleResult cex, String command,
-			String svcompWitness) {
+			String svcompWitness) throws IOException, InterruptedException {
 
-		try {
-			String originalFile = cex.getLocation().getFileName();
-			UltimatePreferenceStore ups = new UltimatePreferenceStore(Activator.s_PLUGIN_ID);
-			String cpaCheckerHome = System.getenv().get("CPACHECKER_HOME");
-			if (cpaCheckerHome == null) {
-				mLogger.error("CPACHECKER_HOME not set, cannot use CPACHECKER as witness verifier");
-				reportWitnessResult(svcompWitness, cex, false);
-				return false;
-			}
-
-			String[] cmdArray = makeCPACheckerCommand(command, svcompWitnessFile,
-					ups.getString(CorePreferenceInitializer.LABEL_WITNESS_CPACHECKER_PROPERTY), originalFile,
-					cpaCheckerHome);
-			command = StringUtils.join(cmdArray, " ");
-			mLogger.info(command);
-			MonitoredProcess mp = MonitoredProcess.exec(cmdArray, cpaCheckerHome, null, mServices, mStorage);
-			BufferedInputStream errorStream = new BufferedInputStream(mp.getErrorStream());
-			BufferedInputStream outputStream = new BufferedInputStream(mp.getInputStream());
-
-			boolean hitTimeout = false;
-			int timeoutInS = ups.getInt(CorePreferenceInitializer.LABEL_WITNESS_VERIFIER_TIMEOUT);
-			// wait for 10s for the witness checker
-			mLogger.info("Waiting for " + timeoutInS + "s for CPA Checker...");
-			MonitoredProcessState mps = mp.waitfor(timeoutInS * 1000);
-			if (mps.isRunning()) {
-				mp.forceShutdown();
-				hitTimeout = true;
-			}
-			mLogger.info("Return code was " + mps.getReturnCode());
-
-			String error = convertStreamToString(errorStream);
-			String output = convertStreamToString(outputStream);
-			// TODO: interpret error and output
-
-			if (output.startsWith("Verification result: FALSE.")) {
-				mLogger.info("Witness for CEX was verified successfully");
-				reportWitnessResult(svcompWitness, cex, true);
-				return true;
-			} else {
-				StringBuilder sb = new StringBuilder();
-				sb.append("Witness for CEX did not verify");
-				if (hitTimeout) {
-					sb.append(" due to timeout of ");
-					sb.append(timeoutInS);
-					sb.append("s");
-				}
-				sb.append("! CPAChecker said:");
-				sb.append(CoreUtil.getPlatformLineSeparator());
-				sb.append(error);
-				sb.append(CoreUtil.getPlatformLineSeparator());
-				sb.append(output);
-				mLogger.error(sb.toString());
-				reportWitnessResult(svcompWitness, cex, false);
-				return false;
-			}
-
-		} catch (IOException e) {
-			e.printStackTrace();
-		} catch (InterruptedException e) {
-			e.printStackTrace();
+		String originalFile = cex.getLocation().getFileName();
+		UltimatePreferenceStore ups = new UltimatePreferenceStore(Activator.s_PLUGIN_ID);
+		String cpaCheckerHome = System.getenv().get("CPACHECKER_HOME");
+		if (cpaCheckerHome == null) {
+			mLogger.error("CPACHECKER_HOME not set, cannot use CPACHECKER as witness verifier");
+			reportWitnessResult(svcompWitness, cex, false);
+			return false;
 		}
-		return false;
+
+		String[] cmdArray = makeCPACheckerCommand(command, svcompWitnessFile,
+				ups.getString(CorePreferenceInitializer.LABEL_WITNESS_CPACHECKER_PROPERTY), originalFile,
+				cpaCheckerHome);
+		command = StringUtils.join(cmdArray, " ");
+		mLogger.info(command);
+		MonitoredProcess mp = MonitoredProcess.exec(cmdArray, cpaCheckerHome, null, mServices, mStorage);
+		BufferedInputStream errorStream = new BufferedInputStream(mp.getErrorStream());
+		BufferedInputStream outputStream = new BufferedInputStream(mp.getInputStream());
+
+		boolean hitTimeout = false;
+		int timeoutInS = ups.getInt(CorePreferenceInitializer.LABEL_WITNESS_VERIFIER_TIMEOUT);
+		// wait for 10s for the witness checker
+		mLogger.info("Waiting for " + timeoutInS + "s for CPA Checker...");
+		MonitoredProcessState mps = mp.waitfor(timeoutInS * 1000);
+		if (mps.isRunning()) {
+			mp.forceShutdown();
+			hitTimeout = true;
+		}
+		mLogger.info("Return code was " + mps.getReturnCode());
+
+		String error = convertStreamToString(errorStream);
+		String output = convertStreamToString(outputStream);
+		// TODO: interpret error and output
+
+		if (output.startsWith("Verification result: FALSE.")) {
+			mLogger.info("Witness for CEX was verified successfully");
+			reportWitnessResult(svcompWitness, cex, true);
+			return true;
+		} else {
+			StringBuilder sb = new StringBuilder();
+			sb.append("Witness for CEX did not verify");
+			if (hitTimeout) {
+				sb.append(" due to timeout of ");
+				sb.append(timeoutInS);
+				sb.append("s");
+			}
+			sb.append("! CPAChecker said:");
+			sb.append(CoreUtil.getPlatformLineSeparator());
+			sb.append(error);
+			sb.append(CoreUtil.getPlatformLineSeparator());
+			sb.append(output);
+			mLogger.error(sb.toString());
+			reportWitnessResult(svcompWitness, cex, false);
+			return false;
+		}
 	}
 
 	private String[] makeCPACheckerCommand(String command, String svcompWitnessFile, String cpaCheckerProp,
