@@ -102,8 +102,8 @@ public final class MonitoredProcess implements IStorable {
 		storage.putStorable(getKey(mp.mID, command), mp);
 
 		mp.mMonitor = new Thread(mp.createProcessRunner(), command);
-		mp.mLogger.info(String.format("Starting monitored process with %s (exit command is %s)", mp.mCommand,
-				mp.mExitCommand));
+		mp.mLogger.info(String.format("Starting monitored process with %s (exit command is %s, workingDir is %s)",
+				mp.mCommand, mp.mExitCommand, workingDir));
 		mp.mMonitor.start();
 		return mp;
 	}

@@ -203,7 +203,7 @@ public class WitnessManager {
 	private static String convertStreamToString(InputStream is) {
 		Scanner s = null;
 		try {
-			s = new Scanner(is).useDelimiter("\\A");
+			s = new Scanner(is, "UTF-8").useDelimiter("\\A");
 			return s.hasNext() ? s.next() : "";
 		} finally {
 			if (s != null) {
