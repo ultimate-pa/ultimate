@@ -10,11 +10,11 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.core.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimatetest.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestSuite;
 import de.uni_freiburg.informatik.ultimatetest.decider.ITestResultDecider.TestResult;
 import de.uni_freiburg.informatik.ultimatetest.summary.NewTestSummary;
-import de.uni_freiburg.informatik.ultimatetest.util.Util;
 
 /**
  * This summary should only be used with {@link SVCOMP15TestSuite}, because it
@@ -33,26 +33,28 @@ public class SVCOMP15TestSummary extends NewTestSummary {
 	@Override
 	public String getSummaryLog() {
 
-		Set<TCS> tcs = de.uni_freiburg.informatik.ultimate.core.util.Util.selectDistinct(mResults.entrySet(), new IMyReduce<TCS>() {
-			@Override
-			public TCS reduce(Entry<UltimateRunDefinition, ExtendedResult> entry) {
-				return new TCS(entry.getKey().getToolchain(), entry.getKey().getSettings());
-			}
-		});
+		Set<TCS> tcs = CoreUtil.selectDistinct(mResults.entrySet(),
+				new IMyReduce<TCS>() {
+					@Override
+					public TCS reduce(Entry<UltimateRunDefinition, ExtendedResult> entry) {
+						return new TCS(entry.getKey().getToolchain(), entry.getKey().getSettings());
+					}
+				});
 
-		Set<String> svcompCategories = de.uni_freiburg.informatik.ultimate.core.util.Util.selectDistinct(mResults.entrySet(), new IMyReduce<String>() {
-			@Override
-			public String reduce(Entry<UltimateRunDefinition, ExtendedResult> entry) {
-				return entry.getValue().Testname.split(" ")[0];
-			}
-		});
+		Set<String> svcompCategories = CoreUtil.selectDistinct(
+				mResults.entrySet(), new IMyReduce<String>() {
+					@Override
+					public String reduce(Entry<UltimateRunDefinition, ExtendedResult> entry) {
+						return entry.getValue().Testname.split(" ")[0];
+					}
+				});
 
 		StringBuilder sb = new StringBuilder();
 		String indent = "\t";
 		for (final TCS atcs : tcs) {
 			for (final String svcompCategory : svcompCategories) {
-				Collection<Entry<UltimateRunDefinition, ExtendedResult>> results = de.uni_freiburg.informatik.ultimate.core.util.Util.where(mResults.entrySet(),
-						new ITestSummaryResultPredicate() {
+				Collection<Entry<UltimateRunDefinition, ExtendedResult>> results = CoreUtil
+						.where(mResults.entrySet(), new ITestSummaryResultPredicate() {
 							@Override
 							public boolean check(Entry<UltimateRunDefinition, ExtendedResult> entry) {
 								return entry.getKey().getToolchain().equals(atcs.Toolchain)
@@ -72,15 +74,15 @@ public class SVCOMP15TestSummary extends NewTestSummary {
 				sb.append(" ");
 				sb.append(svcompCategory);
 				sb.append(" #################");
-				sb.append(de.uni_freiburg.informatik.ultimate.core.util.Util.getPlatformLineSeparator());
+				sb.append(CoreUtil.getPlatformLineSeparator());
 
 				StringBuilder summary = new StringBuilder();
 				int totalCount = 0;
 				// write the result type and the content (SUCCESS, UNKNOWN,
 				// FAIL)
 				for (final TestResult tResult : TestResult.values()) {
-					Collection<Entry<UltimateRunDefinition, ExtendedResult>> specificResults = de.uni_freiburg.informatik.ultimate.core.util.Util.where(results,
-							new ITestSummaryResultPredicate() {
+					Collection<Entry<UltimateRunDefinition, ExtendedResult>> specificResults = CoreUtil
+							.where(results, new ITestSummaryResultPredicate() {
 								@Override
 								public boolean check(Entry<UltimateRunDefinition, ExtendedResult> entry) {
 									return entry.getValue().Result == tResult;
@@ -88,7 +90,7 @@ public class SVCOMP15TestSummary extends NewTestSummary {
 							});
 
 					summary.append(tResult).append(": ").append(specificResults.size())
-							.append(de.uni_freiburg.informatik.ultimate.core.util.Util.getPlatformLineSeparator());
+							.append(CoreUtil.getPlatformLineSeparator());
 
 					if (specificResults.isEmpty()) {
 						continue;
@@ -97,20 +99,23 @@ public class SVCOMP15TestSummary extends NewTestSummary {
 
 					sb.append("===== ");
 					sb.append(tResult);
-					sb.append(" =====").append(de.uni_freiburg.informatik.ultimate.core.util.Util.getPlatformLineSeparator());
+					sb.append(" =====").append(
+							CoreUtil.getPlatformLineSeparator());
 
-					Set<String> resultCategories = de.uni_freiburg.informatik.ultimate.core.util.Util.selectDistinct(specificResults, new IMyReduce<String>() {
-						@Override
-						public String reduce(Entry<UltimateRunDefinition, ExtendedResult> entry) {
-							return entry.getValue().Category;
-						}
-					});
+					Set<String> resultCategories = CoreUtil.selectDistinct(
+							specificResults, new IMyReduce<String>() {
+								@Override
+								public String reduce(Entry<UltimateRunDefinition, ExtendedResult> entry) {
+									return entry.getValue().Category;
+								}
+							});
 
 					for (final String resultCategory : resultCategories) {
 						// group by result category
-						sb.append(indent).append(resultCategory).append(de.uni_freiburg.informatik.ultimate.core.util.Util.getPlatformLineSeparator());
-						Collection<Entry<UltimateRunDefinition, ExtendedResult>> resultsByCategory = de.uni_freiburg.informatik.ultimate.core.util.Util.where(
-								results, new ITestSummaryResultPredicate() {
+						sb.append(indent).append(resultCategory)
+								.append(CoreUtil.getPlatformLineSeparator());
+						Collection<Entry<UltimateRunDefinition, ExtendedResult>> resultsByCategory = CoreUtil
+								.where(results, new ITestSummaryResultPredicate() {
 									@Override
 									public boolean check(Entry<UltimateRunDefinition, ExtendedResult> entry) {
 										return entry.getValue().Category.equals(resultCategory);
@@ -123,25 +128,31 @@ public class SVCOMP15TestSummary extends NewTestSummary {
 							sb.append(entry.getKey().getInput().getParentFile().getName());
 							sb.append(File.separator);
 							sb.append(entry.getKey().getInput().getName());
-							sb.append(de.uni_freiburg.informatik.ultimate.core.util.Util.getPlatformLineSeparator());
+							sb.append(CoreUtil.getPlatformLineSeparator());
 
 							// message
-							sb.append(indent).append(indent).append(indent).append(entry.getValue().Message)
-									.append(de.uni_freiburg.informatik.ultimate.core.util.Util.getPlatformLineSeparator());
+							sb.append(indent)
+									.append(indent)
+									.append(indent)
+									.append(entry.getValue().Message)
+									.append(CoreUtil
+											.getPlatformLineSeparator());
 
 						}
 
 						sb.append(indent).append("Total: ").append(resultsByCategory.size())
-								.append(de.uni_freiburg.informatik.ultimate.core.util.Util.getPlatformLineSeparator());
-						sb.append(de.uni_freiburg.informatik.ultimate.core.util.Util.getPlatformLineSeparator());
+								.append(CoreUtil.getPlatformLineSeparator());
+						sb.append(CoreUtil.getPlatformLineSeparator());
 					}
-					sb.append(de.uni_freiburg.informatik.ultimate.core.util.Util.getPlatformLineSeparator());
+					sb.append(CoreUtil.getPlatformLineSeparator());
 				}
 
-				sb.append("===== TOTAL =====").append(de.uni_freiburg.informatik.ultimate.core.util.Util.getPlatformLineSeparator());
+				sb.append("===== TOTAL =====").append(
+						CoreUtil.getPlatformLineSeparator());
 				sb.append(summary.toString());
-				sb.append("All: ").append(totalCount).append(de.uni_freiburg.informatik.ultimate.core.util.Util.getPlatformLineSeparator());
-				sb.append(de.uni_freiburg.informatik.ultimate.core.util.Util.getPlatformLineSeparator());
+				sb.append("All: ").append(totalCount)
+						.append(CoreUtil.getPlatformLineSeparator());
+				sb.append(CoreUtil.getPlatformLineSeparator());
 			}
 
 		}
@@ -168,22 +179,25 @@ public class SVCOMP15TestSummary extends NewTestSummary {
 			}
 		});
 
-		sb.append("################# Reasons for !SUCCESS #################").append(de.uni_freiburg.informatik.ultimate.core.util.Util.getPlatformLineSeparator());
+		sb.append("################# Reasons for !SUCCESS #################").append(
+				CoreUtil.getPlatformLineSeparator());
 		for (Entry<String, Integer> entry : nemesis) {
-			sb.append(entry.getValue()).append(indent).append(entry.getKey()).append(de.uni_freiburg.informatik.ultimate.core.util.Util.getPlatformLineSeparator());
+			sb.append(entry.getValue()).append(indent).append(entry.getKey())
+					.append(CoreUtil.getPlatformLineSeparator());
 		}
-		sb.append(de.uni_freiburg.informatik.ultimate.core.util.Util.getPlatformLineSeparator());
+		sb.append(CoreUtil.getPlatformLineSeparator());
 
-		sb.append("################# Total Comparison #################").append(de.uni_freiburg.informatik.ultimate.core.util.Util.getPlatformLineSeparator());
+		sb.append("################# Total Comparison #################").append(
+				CoreUtil.getPlatformLineSeparator());
 		sb.append("Toolchain").append(indent);
 		sb.append("Settings").append(indent);
 		sb.append("Success").append(indent);
 		sb.append("Unknown").append(indent);
 		sb.append("Fail").append(indent);
-		sb.append(de.uni_freiburg.informatik.ultimate.core.util.Util.getPlatformLineSeparator());
+		sb.append(CoreUtil.getPlatformLineSeparator());
 		for (final TCS toolchainAndSettings : tcs) {
-			Collection<Entry<UltimateRunDefinition, ExtendedResult>> specificResults = de.uni_freiburg.informatik.ultimate.core.util.Util.where(mResults.entrySet(),
-					new ITestSummaryResultPredicate() {
+			Collection<Entry<UltimateRunDefinition, ExtendedResult>> specificResults = CoreUtil
+					.where(mResults.entrySet(), new ITestSummaryResultPredicate() {
 						@Override
 						public boolean check(Entry<UltimateRunDefinition, ExtendedResult> entry) {
 							return entry.getKey().getToolchain().equals(toolchainAndSettings.Toolchain)
@@ -193,9 +207,9 @@ public class SVCOMP15TestSummary extends NewTestSummary {
 			appendComparison(sb, indent, toolchainAndSettings, specificResults);
 		}
 
-		sb.append(de.uni_freiburg.informatik.ultimate.core.util.Util.getPlatformLineSeparator());
+		sb.append(CoreUtil.getPlatformLineSeparator());
 		sb.append("################# Comparison by SVCOMP Category #################").append(
-				de.uni_freiburg.informatik.ultimate.core.util.Util.getPlatformLineSeparator());
+				CoreUtil.getPlatformLineSeparator());
 
 		sb.append("SVCOMP-Cat.").append(indent);
 		sb.append("Toolchain").append(indent);
@@ -203,11 +217,11 @@ public class SVCOMP15TestSummary extends NewTestSummary {
 		sb.append("Success").append(indent);
 		sb.append("Unknown").append(indent);
 		sb.append("Fail").append(indent);
-		sb.append(de.uni_freiburg.informatik.ultimate.core.util.Util.getPlatformLineSeparator());
+		sb.append(CoreUtil.getPlatformLineSeparator());
 		for (final TCS toolchainAndSettings : tcs) {
 			for (final String svcompCategory : svcompCategories) {
-				Collection<Entry<UltimateRunDefinition, ExtendedResult>> specificResults = de.uni_freiburg.informatik.ultimate.core.util.Util.where(
-						mResults.entrySet(), new ITestSummaryResultPredicate() {
+				Collection<Entry<UltimateRunDefinition, ExtendedResult>> specificResults = CoreUtil
+						.where(mResults.entrySet(), new ITestSummaryResultPredicate() {
 							@Override
 							public boolean check(Entry<UltimateRunDefinition, ExtendedResult> entry) {
 								return entry.getKey().getToolchain().equals(toolchainAndSettings.Toolchain)
@@ -227,26 +241,29 @@ public class SVCOMP15TestSummary extends NewTestSummary {
 	private void appendComparison(StringBuilder sb, String indent, final TCS toolchainAndSettings,
 			Collection<Entry<UltimateRunDefinition, ExtendedResult>> specificResults) {
 
-		int success = de.uni_freiburg.informatik.ultimate.core.util.Util.where(specificResults, new ITestSummaryResultPredicate() {
-			@Override
-			public boolean check(Entry<UltimateRunDefinition, ExtendedResult> entry) {
-				return entry.getValue().Result.equals(TestResult.SUCCESS);
-			}
-		}).size();
+		int success = CoreUtil.where(specificResults,
+				new ITestSummaryResultPredicate() {
+					@Override
+					public boolean check(Entry<UltimateRunDefinition, ExtendedResult> entry) {
+						return entry.getValue().Result.equals(TestResult.SUCCESS);
+					}
+				}).size();
 
-		int unknown = de.uni_freiburg.informatik.ultimate.core.util.Util.where(specificResults, new ITestSummaryResultPredicate() {
-			@Override
-			public boolean check(Entry<UltimateRunDefinition, ExtendedResult> entry) {
-				return entry.getValue().Result.equals(TestResult.UNKNOWN);
-			}
-		}).size();
+		int unknown = CoreUtil.where(specificResults,
+				new ITestSummaryResultPredicate() {
+					@Override
+					public boolean check(Entry<UltimateRunDefinition, ExtendedResult> entry) {
+						return entry.getValue().Result.equals(TestResult.UNKNOWN);
+					}
+				}).size();
 
-		int fail = de.uni_freiburg.informatik.ultimate.core.util.Util.where(specificResults, new ITestSummaryResultPredicate() {
-			@Override
-			public boolean check(Entry<UltimateRunDefinition, ExtendedResult> entry) {
-				return entry.getValue().Result.equals(TestResult.FAIL);
-			}
-		}).size();
+		int fail = CoreUtil.where(specificResults,
+				new ITestSummaryResultPredicate() {
+					@Override
+					public boolean check(Entry<UltimateRunDefinition, ExtendedResult> entry) {
+						return entry.getValue().Result.equals(TestResult.FAIL);
+					}
+				}).size();
 
 		sb.append(toolchainAndSettings.Toolchain.getName());
 		sb.append(indent);
@@ -257,7 +274,7 @@ public class SVCOMP15TestSummary extends NewTestSummary {
 		sb.append(unknown);
 		sb.append(indent);
 		sb.append(fail);
-		sb.append(de.uni_freiburg.informatik.ultimate.core.util.Util.getPlatformLineSeparator());
+		sb.append(CoreUtil.getPlatformLineSeparator());
 	}
 
 }

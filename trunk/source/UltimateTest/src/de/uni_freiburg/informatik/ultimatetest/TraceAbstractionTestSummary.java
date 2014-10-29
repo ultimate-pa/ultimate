@@ -47,7 +47,7 @@ public class TraceAbstractionTestSummary extends NewTestSummary {
 
 		if (resultService != null) {
 			addTraceAbstractionBenchmarks(ultimateRunDefinition,
-					de.uni_freiburg.informatik.ultimate.core.util.Util.filterResults(resultService.getResults(), BenchmarkResult.class));
+					de.uni_freiburg.informatik.ultimate.core.util.CoreUtil.filterResults(resultService.getResults(), BenchmarkResult.class));
 		}
 
 	}
@@ -66,7 +66,7 @@ public class TraceAbstractionTestSummary extends NewTestSummary {
 		mCount = 0;
 
 		sb.append("################# ").append("Trace Abstraction Test Summary").append(" #################")
-				.append(de.uni_freiburg.informatik.ultimate.core.util.Util.getPlatformLineSeparator());
+				.append(de.uni_freiburg.informatik.ultimate.core.util.CoreUtil.getPlatformLineSeparator());
 
 		PartitionedResults results = partitionResults(mResults.entrySet());
 
@@ -81,12 +81,12 @@ public class TraceAbstractionTestSummary extends NewTestSummary {
 		sb.append(getSummaryLog(results.Failure, "FAILED TESTS"));
 		int fail = mCount;
 		total = total + mCount;
-		sb.append(de.uni_freiburg.informatik.ultimate.core.util.Util.getPlatformLineSeparator());
+		sb.append(de.uni_freiburg.informatik.ultimate.core.util.CoreUtil.getPlatformLineSeparator());
 		sb.append("====== SUMMARY for ").append("Trace Abstraction").append(" ======")
-				.append(de.uni_freiburg.informatik.ultimate.core.util.Util.getPlatformLineSeparator());
-		sb.append("Success:\t" + success).append(de.uni_freiburg.informatik.ultimate.core.util.Util.getPlatformLineSeparator());
-		sb.append("Unknown:\t" + unknown).append(de.uni_freiburg.informatik.ultimate.core.util.Util.getPlatformLineSeparator());
-		sb.append("Failures:\t" + fail).append(de.uni_freiburg.informatik.ultimate.core.util.Util.getPlatformLineSeparator());
+				.append(de.uni_freiburg.informatik.ultimate.core.util.CoreUtil.getPlatformLineSeparator());
+		sb.append("Success:\t" + success).append(de.uni_freiburg.informatik.ultimate.core.util.CoreUtil.getPlatformLineSeparator());
+		sb.append("Unknown:\t" + unknown).append(de.uni_freiburg.informatik.ultimate.core.util.CoreUtil.getPlatformLineSeparator());
+		sb.append("Failures:\t" + fail).append(de.uni_freiburg.informatik.ultimate.core.util.CoreUtil.getPlatformLineSeparator());
 		sb.append("Total:\t\t" + total);
 		return sb.toString();
 
@@ -94,7 +94,7 @@ public class TraceAbstractionTestSummary extends NewTestSummary {
 
 	private String getSummaryLog(Collection<Entry<UltimateRunDefinition, ExtendedResult>> results, String title) {
 		StringBuilder sb = new StringBuilder();
-		sb.append("====== ").append(title).append(" =====").append(de.uni_freiburg.informatik.ultimate.core.util.Util.getPlatformLineSeparator());
+		sb.append("====== ").append(title).append(" =====").append(de.uni_freiburg.informatik.ultimate.core.util.CoreUtil.getPlatformLineSeparator());
 
 		// group by category
 		HashMap<String, Collection<Entry<UltimateRunDefinition, ExtendedResult>>> resultsByCategory = new HashMap<>();
@@ -110,15 +110,15 @@ public class TraceAbstractionTestSummary extends NewTestSummary {
 
 		for (Entry<String, Collection<Entry<UltimateRunDefinition, ExtendedResult>>> entry : resultsByCategory
 				.entrySet()) {
-			sb.append("\t").append(entry.getKey()).append(de.uni_freiburg.informatik.ultimate.core.util.Util.getPlatformLineSeparator());
+			sb.append("\t").append(entry.getKey()).append(de.uni_freiburg.informatik.ultimate.core.util.CoreUtil.getPlatformLineSeparator());
 
 			String indent = "\t\t\t";
 			for (Entry<UltimateRunDefinition, ExtendedResult> currentResult : entry.getValue()) {
-				sb.append("\t\t").append(currentResult.getKey()).append(de.uni_freiburg.informatik.ultimate.core.util.Util.getPlatformLineSeparator());
+				sb.append("\t\t").append(currentResult.getKey()).append(de.uni_freiburg.informatik.ultimate.core.util.CoreUtil.getPlatformLineSeparator());
 				// Add TraceAbstraction benchmarks
 				Collection<BenchmarkResult> benchmarks = m_TraceAbstractionBenchmarks.get(currentResult.getKey());
 				if (benchmarks == null) {
-					sb.append(indent).append("No benchmark results available.").append(de.uni_freiburg.informatik.ultimate.core.util.Util.getPlatformLineSeparator());
+					sb.append(indent).append("No benchmark results available.").append(de.uni_freiburg.informatik.ultimate.core.util.CoreUtil.getPlatformLineSeparator());
 				} else {
 					for (BenchmarkResult<Object> benchmark : benchmarks) {
 						//exclude the extensive ultimate benchmark object
@@ -130,8 +130,8 @@ public class TraceAbstractionTestSummary extends NewTestSummary {
 			}
 
 			sb.append("\tCount for ").append(entry.getKey()).append(": ").append(entry.getValue().size())
-					.append(de.uni_freiburg.informatik.ultimate.core.util.Util.getPlatformLineSeparator());
-			sb.append("\t--------").append(de.uni_freiburg.informatik.ultimate.core.util.Util.getPlatformLineSeparator());
+					.append(de.uni_freiburg.informatik.ultimate.core.util.CoreUtil.getPlatformLineSeparator());
+			sb.append("\t--------").append(de.uni_freiburg.informatik.ultimate.core.util.CoreUtil.getPlatformLineSeparator());
 			mCount = mCount + entry.getValue().size();
 		}
 		sb.append("Count: ").append(mCount);
@@ -151,7 +151,7 @@ public class TraceAbstractionTestSummary extends NewTestSummary {
 			sb.append(s);
 			sb.append(", ");
 		}
-		sb.append(de.uni_freiburg.informatik.ultimate.core.util.Util.getPlatformLineSeparator());
+		sb.append(de.uni_freiburg.informatik.ultimate.core.util.CoreUtil.getPlatformLineSeparator());
 
 		if (provider.getTable() == null || provider.getTable().size() == 0) {
 			sb.append(ident);
@@ -172,7 +172,7 @@ public class TraceAbstractionTestSummary extends NewTestSummary {
 				sb.append(cell);
 				sb.append(", ");
 			}
-			sb.append(de.uni_freiburg.informatik.ultimate.core.util.Util.getPlatformLineSeparator());
+			sb.append(de.uni_freiburg.informatik.ultimate.core.util.CoreUtil.getPlatformLineSeparator());
 			i++;
 		}
 	}

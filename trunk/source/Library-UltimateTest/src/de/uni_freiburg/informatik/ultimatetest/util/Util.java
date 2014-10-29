@@ -132,7 +132,7 @@ public class Util {
 	 * Returns only the name of the file without directories.
 	 */
 	private static String generateLogfilename(ITestLogfile testSummary) {
-		String filename = testSummary.getDescriptiveLogName() + " " + de.uni_freiburg.informatik.ultimate.core.util.Util.getCurrentDateTimeAsString()
+		String filename = testSummary.getDescriptiveLogName() + " " + de.uni_freiburg.informatik.ultimate.core.util.CoreUtil.getCurrentDateTimeAsString()
 				+ testSummary.getFilenameExtension();
 		return filename;
 	}
@@ -154,7 +154,7 @@ public class Util {
 		} else {
 			dir = f.getParent() + File.separator;
 		}
-		String name = "UltimateTest Summary " + description + de.uni_freiburg.informatik.ultimate.core.util.Util.getCurrentDateTimeAsString() + ".log";
+		String name = "UltimateTest Summary " + description + de.uni_freiburg.informatik.ultimate.core.util.CoreUtil.getCurrentDateTimeAsString() + ".log";
 
 		return dir + name;
 	}
@@ -460,7 +460,7 @@ public class Util {
 	@SuppressWarnings("rawtypes")
 	public static <E extends ICsvProviderProvider<?>> Collection<E> getCsvProviderProviderFromUltimateResults(
 			Map<String, List<IResult>> ultimateIResults, Class<E> benchmarkClass) {
-		Collection<BenchmarkResult> benchmarks = de.uni_freiburg.informatik.ultimate.core.util.Util.filterResults(ultimateIResults, BenchmarkResult.class);
+		Collection<BenchmarkResult> benchmarks = de.uni_freiburg.informatik.ultimate.core.util.CoreUtil.filterResults(ultimateIResults, BenchmarkResult.class);
 		return getCsvProviderProviderFromBenchmarkResults(benchmarks, benchmarkClass);
 	}
 

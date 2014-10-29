@@ -1,6 +1,5 @@
 package de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences;
 
-import java.io.File;
 import java.util.Arrays;
 
 import org.eclipse.core.runtime.Platform;
@@ -81,16 +80,21 @@ public class CorePreferenceInitializer extends UltimatePreferenceInitializer {
 
 				// Witness generation
 				new UltimatePreferenceItem<String>(DESC_WITNESS, null, PreferenceType.Label),
-				new UltimatePreferenceItem<Boolean>(LABEL_GEN_WITNESS, VALUE_GEN_WITNESS, PreferenceType.Boolean),
-				new UltimatePreferenceItem<Boolean>(LABEL_WRITE_WITNESS, VALUE_WRITE_WITNESS, PreferenceType.Boolean),
-				new UltimatePreferenceItem<Boolean>(LABEL_VERIFY_WITNESS, VALUE_VERIFY_WITNESS, PreferenceType.Boolean,
+				new UltimatePreferenceItem<Boolean>(LABEL_WITNESS_GEN, VALUE_WITNESS_GEN, PreferenceType.Boolean),
+				new UltimatePreferenceItem<Boolean>(LABEL_WITNESS_LOG, VALUE_WITNESS_LOG, PreferenceType.Boolean),
+				new UltimatePreferenceItem<Boolean>(LABEL_WITNESS_WRITE, VALUE_WITNESS_WRITE, PreferenceType.Boolean),
+				new UltimatePreferenceItem<Boolean>(LABEL_WITNESS_VERIFY, VALUE_WITNESS_VERIFY, PreferenceType.Boolean,
 						new WitnessVerifierValidator()),
 				new UltimatePreferenceItem<WitnessVerifierType>(LABEL_WITNESS_VERIFIER, VALUE_WITNESS_VERIFIER,
 						PreferenceType.Combo, WitnessVerifierType.values()),
-				new UltimatePreferenceItem<String>(LABEL_WITNESS_VERIFIER_DIR, VALUE_WITNESS_VERIFIER_DIR,
+				new UltimatePreferenceItem<String>(LABEL_WITNESS_VERIFIER_COMMAND, VALUE_WITNESS_VERIFIER_COMMAND,
 						PreferenceType.String),
-				new UltimatePreferenceItem<Boolean>(LABEL_DELETE_GRAPHML, VALUE_DELETE_GRAPHML, PreferenceType.Boolean,
-						new WitnessVerifierValidator()),
+				new UltimatePreferenceItem<Integer>(LABEL_WITNESS_VERIFIER_TIMEOUT, VALUE_WITNESS_VERIFIER_TIMEOUT,
+						PreferenceType.Integer, new IUltimatePreferenceItemValidator.IntegerValidator(1, 1000000)),
+				new UltimatePreferenceItem<String>(LABEL_WITNESS_CPACHECKER_PROPERTY,
+						VALUE_WITNESS_CPACHECKER_PROPERTY, PreferenceType.String),
+				new UltimatePreferenceItem<Boolean>(LABEL_WITNESS_DELETE_GRAPHML, VALUE_WITNESS_DELETE_GRAPHML,
+						PreferenceType.Boolean, new WitnessVerifierValidator()),
 
 		// Log levels for external tools
 
@@ -99,20 +103,27 @@ public class CorePreferenceInitializer extends UltimatePreferenceInitializer {
 	}
 
 	public static final String DESC_WITNESS = "Witness generation";
-	public static final String LABEL_GEN_WITNESS = "Generate witness results for each counter example result";
-	public static final boolean VALUE_GEN_WITNESS = false;
-	public static final String LABEL_WRITE_WITNESS = "Write witness as \"<inputfilename>-witness.graphml\" "
+	public static final String LABEL_WITNESS_GEN = "Generate witness from each counter example result";
+	public static final boolean VALUE_WITNESS_GEN = false;
+	public static final String LABEL_WITNESS_LOG = "Log witness";
+	public static final boolean VALUE_WITNESS_LOG = false;
+	public static final String LABEL_WITNESS_WRITE = "Write witness as \"<inputfilename>-witness.graphml\" "
 			+ "in the same directory as the input file";
-	public static final boolean VALUE_WRITE_WITNESS = false;
-	public static final String LABEL_VERIFY_WITNESS = "Verify the witness and generate results";
-	public static final boolean VALUE_VERIFY_WITNESS = false;
+	public static final boolean VALUE_WITNESS_WRITE = false;
+	public static final String LABEL_WITNESS_VERIFY = "Verify the witness and generate results";
+	public static final boolean VALUE_WITNESS_VERIFY = false;
 	public static final String LABEL_WITNESS_VERIFIER = "Use the following witness verifier";
 	public static final WitnessVerifierType VALUE_WITNESS_VERIFIER = WitnessVerifierType.CPACHECKER;
-	public static final String LABEL_WITNESS_VERIFIER_DIR = "Command to execute witness verifier "
-			+ "(gets witness file as first and input file as second parameter)";
-	public static final String VALUE_WITNESS_VERIFIER_DIR = "";
-	public static final String LABEL_DELETE_GRAPHML = "Delete the .graphml file after verification";
-	public static final boolean VALUE_DELETE_GRAPHML = false;
+	public static final String LABEL_WITNESS_VERIFIER_COMMAND = "Command to execute witness verifier "
+			+ "(gets witness file as first and input file as second parameter)\n"
+			+ "For CPA Checker: Additionally, set CPACHECKER_HOME";
+	public static final String VALUE_WITNESS_VERIFIER_COMMAND = "";
+	public static final String LABEL_WITNESS_CPACHECKER_PROPERTY = "For CPAChecker: Use this .prp file (may be relative to CPACHECKER_HOME)";
+	public static final String VALUE_WITNESS_CPACHECKER_PROPERTY = "";
+	public static final String LABEL_WITNESS_VERIFIER_TIMEOUT = "Timeout in seconds for witness verifier";
+	public static final int VALUE_WITNESS_VERIFIER_TIMEOUT = 10;
+	public static final String LABEL_WITNESS_DELETE_GRAPHML = "Delete the .graphml file after verification";
+	public static final boolean VALUE_WITNESS_DELETE_GRAPHML = false;
 
 	public enum WitnessVerifierType {
 		CPACHECKER
@@ -261,7 +272,7 @@ public class CorePreferenceInitializer extends UltimatePreferenceInitializer {
 		public boolean isValid(Boolean value) {
 			if (value) {
 				UltimatePreferenceStore ups = new UltimatePreferenceStore(Activator.s_PLUGIN_ID);
-				return ups.getBoolean(LABEL_GEN_WITNESS) && ups.getBoolean(LABEL_WRITE_WITNESS);
+				return ups.getBoolean(LABEL_WITNESS_GEN) && ups.getBoolean(LABEL_WITNESS_WRITE);
 			} else {
 				return true;
 			}

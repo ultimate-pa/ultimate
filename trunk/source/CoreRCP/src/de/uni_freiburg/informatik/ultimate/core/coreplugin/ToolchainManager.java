@@ -13,7 +13,7 @@ import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.preferences.InstanceScope;
 
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.ToolchainWalker.CompleteToolchainData;
-import de.uni_freiburg.informatik.ultimate.core.coreplugin.cexverifier.CexVerifier;
+import de.uni_freiburg.informatik.ultimate.core.coreplugin.cexverifier.WitnessManager;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences.CorePreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.PluginType;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.SubchainType;
@@ -217,8 +217,8 @@ public class ToolchainManager {
 		@Override
 		public IStatus processToolchain(IProgressMonitor monitor) throws Throwable {
 			mLogger.info("####################### " + getLogPrefix() + " #######################");
-			boolean useBenchmark = new UltimatePreferenceStore(Activator.s_PLUGIN_ID)
-					.getBoolean(CorePreferenceInitializer.LABEL_BENCHMARK);
+			UltimatePreferenceStore ups = new UltimatePreferenceStore(Activator.s_PLUGIN_ID);
+			boolean useBenchmark = ups.getBoolean(CorePreferenceInitializer.LABEL_BENCHMARK);
 			Benchmark bench = null;
 			if (useBenchmark) {
 				bench = new Benchmark();
@@ -234,8 +234,10 @@ public class ToolchainManager {
 						mCurrentController);
 
 				mToolchainWalker.walk(data, mToolchainData.getServices().getProgressMonitorService(), monitor);
-				CexVerifier cexVerifier = new CexVerifier(mLogger, mToolchainData.getServices());
-				cexVerifier.verify();
+				if (ups.getBoolean(CorePreferenceInitializer.LABEL_WITNESS_GEN)) {
+					WitnessManager cexVerifier = new WitnessManager(mLogger, mToolchainData.getServices(),mToolchainData.getStorage());
+					cexVerifier.run();
+				}
 
 			} finally {
 				if (useBenchmark) {

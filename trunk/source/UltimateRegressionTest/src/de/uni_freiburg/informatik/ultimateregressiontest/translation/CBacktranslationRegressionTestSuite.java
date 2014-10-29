@@ -13,7 +13,7 @@ public class CBacktranslationRegressionTestSuite extends AbstractRegressionTestS
 
 	public CBacktranslationRegressionTestSuite() {
 		super();
-		mTimeout = 5000;
+		mTimeout = 10 * 1000;
 		mRootFolder = sRootFolder;
 		mFiletypesToConsider = new String[] { sFileending };
 	}

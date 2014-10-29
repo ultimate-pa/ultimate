@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.core.util;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -49,12 +50,36 @@ public final class MonitoredProcess implements IStorable {
 		return !mProcessCompleted;
 	}
 
-	public int waitfor() throws InterruptedException {
+	public MonitoredProcessState waitfor() throws InterruptedException {
 		if (mMonitor.getState().equals(State.TERMINATED)) {
-			return mReturnCode;
+			return new MonitoredProcessState(false, mReturnCode);
 		}
 		mMonitor.join();
-		return mReturnCode;
+		if (mMonitor.getState().equals(State.TERMINATED)) {
+			return new MonitoredProcessState(false, mReturnCode);
+		} else {
+			return new MonitoredProcessState(true, mReturnCode);
+		}
+	}
+
+	/**
+	 * 
+	 * @param millis
+	 * @return -1 iff the process is still running, the return code of the
+	 *         thread otherwise
+	 * @throws InterruptedException
+	 */
+	public MonitoredProcessState waitfor(long millis) throws InterruptedException {
+		if (mMonitor.getState().equals(State.TERMINATED)) {
+			return new MonitoredProcessState(false, mReturnCode);
+		}
+		mMonitor.join(millis);
+		if (mMonitor.getState().equals(State.TERMINATED)) {
+			return new MonitoredProcessState(false, mReturnCode);
+		} else {
+			return new MonitoredProcessState(true, mReturnCode);
+		}
+
 	}
 
 	/**
@@ -63,10 +88,15 @@ public final class MonitoredProcess implements IStorable {
 	 * @return
 	 * @throws IOException
 	 */
-	public static MonitoredProcess exec(String command, String exitCommand, IUltimateServiceProvider services,
-			IToolchainStorage storage) throws IOException {
-		final MonitoredProcess mp = new MonitoredProcess(Runtime.getRuntime().exec(command), command, exitCommand,
-				services, storage);
+	public static MonitoredProcess exec(String command, String workingDir, String exitCommand,
+			IUltimateServiceProvider services, IToolchainStorage storage) throws IOException {
+		final MonitoredProcess mp;
+		if (workingDir != null) {
+			mp = new MonitoredProcess(Runtime.getRuntime().exec(command, null, new File(workingDir)), command,
+					exitCommand, services, storage);
+		} else {
+			mp = new MonitoredProcess(Runtime.getRuntime().exec(command), command, exitCommand, services, storage);
+		}
 
 		mp.mID = sInstanceCounter.incrementAndGet();
 		storage.putStorable(getKey(mp.mID, command), mp);
@@ -76,6 +106,21 @@ public final class MonitoredProcess implements IStorable {
 				mp.mExitCommand));
 		mp.mMonitor.start();
 		return mp;
+	}
+
+	/**
+	 * Execute a command as process. The process will be cleaned when the
+	 * toolchain ends.
+	 * 
+	 * @param command
+	 * @param services
+	 * @param storage
+	 * @return
+	 * @throws IOException
+	 */
+	public static MonitoredProcess exec(String command, String exitCommand, IUltimateServiceProvider services,
+			IToolchainStorage storage) throws IOException {
+		return exec(command, null, exitCommand, services, storage);
 	}
 
 	public static MonitoredProcess exec(String command, IUltimateServiceProvider services, IToolchainStorage storage)
@@ -147,6 +192,24 @@ public final class MonitoredProcess implements IStorable {
 
 	private ProcessRunner createProcessRunner() {
 		return new ProcessRunner(this);
+	}
+
+	public class MonitoredProcessState {
+		private final boolean mIsRunning;
+		private final int mReturnCode;
+
+		public MonitoredProcessState(boolean isRunning, int returnCode) {
+			mIsRunning = isRunning;
+			mReturnCode = returnCode;
+		}
+
+		public boolean isRunning() {
+			return mIsRunning;
+		}
+
+		public int getReturnCode() {
+			return mReturnCode;
+		}
 	}
 
 	private class ProcessRunner implements Runnable {

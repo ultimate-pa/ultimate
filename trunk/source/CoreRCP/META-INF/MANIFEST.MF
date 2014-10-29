@@ -9,7 +9,8 @@ Require-Bundle: org.eclipse.core.runtime;bundle-version="3.7.0";visibility:=reex
  Library-SMTLIB,
  Library-UltimateUtil,
  Library-log4j,
- ASTBuilder
+ ASTBuilder,
+ Library-ApacheCommonsLang
 Bundle-ActivationPolicy: lazy
 Export-Package: de.uni_freiburg.informatik.ultimate.access,
  de.uni_freiburg.informatik.ultimate.access.walker,

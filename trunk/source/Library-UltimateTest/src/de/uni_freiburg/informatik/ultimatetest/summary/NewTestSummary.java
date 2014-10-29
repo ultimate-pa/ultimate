@@ -7,8 +7,8 @@ import java.util.LinkedHashSet;
 import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.core.services.IResultService;
-import de.uni_freiburg.informatik.ultimate.core.util.Util.IPredicate;
-import de.uni_freiburg.informatik.ultimate.core.util.Util.IReduce;
+import de.uni_freiburg.informatik.ultimate.core.util.CoreUtil.IPredicate;
+import de.uni_freiburg.informatik.ultimate.core.util.CoreUtil.IReduce;
 import de.uni_freiburg.informatik.ultimatetest.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestSuite;
 import de.uni_freiburg.informatik.ultimatetest.decider.ITestResultDecider.TestResult;
@@ -115,7 +115,7 @@ public abstract class NewTestSummary implements ITestSummary {
 
 	protected PartitionedResults partitionResults(Collection<Entry<UltimateRunDefinition, ExtendedResult>> all) {
 		final LinkedHashSet<Entry<UltimateRunDefinition, ExtendedResult>> goodResults = new LinkedHashSet<>();
-		goodResults.addAll(de.uni_freiburg.informatik.ultimate.core.util.Util.where(all, new ITestSummaryResultPredicate() {
+		goodResults.addAll(de.uni_freiburg.informatik.ultimate.core.util.CoreUtil.where(all, new ITestSummaryResultPredicate() {
 			@Override
 			public boolean check(Entry<UltimateRunDefinition, ExtendedResult> entry) {
 				return entry.getValue().Result == TestResult.SUCCESS;
@@ -123,14 +123,14 @@ public abstract class NewTestSummary implements ITestSummary {
 		}));
 
 		final LinkedHashSet<Entry<UltimateRunDefinition, ExtendedResult>> timeoutResults = new LinkedHashSet<>();
-		timeoutResults.addAll(de.uni_freiburg.informatik.ultimate.core.util.Util.where(all, new ITestSummaryResultPredicate() {
+		timeoutResults.addAll(de.uni_freiburg.informatik.ultimate.core.util.CoreUtil.where(all, new ITestSummaryResultPredicate() {
 			@Override
 			public boolean check(Entry<UltimateRunDefinition, ExtendedResult> entry) {
 				return (entry.getValue().Result == TestResult.UNKNOWN && entry.getValue().Message.toLowerCase()
 						.contains("timeout"));
 			}
 		}));
-		Collection<Entry<UltimateRunDefinition, ExtendedResult>> errorResults = de.uni_freiburg.informatik.ultimate.core.util.Util.where(all,
+		Collection<Entry<UltimateRunDefinition, ExtendedResult>> errorResults = de.uni_freiburg.informatik.ultimate.core.util.CoreUtil.where(all,
 				new ITestSummaryResultPredicate() {
 					@Override
 					public boolean check(Entry<UltimateRunDefinition, ExtendedResult> entry) {
@@ -139,14 +139,14 @@ public abstract class NewTestSummary implements ITestSummary {
 				});
 
 		final LinkedHashSet<Entry<UltimateRunDefinition, ExtendedResult>> unsafeResults = new LinkedHashSet<>();
-		unsafeResults.addAll(de.uni_freiburg.informatik.ultimate.core.util.Util.where(goodResults, new ITestSummaryResultPredicate() {
+		unsafeResults.addAll(de.uni_freiburg.informatik.ultimate.core.util.CoreUtil.where(goodResults, new ITestSummaryResultPredicate() {
 			@Override
 			public boolean check(Entry<UltimateRunDefinition, ExtendedResult> entry) {
 				return entry.getValue().Message.contains("UNSAFE");
 			}
 		}));
 
-		Collection<Entry<UltimateRunDefinition, ExtendedResult>> safeResults = de.uni_freiburg.informatik.ultimate.core.util.Util.where(goodResults,
+		Collection<Entry<UltimateRunDefinition, ExtendedResult>> safeResults = de.uni_freiburg.informatik.ultimate.core.util.CoreUtil.where(goodResults,
 				new ITestSummaryResultPredicate() {
 					@Override
 					public boolean check(Entry<UltimateRunDefinition, ExtendedResult> entry) {
@@ -174,21 +174,21 @@ public abstract class NewTestSummary implements ITestSummary {
 		rtr.ExpectedSafe = expectedSafe;
 		rtr.ExpectedUnsafe = expectedUnsafe;
 
-		rtr.Success = de.uni_freiburg.informatik.ultimate.core.util.Util.where(all, new ITestSummaryResultPredicate() {
+		rtr.Success = de.uni_freiburg.informatik.ultimate.core.util.CoreUtil.where(all, new ITestSummaryResultPredicate() {
 			@Override
 			public boolean check(Entry<UltimateRunDefinition, ExtendedResult> entry) {
 				return entry.getValue().Result == TestResult.SUCCESS;
 			}
 		});
 
-		rtr.Unknown = de.uni_freiburg.informatik.ultimate.core.util.Util.where(all, new ITestSummaryResultPredicate() {
+		rtr.Unknown = de.uni_freiburg.informatik.ultimate.core.util.CoreUtil.where(all, new ITestSummaryResultPredicate() {
 			@Override
 			public boolean check(Entry<UltimateRunDefinition, ExtendedResult> entry) {
 				return entry.getValue().Result == TestResult.UNKNOWN;
 			}
 		});
 
-		rtr.Failure = de.uni_freiburg.informatik.ultimate.core.util.Util.where(all, new ITestSummaryResultPredicate() {
+		rtr.Failure = de.uni_freiburg.informatik.ultimate.core.util.CoreUtil.where(all, new ITestSummaryResultPredicate() {
 			@Override
 			public boolean check(Entry<UltimateRunDefinition, ExtendedResult> entry) {
 				return entry.getValue().Result == TestResult.FAIL;
@@ -218,26 +218,26 @@ public abstract class NewTestSummary implements ITestSummary {
 		public String toString() {
 			StringBuilder sb = new StringBuilder();
 			sb.append("Safe: ").append(Safe.size());
-			sb.append(de.uni_freiburg.informatik.ultimate.core.util.Util.getPlatformLineSeparator());
+			sb.append(de.uni_freiburg.informatik.ultimate.core.util.CoreUtil.getPlatformLineSeparator());
 			sb.append("Unsafe: ").append(Unsafe.size());
-			sb.append(de.uni_freiburg.informatik.ultimate.core.util.Util.getPlatformLineSeparator());
+			sb.append(de.uni_freiburg.informatik.ultimate.core.util.CoreUtil.getPlatformLineSeparator());
 			sb.append("Timeout: ").append(Timeout.size());
-			sb.append(de.uni_freiburg.informatik.ultimate.core.util.Util.getPlatformLineSeparator());
+			sb.append(de.uni_freiburg.informatik.ultimate.core.util.CoreUtil.getPlatformLineSeparator());
 			sb.append("Error: ").append(Error.size());
-			sb.append(de.uni_freiburg.informatik.ultimate.core.util.Util.getPlatformLineSeparator());
+			sb.append(de.uni_freiburg.informatik.ultimate.core.util.CoreUtil.getPlatformLineSeparator());
 			sb.append("Expected Safe: ").append(ExpectedSafe);
-			sb.append(de.uni_freiburg.informatik.ultimate.core.util.Util.getPlatformLineSeparator());
+			sb.append(de.uni_freiburg.informatik.ultimate.core.util.CoreUtil.getPlatformLineSeparator());
 			sb.append("Expected Unsafe: ").append(ExpectedUnsafe);
-			sb.append(de.uni_freiburg.informatik.ultimate.core.util.Util.getPlatformLineSeparator());
+			sb.append(de.uni_freiburg.informatik.ultimate.core.util.CoreUtil.getPlatformLineSeparator());
 			sb.append("Total: ").append(All.size());
 			return sb.toString();
 		}
 	}
 
-	protected interface IMyReduce<T> extends de.uni_freiburg.informatik.ultimate.core.util.Util.IReduce<T, Entry<UltimateRunDefinition, ExtendedResult>> {
+	protected interface IMyReduce<T> extends de.uni_freiburg.informatik.ultimate.core.util.CoreUtil.IReduce<T, Entry<UltimateRunDefinition, ExtendedResult>> {
 	}
 
-	protected interface ITestSummaryResultPredicate extends de.uni_freiburg.informatik.ultimate.core.util.Util.IPredicate<Entry<UltimateRunDefinition, ExtendedResult>> {
+	protected interface ITestSummaryResultPredicate extends de.uni_freiburg.informatik.ultimate.core.util.CoreUtil.IPredicate<Entry<UltimateRunDefinition, ExtendedResult>> {
 	}
 
 }

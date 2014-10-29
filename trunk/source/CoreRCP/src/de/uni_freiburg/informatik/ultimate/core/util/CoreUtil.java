@@ -23,9 +23,9 @@ import de.uni_freiburg.informatik.ultimate.result.IResult;
 /**
  * 
  * @author dietsch@informatik.uni-freiburg.de
- *
+ * 
  */
-public class Util {
+public class CoreUtil {
 
 	public interface IReduce<T, K> {
 		public T reduce(K entry);
@@ -40,23 +40,36 @@ public class Util {
 	}
 
 	private static String sPlatformLineSeparator = System.getProperty("line.separator");
-	
+
 	public static String getPlatformLineSeparator() {
 		return sPlatformLineSeparator;
 	}
 
-	public static void writeFile(String filename, String[] content) throws IOException {
-	
+	public static void writeFile(String filename, String content) throws IOException {
 		File outputFile = new File(filename);
 		outputFile.createNewFile();
-	
+
+		Writer out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(outputFile), "UTF-8"));
+		try {
+			out.write(content);
+		} finally {
+			out.close();
+		}
+
+	}
+
+	public static void writeFile(String filename, String[] content) throws IOException {
+
+		File outputFile = new File(filename);
+		outputFile.createNewFile();
+
 		Writer out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(outputFile), "UTF-8"));
 		try {
 			for (String s : content) {
 				out.write(s);
 				out.write(sPlatformLineSeparator);
 			}
-	
+
 		} finally {
 			out.close();
 		}
@@ -65,7 +78,7 @@ public class Util {
 	public static String readFile(String filename) throws IOException {
 		BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(new File(filename)), "UTF8"));
 		try {
-	
+
 			StringBuilder sb = new StringBuilder();
 			String line = br.readLine();
 			while (line != null) {
@@ -158,11 +171,11 @@ public class Util {
 		StringBuilder sb = new StringBuilder();
 		String lineSeparator = System.getProperty("line.separator");
 		String[] splitted = original.split("\\r?\\n");
-	
+
 		for (String s : splitted) {
 			sb.append(indentPrefix).append(s).append(lineSeparator);
 		}
-	
+
 		char last = original.charAt(original.length() - 1);
 		if (forceRemoveLastLinebreak || (last != '\n' && last != '\r')) {
 			sb.replace(sb.length() - lineSeparator.length(), sb.length(), "");

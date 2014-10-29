@@ -12,8 +12,8 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.services.IResultService;
-import de.uni_freiburg.informatik.ultimate.core.util.Util.IMapReduce;
-import de.uni_freiburg.informatik.ultimate.core.util.Util.IReduce;
+import de.uni_freiburg.informatik.ultimate.core.util.CoreUtil.IMapReduce;
+import de.uni_freiburg.informatik.ultimate.core.util.CoreUtil.IReduce;
 import de.uni_freiburg.informatik.ultimate.util.csv.CsvUtils;
 import de.uni_freiburg.informatik.ultimate.util.csv.CsvUtils.IExplicitConverter;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProvider;
@@ -50,7 +50,7 @@ public class TACAS2015Summary extends NewTestSummary {
 		mBenchmarks = benchmarks;
 		mCsvProvider = new LinkedHashMap<>();
 		mColumnDefinitions = Arrays.asList(columnDefinitions);
-		mLatexTableHeaderCount = de.uni_freiburg.informatik.ultimate.core.util.Util.reduce(mColumnDefinitions, new de.uni_freiburg.informatik.ultimate.core.util.Util.IMapReduce<Integer, ColumnDefinition>() {
+		mLatexTableHeaderCount = de.uni_freiburg.informatik.ultimate.core.util.CoreUtil.reduce(mColumnDefinitions, new de.uni_freiburg.informatik.ultimate.core.util.CoreUtil.IMapReduce<Integer, ColumnDefinition>() {
 			@Override
 			public Integer reduce(Integer lastValue, ColumnDefinition entry) {
 				if (lastValue == null) {
@@ -96,12 +96,12 @@ public class TACAS2015Summary extends NewTestSummary {
 		mCsvConversionGoneWrong = 0;
 
 		sb.append("################################# Summary #######################").append(
-				de.uni_freiburg.informatik.ultimate.core.util.Util.getPlatformLineSeparator());
+				de.uni_freiburg.informatik.ultimate.core.util.CoreUtil.getPlatformLineSeparator());
 		sb.append(results);
-		sb.append(de.uni_freiburg.informatik.ultimate.core.util.Util.getPlatformLineSeparator());
+		sb.append(de.uni_freiburg.informatik.ultimate.core.util.CoreUtil.getPlatformLineSeparator());
 		sb.append("CSV conversion gone wrong: ").append(mCsvConversionGoneWrong);
-		sb.append(de.uni_freiburg.informatik.ultimate.core.util.Util.getPlatformLineSeparator());
-		sb.append(de.uni_freiburg.informatik.ultimate.core.util.Util.getPlatformLineSeparator());
+		sb.append(de.uni_freiburg.informatik.ultimate.core.util.CoreUtil.getPlatformLineSeparator());
+		sb.append(de.uni_freiburg.informatik.ultimate.core.util.CoreUtil.getPlatformLineSeparator());
 
 		// sb.append("################################# HTML #######################").append(
 		// Util.getPlatformLineSeparator());
@@ -112,7 +112,7 @@ public class TACAS2015Summary extends NewTestSummary {
 		// sb.append(Util.getPlatformLineSeparator());
 
 		sb.append("################################# Latex #######################").append(
-				de.uni_freiburg.informatik.ultimate.core.util.Util.getPlatformLineSeparator());
+				de.uni_freiburg.informatik.ultimate.core.util.CoreUtil.getPlatformLineSeparator());
 
 		makeTables(sb, results);
 
@@ -121,14 +121,14 @@ public class TACAS2015Summary extends NewTestSummary {
 
 	private void makeTables(StringBuilder sb, PartitionedResults results) {
 
-		Set<String> tools = de.uni_freiburg.informatik.ultimate.core.util.Util.selectDistinct(results.All, new IMyReduce<String>() {
+		Set<String> tools = de.uni_freiburg.informatik.ultimate.core.util.CoreUtil.selectDistinct(results.All, new IMyReduce<String>() {
 			@Override
 			public String reduce(Entry<UltimateRunDefinition, ExtendedResult> entry) {
 				return entry.getKey().getToolchain().getName();
 			}
 		});
 
-		String br = de.uni_freiburg.informatik.ultimate.core.util.Util.getPlatformLineSeparator();
+		String br = de.uni_freiburg.informatik.ultimate.core.util.CoreUtil.getPlatformLineSeparator();
 		// define commands
 		sb.append("\\newcommand{\\headcolor}{}").append(br);
 		sb.append("\\newcommand{\\header}[1]{\\parbox{2.8em}{\\centering #1}\\headcolor}").append(br);
@@ -172,7 +172,7 @@ public class TACAS2015Summary extends NewTestSummary {
 			sb.append("}").append(br);
 
 			// make table body
-			PartitionedResults resultsPerTool = partitionResults(de.uni_freiburg.informatik.ultimate.core.util.Util.where(results.All,
+			PartitionedResults resultsPerTool = partitionResults(de.uni_freiburg.informatik.ultimate.core.util.CoreUtil.where(results.All,
 					new ITestSummaryResultPredicate() {
 						@Override
 						public boolean check(Entry<UltimateRunDefinition, ExtendedResult> entry) {
@@ -191,7 +191,7 @@ public class TACAS2015Summary extends NewTestSummary {
 	private void makeTableBody(StringBuilder sb, PartitionedResults results, String toolname) {
 		// make header
 
-		Set<String> folders = de.uni_freiburg.informatik.ultimate.core.util.Util.selectDistinct(results.All, new IMyReduce<String>() {
+		Set<String> folders = de.uni_freiburg.informatik.ultimate.core.util.CoreUtil.selectDistinct(results.All, new IMyReduce<String>() {
 			@Override
 			public String reduce(Entry<UltimateRunDefinition, ExtendedResult> entry) {
 				return entry.getKey().getInput().getParentFile().getName();
@@ -200,7 +200,7 @@ public class TACAS2015Summary extends NewTestSummary {
 
 		int i = 0;
 		for (final String folder : folders) {
-			PartitionedResults resultsPerFolder = partitionResults(de.uni_freiburg.informatik.ultimate.core.util.Util.where(results.All,
+			PartitionedResults resultsPerFolder = partitionResults(de.uni_freiburg.informatik.ultimate.core.util.CoreUtil.where(results.All,
 					new ITestSummaryResultPredicate() {
 						@Override
 						public boolean check(Entry<UltimateRunDefinition, ExtendedResult> entry) {
@@ -214,10 +214,10 @@ public class TACAS2015Summary extends NewTestSummary {
 	}
 
 	private void makeFolderRow(StringBuilder sb, PartitionedResults results, String folder, boolean last) {
-		String br = de.uni_freiburg.informatik.ultimate.core.util.Util.getPlatformLineSeparator();
+		String br = de.uni_freiburg.informatik.ultimate.core.util.CoreUtil.getPlatformLineSeparator();
 		final int resultRows = 4;
 
-		List<String> variants = new ArrayList<>(de.uni_freiburg.informatik.ultimate.core.util.Util.selectDistinct(results.All, new IMyReduce<String>() {
+		List<String> variants = new ArrayList<>(de.uni_freiburg.informatik.ultimate.core.util.CoreUtil.selectDistinct(results.All, new IMyReduce<String>() {
 			@Override
 			public String reduce(Entry<UltimateRunDefinition, ExtendedResult> entry) {
 				return entry.getKey().getSettings().getName();
@@ -310,7 +310,7 @@ public class TACAS2015Summary extends NewTestSummary {
 	private void makeVariantEntry(StringBuilder sb, Collection<Entry<UltimateRunDefinition, ExtendedResult>> current,
 			final String variant, boolean isFirst) {
 
-		Collection<Entry<UltimateRunDefinition, ExtendedResult>> results = de.uni_freiburg.informatik.ultimate.core.util.Util.where(current,
+		Collection<Entry<UltimateRunDefinition, ExtendedResult>> results = de.uni_freiburg.informatik.ultimate.core.util.CoreUtil.where(current,
 				new ITestSummaryResultPredicate() {
 					@Override
 					public boolean check(Entry<UltimateRunDefinition, ExtendedResult> entry) {
@@ -318,7 +318,7 @@ public class TACAS2015Summary extends NewTestSummary {
 					}
 				});
 
-		String br = de.uni_freiburg.informatik.ultimate.core.util.Util.getPlatformLineSeparator();
+		String br = de.uni_freiburg.informatik.ultimate.core.util.CoreUtil.getPlatformLineSeparator();
 		String sep = " & ";
 
 		if (isFirst) {
@@ -331,14 +331,14 @@ public class TACAS2015Summary extends NewTestSummary {
 
 		ICsvProvider<String> csv = makePrintCsvProviderFromResults(results);
 
-		csv = CsvUtils.projectColumn(csv, de.uni_freiburg.informatik.ultimate.core.util.Util.select(mColumnDefinitions, new de.uni_freiburg.informatik.ultimate.core.util.Util.IReduce<String, ColumnDefinition>() {
+		csv = CsvUtils.projectColumn(csv, de.uni_freiburg.informatik.ultimate.core.util.CoreUtil.select(mColumnDefinitions, new de.uni_freiburg.informatik.ultimate.core.util.CoreUtil.IReduce<String, ColumnDefinition>() {
 			@Override
 			public String reduce(ColumnDefinition entry) {
 				return entry.getColumnToKeep();
 			}
 		}));
 
-		csv = reduceProvider(csv, de.uni_freiburg.informatik.ultimate.core.util.Util.select(mColumnDefinitions, new de.uni_freiburg.informatik.ultimate.core.util.Util.IReduce<Aggregate, ColumnDefinition>() {
+		csv = reduceProvider(csv, de.uni_freiburg.informatik.ultimate.core.util.CoreUtil.select(mColumnDefinitions, new de.uni_freiburg.informatik.ultimate.core.util.CoreUtil.IReduce<Aggregate, ColumnDefinition>() {
 			@Override
 			public Aggregate reduce(ColumnDefinition entry) {
 				return entry.getManyRunsToOneRow();
@@ -403,8 +403,8 @@ public class TACAS2015Summary extends NewTestSummary {
 		List<String> newRow = new ArrayList<>();
 		List<String> oldRow = csv.getRow(0);
 
-		Collection<ConversionContext> conversionInfo = de.uni_freiburg.informatik.ultimate.core.util.Util.select(mColumnDefinitions,
-				new de.uni_freiburg.informatik.ultimate.core.util.Util.IReduce<ConversionContext, ColumnDefinition>() {
+		Collection<ConversionContext> conversionInfo = de.uni_freiburg.informatik.ultimate.core.util.CoreUtil.select(mColumnDefinitions,
+				new de.uni_freiburg.informatik.ultimate.core.util.CoreUtil.IReduce<ConversionContext, ColumnDefinition>() {
 					@Override
 					public ConversionContext reduce(ColumnDefinition entry) {
 						return entry.getConversionContext();
@@ -431,10 +431,10 @@ public class TACAS2015Summary extends NewTestSummary {
 
 	private void printCsv(StringBuilder sb, String header, ICsvProvider<String> provider) {
 		sb.append("################################# ").append(header).append(" #######################")
-				.append(de.uni_freiburg.informatik.ultimate.core.util.Util.getPlatformLineSeparator());
+				.append(de.uni_freiburg.informatik.ultimate.core.util.CoreUtil.getPlatformLineSeparator());
 		provider.toCsv(sb, null);
-		sb.append(de.uni_freiburg.informatik.ultimate.core.util.Util.getPlatformLineSeparator());
-		sb.append(de.uni_freiburg.informatik.ultimate.core.util.Util.getPlatformLineSeparator());
+		sb.append(de.uni_freiburg.informatik.ultimate.core.util.CoreUtil.getPlatformLineSeparator());
+		sb.append(de.uni_freiburg.informatik.ultimate.core.util.CoreUtil.getPlatformLineSeparator());
 	}
 
 	private ICsvProvider<String> makePrintCsvProviderFromResults(
@@ -463,7 +463,7 @@ public class TACAS2015Summary extends NewTestSummary {
 		}
 		// provider.renameColumnTitle("ICC %", "ICC");
 		provider = CsvUtils.projectColumn(provider,
-				de.uni_freiburg.informatik.ultimate.core.util.Util.select(mColumnDefinitions, new de.uni_freiburg.informatik.ultimate.core.util.Util.IReduce<String, ColumnDefinition>() {
+				de.uni_freiburg.informatik.ultimate.core.util.CoreUtil.select(mColumnDefinitions, new de.uni_freiburg.informatik.ultimate.core.util.CoreUtil.IReduce<String, ColumnDefinition>() {
 					@Override
 					public String reduce(ColumnDefinition entry) {
 						return entry.getColumnToKeep();
@@ -473,7 +473,7 @@ public class TACAS2015Summary extends NewTestSummary {
 		// transform from multiple rows per UltimateTestCase to one (e.g. merge
 		// the different benchmark types into one row)
 		ICsvProvider<String> newProvider = reduceProvider(provider,
-				de.uni_freiburg.informatik.ultimate.core.util.Util.select(mColumnDefinitions, new de.uni_freiburg.informatik.ultimate.core.util.Util.IReduce<Aggregate, ColumnDefinition>() {
+				de.uni_freiburg.informatik.ultimate.core.util.CoreUtil.select(mColumnDefinitions, new de.uni_freiburg.informatik.ultimate.core.util.CoreUtil.IReduce<Aggregate, ColumnDefinition>() {
 					@Override
 					public Aggregate reduce(ColumnDefinition entry) {
 						return entry.getSingleRunToOneRow();
@@ -489,8 +489,8 @@ public class TACAS2015Summary extends NewTestSummary {
 		final HashSet<String> max = new HashSet<>();
 		final HashSet<String> avg = new HashSet<>();
 
-		List<String> columnsToKeep = new ArrayList<>(de.uni_freiburg.informatik.ultimate.core.util.Util.select(mColumnDefinitions,
-				new de.uni_freiburg.informatik.ultimate.core.util.Util.IReduce<String, ColumnDefinition>() {
+		List<String> columnsToKeep = new ArrayList<>(de.uni_freiburg.informatik.ultimate.core.util.CoreUtil.select(mColumnDefinitions,
+				new de.uni_freiburg.informatik.ultimate.core.util.CoreUtil.IReduce<String, ColumnDefinition>() {
 					@Override
 					public String reduce(ColumnDefinition entry) {
 						return entry.getColumnToKeep();

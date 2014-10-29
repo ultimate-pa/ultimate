@@ -160,13 +160,14 @@ public class GraphMLConverter {
 		WitnessNode next = null;
 		graph.addVertex(current);
 
-		ProgramState<IASTExpression> initialState = mProgramExecution.getInitialProgramState();
-		if (initialState != null) {
-			next = fac.createWitnessNode();
-			graph.addVertex(next);
-			graph.addEdge(fac.createWitnessEdge(initialState), current, next);
-			current = next;
-		}
+		//TODO: Include state information in assumptions
+//		ProgramState<IASTExpression> initialState = mProgramExecution.getInitialProgramState();
+//		if (initialState != null) {
+//			next = fac.createWitnessNode();
+//			graph.addVertex(next);
+//			graph.addEdge(fac.createWitnessEdge(initialState), current, next);
+//			current = next;
+//		}
 
 		for (int i = 0; i < mProgramExecution.getLength(); ++i) {
 			AtomicTraceElement<CACSLLocation> currentATE = mProgramExecution.getTraceElement(i);
@@ -175,14 +176,15 @@ public class GraphMLConverter {
 			graph.addEdge(fac.createWitnessEdge(currentATE), current, next);
 			current = next;
 
-			ProgramState<IASTExpression> currentState = mProgramExecution.getProgramState(i);
-			if (currentState == null) {
-				continue;
-			}
-			next = fac.createWitnessNode();
-			graph.addVertex(next);
-			graph.addEdge(fac.createWitnessEdge(currentState), current, next);
-			current = next;
+			//TODO: Include state information in assumptions
+//			ProgramState<IASTExpression> currentState = mProgramExecution.getProgramState(i);
+//			if (currentState == null) {
+//				continue;
+//			}
+//			next = fac.createWitnessNode();
+//			graph.addVertex(next);
+//			graph.addEdge(fac.createWitnessEdge(currentState), current, next);
+//			current = next;
 		}
 
 		return graph;

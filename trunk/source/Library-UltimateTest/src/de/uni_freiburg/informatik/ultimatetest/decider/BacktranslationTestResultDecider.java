@@ -12,12 +12,15 @@ import java.util.Map.Entry;
 import org.apache.log4j.Logger;
 import org.eclipse.core.runtime.Path;
 
+import de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator;
+import de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences.CorePreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 import de.uni_freiburg.informatik.ultimate.core.services.IResultService;
 import de.uni_freiburg.informatik.ultimate.result.CounterExampleResult;
 import de.uni_freiburg.informatik.ultimate.result.ExceptionOrErrorResult;
 import de.uni_freiburg.informatik.ultimate.result.GenericResult;
 import de.uni_freiburg.informatik.ultimate.result.IResult;
-import de.uni_freiburg.informatik.ultimate.result.IProgramExecution.AtomicTraceElement.StepInfo;
+import de.uni_freiburg.informatik.ultimate.result.WitnessResult;
 import de.uni_freiburg.informatik.ultimatetest.util.Util;
 
 /**
@@ -56,6 +59,7 @@ public class BacktranslationTestResultDecider extends TestResultDecider {
 				+ "matches the given one.");
 		boolean fail = false;
 		ArrayList<CounterExampleResult<?, ?, ?>> cex = new ArrayList<>();
+		ArrayList<WitnessResult<?, ?, ?>> witnesses = new ArrayList<>();
 		Set<Entry<String, List<IResult>>> resultSet = resultService.getResults().entrySet();
 		for (Entry<String, List<IResult>> x : resultSet) {
 			for (IResult result : x.getValue()) {
@@ -73,6 +77,8 @@ public class BacktranslationTestResultDecider extends TestResultDecider {
 					}
 				} else if (result instanceof CounterExampleResult<?, ?, ?>) {
 					cex.add((CounterExampleResult<?, ?, ?>) result);
+				} else if (result instanceof WitnessResult<?, ?, ?>) {
+					witnesses.add((WitnessResult<?, ?, ?>) result);
 				}
 			}
 		}
@@ -89,6 +95,40 @@ public class BacktranslationTestResultDecider extends TestResultDecider {
 			fail = true;
 		}
 
+		if (mFileEnding.equals(".c")
+				&& new UltimatePreferenceStore(Activator.s_PLUGIN_ID)
+						.getBoolean(CorePreferenceInitializer.LABEL_WITNESS_VERIFY)) {
+			// we expect witness verification for .c files to succeed
+
+			if (cex.size() != witnesses.size()) {
+				setResultCategory("Not all counter examples have witnesses");
+				String errorMsg = "There were " + cex.size() + " counter examples, but " + witnesses.size()
+						+ " witnesses";
+				setResultMessage(errorMsg);
+				customMessages.add(errorMsg);
+				fail = true;
+
+			} else {
+				for (WitnessResult<?, ?, ?> witness : witnesses) {
+					if (witness.isEmpty()) {
+						setResultCategory("Empty Witness");
+						String errorMsg = "The witness is empty: " + witness.getShortDescription();
+						setResultMessage(errorMsg);
+						customMessages.add(errorMsg);
+						fail = true;
+						break;
+					} else if (!witness.isVerified()) {
+						setResultCategory("Witness failed to verify");
+						String errorMsg = "The witness failed to verify: " + witness.getLongDescription();
+						setResultMessage(errorMsg);
+						customMessages.add(errorMsg);
+						fail = true;
+						break;
+					}
+				}
+			}
+		}
+
 		if (!fail) {
 			// so far so good, now we compare the error path with the expected
 			// error path
@@ -101,11 +141,11 @@ public class BacktranslationTestResultDecider extends TestResultDecider {
 			if (desiredCounterExampleFile.canRead()) {
 
 				try {
-					String desiredCounterExample = de.uni_freiburg.informatik.ultimate.core.util.Util
+					String desiredCounterExample = de.uni_freiburg.informatik.ultimate.core.util.CoreUtil
 							.readFile(desiredCounterExampleFile);
 
 					// compare linewise
-					String platformLineSeparator = de.uni_freiburg.informatik.ultimate.core.util.Util
+					String platformLineSeparator = de.uni_freiburg.informatik.ultimate.core.util.CoreUtil
 							.getPlatformLineSeparator();
 					String[] desiredLines = desiredCounterExample.split(platformLineSeparator);
 					String[] actualLines = actualCounterExample.split(platformLineSeparator);
@@ -227,11 +267,11 @@ public class BacktranslationTestResultDecider extends TestResultDecider {
 	}
 
 	private boolean tryWritingActualResultToFile(File desiredCounterExampleFile, String actualCounterExample) {
-		String[] actualLines = actualCounterExample.split(de.uni_freiburg.informatik.ultimate.core.util.Util
+		String[] actualLines = actualCounterExample.split(de.uni_freiburg.informatik.ultimate.core.util.CoreUtil
 				.getPlatformLineSeparator());
 		try {
-			de.uni_freiburg.informatik.ultimate.core.util.Util.writeFile(desiredCounterExampleFile.getAbsolutePath()
-					+ "-actual", actualLines);
+			de.uni_freiburg.informatik.ultimate.core.util.CoreUtil.writeFile(
+					desiredCounterExampleFile.getAbsolutePath() + "-actual", actualLines);
 			return true;
 		} catch (IOException e) {
 			return false;
