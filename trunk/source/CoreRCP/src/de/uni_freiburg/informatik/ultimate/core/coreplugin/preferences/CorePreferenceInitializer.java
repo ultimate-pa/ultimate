@@ -9,6 +9,7 @@ import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceIn
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceItem;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceItem.IUltimatePreferenceItemValidator;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceItem.PreferenceType;
+import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 
 /**
  * CorePreferenceInitializer implements UltimatePreferenceStore for
@@ -18,7 +19,7 @@ import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceIt
  * It has to contribute to the extension point
  * org.eclipse.core.runtime.preferences.initializer (see the plugin.xml)
  * 
- * @author Dietsch
+ * @author dietsch@informatik.uni-freiburg.de
  * 
  */
 public class CorePreferenceInitializer extends UltimatePreferenceInitializer {
@@ -78,13 +79,42 @@ public class CorePreferenceInitializer extends UltimatePreferenceInitializer {
 						new IUltimatePreferenceItemValidator.IntegerValidator(0, 1000000)),
 
 				// Witness generation
-				new UltimatePreferenceItem<Integer>(LABEL_TIMEOUT, VALUE_TIMEOUT, PreferenceType.Integer,
-						new IUltimatePreferenceItemValidator.IntegerValidator(0, 1000000)),
+				new UltimatePreferenceItem<String>(DESC_WITNESS, null, PreferenceType.Label),
+				new UltimatePreferenceItem<Boolean>(LABEL_GEN_WITNESS, VALUE_GEN_WITNESS, PreferenceType.Boolean),
+				new UltimatePreferenceItem<Boolean>(LABEL_WRITE_WITNESS, VALUE_WRITE_WITNESS, PreferenceType.Boolean),
+				new UltimatePreferenceItem<Boolean>(LABEL_VERIFY_WITNESS, VALUE_VERIFY_WITNESS, PreferenceType.Boolean,
+						new WitnessVerifierValidator()),
+				new UltimatePreferenceItem<WitnessVerifierType>(LABEL_WITNESS_VERIFIER, VALUE_WITNESS_VERIFIER,
+						PreferenceType.Combo, WitnessVerifierType.values()),
+				new UltimatePreferenceItem<String>(LABEL_WITNESS_VERIFIER_DIR, VALUE_WITNESS_VERIFIER_DIR,
+						PreferenceType.Directory),
+				new UltimatePreferenceItem<Boolean>(LABEL_DELETE_GRAPHML, VALUE_DELETE_GRAPHML, PreferenceType.Boolean,
+						new WitnessVerifierValidator()),
 
 		// Log levels for external tools
 
 		// Plugin-specific log levels
 		};
+	}
+
+	public static final String DESC_WITNESS = "Witness generation";
+	public static final String LABEL_GEN_WITNESS = "Generate witness results for each counter example result";
+	public static final boolean VALUE_GEN_WITNESS = false;
+	public static final String LABEL_WRITE_WITNESS = "Write witness as \"<inputfilename>-witness.graphml\" "
+			+ "in the same directory as the input file";
+	public static final boolean VALUE_WRITE_WITNESS = false;
+	public static final String LABEL_VERIFY_WITNESS = "Verify the witness and generate results";
+	public static final boolean VALUE_VERIFY_WITNESS = false;
+	public static final String LABEL_WITNESS_VERIFIER = "Use the following witness verifier";
+	public static final WitnessVerifierType VALUE_WITNESS_VERIFIER = WitnessVerifierType.CPACHECKER;
+	public static final String LABEL_WITNESS_VERIFIER_DIR = "Path to witness verifier executable "
+			+ "(gets witness file as first and input file as second parameter)";
+	public static final String VALUE_WITNESS_VERIFIER_DIR = "";
+	public static final String LABEL_DELETE_GRAPHML = "Delete the .graphml file after verification";
+	public static final boolean VALUE_DELETE_GRAPHML = false;
+
+	public enum WitnessVerifierType {
+		CPACHECKER
 	}
 
 	@Override
@@ -95,21 +125,6 @@ public class CorePreferenceInitializer extends UltimatePreferenceInitializer {
 	@Override
 	public String getPreferencePageTitle() {
 		return "General";
-	}
-
-	private class LogLevelValidator implements IUltimatePreferenceItemValidator<String> {
-		@Override
-		public boolean isValid(String value) {
-			String s = value.toUpperCase();
-			return s.equals(VALUE_TRACE_LOGGING_PREF) || s.equals(VALUE_DEBUG_LOGGING_PREF)
-					|| s.equals(VALUE_INFO_LOGGING_PREF) || s.equals(VALUE_WARN_LOGGING_PREF)
-					|| s.equals(VALUE_ERROR_LOGGING_PREF) || s.equals(VALUE_FATAL_LOGGING_PREF);
-		}
-
-		@Override
-		public String getInvalidValueErrorMessage(String value) {
-			return INVALID_LOGLEVEL;
-		}
 	}
 
 	public static final String PLUGINID = Activator.s_PLUGIN_ID;
@@ -136,7 +151,8 @@ public class CorePreferenceInitializer extends UltimatePreferenceInitializer {
 	public static final String LABEL_LOG4J_PATTERN = "Logger pattern: ";
 
 	// Log level
-	public static final String DESC_LOGFILE = "The basic preferences for creating a log file (like enabled, name, directory)";
+	public static final String DESC_LOGFILE = "The basic preferences for creating a log file (like enabled, name, "
+			+ "directory)";
 
 	public static final String LABEL_LOGFILE = "Create a Logfile";
 	public static final boolean VALUE_LOGFILE = false;
@@ -215,9 +231,45 @@ public class CorePreferenceInitializer extends UltimatePreferenceInitializer {
 	public static final String INVALID_LOGLEVEL = "Valid levels: " + Arrays.toString(VALUE_VALID_LOG_LEVELS);
 	public static final String INVALID_ENTRY = "Entry has to be of the form: \"<plug-in id>=<log level>\"";
 	public static final String INVALID_TOOL_ENTRY = "Entry has to be of the form: \"<tool id>=<log level>\"";
-	public static final String LOGGING_PREFERENCES_DESC = "Specify log levels for the certail plugins.\nNote that there is a hierarchy and specifying a less strict level for children will have no effect";
+	public static final String INVALID_WITNESSVERIFCATION_SETTING = "You must enable generation and writing of "
+			+ "witness results before you can verify them";
+	public static final String LOGGING_PREFERENCES_DESC = "Specify log levels for the certail plugins.\n"
+			+ "Note that there is a hierarchy and specifying a less strict level for children will have no effect";
 	public static final String ALL_PLUGINS_PRESENT = "All entered plugins are in fact present!";
 	public static final String PLUGINS_NOT_PRESENT = "The following plugins are not present at the moment: \n";
 	public static final String EMPTY_STRING = "";
 
+	private class LogLevelValidator implements IUltimatePreferenceItemValidator<String> {
+		@Override
+		public boolean isValid(String value) {
+			String s = value.toUpperCase();
+			return s.equals(VALUE_TRACE_LOGGING_PREF) || s.equals(VALUE_DEBUG_LOGGING_PREF)
+					|| s.equals(VALUE_INFO_LOGGING_PREF) || s.equals(VALUE_WARN_LOGGING_PREF)
+					|| s.equals(VALUE_ERROR_LOGGING_PREF) || s.equals(VALUE_FATAL_LOGGING_PREF);
+		}
+
+		@Override
+		public String getInvalidValueErrorMessage(String value) {
+			return INVALID_LOGLEVEL;
+		}
+	}
+
+	private class WitnessVerifierValidator implements IUltimatePreferenceItemValidator<Boolean> {
+
+		@Override
+		public boolean isValid(Boolean value) {
+			if (value) {
+				UltimatePreferenceStore ups = new UltimatePreferenceStore(Activator.s_PLUGIN_ID);
+				return ups.getBoolean(LABEL_GEN_WITNESS) && ups.getBoolean(LABEL_WRITE_WITNESS);
+			} else {
+				return true;
+			}
+		}
+
+		@Override
+		public String getInvalidValueErrorMessage(Boolean value) {
+			return INVALID_WITNESSVERIFCATION_SETTING;
+		}
+
+	}
 }
