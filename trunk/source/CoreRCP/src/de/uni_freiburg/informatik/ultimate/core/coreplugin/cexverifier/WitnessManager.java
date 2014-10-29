@@ -131,7 +131,7 @@ public class WitnessManager {
 			command = makeCPACheckerCommand(command, svcompWitnessFile,
 					ups.getString(CorePreferenceInitializer.LABEL_WITNESS_CPACHECKER_PROPERTY), originalFile,
 					cpaCheckerHome);
-
+			mLogger.fatal(command);
 			MonitoredProcess mp = MonitoredProcess.exec(command, cpaCheckerHome, null, mServices, mStorage);
 			BufferedInputStream errorStream = new BufferedInputStream(mp.getErrorStream());
 			BufferedInputStream outputStream = new BufferedInputStream(mp.getInputStream());
@@ -145,8 +145,8 @@ public class WitnessManager {
 				hitTimeout = true;
 			}
 
-			String error = convertStreamToString2(errorStream);
-			String output = convertStreamToString2(outputStream);
+			String error = convertStreamToString(errorStream);
+			String output = convertStreamToString(outputStream);
 			// TODO: interpret error and output
 
 			if (output.startsWith("Verification result: FALSE.")) {
@@ -215,17 +215,17 @@ public class WitnessManager {
 		}
 	}
 
-	private static String convertStreamToString2(InputStream is) {
-		BufferedReader reader = new BufferedReader(new InputStreamReader(is));
-		StringBuilder out = new StringBuilder();
-		String line;
-		try {
-			while ((line = reader.readLine()) != null) {
-				out.append(line);
-			}
-			reader.close();
-		} catch (IOException e) {
-		}
-		return out.toString();
-	}
+	// private static String convertStreamToString2(InputStream is) {
+	// BufferedReader reader = new BufferedReader(new InputStreamReader(is));
+	// StringBuilder out = new StringBuilder();
+	// String line;
+	// try {
+	// while ((line = reader.readLine()) != null) {
+	// out.append(line);
+	// }
+	// reader.close();
+	// } catch (IOException e) {
+	// }
+	// return out.toString();
+	// }
 }
