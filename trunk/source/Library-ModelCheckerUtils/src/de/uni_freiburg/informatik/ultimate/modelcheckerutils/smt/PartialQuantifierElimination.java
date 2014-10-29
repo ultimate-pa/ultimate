@@ -3,11 +3,9 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import org.apache.log4j.Logger;
@@ -21,15 +19,13 @@ import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSelect;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.AffineRelation;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.BinaryEqualityRelation;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.BinaryRelation.NoRelationOfThisKindException;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.NotAffineException;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Cnf;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Dnf;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.partialQuantifierElimination.XnfDer;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.partialQuantifierElimination.XnfUsr;
 import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
-import de.uni_freiburg.informatik.ultimate.util.HashRelation;
 
 /**
  * Try to eliminate existentially quantified variables in terms. Therefore we
@@ -41,7 +37,80 @@ public class PartialQuantifierElimination {
 	static final boolean USE_UPD = true;
 	static final boolean USE_IRD = true;
 	static final boolean USE_SOS = true;
-	static final boolean USE_USR = !true;
+	static final boolean USE_USR = true;
+	
+	
+	/**
+	 * Compose term with outer operation of a XNF.
+	 * For the case of existential quantification:
+	 * Compose disjuncts to a disjunction.
+	 */
+	private static Term composeXjunctsOuter(Script script, int quantifier, Term[] xjunctsOuter) {
+		final Term result;
+		if (quantifier == QuantifiedFormula.EXISTS) {
+			result = Util.or(script, xjunctsOuter);
+		} else if (quantifier == QuantifiedFormula.FORALL) {
+			result = Util.and(script, xjunctsOuter);
+		} else {
+			throw new AssertionError("unknown quantifier");
+		}
+		return result;
+	}
+
+	/**
+	 * Compose term with inner operation of a XNF.
+	 * For the case of existential quantification:
+	 * Compose atoms to a conjunction.
+	 */
+	private static Term composeXjunctsInner(Script script, int quantifier, Term[] xjunctsInner) {
+		final Term result;
+		if (quantifier == QuantifiedFormula.EXISTS) {
+			result = Util.and(script, xjunctsInner);
+		} else if (quantifier == QuantifiedFormula.FORALL) {
+			result = Util.or(script, xjunctsInner);
+		} else {
+			throw new AssertionError("unknown quantifier");
+		}
+		return result;
+	}
+	
+	/**
+	 * Get all parameters of the outer operation of a XNF
+	 * For the case of existential quantification:
+	 * Get all disjuncts of a formula in DNF. 
+	 * (conjuncts of CNF for case of universal quantification)
+	 */
+	private static Term[] getXjunctsOuter(int quantifier, Term xnf) {
+		Term[] xjunctsOuter;
+		if (quantifier == QuantifiedFormula.EXISTS) {
+			xjunctsOuter = SmtUtils.getDisjuncts(xnf);
+		} else if (quantifier == QuantifiedFormula.FORALL) {
+			xjunctsOuter = SmtUtils.getConjuncts(xnf);
+		} else {
+			throw new AssertionError("unknown quantifier");
+		}
+		return xjunctsOuter;
+	}
+	
+	/**
+	 * Get all parameters of the inner operation of a XNF
+	 * For the case of existential quantification:
+	 * Get all conjuncts of a conjunction. 
+	 * (disjuncts of disjunction in case of universal quantification)
+	 */
+	private static Term[] getXjunctsInner(int quantifier, Term xnf) {
+		Term[] xjunctsOuter;
+		if (quantifier == QuantifiedFormula.EXISTS) {
+			xjunctsOuter = SmtUtils.getConjuncts(xnf);
+		} else if (quantifier == QuantifiedFormula.FORALL) {
+			xjunctsOuter = SmtUtils.getDisjuncts(xnf);
+		} else {
+			throw new AssertionError("unknown quantifier");
+		}
+		return xjunctsOuter;
+	}
+
+	
 
 	/**
 	 * Returns equivalent formula. Quantifier is dropped if quantified variable
@@ -98,27 +167,16 @@ public class PartialQuantifierElimination {
 		// apply Destructive Equality Resolution
 		Term termAfterDER;
 		{
-
-			Term[] oldParams;
-			if (quantifier == QuantifiedFormula.EXISTS) {
-				oldParams = SmtUtils.getDisjuncts(result);
-			} else if (quantifier == QuantifiedFormula.FORALL) {
-				oldParams = SmtUtils.getConjuncts(result);
-			} else {
-				throw new AssertionError("unknown quantifier");
-			}
+			XnfDer xnfDer = new XnfDer(script, services);
+			Term[] oldParams = getXjunctsOuter(quantifier, result);
 			Term[] newParams = new Term[oldParams.length];
 			for (int i = 0; i < oldParams.length; i++) {
 				Set<TermVariable> eliminateesDER = new HashSet<TermVariable>(eliminatees);
-				newParams[i] = derSimple(script, quantifier, oldParams[i], eliminateesDER, logger);
+				Term[] oldAtoms = getXjunctsInner(quantifier, oldParams[i]);
+				newParams[i] = composeXjunctsInner(script, quantifier, 
+						xnfDer.tryToEliminate(quantifier, oldAtoms, eliminateesDER));
 			}
-			if (quantifier == QuantifiedFormula.EXISTS) {
-				termAfterDER = Util.or(script, newParams);
-			} else if (quantifier == QuantifiedFormula.FORALL) {
-				termAfterDER = Util.and(script, newParams);
-			} else {
-				throw new AssertionError("unknown quantifier");
-			}
+			termAfterDER = composeXjunctsOuter(script, quantifier, newParams);
 			result = termAfterDER;
 			Set<TermVariable> remainingAfterDER = new HashSet<TermVariable>(eliminatees);
 			remainingAfterDER.retainAll(Arrays.asList(result.getFreeVars()));
@@ -132,26 +190,13 @@ public class PartialQuantifierElimination {
 		// apply Infinity Restrictor Drop
 		Term termAfterIRD;
 		if (USE_IRD) {
-			Term[] oldParams;
-			if (quantifier == QuantifiedFormula.EXISTS) {
-				oldParams = SmtUtils.getDisjuncts(result);
-			} else if (quantifier == QuantifiedFormula.FORALL) {
-				oldParams = SmtUtils.getConjuncts(result);
-			} else {
-				throw new AssertionError("unknown quantifier");
-			}
+			Term[] oldParams = getXjunctsOuter(quantifier, result);
 			Term[] newParams = new Term[oldParams.length];
 			for (int i = 0; i < oldParams.length; i++) {
 				Set<TermVariable> eliminateesIRD = new HashSet<TermVariable>(eliminatees);
 				newParams[i] = irdSimple(script, quantifier, oldParams[i], eliminateesIRD, logger);
 			}
-			if (quantifier == QuantifiedFormula.EXISTS) {
-				termAfterIRD = Util.or(script, newParams);
-			} else if (quantifier == QuantifiedFormula.FORALL) {
-				termAfterIRD = Util.and(script, newParams);
-			} else {
-				throw new AssertionError("unknown quantifier");
-			}
+			termAfterIRD = composeXjunctsOuter(script, quantifier, newParams);
 			result = termAfterIRD;
 			Set<TermVariable> remainingAfterIRD = new HashSet<TermVariable>(eliminatees);
 			remainingAfterIRD.retainAll(Arrays.asList(result.getFreeVars()));
@@ -165,26 +210,13 @@ public class PartialQuantifierElimination {
 		// apply Unconnected Parameter Deletion
 		Term termAfterUPD = null;
 		if (USE_UPD) {
-			Term[] oldParams;
-			if (quantifier == QuantifiedFormula.EXISTS) {
-				oldParams = SmtUtils.getDisjuncts(result);
-			} else if (quantifier == QuantifiedFormula.FORALL) {
-				oldParams = SmtUtils.getConjuncts(result);
-			} else {
-				throw new AssertionError("unknown quantifier");
-			}
+			Term[] oldParams = getXjunctsOuter(quantifier, result);
 			Term[] newParams = new Term[oldParams.length];
 			for (int i = 0; i < oldParams.length; i++) {
 				Set<TermVariable> eliminateesUPD = new HashSet<TermVariable>(eliminatees);
 				newParams[i] = updSimple(script, quantifier, oldParams[i], eliminateesUPD, logger);
 			}
-			if (quantifier == QuantifiedFormula.EXISTS) {
-				termAfterUPD = Util.or(script, newParams);
-			} else if (quantifier == QuantifiedFormula.FORALL) {
-				termAfterUPD = Util.and(script, newParams);
-			} else {
-				throw new AssertionError("unknown quantifier");
-			}
+			termAfterUPD = composeXjunctsOuter(script, quantifier, newParams);
 			result = termAfterUPD;
 			Set<TermVariable> remainingAfterUPD = new HashSet<TermVariable>(eliminatees);
 			remainingAfterUPD.retainAll(Arrays.asList(result.getFreeVars()));
@@ -199,27 +231,14 @@ public class PartialQuantifierElimination {
 		if (USE_SOS) {
 			Set<TermVariable> remainingAndNewAfterSOS = new HashSet<TermVariable>();
 			Term termAfterSOS;
-			Term[] oldParams;
-			if (quantifier == QuantifiedFormula.EXISTS) {
-				oldParams = SmtUtils.getDisjuncts(result);
-			} else if (quantifier == QuantifiedFormula.FORALL) {
-				oldParams = SmtUtils.getConjuncts(result);
-			} else {
-				throw new AssertionError("unknown quantifier");
-			}
+			Term[] oldParams = getXjunctsOuter(quantifier, result);
 			Term[] newParams = new Term[oldParams.length];
 			for (int i = 0; i < oldParams.length; i++) {
 				Set<TermVariable> eliminateesSOS = new HashSet<TermVariable>(eliminatees);
 				newParams[i] = sos(script, quantifier, oldParams[i], eliminateesSOS, logger, services);
 				remainingAndNewAfterSOS.addAll(eliminateesSOS);
 			}
-			if (quantifier == QuantifiedFormula.EXISTS) {
-				termAfterSOS = Util.or(script, newParams);
-			} else if (quantifier == QuantifiedFormula.FORALL) {
-				termAfterSOS = Util.and(script, newParams);
-			} else {
-				throw new AssertionError("unknown quantifier");
-			}
+			termAfterSOS = composeXjunctsOuter(script, quantifier, newParams);
 			sosChangedTerm = (result != termAfterSOS);
 			result = termAfterSOS;
 			eliminatees.retainAll(remainingAndNewAfterSOS);
@@ -254,15 +273,28 @@ public class PartialQuantifierElimination {
 		assert Arrays.asList(result.getFreeVars()).containsAll(eliminatees) : "superficial variables";
 		
 		if (USE_USR) {
-			Set<TermVariable> affectedEliminatees = new HashSet<TermVariable>();
-			result = usr(script, quantifier, result, eliminatees, affectedEliminatees , logger);
-			if (!affectedEliminatees.isEmpty()) {
+			XnfUsr xnfUsr = new XnfUsr(script, services);
+			Term[] oldParams = getXjunctsOuter(quantifier, result);
+			Term[] newParams = new Term[oldParams.length];
+			for (int i = 0; i < oldParams.length; i++) {
+				Set<TermVariable> eliminateesUsr = new HashSet<TermVariable>(eliminatees);
+				Term[] oldAtoms = getXjunctsInner(quantifier, oldParams[i]);
+				newParams[i] = composeXjunctsInner(script, quantifier, 
+						xnfUsr.tryToEliminate(quantifier, oldAtoms, eliminateesUsr));
+			}
+			Term termAfterUsr = composeXjunctsOuter(script, quantifier, newParams);
+			result = termAfterUsr;
+			if (!xnfUsr.getAffectedEliminatees().isEmpty()) {
 				result = elim(script, quantifier, eliminatees, result, services, logger);
 			}
 		}
 		
 		return result;
 	}
+
+
+
+
 
 	public static Term sos(Script script, int quantifier, Term term, Set<TermVariable> eliminatees, Logger logger,
 			IUltimateServiceProvider services) {
@@ -543,186 +575,13 @@ public class PartialQuantifierElimination {
 		return result;
 	}
 
-	public static Term derSimple(Script script, int quantifier, Term term, Collection<TermVariable> vars, Logger logger) {
-		Iterator<TermVariable> it = vars.iterator();
-		Term result = term;
-		while (it.hasNext()) {
-			TermVariable tv = it.next();
-			if (!Arrays.asList(result.getFreeVars()).contains(tv)) {
-				// case where var does not occur
-				it.remove();
-				continue;
-			} else {
-				Term withoutTv = derSimple(script, quantifier, result, tv, logger);
-				if (withoutTv != null) {
-					result = withoutTv;
-					it.remove();
-				}
-			}
-		}
-		return result;
-	}
 
-	/**
-	 * TODO: revise documentation Try to eliminate the variables vars in term.
-	 * Let vars = {x_1,...,x_n} and term = φ. Returns a term that is equivalent
-	 * to ∃x_1,...,∃x_n φ, but were variables are removed. Successfully removed
-	 * variables are also removed from vars. Analogously for universal
-	 * quantification.
-	 * 
-	 * @param logger
-	 */
-	public static Term derSimple(Script script, int quantifier, Term term, TermVariable tv, Logger logger) {
-		Term[] oldParams;
-		if (quantifier == QuantifiedFormula.EXISTS) {
-			oldParams = SmtUtils.getConjuncts(term);
-		} else if (quantifier == QuantifiedFormula.FORALL) {
-			oldParams = SmtUtils.getDisjuncts(term);
-		} else {
-			throw new AssertionError("unknown quantifier");
-		}
-		Term result;
-		EqualityInformation eqInfo = getEqinfo(script, tv, oldParams, null, quantifier, logger);
-		if (eqInfo == null) {
-			logger.debug(new DebugMessage("not eliminated quantifier via DER for {0}", tv));
-			result = null;
-		} else {
-			logger.debug(new DebugMessage("eliminated quantifier via DER for {0}", tv));
-			Term[] newParams = new Term[oldParams.length - 1];
-			Map<Term, Term> substitutionMapping = Collections.singletonMap(eqInfo.getVariable(), eqInfo.getTerm());
-			SafeSubstitution substitution = new SafeSubstitution(script, substitutionMapping);
-			for (int i = 0; i < eqInfo.getIndex(); i++) {
-				newParams[i] = substitution.transform(oldParams[i]);
-			}
-			for (int i = eqInfo.getIndex() + 1; i < oldParams.length; i++) {
-				newParams[i - 1] = substitution.transform(oldParams[i]);
-			}
-			if (quantifier == QuantifiedFormula.EXISTS) {
-				result = Util.and(script, newParams);
-			} else if (quantifier == QuantifiedFormula.FORALL) {
-				result = Util.or(script, newParams);
-			} else {
-				throw new AssertionError("unknown quantifier");
-			}
-		}
-		return result;
-	}
 
-	/**
-	 * Check all terms in context if they are an equality of the form givenTerm
-	 * == t, such that t does not contain the subterm forbiddenTerm. If this is
-	 * the case return corresponding equality information, otherwise return
-	 * null. If forbiddenTerm is null all subterms in t are allowed.
-	 * 
-	 * @param logger
-	 */
-	public static EqualityInformation getEqinfo(Script script, Term givenTerm, Term[] context, Term forbiddenTerm,
-			int quantifier, Logger logger) {
-		BinaryEqualityRelation[] binaryRelations = new BinaryEqualityRelation[context.length];
 
-		// stage 1: check if there is an "=" or "distinct" term where the
-		// givenTerm is on one hand sie of the relation.
-		for (int i = 0; i < context.length; i++) {
-			if (!isSubterm(givenTerm, context[i])) {
-				continue;
-			}
-			try {
-				binaryRelations[i] = new BinaryEqualityRelation(context[i]);
-			} catch (NoRelationOfThisKindException e2) {
-				continue;
-			}
 
-			if (binaryRelations[i].getRelationSymbol().toString().equals("=") && quantifier == QuantifiedFormula.FORALL) {
-				binaryRelations[i] = null;
-				continue;
-			} else if (binaryRelations[i].getRelationSymbol().toString().equals("distinct")
-					&& quantifier == QuantifiedFormula.EXISTS) {
-				binaryRelations[i] = null;
-				continue;
-			}
 
-			Term lhs = binaryRelations[i].getLhs();
-			Term rhs = binaryRelations[i].getRhs();
 
-			if (lhs.equals(givenTerm) && !isSubterm(givenTerm, rhs)) {
-				if (forbiddenTerm == null || !isSubterm(forbiddenTerm, rhs)) {
-					return new EqualityInformation(i, givenTerm, rhs);
-				}
-			}
-			if (rhs.equals(givenTerm) && !isSubterm(givenTerm, lhs)) {
-				if (forbiddenTerm == null || !isSubterm(forbiddenTerm, lhs)) {
-					return new EqualityInformation(i, givenTerm, lhs);
-				}
-			}
-		}
-		// stage 2: also rewrite linear terms if necessary to get givenTerm
-		// to one hand side of the binary relation.
-		for (int i = 0; i < context.length; i++) {
-			if (binaryRelations[i] == null) {
-				// not even binary equality relation that contains givenTerm
-				continue;
-			} else {
-				AffineRelation affRel;
-				try {
-					affRel = new AffineRelation(context[i], logger);
-				} catch (NotAffineException e1) {
-					continue;
-				}
-				if (affRel.isVariable(givenTerm)) {
-					Term equalTerm;
-					try {
-						ApplicationTerm equality = affRel.onLeftHandSideOnly(script, givenTerm);
-						equalTerm = equality.getParameters()[1];
-					} catch (NotAffineException e) {
-						// no representation where var is on lhs
-						continue;
-					}
-					if (forbiddenTerm != null && isSubterm(forbiddenTerm, equalTerm)) {
-						continue;
-					} else {
-						return new EqualityInformation(i, givenTerm, equalTerm);
-					}
-				}
-			}
-		}
-		// no equality information found
-		return null;
-	}
 
-	/**
-	 * Returns true if subterm is a subterm of term.
-	 */
-	private static boolean isSubterm(Term subterm, Term term) {
-		return (new ContainsSubterm(subterm)).containsSubterm(term);
-	}
-
-	/**
-	 * A given term, an equal term and the index at which this equality occurred
-	 */
-	public static class EqualityInformation {
-		private final int m_Index;
-		private final Term m_GivenTerm;
-		private final Term m_EqualTerm;
-
-		public EqualityInformation(int index, Term givenTerm, Term equalTerm) {
-			m_Index = index;
-			m_GivenTerm = givenTerm;
-			m_EqualTerm = equalTerm;
-		}
-
-		public int getIndex() {
-			return m_Index;
-		}
-
-		public Term getVariable() {
-			return m_GivenTerm;
-		}
-
-		public Term getTerm() {
-			return m_EqualTerm;
-		}
-
-	}
 
 	/**
 	 * Find term φ such that term implies tv == φ.
@@ -841,43 +700,43 @@ public class PartialQuantifierElimination {
 	
 	
 	
-	public static Term usr(Script script, int quantifier, Term term, Collection<TermVariable> eliminatees, Set<TermVariable> affectedEliminatees, Logger logger) {
-		Term[] oldParams;
-		if (quantifier == QuantifiedFormula.EXISTS) {
-			oldParams = SmtUtils.getConjuncts(term);
-		} else if (quantifier == QuantifiedFormula.FORALL) {
-			oldParams = SmtUtils.getDisjuncts(term);
-		} else {
-			throw new AssertionError("unknown quantifier");
-		}
-		HashRelation<TermVariable, Term> var2arrays = new HashRelation<TermVariable, Term>();
-		HashRelation<TermVariable, Term> var2parameters = new HashRelation<TermVariable, Term>();
-		for (Term param : oldParams) {
-			List<MultiDimensionalSelect> slects = MultiDimensionalSelect.extractSelectDeep(param, false);
-			for (MultiDimensionalSelect mds : slects) {
-				Set<TermVariable> indexFreeVars = mds.getIndex().getFreeVars();
-				for (TermVariable tv : indexFreeVars) {
-					if (eliminatees.contains(tv)) {
-						var2arrays.addPair(tv, mds.getArray());
-						var2parameters.addPair(tv, param);
-					}
-				}
-			}
-		}
-		Set<Term> superfluousParams = new HashSet<Term>();
-		for (TermVariable eliminatee : var2arrays.getDomain()) {
-			if (var2arrays.getImage(eliminatee).size() == 1 &&
-					var2parameters.getImage(eliminatee).size() == 1) {
-				superfluousParams.addAll(var2parameters.getImage(eliminatee));
-				affectedEliminatees.add(eliminatee);
-			}
-		}
-		ArrayList<Term> resultParams = new ArrayList<Term>();
-		for (Term oldParam : oldParams) {
-			if (!superfluousParams.contains(oldParam)) {
-				resultParams.add(oldParam);
-			}
-		}
-		return Util.and(script, resultParams.toArray(new Term[resultParams.size()]));
-	}
+//	public static Term usr(Script script, int quantifier, Term term, Collection<TermVariable> eliminatees, Set<TermVariable> affectedEliminatees, Logger logger) {
+//		Term[] oldParams;
+//		if (quantifier == QuantifiedFormula.EXISTS) {
+//			oldParams = SmtUtils.getConjuncts(term);
+//		} else if (quantifier == QuantifiedFormula.FORALL) {
+//			oldParams = SmtUtils.getDisjuncts(term);
+//		} else {
+//			throw new AssertionError("unknown quantifier");
+//		}
+//		HashRelation<TermVariable, Term> var2arrays = new HashRelation<TermVariable, Term>();
+//		HashRelation<TermVariable, Term> var2parameters = new HashRelation<TermVariable, Term>();
+//		for (Term param : oldParams) {
+//			List<MultiDimensionalSelect> slects = MultiDimensionalSelect.extractSelectDeep(param, false);
+//			for (MultiDimensionalSelect mds : slects) {
+//				Set<TermVariable> indexFreeVars = mds.getIndex().getFreeVars();
+//				for (TermVariable tv : indexFreeVars) {
+//					if (eliminatees.contains(tv)) {
+//						var2arrays.addPair(tv, mds.getArray());
+//						var2parameters.addPair(tv, param);
+//					}
+//				}
+//			}
+//		}
+//		Set<Term> superfluousParams = new HashSet<Term>();
+//		for (TermVariable eliminatee : var2arrays.getDomain()) {
+//			if (var2arrays.getImage(eliminatee).size() == 1 &&
+//					var2parameters.getImage(eliminatee).size() == 1) {
+//				superfluousParams.addAll(var2parameters.getImage(eliminatee));
+//				affectedEliminatees.add(eliminatee);
+//			}
+//		}
+//		ArrayList<Term> resultParams = new ArrayList<Term>();
+//		for (Term oldParam : oldParams) {
+//			if (!superfluousParams.contains(oldParam)) {
+//				resultParams.add(oldParam);
+//			}
+//		}
+//		return Util.and(script, resultParams.toArray(new Term[resultParams.size()]));
+//	}
 }
