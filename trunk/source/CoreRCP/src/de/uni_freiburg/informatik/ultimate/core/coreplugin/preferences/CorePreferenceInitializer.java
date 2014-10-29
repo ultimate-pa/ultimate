@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences;
 
+import java.io.File;
 import java.util.Arrays;
 
 import org.eclipse.core.runtime.Platform;
@@ -87,7 +88,7 @@ public class CorePreferenceInitializer extends UltimatePreferenceInitializer {
 				new UltimatePreferenceItem<WitnessVerifierType>(LABEL_WITNESS_VERIFIER, VALUE_WITNESS_VERIFIER,
 						PreferenceType.Combo, WitnessVerifierType.values()),
 				new UltimatePreferenceItem<String>(LABEL_WITNESS_VERIFIER_DIR, VALUE_WITNESS_VERIFIER_DIR,
-						PreferenceType.Directory),
+						PreferenceType.String),
 				new UltimatePreferenceItem<Boolean>(LABEL_DELETE_GRAPHML, VALUE_DELETE_GRAPHML, PreferenceType.Boolean,
 						new WitnessVerifierValidator()),
 
@@ -107,7 +108,7 @@ public class CorePreferenceInitializer extends UltimatePreferenceInitializer {
 	public static final boolean VALUE_VERIFY_WITNESS = false;
 	public static final String LABEL_WITNESS_VERIFIER = "Use the following witness verifier";
 	public static final WitnessVerifierType VALUE_WITNESS_VERIFIER = WitnessVerifierType.CPACHECKER;
-	public static final String LABEL_WITNESS_VERIFIER_DIR = "Path to witness verifier executable "
+	public static final String LABEL_WITNESS_VERIFIER_DIR = "Command to execute witness verifier "
 			+ "(gets witness file as first and input file as second parameter)";
 	public static final String VALUE_WITNESS_VERIFIER_DIR = "";
 	public static final String LABEL_DELETE_GRAPHML = "Delete the .graphml file after verification";
@@ -270,6 +271,5 @@ public class CorePreferenceInitializer extends UltimatePreferenceInitializer {
 		public String getInvalidValueErrorMessage(Boolean value) {
 			return INVALID_WITNESSVERIFCATION_SETTING;
 		}
-
 	}
 }
