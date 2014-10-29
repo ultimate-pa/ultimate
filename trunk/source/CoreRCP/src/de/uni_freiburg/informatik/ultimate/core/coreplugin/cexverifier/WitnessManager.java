@@ -9,6 +9,8 @@ import java.io.InputStreamReader;
 import java.util.Collection;
 import java.util.Scanner;
 
+import org.apache.commons.lang3.StringEscapeUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.SystemUtils;
 import org.apache.log4j.Logger;
 
@@ -20,6 +22,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.core.util.MonitoredProcess;
+import de.uni_freiburg.informatik.ultimate.core.util.MonitoredProcess.MonitoredProcessState;
 import de.uni_freiburg.informatik.ultimate.result.CounterExampleResult;
 import de.uni_freiburg.informatik.ultimate.result.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.result.WitnessResult;
@@ -131,7 +134,6 @@ public class WitnessManager {
 			command = makeCPACheckerCommand(command, svcompWitnessFile,
 					ups.getString(CorePreferenceInitializer.LABEL_WITNESS_CPACHECKER_PROPERTY), originalFile,
 					cpaCheckerHome);
-			mLogger.fatal(command);
 			MonitoredProcess mp = MonitoredProcess.exec(command, cpaCheckerHome, null, mServices, mStorage);
 			BufferedInputStream errorStream = new BufferedInputStream(mp.getErrorStream());
 			BufferedInputStream outputStream = new BufferedInputStream(mp.getInputStream());
@@ -140,10 +142,12 @@ public class WitnessManager {
 			int timeoutInS = ups.getInt(CorePreferenceInitializer.LABEL_WITNESS_VERIFIER_TIMEOUT);
 			// wait for 10s for the witness checker
 			mLogger.info("Waiting for " + timeoutInS + "s for CPA Checker...");
-			if (mp.waitfor(timeoutInS * 1000).isRunning()) {
+			MonitoredProcessState mps = mp.waitfor(timeoutInS * 1000);
+			if (mps.isRunning()) {
 				mp.forceShutdown();
 				hitTimeout = true;
 			}
+			mLogger.info("Return code was " + mps.getReturnCode());
 
 			String error = convertStreamToString(errorStream);
 			String output = convertStreamToString(outputStream);
@@ -200,7 +204,8 @@ public class WitnessManager {
 	}
 
 	private String escape(String str) {
-		return "\"" + str + "\"";
+		return str;
+		// return "\"" + str + "\"";
 	}
 
 	// private static String convertStreamToString(InputStream is) {
