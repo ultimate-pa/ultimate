@@ -218,11 +218,13 @@ public class RelevantTransFormulas extends NestedFormulas<TransFormula, IPredica
 						conjunctsInUnsatCore.add(original);
 					}
 				} else {
-					Term original = annot2Original.get(conjuncts_annot[j]);
-					if (s_ComputeSumSizeFormulasInUnsatCore) {
-						m_SumSizeFormulasInUnsatCore += (new DAGSize()).size(original);
+					if (unsat_core.contains(conjuncts_annot[j])) {
+						Term original = annot2Original.get(conjuncts_annot[j]);
+						if (s_ComputeSumSizeFormulasInUnsatCore) {
+							m_SumSizeFormulasInUnsatCore += (new DAGSize()).size(original);
+						}
+						conjunctsInUnsatCore.add(original);
 					}
-					conjunctsInUnsatCore.add(original);
 				}
 			}
 		}
