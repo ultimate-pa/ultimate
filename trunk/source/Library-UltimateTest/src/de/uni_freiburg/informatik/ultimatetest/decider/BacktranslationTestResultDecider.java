@@ -17,6 +17,7 @@ import de.uni_freiburg.informatik.ultimate.result.CounterExampleResult;
 import de.uni_freiburg.informatik.ultimate.result.ExceptionOrErrorResult;
 import de.uni_freiburg.informatik.ultimate.result.GenericResult;
 import de.uni_freiburg.informatik.ultimate.result.IResult;
+import de.uni_freiburg.informatik.ultimate.result.IProgramExecution.AtomicTraceElement.StepInfo;
 import de.uni_freiburg.informatik.ultimatetest.util.Util;
 
 /**
@@ -100,10 +101,12 @@ public class BacktranslationTestResultDecider extends TestResultDecider {
 			if (desiredCounterExampleFile.canRead()) {
 
 				try {
-					String desiredCounterExample = de.uni_freiburg.informatik.ultimate.core.util.Util.readFile(desiredCounterExampleFile);
+					String desiredCounterExample = de.uni_freiburg.informatik.ultimate.core.util.Util
+							.readFile(desiredCounterExampleFile);
 
 					// compare linewise
-					String platformLineSeparator = de.uni_freiburg.informatik.ultimate.core.util.Util.getPlatformLineSeparator();
+					String platformLineSeparator = de.uni_freiburg.informatik.ultimate.core.util.Util
+							.getPlatformLineSeparator();
 					String[] desiredLines = desiredCounterExample.split(platformLineSeparator);
 					String[] actualLines = actualCounterExample.split(platformLineSeparator);
 
@@ -114,8 +117,14 @@ public class BacktranslationTestResultDecider extends TestResultDecider {
 							String curDes = desiredLines[i].trim();
 							String curAct = actualLines[i].trim();
 							if (!(curDes.equals(curAct))) {
-								fail = true;
-								break;
+								// ok it does not match, but we may make an
+								// exception for value lines
+								if (!isValueLineOk(curDes, curAct)) {
+									// it is either not a value line or the
+									// value lines differ too much
+									fail = true;
+									break;
+								}
 							}
 						}
 					}
@@ -162,6 +171,46 @@ public class BacktranslationTestResultDecider extends TestResultDecider {
 		return fail ? TestResult.FAIL : TestResult.SUCCESS;
 	}
 
+	/**
+	 * 
+	 * @param curDes
+	 *            A line from the desired error trace, already trimmed
+	 * @param curAct
+	 *            The corresponding line from the actual error trace, already
+	 *            trimmed
+	 * @return true iff it is a value line and the values do not differ too much
+	 *         (i.e. there is the same number of the same variables, but the
+	 *         values do not match)
+	 */
+	private boolean isValueLineOk(String curDes, String curAct) {
+
+		if ((curDes.startsWith("VAL") && curAct.startsWith("VAL"))
+				|| (curDes.startsWith("IVAL") && curAct.startsWith("IVAL")))
+
+		{
+			String[] curDesVals = curDes.split(",");
+			String[] curActVals = curAct.split(",");
+			if (curDesVals.length != curActVals.length) {
+				return false;
+			}
+
+			for (int i = 0; i < curDesVals.length; ++i) {
+				String[] singleDesVal = curDesVals[i].split("=");
+				String[] singleActVal = curActVals[i].split("=");
+				if (singleDesVal.length != singleActVal.length || singleDesVal.length < 2) {
+					return false;
+				}
+				// check for the name of the var
+				if (!singleDesVal[0].equals(singleActVal[0])) {
+					return false;
+				}
+			}
+			return true;
+		}
+
+		return false;
+	}
+
 	@Override
 	public TestResult getTestResult(IResultService resultService, Throwable e) {
 		setResultCategory("Unexpected exception");
@@ -178,9 +227,11 @@ public class BacktranslationTestResultDecider extends TestResultDecider {
 	}
 
 	private boolean tryWritingActualResultToFile(File desiredCounterExampleFile, String actualCounterExample) {
-		String[] actualLines = actualCounterExample.split(de.uni_freiburg.informatik.ultimate.core.util.Util.getPlatformLineSeparator());
+		String[] actualLines = actualCounterExample.split(de.uni_freiburg.informatik.ultimate.core.util.Util
+				.getPlatformLineSeparator());
 		try {
-			de.uni_freiburg.informatik.ultimate.core.util.Util.writeFile(desiredCounterExampleFile.getAbsolutePath() + "-actual", actualLines);
+			de.uni_freiburg.informatik.ultimate.core.util.Util.writeFile(desiredCounterExampleFile.getAbsolutePath()
+					+ "-actual", actualLines);
 			return true;
 		} catch (IOException e) {
 			return false;

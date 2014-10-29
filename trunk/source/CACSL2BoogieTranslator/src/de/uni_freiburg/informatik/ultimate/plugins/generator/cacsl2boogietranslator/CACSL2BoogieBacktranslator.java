@@ -30,7 +30,6 @@ import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvide
 import de.uni_freiburg.informatik.ultimate.model.DefaultTranslator;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieTransformer;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssertStatement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BoogieASTNode;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.CallStatement;
@@ -279,46 +278,58 @@ public class CACSL2BoogieBacktranslator extends
 			// if it is a return we are already finished.
 			return i;
 		}
+		// The following code is not necessary anymore because Alex changed the
+		// local var initialisation code s.t the assign statements at the
+		// beginning of each function have their ignore flags set
+		// We keep it for a couple of revisions and throw it out once we are sure we dont need it 
 
-		int j = i + 1;
-		for (int k = 0; k < fcall.getArguments().length && j < programExecution.getLength(); ++j, ++k) {
-			AtomicTraceElement<BoogieASTNode> origFuncDef = programExecution.getTraceElement(j);
-
-			if (!(origFuncDef.getTraceElement() instanceof AssignmentStatement)) {
-				reportUnfinishedBacktranslation("CASTFunctionCallExpression is followed by "
-						+ origFuncDef.getTraceElement().getClass().getSimpleName());
-				return i;
-			}
-
-			if (!(origFuncDef.getTraceElement().getLocation() instanceof CACSLLocation)) {
-				reportUnfinishedBacktranslation("CASTFunctionCallExpression is followed by some unknown location: "
-						+ origFuncDef.getTraceElement().getLocation().getClass().getSimpleName());
-				return i;
-			}
-			IASTNode cnode = ((CLocation) origFuncDef.getTraceElement().getLocation()).getNode();
-			if (!(cnode instanceof CASTFunctionDefinition)) {
-				reportUnfinishedBacktranslation("After CASTFunctionCallExpression should follow a "
-						+ "CASTFunctionDefinition for each argument, but was: " + cnode.getClass().getSimpleName());
-				return i;
-			}
-
-			// there is no backtranslation for this assign, but maybe we need it
-			// to track the body vars?
-			// AssignmentStatement assign = (AssignmentStatement)
-			// origFuncDef.getTraceElement();
-			// IdentifierExpression origInParam = new
-			// LHSIdentifierExtractor().extract(assign);
-			// IASTExpression inParam = translateExpression(origInParam);
-			//
-			// translatedAtomicTraceElements.add(new
-			// AtomicTraceElement<CACSLLocation>(cloc, new
-			// CACSLLocation(inParam),
-			// StepInfo.ARG_EVAL));
-			//
-			// translatedProgramStates.add(translateProgramState(programExecution.getProgramState(j)));
-		}
-
-		i = j - 1;
+		// int j = i + 1;
+		// for (int k = 0; k < fcall.getArguments().length && j <
+		// programExecution.getLength(); ++j, ++k) {
+		// AtomicTraceElement<BoogieASTNode> origFuncDef =
+		// programExecution.getTraceElement(j);
+		//
+		// if (!(origFuncDef.getTraceElement() instanceof AssignmentStatement))
+		// {
+		// reportUnfinishedBacktranslation("CASTFunctionCallExpression is followed by "
+		// + origFuncDef.getTraceElement().getClass().getSimpleName());
+		// return i;
+		// }
+		//
+		// if (!(origFuncDef.getTraceElement().getLocation() instanceof
+		// CACSLLocation)) {
+		// reportUnfinishedBacktranslation("CASTFunctionCallExpression is followed by some unknown location: "
+		// +
+		// origFuncDef.getTraceElement().getLocation().getClass().getSimpleName());
+		// return i;
+		// }
+		// IASTNode cnode = ((CLocation)
+		// origFuncDef.getTraceElement().getLocation()).getNode();
+		// if (!(cnode instanceof CASTFunctionDefinition)) {
+		// reportUnfinishedBacktranslation("After CASTFunctionCallExpression should follow a "
+		// + "CASTFunctionDefinition for each argument, but was: " +
+		// cnode.getClass().getSimpleName());
+		// return i;
+		// }
+		//
+		// // there is no backtranslation for this assign, but maybe we need it
+		// // to track the body vars?
+		// // AssignmentStatement assign = (AssignmentStatement)
+		// // origFuncDef.getTraceElement();
+		// // IdentifierExpression origInParam = new
+		// // LHSIdentifierExtractor().extract(assign);
+		// // IASTExpression inParam = translateExpression(origInParam);
+		// //
+		// // translatedAtomicTraceElements.add(new
+		// // AtomicTraceElement<CACSLLocation>(cloc, new
+		// // CACSLLocation(inParam),
+		// // StepInfo.ARG_EVAL));
+		// //
+		// //
+		// translatedProgramStates.add(translateProgramState(programExecution.getProgramState(j)));
+		// }
+		//
+		// i = j - 1;
 		return i;
 	}
 
