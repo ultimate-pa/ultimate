@@ -1,6 +1,5 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -9,8 +8,6 @@ import java.util.Map;
 
 import org.apache.log4j.Logger;
 
-import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
-import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
@@ -33,7 +30,7 @@ public class AnnotateAndAssertConjunctsOfCodeBlocks extends AnnotateAndAssertCod
 	private final Map<Term,Term> m_Annotated2Original = new HashMap<Term,Term>();
 	private final SplitEqualityMapping m_SplitEqualityMapping = new SplitEqualityMapping();
 	
-	private final static boolean m_SplitEqualities = true;
+	private final static boolean m_SplitEqualities = false;
 
 	public AnnotateAndAssertConjunctsOfCodeBlocks(SmtManager smtManager, 
 			NestedFormulas<Term, Term> nestedSSA, DefaultTransFormulas defaultTransformulas, Logger logger) {
