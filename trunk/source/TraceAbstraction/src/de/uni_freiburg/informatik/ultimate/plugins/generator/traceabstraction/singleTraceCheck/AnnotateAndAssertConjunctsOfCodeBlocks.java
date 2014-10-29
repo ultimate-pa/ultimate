@@ -30,7 +30,7 @@ public class AnnotateAndAssertConjunctsOfCodeBlocks extends AnnotateAndAssertCod
 	private final Map<Term,Term> m_Annotated2Original = new HashMap<Term,Term>();
 	private final SplitEqualityMapping m_SplitEqualityMapping = new SplitEqualityMapping();
 	
-	private final static boolean m_SplitEqualities = true;
+	private final static boolean m_SplitEqualities = false;
 
 	public AnnotateAndAssertConjunctsOfCodeBlocks(SmtManager smtManager, 
 			NestedFormulas<Term, Term> nestedSSA, DefaultTransFormulas defaultTransformulas, Logger logger) {
