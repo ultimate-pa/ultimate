@@ -6,7 +6,9 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Scanner;
 
 import org.apache.commons.lang3.StringEscapeUtils;
@@ -131,10 +133,12 @@ public class WitnessManager {
 				return false;
 			}
 
-			command = makeCPACheckerCommand(command, svcompWitnessFile,
+			String[] cmdArray = makeCPACheckerCommand(command, svcompWitnessFile,
 					ups.getString(CorePreferenceInitializer.LABEL_WITNESS_CPACHECKER_PROPERTY), originalFile,
 					cpaCheckerHome);
-			MonitoredProcess mp = MonitoredProcess.exec(command, cpaCheckerHome, null, mServices, mStorage);
+			command = StringUtils.join(cmdArray, " ");
+			mLogger.info(command);
+			MonitoredProcess mp = MonitoredProcess.exec(cmdArray, cpaCheckerHome, null, mServices, mStorage);
 			BufferedInputStream errorStream = new BufferedInputStream(mp.getErrorStream());
 			BufferedInputStream outputStream = new BufferedInputStream(mp.getInputStream());
 
@@ -183,24 +187,21 @@ public class WitnessManager {
 		return false;
 	}
 
-	private String makeCPACheckerCommand(String command, String svcompWitnessFile, String cpaCheckerProp,
+	private String[] makeCPACheckerCommand(String command, String svcompWitnessFile, String cpaCheckerProp,
 			String originalFile, String workingDir) {
+		List<String> cmdArgs = new ArrayList<>();
 		String[] args = command.split(" ");
 		File f = new File(workingDir + File.separator + args[0]);
-		StringBuilder sb = new StringBuilder();
-		sb.append(f.getAbsolutePath());
+		cmdArgs.add(f.getAbsolutePath());
 		for (int i = 1; i < args.length; ++i) {
-			sb.append(" ").append(args[i]);
+			cmdArgs.add(args[i]);
 		}
-		sb.append(" ");
-		sb.append("-spec ");
-		sb.append(escape(svcompWitnessFile));
-		sb.append(" ");
-		sb.append("-spec ");
-		sb.append(escape(cpaCheckerProp));
-		sb.append(" ");
-		sb.append(escape(originalFile));
-		return sb.toString();
+		cmdArgs.add("-spec");
+		cmdArgs.add(escape(svcompWitnessFile));
+		cmdArgs.add("-spec");
+		cmdArgs.add(escape(cpaCheckerProp));
+		cmdArgs.add(escape(originalFile));
+		return cmdArgs.toArray(new String[0]);
 	}
 
 	private String escape(String str) {
@@ -208,29 +209,29 @@ public class WitnessManager {
 		// return "\"" + str + "\"";
 	}
 
-	// private static String convertStreamToString(InputStream is) {
-	// Scanner s = null;
-	// try {
-	// s = new Scanner(is).useDelimiter("\\A");
-	// return s.hasNext() ? s.next() : "";
-	// } finally {
-	// if (s != null) {
-	// s.close();
-	// }
-	// }
-	// }
-
 	private static String convertStreamToString(InputStream is) {
-		BufferedReader reader = new BufferedReader(new InputStreamReader(is));
-		StringBuilder out = new StringBuilder();
-		String line;
+		Scanner s = null;
 		try {
-			while ((line = reader.readLine()) != null) {
-				out.append(line);
+			s = new Scanner(is).useDelimiter("\\A");
+			return s.hasNext() ? s.next() : "";
+		} finally {
+			if (s != null) {
+				s.close();
 			}
-			reader.close();
-		} catch (IOException e) {
 		}
-		return out.toString();
 	}
+
+	// private static String convertStreamToString(InputStream is) {
+	// BufferedReader reader = new BufferedReader(new InputStreamReader(is));
+	// StringBuilder out = new StringBuilder();
+	// String line;
+	// try {
+	// while ((line = reader.readLine()) != null) {
+	// out.append(line);
+	// }
+	// reader.close();
+	// } catch (IOException e) {
+	// }
+	// return out.toString();
+	// }
 }
