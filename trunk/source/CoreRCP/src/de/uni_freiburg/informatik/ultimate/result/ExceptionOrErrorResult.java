@@ -31,17 +31,17 @@ public class ExceptionOrErrorResult extends AbstractResult {
 
 	@Override
 	public String getShortDescription() {
-		return getPlugin() + ": " + m_Throwable.getClass().getSimpleName();
+		return m_Throwable.getClass().getSimpleName();
 	}
 
 	@Override
 	public String getLongDescription() {
 		StackTraceElement[] stacktrace = m_Throwable.getStackTrace();
+		String rtr = getPlugin() + ": " + getShortDescription();
 		if (stacktrace != null && stacktrace.length > 0) {
-			return getShortDescription() + ": " + stacktrace[0].toString();
-		} else {
-			return getShortDescription();
+			rtr = rtr + ": " + stacktrace[0].toString();
 		}
+		return rtr;
 	}
 
 	@Override
