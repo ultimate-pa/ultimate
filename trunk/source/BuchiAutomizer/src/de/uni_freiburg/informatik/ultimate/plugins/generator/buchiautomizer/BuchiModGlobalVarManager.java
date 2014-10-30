@@ -85,6 +85,7 @@ public class BuchiModGlobalVarManager extends ModifiableGlobalVariableManager {
 		assert infeasibility == Infeasibility.UNPROVEABLE;
 		formula = Util.and(m_Script, formula, oldVarEquality(m_Unseeded, m_UnseededOldVar));
 		inVars.put(m_Unseeded, m_Unseeded.getTermVariable());
+		outVars.put(m_Unseeded, m_Unseeded.getTermVariable());
 		outVars.put(m_UnseededOldVar, m_UnseededOldVar.getTermVariable());
 		for (int i=0; i<m_OldRank.length; i++) {
 			formula = Util.and(m_Script, formula, oldVarEquality(m_OldRank[i], m_OldRankOldVar[i]));
@@ -115,6 +116,7 @@ public class BuchiModGlobalVarManager extends ModifiableGlobalVariableManager {
 		assert infeasibility == Infeasibility.UNPROVEABLE;
 		formula = Util.and(m_Script, formula, oldVarEquality(m_Unseeded, m_UnseededOldVar));
 		inVars.put(m_UnseededOldVar, m_UnseededOldVar.getTermVariable());
+		outVars.put(m_UnseededOldVar, m_UnseededOldVar.getTermVariable());
 		outVars.put(m_Unseeded, m_Unseeded.getTermVariable());
 		for (int i=0; i<m_OldRank.length; i++) {
 			formula = Util.and(m_Script, formula, oldVarEquality(m_OldRank[i], m_OldRankOldVar[i]));
