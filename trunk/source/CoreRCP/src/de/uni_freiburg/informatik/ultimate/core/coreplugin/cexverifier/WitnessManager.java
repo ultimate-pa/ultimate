@@ -9,11 +9,8 @@ import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Scanner;
 
-import org.apache.commons.lang3.StringEscapeUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.SystemUtils;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator;
@@ -206,29 +203,29 @@ public class WitnessManager {
 		// return "\"" + str + "\"";
 	}
 
-	private static String convertStreamToString(InputStream is) {
-		Scanner s = null;
-		try {
-			s = new Scanner(is).useDelimiter("\\A");
-			return s.hasNext() ? s.next() : "";
-		} finally {
-			if (s != null) {
-				s.close();
-			}
-		}
-	}
-
 	// private static String convertStreamToString(InputStream is) {
-	// BufferedReader reader = new BufferedReader(new InputStreamReader(is));
-	// StringBuilder out = new StringBuilder();
-	// String line;
+	// Scanner s = null;
 	// try {
-	// while ((line = reader.readLine()) != null) {
-	// out.append(line);
+	// s = new Scanner(is).useDelimiter("\\A");
+	// return s.hasNext() ? s.next() : "";
+	// } finally {
+	// if (s != null) {
+	// s.close();
 	// }
-	// reader.close();
-	// } catch (IOException e) {
 	// }
-	// return out.toString();
 	// }
+
+	private static String convertStreamToString(InputStream is) {
+		BufferedReader reader = new BufferedReader(new InputStreamReader(is));
+		StringBuilder out = new StringBuilder();
+		String line;
+		try {
+			while ((line = reader.readLine()) != null) {
+				out.append(line).append(CoreUtil.getPlatformLineSeparator());
+			}
+			reader.close();
+		} catch (IOException e) {
+		}
+		return out.toString();
+	}
 }
