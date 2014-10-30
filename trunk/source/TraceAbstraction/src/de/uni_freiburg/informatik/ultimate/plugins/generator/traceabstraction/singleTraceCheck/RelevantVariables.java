@@ -298,6 +298,9 @@ public class RelevantVariables {
 			ConstraintAnalysis localVarAssignmentCa = 
 					m_NestedConstraintAnalysis.getLocalVarAssignment(posOfCall);
 			result.addAll(localVarAssignmentCa.getConstraintOut());
+			ConstraintAnalysis oldVarAssignmentCa = 
+					m_NestedConstraintAnalysis.getOldVarAssignment(posOfCall);
+			result.addAll(oldVarAssignmentCa.getConstraintOut());
 			
 //			for (BoogieVar bv : oldVarAssignment.getInVars().keySet()) {
 //				result.add(bv);
