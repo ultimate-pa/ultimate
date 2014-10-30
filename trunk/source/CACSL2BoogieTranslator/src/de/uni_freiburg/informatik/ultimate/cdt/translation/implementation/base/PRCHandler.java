@@ -24,6 +24,7 @@ import org.eclipse.cdt.core.dom.ast.IASTCompoundStatement;
 import org.eclipse.cdt.core.dom.ast.IASTConditionalExpression;
 import org.eclipse.cdt.core.dom.ast.IASTContinueStatement;
 import org.eclipse.cdt.core.dom.ast.IASTDeclSpecifier;
+import org.eclipse.cdt.core.dom.ast.IASTDeclaration;
 import org.eclipse.cdt.core.dom.ast.IASTDeclarationStatement;
 import org.eclipse.cdt.core.dom.ast.IASTDeclarator;
 import org.eclipse.cdt.core.dom.ast.IASTDefaultStatement;
@@ -230,6 +231,11 @@ public class PRCHandler extends CHandler {
 //			if (!reachableDecs.contains(node))
 //				return new ResultSkip();
 //		}
+		LinkedHashSet<IASTDeclaration> reachableDecs = ((PRDispatcher) main).getReachableDeclarationsOrDeclarators();
+		if (reachableDecs != null) {
+			if (!reachableDecs.contains(node))
+				return new ResultSkip();
+		}
 
 		ResultTypes resType = (ResultTypes) main.dispatch(node.getDeclSpecifier());
 
@@ -266,6 +272,21 @@ public class PRCHandler extends CHandler {
 
 	@Override
 	public Result visit(Dispatcher main, IASTSimpleDeclaration node) {
+		LinkedHashSet<IASTDeclaration> reachableDecs = ((PRDispatcher) main).getReachableDeclarationsOrDeclarators();
+		if (reachableDecs != null) {
+			if (node.getParent() instanceof IASTTranslationUnit) {
+				if (!reachableDecs.contains(node)) {
+					boolean skip = true;
+					for (IASTDeclarator d : node.getDeclarators())
+						if (reachableDecs.contains(d))
+							skip = false;
+					if (reachableDecs.contains(node.getDeclSpecifier()))
+						skip = false;
+					if (skip)
+						return new ResultSkip();
+				}
+			}
+		}
 
 		ILocation loc = LocationFactory.createCLocation(node);
 

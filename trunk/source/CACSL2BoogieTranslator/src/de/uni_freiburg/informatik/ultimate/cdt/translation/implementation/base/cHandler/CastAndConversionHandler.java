@@ -95,19 +95,23 @@ public class CastAndConversionHandler {
 				if (lCPrim.isUnsigned() || rCPrim.isUnsigned()) {
 					//does the unsigned int fit into the signed one? 
 					if (!lCPrim.isUnsigned() && rCPrim.isUnsigned()) {//l is signed r unsigned
-						if (rIsBigger) {
+						if (!rIsBigger) {
 							//does not fit, need to convert signedInt l
 							if (wraparoundOverflows)
 								doIntOverflowTreatment(main, memoryHandler, iLoc, leftRex);
 						}
+						if (wraparoundOverflows)
+							doIntOverflowTreatment(main, memoryHandler, iLoc, rightRex);
 						//if lIsBigger, it fits, if both are false, we don't know
 						// do nothing either way..
 					} else if (!rCPrim.isUnsigned() && lCPrim.isUnsigned()) {//l is signed r unsigned
-						if (lIsBigger) {
-							//does not fit, need to convert signedInt l
+						if (!lIsBigger) {
+							//does not fit, need to convert signedInt r
 							if (wraparoundOverflows)
 								doIntOverflowTreatment(main, memoryHandler, iLoc, rightRex);
 						}
+						if (wraparoundOverflows)
+							doIntOverflowTreatment(main, memoryHandler, iLoc, leftRex);
 						//if lIsBigger, it fits, if both are false, we don't know
 						// do nothing either way..
 					} else {//both are unsigned

@@ -289,7 +289,18 @@ public class MainDispatcher extends Dispatcher {
 		// functionsOnHeap = pr.getFunctionPointers();
 		mFunctionToIndex = pr.getFunctionToIndex();
 
-		PRDispatcher prd = new PRDispatcher(backtranslator, mServices, mLogger, mFunctionToIndex);
+		boolean useDetNecessaryDeclarations = true;
+		if (useDetNecessaryDeclarations) {
+			DetermineNecessaryDeclarations dnd = new DetermineNecessaryDeclarations(this.getCheckedMethod(), this,
+					ftb.getFunctionTable(), mFunctionToIndex);
+			tu.accept(dnd);
+
+			reachableDeclarations = dnd.getReachableDeclarationsOrDeclarators();
+		} else {
+			reachableDeclarations = null;
+		}
+
+		PRDispatcher prd = new PRDispatcher(backtranslator, mServices, mLogger, mFunctionToIndex, reachableDeclarations);
 		prd.init();
 		prd.dispatch(node);
 		variablesOnHeap.addAll(((PRCHandler) prd.cHandler).getVarsForHeap());
@@ -309,16 +320,7 @@ public class MainDispatcher extends Dispatcher {
 			isMMRequired = pr.isMMRequired();
 		}
 
-		boolean useDetNecessaryDeclarations = true;
-		if (useDetNecessaryDeclarations) {
-			DetermineNecessaryDeclarations dnd = new DetermineNecessaryDeclarations(this.getCheckedMethod(), this,
-					ftb.getFunctionTable(), mFunctionToIndex);
-			tu.accept(dnd);
 
-			reachableDeclarations = dnd.getReachableDeclarationsOrDeclarators();
-		} else {
-			reachableDeclarations = null;
-		}
 	}
 
 	@Override

@@ -2,6 +2,7 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base;
 
 import java.text.ParseException;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 
 import org.apache.log4j.Logger;
 import org.eclipse.cdt.core.dom.ast.IASTASMDeclaration;
@@ -98,11 +99,13 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietransla
 
 public class PRDispatcher extends Dispatcher {
 	
+	LinkedHashSet<IASTDeclaration> reachableDeclarations;
 
 	public PRDispatcher(CACSL2BoogieBacktranslator backtranslator,
-			IUltimateServiceProvider services, Logger logger, LinkedHashMap<String,Integer> functionToIndex) {
+			IUltimateServiceProvider services, Logger logger, LinkedHashMap<String,Integer> functionToIndex, LinkedHashSet<IASTDeclaration> reachableDeclarations) {
 		super(backtranslator, services, logger);
 		mFunctionToIndex = functionToIndex;
+		this.reachableDeclarations = reachableDeclarations;
 	}
 
 	@Override
@@ -406,5 +409,7 @@ public class PRDispatcher extends Dispatcher {
 		// TODO Auto-generated method stub
 		return false;
 	}
-
+	LinkedHashSet<IASTDeclaration> getReachableDeclarationsOrDeclarators() {
+		return reachableDeclarations;
+	}
 }
