@@ -171,7 +171,11 @@ public class WitnessManager {
 			}
 			sb.append("! CPAChecker said:");
 			sb.append(CoreUtil.getPlatformLineSeparator());
+			sb.append("STDERR:");
+			sb.append(CoreUtil.getPlatformLineSeparator());
 			sb.append(error);
+			sb.append(CoreUtil.getPlatformLineSeparator());
+			sb.append("STDOUT:");
 			sb.append(CoreUtil.getPlatformLineSeparator());
 			sb.append(output);
 			mLogger.error(sb.toString());

@@ -31,13 +31,14 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
  */
 class Executor {
 
-	private String m_Solver;
-	private MonitoredProcess m_Process;
-	private Lexer m_Lexer;
-	private BufferedWriter m_Writer;
-	private Logger m_Logger;
-	private Script m_Script;
-	private InputStream m_stdErr;
+	private MonitoredProcess mProcess;
+	private Lexer mLexer;
+	private BufferedWriter mWriter;
+	private InputStream mStdErr;
+
+	private final Script mScript;
+	private final String mSolverCmd;
+	private final Logger mLogger;
 	private final IUltimateServiceProvider mServices;
 	private final IToolchainStorage mStorage;
 
@@ -45,53 +46,46 @@ class Executor {
 			IToolchainStorage storage) {
 		mServices = services;
 		mStorage = storage;
-		m_Solver = solverCommand;
-		m_Script = script;
-		m_Logger = logger;
+		mSolverCmd = solverCommand;
+		mScript = script;
+		mLogger = logger;
 		createProcess();
 	}
 
 	private void createProcess() {
 		// m_Logger = Logger.getRootLogger();
 		try {
-			m_Process = MonitoredProcess.exec(m_Solver, "(exit)", mServices, mStorage);
+			mProcess = MonitoredProcess.exec(mSolverCmd, "(exit)", mServices, mStorage);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		m_Logger.fatal("Got process: " + m_Process);
-		OutputStream stdin = m_Process.getOutputStream();
-		m_Logger.fatal("Got stream stdin: " + stdin);
-		
-		InputStream stdout = m_Process.getInputStream();
-		m_Logger.fatal("Got stream stdout: " + stdout);
-		
-		m_stdErr = m_Process.getErrorStream();
-		m_Logger.fatal("Got stream stderr: " + m_stdErr);
-		
+
+		if (mProcess == null) {
+			String errorMsg = "Could not create process \"" + mSolverCmd + "\", terminating... ";
+			mLogger.fatal(errorMsg);
+			throw new IllegalStateException(errorMsg);
+		}
+
+		OutputStream stdin = mProcess.getOutputStream();
+		InputStream stdout = mProcess.getInputStream();
+
+		mStdErr = mProcess.getErrorStream();
+
 		MySymbolFactory symfactory = new MySymbolFactory();
-		InputStreamReader reader = new InputStreamReader(stdout);
-		m_Logger.fatal("Got streamreader stdout: " + reader);
-		m_Lexer = new Lexer(reader);
-		
-		m_Logger.fatal("Got Lexer: " + m_Lexer);
-		m_Lexer.setSymbolFactory(symfactory);
-		
-		OutputStreamWriter writer = new OutputStreamWriter(stdin);
-		m_Logger.fatal("Got streamwriter stdin: " + writer);
-		m_Writer = new BufferedWriter(writer);
-		m_Logger.fatal("Got buffered streamwriter stdin: " + m_Writer);
+		mLexer = new Lexer(new InputStreamReader(stdout));
+		mLexer.setSymbolFactory(symfactory);
+
+		mWriter = new BufferedWriter(new OutputStreamWriter(stdin));
 
 		input("(set-option :print-success true)");
-		m_Logger.fatal("Set input");
 		parseSuccess();
-		m_Logger.fatal("Parsed Success");
 	}
 
 	public void input(String in) {
-		m_Logger.debug(in + "\n");
+		mLogger.debug(in + "\n");
 		try {
-			m_Writer.write(in + "\n");
-			m_Writer.flush();
+			mWriter.write(in + "\n");
+			mWriter.flush();
 		} catch (IOException e) {
 			throw new SMTLIBException("Connection to SMT solver broken", e);
 		}
@@ -101,8 +95,8 @@ class Executor {
 
 		input("(exit)");
 		parseSuccess();
-		m_Process.forceShutdown();
-		m_Process = null;
+		mProcess.forceShutdown();
+		mProcess = null;
 
 	}
 
@@ -122,9 +116,9 @@ class Executor {
 
 	private List<Symbol> readAnswer() {
 		try {
-			List<Symbol> result = parseSexpr(m_Lexer);
+			List<Symbol> result = parseSexpr(mLexer);
 			for (Symbol s : result)
-				m_Logger.debug(s.toString() + "\n");
+				mLogger.debug(s.toString() + "\n");
 			return result;
 		} catch (IOException e) {
 			throw new SMTLIBException("Connection to SMT solver broken", e);
@@ -133,12 +127,12 @@ class Executor {
 
 	public void reset() {
 		try {
-			m_Writer.write("(exit)\n");
-			m_Writer.flush();
+			mWriter.write("(exit)\n");
+			mWriter.flush();
 		} catch (IOException e) {
 			/* ignore */
 		}
-		m_Process.forceShutdown();
+		mProcess.forceShutdown();
 		createProcess();
 	}
 
@@ -147,15 +141,15 @@ class Executor {
 
 		// clear the std error buffer as it blocks when it runs full
 		try {
-			while (m_stdErr.available() > 0) {
-				m_stdErr.read();
+			while (mStdErr.available() > 0) {
+				mStdErr.read();
 			}
 		} catch (IOException e) {
 			// we don't care what happens on stdErr
 		}
 
 		Parser m_Parser = new Parser();
-		m_Parser.setScript(m_Script);
+		m_Parser.setScript(mScript);
 		answer.add(0, new Symbol(what));
 		m_Parser.setAnswer(answer);
 		try {
