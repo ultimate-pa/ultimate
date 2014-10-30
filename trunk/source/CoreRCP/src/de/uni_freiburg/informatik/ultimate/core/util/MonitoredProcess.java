@@ -10,6 +10,7 @@ import java.io.OutputStreamWriter;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 import java.lang.Thread.State;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.commons.lang3.StringUtils;
@@ -30,10 +31,11 @@ public final class MonitoredProcess implements IStorable {
 	private final String mCommand;
 	private final String mExitCommand;
 
-	// buffer size in bytes 
+	// buffer size in bytes
 	private final static int sBufferSize = 2048;
 	private final PipedInputStream mStdInStreamPipe;
 	private final PipedInputStream mStdErrStreamPipe;
+	private final Semaphore mWaitForSetup;
 
 	private Thread mMonitor;
 	private int mID;
@@ -59,6 +61,10 @@ public final class MonitoredProcess implements IStorable {
 		mMonitor = null;
 		mStdInStreamPipe = new PipedInputStream(sBufferSize);
 		mStdErrStreamPipe = new PipedInputStream(sBufferSize);
+
+		// wait until all 3 threads are ready (stderr buffer, stdinbuffer,
+		// actual process watcher) before returning from exec
+		mWaitForSetup = new Semaphore(-2);
 	}
 
 	/**
@@ -85,6 +91,7 @@ public final class MonitoredProcess implements IStorable {
 		mp.mLogger.info(String.format("Starting monitored process with %s (exit command is %s, workingDir is %s)",
 				mp.mCommand, mp.mExitCommand, workingDir));
 		mp.mMonitor.start();
+		mp.mWaitForSetup.acquireUninterruptibly();
 		return mp;
 	}
 
@@ -111,6 +118,7 @@ public final class MonitoredProcess implements IStorable {
 		mp.mLogger.info(String.format("Starting monitored process with %s (exit command is %s)", mp.mCommand,
 				mp.mExitCommand));
 		mp.mMonitor.start();
+		mp.mWaitForSetup.acquireUninterruptibly();
 		return mp;
 	}
 
@@ -264,23 +272,31 @@ public final class MonitoredProcess implements IStorable {
 		@Override
 		public void run() {
 			try {
-
 				PipedOutputStream stdInBufferPipe = new PipedOutputStream(mStdInStreamPipe);
 				PipedOutputStream stdErrBufferPipe = new PipedOutputStream(mStdErrStreamPipe);
-
 				setUpStreamBuffer(mMonitoredProcess.mProcess.getInputStream(), stdInBufferPipe);
 				setUpStreamBuffer(mMonitoredProcess.mProcess.getErrorStream(), stdErrBufferPipe);
 
-				mMonitoredProcess.mReturnCode = mMonitoredProcess.mProcess.waitFor();
+			} catch (IOException e) {
+				mMonitoredProcess.mLogger.error("The process started with " + mMonitoredProcess.mCommand
+						+ " failed during stream data buffering. It will terminate abnormally.", e);
+				mMonitoredProcess.mProcess.destroy();
+				mMonitoredProcess.mProcess = null;
+				mMonitoredProcess.mStorage.removeStorable(getKey(mMonitoredProcess.mID, mMonitoredProcess.mCommand));
 
+				// release enough permits for exec to guarantee return
+				mWaitForSetup.release(3);
+				return;
+			}
+
+			try {
+				mWaitForSetup.release();
+				mMonitoredProcess.mReturnCode = mMonitoredProcess.mProcess.waitFor();
 				mMonitoredProcess.mLogger.debug("Finished waiting for process!");
 				mMonitoredProcess.mProcessCompleted = true;
 			} catch (InterruptedException e) {
 				mMonitoredProcess.mLogger.error("The process started with " + mMonitoredProcess.mCommand
 						+ " was interrupted. It will terminate abnormally.", e);
-			} catch (IOException e) {
-				mMonitoredProcess.mLogger.error("The process started with " + mMonitoredProcess.mCommand
-						+ " failed during stream data buffering. It will terminate abnormally.", e);
 			} finally {
 				mMonitoredProcess.mProcess.destroy();
 				mMonitoredProcess.mProcess = null;
@@ -296,6 +312,7 @@ public final class MonitoredProcess implements IStorable {
 
 					BufferedReader br = new BufferedReader(streamReader);
 					int chunk = -1;
+					mWaitForSetup.release();
 					try {
 						while ((chunk = br.read()) != -1) {
 							os.write(chunk);
