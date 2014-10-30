@@ -29,7 +29,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Ret
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.SequentialComposition;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.BenchmarkData;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.IBenchmarkDataProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.IBenchmarkType;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.BasicPredicateExplicitQuantifier;
@@ -346,13 +345,18 @@ public class TraceCheckerSpWp extends TraceChecker {
 			RelevantVariables rvar = new RelevantVariables(rtf, m_ModifiedGlobals);
 			relevantVarsToUseForFPBP = rvar.getRelevantVariables();
 		}
+		
+
 
 		if (m_ComputeInterpolantsFp) {
 			mLogger.debug("Computing forward relevant predicates...");
 			computeForwardRelevantPredicates(relevantVarsToUseForFPBP, rtf, trace, tracePrecondition, m_LiveVariables,
 					numberOfQuantifiedPredicates);
 			mLogger.debug("Checking inductivity of forward relevant predicates...");
-			assert checkPredicatesCorrect(m_InterpolantsFp, trace, tracePrecondition, tracePostcondition, "FP") : "invalid Hoare triple in FP";
+			if (!checkPredicatesCorrect(m_InterpolantsFp, trace, tracePrecondition, tracePostcondition, "FP")) {
+				throw new AssertionError("invalid Hoare triple in FP");
+			}
+//			assert checkPredicatesCorrect(m_InterpolantsFp, trace, tracePrecondition, tracePostcondition, "FP") : "invalid Hoare triple in FP";
 			if (m_CollectInformationAboutSizeOfPredicates) {
 				sizeOfPredicatesFP = computeSizeOfPredicates(m_InterpolantsFp);
 			}
