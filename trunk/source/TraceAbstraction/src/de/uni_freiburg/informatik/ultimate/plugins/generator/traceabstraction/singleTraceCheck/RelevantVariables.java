@@ -103,36 +103,48 @@ public class RelevantVariables {
 		public boolean occurs(BoogieVar bv, int start, int end) {
 			boolean result = false;
 			TreeSet<Integer> inSet = (TreeSet<Integer>) inRelation.getImage(bv);
-			result = result || containsNumberBetween(start+1, end, inSet);
-			if (result == true) {
-				return result;
+			if (inSet != null) {
+				result = result || containsNumberBetween(start+1, end, inSet);
+				if (result == true) {
+					return result;
+				}
 			}
 			TreeSet<Integer> outSet = (TreeSet<Integer>) outRelation.getImage(bv);
-			result = result || containsNumberBetween(start, end-1, outSet);
+			if (outSet != null) {
+				result = result || containsNumberBetween(start, end-1, outSet);
+			}
 			return result;
 		}
-		
+
 		public boolean occursAfter(BoogieVar bv, int start) {
 			boolean result = false;
 			TreeSet<Integer> inSet = (TreeSet<Integer>) inRelation.getImage(bv);
-			result = result || inSet.ceiling(start+1) != null;
-			if (result == true) {
-				return result;
+			if (inSet != null) {
+				result = result || inSet.ceiling(start+1) != null;
+				if (result == true) {
+					return result;
+				}
 			}
 			TreeSet<Integer> outSet = (TreeSet<Integer>) outRelation.getImage(bv);
-			result = result ||  outSet.ceiling(start) != null;
+			if (outSet != null) {
+				result = result ||  outSet.ceiling(start) != null;
+			}
 			return result;
 		}
-		
+
 		public boolean occursBefore(BoogieVar bv, int end) {
 			boolean result = false;
 			TreeSet<Integer> inSet = (TreeSet<Integer>) inRelation.getImage(bv);
-			result = result || inSet.floor(end) != null;
-			if (result == true) {
-				return result;
+			if (inSet != null) {
+				result = result || inSet.floor(end) != null;
+				if (result == true) {
+					return result;
+				}
 			}
 			TreeSet<Integer> outSet = (TreeSet<Integer>) outRelation.getImage(bv);
-			result = result ||  outSet.ceiling(end-1) != null;
+			if (outSet != null) {
+				result = result ||  outSet.ceiling(end-1) != null;
+			}
 			return result;
 		}
 
