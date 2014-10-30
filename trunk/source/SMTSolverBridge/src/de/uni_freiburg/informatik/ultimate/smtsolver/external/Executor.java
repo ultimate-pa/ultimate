@@ -41,7 +41,8 @@ class Executor {
 	private final IUltimateServiceProvider mServices;
 	private final IToolchainStorage mStorage;
 
-	Executor(String solverCommand, Script script, Logger logger, IUltimateServiceProvider services, IToolchainStorage storage) {
+	Executor(String solverCommand, Script script, Logger logger, IUltimateServiceProvider services,
+			IToolchainStorage storage) {
 		mServices = services;
 		mStorage = storage;
 		m_Solver = solverCommand;
@@ -57,18 +58,33 @@ class Executor {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-
+		m_Logger.fatal("Got process: " + m_Process);
 		OutputStream stdin = m_Process.getOutputStream();
+		m_Logger.fatal("Got stream stdin: " + stdin);
+		
 		InputStream stdout = m_Process.getInputStream();
-
+		m_Logger.fatal("Got stream stdout: " + stdout);
+		
 		m_stdErr = m_Process.getErrorStream();
+		m_Logger.fatal("Got stream stderr: " + m_stdErr);
+		
 		MySymbolFactory symfactory = new MySymbolFactory();
-		m_Lexer = new Lexer(new InputStreamReader(stdout));
+		InputStreamReader reader = new InputStreamReader(stdout);
+		m_Logger.fatal("Got streamreader stdout: " + reader);
+		m_Lexer = new Lexer(reader);
+		
+		m_Logger.fatal("Got Lexer: " + m_Lexer);
 		m_Lexer.setSymbolFactory(symfactory);
-		m_Writer = new BufferedWriter(new OutputStreamWriter(stdin));
+		
+		OutputStreamWriter writer = new OutputStreamWriter(stdin);
+		m_Logger.fatal("Got streamwriter stdin: " + writer);
+		m_Writer = new BufferedWriter(writer);
+		m_Logger.fatal("Got buffered streamwriter stdin: " + m_Writer);
 
 		input("(set-option :print-success true)");
+		m_Logger.fatal("Set input");
 		parseSuccess();
+		m_Logger.fatal("Parsed Success");
 	}
 
 	public void input(String in) {
