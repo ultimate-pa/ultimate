@@ -1661,6 +1661,7 @@ public class CHandler implements ICHandler {
 					//modulo is not compatible with division..
 					CastAndConversionHandler.usualArithmeticConversions(main, loc, mMemoryHandler, 
 							rlToInt, rrToInt, true);
+					//FIXME ..or should we do wraparound only on nominator??
 				} else {
 					CastAndConversionHandler.usualArithmeticConversions(main, loc, mMemoryHandler, 
 							rlToInt, rrToInt, false);

@@ -40,10 +40,6 @@ public class CastAndConversionHandler {
 		CType lUlType = left.cType.getUnderlyingType();
 		CType rUlType = right.cType.getUnderlyingType();
 
-		//save some time if the types are equal..
-		if (lUlType.equals(rUlType))
-			return; 
-		
 		CACSLLocation iLoc = LocationFactory.createIgnoreCLocation();
 		Expression lSize = memoryHandler.calculateSizeOf(lUlType, iLoc);
 		Expression rSize = memoryHandler.calculateSizeOf(rUlType, iLoc);
