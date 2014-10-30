@@ -437,28 +437,14 @@ public class PRCHandler extends CHandler {
 	
 	@Override
 	public Result visit(Dispatcher main, IASTBinaryExpression node) {
-		ArrayList<Declaration> decl = new ArrayList<Declaration>();
-		ArrayList<Statement> stmt = new ArrayList<Statement>();
-		Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<VariableDeclaration, ILocation>();
 		ILocation loc = LocationFactory.createCLocation(node);
-		List<Overapprox> overappr = new ArrayList<Overapprox>();
 
-		ResultExpression l = (ResultExpression) main.dispatch(node.getOperand1());
-		ResultExpression r = (ResultExpression) main.dispatch(node.getOperand2());
 
-		ResultExpression rl = l.switchToRValueIfNecessary(main, mMemoryHandler, mStructHandler, loc);
-		ResultExpression rr = r.switchToRValueIfNecessary(main, mMemoryHandler, mStructHandler, loc);
-
-		CType lType = l.lrVal.cType;
-		if (lType instanceof CNamed)
-			lType = ((CNamed) lType).getUnderlyingType();
-		CType rType = r.lrVal.cType;
-		if (rType instanceof CNamed)
-			rType = ((CNamed) rType).getUnderlyingType();
 
 		switch (node.getOperator()) {
 		case IASTBinaryExpression.op_assign: 
-			ResultExpression rrToInt = ConvExpr.rexBoolToIntIfNecessary(loc, rr);
+			ResultExpression l = (ResultExpression) main.dispatch(node.getOperand1());
+			ResultExpression r = (ResultExpression) main.dispatch(node.getOperand2());
 			return makeAssignment(main, loc, l.lrVal, r.lrVal);
 			default:
 				return super.visit(main, node);
@@ -468,19 +454,21 @@ public class PRCHandler extends CHandler {
 	
 	@Override
 	public Result visit(Dispatcher main, IASTUnaryExpression node) {
-		ResultExpression o = (ResultExpression) main.dispatch(node.getOperand());
 		ILocation loc = LocationFactory.createCLocation(node);
-		Expression nr1 = new IntegerLiteral(loc, SFO.NR1);
 
-		CType oType = o.lrVal.cType;
-		if (oType instanceof CNamed)
-			oType = ((CNamed) oType).getUnderlyingType();
 
 		switch (node.getOperator()) {
 		case IASTUnaryExpression.op_amper:
+			ResultExpression o = (ResultExpression) main.dispatch(node.getOperand());
 			//can't really addressof at this point, returning the value instead but wiht pointer type
-			ResultExpression rop = o.switchToRValueIfNecessary(main, mMemoryHandler, mStructHandler, loc);
-			return new ResultExpression(new RValue(rop.lrVal.getValue(), new CPointer(rop.lrVal.cType)));
+//			ResultExpression rop = o.switchToRValueIfNecessary(main, mMemoryHandler, mStructHandler, loc);
+			RValue ad = null;
+			if (o.lrVal instanceof HeapLValue)
+				ad = new RValue(((HeapLValue) o.lrVal).getAddress(), new CPointer(o.lrVal.cType));
+			else 
+				ad = new RValue(o.lrVal.getValue(), new CPointer(o.lrVal.cType));
+
+			return new ResultExpression(ad);
 			default:
 				return super.visit(main, node);
 		}
