@@ -562,7 +562,7 @@ public class InitializationHandler {
 				ArrayList<Expression> innerDims = new ArrayList<Expression>(Arrays.asList(arrayType.getDimensions()));
 				innerDims.remove(0);//TODO ??
 				CArray innerArrayType = new CArray(innerDims.toArray(new Expression[0]), 
-						arrayType.getValueType(), arrayType.isOnHeap());
+						arrayType.getValueType());
 
 				ResultExpression initRex = initArrayOnHeap(main, 
 								loc, 
@@ -673,7 +673,7 @@ public class InitializationHandler {
 				ArrayList<Expression> innerDims = new ArrayList<Expression>(Arrays.asList(arrayType.getDimensions()));
 				innerDims.remove(0);//TODO ??
 				CArray innerArrayType = new CArray(innerDims.toArray(new Expression[0]), 
-						arrayType.getValueType(), arrayType.isOnHeap());
+						arrayType.getValueType());
 
 				ResultExpression initRex = initBoogieArray(main, 
 								loc,

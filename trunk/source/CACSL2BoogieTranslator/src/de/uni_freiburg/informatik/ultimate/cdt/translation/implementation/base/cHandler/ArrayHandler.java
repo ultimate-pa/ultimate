@@ -104,8 +104,8 @@ public class ArrayHandler {
 			} else {
 				newDimensions.remove(0);
 				newCType = new CArray(newDimensions.toArray(new Expression[0]), 
-						((CArray) result.lrVal.cType).getValueType(),
-						((CArray) result.lrVal.cType).isOnHeap());
+						((CArray) result.lrVal.cType).getValueType()
+						);
 			}
 
 			if (result.lrVal instanceof HeapLValue) {

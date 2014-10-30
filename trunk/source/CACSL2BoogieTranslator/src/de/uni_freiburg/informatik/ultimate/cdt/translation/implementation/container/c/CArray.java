@@ -35,15 +35,6 @@ public class CArray extends CType {
      */
     private final CType valueType;
 
-    /**
-     * supposed to be true iff the array is of variable length.
-     * I.e. at least one of the dimensions is not an IntegerLiteral, or there
-     * are no dimensions given (only the case with a function parameter, right? - the other
-     * case where one dimension is only given via the initializer should be resolved right at 
-     * initialization..)
-     */
-//    private final boolean variableLength;
-    
     private boolean isOnHeap = false;;
     
     /**
@@ -64,20 +55,6 @@ public class CArray extends CType {
 //        this.variableLength = false;
     }
     
-    public CArray(Expression[] dimensions, CType valueType, boolean isOnHeap) {
-    	this(dimensions, valueType);
-    	this.isOnHeap = true;
-    }
-    
-//    public CArray(Expression[] dimensions,
-//            CType valueType, boolean varLength) {
-//        super(false, false, false, false); //FIXME: integrate those flags
-//        assert varLength : "use other constructor otherwise";
-//        this.valueType = valueType;
-//        this.dimensions = dimensions;
-//        this.variableLength = true;
-//    }
-
     /**
      * @return the dimensions
      */
@@ -302,9 +279,5 @@ public class CArray extends CType {
 	public int hashCode() {
 //		return HashUtils.hashJenkins(31, dimensions, valueType, variableLength);
 		return HashUtils.hashJenkins(31, dimensions, valueType);
-	}
-
-	public boolean isOnHeap() {
-		return isOnHeap;
 	}
 }

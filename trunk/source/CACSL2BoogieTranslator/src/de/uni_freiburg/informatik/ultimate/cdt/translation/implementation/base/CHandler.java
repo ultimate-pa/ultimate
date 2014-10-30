@@ -808,12 +808,12 @@ public class CHandler implements ICHandler {
 					variableLengthArrayAuxVarInitializer = new ResultExpression(initStmts, 
 							null, initDecls, initAuxVars);
 	
-					arrayType = new CArray(sizeExpressions.toArray(new Expression[sizeExpressions.size()]), newResType.cType, resType.isOnHeap);
+					arrayType = new CArray(sizeExpressions.toArray(new Expression[sizeExpressions.size()]), newResType.cType);
 				} else { //something like int a[] -- no size given
-					arrayType = new CArray(sizeConstants.toArray(new Expression[sizeConstants.size()]), newResType.cType, resType.isOnHeap);
+					arrayType = new CArray(sizeConstants.toArray(new Expression[sizeConstants.size()]), newResType.cType);
 				}
 			} else {
-				arrayType = new CArray(sizeConstants.toArray(new Expression[sizeConstants.size()]), newResType.cType, resType.isOnHeap);
+				arrayType = new CArray(sizeConstants.toArray(new Expression[sizeConstants.size()]), newResType.cType);
 			}
 			newResType.cType = arrayType;
 
@@ -1157,7 +1157,7 @@ public class CHandler implements ICHandler {
 				if (dims.size() == 0)
 					newCType = arrayCType.getValueType();
 				else
-					newCType = new CArray(dims.toArray(new Expression[0]), arrayCType.getValueType(), arrayCType.isOnHeap());
+					newCType = new CArray(dims.toArray(new Expression[0]), arrayCType.getValueType());
 				return new ResultExpression(rop.stmt, new HeapLValue(addr, newCType), rop.decl, rop.auxVars,
 						rop.overappr);
 			} else {
