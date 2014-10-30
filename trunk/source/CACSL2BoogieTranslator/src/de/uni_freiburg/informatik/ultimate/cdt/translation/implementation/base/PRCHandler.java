@@ -33,6 +33,7 @@ import org.eclipse.cdt.core.dom.ast.IASTEqualsInitializer;
 import org.eclipse.cdt.core.dom.ast.IASTExpression;
 import org.eclipse.cdt.core.dom.ast.IASTExpressionList;
 import org.eclipse.cdt.core.dom.ast.IASTExpressionStatement;
+import org.eclipse.cdt.core.dom.ast.IASTFieldDeclarator;
 import org.eclipse.cdt.core.dom.ast.IASTFieldReference;
 import org.eclipse.cdt.core.dom.ast.IASTForStatement;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionCallExpression;
@@ -300,6 +301,10 @@ public class PRCHandler extends CHandler {
 			 * visited one after another.
 			 */
 			for (IASTDeclarator d : node.getDeclarators()) {
+				if (d instanceof IASTFieldDeclarator)
+					throw new UnsupportedSyntaxException(loc, "bitfields are not supported at the moment");
+				
+				
 				ResultDeclaration declResult = (ResultDeclaration) main.dispatch(d);
 
 				// the ResultDeclaration from one Declarator always only
