@@ -43,4 +43,9 @@ public class ExceptionOrErrorResult extends AbstractResult {
 			return getShortDescription();
 		}
 	}
+
+	@Override
+	public String toString() {
+		return getLongDescription();
+	}
 }

@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimatetest.decider;
 
+import de.uni_freiburg.informatik.ultimate.result.ExceptionOrErrorResult;
 import de.uni_freiburg.informatik.ultimatetest.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimatetest.decider.expectedResult.IExpectedResultFinder;
 import de.uni_freiburg.informatik.ultimatetest.decider.expectedResult.KeywordBasedExpectedResultFinder;
@@ -11,11 +12,11 @@ import de.uni_freiburg.informatik.ultimatetest.util.Util;
 /**
  * Use keywords in filename and first line to decide correctness of safety
  * checker results.
+ * 
  * @author heizmann@informatik.uni-freiburg.de
- *
+ * 
  */
-public class SafetyCheckTestResultDecider extends
-		ThreeTierTestResultDecider<SafetyCheckerOverallResult> {
+public class SafetyCheckTestResultDecider extends ThreeTierTestResultDecider<SafetyCheckerOverallResult> {
 
 	/**
 	 * 
@@ -25,16 +26,14 @@ public class SafetyCheckTestResultDecider extends
 	 *            if true the TestResult UNKNOWN is a success for JUnit, if
 	 *            false, the TestResult UNKNOWN is a failure for JUnit.
 	 */
-	public SafetyCheckTestResultDecider(
-			UltimateRunDefinition ultimateRunDefinition, boolean unknownIsJUnitSuccess) {
+	public SafetyCheckTestResultDecider(UltimateRunDefinition ultimateRunDefinition, boolean unknownIsJUnitSuccess) {
 		super(ultimateRunDefinition, unknownIsJUnitSuccess);
 	}
 
 	@Override
 	public IExpectedResultFinder<SafetyCheckerOverallResult> constructExpectedResultFinder() {
 		return new KeywordBasedExpectedResultFinder<SafetyCheckerOverallResult>(
-				Util.constructFilenameKeywordMap_SafetyChecker(), 
-				null, 
+				Util.constructFilenameKeywordMap_SafetyChecker(), null,
 				Util.constructFirstlineKeywordMap_SafetyChecker());
 	}
 
@@ -47,17 +46,14 @@ public class SafetyCheckTestResultDecider extends
 	public ITestResultEvaluation<SafetyCheckerOverallResult> constructTestResultEvaluation() {
 		return new SafetyCheckerTestResultEvaluation();
 	}
-	
-	
-	
+
 	public class SafetyCheckerTestResultEvaluation implements ITestResultEvaluation<SafetyCheckerOverallResult> {
 		String m_Category;
 		String m_Message;
 		TestResult m_TestResult;
 
 		@Override
-		public void evaluateTestResult(
-				IExpectedResultFinder<SafetyCheckerOverallResult> expectedResultFinder,
+		public void evaluateTestResult(IExpectedResultFinder<SafetyCheckerOverallResult> expectedResultFinder,
 				IOverallResultEvaluator<SafetyCheckerOverallResult> overallResultDeterminer) {
 			evaluateExpectedResult(expectedResultFinder);
 			switch (expectedResultFinder.getExpectedResultFinderStatus()) {
@@ -72,7 +68,7 @@ public class SafetyCheckTestResultDecider extends
 				return;
 			}
 		}
-		
+
 		private void evaluateOverallResultWithoutExpectedResult(
 				IOverallResultEvaluator<SafetyCheckerOverallResult> overallResultDeterminer) {
 			m_Category = overallResultDeterminer.getOverallResult() + "(Expected:UNKNOWN)";
@@ -93,71 +89,69 @@ public class SafetyCheckTestResultDecider extends
 			}
 		}
 
-		private void compareToOverallResult(
-				SafetyCheckerOverallResult expectedResult,
+		private void compareToOverallResult(SafetyCheckerOverallResult expectedResult,
 				IOverallResultEvaluator<SafetyCheckerOverallResult> overallResultDeterminer) {
 			m_Category = overallResultDeterminer.getOverallResult() + "(Expected:" + expectedResult + ")";
-			m_Message += " UltimateResult: " + overallResultDeterminer.getOverallResult() 
-					+ "   " + overallResultDeterminer.generateOverallResultMessage();
-				switch (overallResultDeterminer.getOverallResult()) {
-				case EXCEPTION_OR_ERROR:
+			m_Message += " UltimateResult: " + overallResultDeterminer.getOverallResult() + "   "
+					+ overallResultDeterminer.generateOverallResultMessage();
+			switch (overallResultDeterminer.getOverallResult()) {
+			case EXCEPTION_OR_ERROR:
+				m_TestResult = TestResult.FAIL;
+				break;
+			case SAFE:
+				if (expectedResult == SafetyCheckerOverallResult.SAFE) {
+					m_TestResult = TestResult.SUCCESS;
+				} else {
 					m_TestResult = TestResult.FAIL;
-					break;
-				case SAFE:
-					if (expectedResult == SafetyCheckerOverallResult.SAFE) {
-						m_TestResult = TestResult.SUCCESS;
-					} else {
-						m_TestResult = TestResult.FAIL;
-					}
-					break;
-				case UNSAFE:
-				case UNSAFE_DEREF:
-				case UNSAFE_FREE:
-				case UNSAFE_MEMTRACK:
-					if (expectedResult == overallResultDeterminer.getOverallResult()) {
-						m_TestResult = TestResult.SUCCESS;
-					} else if (expectedResult == SafetyCheckerOverallResult.UNSAFE) {
-						m_TestResult = TestResult.SUCCESS;
-					} else {
-						m_TestResult = TestResult.FAIL;
-					}
-					break;
-				case UNKNOWN:
-					// syntax error should always have been found
-					if (expectedResult == SafetyCheckerOverallResult.SYNTAX_ERROR) {
-						m_TestResult = TestResult.FAIL;
-					} else {
-						m_TestResult = TestResult.UNKNOWN;
-					}
-					break;
-				case SYNTAX_ERROR:
-					if (expectedResult == SafetyCheckerOverallResult.SYNTAX_ERROR) {
-						m_TestResult = TestResult.SUCCESS;
-					} else {
-						m_TestResult = TestResult.FAIL;
-					}
-					break;
-				case TIMEOUT:
-					// syntax error should always have been found
-					if (expectedResult == SafetyCheckerOverallResult.SYNTAX_ERROR) {
-						m_TestResult = TestResult.FAIL;
-					} else {
-						m_TestResult = TestResult.UNKNOWN;
-					}
-					break;
-				case UNSUPPORTED_SYNTAX:
-					m_TestResult = TestResult.FAIL;
-					break;
-				case NO_RESULT:
-					m_TestResult = TestResult.FAIL;
-					break;
-				default:
-					throw new AssertionError("unknown case");
 				}
+				break;
+			case UNSAFE:
+			case UNSAFE_DEREF:
+			case UNSAFE_FREE:
+			case UNSAFE_MEMTRACK:
+				if (expectedResult == overallResultDeterminer.getOverallResult()) {
+					m_TestResult = TestResult.SUCCESS;
+				} else if (expectedResult == SafetyCheckerOverallResult.UNSAFE) {
+					m_TestResult = TestResult.SUCCESS;
+				} else {
+					m_TestResult = TestResult.FAIL;
+				}
+				break;
+			case UNKNOWN:
+				// syntax error should always have been found
+				if (expectedResult == SafetyCheckerOverallResult.SYNTAX_ERROR) {
+					m_TestResult = TestResult.FAIL;
+				} else {
+					m_TestResult = TestResult.UNKNOWN;
+				}
+				break;
+			case SYNTAX_ERROR:
+				if (expectedResult == SafetyCheckerOverallResult.SYNTAX_ERROR) {
+					m_TestResult = TestResult.SUCCESS;
+				} else {
+					m_TestResult = TestResult.FAIL;
+				}
+				break;
+			case TIMEOUT:
+				// syntax error should always have been found
+				if (expectedResult == SafetyCheckerOverallResult.SYNTAX_ERROR) {
+					m_TestResult = TestResult.FAIL;
+				} else {
+					m_TestResult = TestResult.UNKNOWN;
+				}
+				break;
+			case UNSUPPORTED_SYNTAX:
+				m_TestResult = TestResult.FAIL;
+				break;
+			case NO_RESULT:
+				m_TestResult = TestResult.FAIL;
+				break;
+			default:
+				throw new AssertionError("unknown case");
+			}
 		}
 
-		private void evaluateExpectedResult(
-				IExpectedResultFinder<SafetyCheckerOverallResult> expectedResultFinder)
+		private void evaluateExpectedResult(IExpectedResultFinder<SafetyCheckerOverallResult> expectedResultFinder)
 				throws AssertionError {
 			switch (expectedResultFinder.getExpectedResultFinderStatus()) {
 			case ERROR:
@@ -177,8 +171,7 @@ public class SafetyCheckTestResultDecider extends
 		}
 
 		@Override
-		public void evaluateTestResult(
-				IExpectedResultFinder<SafetyCheckerOverallResult> expectedResultFinder,
+		public void evaluateTestResult(IExpectedResultFinder<SafetyCheckerOverallResult> expectedResultFinder,
 				Throwable e) {
 			evaluateExpectedResult(expectedResultFinder);
 			switch (expectedResultFinder.getExpectedResultFinderStatus()) {
@@ -188,7 +181,8 @@ public class SafetyCheckTestResultDecider extends
 			case EXPECTED_RESULT_FOUND:
 			case NO_EXPECTED_RESULT_FOUND:
 				m_Category += "/UltimateResult:" + SafetyCheckerOverallResult.EXCEPTION_OR_ERROR;
-				m_Message += " UltimateResult: " + e.getMessage();
+				ExceptionOrErrorResult res = new ExceptionOrErrorResult("Unknown", e);
+				m_Message += " UltimateResult: " + res.getLongDescription();
 			default:
 				break;
 			}
@@ -208,7 +202,7 @@ public class SafetyCheckTestResultDecider extends
 		public String getTestResultMessage() {
 			return m_Message;
 		}
-		
+
 	}
 
 }

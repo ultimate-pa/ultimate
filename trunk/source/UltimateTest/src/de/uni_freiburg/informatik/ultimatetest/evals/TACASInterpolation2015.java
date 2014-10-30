@@ -5,8 +5,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.core.util.CoreUtil.IPredicate;
-import de.uni_freiburg.informatik.ultimate.core.util.CoreUtil.IReduce;
+import de.uni_freiburg.informatik.ultimate.core.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.TimingBenchmark;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.CodeCheckBenchmarks;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionBenchmarks;
@@ -22,7 +21,6 @@ import de.uni_freiburg.informatik.ultimatetest.evals.TACAS2015Summary.Aggregate;
 import de.uni_freiburg.informatik.ultimatetest.summary.IIncrementalLog;
 import de.uni_freiburg.informatik.ultimatetest.summary.ITestSummary;
 import de.uni_freiburg.informatik.ultimatetest.summary.IncrementalLogWithVMParameters;
-import de.uni_freiburg.informatik.ultimatetest.util.Util;
 
 /**
  * 
@@ -38,8 +36,13 @@ public abstract class TACASInterpolation2015 extends AbstractModelCheckerTestSui
 
 	private IncrementalLogWithVMParameters mIncrementalLog;
 
-	// Time out for each test case in milliseconds
-	private final static int mTimeout = 300 * 1000;
+	/**
+	 * @return Time out for each test case in milliseconds
+	 */
+	protected int getTimeout() {
+		return 300 * 1000;
+	}
+
 	private final static String[] mFileEndings = new String[] { ".c" };
 
 	@Override
@@ -86,7 +89,7 @@ public abstract class TACASInterpolation2015 extends AbstractModelCheckerTestSui
 	protected abstract int getFilesPerCategory();
 
 	protected void addTestCasesFixed(String toolchain, String setting, List<UltimateTestCase> testcases) {
-		addTestCases(toolchain, setting, getDirectories(), mFileEndings, mTimeout);
+		addTestCases(toolchain, setting, getDirectories(), mFileEndings, getTimeout());
 		testcases.addAll(limitTestFiles());
 	}
 
@@ -140,7 +143,7 @@ public abstract class TACASInterpolation2015 extends AbstractModelCheckerTestSui
 	@Override
 	protected IIncrementalLog[] constructIncrementalLog() {
 		if (mIncrementalLog == null) {
-			mIncrementalLog = new IncrementalLogWithVMParameters(this.getClass(), mTimeout);
+			mIncrementalLog = new IncrementalLogWithVMParameters(this.getClass(), getTimeout());
 		}
 		return new IIncrementalLog[] { mIncrementalLog };
 	}
@@ -151,7 +154,7 @@ public abstract class TACASInterpolation2015 extends AbstractModelCheckerTestSui
 		}
 		List<UltimateTestCase> testcases = new ArrayList<>();
 
-		Set<String> categories = de.uni_freiburg.informatik.ultimate.core.util.CoreUtil.selectDistinct(mTestCases, new de.uni_freiburg.informatik.ultimate.core.util.CoreUtil.IReduce<String, UltimateTestCase>() {
+		Set<String> categories = CoreUtil.selectDistinct(mTestCases, new CoreUtil.IReduce<String, UltimateTestCase>() {
 			@Override
 			public String reduce(UltimateTestCase entry) {
 				return entry.getUltimateRunDefinition().getInput().getParentFile().getName();
@@ -159,7 +162,7 @@ public abstract class TACASInterpolation2015 extends AbstractModelCheckerTestSui
 		});
 
 		for (final String category : categories) {
-			testcases.addAll(de.uni_freiburg.informatik.ultimate.core.util.CoreUtil.where(mTestCases, new de.uni_freiburg.informatik.ultimate.core.util.CoreUtil.IPredicate<UltimateTestCase>() {
+			testcases.addAll(CoreUtil.where(mTestCases, new CoreUtil.IPredicate<UltimateTestCase>() {
 				int i = 0;
 
 				@Override

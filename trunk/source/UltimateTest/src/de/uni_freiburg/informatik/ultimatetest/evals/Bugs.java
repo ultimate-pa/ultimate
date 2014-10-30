@@ -13,10 +13,10 @@ public class Bugs extends TACASInterpolation2015 {
 //
 //		addTestCasesFixed("AutomizerC.xml", "automizer/BackwardPredicates_SvcompReachPreciseMM.epf", testcases);
 
-		/* MemSafety */
-		addTestCasesFixed("AutomizerC.xml", "svcomp2015/svComp-32bit-memsafety.epf", testcases);
-		addTestCasesFixed("CodeCheckWithBE-C.xml", "svcomp2015/svComp-32bit-memsafety-BE-Kojak.epf.epf", testcases);
-		addTestCasesFixed("CodeCheckWithBE-C.xml", "svcomp2015/svComp-32bit-memsafety-BE-Impulse.epf.epf", testcases);
+		addTestCasesFixed("AutomizerC.xml", "svcomp2015/svComp-32bit-precise.epf", testcases);
+		addTestCasesFixed("CodeCheckWithBE-C.xml", "svcomp2015/svComp-32bit-precise-BE-Kojak.epf", testcases);
+//		addTestCasesFixed("CodeCheckWithBE-C.xml", "svcomp2015/svComp-32bit-memsafety-BE-Kojak.epf.epf", testcases);
+//		addTestCasesFixed("CodeCheckWithBE-C.xml", "svcomp2015/svComp-32bit-memsafety-BE-Impulse.epf.epf", testcases);
 
 		// addTestCasesFixed("AutomizerC.xml",
 		// "TACASInterpolation2015/TreeInterpolation.epf", testcases);
@@ -57,27 +57,20 @@ public class Bugs extends TACASInterpolation2015 {
 	protected String[] getDirectories() {
 		// @formatter:off
 		return new String[] { 
-//			"examples/svcomp/eca-rers2012/Problem01_label15_false-unreach-call.c",
-//			"examples/svcomp/ntdrivers-simplified/diskperf_simpl1_true-unreach-call_true-termination.cil.c",
-//			"examples/svcomp/ntdrivers-simplified/floppy_simpl3_true-unreach-call_true-termination.cil.c",
-//			"examples/svcomp/ntdrivers-simplified/floppy_simpl4_true-unreach-call_true-termination.cil.c",
-//			"examples/svcomp/recursive/BallRajamani-SPIN2000-Fig1_false-unreach-call.c",
-//			"examples/svcomp/systemc/kundu1_false-unreach-call_false-termination.cil.c",
-//			"examples/svcomp/systemc/kundu2_false-unreach-call_false-termination.cil.c",
-//			"examples/svcomp/systemc/pipeline_false-unreach-call_false-termination.cil.c",
-//			"examples/svcomp/systemc/token_ring.01_false-unreach-call_false-termination.cil.c",
-//			"examples/svcomp/systemc/token_ring.02_false-unreach-call_false-termination.cil.c",
-//			"examples/svcomp/systemc/token_ring.03_false-unreach-call_false-termination.cil.c",
-//			"examples/svcomp/systemc/token_ring.04_false-unreach-call_false-termination.cil.c",
-//			"examples/svcomp/systemc/token_ring.05_false-unreach-call_false-termination.cil.c"
-//			"examples/svcomp/ntdrivers/floppy_false-unreach-call.i.cil.c",
-//			"examples/svcomp/ssh/s3_srvr.blast.02_true-unreach-call.i.cil.c",
-//			"examples/svcomp/ssh/s3_srvr.blast.01_true-unreach-call.i.cil.c"
-				"examples/svcomp/memsafety/960521-1_false-valid-deref.i"
+			"examples/svcomp/product-lines/elevator_spec1_productSimulator_false-unreach-call.cil.c",
+			"examples/svcomp/ntdrivers-simplified/floppy_simpl3_false-unreach-call_true-termination.cil.c",
+			"examples/svcomp/seq-pthread/cs_lazy_false-unreach-call.i",
+			"examples/svcomp/ssh/s3_srvr.blast.16_false-unreach-call.i.cil.c"
+			
 				
 		};
 		// @formatter:on
 		// return super.getDirectories();
+	}
+	
+	@Override
+	protected int getTimeout() {
+		return 120 * 1000;
 	}
 
 }
