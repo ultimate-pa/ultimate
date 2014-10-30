@@ -55,7 +55,7 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 				new UltimatePreferenceItem<Integer>(
 						LABEL_EXPLICIT_TYPESIZE_VOID, 1, PreferenceType.Integer),
 				new UltimatePreferenceItem<Integer>(
-						LABEL_EXPLICIT_TYPESIZE_BOOL, 4, PreferenceType.Integer),
+						LABEL_EXPLICIT_TYPESIZE_BOOL, 1, PreferenceType.Integer),
 				new UltimatePreferenceItem<Integer>(
 						LABEL_EXPLICIT_TYPESIZE_CHAR, 1, PreferenceType.Integer),
 				new UltimatePreferenceItem<Integer>(
@@ -64,7 +64,7 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 				new UltimatePreferenceItem<Integer>(
 						LABEL_EXPLICIT_TYPESIZE_INT, 4, PreferenceType.Integer),
 				new UltimatePreferenceItem<Integer>(
-						LABEL_EXPLICIT_TYPESIZE_LONG, 8, PreferenceType.Integer),
+						LABEL_EXPLICIT_TYPESIZE_LONG, 4, PreferenceType.Integer),
 				new UltimatePreferenceItem<Integer>(
 						LABEL_EXPLICIT_TYPESIZE_FLOAT, 4,
 						PreferenceType.Integer),
@@ -97,7 +97,7 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 				new UltimatePreferenceItem<Integer>(
 						LABEL_EXPLICIT_TYPESIZE_UINT, 4, PreferenceType.Integer),
 				new UltimatePreferenceItem<Integer>(
-						LABEL_EXPLICIT_TYPESIZE_ULONG, 8,
+						LABEL_EXPLICIT_TYPESIZE_ULONG, 4,
 						PreferenceType.Integer),
 				new UltimatePreferenceItem<Integer>(
 						LABEL_EXPLICIT_TYPESIZE_LONGLONG, 8,
@@ -109,18 +109,18 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 						LABEL_EXPLICIT_TYPESIZE_COMPLEXFLOAT, 8,
 						PreferenceType.Integer),
 				new UltimatePreferenceItem<Integer>(
-						LABEL_EXPLICIT_TYPESIZE_COMPLEXDOUBLE, 8,
+						LABEL_EXPLICIT_TYPESIZE_COMPLEXDOUBLE, 16,
 						PreferenceType.Integer),
 				new UltimatePreferenceItem<Integer>(
-						LABEL_EXPLICIT_TYPESIZE_LONGDOUBLE, 8,
+						LABEL_EXPLICIT_TYPESIZE_LONGDOUBLE, 12,
 						PreferenceType.Integer),
 				new UltimatePreferenceItem<Integer>(
-						LABEL_EXPLICIT_TYPESIZE_COMPLEXLONGDOUBLE, 8,
+						LABEL_EXPLICIT_TYPESIZE_COMPLEXLONGDOUBLE, 24,
 						PreferenceType.Integer),
 				new UltimatePreferenceItem<Integer>(
 						LABEL_EXPLICIT_TYPESIZE_ENUM, 4, PreferenceType.Integer),
 				new UltimatePreferenceItem<Integer>(
-						LABEL_EXPLICIT_TYPESIZE_DEFAULT, 8,
+						LABEL_EXPLICIT_TYPESIZE_DEFAULT, 4,
 						PreferenceType.Integer) };
 	}
 
