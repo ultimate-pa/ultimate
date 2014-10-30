@@ -219,8 +219,7 @@ public class LassoChecker {
 		m_ExternalSolver_RankSynthesis = baPref.getBoolean(PreferenceInitializer.LABEL_ExtSolverRank);
 		m_ExternalSolverCommand_RankSynthesis = baPref.getString(PreferenceInitializer.LABEL_ExtSolverCommandRank);
 		m_LassoRankerAnalysisType = baPref.getBoolean(PreferenceInitializer.LABEL_NonLinearConstraints) ? AnalysisType.Nonlinear
-				: AnalysisType.Linear; // Should be Linear_with_guesses, once
-										// that is thoroughly tested
+				: AnalysisType.Linear_with_guesses;
 		m_TemplateBenchmarkMode = baPref.getBoolean(PreferenceInitializer.LABEL_TemplateBenchmarkMode);
 		m_TrySimplificationTerminationArgument = baPref.getBoolean(PreferenceInitializer.LABEL_Simplify);
 		m_Interpolation = interpolation;
