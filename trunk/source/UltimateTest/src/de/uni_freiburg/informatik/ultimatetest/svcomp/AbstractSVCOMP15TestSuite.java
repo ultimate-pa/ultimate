@@ -9,8 +9,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import de.uni_freiburg.informatik.ultimate.core.util.CoreUtil;
-import de.uni_freiburg.informatik.ultimate.core.util.CoreUtil.IMapReduce;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.TimingBenchmark;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.CodeCheckBenchmarks;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionBenchmarks;
@@ -78,32 +76,6 @@ public abstract class AbstractSVCOMP15TestSuite extends UltimateTestSuite {
 			}
 
 			mIncrementalLog.setCountTotal(mTestCases.size());
-			int impulse = CoreUtil.reduce(mTestCases, new IMapReduce<Integer, UltimateTestCase>() {
-				public Integer reduce(Integer lastValue, UltimateTestCase entry) {
-					if (entry.getUltimateRunDefinition().getSettings().getName().contains("32bit-precise-BE-Impulse")) {
-						if (lastValue == null) {
-							return 1;
-						}
-						return lastValue + 1;
-					}
-					return lastValue;
-
-				}
-			});
-			int kojak = CoreUtil.reduce(mTestCases, new IMapReduce<Integer, UltimateTestCase>() {
-				public Integer reduce(Integer lastValue, UltimateTestCase entry) {
-					if (entry.getUltimateRunDefinition().getSettings().getName().contains("32bit-precise-BE-Kojak")) {
-						if (lastValue == null) {
-							return 1;
-						}
-						return lastValue + 1;
-					}
-					return lastValue;
-
-				}
-			});
-			int fotze = kojak - impulse;
-
 		}
 		return mTestCases;
 	}

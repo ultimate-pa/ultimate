@@ -186,6 +186,9 @@ public final class MonitoredProcess implements IStorable {
 			mLogger.warn("Forcibly destroying the process started with " + mCommand);
 			try {
 				mProcess.destroy();
+				mProcess.getErrorStream().close();
+				mProcess.getInputStream().close();
+				mProcess.getOutputStream().close();
 			} catch (NullPointerException ex) {
 				mLogger.warn("Rare case: The thread was killed right after we checked if it "
 						+ "was killed and before we wanted to kill it manually");

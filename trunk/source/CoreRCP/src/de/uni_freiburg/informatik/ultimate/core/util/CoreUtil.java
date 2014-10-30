@@ -143,6 +143,14 @@ public class CoreUtil {
 		}
 		return rtr;
 	}
+	
+	public static <T, E> T reduce(Set<E> collection, IMapReduce<T, E> reducer) {
+		T lastValue = null;
+		for (E entry : collection) {
+			lastValue = reducer.reduce(lastValue, entry);
+		}
+		return lastValue;
+	}
 
 	public static <T, E> T reduce(Collection<E> collection, IMapReduce<T, E> reducer) {
 		T lastValue = null;

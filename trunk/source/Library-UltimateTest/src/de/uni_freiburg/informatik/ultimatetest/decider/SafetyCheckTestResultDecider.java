@@ -86,6 +86,8 @@ public class SafetyCheckTestResultDecider extends ThreeTierTestResultDecider<Saf
 			case TIMEOUT:
 				m_TestResult = TestResult.UNKNOWN;
 				break;
+			default:
+				throw new UnsupportedOperationException("Forgot to add case");
 			}
 		}
 
