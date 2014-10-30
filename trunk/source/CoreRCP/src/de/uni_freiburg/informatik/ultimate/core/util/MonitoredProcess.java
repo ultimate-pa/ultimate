@@ -194,6 +194,18 @@ public final class MonitoredProcess implements IStorable {
 						ExceptionUtils.getStackTrace(ex)));
 
 			}
+
+			try {
+				mStdInStreamPipe.close();
+			} catch (IOException e) {
+				mLogger.warn("An error occured during closing a pipe", e);
+			}
+
+			try {
+				mStdErrStreamPipe.close();
+			} catch (IOException e) {
+				mLogger.warn("An error occured during closing a pipe", e);
+			}
 		}
 		return;
 	}

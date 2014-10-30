@@ -49,7 +49,7 @@
 		<jacoco.version>0.7.2.201409121644</jacoco.version>
 
 		<!-- Global arguments for the VM used during junit tests depending on profile -->
-		<manualtest-argline>-Xmx6g -XX:+HeapDumpOnOutOfMemoryError</manualtest-argline>
+		<manualtest-argline>-Xmx4g -XX:+HeapDumpOnOutOfMemoryError</manualtest-argline>
 		<coverage-argline>-Xmx4g -XX:+HeapDumpOnOutOfMemoryError</coverage-argline>
 
 	</properties>
