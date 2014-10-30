@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import de.uni_freiburg.informatik.ultimate.util.relation.Pair;
 import de.uni_freiburg.informatik.ultimatetest.decider.ITestResultDecider;
 import de.uni_freiburg.informatik.ultimatetest.util.Util;
 
@@ -55,9 +56,40 @@ public abstract class AbstractModelCheckerTestSuite extends UltimateTestSuite {
 		}
 		addTestCases(toolchainFile, settingsFile, testFiles, deadline);
 	}
+	
+	
+	protected void addTestCases(String toolchain, String settings, 
+			DirectoryFileEndingsPair[] directoryFileEndingsPairs, long deadline) {
+
+		File toolchainFile = new File(Util.getPathFromTrunk(mPathToToolchains + toolchain));
+		File settingsFile = new File(Util.getPathFromTrunk(mPathToSettings + settings));
+		Collection<File> testFiles = new ArrayList<File>();
+		for (DirectoryFileEndingsPair directoryFileEndingsPair : directoryFileEndingsPairs) {
+			testFiles.addAll(getInputFiles(directoryFileEndingsPair.getDirectory(), directoryFileEndingsPair.getFileEndings()));
+		}
+		addTestCases(toolchainFile, settingsFile, testFiles, deadline);
+	}
 
 	private Collection<File> getInputFiles(String directory, String[] fileEndings) {
 		return Util.getFiles(new File(Util.getPathFromTrunk(directory)), fileEndings);
+	}
+	
+	
+	public static class DirectoryFileEndingsPair {
+		private final String m_Directory;
+		private final String[] m_FileEndings;
+		public DirectoryFileEndingsPair(String directory, String[] fileEndings) {
+			super();
+			m_Directory = directory;
+			m_FileEndings = fileEndings;
+		}
+		public String getDirectory() {
+			return m_Directory;
+		}
+		public String[] getFileEndings() {
+			return m_FileEndings;
+		}
+		
 	}
 
 }

@@ -12,45 +12,62 @@ import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
  * 
  */
 public class Svcomp_Reach_PreciseMemoryModel extends AbstractTraceAbstractionTestSuite {
-	private static final String[] m_Directories = {
-	// "examples/svcomp/bitvector/",
-	// "examples/svcomp/bitvector-regression/",
-	// "examples/svcomp/ntdrivers-simplified/",
-	// "examples/svcomp/ssh-simplified/",
-	// "examples/svcomp/locks/",
-	// "examples/svcomp/eca/",
-	// "examples/svcomp/loops/",
-	// "examples/svcomp/product-lines/",
-	// "examples/svcomp/heap-manipulation/",
-	// "examples/svcomp/list-properties/",
-	 "examples/svcomp/ldv-regression/",
-	// "examples/svcomp/ddv-machzwd/",
-	// "examples/svcomp/recursive/",
-//	"examples/svcomp/systemc/",
-	// "examples/svcomp/seq-mthreaded/",
-	// "examples/svcomp/seq-pthread/"
+	private static final DirectoryFileEndingsPair[] m_DirectoryFileEndingsPairs = {
+//		/*** Category 1. Arrays ***/
+//		new DirectoryFileEndingsPair("examples/svcomp/array-examples/", new String[]{ ".i" }) ,
+//		
+//		/*** Category 2. Bit Vectors ***/
+//		new DirectoryFileEndingsPair("examples/svcomp/bitvector/", new String[]{ ".i", ".c" }) ,
+//		new DirectoryFileEndingsPair("examples/svcomp/bitvector-regression/", new String[]{ ".i", ".c" }) ,
+//		
+//		/*** Category 4. Control Flow and Integer Variables ***/
+//		new DirectoryFileEndingsPair("examples/svcomp/ntdrivers-simplified/", new String[]{".c" }) ,
+//		new DirectoryFileEndingsPair("examples/svcomp/ssh-simplified/", new String[]{".c" }) ,
+//		new DirectoryFileEndingsPair("examples/svcomp/locks/", new String[]{".c" }) ,
+//		new DirectoryFileEndingsPair("examples/svcomp/locks/", new String[]{".c" }) ,
+//		
+//		new DirectoryFileEndingsPair("examples/svcomp/loops/", new String[]{".i"}) ,
+//		new DirectoryFileEndingsPair("examples/svcomp/loop-acceleration/", new String[]{".c" }) ,
+//		new DirectoryFileEndingsPair("examples/svcomp/loop-invgen/", new String[]{".i"}) ,
+//		new DirectoryFileEndingsPair("examples/svcomp/loop-lit/", new String[]{ ".i", ".c" }) ,
+//		new DirectoryFileEndingsPair("examples/svcomp/loop-new/", new String[]{".i"}) ,
+//		
+//		new DirectoryFileEndingsPair("examples/svcomp/eca/", new String[]{".c" }) ,
+//		new DirectoryFileEndingsPair("examples/svcomp/product-lines/", new String[]{".c" }) ,
+//		
+//		/*** Category 6. Heap Manipulation / Dynamic Data Structures ***/
+//		new DirectoryFileEndingsPair("examples/svcomp/heap-manipulation/", new String[]{ ".i" }) ,
+//		new DirectoryFileEndingsPair("examples/svcomp/list-properties/", new String[]{ ".i" }) ,
+//		new DirectoryFileEndingsPair("examples/svcomp/ldv-regression/", new String[]{ ".i" }) ,
+//		new DirectoryFileEndingsPair("examples/svcomp/ddv-machzwd/", new String[]{ ".i" }) ,
+//
+//		/*** Category 8. Recursive ***/
+//		new DirectoryFileEndingsPair("examples/svcomp/recursive/", new String[]{ ".c" }) ,
+//		
+//		/*** Category 9. Recursive ***/
+//		new DirectoryFileEndingsPair("examples/svcomp/systemc/", new String[]{ ".c" }) ,
+//		new DirectoryFileEndingsPair("examples/svcomp/seq-mthreaded/", new String[]{ ".c" }) ,
+//		new DirectoryFileEndingsPair("examples/svcomp/seq-pthread/", new String[]{ ".i" }) ,
 	};
 
 	// Time out for each test case in milliseconds
-	private static int m_Timeout = 20000;
+	private static long m_Timeout = 60 * 1000;
 
 	private static final boolean m_AutomizerWithForwardPredicates = true;
-	private static final boolean m_AutomizerWithBackwardPredicates = true;
+	private static final boolean m_AutomizerWithBackwardPredicates = false;
 	
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
 		if (m_AutomizerWithForwardPredicates) {
-			addTestCases("AutomizerC.xml", "automizer/ForwardPredicates_SvcompReachPreciseMM.epf", m_Directories,
-					new String[] { ".c", ".i" },
-					// "Trace Abstraction via Forward Predicates (SP)",
-					// "CFilesForwardPredicates",
+			addTestCases("AutomizerC.xml", 
+					"automizer/ForwardPredicates_SvcompReachPreciseMM.epf", 
+					m_DirectoryFileEndingsPairs,
 					m_Timeout);
 		}
 		if (m_AutomizerWithBackwardPredicates) {
-			addTestCases("AutomizerC.xml", "automizer/BackwardPredicates_SvcompReachPreciseMM.epf", m_Directories,
-					new String[] { ".c", ".i" },
-					// "Trace Abstraction via Backward Predicates (BP)",
-					// "CFilesBackwardPredicates",
+			addTestCases("AutomizerC.xml", 
+					"automizer/BackwardPredicates_SvcompReachPreciseMM.epf", 
+					m_DirectoryFileEndingsPairs,
 					m_Timeout);
 		}
 		// return Util.firstN(super.createTestCases(), 3);
