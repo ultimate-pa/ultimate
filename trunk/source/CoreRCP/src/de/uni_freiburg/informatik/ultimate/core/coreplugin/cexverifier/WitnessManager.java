@@ -154,7 +154,7 @@ public class WitnessManager {
 		String output = convertStreamToString(outputStream);
 		// TODO: interpret error and output
 
-		if (output.startsWith("Verification result: FALSE.")) {
+		if (checkOutputForSuccess(output)) {
 			mLogger.info("Witness for CEX was verified successfully");
 			reportWitnessResult(svcompWitness, cex, true);
 			return true;
@@ -179,6 +179,15 @@ public class WitnessManager {
 			reportWitnessResult(svcompWitness, cex, false);
 			return false;
 		}
+	}
+
+	private boolean checkOutputForSuccess(String output) {
+		for (String line : output.split(CoreUtil.getPlatformLineSeparator())) {
+			if (line.startsWith("Verification result: FALSE.")) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	private String[] makeCPACheckerCommand(String command, String svcompWitnessFile, String cpaCheckerProp,
