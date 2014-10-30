@@ -75,6 +75,13 @@ public class RCFG2AnnotatedRCFG {
 					continue;
 				m_oldPpTonew.put(newNode, copyNode(newNode, truePredicate));
 				openNodes.add(newNode);
+				if (outEdge instanceof Return) {
+					ProgramPoint hier = ((Return) outEdge).getCallerProgramPoint();
+					if (m_oldPpTonew.containsKey(hier))
+						continue;
+					m_oldPpTonew.put(hier, copyNode(hier, truePredicate));
+					openNodes.add(hier);
+				}
 			}
 		}
 
