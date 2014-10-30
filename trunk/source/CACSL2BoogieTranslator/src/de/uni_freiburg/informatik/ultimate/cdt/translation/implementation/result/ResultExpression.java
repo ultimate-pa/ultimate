@@ -261,16 +261,16 @@ public class ResultExpression extends Result {
 				//						return null; //"you can't assign arrays in C"
 				//						throw new AssertionError("you can't assign arrays in C");
 				// if it is a HeapLValue, it must be on heap -> treat it as a pointer
-				//						rex = memoryHandler.getReadCall(
-				//									main, addressRVal);
-				//						newStmt.addAll(rex.stmt);
-				//						newDecl.addAll(rex.decl);
-				//						newAuxVars.putAll(rex.auxVars);	
-				//						newValue = (RValue) rex.lrVal;
-				newStmt.addAll(this.stmt);
-				newDecl.addAll(this.decl);
-				newAuxVars.putAll(this.auxVars);	
-				newValue = new RValue(hlv.getAddress(), this.lrVal.cType);
+									ResultExpression	rex = readArrayFromHeap(main, structHandler,
+											memoryHandler, loc, addressRVal, (CArray) addressRVal.cType);
+										newStmt.addAll(rex.stmt);
+										newDecl.addAll(rex.decl);
+										newAuxVars.putAll(rex.auxVars);	
+										newValue = (RValue) rex.lrVal;
+//				newStmt.addAll(this.stmt);
+//				newDecl.addAll(this.decl);
+//				newAuxVars.putAll(this.auxVars);	
+//				newValue = new RValue(hlv.getAddress(), this.lrVal.cType);
 			} else if (underlyingType instanceof CEnum) { //same as for an int
 				ResultExpression rex = memoryHandler.getReadCall(
 						main, addressRVal);
@@ -335,6 +335,17 @@ public class ResultExpression extends Result {
 
 		return toReturn;
 	}
+
+//	private ResultExpression readArrayFromHeap(Dispatcher main,
+//			MemoryHandler memoryHandler, ILocation loc, RValue addressRVal) {
+//		CArray arrayType = (CArray) addressRVal.cType.getUnderlyingType();
+//		
+//		Expression[] dims = arrayType.getDimensions();
+//		
+//		for (int i)
+//				
+//		return null;
+//	}
 
 	/**
 	 * Read the contents of a struct (given as a pointer) from the heap recursively (for nested structs)
@@ -408,68 +419,15 @@ public class ResultExpression extends Result {
 				newDecl.addAll(fieldRead.decl);
 				newAuxVars.putAll(fieldRead.auxVars);
 			} else if (underlyingType instanceof CArray) {
-				CArray arrayType = (CArray) underlyingType;
-				if (arrayType.getDimensions().length == 1
-						&& arrayType.getDimensions()[0] instanceof IntegerLiteral) {
-					int dim = Integer.parseInt(((IntegerLiteral) arrayType.getDimensions()[0]).getValue());
-
-					String newArrayId = main.nameHandler.getTempVarUID(SFO.AUXVAR.ARRAYCOPY);
-					VarList newArrayVl = new VarList(loc, new String[] { newArrayId }, 
-							new ArrayType(loc, new String[0], new ASTType[] { new PrimitiveType(loc, SFO.INT) }, 
-									main.typeHandler.ctype2asttype(loc, arrayType.getValueType())));
-					VariableDeclaration newArrayDec = new VariableDeclaration(loc, new Attribute[0], new VarList[] { newArrayVl });
-					fieldRVal = new RValue(new IdentifierExpression(loc, newArrayId), arrayType);
-					
-					newDecl.add(newArrayDec);
-					newAuxVars.put(newArrayDec, loc);
-					
-					
-					Expression arrayStartAddress = address.getValue();
-					Expression newStartAddressBase = null;
-					Expression newStartAddressOffset = null;
-					if (arrayStartAddress instanceof StructConstructor) {
-						newStartAddressBase = ((StructConstructor) arrayStartAddress).getFieldValues()[0];
-						newStartAddressOffset = ((StructConstructor) arrayStartAddress).getFieldValues()[1];
-					} else {
-						newStartAddressBase = MemoryHandler.getPointerBaseAddress(arrayStartAddress, loc);
-						newStartAddressOffset = MemoryHandler.getPointerOffset(arrayStartAddress, loc);
-					}
-
-					Expression valueTypeSize = memoryHandler.calculateSizeOf(arrayType.getValueType(), loc);
-
-					Expression arrayEntryAddressOffset = newStartAddressOffset;
-
-					for (int pos = 0; pos < dim; pos++) {
-						
-						ResultExpression readRex;
-						Expression readAddress = MemoryHandler.constructPointerFromBaseAndOffset(newStartAddressBase, arrayEntryAddressOffset, loc);
-						if (arrayType.getValueType().getUnderlyingType() instanceof CStruct) {
-							readRex = readStructFromHeap(main, structHandler, memoryHandler, loc, 
-									new RValue(readAddress, arrayType.getValueType().getUnderlyingType()));
-						} else {
-							readRex = memoryHandler.getReadCall(main, new RValue(
-									readAddress, 
-									arrayType.getValueType()));
-						}
-						newDecl.addAll(readRex.decl);
-						newStmt.addAll(readRex.stmt);
-						newAuxVars.putAll(readRex.auxVars);
-
-						ArrayLHS aAcc = new ArrayLHS(loc, new VariableLHS(loc, newArrayId),
-								new Expression[] { new IntegerLiteral(loc, new Integer(pos).toString())} );
-						ResultExpression assRex = ((CHandler) main.cHandler).makeAssignment(main, loc, newStmt, 
-								new LocalLValue(aAcc, arrayType.getValueType()), (RValue) readRex.lrVal, newDecl, newAuxVars, overappr);
-						newDecl = assRex.decl;
-						newStmt = assRex.stmt;
-						newAuxVars = assRex.auxVars;
-
-						arrayEntryAddressOffset = CHandler.createArithmeticExpression(IASTBinaryExpression.op_plus, 
-								newStartAddressOffset, valueTypeSize, loc);
-					}
-				} else {
-					throw new UnsupportedSyntaxException(loc, "we need to generalize this to nested and/or variable length arrays");
-				}
 				
+				ResultExpression xres1 = readArrayFromHeap(main, structHandler,
+						memoryHandler, loc, address, (CArray) underlyingType);
+				ResultExpression xres = xres1;
+				
+				fieldRVal = (RValue) xres.lrVal;
+				newStmt.addAll(xres.stmt);
+				newDecl.addAll(xres.decl);
+				newAuxVars.putAll(xres.auxVars);
 				
 				
 //				fieldRead = (ResultExpression) structHandler.readFieldInTheStructAtAddress(
@@ -529,6 +487,77 @@ public class ResultExpression extends Result {
 		        newDecl, newAuxVars, this.overappr, this.unionFieldIdToCType);
 
 		return result;
+	}
+
+	public ResultExpression readArrayFromHeap(Dispatcher main,
+			StructHandler structHandler, MemoryHandler memoryHandler,
+			ILocation loc, RValue address, CArray arrayType) {
+		RValue xfieldRVal = null;
+		ArrayList<Declaration> decl = new ArrayList<>();
+		ArrayList<Statement> stmt = new ArrayList<>();
+		Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<>();
+		if (arrayType.getDimensions().length == 1
+				&& arrayType.getDimensions()[0] instanceof IntegerLiteral) {
+			int dim = Integer.parseInt(((IntegerLiteral) arrayType.getDimensions()[0]).getValue());
+
+			String newArrayId = main.nameHandler.getTempVarUID(SFO.AUXVAR.ARRAYCOPY);
+			VarList newArrayVl = new VarList(loc, new String[] { newArrayId }, 
+					new ArrayType(loc, new String[0], new ASTType[] { new PrimitiveType(loc, SFO.INT) }, 
+							main.typeHandler.ctype2asttype(loc, arrayType.getValueType())));
+			VariableDeclaration newArrayDec = new VariableDeclaration(loc, new Attribute[0], new VarList[] { newArrayVl });
+			xfieldRVal = new RValue(new IdentifierExpression(loc, newArrayId), arrayType);
+			
+			decl.add(newArrayDec);
+			auxVars.put(newArrayDec, loc);
+			
+			
+			Expression arrayStartAddress = address.getValue();
+			Expression newStartAddressBase = null;
+			Expression newStartAddressOffset = null;
+			if (arrayStartAddress instanceof StructConstructor) {
+				newStartAddressBase = ((StructConstructor) arrayStartAddress).getFieldValues()[0];
+				newStartAddressOffset = ((StructConstructor) arrayStartAddress).getFieldValues()[1];
+			} else {
+				newStartAddressBase = MemoryHandler.getPointerBaseAddress(arrayStartAddress, loc);
+				newStartAddressOffset = MemoryHandler.getPointerOffset(arrayStartAddress, loc);
+			}
+
+			Expression valueTypeSize = memoryHandler.calculateSizeOf(arrayType.getValueType(), loc);
+
+			Expression arrayEntryAddressOffset = newStartAddressOffset;
+
+			for (int pos = 0; pos < dim; pos++) {
+				
+				ResultExpression readRex;
+				Expression readAddress = MemoryHandler.constructPointerFromBaseAndOffset(newStartAddressBase, arrayEntryAddressOffset, loc);
+				if (arrayType.getValueType().getUnderlyingType() instanceof CStruct) {
+					readRex = readStructFromHeap(main, structHandler, memoryHandler, loc, 
+							new RValue(readAddress, arrayType.getValueType().getUnderlyingType()));
+				} else {
+					readRex = memoryHandler.getReadCall(main, new RValue(
+							readAddress, 
+							arrayType.getValueType()));
+				}
+				decl.addAll(readRex.decl);
+				stmt.addAll(readRex.stmt);
+				auxVars.putAll(readRex.auxVars);
+
+				ArrayLHS aAcc = new ArrayLHS(loc, new VariableLHS(loc, newArrayId),
+						new Expression[] { new IntegerLiteral(loc, new Integer(pos).toString())} );
+				ResultExpression assRex = ((CHandler) main.cHandler).makeAssignment(main, loc, stmt, 
+						new LocalLValue(aAcc, arrayType.getValueType()), (RValue) readRex.lrVal, decl, auxVars, overappr);
+				decl = assRex.decl;
+				stmt = assRex.stmt;
+				auxVars = assRex.auxVars;
+
+				arrayEntryAddressOffset = CHandler.createArithmeticExpression(IASTBinaryExpression.op_plus, 
+						arrayEntryAddressOffset, valueTypeSize, loc);
+			}
+		} else {
+			throw new UnsupportedSyntaxException(loc, "we need to generalize this to nested and/or variable length arrays");
+		}
+		ResultExpression xres1 = new ResultExpression(stmt, xfieldRVal, decl, auxVars);
+		return xres1;
 	}
 	
 	/**

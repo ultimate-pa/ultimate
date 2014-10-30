@@ -1434,14 +1434,29 @@ public class MemoryHandler {
 
 					int dim = Integer.parseInt(((IntegerLiteral) arrayType.getDimensions()[0]).getValue());
 
+//					Expression readArrayEntryAddressOffset = arrayType.isOnHeap() ? getPointerOffset(rval.getValue(), loc) : null;
+
 					for (int pos = 0; pos < dim; pos++) {
+						RValue arrayAccRVal;
+//						if (arrayType.isOnHeap()) {
+//							arrayAccRVal = new RValue(
+//									constructPointerFromBaseAndOffset(
+//											getPointerBaseAddress(rval.getValue(), loc),
+//											readArrayEntryAddressOffset, loc),
+//											arrayType.getValueType());
+//							readArrayEntryAddressOffset = CHandler.createArithmeticExpression(IASTBinaryExpression.op_plus, 
+//								readArrayEntryAddressOffset, valueTypeSize, loc);
+//						} else {
+							arrayAccRVal = new RValue(
+									new ArrayAccessExpression(loc, 
+											rval.getValue(), 
+											new Expression[] { new IntegerLiteral(loc, new Integer(pos).toString()) }), arrayType.getValueType());
+//						}
 						stmt.addAll(getWriteCall(loc, 
 								new HeapLValue(constructPointerFromBaseAndOffset(newStartAddressBase, arrayEntryAddressOffset, loc), arrayType.getValueType()), 
-								new RValue(
-										new ArrayAccessExpression(loc, rval.getValue(), new Expression[] { new IntegerLiteral(loc, new Integer(pos).toString()) }),
-												arrayType.getValueType() )));
+								arrayAccRVal));
 						arrayEntryAddressOffset = CHandler.createArithmeticExpression(IASTBinaryExpression.op_plus, 
-								newStartAddressOffset, valueTypeSize, loc);
+								arrayEntryAddressOffset, valueTypeSize, loc);
 					}
         	} else {
         		throw new UnsupportedSyntaxException(loc, "we need to generalize this to nested and/or variable length arrays");

@@ -44,6 +44,8 @@ public class CArray extends CType {
      */
 //    private final boolean variableLength;
     
+    private boolean isOnHeap = false;;
+    
     /**
      * Constructor.
      * 
@@ -60,6 +62,11 @@ public class CArray extends CType {
         this.dimensions = dimensions;
         this.valueType = valueType;
 //        this.variableLength = false;
+    }
+    
+    public CArray(Expression[] dimensions, CType valueType, boolean isOnHeap) {
+    	this(dimensions, valueType);
+    	this.isOnHeap = true;
     }
     
 //    public CArray(Expression[] dimensions,
@@ -295,5 +302,9 @@ public class CArray extends CType {
 	public int hashCode() {
 //		return HashUtils.hashJenkins(31, dimensions, valueType, variableLength);
 		return HashUtils.hashJenkins(31, dimensions, valueType);
+	}
+
+	public boolean isOnHeap() {
+		return isOnHeap;
 	}
 }

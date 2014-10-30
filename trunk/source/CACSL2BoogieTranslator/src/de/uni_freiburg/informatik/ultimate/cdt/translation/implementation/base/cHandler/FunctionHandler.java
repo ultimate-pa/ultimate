@@ -355,7 +355,8 @@ public class FunctionHandler {
 		ILocation loc = LocationFactory.createCLocation(node, check);
 		IASTExpression functionName = node.getFunctionNameExpression();
 		if (!(functionName instanceof IASTIdExpression)) {
-			return handleFunctionPointerCall(loc, main, memoryHandler, structHandler, functionName, node.getArguments());
+			return handleFunctionPointerCall(loc, main, memoryHandler, 
+					structHandler, functionName, node.getArguments());
 		}
 		// don't use getRawSignature because it refers to the code before
 		// preprocessing
@@ -364,12 +365,12 @@ public class FunctionHandler {
 		String methodName = ((IASTIdExpression) functionName).getName().toString();
 
 		if (main.cHandler.getSymbolTable().containsCSymbol(methodName)) {
-			return handleFunctionPointerCall(loc, main, memoryHandler, structHandler, functionName, node.getArguments());
+			return handleFunctionPointerCall(loc, main, memoryHandler, 
+					structHandler, functionName, node.getArguments());
 		}
 
-		IASTInitializerClause[] arguments = node.getArguments();
-
-		return handleFunctionCallGivenNameAndArguments(main, memoryHandler, structHandler, loc, methodName, arguments);
+		return handleFunctionCallGivenNameAndArguments(main, memoryHandler, structHandler, 
+				loc, methodName, node.getArguments());
 	}
 
 	/**
@@ -551,11 +552,13 @@ public class FunctionHandler {
 //				if (currModClause == null) {
 //					currModClause = new LinkedHashSet<>();
 //				}
-				modifiedGlobals.put(mId, currModClause);
+//				modifiedGlobals.put(mId, currModClause);
+				modifiedGlobals.get(mId).addAll(currModClause);//TODO Hack --> understand what's going on, makes a difference in ntdrivers/parport_false..
 				int nrSpec = spec.length;
 				spec = Arrays.copyOf(spec, nrSpec + 1);
 				LinkedHashSet<String> modifySet = new LinkedHashSet<>();
-				for (String var : currModClause) {
+//				for (String var : currModClause) {
+				for (String var : modifiedGlobals.get(mId)) {
 					modifySet.add(var);
 				}
 
@@ -682,8 +685,21 @@ public class FunctionHandler {
 		ArrayList<Expression> args = new ArrayList<Expression>();
 		for (int i = 0; i < inParams.length; i++) {
 			IASTInitializerClause inParam = inParams[i];
-			ResultExpression in = ((ResultExpression) main.dispatch(inParam)).switchToRValueIfNecessary(main,
+			ResultExpression in = ((ResultExpression) main.dispatch(inParam));
+					
+			if (in.lrVal.cType.getUnderlyingType() instanceof CArray) {
+				//arrays are passed as pointers --> switch to RValue would make a boogie array..
+				CType valueType = ((CArray) in.lrVal.cType.getUnderlyingType()).getValueType().getUnderlyingType();
+				if (in.lrVal instanceof HeapLValue)
+					in.lrVal = new RValue(((HeapLValue)in.lrVal).getAddress(), new CPointer(valueType));
+				else
+					in.lrVal = new RValue(in.lrVal.getValue(), new CPointer(valueType));	
+			} else {
+				in = in.switchToRValueIfNecessary(main,
 					memoryHandler, structHandler, loc);
+			}
+
+			
 			if (in.lrVal.getValue() == null) {
 				String msg = "Incorrect or invalid in-parameter! " + loc.toString();
 				throw new IncorrectSyntaxException(loc, msg);

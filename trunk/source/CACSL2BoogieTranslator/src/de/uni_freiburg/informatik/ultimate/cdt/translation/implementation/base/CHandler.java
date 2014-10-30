@@ -266,7 +266,7 @@ public class CHandler implements ICHandler {
 	 * PointerDeclarator contains an ArrayDeclarator contains a Pointer contains
 	 * a function.
 	 */
-	private ArrayDeque<ResultTypes> mCurrentDeclaredTypes;
+	protected ArrayDeque<ResultTypes> mCurrentDeclaredTypes;
 
 	/**
 	 * Stores the labels of the loops we are currently inside. (For translation
@@ -724,7 +724,9 @@ public class CHandler implements ICHandler {
 		ResultTypes resType = mCurrentDeclaredTypes.peek();
 		ResultTypes newResType = new ResultTypes(resType);
 
-		newResType.isOnHeap |= ((MainDispatcher) main).getVariablesForHeap().contains(node);
+		newResType.isOnHeap |= main instanceof MainDispatcher 
+				? ((MainDispatcher) main).getVariablesForHeap().contains(node)
+						 : false; //in this case we are in the PRDispatcher
 
 		IASTPointerOperator[] pointerOps = node.getPointerOperators();
 		for (int i = 0; i < pointerOps.length; i++) {
@@ -806,12 +808,12 @@ public class CHandler implements ICHandler {
 					variableLengthArrayAuxVarInitializer = new ResultExpression(initStmts, 
 							null, initDecls, initAuxVars);
 	
-					arrayType = new CArray(sizeExpressions.toArray(new Expression[sizeExpressions.size()]), newResType.cType);
+					arrayType = new CArray(sizeExpressions.toArray(new Expression[sizeExpressions.size()]), newResType.cType, resType.isOnHeap);
 				} else { //something like int a[] -- no size given
-					arrayType = new CArray(sizeConstants.toArray(new Expression[sizeConstants.size()]), newResType.cType);
+					arrayType = new CArray(sizeConstants.toArray(new Expression[sizeConstants.size()]), newResType.cType, resType.isOnHeap);
 				}
 			} else {
-				arrayType = new CArray(sizeConstants.toArray(new Expression[sizeConstants.size()]), newResType.cType);
+				arrayType = new CArray(sizeConstants.toArray(new Expression[sizeConstants.size()]), newResType.cType, resType.isOnHeap);
 			}
 			newResType.cType = arrayType;
 
@@ -1155,7 +1157,7 @@ public class CHandler implements ICHandler {
 				if (dims.size() == 0)
 					newCType = arrayCType.getValueType();
 				else
-					newCType = new CArray(dims.toArray(new Expression[0]), arrayCType.getValueType());
+					newCType = new CArray(dims.toArray(new Expression[0]), arrayCType.getValueType(), arrayCType.isOnHeap());
 				return new ResultExpression(rop.stmt, new HeapLValue(addr, newCType), rop.decl, rop.auxVars,
 						rop.overappr);
 			} else {
@@ -1204,29 +1206,42 @@ public class CHandler implements ICHandler {
 		ResultExpression rl = l.switchToRValueIfNecessary(main, mMemoryHandler, mStructHandler, loc);
 		ResultExpression rr = r.switchToRValueIfNecessary(main, mMemoryHandler, mStructHandler, loc);
 
-		CType lType = l.lrVal.cType;
-		if (lType instanceof CNamed)
-			lType = ((CNamed) lType).getUnderlyingType();
-		CType rType = r.lrVal.cType;
-		if (rType instanceof CNamed)
-			rType = ((CNamed) rType).getUnderlyingType();
+		CType lType = l.lrVal.cType.getUnderlyingType();
+		CType rType = r.lrVal.cType.getUnderlyingType();
 
 		switch (node.getOperator()) {
 		case IASTBinaryExpression.op_assign: {
 			stmt.addAll(l.stmt);
-			stmt.addAll(rr.stmt);
 			decl.addAll(l.decl);
-			decl.addAll(rr.decl);
 			auxVars.putAll(l.auxVars);
-			auxVars.putAll(rr.auxVars);
 			overappr.addAll(l.overappr);
-			overappr.addAll(rr.overappr);
-//			if (l.lrVal.cType instanceof CPrimitive
-//					&& ((CPrimitive) l.lrVal.cType).getGeneralType() == GENERALPRIMITIVE.INTTYPE) {
-			ResultExpression rrToInt = ConvExpr.rexBoolToIntIfNecessary(loc, rr);
-//			}
-			return makeAssignment(main, loc, stmt, l.lrVal, (RValue) rrToInt.lrVal, decl, auxVars, overappr,
-					l.unionFieldIdToCType);// , r.lrVal.cType);
+			
+			if (lType instanceof CPointer && rType instanceof CArray) {
+				//array must be on heap --> just take the address
+
+				stmt.addAll(r.stmt);
+				decl.addAll(r.decl);
+				auxVars.putAll(r.auxVars);
+				overappr.addAll(r.overappr);
+				
+				RValue address = null;
+				if (r.lrVal instanceof HeapLValue)
+					address = new RValue(((HeapLValue) r.lrVal).getAddress(), new CPointer(((CArray) rType).getValueType()));
+				else
+					address = new RValue(r.lrVal.getValue(), new CPointer(((CArray) rType).getValueType()));
+				return makeAssignment(main, loc, stmt, l.lrVal, address, decl, auxVars, overappr);
+			} else {
+				stmt.addAll(rr.stmt);
+				decl.addAll(rr.decl);
+				auxVars.putAll(rr.auxVars);
+				overappr.addAll(rr.overappr);
+				//			if (l.lrVal.cType instanceof CPrimitive
+				//					&& ((CPrimitive) l.lrVal.cType).getGeneralType() == GENERALPRIMITIVE.INTTYPE) {
+				ResultExpression rrToInt = ConvExpr.rexBoolToIntIfNecessary(loc, rr);
+				//			}
+				return makeAssignment(main, loc, stmt, l.lrVal, (RValue) rrToInt.lrVal, decl, auxVars, overappr,
+						l.unionFieldIdToCType);// , r.lrVal.cType);
+			}
 //			} else {
 //				return makeAssignment(main, loc, stmt, l.lrVal, (RValue) rr.lrVal, decl, auxVars, overappr,
 //						l.unionFieldIdToCType);// , r.lrVal.cType);
@@ -1463,80 +1478,204 @@ public class CHandler implements ICHandler {
 		case IASTBinaryExpression.op_modulo:
 		case IASTBinaryExpression.op_multiply:
 		case IASTBinaryExpression.op_divide: {
-			ResultExpression rlToInt = ConvExpr.rexBoolToIntIfNecessary(loc, rl);
-			ResultExpression rrToInt = ConvExpr.rexBoolToIntIfNecessary(loc, rr);
 			
-			if (node.getOperator() == IASTBinaryExpression.op_divide) {
-				Check check = new Check(Check.Spec.DIVISION_BY_ZERO);
-				ILocation assertLoc = LocationFactory.createCLocation(node, check);
-				AssertStatement assertStmt = new AssertStatement(assertLoc, new BinaryExpression(assertLoc,
-						BinaryExpression.Operator.COMPNEQ, new IntegerLiteral(assertLoc, SFO.NR0),
-						rrToInt.lrVal.getValue()));
-				Map<String, IAnnotations> annots = assertStmt.getPayload().getAnnotations();
-				for (Overapprox overapprItem : overappr) {
-					annots.put(Overapprox.getIdentifier(), overapprItem);
+			if (lType instanceof CArray || rType instanceof CArray) {
+				ResultExpression rlToInt = ConvExpr.rexBoolToIntIfNecessary(loc, rl);
+				ResultExpression rrToInt = ConvExpr.rexBoolToIntIfNecessary(loc, rr);
+	
+				RValue rval = null;
+				if (lType instanceof CArray
+						&& rType instanceof CPrimitive
+						&& ((CPrimitive) rType).getGeneralType() == GENERALPRIMITIVE.INTTYPE) {
+					CType valueType = ((CArray) lType).getValueType().getUnderlyingType();
+
+					RValue arrayAdd = null;
+					if (l.lrVal instanceof HeapLValue)
+						arrayAdd = new RValue(((HeapLValue)l.lrVal).getAddress(), new CPointer(valueType));
+					else
+						arrayAdd = new RValue(l.lrVal.getValue(), new CPointer(valueType));
+						
+
+					rval = doPointerArithPointerAndInteger(main, node.getOperator(), loc, arrayAdd,
+							((RValue) rrToInt.lrVal), new CPointer(valueType));
+
+					stmt.addAll(l.stmt);
+					stmt.addAll(rrToInt.stmt);
+					decl.addAll(l.decl);
+					decl.addAll(rrToInt.decl);
+					auxVars.putAll(l.auxVars);
+					auxVars.putAll(rrToInt.auxVars);
+					overappr.addAll(l.overappr);
+					overappr.addAll(rrToInt.overappr);
+					
+				} else if ((rType instanceof CArray) 
+						&& lType instanceof CPrimitive
+						&& ((CPrimitive) lType).getGeneralType() == GENERALPRIMITIVE.INTTYPE) {
+					CType valueType = ((CArray) rType).getValueType().getUnderlyingType();
+
+					RValue arrayAdd = null;
+					if (r.lrVal instanceof HeapLValue)
+						arrayAdd = new RValue(((HeapLValue)r.lrVal).getAddress(), new CPointer(valueType));
+					else
+						arrayAdd = new RValue(r.lrVal.getValue(), new CPointer(valueType));
+	
+					rval = doPointerArithPointerAndInteger(main, node.getOperator(), loc,
+							(RValue) rlToInt.lrVal, arrayAdd, new CPointer(valueType));
+
+					stmt.addAll(rlToInt.stmt);
+					stmt.addAll(r.stmt);
+					decl.addAll(rlToInt.decl);
+					decl.addAll(r.decl);
+					auxVars.putAll(rlToInt.auxVars);
+					auxVars.putAll(r.auxVars);
+					overappr.addAll(rlToInt.overappr);
+					overappr.addAll(r.overappr);	
+
+				} else if (lType instanceof CArray
+						&& rType instanceof CArray) {
+					CType lValueType = ((CArray) lType).getValueType();
+					CType rValueType = ((CArray) rType).getValueType();
+					
+					RValue arrayAddl = null;
+					if (l.lrVal instanceof HeapLValue)
+						arrayAddl = new RValue(((HeapLValue)l.lrVal).getAddress(), new CPointer(lValueType));
+					else
+						arrayAddl = new RValue(l.lrVal.getValue(), new CPointer(lValueType));
+			
+					RValue arrayAddr = null;
+					if (r.lrVal instanceof HeapLValue)
+						arrayAddr = new RValue(((HeapLValue)r.lrVal).getAddress(), new CPointer(rValueType));
+					else
+						arrayAddr = new RValue(r.lrVal.getValue(), new CPointer(rValueType));
+		
+					assert lValueType.equals(rValueType);
+					if (this.mMemoryHandler.getPointerSubtractionAndComparisonValidityCheckMode() == POINTER_CHECKMODE.ASSERTandASSUME) {
+						Statement assertStm = new AssertStatement(loc, new BinaryExpression(loc,
+								BinaryExpression.Operator.COMPEQ, new StructAccessExpression(loc, arrayAddl.getValue(),
+										SFO.POINTER_BASE), new StructAccessExpression(loc, arrayAddr.getValue(),
+												SFO.POINTER_BASE)));
+						stmt.add(assertStm);
+						Check chk = new Check(Spec.ILLEGAL_POINTER_ARITHMETIC);
+						chk.addToNodeAnnot(assertStm);
+					} else if (this.mMemoryHandler.getPointerSubtractionAndComparisonValidityCheckMode() == POINTER_CHECKMODE.ASSUME) {
+						Statement assumeStm = new AssumeStatement(loc, new BinaryExpression(loc,
+								BinaryExpression.Operator.COMPEQ, new StructAccessExpression(loc, arrayAddl.getValue(),
+										SFO.POINTER_BASE), new StructAccessExpression(loc, arrayAddr.getValue(),
+												SFO.POINTER_BASE)));
+						stmt.add(assumeStm);
+					}
+
+					rval = doPointerArithPointerAndPointer(main, node.getOperator(), loc, arrayAddl,
+							arrayAddr);
+
+					stmt.addAll(l.stmt);
+					stmt.addAll(r.stmt);
+					decl.addAll(l.decl);
+					decl.addAll(r.decl);
+					auxVars.putAll(l.auxVars);
+					auxVars.putAll(r.auxVars);
+					overappr.addAll(l.overappr);
+					overappr.addAll(r.overappr);
 				}
-				stmt.add(assertStmt);
-				check.addToNodeAnnot(assertStmt);
-				stmt.add(assertStmt);
 				
-				//modulo is not compatible with division..
-				CastAndConversionHandler.usualArithmeticConversions(main, loc, mMemoryHandler, 
-						rlToInt, rrToInt, true);
-			} else {
-				CastAndConversionHandler.usualArithmeticConversions(main, loc, mMemoryHandler, 
-						rlToInt, rrToInt, false);
-			}
-			stmt.addAll(rlToInt.stmt);
-			stmt.addAll(rrToInt.stmt);
-			decl.addAll(rlToInt.decl);
-			decl.addAll(rrToInt.decl);
-			auxVars.putAll(rlToInt.auxVars);
-			auxVars.putAll(rrToInt.auxVars);
-			overappr.addAll(rlToInt.overappr);
-			overappr.addAll(rrToInt.overappr);
+				return new ResultExpression(stmt, rval, decl, auxVars, overappr);
+			} else if (lType instanceof CPointer || rType instanceof CPointer) {
+				ResultExpression rlToInt = ConvExpr.rexBoolToIntIfNecessary(loc, rl);
+				ResultExpression rrToInt = ConvExpr.rexBoolToIntIfNecessary(loc, rr);
+				RValue rval = null;
+				if ((lType instanceof CPointer) 
+						&& rType instanceof CPrimitive
+						&& ((CPrimitive) rType).getGeneralType() == GENERALPRIMITIVE.INTTYPE) {
+					CType valueType = ((CPointer) lType).pointsToType.getUnderlyingType();
+									
+					rval = doPointerArithPointerAndInteger(main, node.getOperator(), loc, ((RValue) rlToInt.lrVal),
+									((RValue) rrToInt.lrVal), valueType);
+				} else if ((rType instanceof CPointer) 
+						&& lType instanceof CPrimitive
+						&& ((CPrimitive) lType).getGeneralType() == GENERALPRIMITIVE.INTTYPE) {
+					CType valueType =  ((CPointer) rType).pointsToType.getUnderlyingType();
+					rval = doPointerArithPointerAndInteger(main, node.getOperator(), loc, (RValue) rrToInt.lrVal,
+									(RValue) rlToInt.lrVal, valueType);
+				} else if (lType instanceof CPointer
+						&& rType instanceof CPointer) {
+					assert node.getOperator() == IASTBinaryExpression.op_minus : "only subtraction of two pointers is allowed";
+					CType lValueType = ((CPointer) lType).pointsToType;
+					CType rValueType = ((CPointer) rType).pointsToType;
+					assert lValueType.equals(rValueType);
+					// assert (in Boogie) that the base value of the pointers
+					// matches
+					if (this.mMemoryHandler.getPointerSubtractionAndComparisonValidityCheckMode() == POINTER_CHECKMODE.ASSERTandASSUME) {
+						Statement assertStm = new AssertStatement(loc, new BinaryExpression(loc,
+								BinaryExpression.Operator.COMPEQ, new StructAccessExpression(loc, rlToInt.lrVal.getValue(),
+										SFO.POINTER_BASE), new StructAccessExpression(loc, rrToInt.lrVal.getValue(),
+												SFO.POINTER_BASE)));
+						stmt.add(assertStm);
+						Check chk = new Check(Spec.ILLEGAL_POINTER_ARITHMETIC);
+						chk.addToNodeAnnot(assertStm);
+					} else if (this.mMemoryHandler.getPointerSubtractionAndComparisonValidityCheckMode() == POINTER_CHECKMODE.ASSUME) {
+						Statement assumeStm = new AssumeStatement(loc, new BinaryExpression(loc,
+								BinaryExpression.Operator.COMPEQ, new StructAccessExpression(loc, rlToInt.lrVal.getValue(),
+										SFO.POINTER_BASE), new StructAccessExpression(loc, rrToInt.lrVal.getValue(),
+												SFO.POINTER_BASE)));
+						stmt.add(assumeStm);
+					}
 
-
-			RValue rval = null;
-			// implicit casts
-			if (lType instanceof CPointer && rType instanceof CPrimitive
-					&& ((CPrimitive) rType).getGeneralType() == GENERALPRIMITIVE.INTTYPE) {
-				rval = doPointerArithPointerAndInteger(main, node.getOperator(), loc, ((RValue) rlToInt.lrVal),
-						((RValue) rrToInt.lrVal), ((CPointer) rlToInt.lrVal.cType.getUnderlyingType()).pointsToType);
-			} else if (rType instanceof CPointer && lType instanceof CPrimitive
-					&& ((CPrimitive) lType).getGeneralType() == GENERALPRIMITIVE.INTTYPE) {
-				rval = doPointerArithPointerAndInteger(main, node.getOperator(), loc, (RValue) rrToInt.lrVal,
-						(RValue) rlToInt.lrVal, ((CPointer) rrToInt.lrVal.cType.getUnderlyingType()).pointsToType);
-			} else if (lType instanceof CPointer && rType instanceof CPointer) {
-				assert node.getOperator() == IASTBinaryExpression.op_minus : "only subtraction of two pointers is allowed";
-				assert ((CPointer) lType).pointsToType
-						.equals(((CPointer) rType).pointsToType);
-				// assert (in Boogie) that the base value of the pointers
-				// matches
-				if (this.mMemoryHandler.getPointerSubtractionAndComparisonValidityCheckMode() == POINTER_CHECKMODE.ASSERTandASSUME) {
-					Statement assertStm = new AssertStatement(loc, new BinaryExpression(loc,
-							BinaryExpression.Operator.COMPEQ, new StructAccessExpression(loc, rlToInt.lrVal.getValue(),
-									SFO.POINTER_BASE), new StructAccessExpression(loc, rrToInt.lrVal.getValue(),
-									SFO.POINTER_BASE)));
-					stmt.add(assertStm);
-					Check chk = new Check(Spec.ILLEGAL_POINTER_ARITHMETIC);
-					chk.addToNodeAnnot(assertStm);
-				} else if (this.mMemoryHandler.getPointerSubtractionAndComparisonValidityCheckMode() == POINTER_CHECKMODE.ASSUME) {
-					Statement assumeStm = new AssumeStatement(loc, new BinaryExpression(loc,
-							BinaryExpression.Operator.COMPEQ, new StructAccessExpression(loc, rlToInt.lrVal.getValue(),
-									SFO.POINTER_BASE), new StructAccessExpression(loc, rrToInt.lrVal.getValue(),
-									SFO.POINTER_BASE)));
-					stmt.add(assumeStm);
+					rval = doPointerArithPointerAndPointer(main, node.getOperator(), loc, (RValue) rlToInt.lrVal,
+							(RValue) rrToInt.lrVal);
 				}
+				stmt.addAll(rlToInt.stmt);
+				stmt.addAll(rrToInt.stmt);
+				decl.addAll(rlToInt.decl);
+				decl.addAll(rrToInt.decl);
+				auxVars.putAll(rlToInt.auxVars);
+				auxVars.putAll(rrToInt.auxVars);
+				overappr.addAll(rlToInt.overappr);
+				overappr.addAll(rrToInt.overappr);
 
-				rval = doPointerArithPointerAndPointer(main, node.getOperator(), loc, (RValue) rlToInt.lrVal,
-						(RValue) rrToInt.lrVal);
+				return new ResultExpression(stmt, rval, decl, auxVars, overappr);
+
 			} else {
-				rval = new RValue(createArithmeticExpression(node.getOperator(), rlToInt.lrVal.getValue(),
+
+
+				ResultExpression rlToInt = ConvExpr.rexBoolToIntIfNecessary(loc, rl);
+				ResultExpression rrToInt = ConvExpr.rexBoolToIntIfNecessary(loc, rr);
+
+				if (node.getOperator() == IASTBinaryExpression.op_divide) {
+					Check check = new Check(Check.Spec.DIVISION_BY_ZERO);
+					ILocation assertLoc = LocationFactory.createCLocation(node, check);
+					AssertStatement assertStmt = new AssertStatement(assertLoc, new BinaryExpression(assertLoc,
+							BinaryExpression.Operator.COMPNEQ, new IntegerLiteral(assertLoc, SFO.NR0),
+							rrToInt.lrVal.getValue()));
+					Map<String, IAnnotations> annots = assertStmt.getPayload().getAnnotations();
+					for (Overapprox overapprItem : overappr) {
+						annots.put(Overapprox.getIdentifier(), overapprItem);
+					}
+					stmt.add(assertStmt);
+					check.addToNodeAnnot(assertStmt);
+					stmt.add(assertStmt);
+
+					//modulo is not compatible with division..
+					CastAndConversionHandler.usualArithmeticConversions(main, loc, mMemoryHandler, 
+							rlToInt, rrToInt, true);
+				} else {
+					CastAndConversionHandler.usualArithmeticConversions(main, loc, mMemoryHandler, 
+							rlToInt, rrToInt, false);
+				}
+				stmt.addAll(rlToInt.stmt);
+				stmt.addAll(rrToInt.stmt);
+				decl.addAll(rlToInt.decl);
+				decl.addAll(rrToInt.decl);
+				auxVars.putAll(rlToInt.auxVars);
+				auxVars.putAll(rrToInt.auxVars);
+				overappr.addAll(rlToInt.overappr);
+				overappr.addAll(rrToInt.overappr);
+
+
+				RValue rval = new RValue(createArithmeticExpression(node.getOperator(), rlToInt.lrVal.getValue(),
 						rrToInt.lrVal.getValue(), loc), rlToInt.lrVal.cType);
+				assert (main.isAuxVarMapcomplete(decl, auxVars)) : "unhavoced auxvars";
+				return new ResultExpression(stmt, rval, decl, auxVars, overappr);
 			}
-			assert (main.isAuxVarMapcomplete(decl, auxVars)) : "unhavoced auxvars";
-			return new ResultExpression(stmt, rval, decl, auxVars, overappr);
 		}
 		case IASTBinaryExpression.op_minusAssign:
 		case IASTBinaryExpression.op_multiplyAssign:
@@ -1910,7 +2049,7 @@ public class CHandler implements ICHandler {
 				ResultExpression rex = (ResultExpression) r;
 				rex = rex.switchToRValueIfNecessary(main, mMemoryHandler, mStructHandler, loc);
 				result.list.add(new ResultExpressionListRec(rex.stmt, rex.lrVal, rex.decl, rex.auxVars, rex.overappr));
-				result.auxVars.putAll(((ResultExpression) r).auxVars);
+//				result.auxVars.putAll(((ResultExpression) r).auxVars);//what for??
 			} else {
 				String msg = "Unexpected result";
 				throw new UnsupportedSyntaxException(loc, msg);
@@ -2110,9 +2249,7 @@ public class CHandler implements ICHandler {
 
 	@Override
 	public Result visit(Dispatcher main, IASTCastExpression node) {
-		ResultExpression expr = (ResultExpression) main.dispatch(node.getOperand()); 
 		ILocation loc = LocationFactory.createCLocation(node); 
-		expr = expr.switchToRValueIfNecessary(main, mMemoryHandler, mStructHandler, loc);
 
 		// TODO: check validity of cast?
 
@@ -2124,6 +2261,18 @@ public class CHandler implements ICHandler {
 		CType newCType = declResult.getDeclarations().get(0).getType();
 		mCurrentDeclaredTypes.pop();
 		
+		ResultExpression expr = (ResultExpression) main.dispatch(node.getOperand()); 
+		if (expr.lrVal.cType.getUnderlyingType() instanceof CArray
+				&& newCType.getUnderlyingType() instanceof CPointer) {
+			CType valueType = ((CArray) expr.lrVal.cType.getUnderlyingType()).getValueType().getUnderlyingType();
+				if (expr.lrVal instanceof HeapLValue)
+					expr.lrVal = new RValue(((HeapLValue)expr.lrVal).getAddress(), new CPointer(valueType));
+				else
+					expr.lrVal = new RValue(expr.lrVal.getValue(), new CPointer(valueType));	
+		} else {
+			expr = expr.switchToRValueIfNecessary(main, mMemoryHandler, mStructHandler, loc);
+		}
+
 		expr.lrVal = castToType(loc, (RValue) expr.lrVal, newCType);
 
 		// String msg = "Ignored cast! At line: "
@@ -2600,6 +2749,7 @@ public class CHandler implements ICHandler {
 	public static Expression createArithmeticExpression(int op, Expression left, Expression right, ILocation loc) {
 		BinaryExpression.Operator operator;
 		boolean bothAreIntegerLiterals = left instanceof IntegerLiteral && right instanceof IntegerLiteral;
+		//TODO: make this more general, (a + 4) + 4 may still occur this way..
 		String constantResult = "";
 		switch (op) {
 		case IASTBinaryExpression.op_minusAssign:
@@ -2921,7 +3071,7 @@ public class CHandler implements ICHandler {
 		return mBoogieIdsOfHeapVars.contains(boogieId);
 	}
 
-	private StorageClass scConstant2StorageClass(int storageClass) {
+	protected StorageClass scConstant2StorageClass(int storageClass) {
 		switch (storageClass) {
 		case IASTDeclSpecifier.sc_auto:
 			return StorageClass.AUTO;

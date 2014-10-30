@@ -204,15 +204,18 @@ public class InitializationHandler {
 			lrVal = new RValue(rhs, lCType);
 		} else if (lCType instanceof CArray) {
 
-			stmt.addAll(this.initBoogieArray(main, loc,
-					initializer == null ? null : ((ResultExpressionListRec) initializer).list,
-							lhs, (CArray) lCType));
 			if (initializer == null) {
-				stmt.addAll(this.initBoogieArray(main, loc,
-						null, lhs, (CArray) lCType));
+				ResultExpression aInit = this.initBoogieArray(main, loc,
+						null, lhs, (CArray) lCType);
+				stmt.addAll(aInit.stmt);
+				decl.addAll(aInit.decl);
+				auxVars.putAll(aInit.auxVars);
 			} else if (initializer instanceof ResultExpressionListRec) {
-				stmt.addAll(this.initBoogieArray(main, loc,
-						((ResultExpressionListRec) initializer).list, lhs, (CArray) lCType));
+				ResultExpression aInit = this.initBoogieArray(main, loc,
+						((ResultExpressionListRec) initializer).list, lhs, (CArray) lCType);
+				stmt.addAll(aInit.stmt);
+				decl.addAll(aInit.decl);
+				auxVars.putAll(aInit.auxVars);
 			} else if (initializer instanceof ResultExpression) {// we have a variable length array and need the corresponding aux vars
 				//					stmt.addAll(initializer.stmt);
 				//					decl.addAll(initializer.decl);
@@ -359,11 +362,17 @@ public class InitializationHandler {
 //				stmt.add(mallocRex);
 
 				if (initializer == null) {
-					stmt.addAll(this.initArrayOnHeap(main, loc, 
-							null, arrayAddress, (CArray) lCType));				
+					ResultExpression aInit = this.initArrayOnHeap(main, loc, 
+							null, arrayAddress, (CArray) lCType);				
+					stmt.addAll(aInit.stmt);
+					decl.addAll(aInit.decl);
+					auxVars.putAll(aInit.auxVars);
 				} else if (initializer instanceof ResultExpressionListRec) {
-					stmt.addAll(this.initArrayOnHeap(main, loc, 
-							((ResultExpressionListRec) initializer).list, arrayAddress, (CArray) lCType));				
+					ResultExpression aInit = this.initArrayOnHeap(main, loc, 
+							((ResultExpressionListRec) initializer).list, arrayAddress, (CArray) lCType);
+					stmt.addAll(aInit.stmt);
+					decl.addAll(aInit.decl);
+					auxVars.putAll(aInit.auxVars);
 				} else if (initializer instanceof ResultExpression) {// we have a variable length array and need the corresponding aux vars
 					//					stmt.addAll(initializer.stmt);
 					//					decl.addAll(initializer.decl);
@@ -373,18 +382,24 @@ public class InitializationHandler {
 				}
 
 			} else { //not on Heap
+				ResultExpression initRex = null;
 				if (initializer == null) {
-					stmt.addAll(this.initBoogieArray(main, loc,
-							null, lhs, (CArray) lCType));
+					initRex = this.initBoogieArray(main, loc,
+							null, lhs, (CArray) lCType);
 				} else if (initializer instanceof ResultExpressionListRec) {
-					stmt.addAll(this.initBoogieArray(main, loc,
-							((ResultExpressionListRec) initializer).list, lhs, (CArray) lCType));
+					initRex = this.initBoogieArray(main, loc,
+							((ResultExpressionListRec) initializer).list, lhs, (CArray) lCType);
 				} else if (initializer instanceof ResultExpression) {// we have a variable length array and need the corresponding aux vars
 					//					stmt.addAll(initializer.stmt);
 					//					decl.addAll(initializer.decl);
 					//					auxVars.putAll(initializer.auxVars);
 				} else {
 					assert false;
+				}
+				if (initRex != null) {
+					stmt.addAll(initRex.stmt);
+					decl.addAll(initRex.decl);
+					auxVars.putAll(initRex.auxVars);
 				}
 			}
 			assert lhs != null;
@@ -448,10 +463,12 @@ public class InitializationHandler {
 	 * @param arrayType The type of the array (containing its size and value type)
 	 * @return a list of statements that do the initialization
 	 */
-	private ArrayList<Statement> initArrayOnHeap(Dispatcher main, ILocation loc, 
+	private ResultExpression initArrayOnHeap(Dispatcher main, ILocation loc, 
 			ArrayList<ResultExpressionListRec> list, Expression startAddress,
 			CArray arrayType) {
-		ArrayList<Statement> arrayWrites = new ArrayList<Statement>();
+		ArrayList<Statement> stmt = new ArrayList<>();
+		ArrayList<Declaration> decl = new ArrayList<>();
+		Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<>();
 
 		Expression sizeOfCell = mMemoryHandler.calculateSizeOf(arrayType.getValueType(), loc); 
 		Expression[] dimensions = arrayType.getDimensions();
@@ -496,21 +513,25 @@ public class InitializationHandler {
 //				TODO: we may need to pass statements, decls, ...
 				if (list != null && list.size() > i && list.get(i).lrVal != null) {
 					val = (RValue) list.get(i).lrVal; 
-					arrayWrites.addAll(mMemoryHandler.getWriteCall(loc, new HeapLValue(writeLocation, valueType), val));
+					stmt.addAll(mMemoryHandler.getWriteCall(loc, new HeapLValue(writeLocation, valueType), val));
 				} else {
 					if (valueType instanceof CArray) {
 						throw new AssertionError("this should not be the case as we are in the inner/outermost array right??");
 					} else if  (valueType instanceof CStruct) {
 						ResultExpression sInit = this.initStructOnHeapFromRERL(main, loc, 
 								writeLocation, list != null && list.size() > i ? list.get(i) : null, (CStruct) valueType);
-						arrayWrites.addAll(sInit.stmt);
+						stmt.addAll(sInit.stmt);
+						decl.addAll(sInit.decl);
+						auxVars.putAll(sInit.auxVars);
 						assert sInit.decl.size() == 0 && sInit.auxVars.size() == 0 : "==> change return type of initArray..";
 						val = (RValue) sInit.lrVal;
 					} else if (valueType instanceof CPrimitive 
 							|| valueType instanceof CPointer) {
-						val = (RValue) (main.cHandler.getInitHandler().initVar(loc, main, 
-								(VariableLHS) null, valueType, null)).lrVal;
-						arrayWrites.addAll(mMemoryHandler.getWriteCall(loc, new HeapLValue(writeLocation, valueType), val));
+						ResultExpression pInit = main.cHandler.getInitHandler().initVar(loc, main, 
+								(VariableLHS) null, valueType, null);
+						assert pInit.stmt.isEmpty() && pInit.decl.isEmpty() && pInit.auxVars.isEmpty();
+						val = (RValue) pInit.lrVal;
+						stmt.addAll(mMemoryHandler.getWriteCall(loc, new HeapLValue(writeLocation, valueType), val));
 					} else {
 						throw new UnsupportedSyntaxException(loc, "trying to init unknown type");
 					}
@@ -541,20 +562,22 @@ public class InitializationHandler {
 				ArrayList<Expression> innerDims = new ArrayList<Expression>(Arrays.asList(arrayType.getDimensions()));
 				innerDims.remove(0);//TODO ??
 				CArray innerArrayType = new CArray(innerDims.toArray(new Expression[0]), 
-						arrayType.getValueType());
+						arrayType.getValueType(), arrayType.isOnHeap());
 
-				arrayWrites.addAll(
-						initArrayOnHeap(main, 
+				ResultExpression initRex = initArrayOnHeap(main, 
 								loc, 
 								list != null ? list.get(i).list : null,
 										MemoryHandler.constructPointerFromBaseAndOffset(
 												newStartAddressBase,
 												newStartAddressOffsetInner, 
 												loc),
-												innerArrayType)); 
+												innerArrayType); 
+				stmt.addAll(initRex.stmt);
+				decl.addAll(initRex.decl);
+				auxVars.putAll(initRex.auxVars);
 			}
 		}
-		return arrayWrites;
+		return new ResultExpression(stmt, null, decl, auxVars);
 	}
 
 	/**
@@ -567,10 +590,12 @@ public class InitializationHandler {
 	 * @param arrayType The type of the array (containing its size and value type)
 	 * @return a list of statements that do the initialization
 	 */
-	private ArrayList<Statement> initBoogieArray(Dispatcher main, ILocation loc, 
+	private ResultExpression initBoogieArray(Dispatcher main, ILocation loc, 
 			ArrayList<ResultExpressionListRec> list, LeftHandSide innerArrayAccessLHS,
 			CArray arrayType) {
-		ArrayList<Statement> arrayWrites = new ArrayList<Statement>();
+		ArrayList<Statement> stmt = new ArrayList<Statement>();
+		ArrayList<Declaration> decl = new ArrayList<>();
+		Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<>();
 
 		Expression[] dimensions = arrayType.getDimensions();
 		Integer currentSizeInt = null;
@@ -584,10 +609,14 @@ public class InitializationHandler {
 			RValue val = null;
 
 			for (int i = 0; i < currentSizeInt; i++) {
-				//TODO: we may need to pass statements, decls, ...
 				if (list != null && list.size() > i && list.get(i).lrVal != null) {
-					val = (RValue) list.get(i).lrVal; //if not enough values are given, fill the rest with the last --> wrong? FIXME
+					// we have a value to initialize with
+					val = (RValue) list.get(i).lrVal;
+					decl.addAll(list.get(i).decl);
+					auxVars.putAll(list.get(i).auxVars);
+					stmt.addAll(list.get(i).stmt);
 				} else {
+					//do default initialization
 					CType valueType = arrayType.getValueType().getUnderlyingType();
 
 					if (valueType instanceof CArray) {
@@ -595,7 +624,9 @@ public class InitializationHandler {
 					} else if  (valueType instanceof CStruct) {
 						ResultExpression sInit = this.makeStructConstructorFromRERL(main, loc, 
 								null, (CStruct) valueType);
-						arrayWrites.addAll(sInit.stmt);
+						stmt.addAll(sInit.stmt);
+						decl.addAll(sInit.decl);
+						auxVars.putAll(sInit.auxVars);
 						assert sInit.decl.size() == 0 && sInit.auxVars.size() == 0 : "==> change return type of initArray..";
 						val = (RValue) sInit.lrVal;
 					} else if (valueType instanceof CPrimitive 
@@ -620,7 +651,7 @@ public class InitializationHandler {
 				}
 
 				ArrayLHS arrayAccessLHS = new ArrayLHS(loc, newLHS, newIndices);
-				arrayWrites.add(new AssignmentStatement(loc, 
+				stmt.add(new AssignmentStatement(loc, 
 						new LeftHandSide[] { arrayAccessLHS }, new Expression[] { val.getValue() }));
 			}
 		} else {
@@ -642,16 +673,19 @@ public class InitializationHandler {
 				ArrayList<Expression> innerDims = new ArrayList<Expression>(Arrays.asList(arrayType.getDimensions()));
 				innerDims.remove(0);//TODO ??
 				CArray innerArrayType = new CArray(innerDims.toArray(new Expression[0]), 
-						arrayType.getValueType());
+						arrayType.getValueType(), arrayType.isOnHeap());
 
-				arrayWrites.addAll(
-						initBoogieArray(main, 
+				ResultExpression initRex = initBoogieArray(main, 
 								loc,
 								list != null ? list.get(i).list : null,
-										new ArrayLHS(loc, newLHS, newIndices), innerArrayType)); 
+										new ArrayLHS(loc, newLHS, newIndices), innerArrayType); 
+				stmt.addAll(initRex.stmt);
+				decl.addAll(initRex.decl);
+				auxVars.putAll(initRex.auxVars);
 			}
 		}
-		return arrayWrites;
+//		return arrayWrites;
+		return new ResultExpression(stmt, null, decl, auxVars);
 	}
 
 	/**
@@ -761,10 +795,13 @@ public class InitializationHandler {
 					if (i < rerl.list.size())
 						arrayInitRerl = rerl.list.get(i);
 
-					fieldStmt.addAll(this.initArrayOnHeap(main, loc, 
+					ResultExpression aInit = this.initArrayOnHeap(main, loc, 
 							arrayInitRerl == null ? null : arrayInitRerl.list, 
 									fieldPointer,
-									 (CArray) underlyingFieldType));
+									 (CArray) underlyingFieldType);
+					fieldStmt.addAll(aInit.stmt);
+					fieldDecl.addAll(aInit.decl);
+					fieldAuxVars.putAll(aInit.auxVars);
 
 					fieldWrites = new ResultExpression(fieldStmt, 
 							null,
@@ -897,9 +934,13 @@ public class InitializationHandler {
 					fieldAuxVars.put(tVarDecl, (ILocation) loc);
 					fieldDecl.add(tVarDecl);
 					VariableLHS fieldLHS = new VariableLHS(loc, tmpId);
-					fieldStmt.addAll(main.cHandler.getInitHandler().initBoogieArray(main, loc, 
+					ResultExpression aInit = main.cHandler.getInitHandler().initBoogieArray(main, loc, 
 							arrayInitRerl == null ? null : arrayInitRerl.list, 
-									fieldLHS, (CArray) underlyingFieldType));
+									fieldLHS, (CArray) underlyingFieldType);
+					
+					fieldStmt.addAll(aInit.stmt);
+					fieldDecl.addAll(aInit.decl);
+					fieldAuxVars.putAll(aInit.auxVars);
 
 					fieldContents = new ResultExpression(fieldStmt, lrVal, fieldDecl, fieldAuxVars);
 				} else if (underlyingFieldType instanceof CEnum) {
