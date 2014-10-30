@@ -70,7 +70,7 @@ public class Bugs extends TACASInterpolation2015 {
 	
 	@Override
 	protected int getTimeout() {
-		return 120 * 1000;
+		return 600 * 1000;
 	}
 
 }

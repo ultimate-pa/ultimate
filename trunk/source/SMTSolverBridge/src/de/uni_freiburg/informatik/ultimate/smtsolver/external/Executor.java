@@ -62,7 +62,6 @@ class Executor {
 		InputStream stdout = m_Process.getInputStream();
 
 		m_stdErr = m_Process.getErrorStream();
-
 		MySymbolFactory symfactory = new MySymbolFactory();
 		m_Lexer = new Lexer(new InputStreamReader(stdout));
 		m_Lexer.setSymbolFactory(symfactory);

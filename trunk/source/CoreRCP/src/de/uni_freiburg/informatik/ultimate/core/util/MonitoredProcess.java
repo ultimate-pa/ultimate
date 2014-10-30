@@ -1,10 +1,14 @@
 package de.uni_freiburg.informatik.ultimate.core.util;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.io.PipedInputStream;
+import java.io.PipedOutputStream;
 import java.lang.Thread.State;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -19,18 +23,26 @@ import de.uni_freiburg.informatik.ultimate.util.ExceptionUtils;
 
 public final class MonitoredProcess implements IStorable {
 
-	private Logger mLogger;
-	private String mCommand;
-	private String mExitCommand;
+	private final Logger mLogger;
+	private final IToolchainStorage mStorage;
+	private final IUltimateServiceProvider mServices;
+
+	private final String mCommand;
+	private final String mExitCommand;
+
+	// buffer size in bytes 
+	private final static int sBufferSize = 2048;
+	private final PipedInputStream mStdInStreamPipe;
+	private final PipedInputStream mStdErrStreamPipe;
+
 	private Thread mMonitor;
+	private int mID;
 
 	private volatile Process mProcess;
 	private volatile boolean mProcessCompleted;
 	private volatile int mReturnCode;
-	private final IToolchainStorage mStorage;
-	private static AtomicInteger sInstanceCounter = new AtomicInteger();
-	private int mID;
-	private IUltimateServiceProvider mServices;
+
+	private final static AtomicInteger sInstanceCounter = new AtomicInteger();
 
 	private MonitoredProcess(Process process, String command, String exitCommand, IUltimateServiceProvider services,
 			IToolchainStorage storage) {
@@ -45,42 +57,8 @@ public final class MonitoredProcess implements IStorable {
 		mExitCommand = exitCommand;
 		mReturnCode = -1;
 		mMonitor = null;
-	}
-
-	private boolean isRunning() {
-		return !mProcessCompleted;
-	}
-
-	public MonitoredProcessState waitfor() throws InterruptedException {
-		if (mMonitor.getState().equals(State.TERMINATED)) {
-			return new MonitoredProcessState(false, mReturnCode);
-		}
-		mMonitor.join();
-		if (mMonitor.getState().equals(State.TERMINATED)) {
-			return new MonitoredProcessState(false, mReturnCode);
-		} else {
-			return new MonitoredProcessState(true, mReturnCode);
-		}
-	}
-
-	/**
-	 * 
-	 * @param millis
-	 * @return -1 iff the process is still running, the return code of the
-	 *         thread otherwise
-	 * @throws InterruptedException
-	 */
-	public MonitoredProcessState waitfor(long millis) throws InterruptedException {
-		if (mMonitor.getState().equals(State.TERMINATED)) {
-			return new MonitoredProcessState(false, mReturnCode);
-		}
-		mMonitor.join(millis);
-		if (mMonitor.getState().equals(State.TERMINATED)) {
-			return new MonitoredProcessState(false, mReturnCode);
-		} else {
-			return new MonitoredProcessState(true, mReturnCode);
-		}
-
+		mStdInStreamPipe = new PipedInputStream(sBufferSize);
+		mStdErrStreamPipe = new PipedInputStream(sBufferSize);
 	}
 
 	/**
@@ -141,8 +119,35 @@ public final class MonitoredProcess implements IStorable {
 		return exec(command, null, services, storage);
 	}
 
-	private static String getKey(int id, String command) {
-		return id + " " + command;
+	public MonitoredProcessState waitfor() throws InterruptedException {
+		if (mMonitor.getState().equals(State.TERMINATED)) {
+			return new MonitoredProcessState(false, mReturnCode);
+		}
+		mMonitor.join();
+		if (mMonitor.getState().equals(State.TERMINATED)) {
+			return new MonitoredProcessState(false, mReturnCode);
+		} else {
+			return new MonitoredProcessState(true, mReturnCode);
+		}
+	}
+
+	/**
+	 * 
+	 * @param millis
+	 * @return -1 iff the process is still running, the return code of the
+	 *         thread otherwise
+	 * @throws InterruptedException
+	 */
+	public MonitoredProcessState waitfor(long millis) throws InterruptedException {
+		if (mMonitor.getState().equals(State.TERMINATED)) {
+			return new MonitoredProcessState(false, mReturnCode);
+		}
+		mMonitor.join(millis);
+		if (mMonitor.getState().equals(State.TERMINATED)) {
+			return new MonitoredProcessState(false, mReturnCode);
+		} else {
+			return new MonitoredProcessState(true, mReturnCode);
+		}
 	}
 
 	public void forceShutdown() {
@@ -190,11 +195,16 @@ public final class MonitoredProcess implements IStorable {
 	}
 
 	public InputStream getErrorStream() {
-		return mProcess.getErrorStream();
+		return mStdErrStreamPipe;
 	}
 
 	public InputStream getInputStream() {
-		return mProcess.getInputStream();
+		return mStdInStreamPipe;
+	}
+
+	@Override
+	public void destroy() {
+		forceShutdown();
 	}
 
 	@Override
@@ -207,6 +217,19 @@ public final class MonitoredProcess implements IStorable {
 		return new ProcessRunner(this);
 	}
 
+	private static String getKey(int id, String command) {
+		return id + " " + command;
+	}
+
+	private boolean isRunning() {
+		return !mProcessCompleted;
+	}
+
+	/**
+	 * 
+	 * @author dietsch@informatik.uni-freiburg.de
+	 * 
+	 */
 	public class MonitoredProcessState {
 		private final boolean mIsRunning;
 		private final int mReturnCode;
@@ -225,9 +248,14 @@ public final class MonitoredProcess implements IStorable {
 		}
 	}
 
+	/**
+	 * 
+	 * @author dietsch@informatik.uni-freiburg.de
+	 * 
+	 */
 	private class ProcessRunner implements Runnable {
 
-		private MonitoredProcess mMonitoredProcess;
+		private final MonitoredProcess mMonitoredProcess;
 
 		private ProcessRunner(MonitoredProcess mp) {
 			mMonitoredProcess = mp;
@@ -236,6 +264,13 @@ public final class MonitoredProcess implements IStorable {
 		@Override
 		public void run() {
 			try {
+
+				PipedOutputStream stdInBufferPipe = new PipedOutputStream(mStdInStreamPipe);
+				PipedOutputStream stdErrBufferPipe = new PipedOutputStream(mStdErrStreamPipe);
+
+				setUpStreamBuffer(mMonitoredProcess.mProcess.getInputStream(), stdInBufferPipe);
+				setUpStreamBuffer(mMonitoredProcess.mProcess.getErrorStream(), stdErrBufferPipe);
+
 				mMonitoredProcess.mReturnCode = mMonitoredProcess.mProcess.waitFor();
 
 				mMonitoredProcess.mLogger.debug("Finished waiting for process!");
@@ -243,17 +278,47 @@ public final class MonitoredProcess implements IStorable {
 			} catch (InterruptedException e) {
 				mMonitoredProcess.mLogger.error("The process started with " + mMonitoredProcess.mCommand
 						+ " was interrupted. It will terminate abnormally.", e);
+			} catch (IOException e) {
+				mMonitoredProcess.mLogger.error("The process started with " + mMonitoredProcess.mCommand
+						+ " failed during stream data buffering. It will terminate abnormally.", e);
 			} finally {
 				mMonitoredProcess.mProcess.destroy();
 				mMonitoredProcess.mProcess = null;
 				mMonitoredProcess.mStorage.removeStorable(getKey(mMonitoredProcess.mID, mMonitoredProcess.mCommand));
 			}
 		}
-	}
 
-	@Override
-	public void destroy() {
-		forceShutdown();
-	}
+		private void setUpStreamBuffer(final InputStream is, final OutputStream os) {
 
+			final InputStreamReader streamReader = new InputStreamReader(is);
+			new Thread(new Runnable() {
+				public void run() {
+
+					BufferedReader br = new BufferedReader(streamReader);
+					int chunk = -1;
+					try {
+						while ((chunk = br.read()) != -1) {
+							os.write(chunk);
+							os.flush();
+						}
+					} catch (IOException e) {
+						mMonitoredProcess.mLogger.fatal("The process started with " + mMonitoredProcess.mCommand
+								+ " failed during stream data buffering. "
+								+ "This exception will be ignored, as it should never happen.", e);
+					} finally {
+						try {
+							br.close();
+							os.flush();
+							os.close();
+						} catch (IOException e) {
+							mMonitoredProcess.mLogger.fatal("The process started with " + mMonitoredProcess.mCommand
+									+ " failed during closing the streams. "
+									+ "This exception will be ignored, as it should never happen.", e);
+						}
+					}
+				}
+			}, "MonitoredProcess StreamBuffer").start();
+		}
+
+	}
 }
