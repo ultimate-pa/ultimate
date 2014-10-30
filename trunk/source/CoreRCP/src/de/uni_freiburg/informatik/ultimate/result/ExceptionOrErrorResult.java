@@ -31,7 +31,7 @@ public class ExceptionOrErrorResult extends AbstractResult {
 
 	@Override
 	public String getShortDescription() {
-		return m_Throwable.getClass().getSimpleName();
+		return m_Throwable.getClass().getSimpleName() + ": " + m_Throwable.getMessage();
 	}
 
 	@Override
