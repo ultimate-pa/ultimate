@@ -962,8 +962,7 @@ public class CHandler implements ICHandler {
 			VariableLHS idLhs = new VariableLHS(loc, bId);
 			lrVal = new LocalLValue(idLhs, cType, false, intFromPtr);
 		}
-		return new ResultExpression(new ArrayList<Statement>(), lrVal,
-				new ArrayList<Declaration>(), new LinkedHashMap<VariableDeclaration, ILocation>());
+		return new ResultExpression(lrVal);
 	}
 
 	@Override
@@ -2022,8 +2021,7 @@ public class CHandler implements ICHandler {
 		ILocation loc = LocationFactory.createCLocation(cs);
 		ArrayList<Statement> stmt = new ArrayList<Statement>();
 		stmt.add(new GotoStatement(loc, new String[] { mInnerMostLoopLabel.peek() }));
-		ResultExpression contResult = new ResultExpression(stmt, null, new ArrayList<Declaration>(),
-				Collections.<VariableDeclaration, ILocation> emptyMap());
+		ResultExpression contResult = new ResultExpression(stmt, null);
 		return contResult;
 	}
 
@@ -2077,8 +2075,7 @@ public class CHandler implements ICHandler {
 	public Result visit(Dispatcher main, IASTBreakStatement node) {
 		ArrayList<Statement> stmt = new ArrayList<Statement>();
 		stmt.add(new BreakStatement(LocationFactory.createCLocation(node)));
-		Map<VariableDeclaration, ILocation> emptyAuxVars = new LinkedHashMap<VariableDeclaration, ILocation>();
-		return new ResultExpression(stmt, null, new ArrayList<Declaration>(), emptyAuxVars);
+		return new ResultExpression(stmt, null);
 	}
 
 	@Override
@@ -2249,7 +2246,7 @@ public class CHandler implements ICHandler {
 		String[] name = new String[] { node.getName().toString() };
 		stmt.add(new GotoStatement(LocationFactory.createCLocation(node), name));
 		Map<VariableDeclaration, ILocation> emptyAuxVars = new LinkedHashMap<VariableDeclaration, ILocation>(0);
-		return new ResultExpression(stmt, null, new ArrayList<Declaration>(), emptyAuxVars);
+		return new ResultExpression(stmt, null);
 	}
 
 	@Override

@@ -82,7 +82,7 @@ public class StructHandler {
 			ResultExpression rFieldOwnerRex = fieldOwner.switchToRValueIfNecessary(main, memoryHandler, this, loc);
 			Expression address = rFieldOwnerRex.lrVal.getValue();
 			fieldOwner = new ResultExpression(rFieldOwnerRex.stmt, new HeapLValue(address, rFieldOwnerRex.lrVal.cType), 
-					rFieldOwnerRex.decl, rFieldOwnerRex.auxVars);
+					rFieldOwnerRex.decl, rFieldOwnerRex.auxVars, rFieldOwnerRex.overappr);
 		}
 
 		if (fieldOwner.lrVal instanceof HeapLValue) {

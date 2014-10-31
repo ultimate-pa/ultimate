@@ -214,7 +214,10 @@ public class SvComp14CHandler extends CHandler {
 			auxVars.putAll(destRex.auxVars);
 			auxVars.putAll(srcRex.auxVars);
 			auxVars.putAll(sizeRex.auxVars);
-			
+			overappr.addAll(destRex.overappr);
+			overappr.addAll(srcRex.overappr);
+			overappr.addAll(sizeRex.overappr);		
+
 			String tId = main.nameHandler.getTempVarUID(SFO.AUXVAR.MEMCPYRES);
 			VariableDeclaration tVarDecl = new VariableDeclaration(loc, new Attribute[0], new VarList[] { new VarList(
 					loc, new String[] { tId }, MemoryHandler.POINTER_TYPE) });
@@ -225,17 +228,19 @@ public class SvComp14CHandler extends CHandler {
 					new Expression[] { destRex.lrVal.getValue(), srcRex.lrVal.getValue(), sizeRex.lrVal.getValue() });
 			stmt.add(call);
 			
-			return new ResultExpression(stmt, new RValue(new IdentifierExpression(loc, tId), destRex.lrVal.cType), decl, auxVars);
+			return new ResultExpression(stmt, new RValue(new IdentifierExpression(loc, tId), 
+					destRex.lrVal.cType), decl, auxVars, overappr);
 		}
 		
 		if (methodName.equals("__builtin_object_size")) {
 			main.warn(loc, "used trivial implementation of __builtin_object_size");
-			return new ResultExpression(new RValue(new IntegerLiteral(loc, SFO.NR0), new CPrimitive(PRIMITIVE.INT)));
+			return new ResultExpression(new RValue(new IntegerLiteral(loc, SFO.NR0), 
+					new CPrimitive(PRIMITIVE.INT)));
 		}
 
 		if (methodName.equals("abort")) {
 			stmt.add(new AssumeStatement(loc, new BooleanLiteral(loc, false)));
-			return new ResultExpression(stmt, null, decl, auxVars);
+			return new ResultExpression(stmt, null, decl, auxVars, overappr);
 		}
 
 		return super.visit(main, node);

@@ -160,6 +160,13 @@ public class ResultExpression extends Result {
 	            auxVars, overapproxList, null);
 	}
 	
+	public ResultExpression(ArrayList<Statement> stmt,
+			LRValue lrVal) {
+	    this(stmt, lrVal, new ArrayList<Declaration>(),
+	            new LinkedHashMap<VariableDeclaration, ILocation>(), 
+	            new ArrayList<Overapprox>(), null);
+	}
+	
 	public ResultExpression(
             LRValue lrVal,
             Map<VariableDeclaration, ILocation> auxVars) {
@@ -496,6 +503,8 @@ public class ResultExpression extends Result {
 		ArrayList<Declaration> decl = new ArrayList<>();
 		ArrayList<Statement> stmt = new ArrayList<>();
 		Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<>();
+		ArrayList<Overapprox> overApp = new ArrayList<>();
+
 		if (arrayType.getDimensions().length == 1
 				&& arrayType.getDimensions()[0] instanceof IntegerLiteral) {
 			int dim = Integer.parseInt(((IntegerLiteral) arrayType.getDimensions()[0]).getValue());
@@ -541,6 +550,7 @@ public class ResultExpression extends Result {
 				decl.addAll(readRex.decl);
 				stmt.addAll(readRex.stmt);
 				auxVars.putAll(readRex.auxVars);
+				overApp.addAll(readRex.overappr);
 
 				ArrayLHS aAcc = new ArrayLHS(loc, new VariableLHS(loc, newArrayId),
 						new Expression[] { new IntegerLiteral(loc, new Integer(pos).toString())} );
@@ -549,6 +559,7 @@ public class ResultExpression extends Result {
 				decl = assRex.decl;
 				stmt = assRex.stmt;
 				auxVars = assRex.auxVars;
+				overApp.addAll(assRex.overappr);
 
 				arrayEntryAddressOffset = CHandler.createArithmeticExpression(IASTBinaryExpression.op_plus, 
 						arrayEntryAddressOffset, valueTypeSize, loc);
@@ -556,7 +567,7 @@ public class ResultExpression extends Result {
 		} else {
 			throw new UnsupportedSyntaxException(loc, "we need to generalize this to nested and/or variable length arrays");
 		}
-		ResultExpression xres1 = new ResultExpression(stmt, xfieldRVal, decl, auxVars);
+		ResultExpression xres1 = new ResultExpression(stmt, xfieldRVal, decl, auxVars, overApp);
 		return xres1;
 	}
 	

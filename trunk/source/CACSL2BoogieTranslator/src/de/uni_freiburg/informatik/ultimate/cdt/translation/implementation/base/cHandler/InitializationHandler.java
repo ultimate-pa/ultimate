@@ -469,6 +469,7 @@ public class InitializationHandler {
 		ArrayList<Statement> stmt = new ArrayList<>();
 		ArrayList<Declaration> decl = new ArrayList<>();
 		Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<>();
+		ArrayList<Overapprox> overApp = new ArrayList<>();
 
 		Expression sizeOfCell = mMemoryHandler.calculateSizeOf(arrayType.getValueType(), loc); 
 		Expression[] dimensions = arrayType.getDimensions();
@@ -575,9 +576,10 @@ public class InitializationHandler {
 				stmt.addAll(initRex.stmt);
 				decl.addAll(initRex.decl);
 				auxVars.putAll(initRex.auxVars);
+				overApp.addAll(initRex.overappr);
 			}
 		}
-		return new ResultExpression(stmt, null, decl, auxVars);
+		return new ResultExpression(stmt, null, decl, auxVars, overApp);
 	}
 
 	/**
@@ -596,6 +598,7 @@ public class InitializationHandler {
 		ArrayList<Statement> stmt = new ArrayList<Statement>();
 		ArrayList<Declaration> decl = new ArrayList<>();
 		Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<>();
+		ArrayList<Overapprox> overApp = new ArrayList<>();
 
 		Expression[] dimensions = arrayType.getDimensions();
 		Integer currentSizeInt = null;
@@ -615,6 +618,7 @@ public class InitializationHandler {
 					decl.addAll(list.get(i).decl);
 					auxVars.putAll(list.get(i).auxVars);
 					stmt.addAll(list.get(i).stmt);
+					overApp.addAll(list.get(i).overappr);
 				} else {
 					//do default initialization
 					CType valueType = arrayType.getValueType().getUnderlyingType();
@@ -627,6 +631,7 @@ public class InitializationHandler {
 						stmt.addAll(sInit.stmt);
 						decl.addAll(sInit.decl);
 						auxVars.putAll(sInit.auxVars);
+						overApp.addAll(sInit.overappr);
 						assert sInit.decl.size() == 0 && sInit.auxVars.size() == 0 : "==> change return type of initArray..";
 						val = (RValue) sInit.lrVal;
 					} else if (valueType instanceof CPrimitive 
@@ -682,10 +687,11 @@ public class InitializationHandler {
 				stmt.addAll(initRex.stmt);
 				decl.addAll(initRex.decl);
 				auxVars.putAll(initRex.auxVars);
+				overApp.addAll(initRex.overappr);
 			}
 		}
 //		return arrayWrites;
-		return new ResultExpression(stmt, null, decl, auxVars);
+		return new ResultExpression(stmt, null, decl, auxVars, overApp);
 	}
 
 	/**
@@ -790,6 +796,7 @@ public class InitializationHandler {
 					ArrayList<Declaration> fieldDecl = new ArrayList<Declaration>();
 					Map<VariableDeclaration, ILocation> fieldAuxVars =
 							new LinkedHashMap<VariableDeclaration, ILocation>();
+					ArrayList<Overapprox> fieldOverApp = new ArrayList<>();
 
 					ResultExpressionListRec arrayInitRerl = null;
 					if (i < rerl.list.size())
@@ -802,10 +809,11 @@ public class InitializationHandler {
 					fieldStmt.addAll(aInit.stmt);
 					fieldDecl.addAll(aInit.decl);
 					fieldAuxVars.putAll(aInit.auxVars);
+					fieldOverApp.addAll(aInit.overappr);
 
 					fieldWrites = new ResultExpression(fieldStmt, 
 							null,
-							fieldDecl, fieldAuxVars);
+							fieldDecl, fieldAuxVars, fieldOverApp);
 				} else if (underlyingFieldType instanceof CEnum) {
 					//like CPrimitive (?)
 					fieldWrites = main.cHandler.getInitHandler().initVar(loc, main, 
@@ -918,6 +926,7 @@ public class InitializationHandler {
 					ArrayList<Declaration> fieldDecl = new ArrayList<Declaration>();
 					Map<VariableDeclaration, ILocation> fieldAuxVars =
 							new LinkedHashMap<VariableDeclaration, ILocation>();
+					ArrayList<Overapprox> fieldOverApp = new ArrayList<>();
 
 					String tmpId = main.nameHandler.getTempVarUID(SFO.AUXVAR.ARRAYINIT);
 
@@ -941,8 +950,10 @@ public class InitializationHandler {
 					fieldStmt.addAll(aInit.stmt);
 					fieldDecl.addAll(aInit.decl);
 					fieldAuxVars.putAll(aInit.auxVars);
+					fieldOverApp.addAll(aInit.overappr);
 
-					fieldContents = new ResultExpression(fieldStmt, lrVal, fieldDecl, fieldAuxVars);
+					fieldContents = new ResultExpression(fieldStmt, lrVal, fieldDecl, 
+							fieldAuxVars, fieldOverApp);
 				} else if (underlyingFieldType instanceof CEnum) {
 					//like CPrimitive
 					fieldContents = main.cHandler.getInitHandler().initVar(loc, main, 

@@ -387,6 +387,7 @@ public class FunctionHandler {
 		ArrayList<Statement> stmt = new ArrayList<Statement>();
 		ArrayList<Declaration> decl = new ArrayList<Declaration>();
 		Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<VariableDeclaration, ILocation>();
+		ArrayList<Overapprox> overApp = new ArrayList<>();
 		// The ReturnValue could be empty!
 		ILocation loc = LocationFactory.createCLocation(node);
 		VarList[] outParams = this.currentProcedure.getOutParams();
@@ -415,6 +416,7 @@ public class FunctionHandler {
 			stmt.addAll(exprResult.stmt);
 			decl.addAll(exprResult.decl);
 			auxVars.putAll(exprResult.auxVars);
+			overApp.addAll(exprResult.overappr);
 			if (outParams.length == 0) {
 				// void method which is returning something! We remove the
 				// return value!
@@ -448,7 +450,7 @@ public class FunctionHandler {
 		}
 
 		stmt.add(new ReturnStatement(loc));
-		return new ResultExpression(stmt, null, decl, auxVars);
+		return new ResultExpression(stmt, null, decl, auxVars, overApp);
 	}
 
 	/**
