@@ -1,14 +1,27 @@
 import sys
 import subprocess
+import os
+import fnmatch
 
-#locations of files
-#ultimateBin = '/storage/stalin/trunk/source/BA_SiteRepository/target/products/CLI-E3/linux/gtk/x86_64/Ultimate'
-#ultimateBin = '../../source/BA_SiteRepository/target/products/CLI-E3/linux/gtk/x86_64/Ultimate'
 # current z3 version z3-4.3.3.f50a8b0a59ff-x64-debian-7.7.zip
+
+
+
 ultimateBin = './Ultimate'
-toolchain = './ToolchainKojakC.xml'
-settingsFileErrorReachability = './AlexSVCOMPstandard'
-settingsFileMemSafety = './AlexSVCOMPmemsafety'
+toolchain = './Kojak.xml'
+writeUltimateOutputToFile = True
+outputFileName = 'Ultimate.log'
+errorPathFileName = 'UltimateCounterExample.errorpath'
+
+# various settings file strings 
+settingsFileMemSafety = 'memsafety'
+settingsFileTermination = 'termination'
+settingsFileSimple32 = '32bit-simple'
+settingsFileSimple64 = '64bit-simple'
+settingsFilePrecise32 = '32bit-precise'
+settingsFilePrecise64 = '64bit-precise'
+
+
 #special strings in ultimate output
 safetyString = 'Ultimate proved your program to be correct'
 unsafetyString = 'Ultimate proved your program to be incorrect'
@@ -16,44 +29,59 @@ unknownSafetyString = 'Ultimate could not prove your program'
 memDerefUltimateString = 'pointer dereference may fail'
 memFreeUltimateString = 'free of unallocated memory possible'
 memMemtrackUltimateString = 'not all allocated memory was freed' 
-errorPathBeginString = '=== Start of program execution'
-errorPathEndString = '=== End of program execution'
+errorPathBeginString = 'We found a FailurePath:'
 memDerefResult = 'valid-deref'
 memFreeResult = 'valid-free'
 memMemtrackResult = 'valid-memtrack'
 
-writeUltimateOutputToFile = True
-outputFileName = './ultimateOut.txt'
 
 #parse command line arguments
-if (len(sys.argv) != 4):
-	print('wrong number of arguments')
+if (len(sys.argv) != 5):
+	print('wrong number of arguments: use ./Ultimate.py <propertyfile> <C file> [32bit|64bit] [simple|precise]')
 	sys.exit(0)
 
 propertyFileName = sys.argv[1]
 cFile = sys.argv[2]
-errorPathFileName = sys.argv[3]
+architecture = sys.argv[3]
+memorymodel = sys.argv[4]
 
 memSafetyMode = False
+terminationMode = False
 
 propFile = open(propertyFileName, 'r')
 for line in propFile:
 	if line.find('valid-') != -1:
 		memSafetyMode = True
+	if line.find('LTL(F end)') != -1:
+		terminationMode = True
+
+settingsSearchString = ''
 
 if memSafetyMode:
 	print('checking for memory safety')
+	settingsSearchString = settingsFileMemSafety
+elif terminationMode: 
+	print('checking for termination')
+	settingsSearchString = settingsFileTermination
 else: 
 	print('checking for ERROR reachability')
-#else:
-#	print('unknown property file')
-#	sys.exit(0)
+	if architecture in ("32bit", "64bit"): 
+		settingsSearchString = architecture
+	else:
+		print('architecture has to be either 32bit or 64bit')
+		sys.exit(0)
+	if memorymodel in ("simple", "precise"): 
+		settingsSearchString = settingsSearchString + '-' + memorymodel
+	else:
+		print('memorymodel has to be either simple or precise')
+		sys.exit(0)
 
-if (memSafetyMode):
-	settingsArgument = '--settings ' + settingsFileMemSafety
-else:
-	settingsArgument = '--settings ' + settingsFileErrorReachability
-
+settingsArgument = ''
+for root, dirs, files in os.walk('./'):
+	for name in files:
+		if fnmatch.fnmatch(name, '*' + settingsSearchString + '*.epf'):
+			settingsArgument = '--settings '+os.path.join(root, name)
+			break
 
 #execute ultimate
 ultimateCall = ultimateBin 
@@ -99,9 +127,9 @@ while True:
 		memResult = memMemtrackResult
 	if (line.find(errorPathBeginString) != -1):
 		readingErrorPath = True
-	if (line.find(errorPathEndString) != -1):
+	if (readingErrorPath and line == ''):
 		readingErrorPath = False
-	if (line == ''):
+	if (not readingErrorPath and line == ''):
 		print('wrong executable or arguments?')
 		break
 	if (line.find('Closed successfully') != -1):
