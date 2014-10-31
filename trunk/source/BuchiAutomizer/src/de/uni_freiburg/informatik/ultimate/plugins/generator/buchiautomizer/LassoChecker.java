@@ -581,6 +581,7 @@ public class LassoChecker {
 		settings.num_strict_invariants = 0;
 		settings.nondecreasing_invariants = true;
 		settings.simplify_termination_argument = m_TrySimplificationTerminationArgument;
+		settings.simplify_supporting_invariants = m_TrySimplificationTerminationArgument;
 		return settings;
 	}
 
