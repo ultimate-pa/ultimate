@@ -142,13 +142,9 @@ public class BoogiePreprocessorBacktranslator extends
 						return null;
 					}
 				}
-				// if we reach this point, we have an EnuresSpecification that
-				// was not inserted by the user (probably by RCFGBuilder),
-				// because there is no mapping, and that this spec is
-				// unexpected. If this happens, we have to find a strategy for
-				// that, so we throw an exception here.
-				throw new UnsupportedOperationException("Generated EnsuresSpecification "
-						+ BoogiePrettyPrinter.print(spec) + " is not ensure(true)");
+				reportUnfinishedBacktranslation("Generated EnsuresSpecification " + BoogiePrettyPrinter.print(spec)
+						+ " is not ensure(true)");
+				return null;
 			}
 			// if there is no mapping, we return the identity (we do not change
 			// everything, so this may be right)
@@ -388,7 +384,7 @@ public class BoogiePreprocessorBacktranslator extends
 				}
 			}
 			// descend
-//			String pretty = BoogiePrettyPrinter.print(expr);
+			// String pretty = BoogiePrettyPrinter.print(expr);
 			return super.processExpression(expr);
 		}
 
