@@ -15,4 +15,4 @@ integral hull	examples that look like they need an integral hull
 needs guesses	requires guesses for Motzkin coefficients
 nonlinear		examples that use nonlinear arithmetic in the program syntax
 simple			if these don't work there is a bug in Ultimate
-success			examples usually work
+success			examples that usually work
