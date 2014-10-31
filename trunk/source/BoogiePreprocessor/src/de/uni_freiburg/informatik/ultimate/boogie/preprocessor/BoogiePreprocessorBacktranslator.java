@@ -388,7 +388,7 @@ public class BoogiePreprocessorBacktranslator extends
 				}
 			}
 			// descend
-			String pretty = BoogiePrettyPrinter.print(expr);
+//			String pretty = BoogiePrettyPrinter.print(expr);
 			return super.processExpression(expr);
 		}
 

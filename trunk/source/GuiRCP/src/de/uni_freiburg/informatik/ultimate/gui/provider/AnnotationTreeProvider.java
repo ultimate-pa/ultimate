@@ -23,6 +23,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.IPayload;
 import de.uni_freiburg.informatik.ultimate.model.annotation.IAnnotations;
+import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.model.structure.ITree;
 import de.uni_freiburg.informatik.ultimate.model.structure.IWalkable;
 
@@ -100,27 +101,31 @@ public class AnnotationTreeProvider implements ITreeContentProvider {
 		if (currentBuffer != null) {
 			return currentBuffer;
 		}
-		
+
 		ArrayList<Object> returnObj = new ArrayList<Object>();
 		GroupEntry general = new GroupEntry("IElement", null);
 		returnObj.add(general);
 		general.addEntry(new Entry("HashCode", String.valueOf(elem.hashCode()), general));
-		
+
 		GroupEntry payload = new GroupEntry("IPayload", null);
 		returnObj.add(payload);
 		payload.addEntry(new Entry("Name", node.getName(), general));
 		payload.addEntry(new Entry("UID", node.getID().toString(), general));
-		
-		GroupEntry location = new GroupEntry("IPayload.Location", general);
-		returnObj.add(location);
-		location.addEntry(new Entry("Source Info", node.getLocation().toString(), location));
-		location.addEntry(new Entry("Filename", node.getLocation().getFileName(), location));
-		location.addEntry(new Entry("Start Line Number", Integer.toString(node.getLocation().getStartLine()), location));
-		location.addEntry(new Entry("Start Column Number", Integer.toString(node.getLocation().getStartColumn()),
-				location));
-		location.addEntry(new Entry("End Line Number", Integer.toString(node.getLocation().getEndLine()), location));
-		location.addEntry(new Entry("End Column Number", Integer.toString(node.getLocation().getEndColumn()), location));
-		
+
+		ILocation loc = node.getLocation();
+		if (loc != null) {
+			GroupEntry location = new GroupEntry("IPayload.Location", general);
+			returnObj.add(location);
+			location.addEntry(new Entry("Source Info", node.getLocation().toString(), location));
+			location.addEntry(new Entry("Filename", node.getLocation().getFileName(), location));
+			location.addEntry(new Entry("Start Line Number", Integer.toString(node.getLocation().getStartLine()),
+					location));
+			location.addEntry(new Entry("Start Column Number", Integer.toString(node.getLocation().getStartColumn()),
+					location));
+			location.addEntry(new Entry("End Line Number", Integer.toString(node.getLocation().getEndLine()), location));
+			location.addEntry(new Entry("End Column Number", Integer.toString(node.getLocation().getEndColumn()),
+					location));
+		}
 		GroupEntry annotation = new GroupEntry("IPayload.Annotation", null);
 		returnObj.add(annotation);
 		for (String outer : node.getAnnotations().keySet()) {

@@ -3,6 +3,8 @@ package de.uni_freiburg.informatik.ultimate.boogie.preprocessor;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.log4j.Logger;
+
 import de.uni_freiburg.informatik.ultimate.access.IObserver;
 import de.uni_freiburg.informatik.ultimate.boogie.preferences.PreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTableConstructor;
@@ -64,11 +66,14 @@ public class BoogiePreprocessor implements IAnalysis {
 		BoogiePreprocessorBacktranslator backTranslator = new BoogiePreprocessorBacktranslator(mServices);
 		mServices.getBacktranslationService().addTranslator(backTranslator);
 
-		BoogieSymbolTableConstructor symb = new BoogieSymbolTableConstructor(mServices.getLoggingService().getLogger(
-				Activator.PLUGIN_ID));
+		Logger logger = mServices.getLoggingService().getLogger(
+				Activator.PLUGIN_ID);
+		
+		BoogieSymbolTableConstructor symb = new BoogieSymbolTableConstructor(logger);
 		backTranslator.setSymbolTable(symb.getSymbolTable());
 
 		ArrayList<IObserver> observers = new ArrayList<IObserver>();
+//		observers.add(new DebugObserver(logger));
 		observers.add(new TypeChecker(mServices));
 		observers.add(new ConstExpander(backTranslator));
 		observers.add(new StructExpander(backTranslator));

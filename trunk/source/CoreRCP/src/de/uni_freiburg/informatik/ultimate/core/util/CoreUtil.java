@@ -144,6 +144,14 @@ public class CoreUtil {
 		return rtr;
 	}
 	
+	public static <E> Collection<E> flattenMapValuesToCollection(Map<?,E> map){
+		Collection<E> rtr = new ArrayList<>();
+		for(Entry<?, E> entry : map.entrySet()){
+			rtr.add(entry.getValue());
+		}
+		return rtr;
+	}
+	
 	public static <T, E> T reduce(Set<E> collection, IMapReduce<T, E> reducer) {
 		T lastValue = null;
 		for (E entry : collection) {
