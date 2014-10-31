@@ -248,14 +248,24 @@ public class LassoAnalysis {
 		mLogger.debug(new DebugMessage("Original loop:\n{0}",
 				m_loop_transition));
 		mLogger.debug("After preprocessing:");
-		mLogger.debug(new DebugMessage("Overapproximated stem:\n{0}",
-				m_lasso_t.getStem()));
-		mLogger.debug(new DebugMessage("Underapproximated stem:\n{0}",
-				m_lasso_nt.getStem()));
-		mLogger.debug(new DebugMessage("Overapproximated loop:\n{0}",
-				m_lasso_t.getLoop()));
-		mLogger.debug(new DebugMessage("Underapproximated loop:\n{0}",
-				m_lasso_nt.getLoop()));
+		if (lassoBuilder.isStemApproximated()) {
+			mLogger.debug(new DebugMessage("Overapproximated stem:\n{0}",
+					m_lasso_t.getStem()));
+			mLogger.debug(new DebugMessage("Underapproximated stem:\n{0}",
+					m_lasso_nt.getStem()));
+		} else {
+			mLogger.debug(new DebugMessage("Stem (not approximated):\n{0}",
+					m_lasso_t.getStem()));
+		}
+		if (lassoBuilder.isLoopApproximated()) {
+			mLogger.debug(new DebugMessage("Overapproximated loop:\n{0}",
+					m_lasso_t.getLoop()));
+			mLogger.debug(new DebugMessage("Underapproximated loop:\n{0}",
+					m_lasso_nt.getLoop()));
+		} else {
+			mLogger.debug(new DebugMessage("Loop (not approximated):\n{0}",
+					m_lasso_t.getLoop()));
+		}
 		mLogger.debug("Guesses for Motzkin coefficients: "
 				+ eigenvalueGuesses(m_lasso_t));
 		mLogger.info("Preprocessing complete.");

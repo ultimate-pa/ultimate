@@ -78,31 +78,29 @@ public class StemAndLoopPreProcessor extends LassoPreProcessor {
 		m_lassoBuilder = lasso_builder;
 		
 		// Process stem
-		if (lasso_builder.getStemComponentsTermination()
-				== lasso_builder.getStemComponentsNonTermination()) {
-			Collection<TransFormulaLR> components =
-					processStemOrLoop(lasso_builder.getStemComponentsTermination());
-			lasso_builder.setStemComponentsTermination(components);
-			lasso_builder.setStemComponentsNonTermination(components);
-		} else {
+		if (lasso_builder.isStemApproximated()) {
 			lasso_builder.setStemComponentsTermination(
 					processStemOrLoop(lasso_builder.getStemComponentsTermination()));
 			lasso_builder.setStemComponentsNonTermination(
 					processStemOrLoop(lasso_builder.getStemComponentsNonTermination()));
+		} else {
+			Collection<TransFormulaLR> components =
+					processStemOrLoop(lasso_builder.getStemComponentsTermination());
+			lasso_builder.setStemComponentsTermination(components);
+			lasso_builder.setStemComponentsNonTermination(components);
 		}
 		
 		// Process loop
-		if (lasso_builder.getLoopComponentsTermination()
-				== lasso_builder.getLoopComponentsNonTermination()) {
-			Collection<TransFormulaLR> components =
-					processStemOrLoop(lasso_builder.getLoopComponentsTermination());
-			lasso_builder.setLoopComponentsTermination(components);
-			lasso_builder.setLoopComponentsNonTermination(components);
-		} else {
+		if (lasso_builder.isLoopApproximated()) {
 			lasso_builder.setLoopComponentsTermination(
 					processStemOrLoop(lasso_builder.getLoopComponentsTermination()));
 			lasso_builder.setLoopComponentsNonTermination(
 					processStemOrLoop(lasso_builder.getLoopComponentsNonTermination()));
+		} else {
+			Collection<TransFormulaLR> components =
+					processStemOrLoop(lasso_builder.getLoopComponentsTermination());
+			lasso_builder.setLoopComponentsTermination(components);
+			lasso_builder.setLoopComponentsNonTermination(components);
 		}
 	}
 

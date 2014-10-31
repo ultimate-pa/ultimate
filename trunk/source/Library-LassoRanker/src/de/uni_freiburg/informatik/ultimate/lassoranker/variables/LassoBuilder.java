@@ -165,6 +165,22 @@ public class LassoBuilder {
 	}
 	
 	/**
+	 * Is the stem the same for termination analysis and nontermination analysis?
+	 * @return whether getStemComponentsTermination() == getStemComponentsNonTermination()
+	 */
+	public boolean isStemApproximated() {
+		return m_stem_components_t != m_stem_components_nt;
+	}
+	
+	/**
+	 * Is the loop the same for termination analysis and nontermination analysis?
+	 * @return whether getLoopComponentsTermination() == getLoopComponentsNonTermination()
+	 */
+	public boolean isLoopApproximated() {
+		return m_loop_components_t != m_loop_components_nt;
+	}
+	
+	/**
 	 * @return the stem's components (possibly overapproximation)
 	 */
 	public Collection<TransFormulaLR> getStemComponentsTermination() {
