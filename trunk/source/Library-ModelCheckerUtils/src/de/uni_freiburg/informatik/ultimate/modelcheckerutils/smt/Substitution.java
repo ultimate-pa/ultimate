@@ -36,7 +36,7 @@ public class Substitution {
 		if (USE_SAFE_SUBSTITUTION) {
 			Term resultSS = withSS(term);
 			assert (Util.checkSat(m_Script, 
-					m_Script.term("distinct", result, resultSS)) == LBool.UNSAT) : 
+					m_Script.term("distinct", result, resultSS)) != LBool.SAT) : 
 						"Bug in safe substitution.";
 			result = resultSS;
 		}
