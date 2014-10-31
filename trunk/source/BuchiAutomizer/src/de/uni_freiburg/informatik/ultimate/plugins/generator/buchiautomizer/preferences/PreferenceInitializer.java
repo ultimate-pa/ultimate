@@ -37,11 +37,11 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 								0, 1000000)),
 				new UltimatePreferenceItem<INTERPOLATION>(
 						TraceAbstractionPreferenceInitializer.LABEL_INTERPOLATED_LOCS, 
-						INTERPOLATION.Craig_TreeInterpolation,
+						INTERPOLATION.ForwardPredicates,
 						PreferenceType.Combo, 
 						TraceAbstractionPreferenceInitializer.INTERPOLATION.values()),
 				new UltimatePreferenceItem<Boolean>(LABEL_ExtSolverRank,
-						true, PreferenceType.Boolean),
+						false, PreferenceType.Boolean),
 				new UltimatePreferenceItem<String>(LABEL_ExtSolverCommandRank,
 						DEF_ExtSolverCommandRank, PreferenceType.String),
 				new UltimatePreferenceItem<Boolean>(LABEL_NonLinearConstraints,
@@ -55,7 +55,7 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 				new UltimatePreferenceItem<Boolean>(LABEL_TermcompProof,
 						false, PreferenceType.Boolean),
 				new UltimatePreferenceItem<Boolean>(LABEL_Simplify,
-						false, PreferenceType.Boolean),
+						true, PreferenceType.Boolean),
 		};
 	}
 
