@@ -49,7 +49,7 @@ public class SVCOMP15MemSafety extends AbstractSVCOMP15TestSuite {
 
 		/* Automizer */
 		rtr.add(getTestDefinitionFromExamples("MemorySafety", "AutomizerC.xml",
-				"svcomp2015/svComp-32bit-memsafety.epf", getTimeout()));
+				"svcomp2015/svComp-32bit-memsafety-Automizer.epf", getTimeout()));
 
 		/* Kojak */
 		rtr.add(getTestDefinitionFromExamples("MemorySafety", "CodeCheckWithBE-C.xml",

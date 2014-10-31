@@ -29,13 +29,13 @@ public class SVCOMP15Witness extends AbstractSVCOMP15TestSuite {
 		/* Automizer */
 		rtr.add(getTestDefinitionFromExamples("ControlFlowInteger.false-unreach-label", "AutomizerC.xml",
 				"svcomp2015/svComp-32bit-precise-wit.epf", getTimeout()));
-//		rtr.add(getTestDefinitionFromExamples("Loops.false-unreach-label", "AutomizerC.xml",
-//				"svcomp2015/svComp-32bit-precise-wit.epf", getTimeout()));
-//		rtr.add(getTestDefinitionFromExamples("ProductLines.false-unreach-label", "AutomizerC.xml",
-//				"svcomp2015/svComp-32bit-precise-wit.epf", getTimeout()));
+		rtr.add(getTestDefinitionFromExamples("Loops.false-unreach-label", "AutomizerC.xml",
+				"svcomp2015/svComp-32bit-precise-wit.epf", getTimeout()));
+		rtr.add(getTestDefinitionFromExamples("ProductLines.false-unreach-label", "AutomizerC.xml",
+				"svcomp2015/svComp-32bit-precise-wit.epf", getTimeout()));
 //		
-//		rtr.add(getTestDefinitionFromExamples("Sequentialized.false-unreach-label", "AutomizerC.xml",
-//				"svcomp2015/svComp-32bit-precise-wit.epf", getTimeout()));
+		rtr.add(getTestDefinitionFromExamples("Sequentialized.false-unreach-label", "AutomizerC.xml",
+				"svcomp2015/svComp-32bit-precise-wit.epf", getTimeout()));
 //		rtr.add(getTestDefinitionFromExamples("DeviceDrivers64.false-unreach-label", "AutomizerC.xml",
 //				"svcomp2015/svComp-64bit-simple-wit.epf", getTimeout()));
 //		rtr.add(getTestDefinitionFromExamples("Simple.false-unreach-label", "AutomizerC.xml",

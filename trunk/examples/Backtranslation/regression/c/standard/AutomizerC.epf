@@ -49,9 +49,9 @@ file_export_version=3.0
 /instance/CDTParser/Please\ specify\ include\ paths\ that\ will\ be\ parsed\ with\ the\ given\ C-File=C\:\\Users\\alex\\Desktop\\CstdHeaders;
 @CDTParser=0.0.1
 #Wed Oct 29 15:44:27 CET 2014
-/instance/UltimateCore/Command\ to\ execute\ witness\ verifier\ (gets\ witness\ file\ as\ first\ and\ input\ file\ as\ second\ parameter)\nFor\ CPA\ Checker\:\ Additionally,\ set\ CPACHECKER_HOME=scripts/cpa.bat -explicitAnalysis-NoRefiner -setprop analysis.checkCounterexamples\=false -setprop cpa.value.merge\=SEP -setprop cfa.useMultiEdges\=false -setprop parser.transformTokensToLines\=true -setprop spec.matchSourcecodeData\=false
+/instance/UltimateCore/Command\ to\ execute\ witness\ verifier\ (gets\ witness\ file\ as\ first\ and\ input\ file\ as\ second\ parameter)\nFor\ CPA\ Checker\:\ Additionally,\ set\ CPACHECKER_HOME=scripts/cpa.bat -explicitAnalysis-NoRefiner -setprop analysis.checkCounterexamples\=false -setprop cpa.value.merge\=SEP -setprop cfa.useMultiEdges\=false -setprop parser.transformTokensToLines\=false -setprop spec.matchSourcecodeData\=false -setprop spec.strictLineMatching\=false
 /instance/UltimateCore/Write\ witness\ as\ "<inputfilename>-witness.graphml"\ in\ the\ same\ directory\ as\ the\ input\ file=true
-/instance/UltimateCore/Delete\ the\ .graphml\ file\ after\ verification=true
+/instance/UltimateCore/Delete\ the\ .graphml\ file\ after\ verification=false
 /instance/UltimateCore/Generate\ witness\ from\ each\ counter\ example\ result=true
 /instance/UltimateCore/Generate\ benchmark\ results=false
 /instance/UltimateCore/For\ CPAChecker\:\ Use\ this\ .prp\ file\ (may\ be\ relative\ to\ CPACHECKER_HOME)=examples/PropertyERROR.prp

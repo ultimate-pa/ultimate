@@ -48,26 +48,26 @@ public class SVCOMP15TestSuite extends AbstractSVCOMP15TestSuite {
 		//@formatter:on
 
 		/* Automizer */
-		rtr.add(getTestDefinitionFromExamples("Arrays", "AutomizerC.xml", "svcomp2015/svComp-32bit-precise.epf",
-				getTimeout()));
+		rtr.add(getTestDefinitionFromExamples("Arrays", "AutomizerC.xml",
+				"svcomp2015/svComp-32bit-precise-Automizer.epf", getTimeout()));
 		rtr.add(getTestDefinitionFromExamples("ControlFlowInteger", "AutomizerC.xml",
-				"svcomp2015/svComp-32bit-precise.epf", getTimeout()));
-		rtr.add(getTestDefinitionFromExamples("ECA", "AutomizerC.xml", "svcomp2015/svComp-32bit-precise.epf",
+				"svcomp2015/svComp-32bit-precise-Automizer.epf", getTimeout()));
+		rtr.add(getTestDefinitionFromExamples("ECA", "AutomizerC.xml", "svcomp2015/svComp-32bit-precise-Automizer.epf",
 				getTimeout()));
-		rtr.add(getTestDefinitionFromExamples("Loops", "AutomizerC.xml", "svcomp2015/svComp-32bit-precise.epf",
-				getTimeout()));
-		rtr.add(getTestDefinitionFromExamples("ProductLines", "AutomizerC.xml", "svcomp2015/svComp-32bit-precise.epf",
-				getTimeout()));
-		rtr.add(getTestDefinitionFromExamples("Recursive", "AutomizerC.xml", "svcomp2015/svComp-32bit-precise.epf",
-				getTimeout()));
+		rtr.add(getTestDefinitionFromExamples("Loops", "AutomizerC.xml",
+				"svcomp2015/svComp-32bit-precise-Automizer.epf", getTimeout()));
+		rtr.add(getTestDefinitionFromExamples("ProductLines", "AutomizerC.xml",
+				"svcomp2015/svComp-32bit-precise-Automizer.epf", getTimeout()));
+		rtr.add(getTestDefinitionFromExamples("Recursive", "AutomizerC.xml",
+				"svcomp2015/svComp-32bit-precise-Automizer.epf", getTimeout()));
 		rtr.add(getTestDefinitionFromExamples("Sequentialized", "AutomizerC.xml",
-				"svcomp2015/svComp-32bit-precise.epf", getTimeout()));
+				"svcomp2015/svComp-32bit-precise-Automizer.epf", getTimeout()));
 		rtr.add(getTestDefinitionFromExamples("DeviceDrivers64", "AutomizerC.xml",
-				"svcomp2015/svComp-64bit-simple.epf", getTimeout()));
-		rtr.add(getTestDefinitionFromExamples("Simple", "AutomizerC.xml", "svcomp2015/svComp-32bit-simple.epf",
-				getTimeout()));
+				"svcomp2015/svComp-64bit-simple-Automizer.epf", getTimeout()));
+		rtr.add(getTestDefinitionFromExamples("Simple", "AutomizerC.xml",
+				"svcomp2015/svComp-32bit-simple-Automizer.epf", getTimeout()));
 		rtr.add(getTestDefinitionFromExamples("MemorySafety", "AutomizerC.xml",
-				"svcomp2015/svComp-32bit-memsafety.epf", getTimeout()));
+				"svcomp2015/svComp-32bit-memsafety-Automizer.epf", getTimeout()));
 
 		/* Kojak */
 		rtr.add(getTestDefinitionFromExamples("Arrays", "CodeCheckWithBE-C.xml",
