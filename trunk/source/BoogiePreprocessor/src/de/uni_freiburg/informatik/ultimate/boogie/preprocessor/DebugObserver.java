@@ -68,8 +68,9 @@ public class DebugObserver extends BaseObserver {
 	}
 
 	private void checkAnnotations(IWalkable node, Collection<IAnnotations> annots) {
-		if (annots instanceof Overapprox) {
-			mLogger.info("Overapprox found");
+		for (IAnnotations annot : annots) {
+			if (annot instanceof Overapprox)
+				mLogger.info("Overapprox found");
 		}
 	}
 

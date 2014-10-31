@@ -2,6 +2,7 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -30,6 +31,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.ConvExpr;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
+import de.uni_freiburg.informatik.ultimate.model.annotation.IAnnotations;
 import de.uni_freiburg.informatik.ultimate.model.annotation.Overapprox;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayLHS;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssignmentStatement;
@@ -317,9 +319,11 @@ public class InitializationHandler {
 						new RValue(rhs, cType)));
 			} else {
 				assert lhs != null;
-				stmt.add(new AssignmentStatement(loc, 
+				AssignmentStatement assignment = new AssignmentStatement(loc, 
 						new LeftHandSide[] { lhs },
-						new Expression[] { rhs } ));
+						new Expression[] { rhs } );
+				addOverApprToStatementAnnots(overappr, assignment);
+				stmt.add(assignment);
 			}
 		} else if (lCType instanceof CPointer) {
 			if (initializer == null) {
@@ -346,6 +350,10 @@ public class InitializationHandler {
 				stmt.addAll(mMemoryHandler.getWriteCall(loc, (HeapLValue) var, new RValue(rhs, lCType)));
 			} else {
 				assert lhs != null;
+				AssignmentStatement assignment = new AssignmentStatement(loc, 
+						new LeftHandSide[] { lhs },
+						new Expression[] { rhs } );
+				addOverApprToStatementAnnots(overappr, assignment);
 				stmt.add(new AssignmentStatement(loc, new LeftHandSide[] { lhs },
 						new Expression[] { rhs } ));
 			}
@@ -428,7 +436,9 @@ public class InitializationHandler {
 				auxVars.putAll(scRex.auxVars);
 
 				assert lhs != null;
-				stmt.add(new AssignmentStatement(loc, new LeftHandSide[] { lhs }, new Expression[] { scRex.lrVal.getValue() }));
+				Statement assignment = new AssignmentStatement(loc, new LeftHandSide[] { lhs }, new Expression[] { scRex.lrVal.getValue() });
+				addOverApprToStatementAnnots(overappr, assignment);
+				stmt.add(assignment);
 			}
 		} else if (lCType instanceof CEnum) {
 			if (initializer == null) {
@@ -443,9 +453,11 @@ public class InitializationHandler {
 						new RValue(rhs, cType)));
 			} else {
 				assert lhs != null;
-				stmt.add(new AssignmentStatement(loc, 
+				Statement assignment = new AssignmentStatement(loc, 
 						new LeftHandSide[] { lhs },
-						new Expression[] { rhs } ));
+						new Expression[] { rhs } );
+				addOverApprToStatementAnnots(overappr, assignment);
+				stmt.add(assignment);
 			}
 		} else {
 			String msg = "Unknown type - don't know how to initialize!";
@@ -454,6 +466,15 @@ public class InitializationHandler {
 		assert (main.isAuxVarMapcomplete(decl, auxVars));
 
 		return new ResultExpression(stmt, null, decl, auxVars, overappr);
+	}
+
+
+	public static void addOverApprToStatementAnnots(ArrayList<Overapprox> overappr,
+			Statement stm) {
+		HashMap<String, IAnnotations> annots = stm.getPayload().getAnnotations();
+		for (Overapprox overapprItem : overappr) {
+			annots.put(Overapprox.getIdentifier(), overapprItem);
+		}
 	}
 
 	/**
@@ -656,8 +677,10 @@ public class InitializationHandler {
 				}
 
 				ArrayLHS arrayAccessLHS = new ArrayLHS(loc, newLHS, newIndices);
-				stmt.add(new AssignmentStatement(loc, 
-						new LeftHandSide[] { arrayAccessLHS }, new Expression[] { val.getValue() }));
+				Statement assignment = new AssignmentStatement(loc, 
+						new LeftHandSide[] { arrayAccessLHS }, new Expression[] { val.getValue() });
+				addOverApprToStatementAnnots(overApp, assignment);
+				stmt.add(assignment);
 			}
 		} else {
 			for (int i = 0; i < currentSizeInt; i++) { 
