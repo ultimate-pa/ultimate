@@ -15,21 +15,21 @@ public class BuchiAutomizerDefaultTests extends
 		AbstractBuchiAutomizerTestSuite {
 	private static final String[] m_Directories = {
 //		"examples/lassos",
-		"examples/svcomp/termination-crafted",
-		"examples/svcomp/termination-crafted-lit",
-		"examples/svcomp/termination-memory-alloca",
-		"examples/svcomp/termination-numeric"
-//		"examples/termination/TermCompOfficialBenchmarkSet/aprove_memory",
+//		"examples/termination/svcomp/termination-crafted",
+//		"examples/termination/svcomp/termination-crafted-lit",
+//		"examples/termination/svcomp/termination-memory-alloca",
+//		"examples/termination/svcomp/termination-numeric"
+		"examples/termination/svcomp-sorted/success"
+//		"examples/termination/svcomp-sorted/fail"
 //		"examples/programs/quantifier",
 //		"examples/programs/recursivePrograms",
 //		"examples/programs/toy"
-//		"examples/termination/AProVE"
 	};
 	
 	// Time out for each test case in milliseconds
 	private static int m_Timeout = 150 * 1000;
 
-	private static final boolean s_UseMediumBlockEncoding = true;
+	private static final boolean s_UseMediumBlockEncoding = false;
 	private static final String s_MediumBlockEncodingSetting = "buchiAutomizer/staged300Forward-Z3.epf";
 
 	private static final boolean s_UseLargeBlockEncoding = false;
