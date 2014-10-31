@@ -27,13 +27,14 @@ with open(filename, 'r') as f:
 outputs = data.strip().split('\n\n')
 
 # All the regular expressions
-re_program = re.compile(r'Program:\s+([\S]+)')
-re_toolchain = re.compile(r'Toolchain:\s+([\S]+)')
-re_settings = re.compile(r'Settings\sFile:\s+([\S]+)')
+re_program = re.compile(r'(\S+\.c)')
+re_toolchain = re.compile(r'(\S+\.xml)')
+re_settings = re.compile(r'(\S+\.epf)')
 re_time = re.compile(r'Automizer terminated after (\d+) and says')
-re_verdict = re.compile(r'(?: terminated after \d+ and says:\s+|!!!FAIL!!!\s*|!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!11[\w\W]*)(Termination|No\sResult|Nontermination|Exception|OutOfMemoryError|Timeout)')
-all_res = (re_program, re_toolchain, re_settings, re_time, re_verdict)
-all_names = ('program', 'toolchain', 'settings', 'time', 'verdict')
+#re_verdict = re.compile(r'(?: terminated after \d+ and says:\s+|!!!FAIL!!!\s*|!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!11[\w\W]*)(Termination|No\sResult|Nontermination|Exception|OutOfMemoryError|Timeout)')
+re_verdict = re.compile(r'Test result:\s(\S+)')
+all_res = (re_program, re_toolchain, re_settings, re_verdict) # re_time,
+all_names = ('program', 'toolchain', 'settings', 'verdict') # 'time',
 assert len(all_res) == len(all_names)
 
 # Parse all the things!
