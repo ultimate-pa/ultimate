@@ -37,12 +37,14 @@ public class ImpulseChecker extends CodeChecker {
 	//private HashMap <AnnotatedProgramPoint, AnnotatedProgramPoint> _cloneNode;
 	
 	private final RedirectionFinder cloneFinder;
+	private int nodeIDs;
 	
 	public ImpulseChecker(IElement root, SmtManager m_smtManager, TAPreferences m_taPrefs, RootNode m_originalRoot, ImpRootNode m_graphRoot,
 			GraphWriter m_graphWriter, EdgeChecker edgeChecker, PredicateUnifier predicateUnifier, Logger logger) {
 		super(root, m_smtManager, m_taPrefs, m_originalRoot, m_graphRoot,
 				m_graphWriter, edgeChecker, predicateUnifier, logger);
 		cloneFinder = new RedirectionFinder(this);
+		nodeIDs = 0;
 	}
 	
 	public void replaceEdge(AppEdge edge, AnnotatedProgramPoint newTarget) {
@@ -166,7 +168,7 @@ public class ImpulseChecker extends CodeChecker {
 		AnnotatedProgramPoint[] clones = new AnnotatedProgramPoint[nodes.length];
 		//_cloneNode = new HashMap <AnnotatedProgramPoint, AnnotatedProgramPoint>();
 		
-		AnnotatedProgramPoint newRoot = new AnnotatedProgramPoint(nodes[0], nodes[0].getPredicate(), true);
+		AnnotatedProgramPoint newRoot = new AnnotatedProgramPoint(nodes[0], nodes[0].getPredicate(), true, ++nodeIDs);
 		
 		clones[0] = nodes[0];
 		//_cloneNode.put(newRoot, nodes[0]);
@@ -174,7 +176,7 @@ public class ImpulseChecker extends CodeChecker {
 		
 		for (int i = 0; i < interpolants.length; ++i) {
 			//_cloneNode.put(nodes[i + 1], new AnnotatedProgramPoint(nodes[i + 1], conjugatePredicates(nodes[i + 1].getPredicate(), interpolants[i]), true));
-			clones[i + 1] = new AnnotatedProgramPoint(nodes[i + 1], conjugatePredicates(nodes[i + 1].getPredicate(), interpolants[i]), true);
+			clones[i + 1] = new AnnotatedProgramPoint(nodes[i + 1], conjugatePredicates(nodes[i + 1].getPredicate(), interpolants[i]), true, ++nodeIDs);
 		}
 		
 		if (!defaultRedirecting(nodes, clones))
@@ -311,9 +313,11 @@ public class ImpulseChecker extends CodeChecker {
 		return result;
 	}
 
+	/*
 	public boolean isStrongerPredicate(AnnotatedProgramPoint strongerNode, AnnotatedProgramPoint weakerNode) {
 		return m_smtManager.isCovered(strongerNode.getPredicate(), weakerNode.getPredicate()) == LBool.UNSAT;
 	}
+	*/
 	
 	@Override
 	public boolean codeCheck(NestedRun<CodeBlock, AnnotatedProgramPoint> errorRun, IPredicate[] interpolants,
@@ -387,11 +391,15 @@ public class ImpulseChecker extends CodeChecker {
 	
 
 
-	boolean isStrongerPredicate(IPredicate predicate1,
-			IPredicate predicate2) {
+	boolean isStrongerPredicate(AnnotatedProgramPoint node1,
+			AnnotatedProgramPoint node2) {
 		
-		boolean result = m_predicateUnifier.getCoverageRelation().isCovered(predicate1, predicate2) == LBool.UNSAT;
-		System.err.printf("%s > %s  :: %s\n", predicate1, predicate2, result);
+		boolean result = m_predicateUnifier.getCoverageRelation().isCovered(node1.getPredicate(), node2.getPredicate()) == LBool.UNSAT;
+		//System.err.printf("%s > %s  :: %s\n", predicate1, predicate2, result);
+		if (result) {
+			boolean converse = m_predicateUnifier.getCoverageRelation().isCovered(node2.getPredicate(), node1.getPredicate()) == LBool.UNSAT;
+			result &= !converse || (converse && node1._nodeID > node2._nodeID);
+		}
 		return result;
 	}
 }

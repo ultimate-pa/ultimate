@@ -38,6 +38,8 @@ public class AnnotatedProgramPoint extends ModifiableExplicitEdgesMultigraph<Ann
 	 * @param programPoint the program point this APP represents
 	 * @param isPEL specifies whether or not this APP is considered to be an error location 
 	 */
+	
+	public int _nodeID;
 	public AnnotatedProgramPoint(IPredicate predicate, ProgramPoint programPoint) {
 		_predicate = predicate;
 		_programPoint = programPoint;
@@ -68,8 +70,9 @@ public class AnnotatedProgramPoint extends ModifiableExplicitEdgesMultigraph<Ann
 	 * @param newPred the predicate of the new copy
 	 * @param copyOutgoingEdges if true, the hyperedges will be copied
 	 */
-	public AnnotatedProgramPoint(AnnotatedProgramPoint oldApp, IPredicate newPred, boolean copyOutgoingEdges) {
+	public AnnotatedProgramPoint(AnnotatedProgramPoint oldApp, IPredicate newPred, boolean copyOutgoingEdges, int id) {
 		this(oldApp, newPred);
+		_nodeID = id;
 		if(copyOutgoingEdges) {
 			for (AppEdge oldOutEdge : oldApp.getOutgoingEdges()) {
 				if (oldOutEdge instanceof AppHyperEdge) {

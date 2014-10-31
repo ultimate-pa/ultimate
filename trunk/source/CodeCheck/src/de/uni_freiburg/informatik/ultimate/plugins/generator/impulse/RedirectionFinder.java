@@ -54,7 +54,7 @@ public class RedirectionFinder {
 			for (AnnotatedProgramPoint subNode : comp) {
 				if (subNode == node)
 					continue;
-				if (codeChecker.isStrongerPredicate(node.getPredicate(), subNode.getPredicate()))
+				if (codeChecker.isStrongerPredicate(node, subNode))
 					predicates.remove(subNode);
 			}
 		}
