@@ -95,34 +95,14 @@ public class CACSLProgramExecution implements IProgramExecution<CACSLLocation, I
 		}
 
 		for (int i = 0; i < mTrace.size(); i++) {
-			AtomicTraceElement<CACSLLocation> currentATE = mTrace.get(i);
-			CACSLLocation currentStep = currentATE.getStep();
-
 			String lineNumber = lineNumerColumn.get(i);
 			String stepInfo = stepInfoColum.get(i);
 
 			addFixedLength(sb, lineNumber, lineNumberColumnLength, fillChar);
 			addFixedLength(sb, stepInfo, stepInfoColumLength, fillChar);
+			AtomicTraceElement<CACSLLocation> currentATE = mTrace.get(i);
+			appendStepAsString(sb, currentATE, false);
 
-			if (currentStep instanceof CLocation) {
-				IASTNode currentStepNode = ((CLocation) currentStep).getNode();
-
-				String str = getStringFromIASTNode(currentStepNode);
-
-				if (currentATE.hasStepInfo(StepInfo.CONDITION_EVAL_FALSE)) {
-					sb.append("!(");
-					sb.append(str);
-					sb.append(")");
-				} else {
-					sb.append(str);
-				}
-			} else if (currentStep instanceof ACSLLocation) {
-				// do something if its an acsl node
-				ACSLNode currentStepNode = ((ACSLLocation) currentStep).getNode();
-				sb.append(currentStepNode.toString());
-			} else {
-				throw new UnsupportedOperationException();
-			}
 			sb.append(lineSeparator);
 			valuation = ppstoString(getProgramState(i));
 			if (valuation != null) {
@@ -135,7 +115,48 @@ public class CACSLProgramExecution implements IProgramExecution<CACSLLocation, I
 		return sb.toString();
 	}
 
-	private String getStringFromIASTNode(IASTNode currentStepNode) {
+	public static void appendStepAsString(StringBuilder sb, AtomicTraceElement<CACSLLocation> currentATE,
+			boolean witness) {
+		CACSLLocation currentStep = currentATE.getStep();
+		if (currentStep instanceof CLocation) {
+			IASTNode currentStepNode = ((CLocation) currentStep).getNode();
+
+			String str = getStringFromIASTNode(currentStepNode);
+
+			boolean witnessMode = witness
+					&& (currentATE.hasStepInfo(StepInfo.CONDITION_EVAL_FALSE) || currentATE
+							.hasStepInfo(StepInfo.CONDITION_EVAL_TRUE));
+
+			if (witnessMode) {
+				sb.append("[");
+			}
+			if (currentATE.hasStepInfo(StepInfo.CONDITION_EVAL_FALSE)) {
+				sb.append("!(");
+				sb.append(str);
+				sb.append(")");
+			} else {
+				sb.append(str);
+			}
+
+			if (witnessMode) {
+				sb.append("]");
+			}
+		} else if (currentStep instanceof ACSLLocation) {
+			// do something if its an acsl node
+			ACSLNode currentStepNode = ((ACSLLocation) currentStep).getNode();
+			sb.append(currentStepNode.toString());
+		} else {
+			throw new UnsupportedOperationException();
+		}
+	}
+
+	public static String getStepAsWitnessString(AtomicTraceElement<CACSLLocation> currentATE) {
+		StringBuilder sb = new StringBuilder();
+		appendStepAsString(sb, currentATE, true);
+		return sb.toString();
+	}
+
+	private static String getStringFromIASTNode(IASTNode currentStepNode) {
 		String str = currentStepNode.getRawSignature();
 		if (currentStepNode instanceof CASTIdExpression) {
 			CASTIdExpression id = (CASTIdExpression) currentStepNode;
@@ -148,7 +169,7 @@ public class CACSLProgramExecution implements IProgramExecution<CACSLLocation, I
 		return str;
 	}
 
-	private String getPointerStars(IPointerType type) {
+	private static String getPointerStars(IPointerType type) {
 		if (type.getType() instanceof IPointerType) {
 			return "*" + getPointerStars((IPointerType) type.getType());
 		} else {

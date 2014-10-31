@@ -182,6 +182,7 @@
 		<module>../BA_FeatureUltimateDebug</module>
 		<module>../BA_FeatureUltimateCommandLine</module>
 		<module>../BA_FeatureDependenciesCommandlineE3</module>
+		<module>../BA_FeatureDependenciesCommandlineE4</module>
 		<module>../BA_FeatureDependenciesDebugE3</module>
 		<module>../BA_FeatureUltimateBOSCHReqAnalyzer</module>
 

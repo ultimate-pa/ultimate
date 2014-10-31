@@ -1,11 +1,11 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.graphml;
 
+import java.math.BigDecimal;
+
 import org.eclipse.cdt.core.dom.ast.IASTExpression;
 
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.ACSLLocation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CLocation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.FakeExpression;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.CACSLProgramExecution;
 import de.uni_freiburg.informatik.ultimate.result.IProgramExecution.AtomicTraceElement;
 import de.uni_freiburg.informatik.ultimate.result.IProgramExecution.AtomicTraceElement.StepInfo;
 import de.uni_freiburg.informatik.ultimate.result.IProgramExecution.ProgramState;
@@ -43,15 +43,19 @@ public class WitnessEdge {
 		return mState != null && mATE == null;
 	}
 
+	public boolean hasStep() {
+		return mATE != null;
+	}
+
 	public boolean isNegated() {
-		if (isDummy() || isInitial()) {
+		if (!hasStep()) {
 			return false;
 		}
 		return mATE.hasStepInfo(StepInfo.CONDITION_EVAL_FALSE);
 	}
 
 	public String getLineNumber() {
-		if (isDummy() || isInitial()) {
+		if (!hasStep()) {
 			return null;
 		}
 		return String.valueOf(mATE.getStep().getStartLine());
@@ -74,31 +78,58 @@ public class WitnessEdge {
 		return null;
 	}
 
-	public String getSourceCode() {
-		if (isDummy() || isInitial()) {
+	public String getEnterFunction() {
+		if (!hasStep()) {
 			return null;
 		}
+		// if(mATE.hasStepInfo(StepInfo.PROC_CALL)){
+		// CACSLLocation currentStep = mATE.getStep();
+		// if (currentStep instanceof CLocation) {
+		// IASTNode currentStepNode = ((CLocation) currentStep).getNode();
+		// String str = currentStepNode.getRawSignature();
+		// }
+		// }
+		return null;
+	}
 
-		CACSLLocation loc = mATE.getStep();
-		if (loc instanceof CLocation) {
-			CLocation cloc = (CLocation) loc;
-			String rtr = cloc.getNode().getRawSignature();
-			return rtr;
-		} else if (loc instanceof ACSLLocation) {
-
+	public String getReturnFunction() {
+		if (!hasStep()) {
+			return null;
 		}
 		return null;
 	}
 
+	public String getSourceCode() {
+		if (!hasStep()) {
+			return null;
+		}
+		return CACSLProgramExecution.getStepAsWitnessString(mATE);
+	}
+
 	private void appendValidExpression(IASTExpression var, IASTExpression val, StringBuilder sb) {
-		if (var instanceof FakeExpression) {
-			if (val instanceof FakeExpression) {
-				sb.append(var.getRawSignature());
-				sb.append("=");
-				sb.append(val.getRawSignature());
-				sb.append(";");
+
+		String varStr = var.getRawSignature();
+		String valStr = val.getRawSignature();
+
+		if(varStr.contains("\\") || varStr.contains("&")){
+			//is something like read, old, etc. 
+			return;
+		}
+		
+		try {
+			new BigDecimal(valStr);
+		} catch (Exception ex) {
+			//this is no valid number literal, maybe its true or false? 
+			if(!valStr.equalsIgnoreCase("true") && !valStr.equalsIgnoreCase("false")){
+				//nope, give up
+				return;
 			}
 		}
+
+		sb.append(varStr);
+		sb.append("=");
+		sb.append(valStr);
+		sb.append(";");
 	}
 
 }

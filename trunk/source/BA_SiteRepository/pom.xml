@@ -11,59 +11,58 @@
 
 	<groupId>UltimateRepository</groupId>
 	<artifactId>UltimateRepository</artifactId>
-	<version>0.0.1</version>
 	<packaging>eclipse-repository</packaging>
-<profiles>
-<profile>
-<id>materialize</id>
+	<profiles>
+		<profile>
+			<id>materialize</id>
 
-	<build>
-		<plugins>
-			<plugin>
-				<groupId>org.eclipse.tycho</groupId>
-				<artifactId>tycho-p2-director-plugin</artifactId>
-				<version>${tycho-version}</version>
-				<executions>
-					<execution>
-						<!-- install the product using the p2 director -->
-						<id>materialize-products</id>
-						<goals>
-							<goal>materialize-products</goal>
-						</goals>
-					</execution>
-					<execution>
-						<!-- create zip file with the installed product -->
-						<id>archive-products</id>
-						<goals>
-							<goal>archive-products</goal>
-						</goals>
-					</execution>
-				</executions>
-				<!-- We need to say which products will be build and assign each of them 
-					a unique attachId (dont know why, it just is) -->
-				<configuration>
-					<formats>
-						<linux>tar.gz</linux>
-					</formats>
-					<products>
-						<product>
-							<id>CLI-E3</id>
-							<attachId>UltimateCLI</attachId>
-						</product>
-						<product>
-							<id>Debug-E3</id>
-							<attachId>UltimateDebug</attachId>
-						</product>
-						<product>
-							<id>BOSCHReqAnalyzer</id>
-							<attachId>BOSCHReqAnalyzer</attachId>
-						</product>
-					</products>
-				</configuration>
-			</plugin>
-		</plugins>
-	</build>
-</profile>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.eclipse.tycho</groupId>
+						<artifactId>tycho-p2-director-plugin</artifactId>
+						<version>${tycho-version}</version>
+						<executions>
+							<execution>
+								<!-- install the product using the p2 director -->
+								<id>materialize-products</id>
+								<goals>
+									<goal>materialize-products</goal>
+								</goals>
+							</execution>
+							<execution>
+								<!-- create zip file with the installed product -->
+								<id>archive-products</id>
+								<goals>
+									<goal>archive-products</goal>
+								</goals>
+							</execution>
+						</executions>
+						<!-- We need to say which products will be build and assign each of them
+							a unique attachId (dont know why, it just is) -->
+						<configuration>
+							<formats>
+								<linux>tar.gz</linux>
+							</formats>
+							<products>
+								<product>
+									<id>CLI-E4</id>
+									<attachId>UltimateCLI</attachId>
+								</product>
+								<product>
+									<id>Debug-E3</id>
+									<attachId>UltimateDebug</attachId>
+								</product>
+								<product>
+									<id>BOSCHReqAnalyzer</id>
+									<attachId>BOSCHReqAnalyzer</attachId>
+								</product>
+							</products>
+						</configuration>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
 	</profiles>
 
 </project>

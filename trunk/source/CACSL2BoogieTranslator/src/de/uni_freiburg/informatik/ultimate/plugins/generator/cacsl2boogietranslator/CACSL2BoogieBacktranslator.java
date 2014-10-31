@@ -735,7 +735,6 @@ public class CACSL2BoogieBacktranslator extends
 			}
 			return ate;
 		}
-
 	}
 
 	private class SynthesizedExpressionTransformer extends BoogieTransformer {

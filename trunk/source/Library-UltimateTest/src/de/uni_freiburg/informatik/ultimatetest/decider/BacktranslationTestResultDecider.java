@@ -237,7 +237,7 @@ public class BacktranslationTestResultDecider extends TestResultDecider {
 			for (int i = 0; i < curDesVals.length; ++i) {
 				String[] singleDesVal = curDesVals[i].split("=");
 				String[] singleActVal = curActVals[i].split("=");
-				if (singleDesVal.length != singleActVal.length || singleDesVal.length < 2) {
+				if (singleDesVal.length != singleActVal.length) {
 					return false;
 				}
 				// check for the name of the var

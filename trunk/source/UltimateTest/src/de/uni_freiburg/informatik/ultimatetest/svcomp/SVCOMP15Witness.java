@@ -13,13 +13,13 @@ public class SVCOMP15Witness extends AbstractSVCOMP15TestSuite {
 	@Override
 	protected long getTimeout() {
 		// Timeout for each test case in milliseconds
-		return 120 * 1000;
+		return 30 * 1000;
 	}
 
 	@Override
 	protected int getFilesPerCategory() {
 		// -1 or value larger than 0
-		return 45;
+		return 15;
 	}
 
 	@Override
