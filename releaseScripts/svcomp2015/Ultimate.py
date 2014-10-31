@@ -5,10 +5,7 @@ import fnmatch
 
 # current z3 version z3-4.3.3.f50a8b0a59ff-x64-debian-7.7.zip
 
-
-
 ultimateBin = './Ultimate'
-toolchain = './Kojak.xml'
 writeUltimateOutputToFile = True
 outputFileName = 'Ultimate.log'
 errorPathFileName = 'UltimateCounterExample.errorpath'
@@ -37,7 +34,7 @@ memMemtrackResult = 'valid-memtrack'
 
 #parse command line arguments
 if (len(sys.argv) != 5):
-	print('wrong number of arguments: use ./Ultimate.py <propertyfile> <C file> [32bit|64bit] [simple|precise]')
+	print('Wrong number of arguments: use ./Ultimate.py <propertyfile> <C file> [32bit|64bit] [simple|precise]')
 	sys.exit(0)
 
 propertyFileName = sys.argv[1]
@@ -58,22 +55,22 @@ for line in propFile:
 settingsSearchString = ''
 
 if memSafetyMode:
-	print('checking for memory safety')
+	print('Checking for memory safety')
 	settingsSearchString = settingsFileMemSafety
 elif terminationMode: 
-	print('checking for termination')
+	print('Checking for termination')
 	settingsSearchString = settingsFileTermination
 else: 
-	print('checking for ERROR reachability')
+	print('Checking for ERROR reachability')
 	if architecture in ("32bit", "64bit"): 
 		settingsSearchString = architecture
 	else:
-		print('architecture has to be either 32bit or 64bit')
+		print('Architecture has to be either 32bit or 64bit')
 		sys.exit(0)
 	if memorymodel in ("simple", "precise"): 
 		settingsSearchString = settingsSearchString + '-' + memorymodel
 	else:
-		print('memorymodel has to be either simple or precise')
+		print('Memory model has to be either simple or precise')
 		sys.exit(0)
 
 settingsArgument = ''
@@ -83,18 +80,42 @@ for root, dirs, files in os.walk('./'):
 			settingsArgument = '--settings '+os.path.join(root, name)
 			break
 
+toolchain = ''
+if terminationMode:
+	for root, dirs, files in os.walk('./'):
+		for name in files:
+			if fnmatch.fnmatch(name, '*Termination.xml'):
+				toolchain = os.path.join(root, name)
+				break
+		break
+else:
+	for root, dirs, files in os.walk('./'):
+		for name in files:
+			if fnmatch.fnmatch(name, '*.xml') and not fnmatch.fnmatch(name, 'artifacts.xml') and not fnmatch.fnmatch(name, '*Termination.xml'):
+				toolchain = os.path.join(root, name)
+				break
+		break
+
+if settingsArgument == '':
+	print('No suitable settings file found')
+	sys.exit(0)
+if toolchain == '':
+	print('No suitable toolchain file found')
+	sys.exit(0)
+	
+
 #execute ultimate
 ultimateCall = ultimateBin 
 ultimateCall += ' ' + toolchain  
 ultimateCall += ' ' +  cFile
 ultimateCall += ' ' +  settingsArgument
 
-#print('Calling Ultimate with: ' + ultimateCall)
+print('Calling Ultimate with: ' + ultimateCall)
 
 try:
 	ultimateProcess = subprocess.Popen(ultimateCall, stdin=subprocess.PIPE, stdout = subprocess.PIPE, stderr = subprocess.PIPE, shell=True)
 except:
-	print('error trying to open subprocess')
+	print('Error trying to open subprocess')
 	sys.exit(0)
 
 
@@ -130,20 +151,20 @@ while True:
 	if (readingErrorPath and line == ''):
 		readingErrorPath = False
 	if (not readingErrorPath and line == ''):
-		print('wrong executable or arguments?')
+		print('Wrong executable or arguments?')
 		break
 	if (line.find('Closed successfully') != -1):
-		print('\nexecution finished normally') 
+		print('\nExecution finished normally') 
 		break
 
 #summarize results
 if writeUltimateOutputToFile:
-	print('writing output to file {}'.format(outputFileName))
+	print('Writing output to file {}'.format(outputFileName))
 	outputFile = open(outputFileName, 'wb')
 	outputFile.write(ultimateOutput.encode('utf-8'))
 
 if safetyResult == 'FALSE':
-	print('writing output to file {}'.format(errorPathFileName))
+	print('Writing output to file {}'.format(errorPathFileName))
 	errOutputFile = open(errorPathFileName, 'wb')
 	errOutputFile.write(errorPath.encode('utf-8'))
 
