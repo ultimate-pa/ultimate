@@ -45,13 +45,14 @@ public class CoreUtil {
 		return sPlatformLineSeparator;
 	}
 
-	public static void writeFile(String filename, String content) throws IOException {
+	public static File writeFile(String filename, String content) throws IOException {
 		File outputFile = new File(filename);
 		outputFile.createNewFile();
 
 		Writer out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(outputFile), "UTF-8"));
 		try {
 			out.write(content);
+			return outputFile;
 		} finally {
 			out.close();
 		}
@@ -143,15 +144,15 @@ public class CoreUtil {
 		}
 		return rtr;
 	}
-	
-	public static <E> Collection<E> flattenMapValuesToCollection(Map<?,E> map){
+
+	public static <E> Collection<E> flattenMapValuesToCollection(Map<?, E> map) {
 		Collection<E> rtr = new ArrayList<>();
-		for(Entry<?, E> entry : map.entrySet()){
+		for (Entry<?, E> entry : map.entrySet()) {
 			rtr.add(entry.getValue());
 		}
 		return rtr;
 	}
-	
+
 	public static <T, E> T reduce(Set<E> collection, IMapReduce<T, E> reducer) {
 		T lastValue = null;
 		for (E entry : collection) {

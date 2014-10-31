@@ -83,6 +83,8 @@ public class CorePreferenceInitializer extends UltimatePreferenceInitializer {
 				new UltimatePreferenceItem<Boolean>(LABEL_WITNESS_GEN, VALUE_WITNESS_GEN, PreferenceType.Boolean),
 				new UltimatePreferenceItem<Boolean>(LABEL_WITNESS_LOG, VALUE_WITNESS_LOG, PreferenceType.Boolean),
 				new UltimatePreferenceItem<Boolean>(LABEL_WITNESS_WRITE, VALUE_WITNESS_WRITE, PreferenceType.Boolean),
+				new UltimatePreferenceItem<Boolean>(LABEL_WITNESS_WRITE_WORKINGDIR, VALUE_WITNESS_WRITE_WORKINGDIR,
+						PreferenceType.Boolean),
 				new UltimatePreferenceItem<Boolean>(LABEL_WITNESS_VERIFY, VALUE_WITNESS_VERIFY, PreferenceType.Boolean,
 						new WitnessVerifierValidator()),
 				new UltimatePreferenceItem<WitnessVerifierType>(LABEL_WITNESS_VERIFIER, VALUE_WITNESS_VERIFIER,
@@ -110,6 +112,9 @@ public class CorePreferenceInitializer extends UltimatePreferenceInitializer {
 	public static final String LABEL_WITNESS_WRITE = "Write witness as \"<inputfilename>-witness.graphml\" "
 			+ "in the same directory as the input file";
 	public static final boolean VALUE_WITNESS_WRITE = false;
+	public static final String LABEL_WITNESS_WRITE_WORKINGDIR = "Write witness as \"witness.graphml\" "
+			+ "to working directory";
+	public static final boolean VALUE_WITNESS_WRITE_WORKINGDIR = false;
 	public static final String LABEL_WITNESS_VERIFY = "Verify the witness and generate results";
 	public static final boolean VALUE_WITNESS_VERIFY = false;
 	public static final String LABEL_WITNESS_VERIFIER = "Use the following witness verifier";

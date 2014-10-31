@@ -55,10 +55,23 @@ public class WitnessManager {
 			IProgramExecution pe = backtrans.translateProgramExecution(cex.getProgramExecution());
 			String svcompWitness = pe.getSVCOMPWitnessString();
 
-			if (!ups.getBoolean(CorePreferenceInitializer.LABEL_WITNESS_WRITE)) {
+			boolean writeInWorkingDir = ups.getBoolean(CorePreferenceInitializer.LABEL_WITNESS_WRITE_WORKINGDIR);
+			boolean writeBesideInputFile = ups.getBoolean(CorePreferenceInitializer.LABEL_WITNESS_WRITE);
+			List<String> filenamesToDelete = new ArrayList<>();
+
+			if (!writeBesideInputFile && !writeInWorkingDir) {
 				continue;
 			}
-			String filename = writeWitness(svcompWitness, cex.getLocation().getFileName());
+			String filename = null;
+			if (writeInWorkingDir) {
+				filename = writeWitness(svcompWitness, null);
+				filenamesToDelete.add(filename);
+			}
+
+			if (writeBesideInputFile) {
+				filename = writeWitness(svcompWitness, cex.getLocation().getFileName());
+				filenamesToDelete.add(filename);
+			}
 
 			if (ups.getBoolean(CorePreferenceInitializer.LABEL_WITNESS_VERIFY)) {
 				if (svcompWitness == null) {
@@ -71,7 +84,9 @@ public class WitnessManager {
 			}
 
 			if (ups.getBoolean(CorePreferenceInitializer.LABEL_WITNESS_DELETE_GRAPHML)) {
-				deleteFile(filename);
+				for (String fi : filenamesToDelete) {
+					deleteFile(fi);
+				}
 			}
 		}
 	}
@@ -85,9 +100,22 @@ public class WitnessManager {
 	}
 
 	private String writeWitness(String svcompWitness, String origInputFile) {
-		String filename = origInputFile + "-witness.graphml";
+		String filename;
+
+		if (origInputFile == null) {
+			filename = "witness.graphml";
+		} else {
+			filename = origInputFile + "-witness.graphml";
+		}
+
 		try {
-			CoreUtil.writeFile(filename, svcompWitness);
+			File f = CoreUtil.writeFile(filename, svcompWitness);
+			if (f != null) {
+				mLogger.info("Wrote witness to " + f.getAbsolutePath());
+			} else {
+				mLogger.warn("Something wrent wrong trying to write to " + filename);
+			}
+
 		} catch (IOException e) {
 			e.printStackTrace();
 			return null;
@@ -129,10 +157,12 @@ public class WitnessManager {
 			reportWitnessResult(svcompWitness, cex, false);
 			return false;
 		}
+		int timeoutInS = ups.getInt(CorePreferenceInitializer.LABEL_WITNESS_VERIFIER_TIMEOUT);
 
 		String[] cmdArray = makeCPACheckerCommand(command, svcompWitnessFile,
 				ups.getString(CorePreferenceInitializer.LABEL_WITNESS_CPACHECKER_PROPERTY), originalFile,
-				cpaCheckerHome);
+				cpaCheckerHome, timeoutInS);
+		timeoutInS++;
 		command = StringUtils.join(cmdArray, " ");
 		mLogger.info(command);
 		MonitoredProcess mp = MonitoredProcess.exec(cmdArray, cpaCheckerHome, null, mServices, mStorage);
@@ -140,8 +170,11 @@ public class WitnessManager {
 		BufferedInputStream outputStream = new BufferedInputStream(mp.getInputStream());
 
 		boolean hitTimeout = false;
-		int timeoutInS = ups.getInt(CorePreferenceInitializer.LABEL_WITNESS_VERIFIER_TIMEOUT);
-		// wait for 10s for the witness checker
+		String error = convertStreamToString(errorStream);
+		String output = convertStreamToString(outputStream);
+
+		// wait for 1 extra second for the witness checker, then kill it
+		// forcefully
 		mLogger.info("Waiting for " + timeoutInS + "s for CPA Checker...");
 		MonitoredProcessState mps = mp.waitfor(timeoutInS * 1000);
 		if (mps.isRunning()) {
@@ -150,8 +183,6 @@ public class WitnessManager {
 		}
 		mLogger.info("Return code was " + mps.getReturnCode());
 
-		String error = convertStreamToString(errorStream);
-		String output = convertStreamToString(outputStream);
 		// TODO: interpret error and output
 
 		if (checkOutputForSuccess(output)) {
@@ -191,7 +222,7 @@ public class WitnessManager {
 	}
 
 	private String[] makeCPACheckerCommand(String command, String svcompWitnessFile, String cpaCheckerProp,
-			String originalFile, String workingDir) {
+			String originalFile, String workingDir, int timeoutInS) {
 		List<String> cmdArgs = new ArrayList<>();
 		String[] args = command.split(" ");
 		File f = new File(workingDir + File.separator + args[0]);
@@ -199,6 +230,8 @@ public class WitnessManager {
 		for (int i = 1; i < args.length; ++i) {
 			cmdArgs.add(args[i]);
 		}
+		cmdArgs.add("-timelimit");
+		cmdArgs.add(String.valueOf(timeoutInS));
 		cmdArgs.add("-spec");
 		cmdArgs.add(escape(svcompWitnessFile));
 		cmdArgs.add("-spec");

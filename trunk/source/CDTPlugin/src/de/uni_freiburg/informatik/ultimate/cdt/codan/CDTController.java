@@ -188,7 +188,7 @@ public class CDTController implements IController {
 					}
 					mIsRunning = false;
 				}
-			});
+			},"CDTUltimateThread");
 			t.start();
 		}
 

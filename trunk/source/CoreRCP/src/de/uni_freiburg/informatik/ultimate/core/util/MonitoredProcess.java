@@ -334,18 +334,14 @@ public final class MonitoredProcess implements IStorable {
 							os.flush();
 						}
 					} catch (IOException e) {
-						mMonitoredProcess.mLogger.fatal("The process started with " + mMonitoredProcess.mCommand
-								+ " failed during stream data buffering. "
-								+ "This exception will be ignored, as it should never happen.", e);
+						mMonitoredProcess.mLogger.warn("The stream was forcibly closed");
 					} finally {
 						try {
 							br.close();
 							os.flush();
 							os.close();
 						} catch (IOException e) {
-							mMonitoredProcess.mLogger.fatal("The process started with " + mMonitoredProcess.mCommand
-									+ " failed during closing the streams. "
-									+ "This exception will be ignored, as it should never happen.", e);
+							mMonitoredProcess.mLogger.fatal("During closing of the streams, an error occured");
 						}
 					}
 				}

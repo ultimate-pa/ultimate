@@ -51,7 +51,6 @@ public class DebugObserver extends BaseObserver {
 				}
 				queue.add(succ);
 			}
-
 		}
 	}
 
@@ -64,7 +63,6 @@ public class DebugObserver extends BaseObserver {
 				checkAnnotations(node, annots);
 			}
 		}
-
 	}
 
 	private void checkAnnotations(IWalkable node, Collection<IAnnotations> annots) {

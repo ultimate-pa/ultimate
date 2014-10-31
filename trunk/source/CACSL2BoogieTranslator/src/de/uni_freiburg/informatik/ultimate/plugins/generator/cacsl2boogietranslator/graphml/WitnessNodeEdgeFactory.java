@@ -26,14 +26,25 @@ public class WitnessNodeEdgeFactory {
 		return new WitnessNode(isEntry, mCurrentNodeId);
 	}
 
+	public WitnessEdge createWitnessEdge(AtomicTraceElement<CACSLLocation> traceElement,
+			ProgramState<IASTExpression> state) {
+		mCurrentEdgeId++;
+		return new WitnessEdge(traceElement, state, mCurrentEdgeId);
+	}
+
 	public WitnessEdge createWitnessEdge(AtomicTraceElement<CACSLLocation> traceElement) {
 		mCurrentEdgeId++;
-		return new WitnessEdge(traceElement, mCurrentEdgeId);
+		return new WitnessEdge(traceElement, null, mCurrentEdgeId);
 	}
 
 	public WitnessEdge createWitnessEdge(ProgramState<IASTExpression> state) {
 		mCurrentEdgeId++;
-		return new WitnessEdge(state, mCurrentEdgeId);
+		return new WitnessEdge(null, state, mCurrentEdgeId);
+	}
+
+	public WitnessEdge createDummyWitnessEdge() {
+		mCurrentEdgeId++;
+		return new WitnessEdge(null, null, mCurrentEdgeId);
 	}
 
 }

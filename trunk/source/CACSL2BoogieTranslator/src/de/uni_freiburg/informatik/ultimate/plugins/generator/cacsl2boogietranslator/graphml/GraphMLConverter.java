@@ -30,6 +30,7 @@ public class GraphMLConverter {
 
 	public String makeGraphMLString() {
 		StringWriter writer = new StringWriter();
+
 		GraphMLWriter<WitnessNode, WitnessEdge> graphWriter = new GraphMLWriter<>();
 		String filename = StringEscapeUtils.escapeXml10(mProgramExecution.getTraceElement(0).getStep().getFileName());
 		graphWriter.setEdgeIDs(new Transformer<WitnessEdge, String>() {
@@ -64,10 +65,7 @@ public class GraphMLConverter {
 		graphWriter.addEdgeData("assumption", null, null, new Transformer<WitnessEdge, String>() {
 			@Override
 			public String transform(WitnessEdge arg0) {
-				if (arg0.isAssumption()) {
-					return StringEscapeUtils.escapeXml10(arg0.getSourceCode());
-				}
-				return null;
+				return StringEscapeUtils.escapeXml10(arg0.getAssumption());
 			}
 		});
 
@@ -156,38 +154,69 @@ public class GraphMLConverter {
 		DirectedSparseGraph<WitnessNode, WitnessEdge> graph = new DirectedSparseGraph<>();
 		WitnessNodeEdgeFactory fac = new WitnessNodeEdgeFactory();
 
+		WitnessNode current = insertStartNodeAndDummyEdges(fac, graph, 4);
+		WitnessNode next = null;
+
+		// Add initial state edge if present; only edge with assumption but no
+		// source code or line number
+		ProgramState<IASTExpression> initialState = mProgramExecution.getInitialProgramState();
+		if (initialState != null) {
+			next = fac.createWitnessNode();
+			graph.addVertex(next);
+			graph.addEdge(fac.createWitnessEdge(initialState), current, next);
+			current = next;
+		}
+
+		for (int i = 0; i < mProgramExecution.getLength(); ++i) {
+
+			i = collapseToSingleTraceElement(i, mProgramExecution);
+
+			AtomicTraceElement<CACSLLocation> currentATE = mProgramExecution.getTraceElement(i);
+			ProgramState<IASTExpression> currentState = mProgramExecution.getProgramState(i);
+			next = fac.createWitnessNode();
+			graph.addVertex(next);
+			if (currentState == null) {
+				graph.addEdge(fac.createWitnessEdge(currentATE), current, next);
+			} else {
+				graph.addEdge(fac.createWitnessEdge(currentATE, currentState), current, next);
+			}
+			current = next;
+		}
+
+		return graph;
+	}
+
+	private WitnessNode insertStartNodeAndDummyEdges(WitnessNodeEdgeFactory fac,
+			DirectedSparseGraph<WitnessNode, WitnessEdge> graph, int numberOfUselessEdgesAfterStart) {
 		WitnessNode current = fac.createWitnessNode(true);
 		WitnessNode next = null;
 		graph.addVertex(current);
 
-		//TODO: Include state information in assumptions
-//		ProgramState<IASTExpression> initialState = mProgramExecution.getInitialProgramState();
-//		if (initialState != null) {
-//			next = fac.createWitnessNode();
-//			graph.addVertex(next);
-//			graph.addEdge(fac.createWitnessEdge(initialState), current, next);
-//			current = next;
-//		}
-
-		for (int i = 0; i < mProgramExecution.getLength(); ++i) {
-			AtomicTraceElement<CACSLLocation> currentATE = mProgramExecution.getTraceElement(i);
+		for (int i = 0; i < numberOfUselessEdgesAfterStart; ++i) {
 			next = fac.createWitnessNode();
 			graph.addVertex(next);
-			graph.addEdge(fac.createWitnessEdge(currentATE), current, next);
+			graph.addEdge(fac.createDummyWitnessEdge(), current, next);
 			current = next;
-
-			//TODO: Include state information in assumptions
-//			ProgramState<IASTExpression> currentState = mProgramExecution.getProgramState(i);
-//			if (currentState == null) {
-//				continue;
-//			}
-//			next = fac.createWitnessNode();
-//			graph.addVertex(next);
-//			graph.addEdge(fac.createWitnessEdge(currentState), current, next);
-//			current = next;
 		}
 
-		return graph;
+		return current;
+	}
+
+	private int collapseToSingleTraceElement(int currentIdx, CACSLProgramExecution programExecution) {
+		int i = currentIdx;
+		for (; i < programExecution.getLength(); i++) {
+			AtomicTraceElement<CACSLLocation> currentATE = programExecution.getTraceElement(i);
+			CACSLLocation currentLoc = currentATE.getTraceElement();
+			for (int j = i; j < programExecution.getLength(); j++) {
+				AtomicTraceElement<CACSLLocation> nextATE = programExecution.getTraceElement(j);
+				CACSLLocation nextLoc = nextATE.getTraceElement();
+				if (nextLoc != currentLoc) {
+					return j - 1;
+				}
+			}
+
+		}
+		return currentIdx;
 	}
 
 }

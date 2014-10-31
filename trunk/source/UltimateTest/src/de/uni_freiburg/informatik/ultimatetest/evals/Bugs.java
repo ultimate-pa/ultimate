@@ -9,14 +9,19 @@ public class Bugs extends TACASInterpolation2015 {
 	@Override
 	protected void createTestCasesForReal(List<UltimateTestCase> testcases) {
 
-//		addTestCasesFixed("AutomizerC.xml", "TACASInterpolation2015/ForwardPredicates.epf", testcases);
-//
-//		addTestCasesFixed("AutomizerC.xml", "automizer/BackwardPredicates_SvcompReachPreciseMM.epf", testcases);
+		// addTestCasesFixed("AutomizerC.xml",
+		// "TACASInterpolation2015/ForwardPredicates.epf", testcases);
+		//
+		addTestCasesFixed("AutomizerC.xml", "automizer/ForwardPredicates_SvcompReachPreciseMM.epf", testcases);
 
-		addTestCasesFixed("AutomizerC.xml", "svcomp2015/svComp-32bit-precise.epf", testcases);
-//		addTestCasesFixed("CodeCheckWithBE-C.xml", "svcomp2015/svComp-32bit-precise-BE-Kojak.epf", testcases);
-//		addTestCasesFixed("CodeCheckWithBE-C.xml", "svcomp2015/svComp-32bit-memsafety-BE-Kojak.epf.epf", testcases);
-//		addTestCasesFixed("CodeCheckWithBE-C.xml", "svcomp2015/svComp-32bit-memsafety-BE-Impulse.epf.epf", testcases);
+		// addTestCasesFixed("AutomizerC.xml",
+		// "svcomp2015/svComp-32bit-precise.epf", testcases);
+		// addTestCasesFixed("CodeCheckWithBE-C.xml",
+		// "svcomp2015/svComp-32bit-precise-BE-Kojak.epf", testcases);
+		// addTestCasesFixed("CodeCheckWithBE-C.xml",
+		// "svcomp2015/svComp-32bit-memsafety-BE-Kojak.epf.epf", testcases);
+		// addTestCasesFixed("CodeCheckWithBE-C.xml",
+		// "svcomp2015/svComp-32bit-memsafety-BE-Impulse.epf.epf", testcases);
 
 		// addTestCasesFixed("AutomizerC.xml",
 		// "TACASInterpolation2015/TreeInterpolation.epf", testcases);
@@ -57,17 +62,26 @@ public class Bugs extends TACASInterpolation2015 {
 	protected String[] getDirectories() {
 		// @formatter:off
 		return new String[] { 
-//			"examples/svcomp/product-lines/elevator_spec1_productSimulator_false-unreach-call.cil.c",
+//			"examples/svcomp/ssh/s3_srvr.blast.16_false-unreach-call.i.cil.c",
 //			"examples/svcomp/ntdrivers-simplified/floppy_simpl3_false-unreach-call_true-termination.cil.c",
 //			"examples/svcomp/seq-pthread/cs_lazy_false-unreach-call.i",
-//			"examples/svcomp/ssh/s3_srvr.blast.16_false-unreach-call.i.cil.c"
-			"examples/svcomp/bitvector-regression/integerpromotion_true-unreach-call.i"
+			
+				//nutz, backtranslation, works
+//				"examples/svcomp/ssh/s3_srvr.blast.16_false-unreach-call.i.cil.c",
+				//matthias, preprocessor
+
+				//need to change bpl from recursive to iterative
+//				"examples/svcomp/array-examples/data_structures_set_multi_proc_false-unreach-call_ground.i",
+ 
+//			"examples/svcomp/array-examples/data_structures_set_multi_proc_trivial_true-unreach-call_ground.i",
+
+//			"examples/svcomp/array-examples/data_structures_set_multi_proc_true-unreach-call_ground.i"
 				
 		};
 		// @formatter:on
 		// return super.getDirectories();
 	}
-	
+
 	@Override
 	protected int getTimeout() {
 		return 600 * 1000;
