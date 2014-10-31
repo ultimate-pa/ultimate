@@ -5,15 +5,14 @@ Author: Jan Leike
 Date:   2014-10-31
 
 
-Folder				Description
+Folder			Description
 ---------------------------------------------------------------
-brittle				examples that tend to break when we fiddle with the settings
-difficult			examples that we know to be extremely difficult
-error				Ultimate crashed
-fail				examples that fail for unspecified or unusual reasons, investigation needed
-integral hull		examples that look like they need an integral hull
-needs guesses		requires guesses for Motzkin coefficients
-nonlinear			examples that use nonlinear arithmetic in the program syntax
-nontermination-fail	nonterminating examples that are too difficult
-simple				if these don't work there is a bug in Ultimate
-success				examples usually work
+brittle			examples that tend to break when we fiddle with the settings
+difficult		examples that we know to be extremely difficult
+error			Ultimate crashed
+fail			examples that fail for unspecified or unusual reasons, investigation needed
+integral hull	examples that look like they need an integral hull
+needs guesses	requires guesses for Motzkin coefficients
+nonlinear		examples that use nonlinear arithmetic in the program syntax
+simple			if these don't work there is a bug in Ultimate
+success			examples usually work
