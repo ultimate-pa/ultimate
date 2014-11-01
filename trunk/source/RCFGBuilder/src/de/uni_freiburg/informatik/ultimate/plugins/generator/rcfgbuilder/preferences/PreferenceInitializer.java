@@ -46,7 +46,7 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 	public static final String LABEL_ExtSolverFlag = "Use external solver instead of SMTInterpol";
 	public static final boolean DEF_ExtSolverFlag = true;
 	public static final String LABEL_ExtSolverCommand = "Command for external solver";
-	public static final String DEF_ExtSolverCommand = "z3 SMTLIB2_COMPLIANT=true -memory:1234 -smt2 -in -t:12000";
+	public static final String DEF_ExtSolverCommand = "z3 SMTLIB2_COMPLIANT=true -memory:1024 -smt2 -in -t:12000";
 	public static final String LABEL_CodeBlockSize = "Size of a code block";
 	public enum CodeBlockSize { SingleStatement, SequenceOfStatements, LoopFreeBlock };
 	public static final CodeBlockSize DEF_CodeBlockSize = CodeBlockSize.LoopFreeBlock;

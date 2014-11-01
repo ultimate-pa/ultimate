@@ -33,14 +33,12 @@ public class RCFGBacktranslator extends DefaultTranslator<CodeBlock, BoogieASTNo
 	}
 
 	/**
-	 * Mapping from auxiliary CodeBlocks to source BoogieAstNodes.
-	 * For assert, the requires assumed at begin of procedure, and ensures
-	 * the result is a singleton. For the assert requires before the call
-	 * the result contains two elements: First, the call, afterwards the
-	 * requires.
+	 * Mapping from auxiliary CodeBlocks to source BoogieAstNodes. For assert,
+	 * the requires assumed at begin of procedure, and ensures the result is a
+	 * singleton. For the assert requires before the call the result contains
+	 * two elements: First, the call, afterwards the requires.
 	 */
-	private Map<Statement, BoogieASTNode[]> m_CodeBlock2Statement = 
-			new HashMap<Statement, BoogieASTNode[]>();
+	private Map<Statement, BoogieASTNode[]> m_CodeBlock2Statement = new HashMap<Statement, BoogieASTNode[]>();
 
 	public BoogieASTNode[] putAux(Statement aux, BoogieASTNode[] source) {
 		return m_CodeBlock2Statement.put(aux, source);
@@ -49,8 +47,7 @@ public class RCFGBacktranslator extends DefaultTranslator<CodeBlock, BoogieASTNo
 	@Override
 	public List<BoogieASTNode> translateTrace(List<CodeBlock> trace) {
 		List<CodeBlock> cbTrace = trace;
-		List<AtomicTraceElement<BoogieASTNode>> atomicTeList = 
-				new ArrayList<AtomicTraceElement<BoogieASTNode>>();
+		List<AtomicTraceElement<BoogieASTNode>> atomicTeList = new ArrayList<AtomicTraceElement<BoogieASTNode>>();
 		for (RcfgElement elem : cbTrace) {
 			if (elem instanceof CodeBlock) {
 				addCodeBlock((CodeBlock) elem, atomicTeList, null);
@@ -67,7 +64,6 @@ public class RCFGBacktranslator extends DefaultTranslator<CodeBlock, BoogieASTNo
 		return result;
 	}
 
-	
 	/**
 	 * Transform a single (possibly large) CodeBlock to a list of BoogieASTNodes
 	 * and add these BoogieASTNodes to the List trace. If
@@ -85,7 +81,7 @@ public class RCFGBacktranslator extends DefaultTranslator<CodeBlock, BoogieASTNo
 	 * can not be determined) we call this method recursively on some branch.
 	 * </ul>
 	 */
-	private void addCodeBlock(CodeBlock cb, List<AtomicTraceElement<BoogieASTNode>> trace, 
+	private void addCodeBlock(CodeBlock cb, List<AtomicTraceElement<BoogieASTNode>> trace,
 			Map<TermVariable, Boolean> branchEncoders) {
 		if (cb instanceof Call) {
 			Statement st = ((Call) cb).getCallStatement();
@@ -95,7 +91,7 @@ public class RCFGBacktranslator extends DefaultTranslator<CodeBlock, BoogieASTNo
 			trace.add(new AtomicTraceElement<BoogieASTNode>(st, st, StepInfo.PROC_RETURN));
 		} else if (cb instanceof Summary) {
 			Statement st = ((Summary) cb).getCallStatement();
-			//FIXME: Is summary call, return or something new?
+			// FIXME: Is summary call, return or something new?
 			trace.add(new AtomicTraceElement<BoogieASTNode>(st, st, StepInfo.NONE));
 		} else if (cb instanceof StatementSequence) {
 			StatementSequence ss = (StatementSequence) cb;
@@ -131,13 +127,9 @@ public class RCFGBacktranslator extends DefaultTranslator<CodeBlock, BoogieASTNo
 			}
 			throw new AssertionError("no branch was taken");
 		} else {
-			throw new UnsupportedOperationException(
-					"Unsupported CodeBlock" + cb.getClass().getCanonicalName());
+			throw new UnsupportedOperationException("Unsupported CodeBlock" + cb.getClass().getCanonicalName());
 		}
 	}
-	
-	
-	
 
 	@Override
 	public IProgramExecution<BoogieASTNode, Expression> translateProgramExecution(
@@ -148,22 +140,24 @@ public class RCFGBacktranslator extends DefaultTranslator<CodeBlock, BoogieASTNo
 		RcfgProgramExecution rcfgProgramExecution = (RcfgProgramExecution) programExecution;
 
 		List<AtomicTraceElement<BoogieASTNode>> trace = new ArrayList<AtomicTraceElement<BoogieASTNode>>();
-		Map<Integer, ProgramState<Expression>> programStateMapping = 
-				new HashMap<Integer, ProgramState<Expression>>();
+		Map<Integer, ProgramState<Expression>> programStateMapping = new HashMap<Integer, ProgramState<Expression>>();
 
 		if (rcfgProgramExecution.getInitialProgramState() != null) {
 			programStateMapping.put(-1, rcfgProgramExecution.getInitialProgramState());
 		}
 		for (int i = 0; i < rcfgProgramExecution.getLength(); i++) {
 			AtomicTraceElement<CodeBlock> codeBlock = rcfgProgramExecution.getTraceElement(i);
-			addCodeBlock(codeBlock.getTraceElement(), trace, rcfgProgramExecution.getBranchEncoders()[i]);
+			Map<TermVariable, Boolean>[] branchEncoders = rcfgProgramExecution.getBranchEncoders();
+			if (branchEncoders == null || i >= branchEncoders.length) {
+				addCodeBlock(codeBlock.getTraceElement(), trace, null);
+			} else {
+				addCodeBlock(codeBlock.getTraceElement(), trace, branchEncoders[i]);
+			}
 			int posInNewTrace = trace.size() - 1;
 			ProgramState<Expression> programState = rcfgProgramExecution.getProgramState(i);
 			programStateMapping.put(posInNewTrace, programState);
 		}
 		return new BoogieProgramExecution(programStateMapping, trace);
 	}
-
-
 
 }
