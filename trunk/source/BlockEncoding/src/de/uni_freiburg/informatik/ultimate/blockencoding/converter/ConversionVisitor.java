@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map.Entry;
 import java.util.Stack;
 
 import org.apache.log4j.Logger;
@@ -26,6 +27,7 @@ import de.uni_freiburg.informatik.ultimate.blockencoding.rating.metrics.Disjunct
 import de.uni_freiburg.informatik.ultimate.blockencoding.rating.metrics.DisjunctVariablesRating;
 import de.uni_freiburg.informatik.ultimate.blockencoding.rating.util.EncodingStatistics;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.model.annotation.IAnnotations;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BoogieASTNode;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BooleanLiteral;
@@ -290,6 +292,10 @@ public class ConversionVisitor implements IMinimizationVisitor {
 			}
 			ProgramPoint newNode = new ProgramPoint(node.getOriginalNode().getPosition(), node.getOriginalNode()
 					.getProcedure(), node.getOriginalNode().isErrorLocation(), BoogieASTNode);
+			//inserted by alex 1.11.2014: (don't forget the annotations.. (mb this would be nicer in the constructor TODO
+			for (Entry<String, IAnnotations> annots : node.getOriginalNode().getPayload().getAnnotations().entrySet()) {
+				newNode.getPayload().getAnnotations().put(annots.getKey(), annots.getValue());
+			}
 			mRefNodeMap.put(node, newNode);
 			// to reset the rootAnnot, we need to keep a map from the original
 			// program points, to the new ones. And since we only create
