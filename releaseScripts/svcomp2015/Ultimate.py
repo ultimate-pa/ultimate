@@ -21,8 +21,8 @@ settingsFilePrecise64 = '64bit-precise'
 
 #special strings in ultimate output
 safetyString = 'Ultimate proved your program to be correct'
+allSpecString = 'AllSpecificationsHoldResult'
 unsafetyString = 'Ultimate proved your program to be incorrect'
-unknownSafetyString = 'Ultimate could not prove your program'
 memDerefUltimateString = 'pointer dereference may fail'
 memFreeUltimateString = 'free of unallocated memory possible'
 memMemtrackUltimateString = 'not all allocated memory was freed' 
@@ -134,12 +134,10 @@ while True:
 	sys.stdout.write('.')
 	#sys.stdout.write('Ultimate: ' + line)
 	sys.stdout.flush()
-	if (line.find(safetyString) != -1):
+	if (line.find(safetyString) != -1 or line.find(allSpecString) != -1):
 		safetyResult = 'TRUE'
 	if (line.find(unsafetyString) != -1):
 		safetyResult = 'FALSE'
-	if (line.find(unknownSafetyString) != -1):
-		safetyResult = 'UNKNOWN'
 	if (line.find(memDerefUltimateString) != -1):
 		memResult = memDerefResult
 	if (line.find(memFreeUltimateString) != -1):
@@ -148,7 +146,7 @@ while True:
 		memResult = memMemtrackResult
 	if (line.find(errorPathBeginString) != -1):
 		readingErrorPath = True
-	if (readingErrorPath and line == ''):
+	if (readingErrorPath and line.strip() == ''):
 		readingErrorPath = False
 	if (not readingErrorPath and line == ''):
 		print('Wrong executable or arguments?')
@@ -159,12 +157,12 @@ while True:
 
 #summarize results
 if writeUltimateOutputToFile:
-	print('Writing output to file {}'.format(outputFileName))
+	print('Writing output log to file {}'.format(outputFileName))
 	outputFile = open(outputFileName, 'wb')
 	outputFile.write(ultimateOutput.encode('utf-8'))
 
 if safetyResult == 'FALSE':
-	print('Writing output to file {}'.format(errorPathFileName))
+	print('Writing human readable error path to file {}'.format(errorPathFileName))
 	errOutputFile = open(errorPathFileName, 'wb')
 	errOutputFile.write(errorPath.encode('utf-8'))
 
