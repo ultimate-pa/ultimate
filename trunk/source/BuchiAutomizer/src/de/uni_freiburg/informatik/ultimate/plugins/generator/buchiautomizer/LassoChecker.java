@@ -157,6 +157,7 @@ public class LassoChecker {
 	Collection<Term> m_Axioms;
 	private final IUltimateServiceProvider mServices;
 	private final IToolchainStorage mStorage;
+	private final boolean m_RemoveSuperfluousSupportingInvariants = true;
 
 	public ContinueDirective getContinueDirective() {
 		assert m_ContinueDirective != null;
@@ -690,7 +691,7 @@ public class LassoChecker {
 			}
 		}
 
-		TerminationArgument termArg = tryTemplatesAndComputePredicates(withStem, la, rankingFunctionTemplates);
+		TerminationArgument termArg = tryTemplatesAndComputePredicates(withStem, la, rankingFunctionTemplates, loopTF);
 		assert (nonTermArgument == null || termArg == null) : " terminating and nonterminating";
 		if (termArg != null) {
 			return SynthesisResult.TERMINATING;
@@ -706,11 +707,12 @@ public class LassoChecker {
 	 * @param lrta
 	 * @param nonTermArgument
 	 * @param rankingFunctionTemplates
+	 * @param loopTF 
 	 * @return
 	 * @throws AssertionError
 	 */
 	private TerminationArgument tryTemplatesAndComputePredicates(final boolean withStem, LassoAnalysis la,
-			List<RankingTemplate> rankingFunctionTemplates) throws AssertionError {
+			List<RankingTemplate> rankingFunctionTemplates, TransFormula loopTF) throws AssertionError {
 		TerminationArgument firstTerminationArgument = null;
 		for (RankingTemplate rft : rankingFunctionTemplates) {
 			TerminationArgument termArg;
@@ -733,7 +735,7 @@ public class LassoChecker {
 			if (termArg != null) {
 				assert termArg.getRankingFunction() != null;
 				assert termArg.getSupportingInvariants() != null;
-				m_Bspm.computePredicates(!withStem, termArg);
+				m_Bspm.computePredicates(!withStem, termArg, m_RemoveSuperfluousSupportingInvariants, loopTF);
 				assert m_Bspm.providesPredicates();
 				assert areSupportingInvariantsCorrect() : "incorrect supporting invariant with"
 						+ rft.getClass().getSimpleName();
@@ -751,7 +753,7 @@ public class LassoChecker {
 		if (firstTerminationArgument != null) {
 			assert firstTerminationArgument.getRankingFunction() != null;
 			assert firstTerminationArgument.getSupportingInvariants() != null;
-			m_Bspm.computePredicates(!withStem, firstTerminationArgument);
+			m_Bspm.computePredicates(!withStem, firstTerminationArgument, m_RemoveSuperfluousSupportingInvariants, loopTF);
 			assert m_Bspm.providesPredicates();
 			return firstTerminationArgument;
 		} else {

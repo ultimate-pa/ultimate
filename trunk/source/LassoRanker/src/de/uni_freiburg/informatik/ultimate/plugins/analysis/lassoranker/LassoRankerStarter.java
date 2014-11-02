@@ -300,7 +300,7 @@ public class LassoRankerStarter {
 	private boolean isTerminationArgumentCorrect(TerminationArgument arg) {
 
 		BinaryStatePredicateManager bspm = new BinaryStatePredicateManager(m_SmtManager, mServices);
-		bspm.computePredicates(false, arg);
+		bspm.computePredicates(false, arg, false, null);
 
 		// check supporting invariants
 		boolean siCorrect = true;

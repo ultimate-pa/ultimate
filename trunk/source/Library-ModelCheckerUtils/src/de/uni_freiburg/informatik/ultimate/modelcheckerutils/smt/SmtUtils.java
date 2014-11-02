@@ -389,4 +389,8 @@ public class SmtUtils {
 		}
 		return freeVars;
 	}
+	
+	public static Term and(Script script, Collection<Term> terms) {
+		return Util.and(script, terms.toArray(new Term[terms.size()]));
+	}
 }

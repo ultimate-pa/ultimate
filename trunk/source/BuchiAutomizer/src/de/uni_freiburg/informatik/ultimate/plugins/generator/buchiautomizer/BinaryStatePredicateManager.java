@@ -1,8 +1,11 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer;
 
 import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.TreeMap;
 
@@ -25,6 +28,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieNonOldVar;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.AffineSubtermNormalizer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
@@ -190,7 +194,16 @@ public class BinaryStatePredicateManager {
 		m_LexTerms = null;
 	}
 
-	public void computePredicates(boolean loopTermination, TerminationArgument termArg) {
+	/**
+	 * 
+	 * @param loopTermination
+	 * @param termArg
+	 * @param removeSuperfluousSupportingInvariants 
+	 * @param loopTf TransFormula for loop, has to be provided if we remove
+	 * superfluous supporting invariants.
+	 */
+	public void computePredicates(boolean loopTermination, TerminationArgument termArg, 
+			boolean removeSuperfluousSupportingInvariants, TransFormula loopTf) {
 		assert m_LoopTermination == null;
 		assert m_TerminationArgument == null;
 		assert m_StemPrecondition == null;
@@ -206,8 +219,14 @@ public class BinaryStatePredicateManager {
 		m_TerminationArgument = termArg;
 		IPredicate unseededPredicate = unseededPredicate();
 		m_StemPrecondition = unseededPredicate;
+
+		RankingFunction rf = m_TerminationArgument.getRankingFunction();
+		decodeLex(rf);
+		m_RankEquality = computeRankEquality();
+		m_RankDecreaseAndBound = computeRankDecreaseAndBound();
 		m_SiConjunction = computeSiConjunction(m_TerminationArgument.getSupportingInvariants(),
-				m_TerminationArgument.getArrayIndexSupportingInvariants());
+				m_TerminationArgument.getArrayIndexSupportingInvariants(), 
+				removeSuperfluousSupportingInvariants, loopTf);
 		boolean siConjunctionIsTrue = isTrue(m_SiConjunction);
 		if (siConjunctionIsTrue) {
 			m_StemPostcondition = unseededPredicate;
@@ -216,9 +235,6 @@ public class BinaryStatePredicateManager {
 			m_StemPostcondition = m_SmtManager.newPredicate(tvp.getFormula(), tvp.getProcedures(), tvp.getVars(),
 					tvp.getClosedFormula());
 		}
-		RankingFunction rf = m_TerminationArgument.getRankingFunction();
-		decodeLex(rf);
-		m_RankEquality = computeRankEquality();
 		if (siConjunctionIsTrue) {
 			m_RankEqualityAndSi = m_RankEquality;
 		} else {
@@ -226,7 +242,6 @@ public class BinaryStatePredicateManager {
 			m_RankEqualityAndSi = m_SmtManager.newPredicate(tvp.getFormula(), tvp.getProcedures(), tvp.getVars(),
 					tvp.getClosedFormula());
 		}
-		m_RankDecreaseAndBound = computeRankDecreaseAndBound();
 		IPredicate unseededOrRankDecrease;
 		{
 			TermVarsProc tvp = m_SmtManager.or(unseededPredicate, m_RankDecreaseAndBound);
@@ -243,6 +258,65 @@ public class BinaryStatePredicateManager {
 		m_ProvidesPredicates = true;
 	}
 
+	private List<Term> removeSuperfluousSupportingInvariants(List<Term> siTerms, TransFormula loopTf) {
+		ArrayList<Term> neededSiTerms = new ArrayList<Term>();
+		for (int i=0; i<siTerms.size(); i++) {
+			Term[] siTermSubset = startingFromIPlusList(siTerms, i+1, neededSiTerms);
+			boolean isSi = isSupportingInvariant(siTermSubset, loopTf);
+			if (!isSi) {
+				// we cannot drop the i'th term
+				neededSiTerms.add(siTerms.get(i));
+			}
+		}
+		int superfluous = siTerms.size() - neededSiTerms.size();
+		mLogger.info(superfluous + " out of " + siTerms.size() + 
+				" supporting invariants were superfluous and have been removed");
+		return neededSiTerms;
+	}
+	
+	private boolean isSupportingInvariant(Term[] siTermSubset, TransFormula loopTf) {
+		List<Term> siSubsetAndRankEqualityList = new ArrayList<Term>(Arrays.asList(siTermSubset));
+		siSubsetAndRankEqualityList.add(m_RankEquality.getFormula());
+		IPredicate siSubsetAndRankEquality = m_SmtManager.newPredicate(
+				TermVarsProc.computeTermVarsProc(
+						SmtUtils.and(m_Script, siSubsetAndRankEqualityList), 
+						m_SmtManager.getBoogie2Smt()));
+		
+		List<Term> siSubsetAndRankDecreaseAndBoundList = new ArrayList<Term>(Arrays.asList(siTermSubset));
+		siSubsetAndRankDecreaseAndBoundList.add(m_RankDecreaseAndBound.getFormula());
+		IPredicate siSubsetAndRankDecreaseAndBound = m_SmtManager.newPredicate(
+				TermVarsProc.computeTermVarsProc(
+						SmtUtils.and(m_Script, siSubsetAndRankDecreaseAndBoundList), 
+						m_SmtManager.getBoogie2Smt()));
+		LBool sat = PredicateUtils.isInductiveHelper(
+				m_SmtManager.getBoogie2Smt(), 
+				siSubsetAndRankEquality, 
+				siSubsetAndRankDecreaseAndBound, loopTf, null);
+		switch (sat) {
+		case SAT:
+		case UNKNOWN:
+			return false;
+		case UNSAT:
+			return true;
+		default:
+			throw new AssertionError("unknown case");
+		}
+	}
+
+	/**
+	 * Returns an array that contains all elements of list with index greater
+	 * than or equal to i and all elements of the list additionalList.
+	 * @return
+	 */
+	Term[] startingFromIPlusList(List<Term> list, int i, List<Term> additionalList) {
+		List<Term> result = new ArrayList<Term>(list.size()+i+list.size());
+		for (int j=i; j<list.size(); j++) {
+			result.add(list.get(i));
+		}
+		result.addAll(additionalList);
+		return result.toArray(new Term[result.size()]);
+	}
+
 	private IPredicate unseededPredicate() {
 		Set<BoogieVar> vars = new HashSet<BoogieVar>(1);
 		vars.add(m_UnseededVariable);
@@ -252,21 +326,23 @@ public class BinaryStatePredicateManager {
 		return result;
 	}
 
-	private IPredicate computeSiConjunction(Collection<SupportingInvariant> siList, Collection<Term> aisi) {
-		Term[] siTerms = new Term[siList.size() + aisi.size()];
-		int i = 0;
+	private IPredicate computeSiConjunction(
+			Collection<SupportingInvariant> siList, 
+			Collection<Term> aisi, 
+			boolean removeSuperfluousSupportingInvariants, 
+			TransFormula loopTf) {
+		List<Term> siTerms = new ArrayList<Term>(siList.size() + aisi.size());
 		for (SupportingInvariant si : siList) {
 			Term formula = si.asTerm(m_SmtManager.getScript());
-			siTerms[i] = formula;
-			i++;
+			siTerms.add(formula);
 		}
-		assert i == siList.size();
-		int j = 0;
-		for (Term term : aisi) {
-			siTerms[i + j] = term;
-			j++;
+		siTerms.addAll(aisi);
+		if (removeSuperfluousSupportingInvariants) {
+			assert isSupportingInvariant(siTerms.toArray(new Term[siTerms.size()]), loopTf);
+			siTerms = removeSuperfluousSupportingInvariants(siTerms, loopTf);
 		}
-		Term conjunction = Util.and(m_Script, siTerms);
+		
+		Term conjunction = SmtUtils.and(m_Script, siTerms);
 		Term si;
 		if (false) {
 			Term simplified = SmtUtils.simplify(m_SmtManager.getScript(), conjunction, mServices);   
