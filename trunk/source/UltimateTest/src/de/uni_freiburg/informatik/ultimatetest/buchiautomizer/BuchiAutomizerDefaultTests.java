@@ -15,12 +15,7 @@ public class BuchiAutomizerDefaultTests extends
 		AbstractBuchiAutomizerTestSuite {
 	private static final String[] m_Directories = {
 //		"examples/lassos",
-//		"examples/termination/svcomp/termination-crafted",
-//		"examples/termination/svcomp/termination-crafted-lit",
-//		"examples/termination/svcomp/termination-memory-alloca",
-//		"examples/termination/svcomp/termination-numeric"
-		"examples/termination/svcomp-sorted/success"
-//		"examples/termination/svcomp-sorted/fail"
+		"examples/termination/svcomp-sorted/",
 //		"examples/programs/quantifier",
 //		"examples/programs/recursivePrograms",
 //		"examples/programs/toy"
