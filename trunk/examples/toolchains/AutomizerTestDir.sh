@@ -66,7 +66,7 @@ fi
 #------------------------------------------------------------------------------
 # assume that the executable is in following directory
 #------------------------------------------------------------------------------
-UltimateEXE="trunk/source/BA_SiteRepository/target/products/CLI-E3/linux/gtk/$arch/Ultimate";
+UltimateEXE="trunk/source/BA_SiteRepository/target/products/CLI-E4/linux/gtk/$arch/Ultimate";
 if [ ! -e "$UltimateEXE" ]; then
     echo "unable to find Ultimate executable $UltimateEXE"
     exit
@@ -77,7 +77,7 @@ function setAssertions {
 	#------------------------------------------------------------------------------
 	# set enable assertions
 	#------------------------------------------------------------------------------
-	UltimateINI="trunk/source/BA_SiteRepository/target/products/CLI-E3/linux/gtk/$arch/Ultimate.ini";
+	UltimateINI="trunk/source/BA_SiteRepository/target/products/CLI-E4/linux/gtk/$arch/Ultimate.ini";
 	if [ ! -e "$UltimateINI" ]; then
 		echo "unable to find Ultimate.ini $UltimateINI"
 		exit
