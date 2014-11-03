@@ -21,7 +21,7 @@ public class WitnessBugs extends TACASInterpolation2015 {
 	protected String[] getDirectories() {
 		// @formatter:off
 		return new String[] { 
-				
+			"examples/svcomp/ssh-simplified/s3_srvr_10_false-unreach-call.cil.c"
 		};
 		// @formatter:on
 	}
