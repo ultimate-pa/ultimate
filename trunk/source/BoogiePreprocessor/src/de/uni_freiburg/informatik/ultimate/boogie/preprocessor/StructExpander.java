@@ -8,6 +8,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 
+import org.apache.log4j.Logger;
+
 import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
 import de.uni_freiburg.informatik.ultimate.boogie.type.ArrayType;
@@ -42,6 +44,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Unit;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableLHS;
+import de.uni_freiburg.informatik.ultimate.model.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 
 /**
@@ -157,10 +160,13 @@ public class StructExpander extends BoogieTransformer implements IUnmanagedObser
 
 	private final BoogiePreprocessorBacktranslator mTranslator;
 
-	protected StructExpander(BoogiePreprocessorBacktranslator translator) {
+	private final Logger mLogger;
+
+	protected StructExpander(BoogiePreprocessorBacktranslator translator, Logger logger) {
 		mTranslator = translator;
 		m_FlattenCache = new HashMap<BoogieType, BoogieType>();
 		m_StructTypes = new HashMap<String, TypeConstructor>();
+		mLogger = logger;
 	}
 
 	/**
@@ -451,6 +457,9 @@ public class StructExpander extends BoogieTransformer implements IUnmanagedObser
 	 *         flattened type of the original expression.
 	 */
 	private Expression[] expandExpression(Expression e) {
+		if (e.getType() == null) {
+			mLogger.error("The expression " + BoogiePrettyPrinter.print(e) + " has a null type!");
+		}
 		BoogieType bt = flattenType(e.getType());
 		if (!(bt instanceof StructType)) {
 			// quick check, if process expression can be used.

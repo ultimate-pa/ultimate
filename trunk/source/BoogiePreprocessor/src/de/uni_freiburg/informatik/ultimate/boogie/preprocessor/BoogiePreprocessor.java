@@ -66,17 +66,16 @@ public class BoogiePreprocessor implements IAnalysis {
 		BoogiePreprocessorBacktranslator backTranslator = new BoogiePreprocessorBacktranslator(mServices);
 		mServices.getBacktranslationService().addTranslator(backTranslator);
 
-		Logger logger = mServices.getLoggingService().getLogger(
-				Activator.PLUGIN_ID);
-		
+		Logger logger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
+
 		BoogieSymbolTableConstructor symb = new BoogieSymbolTableConstructor(logger);
 		backTranslator.setSymbolTable(symb.getSymbolTable());
 
 		ArrayList<IObserver> observers = new ArrayList<IObserver>();
-//		observers.add(new DebugObserver(logger));
+		// observers.add(new DebugObserver(logger));
 		observers.add(new TypeChecker(mServices));
 		observers.add(new ConstExpander(backTranslator));
-		observers.add(new StructExpander(backTranslator));
+		observers.add(new StructExpander(backTranslator, logger));
 		observers.add(new UnstructureCode(backTranslator));
 		observers.add(new FunctionInliner());
 		observers.add(symb);

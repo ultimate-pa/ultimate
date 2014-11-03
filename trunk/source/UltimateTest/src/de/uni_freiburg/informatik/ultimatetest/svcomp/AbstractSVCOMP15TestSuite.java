@@ -19,6 +19,7 @@ import de.uni_freiburg.informatik.ultimatetest.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimatetest.UltimateStarter;
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestSuite;
+import de.uni_freiburg.informatik.ultimatetest.decider.ITestResultDecider;
 import de.uni_freiburg.informatik.ultimatetest.decider.SafetyCheckTestResultDecider;
 import de.uni_freiburg.informatik.ultimatetest.evals.ColumnDefinition;
 import de.uni_freiburg.informatik.ultimatetest.evals.ConversionContext;
@@ -95,8 +96,8 @@ public abstract class AbstractSVCOMP15TestSuite extends UltimateTestSuite {
 				UltimateRunDefinition urd = new UltimateRunDefinition(input, def.getSettings(), def.getToolchain());
 				UltimateStarter starter = new UltimateStarter(urd, def.getTimeout());
 
-				UltimateTestCase testCase = new UltimateTestCase(name, new SafetyCheckTestResultDecider(urd, true),
-						starter, urd, super.getSummaries(), super.getIncrementalLogs());
+				UltimateTestCase testCase = new UltimateTestCase(name, getTestResultDecider(urd), starter, urd,
+						super.getSummaries(), super.getIncrementalLogs());
 
 				testcases.add(testCase);
 			} catch (Throwable ex) {
@@ -105,6 +106,10 @@ public abstract class AbstractSVCOMP15TestSuite extends UltimateTestSuite {
 			}
 		}
 
+	}
+
+	protected ITestResultDecider getTestResultDecider(UltimateRunDefinition urd) {
+		return new SafetyCheckTestResultDecider(urd, true);
 	}
 
 	private String createTestCaseName(File svcompRootDir, File input, TestDefinition def) {
