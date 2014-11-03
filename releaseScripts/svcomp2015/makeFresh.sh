@@ -7,10 +7,10 @@ else
 	CURRENTUSER="$1"
 fi
 
-svn up ../../.
-pushd ../../trunk/source/BA_MavenParentUltimate/
-mvn clean install -Pmaterialize
-popd
+#svn up ../../.
+#pushd ../../trunk/source/BA_MavenParentUltimate/
+#mvn clean install -Pmaterialize
+#popd
 
 ./createZipAutomizer.sh
 ./createZipCodeCheck.sh

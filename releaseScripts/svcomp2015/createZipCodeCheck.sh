@@ -3,7 +3,7 @@
 TOOLNAME=Kojak
 TARGETDIR=Ultimate${TOOLNAME}
 TOOLCHAIN=../../trunk/examples/toolchains/CodeCheckWithBE-C.xml
-SETTINGS=../../trunk/examples/settings/svcomp2015/*Kojak*
+SETTINGS=../../trunk/examples/settings/svcomp2015/*Impulse*
 
 rm -r "$TARGETDIR"
 rm Ultimate"$TOOLNAME".zip
