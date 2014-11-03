@@ -3,13 +3,9 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.partialQuantif
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
-
-import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
@@ -18,19 +14,19 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.PartialQuantifierElimination;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SafeSubstitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.AffineRelation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.BinaryNumericRelation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.BinaryRelation.NoRelationOfThisKindException;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.NotAffineException;
-import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Cnf;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Dnf;
 
 /**
  * Transitive inequality resolution (TIR) for terms in XNF.
  * @author Matthias Heizmann
  */
-public class XnfTir extends XjunctPartialQuantifierElimination {
+public class XnfTir extends XnfPartialQuantifierElimination {
 
 	public XnfTir(Script script, IUltimateServiceProvider services) {
 		super(script, services);
@@ -47,29 +43,47 @@ public class XnfTir extends XjunctPartialQuantifierElimination {
 	}
 
 	@Override
-	public Term[] tryToEliminate(int quantifier, Term[] inputAtoms,
+	public Term[] tryToEliminate(int quantifier, Term[] inputDisjuncts,
 			Set<TermVariable> eliminatees) {
+		List<Term> currentDisjuncts = new ArrayList<Term>(Arrays.asList(inputDisjuncts));
 		Iterator<TermVariable> it = eliminatees.iterator();
-		Term[] resultAtoms = inputAtoms;
 		while (it.hasNext()) {
-			TermVariable tv = it.next();
-			if (!SmtUtils.getFreeVars(Arrays.asList(resultAtoms)).contains(tv)) {
-				// case where var does not occur
-				it.remove();
+			List<Term> nextDisjuncts = new ArrayList<Term>();
+			TermVariable eliminatee = it.next();
+			if (!eliminatee.getSort().isNumericSort()) {
+				// this technique is not applicable
+				nextDisjuncts = currentDisjuncts;
 				continue;
-			} else {
-				Term[] withoutTv = tryToEliminate(quantifier, resultAtoms, tv);
-				if (withoutTv != null) {
-					resultAtoms = withoutTv;
-					it.remove();
+			}
+			boolean unableToRemoveEliminatee = false;
+			for (Term oldDisjunct : currentDisjuncts) {
+				List<Term> elimResultDisjuncts = tryToEliminate_singleDisjuct(quantifier, oldDisjunct, eliminatee);
+				if (elimResultDisjuncts == null) {
+					// unable to eliminate
+					unableToRemoveEliminatee = true;
+					nextDisjuncts.add(oldDisjunct);
+				} else {
+					nextDisjuncts.addAll(elimResultDisjuncts);
 				}
 			}
+			if (unableToRemoveEliminatee) {
+				// not eliminated :-(
+			} else {
+				it.remove();
+			}
+			currentDisjuncts = nextDisjuncts;
 		}
-		return resultAtoms;
+		return currentDisjuncts.toArray(new Term[currentDisjuncts.size()]);
 	}
 
-
-	private Term[] tryToEliminate(int quantifier, Term[] inputAtoms,
+	private List<Term> tryToEliminate_singleDisjuct(int quantifier, Term disjunct,
+			TermVariable eliminatee) {
+		Term[] conjuncts = PartialQuantifierElimination.getXjunctsInner(quantifier, disjunct);
+		List<Term> result = tryToEliminate_Conjuncts(quantifier, conjuncts, eliminatee);
+		return result;
+	}
+	
+	private List<Term> tryToEliminate_Conjuncts(int quantifier, Term[] inputAtoms,
 			TermVariable eliminatee) {
 		List<Term> termsWithoutEliminatee = new ArrayList<Term>();
 		List<Term> nonStrictUpperBounds = new ArrayList<Term>();
@@ -161,10 +175,27 @@ public class XnfTir extends XjunctPartialQuantifierElimination {
 			}
 		}
 		resultAtoms.addAll(termsWithoutEliminatee);
-		if (!antiDer.isEmpty()) {
-			throw new AssertionError("not yet implemented");
+		final List<Term> resultDisjunctions;
+		if (antiDer.isEmpty()) {
+			resultDisjunctions = new ArrayList<Term>();
+			Term tmp = SmtUtils.and(m_Script, resultAtoms);
+			assert !Arrays.asList(tmp.getFreeVars()).contains(eliminatee) : "not eliminated";
+			resultDisjunctions.add(tmp);
+		} else {
+			resultAtoms.add(bi.computeAdDisjunction());
+			Term tmp = SmtUtils.and(m_Script, resultAtoms);
+			Term disjunction;
+			if (quantifier == QuantifiedFormula.EXISTS) {
+				disjunction = (new Dnf(m_Script, m_Services)).transform(tmp);
+			} else if (quantifier == QuantifiedFormula.FORALL) {
+				disjunction = (new Cnf(m_Script, m_Services)).transform(tmp);
+			} else {
+				throw new AssertionError("unknown quantifier");
+			}
+			assert !Arrays.asList(disjunction.getFreeVars()).contains(eliminatee) : "not eliminated";
+			resultDisjunctions = Arrays.asList(PartialQuantifierElimination.getXjunctsOuter(quantifier, disjunction));
 		}
-		return resultAtoms.toArray(new Term[resultAtoms.size()]);
+		return resultDisjunctions;
 	}
 	
 	private Term buildInequality(String symbol, Term lhs, Term rhs) {
@@ -203,10 +234,9 @@ public class XnfTir extends XjunctPartialQuantifierElimination {
 			m_nonStrictLowerBounds = nonStrictLowerBounds;
 			m_strictLowerBounds = strictLowerBounds;
 			m_antiDer = antiDer;
-			computeAll();
 		}
 		
-		void computeAll() {
+		Term computeAdDisjunction() {
 			ArrayList<Term> resultXJuncts = new ArrayList<Term>();
 			for (int i=0; i<Math.pow(2,m_antiDer.size()); i++) {
 				ArrayList<Term> resultAtoms = new ArrayList<Term>();
@@ -258,7 +288,7 @@ public class XnfTir extends XjunctPartialQuantifierElimination {
 				}
 				resultXJuncts.add(PartialQuantifierElimination.composeXjunctsInner(m_Script, m_quantifier, resultAtoms.toArray(new Term[resultAtoms.size()])));
 			}
-			
+			return PartialQuantifierElimination.composeXjunctsOuter(m_Script, m_quantifier, resultXJuncts.toArray(new Term[resultXJuncts.size()]));
 		}
 
 		private String computeRelationSymbol(int quantifier, Sort sort) {

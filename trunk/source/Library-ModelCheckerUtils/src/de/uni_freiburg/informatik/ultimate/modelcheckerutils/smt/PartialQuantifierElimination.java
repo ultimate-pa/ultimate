@@ -189,20 +189,29 @@ public class PartialQuantifierElimination {
 		// apply Infinity Restrictor Drop
 		Term termAfterIRD;
 		if (USE_IRD) {
-			XnfTir xnfIRD = new XnfTir(script, services);
+			Set<TermVariable> eliminateesTir = new HashSet<TermVariable>(eliminatees);
+			XnfTir xnfTir = new XnfTir(script, services);
 			Term[] oldParams = getXjunctsOuter(quantifier, result);
-			Term[] newParams = new Term[oldParams.length];
-			for (int i = 0; i < oldParams.length; i++) {
-				Set<TermVariable> eliminateesIRD = new HashSet<TermVariable>(eliminatees);
-				Term[] oldAtoms = getXjunctsInner(quantifier, oldParams[i]);
-				newParams[i] = composeXjunctsInner(script, quantifier, 
-						xnfIRD.tryToEliminate(quantifier, oldAtoms, eliminateesIRD));
-			}
+			Term[] newParams = xnfTir.tryToEliminate(quantifier, oldParams, eliminateesTir);
 			termAfterIRD = composeXjunctsOuter(script, quantifier, newParams);
-			result = termAfterIRD;
 			Set<TermVariable> remainingAfterIRD = new HashSet<TermVariable>(eliminatees);
-			remainingAfterIRD.retainAll(Arrays.asList(result.getFreeVars()));
+			remainingAfterIRD.retainAll(Arrays.asList(termAfterIRD.getFreeVars()));
 			eliminatees.retainAll(remainingAfterIRD);
+			result = termAfterIRD;
+//			XnfIrd xnfIRD = new XnfIrd(script, services);
+//			Term[] oldParams = getXjunctsOuter(quantifier, result);
+//			Term[] newParams = new Term[oldParams.length];
+//			for (int i = 0; i < oldParams.length; i++) {
+//				Set<TermVariable> eliminateesIRD = new HashSet<TermVariable>(eliminatees);
+//				Term[] oldAtoms = getXjunctsInner(quantifier, oldParams[i]);
+//				newParams[i] = composeXjunctsInner(script, quantifier, 
+//						xnfIRD.tryToEliminate(quantifier, oldAtoms, eliminateesIRD));
+//			}
+//			termAfterIRD = composeXjunctsOuter(script, quantifier, newParams);
+//			result = termAfterIRD;
+//			Set<TermVariable> remainingAfterIRD = new HashSet<TermVariable>(eliminatees);
+//			remainingAfterIRD.retainAll(Arrays.asList(result.getFreeVars()));
+//			eliminatees.retainAll(remainingAfterIRD);
 		}
 
 		if (eliminatees.isEmpty()) {

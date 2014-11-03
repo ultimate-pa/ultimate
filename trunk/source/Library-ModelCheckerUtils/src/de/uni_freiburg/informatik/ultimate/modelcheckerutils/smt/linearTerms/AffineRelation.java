@@ -72,8 +72,8 @@ public class AffineRelation {
 			case LESS:
 				// decrement affine term by one
 				m_RelationSymbol = RelationSymbol.LEQ;
-				m_AffineTerm = new AffineTerm(m_AffineTerm, 
-						new AffineTerm(m_AffineTerm.getSort(), Rational.ONE));
+				m_AffineTerm = new AffineTerm(difference, 
+						new AffineTerm(difference.getSort(), Rational.ONE));
 				break;
 			case GREATER:
 				// increment affine term by one
