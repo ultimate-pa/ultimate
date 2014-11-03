@@ -35,6 +35,7 @@ public class PartialQuantifierElimination {
 
 	static final boolean USE_UPD = true;
 	static final boolean USE_IRD = true;
+	static final boolean USE_TIR = true;
 	static final boolean USE_SOS = true;
 	static final boolean USE_USR = true;
 	
@@ -147,10 +148,11 @@ public class PartialQuantifierElimination {
 		Term result;
 
 		// transform to DNF (resp. CNF)
+		result = (new IteRemover(script)).transform(term);
 		if (quantifier == QuantifiedFormula.EXISTS) {
-			result = (new Dnf(script, services)).transform(term);
+			result = (new Dnf(script, services)).transform(result);
 		} else if (quantifier == QuantifiedFormula.FORALL) {
-			result = (new Cnf(script, services)).transform(term);
+			result = (new Cnf(script, services)).transform(result);
 		} else {
 			throw new AssertionError("unknown quantifier");
 		}
@@ -189,34 +191,45 @@ public class PartialQuantifierElimination {
 		// apply Infinity Restrictor Drop
 		Term termAfterIRD;
 		if (USE_IRD) {
-			Set<TermVariable> eliminateesTir = new HashSet<TermVariable>(eliminatees);
-			XnfTir xnfTir = new XnfTir(script, services);
+			XnfIrd xnfIRD = new XnfIrd(script, services);
 			Term[] oldParams = getXjunctsOuter(quantifier, result);
-			Term[] newParams = xnfTir.tryToEliminate(quantifier, oldParams, eliminateesTir);
+			Term[] newParams = new Term[oldParams.length];
+			for (int i = 0; i < oldParams.length; i++) {
+				Set<TermVariable> eliminateesIRD = new HashSet<TermVariable>(eliminatees);
+				Term[] oldAtoms = getXjunctsInner(quantifier, oldParams[i]);
+				newParams[i] = composeXjunctsInner(script, quantifier, 
+						xnfIRD.tryToEliminate(quantifier, oldAtoms, eliminateesIRD));
+			}
 			termAfterIRD = composeXjunctsOuter(script, quantifier, newParams);
-			Set<TermVariable> remainingAfterIRD = new HashSet<TermVariable>(eliminatees);
-			remainingAfterIRD.retainAll(Arrays.asList(termAfterIRD.getFreeVars()));
-			eliminatees.retainAll(remainingAfterIRD);
 			result = termAfterIRD;
-//			XnfIrd xnfIRD = new XnfIrd(script, services);
-//			Term[] oldParams = getXjunctsOuter(quantifier, result);
-//			Term[] newParams = new Term[oldParams.length];
-//			for (int i = 0; i < oldParams.length; i++) {
-//				Set<TermVariable> eliminateesIRD = new HashSet<TermVariable>(eliminatees);
-//				Term[] oldAtoms = getXjunctsInner(quantifier, oldParams[i]);
-//				newParams[i] = composeXjunctsInner(script, quantifier, 
-//						xnfIRD.tryToEliminate(quantifier, oldAtoms, eliminateesIRD));
-//			}
-//			termAfterIRD = composeXjunctsOuter(script, quantifier, newParams);
-//			result = termAfterIRD;
-//			Set<TermVariable> remainingAfterIRD = new HashSet<TermVariable>(eliminatees);
-//			remainingAfterIRD.retainAll(Arrays.asList(result.getFreeVars()));
-//			eliminatees.retainAll(remainingAfterIRD);
+			Set<TermVariable> remainingAfterIRD = new HashSet<TermVariable>(eliminatees);
+			remainingAfterIRD.retainAll(Arrays.asList(result.getFreeVars()));
+			eliminatees.retainAll(remainingAfterIRD);
 		}
 
 		if (eliminatees.isEmpty()) {
 			return result;
 		}
+		
+		
+		// apply TIR
+		Term termAfterTIR;
+		if (USE_TIR) {
+			Set<TermVariable> eliminateesTir = new HashSet<TermVariable>(eliminatees);
+			XnfTir xnfTir = new XnfTir(script, services);
+			Term[] oldParams = getXjunctsOuter(quantifier, result);
+			Term[] newParams = xnfTir.tryToEliminate(quantifier, oldParams, eliminateesTir);
+			termAfterTIR = composeXjunctsOuter(script, quantifier, newParams);
+			Set<TermVariable> remainingAfterTIR = new HashSet<TermVariable>(eliminatees);
+			remainingAfterTIR.retainAll(Arrays.asList(termAfterTIR.getFreeVars()));
+			eliminatees.retainAll(remainingAfterTIR);
+			result = termAfterTIR;
+		}
+
+		if (eliminatees.isEmpty()) {
+			return result;
+		}
+		
 
 		// apply Unconnected Parameter Deletion
 		Term termAfterUPD = null;
