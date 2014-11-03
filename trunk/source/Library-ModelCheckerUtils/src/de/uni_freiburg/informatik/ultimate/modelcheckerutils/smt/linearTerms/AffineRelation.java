@@ -60,7 +60,7 @@ public class AffineRelation {
 			difference = new AffineTerm(affineLhs, new AffineTerm(affineRhs, Rational.MONE));
 		}
 		if (makeNonStrict && difference.getSort().getName().equals("Int")) {
-			switch (m_RelationSymbol) {
+			switch (bnr.getRelationSymbol()) {
 			case DISTINCT:
 			case EQ:
 			case GEQ:
@@ -68,17 +68,18 @@ public class AffineRelation {
 				// relation symbol is not strict anyway
 				m_AffineTerm = difference; 
 				m_RelationSymbol = bnr.getRelationSymbol();
+				break;
 			case LESS:
 				// decrement affine term by one
 				m_RelationSymbol = RelationSymbol.LEQ;
 				m_AffineTerm = new AffineTerm(m_AffineTerm, 
-						new AffineTerm(m_AffineTerm.getSort(), Rational.MONE));
+						new AffineTerm(m_AffineTerm.getSort(), Rational.ONE));
 				break;
 			case GREATER:
 				// increment affine term by one
 				m_RelationSymbol = RelationSymbol.GEQ;
-				m_AffineTerm = new AffineTerm(m_AffineTerm, 
-						new AffineTerm(m_AffineTerm.getSort(), Rational.ONE));
+				m_AffineTerm = new AffineTerm(difference, 
+						new AffineTerm(difference.getSort(), Rational.MONE));
 				break;
 			default:
 				throw new AssertionError("unknown symbol");

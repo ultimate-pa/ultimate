@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.partialQuantifierElimination;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -13,6 +14,7 @@ import org.apache.log4j.Logger;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SafeSubstitution;
@@ -131,6 +133,14 @@ public class XnfTir extends XnfPartialQuantifierElimination {
 				}
 			}
 		}
+		BuildingInstructions bi = new BuildingInstructions(quantifier,
+				eliminatee.getSort(),
+				termsWithoutEliminatee, 
+				nonStrictUpperBounds, 
+				strictUpperBounds, 
+				nonStrictLowerBounds, 
+				strictLowerBounds, 
+				antiDer);
 		List<Term> resultAtoms = new ArrayList<Term>();
 		for (Term nonStrictlowerBound : nonStrictLowerBounds) {
 			for (Term nonStrictUpperBound : nonStrictUpperBounds) {
@@ -167,27 +177,79 @@ public class XnfTir extends XnfPartialQuantifierElimination {
 		return rel.positiveNormalForm(m_Script);
 	}
 
-	public static Term[] derSimple(Script script, int quantifier, Term[] inputAtoms, TermVariable tv, Logger logger) {
-		final Term[] resultAtoms;
-		EqualityInformation eqInfo = EqualityInformation.getEqinfo(script, tv, inputAtoms, null, quantifier, logger);
-		if (eqInfo == null) {
-			logger.debug(new DebugMessage("not eliminated quantifier via DER for {0}", tv));
-			resultAtoms = null;
-		} else {
-			logger.debug(new DebugMessage("eliminated quantifier via DER for {0}", tv));
-			resultAtoms = new Term[inputAtoms.length - 1];
-			Map<Term, Term> substitutionMapping = Collections.singletonMap(eqInfo.getVariable(), eqInfo.getTerm());
-			SafeSubstitution substitution = new SafeSubstitution(script, substitutionMapping);
-			for (int i = 0; i < eqInfo.getIndex(); i++) {
-				resultAtoms[i] = substitution.transform(inputAtoms[i]);
-			}
-			for (int i = eqInfo.getIndex() + 1; i < inputAtoms.length; i++) {
-				resultAtoms[i - 1] = substitution.transform(inputAtoms[i]);
-			}
+
+	private class BuildingInstructions {
+		private final int m_quantifier;
+		private final Sort m_Sort;
+		private final List<Term> m_termsWithoutEliminatee;
+		private final List<Term> m_nonStrictUpperBounds;
+		private final List<Term> m_strictUpperBounds;
+		private final List<Term> m_nonStrictLowerBounds;
+		private final List<Term> m_strictLowerBounds;
+		private final List<Term> m_antiDer;
+		public BuildingInstructions(int quantifier,
+				Sort sort,
+				List<Term> termsWithoutEliminatee,
+				List<Term> nonStrictUpperBounds, List<Term> strictUpperBounds,
+				List<Term> nonStrictLowerBounds, List<Term> strictLowerBounds,
+				List<Term> antiDer) {
+			super();
+			m_quantifier = quantifier;
+			m_Sort = sort;
+			m_termsWithoutEliminatee = termsWithoutEliminatee;
+			m_nonStrictUpperBounds = nonStrictUpperBounds;
+			m_strictUpperBounds = strictUpperBounds;
+			m_nonStrictLowerBounds = nonStrictLowerBounds;
+			m_strictLowerBounds = strictLowerBounds;
+			m_antiDer = antiDer;
 		}
-		return resultAtoms;
+		
+		void computeAll() {
+			ArrayList<Term> adLowerBounds = new ArrayList<Term>();
+			ArrayList<Term> adUpperBounds = new ArrayList<Term>();
+			for (int i=0; i<Math.pow(2,m_antiDer.size()); i++) {
+				for (int k=0; k<m_antiDer.size(); k++) {
+					// zero means lower -  one means upper
+					if (BigInteger.valueOf(i).testBit(k)) {
+						adUpperBounds.add(m_antiDer.get(k));
+					} else {
+						adLowerBounds.add(m_antiDer.get(k));
+					}
+				}
+			}
+			switch (m_Sort.getName()) {
+			case "Int":
+				adUpperBounds = add(adUpperBounds, m_Script.numeral("-1"));
+				adLowerBounds = add(adLowerBounds, m_Script.numeral("1"));
+				break;
+			case "Real":
+				// do nothing
+				break;
+			default:
+				break;
+			}
+			
+		}
+
+		/**
+		 * Add Term summand2 
+		 * @param adUpperBounds
+		 * @param term
+		 * @return
+		 */
+		private ArrayList<Term> add(ArrayList<Term> terms, Term summand) {
+			assert summand.getSort().getName().equals("Int");
+			ArrayList<Term> result = new ArrayList<Term>();
+			for (Term term : terms) {
+				assert term.getSort().getName().equals("Int");
+				result.add(m_Script.term("+", term, summand));
+			}
+			return result;
+		}
+
+		
+		
 	}
-	
 	
 
 	

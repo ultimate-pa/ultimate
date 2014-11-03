@@ -22,6 +22,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Cnf
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Dnf;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.partialQuantifierElimination.XnfDer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.partialQuantifierElimination.XnfIrd;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.partialQuantifierElimination.XnfTir;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.partialQuantifierElimination.XnfUsr;
 import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 
@@ -188,7 +189,7 @@ public class PartialQuantifierElimination {
 		// apply Infinity Restrictor Drop
 		Term termAfterIRD;
 		if (USE_IRD) {
-			XnfIrd xnfIRD = new XnfIrd(script, services);
+			XnfTir xnfIRD = new XnfTir(script, services);
 			Term[] oldParams = getXjunctsOuter(quantifier, result);
 			Term[] newParams = new Term[oldParams.length];
 			for (int i = 0; i < oldParams.length; i++) {
