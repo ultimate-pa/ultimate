@@ -211,9 +211,13 @@ public class ConversionVisitor implements IMinimizationVisitor {
 								+ " is no ShortcutCodeBlock");
 					}
 				}
-				mLogger.debug("<-Converted Formula->: " + cb.getTransitionFormula());
-				cb.connectSource(getReferencedNode(edge.getSource()));
-				cb.connectTarget(getReferencedNode(edge.getTarget()));
+				if (cb != null) {
+					mLogger.debug("<-Converted Formula->: " + cb.getTransitionFormula());
+					cb.connectSource(getReferencedNode(edge.getSource()));
+					cb.connectTarget(getReferencedNode(edge.getTarget()));
+				} else {
+					mLogger.debug("Formula not converted, probably due to timeout.");
+				}
 				// now we print out all edges which we added more than two times
 				for (IMinimizedEdge key : mCheckForMultipleFormula.keySet()) {
 					if (mCheckForMultipleFormula.get(key) >= 2) {
