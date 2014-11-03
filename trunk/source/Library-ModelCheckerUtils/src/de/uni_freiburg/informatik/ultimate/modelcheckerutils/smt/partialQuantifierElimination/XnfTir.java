@@ -105,6 +105,10 @@ public class XnfTir extends XnfPartialQuantifierElimination {
 					// no chance to eliminate the variable
 					return null;
 				}
+				if (!rel.isVariable(eliminatee)) {
+					// eliminatee occurs probably only in select
+					return null;
+				}
 				try {
 					eliminateeOnLhs = rel.onLeftHandSideOnly(m_Script, eliminatee);
 				} catch (NotAffineException e) {
