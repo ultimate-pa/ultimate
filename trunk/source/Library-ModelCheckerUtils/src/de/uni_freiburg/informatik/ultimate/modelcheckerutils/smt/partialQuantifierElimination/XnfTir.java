@@ -182,12 +182,12 @@ public class XnfTir extends XnfPartialQuantifierElimination {
 		final List<Term> resultDisjunctions;
 		if (antiDer.isEmpty()) {
 			resultDisjunctions = new ArrayList<Term>();
-			Term tmp = SmtUtils.and(m_Script, resultAtoms);
+			Term tmp = PartialQuantifierElimination.composeXjunctsInner(m_Script, quantifier, resultAtoms.toArray(new Term[resultAtoms.size()]));
 			assert !Arrays.asList(tmp.getFreeVars()).contains(eliminatee) : "not eliminated";
 			resultDisjunctions.add(tmp);
 		} else {
 			resultAtoms.add(bi.computeAdDisjunction());
-			Term tmp = SmtUtils.and(m_Script, resultAtoms);
+			Term tmp = PartialQuantifierElimination.composeXjunctsInner(m_Script, quantifier, resultAtoms.toArray(new Term[resultAtoms.size()]));
 			Term disjunction;
 			if (quantifier == QuantifiedFormula.EXISTS) {
 				disjunction = (new Dnf(m_Script, m_Services)).transform(tmp);
@@ -254,16 +254,18 @@ public class XnfTir extends XnfPartialQuantifierElimination {
 						adLowerBounds.add(m_antiDer.get(k));
 					}
 				}
-				switch (m_Sort.getName()) {
-				case "Int":
-					adUpperBounds = add(adUpperBounds, m_Script.numeral("-1"));
-					adLowerBounds = add(adLowerBounds, m_Script.numeral("1"));
-					break;
-				case "Real":
-					// do nothing
-					break;
-				default:
-					break;
+				if (m_quantifier == QuantifiedFormula.EXISTS) {
+					switch (m_Sort.getName()) {
+					case "Int":
+						adUpperBounds = add(adUpperBounds, m_Script.numeral("-1"));
+						adLowerBounds = add(adLowerBounds, m_Script.numeral("1"));
+						break;
+					case "Real":
+						// do nothing
+						break;
+					default:
+						break;
+					}
 				}
 				String relSymb = computeRelationSymbol(m_quantifier, m_Sort);
 				for (Term adLower : adLowerBounds) {
