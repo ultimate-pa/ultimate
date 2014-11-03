@@ -76,10 +76,17 @@ public class RewriteEquality extends TransformerPreProcessor {
 				ApplicationTerm appt = (ApplicationTerm) term;
 				if (appt.getFunction().getName().equals("=") &&
 						!appt.getParameters()[0].getSort().getName().equals("Bool")) {
-					assert(appt.getParameters().length == 2);
+					assert(appt.getParameters().length == 2) : "equality with more than two parameters not yet supported";
 					Term param1 = m_Script.term("<=", appt.getParameters());
 					Term param2 = m_Script.term(">=", appt.getParameters());
 					setResult(m_Script.term("and", param1, param2));
+					return;
+				} else if (appt.getFunction().getName().equals("distinct") &&
+						!appt.getParameters()[0].getSort().getName().equals("Bool")) {
+					assert(appt.getParameters().length == 2) : "distinct with more than two parameters not yet supported";
+					Term param1 = m_Script.term("<", appt.getParameters());
+					Term param2 = m_Script.term(">", appt.getParameters());
+					setResult(m_Script.term("or", param1, param2));
 					return;
 				}
 			}
