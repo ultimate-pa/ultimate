@@ -14,6 +14,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SafeSubstitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.AffineRelation;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.NotAffineException;
 import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 
 /**
@@ -67,7 +69,7 @@ public class XnfDer extends XnfPartialQuantifierElimination {
 	 * 
 	 * @param logger
 	 */
-	public static Term[] derSimple(Script script, int quantifier, Term[] inputAtoms, TermVariable tv, Logger logger) {
+	public Term[] derSimple(Script script, int quantifier, Term[] inputAtoms, TermVariable tv, Logger logger) {
 		final Term[] resultAtoms;
 		EqualityInformation eqInfo = EqualityInformation.getEqinfo(script, tv, inputAtoms, null, quantifier, logger);
 		if (eqInfo == null) {
@@ -79,16 +81,30 @@ public class XnfDer extends XnfPartialQuantifierElimination {
 			Map<Term, Term> substitutionMapping = Collections.singletonMap(eqInfo.getVariable(), eqInfo.getTerm());
 			SafeSubstitution substitution = new SafeSubstitution(script, substitutionMapping);
 			for (int i = 0; i < eqInfo.getIndex(); i++) {
-				resultAtoms[i] = substitution.transform(inputAtoms[i]);
+				resultAtoms[i] = substituteAndNormalize(substitution, inputAtoms[i]);
 			}
 			for (int i = eqInfo.getIndex() + 1; i < inputAtoms.length; i++) {
-				resultAtoms[i - 1] = substitution.transform(inputAtoms[i]);
+				resultAtoms[i - 1] = substituteAndNormalize(substitution, inputAtoms[i]);
 			}
 		}
 		return resultAtoms;
 	}
 	
-	
+	/**
+	 * Apply substitution to term and normalize afterwards if the substitution modified the term.
+	 */
+	private Term substituteAndNormalize(SafeSubstitution substitution, Term term) {
+		Term result =  substitution.transform(term);
+		if (term != result) {
+			try {
+				AffineRelation afr = new AffineRelation(result, m_Logger);
+				result = afr.positiveNormalForm(m_Script);
+			} catch (NotAffineException e) {
+				// Do nothing - we return result.
+			}
+		}
+		return result;
+	}
 
 	
 
