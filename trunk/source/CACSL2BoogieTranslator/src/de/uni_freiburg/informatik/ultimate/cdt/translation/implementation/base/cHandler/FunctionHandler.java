@@ -607,7 +607,7 @@ public class FunctionHandler {
 
 	private Result handleFunctionCallGivenNameAndArguments(Dispatcher main, MemoryHandler memoryHandler,
 			StructHandler structHandler, ILocation loc, String methodName, IASTInitializerClause[] arguments) {
-		if (methodName.equals("malloc") || methodName.equals("alloca")) {
+		if (methodName.equals("malloc") || methodName.equals("alloca") || methodName.equals("__builtin_alloca")) {
 			assert arguments.length == 1;
 			Result sizeRes = main.dispatch(arguments[0]);
 			assert sizeRes instanceof ResultExpression;
@@ -621,7 +621,7 @@ public class FunctionHandler {
 
 			// for alloc a we have to free the variable ourselves when the
 			// stackframe is closed, i.e. at a return
-			if (methodName.equals("alloca")) {
+			if (methodName.equals("alloca") || methodName.equals("__builtin_alloca")) {
 				memoryHandler.addVariableToBeFreed(main, 
 						new LocalLValueILocationPair((LocalLValue) mallocRex.lrVal, 
 								LocationFactory.createIgnoreLocation(loc)));
