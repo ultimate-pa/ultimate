@@ -12,7 +12,7 @@ public class Bugs extends TACASInterpolation2015 {
 		// addTestCasesFixed("AutomizerC.xml",
 		// "TACASInterpolation2015/ForwardPredicates.epf", testcases);
 		//
-		addTestCasesFixed("AutomizerC.xml", "automizer/ForwardPredicates_SvcompReachPreciseMM.epf", testcases);
+		addTestCasesFixed("AutomizerC.xml", "svcomp2015/svComp-32bit-simple-Automizer.epf", testcases);
 
 		// addTestCasesFixed("AutomizerC.xml",
 		// "svcomp2015/svComp-32bit-precise.epf", testcases);
@@ -63,7 +63,7 @@ public class Bugs extends TACASInterpolation2015 {
 		// @formatter:off
 		return new String[] { 
 //			"examples/svcomp/ssh/s3_srvr.blast.16_false-unreach-call.i.cil.c",
-//			"examples/svcomp/ntdrivers-simplified/floppy_simpl3_false-unreach-call_true-termination.cil.c",
+			"examples/svcomp/ntdrivers-simplified/floppy_simpl3_false-unreach-call_true-termination.cil.c",
 //			"examples/svcomp/seq-pthread/cs_lazy_false-unreach-call.i",
 			
 				//nutz, backtranslation, works

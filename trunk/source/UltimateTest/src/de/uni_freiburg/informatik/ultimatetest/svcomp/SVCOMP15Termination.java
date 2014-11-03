@@ -32,7 +32,7 @@ public class SVCOMP15Termination extends AbstractSVCOMP15TestSuite {
 
 		/* Automizer */
 		rtr.add(getTestDefinitionFromExamples("Termination-crafted", "BuchiAutomizerCWithBlockEncoding.xml",
-				"svcomp2015/svComp-64bit-termination-Automizer", getTimeout()));
+				"svcomp2015/svComp-64bit-termination-Automizer.epf", getTimeout()));
 
 		return rtr;
 	}
