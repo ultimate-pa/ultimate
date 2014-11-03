@@ -63,12 +63,12 @@ public class WitnessManager {
 				continue;
 			}
 			String filename = null;
-			if (writeInWorkingDir) {
+			if (writeInWorkingDir && svcompWitness != null) {
 				filename = writeWitness(svcompWitness, null);
 				filenamesToDelete.add(filename);
 			}
 
-			if (writeBesideInputFile) {
+			if (writeBesideInputFile && svcompWitness != null) {
 				filename = writeWitness(svcompWitness, cex.getLocation().getFileName());
 				filenamesToDelete.add(filename);
 			}

@@ -1,4 +1,5 @@
 step0: z := 0;
 values0:  z=0
-step1: requires x > 0;
-values1:  z=0
+step1: call z := inc(z); [FCALL]
+step2: requires x > 0;
+values2:  z=0

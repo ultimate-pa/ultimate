@@ -86,9 +86,8 @@ public class BoogieProgramExecution implements IProgramExecution<BoogieASTNode, 
 	}
 
 	private String ppstoString(ProgramState<Expression> pps) {
-		String result;
 		if (pps == null) {
-			result = null;
+			return null;
 		} else {
 			List<Expression> keys = new ArrayList<>(pps.getVariables());
 			Collections.sort(keys, new Comparator<Expression>() {
@@ -106,9 +105,12 @@ public class BoogieProgramExecution implements IProgramExecution<BoogieASTNode, 
 				String val = BoogiePrettyPrinter.print(value);
 				sb.append(var + "=" + val);
 			}
-			result = sb.toString();
+			if (sb.length() > 0) {
+				return sb.toString();
+			} else {
+				return null;
+			}
 		}
-		return result;
 	}
 
 	@Override
