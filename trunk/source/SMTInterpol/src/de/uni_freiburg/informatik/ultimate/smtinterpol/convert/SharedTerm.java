@@ -87,16 +87,7 @@ public class SharedTerm {
 	}
 	
 	public EqualityProxy createEquality(SharedTerm other) {
-		SharedTerm a = this, b = other;
-		if (getSort() != other.getSort()) {
-			// LIRA: convert both terms to reals.
-			if (getSort().getName().equals("Real")) {
-				b = mClausifier.toReal(b);
-			} else {
-				a = mClausifier.toReal(a);
-			}
-		}
-		return mClausifier.createEqualityProxy(a, b);
+		return mClausifier.createEqualityProxy(this, other);
 	}
 
 	public void unshareLA() {

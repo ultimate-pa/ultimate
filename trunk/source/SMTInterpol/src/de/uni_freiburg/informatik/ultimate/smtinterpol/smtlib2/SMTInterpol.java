@@ -403,6 +403,21 @@ public class SMTInterpol extends NoopScript {
 			return res;
 		}
 	}
+	
+	private static class TimeoutTask extends TimerTask {
+		private final DPLLEngine mEngine;
+		public TimeoutTask(DPLLEngine engine) {
+			mEngine = engine;
+		}
+		@Override
+		public void run() {
+			synchronized (mEngine) {
+				mEngine.setCompleteness(DPLLEngine.INCOMPLETE_TIMEOUT);
+				mEngine.stop();
+			}
+		}
+	}
+	
 	private CheckType mCheckType = CheckType.FULL;
 	private DPLLEngine mEngine;
 	private Clausifier mClausifier;
@@ -470,6 +485,9 @@ public class SMTInterpol extends NoopScript {
 	private boolean mSimplifyInterpolants = false;
 	private CheckType mSimplifyCheckType = CheckType.QUICK;
 	private boolean mSimplifyRepeatedly = true;
+	
+	// Timeout handling
+	private Timer mTimer;
 	
 	// The option numbers
 	private final static int OPT_PRINT_SUCCESS = 0;
@@ -668,10 +686,7 @@ public class SMTInterpol extends NoopScript {
 			for (Map.Entry<String, Object> me : options.entrySet())
 				setOption(me.getKey(), me.getValue());
 		mCancel = other.mCancel;
-		mEngine = new DPLLEngine(getTheory(), mLogger, mCancel);
-		mClausifier = new Clausifier(mEngine, 0);
-		mClausifier.setLogic(getTheory().getLogic());
-		mEngine.getRandom().setSeed(mRandomSeed);
+		setupClausifier(getTheory().getLogic());
 	}
 	
 	// Called in ctor => make it final
@@ -720,20 +735,10 @@ public class SMTInterpol extends NoopScript {
 			throw new SMTLIBException("No logic set!");
 		mModel = null;
 		mAssertionStackModified = false;
-		Timer timer = null;
+		TimeoutTask timer = null;
 		if (mTimeout > 0) {
-			timer = new Timer("Timing thread",true);
-			timer.schedule(new TimerTask() {
-
-				@Override
-				public void run() {
-					synchronized (mEngine) {
-						mEngine.setCompleteness(DPLLEngine.INCOMPLETE_TIMEOUT);
-						mEngine.stop();
-					}
-				}
-			
-			}, mTimeout);
+			timer = new TimeoutTask(mEngine);
+			getTimer().schedule(timer, mTimeout);
 		}
 		
 		LBool result = LBool.UNKNOWN;
@@ -851,10 +856,21 @@ public class SMTInterpol extends NoopScript {
 	@Override
 	public void setLogic(Logics logic)
 		throws UnsupportedOperationException, SMTLIBException {
-		int proofMode = getProofMode();
-		mSolverSetup = new SMTInterpolSetup(proofMode);
+		mSolverSetup = new SMTInterpolSetup(getProofMode());
 		super.setLogic(logic);
+		setupClausifier(logic);
+	}
+
+	/**
+	 * Setup the clausifier and the engine according to the logic,
+	 * the current proof production mode, and some other options.
+	 * @param logic the SMT-LIB logic to use.
+	 * @throws UnsupportedOperationException if the logic is not supported
+	 * by SMTInterpol.
+	 */
+	private void setupClausifier(Logics logic) {
 		try {
+			int proofMode = getProofMode();
 			mEngine = new DPLLEngine(getTheory(), mLogger, mCancel);
 			mClausifier = new Clausifier(mEngine, proofMode);
 			// This has to be before set-logic since we need to capture
@@ -1607,7 +1623,7 @@ public class SMTInterpol extends NoopScript {
 	 */
 	public Logger getLogger() {
 		return mLogger;
-	}	
+	}
 
 	protected void setEngine(DPLLEngine engine) {
 		mEngine = engine;
@@ -1839,5 +1855,12 @@ public class SMTInterpol extends NoopScript {
 			throw new UnsupportedOperationException(
 					"SMTInterpol does not support Arrays with Boolean indices");
 		super.declareFun(fun, paramSorts, resultSort);
+	}
+	
+	private Timer getTimer() {
+		if (mTimer == null) {
+			mTimer = new Timer("SMTInterpol Timeout Handler", true);
+		}
+		return mTimer;
 	}
 }

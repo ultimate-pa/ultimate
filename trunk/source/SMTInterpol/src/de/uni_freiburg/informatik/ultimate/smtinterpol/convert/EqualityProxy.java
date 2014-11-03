@@ -158,6 +158,16 @@ public class EqualityProxy {
 				mLhs.shareWithLinAr();
 		}
 		
+		if (mLhs.getSort() != mRhs.getSort()) {
+			/* This can only happen in Logic LIRA, where one of the
+			 * shared terms is integer and the other is real.
+			 *
+			 * In this case we need to create the equality in the LASolver
+			 * to check for integral values for the integer part.
+			 */
+			return createLAEquality();
+		}
+		
 		/* check if the shared terms share at least one theory. */
 		if (!((mLhs.mCCterm != null && mRhs.mCCterm != null)
 				|| (mLhs.mOffset != null && mRhs.mOffset != null))) {
@@ -173,7 +183,7 @@ public class EqualityProxy {
 		} else {
 			/* create CC equality */
 			return mClausifier.getCClosure().createCCEquality(
-			        mClausifier.getStackLevel(), mLhs.mCCterm, mRhs.mCCterm);
+					mClausifier.getStackLevel(), mLhs.mCCterm, mRhs.mCCterm);
 		}
 	}
 	
