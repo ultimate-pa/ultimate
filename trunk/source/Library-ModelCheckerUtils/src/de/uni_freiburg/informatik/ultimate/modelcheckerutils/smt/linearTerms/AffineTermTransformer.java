@@ -42,9 +42,11 @@ public class AffineTermTransformer extends TermTransformer {
 				AffineTerm result = convertToReal(appTerm);
 				setResult(result);
 				return;
+			} else if (funName.equals("select")) {
+				setResult(term);
+				return;
 			} else {
-				AffineTerm result = new AffineTerm(appTerm);
-				setResult(result);
+				resultIsNotAffine();
 				return;
 			}
 		} else if (term instanceof ConstantTerm) {
