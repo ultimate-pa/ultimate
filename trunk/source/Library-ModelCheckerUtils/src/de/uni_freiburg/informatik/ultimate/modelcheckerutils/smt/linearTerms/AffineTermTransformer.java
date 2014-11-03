@@ -43,7 +43,8 @@ public class AffineTermTransformer extends TermTransformer {
 				setResult(result);
 				return;
 			} else if (funName.equals("select")) {
-				setResult(term);
+				AffineTerm result = new AffineTerm(appTerm);
+				setResult(result);
 				return;
 			} else {
 				resultIsNotAffine();
