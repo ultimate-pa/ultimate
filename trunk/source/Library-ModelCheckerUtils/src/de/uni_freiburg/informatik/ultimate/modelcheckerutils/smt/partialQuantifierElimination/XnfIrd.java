@@ -19,7 +19,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.Aff
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.NotAffineException;
 import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 
-public class XnfIrd extends XnfPartialQuantifierElimination {
+public class XnfIrd extends XjunctPartialQuantifierElimination {
 
 	public XnfIrd(Script script, IUltimateServiceProvider services) {
 		super(script, services);

@@ -17,6 +17,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SafeSubstitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.AffineRelation;
@@ -29,7 +30,7 @@ import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
  * Transitive inequality resolution (TIR) for terms in XNF.
  * @author Matthias Heizmann
  */
-public class XnfTir extends XnfPartialQuantifierElimination {
+public class XnfTir extends XjunctPartialQuantifierElimination {
 
 	public XnfTir(Script script, IUltimateServiceProvider services) {
 		super(script, services);
@@ -202,12 +203,15 @@ public class XnfTir extends XnfPartialQuantifierElimination {
 			m_nonStrictLowerBounds = nonStrictLowerBounds;
 			m_strictLowerBounds = strictLowerBounds;
 			m_antiDer = antiDer;
+			computeAll();
 		}
 		
 		void computeAll() {
-			ArrayList<Term> adLowerBounds = new ArrayList<Term>();
-			ArrayList<Term> adUpperBounds = new ArrayList<Term>();
+			ArrayList<Term> resultXJuncts = new ArrayList<Term>();
 			for (int i=0; i<Math.pow(2,m_antiDer.size()); i++) {
+				ArrayList<Term> resultAtoms = new ArrayList<Term>();
+				ArrayList<Term> adLowerBounds = new ArrayList<Term>();
+				ArrayList<Term> adUpperBounds = new ArrayList<Term>();
 				for (int k=0; k<m_antiDer.size(); k++) {
 					// zero means lower -  one means upper
 					if (BigInteger.valueOf(i).testBit(k)) {
@@ -216,19 +220,60 @@ public class XnfTir extends XnfPartialQuantifierElimination {
 						adLowerBounds.add(m_antiDer.get(k));
 					}
 				}
-			}
-			switch (m_Sort.getName()) {
-			case "Int":
-				adUpperBounds = add(adUpperBounds, m_Script.numeral("-1"));
-				adLowerBounds = add(adLowerBounds, m_Script.numeral("1"));
-				break;
-			case "Real":
-				// do nothing
-				break;
-			default:
-				break;
+				switch (m_Sort.getName()) {
+				case "Int":
+					adUpperBounds = add(adUpperBounds, m_Script.numeral("-1"));
+					adLowerBounds = add(adLowerBounds, m_Script.numeral("1"));
+					break;
+				case "Real":
+					// do nothing
+					break;
+				default:
+					break;
+				}
+				String relSymb = computeRelationSymbol(m_quantifier, m_Sort);
+				for (Term adLower : adLowerBounds) {
+					for (Term adUpper : adUpperBounds) {
+						resultAtoms.add(buildInequality(
+								relSymb, adLower, adUpper));
+					}
+					
+				}
+				
+				for (Term adLower : adLowerBounds) {
+					for (Term nonStrictUpperBound : m_nonStrictUpperBounds) {
+						resultAtoms.add(buildInequality(relSymb, adLower, nonStrictUpperBound));
+					}
+					for (Term strictUpperBound : m_strictUpperBounds) {
+						resultAtoms.add(buildInequality(relSymb, adLower, strictUpperBound));
+					}
+				}
+				for (Term adUpper : adUpperBounds) {
+					for (Term nonStrictLowerBound : m_nonStrictLowerBounds) {
+						resultAtoms.add(buildInequality(relSymb, nonStrictLowerBound, adUpper));
+					}
+					for (Term strictLowerBound : m_strictLowerBounds) {
+						resultAtoms.add(buildInequality(relSymb, strictLowerBound, adUpper));
+					}
+				}
+				resultXJuncts.add(PartialQuantifierElimination.composeXjunctsInner(m_Script, m_quantifier, resultAtoms.toArray(new Term[resultAtoms.size()])));
 			}
 			
+		}
+
+		private String computeRelationSymbol(int quantifier, Sort sort) {
+			if (quantifier == QuantifiedFormula.FORALL) {
+				return "<=";
+			} else {
+				switch (m_Sort.getName()) {
+				case "Int":
+					return "<=";
+				case "Real":
+					return "<";
+				default:
+					throw new UnsupportedOperationException("unknown Sort");
+				}
+			}
 		}
 
 		/**

@@ -22,7 +22,7 @@ import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
  * Destructive equality resolution (DER) for terms in XNF.
  * @author Matthias Heizmann
  */
-public class XnfDer extends XnfPartialQuantifierElimination {
+public class XnfDer extends XjunctPartialQuantifierElimination {
 
 	public XnfDer(Script script, IUltimateServiceProvider services) {
 		super(script, services);

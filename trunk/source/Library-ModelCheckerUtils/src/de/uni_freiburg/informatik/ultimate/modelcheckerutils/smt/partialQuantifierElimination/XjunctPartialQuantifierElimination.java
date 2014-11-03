@@ -11,17 +11,17 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.ModelCheckerUtils;
 
 /**
- * Abstract superclass for our partical quantifier elimination for terms in XNF.
+ * Abstract superclass for our partial quantifier elimination for Xjuncts of a XNF.
  * @author Matthias Heizmann
  */
 
-public abstract class XnfPartialQuantifierElimination {
+public abstract class XjunctPartialQuantifierElimination {
 	protected final Script m_Script;
 	protected final IUltimateServiceProvider m_Services; 
 	protected final Logger m_Logger;
 	
 	
-	public XnfPartialQuantifierElimination(Script script,
+	public XjunctPartialQuantifierElimination(Script script,
 			IUltimateServiceProvider services) {
 		super();
 		m_Script = script;

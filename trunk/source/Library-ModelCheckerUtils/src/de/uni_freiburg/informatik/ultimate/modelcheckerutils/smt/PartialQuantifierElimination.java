@@ -44,7 +44,7 @@ public class PartialQuantifierElimination {
 	 * For the case of existential quantification:
 	 * Compose disjuncts to a disjunction.
 	 */
-	private static Term composeXjunctsOuter(Script script, int quantifier, Term[] xjunctsOuter) {
+	public static Term composeXjunctsOuter(Script script, int quantifier, Term[] xjunctsOuter) {
 		final Term result;
 		if (quantifier == QuantifiedFormula.EXISTS) {
 			result = Util.or(script, xjunctsOuter);
@@ -61,7 +61,7 @@ public class PartialQuantifierElimination {
 	 * For the case of existential quantification:
 	 * Compose atoms to a conjunction.
 	 */
-	private static Term composeXjunctsInner(Script script, int quantifier, Term[] xjunctsInner) {
+	public static Term composeXjunctsInner(Script script, int quantifier, Term[] xjunctsInner) {
 		final Term result;
 		if (quantifier == QuantifiedFormula.EXISTS) {
 			result = Util.and(script, xjunctsInner);
@@ -79,7 +79,7 @@ public class PartialQuantifierElimination {
 	 * Get all disjuncts of a formula in DNF. 
 	 * (conjuncts of CNF for case of universal quantification)
 	 */
-	private static Term[] getXjunctsOuter(int quantifier, Term xnf) {
+	public static Term[] getXjunctsOuter(int quantifier, Term xnf) {
 		Term[] xjunctsOuter;
 		if (quantifier == QuantifiedFormula.EXISTS) {
 			xjunctsOuter = SmtUtils.getDisjuncts(xnf);
@@ -97,7 +97,7 @@ public class PartialQuantifierElimination {
 	 * Get all conjuncts of a conjunction. 
 	 * (disjuncts of disjunction in case of universal quantification)
 	 */
-	private static Term[] getXjunctsInner(int quantifier, Term xnf) {
+	public static Term[] getXjunctsInner(int quantifier, Term xnf) {
 		Term[] xjunctsOuter;
 		if (quantifier == QuantifiedFormula.EXISTS) {
 			xjunctsOuter = SmtUtils.getConjuncts(xnf);

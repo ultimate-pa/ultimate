@@ -15,7 +15,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ApplicationTerm
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSelect;
 import de.uni_freiburg.informatik.ultimate.util.HashRelation;
 
-public class XnfUsr extends XnfPartialQuantifierElimination {
+public class XnfUsr extends XjunctPartialQuantifierElimination {
 	
 	private final Set<TermVariable> affectedEliminatees = new HashSet<>();
 
