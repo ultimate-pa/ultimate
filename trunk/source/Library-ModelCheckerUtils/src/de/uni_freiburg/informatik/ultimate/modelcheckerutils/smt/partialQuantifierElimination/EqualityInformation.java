@@ -98,7 +98,7 @@ public class EqualityInformation {
 			} else {
 				AffineRelation affRel;
 				try {
-					affRel = new AffineRelation(context[i], logger);
+					affRel = new AffineRelation(context[i], false);
 				} catch (NotAffineException e1) {
 					continue;
 				}

@@ -3,8 +3,6 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 
-import org.apache.log4j.Logger;
-
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
@@ -22,10 +20,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
  */
 public class AffineTermTransformer extends TermTransformer {
 
-	private final Logger mLogger;
-
-	public AffineTermTransformer(Logger logger) {
-		mLogger = logger;
+	public AffineTermTransformer() {
 	}
 
 	@Override
@@ -241,7 +236,6 @@ public class AffineTermTransformer extends TermTransformer {
 	 * set result to auxiliary error term
 	 */
 	private void resultIsNotAffine() {
-		mLogger.debug("not affine");
 		setResult(new AffineTerm());
 	}
 

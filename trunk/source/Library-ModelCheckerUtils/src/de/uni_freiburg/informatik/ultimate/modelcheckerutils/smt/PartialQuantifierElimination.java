@@ -506,7 +506,7 @@ public class PartialQuantifierElimination {
 			} else {
 				AffineRelation affineRelation;
 				try {
-					affineRelation = new AffineRelation(oldParam, logger);
+					affineRelation = new AffineRelation(oldParam, false);
 				} catch (NotAffineException e) {
 					// unable to eliminate quantifier
 					return null;

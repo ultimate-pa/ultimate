@@ -4,8 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map.Entry;
 
-import org.apache.log4j.Logger;
-
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -27,15 +25,22 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.Bin
  */
 public class AffineRelation {
 	private final Term m_OriginalTerm;
-	private final RelationSymbol m_RelationSymbol;
+	private RelationSymbol m_RelationSymbol;
 	/**
 	 * Affine term ψ such that the relation ψ ▷ 0 is equivalent to the
 	 * m_OriginalTerm.
 	 * 
 	 */
-	private final AffineTerm m_AffineTerm;
+	private AffineTerm m_AffineTerm;
 
-	public AffineRelation(Term term, Logger logger) throws NotAffineException {
+	/**
+	 * Transform Term into AffineRelation.
+	 * @param term Term to which the resulting AffineRelation is equivalent.
+	 * @param makeNonStrict if true and sort is Int, the resulting 
+	 * AffineRelation does not have strict inequalities.
+	 * @throws NotAffineException Thrown if Term is not affine.
+	 */
+	public AffineRelation(Term term, boolean makeNonStrict) throws NotAffineException {
 		m_OriginalTerm = term;
 		BinaryNumericRelation bnr = null;
 		try {
@@ -43,15 +48,73 @@ public class AffineRelation {
 		} catch (NoRelationOfThisKindException e) {
 			throw new NotAffineException("Relation is not affine");
 		}
-		m_RelationSymbol = bnr.getRelationSymbol();
+		
 		Term lhs = bnr.getLhs();
 		Term rhs = bnr.getRhs();
-		AffineTerm affineLhs = (AffineTerm) (new AffineTermTransformer(logger)).transform(lhs);
-		AffineTerm affineRhs = (AffineTerm) (new AffineTermTransformer(logger)).transform(rhs);
+		AffineTerm affineLhs = (AffineTerm) (new AffineTermTransformer()).transform(lhs);
+		AffineTerm affineRhs = (AffineTerm) (new AffineTermTransformer()).transform(rhs);
+		AffineTerm difference;
 		if (affineLhs.isErrorTerm() || affineRhs.isErrorTerm()) {
 			throw new NotAffineException("Relation is not affine");
 		} else {
-			m_AffineTerm = new AffineTerm(affineLhs, new AffineTerm(affineRhs, Rational.MONE));
+			difference = new AffineTerm(affineLhs, new AffineTerm(affineRhs, Rational.MONE));
+		}
+		if (makeNonStrict && difference.getSort().getName().equals("Int")) {
+			switch (m_RelationSymbol) {
+			case DISTINCT:
+			case EQ:
+			case GEQ:
+			case LEQ:
+				// relation symbol is not strict anyway
+				m_AffineTerm = difference; 
+				m_RelationSymbol = bnr.getRelationSymbol();
+			case LESS:
+				// decrement affine term by one
+				m_RelationSymbol = RelationSymbol.LEQ;
+				m_AffineTerm = new AffineTerm(m_AffineTerm, 
+						new AffineTerm(m_AffineTerm.getSort(), Rational.MONE));
+				break;
+			case GREATER:
+				// increment affine term by one
+				m_RelationSymbol = RelationSymbol.GEQ;
+				m_AffineTerm = new AffineTerm(m_AffineTerm, 
+						new AffineTerm(m_AffineTerm.getSort(), Rational.ONE));
+				break;
+			default:
+				throw new AssertionError("unknown symbol");
+			}
+		} else {
+			m_AffineTerm = difference; 
+			m_RelationSymbol = bnr.getRelationSymbol();
+
+		}
+	}
+	
+	
+	public void makeNonStrict() {
+		if (!m_AffineTerm.getSort().getName().equals("Int")) {
+			throw new UnsupportedOperationException("can only make Int terms non strict");
+		}
+		switch (m_RelationSymbol) {
+		case DISTINCT:
+		case EQ:
+		case GEQ:
+		case LEQ:
+			throw new UnsupportedOperationException("can only make strict symbols non-strict");
+		case LESS:
+			// dencrement affine term by one
+			m_RelationSymbol = RelationSymbol.LEQ;
+			m_AffineTerm = new AffineTerm(m_AffineTerm, 
+					new AffineTerm(m_AffineTerm.getSort(), Rational.MONE));
+			break;
+		case GREATER:
+			// increment affine term by one
+			m_RelationSymbol = RelationSymbol.GEQ;
+			m_AffineTerm = new AffineTerm(m_AffineTerm, 
+					new AffineTerm(m_AffineTerm.getSort(), Rational.ONE));
+			break;
+		default:
+			throw new AssertionError("unknown symbol");
 		}
 	}
 
@@ -168,5 +231,7 @@ public class AffineRelation {
 			return script.term("*", rational.toTerm(term.getSort()), term);
 		}
 	}
+	
+
 
 }
