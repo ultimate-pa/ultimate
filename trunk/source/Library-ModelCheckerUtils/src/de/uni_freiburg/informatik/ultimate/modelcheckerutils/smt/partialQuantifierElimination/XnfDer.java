@@ -97,7 +97,7 @@ public class XnfDer extends XnfPartialQuantifierElimination {
 		Term result =  substitution.transform(term);
 		if (term != result) {
 			try {
-				AffineRelation afr = new AffineRelation(result, m_Logger);
+				AffineRelation afr = new AffineRelation(result, false);
 				result = afr.positiveNormalForm(m_Script);
 			} catch (NotAffineException e) {
 				// Do nothing - we return result.
