@@ -8,9 +8,9 @@ else
 fi
 
 #svn up ../../.
-#pushd ../../trunk/source/BA_MavenParentUltimate/
-#mvn clean install -Pmaterialize
-#popd
+pushd ../../trunk/source/BA_MavenParentUltimate/
+mvn clean install -Pmaterialize
+popd
 
 ./createZipAutomizer.sh
 ./createZipCodeCheck.sh
