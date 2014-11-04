@@ -1574,7 +1574,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 		} else if (protocol.equals("bundleresource")) {
 			try {
 				URL fileURL = FileLocator.toFileURL(dirURL);
-				dirFile = new File(fileURL.toURI());
+				dirFile = new File(fileURL.getFile());
 			} catch (Exception e) {
 				e.printStackTrace();
 				// throw new UnsupportedOperationException("Directory \"" + dir
