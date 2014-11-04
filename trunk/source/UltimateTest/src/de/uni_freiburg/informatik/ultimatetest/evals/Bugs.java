@@ -8,48 +8,9 @@ public class Bugs extends TACASInterpolation2015 {
 
 	@Override
 	protected void createTestCasesForReal(List<UltimateTestCase> testcases) {
+		addTestCasesFixed("CodeCheckWithBE-C.xml", "svComp-32bit-precise-BE-Impulse.epf", testcases);
+		addTestCasesFixed("AutomizerC.xml", "svComp-32bit-precise-Automizer.epf", testcases);
 
-		// addTestCasesFixed("AutomizerC.xml",
-		// "TACASInterpolation2015/ForwardPredicates.epf", testcases);
-		//
-		addTestCasesFixed("AutomizerC.xml", "svcomp2015/svComp-32bit-simple-Automizer.epf", testcases);
-
-		// addTestCasesFixed("AutomizerC.xml",
-		// "svcomp2015/svComp-32bit-precise.epf", testcases);
-		// addTestCasesFixed("CodeCheckWithBE-C.xml",
-		// "svcomp2015/svComp-32bit-precise-BE-Kojak.epf", testcases);
-		// addTestCasesFixed("CodeCheckWithBE-C.xml",
-		// "svcomp2015/svComp-32bit-memsafety-BE-Kojak.epf.epf", testcases);
-		// addTestCasesFixed("CodeCheckWithBE-C.xml",
-		// "svcomp2015/svComp-32bit-memsafety-BE-Impulse.epf.epf", testcases);
-
-		// addTestCasesFixed("AutomizerC.xml",
-		// "TACASInterpolation2015/TreeInterpolation.epf", testcases);
-
-		// addTestCasesFixed("CodeCheckNoBE-C.xml",
-		// "TACASInterpolation2015/Kojak-FP-nBE.epf", testcases);
-		//
-		// addTestCasesFixed("CodeCheckNoBE-C.xml",
-		// "TACASInterpolation2015/Kojak-TreeInterpolation-nBE.epf", testcases);
-		//
-		// addTestCasesFixed("ImpulseNoBE-C.xml",
-		// "TACASInterpolation2015/Impulse-FP-nBE.epf", testcases);
-		//
-		// addTestCasesFixed("ImpulseNoBE-C.xml",
-		// "TACASInterpolation2015/Impulse-TreeInterpolation-nBE.epf",
-		// testcases);
-		//
-		// addTestCasesFixed("CodeCheckWithBE-C.xml",
-		// "TACASInterpolation2015/Kojak-FP.epf", testcases);
-		//
-		// addTestCasesFixed("CodeCheckWithBE-C.xml",
-		// "TACASInterpolation2015/Kojak-TreeInterpolation.epf", testcases);
-		//
-		// addTestCasesFixed("ImpulseWithBE-C.xml",
-		// "TACASInterpolation2015/Impulse-FP.epf", testcases);
-		//
-		// addTestCasesFixed("ImpulseWithBE-C.xml",
-		// "TACASInterpolation2015/Impulse-TreeInterpolation.epf", testcases);
 	}
 
 	@Override
@@ -62,24 +23,24 @@ public class Bugs extends TACASInterpolation2015 {
 	protected String[] getDirectories() {
 		// @formatter:off
 		return new String[] { 
-//			"examples/svcomp/ssh/s3_srvr.blast.16_false-unreach-call.i.cil.c",
-			"examples/svcomp/ntdrivers-simplified/floppy_simpl3_false-unreach-call_true-termination.cil.c",
-//			"examples/svcomp/seq-pthread/cs_lazy_false-unreach-call.i",
-			
-				//nutz, backtranslation, works
-//				"examples/svcomp/ssh/s3_srvr.blast.16_false-unreach-call.i.cil.c",
-				//matthias, preprocessor
-
-				//need to change bpl from recursive to iterative
-//				"examples/svcomp/array-examples/data_structures_set_multi_proc_false-unreach-call_ground.i",
- 
-//			"examples/svcomp/array-examples/data_structures_set_multi_proc_trivial_true-unreach-call_ground.i",
-
-//			"examples/svcomp/array-examples/data_structures_set_multi_proc_true-unreach-call_ground.i"
+				"examples/svcomp/bitvector-regression/integerpromotion_true-unreach-call.i",
+				"examples/svcomp/bitvector/num_conversion_2_true-unreach-call.i",
+				"examples/svcomp/bitvector/soft_float_4_true-unreach-call.c.cil.c",
+				"examples/svcomp/bitvector/soft_float_1_true-unreach-call.c.cil.c",
+				"examples/svcomp/bitvector-regression/signextension_true-unreach-call.i",
+				"examples/svcomp/bitvector/parity_true-unreach-call.i",
+				"examples/svcomp/loop-invgen/NetBSD_loop_false-unreach-call.i",
+				"examples/svcomp/bitvector-regression/pointer_extension2_false-unreach-call.i",
+				"examples/svcomp/bitvector-regression/signextension_false-unreach-call.i",
+				"examples/svcomp/ssh-simplified/s3_srvr_11_false-unreach-call.cil.c",
+				"examples/svcomp/loop-invgen/SpamAssassin-loop_false-unreach-call.i",
+				"examples/svcomp/bitvector-regression/signextension_false-unreach-call.i",
+				"examples/svcomp/bitvector-regression/pointer_extension2_false-unreach-call.i",
+				"examples/svcomp/array-examples/standard_allDiff2_false-unreach-call_ground.i",
+				"examples/svcomp/loop-invgen/NetBSD_loop_false-unreach-call.i",
 				
 		};
 		// @formatter:on
-		// return super.getDirectories();
 	}
 
 	@Override
