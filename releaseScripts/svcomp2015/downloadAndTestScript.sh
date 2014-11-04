@@ -62,7 +62,7 @@ do
 	wget -q "$fileUrl"
 	echo "python Ultimate.py" "$property" "$file" "$bit" "$memMod"
 	OUTPUT=`python Ultimate.py "$property" "$file" "$bit" "$memMod"`
-	echo $OUTPUT
+	#echo $OUTPUT
 	TestResult=`checkResult "$OUTPUT" "$expectedResult"`
 	if [ "$TestResult" ]
 	then
