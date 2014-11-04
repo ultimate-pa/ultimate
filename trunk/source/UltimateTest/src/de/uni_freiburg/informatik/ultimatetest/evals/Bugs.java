@@ -8,8 +8,8 @@ public class Bugs extends TACASInterpolation2015 {
 
 	@Override
 	protected void createTestCasesForReal(List<UltimateTestCase> testcases) {
-		addTestCasesFixed("CodeCheckWithBE-C.xml", "svComp-32bit-precise-BE-Impulse.epf", testcases);
-		addTestCasesFixed("AutomizerC.xml", "svComp-32bit-precise-Automizer.epf", testcases);
+		addTestCasesFixed("CodeCheckWithBE-C.xml", "svcomp2015/svComp-32bit-precise-BE-Impulse.epf", testcases);
+		addTestCasesFixed("AutomizerC.xml", "svcomp2015/svComp-32bit-precise-Automizer.epf", testcases);
 
 	}
 
