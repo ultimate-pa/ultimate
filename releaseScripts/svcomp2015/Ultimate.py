@@ -5,6 +5,7 @@ import fnmatch
 
 # current z3 version z3-4.3.3.f50a8b0a59ff-x64-debian-7.7.zip
 
+svnRevNumber = '12950'
 ultimateBin = './Ultimate'
 writeUltimateOutputToFile = True
 outputFileName = 'Ultimate.log'
@@ -113,6 +114,7 @@ ultimateCall += ' ' + toolchain
 ultimateCall += ' ' +  cFile
 ultimateCall += ' ' +  settingsArgument
 
+print('Rev ' + svnRevNumber)
 print('Calling Ultimate with: ' + ultimateCall)
 
 try:
