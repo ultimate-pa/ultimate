@@ -3,7 +3,7 @@
 TOOLNAME=Automizer
 TARGETDIR=Ultimate${TOOLNAME}
 TOOLCHAIN=../../trunk/examples/toolchains/AutomizerC.xml
-TERMTOOLCHAIN=../../trunk/examples/toolchains/AutomizerAndBuchiAutomizerC.xml
+TERMTOOLCHAIN=../../trunk/examples/toolchains/BuchiAutomizerCWithBlockEncoding.xml
 SETTINGS=../../trunk/examples/settings/svcomp2015/*${TOOLNAME}*
 TERMSETTINGS="$TARGETDIR"/svComp-64bit-termination-Automizer.epf
 
