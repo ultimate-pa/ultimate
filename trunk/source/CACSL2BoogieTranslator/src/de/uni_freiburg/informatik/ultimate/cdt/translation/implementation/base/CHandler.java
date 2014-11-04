@@ -2275,6 +2275,25 @@ public class CHandler implements ICHandler {
 			expr = expr.switchToRValueIfNecessary(main, mMemoryHandler, mStructHandler, loc);
 		}
 
+		if (newCType instanceof CPointer && expr.lrVal.cType instanceof CPointer) {
+			if (((CPointer) newCType).pointsToType instanceof CPrimitive
+					&& ((CPrimitive) ((CPointer) newCType).pointsToType).getGeneralType() == GENERALPRIMITIVE.INTTYPE
+					&& ((CPointer) expr.lrVal.cType).pointsToType instanceof CPrimitive
+					&& ((CPrimitive) ((CPointer) expr.lrVal.cType).pointsToType).getGeneralType() == GENERALPRIMITIVE.INTTYPE
+					) {
+				if (
+						(((CPrimitive) ((CPointer) newCType).pointsToType).isUnsigned()
+						&& !((CPrimitive) ((CPointer) expr.lrVal.cType).pointsToType).isUnsigned())
+						||
+						!(((CPrimitive) ((CPointer) newCType).pointsToType).isUnsigned()
+						&& ((CPrimitive) ((CPointer) expr.lrVal.cType).pointsToType).isUnsigned())
+						) {
+					throw new UnsupportedSyntaxException(loc, "we don't support this cast.");
+				}
+			}
+				
+		}
+
 		expr.lrVal = castToType(loc, (RValue) expr.lrVal, newCType);
 
 		// String msg = "Ignored cast! At line: "
@@ -2536,15 +2555,49 @@ public class CHandler implements ICHandler {
 			// add havocs if we have a write to a union (which is not on heap,
 			// otherwise the heap model should deal with everything)
 			if (unionFieldsToCType != null) {
+				
+//				boolean unionIsFixedSize = true;
+//				for (Entry<StructLHS, CType> en : unionFieldsToCType.entrySet())
+//					unionIsFixedSize &= mMemoryHandler.calculateSizeOf(rVal.cType, loc) instanceof IntegerLiteral;
+//
+//				Expression lrValSize = mMemoryHandler.calculateSizeOf(lrVal.cType, loc);
+//				unionIsFixedSize &= lrValSize instanceof IntegerLiteral;
+
+
 				for (Entry<StructLHS, CType> en : unionFieldsToCType.entrySet()) {
+					
 					//do not havoc when the type of the field is "compatible"
 					if (rightHandSide.cType.equals(en.getValue())
-							|| (rightHandSide.cType instanceof CPrimitive && en.getValue() instanceof CPrimitive
+							|| (rightHandSide.cType.getUnderlyingType() instanceof CPrimitive && en.getValue() instanceof CPrimitive
 							 && ((CPrimitive) rightHandSide.cType.getUnderlyingType()).getGeneralType().equals(((CPrimitive) en.getValue()).getGeneralType())
 							 && (mMemoryHandler.calculateSizeOfWithGivenTypeSizes(loc, rightHandSide.cType) 
 									 == mMemoryHandler.calculateSizeOfWithGivenTypeSizes(loc, en.getValue())))) {
 						stmt.add(new AssignmentStatement(loc, new LeftHandSide[] { en.getKey() },
 								new Expression[] { rightHandSide.getValue() }));
+//					} else if (rightHandSide.cType.getUnderlyingType() instanceof CStruct && unionIsFixedSize) {
+//						CStruct structType = (CStruct) rightHandSide.cType.getUnderlyingType();
+//
+//						int lrValSizeInt = Integer.parseInt(((IntegerLiteral) lrValSize).getValue());
+//						int currOffset = 0;
+//						for (String fId : structType.getFieldIds()) {
+//							CType fType = structType.getFieldType(fId).getUnderlyingType();
+//							
+//							if (currOffset > lrValSizeInt)
+//								break;
+//
+//							currOffset += mMemoryHandler.calculateSizeOfWithGivenTypeSizes(loc, fType);
+//							
+//
+//							String tmpId = main.nameHandler.getTempVarUID(SFO.AUXVAR.UNION);
+//							VariableDeclaration tVarDec = new VariableDeclaration(loc, new Attribute[0], new VarList[] { new VarList(loc,
+//									new String[] { tmpId }, main.typeHandler.ctype2asttype(loc, en.getValue())) });
+//							decl.add(tVarDec);
+//							auxVars.put(tVarDec, loc); //ensures that the variable will be havoced (necessary only when we are inside a loop)
+//
+//							stmt.add(new AssignmentStatement(loc, new LeftHandSide[] { en.getKey() },
+//									new Expression[] { new IdentifierExpression(loc, tmpId) }));						
+//						}
+
 					} else { //otherwise we consider the value undefined, thus havoc it
 						// TODO: maybe not use auxiliary variables so lavishly
 						String tmpId = main.nameHandler.getTempVarUID(SFO.AUXVAR.UNION);
