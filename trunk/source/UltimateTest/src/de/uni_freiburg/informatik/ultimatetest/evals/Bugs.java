@@ -27,17 +27,14 @@ public class Bugs extends TACASInterpolation2015 {
 				"examples/svcomp/bitvector/num_conversion_2_true-unreach-call.i",
 				"examples/svcomp/bitvector/soft_float_4_true-unreach-call.c.cil.c",
 				"examples/svcomp/bitvector/soft_float_1_true-unreach-call.c.cil.c",
-				"examples/svcomp/bitvector-regression/signextension_true-unreach-call.i",
 				"examples/svcomp/bitvector/parity_true-unreach-call.i",
-				"examples/svcomp/loop-invgen/NetBSD_loop_false-unreach-call.i",
-				"examples/svcomp/bitvector-regression/pointer_extension2_false-unreach-call.i",
+				"examples/svcomp/bitvector-regression/signextension_true-unreach-call.i",
 				"examples/svcomp/bitvector-regression/signextension_false-unreach-call.i",
-				"examples/svcomp/ssh-simplified/s3_srvr_11_false-unreach-call.cil.c",
+				"examples/svcomp/bitvector-regression/pointer_extension2_false-unreach-call.i",
 				"examples/svcomp/loop-invgen/SpamAssassin-loop_false-unreach-call.i",
-				"examples/svcomp/bitvector-regression/signextension_false-unreach-call.i",
-				"examples/svcomp/bitvector-regression/pointer_extension2_false-unreach-call.i",
-				"examples/svcomp/array-examples/standard_allDiff2_false-unreach-call_ground.i",
 				"examples/svcomp/loop-invgen/NetBSD_loop_false-unreach-call.i",
+				"examples/svcomp/array-examples/standard_allDiff2_false-unreach-call_ground.i",
+				"examples/svcomp/ssh-simplified/s3_srvr_11_false-unreach-call.cil.c",
 				
 		};
 		// @formatter:on
@@ -45,7 +42,7 @@ public class Bugs extends TACASInterpolation2015 {
 
 	@Override
 	protected int getTimeout() {
-		return 600 * 1000;
+		return 30 * 1000;
 	}
 
 }
