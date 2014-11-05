@@ -22,11 +22,12 @@ public class WitnessBugs extends TACASInterpolation2015 {
 		// @formatter:off
 		return new String[] { 
 			//difference between codecheck and automizer 
-			"examples/svcomp/ssh-simplified/s3_srvr_10_false-unreach-call.cil.c",
+//			"examples/svcomp/ssh-simplified/s3_srvr_10_false-unreach-call.cil.c",
+//			"examples/Backtranslation/regression/c/standard/Loops.c",
 			
 			
-//			"examples/svcomp/systemc/kundu1_false-unreach-call_false-termination.cil.c",
-//			"examples/svcomp/seq-pthread/cs_lazy_false-unreach-call.i",
+			"examples/svcomp/systemc/kundu1_false-unreach-call_false-termination.cil.c",
+			"examples/svcomp/seq-pthread/cs_lazy_false-unreach-call.i",
 			
 			// works 
 			// "examples/svcomp/ntdrivers-simplified/floppy_simpl3_false-unreach-call_true-termination.cil.c"

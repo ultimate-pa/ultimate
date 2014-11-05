@@ -2,6 +2,8 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietransl
 
 import java.io.IOException;
 import java.io.StringWriter;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 import org.apache.commons.collections15.Transformer;
 import org.apache.commons.lang3.StringEscapeUtils;
@@ -16,6 +18,7 @@ import de.uni_freiburg.informatik.ultimate.result.IProgramExecution.AtomicTraceE
 import de.uni_freiburg.informatik.ultimate.result.IProgramExecution.ProgramState;
 import edu.uci.ics.jung.graph.DirectedSparseGraph;
 import edu.uci.ics.jung.graph.Hypergraph;
+import edu.uci.ics.jung.graph.util.Pair;
 import edu.uci.ics.jung.io.GraphMLWriter;
 
 /**
@@ -153,43 +156,46 @@ public class GraphMLConverter {
 		}
 	}
 
-//	private Hypergraph<WitnessNode, WitnessEdge> getGraph() {
-//		DirectedSparseGraph<WitnessNode, WitnessEdge> graph = new DirectedSparseGraph<>();
-//		WitnessNodeEdgeFactory fac = new WitnessNodeEdgeFactory();
-//
-//		WitnessNode current = insertStartNodeAndDummyEdges(fac, graph, 0);
-//		WitnessNode next = null;
-//
-//		// Looks like they use assumptions before their statements, so why not
-//		// ...
-//		ProgramState<IASTExpression> assumptionState = null;
-//
-//		for (int i = 0; i < mProgramExecution.getLength(); ++i) {
-//
-//			i = skipGlobalDeclarations(i, mProgramExecution);
-//			i = collapseToSingleTraceElement(i, mProgramExecution);
-//			if (i == 0) {
-//				//we only use our initial state if we did not skip initial states
-//				assumptionState = mProgramExecution.getInitialProgramState();
-//			}
-//
-//			AtomicTraceElement<CACSLLocation> currentATE = mProgramExecution.getTraceElement(i);
-//			next = fac.createWitnessNode();
-//			graph.addVertex(next);
-//			if (assumptionState == null) {
-//				graph.addEdge(fac.createWitnessEdge(currentATE), current, next);
-//			} else {
-//				graph.addEdge(fac.createWitnessEdge(currentATE, assumptionState), current, next);
-//			}
-//			current = next;
-//			assumptionState = mProgramExecution.getProgramState(i);
-//		}
-//
-//		return graph;
-//	}
+	// private Hypergraph<WitnessNode, WitnessEdge> getGraph() {
+	// DirectedSparseGraph<WitnessNode, WitnessEdge> graph = new
+	// DirectedSparseGraph<>();
+	// WitnessNodeEdgeFactory fac = new WitnessNodeEdgeFactory();
+	//
+	// WitnessNode current = insertStartNodeAndDummyEdges(fac, graph, 0);
+	// WitnessNode next = null;
+	//
+	// // Looks like they use assumptions before their statements, so why not
+	// // ...
+	// ProgramState<IASTExpression> assumptionState = null;
+	//
+	// for (int i = 0; i < mProgramExecution.getLength(); ++i) {
+	//
+	// i = skipGlobalDeclarations(i, mProgramExecution);
+	// i = collapseToSingleTraceElement(i, mProgramExecution);
+	// if (i == 0) {
+	// //we only use our initial state if we did not skip initial states
+	// assumptionState = mProgramExecution.getInitialProgramState();
+	// }
+	//
+	// AtomicTraceElement<CACSLLocation> currentATE =
+	// mProgramExecution.getTraceElement(i);
+	// next = fac.createWitnessNode();
+	// graph.addVertex(next);
+	// if (assumptionState == null) {
+	// graph.addEdge(fac.createWitnessEdge(currentATE), current, next);
+	// } else {
+	// graph.addEdge(fac.createWitnessEdge(currentATE, assumptionState),
+	// current, next);
+	// }
+	// current = next;
+	// assumptionState = mProgramExecution.getProgramState(i);
+	// }
+	//
+	// return graph;
+	// }
 
 	private Hypergraph<WitnessNode, WitnessEdge> getGraph() {
-		DirectedSparseGraph<WitnessNode, WitnessEdge> graph = new DirectedSparseGraph<>();
+		DirectedSparseGraph<WitnessNode, WitnessEdge> graph = new OrderedDirectedSparseGraph<>();
 		WitnessNodeEdgeFactory fac = new WitnessNodeEdgeFactory();
 
 		WitnessNode current = insertStartNodeAndDummyEdges(fac, graph, 0);
@@ -207,7 +213,7 @@ public class GraphMLConverter {
 
 		for (int i = 0; i < mProgramExecution.getLength(); ++i) {
 
-//			i = skipGlobalDeclarations(i, mProgramExecution);
+			// i = skipGlobalDeclarations(i, mProgramExecution);
 			i = collapseToSingleTraceElement(i, mProgramExecution);
 
 			AtomicTraceElement<CACSLLocation> currentATE = mProgramExecution.getTraceElement(i);
@@ -274,5 +280,21 @@ public class GraphMLConverter {
 			}
 		}
 		return currentIdx;
+	}
+
+	/**
+	 * Change the default {@link DirectedSparseGraph} s.t. the nodes and edges written
+	 * are ordered lexicographically.
+	 * DirectedSparseGraph
+	 * @author dietsch@informatik.uni-freiburg.de
+	 */
+	private class OrderedDirectedSparseGraph<V, E> extends DirectedSparseGraph<V, E> {
+		private static final long serialVersionUID = -8539872407688620571L;
+		
+		public OrderedDirectedSparseGraph() {
+			super();
+			vertices = new LinkedHashMap<V, Pair<Map<V,E>>>(); 
+			edges = new LinkedHashMap<>();
+		}
 	}
 }
