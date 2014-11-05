@@ -32,15 +32,21 @@ public class AffineRelation {
 	 * 
 	 */
 	private AffineTerm m_AffineTerm;
+	
+	public enum TransformInequality { NO_TRANFORMATION, STRICT2NONSTRICT, NONSTRICT2STRICT }
+	
+	public AffineRelation(Term term) throws NotAffineException {
+		this(term, TransformInequality.NO_TRANFORMATION);
+	}
 
 	/**
 	 * Transform Term into AffineRelation.
 	 * @param term Term to which the resulting AffineRelation is equivalent.
-	 * @param makeNonStrict if true and sort is Int, the resulting 
-	 * AffineRelation does not have strict inequalities.
+	 * @param transformInequality transform strict inequalities to non-strict
+	 * inequalities and vice versa
 	 * @throws NotAffineException Thrown if Term is not affine.
 	 */
-	public AffineRelation(Term term, boolean makeNonStrict) throws NotAffineException {
+	public AffineRelation(Term term, TransformInequality transformInequality) throws NotAffineException {
 		m_OriginalTerm = term;
 		BinaryNumericRelation bnr = null;
 		try {
@@ -59,30 +65,60 @@ public class AffineRelation {
 		} else {
 			difference = new AffineTerm(affineLhs, new AffineTerm(affineRhs, Rational.MONE));
 		}
-		if (makeNonStrict && difference.getSort().getName().equals("Int")) {
-			switch (bnr.getRelationSymbol()) {
-			case DISTINCT:
-			case EQ:
-			case GEQ:
-			case LEQ:
-				// relation symbol is not strict anyway
-				m_AffineTerm = difference; 
-				m_RelationSymbol = bnr.getRelationSymbol();
-				break;
-			case LESS:
-				// decrement affine term by one
-				m_RelationSymbol = RelationSymbol.LEQ;
-				m_AffineTerm = new AffineTerm(difference, 
-						new AffineTerm(difference.getSort(), Rational.ONE));
-				break;
-			case GREATER:
-				// increment affine term by one
-				m_RelationSymbol = RelationSymbol.GEQ;
-				m_AffineTerm = new AffineTerm(difference, 
-						new AffineTerm(difference.getSort(), Rational.MONE));
-				break;
-			default:
-				throw new AssertionError("unknown symbol");
+		if (transformInequality != TransformInequality.NO_TRANFORMATION && 
+				difference.getSort().getName().equals("Int")) {
+			if (transformInequality == TransformInequality.STRICT2NONSTRICT ) {
+				switch (bnr.getRelationSymbol()) {
+				case DISTINCT:
+				case EQ:
+				case GEQ:
+				case LEQ:
+					// relation symbol is not strict anyway
+					m_AffineTerm = difference; 
+					m_RelationSymbol = bnr.getRelationSymbol();
+					break;
+				case LESS:
+					// decrement affine term by one
+					m_RelationSymbol = RelationSymbol.LEQ;
+					m_AffineTerm = new AffineTerm(difference, 
+							new AffineTerm(difference.getSort(), Rational.ONE));
+					break;
+				case GREATER:
+					// increment affine term by one
+					m_RelationSymbol = RelationSymbol.GEQ;
+					m_AffineTerm = new AffineTerm(difference, 
+							new AffineTerm(difference.getSort(), Rational.MONE));
+					break;
+				default:
+					throw new AssertionError("unknown symbol");
+				}
+			} else if (transformInequality == TransformInequality.STRICT2NONSTRICT) {
+				switch (bnr.getRelationSymbol()) {
+				case DISTINCT:
+				case EQ:
+				case LESS:
+				case GREATER:
+					// relation symbol is not strict anyway
+					m_AffineTerm = difference; 
+					m_RelationSymbol = bnr.getRelationSymbol();
+					break;
+				case GEQ:
+					// decrement affine term by one
+					m_RelationSymbol = RelationSymbol.LEQ;
+					m_AffineTerm = new AffineTerm(difference, 
+							new AffineTerm(difference.getSort(), Rational.ONE));
+					break;
+				case LEQ:
+					// increment affine term by one
+					m_RelationSymbol = RelationSymbol.GEQ;
+					m_AffineTerm = new AffineTerm(difference, 
+							new AffineTerm(difference.getSort(), Rational.MONE));
+					break;
+				default:
+					throw new AssertionError("unknown symbol");
+				}
+			} else {
+				throw new AssertionError("unknown case");
 			}
 		} else {
 			m_AffineTerm = difference; 

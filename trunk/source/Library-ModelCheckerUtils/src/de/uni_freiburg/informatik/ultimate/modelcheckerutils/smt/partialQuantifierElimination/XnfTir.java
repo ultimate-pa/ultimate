@@ -17,6 +17,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.PartialQuantifi
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.AffineRelation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.BinaryNumericRelation;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.AffineRelation.TransformInequality;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.BinaryRelation.NoRelationOfThisKindException;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.NotAffineException;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Cnf;
@@ -100,7 +101,7 @@ public class XnfTir extends XnfPartialQuantifierElimination {
 				Term eliminateeOnLhs;
 				AffineRelation rel;
 				try {
-					 rel = new AffineRelation(term, true);
+					 rel = new AffineRelation(term, TransformInequality.STRICT2NONSTRICT);
 				} catch (NotAffineException e) {
 					// no chance to eliminate the variable
 					return null;
@@ -206,7 +207,7 @@ public class XnfTir extends XnfPartialQuantifierElimination {
 		Term term = m_Script.term(symbol, lhs, rhs);
 		AffineRelation rel;
 		try {
-			rel = new AffineRelation(term, false);
+			rel = new AffineRelation(term);
 		} catch (NotAffineException e) {
 			throw new AssertionError("should be affine");
 		}

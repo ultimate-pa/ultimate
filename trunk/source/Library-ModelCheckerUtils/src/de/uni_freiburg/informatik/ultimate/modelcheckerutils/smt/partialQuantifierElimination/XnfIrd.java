@@ -87,7 +87,7 @@ public class XnfIrd extends XjunctPartialQuantifierElimination {
 			} else {
 				AffineRelation affineRelation;
 				try {
-					affineRelation = new AffineRelation(oldParam, false);
+					affineRelation = new AffineRelation(oldParam);
 				} catch (NotAffineException e) {
 					// unable to eliminate quantifier
 					return null;
