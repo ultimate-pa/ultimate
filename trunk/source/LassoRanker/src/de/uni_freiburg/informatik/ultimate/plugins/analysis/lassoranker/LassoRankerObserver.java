@@ -1,5 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker;
 
+import java.io.IOException;
+
 import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
 import de.uni_freiburg.informatik.ultimate.automata.ExampleNWAFactory;
@@ -37,7 +39,7 @@ public class LassoRankerObserver implements IUnmanagedObserver {
 	}
 
 	@Override
-	public boolean process(IElement root) {
+	public boolean process(IElement root) throws IOException {
 		
 		//TODO: Now you can get instances of your library classes for the current toolchain like this: 
 		//NWA is nevertheless very broken, as its static initialization prevents parallelism 

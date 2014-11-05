@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -212,7 +213,7 @@ public class LassoChecker {
 	public LassoChecker(INTERPOLATION interpolation, SmtManager smtManager,
 			ModifiableGlobalVariableManager modifiableGlobalVariableManager, Collection<Term> axioms,
 			BinaryStatePredicateManager bspm, NestedLassoRun<CodeBlock, IPredicate> counterexample,
-			String lassoCheckerIdentifier, IUltimateServiceProvider services, IToolchainStorage storage) {
+			String lassoCheckerIdentifier, IUltimateServiceProvider services, IToolchainStorage storage) throws IOException {
 		mServices = services;
 		mStorage = storage;
 		mLogger = mServices.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
@@ -260,7 +261,7 @@ public class LassoChecker {
 		}
 	}
 
-	private void checkFeasibility() {
+	private void checkFeasibility() throws IOException {
 		NestedRun<CodeBlock, IPredicate> stem = m_Counterexample.getStem();
 		mLogger.info("Stem: " + stem);
 		NestedRun<CodeBlock, IPredicate> loop = m_Counterexample.getLoop();
@@ -473,7 +474,7 @@ public class LassoChecker {
 		return result;
 	}
 
-	private void checkLoopTermination(TransFormula loopTF) {
+	private void checkLoopTermination(TransFormula loopTF) throws IOException {
 		assert !m_Bspm.providesPredicates() : "termination already checked";
 		boolean containsArrays = SmtUtils.containsArrayVariables(loopTF.getFormula());
 		if (containsArrays) {
@@ -485,7 +486,7 @@ public class LassoChecker {
 		}
 	}
 
-	private void checkLassoTermination(TransFormula stemTF, TransFormula loopTF) {
+	private void checkLassoTermination(TransFormula stemTF, TransFormula loopTF) throws IOException {
 		assert !m_Bspm.providesPredicates() : "termination already checked";
 		assert loopTF != null;
 		boolean containsArrays = SmtUtils.containsArrayVariables(loopTF.getFormula())
@@ -593,7 +594,7 @@ public class LassoChecker {
 	}
 
 	private SynthesisResult synthesize(final boolean withStem, TransFormula stemTF, final TransFormula loopTF,
-			boolean containsArrays) {
+			boolean containsArrays) throws IOException {
 		if (!withStem) {
 			stemTF = getDummyTF();
 		}
@@ -710,9 +711,10 @@ public class LassoChecker {
 	 * @param loopTF 
 	 * @return
 	 * @throws AssertionError
+	 * @throws IOException 
 	 */
 	private TerminationArgument tryTemplatesAndComputePredicates(final boolean withStem, LassoAnalysis la,
-			List<RankingTemplate> rankingFunctionTemplates, TransFormula loopTF) throws AssertionError {
+			List<RankingTemplate> rankingFunctionTemplates, TransFormula loopTF) throws AssertionError, IOException {
 		TerminationArgument firstTerminationArgument = null;
 		for (RankingTemplate rft : rankingFunctionTemplates) {
 			TerminationArgument termArg;

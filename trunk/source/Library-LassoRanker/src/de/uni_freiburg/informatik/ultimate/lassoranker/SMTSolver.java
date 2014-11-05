@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.lassoranker;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 
 import de.uni_freiburg.informatik.ultimate.core.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
@@ -64,9 +65,10 @@ public class SMTSolver {
 	 * @param produce_unsat_cores
 	 *            produce unsat cores?
 	 * @return the new script
+	 * @throws IOException 
 	 */
 	private static Script newScript(boolean useExternalSolver, String smt_solver_command, String dump_filename,
-			boolean produce_unsat_cores, IUltimateServiceProvider services, IToolchainStorage storage) {
+			boolean produce_unsat_cores, IUltimateServiceProvider services, IToolchainStorage storage) throws IOException {
 
 		Script script;
 		if (useExternalSolver) {
@@ -105,9 +107,10 @@ public class SMTSolver {
 	 * @param services
 	 * @param storage
 	 * @return the new solver instance
+	 * @throws IOException 
 	 */
 	public static Script newScript(LassoRankerPreferences preferences, String constraintsName,
-			IUltimateServiceProvider services, IToolchainStorage storage) {
+			IUltimateServiceProvider services, IToolchainStorage storage) throws IOException {
 		return newScript(
 				preferences.externalSolver,
 				preferences.smt_solver_command,

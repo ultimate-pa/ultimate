@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.lassoranker;
 
 import java.io.Closeable;
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -111,10 +112,11 @@ public abstract class ArgumentSynthesizer implements Closeable {
 	 * @param constaintsName
 	 *            name of the constraints whose satisfiability is checked
 	 * @param storage 
+	 * @throws IOException 
 	 */
 	public ArgumentSynthesizer(Lasso lasso, LassoRankerPreferences preferences,
 			String constaintsName, IUltimateServiceProvider services,
-			IToolchainStorage storage) {
+			IToolchainStorage storage) throws IOException {
 		mLogger = services.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
 		m_preferences = preferences;
 		m_script = SMTSolver.newScript(preferences, constaintsName, services, storage);
@@ -141,8 +143,9 @@ public abstract class ArgumentSynthesizer implements Closeable {
 	 * Try to synthesize an argument for (non-)termination
 	 * 
 	 * @return result of the solver while checking the constraints
+	 * @throws IOException 
 	 */
-	public final LBool synthesize() throws SMTLIBException, TermException {
+	public final LBool synthesize() throws SMTLIBException, TermException, IOException {
 		LBool lBool = do_synthesis();
 		m_synthesis_successful = (lBool == LBool.SAT);
 		return lBool;
@@ -153,8 +156,9 @@ public abstract class ArgumentSynthesizer implements Closeable {
 	 * in the child classes and is wrapped by synthesize().
 	 * 
 	 * @return result of the solver while checking the constraints
+	 * @throws IOException 
 	 */
-	protected abstract LBool do_synthesis() throws SMTLIBException, TermException;
+	protected abstract LBool do_synthesis() throws SMTLIBException, TermException, IOException;
 
 	/**
 	 * Tries to simplify a satisfying assignment by assigning zeros to

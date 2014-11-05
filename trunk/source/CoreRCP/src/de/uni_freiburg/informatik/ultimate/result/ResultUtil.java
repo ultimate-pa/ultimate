@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.result;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.core.services.IBacktranslationService;
@@ -9,6 +10,8 @@ import de.uni_freiburg.informatik.ultimate.model.ITranslator;
 import de.uni_freiburg.informatik.ultimate.model.annotation.IAnnotations;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.output.BoogiePrettyPrinter;
+import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
+import de.uni_freiburg.informatik.ultimate.result.IProgramExecution.AtomicTraceElement;
 
 /**
  * 
@@ -16,6 +19,15 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.output.BoogiePrettyPrint
  */
 public class ResultUtil {
 
+	public static <TE extends IElement, E> List<ILocation> getLocationSequence(IProgramExecution<TE, E> pe) {
+		List<ILocation> result = new ArrayList<ILocation>();
+		for (int i = 0; i < pe.getLength(); i++) {
+			AtomicTraceElement<TE> te = pe.getTraceElement(i);
+			result.add(te.getTraceElement().getPayload().getLocation());
+		}
+		return result;
+	}
+	
 	/**
 	 * Use Ultimate's translator sequence do translate a result expression back
 	 * through the toolchain.

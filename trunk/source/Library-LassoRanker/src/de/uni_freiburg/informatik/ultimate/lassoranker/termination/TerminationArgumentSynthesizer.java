@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.lassoranker.termination;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -109,10 +110,11 @@ public class TerminationArgumentSynthesizer extends ArgumentSynthesizer {
 	 *            preprocessing
 	 * @param services
 	 * @param storage
+	 * @throws IOException 
 	 */
 	public TerminationArgumentSynthesizer(Lasso lasso, RankingTemplate template,
 			LassoRankerPreferences preferences, TerminationAnalysisSettings settings,
-			Set<Term> arrayIndexSupportingInvariants, IUltimateServiceProvider services, IToolchainStorage storage) {
+			Set<Term> arrayIndexSupportingInvariants, IUltimateServiceProvider services, IToolchainStorage storage) throws IOException {
 		super(lasso, preferences, template.getName() + "Template", services, storage);
 
 		// Check the settings
@@ -316,9 +318,10 @@ public class TerminationArgumentSynthesizer extends ArgumentSynthesizer {
 	 * @throws TermException
 	 *             if the supplied transitions contain non-affine update
 	 *             statements
+	 * @throws IOException 
 	 */
 	@Override
-	protected LBool do_synthesis() throws SMTLIBException, TermException {
+	protected LBool do_synthesis() throws SMTLIBException, TermException, IOException {
 		if (m_settings.analysis.isLinear() && m_template.getDegree() > 0) {
 			mLogger.warn("Using a linear SMT query and a templates of degree "
 					+ "> 0, hence this method is incomplete.");

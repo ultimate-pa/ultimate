@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.lassoranker;
 
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -358,10 +359,11 @@ public class LassoAnalysis {
 	 *            (local) settings for nontermination analysis
 	 * @param services
 	 * @return the non-termination argument or null of none is found
+	 * @throws IOException 
 	 */
 	public NonTerminationArgument checkNonTermination(
 			NonTerminationAnalysisSettings settings) throws SMTLIBException,
-			TermException {
+			TermException, IOException {
 		mLogger.info("Checking for nontermination...");
 
 		NonTerminationArgumentSynthesizer nas =
@@ -385,9 +387,10 @@ public class LassoAnalysis {
 	 * @param settings
 	 *            (local) settings for termination analysis
 	 * @return the termination argument or null of none is found
+	 * @throws IOException 
 	 */
 	public TerminationArgument tryTemplate(RankingTemplate template, TerminationAnalysisSettings settings)
-			throws SMTLIBException, TermException {
+			throws SMTLIBException, TermException, IOException {
 		// ignore stem
 		mLogger.info("Using template '" + template.getName() + "'.");
 		mLogger.debug(template);

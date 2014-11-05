@@ -43,7 +43,7 @@ class Executor {
 	private final IToolchainStorage mStorage;
 
 	Executor(String solverCommand, Script script, Logger logger, IUltimateServiceProvider services,
-			IToolchainStorage storage) {
+			IToolchainStorage storage) throws IOException {
 		mServices = services;
 		mStorage = storage;
 		mSolverCmd = solverCommand;
@@ -52,13 +52,9 @@ class Executor {
 		createProcess();
 	}
 
-	private void createProcess() {
+	private void createProcess() throws IOException {
 		// m_Logger = Logger.getRootLogger();
-		try {
-			mProcess = MonitoredProcess.exec(mSolverCmd, "(exit)", mServices, mStorage);
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+		mProcess = MonitoredProcess.exec(mSolverCmd, "(exit)", mServices, mStorage);
 
 		if (mProcess == null) {
 			String errorMsg = "Could not create process \"" + mSolverCmd + "\", terminating... ";
@@ -125,7 +121,7 @@ class Executor {
 		}
 	}
 
-	public void reset() {
+	public void reset() throws IOException {
 		try {
 			mWriter.write("(exit)\n");
 			mWriter.flush();

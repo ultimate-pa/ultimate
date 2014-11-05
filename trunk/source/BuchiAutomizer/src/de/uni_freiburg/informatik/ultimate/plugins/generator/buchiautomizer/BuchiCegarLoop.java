@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -273,7 +274,7 @@ public class BuchiCegarLoop {
 		return nlr.getStem().getLength() == 1;
 	}
 
-	public final Result iterate() {
+	public final Result iterate() throws IOException {
 		mLogger.info("Interprodecural is " + m_Pref.interprocedural());
 		mLogger.info("Hoare is " + m_Pref.computeHoareAnnotation());
 		mLogger.info("Compute interpolants for " + m_Interpolation);

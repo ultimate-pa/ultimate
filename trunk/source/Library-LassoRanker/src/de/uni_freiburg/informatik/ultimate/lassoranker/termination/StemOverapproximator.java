@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.lassoranker.termination;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -82,9 +83,10 @@ class StemOverapproximator {
 	/**
 	 * Create a new StemOverapproximator
 	 * @param preferences LassoRanker preferences regarding new SMT scripts
+	 * @throws IOException 
 	 */
 	public StemOverapproximator(LassoRankerPreferences preferences,
-			IUltimateServiceProvider services, IToolchainStorage storage) {
+			IUltimateServiceProvider services, IToolchainStorage storage) throws IOException {
 		m_annotate_terms = preferences.annotate_terms;
 		
 		// Create a new QF_LRA script

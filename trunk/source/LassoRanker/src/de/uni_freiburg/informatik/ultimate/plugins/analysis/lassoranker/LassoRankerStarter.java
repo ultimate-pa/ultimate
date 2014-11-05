@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -76,7 +77,8 @@ public class LassoRankerStarter {
 	private SmtManager m_SmtManager;
 	private final IUltimateServiceProvider mServices;
 
-	public LassoRankerStarter(RootNode rootNode, IUltimateServiceProvider services, IToolchainStorage storage) {
+	public LassoRankerStarter(RootNode rootNode, IUltimateServiceProvider services, IToolchainStorage storage)
+			throws IOException {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
 
@@ -401,8 +403,7 @@ public class LassoRankerStarter {
 	 * Report that there was a timeout. TODO: which templates already failed,
 	 * where did the timeout occur.
 	 */
-	private void reportTimeoutResult(RankingTemplate[] templates,
-			RankingTemplate templateWhereTimeoutOccurred) {
+	private void reportTimeoutResult(RankingTemplate[] templates, RankingTemplate templateWhereTimeoutOccurred) {
 		StringBuilder sb = new StringBuilder();
 		sb.append("LassoRanker could not prove termination " + "or nontermination of the given linear lasso program.\n");
 		sb.append("Templates:");

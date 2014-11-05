@@ -1,5 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder;
 
+import java.io.IOException;
+
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
@@ -55,8 +57,9 @@ public class RCFGBuilderObserver implements IUnmanagedObserver {
 	 * checks whether they're implementations or just declarations. If
 	 * implementation is present calls makeProcedureCFG() and appends CFG as
 	 * child of procedure node to CFG
+	 * @throws IOException 
 	 */
-	public boolean process(IElement root) {
+	public boolean process(IElement root) throws IOException {
 		if (!(root instanceof Unit)) {
 			// TODO
 			mLogger.debug("No WrapperNode. Let Ultimate process with next node");

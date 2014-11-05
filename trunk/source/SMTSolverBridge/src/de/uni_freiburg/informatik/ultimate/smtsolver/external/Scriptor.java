@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.smtsolver.external;
 
+import java.io.IOException;
 import java.util.Map;
 
 import org.apache.log4j.Logger;
@@ -40,8 +41,11 @@ public class Scriptor extends NoopScript {
 	 *            expected to read smtlib 2 commands on stdin.
 	 * @param services
 	 * @param storage
+	 * @throws IOException
+	 *             If the solver is not installed
 	 */
-	public Scriptor(String command, Logger logger, IUltimateServiceProvider services, IToolchainStorage storage) {
+	public Scriptor(String command, Logger logger, IUltimateServiceProvider services, IToolchainStorage storage)
+			throws IOException {
 		m_Executor = new Executor(command, this, logger, services, storage);
 		super.setOption(":print-success", true);
 	}
@@ -274,7 +278,13 @@ public class Scriptor extends NoopScript {
 	@Override
 	public void reset() {
 		super.reset();
-		m_Executor.reset();
+		try {
+			m_Executor.reset();
+		} catch (IOException e) {
+			// this should only happen if the solver executable is removed
+			// between creating executor and calling reset.
+			e.printStackTrace();
+		}
 	}
 
 	@Override

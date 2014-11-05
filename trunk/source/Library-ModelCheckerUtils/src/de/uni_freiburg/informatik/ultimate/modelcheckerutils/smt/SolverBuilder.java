@@ -1,5 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt;
 
+import java.io.IOException;
+
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.core.services.IProgressMonitorService;
@@ -28,7 +30,7 @@ public class SolverBuilder {
 	}
 
 	public static Script createExternalSolver(IUltimateServiceProvider services, IToolchainStorage storage,
-			String command) {
+			String command) throws IOException {
 		Logger solverLogger = services.getLoggingService().getLoggerForExternalTool(sSolverLoggerName);
 		Script script = new Scriptor(command, solverLogger, services, storage);
 		return script;

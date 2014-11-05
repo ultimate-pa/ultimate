@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer;
 
+import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -58,7 +59,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 	}
 
 	@Override
-	public boolean process(IElement root) {
+	public boolean process(IElement root) throws IOException {
 		if (!(root instanceof RootNode)) {
 			return false;
 		}

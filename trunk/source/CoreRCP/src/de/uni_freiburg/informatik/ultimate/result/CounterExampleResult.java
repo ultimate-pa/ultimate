@@ -19,12 +19,15 @@ import de.uni_freiburg.informatik.ultimate.result.IProgramExecution.AtomicTraceE
  * @author Oleksii Saukh
  * @date 02.01.2012
  * 
- * @param <ELEM> Type of position
- * @param <TE> Type of trace element
- * @param <E> Type of expression
+ * @param <ELEM>
+ *            Type of position
+ * @param <TE>
+ *            Type of trace element
+ * @param <E>
+ *            Type of expression
  */
-public class CounterExampleResult<ELEM extends IElement, TE extends IElement, E> extends AbstractResultAtElement<ELEM> implements
-		IResultWithTrace {
+public class CounterExampleResult<ELEM extends IElement, TE extends IElement, E> extends AbstractResultAtElement<ELEM>
+		implements IResultWithTrace {
 	private final Check mCheckedSpecification;
 	private String mProgramExecutionAsString;
 	private final List<ILocation> mFailurePath;
@@ -35,7 +38,7 @@ public class CounterExampleResult<ELEM extends IElement, TE extends IElement, E>
 		super(position, plugin, translatorSequence);
 		mCheckedSpecification = ResultUtil.getCheckedSpecification(position);
 		mProgramExecution = pe;
-		mFailurePath = getLocationSequence(pe);
+		mFailurePath = ResultUtil.getLocationSequence(pe);
 	}
 
 	@Override
@@ -46,7 +49,7 @@ public class CounterExampleResult<ELEM extends IElement, TE extends IElement, E>
 			return mCheckedSpecification.getNegativeMessage();
 		}
 	}
-	
+
 	public Check getCheckedSpecification() {
 		return mCheckedSpecification;
 	}
@@ -79,14 +82,4 @@ public class CounterExampleResult<ELEM extends IElement, TE extends IElement, E>
 		}
 		return mProgramExecutionAsString;
 	}
-
-	private static <TE extends IElement, E> List<ILocation> getLocationSequence(IProgramExecution<TE, E> pe) {
-		List<ILocation> result = new ArrayList<ILocation>();
-		for (int i = 0; i < pe.getLength(); i++) {
-			AtomicTraceElement<TE> te = pe.getTraceElement(i);
-			result.add(te.getTraceElement().getPayload().getLocation());
-		}
-		return result;
-	}
-
 }

@@ -28,11 +28,12 @@ import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
  * @param <TE> Type of trace element
  * @param <E> Type of expression
  */
-public class UnprovableResult<ELEM extends IElement, TE, E> extends AbstractResultAtElement<ELEM> implements
+public class UnprovableResult<ELEM extends IElement, TE extends IElement, E> extends AbstractResultAtElement<ELEM> implements
 		IResultWithTrace {
 
-	private final Check m_CheckedSpecification;
-	private final IProgramExecution<TE, E> m_ProgramExecution;
+	private final Check mCheckedSpecification;
+	private final IProgramExecution<TE, E> mProgramExecution;
+	private final List<ILocation> mFailurePath;
 
 	/**
 	 * Constructor.
@@ -43,18 +44,19 @@ public class UnprovableResult<ELEM extends IElement, TE, E> extends AbstractResu
 	public UnprovableResult(String plugin, ELEM position, IBacktranslationService translatorSequence,
 			IProgramExecution<TE, E> programExecution) {
 		super(position, plugin, translatorSequence);
-		m_CheckedSpecification = ResultUtil.getCheckedSpecification(position);
-		m_ProgramExecution = programExecution;
+		mCheckedSpecification = ResultUtil.getCheckedSpecification(position);
+		mProgramExecution = programExecution;
+		mFailurePath = ResultUtil.getLocationSequence(programExecution);
 	}
 
 	@Override
 	public String getShortDescription() {
-		return "Unable to prove that " + m_CheckedSpecification.getPositiveMessage();
+		return "Unable to prove that " + mCheckedSpecification.getPositiveMessage();
 	}
 
 	@Override
 	public String getLongDescription() {
-		return "Unable to prove that " + m_CheckedSpecification.getPositiveMessage();
+		return "Unable to prove that " + mCheckedSpecification.getPositiveMessage();
 	}
 
 	/**
@@ -63,6 +65,10 @@ public class UnprovableResult<ELEM extends IElement, TE, E> extends AbstractResu
 	 * @return the failurePath
 	 */
 	public List<ILocation> getFailurePath() {
-		throw new UnsupportedOperationException("not yet implemented");
+		return mFailurePath;
+	}
+	
+	public IProgramExecution<TE, E> getProgramExecution(){
+		return mProgramExecution;
 	}
 }
