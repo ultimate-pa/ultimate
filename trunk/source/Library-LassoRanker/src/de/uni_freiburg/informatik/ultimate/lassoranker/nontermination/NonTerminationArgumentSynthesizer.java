@@ -148,15 +148,12 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 			m_sort = m_script.sort("Real");
 		} else {
 			mLogger.info("Using integer mode.");
+			m_analysis_type = m_settings.analysis;
 			if (m_settings.analysis.isLinear()) {
-				m_analysis_type = m_settings.analysis;
+				m_script.setLogic(Logics.QF_LIA);
 			} else {
-				mLogger.info("Nontermination analysis is set to NONLINEAR, " +
-						"but we have an integer program. " +
-						"Falling back to linear analysis with guessing.");
-				m_analysis_type = AnalysisType.Linear_with_guesses;
+				m_script.setLogic(Logics.QF_NIA);
 			}
-			m_script.setLogic(Logics.QF_LIA);
 			m_sort = m_script.sort("Int");
 		}
 		assert !m_analysis_type.isDisabled();
