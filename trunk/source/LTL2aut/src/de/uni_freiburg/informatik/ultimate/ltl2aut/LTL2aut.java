@@ -1,21 +1,25 @@
 package de.uni_freiburg.informatik.ultimate.ltl2aut;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.access.IObserver;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.IGenerator;
 import de.uni_freiburg.informatik.ultimate.ltl2aut.preferences.PreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.model.GraphType;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
+import de.uni_freiburg.informatik.ultimate.result.CounterExampleResult;
 
 public class LTL2aut implements IGenerator {
 
 	protected List<String> mFileNames;
 	private boolean mProcess;
+	private boolean mSkip;
 	private int mUseful;
 
 	private LTL2autObserver mObserver;
@@ -57,6 +61,9 @@ public class LTL2aut implements IGenerator {
 
 	@Override
 	public QueryKeyword getQueryKeyword() {
+		if (mSkip) {
+			return QueryKeyword.LAST;
+		}
 		return QueryKeyword.ALL;
 	}
 
@@ -82,7 +89,7 @@ public class LTL2aut implements IGenerator {
 	public List<IObserver> getObservers() {
 		mObserver = new LTL2autObserver(mServices, mStorage);
 		ArrayList<IObserver> observers = new ArrayList<IObserver>();
-		if (mProcess) {
+		if (mProcess && !mSkip) {
 			observers.add(mObserver);
 		}
 		return observers;
@@ -103,15 +110,22 @@ public class LTL2aut implements IGenerator {
 		mStorage = storage;
 	}
 
+	@SuppressWarnings("rawtypes")
 	@Override
 	public void setServices(IUltimateServiceProvider services) {
 		mServices = services;
+		Collection<CounterExampleResult> cex = CoreUtil.filterResults(services.getResultService().getResults(),
+				CounterExampleResult.class);
+		mSkip = !cex.isEmpty();
 	}
 
 	@Override
 	public void finish() {
-		if (mUseful == 0) {
+		if (!mSkip && mUseful == 0) {
 			throw new IllegalStateException("Was used in a toolchain were it did nothing");
+		}
+		if (mSkip) {
+			mServices.getLoggingService().getLogger(getPluginID()).info("Another plugin discovered errors, skipping...");
 		}
 	}
 
