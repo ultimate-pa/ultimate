@@ -13,7 +13,7 @@ procedure proc() returns ()
   assume a >= x;
   assume x >= b;
   assume x != a;
-  assume x >= 1;
+  assume x >= 1.0;
   while (*) {
     //prevent large block encoding
   }
