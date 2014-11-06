@@ -38,10 +38,11 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.termination.SupportingInv
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.TerminationArgument;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.rankingfunctions.RankingFunction;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
-import de.uni_freiburg.informatik.ultimate.model.structure.BasePayloadContainer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.LassoChecker.ContinueDirective;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.RefineBuchi.RefinementSetting;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.annot.BuchiProgramAcceptingStateAnnotation;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.annot.BuchiProgramRootNodeAnnotation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.PreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.PreferenceInitializer.BInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -135,8 +136,6 @@ public class BuchiCegarLoop {
 	protected NestedWordAutomaton<CodeBlock, IPredicate> m_InterpolAutomaton;
 
 	protected IAutomaton<CodeBlock, IPredicate> m_ArtifactAutomaton;
-
-	private static final String LTL_MODE_IDENTIFIER = "BuchiProgramProduct";
 
 	// used for the collection of statistics
 	int m_Infeasible = 0;
@@ -461,7 +460,7 @@ public class BuchiCegarLoop {
 		}
 		m_BenchmarkGenerator.start(BuchiCegarLoopBenchmark.s_BuchiClosure);
 		try {
-			m_Abstraction = (INestedWordAutomatonOldApi<CodeBlock, IPredicate>) (new BuchiClosureNwa(m_Abstraction));
+			m_Abstraction = (INestedWordAutomatonOldApi<CodeBlock, IPredicate>) (new BuchiClosureNwa<>(m_Abstraction));
 			m_Abstraction = (new RemoveDeadEnds<CodeBlock, IPredicate>(m_Abstraction)).getResult();
 		} finally {
 			m_BenchmarkGenerator.stop(BuchiCegarLoopBenchmark.s_BuchiClosure);
@@ -551,10 +550,11 @@ public class BuchiCegarLoop {
 		for (Map<String, ProgramPoint> prog2pp : m_RootNode.getRootAnnot().getProgramPoints().values()) {
 			allNodes.addAll(prog2pp.values());
 		}
-		if (hasLtlAnnotation(m_RootNode)) {
+
+		if (BuchiProgramRootNodeAnnotation.getAnnotation(m_RootNode) != null) {
 			acceptingNodes = new HashSet<ProgramPoint>();
 			for (ProgramPoint pp : allNodes) {
-				if (hasLtlAnnotation(pp)) {
+				if (BuchiProgramAcceptingStateAnnotation.getAnnotation(pp) != null) {
 					acceptingNodes.add(pp);
 				}
 			}
@@ -563,14 +563,6 @@ public class BuchiCegarLoop {
 		}
 		m_Abstraction = cFG2NestedWordAutomaton.getNestedWordAutomaton(m_RootNode, m_DefaultStateFactory,
 				acceptingNodes);
-	}
-
-	private boolean hasLtlAnnotation(BasePayloadContainer bpc) {
-		if (bpc.getPayload().hasAnnotation()) {
-			return bpc.getPayload().getAnnotations().containsKey(LTL_MODE_IDENTIFIER);
-		} else {
-			return false;
-		}
 	}
 
 	private void refineFinite(LassoChecker lassoChecker) throws OperationCanceledException {
@@ -662,8 +654,8 @@ public class BuchiCegarLoop {
 		}
 		TerminationArgumentResult<RcfgElement> result = new TerminationArgumentResult<RcfgElement>(honda,
 				Activator.s_PLUGIN_NAME, rf.asLexExpression(m_SmtManager.getScript(), m_RootNode.getRootAnnot()
-						.getBoogie2SMT().getTerm2Expression()), rf.getName(), supporting_invariants, mServices
-						.getBacktranslationService());
+						.getBoogie2SMT().getTerm2Expression()), rf.getName(), supporting_invariants,
+				mServices.getBacktranslationService());
 		return result;
 	}
 

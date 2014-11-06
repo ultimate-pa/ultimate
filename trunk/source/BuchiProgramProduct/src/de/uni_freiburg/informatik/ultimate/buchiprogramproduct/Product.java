@@ -19,6 +19,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.annot.BuchiProgramAcceptingStateAnnotation;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.annot.BuchiProgramRootNodeAnnotation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -82,7 +83,7 @@ public class Product {
 		mRootNode.getRootAnnot().getEntryNodes().clear();
 		mRootNode.getRootAnnot().getExitNodes().clear();
 		mRootNode.getRootAnnot().getLoopLocations().clear();
-		mRootNode.getPayload().getAnnotations().put(Activator.PLUGIN_ID, new BuchiProgramAcceptingStateAnnotation());
+		new BuchiProgramRootNodeAnnotation().annotate(mRootNode);
 
 		collectRCFGLocations();
 		createProductStates();
@@ -337,7 +338,7 @@ public class Product {
 
 				// accepting states (just check for AcceptingNodeAnnotation)
 				if (mNWA.isFinal(n)) {
-					productNode.getPayload().getAnnotations().put(Activator.PLUGIN_ID, acceptingNodeAnnotation);
+					acceptingNodeAnnotation.annotate(productNode);
 				}
 
 				// inital states
