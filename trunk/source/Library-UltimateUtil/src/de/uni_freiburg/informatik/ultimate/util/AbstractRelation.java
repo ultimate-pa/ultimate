@@ -56,9 +56,9 @@ import java.util.Set;
 public abstract class AbstractRelation<D,R,MAP extends Map<D,Set<R>>> {
 	protected final MAP m_Map;
 	
-	public abstract MAP newMap();
+	protected abstract MAP newMap();
 	
-	public abstract Set<R> newSet();
+	protected abstract Set<R> newSet();
 
 	public AbstractRelation() {
 		super();
