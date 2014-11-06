@@ -42,11 +42,10 @@ public class BlockEncoding implements IGenerator {
 	}
 
 	@Override
-	public int init() {
+	public void init() {
 		Logger logger = mServices.getLoggingService().getLogger(s_PLUGIN_ID);
 		mConversionObserver = new MinModelConversionObserver(mServices);
 		mBlockEncodingObserver = new BlockEncodingObserver(logger);
-		return 0;
 	}
 
 	@Override
@@ -105,5 +104,11 @@ public class BlockEncoding implements IGenerator {
 	@Override
 	public void setServices(IUltimateServiceProvider services) {
 		mServices = services;
+	}
+
+	@Override
+	public void finish() {
+		// TODO Auto-generated method stub
+		
 	}
 }

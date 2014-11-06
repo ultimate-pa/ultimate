@@ -313,8 +313,7 @@ public class AutomataScriptParser implements ISource {
 	}
 
 	@Override
-	public int init() {
-		return 0;
+	public void init() {
 	}
 
 	private static ILocation getPseudoLocation() {
@@ -336,6 +335,12 @@ public class AutomataScriptParser implements ISource {
 	public void setServices(IUltimateServiceProvider services) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
+	}
+
+	@Override
+	public void finish() {
+		// TODO Auto-generated method stub
+		
 	}
 
 }

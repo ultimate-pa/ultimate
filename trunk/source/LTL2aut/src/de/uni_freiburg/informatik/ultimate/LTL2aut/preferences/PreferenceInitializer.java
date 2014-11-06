@@ -1,10 +1,10 @@
-package de.uni_freiburg.informatik.ultimate.LTL2aut.preferences;
+package de.uni_freiburg.informatik.ultimate.ltl2aut.preferences;
 
-import de.uni_freiburg.informatik.ultimate.LTL2aut.Activator;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceItem;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceItem.PreferenceType;
+import de.uni_freiburg.informatik.ultimate.ltl2aut.Activator;
 
 public class PreferenceInitializer extends UltimatePreferenceInitializer {
 
@@ -12,7 +12,7 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 	 * labels for the different preferencess
 	 */
 	public static final String LABEL_TOOLLOCATION = "Path to LTL*BA executable (LTL2BA, LTL3BA)";
-	public static final String LABEL_TOOLARGUMENT = "Command line string";
+	public static final String LABEL_TOOLARGUMENT = "Command line string ($1 will be replaced with the property)";
 	public static final String LABEL_PROPERTYFROMFILE = "Read property from file";
 	public static final String LABEL_PPROPERTY = "Property to check";
 
@@ -20,7 +20,7 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 	 * default values for the different preferences
 	 */
 	public static final String DEF_TOOLLOCATION = "";
-	public static final String DEF_TOOLARGUMENT = "\"!( $1 )\"";
+	public static final String DEF_TOOLARGUMENT = "!($1)";
 	public static final boolean DEF_PROPERTYFROMFILE = false;
 	public static final String DEF_PPROPERTY = "[] a \n a: x > 42";
 
@@ -41,10 +41,11 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 
 	@Override
 	public String getPreferencePageTitle() {
-		return "LTL2aut";
+		return Activator.PLUGIN_NAME;
 	}
-	
-	public static boolean readPropertyFromFile(){
-		return new UltimatePreferenceStore(Activator.PLUGIN_ID).getBoolean(PreferenceInitializer.LABEL_PROPERTYFROMFILE);
+
+	public static boolean readPropertyFromFile() {
+		return new UltimatePreferenceStore(Activator.PLUGIN_ID)
+				.getBoolean(PreferenceInitializer.LABEL_PROPERTYFROMFILE);
 	}
 }

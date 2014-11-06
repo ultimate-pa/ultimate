@@ -235,7 +235,8 @@ public class ToolchainManager {
 
 				mToolchainWalker.walk(data, mToolchainData.getServices().getProgressMonitorService(), monitor);
 				if (ups.getBoolean(CorePreferenceInitializer.LABEL_WITNESS_GEN)) {
-					WitnessManager cexVerifier = new WitnessManager(mLogger, mToolchainData.getServices(),mToolchainData.getStorage());
+					WitnessManager cexVerifier = new WitnessManager(mLogger, mToolchainData.getServices(),
+							mToolchainData.getStorage());
 					cexVerifier.run();
 				}
 
@@ -342,6 +343,8 @@ public class ToolchainManager {
 			} catch (Exception e) {
 				mLogger.fatal(getLogPrefix() + ": Parsing gives Exception", e);
 				resetModelManager();
+			} finally {
+				parser.finish();
 			}
 			return root;
 		}

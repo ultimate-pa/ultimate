@@ -1,13 +1,13 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: LTL2aut
-Bundle-SymbolicName: LTL2aut;singleton:=true
+Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.ltl2aut;singleton:=true
 Bundle-Version: 0.0.1
-Bundle-Activator: de.uni_freiburg.informatik.ultimate.LTL2aut.Activator
+Bundle-Activator: de.uni_freiburg.informatik.ultimate.ltl2aut.Activator
 Require-Bundle: Library-log4j,
  UltimateCore,
  JavaCup
 Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-1.7
-Export-Package: de.uni_freiburg.informatik.ultimate.LTL2aut.ast
+Export-Package: de.uni_freiburg.informatik.ultimate.ltl2aut.ast
 Import-Package: org.apache.commons.io

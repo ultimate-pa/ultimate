@@ -57,9 +57,8 @@ public class AbstractInterpretation implements IAnalysis {
 	}
 
 	@Override
-	public int init() {
+	public void init() {
 		m_Observer = new AbstractInterpretationObserver(mServices);
-		return 0;
 	}
 
 	@Override
@@ -86,6 +85,12 @@ public class AbstractInterpretation implements IAnalysis {
 	@Override
 	public void setServices(IUltimateServiceProvider services) {
 		mServices = services;
+	}
+
+	@Override
+	public void finish() {
+		// TODO Auto-generated method stub
+		
 	}
 
 }

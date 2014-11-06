@@ -8,7 +8,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 
 /**
- * @author dietsch
+ * @author dietsch@informatik.uni-freiburg.de
  * 
  */
 public interface IToolchainPlugin extends IUltimatePlugin {
@@ -42,15 +42,19 @@ public interface IToolchainPlugin extends IUltimatePlugin {
 
 	/**
 	 * {@link UltimateCore} will call this method according to the
-	 * UltimatePlugin livecycle (usually once after the plugin has been loaded
-	 * and once before it is used in a toolchain).
+	 * UltimatePlugin lifecycle (once before it is used in a toolchain).
 	 * 
 	 * Note that this is called <b>BEFORE</b>
 	 * {@link #setServices(IUltimateServiceProvider)} and
 	 * {@link #setToolchainStorage(IToolchainStorage)}.
 	 */
-	int init();
-	
-	
+	void init();
+
+	/**
+	 * {@link UltimateCore} will call this method once after {@link IToolchainPlugin}
+	 * has been processed completely and before starting the next plugin in the
+	 * toolchain.
+	 */
+	void finish();
 
 }

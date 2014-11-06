@@ -1,14 +1,14 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: BuchiProgramProduct
-Bundle-SymbolicName: BuchiProgramProduct;singleton:=true
+Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.buchiprogramproduct;singleton:=true
 Bundle-Version: 0.0.1
-Bundle-Activator: de.uni_freiburg.informatik.ultimate.BuchiProgramProduct.Activator
+Bundle-Activator: de.uni_freiburg.informatik.ultimate.buchiprogramproduct.Activator
 Require-Bundle: Library-log4j,
  UltimateCore,
  Library-ModelCheckerUtils,
  BoogiePreprocessor,
- LTL2aut,
+ de.uni_freiburg.informatik.ultimate.ltl2aut,
  de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder,
  JavaCup,
  de.uni_freiburg.informatik.ultimate.automata

@@ -68,8 +68,7 @@ public class DSITransformer implements IGenerator {
 		return QueryKeyword.LAST;
 	}
 
-	public int init() {
-		return 0;
+	public void init() {
 	}
 
 	@Override
@@ -95,5 +94,11 @@ public class DSITransformer implements IGenerator {
 	@Override
 	public void setServices(IUltimateServiceProvider services) {
 		mServices = services;
+	}
+
+	@Override
+	public void finish() {
+		// TODO Auto-generated method stub
+		
 	}
 }

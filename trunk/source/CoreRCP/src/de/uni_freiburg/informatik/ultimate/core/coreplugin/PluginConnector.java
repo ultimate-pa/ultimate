@@ -106,6 +106,7 @@ public class PluginConnector {
 			runTool(observers, currentModel);
 			++mCurrent;
 		}
+		mTool.finish();
 		mLogger.info("------------------------ END " + mTool.getPluginName() + "----------------------------");
 	}
 

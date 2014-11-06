@@ -68,9 +68,8 @@ public class CDTParser implements ISource {
 	}
 
 	@Override
-	public int init() {
+	public void init() {
 		m_FileNames = new ArrayList<String>();
-		return 0;
 	}
 
 	@Override
@@ -197,5 +196,11 @@ public class CDTParser implements ISource {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 
+	}
+
+	@Override
+	public void finish() {
+		// TODO Auto-generated method stub
+		
 	}
 }

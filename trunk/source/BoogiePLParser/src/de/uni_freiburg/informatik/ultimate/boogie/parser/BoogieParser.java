@@ -62,9 +62,8 @@ public class BoogieParser implements ISource {
 	 * 
 	 * @see de.uni_freiburg.informatik.ultimate.ep.interfaces.IToolchainPlugin#init()
 	 */
-	public int init() {
+	public void init() {
 		mFileNames = new ArrayList<String>();
-		return 0;
 	}
 
 	/**
@@ -272,5 +271,11 @@ public class BoogieParser implements ISource {
 	public void setServices(IUltimateServiceProvider services) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
+	}
+
+	@Override
+	public void finish() {
+		// TODO Auto-generated method stub
+		
 	}
 }

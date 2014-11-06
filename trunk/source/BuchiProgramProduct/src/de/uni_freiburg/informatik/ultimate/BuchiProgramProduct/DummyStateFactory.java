@@ -1,4 +1,4 @@
-package de.uni_freiburg.informatik.ultimate.BuchiProgramProduct;
+package de.uni_freiburg.informatik.ultimate.buchiprogramproduct;
 
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 

@@ -3,7 +3,7 @@ Bundle-ManifestVersion: 2
 Bundle-Name: LTL2autTest
 Bundle-SymbolicName: LTL2autTest
 Bundle-Version: 0.0.1
-Fragment-Host: LTL2aut
+Fragment-Host: de.uni_freiburg.informatik.ultimate.ltl2aut
 Bundle-RequiredExecutionEnvironment: JavaSE-1.7
 Import-Package: junit.framework,
  org.apache.commons.io

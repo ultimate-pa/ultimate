@@ -262,7 +262,7 @@ public class PreferencesInitializer extends UltimatePreferenceInitializer {
 		);
 		return settings;
 	}
-	
+		
 	/**
 	 * @return the (local) nontermination analysis settings from the GUI
 	 */

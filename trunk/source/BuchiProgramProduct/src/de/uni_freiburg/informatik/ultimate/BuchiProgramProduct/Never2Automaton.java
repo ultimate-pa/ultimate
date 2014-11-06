@@ -1,23 +1,23 @@
-package de.uni_freiburg.informatik.ultimate.BuchiProgramProduct;
+package de.uni_freiburg.informatik.ultimate.buchiprogramproduct;
 
 import java.util.HashSet;
 import java.util.Set;
 
 import org.apache.log4j.Logger;
 
-import de.uni_freiburg.informatik.ultimate.LTL2aut.ast.AstNode;
-import de.uni_freiburg.informatik.ultimate.LTL2aut.ast.BinaryOperator;
-import de.uni_freiburg.informatik.ultimate.LTL2aut.ast.BoolLiteral;
-import de.uni_freiburg.informatik.ultimate.LTL2aut.ast.ComperativeOperator;
-import de.uni_freiburg.informatik.ultimate.LTL2aut.ast.IntLiteral;
-import de.uni_freiburg.informatik.ultimate.LTL2aut.ast.LabeledBlock;
-import de.uni_freiburg.informatik.ultimate.LTL2aut.ast.Name;
-import de.uni_freiburg.informatik.ultimate.LTL2aut.ast.Not;
-import de.uni_freiburg.informatik.ultimate.LTL2aut.ast.OptionStatement;
-import de.uni_freiburg.informatik.ultimate.LTL2aut.ast.SkipStatement;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.ltl2aut.ast.AstNode;
+import de.uni_freiburg.informatik.ultimate.ltl2aut.ast.BinaryOperator;
+import de.uni_freiburg.informatik.ultimate.ltl2aut.ast.BoolLiteral;
+import de.uni_freiburg.informatik.ultimate.ltl2aut.ast.ComperativeOperator;
+import de.uni_freiburg.informatik.ultimate.ltl2aut.ast.IntLiteral;
+import de.uni_freiburg.informatik.ultimate.ltl2aut.ast.LabeledBlock;
+import de.uni_freiburg.informatik.ultimate.ltl2aut.ast.Name;
+import de.uni_freiburg.informatik.ultimate.ltl2aut.ast.Not;
+import de.uni_freiburg.informatik.ultimate.ltl2aut.ast.OptionStatement;
+import de.uni_freiburg.informatik.ultimate.ltl2aut.ast.SkipStatement;
 import de.uni_freiburg.informatik.ultimate.model.IType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.model.boogie.DeclarationInformation.StorageClass;

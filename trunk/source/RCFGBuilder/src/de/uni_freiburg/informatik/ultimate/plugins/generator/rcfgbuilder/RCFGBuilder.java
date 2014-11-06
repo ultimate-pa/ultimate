@@ -40,8 +40,7 @@ public class RCFGBuilder implements IGenerator {
 	}
 
 	@Override
-	public int init() {
-		return 0;
+	public void init() {
 	}
 
 	@Override
@@ -99,5 +98,11 @@ public class RCFGBuilder implements IGenerator {
 	@Override
 	public void setServices(IUltimateServiceProvider services) {
 		mServices = services;
+	}
+
+	@Override
+	public void finish() {
+		// TODO Auto-generated method stub
+		
 	}
 }

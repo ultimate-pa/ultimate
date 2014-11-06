@@ -1,4 +1,4 @@
-package de.uni_freiburg.informatik.ultimate.LTL2aut;
+package de.uni_freiburg.informatik.ultimate.ltl2aut;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -12,33 +12,40 @@ import java.util.Map;
 import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Logger;
 
-import de.uni_freiburg.informatik.ultimate.LTL2aut.ast.AstNode;
-import de.uni_freiburg.informatik.ultimate.LTL2aut.ast.AtomicProposition;
-import de.uni_freiburg.informatik.ultimate.LTL2aut.preferences.PreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
+import de.uni_freiburg.informatik.ultimate.core.services.IToolchainStorage;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.ltl2aut.ast.AstNode;
+import de.uni_freiburg.informatik.ultimate.ltl2aut.ast.AtomicProposition;
+import de.uni_freiburg.informatik.ultimate.ltl2aut.preferences.PreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Unit;
 
 /**
- * This class reads a definition of a property in ltl and returns the AST of the
+ * This class reads a definition of a property in LTL and returns the AST of the
  * description of the LTL formula as a Buchi automaton.
  * 
  * @author Langenfeld
  * 
  */
-public class DummyLTL2autObserver implements IUnmanagedObserver {
-
-	private AstNode mRootNode;
-	private final Logger mLogger;
-	private String mInputFile;
+public class LTL2autObserver implements IUnmanagedObserver {
 
 	private static final String sLTLMarker = "#LTLProperty:";
 	private static final String sIRSMarker = "#IRS:";
 
-	public DummyLTL2autObserver(Logger logger) {
-		mLogger = logger;
+	private final IUltimateServiceProvider mServices;
+	private final IToolchainStorage mStorage;
+	private final Logger mLogger;
+
+	private String mInputFile;
+	private AstNode mRootNode;
+
+	public LTL2autObserver(IUltimateServiceProvider services, IToolchainStorage storage) {
+		mServices = services;
+		mStorage = storage;
+		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 	}
 
 	@Override
@@ -116,9 +123,9 @@ public class DummyLTL2autObserver implements IUnmanagedObserver {
 	private AstNode getProperty(String property) throws Throwable {
 		try {
 			mLogger.debug("Parsing LTL property...");
-			return new WrapLTL2Never(mLogger).ltl2Ast(property);
+			return new WrapLTL2Never(mServices, mStorage).ltl2Ast(property);
 		} catch (Throwable e) {
-			mLogger.error(String.format("Exception during LTL->BA execution: %s", e));
+			mLogger.fatal(String.format("Exception during LTL->BA execution: %s", e));
 			throw e;
 		}
 	}

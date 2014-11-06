@@ -16,13 +16,29 @@ import de.uni_freiburg.informatik.ultimate.result.UnprovableResult;
 
 public class ResultNotifier {
 
-	private static final int NORESULT = -1;
-	private static final int GENERICRESULT = 0;
-	private static final int CORRECT = 1;
-	private static final int UNPROVABLE = 2;
-	private static final int TIMEOUT = 3;
-	private static final int INCORRECT = 4;
-	private static final int SYNTAXERROR = 5;
+	private enum ToolchainResult {
+		NORESULT(-1),
+		GENERICRESULT(0), 
+		CORRECT(1), 
+		UNPROVABLE(2), 
+		TIMEOUT(3), 
+		INCORRECT(4), 
+		SYNTAXERROR(5);
+
+		private int mValue;
+
+		ToolchainResult(int i) {
+			mValue = i;
+		}
+
+		boolean isLess(ToolchainResult other) {
+			return mValue < other.mValue;
+		}
+
+		boolean isLessOrEqual(ToolchainResult other) {
+			return mValue <= other.mValue;
+		}
+	}
 
 	private final IController mController;
 	private final Logger mLogger;
@@ -36,33 +52,33 @@ public class ResultNotifier {
 	}
 
 	public void processResults() {
-		int toolchainResult = ResultNotifier.NORESULT;
+		ToolchainResult toolchainResult = ToolchainResult.NORESULT;
 		String description = "Toolchain returned no Result.";
-		
+
 		for (List<IResult> PluginResults : mServices.getResultService().getResults().values()) {
 			for (IResult result : PluginResults) {
 				if (result instanceof SyntaxErrorResult) {
-					toolchainResult = ResultNotifier.SYNTAXERROR;
+					toolchainResult = ToolchainResult.SYNTAXERROR;
 					description = result.getShortDescription();
 				} else if (result instanceof UnprovableResult) {
-					if (toolchainResult < ResultNotifier.UNPROVABLE) {
-						toolchainResult = ResultNotifier.UNPROVABLE;
+					if (toolchainResult.isLess(ToolchainResult.UNPROVABLE)) {
+						toolchainResult = ToolchainResult.UNPROVABLE;
 						description = "unable to determine feasibility of some traces";
 					}
 				} else if (result instanceof CounterExampleResult) {
-					if (toolchainResult < ResultNotifier.INCORRECT)
-						toolchainResult = ResultNotifier.INCORRECT;
+					if (toolchainResult.isLess(ToolchainResult.INCORRECT))
+						toolchainResult = ToolchainResult.INCORRECT;
 				} else if (result instanceof PositiveResult) {
-					if (toolchainResult < ResultNotifier.CORRECT)
-						toolchainResult = ResultNotifier.CORRECT;
+					if (toolchainResult.isLess(ToolchainResult.CORRECT))
+						toolchainResult = ToolchainResult.CORRECT;
 				} else if (result instanceof TimeoutResultAtElement) {
-					if (toolchainResult < ResultNotifier.TIMEOUT) {
-						toolchainResult = ResultNotifier.TIMEOUT;
+					if (toolchainResult.isLess(ToolchainResult.TIMEOUT)) {
+						toolchainResult = ToolchainResult.TIMEOUT;
 						description = "Timeout";
 					}
 				} else if (result instanceof GenericResultAtElement) {
-					if (toolchainResult <= ResultNotifier.GENERICRESULT) {
-						toolchainResult = ResultNotifier.GENERICRESULT;
+					if (toolchainResult.isLessOrEqual(ToolchainResult.GENERICRESULT)) {
+						toolchainResult = ToolchainResult.GENERICRESULT;
 						description = result.getShortDescription() + "  " + result.getLongDescription();
 					}
 				}

@@ -41,9 +41,8 @@ public class CACSL2BoogieTranslator implements IGenerator {
 	}
 
 	@Override
-	public int init() {
+	public void init() {
 		m_Observer = new CACSL2BoogieTranslatorObserver(mServices, mStorage);
-		return 0;
 	}
 
 	@Override
@@ -94,5 +93,11 @@ public class CACSL2BoogieTranslator implements IGenerator {
 	@Override
 	public void setServices(IUltimateServiceProvider services) {
 		mServices = services;
+	}
+
+	@Override
+	public void finish() {
+		// TODO Auto-generated method stub
+		
 	}
 }

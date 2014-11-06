@@ -48,9 +48,7 @@ public class BuchiAutomizer implements IGenerator {
 	}
 
 	@Override
-	public int init() {
-
-		return 0;
+	public void init() {
 	}
 
 	@Override
@@ -129,5 +127,11 @@ public class BuchiAutomizer implements IGenerator {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
 
+	}
+
+	@Override
+	public void finish() {
+		// TODO Auto-generated method stub
+		
 	}
 }

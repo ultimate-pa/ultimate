@@ -1,4 +1,4 @@
-package de.uni_freiburg.informatik.ultimate.BuchiProgramProduct.test;
+package de.uni_freiburg.informatik.ultimate.buchiprogramproduct.test;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -7,11 +7,11 @@ import java.util.Set;
 import org.apache.log4j.Logger;
 
 import junit.framework.TestCase;
-import de.uni_freiburg.informatik.ultimate.BuchiProgramProduct.Never2Automaton;
-import de.uni_freiburg.informatik.ultimate.LTL2aut.ast.*;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
+import de.uni_freiburg.informatik.ultimate.buchiprogramproduct.Never2Automaton;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.ltl2aut.ast.*;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BoogieASTNode;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BooleanLiteral;
 

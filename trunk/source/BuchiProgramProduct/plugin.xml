@@ -3,7 +3,7 @@
 <plugin>
    <extension
          point="de.uni_freiburg.informatik.ultimate.ep.generator">
-      <impl class="de.uni_freiburg.informatik.ultimate.BuchiProgramProduct.BuchiProgramProduct"/>
+      <impl class="de.uni_freiburg.informatik.ultimate.buchiprogramproduct.BuchiProgramProduct"/>
    </extension>
 
 </plugin>

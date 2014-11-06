@@ -1,4 +1,4 @@
-package de.uni_freiburg.informatik.ultimate.LTL2aut;
+package de.uni_freiburg.informatik.ultimate.ltl2aut;
 
 import java_cup.runtime.*;
 

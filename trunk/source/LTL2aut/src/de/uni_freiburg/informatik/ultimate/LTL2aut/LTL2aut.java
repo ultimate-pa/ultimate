@@ -1,40 +1,40 @@
-package de.uni_freiburg.informatik.ultimate.LTL2aut;
+package de.uni_freiburg.informatik.ultimate.ltl2aut;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.log4j.Logger;
-
-import de.uni_freiburg.informatik.ultimate.LTL2aut.preferences.PreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.access.IObserver;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.IGenerator;
+import de.uni_freiburg.informatik.ultimate.ltl2aut.preferences.PreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.model.GraphType;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 
 public class LTL2aut implements IGenerator {
 
-	protected Logger mLogger;
-
-	protected List<String> mFileNames = new ArrayList<String>();
-
-	private DummyLTL2autObserver mObserver;
-
+	protected List<String> mFileNames;
 	private boolean mProcess;
+	private int mUseful;
 
+	private LTL2autObserver mObserver;
 	private IUltimateServiceProvider mServices;
+	private IToolchainStorage mStorage;
+
+	public LTL2aut() {
+		mFileNames = new ArrayList<String>();
+	}
 
 	@Override
-	public int init() {
+	public void init() {
 		mProcess = false;
-		return 0;
+		mUseful = 0;
 	}
 
 	@Override
 	public String getPluginName() {
-		return Activator.PLUGIN_ID;
+		return Activator.PLUGIN_NAME;
 	}
 
 	@Override
@@ -68,8 +68,9 @@ public class LTL2aut implements IGenerator {
 	@Override
 	public void setInputDefinition(GraphType graphType) {
 		switch (graphType.getCreator()) {
-		case "BoogiePLCupParser":
+		case "de.uni_freiburg.informatik.ultimate.boogie.parser":
 			mProcess = true;
+			mUseful++;
 			break;
 		default:
 			mProcess = false;
@@ -79,7 +80,7 @@ public class LTL2aut implements IGenerator {
 
 	@Override
 	public List<IObserver> getObservers() {
-		mObserver = new DummyLTL2autObserver(mLogger);
+		mObserver = new LTL2autObserver(mServices, mStorage);
 		ArrayList<IObserver> observers = new ArrayList<IObserver>();
 		if (mProcess) {
 			observers.add(mObserver);
@@ -98,15 +99,20 @@ public class LTL2aut implements IGenerator {
 	}
 
 	@Override
-	public void setToolchainStorage(IToolchainStorage services) {
-		// TODO Auto-generated method stub
-
+	public void setToolchainStorage(IToolchainStorage storage) {
+		mStorage = storage;
 	}
 
 	@Override
 	public void setServices(IUltimateServiceProvider services) {
 		mServices = services;
-		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
+	}
+
+	@Override
+	public void finish() {
+		if (mUseful == 0) {
+			throw new IllegalStateException("Was used in a toolchain were it did nothing");
+		}
 	}
 
 }

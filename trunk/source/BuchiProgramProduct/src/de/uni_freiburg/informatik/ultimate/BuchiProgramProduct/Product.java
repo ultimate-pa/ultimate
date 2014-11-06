@@ -1,7 +1,4 @@
-/**
- * 
- */
-package de.uni_freiburg.informatik.ultimate.BuchiProgramProduct;
+package de.uni_freiburg.informatik.ultimate.buchiprogramproduct;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -99,7 +96,8 @@ public class Product {
 		TransFormulaBuilder tfb = new TransFormulaBuilder(b2smt, mServices);
 
 		for (String procIdent : rootAnnot.getBoogieDeclarations().getProcImplementation().keySet()) {
-			Procedure proc = rootAnnot.getBoogieDeclarations().getProcImplementation().get(procIdent);
+			// Procedure proc =
+			// rootAnnot.getBoogieDeclarations().getProcImplementation().get(procIdent);
 			// b2smt.declareLocals(proc);
 
 			for (ProgramPoint node : rootAnnot.getProgramPoints().get(procIdent).values()) {
@@ -175,8 +173,7 @@ public class Product {
 								ArrayList<Statement> stmts = new ArrayList<Statement>();
 								stmts.add(new AssumeStatement(null, ((Expression) autTrans.getLetter())));
 								// edge
-								StatementSequence s = new StatementSequence(helper, targetpp, stmts,
-										Origin.IMPLEMENTATION, mLogger);
+								new StatementSequence(helper, targetpp, stmts, Origin.IMPLEMENTATION, mLogger);
 
 							}
 						} else if (rcfgEdge instanceof Return) {
@@ -250,8 +247,7 @@ public class Product {
 								ArrayList<Statement> stmts = new ArrayList<Statement>();
 								stmts.add(new AssumeStatement(null, ((Expression) autTrans.getLetter())));
 								// edge
-								StatementSequence s = new StatementSequence(helper, targetpp, stmts,
-										Origin.IMPLEMENTATION, mLogger);
+								new StatementSequence(helper, targetpp, stmts, Origin.IMPLEMENTATION, mLogger);
 
 							}
 						} else if (rcfgEdge instanceof Summary) {
@@ -305,8 +301,7 @@ public class Product {
 								stmts.addAll(((StatementSequence) rcfgEdge).getStatements());
 								stmts.add(new AssumeStatement(null, ((Expression) autTrans.getLetter())));
 								// edge
-								StatementSequence s = new StatementSequence(currentpp, targetpp, stmts,
-										Origin.IMPLEMENTATION, mLogger);
+								new StatementSequence(currentpp, targetpp, stmts, Origin.IMPLEMENTATION, mLogger);
 
 							}
 						} else

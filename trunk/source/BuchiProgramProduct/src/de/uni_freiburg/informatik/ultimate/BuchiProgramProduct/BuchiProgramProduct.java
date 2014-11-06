@@ -1,4 +1,4 @@
-package de.uni_freiburg.informatik.ultimate.BuchiProgramProduct;
+package de.uni_freiburg.informatik.ultimate.buchiprogramproduct;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,11 +30,12 @@ public class BuchiProgramProduct implements IGenerator {
 	private BuchiProductObserver mBuchiProductObserver;
 	private boolean mProcess;
 	private IUltimateServiceProvider mServices;
+	private int mUseful;
 
 	@Override
 	public GraphType getOutputDefinition() {
 		List<String> filenames = new ArrayList<String>();
-		filenames.add("Product");
+		filenames.add("LTL+Program Product");
 
 		return new GraphType(Activator.PLUGIN_ID, GraphType.Type.OTHER, filenames);
 	}
@@ -52,9 +53,10 @@ public class BuchiProgramProduct implements IGenerator {
 	@Override
 	public void setInputDefinition(GraphType graphType) {
 		switch (graphType.getCreator()) {
-		case "LTL2aut":
-		case "RCFGBuilder":
+		case "de.uni_freiburg.informatik.ultimate.ltl2aut":
+		case "de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder":
 			mProcess = true;
+			mUseful++;
 			break;
 		default:
 			mProcess = false;
@@ -66,22 +68,24 @@ public class BuchiProgramProduct implements IGenerator {
 	public List<IObserver> getObservers() {
 		ArrayList<IObserver> observers = new ArrayList<IObserver>();
 		if (mProcess) {
-			mBuchiProductObserver = new BuchiProductObserver(mLogger, mServices);
+			if (mBuchiProductObserver == null) {
+				mBuchiProductObserver = new BuchiProductObserver(mLogger, mServices);
+			}
 			observers.add(mBuchiProductObserver);
 		}
 		return observers;
 	}
 
 	@Override
-	public int init() {
+	public void init() {
 		mProcess = false;
 		mFileNames = new ArrayList<String>();
-		return 0;
+		mUseful = 0;
 	}
 
 	@Override
 	public String getPluginName() {
-		return Activator.PLUGIN_ID;
+		return Activator.PLUGIN_NAME;
 	}
 
 	@Override
@@ -118,6 +122,13 @@ public class BuchiProgramProduct implements IGenerator {
 	public void setServices(IUltimateServiceProvider services) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
+	}
+
+	@Override
+	public void finish() {
+		if (mUseful == 0) {
+			throw new IllegalStateException("Was used in a toolchain were it did nothing");
+		}
 	}
 
 }

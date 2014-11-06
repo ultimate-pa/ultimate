@@ -52,8 +52,7 @@ public class JungVisualization implements IOutput {
 	}
 
 	@Override
-	public int init() {
-		return 0;
+	public void init() {
 	}
 
 	@Override
@@ -75,6 +74,12 @@ public class JungVisualization implements IOutput {
 	@Override
 	public void setServices(IUltimateServiceProvider services) {
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
+	}
+
+	@Override
+	public void finish() {
+		// TODO Auto-generated method stub
+		
 	}
 
 }

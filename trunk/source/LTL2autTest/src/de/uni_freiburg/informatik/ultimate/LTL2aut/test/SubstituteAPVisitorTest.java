@@ -6,13 +6,13 @@ import java.util.Map;
 
 import org.apache.commons.io.IOUtils;
 
-import de.uni_freiburg.informatik.ultimate.LTL2aut.Lexer;
-import de.uni_freiburg.informatik.ultimate.LTL2aut.LexerAP;
-import de.uni_freiburg.informatik.ultimate.LTL2aut.Parser;
-import de.uni_freiburg.informatik.ultimate.LTL2aut.ParserAP;
-import de.uni_freiburg.informatik.ultimate.LTL2aut.SubstituteAPVisitor;
-import de.uni_freiburg.informatik.ultimate.LTL2aut.ast.AstNode;
-import de.uni_freiburg.informatik.ultimate.LTL2aut.ast.AtomicProposition;
+import de.uni_freiburg.informatik.ultimate.ltl2aut.Lexer;
+import de.uni_freiburg.informatik.ultimate.ltl2aut.LexerAP;
+import de.uni_freiburg.informatik.ultimate.ltl2aut.Parser;
+import de.uni_freiburg.informatik.ultimate.ltl2aut.ParserAP;
+import de.uni_freiburg.informatik.ultimate.ltl2aut.SubstituteAPVisitor;
+import de.uni_freiburg.informatik.ultimate.ltl2aut.ast.AstNode;
+import de.uni_freiburg.informatik.ultimate.ltl2aut.ast.AtomicProposition;
 import junit.framework.TestCase;
 
 public class SubstituteAPVisitorTest extends TestCase {

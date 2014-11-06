@@ -88,8 +88,7 @@ public class IrsDependencies implements IAnalysis {
 	}
 
 	@Override
-	public int init() {
-		return 0;
+	public void init() {
 	}
 
 	@Override
@@ -117,6 +116,12 @@ public class IrsDependencies implements IAnalysis {
 	public void setServices(IUltimateServiceProvider services) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
+	}
+
+	@Override
+	public void finish() {
+		// TODO Auto-generated method stub
+		
 	}
 
 }

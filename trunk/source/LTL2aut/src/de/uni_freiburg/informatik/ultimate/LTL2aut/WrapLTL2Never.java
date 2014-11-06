@@ -1,15 +1,20 @@
-package de.uni_freiburg.informatik.ultimate.LTL2aut;
+package de.uni_freiburg.informatik.ultimate.ltl2aut;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Logger;
 
-import de.uni_freiburg.informatik.ultimate.LTL2aut.ast.AstNode;
-import de.uni_freiburg.informatik.ultimate.LTL2aut.preferences.PreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
+import de.uni_freiburg.informatik.ultimate.core.services.IToolchainStorage;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.util.MonitoredProcess;
+import de.uni_freiburg.informatik.ultimate.ltl2aut.ast.AstNode;
+import de.uni_freiburg.informatik.ultimate.ltl2aut.preferences.PreferenceInitializer;
 
 /**
  * This class handles the communication of with the external tool for
@@ -23,13 +28,33 @@ import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceSt
 public class WrapLTL2Never {
 
 	private final Logger mLogger;
+	private final IUltimateServiceProvider mServices;
+	private final IToolchainStorage mStorage;
 
-	public WrapLTL2Never(Logger logger) {
-		mLogger = logger;
+	public WrapLTL2Never(IUltimateServiceProvider services, IToolchainStorage storage) {
+		mServices = services;
+		mStorage = storage;
+		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 	}
 
 	/**
-	 * Returns a B�chi automaton for the ltl formula as a promela never claim.
+	 * Returns the AST of the Promela never claim description of the Büchi
+	 * automaton returned by the ltl2büchi tool.
+	 * 
+	 * @param ltlFormula
+	 *            LTL formula in the format accepted by the tool
+	 * @return AST of Büchi automaton description
+	 * @throws Exception
+	 */
+	public AstNode ltl2Ast(String ltlFormula) throws Exception {
+		String toolOutput = execLTLXBA(ltlFormula.trim());
+		mLogger.debug(String.format("LTLXBA said: %s", toolOutput));
+		InputStreamReader file = new InputStreamReader(IOUtils.toInputStream(toolOutput));
+		return (AstNode) new Parser(new Lexer(file)).parse().value;
+	}
+
+	/**
+	 * Returns a Büchi automaton for the ltl formula as a promela never claim.
 	 * 
 	 * @param ltlFomula
 	 *            ltl formula in the form accepted by the called tool
@@ -37,48 +62,28 @@ public class WrapLTL2Never {
 	 * @throws InterruptedException
 	 * @return whole return string of the called tool
 	 */
-	public String execLTLXBA(String ltlFormula) throws IOException, InterruptedException {
-		UltimatePreferenceStore prefs = new UltimatePreferenceStore(Activator.PLUGIN_ID);
-		String result = "";
-
-		String line;
-		// TODO: fixme, no hard coded arguements!!
-		ProcessBuilder pb = new ProcessBuilder(new String[] {
-				prefs.getString(PreferenceInitializer.LABEL_TOOLLOCATION), "-f",
-				prefs.getString(PreferenceInitializer.LABEL_TOOLARGUMENT).replace("$1", ltlFormula) });
-		Process p = pb.start();
-		BufferedReader bri = new BufferedReader(new InputStreamReader(p.getInputStream()));
-
+	private String execLTLXBA(String ltlFormula) throws IOException, InterruptedException {
+		String[] command = getCommand(ltlFormula);
+		MonitoredProcess process = MonitoredProcess.exec(command, null, null, mServices, mStorage);
+		BufferedReader bri = new BufferedReader(new InputStreamReader(process.getInputStream()));
+		String line = null;
+		StringBuilder sb = new StringBuilder();
 		while ((line = bri.readLine()) != null) {
-			// System.out.println(line);
-			result += line;
+			sb.append(line);
 		}
 		bri.close();
-		p.waitFor();
+		process.waitfor();
 
-		return result;
+		return sb.toString();
 	}
 
-	/**
-	 * Returns the Ast of the Promela never claim description of the B�chi
-	 * automaton returned by the ltl2b�chi tool.
-	 * 
-	 * @param ltlFormula
-	 *            ltl formula in the format accepted by the tool
-	 * @return Ast of B�chi automaton description
-	 * @throws Exception
-	 */
-	public AstNode ltl2Ast(String ltlFormula) throws Exception {
-		String toolOutput = this.execLTLXBA(ltlFormula.trim());
-		mLogger.debug(String.format("LTLXBA said: %s", toolOutput));
-		InputStreamReader file = new InputStreamReader(IOUtils.toInputStream(toolOutput));
-
-		AstNode n = null;
-		Lexer lexer = new Lexer(file);
-		Parser p = new Parser(lexer);
-		n = (AstNode) p.parse().value;
-
-		return n;
+	private String[] getCommand(String ltlFormula) {
+		UltimatePreferenceStore prefs = new UltimatePreferenceStore(Activator.PLUGIN_ID);
+		List<String> rtr = new ArrayList<>();
+		rtr.add(prefs.getString(PreferenceInitializer.LABEL_TOOLLOCATION));
+		rtr.add("-f");
+		rtr.add(prefs.getString(PreferenceInitializer.LABEL_TOOLARGUMENT).replace("$1", ltlFormula));
+		return rtr.toArray(new String[0]);
 	}
 
 }

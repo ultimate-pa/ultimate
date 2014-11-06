@@ -72,9 +72,7 @@ public class CookiefyPlugin implements IGenerator {
 	}
 
 	@Override
-	public int init() {
-
-		return 0;
+	public void init() {
 	}
 
 	@Override
@@ -103,6 +101,12 @@ public class CookiefyPlugin implements IGenerator {
 	public void setServices(IUltimateServiceProvider services) {
 		mLogger = services.getLoggingService().getLogger(s_PLUGIN_ID);
 
+	}
+
+	@Override
+	public void finish() {
+		// TODO Auto-generated method stub
+		
 	}
 
 }

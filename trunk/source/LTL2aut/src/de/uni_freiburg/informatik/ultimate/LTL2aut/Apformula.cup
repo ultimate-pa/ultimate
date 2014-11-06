@@ -1,7 +1,7 @@
 // CUP specification for a simple expression evaluator (w/ actions)
-package de.uni_freiburg.informatik.ultimate.LTL2aut;
+package de.uni_freiburg.informatik.ultimate.ltl2aut;
 import java_cup.runtime.*;
-import de.uni_freiburg.informatik.ultimate.LTL2aut.ast.*;
+import de.uni_freiburg.informatik.ultimate.ltl2aut.ast.*;
 import java.util.ArrayList;
 
 parser ParserAP;

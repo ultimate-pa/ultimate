@@ -44,11 +44,9 @@ public class CodeCheck implements IGenerator {
 	}
 
 	@Override
-	public int init() {
+	public void init() {
 		//FIXME: hack..
 		mServices.getServiceInstance(ExampleNWAFactory.class);
-		
-		return 0;
 	}
 
 	@Override
@@ -105,5 +103,11 @@ public class CodeCheck implements IGenerator {
 	@Override
 	public void setServices(IUltimateServiceProvider services) {
 		mServices = services;
+	}
+
+	@Override
+	public void finish() {
+		// TODO Auto-generated method stub
+		
 	}
 }

@@ -48,8 +48,7 @@ public class LassoRanker implements IAnalysis {
 	 * Method is called by core after the plugin is loaded
 	 */
 	@Override
-	public int init() {
-		return 0;
+	public void init() {
 	}
 
 	@Override
@@ -101,5 +100,11 @@ public class LassoRanker implements IAnalysis {
 	@Override
 	public void setServices(IUltimateServiceProvider services) {
 		mServices = services;
+	}
+
+	@Override
+	public void finish() {
+		// TODO Auto-generated method stub
+		
 	}
 }

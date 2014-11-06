@@ -23,8 +23,7 @@ public class PeaToBoogie implements ISource {
 	List<String> m_FileNames = new ArrayList<String>();
 
 	@Override
-	public int init() {
-		return 0;
+	public void init() {
 	}
 
 	@Override
@@ -103,5 +102,11 @@ public class PeaToBoogie implements ISource {
 	@Override
 	public void setServices(IUltimateServiceProvider services) {
 		mLogger = services.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
+	}
+
+	@Override
+	public void finish() {
+		// TODO Auto-generated method stub
+		
 	}
 }

@@ -34,8 +34,7 @@ public class BoogiePreprocessor implements IAnalysis {
 		return Activator.PLUGIN_ID;
 	}
 
-	public int init() {
-		return -1;
+	public void init() {
 	}
 
 	/**
@@ -116,5 +115,11 @@ public class BoogiePreprocessor implements IAnalysis {
 	public void setServices(IUltimateServiceProvider services) {
 		mServices = services;
 
+	}
+
+	@Override
+	public void finish() {
+		// TODO Auto-generated method stub
+		
 	}
 }

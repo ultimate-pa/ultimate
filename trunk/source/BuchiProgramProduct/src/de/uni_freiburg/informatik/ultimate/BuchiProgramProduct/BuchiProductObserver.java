@@ -1,14 +1,15 @@
-package de.uni_freiburg.informatik.ultimate.BuchiProgramProduct;
+package de.uni_freiburg.informatik.ultimate.buchiprogramproduct;
 
 import org.apache.log4j.Logger;
-import de.uni_freiburg.informatik.ultimate.LTL2aut.ast.AstNode;
-import de.uni_freiburg.informatik.ultimate.LTL2aut.ast.NeverStatement;
+
 import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
 import de.uni_freiburg.informatik.ultimate.boogie.type.PreprocessorAnnotation;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.ltl2aut.ast.AstNode;
+import de.uni_freiburg.informatik.ultimate.ltl2aut.ast.NeverStatement;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BoogieASTNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
@@ -47,7 +48,7 @@ public class BuchiProductObserver implements IUnmanagedObserver {
 		mLogger.debug("Transforming NeverClaim to NestedWordAutomaton...");
 		try {
 			// Build NWA from LTL formula in NeverClaim representation
-			nwa = new Never2Automaton(mNeverClaim, symbolTable, mLogger,mServices).getAutomaton();
+			nwa = new Never2Automaton(mNeverClaim, symbolTable, mLogger, mServices).getAutomaton();
 			if (nwa == null) {
 				throw new NullPointerException("nwa is null");
 			}
@@ -58,10 +59,11 @@ public class BuchiProductObserver implements IUnmanagedObserver {
 			throw e;
 		}
 
-		mLogger.debug("Beginning generation of product automaton...");
+		mLogger.info("Beginning generation of product automaton");
 
 		try {
 			mProduct = new Product(nwa, mRcfg, mServices);
+			mLogger.info("Product automaton successfully generated");
 		} catch (Exception e) {
 			mLogger.error(String.format(
 					"BuchiProgramProduct encountered an error during product automaton generation:\n %s", e));

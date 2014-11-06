@@ -1,11 +1,14 @@
 package de.uni_freiburg.informatik.ultimate.LTL2aut.test;
 
 import java.io.InputStreamReader;
+
 import junit.framework.TestCase;
+
 import org.apache.commons.io.IOUtils;
-import de.uni_freiburg.informatik.ultimate.LTL2aut.LexerAP;
-import de.uni_freiburg.informatik.ultimate.LTL2aut.ParserAP;
-import de.uni_freiburg.informatik.ultimate.LTL2aut.ast.AstNode;
+
+import de.uni_freiburg.informatik.ultimate.ltl2aut.LexerAP;
+import de.uni_freiburg.informatik.ultimate.ltl2aut.ParserAP;
+import de.uni_freiburg.informatik.ultimate.ltl2aut.ast.AstNode;
 
 public class ApParserTest extends TestCase {
 	
