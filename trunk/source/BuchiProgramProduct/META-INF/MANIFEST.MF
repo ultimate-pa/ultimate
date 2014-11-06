@@ -11,7 +11,8 @@ Require-Bundle: Library-log4j,
  de.uni_freiburg.informatik.ultimate.ltl2aut,
  de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder,
  JavaCup,
- de.uni_freiburg.informatik.ultimate.automata
+ de.uni_freiburg.informatik.ultimate.automata,
+ de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer
 Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-1.7
 Import-Package: junit.framework,

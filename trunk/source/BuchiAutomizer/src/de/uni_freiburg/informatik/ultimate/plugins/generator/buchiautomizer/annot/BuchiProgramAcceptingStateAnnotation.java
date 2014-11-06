@@ -1,4 +1,4 @@
-package de.uni_freiburg.informatik.ultimate.buchiprogramproduct;
+package de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.annot;
 
 import de.uni_freiburg.informatik.ultimate.model.annotation.AbstractAnnotations;
 
@@ -11,19 +11,17 @@ import de.uni_freiburg.informatik.ultimate.model.annotation.AbstractAnnotations;
  * 
  */
 
-public class AcceptingNodeAnnotation extends AbstractAnnotations {
+public class BuchiProgramAcceptingStateAnnotation extends AbstractAnnotations {
 
 	private static final long serialVersionUID = 1L;
 
 	@Override
 	protected String[] getFieldNames() {
-		// TODO Auto-generated method stub
 		return new String[] { "accepting" };
 	}
 
 	@Override
 	protected Object getFieldValue(String field) {
-		// TODO Auto-generated method stub
 		return new Object[] { true };
 	}
 

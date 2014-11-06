@@ -16,4 +16,5 @@ Require-Bundle: Library-log4j,
  de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction
 Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-1.7
-Export-Package: de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer
+Export-Package: de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer,
+ de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.annot

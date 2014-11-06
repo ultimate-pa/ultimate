@@ -16,9 +16,9 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BoogieASTNode;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Procedure;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.annot.BuchiProgramAcceptingStateAnnotation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -82,7 +82,7 @@ public class Product {
 		mRootNode.getRootAnnot().getEntryNodes().clear();
 		mRootNode.getRootAnnot().getExitNodes().clear();
 		mRootNode.getRootAnnot().getLoopLocations().clear();
-		mRootNode.getPayload().getAnnotations().put(Activator.PLUGIN_ID, new AcceptingNodeAnnotation());
+		mRootNode.getPayload().getAnnotations().put(Activator.PLUGIN_ID, new BuchiProgramAcceptingStateAnnotation());
 
 		collectRCFGLocations();
 		createProductStates();
@@ -132,7 +132,7 @@ public class Product {
 			for (ProgramPoint pp : mRCFGLocations) {
 				mLogger.debug(pp.toString());
 				for (String n : mNWA.getStates()) {
-					currentpp = mProductLocations.get(stateNameGenerator(pp.getLocationName(), n));
+					currentpp = mProductLocations.get(generateStateName(pp.getLocationName(), n));
 					// For Edge of Node x Edge of node
 					for (RCFGEdge rcfgEdge : pp.getOutgoingEdges())
 						// distinguish between the different Edges of the RCFG
@@ -167,8 +167,9 @@ public class Product {
 							// like any other edge in the graph.
 							for (OutgoingInternalTransition<BoogieASTNode, String> autTrans : mNWA
 									.internalSuccessors(n)) {
-								targetpp = mProductLocations.get(stateNameGenerator(((ProgramPoint) rcfgEdge
-										.getTarget()).getLocationName(), autTrans.getSucc().toString()));
+								targetpp = mProductLocations.get(generateStateName(
+										((ProgramPoint) rcfgEdge.getTarget()).getLocationName(), autTrans.getSucc()
+												.toString()));
 
 								ArrayList<Statement> stmts = new ArrayList<Statement>();
 								stmts.add(new AssumeStatement(null, ((Expression) autTrans.getLetter())));
@@ -241,8 +242,9 @@ public class Product {
 							// like any other edge in the graph.
 							for (OutgoingInternalTransition<BoogieASTNode, String> autTrans : mNWA
 									.internalSuccessors(n)) {
-								targetpp = mProductLocations.get(stateNameGenerator(((ProgramPoint) rcfgEdge
-										.getTarget()).getLocationName(), autTrans.getSucc().toString()));
+								targetpp = mProductLocations.get(generateStateName(
+										((ProgramPoint) rcfgEdge.getTarget()).getLocationName(), autTrans.getSucc()
+												.toString()));
 
 								ArrayList<Statement> stmts = new ArrayList<Statement>();
 								stmts.add(new AssumeStatement(null, ((Expression) autTrans.getLetter())));
@@ -294,8 +296,9 @@ public class Product {
 								continue;
 							for (OutgoingInternalTransition<BoogieASTNode, String> autTrans : mNWA
 									.internalSuccessors(n)) {
-								targetpp = mProductLocations.get(stateNameGenerator(((ProgramPoint) rcfgEdge
-										.getTarget()).getLocationName(), autTrans.getSucc().toString()));
+								targetpp = mProductLocations.get(generateStateName(
+										((ProgramPoint) rcfgEdge.getTarget()).getLocationName(), autTrans.getSucc()
+												.toString()));
 								// append statements of rcfg and ltl
 								ArrayList<Statement> stmts = new ArrayList<Statement>();
 								stmts.addAll(((StatementSequence) rcfgEdge).getStatements());
@@ -319,7 +322,7 @@ public class Product {
 		Map<String, Map<String, ProgramPoint>> productLocations = mRootNode.getRootAnnot().getProgramPoints();
 
 		ProgramPoint productNode;
-		final AcceptingNodeAnnotation acceptingNodeAnnotation = new AcceptingNodeAnnotation();
+		final BuchiProgramAcceptingStateAnnotation acceptingNodeAnnotation = new BuchiProgramAcceptingStateAnnotation();
 
 		for (ProgramPoint pp : mRCFGLocations) {
 			if (!productLocations.containsKey(pp.getProcedure())) {
@@ -327,10 +330,10 @@ public class Product {
 				mLogger.debug(pp.getProcedure());
 			}
 			for (String n : mNWA.getStates()) {
-				productNode = new ProgramPoint(stateNameGenerator(pp.getLocationName(), n), pp.getProcedure(), false,
+				productNode = new ProgramPoint(generateStateName(pp.getLocationName(), n), pp.getProcedure(), false,
 						pp.getBoogieASTNode());
 
-				mProductLocations.put(stateNameGenerator(pp.getLocationName(), n), productNode);
+				mProductLocations.put(generateStateName(pp.getLocationName(), n), productNode);
 
 				// accepting states (just check for AcceptingNodeAnnotation)
 				if (mNWA.isFinal(n)) {
@@ -345,7 +348,7 @@ public class Product {
 					}
 
 				// add to annotation
-				productLocations.get(pp.getProcedure()).put(stateNameGenerator(pp.getLocationName(), n), productNode);
+				productLocations.get(pp.getProcedure()).put(generateStateName(pp.getLocationName(), n), productNode);
 			}
 
 		}
@@ -389,7 +392,7 @@ public class Product {
 	 *            Name of the state in the BA
 	 * @return
 	 */
-	private String stateNameGenerator(String name1, String name2) {
+	private String generateStateName(String name1, String name2) {
 		if (name1.equals("ULTIMATE.startENTRY") && mNWA.isInitial(name2)) {
 			return "ULTIMATE.start";
 		} else {
