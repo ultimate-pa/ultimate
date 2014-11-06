@@ -92,25 +92,25 @@ public class AffineRelation {
 				default:
 					throw new AssertionError("unknown symbol");
 				}
-			} else if (transformInequality == TransformInequality.STRICT2NONSTRICT) {
+			} else if (transformInequality == TransformInequality.NONSTRICT2STRICT) {
 				switch (bnr.getRelationSymbol()) {
 				case DISTINCT:
 				case EQ:
 				case LESS:
 				case GREATER:
-					// relation symbol is not strict anyway
+					// relation symbol is strict anyway
 					m_AffineTerm = difference; 
 					m_RelationSymbol = bnr.getRelationSymbol();
 					break;
 				case GEQ:
 					// decrement affine term by one
-					m_RelationSymbol = RelationSymbol.LEQ;
+					m_RelationSymbol = RelationSymbol.GREATER;
 					m_AffineTerm = new AffineTerm(difference, 
 							new AffineTerm(difference.getSort(), Rational.ONE));
 					break;
 				case LEQ:
 					// increment affine term by one
-					m_RelationSymbol = RelationSymbol.GEQ;
+					m_RelationSymbol = RelationSymbol.LESS;
 					m_AffineTerm = new AffineTerm(difference, 
 							new AffineTerm(difference.getSort(), Rational.MONE));
 					break;
