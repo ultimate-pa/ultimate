@@ -5,17 +5,17 @@
  * 
  */
 
-var a,b,c: int;
+var a,b,x: int;
 
 
 procedure proc() returns ()
 {
-  assume a > b;
-  assume b > c;
+  assume a > x;
+  assume x > b;
   while (*) {
     //prevent large block encoding
   }
-  assert a >= c + 2;
+  assert a >= b + 2;
 }
 
 

@@ -5,18 +5,18 @@
  * 
  */
 
-var x,a,b,c,d: real;
+var x,lower,upper: real;
 
 
 procedure proc() returns ()
 {
-  assume a >= x;
-  assume x >= b;
-  assume x != a;
+  assume upper >= x;
+  assume x >= lower;
+  assume x != upper;
   while (*) {
     //prevent large block encoding
   }
-  assert a > b;
+  assert upper > lower;
 }
 
 
