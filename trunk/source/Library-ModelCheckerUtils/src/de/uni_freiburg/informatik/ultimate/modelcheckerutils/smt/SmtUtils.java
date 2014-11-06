@@ -393,4 +393,8 @@ public class SmtUtils {
 	public static Term and(Script script, Collection<Term> terms) {
 		return Util.and(script, terms.toArray(new Term[terms.size()]));
 	}
+	
+	public static Term or(Script script, Collection<Term> terms) {
+		return Util.or(script, terms.toArray(new Term[terms.size()]));
+	}
 }
