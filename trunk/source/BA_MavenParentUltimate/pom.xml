@@ -232,6 +232,7 @@
 		<module>../BuchiProgramProduct</module>
 		<module>../LTL2aut</module>
 		<module>../ReachingDefinitions</module>
+		<module>../IRSDependencies</module>
 		<module>../Library-ApacheCommonsLang</module>
 	</modules>
 
