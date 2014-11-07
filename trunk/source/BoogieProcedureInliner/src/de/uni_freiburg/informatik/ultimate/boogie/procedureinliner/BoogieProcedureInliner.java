@@ -7,14 +7,12 @@ import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceIn
 import de.uni_freiburg.informatik.ultimate.core.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.IAnalysis;
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.ITool.QueryKeyword;
 import de.uni_freiburg.informatik.ultimate.model.GraphType;
-import de.uni_freiburg.informatik.ultimate.result.GenericResult;
 
 /**
  * 
  * @author schaetzc@informatik.uni-freiburg.de
- *
+ * 
  */
 public class BoogieProcedureInliner implements IAnalysis {
 
@@ -58,13 +56,12 @@ public class BoogieProcedureInliner implements IAnalysis {
 	public void setServices(IUltimateServiceProvider services) {
 		// TODO Auto-generated method stub
 		// #1 (save it!)
-		//exceptions: services.getResultService().reportResult(getPluginID(), new GenericResult(getPluginID(), "", longDescription, severity));
+		// exceptions: services.getResultService().reportResult(getPluginID(),
+		// new GenericResult(getPluginID(), "", longDescription, severity));
 	}
 
 	@Override
-	public int init() {
-		// TODO Auto-generated method stub
-		return 0;
+	public void init() {
 	}
 
 	@Override
@@ -80,6 +77,10 @@ public class BoogieProcedureInliner implements IAnalysis {
 	@Override
 	public UltimatePreferenceInitializer getPreferences() {
 		return null;
+	}
+
+	@Override
+	public void finish() {
 	}
 
 }
