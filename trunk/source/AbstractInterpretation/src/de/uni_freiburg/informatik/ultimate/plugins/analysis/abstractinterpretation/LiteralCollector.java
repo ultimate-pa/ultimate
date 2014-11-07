@@ -10,6 +10,7 @@ import java.util.Set;
 
 import org.apache.log4j.Logger;
 
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayAccessExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayStoreExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssignmentStatement;
@@ -60,6 +61,15 @@ public class LiteralCollector extends RCFGEdgeVisitor {
 		
 		for (RCFGEdge e : root.getOutgoingEdges())
 			visit(e);
+	}
+	
+	public LiteralCollector(INestedWordAutomaton nwa, Logger logger){
+		m_logger = logger;
+		
+		for(Object x : nwa.getInitialStates()){
+			CodeBlock initial = (CodeBlock)x;
+			visit(initial);
+		}
 	}
 	
 	public Set<String> getResult() {

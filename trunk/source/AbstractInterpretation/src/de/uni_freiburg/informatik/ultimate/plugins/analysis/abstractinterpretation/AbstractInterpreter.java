@@ -19,6 +19,7 @@ import java.util.Set;
 
 import org.apache.log4j.Logger;
 
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
 import de.uni_freiburg.informatik.ultimate.boogie.type.PreprocessorAnnotation;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
@@ -76,7 +77,7 @@ public class AbstractInterpreter extends RCFGEdgeVisitor {
 	private IAbstractDomainFactory<?> m_bitVectorDomainFactory;
 	private IAbstractDomainFactory<?> m_stringDomainFactory;
 
-	private final LinkedList<RCFGNode> m_nodesToVisit = new LinkedList<RCFGNode>();
+	private final LinkedList<IElement> m_nodesToVisit = new LinkedList<IElement>();
 
 	private final Map<RCFGNode, List<AbstractState>> m_states = new HashMap<RCFGNode, List<AbstractState>>();
 
@@ -269,6 +270,7 @@ public class AbstractInterpreter extends RCFGEdgeVisitor {
 	 *            detection etc.
 	 */
 	public void processRcfg(RootNode root) {
+		m_logger.warn("Fabian 2: process RCFG start: root "+root.toString());
 		m_errorLocs.clear();
 		m_reachedErrorLocs.clear();
 		m_recursionEntryNodes.clear();
@@ -400,12 +402,160 @@ public class AbstractInterpreter extends RCFGEdgeVisitor {
 				reportTimeoutResult();
 		}
 	}
+	
+	public List<UnprovableResult<RcfgElement, CodeBlock, Expression>> processNWA(INestedWordAutomaton nwa, RootNode rn) {
+		List<UnprovableResult<RcfgElement, CodeBlock, Expression>> result = null;
+		//RootNode root = rn;
+		m_logger.warn("Fabian 2: process NWA start:  "+nwa.toString());
+		m_errorLocs.clear();
+		m_reachedErrorLocs.clear();
+		m_recursionEntryNodes.clear();
+		
+		m_continueProcessing = true;
+
+		// state change logger
+		if (m_stateChangeLogConsole || m_stateChangeLogFile) {
+			String fileDir = "";
+			String fileName = "";
+			if (m_stateChangeLogFile) {
+				File sourceFile = new File(rn.getFilename());
+				DateFormat dfm = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss");
+				fileName = sourceFile.getName() + "_AI_" + dfm.format(new Date()) + ".txt";
+				if (m_stateChangeLogUseSourcePath) {
+					fileDir = sourceFile.getParent();
+				} else {
+					fileDir = null;
+				}
+				if (fileDir == null) {
+					fileDir = new File(m_stateChangeLogPath).getAbsolutePath();
+				}
+			}
+			StateChangeLogger scl = new StateChangeLogger(m_logger, m_stateChangeLogConsole, m_stateChangeLogFile,
+					fileDir + File.separatorChar + fileName);
+			this.registerStateChangeListener(scl);
+		}
+
+		// numbers for widening
+		m_numbersForWidening.clear();
+		m_numbersForWidening.addAll(m_fixedNumbersForWidening);
+		// collect literals if preferences say so
+		if (m_widening_autoNumbers) {
+			LiteralCollector literalCollector = new LiteralCollector(nwa, m_logger);
+			m_numbersForWidening.addAll(literalCollector.getResult());
+		}
+
+		// domain factories chosen in preferences
+		m_intDomainFactory = makeDomainFactory(m_intDomainID, m_intWideningOpName, m_intMergeOpName);
+		m_realDomainFactory = makeDomainFactory(m_realDomainID, m_realWideningOpName, m_realMergeOpName);
+		m_boolDomainFactory = makeDomainFactory(m_boolDomainID, m_boolWideningOpName, m_boolMergeOpName);
+		m_bitVectorDomainFactory = makeDomainFactory(m_bitVectorDomainID, m_bitVectorWideningOpName, m_bitVectorMergeOpName);
+		m_stringDomainFactory = makeDomainFactory(m_stringDomainID, m_stringWideningOpName, m_stringMergeOpName);
+
+		// fetch loop nodes with their entry/exit edges
+		LoopDetector loopDetector = new LoopDetector(m_services);
+		try {
+			loopDetector.process(rn);
+		} catch (Throwable e1) {
+			e1.printStackTrace();
+		}
+		m_loopEntryNodes = loopDetector.getResult();
+
+		m_logger.debug("Loop information:");
+		for (ProgramPoint pp : m_loopEntryNodes.keySet()) {
+			Map<RCFGEdge, RCFGEdge> loopsie = m_loopEntryNodes.get(pp);
+			for (Entry<RCFGEdge, RCFGEdge> e : loopsie.entrySet()) {
+				m_logger.debug(String.format("Loop: %s -> %s -> ... -> %s -> %s",
+						pp, (ProgramPoint) e.getKey().getTarget(),
+						(ProgramPoint) e.getValue().getSource(), pp));
+			}
+		}
+
+		// preprocessor annotation: get symboltable
+		//todo Fabian ???
+		PreprocessorAnnotation pa = PreprocessorAnnotation.getAnnotation(rn);
+		if (pa == null) {
+			m_logger.error("No symbol table found on given RootNode.");
+			return null;
+		}
+		m_symbolTable = pa.getSymbolTable();
+
+		m_boogieVisitor = new AbstractInterpretationBoogieVisitor(m_logger, m_symbolTable,
+				m_intDomainFactory, m_realDomainFactory, m_boolDomainFactory,
+				m_bitVectorDomainFactory, m_stringDomainFactory);
+
+		// root annotation: get location list, error locations
+		//todo fabian: ???
+		RootAnnot ra = rn.getRootAnnot();
+		
+		Map<String, ProgramPoint> entryNodes = ra.getEntryNodes();
+		ProgramPoint mainEntry = entryNodes.get(m_mainMethodName);
+
+		// check for ULTIMATE.start and recursive methods
+		for (String s : entryNodes.keySet()) {
+			ProgramPoint entryNode = entryNodes.get(s);
+			// check for ULTIMATE.start
+			if (entryNode.getProcedure().startsWith(m_ultimateStartProcName))
+				mainEntry = entryNode;
+			// check for recursive methods
+			Collection<ProgramPoint> methodNodes = ra.getProgramPoints().get(s).values();
+			for (RCFGEdge e : entryNode.getIncomingEdges()) {
+				if (methodNodes.contains(e.getSource())) {
+					// entryNode belongs to recursive method
+					m_recursionEntryNodes.add(entryNode);
+				}
+			}
+		}
+		
+		Map<String,Collection<ProgramPoint>> errorLocMap = ra.getErrorNodes();
+		for (String s : errorLocMap.keySet())
+			m_errorLocs.addAll(errorLocMap.get(s));
+
+		
+		// add entry node of Main procedure / any if no Main() exists
+		for (Object n : nwa.getInternalAlphabet())
+		{
+			CodeBlock initial = (CodeBlock)n;
+			RCFGNode target = initial.getTarget();
+		//}
+		
+		//for (RCFGEdge e : root.getOutgoingEdges()) {
+		//	if (e instanceof RootEdge) {
+		//		RCFGNode target = e.getTarget();
+				if ((mainEntry == null) || (target == mainEntry)) {
+					AbstractState state = new AbstractState(m_logger, m_intDomainFactory,
+							m_realDomainFactory, m_boolDomainFactory,
+							m_bitVectorDomainFactory, m_stringDomainFactory);
+					if (target instanceof ProgramPoint) {
+						CallStatement mainProcMockStatement =
+								new CallStatement(null, false, null, ((ProgramPoint) target).getProcedure(), null);
+						state.pushStackLayer(mainProcMockStatement); // layer for main method
+					}
+					//putStateToNode(state, target, e);
+					putStateToNode(state, target, initial);
+					m_nodesToVisit.add(target);
+				//}
+			}
+		}
+
+		result = visitNodes(true);
+
+		/* report as safe if the analysis terminated after having explored the
+		 * whole reachable state space without finding an error */
+		if (m_reachedErrorLocs.isEmpty()) {
+			if (m_continueProcessing)
+				reportSafeResult();
+			else if (!m_services.getProgressMonitorService().continueProcessing())
+				reportTimeoutResult();
+		}
+		
+		return result;
+	}
 
 	/**
 	 * Visit edges as long as there are edges in m_edgesToVisit
 	 */
 	protected void visitNodes() {
-		RCFGNode node = m_nodesToVisit.poll();
+		RCFGNode node = (RCFGNode) m_nodesToVisit.poll();
 		if (node != null) {
 			m_callStatementsAtCalls.clear();
 			m_callStatementsAtSummaries.clear();
@@ -451,10 +601,61 @@ public class AbstractInterpreter extends RCFGEdgeVisitor {
 				visitNodes(); // repeat until m_nodesToVisit is empty
 		}
 	}
+	
+	protected List<UnprovableResult<RcfgElement, CodeBlock, Expression>> visitNodes(boolean runsOnNWA) {
+		List<UnprovableResult<RcfgElement, CodeBlock, Expression>> result = new ArrayList<UnprovableResult<RcfgElement, CodeBlock, Expression>>();
+		RCFGNode node = (RCFGNode) m_nodesToVisit.poll();
+		if (node != null) {
+			m_callStatementsAtCalls.clear();
+			m_callStatementsAtSummaries.clear();
+			
+			List<AbstractState> statesAtNode = m_states.get(node);
+			m_logger.debug(String.format("---- PROCESSING NODE %S ----", (ProgramPoint) node));
+			// process all unprocessed states at the node
+			boolean hasUnprocessed = true;
+			while (hasUnprocessed && m_continueProcessing) {
+				AbstractState unprocessedState = null;
+				for (AbstractState s : statesAtNode) {
+					if (!s.isProcessed()) {
+						unprocessedState = s;
+						break;
+					}
+				}
+				if (unprocessedState != null) {
+					m_currentState = unprocessedState;
+					m_currentState.setProcessed(true);
+
+					m_currentNode = node;
+
+					for (RCFGEdge e : node.getOutgoingEdges()) {
+						m_resultingState = null;
+						result.add(visit(e, runsOnNWA));
+					}
+				} else {
+					hasUnprocessed = false;
+				}
+				// abort if asked to cancel
+				m_continueProcessing = m_continueProcessing && m_services.getProgressMonitorService().continueProcessing();
+			} // hasUnprocessed
+			
+			// remove states if they aren't needed for possible widening anymore
+			if (node.getIncomingEdges().size() <= 1)
+				m_states.remove(node);
+			
+			if (!m_callStatementsAtCalls.containsAll(m_callStatementsAtSummaries))
+				reportUnsupportedSyntaxResult(node, "Abstract interpretation plug-in can't verify "
+						+ "programs which contain procedures without implementations.");
+			
+			if (m_continueProcessing)
+				result.addAll(visitNodes(runsOnNWA)); // repeat until m_nodesToVisit is empty
+		}
+		return result;
+	}
 
 	@Override
 	protected void visit(RCFGEdge e) {
 		m_logger.debug("Visiting: " + e.getSource() + " -> " + e.getTarget());
+		m_logger.warn("Fabian16: visit rcfg edge -> "+e.toString());
 
 		super.visit(e);
 		
@@ -483,13 +684,56 @@ public class AbstractInterpreter extends RCFGEdgeVisitor {
 				ProgramPoint pp = (ProgramPoint) targetNode;
 				if (m_errorLocs.contains(pp) && !m_reachedErrorLocs.contains(pp)) {
 					m_reachedErrorLocs.add(pp);
-					reportErrorResult(pp, m_resultingState);
+					reportErrorResult(pp, m_resultingState, false);
 				} else {
 					if (!m_nodesToVisit.contains(targetNode))
 						m_nodesToVisit.add(targetNode);
 				}
 			}
 		}
+	}
+	
+	protected UnprovableResult<RcfgElement, CodeBlock, Expression> visit(RCFGEdge e, boolean runsOnNWA) {
+		UnprovableResult<RcfgElement, CodeBlock, Expression> result = null;
+		m_logger.debug("Visiting: " + e.getSource() + " -> " + e.getTarget());
+		m_logger.warn("Fabian16: visit rcfg edge -> "+e.toString());
+
+		super.visit(e);
+		
+		String evaluationError = m_boogieVisitor.getErrorMessage();
+		if (!evaluationError.isEmpty()) {
+			reportUnsupportedSyntaxResult(e, evaluationError);
+			
+			m_resultingState = null; // return, abort, stop.
+		}
+
+		if (m_resultingState == null)
+			return result; // do not process target node!
+		
+		Map<RCFGEdge, RCFGEdge> loopEdges = m_loopEntryNodes.get(m_currentNode);
+		if (loopEdges != null) {
+			RCFGEdge exitEdge = loopEdges.get(e);
+			if (exitEdge != null)
+				m_resultingState.pushLoopEntry((ProgramPoint) m_currentNode, exitEdge);
+		}
+
+		m_resultingState.addCodeBlockToTrace((CodeBlock) e);
+
+		RCFGNode targetNode = e.getTarget();
+		if (targetNode != null) {
+			if (putStateToNode(m_resultingState, targetNode, e)) {
+				ProgramPoint pp = (ProgramPoint) targetNode;
+				if (m_errorLocs.contains(pp) && !m_reachedErrorLocs.contains(pp)) {
+					m_reachedErrorLocs.add(pp);
+
+					result = reportErrorResult(pp, m_resultingState, runsOnNWA);
+				} else {
+					if (!m_nodesToVisit.contains(targetNode))
+						m_nodesToVisit.add(targetNode);
+				}
+			}
+		}
+		return result;
 	}
 
 	@Override
@@ -654,7 +898,8 @@ public class AbstractInterpreter extends RCFGEdgeVisitor {
 	 * @param location The error location
 	 * @param state The abstract state at the error location
 	 */
-	private void reportErrorResult(ProgramPoint location, AbstractState state) {
+	private UnprovableResult<RcfgElement, CodeBlock, Expression> reportErrorResult(ProgramPoint location, AbstractState state, boolean runsOnNWA) {
+		m_logger.warn("Fabian 1: report error result start!");
 		RcfgProgramExecution programExecution = new RcfgProgramExecution(state.getTrace(),
 				new HashMap<Integer, ProgramState<Expression>>(),
 				null);
@@ -665,7 +910,12 @@ public class AbstractInterpreter extends RCFGEdgeVisitor {
 						m_services.getBacktranslationService(),
 						programExecution);
 		
-		m_services.getResultService().reportResult(Activator.s_PLUGIN_ID, result);
+		if (runsOnNWA){
+			return result;
+		} else {
+			m_services.getResultService().reportResult(Activator.s_PLUGIN_ID, result);
+		}
+		m_logger.warn("Fabian 17: error report: "+result.toString());
 		
 		if (m_stopAfterAnyError) {
 			m_continueProcessing = false;
@@ -676,6 +926,7 @@ public class AbstractInterpreter extends RCFGEdgeVisitor {
 				m_continueProcessing = false;
 			m_logger.info("Abstract interpretation finished after reaching all error locations");
 		}
+		return result;
 	}
 	
 	private void reportUnsupportedSyntaxResult(IElement location, String message) {

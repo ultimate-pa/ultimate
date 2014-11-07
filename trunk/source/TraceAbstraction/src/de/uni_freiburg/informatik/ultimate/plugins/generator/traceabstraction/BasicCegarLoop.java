@@ -13,9 +13,7 @@ import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.Automaton2UltimateModel;
-import de.uni_freiburg.informatik.ultimate.automata.ExampleNWAFactory;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
@@ -40,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvide
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.ta.IsEmptyWithAI;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
@@ -81,6 +80,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
 public class BasicCegarLoop extends AbstractCegarLoop {
 
 	private final static boolean differenceInsteadOfIntersection = true;
+	private static boolean runWithAI = false;
 
 	protected final static boolean m_RemoveDeadEnds = true;
 
@@ -141,8 +141,16 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 	@Override
 	protected boolean isAbstractionCorrect() throws OperationCanceledException {
 		try {
-			m_Counterexample = (new IsEmpty<CodeBlock, IPredicate>((INestedWordAutomatonOldApi) m_Abstraction))
-					.getNestedRun();
+			if (runWithAI) {
+				IsEmptyWithAI<CodeBlock, IPredicate> emptyWithAI = new IsEmptyWithAI<CodeBlock, IPredicate>(
+						(INestedWordAutomatonOldApi) m_Abstraction, mServices,
+						super.m_RootNode);
+				m_Counterexample = emptyWithAI.getNestedRun();
+			} else {
+				m_Counterexample = (new IsEmpty<CodeBlock, IPredicate>(
+						(INestedWordAutomatonOldApi) m_Abstraction))
+						.getNestedRun();
+			}
 		} catch (OperationCanceledException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
