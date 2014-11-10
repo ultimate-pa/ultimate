@@ -80,7 +80,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
 public class BasicCegarLoop extends AbstractCegarLoop {
 
 	private final static boolean differenceInsteadOfIntersection = true;
-	private static boolean runWithAI = true;
+	private static boolean runWithAI = false;
 
 	protected final static boolean m_RemoveDeadEnds = true;
 
