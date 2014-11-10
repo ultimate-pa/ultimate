@@ -197,7 +197,8 @@
 		<module>../TraceAbstractionWithAFAs</module>
 		<module>../JavaCup</module>
 		<module>../RCFGBuilder</module>
-
+		<module>../AbstractInterpretation</module>
+		
 		<module>../CodeCheck</module>
 		<module>../Library-log4j</module>
 		<module>../ACSLParser</module>

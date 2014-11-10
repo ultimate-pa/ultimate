@@ -10,7 +10,7 @@
   
   
   <groupId>AbstractInterpretation</groupId>
-  <artifactId>AbstractInterpretation</artifactId>
+  <artifactId>de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation</artifactId>
   <version>0.0.1</version>
   <packaging>eclipse-plugin</packaging>
 </project>
