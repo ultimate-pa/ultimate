@@ -79,8 +79,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  */
 public class BasicCegarLoop extends AbstractCegarLoop {
 
-	private final static boolean differenceInsteadOfIntersection = true;
-	private static boolean runWithAI = false;
+	private final static boolean m_DifferenceInsteadOfIntersection = true;
+	private static boolean m_RunWithAI = false;
 
 	protected final static boolean m_RemoveDeadEnds = true;
 
@@ -114,19 +114,16 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 				super.m_SmtManager, m_Pref, m_RemoveDeadEnds && m_ComputeHoareAnnotation, m_Haf);
 		m_PredicateFactoryInterpolantAutomata = new PredicateFactory(super.m_SmtManager, m_Pref);
 
-		m_AssertCodeBlocksIncrementally = (new UltimatePreferenceStore(Activator.s_PLUGIN_ID))
-				.getEnum(TraceAbstractionPreferenceInitializer.LABEL_AssertCodeBlocksIncrementally, AssertCodeBlockOrder.class);
+		m_AssertCodeBlocksIncrementally = (new UltimatePreferenceStore(Activator.s_PLUGIN_ID)).getEnum(
+				TraceAbstractionPreferenceInitializer.LABEL_AssertCodeBlocksIncrementally, AssertCodeBlockOrder.class);
 
 		m_PredicateFactoryResultChecking = new PredicateFactoryResultChecking(smtManager);
 		m_CegarLoopBenchmark = new CegarLoopBenchmarkGenerator();
 		m_CegarLoopBenchmark.start(CegarLoopBenchmarkType.s_OverallTime);
-		
+
 		UltimatePreferenceStore m_Prefs = new UltimatePreferenceStore(Activator.s_PLUGIN_ID);
-		m_UnsatCores = m_Prefs.getEnum(
-				TraceAbstractionPreferenceInitializer.LABEL_UnsatCores,
-				UnsatCores.class);
-		m_UseLiveVariables = m_Prefs.getBoolean(
-				TraceAbstractionPreferenceInitializer.LABEL_LiveVariables);
+		m_UnsatCores = m_Prefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_UnsatCores, UnsatCores.class);
+		m_UseLiveVariables = m_Prefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_LiveVariables);
 	}
 
 	@Override
@@ -141,14 +138,12 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 	@Override
 	protected boolean isAbstractionCorrect() throws OperationCanceledException {
 		try {
-			if (runWithAI) {
+			if (m_RunWithAI) {
 				IsEmptyWithAI<CodeBlock, IPredicate> emptyWithAI = new IsEmptyWithAI<CodeBlock, IPredicate>(
-						(INestedWordAutomatonOldApi) m_Abstraction, mServices,
-						super.m_RootNode);
+						(INestedWordAutomatonOldApi) m_Abstraction, mServices, super.m_RootNode);
 				m_Counterexample = emptyWithAI.getNestedRun();
 			} else {
-				m_Counterexample = (new IsEmpty<CodeBlock, IPredicate>(
-						(INestedWordAutomatonOldApi) m_Abstraction))
+				m_Counterexample = (new IsEmpty<CodeBlock, IPredicate>((INestedWordAutomatonOldApi) m_Abstraction))
 						.getNestedRun();
 			}
 		} catch (OperationCanceledException e) {
@@ -187,7 +182,8 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		case FPandBP:
 			m_TraceChecker = new TraceCheckerSpWp(truePredicate, falsePredicate, new TreeMap<Integer, IPredicate>(),
 					NestedWord.nestedWord(m_Counterexample.getWord()), m_SmtManager, m_RootNode.getRootAnnot()
-							.getModGlobVarManager(), m_AssertCodeBlocksIncrementally, m_UnsatCores, m_UseLiveVariables, mServices);
+							.getModGlobVarManager(), m_AssertCodeBlocksIncrementally, m_UnsatCores, m_UseLiveVariables,
+					mServices);
 			break;
 		default:
 			throw new UnsupportedOperationException("unsupported interpolation");
@@ -289,7 +285,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		EdgeChecker edgeChecker = new EdgeChecker(m_SmtManager, m_RootNode.getRootAnnot().getModGlobVarManager(),
 				m_TraceChecker.getPredicateUnifier().getCoverageRelation());
 		try {
-			if (differenceInsteadOfIntersection) {
+			if (m_DifferenceInsteadOfIntersection) {
 				mLogger.debug("Start constructing difference");
 				// assert(oldAbstraction.getStateFactory() ==
 				// m_InterpolAutomaton.getStateFactory());
@@ -434,7 +430,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 						// cdnwa = new ComplementDeterministicNwa<>(dia);
 						PowersetDeterminizer<CodeBlock, IPredicate> psd2 = new PowersetDeterminizer<CodeBlock, IPredicate>(
 								determinized, true, m_PredicateFactoryInterpolantAutomata);
-						
+
 						diff = new Difference<CodeBlock, IPredicate>(oldAbstraction, determinized, psd2,
 								m_StateFactoryForRefinement, explointSigmaStarConcatOfIA);
 						determinized.finishConstruction();
