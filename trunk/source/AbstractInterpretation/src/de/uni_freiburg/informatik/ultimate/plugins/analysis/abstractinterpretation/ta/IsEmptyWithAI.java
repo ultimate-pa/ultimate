@@ -50,11 +50,16 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Accepts;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.AbstractInterpreter;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RcfgElement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
+import de.uni_freiburg.informatik.ultimate.result.IProgramExecution;
+import de.uni_freiburg.informatik.ultimate.result.IProgramExecution.AtomicTraceElement;
+import de.uni_freiburg.informatik.ultimate.result.IProgramExecution.ProgramState;
 import de.uni_freiburg.informatik.ultimate.result.UnprovableResult;
 
 
@@ -457,8 +462,38 @@ public class IsEmptyWithAI<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	
 	private NestedRun<LETTER,STATE> getAcceptingRun(UnprovableResult<RcfgElement, CodeBlock, Expression> unprovableResult) {
 		s_Logger.warn("Fabian 4: getAcceptingRun() start!");
-		ProgramPoint unprovable = (ProgramPoint) unprovableResult.getElement();
+		IProgramExecution<CodeBlock, Expression> execution = unprovableResult.getProgramExecution();
+		List<LETTER> executionLetters = new LinkedList<LETTER>();
+		for (int i = 0; i< execution.getLength(); i++)
+		{
+			executionLetters.add((LETTER) execution.getTraceElement(i).getTraceElement());
+			RCFGEdge traceElement = (RCFGEdge) execution.getTraceElement(i).getTraceElement();
+			s_Logger.warn("   "+traceElement.toString());
+		}
 
+		List<STATE> newStates = new LinkedList<STATE>();
+		
+		
+		for (LETTER exeLetter : executionLetters)
+		{
+		
+		for (STATE eachState : m_nwa.getStates())
+		{
+			Set<LETTER> test1 = m_nwa.lettersCallIncoming(eachState);
+			Set<LETTER> test2 = m_nwa.lettersCall(eachState);
+			Set<LETTER> test3 = m_nwa.lettersInternal(eachState);
+			Set<LETTER> test4 = m_nwa.lettersInternalIncoming(eachState);
+			
+
+					if (test4.contains(exeLetter))
+					{
+						newStates.add(eachState);
+						s_Logger.warn("     "+eachState.toString());
+					}
+				}
+		}
+		
+		
 
 		for (STATE state : m_StartStates) {
 			enqueueAndMarkVisited(state, dummyEmptyStackState);
@@ -712,8 +747,6 @@ public class IsEmptyWithAI<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	 */
 	private NestedRun<LETTER,STATE> constructRun(STATE state, STATE stateK) {
 //		s_Logger.debug("Reconstruction from " + state + " " + stateK);
-		s_Logger.warn("Fabian 11: construct Run 618:");
-		s_Logger.warn("Fabian 11: "+state.toString() + " " + stateK.toString());
 		NestedRun<LETTER,STATE> run = new NestedRun<LETTER,STATE>(state);
 		while (!m_StartStates.contains(state) ||
 				!m_reconstructionStack.isEmpty()) {

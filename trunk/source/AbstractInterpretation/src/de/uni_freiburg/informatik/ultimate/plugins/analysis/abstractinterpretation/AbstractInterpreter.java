@@ -510,7 +510,6 @@ public class AbstractInterpreter extends RCFGEdgeVisitor {
 		for (String s : errorLocMap.keySet())
 			m_errorLocs.addAll(errorLocMap.get(s));
 
-		
 		// add entry node of Main procedure / any if no Main() exists
 		for (Object n : nwa.getInternalAlphabet())
 		{
