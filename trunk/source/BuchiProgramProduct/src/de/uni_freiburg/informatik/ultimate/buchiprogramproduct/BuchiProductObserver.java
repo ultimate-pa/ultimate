@@ -12,6 +12,10 @@ import de.uni_freiburg.informatik.ultimate.ltl2aut.ast.AstNode;
 import de.uni_freiburg.informatik.ultimate.ltl2aut.ast.NeverStatement;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BoogieASTNode;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.annot.BuchiProgramRootNodeAnnotation;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 
 public class BuchiProductObserver implements IUnmanagedObserver {
@@ -40,10 +44,11 @@ public class BuchiProductObserver implements IUnmanagedObserver {
 		if (mNeverClaim == null || mRcfg == null) {
 			return;
 		}
-
 		BoogieSymbolTable symbolTable = PreprocessorAnnotation.getAnnotation(mRcfg).getSymbolTable();
-
 		NestedWordAutomaton<BoogieASTNode, String> nwa;
+		ProductBacktranslator translator = new ProductBacktranslator(RCFGEdge.class, CodeBlock.class, Expression.class,
+				Expression.class);
+		mServices.getBacktranslationService().addTranslator(translator);
 
 		mLogger.debug("Transforming NeverClaim to NestedWordAutomaton...");
 		try {
@@ -53,16 +58,17 @@ public class BuchiProductObserver implements IUnmanagedObserver {
 				throw new NullPointerException("nwa is null");
 			}
 		} catch (Exception e) {
-			mLogger.error(String
-					.format("BuchiProgramProduct encountered an error during NeverClaim to NestedWordAutomaton transformation:\n %s",
-							e));
+			mLogger.error(String.format(
+					"BuchiProgramProduct encountered an error during NeverClaim to NestedWordAutomaton"
+							+ " transformation:\n %s", e));
 			throw e;
 		}
 
 		mLogger.info("Beginning generation of product automaton");
 
 		try {
-			mProduct = new Product(nwa, mRcfg, mServices);
+			BuchiProgramRootNodeAnnotation ltlAnnot = BuchiProgramRootNodeAnnotation.getAnnotation(mNeverClaim);
+			mProduct = new Product(nwa, mRcfg, ltlAnnot, mServices);
 			mLogger.info("Product automaton successfully generated");
 		} catch (Exception e) {
 			mLogger.error(String.format(

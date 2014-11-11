@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import de.uni_freiburg.informatik.ultimate.core.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.model.annotation.IAnnotations;
 import de.uni_freiburg.informatik.ultimate.model.annotation.Overapprox;
@@ -119,9 +120,10 @@ public class RcfgProgramExecution implements IProgramExecution<CodeBlock, Expres
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
 		String valuation = ppstoString(getInitialProgramState());
-		String lineSeparator = System.getProperty("line.separator");
+		String lineSeparator = CoreUtil.getPlatformLineSeparator();
 
-		sb.append("=== Start of program execution");
+		sb.append("=== Start of program execution ===");
+		sb.append(lineSeparator);
 		if (valuation != null) {
 			sb.append("initial values:");
 			sb.append(valuation);

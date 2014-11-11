@@ -19,7 +19,7 @@ import de.uni_freiburg.informatik.ultimatetest.util.Util;
 /**
  * Stolen from AbstractTraceAbstractionTestSuite ;-)
  */
-public class AbstractAbstractInterpretationTestSuite extends UltimateTestSuite {
+public abstract class AbstractAbstractInterpretationTestSuite extends UltimateTestSuite {
 	private List<UltimateTestCase> m_testCases;
 
 	private static final String m_PathToSettings = "examples/settings/";

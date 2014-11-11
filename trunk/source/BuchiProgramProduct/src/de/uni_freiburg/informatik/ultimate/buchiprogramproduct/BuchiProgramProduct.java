@@ -124,7 +124,6 @@ public class BuchiProgramProduct implements IGenerator {
 
 	@Override
 	public void setToolchainStorage(IToolchainStorage services) {
-		// TODO Auto-generated method stub
 
 	}
 
@@ -140,7 +139,7 @@ public class BuchiProgramProduct implements IGenerator {
 
 	@Override
 	public void finish() {
-		if (mUseful == 0) {
+		if (!mSkip && mUseful == 0) {
 			throw new IllegalStateException("Was used in a toolchain were it did nothing");
 		}
 		if (mSkip) {

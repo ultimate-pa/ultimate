@@ -3,7 +3,6 @@ package de.uni_freiburg.informatik.ultimatetest.summary;
 import de.uni_freiburg.informatik.ultimate.util.Utils;
 import de.uni_freiburg.informatik.ultimatetest.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestSuite;
-import de.uni_freiburg.informatik.ultimatetest.util.Util;
 
 public class IncrementalLogWithVMParameters extends DefaultIncrementalLogfile {
 

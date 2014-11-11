@@ -1,38 +1,38 @@
-step0: requires x > 0;
-values0:  x=1
-step1: y := 4;
-values1:  x=1  y=4
-step2: invariant y > 0;
-values2:  x=1  y=4
-step3: y > 0 [COND TRUE]
-values3:  x=1  y=4
-step4: res := res + x;
-values4:  res=-2  x=1  y=4
-step5: y := y - 1;
-values5:  res=-2  x=1  y=3
-step6: invariant y > 0;
-values6:  res=-2  x=1  y=3
-step7: y > 0 [COND TRUE]
-values7:  res=-2  x=1  y=3
-step8: res := res + x;
-values8:  res=-1  x=1  y=3
-step9: y := y - 1;
-values9:  res=-1  x=1  y=2
-step10: invariant y > 0;
-values10:  res=-1  x=1  y=2
-step11: y > 0 [COND TRUE]
-values11:  res=-1  x=1  y=2
-step12: res := res + x;
-values12:  res=0  x=1  y=2
-step13: y := y - 1;
-values13:  res=0  x=1  y=1
-step14: invariant y > 0;
-values14:  res=0  x=1  y=1
-step15: y > 0 [COND TRUE]
-values15:  res=0  x=1  y=1
-step16: res := res + x;
-values16:  res=1  x=1  y=1
-step17: y := y - 1;
-values17:  res=1  x=1  y=0
-step18: invariant y > 0;
-values18:  res=1  x=1  y=0
+[L2-L3]             requires x > 0;
+         VAL        [x=1]
+[L8]                y := 4;
+         VAL        [x=1, y=4]
+[L10]               invariant y > 0;
+         VAL        [x=1, y=4]
+[L9]     COND TRUE  y > 0
+         VAL        [x=1, y=4]
+[L12]               res := res + x;
+         VAL        [res=-2, x=1, y=4]
+[L13]               y := y - 1;
+         VAL        [res=-2, x=1, y=3]
+[L10]               invariant y > 0;
+         VAL        [res=-2, x=1, y=3]
+[L9]     COND TRUE  y > 0
+         VAL        [res=-2, x=1, y=3]
+[L12]               res := res + x;
+         VAL        [res=-1, x=1, y=3]
+[L13]               y := y - 1;
+         VAL        [res=-1, x=1, y=2]
+[L10]               invariant y > 0;
+         VAL        [res=-1, x=1, y=2]
+[L9]     COND TRUE  y > 0
+         VAL        [res=-1, x=1, y=2]
+[L12]               res := res + x;
+         VAL        [res=0, x=1, y=2]
+[L13]               y := y - 1;
+         VAL        [res=0, x=1, y=1]
+[L10]               invariant y > 0;
+         VAL        [res=0, x=1, y=1]
+[L9]     COND TRUE  y > 0
+         VAL        [res=0, x=1, y=1]
+[L12]               res := res + x;
+         VAL        [res=1, x=1, y=1]
+[L13]               y := y - 1;
+         VAL        [res=1, x=1, y=0]
+[L10]               invariant y > 0;
+         VAL        [res=1, x=1, y=0]

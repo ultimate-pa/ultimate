@@ -3,7 +3,6 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.impulse;
 import java.util.ArrayList;
 import java.util.HashSet;
 
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.appgraph.AnnotatedProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.appgraph.AppEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.GlobalSettings;

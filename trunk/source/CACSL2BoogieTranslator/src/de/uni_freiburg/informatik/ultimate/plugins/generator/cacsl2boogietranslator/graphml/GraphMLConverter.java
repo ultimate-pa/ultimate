@@ -8,11 +8,8 @@ import java.util.Map;
 import org.apache.commons.collections15.Transformer;
 import org.apache.commons.lang3.StringEscapeUtils;
 import org.eclipse.cdt.core.dom.ast.IASTExpression;
-import org.eclipse.cdt.internal.core.dom.parser.c.CASTSimpleDeclaration;
-import org.eclipse.cdt.internal.core.dom.parser.c.CASTTranslationUnit;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.CACSLProgramExecution;
 import de.uni_freiburg.informatik.ultimate.result.IProgramExecution.AtomicTraceElement;
 import de.uni_freiburg.informatik.ultimate.result.IProgramExecution.ProgramState;
@@ -247,24 +244,24 @@ public class GraphMLConverter {
 		return current;
 	}
 
-	private int skipGlobalDeclarations(int currentIdx, CACSLProgramExecution programExecution) {
-		int i = currentIdx;
-		for (; i < programExecution.getLength(); i++) {
-			AtomicTraceElement<CACSLLocation> currentATE = programExecution.getTraceElement(i);
-			CACSLLocation currentLoc = currentATE.getTraceElement();
-			if (currentLoc instanceof CLocation) {
-				CLocation currentCLoc = (CLocation) currentLoc;
-				if (currentCLoc.getNode() instanceof CASTSimpleDeclaration) {
-					if (currentCLoc.getNode().getParent() instanceof CASTTranslationUnit) {
-						// it is a global, go on
-						continue;
-					}
-				}
-			}
-			break;
-		}
-		return i;
-	}
+//	private int skipGlobalDeclarations(int currentIdx, CACSLProgramExecution programExecution) {
+//		int i = currentIdx;
+//		for (; i < programExecution.getLength(); i++) {
+//			AtomicTraceElement<CACSLLocation> currentATE = programExecution.getTraceElement(i);
+//			CACSLLocation currentLoc = currentATE.getTraceElement();
+//			if (currentLoc instanceof CLocation) {
+//				CLocation currentCLoc = (CLocation) currentLoc;
+//				if (currentCLoc.getNode() instanceof CASTSimpleDeclaration) {
+//					if (currentCLoc.getNode().getParent() instanceof CASTTranslationUnit) {
+//						// it is a global, go on
+//						continue;
+//					}
+//				}
+//			}
+//			break;
+//		}
+//		return i;
+//	}
 
 	private int collapseToSingleTraceElement(int currentIdx, CACSLProgramExecution programExecution) {
 		int i = currentIdx;

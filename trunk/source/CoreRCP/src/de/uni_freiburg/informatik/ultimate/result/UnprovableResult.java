@@ -29,7 +29,7 @@ import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
  * @param <E> Type of expression
  */
 public class UnprovableResult<ELEM extends IElement, TE extends IElement, E> extends AbstractResultAtElement<ELEM> implements
-		IResultWithTrace {
+		IResultWithFiniteTrace<TE,E> {
 
 	private final Check mCheckedSpecification;
 	private final IProgramExecution<TE, E> mProgramExecution;

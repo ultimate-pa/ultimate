@@ -227,6 +227,7 @@ public class IsEmptyWithAI<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		m_StartStates = m_nwa.getInitialStates();
 		m_GoalStates = m_nwa.getFinalStates();
 		s_Logger.info(startMessage());
+		
 		if (results.equals(null)) {
 			m_acceptingRun = getAcceptingRun();
 		} else {

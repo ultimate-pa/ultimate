@@ -56,13 +56,13 @@ public class TerminationArgumentResult<P extends IElement> extends AbstractResul
 		sb.append(" ranking function");
 		sb.append(": [");
 		for (Expression e : m_RankingFunction) {
-			sb.append(m_TranslatorSequence.translateExpressionToString(e, Expression.class));
+			sb.append(mTranslatorSequence.translateExpressionToString(e, Expression.class));
 		}
 		sb.append("]");
 		if (m_SupportingInvariants.length > 0) {
 			sb.append(" and the following supporting invariants: ");
 			for (Expression e : m_SupportingInvariants) {
-				sb.append(m_TranslatorSequence.translateExpressionToString(e, Expression.class));
+				sb.append(mTranslatorSequence.translateExpressionToString(e, Expression.class));
 			}
 		} else {
 			sb.append(" for which no supporting invariant is required.");

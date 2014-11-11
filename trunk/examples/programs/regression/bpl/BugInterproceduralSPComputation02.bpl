@@ -3,7 +3,7 @@
  * Date: 08.10.2013
  * Author: heizmann@informatik.uni-freiburg.de
  *
- * Bug in computation of Stronges Postcondition in r9797
+ * Bug in computation of Strongest Postcondition in r9797
  */
 
 var x : int;

@@ -8,16 +8,21 @@ import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
  * Result that reports that a nonterminating execution for a lasso shaped
  * sequence of statements has been found.
  * 
- * @author Matthias Heizmann
+ * @author heizmann@informatik.uni-freiburg.de
+ * @author dietsch@informatik.uni-freiburg.de
  * 
- * @param <TE>
  */
 public class NonterminatingLassoResult<ELEM extends IElement, TE extends IElement, EXP extends IElement> extends
-		AbstractResultWithLasso<ELEM, TE, EXP> {
+		AbstractResultAtElement<ELEM> implements IResultWithInfiniteLassoTrace<TE, EXP> {
+
+	protected final IProgramExecution<TE, EXP> mStem;
+	protected final IProgramExecution<TE, EXP> mLoop;
 
 	public NonterminatingLassoResult(ELEM position, String plugin, IBacktranslationService translatorSequence,
 			IProgramExecution<TE, EXP> stem, IProgramExecution<TE, EXP> loop, ILocation location) {
-		super(plugin, position, translatorSequence, stem, loop);
+		super(position, plugin, translatorSequence);
+		mStem = stem;
+		mLoop = loop;
 	}
 
 	@Override
@@ -32,11 +37,21 @@ public class NonterminatingLassoResult<ELEM extends IElement, TE extends IElemen
 		sb.append(System.getProperty("line.separator"));
 		sb.append("Stem:");
 		sb.append(System.getProperty("line.separator"));
-		sb.append(m_TranslatorSequence.translateProgramExecution(m_Stem));
+		sb.append(mTranslatorSequence.translateProgramExecution(mStem));
 		sb.append("Loop:");
 		sb.append(System.getProperty("line.separator"));
-		sb.append(m_TranslatorSequence.translateProgramExecution(m_Loop));
+		sb.append(mTranslatorSequence.translateProgramExecution(mLoop));
 		sb.append("End of lasso representation.");
 		return sb.toString();
+	}
+
+	@Override
+	public IProgramExecution<TE, EXP> getStem() {
+		return mStem;
+	}
+
+	@Override
+	public IProgramExecution<TE, EXP> getLasso() {
+		return mLoop;
 	}
 }

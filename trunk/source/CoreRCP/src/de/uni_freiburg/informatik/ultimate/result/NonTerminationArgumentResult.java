@@ -80,7 +80,7 @@ public class NonTerminationArgumentResult<P extends IElement> extends AbstractRe
 		sb.append("{");
 		boolean first = true;
 		for (Entry<Expression, String> entry : state.entrySet()) {
-			String var = m_TranslatorSequence.translateExpressionToString(entry.getKey(), Expression.class);
+			String var = mTranslatorSequence.translateExpressionToString(entry.getKey(), Expression.class);
 			if (var.contains("UnsupportedOperation")) {
 				continue;
 			}

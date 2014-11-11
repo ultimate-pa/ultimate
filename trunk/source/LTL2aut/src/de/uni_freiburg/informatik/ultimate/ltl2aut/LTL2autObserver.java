@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Logger;
@@ -22,6 +23,7 @@ import de.uni_freiburg.informatik.ultimate.ltl2aut.ast.AtomicProposition;
 import de.uni_freiburg.informatik.ultimate.ltl2aut.preferences.PreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Unit;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.annot.BuchiProgramRootNodeAnnotation;
 
 /**
  * This class reads a definition of a property in LTL and returns the AST of the
@@ -68,7 +70,16 @@ public class LTL2autObserver implements IUnmanagedObserver {
 		for (int i = 1; i < specification.length; ++i) {
 			mLogger.info(specification[i]);
 		}
+
+		new BuchiProgramRootNodeAnnotation(getSubstitutedProperty(irs, specification[0])).annotate(node);
 		mRootNode = node;
+	}
+
+	private String getSubstitutedProperty(Map<String, AstNode> irs, String property) {
+		for (Entry<String, AstNode> entry : irs.entrySet()) {
+			property = property.replaceAll(entry.getKey(), "(" + entry.getValue().toString() + ")");
+		}
+		return property;
 	}
 
 	private String[] getSpecification() throws IOException {

@@ -33,7 +33,7 @@ public class InvariantResult<ELEM extends IElement, E> extends AbstractResultAtE
 	public String getLongDescription() {
 		StringBuffer sb = new StringBuffer();
 		sb.append("Derived loop invariant: ");
-		sb.append(m_TranslatorSequence.translateExpressionToString(m_Invariant, (Class<E>) m_Invariant.getClass()));
+		sb.append(mTranslatorSequence.translateExpressionToString(m_Invariant, (Class<E>) m_Invariant.getClass()));
 		return sb.toString();
 	}
 }

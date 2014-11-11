@@ -4,7 +4,6 @@ import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -15,11 +14,11 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BoogieASTNode;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Specification;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.result.IProgramExecution;
-import de.uni_freiburg.informatik.ultimate.result.IProgramExecution.AtomicTraceElement.StepInfo;
 import de.uni_freiburg.informatik.ultimate.result.IValuation;
+import de.uni_freiburg.informatik.ultimate.result.ProgramExecutionFormatter;
+import de.uni_freiburg.informatik.ultimate.result.ProgramExecutionFormatter.IProgramExecutionStringProvider;
 import de.uni_freiburg.informatik.ultimate.result.ResultUtil;
 
 /**
@@ -32,29 +31,6 @@ public class BoogieProgramExecution implements IProgramExecution<BoogieASTNode, 
 
 	private final List<AtomicTraceElement<BoogieASTNode>> m_Trace;
 	private final Map<Integer, ProgramState<Expression>> m_PartialProgramStateMapping;
-
-	/**
-	 * Create a BoogieProgramExecution where every statement is an atomic step
-	 * 
-	 * @param trace
-	 *            A trace consisting of atomic steps. May not be null and should
-	 *            be immutable.
-	 * @param partialProgramStateMapping
-	 * 
-	 */
-	public BoogieProgramExecution(List<BoogieASTNode> trace,
-			Map<Integer, ProgramState<Expression>> partialProgramStateMapping) {
-
-		// a list of boogieastnodes is a trace that consists of atomic
-		// statements.
-		ArrayList<AtomicTraceElement<BoogieASTNode>> atomictrace = new ArrayList<>();
-		for (BoogieASTNode te : trace) {
-			atomictrace.add(new AtomicTraceElement<BoogieASTNode>(te));
-		}
-
-		m_Trace = atomictrace;
-		m_PartialProgramStateMapping = partialProgramStateMapping;
-	}
 
 	public BoogieProgramExecution(Map<Integer, ProgramState<Expression>> partialProgramStateMapping,
 			List<AtomicTraceElement<BoogieASTNode>> trace) {
@@ -85,83 +61,11 @@ public class BoogieProgramExecution implements IProgramExecution<BoogieASTNode, 
 		return m_PartialProgramStateMapping.get(-1);
 	}
 
-	private String ppstoString(ProgramState<Expression> pps) {
-		if (pps == null) {
-			return null;
-		} else {
-			List<Expression> keys = new ArrayList<>(pps.getVariables());
-			Collections.sort(keys, new Comparator<Expression>() {
-				@Override
-				public int compare(Expression arg0, Expression arg1) {
-					return BoogiePrettyPrinter.print(arg0).compareToIgnoreCase(BoogiePrettyPrinter.print(arg1));
-				}
-			});
-
-			StringBuilder sb = new StringBuilder();
-			for (Expression variable : keys) {
-				Expression value = pps.getValues(variable).iterator().next();
-				sb.append("  ");
-				String var = BoogiePrettyPrinter.print(variable);
-				String val = BoogiePrettyPrinter.print(value);
-				sb.append(var + "=" + val);
-			}
-			if (sb.length() > 0) {
-				return sb.toString();
-			} else {
-				return null;
-			}
-		}
-	}
-
 	@Override
 	public String toString() {
-		StringBuilder sb = new StringBuilder();
-		String valuation = ppstoString(getInitialProgramState());
-		String lineSeparator = System.getProperty("line.separator");
-		if (valuation != null) {
-			sb.append("initial values:");
-			sb.append(valuation);
-			sb.append(lineSeparator);
-		}
-		for (int i = 0; i < m_Trace.size(); i++) {
-			AtomicTraceElement<BoogieASTNode> currentATE = m_Trace.get(i);
-			BoogieASTNode currentStep = currentATE.getStep();
-
-			sb.append("step");
-			sb.append(i);
-			sb.append(": ");
-
-			if (currentATE.hasStepInfo(StepInfo.CONDITION_EVAL_FALSE)) {
-				Expression exp = (Expression) currentStep;
-				sb.append(BoogiePrettyPrinter.print(new UnaryExpression(exp.getLocation(),
-						UnaryExpression.Operator.LOGICNEG, exp)));
-			} else {
-				if (currentStep instanceof Statement) {
-					sb.append(BoogiePrettyPrinter.print((Statement) currentStep));
-				} else if (currentStep instanceof Specification) {
-					sb.append(BoogiePrettyPrinter.print((Specification) currentStep));
-				} else if (currentStep instanceof Expression) {
-					sb.append(BoogiePrettyPrinter.print((Expression) currentStep));
-				} else {
-					throw new IllegalArgumentException(
-							"current step is neither Statement nor Specification nor Expression");
-				}
-			}
-			if (!currentATE.hasStepInfo(StepInfo.NONE)) {
-				sb.append(" ").append(currentATE.getStepInfo().toString());
-			}
-
-			sb.append(lineSeparator);
-			valuation = ppstoString(getProgramState(i));
-			if (valuation != null) {
-				sb.append("values");
-				sb.append(i);
-				sb.append(":");
-				sb.append(valuation);
-				sb.append(lineSeparator);
-			}
-		}
-		return sb.toString();
+		ProgramExecutionFormatter<BoogieASTNode, Expression> pef = new ProgramExecutionFormatter<>(
+				new BoogieProgramExecutionStringProvider());
+		return pef.formatProgramExecution(this);
 	}
 
 	public IValuation getValuation(final List<ITranslator<?, ?, ?, ?>> translatorSequence) {
@@ -213,5 +117,54 @@ public class BoogieProgramExecution implements IProgramExecution<BoogieASTNode, 
 	@Override
 	public String getSVCOMPWitnessString() {
 		return null;
+	}
+
+	/**
+	 * 
+	 * @author dietsch@informatik.uni-freiburg.de
+	 * 
+	 */
+	private class BoogieProgramExecutionStringProvider implements
+			IProgramExecutionStringProvider<BoogieASTNode, Expression> {
+
+		@Override
+		public int getStartLineNumberFromStep(BoogieASTNode step) {
+			if (step.getLocation() == null) {
+				return -1;
+			}
+			return step.getLocation().getStartLine();
+		}
+
+		@Override
+		public int getEndLineNumberFromStep(BoogieASTNode step) {
+			if (step.getLocation() == null) {
+				return -1;
+			}
+			return step.getLocation().getEndLine();
+		}
+
+		@Override
+		public String getStringFromStep(BoogieASTNode step) {
+			if (step instanceof Statement) {
+				return BoogiePrettyPrinter.print((Statement) step);
+			} else if (step instanceof Specification) {
+				return BoogiePrettyPrinter.print((Specification) step);
+			} else if (step instanceof Expression) {
+				return BoogiePrettyPrinter.print((Expression) step);
+			} else {
+				throw new IllegalArgumentException("current step is neither Statement nor Specification nor Expression");
+			}
+		}
+
+		@Override
+		public String getStringFromTraceElement(BoogieASTNode traceelement) {
+			return getStringFromStep(traceelement);
+		}
+
+		@Override
+		public String getStringFromExpression(Expression expression) {
+			return BoogiePrettyPrinter.print(expression);
+		}
+
 	}
 }

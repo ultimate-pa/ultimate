@@ -4,7 +4,8 @@ import de.uni_freiburg.informatik.ultimate.model.annotation.AbstractAnnotations;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BoogieASTNode;
 
 /**
- * Specification that should be checked at position 
+ * Specification that should be checked at position
+ * 
  * @author Markus Lindenmann
  * @author Stefan Wissert
  * @author Oleksii Saukh
@@ -16,91 +17,92 @@ public class Check extends AbstractAnnotations {
 	public static String getIdentifier() {
 		return Check.class.getName();
 	}
-	
+
 	public enum Spec {
-	    /**
-	     * Array Index out of bounds error.
-	     */
-	    ARRAY_INDEX,
-	    /**
-	     * Pre condition violated.
-	     */
-	    PRE_CONDITION,
-	    /**
-	     * Post condition violated.
-	     */
-	    POST_CONDITION,
-	    /**
-	     * Invariant violated.
-	     */
-	    INVARIANT,
-	    /**
-	     * Assert statement violated.
-	     */
-	    ASSERT,
-	    /**
-	     * Devision by zero error.
-	     */
-	    DIVISION_BY_ZERO,
-	    /**
-	     * Integer overflow error.
-	     */
-	    INTEGER_OVERFLOW,
-	    /**
-	     * Tried to access unallocated memory.
-	     */
-	    MEMORY_DEREFERENCE,
-	    /**
-	     * Memory leak detected. I.e. missing free!
-	     */
-	    MEMORY_LEAK,
-	    /**
-	     * Free of unallocated pointer.
-	     */
-	    MEMORY_FREE,
-	    /**
-	     * Free of unallocated pointer.
-	     */
-	    MALLOC_NONNEGATIVE,
-	    /**
-	     * Pointer arithmetic that is not allowed by C.
-	     * E.g. 
-	     * - computing the difference of two pointers that point to
-	     * completely different arrays
-	     * - comparing pointers that point to completely different arrays
-	     */
-	    ILLEGAL_POINTER_ARITHMETIC,
-	    /**
-	     * Error function reachable. 
-	     */
-	    ERROR_Function,
-	    /**
-	     * Not further specified or unknown.
-	     */
-	    UNKNOWN
-	    // add missing failure types...
+		/**
+		 * Array Index out of bounds error.
+		 */
+		ARRAY_INDEX,
+		/**
+		 * Pre condition violated.
+		 */
+		PRE_CONDITION,
+		/**
+		 * Post condition violated.
+		 */
+		POST_CONDITION,
+		/**
+		 * Invariant violated.
+		 */
+		INVARIANT,
+		/**
+		 * Assert statement violated.
+		 */
+		ASSERT,
+		/**
+		 * Devision by zero error.
+		 */
+		DIVISION_BY_ZERO,
+		/**
+		 * Integer overflow error.
+		 */
+		INTEGER_OVERFLOW,
+		/**
+		 * Tried to access unallocated memory.
+		 */
+		MEMORY_DEREFERENCE,
+		/**
+		 * Memory leak detected. I.e. missing free!
+		 */
+		MEMORY_LEAK,
+		/**
+		 * Free of unallocated pointer.
+		 */
+		MEMORY_FREE,
+		/**
+		 * Free of unallocated pointer.
+		 */
+		MALLOC_NONNEGATIVE,
+		/**
+		 * Pointer arithmetic that is not allowed by C. E.g. - computing the
+		 * difference of two pointers that point to completely different arrays
+		 * - comparing pointers that point to completely different arrays
+		 */
+		ILLEGAL_POINTER_ARITHMETIC,
+		/**
+		 * Error function reachable.
+		 */
+		ERROR_Function,
+		/**
+		 * Not further specified or unknown.
+		 */
+		UNKNOWN, 
+		/**
+		 * An LTL property
+		 */
+		LTL
+		// add missing failure types...
+
 	}
-	
-	private Spec m_Spec;
-	
+
+	private Spec mSpec;
+
 	/**
-	 * The published attributes.  Update this and getFieldValue()
-	 * if you add new attributes.
+	 * The published attributes. Update this and getFieldValue() if you add new
+	 * attributes.
 	 */
-	private final static String[] s_AttribFields = {
-		"Check"
-	};
-	
+	private final static String[] s_AttribFields = { "Check" };
+
 	public Spec getSpec() {
-		return m_Spec;
+		return mSpec;
 	}
-	
+
 	public Check(Check.Spec spec) {
-		m_Spec = spec;
+		mSpec = spec;
 	}
-	
+
 	public String getPositiveMessage() {
-		switch (m_Spec) {
+		switch (mSpec) {
 		case ARRAY_INDEX:
 			return "array index is always in bounds";
 		case PRE_CONDITION:
@@ -133,9 +135,9 @@ public class Check extends AbstractAnnotations {
 			throw new AssertionError();
 		}
 	}
-	
+
 	public String getNegativeMessage() {
-		switch (m_Spec) {
+		switch (mSpec) {
 		case ARRAY_INDEX:
 			return "array index can be out of bounds";
 		case PRE_CONDITION:
@@ -176,19 +178,20 @@ public class Check extends AbstractAnnotations {
 
 	@Override
 	protected Object getFieldValue(String field) {
-		if (field == "Check")
-			return m_Spec.toString();
+		if (field.equals("Check"))
+			return mSpec.toString();
 		else
-			throw new UnsupportedOperationException("Unknown field "+field);
+			throw new UnsupportedOperationException("Unknown field " + field);
 	}
 
-    /**
-     * Adds this Check object to the annotations of an BoogieASTNode.
-     * 
-     * @param node the BoogieASTNode
-     * @author Christian
-     */
-    public final void addToNodeAnnot(BoogieASTNode node) {
-        node.getPayload().getAnnotations().put(getIdentifier(), this);
-    }
+	/**
+	 * Adds this Check object to the annotations of an BoogieASTNode.
+	 * 
+	 * @param node
+	 *            the BoogieASTNode
+	 * @author Christian
+	 */
+	public final void addToNodeAnnot(BoogieASTNode node) {
+		node.getPayload().getAnnotations().put(getIdentifier(), this);
+	}
 }

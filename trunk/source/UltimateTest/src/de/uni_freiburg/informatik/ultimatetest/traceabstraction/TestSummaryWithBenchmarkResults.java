@@ -11,7 +11,6 @@ import de.uni_freiburg.informatik.ultimatetest.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestSuite;
 import de.uni_freiburg.informatik.ultimatetest.decider.ITestResultDecider.TestResult;
 import de.uni_freiburg.informatik.ultimatetest.summary.DefaultIncrementalLogfile;
-import de.uni_freiburg.informatik.ultimatetest.util.Util;
 
 /**
  * Incremental log in which for each test the BenchmarkResults are shown.

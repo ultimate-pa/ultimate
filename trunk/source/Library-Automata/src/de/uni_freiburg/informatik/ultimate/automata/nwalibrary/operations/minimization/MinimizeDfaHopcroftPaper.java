@@ -9,7 +9,6 @@ import java.util.Iterator;
 
 import org.apache.log4j.Logger;
 
-import cern.colt.function.IntComparator;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;

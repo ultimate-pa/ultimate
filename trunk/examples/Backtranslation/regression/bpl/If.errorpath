@@ -1,8 +1,8 @@
-step0: !(a > 10) [COND FALSE]
-values0:  a=0
-step1: a < 5 [COND TRUE]
-values1:  a=0
-step2: r := 3;
-values2:  a=0  r=3
-step3: assert r != 3;
-values3:  a=0  r=3
+[L3]   COND FALSE  !(a > 10)
+       VAL         [a=0]
+[L10]  COND TRUE   a < 5
+       VAL         [a=0]
+[L11]              r := 3;
+       VAL         [a=0, r=3]
+[L16]              assert r != 3;
+       VAL         [a=0, r=3]

@@ -16,13 +16,13 @@ public abstract class AbstractResultAtElement<ELEM extends IElement>
 						extends AbstractResult implements IResultWithLocation {
 	
 	private final ELEM m_Element;
-	protected final IBacktranslationService m_TranslatorSequence;
+	protected final IBacktranslationService mTranslatorSequence;
 	
 	public AbstractResultAtElement(ELEM element, String plugin,
 			IBacktranslationService translatorSequence) {
 		super(plugin);
 		m_Element = element;
-		m_TranslatorSequence = translatorSequence.getTranslationServiceCopy();
+		mTranslatorSequence = translatorSequence.getTranslationServiceCopy();
 	}
 	
 	public final ILocation getLocation() {

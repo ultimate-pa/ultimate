@@ -3,8 +3,6 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 import org.eclipse.core.runtime.Plugin;
 import org.osgi.framework.BundleContext;
 
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.RCFGBuilder;
-
 
 /**
  * The activator class controls the plug-in life cycle

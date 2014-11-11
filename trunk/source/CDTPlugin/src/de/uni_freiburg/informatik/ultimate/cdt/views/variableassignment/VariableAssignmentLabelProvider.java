@@ -1,15 +1,8 @@
 package de.uni_freiburg.informatik.ultimate.cdt.views.variableassignment;
 
-import java.util.Map;
-
 import org.eclipse.jface.viewers.ILabelProviderListener;
 import org.eclipse.jface.viewers.ITableLabelProvider;
 import org.eclipse.swt.graphics.Image;
-
-import de.uni_freiburg.informatik.ultimate.cdt.codan.UltimateCChecker;
-import de.uni_freiburg.informatik.ultimate.core.services.IStorable;
-import de.uni_freiburg.informatik.ultimate.core.services.IToolchainStorage;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.IdentifierMapping;
 
 /**
  * @author Stefan Wissert

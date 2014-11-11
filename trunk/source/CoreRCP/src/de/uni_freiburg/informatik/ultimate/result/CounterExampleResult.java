@@ -1,12 +1,11 @@
 package de.uni_freiburg.informatik.ultimate.result;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.core.services.IBacktranslationService;
+import de.uni_freiburg.informatik.ultimate.core.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
-import de.uni_freiburg.informatik.ultimate.result.IProgramExecution.AtomicTraceElement;
 
 /**
  * Result to store that the specification given at some location does not always
@@ -27,7 +26,7 @@ import de.uni_freiburg.informatik.ultimate.result.IProgramExecution.AtomicTraceE
  *            Type of expression
  */
 public class CounterExampleResult<ELEM extends IElement, TE extends IElement, E> extends AbstractResultAtElement<ELEM>
-		implements IResultWithTrace {
+		implements IResultWithFiniteTrace<TE, E> {
 	private final Check mCheckedSpecification;
 	private String mProgramExecutionAsString;
 	private final List<ILocation> mFailurePath;
@@ -57,8 +56,10 @@ public class CounterExampleResult<ELEM extends IElement, TE extends IElement, E>
 	@Override
 	public String getLongDescription() {
 		StringBuilder sb = new StringBuilder();
+		sb.append(getShortDescription());
+		sb.append(CoreUtil.getPlatformLineSeparator());
 		sb.append("We found a FailurePath: ");
-		sb.append(System.getProperty("line.separator"));
+		sb.append(CoreUtil.getPlatformLineSeparator());
 		sb.append(getProgramExecutionAsString());
 		return sb.toString();
 	}
@@ -78,7 +79,7 @@ public class CounterExampleResult<ELEM extends IElement, TE extends IElement, E>
 
 	public String getProgramExecutionAsString() {
 		if (mProgramExecutionAsString == null) {
-			mProgramExecutionAsString = m_TranslatorSequence.translateProgramExecution(mProgramExecution).toString();
+			mProgramExecutionAsString = mTranslatorSequence.translateProgramExecution(mProgramExecution).toString();
 		}
 		return mProgramExecutionAsString;
 	}

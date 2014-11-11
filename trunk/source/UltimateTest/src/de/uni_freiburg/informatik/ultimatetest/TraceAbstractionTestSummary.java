@@ -13,7 +13,6 @@ import de.uni_freiburg.informatik.ultimate.util.Benchmark;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProvider;
 import de.uni_freiburg.informatik.ultimatetest.decider.ITestResultDecider.TestResult;
 import de.uni_freiburg.informatik.ultimatetest.summary.NewTestSummary;
-import de.uni_freiburg.informatik.ultimatetest.util.Util;
 
 public class TraceAbstractionTestSummary extends NewTestSummary {
 

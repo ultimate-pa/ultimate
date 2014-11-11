@@ -14,8 +14,6 @@ import java.util.Set;
  * each position of this trace. This interface is used to transport traces from
  * an analyzer tool through the toolchain back to the user.
  * 
- * TODO: how should an interface for infinite traces look?
- * 
  * @author heizmann@informatik.uni-freiburg.de
  * @author dietsch@informatik.uni-freiburg.de
  * 
@@ -54,10 +52,22 @@ public interface IProgramExecution<TE, E> {
 	 */
 	public ProgramState<E> getInitialProgramState();
 
+	/**
+	 * @return The instance of {@link Class} describing the type of the type
+	 *         parameter E.
+	 */
 	public Class<E> getExpressionClass();
 
+	/**
+	 * @return The instance of {@link Class} describing the type of the type
+	 *         parameter TE.
+	 */
 	public Class<TE> getTraceElementClass();
 
+	/**
+	 * Should return a human-readable representation of this program execution.
+	 * Use {@link ProgramExecutionFormatter} to obtain it.
+	 */
 	public String toString();
 
 	/**

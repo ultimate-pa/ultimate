@@ -43,7 +43,7 @@ public class ProcedureContractResult<ELEM extends IElement, E>
 		sb.append("Derived contract for procedure ");
 		sb.append(m_ProcedureName);
 		sb.append(": ");
-		sb.append(m_TranslatorSequence.translateExpressionToString(m_Contract, (Class<E>)m_Contract.getClass()));
+		sb.append(mTranslatorSequence.translateExpressionToString(m_Contract, (Class<E>)m_Contract.getClass()));
 		return sb.toString();
 	}
 }

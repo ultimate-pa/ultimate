@@ -179,7 +179,7 @@ public class CACSL2BoogieBacktranslator extends
 					// we merge all things in a row that point to the same
 					// location, as they only contain temporary stuff
 					i = findMergeSequence(programExecution, i, loc);
-					String raw = cnode.getRawSignature(); // debug
+//					String raw = cnode.getRawSignature(); // debug
 					if (ate.getTraceElement() instanceof HavocStatement) {
 						HavocStatement havoc = (HavocStatement) ate.getTraceElement();
 						CheckForTempVars check = new CheckForTempVars();

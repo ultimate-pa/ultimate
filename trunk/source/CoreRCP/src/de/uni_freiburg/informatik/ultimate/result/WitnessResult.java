@@ -6,14 +6,14 @@ import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 
 public class WitnessResult<ELEM extends IElement, TE extends IElement, E> extends AbstractResultAtElement<ELEM>
-		implements IResultWithTrace {
+		implements IResultWithFiniteTrace<TE, E> {
 
 	private final CounterExampleResult<ELEM, TE, E> mCEXResult;
 	private final String mWitness;
 	private final boolean mIsVerified;
 
 	public WitnessResult(CounterExampleResult<ELEM, TE, E> cexRes, String witness, boolean isVerified) {
-		super(cexRes.getElement(), cexRes.getPlugin(), cexRes.m_TranslatorSequence);
+		super(cexRes.getElement(), cexRes.getPlugin(), cexRes.mTranslatorSequence);
 		mCEXResult = cexRes;
 		mWitness = witness;
 		mIsVerified = isVerified;
@@ -53,6 +53,14 @@ public class WitnessResult<ELEM extends IElement, TE extends IElement, E> extend
 
 	public CounterExampleResult<ELEM, TE, E> getCounterExampleResult() {
 		return mCEXResult;
+	}
+
+	@Override
+	public IProgramExecution<TE, E> getProgramExecution() {
+		if (mCEXResult == null) {
+			return null;
+		}
+		return mCEXResult.getProgramExecution();
 	};
 
 }

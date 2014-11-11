@@ -7,12 +7,9 @@ import java.util.LinkedHashSet;
 import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.core.services.IResultService;
-import de.uni_freiburg.informatik.ultimate.core.util.CoreUtil.IPredicate;
-import de.uni_freiburg.informatik.ultimate.core.util.CoreUtil.IReduce;
 import de.uni_freiburg.informatik.ultimatetest.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestSuite;
 import de.uni_freiburg.informatik.ultimatetest.decider.ITestResultDecider.TestResult;
-import de.uni_freiburg.informatik.ultimatetest.util.Util;
 
 /**
  * 

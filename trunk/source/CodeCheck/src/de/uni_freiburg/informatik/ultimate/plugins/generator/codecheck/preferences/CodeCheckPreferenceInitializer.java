@@ -1,7 +1,5 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.preferences;
 
-import java.util.prefs.PreferenceChangeEvent;
-
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceItem;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceItem.IUltimatePreferenceItemValidator;

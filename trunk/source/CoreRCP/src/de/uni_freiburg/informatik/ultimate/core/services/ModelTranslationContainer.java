@@ -31,7 +31,9 @@ class ModelTranslationContainer implements IBacktranslationService {
 			ITranslator<?, ?, ?, ?> last = mTranslationSequence.getLast();
 
 			if (!isAllowedNext(last, translator)) {
-				throw new IllegalArgumentException("The supplied ITranslator is not compatible with the existing ones");
+				throw new IllegalArgumentException(
+						"The supplied ITranslator is not compatible with the existing ones. It has to be compatible with "
+								+ last + ", but it is " + translator);
 			}
 		}
 		mTranslationSequence.addLast(translator);

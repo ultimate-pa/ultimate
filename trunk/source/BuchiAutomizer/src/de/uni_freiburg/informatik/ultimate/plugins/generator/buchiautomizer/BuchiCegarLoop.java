@@ -90,6 +90,12 @@ public class BuchiCegarLoop {
 		TERMINATING, TIMEOUT, UNKNOWN, NONTERMINATING
 	}
 
+	/**
+	 * true iff we are run in an LTL toolchain and should report appropriate
+	 * results
+	 */
+	private boolean mLTLMode;
+
 	private final String m_Name;
 
 	/**
@@ -184,6 +190,7 @@ public class BuchiCegarLoop {
 	public BuchiCegarLoop(RootNode rootNode, SmtManager smtManager, TAPreferences taPrefs,
 			IUltimateServiceProvider services, IToolchainStorage storage) {
 		assert services != null;
+		mLTLMode = false;
 		mServices = services;
 		mStorage = storage;
 		mLogger = mServices.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
@@ -551,7 +558,9 @@ public class BuchiCegarLoop {
 			allNodes.addAll(prog2pp.values());
 		}
 
+		// check if we run in LTL mode and set accepting states accordingly
 		if (BuchiProgramRootNodeAnnotation.getAnnotation(m_RootNode) != null) {
+			mLTLMode = true;
 			acceptingNodes = new HashSet<ProgramPoint>();
 			for (ProgramPoint pp : allNodes) {
 				if (BuchiProgramAcceptingStateAnnotation.getAnnotation(pp) != null) {
@@ -559,6 +568,7 @@ public class BuchiCegarLoop {
 				}
 			}
 		} else {
+			mLTLMode = false;
 			acceptingNodes = allNodes;
 		}
 		m_Abstraction = cFG2NestedWordAutomaton.getNestedWordAutomaton(m_RootNode, m_DefaultStateFactory,
@@ -750,6 +760,14 @@ public class BuchiCegarLoop {
 
 	public BuchiCegarLoopBenchmarkGenerator getBenchmarkGenerator() {
 		return m_BenchmarkGenerator;
+	}
+
+	/**
+	 * @return true iff run in LTL mode and results should be interpreted
+	 *         accordingly.
+	 */
+	public boolean isInLTLMode() {
+		return mLTLMode;
 	}
 
 }

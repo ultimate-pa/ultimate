@@ -5,7 +5,7 @@ import java.math.BigDecimal;
 import org.eclipse.cdt.core.dom.ast.IASTExpression;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.CACSLProgramExecution;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.CACSLProgramExecutionStringProvider;
 import de.uni_freiburg.informatik.ultimate.result.IProgramExecution.AtomicTraceElement;
 import de.uni_freiburg.informatik.ultimate.result.IProgramExecution.AtomicTraceElement.StepInfo;
 import de.uni_freiburg.informatik.ultimate.result.IProgramExecution.ProgramState;
@@ -103,7 +103,29 @@ public class WitnessEdge {
 		if (!hasStep()) {
 			return null;
 		}
-		return CACSLProgramExecution.getStepAsWitnessString(mATE);
+		CACSLProgramExecutionStringProvider stringProvider = new CACSLProgramExecutionStringProvider();
+		String stepAsString = stringProvider.getStringFromStep(mATE.getStep());
+		StringBuilder sb = new StringBuilder();
+
+		boolean isConditional = (mATE.hasStepInfo(StepInfo.CONDITION_EVAL_FALSE) || mATE
+				.hasStepInfo(StepInfo.CONDITION_EVAL_TRUE));
+
+		if (isConditional) {
+			sb.append("[");
+		}
+		if (mATE.hasStepInfo(StepInfo.CONDITION_EVAL_FALSE)) {
+			sb.append("!(");
+			sb.append(stepAsString);
+			sb.append(")");
+		} else {
+			sb.append(stepAsString);
+		}
+
+		if (isConditional) {
+			sb.append("]");
+		}
+
+		return sb.toString();
 	}
 
 	private void appendValidExpression(IASTExpression var, IASTExpression val, StringBuilder sb) {
@@ -111,17 +133,17 @@ public class WitnessEdge {
 		String varStr = var.getRawSignature();
 		String valStr = val.getRawSignature();
 
-		if(varStr.contains("\\") || varStr.contains("&")){
-			//is something like read, old, etc. 
+		if (varStr.contains("\\") || varStr.contains("&")) {
+			// is something like read, old, etc.
 			return;
 		}
-		
+
 		try {
 			new BigDecimal(valStr);
 		} catch (Exception ex) {
-			//this is no valid number literal, maybe its true or false? 
-			if(!valStr.equalsIgnoreCase("true") && !valStr.equalsIgnoreCase("false")){
-				//nope, give up
+			// this is no valid number literal, maybe its true or false?
+			if (!valStr.equalsIgnoreCase("true") && !valStr.equalsIgnoreCase("false")) {
+				// nope, give up
 				return;
 			}
 		}
