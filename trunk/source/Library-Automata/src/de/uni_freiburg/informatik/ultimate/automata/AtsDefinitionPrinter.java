@@ -42,8 +42,11 @@ import java.util.Set;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.AlternatingAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingCallTransition;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingInternalTransition;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.NestedWordAutomatonReachableStates;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
@@ -68,7 +71,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.PetriNetJuli
 
 public class AtsDefinitionPrinter<LETTER,STATE> {
 
-		public enum Labeling { NUMERATE, TOSTRING, QUOTED };
+		public enum Labeling { NUMERATE, TOSTRING, QUOTED, BA_FORMAT };
 		
 		private static Logger s_Logger = 
 			NestedWordAutomata.getLogger();
@@ -127,9 +130,9 @@ public class AtsDefinitionPrinter<LETTER,STATE> {
 		@SuppressWarnings("unchecked")
 		private void printAutomaton(String name, Object automaton, Labeling labels) {
 			if (automaton instanceof INestedWordAutomatonSimple) {
-				INestedWordAutomatonOldApi<LETTER,STATE> nwa;
-				if (automaton instanceof INestedWordAutomatonOldApi) {
-					nwa = (INestedWordAutomatonOldApi<LETTER, STATE>) automaton;
+				INestedWordAutomaton<LETTER,STATE> nwa;
+				if (automaton instanceof INestedWordAutomaton) {
+					nwa = (INestedWordAutomaton<LETTER, STATE>) automaton;
 				} else {
 					try {
 						nwa = new NestedWordAutomatonReachableStates<LETTER, STATE>((INestedWordAutomatonSimple<LETTER, STATE>) automaton);
@@ -140,13 +143,17 @@ public class AtsDefinitionPrinter<LETTER,STATE> {
 					
 				if (labels == Labeling.TOSTRING) {
 					new NwaTestFileWriterToString(name, nwa);
-				}
-				else if (labels == Labeling.QUOTED) {
+				} else if (labels == Labeling.QUOTED) {
 					new NwaTestFileWriterToStringWithHash(name, nwa);
 				
-				}
-				else if (labels == Labeling.NUMERATE) {
+				} else if (labels == Labeling.NUMERATE) {
 					new NwaTestFileWriter(name, nwa);
+				} else if (labels == Labeling.BA_FORMAT) {
+					new BaFormatWriter(nwa);
+				}
+				
+				else {
+					throw new AssertionError("unsupported labeling");
 				}
 			}
 			
@@ -154,13 +161,13 @@ public class AtsDefinitionPrinter<LETTER,STATE> {
 				IPetriNet<LETTER,STATE> net = (IPetriNet<LETTER,STATE>) automaton;
 				if (labels == Labeling.TOSTRING) {
 					new NetTestFileWriterToString(net);
-				}
-				else if (labels == Labeling.QUOTED) {
+				} else if (labels == Labeling.QUOTED) {
 					new NetTestFileWriterToStringWithUniqueNumber(net);
 				
-				}
-				else if (labels == Labeling.NUMERATE) {
+				} else if (labels == Labeling.NUMERATE) {
 					new NetTestFileWriter(net);
+				} else {
+					throw new AssertionError("unsupported labeling");
 				}
 			}
 			
@@ -185,13 +192,13 @@ public class AtsDefinitionPrinter<LETTER,STATE> {
 		 */
 		private class NwaTestFileWriter {
 
-			INestedWordAutomatonOldApi<LETTER,STATE> m_Nwa;
+			INestedWordAutomaton<LETTER,STATE> m_Nwa;
 			Map<LETTER, String> internalAlphabet;
 			Map<LETTER, String> callAlphabet;
 			Map<LETTER, String> returnAlphabet;
 			Map<STATE, String> stateMapping;
 
-			public NwaTestFileWriter(String name, INestedWordAutomatonOldApi<LETTER,STATE> nwa) {
+			public NwaTestFileWriter(String name, INestedWordAutomaton<LETTER,STATE> nwa) {
 				m_Nwa = nwa;
 				internalAlphabet = getAlphabetMapping(nwa.getInternalAlphabet(), "a");
 				callAlphabet = getAlphabetMapping(nwa.getCallAlphabet(), "c");
@@ -280,10 +287,8 @@ public class AtsDefinitionPrinter<LETTER,STATE> {
 			private void printCallTransitions(Collection<STATE> allStates) {
 				m_printWriter.println('\t' + "callTransitions = {");
 				for (STATE state : allStates) {
-					for (LETTER letter : m_Nwa.lettersCall(state)) {
-						for (STATE succ : m_Nwa.succCall(state, letter)) {
-							printCallTransition(state,letter,succ);
-						}
+					for (OutgoingCallTransition<LETTER, STATE> outTrans : m_Nwa.callSuccessors(state)) {
+						printCallTransition(state, outTrans);
 					}
 				}
 				m_printWriter.println("\t},");
@@ -292,10 +297,8 @@ public class AtsDefinitionPrinter<LETTER,STATE> {
 			private void printInternalTransitions(Collection<STATE> allStates) {
 				m_printWriter.println('\t' + "internalTransitions = {");
 				for (STATE state : allStates) {
-					for (LETTER letter : m_Nwa.lettersInternal(state)) {
-						for (STATE succ : m_Nwa.succInternal(state, letter)) {
-							printInternalTransition(state,letter,succ);
-						}
+					for (OutgoingInternalTransition<LETTER, STATE> outTrans : m_Nwa.internalSuccessors(state)) {
+						printInternalTransition(state, outTrans);
 					}
 				}
 				m_printWriter.println("\t},");
@@ -304,43 +307,36 @@ public class AtsDefinitionPrinter<LETTER,STATE> {
 			private void printReturnTransitions(Collection<STATE> allStates) {
 				m_printWriter.println('\t' + "returnTransitions = {");
 				for (STATE state : allStates) {
-					for (LETTER letter : m_Nwa.lettersReturn(state)) {
-						for (STATE hierPred : m_Nwa.hierPred(state, letter)) {
-							for (STATE succ : m_Nwa.succReturn(state, hierPred, letter)) {
-								printReturnTransition(state,hierPred,letter,succ);
-							}
-						}
+					for (OutgoingReturnTransition<LETTER, STATE> outTrans : m_Nwa.returnSuccessors(state)) {
+						printReturnTransition(state, outTrans);
 					}
 				}
 				m_printWriter.println("\t}");
 			}
 
 
-			private void printCallTransition(STATE state, LETTER letter,
-					STATE succ) {
+			private void printCallTransition(STATE state, OutgoingCallTransition<LETTER, STATE> callTrans) {
 				m_printWriter.println("\t\t (" +
 						stateMapping.get(state) + " " +
-						callAlphabet.get(letter) + " " +
-						stateMapping.get(succ) + ")"
+						callAlphabet.get(callTrans.getLetter()) + " " +
+						stateMapping.get(callTrans.getSucc()) + ")"
 				);
 			}
 
-			private void printInternalTransition(STATE state, LETTER letter,
-					STATE succ) {
+			private void printInternalTransition(STATE state, OutgoingInternalTransition<LETTER, STATE> internalTrans) {
 				m_printWriter.println("\t\t (" +
 						stateMapping.get(state) + " " +
-						internalAlphabet.get(letter) + " " +
-						stateMapping.get(succ) + ")"
+						internalAlphabet.get(internalTrans.getLetter()) + " " +
+						stateMapping.get(internalTrans.getSucc()) + ")"
 				);
 			}
 
-			private void printReturnTransition(STATE state,
-					STATE linPred, LETTER letter, STATE succ) {
+			private void printReturnTransition(STATE state, OutgoingReturnTransition<LETTER, STATE> returnTrans) {
 				m_printWriter.println("\t\t (" +
 						stateMapping.get(state) + " " +
-						stateMapping.get(linPred) + " " +
-						returnAlphabet.get(letter) + " " +
-						stateMapping.get(succ) + ")"
+						stateMapping.get(returnTrans.getHierPred()) + " " +
+						returnAlphabet.get(returnTrans.getLetter()) + " " +
+						stateMapping.get(returnTrans.getSucc()) + ")"
 				);		
 			}
 		}
@@ -353,7 +349,7 @@ public class AtsDefinitionPrinter<LETTER,STATE> {
 		 */
 		private class NwaTestFileWriterToString extends NwaTestFileWriter{
 
-			public NwaTestFileWriterToString(String name, INestedWordAutomatonOldApi<LETTER,STATE> nwa) {
+			public NwaTestFileWriterToString(String name, INestedWordAutomaton<LETTER,STATE> nwa) {
 				super(name, nwa);
 			}
 
@@ -385,7 +381,7 @@ public class AtsDefinitionPrinter<LETTER,STATE> {
 		 */
 		private class NwaTestFileWriterToStringWithHash extends NwaTestFileWriter{
 
-			public NwaTestFileWriterToStringWithHash(String name, INestedWordAutomatonOldApi<LETTER,STATE> nwa) {
+			public NwaTestFileWriterToStringWithHash(String name, INestedWordAutomaton<LETTER,STATE> nwa) {
 				super(name, nwa);
 			}
 
@@ -684,6 +680,14 @@ public class AtsDefinitionPrinter<LETTER,STATE> {
 				);
 			}
 
+		}
+		
+		private class BaFormatWriter {
+
+			public BaFormatWriter(INestedWordAutomaton<LETTER, STATE> nwa) {
+				// TODO Auto-generated constructor stub
+			}
+			
 		}
 		
 
