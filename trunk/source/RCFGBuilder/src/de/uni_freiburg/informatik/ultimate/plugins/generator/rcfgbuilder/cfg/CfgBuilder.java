@@ -150,6 +150,7 @@ public class CfgBuilder {
 			String fullFilename = directory + filename + ".smt2";
 			try {
 				m_Script = new LoggingScript(m_Script, fullFilename, true);
+				mLogger.info("Dumping SMT Script to " + new File(fullFilename).getAbsolutePath());
 			} catch (FileNotFoundException e) {
 				throw new AssertionError(e);
 			}
@@ -713,7 +714,7 @@ public class CfgBuilder {
 			for (EnsuresSpecification spec : ensures) {
 				AssumeStatement st = new AssumeStatement(spec.getLocation(), spec.getFormula());
 				passAllAnnotations(spec, st);
-				m_Backtranslator.putAux(st, new BoogieASTNode[]{spec});
+				m_Backtranslator.putAux(st, new BoogieASTNode[] { spec });
 				processAssuAssiHavoStatement(st, Origin.ENSURES);
 				m_LastSt = st;
 			}
@@ -732,7 +733,7 @@ public class CfgBuilder {
 					AssumeStatement assumeSt;
 					assumeSt = new AssumeStatement(spec.getLocation(), getNegation(specExpr));
 					passAllAnnotations(spec, assumeSt);
-					m_Backtranslator.putAux(assumeSt, new BoogieASTNode[]{spec});
+					m_Backtranslator.putAux(assumeSt, new BoogieASTNode[] { spec });
 					ProgramPoint errorLocNode = addErrorNode(m_currentProcedureName, spec);
 					CodeBlock assumeEdge = new StatementSequence(finalNode, errorLocNode, assumeSt, Origin.ENSURES,
 							mLogger);
@@ -757,7 +758,7 @@ public class CfgBuilder {
 				for (RequiresSpecification spec : requires) {
 					AssumeStatement st = new AssumeStatement(spec.getLocation(), spec.getFormula());
 					passAllAnnotations(spec, st);
-					m_Backtranslator.putAux(st, new BoogieASTNode[]{spec});
+					m_Backtranslator.putAux(st, new BoogieASTNode[] { spec });
 					processAssuAssiHavoStatement(st, Origin.REQUIRES);
 					m_LastSt = st;
 				}
@@ -949,7 +950,7 @@ public class CfgBuilder {
 			Expression assertion = ((AssertStatement) st).getFormula();
 			AssumeStatement assumeError = new AssumeStatement(st.getLocation(), getNegation(assertion));
 			passAllAnnotations(st, assumeError);
-			m_Backtranslator.putAux(assumeError, new BoogieASTNode[]{st});
+			m_Backtranslator.putAux(assumeError, new BoogieASTNode[] { st });
 			ProgramPoint errorLocNode = addErrorNode(m_currentProcedureName, st);
 			StatementSequence assumeErrorCB = new StatementSequence(locNode, errorLocNode, assumeError, Origin.ASSERT,
 					mLogger);
@@ -958,7 +959,7 @@ public class CfgBuilder {
 			m_Edges.add(assumeErrorCB);
 			AssumeStatement assumeSafe = new AssumeStatement(st.getLocation(), assertion);
 			passAllAnnotations(st, assumeSafe);
-			m_Backtranslator.putAux(assumeSafe, new BoogieASTNode[]{st});
+			m_Backtranslator.putAux(assumeSafe, new BoogieASTNode[] { st });
 			StatementSequence assumeSafeCB = new StatementSequence(locNode, null, assumeSafe, Origin.ASSERT, mLogger);
 			passAllAnnotations(st, assumeSafeCB);
 			// add a new TransEdge labeled with st as successor of the
@@ -1055,7 +1056,7 @@ public class CfgBuilder {
 					AssumeStatement assumeSt;
 					assumeSt = new AssumeStatement(st.getLocation(), violatedRequires);
 					passAllAnnotations(st, assumeSt);
-					m_Backtranslator.putAux(assumeSt, new BoogieASTNode[]{st, spec});
+					m_Backtranslator.putAux(assumeSt, new BoogieASTNode[] { st, spec });
 					ProgramPoint errorLocNode = addErrorNode(m_currentProcedureName, st);
 					StatementSequence errorCB = new StatementSequence(locNode, errorLocNode, assumeSt, Origin.REQUIRES,
 							mLogger);

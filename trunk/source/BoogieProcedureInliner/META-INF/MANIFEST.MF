@@ -4,6 +4,7 @@ Bundle-Name: BoogieProcedureInliner
 Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.boogie.procedureinliner;singleton:=true
 Bundle-Version: 0.0.1
 Bundle-Activator: de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.Activator
-Require-Bundle: UltimateCore
+Require-Bundle: Library-log4j, 
+ UltimateCore
 Bundle-RequiredExecutionEnvironment: JavaSE-1.7
 Bundle-ActivationPolicy: lazy
