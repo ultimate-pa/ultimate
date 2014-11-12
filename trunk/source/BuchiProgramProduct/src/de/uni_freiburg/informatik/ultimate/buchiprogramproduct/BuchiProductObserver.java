@@ -15,7 +15,6 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BoogieASTNode;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.annot.BuchiProgramRootNodeAnnotation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 
 public class BuchiProductObserver implements IUnmanagedObserver {
@@ -46,8 +45,7 @@ public class BuchiProductObserver implements IUnmanagedObserver {
 		}
 		BoogieSymbolTable symbolTable = PreprocessorAnnotation.getAnnotation(mRcfg).getSymbolTable();
 		NestedWordAutomaton<BoogieASTNode, String> nwa;
-		ProductBacktranslator translator = new ProductBacktranslator(RCFGEdge.class, CodeBlock.class, Expression.class,
-				Expression.class);
+		ProductBacktranslator translator = new ProductBacktranslator(CodeBlock.class, Expression.class);
 		mServices.getBacktranslationService().addTranslator(translator);
 
 		mLogger.debug("Transforming NeverClaim to NestedWordAutomaton...");
@@ -68,7 +66,7 @@ public class BuchiProductObserver implements IUnmanagedObserver {
 
 		try {
 			BuchiProgramRootNodeAnnotation ltlAnnot = BuchiProgramRootNodeAnnotation.getAnnotation(mNeverClaim);
-			mProduct = new Product(nwa, mRcfg, ltlAnnot, mServices);
+			mProduct = new Product(nwa, mRcfg, ltlAnnot, mServices, translator);
 			mLogger.info("Product automaton successfully generated");
 		} catch (Exception e) {
 			mLogger.error(String.format(

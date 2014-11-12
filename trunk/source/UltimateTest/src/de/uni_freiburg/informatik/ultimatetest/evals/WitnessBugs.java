@@ -9,7 +9,7 @@ public class WitnessBugs extends TACASInterpolation2015 {
 	@Override
 	protected void createTestCasesForReal(List<UltimateTestCase> testcases) {
 		addTestCasesFixed("AutomizerC.xml", "witness/svComp-32bit-precise-Automizer-Witness.epf", testcases);
-//		addTestCasesFixed("CodeCheckWithBE-C.xml", "witness/svComp-32bit-precise-BE-Impulse-Witness.epf", testcases);
+		addTestCasesFixed("CodeCheckWithBE-C.xml", "witness/svComp-32bit-precise-BE-Impulse-Witness.epf", testcases);
 	}
 
 	@Override
@@ -22,7 +22,7 @@ public class WitnessBugs extends TACASInterpolation2015 {
 		// @formatter:off
 		return new String[] { 
 			//difference between codecheck and automizer 
-//			"examples/svcomp/ssh-simplified/s3_srvr_10_false-unreach-call.cil.c",
+			"examples/svcomp/ssh-simplified/s3_srvr_10_false-unreach-call.cil.c",
 //			"examples/Backtranslation/regression/c/standard/Loops.c",
 			
 			
@@ -30,7 +30,7 @@ public class WitnessBugs extends TACASInterpolation2015 {
 			"examples/svcomp/seq-pthread/cs_lazy_false-unreach-call.i",
 			
 			// works 
-			// "examples/svcomp/ntdrivers-simplified/floppy_simpl3_false-unreach-call_true-termination.cil.c"
+			 "examples/svcomp/ntdrivers-simplified/floppy_simpl3_false-unreach-call_true-termination.cil.c"
 		};
 		// @formatter:on
 	}

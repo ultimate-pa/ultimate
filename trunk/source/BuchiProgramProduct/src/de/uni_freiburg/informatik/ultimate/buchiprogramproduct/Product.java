@@ -59,9 +59,11 @@ public class Product {
 
 	private final Logger mLogger;
 	private final IUltimateServiceProvider mServices;
+	private final ProductBacktranslator mBacktranslator;
 
 	public Product(NestedWordAutomaton<BoogieASTNode, String> aut, RootNode rcfg,
-			BuchiProgramRootNodeAnnotation ltlAnnot, IUltimateServiceProvider services) throws Exception {
+			BuchiProgramRootNodeAnnotation ltlAnnot, IUltimateServiceProvider services, ProductBacktranslator backtrans)
+			throws Exception {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mRCFGLocations = new ArrayList<ProgramPoint>();
@@ -69,6 +71,7 @@ public class Product {
 		mCallEdges = new HashMap<ProgramPoint, ArrayList<Call>>();
 		mNWA = aut;
 		mRCFG = rcfg;
+		mBacktranslator = backtrans;
 
 		// create the new root node
 		mRootNode = new RootNode(mRCFG.getPayload().getLocation(), mRCFG.getRootAnnot());
@@ -90,30 +93,64 @@ public class Product {
 		generateTransFormula();
 	}
 
-	private void generateTransFormula() {
-		Boogie2SMT b2smt = mRootNode.getRootAnnot().getBoogie2SMT();
-		RootAnnot rootAnnot = mRootNode.getRootAnnot();
-		TransFormulaBuilder tfb = new TransFormulaBuilder(b2smt, mServices);
+	public RootNode getProductRCFG() {
+		return mRootNode;
+	}
 
-		for (String procIdent : rootAnnot.getBoogieDeclarations().getProcImplementation().keySet()) {
-			// Procedure proc =
-			// rootAnnot.getBoogieDeclarations().getProcImplementation().get(procIdent);
-			// b2smt.declareLocals(proc);
+	/**
+	 * collect all states that are part of the RCFG into a List
+	 */
+	private void collectRCFGLocations() {
+		Queue<ProgramPoint> unhandledLocations = new ArrayDeque<ProgramPoint>();
 
-			for (ProgramPoint node : rootAnnot.getProgramPoints().get(procIdent).values()) {
-				if (node.getLocationName().startsWith("h_")) {
-					mLogger.debug(node.getLocationName());
+		for (RCFGEdge p : ((RootNode) mRCFG).getOutgoingEdges()) {
+			unhandledLocations.add((ProgramPoint) p.getTarget());
+		}
+		// collect all Nodes in the RCFG for the product
+		ProgramPoint cp;
+		while (unhandledLocations.peek() != null) {
+			cp = unhandledLocations.poll();
+			mRCFGLocations.add(cp);
+			for (RCFGEdge p : cp.getOutgoingEdges()) {
+				if (p instanceof Summary) {
+					continue;
 				}
-				for (RCFGEdge edge : node.getOutgoingEdges()) {
-					if (edge instanceof StatementSequence) {
-						tfb.addTransitionFormulas((CodeBlock) edge, procIdent);
-					}
+				if (!(mRCFGLocations.contains(p.getTarget()) || unhandledLocations.contains(p.getTarget()))) {
+					unhandledLocations.add((ProgramPoint) p.getTarget());
 				}
 			}
-
-			// b2smt.removeLocals(proc);
+			// append selfloops to leafs of the rcfg
+			if (cp.getOutgoingEdges().size() == 0) {
+				mapNewEdge2OldEdge(new StatementSequence(cp, cp, generateNeverClaimAssumeStatement(new BooleanLiteral(
+						null, true)), mLogger), null);
+			}
 		}
+	}
 
+	/**
+	 * Multiply states and make them available in the dictionary with their new
+	 * name
+	 */
+	private void createProductStates() {
+		final BuchiProgramAcceptingStateAnnotation acceptingNodeAnnotation = new BuchiProgramAcceptingStateAnnotation();
+
+		for (ProgramPoint origpp : mRCFGLocations) {
+			for (String nwaState : mNWA.getStates()) {
+				ProgramPoint newPP = createProgramPoint(generateStateName(origpp.getLocationName(), nwaState), origpp);
+				mProductLocations.put(generateStateName(origpp.getLocationName(), nwaState), newPP);
+
+				// accepting states (just check for AcceptingNodeAnnotation)
+				if (mNWA.isFinal(nwaState)) {
+					acceptingNodeAnnotation.annotate(newPP);
+				}
+
+				// inital states
+				if (origpp.getLocationName().equals("ULTIMATE.startENTRY") && mNWA.isInitial(nwaState)) {
+					mapNewEdge2OldEdge(new RootEdge(mRootNode, newPP), null);
+					mRootNode.getRootAnnot().getEntryNodes().put("ULTIMATE.start", newPP);
+				}
+			}
+		}
 	}
 
 	/**
@@ -165,6 +202,30 @@ public class Product {
 		}
 	}
 
+	private void generateTransFormula() {
+		Boogie2SMT b2smt = mRootNode.getRootAnnot().getBoogie2SMT();
+		RootAnnot rootAnnot = mRootNode.getRootAnnot();
+		TransFormulaBuilder tfb = new TransFormulaBuilder(b2smt, mServices);
+
+		for (String procIdent : rootAnnot.getBoogieDeclarations().getProcImplementation().keySet()) {
+			// Procedure proc =
+			// rootAnnot.getBoogieDeclarations().getProcImplementation().get(procIdent);
+			// b2smt.declareLocals(proc);
+
+			for (ProgramPoint node : rootAnnot.getProgramPoints().get(procIdent).values()) {
+				if (node.getLocationName().startsWith("h_")) {
+					mLogger.debug(node.getLocationName());
+				}
+				for (RCFGEdge edge : node.getOutgoingEdges()) {
+					if (edge instanceof StatementSequence) {
+						tfb.addTransitionFormulas((CodeBlock) edge, procIdent);
+					}
+				}
+			}
+			// b2smt.removeLocals(proc);
+		}
+	}
+
 	private void handleEdgeStatementSequence(ProgramPoint currentpp, String nwaState, StatementSequence rcfgEdge) {
 		ProgramPoint targetpp;
 		for (OutgoingInternalTransition<BoogieASTNode, String> autTrans : mNWA.internalSuccessors(nwaState)) {
@@ -173,24 +234,6 @@ public class Product {
 			// append statements of rcfg and ltl
 			createNewStatementSequence(currentpp, rcfgEdge, targetpp, autTrans);
 		}
-	}
-
-	private void createNewStatementSequence(ProgramPoint currentpp, StatementSequence rcfgEdge, ProgramPoint targetpp,
-			OutgoingInternalTransition<BoogieASTNode, String> autTrans) {
-		ArrayList<Statement> stmts = new ArrayList<Statement>();
-		stmts.addAll(rcfgEdge.getStatements());
-		stmts.add(generateNeverClaimAssumeStatement(autTrans));
-		// create the edge
-		new StatementSequence(currentpp, targetpp, stmts, rcfgEdge.getOrigin(), mLogger);
-	}
-
-	private AssumeStatement generateNeverClaimAssumeStatement(OutgoingInternalTransition<BoogieASTNode, String> autTrans) {
-		return generateNeverClaimAssumeStatement(((Expression) autTrans.getLetter()));
-	}
-
-	private AssumeStatement generateNeverClaimAssumeStatement(Expression expr) {
-		AssumeStatement neverClaimStmt = new AssumeStatement(null, expr);
-		return neverClaimStmt;
 	}
 
 	private void handleEdgeReturn(Return returnEdge, ProgramPoint currentpp, String nwaState) {
@@ -214,6 +257,7 @@ public class Product {
 		for (Call call : mCallEdges.get(caller)) {
 			Return r = new Return(currentpp, helper, call, mLogger);
 			r.setTransitionFormula(returnEdge.getTransitionFormula());
+			mapNewEdge2OldEdge(r, returnEdge);
 		}
 
 		// From the helpernode, the original call target is
@@ -222,13 +266,39 @@ public class Product {
 		// edge is calculated
 		// like any other edge in the graph.
 		for (OutgoingInternalTransition<BoogieASTNode, String> autTrans : mNWA.internalSuccessors(nwaState)) {
-
 			ProgramPoint targetpp = mProductLocations.get(generateStateName(returnTarget.getLocationName(), autTrans
 					.getSucc().toString()));
-			ArrayList<Statement> stmts = new ArrayList<Statement>();
-			stmts.add(generateNeverClaimAssumeStatement(autTrans));
-			// edge
-			new StatementSequence(helper, targetpp, stmts, Origin.IMPLEMENTATION, mLogger);
+			createNewStatementSequence(helper, null, targetpp, autTrans);
+		}
+	}
+
+	private void handleEdgeCall(ProgramPoint currentpp, Call rcfgEdge, ProgramPoint pp, String nwaState) {
+
+		String helperName = generateHelperStateName(mHelperUnifique + currentpp.getPosition());
+		ProgramPoint helper = createProgramPoint(helperName, currentpp);
+
+		Call call = new Call(currentpp, helper, rcfgEdge.getCallStatement(), mLogger);
+		call.setTransitionFormula(rcfgEdge.getTransitionFormula());
+		mapNewEdge2OldEdge(call, rcfgEdge);
+
+		// store all call edges in hashmap for the handling of return edges
+		// later on
+		ArrayList<Call> calls = mCallEdges.get(pp);
+		if (calls == null) {
+			calls = new ArrayList<>();
+			mCallEdges.put(pp, calls);
+		}
+		calls.add(call);
+
+		// From the helpernode, the original call target is
+		// connected with a new
+		// edge with the fitting assumption of the call. The
+		// edge is calculated
+		// like any other edge in the graph.
+		for (OutgoingInternalTransition<BoogieASTNode, String> autTrans : mNWA.internalSuccessors(nwaState)) {
+			ProgramPoint targetpp = mProductLocations.get(generateStateName(
+					((ProgramPoint) rcfgEdge.getTarget()).getLocationName(), autTrans.getSucc().toString()));
+			createNewStatementSequence(helper, null, targetpp, autTrans);
 		}
 	}
 
@@ -263,93 +333,39 @@ public class Product {
 		return rtr;
 	}
 
-	private void handleEdgeCall(ProgramPoint currentpp, Call rcfgEdge, ProgramPoint pp, String nwaState) {
-
-		String helperName = generateHelperStateName(mHelperUnifique + currentpp.getPosition());
-		ProgramPoint helper = createProgramPoint(helperName, currentpp);
-
-		Call call = new Call(currentpp, helper, rcfgEdge.getCallStatement(), mLogger);
-		call.setTransitionFormula(rcfgEdge.getTransitionFormula());
-
-		// store all call edges in hashmap for the handling of return edges
-		// later on
-		ArrayList<Call> calls = mCallEdges.get(pp);
-		if (calls == null) {
-			calls = new ArrayList<>();
-			mCallEdges.put(pp, calls);
+	private void createNewStatementSequence(ProgramPoint currentpp, StatementSequence originalSS,
+			ProgramPoint targetpp, OutgoingInternalTransition<BoogieASTNode, String> autTrans) {
+		ArrayList<Statement> stmts = new ArrayList<Statement>();
+		if (originalSS != null) {
+			stmts.addAll(originalSS.getStatements());
 		}
-		calls.add(call);
-
-		// From the helpernode, the original call target is
-		// connected with a new
-		// edge with the fitting assumption of the call. The
-		// edge is calculated
-		// like any other edge in the graph.
-		for (OutgoingInternalTransition<BoogieASTNode, String> autTrans : mNWA.internalSuccessors(nwaState)) {
-			ProgramPoint targetpp = mProductLocations.get(generateStateName(
-					((ProgramPoint) rcfgEdge.getTarget()).getLocationName(), autTrans.getSucc().toString()));
-
-			ArrayList<Statement> stmts = new ArrayList<Statement>();
+		if (autTrans != null) {
 			stmts.add(generateNeverClaimAssumeStatement(autTrans));
-			// edge
-			new StatementSequence(helper, targetpp, stmts, Origin.IMPLEMENTATION, mLogger);
 		}
+		// create the edge
+		StatementSequence newSS;
+		if (originalSS != null) {
+			newSS = new StatementSequence(currentpp, targetpp, stmts, originalSS.getOrigin(), mLogger);
+		} else {
+			newSS = new StatementSequence(currentpp, targetpp, stmts, Origin.IMPLEMENTATION, mLogger);
+		}
+
+		// TODO: map the new statement sequence to the one from which it
+		// originated (for backtranslation)
+		mapNewEdge2OldEdge(newSS, originalSS);
 	}
 
-	/**
-	 * Multiply states and make them available in the dictionary with their new
-	 * name
-	 */
-	private void createProductStates() {
-		final BuchiProgramAcceptingStateAnnotation acceptingNodeAnnotation = new BuchiProgramAcceptingStateAnnotation();
-
-		for (ProgramPoint origpp : mRCFGLocations) {
-			for (String nwaState : mNWA.getStates()) {
-				ProgramPoint newPP = createProgramPoint(generateStateName(origpp.getLocationName(), nwaState), origpp);
-				mProductLocations.put(generateStateName(origpp.getLocationName(), nwaState), newPP);
-
-				// accepting states (just check for AcceptingNodeAnnotation)
-				if (mNWA.isFinal(nwaState)) {
-					acceptingNodeAnnotation.annotate(newPP);
-				}
-
-				// inital states
-				if (origpp.getLocationName().equals("ULTIMATE.startENTRY") && mNWA.isInitial(nwaState)) {
-					new RootEdge(mRootNode, newPP);
-					mRootNode.getRootAnnot().getEntryNodes().put("ULTIMATE.start", newPP);
-				}
-			}
-		}
+	private void mapNewEdge2OldEdge(RCFGEdge newEdge, RCFGEdge originalEdge) {
+		mBacktranslator.mapEdges(newEdge, originalEdge);
 	}
 
-	/**
-	 * collect all states that are part of the RCFG into a List
-	 */
-	private void collectRCFGLocations() {
-		Queue<ProgramPoint> unhandledLocations = new ArrayDeque<ProgramPoint>();
+	private AssumeStatement generateNeverClaimAssumeStatement(OutgoingInternalTransition<BoogieASTNode, String> autTrans) {
+		return generateNeverClaimAssumeStatement(((Expression) autTrans.getLetter()));
+	}
 
-		for (RCFGEdge p : ((RootNode) mRCFG).getOutgoingEdges()) {
-			unhandledLocations.add((ProgramPoint) p.getTarget());
-		}
-		// collect all Nodes in the RCFG for the product
-		ProgramPoint cp;
-		while (unhandledLocations.peek() != null) {
-			cp = unhandledLocations.poll();
-			mRCFGLocations.add(cp);
-			for (RCFGEdge p : cp.getOutgoingEdges()) {
-				if (p instanceof Summary) {
-					continue;
-				}
-				if (!(mRCFGLocations.contains(p.getTarget()) || unhandledLocations.contains(p.getTarget()))) {
-					unhandledLocations.add((ProgramPoint) p.getTarget());
-				}
-			}
-			// append selfloops to leafs of the rcfg
-			if (cp.getOutgoingEdges().size() == 0) {
-				new StatementSequence(cp, cp, generateNeverClaimAssumeStatement(new BooleanLiteral(null, true)),
-						mLogger);
-			}
-		}
+	private AssumeStatement generateNeverClaimAssumeStatement(Expression expr) {
+		AssumeStatement neverClaimStmt = new AssumeStatement(null, expr);
+		return neverClaimStmt;
 	}
 
 	/**
@@ -368,10 +384,6 @@ public class Product {
 		} else {
 			return name1 + "__" + name2;
 		}
-	}
-
-	public RootNode getProductRCFG() {
-		return mRootNode;
 	}
 
 	private String generateHelperStateName(String location) {
