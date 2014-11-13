@@ -270,7 +270,6 @@ public class AbstractInterpreter extends RCFGEdgeVisitor {
 	 *            detection etc.
 	 */
 	public void processRcfg(RootNode root) {
-		m_logger.warn("Fabian 2: process RCFG start: root "+root.toString());
 		m_errorLocs.clear();
 		m_reachedErrorLocs.clear();
 		m_recursionEntryNodes.clear();
@@ -403,10 +402,9 @@ public class AbstractInterpreter extends RCFGEdgeVisitor {
 		}
 	}
 	
-	public List<UnprovableResult<RcfgElement, CodeBlock, Expression>> processNWA(INestedWordAutomaton nwa, RootNode rn) {
+	public List<UnprovableResult<RcfgElement, CodeBlock, Expression>> processNWA(INestedWordAutomaton nwa, RootNode rn, List<RCFGNode> initialStateNodes) {
 		List<UnprovableResult<RcfgElement, CodeBlock, Expression>> result = null;
 		//RootNode root = rn;
-		m_logger.warn("Fabian 2: process NWA start:  "+nwa.toString());
 		m_errorLocs.clear();
 		m_reachedErrorLocs.clear();
 		m_recursionEntryNodes.clear();
@@ -510,17 +508,24 @@ public class AbstractInterpreter extends RCFGEdgeVisitor {
 		for (String s : errorLocMap.keySet())
 			m_errorLocs.addAll(errorLocMap.get(s));
 
+		for (RCFGNode n : initialStateNodes)
+		{	
+			m_nodesToVisit.add(n);
+			AbstractState state = new AbstractState(m_logger, m_intDomainFactory,
+					m_realDomainFactory, m_boolDomainFactory,
+					m_bitVectorDomainFactory, m_stringDomainFactory);
+
+			putStateToNode(state, n, null);
+		}
+		
 		// add entry node of Main procedure / any if no Main() exists
-		for (Object n : nwa.getInternalAlphabet())
+		/*for (Object n : nwa.getInternalAlphabet())
 		{
 			CodeBlock initial = (CodeBlock)n;
 			RCFGNode target = initial.getTarget();
-		//}
-		
-		//for (RCFGEdge e : root.getOutgoingEdges()) {
-		//	if (e instanceof RootEdge) {
-		//		RCFGNode target = e.getTarget();
-				if ((mainEntry == null) || (target == mainEntry)) {
+			RCFGNode source = initial.getSource();
+			
+			if ((mainEntry == null) || (target == mainEntry)) {
 					AbstractState state = new AbstractState(m_logger, m_intDomainFactory,
 							m_realDomainFactory, m_boolDomainFactory,
 							m_bitVectorDomainFactory, m_stringDomainFactory);
@@ -529,12 +534,10 @@ public class AbstractInterpreter extends RCFGEdgeVisitor {
 								new CallStatement(null, false, null, ((ProgramPoint) target).getProcedure(), null);
 						state.pushStackLayer(mainProcMockStatement); // layer for main method
 					}
-					//putStateToNode(state, target, e);
 					putStateToNode(state, target, initial);
-					m_nodesToVisit.add(target);
-				//}
-			}
-		}
+					m_nodesToVisit.add(target);	
+			} 
+		}*/
 
 		result = visitNodes(true);
 
@@ -604,6 +607,7 @@ public class AbstractInterpreter extends RCFGEdgeVisitor {
 	protected List<UnprovableResult<RcfgElement, CodeBlock, Expression>> visitNodes(boolean runsOnNWA) {
 		List<UnprovableResult<RcfgElement, CodeBlock, Expression>> result = new ArrayList<UnprovableResult<RcfgElement, CodeBlock, Expression>>();
 		RCFGNode node = (RCFGNode) m_nodesToVisit.poll();
+		
 		if (node != null) {
 			m_callStatementsAtCalls.clear();
 			m_callStatementsAtSummaries.clear();
@@ -654,7 +658,6 @@ public class AbstractInterpreter extends RCFGEdgeVisitor {
 	@Override
 	protected void visit(RCFGEdge e) {
 		m_logger.debug("Visiting: " + e.getSource() + " -> " + e.getTarget());
-		m_logger.warn("Fabian16: visit rcfg edge -> "+e.toString());
 
 		super.visit(e);
 		
@@ -695,7 +698,6 @@ public class AbstractInterpreter extends RCFGEdgeVisitor {
 	protected UnprovableResult<RcfgElement, CodeBlock, Expression> visit(RCFGEdge e, boolean runsOnNWA) {
 		UnprovableResult<RcfgElement, CodeBlock, Expression> result = null;
 		m_logger.debug("Visiting: " + e.getSource() + " -> " + e.getTarget());
-		m_logger.warn("Fabian16: visit rcfg edge -> "+e.toString());
 
 		super.visit(e);
 		
@@ -898,7 +900,6 @@ public class AbstractInterpreter extends RCFGEdgeVisitor {
 	 * @param state The abstract state at the error location
 	 */
 	private UnprovableResult<RcfgElement, CodeBlock, Expression> reportErrorResult(ProgramPoint location, AbstractState state, boolean runsOnNWA) {
-		m_logger.warn("Fabian 1: report error result start!");
 		RcfgProgramExecution programExecution = new RcfgProgramExecution(state.getTrace(),
 				new HashMap<Integer, ProgramState<Expression>>(),
 				null);
@@ -914,7 +915,6 @@ public class AbstractInterpreter extends RCFGEdgeVisitor {
 		} else {
 			m_services.getResultService().reportResult(Activator.s_PLUGIN_ID, result);
 		}
-		m_logger.warn("Fabian 17: error report: "+result.toString());
 		
 		if (m_stopAfterAnyError) {
 			m_continueProcessing = false;

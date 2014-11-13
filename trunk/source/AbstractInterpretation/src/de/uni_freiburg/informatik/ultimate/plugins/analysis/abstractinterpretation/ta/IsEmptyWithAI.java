@@ -218,11 +218,11 @@ public class IsEmptyWithAI<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	 * Default constructor. Here we search a run from the initial states of the
 	 * automaton to the final states of the automaton.
 	 */
-	public IsEmptyWithAI(INestedWordAutomaton<LETTER, STATE> nwa, IUltimateServiceProvider services, RootNode root) {
+	public IsEmptyWithAI(INestedWordAutomaton<LETTER, STATE> nwa, IUltimateServiceProvider services, RootNode root, List<RCFGNode> initialStateNodes) {
 		List<UnprovableResult<RcfgElement, CodeBlock, Expression>> results = null;
 		m_nwa = nwa;
 		m_aI = new AbstractInterpreter(services);
-		results = m_aI.processNWA(nwa, root);
+		results = m_aI.processNWA(nwa, root, initialStateNodes);
 		dummyEmptyStackState = m_nwa.getEmptyStackState();
 		m_StartStates = m_nwa.getInitialStates();
 		m_GoalStates = m_nwa.getFinalStates();
@@ -353,7 +353,6 @@ public class IsEmptyWithAI<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	 * null if the automaton does not accept any nested word.
 	 */
 	private NestedRun<LETTER, STATE> getAcceptingRun() {
-		s_Logger.warn("Fabian 4: getAcceptingRun() start!");
 		for (STATE state : m_StartStates) {
 			enqueueAndMarkVisited(state, dummyEmptyStackState);
 		}
@@ -413,7 +412,6 @@ public class IsEmptyWithAI<LETTER, STATE> implements IOperation<LETTER, STATE> {
 
 	private NestedRun<LETTER, STATE> getAcceptingRun(
 			UnprovableResult<RcfgElement, CodeBlock, Expression> unprovableResult) {
-		s_Logger.warn("Fabian 4: getAcceptingRun() start!");
 		IProgramExecution<CodeBlock, Expression> execution = unprovableResult.getProgramExecution();
 		List<LETTER> executionLetters = new ArrayList<LETTER>();
 		ArrayList<STATE> executionStates = new ArrayList<STATE>();
