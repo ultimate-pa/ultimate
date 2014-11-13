@@ -18,12 +18,12 @@ public class NextACSL {
 	/**
 	 * a list of ACSL comments to hold.
 	 */
-	public ArrayList<ACSLNode> acsl;
+	public ArrayList<ACSLNode> mAcsl;
 	/**
 	 * The successor C node as reference, where the ACSL is contained in the
 	 * translation unit.
 	 */
-	public IASTNode successorCNode;
+	public IASTNode mSuccessorCNode;
 
 	/**
 	 * Constructor.
@@ -36,7 +36,7 @@ public class NextACSL {
 	 */
 	public NextACSL(ArrayList<ACSLNode> acsl, IASTNode successorCNode) {
 		assert acsl != null;
-		this.acsl = acsl;
-		this.successorCNode = successorCNode;
+		mAcsl = acsl;
+		mSuccessorCNode = successorCNode;
 	}
 }

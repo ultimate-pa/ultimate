@@ -96,6 +96,7 @@ Invariant ::=
 	identifier : String
 	formula : Expression
 	( { GlobalInvariant }
+	| { GlobalLTLInvariant }
 	| { TypeInvariant }
 		parameters : ?Parameter
 	);		
@@ -157,12 +158,12 @@ Expression ::=
 		operator : Operator { LOGICIFF, LOGICIMPLIES, LOGICAND, LOGICOR, LOGICXOR,
 						   COMPLT, COMPGT, COMPLEQ, COMPGEQ, COMPEQ, COMPNEQ, COMPPO,
 						   BITVECCONCAT, ARITHPLUS, ARITHMINUS, ARITHMUL, ARITHDIV, ARITHMOD,
-						   BITAND, BITOR, BITIMPLIES, BITIFF, BITXOR }
+						   BITAND, BITOR, BITIMPLIES, BITIFF, BITXOR, LTLUNTIL }
 		left  : Expression
 		right : Expression
 	| { NotDefinedExpression }
 	| { UnaryExpression }
-		operator : Operator { LOGICNEG, PLUS, MINUS, LOGICCOMPLEMENT, POINTER, ADDROF }
+		operator : Operator { LOGICNEG, PLUS, MINUS, LOGICCOMPLEMENT, POINTER, ADDROF, LTLGLOBALLY, LTLFINALLY, LTLNEXT }
 		expr     : Expression
 	| { ArrayAccessExpression }
 		array   : Expression

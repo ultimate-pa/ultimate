@@ -200,10 +200,11 @@ terminal String STAR;
 terminal LPAR, RPAR, IF, ELSE, COLON, COLON2, COLONCOLON, DOT, DOTDOT, DOTDOTDOT;
 terminal LT, GT, LE, GE, EQ, NE, COMMA, ARROW, EQUAL;
 terminal FORALL, EXISTS, IFF, IMPLIES, AND, OR, NOT, SEPARATED;
+terminal GLOBALLY, FINALLY, UNTIL, NEXT;
 terminal TRUE, FALSE, OLD, AT, RESULT, BLOCK_LENGTH, BASE_ADDR;
 terminal VALID, VALID_INDEX, VALID_RANGE, FRESH, DOLLAR;
 terminal QUESTION, MINUS, PLUS, AMP, SLASH, PERCENT, LSQUARE, RSQUARE;
-terminal GLOBAL, INVARIANT, VARIANT, DECREASES, FOR, LABEL, ASSERT, SEMICOLON, NULL, EMPTY;
+terminal GLOBAL, INVARIANT, VARIANT, DECREASES, FOR, LABEL, ASSERT, SEMICOLON, NULL, EMPTY, LTL;
 terminal REQUIRES, ENSURES, ASSIGNS, LOOP, NOTHING, SLICE, IMPACT, PRAGMA, FROM;
 terminal EXITS, BREAKS, CONTINUES, RETURNS;
 terminal READS, WRITES;
@@ -216,14 +217,16 @@ terminal BIFF, BIMPLIES, HAT, HATHAT, PIPE, TILDE, GTGT, LTLT;
 terminal SIZEOF, LAMBDA, LET;
 terminal TYPEOF, BSTYPE;
 terminal WITH, CONST;
+terminal AP;
 terminal INITIALIZED;
 terminal prec_named, prec_forall, prec_exists, prec_lambda, prec_question, prec_no_rel,
-		 prec_rel_list, prec_cast, prec_unary_op, prec_par;
+		 prec_rel_list, prec_cast, prec_unary_op, prec_par, prec_ltl_iff, prec_ltl_implies, 
+		 prec_ltl_or, prec_ltl_and, prec_ltl_not, prec_ltl_expr;
 /*terminal symbols for starting */
 terminal LSTART, GSTART;
 
 non terminal String identifier, string, any_identifier, identifier_or_typename, label_name, type_spec;
-non terminal Expression lexpr, lexpr_inner, lexpr_rel, lexpr_end_rel, constant, constant_option;
+non terminal Expression lexpr, lexpr_inner, lexpr_rel, lexpr_end_rel, constant, constant_option, ltlexpr;
 non terminal CodeAnnot code_annotation;
 non terminal LoopAnnot loop_annot_stack, loop_annot_opt, loop_annotations;
 non terminal String[] ne_behavior_name_list, behavior_name_list;
@@ -291,6 +294,14 @@ precedence right prec_cast, TILDE, NOT, prec_unary_op;
 precedence nonassoc LTCOLON, COLONGT;
 precedence left DOT, ARROW, LSQUARE;
 precedence right prec_par;
+precedence nonassoc prec_ltl_expr;
+precedence left prec_ltl_iff;
+precedence left prec_ltl_implies;
+precedence left prec_ltl_or;
+precedence left prec_ltl_and;
+precedence left UNTIL;
+precedence right GLOBALLY, FINALLY, NEXT, prec_ltl_not;
+precedence right AP;
 /* bottom up - highest precedence */
 
 /* start */
@@ -355,6 +366,21 @@ lexpr::=
 /* both terms and predicates */
 | any_identifier:id COLON lexpr:expr {: RESULT = new SyntacticNamingExpression(id, expr); :} %prec prec_named 
 | lexpr_rel:expr {: RESULT = expr; :} %prec prec_rel_list 
+;
+
+/* LTL extension */
+ltlexpr::=
+  GLOBALLY ltlexpr:e1 {: RESULT = new UnaryExpression(UnaryExpression.Operator.LTLGLOBALLY, e1);:} %prec GLOBALLY
+| FINALLY ltlexpr:e1 {: RESULT = new UnaryExpression(UnaryExpression.Operator.LTLFINALLY, e1);:} %prec FINALLY
+| NEXT ltlexpr:e1 {: RESULT = new UnaryExpression(UnaryExpression.Operator.LTLNEXT, e1);:} %prec NEXT
+| NOT ltlexpr:e {: RESULT = new UnaryExpression(UnaryExpression.Operator.LOGICNEG, e);:} %prec prec_ltl_not
+| ltlexpr:e1 UNTIL ltlexpr:e2 {: RESULT = new BinaryExpression(BinaryExpression.Operator.LTLUNTIL, e1, e2);:} %prec UNTIL
+| ltlexpr:e1 IMPLIES ltlexpr:e2 {: RESULT = new BinaryExpression(BinaryExpression.Operator.LOGICIMPLIES, e1, e2);:} %prec prec_ltl_implies
+| ltlexpr:e1 IFF ltlexpr:e2 {: RESULT = new BinaryExpression(BinaryExpression.Operator.LOGICIFF, e1, e2);:} %prec prec_ltl_iff
+| ltlexpr:e1 OR ltlexpr:e2 {: RESULT = new BinaryExpression(BinaryExpression.Operator.LOGICOR, e1, e2);:} %prec prec_ltl_or   
+| ltlexpr:e1 AND ltlexpr:e2 {:RESULT = new BinaryExpression(BinaryExpression.Operator.LOGICAND, e1, e2);:} %prec prec_ltl_and   
+| AP LPAR lexpr:e RPAR {: RESULT = e; :}
+| LPAR ltlexpr:e RPAR {: RESULT = e; :} %prec prec_ltl_expr
 ;
 
 lexpr_rel::=
@@ -1139,6 +1165,9 @@ decl::=
  GLOBAL INVARIANT any_identifier:i COLON lexpr:e SEMICOLON
  {: GlobalInvariant gInv = new GlobalInvariant(i, e);
  	parser.setAcslNode(gInv); :} 
+| LTL INVARIANT any_identifier:i COLON ltlexpr:e SEMICOLON
+ {: GlobalLTLInvariant ltlInv = new GlobalLTLInvariant(i, e);
+ 	parser.setAcslNode(ltlInv); :} 
 | type_annot:tInv
  {: parser.setAcslNode(tInv); :}  
 | model_annot:model

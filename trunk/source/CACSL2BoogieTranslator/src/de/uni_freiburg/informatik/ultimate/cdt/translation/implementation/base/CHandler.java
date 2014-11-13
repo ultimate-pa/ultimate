@@ -2242,7 +2242,7 @@ public class CHandler implements ICHandler {
 		ArrayList<Statement> stmt = new ArrayList<Statement>();
 		String[] name = new String[] { node.getName().toString() };
 		stmt.add(new GotoStatement(LocationFactory.createCLocation(node), name));
-		Map<VariableDeclaration, ILocation> emptyAuxVars = new LinkedHashMap<VariableDeclaration, ILocation>(0);
+//		Map<VariableDeclaration, ILocation> emptyAuxVars = new LinkedHashMap<VariableDeclaration, ILocation>(0);
 		return new ResultExpression(stmt, null);
 	}
 
@@ -2637,10 +2637,10 @@ public class CHandler implements ICHandler {
 	 */
 	private void checkForACSL(Dispatcher main, ArrayList<Statement> stmt, IASTNode next, IASTNode parent) {
 		if (mAcsl != null) {
-			if (mAcsl.successorCNode == null) {
+			if (mAcsl.mSuccessorCNode == null) {
 				if (parent != null && stmt != null && next == null) {
 					// ACSL at the end of a function
-					for (ACSLNode acslNode : mAcsl.acsl) {
+					for (ACSLNode acslNode : mAcsl.mAcsl) {
 						if (parent.getFileLocation().getEndingLineNumber() <= acslNode.getStartingLineNumber()) {
 							return; // handle later ...
 						}
@@ -2668,9 +2668,9 @@ public class CHandler implements ICHandler {
 					// ACSL for next compound statement -> handle it next call
 					// or in case of translation unit, ACSL in an unexpected
 					// location!
-			} else if (mAcsl.successorCNode.equals(next)) {
+			} else if (mAcsl.mSuccessorCNode.equals(next)) {
 				assert mContract.isEmpty();
-				for (ACSLNode acslNode : mAcsl.acsl) {
+				for (ACSLNode acslNode : mAcsl.mAcsl) {
 					if (stmt != null) {
 						// this means we are in a compound statement
 						if (acslNode instanceof Contract || acslNode instanceof LoopAnnot) {

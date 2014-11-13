@@ -5,7 +5,6 @@
         Build File for Compiler Project
     </description>
 
-
     <target name="generate_parser">
         <java classname="java_cup.Main" classpath="${cupDir}" fork="true">
             <arg value="GlobalLocalParser.cup" />

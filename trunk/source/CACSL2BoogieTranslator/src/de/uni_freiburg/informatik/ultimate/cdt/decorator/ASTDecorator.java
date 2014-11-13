@@ -21,15 +21,15 @@ public class ASTDecorator {
 	/**
 	 * All ACSL ASTs in the file, specified with there root node.
 	 */
-	private List<ACSLNode> acslASTs;
+	private List<ACSLNode> mAcslASTs;
 	/**
 	 * The root node of the decorator.
 	 */
-	private DecoratorNode rootNode;
+	private DecoratorNode mRootNode;
 	/**
 	 * Helper variable, required for mapASTs().
 	 */
-	private int currentStartLineNr;
+	private int mCurrentStartLineNr;
 
 	/**
 	 * Entry point to recursive method to generate the mapping between CDT AST
@@ -43,9 +43,9 @@ public class ASTDecorator {
 		if(!(node instanceof IASTTranslationUnit)) {
 			throw new IllegalArgumentException("First node of C-AST must be TU!");
 		}
-		currentStartLineNr = 1;
+		mCurrentStartLineNr = 1;
 		DecoratorNode result = mapASTs(node, null).get(0);
-		assert acslASTs.isEmpty();
+		assert mAcslASTs.isEmpty();
 		setRootNode(result);
 	}
 
@@ -64,14 +64,14 @@ public class ASTDecorator {
 
 		// there is acsl between the previous node and this one.
 		List<DecoratorNode> list = new ArrayList<DecoratorNode>();
-		if (parent != null && containsAcsl(currentStartLineNr, node.getFileLocation()
+		if (parent != null && containsAcsl(mCurrentStartLineNr, node.getFileLocation()
 				.getStartingLineNumber())) {
-			list.addAll(getAllTheAcsl(parent, currentStartLineNr, node
+			list.addAll(getAllTheAcsl(parent, mCurrentStartLineNr, node
 					.getFileLocation().getStartingLineNumber()));
 		}
 
 		if (!containsAcsl(node)) {
-			currentStartLineNr = node.getFileLocation().getEndingLineNumber() + 1;
+			mCurrentStartLineNr = node.getFileLocation().getEndingLineNumber() + 1;
 			list.add(new DecoratorNode(parent, node));
 			return list;
 		}
@@ -80,7 +80,7 @@ public class ASTDecorator {
 		list.add(result);
 		for (int i = 0; i < node.getChildren().length; i++) {
 			if (i == 0) {
-				currentStartLineNr = node.getFileLocation()
+				mCurrentStartLineNr = node.getFileLocation()
 						.getStartingLineNumber();
 			}
 			List<DecoratorNode> newChildren = mapASTs(node.getChildren()[i],
@@ -91,13 +91,13 @@ public class ASTDecorator {
 				}
 			}
 		}
-		if (containsAcsl(currentStartLineNr, node.getFileLocation()
+		if (containsAcsl(mCurrentStartLineNr, node.getFileLocation()
 				.getEndingLineNumber() + 1)) {
 			// there is acsl between last children and node end ...
-			result.addAllChildren(getAllTheAcsl(result, currentStartLineNr,
+			result.addAllChildren(getAllTheAcsl(result, mCurrentStartLineNr,
 					node.getFileLocation().getEndingLineNumber()));
 		}
-		currentStartLineNr = node.getFileLocation().getEndingLineNumber();
+		mCurrentStartLineNr = node.getFileLocation().getEndingLineNumber();
 		return list;
 	}
 
@@ -115,10 +115,10 @@ public class ASTDecorator {
 	private List<DecoratorNode> getAllTheAcsl(DecoratorNode parent, int start,
 			int end) {
 		List<DecoratorNode> list = new ArrayList<DecoratorNode>();
-		for (int i = 0; i < acslASTs.size(); i++) {
-			if (acslASTs.get(i).getEndingLineNumber() <= end
-					&& acslASTs.get(i).getStartingLineNumber() >= start) {
-				list.add(new DecoratorNode(parent, acslASTs.remove(i--)));
+		for (int i = 0; i < mAcslASTs.size(); i++) {
+			if (mAcslASTs.get(i).getEndingLineNumber() <= end
+					&& mAcslASTs.get(i).getStartingLineNumber() >= start) {
+				list.add(new DecoratorNode(parent, mAcslASTs.remove(i--)));
 			}
 		}
 		return list;
@@ -149,7 +149,7 @@ public class ASTDecorator {
 	 * @return true iff the given line numbers contain ACSL statements.
 	 */
 	private boolean containsAcsl(int start, int end) {
-		for (ACSLNode acsl : this.acslASTs) {
+		for (ACSLNode acsl : mAcslASTs) {
 			if (start <= acsl.getStartingLineNumber()
 					&& end >= acsl.getEndingLineNumber()) {
 				return true;
@@ -164,7 +164,7 @@ public class ASTDecorator {
 	 * @return the rootNode
 	 */
 	public DecoratorNode getRootNode() {
-		return rootNode;
+		return mRootNode;
 	}
 
 	/**
@@ -174,7 +174,7 @@ public class ASTDecorator {
 	 *            the root node
 	 */
 	private void setRootNode(DecoratorNode node) {
-		this.rootNode = node;
+		mRootNode = node;
 	}
 
 	/**
@@ -184,6 +184,6 @@ public class ASTDecorator {
 	 *            the acslASTs to set
 	 */
 	public void setAcslASTs(List<ACSLNode> acslASTs) {
-		this.acslASTs = acslASTs;
+		mAcslASTs = acslASTs;
 	}
 }

@@ -25,8 +25,8 @@ public class CACSL2BoogieTranslator implements IGenerator {
 	private static final String s_PLUGIN_NAME = Activator.s_PLUGIN_NAME;
 	private static final String s_PLUGIN_ID = Activator.s_PLUGIN_ID;
 
-	private CACSL2BoogieTranslatorObserver m_Observer;
-	private GraphType m_InputDefinition;
+	private CACSL2BoogieTranslatorObserver mObserver;
+	private GraphType mInputDefinition;
 	private IUltimateServiceProvider mServices;
 	private IToolchainStorage mStorage;
 
@@ -42,7 +42,7 @@ public class CACSL2BoogieTranslator implements IGenerator {
 
 	@Override
 	public void init() {
-		m_Observer = new CACSL2BoogieTranslatorObserver(mServices, mStorage);
+		mObserver = new CACSL2BoogieTranslatorObserver(mServices, mStorage);
 	}
 
 	@Override
@@ -57,22 +57,22 @@ public class CACSL2BoogieTranslator implements IGenerator {
 
 	@Override
 	public void setInputDefinition(GraphType graphType) {
-		this.m_InputDefinition = graphType;
+		this.mInputDefinition = graphType;
 	}
 
 	@Override
 	public List<IObserver> getObservers() {
-		return Collections.singletonList((IObserver) m_Observer);
+		return Collections.singletonList((IObserver) mObserver);
 	}
 
 	@Override
 	public GraphType getOutputDefinition() {
-		return new GraphType(Activator.s_PLUGIN_ID, m_InputDefinition.getType(), m_InputDefinition.getFileNames());
+		return new GraphType(Activator.s_PLUGIN_ID, mInputDefinition.getType(), mInputDefinition.getFileNames());
 	}
 
 	@Override
 	public IElement getModel() {
-		return this.m_Observer.getRoot();
+		return this.mObserver.getRoot();
 	}
 
 	@Override

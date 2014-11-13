@@ -90,7 +90,8 @@ WhiteSpace     = {LineTerminator}* | {space}*
   	"function"      { return symbol("function",sym.FUNCTION); }
     "float"			{ return symbol("float",sym.FLOAT); }
     "for"			{ return symbol("for",sym.FOR); }
-    "global"		{ return symbol("global",sym.GLOBAL); }
+    "global"		{ return symbol("global",sym.GLOBAL); } 
+    "ltl"			{ return symbol("global",sym.LTL); }
     "if"            { return symbol("if",sym.IF); }
 	"impact"		{ return symbol("impact",sym.IMPACT); }
 	"inductive"		{ return symbol("inductive",sym.INDUCTIVE); }
@@ -196,6 +197,11 @@ WhiteSpace     = {LineTerminator}* | {space}*
     ":>"            { return symbol("colongt",sym.COLONGT); }
     "<<"            { return symbol("ltlt",sym.LTLT); }
     ">>"            { return symbol("gtgt",sym.GTGT); }
+    "[]"            { return symbol("globally",sym.GLOBALLY); }
+    "<>"            { return symbol("finally",sym.FINALLY); }
+    "X"             { return symbol("next",sym.NEXT); }
+    "U"             { return symbol("until",sym.UNTIL); }
+    "AP"            { return symbol("ap",sym.AP); }
     
     space+			{}
 	"\n"			{}

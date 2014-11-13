@@ -38,7 +38,7 @@ public class CACSL2BoogieTranslatorObserver implements IUnmanagedObserver {
 	 * Whether to print the AST and some debug information for the translation,
 	 * or not.
 	 */
-	private static final boolean m_ExtendedDebugOutput = false;
+	private static final boolean mExtendedDebugOutput = false;
 	/**
 	 * The logger instance.
 	 */
@@ -46,7 +46,7 @@ public class CACSL2BoogieTranslatorObserver implements IUnmanagedObserver {
 	/**
 	 * A Wrapper holding the root node of the resulting Boogie AST.
 	 */
-	private WrapperNode rootNode;
+	private WrapperNode mRootNode;
 	private IToolchainStorage mStorage;
 
 	private IUltimateServiceProvider mService;
@@ -68,7 +68,7 @@ public class CACSL2BoogieTranslatorObserver implements IUnmanagedObserver {
 		}
 		IASTTranslationUnit inputTU = (IASTTranslationUnit) ((WrapperNode) root).getBacking();
 
-		if (m_ExtendedDebugOutput) {
+		if (mExtendedDebugOutput) {
 			ASTPrinter.print(inputTU);
 		}
 
@@ -105,7 +105,7 @@ public class CACSL2BoogieTranslatorObserver implements IUnmanagedObserver {
 		decorator.mapASTs(inputTU);
 
 		try {
-			this.rootNode = new WrapperNode(null, main.run(decorator.getRootNode()).node);
+			mRootNode = new WrapperNode(null, main.run(decorator.getRootNode()).node);
 			IdentifierMapping<String, String> map = new IdentifierMapping<String, String>();
 			map.setMap(main.getIdentifierMapping());
 			mStorage.putStorable(IdentifierMapping.getStorageKey(), map);
@@ -200,6 +200,6 @@ public class CACSL2BoogieTranslatorObserver implements IUnmanagedObserver {
 	 * @return the root node of the translated Boogie tree
 	 */
 	public IElement getRoot() {
-		return rootNode;
+		return mRootNode;
 	}
 }
