@@ -5,6 +5,8 @@ package de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.
 
 import java.util.List;
 import java.util.ArrayList;
+
+import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AtsASTNode;
 
 
@@ -20,11 +22,12 @@ public class ArgumentListAST extends AtsASTNode {
 	private static final long serialVersionUID = -7834789712780583991L;
 	private ArrayList<Object> m_arguments;
 	
-	public ArgumentListAST() {
+	public ArgumentListAST(ILocation loc) {
+		super(loc);
 		m_arguments = new ArrayList<Object>();
 	}
 	public ArgumentListAST(AtsASTNode e) {
-		this();
+		this(e.getLocation());
 		m_arguments.add(e);
 		addOutgoingNode(e);
 	}

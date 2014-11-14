@@ -6,6 +6,8 @@ package de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.
 import java.util.ArrayList;
 import java.util.List;
 
+import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
+
 /**
  * @author musab@informatik.uni-freiburg.de
  *
@@ -24,14 +26,15 @@ public class PetriNetAutomatonAST extends AutomatonAST {
 	private List<String> m_acceptingPlaces;
 	
 	
-	public PetriNetAutomatonAST() {
+	public PetriNetAutomatonAST(ILocation loc) {
+		super(loc);
 		m_transitions = new ArrayList<PetriNetTransitionAST>();
-		m_initialMarkings = new PetriNetMarkingListAST();
+		m_initialMarkings = new PetriNetMarkingListAST(loc);
 		m_acceptingPlaces = new ArrayList<String>();
 	}
 	
-	public PetriNetAutomatonAST(String name) {
-		this();
+	public PetriNetAutomatonAST(ILocation loc, String name) {
+		super(loc);
 		m_Name = name;
 	}
 

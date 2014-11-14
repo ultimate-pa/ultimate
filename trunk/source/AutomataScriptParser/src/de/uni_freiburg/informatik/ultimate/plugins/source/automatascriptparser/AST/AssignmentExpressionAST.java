@@ -1,6 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST;
 
 
+import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AtsASTNode;
 /**
  * @author musab@informatik.uni-freiburg.de
@@ -22,7 +23,8 @@ public class AssignmentExpressionAST extends AtsASTNode {
 		this.m_operator = operator;
 	}
 	
-	public AssignmentExpressionAST(VariableExpressionAST var, AssignmentOperatorAST operator, AtsASTNode value) {
+	public AssignmentExpressionAST(ILocation loc, VariableExpressionAST var, AssignmentOperatorAST operator, AtsASTNode value) {
+		super(loc);
 		setOperator(operator);
 		addOutgoingNode(var);
 		addOutgoingNode(value);

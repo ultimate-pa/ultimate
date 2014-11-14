@@ -3,6 +3,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST;
 
+import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AtsASTNode;
 
 /**
@@ -10,6 +11,11 @@ import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.A
  *
  */
 public class AutomatonAST extends AtsASTNode {
+
+	public AutomatonAST(ILocation loc) {
+		super(loc);
+	}
+
 
 	/**
 	 * 

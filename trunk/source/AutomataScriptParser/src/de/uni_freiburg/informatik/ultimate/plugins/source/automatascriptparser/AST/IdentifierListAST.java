@@ -6,6 +6,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.
 import java.util.ArrayList;
 import java.util.List;
 
+import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AtsASTNode;
 
 /**
@@ -21,7 +22,8 @@ public class IdentifierListAST extends AtsASTNode {
 	private List<String> m_idList;
 	
 	
-	public IdentifierListAST() {
+	public IdentifierListAST(ILocation loc) {
+		super(loc);
 		m_idList = new ArrayList<String>();
 	}
 	

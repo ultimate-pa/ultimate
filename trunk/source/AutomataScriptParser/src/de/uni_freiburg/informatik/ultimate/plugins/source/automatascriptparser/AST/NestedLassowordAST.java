@@ -4,6 +4,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST;
 
 
+import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AtsASTNode;
 
 /**
@@ -19,7 +20,8 @@ public class NestedLassowordAST extends AtsASTNode {
 	private NestedwordAST m_nw1;
 	private NestedwordAST m_nw2;
 	
-	public NestedLassowordAST(NestedwordAST nw1, NestedwordAST nw2) {
+	public NestedLassowordAST(ILocation loc, NestedwordAST nw1, NestedwordAST nw2) {
+		super(loc);
 		m_nw1 = nw1;
 		m_nw2 = nw2;
 		setType(de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.NestedLassoWord.class);

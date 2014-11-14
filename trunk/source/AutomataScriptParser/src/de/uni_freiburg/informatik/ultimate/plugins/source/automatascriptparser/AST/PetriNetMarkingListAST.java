@@ -5,6 +5,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.
 
 import java.util.List;
 
+import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AtsASTNode;
 
 /**
@@ -19,12 +20,13 @@ public class PetriNetMarkingListAST extends AtsASTNode {
 	private static final long serialVersionUID = -2876076623803821394L;
 	private IdentifierListAST m_markings;
 	
-	public PetriNetMarkingListAST() {
-		m_markings = new IdentifierListAST();
+	public PetriNetMarkingListAST(ILocation loc) {
+		super(loc);
+		m_markings = new IdentifierListAST(loc);
 	}
 	
-	public PetriNetMarkingListAST(IdentifierListAST idlist) {
-		this();
+	public PetriNetMarkingListAST(ILocation loc, IdentifierListAST idlist) {
+		this(loc);
 		m_markings = idlist;
 	}
 

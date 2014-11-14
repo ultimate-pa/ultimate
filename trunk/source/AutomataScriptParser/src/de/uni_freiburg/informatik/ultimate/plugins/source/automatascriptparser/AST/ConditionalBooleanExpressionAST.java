@@ -4,6 +4,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST;
 
 
+import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AtsASTNode;
 
 /**
@@ -17,18 +18,21 @@ public class ConditionalBooleanExpressionAST extends AtsASTNode {
 	private static final long serialVersionUID = 8374243361020834074L;
 	private ConditionalBooleanOperatorAST m_operator;
 	
-	public ConditionalBooleanExpressionAST() {
+	public ConditionalBooleanExpressionAST(ILocation loc) {
+		super(loc);
 		m_returnType = Boolean.class;
 		m_expectingType = m_returnType;
 	}
 	
-	public ConditionalBooleanExpressionAST(AtsASTNode element) {
+	public ConditionalBooleanExpressionAST(ILocation loc, AtsASTNode element) {
+		super(loc);
 		m_returnType = Boolean.class;
 		m_expectingType = m_returnType;
 		addOutgoingNode(element);
 	}
 	
-	public ConditionalBooleanExpressionAST(AtsASTNode element1, AtsASTNode element2) {
+	public ConditionalBooleanExpressionAST(ILocation loc, AtsASTNode element1, AtsASTNode element2) {
+		super(loc);
 		m_returnType = Boolean.class;
 		m_expectingType = m_returnType;
 		addOutgoingNode(element1);

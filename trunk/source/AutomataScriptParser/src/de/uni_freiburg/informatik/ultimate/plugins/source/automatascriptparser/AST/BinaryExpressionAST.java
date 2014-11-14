@@ -4,6 +4,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST;
 
 
+import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AtsASTNode;
 
 /**
@@ -19,7 +20,8 @@ public class BinaryExpressionAST extends AtsASTNode {
 	private static final long serialVersionUID = 561094736879070816L;
 	private BinaryOperatorAST m_operator;
 	
-	public BinaryExpressionAST() {
+	public BinaryExpressionAST(ILocation loc) {
+		super(loc);
 		// The default type of a binary expression is Integer 
 		setBothTypesTo(Integer.class);
 	}
@@ -32,7 +34,8 @@ public class BinaryExpressionAST extends AtsASTNode {
 		m_expectingType = type;
 	}
 	
-	public BinaryExpressionAST(AtsASTNode leftChild, AtsASTNode rightChild) {
+	public BinaryExpressionAST(ILocation loc, AtsASTNode leftChild, AtsASTNode rightChild) {
+		super(loc);
 		setBothTypesTo(Integer.class);
 		addOutgoingNode(leftChild);
 		addOutgoingNode(rightChild);

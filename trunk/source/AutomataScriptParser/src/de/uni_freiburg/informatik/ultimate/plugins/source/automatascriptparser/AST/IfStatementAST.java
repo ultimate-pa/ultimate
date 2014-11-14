@@ -4,6 +4,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST;
 
 
+import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AtsASTNode;
 
 /**
@@ -17,11 +18,12 @@ public class IfStatementAST extends AtsASTNode {
 	 */
 	private static final long serialVersionUID = -4479791837394249760L;
 	
-	public IfStatementAST() {
-		
+	public IfStatementAST(ILocation loc) {
+		super(loc);
 	}
 	
-	public IfStatementAST(AtsASTNode condition, AtsASTNode thenStmts) {
+	public IfStatementAST(ILocation loc, AtsASTNode condition, AtsASTNode thenStmts) {
+		super(loc);
 		addOutgoingNode(condition);
 		addOutgoingNode(thenStmts);
 	}

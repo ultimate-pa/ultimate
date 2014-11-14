@@ -4,6 +4,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST;
 
 
+import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AtsASTNode;
 
 /**
@@ -18,7 +19,8 @@ public class WhileStatementAST extends AtsASTNode {
 	private static final long serialVersionUID = -5296928252765910201L;
 
 
-	public WhileStatementAST(AtsASTNode condition, AtsASTNode stmtList) {
+	public WhileStatementAST(ILocation loc, AtsASTNode condition, AtsASTNode stmtList) {
+		super(loc);
 		addOutgoingNode(condition);
 		addOutgoingNode(stmtList);
 	}

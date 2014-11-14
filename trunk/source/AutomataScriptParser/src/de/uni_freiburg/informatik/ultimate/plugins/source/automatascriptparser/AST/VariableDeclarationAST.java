@@ -4,6 +4,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST;
 
 
+import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AtsASTNode;
 
 import java.util.ArrayList;
@@ -22,7 +23,8 @@ public class VariableDeclarationAST extends AtsASTNode {
 	private static final long serialVersionUID = 6868411705150725931L;
 	private List<String> m_identifiers;
     
-    public VariableDeclarationAST(String identifier) {
+    public VariableDeclarationAST(ILocation loc, String identifier) {
+    	super(loc);
     	m_identifiers = new ArrayList<String>();
     	m_identifiers.add(identifier);
     }

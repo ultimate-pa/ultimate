@@ -3,6 +3,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST;
 
+import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AtsASTNode;
 
 
@@ -20,7 +21,8 @@ public class OperationInvocationExpressionAST extends AtsASTNode {
 	private String m_errorMessage;
 	private String m_argsAsString;
 	
-	public OperationInvocationExpressionAST(String opName, AtsASTNode e2) {
+	public OperationInvocationExpressionAST(ILocation loc, String opName, AtsASTNode e2) {
+		super(loc);
 		m_operationName = opName;
 		m_errorMessage = "";
 		addOutgoingNode(e2);

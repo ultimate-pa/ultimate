@@ -32,26 +32,29 @@ public class AtsASTNode extends BaseAST<AtsASTNode> {
 	// The type the children of this node should have.
 	protected Class<?> m_expectingType;
 
-	protected ILocation m_location;
+	protected final ILocation m_location;
 	private Map<Class<?>, Class<?>> m_primitiveToClassTypes;
 	
- 	public AtsASTNode() {
+ 	public AtsASTNode(ILocation loc) {
+ 		super(new Payload(loc, "AtsASTNode"));
 		m_children = new ArrayList<AtsASTNode>();
 		m_parent = null;
-		m_location = null;
+		m_location = loc;
 		m_primitiveToClassTypes = new HashMap<Class<?>, Class<?>>();
 		m_primitiveToClassTypes.put(int.class, Integer.class);
 		m_primitiveToClassTypes.put(boolean.class, Boolean.class);
 	}
 	
-	public AtsASTNode(ILocation loc) {
-		super(new Payload(loc, "AtsASTNode"));
-		m_children = new ArrayList<AtsASTNode>();
-		m_parent = null;
-		m_location = loc;
-	}
+//	public AtsASTNode(ILocation loc) {
+//		super(new Payload(loc, "AtsASTNode"));
+//		m_children = new ArrayList<AtsASTNode>();
+//		m_parent = null;
+//		m_location = loc;
+//	}
 	
-	public AtsASTNode(AtsASTNode par) {
+	public AtsASTNode(ILocation loc, AtsASTNode par) {
+		super(new Payload(loc, "AtsASTNode"));
+		m_location = loc;
 		m_children = new ArrayList<AtsASTNode>();
 		m_parent = par;
 	}
@@ -111,11 +114,6 @@ public class AtsASTNode extends BaseAST<AtsASTNode> {
 		return m_location;
 	}
 
-	public void setLocation(ILocation loc) {
-		mPayload = new Payload(loc, "AtsASTNode");
-		m_location = loc;
-		
-	}
 	
 	/**
 	 * 

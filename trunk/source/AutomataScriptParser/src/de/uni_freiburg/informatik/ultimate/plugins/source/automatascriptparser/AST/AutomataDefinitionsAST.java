@@ -21,6 +21,7 @@ public class AutomataDefinitionsAST extends AtsASTNode {
 	
 	private List<AutomatonAST> m_AutomataDefinitions;
 	public AutomataDefinitionsAST() {
+		super(null);
 		m_AutomataDefinitions = new ArrayList<AutomatonAST>();
 	}
 	

@@ -5,6 +5,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.
 
 import java.util.List;
 
+import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AtsASTNode;
 
 /**
@@ -26,7 +27,8 @@ public class PetriNetTransitionAST extends AtsASTNode {
 	private IdentifierListAST m_successors;
 	
 
-	public PetriNetTransitionAST(IdentifierListAST from, String symbol, IdentifierListAST to) {
+	public PetriNetTransitionAST(ILocation loc, IdentifierListAST from, String symbol, IdentifierListAST to) {
+		super(loc);
 		m_predeccesors = from;
 		m_symbol = symbol;
 		m_successors = to;

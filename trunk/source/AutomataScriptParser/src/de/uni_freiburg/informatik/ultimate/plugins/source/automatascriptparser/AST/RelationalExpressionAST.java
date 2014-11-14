@@ -4,6 +4,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST;
 
 
+import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AtsASTNode;
 
 /**
@@ -26,7 +27,8 @@ public class RelationalExpressionAST extends AtsASTNode {
 		this.m_operator = operator;
 	}
 	
-	public RelationalExpressionAST() {
+	public RelationalExpressionAST(ILocation loc) {
+		super(loc);
 		m_returnType = Boolean.class;
 		m_expectingType = Integer.class;
 	}

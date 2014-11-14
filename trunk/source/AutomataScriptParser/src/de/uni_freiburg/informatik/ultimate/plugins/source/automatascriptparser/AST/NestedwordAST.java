@@ -8,6 +8,8 @@ import java.util.ArrayList;
 import java.util.Deque;
 
 
+
+import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AtsASTNode;
 
 /**
@@ -47,7 +49,8 @@ public class NestedwordAST extends AtsASTNode {
 	 */
 	public static final int MINUS_INFINITY = Integer.MIN_VALUE;
 	
-	public NestedwordAST() {
+	public NestedwordAST(ILocation loc) {
+		super(loc);
 		m_CallPositions = new ArrayDeque<Integer>();
 		m_Word = new ArrayList<String>();
 		m_NestingRelation = new ArrayList<Integer>();

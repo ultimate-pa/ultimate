@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AtsASTNode;
 
 /**
@@ -88,7 +89,8 @@ public class TransitionListAST extends AtsASTNode {
 	private List<PetriNetTransitionAST> m_netTransitions;
 	
 	
-	public TransitionListAST() {
+	public TransitionListAST(ILocation loc) {
+		super(loc);
 		m_Transitions = new HashMap<Pair<String,String>, Set<String>>();
 		m_ReturnTransitions = new HashMap<String, Map<String, Map<String, Set<String>>>>();
 		m_netTransitions = new ArrayList<PetriNetTransitionAST>();

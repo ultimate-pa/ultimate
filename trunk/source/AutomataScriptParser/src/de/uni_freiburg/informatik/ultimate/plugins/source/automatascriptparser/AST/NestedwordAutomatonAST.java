@@ -10,6 +10,8 @@ import java.util.Map;
 import java.util.Set;
 
 
+
+import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.TransitionListAST.Pair;
 
 
@@ -37,7 +39,8 @@ public class NestedwordAutomatonAST extends AutomatonAST {
 	private Map<Pair<String, String>, Set<String>> m_CallTransitions;
 	private Map<String, Map<String, Map<String, Set<String>>>> m_ReturnTransitions;
 	
-	public NestedwordAutomatonAST(String name) {
+	public NestedwordAutomatonAST(ILocation loc, String name) {
+		super(loc);
 		m_CallAlphabet = new ArrayList<String>();
 		m_InternalAlphabet = new ArrayList<String>();
 		m_ReturnAlphabet = new ArrayList<String>();

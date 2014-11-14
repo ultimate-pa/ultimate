@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.TransitionListAST.Pair;
 
 // Test
@@ -21,7 +22,8 @@ public class AlternatingAutomatonAST extends AutomatonAST {
 	
 	private Map<Pair<String, String>, Set<String>> m_transitions;
 	
-	public AlternatingAutomatonAST(String name) {
+	public AlternatingAutomatonAST(ILocation loc, String name) {
+		super(loc);
 		m_Alphabet = new ArrayList<String>();
 		m_ExStates = new ArrayList<String>();
 		m_UniStates = new ArrayList<String>();

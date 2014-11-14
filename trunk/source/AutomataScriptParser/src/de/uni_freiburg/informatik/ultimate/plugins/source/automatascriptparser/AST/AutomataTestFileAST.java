@@ -14,6 +14,7 @@ public class AutomataTestFileAST extends AtsASTNode {
 	private AtsASTNode m_statementList;
 
 	public AutomataTestFileAST (AtsASTNode stmtList, AutomataDefinitionsAST autDefs) {
+		super(null);
 		m_automataDefinitions = autDefs;
 		m_statementList = stmtList;
 	}

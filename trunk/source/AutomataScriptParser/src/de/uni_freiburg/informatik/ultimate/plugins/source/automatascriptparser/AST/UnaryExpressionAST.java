@@ -4,6 +4,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST;
 
 
+import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AtsASTNode;
 
 /**
@@ -20,12 +21,14 @@ public class UnaryExpressionAST extends AtsASTNode {
 	private static final long serialVersionUID = 1809386058471685881L;
 	private UnaryOperatorAST m_operator;
 	
-	public UnaryExpressionAST() {
+	public UnaryExpressionAST(ILocation loc) {
+		super(loc);
 		m_returnType = Integer.class;
 		m_expectingType = m_returnType;
 	}
 	
-	public UnaryExpressionAST(VariableExpressionAST expr) {
+	public UnaryExpressionAST(ILocation loc, VariableExpressionAST expr) {
+		super(loc);
 		m_returnType = Integer.class;
 		m_expectingType = m_returnType;
 		addOutgoingNode(expr);

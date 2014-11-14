@@ -4,6 +4,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST;
 
 
+import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AtsASTNode;
 
 /**
@@ -17,7 +18,8 @@ public class VariableExpressionAST extends AtsASTNode {
 	private static final long serialVersionUID = 1274217864955285514L;
 	private String m_Identifier;
 	
-	public VariableExpressionAST(String identifier) {
+	public VariableExpressionAST(ILocation loc, String identifier) {
+		super(loc);
 		m_Identifier = identifier;
 	}
 

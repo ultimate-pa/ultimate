@@ -4,6 +4,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST;
 
 
+import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AtsASTNode;
 
 /**
@@ -11,6 +12,10 @@ import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.A
  *
  */
 public class StatementListAST extends AtsASTNode {
+
+	public StatementListAST(ILocation loc) {
+		super(loc);
+	}
 
 	/**
 	 * 
