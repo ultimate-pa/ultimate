@@ -41,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPre
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.ta.IsEmptyWithAI;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CoverageAnalysis.BackwardCoveringInformation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataTransitionAppender.BestApproximationDeterminizer;
@@ -139,8 +140,11 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 	protected boolean isAbstractionCorrect() throws OperationCanceledException {
 		try {
 			if (m_RunWithAI) {
+				//FIXME: Fabian, fix the constructor call
+				List<RCFGNode> initialStates = new ArrayList<>();
+				initialStates.add(m_RootNode);
 				IsEmptyWithAI<CodeBlock, IPredicate> emptyWithAI = new IsEmptyWithAI<CodeBlock, IPredicate>(
-						(INestedWordAutomatonOldApi) m_Abstraction, mServices, super.m_RootNode);
+						(INestedWordAutomatonOldApi) m_Abstraction, mServices, m_RootNode, initialStates);
 				m_Counterexample = emptyWithAI.getNestedRun();
 			} else {
 				m_Counterexample = (new IsEmpty<CodeBlock, IPredicate>((INestedWordAutomatonOldApi) m_Abstraction))

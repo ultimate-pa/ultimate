@@ -218,7 +218,8 @@ public class IsEmptyWithAI<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	 * Default constructor. Here we search a run from the initial states of the
 	 * automaton to the final states of the automaton.
 	 */
-	public IsEmptyWithAI(INestedWordAutomaton<LETTER, STATE> nwa, IUltimateServiceProvider services, RootNode root, List<RCFGNode> initialStateNodes) {
+	public IsEmptyWithAI(INestedWordAutomaton<LETTER, STATE> nwa, IUltimateServiceProvider services, RootNode root,
+			List<RCFGNode> initialStateNodes) {
 		List<UnprovableResult<RcfgElement, CodeBlock, Expression>> results = null;
 		m_nwa = nwa;
 		m_aI = new AbstractInterpreter(services);
@@ -227,7 +228,7 @@ public class IsEmptyWithAI<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		m_StartStates = m_nwa.getInitialStates();
 		m_GoalStates = m_nwa.getFinalStates();
 		s_Logger.info(startMessage());
-		
+
 		if (results.equals(null)) {
 			m_acceptingRun = getAcceptingRun();
 		} else {
