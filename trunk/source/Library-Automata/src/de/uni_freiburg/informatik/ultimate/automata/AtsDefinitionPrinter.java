@@ -685,7 +685,65 @@ public class AtsDefinitionPrinter<LETTER,STATE> {
 		private class BaFormatWriter {
 
 			public BaFormatWriter(INestedWordAutomaton<LETTER, STATE> nwa) {
-				// TODO Auto-generated constructor stub
+				Map<LETTER, String> alphabetMapping = computeAlphabetMapping(nwa.getInternalAlphabet());
+				Map<STATE, String> stateMapping = computeStateMapping(nwa.getStates());
+				StringBuilder initStateSb = computeStateString(nwa.getInitialStates(), stateMapping);
+				StringBuilder transSb = computeTransitionString(nwa, stateMapping, alphabetMapping);
+				StringBuilder finalStateSb = computeStateString(nwa.getFinalStates(), stateMapping);
+				m_printWriter.print(initStateSb);
+				m_printWriter.print(transSb);
+				m_printWriter.print(finalStateSb);
+			}
+
+			private StringBuilder computeStateString(
+					Collection<STATE> initialStates,
+					Map<STATE, String> stateMapping) {
+				StringBuilder result = new StringBuilder();
+				for (STATE state : initialStates) {
+					result.append("[" + stateMapping.get(state) + "]" + System.lineSeparator());
+				}
+				return result;
+			}
+			
+			private StringBuilder computeTransitionString(
+					INestedWordAutomaton<LETTER, STATE> nwa,
+					Map<STATE, String> stateMapping,
+					Map<LETTER, String> alphabetMapping) {
+				StringBuilder result = new StringBuilder();
+				for (STATE state : nwa.getStates()) {
+					for (OutgoingInternalTransition<LETTER, STATE> outTrans : nwa.internalSuccessors(state)) {
+						result.append(
+								alphabetMapping.get(outTrans.getLetter()) + 
+								"," + 
+								"[" + stateMapping.get(state) + "]" + 
+								"->" +
+								"[" + stateMapping.get(outTrans.getSucc()) + "]" +
+								System.lineSeparator());
+					}
+				}
+				return result;
+			}
+
+			
+			
+			protected Map<LETTER,String> computeAlphabetMapping(Collection<LETTER> alphabet) {
+				Integer counter = 0;
+				Map<LETTER,String> alphabetMapping = new HashMap<LETTER,String>();
+				for (LETTER letter : alphabet) {
+					alphabetMapping.put(letter, counter.toString());
+					counter++;
+				}
+				return alphabetMapping;
+			}
+
+			protected Map<STATE,String> computeStateMapping(Collection<STATE> states) {
+				Integer counter = 0;
+				Map<STATE,String> stateMapping = new HashMap<STATE,String>();
+				for (STATE state : states) {
+					stateMapping.put(state, counter.toString());
+					counter++;
+				}
+				return stateMapping;
 			}
 			
 		}
