@@ -1359,6 +1359,8 @@ public class TestFileInterpreter implements IMessagePrinter {
 								throw (InterpreterException) targetException;
 							} else if (targetException instanceof AutomataLibraryException) {
 								throw new InterpreterException(oe.getLocation(), targetException.getMessage());
+							} else if (targetException instanceof OutOfMemoryError) {
+								throw new InterpreterException(oe.getLocation(), "OutOfMemoryError");
 							} else if (targetException instanceof Error) {
 								throw (Error) targetException;
 							} else {
