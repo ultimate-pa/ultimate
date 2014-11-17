@@ -21,9 +21,6 @@ import de.uni_freiburg.informatik.ultimate.model.structure.BaseAST;
 public class AtsASTNode extends BaseAST<AtsASTNode> {
 
 	
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = 8077752308820134631L;
 	protected List<AtsASTNode> m_children;
 	protected AtsASTNode m_parent;
@@ -32,14 +29,12 @@ public class AtsASTNode extends BaseAST<AtsASTNode> {
 	// The type the children of this node should have.
 	protected Class<?> m_expectingType;
 
-	protected final ILocation m_location;
 	private Map<Class<?>, Class<?>> m_primitiveToClassTypes;
 	
  	public AtsASTNode(ILocation loc) {
  		super(new Payload(loc, "AtsASTNode"));
 		m_children = new ArrayList<AtsASTNode>();
 		m_parent = null;
-		m_location = loc;
 		m_primitiveToClassTypes = new HashMap<Class<?>, Class<?>>();
 		m_primitiveToClassTypes.put(int.class, Integer.class);
 		m_primitiveToClassTypes.put(boolean.class, Boolean.class);
@@ -54,7 +49,6 @@ public class AtsASTNode extends BaseAST<AtsASTNode> {
 	
 	public AtsASTNode(ILocation loc, AtsASTNode par) {
 		super(new Payload(loc, "AtsASTNode"));
-		m_location = loc;
 		m_children = new ArrayList<AtsASTNode>();
 		m_parent = par;
 	}
@@ -111,7 +105,7 @@ public class AtsASTNode extends BaseAST<AtsASTNode> {
 	
 	
 	public ILocation getLocation() {
-		return m_location;
+		return getPayload().getLocation();
 	}
 
 	
