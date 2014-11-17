@@ -302,7 +302,7 @@ start with automata_test_file;
 
 // 1. Start of the grammar
 automata_test_file ::= test_statement_block:stmtList
-                       {: AutomataTestFileAST ats = new AutomataTestFileAST(stmtList, m_automataDefinitions); 
+                       {: AutomataTestFileAST ats = new AutomataTestFileAST(getLocation(stmtList$, stmtList$), stmtList, m_automataDefinitions); 
                           RESULT = ats; :};
 
 // 2. Lexical Structure

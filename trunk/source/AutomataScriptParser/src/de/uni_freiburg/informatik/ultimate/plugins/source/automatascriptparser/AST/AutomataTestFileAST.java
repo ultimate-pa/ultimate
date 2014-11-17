@@ -1,6 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST;
 
 
+import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AtsASTNode;
 
 public class AutomataTestFileAST extends AtsASTNode {
@@ -13,8 +14,8 @@ public class AutomataTestFileAST extends AtsASTNode {
 
 	private AtsASTNode m_statementList;
 
-	public AutomataTestFileAST (AtsASTNode stmtList, AutomataDefinitionsAST autDefs) {
-		super(null);
+	public AutomataTestFileAST (ILocation loc, AtsASTNode stmtList, AutomataDefinitionsAST autDefs) {
+		super(loc);
 		m_automataDefinitions = autDefs;
 		m_statementList = stmtList;
 	}
