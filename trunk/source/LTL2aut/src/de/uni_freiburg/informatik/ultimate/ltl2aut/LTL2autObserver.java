@@ -23,7 +23,7 @@ import de.uni_freiburg.informatik.ultimate.ltl2aut.ast.AtomicProposition;
 import de.uni_freiburg.informatik.ultimate.ltl2aut.preferences.PreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Unit;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.annot.BuchiProgramRootNodeAnnotation;
+import de.uni_freiburg.informatik.ultimate.result.LTLPropertyCheck;
 
 /**
  * This class reads a definition of a property in LTL and returns the AST of the
@@ -71,7 +71,8 @@ public class LTL2autObserver implements IUnmanagedObserver {
 			mLogger.info(specification[i]);
 		}
 
-		new BuchiProgramRootNodeAnnotation(getSubstitutedProperty(irs, specification[0])).annotate(node);
+		//TODO: Fix 
+		new LTLPropertyCheck(getSubstitutedProperty(irs, specification[0]), null, null).annotate(node);
 		mRootNode = node;
 	}
 
@@ -128,7 +129,6 @@ public class LTL2autObserver implements IUnmanagedObserver {
 		String property = new UltimatePreferenceStore(Activator.PLUGIN_ID)
 				.getString(PreferenceInitializer.LABEL_PPROPERTY);
 		return property.split("\n");
-
 	}
 
 	private AstNode getProperty(String property) throws Throwable {

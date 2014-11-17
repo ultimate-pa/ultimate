@@ -20,7 +20,6 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.annot.BuchiProgramAcceptingStateAnnotation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.annot.BuchiProgramRootNodeAnnotation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -33,6 +32,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Roo
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence.Origin;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
+import de.uni_freiburg.informatik.ultimate.result.LTLPropertyCheck;
 
 /**
  * This class is implementing the Buchi program product, multiplying a
@@ -62,7 +62,7 @@ public class Product {
 	private final ProductBacktranslator mBacktranslator;
 
 	public Product(NestedWordAutomaton<BoogieASTNode, String> aut, RootNode rcfg,
-			BuchiProgramRootNodeAnnotation ltlAnnot, IUltimateServiceProvider services, ProductBacktranslator backtrans)
+			LTLPropertyCheck ltlAnnot, IUltimateServiceProvider services, ProductBacktranslator backtrans)
 			throws Exception {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);

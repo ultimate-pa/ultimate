@@ -12,7 +12,7 @@ public class UltimateEmit extends Emit {
      */
     // @Override
     public void emitClassDeclaration(Node node) throws IOException {
-        writer.println("public "
+        mWriter.println("public "
                 + (node.isAbstract() ? "abstract " : "")
                 + "class "
                 + node.getName()
@@ -20,8 +20,8 @@ public class UltimateEmit extends Emit {
                         : " extends BoogieASTNode")
                 + (node.getInterfaces() != null ? " implements "+node.getInterfaces() : "")
                         + " {");
-        formatComment(writer, "    ", "The serial version UID.");
-        writer.println("    private static final long serialVersionUID = 1L;");
+        formatComment(mWriter, "    ", "The serial version UID.");
+        mWriter.println("    private static final long serialVersionUID = 1L;");
     }
 
     public String getConstructorParam(Node node, boolean optional) {
@@ -59,10 +59,10 @@ public class UltimateEmit extends Emit {
             ancestor = ancestor.getParent();
         }
         if (numNotOptionalParams == 0 || numNotWriteableParams == 0) {
-            formatComment(writer, "    ", "The default constructor.");
-            writer.println("    public " + node.getName() + "() {");
-            writer.println("    }");
-            writer.println();
+            formatComment(mWriter, "    ", "The default constructor.");
+            mWriter.println("    public " + node.getName() + "() {");
+            mWriter.println("    }");
+            mWriter.println();
         }
 
         if (numNotOptionalParams > 0 && numNotOptionalParams < numTotalParams)
@@ -80,24 +80,24 @@ public class UltimateEmit extends Emit {
     // @Override
     public void emitPreamble(Node node) throws IOException {
         super.emitPreamble(node);
-        writer.println("import java.util.List;");
-        writer.println("import de.uni_freiburg.informatik.ultimate.model.location.ILocation;");
+        mWriter.println("import java.util.List;");
+        mWriter.println("import de.uni_freiburg.informatik.ultimate.model.location.ILocation;");
         if (node.getParent() == null)
-            writer.println("import de.uni_freiburg.informatik.ultimate.model.boogie.ast.wrapper.BoogieASTNode;");
+            mWriter.println("import de.uni_freiburg.informatik.ultimate.model.boogie.ast.wrapper.BoogieASTNode;");
 
     }
 
     public void emitNodeHook(Node node) throws IOException {
-        writer.println();
-        writer.println("    public List<Object> getChildren() {");
-        writer.println("        List<Object> children = super.getChildren();");
+        mWriter.println();
+        mWriter.println("    public List<Object> getChildren() {");
+        mWriter.println("        List<Object> children = super.getChildren();");
         Parameter[] parameters = node.getParameters();
         for (int i = 0; i < parameters.length; i++) {
-            writer.println("        children.add(" + parameters[i].getName()
+            mWriter.println("        children.add(" + parameters[i].getName()
                     + ");");
         }
-        writer.println("        return children;");
-        writer.println("    }");
+        mWriter.println("        return children;");
+        mWriter.println("    }");
     }
 
 }

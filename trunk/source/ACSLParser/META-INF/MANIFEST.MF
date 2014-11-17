@@ -3,12 +3,12 @@ Bundle-ManifestVersion: 2
 Bundle-Name: ACSLParser
 Bundle-SymbolicName: ACSLParser;singleton:=true
 Bundle-Version: 0.0.1
-Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+Bundle-RequiredExecutionEnvironment: JavaSE-1.7
 Export-Package: de.uni_freiburg.informatik.ultimate.acsl.parser,
  de.uni_freiburg.informatik.ultimate.model.acsl,
  de.uni_freiburg.informatik.ultimate.model.acsl.ast
 Bundle-ClassPath: .
 Require-Bundle: Library-log4j,
- JavaCup;visibility:=reexport,
- ASTBuilder;bundle-version="0.0.1"
+ JavaCup,
+ ASTBuilder
 Import-Package: org.apache.log4j

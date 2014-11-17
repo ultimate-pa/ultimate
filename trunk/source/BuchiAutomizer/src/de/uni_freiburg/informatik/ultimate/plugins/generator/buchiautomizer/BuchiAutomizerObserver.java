@@ -21,7 +21,6 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Term2Expression;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BuchiCegarLoop.Result;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.annot.BuchiProgramRootNodeAnnotation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.PreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.RcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -38,6 +37,7 @@ import de.uni_freiburg.informatik.ultimate.result.IProgramExecution.ProgramState
 import de.uni_freiburg.informatik.ultimate.result.IResult;
 import de.uni_freiburg.informatik.ultimate.result.LTLFiniteCounterExampleResult;
 import de.uni_freiburg.informatik.ultimate.result.LTLInfiniteCounterExampleResult;
+import de.uni_freiburg.informatik.ultimate.result.LTLPropertyCheck;
 import de.uni_freiburg.informatik.ultimate.result.NonTerminationArgumentResult;
 import de.uni_freiburg.informatik.ultimate.result.NonterminatingLassoResult;
 import de.uni_freiburg.informatik.ultimate.result.TerminationAnalysisResult;
@@ -112,7 +112,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 		String whatToProve = "termination";
 
 		if (bcl.isInLTLMode()) {
-			BuchiProgramRootNodeAnnotation ltlAnnot = BuchiProgramRootNodeAnnotation.getAnnotation(mGraphRoot);
+			LTLPropertyCheck ltlAnnot = LTLPropertyCheck.getAnnotation(mGraphRoot);
 			switch (result) {
 			case NONTERMINATING:
 				// there is a violation of the LTL property
@@ -190,13 +190,13 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 		}
 	}
 
-	private void reportLTLPropertyHolds(BuchiCegarLoop bcl, BuchiProgramRootNodeAnnotation ltlAnnot) {
+	private void reportLTLPropertyHolds(BuchiCegarLoop bcl, LTLPropertyCheck ltlAnnot) {
 		IResult result = new AllSpecificationsHoldResult(Activator.s_PLUGIN_ID,
 				"Buchi Automizer proved that the LTL property " + ltlAnnot.getLTLProperty() + " holds");
 		reportResult(result);
 	}
 
-	private void reportLTLPropertyIsViolated(BuchiCegarLoop bcl, BuchiProgramRootNodeAnnotation ltlAnnot) {
+	private void reportLTLPropertyIsViolated(BuchiCegarLoop bcl, LTLPropertyCheck ltlAnnot) {
 		NestedLassoRun<CodeBlock, IPredicate> counterexample = bcl.getCounterexample();
 		ProgramPoint position = ((ISLPredicate) counterexample.getLoop().getStateAtPosition(0)).getProgramPoint();
 		// first, check if the counter example is really infinite or not

@@ -8,8 +8,8 @@ public class Bugs extends TACASInterpolation2015 {
 
 	@Override
 	protected void createTestCasesForReal(List<UltimateTestCase> testcases) {
-		addTestCasesFixed("CodeCheckWithBE-C.xml", "svcomp2015/svComp-32bit-precise-BE-Impulse.epf", testcases);
-		addTestCasesFixed("AutomizerC.xml", "svcomp2015/svComp-32bit-precise-Automizer.epf", testcases);
+		addTestCasesFixed("CodeCheckNoBE-C.xml", "TACASInterpolation2015/Kojak-TreeInterpolation-nBE.epf", testcases);
+//		addTestCasesFixed("AutomizerC.xml", "svcomp2015/svComp-32bit-precise-Automizer.epf", testcases);
 
 	}
 
@@ -23,18 +23,12 @@ public class Bugs extends TACASInterpolation2015 {
 	protected String[] getDirectories() {
 		// @formatter:off
 		return new String[] { 
-				"examples/svcomp/bitvector-regression/integerpromotion_true-unreach-call.i",
-				"examples/svcomp/bitvector/num_conversion_2_true-unreach-call.i",
-				"examples/svcomp/bitvector/soft_float_4_true-unreach-call.c.cil.c",
-				"examples/svcomp/bitvector/soft_float_1_true-unreach-call.c.cil.c",
-				"examples/svcomp/bitvector/parity_true-unreach-call.i",
-				"examples/svcomp/bitvector-regression/signextension_true-unreach-call.i",
-				"examples/svcomp/bitvector-regression/signextension_false-unreach-call.i",
-				"examples/svcomp/bitvector-regression/pointer_extension2_false-unreach-call.i",
-				"examples/svcomp/loop-invgen/SpamAssassin-loop_false-unreach-call.i",
-				"examples/svcomp/loop-invgen/NetBSD_loop_false-unreach-call.i",
-				"examples/svcomp/array-examples/standard_allDiff2_false-unreach-call_ground.i",
-				"examples/svcomp/ssh-simplified/s3_srvr_11_false-unreach-call.cil.c",
+				"examples/svcomp/recursive/Fibonacci04_false-unreach-call_true-termination.c",
+				"examples/svcomp/recursive/MultCommutative_true-unreach-call_true-termination.c",
+				"examples/svcomp/systemc/pipeline_true-unreach-call_false-termination.cil.c",
+				"examples/svcomp/systemc/transmitter.03_false-unreach-call_false-termination.cil.c",
+				"examples/svcomp/systemc/transmitter.04_false-unreach-call_false-termination.cil.c",
+				"examples/svcomp/systemc/transmitter.06_false-unreach-call_false-termination.cil.c",
 				
 		};
 		// @formatter:on
@@ -42,7 +36,7 @@ public class Bugs extends TACASInterpolation2015 {
 
 	@Override
 	protected int getTimeout() {
-		return 30 * 1000;
+		return 120 * 1000;
 	}
 
 }

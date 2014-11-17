@@ -13,9 +13,9 @@ import de.uni_freiburg.informatik.ultimate.ltl2aut.ast.NeverStatement;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BoogieASTNode;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.annot.BuchiProgramRootNodeAnnotation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
+import de.uni_freiburg.informatik.ultimate.result.LTLPropertyCheck;
 
 public class BuchiProductObserver implements IUnmanagedObserver {
 
@@ -65,7 +65,7 @@ public class BuchiProductObserver implements IUnmanagedObserver {
 		mLogger.info("Beginning generation of product automaton");
 
 		try {
-			BuchiProgramRootNodeAnnotation ltlAnnot = BuchiProgramRootNodeAnnotation.getAnnotation(mNeverClaim);
+			LTLPropertyCheck ltlAnnot = LTLPropertyCheck.getAnnotation(mNeverClaim);
 			mProduct = new Product(nwa, mRcfg, ltlAnnot, mServices, translator);
 			mLogger.info("Product automaton successfully generated");
 		} catch (Exception e) {

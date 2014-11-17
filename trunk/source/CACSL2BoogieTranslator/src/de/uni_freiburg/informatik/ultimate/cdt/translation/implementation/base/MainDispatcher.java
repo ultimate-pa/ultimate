@@ -140,6 +140,7 @@ import de.uni_freiburg.informatik.ultimate.model.acsl.ast.FieldAccessExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.FreeableExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.FunctionApplication;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.GlobalInvariant;
+import de.uni_freiburg.informatik.ultimate.model.acsl.ast.GlobalLTLInvariant;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.IfThenElseExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.Inductive;
@@ -717,6 +718,9 @@ public class MainDispatcher extends Dispatcher {
 		if (n instanceof Invariant) {
 			if (n instanceof GlobalInvariant) {
 				return acslHandler.visit(this, (GlobalInvariant) n);
+			}
+			if (n instanceof GlobalLTLInvariant) {
+				return acslHandler.visit(this, (GlobalLTLInvariant) n);
 			}
 			if (n instanceof TypeInvariant) {
 				return acslHandler.visit(this, (TypeInvariant) n);

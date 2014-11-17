@@ -12,11 +12,11 @@ public class NewUltimateEmit extends Emit {
 	 */
 	// @Override
 	public void emitClassDeclaration(Node node) throws IOException {
-		writer.println("public " + (node.isAbstract() ? "abstract " : "") + "class " + node.getName()
+		mWriter.println("public " + (node.isAbstract() ? "abstract " : "") + "class " + node.getName()
 				+ (node.getParent() != null ? " extends " + node.getParent().getName() : " extends BoogieASTNode")
 				+ (node.getInterfaces() != null ? " implements " + node.getInterfaces() : "") + " {");
-		formatComment(writer, "    ", "The serial version UID.");
-		writer.println("    private static final long serialVersionUID = 1L;");
+		formatComment(mWriter, "    ", "The serial version UID.");
+		mWriter.println("    private static final long serialVersionUID = 1L;");
 	}
 
 	public String getConstructorParam(Node node, boolean optional) {
@@ -52,10 +52,10 @@ public class NewUltimateEmit extends Emit {
 			ancestor = ancestor.getParent();
 		}
 		if (numNotOptionalParams == 0 || numNotWriteableParams == 0) {
-			formatComment(writer, "    ", "The default constructor.");
-			writer.println("    public " + node.getName() + "() {");
-			writer.println("    }");
-			writer.println();
+			formatComment(mWriter, "    ", "The default constructor.");
+			mWriter.println("    public " + node.getName() + "() {");
+			mWriter.println("    }");
+			mWriter.println();
 		}
 
 		if (numNotOptionalParams > 0 && numNotOptionalParams < numTotalParams)
@@ -73,18 +73,18 @@ public class NewUltimateEmit extends Emit {
 	// @Override
 	public void emitPreamble(Node node) throws IOException {
 		super.emitPreamble(node);
-		writer.println("import java.util.List;");
-		writer.println("import de.uni_freiburg.informatik.ultimate.model.location.ILocation;");
-		writer.println("import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BoogieASTNode;");
+		mWriter.println("import java.util.List;");
+		mWriter.println("import de.uni_freiburg.informatik.ultimate.model.location.ILocation;");
+		mWriter.println("import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BoogieASTNode;");
 		if (needsArraysPackage(node)) {
-			writer.println("import java.util.Arrays;");
+			mWriter.println("import java.util.Arrays;");
 		}
 	}
 
 	public void emitNodeHook(Node node) throws IOException {
-		writer.println();
-		writer.println("    public List<BoogieASTNode> getOutgoingNodes() {");
-		writer.println("        List<BoogieASTNode> children = super.getOutgoingNodes();");
+		mWriter.println();
+		mWriter.println("    public List<BoogieASTNode> getOutgoingNodes() {");
+		mWriter.println("        List<BoogieASTNode> children = super.getOutgoingNodes();");
 		Parameter[] parameters = node.getParameters();
 		System.out.println(node.getName() + " has " + parameters.length + " parameters");
 		for (int i = 0; i < parameters.length; i++) {
@@ -95,21 +95,21 @@ public class NewUltimateEmit extends Emit {
 			System.out.println(parameters[i].getName() + " is an array? " + isArray(parameters[i].getType()));
 			
 			if (isArray(parameters[i].getType())) {
-				writer.println(String.format("        if(%s!=null){", parameters[i].getName()));
-				writer.println(String.format("            children.addAll(Arrays.asList(%s));", parameters[i].getName()));
-				writer.println("        }");
+				mWriter.println(String.format("        if(%s!=null){", parameters[i].getName()));
+				mWriter.println(String.format("            children.addAll(Arrays.asList(%s));", parameters[i].getName()));
+				mWriter.println("        }");
 			} else {
-				writer.println("        children.add(" + parameters[i].getName() + ");");
+				mWriter.println("        children.add(" + parameters[i].getName() + ");");
 			}
 		}
-		writer.println("        return children;");
-		writer.println("    }");
+		mWriter.println("        return children;");
+		mWriter.println("    }");
 	}
 
 	private boolean isNoRegularChild(String type) {
 		while (type.endsWith("[]"))
 			type = type.substring(0, type.length() - 2);
-		return !(grammar.getNodeTable().containsKey(type));
+		return !(mGrammar.getNodeTable().containsKey(type));
 	}
 
 	private boolean needsArraysPackage(Node node) {

@@ -16,7 +16,7 @@ public class Main {
 			System.exit(1);
 			return;
 		}
-		Emit emitter = new Emit();
+		Emit emitter = null;
 		boolean debug = false;
 		int i = 0;
 		while (i < param.length) {
@@ -36,7 +36,11 @@ public class Main {
 				break;
 			}
 		}
-
+		
+		if(emitter == null){
+			emitter = new Emit();
+		}
+		
 		for (; i < param.length; i++) {
 			Lexer lexer = new Lexer(new FileReader(param[i]));
 			parser p = new parser(lexer);

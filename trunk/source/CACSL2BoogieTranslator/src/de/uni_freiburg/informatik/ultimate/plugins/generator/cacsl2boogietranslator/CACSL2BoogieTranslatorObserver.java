@@ -3,6 +3,9 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator;
 
+import java.util.List;
+import java.util.Map.Entry;
+
 import org.apache.log4j.Logger;
 import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
 import org.eclipse.cdt.core.parser.util.ASTPrinter;
@@ -21,6 +24,10 @@ import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceSt
 import de.uni_freiburg.informatik.ultimate.core.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
+import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
+import de.uni_freiburg.informatik.ultimate.model.acsl.LTLPrettyPrinter;
+import de.uni_freiburg.informatik.ultimate.model.acsl.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.model.acsl.ast.GlobalLTLInvariant;
 import de.uni_freiburg.informatik.ultimate.model.structure.WrapperNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.result.IResult;
@@ -100,7 +107,32 @@ public class CACSL2BoogieTranslatorObserver implements IUnmanagedObserver {
 		FunctionLineVisitor visitor = new FunctionLineVisitor();
 		inputTU.accept(visitor);
 		CommentParser cparser = new CommentParser(inputTU.getComments(), visitor.getLineRange(), mLogger, main);
-		decorator.setAcslASTs(cparser.processComments());
+		List<ACSLNode> acslNodes = cparser.processComments();
+		// test "pretty printer"
+		for (ACSLNode acslNode : acslNodes) {
+			if (acslNode instanceof GlobalLTLInvariant) {
+				LTLPrettyPrinter printer = new LTLPrettyPrinter();
+				mLogger.info(printer.print(acslNode));
+				LTLExpressionExtractor extractor = new LTLExpressionExtractor();
+				if (!extractor.run(acslNode)) {
+					continue;
+				}
+				mLogger.info(extractor.getLTLFormatString());
+				for (Entry<String, Expression> subexp : extractor.getAP2SubExpressionMap().entrySet()) {
+					mLogger.info(subexp.getKey() + ": " + printer.print(subexp.getValue()));
+				}
+
+				//TODO: Alex
+//				List<VariableDeclaration> globalDeclarations = null;
+//				//create this from extractor.getAP2SubExpressionMap()
+//				Map<String, CheckableExpression> ap2expr = null;
+//				LTLPropertyCheck x = new LTLPropertyCheck(extractor.getLTLFormatString(), ap2expr, globalDeclarations);
+//				//annotate translation unit with x 
+
+			}
+		}
+		// end test
+		decorator.setAcslASTs(acslNodes);
 		// build decorator tree
 		decorator.mapASTs(inputTU);
 
@@ -112,8 +144,10 @@ public class CACSL2BoogieTranslatorObserver implements IUnmanagedObserver {
 			mService.getBacktranslationService().addTranslator(backtranslator);
 		} catch (Exception t) {
 			final IResult result;
-//			String message = "There was an error during the translation process! [" + t.getClass() + ", "
-//					+ t.getMessage() + "]";
+			// String message =
+			// "There was an error during the translation process! [" +
+			// t.getClass() + ", "
+			// + t.getMessage() + "]";
 			if (t instanceof IncorrectSyntaxException) {
 				result = new SyntaxErrorResult(Activator.s_PLUGIN_NAME, ((IncorrectSyntaxException) t).getLocation(),
 						t.getLocalizedMessage());
@@ -121,28 +155,6 @@ public class CACSL2BoogieTranslatorObserver implements IUnmanagedObserver {
 				result = new UnsupportedSyntaxResult<IElement>(Activator.s_PLUGIN_NAME,
 						((UnsupportedSyntaxException) t).getLocation(), t.getLocalizedMessage());
 			} else {
-				// DD: I fiddled with this branch
-				// DD: All of this is not necessary: The result wont be
-				// reported, because you throw an exception
-				// DD: You dont need to print the stacktrace, Ultimate does it
-				// for you
-				// DD: Throwing a new exception hides the stacktrace and masks
-				// all errors under one
-				
-				// something unexpected happened
-				// report it to the user ...
-				// String shortDescription = t.getClass().getSimpleName();
-				// String longDescription = t.getLocalizedMessage();
-				// result = new GenericResult(Activator.s_PLUGIN_ID,
-				// shortDescription, longDescription, Severity.ERROR);
-				//
-				// // Terminate the compile process with a "real" Exception,
-				// // visible to the Ultimate toolchain executer! Something
-				// // really went wrong! The core will decide what to do next!
-				// if (m_ExtendedDebugOutput) {
-				// t.printStackTrace();
-				// }
-				// throw new RuntimeException(message);
 				throw t;
 			}
 			mService.getResultService().reportResult(Activator.s_PLUGIN_ID, result);
@@ -152,43 +164,21 @@ public class CACSL2BoogieTranslatorObserver implements IUnmanagedObserver {
 		return false;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.access.IObserver#finish()
-	 */
 	@Override
 	public void finish() {
 		// Not required.
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * de.uni_freiburg.informatik.ultimate.access.IObserver#getWalkerOptions()
-	 */
 	@Override
 	public WalkerOptions getWalkerOptions() {
 		return null;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.access.IObserver#init()
-	 */
 	@Override
 	public void init() {
 		// Not required.
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * de.uni_freiburg.informatik.ultimate.access.IObserver#performedChanges()
-	 */
 	@Override
 	public boolean performedChanges() {
 		return false;

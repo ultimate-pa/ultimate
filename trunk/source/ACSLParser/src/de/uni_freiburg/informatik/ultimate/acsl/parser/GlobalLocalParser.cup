@@ -220,8 +220,7 @@ terminal WITH, CONST;
 terminal AP;
 terminal INITIALIZED;
 terminal prec_named, prec_forall, prec_exists, prec_lambda, prec_question, prec_no_rel,
-		 prec_rel_list, prec_cast, prec_unary_op, prec_par, prec_ltl_iff, prec_ltl_implies, 
-		 prec_ltl_or, prec_ltl_and, prec_ltl_not, prec_ltl_expr;
+		 prec_rel_list, prec_cast, prec_unary_op, prec_par;
 /*terminal symbols for starting */
 terminal LSTART, GSTART;
 
@@ -294,13 +293,8 @@ precedence right prec_cast, TILDE, NOT, prec_unary_op;
 precedence nonassoc LTCOLON, COLONGT;
 precedence left DOT, ARROW, LSQUARE;
 precedence right prec_par;
-precedence nonassoc prec_ltl_expr;
-precedence left prec_ltl_iff;
-precedence left prec_ltl_implies;
-precedence left prec_ltl_or;
-precedence left prec_ltl_and;
 precedence left UNTIL;
-precedence right GLOBALLY, FINALLY, NEXT, prec_ltl_not;
+precedence right GLOBALLY, FINALLY, NEXT;
 precedence right AP;
 /* bottom up - highest precedence */
 
@@ -370,17 +364,17 @@ lexpr::=
 
 /* LTL extension */
 ltlexpr::=
-  GLOBALLY ltlexpr:e1 {: RESULT = new UnaryExpression(UnaryExpression.Operator.LTLGLOBALLY, e1);:} %prec GLOBALLY
-| FINALLY ltlexpr:e1 {: RESULT = new UnaryExpression(UnaryExpression.Operator.LTLFINALLY, e1);:} %prec FINALLY
-| NEXT ltlexpr:e1 {: RESULT = new UnaryExpression(UnaryExpression.Operator.LTLNEXT, e1);:} %prec NEXT
-| NOT ltlexpr:e {: RESULT = new UnaryExpression(UnaryExpression.Operator.LOGICNEG, e);:} %prec prec_ltl_not
-| ltlexpr:e1 UNTIL ltlexpr:e2 {: RESULT = new BinaryExpression(BinaryExpression.Operator.LTLUNTIL, e1, e2);:} %prec UNTIL
-| ltlexpr:e1 IMPLIES ltlexpr:e2 {: RESULT = new BinaryExpression(BinaryExpression.Operator.LOGICIMPLIES, e1, e2);:} %prec prec_ltl_implies
-| ltlexpr:e1 IFF ltlexpr:e2 {: RESULT = new BinaryExpression(BinaryExpression.Operator.LOGICIFF, e1, e2);:} %prec prec_ltl_iff
-| ltlexpr:e1 OR ltlexpr:e2 {: RESULT = new BinaryExpression(BinaryExpression.Operator.LOGICOR, e1, e2);:} %prec prec_ltl_or   
-| ltlexpr:e1 AND ltlexpr:e2 {:RESULT = new BinaryExpression(BinaryExpression.Operator.LOGICAND, e1, e2);:} %prec prec_ltl_and   
+  GLOBALLY ltlexpr:e1 {: RESULT = new UnaryExpression(UnaryExpression.Operator.LTLGLOBALLY, e1);:} 
+| FINALLY ltlexpr:e1 {: RESULT = new UnaryExpression(UnaryExpression.Operator.LTLFINALLY, e1);:} 
+| NEXT ltlexpr:e1 {: RESULT = new UnaryExpression(UnaryExpression.Operator.LTLNEXT, e1);:} 
+| NOT ltlexpr:e {: RESULT = new UnaryExpression(UnaryExpression.Operator.LOGICNEG, e);:} 
+| ltlexpr:e1 UNTIL ltlexpr:e2 {: RESULT = new BinaryExpression(BinaryExpression.Operator.LTLUNTIL, e1, e2);:} 
+| ltlexpr:e1 IMPLIES ltlexpr:e2 {: RESULT = new BinaryExpression(BinaryExpression.Operator.LOGICIMPLIES, e1, e2);:} 
+| ltlexpr:e1 IFF ltlexpr:e2 {: RESULT = new BinaryExpression(BinaryExpression.Operator.LOGICIFF, e1, e2);:} 
+| ltlexpr:e1 OR ltlexpr:e2 {: RESULT = new BinaryExpression(BinaryExpression.Operator.LOGICOR, e1, e2);:}
+| ltlexpr:e1 AND ltlexpr:e2 {:RESULT = new BinaryExpression(BinaryExpression.Operator.LOGICAND, e1, e2);:}
 | AP LPAR lexpr:e RPAR {: RESULT = e; :}
-| LPAR ltlexpr:e RPAR {: RESULT = e; :} %prec prec_ltl_expr
+| LPAR ltlexpr:e RPAR {: RESULT = e; :} 
 ;
 
 lexpr_rel::=
