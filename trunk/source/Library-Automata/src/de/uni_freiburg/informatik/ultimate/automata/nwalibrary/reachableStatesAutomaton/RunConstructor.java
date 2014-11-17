@@ -36,6 +36,7 @@ import java.util.Stack;
 import java.util.TreeMap;
 
 import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
+import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IncomingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IncomingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IncomingReturnTransition;
@@ -278,11 +279,12 @@ class RunConstructor<LETTER,STATE> {
 	/**
 	 * Returns run whose first state is m_Goal and whose last state is 
 	 * m_Start.
+	 * @throws OperationCanceledException 
 	 */
-	NestedRun<LETTER, STATE> constructRun() {
+	NestedRun<LETTER, STATE> constructRun() throws OperationCanceledException {
 		//TODO: Check if this timeout check is responsible for problems.
 		if (!NestedWordAutomata.getMonitor().continueProcessing()) {
-			throw new ToolchainCanceledException();
+			throw new OperationCanceledException();
 		}
 		assert !m_SummaryMustContainAccepting || m_Goal != null;
 		if (!m_FindSummary && m_Nwars.isInitial(m_Start.getState())) {

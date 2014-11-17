@@ -31,6 +31,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IncomingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IncomingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IncomingReturnTransition;
@@ -57,7 +58,7 @@ class LassoConstructor<LETTER, STATE> {
     
 	public LassoConstructor(
 			NestedWordAutomatonReachableStates<LETTER, STATE> nwars, 
-			StateContainer<LETTER, STATE> goal, SCC scc) {
+			StateContainer<LETTER, STATE> goal, SCC scc) throws OperationCanceledException {
 		m_Nwars = nwars;
 		m_Goal = goal;
 		m_Scc = scc;
@@ -78,7 +79,7 @@ class LassoConstructor<LETTER, STATE> {
 	
 	public LassoConstructor(
 			NestedWordAutomatonReachableStates<LETTER, STATE> nwars, 
-			Summary<LETTER, STATE> summary, SCC scc) {
+			Summary<LETTER, STATE> summary, SCC scc) throws OperationCanceledException {
 		m_Nwars = nwars;
 		m_Goal = summary.getSucc();
 		m_Scc = scc;
@@ -122,8 +123,9 @@ class LassoConstructor<LETTER, STATE> {
 
 	/**
 	 * Use m_SuccInfos to construct a run for a loop that has been found.
+	 * @throws OperationCanceledException 
 	 */
-	private void constructRunOfLoop() {
+	private void constructRunOfLoop() throws OperationCanceledException {
 		//then we reconstruct the run
 		m_Loop = new NestedRun<LETTER, STATE>(m_Goal.getState());
 		StateContainer<LETTER, STATE> current = m_Goal;
