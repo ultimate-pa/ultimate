@@ -73,6 +73,8 @@ public class AutomataScriptTestResultDecider implements ITestResultDecider {
 			return TestResult.FAIL;
 		case TIMEOUT:
 			return TestResult.UNKNOWN;
+		case OUT_OF_MEMORY:
+			return TestResult.UNKNOWN;
 		default:
 			throw new AssertionError();
 		}
