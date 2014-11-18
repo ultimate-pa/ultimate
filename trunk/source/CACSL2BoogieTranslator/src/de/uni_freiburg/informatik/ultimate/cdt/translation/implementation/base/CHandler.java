@@ -122,6 +122,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.IT
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.CodeAnnot;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.Contract;
+import de.uni_freiburg.informatik.ultimate.model.acsl.ast.GlobalLTLInvariant;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.LoopAnnot;
 import de.uni_freiburg.informatik.ultimate.model.annotation.IAnnotations;
 import de.uni_freiburg.informatik.ultimate.model.annotation.Overapprox;
@@ -168,11 +169,14 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.WhileStatement;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.CACSL2BoogieBacktranslator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.LTLExpressionExtractor;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.POINTER_CHECKMODE;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.UNSIGNED_TREATMENT;
 import de.uni_freiburg.informatik.ultimate.result.Check;
+import de.uni_freiburg.informatik.ultimate.result.LTLPropertyCheck;
 import de.uni_freiburg.informatik.ultimate.result.Check.Spec;
+import de.uni_freiburg.informatik.ultimate.result.LTLPropertyCheck.CheckableExpression;
 
 /**
  * Class that handles translation of C nodes to Boogie nodes.
@@ -275,6 +279,8 @@ public class CHandler implements ICHandler {
 	
 	CACSLPreferenceInitializer.UNSIGNED_TREATMENT mUnsignedTreatment;
 
+	private ArrayList<LTLExpressionExtractor> mGlobAcslExtractors;
+
 
 	/**
 	 * Constructor.
@@ -313,6 +319,8 @@ public class CHandler implements ICHandler {
 
 		this.mBoogieIdsOfHeapVars = new LinkedHashSet<String>();
 		this.mCurrentDeclaredTypes = new ArrayDeque<ResultTypes>();
+		
+		this.mGlobAcslExtractors = new ArrayList<>();
 	}
 
 	@Override
@@ -357,6 +365,7 @@ public class CHandler implements ICHandler {
 		}
 		ArrayList<Declaration> decl = new ArrayList<Declaration>();
 
+		checkForACSL(main, null, node, null);
 
 		for (IASTNode child : node.getChildren()) {
 			checkForACSL(main, null, child, null);
@@ -410,7 +419,30 @@ public class CHandler implements ICHandler {
 
 		// handle proc. declaration & resolve their transitive modified globals
 		decl.addAll(mFunctionHandler.calculateTransitiveModifiesClause(main, mMemoryHandler));
-		return new Result(new Unit(loc, decl.toArray(new Declaration[0])));
+		
+		//handle global ACSL stuff
+		//TODO: do it!
+		
+		checkForACSL(main, null, node, null);
+
+		//the overall translation result:
+	    Unit boogieUnit = new Unit(loc, decl.toArray(new Declaration[0]));
+		
+	    //annotate the Unit with LTLPropertyChecks if applicable
+		for (LTLExpressionExtractor ex : mGlobAcslExtractors) {
+			Map<String, LTLPropertyCheck.CheckableExpression> checkableAtomicPropositions = new LinkedHashMap<String, LTLPropertyCheck.CheckableExpression>();
+			
+			LTLPropertyCheck propCheck = new LTLPropertyCheck(ex.getLTLFormatString(), checkableAtomicPropositions, null);
+
+			for (Entry<String, de.uni_freiburg.informatik.ultimate.model.acsl.ast.Expression> en : ex.getAP2SubExpressionMap().entrySet()) {
+				Result r = main.dispatch(en.getValue());
+				checkableAtomicPropositions.put(en.getKey(), propCheck.new CheckableExpression((Expression) r.node, null));
+			}
+
+			propCheck.annotate(boogieUnit);
+		}
+		
+		return new Result(boogieUnit);
 	}
 
 	@Override
@@ -2273,22 +2305,37 @@ public class CHandler implements ICHandler {
 		}
 
 		if (newCType instanceof CPointer && expr.lrVal.cType instanceof CPointer) {
-			if (((CPointer) newCType).pointsToType instanceof CPrimitive
-					&& ((CPrimitive) ((CPointer) newCType).pointsToType).getGeneralType() == GENERALPRIMITIVE.INTTYPE
-					&& ((CPointer) expr.lrVal.cType).pointsToType instanceof CPrimitive
-					&& ((CPrimitive) ((CPointer) expr.lrVal.cType).pointsToType).getGeneralType() == GENERALPRIMITIVE.INTTYPE
-					) {
+			CType newPointsToType = ((CPointer) newCType).pointsToType;
+			CType exprPointsToType = ((CPointer) expr.lrVal.cType).pointsToType;
+			if (newPointsToType instanceof CPrimitive
+					&& exprPointsToType instanceof CPrimitive) {
 				if (
-						(((CPrimitive) ((CPointer) newCType).pointsToType).isUnsigned()
-						&& !((CPrimitive) ((CPointer) expr.lrVal.cType).pointsToType).isUnsigned())
-						||
-						!(((CPrimitive) ((CPointer) newCType).pointsToType).isUnsigned()
-						&& ((CPrimitive) ((CPointer) expr.lrVal.cType).pointsToType).isUnsigned())
+						((CPrimitive) newPointsToType).getGeneralType() == GENERALPRIMITIVE.INTTYPE
+						&& ((CPrimitive) exprPointsToType).getGeneralType() == GENERALPRIMITIVE.INTTYPE
 						) {
-					throw new UnsupportedSyntaxException(loc, "we don't support this cast.");
+					if (
+							(((CPrimitive) newPointsToType).isUnsigned()
+									&& !((CPrimitive) exprPointsToType).isUnsigned())
+									||
+									!(((CPrimitive) newPointsToType).isUnsigned()
+											&& ((CPrimitive) exprPointsToType).isUnsigned())
+							) {
+						throw new UnsupportedSyntaxException(loc, "we don't support this cast.");
+					}
+
+				} else if ( 
+						((CPrimitive) newPointsToType).getGeneralType() == GENERALPRIMITIVE.VOID
+						&& ((CPrimitive) exprPointsToType).getGeneralType() == GENERALPRIMITIVE.INTTYPE
+						||
+						((CPrimitive) newPointsToType).getGeneralType() == GENERALPRIMITIVE.INTTYPE
+						&& ((CPrimitive) exprPointsToType).getGeneralType() == GENERALPRIMITIVE.VOID
+						) {
+						throw new UnsupportedSyntaxException(loc, "we don't support this cast.");
 				}
+
+
 			}
-				
+
 		}
 
 		expr.lrVal = castToType(loc, (RValue) expr.lrVal, newCType);
@@ -2636,8 +2683,31 @@ public class CHandler implements ICHandler {
 	 *            <code>null</code> otherwise.
 	 */
 	private void checkForACSL(Dispatcher main, ArrayList<Statement> stmt, IASTNode next, IASTNode parent) {
-		if (mAcsl != null) {
-			if (mAcsl.mSuccessorCNode == null) {
+ 		if (mAcsl != null) {
+			if (next instanceof IASTTranslationUnit) {
+				for (ACSLNode globAcsl : mAcsl.mAcsl) {
+					if (globAcsl instanceof GlobalLTLInvariant) {
+						LTLExpressionExtractor extractor = new LTLExpressionExtractor();
+						extractor.run(globAcsl);
+						mGlobAcslExtractors.add(extractor);
+//						mLogger.info(extractor.getLTLFormatString());
+//						Map<String, de.uni_freiburg.informatik.ultimate.model.acsl.ast.Expression> expMap = extractor.getAP2SubExpressionMap();
+//						Map<String, Expression> boogieExpMap = new LinkedHashMap<String, Expression>();
+//						for (Entry<String, de.uni_freiburg.informatik.ultimate.model.acsl.ast.Expression> en : expMap.entrySet()) {
+//							Result r = main.dispatch(en.getValue());
+//							boogieExpMap.put(en.getKey(), null);
+//						}
+
+					}
+					try {
+						mAcsl = main.nextACSLStatement();
+					} catch (ParseException e1) {
+						String msg = "Skipped a ACSL node due to: " + e1.getMessage();
+						ILocation loc = LocationFactory.createCLocation(parent);
+						main.unsupportedSyntax(loc, msg);
+					}
+				}
+			} else if (mAcsl.mSuccessorCNode == null) {
 				if (parent != null && stmt != null && next == null) {
 					// ACSL at the end of a function
 					for (ACSLNode acslNode : mAcsl.mAcsl) {
@@ -2664,7 +2734,10 @@ public class CHandler implements ICHandler {
 							throw new IncorrectSyntaxException(loc, msg);
 						}
 					}
-				} // ELSE:
+				}
+				
+				
+				// ELSE:
 					// ACSL for next compound statement -> handle it next call
 					// or in case of translation unit, ACSL in an unexpected
 					// location!
@@ -2699,6 +2772,7 @@ public class CHandler implements ICHandler {
 					ILocation loc = LocationFactory.createCLocation(parent);
 					main.unsupportedSyntax(loc, msg);
 				}
+
 			}
 		}
 	}

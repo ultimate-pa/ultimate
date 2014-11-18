@@ -1158,9 +1158,17 @@ decl_list::=
 decl::=
  GLOBAL INVARIANT any_identifier:i COLON lexpr:e SEMICOLON
  {: GlobalInvariant gInv = new GlobalInvariant(i, e);
+
+     gInv.setStartingLineNumber(parser.getStartLineNumber());
+  	 gInv.setEndingLineNumber(parser.getEndLineNumber());
+
  	parser.setAcslNode(gInv); :} 
 | LTL INVARIANT any_identifier:i COLON ltlexpr:e SEMICOLON
  {: GlobalLTLInvariant ltlInv = new GlobalLTLInvariant(i, e);
+
+     ltlInv.setStartingLineNumber(parser.getStartLineNumber());
+  	 ltlInv.setEndingLineNumber(parser.getEndLineNumber());
+
  	parser.setAcslNode(ltlInv); :} 
 | type_annot:tInv
  {: parser.setAcslNode(tInv); :}  
