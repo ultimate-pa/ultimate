@@ -4,7 +4,7 @@
 //"output U occurs at most twice before output Z"
 //Formula is satisfied.
 //Problem19.c
-//(! (F oZ) | ((! oU & ! oZ) U (oZ | ((oU & ! oZ) U (oZ | ((! oU & ! oZ) U (oZ | ((oU & ! oZ) U (oZ | (! oU U oZ))))))))))
+//(G (! oY | (F oU)))
 #include <stdio.h> 
 #include <assert.h>
 #include <math.h>
@@ -9762,7 +9762,7 @@
 	}
 
 int input, output;
-	//@ ltl invariant positive: (! (<> AP(output == 26)) || ((! AP(output == 21) && ! AP(output == 26)) U (AP(output == 26) || ((AP(output == 21) && ! AP(output == 26)) U (AP(output == 26) || ((! AP(output == 21) && ! AP(output == 26)) U (AP(output == 26) || ((AP(output == 21) && ! AP(output == 26)) U (AP(output == 26) || (! AP(output == 21) U AP(output == 26)))))))))))
+	//@ ltl invariant positive: ([] (! AP(output == 25) || (<> AP(output == 21))))
 	
 int main()
 {

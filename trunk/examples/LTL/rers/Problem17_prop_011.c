@@ -4,7 +4,7 @@
 //"output X does never occur before output V"
 //Formula is satisfied.
 //Problem17.c
-//(! oX WU oV)
+//(! (F iF) | (! oU U (iA | iF)))
 #include <stdio.h> 
 #include <assert.h>
 #include <math.h>
@@ -2567,7 +2567,7 @@
 	}
 
 int input, output;
-	//@ ltl invariant positive: (! AP(output == 24) WU AP(output == 22))
+	//@ ltl invariant positive: (! (<> AP(input == 6)) || (! AP(output == 21) U (AP(input == 1) || AP(input == 6))))
 	
 int main()
 {

@@ -3,7 +3,7 @@
 //"output V does never occur after input F until input B"
 //Formula is satisfied.
 //Problem17.c
-//(G (! (iF & ! iB) | (! oV WU iB)))
+//(G ! oW)
 #include <stdio.h> 
 #include <assert.h>
 #include <math.h>
@@ -2566,7 +2566,7 @@
 	}
 
 int input, output;
-	//@ ltl invariant positive: ([] (! (AP(input == 6) && ! AP(input == 2)) || (! AP(output == 22) WU AP(input == 2))))
+	//@ ltl invariant positive: ([] ! AP(output == 23))
 	
 int main()
 {

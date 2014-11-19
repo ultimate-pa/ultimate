@@ -4,7 +4,7 @@
 //"output Y occurs between input D and output V"
 //Formula is satisfied.
 //Problem17.c
-//(G (! (iD & ! oV) | (! oV WU (oY & ! oV))))
+//(G (! iF | (G ! oY)))
 #include <stdio.h> 
 #include <assert.h>
 #include <math.h>
@@ -2567,7 +2567,7 @@
 	}
 
 int input, output;
-	//@ ltl invariant positive: ([] (! (AP(input == 4) && ! AP(output == 22)) || (! AP(output == 22) WU (AP(output == 25) && ! AP(output == 22)))))
+	//@ ltl invariant positive: ([] (! AP(input == 6) || ([] ! AP(output == 25))))
 	
 int main()
 {

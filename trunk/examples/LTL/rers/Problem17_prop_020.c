@@ -4,7 +4,7 @@
 //"output Z does never occur between output V and input D"
 //Formula is satisfied.
 //Problem17.c
-//(G (! ((oV & ! iD) & (F iD)) | (! oZ U iD)))
+//((G ! iC) | (F (iC & (F oU))))
 #include <stdio.h> 
 #include <assert.h>
 #include <math.h>
@@ -2567,7 +2567,7 @@
 	}
 
 int input, output;
-	//@ ltl invariant positive: ([] (! ((AP(output == 22) && ! AP(input == 4)) && (<> AP(input == 4))) || (! AP(output == 26) U AP(input == 4))))
+	//@ ltl invariant positive: (([] ! AP(input == 3)) || (<> (AP(input == 3) && (<> AP(output == 21)))))
 	
 int main()
 {

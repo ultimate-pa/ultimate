@@ -4,7 +4,7 @@
 //"output Z occurs eventually"
 //Formula is satisfied.
 //Problem16.c
-//(F oZ)
+//(! (F oY) | (! oU U (iE | oY)))
 #include <stdio.h> 
 #include <assert.h>
 #include <math.h>
@@ -1759,7 +1759,7 @@
 	}
 
 int input, output;
-	//@ ltl invariant positive: (<> AP(output == 26))
+	//@ ltl invariant positive: (! (<> AP(output == 25)) || (! AP(output == 21) U (AP(input == 5) || AP(output == 25))))
 	
 int main()
 {

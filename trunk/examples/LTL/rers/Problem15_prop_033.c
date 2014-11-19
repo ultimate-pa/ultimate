@@ -4,7 +4,7 @@
 //"output X does never occur"
 //Formula is satisfied.
 //Problem15.c
-//(G ! oX)
+//(! (F oV) | ((! oX & ! oV) U (oV | ((oX & ! oV) U (oV | ((! oX & ! oV) U (oV | ((oX & ! oV) U (oV | (! oX U oV))))))))))
 #include <stdio.h> 
 #include <assert.h>
 #include <math.h>
@@ -1753,7 +1753,7 @@
 	}
 
 int input, output;
-	//@ ltl invariant positive: ([] ! AP(output == 24))
+	//@ ltl invariant positive: (! (<> AP(output == 22)) || ((! AP(output == 24) && ! AP(output == 22)) U (AP(output == 22) || ((AP(output == 24) && ! AP(output == 22)) U (AP(output == 22) || ((! AP(output == 24) && ! AP(output == 22)) U (AP(output == 22) || ((AP(output == 24) && ! AP(output == 22)) U (AP(output == 22) || (! AP(output == 24) U AP(output == 22)))))))))))
 
 	
 int main()

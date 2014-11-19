@@ -4,7 +4,7 @@
 //"output V does never occur between input E and input F"
 //Formula is satisfied.
 //Problem19.c
-//(G (! ((iE & ! iF) & (F iF)) | (! oV U iF)))
+//(G (! ((iA & ! iE) & (F iE)) | (! oU U iE)))
 #include <stdio.h> 
 #include <assert.h>
 #include <math.h>
@@ -9762,7 +9762,7 @@
 	}
 
 int input, output;
-	//@ ltl invariant positive: ([] (! ((AP(input == 5) && ! AP(input == 6)) && (<> AP(input == 6))) || (! AP(output == 22) U AP(input == 6))))
+	//@ ltl invariant positive: ([] (! ((AP(input == 1) && ! AP(input == 5)) && (<> AP(input == 5))) || (! AP(output == 21) U AP(input == 5))))
 	
 int main()
 {

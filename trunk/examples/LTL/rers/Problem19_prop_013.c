@@ -4,7 +4,7 @@
 //"output U responds to output V"
 //Formula is satisfied.
 //Problem19.c
-//(G (! oV | (F oU)))
+//(! (F oZ) | (! oU U (oX | oZ)))
 #include <stdio.h> 
 #include <assert.h>
 #include <math.h>
@@ -9762,7 +9762,7 @@
 	}
 
 int input, output;
-	//@ ltl invariant positive: ([] (! AP(output == 22) || (<> AP(output == 21))))
+	//@ ltl invariant positive: (! (<> AP(output == 26)) || (! AP(output == 21) U (AP(output == 24) || AP(output == 26))))
 	
 int main()
 {

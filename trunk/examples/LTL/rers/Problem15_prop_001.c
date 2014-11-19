@@ -4,7 +4,7 @@
 //"output X does never occur after output V"
 //Formula is satisfied.
 //Problem15.c
-//(G (! oV | (G ! oX)))
+//(G ! oY)
 #include <stdio.h> 
 #include <assert.h>
 #include <math.h>
@@ -1753,7 +1753,7 @@
 	}
 
 int input, output;
-	//@ ltl invariant positive: ([] (! AP(output == 22) || ([] ! AP(output == 24))))
+	//@ ltl invariant positive: ([] ! AP(output == 25))
 
 	
 int main()

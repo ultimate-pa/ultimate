@@ -4,7 +4,7 @@
 //"output W does never occur before input B"
 //Formula is satisfied.
 //Problem17.c
-//(! oW WU iB)
+//(F oY)
 #include <stdio.h> 
 #include <assert.h>
 #include <math.h>
@@ -2567,7 +2567,7 @@
 	}
 
 int input, output;
-	//@ ltl invariant positive: (! AP(output == 23) WU AP(input == 2))
+	//@ ltl invariant positive: (<> AP(output == 25))
 	
 int main()
 {

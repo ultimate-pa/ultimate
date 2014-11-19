@@ -4,7 +4,7 @@
 //"output Y occurs eventually"
 //Formula is satisfied.
 //Problem17.c
-//(F oY)
+//((G ! iF) | (F (iF & (F oW))))
 #include <stdio.h> 
 #include <assert.h>
 #include <math.h>
@@ -2567,7 +2567,7 @@
 	}
 
 int input, output;
-	//@ ltl invariant positive: (<> AP(output == 25))
+	//@ ltl invariant positive: (([] ! AP(input == 6)) || (<> (AP(input == 6) && (<> AP(output == 23)))))
 	
 int main()
 {

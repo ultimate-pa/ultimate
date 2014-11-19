@@ -4,7 +4,7 @@
 //"output Z does never occur after output W"
 //Formula is satisfied.
 //Problem18.c
-//(G (! oW | (G ! oZ)))
+//(! (F oW) | (! oY U (iB | oW)))
 #include <stdio.h> 
 #include <assert.h>
 #include <math.h>
@@ -4243,7 +4243,7 @@
 	}
 
 int input, output;
-	//@ ltl invariant positive: ([] (! AP(output == 23) || ([] ! AP(output == 26))))
+	//@ ltl invariant positive: (! (<> AP(output == 23)) || (! AP(output == 25) U (AP(input == 2) || AP(output == 23))))
 
 	
 int main()

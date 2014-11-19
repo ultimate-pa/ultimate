@@ -3,7 +3,7 @@
 //"input B precedes output W"
 //Formula is satisfied.
 //Problem14.c
-//(! oW WU iB)
+//(F oZ)
 #include <stdio.h> 
 #include <assert.h>
 #include <math.h>
@@ -869,7 +869,7 @@
 	}
 
 int input, output;
-	//@ ltl invariant positive: (! AP(output == 23) WU AP(input == 2))
+	//@ ltl invariant positive: (<> AP(output == 26))
 	
 int main()
 {

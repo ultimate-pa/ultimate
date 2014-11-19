@@ -4,7 +4,7 @@
 //"output X occurs at most twice"
 //Formula is satisfied.
 //Problem19.c
-//(! oX WU (oX WU (! oX WU (oX WU (G ! oX)))))
+//((G ! iC) | (F (iC & (F oY))))
 #include <stdio.h> 
 #include <assert.h>
 #include <math.h>
@@ -9762,7 +9762,7 @@
 	}
 
 int input, output;
-	//@ ltl invariant positive: (! AP(output == 24) WU (AP(output == 24) WU (! AP(output == 24) WU (AP(output == 24) WU ([] ! AP(output == 24))))))
+	//@ ltl invariant positive: (([] ! AP(input == 3)) || (<> (AP(input == 3) && (<> AP(output == 25)))))
 	
 int main()
 {

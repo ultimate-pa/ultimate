@@ -4,7 +4,7 @@
 //"output W occurs between output Z and output X"
 //Formula is satisfied.
 //Problem14.c
-//(G (! (oZ & ! oX) | (! oX WU (oW & ! oX))))
+//((G ! oV) | (F (oV & (F oX))))
 #include <stdio.h> 
 #include <assert.h>
 #include <math.h>
@@ -870,7 +870,7 @@
 	}
 
 int input, output;
-	//@ ltl invariant positive: ([] (! (AP(output == 26) && ! AP(output == 24)) || (! AP(output == 24) WU (AP(output == 23) && ! AP(output == 24)))))
+	//@ ltl invariant positive: (([] ! AP(output == 22)) || (<> (AP(output == 22) && (<> AP(output == 24)))))
 	
 int main()
 {
