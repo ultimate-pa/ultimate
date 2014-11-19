@@ -5,7 +5,7 @@ import org.osgi.framework.ServiceReference;
 import org.osgi.service.http.HttpService;
 import org.osgi.util.tracker.ServiceTracker;
 
-import de.uni_freiburg.informatik.ultimate.website.UltimateInterface;
+import de.uni_freiburg.informatik.ultimate.website.UltimateHttpServlet;
 
 /**
  * @author Markus Lindenmann
@@ -25,31 +25,17 @@ public class HttpTracker extends ServiceTracker<Object, HttpService> {
 		super(context, HttpService.class.getName(), null);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * org.osgi.util.tracker.ServiceTracker#addingService(org.osgi.framework
-	 * .ServiceReference)
-	 */
 	@Override
 	public HttpService addingService(ServiceReference<Object> reference) {
 		final HttpService http = (HttpService) context.getService(reference);
 		try {
-			http.registerServlet("/if", new UltimateInterface(), null, null);
+			http.registerServlet("/if", new UltimateHttpServlet(), null, null);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 		return http;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * org.osgi.util.tracker.ServiceTracker#removedService(org.osgi.framework
-	 * .ServiceReference, java.lang.Object)
-	 */
 	@Override
 	public void removedService(ServiceReference<Object> reference,
 			HttpService service) {
@@ -58,13 +44,6 @@ public class HttpTracker extends ServiceTracker<Object, HttpService> {
 		super.removedService(reference, service);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * org.osgi.util.tracker.ServiceTracker#modifiedService(org.osgi.framework
-	 * .ServiceReference, java.lang.Object)
-	 */
 	@Override
 	public void modifiedService(ServiceReference<Object> reference,
 			HttpService service) {

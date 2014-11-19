@@ -4,15 +4,15 @@ Bundle-Name: WebInterface
 Bundle-SymbolicName: WebInterface;singleton:=true
 Bundle-Version: 0.0.1
 Bundle-Activator: webinterface.Activator
-Bundle-Localization: plugin
 Require-Bundle: UltimateCore,
  WebUltimateBridge,
  Library-log4j
 Bundle-ClassPath: .
 Import-Package: javax.servlet,
- javax.servlet.http;version="2.5.0",
- org.eclipse.equinox.http.registry;bundle-version="1.1.100",
- org.osgi.framework;version="1.5.0",
- org.osgi.service.http;version="1.2.1",
- org.osgi.util.tracker;version="1.4.0"
+ javax.servlet.http,
+ org.eclipse.equinox.http.registry,
+ org.osgi.framework,
+ org.osgi.service.http,
+ org.osgi.util.tracker
 Bundle-ActivationPolicy: lazy
+Bundle-RequiredExecutionEnvironment: JavaSE-1.7

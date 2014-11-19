@@ -6,7 +6,7 @@ Bundle-Version: 0.0.1
 Bundle-Activator: webultimatebridge.Activator
 Require-Bundle: org.eclipse.core.runtime
 Bundle-ActivationPolicy: lazy
-Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+Bundle-RequiredExecutionEnvironment: JavaSE-1.7
 Export-Package: de.uni_freiburg.informatik.ultimate.website,
  de.uni_freiburg.informatik.ultimate.website.toolchains,
  resources.examples

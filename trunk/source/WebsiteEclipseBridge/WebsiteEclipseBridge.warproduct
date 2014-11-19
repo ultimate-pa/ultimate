@@ -13,6 +13,8 @@
       <plugin id="CDTParser"/>
       <plugin id="CoreRCPTest" fragment="true"/>
       <plugin id="JavaCup"/>
+      <plugin id="Library-ApacheCommonsLang"/>
+      <plugin id="Library-Jung"/>
       <plugin id="Library-LassoRanker"/>
       <plugin id="Library-ModelCheckerUtils"/>
       <plugin id="Library-SMTLIB"/>
@@ -28,6 +30,8 @@
       <plugin id="com.ibm.icu"/>
       <plugin id="de.uni_freiburg.informatik.ultimate.automata"/>
       <plugin id="de.uni_freiburg.informatik.ultimate.boogie.printer"/>
+      <plugin id="de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation"/>
+      <plugin id="de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies"/>
       <plugin id="de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker"/>
       <plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.automatascriptinterpreter"/>
       <plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding"/>
@@ -36,6 +40,7 @@
       <plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder"/>
       <plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction"/>
       <plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstractionconcurrent"/>
+      <plugin id="javax.xml"/>
       <plugin id="org.apache.log4j"/>
       <plugin id="org.eclipse.cdt.core"/>
       <plugin id="org.eclipse.cdt.core.linux" fragment="true"/>
@@ -53,6 +58,7 @@
       <plugin id="org.eclipse.core.filesystem.win32.x86_64" fragment="true"/>
       <plugin id="org.eclipse.core.jobs"/>
       <plugin id="org.eclipse.core.resources"/>
+      <plugin id="org.eclipse.core.resources.win32.x86_64" fragment="true"/>
       <plugin id="org.eclipse.core.runtime"/>
       <plugin id="org.eclipse.core.runtime.compatibility.registry" fragment="true"/>
       <plugin id="org.eclipse.core.variables"/>
@@ -64,7 +70,6 @@
       <plugin id="org.eclipse.equinox.preferences"/>
       <plugin id="org.eclipse.equinox.registry"/>
       <plugin id="org.eclipse.equinox.servletbridge"/>
-      <plugin id="org.eclipse.equinox.servletbridge.extensionbundle" fragment="true"/>
       <plugin id="org.eclipse.equinox.transforms.hook" fragment="true"/>
       <plugin id="org.eclipse.equinox.weaving.hook" fragment="true"/>
       <plugin id="org.eclipse.ltk.core.refactoring"/>
@@ -83,6 +88,8 @@
       <plugin id="BoogiePreprocessor" autoStart="true" startLevel="0" />
       <plugin id="CDTParser" autoStart="true" startLevel="0" />
       <plugin id="JavaCup" autoStart="true" startLevel="0" />
+      <plugin id="Library-ApacheCommonsLang" autoStart="true" startLevel="0" />
+      <plugin id="Library-Jung" autoStart="true" startLevel="0" />
       <plugin id="Library-LassoRanker" autoStart="true" startLevel="0" />
       <plugin id="Library-ModelCheckerUtils" autoStart="true" startLevel="0" />
       <plugin id="Library-SMTLIB" autoStart="true" startLevel="0" />
@@ -97,6 +104,8 @@
       <plugin id="com.ibm.icu" autoStart="true" startLevel="0" />
       <plugin id="de.uni_freiburg.informatik.ultimate.automata" autoStart="true" startLevel="0" />
       <plugin id="de.uni_freiburg.informatik.ultimate.boogie.printer" autoStart="true" startLevel="0" />
+      <plugin id="de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation" autoStart="true" startLevel="0" />
+      <plugin id="de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies" autoStart="true" startLevel="0" />
       <plugin id="de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker" autoStart="true" startLevel="0" />
       <plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.automatascriptinterpreter" autoStart="true" startLevel="0" />
       <plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding" autoStart="true" startLevel="0" />
@@ -105,18 +114,19 @@
       <plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder" autoStart="true" startLevel="0" />
       <plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction" autoStart="true" startLevel="0" />
       <plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstractionconcurrent" autoStart="true" startLevel="0" />
+      <plugin id="javax.xml" autoStart="true" startLevel="0" />
       <plugin id="org.apache.log4j" autoStart="true" startLevel="0" />
       <plugin id="org.eclipse.cdt.core" autoStart="true" startLevel="0" />
+      <plugin id="org.eclipse.cdt.core.linux" autoStart="true" startLevel="0" />
       <plugin id="org.eclipse.cdt.core.linux.x86" autoStart="true" startLevel="0" />
-      <plugin id="org.eclipse.cdt.core.win32" autoStart="true" startLevel="0" />
-      <plugin id="org.eclipse.cdt.core.win32.x86_64" autoStart="true" startLevel="0" />
+      <plugin id="org.eclipse.cdt.core.linux.x86_64" autoStart="true" startLevel="0" />
       <plugin id="org.eclipse.core.commands" autoStart="true" startLevel="0" />
       <plugin id="org.eclipse.core.contenttype" autoStart="true" startLevel="0" />
       <plugin id="org.eclipse.core.expressions" autoStart="true" startLevel="0" />
       <plugin id="org.eclipse.core.filebuffers" autoStart="true" startLevel="0" />
       <plugin id="org.eclipse.core.filesystem" autoStart="true" startLevel="0" />
       <plugin id="org.eclipse.core.filesystem.linux.x86" autoStart="true" startLevel="0" />
-      <plugin id="org.eclipse.core.filesystem.win32.x86_64" autoStart="true" startLevel="0" />
+      <plugin id="org.eclipse.core.filesystem.linux.x86_64" autoStart="true" startLevel="0" />
       <plugin id="org.eclipse.core.jobs" autoStart="true" startLevel="0" />
       <plugin id="org.eclipse.core.resources" autoStart="true" startLevel="0" />
       <plugin id="org.eclipse.core.runtime" autoStart="true" startLevel="0" />
@@ -139,7 +149,7 @@
 
    <warConfiguration webXml="/WebsiteEclipseBridge/WEB-INF/web.xml" launchIni="/WebsiteEclipseBridge/WEB-INF/launch.ini">
    <libraries>
-      <library path="org.eclipse.equinox.servletbridge_1.2.100.v20110502.jar" fromTarget="true"/>
+      <library path="org.eclipse.equinox.servletbridge_1.2.300.v20130508-1243.jar" fromTarget="true"/>
    </libraries>
    </warConfiguration>
 </product>

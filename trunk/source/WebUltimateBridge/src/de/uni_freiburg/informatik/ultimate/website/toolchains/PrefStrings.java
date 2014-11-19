@@ -51,7 +51,7 @@ public class PrefStrings {
 	public static final String s_buchiautomizer = "de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer";
 	public static final String s_automatascriptinterpreter = "de.uni_freiburg.informatik.ultimate.plugins.generator.automatascriptinterpreter";
 	public static final String s_blockencoding = "de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding";
-	public static final String s_traceAbstractionConcurrent = "de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstractionConcurrent";
+	public static final String s_traceAbstractionConcurrent = "de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstractionconcurrent";
 	
 	public static final String s_lassoRanker = "de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker";
 	public static final String s_traceAbstraction = "de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction";
