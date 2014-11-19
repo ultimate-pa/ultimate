@@ -4,7 +4,7 @@
 //"output U occurs eventually"
 //Formula is satisfied.
 //Problem16.c
-//(G (! ((oU & ! oV) & (F oV)) | (! oW U oV)))
+//(F oU)
 #include <stdio.h> 
 #include <assert.h>
 #include <math.h>
@@ -1759,7 +1759,7 @@
 	}
 
 int input, output;
-	//@ ltl invariant positive: ([] (! ((AP(output == 21) && ! AP(output == 22)) && (<> AP(output == 22))) || (! AP(output == 23) U AP(output == 22))))
+	//@ ltl invariant positive: (<> AP(output == 21))
 	
 int main()
 {

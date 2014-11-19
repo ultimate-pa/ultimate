@@ -4,7 +4,7 @@
 //"input B precedes output Y before input C"
 //Formula is satisfied.
 //Problem18.c
-//(G (! ((oW & ! oU) & (F oU)) | (! oX U oU)))
+//(! (F iC) | (! oY U (iB | iC)))
 #include <stdio.h> 
 #include <assert.h>
 #include <math.h>
@@ -4243,7 +4243,7 @@
 	}
 
 int input, output;
-	//@ ltl invariant positive: ([] (! ((AP(output == 23) && ! AP(output == 21)) && (<> AP(output == 21))) || (! AP(output == 24) U AP(output == 21))))
+	//@ ltl invariant positive: (! (<> AP(input == 3)) || (! AP(output == 25) U (AP(input == 2) || AP(input == 3))))
 
 	
 int main()

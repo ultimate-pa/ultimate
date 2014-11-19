@@ -4,7 +4,7 @@
 //"output V does never occur"
 //Formula is satisfied.
 //Problem17.c
-//(G (! iB | (F oX)))
+//(G ! oV)
 #include <stdio.h> 
 #include <assert.h>
 #include <math.h>
@@ -2567,7 +2567,7 @@
 	}
 
 int input, output;
-	//@ ltl invariant positive: ([] (! AP(input == 2) || (<> AP(output == 24))))
+	//@ ltl invariant positive: ([] ! AP(output == 22))
 	
 int main()
 {

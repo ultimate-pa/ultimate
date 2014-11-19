@@ -4,7 +4,7 @@
 //"output V occurs after input D"
 //Formula is satisfied.
 //Problem16.c
-//(G (! (oZ & ! iA) | (! iA U (oY & ! iA))))
+//((G ! iD) | (F (iD & (F oV))))
 #include <stdio.h> 
 #include <assert.h>
 #include <math.h>
@@ -1759,7 +1759,7 @@
 	}
 
 int input, output;
-	//@ ltl invariant positive: ([] (! (AP(output == 26) && ! AP(input == 1)) || (! AP(input == 1) U (AP(output == 25) && ! AP(input == 1)))))
+	//@ ltl invariant positive: (([] ! AP(input == 4)) || (<> (AP(input == 4) && (<> AP(output == 22)))))
 	
 int main()
 {

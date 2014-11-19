@@ -5,7 +5,7 @@
 //Formula is not satisfied! An error path is
 //[iE, oV, iF, oY, iA, oU, iB, oZ, iE, oY, iD, oV, iE, oZ] ([iE, oZ])*
 //Problem14.c
-//(! (F oW) | (! oV U (oZ | oW)))
+//(G (! (oY & ! iB) | (! oZ WU iB)))
 #include <stdio.h> 
 #include <assert.h>
 #include <math.h>
@@ -871,7 +871,7 @@
 	}
 
 int input, output;
-	//@ ltl invariant positive: (! (<> AP(output == 23)) || (! AP(output == 22) U (AP(output == 26) || AP(output == 23))))
+	//@ ltl invariant positive: ([] (! (AP(output == 25) && ! AP(input == 2)) || (! AP(output == 26) WU AP(input == 2))))
 	
 int main()
 {

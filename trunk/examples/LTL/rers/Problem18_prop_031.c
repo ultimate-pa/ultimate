@@ -4,7 +4,7 @@
 //"output X does never occur after input A until input D"
 //Formula is satisfied.
 //Problem18.c
-//(! (F iB) | ((! oZ & ! iB) U (iB | ((oZ & ! iB) U (iB | ((! oZ & ! iB) U (iB | ((oZ & ! iB) U (iB | (! oZ U iB))))))))))
+//(G (! (iA & ! iD) | (! oX WU iD)))
 #include <stdio.h> 
 #include <assert.h>
 #include <math.h>
@@ -4243,7 +4243,7 @@
 	}
 
 int input, output;
-	//@ ltl invariant positive: (! (<> AP(input == 2)) || ((! AP(output == 26) && ! AP(input == 2)) U (AP(input == 2) || ((AP(output == 26) && ! AP(input == 2)) U (AP(input == 2) || ((! AP(output == 26) && ! AP(input == 2)) U (AP(input == 2) || ((AP(output == 26) && ! AP(input == 2)) U (AP(input == 2) || (! AP(output == 26) U AP(input == 2)))))))))))
+	//@ ltl invariant positive: ([] (! (AP(input == 1) && ! AP(input == 4)) || (! AP(output == 24) WU AP(input == 4))))
 
 	
 int main()

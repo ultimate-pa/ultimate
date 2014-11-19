@@ -4,7 +4,7 @@
 //"input A precedes output U before input F"
 //Formula is satisfied.
 //Problem17.c
-//(! (F oV) | ((! oW & ! oV) U (oV | ((oW & ! oV) U (oV | ((! oW & ! oV) U (oV | ((oW & ! oV) U (oV | (! oW U oV))))))))))
+//(! (F iF) | (! oU U (iA | iF)))
 #include <stdio.h> 
 #include <assert.h>
 #include <math.h>
@@ -2567,7 +2567,7 @@
 	}
 
 int input, output;
-	//@ ltl invariant positive: (! (<> AP(output == 22)) || ((! AP(output == 23) && ! AP(output == 22)) U (AP(output == 22) || ((AP(output == 23) && ! AP(output == 22)) U (AP(output == 22) || ((! AP(output == 23) && ! AP(output == 22)) U (AP(output == 22) || ((AP(output == 23) && ! AP(output == 22)) U (AP(output == 22) || (! AP(output == 23) U AP(output == 22)))))))))))
+	//@ ltl invariant positive: (! (<> AP(input == 6)) || (! AP(output == 21) U (AP(input == 1) || AP(input == 6))))
 	
 int main()
 {

@@ -4,7 +4,7 @@
 //"output W does never occur after output U until output V"
 //Formula is satisfied.
 //Problem17.c
-//(! (F oW) | ((! oX & ! oW) U (oW | ((oX & ! oW) U (oW | ((! oX & ! oW) U (oW | ((oX & ! oW) U (oW | (! oX U oW))))))))))
+//(G (! (oU & ! oV) | (! oW WU oV)))
 #include <stdio.h> 
 #include <assert.h>
 #include <math.h>
@@ -2567,7 +2567,7 @@
 	}
 
 int input, output;
-	//@ ltl invariant positive: (! (<> AP(output == 23)) || ((! AP(output == 24) && ! AP(output == 23)) U (AP(output == 23) || ((AP(output == 24) && ! AP(output == 23)) U (AP(output == 23) || ((! AP(output == 24) && ! AP(output == 23)) U (AP(output == 23) || ((AP(output == 24) && ! AP(output == 23)) U (AP(output == 23) || (! AP(output == 24) U AP(output == 23)))))))))))
+	//@ ltl invariant positive: ([] (! (AP(output == 21) && ! AP(output == 22)) || (! AP(output == 23) WU AP(output == 22))))
 	
 int main()
 {

@@ -4,7 +4,7 @@
 //"output W does never occur between input E and input D"
 //Formula is satisfied.
 //Problem18.c
-//(G ! oX)
+//(G (! ((iE & ! iD) & (F iD)) | (! oW U iD)))
 #include <stdio.h> 
 #include <assert.h>
 #include <math.h>
@@ -4243,7 +4243,7 @@
 	}
 
 int input, output;
-	//@ ltl invariant positive: ([] ! AP(output == 24))
+	//@ ltl invariant positive: ([] (! ((AP(input == 5) && ! AP(input == 4)) && (<> AP(input == 4))) || (! AP(output == 23) U AP(input == 4))))
 
 	
 int main()

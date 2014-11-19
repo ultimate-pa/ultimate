@@ -4,7 +4,7 @@
 //"output W does never occur before input F"
 //Formula is satisfied.
 //Problem14.c
-//(! (F iE) | ((! oZ & ! iE) U (iE | ((oZ & ! iE) U (iE | ((! oZ & ! iE) U (iE | ((oZ & ! iE) U (iE | (! oZ U iE))))))))))
+//(! oW WU iF)
 #include <stdio.h> 
 #include <assert.h>
 #include <math.h>
@@ -870,7 +870,7 @@
 	}
 
 int input, output;
-	//@ ltl invariant positive: (! (<> AP(input == 5)) || ((! AP(output == 26) && ! AP(input == 5)) U (AP(input == 5) || ((AP(output == 26) && ! AP(input == 5)) U (AP(input == 5) || ((! AP(output == 26) && ! AP(input == 5)) U (AP(input == 5) || ((AP(output == 26) && ! AP(input == 5)) U (AP(input == 5) || (! AP(output == 26) U AP(input == 5)))))))))))
+	//@ ltl invariant positive: (! AP(output == 23) WU AP(input == 6))
 	
 int main()
 {

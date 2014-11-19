@@ -4,7 +4,7 @@
 //"output V does never occur before input D"
 //Formula is satisfied.
 //Problem18.c
-//(! (F oZ) | (! oU U (iE | oZ)))
+//(! oV WU iD)
 #include <stdio.h> 
 #include <assert.h>
 #include <math.h>
@@ -4243,7 +4243,7 @@
 	}
 
 int input, output;
-	//@ ltl invariant positive: (! (<> AP(output == 26)) || (! AP(output == 21) U (AP(input == 5) || AP(output == 26))))
+	//@ ltl invariant positive: (! AP(output == 22) WU AP(input == 4))
 
 	
 int main()

@@ -4,7 +4,7 @@
 //"output W does never occur"
 //Formula is satisfied.
 //Problem14.c
-//(G (! iA | (G ! oU)))
+//(G ! oW)
 #include <stdio.h> 
 #include <assert.h>
 #include <math.h>
@@ -870,7 +870,7 @@
 	}
 
 int input, output;
-	//@ ltl invariant positive: ([] (! AP(input == 1) || ([] ! AP(output == 21))))
+	//@ ltl invariant positive: ([] ! AP(output == 23))
 	
 int main()
 {

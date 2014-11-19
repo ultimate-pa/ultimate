@@ -4,7 +4,7 @@
 //"input D precedes output V"
 //Formula is satisfied.
 //Problem17.c
-//((G ! iD) | (F (iD & (F oU))))
+//(! oV WU iD)
 #include <stdio.h> 
 #include <assert.h>
 #include <math.h>
@@ -2567,7 +2567,7 @@
 	}
 
 int input, output;
-	//@ ltl invariant positive: (([] ! AP(input == 4)) || (<> (AP(input == 4) && (<> AP(output == 21)))))
+	//@ ltl invariant positive: (! AP(output == 22) WU AP(input == 4))
 	
 int main()
 {

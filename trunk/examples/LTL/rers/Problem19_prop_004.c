@@ -4,7 +4,7 @@
 //"output W occurs between output V and input B"
 //Formula is satisfied.
 //Problem19.c
-//(G ! oZ)
+//(G (! (oV & ! iB) | (! iB WU (oW & ! iB))))
 #include <stdio.h> 
 #include <assert.h>
 #include <math.h>
@@ -9762,7 +9762,7 @@
 	}
 
 int input, output;
-	//@ ltl invariant positive: ([] ! AP(output == 26))
+	//@ ltl invariant positive: ([] (! (AP(output == 22) && ! AP(input == 2)) || (! AP(input == 2) WU (AP(output == 23) && ! AP(input == 2)))))
 	
 int main()
 {

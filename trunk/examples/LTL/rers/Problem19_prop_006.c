@@ -4,7 +4,7 @@
 //"output Z precedes output V before input C"
 //Formula is satisfied.
 //Problem19.c
-//(G (! (iF & ! iE) | (! iE U (oU & ! iE))))
+//(! (F iC) | (! oV U (oZ | iC)))
 #include <stdio.h> 
 #include <assert.h>
 #include <math.h>
@@ -9762,7 +9762,7 @@
 	}
 
 int input, output;
-	//@ ltl invariant positive: ([] (! (AP(input == 6) && ! AP(input == 5)) || (! AP(input == 5) U (AP(output == 21) && ! AP(input == 5)))))
+	//@ ltl invariant positive: (! (<> AP(input == 3)) || (! AP(output == 22) U (AP(output == 26) || AP(input == 3))))
 	
 int main()
 {

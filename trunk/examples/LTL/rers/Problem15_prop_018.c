@@ -4,7 +4,7 @@
 //"output W does never occur before output Y"
 //Formula is satisfied.
 //Problem15.c
-//(! (F iB) | ((! oY & ! iB) U (iB | ((oY & ! iB) U (iB | ((! oY & ! iB) U (iB | ((oY & ! iB) U (iB | (! oY U iB))))))))))
+//(! oW WU oY)
 #include <stdio.h> 
 #include <assert.h>
 #include <math.h>
@@ -1753,7 +1753,7 @@
 	}
 
 int input, output;
-	//@ ltl invariant positive: (! (<> AP(input == 2)) || ((! AP(output == 25) && ! AP(input == 2)) U (AP(input == 2) || ((AP(output == 25) && ! AP(input == 2)) U (AP(input == 2) || ((! AP(output == 25) && ! AP(input == 2)) U (AP(input == 2) || ((AP(output == 25) && ! AP(input == 2)) U (AP(input == 2) || (! AP(output == 25) U AP(input == 2)))))))))))
+	//@ ltl invariant positive: (! AP(output == 23) WU AP(output == 25))
 
 	
 int main()

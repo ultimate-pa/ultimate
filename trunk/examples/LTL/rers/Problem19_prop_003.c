@@ -4,7 +4,7 @@
 //"output Y precedes output V"
 //Formula is satisfied.
 //Problem19.c
-//(! (F iC) | (! oV U (oZ | iC)))
+//(! oV WU oY)
 #include <stdio.h> 
 #include <assert.h>
 #include <math.h>
@@ -9762,7 +9762,7 @@
 	}
 
 int input, output;
-	//@ ltl invariant positive: (! (<> AP(input == 3)) || (! AP(output == 22) U (AP(output == 26) || AP(input == 3))))
+	//@ ltl invariant positive: (! AP(output == 22) WU AP(output == 25))
 	
 int main()
 {

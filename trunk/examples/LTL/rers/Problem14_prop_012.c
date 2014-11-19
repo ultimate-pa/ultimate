@@ -4,7 +4,7 @@
 //"input F precedes output Y"
 //Formula is satisfied.
 //Problem14.c
-//(G (! iE | (F oX)))
+//(! oY WU iF)
 #include <stdio.h> 
 #include <assert.h>
 #include <math.h>
@@ -870,7 +870,7 @@
 	}
 
 int input, output;
-	//@ ltl invariant positive: ([] (! AP(input == 5) || (<> AP(output == 24))))
+	//@ ltl invariant positive: (! AP(output == 25) WU AP(input == 6))
 	
 int main()
 {

@@ -4,7 +4,7 @@
 //"output V does never occur between input A and output W"
 //Formula is satisfied.
 //Problem14.c
-//(! (F oU) | ((! oX & ! oU) U (oU | ((oX & ! oU) U (oU | ((! oX & ! oU) U (oU | ((oX & ! oU) U (oU | (! oX U oU))))))))))
+//(G (! ((iA & ! oW) & (F oW)) | (! oV U oW)))
 #include <stdio.h> 
 #include <assert.h>
 #include <math.h>
@@ -870,7 +870,7 @@
 	}
 
 int input, output;
-	//@ ltl invariant positive: (! (<> AP(output == 21)) || ((! AP(output == 24) && ! AP(output == 21)) U (AP(output == 21) || ((AP(output == 24) && ! AP(output == 21)) U (AP(output == 21) || ((! AP(output == 24) && ! AP(output == 21)) U (AP(output == 21) || ((AP(output == 24) && ! AP(output == 21)) U (AP(output == 21) || (! AP(output == 24) U AP(output == 21)))))))))))
+	//@ ltl invariant positive: ([] (! ((AP(input == 1) && ! AP(output == 23)) && (<> AP(output == 23))) || (! AP(output == 22) U AP(output == 23))))
 	
 int main()
 {

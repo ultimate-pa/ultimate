@@ -4,7 +4,7 @@
 //"output W does never occur after input C until output V"
 //Formula is satisfied.
 //Problem16.c
-//(G ! oW)
+//(G (! (iC & ! oV) | (! oW WU oV)))
 #include <stdio.h> 
 #include <assert.h>
 #include <math.h>
@@ -1759,7 +1759,7 @@
 	}
 
 int input, output;
-	//@ ltl invariant positive: ([] ! AP(output == 23))
+	//@ ltl invariant positive: ([] (! (AP(input == 3) && ! AP(output == 22)) || (! AP(output == 23) WU AP(output == 22))))
 	
 int main()
 {
