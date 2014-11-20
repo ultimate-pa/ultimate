@@ -41,7 +41,9 @@ RANK_C=(
 # 	"../../../../../examples/termination/TermCompOfficialBenchmarkSet/svcomp/LeikeHeizmann-WST2014-Ex5_false-termination.c"
 # 	"../../../../../examples/termination/TermCompOfficialBenchmarkSet/svcomp/LeikeHeizmann-WST2014-Ex6_false-termination.c"
 # 	"../../../../../examples/termination/TermCompOfficialBenchmarkSet/svcomp/LeikeHeizmann-WST2014-Ex9_true-termination.c"
-	"../../../../../examples/termination/TermCompOfficialBenchmarkSet/svcomp/*.c"
+#	"../../../../../examples/termination/TermCompOfficialBenchmarkSet/svcomp/*.c"
+	"../../../../../examples/svcomp/termination-crafted/*.c"
+	"../../../../../examples/svcomp/termination-crafted-lit/*.c"
 	)
 
 for i in "${RANK_C[@]}"
@@ -76,7 +78,8 @@ done
 TERMINATION_C=(
 	"../../../../../examples/programs/termination/Bubblesort_true-termination.c"
 	"../../../../../examples/programs/termination/MicrosoftZuneBug_false-termination.c"
-	"../../../../../examples/termination/TermCompOfficialBenchmarkSet/svcomp/*.c"
+	"../../../../../examples/svcomp/termination-crafted/*.c"
+	"../../../../../examples/svcomp/termination-crafted-lit/*.c"
 	)
 
 for i in "${TERMINATION_C[@]}"
