@@ -33,7 +33,7 @@ import org.apache.log4j.Logger;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 
@@ -53,7 +53,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 public class Accepts<LETTER,STATE> extends AbstractAcceptance<LETTER,STATE>
 									  implements IOperation<LETTER,STATE> {
 
-	private final INestedWordAutomaton<LETTER,STATE> m_Automaton;
+	private final INestedWordAutomatonSimple<LETTER,STATE> m_Automaton;
 	private final NestedWord<LETTER> m_Word;
 	private final boolean m_PrefixOfInputIsAccepted;
 	private final boolean m_InputIsSuffixOfAcceptedWord;
@@ -62,7 +62,7 @@ public class Accepts<LETTER,STATE> extends AbstractAcceptance<LETTER,STATE>
 	private static Logger s_Logger = NestedWordAutomata.getLogger();
 
 
-	public Accepts(INestedWordAutomaton<LETTER,STATE> automaton, NestedWord<LETTER> word,
+	public Accepts(INestedWordAutomatonSimple<LETTER,STATE> automaton, NestedWord<LETTER> word,
 			boolean prefixOfIntputIsAccepted,
 			boolean inputIsSuffixOfAcceptedWord) {
 		super();
@@ -74,7 +74,7 @@ public class Accepts<LETTER,STATE> extends AbstractAcceptance<LETTER,STATE>
 		m_IsAccepted = isAccepted();
 		s_Logger.info(exitMessage());
 	}
-	public Accepts(INestedWordAutomaton<LETTER,STATE> automaton, NestedWord<LETTER> word) {
+	public Accepts(INestedWordAutomatonSimple<LETTER,STATE> automaton, NestedWord<LETTER> word) {
 		this(automaton, word, false, false);
 	}
 
@@ -145,7 +145,7 @@ public class Accepts<LETTER,STATE> extends AbstractAcceptance<LETTER,STATE>
 	 * accepting state.
 	 */
 	public boolean containsAcceptingConfiguration(Set<Stack<STATE>> configurations,
-			INestedWordAutomaton<LETTER,STATE> nwa) {
+			INestedWordAutomatonSimple<LETTER,STATE> nwa) {
 		for (Stack<STATE> config : configurations) {
 			if (isAcceptingConfiguration(config, m_Automaton)) {
 				return true;

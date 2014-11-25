@@ -40,12 +40,14 @@ import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.DoubleDecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
+import de.uni_freiburg.informatik.ultimate.util.Utils;
 
 
 /**
@@ -103,9 +105,16 @@ public class IsEmpty<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	private final Collection<STATE> m_GoalStates;
 	
 	/**
+	 * If set, the goal states are exactly the accepting states of automaton 
+	 * m_nwa, the set m_GoalStates is null, and we use m_nwa to check if a 
+	 * state is a goal state.
+	 */
+	private final boolean m_GoalStateIsAcceptingState;
+	
+	/**
 	 * INestedWordAutomaton for which we check emptiness.
 	 */
-	INestedWordAutomaton<LETTER,STATE> m_nwa;
+	INestedWordAutomatonSimple<LETTER,STATE> m_nwa;
 	
 	NestedRun<LETTER,STATE> m_acceptingRun;
 	
@@ -233,11 +242,12 @@ public class IsEmpty<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	 * Default constructor. Here we search a run from the initial states
 	 * of the automaton to the final states of the automaton.
 	 */
-	public IsEmpty(INestedWordAutomaton<LETTER,STATE> nwa) {
+	public IsEmpty(INestedWordAutomatonSimple<LETTER,STATE> nwa) {
 		m_nwa = nwa;
 		dummyEmptyStackState = m_nwa.getEmptyStackState();
-		m_StartStates = m_nwa.getInitialStates();
-		m_GoalStates = m_nwa.getFinalStates();
+		m_StartStates = Utils.constructHashSet(m_nwa.getInitialStates());
+		m_GoalStateIsAcceptingState = true;
+		m_GoalStates = null;
 		s_Logger.info(startMessage());
 		m_acceptingRun = getAcceptingRun();
 		s_Logger.info(exitMessage());
@@ -252,14 +262,31 @@ public class IsEmpty<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	public IsEmpty(INestedWordAutomaton<LETTER,STATE> nwa, 
 			Set<STATE> startStates, Set<STATE> goalStates) {
 		m_nwa = nwa;
-		assert m_nwa.getStates().containsAll(startStates) : "unknown states";
-		assert m_nwa.getStates().containsAll(goalStates) : "unknown states";
+		assert nwa.getStates().containsAll(startStates) : "unknown states";
+		assert nwa.getStates().containsAll(goalStates) : "unknown states";
 		dummyEmptyStackState = m_nwa.getEmptyStackState();
 		m_StartStates = startStates;
+		m_GoalStateIsAcceptingState = false;
 		m_GoalStates = goalStates;
 		s_Logger.info(startMessage());
 		m_acceptingRun = getAcceptingRun();
 		s_Logger.info(exitMessage());
+	}
+	
+	/**
+	 * If we use the accepting states of m_nwa as goal states (in this case 
+	 * m_GoalStateIsAcceptingState is set and m_GoalStates is null) then we
+	 * return true iff state is an accepting state.
+	 * Otherwise we return true iff m_GoalStates.contains(state).
+	 */
+	private boolean isGoalState(STATE state) {
+		if (m_GoalStateIsAcceptingState) {
+			assert m_GoalStates == null : 
+				"if we search accepting states, m_GoalStates is null";
+			return m_nwa.isFinal(state);
+		} else {
+			return m_GoalStates.contains(state);
+		}
 	}
 	
 	
@@ -371,7 +398,7 @@ public class IsEmpty<LETTER,STATE> implements IOperation<LETTER,STATE> {
 			STATE state = pair.getUp();
 			STATE stateK = pair.getDown();
 			
-			if (m_GoalStates.contains(state)) {
+			if (isGoalState(state)) {
 				return constructRun(state, stateK);
 			}
 			
