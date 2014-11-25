@@ -814,11 +814,6 @@ public class MainDispatcher extends Dispatcher {
 		checkACSLLocation(current);
 		acsl.add(current.getAcslNode());
 		if (!decoratorTreeIterator.hasNext()) {
-			// We found an ACSL node without a successor C node!
-			if (current.getParent().getCNode() instanceof IASTTranslationUnit) {
-				throw new IllegalArgumentException("ACSL on invalid location! line: "
-						+ current.getAcslNode().getStartingLineNumber());
-			}
 			return new NextACSL(acsl, null);
 		}
 		// find successor C node with same parent as the found acsl node

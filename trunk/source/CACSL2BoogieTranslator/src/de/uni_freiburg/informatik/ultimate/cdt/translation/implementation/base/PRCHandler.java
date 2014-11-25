@@ -103,26 +103,6 @@ public class PRCHandler extends CHandler {
 
     ////////////
 	
-
-	/**
-	 * This is a stack containing the types of the things declared
-	 * IASTDeclarator nodes. The last element on the stack corresponds to the
-	 * type of the current (inner) declarator node. There may be several types
-	 * on this stack if the declarators are nested, as in
-	 * 
-	 * <pre>
-	 * int *(*a(int))[3]
-	 * </pre>
-	 * 
-	 * which declares a function returning a pointer to an array of length three
-	 * containing int pointers. There are three nested declarators: A
-	 * PointerDeclarator contains an ArrayDeclarator contains a Pointer contains
-	 * a function.
-	 */
-//	private ArrayDeque<ResultTypes> mCurrentDeclaredTypes;
-
-	private Logger mLogger;
-
 	
 	public PRCHandler(Dispatcher main, CACSL2BoogieBacktranslator backtranslator, boolean errorLabelWarning,
 			Logger logger, ITypeHandler typeHandler) {
@@ -130,32 +110,15 @@ public class PRCHandler extends CHandler {
 		
 		variablesOnHeap = new LinkedHashSet<>();
 
-		mLogger = logger;
 		this.mTypeHandler = typeHandler;
-
-//		mPreferences= new UltimatePreferenceStore(Activator.s_PLUGIN_ID);
-		
-//		this.mUnsignedTreatment = mPreferences.getEnum(CACSLPreferenceInitializer.LABEL_UNSIGNED_TREATMENT, 
-//				CACSLPreferenceInitializer.UNSIGNED_TREATMENT.class);
 
 		this.mArrayHandler = new ArrayHandler();
 		this.mFunctionHandler = new PRFunctionHandler();
 		this.mStructHandler = new StructHandler();
-//		boolean checkPointerValidity = mPreferences.getBoolean(CACSLPreferenceInitializer.LABEL_CHECK_POINTER_VALIDITY);
 		this.mMemoryHandler = new MemoryHandler(mFunctionHandler, false);
-//		this.mInitHandler = new InitializationHandler(mFunctionHandler, mStructHandler, mMemoryHandler);
-//		this.mPostProcessor = new PostProcessor(main, mLogger);
-		
 		this.mSymbolTable = new SymbolTable(main);
 		this.mFunctions = new LinkedHashMap<String, FunctionDeclaration>();
-//		this.mDeclarationsGlobalInBoogie = new LinkedHashMap<Declaration, CDeclaration>();
-//		this.mAxioms = new LinkedHashSet<Axiom>();
-//		this.mBacktranslator = backtranslator;
 		this.mContract = new ArrayList<ACSLNode>();
-//		this.mErrorLabelWarning = errorLabelWarning;
-//		this.mInnerMostLoopLabel = new Stack<String>();
-
-//		this.mBoogieIdsOfHeapVars = new LinkedHashSet<String>();
 		this.mCurrentDeclaredTypes = new ArrayDeque<ResultTypes>();
 	}
 	
@@ -174,11 +137,6 @@ public class PRCHandler extends CHandler {
 
 	@Override
 	public Result visit(Dispatcher main, IASTFunctionDefinition node) {
-//		LinkedHashSet<IASTDeclaration> reachableDecs = ((MainDispatcher) main).getReachableDeclarationsOrDeclarators();
-//		if (reachableDecs != null) {
-//			if (!reachableDecs.contains(node))
-//				return new ResultSkip();
-//		}
 		LinkedHashSet<IASTDeclaration> reachableDecs = ((PRDispatcher) main).getReachableDeclarationsOrDeclarators();
 		if (reachableDecs != null) {
 			if (!reachableDecs.contains(node))
@@ -206,7 +164,7 @@ public class PRCHandler extends CHandler {
 		}
 
 		for (IASTNode child : node.getChildren()) {
-			Result r = main.dispatch(child);
+			main.dispatch(child);
 		}
 		if (isNewScopeRequired(parent)) {
 			this.endScope();
@@ -375,45 +333,15 @@ public class PRCHandler extends CHandler {
 		assert r instanceof ResultTypes;
 		ResultTypes rt = (ResultTypes) r;
 		assert rt.cType instanceof CEnum;
-//		CEnum cEnum = (CEnum) rt.cType;
-//		ILocation loc = LocationFactory.createCLocation(node);
-//		ASTType at = new PrimitiveType(loc, SFO.INT);
-//		String enumId = cEnum.getIdentifier();
-//		Expression oldValue = null;
-//		Expression[] enumDomain = new Expression[cEnum.getFieldCount()];
 		
 		ResultDeclaration result = new ResultDeclaration();
-		
-//		for (int i = 0; i < cEnum.getFieldCount(); i++) {
-//			String fId = cEnum.getFieldIds()[i];
-//			String bId = enumId + "~" + fId;
-//			VarList vl = new VarList(loc, new String[] { bId }, at);
-//			ConstDeclaration cd = new ConstDeclaration(loc, new Attribute[0], false, vl, null, false);
-//			mDeclarationsGlobalInBoogie.put(cd, new CDeclaration(cEnum, fId));
-//			Expression l = new IdentifierExpression(loc, bId);
-//			Expression newValue = oldValue;
-//			if (oldValue == null && cEnum.getFieldValue(fId) == null) {
-//				newValue = new IntegerLiteral(loc, SFO.NR0);
-//			} else if (cEnum.getFieldValue(fId) == null) {
-//				newValue = createArithmeticExpression(IASTBinaryExpression.op_plus, oldValue, new IntegerLiteral(loc, SFO.NR1), loc);
-//			} else {
-//				newValue = cEnum.getFieldValue(fId);
-//			}
-//			oldValue = newValue;
-//			enumDomain[i] = newValue;
-//			mAxioms.add(new Axiom(loc, new Attribute[0], new BinaryExpression(loc, Operator.COMPEQ, l, newValue)));
-//			mSymbolTable.put(fId, new SymbolTableValue(bId, cd, new CDeclaration(cEnum, fId), true,
-//					scConstant2StorageClass(node.getDeclSpecifier().getStorageClass()))); // FIXME
-//																							// ??
-//		}
+
 		return result;
 	}
 	
 	@Override
 	public Result visit(Dispatcher main, IASTBinaryExpression node) {
 		ILocation loc = LocationFactory.createCLocation(node);
-
-
 
 		switch (node.getOperator()) {
 		case IASTBinaryExpression.op_assign: 
@@ -428,9 +356,6 @@ public class PRCHandler extends CHandler {
 	
 	@Override
 	public Result visit(Dispatcher main, IASTUnaryExpression node) {
-		ILocation loc = LocationFactory.createCLocation(node);
-
-
 		switch (node.getOperator()) {
 		case IASTUnaryExpression.op_amper:
 			ResultExpression o = (ResultExpression) main.dispatch(node.getOperand());

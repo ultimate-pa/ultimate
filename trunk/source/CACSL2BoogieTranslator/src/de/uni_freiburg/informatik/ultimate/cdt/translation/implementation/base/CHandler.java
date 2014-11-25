@@ -3353,7 +3353,7 @@ public class CHandler implements ICHandler {
 
 	public static Expression convertLHSToExpression(LeftHandSide lhs) {
 		if (lhs instanceof VariableLHS) {
-			return new IdentifierExpression(lhs.getLocation(), lhs.getType(), ((VariableLHS) lhs).getIdentifier(), null);
+			return new IdentifierExpression(lhs.getLocation(), ((VariableLHS) lhs).getIdentifier());
 		} else if (lhs instanceof ArrayLHS) {
 			ArrayLHS alhs = (ArrayLHS) lhs;
 			Expression array = convertLHSToExpression(alhs.getArray());
