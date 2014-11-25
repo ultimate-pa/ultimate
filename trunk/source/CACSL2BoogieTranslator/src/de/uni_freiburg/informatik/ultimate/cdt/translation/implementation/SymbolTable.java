@@ -8,8 +8,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Stack;
 
-import org.eclipse.osgi.internal.resolver.ComputeNodeOrder;
-
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.SymbolTableValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.CDeclaration;
