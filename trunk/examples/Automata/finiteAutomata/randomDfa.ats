@@ -1,0 +1,6 @@
+// Author: Daniel Tischner
+// Date: 2014-11-25
+//
+// Test results of a random DFA generator.
+
+print(getRandomDfa(5, 3, 3, true));
