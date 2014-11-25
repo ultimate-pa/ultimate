@@ -14,10 +14,20 @@ import java.util.List;
 public class ACSLEmit extends Emit {
 
 	private static final String sVisitorName = "ACSLVisitor";
+	private static final String sTransformerName = "ACSLTransformer";
+	private static final String[] sOthers = new String[] { sVisitorName, sTransformerName };
+
+	private boolean isOther(Node node) {
+		for (String s : sOthers) {
+			if (node.getName().equals(s)) {
+				return true;
+			}
+		}
+		return false;
+	}
 
 	@Override
 	public void emitClassDeclaration(Node node) throws IOException {
-
 		StringBuilder classDecl = new StringBuilder();
 		classDecl.append("public ");
 		if (node.isAbstract()) {
@@ -29,7 +39,7 @@ public class ACSLEmit extends Emit {
 		if (node.getParent() != null) {
 			classDecl.append(" extends ");
 			classDecl.append(node.getParent().getName());
-		} else if (!node.getName().equals(sVisitorName)) {
+		} else if (!isOther(node)) {
 			classDecl.append(" extends ACSLNode");
 		}
 
@@ -44,10 +54,17 @@ public class ACSLEmit extends Emit {
 	@Override
 	public void emitPreamble(Node node) throws IOException {
 		super.emitPreamble(node);
-		if (!node.name.equals(sVisitorName)) {
+		if (!isOther(node)) {
 			mWriter.println("import java.util.List;");
 			if (node.getParent() == null) {
 				mWriter.println("import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;");
+			}
+
+			for (Parameter p : getAllACSLParameters(node)) {
+				if (isArrayType(p)) {
+					mWriter.println("import java.util.ArrayList;");
+					break;
+				}
 			}
 		}
 	}
@@ -59,6 +76,14 @@ public class ACSLEmit extends Emit {
 				mWriter.println();
 				mWriter.println("    public boolean visit(" + n.name + " node) {");
 				mWriter.println("        return true;");
+				mWriter.println("    }");
+			}
+
+		} else if (node.name.equals(sTransformerName)) {
+			for (Node n : mGrammar.getNodeTable().values()) {
+				mWriter.println();
+				mWriter.println("    public " + n.name + " transform(" + n.name + " node) {");
+				mWriter.println("        return node;");
 				mWriter.println("    }");
 			}
 
@@ -74,33 +99,163 @@ public class ACSLEmit extends Emit {
 			mWriter.println("    }");
 
 			if (!node.isAbstract()) {
-				List<Parameter> allParameters = new ArrayList<>();
-				Node current = node;
-				while (current != null) {
-					for (Parameter p : current.getParameters()) {
-						if (mGrammar.nodeTable.containsKey(p.getType())) {
-							allParameters.add(p);
-						}
-					}
-					current = current.getParent();
-				}
+				List<Parameter> allACSLParameters = getAllACSLParameters(node);
+				writeVisitorAcceptMethod(allACSLParameters);
+				writeTransformerAcceptMethod(node, allACSLParameters);
 
-				mWriter.println();
-				mWriter.println("    public void accept(" + sVisitorName + " visitor) {");
-				mWriter.println("        if(visitor.visit(this)){");
-				for (Parameter p : allParameters) {
-					mWriter.println("            if(" + p.getName() + "!=null){");
-					mWriter.println("                " + p.getName() + ".accept(visitor);");
-					mWriter.println("            }");
-				}
-				mWriter.println("        }");
-				mWriter.println("    }");
 			} else {
 				mWriter.println();
 				mWriter.println("    public abstract void accept(" + sVisitorName + " visitor);");
+
+				mWriter.println();
+				mWriter.println("    public abstract " + node.name + " accept(" + sTransformerName + " visitor);");
 			}
 
 		}
+	}
+
+	private void writeTransformerAcceptMethod(Node node, List<Parameter> allACSLParameters) {
+		// accept method for transformer
+		mWriter.println();
+		mWriter.println("    public " + node.name + " accept(" + sTransformerName + " visitor) {");
+		mWriter.println("        " + node.name + " node = visitor.transform(this);");
+		mWriter.println("        if(node != this){");
+		mWriter.println("            return node;");
+		mWriter.println("        }");
+		mWriter.println();
+
+		boolean isChangedPrinted = false;
+
+		for (Parameter p : allACSLParameters) {
+			String newName = "new" + p.getName();
+			String listName = "tmpList" + newName;
+			// declarations
+			if (isArrayType(p)) {
+				if (!isChangedPrinted) {
+					mWriter.println("        boolean isChanged=false;");
+					isChangedPrinted = true;
+				}
+				mWriter.println("            ArrayList<" + getBaseType(p) + "> " + listName + " = new ArrayList<>();");
+			} else {
+				mWriter.println("            " + p.type + " " + newName + " = null;");
+			}
+
+			mWriter.println("        if(" + p.getName() + " != null){");
+			if (isArrayType(p)) {
+				mWriter.println("            for(" + getBaseType(p) + " elem : " + p.getName() + "){");
+				mWriter.println("                " + getBaseType(p) + " " + newName + " = elem.accept(visitor);");
+				mWriter.println("                isChanged = isChanged || " + newName + " != elem;");
+				mWriter.println("                " + listName + ".add(elem.accept(visitor));");
+				mWriter.println("            }");
+			} else {
+				mWriter.println("            " + newName + " = " + p.getName() + ".accept(visitor);");
+			}
+			mWriter.println("        }");
+		}
+
+		if (allACSLParameters.size() > 0) {
+
+			StringBuilder sb = new StringBuilder();
+			sb.append("        if(");
+
+			if (isChangedPrinted) {
+				sb.append("isChanged || ");
+			}
+
+			for (Parameter p : allACSLParameters) {
+				if (isArrayType(p)) {
+					continue;
+				}
+				String newName = "new" + p.getName();
+				sb.append(p.name + " != " + newName);
+				sb.append(" || ");
+			}
+			if (sb.substring(sb.length() - 4, sb.length()).equals(" || ")) {
+				sb.delete(sb.length() - 4, sb.length());
+			}
+			sb.append("){");
+			mWriter.println(sb.toString());
+			mWriter.println("            return new " + node.name + "(" + getNewCallParams(node) + ");");
+			mWriter.println("        }");
+		}
+		mWriter.println("        return this;");
+		mWriter.println("    }");
+	}
+
+	private boolean isArrayType(Parameter p) {
+		if (p.getType().contains("[]")) {
+			return true;
+		}
+		return false;
+	}
+
+	private String getBaseType(Parameter p) {
+		String typeStr = p.getType().replaceAll("\\[\\]", "");
+		return typeStr;
+	}
+
+	private String getNewCallParams(Node node) {
+		if (node == null) {
+			return "";
+		}
+
+		StringBuffer sb = new StringBuffer();
+
+		sb.append(getNewCallParams(node.getParent()));
+
+		String comma = "";
+		if (sb.length() > 0)
+			comma = ", ";
+
+		for (Parameter p : node.getParameters()) {
+			String pname;
+			if (!mGrammar.nodeTable.containsKey(getBaseType(p))) {
+				pname = p.getName();
+			} else if (isArrayType(p)) {
+				pname = "tmpListnew" + p.getName() + ".toArray(new " + getBaseType(p) + "[0])";
+			} else {
+				pname = "new" + p.getName();
+			}
+			sb.append(comma).append(pname);
+			comma = ", ";
+		}
+		return sb.toString();
+
+	}
+
+	private void writeVisitorAcceptMethod(List<Parameter> allACSLParameters) {
+		// accept method for visitor
+		mWriter.println();
+		mWriter.println("    public void accept(" + sVisitorName + " visitor) {");
+		mWriter.println("        if(visitor.visit(this)){");
+		for (Parameter p : allACSLParameters) {
+			mWriter.println("            if(" + p.getName() + "!=null){");
+			if (isArrayType(p)) {
+				mWriter.println("                for(" + getBaseType(p) + " elem : " + p.getName() + "){");
+				mWriter.println("                    elem.accept(visitor);");
+				mWriter.println("                }");
+
+			} else {
+				mWriter.println("                " + p.getName() + ".accept(visitor);");
+			}
+			mWriter.println("            }");
+		}
+		mWriter.println("        }");
+		mWriter.println("    }");
+	}
+
+	private List<Parameter> getAllACSLParameters(Node node) {
+		List<Parameter> allParameters = new ArrayList<>();
+		Node current = node;
+		while (current != null) {
+			for (Parameter p : current.getParameters()) {
+				if (mGrammar.nodeTable.containsKey(getBaseType(p))) {
+					allParameters.add(p);
+				}
+			}
+			current = current.getParent();
+		}
+		return allParameters;
 	}
 
 	@Override
@@ -109,8 +264,10 @@ public class ACSLEmit extends Emit {
 		for (Node n : grammar.getNodeTable().values()) {
 			types.add(n.name);
 		}
-		Node visitorNode = new Node(sVisitorName, null, null, "", types, false, new Parameter[0]);
-		grammar.getNodeTable().put(sVisitorName, visitorNode);
+		grammar.getNodeTable()
+				.put(sVisitorName, new Node(sVisitorName, null, null, "", types, false, new Parameter[0]));
+		grammar.getNodeTable().put(sTransformerName,
+				new Node(sTransformerName, null, null, "", types, false, new Parameter[0]));
 		super.setGrammar(grammar);
 	}
 }

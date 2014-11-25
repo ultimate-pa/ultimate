@@ -10,6 +10,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.Stack;
 
@@ -76,6 +77,8 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.WhileStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.WildcardExpression;
+import de.uni_freiburg.informatik.ultimate.result.LTLPropertyCheck;
+import de.uni_freiburg.informatik.ultimate.result.LTLPropertyCheck.CheckableExpression;
 import de.uni_freiburg.informatik.ultimate.result.TypeErrorResult;
 
 /**
@@ -1093,6 +1096,21 @@ public class TypeChecker extends BaseObserver {
 					processVariableDeclaration((VariableDeclaration) decl);
 				else if (decl instanceof ConstDeclaration)
 					processConstDeclaration((ConstDeclaration) decl);
+			}
+
+			// pass2,5 :) LTL property declarations
+			LTLPropertyCheck propCheck = LTLPropertyCheck.getAnnotation(unit);
+			if (propCheck != null) {
+				for (VariableDeclaration decl : propCheck.getGlobalDeclarations()) {
+					processVariableDeclaration(decl);
+				}
+				for (Entry<String, CheckableExpression> entry : propCheck.getCheckableAtomicPropositions().entrySet()) {
+					// FIXME: what about those statements?
+					// for (Statement stmt : entry.getValue().getStatements()) {
+					//
+					// }
+					typecheckExpression(entry.getValue().getExpression());
+				}
 			}
 
 			// pass3: attributes function definition, axioms,

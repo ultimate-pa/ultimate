@@ -15,15 +15,25 @@ import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.boogie.parser.Lexer;
+import de.uni_freiburg.informatik.ultimate.boogie.parser.Parser;
+import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
+import de.uni_freiburg.informatik.ultimate.boogie.type.PreprocessorAnnotation;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 import de.uni_freiburg.informatik.ultimate.core.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.ltl2aut.ast.AstNode;
-import de.uni_freiburg.informatik.ultimate.ltl2aut.ast.AtomicProposition;
+import de.uni_freiburg.informatik.ultimate.ltl2aut.never2nwa.NWAContainer;
+import de.uni_freiburg.informatik.ultimate.ltl2aut.never2nwa.Never2Automaton;
 import de.uni_freiburg.informatik.ultimate.ltl2aut.preferences.PreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BoogieASTNode;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Unit;
+import de.uni_freiburg.informatik.ultimate.model.boogie.output.BoogiePrettyPrinter;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.result.LTLPropertyCheck;
+import de.uni_freiburg.informatik.ultimate.result.LTLPropertyCheck.CheckableExpression;
 
 /**
  * This class reads a definition of a property in LTL and returns the AST of the
@@ -42,7 +52,9 @@ public class LTL2autObserver implements IUnmanagedObserver {
 	private final Logger mLogger;
 
 	private String mInputFile;
-	private AstNode mRootNode;
+	private NWAContainer mNWAContainer;
+	private LTLPropertyCheck mCheck;
+	private BoogieSymbolTable mSymbolTable;
 
 	public LTL2autObserver(IUltimateServiceProvider services, IToolchainStorage storage) {
 		mServices = services;
@@ -52,33 +64,61 @@ public class LTL2autObserver implements IUnmanagedObserver {
 
 	@Override
 	public void init() {
-		mRootNode = null;
+		mNWAContainer = null;
 		mInputFile = null;
+		mSymbolTable = null;
+		mCheck = null;
 	}
 
 	@Override
 	public void finish() throws Throwable {
-		String[] specification = getSpecification();
-		if (specification == null || specification.length == 0 || specification[0].isEmpty()) {
-			throw new UnsupportedOperationException("No specification given");
-		}
-		AstNode node = getProperty(specification[0]);
-		Map<String, AstNode> irs = getIRS(Arrays.copyOfRange(specification, 1, specification.length));
-		new SubstituteAPVisitor(irs, node);
-		mLogger.info("LTL Property is: " + specification[0]);
-		mLogger.info("IRS table is:");
-		for (int i = 1; i < specification.length; ++i) {
-			mLogger.info(specification[i]);
+		// TODO: Change s.t. this plugin returns an NWA with Boogie code
+		String ltlProperty;
+		Map<String, CheckableExpression> irs;
+		if (mCheck != null) {
+			// if there is a check, there is already boogie code
+			// the ltl string is in our ACSL format, we should convert it to
+			// ltl2aut format
+			// see http://www.lsv.ens-cachan.fr/~gastin/ltl2ba/
+			ltlProperty = mCheck.getLTLProperty();
+			irs = mCheck.getCheckableAtomicPropositions();
+		} else {
+			// there is no check, so we either need to read the property from
+			// the boogie file or from the settings
+			// both formats are in ltl2aut format
+			// we need to create a check with boogie-code
+			String[] specification = getSpecification();
+			if (specification == null || specification.length == 0 || specification[0].isEmpty()) {
+				throw new UnsupportedOperationException("No specification given");
+			}
+			ltlProperty = specification[0];
+			irs = getIRS(Arrays.copyOfRange(specification, 1, specification.length));
+			mCheck = new LTLPropertyCheck(ltlProperty, irs, null);
 		}
 
-		//TODO: Fix 
-		new LTLPropertyCheck(getSubstitutedProperty(irs, specification[0]), null, null).annotate(node);
-		mRootNode = node;
+		String ltl2baProperty = getLTL2BAProperty(ltlProperty);
+		AstNode node = getNeverClaim(ltl2baProperty);
+		NestedWordAutomaton<CodeBlock,String> nwa = createNWAFromNeverClaim(node, irs,mSymbolTable);
+		mLogger.info("LTL Property is: " + prettyPrintProperty(irs, ltlProperty));
+
+		mNWAContainer = new NWAContainer(nwa);
+		mCheck.annotate(mNWAContainer);
 	}
 
-	private String getSubstitutedProperty(Map<String, AstNode> irs, String property) {
-		for (Entry<String, AstNode> entry : irs.entrySet()) {
-			property = property.replaceAll(entry.getKey(), "(" + entry.getValue().toString() + ")");
+	private String getLTL2BAProperty(String ltlProperty) {
+		ltlProperty = ltlProperty.toLowerCase();
+		ltlProperty = ltlProperty.replaceAll("f", "<>");
+		ltlProperty = ltlProperty.replaceAll("g", "[]");
+		ltlProperty = ltlProperty.replaceAll("x", "X");
+		ltlProperty = ltlProperty.replaceAll("u", "U");
+		ltlProperty = ltlProperty.replaceAll("r", "\\/");
+		return ltlProperty;
+	}
+
+	private String prettyPrintProperty(Map<String, CheckableExpression> irs, String property) {
+		for (Entry<String, CheckableExpression> entry : irs.entrySet()) {
+			property = property.replaceAll(entry.getKey(),
+					"(" + BoogiePrettyPrinter.print(entry.getValue().getExpression()) + ")");
 		}
 		return property;
 	}
@@ -131,35 +171,58 @@ public class LTL2autObserver implements IUnmanagedObserver {
 		return property.split("\n");
 	}
 
-	private AstNode getProperty(String property) throws Throwable {
+	private AstNode getNeverClaim(String property) throws Throwable {
 		try {
 			mLogger.debug("Parsing LTL property...");
-			return new WrapLTL2Never(mServices, mStorage).ltl2Ast(property);
+			return new LTLXBAExecutor(mServices, mStorage).ltl2Ast(property);
 		} catch (Throwable e) {
 			mLogger.fatal(String.format("Exception during LTL->BA execution: %s", e));
 			throw e;
 		}
 	}
 
-	private Map<String, AstNode> getIRS(String[] entries) throws Throwable {
-		mLogger.debug("Parsing mapping from AP to boolean expression over program variables...");
-		Map<String, AstNode> aps = new HashMap<String, AstNode>();
+	private Map<String, CheckableExpression> getIRS(String[] entries) throws Throwable {
+		mLogger.debug("Parsing mapping from AP to BoogieCode...");
+		Map<String, CheckableExpression> aps = new HashMap<>();
 		for (String entry : entries) {
 			try {
-				LexerAP lexer = new LexerAP(new InputStreamReader(IOUtils.toInputStream(entry.trim())));
-				ParserAP p = new ParserAP(lexer);
+				// TODO: finish
 
-				AstNode nodea = (AstNode) p.parse().value;
+				de.uni_freiburg.informatik.ultimate.boogie.parser.Lexer lexer = new Lexer(new InputStreamReader(
+						IOUtils.toInputStream(entry.trim())));
+				de.uni_freiburg.informatik.ultimate.boogie.parser.Parser p = new Parser(lexer);
+				Object x = p.parse().value;
+				// AstNode nodea = (AstNode) p.parse().value;
 				// append node to dictionary of atomic propositions
-				if (nodea instanceof AtomicProposition) {
-					aps.put(((AtomicProposition) nodea).getIdent(), nodea.getOutgoingNodes().get(0));
-				}
+				// if (nodea instanceof AtomicProposition) {
+				// aps.put(((AtomicProposition) nodea).getIdent(),
+				// nodea.getOutgoingNodes().get(0));
+				// }
 			} catch (Throwable e) {
 				mLogger.error(String.format("Exception while parsing the atomic proposition \"%s\": %s", entry, e));
 				throw e;
 			}
 		}
-		return aps;
+		throw new UnsupportedOperationException();
+		// return aps;
+	}
+
+	private NestedWordAutomaton<CodeBlock, String> createNWAFromNeverClaim(AstNode neverclaim,
+			Map<String, CheckableExpression> irs, BoogieSymbolTable symbolTable) throws Exception {
+		NestedWordAutomaton<CodeBlock,String> nwa;
+
+		mLogger.debug("Transforming NeverClaim to NestedWordAutomaton...");
+		try {
+			// Build NWA from LTL formula in NeverClaim representation
+			nwa = new Never2Automaton(neverclaim, symbolTable,irs, mLogger, mServices).getAutomaton();
+			if (nwa == null) {
+				throw new NullPointerException("nwa is null");
+			}
+		} catch (Exception e) {
+			mLogger.fatal("LTL2Aut encountered an error while transforming the NeverClaim to a NestedWordAutomaton");
+			throw e;
+		}
+		return nwa;
 	}
 
 	@Override
@@ -176,12 +239,15 @@ public class LTL2autObserver implements IUnmanagedObserver {
 	public boolean process(IElement root) throws Throwable {
 		if (root instanceof Unit) {
 			mInputFile = ((Unit) root).getLocation().getFileName();
+			mCheck = LTLPropertyCheck.getAnnotation(root);
+			mSymbolTable = PreprocessorAnnotation.getAnnotation(root).getSymbolTable();
+			return false;
 		}
-		return false;
+		return true;
 	}
 
-	public AstNode getRootNode() {
-		return mRootNode;
+	public NWAContainer getNWAContainer() {
+		return mNWAContainer;
 	}
 
 }

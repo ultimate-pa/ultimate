@@ -25,13 +25,13 @@ import de.uni_freiburg.informatik.ultimate.ltl2aut.preferences.PreferenceInitial
  * 
  */
 
-public class WrapLTL2Never {
+public class LTLXBAExecutor {
 
 	private final Logger mLogger;
 	private final IUltimateServiceProvider mServices;
 	private final IToolchainStorage mStorage;
 
-	public WrapLTL2Never(IUltimateServiceProvider services, IToolchainStorage storage) {
+	public LTLXBAExecutor(IUltimateServiceProvider services, IToolchainStorage storage) {
 		mServices = services;
 		mStorage = storage;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
@@ -50,7 +50,13 @@ public class WrapLTL2Never {
 		String toolOutput = execLTLXBA(ltlFormula.trim());
 		mLogger.debug(String.format("LTLXBA said: %s", toolOutput));
 		InputStreamReader file = new InputStreamReader(IOUtils.toInputStream(toolOutput));
-		return (AstNode) new Parser(new Lexer(file)).parse().value;
+		try {
+			return (AstNode) new Parser(new Lexer(file)).parse().value;
+		} catch (Exception ex) {
+			mLogger.fatal("Error during parsing of LTLXBA output. Tool said:");
+			mLogger.fatal(toolOutput);
+			throw ex;
+		}
 	}
 
 	/**

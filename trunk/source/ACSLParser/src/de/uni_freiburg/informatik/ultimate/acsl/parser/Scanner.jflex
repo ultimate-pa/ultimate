@@ -201,6 +201,8 @@ WhiteSpace     = {LineTerminator}* | {space}*
     "<>"            { return symbol("finally",sym.FINALLY); }
     "X"             { return symbol("next",sym.NEXT); }
     "U"             { return symbol("until",sym.UNTIL); }
+    "WU"             { return symbol("until",sym.WEAKUNTIL); }
+    "R"             { return symbol("until",sym.RELEASE); }
     "AP"            { return symbol("ap",sym.AP); }
     
     space+			{}

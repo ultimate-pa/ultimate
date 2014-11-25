@@ -8,6 +8,7 @@ import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
 import de.uni_freiburg.informatik.ultimate.model.acsl.LTLPrettyPrinter;
+import de.uni_freiburg.informatik.ultimate.model.acsl.ast.ACSLTransformer;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.ACSLVisitor;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.BinaryExpression.Operator;
@@ -22,9 +23,8 @@ import de.uni_freiburg.informatik.ultimate.model.acsl.ast.UnaryExpression;
 /**
  * @author dietsch@informatik.uni-freiburg.de
  */
-public class LTLExpressionExtractor extends ACSLVisitor {
+public class LTLExpressionExtractor {
 
-	private Expression mCurrentSubExpression;
 	private List<Expression> mExpressions;
 	private String mLTLFormatString;
 	private LinkedHashMap<String, Expression> mMap;
@@ -40,10 +40,9 @@ public class LTLExpressionExtractor extends ACSLVisitor {
 		LTLPrettyPrinter printer = new LTLPrettyPrinter();
 		mLTLFormatString = printer.print(node);
 
-		mCurrentSubExpression = null;
-		mExpressions = null;
 		mMap = null;
-		node.accept(this);
+		node = node.accept(new LTLReplaceWeakUntil());
+		node.accept(new LTLExtractSubexpressions());
 
 		// consolidate expression list, replace format string
 		if (mExpressions != null) {
@@ -93,67 +92,117 @@ public class LTLExpressionExtractor extends ACSLVisitor {
 		return rtr;
 	}
 
-	@Override
-	public boolean visit(GlobalLTLInvariant node) {
-		mExpressions = new ArrayList<>();
-		return super.visit(node);
-	}
+	private class LTLReplaceWeakUntil extends ACSLTransformer {
 
-	@Override
-	public boolean visit(BinaryExpression node) {
-		if (node.getOperator().equals(Operator.LTLUNTIL)) {
-			mCurrentSubExpression = null;
-		} else if (mCurrentSubExpression == null) {
-			mCurrentSubExpression = node;
-		}
-		return super.visit(node);
-	}
+		@Override
+		public BinaryExpression transform(BinaryExpression node) {
 
-	@Override
-	public boolean visit(UnaryExpression node) {
-		switch (node.getOperator()) {
-		case LTLFINALLY:
-		case LTLGLOBALLY:
-		case LTLNEXT:
-			mCurrentSubExpression = null;
-			break;
-		default:
-			if (mCurrentSubExpression == null) {
-				mCurrentSubExpression = node;
+			if (node.getOperator().equals(Operator.LTLWEAKUNTIL)) {
+				// a WU b == (a U b) || (G a)
+				Expression left = node.getLeft().accept(this);
+				Expression right = node.getRight().accept(this);
+
+				BinaryExpression until = new BinaryExpression(Operator.LTLUNTIL, left, right);
+				UnaryExpression globally = new UnaryExpression(UnaryExpression.Operator.LTLGLOBALLY, left);
+				BinaryExpression or = new BinaryExpression(Operator.LOGICOR, until, globally);
+
+				addAdditionalInfo(node, until);
+				addAdditionalInfo(node, globally);
+				addAdditionalInfo(node, or);
+
+				return or;
 			}
-			break;
+
+			return super.transform(node);
 		}
-		return super.visit(node);
+
+		private void addAdditionalInfo(BinaryExpression node, Expression expr) {
+			expr.setEndingLineNumber(node.getEndingLineNumber());
+			expr.setStartingLineNumber(node.getStartingLineNumber());
+			expr.setFileName(node.getFileName());
+			expr.setType(node.getType());
+		}
+
 	}
 
-	@Override
-	public boolean visit(BooleanLiteral node) {
-		literalReached();
-		return super.visit(node);
-	}
+	private class LTLExtractSubexpressions extends ACSLVisitor {
 
-	@Override
-	public boolean visit(IdentifierExpression node) {
-		literalReached();
-		return super.visit(node);
-	}
+		private Expression mCurrentSubExpression;
 
-	@Override
-	public boolean visit(IntegerLiteral node) {
-		literalReached();
-		return super.visit(node);
-	}
-
-	@Override
-	public boolean visit(RealLiteral node) {
-		literalReached();
-		return super.visit(node);
-	}
-
-	private void literalReached() {
-		if (mCurrentSubExpression != null && mExpressions != null) {
-			mExpressions.add(mCurrentSubExpression);
+		private LTLExtractSubexpressions() {
 			mCurrentSubExpression = null;
+			mExpressions = null;
+		}
+
+		@Override
+		public boolean visit(GlobalLTLInvariant node) {
+			mExpressions = new ArrayList<>();
+			return super.visit(node);
+		}
+
+		@Override
+		public boolean visit(BinaryExpression node) {
+			switch (node.getOperator()) {
+			case LTLUNTIL:
+			case LTLWEAKUNTIL:
+			case LTLRELEASE:
+				mCurrentSubExpression = null;
+				break;
+			default:
+				if (mCurrentSubExpression == null) {
+					mCurrentSubExpression = node;
+				}
+				break;
+			}
+			return super.visit(node);
+		}
+
+		@Override
+		public boolean visit(UnaryExpression node) {
+			switch (node.getOperator()) {
+			case LTLFINALLY:
+			case LTLGLOBALLY:
+			case LTLNEXT:
+				mCurrentSubExpression = null;
+				break;
+			default:
+				if (mCurrentSubExpression == null) {
+					mCurrentSubExpression = node;
+				}
+				break;
+			}
+			return super.visit(node);
+		}
+
+		@Override
+		public boolean visit(BooleanLiteral node) {
+			literalReached();
+			return super.visit(node);
+		}
+
+		@Override
+		public boolean visit(IdentifierExpression node) {
+			literalReached();
+			return super.visit(node);
+		}
+
+		@Override
+		public boolean visit(IntegerLiteral node) {
+			literalReached();
+			return super.visit(node);
+		}
+
+		@Override
+		public boolean visit(RealLiteral node) {
+			literalReached();
+			return super.visit(node);
+		}
+
+		private void literalReached() {
+			if (mCurrentSubExpression != null && mExpressions != null) {
+				mExpressions.add(mCurrentSubExpression);
+				mCurrentSubExpression = null;
+			}
 		}
 	}
 }

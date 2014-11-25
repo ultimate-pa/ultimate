@@ -10,6 +10,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.IGenerator;
+import de.uni_freiburg.informatik.ultimate.ltl2aut.never2nwa.NWAContainer;
 import de.uni_freiburg.informatik.ultimate.ltl2aut.preferences.PreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.model.GraphType;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
@@ -76,6 +77,7 @@ public class LTL2aut implements IGenerator {
 	public void setInputDefinition(GraphType graphType) {
 		switch (graphType.getCreator()) {
 		case "de.uni_freiburg.informatik.ultimate.boogie.parser":
+		case "de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator":
 			mProcess = true;
 			mUseful++;
 			break;
@@ -97,7 +99,7 @@ public class LTL2aut implements IGenerator {
 
 	@Override
 	public IElement getModel() {
-		return mObserver.getRootNode();
+		return mObserver.getNWAContainer();
 	}
 
 	@Override
@@ -125,7 +127,8 @@ public class LTL2aut implements IGenerator {
 			throw new IllegalStateException("Was used in a toolchain were it did nothing");
 		}
 		if (mSkip) {
-			mServices.getLoggingService().getLogger(getPluginID()).info("Another plugin discovered errors, skipping...");
+			mServices.getLoggingService().getLogger(getPluginID())
+					.info("Another plugin discovered errors, skipping...");
 		}
 	}
 

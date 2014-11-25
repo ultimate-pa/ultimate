@@ -6,9 +6,14 @@ Bundle-Version: 0.0.1
 Bundle-Activator: de.uni_freiburg.informatik.ultimate.ltl2aut.Activator
 Require-Bundle: Library-log4j,
  UltimateCore,
+ BoogieParser,
+ BoogiePreprocessor,
+ de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder,
+ de.uni_freiburg.informatik.ultimate.automata,
  JavaCup,
- de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer
+ de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer 
 Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-1.7
-Export-Package: de.uni_freiburg.informatik.ultimate.ltl2aut.ast
+Export-Package: de.uni_freiburg.informatik.ultimate.ltl2aut.ast,
+ de.uni_freiburg.informatik.ultimate.ltl2aut.never2nwa
 Import-Package: org.apache.commons.io

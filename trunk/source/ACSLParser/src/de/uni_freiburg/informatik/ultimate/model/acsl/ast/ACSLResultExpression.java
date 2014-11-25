@@ -36,4 +36,9 @@ public class ACSLResultExpression extends Expression {
 		
 	}
 
+	@Override
+	public Expression accept(ACSLTransformer visitor) {
+		return null;
+	}
+
 }

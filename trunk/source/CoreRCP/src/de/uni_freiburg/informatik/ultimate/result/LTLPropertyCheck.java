@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.result;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -24,14 +25,28 @@ public class LTLPropertyCheck extends Check {
 
 	private final String mLTLProptery;
 	private final Map<String, CheckableExpression> mCheckableAtomicPropositions;
-	private final List<VariableDeclaration> mGlobalDeclarations;
+	private List<VariableDeclaration> mGlobalDeclarations;
 
 	public LTLPropertyCheck(String ltlPropertyAsString, Map<String, CheckableExpression> checkableAtomicPropositions,
 			List<VariableDeclaration> globalDeclarations) {
 		super(Spec.LTL);
+		assert ltlPropertyAsString != null;
+		assert checkableAtomicPropositions != null;
+		assert checkableAtomicPropositions.size() > 0;
 		mLTLProptery = ltlPropertyAsString;
 		mCheckableAtomicPropositions = checkableAtomicPropositions;
 		mGlobalDeclarations = globalDeclarations;
+	}
+
+	public Map<String, CheckableExpression> getCheckableAtomicPropositions() {
+		return mCheckableAtomicPropositions;
+	}
+
+	public List<VariableDeclaration> getGlobalDeclarations() {
+		if (mGlobalDeclarations == null) {
+			mGlobalDeclarations = new ArrayList<>(0);
+		}
+		return mGlobalDeclarations;
 	}
 
 	public String getLTLProperty() {
@@ -85,11 +100,12 @@ public class LTLPropertyCheck extends Check {
 	 * @author dietsch@informatik.uni-freiburg.de
 	 * 
 	 */
-	public class CheckableExpression {
+	public static class CheckableExpression {
 		private final Expression mExpression;
-		private final List<Statement> mStatements;
+		private List<Statement> mStatements;
 
 		public CheckableExpression(Expression expr, List<Statement> statements) {
+			assert expr != null;
 			mExpression = expr;
 			mStatements = statements;
 		}
@@ -99,6 +115,9 @@ public class LTLPropertyCheck extends Check {
 		}
 
 		public List<Statement> getStatements() {
+			if (mStatements == null) {
+				mStatements = new ArrayList<>(0);
+			}
 			return mStatements;
 		}
 

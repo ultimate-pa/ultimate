@@ -436,7 +436,7 @@ public class CHandler implements ICHandler {
 
 			for (Entry<String, de.uni_freiburg.informatik.ultimate.model.acsl.ast.Expression> en : ex.getAP2SubExpressionMap().entrySet()) {
 				Result r = main.dispatch(en.getValue());
-				checkableAtomicPropositions.put(en.getKey(), propCheck.new CheckableExpression((Expression) r.node, null));
+				checkableAtomicPropositions.put(en.getKey(), new CheckableExpression((Expression) r.node, null));
 			}
 
 			propCheck.annotate(boogieUnit);

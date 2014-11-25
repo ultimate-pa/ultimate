@@ -24,17 +24,23 @@ option java15, compact_red, newpositions;
 
 parser code {:
     /** The logger instance. */
-    protected static Logger s_Logger;
-    /** Holds an ACSL node. */
+    protected Logger mLogger;
+    
+	/** Holds an ACSL node. */
 	private ACSLNode acslNode;
+	
 	/** the current start line number. */
 	private int startLineNumber;
+	
 	/** the current end line number. */
 	private int endLineNumber;
+	
 	/** List of expressions. */
 	public LinkedList<Expression> expressionList = new LinkedList<Expression>();
+	
 	/** Binary expressions operator list. */
 	public LinkedList<BinaryExpression.Operator> opList = new LinkedList<BinaryExpression.Operator>();
+	
 	/** Temporary loop annotation. */
 	public LoopAnnot tempLoopAnnot;
 	
@@ -43,11 +49,11 @@ parser code {:
 	 * 
 	 * @param s the Scanner object.
 	 * @param sf the SymbolFactory object.
-	 * @param s_Logger the Logger object to be used.
+	 * @param logger the Logger object to be used.
 	 */
-	public Parser(java_cup.runtime.Scanner s, java_cup.runtime.SymbolFactory sf, Logger s_Logger) {
+	public Parser(java_cup.runtime.Scanner s, java_cup.runtime.SymbolFactory sf, Logger logger) {
 		this(s, sf);
-		Parser.s_Logger = s_Logger;
+		mLogger = logger;
 	}
 	
 	/**
@@ -130,15 +136,15 @@ parser code {:
 	 * @param input the input string to be parsed
 	 * @param start the start line number.
 	 * @param end the end line number.
-	 * @param s_Logger the Logger object to be used.
+	 * @param logger the Logger object to be used.
 	 * @return the parsed comment in an <code>ACSLNode</code>
 	 * @throws Exception Well yeah - care for it ...
 	 */
-	public static ACSLNode parseComment(String input, int start, int end, Logger s_Logger) throws Exception {
+	public static ACSLNode parseComment(String input, int start, int end, Logger logger) throws Exception {
 		java.io.InputStream instream = new java.io.ByteArrayInputStream(input.getBytes());
 		ComplexSymbolFactory sf = new ComplexSymbolFactory();
 		Scanner scanner = new Scanner(instream, sf);
-		Parser parser = new Parser(scanner, sf, s_Logger);
+		Parser parser = new Parser(scanner, sf, logger);
 		parser.setStartLineNumber(start);
 		parser.setEndLineNumber(end);
 		parser.parse();
@@ -184,6 +190,18 @@ parser code {:
     }
 :}
 
+action code {:
+	public ACSLNode setLineNumber(Symbol sBegin, Symbol sEnd, ACSLNode current) {
+	    int startLine = sBegin.left;
+	    int endLine = sEnd.right;
+	    //int startColumn = ((BoogieSymbol) sBegin).getLeftColumn();
+	    //int endColumn = ((BoogieSymbol) sBegin).getRightColumn();
+		current.setStartingLineNumber(startLine);
+		current.setEndingLineNumber(endLine);
+	    return current;
+	}
+:}
+
 scan with {: return getScanner().next_token(); :}
 
 /* Terminals */
@@ -200,7 +218,7 @@ terminal String STAR;
 terminal LPAR, RPAR, IF, ELSE, COLON, COLON2, COLONCOLON, DOT, DOTDOT, DOTDOTDOT;
 terminal LT, GT, LE, GE, EQ, NE, COMMA, ARROW, EQUAL;
 terminal FORALL, EXISTS, IFF, IMPLIES, AND, OR, NOT, SEPARATED;
-terminal GLOBALLY, FINALLY, UNTIL, NEXT;
+terminal GLOBALLY, FINALLY, UNTIL, NEXT, WEAKUNTIL, RELEASE;
 terminal TRUE, FALSE, OLD, AT, RESULT, BLOCK_LENGTH, BASE_ADDR;
 terminal VALID, VALID_INDEX, VALID_RANGE, FRESH, DOLLAR;
 terminal QUESTION, MINUS, PLUS, AMP, SLASH, PERCENT, LSQUARE, RSQUARE;
@@ -293,7 +311,7 @@ precedence right prec_cast, TILDE, NOT, prec_unary_op;
 precedence nonassoc LTCOLON, COLONGT;
 precedence left DOT, ARROW, LSQUARE;
 precedence right prec_par;
-precedence left UNTIL;
+precedence left UNTIL, WEAKUNTIL, RELEASE;
 precedence right GLOBALLY, FINALLY, NEXT;
 precedence right AP;
 /* bottom up - highest precedence */
@@ -302,8 +320,19 @@ precedence right AP;
 start with start_grammar;
 
 /* mehrere Einstiegspunkte... ? */
-start_grammar::= LSTART local {: if(s_Logger!=null){s_Logger.debug("Start Parsing Local");}else{System.out.println("Start Parsing Local");} :} 
-				| GSTART global {: if(s_Logger!=null){s_Logger.debug("Start Parsing Global");}else{System.out.println("Start Parsing Global");} :};
+start_grammar::= LSTART local 
+{: 				if(parser.mLogger!=null){
+					parser.mLogger.debug("Start Parsing Local");
+				} else {
+					System.out.println("Start Parsing Local");
+				} :} 
+| GSTART global {: 
+	if(parser.mLogger!=null){
+		parser.mLogger.debug("Start Parsing Global");
+	} else {
+		System.out.println("Start Parsing Global");
+	} :}
+;
 
 /* Trennung von Local und Global Annotations */
 /* contract kann in beiden vorkommen, siehe Function Contract vs. Statement Contract */
@@ -345,40 +374,42 @@ lexpr_option::=
 /* TODO: right treatment of all expressions... */
 lexpr::=
 /* predicates */
- lexpr:e1 IMPLIES lexpr:e2 {: RESULT = new BinaryExpression(BinaryExpression.Operator.LOGICIMPLIES, e1, e2);:}
-| lexpr:e1 IFF lexpr:e2 {: RESULT = new BinaryExpression(BinaryExpression.Operator.LOGICIFF, e1, e2);:} 
-| lexpr:e1 OR lexpr:e2 {: RESULT = new BinaryExpression(BinaryExpression.Operator.LOGICOR, e1, e2);:}    
-| lexpr:e1 AND lexpr:e2 {:RESULT = new BinaryExpression(BinaryExpression.Operator.LOGICAND, e1, e2);:}    
-| lexpr:e1 HATHAT lexpr:e2 {: RESULT = new BinaryExpression(BinaryExpression.Operator.LOGICXOR, e1, e2); :}   
+ lexpr:e1 IMPLIES lexpr:e2 {: RESULT = new BinaryExpression(BinaryExpression.Operator.LOGICIMPLIES, e1, e2); setLineNumber(e1$,e2$,RESULT);:}
+| lexpr:e1 IFF lexpr:e2 {: RESULT = new BinaryExpression(BinaryExpression.Operator.LOGICIFF, e1, e2); setLineNumber(e1$,e2$,RESULT);:} 
+| lexpr:e1 OR lexpr:e2 {: RESULT = new BinaryExpression(BinaryExpression.Operator.LOGICOR, e1, e2); setLineNumber(e1$,e2$,RESULT);:}    
+| lexpr:e1 AND lexpr:e2 {:RESULT = new BinaryExpression(BinaryExpression.Operator.LOGICAND, e1, e2); setLineNumber(e1$,e2$,RESULT);:}    
+| lexpr:e1 HATHAT lexpr:e2 {: RESULT = new BinaryExpression(BinaryExpression.Operator.LOGICXOR, e1, e2); setLineNumber(e1$,e2$,RESULT);:}   
 /* terms */
-| lexpr:e1 AMP lexpr:e2 {: RESULT = new BinaryExpression(BinaryExpression.Operator.BITAND, e1, e2); :}
-| lexpr:e1 PIPE lexpr:e2 {: RESULT = new BinaryExpression(BinaryExpression.Operator.BITOR, e1, e2); :} 
-| lexpr:e1 HAT lexpr:e2 {: RESULT = new BinaryExpression(BinaryExpression.Operator.BITXOR, e1, e2); :}
-| lexpr:e1 BIMPLIES lexpr:e2 {: RESULT = new BinaryExpression(BinaryExpression.Operator.BITIMPLIES, e1, e2); :}
-| lexpr:e1 BIFF lexpr:e2 {: RESULT = new BinaryExpression(BinaryExpression.Operator.BITIFF, e1, e2); :}
-| lexpr QUESTION lexpr COLON2 lexpr {: RESULT = new NotDefinedExpression(); :}  %prec prec_question 
+| lexpr:e1 AMP lexpr:e2 {: RESULT = new BinaryExpression(BinaryExpression.Operator.BITAND, e1, e2); setLineNumber(e1$,e2$,RESULT);:}
+| lexpr:e1 PIPE lexpr:e2 {: RESULT = new BinaryExpression(BinaryExpression.Operator.BITOR, e1, e2); setLineNumber(e1$,e2$,RESULT);:} 
+| lexpr:e1 HAT lexpr:e2 {: RESULT = new BinaryExpression(BinaryExpression.Operator.BITXOR, e1, e2); setLineNumber(e1$,e2$,RESULT);:}
+| lexpr:e1 BIMPLIES lexpr:e2 {: RESULT = new BinaryExpression(BinaryExpression.Operator.BITIMPLIES, e1, e2); setLineNumber(e1$,e2$,RESULT);:}
+| lexpr:e1 BIFF lexpr:e2 {: RESULT = new BinaryExpression(BinaryExpression.Operator.BITIFF, e1, e2); setLineNumber(e1$,e2$,RESULT);:}
+| lexpr QUESTION lexpr:e1 COLON2 lexpr:e2 {: RESULT = new NotDefinedExpression(); setLineNumber(e1$,e2$,RESULT);:}  %prec prec_question 
 /* both terms and predicates */
 | any_identifier:id COLON lexpr:expr {: RESULT = new SyntacticNamingExpression(id, expr); :} %prec prec_named 
-| lexpr_rel:expr {: RESULT = expr; :} %prec prec_rel_list 
+| lexpr_rel:expr {: RESULT = expr; setLineNumber(expr$,expr$,RESULT);:} %prec prec_rel_list 
 ;
 
 /* LTL extension */
 ltlexpr::=
-  GLOBALLY ltlexpr:e1 {: RESULT = new UnaryExpression(UnaryExpression.Operator.LTLGLOBALLY, e1);:} 
-| FINALLY ltlexpr:e1 {: RESULT = new UnaryExpression(UnaryExpression.Operator.LTLFINALLY, e1);:} 
-| NEXT ltlexpr:e1 {: RESULT = new UnaryExpression(UnaryExpression.Operator.LTLNEXT, e1);:} 
-| NOT ltlexpr:e {: RESULT = new UnaryExpression(UnaryExpression.Operator.LOGICNEG, e);:} 
-| ltlexpr:e1 UNTIL ltlexpr:e2 {: RESULT = new BinaryExpression(BinaryExpression.Operator.LTLUNTIL, e1, e2);:} 
-| ltlexpr:e1 IMPLIES ltlexpr:e2 {: RESULT = new BinaryExpression(BinaryExpression.Operator.LOGICIMPLIES, e1, e2);:} 
-| ltlexpr:e1 IFF ltlexpr:e2 {: RESULT = new BinaryExpression(BinaryExpression.Operator.LOGICIFF, e1, e2);:} 
-| ltlexpr:e1 OR ltlexpr:e2 {: RESULT = new BinaryExpression(BinaryExpression.Operator.LOGICOR, e1, e2);:}
-| ltlexpr:e1 AND ltlexpr:e2 {:RESULT = new BinaryExpression(BinaryExpression.Operator.LOGICAND, e1, e2);:}
-| AP LPAR lexpr:e RPAR {: RESULT = e; :}
-| LPAR ltlexpr:e RPAR {: RESULT = e; :} 
+  GLOBALLY ltlexpr:e1 {: RESULT = new UnaryExpression(UnaryExpression.Operator.LTLGLOBALLY, e1); setLineNumber(e1$,e1$,RESULT);:} 
+| FINALLY ltlexpr:e1 {: RESULT = new UnaryExpression(UnaryExpression.Operator.LTLFINALLY, e1); setLineNumber(e1$,e1$,RESULT);:} 
+| NEXT ltlexpr:e1 {: RESULT = new UnaryExpression(UnaryExpression.Operator.LTLNEXT, e1); setLineNumber(e1$,e1$,RESULT);:} 
+| NOT ltlexpr:e {: RESULT = new UnaryExpression(UnaryExpression.Operator.LOGICNEG, e); setLineNumber(e$,e$,RESULT);:} 
+| ltlexpr:e1 UNTIL ltlexpr:e2 {: RESULT = new BinaryExpression(BinaryExpression.Operator.LTLUNTIL, e1, e2); setLineNumber(e1$,e2$,RESULT);:} 
+| ltlexpr:e1 WEAKUNTIL ltlexpr:e2 {: RESULT = new BinaryExpression(BinaryExpression.Operator.LTLWEAKUNTIL, e1, e2); setLineNumber(e1$,e2$,RESULT);:} 
+| ltlexpr:e1 RELEASE ltlexpr:e2 {: RESULT = new BinaryExpression(BinaryExpression.Operator.LTLRELEASE, e1, e2); setLineNumber(e1$,e2$,RESULT);:} 
+| ltlexpr:e1 IMPLIES ltlexpr:e2 {: RESULT = new BinaryExpression(BinaryExpression.Operator.LOGICIMPLIES, e1, e2); setLineNumber(e1$,e2$,RESULT);:} 
+| ltlexpr:e1 IFF ltlexpr:e2 {: RESULT = new BinaryExpression(BinaryExpression.Operator.LOGICIFF, e1, e2); setLineNumber(e1$,e2$,RESULT);:} 
+| ltlexpr:e1 OR ltlexpr:e2 {: RESULT = new BinaryExpression(BinaryExpression.Operator.LOGICOR, e1, e2);setLineNumber(e1$,e2$,RESULT);:}
+| ltlexpr:e1 AND ltlexpr:e2 {:RESULT = new BinaryExpression(BinaryExpression.Operator.LOGICAND, e1, e2); setLineNumber(e1$,e2$,RESULT);:}
+| AP LPAR lexpr:e RPAR {: RESULT = e; setLineNumber(e$,e$,RESULT);:}
+| LPAR ltlexpr:e RPAR {: RESULT = e; setLineNumber(e$,e$,RESULT);:} 
 ;
 
 lexpr_rel::=
- lexpr_end_rel:expr {: RESULT = expr; :} %prec prec_no_rel 
+ lexpr_end_rel:expr {: RESULT = expr; setLineNumber(expr$,expr$,RESULT);:} %prec prec_no_rel 
 | lexpr_inner:expr rel_list:exprRel 
   {: Expression tempExpr = null;
   	 if (parser.expressionList.size() >= 2) {
@@ -387,15 +418,24 @@ lexpr_rel::=
   	 			Expression right = parser.expressionList.poll();
   	 			Expression left = parser.expressionList.poll();
   	 			tempExpr = new BinaryExpression(parser.opList.poll(), left, right);
+				tempExpr.setStartingLineNumber(left.getStartingLineNumber());
+				tempExpr.setEndingLineNumber(right.getEndingLineNumber());
   	 		} else {
   	 			Expression right = parser.expressionList.poll();
   	 			Expression left = tempExpr;
   	 			tempExpr = new BinaryExpression(parser.opList.poll(), left, right);
+				tempExpr.setStartingLineNumber(left.getStartingLineNumber());
+				tempExpr.setEndingLineNumber(right.getEndingLineNumber());
   	 		}	
   	 	}
   	 	RESULT = new BinaryExpression(parser.opList.poll(), expr, tempExpr);
+		RESULT.setStartingLineNumber(expr.getStartingLineNumber());
+		RESULT.setEndingLineNumber(tempExpr.getEndingLineNumber());
   	 } else {
-  	 	RESULT = new BinaryExpression(parser.opList.poll(), expr, parser.expressionList.poll());
+		tempExpr = parser.expressionList.poll();
+  	 	RESULT = new BinaryExpression(parser.opList.poll(), expr, tempExpr);
+		RESULT.setStartingLineNumber(expr.getStartingLineNumber());
+		RESULT.setEndingLineNumber(tempExpr.getEndingLineNumber());
   	 } :} %prec prec_rel_list
 ;
 
@@ -408,8 +448,8 @@ lexpr_binder::=
 
 lexpr_end_rel::=
   lexpr_inner:expr {: RESULT = expr; :} %prec prec_no_rel
-| lexpr_binder {: RESULT = new NotDefinedExpression(); :}
-| NOT lexpr_binder {: RESULT = new NotDefinedExpression(); :}  
+| lexpr_binder:e {: RESULT = new NotDefinedExpression(); setLineNumber(e$,e$,RESULT);:}
+| NOT lexpr_binder:e {: RESULT = new NotDefinedExpression(); setLineNumber(e$,e$,RESULT);:}  
 ;
 
 rel_list::=
@@ -434,75 +474,74 @@ relation::=
 
 /* TODO: Finish Expression!! */
 lexpr_inner::=
- string:s {: RESULT = new StringLiteral(s); :}
-| NOT lexpr_inner:e {: RESULT = new UnaryExpression(UnaryExpression.Operator.LOGICNEG, e);:}
-| TRUE {: RESULT = new BooleanLiteral(true);:}
-| FALSE {: RESULT = new BooleanLiteral(false);:}
-| VALID LPAR lexpr:expr RPAR {: RESULT = new ValidExpression(expr); :}
-| FREEABLE LPAR lexpr:expr RPAR {: RESULT = new FreeableExpression(expr); :}
-| MALLOCABLE LPAR lexpr:expr RPAR {: RESULT = new MallocableExpression(expr); :}
-| VALID_INDEX LPAR lexpr COMMA lexpr RPAR {: RESULT = new NotDefinedExpression(); :}
-| VALID_RANGE LPAR lexpr COMMA lexpr COMMA lexpr RPAR {: RESULT = new NotDefinedExpression(); :}
-| INITIALIZED LPAR lexpr RPAR {: RESULT = new NotDefinedExpression(); :}
-| FRESH LPAR lexpr RPAR{: RESULT = new NotDefinedExpression(); :}
-| NULL {: RESULT = new NullPointer(); :}
-| constant:expr {: RESULT = expr; :}
-| lexpr_inner:e1 PLUS lexpr_inner:e2 {: RESULT = new BinaryExpression(BinaryExpression.Operator.ARITHPLUS, e1, e2);:}
-| lexpr_inner:e1 MINUS lexpr_inner:e2 {: RESULT = new BinaryExpression(BinaryExpression.Operator.ARITHMINUS, e1, e2);:}
-| lexpr_inner:e1 STAR lexpr_inner:e2 {: RESULT = new BinaryExpression(BinaryExpression.Operator.ARITHMUL, e1, e2);:} 
-| lexpr_inner:e1 SLASH lexpr_inner:e2 {: RESULT = new BinaryExpression(BinaryExpression.Operator.ARITHDIV, e1, e2);:}
-| lexpr_inner:e1 PERCENT lexpr_inner:e2 {: RESULT = new BinaryExpression(BinaryExpression.Operator.ARITHMOD, e1, e2);:} 
-| lexpr_inner:e ARROW identifier_or_typename:i {: RESULT = new FieldAccessExpression(e, i); :} // TODO Deref e
-| lexpr_inner:e DOT identifier_or_typename:i {: RESULT = new FieldAccessExpression(e, i); :}
-| lexpr_inner LSQUARE range RSQUARE {: RESULT = new NotDefinedExpression(); :}
-| lexpr_inner:array LSQUARE lexpr:indices RSQUARE {: RESULT = new ArrayAccessExpression(array, new Expression[] {indices}); :}
-| MINUS lexpr_inner:e {: RESULT = new UnaryExpression(UnaryExpression.Operator.MINUS, e); :} %prec prec_unary_op 
-| PLUS  lexpr_inner:e {: RESULT = new UnaryExpression(UnaryExpression.Operator.PLUS, e); :} %prec prec_unary_op 
-| TILDE lexpr_inner:e {: RESULT = new UnaryExpression(UnaryExpression.Operator.LOGICCOMPLEMENT, e); :}
-| STAR  lexpr_inner:e {: RESULT = new UnaryExpression(UnaryExpression.Operator.POINTER, e); :} %prec prec_unary_op 
-| AMP   lexpr_inner:e {: RESULT = new UnaryExpression(UnaryExpression.Operator.ADDROF, e); :} %prec prec_unary_op 
+ string:s {: RESULT = new StringLiteral(s); setLineNumber(s$,s$,RESULT);:}
+| NOT lexpr_inner:e {: RESULT = new UnaryExpression(UnaryExpression.Operator.LOGICNEG, e);setLineNumber(e$,e$,RESULT);:}
+| TRUE:e {: RESULT = new BooleanLiteral(true);setLineNumber(e$,e$,RESULT);:}
+| FALSE:e {: RESULT = new BooleanLiteral(false);setLineNumber(e$,e$,RESULT);:}
+| VALID LPAR lexpr:expr RPAR {: RESULT = new ValidExpression(expr); setLineNumber(expr$,expr$,RESULT);:}
+| FREEABLE LPAR lexpr:expr RPAR {: RESULT = new FreeableExpression(expr); setLineNumber(expr$,expr$,RESULT);:}
+| MALLOCABLE LPAR lexpr:expr RPAR {: RESULT = new MallocableExpression(expr); setLineNumber(expr$,expr$,RESULT);:}
+| VALID_INDEX LPAR lexpr:e1 COMMA lexpr:e2 RPAR {: RESULT = new NotDefinedExpression(); setLineNumber(e1$,e2$,RESULT);:}
+| VALID_RANGE LPAR lexpr:e COMMA lexpr COMMA lexpr RPAR {: RESULT = new NotDefinedExpression(); setLineNumber(e$,e$,RESULT); :}
+| INITIALIZED LPAR lexpr:e RPAR {: RESULT = new NotDefinedExpression(); setLineNumber(e$,e$,RESULT);:}
+| FRESH LPAR lexpr:e RPAR{: RESULT = new NotDefinedExpression(); setLineNumber(e$,e$,RESULT);:}
+| NULL:e {: RESULT = new NullPointer(); setLineNumber(e$,e$,RESULT);:}
+| constant:expr {: RESULT = expr; setLineNumber(expr$,expr$,RESULT);:}
+| lexpr_inner:e1 PLUS lexpr_inner:e2 {: RESULT = new BinaryExpression(BinaryExpression.Operator.ARITHPLUS, e1, e2); setLineNumber(e1$,e2$,RESULT);:}
+| lexpr_inner:e1 MINUS lexpr_inner:e2 {: RESULT = new BinaryExpression(BinaryExpression.Operator.ARITHMINUS, e1, e2); setLineNumber(e1$,e2$,RESULT);:}
+| lexpr_inner:e1 STAR lexpr_inner:e2 {: RESULT = new BinaryExpression(BinaryExpression.Operator.ARITHMUL, e1, e2); setLineNumber(e1$,e2$,RESULT);:} 
+| lexpr_inner:e1 SLASH lexpr_inner:e2 {: RESULT = new BinaryExpression(BinaryExpression.Operator.ARITHDIV, e1, e2); setLineNumber(e1$,e2$,RESULT);:}
+| lexpr_inner:e1 PERCENT lexpr_inner:e2 {: RESULT = new BinaryExpression(BinaryExpression.Operator.ARITHMOD, e1, e2); setLineNumber(e1$,e2$,RESULT);:} 
+| lexpr_inner:e ARROW identifier_or_typename:i {: RESULT = new FieldAccessExpression(e, i); setLineNumber(e$,i$,RESULT);:} // TODO Deref e
+| lexpr_inner:e DOT identifier_or_typename:i {: RESULT = new FieldAccessExpression(e, i); setLineNumber(e$,i$,RESULT);:}
+| lexpr_inner LSQUARE range:e RSQUARE {: RESULT = new NotDefinedExpression(); setLineNumber(e$,e$,RESULT);:}
+| lexpr_inner:array LSQUARE lexpr:indices RSQUARE {: RESULT = new ArrayAccessExpression(array, new Expression[] {indices}); setLineNumber(array$,indices$,RESULT);:}
+| MINUS lexpr_inner:e {: RESULT = new UnaryExpression(UnaryExpression.Operator.MINUS, e); setLineNumber(e$,e$,RESULT);:} %prec prec_unary_op 
+| PLUS  lexpr_inner:e {: RESULT = new UnaryExpression(UnaryExpression.Operator.PLUS, e); setLineNumber(e$,e$,RESULT);:} %prec prec_unary_op 
+| TILDE lexpr_inner:e {: RESULT = new UnaryExpression(UnaryExpression.Operator.LOGICCOMPLEMENT, e); setLineNumber(e$,e$,RESULT);:}
+| STAR  lexpr_inner:e {: RESULT = new UnaryExpression(UnaryExpression.Operator.POINTER, e); setLineNumber(e$,e$,RESULT);:} %prec prec_unary_op 
+| AMP   lexpr_inner:e {: RESULT = new UnaryExpression(UnaryExpression.Operator.ADDROF, e); setLineNumber(e$,e$,RESULT); :} %prec prec_unary_op 
 | SIZEOF LPAR lexpr:expr RPAR 
  {: SizeOfExpression sexpr = new SizeOfExpression(); 
  	sexpr.setFormula(expr);
+	setLineNumber(expr$,expr$,sexpr);
  	RESULT = sexpr; :}
 | SIZEOF LPAR logic_type:lt RPAR 
  {: SizeOfExpression sexpr = new SizeOfExpression(); 
  	sexpr.setLogicType(new ACSLType(lt));
+	setLineNumber(lt$,lt$,sexpr);
  	RESULT = sexpr; :}
-| OLD LPAR lexpr:expr RPAR {: RESULT = new OldValueExpression(expr); :}
-| AT LPAR lexpr:expr COMMA label_name:label RPAR {: RESULT = new AtLabelExpression(expr, label); :}
-| BASE_ADDR LPAR lexpr:expr RPAR {: RESULT = new BaseAddrExpression(expr); :}
-| BLOCK_LENGTH LPAR lexpr:expr RPAR {: RESULT = new BlockLengthExpression(expr); :}
-| RESULT {: RESULT = new ResultExpression(); :}
-| SEPARATED LPAR ne_lexpr_list RPAR {: RESULT = new NotDefinedExpression(); :}
-| identifier LPAR ne_lexpr_list RPAR {: RESULT = new NotDefinedExpression(); :}
-| identifier LBRACE ne_tvar_list RBRACE LPAR ne_lexpr_list RPAR {: RESULT = new NotDefinedExpression(); :}
-| identifier LBRACE ne_tvar_list RBRACE {: RESULT = new NotDefinedExpression(); :}
-| identifier:ident {: RESULT = new IdentifierExpression(ident);
-					  RESULT.setStartingLineNumber(parser.getStartLineNumber() + ((ComplexSymbol)ident$).getLeft().getLine());
-  	 				  RESULT.setEndingLineNumber(parser.getStartLineNumber() + ((ComplexSymbol)ident$).getLeft().getLine());
-					:} %prec IDENTIFIER 
-| lexpr_inner GTGT lexpr_inner {: RESULT = new NotDefinedExpression(); :}
-| lexpr_inner LTLT lexpr_inner {: RESULT = new NotDefinedExpression(); :}
-| LPAR lexpr:e RPAR {: RESULT = e; :} %prec prec_par 
-| LPAR range RPAR {: RESULT = new NotDefinedExpression(); :}
-| LPAR cast_logic_type RPAR lexpr_inner {: RESULT = new NotDefinedExpression(); :} %prec prec_cast 
-| lexpr_inner LTCOLON lexpr_inner {: RESULT = new NotDefinedExpression(); :} %prec prec_cast 
-| lexpr_inner COLONGT logic_type {: RESULT = new NotDefinedExpression(); :} %prec prec_cast 
-| lexpr_inner COLONGT lexpr_inner {: RESULT = new NotDefinedExpression(); :} %prec prec_cast 
-| TYPEOF LPAR lexpr RPAR {: RESULT = new NotDefinedExpression(); :}
-| BSTYPE LPAR type_spec STAR RPAR {: RESULT = new NotDefinedExpression(); :}
+| OLD LPAR lexpr:expr RPAR {: RESULT = new OldValueExpression(expr); setLineNumber(expr$,expr$,RESULT); :}
+| AT LPAR lexpr:expr COMMA label_name:label RPAR {: RESULT = new AtLabelExpression(expr, label); setLineNumber(expr$,label$,RESULT); :}
+| BASE_ADDR LPAR lexpr:expr RPAR {: RESULT = new BaseAddrExpression(expr); setLineNumber(expr$,expr$,RESULT); :}
+| BLOCK_LENGTH LPAR lexpr:expr RPAR {: RESULT = new BlockLengthExpression(expr); setLineNumber(expr$,expr$,RESULT); :}
+| RESULT:e {: RESULT = new ResultExpression(); setLineNumber(e$,e$,RESULT);:}
+| SEPARATED LPAR ne_lexpr_list:e RPAR {: RESULT = new NotDefinedExpression(); setLineNumber(e$,e$,RESULT);:}
+| identifier:e1 LPAR ne_lexpr_list:e2 RPAR {: RESULT = new NotDefinedExpression(); setLineNumber(e1$,e2$,RESULT);:}
+| identifier:e1 LBRACE ne_tvar_list:e2 RBRACE LPAR ne_lexpr_list:e3 RPAR {: RESULT = new NotDefinedExpression(); setLineNumber(e1$,e3$,RESULT);:}
+| identifier:e1 LBRACE ne_tvar_list:e2 RBRACE {: RESULT = new NotDefinedExpression(); setLineNumber(e1$,e2$,RESULT);:}
+| identifier:ident {: RESULT = new IdentifierExpression(ident); setLineNumber(ident$,ident$,RESULT); :} %prec IDENTIFIER 
+| lexpr_inner:e1 GTGT lexpr_inner:e2 {: RESULT = new NotDefinedExpression(); setLineNumber(e1$,e2$,RESULT);:}
+| lexpr_inner:e1 LTLT lexpr_inner:e2 {: RESULT = new NotDefinedExpression(); setLineNumber(e1$,e2$,RESULT);:}
+| LPAR lexpr:e RPAR {: RESULT = e; setLineNumber(e$,e$,RESULT);:} %prec prec_par 
+| LPAR range:e RPAR {: RESULT = new NotDefinedExpression(); setLineNumber(e$,e$,RESULT);:}
+| LPAR cast_logic_type:e1 RPAR lexpr_inner:e2 {: RESULT = new NotDefinedExpression(); setLineNumber(e1$,e2$,RESULT);:} %prec prec_cast 
+| lexpr_inner:e1 LTCOLON lexpr_inner:e2 {: RESULT = new NotDefinedExpression(); setLineNumber(e1$,e2$,RESULT);:} %prec prec_cast 
+| lexpr_inner:e1 COLONGT logic_type:e2 {: RESULT = new NotDefinedExpression(); setLineNumber(e1$,e2$,RESULT);:} %prec prec_cast 
+| lexpr_inner:e1 COLONGT lexpr_inner:e2 {: RESULT = new NotDefinedExpression(); setLineNumber(e1$,e2$,RESULT);:} %prec prec_cast 
+| TYPEOF LPAR lexpr:e RPAR {: RESULT = new NotDefinedExpression(); setLineNumber(e$,e$,RESULT);:}
+| BSTYPE LPAR type_spec:e STAR RPAR {: RESULT = new NotDefinedExpression(); setLineNumber(e$,e$,RESULT);:}
     /* tsets */
-| EMPTY {: RESULT = new NotDefinedExpression(); :}
-| BSUNION LPAR lexpr_list RPAR {: RESULT = new NotDefinedExpression(); :}
-| INTER LPAR lexpr_list RPAR {: RESULT = new NotDefinedExpression(); :}
-| LBRACE lexpr RBRACE {: RESULT = new NotDefinedExpression(); :}
-| LBRACE lexpr PIPE binders RBRACE {: RESULT = new NotDefinedExpression(); :}
-| LBRACE lexpr PIPE binders SEMICOLON lexpr RBRACE {: RESULT = new NotDefinedExpression(); :}
+| EMPTY:e {: RESULT = new NotDefinedExpression();  setLineNumber(e$,e$,RESULT);:}
+| BSUNION LPAR lexpr_list:e RPAR {: RESULT = new NotDefinedExpression();  setLineNumber(e$,e$,RESULT);:}
+| INTER LPAR lexpr_list:e RPAR {: RESULT = new NotDefinedExpression();  setLineNumber(e$,e$,RESULT);:}
+| LBRACE lexpr:e RBRACE {: RESULT = new NotDefinedExpression();  setLineNumber(e$,e$,RESULT);:}
+| LBRACE lexpr:e1 PIPE binders:e2 RBRACE {: RESULT = new NotDefinedExpression();  setLineNumber(e1$,e2$,RESULT);:}
+| LBRACE lexpr:e1 PIPE binders:e2 SEMICOLON lexpr:e3 RBRACE {: RESULT = new NotDefinedExpression();  setLineNumber(e1$,e3$,RESULT);:}
     /* Aggregated object initialization */
-| LBRACE field_init RBRACE {: RESULT = new NotDefinedExpression(); :}
-| LBRACE array_init RBRACE {: RESULT = new NotDefinedExpression(); :}
-| LBRACE lexpr WITH update RBRACE {: RESULT = new NotDefinedExpression(); :}
+| LBRACE field_init:e RBRACE {: RESULT = new NotDefinedExpression();  setLineNumber(e$,e$,RESULT);:}
+| LBRACE array_init:e RBRACE {: RESULT = new NotDefinedExpression();  setLineNumber(e$,e$,RESULT);:}
+| LBRACE lexpr:e1 WITH update:e2 RBRACE {: RESULT = new NotDefinedExpression();  setLineNumber(e1$,e2$,RESULT);:}
 ;
 
 string::=
@@ -589,14 +628,14 @@ var_spec::=
 
 constant::=
  CONSTANT:value
- {: RESULT = new RealLiteral(value); :}  
+ {: RESULT = new RealLiteral(value);setLineNumber(value$,value$,RESULT);:}  
 | CONSTANT10:value 
- {: RESULT = new IntegerLiteral(value); :}
+ {: RESULT = new IntegerLiteral(value); setLineNumber(value$,value$,RESULT);:}
 ;
 
 constant_option::=
  constant:c
- {: RESULT = c; :} 
+ {: RESULT = c;  setLineNumber(c$,c$,RESULT);:} 
 | /* empty */
  {: RESULT = null; :}  
 ;
@@ -659,10 +698,12 @@ ne_parameters::=
 parameter::=
  type_spec:t var_spec:var
  {: ACSLType type = new ACSLType(t);
- 	RESULT = new Parameter(type, var); :} 
+ 	RESULT = new Parameter(type, var); 
+	setLineNumber(t$,var$,RESULT);:} 
 | identifier:i var_spec:var
  {: ACSLType type = new ACSLType(i);
- 	RESULT = new Parameter(type, var); :} 
+ 	RESULT = new Parameter(type, var);
+    setLineNumber(i$,var$,RESULT);	:} 
 ;
 
 
@@ -688,9 +729,9 @@ cast_logic_type::=
 
 logic_rt_type::=
  identifier:id
- {: RESULT = new ACSLType(id); :}
+ {: RESULT = new ACSLType(id); setLineNumber(id$,id$,RESULT); :}
 | logic_type:type
- {: RESULT = new ACSLType(type); :}  
+ {: RESULT = new ACSLType(type);  setLineNumber(type$,type$,RESULT);:}  
 ;
 
 abs_spec_option::=
@@ -826,14 +867,16 @@ requires::=
 
 ne_requires::=
  REQUIRES:r lexpr:expr SEMICOLON:s requires:req
- {: expr.setStartingLineNumber(parser.getStartLineNumber() + ((ComplexSymbol)r$).getRight().getLine());
-  	expr.setEndingLineNumber(parser.getStartLineNumber() + ((ComplexSymbol)s$).getLeft().getLine());
+ {: //expr.setStartingLineNumber(parser.getStartLineNumber() + ((ComplexSymbol)r$).getRight().getLine());
+  	//expr.setEndingLineNumber(parser.getStartLineNumber() + ((ComplexSymbol)s$).getLeft().getLine());
  	Requires requires = new Requires(expr);
- 	int tmpLn = parser.getStartLineNumber();
- 	requires.setStartingLineNumber(tmpLn + ((ComplexSymbol)r$).getLeft().getLine());
- 	requires.setEndingLineNumber(tmpLn + ((ComplexSymbol)s$).getRight().getLine());
+	setLineNumber(expr$,expr$,requires);
+ 	//int tmpLn = parser.getStartLineNumber();
+ 	//requires.setStartingLineNumber(tmpLn + ((ComplexSymbol)r$).getLeft().getLine());
+ 	//requires.setEndingLineNumber(tmpLn + ((ComplexSymbol)s$).getRight().getLine());
  	req.add(requires);
- 	RESULT = req; :} 
+ 	RESULT = req; 
+	:} 
 ;
 
 terminates::=
@@ -844,14 +887,7 @@ terminates::=
 ;
 
 ne_terminates::=
- TERMINATES:t lexpr:expr SEMICOLON:s
- {: expr.setStartingLineNumber(parser.getStartLineNumber() + ((ComplexSymbol)t$).getRight().getLine());
-  	expr.setEndingLineNumber(parser.getStartLineNumber() + ((ComplexSymbol)s$).getLeft().getLine());
- 	Terminates terminates = new Terminates(expr);
- 	int tmpLn = parser.getStartLineNumber(); 
- 	terminates.setStartingLineNumber(tmpLn + ((ComplexSymbol)t$).getLeft().getLine());
- 	terminates.setEndingLineNumber(tmpLn + ((ComplexSymbol)s$).getRight().getLine());
- 	RESULT = terminates; :} 
+ TERMINATES lexpr:expr SEMICOLON {: RESULT = new Terminates(expr); setLineNumber(expr$,expr$,RESULT); :} 
 ;
 
 decreases::=
@@ -862,23 +898,8 @@ decreases::=
 ;
 
 ne_decreases::=
- DECREASES:d lexpr:expr SEMICOLON:s
- {: 
- 	expr.setStartingLineNumber(parser.getStartLineNumber() + ((ComplexSymbol)d$).getRight().getLine());
-  	expr.setEndingLineNumber(parser.getStartLineNumber() + ((ComplexSymbol)s$).getLeft().getLine());
- 	Decreases decreases = new Decreases(expr); 
- 	int tmpLn = parser.getStartLineNumber(); 
- 	decreases.setStartingLineNumber(tmpLn + ((ComplexSymbol)d$).getLeft().getLine());
- 	decreases.setEndingLineNumber(tmpLn + ((ComplexSymbol)s$).getRight().getLine());
- 	RESULT = decreases; :}
-| DECREASES:d lexpr:expr FOR:f any_identifier:id SEMICOLON:s
- {: expr.setStartingLineNumber(parser.getStartLineNumber() + ((ComplexSymbol)d$).getRight().getLine());
-  	expr.setEndingLineNumber(parser.getStartLineNumber() + ((ComplexSymbol)f$).getLeft().getLine());
- 	Decreases decreases = new Decreases(expr, id);
- 	int tmpLn = parser.getStartLineNumber();
- 	decreases.setStartingLineNumber(tmpLn + ((ComplexSymbol)d$).getLeft().getLine());
- 	decreases.setEndingLineNumber(tmpLn + ((ComplexSymbol)s$).getRight().getLine());
- 	RESULT = decreases; :}  
+  DECREASES lexpr:expr SEMICOLON {: RESULT = new Decreases(expr); setLineNumber(expr$,expr$,RESULT);:}
+| DECREASES lexpr:expr FOR any_identifier:id SEMICOLON {: RESULT = new Decreases(expr, id); setLineNumber(expr$,id$,RESULT);:}  
 ;
 
 simple_clauses::=

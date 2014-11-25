@@ -6,6 +6,7 @@ package de.uni_freiburg.informatik.ultimate.model.acsl;
 import java.util.ArrayList;
 import java.util.List;
 
+import de.uni_freiburg.informatik.ultimate.model.acsl.ast.ACSLTransformer;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.ACSLVisitor;
 
 /**
@@ -104,5 +105,7 @@ public abstract class ACSLNode {
 	 * @param visitor
 	 */
 	public abstract void accept(ACSLVisitor visitor);
+	
+	public abstract ACSLNode accept(ACSLTransformer visitor);
 
 }

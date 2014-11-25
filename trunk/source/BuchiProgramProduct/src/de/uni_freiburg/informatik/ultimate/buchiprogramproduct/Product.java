@@ -13,7 +13,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomat
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssumeStatement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BoogieASTNode;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
@@ -45,9 +44,9 @@ import de.uni_freiburg.informatik.ultimate.result.LTLPropertyCheck;
  */
 public class Product {
 
-	private NestedWordAutomaton<BoogieASTNode, String> mNWA;
-	private RootNode mRCFG;
-	private List<ProgramPoint> mRCFGLocations;
+	private final NestedWordAutomaton<CodeBlock, String> mNWA;
+	private final RootNode mRCFG;
+	private final List<ProgramPoint> mRCFGLocations;
 
 	private HashMap<String, ProgramPoint> mProductLocations;
 
@@ -61,9 +60,8 @@ public class Product {
 	private final IUltimateServiceProvider mServices;
 	private final ProductBacktranslator mBacktranslator;
 
-	public Product(NestedWordAutomaton<BoogieASTNode, String> aut, RootNode rcfg,
-			LTLPropertyCheck ltlAnnot, IUltimateServiceProvider services, ProductBacktranslator backtrans)
-			throws Exception {
+	public Product(NestedWordAutomaton<CodeBlock, String> aut, RootNode rcfg, LTLPropertyCheck ltlAnnot,
+			IUltimateServiceProvider services, ProductBacktranslator backtrans) throws Exception {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mRCFGLocations = new ArrayList<ProgramPoint>();
@@ -162,7 +160,6 @@ public class Product {
 
 		// first, do everything except return edges
 		for (ProgramPoint pp : mRCFGLocations) {
-			mLogger.debug(pp.toString());
 			for (String nwaState : mNWA.getStates()) {
 				ProgramPoint currentpp = mProductLocations.get(generateStateName(pp.getLocationName(), nwaState));
 				// For Edge of Node x Edge of node
@@ -189,7 +186,6 @@ public class Product {
 
 		// second, handle all return edges
 		for (ProgramPoint pp : mRCFGLocations) {
-			mLogger.debug(pp.toString());
 			for (String nwaState : mNWA.getStates()) {
 				ProgramPoint currentpp = mProductLocations.get(generateStateName(pp.getLocationName(), nwaState));
 				// For Edge of Node x Edge of node
@@ -228,7 +224,7 @@ public class Product {
 
 	private void handleEdgeStatementSequence(ProgramPoint currentpp, String nwaState, StatementSequence rcfgEdge) {
 		ProgramPoint targetpp;
-		for (OutgoingInternalTransition<BoogieASTNode, String> autTrans : mNWA.internalSuccessors(nwaState)) {
+		for (OutgoingInternalTransition<CodeBlock, String> autTrans : mNWA.internalSuccessors(nwaState)) {
 			targetpp = mProductLocations.get(generateStateName(((ProgramPoint) rcfgEdge.getTarget()).getLocationName(),
 					autTrans.getSucc().toString()));
 			// append statements of rcfg and ltl
@@ -265,7 +261,7 @@ public class Product {
 		// edge with the fitting assumption of the call. The
 		// edge is calculated
 		// like any other edge in the graph.
-		for (OutgoingInternalTransition<BoogieASTNode, String> autTrans : mNWA.internalSuccessors(nwaState)) {
+		for (OutgoingInternalTransition<CodeBlock, String> autTrans : mNWA.internalSuccessors(nwaState)) {
 			ProgramPoint targetpp = mProductLocations.get(generateStateName(returnTarget.getLocationName(), autTrans
 					.getSucc().toString()));
 			createNewStatementSequence(helper, null, targetpp, autTrans);
@@ -295,7 +291,7 @@ public class Product {
 		// edge with the fitting assumption of the call. The
 		// edge is calculated
 		// like any other edge in the graph.
-		for (OutgoingInternalTransition<BoogieASTNode, String> autTrans : mNWA.internalSuccessors(nwaState)) {
+		for (OutgoingInternalTransition<CodeBlock, String> autTrans : mNWA.internalSuccessors(nwaState)) {
 			ProgramPoint targetpp = mProductLocations.get(generateStateName(
 					((ProgramPoint) rcfgEdge.getTarget()).getLocationName(), autTrans.getSucc().toString()));
 			createNewStatementSequence(helper, null, targetpp, autTrans);
@@ -334,14 +330,28 @@ public class Product {
 	}
 
 	private void createNewStatementSequence(ProgramPoint currentpp, StatementSequence originalSS,
-			ProgramPoint targetpp, OutgoingInternalTransition<BoogieASTNode, String> autTrans) {
+			ProgramPoint targetpp, OutgoingInternalTransition<CodeBlock, String> autTrans) {
 		ArrayList<Statement> stmts = new ArrayList<Statement>();
 		if (originalSS != null) {
 			stmts.addAll(originalSS.getStatements());
 		}
 		if (autTrans != null) {
-			stmts.add(generateNeverClaimAssumeStatement(autTrans));
+			if (autTrans.getLetter() instanceof StatementSequence) {
+				StatementSequence autTransStmts = (StatementSequence) autTrans.getLetter();
+				stmts.addAll(autTransStmts.getStatements());
+			} else {
+				if (autTrans.getLetter() == null) {
+					throw new NullPointerException("Letter has to be a statement sequence, but is null");
+				} else {
+					throw new UnsupportedOperationException("Letter has to be a statement sequence, but is "
+							+ autTrans.getLetter().getClass().getSimpleName());
+				}
+			}
+
+			// TODO: autTrans is a codeblock, aka a statement sequence
+			// stmts.add(generateNeverClaimAssumeStatement(autTrans));
 		}
+		
 		// create the edge
 		StatementSequence newSS;
 		if (originalSS != null) {
@@ -357,10 +367,6 @@ public class Product {
 
 	private void mapNewEdge2OldEdge(RCFGEdge newEdge, RCFGEdge originalEdge) {
 		mBacktranslator.mapEdges(newEdge, originalEdge);
-	}
-
-	private AssumeStatement generateNeverClaimAssumeStatement(OutgoingInternalTransition<BoogieASTNode, String> autTrans) {
-		return generateNeverClaimAssumeStatement(((Expression) autTrans.getLetter()));
 	}
 
 	private AssumeStatement generateNeverClaimAssumeStatement(Expression expr) {
