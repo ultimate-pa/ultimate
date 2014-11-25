@@ -6,7 +6,6 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import org.apache.commons.collections15.Transformer;
-import org.apache.commons.lang3.StringEscapeUtils;
 import org.eclipse.cdt.core.dom.ast.IASTExpression;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;

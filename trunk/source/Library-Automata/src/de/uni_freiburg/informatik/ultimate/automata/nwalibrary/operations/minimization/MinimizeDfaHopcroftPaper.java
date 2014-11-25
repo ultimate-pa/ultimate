@@ -85,22 +85,17 @@ public class MinimizeDfaHopcroftPaper<LETTER, STATE> implements IOperation<LETTE
 			
 			s_Logger.info("Start intitializing partitions ... ");
 			m_blocks.init(m_nOfStates);
-			s_Logger.info("84 - m_cords.m_nOfSets: " + m_cords.m_nOfSets);
-			s_Logger.info("84 - m_blocks.m_nOfSets: " + m_blocks.m_nOfSets);
 			
 			// Make initial partition.
-			s_Logger.info("Make initial blocks partition.");
 			makeInitialPartition();
 						
 			// Make transition partition.
-			s_Logger.info("Make initial transistion partition.");
 			makeTransitionPartition();
 			s_Logger.info("completed initialization of partitions.");
 			
 			m_adjacent = new int[m_nOfTransitions];
 			m_F = new int[m_nOfStates + 1];
 			
-			s_Logger.info("Make adjacent transitions.");
 			// Make adjacent.
 			makeAdjacent(m_labelHeads);
 			
@@ -119,16 +114,13 @@ public class MinimizeDfaHopcroftPaper<LETTER, STATE> implements IOperation<LETTE
 						++i) {
 					// Mark all states, which are tails of the transitions with
 					// the same letter. --> Getting path to current state.
-					s_Logger.info("m_blocks.mark(...)");
 					m_blocks.mark(m_labelTails[m_cords.m_Elements[i]]);
 				}
 				// Split all blocks with marked elements into blocks of marked
 				// and non-marked states. --> new blocks are created.
-				s_Logger.info("m_blocks.split()");
 				m_blocks.split();
 				cordsIterator++;
 				// Iterate over all blocks of states.
-				s_Logger.info("blockIterator: " + blockIterator);
 				while (blockIterator < m_blocks.m_nOfSets) {
 					// Iterate over all states of each block.
 					for (i = m_blocks.m_first[blockIterator];
@@ -139,13 +131,11 @@ public class MinimizeDfaHopcroftPaper<LETTER, STATE> implements IOperation<LETTE
 						for (j = m_F[m_blocks.m_Elements[i]];
 								j < m_F[m_blocks.m_Elements[i] + 1];
 								++j) {
-							s_Logger.info("m_cords.mark(...)");
 							m_cords.mark(m_adjacent[j]);
 						}
 					}
 					// Split all sets of marked transitions into sets of marked
 					// and non-marked transitions.
-					s_Logger.info("m_cords.split()");
 					m_cords.split();
 					++blockIterator;
 				}
@@ -162,7 +152,6 @@ public class MinimizeDfaHopcroftPaper<LETTER, STATE> implements IOperation<LETTE
 		private void preprocessingData() {
 			m_nOfFinalStates = m_operand.getFinalStates().size();
 			m_nOfStates = m_operand.getStates().size();
-			s_Logger.info("nOfStates: " + m_nOfStates); 
 			m_nOfLetters = m_operand.getInternalAlphabet().size();			
 			
 			initializeMappings();
@@ -224,7 +213,6 @@ public class MinimizeDfaHopcroftPaper<LETTER, STATE> implements IOperation<LETTE
 				}
 			}
 			m_nOfTransitions = index;
-			s_Logger.info("m_nOfTransitions: " + m_nOfTransitions);
 			// resize arrays to used size for saving memory
 			// Maybe too much computing time?
 			m_labels = Arrays.copyOf(m_labels, m_nOfTransitions);
@@ -246,7 +234,6 @@ public class MinimizeDfaHopcroftPaper<LETTER, STATE> implements IOperation<LETTE
 				// Store block 0 as block with marked elements.
 				m_setsWithMarkedElements[m_w++] = 0;
 				// Split initial block 0.
-				s_Logger.info("m_blocks.split()");
 				m_blocks.split();
 			}
 		}
@@ -255,16 +242,12 @@ public class MinimizeDfaHopcroftPaper<LETTER, STATE> implements IOperation<LETTE
 		 * Create transition partition m_cords.
 		 */
 		private void makeTransitionPartition() {
-			s_Logger.info("m_cords.init()");
 			m_cords.init(m_nOfTransitions);
 			if (m_nOfTransitions > 0) {
 				Integer[] test = new Integer[m_cords.m_Elements.length];
 				for (int i = 0; i < test.length; ++i) {
 					test[i] = m_cords.m_Elements[i];
-					s_Logger.info("m_cords[" + i + "]: " + m_cords.m_Elements[i]);
-					s_Logger.info("m_labels[" + i + "]: " + m_labels[m_cords.m_Elements[i]]);
 				}
-				s_Logger.info("----------------");
 				Arrays.sort(test, new Comparator<Integer>() {
 					
 					@Override
@@ -276,7 +259,6 @@ public class MinimizeDfaHopcroftPaper<LETTER, STATE> implements IOperation<LETTE
 				
 				for (int i = 0; i < test.length; ++i) {
 					m_cords.m_Elements[i] = test[i];
-					s_Logger.info("m_cords[" + i + "]: " + m_cords.m_Elements[i]);
 				}
 				
 				m_cords.m_nOfSets = m_nOfMarkedElemInSet[0] = 0;
@@ -296,11 +278,8 @@ public class MinimizeDfaHopcroftPaper<LETTER, STATE> implements IOperation<LETTE
 					m_cords.m_setElemBelongsTo[t] = m_cords.m_nOfSets;
 					m_cords.m_LocationOfElem[t] = i;
 				}
-				// ATTENTION: removed ++,
-				// original code was: m_cords.m_past[m_cords.m_nOfSets++]
 				m_cords.m_past[m_cords.m_nOfSets++] = m_nOfTransitions;
 			}
-			s_Logger.info("279 - m_cords.m_nOfSets: " + m_cords.m_nOfSets);
 		}
 		
 		/*******************************************************************//**
@@ -399,9 +378,6 @@ public class MinimizeDfaHopcroftPaper<LETTER, STATE> implements IOperation<LETTE
 			 * Method for splitting blocks with marked elements.
 			 */
 			public void split() {
-				s_Logger.info("378 - m_cords.m_nOfSets: " + m_cords.m_nOfSets);
-				s_Logger.info("379 - m_blocks.m_nOfSets: " + m_blocks.m_nOfSets);
-
 				while (m_w > 0) {
 					// set with marked elements.
 					int set = m_setsWithMarkedElements[--m_w];
@@ -416,8 +392,6 @@ public class MinimizeDfaHopcroftPaper<LETTER, STATE> implements IOperation<LETTE
 					// Split block into two blocks with marked and non-marked
 					// elements. Take the smaller one as new block and remain
 					// the bigger one as the old block.
-					s_Logger.info("390 - m_cords.m_nOfSets: " + m_cords.m_nOfSets);
-					s_Logger.info("391 - m_blocks.m_nOfSets: " + m_blocks.m_nOfSets);
 					if (m_nOfMarkedElemInSet[set] <= m_past[set] - firstUnmarked) {
 						// block with marked elements is smaller --> new block
 						m_first[this.m_nOfSets] = m_first[set];
@@ -425,10 +399,6 @@ public class MinimizeDfaHopcroftPaper<LETTER, STATE> implements IOperation<LETTE
 					} else {
 						// block with marked elements is bigger --> remain as old block.
 						// --> new one consists of non-marked elements.
-						s_Logger.info("399 - m_cords.m_nOfSets: " + m_cords.m_nOfSets + " m_cords.m_past.length: " + m_cords.m_past.length);
-						s_Logger.info("400 - m_blocks.m_nOfSets: " + m_blocks.m_nOfSets + " m_block.m_past.length: " + m_blocks.m_past.length);
-
-						s_Logger.info("set: " + set);
 						m_past[this.m_nOfSets] = m_past[set];	// TODO: Index out of bounds, why?
 						m_first[this.m_nOfSets] = m_past[set] = firstUnmarked;
 					}
@@ -440,8 +410,6 @@ public class MinimizeDfaHopcroftPaper<LETTER, STATE> implements IOperation<LETTE
 					// Set changed block and new block as blocks with non-marked elements.
 					m_nOfMarkedElemInSet[set] = m_nOfMarkedElemInSet[this.m_nOfSets++] = 0;
 				}
-				s_Logger.info("438 - m_blocks.m_nOfSets: " + m_blocks.m_nOfSets);
-				s_Logger.info("438 - m_cords.m_nOfSets: " + m_cords.m_nOfSets);
 
 			}
 		}
@@ -456,42 +424,61 @@ public class MinimizeDfaHopcroftPaper<LETTER, STATE> implements IOperation<LETTE
 					null, m_operand.getStateFactory());
 			
 			StateFactory<STATE> sF = m_operand.getStateFactory();
-			ArrayList<STATE> newStates = new ArrayList<STATE>(m_blocks.m_nOfSets);
+			ArrayList<STATE> newStates =
+					new ArrayList<STATE>(m_blocks.m_nOfSets);
 			int blockOfInitState = m_blocks.m_setElemBelongsTo[m_initialState];
-			// Iterate over all first elements (states) of each block.
+			// Iterate over number of blocks for getting every first element.
 			for (int i = 0; i < m_blocks.m_nOfSets; ++i) {
-				// Get first of block.
-				int first = m_blocks.m_first[i];
-				// Get STATE, the integer belongs to.
-				Collection<STATE> tmp = new ArrayList<STATE>(m_blocks.m_past[i] - first);
-				for (int j = first; j < m_blocks.m_past[i]; ++j) {
+				// Get index in m_elements of the first element in block.
+				int firstOfBlockIndex = m_blocks.m_first[i];
+				// Get index in m_elements of the last element in block.
+				int lastOfBlockIndex = m_blocks.m_past[i];
+				// For intersecting all STATEs belonging to one block,
+				// build collection of all States.
+				Collection<STATE> tmp = new ArrayList<STATE>(
+						lastOfBlockIndex - firstOfBlockIndex);
+				// Iterate in m_elements over all States belonging to one block
+				// and adding them to the collection created before.
+				for (int j = firstOfBlockIndex; j < lastOfBlockIndex; ++j) {
 					int elem = m_blocks.m_Elements[j];
-					s_Logger.info("elem: " + elem + " j: " + j);
 					tmp.add(m_int2state.get(elem));
 				}
+				// Build the new state by using the minimize - function of StateFactory.
 				STATE newState = sF.minimize(tmp);
-				s_Logger.info("newState: " + newState.toString());
 				newStates.add(newState);
-				m_Result.addState((i == blockOfInitState), m_operand.isFinal(m_int2state.get(m_blocks.m_Elements[first])), newState);
+				// Add the new state to the new result automaton.
+				m_Result.addState(
+						(i == blockOfInitState), // is initial state?
+						m_operand.isFinal(m_int2state.get(
+								m_blocks.m_Elements[firstOfBlockIndex])), // is final state?
+						newState);
 			}
 			
+			// Iterate over each block to get the outgoing transitions of every
+			// first element of block.
 			for (int i = 0; i < m_blocks.m_nOfSets; ++i) {
-				int firstOfBlock = m_blocks.m_first[i];
-				STATE st = m_int2state.get(m_blocks.m_Elements[firstOfBlock]);
+				// Get the index in m_elements of the first element.
+				int firstOfBlockIndex = m_blocks.m_first[i];
+				// Get the belonging STATE - object out of Map.
+				STATE st = m_int2state.get(m_blocks.m_Elements[firstOfBlockIndex]);
+				// Take the before created new State as predecessor
+				// for the new transition.
 				STATE newPred = newStates.get(i);
-				s_Logger.info("st: " + st + " newPred: " + newPred);
-				// Get outgoing transitions of state.
+				// Get the outgoing transitions of the STATE st.
 				Iterator<OutgoingInternalTransition<LETTER, STATE>> it = 
 						m_operand.internalSuccessors(st).iterator();
-				// Iterate over outgoing transitions of state and check, whether
-				// successor of transition is also first of block.
-				// --> if yes, add transition to new automaton.
+				// Iterate over outgoing transitions of each block and add the
+				// transition to the new automaton.
 				while (it.hasNext()) {
+					// Get the next outgoing transition.
 					OutgoingInternalTransition<LETTER, STATE> next = it.next();
+					// Get the successor of the transition.
 					int succ = m_state2int.get(next.getSucc());
+					// For finding the equivalent state in the new states,
+					// get the number of the block the successor belongs to.
 					int blockOfSucc = m_blocks.m_setElemBelongsTo[succ];
 					STATE newSucc = newStates.get(blockOfSucc);
-					// Successor of transition is first of block. --> add transition.
+					// Add the new transition to the result automaton.
 					m_Result.addInternalTransition(newPred, next.getLetter(), newSucc);
 				}
 			}	
