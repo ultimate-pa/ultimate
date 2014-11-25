@@ -2,6 +2,7 @@ package de.uni_freiburg.informatik.ultimate.util;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.concurrent.TimeUnit;
 
@@ -148,5 +149,16 @@ public class Utils {
 			}
 		}
 		return filteredList;
+	}
+	
+	/**
+	 * Construct a new HashSet that contains the elements of a given Iterable.
+	 */
+	public static <E> HashSet<E> constructHashSet(Iterable<E> iterable) {
+		HashSet<E> result = new HashSet<E>();
+		for (E element : iterable) {
+			result.add(element);
+		}
+		return result;
 	}
 }
