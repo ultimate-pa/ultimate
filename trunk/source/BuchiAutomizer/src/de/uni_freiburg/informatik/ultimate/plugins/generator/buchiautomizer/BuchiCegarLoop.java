@@ -142,6 +142,7 @@ public class BuchiCegarLoop {
 	protected NestedWordAutomaton<CodeBlock, IPredicate> m_InterpolAutomaton;
 
 	protected IAutomaton<CodeBlock, IPredicate> m_ArtifactAutomaton;
+	protected final static Labeling m_PrintAutomataLabeling = Labeling.TOSTRING;
 
 	// used for the collection of statistics
 	int m_Infeasible = 0;
@@ -736,7 +737,7 @@ public class BuchiCegarLoop {
 
 	protected static void writeAutomatonToFile(IAutomaton<CodeBlock, IPredicate> automaton, String path,
 			String filename, Logger logger) {
-		new AtsDefinitionPrinter<String, String>(filename, path + "/" + filename, Labeling.TOSTRING, "", automaton);
+		new AtsDefinitionPrinter<String, String>(filename, path + "/" + filename, m_PrintAutomataLabeling, "", automaton);
 	}
 
 	public ModuleDecompositionBenchmark getMDBenchmark() {
