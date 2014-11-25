@@ -6,6 +6,9 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Stack;
+
+import org.eclipse.osgi.internal.resolver.ComputeNodeOrder;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.SymbolTableValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
@@ -26,11 +29,15 @@ public class SymbolTable extends LinkedScopedHashMap<String, SymbolTableValue> {
      */
     private HashMap<String, String> boogieID2CID;
     
+
     private HashMap<CDeclaration, Declaration> mCDecl2BoogieDecl;
     /**
      * unique ID for current scope.
      */
     private int compoundCounter;
+
+    private Stack<Integer> compoundNrStack = new Stack<>();;
+
     /**
      * A reference to the main dispatcher.
      */
@@ -78,10 +85,18 @@ public class SymbolTable extends LinkedScopedHashMap<String, SymbolTableValue> {
         return super.get(cId);
     }
 
+
     @Override
     public void beginScope() {
         super.beginScope();
         compoundCounter++;
+        compoundNrStack.push(compoundCounter);
+    }
+
+    @Override
+    public void endScope() {
+        super.endScope();
+        compoundNrStack.pop();
     }
 
     /**
@@ -164,7 +179,7 @@ public class SymbolTable extends LinkedScopedHashMap<String, SymbolTableValue> {
      * @return a unique number for the current scope.
      */
     public int getCompoundCounter() {
-        return compoundCounter;
+        return compoundNrStack.peek();
     }
 
     /**
