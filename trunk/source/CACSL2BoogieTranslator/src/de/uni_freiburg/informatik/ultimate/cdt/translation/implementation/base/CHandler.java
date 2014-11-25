@@ -2697,16 +2697,15 @@ public class CHandler implements ICHandler {
 //							Result r = main.dispatch(en.getValue());
 //							boogieExpMap.put(en.getKey(), null);
 //						}
-
+						try {
+							mAcsl = main.nextACSLStatement();
+						} catch (ParseException e1) {
+							String msg = "Skipped a ACSL node due to: " + e1.getMessage();
+							ILocation loc = LocationFactory.createCLocation(parent);
+							main.unsupportedSyntax(loc, msg);
+						}
 					}
-					try {
-						mAcsl = main.nextACSLStatement();
-					} catch (ParseException e1) {
-						String msg = "Skipped a ACSL node due to: " + e1.getMessage();
-						ILocation loc = LocationFactory.createCLocation(parent);
-						main.unsupportedSyntax(loc, msg);
-					}
-				}
+				} //TODO: deal with other global ACSL stuff
 			} else if (mAcsl.mSuccessorCNode == null) {
 				if (parent != null && stmt != null && next == null) {
 					// ACSL at the end of a function
