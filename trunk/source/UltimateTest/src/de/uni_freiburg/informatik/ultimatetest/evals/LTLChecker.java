@@ -4,16 +4,13 @@ import java.util.List;
 
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
 
-public class TACAS2015Matthias extends AbstractEvaluationTestSuite {
+public class LTLChecker extends AbstractEvaluationTestSuite {
 
 	@Override
 	protected void createTestCasesForReal(List<UltimateTestCase> testcases) {
-		// addTestCasesFixed("AutomizerC.xml",
-		// "TACASInterpolation2015/BackwardPredicates.epf", testcases);
 
-		addTestCasesFixed("AutomizerC.xml", "TACASInterpolation2015/ForwardPredicates.epf", testcases);
+		addTestCasesFixed("LtlSoftwareModelCheckingC.xml", "LtlSoftwareModelCheckingC.epf", testcases);
 
-		addTestCasesFixed("AutomizerC.xml", "TACASInterpolation2015/TreeInterpolation.epf", testcases);
 	}
 
 	@Override
@@ -24,8 +21,7 @@ public class TACAS2015Matthias extends AbstractEvaluationTestSuite {
 	@Override
 	protected String[] getDirectories() {
 		return new String[] { 
-				"examples/svcomp/recursive/",
-				"examples/svcomp/systemc/",
+				"examples/LTL/simple/",
 		};
 //		 return super.getDirectories();
 	}

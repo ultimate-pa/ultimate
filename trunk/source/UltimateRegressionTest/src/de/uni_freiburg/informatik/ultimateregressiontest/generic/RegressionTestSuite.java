@@ -15,7 +15,7 @@ public class RegressionTestSuite extends AbstractRegressionTestSuite {
 
 	public RegressionTestSuite() {
 		super();
-		mTimeout = 10000;
+		mTimeout = 20 * 1000;
 		mRootFolder = Util.getPathFromTrunk("examples/");
 
 		// match every path not containing CToBoogieTranslation or Backtranslation

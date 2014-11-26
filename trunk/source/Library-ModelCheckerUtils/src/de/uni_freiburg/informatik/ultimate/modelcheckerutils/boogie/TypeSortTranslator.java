@@ -162,7 +162,7 @@ public class TypeSortTranslator {
 			String name = constructedType.getConstr().getName();
 			result = m_Script.sort(name);
 		} else {
-			throw new IllegalArgumentException("Unsupported type" + boogieType);
+			throw new IllegalArgumentException("Unsupported type " + boogieType);
 		}
 		m_type2sort.put(boogieType, result);
 		m_sort2type.put(result, boogieType);

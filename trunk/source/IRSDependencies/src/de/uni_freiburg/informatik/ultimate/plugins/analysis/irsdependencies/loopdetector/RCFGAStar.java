@@ -29,13 +29,13 @@ import de.uni_freiburg.informatik.ultimate.util.Utils;
 public class RCFGAStar {
 
 	private final Logger mLogger;
-	private final IHeuristic mHeuristic;
+	private final IHeuristic<RCFGNode, RCFGEdge> mHeuristic;
 	private final RCFGNode mStart;
 	private final RCFGNode mTarget;
 	private final HashSet<RCFGEdge> mForbiddenEdges;
-	private final HashMap<RCFGNode, AstarAnnotation> mAnnotation;
+	private final HashMap<RCFGNode, AstarAnnotation<RCFGEdge>> mAnnotation;
 
-	public RCFGAStar(Logger logger, RCFGNode start, RCFGNode target, IHeuristic heuristic) {
+	public RCFGAStar(Logger logger, RCFGNode start, RCFGNode target, IHeuristic<RCFGNode, RCFGEdge> heuristic) {
 		mLogger = logger;
 		mStart = start;
 		mTarget = target;
@@ -44,7 +44,7 @@ public class RCFGAStar {
 		mAnnotation = new HashMap<>();
 	}
 
-	public RCFGAStar(Logger logger, RCFGNode start, RCFGNode target, IHeuristic heuristic,
+	public RCFGAStar(Logger logger, RCFGNode start, RCFGNode target, IHeuristic<RCFGNode, RCFGEdge> heuristic,
 			Collection<RCFGEdge> forbiddenEdges) {
 		this(logger, start, target, heuristic);
 		mForbiddenEdges.addAll(forbiddenEdges);
@@ -71,8 +71,8 @@ public class RCFGAStar {
 		FasterPriorityQueue<RCFGNode> open = new FasterPriorityQueue<RCFGNode>(new Comparator<RCFGNode>() {
 			@Override
 			public int compare(RCFGNode o1, RCFGNode o2) {
-				return Integer
-						.compare(getAnnotation(o1).mExpectedCostToTarget, getAnnotation(o2).mExpectedCostToTarget);
+				return Integer.compare(getAnnotation(o1).getExpectedCostToTarget(), getAnnotation(o2)
+						.getExpectedCostToTarget());
 			}
 		});
 		HashSet<RCFGEdge> closed = new HashSet<RCFGEdge>();
@@ -102,7 +102,7 @@ public class RCFGAStar {
 
 	private void initialize(RCFGNode node, FasterPriorityQueue<RCFGNode> open) {
 		open.add(node);
-		AstarAnnotation annot = new AstarAnnotation();
+		AstarAnnotation<RCFGEdge> annot = new AstarAnnotation<RCFGEdge>();
 		addAnntotation(node, annot);
 	}
 
@@ -114,12 +114,12 @@ public class RCFGAStar {
 			}
 			RCFGNode successor = e.getTarget();
 
-			AstarAnnotation currentAnnotation = getAnnotation(currentNode);
-			AstarAnnotation successorAnnotation = getAnnotation(successor);
+			AstarAnnotation<RCFGEdge> currentAnnotation = getAnnotation(currentNode);
+			AstarAnnotation<RCFGEdge> successorAnnotation = getAnnotation(successor);
 
-			int costSoFar = currentAnnotation.mCostSoFar + mHeuristic.getConcreteCost(e);
+			int costSoFar = currentAnnotation.getCostSoFar() + mHeuristic.getConcreteCost(e);
 
-			if (open.contains(successor) && costSoFar >= successorAnnotation.mCostSoFar) {
+			if (open.contains(successor) && costSoFar >= successorAnnotation.getCostSoFar()) {
 				// we already now the successor and our current way is not
 				// better than the new one
 				continue;
@@ -130,8 +130,8 @@ public class RCFGAStar {
 			open.remove(successor);
 			successorAnnotation.setExpectedCostToTarget(expectedCost);
 			if (successorAnnotation.isLowest()) {
-				successorAnnotation.mBackPointer = e;
-				successorAnnotation.mCostSoFar = costSoFar;
+				successorAnnotation.setBackPointer(e);
+				successorAnnotation.setCostSoFar(costSoFar);
 				open.add(successor);
 			}
 		}
@@ -141,8 +141,8 @@ public class RCFGAStar {
 	private List<RCFGEdge> createErrorPath(RCFGNode target) {
 		List<RCFGEdge> rtr = new ArrayList<RCFGEdge>();
 
-		AstarAnnotation currentAnnotation = getAnnotation(target);
-		RCFGEdge current = currentAnnotation.mBackPointer;
+		AstarAnnotation<RCFGEdge> currentAnnotation = getAnnotation(target);
+		RCFGEdge current = currentAnnotation.getBackPointer();
 
 		// special case: self loop
 		if (current.getSource() == current.getTarget() && current.getSource() == mTarget) {
@@ -156,52 +156,52 @@ public class RCFGAStar {
 			if (current.getSource() == mTarget) {
 				break;
 			}
-			current = currentAnnotation.mBackPointer;
+			current = currentAnnotation.getBackPointer();
 		}
 
 		Collections.reverse(rtr);
 		return rtr;
 	}
 
-	private void addAnntotation(RCFGNode node, AstarAnnotation annon) {
+	private void addAnntotation(RCFGNode node, AstarAnnotation<RCFGEdge> annon) {
 		mAnnotation.put(node, annon);
 	}
 
-	private AstarAnnotation getAnnotation(RCFGNode node) {
-		AstarAnnotation annot = mAnnotation.get(node);
+	private AstarAnnotation<RCFGEdge> getAnnotation(RCFGNode node) {
+		AstarAnnotation<RCFGEdge> annot = mAnnotation.get(node);
 		if (annot == null) {
-			annot = new AstarAnnotation();
+			annot = new AstarAnnotation<RCFGEdge>();
 			addAnntotation(node, annot);
 		}
 		return annot;
 	}
 
-	private class AstarAnnotation extends AbstractAnnotations implements Comparable<AstarAnnotation> {
+	private class AstarAnnotation<E> extends AbstractAnnotations implements Comparable<AstarAnnotation<E>> {
 
 		private static final long serialVersionUID = 1L;
-		private RCFGEdge mBackPointer;
+		private E mBackPointer;
 		private int mCostSoFar; // g-value
 		private int mExpectedCostToTarget; // f-value
 		private int mLowestExpectedCost;
 
 		private AstarAnnotation() {
-			mExpectedCostToTarget = Integer.MAX_VALUE;
-			mLowestExpectedCost = Integer.MAX_VALUE;
+			setExpectedCostToTarget(Integer.MAX_VALUE);
+			setLowestExpectedCost(Integer.MAX_VALUE);
 		}
 
 		private void setExpectedCostToTarget(int value) {
 			mExpectedCostToTarget = value;
-			if (value < mLowestExpectedCost) {
-				mLowestExpectedCost = value;
+			if (value < getLowestExpectedCost()) {
+				setLowestExpectedCost(value);
 			}
 		}
 
 		private boolean isLowest() {
-			return mLowestExpectedCost == mExpectedCostToTarget;
+			return getLowestExpectedCost() == getExpectedCostToTarget();
 		}
 
 		@Override
-		public int compareTo(AstarAnnotation o) {
+		public int compareTo(AstarAnnotation<E> o) {
 			return 0;
 		}
 
@@ -219,6 +219,34 @@ public class RCFGAStar {
 			} catch (Exception ex) {
 				return ex;
 			}
+		}
+
+		private E getBackPointer() {
+			return mBackPointer;
+		}
+
+		private void setBackPointer(E backPointer) {
+			mBackPointer = backPointer;
+		}
+
+		private int getCostSoFar() {
+			return mCostSoFar;
+		}
+
+		private void setCostSoFar(int costSoFar) {
+			mCostSoFar = costSoFar;
+		}
+
+		private int getExpectedCostToTarget() {
+			return mExpectedCostToTarget;
+		}
+
+		private int getLowestExpectedCost() {
+			return mLowestExpectedCost;
+		}
+
+		private void setLowestExpectedCost(int lowestExpectedCost) {
+			mLowestExpectedCost = lowestExpectedCost;
 		}
 	}
 
@@ -262,10 +290,19 @@ public class RCFGAStar {
 		}
 	}
 
-	public interface IHeuristic {
-		int getHeuristicValue(RCFGNode from, RCFGNode to);
+	/**
+	 * 
+	 * @author dietsch@informatik.uni-freiburg.de
+	 * 
+	 * @param <V>
+	 *            Type of vertices
+	 * @param <E>
+	 *            Type of edges
+	 */
+	public interface IHeuristic<V, E> {
+		int getHeuristicValue(V from, V to);
 
-		int getConcreteCost(RCFGEdge e);
+		int getConcreteCost(E e);
 	}
 
 }

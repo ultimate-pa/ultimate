@@ -23,16 +23,10 @@ import de.uni_freiburg.informatik.ultimatetest.summary.ITestSummary;
 import de.uni_freiburg.informatik.ultimatetest.summary.IncrementalLogWithVMParameters;
 
 /**
- * 
- * Test suite that contains the evaluation for the coming paper
- * "An interpolant generator for when you don't have an interpolant generator"
- * (see https://sotec.informatik.uni-freiburg.de/svn/swt/devel/heizmann/publish/
- * 2015TACAS-Interpolation/)
- * 
  * @author dietsch@informatik.uni-freiburg.de
  * 
  */
-public abstract class TACASInterpolation2015 extends AbstractModelCheckerTestSuite {
+public abstract class AbstractEvaluationTestSuite extends AbstractModelCheckerTestSuite {
 
 	private IncrementalLogWithVMParameters mIncrementalLog;
 

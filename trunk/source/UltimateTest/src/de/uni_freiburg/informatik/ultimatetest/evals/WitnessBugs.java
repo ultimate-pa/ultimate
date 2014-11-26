@@ -4,7 +4,7 @@ import java.util.List;
 
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
 
-public class WitnessBugs extends TACASInterpolation2015 {
+public class WitnessBugs extends AbstractEvaluationTestSuite {
 
 	@Override
 	protected void createTestCasesForReal(List<UltimateTestCase> testcases) {

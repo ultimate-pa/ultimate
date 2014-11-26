@@ -144,8 +144,8 @@ public class LoopDetector extends BaseObserver {
 		return first;
 	}
 
-	private IHeuristic getZeroHeuristic() {
-		return new IHeuristic() {
+	private IHeuristic<RCFGNode, RCFGEdge> getZeroHeuristic() {
+		return new IHeuristic<RCFGNode, RCFGEdge>() {
 
 			@Override
 			public int getHeuristicValue(RCFGNode from, RCFGNode to) {

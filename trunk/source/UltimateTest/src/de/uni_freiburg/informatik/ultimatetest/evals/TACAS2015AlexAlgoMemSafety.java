@@ -4,7 +4,7 @@ import java.util.List;
 
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
 
-public class TACAS2015AlexAlgoMemSafety extends TACASInterpolation2015 {
+public class TACAS2015AlexAlgoMemSafety extends AbstractEvaluationTestSuite {
 
 	@Override
 	protected void createTestCasesForReal(List<UltimateTestCase> testcases) {
