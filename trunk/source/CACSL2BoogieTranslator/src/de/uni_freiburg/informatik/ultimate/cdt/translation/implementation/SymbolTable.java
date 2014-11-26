@@ -177,7 +177,10 @@ public class SymbolTable extends LinkedScopedHashMap<String, SymbolTableValue> {
      * @return a unique number for the current scope.
      */
     public int getCompoundCounter() {
-        return compoundNrStack.peek();
+    	if (compoundNrStack.isEmpty())
+    		return 0;
+    	else 
+    		return compoundNrStack.peek();
     }
 
     /**
