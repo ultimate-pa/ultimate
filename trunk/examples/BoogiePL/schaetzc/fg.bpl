@@ -1,16 +1,21 @@
 var z, w : int;
 
 procedure f()
+modifies z,w;
 {
    w := 0;
    havoc z;
    while (z < 7) {
-      z := g(z);
+      call z := g(z);
    }
 }
 
-procedure g(x : int) returns (y : int)
+procedure g(inx : int) returns (y : int)
+modifies z,w;
 {
+   var x : int;
+   x := inx;
+   
    w := w + 1;
    y := x;
    x := 1;
