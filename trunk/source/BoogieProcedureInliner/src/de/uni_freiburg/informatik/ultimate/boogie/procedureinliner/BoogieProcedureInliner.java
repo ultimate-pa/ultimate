@@ -1,6 +1,9 @@
 package de.uni_freiburg.informatik.ultimate.boogie.procedureinliner;
 
+import java.util.ArrayList;
 import java.util.List;
+
+import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.access.IObserver;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
@@ -16,6 +19,9 @@ import de.uni_freiburg.informatik.ultimate.model.GraphType;
  */
 public class BoogieProcedureInliner implements IAnalysis {
 
+	private IUltimateServiceProvider mServices;
+	private Logger mLogger;
+	
 	@Override
 	public GraphType getOutputDefinition() {
 		return null;
@@ -43,21 +49,24 @@ public class BoogieProcedureInliner implements IAnalysis {
 
 	@Override
 	public List<IObserver> getObservers() {
-		return null;
+		// TODO generate Observers (which transform the AST)
+		ArrayList<IObserver> observers = new ArrayList<IObserver>();
+		observers.add(new ProcedureInliner(mServices));
+		return observers;
 	}
 
 	@Override
 	public void setToolchainStorage(IToolchainStorage storage) {
-		// TODO Auto-generated method stub
 		// #2
 	}
 
 	@Override
 	public void setServices(IUltimateServiceProvider services) {
-		// TODO Auto-generated method stub
-		// #1 (save it!)
+		// #1
+		mServices = services;
+		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		// exceptions: services.getResultService().reportResult(getPluginID(),
-		// new GenericResult(getPluginID(), "", longDescription, severity));
+		//               new GenericResult(getPluginID(), "", longDescription, severity));
 	}
 
 	@Override
