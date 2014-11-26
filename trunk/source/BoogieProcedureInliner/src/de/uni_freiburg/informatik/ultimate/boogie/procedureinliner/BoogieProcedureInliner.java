@@ -13,9 +13,10 @@ import de.uni_freiburg.informatik.ultimate.ep.interfaces.IAnalysis;
 import de.uni_freiburg.informatik.ultimate.model.GraphType;
 
 /**
+ * Tool for inlining boogie procedures.
+ * Currently under construction -- do not use.
  * 
  * @author schaetzc@informatik.uni-freiburg.de
- * 
  */
 public class BoogieProcedureInliner implements IAnalysis {
 
@@ -49,8 +50,9 @@ public class BoogieProcedureInliner implements IAnalysis {
 
 	@Override
 	public List<IObserver> getObservers() {
-		// TODO generate Observers (which transform the AST)
 		ArrayList<IObserver> observers = new ArrayList<IObserver>();
+		// TODO add preprocessor.TypeChecker to observers
+		//observers.add(new TypeChecker(mServices));
 		observers.add(new ProcedureInliner(mServices));
 		return observers;
 	}
@@ -85,6 +87,7 @@ public class BoogieProcedureInliner implements IAnalysis {
 
 	@Override
 	public UltimatePreferenceInitializer getPreferences() {
+		// TODO offer preferences for this tool
 		return null;
 	}
 
