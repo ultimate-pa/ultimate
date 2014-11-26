@@ -69,30 +69,17 @@ public final class GetRandomDfa implements IOperation<String, String> {
 	 *            The DFA to extract in the int[] array format specified by
 	 *            {@link #generatePackedRandomDFA(int, int, int, boolean, boolean)
 	 *            generatePackedRandomDFA(...)}
-	 * @param size
-	 *            Amount of nodes also the size of the automaton
-	 * @param alphabetSize
-	 *            Size of the alphabet
-	 * @param numOfAccStates
-	 *            Amount of accepting states
-	 * @param isTotal
-	 *            If transition function of DFA was set to be total or not.
-	 *            A wrong assignment will lead to a false number of nodes.
-	 * @param rnd
-	 *            Random generator
 	 * @return As {@link NestedWordAutomaton} extracted DFA
 	 */
-	public static NestedWordAutomaton<String, String> extractPackedDFA(
-			int[] dfa, int size, int alphabetSize, int numOfAccStates, boolean isTotal,
-			Random rnd) {
-		List<String> num2State = new ArrayList<String>(size);
-		for (int i = 0; i < size; ++i) {
+	private NestedWordAutomaton<String, String> extractPackedDFA(int[] dfa) {
+		List<String> num2State = new ArrayList<String>(m_size);
+		for (int i = 0; i < m_size; ++i) {
 			num2State.add(PREFIX_NODE + i);
 		}
 		String initialState = num2State.get(0);
 
-		List<String> num2Letter = new ArrayList<String>(alphabetSize);
-		for (int i = 0; i < alphabetSize; ++i) {
+		List<String> num2Letter = new ArrayList<String>(m_alphabetSize);
+		for (int i = 0; i < m_alphabetSize; ++i) {
 			num2Letter.add(PREFIX_TRANSITION + i);
 		}
 
@@ -102,9 +89,9 @@ public final class GetRandomDfa implements IOperation<String, String> {
 				num2Letter), null, null, stateFactory);
 
 		List<String> shuffledStateList = new ArrayList<String>(num2State);
-		Collections.shuffle(shuffledStateList, rnd);
+		Collections.shuffle(shuffledStateList, m_random);
 		// Accepting states
-		for (int i = 0; i < numOfAccStates; ++i) {
+		for (int i = 0; i < m_numOfAccStates; ++i) {
 			String state = shuffledStateList.get(i);
 			if (state.equals(initialState)) {
 				result.addState(true, true, state);
@@ -113,7 +100,7 @@ public final class GetRandomDfa implements IOperation<String, String> {
 			}
 		}
 		// Non-accepting states
-		for (int i = numOfAccStates; i < size; ++i) {
+		for (int i = m_numOfAccStates; i < m_size; ++i) {
 			String state = shuffledStateList.get(i);
 			if (state.equals(initialState)) {
 				result.addState(true, false, state);
@@ -126,16 +113,16 @@ public final class GetRandomDfa implements IOperation<String, String> {
 		int lengthOfUsableSequence = dfa.length;
 		//Skip transitions of the sink state for non-total DFAs.
 		//This simulates non-total DFAs because the generator only returns total DFAs.
-		if (!isTotal) {
-			lengthOfUsableSequence -= alphabetSize;
+		if (!m_isTotal) {
+			lengthOfUsableSequence -= m_alphabetSize;
 		}
 		for (int i = 0; i < lengthOfUsableSequence; i++) {
-			int predStateIndex = (int) Math.floor((i + 0.0) / alphabetSize);
-			int letterIndex = i % alphabetSize;
+			int predStateIndex = (int) Math.floor((i + 0.0) / m_alphabetSize);
+			int letterIndex = i % m_alphabetSize;
 			int succStateIndex = dfa[i];
 			//Skip transition if it points to a node out of the wished size.
 			//This node is the sink node for non-total DFAs.
-			if(dfa[i] < size) {
+			if(dfa[i] < m_size) {
 				String predState = num2State.get(predStateIndex);
 				String letter = num2Letter.get(letterIndex);
 				String succState = num2State.get(succStateIndex);
@@ -158,39 +145,27 @@ public final class GetRandomDfa implements IOperation<String, String> {
 	 * [0,1|0,0|1,2] each of the 3 nodes has 2 outgoing edges where the number denotes
 	 * the destination.<br />
 	 * e.g. 2nd edge of first node points to the second node.
-	 * @param size Amount of nodes also the size of the automaton
-	 * @param alphabetSize Size of the alphabet
-	 * @param numOfAccStates Amount of accepting states
-	 * @param ensureIsUniform If true ensures a uniform distribution of the connected
-	 * DFAs at high cost of performance for big 'size'.
-	 * If false random classes of DFAs get favored over other random classes but the
-	 * generation is very fast.
-	 * @param enableCaching If true enables caching of pre-calculated results for future
-	 * similar requests. If false caching will not be done.
-	 * Best results can be achieved by executing requests with same 'size' and similar
-	 * 'alphabetSize' behind one another.
 	 * @return Uniform or non-uniform distributed random connected total
 	 * DFA in a specific int[] array format
 	 */
-	public static int[] generatePackedRandomDFA(int size, int alphabetSize,
-			int numOfAccStates, boolean ensureIsUniform, boolean enableCaching)
+	public int[] generatePackedRandomDFA()
 			throws IllegalArgumentException {
-		if (size < 1 || alphabetSize < 1) {
+		if (m_size < 1 || m_alphabetSize < 1) {
 			throw new IllegalArgumentException(
 					"Neither 'size' nor 'alphabetSize' must be less than one.");
 		}
-		if (numOfAccStates < 0 || numOfAccStates > size) {
+		if (m_numOfAccStates < 0 || m_numOfAccStates > m_size) {
 			throw new IllegalArgumentException(
 					"'numOfAccStates' must not exceed 'size' or be less than zero.");
 		}
-		final int SEQUENCE_LENGTH = size * alphabetSize;
+		final int SEQUENCE_LENGTH = m_size * m_alphabetSize;
 
 		int[] sequence = new int[SEQUENCE_LENGTH];
 		int curSequenceIndex = 0;
 
 		// Special case where size == 1
-		if (size == 1) {
-			for (int i = 0; i < alphabetSize; i++) {
+		if (m_size == 1) {
+			for (int i = 0; i < m_alphabetSize; i++) {
 				sequence[curSequenceIndex] = 0;
 				curSequenceIndex++;
 			}
@@ -200,17 +175,15 @@ public final class GetRandomDfa implements IOperation<String, String> {
 		// Case where size >= 2
 		final Random rnd = new Random();
 
-		if (ensureIsUniform) {
-			preCalcPermutationsTable(size, alphabetSize, SEQUENCE_LENGTH,
-					enableCaching);
+		if (m_ensureIsUniform) {
+			preCalcPermutationsTable(SEQUENCE_LENGTH);
 		}
 
 		int lastFlag = -1;
 		// Calculate the flags for each node and generate the sequence from left
 		// to right until all nodes are reached by an edge.
-		for (int i = 1; i <= size - 1; i++) {
-			int curFlag = generateFlag(i, lastFlag + 1, alphabetSize,
-					permutationsTable, rnd, ensureIsUniform);
+		for (int i = 1; i <= m_size - 1; i++) {
+			int curFlag = generateFlag(i, lastFlag + 1);
 			for (int j = lastFlag + 1; j <= curFlag - 1; j++) {
 				// Only use nodes that were already reached
 				sequence[curSequenceIndex] = rnd.nextInt(i);
@@ -223,11 +196,11 @@ public final class GetRandomDfa implements IOperation<String, String> {
 		// Now all nodes are reached by an edge and the rest of the sequence can
 		// be filled up by using all nodes as edge destinations.
 		for (int i = lastFlag + 1; i <= SEQUENCE_LENGTH - 1; i++) {
-			sequence[curSequenceIndex] = rnd.nextInt(size);
+			sequence[curSequenceIndex] = rnd.nextInt(m_size);
 			curSequenceIndex++;
 		}
 
-		if (!enableCaching) {
+		if (!m_enableCaching) {
 			permutationsTable = null;
 		}
 
@@ -257,35 +230,19 @@ public final class GetRandomDfa implements IOperation<String, String> {
 	 * @param firstPossiblePos
 	 *            First possible position in the sequence at where the flag is
 	 *            allowed to appear
-	 * @param alphabetSize
-	 *            Size of the alphabet
-	 * @param permutationsTable
-	 *            2D Table where permutationsTable[m][j] is the number of DFAs
-	 *            that have the first occurrence of node 'm' at position 'j' in
-	 *            the sequence. Therefore it has size [size][size *
-	 *            alphabetSize].
-	 * @param rnd
-	 *            Random generator
-	 * @param ensureIsUniform
-	 *            If true ensures correct flags for a uniform distribution of
-	 *            the DFAs at high cost of performance for big 'size'. If false
-	 *            random classes of DFAs get favored over other random classes
-	 *            but the generation of the flags is very fast.
 	 * @return Flag for the given node
 	 */
-	private static int generateFlag(int node, int firstPossiblePos,
-			int alphabetSize, BigInteger[][] permutationsTable, Random rnd,
-			boolean ensureIsUniform) {
+	private int generateFlag(int node, int firstPossiblePos) {
 		/*
 		 * The length of the sequence before 'node's edges are reached. Flag
 		 * must appear before this to satisfy all rules.
 		 */
-		final int PRE_SEQUENCE_LENGTH = node * alphabetSize;
+		final int PRE_SEQUENCE_LENGTH = node * m_alphabetSize;
 
 		// If a uniform distribution must not be ensured randomly select a
 		// possible position for the flag.
-		if (!ensureIsUniform) {
-			return rnd.nextInt(PRE_SEQUENCE_LENGTH - firstPossiblePos)
+		if (!m_ensureIsUniform) {
+			return m_random.nextInt(PRE_SEQUENCE_LENGTH - firstPossiblePos)
 					+ firstPossiblePos;
 		}
 
@@ -310,7 +267,7 @@ public final class GetRandomDfa implements IOperation<String, String> {
 		// Randomly select one of all possible permutations including its
 		// probability
 		BigInteger permutation = nextRandomBigInteger(
-				permutations.add(BigInteger.ONE), rnd);
+				permutations.add(BigInteger.ONE), m_random);
 
 		counter = 0;
 		// Calculate the flag using the probability of each DFA setting and the
@@ -363,39 +320,31 @@ public final class GetRandomDfa implements IOperation<String, String> {
 	 * <b>O(k)</b> if caching is enabled and n is equal to cached version<br/>
 	 * where 'n' is the amount of nodes, 'k' the size of the alphabet.
 	 * 
-	 * @param size
-	 *            Amount of nodes
-	 * @param alphabetSize
-	 *            Size of alphabet
 	 * @param sequenceLength
 	 *            Length of sequence that must be size * alphabetSize
-	 * @param enableCaching
-	 *            If true enables caching of pre-calculated results for future
-	 *            similar requests. If false caching will not be done.
 	 */
-	private static void preCalcPermutationsTable(int size, int alphabetSize,
-			int sequenceLength, boolean enableCaching) {
-		boolean hasUsableCache = enableCaching && permutationsTable != null
+	private void preCalcPermutationsTable(int sequenceLength) {
+		boolean hasUsableCache = m_enableCaching && permutationsTable != null
 				&& permutationsTable[0] != null
-				&& permutationsTable.length == size;
+				&& permutationsTable.length == m_size;
 		if (hasUsableCache && permutationsTable[0].length == sequenceLength) {
 			return;
 		}
 
-		BigInteger[][] nextPermutationsTable = new BigInteger[size][sequenceLength];
+		BigInteger[][] nextPermutationsTable = new BigInteger[m_size][sequenceLength];
 
 		// Calculate the bottom row of the table.
-		for (int i = (size - 1) * alphabetSize - 1; i >= size - 2; i--) {
+		for (int i = (m_size - 1) * m_alphabetSize - 1; i >= m_size - 2; i--) {
 
 			// If there is a usable cache, the second index is in range and
 			// there is a value then copy it because this row is independent of
 			// changes in alphabetSize.
 			if (hasUsableCache && i < permutationsTable[0].length
-					&& permutationsTable[size - 1] != null
-					&& permutationsTable[size - 1][i] != null) {
-				nextPermutationsTable[size - 1][i] = permutationsTable[size - 1][i];
+					&& permutationsTable[m_size - 1] != null
+					&& permutationsTable[m_size - 1][i] != null) {
+				nextPermutationsTable[m_size - 1][i] = permutationsTable[m_size - 1][i];
 			} else {
-				nextPermutationsTable[size - 1][i] = BigInteger.valueOf(size)
+				nextPermutationsTable[m_size - 1][i] = BigInteger.valueOf(m_size)
 						.pow(sequenceLength - 1 - i);
 			}
 		}
@@ -403,15 +352,15 @@ public final class GetRandomDfa implements IOperation<String, String> {
 		// the other entries.
 		// Caching is not possible because all entries here are dependent on
 		// changes in size and alphabetSize.
-		for (int curNode = size - 2; curNode >= 1; curNode--) {
+		for (int curNode = m_size - 2; curNode >= 1; curNode--) {
 			// Length of the sequence before 'curNode's edges are reached.
-			int preSequenceLength = curNode * alphabetSize;
+			int preSequenceLength = curNode * m_alphabetSize;
 
 			// Calculate the rightest entry of the current row using the
 			// diagonal right entry of the bottom row.
 			BigInteger permutations = BigInteger.ZERO;
 
-			for (int i = 0; i <= alphabetSize - 1; i++) {
+			for (int i = 0; i <= m_alphabetSize - 1; i++) {
 				permutations = permutations
 						.add(nextPermutationsTable[curNode + 1][preSequenceLength
 								+ i].multiply(BigInteger.valueOf((int) Math
@@ -430,7 +379,7 @@ public final class GetRandomDfa implements IOperation<String, String> {
 			}
 		}
 
-		permutationsTable = nextPermutationsTable.clone();
+		permutationsTable = nextPermutationsTable;
 	}
 
 	/**
@@ -452,45 +401,46 @@ public final class GetRandomDfa implements IOperation<String, String> {
 	private static BigInteger[][] permutationsTable;
 	
 	/**
-	 * Random generator.
-	 */
-	private final Random m_Random;
-	/**
-	 * Resulting automaton of generator.
-	 */
-	private final NestedWordAutomaton<String, String> m_Result;
-
-	/**
-	 * Size of the automaton also amount of nodes.
-	 */
-	int m_size;
-	/**
 	 * Size of the alphabet.
 	 */
-	int m_alphabetSize;
+	private final int m_alphabetSize;
 	/**
 	 * If transition function should be total or not.
 	 * If not it can be possible that some transitions are missing
 	 * and the DFA is a non-complete DFA.
 	 */
-	boolean m_isTotal;
+	private final boolean m_isTotal;
 	/**
 	 * Number of the accepting states.
 	 */
-	int m_numOfAccStates;
+	private final int m_numOfAccStates;
 	/**
 	 * If true ensures a uniform distribution of the connected DFAs at high cost
 	 * of performance for big 'size'. If false random classes of DFAs get
 	 * favored over other random classes but the generation is very fast.
 	 */
-	boolean m_ensureIsUniform;
+	private final boolean m_ensureIsUniform;
 	/**
 	 * If true enables caching of pre-calculated results for future similar
 	 * requests. If false caching will not be done. Best results can be achieved
 	 * by executing requests with same 'size' and similar 'alphabetSize' behind
 	 * one another.
 	 */
-	boolean m_enableCaching;
+	private final boolean m_enableCaching;
+	/**
+	 * Random generator.
+	 */
+	private final Random m_random;
+	/**
+	 * Resulting automaton of generator.
+	 */
+	private final NestedWordAutomaton<String, String> m_result;
+
+	/**
+	 * Size of the automaton also amount of nodes.
+	 * This field is not final because it gets shortly modified if DFA may also be non-total.
+	 */
+	private int m_size;
 
 	/**
 	 * Generates a uniform distributed random connected or not-connected total
@@ -523,24 +473,7 @@ public final class GetRandomDfa implements IOperation<String, String> {
 	 * @return Uniform distributed random total DFA
 	 */
 	public GetRandomDfa(int size, int alphabetSize, int numOfAccStates, boolean isTotal) {
-		m_size = size;
-		m_alphabetSize = alphabetSize;
-		m_numOfAccStates = numOfAccStates;
-		m_isTotal = isTotal;
-		m_ensureIsUniform = true;
-		m_enableCaching = true;
-
-		m_Random = new Random();
-		//If DFA should not be total simulate that
-		//using a increased size where the new node is the sink state.
-		int generationSize = m_size;
-		if (!isTotal) {
-			generationSize += 1;
-		}
-		m_Result = extractPackedDFA(
-				generatePackedRandomDFA(generationSize, m_alphabetSize,
-						m_numOfAccStates, m_ensureIsUniform, m_enableCaching),
-				m_size, m_alphabetSize, m_numOfAccStates, m_isTotal, m_Random);
+		this(size, alphabetSize, numOfAccStates, isTotal, true, true);
 	}
 
 	/**
@@ -580,24 +513,7 @@ public final class GetRandomDfa implements IOperation<String, String> {
 	 */
 	public GetRandomDfa(int size, int alphabetSize, int numOfAccStates, boolean isTotal,
 			boolean ensureIsUniform) {
-		m_size = size;
-		m_alphabetSize = alphabetSize;
-		m_numOfAccStates = numOfAccStates;
-		m_isTotal = isTotal;
-		m_ensureIsUniform = ensureIsUniform;
-		m_enableCaching = true;
-
-		m_Random = new Random();
-		//If DFA should not be total simulate that
-		//using a increased size where the new node is the sink state.
-		int generationSize = m_size;
-		if (!isTotal) {
-			generationSize += 1;
-		}
-		m_Result = extractPackedDFA(
-				generatePackedRandomDFA(generationSize, m_alphabetSize,
-						m_numOfAccStates, m_ensureIsUniform, m_enableCaching),
-				m_size, m_alphabetSize, m_numOfAccStates, m_isTotal, m_Random);
+		this(size, alphabetSize, numOfAccStates, isTotal, ensureIsUniform, true);
 	}
 
 	/**
@@ -643,17 +559,17 @@ public final class GetRandomDfa implements IOperation<String, String> {
 		m_ensureIsUniform = ensureIsUniform;
 		m_enableCaching = enableCaching;
 
-		m_Random = new Random();
+		m_random = new Random();
 		//If DFA should not be total simulate that
 		//using a increased size where the new node is the sink state.
-		int generationSize = m_size;
 		if (!isTotal) {
-			generationSize += 1;
+			m_size += 1;
 		}
-		m_Result = extractPackedDFA(
-				generatePackedRandomDFA(generationSize, m_alphabetSize,
-						m_numOfAccStates, m_ensureIsUniform, m_enableCaching),
-				m_size, m_alphabetSize, m_numOfAccStates, m_isTotal, m_Random);
+		int[] dfa = generatePackedRandomDFA();
+		if (!isTotal) {
+			m_size -= 1;
+		}
+		m_result = extractPackedDFA(dfa);
 	}
 
 	@Override
@@ -665,12 +581,12 @@ public final class GetRandomDfa implements IOperation<String, String> {
 	@Override
 	public String exitMessage() {
 		return "Finished " + operationName() + " Result "
-				+ m_Result.sizeInformation() + ".";
+				+ m_result.sizeInformation() + ".";
 	}
 
 	@Override
 	public NestedWordAutomaton<String, String> getResult() {
-		return m_Result;
+		return m_result;
 	}
 
 	@Override
