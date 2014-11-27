@@ -1337,6 +1337,10 @@ public class TestFileInterpreter implements IMessagePrinter {
 			Set<Class<?>> operationClasses = mExistingOperations.get(operationName);
 			for (Class<?> operationClass : operationClasses) {
 				Constructor<?>[] operationConstructors = operationClass.getConstructors();
+				if (operationConstructors.length == 0) {
+					String description = "Error in automata library: operation " + operationName + " does not have a constructor";
+					throw new InterpreterException(oe.getLocation(), description, description);
+				}
 				// Find the constructor which expects the correct arguments
 				for (Constructor<?> c : operationConstructors) {
 					// Convention: If the first parameter is a StateFactory, we
