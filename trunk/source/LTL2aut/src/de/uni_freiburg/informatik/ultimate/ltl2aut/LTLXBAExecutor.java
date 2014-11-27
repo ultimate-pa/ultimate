@@ -85,10 +85,14 @@ public class LTLXBAExecutor {
 
 	private String[] getCommand(String ltlFormula) {
 		UltimatePreferenceStore prefs = new UltimatePreferenceStore(Activator.PLUGIN_ID);
+		ltlFormula = prefs.getString(PreferenceInitializer.LABEL_TOOLARGUMENT).replace("$1", ltlFormula);
+		ltlFormula = ltlFormula.replaceAll("\\(", " ( ");
+		ltlFormula = ltlFormula.replaceAll("\\)", " ) ");
+		ltlFormula = ltlFormula.replaceAll("\\s+", " ");
 		List<String> rtr = new ArrayList<>();
 		rtr.add(prefs.getString(PreferenceInitializer.LABEL_TOOLLOCATION));
 		rtr.add("-f");
-		rtr.add(prefs.getString(PreferenceInitializer.LABEL_TOOLARGUMENT).replace("$1", ltlFormula));
+		rtr.add(ltlFormula);
 		return rtr.toArray(new String[0]);
 	}
 
