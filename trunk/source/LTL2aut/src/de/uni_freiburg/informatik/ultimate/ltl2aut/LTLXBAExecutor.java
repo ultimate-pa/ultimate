@@ -2,6 +2,7 @@ package de.uni_freiburg.informatik.ultimate.ltl2aut;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
@@ -12,6 +13,7 @@ import org.apache.log4j.Logger;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 import de.uni_freiburg.informatik.ultimate.core.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.core.util.MonitoredProcess;
 import de.uni_freiburg.informatik.ultimate.ltl2aut.ast.AstNode;
 import de.uni_freiburg.informatik.ultimate.ltl2aut.preferences.PreferenceInitializer;
@@ -71,16 +73,23 @@ public class LTLXBAExecutor {
 	private String execLTLXBA(String ltlFormula) throws IOException, InterruptedException {
 		String[] command = getCommand(ltlFormula);
 		MonitoredProcess process = MonitoredProcess.exec(command, null, null, mServices, mStorage);
-		BufferedReader bri = new BufferedReader(new InputStreamReader(process.getInputStream()));
-		String line = null;
-		StringBuilder sb = new StringBuilder();
-		while ((line = bri.readLine()) != null) {
-			sb.append(line);
-		}
-		bri.close();
+		String rtr = convertStreamToString(process.getInputStream());
 		process.waitfor();
+		return rtr;
+	}
 
-		return sb.toString();
+	private static String convertStreamToString(InputStream is) {
+		BufferedReader reader = new BufferedReader(new InputStreamReader(is));
+		StringBuilder out = new StringBuilder();
+		String line;
+		try {
+			while ((line = reader.readLine()) != null) {
+				out.append(line).append(CoreUtil.getPlatformLineSeparator());
+			}
+			reader.close();
+		} catch (IOException e) {
+		}
+		return out.toString();
 	}
 
 	private String[] getCommand(String ltlFormula) {
