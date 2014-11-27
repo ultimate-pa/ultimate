@@ -13,6 +13,7 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -1341,9 +1342,10 @@ public class TestFileInterpreter implements IMessagePrinter {
 					// Convention: If the first parameter is a StateFactory, we
 					// prepend a StringFactory to the arguments.
 					Object[] augmentedArgs = prependStateFactoryIfNecessary(c, arguments);
-					if (allArgumentsHaveCorrectTypeForThisConstructor(c, augmentedArgs)) {
+					Object[] argumentsWithServices = prependIUltimateServiceProviderIfNecessary(c, augmentedArgs);
+					if (allArgumentsHaveCorrectTypeForThisConstructor(c, argumentsWithServices)) {
 						try {
-							result = (IOperation<String, String>) c.newInstance(augmentedArgs);
+							result = (IOperation<String, String>) c.newInstance(argumentsWithServices);
 							return result;
 						} catch (InstantiationException e) {
 							e.printStackTrace();
@@ -1396,6 +1398,34 @@ public class TestFileInterpreter implements IMessagePrinter {
 	}
 
 	/**
+	 * Prepend mServices to args if IUltimateServiceProvider is the first
+	 * parameter of the constructor.
+	 * FIXME: This is only a workaround! In the future IUltimateServiceProvider
+	 * will be the first argument of each IOperation and we will always
+	 * prepend mServices
+	 */
+	private Object[] prependIUltimateServiceProviderIfNecessary(
+			Constructor<?> c, Object[] args) {
+		boolean firstParameterIsIUltimateServiceProvider;
+		Class<?> fstParam = c.getParameterTypes()[0];
+		if (IUltimateServiceProvider.class.isAssignableFrom(fstParam)) {
+			firstParameterIsIUltimateServiceProvider = true;
+		} else {
+			firstParameterIsIUltimateServiceProvider = false;
+		}
+		Object[] result;
+		if (firstParameterIsIUltimateServiceProvider) {
+			List<Object> list = new ArrayList<>();
+			list.add(mServices);
+			list.addAll(Arrays.asList(args));
+			result = list.toArray();
+		} else {
+			result = args;
+		}
+		return result;
+	}
+	
+	/**
 	 * Return args.toArray(), but prepend a new StringFactory if the first
 	 * parameter of the Constructor c is a StateFacotry.
 	 */
@@ -1407,8 +1437,11 @@ public class TestFileInterpreter implements IMessagePrinter {
 		} else {
 			firstParameterIsStateFactory = false;
 		}
+		boolean firstParameterIsServicesAndSecondParameterIsStateFactory;
+		firstParameterIsServicesAndSecondParameterIsStateFactory = firstParameterIsServicesAndSecondParameterIsStateFactory(
+				c, fstParam);
 		Object result[];
-		if (firstParameterIsStateFactory) {
+		if (firstParameterIsStateFactory || firstParameterIsServicesAndSecondParameterIsStateFactory) {
 			result = new Object[args.size() + 1];
 			result[0] = new StringFactory();
 			int offset = 1;
@@ -1420,6 +1453,31 @@ public class TestFileInterpreter implements IMessagePrinter {
 			result = args.toArray();
 		}
 		return result;
+	}
+
+	/**
+	 * TODO: get rid of this workaround 
+	 * Workaround that is necessary as long as not all operations use
+	 * Services as their first parameter.
+	 */
+	private boolean firstParameterIsServicesAndSecondParameterIsStateFactory(
+			Constructor<?> c, Class<?> fstParam) {
+		boolean firstParameterIsServicesAndSecondParameterIsStateFactory;
+		if (c.getParameterTypes().length < 2) {
+			firstParameterIsServicesAndSecondParameterIsStateFactory = false;
+		} else {
+			Class<?> sndParam = c.getParameterTypes()[1];
+			if (IUltimateServiceProvider.class.isAssignableFrom(fstParam)) {
+				if (StateFactory.class.isAssignableFrom(sndParam)) {
+					firstParameterIsServicesAndSecondParameterIsStateFactory = true;
+				} else {
+					firstParameterIsServicesAndSecondParameterIsStateFactory = false;
+				}
+			} else {
+				firstParameterIsServicesAndSecondParameterIsStateFactory = false;
+			}
+		}
+		return firstParameterIsServicesAndSecondParameterIsStateFactory;
 	}
 
 	/**
