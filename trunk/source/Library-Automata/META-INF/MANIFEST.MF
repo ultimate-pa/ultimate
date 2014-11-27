@@ -30,6 +30,7 @@ Export-Package: de.uni_freiburg.informatik.ultimate.automata;
    de.uni_freiburg.informatik.ultimate.core.api",
  de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction,
  de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.old.vertex,
+ de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.incremental_inclusion,
  de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization,
  de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi,
  de.uni_freiburg.informatik.ultimate.automata.nwalibrary.senwa,
