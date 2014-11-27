@@ -37,7 +37,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.signdomain.SignDomainFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.topbottomdomain.TopBottomDomainFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.preferences.AbstractInterpretationPreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.loopdetector.LoopDetector;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.loopdetector.RCFGLoopDetector;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.RcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -315,7 +315,7 @@ public class AbstractInterpreter extends RCFGEdgeVisitor {
 		m_stringDomainFactory = makeDomainFactory(m_stringDomainID, m_stringWideningOpName, m_stringMergeOpName);
 
 		// fetch loop nodes with their entry/exit edges
-		LoopDetector loopDetector = new LoopDetector(m_services);
+		RCFGLoopDetector loopDetector = new RCFGLoopDetector(m_services);
 		try {
 			loopDetector.process(root);
 		} catch (Throwable e1) {
@@ -450,7 +450,7 @@ public class AbstractInterpreter extends RCFGEdgeVisitor {
 		m_stringDomainFactory = makeDomainFactory(m_stringDomainID, m_stringWideningOpName, m_stringMergeOpName);
 
 		// fetch loop nodes with their entry/exit edges
-		LoopDetector loopDetector = new LoopDetector(m_services);
+		RCFGLoopDetector loopDetector = new RCFGLoopDetector(m_services);
 		try {
 			loopDetector.process(rn);
 		} catch (Throwable e1) {

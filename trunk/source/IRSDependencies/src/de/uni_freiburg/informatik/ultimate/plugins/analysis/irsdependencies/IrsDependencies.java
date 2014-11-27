@@ -11,7 +11,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.IAnalysis;
 import de.uni_freiburg.informatik.ultimate.model.GraphType;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.loopdetector.LoopDetector;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.loopdetector.RCFGLoopDetector;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.preferences.IRSDependenciesPreferenceInitializer;
 
 public class IrsDependencies implements IAnalysis {
@@ -67,7 +67,7 @@ public class IrsDependencies implements IAnalysis {
 		switch (creator) {
 		case "de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder":
 			mLogger.info("Preparing to process RCFG...");
-			mObservers.add(new LoopDetector(mServices));
+			mObservers.add(new RCFGLoopDetector(mServices));
 
 			break;
 		// case "BoogiePLCupParser":

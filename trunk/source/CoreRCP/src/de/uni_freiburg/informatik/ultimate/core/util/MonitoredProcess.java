@@ -334,14 +334,16 @@ public final class MonitoredProcess implements IStorable {
 							os.flush();
 						}
 					} catch (IOException e) {
-						mMonitoredProcess.mLogger.warn("The stream was forcibly closed");
+						mMonitoredProcess.mLogger.warn("The stream was forcibly closed (" + mMonitoredProcess.mCommand
+								+ ")");
 					} finally {
 						try {
 							br.close();
 							os.flush();
 							os.close();
 						} catch (IOException e) {
-							mMonitoredProcess.mLogger.fatal("During closing of the streams, an error occured");
+							mMonitoredProcess.mLogger.fatal("During closing of the streams, an error occured ("
+									+ mMonitoredProcess.mCommand + ")");
 						}
 					}
 				}
