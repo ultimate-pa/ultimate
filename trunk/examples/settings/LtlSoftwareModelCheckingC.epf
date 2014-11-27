@@ -48,7 +48,7 @@ file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.ltl2aut/Read\ property\ from\ file=true
 file_export_version=3.0
 @de.uni_freiburg.informatik.ultimate.ltl2aut=0.0.1
-/instance/de.uni_freiburg.informatik.ultimate.ltl2aut/Path\ to\ LTL*BA\ executable\ (LTL2BA,\ LTL3BA)=C\:\\Users\\firefox\\Desktop\\Diverses\\Downloads\\ltl2ba-1.1.tar\\ltl2ba-1.1\\ltl2ba.exe
+/instance/de.uni_freiburg.informatik.ultimate.ltl2aut/Path\ to\ LTL*BA\ executable\ (LTL2BA,\ LTL3BA)=ltl2ba
 /instance/de.uni_freiburg.informatik.ultimate.ltl2aut/Property\ to\ check=[] a \r\n a\: x > 42
 \!/instance/de.uni_freiburg.informatik.ultimate.ltl2aut=
 #Wed Nov 26 13:26:51 CET 2014
