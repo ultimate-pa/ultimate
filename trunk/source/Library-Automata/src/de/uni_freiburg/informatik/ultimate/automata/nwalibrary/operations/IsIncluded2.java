@@ -27,6 +27,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations;
 
 import org.apache.log4j.Logger;
 
+import de.uni_freiburg.informatik.ultimate.automata.Activator;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
@@ -50,8 +51,9 @@ import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvide
  */
 public class IsIncluded2<LETTER, STATE> implements IOperation<LETTER,STATE> {
 	
-	private static Logger s_Logger = 
-			NestedWordAutomata.getLogger();
+	private final IUltimateServiceProvider m_Services;
+	private final Logger m_Logger;
+	
 	
 	private final INestedWordAutomatonSimple<LETTER, STATE> m_A;
 	private final INestedWordAutomatonSimple<LETTER, STATE> m_B1;
@@ -63,22 +65,24 @@ public class IsIncluded2<LETTER, STATE> implements IOperation<LETTER,STATE> {
 	private final NestedRun<LETTER, STATE> m_Counterexample;
 	
 	
-	public IsIncluded2(StateFactory<STATE> stateFactory,
+	public IsIncluded2(IUltimateServiceProvider services,
+			StateFactory<STATE> stateFactory,
 			INestedWordAutomatonSimple<LETTER, STATE> a, 
 			INestedWordAutomatonSimple<LETTER, STATE> b_1,
 			INestedWordAutomatonSimple<LETTER, STATE> b_2) throws AutomataLibraryException {
+		m_Services = services;
+		m_Logger = m_Services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		m_A = a;
 		m_B1 = b_1;
 		m_B2 = b_2;
 		// workaround until Matthias implemented this
-		IUltimateServiceProvider services = null;
-		s_Logger.info(startMessage());
+		m_Logger.info(startMessage());
 		m_InclusionViaDifference = new InclusionViaDifference<>(services, stateFactory, a);
 		m_InclusionViaDifference.addSubtrahend(m_B1);
 		m_InclusionViaDifference.addSubtrahend(m_B2);
 		m_Counterexample = m_InclusionViaDifference.getCounterexample();
 		m_Result = (m_Counterexample == null);
-		s_Logger.info(exitMessage());
+		m_Logger.info(exitMessage());
 	}
 
 	@Override
