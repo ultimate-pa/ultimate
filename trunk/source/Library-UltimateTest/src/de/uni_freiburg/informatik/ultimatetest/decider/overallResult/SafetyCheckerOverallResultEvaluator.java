@@ -71,7 +71,7 @@ public class SafetyCheckerOverallResultEvaluator implements IOverallResultEvalua
 		}
 	}
 
-	private SafetyCheckerOverallResult detectResultCategory(IResult result) {
+	protected SafetyCheckerOverallResult detectResultCategory(IResult result) {
 		if (result instanceof AllSpecificationsHoldResult) {
 			return SafetyCheckerOverallResult.SAFE;
 		} else if (result instanceof CounterExampleResult) {

@@ -20,7 +20,7 @@ import de.uni_freiburg.informatik.ultimate.result.IResult;
 
 /**
  * Main class of Plug-In BuchiAutomizer
- * 
+ * DD: Why is BuchiAutomizer an IGenerator? 
  * 
  * TODO: refine comments
  * 

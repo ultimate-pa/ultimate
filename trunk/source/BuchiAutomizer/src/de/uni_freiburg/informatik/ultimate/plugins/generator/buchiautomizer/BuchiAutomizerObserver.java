@@ -239,18 +239,21 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 	}
 
 	private boolean isLTLCounterExampleFinite(List<CodeBlock> loop) {
-		boolean isFinite = true;
-
-		// is the loop a real loop in the program?
-		for (CodeBlock cb : loop) {
-			if (mRootAnnot.getLoopLocations().keySet().contains(cb.getSource())) {
-				isFinite = false;
-			}
-		}
-
-		// TODO: is the loop part of a recursion? Then its also not finite
-
-		return isFinite;
+		// TODO: does not work reliably
+		// boolean isFinite = true;
+		//
+		// // is the loop a real loop in the program?
+		// for (CodeBlock cb : loop) {
+		// if (mRootAnnot.getLoopLocations().keySet().contains(cb.getSource()))
+		// {
+		// isFinite = false;
+		// }
+		// }
+		//
+		// // TODO: is the loop part of a recursion? Then its also not finite
+		//
+		// return isFinite;
+		return false;
 	}
 
 	/**
