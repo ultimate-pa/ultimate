@@ -21,7 +21,9 @@ Require-Bundle: UltimateCore,
  de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer,
  de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker,
  de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck,
- de.uni_freiburg.informatik.ultimate.plugins.generator.automatascriptinterpreter
+ de.uni_freiburg.informatik.ultimate.plugins.generator.automatascriptinterpreter,
+ de.uni_freiburg.informatik.ultimate.ltl2aut,
+ de.uni_freiburg.informatik.ultimate.buchiprogramproduct
 Import-Package: org.junit,
  org.junit.experimental.categories,
  org.junit.runner,
