@@ -32,17 +32,21 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AtsDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.NestedWordAutomatonReachableStates;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 
 public class NestedWordAutomatonFilteredStates<LETTER, STATE> implements
 		INestedWordAutomatonOldApi<LETTER, STATE>, INestedWordAutomaton<LETTER, STATE>, IDoubleDeckerAutomaton<LETTER, STATE> {
+	private final IUltimateServiceProvider m_Services;
 	private final INestedWordAutomatonOldApi<LETTER, STATE> m_Nwa;
 	private final Set<STATE> m_RemainingStates;
 	private final Set<STATE> m_newInitials;
 	private final Set<STATE> m_newFinals;
 	private final NestedWordAutomatonReachableStates<LETTER, STATE>.AncestorComputation m_AncestorComputation;
 	
-	NestedWordAutomatonFilteredStates(INestedWordAutomatonOldApi<LETTER, STATE> automaton, 
+	NestedWordAutomatonFilteredStates(IUltimateServiceProvider services,
+			INestedWordAutomatonOldApi<LETTER, STATE> automaton, 
 			Set<STATE> remainingStates, Set<STATE> newInitials, Set<STATE> newFinals) {
+		m_Services = services;
 		m_Nwa = automaton;
 		m_RemainingStates = remainingStates;
 		m_newInitials = newInitials;
@@ -51,8 +55,10 @@ public class NestedWordAutomatonFilteredStates<LETTER, STATE> implements
 	}
 	
 	public NestedWordAutomatonFilteredStates(
+			IUltimateServiceProvider services,
 			NestedWordAutomatonReachableStates<LETTER, STATE> automaton, 
 			NestedWordAutomatonReachableStates<LETTER, STATE>.AncestorComputation ancestorComputation) {
+		m_Services = services;
 		m_Nwa = automaton;
 		m_RemainingStates = ancestorComputation.getStates();
 		m_newInitials = ancestorComputation.getInitials();
@@ -480,7 +486,7 @@ public class NestedWordAutomatonFilteredStates<LETTER, STATE> implements
 	
 	@Override
 	public String toString() {
-		return (new AtsDefinitionPrinter<String,String>("nwa", this)).getDefinitionAsString();
+		return (new AtsDefinitionPrinter<String,String>(m_Services, "nwa", this)).getDefinitionAsString();
 	}
 	
 	

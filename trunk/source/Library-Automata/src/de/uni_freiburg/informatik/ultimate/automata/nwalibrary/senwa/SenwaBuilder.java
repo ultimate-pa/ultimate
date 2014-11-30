@@ -41,9 +41,11 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.Senwa;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.senwa.SenwaWalker.ISuccessorVisitor;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 
 public class SenwaBuilder<LETTER, STATE> implements ISuccessorVisitor<LETTER, STATE>, IOperation<LETTER, STATE> {
 	
+	private final IUltimateServiceProvider m_Services;
 	Senwa<LETTER, STATE> m_Senwa;
 	INestedWordAutomatonOldApi<LETTER, STATE> m_Nwa;
 	Set<STATE> m_Added = new HashSet<STATE>();
@@ -77,12 +79,15 @@ public class SenwaBuilder<LETTER, STATE> implements ISuccessorVisitor<LETTER, ST
 	
 	
 	
-	public SenwaBuilder(INestedWordAutomatonOldApi<LETTER, STATE> nwa) throws OperationCanceledException {
+	public SenwaBuilder(IUltimateServiceProvider services, 
+			INestedWordAutomatonOldApi<LETTER, STATE> nwa) throws OperationCanceledException {
+		m_Services = services;
 		m_Nwa = nwa;
 		s_Logger.info(startMessage());
-		m_Senwa = new Senwa<LETTER, STATE>(m_Nwa.getInternalAlphabet(), m_Nwa.getCallAlphabet(), 
+		m_Senwa = new Senwa<LETTER, STATE>(m_Services,
+				m_Nwa.getInternalAlphabet(), m_Nwa.getCallAlphabet(), 
 				m_Nwa.getReturnAlphabet(), m_Nwa.getStateFactory());
-		new SenwaWalker<LETTER, STATE>(m_Senwa, this, true);
+		new SenwaWalker<LETTER, STATE>(m_Services, m_Senwa, this, true);
 		s_Logger.info(exitMessage());
 	}
 	
@@ -183,10 +188,10 @@ public class SenwaBuilder<LETTER, STATE> implements ISuccessorVisitor<LETTER, ST
 			throws AutomataLibraryException {
 		s_Logger.info("Start testing correctness of " + operationName());
 		boolean correct = true;
-		correct &= (ResultChecker.nwaLanguageInclusion(m_Nwa, m_Senwa, stateFactory) == null);
-		correct &= (ResultChecker.nwaLanguageInclusion(m_Senwa, m_Nwa, stateFactory) == null);
+		correct &= (ResultChecker.nwaLanguageInclusion(m_Services, m_Nwa, m_Senwa, stateFactory) == null);
+		correct &= (ResultChecker.nwaLanguageInclusion(m_Services, m_Senwa, m_Nwa, stateFactory) == null);
 		if (!correct) {
-			ResultChecker.writeToFileIfPreferred(operationName() + "Failed", "", m_Nwa);
+			ResultChecker.writeToFileIfPreferred(m_Services, operationName() + "Failed", "", m_Nwa);
 		}
 		s_Logger.info("Finished testing correctness of " + operationName());
 		return correct;

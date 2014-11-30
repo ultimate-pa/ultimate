@@ -41,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 
 
 /**
@@ -51,9 +52,11 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
  * @version 2010-12-18
  */
 public class BuchiIsEmptyXW<LETTER,STATE> implements IOperation<LETTER,STATE> {
+	private final IUltimateServiceProvider m_Services;
 	
-	
-	public BuchiIsEmptyXW(INestedWordAutomatonOldApi<LETTER, STATE> nwa) throws OperationCanceledException {
+	public BuchiIsEmptyXW(IUltimateServiceProvider services, 
+			INestedWordAutomatonOldApi<LETTER, STATE> nwa) throws OperationCanceledException {
+		m_Services = services;
 		m_nwa = nwa;
 		s_Logger.info(startMessage());
 		m_Result = checkEmptiness();
@@ -410,7 +413,7 @@ public class BuchiIsEmptyXW<LETTER,STATE> implements IOperation<LETTER,STATE> {
 			extendPathBeyondOrigin(workPair.source, workPair.target, 
 					reachabilityBridge, worklist);
 			
-			if (!NestedWordAutomata.getMonitor().continueProcessing()) {
+			if (!m_Services.getProgressMonitorService().continueProcessing()) {
 				throw new OperationCanceledException();
 			}
 		}
@@ -435,7 +438,7 @@ public class BuchiIsEmptyXW<LETTER,STATE> implements IOperation<LETTER,STATE> {
 			extendAcceptingPathCallReturn(workPair.source, workPair.target, 
 					callAlphabet, returnAlphabet, reachabilityBridge, 
 					reachabilityBridgeA, worklist);
-			if (!NestedWordAutomata.getMonitor().continueProcessing()) {
+			if (!m_Services.getProgressMonitorService().continueProcessing()) {
 				throw new OperationCanceledException();
 			}
 		}
@@ -472,7 +475,7 @@ public class BuchiIsEmptyXW<LETTER,STATE> implements IOperation<LETTER,STATE> {
 					reachabilityBridgeC, worklist);
 			extendPathBeyondOrigin(workPair.source,workPair.target, 
 					reachabilityBridgeC, worklist);
-			if (!NestedWordAutomata.getMonitor().continueProcessing()) {
+			if (!m_Services.getProgressMonitorService().continueProcessing()) {
 				throw new OperationCanceledException();
 			}
 		}

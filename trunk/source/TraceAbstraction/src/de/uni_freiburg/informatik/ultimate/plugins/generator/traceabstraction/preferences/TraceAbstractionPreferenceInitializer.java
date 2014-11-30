@@ -52,6 +52,9 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 				new UltimatePreferenceItem<Determinization>(
 						LABEL_DETERMINIZATION, Determinization.CODENAME_PROJECT_BELLWALD,
 						PreferenceType.Combo, Determinization.values()),
+				new UltimatePreferenceItem<LanguageOperation>(
+						LABEL_LanguageOperation, LanguageOperation.DIFFERENCE,
+						PreferenceType.Combo, LanguageOperation.values()),
 				new UltimatePreferenceItem<Boolean>(LABEL_DIFFERENCE_SENWA,
 						DEF_DIFFERENCE_SENWA, PreferenceType.Boolean),
 				new UltimatePreferenceItem<Minimization>(LABEL_MINIMIZE,
@@ -105,6 +108,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final String LABEL_AssertCodeBlocksIncrementally = "Assert CodeBlocks";
 	public static final String LABEL_UnsatCores = "Use unsat cores";
 	public static final String LABEL_LiveVariables = "Use live variables";
+	public static final String LABEL_LanguageOperation = "LanguageOperation";
 
 	public static final String VALUE_ABSTRACTION = "Abstraction";
 	public static final String VALUE_RCFG = "RecursiveControlFlowGraph";
@@ -166,6 +170,10 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	
 	public enum UnsatCores {
 		IGNORE, STATEMENT_LEVEL, CONJUNCT_LEVEL
+	}
+	
+	public enum LanguageOperation {
+		DIFFERENCE, INCLUSION, INCLUSION_VIA_DIFFERENCE 
 	}
 	
 	

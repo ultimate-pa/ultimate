@@ -33,23 +33,27 @@ import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 
 public class IntersectDD<LETTER, STATE> extends AbstractIntersect<LETTER, STATE>
 		implements IOperation<LETTER, STATE> {
 
 	private static Logger s_Logger = NestedWordAutomata.getLogger();
 
-	public IntersectDD(INestedWordAutomatonOldApi<LETTER, STATE> fstNwa,
-			INestedWordAutomatonOldApi<LETTER, STATE> sndNwa)
-			throws AutomataLibraryException {
-		super(false, false, fstNwa, sndNwa);
-	}
-
-	public IntersectDD(boolean minimizeResult,
+	public IntersectDD(IUltimateServiceProvider services,
 			INestedWordAutomatonOldApi<LETTER, STATE> fstNwa,
 			INestedWordAutomatonOldApi<LETTER, STATE> sndNwa)
 			throws AutomataLibraryException {
-		super(false, minimizeResult, fstNwa, sndNwa);
+		super(services, false, false, fstNwa, sndNwa);
+	}
+
+	public IntersectDD(
+			IUltimateServiceProvider services,
+			boolean minimizeResult,
+			INestedWordAutomatonOldApi<LETTER, STATE> fstNwa,
+			INestedWordAutomatonOldApi<LETTER, STATE> sndNwa)
+			throws AutomataLibraryException {
+		super(services, false, minimizeResult, fstNwa, sndNwa);
 	}
 
 	@Override

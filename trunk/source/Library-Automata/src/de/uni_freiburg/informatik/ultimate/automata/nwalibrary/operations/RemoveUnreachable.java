@@ -42,8 +42,11 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingReturnTra
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.ReachableStatesCopy;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.NestedWordAutomatonReachableStates;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 
 public class RemoveUnreachable<LETTER,STATE> implements IOperation<LETTER,STATE> {
+	
+	private final IUltimateServiceProvider m_Services;
 	
 	private final INestedWordAutomatonSimple<LETTER,STATE> m_Input;
 	private final NestedWordAutomatonReachableStates<LETTER,STATE> m_Result;
@@ -59,11 +62,13 @@ public class RemoveUnreachable<LETTER,STATE> implements IOperation<LETTER,STATE>
 	 * @param nwa
 	 * @throws OperationCanceledException
 	 */
-	public RemoveUnreachable(INestedWordAutomatonSimple<LETTER,STATE> nwa)
+	public RemoveUnreachable(IUltimateServiceProvider services,
+			INestedWordAutomatonSimple<LETTER,STATE> nwa)
 			throws OperationCanceledException {
+		m_Services = services;
 		m_Input = nwa;
 		s_Logger.info(startMessage());
-		m_Result = new NestedWordAutomatonReachableStates<LETTER, STATE>(m_Input);
+		m_Result = new NestedWordAutomatonReachableStates<LETTER, STATE>(m_Services, m_Input);
 		s_Logger.info(exitMessage());
 	}
 	
@@ -102,8 +107,9 @@ public class RemoveUnreachable<LETTER,STATE> implements IOperation<LETTER,STATE>
 			// correct &= (ResultChecker.nwaLanguageInclusion(m_Result, m_Input)
 			// == null);
 			assert correct;
-			DoubleDeckerAutomaton<LETTER, STATE> reachalbeStatesCopy = (DoubleDeckerAutomaton<LETTER, STATE>) (new ReachableStatesCopy(
-					(INestedWordAutomatonOldApi) m_Input, false, false, false,
+			DoubleDeckerAutomaton<LETTER, STATE> reachalbeStatesCopy = 
+					(DoubleDeckerAutomaton<LETTER, STATE>) (new ReachableStatesCopy(
+					m_Services, (INestedWordAutomatonOldApi) m_Input, false, false, false,
 					false)).getResult();
 			correct &=
 			ResultChecker.isSubset(reachalbeStatesCopy.getStates(),m_Result.getStates());
@@ -145,7 +151,7 @@ public class RemoveUnreachable<LETTER,STATE> implements IOperation<LETTER,STATE>
 				assert correct;
 			}
 			if (!correct) {
-				ResultChecker.writeToFileIfPreferred(
+				ResultChecker.writeToFileIfPreferred(m_Services, 
 						operationName() + "Failed", "", m_Input);
 			}
 			s_Logger.info("Finished testing correctness of " + operationName());

@@ -170,7 +170,7 @@ public class CegarLoopSWBnonRecursive extends BasicCegarLoop {
 		// automaton
 		m_NestedAbstraction = (INestedWordAutomaton<CodeBlock, IPredicate>) m_Abstraction;
 
-		m_DoubleDeckerAbstraction = (new RemoveUnreachable<CodeBlock, IPredicate>(
+		m_DoubleDeckerAbstraction = (new RemoveUnreachable<CodeBlock, IPredicate>(m_Services, 
 				(INestedWordAutomatonSimple<CodeBlock, IPredicate>) m_Abstraction)).getResult();
 		// (IDoubleDeckerAutomaton<CodeBlock, IPredicate>) m_Abstraction.get;
 
@@ -178,7 +178,7 @@ public class CegarLoopSWBnonRecursive extends BasicCegarLoop {
 		m_CounterExamplePath = (NestedRun<CodeBlock, IPredicate>) m_Counterexample;
 
 		// create an new interpolant automaton
-		m_InterpolAutomaton = new NestedWordAutomaton<CodeBlock, IPredicate>(m_NestedAbstraction.getAlphabet(),
+		m_InterpolAutomaton = new NestedWordAutomaton<CodeBlock, IPredicate>(m_Services, m_NestedAbstraction.getAlphabet(),
 				m_NestedAbstraction.getCallAlphabet(), m_NestedAbstraction.getReturnAlphabet(),
 				m_NestedAbstraction.getStateFactory());
 
@@ -562,7 +562,7 @@ public class CegarLoopSWBnonRecursive extends BasicCegarLoop {
 										 * parameter he set the argument to
 										 * AssertCodeBlockOrder.NOT_INCREMENTALLY. Check if you want to set this
 										 * to another value.
-										 */AssertCodeBlockOrder.NOT_INCREMENTALLY,mServices);
+										 */AssertCodeBlockOrder.NOT_INCREMENTALLY,m_Services);
 
 		if (m_TraceChecker.isCorrect() == LBool.UNSAT) {
 			mLogger.debug("Accepted");
@@ -686,7 +686,7 @@ public class CegarLoopSWBnonRecursive extends BasicCegarLoop {
 	 */
 	@Override
 	protected boolean refineAbstraction() throws AutomataLibraryException {
-		SuperDifference<CodeBlock, IPredicate> diff = new SuperDifference<CodeBlock, IPredicate>(m_NestedAbstraction,
+		SuperDifference<CodeBlock, IPredicate> diff = new SuperDifference<CodeBlock, IPredicate>(m_Services, m_NestedAbstraction,
 				m_InterpolAutomaton, m_Epimorphism, false);
 
 		m_Abstraction = diff.getResult();

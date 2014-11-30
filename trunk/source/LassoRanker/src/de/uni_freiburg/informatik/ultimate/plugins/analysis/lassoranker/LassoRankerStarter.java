@@ -92,7 +92,7 @@ public class LassoRankerStarter {
 		boolean useNewExtraction = true;
 		if (useNewExtraction) {
 			try {
-				lassoExtractor = new LassoExtractorBuchi(rootNode, m_SmtManager, mLogger);
+				lassoExtractor = new LassoExtractorBuchi(mServices, rootNode, m_SmtManager, mLogger);
 			} catch (AutomataLibraryException e) {
 				throw new AssertionError(e.toString());
 			}

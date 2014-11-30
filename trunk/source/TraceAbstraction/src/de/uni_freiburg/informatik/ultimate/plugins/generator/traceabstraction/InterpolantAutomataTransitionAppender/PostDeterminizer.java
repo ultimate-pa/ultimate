@@ -8,6 +8,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomat
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IStateDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.DeterminizedState;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
@@ -20,6 +21,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 
 public class PostDeterminizer 
 		implements IStateDeterminizer<CodeBlock, IPredicate> {
+	private final IUltimateServiceProvider m_Services;
 	
 	private final boolean m_ComputeHoareAnnotation;
 	protected final NestedWordAutomaton<CodeBlock, IPredicate> m_Ia;
@@ -50,11 +52,13 @@ public class PostDeterminizer
 	
 	
 
-	public PostDeterminizer(EdgeChecker edgeChecker,
+	public PostDeterminizer(IUltimateServiceProvider services, 
+			EdgeChecker edgeChecker,
 			boolean computeHoareAnnotation,
 			NestedWordAutomaton<CodeBlock, IPredicate> mNwa,
 			boolean eager,
 			StateFactory<IPredicate> stateFactory) {
+		m_Services = services;
 		m_EdgeChecker = edgeChecker;
 		m_ComputeHoareAnnotation = computeHoareAnnotation;
 		m_Ia = mNwa;
@@ -90,6 +94,7 @@ public class PostDeterminizer
 		
 		
 		m_RejectionCache = new NestedWordAutomaton<CodeBlock, IPredicate>(
+				m_Services, 
 				mNwa.getInternalAlphabet(), 
 				mNwa.getCallAlphabet(),
 				mNwa.getReturnAlphabet(),

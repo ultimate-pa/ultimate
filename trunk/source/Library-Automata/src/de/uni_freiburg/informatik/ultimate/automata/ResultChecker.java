@@ -56,6 +56,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNet2FiniteAuto
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.PetriNetJulian;
 import de.uni_freiburg.informatik.ultimate.automata.preferences.PreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 
 @Deprecated
 public class ResultChecker<LETTER,STATE> {
@@ -76,7 +77,7 @@ public class ResultChecker<LETTER,STATE> {
 	
 	
 	
-	public static boolean reduceBuchi(INestedWordAutomatonOldApi operand,
+	public static boolean reduceBuchi(IUltimateServiceProvider services, INestedWordAutomatonOldApi operand,
 			INestedWordAutomatonOldApi result) throws AutomataLibraryException {
 		StateFactory stateFactory = operand.getStateFactory();
 		if (resultCheckStackHeight >= maxResultCheckStackHeight)
@@ -84,16 +85,16 @@ public class ResultChecker<LETTER,STATE> {
 		resultCheckStackHeight++;
 		s_Logger.debug("Testing correctness of reduceBuchi");
 		
-		INestedWordAutomatonOldApi minimizedOperand = (new MinimizeDfa(operand)).getResult();
+		INestedWordAutomatonOldApi minimizedOperand = (new MinimizeDfa(services, operand)).getResult();
 
 		boolean correct = true;
-		NestedLassoRun inOperandButNotInResultBuchi = nwaBuchiLanguageInclusion(stateFactory, minimizedOperand,result);
+		NestedLassoRun inOperandButNotInResultBuchi = nwaBuchiLanguageInclusion(services, stateFactory, minimizedOperand,result);
 		if (inOperandButNotInResultBuchi != null) {
 			s_Logger.error("Lasso word accepted by operand, but not by result: " + 
 					inOperandButNotInResultBuchi.getNestedLassoWord());
 			correct = false;
 		}
-		NestedLassoRun inResultButNotInOperatndBuchi = nwaBuchiLanguageInclusion(stateFactory, result,minimizedOperand);
+		NestedLassoRun inResultButNotInOperatndBuchi = nwaBuchiLanguageInclusion(services, stateFactory, result,minimizedOperand);
 		if (inResultButNotInOperatndBuchi != null) {
 			s_Logger.error("Lasso word accepted by result, but not by operand: " + 
 					inResultButNotInOperatndBuchi.getNestedLassoWord());
@@ -141,7 +142,7 @@ public class ResultChecker<LETTER,STATE> {
 	
 
 	
-	public static boolean buchiComplement(INestedWordAutomatonOldApi operand,
+	public static boolean buchiComplement(IUltimateServiceProvider services, INestedWordAutomatonOldApi operand,
 										  INestedWordAutomatonOldApi result) throws OperationCanceledException {
 		if (resultCheckStackHeight >= maxResultCheckStackHeight) return true;
 		resultCheckStackHeight++;
@@ -153,14 +154,14 @@ public class ResultChecker<LETTER,STATE> {
 			NestedWord stem = (new GetRandomNestedWord(operand, maxNumberOfStates)).getResult();
 			NestedWord loop = (new GetRandomNestedWord(operand, maxNumberOfStates)).getResult();
 			NestedLassoWord lasso = new NestedLassoWord(stem, loop);
-			boolean operandAccepts = (new BuchiAccepts(operand, lasso)).getResult();
-			boolean resultAccepts = (new BuchiAccepts(result, lasso)).getResult();
+			boolean operandAccepts = (new BuchiAccepts(services, operand, lasso)).getResult();
+			boolean resultAccepts = (new BuchiAccepts(services, result, lasso)).getResult();
 			if (operandAccepts ^ resultAccepts) {
 				// check passed
 			} else {
 				correct = false;
 				String message = "// Problem with lasso " + lasso.toString();
-				writeToFileIfPreferred("FailedBuchiComplementCheck", message, operand);
+				writeToFileIfPreferred(services, "FailedBuchiComplementCheck", message, operand);
 				break;
 			}
 		}
@@ -176,7 +177,8 @@ public class ResultChecker<LETTER,STATE> {
 	}
 	
 	
-	public static boolean buchiComplementSVW(INestedWordAutomatonOldApi operand,
+	public static boolean buchiComplementSVW(IUltimateServiceProvider services, 
+			INestedWordAutomatonOldApi operand,
 			INestedWordAutomatonOldApi result) throws OperationCanceledException {
 		if (resultCheckStackHeight >= maxResultCheckStackHeight) return true;
 		resultCheckStackHeight++;
@@ -189,8 +191,8 @@ public class ResultChecker<LETTER,STATE> {
 			NestedWord loop = (new GetRandomNestedWord(operand, maxNumberOfStates)).getResult();
 			NestedLassoWord lasso = new NestedLassoWord(stem, loop);
 
-			boolean operandAccepts = (new BuchiAccepts(operand, lasso)).getResult();
-			boolean resultAccepts = (new BuchiAccepts(operand, lasso)).getResult();
+			boolean operandAccepts = (new BuchiAccepts(services, operand, lasso)).getResult();
+			boolean resultAccepts = (new BuchiAccepts(services, operand, lasso)).getResult();
 			if (operandAccepts ^ resultAccepts) {
 				// ok
 			} else {
@@ -223,17 +225,17 @@ public class ResultChecker<LETTER,STATE> {
 	
 	
 	
-	public static boolean petriNetJulian(INestedWordAutomatonOldApi op,
+	public static boolean petriNetJulian(IUltimateServiceProvider services, INestedWordAutomatonOldApi op,
 										 PetriNetJulian result) throws AutomataLibraryException {
 		if (resultCheckStackHeight >= maxResultCheckStackHeight) return true;
 		resultCheckStackHeight++;
 		s_Logger.info("Testing correctness of PetriNetJulian constructor");
 
 		INestedWordAutomatonOldApi resultAutomata = 
-							(new PetriNet2FiniteAutomaton(result)).getResult();
+							(new PetriNet2FiniteAutomaton(services, result)).getResult();
 		boolean correct = true;
-		correct &= (nwaLanguageInclusion(resultAutomata,op,op.getStateFactory()) == null);
-		correct &= (nwaLanguageInclusion(op,resultAutomata,op.getStateFactory()) == null);
+		correct &= (nwaLanguageInclusion(services, resultAutomata,op,op.getStateFactory()) == null);
+		correct &= (nwaLanguageInclusion(services, op,resultAutomata,op.getStateFactory()) == null);
 
 		s_Logger.info("Finished testing correctness of PetriNetJulian constructor");
 		resultCheckStackHeight--;
@@ -244,18 +246,18 @@ public class ResultChecker<LETTER,STATE> {
 
 	
 
-	public static boolean petriNetLanguageEquivalence(PetriNetJulian net1, PetriNetJulian net2) throws AutomataLibraryException {
+	public static boolean petriNetLanguageEquivalence(IUltimateServiceProvider services, PetriNetJulian net1, PetriNetJulian net2) throws AutomataLibraryException {
 		if (resultCheckStackHeight >= maxResultCheckStackHeight) return true;
 		resultCheckStackHeight++;
 		s_Logger.info("Testing Petri net language equivalence");
-		INestedWordAutomatonOldApi finAuto1 = (new PetriNet2FiniteAutomaton(net1)).getResult();
-		INestedWordAutomatonOldApi finAuto2 = (new PetriNet2FiniteAutomaton(net2)).getResult();
-		NestedRun subsetCounterex = nwaLanguageInclusion(finAuto1, finAuto2, net1.getStateFactory());
+		INestedWordAutomatonOldApi finAuto1 = (new PetriNet2FiniteAutomaton(services, net1)).getResult();
+		INestedWordAutomatonOldApi finAuto2 = (new PetriNet2FiniteAutomaton(services, net2)).getResult();
+		NestedRun subsetCounterex = nwaLanguageInclusion(services, finAuto1, finAuto2, net1.getStateFactory());
 		boolean subset = subsetCounterex == null;
 		if (!subset) {
 			s_Logger.error("Only accepted by first: " + subsetCounterex.getWord());
 		}
-		NestedRun supersetCounterex = nwaLanguageInclusion(finAuto2, finAuto1, net1.getStateFactory());
+		NestedRun supersetCounterex = nwaLanguageInclusion(services, finAuto2, finAuto1, net1.getStateFactory());
 		boolean superset = supersetCounterex == null;
 		if (!superset) {
 			s_Logger.error("Only accepted by second: " + supersetCounterex.getWord());
@@ -277,9 +279,9 @@ public class ResultChecker<LETTER,STATE> {
 	}
 
 
-	public static <LETTER,STATE> NestedRun nwaLanguageInclusion(INestedWordAutomatonOldApi nwa1, INestedWordAutomatonOldApi nwa2, StateFactory stateFactory) throws AutomataLibraryException {
+	public static <LETTER,STATE> NestedRun nwaLanguageInclusion(IUltimateServiceProvider services, INestedWordAutomatonOldApi nwa1, INestedWordAutomatonOldApi nwa2, StateFactory stateFactory) throws AutomataLibraryException {
 		IStateDeterminizer stateDeterminizer = new PowersetDeterminizer<LETTER,STATE>(nwa2, true, stateFactory);
-		INestedWordAutomatonOldApi nwa1MinusNwa2 = (new DifferenceDD(nwa1, nwa2, stateDeterminizer, stateFactory, false, false)).getResult();
+		INestedWordAutomatonOldApi nwa1MinusNwa2 = (new DifferenceDD(services, nwa1, nwa2, stateDeterminizer, stateFactory, false, false)).getResult();
 		NestedRun inNwa1ButNotInNwa2 = (new IsEmpty(nwa1MinusNwa2)).getNestedRun();
 		return inNwa1ButNotInNwa2;
 //		if (inNwa1ButNotInNwa2 != null) {
@@ -290,18 +292,19 @@ public class ResultChecker<LETTER,STATE> {
 	}
 	
 	public static <LETTER, STATE> INestedWordAutomatonOldApi<LETTER, STATE> getOldApiNwa(
+			IUltimateServiceProvider services,
 			INestedWordAutomatonSimple<LETTER, STATE> nwa)
 			throws OperationCanceledException {
 		if (nwa instanceof INestedWordAutomatonOldApi) {
 			return (INestedWordAutomatonOldApi<LETTER, STATE>) nwa;
 		} else {
-			return (new RemoveUnreachable<LETTER, STATE>(nwa)).getResult();
+			return (new RemoveUnreachable<LETTER, STATE>(services, nwa)).getResult();
 		}
 	}
 	
-	private static NestedLassoRun nwaBuchiLanguageInclusion(StateFactory stateFactory, 
+	private static NestedLassoRun nwaBuchiLanguageInclusion(IUltimateServiceProvider services, StateFactory stateFactory, 
 			INestedWordAutomatonOldApi nwa1, INestedWordAutomatonOldApi nwa2) throws AutomataLibraryException {
-		return (new BuchiIsIncluded(stateFactory, nwa1, nwa2)).getCounterexample();
+		return (new BuchiIsIncluded(services, stateFactory, nwa1, nwa2)).getCounterexample();
 	}
 	
 	
@@ -311,14 +314,14 @@ public class ResultChecker<LETTER,STATE> {
         return dateFormat.format(date);
     }
     
-    public static void writeToFileIfPreferred(String filenamePrefix, String message, IAutomaton... automata) {
+    public static void writeToFileIfPreferred(IUltimateServiceProvider services, String filenamePrefix, String message, IAutomaton... automata) {
 		IScopeContext scope = InstanceScope.INSTANCE;
 		UltimatePreferenceStore prefs = new UltimatePreferenceStore(Activator.PLUGIN_ID);
 		boolean writeToFile = prefs.getBoolean(PreferenceInitializer.Name_Write);
 		if (writeToFile) {
 			String directory = prefs.getString(PreferenceInitializer.Name_Path); 
 			String filename = directory + File.separator+filenamePrefix + getDateTime() + ".fat";
-			new AtsDefinitionPrinter(filenamePrefix, filename, Labeling.QUOTED, message, automata);
+			new AtsDefinitionPrinter(services, filenamePrefix, filename, Labeling.QUOTED, message, automata);
 		}
     }
     

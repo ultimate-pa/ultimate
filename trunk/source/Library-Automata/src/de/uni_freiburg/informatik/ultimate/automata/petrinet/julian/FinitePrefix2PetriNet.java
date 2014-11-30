@@ -43,10 +43,12 @@ import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Place;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.util.UnionFind;
 
 public class FinitePrefix2PetriNet<L, C> implements IOperation<L, C> {
 
+	private final IUltimateServiceProvider m_Services;
 	private static Logger s_Logger = NestedWordAutomata.getLogger();
 	
 	BranchingProcess<L, C> m_Input;
@@ -84,7 +86,9 @@ public class FinitePrefix2PetriNet<L, C> implements IOperation<L, C> {
 //		return result;
 //	}
 
-	public FinitePrefix2PetriNet(BranchingProcess<L, C> bp) throws AutomataLibraryException {
+	public FinitePrefix2PetriNet(IUltimateServiceProvider services, 
+			BranchingProcess<L, C> bp) throws AutomataLibraryException {
+		m_Services = services;
 		// TODO implement merging for markings?
 		m_Input = bp;
 		s_Logger.info(startMessage());
@@ -101,7 +105,7 @@ public class FinitePrefix2PetriNet<L, C> implements IOperation<L, C> {
 					+ e.getSuccessorConditions());
 
 		PetriNetJulian<L, C> old_net = m_Input.getNet();
-		m_Net = new PetriNetJulian<L, C>(old_net.getAlphabet(),
+		m_Net = new PetriNetJulian<L, C>(m_Services, old_net.getAlphabet(),
 				old_net.getStateFactory(), false);
 		
 		
@@ -235,7 +239,7 @@ public class FinitePrefix2PetriNet<L, C> implements IOperation<L, C> {
 
 		s_Logger.info(exitMessage());
 		try {
-			assert ResultChecker.petriNetLanguageEquivalence(old_net, m_Net) : 
+			assert ResultChecker.petriNetLanguageEquivalence(m_Services, old_net, m_Net) : 
 				"The language recognized by the FinitePrefix2PetriNet is not equal to the language of the original net.";
 		} catch (OperationCanceledException e1) {
 			e1.printStackTrace();

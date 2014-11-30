@@ -10,6 +10,7 @@ import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.DoubleDecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.DoubleDeckerVisitor;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SPredicate;
@@ -26,8 +27,9 @@ public class HoareAnnotationExtractor extends DoubleDeckerVisitor<CodeBlock, IPr
 
 	private final HoareAnnotationFragments m_HoareAnnotation;
 
-	public HoareAnnotationExtractor(INestedWordAutomatonOldApi<CodeBlock, IPredicate> abstraction,
+	public HoareAnnotationExtractor(IUltimateServiceProvider services, INestedWordAutomatonOldApi<CodeBlock, IPredicate> abstraction,
 			HoareAnnotationFragments haf) {
+		super(services);
 		m_TraversedNwa = (INestedWordAutomatonOldApi<CodeBlock, IPredicate>) abstraction;
 		m_HoareAnnotation = haf;
 

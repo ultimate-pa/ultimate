@@ -28,11 +28,9 @@ public class TAPreferences {
 	}
 
 
-
 	public enum Determinization {
 		POWERSET, BESTAPPROXIMATION, SELFLOOP, STRONGESTPOST, EAGERPOST, LAZYPOST, NEWEAGER, CODENAME_PROJECT_BELLWALD
 	}
-	
 
 
 	public enum Concurrency {

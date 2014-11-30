@@ -42,12 +42,14 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.DoubleDecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IncomingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.Senwa;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 
 /**
  * Visit all states of a SENWA. This can also be used to construct this SEVPA.
  */
 public class SenwaWalker<LETTER,STATE> {
 	
+	private final IUltimateServiceProvider m_Services;
 	private static Logger s_Logger = 
 		NestedWordAutomata.getLogger();
 	
@@ -98,7 +100,8 @@ public class SenwaWalker<LETTER,STATE> {
 	protected ISuccessorVisitor<LETTER, STATE> m_SuccVisit;
 	private long m_DeadEndRemovalTime;
 	
-	public SenwaWalker (Senwa<LETTER,STATE> senwa, ISuccessorVisitor<LETTER, STATE> succVisit, boolean removeDeadEnds) throws OperationCanceledException {
+	public SenwaWalker(IUltimateServiceProvider services, Senwa<LETTER,STATE> senwa, ISuccessorVisitor<LETTER, STATE> succVisit, boolean removeDeadEnds) throws OperationCanceledException {
+		m_Services = services;
 		m_TraversedSenwa = senwa;
 		m_SuccVisit = succVisit;
 		m_RemoveDeadEnds = removeDeadEnds;
@@ -256,7 +259,7 @@ public class SenwaWalker<LETTER,STATE> {
 				}
 			}
 			
-			if (!NestedWordAutomata.getMonitor().continueProcessing()) {
+			if (!m_Services.getProgressMonitorService().continueProcessing()) {
 				throw new OperationCanceledException();
 			}
 			
@@ -295,6 +298,7 @@ public class SenwaWalker<LETTER,STATE> {
 	
 	protected Senwa<LETTER,STATE> getTotalizedEmptyAutomaton() {
 		Senwa<LETTER,STATE> emptyAutomaton = new Senwa<LETTER,STATE>(
+				m_Services, 
 				m_TraversedSenwa.getInternalAlphabet(), 
 				m_TraversedSenwa.getCallAlphabet(), 
 				m_TraversedSenwa.getReturnAlphabet(), 

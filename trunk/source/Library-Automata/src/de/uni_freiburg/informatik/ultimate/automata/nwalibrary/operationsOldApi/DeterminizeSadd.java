@@ -42,9 +42,11 @@ import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 
 public class DeterminizeSadd<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	
+	private final IUltimateServiceProvider m_Services;
 	private static Logger s_Logger = 
 		NestedWordAutomata.getLogger();
 	
@@ -87,10 +89,13 @@ public class DeterminizeSadd<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	
 	
 	
-	public DeterminizeSadd(INestedWordAutomatonOldApi<LETTER,STATE> nwa) {
+	public DeterminizeSadd(IUltimateServiceProvider services,
+			INestedWordAutomatonOldApi<LETTER,STATE> nwa) {
+		m_Services = services;
 		m_Operand = nwa;
 		s_Logger.info(startMessage());
 		result = new NestedWordAutomaton<LETTER,STATE>(
+				m_Services, 
 				m_Operand.getInternalAlphabet(),
 				m_Operand.getCallAlphabet(),
 				m_Operand.getReturnAlphabet(),
@@ -457,9 +462,9 @@ public class DeterminizeSadd<LETTER,STATE> implements IOperation<LETTER,STATE> {
 			throws AutomataLibraryException {
 		s_Logger.info("Testing correctness of determinization");
 		boolean correct = true;
-		INestedWordAutomatonOldApi<LETTER,STATE> resultDD = (new DeterminizeDD<LETTER,STATE>(stateFactory, m_Operand)).getResult();
-		correct &= (ResultChecker.nwaLanguageInclusion(resultDD,result, stateFactory) == null);
-		correct &= (ResultChecker.nwaLanguageInclusion(result,resultDD, stateFactory) == null);
+		INestedWordAutomatonOldApi<LETTER,STATE> resultDD = (new DeterminizeDD<LETTER,STATE>(m_Services, stateFactory, m_Operand)).getResult();
+		correct &= (ResultChecker.nwaLanguageInclusion(m_Services, resultDD,result, stateFactory) == null);
+		correct &= (ResultChecker.nwaLanguageInclusion(m_Services, result,resultDD, stateFactory) == null);
 		s_Logger.info("Finished testing correctness of determinization");
 		return correct;
 	}

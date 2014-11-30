@@ -42,7 +42,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvide
  */
 public abstract class AbstractIncrementalInclusionCheck<LETTER,STATE> {
 	
-	private final IUltimateServiceProvider m_Services;
+	protected final IUltimateServiceProvider m_Services;
 	
 	private final INestedWordAutomatonSimple<LETTER, STATE> m_A;
 	private final List<INestedWordAutomatonSimple<LETTER, STATE>> m_B = new ArrayList<>();
@@ -51,8 +51,16 @@ public abstract class AbstractIncrementalInclusionCheck<LETTER,STATE> {
 	public AbstractIncrementalInclusionCheck(IUltimateServiceProvider services,
 			INestedWordAutomatonSimple<LETTER, STATE> a) {
 		super();
-		m_Services = services;
-		m_A = a;
+		if (services == null) {
+			throw new NullPointerException("services must not be null");
+		} else {
+			m_Services = services;
+		}
+		if (a == null) {
+			throw new NullPointerException("automaton A must not be null");
+		} else {
+			m_A = a;
+		}
 	}
 
 

@@ -37,6 +37,7 @@ import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 
 
 /**
@@ -48,6 +49,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
  * @param <STATE> Content
  */
 public class ConcurrentProduct<LETTER,STATE> {
+	
+	private final IUltimateServiceProvider m_Services;
 	
 	private static Logger s_Logger = 
 		NestedWordAutomata.getLogger();
@@ -170,8 +173,10 @@ public class ConcurrentProduct<LETTER,STATE> {
 	}
 	
 	
-	public ConcurrentProduct(INestedWordAutomatonOldApi<LETTER,STATE> nwa1,
+	public ConcurrentProduct(IUltimateServiceProvider services, 
+			INestedWordAutomatonOldApi<LETTER,STATE> nwa1,
 			INestedWordAutomatonOldApi<LETTER,STATE> nwa2, boolean concurrentPrefixProduct) {
+		m_Services = services;
 		m_ConcurrentPrefixProduct = concurrentPrefixProduct;
 		M_Nwa1 = nwa1;
 		M_Nwa2 = nwa2;
@@ -192,7 +197,8 @@ public class ConcurrentProduct<LETTER,STATE> {
 		m_SynchronizationAlphabet.retainAll(nwa2.getInternalAlphabet());
 		Set<LETTER> commonAlphabet = new HashSet<LETTER>(nwa1.getInternalAlphabet());
 		commonAlphabet.addAll(nwa2.getInternalAlphabet());
-		m_Result = new NestedWordAutomaton<LETTER,STATE>(commonAlphabet,
+		m_Result = new NestedWordAutomaton<LETTER,STATE>(
+				m_Services, commonAlphabet,
 									 new HashSet<LETTER>(0),
 									 new HashSet<LETTER>(0),
 									 m_ContentFactory);

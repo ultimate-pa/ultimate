@@ -88,7 +88,7 @@ public class BuchiInterpolantAutomatonBouncer extends AbstractInterpolantAutomat
 			boolean scroogeNondeterminismLoop, boolean hondaBouncerStem, boolean hondaBouncerLoop,
 			PredicateFactory predicateFactory, PredicateUnifier stemPU, PredicateUnifier loopPU,
 			IPredicate falsePredicate, IUltimateServiceProvider services) {
-		super(smtManager, edgeChecker, abstraction, falsePredicate, null, services.getLoggingService().getLogger(
+		super(services, smtManager, edgeChecker, abstraction, falsePredicate, null, services.getLoggingService().getLogger(
 				Activator.s_PLUGIN_ID));
 		mServices = services;
 		m_Bspm = bspm;

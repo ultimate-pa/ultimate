@@ -36,9 +36,12 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.NestedWordAutomatonReachableStates;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 
 
 public class Totalize<LETTER,STATE> implements IOperation<LETTER,STATE> {
+	
+	private final IUltimateServiceProvider m_Services;
 
 	protected static Logger s_Logger = 
 		NestedWordAutomata.getLogger();
@@ -69,12 +72,14 @@ public class Totalize<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	}
 	
 	
-	public Totalize(INestedWordAutomatonSimple<LETTER,STATE> input) throws OperationCanceledException {
+	public Totalize(IUltimateServiceProvider services,
+			INestedWordAutomatonSimple<LETTER,STATE> input) throws OperationCanceledException {
+		m_Services = services;
 		this.m_StateFactory = input.getStateFactory();
 		this.m_Operand = input;
 		s_Logger.info(startMessage());
 		m_Totalized = new TotalizeNwa<LETTER, STATE>(input, m_StateFactory);
-		m_Result = new NestedWordAutomatonReachableStates<LETTER, STATE>(m_Totalized);
+		m_Result = new NestedWordAutomatonReachableStates<LETTER, STATE>(m_Services, m_Totalized);
 		s_Logger.info(exitMessage());
 	}
 	
@@ -90,13 +95,13 @@ public class Totalize<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	public boolean checkResult(StateFactory<STATE> sf) throws AutomataLibraryException {
 		boolean correct = true;
 			s_Logger.info("Start testing correctness of " + operationName());
-			INestedWordAutomatonOldApi<LETTER, STATE> operandOldApi = ResultChecker.getOldApiNwa(m_Operand);
+			INestedWordAutomatonOldApi<LETTER, STATE> operandOldApi = ResultChecker.getOldApiNwa(m_Services, m_Operand);
 
 			// should recognize same language imput
-			correct &= (ResultChecker.nwaLanguageInclusion(operandOldApi, m_Result, sf) == null);
-			correct &= (ResultChecker.nwaLanguageInclusion(m_Result, operandOldApi, sf) == null);
+			correct &= (ResultChecker.nwaLanguageInclusion(m_Services, operandOldApi, m_Result, sf) == null);
+			correct &= (ResultChecker.nwaLanguageInclusion(m_Services, m_Result, operandOldApi, sf) == null);
 			if (!correct) {
-				ResultChecker.writeToFileIfPreferred(operationName() + "Failed", "", m_Operand);
+				ResultChecker.writeToFileIfPreferred(m_Services, operationName() + "Failed", "", m_Operand);
 			}
 		s_Logger.info("Finished testing correctness of " + operationName());
 		return correct;

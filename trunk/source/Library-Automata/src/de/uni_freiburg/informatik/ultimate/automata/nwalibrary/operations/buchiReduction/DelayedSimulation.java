@@ -36,6 +36,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
+
 import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
@@ -45,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StringFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.Player0Vertex;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.Player1Vertex;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.Vertex;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 
 /**
  * @author Markus Lindenmann (lindenmm@informatik.uni-freiburg.de)
@@ -62,9 +64,11 @@ public class DelayedSimulation<LETTER,STATE> extends AbstractSimulation<LETTER, 
      *            whether to use strongly connected components
      * @throws OperationCanceledException
      */
-    public DelayedSimulation(INestedWordAutomatonOldApi<LETTER,STATE> ba, boolean useSCCs, StateFactory<STATE> stateFactory)
+    public DelayedSimulation(IUltimateServiceProvider services,
+    		INestedWordAutomatonOldApi<LETTER,STATE> ba, 
+    		boolean useSCCs, StateFactory<STATE> stateFactory)
             throws OperationCanceledException {
-    	super(ba, useSCCs, stateFactory);
+    	super(services, ba, useSCCs, stateFactory);
     }
 
     /**
@@ -94,7 +98,7 @@ public class DelayedSimulation<LETTER,STATE> extends AbstractSimulation<LETTER, 
                     infinity++;
                 }
             }
-            if (!NestedWordAutomata.getMonitor().continueProcessing()) {
+            if (!m_Services.getProgressMonitorService().continueProcessing()) {
                 s_Logger.debug("Stopped in generateGameGraph/calculating v0 und v1");
                 throw new OperationCanceledException();
             }
@@ -132,7 +136,7 @@ public class DelayedSimulation<LETTER,STATE> extends AbstractSimulation<LETTER, 
                     }
                 }
             }
-            if (!NestedWordAutomata.getMonitor().continueProcessing()) {
+            if (!m_Services.getProgressMonitorService().continueProcessing()) {
                 s_Logger.debug("Stopped in generateGameGraph/calculating v0 und v1");
                 throw new OperationCanceledException();
             }
@@ -180,7 +184,7 @@ public class DelayedSimulation<LETTER,STATE> extends AbstractSimulation<LETTER, 
             }
         }
 
-        if (!NestedWordAutomata.getMonitor().continueProcessing()) {
+        if (!m_Services.getProgressMonitorService().continueProcessing()) {
             s_Logger.debug("Stopped in generateBuchiAutomaton/table filled");
             throw new OperationCanceledException();
         }
@@ -191,7 +195,7 @@ public class DelayedSimulation<LETTER,STATE> extends AbstractSimulation<LETTER, 
         HashMap<STATE,STATE> oldSNames2newSNames = new HashMap<STATE,STATE>();
         @SuppressWarnings("unchecked")
         StateFactory<STATE> snf = (StateFactory<STATE>) new StringFactory();
-        result = new NestedWordAutomaton<LETTER,STATE>(m_Operand.getInternalAlphabet(),
+        result = new NestedWordAutomaton<LETTER,STATE>(m_Services, m_Operand.getInternalAlphabet(),
                 null, null, snf);
         for (int i = 0; i < states.size(); i++) {
             if (marker[i]) continue;
@@ -214,7 +218,7 @@ public class DelayedSimulation<LETTER,STATE> extends AbstractSimulation<LETTER, 
             marker[i] = true;
         }
 
-        if (!NestedWordAutomata.getMonitor().continueProcessing()) {
+        if (!m_Services.getProgressMonitorService().continueProcessing()) {
             s_Logger.debug("Stopped in generateBuchiAutomaton/states added to result BA");
             throw new OperationCanceledException();
         }

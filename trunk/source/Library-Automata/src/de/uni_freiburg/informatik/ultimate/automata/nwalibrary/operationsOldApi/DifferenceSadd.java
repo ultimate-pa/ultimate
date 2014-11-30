@@ -43,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomat
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IStateDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.PowersetDeterminizer;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 
 
 /**
@@ -65,6 +66,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Powers
  */
 public class DifferenceSadd<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	
+	private final IUltimateServiceProvider m_Services;
 	private static Logger s_Logger = 
 		NestedWordAutomata.getLogger();
 	
@@ -140,9 +142,11 @@ public class DifferenceSadd<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	}
 	
 	public DifferenceSadd(
+			IUltimateServiceProvider services,
 			INestedWordAutomatonOldApi<LETTER,STATE> minuend,
 			INestedWordAutomatonOldApi<LETTER,STATE> subtrahend,
 			IStateDeterminizer<LETTER,STATE> stateDeterminizer) throws AutomataLibraryException {
+		m_Services = services;
 		contentFactory = minuend.getStateFactory();
 		this.minuend = minuend;
 		this.subtrahend = subtrahend;
@@ -152,6 +156,7 @@ public class DifferenceSadd<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		this.stateDeterminizer = stateDeterminizer;
 		s_Logger.info(startMessage());
 		difference = new NestedWordAutomaton<LETTER,STATE>(
+				m_Services, 
 				minuend.getInternalAlphabet(),
 				minuend.getCallAlphabet(),
 				minuend.getReturnAlphabet(),
@@ -168,9 +173,11 @@ public class DifferenceSadd<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	 * @throws AutomataLibraryException 
 	 */	
 	public DifferenceSadd(
+			IUltimateServiceProvider services,
 			StateFactory<STATE> stateFactory,
 			INestedWordAutomatonOldApi<LETTER,STATE> minuend,
 			INestedWordAutomatonOldApi<LETTER,STATE> subtrahend) throws AutomataLibraryException {
+		m_Services = services;
 		contentFactory = minuend.getStateFactory();
 		this.minuend = minuend;
 		this.subtrahend = subtrahend;
@@ -180,6 +187,7 @@ public class DifferenceSadd<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		this.stateDeterminizer = new PowersetDeterminizer<LETTER,STATE>(subtrahend, true, stateFactory);
 		s_Logger.info(startMessage());
 		difference = new NestedWordAutomaton<LETTER,STATE>(
+				m_Services, 
 				minuend.getInternalAlphabet(),
 				minuend.getCallAlphabet(),
 				minuend.getReturnAlphabet(),
@@ -545,11 +553,12 @@ public class DifferenceSadd<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		if (stateDeterminizer instanceof PowersetDeterminizer) {
 			s_Logger.info("Start testing correctness of " + operationName());
 
-			INestedWordAutomatonOldApi<LETTER,STATE> resultDD = (new DifferenceDD<LETTER,STATE>(stateFactory, minuend, subtrahend)).getResult();
-			correct &= (ResultChecker.nwaLanguageInclusion(resultDD, difference, stateFactory) == null);
-			correct &= (ResultChecker.nwaLanguageInclusion(difference, resultDD, stateFactory) == null);
+			INestedWordAutomatonOldApi<LETTER,STATE> resultDD = 
+					(new DifferenceDD<LETTER,STATE>(m_Services, stateFactory, minuend, subtrahend)).getResult();
+			correct &= (ResultChecker.nwaLanguageInclusion(m_Services, resultDD, difference, stateFactory) == null);
+			correct &= (ResultChecker.nwaLanguageInclusion(m_Services, difference, resultDD, stateFactory) == null);
 			if (!correct) {
-			ResultChecker.writeToFileIfPreferred(operationName() + "Failed", "", minuend,subtrahend);
+			ResultChecker.writeToFileIfPreferred(m_Services, operationName() + "Failed", "", minuend,subtrahend);
 			}
 			s_Logger.info("Finished testing correctness of " + operationName());
 		} else {

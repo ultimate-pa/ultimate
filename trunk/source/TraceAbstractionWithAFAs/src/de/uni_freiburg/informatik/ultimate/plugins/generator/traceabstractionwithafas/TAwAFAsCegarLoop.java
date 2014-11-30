@@ -154,7 +154,7 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 
 
 					//.. then, nondeterminize it
-					NonDeterminizeAA<CodeBlock, IPredicate> nonDet = new NonDeterminizeAA<>(reversedAA);
+					NonDeterminizeAA<CodeBlock, IPredicate> nonDet = new NonDeterminizeAA<>(m_Services, reversedAA);
 					NestedWordAutomaton<CodeBlock, CompoundState<IPredicate>> nwaFromAA = nonDet.getResult();
 				}
 				 
@@ -178,7 +178,7 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 
 		//.. in the end, build the union of all the nwas we got from the dags, return it
 		if (useSalomAA) {
-			DeterminizeRAFA<CodeBlock> detRev = new DeterminizeRAFA<CodeBlock>(salomAAUnion, m_SmtManager, mPredicateUnifier);
+			DeterminizeRAFA<CodeBlock> detRev = new DeterminizeRAFA<CodeBlock>(m_Services, salomAAUnion, m_SmtManager, mPredicateUnifier);
 			m_InterpolAutomaton = detRev.getResult();
 		} else {
 			//TODO?
@@ -394,14 +394,14 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 		case Craig_TreeInterpolation:
 			m_TraceChecker = new TraceCheckerWithAccessibleSSATerms(truePredicate, falsePredicate, new TreeMap<Integer, IPredicate>(),//different TraceChecker, here..
 					NestedWord.nestedWord(m_Counterexample.getWord()), m_SmtManager, m_RootNode.getRootAnnot()
-							.getModGlobVarManager(), m_AssertCodeBlocksIncrementally, mServices);
+							.getModGlobVarManager(), m_AssertCodeBlocksIncrementally, m_Services);
 			break;
 		case ForwardPredicates:
 		case BackwardPredicates:
 		case FPandBP:
 			m_TraceChecker = new TraceCheckerSpWp(truePredicate, falsePredicate, new TreeMap<Integer, IPredicate>(),
 					NestedWord.nestedWord(m_Counterexample.getWord()), m_SmtManager, m_RootNode.getRootAnnot()
-							.getModGlobVarManager(), m_AssertCodeBlocksIncrementally, UnsatCores.CONJUNCT_LEVEL, true, mServices);
+							.getModGlobVarManager(), m_AssertCodeBlocksIncrementally, UnsatCores.CONJUNCT_LEVEL, true, m_Services);
 			break;
 		default:
 			throw new UnsupportedOperationException("unsupported interpolation");

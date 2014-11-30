@@ -41,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomat
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.DoubleDeckerVisitor;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.ReachableStatesCopy;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 
 
 /**
@@ -51,7 +52,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.
 
 public class BuchiComplementDeterministic<LETTER,STATE> extends DoubleDeckerVisitor<LETTER,STATE>
 											   implements IOperation<LETTER,STATE> {
-	
 	private static Logger s_Logger = 
 		NestedWordAutomata.getLogger();
 	
@@ -87,7 +87,9 @@ public class BuchiComplementDeterministic<LETTER,STATE> extends DoubleDeckerVisi
 			m_TraversedNwa.sizeInformation();
 	}
 	
-	public BuchiComplementDeterministic(INestedWordAutomatonOldApi<LETTER,STATE> nwa) throws OperationCanceledException {
+	public BuchiComplementDeterministic(IUltimateServiceProvider services,
+			INestedWordAutomatonOldApi<LETTER,STATE> nwa) throws OperationCanceledException {
+		super(services);
 		m_Operand = nwa;
 		m_ContentFactory = m_Operand.getStateFactory();
 		s_Logger.info(startMessage());
@@ -95,9 +97,10 @@ public class BuchiComplementDeterministic<LETTER,STATE> extends DoubleDeckerVisi
 			m_TotalizedOperand = m_Operand;
 		}
 		else { 			
-			m_TotalizedOperand = new ReachableStatesCopy<LETTER,STATE>(nwa, true, false, false, false).getResult();
+			m_TotalizedOperand = new ReachableStatesCopy<LETTER,STATE>(m_Services, nwa, true, false, false, false).getResult();
 		}
 		m_TraversedNwa = new NestedWordAutomaton<LETTER,STATE>(
+				m_Services,
 				nwa.getInternalAlphabet(),
 				nwa.getCallAlphabet(),
 				nwa.getReturnAlphabet(),
@@ -242,7 +245,7 @@ public class BuchiComplementDeterministic<LETTER,STATE> extends DoubleDeckerVisi
 	@Override
 	public boolean checkResult(StateFactory<STATE> stateFactory)
 			throws OperationCanceledException {
-		return ResultChecker.buchiComplement(m_Operand, m_TraversedNwa);
+		return ResultChecker.buchiComplement(m_Services, m_Operand, m_TraversedNwa);
 	}
 
 

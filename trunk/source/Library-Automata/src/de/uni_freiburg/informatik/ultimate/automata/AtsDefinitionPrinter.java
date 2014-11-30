@@ -53,6 +53,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Place;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.PetriNetJulian;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 
 
 /**
@@ -73,6 +74,7 @@ public class AtsDefinitionPrinter<LETTER,STATE> {
 
 		public enum Labeling { NUMERATE, TOSTRING, QUOTED, BA_FORMAT };
 		
+		private final IUltimateServiceProvider m_Services;
 		private static Logger s_Logger = 
 			NestedWordAutomata.getLogger();
 		
@@ -96,7 +98,9 @@ public class AtsDefinitionPrinter<LETTER,STATE> {
 		}
 		
 		
-		public AtsDefinitionPrinter(String automatonName, String filename, Labeling labels, String message, Object... automata) {
+		public AtsDefinitionPrinter(IUltimateServiceProvider services,
+				String automatonName, String filename, Labeling labels, String message, Object... automata) {
+			m_Services = services;
 			s_Logger.warn("Dumping Testfile");
 			initializePrintWriter(filename);
 			m_printWriter.println("// Testfile dumped by Ultimate at "+getDateTime());
@@ -112,7 +116,8 @@ public class AtsDefinitionPrinter<LETTER,STATE> {
 		}
 		
 		
-		public AtsDefinitionPrinter(String name, Object automaton) {
+		public AtsDefinitionPrinter(IUltimateServiceProvider services, String name, Object automaton) {
+			m_Services = services;
 			m_StringWriter = new StringWriter();
 			m_printWriter = new PrintWriter(m_StringWriter);
 			printAutomaton(name, automaton, Labeling.TOSTRING);
@@ -135,7 +140,7 @@ public class AtsDefinitionPrinter<LETTER,STATE> {
 					nwa = (INestedWordAutomaton<LETTER, STATE>) automaton;
 				} else {
 					try {
-						nwa = new NestedWordAutomatonReachableStates<LETTER, STATE>((INestedWordAutomatonSimple<LETTER, STATE>) automaton);
+						nwa = new NestedWordAutomatonReachableStates<LETTER, STATE>(m_Services, (INestedWordAutomatonSimple<LETTER, STATE>) automaton);
 					} catch (OperationCanceledException e) {
 						throw new AssertionError("Timeout while preparing automaton for printing.");
 					}

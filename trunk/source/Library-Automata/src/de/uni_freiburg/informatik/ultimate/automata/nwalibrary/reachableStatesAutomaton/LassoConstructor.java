@@ -40,8 +40,10 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.Transitionlet;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.NestedLassoRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.NestedWordAutomatonReachableStates.StronglyConnectedComponents.SCC;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 
 class LassoConstructor<LETTER, STATE> {
+	private final IUltimateServiceProvider m_Services;
 	private final NestedWordAutomatonReachableStates<LETTER, STATE> m_Nwars;
     private final StateContainer<LETTER,STATE> m_Goal;
     private final Set<StateContainer<LETTER,STATE>> m_Visited =
@@ -56,9 +58,10 @@ class LassoConstructor<LETTER, STATE> {
     private NestedRun<LETTER, STATE> m_Stem;
     private NestedLassoRun<LETTER, STATE> m_Lasso;
     
-	public LassoConstructor(
+	public LassoConstructor(IUltimateServiceProvider services, 
 			NestedWordAutomatonReachableStates<LETTER, STATE> nwars, 
 			StateContainer<LETTER, STATE> goal, SCC scc) throws OperationCanceledException {
+		m_Services = services;
 		m_Nwars = nwars;
 		m_Goal = goal;
 		m_Scc = scc;
@@ -73,13 +76,14 @@ class LassoConstructor<LETTER, STATE> {
 		}
 		findRunBackwards();
 		constructRunOfLoop();
-		m_Stem = (new RunConstructor<LETTER, STATE>(m_Nwars, m_Goal)).constructRun();
+		m_Stem = (new RunConstructor<LETTER, STATE>(m_Services, m_Nwars, m_Goal)).constructRun();
 		m_Lasso = new NestedLassoRun<LETTER, STATE>(m_Stem, m_Loop);
 	}
 	
-	public LassoConstructor(
+	public LassoConstructor(IUltimateServiceProvider services,
 			NestedWordAutomatonReachableStates<LETTER, STATE> nwars, 
 			Summary<LETTER, STATE> summary, SCC scc) throws OperationCanceledException {
+		m_Services = services;
 		m_Nwars = nwars;
 		m_Goal = summary.getSucc();
 		m_Scc = scc;
@@ -97,7 +101,7 @@ class LassoConstructor<LETTER, STATE> {
 		}
 		findRunBackwards();
 		constructRunOfLoop();
-		m_Stem = (new RunConstructor<LETTER, STATE>(m_Nwars, m_Goal)).constructRun();
+		m_Stem = (new RunConstructor<LETTER, STATE>(m_Services, m_Nwars, m_Goal)).constructRun();
 		m_Lasso = new NestedLassoRun<LETTER, STATE>(m_Stem, m_Loop);
 	}
 
@@ -148,7 +152,7 @@ class LassoConstructor<LETTER, STATE> {
 						inTrans.getLetter(),
 						info.getSuccessor());
 				boolean summaryMustContainAccepting = m_FindAcceptingSummary && i == 0;
-				newSuffix = (new RunConstructor<LETTER, STATE>(m_Nwars, summary, summaryMustContainAccepting)).constructRun();
+				newSuffix = (new RunConstructor<LETTER, STATE>(m_Services, m_Nwars, summary, summaryMustContainAccepting)).constructRun();
 				assert newSuffix != null : "no run for summary found";
 			} else {
 				throw new AssertionError("unsupported transition");

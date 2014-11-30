@@ -38,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.DoubleDecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.DoubleDeckerVisitor;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 
 
 /**
@@ -50,7 +51,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.
  */
 public class HasUnreachableStates<LETTER,STATE> extends DoubleDeckerVisitor<LETTER,STATE>
 										   implements IOperation<LETTER,STATE> {
-	
 	private static Logger s_Logger = 
 			NestedWordAutomata.getLogger();
 	
@@ -59,7 +59,9 @@ public class HasUnreachableStates<LETTER,STATE> extends DoubleDeckerVisitor<LETT
 	private int m_UnreachalbeStates = 0;
 
 	
-	public HasUnreachableStates(INestedWordAutomatonOldApi<LETTER,STATE> operand) throws OperationCanceledException {
+	public HasUnreachableStates(IUltimateServiceProvider services,
+			INestedWordAutomatonOldApi<LETTER,STATE> operand) throws OperationCanceledException {
+		super(services);
 		m_TraversedNwa = operand;
 		s_Logger.info(startMessage());
 		traverseDoubleDeckerGraph();

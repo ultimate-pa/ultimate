@@ -53,9 +53,7 @@ public class NestedWordAutomata implements IUltimatePlugin, IService {
 		return sLoggerProxy;
 	}
 	
-	public static IProgressMonitorService getMonitor(){
-		return sProgress;
-	}
+
 	
 	
 	/********************** End hacky shit ****************************/ 

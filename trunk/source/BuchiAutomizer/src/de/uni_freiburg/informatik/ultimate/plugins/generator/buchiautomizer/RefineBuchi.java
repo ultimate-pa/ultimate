@@ -65,14 +65,14 @@ public class RefineBuchi {
 	 */
 	protected INestedWordAutomatonSimple<CodeBlock, IPredicate> m_InterpolAutomatonUsedInRefinement;
 
-	private final IUltimateServiceProvider mServices;
+	private final IUltimateServiceProvider m_Services;
 
 	public RefineBuchi(SmtManager smtManager, boolean dumpAutomata, boolean difference,
 			PredicateFactory stateFactoryInterpolAutom, PredicateFactoryRefinement stateFactoryForRefinement,
 			boolean useDoubleDeckers, String dumpPath, INTERPOLATION interpolation, IUltimateServiceProvider services,
 			Logger logger) {
 		super();
-		mServices = services;
+		m_Services = services;
 		mLogger = logger;
 		m_SmtManager = smtManager;
 		m_DumpAutomata = dumpAutomata;
@@ -161,7 +161,7 @@ public class RefineBuchi {
 		assert !bspm.getStemPrecondition().getFormula().toString().equals("false");
 		assert !bspm.getHondaPredicate().getFormula().toString().equals("false");
 		assert !bspm.getRankEqAndSi().getFormula().toString().equals("false");
-		PredicateUnifier pu = new PredicateUnifier(mServices, m_SmtManager, bspm.getStemPrecondition(),
+		PredicateUnifier pu = new PredicateUnifier(m_Services, m_SmtManager, bspm.getStemPrecondition(),
 				bspm.getHondaPredicate(), bspm.getRankEqAndSi(), bspm.getStemPostcondition());
 		IPredicate[] stemInterpolants;
 		TraceChecker traceChecker;
@@ -190,19 +190,19 @@ public class RefineBuchi {
 		} else {
 			throw new AssertionError();
 		}
-		m_Bci = TraceCheckerUtils.computeCoverageCapability(traceChecker, mLogger);
+		m_Bci = TraceCheckerUtils.computeCoverageCapability(m_Services, traceChecker, mLogger);
 
 		NestedWordAutomaton<CodeBlock, IPredicate> m_InterpolAutomaton = constructBuchiInterpolantAutomaton(
 				bspm.getStemPrecondition(), stem, stemInterpolants, bspm.getHondaPredicate(), loop, loopInterpolants,
 				m_Abstraction);
 		if (m_DumpAutomata) {
 			String filename = "InterpolantAutomatonBuchi" + m_Iteration;
-			BuchiCegarLoop.writeAutomatonToFile(m_InterpolAutomaton, m_DumpPath, filename, mLogger);
+			BuchiCegarLoop.writeAutomatonToFile(m_Services, m_InterpolAutomaton, m_DumpPath, filename, mLogger);
 		}
 		BuchiEdgeChecker ec = new BuchiEdgeChecker(m_SmtManager, buchiModGlobalVarManager);
 		ec.putDecreaseEqualPair(bspm.getHondaPredicate(), bspm.getRankEqAndSi());
 		assert (new InductivityCheck(m_InterpolAutomaton, ec, false, true, mLogger)).getResult();
-		assert (new BuchiAccepts<CodeBlock, IPredicate>(m_InterpolAutomaton, m_Counterexample.getNestedLassoWord()))
+		assert (new BuchiAccepts<CodeBlock, IPredicate>(m_Services, m_InterpolAutomaton, m_Counterexample.getNestedLassoWord()))
 				.getResult();
 		switch (setting.getInterpolantAutomaton()) {
 		case LassoAutomaton:
@@ -210,7 +210,7 @@ public class RefineBuchi {
 			break;
 		case EagerNondeterminism:
 
-			m_InterpolAutomatonUsedInRefinement = new EagerInterpolantAutomaton(ec, m_InterpolAutomaton);
+			m_InterpolAutomatonUsedInRefinement = new EagerInterpolantAutomaton(m_Services, ec, m_InterpolAutomaton);
 			break;
 		case ScroogeNondeterminism:
 		case Deterministic:
@@ -230,7 +230,7 @@ public class RefineBuchi {
 				loopInterpolantsForRefinement.addAll(pu.cannibalize(false, bspm.getRankEqAndSi().getFormula()));
 
 				LoopCannibalizer lc = new LoopCannibalizer(m_Counterexample, loopInterpolantsForRefinement, bspm, pu,
-						m_SmtManager, buchiModGlobalVarManager, interpolation, mServices);
+						m_SmtManager, buchiModGlobalVarManager, interpolation, m_Services);
 				loopInterpolantsForRefinement = lc.getResult();
 			} else {
 				loopInterpolantsForRefinement = new HashSet<IPredicate>(Arrays.asList(loopInterpolants));
@@ -243,7 +243,7 @@ public class RefineBuchi {
 							: stem.getSymbol(stem.length() - 1), loop.getSymbol(loop.length() - 1), m_Abstraction,
 					setting.isScroogeNondeterminismStem(), setting.isScroogeNondeterminismLoop(),
 					setting.isBouncerStem(), setting.isBouncerLoop(), m_StateFactoryInterpolAutom, pu, pu,
-					pu.getFalsePredicate(), mServices);
+					pu.getFalsePredicate(), m_Services);
 			break;
 		default:
 			throw new UnsupportedOperationException("unknown automaton");
@@ -252,7 +252,7 @@ public class RefineBuchi {
 				m_InterpolAutomatonUsedInRefinement, m_UseDoubleDeckers, m_StateFactoryInterpolAutom);
 		INestedWordAutomatonOldApi<CodeBlock, IPredicate> newAbstraction;
 		if (m_Difference) {
-			BuchiDifferenceFKV<CodeBlock, IPredicate> diff = new BuchiDifferenceFKV<CodeBlock, IPredicate>(
+			BuchiDifferenceFKV<CodeBlock, IPredicate> diff = new BuchiDifferenceFKV<CodeBlock, IPredicate>(m_Services, 
 					m_Abstraction, m_InterpolAutomatonUsedInRefinement, stateDeterminizer, m_StateFactoryForRefinement);
 			finishComputation(m_InterpolAutomatonUsedInRefinement, setting);
 
@@ -283,13 +283,14 @@ public class RefineBuchi {
 			newAbstraction = diff.getResult();
 		} else {
 			BuchiComplementFKV<CodeBlock, IPredicate> complNwa = new BuchiComplementFKV<CodeBlock, IPredicate>(
+					m_Services, 
 					m_InterpolAutomatonUsedInRefinement, stateDeterminizer);
 			finishComputation(m_InterpolAutomatonUsedInRefinement, setting);
 			assert (complNwa.checkResult(m_StateFactoryInterpolAutom));
 			INestedWordAutomatonOldApi<CodeBlock, IPredicate> complement = complNwa.getResult();
-			assert !(new BuchiAccepts<CodeBlock, IPredicate>(complement, m_Counterexample.getNestedLassoWord()))
+			assert !(new BuchiAccepts<CodeBlock, IPredicate>(m_Services, complement, m_Counterexample.getNestedLassoWord()))
 					.getResult();
-			BuchiIntersect<CodeBlock, IPredicate> interNwa = new BuchiIntersect<CodeBlock, IPredicate>(m_Abstraction,
+			BuchiIntersect<CodeBlock, IPredicate> interNwa = new BuchiIntersect<CodeBlock, IPredicate>(m_Services, m_Abstraction,
 					complement, m_StateFactoryForRefinement);
 			assert (interNwa.checkResult(m_StateFactoryInterpolAutom));
 			newAbstraction = interNwa.getResult();
@@ -312,7 +313,7 @@ public class RefineBuchi {
 		// : "no progress";
 		if (m_DumpAutomata) {
 			String filename = "interpolBuchiAutomatonUsedInRefinement" + m_Iteration + "after";
-			BuchiCegarLoop.writeAutomatonToFile(m_InterpolAutomatonUsedInRefinement, m_DumpPath, filename, mLogger);
+			BuchiCegarLoop.writeAutomatonToFile(m_Services, m_InterpolAutomatonUsedInRefinement, m_DumpPath, filename, mLogger);
 		}
 		return newAbstraction;
 	}
@@ -330,7 +331,7 @@ public class RefineBuchi {
 					 * set the argument to AssertCodeBlockOrder.NOT_INCREMENTALLY.
 					 * Check if you want to set this
 					 * to a different value.
-					 */AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices);
+					 */AssertCodeBlockOrder.NOT_INCREMENTALLY, m_Services);
 		case ForwardPredicates:
 		case BackwardPredicates:
 		case FPandBP:
@@ -343,7 +344,7 @@ public class RefineBuchi {
 					 * Check if you want to set this
 					 * to a different value.
 					 */AssertCodeBlockOrder.NOT_INCREMENTALLY,
-					 UnsatCores.CONJUNCT_LEVEL, true, mServices);
+					 UnsatCores.CONJUNCT_LEVEL, true, m_Services);
 		default:
 			throw new UnsupportedOperationException("unsupported interpolation");
 		}
@@ -353,25 +354,25 @@ public class RefineBuchi {
 			INestedWordAutomatonSimple<CodeBlock, IPredicate> interpolAutomatonUsedInRefinement,
 			NestedLassoRun<CodeBlock, IPredicate> counterexample) throws OperationCanceledException {
 		INestedWordAutomatonOldApi<CodeBlock, IPredicate> oldApi;
-		oldApi = (new RemoveUnreachable<CodeBlock, IPredicate>(interpolAutomatonUsedInRefinement)).getResult();
+		oldApi = (new RemoveUnreachable<CodeBlock, IPredicate>(m_Services, interpolAutomatonUsedInRefinement)).getResult();
 		NestedWord<CodeBlock> stem = counterexample.getStem().getWord();
 		NestedWord<CodeBlock> loop = counterexample.getLoop().getWord();
 		NestedWord<CodeBlock> stemAndLoop = stem.concatenate(loop);
 		NestedLassoWord<CodeBlock> stemExtension = new NestedLassoWord<CodeBlock>(stemAndLoop, loop);
 		NestedWord<CodeBlock> loopAndLoop = loop.concatenate(loop);
 		NestedLassoWord<CodeBlock> loopExtension = new NestedLassoWord<CodeBlock>(stem, loopAndLoop);
-		boolean wordAccepted = (new BuchiAccepts<CodeBlock, IPredicate>(oldApi, counterexample.getNestedLassoWord()))
+		boolean wordAccepted = (new BuchiAccepts<CodeBlock, IPredicate>(m_Services, oldApi, counterexample.getNestedLassoWord()))
 				.getResult();
 		if (!wordAccepted) {
 			mLogger.info("Bad chosen interpolant automaton: word not accepted");
 			return false;
 		}
-		boolean stemExtensionAccepted = (new BuchiAccepts<CodeBlock, IPredicate>(oldApi, stemExtension)).getResult();
+		boolean stemExtensionAccepted = (new BuchiAccepts<CodeBlock, IPredicate>(m_Services, oldApi, stemExtension)).getResult();
 		if (!stemExtensionAccepted) {
 			mLogger.info("Bad chosen interpolant automaton: stem extension not accepted");
 			return false;
 		}
-		boolean loopExtensionAccepted = (new BuchiAccepts<CodeBlock, IPredicate>(oldApi, loopExtension)).getResult();
+		boolean loopExtensionAccepted = (new BuchiAccepts<CodeBlock, IPredicate>(m_Services, oldApi, loopExtension)).getResult();
 		if (!loopExtensionAccepted) {
 			mLogger.info("Bad chosen interpolant automaton: loop extension not accepted");
 			return false;
@@ -401,6 +402,7 @@ public class RefineBuchi {
 			NestedWord<CodeBlock> stem, IPredicate[] stemInterpolants, IPredicate honda, NestedWord<CodeBlock> loop,
 			IPredicate[] loopInterpolants, INestedWordAutomatonSimple<CodeBlock, IPredicate> abstraction) {
 		NestedWordAutomaton<CodeBlock, IPredicate> result = new NestedWordAutomaton<CodeBlock, IPredicate>(
+				m_Services, 
 				abstraction.getInternalAlphabet(), abstraction.getCallAlphabet(), abstraction.getReturnAlphabet(),
 				abstraction.getStateFactory());
 		boolean emptyStem = stem.length() == 0;

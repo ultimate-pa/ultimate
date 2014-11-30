@@ -33,6 +33,7 @@ import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.NestedWordAutomatonReachableStates;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 
 
 /**
@@ -44,19 +45,21 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAu
  */
 public class BuchiIsEmpty<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	
-	
+	private final IUltimateServiceProvider m_Services;
 	INestedWordAutomatonSimple<LETTER, STATE> m_Nwa;
 	NestedWordAutomatonReachableStates<LETTER, STATE> m_Reach;
 	NestedWordAutomatonReachableStates<LETTER, STATE>.StronglyConnectedComponents m_Sccs;
 	final Boolean m_Result;
 	
-	public BuchiIsEmpty(INestedWordAutomatonSimple<LETTER, STATE> nwa) throws OperationCanceledException {
+	public BuchiIsEmpty(IUltimateServiceProvider services,
+			INestedWordAutomatonSimple<LETTER, STATE> nwa) throws OperationCanceledException {
+		m_Services = services;
 		m_Nwa = nwa;
 		s_Logger.info(startMessage());
 		if (m_Nwa instanceof NestedWordAutomatonReachableStates) {
 			m_Reach = (NestedWordAutomatonReachableStates<LETTER, STATE>) m_Nwa;
 		} else {
-			m_Reach = new NestedWordAutomatonReachableStates<LETTER, STATE>(m_Nwa);
+			m_Reach = new NestedWordAutomatonReachableStates<LETTER, STATE>(m_Services, m_Nwa);
 		}
 		m_Sccs = m_Reach.getOrComputeStronglyConnectedComponents();
 		m_Result = m_Sccs.buchiIsEmpty();

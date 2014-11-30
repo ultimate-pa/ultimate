@@ -45,9 +45,11 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.TransitionConsitenceCheck;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.ReachableStatesCopy;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.NestedWordAutomatonReachableStates;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 
 public class RemoveDeadEnds<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	
+	private final IUltimateServiceProvider m_Services;
 	private final INestedWordAutomatonSimple<LETTER,STATE> m_Input;
 	private final NestedWordAutomatonReachableStates<LETTER,STATE> m_Reach;
 	private final INestedWordAutomatonOldApi<LETTER,STATE> m_Result;
@@ -65,13 +67,15 @@ public class RemoveDeadEnds<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	 * @param nwa
 	 * @throws OperationCanceledException
 	 */
-	public RemoveDeadEnds(INestedWordAutomatonSimple<LETTER,STATE> nwa)
+	public RemoveDeadEnds(IUltimateServiceProvider services,
+			INestedWordAutomatonSimple<LETTER,STATE> nwa)
 			throws OperationCanceledException {
+		m_Services = services;
 		m_Input = nwa;
 		s_Logger.info(startMessage());
-		m_Reach = new NestedWordAutomatonReachableStates<LETTER, STATE>(m_Input);
+		m_Reach = new NestedWordAutomatonReachableStates<LETTER, STATE>(m_Services, m_Input);
 		m_Reach.computeDeadEnds();
-		m_Result = new NestedWordAutomatonFilteredStates<LETTER, STATE>(m_Reach, m_Reach.getWithOutDeadEnds());
+		m_Result = new NestedWordAutomatonFilteredStates<LETTER, STATE>(m_Services, m_Reach, m_Reach.getWithOutDeadEnds());
 		s_Logger.info(exitMessage());
 		assert (new TransitionConsitenceCheck<LETTER, STATE>(m_Result)).consistentForAll();
 	}
@@ -112,10 +116,10 @@ public class RemoveDeadEnds<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		if (m_Input instanceof INestedWordAutomatonOldApi) {
 			input = (INestedWordAutomatonOldApi<LETTER, STATE>) m_Input;
 		} else {
-			input = (new RemoveUnreachable<LETTER, STATE>(m_Input)).getResult(); 
+			input = (new RemoveUnreachable<LETTER, STATE>(m_Services, m_Input)).getResult(); 
 		}
 		ReachableStatesCopy<LETTER, STATE> rsc = 
-				(new ReachableStatesCopy<LETTER, STATE>(input, false, false, false, false));
+				(new ReachableStatesCopy<LETTER, STATE>(m_Services, input, false, false, false, false));
 //		Set<UpDownEntry<STATE>> rsaEntries = new HashSet<UpDownEntry<STATE>>();
 //		for (UpDownEntry<STATE> rde : m_Reach.getRemovedUpDownEntry()) {
 //			rsaEntries.add(rde);
@@ -177,7 +181,7 @@ public class RemoveDeadEnds<LETTER,STATE> implements IOperation<LETTER,STATE> {
 			assert correct;
 		}
 		if (!correct) {
-			ResultChecker.writeToFileIfPreferred(operationName() + "Failed", "", m_Input);
+			ResultChecker.writeToFileIfPreferred(m_Services, operationName() + "Failed", "", m_Input);
 		}
 		s_Logger.info("Finished testing correctness of " + operationName());
 		return correct;

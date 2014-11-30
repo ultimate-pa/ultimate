@@ -38,6 +38,7 @@ import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.AtsDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 
 
 
@@ -51,6 +52,7 @@ import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
  */
 public class NestedWordAutomatonCache<LETTER,STATE> implements INestedWordAutomatonSimple<LETTER,STATE> {
 	
+	private final IUltimateServiceProvider m_Services;
 	private static Logger s_Logger = 
 		NestedWordAutomata.getLogger();
 	
@@ -932,10 +934,12 @@ public class NestedWordAutomatonCache<LETTER,STATE> implements INestedWordAutoma
 	
 
 	
-	public NestedWordAutomatonCache(Set<LETTER> internalAlphabet,
+	public NestedWordAutomatonCache(IUltimateServiceProvider services,
+			Set<LETTER> internalAlphabet,
 				Set<LETTER> callAlphabet,
 				Set<LETTER> returnAlphabet,
 			   StateFactory<STATE> stateFactory) {
+		m_Services = services;
 		if (internalAlphabet == null) {
 			throw new IllegalArgumentException("nwa must have internal alphabet");
 		}
@@ -1039,7 +1043,7 @@ public class NestedWordAutomatonCache<LETTER,STATE> implements INestedWordAutoma
 	
 	@Override
 	public String toString() {
-		return (new AtsDefinitionPrinter<String,String>("nwa", this)).getDefinitionAsString();
+		return (new AtsDefinitionPrinter<String,String>(m_Services, "nwa", this)).getDefinitionAsString();
 	}
 
 

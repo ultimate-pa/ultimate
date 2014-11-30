@@ -20,6 +20,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IncomingInternalT
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
@@ -37,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol;
  */
 public class MinimizeDfaSymbolic<LETTER, STATE> implements
 		IOperation<LETTER, STATE> {
+	private final IUltimateServiceProvider m_Services;
 	// Logger for debug - information.
 	private static Logger s_Logger = NestedWordAutomata.getLogger();
 	// Result automaton.
@@ -81,7 +83,9 @@ public class MinimizeDfaSymbolic<LETTER, STATE> implements
 	 * Constructor
 	 * @param operand
 	 */
-	public MinimizeDfaSymbolic(INestedWordAutomatonOldApi<LETTER, STATE> operand) {
+	public MinimizeDfaSymbolic(IUltimateServiceProvider services, 
+			INestedWordAutomatonOldApi<LETTER, STATE> operand) {
+		m_Services = services;
 		this.m_operand = operand;
 
 		// Start minimization.
@@ -826,6 +830,7 @@ public class MinimizeDfaSymbolic<LETTER, STATE> implements
 	 */
 	private void buildResult() {
 		m_Result = new NestedWordAutomaton<LETTER, STATE>(
+				m_Services, 
 				m_operand.getInternalAlphabet(), null,
 				null, m_operand.getStateFactory());
 		
@@ -936,7 +941,7 @@ public class MinimizeDfaSymbolic<LETTER, STATE> implements
 			message = "The result recognizes more words than before.";
 		}
 		
-		ResultChecker.writeToFileIfPreferred(
+		ResultChecker.writeToFileIfPreferred(m_Services,
 				operationName() + " failed",
 				message,
 				m_operand);
@@ -958,9 +963,9 @@ public class MinimizeDfaSymbolic<LETTER, STATE> implements
 			final INestedWordAutomatonSimple<LETTER, STATE> superset,
 			final StateFactory<STATE> stateFactory)
 				throws AutomataLibraryException {
-		return ResultChecker.nwaLanguageInclusion(
-				ResultChecker.getOldApiNwa(subset),
-				ResultChecker.getOldApiNwa(superset),
+		return ResultChecker.nwaLanguageInclusion(m_Services,
+				ResultChecker.getOldApiNwa(m_Services,subset),
+				ResultChecker.getOldApiNwa(m_Services,superset),
 				stateFactory) == null;
 	}
 }

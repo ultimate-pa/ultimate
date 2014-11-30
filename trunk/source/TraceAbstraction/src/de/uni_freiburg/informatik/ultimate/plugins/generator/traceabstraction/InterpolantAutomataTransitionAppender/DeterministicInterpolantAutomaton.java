@@ -11,6 +11,7 @@ import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
@@ -61,11 +62,12 @@ public class DeterministicInterpolantAutomaton extends AbstractInterpolantAutoma
 
 	
 
-	public DeterministicInterpolantAutomaton(SmtManager smtManager, EdgeChecker edgeChecker,
+	public DeterministicInterpolantAutomaton(IUltimateServiceProvider services, 
+			SmtManager smtManager, EdgeChecker edgeChecker,
 			INestedWordAutomaton<CodeBlock, IPredicate> abstraction, 
 			NestedWordAutomaton<CodeBlock, IPredicate> interpolantAutomaton, 
 			TraceChecker traceChecker, Logger  logger) {
-		super(smtManager ,edgeChecker, abstraction, traceChecker.getPostcondition(), interpolantAutomaton, logger);
+		super(services, smtManager ,edgeChecker, abstraction, traceChecker.getPostcondition(), interpolantAutomaton, logger);
 		m_UseLazyEdgeChecks = false;
 		m_PredicateUnifier = traceChecker.getPredicateUnifier();
 		Collection<IPredicate> allPredicates;

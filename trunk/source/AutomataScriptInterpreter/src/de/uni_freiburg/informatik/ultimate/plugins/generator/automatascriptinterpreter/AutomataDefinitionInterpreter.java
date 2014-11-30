@@ -167,10 +167,11 @@ public class AutomataDefinitionInterpreter {
 		Set<String> returnAlphabet = new HashSet<String>(nwa.getReturnAlphabet());
 		
 		NestedWordAutomaton<String, String> nw = new NestedWordAutomaton<String, String>(
-				                                     Collections.unmodifiableSet(internalAlphabet), 
-				                                     Collections.unmodifiableSet(callAlphabet), 
-				                                     Collections.unmodifiableSet(returnAlphabet), 
-				                                     new StringFactory());
+				mServices,
+				Collections.unmodifiableSet(internalAlphabet), 
+				Collections.unmodifiableSet(callAlphabet), 
+				Collections.unmodifiableSet(returnAlphabet), 
+				new StringFactory());
 		
 		/*
 		 * Now add the states to the NestedWordAutomaton 
@@ -224,6 +225,7 @@ public class AutomataDefinitionInterpreter {
 	public void interpret(PetriNetAutomatonAST pna) throws IllegalArgumentException {
 		mErrorLocation = pna.getLocation();
 		PetriNetJulian<String, String> net = new PetriNetJulian<String, String>(
+				mServices,
 				new HashSet<String>(pna.getAlphabet()), 
 				new StringFactory(), false);
 		Map<String, Place<String, String>> name2places = new HashMap<String, Place<String, String>>();

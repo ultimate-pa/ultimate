@@ -6,6 +6,7 @@ import java.util.List;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -48,13 +49,15 @@ public class TraceCheckerUtils {
 	 * @param logger 
 	 */
 	public static BackwardCoveringInformation computeCoverageCapability(
+			IUltimateServiceProvider services, 
 			TraceChecker traceChecker, Logger logger) {
 		NestedWord<CodeBlock> trace = NestedWord.nestedWord(traceChecker.getTrace());
 		List<ProgramPoint> programPoints = getSequenceOfProgramPoints(trace);
-		return computeCoverageCapability(traceChecker, programPoints, logger);
+		return computeCoverageCapability(services, traceChecker, programPoints, logger);
 	}
 	
 	public static BackwardCoveringInformation computeCoverageCapability(
+			IUltimateServiceProvider services, 
 			TraceChecker traceChecker, List<ProgramPoint> programPoints, Logger logger) {
 		if (traceChecker.isCorrect() != LBool.UNSAT) {
 			throw new AssertionError("We can only build an interpolant "
@@ -64,7 +67,7 @@ public class TraceCheckerUtils {
 			throw new AssertionError("We can only build an interpolant "
 					+ "automaton for which interpolants were computed");
 		}
-		CoverageAnalysis ca = new CoverageAnalysis(traceChecker, programPoints, logger);
+		CoverageAnalysis ca = new CoverageAnalysis(services, traceChecker, programPoints, logger);
 		ca.analyze();
 		return ca.getBackwardCoveringInformation();
 	}

@@ -40,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IStateDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.PowersetDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.NestedWordAutomatonReachableStates;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 
 	
 
@@ -51,6 +52,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAu
  */
 public class BuchiComplementFKV<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	
+	private final IUltimateServiceProvider m_Services;
 	private static Logger s_Logger = 
 		NestedWordAutomata.getLogger();
 	
@@ -95,24 +97,28 @@ public class BuchiComplementFKV<LETTER,STATE> implements IOperation<LETTER,STATE
 
 
 
-	public BuchiComplementFKV(StateFactory<STATE> stateFactory, 
+	public BuchiComplementFKV(IUltimateServiceProvider services,
+			StateFactory<STATE> stateFactory, 
 			INestedWordAutomatonSimple<LETTER,STATE> input) throws OperationCanceledException {
+		m_Services = services;
 		this.m_StateDeterminizer = new PowersetDeterminizer<LETTER, STATE>(input, true, stateFactory);
 		this.m_StateFactory = input.getStateFactory();
 		this.m_Operand = input;
 		s_Logger.info(startMessage());
-		m_Complemented = new BuchiComplementFKVNwa<LETTER, STATE>(input,m_StateDeterminizer,m_StateFactory);
-		m_Result = new NestedWordAutomatonReachableStates<LETTER, STATE>(m_Complemented);
+		m_Complemented = new BuchiComplementFKVNwa<LETTER, STATE>(m_Services, input,m_StateDeterminizer,m_StateFactory);
+		m_Result = new NestedWordAutomatonReachableStates<LETTER, STATE>(m_Services, m_Complemented);
 		s_Logger.info(exitMessage());
 	}
 	
-	public BuchiComplementFKV(INestedWordAutomatonSimple<LETTER,STATE> input, IStateDeterminizer<LETTER, STATE> stateDeterminizier) throws OperationCanceledException {
+	public BuchiComplementFKV(IUltimateServiceProvider services,
+			INestedWordAutomatonSimple<LETTER,STATE> input, IStateDeterminizer<LETTER, STATE> stateDeterminizier) throws OperationCanceledException {
+		m_Services = services;
 		this.m_StateDeterminizer = stateDeterminizier;
 		this.m_StateFactory = input.getStateFactory();
 		this.m_Operand = input;
 		s_Logger.info(startMessage());
-		m_Complemented = new BuchiComplementFKVNwa<LETTER, STATE>(input,m_StateDeterminizer,m_StateFactory);
-		m_Result = new NestedWordAutomatonReachableStates<LETTER, STATE>(m_Complemented);
+		m_Complemented = new BuchiComplementFKVNwa<LETTER, STATE>(m_Services, input,m_StateDeterminizer,m_StateFactory);
+		m_Result = new NestedWordAutomatonReachableStates<LETTER, STATE>(m_Services, m_Complemented);
 		s_Logger.info(exitMessage());
 	}
 	
@@ -128,14 +134,14 @@ public class BuchiComplementFKV<LETTER,STATE> implements IOperation<LETTER,STATE
 		boolean correct = true;
 		s_Logger.info("Start testing correctness of " + operationName());
 		INestedWordAutomatonOldApi<LETTER, STATE> operandOldApi = 
-				ResultChecker.getOldApiNwa(m_Operand);
+				ResultChecker.getOldApiNwa(m_Services, m_Operand);
 		List<NestedLassoWord<LETTER>> lassoWords = new ArrayList<NestedLassoWord<LETTER>>();
-		BuchiIsEmpty<LETTER, STATE> operandEmptiness = new BuchiIsEmpty<LETTER, STATE>(operandOldApi);
+		BuchiIsEmpty<LETTER, STATE> operandEmptiness = new BuchiIsEmpty<LETTER, STATE>(m_Services, operandOldApi);
 		boolean operandEmpty = operandEmptiness.getResult();
 		if (!operandEmpty) {
 			lassoWords.add(operandEmptiness.getAcceptingNestedLassoRun().getNestedLassoWord());
 		}
-		BuchiIsEmpty<LETTER, STATE> resultEmptiness = new BuchiIsEmpty<LETTER, STATE>(m_Result);
+		BuchiIsEmpty<LETTER, STATE> resultEmptiness = new BuchiIsEmpty<LETTER, STATE>(m_Services, m_Result);
 		boolean resultEmpty = resultEmptiness.getResult();
 		if (!resultEmpty) {
 			lassoWords.add(resultEmptiness.getAcceptingNestedLassoRun().getNestedLassoWord());
@@ -163,8 +169,8 @@ public class BuchiComplementFKV<LETTER,STATE> implements IOperation<LETTER,STATE
 		lassoWords.add(ResultChecker.getRandomNestedLassoWord(m_Result, 1));
 		lassoWords.add(ResultChecker.getRandomNestedLassoWord(m_Result, 1));
 		lassoWords.add(ResultChecker.getRandomNestedLassoWord(m_Result, 1));
-		lassoWords.addAll((new LassoExtractor<LETTER, STATE>(operandOldApi)).getResult());
-		lassoWords.addAll((new LassoExtractor<LETTER, STATE>(m_Result)).getResult());
+		lassoWords.addAll((new LassoExtractor<LETTER, STATE>(m_Services, operandOldApi)).getResult());
+		lassoWords.addAll((new LassoExtractor<LETTER, STATE>(m_Services, m_Result)).getResult());
 
 		lassoWords.add(ResultChecker.getRandomNestedLassoWord(m_Result, 2));
 		lassoWords.add(ResultChecker.getRandomNestedLassoWord(m_Result, 2));
@@ -189,8 +195,8 @@ public class BuchiComplementFKV<LETTER,STATE> implements IOperation<LETTER,STATE
 		}
 
 		if (!correct) {
-			ResultChecker.writeToFileIfPreferred(operationName() + "Failed", "", m_Operand);
-			ResultChecker.writeToFileIfPreferred(operationName() + "FailedRes", "", m_Result);
+			ResultChecker.writeToFileIfPreferred(m_Services, operationName() + "Failed", "", m_Operand);
+			ResultChecker.writeToFileIfPreferred(m_Services, operationName() + "FailedRes", "", m_Result);
 		}
 		s_Logger.info("Finished testing correctness of " + operationName());
 		return correct;
@@ -200,8 +206,8 @@ public class BuchiComplementFKV<LETTER,STATE> implements IOperation<LETTER,STATE
 	private boolean checkAcceptance(NestedLassoWord<LETTER> nlw,
 			INestedWordAutomatonOldApi<LETTER, STATE> operand , 
 			boolean underApproximationOfComplement) throws OperationCanceledException {
-		boolean op = (new BuchiAccepts<LETTER, STATE>(operand, nlw)).getResult();
-		boolean res = (new BuchiAccepts<LETTER, STATE>(m_Result, nlw)).getResult();
+		boolean op = (new BuchiAccepts<LETTER, STATE>(m_Services, operand, nlw)).getResult();
+		boolean res = (new BuchiAccepts<LETTER, STATE>(m_Services, m_Result, nlw)).getResult();
 		boolean correct;
 		if (underApproximationOfComplement) {
 			correct = !res || op;

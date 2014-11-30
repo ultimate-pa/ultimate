@@ -48,8 +48,11 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetRun;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Place;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.petruchio.EmptinessPetruchio;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 
 public class PetriNetJulian<S, C> implements IPetriNet<S, C> {
+	
+	private final IUltimateServiceProvider m_Services;
 
 	@SuppressWarnings("unused")
 	private static Logger s_Logger = NestedWordAutomata.getLogger();
@@ -69,16 +72,19 @@ public class PetriNetJulian<S, C> implements IPetriNet<S, C> {
 	 */
 	private final boolean m_ConstantTokenAmount;
 
-	public PetriNetJulian(Set<S> alphabet,
+	public PetriNetJulian(IUltimateServiceProvider services, Set<S> alphabet,
 			StateFactory<C> stateFactory, boolean constantTokenAmount) {
+		m_Services = services;
 		this.alphabet = alphabet;
 		this.stateFactory = stateFactory;
 		this.m_ConstantTokenAmount = constantTokenAmount;
 		assert (!constantTokenAmount() || transitionsPreserveTokenAmount());
 	}
 
-	public PetriNetJulian(INestedWordAutomatonOldApi<S, C> nwa)
+	public PetriNetJulian(IUltimateServiceProvider services, 
+			INestedWordAutomatonOldApi<S, C> nwa)
 			throws AutomataLibraryException {
+		m_Services = services;
 		alphabet = nwa.getInternalAlphabet();
 		stateFactory = nwa.getStateFactory();
 		this.m_ConstantTokenAmount = true;
@@ -122,7 +128,7 @@ public class PetriNetJulian<S, C> implements IPetriNet<S, C> {
 		// }
 
 		assert (!constantTokenAmount() || transitionsPreserveTokenAmount());
-		assert ResultChecker.petriNetJulian(nwa, this);
+		assert ResultChecker.petriNetJulian(m_Services, nwa, this);
 	}
 
 	public Place<S, C> addPlace(C content, boolean isInitial, boolean isFinal) {
@@ -243,12 +249,12 @@ public class PetriNetJulian<S, C> implements IPetriNet<S, C> {
 	public PetriNetRun<S, C> acceptingRun() throws OperationCanceledException {
 		// NestedRun<S, C> test = getAcceptingNestedRun();
 		// System.out.print(test);
-		return (new PetriNetUnfolder<S, C>(this, PetriNetUnfolder.order.ERV,
+		return (new PetriNetUnfolder<S, C>(m_Services, this, PetriNetUnfolder.order.ERV,
 				false, true)).getAcceptingRun();
 	}
 
 	public NestedRun<S, C> getAcceptingNestedRun() throws OperationCanceledException {
-		EmptinessPetruchio<S, C> ep = new EmptinessPetruchio<S, C>(this);
+		EmptinessPetruchio<S, C> ep = new EmptinessPetruchio<S, C>(m_Services, this);
 		NestedRun<S, C> result = ep.getResult();
 
 		// NestedRun<S,C> result = (new

@@ -33,6 +33,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomat
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Determinize;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 
 /**
  * This class implements Brzozowski's minimization algorithm.
@@ -69,10 +70,11 @@ public class MinimizeBrzozowski<LETTER, STATE>
 	 * @param operand input (finite, possibly nondeterministic) automaton
 	 * @throws OperationCanceledException thrown when execution is cancelled
 	 */
-	public MinimizeBrzozowski(StateFactory<STATE> stateFactory, 
+	public MinimizeBrzozowski(IUltimateServiceProvider services,
+			StateFactory<STATE> stateFactory, 
 			INestedWordAutomaton<LETTER, STATE> operand)
 			throws OperationCanceledException {
-		super(stateFactory, "MinimizeBrzozowski", operand);
+		super(services, stateFactory, "MinimizeBrzozowski", operand);
 		
 		assert super.checkForFiniteAutomaton() :
 			"The input automaton contains call or return transitions.";
@@ -115,7 +117,8 @@ public class MinimizeBrzozowski<LETTER, STATE>
 	private INestedWordAutomaton<LETTER, STATE> reverse(
 			final INestedWordAutomaton<LETTER, STATE> automaton) {
 		NestedWordAutomaton<LETTER, STATE> reversed =
-				new NestedWordAutomaton<LETTER, STATE>(automaton.getInternalAlphabet(),
+				new NestedWordAutomaton<LETTER, STATE>(m_Services, 
+						automaton.getInternalAlphabet(),
 						automaton.getCallAlphabet(),
 						automaton.getReturnAlphabet(),
 						automaton.getStateFactory());
@@ -147,7 +150,7 @@ public class MinimizeBrzozowski<LETTER, STATE>
 	private INestedWordAutomaton<LETTER, STATE> determinize(
 			final INestedWordAutomaton<LETTER, STATE> automaton) {
 		try {
-			return new Determinize<LETTER, STATE>(m_StateFactory, automaton).getResult();
+			return new Determinize<LETTER, STATE>(m_Services, m_StateFactory, automaton).getResult();
 		}
 		// this case cannot occur
 		catch (OperationCanceledException e) {

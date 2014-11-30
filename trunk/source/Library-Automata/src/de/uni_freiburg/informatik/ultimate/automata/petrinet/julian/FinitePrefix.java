@@ -32,19 +32,23 @@ import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.PetriNetUnfolder.order;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 
 public class FinitePrefix<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	
+	private final IUltimateServiceProvider m_Services;
 	private static Logger s_Logger = 
 			NestedWordAutomata.getLogger();
 
 	private final PetriNetJulian<LETTER,STATE> m_Operand;
 	private final BranchingProcess<LETTER,STATE> m_Result;
 	
-	public FinitePrefix(PetriNetJulian<LETTER,STATE> operand) throws OperationCanceledException {
+	public FinitePrefix(IUltimateServiceProvider services, 
+			PetriNetJulian<LETTER,STATE> operand) throws OperationCanceledException {
+		m_Services = services;
 		m_Operand = operand;
 		s_Logger.info(startMessage());
-		PetriNetUnfolder<LETTER,STATE> unf = new PetriNetUnfolder<LETTER,STATE>(operand, order.ERV, true, false);
+		PetriNetUnfolder<LETTER,STATE> unf = new PetriNetUnfolder<LETTER,STATE>(m_Services, operand, order.ERV, true, false);
 		m_Result = unf.getFinitePrefix();
 		s_Logger.info(exitMessage());
 	}

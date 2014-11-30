@@ -41,10 +41,12 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.DifferenceDD;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.IOpWithDelayedDeadEndRemoval;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.NestedWordAutomatonReachableStates;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 
 
 public class Difference<LETTER,STATE> implements IOperation<LETTER,STATE>, IOpWithDelayedDeadEndRemoval<LETTER, STATE> {
 
+	private final IUltimateServiceProvider m_Services;
 	protected static Logger s_Logger = 
 		NestedWordAutomata.getLogger();
 	
@@ -82,10 +84,12 @@ public class Difference<LETTER,STATE> implements IOperation<LETTER,STATE>, IOpWi
 	
 	
 	
-	public Difference(StateFactory<STATE> stateFactory, 
+	public Difference(IUltimateServiceProvider services,
+			StateFactory<STATE> stateFactory, 
 			INestedWordAutomatonOldApi<LETTER,STATE> fstOperand,
 			INestedWordAutomatonSimple<LETTER,STATE> sndOperand
 			) throws AutomataLibraryException {
+		m_Services = services;
 		m_FstOperand = fstOperand;
 		m_SndOperand = sndOperand;
 		m_StateFactory = m_FstOperand.getStateFactory();
@@ -96,11 +100,13 @@ public class Difference<LETTER,STATE> implements IOperation<LETTER,STATE>, IOpWi
 	}
 	
 	
-	public Difference(INestedWordAutomatonOldApi<LETTER,STATE> fstOperand,
+	public Difference(IUltimateServiceProvider services,
+			INestedWordAutomatonOldApi<LETTER,STATE> fstOperand,
 			INestedWordAutomatonSimple<LETTER,STATE> sndOperand,
 			IStateDeterminizer<LETTER, STATE> stateDeterminizer,
 			StateFactory<STATE> sf,
 			boolean finalIsTrap) throws AutomataLibraryException {
+		m_Services = services;
 		m_FstOperand = fstOperand;
 		m_SndOperand = sndOperand;
 		m_StateFactory = sf;
@@ -115,7 +121,8 @@ public class Difference<LETTER,STATE> implements IOperation<LETTER,STATE>, IOpWi
 			TotalizeNwa<LETTER, STATE> sndTotalized = new TotalizeNwa<LETTER, STATE>(m_SndOperand, m_StateFactory);
 			ComplementDeterministicNwa<LETTER,STATE> sndComplemented = new ComplementDeterministicNwa<LETTER, STATE>(sndTotalized);
 			IntersectNwa<LETTER, STATE> intersect = new IntersectNwa<LETTER, STATE>(m_FstOperand, sndComplemented, m_StateFactory, finalIsTrap);
-			NestedWordAutomatonReachableStates<LETTER, STATE> result = new NestedWordAutomatonReachableStates<LETTER, STATE>(intersect);
+			NestedWordAutomatonReachableStates<LETTER, STATE> result = 
+					new NestedWordAutomatonReachableStates<LETTER, STATE>(m_Services, intersect);
 			if (!sndTotalized.nonDeterminismInInputDetected()) {
 				m_SndComplemented = sndComplemented;
 				m_Intersect = intersect;
@@ -126,10 +133,10 @@ public class Difference<LETTER,STATE> implements IOperation<LETTER,STATE>, IOpWi
 			s_Logger.info("Subtrahend was not deterministic. Recomputing result with determinization.");
 			}
 		}
-		m_SndDeterminized = new DeterminizeNwa<LETTER,STATE>(m_SndOperand,m_StateDeterminizer,m_StateFactory);
+		m_SndDeterminized = new DeterminizeNwa<LETTER,STATE>(m_Services, m_SndOperand,m_StateDeterminizer,m_StateFactory);
 		m_SndComplemented = new ComplementDeterministicNwa<LETTER, STATE>(m_SndDeterminized);
 		m_Intersect = new IntersectNwa<LETTER, STATE>(m_FstOperand, m_SndComplemented, m_StateFactory, finalIsTrap);
-		m_Result = new NestedWordAutomatonReachableStates<LETTER, STATE>(m_Intersect);
+		m_Result = new NestedWordAutomatonReachableStates<LETTER, STATE>(m_Services, m_Intersect);
 	}
 	
 
@@ -152,20 +159,20 @@ public class Difference<LETTER,STATE> implements IOperation<LETTER,STATE>, IOpWi
 	
 	public boolean checkResult(StateFactory<STATE> sf) throws AutomataLibraryException {
 		s_Logger.info("Start testing correctness of " + operationName());
-		INestedWordAutomatonOldApi<LETTER, STATE> fstOperandOldApi = ResultChecker.getOldApiNwa(m_FstOperand);
-		INestedWordAutomatonOldApi<LETTER, STATE> sndOperandOldApi = ResultChecker.getOldApiNwa(m_SndOperand);
+		INestedWordAutomatonOldApi<LETTER, STATE> fstOperandOldApi = ResultChecker.getOldApiNwa(m_Services, m_FstOperand);
+		INestedWordAutomatonOldApi<LETTER, STATE> sndOperandOldApi = ResultChecker.getOldApiNwa(m_Services, m_SndOperand);
 		INestedWordAutomatonOldApi<LETTER, STATE> resultDD = 
-				(new DifferenceDD<LETTER, STATE>(fstOperandOldApi,sndOperandOldApi, 
+				(new DifferenceDD<LETTER, STATE>(m_Services, fstOperandOldApi,sndOperandOldApi, 
 						new PowersetDeterminizer<LETTER, STATE>(sndOperandOldApi,true, sf),sf,false,false)).getResult();
 		boolean correct = true;
 //		correct &= (resultDD.size() == m_Result.size());
 //		assert correct;
-		correct &= (ResultChecker.nwaLanguageInclusion(resultDD, m_Result, sf) == null);
+		correct &= (ResultChecker.nwaLanguageInclusion(m_Services, resultDD, m_Result, sf) == null);
 		assert correct;
-		correct &= (ResultChecker.nwaLanguageInclusion(m_Result, resultDD, sf) == null);
+		correct &= (ResultChecker.nwaLanguageInclusion(m_Services, m_Result, resultDD, sf) == null);
 		assert correct;
 		if (!correct) {
-			ResultChecker.writeToFileIfPreferred(operationName() + "Failed", "", m_FstOperand,m_SndOperand);
+			ResultChecker.writeToFileIfPreferred(m_Services, operationName() + "Failed", "", m_FstOperand,m_SndOperand);
 		}
 		s_Logger.info("Finished testing correctness of " + operationName());
 		return correct;
@@ -178,7 +185,7 @@ public class Difference<LETTER,STATE> implements IOperation<LETTER,STATE>, IOpWi
 	@Override
 	public boolean removeDeadEnds() {
 		m_Result.computeDeadEnds();
-		m_ResultWOdeadEnds = new NestedWordAutomatonFilteredStates<LETTER, STATE>(m_Result, m_Result.getWithOutDeadEnds());
+		m_ResultWOdeadEnds = new NestedWordAutomatonFilteredStates<LETTER, STATE>(m_Services, m_Result, m_Result.getWithOutDeadEnds());
 		s_Logger.info("With dead ends: " + m_Result.getStates().size());
 		s_Logger.info("Without dead ends: " + m_ResultWOdeadEnds.getStates().size());
 		return m_Result.getStates().size() != m_ResultWOdeadEnds.getStates().size();

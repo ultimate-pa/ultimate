@@ -41,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IStateDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.PowersetDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.NestedWordAutomatonReachableStates;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 
 	
 
@@ -52,6 +53,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAu
  */
 public class BuchiClosure<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	
+	private final IUltimateServiceProvider m_Services;
 	private static Logger s_Logger = 
 		NestedWordAutomata.getLogger();
 
@@ -84,7 +86,9 @@ public class BuchiClosure<LETTER,STATE> implements IOperation<LETTER,STATE> {
 
 
 
-	public BuchiClosure(INestedWordAutomatonOldApi<LETTER,STATE> input) throws OperationCanceledException {
+	public BuchiClosure(IUltimateServiceProvider services,
+			INestedWordAutomatonOldApi<LETTER,STATE> input) throws OperationCanceledException {
+		m_Services = services;
 		this.m_Operand = input;
 		s_Logger.info(startMessage());
 		m_Result = new BuchiClosureNwa((INestedWordAutomatonOldApi) m_Operand);
@@ -102,14 +106,14 @@ public class BuchiClosure<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		boolean correct = true;
 		s_Logger.info("Start testing correctness of " + operationName());
 		INestedWordAutomatonOldApi<LETTER, STATE> operandOldApi = 
-				ResultChecker.getOldApiNwa(m_Operand);
+				ResultChecker.getOldApiNwa(m_Services, m_Operand);
 		List<NestedLassoWord<LETTER>> lassoWords = new ArrayList<NestedLassoWord<LETTER>>();
-		BuchiIsEmpty<LETTER, STATE> operandEmptiness = new BuchiIsEmpty<LETTER, STATE>(operandOldApi);
+		BuchiIsEmpty<LETTER, STATE> operandEmptiness = new BuchiIsEmpty<LETTER, STATE>(m_Services, operandOldApi);
 		boolean operandEmpty = operandEmptiness.getResult();
 		if (!operandEmpty) {
 			lassoWords.add(operandEmptiness.getAcceptingNestedLassoRun().getNestedLassoWord());
 		}
-		BuchiIsEmpty<LETTER, STATE> resultEmptiness = new BuchiIsEmpty<LETTER, STATE>(m_Result);
+		BuchiIsEmpty<LETTER, STATE> resultEmptiness = new BuchiIsEmpty<LETTER, STATE>(m_Services, m_Result);
 		boolean resultEmpty = resultEmptiness.getResult();
 		if (!resultEmpty) {
 			lassoWords.add(resultEmptiness.getAcceptingNestedLassoRun().getNestedLassoWord());

@@ -35,8 +35,10 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNet2FiniteAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetRun;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.PetriNetUnfolder.order;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 
 public class IsEmpty<LETTER,STATE> implements IOperation<LETTER,STATE> {
+	private final IUltimateServiceProvider m_Services;
 	
 	private static Logger s_Logger = 
 			NestedWordAutomata.getLogger();
@@ -44,11 +46,13 @@ public class IsEmpty<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	private final PetriNetJulian<LETTER,STATE> m_Operand;
 	private final Boolean m_Result;
 	
-	public IsEmpty(PetriNetJulian<LETTER,STATE> operand) throws OperationCanceledException {
+	public IsEmpty(IUltimateServiceProvider services, 
+			PetriNetJulian<LETTER,STATE> operand) throws OperationCanceledException {
+		m_Services = services;
 		m_Operand = operand;
 		s_Logger.info(startMessage());
 		PetriNetUnfolder<LETTER,STATE> unf = 
-				new PetriNetUnfolder<LETTER,STATE>(operand, order.ERV, false, true);
+				new PetriNetUnfolder<LETTER,STATE>(m_Services, operand, order.ERV, false, true);
 		PetriNetRun<LETTER,STATE> run = unf.getAcceptingRun();
 		m_Result = (run == null);
 		s_Logger.info(exitMessage());
@@ -79,7 +83,7 @@ public class IsEmpty<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	@Override
 	public boolean checkResult(StateFactory<STATE> stateFactory)
 			throws OperationCanceledException {
-		INestedWordAutomatonOldApi<LETTER, STATE> finiteAutomaton = (new PetriNet2FiniteAutomaton<>(m_Operand)).getResult();
+		INestedWordAutomatonOldApi<LETTER, STATE> finiteAutomaton = (new PetriNet2FiniteAutomaton<>(m_Services, m_Operand)).getResult();
 		boolean automatonEmpty = (new de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsEmpty(finiteAutomaton)).getResult();
 		return (m_Result == automatonEmpty);
 	}

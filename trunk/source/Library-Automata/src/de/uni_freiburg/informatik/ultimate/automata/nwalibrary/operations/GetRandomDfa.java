@@ -38,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StringFactory;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 
 /**
  * Utility class that provides a method {@link #generatePackedRandomDFA(int, int, int, boolean, boolean)
@@ -57,6 +58,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StringFactory;
  *
  */
 public final class GetRandomDfa implements IOperation<String, String> {
+	private final IUltimateServiceProvider m_Services;
 
 	/**
 	 * Extracts a DFA that is packed into the int[] array format specified by
@@ -85,7 +87,7 @@ public final class GetRandomDfa implements IOperation<String, String> {
 
 		StateFactory<String> stateFactory = new StringFactory();
 		NestedWordAutomaton<String, String> result;
-		result = new NestedWordAutomaton<String, String>(new HashSet<String>(
+		result = new NestedWordAutomaton<String, String>(m_Services, new HashSet<String>(
 				num2Letter), null, null, stateFactory);
 
 		List<String> shuffledStateList = new ArrayList<String>(num2State);
@@ -472,8 +474,8 @@ public final class GetRandomDfa implements IOperation<String, String> {
 	 *            and the DFA is a non-complete DFA.
 	 * @return Uniform distributed random total DFA
 	 */
-	public GetRandomDfa(int size, int alphabetSize, int numOfAccStates, boolean isTotal) {
-		this(size, alphabetSize, numOfAccStates, isTotal, true, true);
+	public GetRandomDfa(IUltimateServiceProvider services, int size, int alphabetSize, int numOfAccStates, boolean isTotal) {
+		this(services, size, alphabetSize, numOfAccStates, isTotal, true, true);
 	}
 
 	/**
@@ -511,9 +513,9 @@ public final class GetRandomDfa implements IOperation<String, String> {
 	 *            generation is very fast.
 	 * @return Uniform or non-uniform distributed random DFA
 	 */
-	public GetRandomDfa(int size, int alphabetSize, int numOfAccStates, boolean isTotal,
+	public GetRandomDfa(IUltimateServiceProvider services, int size, int alphabetSize, int numOfAccStates, boolean isTotal,
 			boolean ensureIsUniform) {
-		this(size, alphabetSize, numOfAccStates, isTotal, ensureIsUniform, true);
+		this(services, size, alphabetSize, numOfAccStates, isTotal, ensureIsUniform, true);
 	}
 
 	/**
@@ -550,8 +552,9 @@ public final class GetRandomDfa implements IOperation<String, String> {
 	 *            and similar 'alphabetSize' behind one another.
 	 * @return Uniform or non-uniform distributed random DFA
 	 */
-	public GetRandomDfa(int size, int alphabetSize, int numOfAccStates, boolean isTotal,
+	public GetRandomDfa(IUltimateServiceProvider services, int size, int alphabetSize, int numOfAccStates, boolean isTotal,
 			boolean ensureIsUniform, boolean enableCaching) {
+		m_Services = services;
 		m_size = size;
 		m_alphabetSize = alphabetSize;
 		m_numOfAccStates = numOfAccStates;

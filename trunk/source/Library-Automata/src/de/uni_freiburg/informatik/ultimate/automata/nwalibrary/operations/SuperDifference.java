@@ -40,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingInternalT
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.Transitionlet;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 
 /**
  * Given two nondeterministic NWAs nwa_minuend and nwa_subtrahend a
@@ -63,6 +64,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.Transitionlet;
 
 public class SuperDifference<LETTER, STATE> implements IOperation<LETTER, STATE> 
 {
+	private final IUltimateServiceProvider m_Services;
 	/* *** *** *** Fields *** *** *** */
 
 	// For status output
@@ -123,12 +125,14 @@ public class SuperDifference<LETTER, STATE> implements IOperation<LETTER, STATE>
 	 * @throws OperationCanceledException
 	 */
 	public SuperDifference(
+			IUltimateServiceProvider services,
 			INestedWordAutomaton<LETTER, STATE> minuend,
 			INestedWordAutomaton<LETTER, STATE> subtrahend,
 			AutomatonEpimorphism<STATE> automatonEpimorhpism, 
 			boolean minimize)
 			throws OperationCanceledException 
 	{
+		m_Services = services;
 		m_Minuend = minuend;
 		m_Subtrahend = subtrahend;
 		m_Epimorphism = automatonEpimorhpism;
@@ -140,6 +144,7 @@ public class SuperDifference<LETTER, STATE> implements IOperation<LETTER, STATE>
 
 		// initialize the result with the empty automaton
 		m_Result = new NestedWordAutomaton<LETTER, STATE>(
+				m_Services, 
 				minuend.getInternalAlphabet(), minuend.getCallAlphabet(),
 				minuend.getReturnAlphabet(), minuend.getStateFactory());
 		m_SinkState = m_StateFactory.createSinkStateContent();

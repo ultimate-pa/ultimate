@@ -58,6 +58,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingCallTrans
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 
 /**
  * TODO list:
@@ -181,10 +182,11 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 	 * preprocessing: dead end and unreachable states/transitions removed
 	 * @throws OperationCanceledException if cancel signal is received
 	 */
-	public ShrinkNwa(final StateFactory<STATE> stateFactory,
+	public ShrinkNwa(final IUltimateServiceProvider services,
+			final StateFactory<STATE> stateFactory,
 			final INestedWordAutomaton<LETTER,STATE> operand)
 			throws OperationCanceledException {
-		this(stateFactory, operand, false, 0, false, 0, false, false);
+		this(services, stateFactory, operand, false, 0, false, 0, false, false);
 	}
 	
 	/**
@@ -206,14 +208,15 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 	 *                          singleton
 	 * @throws OperationCanceledException if cancel signal is received
 	 */
-	public ShrinkNwa(final StateFactory<STATE> stateFactory,
+	public ShrinkNwa(final IUltimateServiceProvider services,
+			final StateFactory<STATE> stateFactory,
 			final INestedWordAutomaton<LETTER,STATE> operand,
 			final boolean splitOutgoing, final int splitRandomSize,
 			final boolean firstReturnSplit,
 			final int firstReturnSplitAlternative,
 			final boolean splitAllCallPreds, final boolean returnSplitNaive)
 			throws OperationCanceledException {
-		this(stateFactory, operand, null, false, false, splitOutgoing,
+		this(services, stateFactory, operand, null, false, false, splitOutgoing,
 				splitRandomSize, firstReturnSplit,
 				firstReturnSplitAlternative, splitAllCallPreds,
 				returnSplitNaive);
@@ -245,6 +248,7 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 	 */
 	@SuppressWarnings("unchecked")
 	public ShrinkNwa(
+			final IUltimateServiceProvider services,
 			final StateFactory<STATE> stateFactory,
 			final INestedWordAutomaton<LETTER,STATE> operand,
 			final Collection<Set<STATE>> equivalenceClasses,
@@ -254,7 +258,7 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 			final int firstReturnSplitAlternative,
 			final boolean splitAllCallPreds, final boolean returnSplitNaive)
 					throws OperationCanceledException {
-		super(stateFactory, "shrinkNwa", operand);
+		super(services, stateFactory, "shrinkNwa", operand);
 		if (STAT_RETURN_SIZE) {
 			try {
 				m_writer1 = new BufferedWriter(
@@ -428,7 +432,7 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 			// iterative refinement
 			while (m_workListIntCall.hasNext()) {
 				// cancel if signal is received
-				if (! NestedWordAutomata.getMonitor().continueProcessing()) {
+				if (!m_Services.getProgressMonitorService().continueProcessing()) {
 					throw new OperationCanceledException();
 				}
 				
@@ -446,14 +450,14 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 			// iterative refinement
 			outer: while (true) {
 				// cancel if signal is received
-				if (! NestedWordAutomata.getMonitor().continueProcessing()) {
+				if (!m_Services.getProgressMonitorService().continueProcessing()) {
 					throw new OperationCanceledException();
 				}
 				
 				// internals and calls
 				while (m_workListIntCall.hasNext()) {
 					// cancel if signal is received
-					if (! NestedWordAutomata.getMonitor().continueProcessing())
+					if (!m_Services.getProgressMonitorService().continueProcessing())
 							{
 						throw new OperationCanceledException();
 					}

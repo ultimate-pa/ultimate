@@ -47,6 +47,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IncomingCallTrans
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IncomingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IncomingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 
 /**
  * TODO Documentation
@@ -63,6 +64,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomat
  */
 public abstract class DoubleDeckerVisitor<LETTER, STATE> implements IOpWithDelayedDeadEndRemoval<LETTER, STATE> {
 
+	protected final IUltimateServiceProvider m_Services;
 	protected static Logger s_Logger = NestedWordAutomata.getLogger();
 
 	public enum ReachFinal {
@@ -157,6 +159,10 @@ public abstract class DoubleDeckerVisitor<LETTER, STATE> implements IOpWithDelay
 	private long m_DeadEndRemovalTime;
 
 	private Set<STATE> m_DeadEnds;
+	
+	public DoubleDeckerVisitor(IUltimateServiceProvider services) {
+		m_Services = services;
+	}
 
 	public INestedWordAutomatonOldApi<LETTER, STATE> getResult() throws OperationCanceledException {
 		return m_TraversedNwa;
@@ -328,7 +334,7 @@ public abstract class DoubleDeckerVisitor<LETTER, STATE> implements IOpWithDelay
 					enqueueAndMark(summarySuccDoubleDecker);
 				}
 			}
-			if (!NestedWordAutomata.getMonitor().continueProcessing()) {
+			if (!m_Services.getProgressMonitorService().continueProcessing()) {
 				throw new OperationCanceledException();
 			}
 

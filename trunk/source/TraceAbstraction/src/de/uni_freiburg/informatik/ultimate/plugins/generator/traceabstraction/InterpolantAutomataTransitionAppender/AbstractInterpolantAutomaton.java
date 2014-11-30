@@ -16,6 +16,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingCallTrans
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
@@ -32,6 +33,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
  */
 public abstract class AbstractInterpolantAutomaton implements INestedWordAutomatonSimple<CodeBlock, IPredicate> {
 
+	protected final IUltimateServiceProvider m_Services;
 	protected final Logger mLogger;
 
 	protected final SmtManager m_SmtManager;
@@ -50,10 +52,12 @@ public abstract class AbstractInterpolantAutomaton implements INestedWordAutomat
 	private IPredicate m_AssertedState;
 	private IPredicate m_AssertedHier;
 
-	public AbstractInterpolantAutomaton(SmtManager smtManager, EdgeChecker edgeChecker,
+	public AbstractInterpolantAutomaton(IUltimateServiceProvider services, 
+			SmtManager smtManager, EdgeChecker edgeChecker,
 			INestedWordAutomaton<CodeBlock, IPredicate> abstraction, IPredicate falseState,
 			NestedWordAutomaton<CodeBlock, IPredicate> interpolantAutomaton, Logger logger) {
 		super();
+		m_Services = services;
 		mLogger = logger;
 		m_SmtManager = smtManager;
 		m_EdgeChecker = edgeChecker;
@@ -62,7 +66,7 @@ public abstract class AbstractInterpolantAutomaton implements INestedWordAutomat
 		m_InSucComp = new InternalSuccessorComputationHelper();
 		m_CaSucComp = new CallSuccessorComputationHelper();
 		m_ReSucComp = new ReturnSuccessorComputationHelper();
-		m_Result = new NestedWordAutomatonCache<CodeBlock, IPredicate>(abstraction.getInternalAlphabet(),
+		m_Result = new NestedWordAutomatonCache<CodeBlock, IPredicate>(m_Services, abstraction.getInternalAlphabet(),
 				abstraction.getCallAlphabet(), abstraction.getReturnAlphabet(), abstraction.getStateFactory());
 	}
 
@@ -356,7 +360,7 @@ public abstract class AbstractInterpolantAutomaton implements INestedWordAutomat
 	@Override
 	public final String toString() {
 		if (m_ComputationFinished) {
-			return (new AtsDefinitionPrinter<String, String>("nwa", this)).getDefinitionAsString();
+			return (new AtsDefinitionPrinter<String, String>(m_Services, "nwa", this)).getDefinitionAsString();
 		} else {
 			return "automaton under construction";
 		}

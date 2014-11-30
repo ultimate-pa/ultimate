@@ -41,9 +41,11 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNet2FiniteAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Place;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 
 public class Accepts<S, C> implements IOperation<S, C> {
 	
+	private final IUltimateServiceProvider m_Services;
 	private static Logger s_Logger = NestedWordAutomata.getLogger();
 		
 	@Override
@@ -73,7 +75,9 @@ public class Accepts<S, C> implements IOperation<S, C> {
 	
 	
 
-	public Accepts(PetriNetJulian<S, C> net, Word<S> nWord) throws OperationCanceledException {
+	public Accepts(IUltimateServiceProvider services, 
+			PetriNetJulian<S, C> net, Word<S> nWord) throws OperationCanceledException {
+		m_Services = services;
 		this.net = net;
 		this.nWord = nWord;
 		s_Logger.info(startMessage());
@@ -93,7 +97,7 @@ public class Accepts<S, C> implements IOperation<S, C> {
 			return net.isAccepting(marking);
 		
 		
-		if (!NestedWordAutomata.getMonitor().continueProcessing()) {
+		if (!m_Services.getProgressMonitorService().continueProcessing()) {
 			throw new OperationCanceledException();
 		}
 
@@ -132,7 +136,7 @@ public class Accepts<S, C> implements IOperation<S, C> {
 
 		NestedWord nw = NestedWord.nestedWord(nWord);
 		boolean resultAutomata = (new de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Accepts(
-				(new PetriNet2FiniteAutomaton(net)).getResult(), nw))
+				(new PetriNet2FiniteAutomaton(m_Services, net)).getResult(), nw))
 				.getResult();
 		boolean correct = (m_Result == resultAutomata);
 

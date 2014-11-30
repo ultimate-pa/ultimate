@@ -46,8 +46,11 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNet2FiniteAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Place;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 
 public class DifferenceBlackAndWhite<S,C> implements IOperation<S,C> {
+	
+	private final IUltimateServiceProvider m_Services;
 	
 	@Override
 	public String operationName() {
@@ -95,8 +98,10 @@ public class DifferenceBlackAndWhite<S,C> implements IOperation<S,C> {
 			" Result " + m_Result.sizeInformation();
 	}
 	
-	public DifferenceBlackAndWhite(PetriNetJulian<S,C> net, 
+	public DifferenceBlackAndWhite(IUltimateServiceProvider services,
+									PetriNetJulian<S,C> net, 
 								   NestedWordAutomaton<S,C> nwa) {
+		m_Services = services;
 		m_Net = net;
 		m_Nwa = nwa;
 		m_ContentFactory = net.getStateFactory();
@@ -124,7 +129,7 @@ public class DifferenceBlackAndWhite<S,C> implements IOperation<S,C> {
 		if(nwa.isFinal(nwaInitialState)) {
 			// case where nwa accepts everything. Result will be a net that
 			// accepts the empty language
-			m_Result = new PetriNetJulian<S,C>(m_Net.getAlphabet(),
+			m_Result = new PetriNetJulian<S,C>(m_Services, m_Net.getAlphabet(),
 					m_Net.getStateFactory(),
 					true);
 			C sinkContent = m_ContentFactory.createSinkStateContent();
@@ -207,7 +212,7 @@ public class DifferenceBlackAndWhite<S,C> implements IOperation<S,C> {
 		
 		// difference black and white preserves the constantTokenAmount invariant
 		final boolean constantTokenAmount = m_Net.constantTokenAmount();
-		m_Result = new PetriNetJulian<S,C>(m_Net.getAlphabet(),
+		m_Result = new PetriNetJulian<S,C>(m_Services, m_Net.getAlphabet(),
 											m_Net.getStateFactory(),
 											constantTokenAmount);
 		
@@ -378,12 +383,12 @@ public class DifferenceBlackAndWhite<S,C> implements IOperation<S,C> {
 			throws AutomataLibraryException {
 		s_Logger.info("Testing correctness of differenceBlackAndWhite");
 
-		INestedWordAutomatonOldApi op1AsNwa = (new PetriNet2FiniteAutomaton(m_Net)).getResult();
-		INestedWordAutomatonOldApi rcResult = (new DifferenceDD(stateFactory, op1AsNwa, m_Nwa)).getResult();
-		INestedWordAutomatonOldApi resultAsNwa = (new PetriNet2FiniteAutomaton(m_Result)).getResult();
+		INestedWordAutomatonOldApi op1AsNwa = (new PetriNet2FiniteAutomaton(m_Services, m_Net)).getResult();
+		INestedWordAutomatonOldApi rcResult = (new DifferenceDD(m_Services, stateFactory, op1AsNwa, m_Nwa)).getResult();
+		INestedWordAutomatonOldApi resultAsNwa = (new PetriNet2FiniteAutomaton(m_Services, m_Result)).getResult();
 		boolean correct = true;
-		correct &= (ResultChecker.nwaLanguageInclusion(resultAsNwa,rcResult,stateFactory) == null);
-		correct &= (ResultChecker.nwaLanguageInclusion(rcResult,resultAsNwa,stateFactory) == null);
+		correct &= (ResultChecker.nwaLanguageInclusion(m_Services, resultAsNwa,rcResult,stateFactory) == null);
+		correct &= (ResultChecker.nwaLanguageInclusion(m_Services, rcResult,resultAsNwa,stateFactory) == null);
 
 		s_Logger.info("Finished testing correctness of differenceBlackAndWhite");
 		return correct;

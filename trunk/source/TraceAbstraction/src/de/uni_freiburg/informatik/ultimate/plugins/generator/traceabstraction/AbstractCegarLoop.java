@@ -19,6 +19,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
@@ -143,8 +144,11 @@ public abstract class AbstractCegarLoop {
 
 	protected CegarLoopBenchmarkGenerator m_CegarLoopBenchmark;
 
-	public AbstractCegarLoop(String name, RootNode rootNode, SmtManager smtManager, TAPreferences taPrefs,
+	protected final IUltimateServiceProvider m_Services;
+
+	public AbstractCegarLoop(IUltimateServiceProvider services, String name, RootNode rootNode, SmtManager smtManager, TAPreferences taPrefs,
 			Collection<ProgramPoint> errorLocs, Logger logger) {
+		m_Services = services;
 		mLogger = logger;
 		m_ModGlobVarManager = rootNode.getRootAnnot().getModGlobVarManager();
 		this.m_Name = name;
@@ -380,7 +384,7 @@ public abstract class AbstractCegarLoop {
 	}
 
 	protected void writeAutomatonToFile(IAutomaton<CodeBlock, IPredicate> automaton, String filename) {
-		new AtsDefinitionPrinter<String, String>(filename, m_Pref.dumpPath() + "/" + filename, m_PrintAutomataLabeling,
+		new AtsDefinitionPrinter<String, String>(m_Services, filename, m_Pref.dumpPath() + "/" + filename, m_PrintAutomataLabeling,
 				"", automaton);
 	}
 

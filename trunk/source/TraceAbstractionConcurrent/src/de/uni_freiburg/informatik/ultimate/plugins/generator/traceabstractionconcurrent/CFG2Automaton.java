@@ -173,7 +173,7 @@ public abstract class CFG2Automaton {
 		mLogger.debug("Step: construct the automaton");
 		// construct the automaton
 		NestedWordAutomaton<CodeBlock, IPredicate> nwa = new NestedWordAutomaton<CodeBlock, IPredicate>(
-				internalAlphabet, callAlphabet, returnAlphabet, m_ContentFactory);
+				mServices, internalAlphabet, callAlphabet, returnAlphabet, m_ContentFactory);
 
 		IPredicate procedureInitialState = null;
 

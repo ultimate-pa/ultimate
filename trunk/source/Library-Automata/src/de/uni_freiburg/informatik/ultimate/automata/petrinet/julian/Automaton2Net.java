@@ -34,18 +34,22 @@ import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 
 public class Automaton2Net<LETTER, STATE> implements IOperation<LETTER,STATE> {
 
+	private final IUltimateServiceProvider m_Services;
 	private static Logger s_Logger = NestedWordAutomata.getLogger();
 
 	INestedWordAutomatonOldApi<LETTER, STATE> m_Operand;
 	IPetriNet<LETTER, STATE> m_Net;
 
-	public Automaton2Net(INestedWordAutomatonOldApi<LETTER, STATE> operand) throws AutomataLibraryException {
+	public Automaton2Net(IUltimateServiceProvider services, 
+			INestedWordAutomatonOldApi<LETTER, STATE> operand) throws AutomataLibraryException {
+		m_Services = services;
 		m_Operand = operand;
 		s_Logger.info(startMessage());
-		m_Net = new PetriNetJulian<LETTER, STATE>(m_Operand);
+		m_Net = new PetriNetJulian<LETTER, STATE>(m_Services, m_Operand);
 		s_Logger.info(exitMessage());
 	}
 

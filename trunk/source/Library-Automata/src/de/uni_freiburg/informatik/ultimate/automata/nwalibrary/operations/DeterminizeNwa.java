@@ -37,8 +37,11 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingInternalT
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.DeterminizedState;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 
 public class DeterminizeNwa<LETTER, STATE> implements INestedWordAutomatonSimple<LETTER, STATE> {
+	
+	private final IUltimateServiceProvider m_Services;
 	
 	private final INestedWordAutomatonSimple<LETTER, STATE> m_Operand;
 	private final NestedWordAutomaton<LETTER, STATE> m_Cache;
@@ -50,13 +53,15 @@ public class DeterminizeNwa<LETTER, STATE> implements INestedWordAutomatonSimple
 	private final Map<DeterminizedState<LETTER, STATE>, STATE> m_det2res =
 			new HashMap<DeterminizedState<LETTER, STATE>, STATE>();
 	
-	public DeterminizeNwa(INestedWordAutomatonSimple<LETTER, STATE> operand, 
+	public DeterminizeNwa(IUltimateServiceProvider services,
+			INestedWordAutomatonSimple<LETTER, STATE> operand, 
 			IStateDeterminizer<LETTER, STATE> stateDeterminizer, 
 			StateFactory<STATE> sf) {
+		m_Services = services;
 		m_Operand = operand;
 		m_StateDeterminizer = stateDeterminizer;
 		m_StateFactory = sf;
-		m_Cache = new NestedWordAutomaton<LETTER, STATE>(operand.getInternalAlphabet(), 
+		m_Cache = new NestedWordAutomaton<LETTER, STATE>(m_Services, operand.getInternalAlphabet(), 
 				operand.getCallAlphabet(), operand.getReturnAlphabet(), sf);
 
 	}

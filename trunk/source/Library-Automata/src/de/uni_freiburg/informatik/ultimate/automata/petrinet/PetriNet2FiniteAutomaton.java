@@ -42,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 
 
 /**
@@ -54,6 +55,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
  */
 public class PetriNet2FiniteAutomaton<S,C> implements IOperation<S,C> {
 	
+	private final IUltimateServiceProvider m_Services;
     private static Logger s_Logger = NestedWordAutomata.getLogger();
 	
 	private final IPetriNet<S, C> m_Net;
@@ -77,12 +79,14 @@ public class PetriNet2FiniteAutomaton<S,C> implements IOperation<S,C> {
 	}
 	
 	
-	public PetriNet2FiniteAutomaton(IPetriNet<S,C> net) {
+	public PetriNet2FiniteAutomaton(IUltimateServiceProvider services, 
+			IPetriNet<S,C> net) {
+		m_Services = services;
 		m_Net = net;
 		s_Logger.info(startMessage());
 		m_ContentFactory = net.getStateFactory();
 		Set<S> alphabet = new HashSet<S>(net.getAlphabet());
-		m_Result = new NestedWordAutomaton<S,C>(alphabet,
+		m_Result = new NestedWordAutomaton<S,C>(m_Services, alphabet,
 									 new HashSet<S>(0),
 									 new HashSet<S>(0),
 									 net.getStateFactory());

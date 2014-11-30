@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 
 
 /**
@@ -50,6 +51,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
  */
 public class IntersectNodd<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	
+	private final IUltimateServiceProvider m_Services;
 	private static Logger s_Logger = 
 		NestedWordAutomata.getLogger();
 	
@@ -75,7 +77,9 @@ public class IntersectNodd<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	
 	private INestedWordAutomatonOldApi<LETTER,STATE> fstOperand;
 
-	public IntersectNodd (INestedWordAutomatonOldApi<LETTER,STATE> nwa, INestedWordAutomatonOldApi<LETTER,STATE> nwa2) {
+	public IntersectNodd (IUltimateServiceProvider services, 
+			INestedWordAutomatonOldApi<LETTER,STATE> nwa, INestedWordAutomatonOldApi<LETTER,STATE> nwa2) {
+		m_Services = services;
 		this.fstOperand = nwa;
 		this.sndOperand = nwa2;
 		s_Logger.info(startMessage());
@@ -126,7 +130,8 @@ public class IntersectNodd<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		newReturns.retainAll(sndOperand.getReturnAlphabet());
 		
 		
-		m_result = new NestedWordAutomaton<LETTER,STATE>(newInternals, newCalls, newReturns, fstOperand.getStateFactory());
+		m_result = new NestedWordAutomaton<LETTER,STATE>(m_Services, 
+				newInternals, newCalls, newReturns, fstOperand.getStateFactory());
 		for (STATE fst : fstOperand.getInitialStates()) {
 			for (STATE snd : sndOperand.getInitialStates()) {
 				STATE ps = getProductState(fst, snd);

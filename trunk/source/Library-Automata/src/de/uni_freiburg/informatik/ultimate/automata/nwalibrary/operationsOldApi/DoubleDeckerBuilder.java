@@ -30,6 +30,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.DoubleDecker;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 
 public abstract class DoubleDeckerBuilder<LETTER,STATE> extends DoubleDeckerVisitor<LETTER,STATE>{
 
@@ -37,7 +38,9 @@ public abstract class DoubleDeckerBuilder<LETTER,STATE> extends DoubleDeckerVisi
 	Set<STATE> m_SuccessorsConstructedCa = new HashSet<STATE>();
 //	Set<STATE> m_SuccessorsConstructedRe = new HashSet<STATE>();
 	
-
+	public DoubleDeckerBuilder(IUltimateServiceProvider services) {
+		super(services);
+	}
 	
 	@Override
 	protected Collection<STATE> visitAndGetInternalSuccessors(

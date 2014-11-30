@@ -11,6 +11,7 @@ import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Procedure;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
@@ -24,6 +25,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Sum
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 
 public class CFG2NestedWordAutomaton {
+	private final IUltimateServiceProvider m_Services;
 	
 	private final SmtManager m_SmtManager;
 	private static final boolean m_StoreHistory = false;
@@ -33,7 +35,8 @@ public class CFG2NestedWordAutomaton {
 	
 	private final Logger mLogger;
 	
-	public CFG2NestedWordAutomaton(boolean interprocedural, SmtManager predicateFactory, Logger logger) {
+	public CFG2NestedWordAutomaton(IUltimateServiceProvider services, boolean interprocedural, SmtManager predicateFactory, Logger logger) {
+		m_Services = services;
 		mLogger = logger;
 		m_SmtManager = predicateFactory;
 		m_Interprocedural = interprocedural;
@@ -144,7 +147,7 @@ public class CFG2NestedWordAutomaton {
 		mLogger.debug("Step: construct the automaton");
 		// construct the automaton
 		NestedWordAutomaton<CodeBlock, IPredicate> nwa =
-			new NestedWordAutomaton<CodeBlock, IPredicate>(
+			new NestedWordAutomaton<CodeBlock, IPredicate>(m_Services, 
 					internalAlphabet,
 					callAlphabet,
 					returnAlphabet,

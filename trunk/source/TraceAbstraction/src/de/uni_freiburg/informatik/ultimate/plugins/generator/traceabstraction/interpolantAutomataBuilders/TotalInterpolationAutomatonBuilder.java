@@ -77,7 +77,7 @@ public class TotalInterpolationAutomatonBuilder {
 		m_PredicateUnifier = traceChecker.getPredicateUnifier();
 		m_Abstraction = abstraction;
 		InCaReAlphabet<CodeBlock> alphabet = new InCaReAlphabet<CodeBlock>(abstraction);
-		m_IA = (new StraightLineInterpolantAutomatonBuilder(alphabet, traceChecker, predicateFactory)).getResult();
+		m_IA = (new StraightLineInterpolantAutomatonBuilder(mServices, alphabet, traceChecker, predicateFactory)).getResult();
 		m_ModifiedGlobals = modifiableGlobals;
 		m_Interpolation = interpolation;
 		m_Epimorphism = new AutomatonEpimorphism<IPredicate>();

@@ -12,6 +12,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingCallTrans
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
@@ -21,6 +22,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 
 public class EagerInterpolantAutomaton implements
 		INestedWordAutomatonSimple<CodeBlock, IPredicate> {
+	private final IUltimateServiceProvider m_Services;
 	private final EdgeChecker m_EdgeChecker;
 	private final NestedWordAutomaton<CodeBlock, IPredicate> m_Ia;
 	private final NestedWordAutomatonCache<CodeBlock, IPredicate> m_RejectionCache;
@@ -103,12 +105,15 @@ public class EagerInterpolantAutomaton implements
 	}
 	
 
-	public EagerInterpolantAutomaton(EdgeChecker edgeChecker,
+	public EagerInterpolantAutomaton(IUltimateServiceProvider services, 
+			EdgeChecker edgeChecker,
 			NestedWordAutomaton<CodeBlock, IPredicate> nwa) {
 		super();
+		m_Services = services;
 		m_EdgeChecker = edgeChecker;
 		m_Ia = nwa;
 		m_RejectionCache = new NestedWordAutomatonCache<CodeBlock, IPredicate>(
+				m_Services,
 				m_Ia.getInternalAlphabet(), 
 				m_Ia.getCallAlphabet(), 
 				m_Ia.getReturnAlphabet(), 

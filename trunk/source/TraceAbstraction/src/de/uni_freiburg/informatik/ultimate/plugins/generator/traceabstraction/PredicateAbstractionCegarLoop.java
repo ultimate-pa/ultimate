@@ -39,7 +39,7 @@ public class PredicateAbstractionCegarLoop extends BasicCegarLoop {
 												 * set the argument to AssertCodeBlockOrder.NOT_INCREMENTALLY.
 												 * Check if you want to set this
 												 * to true.
-												 */AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices);
+												 */AssertCodeBlockOrder.NOT_INCREMENTALLY, m_Services);
 
 		LBool feasibility = m_TraceChecker.isCorrect();
 		if (feasibility != LBool.UNSAT) {
@@ -65,7 +65,7 @@ public class PredicateAbstractionCegarLoop extends BasicCegarLoop {
 
 		NestedWordAutomaton<CodeBlock, IPredicate> abstraction = (NestedWordAutomaton<CodeBlock, IPredicate>) m_Abstraction;
 		NestedWordAutomaton<CodeBlock, IPredicate> interpolantAutomaton = new NestedWordAutomaton<CodeBlock, IPredicate>(
-				abstraction.getInternalAlphabet(), abstraction.getCallAlphabet(), abstraction.getReturnAlphabet(),
+				m_Services, abstraction.getInternalAlphabet(), abstraction.getCallAlphabet(), abstraction.getReturnAlphabet(),
 				abstraction.getStateFactory());
 		IPredicate trueTerm = m_SmtManager.newTruePredicate();
 		interpolantAutomaton.addState(true, false, trueTerm);

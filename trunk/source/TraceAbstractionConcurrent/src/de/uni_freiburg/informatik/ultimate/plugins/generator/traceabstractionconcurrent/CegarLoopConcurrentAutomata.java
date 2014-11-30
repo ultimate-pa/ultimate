@@ -58,7 +58,7 @@ public class CegarLoopConcurrentAutomata extends BasicCegarLoop {
 	protected void constructInterpolantAutomaton() throws OperationCanceledException {
 		m_CegarLoopBenchmark.start(CegarLoopBenchmarkType.s_BasicInterpolantAutomatonTime);
 		StraightLineInterpolantAutomatonBuilder iab = new StraightLineInterpolantAutomatonBuilder(
-				new InCaReAlphabet<CodeBlock>(m_Abstraction), m_TraceChecker, m_PredicateFactoryInterpolantAutomata);
+				m_Services, new InCaReAlphabet<CodeBlock>(m_Abstraction), m_TraceChecker, m_PredicateFactoryInterpolantAutomata);
 		m_InterpolAutomaton = iab.getResult();
 		mLogger.info("Interpolatants " + m_InterpolAutomaton.getStates());
 
@@ -71,7 +71,7 @@ public class CegarLoopConcurrentAutomata extends BasicCegarLoop {
 	@Override
 	protected void getInitialAbstraction() {
 		StateFactory<IPredicate> predicateFactory = new PredicateFactory(super.m_SmtManager, m_Pref);
-		CFG2Automaton cFG2NestedWordAutomaton = new Cfg2Nwa(m_RootNode, predicateFactory, m_SmtManager, mServices);
+		CFG2Automaton cFG2NestedWordAutomaton = new Cfg2Nwa(m_RootNode, predicateFactory, m_SmtManager, m_Services);
 		m_Abstraction = (NestedWordAutomaton<CodeBlock, IPredicate>) cFG2NestedWordAutomaton.getResult();
 
 		if (m_Iteration <= m_Pref.watchIteration()
@@ -134,12 +134,12 @@ public class CegarLoopConcurrentAutomata extends BasicCegarLoop {
 
 		IOpWithDelayedDeadEndRemoval<CodeBlock, IPredicate> diff;
 
-		PostDeterminizer epd = new PostDeterminizer(edgeChecker, m_ComputeHoareAnnotation, m_InterpolAutomaton, true,
+		PostDeterminizer epd = new PostDeterminizer(m_Services, edgeChecker, m_ComputeHoareAnnotation, m_InterpolAutomaton, true,
 				m_PredicateFactoryInterpolantAutomata);
 		if (m_Pref.differenceSenwa()) {
-			diff = new DifferenceSenwa<CodeBlock, IPredicate>(oldAbstraction, m_InterpolAutomaton, epd, false);
+			diff = new DifferenceSenwa<CodeBlock, IPredicate>(m_Services, oldAbstraction, m_InterpolAutomaton, epd, false);
 		} else {
-			diff = new Difference<CodeBlock, IPredicate>(oldAbstraction, m_InterpolAutomaton, epd,
+			diff = new Difference<CodeBlock, IPredicate>(m_Services, oldAbstraction, m_InterpolAutomaton, epd,
 					m_StateFactoryForRefinement, explointSigmaStarConcatOfIA);
 		}
 		mLogger.info("Internal Transitions: " + epd.m_AnswerInternalAutomaton + " answers given by automaton "

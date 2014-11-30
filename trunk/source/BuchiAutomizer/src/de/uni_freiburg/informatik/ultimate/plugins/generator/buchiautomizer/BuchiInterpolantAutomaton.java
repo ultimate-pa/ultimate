@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
  */
 public class BuchiInterpolantAutomaton implements INestedWordAutomatonSimple<CodeBlock, IPredicate> {
 
+	protected final IUltimateServiceProvider m_Services;
 	protected final Logger mLogger;
 
 	private final SmtManager m_SmtManager;
@@ -72,8 +73,6 @@ public class BuchiInterpolantAutomaton implements INestedWordAutomatonSimple<Cod
 	private IPredicate m_AssertedState;
 	private IPredicate m_AssertedHier;
 
-	protected final IUltimateServiceProvider mServices;
-
 	public BuchiInterpolantAutomaton(SmtManager smtManager, EdgeChecker edgeChecker, boolean emtpyStem,
 			IPredicate precondition, Set<IPredicate> stemInterpolants, IPredicate hondaPredicate,
 			Set<IPredicate> loopInterpolants, CodeBlock hondaEntererStem, CodeBlock hondaEntererLoop,
@@ -82,14 +81,14 @@ public class BuchiInterpolantAutomaton implements INestedWordAutomatonSimple<Cod
 			PredicateFactory predicateFactory, Logger logger, IUltimateServiceProvider services) {
 		super();
 		mLogger = logger;
-		mServices = services;
+		m_Services = services;
 		m_SmtManager = smtManager;
 		m_EdgeChecker = edgeChecker;
-		m_InputSuccessorCache = new NestedWordAutomatonCache<CodeBlock, IPredicate>(abstraction.getInternalAlphabet(),
+		m_InputSuccessorCache = new NestedWordAutomatonCache<CodeBlock, IPredicate>(m_Services, abstraction.getInternalAlphabet(),
 				abstraction.getCallAlphabet(), abstraction.getReturnAlphabet(), predicateFactory);
-		m_RejectionCache = new NestedWordAutomatonCache<CodeBlock, IPredicate>(abstraction.getInternalAlphabet(),
+		m_RejectionCache = new NestedWordAutomatonCache<CodeBlock, IPredicate>(m_Services, abstraction.getInternalAlphabet(),
 				abstraction.getCallAlphabet(), abstraction.getReturnAlphabet(), predicateFactory);
-		m_Result = new NestedWordAutomatonCache<CodeBlock, IPredicate>(abstraction.getInternalAlphabet(),
+		m_Result = new NestedWordAutomatonCache<CodeBlock, IPredicate>(m_Services, abstraction.getInternalAlphabet(),
 				abstraction.getCallAlphabet(), abstraction.getReturnAlphabet(), predicateFactory);
 		m_InputStemPredicates = new HashSet<IPredicate>();
 		m_InputLoopPredicates = new HashSet<IPredicate>();
@@ -759,7 +758,7 @@ public class BuchiInterpolantAutomaton implements INestedWordAutomatonSimple<Cod
 	@Override
 	public String toString() {
 		if (m_ComputationFinished) {
-			return (new AtsDefinitionPrinter<String, String>("nwa", this)).getDefinitionAsString();
+			return (new AtsDefinitionPrinter<String, String>(m_Services, "nwa", this)).getDefinitionAsString();
 		} else {
 			return "automaton under construction";
 		}

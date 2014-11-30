@@ -50,6 +50,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IncomingReturnTra
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.SummaryReturnTransition;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 
 /**
  * minimizer for special type of nested word automata used in Ultimate
@@ -65,6 +66,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.SummaryReturnTran
  * @author Christian Schilling <schillic@informatik.uni-freiburg.de>
  */
 public class MinimizeSevpa<LETTER,STATE> implements IOperation<LETTER,STATE> {
+	private final IUltimateServiceProvider m_Services;
 	private static Logger s_Logger = NestedWordAutomata.getLogger();
 	// old automaton
 	private final INestedWordAutomatonOldApi<LETTER,STATE> m_operand;
@@ -114,9 +116,10 @@ public class MinimizeSevpa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	 * @param operand nested word automaton to minimize
 	 * @throws OperationCanceledException iff cancel signal is received
 	 */
-	public MinimizeSevpa(INestedWordAutomatonOldApi<LETTER,STATE> operand)
+	public MinimizeSevpa(IUltimateServiceProvider services,
+			INestedWordAutomatonOldApi<LETTER,STATE> operand)
 			throws OperationCanceledException {
-		this(operand, null, operand.getStateFactory());
+		this(services, operand, null, operand.getStateFactory());
 	}
 	
 	/**
@@ -130,10 +133,12 @@ public class MinimizeSevpa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	 */
 	@SuppressWarnings("unchecked")
 	public MinimizeSevpa(
+			IUltimateServiceProvider services,
 			final INestedWordAutomatonOldApi<LETTER,STATE> operand,
 			Collection<Set<STATE>> equivalenceClasses,
 			StateFactory<STATE> stateFactoryConstruction)
 					throws OperationCanceledException {
+		m_Services = services;
 		m_operand = operand;
 		if (operand instanceof IDoubleDeckerAutomaton<?, ?>) {
 			m_doubleDecker = (IDoubleDeckerAutomaton<LETTER, STATE>)operand;
@@ -190,7 +195,7 @@ public class MinimizeSevpa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		StatesContainer states = new StatesContainer(m_operand);
 		
 		// cancel if signal is received
-		if (! NestedWordAutomata.getMonitor().continueProcessing()) {
+		if (!m_Services.getProgressMonitorService().continueProcessing()) {
 			throw new OperationCanceledException();
 		}
 		
@@ -415,7 +420,7 @@ public class MinimizeSevpa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 				a.delete();
 				
 				// cancel iteration iff cancel signal is received
-				if (! NestedWordAutomata.getMonitor().continueProcessing()) {
+				if (!m_Services.getProgressMonitorService().continueProcessing()) {
 					throw new OperationCanceledException();
 				}
 			}
@@ -942,7 +947,7 @@ public class MinimizeSevpa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	private NestedWordAutomaton<LETTER, STATE> merge() {
 		// initialize result automaton
 		NestedWordAutomaton<LETTER, STATE> result =
-			new NestedWordAutomaton<LETTER, STATE>(
+			new NestedWordAutomaton<LETTER, STATE>(m_Services, 
 				m_operand.getInternalAlphabet(), m_operand.getCallAlphabet(),
 				m_operand.getReturnAlphabet(), m_operand.getStateFactory());
 		
@@ -2756,12 +2761,12 @@ public class MinimizeSevpa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 			throws AutomataLibraryException {
 		s_Logger.info("Start testing correctness of " + operationName());
 		boolean correct = true;
-		correct &= (ResultChecker.nwaLanguageInclusion(m_operand, m_nwa, stateFactory) == null);
+		correct &= (ResultChecker.nwaLanguageInclusion(m_Services, m_operand, m_nwa, stateFactory) == null);
 		assert correct;
-		correct &= (ResultChecker.nwaLanguageInclusion(m_nwa, m_operand, stateFactory) == null);
+		correct &= (ResultChecker.nwaLanguageInclusion(m_Services, m_nwa, m_operand, stateFactory) == null);
 		assert correct;
 		if (!correct) {
-			ResultChecker.writeToFileIfPreferred(operationName() + "Failed", "", m_operand);
+			ResultChecker.writeToFileIfPreferred(m_Services, operationName() + "Failed", "", m_operand);
 		}
 		s_Logger.info("Finished testing correctness of " + operationName());
 		return correct;

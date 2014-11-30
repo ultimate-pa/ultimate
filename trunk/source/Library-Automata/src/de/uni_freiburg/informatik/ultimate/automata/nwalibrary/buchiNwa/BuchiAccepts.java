@@ -40,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.AbstractAcceptance;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 
 
 /**
@@ -52,7 +53,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Abstra
  */
 public class BuchiAccepts<LETTER,STATE> extends AbstractAcceptance<LETTER,STATE>
 									    implements IOperation<LETTER,STATE> {
-	
+	private final IUltimateServiceProvider m_Services;
 	
 	private static Logger s_Logger =  NestedWordAutomata.getLogger();
 	/**
@@ -110,7 +111,8 @@ public class BuchiAccepts<LETTER,STATE> extends AbstractAcceptance<LETTER,STATE>
 	 *  always rejected its loop contains pending returns.  
 	 * @throws OperationCanceledException 
 	 */
-	public BuchiAccepts(INestedWordAutomatonOldApi<LETTER,STATE> nwa, NestedLassoWord<LETTER> nlw) throws OperationCanceledException{
+	public BuchiAccepts(IUltimateServiceProvider services, INestedWordAutomatonOldApi<LETTER,STATE> nwa, NestedLassoWord<LETTER> nlw) throws OperationCanceledException{
+		m_Services = services;
 		m_Nwa = nwa;
 		
 		m_Stem = nlw.getStem();
@@ -156,7 +158,7 @@ public class BuchiAccepts<LETTER,STATE> extends AbstractAcceptance<LETTER,STATE>
 			for (int i = 0; i < m_Stem.length(); i++) {
 				currentConfigs = successorConfigurations(currentConfigs, m_Stem, i,
 						m_Nwa, false);
-				if (!NestedWordAutomata.getMonitor().continueProcessing()) {
+				if (!m_Services.getProgressMonitorService().continueProcessing()) {
 					throw new OperationCanceledException();
 				}
 			}
@@ -170,7 +172,7 @@ public class BuchiAccepts<LETTER,STATE> extends AbstractAcceptance<LETTER,STATE>
 			for (int i = 0; i < m_Loop.length(); i++) {
 				currentConfigs = successorConfigurations(
 						currentConfigs, m_Loop, i, m_Nwa, false);
-				if (!NestedWordAutomata.getMonitor().continueProcessing()) {
+				if (!m_Services.getProgressMonitorService().continueProcessing()) {
 					throw new OperationCanceledException();
 				}
 			}
@@ -218,7 +220,7 @@ public class BuchiAccepts<LETTER,STATE> extends AbstractAcceptance<LETTER,STATE>
 				Set<Stack<STATE>> justVisitedAccepting = 
 						removeAcceptingConfigurations(currentConfigsNotVisitedAccepting, m_Nwa);
 				currentConfigsVisitedAccepting.addAll(justVisitedAccepting);
-				if (!NestedWordAutomata.getMonitor().continueProcessing()) {
+				if (!m_Services.getProgressMonitorService().continueProcessing()) {
 					throw new OperationCanceledException();
 				}
 			}

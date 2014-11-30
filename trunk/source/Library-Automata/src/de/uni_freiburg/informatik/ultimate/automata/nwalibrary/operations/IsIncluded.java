@@ -34,6 +34,7 @@ import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 
 /**
  * Operation that checks if the language of the first operand is included in the
@@ -45,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
  */
 public class IsIncluded<LETTER, STATE> implements IOperation<LETTER,STATE> {
 	
+	private final IUltimateServiceProvider m_Services;
 	private static Logger s_Logger = 
 			NestedWordAutomata.getLogger();
 	
@@ -55,14 +57,16 @@ public class IsIncluded<LETTER, STATE> implements IOperation<LETTER,STATE> {
 	private final NestedRun<LETTER, STATE> m_Counterexample;
 	
 	
-	public IsIncluded(StateFactory<STATE> stateFactory,
+	public IsIncluded(IUltimateServiceProvider services,
+			StateFactory<STATE> stateFactory,
 			INestedWordAutomatonOldApi<LETTER, STATE> nwa1, 
 			INestedWordAutomatonOldApi<LETTER, STATE> nwa2) throws AutomataLibraryException {
+		m_Services = services;
 		m_Operand1 = nwa1;
 		m_Operand2 = nwa2;
 		s_Logger.info(startMessage());
 		IsEmpty<LETTER, STATE> emptinessCheck = new IsEmpty<LETTER, STATE>(
-				(new Difference<LETTER, STATE>(stateFactory, nwa1, nwa2)).getResult());
+				(new Difference<LETTER, STATE>(m_Services, stateFactory, nwa1, nwa2)).getResult());
 		m_Result = emptinessCheck.getResult();
 		m_Counterexample = emptinessCheck.getNestedRun();
 		s_Logger.info(exitMessage());

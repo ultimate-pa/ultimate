@@ -31,21 +31,24 @@ import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.AbstractIntersect;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 
 public class BuchiIntersectDD<LETTER, STATE> extends
 		AbstractIntersect<LETTER, STATE> implements IOperation<LETTER,STATE> {
 
-	public BuchiIntersectDD(INestedWordAutomatonOldApi<LETTER, STATE> fstNwa,
+	public BuchiIntersectDD(IUltimateServiceProvider services,
+			INestedWordAutomatonOldApi<LETTER, STATE> fstNwa,
 			INestedWordAutomatonOldApi<LETTER, STATE> sndNwa)
 			throws AutomataLibraryException {
-		super(true, false, fstNwa, sndNwa);
+		super(services, true, false, fstNwa, sndNwa);
 	}
 
-	public BuchiIntersectDD(INestedWordAutomatonOldApi<LETTER, STATE> fstNwa,
+	public BuchiIntersectDD(IUltimateServiceProvider services,
+			INestedWordAutomatonOldApi<LETTER, STATE> fstNwa,
 			INestedWordAutomatonOldApi<LETTER, STATE> sndNwa,
 			boolean minimizeResult)
 			throws AutomataLibraryException {
-		super(true, minimizeResult, fstNwa, sndNwa);
+		super(services, true, minimizeResult, fstNwa, sndNwa);
 	}
 
 	@Override

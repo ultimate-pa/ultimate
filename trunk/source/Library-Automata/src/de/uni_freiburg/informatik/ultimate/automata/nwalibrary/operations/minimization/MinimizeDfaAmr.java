@@ -43,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 
 /**
  * This class implements the incremental DFA minimization algorithm by Almeida,
@@ -139,10 +140,11 @@ public class MinimizeDfaAmr<LETTER, STATE>
 	 * @throws OperationCanceledException thrown when execution is cancelled
 	 * @throws AutomataLibraryException thrown by DFA check
 	 */
-	public MinimizeDfaAmr(final StateFactory<STATE> stateFactory,
+	public MinimizeDfaAmr(final IUltimateServiceProvider services,
+			final StateFactory<STATE> stateFactory,
 			final INestedWordAutomaton<LETTER, STATE> operand)
 			throws OperationCanceledException, AutomataLibraryException {
-		this(stateFactory, operand, null);
+		this(services, stateFactory, operand, null);
 	}
 	
 	/**
@@ -153,11 +155,12 @@ public class MinimizeDfaAmr<LETTER, STATE>
 	 * @throws OperationCanceledException thrown when execution is cancelled
 	 * @throws AutomataLibraryException thrown by DFA check
 	 */
-	public MinimizeDfaAmr(final StateFactory<STATE> stateFactory,
+	public MinimizeDfaAmr(final IUltimateServiceProvider services,
+			final StateFactory<STATE> stateFactory,
 			final INestedWordAutomaton<LETTER, STATE> operand,
 			final Interrupt interrupt)
 			throws OperationCanceledException, AutomataLibraryException {
-		super(stateFactory, "MinimizeAMR", operand, interrupt);
+		super(services, stateFactory, "MinimizeAMR", operand, interrupt);
 		
 		assert super.checkForDfa() : "The input automaton is no DFA.";
 		
@@ -521,6 +524,7 @@ public class MinimizeDfaAmr<LETTER, STATE>
 		final StateFactory<STATE> stateFactory = m_operand.getStateFactory();
 		NestedWordAutomaton<LETTER, STATE> result =
 				new NestedWordAutomaton<LETTER, STATE>(
+						m_Services, 
 						m_operand.getInternalAlphabet(),
 						m_operand.getCallAlphabet(),
 						m_operand.getReturnAlphabet(),

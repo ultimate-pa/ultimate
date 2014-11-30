@@ -46,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.HasUnreachableStates;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 
 /**
  * @author Markus Lindenmann
@@ -53,6 +54,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.HasUnr
  * @date 13.11.2011
  */
 public class MinimizeDfa<LETTER,STATE> implements IOperation<LETTER,STATE> {
+	private final IUltimateServiceProvider m_Services;
     /*_______________________________________________________________________*\
     \* FIELDS / ATTRIBUTES                                                   */
     
@@ -79,9 +81,10 @@ public class MinimizeDfa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	 *            the input automaton
 	 * @throws OperationCanceledException 
 	 */
-    public MinimizeDfa(INestedWordAutomatonOldApi<LETTER,STATE> operand)
+    public MinimizeDfa(IUltimateServiceProvider services, INestedWordAutomatonOldApi<LETTER,STATE> operand)
             throws OperationCanceledException {
-        if (new HasUnreachableStates<LETTER,STATE>(operand)
+    	m_Services = services;
+        if (new HasUnreachableStates<LETTER,STATE>(m_Services, operand)
 				.result()) {
 			throw new IllegalArgumentException("No unreachalbe states allowed");
 		}
@@ -143,7 +146,7 @@ public class MinimizeDfa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 						}
 					}
 				}
-				if (!NestedWordAutomata.getMonitor().continueProcessing()) {
+				if (!m_Services.getProgressMonitorService().continueProcessing()) {
 					throw new OperationCanceledException();
 				}
 			}
@@ -225,6 +228,7 @@ public class MinimizeDfa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		@SuppressWarnings("unchecked")
 		StateFactory<STATE> snf = m_Operand.getStateFactory();
         m_Result = new NestedWordAutomaton<LETTER,STATE>(
+        		m_Services, 
                 m_Operand.getInternalAlphabet(), null, null, snf);
 
 		for (int i = 0; i < states.size(); i++) {
@@ -390,10 +394,10 @@ public class MinimizeDfa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 			throws AutomataLibraryException {
 		s_Logger.info("Start testing correctness of " + operationName());
 		boolean correct = true;
-		correct &= (ResultChecker.nwaLanguageInclusion(m_Operand, m_Result, stateFactory) == null);
-		correct &= (ResultChecker.nwaLanguageInclusion(m_Result, m_Operand, stateFactory) == null);
+		correct &= (ResultChecker.nwaLanguageInclusion(m_Services, m_Operand, m_Result, stateFactory) == null);
+		correct &= (ResultChecker.nwaLanguageInclusion(m_Services, m_Result, m_Operand, stateFactory) == null);
 		if (!correct) {
-			ResultChecker.writeToFileIfPreferred(operationName() + "Failed", "", m_Operand);
+			ResultChecker.writeToFileIfPreferred(m_Services, operationName() + "Failed", "", m_Operand);
 		}
 		s_Logger.info("Finished testing correctness of " + operationName());
 		return correct;

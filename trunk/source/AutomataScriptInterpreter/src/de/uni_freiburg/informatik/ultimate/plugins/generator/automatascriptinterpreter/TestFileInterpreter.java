@@ -1057,7 +1057,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 				final String text;
 				if (o instanceof IAutomaton) {
 					mLastPrintedAutomaton = (IAutomaton<?, ?>) o;
-					text = (new AtsDefinitionPrinter<String, String>("automaton", o)).getDefinitionAsString();
+					text = (new AtsDefinitionPrinter<String, String>(mServices, "automaton", o)).getDefinitionAsString();
 				} else {
 					text = String.valueOf(o);
 				}

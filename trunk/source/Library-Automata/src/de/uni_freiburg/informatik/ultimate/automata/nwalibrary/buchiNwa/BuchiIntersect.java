@@ -39,10 +39,12 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.NestedWordAutomatonReachableStates;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 
 
 public class BuchiIntersect<LETTER,STATE> implements IOperation<LETTER,STATE> {
 
+	private final IUltimateServiceProvider m_Services;
 	protected static Logger s_Logger = 
 		NestedWordAutomata.getLogger();
 	
@@ -76,18 +78,22 @@ public class BuchiIntersect<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	
 	
 	
-	public BuchiIntersect(INestedWordAutomatonSimple<LETTER,STATE> fstOperand,
+	public BuchiIntersect(IUltimateServiceProvider services,
+			INestedWordAutomatonSimple<LETTER,STATE> fstOperand,
 			INestedWordAutomatonSimple<LETTER,STATE> sndOperand
 			) throws AutomataLibraryException {
+		m_Services = services;
 		m_FstOperand = fstOperand;
 		m_SndOperand = sndOperand;
 		m_StateFactory = m_FstOperand.getStateFactory();
 		doIntersect();
 	}
 	
-	public BuchiIntersect(INestedWordAutomatonSimple<LETTER,STATE> fstOperand,
+	public BuchiIntersect(IUltimateServiceProvider services,
+			INestedWordAutomatonSimple<LETTER,STATE> fstOperand,
 			INestedWordAutomatonSimple<LETTER,STATE> sndOperand,
 			StateFactory<STATE> sf) throws AutomataLibraryException {
+		m_Services = services;
 		m_FstOperand = fstOperand;
 		m_SndOperand = sndOperand;
 		m_StateFactory = sf;
@@ -97,7 +103,7 @@ public class BuchiIntersect<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	private void doIntersect() throws AutomataLibraryException {
 		s_Logger.info(startMessage());
 		m_Intersect = new BuchiIntersectNwa<LETTER, STATE>(m_FstOperand, m_SndOperand, m_StateFactory);
-		m_Result = new NestedWordAutomatonReachableStates<LETTER, STATE>(m_Intersect);
+		m_Result = new NestedWordAutomatonReachableStates<LETTER, STATE>(m_Services, m_Intersect);
 		s_Logger.info(exitMessage());
 	}
 	
@@ -117,16 +123,17 @@ public class BuchiIntersect<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	
 	public boolean checkResult(StateFactory<STATE> sf) throws AutomataLibraryException {
 		s_Logger.info("Start testing correctness of " + operationName());
-		INestedWordAutomatonOldApi<LETTER, STATE> fstOperandOldApi = ResultChecker.getOldApiNwa(m_FstOperand);
-		INestedWordAutomatonOldApi<LETTER, STATE> sndOperandOldApi = ResultChecker.getOldApiNwa(m_SndOperand);
-		INestedWordAutomatonOldApi<LETTER, STATE> resultDD = (new BuchiIntersectDD<LETTER, STATE>(fstOperandOldApi,sndOperandOldApi)).getResult();
+		INestedWordAutomatonOldApi<LETTER, STATE> fstOperandOldApi = ResultChecker.getOldApiNwa(m_Services, m_FstOperand);
+		INestedWordAutomatonOldApi<LETTER, STATE> sndOperandOldApi = ResultChecker.getOldApiNwa(m_Services, m_SndOperand);
+		INestedWordAutomatonOldApi<LETTER, STATE> resultDD = 
+				(new BuchiIntersectDD<LETTER, STATE>(m_Services, fstOperandOldApi,sndOperandOldApi)).getResult();
 		boolean correct = true;
 //		correct &= (resultDD.size() <= m_Result.size());
 		assert correct;
 		correct &= resultCheckWithRandomWords();
 		assert correct;
 		if (!correct) {
-			ResultChecker.writeToFileIfPreferred(operationName() + "Failed", "", m_FstOperand,m_SndOperand);
+			ResultChecker.writeToFileIfPreferred(m_Services, operationName() + "Failed", "", m_FstOperand,m_SndOperand);
 		}
 		s_Logger.info("Finished testing correctness of " + operationName());
 		return correct;
@@ -134,25 +141,25 @@ public class BuchiIntersect<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	
 	private boolean resultCheckWithRandomWords() throws OperationCanceledException {
 		INestedWordAutomatonOldApi<LETTER, STATE> fstOperandOldApi = 
-				ResultChecker.getOldApiNwa(m_FstOperand);
+				ResultChecker.getOldApiNwa(m_Services, m_FstOperand);
 		INestedWordAutomatonOldApi<LETTER, STATE> sndOperandOldApi = 
-				ResultChecker.getOldApiNwa(m_SndOperand);
+				ResultChecker.getOldApiNwa(m_Services, m_SndOperand);
 		List<NestedLassoWord<LETTER>> lassoWords = 
 				new ArrayList<NestedLassoWord<LETTER>>();
 		BuchiIsEmpty<LETTER, STATE> resultEmptiness = 
-				new BuchiIsEmpty<LETTER, STATE>(m_Result);
+				new BuchiIsEmpty<LETTER, STATE>(m_Services, m_Result);
 		if (!resultEmptiness.getResult()) {
 			lassoWords.add(resultEmptiness.getAcceptingNestedLassoRun().getNestedLassoWord());
 		}
 		BuchiIsEmpty<LETTER, STATE> fstOperandEmptiness = 
-				new BuchiIsEmpty<LETTER, STATE>(fstOperandOldApi);
+				new BuchiIsEmpty<LETTER, STATE>(m_Services, fstOperandOldApi);
 		if (fstOperandEmptiness.getResult()) {
 			assert resultEmptiness.getResult();
 		} else 	{
 			lassoWords.add(fstOperandEmptiness.getAcceptingNestedLassoRun().getNestedLassoWord());
 		}
 		BuchiIsEmpty<LETTER, STATE> sndOperandEmptiness = 
-				new BuchiIsEmpty<LETTER, STATE>(fstOperandOldApi);
+				new BuchiIsEmpty<LETTER, STATE>(m_Services, fstOperandOldApi);
 		if (sndOperandEmptiness.getResult()) {
 			assert resultEmptiness.getResult();
 		} else 	{
@@ -161,9 +168,9 @@ public class BuchiIntersect<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		lassoWords.add(ResultChecker.getRandomNestedLassoWord(m_Result, m_Result.size()));
 		lassoWords.add(ResultChecker.getRandomNestedLassoWord(m_Result, fstOperandOldApi.size()));
 		lassoWords.add(ResultChecker.getRandomNestedLassoWord(m_Result, sndOperandOldApi.size()));
-		lassoWords.addAll((new LassoExtractor<LETTER, STATE>(m_FstOperand)).getResult());
-		lassoWords.addAll((new LassoExtractor<LETTER, STATE>(m_SndOperand)).getResult());
-		lassoWords.addAll((new LassoExtractor<LETTER, STATE>(m_Result)).getResult());
+		lassoWords.addAll((new LassoExtractor<LETTER, STATE>(m_Services, m_FstOperand)).getResult());
+		lassoWords.addAll((new LassoExtractor<LETTER, STATE>(m_Services, m_SndOperand)).getResult());
+		lassoWords.addAll((new LassoExtractor<LETTER, STATE>(m_Services, m_Result)).getResult());
 		boolean correct = true;
 		for (NestedLassoWord<LETTER> nlw : lassoWords) {
 			correct &= checkAcceptance(nlw, fstOperandOldApi, sndOperandOldApi);
@@ -179,9 +186,9 @@ public class BuchiIntersect<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	private boolean checkAcceptance(NestedLassoWord<LETTER> nlw,
 			INestedWordAutomatonOldApi<LETTER, STATE> operand1,
 			INestedWordAutomatonOldApi<LETTER, STATE> operand2) throws OperationCanceledException {
-		boolean op1 = (new BuchiAccepts<LETTER, STATE>(operand1, nlw)).getResult();
-		boolean op2 = (new BuchiAccepts<LETTER, STATE>(operand2, nlw)).getResult();
-		boolean res = (new BuchiAccepts<LETTER, STATE>(m_Result, nlw)).getResult();
+		boolean op1 = (new BuchiAccepts<LETTER, STATE>(m_Services, operand1, nlw)).getResult();
+		boolean op2 = (new BuchiAccepts<LETTER, STATE>(m_Services, operand2, nlw)).getResult();
+		boolean res = (new BuchiAccepts<LETTER, STATE>(m_Services, m_Result, nlw)).getResult();
 		return ((op1 && op2) == res);
 	}
 	

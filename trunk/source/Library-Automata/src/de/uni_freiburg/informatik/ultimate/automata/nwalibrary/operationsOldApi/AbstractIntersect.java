@@ -42,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.DoubleDecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 
 
 
@@ -104,9 +105,11 @@ public abstract class AbstractIntersect<LETTER,STATE> extends DoubleDeckerBuilde
 
 	
 
-	public AbstractIntersect(boolean buchiIntersection, boolean minimizeResult,
+	public AbstractIntersect(IUltimateServiceProvider services,
+			boolean buchiIntersection, boolean minimizeResult,
 					 INestedWordAutomatonOldApi<LETTER,STATE> fstNwa,
 					 INestedWordAutomatonOldApi<LETTER,STATE> sndNwa) throws AutomataLibraryException {
+		super(services);
 	
 		m_Buchi = buchiIntersection;
 		m_RemoveDeadEnds = minimizeResult;
@@ -129,7 +132,7 @@ public abstract class AbstractIntersect<LETTER,STATE> extends DoubleDeckerBuilde
 		newReturns.addAll(m_FstNwa.getReturnAlphabet());
 		newReturns.retainAll(m_SndNwa.getReturnAlphabet());
 		
-		m_ResultNwa = new NestedWordAutomaton<LETTER,STATE>(
+		m_ResultNwa = new NestedWordAutomaton<LETTER,STATE>(m_Services, 
 				newInternals, newCalls,	newReturns,	m_ContentFactory);
 		super.m_TraversedNwa = (NestedWordAutomaton<LETTER,STATE>) m_ResultNwa;
 		super.traverseDoubleDeckerGraph();

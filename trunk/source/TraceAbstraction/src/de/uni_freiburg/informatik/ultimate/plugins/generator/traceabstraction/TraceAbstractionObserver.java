@@ -9,6 +9,7 @@ import org.apache.log4j.Logger;
 import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
 import de.uni_freiburg.informatik.ultimate.automata.ExampleNWAFactory;
+import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 import de.uni_freiburg.informatik.ultimate.core.services.IBacktranslationService;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -24,7 +25,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Roo
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.Result;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolantAutomaton;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.LanguageOperation;
 import de.uni_freiburg.informatik.ultimate.result.AllSpecificationsHoldResult;
 import de.uni_freiburg.informatik.ultimate.result.BenchmarkResult;
 import de.uni_freiburg.informatik.ultimate.result.CounterExampleResult;
@@ -177,14 +180,22 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 	private void iterate(String name, RootNode root, TAPreferences taPrefs, SmtManager smtManager,
 			TraceAbstractionBenchmarks taBenchmark, Collection<ProgramPoint> errorLocs) {
 		BasicCegarLoop basicCegarLoop;
-		if (taPrefs.interpolantAutomaton() == InterpolantAutomaton.TOTALINTERPOLATION) {
-			basicCegarLoop = new CegarLoopSWBnonRecursive(name, root, smtManager, taBenchmark, taPrefs, errorLocs,
-					taPrefs.interpolation(), taPrefs.computeHoareAnnotation(), mServices);
-			// abstractCegarLoop = new CegarLoopSequentialWithBackedges(name,
-			// root, smtManager, timingStatistics,taPrefs, errorLocs);
+		LanguageOperation languageOperation = (new UltimatePreferenceStore(Activator.s_PLUGIN_ID)).getEnum(
+				TraceAbstractionPreferenceInitializer.LABEL_LanguageOperation,
+				LanguageOperation.class);
+		if (languageOperation == LanguageOperation.DIFFERENCE) {		
+			if (taPrefs.interpolantAutomaton() == InterpolantAutomaton.TOTALINTERPOLATION) {
+				basicCegarLoop = new CegarLoopSWBnonRecursive(name, root, smtManager, taBenchmark, taPrefs, errorLocs,
+						taPrefs.interpolation(), taPrefs.computeHoareAnnotation(), mServices);
+				// abstractCegarLoop = new CegarLoopSequentialWithBackedges(name,
+				// root, smtManager, timingStatistics,taPrefs, errorLocs);
+			} else {
+				basicCegarLoop = new BasicCegarLoop(name, root, smtManager, taPrefs, errorLocs, taPrefs.interpolation(),
+						taPrefs.computeHoareAnnotation(), mServices);
+			}
 		} else {
-			basicCegarLoop = new BasicCegarLoop(name, root, smtManager, taPrefs, errorLocs, taPrefs.interpolation(),
-					taPrefs.computeHoareAnnotation(), mServices);
+			basicCegarLoop = new IncrementalInclusionCegarLoop(name, root, smtManager, taPrefs, errorLocs, taPrefs.interpolation(), 
+					taPrefs.computeHoareAnnotation(), mServices, languageOperation);
 		}
 
 		Result result = basicCegarLoop.iterate();

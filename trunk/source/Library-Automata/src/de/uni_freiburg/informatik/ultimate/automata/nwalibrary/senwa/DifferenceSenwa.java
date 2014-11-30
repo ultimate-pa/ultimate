@@ -51,13 +51,14 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.DifferenceState;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.IOpWithDelayedDeadEndRemoval;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.senwa.SenwaWalker.ISuccessorVisitor;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 
 public class DifferenceSenwa<LETTER, STATE> implements 
 								ISuccessorVisitor<LETTER, STATE>,
 								IOperation<LETTER, STATE>,
 								IOpWithDelayedDeadEndRemoval<LETTER, STATE>{
 	
-	
+	private final IUltimateServiceProvider m_Services;
 	private static Logger s_Logger = 
 			NestedWordAutomata.getLogger();
 		
@@ -115,10 +116,11 @@ public class DifferenceSenwa<LETTER, STATE> implements
 	
 	
 	
-	public DifferenceSenwa(
+	public DifferenceSenwa(IUltimateServiceProvider services,
 			INestedWordAutomatonOldApi<LETTER,STATE> minuend,
 			INestedWordAutomatonOldApi<LETTER,STATE> subtrahend)
 					throws OperationCanceledException {
+		m_Services = services;
 		contentFactory = minuend.getStateFactory();
 		this.minuend = minuend;
 		this.subtrahend = subtrahend;
@@ -128,29 +130,32 @@ public class DifferenceSenwa<LETTER, STATE> implements
 		this.stateDeterminizer = new StateDeterminizerCache<LETTER, STATE>(
 							new PowersetDeterminizer<LETTER,STATE>(subtrahend, true, contentFactory)); 
 		
-		m_Senwa = new Senwa<LETTER, STATE>(minuend.getInternalAlphabet(), minuend.getCallAlphabet(), 
+		m_Senwa = new Senwa<LETTER, STATE>(m_Services, 
+				minuend.getInternalAlphabet(), minuend.getCallAlphabet(), 
 				minuend.getReturnAlphabet(), minuend.getStateFactory());
-		m_SenwaWalker = new SenwaWalker<LETTER, STATE>(m_Senwa, this, true);
+		m_SenwaWalker = new SenwaWalker<LETTER, STATE>(m_Services, m_Senwa, this, true);
 		s_Logger.info(exitMessage());
 	}
 	
 	
 	public DifferenceSenwa(
+			IUltimateServiceProvider services,
 			INestedWordAutomaton<LETTER,STATE> minuend,
 			INestedWordAutomaton<LETTER,STATE> subtrahend,
 			IStateDeterminizer<LETTER,STATE> stateDeterminizer,
 			boolean removeDeadEndsImmediately)
 					throws OperationCanceledException {
+		m_Services = services;
 		contentFactory = minuend.getStateFactory();
 		if (minuend instanceof INestedWordAutomatonOldApi) {
 			this.minuend = (INestedWordAutomatonOldApi<LETTER, STATE>) minuend;
 		} else {
-			this.minuend = (new RemoveUnreachable<LETTER,STATE>(minuend)).getResult();
+			this.minuend = (new RemoveUnreachable<LETTER,STATE>(m_Services, minuend)).getResult();
 		}
 		if (subtrahend instanceof INestedWordAutomatonOldApi) {
 			this.subtrahend = (INestedWordAutomatonOldApi<LETTER, STATE>) minuend;
 		} else {
-			this.subtrahend = (new RemoveUnreachable<LETTER,STATE>(minuend)).getResult();
+			this.subtrahend = (new RemoveUnreachable<LETTER,STATE>(m_Services, minuend)).getResult();
 		}
 		s_Logger.info(startMessage());
 		
@@ -158,9 +163,10 @@ public class DifferenceSenwa<LETTER, STATE> implements
 		this.stateDeterminizer = new StateDeterminizerCache<LETTER, STATE>(
 				stateDeterminizer); 
 		
-		m_Senwa = new Senwa<LETTER, STATE>(minuend.getInternalAlphabet(), minuend.getCallAlphabet(), 
+		m_Senwa = new Senwa<LETTER, STATE>(m_Services,
+				minuend.getInternalAlphabet(), minuend.getCallAlphabet(), 
 				minuend.getReturnAlphabet(), minuend.getStateFactory());
-		m_SenwaWalker = new SenwaWalker<LETTER, STATE>(m_Senwa, this, removeDeadEndsImmediately);
+		m_SenwaWalker = new SenwaWalker<LETTER, STATE>(m_Services, m_Senwa, this, removeDeadEndsImmediately);
 		s_Logger.info(exitMessage());
 	}
 	
@@ -331,11 +337,11 @@ public class DifferenceSenwa<LETTER, STATE> implements
 		if (stateDeterminizer instanceof PowersetDeterminizer) {
 			s_Logger.info("Start testing correctness of " + operationName());
 
-			INestedWordAutomatonOldApi<LETTER,STATE> resultSadd = (new DifferenceSadd<LETTER,STATE>(stateFactory, minuend, subtrahend)).getResult();
-			correct &= (ResultChecker.nwaLanguageInclusion(resultSadd, m_Senwa, stateFactory) == null);
-			correct &= (ResultChecker.nwaLanguageInclusion(m_Senwa, resultSadd, stateFactory) == null);
+			INestedWordAutomatonOldApi<LETTER,STATE> resultSadd = (new DifferenceSadd<LETTER,STATE>(m_Services, stateFactory, minuend, subtrahend)).getResult();
+			correct &= (ResultChecker.nwaLanguageInclusion(m_Services, resultSadd, m_Senwa, stateFactory) == null);
+			correct &= (ResultChecker.nwaLanguageInclusion(m_Services, m_Senwa, resultSadd, stateFactory) == null);
 			if (!correct) {
-			ResultChecker.writeToFileIfPreferred(operationName() + "Failed", "", minuend,subtrahend);
+			ResultChecker.writeToFileIfPreferred(m_Services, operationName() + "Failed", "", minuend,subtrahend);
 			}
 			s_Logger.info("Finished testing correctness of " + operationName());
 		} else {

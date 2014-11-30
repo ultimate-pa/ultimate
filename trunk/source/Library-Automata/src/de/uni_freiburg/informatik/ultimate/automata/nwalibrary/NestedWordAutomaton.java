@@ -42,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.ConcurrentProduct;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsEmpty;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 
 /**
  * 
@@ -54,6 +55,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsEmpt
 public class NestedWordAutomaton<LETTER, STATE> implements INestedWordAutomatonOldApi<LETTER, STATE>,
 		INestedWordAutomaton<LETTER, STATE> {
 
+	private final IUltimateServiceProvider m_Services;
 	private static Logger s_Logger = NestedWordAutomata.getLogger();
 
 	private Set<LETTER> m_InternalAlphabet;
@@ -1978,8 +1980,10 @@ public class NestedWordAutomaton<LETTER, STATE> implements INestedWordAutomatonO
 		// assert checkTransitionsStoredConsistent();
 	}
 
-	public NestedWordAutomaton(Set<LETTER> internalAlphabet, Set<LETTER> callAlphabet, Set<LETTER> returnAlphabet,
+	public NestedWordAutomaton(IUltimateServiceProvider services,
+			Set<LETTER> internalAlphabet, Set<LETTER> callAlphabet, Set<LETTER> returnAlphabet,
 			StateFactory<STATE> stateFactory) {
+		m_Services = services;
 		if (internalAlphabet == null) {
 			throw new IllegalArgumentException("nwa must have internal alphabet");
 		}
@@ -2261,12 +2265,12 @@ public class NestedWordAutomaton<LETTER, STATE> implements INestedWordAutomatonO
 	}
 
 	public INestedWordAutomatonOldApi<LETTER, STATE> concurrentProduct(INestedWordAutomatonOldApi<LETTER, STATE> nwa) {
-		return (new ConcurrentProduct<LETTER, STATE>(this, nwa, false)).getResult();
+		return (new ConcurrentProduct<LETTER, STATE>(m_Services, this, nwa, false)).getResult();
 	}
 
 	public INestedWordAutomatonOldApi<LETTER, STATE> concurrentPrefixProduct(
 			INestedWordAutomatonOldApi<LETTER, STATE> nwa) {
-		return (new ConcurrentProduct<LETTER, STATE>(this, nwa, true)).getResult();
+		return (new ConcurrentProduct<LETTER, STATE>(m_Services, this, nwa, true)).getResult();
 	}
 
 	/**
@@ -2522,7 +2526,7 @@ public class NestedWordAutomaton<LETTER, STATE> implements INestedWordAutomatonO
 
 	@Override
 	public String toString() {
-		return (new AtsDefinitionPrinter<String, String>("nwa", this)).getDefinitionAsString();
+		return (new AtsDefinitionPrinter<String, String>(m_Services, "nwa", this)).getDefinitionAsString();
 	}
 
 	/**

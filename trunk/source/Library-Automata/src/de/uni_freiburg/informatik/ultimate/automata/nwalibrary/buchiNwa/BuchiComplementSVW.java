@@ -33,6 +33,7 @@ import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 
 /**
  * Büchi complementation based on the method of Sistla, Vardi, Wolper: <br>
@@ -48,6 +49,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
  */
 public class BuchiComplementSVW<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	
+	private final IUltimateServiceProvider m_Services;
 	private static Logger s_Logger = 
 		NestedWordAutomata.getLogger();
 	
@@ -72,11 +74,13 @@ public class BuchiComplementSVW<LETTER,STATE> implements IOperation<LETTER,STATE
 				m_Result.sizeInformation();
 	}
 		
-	public BuchiComplementSVW(INestedWordAutomatonOldApi<LETTER,STATE> operand)
+	public BuchiComplementSVW(IUltimateServiceProvider services,
+			INestedWordAutomatonOldApi<LETTER,STATE> operand)
 			throws OperationCanceledException {
+		m_Services = services;
 		m_Operand = operand;
 		s_Logger.info(startMessage());
-		m_Result = new BuchiComplementAutomatonSVW<LETTER, STATE>(operand);
+		m_Result = new BuchiComplementAutomatonSVW<LETTER, STATE>(m_Services, operand);
 		s_Logger.info(exitMessage());
 	}
 
@@ -89,7 +93,7 @@ public class BuchiComplementSVW<LETTER,STATE> implements IOperation<LETTER,STATE
 	@Override
 	public boolean checkResult(StateFactory<STATE> stateFactory)
 			throws OperationCanceledException {
-		return ResultChecker.buchiComplement(m_Operand, m_Result);
+		return ResultChecker.buchiComplement(m_Services, m_Operand, m_Result);
 	}
 	
 }

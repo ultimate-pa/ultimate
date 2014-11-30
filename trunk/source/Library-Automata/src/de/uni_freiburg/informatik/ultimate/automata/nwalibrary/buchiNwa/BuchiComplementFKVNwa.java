@@ -52,6 +52,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IStateDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.DeterminizedState;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.IDeterminizedState;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.util.TreeRelation;
 
 	
@@ -64,6 +65,7 @@ import de.uni_freiburg.informatik.ultimate.util.TreeRelation;
  */
 public class BuchiComplementFKVNwa<LETTER,STATE> implements INestedWordAutomatonSimple<LETTER,STATE> {
 	
+	private final IUltimateServiceProvider m_Services;
 	private static Logger s_Logger = 
 		NestedWordAutomata.getLogger();
 	
@@ -117,12 +119,15 @@ public class BuchiComplementFKVNwa<LETTER,STATE> implements INestedWordAutomaton
 	
 	
 	
-	public BuchiComplementFKVNwa(INestedWordAutomatonSimple<LETTER,STATE> operand,
+	public BuchiComplementFKVNwa(IUltimateServiceProvider services,
+			INestedWordAutomatonSimple<LETTER,STATE> operand,
 			IStateDeterminizer<LETTER,STATE> stateDeterminizer,
 			StateFactory<STATE> stateFactory) throws OperationCanceledException {
+		m_Services = services;
 		m_Operand = operand;
 		m_StateFactory = stateFactory;
 		m_Cache = new NestedWordAutomatonCache<LETTER, STATE>(
+				m_Services,
 				operand.getInternalAlphabet(), operand.getCallAlphabet(), 
 				operand.getReturnAlphabet(), m_StateFactory);
 		m_StateDeterminizer = stateDeterminizer;

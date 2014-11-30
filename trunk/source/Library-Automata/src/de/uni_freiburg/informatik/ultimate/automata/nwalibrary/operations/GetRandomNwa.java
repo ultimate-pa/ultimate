@@ -41,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StringFactory;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 
 /**
  * Class that provides the method {@code generateAutomaton()} for randomly
@@ -51,6 +52,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StringFactory;
  */
 public class GetRandomNwa implements IOperation<String,String> {
 	
+	private final IUltimateServiceProvider m_Services;
 	protected static Logger s_Logger = 
 			NestedWordAutomata.getLogger();
 	
@@ -73,11 +75,13 @@ public class GetRandomNwa implements IOperation<String,String> {
 	 * @param returnTransitionProbability
 	 * @param acceptanceDensity
 	 */
-	public GetRandomNwa(int alphabetSize, int size, 
+	public GetRandomNwa(IUltimateServiceProvider services,
+			int alphabetSize, int size, 
 			double internalTransitionDensity,
 			double callTransitionProbability,
 			double returnTransitionProbability,
 			double acceptanceDensity) {
+		m_Services = services;
 		m_Random = new Random();
 		m_alphabetSize = alphabetSize;
 		m_size = size;
@@ -102,11 +106,13 @@ public class GetRandomNwa implements IOperation<String,String> {
 	 * @param returnTransitionProbability
 	 * @param acceptanceDensity
 	 */
-	public GetRandomNwa(int alphabetSize, int size, 
+	public GetRandomNwa(IUltimateServiceProvider services,
+			int alphabetSize, int size, 
 			int internalTransitionDensity,
 			int callTransitionProbability,
 			int returnTransitionProbability,
 			int acceptanceDensity) {
+		m_Services = services;
 		m_Random = new Random();
 		m_alphabetSize = alphabetSize;
 		m_size = size;
@@ -223,9 +229,11 @@ public class GetRandomNwa implements IOperation<String,String> {
 		NestedWordAutomaton<String,String> result;
 		if (isFiniteAutomaton) {
 			result = new NestedWordAutomaton<String,String>(
+					m_Services, 
 					new HashSet<String>(num2Letter), null, null,	stateFactory);			
 		} else {
 			result = new NestedWordAutomaton<String,String>(
+					m_Services, 
 					new HashSet<String>(num2Letter),
 					new HashSet<String>(num2Letter), 
 					new HashSet<String>(num2Letter),	stateFactory);						

@@ -48,6 +48,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAu
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.NestedWordAutomatonReachableStates.StronglyConnectedComponents;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.NestedWordAutomatonReachableStates.StronglyConnectedComponents.SCC;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.StateContainer.DownStateProp;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.util.HashRelation;
 
 
@@ -62,29 +63,32 @@ import de.uni_freiburg.informatik.ultimate.util.HashRelation;
  */
 class LassoExtractor<LETTER, STATE> {
 	
+	private final IUltimateServiceProvider m_Services;
 	private static Logger s_Logger = NestedWordAutomata.getLogger();
 
 	private final NestedWordAutomatonReachableStates<LETTER, STATE> m_Nwars;
 
 	private final NestedLassoRun<LETTER, STATE> m_nlr;
 
-	public LassoExtractor(NestedWordAutomatonReachableStates<LETTER, STATE> nwars,
+	public LassoExtractor(IUltimateServiceProvider services, 
+			NestedWordAutomatonReachableStates<LETTER, STATE> nwars,
 			StateContainer<LETTER, STATE> honda, 
 			SCC scc, 
 			HashRelation<StateContainer<LETTER, STATE>, Summary<LETTER, STATE>> acceptingSummaries) throws OperationCanceledException {
+		m_Services = services;
 		m_Nwars = nwars;
 		Set<SuccInfo> forbiddenSummaries = Collections.emptySet();
 		LoopFinder lf = new LoopFinder(honda, scc, true, 
 				acceptingSummaries, forbiddenSummaries);
 		NestedRun<LETTER, STATE> loop = lf.getNestedRun();
 		assert loop.getLength() > 1 : "looping epsilon transition";
-		NestedRun<LETTER, STATE> stem = (new RunConstructor<LETTER, STATE>(m_Nwars, honda)).constructRun();
+		NestedRun<LETTER, STATE> stem = (new RunConstructor<LETTER, STATE>(m_Services, m_Nwars, honda)).constructRun();
 		s_Logger.debug("Stem length: " + stem.getLength());
 		s_Logger.debug("Loop length: " + loop.getLength());
 		m_nlr = new NestedLassoRun<LETTER, STATE>(stem, loop);
 		s_Logger.debug("Stem " + stem);
 		s_Logger.debug("Loop " + loop);
-		assert (new BuchiAccepts<LETTER, STATE>(m_Nwars, m_nlr.getNestedLassoWord())).getResult();
+		assert (new BuchiAccepts<LETTER, STATE>(m_Services, m_Nwars, m_nlr.getNestedLassoWord())).getResult();
 	}
 
 	NestedLassoRun<LETTER, STATE> getNestedLassoRun() {

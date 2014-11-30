@@ -41,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.ReachableStatesCopy;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 
 /**
  * @author Markus Lindenmann (lindenmm@informatik.uni-freiburg.de)
@@ -48,6 +49,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.
  * @date 10.12.2011
  */
 public class BuchiReduce<LETTER,STATE> implements IOperation<LETTER,STATE> {
+	private final IUltimateServiceProvider m_Services;
     private static Logger s_Logger = NestedWordAutomata.getLogger();
     /**
      * The resulting Buchi automaton.
@@ -65,26 +67,27 @@ public class BuchiReduce<LETTER,STATE> implements IOperation<LETTER,STATE> {
      *            the automaton to reduce
      * @throws OperationCanceledException 
      */
-    public BuchiReduce(StateFactory<STATE> stateFactory, INestedWordAutomatonOldApi<LETTER,STATE> operand)
+    public BuchiReduce(IUltimateServiceProvider services, StateFactory<STATE> stateFactory, INestedWordAutomatonOldApi<LETTER,STATE> operand)
             throws OperationCanceledException {
+    	m_Services = services;
     	m_Operand = operand;
         BuchiReduce.s_Logger.info(startMessage());
         
         // Remove dead ends. 
         // Removal of dead ends is no optimization but a requirement for
         // correctness of the algorithm
-        m_Operand = new ReachableStatesCopy<LETTER,STATE>(operand,false,false,true,false).getResult();
+        m_Operand = new ReachableStatesCopy<LETTER,STATE>(m_Services, operand,false,false,true,false).getResult();
     	if(s_Logger.isDebugEnabled()) {
 	    	StringBuilder msg = new StringBuilder();
 	        msg.append(" W/O dead ends ").append(m_Operand.sizeInformation());
 	        s_Logger.debug(msg.toString());
     	}
-        m_Result = new DelayedSimulation<LETTER,STATE>(m_Operand, true, stateFactory).result;
+        m_Result = new DelayedSimulation<LETTER,STATE>(m_Services, m_Operand, true, stateFactory).result;
         
         boolean compareWithNonSccResult = false;
         if (compareWithNonSccResult) {
         	NestedWordAutomaton<LETTER,STATE> nonSCCresult = 
-        			new DelayedSimulation<LETTER,STATE>(m_Operand, false, stateFactory).result;
+        			new DelayedSimulation<LETTER,STATE>(m_Services, m_Operand, false, stateFactory).result;
         	if (m_Result.size() != nonSCCresult.size()) {
         		throw new AssertionError();
         	}
@@ -118,6 +121,6 @@ public class BuchiReduce<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	@Override
 	public boolean checkResult(StateFactory<STATE> stateFactory)
 			throws AutomataLibraryException {
-		return ResultChecker.reduceBuchi(m_Operand, m_Result);
+		return ResultChecker.reduceBuchi(m_Services, m_Operand, m_Result);
 	}
 }

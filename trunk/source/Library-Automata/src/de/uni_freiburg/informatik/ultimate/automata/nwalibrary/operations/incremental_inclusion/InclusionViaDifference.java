@@ -27,6 +27,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.incre
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
@@ -35,6 +36,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Determ
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IntersectNwa;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsEmpty;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.PowersetDeterminizer;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.RemoveDeadEnds;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 
 /**
@@ -51,14 +53,33 @@ import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvide
  */
 public class InclusionViaDifference<LETTER, STATE> extends
 		AbstractIncrementalInclusionCheck<LETTER, STATE> {
-	private final  StateFactory<STATE> m_StateFactory;
+	private final StateFactory<STATE> m_StateFactoryIntersect;
+	private final StateFactory<STATE> m_StateFactoryDeterminize;
 	private INestedWordAutomatonSimple<LETTER, STATE> m_Difference;
 
+	
 	public InclusionViaDifference(IUltimateServiceProvider services,
 			StateFactory<STATE> stateFactory,
 			INestedWordAutomatonSimple<LETTER, STATE> a) {
 		super(services, a);
-		m_StateFactory = stateFactory;
+		m_StateFactoryIntersect = stateFactory;
+		m_StateFactoryDeterminize = stateFactory;
+		// initialize difference. B_1,...,B_n is emtpy
+		m_Difference = a;
+	}
+	
+	/**
+	 * Constructor that uses different stateFactories for intersection and
+	 * determinization. This is currently needed when we use the inclusion
+	 * check in program verification. 
+	 */
+	public InclusionViaDifference(IUltimateServiceProvider services,
+			StateFactory<STATE> stateFactoryIntersect,
+			StateFactory<STATE> stateFactoryDeterminize,
+			INestedWordAutomatonSimple<LETTER, STATE> a) {
+		super(services, a);
+		m_StateFactoryIntersect = stateFactoryIntersect;
+		m_StateFactoryDeterminize = stateFactoryDeterminize;
 		// initialize difference. B_1,...,B_n is emtpy
 		m_Difference = a;
 	}
@@ -73,12 +94,13 @@ public class InclusionViaDifference<LETTER, STATE> extends
 	public void addSubtrahend(INestedWordAutomatonSimple<LETTER, STATE> nwa) throws AutomataLibraryException {
 		super.addSubtrahend(nwa);
 		INestedWordAutomatonSimple<LETTER, STATE> determinized = 
-				new DeterminizeNwa<>(nwa, new PowersetDeterminizer<>(nwa, true, m_StateFactory), m_StateFactory);
+				new DeterminizeNwa<>(m_Services, nwa, new PowersetDeterminizer<>(nwa, true, m_StateFactoryDeterminize), m_StateFactoryDeterminize);
 		INestedWordAutomatonSimple<LETTER, STATE> complemented =
 				new ComplementDeterministicNwa<>(determinized);
 		INestedWordAutomatonSimple<LETTER, STATE> difference =
-				new IntersectNwa<>(m_Difference, complemented, m_StateFactory, false);
-		m_Difference = difference;
+				new IntersectNwa<>(m_Difference, complemented, m_StateFactoryIntersect, false);
+		 INestedWordAutomatonOldApi<LETTER, STATE> removedDeadEnds = (new RemoveDeadEnds<LETTER, STATE>(m_Services, difference)).getResult();
+		m_Difference = removedDeadEnds;
 	}
 	
 

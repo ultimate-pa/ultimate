@@ -11,6 +11,7 @@ import org.apache.log4j.Logger;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -30,6 +31,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  * @author heizmann@informatik.uni-freiburg.de
  */
 public class CoverageAnalysis {
+	
+	protected final IUltimateServiceProvider m_Services;
 
 	protected final Logger mLogger ;
 	
@@ -49,9 +52,10 @@ public class CoverageAnalysis {
 	protected final TraceChecker m_TraceChecker;
 	protected final InterpolantsPreconditionPostcondition m_IPP;
 
-	public CoverageAnalysis(
+	public CoverageAnalysis(IUltimateServiceProvider services, 
 			TraceChecker traceChecker,
 			List<ProgramPoint> programPointSequence, Logger logger) {
+		m_Services = services;
 		mLogger = logger;
 		m_Interpolants = traceChecker.getInterpolants();
 		m_NestedWord = NestedWord.nestedWord(traceChecker.getTrace());

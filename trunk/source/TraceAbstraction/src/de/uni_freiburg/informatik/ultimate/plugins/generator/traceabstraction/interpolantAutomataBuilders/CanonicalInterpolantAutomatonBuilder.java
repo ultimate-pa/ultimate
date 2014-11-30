@@ -11,6 +11,7 @@ import org.apache.log4j.Logger;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.InCaReAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
@@ -39,11 +40,11 @@ public class CanonicalInterpolantAutomatonBuilder extends CoverageAnalysis {
 
 	private final Map<Integer, Set<IPredicate>> m_AlternativeCallPredecessors = new HashMap<Integer, Set<IPredicate>>();
 
-	public CanonicalInterpolantAutomatonBuilder(TraceChecker traceChecker, List<ProgramPoint> programPointSequence,
+	public CanonicalInterpolantAutomatonBuilder(IUltimateServiceProvider services, TraceChecker traceChecker, List<ProgramPoint> programPointSequence,
 			InCaReAlphabet<CodeBlock> alphabet, SmtManager smtManager, StateFactory<IPredicate> predicateFactory,
 			Logger logger) {
-		super(traceChecker, programPointSequence, logger);
-		m_IA = new NestedWordAutomaton<CodeBlock, IPredicate>(alphabet.getInternalAlphabet(),
+		super(services, traceChecker, programPointSequence, logger);
+		m_IA = new NestedWordAutomaton<CodeBlock, IPredicate>(m_Services, alphabet.getInternalAlphabet(),
 				alphabet.getCallAlphabet(), alphabet.getReturnAlphabet(), predicateFactory);
 		m_SmtManager = smtManager;
 	}

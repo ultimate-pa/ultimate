@@ -36,6 +36,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsDeterministic;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 
 /**
  * This is the superclass of all minimization classes.
@@ -51,6 +52,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsDete
  */
 public abstract class AMinimizeNwa<LETTER, STATE>
 		implements IOperation<LETTER, STATE> {
+	
+	protected final IUltimateServiceProvider m_Services;
 	/**
 	 * The logger.
 	 */
@@ -78,8 +81,10 @@ public abstract class AMinimizeNwa<LETTER, STATE>
 	 * @param name operation name
 	 * @param operand input automaton
 	 */
-	protected AMinimizeNwa(StateFactory<STATE> stateFactory, final String name,
+	protected AMinimizeNwa(IUltimateServiceProvider services,
+			StateFactory<STATE> stateFactory, final String name,
 			final INestedWordAutomaton<LETTER, STATE> operand) {
+		m_Services = services;
 		m_name = name;
 		m_operand = operand;
 		m_StateFactory = stateFactory;
@@ -126,7 +131,7 @@ public abstract class AMinimizeNwa<LETTER, STATE>
 			message = "The result recognizes more words than before.";
 		}
 		
-		ResultChecker.writeToFileIfPreferred(
+		ResultChecker.writeToFileIfPreferred(m_Services, 
 				operationName() + " failed",
 				message,
 				m_operand);
@@ -148,9 +153,9 @@ public abstract class AMinimizeNwa<LETTER, STATE>
 			final INestedWordAutomatonSimple<LETTER, STATE> superset,
 			final StateFactory<STATE> stateFactory)
 				throws AutomataLibraryException {
-		return ResultChecker.nwaLanguageInclusion(
-				ResultChecker.getOldApiNwa(subset),
-				ResultChecker.getOldApiNwa(superset),
+		return ResultChecker.nwaLanguageInclusion(m_Services, 
+				ResultChecker.getOldApiNwa(m_Services, subset),
+				ResultChecker.getOldApiNwa(m_Services, superset),
 				stateFactory) == null;
 	}
 	
@@ -175,7 +180,7 @@ public abstract class AMinimizeNwa<LETTER, STATE>
 	 */
 	protected final boolean checkForDeterminism()
 			throws AutomataLibraryException {
-		return new IsDeterministic<LETTER, STATE>(m_operand).
+		return new IsDeterministic<LETTER, STATE>(m_Services, m_operand).
 				checkResult(m_operand.getStateFactory());
 	}
 	
@@ -207,7 +212,7 @@ public abstract class AMinimizeNwa<LETTER, STATE>
 	 */
 	protected final void checkForContinuation()
 			throws OperationCanceledException {
-		if (! NestedWordAutomata.getMonitor().continueProcessing()) {
+		if (!m_Services.getProgressMonitorService().continueProcessing()) {
 			throw new OperationCanceledException();
 		}
 	}

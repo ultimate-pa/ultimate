@@ -50,7 +50,7 @@ public class AutomataScriptInterpreterObserver implements IUnmanagedObserver {
 			printAutomaton = getDummyAutomatonWithMessage();
 		}
 		try {
-			mGraphrootOfUltimateModelOfLastPrintedAutomaton = Automaton2UltimateModel.ultimateModel(printAutomaton);
+			mGraphrootOfUltimateModelOfLastPrintedAutomaton = Automaton2UltimateModel.ultimateModel(mServices, printAutomaton);
 		} catch (OperationCanceledException e) {
 			mLogger.warn("Nothing visualized because of timeout");
 		}
@@ -87,7 +87,7 @@ public class AutomataScriptInterpreterObserver implements IUnmanagedObserver {
 
 	public IAutomaton<String, String> getDummyAutomatonWithMessage() {
 		NestedWordAutomaton<String, String> dummyAutomaton = new NestedWordAutomaton<String, String>(
-				new HashSet<String>(0), null, null, new StringFactory());
+				mServices, new HashSet<String>(0), null, null, new StringFactory());
 		dummyAutomaton.addState(true, false, "Use the print keyword in .ats file to select an automaton"
 				+ " for visualization");
 		return dummyAutomaton;

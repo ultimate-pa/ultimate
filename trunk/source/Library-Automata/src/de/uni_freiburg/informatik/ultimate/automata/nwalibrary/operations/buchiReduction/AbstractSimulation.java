@@ -52,12 +52,14 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.Player0Vertex;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.Player1Vertex;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.Vertex;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 
 /**
  * @author Markus Lindenmann (lindenmm@informatik.uni-freiburg.de)
  * @author Oleksii Saukh (saukho@informatik.uni-freiburg.de)
  */
 public abstract class AbstractSimulation<LETTER,STATE> {
+	protected final IUltimateServiceProvider m_Services;
     /**
      * Vertex set 0.
      */
@@ -103,8 +105,10 @@ public abstract class AbstractSimulation<LETTER,STATE> {
      * @param stateFactory TODO
      * @throws OperationCanceledException
      */
-    public AbstractSimulation(INestedWordAutomatonOldApi<LETTER,STATE> ba, boolean useSCCs, StateFactory<STATE> stateFactory)
+    public AbstractSimulation(IUltimateServiceProvider services,
+    		INestedWordAutomatonOldApi<LETTER,STATE> ba, boolean useSCCs, StateFactory<STATE> stateFactory)
             throws OperationCanceledException {
+    	m_Services = services;
         this.v0 = new HashSet<Player0Vertex<LETTER,STATE>>();
         this.v1 = new HashSet<Player1Vertex<LETTER,STATE>>();
         this.e = new HashMap<Vertex<LETTER,STATE>, HashSet<Vertex<LETTER, STATE>>>();
@@ -242,7 +246,7 @@ public abstract class AbstractSimulation<LETTER,STATE> {
                     }
                 }
             }
-            if (!NestedWordAutomata.getMonitor().continueProcessing()) {
+            if (!m_Services.getProgressMonitorService().continueProcessing()) {
                 s_Logger.debug("Stopped in efficientLiftingAlgorithm");
                 throw new OperationCanceledException();
             }

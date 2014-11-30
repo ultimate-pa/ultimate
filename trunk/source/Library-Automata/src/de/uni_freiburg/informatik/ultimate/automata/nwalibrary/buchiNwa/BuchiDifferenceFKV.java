@@ -41,10 +41,12 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IStateDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.PowersetDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.NestedWordAutomatonReachableStates;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 
 
 public class BuchiDifferenceFKV<LETTER,STATE> implements IOperation<LETTER,STATE> {
 
+	private final IUltimateServiceProvider m_Services;
 	protected static Logger s_Logger = 
 		NestedWordAutomata.getLogger();
 	
@@ -87,10 +89,12 @@ public class BuchiDifferenceFKV<LETTER,STATE> implements IOperation<LETTER,STATE
 	
 	
 	
-	public BuchiDifferenceFKV(StateFactory<STATE> stateFactory,
+	public BuchiDifferenceFKV(IUltimateServiceProvider services,
+			StateFactory<STATE> stateFactory,
 			INestedWordAutomatonSimple<LETTER,STATE> fstOperand,
 			INestedWordAutomatonSimple<LETTER,STATE> sndOperand
 			) throws AutomataLibraryException {
+		m_Services = services;
 		m_FstOperand = fstOperand;
 		m_SndOperand = sndOperand;
 		m_StateFactory = m_FstOperand.getStateFactory();
@@ -101,10 +105,12 @@ public class BuchiDifferenceFKV<LETTER,STATE> implements IOperation<LETTER,STATE
 	}
 	
 	
-	public BuchiDifferenceFKV(INestedWordAutomatonSimple<LETTER,STATE> fstOperand,
+	public BuchiDifferenceFKV(IUltimateServiceProvider services,
+			INestedWordAutomatonSimple<LETTER,STATE> fstOperand,
 			INestedWordAutomatonSimple<LETTER,STATE> sndOperand,
 			IStateDeterminizer<LETTER, STATE> stateDeterminizer,
 			StateFactory<STATE> sf) throws AutomataLibraryException {
+		m_Services = services;
 		m_FstOperand = fstOperand;
 		m_SndOperand = sndOperand;
 		m_StateFactory = sf;
@@ -115,9 +121,9 @@ public class BuchiDifferenceFKV<LETTER,STATE> implements IOperation<LETTER,STATE
 	}
 	
 	private void computateDifference() throws AutomataLibraryException {
-		m_SndComplemented = new BuchiComplementFKVNwa<LETTER, STATE>(m_SndOperand, m_StateDeterminizer, m_StateFactory);
+		m_SndComplemented = new BuchiComplementFKVNwa<LETTER, STATE>(m_Services, m_SndOperand, m_StateDeterminizer, m_StateFactory);
 		m_Intersect = new BuchiIntersectNwa<LETTER, STATE>(m_FstOperand, m_SndComplemented, m_StateFactory);
-		m_Result = new NestedWordAutomatonReachableStates<LETTER, STATE>(m_Intersect);
+		m_Result = new NestedWordAutomatonReachableStates<LETTER, STATE>(m_Services, m_Intersect);
 	}
 	
 
@@ -146,20 +152,20 @@ public class BuchiDifferenceFKV<LETTER,STATE> implements IOperation<LETTER,STATE
 		boolean underApproximationOfComplement = false;
 		boolean correct = true;
 			s_Logger.info("Start testing correctness of " + operationName());
-			INestedWordAutomatonOldApi<LETTER, STATE> fstOperandOldApi = ResultChecker.getOldApiNwa(m_FstOperand);
-			INestedWordAutomatonOldApi<LETTER, STATE> sndOperandOldApi = ResultChecker.getOldApiNwa(m_SndOperand);
+			INestedWordAutomatonOldApi<LETTER, STATE> fstOperandOldApi = ResultChecker.getOldApiNwa(m_Services, m_FstOperand);
+			INestedWordAutomatonOldApi<LETTER, STATE> sndOperandOldApi = ResultChecker.getOldApiNwa(m_Services, m_SndOperand);
 			List<NestedLassoWord<LETTER>> lassoWords = new ArrayList<NestedLassoWord<LETTER>>();
-			BuchiIsEmpty<LETTER, STATE> fstOperandEmptiness = new BuchiIsEmpty<LETTER, STATE>(fstOperandOldApi);
+			BuchiIsEmpty<LETTER, STATE> fstOperandEmptiness = new BuchiIsEmpty<LETTER, STATE>(m_Services, fstOperandOldApi);
 			boolean fstOperandEmpty = fstOperandEmptiness.getResult();
 			if (!fstOperandEmpty) {
 				lassoWords.add(fstOperandEmptiness.getAcceptingNestedLassoRun().getNestedLassoWord());
 			}
-			BuchiIsEmpty<LETTER, STATE> sndOperandEmptiness = new BuchiIsEmpty<LETTER, STATE>(fstOperandOldApi);
+			BuchiIsEmpty<LETTER, STATE> sndOperandEmptiness = new BuchiIsEmpty<LETTER, STATE>(m_Services, fstOperandOldApi);
 			boolean sndOperandEmpty = sndOperandEmptiness.getResult();
 			if (!sndOperandEmpty) {
 				lassoWords.add(sndOperandEmptiness.getAcceptingNestedLassoRun().getNestedLassoWord());
 			}
-			BuchiIsEmpty<LETTER, STATE> resultEmptiness = new BuchiIsEmpty<LETTER, STATE>(m_Result);
+			BuchiIsEmpty<LETTER, STATE> resultEmptiness = new BuchiIsEmpty<LETTER, STATE>(m_Services, m_Result);
 			boolean resultEmpty = resultEmptiness.getResult();
 			if (!resultEmpty) {
 				lassoWords.add(resultEmptiness.getAcceptingNestedLassoRun().getNestedLassoWord());
@@ -169,16 +175,16 @@ public class BuchiDifferenceFKV<LETTER,STATE> implements IOperation<LETTER,STATE
 			lassoWords.add(ResultChecker.getRandomNestedLassoWord(m_Result, m_Result.size()));
 			lassoWords.add(ResultChecker.getRandomNestedLassoWord(m_Result, fstOperandOldApi.size()));
 			lassoWords.add(ResultChecker.getRandomNestedLassoWord(m_Result, sndOperandOldApi.size()));
-			lassoWords.addAll((new LassoExtractor<LETTER, STATE>(m_FstOperand)).getResult());
-			lassoWords.addAll((new LassoExtractor<LETTER, STATE>(m_SndOperand)).getResult());
-			lassoWords.addAll((new LassoExtractor<LETTER, STATE>(m_Result)).getResult());
+			lassoWords.addAll((new LassoExtractor<LETTER, STATE>(m_Services, m_FstOperand)).getResult());
+			lassoWords.addAll((new LassoExtractor<LETTER, STATE>(m_Services, m_SndOperand)).getResult());
+			lassoWords.addAll((new LassoExtractor<LETTER, STATE>(m_Services, m_Result)).getResult());
 
 			for (NestedLassoWord<LETTER> nlw : lassoWords) {
 				correct &= checkAcceptance(nlw, fstOperandOldApi, sndOperandOldApi, underApproximationOfComplement);
 				assert correct;
 			}
 			if (!correct) {
-				ResultChecker.writeToFileIfPreferred(operationName() + "Failed", "", m_FstOperand,m_SndOperand);
+				ResultChecker.writeToFileIfPreferred(m_Services, operationName() + "Failed", "", m_FstOperand,m_SndOperand);
 			}
 			s_Logger.info("Finished testing correctness of " + operationName());
 		return correct;
@@ -189,9 +195,9 @@ public class BuchiDifferenceFKV<LETTER,STATE> implements IOperation<LETTER,STATE
 			INestedWordAutomatonOldApi<LETTER, STATE> operand2,
 			boolean underApproximationOfComplement) throws OperationCanceledException {
 		boolean correct;
-		boolean op1 = (new BuchiAccepts<LETTER, STATE>(operand1, nlw)).getResult();
-		boolean op2 = (new BuchiAccepts<LETTER, STATE>(operand2, nlw)).getResult();
-		boolean res = (new BuchiAccepts<LETTER, STATE>(m_Result, nlw)).getResult();
+		boolean op1 = (new BuchiAccepts<LETTER, STATE>(m_Services, operand1, nlw)).getResult();
+		boolean op2 = (new BuchiAccepts<LETTER, STATE>(m_Services, operand2, nlw)).getResult();
+		boolean res = (new BuchiAccepts<LETTER, STATE>(m_Services, m_Result, nlw)).getResult();
 		if (res) {
 			correct = op1 && !op2;
 		} else {

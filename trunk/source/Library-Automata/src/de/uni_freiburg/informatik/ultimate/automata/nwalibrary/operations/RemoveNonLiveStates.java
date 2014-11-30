@@ -49,8 +49,11 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.BuchiIsE
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.NestedLassoWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.ReachableStatesCopy;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.NestedWordAutomatonReachableStates;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 
 public class RemoveNonLiveStates<LETTER,STATE> implements IOperation<LETTER,STATE> {
+	
+	private final IUltimateServiceProvider m_Services;
 	
 	private final INestedWordAutomatonSimple<LETTER,STATE> m_Input;
 	private final NestedWordAutomatonReachableStates<LETTER,STATE> m_Reach;
@@ -69,13 +72,15 @@ public class RemoveNonLiveStates<LETTER,STATE> implements IOperation<LETTER,STAT
 	 * @param nwa
 	 * @throws OperationCanceledException
 	 */
-	public RemoveNonLiveStates(INestedWordAutomatonSimple<LETTER,STATE> nwa)
+	public RemoveNonLiveStates(IUltimateServiceProvider services,
+			INestedWordAutomatonSimple<LETTER,STATE> nwa)
 			throws OperationCanceledException {
+		m_Services = services;
 		m_Input = nwa;
 		s_Logger.info(startMessage());
-		m_Reach = new NestedWordAutomatonReachableStates<LETTER, STATE>(m_Input);
+		m_Reach = new NestedWordAutomatonReachableStates<LETTER, STATE>(m_Services, m_Input);
 		m_Reach.computeNonLiveStates();
-		m_Result = new NestedWordAutomatonFilteredStates<LETTER, STATE>(m_Reach, m_Reach.getOnlyLiveStates());
+		m_Result = new NestedWordAutomatonFilteredStates<LETTER, STATE>(m_Services, m_Reach, m_Reach.getOnlyLiveStates());
 		s_Logger.info(exitMessage());
 //		assert (new TransitionConsitenceCheck<LETTER, STATE>(m_Result)).consistentForAll();
 	}
@@ -116,9 +121,9 @@ public class RemoveNonLiveStates<LETTER,STATE> implements IOperation<LETTER,STAT
 		if (m_Input instanceof INestedWordAutomatonOldApi) {
 			input = (INestedWordAutomatonOldApi<LETTER, STATE>) m_Input;
 		} else {
-			input = (new RemoveUnreachable<LETTER, STATE>(m_Input)).getResult(); 
+			input = (new RemoveUnreachable<LETTER, STATE>(m_Services, m_Input)).getResult(); 
 		}
-		ReachableStatesCopy<LETTER, STATE> rsc = (new ReachableStatesCopy<LETTER, STATE>(input, false, false, false, false));
+		ReachableStatesCopy<LETTER, STATE> rsc = (new ReachableStatesCopy<LETTER, STATE>(m_Services, input, false, false, false, false));
 //		Set<UpDownEntry<STATE>> rsaEntries = new HashSet<UpDownEntry<STATE>>();
 //		for (UpDownEntry<STATE> rde : m_Reach.getRemovedUpDownEntry()) {
 //			rsaEntries.add(rde);
@@ -181,14 +186,14 @@ public class RemoveNonLiveStates<LETTER,STATE> implements IOperation<LETTER,STAT
 		
 		
 		INestedWordAutomatonOldApi<LETTER, STATE> operandOldApi = 
-				ResultChecker.getOldApiNwa(m_Input);
+				ResultChecker.getOldApiNwa(m_Services, m_Input);
 		List<NestedLassoWord<LETTER>> lassoWords = new ArrayList<NestedLassoWord<LETTER>>();
-		BuchiIsEmpty<LETTER, STATE> operandEmptiness = new BuchiIsEmpty<LETTER, STATE>(operandOldApi);
+		BuchiIsEmpty<LETTER, STATE> operandEmptiness = new BuchiIsEmpty<LETTER, STATE>(m_Services, operandOldApi);
 		boolean operandEmpty = operandEmptiness.getResult();
 		if (!operandEmpty) {
 			lassoWords.add(operandEmptiness.getAcceptingNestedLassoRun().getNestedLassoWord());
 		}
-		BuchiIsEmpty<LETTER, STATE> resultEmptiness = new BuchiIsEmpty<LETTER, STATE>(m_Result);
+		BuchiIsEmpty<LETTER, STATE> resultEmptiness = new BuchiIsEmpty<LETTER, STATE>(m_Services, m_Result);
 		boolean resultEmpty = resultEmptiness.getResult();
 		if (!resultEmpty) {
 			lassoWords.add(resultEmptiness.getAcceptingNestedLassoRun().getNestedLassoWord());
@@ -208,7 +213,7 @@ public class RemoveNonLiveStates<LETTER,STATE> implements IOperation<LETTER,STAT
 		
 		
 		if (!correct) {
-			ResultChecker.writeToFileIfPreferred(operationName() + "Failed", "", m_Input);
+			ResultChecker.writeToFileIfPreferred(m_Services, operationName() + "Failed", "", m_Input);
 		}
 		s_Logger.info("Finished testing correctness of " + operationName());
 		return correct;
@@ -216,8 +221,8 @@ public class RemoveNonLiveStates<LETTER,STATE> implements IOperation<LETTER,STAT
 	
 	private boolean checkAcceptance(NestedLassoWord<LETTER> nlw,
 			INestedWordAutomatonOldApi<LETTER, STATE> operand) throws OperationCanceledException {
-		boolean op = (new BuchiAccepts<LETTER, STATE>(operand, nlw)).getResult();
-		boolean res = (new BuchiAccepts<LETTER, STATE>(m_Result, nlw)).getResult();
+		boolean op = (new BuchiAccepts<LETTER, STATE>(m_Services, operand, nlw)).getResult();
+		boolean res = (new BuchiAccepts<LETTER, STATE>(m_Services, m_Result, nlw)).getResult();
 		boolean correct = (op == res);
 		assert correct : operationName() + " wrong result!";
 		return correct;

@@ -37,10 +37,12 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.DeterminizeDD;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.NestedWordAutomatonReachableStates;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 
 
 public class Determinize<LETTER,STATE> implements IOperation<LETTER,STATE> {
 
+	private final IUltimateServiceProvider m_Services;
 	protected static Logger s_Logger = 
 		NestedWordAutomata.getLogger();
 	
@@ -71,13 +73,16 @@ public class Determinize<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	}
 	
 	
-	public Determinize(StateFactory<STATE> stateFactory, INestedWordAutomatonSimple<LETTER,STATE> input) throws OperationCanceledException {
+	public Determinize(IUltimateServiceProvider services,
+			StateFactory<STATE> stateFactory, 
+			INestedWordAutomatonSimple<LETTER,STATE> input) throws OperationCanceledException {
+		m_Services = services;
 		this.stateDeterminizer = new PowersetDeterminizer<LETTER, STATE>(input, true, stateFactory);
 		this.m_StateFactory = stateFactory;
 		this.m_Operand = input;
 		s_Logger.info(startMessage());
-		m_Determinized = new DeterminizeNwa<LETTER, STATE>(input, stateDeterminizer, m_StateFactory);
-		m_Result = new NestedWordAutomatonReachableStates<LETTER, STATE>(m_Determinized);
+		m_Determinized = new DeterminizeNwa<LETTER, STATE>(m_Services, input, stateDeterminizer, m_StateFactory);
+		m_Result = new NestedWordAutomatonReachableStates<LETTER, STATE>(m_Services, m_Determinized);
 		s_Logger.info(exitMessage());
 	}
 	
@@ -94,16 +99,17 @@ public class Determinize<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		boolean correct = true;
 		if (stateDeterminizer instanceof PowersetDeterminizer) {
 			s_Logger.info("Start testing correctness of " + operationName());
-			INestedWordAutomatonOldApi<LETTER, STATE> operandOldApi = ResultChecker.getOldApiNwa(m_Operand);
+			INestedWordAutomatonOldApi<LETTER, STATE> operandOldApi = ResultChecker.getOldApiNwa(m_Services, m_Operand);
 
 			// should have same number of states as old determinization
-			INestedWordAutomatonOldApi<LETTER, STATE> resultDD = (new DeterminizeDD<LETTER, STATE>(sf, operandOldApi)).getResult();
+			INestedWordAutomatonOldApi<LETTER, STATE> resultDD = 
+					(new DeterminizeDD<LETTER, STATE>(m_Services, sf, operandOldApi)).getResult();
 			correct &= (resultDD.size() == m_Result.size());
 			// should recognize same language as old computation
-			correct &= (ResultChecker.nwaLanguageInclusion(resultDD, m_Result, sf) == null);
-			correct &= (ResultChecker.nwaLanguageInclusion(m_Result, resultDD, sf) == null);
+			correct &= (ResultChecker.nwaLanguageInclusion(m_Services, resultDD, m_Result, sf) == null);
+			correct &= (ResultChecker.nwaLanguageInclusion(m_Services, m_Result, resultDD, sf) == null);
 			if (!correct) {
-				ResultChecker.writeToFileIfPreferred(operationName() + "Failed", "", m_Operand);
+				ResultChecker.writeToFileIfPreferred(m_Services, operationName() + "Failed", "", m_Operand);
 			}
 		s_Logger.info("Finished testing correctness of " + operationName());
 		} else {

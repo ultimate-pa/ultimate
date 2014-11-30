@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.Set;
 
 
+
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
@@ -19,6 +20,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingReturnTra
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsEmpty;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.RemoveUnreachable;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.appgraph.AnnotatedProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.appgraph.AppEdge;
@@ -29,9 +31,10 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Pro
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 
 public class NWAEmptinessCheck implements IEmptinessCheck {
+	private final IUltimateServiceProvider m_Services;
 
-
-	public NWAEmptinessCheck() {
+	public NWAEmptinessCheck(IUltimateServiceProvider services) {
+		m_Services = services;
 	}
 
 	@Override
@@ -39,7 +42,7 @@ public class NWAEmptinessCheck implements IEmptinessCheck {
 		INestedWordAutomatonSimple<CodeBlock, AnnotatedProgramPoint> converted = new MyNWA(root);
 		try {
 			return new IsEmpty<CodeBlock, AnnotatedProgramPoint>(
-					(new RemoveUnreachable<CodeBlock, AnnotatedProgramPoint>(converted)).getResult()).getNestedRun();
+					(new RemoveUnreachable<CodeBlock, AnnotatedProgramPoint>(m_Services, converted)).getResult()).getNestedRun();
 		} catch (OperationCanceledException e) {
 			e.printStackTrace();
 			return null;

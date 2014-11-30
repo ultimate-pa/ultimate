@@ -40,18 +40,25 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingInternalT
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.NestedWordAutomatonReachableStates;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.visualization.AutomatonTransition.Transition;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 
 public class NwaToUltimateModel<LETTER,STATE> {
+	private final IUltimateServiceProvider m_Services;
 	private static Logger s_Logger = 
 		NestedWordAutomata.getLogger();
 	
+	public NwaToUltimateModel(IUltimateServiceProvider services) {
+		super();
+		m_Services = services;
+	}
+
 	public IElement getUltimateModelOfNwa(INestedWordAutomatonSimple<LETTER,STATE> nwaSimple) throws OperationCanceledException {
 		final INestedWordAutomaton<LETTER,STATE> nwa;
 		if (nwaSimple instanceof INestedWordAutomaton) {
 			nwa = (INestedWordAutomaton<LETTER, STATE>) nwaSimple;
 		} else {
-			nwa = new NestedWordAutomatonReachableStates<LETTER, STATE>(nwaSimple);
+			nwa = new NestedWordAutomatonReachableStates<LETTER, STATE>(m_Services, nwaSimple);
 		}
 		AutomatonState graphroot = new AutomatonState("Sucessors of this node are the" +
 					" initial states",false);	

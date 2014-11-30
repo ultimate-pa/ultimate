@@ -16,6 +16,7 @@ import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 
 @SuppressWarnings("deprecation")
 /**
@@ -27,6 +28,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
  */
 public class MinimizeDfaHopcroft<LETTER, STATE> implements
 		IOperation<LETTER, STATE> {
+	private final IUltimateServiceProvider m_Services;
 	// Logger for debug - information.
 	private static Logger s_Logger = NestedWordAutomata.getLogger();
 	// Result automaton.
@@ -46,7 +48,9 @@ public class MinimizeDfaHopcroft<LETTER, STATE> implements
 	private int m_nOfTransitions;
 
 	// Constructor.
-	public MinimizeDfaHopcroft(INestedWordAutomatonOldApi<LETTER, STATE> operand) {
+	public MinimizeDfaHopcroft(IUltimateServiceProvider services,
+			INestedWordAutomatonOldApi<LETTER, STATE> operand) {
+		m_Services = services;
 		this.m_operand = operand;
 
 		// Start minimization.
@@ -377,10 +381,10 @@ public class MinimizeDfaHopcroft<LETTER, STATE> implements
 			throws AutomataLibraryException {
 		s_Logger.info("Start testing correctness of " + operationName());
 		boolean correct = true;
-		correct &= (ResultChecker.nwaLanguageInclusion(m_operand, m_Result, stateFactory) == null);
-		correct &= (ResultChecker.nwaLanguageInclusion(m_Result, m_operand, stateFactory) == null);
+		correct &= (ResultChecker.nwaLanguageInclusion(m_Services, m_operand, m_Result, stateFactory) == null);
+		correct &= (ResultChecker.nwaLanguageInclusion(m_Services, m_Result, m_operand, stateFactory) == null);
 		if (!correct) {
-			ResultChecker.writeToFileIfPreferred(operationName() + "Failed", "", m_operand);
+			ResultChecker.writeToFileIfPreferred(m_Services, operationName() + "Failed", "", m_operand);
 		}
 		s_Logger.info("Finished testing correctness of " + operationName());
 		return correct;

@@ -290,7 +290,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 			mLogger.debug("Exploring : " + procRoot);
 			AnnotatedProgramPoint procedureRoot = procRoot;
 
-			IEmptinessCheck emptinessCheck = new NWAEmptinessCheck();
+			IEmptinessCheck emptinessCheck = new NWAEmptinessCheck(mServices);
 
 			if (DEBUG)
 				codeChecker.debug();
@@ -372,7 +372,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 						ArrayList<ProgramPoint> programPoints = new ArrayList<>();
 						for (AnnotatedProgramPoint app : errorRun.getStateSequence())
 							programPoints.add(app.getProgramPoint());
-						BackwardCoveringInformation bci = TraceCheckerUtils.computeCoverageCapability(traceChecker,
+						BackwardCoveringInformation bci = TraceCheckerUtils.computeCoverageCapability(mServices, traceChecker,
 								programPoints, mLogger);
 						if (bwCoveringInfo == null)
 							bwCoveringInfo = bci;

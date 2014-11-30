@@ -36,10 +36,12 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.NestedWordAutomatonReachableStates;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 
 
 public class IsDeterministic<LETTER,STATE> implements IOperation<LETTER,STATE> {
 
+	private final IUltimateServiceProvider m_Services;
 	protected static Logger s_Logger = 
 		NestedWordAutomata.getLogger();
 	
@@ -70,12 +72,14 @@ public class IsDeterministic<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	}
 	
 	
-	public IsDeterministic(INestedWordAutomatonSimple<LETTER,STATE> input) throws OperationCanceledException {
+	public IsDeterministic(IUltimateServiceProvider services,
+			INestedWordAutomatonSimple<LETTER,STATE> input) throws OperationCanceledException {
+		m_Services = services;
 		this.m_StateFactory = input.getStateFactory();
 		this.m_Operand = input;
 		s_Logger.info(startMessage());
 		m_Totalized = new TotalizeNwa<LETTER, STATE>(input, m_StateFactory);
-		m_Reach = new NestedWordAutomatonReachableStates<LETTER, STATE>(m_Totalized);
+		m_Reach = new NestedWordAutomatonReachableStates<LETTER, STATE>(m_Services, m_Totalized);
 		m_Result = !m_Totalized.nonDeterminismInInputDetected();
 		s_Logger.info(exitMessage());
 	}
@@ -93,14 +97,14 @@ public class IsDeterministic<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		boolean correct = true;
 		if (m_Result) {
 			s_Logger.info("Start testing correctness of " + operationName());
-			INestedWordAutomatonOldApi<LETTER, STATE> operandOldApi = ResultChecker.getOldApiNwa(m_Operand);
+			INestedWordAutomatonOldApi<LETTER, STATE> operandOldApi = ResultChecker.getOldApiNwa(m_Services, m_Operand);
 			// should recognize same language as old computation
-			correct &= (ResultChecker.nwaLanguageInclusion(operandOldApi, m_Reach, sf) == null);
+			correct &= (ResultChecker.nwaLanguageInclusion(m_Services, operandOldApi, m_Reach, sf) == null);
 			assert correct;
-			correct &= (ResultChecker.nwaLanguageInclusion(m_Reach, operandOldApi, sf) == null);
+			correct &= (ResultChecker.nwaLanguageInclusion(m_Services, m_Reach, operandOldApi, sf) == null);
 			assert correct;
 			if (!correct) {
-				ResultChecker.writeToFileIfPreferred(operationName() + "Failed", "", m_Operand);
+				ResultChecker.writeToFileIfPreferred(m_Services, operationName() + "Failed", "", m_Operand);
 			}
 		s_Logger.info("Finished testing correctness of " + operationName());
 		} else {

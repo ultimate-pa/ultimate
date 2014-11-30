@@ -46,9 +46,11 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsIncl
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNet2FiniteAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Place;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 
 public class PrefixProduct<S,C> implements IOperation<S,C> {
 	
+	private final IUltimateServiceProvider m_Services;
 	private static Logger s_Logger = 
 			NestedWordAutomata.getLogger();
 	
@@ -118,7 +120,9 @@ public class PrefixProduct<S,C> implements IOperation<S,C> {
 	
 
 	
-	public PrefixProduct(PetriNetJulian<S, C> net, NestedWordAutomaton<S, C> nwa) {
+	public PrefixProduct(IUltimateServiceProvider services,
+			PetriNetJulian<S, C> net, NestedWordAutomaton<S, C> nwa) {
+		m_Services = services;
 		this.m_Net = net;
 		this.m_Nwa = nwa;
 		if (nwa.getInitialStates().size() != 1) {
@@ -145,7 +149,7 @@ public class PrefixProduct<S,C> implements IOperation<S,C> {
 
 		// prefix product preserves the constantTokenAmount invariant
 		final boolean constantTokenAmount = m_Net.constantTokenAmount();
-		m_Result = new PetriNetJulian<S,C>(m_UnionAlphabet, 
+		m_Result = new PetriNetJulian<S,C>(m_Services, m_UnionAlphabet, 
 										 m_Net.getStateFactory(),
 										 constantTokenAmount);
 		
@@ -287,12 +291,12 @@ public class PrefixProduct<S,C> implements IOperation<S,C> {
 			throws AutomataLibraryException {
 		s_Logger.info("Testing correctness of prefixProduct");
 
-		INestedWordAutomatonOldApi op1AsNwa = (new PetriNet2FiniteAutomaton(m_Net)).getResult();
-		INestedWordAutomatonOldApi resultAsNwa = (new PetriNet2FiniteAutomaton(m_Result)).getResult();
-		INestedWordAutomatonOldApi nwaResult = (new ConcurrentProduct(op1AsNwa, m_Nwa, true)).getResult();
+		INestedWordAutomatonOldApi op1AsNwa = (new PetriNet2FiniteAutomaton(m_Services, m_Net)).getResult();
+		INestedWordAutomatonOldApi resultAsNwa = (new PetriNet2FiniteAutomaton(m_Services, m_Result)).getResult();
+		INestedWordAutomatonOldApi nwaResult = (new ConcurrentProduct(m_Services, op1AsNwa, m_Nwa, true)).getResult();
 		boolean correct = true;
-		correct &= (new IsIncluded(stateFactory, resultAsNwa,nwaResult)).getResult();
-		correct &= (new IsIncluded(stateFactory, nwaResult,resultAsNwa)).getResult();
+		correct &= (new IsIncluded(m_Services, stateFactory, resultAsNwa,nwaResult)).getResult();
+		correct &= (new IsIncluded(m_Services, stateFactory, nwaResult,resultAsNwa)).getResult();
 
 		s_Logger.info("Finished testing correctness of prefixProduct");
 		return correct;

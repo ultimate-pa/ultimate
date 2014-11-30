@@ -43,9 +43,11 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNet2FiniteAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetRun;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 
 public class PetriNetUnfolder<S, C> implements IOperation<S, C> {
 
+	private final IUltimateServiceProvider m_Services;
 	private static Logger s_Logger = NestedWordAutomata.getLogger();
 	
 	private final PetriNetJulian<S, C> m_Net;
@@ -162,9 +164,11 @@ public class PetriNetUnfolder<S, C> implements IOperation<S, C> {
 	 *            if false, the complete finite Prefix will be build.
 	 * @throws OperationCanceledException
 	 */
-	public PetriNetUnfolder(PetriNetJulian<S, C> net, order Order,
+	public PetriNetUnfolder(IUltimateServiceProvider services, 
+			PetriNetJulian<S, C> net, order Order,
 			boolean sameTransitionCutOff, boolean stopIfAcceptingRunFound)
 			throws OperationCanceledException {
+		m_Services = services;
 		this.m_Net = net;
 		this.m_StopIfAcceptingRunFound = stopIfAcceptingRunFound;
 		this.m_SameTransitionCutOff = sameTransitionCutOff;
@@ -227,7 +231,7 @@ public class PetriNetUnfolder<S, C> implements IOperation<S, C> {
 			// assert (false);
 			// }
 
-			if (!NestedWordAutomata.getMonitor().continueProcessing()) {
+			if (!m_Services.getProgressMonitorService().continueProcessing()) {
 				throw new OperationCanceledException();
 			}
 		}
@@ -420,7 +424,7 @@ public class PetriNetUnfolder<S, C> implements IOperation<S, C> {
 
 		boolean correct = true;
 		if (m_Run == null) {
-			NestedRun automataRun = (new IsEmpty((new PetriNet2FiniteAutomaton(m_Net)).getResult())).getNestedRun();
+			NestedRun automataRun = (new IsEmpty((new PetriNet2FiniteAutomaton(m_Services, m_Net)).getResult())).getNestedRun();
 			if (automataRun != null) {
 				correct = false;
 				s_Logger.error("EmptinessCheck says empty, but net accepts: " + automataRun.getWord());

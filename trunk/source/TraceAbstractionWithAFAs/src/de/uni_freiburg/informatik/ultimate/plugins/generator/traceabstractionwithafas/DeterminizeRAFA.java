@@ -11,6 +11,7 @@ import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.SalomAA;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
@@ -18,13 +19,15 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
 
 public class DeterminizeRAFA<LETTER extends IElement> implements IOperation<LETTER, IPredicate> {
 
+	private final IUltimateServiceProvider m_Services;
 	NestedWordAutomaton<LETTER, IPredicate> m_result;
 
 	 SmtManager m_smtManager;
 	 PredicateUnifier m_predicateUnifier;
 
-	public DeterminizeRAFA(SalomAA<LETTER, IPredicate> salomAA,
+	public DeterminizeRAFA(IUltimateServiceProvider services, SalomAA<LETTER, IPredicate> salomAA,
 	 SmtManager smtManager, PredicateUnifier predicateUnifier) {
+		m_Services = services;
 
 		 this.m_smtManager = smtManager;
 		 this.m_predicateUnifier = predicateUnifier;
@@ -34,7 +37,7 @@ public class DeterminizeRAFA<LETTER extends IElement> implements IOperation<LETT
 		// NestedWordAutomaton<LETTER, BitSet> newNwa = new
 		// NestedWordAutomaton<LETTER, BitSet>(salomAA.getAlphabet(),
 		NestedWordAutomaton<LETTER, IPredicate> newNwa = new NestedWordAutomaton<LETTER, IPredicate>(
-				salomAA.getAlphabet(), Collections.<LETTER> emptySet(), Collections.<LETTER> emptySet(),
+				m_Services, salomAA.getAlphabet(), Collections.<LETTER> emptySet(), Collections.<LETTER> emptySet(),
 				salomAA.getStateFactory());
 
 		ArrayDeque<BitSet> newQ = new ArrayDeque<>();

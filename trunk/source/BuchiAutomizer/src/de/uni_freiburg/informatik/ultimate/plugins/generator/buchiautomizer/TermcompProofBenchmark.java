@@ -6,6 +6,7 @@ import java.util.TreeMap;
 
 import de.uni_freiburg.informatik.ultimate.automata.AtsDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProvider;
@@ -13,6 +14,7 @@ import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
 import de.uni_freiburg.informatik.ultimate.util.csv.SimpleCsvProvider;
 
 public class TermcompProofBenchmark implements ICsvProviderProvider<Double> {
+	private final IUltimateServiceProvider m_Services;
 
 	private final TreeMap<Integer, String> m_ModuleFinite = new TreeMap<Integer, String>();
 	private final TreeMap<Integer, String> m_ModuleBuchi = new TreeMap<Integer, String>();
@@ -23,17 +25,18 @@ public class TermcompProofBenchmark implements ICsvProviderProvider<Double> {
 	private Boolean m_HasRemainderModule;
 	private boolean m_RemainderModuleNonterminationKnown;
 
-	public TermcompProofBenchmark() {
+	public TermcompProofBenchmark(IUltimateServiceProvider services) {
+		m_Services = services;
 	}
 
 	void reportFiniteModule(Integer iteration, INestedWordAutomatonSimple<CodeBlock, IPredicate> automaton) {
-		String stringRepresentation = (new AtsDefinitionPrinter<>("finiteAutomatonIteration" + iteration, automaton))
+		String stringRepresentation = (new AtsDefinitionPrinter<>(m_Services, "finiteAutomatonIteration" + iteration, automaton))
 				.getDefinitionAsString();
 		m_ModuleFinite.put(iteration, stringRepresentation);
 	}
 
 	void reportBuchiModule(Integer iteration, INestedWordAutomatonSimple<CodeBlock, IPredicate> automaton) {
-		String stringRepresentation = (new AtsDefinitionPrinter<>("buchiAutomatonIteration" + iteration, automaton))
+		String stringRepresentation = (new AtsDefinitionPrinter<>(m_Services, "buchiAutomatonIteration" + iteration, automaton))
 				.getDefinitionAsString();
 		m_ModuleBuchi.put(iteration, stringRepresentation);
 	}

@@ -32,18 +32,22 @@ import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 
 public class GetAcceptedLassoWord<LETTER, STATE> implements IOperation<LETTER,STATE> {
 
+	private final IUltimateServiceProvider m_Services;
 	private static Logger s_Logger = NestedWordAutomata.getLogger();
 
 	private final INestedWordAutomatonOldApi<LETTER, STATE> m_Operand;
 	private final NestedLassoWord<LETTER> m_AcceptedWord;
 
-	public GetAcceptedLassoWord(INestedWordAutomatonOldApi<LETTER, STATE> operand) throws OperationCanceledException {
+	public GetAcceptedLassoWord(IUltimateServiceProvider services,
+			INestedWordAutomatonOldApi<LETTER, STATE> operand) throws OperationCanceledException {
+		m_Services = services;
 		m_Operand = operand;
 		s_Logger.info(startMessage());
-		BuchiIsEmpty<LETTER, STATE> isEmpty = new BuchiIsEmpty<LETTER, STATE>(operand);
+		BuchiIsEmpty<LETTER, STATE> isEmpty = new BuchiIsEmpty<LETTER, STATE>(m_Services, operand);
 		if (isEmpty.getResult()) {
 			throw new IllegalArgumentException(
 					"unable to get word from emtpy language");

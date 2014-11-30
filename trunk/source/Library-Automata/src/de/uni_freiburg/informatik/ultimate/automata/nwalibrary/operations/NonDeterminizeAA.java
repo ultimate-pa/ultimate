@@ -13,19 +13,25 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.AlternatingAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.CompoundState;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 
 public class NonDeterminizeAA<LETTER, STATE> implements IOperation<LETTER, STATE> {
+	
+	private final IUltimateServiceProvider m_Services;
 
 	//	AlternatingAutomaton<LETTER, STATE> oldAutomaton;
 	NestedWordAutomaton<LETTER, CompoundState<STATE>> newAutomaton;
 
-	public NonDeterminizeAA(AlternatingAutomaton<LETTER, STATE> aa) {
+	public NonDeterminizeAA(IUltimateServiceProvider services, 
+			AlternatingAutomaton<LETTER, STATE> aa) {
 		//		this.oldAutomaton = aa;
+		m_Services = services;
 		this.newAutomaton = nondeterminize(aa);
 
 	}
 	public NestedWordAutomaton<LETTER, CompoundState<STATE>> nondeterminize(AlternatingAutomaton<LETTER, STATE> aa) {
-		NestedWordAutomaton<LETTER, CompoundState<STATE>> newNwa = new NestedWordAutomaton<>(
+		NestedWordAutomaton<LETTER, CompoundState<STATE>> newNwa = 
+				new NestedWordAutomaton<>(m_Services, 
 				aa.getAlphabet(), 
 				Collections.<LETTER> emptySet(), 
 				Collections.<LETTER> emptySet(), 

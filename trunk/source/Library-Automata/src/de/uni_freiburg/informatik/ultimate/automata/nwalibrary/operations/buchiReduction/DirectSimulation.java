@@ -46,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.Player0Vertex;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.Player1Vertex;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.Vertex;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.util.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.UnionFind;
 import de.uni_freiburg.informatik.ultimate.util.relation.NestedMap2;
@@ -63,9 +64,10 @@ public class DirectSimulation<LETTER,STATE> extends AbstractSimulation<LETTER, S
      *            whether to use strongly connected components
      * @throws OperationCanceledException
      */
-    public DirectSimulation(INestedWordAutomatonOldApi<LETTER,STATE> ba, boolean useSCCs, StateFactory<STATE> stateFactory)
+    public DirectSimulation(IUltimateServiceProvider services, 
+    		INestedWordAutomatonOldApi<LETTER,STATE> ba, boolean useSCCs, StateFactory<STATE> stateFactory)
             throws OperationCanceledException {
-    	super(ba, useSCCs, stateFactory);
+    	super(services, ba, useSCCs, stateFactory);
     }
 
     /**
@@ -86,7 +88,7 @@ public class DirectSimulation<LETTER,STATE> extends AbstractSimulation<LETTER, S
                 v1.add(v1e);
                 map1.put(q0, q1, v1e);
             }
-            if (!NestedWordAutomata.getMonitor().continueProcessing()) {
+            if (!m_Services.getProgressMonitorService().continueProcessing()) {
                 s_Logger.debug("Stopped in generateGameGraph/calculating v0 und v1");
                 throw new OperationCanceledException();
             }
@@ -117,7 +119,7 @@ public class DirectSimulation<LETTER,STATE> extends AbstractSimulation<LETTER, S
                     }
                 }
             }
-            if (!NestedWordAutomata.getMonitor().continueProcessing()) {
+            if (!m_Services.getProgressMonitorService().continueProcessing()) {
                 s_Logger.debug("Stopped in generateGameGraph/calculating v0 und v1");
                 throw new OperationCanceledException();
             }
@@ -173,13 +175,13 @@ public class DirectSimulation<LETTER,STATE> extends AbstractSimulation<LETTER, S
         }
         
 
-        if (!NestedWordAutomata.getMonitor().continueProcessing()) {
+        if (!m_Services.getProgressMonitorService().continueProcessing()) {
             s_Logger.debug("Stopped in generateBuchiAutomaton/table filled");
             throw new OperationCanceledException();
         }
 
         // merge states
-        result = new NestedWordAutomaton<LETTER,STATE>(m_Operand.getInternalAlphabet(),
+        result = new NestedWordAutomaton<LETTER,STATE>(m_Services, m_Operand.getInternalAlphabet(),
                 null, null, m_StateFactory);
         Set<STATE> representativesOfInitials = new HashSet<STATE>();
         for (STATE initial : m_Operand.getInitialStates()) {
@@ -206,7 +208,7 @@ public class DirectSimulation<LETTER,STATE> extends AbstractSimulation<LETTER, S
         	}
         }
         
-        if (!NestedWordAutomata.getMonitor().continueProcessing()) {
+        if (!m_Services.getProgressMonitorService().continueProcessing()) {
             s_Logger.debug("Stopped in generateBuchiAutomaton/states added to result BA");
             throw new OperationCanceledException();
         }

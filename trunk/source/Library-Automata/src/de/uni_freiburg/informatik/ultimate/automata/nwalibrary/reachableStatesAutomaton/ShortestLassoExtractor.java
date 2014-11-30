@@ -45,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingInternalT
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.BuchiAccepts;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.NestedLassoRun;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.util.HashUtils;
 
 /**
@@ -64,7 +65,7 @@ import de.uni_freiburg.informatik.ultimate.util.HashUtils;
  * 
  */
 class ShortestLassoExtractor<LETTER, STATE> {
-	
+	private final IUltimateServiceProvider m_Services;
 	private static Logger s_Logger = NestedWordAutomata.getLogger();
 	private final NestedWordAutomatonReachableStates<LETTER, STATE> m_Nwars;
 	
@@ -81,7 +82,9 @@ class ShortestLassoExtractor<LETTER, STATE> {
 	NestedRun<LETTER, STATE> m_Loop;
 	NestedRun<LETTER, STATE> m_ConstructedNestedRun;
 	
-	public ShortestLassoExtractor(NestedWordAutomatonReachableStates<LETTER, STATE> nwars, StateContainer<LETTER, STATE> goal) throws OperationCanceledException {
+	public ShortestLassoExtractor(IUltimateServiceProvider services, 
+			NestedWordAutomatonReachableStates<LETTER, STATE> nwars, StateContainer<LETTER, STATE> goal) throws OperationCanceledException {
+		m_Services = services;
 		m_Nwars = nwars;
 		m_Goal = goal;
 		addInitialStack(goal);
@@ -93,7 +96,7 @@ class ShortestLassoExtractor<LETTER, STATE> {
 		m_nlr = new NestedLassoRun<LETTER, STATE>(m_Stem, m_Loop);
 		s_Logger.debug("Stem " + m_Stem);
 		s_Logger.debug("Loop " + m_Loop);
-		assert (new BuchiAccepts<LETTER, STATE>(nwars, m_nlr.getNestedLassoWord())).getResult();
+		assert (new BuchiAccepts<LETTER, STATE>(m_Services, nwars, m_nlr.getNestedLassoWord())).getResult();
 	}
 
 	private StackOfFlaggedStates addInitialStack(StateContainer<LETTER, STATE> goal) {

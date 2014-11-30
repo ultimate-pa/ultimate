@@ -33,6 +33,7 @@ import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 
 /**
  * Operation that checks if the language of the first Buchi automaton is 
@@ -45,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
  */
 public class BuchiIsIncluded<LETTER, STATE> implements IOperation<LETTER,STATE> {
 
+	private final IUltimateServiceProvider m_Services;
 	private static Logger s_Logger = NestedWordAutomata.getLogger();
 
 	private final INestedWordAutomatonOldApi<LETTER, STATE> m_Operand1;
@@ -54,20 +56,22 @@ public class BuchiIsIncluded<LETTER, STATE> implements IOperation<LETTER,STATE> 
 
 	private final NestedLassoRun<LETTER, STATE> m_Counterexample;
 
-	public BuchiIsIncluded(StateFactory<STATE> stateFactory,
+	public BuchiIsIncluded(IUltimateServiceProvider services,
+			StateFactory<STATE> stateFactory,
 			INestedWordAutomatonOldApi<LETTER, STATE> nwa1,
 			INestedWordAutomatonOldApi<LETTER, STATE> nwa2)
 			throws AutomataLibraryException {
+		m_Services = services;
 		m_Operand1 = nwa1;
 		m_Operand2 = nwa2;
 		s_Logger.info(startMessage());
 
 		INestedWordAutomatonOldApi<LETTER, STATE> sndComplement = (new BuchiComplementFKV<LETTER, STATE>(
-				stateFactory, m_Operand2)).getResult();
+				m_Services, stateFactory, m_Operand2)).getResult();
 		INestedWordAutomatonOldApi<LETTER, STATE> difference = (new BuchiIntersectDD<LETTER, STATE>(
-				m_Operand1, sndComplement, true)).getResult();
+				m_Services, m_Operand1, sndComplement, true)).getResult();
 		BuchiIsEmpty<LETTER, STATE> emptinessCheck = new BuchiIsEmpty<LETTER, STATE>(
-				(INestedWordAutomatonOldApi<LETTER, STATE>) difference);
+				m_Services, (INestedWordAutomatonOldApi<LETTER, STATE>) difference);
 
 		m_Result = emptinessCheck.getResult();
 		m_Counterexample = emptinessCheck.getAcceptingNestedLassoRun();

@@ -30,6 +30,8 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
+
 /**
  * Special case of NestedWordAutomaton in which we can partition the set of
  * states into modules. Each module has an unique entry state.
@@ -55,10 +57,11 @@ public class Senwa<LETTER, STATE> extends DoubleDeckerAutomaton<LETTER, STATE> {
 	@Deprecated
 	Map<STATE,Set<STATE>> m_Entry2CallPredecessors = new HashMap<STATE,Set<STATE>>();
 
-	public Senwa(Set<LETTER> internalAlphabet,
+	public Senwa(IUltimateServiceProvider services,
+			Set<LETTER> internalAlphabet,
 			Set<LETTER> callAlphabet, Set<LETTER> returnAlphabet,
 			StateFactory<STATE> stateFactory) {
-		super(internalAlphabet, callAlphabet, returnAlphabet, stateFactory);
+		super(services, internalAlphabet, callAlphabet, returnAlphabet, stateFactory);
 		assert isModuleInformationConsistent();
 	}
 	

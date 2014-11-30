@@ -43,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.result.LTLPropertyCheck.CheckableExpr
  */
 public class Never2Automaton {
 
+	private final IUltimateServiceProvider m_Services;
 	private final AstNode mNeverClaim;
 	private final Logger mLogger;
 	private final Map<String, CheckableExpression> mIRS;
@@ -59,11 +60,12 @@ public class Never2Automaton {
 	 */
 	public Never2Automaton(AstNode ast, BoogieSymbolTable boogieSymbolTable, Map<String, CheckableExpression> irs,
 			Logger logger, IUltimateServiceProvider services) throws Exception {
+		m_Services = services;
 		mLogger = logger;
 		mNeverClaim = ast;
 		mIRS = irs;
 
-		mAutomaton = new NestedWordAutomaton<CodeBlock, String>(collectAlphabet(), null, // call
+		mAutomaton = new NestedWordAutomaton<CodeBlock, String>(m_Services, collectAlphabet(), null, // call
 				null, // return
 				new DummyStateFactory<String>());
 

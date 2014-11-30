@@ -9,6 +9,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
@@ -19,6 +20,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceCheckerSpWp;
 
 public class TwoTrackInterpolantAutomatonBuilder {
+	private final IUltimateServiceProvider m_Services;
 	
 	private final TraceCheckerSpWp m_TraceCheckerSpWp;
 	
@@ -36,6 +38,7 @@ public class TwoTrackInterpolantAutomatonBuilder {
 	 * @param abstraction
 	 */
 	public TwoTrackInterpolantAutomatonBuilder(
+			IUltimateServiceProvider services, 
 			IRun<CodeBlock,IPredicate> nestedRun,
 			SmtManager smtManager,
 			TraceChecker traceChecker,
@@ -43,6 +46,7 @@ public class TwoTrackInterpolantAutomatonBuilder {
 		if (!(traceChecker instanceof TraceCheckerSpWp)) {
 			throw new UnsupportedOperationException("Wrong trace checker");
 		}
+		m_Services = services;
 		m_TraceCheckerSpWp = (TraceCheckerSpWp) traceChecker;
 		m_NestedWord = NestedWord.nestedWord(nestedRun.getWord());
 		m_SmtManager = smtManager;
@@ -63,7 +67,7 @@ public class TwoTrackInterpolantAutomatonBuilder {
 		}
 		
 		NestedWordAutomaton<CodeBlock, IPredicate> nwa = new NestedWordAutomaton<CodeBlock, IPredicate>(
-				internalAlphabet, callAlphabet, returnAlphabet, tAContentFactory);
+				m_Services, internalAlphabet, callAlphabet, returnAlphabet, tAContentFactory);
 		
 		// 1. Ensure that forward predicates has been computed.
 		assert m_TraceCheckerSpWp.forwardsPredicatesComputed() : "Forward predicates has not been computed!" ;

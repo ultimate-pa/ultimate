@@ -45,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsEmpty;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNet2FiniteAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.PetriNetJulian;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 
 /**
  * Check if a PetriNetJulian has an accepting run.
@@ -62,6 +63,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.PetriNetJuli
 
 public class EmptinessPetruchio<S,C> implements IOperation<S,C> {
 	
+	private final IUltimateServiceProvider m_Services;
 	private static Logger s_Logger = 
 		NestedWordAutomata.getLogger();
 	
@@ -89,7 +91,9 @@ public class EmptinessPetruchio<S,C> implements IOperation<S,C> {
 
 	NestedRun<S,C> m_AcceptedRun = null;
 	
-	public EmptinessPetruchio(PetriNetJulian<S,C> net) {
+	public EmptinessPetruchio(IUltimateServiceProvider services, 
+			PetriNetJulian<S,C> net) {
+		m_Services = services;
 		m_NetJulian = net;
 		s_Logger.info(startMessage());
 		m_Petruchio = new PetruchioWrapper<S,C>(net);
@@ -183,7 +187,7 @@ public class EmptinessPetruchio<S,C> implements IOperation<S,C> {
 
 		boolean correct = true;
 		if (m_AcceptedRun == null) {
-			NestedRun automataRun = (new IsEmpty((new PetriNet2FiniteAutomaton(m_NetJulian)).getResult())).getNestedRun();
+			NestedRun automataRun = (new IsEmpty((new PetriNet2FiniteAutomaton(m_Services, m_NetJulian)).getResult())).getNestedRun();
 			correct = (automataRun == null);
 		} else {
 			correct =  m_NetJulian.accepts(m_AcceptedRun.getWord());

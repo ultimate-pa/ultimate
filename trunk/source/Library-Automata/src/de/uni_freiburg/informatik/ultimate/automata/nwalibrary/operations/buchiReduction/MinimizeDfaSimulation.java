@@ -40,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 
 /**
  * @author heizmann@informatik.uni-freiburg.de
@@ -47,6 +48,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 
  */
 public class MinimizeDfaSimulation<LETTER,STATE> implements IOperation<LETTER,STATE> {
+	private final IUltimateServiceProvider m_Services;
     private static Logger s_Logger = NestedWordAutomata.getLogger();
 
     private INestedWordAutomatonOldApi<LETTER,STATE> m_Result;
@@ -62,17 +64,19 @@ public class MinimizeDfaSimulation<LETTER,STATE> implements IOperation<LETTER,ST
      *            the automaton to reduce
      * @throws OperationCanceledException 
      */
-    public MinimizeDfaSimulation(StateFactory<STATE> stateFactory, INestedWordAutomatonOldApi<LETTER,STATE> operand)
+    public MinimizeDfaSimulation(IUltimateServiceProvider services, 
+    		StateFactory<STATE> stateFactory, INestedWordAutomatonOldApi<LETTER,STATE> operand)
             throws OperationCanceledException {
+    	m_Services = services;
     	m_Operand = operand;
         MinimizeDfaSimulation.s_Logger.info(startMessage());
         
-        m_Result = new DirectSimulation<LETTER,STATE>(m_Operand, true, stateFactory).result;
+        m_Result = new DirectSimulation<LETTER,STATE>(m_Services, m_Operand, true, stateFactory).result;
         
         boolean compareWithNonSccResult = false;
         if (compareWithNonSccResult) {
         	NestedWordAutomaton<LETTER,STATE> nonSCCresult = 
-        			new DirectSimulation<LETTER,STATE>(m_Operand, false, stateFactory).result;
+        			new DirectSimulation<LETTER,STATE>(m_Services, m_Operand, false, stateFactory).result;
         	if (m_Result.size() != nonSCCresult.size()) {
         		throw new AssertionError();
         	}
@@ -108,10 +112,10 @@ public class MinimizeDfaSimulation<LETTER,STATE> implements IOperation<LETTER,ST
 			throws AutomataLibraryException {
 		s_Logger.info("Start testing correctness of " + operationName());
 		boolean correct = true;
-		correct &= (ResultChecker.nwaLanguageInclusion(m_Operand, m_Result, stateFactory) == null);
-		correct &= (ResultChecker.nwaLanguageInclusion(m_Result, m_Operand, stateFactory) == null);
+		correct &= (ResultChecker.nwaLanguageInclusion(m_Services, m_Operand, m_Result, stateFactory) == null);
+		correct &= (ResultChecker.nwaLanguageInclusion(m_Services, m_Result, m_Operand, stateFactory) == null);
 		if (!correct) {
-			ResultChecker.writeToFileIfPreferred(operationName() + "Failed", "", m_Operand);
+			ResultChecker.writeToFileIfPreferred(m_Services, operationName() + "Failed", "", m_Operand);
 		}
 		s_Logger.info("Finished testing correctness of " + operationName());
 		return correct;

@@ -50,6 +50,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingInternalT
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.SummaryReturnTransition;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 
 /**
  * Automaton that is returned as the result of the {@code BuchiComplementSVW}
@@ -62,6 +63,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.SummaryReturnTran
  * 
  */
 public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAutomatonOldApi<LETTER, STATE> {
+	private final IUltimateServiceProvider m_Services;
 	private TransitionMonoidAutomaton m_TMA;
 	private Set<LETTER> m_Alphabet;
 	private SizeInfoContainer m_sizeInfo = null;
@@ -78,8 +80,10 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 	private static Logger s_Logger = NestedWordAutomata.getLogger();
 	private String UnsupportedOperationMessage = "Transform to NestedWordAutomaton to get full support.";
 
-	public BuchiComplementAutomatonSVW(INestedWordAutomatonOldApi<LETTER, STATE> origAutomaton)
+	public BuchiComplementAutomatonSVW(IUltimateServiceProvider services, 
+			INestedWordAutomatonOldApi<LETTER, STATE> origAutomaton)
 			throws OperationCanceledException {
+		m_Services = services;
 		m_TMA = new TransitionMonoidAutomaton(origAutomaton);
 		m_Alphabet = origAutomaton.getInternalAlphabet();
 		if (!origAutomaton.getCallAlphabet().isEmpty() || !origAutomaton.getReturnAlphabet().isEmpty()) {
@@ -98,7 +102,8 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 	 *         entirely.
 	 */
 	public NestedWordAutomaton<LETTER, STATE> toNestedWordAutomaton() throws OperationCanceledException {
-		NestedWordAutomaton<LETTER, STATE> result = new NestedWordAutomaton<LETTER, STATE>(m_Alphabet, null, null,
+		NestedWordAutomaton<LETTER, STATE> result = 
+				new NestedWordAutomaton<LETTER, STATE>(m_Services, m_Alphabet, null, null,
 				m_StateFactory);
 		int size = getSizeInfo().totalSize;
 		// Breadth-first traversal of the state space.
@@ -123,7 +128,7 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 					result.addInternalTransition(state, letter, succState);
 				}
 			}
-			if (!NestedWordAutomata.getMonitor().continueProcessing()) {
+			if (!m_Services.getProgressMonitorService().continueProcessing()) {
 				throw new OperationCanceledException();
 			}
 		}

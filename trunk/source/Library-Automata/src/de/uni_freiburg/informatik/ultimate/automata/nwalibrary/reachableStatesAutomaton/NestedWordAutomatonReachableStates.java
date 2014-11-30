@@ -65,12 +65,14 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.NestedLa
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Accepts;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.IOpWithDelayedDeadEndRemoval.UpDownEntry;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.StateContainer.DownStateProp;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 import de.uni_freiburg.informatik.ultimate.util.HashRelation;
 
 public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INestedWordAutomatonOldApi<LETTER, STATE>,
 		INestedWordAutomaton<LETTER, STATE>, IDoubleDeckerAutomaton<LETTER, STATE> {
 
+	private final IUltimateServiceProvider m_Services;
 	private static Logger s_Logger = NestedWordAutomata.getLogger();
 
 	private final INestedWordAutomatonSimple<LETTER, STATE> m_Operand;
@@ -144,8 +146,10 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 	// returnSuccs.add(returnSucc);
 	// }
 
-	public NestedWordAutomatonReachableStates(INestedWordAutomatonSimple<LETTER, STATE> operand)
+	public NestedWordAutomatonReachableStates(IUltimateServiceProvider services,
+			INestedWordAutomatonSimple<LETTER, STATE> operand)
 			throws OperationCanceledException {
+		m_Services = services;
 		this.m_Operand = operand;
 		m_InternalAlphabet = operand.getInternalAlphabet();
 		m_CallAlphabet = operand.getCallAlphabet();
@@ -162,7 +166,7 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 				for (NestedLassoRun<LETTER, STATE> nlr : runs) {
 					STATE honda = nlr.getLoop().getStateAtPosition(0);
 					s_Logger.debug(new DebugMessage("Test lasso construction for honda state {0}", honda));
-					assert (new BuchiAccepts<LETTER, STATE>(NestedWordAutomatonReachableStates.this,
+					assert (new BuchiAccepts<LETTER, STATE>(m_Services, NestedWordAutomatonReachableStates.this,
 							nlr.getNestedLassoWord())).getResult();
 				}
 
@@ -175,11 +179,11 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 
 		} catch (Error e) {
 			String message = "// Problem with  removeUnreachable";
-			ResultChecker.writeToFileIfPreferred("FailedremoveUnreachable", message, operand);
+			ResultChecker.writeToFileIfPreferred(m_Services, "FailedremoveUnreachable", message, operand);
 			throw e;
 		} catch (RuntimeException e) {
 			String message = "// Problem with  removeUnreachable";
-			ResultChecker.writeToFileIfPreferred("FailedremoveUnreachable", message, operand);
+			ResultChecker.writeToFileIfPreferred(m_Services, "FailedremoveUnreachable", message, operand);
 			throw e;
 		}
 	}
@@ -668,12 +672,12 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 						}
 						m_DownPropagationWorklist.add(cont);
 					}
-					if (!NestedWordAutomata.getMonitor().continueProcessing()) {
+					if (!m_Services.getProgressMonitorService().continueProcessing()) {
 						throw new OperationCanceledException();
 					}
 				}
 				while (m_ForwardWorklist.isEmpty() && !m_DownPropagationWorklist.isEmpty()) {
-					if (!NestedWordAutomata.getMonitor().continueProcessing()) {
+					if (!m_Services.getProgressMonitorService().continueProcessing()) {
 						// TODO: Check if this has a performance impact
 						// This exception was included because of timeouts on
 						// e.g.
@@ -697,6 +701,7 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 				for (STATE fin : getFinalStates()) {
 					s_Logger.debug(new DebugMessage("Test if can find an accepting run for final state {0}", fin));
 					NestedRun<LETTER, STATE> run = (new RunConstructor<LETTER, STATE>(
+							m_Services, 
 							NestedWordAutomatonReachableStates.this, m_States.get(fin))).constructRun();
 					assert (new Accepts<LETTER, STATE>(NestedWordAutomatonReachableStates.this, run.getWord()))
 							.getResult();
@@ -1636,14 +1641,14 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 			for (SCC scc : m_Balls) {
 				if (scc.isAccepting()) {
 					for (StateContainer<LETTER, STATE> fin : scc.getAcceptingStates()) {
-						NestedLassoRun<LETTER, STATE> nlr2 = (new LassoConstructor<LETTER, STATE>(
+						NestedLassoRun<LETTER, STATE> nlr2 = (new LassoConstructor<LETTER, STATE>(m_Services, 
 								NestedWordAutomatonReachableStates.this, fin, scc)).getNestedLassoRun();
 						if (m_UseAlternativeLassoConstruction) {
 							int nlr2Size = nlr2.getStem().getLength() + nlr2.getLoop().getLength();
 							NestedLassoRun<LETTER, STATE> nlr = (new ShortestLassoExtractor<LETTER, STATE>(
-									NestedWordAutomatonReachableStates.this, fin)).getNestedLassoRun();
+									m_Services, NestedWordAutomatonReachableStates.this, fin)).getNestedLassoRun();
 							int nlrSize = nlr.getStem().getLength() + nlr.getLoop().getLength();
-							NestedLassoRun<LETTER, STATE> nlr3 = (new LassoExtractor<LETTER, STATE>(
+							NestedLassoRun<LETTER, STATE> nlr3 = (new LassoExtractor<LETTER, STATE>(m_Services, 
 									NestedWordAutomatonReachableStates.this, fin, scc, m_AcceptingSummaries))
 									.getNestedLassoRun();
 							int nlr3Size = nlr3.getStem().getLength() + nlr3.getLoop().getLength();
@@ -1653,11 +1658,11 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 					for (StateContainer<LETTER, STATE> sumPred : scc.getAcceptingSummariesOfSCC().getDomain()) {
 						Set<Summary<LETTER, STATE>> summaries = scc.getAcceptingSummariesOfSCC().getImage(sumPred);
 						for (Summary<LETTER, STATE> summary : summaries) {
-							NestedLassoRun<LETTER, STATE> nlr2 = (new LassoConstructor<LETTER, STATE>(
+							NestedLassoRun<LETTER, STATE> nlr2 = (new LassoConstructor<LETTER, STATE>(m_Services, 
 									NestedWordAutomatonReachableStates.this, summary, scc)).getNestedLassoRun();
 							if (m_UseAlternativeLassoConstruction) {
 								NestedLassoRun<LETTER, STATE> nlr = (new ShortestLassoExtractor<LETTER, STATE>(
-										NestedWordAutomatonReachableStates.this, sumPred)).getNestedLassoRun();
+										m_Services, NestedWordAutomatonReachableStates.this, sumPred)).getNestedLassoRun();
 								int nlrSize = nlr.getStem().getLength() + nlr.getLoop().getLength();
 								int nlr2Size = nlr2.getStem().getLength() + nlr2.getLoop().getLength();
 							}
@@ -1682,22 +1687,22 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 					}
 				}
 			}
-			NestedLassoRun<LETTER, STATE> method4 = (new LassoConstructor<LETTER, STATE>(
+			NestedLassoRun<LETTER, STATE> method4 = (new LassoConstructor<LETTER, STATE>(m_Services, 
 					NestedWordAutomatonReachableStates.this, lowestSerialNumber, sccOfLowest)).getNestedLassoRun();
 			s_Logger.debug("Method4: stem" + method4.getStem().getLength() + " loop" + method4.getLoop().getLength());
 			if (m_UseAlternativeLassoConstruction) {
-				NestedLassoRun<LETTER, STATE> method0 = (new LassoExtractor<LETTER, STATE>(
+				NestedLassoRun<LETTER, STATE> method0 = (new LassoExtractor<LETTER, STATE>(m_Services, 
 						NestedWordAutomatonReachableStates.this, sccOfLowest.getStateWithLowestSerialNumber(),
 						sccOfLowest, m_AcceptingSummaries)).getNestedLassoRun();
 				s_Logger.debug("Method0: stem" + method0.getStem().getLength() + " loop"
 						+ method0.getLoop().getLength());
-				NestedLassoRun<LETTER, STATE> method1 = (new LassoExtractor<LETTER, STATE>(
+				NestedLassoRun<LETTER, STATE> method1 = (new LassoExtractor<LETTER, STATE>(m_Services, 
 						NestedWordAutomatonReachableStates.this, lowestSerialNumber, sccOfLowest, m_AcceptingSummaries))
 						.getNestedLassoRun();
 				s_Logger.debug("Method1: stem" + method1.getStem().getLength() + " loop"
 						+ method1.getLoop().getLength());
 				NestedLassoRun<LETTER, STATE> method2 = (new ShortestLassoExtractor<LETTER, STATE>(
-						NestedWordAutomatonReachableStates.this, lowestSerialNumber)).getNestedLassoRun();
+						m_Services, NestedWordAutomatonReachableStates.this, lowestSerialNumber)).getNestedLassoRun();
 				s_Logger.debug("Method2: stem" + method2.getStem().getLength() + " loop"
 						+ method2.getLoop().getLength());
 				int method0size = method0.getStem().getLength() + method0.getLoop().getLength();
@@ -2263,7 +2268,7 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 
 	@Override
 	public String toString() {
-		return (new AtsDefinitionPrinter<String, String>("nwa", this)).getDefinitionAsString();
+		return (new AtsDefinitionPrinter<String, String>(m_Services, "nwa", this)).getDefinitionAsString();
 	}
 
 }

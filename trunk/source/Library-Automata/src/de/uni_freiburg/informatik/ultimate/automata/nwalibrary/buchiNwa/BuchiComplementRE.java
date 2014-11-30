@@ -37,10 +37,11 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.PowersetDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.DeterminizeUnderappox;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.ReachableStatesCopy;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 
 public class BuchiComplementRE<LETTER,STATE> implements IOperation<LETTER,STATE> {
 
-	
+	private final IUltimateServiceProvider m_Services;
 	private static Logger s_Logger = 
 			NestedWordAutomata.getLogger();
 
@@ -81,26 +82,28 @@ public class BuchiComplementRE<LETTER,STATE> implements IOperation<LETTER,STATE>
 	}
 	
 	
-	public BuchiComplementRE(StateFactory<STATE> stateFactory,
+	public BuchiComplementRE(IUltimateServiceProvider services,
+			StateFactory<STATE> stateFactory,
 			INestedWordAutomatonOldApi<LETTER,STATE> operand) throws AutomataLibraryException {
+		m_Services = services;
 		m_Operand = operand;
 		s_Logger.info(startMessage());
 		INestedWordAutomatonOldApi<LETTER,STATE> operandWithoutNonLiveStates = 
-				(new ReachableStatesCopy<LETTER,STATE>(operand, false, false, false, true)).getResult();
+				(new ReachableStatesCopy<LETTER,STATE>(m_Services, operand, false, false, false, true)).getResult();
 		if (operandWithoutNonLiveStates.isDeterministic()) {
 			s_Logger.info("Rüdigers determinization knack not necessary, already deterministic");
-			m_Result = (new BuchiComplementDeterministic<LETTER,STATE>(operandWithoutNonLiveStates)).getResult();
+			m_Result = (new BuchiComplementDeterministic<LETTER,STATE>(m_Services, operandWithoutNonLiveStates)).getResult();
 		}
 		else {
 			PowersetDeterminizer<LETTER,STATE> pd = 
 					new PowersetDeterminizer<LETTER,STATE>(operandWithoutNonLiveStates, true, stateFactory);
 			INestedWordAutomatonOldApi<LETTER,STATE> determinized = 
-					(new DeterminizeUnderappox<LETTER,STATE>(operandWithoutNonLiveStates,pd)).getResult();
+					(new DeterminizeUnderappox<LETTER,STATE>(m_Services, operandWithoutNonLiveStates,pd)).getResult();
 			INestedWordAutomatonOldApi<LETTER,STATE> determinizedComplement =
-					(new BuchiComplementDeterministic<LETTER,STATE>(determinized)).getResult();
+					(new BuchiComplementDeterministic<LETTER,STATE>(m_Services, determinized)).getResult();
 			INestedWordAutomatonOldApi<LETTER,STATE> intersectionWithOperand =
-					(new BuchiIntersectDD<LETTER,STATE>(operandWithoutNonLiveStates, determinizedComplement, true)).getResult();
-			NestedLassoRun<LETTER,STATE> run = (new BuchiIsEmpty<LETTER,STATE>(intersectionWithOperand)).getAcceptingNestedLassoRun();
+					(new BuchiIntersectDD<LETTER,STATE>(m_Services, operandWithoutNonLiveStates, determinizedComplement, true)).getResult();
+			NestedLassoRun<LETTER,STATE> run = (new BuchiIsEmpty<LETTER,STATE>(m_Services, intersectionWithOperand)).getAcceptingNestedLassoRun();
 			if (run == null) {
 				s_Logger.info("Rüdigers determinization knack applicable");
 				m_buchiComplementREApplicable = true;
@@ -129,7 +132,7 @@ public class BuchiComplementRE<LETTER,STATE> implements IOperation<LETTER,STATE>
 	@Override
 	public boolean checkResult(StateFactory<STATE> stateFactory)
 			throws OperationCanceledException {
-		return ResultChecker.buchiComplement(m_Operand, m_Result);
+		return ResultChecker.buchiComplement(m_Services, m_Operand, m_Result);
 	}
 
 }
