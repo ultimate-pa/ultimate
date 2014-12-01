@@ -77,6 +77,7 @@ public final class MonitoredProcess implements IStorable {
 			IUltimateServiceProvider services, IToolchainStorage storage) throws IOException {
 		final MonitoredProcess mp;
 		String oneLineCmd = StringUtils.join(command, " ");
+
 		if (workingDir != null) {
 			mp = new MonitoredProcess(Runtime.getRuntime().exec(command, null, new File(workingDir)), oneLineCmd,
 					exitCommand, services, storage);
@@ -84,15 +85,19 @@ public final class MonitoredProcess implements IStorable {
 			mp = new MonitoredProcess(Runtime.getRuntime().exec(command), oneLineCmd, exitCommand, services, storage);
 		}
 
-		mp.mID = sInstanceCounter.incrementAndGet();
-		storage.putStorable(getKey(mp.mID, oneLineCmd), mp);
-
-		mp.mMonitor = new Thread(mp.createProcessRunner(), oneLineCmd);
-		mp.mLogger.info(String.format("Starting monitored process with %s (exit command is %s, workingDir is %s)",
-				mp.mCommand, mp.mExitCommand, workingDir));
-		mp.mMonitor.start();
-		mp.mWaitForSetup.acquireUninterruptibly();
+		mp.start(workingDir, storage, oneLineCmd);
 		return mp;
+	}
+
+	private void start(String workingDir, IToolchainStorage storage, String oneLineCmd) {
+		mID = sInstanceCounter.incrementAndGet();
+		storage.putStorable(getKey(mID, oneLineCmd), this);
+
+		mMonitor = new Thread(createProcessRunner(), "MonitoredProcess " + mID + " " + oneLineCmd);
+		mLogger.info(String.format("Starting monitored process with %s (exit command is %s, workingDir is %s)",
+				mCommand, mExitCommand, workingDir));
+		mMonitor.start();
+		mWaitForSetup.acquireUninterruptibly();
 	}
 
 	/**
@@ -107,19 +112,7 @@ public final class MonitoredProcess implements IStorable {
 	 */
 	public static MonitoredProcess exec(String command, String exitCommand, IUltimateServiceProvider services,
 			IToolchainStorage storage) throws IOException {
-		final MonitoredProcess mp;
-		String oneLineCmd = StringUtils.join(command, " ");
-		mp = new MonitoredProcess(Runtime.getRuntime().exec(command), oneLineCmd, exitCommand, services, storage);
-
-		mp.mID = sInstanceCounter.incrementAndGet();
-		storage.putStorable(getKey(mp.mID, oneLineCmd), mp);
-
-		mp.mMonitor = new Thread(mp.createProcessRunner(), oneLineCmd);
-		mp.mLogger.info(String.format("Starting monitored process with %s (exit command is %s)", mp.mCommand,
-				mp.mExitCommand));
-		mp.mMonitor.start();
-		mp.mWaitForSetup.acquireUninterruptibly();
-		return mp;
+		return exec(command.split(" "), null, exitCommand, services, storage);
 	}
 
 	public static MonitoredProcess exec(String command, IUltimateServiceProvider services, IToolchainStorage storage)
@@ -158,7 +151,7 @@ public final class MonitoredProcess implements IStorable {
 		}
 	}
 
-	public void forceShutdown() {
+	public synchronized void forceShutdown() {
 		if (isRunning()) {
 			if (mExitCommand != null) {
 				OutputStream std = mProcess.getOutputStream();
@@ -322,6 +315,7 @@ public final class MonitoredProcess implements IStorable {
 		private void setUpStreamBuffer(final InputStream is, final OutputStream os) {
 
 			final InputStreamReader streamReader = new InputStreamReader(is);
+			final String threadName = "MonitoredProcess " + mID + " StreamBuffer";
 			new Thread(new Runnable() {
 				public void run() {
 
@@ -347,7 +341,7 @@ public final class MonitoredProcess implements IStorable {
 						}
 					}
 				}
-			}, "MonitoredProcess StreamBuffer").start();
+			}, threadName).start();
 		}
 
 	}
