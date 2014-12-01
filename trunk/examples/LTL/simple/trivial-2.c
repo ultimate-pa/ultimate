@@ -1,4 +1,4 @@
-//#Safe
+//#Unsafe
 //@ ltl invariant positive: (<> AP(x < 0));
 
 int x=0;

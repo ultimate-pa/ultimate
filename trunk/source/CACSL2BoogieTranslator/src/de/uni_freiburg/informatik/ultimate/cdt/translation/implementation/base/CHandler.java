@@ -431,14 +431,12 @@ public class CHandler implements ICHandler {
 	    //annotate the Unit with LTLPropertyChecks if applicable
 		for (LTLExpressionExtractor ex : mGlobAcslExtractors) {
 			Map<String, LTLPropertyCheck.CheckableExpression> checkableAtomicPropositions = new LinkedHashMap<String, LTLPropertyCheck.CheckableExpression>();
-			
-			LTLPropertyCheck propCheck = new LTLPropertyCheck(ex.getLTLFormatString(), checkableAtomicPropositions, null);
 
 			for (Entry<String, de.uni_freiburg.informatik.ultimate.model.acsl.ast.Expression> en : ex.getAP2SubExpressionMap().entrySet()) {
 				Result r = main.dispatch(en.getValue());
 				checkableAtomicPropositions.put(en.getKey(), new CheckableExpression((Expression) r.node, null));
 			}
-
+			LTLPropertyCheck propCheck = new LTLPropertyCheck(ex.getLTLFormatString(), checkableAtomicPropositions, null);
 			propCheck.annotate(boogieUnit);
 		}
 		
