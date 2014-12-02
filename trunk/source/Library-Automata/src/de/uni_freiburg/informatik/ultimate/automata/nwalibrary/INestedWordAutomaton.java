@@ -28,6 +28,14 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary;
 import java.util.Collection;
 import java.util.Set;
 
+/**
+ * Interface for data structures that implement nested word automata.
+ * (see INestedWordAutomatonSimple).
+ * @author Matthias Heizmann
+ *
+ * @param <LETTER>
+ * @param <STATE>
+ */
 public interface INestedWordAutomaton<LETTER, STATE> extends INestedWordAutomatonSimple<LETTER, STATE> {
 
 	/**

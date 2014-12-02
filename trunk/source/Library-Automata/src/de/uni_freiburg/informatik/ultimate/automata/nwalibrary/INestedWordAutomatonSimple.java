@@ -29,7 +29,11 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 /**
- * Interface for nested word automata implementations.
+ * Interface for the most basic data structure that represents a nested word 
+ * automaton. This data structure neither provides a method for getting all
+ * states nor for getting incoming transitions and hence allows an 
+ * implementation that constructs automata lazily.
+ * (See INestedWordAutomaton for an interface that provides these methods.)
  * 
  * Nested word automata are a machine model which accepts nested words which
  * have been introduced by Alur et al.
