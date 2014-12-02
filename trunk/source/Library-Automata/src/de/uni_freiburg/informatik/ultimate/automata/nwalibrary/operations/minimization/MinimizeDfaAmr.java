@@ -669,7 +669,7 @@ public class MinimizeDfaAmr<LETTER, STATE>
 	 * @param tuple pair of states that shall be united  
 	 */
 	private void union(final Tuple tuple) {
-		m_unionFind[tuple.m_second] = find(tuple.m_first);
+		m_unionFind[find(tuple.m_second)] = find(tuple.m_first);
 	}
 	
 	// ------------------- auxiliary classes and methods ------------------- //
