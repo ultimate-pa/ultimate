@@ -30,8 +30,12 @@ import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Queue;
 import java.util.Random;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
@@ -41,24 +45,27 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StringFactory;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 
 /**
- * Utility class that provides a method {@link #generatePackedRandomDFA(int, int, int, boolean, boolean)
- * generatePackedRandomDFA(...)} to generate
- * uniform or not-uniform distributed random connected or not connected total or not-total DFAs
- * (Deterministic finite automaton) in a specific packed int[] array format. This format can be
- * unpacked by {@link #extractPackedDFA(int[], int, int, int, Random) extractPackedDFA(...)}<br/><br/>
+ * Utility class that provides a method
+ * {@link #generatePackedRandomDFA(int, int, int, boolean, boolean)
+ * generatePackedRandomDFA(...)} to generate uniform or not-uniform distributed
+ * random connected or not connected total or not-total DFAs (Deterministic
+ * finite automaton) in a specific packed int[] array format. This format can be
+ * unpacked by {@link #extractPackedDFA(int[], int, int, int, Random)
+ * extractPackedDFA(...)}<br/>
+ * <br/>
  * Runtime is in:<br/>
- * <b>O(n^3 * k) * O(random)</b> if result should be uniform and caching is not enabled<br/>
+ * <b>O(n^3 * k) * O(random)</b> if result should be uniform and caching is not
+ * enabled<br/>
  * <b>O(n * k) * O(random)</b> if result should not be uniform<br/>
- * <b>O(n^2 * k) * O(random)</b> if result should be uniform, caching is enabled and there
- * is a valid cache (n must be equals)<br/>
- * where 'n' is the amount of nodes, 'k'
- * the size of the alphabet and 'random' methods of {@link java.util.Random}.
+ * <b>O(n^2 * k) * O(random)</b> if result should be uniform, caching is enabled
+ * and there is a valid cache (n must be equals)<br/>
+ * where 'n' is the amount of nodes, 'k' the size of the alphabet and 'random'
+ * methods of {@link java.util.Random}.
  * 
  * @author Daniel Tischner
  *
  */
 public final class GetRandomDfa implements IOperation<String, String> {
-	private final IUltimateServiceProvider m_Services;
 
 	/**
 	 * Extracts a DFA that is packed into the int[] array format specified by
@@ -71,9 +78,12 @@ public final class GetRandomDfa implements IOperation<String, String> {
 	 *            The DFA to extract in the int[] array format specified by
 	 *            {@link #generatePackedRandomDFA(int, int, int, boolean, boolean)
 	 *            generatePackedRandomDFA(...)}
+	 * @param accStates
+	 *            Set that contains all accepting states
 	 * @return As {@link NestedWordAutomaton} extracted DFA
 	 */
-	private NestedWordAutomaton<String, String> extractPackedDFA(int[] dfa) {
+	private NestedWordAutomaton<String, String> extractPackedDFA(int[] dfa,
+			Set<Integer> accStates) {
 		List<String> num2State = new ArrayList<String>(m_size);
 		for (int i = 0; i < m_size; ++i) {
 			num2State.add(PREFIX_NODE + i);
@@ -87,34 +97,22 @@ public final class GetRandomDfa implements IOperation<String, String> {
 
 		StateFactory<String> stateFactory = new StringFactory();
 		NestedWordAutomaton<String, String> result;
-		result = new NestedWordAutomaton<String, String>(m_Services, new HashSet<String>(
-				num2Letter), null, null, stateFactory);
+		result = new NestedWordAutomaton<String, String>(m_Services,
+				new HashSet<String>(num2Letter), null, null, stateFactory);
 
-		List<String> shuffledStateList = new ArrayList<String>(num2State);
-		Collections.shuffle(shuffledStateList, m_random);
-		// Accepting states
-		for (int i = 0; i < m_numOfAccStates; ++i) {
-			String state = shuffledStateList.get(i);
-			if (state.equals(initialState)) {
-				result.addState(true, true, state);
-			} else {
-				result.addState(false, true, state);
-			}
-		}
-		// Non-accepting states
-		for (int i = m_numOfAccStates; i < m_size; ++i) {
-			String state = shuffledStateList.get(i);
-			if (state.equals(initialState)) {
-				result.addState(true, false, state);
-			} else {
-				result.addState(false, false, state);
-			}
+		// Create states
+		for (int i = 0; i < m_size; ++i) {
+			String state = num2State.get(i);
+			boolean isAccepting = accStates.contains(i);
+			boolean isInitial = state.equals(initialState);
+			result.addState(isInitial, isAccepting, state);
 		}
 
-		// Transitions
+		// Create transitions
 		int lengthOfUsableSequence = dfa.length;
-		//Skip transitions of the sink state for non-total DFAs.
-		//This simulates non-total DFAs because the generator only returns total DFAs.
+		// Skip transitions of the sink state for non-total DFAs.
+		// This simulates non-total DFAs because the generator only returns
+		// total DFAs.
 		if (!m_isTotal) {
 			lengthOfUsableSequence -= m_alphabetSize;
 		}
@@ -122,9 +120,9 @@ public final class GetRandomDfa implements IOperation<String, String> {
 			int predStateIndex = (int) Math.floor((i + 0.0) / m_alphabetSize);
 			int letterIndex = i % m_alphabetSize;
 			int succStateIndex = dfa[i];
-			//Skip transition if it points to a node out of the wished size.
-			//This node is the sink node for non-total DFAs.
-			if(dfa[i] < m_size) {
+			// Skip transition if it points to a node out of the wished size.
+			// This node is the sink node for non-total DFAs.
+			if (dfa[i] < m_size) {
 				String predState = num2State.get(predStateIndex);
 				String letter = num2Letter.get(letterIndex);
 				String succState = num2State.get(succStateIndex);
@@ -150,8 +148,7 @@ public final class GetRandomDfa implements IOperation<String, String> {
 	 * @return Uniform or non-uniform distributed random connected total
 	 * DFA in a specific int[] array format
 	 */
-	public int[] generatePackedRandomDFA()
-			throws IllegalArgumentException {
+	public int[] generatePackedRandomDFA() throws IllegalArgumentException {
 		if (m_size < 1 || m_alphabetSize < 1) {
 			throw new IllegalArgumentException(
 					"Neither 'size' nor 'alphabetSize' must be less than one.");
@@ -221,11 +218,12 @@ public final class GetRandomDfa implements IOperation<String, String> {
 	 * <br/>
 	 * This method is used by random DFA generation to ensure that some rules
 	 * like <i>'every node must get accessed before it is reached in the
-	 * sequence'</i> are satisfied.<br/><br/>
+	 * sequence'</i> are satisfied.<br/>
+	 * <br/>
 	 * Runtime is in:<br/>
 	 * <b>O(n * k) * O(random)</b><br/>
-	 * where 'n' is the amount of nodes, 'k'
-	 * the size of the alphabet and 'random' methods of {@link java.util.Random}.
+	 * where 'n' is the amount of nodes, 'k' the size of the alphabet and
+	 * 'random' methods of {@link java.util.Random}.
 	 * 
 	 * @param node
 	 *            Node to calculate flag for
@@ -284,6 +282,103 @@ public final class GetRandomDfa implements IOperation<String, String> {
 			counter++;
 		}
 		return PRE_SEQUENCE_LENGTH - 1;
+	}
+
+	/**
+	 * Calculates which states of a DFA should be accepting using internal
+	 * properties of the object. Can also ensure that all states reach a
+	 * accepting state by creating extra accepting states which costs
+	 * performance.<br />
+	 * Runtime is in:<br />
+	 * <b>O(numOfAccStates)</b> if not every state needs to reach a accepting<br />
+	 * <b>O(size * alphabetSize)</b> if it needs to be ensured that every state
+	 * reaches a accepting
+	 * 
+	 * @param dfa
+	 *            The DFA to calculate accepting states for in the int[] array
+	 *            format specified by
+	 *            {@link #generatePackedRandomDFA(int, int, int, boolean, boolean)
+	 *            generatePackedRandomDFA(...)}
+	 * @return Set of states that should be accepting
+	 */
+	private Set<Integer> calculateAccStates(int[] dfa) {
+		LinkedHashSet<Integer> finalStates = new LinkedHashSet<Integer>(
+				m_numOfAccStates);
+		// Initialize list
+		List<Integer> shuffledStateList = new ArrayList<Integer>(m_size);
+		for (int i = 0; i < m_size; i++) {
+			shuffledStateList.add(i);
+		}
+		// Add basic final states
+		Collections.shuffle(shuffledStateList, m_random);
+		for (int i = 0; i < m_numOfAccStates; i++) {
+			finalStates.add(shuffledStateList.get(i));
+		}
+
+		if (!m_ensureStatesReachFinal) {
+			return finalStates;
+		}
+		// If it should be ensured that all states reach a final state ensure
+		// that
+		// Create a representation of the DFA where every state knows by which
+		// it is reached.
+		List<Set<Integer>> statesReachedBy = new ArrayList<Set<Integer>>(m_size);
+		for (int i = 0; i < m_size; i++) {
+			statesReachedBy.add(new HashSet<Integer>(m_alphabetSize));
+		}
+		for (int i = 0; i < m_size; i++) {
+			int offset = i * m_alphabetSize;
+			// Resulting states are reached by state i
+			for (int j = 0; j < m_alphabetSize; j++) {
+				int resultingState = dfa[offset + j];
+				// This state is the possible used sink state for non-total DFAs
+				if (resultingState >= m_size) {
+					continue;
+				}
+				statesReachedBy.get(resultingState).add(i);
+			}
+		}
+
+		// Initialize set that will contain remaining states that do not reach a
+		// final state
+		LinkedHashSet<Integer> remainingStates = new LinkedHashSet<Integer>(
+				m_size);
+		for (int i = 0; i < m_size; i++) {
+			remainingStates.add(i);
+		}
+		;
+		// Search all states that do not reach final states
+		// Make one of them final and repeat until all states reach final states
+		do {
+			// Search all states that reach final states and remove them from
+			// 'remainingStates'
+			for (int finalState : finalStates) {
+				if (!remainingStates.contains(finalState)) {
+					continue;
+				}
+				Queue<Integer> statesToProcess = new LinkedList<Integer>();
+				statesToProcess.add(finalState);
+				while (!statesToProcess.isEmpty()) {
+					int currState = statesToProcess.poll();
+					remainingStates.remove(currState);
+					Set<Integer> currStateReachedBy = statesReachedBy
+							.get(currState);
+					for (int state : currStateReachedBy) {
+						if (remainingStates.contains(state)) {
+							statesToProcess.add(state);
+						}
+					}
+				}
+			}
+			// Make one of the remaining states final and repeat until all
+			// states reach final states
+			if (!remainingStates.isEmpty()) {
+				int remainingState = remainingStates.iterator().next();
+				finalStates.add(remainingState);
+			}
+		} while (!remainingStates.isEmpty());
+
+		return finalStates;
 	}
 
 	/**
@@ -346,8 +441,8 @@ public final class GetRandomDfa implements IOperation<String, String> {
 					&& permutationsTable[m_size - 1][i] != null) {
 				nextPermutationsTable[m_size - 1][i] = permutationsTable[m_size - 1][i];
 			} else {
-				nextPermutationsTable[m_size - 1][i] = BigInteger.valueOf(m_size)
-						.pow(sequenceLength - 1 - i);
+				nextPermutationsTable[m_size - 1][i] = BigInteger.valueOf(
+						m_size).pow(sequenceLength - 1 - i);
 			}
 		}
 		// Calculate the other rows from bottom to top and right to left using
@@ -399,17 +494,21 @@ public final class GetRandomDfa implements IOperation<String, String> {
 	 * classes. Dimensions are [size][size * alphabetSize]. Also used for
 	 * caching purpose.
 	 */
-	
 	private static BigInteger[][] permutationsTable;
-	
+
 	/**
 	 * Size of the alphabet.
 	 */
 	private final int m_alphabetSize;
 	/**
-	 * If transition function should be total or not.
-	 * If not it can be possible that some transitions are missing
-	 * and the DFA is a non-complete DFA.
+	 * If true ensures that all states reach a final state at cost of
+	 * performance by creating extra final states. If false just
+	 * {@link m_numOfAccStates} final states will be created.
+	 */
+	private final boolean m_ensureStatesReachFinal;
+	/**
+	 * If transition function should be total or not. If not it can be possible
+	 * that some transitions are missing and the DFA is a non-complete DFA.
 	 */
 	private final boolean m_isTotal;
 	/**
@@ -437,17 +536,21 @@ public final class GetRandomDfa implements IOperation<String, String> {
 	 * Resulting automaton of generator.
 	 */
 	private final NestedWordAutomaton<String, String> m_result;
-
 	/**
-	 * Size of the automaton also amount of nodes.
-	 * This field is not final because it gets shortly modified if DFA may also be non-total.
+	 * Service provider.
+	 */
+	private final IUltimateServiceProvider m_Services;
+	/**
+	 * Size of the automaton also amount of nodes. This field is not final
+	 * because it gets shortly modified if DFA may also be non-total.
 	 */
 	private int m_size;
 
 	/**
 	 * Generates a uniform distributed random connected or not-connected total
-	 * or not-total DFA with a given amount of nodes,
-	 * size of alphabet and number of accepting states.<br />
+	 * or not-total DFA with a given amount of nodes, size of alphabet and
+	 * number of accepting states. It is not ensured that all states reach
+	 * accepting states.<br />
 	 * <br />
 	 * Additionally with following flags:<br />
 	 * boolean <b>ensureIsUniform</b> : <b>true</b> Ensures a uniform
@@ -455,13 +558,17 @@ public final class GetRandomDfa implements IOperation<String, String> {
 	 * boolean <b>enableCaching</b> : <b>true</b> Enables caching of
 	 * pre-calculated results for future similar requests.<br/>
 	 * Best results can be achieved by executing requests with same 'size' and
-	 * similar 'alphabetSize' behind one another.<br/><br/>
+	 * similar 'alphabetSize' behind one another.<br/>
+	 * <br/>
 	 * Runtime is in:<br/>
-	 * <b>O(n^2 * k) * O(random)</b> if there is a valid cache (n must be equals)<br/>
+	 * <b>O(n^2 * k) * O(random)</b> if there is a valid cache (n must be
+	 * equals)<br/>
 	 * <b>O(n^3 * k) * O(random)</b> if there is no valid cache<br/>
-	 * where 'n' is the amount of nodes, 'k'
-	 * the size of the alphabet and 'random' methods of {@link java.util.Random}.
+	 * where 'n' is the amount of nodes, 'k' the size of the alphabet and
+	 * 'random' methods of {@link java.util.Random}.
 	 * 
+	 * @param services
+	 *            Service provider
 	 * @param size
 	 *            Amount of nodes
 	 * @param alphabetSize
@@ -469,43 +576,54 @@ public final class GetRandomDfa implements IOperation<String, String> {
 	 * @param numOfAccStates
 	 *            Number of accepting states
 	 * @param isTotal
-	 *            If transition function should be total or not.
-	 *            If not it can be possible that some transitions are missing
-	 *            and the DFA is a non-complete DFA.
+	 *            If transition function should be total or not. If not it can
+	 *            be possible that some transitions are missing and the DFA is a
+	 *            non-complete DFA.
 	 * @return Uniform distributed random total DFA
 	 */
-	public GetRandomDfa(IUltimateServiceProvider services, int size, int alphabetSize, int numOfAccStates, boolean isTotal) {
-		this(services, size, alphabetSize, numOfAccStates, isTotal, true, true);
+	public GetRandomDfa(IUltimateServiceProvider services, int size,
+			int alphabetSize, int numOfAccStates, boolean isTotal) {
+		this(services, size, alphabetSize, numOfAccStates, isTotal, false,
+				true, true);
 	}
 
 	/**
 	 * Generates a uniform or non-uniform distributed random connected or
-	 * not-connected total or not-total DFA with a given
-	 * amount of nodes, size of alphabet and number of accepting states.<br />
+	 * not-connected total or not-total DFA with a given amount of nodes, size
+	 * of alphabet and number of accepting states.<br />
 	 * <br />
 	 * Additionally with following flags:<br />
 	 * boolean <b>enableCaching</b> : <b>true</b> Enables caching of
 	 * pre-calculated results for future similar requests.<br/>
 	 * Best results can be achieved by executing requests with same 'size' and
-	 * similar 'alphabetSize' behind one another.<br/><br/>
+	 * similar 'alphabetSize' behind one another.<br/>
+	 * <br/>
 	 * Runtime is in:<br/>
-	 * <b>O(n^2 * k) * O(random)</b> if result should be uniform and there
-	 * is a valid cache (n must be equals)<br/>
-	 * <b>O(n^3 * k) * O(random)</b> if result should be uniform and there is no valid cache<br/>
+	 * <b>O(n^2 * k) * O(random)</b> if result should be uniform and there is a
+	 * valid cache (n must be equals)<br/>
+	 * <b>O(n^3 * k) * O(random)</b> if result should be uniform and there is no
+	 * valid cache<br/>
 	 * <b>O(n * k) * O(random)</b> if result should not be uniform<br/>
-	 * where 'n' is the amount of nodes, 'k'
-	 * the size of the alphabet and 'random' methods of {@link java.util.Random}.
+	 * where 'n' is the amount of nodes, 'k' the size of the alphabet and
+	 * 'random' methods of {@link java.util.Random}.
 	 * 
+	 * @param services
+	 *            Service provider
 	 * @param size
 	 *            Amount of nodes
 	 * @param alphabetSize
 	 *            Size of the alphabet
 	 * @param numOfAccStates
-	 *            Number of accepting states
+	 *            Number of accepting states which may be just a bottom bound if
+	 *            'ensureStatesReachFinal' is true
 	 * @param isTotal
-	 *            If transition function should be total or not.
-	 *            If not it can be possible that some transitions are missing
-	 *            and the DFA is a non-complete DFA.
+	 *            If transition function should be total or not. If not it can
+	 *            be possible that some transitions are missing and the DFA is a
+	 *            non-complete DFA.
+	 * @param ensureStatesReachFinal
+	 *            If true ensures that all states reach a final state at cost of
+	 *            performance by creating extra final states. If false just
+	 *            {@link numOfAccStates} final states will be created.
 	 * @param ensureIsUniform
 	 *            If true ensures a uniform distribution of the connected DFAs
 	 *            at high cost of performance for big 'size'. If false random
@@ -513,33 +631,44 @@ public final class GetRandomDfa implements IOperation<String, String> {
 	 *            generation is very fast.
 	 * @return Uniform or non-uniform distributed random DFA
 	 */
-	public GetRandomDfa(IUltimateServiceProvider services, int size, int alphabetSize, int numOfAccStates, boolean isTotal,
-			boolean ensureIsUniform) {
-		this(services, size, alphabetSize, numOfAccStates, isTotal, ensureIsUniform, true);
+	public GetRandomDfa(IUltimateServiceProvider services, int size,
+			int alphabetSize, int numOfAccStates, boolean isTotal,
+			boolean ensureStatesReachFinal, boolean ensureIsUniform) {
+		this(services, size, alphabetSize, numOfAccStates, isTotal,
+				ensureStatesReachFinal, ensureIsUniform, true);
 	}
 
 	/**
 	 * Generates a uniform or non-uniform distributed random connected or
-	 * not-connected total or not-total DFA with a given
-	 * amount of nodes and size of alphabet.<br/><br/>
+	 * not-connected total or not-total DFA with a given amount of nodes and
+	 * size of alphabet.<br/>
+	 * <br/>
 	 * Runtime is in:<br/>
-	 * <b>O(n^3 * k) * O(random)</b> if result should be uniform and caching is not enabled<br/>
+	 * <b>O(n^3 * k) * O(random)</b> if result should be uniform and caching is
+	 * not enabled<br/>
 	 * <b>O(n * k) * O(random)</b> if result should not be uniform<br/>
-	 * <b>O(n^2 * k) * O(random)</b> if result should be uniform, caching is enabled and there
-	 * is a valid cache (n must be equals)<br/>
-	 * where 'n' is the amount of nodes, 'k'
-	 * the size of the alphabet and 'random' methods of {@link java.util.Random}.
+	 * <b>O(n^2 * k) * O(random)</b> if result should be uniform, caching is
+	 * enabled and there is a valid cache (n must be equals)<br/>
+	 * where 'n' is the amount of nodes, 'k' the size of the alphabet and
+	 * 'random' methods of {@link java.util.Random}.
 	 * 
+	 * @param services
+	 *            Service provider
 	 * @param size
 	 *            Amount of nodes
 	 * @param alphabetSize
 	 *            Size of the alphabet
 	 * @param numOfAccStates
-	 *            Number of accepting states
+	 *            Number of accepting states which may be just a bottom bound if
+	 *            'ensureStatesReachFinal' is true
 	 * @param isTotal
-	 *            If transition function should be total or not.
-	 *            If not it can be possible that some transitions are missing
-	 *            and the DFA is a non-complete DFA.
+	 *            If transition function should be total or not. If not it can
+	 *            be possible that some transitions are missing and the DFA is a
+	 *            non-complete DFA.
+	 * @param ensureStatesReachFinal
+	 *            If true ensures that all states reach a final state at cost of
+	 *            performance by creating extra final states. If false just
+	 *            {@link numOfAccStates} final states will be created.
 	 * @param ensureIsUniform
 	 *            If true ensures a uniform distribution of the connected DFAs
 	 *            at high cost of performance for big 'size'. If false random
@@ -552,19 +681,22 @@ public final class GetRandomDfa implements IOperation<String, String> {
 	 *            and similar 'alphabetSize' behind one another.
 	 * @return Uniform or non-uniform distributed random DFA
 	 */
-	public GetRandomDfa(IUltimateServiceProvider services, int size, int alphabetSize, int numOfAccStates, boolean isTotal,
-			boolean ensureIsUniform, boolean enableCaching) {
+	public GetRandomDfa(IUltimateServiceProvider services, int size,
+			int alphabetSize, int numOfAccStates, boolean isTotal,
+			boolean ensureStatesReachFinal, boolean ensureIsUniform,
+			boolean enableCaching) {
 		m_Services = services;
 		m_size = size;
 		m_alphabetSize = alphabetSize;
 		m_numOfAccStates = numOfAccStates;
 		m_isTotal = isTotal;
+		m_ensureStatesReachFinal = ensureStatesReachFinal;
 		m_ensureIsUniform = ensureIsUniform;
 		m_enableCaching = enableCaching;
 
 		m_random = new Random();
-		//If DFA should not be total simulate that
-		//using a increased size where the new node is the sink state.
+		// If DFA should not be total simulate that
+		// using a increased size where the new node is the sink state.
 		if (!isTotal) {
 			m_size += 1;
 		}
@@ -572,7 +704,8 @@ public final class GetRandomDfa implements IOperation<String, String> {
 		if (!isTotal) {
 			m_size -= 1;
 		}
-		m_result = extractPackedDFA(dfa);
+		Set<Integer> accStates = calculateAccStates(dfa);
+		m_result = extractPackedDFA(dfa, accStates);
 	}
 
 	@Override
@@ -603,7 +736,7 @@ public final class GetRandomDfa implements IOperation<String, String> {
 				.format("Start {0}. Alphabet size {1} Number of states {2} "
 						+ "Number of accepting states {3} Is total {4} Ensure is uniform {5} "
 						+ "Is caching enabled {6}", operationName(),
-						m_alphabetSize, m_size, m_numOfAccStates,
-						m_isTotal, m_ensureIsUniform, m_enableCaching);
+						m_alphabetSize, m_size, m_numOfAccStates, m_isTotal,
+						m_ensureIsUniform, m_enableCaching);
 	}
 }
