@@ -1,4 +1,4 @@
-//# safe
+//#Safe
 //Formula: (false R (! (oW & ! iD) | (! iD U (oY & ! iD))))
 //"output Y occurs after output W until input D"
 //Formula is satisfied.
@@ -1593,12 +1593,7 @@ int main()
     {
       // read input
         input = __VERIFIER_nondet_int();
-		__VERIFIER_assume(input == 2 ||
-		input == 5 ||
-		input == 4 ||
-		input == 6 ||
-		input == 3 ||
-		input == 1 ) 
+		__VERIFIER_assume(input >= 1 && input <= 6) 
 
         // operate eca engine
         output = calculate_output(input);

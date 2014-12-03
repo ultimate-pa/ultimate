@@ -1,4 +1,4 @@
-//# unsafe
+//#Unsafe
 //
 //Formula: (! (true U iA) | ((! oV & ! iA) U (iA | ((oV & ! iA) U (iA | ((! oV & ! iA) U (iA | ((oV & ! iA) U (iA | (! oV U iA))))))))))
 //"output V occurs at most twice before input A"
@@ -1589,12 +1589,7 @@ int main()
     {
       // read input
         input = __VERIFIER_nondet_int();
-		__VERIFIER_assume(input == 4 ||
-		input == 2 ||
-		input == 5 ||
-		input == 1 ||
-		input == 6 ||
-		input == 3 ) 
+		__VERIFIER_assume(input >= 1 && input <= 6)
 
         // operate eca engine
         output = calculate_output(input);

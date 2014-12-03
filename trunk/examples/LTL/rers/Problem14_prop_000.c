@@ -1,4 +1,4 @@
-//# safe
+//#Safe
 //Formula: (! oW WU iB)
 //"input B precedes output W"
 //Formula is satisfied.
@@ -703,12 +703,8 @@ int main()
     {
       // read input
         input = __VERIFIER_nondet_int();
-		__VERIFIER_assume(input == 4 ||
-		input == 2 ||
-		input == 3 ||
-		input == 6 ||
-		input == 5 ||
-		input == 1 ) 
+		__VERIFIER_assume(input >= 1 && input <= 6)
+
 
         // operate eca engine
         output = calculate_output(input);

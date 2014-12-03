@@ -1,4 +1,4 @@
-//# safe
+//#Safe
 //
 //Formula: (false R (! ((iE & ! oX) & (true U oX)) | (! oY U oX)))
 //"output Y does never occur between input E and output X"
@@ -4079,12 +4079,7 @@ int main()
     {
       // read input
         input = __VERIFIER_nondet_int();
-		__VERIFIER_assume(input == 4 ||
-		input == 1 ||
-		input == 3 ||
-		input == 5 ||
-		input == 2 ||
-		input == 6 ) 
+		__VERIFIER_assume(input >= 1 && input <= 6)  
 
         // operate eca engine
         output = calculate_output(input);

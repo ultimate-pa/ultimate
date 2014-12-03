@@ -1,4 +1,4 @@
-//# safe
+//#Safe
 //Formula: (false R (! (iE & ! iF) | (! iF WU (oW & ! iF))))
 //"output W occurs between input E and input F"
 //Formula is satisfied.
@@ -4078,12 +4078,7 @@ int main()
     {
       // read input
         input = __VERIFIER_nondet_int();
-		__VERIFIER_assume(input == 4 ||
-		input == 1 ||
-		input == 3 ||
-		input == 5 ||
-		input == 2 ||
-		input == 6 ) 
+		__VERIFIER_assume(input >= 1 && input <= 6)  
 
         // operate eca engine
         output = calculate_output(input);
