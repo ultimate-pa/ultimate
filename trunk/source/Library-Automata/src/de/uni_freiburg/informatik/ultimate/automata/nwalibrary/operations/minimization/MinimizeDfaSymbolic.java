@@ -107,8 +107,6 @@ public class MinimizeDfaSymbolic<LETTER, STATE> implements
 		 * Start with main algorithm.
 		 */
 		// While worklist is not empty.
-		s_Logger.info("Size of worklist: " + m_worklist.size());
-		s_Logger.info("Size of partition: " + m_partition.size());
 		while (!m_worklist.isEmpty()) {
 			// Choose and remove a block r from worklist.
 			Block r = m_worklist.pop();
@@ -239,7 +237,6 @@ public class MinimizeDfaSymbolic<LETTER, STATE> implements
 		
 		// get internal alphabet of m_operand.
 		m_alphabet = m_operand.getInternalAlphabet();
-		s_Logger.info("m_alphabet: " + m_alphabet.toString());
 	}
 
 	private void initializePartitionAndWorklist() {
@@ -274,11 +271,8 @@ public class MinimizeDfaSymbolic<LETTER, STATE> implements
 		// Second, create initial Worklist. Therefor just insert the smaller
 		// block of finalStates and nonFinalStates.
 		m_worklist = new Worklist();
-//		if (finalStates.size() <= nonFinalStates.size()) {
-			m_worklist.push(finalStates);
-//		} else {
-			m_worklist.push(nonFinalStates);
-//		}
+		m_worklist.push(finalStates);
+		m_worklist.push(nonFinalStates);
 	}
 	
 	private void initializeSolver() {
@@ -536,54 +530,6 @@ public class MinimizeDfaSymbolic<LETTER, STATE> implements
 	private int computeHashMapCapacity(int size) {
 		return (int) (size / 0.75 + 1);
 	}
-
-//	/***********************************************************************//**
-//	 * Class for representing a partition.
-//	 * 
-//	 * @author bjoern
-//	 */
-//	public class Partition {
-//		private ArrayList<Block> m_setsOfStates;
-//		private int m_size;
-//		
-//		// Constructor. Allocates space for ArrayList<Block> m_setsOfStates.
-//		public Partition() {
-//			m_setsOfStates = new ArrayList<Block>(m_nOfStates);
-//			m_size = 0;
-//		}
-//		
-//		// Adds block to Partition.
-//		public void add(Block block) {
-//			m_setsOfStates.add(block);
-//			m_size++;
-//		}
-//		
-//		// Remove block from Partition.
-//		// Returns true if current Partition contained <block>.
-//		public boolean remove(Block block) {
-//			m_size--;
-//			return m_setsOfStates.remove(block);
-//		}
-//		
-//		// Returns block <index> of Partition.
-//		public Block get(int index) {
-//			return m_setsOfStates.get(index);
-//		}
-//		
-//		// Returns size of current Partition.
-//		public int size() {
-//			return m_size;
-//		}
-//		
-//		public String toString() {
-//			String ret = "(";
-//			for (int i = 0; i < m_setsOfStates.size(); ++i) {
-//				ret += m_setsOfStates.get(i).toString();
-//			}
-//			ret += ")";
-//			return ret;
-//		}
-//	}
 
 	/***********************************************************************//**
 	 * Class for representing worklist.
@@ -846,12 +792,10 @@ public class MinimizeDfaSymbolic<LETTER, STATE> implements
 		Iterator<Block> it = blocksInPartition.iterator();
 		while (it.hasNext()) {
 			Block blockOfPartition = it.next();
-			s_Logger.info("Block in partition: " + blockOfPartition.toString());
 			// Get states of this block;
 			Collection<STATE> statesOfBlock = blockOfPartition.returnStates();
 			// Build the new state by using the minimize-function of StateFactory.
 			STATE newState = sF.minimize(statesOfBlock);
-			s_Logger.info("new State: " + newState.toString());
 			// Add new state to the new result automaton.
 			STATE firstOfBlock = blockOfPartition.get(0);
 			// Just add new state if not already exists in new automata.
@@ -915,7 +859,7 @@ public class MinimizeDfaSymbolic<LETTER, STATE> implements
 	}
 
 	@Override
-	public INestedWordAutomatonSimple<LETTER, STATE> getResult()
+	public INestedWordAutomaton<LETTER, STATE> getResult()
 			throws OperationCanceledException {
 		return m_Result;
 	}

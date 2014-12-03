@@ -46,7 +46,8 @@ public class MinimizeDfaHopcroftPaper<LETTER, STATE> implements IOperation<LETTE
 				m_nOfMarkedElemInSet,		// # of marked elements in set.
 				m_setsWithMarkedElements,	// sets with marked elements in it.
 				m_F,
-				m_adjacent;
+				m_adjacent,
+				m_finalStates;
 		
 		private int 
 				m_nOfTransitions,	// number of transitions.
@@ -92,7 +93,7 @@ public class MinimizeDfaHopcroftPaper<LETTER, STATE> implements IOperation<LETTE
 			
 			// Make initial partition.
 			makeInitialPartition();
-						
+			
 			// Make transition partition.
 			makeTransitionPartition();
 			s_Logger.info("completed initialization of partitions.");
@@ -123,6 +124,7 @@ public class MinimizeDfaHopcroftPaper<LETTER, STATE> implements IOperation<LETTE
 				// Split all blocks with marked elements into blocks of marked
 				// and non-marked states. --> new blocks are created.
 				m_blocks.split();
+
 				cordsIterator++;
 				// Iterate over all blocks of states.
 				while (blockIterator < m_blocks.m_nOfSets) {
@@ -155,6 +157,7 @@ public class MinimizeDfaHopcroftPaper<LETTER, STATE> implements IOperation<LETTE
 		 */
 		private void preprocessingData() {
 			m_nOfFinalStates = m_operand.getFinalStates().size();
+			m_finalStates = new int[m_nOfFinalStates];
 			m_nOfStates = m_operand.getStates().size();
 			m_nOfLetters = m_operand.getInternalAlphabet().size();			
 			
@@ -162,6 +165,11 @@ public class MinimizeDfaHopcroftPaper<LETTER, STATE> implements IOperation<LETTE
 			initializeLables();
 			
 			m_initialState = m_state2int.get(m_operand.getInitialStates().iterator().next());
+			Iterator<STATE> it = m_operand.getFinalStates().iterator();
+			int index = -1;
+			while (it.hasNext()) {
+				m_finalStates[++index] = m_state2int.get(it.next());
+			}
 
 		}
 		
@@ -231,13 +239,13 @@ public class MinimizeDfaHopcroftPaper<LETTER, STATE> implements IOperation<LETTE
 		private void makeInitialPartition() {
 			m_setsWithMarkedElements = new int[m_nOfTransitions + 1];
 			m_nOfMarkedElemInSet = new int[m_nOfTransitions + 1];
-			// Set number of marked elements of initial block as # finalStates.
-			m_nOfMarkedElemInSet[0] = m_nOfFinalStates;
 			// Is there any finalState?
 			if (m_nOfFinalStates > 0) {
-				// Store block 0 as block with marked elements.
-				m_setsWithMarkedElements[m_w++] = 0;
-				// Split initial block 0.
+				// Before splitting mark final state for splitting final states 
+				// and non - final states.
+				for (int i = 0; i < m_finalStates.length; ++i) {
+					m_blocks.mark(m_finalStates[i]);
+				}
 				m_blocks.split();
 			}
 		}
@@ -322,27 +330,27 @@ public class MinimizeDfaHopcroftPaper<LETTER, STATE> implements IOperation<LETTE
 				// or none block of states.
 				this.m_nOfSets = (nOfStates > 0 ? 1 : 0);
 				// all states of the automaton.
-				m_Elements = new int[nOfStates];
+				this.m_Elements = new int[nOfStates];
 				// location in m_Elements of a state
-				m_LocationOfElem = new int[nOfStates];
+				this.m_LocationOfElem = new int[nOfStates];
 				// # of block an element e belongs to
-				m_setElemBelongsTo = new int[nOfStates];
+				this.m_setElemBelongsTo = new int[nOfStates];
 				
 				// Elements e of block b are stored in an unspecified order in
 				// E[f], E[f + 1], ... , E[p - 1] where f = F[b], p = P[b]
-				m_first = new int[nOfStates]; // first element e of block.
-				m_past = new int[nOfStates];  // first element e of next block
+				this.m_first = new int[nOfStates]; // first element e of block.
+				this.m_past = new int[nOfStates];  // first element e of next block
 				
 				for (int i = 0; i < nOfStates; ++i) {
 					// After initialization elements are sorted.
-					m_Elements[i] = m_LocationOfElem[i] = i;
+					this.m_Elements[i] = this.m_LocationOfElem[i] = i;
 					// Each element belongs to block number 0.
-					m_setElemBelongsTo[i] = 0;
+					this.m_setElemBelongsTo[i] = 0;
 				}
 				
-				if (m_nOfSets == 1) {
-					m_first[0] = 0;			// first element of block 0 = 0.
-					m_past[0] = nOfStates;	// first element of not existing block 1 = nOfStates.
+				if (this.m_nOfSets == 1) {
+					this.m_first[0] = 0;			// first element of block 0 = 0.
+					this.m_past[0] = nOfStates;	// first element of not existing block 1 = nOfStates.
 				}
 				
 				// Now we got an array m_Elements = [0, 1, 2, ... , #states - 1]
@@ -363,10 +371,10 @@ public class MinimizeDfaHopcroftPaper<LETTER, STATE> implements IOperation<LETTE
 				int firstUnmarked = m_first[set] + m_nOfMarkedElemInSet[set];
 				
 				// Switching element e with first unmarked element in m_elements.
-				m_Elements[location] = m_Elements[firstUnmarked];
-				m_LocationOfElem[m_Elements[location]] = location;
-				m_Elements[firstUnmarked] = element;
-				m_LocationOfElem[element] = firstUnmarked;
+				this.m_Elements[location] = this.m_Elements[firstUnmarked];
+				this.m_LocationOfElem[this.m_Elements[location]] = location;
+				this.m_Elements[firstUnmarked] = element;
+				this.m_LocationOfElem[element] = firstUnmarked;
 				
 				// If no element was marked in this block before, add this block
 				// to list of blocks with marked elements.
@@ -386,9 +394,9 @@ public class MinimizeDfaHopcroftPaper<LETTER, STATE> implements IOperation<LETTE
 					// set with marked elements.
 					int set = m_setsWithMarkedElements[--m_w];
 					// first unmarked element of set.
-					int firstUnmarked = m_first[set] + m_nOfMarkedElemInSet[set];
+					int firstUnmarked = this.m_first[set] + m_nOfMarkedElemInSet[set];
 					
-					if (firstUnmarked == m_past[set]) {
+					if (firstUnmarked == this.m_past[set]) {
 						m_nOfMarkedElemInSet[set] = 0;
 						continue;
 					}
@@ -396,20 +404,20 @@ public class MinimizeDfaHopcroftPaper<LETTER, STATE> implements IOperation<LETTE
 					// Split block into two blocks with marked and non-marked
 					// elements. Take the smaller one as new block and remain
 					// the bigger one as the old block.
-					if (m_nOfMarkedElemInSet[set] <= m_past[set] - firstUnmarked) {
+					if (m_nOfMarkedElemInSet[set] <= (m_past[set] - firstUnmarked)) {
 						// block with marked elements is smaller --> new block
-						m_first[this.m_nOfSets] = m_first[set];
-						m_past[this.m_nOfSets ] = m_first[set] = firstUnmarked;
+						this.m_first[this.m_nOfSets] = this.m_first[set];
+						this.m_past[this.m_nOfSets ] = this.m_first[set] = firstUnmarked;
 					} else {
 						// block with marked elements is bigger --> remain as old block.
 						// --> new one consists of non-marked elements.
-						m_past[this.m_nOfSets] = m_past[set];	// TODO: Index out of bounds, why?
-						m_first[this.m_nOfSets] = m_past[set] = firstUnmarked;
+						this.m_past[this.m_nOfSets] = this.m_past[set];	// TODO: Index out of bounds, why?
+						this.m_first[this.m_nOfSets] = this.m_past[set] = firstUnmarked;
 					}
 					
 					// Adapt the number of new block, the elements belong to.
-					for (int i = m_first[this.m_nOfSets]; i < m_past[this.m_nOfSets]; ++i) {
-						m_setElemBelongsTo[m_Elements[i]] = this.m_nOfSets;
+					for (int i = this.m_first[this.m_nOfSets]; i < this.m_past[this.m_nOfSets]; ++i) {
+						this.m_setElemBelongsTo[this.m_Elements[i]] = this.m_nOfSets;
 					}
 					// Set changed block and new block as blocks with non-marked elements.
 					m_nOfMarkedElemInSet[set] = m_nOfMarkedElemInSet[this.m_nOfSets++] = 0;
@@ -432,6 +440,10 @@ public class MinimizeDfaHopcroftPaper<LETTER, STATE> implements IOperation<LETTE
 			ArrayList<STATE> newStates =
 					new ArrayList<STATE>(m_blocks.m_nOfSets);
 			int blockOfInitState = m_blocks.m_setElemBelongsTo[m_initialState];
+			int[] blockOfFinalStates = new int[m_nOfFinalStates];
+			for (int i = 0; i < m_nOfFinalStates; ++i) {
+				blockOfFinalStates[i] = m_blocks.m_setElemBelongsTo[m_finalStates[i]];
+			}
 			// Iterate over number of blocks for getting every first element.
 			for (int i = 0; i < m_blocks.m_nOfSets; ++i) {
 				// Get index in m_elements of the first element in block.
@@ -452,10 +464,15 @@ public class MinimizeDfaHopcroftPaper<LETTER, STATE> implements IOperation<LETTE
 				STATE newState = sF.minimize(tmp);
 				newStates.add(newState);
 				// Add the new state to the new result automaton.
+				boolean isFinalState = false;
+				for (int k = 0; k < blockOfFinalStates.length; ++k) {
+					if (i == blockOfFinalStates[k]) {
+						isFinalState = true;
+					}
+				}
 				m_Result.addState(
 						(i == blockOfInitState), // is initial state?
-						m_operand.isFinal(m_int2state.get(
-								m_blocks.m_Elements[firstOfBlockIndex])), // is final state?
+						isFinalState, // is final state?
 						newState);
 			}
 			
@@ -517,7 +534,7 @@ public class MinimizeDfaHopcroftPaper<LETTER, STATE> implements IOperation<LETTE
 		}
 
 		@Override
-		public INestedWordAutomatonSimple<LETTER, STATE> getResult()
+		public INestedWordAutomaton<LETTER, STATE> getResult()
 				throws OperationCanceledException {
 			return m_Result;
 		}
