@@ -28,7 +28,6 @@ import de.uni_freiburg.informatik.ultimate.ltl2aut.never2nwa.NWAContainer;
 import de.uni_freiburg.informatik.ultimate.ltl2aut.never2nwa.Never2Automaton;
 import de.uni_freiburg.informatik.ultimate.ltl2aut.preferences.PreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BoogieASTNode;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Unit;
 import de.uni_freiburg.informatik.ultimate.model.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -112,6 +111,8 @@ public class LTL2autObserver implements IUnmanagedObserver {
 		ltlProperty = ltlProperty.replaceAll("x", "X");
 		ltlProperty = ltlProperty.replaceAll("u", "U");
 		ltlProperty = ltlProperty.replaceAll("r", "\\/");
+		ltlProperty = ltlProperty.replaceAll("<==>", "<->");
+		ltlProperty = ltlProperty.replaceAll("==>", "->");
 		return ltlProperty;
 	}
 

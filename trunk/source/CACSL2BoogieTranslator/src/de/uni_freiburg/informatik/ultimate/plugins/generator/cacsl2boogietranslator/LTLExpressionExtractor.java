@@ -25,7 +25,6 @@ import de.uni_freiburg.informatik.ultimate.model.acsl.ast.UnaryExpression;
  */
 public class LTLExpressionExtractor {
 
-	private List<Expression> mExpressions;
 	private String mLTLFormatString;
 	private LinkedHashMap<String, Expression> mMap;
 
@@ -42,12 +41,13 @@ public class LTLExpressionExtractor {
 
 		mMap = null;
 		node = node.accept(new LTLReplaceWeakUntil());
-		node.accept(new LTLExtractSubexpressions());
+		LTLExtractSubexpressions visitor = new LTLExtractSubexpressions();
+		node.accept(visitor);
 
 		// consolidate expression list, replace format string
-		if (mExpressions != null) {
+		if (visitor.getResult() != null) {
 			LinkedHashMap<String, Expression> map = new LinkedHashMap<>();
-			for (Expression current : mExpressions) {
+			for (Expression current : visitor.getResult()) {
 				map.put(printer.print(current), current);
 			}
 
@@ -128,16 +128,15 @@ public class LTLExpressionExtractor {
 	private class LTLExtractSubexpressions extends ACSLVisitor {
 
 		private Expression mCurrentSubExpression;
+		private List<Expression> mExpressions;
 
 		private LTLExtractSubexpressions() {
 			mCurrentSubExpression = null;
-			mExpressions = null;
+			mExpressions = new ArrayList<>();
 		}
 
-		@Override
-		public boolean visit(GlobalLTLInvariant node) {
-			mExpressions = new ArrayList<>();
-			return super.visit(node);
+		public List<Expression> getResult() {
+			return mExpressions;
 		}
 
 		@Override
@@ -147,14 +146,23 @@ public class LTLExpressionExtractor {
 			case LTLWEAKUNTIL:
 			case LTLRELEASE:
 				mCurrentSubExpression = null;
-				break;
+				return super.visit(node);
 			default:
 				if (mCurrentSubExpression == null) {
-					mCurrentSubExpression = node;
+					LTLExtractSubexpressions left = new LTLExtractSubexpressions();
+					LTLExtractSubexpressions right = new LTLExtractSubexpressions();
+					node.getLeft().accept(left);
+					node.getRight().accept(right);
+
+					if (left.getResult().isEmpty() && right.getResult().isEmpty()) {
+						mCurrentSubExpression = node;
+					} else if (left.getResult().size() == 1 && left.getResult().get(0) == node.getLeft()
+							&& right.getResult().size() == 1 && node.getRight() == right.getResult().get(0)) {
+						mCurrentSubExpression = node;
+					}
 				}
-				break;
+				return super.visit(node);
 			}
-			return super.visit(node);
 		}
 
 		@Override
