@@ -9,5 +9,7 @@ Require-Bundle: Library-log4j,
  UltimateCore,
  BoogieParser
 Bundle-ActivationPolicy: lazy
-Export-Package: de.uni_freiburg.informatik.ultimate.boogie.type, de.uni_freiburg.informatik.ultimate.boogie.symboltable
+Export-Package: de.uni_freiburg.informatik.ultimate.boogie.preprocessor,
+ de.uni_freiburg.informatik.ultimate.boogie.symboltable,
+ de.uni_freiburg.informatik.ultimate.boogie.type
 Bundle-RequiredExecutionEnvironment: JavaSE-1.7

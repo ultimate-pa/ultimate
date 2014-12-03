@@ -11,6 +11,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.IAnalysis;
 import de.uni_freiburg.informatik.ultimate.model.GraphType;
+import de.uni_freiburg.informatik.ultimate.boogie.preprocessor.TypeChecker;
 
 /**
  * Tool for inlining boogie procedures.
@@ -51,8 +52,7 @@ public class BoogieProcedureInliner implements IAnalysis {
 	@Override
 	public List<IObserver> getObservers() {
 		ArrayList<IObserver> observers = new ArrayList<IObserver>();
-		// TODO add preprocessor.TypeChecker to observers
-		//observers.add(new TypeChecker(mServices));
+		observers.add(new TypeChecker(mServices)); // TODO enable "TypeChecker" as a user option
 		observers.add(new ProcedureInliner(mServices));
 		return observers;
 	}
