@@ -30,6 +30,7 @@ import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -341,14 +342,12 @@ public final class GetRandomDfa implements IOperation<String, String> {
 
 		// Initialize set that will contain remaining states that do not reach a
 		// final state
-		LinkedHashSet<Integer> remainingStates = new LinkedHashSet<Integer>(
-				m_size);
+		LinkedHashSet<Integer> remainingStates = new LinkedHashSet<Integer>(m_size);
 		for (int i = 0; i < m_size; i++) {
 			remainingStates.add(i);
 		}
-		;
 		// Search all states that do not reach final states
-		// Make one of them final and repeat until all states reach final states
+		// Make the last of them final and repeat until all states reach final states
 		do {
 			// Search all states that reach final states and remove them from
 			// 'remainingStates'
@@ -370,10 +369,14 @@ public final class GetRandomDfa implements IOperation<String, String> {
 					}
 				}
 			}
-			// Make one of the remaining states final and repeat until all
+			// Make the last of the remaining states final and repeat until all
 			// states reach final states
-			if (!remainingStates.isEmpty()) {
-				int remainingState = remainingStates.iterator().next();
+			Iterator<Integer> iterator = remainingStates.iterator();
+			int remainingState = NO_STATE;
+			while (iterator.hasNext()) {
+				remainingState = iterator.next();
+			}
+			if (remainingState != NO_STATE) {
 				finalStates.add(remainingState);
 			}
 		} while (!remainingStates.isEmpty());
@@ -489,6 +492,10 @@ public final class GetRandomDfa implements IOperation<String, String> {
 	 * where index is the index to a transition in the transition list.
 	 */
 	public static final String PREFIX_TRANSITION = "a";
+	/**
+	 * Constant for no valid state. Valid states are 0, 1, ...
+	 */
+	public static final int NO_STATE = -1;
 	/**
 	 * Table that contains the amount of all permutations of different DFA
 	 * classes. Dimensions are [size][size * alphabetSize]. Also used for
