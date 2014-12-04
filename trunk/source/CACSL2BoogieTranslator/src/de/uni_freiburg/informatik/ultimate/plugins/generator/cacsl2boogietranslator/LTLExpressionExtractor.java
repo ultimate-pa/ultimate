@@ -37,13 +37,14 @@ public class LTLExpressionExtractor {
 	 */
 	public boolean run(ACSLNode node) {
 		LTLPrettyPrinter printer = new LTLPrettyPrinter();
-		mLTLFormatString = printer.print(node);
-
+//		String debug = printer.print(node);
 		mMap = null;
 		node = node.accept(new LTLReplaceWeakUntil());
 		LTLExtractSubexpressions visitor = new LTLExtractSubexpressions();
 		node.accept(visitor);
-
+		
+		mLTLFormatString = printer.print(node);
+		
 		// consolidate expression list, replace format string
 		if (visitor.getResult() != null) {
 			LinkedHashMap<String, Expression> map = new LinkedHashMap<>();

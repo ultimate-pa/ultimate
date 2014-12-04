@@ -307,12 +307,12 @@ precedence left LT;
 precedence left LTLT, GTGT;
 precedence left PLUS, MINUS;
 precedence left STAR, SLASH, PERCENT, CONST;
+precedence left UNTIL, WEAKUNTIL, RELEASE;
+precedence right GLOBALLY, FINALLY, NEXT;
 precedence right prec_cast, TILDE, NOT, prec_unary_op;
 precedence nonassoc LTCOLON, COLONGT;
 precedence left DOT, ARROW, LSQUARE;
 precedence right prec_par;
-precedence left UNTIL, WEAKUNTIL, RELEASE;
-precedence right GLOBALLY, FINALLY, NEXT;
 precedence right AP;
 /* bottom up - highest precedence */
 

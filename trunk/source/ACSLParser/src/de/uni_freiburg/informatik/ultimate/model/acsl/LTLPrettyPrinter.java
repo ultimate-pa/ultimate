@@ -135,6 +135,10 @@ public class LTLPrettyPrinter extends ACSLVisitor {
 			return "||";
 		case LTLUNTIL:
 			return "U";
+		case LTLRELEASE:
+			return "R";
+		case LTLWEAKUNTIL:
+			return "WU";
 		case LOGICXOR:
 		case COMPPO:
 		case BITXOR:

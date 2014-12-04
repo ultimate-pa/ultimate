@@ -21,15 +21,20 @@ public class LTLChecker extends AbstractEvaluationTestSuite {
 
 	@Override
 	protected int getFilesPerCategory() {
-		return 50;
+		return 20;
 	}
 
 	@Override
 	protected String[] getDirectories() {
 		return new String[] { 
-				"examples/LTL/simple/",
+				"examples/LTL/rers/",
 		};
 //		 return super.getDirectories();
+	}
+	
+	@Override
+	protected int getTimeout() {
+		return 20 * 60 * 1000;
 	}
 
 }
