@@ -703,7 +703,7 @@ int main()
     {
       // read input
         input = __VERIFIER_nondet_int();
-		__VERIFIER_assume(input >= 1 && input <= 6)
+		__VERIFIER_assume(input >= 1 && input <= 6);
 
 
         // operate eca engine
