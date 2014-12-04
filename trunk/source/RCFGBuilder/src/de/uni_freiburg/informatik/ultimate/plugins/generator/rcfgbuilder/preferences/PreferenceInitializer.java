@@ -10,6 +10,8 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 	@Override
 	protected UltimatePreferenceItem<?>[] initDefaultPreferences() {
 		return new UltimatePreferenceItem<?>[] {
+				new UltimatePreferenceItem<Boolean>(LABEL_ASSUME_FOR_ASSERT,
+						DEF_ASSUME_FOR_ASSERT, PreferenceType.Boolean),
 				new UltimatePreferenceItem<Boolean>(LABEL_ExtSolverFlag,
 						DEF_ExtSolverFlag, PreferenceType.Boolean),
 				new UltimatePreferenceItem<String>(LABEL_ExtSolverCommand,
@@ -43,6 +45,8 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 	/*
 	 * new preferences that belong to the RCFG Builder 
 	 */
+	public static final String LABEL_ASSUME_FOR_ASSERT = "Add additional assume for each assert";
+	public static final boolean DEF_ASSUME_FOR_ASSERT = false;
 	public static final String LABEL_ExtSolverFlag = "Use external solver instead of SMTInterpol";
 	public static final boolean DEF_ExtSolverFlag = true;
 	public static final String LABEL_ExtSolverCommand = "Command for external solver";

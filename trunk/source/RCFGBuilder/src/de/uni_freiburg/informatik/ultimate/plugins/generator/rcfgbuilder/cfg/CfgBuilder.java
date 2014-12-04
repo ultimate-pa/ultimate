@@ -107,12 +107,16 @@ public class CfgBuilder {
 	private CodeBlockSize m_CodeBlockSize;
 
 	private final IUltimateServiceProvider mServices;
+	
+	private final boolean m_AddAssumeForEachAssert;
 
 	public CfgBuilder(Unit unit, RCFGBacktranslator backtranslator, IUltimateServiceProvider services,
 			IToolchainStorage storage) throws IOException {
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		m_Backtranslator = backtranslator;
+		m_AddAssumeForEachAssert = (new UltimatePreferenceStore(RCFGBuilder.s_PLUGIN_ID))
+				.getBoolean(PreferenceInitializer.LABEL_ASSUME_FOR_ASSERT);
 		boolean useExternalSolver = (new UltimatePreferenceStore(RCFGBuilder.s_PLUGIN_ID))
 				.getBoolean(PreferenceInitializer.LABEL_ExtSolverFlag);
 
@@ -957,15 +961,19 @@ public class CfgBuilder {
 			passAllAnnotations(st, errorLocNode);
 			passAllAnnotations(st, assumeErrorCB);
 			m_Edges.add(assumeErrorCB);
-			AssumeStatement assumeSafe = new AssumeStatement(st.getLocation(), assertion);
-			passAllAnnotations(st, assumeSafe);
-			m_Backtranslator.putAux(assumeSafe, new BoogieASTNode[] { st });
-			StatementSequence assumeSafeCB = new StatementSequence(locNode, null, assumeSafe, Origin.ASSERT, mLogger);
-			passAllAnnotations(st, assumeSafeCB);
-			// add a new TransEdge labeled with st as successor of the
-			// last constructed LocNode
-			m_Edges.add(assumeSafeCB);
-			m_current = assumeSafeCB;
+			if (m_AddAssumeForEachAssert) {
+				AssumeStatement assumeSafe = new AssumeStatement(st.getLocation(), assertion);
+				passAllAnnotations(st, assumeSafe);
+				m_Backtranslator.putAux(assumeSafe, new BoogieASTNode[] { st });
+				StatementSequence assumeSafeCB = new StatementSequence(locNode, null, assumeSafe, Origin.ASSERT, mLogger);
+				passAllAnnotations(st, assumeSafeCB);
+				// add a new TransEdge labeled with st as successor of the
+				// last constructed LocNode
+				m_Edges.add(assumeSafeCB);
+				m_current = assumeSafeCB;
+			} else {
+				m_current = locNode;
+			}
 		}
 
 		private void processGotoStatement(GotoStatement st) {
