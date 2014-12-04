@@ -17,7 +17,7 @@ public class CLassoRankerTC extends WebToolchain {
 
 	@Override
 	protected String setName() {
-		return "LassoRanker";
+		return "Lasso Ranker";
 	}
 
 	@Override
@@ -30,6 +30,31 @@ public class CLassoRankerTC extends WebToolchain {
 		return new TaskNames[] { TaskNames.RANK_SYNTHESIS_C };
 	}
 
+    /*
+     * (non-Javadoc)
+     * 
+     * @see de.uni_freiburg.informatik.ultimate.website.WebToolchain#setLanguage()
+     */
+    @Override
+    protected String setLanguage() {
+        return "c";
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see de.uni_freiburg.informatik.ultimate.website.WebToolchain#setUserInfo()
+     */
+    @Override
+    protected String setUserInfo() {
+        return null;
+    }
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see de.uni_freiburg.informatik.ultimate.website.Toolchain#setTools()
+	 */
 	@Override
 	protected List<Tool> setTools() {
 		List<Tool> tools = new ArrayList<Tool>();

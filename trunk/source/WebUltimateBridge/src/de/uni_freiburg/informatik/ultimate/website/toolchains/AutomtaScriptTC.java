@@ -60,6 +60,26 @@ public class AutomtaScriptTC extends WebToolchain {
     /*
      * (non-Javadoc)
      * 
+     * @see de.uni_freiburg.informatik.ultimate.website.WebToolchain#setLanguage()
+     */
+    @Override
+    protected String setLanguage() {
+        return "automata";
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see de.uni_freiburg.informatik.ultimate.website.WebToolchain#setUserInfo()
+     */
+    @Override
+    protected String setUserInfo() {
+        return "Sample: defined in 'de.uni_freiburg.informatik.ultimate.website.toolchains:AutomataScriptTC.java'";
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
      * @see de.uni_freiburg.informatik.ultimate.website.Toolchain#setTools()
      */
     @Override

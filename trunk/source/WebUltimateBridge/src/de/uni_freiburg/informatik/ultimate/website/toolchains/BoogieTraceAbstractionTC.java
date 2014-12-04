@@ -60,6 +60,26 @@ public class BoogieTraceAbstractionTC extends WebToolchain {
 		return new TaskNames[] { TaskNames.VerifyBoogie };
 	}
 
+    /*
+     * (non-Javadoc)
+     * 
+     * @see de.uni_freiburg.informatik.ultimate.website.WebToolchain#setLanguage()
+     */
+    @Override
+    protected String setLanguage() {
+        return "boogie";
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see de.uni_freiburg.informatik.ultimate.website.WebToolchain#setUserInfo()
+     */
+    @Override
+    protected String setUserInfo() {
+        return null;
+    }
+
 	/*
 	 * (non-Javadoc)
 	 * 

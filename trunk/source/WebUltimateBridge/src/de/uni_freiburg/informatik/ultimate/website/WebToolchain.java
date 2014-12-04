@@ -25,16 +25,14 @@ public abstract class WebToolchain {
 	/**
 	 * String that identifies the timeout setting from the core preferences.
 	 */
-	private static final String s_TimeoutString = 
-			"Toolchain\\ timeout\\ in\\ seconds";
+	private static final String s_TimeoutString = "Toolchain\\ timeout\\ in\\ seconds";
 	
 	/**
 	 * String that identifies the benchmark setting from the core preferences.
 	 */
-	public static final String s_CoreBenchmarkString= 
-			"Generate\\ benchmark\\ results";
+	public static final String s_CoreBenchmarkString = "Generate\\ benchmark\\ results";
 	/**
-	 * The toolchain name to be shown on the website.
+	 * The toolchain name and the toolchain supertype to be shown on the website.
 	 */
 	private String name;
 	/**
@@ -49,6 +47,14 @@ public abstract class WebToolchain {
 	 * The corresponding task name to be shown on the website.
 	 */
 	private Tasks.TaskNames[] taskName;
+	/**
+	 * The websites user information to be displayed for this toolchain.
+	 */
+	private String userInfo;
+	/**
+	 * The toolchains language being processed.
+	 */
+	private String language;
 	/**
 	 * Short String describing this toolchain.
 	 */
@@ -104,6 +110,8 @@ public abstract class WebToolchain {
 		this.setId(setId());
 		this.setTaskName(setTaskName());
 		this.setDescription(setDescription());
+		this.setLanguage(setLanguage());
+		this.setUserInfo(setUserInfo());
 		this.setTools(setTools());
 		this.setToolsLoggingLevel(setToolsLoggingLevel());
 		this.setPluginsLoggingLevel(setPluginsLoggingLevel());
@@ -269,7 +277,7 @@ public abstract class WebToolchain {
 	}
 
 	/**
-	 * Setter for the general lugins logging level.
+	 * Setter for the general plugins logging level.
 	 * 
 	 * @return the plugins logging level.
 	 */
@@ -318,6 +326,20 @@ public abstract class WebToolchain {
 	 * @return the tools
 	 */
 	protected abstract List<Tool> setTools();
+
+	/**
+	 * Setter for the language used on the website.
+	 * 
+	 * @return the language string
+	 */
+	protected abstract String setLanguage();
+
+	/**
+	 * Setter for the user info for this specific toolchain used on the website.
+	 * 
+	 * @return the user info string
+	 */
+	protected abstract String setUserInfo();
 
 	/**
 	 * Setter for the toolchains description string.<br />
@@ -390,6 +412,25 @@ public abstract class WebToolchain {
 	}
 
 	/**
+	 * Setter for the language.
+	 * 
+	 * @param language
+	 *            the language string to set
+	 */
+	protected final void setLanguage(String language) {
+		this.language = language;
+	}
+
+	/**
+	 * Setter for the user information shown on the website
+	 * 
+	 * @return
+	 */
+	protected final void setUserInfo(String userInfo) {
+		this.userInfo = userInfo;
+	}
+
+	/**
 	 * Setter for the tools list.
 	 * 
 	 * @param tools
@@ -423,5 +464,23 @@ public abstract class WebToolchain {
 	 */
 	private void setPluginsLoggingLevel(LoggingLevel setPluginsLoggingLevel) {
 		this.pluginsLoggingLevel = setPluginsLoggingLevel;
+	}
+
+	/**
+	 * Getter for the user information shown on the website
+	 * 
+	 * @return the user information
+	 */
+	public String getUserInfo() {
+		return userInfo;
+	}
+
+	/**
+	 * Getter for the language used on the website
+	 * 
+	 * @return the toolchains language
+	 */
+	public String getLanguage() {
+		return language;
 	}
 }

@@ -30,7 +30,7 @@ public class CBuchiAutomizerTC extends WebToolchain {
 	 */
 	@Override
 	protected String setName() {
-		return "BüchiAutomizer";
+		return "Büchi Automizer";
 	}
 
 	/*
@@ -52,6 +52,26 @@ public class CBuchiAutomizerTC extends WebToolchain {
 	protected TaskNames[] setTaskName() {
 		return new TaskNames[] { TaskNames.TERMINATION_C };
 	}
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see de.uni_freiburg.informatik.ultimate.website.WebToolchain#setLanguage()
+     */
+    @Override
+    protected String setLanguage() {
+        return "c";
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see de.uni_freiburg.informatik.ultimate.website.WebToolchain#setUserInfo()
+     */
+    @Override
+    protected String setUserInfo() {
+        return null;
+    }
 
 	/*
 	 * (non-Javadoc)
