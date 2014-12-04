@@ -964,19 +964,18 @@ public class CHandler implements ICHandler {
 		boolean intFromPtr = false;
 
 		// Christian: function name, handle separately
-		if (!mSymbolTable.containsCSymbol(cId)) {
-			if (main.getFunctionToIndex().get(cId) != null) {
+		if (!mSymbolTable.containsCSymbol(cId) && main.getFunctionToIndex().containsKey(cId)) {
 				cType = new CPointer(new CFunction(null, null, false));
 				bId = SFO.FUNCTION_ADDRESS + cId;
 				useHeap = true;
-			} else {
-			}
-		} else {
+		} else if (mSymbolTable.containsCSymbol(cId)) {
 			// we have a normal variable
 			bId = mSymbolTable.get(cId, loc).getBoogieName();
 			cType = mSymbolTable.get(cId, loc).getCVariable();
 			useHeap = isHeapVar(bId);
 			intFromPtr = mSymbolTable.get(cId, loc).isIntFromPointer;
+		} else {
+			throw new UnsupportedSyntaxException(loc, "identifier is not declared (neither a variable nor a function name)");
 		}
 
 		LRValue lrVal = null;
