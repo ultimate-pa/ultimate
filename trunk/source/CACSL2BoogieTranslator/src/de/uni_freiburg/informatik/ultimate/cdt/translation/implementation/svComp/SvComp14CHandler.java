@@ -117,9 +117,9 @@ public class SvComp14CHandler extends CHandler {
 		
 
 		if (methodName.equals(ERROR_STRING)) {
-			boolean useSVCompSpecificationFunctions = 
-					!main.mPreferences.getBoolean(CACSLPreferenceInitializer.LABEL_CHECK_SVCOMP_NOERRORFUNCTION);
-			if (useSVCompSpecificationFunctions) {
+			boolean checkSvcompErrorfunction = 
+					main.mPreferences.getBoolean(CACSLPreferenceInitializer.LABEL_CHECK_SVCOMP_ERRORFUNCTION);
+			if (checkSvcompErrorfunction) {
 				Check check = new Check(Spec.ERROR_Function);
 				AssertStatement assertStmt = new AssertStatement(loc, new BooleanLiteral(loc,
 						new InferredType(Type.Boolean), false));
