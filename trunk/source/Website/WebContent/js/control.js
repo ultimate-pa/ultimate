@@ -5,7 +5,7 @@ window.onresize     = alignContent;
 
 var _EDITOR, _CUR_LANG,_LAST_MARKER;
 var _COOKIE_EX_DAYS = 365;
-var _SERVER         = "https://monteverdi.informatik.uni-freiburg.de/tomcat//WebsiteEclipseBridge/if?callback=?";
+var _SERVER         = "../WebsiteEclipseBridge/if?callback=?";
 var _INIT_CODE      = "// Enter Code here ...";
 var _ANIMATE        = !(getCookie("_ANIMATE") == "false");
 var _AUTO_ORIENTATE = !(getCookie("_AUTO_ORIENTATE") == "false");

@@ -18,7 +18,7 @@
     
     VALIDATED WITH: http://www.jslint.com/ --%>
 <%-- The address, where we can find the server. --%>
-var server = "https://monteverdi.informatik.uni-freiburg.de/tomcat//WebsiteEclipseBridge/if?callback=?";
+var server = "../WebsiteEclipseBridge/if?callback=?";
 <%-- The ACE editor instance. --%>
 var editor;
 <%-- The initial text of the ACE editor. --%>
