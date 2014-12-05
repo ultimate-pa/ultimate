@@ -86,7 +86,12 @@ public class CegarLoopBenchmarkType implements IBenchmarkType {
 		case s_TotalInterpolationBenchmark:
 			BenchmarkData bmData1 = (BenchmarkData) value1;
 			BenchmarkData bmData2 = (BenchmarkData) value2;
-			bmData1.aggregateBenchmarkData(bmData2);
+			if (bmData2.getBenchmarkType() == null) {
+				// benchmark not provided for this CEGAR loop,
+				// add nothing
+			} else {
+				bmData1.aggregateBenchmarkData(bmData2);
+			}
 			return bmData1;
 		case s_StatesRemovedByMinimization:
 		case s_OverallIterations:
