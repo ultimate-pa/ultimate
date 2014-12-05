@@ -48,7 +48,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvide
 /**
  * Utility class that provides a method
  * {@link #generatePackedRandomDFA(int, int, int, boolean, boolean)
- * generatePackedRandomDFA(...)} to generate uniform or not-uniform distributed
+ * generatePackedRandomDFA(...)} to generate uniform or non-uniform distributed
  * random connected or not connected total or not-total DFAs (Deterministic
  * finite automaton) in a specific packed int[] array format. This format can be
  * unpacked by {@link #extractPackedDFA(int[], int, int, int, Random)
@@ -420,9 +420,17 @@ public final class GetRandomDfa implements IOperation<String, String> {
 		}
 		
 		int amountOfTrans = dfa.length;
-		float percOfFlags = (m_flags.size() + 0.0f) / amountOfTrans;
-		int maxAllowedToDelete = (int) Math.round((((PERC_FULL + 0.0f) / PERC_FULL) - percOfFlags)
-				* amountOfTrans);
+		int maxAllowedToDelete;
+		if (m_ensureIsConnected) {
+			//Ensure flag edges are not deleted
+			float percOfFlags = (m_flags.size() + 0.0f) / amountOfTrans;
+			maxAllowedToDelete = (int) Math.round((((PERC_FULL + 0.0f) / PERC_FULL) - percOfFlags)
+					* amountOfTrans);
+		} else {
+			//All edges are allowed to delete
+			maxAllowedToDelete = amountOfTrans;
+		}
+		
 		int desiredToDelete = (int) Math.round(((PERC_FULL - m_percOfTotality + 0.0f) / PERC_FULL)
 				* amountOfTrans);
 		int amountToDelete = Math.min(maxAllowedToDelete, desiredToDelete);
@@ -438,7 +446,12 @@ public final class GetRandomDfa implements IOperation<String, String> {
 			int counter = 0;
 			while(!useShuffleVariant && transToDelete.size() < amountToDelete) {
 				int transition = m_random.nextInt(dfa.length);
-				if (!m_flags.contains(transition)) {
+				if (m_ensureIsConnected) {
+					//Don't add flag edges for deletion
+					if (!m_flags.contains(transition)) {
+						transToDelete.add(transition);
+					}
+				} else {
 					transToDelete.add(transition);
 				}
 				//Break variant and use other if it takes too long
@@ -453,7 +466,12 @@ public final class GetRandomDfa implements IOperation<String, String> {
 		if (useShuffleVariant) {
 			List<Integer> transitions = new ArrayList<Integer>(dfa.length - m_flags.size());
 			for (int i = 0; i < dfa.length; i++) {
-				if (!m_flags.contains(i)) {
+				if (m_ensureIsConnected) {
+					//Don't add flag edges for deletion
+					if (!m_flags.contains(i)) {
+						transitions.add(i);
+					}
+				} else {
 					transitions.add(i);
 				}
 			}
@@ -462,7 +480,6 @@ public final class GetRandomDfa implements IOperation<String, String> {
 				transToDelete.add(transitions.get(i));
 			}
 		}
-		
 		return transToDelete;
 	}
 
@@ -636,6 +653,13 @@ public final class GetRandomDfa implements IOperation<String, String> {
 	 */
 	private final int m_percOfTotality;
 	/**
+	 * If true it is ensured that the DFA
+	 * is connected meaning all states are reached.
+	 * If false and if {@link m_percOfTotality} is small
+	 * it may happen that the automata is not connected.
+	 */
+	private final boolean m_ensureIsConnected;
+	/**
 	 * Random generator.
 	 */
 	private final Random m_random;
@@ -651,6 +675,49 @@ public final class GetRandomDfa implements IOperation<String, String> {
 	 * Size of the automaton also amount of nodes.
 	 */
 	private final int m_size;
+	
+	/**
+	 * Generates a uniform distributed random connected total DFA with a
+	 * given amount of nodes, size of alphabet and
+	 * number of accepting states. It is not ensured that all states reach
+	 * accepting states.<br />
+	 * <br />
+	 * Additionally with following flags:<br />
+	 * int <b>percOfTotality</b> : <b>{@link PERC_TOTALITY_BOUND_UPPER}</b>
+	 * Ensures that the DFA is total.<br />
+	 * boolean <b>ensureIsConnected</b> : <b>true</b> Ensures that all states
+	 * are reached.<br />
+	 * boolean <b>ensureStatesReachFinal</b> : <b>false</b> It is not ensured
+	 * that all states reach a final state.<br />
+	 * boolean <b>ensureIsUniform</b> : <b>true</b> Ensures a uniform
+	 * distribution of the DFAs at high cost of performance for big 'size'.<br/>
+	 * boolean <b>enableCaching</b> : <b>true</b> Enables caching of
+	 * pre-calculated results for future similar requests.<br/>
+	 * Best results can be achieved by executing requests with same 'size' and
+	 * similar 'alphabetSize' behind one another.<br/>
+	 * <br/>
+	 * Runtime is in:<br/>
+	 * <b>O(n^2 * k) * O(random)</b> if there is a valid cache (n must be
+	 * equals)<br/>
+	 * <b>O(n^3 * k) * O(random)</b> if there is no valid cache<br/>
+	 * where 'n' is the amount of nodes, 'k' the size of the alphabet and
+	 * 'random' methods of {@link java.util.Random}.
+	 * 
+	 * @param services
+	 *            Service provider
+	 * @param size
+	 *            Amount of nodes
+	 * @param alphabetSize
+	 *            Size of the alphabet
+	 * @param numOfAccStates
+	 *            Number of accepting states
+	 * @return Uniform distributed random total DFA
+	 */
+	public GetRandomDfa(IUltimateServiceProvider services, int size,
+			int alphabetSize, int numOfAccStates) {
+		this(services, size, alphabetSize, numOfAccStates,
+				PERC_TOTALITY_BOUND_UPPER, true, false, true, true);
+	}
 
 	/**
 	 * Generates a uniform distributed random connected or not-connected total
@@ -659,6 +726,8 @@ public final class GetRandomDfa implements IOperation<String, String> {
 	 * accepting states.<br />
 	 * <br />
 	 * Additionally with following flags:<br />
+	 * boolean <b>ensureStatesReachFinal</b> : <b>false</b> It is not ensured
+	 * that all states reach a final state.<br />
 	 * boolean <b>ensureIsUniform</b> : <b>true</b> Ensures a uniform
 	 * distribution of the DFAs at high cost of performance for big 'size'.<br/>
 	 * boolean <b>enableCaching</b> : <b>true</b> Enables caching of
@@ -686,12 +755,18 @@ public final class GetRandomDfa implements IOperation<String, String> {
 	 *            If 0.5 about half of the transitions will miss.
 	 *            If 0.0 all transitions that can be deleted,
 	 *            by ensuring all states get reached, are missing.
+	 * @param ensureIsConnected
+	 *            If true it is ensured that the DFA
+	 *            is connected meaning all states are reached.
+	 *            If false and if {@link m_percOfTotality} is small
+	 *            it may happen that the automata is not connected.
 	 * @return Uniform distributed random total DFA
 	 */
 	public GetRandomDfa(IUltimateServiceProvider services, int size,
-			int alphabetSize, int numOfAccStates, int percOfTotality) {
-		this(services, size, alphabetSize, numOfAccStates, percOfTotality, false,
-				true, true);
+			int alphabetSize, int numOfAccStates, int percOfTotality,
+			boolean ensureIsConnected) {
+		this(services, size, alphabetSize, numOfAccStates, percOfTotality,
+				ensureIsConnected, false, true, true);
 	}
 
 	/**
@@ -728,6 +803,11 @@ public final class GetRandomDfa implements IOperation<String, String> {
 	 *            If 0.5 about half of the transitions will miss.
 	 *            If 0.0 all transitions that can be deleted,
 	 *            by ensuring all states get reached, are missing.
+	 * @param ensureIsConnected
+	 *            If true it is ensured that the DFA
+	 *            is connected meaning all states are reached.
+	 *            If false and if {@link m_percOfTotality} is small
+	 *            it may happen that the automata is not connected.
 	 * @param ensureStatesReachFinal
 	 *            If true ensures that all states reach a final state at cost of
 	 *            performance by creating extra final states. If false just
@@ -741,9 +821,11 @@ public final class GetRandomDfa implements IOperation<String, String> {
 	 */
 	public GetRandomDfa(IUltimateServiceProvider services, int size,
 			int alphabetSize, int numOfAccStates, int percOfTotality,
-			boolean ensureStatesReachFinal, boolean ensureIsUniform) {
+			boolean ensureIsConnected, boolean ensureStatesReachFinal,
+			boolean ensureIsUniform) {
 		this(services, size, alphabetSize, numOfAccStates, percOfTotality,
-				ensureStatesReachFinal, ensureIsUniform, true);
+				ensureIsConnected, ensureStatesReachFinal,
+				ensureIsUniform, true);
 	}
 
 	/**
@@ -774,6 +856,11 @@ public final class GetRandomDfa implements IOperation<String, String> {
 	 *            If 0.5 about half of the transitions will miss.
 	 *            If 0.0 all transitions that can be deleted,
 	 *            by ensuring all states get reached, are missing.
+	 * @param ensureIsConnected
+	 *            If true it is ensured that the DFA
+	 *            is connected meaning all states are reached.
+	 *            If false and if {@link m_percOfTotality} is small
+	 *            it may happen that the automata is not connected.
 	 * @param ensureStatesReachFinal
 	 *            If true ensures that all states reach a final state at cost of
 	 *            performance by creating extra final states. If false just
@@ -792,13 +879,14 @@ public final class GetRandomDfa implements IOperation<String, String> {
 	 */
 	public GetRandomDfa(IUltimateServiceProvider services, int size,
 			int alphabetSize, int numOfAccStates, int percOfTotality,
-			boolean ensureStatesReachFinal, boolean ensureIsUniform,
-			boolean enableCaching) {
+			boolean ensureIsConnected, boolean ensureStatesReachFinal,
+			boolean ensureIsUniform, boolean enableCaching) {
 		m_Services = services;
 		m_size = size;
 		m_alphabetSize = alphabetSize;
 		m_numOfAccStates = numOfAccStates;
 		m_percOfTotality = percOfTotality;
+		m_ensureIsConnected = ensureIsConnected;
 		m_ensureStatesReachFinal = ensureStatesReachFinal;
 		m_ensureIsUniform = ensureIsUniform;
 		m_enableCaching = enableCaching;
