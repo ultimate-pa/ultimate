@@ -1896,15 +1896,18 @@ public class CHandler implements ICHandler {
 	}
 
 	private void checkIntegerBounds(Dispatcher main, ILocation loc, RValue rVal, ArrayList<Statement> stmt) {
-		if (main.mPreferences.getBoolean(CACSLPreferenceInitializer.LABEL_ASSERT_SIGNED_INTEGER_BOUNDS)
+		if (main.mPreferences.getBoolean(CACSLPreferenceInitializer.LABEL_CHECK_SIGNED_INTEGER_BOUNDS)
 				&& rVal.cType instanceof CPrimitive
 				&& ((CPrimitive) rVal.cType).getGeneralType() == GENERALPRIMITIVE.INTTYPE
 				&& !((CPrimitive) rVal.cType).isUnsigned()) {
+			Check check = new Check(Spec.INTEGER_OVERFLOW);
 			AssertStatement smallerMaxInt = new AssertStatement(loc, new BinaryExpression(loc, BinaryExpression.Operator.COMPLT, rVal.getValue(), 
 					new IntegerLiteral(loc, CastAndConversionHandler.getMaxValueOfPrimitiveType(mMemoryHandler, rVal.cType.getUnderlyingType()).toString())));
+			check.addToNodeAnnot(smallerMaxInt);
 			stmt.add(smallerMaxInt);
 			AssertStatement biggerMinInt = new AssertStatement(loc, new BinaryExpression(loc, BinaryExpression.Operator.COMPGEQ, rVal.getValue(), 
 					new IntegerLiteral(loc, CastAndConversionHandler.getMaxValueOfPrimitiveType(mMemoryHandler, rVal.cType.getUnderlyingType()).negate().toString())));
+			check.addToNodeAnnot(biggerMinInt);
 			stmt.add(biggerMinInt);
 		}
 	}
