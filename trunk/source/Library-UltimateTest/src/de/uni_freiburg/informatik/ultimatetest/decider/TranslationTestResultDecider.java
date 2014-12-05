@@ -30,6 +30,10 @@ public class TranslationTestResultDecider extends TestResultDecider {
 	public TranslationTestResultDecider(String inputFile) {
 		mInputFile = inputFile;
 	}
+	
+	public TranslationTestResultDecider(File inputFile) {
+		mInputFile = inputFile.getAbsolutePath();
+	}
 
 	@Override
 	public TestResult getTestResult(IResultService resultService) {

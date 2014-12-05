@@ -1,10 +1,11 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator;
 
-import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
 import de.uni_freiburg.informatik.ultimate.model.acsl.LTLPrettyPrinter;
@@ -14,7 +15,6 @@ import de.uni_freiburg.informatik.ultimate.model.acsl.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.Expression;
-import de.uni_freiburg.informatik.ultimate.model.acsl.ast.GlobalLTLInvariant;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.RealLiteral;
@@ -37,33 +37,24 @@ public class LTLExpressionExtractor {
 	 */
 	public boolean run(ACSLNode node) {
 		LTLPrettyPrinter printer = new LTLPrettyPrinter();
-//		String debug = printer.print(node);
 		mMap = null;
-		node = node.accept(new LTLReplaceWeakUntil());
+		node = removeWeakUntil(node);
 		LTLExtractSubexpressions visitor = new LTLExtractSubexpressions();
 		node.accept(visitor);
-		
+
 		mLTLFormatString = printer.print(node);
-		
-		// consolidate expression list, replace format string
+
 		if (visitor.getResult() != null) {
-			LinkedHashMap<String, Expression> map = new LinkedHashMap<>();
-			for (Expression current : visitor.getResult()) {
-				map.put(printer.print(current), current);
-			}
-
+			// consolidate expression list, replace format string
 			mMap = new LinkedHashMap<>();
-
-			int i = 0;
-			for (Entry<String, Expression> current : map.entrySet()) {
-				String symbol = getAPSymbol(i);
-				mLTLFormatString = replaceAllExpressionsWithAP(mLTLFormatString, symbol, current.getKey());
-				mMap.put(symbol, current.getValue());
-				i++;
-			}
+			mLTLFormatString = new LTLFormatStringPrinter(new HashSet<>(visitor.getResult()), mMap).print(node);
 			return true;
 		}
 		return false;
+	}
+
+	public ACSLNode removeWeakUntil(ACSLNode node) {
+		return node.accept(new LTLReplaceWeakUntil());
 	}
 
 	public Map<String, Expression> getAP2SubExpressionMap() {
@@ -72,11 +63,6 @@ public class LTLExpressionExtractor {
 
 	public String getLTLFormatString() {
 		return mLTLFormatString;
-	}
-
-	public static String replaceAllExpressionsWithAP(String input, String ap, String subExpression) {
-		String key = subExpression.replaceAll("\\(", "\\\\(").replaceAll("\\)", "\\\\)");
-		return input.replaceAll(key, ap);
 	}
 
 	public static String getAPSymbol(int i) {
@@ -126,17 +112,61 @@ public class LTLExpressionExtractor {
 
 	}
 
+	private class LTLFormatStringPrinter extends LTLPrettyPrinter {
+
+		private final Map<String, Expression> mApString2Expr;
+		private final Set<Expression> mSubExpressions;
+		private final Map<String, String> mExprString2APString;
+		private int mAPCounter;
+
+		/**
+		 * 
+		 * @param subExpressions
+		 *            Set of subexpressions that should be replaced by AP
+		 * @param apString2Expr
+		 *            Map that will be filled with a mapping from atomic
+		 *            proposition symbols to actual expressions
+		 */
+		public LTLFormatStringPrinter(Set<Expression> subExpressions, Map<String, Expression> apString2Expr) {
+			super();
+			mApString2Expr = apString2Expr;
+			mSubExpressions = subExpressions;
+			mAPCounter = 0;
+			mExprString2APString = new HashMap<String, String>();
+		}
+
+		@Override
+		public boolean visit(Expression node) {
+			if (mSubExpressions.contains(node)) {
+				String symbol;
+				String nodeString = new LTLPrettyPrinter().print(node);
+				symbol = mExprString2APString.get(nodeString);
+				if (symbol == null) {
+					// we dont have a symbol for this AP yet, so we need a new
+					// one.
+					symbol = getAPSymbol(mAPCounter);
+					mApString2Expr.put(symbol, node);
+					mExprString2APString.put(nodeString, symbol);
+					mAPCounter++;
+				}
+				mBuilder.append(symbol);
+				return false;
+			}
+			return true;
+		}
+	}
+
 	private class LTLExtractSubexpressions extends ACSLVisitor {
 
 		private Expression mCurrentSubExpression;
-		private List<Expression> mExpressions;
+		private HashSet<Expression> mExpressions;
 
 		private LTLExtractSubexpressions() {
 			mCurrentSubExpression = null;
-			mExpressions = new ArrayList<>();
+			mExpressions = new HashSet<>();
 		}
 
-		public List<Expression> getResult() {
+		public Collection<Expression> getResult() {
 			return mExpressions;
 		}
 
@@ -157,9 +187,28 @@ public class LTLExpressionExtractor {
 
 					if (left.getResult().isEmpty() && right.getResult().isEmpty()) {
 						mCurrentSubExpression = node;
-					} else if (left.getResult().size() == 1 && left.getResult().get(0) == node.getLeft()
-							&& right.getResult().size() == 1 && node.getRight() == right.getResult().get(0)) {
-						mCurrentSubExpression = node;
+					} else {
+						boolean allOfLeft = false;
+						boolean allOfRight = false;
+						HashSet<Expression> results = new HashSet<>();
+						for (Expression expr : left.getResult()) {
+							results.add(expr);
+							if (expr == node.getLeft()) {
+								allOfLeft = true;
+							}
+						}
+						for (Expression expr : right.getResult()) {
+							results.add(expr);
+							if (expr == node.getRight()) {
+								allOfRight = true;
+							}
+						}
+						if (allOfRight && allOfLeft) {
+							mCurrentSubExpression = node;
+						} else {
+							mExpressions.addAll(results);
+							return false;
+						}
 					}
 				}
 				return super.visit(node);
@@ -173,14 +222,28 @@ public class LTLExpressionExtractor {
 			case LTLGLOBALLY:
 			case LTLNEXT:
 				mCurrentSubExpression = null;
-				break;
+				return super.visit(node);
 			default:
 				if (mCurrentSubExpression == null) {
-					mCurrentSubExpression = node;
+					LTLExtractSubexpressions right = new LTLExtractSubexpressions();
+					node.getExpr().accept(right);
+
+					if (right.getResult().isEmpty()) {
+						mCurrentSubExpression = node;
+					} else {
+						for (Expression expr : right.getResult()) {
+							if (expr == node.getExpr()) {
+								mCurrentSubExpression = node;
+							}
+						}
+						if (mCurrentSubExpression == null) {
+							mExpressions.addAll(right.getResult());
+							return false;
+						}
+					}
 				}
-				break;
+				return super.visit(node);
 			}
-			return super.visit(node);
 		}
 
 		@Override

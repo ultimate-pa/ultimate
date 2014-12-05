@@ -33,14 +33,14 @@ public abstract class AbstractRegressionTestSuite extends UltimateTestSuite {
 		Collection<Pair> runConfigurations = getRunConfiguration();
 
 		for (Pair runConfiguration : runConfigurations) {
-			Collection<File> inputFiles = getInputFiles(runConfiguration.ToolchainFile.getParentFile());
+			Collection<File> inputFiles = getInputFiles(runConfiguration);
 
 			for (File inputFile : inputFiles) {
-				UltimateRunDefinition urd = new UltimateRunDefinition(inputFile, runConfiguration.SettingsFile,
-						runConfiguration.ToolchainFile);
+				UltimateRunDefinition urd = new UltimateRunDefinition(inputFile, runConfiguration.getSettingsFile(),
+						runConfiguration.getToolchainFile());
 				UltimateStarter starter = new UltimateStarter(urd, mTimeout, null, null);
-				rtr.add(new UltimateTestCase(String.format("%s+%s: %s", runConfiguration.ToolchainFile.getName(),
-						runConfiguration.SettingsFile.getName(), inputFile.getAbsolutePath()),
+				rtr.add(new UltimateTestCase(String.format("%s+%s: %s", runConfiguration.getToolchainFile().getName(),
+						runConfiguration.getSettingsFile().getName(), inputFile.getAbsolutePath()),
 						getTestResultDecider(urd), starter, urd, null, null));
 			}
 		}
@@ -48,7 +48,11 @@ public abstract class AbstractRegressionTestSuite extends UltimateTestSuite {
 		return rtr;
 	}
 
-	private Collection<Pair> getRunConfiguration() {
+	/**
+	 * @return A collection of Pairs of Files, where the first file represents a
+	 *         toolchain and the second represents settings.
+	 */
+	protected Collection<Pair> getRunConfiguration() {
 		ArrayList<Pair> rtr = new ArrayList<>();
 
 		File root = getRootFolder(mRootFolder);
@@ -77,13 +81,12 @@ public abstract class AbstractRegressionTestSuite extends UltimateTestSuite {
 
 		return rtr;
 	}
-	
 
 	@Override
 	protected ITestSummary[] constructTestSummaries() {
 		return new ITestSummary[0];
 	}
-	
+
 	@Override
 	protected IIncrementalLog[] constructIncrementalLog() {
 		return new IIncrementalLog[0];
@@ -108,21 +111,36 @@ public abstract class AbstractRegressionTestSuite extends UltimateTestSuite {
 		return root;
 	}
 
-	protected Collection<File> getInputFiles(File rootFolder) {
-		return Util.getFiles(rootFolder, mFiletypesToConsider);
+	/**
+	 * @return All the files that should be used in this test suite. The default
+	 *         implementation uses all files that can be found recursively under
+	 *         the folder in which the Toolchain file (specified in
+	 *         runConfiguration) lies and that have the endings specified by
+	 *         mFileTypesToConsider.
+	 */
+	protected Collection<File> getInputFiles(Pair runConfiguration) {
+		return Util.getFiles(runConfiguration.getToolchainFile().getParentFile(), mFiletypesToConsider);
 	}
 
 	protected abstract ITestResultDecider getTestResultDecider(UltimateRunDefinition runDefinition);
 
-	private class Pair {
+	public class Pair {
 
-		private Pair(File toolchain, File settings) {
-			ToolchainFile = toolchain;
-			SettingsFile = settings;
+		public Pair(File toolchain, File settings) {
+			mToolchainFile = toolchain;
+			mSettingsFile = settings;
 		}
 
-		private File ToolchainFile;
-		private File SettingsFile;
+		public File getToolchainFile() {
+			return mToolchainFile;
+		}
+
+		public File getSettingsFile() {
+			return mSettingsFile;
+		}
+
+		private File mToolchainFile;
+		private File mSettingsFile;
 	}
 
 }

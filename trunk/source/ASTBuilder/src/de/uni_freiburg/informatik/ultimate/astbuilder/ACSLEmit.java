@@ -100,7 +100,7 @@ public class ACSLEmit extends Emit {
 
 			if (!node.isAbstract()) {
 				List<Parameter> allACSLParameters = getAllACSLParameters(node);
-				writeVisitorAcceptMethod(allACSLParameters);
+				writeVisitorAcceptMethod(node, allACSLParameters);
 				writeTransformerAcceptMethod(node, allACSLParameters);
 
 			} else {
@@ -223,10 +223,52 @@ public class ACSLEmit extends Emit {
 
 	}
 
-	private void writeVisitorAcceptMethod(List<Parameter> allACSLParameters) {
+	private void writeVisitorAcceptMethod(Node node, List<Parameter> allACSLParameters) {
 		// accept method for visitor
 		mWriter.println();
 		mWriter.println("    public void accept(" + sVisitorName + " visitor) {");
+
+		String lineSep = System.getProperty("line.separator");
+
+		Node parent = node.getParent();
+		String indent = "        ";
+		int i = 0;
+		StringBuilder sb = new StringBuilder();
+		if (parent != null) {
+			while (parent != null) {
+				int j = i + 1;
+				while (j > 0) {
+					sb.append(indent);
+					j--;
+				}
+				sb.append("if(visitor.visit((" + parent.name + ")this)){");
+				sb.append(lineSep);
+				parent = parent.getParent();
+				i++;
+			}
+
+			while (i > 0) {
+				int j = i + 1;
+				String localIndent = "";
+				while (j > 0) {
+					localIndent = localIndent + indent;
+					j--;
+				}
+				sb.append(localIndent);
+				sb.append("} else {");
+				sb.append(lineSep);
+				sb.append(indent);
+				sb.append(localIndent);
+				sb.append("return;");
+				sb.append(lineSep);
+				sb.append(localIndent);
+				i--;
+			}
+			sb.append(indent);
+			sb.append("}");
+			mWriter.println(sb.toString());
+		}
+
 		mWriter.println("        if(visitor.visit(this)){");
 		for (Parameter p : allACSLParameters) {
 			mWriter.println("            if(" + p.getName() + "!=null){");

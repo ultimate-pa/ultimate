@@ -3,6 +3,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map.Entry;
 
@@ -112,22 +113,38 @@ public class CACSL2BoogieTranslatorObserver implements IUnmanagedObserver {
 		for (ACSLNode acslNode : acslNodes) {
 			if (acslNode instanceof GlobalLTLInvariant) {
 				LTLPrettyPrinter printer = new LTLPrettyPrinter();
-				mLogger.info(printer.print(acslNode));
+				String orig = printer.print(acslNode);
+				mLogger.info("Original: " + orig);
+
 				LTLExpressionExtractor extractor = new LTLExpressionExtractor();
+				String origNormalized = printer.print(extractor.removeWeakUntil(acslNode));
+				mLogger.info("Original normalized: " + origNormalized);
 				if (!extractor.run(acslNode)) {
 					continue;
 				}
-				mLogger.info(extractor.getLTLFormatString());
+				String extracted = extractor.getLTLFormatString();
+				mLogger.info("Extracted: " + extracted);
+				HashSet<String> equivalence = new HashSet<>();
 				for (Entry<String, Expression> subexp : extractor.getAP2SubExpressionMap().entrySet()) {
-					mLogger.info(subexp.getKey() + ": " + printer.print(subexp.getValue()));
+					String exprAsString = printer.print(subexp.getValue());
+					equivalence.add(exprAsString);
+					mLogger.info(subexp.getKey() + ": " + exprAsString);
+					extracted = extracted.replaceAll(subexp.getKey(), exprAsString);
 				}
+				mLogger.info("Orig from extracted: " + extracted);
+				// the extraction did something weird if this does not hold
+				assert extracted.equals(origNormalized);
+				// our APs are not atomic if this does not hold
+				assert equivalence.size() == extractor.getAP2SubExpressionMap().size();
 
-				//TODO: Alex
-//				List<VariableDeclaration> globalDeclarations = null;
-//				//create this from extractor.getAP2SubExpressionMap()
-//				Map<String, CheckableExpression> ap2expr = null;
-//				LTLPropertyCheck x = new LTLPropertyCheck(extractor.getLTLFormatString(), ap2expr, globalDeclarations);
-//				//annotate translation unit with x 
+				// TODO: Alex
+				// List<VariableDeclaration> globalDeclarations = null;
+				// //create this from extractor.getAP2SubExpressionMap()
+				// Map<String, CheckableExpression> ap2expr = null;
+				// LTLPropertyCheck x = new
+				// LTLPropertyCheck(extractor.getLTLFormatString(), ap2expr,
+				// globalDeclarations);
+				// //annotate translation unit with x
 
 			}
 		}

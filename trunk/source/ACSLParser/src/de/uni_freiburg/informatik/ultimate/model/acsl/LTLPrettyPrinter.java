@@ -16,7 +16,7 @@ import de.uni_freiburg.informatik.ultimate.model.acsl.ast.BinaryExpression.Opera
  */
 public class LTLPrettyPrinter extends ACSLVisitor {
 
-	private StringBuilder mBuilder;
+	protected StringBuilder mBuilder;
 
 	public String print(ACSLNode node) {
 		mBuilder = new StringBuilder();
