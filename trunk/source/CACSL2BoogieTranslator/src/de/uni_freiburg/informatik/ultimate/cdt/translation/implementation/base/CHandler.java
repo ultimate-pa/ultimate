@@ -16,6 +16,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Stack;
 
+import javax.print.DocFlavor.STRING;
+
 import org.apache.log4j.Logger;
 import org.eclipse.cdt.core.dom.ast.IASTASMDeclaration;
 import org.eclipse.cdt.core.dom.ast.IASTArrayDeclarator;
@@ -1013,8 +1015,10 @@ public class CHandler implements ICHandler {
 				if (((CPrimitive) ropToInt.lrVal.cType).getGeneralType() == GENERALPRIMITIVE.INTTYPE) {
 					Expression newEx = new UnaryExpression(loc, 
 							UnaryExpression.Operator.ARITHNEGATIVE, ropToInt.lrVal.getValue());				
-					return new ResultExpression(ropToInt.stmt, new RValue(newEx, ropToInt.lrVal.cType), 
+					ResultExpression rex = new ResultExpression(ropToInt.stmt, new RValue(newEx, ropToInt.lrVal.cType), 
 							ropToInt.decl, ropToInt.auxVars, ropToInt.overappr);
+					checkIntegerBounds(main, loc, rex);
+					return rex;
 				} else if (((CPrimitive) ropToInt.lrVal.cType).getGeneralType() == GENERALPRIMITIVE.FLOATTYPE) {
 					//TODO: having boogie deal with negative real literals would be the nice solution..
 					Expression newEx = new BinaryExpression(loc, BinaryExpression.Operator.ARITHMINUS, 
@@ -1116,6 +1120,7 @@ public class CHandler implements ICHandler {
 			assert !(o.lrVal instanceof RValue);
 			ResultExpression assign = makeAssignment(main, loc, stmt, o.lrVal, rhs, decl, auxVars, overappr);// ,
 																												// o.lrVal.cType);
+			checkIntegerBounds(main, loc, rhs, assign.stmt);
 			return new ResultExpression(assign.stmt, tmpRValue, assign.decl, assign.auxVars, assign.overappr);
 		}
 		case IASTUnaryExpression.op_prefixDecr:
@@ -1166,6 +1171,7 @@ public class CHandler implements ICHandler {
 																		 */tmpName), o.lrVal.cType);
 			ResultExpression assign = makeAssignment(main, loc, stmt, o.lrVal, tmpRValue, decl, auxVars, overappr);// ,
 																													// o.lrVal.cType);
+			checkIntegerBounds(main, loc, tmpRValue, assign.stmt);
 			return new ResultExpression(assign.stmt, tmpRValue, assign.decl, assign.auxVars, assign.overappr);
 		}
 		case IASTUnaryExpression.op_bracketedPrimary:
@@ -1703,8 +1709,14 @@ public class CHandler implements ICHandler {
 
 				RValue rval = new RValue(createArithmeticExpression(node.getOperator(), rlToInt.lrVal.getValue(),
 						rrToInt.lrVal.getValue(), loc), rlToInt.lrVal.cType);
+				
+				
 				assert (main.isAuxVarMapcomplete(decl, auxVars)) : "unhavoced auxvars";
-				return new ResultExpression(stmt, rval, decl, auxVars, overappr);
+				ResultExpression rex = new ResultExpression(stmt, rval, decl, auxVars, overappr);
+				if (node.getOperator() != IASTBinaryExpression.op_divide
+						&& node.getOperator() != IASTBinaryExpression.op_modulo)
+					checkIntegerBounds(main, loc, rex);
+				return rex;
 			}
 		}
 		case IASTBinaryExpression.op_minusAssign:
@@ -1751,7 +1763,10 @@ public class CHandler implements ICHandler {
 			} else {
 				rightHandside = new RValue(createArithmeticExpression(node.getOperator(), rl.lrVal.getValue(),
 						rr.lrVal.getValue(), loc), rr.lrVal.cType);
-			}
+			} 
+			if (node.getOperator() != IASTBinaryExpression.op_divideAssign
+						&& node.getOperator() != IASTBinaryExpression.op_moduloAssign)
+				checkIntegerBounds(main, loc, rightHandside, stmt);
 			return makeAssignment(main, loc, stmt, l.lrVal, rightHandside, decl, auxVars, overappr);
 		}
 		case IASTBinaryExpression.op_binaryAnd:
@@ -1870,6 +1885,29 @@ public class CHandler implements ICHandler {
 //					false);
 //		}
 //	}
+
+	/**
+	 * Takes a ResultExpression coming from an arithmetic expression, and, if the corresponding preference
+	 * is set, adds asserts that check that no integer over-/underflow occurs.
+	 * Does that only if the corresponding preference is set.
+	 */
+	private void checkIntegerBounds(Dispatcher main, ILocation loc, ResultExpression rex) {
+		checkIntegerBounds(main, loc, (RValue) rex.lrVal, rex.stmt);
+	}
+
+	private void checkIntegerBounds(Dispatcher main, ILocation loc, RValue rVal, ArrayList<Statement> stmt) {
+		if (main.mPreferences.getBoolean(CACSLPreferenceInitializer.LABEL_ASSERT_SIGNED_INTEGER_BOUNDS)
+				&& rVal.cType instanceof CPrimitive
+				&& ((CPrimitive) rVal.cType).getGeneralType() == GENERALPRIMITIVE.INTTYPE
+				&& !((CPrimitive) rVal.cType).isUnsigned()) {
+			AssertStatement smallerMaxInt = new AssertStatement(loc, new BinaryExpression(loc, BinaryExpression.Operator.COMPLT, rVal.getValue(), 
+					new IntegerLiteral(loc, CastAndConversionHandler.getMaxValueOfPrimitiveType(mMemoryHandler, rVal.cType.getUnderlyingType()).toString())));
+			stmt.add(smallerMaxInt);
+			AssertStatement biggerMinInt = new AssertStatement(loc, new BinaryExpression(loc, BinaryExpression.Operator.COMPGEQ, rVal.getValue(), 
+					new IntegerLiteral(loc, CastAndConversionHandler.getMaxValueOfPrimitiveType(mMemoryHandler, rVal.cType.getUnderlyingType()).negate().toString())));
+			stmt.add(biggerMinInt);
+		}
+	}
 
 	@Override
 	public Result visit(Dispatcher main, IASTEqualsInitializer node) {

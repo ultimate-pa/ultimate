@@ -179,18 +179,10 @@ public class CastAndConversionHandler {
 			ResultExpression rex) {
 		//FIXME  it is not always correct to take the size of rex's lrval's ctype, in case of a comparison we may need to take the
 		// size of the other value's type
-
+		CType ulType = rex.lrVal.cType.getUnderlyingType();
 		//special treatment for unsigned integer types
-		int exponentInBytes = -1; 
-		if (rex.lrVal.cType.getUnderlyingType() instanceof CEnum) {
-			exponentInBytes = memoryHandler.typeSizeConstants.sizeOfEnumType;
-		} else {
-			//should be primitive
-			exponentInBytes = memoryHandler.typeSizeConstants
-				.CPrimitiveToTypeSizeConstant.get(((CPrimitive) rex.lrVal.cType.getUnderlyingType()).getType());
-		}
-		BigInteger maxValue = new BigInteger("2")
-			.pow(exponentInBytes * 8);
+
+		BigInteger maxValue = getMaxValueOfPrimitiveType(memoryHandler, ulType);
 
 		if (main.cHandler.getUnsignedTreatment() == UNSIGNED_TREATMENT.ASSUME_ALL) {
 			AssumeStatement assumeGeq0 = new AssumeStatement(loc, new BinaryExpression(loc, BinaryExpression.Operator.COMPGEQ,
@@ -208,6 +200,27 @@ public class CastAndConversionHandler {
 					rex.lrVal.isBoogieBool,
 					false);
 		}
+	}
+
+	public static BigInteger getMaxValueOfPrimitiveType(
+			MemoryHandler memoryHandler, CType ulType) {
+		int byteSize = -1; 
+		if (ulType instanceof CEnum) {
+			byteSize = memoryHandler.typeSizeConstants.sizeOfEnumType;
+		} else {
+			//should be primitive
+			byteSize = memoryHandler.typeSizeConstants
+				.CPrimitiveToTypeSizeConstant.get(((CPrimitive) ulType).getType());
+		}
+		BigInteger maxValue = null;
+		if (((CPrimitive) ulType).isUnsigned()) {
+			maxValue = new BigInteger("2")
+				.pow(byteSize * 8);
+		} else {
+			maxValue = new BigInteger("2")
+				.pow((byteSize - 1) * 8);
+		}
+		return maxValue;
 	}
 
 	public static void doIntOverflowTreatmentInComparisonIfApplicable(Dispatcher main, MemoryHandler memoryHandler,
