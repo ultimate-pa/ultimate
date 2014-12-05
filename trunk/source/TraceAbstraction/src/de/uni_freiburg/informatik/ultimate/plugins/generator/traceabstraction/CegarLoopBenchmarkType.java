@@ -27,7 +27,6 @@ public class CegarLoopBenchmarkType implements IBenchmarkType {
 	public static final String s_BiggestAbstraction = "BiggestAbstraction";
 	public static final String s_TraceCheckerBenchmark = "TraceCheckerBenchmark";
 	public static final String s_InterpolantCoveringCapability = "InterpolantCoveringCapability";
-	public static final String s_ICCPercentage = "ICC %";
 	public static final String s_TotalInterpolationBenchmark = "TotalInterpolationBenchmark";
 	
 	private static final CegarLoopBenchmarkType s_Instance = new CegarLoopBenchmarkType();
@@ -49,7 +48,6 @@ public class CegarLoopBenchmarkType implements IBenchmarkType {
 		keyList.add(s_StatesRemovedByMinimization);
 		keyList.add(s_TraceCheckerBenchmark);
 		keyList.add(s_InterpolantCoveringCapability);
-		keyList.add(s_ICCPercentage);
 		keyList.add(s_TotalInterpolationBenchmark);
 		return keyList;
 	}
@@ -154,7 +152,7 @@ public class CegarLoopBenchmarkType implements IBenchmarkType {
 		sb.append(bci.toString());
 		sb.append("\t");
 
-		sb.append(s_ICCPercentage);
+		sb.append("ICC %");
 		sb.append(": ");
 		sb.append(new Double(((double) bci.getSuccessfullBackwardCoverings())
 				/bci.getPotentialBackwardCoverings()).toString());
