@@ -58,6 +58,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.CACSL2BoogieBacktranslator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.result.Check;
 import de.uni_freiburg.informatik.ultimate.result.Check.Spec;
 
@@ -113,13 +114,18 @@ public class SvComp14CHandler extends CHandler {
 		Map<VariableDeclaration, ILocation> auxVars = new HashMap<VariableDeclaration, ILocation>();
 		ArrayList<Overapprox> overappr = new ArrayList<Overapprox>();
 		LRValue returnValue = null;
+		
 
 		if (methodName.equals(ERROR_STRING)) {
-			Check check = new Check(Spec.ERROR_Function);
-			AssertStatement assertStmt = new AssertStatement(loc, new BooleanLiteral(loc,
-					new InferredType(Type.Boolean), false));
-			check.addToNodeAnnot(assertStmt);
-			stmt.add(assertStmt);
+			boolean useSVCompSpecificationFunctions = 
+					!main.mPreferences.getBoolean(CACSLPreferenceInitializer.LABEL_CHECK_SVCOMP_NOERRORFUNCTION);
+			if (useSVCompSpecificationFunctions) {
+				Check check = new Check(Spec.ERROR_Function);
+				AssertStatement assertStmt = new AssertStatement(loc, new BooleanLiteral(loc,
+						new InferredType(Type.Boolean), false));
+				check.addToNodeAnnot(assertStmt);
+				stmt.add(assertStmt);
+			} 
 			return new ResultExpression(stmt, returnValue, decl, auxVars, overappr);
 		}
 		if (methodName.equals(ASSUME_STRING)) {

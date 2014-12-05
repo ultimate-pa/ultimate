@@ -16,6 +16,8 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 						TranslationMode.values()),
 				new UltimatePreferenceItem<String>(LABEL_MAINPROC, "",
 						PreferenceType.String),
+				new UltimatePreferenceItem<Boolean>(LABEL_CHECK_SVCOMP_NOERRORFUNCTION,
+						false, PreferenceType.Boolean),
 				new UltimatePreferenceItem<POINTER_CHECKMODE>(
 						LABEL_CHECK_POINTER_VALIDITY,
 						POINTER_CHECKMODE.ASSERTandASSUME,
@@ -148,6 +150,7 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 
 	public static final String LABEL_MODE = "Translation Mode:";
 	public static final String LABEL_MAINPROC = "Checked method. Library mode if empty.";
+	public static final String LABEL_CHECK_SVCOMP_NOERRORFUNCTION = "Don't translate calls of SVComp-style specification to boogie asserts (omit them if checked, has no effect if not in SVComp translation mode)";
 	public static final String LABEL_CHECK_POINTER_VALIDITY = "Pointer base address is valid at dereference";
 	public static final String LABEL_CHECK_POINTER_ALLOC = "Pointer to allocated memory at dereference";
 	public static final String LABEL_CHECK_FREE_VALID = "Check if freed pointer was valid";
