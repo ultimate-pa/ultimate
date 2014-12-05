@@ -46,7 +46,7 @@ public class PositiveResult<ELEM extends IElement> extends AbstractResultAtEleme
 			StringBuilder sb = new StringBuilder();
 			sb.append("For all program executions holds that ");
 			sb.append(m_CheckedSpecification.getPositiveMessage());
-			sb.append(" holds at this location");
+			sb.append(" at this location");
 			return sb.toString();
 		}
 
