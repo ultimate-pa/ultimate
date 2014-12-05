@@ -110,6 +110,17 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 				iterate(name, (RootNode) root, taPrefs, smtManager, traceAbstractionBenchmark, errorLocs);
 			}
 		}
+		if (m_OverallResult == Result.SAFE) {
+			final String longDescription;
+			if (errNodesOfAllProc.isEmpty()) {
+				longDescription = "We were not able to verify any"
+						+ " specifiation because the program does not contain any specification.";
+			} else {
+				longDescription = errNodesOfAllProc.size() + " specifications checked. All of them hold";
+			}
+			AllSpecificationsHoldResult result = new AllSpecificationsHoldResult(Activator.s_PLUGIN_NAME, longDescription);
+			reportResult(result);
+		}
 
 		mLogger.debug("Compute Hoare Annotation: " + taPrefs.computeHoareAnnotation());
 		mLogger.debug("Overall result: " + m_OverallResult);
@@ -239,22 +250,11 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 	}
 
 	private void reportPositiveResults(Collection<ProgramPoint> errorLocs) {
-		final String longDescription;
-		if (errorLocs.isEmpty()) {
-			longDescription = "We were not able to verify any"
-					+ " specifiation because the program does not contain any specification.";
-		} else {
-			longDescription = errorLocs.size() + " specifications checked. All of them hold";
-			for (ProgramPoint errorLoc : errorLocs) {
-				PositiveResult<RcfgElement> pResult = new PositiveResult<RcfgElement>(Activator.s_PLUGIN_NAME,
-						errorLoc, mServices.getBacktranslationService());
-				reportResult(pResult);
-			}
+		for (ProgramPoint errorLoc : errorLocs) {
+			PositiveResult<RcfgElement> pResult = new PositiveResult<RcfgElement>(Activator.s_PLUGIN_NAME,
+					errorLoc, mServices.getBacktranslationService());
+			reportResult(pResult);
 		}
-		AllSpecificationsHoldResult result = new AllSpecificationsHoldResult(Activator.s_PLUGIN_NAME, longDescription);
-		reportResult(result);
-		// s_Logger.info(result.getShortDescription() + " " +
-		// result.getLongDescription());
 	}
 
 	private void reportCounterexampleResult(RcfgProgramExecution pe) {
