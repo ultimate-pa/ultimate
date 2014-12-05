@@ -81,10 +81,13 @@ public final class GetRandomDfa implements IOperation<String, String> {
 	 *            generatePackedRandomDFA(...)}
 	 * @param accStates
 	 *            Set that contains all accepting states
+	 * @param transToDelete
+	 *            Set that contains indexes in the DFA sequence of all transitions
+	 *            that should be deleted
 	 * @return As {@link NestedWordAutomaton} extracted DFA
 	 */
 	private NestedWordAutomaton<String, String> extractPackedDFA(int[] dfa,
-			Set<Integer> accStates) {
+			Set<Integer> accStates, Set<Integer> transToDelete) {
 		List<String> num2State = new ArrayList<String>(m_size);
 		for (int i = 0; i < m_size; ++i) {
 			num2State.add(PREFIX_NODE + i);
@@ -110,26 +113,21 @@ public final class GetRandomDfa implements IOperation<String, String> {
 		}
 
 		// Create transitions
-		int lengthOfUsableSequence = dfa.length;
-		// Skip transitions of the sink state for non-total DFAs.
-		// This simulates non-total DFAs because the generator only returns
-		// total DFAs.
-		if (!m_isTotal) {
-			lengthOfUsableSequence -= m_alphabetSize;
-		}
-		for (int i = 0; i < lengthOfUsableSequence; i++) {
+		for (int i = 0; i < dfa.length; i++) {
+			//Skip transition if it should not be contained in the final automata
+			if (transToDelete.contains(i)) {
+				continue;
+			}
 			int predStateIndex = (int) Math.floor((i + 0.0) / m_alphabetSize);
 			int letterIndex = i % m_alphabetSize;
 			int succStateIndex = dfa[i];
 			// Skip transition if it points to a node out of the wished size.
 			// This node is the sink node for non-total DFAs.
-			if (dfa[i] < m_size) {
-				String predState = num2State.get(predStateIndex);
-				String letter = num2Letter.get(letterIndex);
-				String succState = num2State.get(succStateIndex);
+			String predState = num2State.get(predStateIndex);
+			String letter = num2Letter.get(letterIndex);
+			String succState = num2State.get(succStateIndex);
 
-				result.addInternalTransition(predState, letter, succState);
-			}
+			result.addInternalTransition(predState, letter, succState);
 		}
 
 		return result;
@@ -184,6 +182,7 @@ public final class GetRandomDfa implements IOperation<String, String> {
 		// to right until all nodes are reached by an edge.
 		for (int i = 1; i <= m_size - 1; i++) {
 			int curFlag = generateFlag(i, lastFlag + 1);
+			m_flags.add(curFlag);
 			for (int j = lastFlag + 1; j <= curFlag - 1; j++) {
 				// Only use nodes that were already reached
 				sequence[curSequenceIndex] = rnd.nextInt(i);
@@ -300,9 +299,12 @@ public final class GetRandomDfa implements IOperation<String, String> {
 	 *            format specified by
 	 *            {@link #generatePackedRandomDFA(int, int, int, boolean, boolean)
 	 *            generatePackedRandomDFA(...)}
+	 * @param transToDelete
+	 *            Set that contains indexes in the DFA sequence of all transitions
+	 *            that should be deleted
 	 * @return Set of states that should be accepting
 	 */
-	private Set<Integer> calculateAccStates(int[] dfa) {
+	private Set<Integer> calcAccStates(int[] dfa, Set<Integer> transToDelete) {
 		LinkedHashSet<Integer> finalStates = new LinkedHashSet<Integer>(
 				m_numOfAccStates);
 		// Initialize list
@@ -331,11 +333,11 @@ public final class GetRandomDfa implements IOperation<String, String> {
 			int offset = i * m_alphabetSize;
 			// Resulting states are reached by state i
 			for (int j = 0; j < m_alphabetSize; j++) {
-				int resultingState = dfa[offset + j];
-				// This state is the possible used sink state for non-total DFAs
-				if (resultingState >= m_size) {
+				//Skip transition if it should not be contained in the final automata
+				if (transToDelete.contains(offset + j)) {
 					continue;
 				}
+				int resultingState = dfa[offset + j];
 				statesReachedBy.get(resultingState).add(i);
 			}
 		}
@@ -343,11 +345,12 @@ public final class GetRandomDfa implements IOperation<String, String> {
 		// Initialize set that will contain remaining states that do not reach a
 		// final state
 		LinkedHashSet<Integer> remainingStates = new LinkedHashSet<Integer>(m_size);
+		int remainingStatesAmount = m_size;
 		for (int i = 0; i < m_size; i++) {
 			remainingStates.add(i);
 		}
 		// Search all states that do not reach final states
-		// Make the last of them final and repeat until all states reach final states
+		// Make one of them final and repeat until all states reach final states
 		do {
 			// Search all states that reach final states and remove them from
 			// 'remainingStates'
@@ -360,6 +363,7 @@ public final class GetRandomDfa implements IOperation<String, String> {
 				while (!statesToProcess.isEmpty()) {
 					int currState = statesToProcess.poll();
 					remainingStates.remove(currState);
+					remainingStatesAmount--;
 					Set<Integer> currStateReachedBy = statesReachedBy
 							.get(currState);
 					for (int state : currStateReachedBy) {
@@ -369,19 +373,97 @@ public final class GetRandomDfa implements IOperation<String, String> {
 					}
 				}
 			}
-			// Make the last of the remaining states final and repeat until all
+			// Make one of the remaining states final and repeat until all
 			// states reach final states
 			Iterator<Integer> iterator = remainingStates.iterator();
-			int remainingState = NO_STATE;
-			while (iterator.hasNext()) {
-				remainingState = iterator.next();
-			}
-			if (remainingState != NO_STATE) {
-				finalStates.add(remainingState);
+			if (remainingStatesAmount > 0) {
+				int remainingState = NO_STATE;
+				int counter = m_random.nextInt(remainingStatesAmount);
+				while (counter >= 0) {
+					remainingState = iterator.next();
+					counter--;
+				}
+				if (remainingState != NO_STATE) {
+					finalStates.add(remainingState);
+				}
 			}
 		} while (!remainingStates.isEmpty());
 
 		return finalStates;
+	}
+	
+	/**
+	 * Calculates the transitions of the DFA that should be deleted.
+	 * Therefore using {@link m_percOfTotality}.
+	 * Transitions that first reach a state, stated by
+	 * {@link m_flags} do not get deleted hence the DFA keeps connected.<br />
+	 * <br />
+	 * 
+	 * Runtime is in <b>O(size * alphabetSize)</b>
+	 * @param dfa
+	 *            The DFA to calculate accepting states for in the int[] array
+	 *            format specified by
+	 *            {@link #generatePackedRandomDFA(int, int, int, boolean, boolean)
+	 *            generatePackedRandomDFA(...)}
+	 * @return List of transitions that should get deleted as indexes in the DFA sequence
+	 */
+	private Set<Integer> calcTransitionsToDelete(int[] dfa) {
+		if (m_percOfTotality < PERC_TOTALITY_BOUND_LOWER || m_percOfTotality > PERC_TOTALITY_BOUND_UPPER) {
+			throw new IllegalArgumentException(
+					"'percOfTotality' must not exceed '" + PERC_TOTALITY_BOUND_UPPER + "' or be less than "
+					+ PERC_TOTALITY_BOUND_LOWER + ".");
+		}
+		
+		//Skip calculation in default case where no transition should be deleted
+		if (m_percOfTotality == PERC_TOTALITY_BOUND_UPPER) {
+			return new HashSet<Integer>(0);
+		}
+		
+		int amountOfTrans = dfa.length;
+		float percOfFlags = (m_flags.size() + 0.0f) / amountOfTrans;
+		int maxAllowedToDelete = (int) Math.round((((PERC_FULL + 0.0f) / PERC_FULL) - percOfFlags)
+				* amountOfTrans);
+		int desiredToDelete = (int) Math.round(((PERC_FULL - m_percOfTotality + 0.0f) / PERC_FULL)
+				* amountOfTrans);
+		int amountToDelete = Math.min(maxAllowedToDelete, desiredToDelete);
+		
+		Set<Integer> transToDelete = new HashSet<Integer>(amountToDelete);
+		
+		final int variantThreshold = dfa.length / 2;
+		final int generationVariantMaxTries = (int) (dfa.length * 2f);
+		boolean useShuffleVariant = amountToDelete > variantThreshold;
+		
+		//Variant 1: Generate random indexes until we have enough unique
+		if (!useShuffleVariant) {
+			int counter = 0;
+			while(!useShuffleVariant && transToDelete.size() < amountToDelete) {
+				int transition = m_random.nextInt(dfa.length);
+				if (!m_flags.contains(transition)) {
+					transToDelete.add(transition);
+				}
+				//Break variant and use other if it takes too long
+				counter++;
+				if (counter > generationVariantMaxTries) {
+					useShuffleVariant = true;
+					transToDelete = new HashSet<Integer>(amountToDelete);
+				}
+			}
+		}
+		//Variant 2: Permute a list of all indexes and select the first valid ones
+		if (useShuffleVariant) {
+			List<Integer> transitions = new ArrayList<Integer>(dfa.length - m_flags.size());
+			for (int i = 0; i < dfa.length; i++) {
+				if (!m_flags.contains(i)) {
+					transitions.add(i);
+				}
+			}
+			Collections.shuffle(transitions, m_random);
+			for (int i = 0; i < amountToDelete; i++) {
+				transToDelete.add(transitions.get(i));
+			}
+		}
+		
+		return transToDelete;
 	}
 
 	/**
@@ -483,6 +565,22 @@ public final class GetRandomDfa implements IOperation<String, String> {
 	}
 
 	/**
+	 * Constant for full percentage of 100.
+	 */
+	public static final int PERC_FULL = 100;
+	/**
+	 * Lower bound for percentage of totality.
+	 */
+	public static final int PERC_TOTALITY_BOUND_LOWER = 0;
+	/**
+	 * Upper bound for percentage of totality.
+	 */
+	public static final int PERC_TOTALITY_BOUND_UPPER = PERC_FULL;
+	/**
+	 * Constant for no valid state. Valid states are 0, 1, ...
+	 */
+	public static final int NO_STATE = -1;
+	/**
 	 * Prefix for nodes. A node then is called 'prefix + index' where index is
 	 * the index to a node in the node list.
 	 */
@@ -492,10 +590,6 @@ public final class GetRandomDfa implements IOperation<String, String> {
 	 * where index is the index to a transition in the transition list.
 	 */
 	public static final String PREFIX_TRANSITION = "a";
-	/**
-	 * Constant for no valid state. Valid states are 0, 1, ...
-	 */
-	public static final int NO_STATE = -1;
 	/**
 	 * Table that contains the amount of all permutations of different DFA
 	 * classes. Dimensions are [size][size * alphabetSize]. Also used for
@@ -508,20 +602,12 @@ public final class GetRandomDfa implements IOperation<String, String> {
 	 */
 	private final int m_alphabetSize;
 	/**
-	 * If true ensures that all states reach a final state at cost of
-	 * performance by creating extra final states. If false just
-	 * {@link m_numOfAccStates} final states will be created.
+	 * If true enables caching of pre-calculated results for future similar
+	 * requests. If false caching will not be done. Best results can be achieved
+	 * by executing requests with same 'size' and similar 'alphabetSize' behind
+	 * one another.
 	 */
-	private final boolean m_ensureStatesReachFinal;
-	/**
-	 * If transition function should be total or not. If not it can be possible
-	 * that some transitions are missing and the DFA is a non-complete DFA.
-	 */
-	private final boolean m_isTotal;
-	/**
-	 * Number of the accepting states.
-	 */
-	private final int m_numOfAccStates;
+	private final boolean m_enableCaching;
 	/**
 	 * If true ensures a uniform distribution of the connected DFAs at high cost
 	 * of performance for big 'size'. If false random classes of DFAs get
@@ -529,12 +615,26 @@ public final class GetRandomDfa implements IOperation<String, String> {
 	 */
 	private final boolean m_ensureIsUniform;
 	/**
-	 * If true enables caching of pre-calculated results for future similar
-	 * requests. If false caching will not be done. Best results can be achieved
-	 * by executing requests with same 'size' and similar 'alphabetSize' behind
-	 * one another.
+	 * If true ensures that all states reach a final state at cost of
+	 * performance by creating extra final states. If false just
+	 * {@link m_numOfAccStates} final states will be created.
 	 */
-	private final boolean m_enableCaching;
+	private final boolean m_ensureStatesReachFinal;
+	/**
+	 * Flags of the DFA specified by {@link #generateFlag(int, int) generateFlag(...)}.
+	 */
+	private final Set<Integer> m_flags;
+	/**
+	 * Number of the accepting states.
+	 */
+	private final int m_numOfAccStates;
+	/**
+	 * Percentage of DFAs totality. If 100 the resulting DFA will be total.
+	 * If 50 about half of the transitions will miss.
+	 * If 0 all transitions that can be deleted,
+	 * by ensuring all states get reached, are missing.
+	 */
+	private final int m_percOfTotality;
 	/**
 	 * Random generator.
 	 */
@@ -548,10 +648,9 @@ public final class GetRandomDfa implements IOperation<String, String> {
 	 */
 	private final IUltimateServiceProvider m_Services;
 	/**
-	 * Size of the automaton also amount of nodes. This field is not final
-	 * because it gets shortly modified if DFA may also be non-total.
+	 * Size of the automaton also amount of nodes.
 	 */
-	private int m_size;
+	private final int m_size;
 
 	/**
 	 * Generates a uniform distributed random connected or not-connected total
@@ -582,15 +681,16 @@ public final class GetRandomDfa implements IOperation<String, String> {
 	 *            Size of the alphabet
 	 * @param numOfAccStates
 	 *            Number of accepting states
-	 * @param isTotal
-	 *            If transition function should be total or not. If not it can
-	 *            be possible that some transitions are missing and the DFA is a
-	 *            non-complete DFA.
+	 * @param percOfTotality
+	 *            Percentage of DFAs totality. If 1.0 the resulting DFA will be total.
+	 *            If 0.5 about half of the transitions will miss.
+	 *            If 0.0 all transitions that can be deleted,
+	 *            by ensuring all states get reached, are missing.
 	 * @return Uniform distributed random total DFA
 	 */
 	public GetRandomDfa(IUltimateServiceProvider services, int size,
-			int alphabetSize, int numOfAccStates, boolean isTotal) {
-		this(services, size, alphabetSize, numOfAccStates, isTotal, false,
+			int alphabetSize, int numOfAccStates, int percOfTotality) {
+		this(services, size, alphabetSize, numOfAccStates, percOfTotality, false,
 				true, true);
 	}
 
@@ -623,10 +723,11 @@ public final class GetRandomDfa implements IOperation<String, String> {
 	 * @param numOfAccStates
 	 *            Number of accepting states which may be just a bottom bound if
 	 *            'ensureStatesReachFinal' is true
-	 * @param isTotal
-	 *            If transition function should be total or not. If not it can
-	 *            be possible that some transitions are missing and the DFA is a
-	 *            non-complete DFA.
+	 * @param percOfTotality
+	 *            Percentage of DFAs totality. If 1.0 the resulting DFA will be total.
+	 *            If 0.5 about half of the transitions will miss.
+	 *            If 0.0 all transitions that can be deleted,
+	 *            by ensuring all states get reached, are missing.
 	 * @param ensureStatesReachFinal
 	 *            If true ensures that all states reach a final state at cost of
 	 *            performance by creating extra final states. If false just
@@ -639,9 +740,9 @@ public final class GetRandomDfa implements IOperation<String, String> {
 	 * @return Uniform or non-uniform distributed random DFA
 	 */
 	public GetRandomDfa(IUltimateServiceProvider services, int size,
-			int alphabetSize, int numOfAccStates, boolean isTotal,
+			int alphabetSize, int numOfAccStates, int percOfTotality,
 			boolean ensureStatesReachFinal, boolean ensureIsUniform) {
-		this(services, size, alphabetSize, numOfAccStates, isTotal,
+		this(services, size, alphabetSize, numOfAccStates, percOfTotality,
 				ensureStatesReachFinal, ensureIsUniform, true);
 	}
 
@@ -668,10 +769,11 @@ public final class GetRandomDfa implements IOperation<String, String> {
 	 * @param numOfAccStates
 	 *            Number of accepting states which may be just a bottom bound if
 	 *            'ensureStatesReachFinal' is true
-	 * @param isTotal
-	 *            If transition function should be total or not. If not it can
-	 *            be possible that some transitions are missing and the DFA is a
-	 *            non-complete DFA.
+	 * @param percOfTotality
+	 *            Percentage of DFAs totality. If 1.0 the resulting DFA will be total.
+	 *            If 0.5 about half of the transitions will miss.
+	 *            If 0.0 all transitions that can be deleted,
+	 *            by ensuring all states get reached, are missing.
 	 * @param ensureStatesReachFinal
 	 *            If true ensures that all states reach a final state at cost of
 	 *            performance by creating extra final states. If false just
@@ -689,30 +791,24 @@ public final class GetRandomDfa implements IOperation<String, String> {
 	 * @return Uniform or non-uniform distributed random DFA
 	 */
 	public GetRandomDfa(IUltimateServiceProvider services, int size,
-			int alphabetSize, int numOfAccStates, boolean isTotal,
+			int alphabetSize, int numOfAccStates, int percOfTotality,
 			boolean ensureStatesReachFinal, boolean ensureIsUniform,
 			boolean enableCaching) {
 		m_Services = services;
 		m_size = size;
 		m_alphabetSize = alphabetSize;
 		m_numOfAccStates = numOfAccStates;
-		m_isTotal = isTotal;
+		m_percOfTotality = percOfTotality;
 		m_ensureStatesReachFinal = ensureStatesReachFinal;
 		m_ensureIsUniform = ensureIsUniform;
 		m_enableCaching = enableCaching;
+		m_flags = new HashSet<Integer>(m_size - 1);
 
 		m_random = new Random();
-		// If DFA should not be total simulate that
-		// using a increased size where the new node is the sink state.
-		if (!isTotal) {
-			m_size += 1;
-		}
 		int[] dfa = generatePackedRandomDFA();
-		if (!isTotal) {
-			m_size -= 1;
-		}
-		Set<Integer> accStates = calculateAccStates(dfa);
-		m_result = extractPackedDFA(dfa, accStates);
+		Set<Integer> transToDelete = calcTransitionsToDelete(dfa);
+		Set<Integer> accStates = calcAccStates(dfa, transToDelete);
+		m_result = extractPackedDFA(dfa, accStates, transToDelete);
 	}
 
 	@Override
@@ -741,9 +837,10 @@ public final class GetRandomDfa implements IOperation<String, String> {
 	public String startMessage() {
 		return MessageFormat
 				.format("Start {0}. Alphabet size {1} Number of states {2} "
-						+ "Number of accepting states {3} Is total {4} Ensure is uniform {5} "
-						+ "Is caching enabled {6}", operationName(),
-						m_alphabetSize, m_size, m_numOfAccStates, m_isTotal,
-						m_ensureIsUniform, m_enableCaching);
+						+ "Number of accepting states {3} Perc of totality {4} "
+						+ "Ensure states reach final {5} Ensure is uniform {6} "
+						+ "Is caching enabled {7}", operationName(),
+						m_alphabetSize, m_size, m_numOfAccStates, m_percOfTotality,
+						m_ensureStatesReachFinal, m_ensureIsUniform, m_enableCaching);
 	}
 }

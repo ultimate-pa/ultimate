@@ -3,4 +3,8 @@
 //
 // Test results of a random DFA generator.
 
-print(getRandomDfa(5, 3, 3, true));
+//Available constructors are:
+//size, alphabetSize, numOfAccStates, percOfTotality(, false, true, true)
+//size, alphabetSize, numOfAccStates, percOfTotality, ensureStatesReachFinal, ensureIsUniform(, true)
+//size, alphabetSize, numOfAccStates, percOfTotality, ensureStatesReachFinal, ensureIsUniform, enableCaching
+print(getRandomDfa(5, 3, 3, 100));
