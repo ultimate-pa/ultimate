@@ -49,7 +49,7 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 						PreferenceType.Combo, UNSIGNED_TREATMENT.values()),
 				new UltimatePreferenceItem<Boolean>(
 						LABEL_ASSERT_SIGNED_INTEGER_BOUNDS,
-						true,
+						false,
 						PreferenceType.Boolean),
 
 				// typesize stuff
