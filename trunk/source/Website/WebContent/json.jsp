@@ -6,6 +6,7 @@
   "description": "Here goes the description, could you think!",
   "user_info": "JSON: defined in Website/json.jsp",
   "animate": "false",
+  "html": "false",
   "sections":
   [
     {

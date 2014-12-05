@@ -134,13 +134,13 @@ public class Tasks {
 		name = "Lasso Ranker";
 		description = "This is to synthesize ranking functions of lasso programs.";
 		w = new Worker(name, "rank", description, null);
+		// w.setContentURL("http://localhost:8080/Website/json/lasso_ranker.json"); // sample for setting an optional url
 		worker.put(w.getId(), w);
 
 		name = "Automata Script";
 		description = null;
 		w = new Worker(name, "run", description, null);
 		w.setUserInfo(""); // sample user information, being shown on Automata Script page
-		w.setContentURL("https://monteverdi.informatik.uni-freiburg.de/tomcat/Website/automata_script.json"); // sample for setting an optional url
 		worker.put(w.getId(), w);
 		
 		attachToolchainsToWorker();

@@ -25,6 +25,7 @@ Params:
 <%@page import="java.io.InputStreamReader"%>
 <%@page import="java.net.HttpURLConnection"%>
 <%@page import="java.net.URLEncoder"%>
+<%@page import="java.net.URLDecoder"%>
 <%@page import="java.net.URL"%>
 
 <%@page import="org.json.simple.JSONObject"%>
@@ -37,9 +38,11 @@ Params:
     StringBuffer text = new StringBuffer();
     HttpURLConnection conn = (HttpURLConnection) page.openConnection();
     conn.connect();
-    InputStreamReader in = new InputStreamReader((InputStream) conn.getContent());
-    BufferedReader buff = new BufferedReader(in);
 
+    InputStreamReader in = new InputStreamReader((InputStream) conn.getContent());
+    // InputStreamReader in = new InputStreamReader(conn.getInputStream());
+    BufferedReader buff = new BufferedReader(in);
+    
     String line = new String();
     while (true)
     {
@@ -47,6 +50,7 @@ Params:
       if(line == null) break;
       text.append(line + "\n");
     }
+    buff.close();
     return text.toString();
   }
 %>
@@ -103,17 +107,19 @@ Params:
    *
    */
   String url = "";
-  String filename = (tool.isEmpty() ? "home" : URLEncoder.encode(tool, "UTF-8"));
+  String filename = URLEncoder.encode(tool, "ISO-8859-1");
+  // setting home page url
+  if (ui.equals("home"))
+	  url = request.getScheme() +"://" + request.getServerName() + ":" + request.getServerPort() + request.getContextPath() + "/json/home.json";
   // getting tool page URL from worker
-  if(ui.equals("tool") && worker.containsKey(tool) && !(null == worker.get(tool).getContentURL() || worker.get(tool).getContentURL().isEmpty()))
+  else if(ui.equals("tool") && worker.containsKey(tool) && !(null == worker.get(tool).getContentURL() || worker.get(tool).getContentURL().isEmpty()))
     url = worker.get(tool).getContentURL();
   // using standard URL
-  // else url = "http://127.0.0.1:8080/Website/json.jsp?ui="+URLEncoder.encode(ui, "UTF-8")+"&tool="+URLEncoder.encode(tool, "UTF-8");
   else url = "http://ultimate.informatik.uni-freiburg.de/contents/" + filename + ".json";
-    
+  
   String str = "";
   try{ str = getData(url); }
-  catch (Exception e) { str = "{ \"description\": \"Error fetching JSON.  ("+url+")\" }"; }
+  catch (Exception e) { str = "{ \"description\": \"Error fetching JSON.  ("+URLDecoder.decode(url, "ISO-8859-1")+")\" }"; }
 
   JSONObject jsonObject = (JSONObject)  JSONValue.parse(str); // for { a: {}, b: {} } JSONs (Object)
 
@@ -270,7 +276,7 @@ Params:
       <div class="<%=ui%> section">
         <div  class="caption">description</div>
         <div  class="text font-normal color-lighter">
-          <c:out value="${content.description}" />
+          <c:out value="${content.description}" escapeXml="${!(content.html ne null && content.html eq 'true')}" />
         </div>
       </div>
       <c:if test="${ui eq 'home'}">
@@ -315,8 +321,13 @@ Params:
               </div>
             </c:when>
             <c:when test="${section.type eq 'list'}">
+              <c:if test="${section.content ne null}">
+              <div class="text font-normal color-lighter">
+                <c:out value="${section.content}" escapeXml="${!(section.html ne null && section.html eq 'true')}"/>
+              </div>
+              </c:if>
               <ul class="text font-normal color-lighter">
-                <c:forEach items="${section.content}" var="li">
+                <c:forEach items="${section.list}" var="li">
                 <li>
                   <c:out value="${li}" escapeXml="${!(section.html ne null && section.html eq 'true')}"/>
                 </li>

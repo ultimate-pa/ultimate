@@ -18,11 +18,27 @@ a {
 }
 
 .link-emph a {
-  text-decoration: underline;
+  /* text-decoration: underline; */
+  background-color: #DDD;
+  
+  -webkit-box-shadow: 0px 0px 20px 3px #EEE inset;
+     -moz-box-shadow: 0px 0px 20px 3px #EEE inset;
+      -ms-box-shadow: 0px 0px 20px 3px #EEE inset;
+       -o-box-shadow: 0px 0px 20px 3px #EEE inset;
+          box-shadow: 0px 0px 20px 3px #EEE inset;
 }
 
 .link-emph a:hover {
-  color: #000;
+  /* color: #000; */
+  background-color: #F6F6F6;
+}
+
+.animate .link-emph a {
+  -webkit-transition: background .2s;
+     -moz-transition: background .2s;
+      -ms-transition: background .2s;
+       -o-transition: background .2s;
+          transition: background .2s;
 }
 
 body {
@@ -1306,8 +1322,6 @@ div.msg-description {
           box-shadow: 0px 0px 20px 2px rgba(0, 0, 0, 0.2);
   
   float: right;
-  
-  cursor: pointer;
 }
 
 .text .interface-screenshot {
