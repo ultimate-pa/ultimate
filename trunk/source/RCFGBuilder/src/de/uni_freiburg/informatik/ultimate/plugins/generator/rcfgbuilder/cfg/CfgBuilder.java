@@ -961,19 +961,27 @@ public class CfgBuilder {
 			passAllAnnotations(st, errorLocNode);
 			passAllAnnotations(st, assumeErrorCB);
 			m_Edges.add(assumeErrorCB);
+			AssumeStatement assumeSafe = new AssumeStatement(st.getLocation(), assertion);
 			if (m_AddAssumeForEachAssert) {
-				AssumeStatement assumeSafe = new AssumeStatement(st.getLocation(), assertion);
-				passAllAnnotations(st, assumeSafe);
-				m_Backtranslator.putAux(assumeSafe, new BoogieASTNode[] { st });
-				StatementSequence assumeSafeCB = new StatementSequence(locNode, null, assumeSafe, Origin.ASSERT, mLogger);
-				passAllAnnotations(st, assumeSafeCB);
-				// add a new TransEdge labeled with st as successor of the
-				// last constructed LocNode
-				m_Edges.add(assumeSafeCB);
-				m_current = assumeSafeCB;
+				assumeSafe = new AssumeStatement(st.getLocation(), assertion);
 			} else {
-				m_current = locNode;
+				// we cannot omit this assume(true) because if the assert is
+				// the last node of the procedure the final location will be
+				// merged with the last location. In this case this would be
+				// the predecessor of the assume(!expression).
+				// Hence the error location would be erroneously reachable from
+				// the final location.
+				assumeSafe = new AssumeStatement(st.getLocation(), 
+						new BooleanLiteral(st.getLocation(), true));
 			}
+			passAllAnnotations(st, assumeSafe);
+			m_Backtranslator.putAux(assumeSafe, new BoogieASTNode[] { st });
+			StatementSequence assumeSafeCB = new StatementSequence(locNode, null, assumeSafe, Origin.ASSERT, mLogger);
+			passAllAnnotations(st, assumeSafeCB);
+			// add a new TransEdge labeled with st as successor of the
+			// last constructed LocNode
+			m_Edges.add(assumeSafeCB);
+			m_current = assumeSafeCB;
 		}
 
 		private void processGotoStatement(GotoStatement st) {
