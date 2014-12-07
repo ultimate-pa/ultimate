@@ -40,7 +40,7 @@ public class Svcomp_Overflow_PreciseMemoryModel extends AbstractTraceAbstraction
 		new DirectoryFileEndingsPair("examples/svcomp/loop-lit/", new String[]{ ".i", ".c" }) ,
 		new DirectoryFileEndingsPair("examples/svcomp/loop-new/", new String[]{".i"}) ,
 		
-		new DirectoryFileEndingsPair("examples/svcomp/eca/", new String[]{".c" }) ,
+		new DirectoryFileEndingsPair("examples/svcomp/eca-rers2012/", new String[]{".c" }) ,
 		new DirectoryFileEndingsPair("examples/svcomp/product-lines/", new String[]{".c" }) ,
 		
 		/*** Category 6. Heap Manipulation / Dynamic Data Structures ***/
@@ -48,6 +48,12 @@ public class Svcomp_Overflow_PreciseMemoryModel extends AbstractTraceAbstraction
 		new DirectoryFileEndingsPair("examples/svcomp/list-properties/", new String[]{ ".i" }) ,
 		new DirectoryFileEndingsPair("examples/svcomp/ldv-regression/", new String[]{ ".i" }) ,
 		new DirectoryFileEndingsPair("examples/svcomp/ddv-machzwd/", new String[]{ ".i" }) ,
+		
+		/*** Category 7. Memory Safety ***/
+		new DirectoryFileEndingsPair("examples/svcomp/memsafety/", new String[]{ ".i" }) ,
+		new DirectoryFileEndingsPair("examples/svcomp/list-ext-properties/", new String[]{ ".i" }) ,
+		new DirectoryFileEndingsPair("examples/svcomp/memory-alloca/", new String[]{ ".i" }) ,
+		new DirectoryFileEndingsPair("examples/svcomp/memory-unsafe/", new String[]{ ".i" }) ,
 
 		/*** Category 8. Recursive ***/
 		new DirectoryFileEndingsPair("examples/svcomp/recursive/", new String[]{ ".c" }) ,
@@ -56,6 +62,12 @@ public class Svcomp_Overflow_PreciseMemoryModel extends AbstractTraceAbstraction
 		new DirectoryFileEndingsPair("examples/svcomp/systemc/", new String[]{ ".c" }) ,
 		new DirectoryFileEndingsPair("examples/svcomp/seq-mthreaded/", new String[]{ ".c" }) ,
 		new DirectoryFileEndingsPair("examples/svcomp/seq-pthread/", new String[]{ ".i" }) ,
+		
+		/*** Category 12. Termination ***/
+		new DirectoryFileEndingsPair("examples/svcomp/termination-crafted/", new String[]{ ".c" }) ,
+		new DirectoryFileEndingsPair("examples/svcomp/termination-crafted-lit/", new String[]{ ".c" }) ,
+		new DirectoryFileEndingsPair("examples/svcomp/termination-memory-alloca/", new String[]{ ".i" }) ,
+		new DirectoryFileEndingsPair("examples/svcomp/termination-numeric/", new String[]{ ".c" }) ,
 		
 //		new DirectoryFileEndingsPair("examples/svcomp/ssh/", new String[]{ ".c" }) ,
 	};
