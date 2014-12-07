@@ -279,11 +279,12 @@ public final class MonitoredProcess implements IStorable {
 
 		@Override
 		public void run() {
+			final Semaphore endOfPumps = new Semaphore(2);
 			try {
 				PipedOutputStream stdInBufferPipe = new PipedOutputStream(mStdInStreamPipe);
 				PipedOutputStream stdErrBufferPipe = new PipedOutputStream(mStdErrStreamPipe);
-				setUpStreamBuffer(mMonitoredProcess.mProcess.getInputStream(), stdInBufferPipe);
-				setUpStreamBuffer(mMonitoredProcess.mProcess.getErrorStream(), stdErrBufferPipe);
+				setUpStreamBuffer(mMonitoredProcess.mProcess.getInputStream(), stdInBufferPipe, endOfPumps);
+				setUpStreamBuffer(mMonitoredProcess.mProcess.getErrorStream(), stdErrBufferPipe, endOfPumps);
 
 			} catch (IOException e) {
 				mMonitoredProcess.mLogger.error("The process started with " + mMonitoredProcess.mCommand
@@ -301,6 +302,8 @@ public final class MonitoredProcess implements IStorable {
 				mWaitForSetup.release();
 				mMonitoredProcess.mReturnCode = mMonitoredProcess.mProcess.waitFor();
 				mMonitoredProcess.mLogger.debug("Finished waiting for process!");
+				endOfPumps.acquireUninterruptibly(2);
+				mMonitoredProcess.mLogger.debug("Finished waiting for pump threads!");
 				mMonitoredProcess.mProcessCompleted = true;
 			} catch (InterruptedException e) {
 				mMonitoredProcess.mLogger.error("The process started with " + mMonitoredProcess.mCommand
@@ -312,8 +315,9 @@ public final class MonitoredProcess implements IStorable {
 			}
 		}
 
-		private void setUpStreamBuffer(final InputStream is, final OutputStream os) {
+		private void setUpStreamBuffer(final InputStream is, final OutputStream os, final Semaphore endOfPumps) {
 
+			endOfPumps.acquireUninterruptibly();
 			final InputStreamReader streamReader = new InputStreamReader(is);
 			final String threadName = "MonitoredProcess " + mID + " StreamBuffer";
 			new Thread(new Runnable() {
@@ -339,6 +343,7 @@ public final class MonitoredProcess implements IStorable {
 							mMonitoredProcess.mLogger.fatal("During closing of the streams, an error occured ("
 									+ mMonitoredProcess.mCommand + ")");
 						}
+						endOfPumps.release();
 					}
 				}
 			}, threadName).start();
