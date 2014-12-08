@@ -19,7 +19,7 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 	/*
 	 * default values for the different preferences
 	 */
-	public static final String DEF_TOOLLOCATION = "";
+	public static final String DEF_TOOLLOCATION = "ltl2ba";
 	public static final String DEF_TOOLARGUMENT = "!($1)";
 	public static final boolean DEF_PROPERTYFROMFILE = false;
 	public static final String DEF_PPROPERTY = "[] a \n a: x > 42";
@@ -27,7 +27,7 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 	@Override
 	protected UltimatePreferenceItem<?>[] initDefaultPreferences() {
 		return new UltimatePreferenceItem<?>[] {
-				new UltimatePreferenceItem<String>(LABEL_TOOLLOCATION, DEF_TOOLLOCATION, PreferenceType.File),
+				new UltimatePreferenceItem<String>(LABEL_TOOLLOCATION, DEF_TOOLLOCATION, PreferenceType.String),
 				new UltimatePreferenceItem<String>(LABEL_TOOLARGUMENT, DEF_TOOLARGUMENT, PreferenceType.String),
 				new UltimatePreferenceItem<Boolean>(LABEL_PROPERTYFROMFILE, DEF_PROPERTYFROMFILE,
 						PreferenceType.Boolean),
