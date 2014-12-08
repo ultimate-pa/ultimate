@@ -272,7 +272,7 @@ public class LassoChecker {
 		checkStemFeasibility();
 		if (m_StemInfeasible) {
 			mLogger.info("stem already infeasible");
-			if (m_TryTwofoldRefinement) {
+			if (!m_TryTwofoldRefinement) {
 				m_ContinueDirective = ContinueDirective.REFINE_FINITE;
 				return;
 			}
