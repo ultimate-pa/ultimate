@@ -143,6 +143,8 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 				IsEmptyWithAI<CodeBlock, IPredicate> emptyWithAI = new IsEmptyWithAI<CodeBlock, IPredicate>(
 						(INestedWordAutomatonOldApi) m_Abstraction, m_Services, m_RootNode, initialStates);
 				m_Counterexample = emptyWithAI.getNestedRun();
+				// TODO: So den neuen AI automaten in TA integrieren 
+				//m_Abstraction = new Difference(services, stateFactory, m_Abstraction, emptyWithAI.getAbstraction())
 			} else {
 				m_Counterexample = (new IsEmpty<CodeBlock, IPredicate>((INestedWordAutomatonOldApi) m_Abstraction))
 						.getNestedRun();
