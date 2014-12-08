@@ -104,8 +104,8 @@ public class AtsDefinitionPrinter<LETTER,STATE> {
 			s_Logger.warn("Dumping Testfile");
 			initializePrintWriter(filename);
 			m_printWriter.println("// Testfile dumped by Ultimate at "+getDateTime());
-			m_printWriter.println("");
-			m_printWriter.println(message);
+			m_printWriter.println("//");
+			m_printWriter.println("// " + message);
 			m_printWriter.println("");
 			if (automata.length == 1) {
 				printAutomaton(automatonName, automata[0], labels);
