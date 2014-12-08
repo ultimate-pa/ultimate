@@ -72,11 +72,12 @@ public class LassoChecker {
 
 	private static final boolean m_SimplifyStemAndLoop = true;
 	/**
-	 * If true we check if the loop has a ranking function even if the stem or
-	 * the concatenation of stem and loop are already infeasible. If false we
-	 * make this additional check only if the loop is smaller than the stem.
+	 * If true we check if the loop is terminating even if the stem or
+	 * the concatenation of stem and loop are already infeasible.
+	 * This allows us to use refineFinite and refineBuchi in the same
+	 * iteration.
 	 */
-	private static final boolean s_AlwaysAdditionalLoopTerminationCheck = true;
+	private final boolean m_TryTwofoldRefinement;
 
 	/**
 	 * For debugging only. Check for termination arguments even if we found a
@@ -213,7 +214,8 @@ public class LassoChecker {
 	public LassoChecker(INTERPOLATION interpolation, SmtManager smtManager,
 			ModifiableGlobalVariableManager modifiableGlobalVariableManager, Collection<Term> axioms,
 			BinaryStatePredicateManager bspm, NestedLassoRun<CodeBlock, IPredicate> counterexample,
-			String lassoCheckerIdentifier, IUltimateServiceProvider services, IToolchainStorage storage) throws IOException {
+			String lassoCheckerIdentifier, IUltimateServiceProvider services, 
+			IToolchainStorage storage) throws IOException {
 		mServices = services;
 		mStorage = storage;
 		mLogger = mServices.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
@@ -224,6 +226,7 @@ public class LassoChecker {
 				: AnalysisType.Linear_with_guesses;
 		m_TemplateBenchmarkMode = baPref.getBoolean(PreferenceInitializer.LABEL_TemplateBenchmarkMode);
 		m_TrySimplificationTerminationArgument = baPref.getBoolean(PreferenceInitializer.LABEL_Simplify);
+		m_TryTwofoldRefinement = baPref.getBoolean(PreferenceInitializer.LABEL_TryTwofoldRefinement);
 		m_Interpolation = interpolation;
 		m_SmtManager = smtManager;
 		m_ModifiableGlobalVariableManager = modifiableGlobalVariableManager;
@@ -269,6 +272,10 @@ public class LassoChecker {
 		checkStemFeasibility();
 		if (m_StemInfeasible) {
 			mLogger.info("stem already infeasible");
+			if (m_TryTwofoldRefinement) {
+				m_ContinueDirective = ContinueDirective.REFINE_FINITE;
+				return;
+			}
 		}
 		checkLoopFeasibility();
 		if (m_LoopInfeasible) {

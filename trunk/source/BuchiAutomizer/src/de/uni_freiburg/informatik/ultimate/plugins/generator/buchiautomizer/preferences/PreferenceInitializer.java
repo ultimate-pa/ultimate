@@ -56,6 +56,8 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 						false, PreferenceType.Boolean),
 				new UltimatePreferenceItem<Boolean>(LABEL_Simplify,
 						true, PreferenceType.Boolean),
+				new UltimatePreferenceItem<Boolean>(LABEL_TryTwofoldRefinement,
+						true, PreferenceType.Boolean),
 		};
 	}
 
@@ -88,6 +90,13 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 	public static final String DEF_DumpPath = "";
 	public static final String LABEL_TermcompProof = "Construct termination proof for TermComp";
 	public static final String LABEL_Simplify = "Try to simplify termination arguments";
+	/**
+	 * If true we check if the loop is terminating even if the stem or
+	 * the concatenation of stem and loop are already infeasible.
+	 * This allows us to use refineFinite and refineBuchi in the same
+	 * iteration.
+	 */
+	public static final String LABEL_TryTwofoldRefinement = "Try twofold refinement";
 	
 	public enum BInterpolantAutomaton { LassoAutomaton, EagerNondeterminism, ScroogeNondeterminism, Deterministic, Staged };
 	
