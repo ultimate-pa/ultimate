@@ -243,7 +243,7 @@ public class BuchiCegarLoop {
 			m_TermcompProofBenchmark = null;
 		}
 
-		m_RefineBuchi = new RefineBuchi(m_SmtManager, m_Pref.dumpAutomata(), m_Difference, m_DefaultStateFactory,
+		m_RefineBuchi = new RefineBuchi(m_RootNode, m_SmtManager, m_Pref.dumpAutomata(), m_Difference, m_DefaultStateFactory,
 				m_StateFactoryForRefinement, m_UseDoubleDeckers, m_Pref.dumpPath(), m_Interpolation, m_Services, mLogger);
 		m_BuchiRefinementSettingSequence = new ArrayList<RefineBuchi.RefinementSetting>();
 		switch (m_InterpolantAutomaton) {
@@ -305,8 +305,8 @@ public class BuchiCegarLoop {
 			m_ArtifactAutomaton = m_Abstraction;
 		}
 		if (m_Pref.dumpAutomata()) {
-			String filename = m_Name + "Abstraction" + m_Iteration;
-			writeAutomatonToFile(m_Services, m_Abstraction, m_Pref.dumpPath(), filename, mLogger);
+			String filename = m_RootNode.getFilename() + "_" + m_Name + "Abstraction" + m_Iteration;
+			writeAutomatonToFile(m_Services, m_Abstraction, m_Pref.dumpPath(), filename, "");
 		}
 
 		boolean initalAbstractionCorrect;
@@ -439,8 +439,8 @@ public class BuchiCegarLoop {
 				}
 
 				if (m_Pref.dumpAutomata()) {
-					String filename = "Abstraction" + m_Iteration;
-					writeAutomatonToFile(m_Services, m_Abstraction, m_Pref.dumpPath(), filename, mLogger);
+					String filename = m_RootNode.getFilename() + "_" + "Abstraction" + m_Iteration;
+					writeAutomatonToFile(m_Services, m_Abstraction, m_Pref.dumpPath(), filename, "");
 				}
 				m_BenchmarkGenerator.reportAbstractionSize(m_Abstraction.size(), m_Iteration);
 
@@ -622,8 +622,8 @@ public class BuchiCegarLoop {
 		}
 		determinized.finishConstruction();
 		if (m_Pref.dumpAutomata()) {
-			String filename = "interpolAutomatonUsedInRefinement" + m_Iteration + "after";
-			writeAutomatonToFile(m_Services, m_InterpolAutomaton, m_Pref.dumpPath(), filename, mLogger);
+			String filename = m_RootNode.getFilename() + "_" + "interpolAutomatonUsedInRefinement" + m_Iteration + "after";
+			writeAutomatonToFile(m_Services, m_InterpolAutomaton, m_Pref.dumpPath(), filename, "");
 		}
 		if (m_ConstructTermcompProof) {
 			m_TermcompProofBenchmark.reportFiniteModule(m_Iteration,
@@ -736,8 +736,8 @@ public class BuchiCegarLoop {
 	}
 
 	protected static void writeAutomatonToFile(IUltimateServiceProvider services, IAutomaton<CodeBlock, IPredicate> automaton, String path,
-			String filename, Logger logger) {
-		new AtsDefinitionPrinter<String, String>(services, filename, path + "/" + filename, m_PrintAutomataLabeling, "", automaton);
+			String filename, String message) {
+		new AtsDefinitionPrinter<String, String>(services, filename, path + "/" + filename, m_PrintAutomataLabeling, message, automaton);
 	}
 
 	public ModuleDecompositionBenchmark getMDBenchmark() {

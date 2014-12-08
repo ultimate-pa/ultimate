@@ -29,6 +29,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.PreferenceInitializer.BInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryRefinement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CoverageAnalysis.BackwardCoveringInformation;
@@ -51,6 +52,8 @@ public class RefineBuchi {
 	 * Intermediate layer to encapsulate communication with SMT solvers.
 	 */
 	private final SmtManager m_SmtManager;
+	
+	private final RootNode m_RootNode;
 
 	private final boolean m_DumpAutomata;
 	private final boolean m_Difference;
@@ -67,13 +70,14 @@ public class RefineBuchi {
 
 	private final IUltimateServiceProvider m_Services;
 
-	public RefineBuchi(SmtManager smtManager, boolean dumpAutomata, boolean difference,
+	public RefineBuchi(RootNode rootNode, SmtManager smtManager, boolean dumpAutomata, boolean difference,
 			PredicateFactory stateFactoryInterpolAutom, PredicateFactoryRefinement stateFactoryForRefinement,
 			boolean useDoubleDeckers, String dumpPath, INTERPOLATION interpolation, IUltimateServiceProvider services,
 			Logger logger) {
 		super();
 		m_Services = services;
 		mLogger = logger;
+		m_RootNode = rootNode;
 		m_SmtManager = smtManager;
 		m_DumpAutomata = dumpAutomata;
 		m_Difference = difference;
@@ -196,8 +200,10 @@ public class RefineBuchi {
 				bspm.getStemPrecondition(), stem, stemInterpolants, bspm.getHondaPredicate(), loop, loopInterpolants,
 				m_Abstraction);
 		if (m_DumpAutomata) {
-			String filename = "InterpolantAutomatonBuchi" + m_Iteration;
-			BuchiCegarLoop.writeAutomatonToFile(m_Services, m_InterpolAutomaton, m_DumpPath, filename, mLogger);
+			
+			String filename = m_RootNode.getFilename() + "_" + "InterpolantAutomatonBuchi" + m_Iteration;
+			String message = setting.toString();
+			BuchiCegarLoop.writeAutomatonToFile(m_Services, m_InterpolAutomaton, m_DumpPath, filename, message);
 		}
 		BuchiEdgeChecker ec = new BuchiEdgeChecker(m_SmtManager, buchiModGlobalVarManager);
 		ec.putDecreaseEqualPair(bspm.getHondaPredicate(), bspm.getRankEqAndSi());
@@ -312,8 +318,9 @@ public class RefineBuchi {
 		// IPredicate>(newAbstraction,m_Counterexample.getNestedLassoWord())).getResult()
 		// : "no progress";
 		if (m_DumpAutomata) {
-			String filename = "interpolBuchiAutomatonUsedInRefinement" + m_Iteration + "after";
-			BuchiCegarLoop.writeAutomatonToFile(m_Services, m_InterpolAutomatonUsedInRefinement, m_DumpPath, filename, mLogger);
+			String filename = m_RootNode.getFilename() + "_" + "interpolBuchiAutomatonUsedInRefinement" + m_Iteration + "after";
+			String message = setting.toString();
+			BuchiCegarLoop.writeAutomatonToFile(m_Services, m_InterpolAutomatonUsedInRefinement, m_DumpPath, filename, message);
 		}
 		return newAbstraction;
 	}
