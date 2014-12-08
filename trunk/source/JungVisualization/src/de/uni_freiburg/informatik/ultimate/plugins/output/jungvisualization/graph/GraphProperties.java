@@ -140,13 +140,14 @@ public class GraphProperties {
 		case Text:
 			vv.getRenderContext().setEdgeLabelTransformer(new ToStringLabeller<VisualizationEdge>() {
 				public String transform(VisualizationEdge edge) {
-					String edgeName = "";
-					if (edge.getPayload() != null) {
-						edgeName = edge.getPayload().getName();
-					} else {
-						edgeName = edge.toString();
-					}
-					return edgeName;
+					return edge.toString();
+//					String edgeName = "";
+//					if (edge.getPayload() != null) {
+//						edgeName = edge.getPayload().getName();
+//					} else {
+//						edgeName = edge.toString();
+//					}
+//					return edgeName;
 				}
 			});
 			break;
