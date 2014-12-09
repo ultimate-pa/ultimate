@@ -1,0 +1,136 @@
+<%@ jet 
+	package="de.uni_freiburg.informatik.ultimate.dev.eclipse.templates.filegenerators"
+	class="ParserPluginGenerator" imports="de.uni_freiburg.informatik.ultimate.dev.eclipse.templates.UltimatePluginData"
+%><%
+	UltimatePluginData data = (UltimatePluginData) argument; 
+%>package de.uni_freiburg.informatik.ultimate.plugins.<%=data.getTypeString()%>.<%=data.getPluginName().toLowerCase()%>;
+
+import java.io.File;
+
+import de.uni_freiburg.informatik.ultimate.ep.interfaces.ISource;
+import de.uni_freiburg.informatik.ultimate.model.GraphType;
+import de.uni_freiburg.informatik.ultimate.model.INode;
+import de.uni_freiburg.informatik.ultimate.model.TokenMap;
+import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
+
+import org.apache.log4j.Logger;
+
+public class <%=data.getPluginName()%> implements ISource {
+	
+	protected String[] m_FileTypes = new String[] {<%=data.getCommaSepFileTypeStrings()%>};
+
+	private static Logger s_Logger = UltimateServices.getInstance().getLogger(Activator.s_PLUGIN_ID);
+	
+		
+	/* (non-Javadoc)
+	 * @see de.uni_freiburg.informatik.ultimate.ep.interfaces.ISource#getFileTypes()
+	 */
+	@Override
+	public String[] getFileTypes() {
+        return m_FileTypes;
+    }
+
+	/* (non-Javadoc)
+	 * @see de.uni_freiburg.informatik.ultimate.ep.interfaces.ISource#getOutputDefinition()
+	 */
+	@Override
+	public GraphType getOutputDefinition() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	/* (non-Javadoc)
+	 * @see de.uni_freiburg.informatik.ultimate.ep.interfaces.ISource#getTokenMap()
+	 */
+	@Override
+	public TokenMap getTokenMap() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	/* (non-Javadoc)
+	 * @see de.uni_freiburg.informatik.ultimate.ep.interfaces.ISource#getTokens()
+	 */
+	@Override
+	public String[] getTokens() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	/* (non-Javadoc)
+	 * @see de.uni_freiburg.informatik.ultimate.ep.interfaces.ISource#parseAST(java.io.File[])
+	 */
+	@Override
+	public INode parseAST(File[] files) throws Exception {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	/* (non-Javadoc)
+	 * @see de.uni_freiburg.informatik.ultimate.ep.interfaces.ISource#parseAST(java.io.File)
+	 */
+	@Override
+	public INode parseAST(File file) throws Exception {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	/* (non-Javadoc)
+	 * @see de.uni_freiburg.informatik.ultimate.ep.interfaces.ISource#parseable(java.io.File)
+	 */
+	@Override
+    public boolean parseable(File[] files) {
+        for (File f : files) {
+            if (!parseable(f)) { return false; }
+        }
+        return true;
+    }
+
+	/* (non-Javadoc)
+	 * @see de.uni_freiburg.informatik.ultimate.ep.interfaces.ISource#parseable(java.io.File)
+	 */
+	@Override
+	public boolean parseable(File file) {
+		for(String s : getFileTypes())
+    	{
+    		if(file.getName().endsWith(s))
+    			return true;
+    	}
+        return false;
+	}
+
+	/* (non-Javadoc)
+	 * @see de.uni_freiburg.informatik.ultimate.ep.interfaces.ISource#setPreludeFile(java.io.File)
+	 */
+	@Override
+	public void setPreludeFile(File prelude) {
+		// TODO Auto-generated method stub
+
+	}
+
+	/* (non-Javadoc)
+	 * @see de.uni_freiburg.informatik.ultimate.ep.interfaces.IRCPPlugin#getName()
+	 */
+	@Override
+	public String getName() {
+		return Activator.s_PLUGIN_NAME;
+	}
+
+	/* (non-Javadoc)
+	 * @see de.uni_freiburg.informatik.ultimate.ep.interfaces.IRCPPlugin#getPluginID()
+	 */
+	@Override
+	public String getPluginID() {
+		return Activator.s_PLUGIN_ID;
+	}
+
+	/* (non-Javadoc)
+	 * @see de.uni_freiburg.informatik.ultimate.ep.interfaces.IRCPPlugin#init(java.lang.Object)
+	 */
+	@Override
+	public int init(Object params) {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
+}

@@ -1,0 +1,13 @@
+<%@ jet 
+	package="de.uni_freiburg.informatik.ultimate.dev.eclipse.templates.filegenerators"
+	class="PluginXmlGenerator" imports="de.uni_freiburg.informatik.ultimate.dev.eclipse.templates.UltimatePluginData"
+%><%
+	UltimatePluginData data = (UltimatePluginData) argument; 
+%><?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.2"?>
+<plugin>
+	<extension point="de.uni_freiburg.informatik.ultimate.ep.<%=data.getTypeString()%>">
+      <impl class="de.uni_freiburg.informatik.ultimate.plugins.<%=data.getTypeString()%>.<%=data.getPluginName().toLowerCase()%>.<%=data.getPluginName()%>">
+      </impl>
+   </extension>
+</plugin>

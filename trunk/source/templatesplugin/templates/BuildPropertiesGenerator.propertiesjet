@@ -1,0 +1,8 @@
+<%@ jet 
+	package="de.uni_freiburg.informatik.ultimate.dev.eclipse.templates.filegenerators"
+	class="BuildPropertiesGenerator"
+%>source.. = src/
+output.. = bin/
+bin.includes = META-INF/,\
+               .,\
+               plugin.xml

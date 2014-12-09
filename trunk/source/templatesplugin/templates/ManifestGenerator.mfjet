@@ -1,0 +1,15 @@
+<%@ jet 
+	package="de.uni_freiburg.informatik.ultimate.dev.eclipse.templates.filegenerators"
+	class="ManifestGenerator" imports="de.uni_freiburg.informatik.ultimate.dev.eclipse.templates.UltimatePluginData"
+%><%
+	UltimatePluginData data = (UltimatePluginData) argument; 
+%>Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: <%=data.getPluginName()%>
+Bundle-SymbolicName: <%=data.getPluginId()%>;singleton:=true
+Bundle-Version: 1.0.0
+Bundle-Activator: de.uni_freiburg.informatik.ultimate.plugins.<%=data.getTypeString()%>.<%=data.getPluginName().toLowerCase()%>.Activator
+Require-Bundle: org.eclipse.core.runtime,
+ UltimateCore
+Bundle-ActivationPolicy: lazy
+Bundle-RequiredExecutionEnvironment: JavaSE-1.6

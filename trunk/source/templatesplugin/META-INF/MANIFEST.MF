@@ -1,0 +1,12 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: Templates
+Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.dev.eclipse.templates; singleton:=true
+Bundle-Version: 0.0.1
+Bundle-Activator: de.uni_freiburg.informatik.ultimate.dev.eclipse.templates.Activator
+Require-Bundle: org.eclipse.ui,
+ org.eclipse.core.runtime,
+ org.eclipse.core.resources,
+ org.eclipse.ui.ide
+Bundle-ActivationPolicy: lazy
+Bundle-RequiredExecutionEnvironment: JavaSE-1.6
