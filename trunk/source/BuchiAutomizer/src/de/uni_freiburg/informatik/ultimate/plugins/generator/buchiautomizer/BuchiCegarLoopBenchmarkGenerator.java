@@ -5,7 +5,9 @@ import java.util.Arrays;
 
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BuchiCegarLoopBenchmark.LassoAnalysisResults;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.LassoChecker.ContinueDirective;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.LassoChecker.LassoCheckResult;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.LassoChecker.SynthesisResult;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.LassoChecker.TraceCheckResult;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopBenchmarkGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CoverageAnalysis.BackwardCoveringInformation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.IBenchmarkType;
@@ -70,56 +72,65 @@ public class BuchiCegarLoopBenchmarkGenerator extends CegarLoopBenchmarkGenerato
 	}
 
 	public void reportLassoAnalysis(LassoChecker lassoChecker) {
-		ContinueDirective cd = lassoChecker.getContinueDirective();
+		LassoCheckResult lcr = lassoChecker.getLassoCheckResult();
+		ContinueDirective cd = lcr.getContinueDirective();
 		switch (cd) {
 
 		case REFINE_BOTH:
-			if (lassoChecker.isStemInfeasible()) {
+			if (lcr.getStemFeasibility() == TraceCheckResult.INFEASIBLE) {
 				m_LassoAnalysisResults.increment(LassoAnalysisResults.s_StemInfeasibleLoopTerminating);
 			} else {
-				assert lassoChecker.isConcatInfeasible();
-				assert (lassoChecker.getLoopTermination() == SynthesisResult.TERMINATING);
+				assert (lcr.getConcatFeasibility() == TraceCheckResult.INFEASIBLE);
+				assert (lcr.getLoopTermination() == SynthesisResult.TERMINATING);
 				m_LassoAnalysisResults.increment(LassoAnalysisResults.s_ConcatInfeasibleLoopTerminating);
 			}
 			break;
 		case REFINE_BUCHI:
-			assert !lassoChecker.isStemInfeasible();
-			if (lassoChecker.getLoopTermination() == SynthesisResult.TERMINATING) {
+			assert lcr.getStemFeasibility() != TraceCheckResult.INFEASIBLE;
+			if (lcr.getLoopTermination() == SynthesisResult.TERMINATING) {
 				m_LassoAnalysisResults.increment(LassoAnalysisResults.s_StemFeasibleLoopTerminating);
 			} else {
-				assert lassoChecker.getLassoTermination() == SynthesisResult.TERMINATING;
+				assert lcr.getLassoTermination() == SynthesisResult.TERMINATING;
 				m_LassoAnalysisResults.increment(LassoAnalysisResults.s_LassoTerminating);
 			}
 			break;
 		case REFINE_FINITE:
-			if (lassoChecker.isStemInfeasible()) {
-				if (lassoChecker.isLoopInfeasible()) {
+			if (lcr.getStemFeasibility() == TraceCheckResult.INFEASIBLE) {
+				if (lcr.getLoopFeasibility() == TraceCheckResult.INFEASIBLE) {
 					m_LassoAnalysisResults.increment(LassoAnalysisResults.s_StemInfeasibleLoopInfeasible);
 				} else {
-					m_LassoAnalysisResults.increment(LassoAnalysisResults.s_StemInfeasibleLoopNonterminating);
-					//TODO: Loop unknown??
+					if (lcr.getLoopTermination() == SynthesisResult.NONTERMINATIG) {
+						m_LassoAnalysisResults.increment(LassoAnalysisResults.s_StemInfeasibleLoopNonterminating);
+					} else {
+						assert lcr.getLoopFeasibility() == TraceCheckResult.UNCHECKED
+								|| lcr.getLoopFeasibility() == TraceCheckResult.UNKNOWN
+								|| lcr.getLoopTermination() == SynthesisResult.UNCHECKED
+								|| lcr.getLoopTermination() == SynthesisResult.UNKNOWN
+								: "lasso checking: illegal case";
+						m_LassoAnalysisResults.increment(LassoAnalysisResults.s_StemInfeasibleLoopUnknown);
+					}
 				}
 			} else {
-				if (lassoChecker.isLoopInfeasible()) {
+				if (lcr.getLoopFeasibility() == TraceCheckResult.INFEASIBLE) {
 					m_LassoAnalysisResults.increment(LassoAnalysisResults.s_StemFeasibleLoopInfeasible);
 				} else {
-					assert lassoChecker.isConcatInfeasible();
+					assert lcr.getConcatFeasibility() == TraceCheckResult.INFEASIBLE;
 					m_LassoAnalysisResults.increment(LassoAnalysisResults.s_ConcatenationInfeasible);
 				}
 			}
 			break;
 		case REPORT_NONTERMINATION:
-			assert !lassoChecker.isStemInfeasible();
-			assert !lassoChecker.isLoopInfeasible();
-			assert !lassoChecker.isConcatInfeasible();
+			assert lcr.getStemFeasibility() != TraceCheckResult.INFEASIBLE;
+			assert lcr.getLoopFeasibility() != TraceCheckResult.INFEASIBLE;
+			assert lcr.getConcatFeasibility() != TraceCheckResult.INFEASIBLE;
 			assert lassoChecker.getNonTerminationArgument() != null;
 			assert !lassoChecker.getBinaryStatePredicateManager().providesPredicates();
 			m_LassoAnalysisResults.increment(LassoAnalysisResults.s_LassoNonterminating);
 			break;
 		case REPORT_UNKNOWN:
-			assert !lassoChecker.isStemInfeasible();
-			assert !lassoChecker.isLoopInfeasible();
-			assert !lassoChecker.isConcatInfeasible();
+			assert lcr.getStemFeasibility() != TraceCheckResult.INFEASIBLE;
+			assert lcr.getLoopFeasibility() != TraceCheckResult.INFEASIBLE;
+			assert lcr.getConcatFeasibility() != TraceCheckResult.INFEASIBLE;
 			assert lassoChecker.getNonTerminationArgument() == null;
 			assert !lassoChecker.getBinaryStatePredicateManager().providesPredicates();
 			m_LassoAnalysisResults.increment(LassoAnalysisResults.s_TerminationUnknown);

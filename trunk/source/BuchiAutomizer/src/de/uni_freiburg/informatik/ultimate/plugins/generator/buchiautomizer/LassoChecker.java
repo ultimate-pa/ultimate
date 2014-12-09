@@ -63,6 +63,10 @@ public class LassoChecker {
 	enum ContinueDirective {
 		REFINE_FINITE, REFINE_BUCHI, REPORT_NONTERMINATION, REPORT_UNKNOWN, REFINE_BOTH
 	}
+	
+	enum TraceCheckResult {
+		FEASIBLE, INFEASIBLE, UNKNOWN, UNCHECKED
+	}
 
 	enum SynthesisResult {
 		TERMINATING, NONTERMINATIG, UNKNOWN, UNCHECKED
@@ -140,19 +144,13 @@ public class LassoChecker {
 
 	private final PredicateUnifier m_PredicateUnifier;
 
-	private Boolean m_StemInfeasible;
 	private TraceChecker m_StemCheck;
-	private Boolean m_LoopInfeasible;
 	private TraceChecker m_LoopCheck;
-	private Boolean m_ConcatInfeasible;
 	private TraceChecker m_ConcatCheck;
 
 	private NestedRun<CodeBlock, IPredicate> m_ConcatenatedCounterexample;
 
-	private ContinueDirective m_ContinueDirective;
 
-	private SynthesisResult m_LoopTermination = SynthesisResult.UNCHECKED;
-	private SynthesisResult m_LassoTermination = SynthesisResult.UNCHECKED;
 
 	private NonTerminationArgument m_NonterminationArgument;
 
@@ -160,38 +158,19 @@ public class LassoChecker {
 	private final IUltimateServiceProvider mServices;
 	private final IToolchainStorage mStorage;
 	private final boolean m_RemoveSuperfluousSupportingInvariants = true;
-
-	public ContinueDirective getContinueDirective() {
-		assert m_ContinueDirective != null;
-		return m_ContinueDirective;
-	}
-
-	public boolean isStemInfeasible() {
-		return m_StemInfeasible;
+	
+	private final LassoCheckResult m_LassoCheckResult;
+	
+	public LassoCheckResult getLassoCheckResult() {
+		return m_LassoCheckResult;
 	}
 
 	public TraceChecker getStemCheck() {
 		return m_StemCheck;
 	}
 
-	public boolean isLoopInfeasible() {
-		return m_LoopInfeasible;
-	}
-
 	public TraceChecker getLoopCheck() {
 		return m_LoopCheck;
-	}
-
-	public boolean isConcatInfeasible() {
-		return m_ConcatInfeasible;
-	}
-
-	public SynthesisResult getLoopTermination() {
-		return m_LoopTermination;
-	}
-
-	public SynthesisResult getLassoTermination() {
-		return m_LassoTermination;
 	}
 
 	public TraceChecker getConcatCheck() {
@@ -237,280 +216,269 @@ public class LassoChecker {
 		m_TruePredicate = m_PredicateUnifier.getTruePredicate();
 		m_FalsePredicate = m_PredicateUnifier.getFalsePredicate();
 		m_Axioms = axioms;
-		checkFeasibility();
-		assert m_ContinueDirective != null;
-		assert m_StemInfeasible != null;
-		assert m_LoopInfeasible != null || 
-				(m_StemInfeasible == true && !m_TryTwofoldRefinement);
-		if (m_StemInfeasible) {
-			assert m_ContinueDirective == ContinueDirective.REFINE_FINITE
-					|| m_ContinueDirective == ContinueDirective.REFINE_BOTH;
+		m_LassoCheckResult = new LassoCheckResult();
+		assert m_LassoCheckResult.getStemFeasibility() != TraceCheckResult.UNCHECKED;
+		assert (m_LassoCheckResult.getLoopFeasibility() != TraceCheckResult.UNCHECKED)
+				|| (m_LassoCheckResult.getLoopFeasibility() != TraceCheckResult.INFEASIBLE && !m_TryTwofoldRefinement);
+		if (m_LassoCheckResult.getStemFeasibility() == TraceCheckResult.INFEASIBLE) {
+			assert m_LassoCheckResult.getContinueDirective() == ContinueDirective.REFINE_FINITE
+					|| m_LassoCheckResult.getContinueDirective() == ContinueDirective.REFINE_BOTH;
 		} else {
-			if (m_LoopInfeasible) {
-				assert m_ContinueDirective == ContinueDirective.REFINE_FINITE;
+			if (m_LassoCheckResult.getLoopFeasibility() == TraceCheckResult.INFEASIBLE) {
+				assert m_LassoCheckResult.getContinueDirective() == ContinueDirective.REFINE_FINITE;
 			} else {
-				if (m_ConcatInfeasible == null) {
+				// loop not infeasible
+				if (m_LassoCheckResult.getLoopTermination() == SynthesisResult.TERMINATING) {
 					assert m_Bspm.providesPredicates();
 				} else {
 					assert m_ConcatCheck != null;
-					if (m_ConcatInfeasible) {
-						assert m_ContinueDirective == ContinueDirective.REFINE_FINITE
-								|| m_ContinueDirective == ContinueDirective.REFINE_BOTH;
+					if (m_LassoCheckResult.getConcatFeasibility() == TraceCheckResult.INFEASIBLE) {
+						assert m_LassoCheckResult.getContinueDirective() == ContinueDirective.REFINE_FINITE
+								|| m_LassoCheckResult.getContinueDirective() == ContinueDirective.REFINE_BOTH;
 						assert m_ConcatenatedCounterexample != null;
 					} else {
-						assert m_ContinueDirective != ContinueDirective.REFINE_FINITE;
+						assert m_LassoCheckResult.getContinueDirective() != ContinueDirective.REFINE_FINITE;
 					}
 				}
 			}
 		}
 	}
+	
+	/**
+	 * Object for that does computation of lasso check and stores the
+	 * result.
+	 * Note that the methods used for the computation also modify member
+	 * variables of the superclass.
+	 */
+	class LassoCheckResult {
+		
+		private final TraceCheckResult m_StemFeasibility;
+		private final TraceCheckResult m_LoopFeasibility;
+		private final TraceCheckResult m_ConcatFeasibility;
 
-	private void checkFeasibility() throws IOException {
-		NestedRun<CodeBlock, IPredicate> stem = m_Counterexample.getStem();
-		mLogger.info("Stem: " + stem);
-		NestedRun<CodeBlock, IPredicate> loop = m_Counterexample.getLoop();
-		mLogger.info("Loop: " + loop);
-		checkStemFeasibility();
-		if (m_StemInfeasible) {
-			mLogger.info("stem already infeasible");
-			if (!m_TryTwofoldRefinement) {
-				m_ContinueDirective = ContinueDirective.REFINE_FINITE;
-				return;
-			}
-		}
-		checkLoopFeasibility();
-		if (m_LoopInfeasible) {
-			mLogger.info("loop already infeasible");
-			m_ContinueDirective = ContinueDirective.REFINE_FINITE;
-			return;
-		} else {
-			if (m_StemInfeasible) {
-				assert (m_TryTwofoldRefinement);
-				TransFormula loopTF = computeLoopTF();
-				checkLoopTermination(loopTF);
-				if (m_LoopTermination == SynthesisResult.TERMINATING) {
-					m_ContinueDirective = ContinueDirective.REFINE_BOTH;
-					return;
-				} else {
+		private final SynthesisResult m_LoopTermination;
+		private final SynthesisResult m_LassoTermination;
+		
+		private final ContinueDirective m_ContinueDirective;
+
+
+		public LassoCheckResult() throws IOException {
+			NestedRun<CodeBlock, IPredicate> stem = m_Counterexample.getStem();
+			mLogger.info("Stem: " + stem);
+			NestedRun<CodeBlock, IPredicate> loop = m_Counterexample.getLoop();
+			mLogger.info("Loop: " + loop);
+			m_StemFeasibility = checkStemFeasibility();
+			if (m_StemFeasibility == TraceCheckResult.INFEASIBLE) {
+				mLogger.info("stem already infeasible");
+				if (!m_TryTwofoldRefinement) {
+					m_LoopFeasibility = TraceCheckResult.UNCHECKED;
+					m_ConcatFeasibility = TraceCheckResult.UNCHECKED;
+					m_LoopTermination = SynthesisResult.UNCHECKED;
+					m_LassoTermination = SynthesisResult.UNCHECKED;
 					m_ContinueDirective = ContinueDirective.REFINE_FINITE;
 					return;
 				}
+			}
+			m_LoopFeasibility = checkLoopFeasibility();
+			if (m_LoopFeasibility == TraceCheckResult.INFEASIBLE) {
+				mLogger.info("loop already infeasible");
+				m_ConcatFeasibility = TraceCheckResult.UNCHECKED;
+				m_LoopTermination = SynthesisResult.UNCHECKED;
+				m_LassoTermination = SynthesisResult.UNCHECKED;
+				m_ContinueDirective = ContinueDirective.REFINE_FINITE;
+				return;
 			} else {
-				// stem feasible
-				checkConcatFeasibility();
-				if (m_ConcatInfeasible) {
-					if (m_TryTwofoldRefinement) {
-						TransFormula loopTF = computeLoopTF();
-						checkLoopTermination(loopTF);
-						if (m_LoopTermination == SynthesisResult.TERMINATING) {
-							m_ContinueDirective = ContinueDirective.REFINE_BOTH;
-							return;
-						} else {
-							m_ContinueDirective = ContinueDirective.REFINE_FINITE;
-							return;
-						}
+				if (m_StemFeasibility == TraceCheckResult.INFEASIBLE) {
+					assert (m_TryTwofoldRefinement);
+					TransFormula loopTF = computeLoopTF();
+					m_LoopTermination = checkLoopTermination(loopTF);
+					m_ConcatFeasibility = TraceCheckResult.UNCHECKED;
+					m_LassoTermination = SynthesisResult.UNCHECKED;
+					if (m_LoopTermination == SynthesisResult.TERMINATING) {
+						m_ContinueDirective = ContinueDirective.REFINE_BOTH;
+						return;
 					} else {
 						m_ContinueDirective = ContinueDirective.REFINE_FINITE;
 						return;
 					}
 				} else {
-					// concat feasible
-					TransFormula loopTF = computeLoopTF();
-					checkLoopTermination(loopTF);
-					if (m_LoopTermination == SynthesisResult.TERMINATING) {
-						m_ContinueDirective = ContinueDirective.REFINE_BUCHI;
-						return;
+					// stem feasible
+					m_ConcatFeasibility = checkConcatFeasibility();
+					if (m_ConcatFeasibility == TraceCheckResult.INFEASIBLE) {
+						m_LassoTermination = SynthesisResult.UNCHECKED;
+						if (m_TryTwofoldRefinement) {
+							TransFormula loopTF = computeLoopTF();
+							m_LoopTermination = checkLoopTermination(loopTF);
+							if (m_LoopTermination == SynthesisResult.TERMINATING) {
+								m_ContinueDirective = ContinueDirective.REFINE_BOTH;
+								return;
+							} else {
+								m_ContinueDirective = ContinueDirective.REFINE_FINITE;
+								return;
+							}
+						} else {
+							m_LoopTermination = SynthesisResult.UNCHECKED;
+							m_ContinueDirective = ContinueDirective.REFINE_FINITE;
+							return;
+						}
 					} else {
-						TransFormula stemTF = computeStemTF();
-						checkLassoTermination(stemTF, loopTF);
-						if (m_LassoTermination == SynthesisResult.TERMINATING) {
+						// concat feasible
+						TransFormula loopTF = computeLoopTF();
+						// checking loop termination before we check lasso 
+						// termination is a workaround.
+						// We want to avoid supporting invariants in possible
+						// yet the termination argument simplification of the
+						// LassoChecker is not optimal. Hence we first check
+						// only the loop, which guarantees that there are no
+						// supporting invariants.
+						m_LoopTermination = checkLoopTermination(loopTF);
+						if (m_LoopTermination == SynthesisResult.TERMINATING) {
+							m_LassoTermination = SynthesisResult.UNCHECKED;
 							m_ContinueDirective = ContinueDirective.REFINE_BUCHI;
 							return;
-						} else if (m_LassoTermination == SynthesisResult.NONTERMINATIG) {
-							m_ContinueDirective = ContinueDirective.REPORT_NONTERMINATION;
-							return;
 						} else {
-							m_ContinueDirective = ContinueDirective.REPORT_UNKNOWN;
-							return;
+							TransFormula stemTF = computeStemTF();
+							m_LassoTermination = checkLassoTermination(stemTF, loopTF);
+							if (m_LassoTermination == SynthesisResult.TERMINATING) {
+								m_ContinueDirective = ContinueDirective.REFINE_BUCHI;
+								return;
+							} else if (m_LassoTermination == SynthesisResult.NONTERMINATIG) {
+								m_ContinueDirective = ContinueDirective.REPORT_NONTERMINATION;
+								return;
+							} else {
+								m_ContinueDirective = ContinueDirective.REPORT_UNKNOWN;
+								return;
+							}
 						}
 					}
 				}
 			}
 		}
 
-		// if (s_AlwaysAdditionalLoopTerminationCheck ||
-		// loop.getLength() < stem.getLength()) {
-		// TransFormula loopTF = computeLoopTF();
-		// checkLoopTermination(loopTF);
-		// if (m_LoopTermination == SynthesisResult.TERMINATING) {
-		// m_ContinueDirective = ContinueDirective.REFINE_BOTH;
-		// return;
-		// } else {
-		// m_ContinueDirective = ContinueDirective.REFINE_FINITE;
-		// return;
-		// }
-		// } else {
-		// m_ContinueDirective = ContinueDirective.REFINE_FINITE;
-		// return;
-		// }
-		// } else {
-		// checkLoopFeasibility();
-		// if (m_LoopInfeasible) {
-		// s_Logger.info("loop already infeasible");
-		// // // because BuchiCegarLoop can not continue with the loop
-		// // // compute this information for concat.
-		// // // TODO: this is a hack find better solution
-		// // checkConcatFeasibility();
-		// // if (!m_ConcatInfeasible) {
-		// // throw new AssertionError("stem infeasible, loop" +
-		// // " infeasible but not concat? If this happens there is" +
-		// // " a bug or there some problem with UNKNOWN that is" +
-		// // " not implemented yet.");
-		// // }
-		// m_ContinueDirective = ContinueDirective.REFINE_FINITE;
-		// return;
-		// } else {
-		// checkConcatFeasibility();
-		// if (m_ConcatInfeasible) {
-		// s_Logger.info("concat infeasible");
-		// if (s_AlwaysAdditionalLoopTerminationCheck ||
-		// loop.getLength() < stem.getLength()) {
-		// TransFormula loopTF = computeLoopTF();
-		// checkLoopTermination(loopTF);
-		// if (m_LoopTermination == SynthesisResult.TERMINATING) {
-		// m_ContinueDirective = ContinueDirective.REFINE_BOTH;
-		// return;
-		// } else {
-		// m_ContinueDirective = ContinueDirective.REFINE_FINITE;
-		// return;
-		// }
-		// } else {
-		// m_ContinueDirective = ContinueDirective.REFINE_FINITE;
-		// return;
-		// }
-		// } else {
-		// TransFormula loopTF = computeLoopTF();
-		// checkLoopTermination(loopTF);
-		// if (m_LoopTermination == SynthesisResult.TERMINATING) {
-		// m_ContinueDirective = ContinueDirective.REFINE_BUCHI;
-		// return;
-		// } else {
-		//
-		// TransFormula stemTF = computeStemTF();
-		// checkLassoTermination(stemTF, loopTF);
-		// if (m_LassoTermination == SynthesisResult.TERMINATING) {
-		// m_ContinueDirective = ContinueDirective.REFINE_BUCHI;
-		// return;
-		// } else if (m_LassoTermination == SynthesisResult.NONTERMINATIG) {
-		// m_ContinueDirective = ContinueDirective.REPORT_NONTERMINATION;
-		// return;
-		// } else {
-		// m_ContinueDirective = ContinueDirective.REPORT_UNKNOWN;
-		// return;
-		// }
-		// }
-		//
-		// }
-		// }
-		// }
-		// boolean thisCodeShouldBeUnreachalbe = true;
-	}
-
-	private void checkStemFeasibility() {
-		NestedRun<CodeBlock, IPredicate> stem = m_Counterexample.getStem();
-		if (BuchiCegarLoop.emptyStem(m_Counterexample)) {
-			m_StemInfeasible = false;
-		} else {
-			m_StemCheck = checkFeasibilityAndComputeInterpolants(stem);
-			if (m_StemCheck.isCorrect() == LBool.UNSAT) {
-				m_StemInfeasible = true;
+		private TraceCheckResult checkStemFeasibility() {
+			NestedRun<CodeBlock, IPredicate> stem = m_Counterexample.getStem();
+			if (BuchiCegarLoop.emptyStem(m_Counterexample)) {
+				return TraceCheckResult.FEASIBLE;
 			} else {
-				m_StemInfeasible = false;
+				m_StemCheck = checkFeasibilityAndComputeInterpolants(stem);
+				return translateSatisfiabilityToFeasibility(m_StemCheck.isCorrect());
 			}
 		}
-	}
 
-	private void checkLoopFeasibility() {
-		NestedRun<CodeBlock, IPredicate> loop = m_Counterexample.getLoop();
-		m_LoopCheck = checkFeasibilityAndComputeInterpolants(loop);
-		if (m_LoopCheck.isCorrect() == LBool.UNSAT) {
-			m_LoopInfeasible = true;
-		} else {
-			m_LoopInfeasible = false;
+		private TraceCheckResult checkLoopFeasibility() {
+			NestedRun<CodeBlock, IPredicate> loop = m_Counterexample.getLoop();
+			m_LoopCheck = checkFeasibilityAndComputeInterpolants(loop);
+			return translateSatisfiabilityToFeasibility(m_LoopCheck.isCorrect());
 		}
-	}
 
-	private void checkConcatFeasibility() {
-		NestedRun<CodeBlock, IPredicate> stem = m_Counterexample.getStem();
-		NestedRun<CodeBlock, IPredicate> loop = m_Counterexample.getLoop();
-		NestedRun<CodeBlock, IPredicate> concat = stem.concatenate(loop);
-		m_ConcatCheck = checkFeasibilityAndComputeInterpolants(concat);
-		if (m_ConcatCheck.isCorrect() == LBool.UNSAT) {
-			m_ConcatInfeasible = true;
-			m_ConcatenatedCounterexample = concat;
-		} else {
-			m_ConcatInfeasible = false;
+		private TraceCheckResult checkConcatFeasibility() {
+			NestedRun<CodeBlock, IPredicate> stem = m_Counterexample.getStem();
+			NestedRun<CodeBlock, IPredicate> loop = m_Counterexample.getLoop();
+			NestedRun<CodeBlock, IPredicate> concat = stem.concatenate(loop);
+			m_ConcatCheck = checkFeasibilityAndComputeInterpolants(concat);
+			if (m_ConcatCheck.isCorrect() == LBool.UNSAT) {
+				m_ConcatenatedCounterexample = concat;
+			}
+			return translateSatisfiabilityToFeasibility(m_ConcatCheck.isCorrect());
 		}
-	}
 
-	private TraceChecker checkFeasibilityAndComputeInterpolants(NestedRun<CodeBlock, IPredicate> run) {
-		TraceChecker result;
-		switch (m_Interpolation) {
-		case Craig_NestedInterpolation:
-		case Craig_TreeInterpolation:
-			result = new TraceChecker(m_TruePredicate, m_FalsePredicate, new TreeMap<Integer, IPredicate>(),
-					run.getWord(), m_SmtManager, m_ModifiableGlobalVariableManager,
-					/*
-					 * TODO: When Matthias
-					 * introduced this parameter he
-					 * set the argument to AssertCodeBlockOrder.NOT_INCREMENTALLY.
-					 * Check if you want to set this
-					 * to a different value.
-					 */AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices);
-			break;
-		case ForwardPredicates:
-		case BackwardPredicates:
-		case FPandBP:
-			result = new TraceCheckerSpWp(m_TruePredicate, m_FalsePredicate, new TreeMap<Integer, IPredicate>(),
-					run.getWord(), m_SmtManager, m_ModifiableGlobalVariableManager,
-					/*
-					 * TODO: When Matthias
-					 * introduced this parameter he
-					 * set the argument to AssertCodeBlockOrder.NOT_INCREMENTALLY.
-					 * Check if you want to set this
-					 * to a different value.
-					 */AssertCodeBlockOrder.NOT_INCREMENTALLY, 
-					 UnsatCores.CONJUNCT_LEVEL, true, mServices);
-			break;
-		default:
-			throw new UnsupportedOperationException("unsupported interpolation");
+		private TraceCheckResult translateSatisfiabilityToFeasibility(LBool lBool) {
+			switch (lBool) {
+			case SAT:
+				return TraceCheckResult.FEASIBLE;
+			case UNKNOWN:
+				return TraceCheckResult.UNKNOWN;
+			case UNSAT:
+				return TraceCheckResult.INFEASIBLE;
+			default:
+				throw new AssertionError("unknown case");
+			}
 		}
-		if (result.isCorrect() == LBool.UNSAT) {
-			result.computeInterpolants(new TraceChecker.AllIntegers(), m_PredicateUnifier, m_Interpolation);
-		} else {
-			result.finishTraceCheckWithoutInterpolantsOrProgramExecution();
-		}
-		return result;
-	}
 
-	private void checkLoopTermination(TransFormula loopTF) throws IOException {
-		assert !m_Bspm.providesPredicates() : "termination already checked";
-		boolean containsArrays = SmtUtils.containsArrayVariables(loopTF.getFormula());
-		if (containsArrays) {
-			// if there are array variables we will probably run in a huge
-			// DNF, so as a precaution we do not check and say unknown
-			m_LoopTermination = SynthesisResult.UNKNOWN;
-		} else {
-			m_LoopTermination = synthesize(false, null, loopTF, containsArrays);
+		private TraceChecker checkFeasibilityAndComputeInterpolants(NestedRun<CodeBlock, IPredicate> run) {
+			TraceChecker result;
+			switch (m_Interpolation) {
+			case Craig_NestedInterpolation:
+			case Craig_TreeInterpolation:
+				result = new TraceChecker(m_TruePredicate, m_FalsePredicate, new TreeMap<Integer, IPredicate>(),
+						run.getWord(), m_SmtManager, m_ModifiableGlobalVariableManager,
+						/*
+						 * TODO: When Matthias
+						 * introduced this parameter he
+						 * set the argument to AssertCodeBlockOrder.NOT_INCREMENTALLY.
+						 * Check if you want to set this
+						 * to a different value.
+						 */AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices);
+				break;
+			case ForwardPredicates:
+			case BackwardPredicates:
+			case FPandBP:
+				result = new TraceCheckerSpWp(m_TruePredicate, m_FalsePredicate, new TreeMap<Integer, IPredicate>(),
+						run.getWord(), m_SmtManager, m_ModifiableGlobalVariableManager,
+						/*
+						 * TODO: When Matthias
+						 * introduced this parameter he
+						 * set the argument to AssertCodeBlockOrder.NOT_INCREMENTALLY.
+						 * Check if you want to set this
+						 * to a different value.
+						 */AssertCodeBlockOrder.NOT_INCREMENTALLY, 
+						 UnsatCores.CONJUNCT_LEVEL, true, mServices);
+				break;
+			default:
+				throw new UnsupportedOperationException("unsupported interpolation");
+			}
+			if (result.isCorrect() == LBool.UNSAT) {
+				result.computeInterpolants(new TraceChecker.AllIntegers(), m_PredicateUnifier, m_Interpolation);
+			} else {
+				result.finishTraceCheckWithoutInterpolantsOrProgramExecution();
+			}
+			return result;
 		}
-	}
 
-	private void checkLassoTermination(TransFormula stemTF, TransFormula loopTF) throws IOException {
-		assert !m_Bspm.providesPredicates() : "termination already checked";
-		assert loopTF != null;
-		boolean containsArrays = SmtUtils.containsArrayVariables(loopTF.getFormula())
-				|| SmtUtils.containsArrayVariables(loopTF.getFormula());
-		m_LassoTermination = synthesize(true, stemTF, loopTF, containsArrays);
+		private SynthesisResult checkLoopTermination(TransFormula loopTF) throws IOException {
+			assert !m_Bspm.providesPredicates() : "termination already checked";
+			boolean containsArrays = SmtUtils.containsArrayVariables(loopTF.getFormula());
+			if (containsArrays) {
+				// if there are array variables we will probably run in a huge
+				// DNF, so as a precaution we do not check and say unknown
+				return SynthesisResult.UNKNOWN;
+			} else {
+				return synthesize(false, null, loopTF, containsArrays);
+			}
+		}
+
+		private SynthesisResult checkLassoTermination(TransFormula stemTF, TransFormula loopTF) throws IOException {
+			assert !m_Bspm.providesPredicates() : "termination already checked";
+			assert loopTF != null;
+			boolean containsArrays = SmtUtils.containsArrayVariables(loopTF.getFormula())
+					|| SmtUtils.containsArrayVariables(loopTF.getFormula());
+			return synthesize(true, stemTF, loopTF, containsArrays);
+		}
+
+		public TraceCheckResult getStemFeasibility() {
+			return m_StemFeasibility;
+		}
+
+		public TraceCheckResult getLoopFeasibility() {
+			return m_LoopFeasibility;
+		}
+
+		public TraceCheckResult getConcatFeasibility() {
+			return m_ConcatFeasibility;
+		}
+
+		public SynthesisResult getLoopTermination() {
+			return m_LoopTermination;
+		}
+
+		public SynthesisResult getLassoTermination() {
+			return m_LassoTermination;
+		}
+
+		public ContinueDirective getContinueDirective() {
+			return m_ContinueDirective;
+		}
+	
 	}
 
 	/**
