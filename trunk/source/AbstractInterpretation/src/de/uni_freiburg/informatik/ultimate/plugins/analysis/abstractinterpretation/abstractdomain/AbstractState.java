@@ -14,7 +14,6 @@ import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
 
 /**
@@ -33,26 +32,26 @@ public class AbstractState {
 	 * - Iteration counts for loops nested within the current loop
 	 */
 	public class LoopStackElement {
-		private final ProgramPoint m_loopNode;
+		private final Object m_loopNode;
 		private final RCFGEdge m_exitEdge;
-		private final Map<ProgramPoint, Integer> m_iterationCounts = new HashMap<ProgramPoint, Integer>();
-		public LoopStackElement(ProgramPoint loopNode, RCFGEdge exitEdge) {
+		private final Map<Object, Integer> m_iterationCounts = new HashMap<Object, Integer>();
+		public LoopStackElement(Object loopNode, RCFGEdge exitEdge) {
 			m_loopNode = loopNode;
 			m_exitEdge = exitEdge;
 		}
-		public ProgramPoint getLoopNode() { return m_loopNode; }
+		public Object getLoopNode() { return m_loopNode; }
 		public RCFGEdge getExitEdge() { return m_exitEdge; }
-		public int getIterationCount(ProgramPoint loopNode) { 
+		public int getIterationCount(Object loopNode) { 
 			Integer count = m_iterationCounts.get(loopNode);
 			if (count == null) return 0;
 			return count.intValue();
 		}
-		public void increaseIterationCount(ProgramPoint loopNode) {
+		public void increaseIterationCount(Object loopNode) {
 			m_iterationCounts.put(loopNode, Integer.valueOf(getIterationCount(loopNode) + 1));
 		}
 		public LoopStackElement copy() {
 			LoopStackElement result = new LoopStackElement(m_loopNode, m_exitEdge);
-			for (ProgramPoint p : m_iterationCounts.keySet())
+			for (Object p : m_iterationCounts.keySet())
 				result.m_iterationCounts.put(p, m_iterationCounts.get(p));
 			return result;
 		}
@@ -771,7 +770,7 @@ public class AbstractState {
 	 * @param loopNode Loop entry node
 	 * @param entryEdge The edge over which the loop will be left
 	 */
-	public void pushLoopEntry(ProgramPoint loopNode, RCFGEdge exitEdge) {
+	public void pushLoopEntry(Object loopNode, RCFGEdge exitEdge) {
 		getCurrentScope().getLoopStack().push(new LoopStackElement(loopNode, exitEdge));
 	}
 

@@ -137,12 +137,19 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 	protected boolean isAbstractionCorrect() throws OperationCanceledException {
 		try {
 			if (m_RunWithAI) {
-				//FIXME: Fabian, fix the constructor call
-				List<RCFGNode> initialStates = new ArrayList<>();
-				initialStates.add(m_RootNode);
-				IsEmptyWithAI<CodeBlock, IPredicate> emptyWithAI = new IsEmptyWithAI<CodeBlock, IPredicate>(
-						(INestedWordAutomatonOldApi) m_Abstraction, m_Services, m_RootNode, initialStates);
+				Map<Object, ProgramPoint> programPointMap = new HashMap<Object, ProgramPoint>();
+				Map<ProgramPoint, Object> predicateMap = new HashMap<ProgramPoint, Object>();
+				
+				for (Object s : ((INestedWordAutomatonOldApi) m_Abstraction).getStates()){
+					ISLPredicate ip = (ISLPredicate) s;
+					//SPredicate sp = (SPredicate) s;
+					ProgramPoint pp = ip.getProgramPoint();
+					programPointMap.put(ip, pp);
+					predicateMap.put(pp, ip);
+				}
+				IsEmptyWithAI<CodeBlock, IPredicate> emptyWithAI = new IsEmptyWithAI<CodeBlock, IPredicate>((INestedWordAutomatonOldApi) m_Abstraction, m_Services, super.m_RootNode, programPointMap, predicateMap);
 				m_Counterexample = emptyWithAI.getNestedRun();
+				
 				// TODO: So den neuen AI automaten in TA integrieren 
 				//m_Abstraction = new Difference(services, stateFactory, m_Abstraction, emptyWithAI.getAbstraction())
 			} else {

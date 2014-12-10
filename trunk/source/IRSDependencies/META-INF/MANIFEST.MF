@@ -13,3 +13,4 @@ Require-Bundle: UltimateCore,
 Bundle-RequiredExecutionEnvironment: JavaSE-1.7
 Bundle-ActivationPolicy: lazy
 Export-Package: de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.loopdetector
+Import-Package: de.uni_freiburg.informatik.ultimate.automata.nwalibrary

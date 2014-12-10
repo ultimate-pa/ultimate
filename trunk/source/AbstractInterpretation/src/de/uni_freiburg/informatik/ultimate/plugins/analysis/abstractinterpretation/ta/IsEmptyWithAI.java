@@ -51,9 +51,9 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Accepts;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.AbstractInterpreter;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RcfgElement;
@@ -73,7 +73,7 @@ import de.uni_freiburg.informatik.ultimate.result.UnprovableResult;
  * labeled with runs of length two or summary. The reachability graph is
  * obtained by traversing the automaton in a BFS manner.
  * 
- * @author fabi@informatik.uni-freiburg.de
+ * @author schillif@informatik.uni-freiburg.de
  * 
  */
 
@@ -212,18 +212,20 @@ public class IsEmptyWithAI<LETTER, STATE> implements IOperation<LETTER, STATE> {
 
 	private STATE m_ReconstructionPredK;
 
-	private AbstractInterpreter m_aI;
+	private AbstractInterpreterTA m_aI;
+	private Map<ProgramPoint, Object> m_predicateMap = new HashMap<ProgramPoint, Object>();
 
 	/**
 	 * Default constructor. Here we search a run from the initial states of the
 	 * automaton to the final states of the automaton.
 	 */
 	public IsEmptyWithAI(INestedWordAutomaton<LETTER, STATE> nwa, IUltimateServiceProvider services, RootNode root,
-			List<RCFGNode> initialStateNodes) {
+			Map<Object, ProgramPoint> programPointMap, Map<ProgramPoint, Object> predicateMap) {
 		List<UnprovableResult<RcfgElement, CodeBlock, Expression>> results = null;
 		m_nwa = nwa;
-		m_aI = new AbstractInterpreter(services);
-		results = m_aI.processNWA(nwa, root, initialStateNodes);
+		m_aI = new AbstractInterpreterTA(services);
+		m_predicateMap = predicateMap;
+		results = m_aI.processNWA(nwa, root, programPointMap);
 		dummyEmptyStackState = m_nwa.getEmptyStackState();
 		m_StartStates = m_nwa.getInitialStates();
 		m_GoalStates = m_nwa.getFinalStates();
@@ -239,11 +241,6 @@ public class IsEmptyWithAI<LETTER, STATE> implements IOperation<LETTER, STATE> {
 			}
 		}
 		s_Logger.info(exitMessage());
-
-		// for(STATE x : m_StartStates){
-		// CodeBlock initial = (CodeBlock)x;
-		// initial.getTarget();
-
 	}
 
 	/**
@@ -421,10 +418,10 @@ public class IsEmptyWithAI<LETTER, STATE> implements IOperation<LETTER, STATE> {
 			RCFGEdge traceElement = (RCFGEdge) execution.getTraceElement(i).getTraceElement();
 			RCFGNode state = traceElement.getSource();
 			executionLetters.add((LETTER) traceElement);
-			executionStates.add((STATE) state);
+			executionStates.add((STATE) m_predicateMap.get(state));
 		}
 		// add the last state
-		executionStates.add((STATE) ((RCFGEdge) executionLetters.get(executionLetters.size() - 1)).getTarget());
+		executionStates.add((STATE) m_predicateMap.get(((RCFGEdge) executionLetters.get(executionLetters.size() - 1)).getTarget()));
 
 		// start with an empty word
 		NestedWord<LETTER> currentWord = new NestedWord<>((LETTER[]) new RCFGEdge[0], new int[0]);
