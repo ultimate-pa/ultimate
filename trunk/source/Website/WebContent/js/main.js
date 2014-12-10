@@ -59,7 +59,7 @@ function getResults()
             if(json.status == "success") { addResults(json.results); }
             else { alert("Unexpected response from server!"); } }
           },
-        contentType: 'text/plain;charset=UTF-8',
+        contentType: 'application/x-www-form-urlencoded;charset=UTF-8',
         dataType: 'json',
         error: function(e) { loading('play', false); toast(e.statusText+' ('+e.status+')'); }
       });
