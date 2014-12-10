@@ -22,7 +22,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.Transitionlet;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.Activator;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.loopdetector.RCFGAStar.IHeuristic;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.loopdetector.AStar;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGNode;
@@ -176,7 +176,7 @@ public class LoopDetectorNWA extends BaseObserver {
 		return rtr;
 	}
 
-	private void process(ProgramPoint loopHead, HashMap<RCFGEdge, RCFGEdge> map, List<RCFGEdge> forbiddenEdges) {
+	/*private void process(ProgramPoint loopHead, HashMap<RCFGEdge, RCFGEdge> map, List<RCFGEdge> forbiddenEdges) {
 		RCFGAStar walker = new RCFGAStar(mLogger, loopHead, loopHead, getZeroHeuristic(), forbiddenEdges);
 
 		List<RCFGEdge> path = walker.findPath();
@@ -193,7 +193,7 @@ public class LoopDetectorNWA extends BaseObserver {
 			path = walker.findPath();
 
 		}
-	}
+	}*/
 
 	private RCFGEdge addToResult(List<RCFGEdge> path, HashMap<RCFGEdge, RCFGEdge> map) {
 		RCFGEdge first = path.get(0);
@@ -203,7 +203,7 @@ public class LoopDetectorNWA extends BaseObserver {
 		return first;
 	}
 
-	private IHeuristic getZeroHeuristic() {
+	/*private IHeuristic getZeroHeuristic() {
 		return new IHeuristic() {
 
 			@Override
@@ -216,7 +216,7 @@ public class LoopDetectorNWA extends BaseObserver {
 				return 1;
 			}
 		};
-	}
+	}*/
 
 	private void printResult(HashMap<ProgramPoint, HashMap<RCFGEdge, RCFGEdge>> result) {
 		if (!mLogger.isDebugEnabled()) {
