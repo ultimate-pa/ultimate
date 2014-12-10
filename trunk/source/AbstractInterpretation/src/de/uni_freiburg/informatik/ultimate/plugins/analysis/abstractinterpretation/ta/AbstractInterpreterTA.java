@@ -47,7 +47,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.signdomain.SignDomainFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.topbottomdomain.TopBottomDomainFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.preferences.AbstractInterpretationPreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.loopdetector.LoopDetector;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.loopdetector.LoopDetectorNWA;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.RcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
