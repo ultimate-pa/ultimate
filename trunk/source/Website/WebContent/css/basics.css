@@ -804,6 +804,25 @@ body {
   overflow-y: auto;
 }
 
+
+body::selection,
+#messages::selection, #messages div::selection,
+#toast_holder::selection, #toast_holder div::selection,
+#header::selection, #header div::selection, #header a::selection {
+  background: transparent;
+  text-shadow: none;
+  color: inherit;
+  }
+
+body::-moz-selection,
+#messages::-moz-selection, #messages div::-moz-selection,
+#toast_holder::-moz-selection, #toast_holder div::-moz-selection,
+#header::-moz-selection, #header div::-moz-selection, #header a::-moz-selection {
+  background: transparent;
+  text-shadow: none;
+  color: inherit;
+}
+
 #content.drag {
   background-color: #FFF;
 }
