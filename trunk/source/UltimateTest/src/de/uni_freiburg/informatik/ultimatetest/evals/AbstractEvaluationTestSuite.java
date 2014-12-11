@@ -21,6 +21,7 @@ import de.uni_freiburg.informatik.ultimatetest.evals.TACAS2015Summary.Aggregate;
 import de.uni_freiburg.informatik.ultimatetest.summary.IIncrementalLog;
 import de.uni_freiburg.informatik.ultimatetest.summary.ITestSummary;
 import de.uni_freiburg.informatik.ultimatetest.summary.IncrementalLogWithVMParameters;
+import de.uni_freiburg.informatik.ultimatetest.traceabstraction.TestSummaryWithBenchmarkResults;
 
 /**
  * @author dietsch@informatik.uni-freiburg.de
@@ -129,7 +130,8 @@ public abstract class AbstractEvaluationTestSuite extends AbstractModelCheckerTe
 
 		return new ITestSummary[] {
 				new TACAS2015Summary(getClass(), benchmarks, columnDef),
-				new TraceAbstractionTestSummary(getClass()) };
+				new TraceAbstractionTestSummary(getClass()),
+		};
 
 		// @formatter:on
 	}
@@ -139,7 +141,7 @@ public abstract class AbstractEvaluationTestSuite extends AbstractModelCheckerTe
 		if (mIncrementalLog == null) {
 			mIncrementalLog = new IncrementalLogWithVMParameters(this.getClass(), getTimeout());
 		}
-		return new IIncrementalLog[] { mIncrementalLog };
+		return new IIncrementalLog[] { mIncrementalLog, new TestSummaryWithBenchmarkResults(this.getClass()) };
 	}
 
 	private List<UltimateTestCase> limitTestFiles() {
