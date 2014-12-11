@@ -6,6 +6,7 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedList;
 
 import org.apache.log4j.Logger;
 
@@ -204,9 +205,9 @@ public class MinimizeDfaHopcroftPaper<LETTER, STATE> implements IOperation<LETTE
 		 */
 		private void initializeLables() {
 			// TODO: Better size handling.
-			m_labels = new int[100];
-			m_labelTails = new int[100];
-			m_labelHeads = new int[100];
+			LinkedList<Integer> labels = new LinkedList<Integer>();
+			LinkedList<Integer> heads = new LinkedList<Integer>();
+			LinkedList<Integer> tails = new LinkedList<Integer>();
 			
 			// Iterate over all states in m_int2state.
 			int index = 0;
@@ -218,18 +219,24 @@ public class MinimizeDfaHopcroftPaper<LETTER, STATE> implements IOperation<LETTE
 				// hasNext? --> add to labels.
 				while (it.hasNext()) {
 					OutgoingInternalTransition< LETTER, STATE> oit = it.next();
-					m_labels[index] = m_letter2int.get(oit.getLetter());
-					m_labelTails[index] = m_state2int.get(st);
-					m_labelHeads[index] = m_state2int.get(oit.getSucc());
+					labels.add(m_letter2int.get(oit.getLetter()));
+					tails.add(m_state2int.get(st));
+					heads.add(m_state2int.get(oit.getSucc()));
 					index++;
 				}
 			}
 			m_nOfTransitions = index;
 			// resize arrays to used size for saving memory
 			// Maybe too much computing time?
-			m_labels = Arrays.copyOf(m_labels, m_nOfTransitions);
-			m_labelTails = Arrays.copyOf(m_labelTails, m_nOfTransitions);
-			m_labelHeads = Arrays.copyOf(m_labelHeads, m_nOfTransitions);
+			m_labels = new int[m_nOfTransitions];
+			m_labelHeads = new int[m_nOfTransitions];
+			m_labelTails = new int[m_nOfTransitions];
+			
+			for (int i = 0; i < m_nOfTransitions; ++i) {
+				m_labels[i] = labels.get(i);
+				m_labelHeads[i] = heads.get(i);
+				m_labelTails[i] = tails.get(i);
+			}
 		}
 
 		/*******************************************************************//**
