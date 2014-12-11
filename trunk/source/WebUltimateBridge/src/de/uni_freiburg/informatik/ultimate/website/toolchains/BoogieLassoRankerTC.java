@@ -114,7 +114,7 @@ public class BoogieLassoRankerTC extends WebToolchain {
         		new String[] { PrefStrings.s_BE_VALUE_DisjunctiveRating }, false, new String[] {
 				PrefStrings.s_BE_VALUE_DisjunctiveRating, PrefStrings.s_BE_VALUE_LargeBlock }, true));
 		oBE.add(new Setting(PrefStrings.s_BE_LABEL_RATINGBOUND, Setting.SettingType.STRING,
-				PrefStrings.s_BE_LABEL_RATINGBOUND, "90", false));
+				PrefStrings.s_BE_LABEL_RATINGBOUND, "0", false));
 		
 		List<Setting> oRank = new ArrayList<Setting>();
 		List<Setting> mRank = new ArrayList<Setting>();
