@@ -487,8 +487,6 @@ public class AbstractInterpreter extends RCFGEdgeVisitor {
 		// root annotation: get location list, error locations
 		// todo fabian: ???
 		RootAnnot rootAnnotation = rootNode.getRootAnnot();
-
-//		rootAnnotation.getBoogie2SMT().getBoogie2SmtSymbolTable().
 		
 		Map<String, ProgramPoint> entryNodes = rootAnnotation.getEntryNodes();
 		ProgramPoint mainEntry = entryNodes.get(mMainMethodName);
