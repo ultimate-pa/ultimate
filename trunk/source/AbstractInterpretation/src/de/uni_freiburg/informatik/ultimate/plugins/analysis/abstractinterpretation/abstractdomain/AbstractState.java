@@ -73,13 +73,13 @@ public class AbstractState {
 		public void setIndicesUnclear() { m_unclearIndices = true; }
 	}
 	
-	public class CallStackElement {
+	public class ScopedAbstractState {
 		private final CallStatement m_callStatement;
 		private final Map<String, IAbstractValue<?>> m_values, m_oldValues;
 		private final LinkedList<LoopStackElement> m_loopStack = new LinkedList<LoopStackElement>();
 		private final Map<String, ArrayData> m_arrays;
 		private boolean m_isGlobalScope = false;
-		public CallStackElement(CallStatement callStatement, Map<String, IAbstractValue<?>> oldValues) {
+		public ScopedAbstractState(CallStatement callStatement, Map<String, IAbstractValue<?>> oldValues) {
 			m_callStatement = callStatement;
 			m_values = new HashMap<String, IAbstractValue<?>>();
 			m_oldValues = oldValues == null ? new HashMap<String, IAbstractValue<?>>() : new HashMap<String, IAbstractValue<?>>(oldValues);
@@ -118,7 +118,7 @@ public class AbstractState {
 	 * Stack of maps from variable identifiers to values. Stack levels represent scope levels,
 	 * index 0 is the global scope.
 	 */
-	private final LinkedList<CallStackElement> m_callStack = new LinkedList<CallStackElement>();
+	private final LinkedList<ScopedAbstractState> m_callStack = new LinkedList<ScopedAbstractState>();
 	
 	public AbstractState(Logger logger, IAbstractDomainFactory<?> intFactory, IAbstractDomainFactory<?> realFactory,
 			IAbstractDomainFactory<?> boolFactory, IAbstractDomainFactory<?> bitVectorFactory,
@@ -147,18 +147,18 @@ public class AbstractState {
 			return false;
 
 
-		List<CallStackElement> thisCallStack = getCallStack();
-		List<CallStackElement> otherCallStack = state.getCallStack();
+		List<ScopedAbstractState> thisCallStack = getCallStack();
+		List<ScopedAbstractState> otherCallStack = state.getCallStack();
 		
 		int thisCallStackSize = thisCallStack.size();
 		int otherCallStackSize = otherCallStack.size();
 		if (thisCallStackSize < otherCallStackSize)
 			return false;
 		for (int i = 1; i <= thisCallStackSize; i++) {
-			CallStackElement thisCSE =  i >= thisCallStackSize
+			ScopedAbstractState thisCSE =  i >= thisCallStackSize
 					? thisCallStack.get(0)
 					: thisCallStack.get(thisCallStackSize - i);
-			CallStackElement otherCSE =  i >= otherCallStackSize
+			ScopedAbstractState otherCSE =  i >= otherCallStackSize
 					? otherCallStack.get(0)
 					: otherCallStack.get(otherCallStackSize - i);
 			
@@ -179,7 +179,7 @@ public class AbstractState {
 	 * @param right
 	 * @return True iff left isSuper right
 	 */
-	private boolean isSuper(CallStackElement left, CallStackElement right) {
+	private boolean isSuper(ScopedAbstractState left, ScopedAbstractState right) {
 		// must be of the same method call and have at least as many variables
 		if ((left.getCallStatement() != right.getCallStatement())
 				|| (left.getValues().size() < right.getValues().size()))
@@ -231,10 +231,10 @@ public class AbstractState {
 		
 		result.m_callStack.clear();
 		for (int i = 0; i < m_callStack.size(); i++) {
-			CallStackElement cse = m_callStack.get(i);
+			ScopedAbstractState cse = m_callStack.get(i);
 			
 			Map<String, IAbstractValue<?>> thisLayer = cse.getValues();
-			CallStackElement resultCSE = new CallStackElement(cse.getCallStatement(), cse.getOldValues());
+			ScopedAbstractState resultCSE = new ScopedAbstractState(cse.getCallStatement(), cse.getOldValues());
 			resultCSE.SetIsGlobalScope(cse.isGlobalScope());
 			result.m_callStack.add(resultCSE);
 			Map<String, IAbstractValue<?>> copyLayer = result.m_callStack.get(i).getValues();
@@ -283,17 +283,17 @@ public class AbstractState {
 		if (state == null)
 			return copy();
 
-		List<CallStackElement> thisCallStack = getCallStack();
-		List<CallStackElement> otherCallStack = state.getCallStack();
+		List<ScopedAbstractState> thisCallStack = getCallStack();
+		List<ScopedAbstractState> otherCallStack = state.getCallStack();
 		int thisCallStackSize = thisCallStack.size();
 		int otherCallStackSize = otherCallStack.size();
 		if (thisCallStackSize < otherCallStackSize)
 			return null;
 		for (int i = 1; i < thisCallStackSize; i++) {
-			CallStackElement thisCSE =  i >= thisCallStackSize
+			ScopedAbstractState thisCSE =  i >= thisCallStackSize
 					? thisCallStack.get(0)
 					: thisCallStack.get(thisCallStackSize - i);
-			CallStackElement otherCSE =  i >= otherCallStackSize
+			ScopedAbstractState otherCSE =  i >= otherCallStackSize
 					? otherCallStack.get(0)
 					: otherCallStack.get(otherCallStackSize - i);
 			if (thisCSE.getCallStatement() != otherCSE.getCallStatement())
@@ -324,7 +324,7 @@ public class AbstractState {
 	 * @param right
 	 * @param result Existing data (values, arrays, loop stack) will be cleared & replaced
 	 */
-	private void mergeLayers(CallStackElement left, CallStackElement right, CallStackElement result) {
+	private void mergeLayers(ScopedAbstractState left, ScopedAbstractState right, ScopedAbstractState result) {
 		if ((left == null) || (right == null) || (result == null))
 			return;
 		
@@ -450,7 +450,7 @@ public class AbstractState {
 	 * @param right
 	 * @param result Existing data (values, arrays, loop stack) will be cleared & replaced
 	 */
-	private void widenLayers(CallStackElement left, CallStackElement right, CallStackElement result) {
+	private void widenLayers(ScopedAbstractState left, ScopedAbstractState right, ScopedAbstractState result) {
 		if ((left == null) || (right == null) || (result == null))
 			return;
 		
@@ -545,8 +545,8 @@ public class AbstractState {
 	 * 		else the global scope if that one does,
 	 * 		else null if none of them has it. 
 	 */
-	private CallStackElement getScopeOfIdentifier(String identifier) {
-		CallStackElement cse = getCurrentScope();
+	private ScopedAbstractState getScopeOfIdentifier(String identifier) {
+		ScopedAbstractState cse = getCurrentScope();
 		if (cse.getValues().containsKey(identifier))
 			return cse;
 		
@@ -569,7 +569,7 @@ public class AbstractState {
 	/**
 	 * @return The current scope level
 	 */
-	public CallStackElement getCurrentScope() {
+	public ScopedAbstractState getCurrentScope() {
 		return m_callStack.peek();
 	}
 	
@@ -584,7 +584,7 @@ public class AbstractState {
 	/**
 	 * @return The global scope level
 	 */
-	public CallStackElement getGlobalScope() {
+	public ScopedAbstractState getGlobalScope() {
 		return m_callStack.getLast();
 	}
 	
@@ -612,12 +612,12 @@ public class AbstractState {
 			 * the new scope is added on top of this shortened scope.
 			 */
 			
-			LinkedList<CallStackElement> headSequence = new LinkedList<CallStackElement>();
+			LinkedList<ScopedAbstractState> headSequence = new LinkedList<ScopedAbstractState>();
 			int max = m_callStack.size();
-			CallStackElement first = m_callStack.get(0);
-			CallStackElement second = null;
+			ScopedAbstractState first = m_callStack.get(0);
+			ScopedAbstractState second = null;
 			for (int i = 1; i < max; i++) {
-				CallStackElement current = m_callStack.get(i);
+				ScopedAbstractState current = m_callStack.get(i);
 				if (current.getCallStatement() == first.getCallStatement()) {
 					second = current;
 					break;
@@ -628,7 +628,7 @@ public class AbstractState {
 			// if a matching recursive call exists, check if its predecessors match the headSequence
 			if (second != null) {
 				int headSize = headSequence.size();
-				LinkedList<CallStackElement> tailSequence = new LinkedList<CallStackElement>();
+				LinkedList<ScopedAbstractState> tailSequence = new LinkedList<ScopedAbstractState>();
 				boolean isMatch = true;
 				for (int i = 0; i < headSize; i++) {
 					int tailId = headSize + i + 2;
@@ -636,8 +636,8 @@ public class AbstractState {
 						isMatch = false;
 						break;
 					}
-					CallStackElement head = headSequence.get(i);
-					CallStackElement tail = m_callStack.get(tailId);
+					ScopedAbstractState head = headSequence.get(i);
+					ScopedAbstractState tail = m_callStack.get(tailId);
 					if (head.getCallStatement() != tail.getCallStatement()) {
 						isMatch = false;
 						break;
@@ -652,9 +652,9 @@ public class AbstractState {
 					headSequence.push(first);
 					tailSequence.push(second);
 					for (int i = headSize; i >= 0; i--) {
-						CallStackElement head = headSequence.get(i);
-						CallStackElement tail = tailSequence.get(i);
-						CallStackElement merged = new CallStackElement(head.getCallStatement(), head.getOldValues());
+						ScopedAbstractState head = headSequence.get(i);
+						ScopedAbstractState tail = tailSequence.get(i);
+						ScopedAbstractState merged = new ScopedAbstractState(head.getCallStatement(), head.getOldValues());
 						mergeLayers(head, tail, merged);
 						m_callStack.push(merged);
 					}
@@ -663,7 +663,7 @@ public class AbstractState {
 		}
 		
 		Map<String, IAbstractValue<?>> oldValues = m_callStack.isEmpty() ? null : getGlobalScope().getValues();
-		m_callStack.push(new CallStackElement(callStatement, oldValues));
+		m_callStack.push(new ScopedAbstractState(callStatement, oldValues));
 	}
 	
 	/**
@@ -688,7 +688,7 @@ public class AbstractState {
 		
 		CallStatement currentCall = getCurrentScope().getCallStatement();
 		
-		for (CallStackElement cse : m_callStack) {
+		for (ScopedAbstractState cse : m_callStack) {
 			if (cse.getCallStatement() == currentCall)
 				result++;
 		}
@@ -703,7 +703,7 @@ public class AbstractState {
 	 * @return True iff a layer with the given identifier exists so the value could be written
 	 */
 	public boolean writeValue(String identifier, IAbstractValue<?> value) {
-		CallStackElement layer = getScopeOfIdentifier(identifier);
+		ScopedAbstractState layer = getScopeOfIdentifier(identifier);
 		
 		if (layer == null)
 			return false;
@@ -721,7 +721,7 @@ public class AbstractState {
 	 * @return The value associated with the identifier on its scope level, or null if it is not found
 	 */
 	public IAbstractValue<?> readValue(String identifier, boolean old) {
-		CallStackElement scope = old ? getCurrentScope() : getScopeOfIdentifier(identifier);
+		ScopedAbstractState scope = old ? getCurrentScope() : getScopeOfIdentifier(identifier);
 		
 		if (scope == null)
 			return null;
@@ -746,7 +746,7 @@ public class AbstractState {
 		if (initialValue == null)
 			return false;
 		
-		CallStackElement layer = asGlobal ? getGlobalScope() : getCurrentScope();
+		ScopedAbstractState layer = asGlobal ? getGlobalScope() : getCurrentScope();
 
 		m_logger.debug(String.format("New variable %s at scope level %d %s", identifier, getStackSize()-1,
 				getCurrentScopeName()));
@@ -845,7 +845,7 @@ public class AbstractState {
 	/**
 	 * @return The stack as a list, bottom layer at index 0.
 	 */
-	public List<CallStackElement> getCallStack() {
+	public List<ScopedAbstractState> getCallStack() {
 		return m_callStack;
 	}
 	

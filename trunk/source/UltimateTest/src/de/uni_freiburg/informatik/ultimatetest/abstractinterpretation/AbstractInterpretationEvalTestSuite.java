@@ -13,7 +13,7 @@ import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
 public class AbstractInterpretationEvalTestSuite extends
 		AbstractAbstractInterpretationTestSuite {
 	
-	private boolean m_compareToAutomizer = false;
+	private boolean m_compareToAutomizer = !false;
 	
 	private static final String[] m_directories = {
 		/* ULTIMATE repo */

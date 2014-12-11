@@ -19,6 +19,8 @@ public class JungVisualization implements IOutput {
 
 	private Logger mLogger;
 
+	private GraphType mGraphType;
+
 	@Override
 	public List<String> getDesiredToolID() {
 		// Never called
@@ -27,7 +29,7 @@ public class JungVisualization implements IOutput {
 
 	@Override
 	public List<IObserver> getObservers() {
-		return Collections.singletonList((IObserver) new JungVisualizationObserver(mLogger));
+		return Collections.singletonList((IObserver) new JungVisualizationObserver(mLogger, mGraphType));
 	}
 
 	@Override
@@ -38,7 +40,7 @@ public class JungVisualization implements IOutput {
 
 	@Override
 	public void setInputDefinition(GraphType graphType) {
-		// Do not need this information
+		mGraphType = graphType;
 	}
 
 	@Override
@@ -79,7 +81,7 @@ public class JungVisualization implements IOutput {
 	@Override
 	public void finish() {
 		// TODO Auto-generated method stub
-		
+
 	}
 
 }

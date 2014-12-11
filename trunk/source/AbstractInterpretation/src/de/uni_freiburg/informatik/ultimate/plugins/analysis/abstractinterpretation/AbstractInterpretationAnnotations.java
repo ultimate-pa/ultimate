@@ -13,7 +13,7 @@ import de.uni_freiburg.informatik.ultimate.model.annotation.AbstractAnnotations;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.AbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.AbstractState.ArrayData;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.AbstractState.CallStackElement;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.AbstractState.ScopedAbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.AbstractState.LoopStackElement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
@@ -55,8 +55,8 @@ public class AbstractInterpretationAnnotations extends AbstractAnnotations {
 			for (AbstractState state : m_states) {
 				// scope -> (value, array -> (value, has unclear indices))
 				Map<String, Object> callstackData = new LinkedHashMap<String, Object>(2);
-				List<CallStackElement> callstack = state.getCallStack();
-				for (CallStackElement cse : callstack) {
+				List<ScopedAbstractState> callstack = state.getCallStack();
+				for (ScopedAbstractState cse : callstack) {
 					// array -> (value, has unclear indices)
 					Map<String, Map<String, Object>> arrayInfo = new LinkedHashMap<String, Map<String, Object>>(2);
 					Map<String, ArrayData> arrays = cse.getArrays();

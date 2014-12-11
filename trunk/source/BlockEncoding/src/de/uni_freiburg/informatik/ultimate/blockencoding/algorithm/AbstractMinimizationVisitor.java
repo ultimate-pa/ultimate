@@ -33,8 +33,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Roo
  * @author Stefan Wissert
  * 
  */
-public abstract class AbstractMinimizationVisitor implements
-		IMinimizationVisitor {
+public abstract class AbstractMinimizationVisitor implements IMinimizationVisitor {
 
 	protected HashSet<IMinimizedEdge> visitedEdges;
 
@@ -122,19 +121,22 @@ public abstract class AbstractMinimizationVisitor implements
 			}
 
 		} else {
-			ArrayList<IMinimizedEdge> edgeList = new ArrayList<IMinimizedEdge>(
-					node.getMinimalOutgoingEdgeLevel());
+			ArrayList<IMinimizedEdge> edgeList = new ArrayList<IMinimizedEdge>(node.getMinimalOutgoingEdgeLevel());
 			for (IMinimizedEdge edge : edgeList) {
-				// We ignore Call- and Return-Edges
-				// They will be processed later
-				if (edge.isBasicEdge()
-						&& (((IBasicEdge) edge).getOriginalEdge() instanceof Call || ((IBasicEdge) edge)
-								.getOriginalEdge() instanceof Return)) {
-					if (((IBasicEdge) edge).getOriginalEdge() instanceof Call) {
+				if (edge.isBasicEdge()) {
+					// We ignore Call- and Return-Edges
+					// They will be processed later
+					//TODO: The intuition behind this is unclear!  
+					CodeBlock block = ((IBasicEdge) edge).getOriginalEdge();
+					if (block instanceof Call) {
 						containsCallReturnEdge = true;
+						continue;
 					}
-					continue;
+					if (block instanceof Return) {
+						continue;
+					}
 				}
+
 				if (!visitedEdges.contains(edge)) {
 					visitedEdges.add(edge);
 					if (edge.getTarget() != null) {
@@ -164,11 +166,8 @@ public abstract class AbstractMinimizationVisitor implements
 		// OutgoingEdges of MinimizedNode are not initialized
 		ArrayList<IMinimizedEdge> outEdges = new ArrayList<IMinimizedEdge>();
 		for (RCFGEdge edge : node.getOriginalNode().getOutgoingEdges()) {
-			outEdges.add(getReferencedMinEdge(
-					(CodeBlock) edge,
-					node,
-					getReferencedMinNode((ProgramPoint) edge.getTarget(), edge,
-							false)));
+			outEdges.add(getReferencedMinEdge((CodeBlock) edge, node,
+					getReferencedMinNode((ProgramPoint) edge.getTarget(), edge, false)));
 		}
 		node.addNewOutgoingEdgeLevel(outEdges, null);
 	}
@@ -183,10 +182,8 @@ public abstract class AbstractMinimizationVisitor implements
 			if (edge instanceof RootEdge) {
 				continue;
 			}
-			inEdges.add(getReferencedMinEdge(
-					(CodeBlock) edge,
-					getReferencedMinNode((ProgramPoint) edge.getSource(), edge,
-							true), node));
+			inEdges.add(getReferencedMinEdge((CodeBlock) edge,
+					getReferencedMinNode((ProgramPoint) edge.getSource(), edge, true), node));
 		}
 		node.addNewIncomingEdgeLevel(inEdges);
 	}
@@ -197,11 +194,9 @@ public abstract class AbstractMinimizationVisitor implements
 	 * @param target
 	 * @return
 	 */
-	private IMinimizedEdge getReferencedMinEdge(CodeBlock originalEdge,
-			MinimizedNode source, MinimizedNode target) {
+	private IMinimizedEdge getReferencedMinEdge(CodeBlock originalEdge, MinimizedNode source, MinimizedNode target) {
 		if (!referenceEdgeMap.containsKey(originalEdge)) {
-			referenceEdgeMap.put(originalEdge, new BasicEdge(originalEdge,
-					source, target));
+			referenceEdgeMap.put(originalEdge, new BasicEdge(originalEdge, source, target));
 		}
 		return referenceEdgeMap.get(originalEdge);
 	}
@@ -210,8 +205,7 @@ public abstract class AbstractMinimizationVisitor implements
 	 * @param originalNode
 	 * @return
 	 */
-	private MinimizedNode getReferencedMinNode(ProgramPoint originalNode,
-			RCFGEdge edge, boolean incoming) {
+	private MinimizedNode getReferencedMinNode(ProgramPoint originalNode, RCFGEdge edge, boolean incoming) {
 		if (!referenceNodeMap.containsKey(originalNode)) {
 			MinimizedNode minNode = new MinimizedNode(originalNode);
 			referenceNodeMap.put(originalNode, minNode);
@@ -250,13 +244,10 @@ public abstract class AbstractMinimizationVisitor implements
 	 * @return
 	 */
 	public MinimizedNode getCorrespondingStartNode(MinimizedNode node) {
-		if (referenceToMethodEntry.containsKey(node.getOriginalNode()
-				.getProcedure())) {
-			return referenceToMethodEntry.get(node.getOriginalNode()
-					.getProcedure());
+		if (referenceToMethodEntry.containsKey(node.getOriginalNode().getProcedure())) {
+			return referenceToMethodEntry.get(node.getOriginalNode().getProcedure());
 		} else {
-			throw new IllegalArgumentException(
-					"There should be a start node for every procedure!");
+			throw new IllegalArgumentException("There should be a start node for every procedure!");
 		}
 	}
 }

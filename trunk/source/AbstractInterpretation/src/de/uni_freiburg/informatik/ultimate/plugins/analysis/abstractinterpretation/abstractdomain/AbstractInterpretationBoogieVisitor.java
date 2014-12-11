@@ -48,21 +48,21 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  * @author Christopher Dillo
  */
 public class AbstractInterpretationBoogieVisitor {
-	
+
 	/**
 	 * States before and after evaluating a statement
 	 */
 	private AbstractState m_currentState, m_resultingState;
-	
+
 	private Statement m_currentStatement;
-	
+
 	/**
 	 * Result value of evaluating an expression
 	 */
 	private IAbstractValue<?> m_resultValue;
-	
-	private final Logger m_logger;
-	
+
+	private final Logger mLogger;
+
 	private final BoogieSymbolTable m_symbolTable;
 
 	private final IAbstractDomainFactory<?> m_intFactory;
@@ -70,7 +70,7 @@ public class AbstractInterpretationBoogieVisitor {
 	private final IAbstractDomainFactory<?> m_boolFactory;
 	private final IAbstractDomainFactory<?> m_bitVectorFactory;
 	private final IAbstractDomainFactory<?> m_stringFactory;
-	
+
 	private final IAbstractValue<?> m_boolFalse, m_boolTrue;
 
 	/**
@@ -79,99 +79,120 @@ public class AbstractInterpretationBoogieVisitor {
 	private String m_lhsIdentifier;
 
 	private String m_arrayIdentifier;
-	
+
 	private IType m_lhsType;
-	
+
 	private StorageClass m_lhsStorageClass;
-	
+
 	private Map<Expression, IAbstractValue<?>> m_interimResults = new HashMap<Expression, IAbstractValue<?>>();
-	
+
 	/**
-	 * Flag for use with return statements, as both CALL and RETURN use CallStatement objects
+	 * Flag for use with return statements, as both CALL and RETURN use
+	 * CallStatement objects
 	 */
 	private boolean m_isReturnStatement = false;
-	
+
 	private boolean m_useOldValues = false;
-	
+
 	/**
-	 * If the boogie visitor encounters any errors (like unsupported syntax), an error message
-	 * is written to this variable. The AbstractInterpreter checks for such messages and returns
-	 * an appropriate result.
+	 * If the boogie visitor encounters any errors (like unsupported syntax), an
+	 * error message is written to this variable. The AbstractInterpreter checks
+	 * for such messages and returns an appropriate result.
 	 */
 	private String m_error = "";
-	
+
 	/**
-	 * Flag set when encountering a unary NOT operation as !(a comp b) needs to be calculated as (a !comp b)
+	 * Flag set when encountering a unary NOT operation as !(a comp b) needs to
+	 * be calculated as (a !comp b)
 	 */
 	private boolean m_negate;
+
 	private void setNegate() {
 		m_negate = true;
 	}
+
 	private boolean doNegate() {
 		if (m_negate) {
 			m_negate = false;
 			return true;
 		}
 		return false;
-		}
-	
+	}
+
 	public AbstractInterpretationBoogieVisitor(Logger logger, BoogieSymbolTable symbolTable,
 			IAbstractDomainFactory<?> intFactory, IAbstractDomainFactory<?> realFactory,
 			IAbstractDomainFactory<?> boolFactory, IAbstractDomainFactory<?> bitVectorFactory,
 			IAbstractDomainFactory<?> stringFactory) {
-		m_logger = logger;
+		mLogger = logger;
 		m_symbolTable = symbolTable;
 		m_intFactory = intFactory;
 		m_realFactory = realFactory;
 		m_boolFactory = boolFactory;
 		m_bitVectorFactory = bitVectorFactory;
 		m_stringFactory = stringFactory;
-		
-		m_boolFalse = m_boolFactory.makeBoolValue(false); // used for assume evaluation
-		m_boolTrue = m_boolFactory.makeBoolValue(true); // used for ifthenelseexpression evaluation
+
+		m_boolFalse = m_boolFactory.makeBoolValue(false); // used for assume
+															// evaluation
+		m_boolTrue = m_boolFactory.makeBoolValue(true); // used for
+														// ifthenelseexpression
+														// evaluation
 	}
-	
+
 	/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-	 * STATEMENTS
-	 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
-	
+	 * STATEMENTS * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+	 * * * * * * * * * * *
+	 */
+
 	/**
-	 * Evaluates a statement with regards to a current state and returns a resulting state 
-	 * @param statement The statement to evaluate
-	 * @param currentState The current abstract program state
+	 * Evaluates a statement with regards to a current state and returns a
+	 * resulting state
+	 * 
+	 * @param statement
+	 *            The statement to evaluate
+	 * @param currentState
+	 *            The current abstract program state
 	 * @return The resulting abstract program state
 	 */
 	public AbstractState evaluateStatement(Statement statement, AbstractState currentState) {
 		m_currentStatement = statement;
-		
+
 		m_currentState = currentState;
-		if (currentState == null) return null;
+		if (currentState == null)
+			return null;
 		m_resultingState = currentState.copy();
-		
+
 		m_interimResults.clear();
-		
+
 		if (statement instanceof HavocStatement) {
 			visit((HavocStatement) statement);
 		} else if (statement instanceof CallStatement) {
 			CallStatement cs = (CallStatement) statement;
-			if (m_isReturnStatement) visitReturn(cs); else visitCall(cs);
+			if (m_isReturnStatement)
+				visitReturn(cs);
+			else
+				visitCall(cs);
 		} else if (statement instanceof AssignmentStatement) {
 			visit((AssignmentStatement) statement);
 		} else if (statement instanceof AssumeStatement) {
 			visit((AssumeStatement) statement);
 		} else {
-			throw new UnsupportedOperationException(String.format("Unsupported statement type %s", statement.getClass()));
+			throw new UnsupportedOperationException(
+					String.format("Unsupported statement type %s", statement.getClass()));
 		}
 
 		m_interimResults.clear();
-		
+
 		return m_resultingState;
 	}
 
 	/**
-	 * Evaluates a return statement with regards to a current state and returns a resulting state 
-	 * @param statement The return edges' corresponding call statement to evaluate
-	 * @param currentState The current abstract program state
+	 * Evaluates a return statement with regards to a current state and returns
+	 * a resulting state
+	 * 
+	 * @param statement
+	 *            The return edges' corresponding call statement to evaluate
+	 * @param currentState
+	 *            The current abstract program state
 	 * @return The resulting abstract program state
 	 */
 	public AbstractState evaluateReturnStatement(CallStatement statement, AbstractState currentState) {
@@ -186,11 +207,11 @@ public class AbstractInterpretationBoogieVisitor {
 
 		// add scope level for entered method
 		m_resultingState.pushStackLayer(statement);
-		
-		m_logger.debug(String.format("CALL: %s", methodName));
-		
+
+		mLogger.debug(String.format("CALL: %s", methodName));
+
 		Expression[] arguments = statement.getArguments();
-		
+
 		// fetch method declaration to get input parameters
 		List<Declaration> methodDecList = m_symbolTable.getFunctionOrProcedureDeclaration(methodName);
 		if (methodDecList.size() >= 1) {
@@ -203,7 +224,7 @@ public class AbstractInterpretationBoogieVisitor {
 				Procedure procedureDec = (Procedure) methodDec;
 				parameters = procedureDec.getInParams();
 			} else {
-				m_logger.warn(String.format("Unknown method declaration kind \"%s\" encountered.", methodDec));
+				mLogger.warn(String.format("Unknown method declaration kind \"%s\" encountered.", methodDec));
 			}
 			if (parameters != null) {
 				// match input parameters to arguments
@@ -212,13 +233,14 @@ public class AbstractInterpretationBoogieVisitor {
 						IAbstractValue<?> argValue = evaluateExpression(arguments[i]);
 						String[] identifiers = parameters[i].getIdentifiers();
 						if (identifiers.length != 1) {
-							m_logger.warn(String.format("Invalid number method \"%s\" input parameter argument %d", methodName, i));
+							mLogger.warn(String.format("Invalid number method \"%s\" input parameter argument %d",
+									methodName, i));
 						} else {
 							m_resultingState.declareIdentifier(identifiers[0], argValue, false);
 						}
 					}
 				} else {
-					m_logger.warn(String.format("Invalid number of arguments for method call of \"%s\"", methodName));
+					mLogger.warn(String.format("Invalid number of arguments for method call of \"%s\"", methodName));
 				}
 			}
 		}
@@ -226,7 +248,7 @@ public class AbstractInterpretationBoogieVisitor {
 
 	protected void visitReturn(CallStatement statement) {
 		CallStatement currentScopeCall = m_currentState.getCurrentScope().getCallStatement();
-		
+
 		if (currentScopeCall != statement) {
 			// abort on not matching return
 			m_resultingState = null;
@@ -237,11 +259,11 @@ public class AbstractInterpretationBoogieVisitor {
 
 		// remove scope level of exited method
 		m_resultingState.popStackLayer();
-		
-		m_logger.debug(String.format("RETURN: %s", procedureName));
+
+		mLogger.debug(String.format("RETURN: %s", procedureName));
 
 		LeftHandSide[] leftHandSides = statement.getLhs();
-		
+
 		// fetch method declaration to get input parameters
 		List<Declaration> methodDecList = m_symbolTable.getFunctionOrProcedureDeclaration(procedureName);
 		if (methodDecList.size() >= 1) {
@@ -251,15 +273,17 @@ public class AbstractInterpretationBoogieVisitor {
 				Procedure procedureDec = (Procedure) methodDec;
 				parameters = procedureDec.getOutParams();
 			} else {
-				m_logger.warn(String.format("Invalid procedure declaration \"%s\" encountered.", methodDec));
+				mLogger.warn(String.format("Invalid procedure declaration \"%s\" encountered.", methodDec));
 			}
 			if (parameters != null) {
-				// get value for each output parameter && write it to the destination variable
+				// get value for each output parameter && write it to the
+				// destination variable
 				if (parameters.length == leftHandSides.length) {
 					for (int i = 0; i < parameters.length; i++) {
 						String[] identifiers = parameters[i].getIdentifiers();
 						if (identifiers.length != 1) {
-							m_logger.warn(String.format("Invalid number of identifiers for procedure \"%s\" output parameter argument %d",
+							mLogger.warn(String.format(
+									"Invalid number of identifiers for procedure \"%s\" output parameter argument %d",
 									procedureName, i));
 						} else {
 							IAbstractValue<?> returnValue = m_currentState.readValue(identifiers[0], false);
@@ -268,11 +292,13 @@ public class AbstractInterpretationBoogieVisitor {
 							evaluateLeftHandSide(leftHandSides[i]);
 							boolean writeSuccessful = m_resultingState.writeValue(m_lhsIdentifier, returnValue);
 							if (!writeSuccessful)
-								m_resultingState.declareIdentifier(m_lhsIdentifier, returnValue, m_lhsStorageClass == StorageClass.GLOBAL);
+								m_resultingState.declareIdentifier(m_lhsIdentifier, returnValue,
+										m_lhsStorageClass == StorageClass.GLOBAL);
 						}
 					}
 				} else {
-					m_logger.warn(String.format("Invalid number of result parameters for procedure return of \"%s\"", procedureName));
+					mLogger.warn(String.format("Invalid number of result parameters for procedure return of \"%s\"",
+							procedureName));
 				}
 			}
 		}
@@ -291,9 +317,9 @@ public class AbstractInterpretationBoogieVisitor {
 	protected void visit(AssignmentStatement statement) {
 		LeftHandSide[] lhs = statement.getLhs();
 		Expression[] rhs = statement.getRhs();
-		
+
 		if (lhs.length != rhs.length) {
-			m_logger.warn(String.format("%s lhs and rhs size mismatch!", statement.getClass()));
+			mLogger.warn(String.format("%s lhs and rhs size mismatch!", statement.getClass()));
 			return;
 		}
 
@@ -302,15 +328,21 @@ public class AbstractInterpretationBoogieVisitor {
 			evaluateLeftHandSide(lhs[i]); // get identifier to m_lhsIdentifier
 			if (m_lhsIdentifier != null) {
 				String identifier = m_lhsIdentifier;
-				IAbstractValue<?> rhsValue = evaluateExpression(rhs[i]); // may change m_lhsIdentifier in an ArrayAccessExpression
+				IAbstractValue<?> rhsValue = evaluateExpression(rhs[i]); // may
+																			// change
+																			// m_lhsIdentifier
+																			// in
+																			// an
+																			// ArrayAccessExpression
 				if (rhsValue != null) {
 					if (m_lhsType.equals(PrimitiveType.boolType))
 						rhsValue = booleanFromAbstractValue(rhsValue);
-					
-					m_logger.debug(String.format("Assignment: %s := %s", identifier, rhsValue));
+
+					mLogger.debug(String.format("Assignment: %s := %s", identifier, rhsValue));
 					boolean writeSuccessful = m_resultingState.writeValue(identifier, rhsValue);
 					if (!writeSuccessful)
-						m_resultingState.declareIdentifier(identifier, rhsValue, m_lhsStorageClass == StorageClass.GLOBAL);
+						m_resultingState.declareIdentifier(identifier, rhsValue,
+								m_lhsStorageClass == StorageClass.GLOBAL);
 				}
 			}
 		}
@@ -320,26 +352,29 @@ public class AbstractInterpretationBoogieVisitor {
 		IAbstractValue<?> formulaResult = evaluateExpression(statement.getFormula());
 
 		if (formulaResult == null) {
-			m_logger.warn(String.format("Evaluating assume statement failed, returned null: %s", statement));
+			mLogger.warn(String.format("Evaluating assume statement failed, returned null: %s", statement));
 			return;
 		}
-		
-		m_logger.debug(String.format("ASSUMESTATEMENT \"%s\" => %s", statement, formulaResult.toString()));
-		
+
+		mLogger.debug(String.format("ASSUMESTATEMENT \"%s\" => %s", statement, formulaResult.toString()));
+
 		if (assumptionValueIsFalse(formulaResult)) {
-			// expression evaluates to false for all values, so there is no resulting state.
+			// expression evaluates to false for all values, so there is no
+			// resulting state.
 			m_resultingState = null;
 			return;
 		}
-		
-		// reconstruct variable values that pass through the formula, adjust resulting statement
+
+		// reconstruct variable values that pass through the formula, adjust
+		// resulting statement
 		applyAssumption(statement.getFormula());
 	}
 
 	/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-	 * LEFT-HAND-SIDES
-	 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
-	
+	 * LEFT-HAND-SIDES * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+	 * * * * * * * * * * * * *
+	 */
+
 	protected void evaluateLeftHandSide(LeftHandSide lhs) {
 		if (lhs instanceof ArrayLHS) {
 			visit((ArrayLHS) lhs);
@@ -349,7 +384,7 @@ public class AbstractInterpretationBoogieVisitor {
 			throw new UnsupportedOperationException(String.format("Unsupported LeftHandSide type %s", lhs.getClass()));
 		}
 	}
-	
+
 	protected void visit(VariableLHS lhs) {
 		m_lhsIdentifier = lhs.getIdentifier();
 		m_lhsType = lhs.getType();
@@ -357,21 +392,27 @@ public class AbstractInterpretationBoogieVisitor {
 	}
 
 	protected void visit(ArrayLHS lhs) {
-		m_logger.warn(String.format("Unsupported LeftHandSide type: %s", lhs.getClass()));
+		mLogger.warn(String.format("Unsupported LeftHandSide type: %s", lhs.getClass()));
 		m_lhsIdentifier = null;
 	}
-	
+
 	/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-	 * EXPRESSIONS
-	 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
-	
+	 * EXPRESSIONS * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+	 * * * * * * * * * * *
+	 */
+
 	/**
 	 * Evaluates an expression and returns the resulting abstract value
-	 * @param expr The expression to evaluate
+	 * 
+	 * @param expr
+	 *            The expression to evaluate
 	 * @return The resulting abstract value
 	 */
 	protected IAbstractValue<?> evaluateExpression(Expression expr) {
-		IAbstractValue<?> backup = m_resultValue; // do not overwrite, but keep (m_resultValue is used by recursive calls of this function)
+		IAbstractValue<?> backup = m_resultValue; // do not overwrite, but keep
+													// (m_resultValue is used by
+													// recursive calls of this
+													// function)
 		m_resultValue = null;
 
 		// evaluate and store result in m_resultValue:
@@ -404,16 +445,17 @@ public class AbstractInterpretationBoogieVisitor {
 		} else {
 			writeError(String.format("Unsupported expression %s", expr.getClass()));
 		}
-		
+
 		if (m_resultValue != null)
 			m_interimResults.put(expr, m_resultValue);
 		IAbstractValue<?> returnValue = m_resultValue;
 		m_resultValue = backup; // restore result value
 		return returnValue;
 	}
-	
+
 	/**
 	 * Evaluate the expression as if it was !(expr)
+	 * 
 	 * @param expr
 	 * @return
 	 */
@@ -429,19 +471,17 @@ public class AbstractInterpretationBoogieVisitor {
 			if (m_resultValue != null)
 				m_resultValue = m_resultValue.negative();
 			break;
-		case LOGICNEG :
-			m_resultValue = doNegate()
-					? evaluateExpression(expr.getExpr())
-					: evaluateNegatedExpression(expr.getExpr());
+		case LOGICNEG:
+			m_resultValue = doNegate() ? evaluateExpression(expr.getExpr()) : evaluateNegatedExpression(expr.getExpr());
 			break;
-		case OLD :
+		case OLD:
 			boolean useOld_bak = m_useOldValues;
 			m_useOldValues = true;
 			m_resultValue = evaluateExpression(expr.getExpr());
 			m_useOldValues = useOld_bak;
 			break;
 		default:
-			m_logger.warn(String.format("Unsupported %s operator: %s", expr.getClass(), expr.getOperator()));
+			mLogger.warn(String.format("Unsupported %s operator: %s", expr.getClass(), expr.getOperator()));
 		}
 	}
 
@@ -459,8 +499,7 @@ public class AbstractInterpretationBoogieVisitor {
 
 	protected void visit(IdentifierExpression expr) {
 		boolean negate = doNegate();
-		getValueOfIdentifier(expr.getIdentifier(), expr.getType(),
-				expr.getDeclarationInformation().getStorageClass());
+		getValueOfIdentifier(expr.getIdentifier(), expr.getType(), expr.getDeclarationInformation().getStorageClass());
 		if (negate)
 			m_resultValue = m_resultValue.logicNot();
 	}
@@ -475,7 +514,7 @@ public class AbstractInterpretationBoogieVisitor {
 		IAbstractValue<?> bitVec = evaluateExpression(expr.getBitvec());
 		if (bitVec == null)
 			m_resultValue = null;
-		
+
 		m_resultValue = bitVec.bitVectorAccess(expr.getStart(), expr.getEnd());
 	}
 
@@ -487,100 +526,117 @@ public class AbstractInterpretationBoogieVisitor {
 		boolean neg = doNegate();
 		IAbstractValue<?> left = null, right = null;
 		switch (expr.getOperator()) {
-		case COMPLT :
+		case COMPLT:
 			left = evaluateExpression(expr.getLeft());
-			if (left == null) return;
+			if (left == null)
+				return;
 			right = evaluateExpression(expr.getRight());
 			m_resultValue = neg ? left.compareIsGreaterEqual(right) : left.compareIsLess(right);
 			break;
-		case COMPGT :
+		case COMPGT:
 			left = evaluateExpression(expr.getLeft());
-			if (left == null) return;
+			if (left == null)
+				return;
 			right = evaluateExpression(expr.getRight());
 			m_resultValue = neg ? left.compareIsLessEqual(right) : left.compareIsGreater(right);
 			break;
-		case COMPLEQ :
+		case COMPLEQ:
 			left = evaluateExpression(expr.getLeft());
-			if (left == null) return;
+			if (left == null)
+				return;
 			right = evaluateExpression(expr.getRight());
 			m_resultValue = neg ? left.compareIsGreater(right) : left.compareIsLessEqual(right);
 			break;
-		case COMPGEQ :
+		case COMPGEQ:
 			left = evaluateExpression(expr.getLeft());
-			if (left == null) return;
+			if (left == null)
+				return;
 			right = evaluateExpression(expr.getRight());
 			m_resultValue = neg ? left.compareIsLess(right) : left.compareIsGreaterEqual(right);
 			break;
-		case COMPEQ :
+		case COMPEQ:
 			left = evaluateExpression(expr.getLeft());
-			if (left == null) return;
+			if (left == null)
+				return;
 			right = evaluateExpression(expr.getRight());
 			m_resultValue = neg ? left.compareIsNotEqual(right) : left.compareIsEqual(right);
 			break;
-		case COMPNEQ :
+		case COMPNEQ:
 			left = evaluateExpression(expr.getLeft());
-			if (left == null) return;
+			if (left == null)
+				return;
 			right = evaluateExpression(expr.getRight());
 			m_resultValue = neg ? left.compareIsEqual(right) : left.compareIsNotEqual(right);
 			break;
-		case ARITHPLUS :
+		case ARITHPLUS:
 			left = evaluateExpression(expr.getLeft());
-			if (left == null) return;
+			if (left == null)
+				return;
 			right = evaluateExpression(expr.getRight());
 			m_resultValue = left.add(right);
 			break;
-		case ARITHMINUS :
+		case ARITHMINUS:
 			left = evaluateExpression(expr.getLeft());
-			if (left == null) return;
+			if (left == null)
+				return;
 			right = evaluateExpression(expr.getRight());
 			m_resultValue = left.subtract(right);
 			break;
-		case ARITHMUL :
+		case ARITHMUL:
 			left = evaluateExpression(expr.getLeft());
-			if (left == null) return;
+			if (left == null)
+				return;
 			right = evaluateExpression(expr.getRight());
 			m_resultValue = left.multiply(right);
 			break;
-		case ARITHDIV :
+		case ARITHDIV:
 			left = evaluateExpression(expr.getLeft());
-			if (left == null) return;
+			if (left == null)
+				return;
 			right = evaluateExpression(expr.getRight());
 			m_resultValue = left.divide(right);
 			break;
-		case ARITHMOD :
+		case ARITHMOD:
 			left = evaluateExpression(expr.getLeft());
-			if (left == null) return;
+			if (left == null)
+				return;
 			right = evaluateExpression(expr.getRight());
 			m_resultValue = left.modulo(right);
 			break;
-		case LOGICIFF :
-		case LOGICIMPLIES :
-		case LOGICAND :
-		case LOGICOR :
-			IAbstractValue<?> leftBool = null, rightBool = null, result;
+		case LOGICIFF:
+		case LOGICIMPLIES:
+		case LOGICAND:
+		case LOGICOR:
+			IAbstractValue<?> leftBool = null,
+			rightBool = null,
+			result;
 			switch (expr.getOperator()) {
-			case LOGICIFF :
+			case LOGICIFF:
 				if (neg) {
 					// !(a <-> b) <=> (a || b) && (!a || !b)
 					leftBool = booleanFromAbstractValue(evaluateExpression(expr.getLeft()));
-					if (leftBool == null) return;
+					if (leftBool == null)
+						return;
 					rightBool = booleanFromAbstractValue(evaluateExpression(expr.getRight()));
 					IAbstractValue<?> leftBool2 = leftBool.logicOr(rightBool);
 					leftBool = booleanFromAbstractValue(evaluateNegatedExpression(expr.getLeft()));
-					if (leftBool == null) return;
+					if (leftBool == null)
+						return;
 					rightBool = booleanFromAbstractValue(evaluateNegatedExpression(expr.getRight()));
 					IAbstractValue<?> rightBool2 = leftBool.logicOr(rightBool);
 					result = leftBool2.logicAnd(rightBool2);
 				} else {
 					leftBool = booleanFromAbstractValue(evaluateExpression(expr.getRight()));
-					if (leftBool == null) return;
+					if (leftBool == null)
+						return;
 					rightBool = booleanFromAbstractValue(evaluateExpression(expr.getRight()));
 					result = leftBool.logicIff(rightBool);
 				}
 				break;
-			case LOGICIMPLIES :
+			case LOGICIMPLIES:
 				leftBool = booleanFromAbstractValue(evaluateExpression(expr.getLeft()));
-				if (leftBool == null) return;
+				if (leftBool == null)
+					return;
 				if (neg) {
 					// !(a -> b) <=> a && !b
 					rightBool = booleanFromAbstractValue(evaluateNegatedExpression(expr.getRight()));
@@ -590,52 +646,58 @@ public class AbstractInterpretationBoogieVisitor {
 					result = leftBool.logicImplies(rightBool);
 				}
 				break;
-			case LOGICAND :
+			case LOGICAND:
 				if (neg) {
 					// !(a && b) <=> !a || !b
 					leftBool = booleanFromAbstractValue(evaluateNegatedExpression(expr.getLeft()));
-					if (leftBool == null) return;
+					if (leftBool == null)
+						return;
 					rightBool = booleanFromAbstractValue(evaluateNegatedExpression(expr.getRight()));
 					result = leftBool.logicOr(rightBool);
 				} else {
 					leftBool = booleanFromAbstractValue(evaluateExpression(expr.getLeft()));
-					if (leftBool == null) return;
+					if (leftBool == null)
+						return;
 					rightBool = booleanFromAbstractValue(evaluateExpression(expr.getRight()));
 					result = leftBool.logicAnd(rightBool);
 				}
 				break;
-			case LOGICOR :
+			case LOGICOR:
 				if (neg) {
 					// !(a || b) <=> !a && !b
 					leftBool = booleanFromAbstractValue(evaluateNegatedExpression(expr.getLeft()));
-					if (leftBool == null) return;
+					if (leftBool == null)
+						return;
 					rightBool = booleanFromAbstractValue(evaluateNegatedExpression(expr.getRight()));
 					result = leftBool.logicAnd(rightBool);
 				} else {
 					leftBool = booleanFromAbstractValue(evaluateExpression(expr.getLeft()));
-					if (leftBool == null) return;
+					if (leftBool == null)
+						return;
 					rightBool = booleanFromAbstractValue(evaluateExpression(expr.getRight()));
 					result = leftBool.logicOr(rightBool);
 				}
 				break;
-			default :
+			default:
 				result = m_boolFactory.makeBottomValue();
 			}
 			left = leftBool;
 			right = rightBool;
 			m_resultValue = result;
 			break;
-		case BITVECCONCAT :
+		case BITVECCONCAT:
 			left = evaluateExpression(expr.getLeft());
-			if (left == null) return;
+			if (left == null)
+				return;
 			right = evaluateExpression(expr.getRight());
 			m_resultValue = left.bitVectorConcat(right);
 			break;
-		case COMPPO :
-		default :
-			m_logger.warn(String.format("Unsupported %s operator: %s", expr.getClass(), expr.getOperator()));
+		case COMPPO:
+		default:
+			mLogger.warn(String.format("Unsupported %s operator: %s", expr.getClass(), expr.getOperator()));
 		}
-		m_logger.debug(String.format("BinOp [%s] %s%s [%s] = [%s]", left, neg ? "NOT " : "", expr.getOperator(), right, m_resultValue));
+		mLogger.debug(String.format("BinOp [%s] %s%s [%s] = [%s]", left, neg ? "NOT " : "", expr.getOperator(), right,
+				m_resultValue));
 	}
 
 	protected void visit(ArrayStoreExpression expr) {
@@ -645,46 +707,49 @@ public class AbstractInterpretationBoogieVisitor {
 		// adjust array's collective merged value
 		ArrayData arrayData = getArrayData(m_arrayIdentifier);
 		mergeArrayValue(arrayData, m_resultValue);
-		
+
 		if (onlySingleIndices) {
 			// store value
-			m_logger.debug(String.format("Array store: %s := %s", m_lhsIdentifier, m_resultValue));
+			mLogger.debug(String.format("Array store: %s := %s", m_lhsIdentifier, m_resultValue));
 			boolean writeSuccessful = m_resultingState.writeValue(m_lhsIdentifier, m_resultValue);
 			if (!writeSuccessful)
-				m_resultingState.declareIdentifier(m_lhsIdentifier, m_resultValue, m_lhsStorageClass == StorageClass.GLOBAL);
+				m_resultingState.declareIdentifier(m_lhsIdentifier, m_resultValue,
+						m_lhsStorageClass == StorageClass.GLOBAL);
 		} else {
-			m_logger.debug(String.format("Array store with ambiguous indices: %s", m_lhsIdentifier));
+			mLogger.debug(String.format("Array store with ambiguous indices: %s", m_lhsIdentifier));
 
 			// Store that array has a value written to ambiguous indices
 			arrayData.setIndicesUnclear();
 		}
-			
-		// since we already stored the value, make sure the AssignmentStatement doesn't do it
+
+		// since we already stored the value, make sure the AssignmentStatement
+		// doesn't do it
 		m_resultValue = null;
 	}
 
 	protected void visit(ArrayAccessExpression expr) {
 		boolean onlySingleIndices = evaluateArrayIdentifier(expr.getArray(), expr.getIndices());
-		
+
 		ArrayData arrayData = getArrayData(m_arrayIdentifier);
-		
+
 		if (onlySingleIndices) {
 			boolean hasValue = getValueOfIdentifier(m_lhsIdentifier, m_lhsType, m_lhsStorageClass);
 			if (arrayData.getIndicesUnclear() && hasValue) {
 				m_resultValue = arrayData.getValue();
 			} else {
-				// merge into collective array data value in case of havoc on m_lhsIdentifier
+				// merge into collective array data value in case of havoc on
+				// m_lhsIdentifier
 				mergeArrayValue(arrayData, m_resultValue);
 			}
-			m_logger.debug(String.format("Array Read: %s -> %s", m_lhsIdentifier, m_resultValue));
+			mLogger.debug(String.format("Array Read: %s -> %s", m_lhsIdentifier, m_resultValue));
 		} else {
-			m_logger.debug(String.format("Array read with ambiguous indices: %s", m_lhsIdentifier));
-			
+			mLogger.debug(String.format("Array read with ambiguous indices: %s", m_lhsIdentifier));
+
 			// return top value as we don't know which array index to access
 			m_resultValue = getTopValueForType(m_lhsType);
 		}
 	}
-	
+
 	protected void visit(FunctionApplication expr) {
 		String ident = expr.getIdentifier();
 		List<Declaration> decList = m_symbolTable.getFunctionOrProcedureDeclaration(ident);
@@ -697,7 +762,8 @@ public class AbstractInterpretationBoogieVisitor {
 			FunctionDeclaration funDec = (FunctionDeclaration) dec;
 			Expression functionBody = funDec.getBody();
 			if (functionBody == null) {
-				m_logger.warn(String.format("Function %s has no body expression, returning TOP of its result type.", ident));
+				mLogger.warn(String.format("Function %s has no body expression, returning TOP of its result type.",
+						ident));
 				m_resultValue = getTopValueForType(funDec.getOutParam().getType().getBoogieType());
 				return;
 			}
@@ -707,12 +773,11 @@ public class AbstractInterpretationBoogieVisitor {
 
 	protected void visit(IfThenElseExpression expr) {
 		/*
-		 * Check if the condition can be true and/or false.
-		 * Only true: Get value of then branch
-		 * Only false: Get value of else branch
-		 * Both: Get values of both branches, merge
+		 * Check if the condition can be true and/or false. Only true: Get value
+		 * of then branch Only false: Get value of else branch Both: Get values
+		 * of both branches, merge
 		 */
-		
+
 		Expression condition = expr.getCondition();
 		Expression thenBranch = expr.getThenPart();
 		Expression elseBranch = expr.getElsePart();
@@ -722,7 +787,7 @@ public class AbstractInterpretationBoogieVisitor {
 
 		IAbstractValue<?> isTrue = booleanFromAbstractValue(evalTrue);
 		IAbstractValue<?> isFalse = booleanFromAbstractValue(evalFalse);
-		
+
 		IAbstractValue<?> trueResult = null;
 		if (isTrue.isEqual(m_boolTrue))
 			trueResult = evaluateExpression(thenBranch);
@@ -730,30 +795,32 @@ public class AbstractInterpretationBoogieVisitor {
 		IAbstractValue<?> falseResult = null;
 		if (isFalse.isEqual(m_boolTrue))
 			falseResult = evaluateExpression(elseBranch);
-		
+
 		if (trueResult == null) {
 			m_resultValue = falseResult;
 			return;
 		}
-		
+
 		if (falseResult == null) {
 			m_resultValue = trueResult;
 			return;
 		}
-		
+
 		// merge both values
 		IMergeOperator<?> mergeOp = mergeOperatorForDomainOfValue(trueResult);
 		m_resultValue = mergeOp.apply(trueResult, falseResult);
 	}
 
 	/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-	 * MISC
-	 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
-	
+	 * MISC * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+	 * * * * * * * *
+	 */
+
 	/**
 	 * @param array
 	 * @param indices
-	 * @return True iff the array is only accesses by a single concrete value per index
+	 * @return True iff the array is only accesses by a single concrete value
+	 *         per index
 	 */
 	private boolean evaluateArrayIdentifier(Expression array, Expression[] indices) {
 		// assume array is a VariableLHS
@@ -781,28 +848,27 @@ public class AbstractInterpretationBoogieVisitor {
 			m_resultValue = null;
 			return false;
 		}
-		
+
 		IAbstractValue<?>[] indexValues = new IAbstractValue<?>[indices.length];
 		boolean onlySingleIndices = true;
 		for (int i = 0; i < indices.length; i++) {
 			indexValues[i] = evaluateExpression(indices[i]);
 			variableIdentifier += String.format("[%s]", indexValues[i]);
 			onlySingleIndices = (indexValues[i] != null) && indexValues[i].representsSingleConcreteValue();
-			if (!onlySingleIndices) break;
+			if (!onlySingleIndices)
+				break;
 		}
 		m_lhsIdentifier = variableIdentifier;
 		m_arrayIdentifier = arrayIdentifier;
 		m_lhsType = type;
 		m_lhsStorageClass = storageClass;
-		
+
 		return onlySingleIndices;
 	}
-	
+
 	private ArrayData getArrayData(String arrayIdentifier) {
-		Map<String, ArrayData> arrayDataMap =
-				(m_lhsStorageClass == StorageClass.GLOBAL ?
-						m_resultingState.getGlobalScope() :
-						m_resultingState.getCurrentScope()).getArrays();
+		Map<String, ArrayData> arrayDataMap = (m_lhsStorageClass == StorageClass.GLOBAL ? m_resultingState
+				.getGlobalScope() : m_resultingState.getCurrentScope()).getArrays();
 		ArrayData arrayData = arrayDataMap.get(arrayIdentifier);
 		if (arrayData == null) {
 			arrayData = m_resultingState.new ArrayData(arrayIdentifier);
@@ -810,11 +876,11 @@ public class AbstractInterpretationBoogieVisitor {
 		}
 		return arrayData;
 	}
-	
+
 	private void mergeArrayValue(ArrayData arrayData, IAbstractValue<?> value) {
 		if (value == null)
 			return;
-		
+
 		IAbstractValue<?> oldValue = arrayData.getValue();
 		if (oldValue == null) {
 			arrayData.setValue(value);
@@ -824,15 +890,15 @@ public class AbstractInterpretationBoogieVisitor {
 				IAbstractValue<?> newValue = mop.apply(oldValue, value);
 				arrayData.setValue(newValue);
 			} else {
-				m_logger.warn(String.format("Can't create merge operator for value %s", oldValue));
+				mLogger.warn(String.format("Can't create merge operator for value %s", oldValue));
 			}
 		}
 	}
 
 	/**
 	 * @param value
-	 * @return A merge operator which is compatible with the given value,
-	 * 		as in, of the same abstract domain system
+	 * @return A merge operator which is compatible with the given value, as in,
+	 *         of the same abstract domain system
 	 */
 	private IMergeOperator<?> mergeOperatorForDomainOfValue(IAbstractValue<?> value) {
 		if (m_boolFactory.valueBelongsToDomainSystem(value))
@@ -852,35 +918,43 @@ public class AbstractInterpretationBoogieVisitor {
 
 		return null;
 	}
+
 	/**
-	 * Stores the value of the given identifier in m_resultValue, with havoc if necessary
+	 * Stores the value of the given identifier in m_resultValue, with havoc if
+	 * necessary
+	 * 
 	 * @param identifier
-	 * @param type Used if havoc is required
-	 * @param storageClass Used if havoc is required
+	 * @param type
+	 *            Used if havoc is required
+	 * @param storageClass
+	 *            Used if havoc is required
 	 * @return True iff a value existed already, false if a havoc was performed
 	 */
 	private boolean getValueOfIdentifier(String identifier, IType type, StorageClass storageClass) {
 		m_resultValue = m_currentState.readValue(identifier, m_useOldValues);
-		
+
 		if ((m_resultValue == null) && (m_currentStatement instanceof CallStatement)) {
-			// Call or Return -> do not access m_resultingState as the current scopes do not match!
+			// Call or Return -> do not access m_resultingState as the current
+			// scopes do not match!
 			m_resultValue = getTopValueForType(type);
 			return false;
 		}
-		
+
 		if ((m_resultValue == null) && !m_useOldValues)
 			m_resultValue = m_resultingState.readValue(identifier, m_useOldValues);
-		
+
 		if (m_resultValue == null) {
-			// first time we encounter this identifier: look up in symbol table, implicit havoc to TOP
+			// first time we encounter this identifier: look up in symbol table,
+			// implicit havoc to TOP
 			m_resultValue = havocValue(identifier, type, storageClass);
 			return false;
 		}
 		return true;
 	}
-	
+
 	private IAbstractValue<?> getTopValueForType(IType type) {
-		if (type == null) return null;
+		if (type == null)
+			return null;
 		if (type instanceof PrimitiveType) {
 			PrimitiveType pt = (PrimitiveType) type;
 			IAbstractValue<?> topValue = null;
@@ -899,7 +973,7 @@ public class AbstractInterpretationBoogieVisitor {
 			return null;
 		}
 	}
-	
+
 	private IAbstractValue<?> havocValue(String identifier, IType type, StorageClass storageClass) {
 		// is an array?
 		if (type instanceof ArrayType) {
@@ -907,10 +981,11 @@ public class AbstractInterpretationBoogieVisitor {
 			arrayData.setIndicesUnclear();
 			IAbstractValue<?> result = getTopValueForType(((ArrayType) type).getValueType());
 			arrayData.setValue(result);
-			// no need to havoc any individual values, since now only the global one will be accessed
+			// no need to havoc any individual values, since now only the global
+			// one will be accessed
 			return result;
 		}
-		
+
 		// not an array
 		if (type != null) {
 			IAbstractValue<?> newValue = getTopValueForType(type);
@@ -922,7 +997,8 @@ public class AbstractInterpretationBoogieVisitor {
 					if (!writeSuccessful)
 						m_resultingState.declareIdentifier(identifier, result, isGlobal);
 				}
-				m_logger.debug(String.format("Havoc: %s\"%s\" := \"%s\".", m_useOldValues ? "old " : "", identifier, result));
+				mLogger.debug(String.format("Havoc: %s\"%s\" := \"%s\".", m_useOldValues ? "old " : "", identifier,
+						result));
 				return result;
 			}
 		} else {
@@ -930,117 +1006,129 @@ public class AbstractInterpretationBoogieVisitor {
 		}
 		return null;
 	}
-	
+
 	/**
-	 * @param value An abstract value to get a boolean value for
-	 * @return A value in the boolean domain representing the given value:
-	 * <br> If it already is a value in the boolean domain, a copy is returned.
-	 * <br> Else, a boolean value of FALSE is returned iff the given value is bottom.
+	 * @param value
+	 *            An abstract value to get a boolean value for
+	 * @return A value in the boolean domain representing the given value: <br>
+	 *         If it already is a value in the boolean domain, a copy is
+	 *         returned. <br>
+	 *         Else, a boolean value of FALSE is returned iff the given value is
+	 *         bottom.
 	 */
 	private IAbstractValue<?> booleanFromAbstractValue(IAbstractValue<?> value) {
 		if (value == null) {
-			m_logger.warn("Encountered a boolean value of null, using UNKNOWN instead.");
+			mLogger.warn("Encountered a boolean value of null, using UNKNOWN instead.");
 			return m_boolFactory.makeTopValue();
 		}
-		
+
 		if (m_boolFactory.valueBelongsToDomainSystem(value)) {
 			if (value.isBottom())
 				return m_boolFactory.makeBoolValue(false);
-				/*	(true == false) || true; -> empty || true -> empty (invalid op), but should be true
-					thus, we turn empty to false to get
-					(true == false) || true; -> false || true -> true		*/
+			/*
+			 * (true == false) || true; -> empty || true -> empty (invalid op),
+			 * but should be true thus, we turn empty to false to get (true ==
+			 * false) || true; -> false || true -> true
+			 */
 			return value.copy();
 		}
-		
+
 		return m_boolFactory.makeBoolValue(!value.isBottom());
 	}
-	
+
 	/**
 	 * Writes an error message to the log and m_error
+	 * 
 	 * @param message
 	 */
 	private void writeError(String message) {
 		if (!m_error.isEmpty())
 			m_error += "\n";
 		m_error += message;
-		
-		m_logger.error(message);
+
+		mLogger.error(message);
 	}
-	
+
 	/**
-	 * @return An error message if an error was encountered. Returns an empty string if no error is present.
+	 * @return An error message if an error was encountered. Returns an empty
+	 *         string if no error is present.
 	 */
 	public String getErrorMessage() {
 		return m_error;
 	}
 
 	/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-	 * ASSUMPTIONS * * * TODO: General cases
-	 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-	 * Currently, only expressions "x ~ y" where x or y is a variable are covered. 
-	 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
-	
+	 * ASSUMPTIONS * * * TODO: General cases * * * * * * * * * * * * * * * * * *
+	 * * * * * * * * * * * * * * * * * * * * * * * * * Currently, only
+	 * expressions "x ~ y" where x or y is a variable are covered. * * * * * * *
+	 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+	 */
+
 	private boolean assumptionValueIsFalse(IAbstractValue<?> assumptionValue) {
 		if (assumptionValue.isBottom())
 			return true;
-		
-		if (m_boolFactory.valueBelongsToDomainSystem(assumptionValue)
-				&& m_boolFalse.isEqual(assumptionValue))
+
+		if (m_boolFactory.valueBelongsToDomainSystem(assumptionValue) && m_boolFalse.isEqual(assumptionValue))
 			return true;
-		
+
 		return false;
 	}
-	
+
 	/**
-	 * Adjusts m_resultingState to narrow the possible values with information taken from
-	 * an assume statement.
-	 * @param assumeFormula The assume statement's formula expression
-	 * @param assumeResult The AbstractValue representing the assume formula's result
+	 * Adjusts m_resultingState to narrow the possible values with information
+	 * taken from an assume statement.
+	 * 
+	 * @param assumeFormula
+	 *            The assume statement's formula expression
+	 * @param assumeResult
+	 *            The AbstractValue representing the assume formula's result
 	 */
 	private boolean applyAssumption(Expression assumeFormula) {
 		return applyAssumption(assumeFormula, false);
 	}
-	
+
 	private boolean applyAssumption(Expression assumeFormula, boolean negate) {
 		// only apply when the assumption can be true
 		IAbstractValue<?> assumeResult = m_interimResults.get(assumeFormula);
-		
+
 		if (assumptionValueIsFalse(assumeResult))
 			return false;
-		
-		boolean didNarrow = false;
-		
+
+		boolean appliedAssumption = false;
+
 		if (assumeFormula instanceof BinaryExpression) {
 			BinaryExpression binOp = (BinaryExpression) assumeFormula;
 			BinaryExpression.Operator oper = binOp.getOperator();
-			
+
 			switch (oper) {
-			case LOGICAND :
-			case LOGICOR :
+			case LOGICAND:
+			case LOGICOR:
 				if (((oper == BinaryExpression.Operator.LOGICAND) && !negate)
 						|| ((oper == BinaryExpression.Operator.LOGICOR) && negate)) {
 					if (binOp.getLeft() instanceof BinaryExpression)
-						didNarrow = applyAssumption(binOp.getLeft(), negate) || didNarrow;
+						appliedAssumption = applyAssumption(binOp.getLeft(), negate) || appliedAssumption;
 					if (binOp.getRight() instanceof BinaryExpression)
-						didNarrow = applyAssumption(binOp.getRight(), negate) || didNarrow;
+						appliedAssumption = applyAssumption(binOp.getRight(), negate) || appliedAssumption;
 				}
-			case COMPLT :
-			case COMPGT :
-			case COMPLEQ :
-			case COMPGEQ :
-			case COMPEQ :
-			case COMPNEQ :
-			case LOGICIFF :
-			case LOGICIMPLIES :
+			case COMPLT:
+			case COMPGT:
+			case COMPLEQ:
+			case COMPGEQ:
+			case COMPEQ:
+			case COMPNEQ:
+			case LOGICIFF:
+			case LOGICIMPLIES:
 				if (binOp.getLeft() instanceof IdentifierExpression) {
 					IdentifierExpression ieLeft = (IdentifierExpression) binOp.getLeft();
 
-					didNarrow = applyAssumptionResult(ieLeft.getIdentifier(), assumeResult) || didNarrow;
+					appliedAssumption = applyAssumptionResult(ieLeft.getIdentifier(), assumeResult) || appliedAssumption;
 				}
 
 				/*
-				 *  Not all comparison operators can simply be "mirrored" (e.g. [5,5] < [10,10] => [5,5], [10,10] > [5,5] => [10,10],
-				 *  so for some of them, we need to calculate the missing intermediate result
+				 * Not all comparison operators can simply be "mirrored" (e.g.
+				 * [5,5] < [10,10] => [5,5], [10,10] > [5,5] => [10,10], so for
+				 * some of them, we need to calculate the missing intermediate
+				 * result
 				 */
 				if (binOp.getRight() instanceof IdentifierExpression) {
 					IdentifierExpression ieRight = (IdentifierExpression) binOp.getRight();
@@ -1050,63 +1138,59 @@ public class AbstractInterpretationBoogieVisitor {
 
 					IAbstractValue<?> rightHandAssumeResult;
 					switch (binOp.getOperator()) {
-					case COMPLT :
-						rightHandAssumeResult = negate ?
-								rightValue.compareIsLess(leftValue) :
-									rightValue.compareIsGreaterEqual(leftValue);
+					case COMPLT:
+						rightHandAssumeResult = negate ? rightValue.compareIsLess(leftValue) : rightValue
+								.compareIsGreaterEqual(leftValue);
 						break;
-					case COMPGT :
-						rightHandAssumeResult = negate ?
-								rightValue.compareIsGreater(leftValue) :
-									rightValue.compareIsLessEqual(leftValue);
+					case COMPGT:
+						rightHandAssumeResult = negate ? rightValue.compareIsGreater(leftValue) : rightValue
+								.compareIsLessEqual(leftValue);
 						break;
-					case COMPLEQ :
-						rightHandAssumeResult = negate ?
-								rightValue.compareIsLessEqual(leftValue) :
-									rightValue.compareIsGreater(leftValue);
+					case COMPLEQ:
+						rightHandAssumeResult = negate ? rightValue.compareIsLessEqual(leftValue) : rightValue
+								.compareIsGreater(leftValue);
 						break;
-					case COMPGEQ :
-						rightHandAssumeResult = negate ?
-								rightValue.compareIsGreaterEqual(leftValue) :
-									rightValue.compareIsLess(leftValue);
+					case COMPGEQ:
+						rightHandAssumeResult = negate ? rightValue.compareIsGreaterEqual(leftValue) : rightValue
+								.compareIsLess(leftValue);
 						break;
-					case COMPEQ :
-					case COMPNEQ :
+					case COMPEQ:
+					case COMPNEQ:
 						rightHandAssumeResult = assumeResult;
-					case LOGICAND :
-					case LOGICIFF :
-					case LOGICIMPLIES :
-					case LOGICOR :
+					case LOGICAND:
+					case LOGICIFF:
+					case LOGICIMPLIES:
+					case LOGICOR:
 					default:
 						// case not covered
 						rightHandAssumeResult = null;
 					}
 					if (rightHandAssumeResult != null)
-						didNarrow = applyAssumptionResult(ieRight.getIdentifier(), rightHandAssumeResult) || didNarrow;
+						appliedAssumption = applyAssumptionResult(ieRight.getIdentifier(), rightHandAssumeResult) || appliedAssumption;
 				}
 				break;
 			default:
 				break;
 			}
-			
+
 		} else if (assumeFormula instanceof UnaryExpression) {
 			UnaryExpression unaryFormula = (UnaryExpression) assumeFormula;
 			if (unaryFormula.getOperator() == UnaryExpression.Operator.LOGICNEG)
-				didNarrow = applyAssumption(unaryFormula.getExpr(), !negate) || didNarrow;
+				appliedAssumption = applyAssumption(unaryFormula.getExpr(), !negate) || appliedAssumption;
 		} else if (assumeFormula instanceof BooleanLiteral) {
-			didNarrow = true; // "assume true;" -> nothing to narrow
+			appliedAssumption = true; // "assume true;" -> nothing to narrow
 		}
-		if (!didNarrow)
-			m_logger.warn(String.format("Could not narrow values at assume statement \"%s\"", assumeFormula));
-		return didNarrow;
+		if (!appliedAssumption)
+			mLogger.warn(String.format("Could not reduce value range at assume statement \"%s\"", assumeFormula));
+		return appliedAssumption;
 	}
-	
+
 	private boolean applyAssumptionResult(String identifier, IAbstractValue<?> assumeResult) {
 		IAbstractValue<?> oldValue = m_resultingState.readValue(identifier, false);
 		if (oldValue != null) {
 			IAbstractValue<?> newValue = oldValue.compareIsEqual(assumeResult);
-			m_logger.debug(String.format("ASSUME for \"%s\": old[%s], assume[%s] => new[%s]",
-					identifier, oldValue, assumeResult, newValue));
+			mLogger.debug(String.format("ASSUME for \"%s\": old[%s], assume[%s] => new[%s]", identifier, oldValue,
+					assumeResult, newValue));
 			if (newValue != null) {
 				m_resultingState.writeValue(identifier, newValue);
 				return true;

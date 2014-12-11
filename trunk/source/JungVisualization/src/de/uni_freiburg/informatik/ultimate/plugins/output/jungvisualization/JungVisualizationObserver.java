@@ -8,6 +8,7 @@ import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
+import de.uni_freiburg.informatik.ultimate.model.GraphType;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.structure.IVisualizable;
 import de.uni_freiburg.informatik.ultimate.model.structure.VisualizationEdge;
@@ -46,12 +47,14 @@ public class JungVisualizationObserver implements IUnmanagedObserver {
 	private final Logger mLogger;
 
 	private boolean mOpenWindow;
+	private final GraphType mInputGraphType;
 
-	public JungVisualizationObserver(Logger logger) {
+	public JungVisualizationObserver(Logger logger, GraphType graphType) {
 		mLogger = logger;
 		mGraph = new DirectedOrderedSparseMultigraph<VisualizationNode, VisualizationEdge>();
 		mGraphLayout = new FRLayout2<VisualizationNode, VisualizationEdge>(mGraph);
 		mVisualizationViewer = new VisualizationViewer<VisualizationNode, VisualizationEdge>(mGraphLayout);
+		mInputGraphType = graphType;
 	}
 
 	@Override
@@ -103,8 +106,8 @@ public class JungVisualizationObserver implements IUnmanagedObserver {
 	 *            active IWorkbenchWindow
 	 */
 	private void openGraphEditor(IWorkbenchWindow workbenchWindow) {
-		JungEditorInput editorInput = new JungEditorInput("JUNG");
-
+		String name = getName(mInputGraphType);
+		JungEditorInput editorInput = new JungEditorInput(name);
 		try {
 			workbenchWindow.getActivePage().openEditor(editorInput, JungEditor.ID, true);
 		} catch (PartInitException pie) {
@@ -112,6 +115,23 @@ public class JungVisualizationObserver implements IUnmanagedObserver {
 					"Error opening JungEditor:\n" + pie.getMessage());
 		} catch (Exception ex) {
 		}
+	}
+
+	private String getName(GraphType graphType) {
+		StringBuilder sb = new StringBuilder();
+
+		String[] parts = graphType.getCreator().split("\\.");
+		if (parts.length - 1 > 0) {
+			sb.append(parts[parts.length - 1]);
+		} else {
+			if (graphType.getCreator().length() < 8) {
+				sb.append(graphType.getCreator());
+			} else {
+				sb.append(graphType.getCreator().substring(graphType.getCreator().length() - 8));
+			}
+		}
+
+		return sb.toString();
 	}
 
 	@Override

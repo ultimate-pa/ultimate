@@ -62,14 +62,11 @@ public class BlockEncoder {
 		// initialize the statistics
 		EncodingStatistics.init();
 		// We need to know, which rating strategy should be chosen
-		UltimatePreferenceStore prefs = new UltimatePreferenceStore(
-				Activator.s_PLUGIN_ID);
+		UltimatePreferenceStore prefs = new UltimatePreferenceStore(Activator.s_PLUGIN_ID);
 		RatingFactory.getInstance().setRatingStrategy(
-				prefs.getEnum(
-						PreferenceInitializer.LABEL_STRATEGY,
-						RatingStrategy.class));
-		shouldMinimizeCallReturn = prefs
-				.getBoolean(PreferenceInitializer.LABEL_CALLMINIMIZE);
+				prefs.getEnum(PreferenceInitializer.LABEL_STRATEGY, RatingStrategy.class));
+		shouldMinimizeCallReturn = prefs.getBoolean(PreferenceInitializer.LABEL_CALLMINIMIZE);
+
 		// Initialize the Visitors, which apply the minimization rules
 		mbVisitor = new MinimizeBranchVisitor(mLogger);
 		mlVisitor = new MinimizeLoopVisitor(mLogger);
@@ -82,17 +79,14 @@ public class BlockEncoder {
 			if (edge instanceof RootEdge) {
 				RootEdge rootEdge = (RootEdge) edge;
 				if (rootEdge.getTarget() instanceof ProgramPoint) {
-					processFunction((ProgramPoint) rootEdge.getTarget(),
-							rootEdge);
+					processFunction((ProgramPoint) rootEdge.getTarget(), rootEdge);
 				} else {
 					mLogger.warn("Minimization canceled, illegal RCFG!");
-					throw new IllegalArgumentException(
-							"Node is no ProgramPoint, illegal RCFG");
+					throw new IllegalArgumentException("Node is no ProgramPoint, illegal RCFG");
 				}
 			} else {
 				mLogger.warn("Minimization canceled, illegal RCFG!");
-				throw new IllegalArgumentException(
-						"An outgoing edge of RootNode is not a RootEdge");
+				throw new IllegalArgumentException("An outgoing edge of RootNode is not a RootEdge");
 			}
 		}
 		// Since we merged some Call- and Return-Edges we need to execute
@@ -109,16 +103,14 @@ public class BlockEncoder {
 			ArrayList<MinimizedNode> methodNodes = new ArrayList<MinimizedNode>();
 			for (RCFGEdge edge : root.getOutgoingEdges()) {
 				if (edge instanceof RootEdge) {
-					methodNodes.add(BlockEncodingAnnotation.getAnnotation(
-							(RootEdge) edge).getNode());
+					methodNodes.add(BlockEncodingAnnotation.getAnnotation((RootEdge) edge).getNode());
 				}
 			}
 			// Now we start processing the method nodes, first step is to
 			// replace the call and return edges with substitutions
 			do {
 				for (MinimizedNode node : methodNodes) {
-					mLogger.debug("Try to merge Call- and Return-Edges for the Method: "
-							+ node);
+					mLogger.debug("Try to merge Call- and Return-Edges for the Method: " + node);
 					mcrVisitor.visitNode(node);
 				}
 				methodNodes.clear();
@@ -129,32 +121,24 @@ public class BlockEncoder {
 				// further minimization is possible in the next run
 				for (RCFGEdge edge : root.getOutgoingEdges()) {
 					if (edge instanceof RootEdge) {
-						mbVisitor.visitNode(BlockEncodingAnnotation
-								.getAnnotation((RootEdge) edge).getNode());
+						mbVisitor.visitNode(BlockEncodingAnnotation.getAnnotation((RootEdge) edge).getNode());
 					}
 				}
 				for (RCFGEdge edge : root.getOutgoingEdges()) {
 					if (edge instanceof RootEdge) {
-						mlVisitor.visitNode(BlockEncodingAnnotation
-								.getAnnotation((RootEdge) edge).getNode());
-						tmVisitor.visitNode(BlockEncodingAnnotation
-								.getAnnotation((RootEdge) edge).getNode());
+						mlVisitor.visitNode(BlockEncodingAnnotation.getAnnotation((RootEdge) edge).getNode());
+						tmVisitor.visitNode(BlockEncodingAnnotation.getAnnotation((RootEdge) edge).getNode());
 					}
 				}
 			} while (!methodNodes.isEmpty());
 		}
 		// print collected statistics
 		mLogger.info("---- Collected Statistics ----");
-		mLogger.info("Amount of basic edges: "
-				+ EncodingStatistics.countOfBasicEdges);
-		mLogger.info("Amount of created disjunctions: "
-				+ EncodingStatistics.countOfDisjunctions);
-		mLogger.info("Max. amount of disjunctions in one edge: "
-				+ EncodingStatistics.maxDisjunctionsInOneEdge);
-		mLogger.info("Max. different variables in one edge: "
-				+ EncodingStatistics.maxDiffVariablesInOneEdge);
-		mLogger.info("Min. different variables in one edge: "
-				+ EncodingStatistics.minDiffVariablesInOneEdge);
+		mLogger.info("Amount of basic edges: " + EncodingStatistics.countOfBasicEdges);
+		mLogger.info("Amount of created disjunctions: " + EncodingStatistics.countOfDisjunctions);
+		mLogger.info("Max. amount of disjunctions in one edge: " + EncodingStatistics.maxDisjunctionsInOneEdge);
+		mLogger.info("Max. different variables in one edge: " + EncodingStatistics.maxDiffVariablesInOneEdge);
+		mLogger.info("Min. different variables in one edge: " + EncodingStatistics.minDiffVariablesInOneEdge);
 		return root;
 	}
 
@@ -166,12 +150,10 @@ public class BlockEncoder {
 	 *            the entry point of a function
 	 */
 	private void processFunction(ProgramPoint methodEntryNode, RootEdge rootEdge) {
-		mLogger.info("Start processing function: "
-				+ methodEntryNode.getProcedure());
+		mLogger.info("Start processing function: " + methodEntryNode.getProcedure());
 		// Remark: While doing the initialization of the min model, we probably
 		// create already a method entry node
-		MinimizedNode node = mbVisitor
-				.getReferencedMethodEntryNode(methodEntryNode);
+		MinimizedNode node = mbVisitor.getReferencedMethodEntryNode(methodEntryNode);
 		if (node == null) {
 			node = new MinimizedNode(methodEntryNode);
 		}
@@ -193,7 +175,6 @@ public class BlockEncoder {
 		} else if (!mbVisitor.isCallReturnEdgeInvolved()) {
 			nonCallingFunctions.add(node);
 		}
-		BlockEncodingAnnotation.addAnnotation(rootEdge,
-				new BlockEncodingAnnotation(node));
+		BlockEncodingAnnotation.addAnnotation(rootEdge, new BlockEncodingAnnotation(node));
 	}
 }

@@ -15,7 +15,7 @@ import org.apache.log4j.Logger;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.AbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.AbstractState.ArrayData;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.AbstractState.CallStackElement;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.AbstractState.ScopedAbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.AbstractState.LoopStackElement;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -125,8 +125,8 @@ public class StateChangeLogger implements IAbstractStateChangeListener {
 	}
 	
 	private void logState(AbstractState state, String targetName, StringBuilder output) {
-		List<CallStackElement> callStack = state.getCallStack();
-		for (CallStackElement cse : callStack) {
+		List<ScopedAbstractState> callStack = state.getCallStack();
+		for (ScopedAbstractState cse : callStack) {
 			CallStatement cs = cse.getCallStatement();
 			output.append(String.format("\tCall stack level: %s\t\t(%s)\n",
 					(cs == null) ? "GLOBAL" : cs.getMethodName(),
