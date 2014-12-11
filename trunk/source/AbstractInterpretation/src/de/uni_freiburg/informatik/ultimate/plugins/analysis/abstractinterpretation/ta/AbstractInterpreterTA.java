@@ -14,15 +14,13 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 
 import org.apache.log4j.Logger;
 
-import com.oracle.jrockit.jfr.Transition;
-
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingCallTransition;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.Transitionlet;
 import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
@@ -33,7 +31,6 @@ import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.AbstractInterpretationAnnotations;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.IAbstractStateChangeListener;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.LiteralCollector;
@@ -50,31 +47,27 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.loopdetector.LoopDetectorNWA;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.RcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CfgBuilder.GotoEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ParallelComposition;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RcfgElement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootAnnot;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.SequentialComposition;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CfgBuilder.GotoEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.RCFGEdgeVisitor;
 import de.uni_freiburg.informatik.ultimate.result.AllSpecificationsHoldResult;
 import de.uni_freiburg.informatik.ultimate.result.IProgramExecution.ProgramState;
 import de.uni_freiburg.informatik.ultimate.result.TimeoutResult;
 import de.uni_freiburg.informatik.ultimate.result.UnprovableResult;
 import de.uni_freiburg.informatik.ultimate.result.UnsupportedSyntaxResult;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingInternalTransition;
 
 /**
- * @author Christopher Dillo 
- * modified for usage on NWA by Fabian Schillinger
+ * @author Christopher Dillo modified for usage on NWA by Fabian Schillinger
  * 
  */
 public class AbstractInterpreterTA extends RCFGEdgeVisitor {
@@ -89,7 +82,7 @@ public class AbstractInterpreterTA extends RCFGEdgeVisitor {
 	private IAbstractDomainFactory<?> m_bitVectorDomainFactory;
 	private IAbstractDomainFactory<?> m_stringDomainFactory;
 
-	//object(node) <list<predecessors> list<successors>>
+	// object(node) <list<predecessors> list<successors>>
 	private final Map<Object, Iterable<OutgoingInternalTransition>> m_nodePredecessors = new HashMap<Object, Iterable<OutgoingInternalTransition>>();
 	private final LinkedList<Object> m_nodesToVisit = new LinkedList<Object>();
 	private final Map<Object, Iterable<OutgoingInternalTransition>> m_nodeSuccessors = new HashMap<Object, Iterable<OutgoingInternalTransition>>();
@@ -97,11 +90,12 @@ public class AbstractInterpreterTA extends RCFGEdgeVisitor {
 	private final Map<Object, Iterable<OutgoingReturnTransition>> m_nodeReturns = new HashMap<Object, Iterable<OutgoingReturnTransition>>();
 	private final LinkedList<OutgoingCallTransition> m_actualCall = new LinkedList<OutgoingCallTransition>();
 	Map<Object, ProgramPoint> m_programPointMap = new HashMap<Object, ProgramPoint>();
-	
+
 	private final Map<Object, List<AbstractState>> m_states = new HashMap<Object, List<AbstractState>>();
 	private final Map<Object, List<AbstractState>> annotations = new HashMap<Object, List<AbstractState>>();
-	//private final Map<RCFGNode, List<AbstractState>> m_states = new HashMap<RCFGNode, List<AbstractState>>();
-	
+	// private final Map<RCFGNode, List<AbstractState>> m_states = new
+	// HashMap<RCFGNode, List<AbstractState>>();
+
 	private AbstractState m_currentState, m_resultingState;
 
 	private Object m_currentNode;
@@ -113,20 +107,22 @@ public class AbstractInterpreterTA extends RCFGEdgeVisitor {
 	private final Set<Object> m_errorLocs = new HashSet<Object>();
 	private final Set<Object> m_reachedErrorLocs = new HashSet<Object>();
 
-	//todo fabian
-	//private HashMap<ProgramPoint, HashMap<RCFGEdge, RCFGEdge>> m_loopEntryNodes;
+	// todo fabian
+	// private HashMap<ProgramPoint, HashMap<RCFGEdge, RCFGEdge>>
+	// m_loopEntryNodes;
 	private HashMap<ProgramPoint, HashMap<Object, Object>> m_loopEntryNodes;
-	
+
 	private final Set<ProgramPoint> m_recursionEntryNodes = new HashSet<ProgramPoint>();
-	
+
 	private Set<String> m_fixedNumbersForWidening = new HashSet<String>();
 	private Set<String> m_numbersForWidening = new HashSet<String>();
-	
+
 	private BoogieSymbolTable m_symbolTable;
-	
+
 	private boolean m_continueProcessing;
 
-	// Lists of call statements to check if there is any node with a summary that has no corresponding regular call
+	// Lists of call statements to check if there is any node with a summary
+	// that has no corresponding regular call
 	private List<CallStatement> m_callStatementsAtCalls = new LinkedList<CallStatement>();
 	private List<CallStatement> m_callStatementsAtSummaries = new LinkedList<CallStatement>();
 
@@ -142,30 +138,30 @@ public class AbstractInterpreterTA extends RCFGEdgeVisitor {
 	private boolean m_stateChangeLogFile;
 	private boolean m_stateChangeLogUseSourcePath;
 	private String m_stateChangeLogPath;
-	
+
 	private boolean m_stopAfterAnyError;
 	private boolean m_stopAfterAllErrors;
-	
+
 	private String m_intDomainID;
 	private String m_intWideningOpName;
 	private String m_intMergeOpName;
-	
+
 	private String m_realDomainID;
 	private String m_realWideningOpName;
 	private String m_realMergeOpName;
-	
+
 	private String m_boolDomainID;
 	private String m_boolWideningOpName;
 	private String m_boolMergeOpName;
-	
+
 	private String m_bitVectorDomainID;
 	private String m_bitVectorWideningOpName;
 	private String m_bitVectorMergeOpName;
-	
+
 	private String m_stringDomainID;
 	private String m_stringWideningOpName;
 	private String m_stringMergeOpName;
-	
+
 	// ULTIMATE.start
 	private final String m_ultimateStartProcName = "ULTIMATE.start";
 
@@ -185,11 +181,18 @@ public class AbstractInterpreterTA extends RCFGEdgeVisitor {
 	/**
 	 * Adds an AbstractInterpretationAnnotation with states at the given
 	 * location IElement
-	 * @param element The location of the given states
-	 * @param states The states at the given location
+	 * 
+	 * @param element
+	 *            The location of the given states
+	 * @param states
+	 *            The states at the given location
 	 */
 	private void annotateElement(Object element, List<AbstractState> states) {
-		annotations.replace(element, states);
+		// DD: I changed replace to put, because replace is Java8, we are on
+		// Java 7; this should be the behavior that replace exhibits. Please check if this was intended 
+		if(annotations.containsKey(element)){
+			annotations.put(element, states);	
+		}
 	}
 
 	/**
@@ -202,8 +205,9 @@ public class AbstractInterpreterTA extends RCFGEdgeVisitor {
 	 * @return True if the state was added, false if not (when a superstate is
 	 *         at the node)
 	 */
-	
-	//private boolean putStateToNode(AbstractState state, RCFGNode node, RCFGEdge fromEdge) {
+
+	// private boolean putStateToNode(AbstractState state, RCFGNode node,
+	// RCFGEdge fromEdge) {
 	private boolean putStateToNode(AbstractState state, Object iPredicate, Object codeBlock) {
 		m_logger.debug("Put state to node?");
 		List<AbstractState> statesAtNode = m_states.get(iPredicate);
@@ -219,9 +223,7 @@ public class AbstractInterpreterTA extends RCFGEdgeVisitor {
 		boolean applyLoopWidening = false;
 		if ((iPredicate != null) && m_loopEntryNodes.containsKey(iPredicate)) {
 			LoopStackElement le = newState.popLoopEntry();
-			while ((le != null)
-					&& (le.getLoopNode() != null)
-					&& (le.getLoopNode() != iPredicate)
+			while ((le != null) && (le.getLoopNode() != null) && (le.getLoopNode() != iPredicate)
 					&& (le.getExitEdge() == codeBlock))
 				le = newState.popLoopEntry();
 			if ((le != null) && (newState.peekLoopEntry().getIterationCount(iPredicate) >= m_iterationsUntilWidening))
@@ -258,7 +260,8 @@ public class AbstractInterpreterTA extends RCFGEdgeVisitor {
 				}
 			} else {
 				if (newState.isSuper(s))
-					statesToRemove.add(s); // remove unprocessed substates of the new state
+					statesToRemove.add(s); // remove unprocessed substates of
+											// the new state
 				else
 					unprocessedStates.add(s); // collect unprocessed states
 			}
@@ -278,26 +281,27 @@ public class AbstractInterpreterTA extends RCFGEdgeVisitor {
 		}
 		statesAtNode.add(newState);
 		m_logger.debug("Yes!!");
-		if (codeBlock != null){
-		Transitionlet it = (Transitionlet) codeBlock;
-		notifyStateChangeListeners((RCFGEdge) it.getLetter(), statesAtNodeBackup, state, newState);
+		if (codeBlock != null) {
+			Transitionlet it = (Transitionlet) codeBlock;
+			notifyStateChangeListeners((RCFGEdge) it.getLetter(), statesAtNodeBackup, state, newState);
 		} else {
-		notifyStateChangeListeners((RCFGEdge) codeBlock, statesAtNodeBackup, state, newState);
+			notifyStateChangeListeners((RCFGEdge) codeBlock, statesAtNodeBackup, state, newState);
 		}
 		if (m_generateStateAnnotations)
 			annotateElement(iPredicate, statesAtNode);
 		return true;
 	}
 
-	public List<UnprovableResult<RcfgElement, CodeBlock, Expression>> processNWA(INestedWordAutomaton nwa, RootNode rn, Map<Object, ProgramPoint> programPointMap) {
+	public List<UnprovableResult<RcfgElement, CodeBlock, Expression>> processNWA(INestedWordAutomaton nwa, RootNode rn,
+			Map<Object, ProgramPoint> programPointMap) {
 		m_programPointMap = programPointMap;
-		
+
 		List<UnprovableResult<RcfgElement, CodeBlock, Expression>> result = null;
-		//RootNode root = rn;
+		// RootNode root = rn;
 		m_errorLocs.clear();
 		m_reachedErrorLocs.clear();
 		m_recursionEntryNodes.clear();
-		
+
 		m_continueProcessing = true;
 
 		// state change logger
@@ -335,9 +339,10 @@ public class AbstractInterpreterTA extends RCFGEdgeVisitor {
 		m_intDomainFactory = makeDomainFactory(m_intDomainID, m_intWideningOpName, m_intMergeOpName);
 		m_realDomainFactory = makeDomainFactory(m_realDomainID, m_realWideningOpName, m_realMergeOpName);
 		m_boolDomainFactory = makeDomainFactory(m_boolDomainID, m_boolWideningOpName, m_boolMergeOpName);
-		m_bitVectorDomainFactory = makeDomainFactory(m_bitVectorDomainID, m_bitVectorWideningOpName, m_bitVectorMergeOpName);
+		m_bitVectorDomainFactory = makeDomainFactory(m_bitVectorDomainID, m_bitVectorWideningOpName,
+				m_bitVectorMergeOpName);
 		m_stringDomainFactory = makeDomainFactory(m_stringDomainID, m_stringWideningOpName, m_stringMergeOpName);
-		
+
 		// fetch loop nodes with their entry/exit edges
 		LoopDetectorNWA loopDetector = new LoopDetectorNWA(m_services);
 		try {
@@ -347,7 +352,7 @@ public class AbstractInterpreterTA extends RCFGEdgeVisitor {
 		}
 		m_loopEntryNodes = loopDetector.getResult();
 
-		//todo Fabian ???
+		// todo Fabian ???
 		PreprocessorAnnotation pa = PreprocessorAnnotation.getAnnotation(rn);
 		if (pa == null) {
 			m_logger.error("No symbol table found on given RootNode.");
@@ -355,17 +360,18 @@ public class AbstractInterpreterTA extends RCFGEdgeVisitor {
 		}
 		m_symbolTable = pa.getSymbolTable();
 
-		m_boogieVisitor = new AbstractInterpretationBoogieVisitor(m_logger, m_symbolTable,
-				m_intDomainFactory, m_realDomainFactory, m_boolDomainFactory,
-				m_bitVectorDomainFactory, m_stringDomainFactory);
+		m_boogieVisitor = new AbstractInterpretationBoogieVisitor(m_logger, m_symbolTable, m_intDomainFactory,
+				m_realDomainFactory, m_boolDomainFactory, m_bitVectorDomainFactory, m_stringDomainFactory);
 
 		m_errorLocs.addAll(nwa.getFinalStates());
-		
-		/*Map<String,Collection<ProgramPoint>> errorLocMap = rn.getRootAnnot().getErrorNodes();
-		for (String s : errorLocMap.keySet())
-			m_errorLocs.addAll(errorLocMap.get(s));*/
 
-		for (Object i : nwa.getStates()){
+		/*
+		 * Map<String,Collection<ProgramPoint>> errorLocMap =
+		 * rn.getRootAnnot().getErrorNodes(); for (String s :
+		 * errorLocMap.keySet()) m_errorLocs.addAll(errorLocMap.get(s));
+		 */
+
+		for (Object i : nwa.getStates()) {
 			Iterable successors = nwa.internalSuccessors(i);
 			Iterable calls = nwa.callSuccessors(i);
 			Iterable returns = nwa.returnSuccessors(i);
@@ -374,36 +380,36 @@ public class AbstractInterpreterTA extends RCFGEdgeVisitor {
 			m_nodeSuccessors.put(i, successors);
 			m_nodeCalls.put(i, calls);
 			m_nodeReturns.put(i, returns);
-			AbstractState state = new AbstractState(m_logger, m_intDomainFactory,
-					m_realDomainFactory, m_boolDomainFactory,
-					m_bitVectorDomainFactory, m_stringDomainFactory);
+			AbstractState state = new AbstractState(m_logger, m_intDomainFactory, m_realDomainFactory,
+					m_boolDomainFactory, m_bitVectorDomainFactory, m_stringDomainFactory);
 
-			//putStateToNode(state, i, ((CodeBlock) predecessor.getLetter());
+			// putStateToNode(state, i, ((CodeBlock) predecessor.getLetter());
 			putStateToNode(state, i, null);
 		}
-		
-		for (Object i : nwa.getInitialStates()){
+
+		for (Object i : nwa.getInitialStates()) {
 			m_nodesToVisit.add(i);
 		}
-		
+
 		result = visitNodes();
 
-		//don't report anything here
+		// don't report anything here
 		return result;
 	}
 
 	protected List<UnprovableResult<RcfgElement, CodeBlock, Expression>> visitNodes() {
 		List<UnprovableResult<RcfgElement, CodeBlock, Expression>> result = new ArrayList<UnprovableResult<RcfgElement, CodeBlock, Expression>>();
 		Object object = m_nodesToVisit.poll();
-		//Iterable<OutgoingInternalTransition> predecessors = m_nodePredecessors.get(object);
+		// Iterable<OutgoingInternalTransition> predecessors =
+		// m_nodePredecessors.get(object);
 		Iterable<OutgoingInternalTransition> successors = m_nodeSuccessors.get(object);
 		Iterable<OutgoingCallTransition> calls = m_nodeCalls.get(object);
 		Iterable<OutgoingReturnTransition> returns = m_nodeReturns.get(object);
-		
+
 		if (object != null) {
 			m_callStatementsAtCalls.clear();
 			m_callStatementsAtSummaries.clear();
-			
+
 			List<AbstractState> statesAtNode = m_states.get(object);
 			m_logger.debug(String.format("---- PROCESSING NODE %S ----", object));
 			// process all unprocessed states at the node
@@ -430,10 +436,10 @@ public class AbstractInterpreterTA extends RCFGEdgeVisitor {
 						m_resultingState = null;
 						m_actualCall.add(e);
 						result.add(visit(e, "call"));
-					} 
+					}
 					for (OutgoingReturnTransition e : returns) {
-						if (e.getHierPred() == m_actualCall.get(m_actualCall.size()-1)){
-							m_actualCall.remove(m_actualCall.size()-1);
+						if (e.getHierPred() == m_actualCall.get(m_actualCall.size() - 1)) {
+							m_actualCall.remove(m_actualCall.size() - 1);
 							m_resultingState = null;
 							result.add(visit(e, "return"));
 						}
@@ -442,26 +448,28 @@ public class AbstractInterpreterTA extends RCFGEdgeVisitor {
 					hasUnprocessed = false;
 				}
 				// abort if asked to cancel
-				m_continueProcessing = m_continueProcessing && m_services.getProgressMonitorService().continueProcessing();
+				m_continueProcessing = m_continueProcessing
+						&& m_services.getProgressMonitorService().continueProcessing();
 			} // hasUnprocessed
-			
+
 			// remove states if they aren't needed for possible widening anymore
 			if (successors.equals(null))
 				m_states.remove(object);
-			
+
 			if (!m_callStatementsAtCalls.containsAll(m_callStatementsAtSummaries))
 				reportUnsupportedSyntaxResult((IElement) object, "Abstract interpretation plug-in can't verify "
 						+ "programs which contain procedures without implementations.");
-			
+
 			if (m_continueProcessing)
-				result.addAll(visitNodes()); // repeat until m_nodesToVisit is empty
+				result.addAll(visitNodes()); // repeat until m_nodesToVisit is
+												// empty
 		}
 		return result;
 	}
 
-
 	protected UnprovableResult<RcfgElement, CodeBlock, Expression> visit(Object transition, String type) {
-	//protected UnprovableResult<RcfgElement, CodeBlock, Expression> visit(RCFGEdge e, boolean runsOnNWA) {
+		// protected UnprovableResult<RcfgElement, CodeBlock, Expression>
+		// visit(RCFGEdge e, boolean runsOnNWA) {
 		UnprovableResult<RcfgElement, CodeBlock, Expression> result = null;
 		Object letter = null;
 		Object succ = null;
@@ -477,20 +485,20 @@ public class AbstractInterpreterTA extends RCFGEdgeVisitor {
 			OutgoingReturnTransition tr = (OutgoingReturnTransition) transition;
 			letter = tr.getLetter();
 			succ = tr.getSucc();
-		} 
-		
+		}
+
 		super.visit((RCFGEdge) letter);
-		
+
 		String evaluationError = m_boogieVisitor.getErrorMessage();
 		if (!evaluationError.isEmpty()) {
 			reportUnsupportedSyntaxResult((IElement) transition, evaluationError);
-			
+
 			m_resultingState = null; // return, abort, stop.
 		}
 
 		if (m_resultingState == null)
 			return result; // do not process target node!
-		
+
 		Map<Object, Object> loopEdges = m_loopEntryNodes.get(m_currentNode);
 		if (loopEdges != null) {
 			Object exitEdge = loopEdges.get(letter);
@@ -506,7 +514,7 @@ public class AbstractInterpreterTA extends RCFGEdgeVisitor {
 					m_reachedErrorLocs.add(succ);
 
 					ProgramPoint pp = m_programPointMap.get(succ);
-					
+
 					result = reportErrorResult(pp, m_resultingState);
 				} else {
 					if (!m_nodesToVisit.contains(succ))
@@ -588,15 +596,16 @@ public class AbstractInterpreterTA extends RCFGEdgeVisitor {
 		m_logger.debug("> SequentialComposition START");
 
 		AbstractState currentState = m_currentState;
-			// backup, as the member variable is manipulated during iterating the CodeBlocks
+		// backup, as the member variable is manipulated during iterating the
+		// CodeBlocks
 
 		CodeBlock[] blocks = c.getCodeBlocks();
 
 		for (int i = 0; i < blocks.length; i++) {
 			visit(blocks[i]);
 			m_currentState = m_resultingState;
-				// so the next CodeBlocks current state is this states' result state
-			
+			// so the next CodeBlocks current state is this states' result state
+
 			if (m_resultingState == null)
 				break;
 		}
@@ -609,9 +618,10 @@ public class AbstractInterpreterTA extends RCFGEdgeVisitor {
 	@Override
 	protected void visit(Summary c) {
 		m_logger.debug("> Summary");
-		
+
 		m_callStatementsAtSummaries.add(c.getCallStatement());
-		m_resultingState = null; // do not process target node (ignore summary edges)
+		m_resultingState = null; // do not process target node (ignore summary
+									// edges)
 	}
 
 	@Override
@@ -676,20 +686,20 @@ public class AbstractInterpreterTA extends RCFGEdgeVisitor {
 
 	/**
 	 * Reports a possible error as the plugin's result
-	 * @param location The error location
-	 * @param state The abstract state at the error location
+	 * 
+	 * @param location
+	 *            The error location
+	 * @param state
+	 *            The abstract state at the error location
 	 */
-	private UnprovableResult<RcfgElement, CodeBlock, Expression> reportErrorResult(ProgramPoint location, AbstractState state) {
+	private UnprovableResult<RcfgElement, CodeBlock, Expression> reportErrorResult(ProgramPoint location,
+			AbstractState state) {
 		RcfgProgramExecution programExecution = new RcfgProgramExecution(state.getTrace(),
-				new HashMap<Integer, ProgramState<Expression>>(),
-				null);
-		
-		UnprovableResult<RcfgElement, CodeBlock, Expression> result =
-				new UnprovableResult<RcfgElement, CodeBlock, Expression>(Activator.s_PLUGIN_NAME,
-						location,
-						m_services.getBacktranslationService(),
-						programExecution);
-		
+				new HashMap<Integer, ProgramState<Expression>>(), null);
+
+		UnprovableResult<RcfgElement, CodeBlock, Expression> result = new UnprovableResult<RcfgElement, CodeBlock, Expression>(
+				Activator.s_PLUGIN_NAME, location, m_services.getBacktranslationService(), programExecution);
+
 		if (m_stopAfterAnyError) {
 			m_continueProcessing = false;
 			m_logger.info(String.format("Abstract interpretation finished after reaching error location %s",
@@ -701,11 +711,10 @@ public class AbstractInterpreterTA extends RCFGEdgeVisitor {
 		}
 		return result;
 	}
-	
+
 	private void reportUnsupportedSyntaxResult(IElement location, String message) {
-		UnsupportedSyntaxResult<IElement> result =
-				new UnsupportedSyntaxResult<IElement>(location, Activator.s_PLUGIN_NAME,
-						m_services.getBacktranslationService(), message);
+		UnsupportedSyntaxResult<IElement> result = new UnsupportedSyntaxResult<IElement>(location,
+				Activator.s_PLUGIN_NAME, m_services.getBacktranslationService(), message);
 
 		m_services.getResultService().reportResult(Activator.s_PLUGIN_ID, result);
 
@@ -733,30 +742,30 @@ public class AbstractInterpreterTA extends RCFGEdgeVisitor {
 	 */
 	private void fetchPreferences() {
 		UltimatePreferenceStore prefs = new UltimatePreferenceStore(Activator.s_PLUGIN_ID);
-		
+
 		m_mainMethodName = prefs.getString(AbstractInterpretationPreferenceInitializer.LABEL_MAIN_METHOD_NAME);
 
 		m_iterationsUntilWidening = prefs
 				.getInt(AbstractInterpretationPreferenceInitializer.LABEL_ITERATIONS_UNTIL_WIDENING);
 		m_parallelStatesUntilMerge = prefs.getInt(AbstractInterpretationPreferenceInitializer.LABEL_STATES_UNTIL_MERGE);
 
-		m_widening_fixedNumbers = prefs.getString(AbstractInterpretationPreferenceInitializer.LABEL_WIDENING_FIXEDNUMBERS);
-		m_widening_autoNumbers = prefs.getBoolean(AbstractInterpretationPreferenceInitializer.LABEL_WIDENING_AUTONUMBERS);
-		
+		m_widening_fixedNumbers = prefs
+				.getString(AbstractInterpretationPreferenceInitializer.LABEL_WIDENING_FIXEDNUMBERS);
+		m_widening_autoNumbers = prefs
+				.getBoolean(AbstractInterpretationPreferenceInitializer.LABEL_WIDENING_AUTONUMBERS);
+
 		m_generateStateAnnotations = prefs
 				.getBoolean(AbstractInterpretationPreferenceInitializer.LABEL_STATE_ANNOTATIONS);
-		m_stateChangeLogConsole = prefs
-		.getBoolean(AbstractInterpretationPreferenceInitializer.LABEL_LOGSTATES_CONSOLE);
-		m_stateChangeLogFile = prefs
-				.getBoolean(AbstractInterpretationPreferenceInitializer.LABEL_LOGSTATES_FILE);
+		m_stateChangeLogConsole = prefs.getBoolean(AbstractInterpretationPreferenceInitializer.LABEL_LOGSTATES_CONSOLE);
+		m_stateChangeLogFile = prefs.getBoolean(AbstractInterpretationPreferenceInitializer.LABEL_LOGSTATES_FILE);
 		m_stateChangeLogUseSourcePath = prefs
 				.getBoolean(AbstractInterpretationPreferenceInitializer.LABEL_LOGSTATES_USESOURCEPATH);
-		m_stateChangeLogPath = prefs
-				.getString(AbstractInterpretationPreferenceInitializer.LABEL_LOGSTATES_PATH);
-		
+		m_stateChangeLogPath = prefs.getString(AbstractInterpretationPreferenceInitializer.LABEL_LOGSTATES_PATH);
+
 		String stopAfter = prefs.getString(AbstractInterpretationPreferenceInitializer.LABEL_STOPAFTER);
 		m_stopAfterAnyError = (stopAfter.equals(AbstractInterpretationPreferenceInitializer.OPTION_STOPAFTER_ANYERROR));
-		m_stopAfterAllErrors = (stopAfter.equals(AbstractInterpretationPreferenceInitializer.OPTION_STOPAFTER_ALLERRORS));
+		m_stopAfterAllErrors = (stopAfter
+				.equals(AbstractInterpretationPreferenceInitializer.OPTION_STOPAFTER_ALLERRORS));
 
 		m_intDomainID = prefs.getString(AbstractInterpretationPreferenceInitializer.LABEL_INTDOMAIN);
 		m_intWideningOpName = prefs.getString(String.format(
@@ -779,8 +788,8 @@ public class AbstractInterpreterTA extends RCFGEdgeVisitor {
 		m_bitVectorDomainID = prefs.getString(AbstractInterpretationPreferenceInitializer.LABEL_BITVECTORDOMAIN);
 		m_bitVectorWideningOpName = prefs.getString(String.format(
 				AbstractInterpretationPreferenceInitializer.LABEL_WIDENINGOP, m_bitVectorDomainID));
-		m_bitVectorMergeOpName = prefs.getString(String.format(AbstractInterpretationPreferenceInitializer.LABEL_MERGEOP,
-				m_bitVectorDomainID));
+		m_bitVectorMergeOpName = prefs.getString(String.format(
+				AbstractInterpretationPreferenceInitializer.LABEL_MERGEOP, m_bitVectorDomainID));
 
 		m_stringDomainID = prefs.getString(AbstractInterpretationPreferenceInitializer.LABEL_STRINGDOMAIN);
 		m_stringWideningOpName = prefs.getString(String.format(
@@ -789,29 +798,30 @@ public class AbstractInterpreterTA extends RCFGEdgeVisitor {
 				m_stringDomainID));
 	}
 
-
 	/**
 	 * @param domainID
 	 * @param wideningOpName
 	 * @param mergeOpName
-	 * @return An abstract domain factory for the abstract domain system given by its ID
+	 * @return An abstract domain factory for the abstract domain system given
+	 *         by its ID
 	 */
 	private IAbstractDomainFactory<?> makeDomainFactory(String domainID, String wideningOpName, String mergeOpName) {
 		if (domainID.equals(TopBottomDomainFactory.getDomainID()))
 			return new TopBottomDomainFactory(m_logger);
-		
+
 		if (domainID.equals(BoolDomainFactory.getDomainID()))
 			return new BoolDomainFactory(m_logger);
-		
+
 		if (domainID.equals(SignDomainFactory.getDomainID()))
 			return new SignDomainFactory(m_logger, wideningOpName, mergeOpName);
 
 		if (domainID.equals(IntervalDomainFactory.getDomainID()))
-			return new IntervalDomainFactory(m_logger, new HashSet<String>(m_numbersForWidening), wideningOpName, mergeOpName);
+			return new IntervalDomainFactory(m_logger, new HashSet<String>(m_numbersForWidening), wideningOpName,
+					mergeOpName);
 
 		// default ADS: TOPBOTTOM
-		m_logger.warn(String.format("Unknown abstract domain system \"%s\" chosen, using \"%s\" instead",
-				domainID, TopBottomDomainFactory.getDomainID()));
+		m_logger.warn(String.format("Unknown abstract domain system \"%s\" chosen, using \"%s\" instead", domainID,
+				TopBottomDomainFactory.getDomainID()));
 		return new TopBottomDomainFactory(m_logger);
 	}
 }
