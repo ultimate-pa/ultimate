@@ -24,7 +24,7 @@ Tests=( \
 "https://svn.sosy-lab.org/software/sv-benchmarks/trunk/c/loop-acceleration/ALL.prp;https://svn.sosy-lab.org/software/sv-benchmarks/trunk/c/loop-acceleration/simple_false-unreach-call2.i;32bit;precise;FALSE" \
 ### Bitvectors
 "https://svn.sosy-lab.org/software/sv-benchmarks/trunk/c/bitvector/ALL.prp;https://svn.sosy-lab.org/software/sv-benchmarks/trunk/c/bitvector/byte_add_1_true-unreach-call.i;32bit;precise;UNKNOWN" \
-"https://svn.sosy-lab.org/software/sv-benchmarks/trunk/c/bitvector/ALL.prp;https://svn.sosy-lab.org/software/sv-benchmarks/trunk/c/bitvector-regression/pointer_extension_true-unreach-call.i;32bit;precise;TRUE" \
+"https://svn.sosy-lab.org/software/sv-benchmarks/trunk/c/bitvector/ALL.prp;https://svn.sosy-lab.org/software/sv-benchmarks/trunk/c/bitvector/jain_1_true-unreach-call.i;32bit;precise;TRUE" \
 "https://svn.sosy-lab.org/software/sv-benchmarks/trunk/c/bitvector/ALL.prp;https://svn.sosy-lab.org/software/sv-benchmarks/trunk/c/bitvector-regression/implicitunsignedconversion_false-unreach-call.i;32bit;precise;FALSE" \
 ### Recursive
 "https://svn.sosy-lab.org/software/sv-benchmarks/trunk/c/recursive/ALL.prp;https://svn.sosy-lab.org/software/sv-benchmarks/trunk/c/recursive/recHanoi02_true-unreach-call_true-termination.c;32bit;precise;TRUE" \
