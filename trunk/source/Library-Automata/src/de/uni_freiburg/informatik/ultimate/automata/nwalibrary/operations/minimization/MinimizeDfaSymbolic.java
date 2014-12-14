@@ -85,8 +85,11 @@ public class MinimizeDfaSymbolic<LETTER, STATE> implements
 
 		// Start minimization.
 		System.out.println(startMessage());
+		long startTime = System.currentTimeMillis();
 		minimizeDfaSymbolic();
+		long endTime = System.currentTimeMillis();
 		System.out.println(exitMessage());
+		s_Logger.info("Symbolic minimization time: " + (endTime - startTime) + " ms.");
 	}
 
 	private void minimizeDfaSymbolic() {
@@ -103,6 +106,7 @@ public class MinimizeDfaSymbolic<LETTER, STATE> implements
 		 * Start with main algorithm.
 		 */
 		// While worklist is not empty.
+		long mainStartTime = System.currentTimeMillis();
 		while (!m_worklist.isEmpty()) {
 			// Choose and remove a block r from worklist.
 			Block r = m_worklist.pop();
@@ -152,11 +156,12 @@ public class MinimizeDfaSymbolic<LETTER, STATE> implements
 				iterate = false;
 				// Create blocks P from m_partition, which are non - empty after
 				// intersecting with block s.
+				s = labelMapping.keySet().iterator();
 				HashSet<Block> intersectingBlocks = buildIntersectingBlocksSet(s);
 				// Iterate over blocks P - for Loop over
 				// intersecting blocks in paper.
-				Iterator<Block> intersectingBlocksIt = intersectingBlocks
-						.iterator();
+				Iterator<Block> intersectingBlocksIt = 
+						intersectingBlocks.iterator();
 				while (intersectingBlocksIt.hasNext()) {
 					Block p = intersectingBlocksIt.next();
 					Block p1 = new Block();
@@ -229,6 +234,8 @@ public class MinimizeDfaSymbolic<LETTER, STATE> implements
 		 * New automaton should be ready, build the result automaton.
 		 */
 		buildResult();
+		long mainEndTime = System.currentTimeMillis();
+		s_Logger.info("Symbolic main time: " + (mainEndTime - mainStartTime) + " ms");
 	}
 
 	/**
@@ -318,24 +325,24 @@ public class MinimizeDfaSymbolic<LETTER, STATE> implements
 			Iterator<LETTER> incomingLabelsIt = incomingLabels.iterator();
 			while (incomingLabelsIt.hasNext()) {
 				LETTER letter = incomingLabelsIt.next();
-				if (hasIncomingTransitionWithLetter(st, letter)) {
-					// Get all predecessors with transition into state
-					// labled with letter.
-					Collection<STATE> predecessors = getPredecessor(st, letter);
-					Term atomLetter = m_letter2Formular.get(letter);
-					// Iterate over predecessors.
-					Iterator<STATE> predIt = predecessors.iterator();
-					while (predIt.hasNext()) {
-						STATE pred = predIt.next();
-						if (retMap.containsKey(pred)) {
-							// HashMap contains pred already.
-							// Just add formula as disjunction.
-							retMap.put(pred,
-									disjunct(atomLetter, retMap.get(pred)));
-						} else {
-							// HashMap does not contain pred yet. Add new key.
-							retMap.put(pred, atomLetter);
-						}
+				assert (hasIncomingTransitionWithLetter(st, letter)); 
+				// Get all predecessors with transition into state
+				// labled with letter.
+				Collection<STATE> predecessors = getPredecessor(st, letter);
+				Term atomLetter = m_letter2Formular.get(letter);
+				// Iterate over predecessors.
+				Iterator<STATE> predIt = predecessors.iterator();
+				while (predIt.hasNext()) {
+					STATE pred = predIt.next();
+					Term existingTermOfPred = retMap.get(pred);
+					if (existingTermOfPred != null) {
+						// HashMap contains pred already.
+						// Just add formula as disjunction.
+						retMap.put(pred,
+								disjunct(atomLetter, existingTermOfPred));
+					} else {
+						// HashMap does not contain pred yet. Add new key.
+						retMap.put(pred, atomLetter);
 					}
 				}
 			}
