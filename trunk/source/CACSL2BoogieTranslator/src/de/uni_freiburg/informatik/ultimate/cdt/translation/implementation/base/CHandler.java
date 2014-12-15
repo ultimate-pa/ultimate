@@ -150,6 +150,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.GotoStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.HavocStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IfStatement;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IfThenElseExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Label;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.LeftHandSide;
@@ -2912,6 +2913,14 @@ public class CHandler implements ICHandler {
 	public static Expression createArithmeticExpression(int op, Expression left, Expression right, ILocation loc) {
 		BinaryExpression.Operator operator;
 		boolean bothAreIntegerLiterals = left instanceof IntegerLiteral && right instanceof IntegerLiteral;
+		BigInteger leftValue = null;
+		BigInteger rightValue = null;
+		//TODO: add checks for UnaryExpression (otherwise we don't catch negative constants, here) --> or remove all the cases 
+		//(if-then-else conditions are checked for being constant in RCFGBuilder anyway, so this is merely a decision of readability of Boogie code..)
+		if (left instanceof IntegerLiteral)
+			leftValue = new BigInteger(((IntegerLiteral) left).getValue());
+		if (right instanceof IntegerLiteral)
+			rightValue = new BigInteger(((IntegerLiteral) right).getValue());
 		//TODO: make this more general, (a + 4) + 4 may still occur this way..
 		String constantResult = "";
 		switch (op) {
@@ -2920,55 +2929,196 @@ public class CHandler implements ICHandler {
 			operator = Operator.ARITHMINUS;
 			if (bothAreIntegerLiterals) {
 				constantResult = 
-						new BigInteger(((IntegerLiteral) left).getValue())
-							.subtract(new BigInteger(((IntegerLiteral) right).getValue())).toString();
+						leftValue
+						.subtract(rightValue).toString();
+				return new IntegerLiteral(loc, constantResult);
+			} else {
+				return new BinaryExpression(loc, operator, left, right);
 			}
-			break;
 		case IASTBinaryExpression.op_multiplyAssign:
 		case IASTBinaryExpression.op_multiply:
 			operator = Operator.ARITHMUL;
 			if (bothAreIntegerLiterals) {
 				constantResult = 
-						new BigInteger(((IntegerLiteral) left).getValue())
-							.multiply(new BigInteger(((IntegerLiteral) right).getValue())).toString();
+						leftValue
+							.multiply(rightValue).toString();
+				return new IntegerLiteral(loc, constantResult);
+			} else {
+				return new BinaryExpression(loc, operator, left, right);
 			}
-			break;
 		case IASTBinaryExpression.op_divideAssign:
 		case IASTBinaryExpression.op_divide:
 			operator = Operator.ARITHDIV;
 			if (bothAreIntegerLiterals) {
 				constantResult = 
-						new BigInteger(((IntegerLiteral) left).getValue())
-							.divide(new BigInteger(((IntegerLiteral) right).getValue())).toString();
+						leftValue
+							.divide(rightValue).toString();
+				return new IntegerLiteral(loc, constantResult);
+			} else {
+				BinaryExpression leftLowerZero = new BinaryExpression(loc, 
+						BinaryExpression.Operator.COMPLT, 
+						left,
+						new IntegerLiteral(loc, SFO.NR0));
+				BinaryExpression rightLowerZero = new BinaryExpression(loc, 
+						BinaryExpression.Operator.COMPLT, 
+						right,
+						new IntegerLiteral(loc, SFO.NR0));
+				BinaryExpression normalDivision = new BinaryExpression(loc, operator, left, right);
+				if (left instanceof IntegerLiteral) {
+					if (leftValue.signum() == 1) {
+						return normalDivision;
+					} else if (leftValue.signum() == -1) {
+						return new IfThenElseExpression(loc, rightLowerZero, 
+									new BinaryExpression(loc, 
+											BinaryExpression.Operator.ARITHMINUS, 
+											normalDivision, 
+											new IntegerLiteral(loc, SFO.NR1)), 
+									new BinaryExpression(loc, 
+											BinaryExpression.Operator.ARITHPLUS, 
+											normalDivision, 
+											new IntegerLiteral(loc, SFO.NR1)));
+					} else {
+						return new IntegerLiteral(loc, SFO.NR0);
+					}
+				} else if (right instanceof IntegerLiteral) {
+					if (rightValue.signum() == 1) {
+						return new IfThenElseExpression(loc, leftLowerZero, 
+								new BinaryExpression(loc, 
+										BinaryExpression.Operator.ARITHPLUS, 
+										normalDivision, 
+										new IntegerLiteral(loc, SFO.NR1)), 
+								normalDivision);
+					} else if (rightValue.signum() == -1) {
+						return new IfThenElseExpression(loc, leftLowerZero, 
+									new BinaryExpression(loc, 
+											BinaryExpression.Operator.ARITHMINUS, 
+											normalDivision, 
+											new IntegerLiteral(loc, SFO.NR1)), 
+									normalDivision);
+					} else {
+						assert false : "program divides by (constant) 0";
+					}
+				} else {
+					return new IfThenElseExpression(loc, leftLowerZero, 
+							new IfThenElseExpression(loc, rightLowerZero, 
+									new BinaryExpression(loc, 
+											BinaryExpression.Operator.ARITHMINUS, 
+											normalDivision, 
+											new IntegerLiteral(loc, SFO.NR1)), 
+									new BinaryExpression(loc, 
+											BinaryExpression.Operator.ARITHPLUS, 
+											normalDivision, 
+											new IntegerLiteral(loc, SFO.NR1))), 
+						normalDivision);
+				}
 			}
-			break;
 		case IASTBinaryExpression.op_moduloAssign:
 		case IASTBinaryExpression.op_modulo:
 			operator = Operator.ARITHMOD;
+			//modulo on bigInteger does not seem to follow the "multiply, add, and get the result back"-rule, together with its division..
 			if (bothAreIntegerLiterals) {
-				constantResult = 
-						new BigInteger(((IntegerLiteral) left).getValue())
-							.mod(new BigInteger(((IntegerLiteral) right).getValue())).toString();
+				if (leftValue.signum() == 1) {
+					if (rightValue.signum() == 1) {
+						constantResult = 
+								leftValue.mod(rightValue).toString();
+					} else if (rightValue.signum() == -1) {
+						constantResult = 
+								leftValue.mod(rightValue.negate()).toString();
+					} else {
+						constantResult = "0";
+					}
+				} else if (leftValue.signum() == -1) {
+					if (rightValue.signum() == 1) {
+						constantResult = 
+								(leftValue.negate().mod(rightValue)).negate().toString();					
+					} else if (rightValue.signum() == -1) {
+						constantResult = 
+								(leftValue.negate().mod(rightValue.negate())).negate().toString();					
+					} else {
+						constantResult = "0";
+					}
+				} else {
+					assert false : "program does modulo 0";
+				}
+				return new IntegerLiteral(loc, constantResult);
+			} else {
+				BinaryExpression leftLowerZero = new BinaryExpression(loc, 
+						BinaryExpression.Operator.COMPLT, 
+						left,
+						new IntegerLiteral(loc, SFO.NR0));
+				BinaryExpression rightLowerZero = new BinaryExpression(loc, 
+						BinaryExpression.Operator.COMPLT, 
+						right,
+						new IntegerLiteral(loc, SFO.NR0));
+				BinaryExpression normalModulo = new BinaryExpression(loc, operator, left, right);
+				if (left instanceof IntegerLiteral) {
+					if (leftValue.signum() == 1) {
+						return normalModulo;
+					} else if (leftValue.signum() == -1) {
+						return new IfThenElseExpression(loc, rightLowerZero, 
+								new BinaryExpression(loc, 
+										BinaryExpression.Operator.ARITHPLUS, 
+										normalModulo, 
+										right), 
+										new BinaryExpression(loc, 
+												BinaryExpression.Operator.ARITHMINUS, 
+												normalModulo, 
+												right));
+					} else {
+						return new IntegerLiteral(loc, SFO.NR0);
+					}
+				} else if (right instanceof IntegerLiteral) {
+					if (rightValue.signum() == 1) {
+						return new IfThenElseExpression(loc, leftLowerZero, 
+								new BinaryExpression(loc, 
+										BinaryExpression.Operator.ARITHMINUS, 
+										normalModulo, 
+										right), 
+										normalModulo);
+					} else if (rightValue.signum() == -1) {
+						return new IfThenElseExpression(loc, leftLowerZero, 
+								new BinaryExpression(loc, 
+										BinaryExpression.Operator.ARITHPLUS, 
+										normalModulo, 
+										right), 
+										normalModulo);
+					} else {
+						assert false : "program divides by (constant) 0";
+					}
+				} else {
+					return new IfThenElseExpression(loc, leftLowerZero, 
+							new IfThenElseExpression(loc, rightLowerZero, 
+									new BinaryExpression(loc, 
+											BinaryExpression.Operator.ARITHPLUS, 
+											normalModulo, 
+											right), 
+											new BinaryExpression(loc, 
+													BinaryExpression.Operator.ARITHMINUS, 
+													normalModulo, 
+													right)), 
+													normalModulo);
+				}
 			}
-			break;
 		case IASTBinaryExpression.op_plusAssign:
 		case IASTBinaryExpression.op_plus:
 			operator = Operator.ARITHPLUS;
 			if (bothAreIntegerLiterals) {
 				constantResult = 
-						new BigInteger(((IntegerLiteral) left).getValue())
-							.add(new BigInteger(((IntegerLiteral) right).getValue())).toString();
+						leftValue
+							.add(rightValue).toString();
+				return new IntegerLiteral(loc, constantResult);
+			} else {
+				return new BinaryExpression(loc, operator, left, right);
 			}
-			break;
 		default:
 			String msg = "Unknown or unsupported arithmetic expression";
 			throw new UnsupportedSyntaxException(loc, msg);
 		}
-		if (bothAreIntegerLiterals) {
-			return new IntegerLiteral(loc, constantResult);
-		} else {
-			return new BinaryExpression(loc, operator, left, right);
-		}
+//		if (bothAreIntegerLiterals) {
+//			return new IntegerLiteral(loc, constantResult);
+//		} else {
+//			return new BinaryExpression(loc, operator, left, right);
+//		}
 	}
 
 	/**
