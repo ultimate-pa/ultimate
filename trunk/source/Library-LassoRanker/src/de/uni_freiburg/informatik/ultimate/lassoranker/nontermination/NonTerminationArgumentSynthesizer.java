@@ -170,7 +170,7 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 		for (RankVar var : m_lasso.getAllRankVars()) {
 			String name = SmtUtils.removeSmtQuoteCharacters(var.toString());
 			vars_init.put(var, newConstant(s_prefix_init + name, sort));
-			vars_honda.put(var,	newConstant(s_prefix_honda + name, sort));
+			vars_honda.put(var, newConstant(s_prefix_honda + name, sort));
 			vars_ray.put(var, newConstant(s_prefix_ray + name, sort));
 		}
 		Term lambda = newConstant(s_lambda_name, sort);
