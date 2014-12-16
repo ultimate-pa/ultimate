@@ -7,6 +7,8 @@ import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
+import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.refactoring.MappingExecutor;
+import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.refactoring.StringMapper;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.*;
@@ -43,12 +45,12 @@ public class ProcedureInliner implements IUnmanagedObserver {
 
 	@Override
 	public boolean process(IElement root) throws Throwable {
-		// Store the first node of the AST and use it to process the AST
-		// manually
+		// Store the first node of the AST and use it to process the AST manually
 		if (root instanceof Unit) {
 			mAstUnit = (Unit) root;
 			pickProcedures();
-
+			// TODO
+			// refactor all variables (add scope-prefix)
 			// TODO
 			// for every non-flat procedure p
 			// inline(p, {});
@@ -83,7 +85,6 @@ public class ProcedureInliner implements IUnmanagedObserver {
 				procedures.add(p);
 			}
 		}
-
 		// Debug prints ---------------
 		/*
 		mLogger.error("Procedures");
@@ -103,7 +104,7 @@ public class ProcedureInliner implements IUnmanagedObserver {
 			Procedure declaration = declarations.get(implementation.getIdentifier());
 			if (declaration == null) {
 				mLogger.error("No declaration for procedure implementation \"" + implementation.getIdentifier() + "\".");
-				// TODO throw exception, using mServies
+				// TODO throw exception, using mServices (see TypeChecker, Line 1156)
 			}
 			// TODO add to procedure list, remove implementation and declaration
 			unite(declaration, implementation);
@@ -112,38 +113,25 @@ public class ProcedureInliner implements IUnmanagedObserver {
 		return procedures;
 	}
 	
-	// Unite separate declaration and implementation of a procedure into one procedure object.
+	/**
+	 * Unites separate declaration and implementation of a procedure into one procedure object.
+	 * parameters can have different names in declaration and implementation.
+	 * The variable names from the implementation are kept,
+	 * the variables from the declaration's specification are refactored.
+	 * @param declaration    Procedure declaration (without body)
+	 * @param implementation Implementation of the same procedure
+	 * @return United procedure
+	 */
 	private Procedure unite(Procedure declaration, Procedure implementation) {
-		// Refactor the specification (parameters can have different names in declaration and implementation)
-		Specification[] specification = new Specification[declaration.getSpecification().length];
-		int i = 0;
-		for (Specification s : declaration.getSpecification()) {
-			if (s instanceof ModifiesSpecification) {
-				specification[i] = null;				
-			} else if (s instanceof RequiresSpecification) {
-				// TODO refactor the expression
-			} else if (s instanceof EnsuresSpecification) {
-				// TODO refactor the expression
-			} else {
-				mLogger.error("Unexpected specification type for procedure \""
-					+ declaration.getIdentifier() + "\": " + s.getClass().getName());
-				// TODO: throw exception, using mServices
-			}
-			++i;
-		}
-		// Unite the procedures
-		// TODO: keep values for ILocation and Attributes (?)
+		//VarList declaration.getInParams();
+		// TODO build mapping 
+		StringMapper mapper = null; //new StringMapper();
+		// TODO Also unite where clauses?
+		// TODO keep values for ILocation and Attributes (?)
+		// TODO refactor Attributes?
 		return new Procedure( null, new Attribute[0], declaration.getIdentifier(),
 				implementation.getTypeParams(), implementation.getInParams(), implementation.getOutParams(),
-				specification, implementation.getBody());
-	}
-	
-	// Refactor variable names inside an expression.
-	// Refactoring is applied simultaneously.
-	private Expression refactorVariables(Expression expr, String[] varNames, String[] newVarNames) {
-		// TODO: watch out for temporary name collisions
-		
-		return null;
+				MappingExecutor.mapVariables(declaration.getSpecification(), mapper), implementation.getBody());
 	}
 
 }
