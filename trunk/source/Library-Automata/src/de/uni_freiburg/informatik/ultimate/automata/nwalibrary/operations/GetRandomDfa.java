@@ -345,7 +345,12 @@ public final class GetRandomDfa implements IOperation<String, String> {
 		// Initialize set that will contain remaining states that do not reach a
 		// final state
 		LinkedHashSet<Integer> remainingStates = new LinkedHashSet<Integer>(m_size);
-		int remainingStatesAmount = m_size;
+		/*
+		 * Christian: Detected a bug: This value is not necessarily the size of
+		 * the data structure and caused problems (could become negative).
+		 * Let us hope this fixed it - need to double-check with Daniel.
+		 */
+//		int remainingStatesAmount = m_size;
 		for (int i = 0; i < m_size; i++) {
 			remainingStates.add(i);
 		}
@@ -363,7 +368,7 @@ public final class GetRandomDfa implements IOperation<String, String> {
 				while (!statesToProcess.isEmpty()) {
 					int currState = statesToProcess.poll();
 					remainingStates.remove(currState);
-					remainingStatesAmount--;
+//					remainingStatesAmount--;
 					Set<Integer> currStateReachedBy = statesReachedBy
 							.get(currState);
 					for (int state : currStateReachedBy) {
@@ -376,9 +381,11 @@ public final class GetRandomDfa implements IOperation<String, String> {
 			// Make one of the remaining states final and repeat until all
 			// states reach final states
 			Iterator<Integer> iterator = remainingStates.iterator();
-			if (remainingStatesAmount > 0) {
+			if (remainingStates.size() > 0) {
+//			if (remainingStatesAmount > 0) {
 				int remainingState = NO_STATE;
-				int counter = m_random.nextInt(remainingStatesAmount);
+				int counter = m_random.nextInt(remainingStates.size());
+//				int counter = m_random.nextInt(remainingStatesAmount);
 				while (counter >= 0) {
 					remainingState = iterator.next();
 					counter--;
