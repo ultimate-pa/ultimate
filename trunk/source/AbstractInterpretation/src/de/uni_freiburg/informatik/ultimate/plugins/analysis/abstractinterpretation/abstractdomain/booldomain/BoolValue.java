@@ -5,6 +5,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import org.apache.log4j.Logger;
 
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.AbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue;
 
 /**
@@ -556,7 +557,7 @@ public class BoolValue implements IAbstractValue<BoolValue.Bool> {
 	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue#setIdentifier(java.lang.String, boolean)
 	 */
 	@Override
-	public void setIdentifier(String identifier, boolean isGlobal) {
+	public void setIdentifier(AbstractState.Pair identifier, boolean isGlobal) {
 		// TODO Auto-generated method stub
 		
 	}

@@ -8,6 +8,7 @@ import java.math.BigInteger;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.AbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue;
 
 /**
@@ -736,7 +737,7 @@ public class IntervalValue implements IAbstractValue<Interval> {
 	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue#setIdentifier(java.lang.String, boolean)
 	 */
 	@Override
-	public void setIdentifier(String identifier, boolean isGlobal) {
+	public void setIdentifier(AbstractState.Pair identifier, boolean isGlobal) {
 		// TODO Auto-generated method stub
 		
 	}

@@ -37,6 +37,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.StateChangeLogger;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.AbstractInterpretationBoogieVisitor;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.AbstractState;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.AbstractState.LoopStackElement;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.IAbstractDomainFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.booldomain.BoolDomainFactory;
@@ -164,6 +165,8 @@ public class AbstractInterpreterTA extends RCFGEdgeVisitor {
 
 	// ULTIMATE.start
 	private final String m_ultimateStartProcName = "ULTIMATE.start";
+
+	private INestedWordAutomaton m_nwa;
 
 	public AbstractInterpreterTA(IUltimateServiceProvider services) {
 		m_services = services;
@@ -295,6 +298,7 @@ public class AbstractInterpreterTA extends RCFGEdgeVisitor {
 	public List<UnprovableResult<RcfgElement, CodeBlock, Expression>> processNWA(INestedWordAutomaton nwa, RootNode rn,
 			Map<Object, ProgramPoint> programPointMap) {
 		m_programPointMap = programPointMap;
+		m_nwa = nwa;
 
 		List<UnprovableResult<RcfgElement, CodeBlock, Expression>> result = null;
 		// RootNode root = rn;
@@ -304,6 +308,8 @@ public class AbstractInterpreterTA extends RCFGEdgeVisitor {
 
 		m_continueProcessing = true;
 
+		
+		
 		// state change logger
 		if (m_stateChangeLogConsole || m_stateChangeLogFile) {
 			String fileDir = "";
@@ -370,6 +376,9 @@ public class AbstractInterpreterTA extends RCFGEdgeVisitor {
 		 * rn.getRootAnnot().getErrorNodes(); for (String s :
 		 * errorLocMap.keySet()) m_errorLocs.addAll(errorLocMap.get(s));
 		 */
+		
+		//(IAbstractValue<?>)rn.getRootAnnot().getBoogie2SMT();
+	
 
 		for (Object i : nwa.getStates()) {
 			Iterable successors = nwa.internalSuccessors(i);
@@ -823,5 +832,18 @@ public class AbstractInterpreterTA extends RCFGEdgeVisitor {
 		m_logger.warn(String.format("Unknown abstract domain system \"%s\" chosen, using \"%s\" instead", domainID,
 				TopBottomDomainFactory.getDomainID()));
 		return new TopBottomDomainFactory(m_logger);
+	}
+
+	
+	public Map<ProgramPoint, Object> getTermsToProgramPoints() {
+		Map<ProgramPoint, Object> toReturn = new HashMap<ProgramPoint, Object>();
+		for (Object s : m_nwa.getStates()){
+			//todo object
+			Object value = null;
+			
+			
+			toReturn.put(m_programPointMap.get(s), value);
+		}
+		return toReturn;
 	}
 }

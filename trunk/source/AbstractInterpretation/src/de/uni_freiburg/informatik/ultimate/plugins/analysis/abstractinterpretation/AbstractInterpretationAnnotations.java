@@ -10,9 +10,11 @@ import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.annotation.AbstractAnnotations;
+import de.uni_freiburg.informatik.ultimate.model.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.AbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.AbstractState.ArrayData;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.AbstractState.Pair;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.AbstractState.ScopedAbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.AbstractState.LoopStackElement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -58,9 +60,9 @@ public class AbstractInterpretationAnnotations extends AbstractAnnotations {
 				List<ScopedAbstractState> callstack = state.getCallStack();
 				for (ScopedAbstractState cse : callstack) {
 					// array -> (value, has unclear indices)
-					Map<String, Map<String, Object>> arrayInfo = new LinkedHashMap<String, Map<String, Object>>(2);
-					Map<String, ArrayData> arrays = cse.getArrays();
-					for (String ident : arrays.keySet()) {
+					Map<Pair<String, DeclarationInformation>, Map<String, Object>> arrayInfo = new LinkedHashMap<Pair<String, DeclarationInformation>, Map<String, Object>>(2);
+					Map<Pair<String, DeclarationInformation>, ArrayData> arrays = cse.getArrays();
+					for (Pair ident : arrays.keySet()) {
 						ArrayData a = arrays.get(ident);
 						Map<String, Object> aInfo = new LinkedHashMap<String, Object>();
 						aInfo.put("Merged value", a.getValue());

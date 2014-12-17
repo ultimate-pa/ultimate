@@ -13,8 +13,10 @@ import java.util.Set;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.CallStatement;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.AbstractState.Pair;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
+import de.uni_freiburg.informatik.ultimate.model.boogie.DeclarationInformation;
 
 /**
  * An AbstractState represents an abstract program state, mapping variable
@@ -58,39 +60,98 @@ public class AbstractState {
 	}
 	
 	public class ArrayData {
-		private final String m_identifier;
+		private final Pair<String, DeclarationInformation> m_identifier;
 		private IAbstractValue<?> m_value;
 		private boolean m_unclearIndices;
-		public ArrayData(String identifier) {
+		public ArrayData(String string, DeclarationInformation declarationInformation) {
+			m_identifier = new Pair(string, declarationInformation);
+			m_value = null;
+			m_unclearIndices = false;
+		}
+		public ArrayData(Pair<String, DeclarationInformation> identifier) {
 			m_identifier = identifier;
 			m_value = null;
 			m_unclearIndices = false;
 		}
-		public String getIdentifier() { return m_identifier; }
+		public Pair getIdentifier() { return m_identifier; }
 		public IAbstractValue<?> getValue() { return m_value; }
 		public void setValue(IAbstractValue<?> value) { m_value = value; }
 		public boolean getIndicesUnclear() { return m_unclearIndices; }
 		public void setIndicesUnclear() { m_unclearIndices = true; }
 	}
 	
+	public class Pair<String, DeclarationInformation> {
+	
+
+		@Override
+		public int hashCode() {
+			final int prime = 31;
+			int result = 1;
+			result = prime * result + ((decl == null) ? 0 : decl.hashCode());
+			result = prime * result + ((str == null) ? 0 : str.hashCode());
+			return result;
+		}
+		@Override
+		public boolean equals(Object obj) {
+			if (this == obj)
+				return true;
+			if (obj == null)
+				return false;
+			if (getClass() != obj.getClass())
+				return false;
+			Pair other = (Pair) obj;
+			if (decl == null) {
+				if (other.decl != null)
+					return false;
+			} else if (!decl.equals(other.decl))
+				return false;
+			if (str == null) {
+				if (other.str != null)
+					return false;
+			} else if (!str.equals(other.str))
+				return false;
+			return true;
+		}
+
+		private final String str;
+		private final DeclarationInformation decl;
+		public String getString() {
+			return str;
+		}
+		public DeclarationInformation getDeclaration() {
+			return decl;
+		}
+		
+		Pair(String str, DeclarationInformation decl){	
+			this.str = str;
+			this.decl = decl;
+		}
+		
+		public java.lang.String toString(){
+			return str.toString().concat("+").concat(decl.toString());
+		}
+		
+	}
+	
 	public class ScopedAbstractState {
 		private final CallStatement m_callStatement;
-		private final Map<String, IAbstractValue<?>> m_values, m_oldValues;
+		//private final Map<String, IAbstractValue<?>> m_values, m_oldValues;
+		private final Map<Pair<String, DeclarationInformation>, IAbstractValue<?>> m_values, m_oldValues;
 		private final LinkedList<LoopStackElement> m_loopStack = new LinkedList<LoopStackElement>();
-		private final Map<String, ArrayData> m_arrays;
+		private final Map<Pair<String, DeclarationInformation>, ArrayData> m_arrays;
 		private boolean m_isGlobalScope = false;
-		public ScopedAbstractState(CallStatement callStatement, Map<String, IAbstractValue<?>> oldValues) {
+		public ScopedAbstractState(CallStatement callStatement, Map<Pair<String, DeclarationInformation>, IAbstractValue<?>> oldValues) {
 			m_callStatement = callStatement;
-			m_values = new HashMap<String, IAbstractValue<?>>();
-			m_oldValues = oldValues == null ? new HashMap<String, IAbstractValue<?>>() : new HashMap<String, IAbstractValue<?>>(oldValues);
+			m_values = new HashMap<Pair<String, DeclarationInformation>, IAbstractValue<?>>();
+			m_oldValues = oldValues == null ? new HashMap<Pair<String, DeclarationInformation>, IAbstractValue<?>>() : new HashMap<Pair<String, DeclarationInformation>, IAbstractValue<?>>(oldValues);
 			m_loopStack.add(new LoopStackElement(null, null)); // global stack element
-			m_arrays = new HashMap<String, ArrayData>();
+			m_arrays = new HashMap<Pair<String, DeclarationInformation>, ArrayData>();
 		}
 		public CallStatement getCallStatement() { return m_callStatement; }
-		public Map<String, IAbstractValue<?>> getValues() { return m_values; }
-		public Map<String, IAbstractValue<?>> getOldValues() { return m_oldValues; }
+		public Map<Pair<String, DeclarationInformation>, IAbstractValue<?>> getValues() { return m_values; }
+		public Map<Pair<String, DeclarationInformation>, IAbstractValue<?>> getOldValues() { return m_oldValues; }
 		public LinkedList<LoopStackElement> getLoopStack() { return m_loopStack; }
-		public Map<String, ArrayData> getArrays() { return m_arrays; }
+		public Map<Pair<String, DeclarationInformation>, ArrayData> getArrays() { return m_arrays; }
 		public boolean isGlobalScope() { return m_isGlobalScope; }
 		public void SetIsGlobalScope(boolean isGlobalScope) { m_isGlobalScope = isGlobalScope; }
 		public String toString() { return m_values.toString(); }
@@ -186,10 +247,12 @@ public class AbstractState {
 			return false;
 
 		// check if any variable in the right CSE occurs and is greater in the left CSE
-		Set<String> rightKeys = right.getValues().keySet();
-		for (String key : rightKeys) {
-			IAbstractValue<?> rightValue = right.getValues().get(key);
-			IAbstractValue<?> leftValue = left.getValues().get(key);
+		Set<AbstractState.Pair<String, DeclarationInformation>> rightKeys = right.getValues().keySet();
+		for (Pair key : rightKeys) {
+			//IAbstractValue<?> rightValue = right.getValues().get(key);
+			//IAbstractValue<?> leftValue = left.getValues().get(key);
+			IAbstractValue<?> rightValue = (IAbstractValue<?>) right.getValues().get(key);
+			IAbstractValue<?> leftValue = (IAbstractValue<?>) left.getValues().get(key);
 			
 			m_logger.debug(String.format("is super? %s ~ %s", leftValue, rightValue));
 			
@@ -206,9 +269,9 @@ public class AbstractState {
 
 		// check if any array value in the right CSE occurs and is greater in the left CSE
 		rightKeys = right.getArrays().keySet();
-		for (String key : rightKeys) {
-			ArrayData rightData = right.getArrays().get(key);
-			ArrayData leftData = left.getArrays().get(key); 
+		for (Pair key : rightKeys) {
+			ArrayData rightData = (ArrayData) right.getArrays().get(key);
+			ArrayData leftData = (ArrayData) left.getArrays().get(key); 
 			
 			// identifier must exist and thus have a value
 			if (leftData == null)
@@ -233,12 +296,12 @@ public class AbstractState {
 		for (int i = 0; i < m_callStack.size(); i++) {
 			ScopedAbstractState cse = m_callStack.get(i);
 			
-			Map<String, IAbstractValue<?>> thisLayer = cse.getValues();
+			Map<Pair<String, DeclarationInformation>, IAbstractValue<?>> thisLayer = cse.getValues();
 			ScopedAbstractState resultCSE = new ScopedAbstractState(cse.getCallStatement(), cse.getOldValues());
 			resultCSE.SetIsGlobalScope(cse.isGlobalScope());
 			result.m_callStack.add(resultCSE);
-			Map<String, IAbstractValue<?>> copyLayer = result.m_callStack.get(i).getValues();
-			for (String identifier : thisLayer.keySet()) {
+			Map<Pair<String, DeclarationInformation>, IAbstractValue<?>> copyLayer = ((ScopedAbstractState) result.m_callStack.get(i)).getValues();
+			for (Pair identifier : thisLayer.keySet()) {
 				IAbstractValue<?> originalValue = thisLayer.get(identifier);
 				if (originalValue == null) {
 					m_logger.error(String.format("Invalid null value for identifier \"%s\" found.", identifier));
@@ -247,9 +310,9 @@ public class AbstractState {
 				}
 			}
 
-			Map<String, ArrayData> thisArray = cse.getArrays();
-			Map<String, ArrayData> copyArray = result.m_callStack.get(i).getArrays();
-			for (String identifier : thisArray.keySet()) {
+			Map<Pair<String, DeclarationInformation>, ArrayData> thisArray = cse.getArrays();
+			Map<Pair<String, DeclarationInformation>, ArrayData> copyArray = result.m_callStack.get(i).getArrays();
+			for (Pair identifier : thisArray.keySet()) {
 				ArrayData originalArrayData = thisArray.get(identifier);
 				ArrayData resultArrayData = new ArrayData(identifier);
 				resultArrayData.setValue(originalArrayData.getValue());
@@ -332,16 +395,16 @@ public class AbstractState {
 		result.getArrays().clear();
 		result.getValues().clear();
 		
-		Map<String, IAbstractValue<?>> leftValues = left.getValues();
-		Map<String, IAbstractValue<?>> rightValues = right.getValues();
-		Map<String, IAbstractValue<?>> resultValues = result.getValues();
+		Map<Pair<String, DeclarationInformation>, IAbstractValue<?>> leftValues = left.getValues();
+		Map<Pair<String, DeclarationInformation>, IAbstractValue<?>> rightValues = right.getValues();
+		Map<Pair<String, DeclarationInformation>, IAbstractValue<?>> resultValues = result.getValues();
 
-		Set<String> identifiers = new HashSet<String>();
+		Set<Pair<String, DeclarationInformation>> identifiers = new HashSet<Pair<String, DeclarationInformation>>();
 		identifiers.addAll(leftValues.keySet());
 		identifiers.addAll(rightValues.keySet());
 
 		// widen values: thisValue wideningOp otherValue
-		for (String identifier : identifiers) {
+		for (Pair identifier : identifiers) {
 			IAbstractValue<?> leftValue = leftValues.get(identifier);
 			IAbstractValue<?> rightValue = rightValues.get(identifier); 
 
@@ -359,15 +422,15 @@ public class AbstractState {
 		}
 
 		// merge array data
-		Map<String, ArrayData> leftArrays = left.getArrays();
-		Map<String, ArrayData> rightArrays = right.getArrays();
-		Map<String, ArrayData> resultArrays = result.getArrays();
+		Map<Pair<String, DeclarationInformation>, ArrayData> leftArrays = left.getArrays();
+		Map<Pair<String, DeclarationInformation>, ArrayData> rightArrays = right.getArrays();
+		Map<Pair<String, DeclarationInformation>, ArrayData> resultArrays = result.getArrays();
 
 		identifiers.clear();
 		identifiers.addAll(leftArrays.keySet());
 		identifiers.addAll(rightArrays.keySet());
 
-		for (String identifier : identifiers) {
+		for (Pair identifier : identifiers) {
 			ArrayData leftData = leftArrays.get(identifier);
 			ArrayData rightData = rightArrays.get(identifier);
 			
@@ -458,16 +521,16 @@ public class AbstractState {
 		result.getArrays().clear();
 		result.getValues().clear();
 		
-		Map<String, IAbstractValue<?>> leftValues = left.getValues();
-		Map<String, IAbstractValue<?>> rightValues = right.getValues();
-		Map<String, IAbstractValue<?>> resultValues = result.getValues();
+		Map<Pair<String, DeclarationInformation>, IAbstractValue<?>> leftValues = left.getValues();
+		Map<Pair<String, DeclarationInformation>, IAbstractValue<?>> rightValues = right.getValues();
+		Map<Pair<String, DeclarationInformation>, IAbstractValue<?>> resultValues = result.getValues();
 
-		Set<String> identifiers = new HashSet<String>();
+		Set<Pair<String, DeclarationInformation>> identifiers = new HashSet<Pair<String, DeclarationInformation>>();
 		identifiers.addAll(leftValues.keySet());
 		identifiers.addAll(rightValues.keySet());
 
 		// widen values: thisValue wideningOp otherValue
-		for (String identifier : identifiers) {
+		for (Pair identifier : identifiers) {
 			IAbstractValue<?> leftValue = leftValues.get(identifier);
 			IAbstractValue<?> rightValue = rightValues.get(identifier); 
 
@@ -485,15 +548,15 @@ public class AbstractState {
 		}
 
 		// merge array data
-		Map<String, ArrayData> leftArrays = left.getArrays();
-		Map<String, ArrayData> rightArrays = right.getArrays();
-		Map<String, ArrayData> resultArrays = result.getArrays();
+		Map<Pair<String, DeclarationInformation>, ArrayData> leftArrays = left.getArrays();
+		Map<Pair<String, DeclarationInformation>, ArrayData> rightArrays = right.getArrays();
+		Map<Pair<String, DeclarationInformation>, ArrayData> resultArrays = result.getArrays();
 
 		identifiers.clear();
 		identifiers.addAll(leftArrays.keySet());
 		identifiers.addAll(rightArrays.keySet());
 
-		for (String identifier : identifiers) {
+		for (Pair identifier : identifiers) {
 			ArrayData leftData = leftArrays.get(identifier);
 			ArrayData rightData = rightArrays.get(identifier);
 			
@@ -545,7 +608,7 @@ public class AbstractState {
 	 * 		else the global scope if that one does,
 	 * 		else null if none of them has it. 
 	 */
-	private ScopedAbstractState getScopeOfIdentifier(String identifier) {
+	private ScopedAbstractState getScopeOfIdentifier(Pair<String, DeclarationInformation> identifier) {
 		ScopedAbstractState cse = getCurrentScope();
 		if (cse.getValues().containsKey(identifier))
 			return cse;
@@ -662,7 +725,7 @@ public class AbstractState {
 			}
 		}
 		
-		Map<String, IAbstractValue<?>> oldValues = m_callStack.isEmpty() ? null : getGlobalScope().getValues();
+		Map<Pair<String, DeclarationInformation>, IAbstractValue<?>> oldValues = m_callStack.isEmpty() ? null : getGlobalScope().getValues();
 		m_callStack.push(new ScopedAbstractState(callStatement, oldValues));
 	}
 	
@@ -702,7 +765,8 @@ public class AbstractState {
 	 * @param value The new value
 	 * @return True iff a layer with the given identifier exists so the value could be written
 	 */
-	public boolean writeValue(String identifier, IAbstractValue<?> value) {
+	public boolean writeValue(String string, DeclarationInformation declarationInformation, IAbstractValue<?> value) {
+		Pair<String, DeclarationInformation> identifier = new Pair(string, declarationInformation);
 		ScopedAbstractState layer = getScopeOfIdentifier(identifier);
 		
 		if (layer == null)
@@ -720,19 +784,21 @@ public class AbstractState {
 	 * @param old Set to true if instead of "x" you want "old(x)" - for global variables only, else you just get "x"
 	 * @return The value associated with the identifier on its scope level, or null if it is not found
 	 */
-	public IAbstractValue<?> readValue(String identifier, boolean old) {
+	public IAbstractValue<?> readValue(String string, DeclarationInformation declarationInformation, boolean old) {
+		Pair<String, DeclarationInformation> identifier = new Pair(string, declarationInformation);
+		
 		ScopedAbstractState scope = old ? getCurrentScope() : getScopeOfIdentifier(identifier);
 		
 		if (scope == null)
 			return null;
 		
 		if (old) {
-			IAbstractValue<?> result = scope.getOldValues().get(identifier);
+			IAbstractValue<?> result = (IAbstractValue<?>) scope.getOldValues().get(identifier);
 			if (result != null)
 				return result;
 		}
 		
-		return scope.getValues().get(identifier);
+		return (IAbstractValue<?>) scope.getValues().get(identifier);
 	}
 	
 	/**
@@ -742,23 +808,25 @@ public class AbstractState {
 	 * @param asGlobal Set to true if the variable is a global variable
 	 * @return True if it could be declared, false if such an identifier already exists on the top layer or the stack is empty
 	 */
-	public boolean declareIdentifier(String identifier, IAbstractValue<?> initialValue, boolean asGlobal) {
+	public boolean declareIdentifier(String identifier, DeclarationInformation declarationInformation, IAbstractValue<?> initialValue, boolean asGlobal) {
 		if (initialValue == null)
 			return false;
 		
 		ScopedAbstractState layer = asGlobal ? getGlobalScope() : getCurrentScope();
 
-		m_logger.debug(String.format("New variable %s at scope level %d %s", identifier, getStackSize()-1,
+		m_logger.debug(String.format("New variable %s / %s at scope level %d %s", identifier, declarationInformation, getStackSize()-1,
 				getCurrentScopeName()));
 		
-		if ((layer == null) || (layer.getValues().containsKey(identifier))) {
+		Pair thisPair = new Pair(identifier, declarationInformation);
+		
+		if ((layer == null) || (layer.getValues().containsKey(thisPair))) {
 			m_logger.error("Cannot declare identifier!");
 			return false;
 		}
 		
-		layer.getValues().put(identifier, initialValue);
+		layer.getValues().put(thisPair, initialValue);
 		
-		initialValue.setIdentifier(identifier, asGlobal);
+		initialValue.setIdentifier(thisPair, asGlobal);
 		
 		return true;
 	}
@@ -797,7 +865,7 @@ public class AbstractState {
 	 * @return The top element of the loop entry stack
 	 */
 	public LoopStackElement peekLoopEntry() {
-		return getCurrentScope().getLoopStack().peek();
+		return (LoopStackElement) getCurrentScope().getLoopStack().peek();
 	}
 	
 	/**

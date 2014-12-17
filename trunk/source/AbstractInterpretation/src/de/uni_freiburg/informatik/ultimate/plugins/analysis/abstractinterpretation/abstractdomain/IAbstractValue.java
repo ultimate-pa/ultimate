@@ -3,6 +3,9 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain;
 
+import de.uni_freiburg.informatik.ultimate.model.boogie.DeclarationInformation;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.AbstractState.Pair;
+
 /**
  * IAbstractValue stores the value of a variable in an abstract dromain.
  * 
@@ -191,7 +194,7 @@ public interface IAbstractValue<T> {
 	 * @param isGlobal Set to true if the identifier belongs to the global scope,
 	 * false if it is a local identifier
 	 */
-	public void setIdentifier(String identifier, boolean isGlobal);
+	public void setIdentifier(AbstractState.Pair identifier, boolean isGlobal);
 	
 	/**
 	 * @return A string representation of the abstract value

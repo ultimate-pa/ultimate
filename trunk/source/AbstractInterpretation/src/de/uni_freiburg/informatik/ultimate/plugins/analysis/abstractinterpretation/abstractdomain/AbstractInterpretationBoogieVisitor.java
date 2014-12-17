@@ -13,6 +13,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
 import de.uni_freiburg.informatik.ultimate.boogie.type.ArrayType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.model.IType;
+import de.uni_freiburg.informatik.ultimate.model.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.model.boogie.DeclarationInformation.StorageClass;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayAccessExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayLHS;
@@ -41,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.AbstractState.ArrayData;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.AbstractState.Pair;
 
 /**
  * Used to evaluate boogie statements during abstract interpretation
@@ -82,7 +84,7 @@ public class AbstractInterpretationBoogieVisitor {
 
 	private IType m_lhsType;
 
-	private StorageClass m_lhsStorageClass;
+	private DeclarationInformation m_declarationInformation;
 
 	private Map<Expression, IAbstractValue<?>> m_interimResults = new HashMap<Expression, IAbstractValue<?>>();
 
@@ -204,7 +206,8 @@ public class AbstractInterpretationBoogieVisitor {
 
 	protected void visitCall(CallStatement statement) {
 		String methodName = statement.getMethodName();
-
+		
+		
 		// add scope level for entered method
 		m_resultingState.pushStackLayer(statement);
 
@@ -214,6 +217,9 @@ public class AbstractInterpretationBoogieVisitor {
 
 		// fetch method declaration to get input parameters
 		List<Declaration> methodDecList = m_symbolTable.getFunctionOrProcedureDeclaration(methodName);
+		
+		
+		
 		if (methodDecList.size() >= 1) {
 			Declaration methodDec = methodDecList.get(0);
 			VarList[] parameters = null;
@@ -236,7 +242,7 @@ public class AbstractInterpretationBoogieVisitor {
 							mLogger.warn(String.format("Invalid number method \"%s\" input parameter argument %d",
 									methodName, i));
 						} else {
-							m_resultingState.declareIdentifier(identifiers[0], argValue, false);
+							m_resultingState.declareIdentifier(identifiers[0], m_declarationInformation, argValue, false);
 						}
 					}
 				} else {
@@ -286,14 +292,14 @@ public class AbstractInterpretationBoogieVisitor {
 									"Invalid number of identifiers for procedure \"%s\" output parameter argument %d",
 									procedureName, i));
 						} else {
-							IAbstractValue<?> returnValue = m_currentState.readValue(identifiers[0], false);
+							IAbstractValue<?> returnValue = m_currentState.readValue(identifiers[0], m_declarationInformation, false);
 							if (returnValue == null)
 								returnValue = getTopValueForType(parameters[i].getType().getBoogieType());
 							evaluateLeftHandSide(leftHandSides[i]);
-							boolean writeSuccessful = m_resultingState.writeValue(m_lhsIdentifier, returnValue);
+							boolean writeSuccessful = m_resultingState.writeValue(m_lhsIdentifier, m_declarationInformation, returnValue);
 							if (!writeSuccessful)
-								m_resultingState.declareIdentifier(m_lhsIdentifier, returnValue,
-										m_lhsStorageClass == StorageClass.GLOBAL);
+								m_resultingState.declareIdentifier(m_lhsIdentifier, m_declarationInformation, returnValue,
+										m_declarationInformation.getStorageClass() == StorageClass.GLOBAL);
 						}
 					}
 				} else {
@@ -310,7 +316,7 @@ public class AbstractInterpretationBoogieVisitor {
 			m_lhsType = null;
 			evaluateLeftHandSide(lhs[i]); // get identifier to m_lhsIdentifier
 			if (m_lhsIdentifier != null)
-				havocValue(m_lhsIdentifier, m_lhsType, m_lhsStorageClass);
+				havocValue(m_lhsIdentifier, m_declarationInformation, m_lhsType);
 		}
 	}
 
@@ -339,10 +345,10 @@ public class AbstractInterpretationBoogieVisitor {
 						rhsValue = booleanFromAbstractValue(rhsValue);
 
 					mLogger.debug(String.format("Assignment: %s := %s", identifier, rhsValue));
-					boolean writeSuccessful = m_resultingState.writeValue(identifier, rhsValue);
+					boolean writeSuccessful = m_resultingState.writeValue(identifier, m_declarationInformation, rhsValue);
 					if (!writeSuccessful)
-						m_resultingState.declareIdentifier(identifier, rhsValue,
-								m_lhsStorageClass == StorageClass.GLOBAL);
+						m_resultingState.declareIdentifier(identifier, m_declarationInformation, rhsValue,
+								m_declarationInformation.getStorageClass() == StorageClass.GLOBAL);
 				}
 			}
 		}
@@ -388,7 +394,7 @@ public class AbstractInterpretationBoogieVisitor {
 	protected void visit(VariableLHS lhs) {
 		m_lhsIdentifier = lhs.getIdentifier();
 		m_lhsType = lhs.getType();
-		m_lhsStorageClass = lhs.getDeclarationInformation().getStorageClass();
+		m_declarationInformation = lhs.getDeclarationInformation();
 	}
 
 	protected void visit(ArrayLHS lhs) {
@@ -499,7 +505,7 @@ public class AbstractInterpretationBoogieVisitor {
 
 	protected void visit(IdentifierExpression expr) {
 		boolean negate = doNegate();
-		getValueOfIdentifier(expr.getIdentifier(), expr.getType(), expr.getDeclarationInformation().getStorageClass());
+		getValueOfIdentifier(expr.getIdentifier(), expr.getDeclarationInformation(), expr.getType());
 		if (negate)
 			m_resultValue = m_resultValue.logicNot();
 	}
@@ -701,20 +707,21 @@ public class AbstractInterpretationBoogieVisitor {
 	}
 
 	protected void visit(ArrayStoreExpression expr) {
+		
 		m_resultValue = evaluateExpression(expr.getValue());
 		boolean onlySingleIndices = evaluateArrayIdentifier(expr.getArray(), expr.getIndices());
 
 		// adjust array's collective merged value
-		ArrayData arrayData = getArrayData(m_arrayIdentifier);
+		ArrayData arrayData = getArrayData(m_arrayIdentifier, m_declarationInformation);
 		mergeArrayValue(arrayData, m_resultValue);
 
 		if (onlySingleIndices) {
 			// store value
 			mLogger.debug(String.format("Array store: %s := %s", m_lhsIdentifier, m_resultValue));
-			boolean writeSuccessful = m_resultingState.writeValue(m_lhsIdentifier, m_resultValue);
+			boolean writeSuccessful = m_resultingState.writeValue(m_lhsIdentifier, m_declarationInformation, m_resultValue);
 			if (!writeSuccessful)
-				m_resultingState.declareIdentifier(m_lhsIdentifier, m_resultValue,
-						m_lhsStorageClass == StorageClass.GLOBAL);
+				m_resultingState.declareIdentifier(m_lhsIdentifier, m_declarationInformation, m_resultValue,
+						m_declarationInformation.getStorageClass() == StorageClass.GLOBAL);
 		} else {
 			mLogger.debug(String.format("Array store with ambiguous indices: %s", m_lhsIdentifier));
 
@@ -729,11 +736,11 @@ public class AbstractInterpretationBoogieVisitor {
 
 	protected void visit(ArrayAccessExpression expr) {
 		boolean onlySingleIndices = evaluateArrayIdentifier(expr.getArray(), expr.getIndices());
-
-		ArrayData arrayData = getArrayData(m_arrayIdentifier);
+		
+		ArrayData arrayData = getArrayData(m_arrayIdentifier, m_declarationInformation);
 
 		if (onlySingleIndices) {
-			boolean hasValue = getValueOfIdentifier(m_lhsIdentifier, m_lhsType, m_lhsStorageClass);
+			boolean hasValue = getValueOfIdentifier(m_lhsIdentifier, m_declarationInformation, m_lhsType);
 			if (arrayData.getIndicesUnclear() && hasValue) {
 				m_resultValue = arrayData.getValue();
 			} else {
@@ -827,25 +834,24 @@ public class AbstractInterpretationBoogieVisitor {
 		String arrayIdentifier = null;
 		String variableIdentifier = null;
 		IType type = null;
-		StorageClass storageClass = null;
 		if (array instanceof IdentifierExpression) {
 			IdentifierExpression arrayIdent = (IdentifierExpression) array;
 			variableIdentifier = arrayIdentifier = arrayIdent.getIdentifier();
 			type = arrayIdent.getType();
 			if (type instanceof ArrayType)
 				type = ((ArrayType) type).getValueType();
-			storageClass = arrayIdent.getDeclarationInformation().getStorageClass();
+			m_declarationInformation = arrayIdent.getDeclarationInformation();
 		} else if (array instanceof ArrayAccessExpression) {
 			ArrayAccessExpression arrayAccess = (ArrayAccessExpression) array;
 			evaluateArrayIdentifier(arrayAccess.getArray(), arrayAccess.getIndices());
 			variableIdentifier = m_lhsIdentifier;
-			storageClass = m_lhsStorageClass;
 			type = m_lhsType;
 		} else {
 			writeError(String.format("Unsupported array identifier found: %s", array));
 			m_lhsIdentifier = null;
 			m_lhsType = null;
 			m_resultValue = null;
+			m_declarationInformation = null;
 			return false;
 		}
 
@@ -861,18 +867,18 @@ public class AbstractInterpretationBoogieVisitor {
 		m_lhsIdentifier = variableIdentifier;
 		m_arrayIdentifier = arrayIdentifier;
 		m_lhsType = type;
-		m_lhsStorageClass = storageClass;
 
 		return onlySingleIndices;
 	}
 
-	private ArrayData getArrayData(String arrayIdentifier) {
-		Map<String, ArrayData> arrayDataMap = (m_lhsStorageClass == StorageClass.GLOBAL ? m_resultingState
+	private ArrayData getArrayData(String arrayIdentifier, DeclarationInformation declarationInformation) {
+		Map<Pair<String, DeclarationInformation>, ArrayData> arrayDataMap = (m_declarationInformation.getStorageClass() == StorageClass.GLOBAL ? m_resultingState
 				.getGlobalScope() : m_resultingState.getCurrentScope()).getArrays();
-		ArrayData arrayData = arrayDataMap.get(arrayIdentifier);
+		AbstractState.Pair<String, DeclarationInformation> pair = m_currentState.new Pair<String, DeclarationInformation>(arrayIdentifier, declarationInformation);
+		ArrayData arrayData = arrayDataMap.get(pair);
 		if (arrayData == null) {
-			arrayData = m_resultingState.new ArrayData(arrayIdentifier);
-			arrayDataMap.put(arrayIdentifier, arrayData);
+			arrayData = m_resultingState.new ArrayData(arrayIdentifier, declarationInformation);
+			arrayDataMap.put(pair, arrayData);
 		}
 		return arrayData;
 	}
@@ -930,8 +936,8 @@ public class AbstractInterpretationBoogieVisitor {
 	 *            Used if havoc is required
 	 * @return True iff a value existed already, false if a havoc was performed
 	 */
-	private boolean getValueOfIdentifier(String identifier, IType type, StorageClass storageClass) {
-		m_resultValue = m_currentState.readValue(identifier, m_useOldValues);
+	private boolean getValueOfIdentifier(String identifier, DeclarationInformation declarationInformation, IType type) {
+		m_resultValue = m_currentState.readValue(identifier, declarationInformation, m_useOldValues);
 
 		if ((m_resultValue == null) && (m_currentStatement instanceof CallStatement)) {
 			// Call or Return -> do not access m_resultingState as the current
@@ -941,12 +947,12 @@ public class AbstractInterpretationBoogieVisitor {
 		}
 
 		if ((m_resultValue == null) && !m_useOldValues)
-			m_resultValue = m_resultingState.readValue(identifier, m_useOldValues);
+			m_resultValue = m_resultingState.readValue(identifier, declarationInformation, m_useOldValues);
 
 		if (m_resultValue == null) {
 			// first time we encounter this identifier: look up in symbol table,
 			// implicit havoc to TOP
-			m_resultValue = havocValue(identifier, type, storageClass);
+			m_resultValue = havocValue(identifier, declarationInformation, type);
 			return false;
 		}
 		return true;
@@ -974,10 +980,11 @@ public class AbstractInterpretationBoogieVisitor {
 		}
 	}
 
-	private IAbstractValue<?> havocValue(String identifier, IType type, StorageClass storageClass) {
+	private IAbstractValue<?> havocValue(String identifier, DeclarationInformation declarationInformation, IType type) {
 		// is an array?
+		
 		if (type instanceof ArrayType) {
-			ArrayData arrayData = getArrayData(identifier);
+			ArrayData arrayData = getArrayData(identifier, declarationInformation);
 			arrayData.setIndicesUnclear();
 			IAbstractValue<?> result = getTopValueForType(((ArrayType) type).getValueType());
 			arrayData.setValue(result);
@@ -991,11 +998,11 @@ public class AbstractInterpretationBoogieVisitor {
 			IAbstractValue<?> newValue = getTopValueForType(type);
 			if (newValue != null) {
 				IAbstractValue<?> result = newValue;
-				boolean isGlobal = storageClass == StorageClass.GLOBAL;
+				boolean isGlobal = declarationInformation.getStorageClass() == StorageClass.GLOBAL;
 				if (!(m_useOldValues && isGlobal)) {
-					boolean writeSuccessful = m_resultingState.writeValue(identifier, result);
+					boolean writeSuccessful = m_resultingState.writeValue(identifier, declarationInformation, result);
 					if (!writeSuccessful)
-						m_resultingState.declareIdentifier(identifier, result, isGlobal);
+						m_resultingState.declareIdentifier(identifier, declarationInformation, result, isGlobal);
 				}
 				mLogger.debug(String.format("Havoc: %s\"%s\" := \"%s\".", m_useOldValues ? "old " : "", identifier,
 						result));
@@ -1121,7 +1128,7 @@ public class AbstractInterpretationBoogieVisitor {
 				if (binOp.getLeft() instanceof IdentifierExpression) {
 					IdentifierExpression ieLeft = (IdentifierExpression) binOp.getLeft();
 
-					appliedAssumption = applyAssumptionResult(ieLeft.getIdentifier(), assumeResult) || appliedAssumption;
+					appliedAssumption = applyAssumptionResult(ieLeft.getIdentifier(), ieLeft.getDeclarationInformation(), assumeResult) || appliedAssumption;
 				}
 
 				/*
@@ -1166,7 +1173,7 @@ public class AbstractInterpretationBoogieVisitor {
 						rightHandAssumeResult = null;
 					}
 					if (rightHandAssumeResult != null)
-						appliedAssumption = applyAssumptionResult(ieRight.getIdentifier(), rightHandAssumeResult) || appliedAssumption;
+						appliedAssumption = applyAssumptionResult(ieRight.getIdentifier(), ieRight.getDeclarationInformation(), rightHandAssumeResult) || appliedAssumption;
 				}
 				break;
 			default:
@@ -1185,14 +1192,14 @@ public class AbstractInterpretationBoogieVisitor {
 		return appliedAssumption;
 	}
 
-	private boolean applyAssumptionResult(String identifier, IAbstractValue<?> assumeResult) {
-		IAbstractValue<?> oldValue = m_resultingState.readValue(identifier, false);
+	private boolean applyAssumptionResult(String identifier, DeclarationInformation declarationInformation, IAbstractValue<?> assumeResult) {
+		IAbstractValue<?> oldValue = m_resultingState.readValue(identifier, declarationInformation, false);
 		if (oldValue != null) {
 			IAbstractValue<?> newValue = oldValue.compareIsEqual(assumeResult);
 			mLogger.debug(String.format("ASSUME for \"%s\": old[%s], assume[%s] => new[%s]", identifier, oldValue,
 					assumeResult, newValue));
 			if (newValue != null) {
-				m_resultingState.writeValue(identifier, newValue);
+				m_resultingState.writeValue(identifier, declarationInformation, newValue);
 				return true;
 			}
 		}

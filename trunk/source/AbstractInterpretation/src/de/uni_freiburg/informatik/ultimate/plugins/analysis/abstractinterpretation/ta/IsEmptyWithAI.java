@@ -705,5 +705,9 @@ public class IsEmptyWithAI<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		}
 		return correct;
 	}
+	
+	public Map<ProgramPoint, Object> getTermsToProgramPoints(){
+		return m_aI.getTermsToProgramPoints();
+	}
 
 }
