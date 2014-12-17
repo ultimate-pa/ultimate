@@ -89,51 +89,16 @@ public class CTraceAbstractionTC extends WebToolchain {
     protected List<Tool> setTools() {
         List<Tool> tools = new ArrayList<Tool>();
         List<Setting> oCACSL = new ArrayList<Setting>();
-        oCACSL.add(new Setting("/Checked\\ method.\\ Library\\ mode\\ if\\ empty.", Setting.SettingType.STRING,
+        oCACSL.add(new Setting(PrefStrings.s_CACSL_LABEL_StartFunction, Setting.SettingType.STRING,
                 "Starting procedure: ", "main", true));
-        oCACSL.add(new Setting("/Translation\\ Mode\\:", "Translation Mode",
-				new String[] { "Best SV_COMP" }, false, new String[] {
-						"BASE", "SV_COMP14" }, true));
+        oCACSL.add(new Setting(PrefStrings.s_CACSL_LABEL_TranslationMode, "Translation Mode",
+				new String[] { PrefStrings.s_CACSL_VALUE_Svcomp }, false, new String[] {
+        		PrefStrings.s_CACSL_VALUE_Base, PrefStrings.s_CACSL_VALUE_Svcomp }, true));
         List<Setting> mCACSL = new ArrayList<Setting>();
         tools.add(new Tool(PrefStrings.s_cacsl2boogietranslator, oCACSL, mCACSL,
                 LoggingLevel.WARN));
 
-        List<Setting> oPre = new ArrayList<Setting>();
-        List<Setting> mPre = new ArrayList<Setting>();
-        tools.add(new Tool(PrefStrings.s_boogiePreprocessor,
-                oPre, mPre, LoggingLevel.WARN));
-
-        List<Setting> oRCFGB = new ArrayList<Setting>();
-        List<Setting> mRCFGB = new ArrayList<Setting>();
-        tools.add(new Tool(PrefStrings.s_rcfgBuilder, oRCFGB, mRCFGB, LoggingLevel.WARN));
-        oRCFGB.add(new Setting(PrefStrings.s_RCFG_LABEL_ExternalSolver, Setting.SettingType.BOOLEAN,
-                "external solver", "false", false));
-        List<Setting> oTrAbs = new ArrayList<Setting>();
-//        oTrAbs.add(new Setting("", Setting.SettingType.STRING, "Mode",
-//                "StrongestPost", true));
-//        oTrAbs.add(new Setting("/AllErrorsAtOnce", Setting.SettingType.BOOLEAN,
-//        		"check all specifications at once", "false", true));
-//        oTrAbs.add(new Setting("/Minimize", Setting.SettingType.BOOLEAN,
-//                "Use Minimization", "true", true));
-        oTrAbs.add(new Setting("/Compute\\ Hoare\\ Annotation\\ of\\ negated\\ interpolant\\ automaton,\\ abstraction\\ and\\ CFG", Setting.SettingType.BOOLEAN,
-                "Compute Hoare Annotation", "true", true));
-        oTrAbs.add(new Setting(PrefStrings.s_TA_LABEL_Interpol, Setting.SettingType.STRING,
-                "interpolation", PrefStrings.s_TA_VALUE_CraigTree, false));
-        oTrAbs.add(new Setting("Timeout\\ in\\ seconds", Setting.SettingType.INTEGER,
-                "Timeout", "20", false));
-//        oTrAbs.add(new Setting("/Edges2True", Setting.SettingType.BOOLEAN,
-//                "Edges to true", "true", true));
-//        oTrAbs.add(new Setting("/Interpolants", Setting.SettingType.STRING,
-//                "Which locations", "All locations", true));
-//        oTrAbs.add(new Setting("/Determinization", "Type of Determinization",
-//                new String[] { "Best Approximation" }, false, new String[] {
-//                        "LazyPost", "EagerPost", "Best Approximation",
-//                        "Add as many selfloops as possible" }, true));
-        List<Setting> mTrAbs = new ArrayList<Setting>();
-        mTrAbs.add(new Setting("/DumpPath", Setting.SettingType.STRING,
-                "Where to dump", "C:\\Code\\log\\dump", false));
-        tools.add(new Tool(PrefStrings.s_traceAbstraction, oTrAbs, mTrAbs,
-                LoggingLevel.WARN));
+        tools.addAll(BoogieTraceAbstractionTC.boogieTools());
         return tools;
     }
 

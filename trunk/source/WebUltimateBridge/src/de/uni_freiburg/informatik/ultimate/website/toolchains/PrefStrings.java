@@ -12,6 +12,11 @@ package de.uni_freiburg.informatik.ultimate.website.toolchains;
  *
  */
 public class PrefStrings {
+	public static final String s_CACSL_LABEL_StartFunction = "/Checked\\ method.\\ Library\\ mode\\ if\\ empty.";
+	public static final String s_CACSL_LABEL_TranslationMode = "/Translation\\ Mode\\:";
+	public static final String s_CACSL_VALUE_Base = "BASE";
+	public static final String s_CACSL_VALUE_Svcomp = "SV_COMP14";
+	
 	public static final String s_RCFG_LABEL_ExternalSolver = "Use\\ external\\ solver\\ instead\\ of\\ SMTInterpol";
 	public static final String s_RCFG_LABEL_BlockSize = "Size\\ of\\ a\\ code\\ block";
 	public static final String s_RCFG_VALUE_Single = "SingleStatement";
@@ -24,6 +29,7 @@ public class PrefStrings {
 	public static final String s_TA_LABEL_Interpol = "Compute\\ Interpolants\\ along\\ a\\ Counterexample";
 	public static final String s_TA_VALUE_CraigTree = "Craig_TreeInterpolation";
 	public static final String s_TA_VALUE_Forward = "ForwardPredicates";
+	public static final String s_TA_LABEL_Hoare = "/Compute\\ Hoare\\ Annotation\\ of\\ negated\\ interpolant\\ automaton,\\ abstraction\\ and\\ CFG";
 	
 	public static final String s_BA_LABEL_ExtSolverRank = "Use\\ external\\ solver\\ (rank\\ synthesis)";
 	public static final String s_BA_LABEL_Nonlinear = "Allow\\ nonlinear\\ constraints";

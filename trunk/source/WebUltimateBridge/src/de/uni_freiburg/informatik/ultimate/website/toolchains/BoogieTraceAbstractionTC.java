@@ -87,6 +87,10 @@ public class BoogieTraceAbstractionTC extends WebToolchain {
 	 */
 	@Override
 	protected List<Tool> setTools() {
+		return boogieTools();
+	}
+	
+	static List<Tool> boogieTools() {
 		List<Tool> tools = new ArrayList<Tool>();
 		
 		List<Setting> oPre = new ArrayList<Setting>();
@@ -102,14 +106,10 @@ public class BoogieTraceAbstractionTC extends WebToolchain {
 
         List<Setting> oTrAbs = new ArrayList<Setting>();
         List<Setting> mTrAbs = new ArrayList<Setting>();
-        oTrAbs.add(new Setting("/Compute\\ Interpolants\\ along\\ a\\ Counterexample", Setting.SettingType.STRING,
-                "interpolation", "Craig_NestedInterpolation", false));
-        oTrAbs.add(new Setting("/Compute\\ Hoare\\ Annotation\\ of\\ negated\\ interpolant\\ automaton,\\ abstraction\\ and\\ CFG", Setting.SettingType.BOOLEAN,
+        oTrAbs.add(new Setting(PrefStrings.s_TA_LABEL_Interpol, Setting.SettingType.STRING,
+                "interpolation", PrefStrings.s_TA_VALUE_CraigTree, false));
+        oTrAbs.add(new Setting(PrefStrings.s_TA_LABEL_Hoare, Setting.SettingType.BOOLEAN,
                 "Compute Hoare Annotation", "true", true));
-        oTrAbs.add(new Setting("/Timeout", Setting.SettingType.INTEGER,
-                "Timeout", "20", false));
-        mTrAbs.add(new Setting("/DumpPath", Setting.SettingType.STRING,
-                "Where to dump", "C:\\Code\\log\\dump", false));
         tools.add(new Tool(PrefStrings.s_traceAbstraction, oTrAbs, mTrAbs,
                 LoggingLevel.WARN));
 		return tools;
