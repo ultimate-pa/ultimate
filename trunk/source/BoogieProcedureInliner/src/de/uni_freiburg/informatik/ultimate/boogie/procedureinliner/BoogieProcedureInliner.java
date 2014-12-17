@@ -53,7 +53,8 @@ public class BoogieProcedureInliner implements IAnalysis {
 	public List<IObserver> getObservers() {
 		ArrayList<IObserver> observers = new ArrayList<IObserver>();
 		observers.add(new TypeChecker(mServices)); // TODO enable "TypeChecker" as a user option
-		observers.add(new ProcedureInliner(mServices));
+		observers.add(new ScopePrefixer(mServices));
+		observers.add(new ProcedureInlinerObserver(mServices));
 		return observers;
 	}
 

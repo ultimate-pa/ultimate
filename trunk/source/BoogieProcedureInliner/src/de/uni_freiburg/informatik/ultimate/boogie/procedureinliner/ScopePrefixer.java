@@ -14,13 +14,19 @@ import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvide
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.*;
 
-public class ProcedureInliner implements IUnmanagedObserver {
+/**
+ * Observer, which unites specifications and implementations of procedures
+ * and gives every variable an unique name.
+ * 
+ * @author schaetzc@informatik.uni-freiburg.de
+ */
+public class ScopePrefixer implements IUnmanagedObserver {
 
 	private IUltimateServiceProvider mServices;
 	private Logger mLogger;
 	private Unit mAstUnit;
 
-	public ProcedureInliner(IUltimateServiceProvider services) {
+	public ScopePrefixer(IUltimateServiceProvider services) {
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 	}
@@ -49,20 +55,7 @@ public class ProcedureInliner implements IUnmanagedObserver {
 		if (root instanceof Unit) {
 			mAstUnit = (Unit) root;
 			uniteProcedures();
-			// TODO
-			// refactor all variables (add scope-prefix)
-			// TODO
-			// for every non-flat procedure p
-			// inline(p, {});
-			// --------------------
-			// inline(p, parents) :=
-			// if p in parents
-			// error: possible recursion!
-			// for every called procedure c in p
-			// if c is not flat
-			// inline(c, {p} u parents)
-			// inline c into p // this changes p
-			// mark p as flat
+			addScopePrefix();
 			return false;
 		}
 		return true;
@@ -138,4 +131,35 @@ public class ProcedureInliner implements IUnmanagedObserver {
 		}
 		return mapping;
 	}
+	
+	private void addScopePrefix() {
+		Declaration[] oldDecls = mAstUnit.getDeclarations();
+		Declaration[] newDecls = new Declaration[oldDecls.length];
+		for (int i = 0; i < oldDecls.length; ++i) {
+			newDecls[i] = addScopePrefix(oldDecls[i]);
+		}
+		// TODO
+		// mAstUnit.setDeclarations(newDecls);
+	}
+	
+	private Declaration addScopePrefix(Declaration decl) {
+		// TODO implement
+		if (decl instanceof TypeDeclaration) {
+			return null;
+		}
+		if (decl instanceof Axiom) {
+			return null;
+		}
+		if (decl instanceof FunctionDeclaration) {
+			return null;
+		}
+		if (decl instanceof VariableDeclaration) {
+			return null;
+		}
+		if (decl instanceof Procedure) {
+			return null;
+		}
+		return null;
+	}
+	
 }
