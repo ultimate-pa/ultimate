@@ -9,6 +9,8 @@ import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvide
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.*;
 
+// Inliner for procedures with overall unique variable identifiers.
+// TODO implement
 public class ProcedureInlinerObserver implements IUnmanagedObserver {
 
 	private IUltimateServiceProvider mServices;

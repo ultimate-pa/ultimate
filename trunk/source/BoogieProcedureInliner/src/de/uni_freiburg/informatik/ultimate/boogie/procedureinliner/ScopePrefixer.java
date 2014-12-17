@@ -16,7 +16,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.*;
 
 /**
  * Observer, which unites specifications and implementations of procedures
- * and gives every variable an unique name.
+ * and gives every global variable and variable in the procedures an unique name.
  * 
  * @author schaetzc@informatik.uni-freiburg.de
  */
@@ -138,19 +138,22 @@ public class ScopePrefixer implements IUnmanagedObserver {
 		for (int i = 0; i < oldDecls.length; ++i) {
 			newDecls[i] = addScopePrefix(oldDecls[i]);
 		}
-		// TODO
+		// TODO when addScopePrefix(Declaration decl) implemented:
 		// mAstUnit.setDeclarations(newDecls);
 	}
 	
 	private Declaration addScopePrefix(Declaration decl) {
 		// TODO implement
 		if (decl instanceof TypeDeclaration) {
-			return null;
-		}
-		if (decl instanceof Axiom) {
+			// rename attributes?
 			return null;
 		}
 		if (decl instanceof FunctionDeclaration) {
+			FunctionDeclaration d = (FunctionDeclaration) decl;
+			// TODO rename global variables in body
+			return null;
+		}
+		if (decl instanceof Axiom) {
 			return null;
 		}
 		if (decl instanceof VariableDeclaration) {
