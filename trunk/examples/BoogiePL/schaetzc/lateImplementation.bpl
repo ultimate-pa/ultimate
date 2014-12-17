@@ -1,23 +1,25 @@
 var globalVar : int;
 
 procedure f1(x : int) returns (y : int);
+requires x >= 0;
 modifies globalVar;
 
 procedure f2()
+modifies globalVar;
 {
    var localVar : int;
-   call localVar := id(5);
+   call localVar := f1(5);
 }
 
 procedure f3()
 modifies globalVar;
 {
-   call globalVar := id(5);
+   call globalVar := f1(5);
 }
 
-implementation f1(x: int) returns (y: int)
+implementation f1(a: int) returns (b: int)
 {
-  y := x;
-  globalVar := y;
+  b := a;
+  globalVar := b;
 }
 

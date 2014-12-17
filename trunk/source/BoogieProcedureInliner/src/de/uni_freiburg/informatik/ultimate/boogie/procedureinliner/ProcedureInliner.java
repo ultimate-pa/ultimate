@@ -7,6 +7,7 @@ import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
+import de.uni_freiburg.informatik.ultimate.boogie.preprocessor.Activator;
 import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.refactoring.MappingExecutor;
 import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.refactoring.StringMapper;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
@@ -39,8 +40,7 @@ public class ProcedureInliner implements IUnmanagedObserver {
 
 	@Override
 	public boolean performedChanges() {
-		// TODO Auto-generated method stub
-		return false;
+		return true; // TODO only if something has really changed
 	}
 
 	@Override
@@ -48,7 +48,7 @@ public class ProcedureInliner implements IUnmanagedObserver {
 		// Store the first node of the AST and use it to process the AST manually
 		if (root instanceof Unit) {
 			mAstUnit = (Unit) root;
-			pickProcedures();
+			uniteProcedures();
 			// TODO
 			// refactor all variables (add scope-prefix)
 			// TODO
@@ -68,51 +68,44 @@ public class ProcedureInliner implements IUnmanagedObserver {
 		return true;
 	}
 
-	private ArrayList<Procedure> pickProcedures() {
+	// unite procedure specifications with their implementations in mAstUnit 
+	private void uniteProcedures() {
 		// Filter the procedure objects from the AST
-		ArrayList<Procedure> implementations = new ArrayList<Procedure>(); // implementation only
-		HashMap<String, Procedure> declarations = new HashMap<String, Procedure>(); // declaration only
-		ArrayList<Procedure> procedures = new ArrayList<Procedure>(); // both, implementation and declaration
+		ArrayList<Procedure> implementations = new ArrayList<Procedure>(); // procedure implementation only
+		HashMap<String, Procedure> declarations = new HashMap<String, Procedure>(); // procedure declaration only
+		ArrayList<Procedure> procedures = new ArrayList<Procedure>(); // both, procedure implementation and declaration
+		ArrayList<Declaration> others = new ArrayList<Declaration>(); // everything other from the ast unit
 		for (Declaration declaration : mAstUnit.getDeclarations()) {
-			if (!(declaration instanceof Procedure))
-				continue;
-			Procedure p = (Procedure) declaration;
-			if (p.getSpecification() == null) {
-				implementations.add(p);
-			} else if (p.getBody() == null) { 
-				declarations.put(p.getIdentifier(), p);
-			} else { 
-				procedures.add(p);
+			if (declaration instanceof Procedure) {
+				Procedure p = (Procedure) declaration;
+				if (p.getSpecification() == null) {
+					implementations.add(p);
+				} else if (p.getBody() == null) { 
+					declarations.put(p.getIdentifier(), p);
+				} else { 
+					procedures.add(p);
+				}
+			} else {
+				others.add(declaration);
 			}
 		}
-		// Debug prints ---------------
-		/*
-		mLogger.error("Procedures");
-		for (Procedure p : procedures)
-			mLogger.warn("   " + p);
-		mLogger.error("Declarations");
-		for (Procedure p : declarations.values())
-			mLogger.warn("   " + p);
-		mLogger.error("Implementations");
-		for (Procedure p : implementations)
-			mLogger.error("   " + p);
-		*/
-		// --------------------------
 
 		// Unite all implementations with their specifications
 		for (Procedure implementation : implementations) {
-			Procedure declaration = declarations.get(implementation.getIdentifier());
+			Procedure declaration = declarations.remove(implementation.getIdentifier());
 			if (declaration == null) {
 				mLogger.error("No declaration for procedure implementation \"" + implementation.getIdentifier() + "\".");
 				// TODO throw exception, using mServices (see TypeChecker, Line 1156)
+				throw new AssertionError();
 			}
-			// TODO add to procedure list, remove implementation and declaration
-			unite(declaration, implementation);
+			procedures.add(unite(declaration, implementation));
+			declarations.remove(implementation.getIdentifier());
 		}
-
-		return procedures;
+		others.addAll(procedures);
+		others.addAll(declarations.values()); // remaining declarations without implementations
+		mAstUnit.setDeclarations(others.toArray(new Declaration[others.size()]));
 	}
-	
+
 	/**
 	 * Unites separate declaration and implementation of a procedure into one procedure object.
 	 * parameters can have different names in declaration and implementation.
@@ -123,15 +116,26 @@ public class ProcedureInliner implements IUnmanagedObserver {
 	 * @return United procedure
 	 */
 	private Procedure unite(Procedure declaration, Procedure implementation) {
-		//VarList declaration.getInParams();
-		// TODO build mapping 
-		StringMapper mapper = null; //new StringMapper();
+		HashMap<String, String> mapping = generateMapping(declaration.getInParams(), implementation.getInParams());
+		mapping.putAll(generateMapping(declaration.getOutParams(), implementation.getOutParams()));
+		StringMapper mapper = new StringMapper(mapping);
 		// TODO Also unite where clauses?
-		// TODO keep values for ILocation and Attributes (?)
+		// TODO keep Location and Attributes (?)
 		// TODO refactor Attributes?
 		return new Procedure( null, new Attribute[0], declaration.getIdentifier(),
 				implementation.getTypeParams(), implementation.getInParams(), implementation.getOutParams(),
 				MappingExecutor.mapVariables(declaration.getSpecification(), mapper), implementation.getBody());
 	}
 
+	private HashMap<String, String> generateMapping(VarList[] oldVars, VarList[] newVars) {
+		HashMap<String, String> mapping = new HashMap<String, String>();		
+		for (int i = 0; i < oldVars.length; ++i) {
+			String[] oldVarNames = oldVars[i].getIdentifiers();
+			String[] newVarNames = newVars[i].getIdentifiers();
+			for (int j = 0; j < oldVarNames.length; ++j) {
+				mapping.put(oldVarNames[j], newVarNames[j]);
+			}
+		}
+		return mapping;
+	}
 }

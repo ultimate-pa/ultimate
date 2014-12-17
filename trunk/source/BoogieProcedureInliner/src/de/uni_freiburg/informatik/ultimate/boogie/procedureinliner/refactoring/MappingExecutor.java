@@ -3,6 +3,10 @@ package de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.refactoring;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.*;
 
 // TODO map variables in attributes (?)
+/**
+ * Unfinished -- do not use.
+ * @author schaetzc@informatik.uni-freiburg.de
+ */
 public class MappingExecutor {
 
 	public static Specification mapVariables(Specification spec, IStringMapper mapper) {
@@ -38,12 +42,13 @@ public class MappingExecutor {
 	}
 	
 	public static Expression mapVariables(Expression expr, IStringMapper mapper) {
-		if (expr instanceof IdentifierExpression) { // trivial case
+		// trivial case ----
+		if (expr instanceof IdentifierExpression) {
 			IdentifierExpression e = (IdentifierExpression) expr;
 			return new IdentifierExpression(e.getLocation(), e.getType(),
 					mapper.map(e.getIdentifier()), e.getDeclarationInformation());
 		}
-
+		// non-trivial cases ----
 		if (expr instanceof ArrayAccessExpression) {
 			ArrayAccessExpression e = (ArrayAccessExpression) expr;
 			return new ArrayAccessExpression(e.getLocation(), e.getType(),
@@ -81,13 +86,16 @@ public class MappingExecutor {
 					mapVariables(e.getThenPart(), mapper),
 					mapVariables(e.getElsePart(), mapper));
 		}
+		// TODO QuantifierExpression need a lot of work, regarding the bound variables
+		// ////////////////////////////////////
 		if (expr instanceof QuantifierExpression) {
 			QuantifierExpression e = (QuantifierExpression) expr;
 			return new QuantifierExpression(e.getLocation(), e.getType(), e.isUniversal(), e.getTypeParams(),
-					mapVariables(e.getParameters(), mapper),
-					e.getAttributes(), // TODO map attributes? (do they have their own scope?) // TODO // TODO // TODO
-					mapVariables(e.getSubformula(), mapper));
+					e.getParameters(), // TODO rename, avoiding name collisions -----------------+
+					e.getAttributes(), // map attributes? (do they have their own scope?)        |
+					mapVariables(e.getSubformula(), mapper)); // Rename bound variables, too <---+
 		}
+		// ////////////////////////////////////
 		if (expr instanceof StructAccessExpression) {
 			StructAccessExpression e = (StructAccessExpression) expr;
 			return new StructAccessExpression(e.getLocation(), e.getType(),

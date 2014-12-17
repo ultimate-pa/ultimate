@@ -13,6 +13,10 @@ public class StringMapper implements IStringMapper {
 		}
 	}
 	
+	public StringMapper(HashMap<String, String> mapping) {
+		mMapping = mapping;
+	}
+
 	@Override
 	public String map(String oldVarName) {
 		String newVarName = mMapping.get(oldVarName);
