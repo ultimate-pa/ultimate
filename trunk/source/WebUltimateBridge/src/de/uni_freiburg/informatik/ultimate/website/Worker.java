@@ -32,6 +32,18 @@ public class Worker {
 	 */
 	private String userInfo;
 	/**
+	 * The websites layout orientation of the interface. "vertical", "horizontal"
+	 */
+	private String layoutOrientation;
+	/**
+	 * The websites font size of the interface. Any String of a number
+	 */
+	private String layoutFontsize;
+	/**
+	 * The websites transition preset of the interface. "true", "false"
+	 */
+	private String layoutTransitions;
+	/**
 	 * Where the content for the website is. optional.
 	 */
 	private String contentURL;
@@ -60,10 +72,13 @@ public class Worker {
 	 *            the description for this worker on the website. Can be null
 	 */
 	public Worker(String name, String label, String description, ArrayList<WebToolchain> toolchains) {
-		this.name        = name;
-		this.label       = (label == null) ? getLabel(name) : label;
-		this.description = (description == null) ? getDescription(name) : description;
-		this.toolchains  = (toolchains == null) ? new ArrayList<WebToolchain>() : toolchains;
+		this.name              = name;
+		this.label             = (label == null) ? getLabel(name) : label;
+		this.description       = (description == null) ? getDescription(name) : description;
+		this.toolchains        = (toolchains == null) ? new ArrayList<WebToolchain>() : toolchains;
+		this.layoutFontsize    = null;
+		this.layoutOrientation = null;
+		this.layoutTransitions = null;
 		setId(name);
 	}
 
@@ -211,6 +226,18 @@ public class Worker {
 		return logoURL;
 	}
 
+	public String getInterfaceLayoutFontsize() {
+		return layoutFontsize;
+	}
+
+	public String getInterfaceLayoutOrientation() {
+		return layoutOrientation;
+	}
+
+	public String getInterfaceLayoutTransitions() {
+		return layoutTransitions;
+	}
+
 	/**
 	 * Setter for the html userInfo for this worker.
 	 * 
@@ -235,6 +262,34 @@ public class Worker {
 		this.logoURL = url;
 	}
 
+	/**
+	 * Setter for the html fontsize preset of this worker.
+	 * 
+	 */
+	public void setInterfaceLayoutFontsize(String fontsize) {
+		this.layoutFontsize = fontsize;
+	}
+
+	/**
+	 * Setter for the html orientation preset of this worker.
+	 * 
+	 */
+	public void setInterfaceLayoutOrientation(String orientation) {
+		this.layoutOrientation = orientation;
+	}
+
+	/**
+	 * Setter for the html transitions usage preset of this worker.
+	 * 
+	 */
+	public void setInterfaceLayoutTransitions(String transitions) {
+		this.layoutTransitions = transitions;
+	}
+
+	/**
+	 * Converts a given String to URL and HTML usable
+	 * 
+	 */
 	public static String toKey(String name) {
 		return name.toLowerCase().replaceAll("\\s+","_");
 	}

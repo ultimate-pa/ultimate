@@ -17,6 +17,7 @@ function initSpinners()
              _ITEMS[k].evalText,
              _ITEMS[k].children,
              _ITEMS[k].settings,
+             _ITEMS[k].preferences,
              _ITEMS[k].language,
              _ITEMS[k].taskID);
   });
@@ -110,13 +111,14 @@ function initAsItems(arr)
   // when DOM has items, inititalise them to _ITEMS as Item-objects
   Obj.eachElement( arr, function(k,v)
   {
-    var spinnerID = v.parentElement.parentElement.id || v.parentElement.id;
-    var parentID  = null;
-    var settings  = [];
-    var children  = [];
-    var text      = '';
-    var lang      = '';
-    var tID       = null;
+    var spinnerID   = v.parentElement.parentElement.id || v.parentElement.id;
+    var parentID    = null;
+    var settings    = [];
+    var preferences = [];
+    var children    = [];
+    var text        = '';
+    var lang        = '';
+    var tID         = null;
 
     var task_sel = $('#task .selected')[0];
     
@@ -127,12 +129,13 @@ function initAsItems(arr)
     {
       children     = _ITEMS[v.id].children;
       settings     = _ITEMS[v.id].settings;
+      preferences  = _ITEMS[v.id].preferences;
       text         = _ITEMS[v.id].evalText;
       lang         = _ITEMS[v.id].language;
       tID          = _ITEMS[v.id].taskID;
     }
     
-    new Item(v.id, v.innerHTML, spinnerID, parentID, text, children, settings, lang, tID);
+    new Item(v.id, v.innerHTML, spinnerID, parentID, text, children, settings, preferences, lang, tID);
     v.onclick = function() { _ITEMS[v.id].onselect(); };
   });
 }
@@ -148,6 +151,9 @@ function onToolSelect(self)
   var play = document.getElementById('play');
   var text = self.selected.evalText || play.dataset.defaultVal;
   play.firstElementChild.innerHTML = text;
+
+  if(_EVENT) window.clearTimeout(_EVENT);
+  _EVENT = setTimeout(alignHeaderWidth, 50);
 }
 
 function onTaskSelect(self)
@@ -165,6 +171,9 @@ function onTaskSelect(self)
   changeMode(lang);
   // apply settings
   appendSettings();
+
+  if(_EVENT) window.clearTimeout(_EVENT);
+  _EVENT = setTimeout(alignHeaderWidth, 50);
 }
 
 function onSampleSelect(self)
@@ -193,7 +202,7 @@ function appendSettings(tool, task)
   var box = document.getElementById('settings').lastElementChild;
   
   // append matching settings
-  if(tool && task && task.settings)
+  if(tool && task && task.settings && task.settings.length > 0)
   {
     _SPINNER.settings.children = [];
     Arr.foreach( task.settings, function(k,v)
@@ -214,26 +223,48 @@ function appendSettings(tool, task)
     });
   }
   
+  var el;
+  
   // append general settings
+  var pref = tool ? tool.preferences.fontsize : [].x; // read preference preset for current tool, can be typeof 'undefined'
+  task && (pref = task.preferences.fontsize || pref); // overwrite preference preset for current task if exist
+  _FONTSIZE = (typeof pref != 'undefined') ? pref : (getCookie('_FONTSIZE') || 100); // use preset fontisize and cookie otherwise
   el = document.createElement('div');
   el.appendChild(getSliderTemplate('font-size', 'Font size', _FONTSIZE, changeFontSize, '50', '150', '%'));
   box.appendChild(el);
-  el.firstChild.children[1].onchange();
+  _COOKIE_SKIP = !!pref; // prevent writing cookie once
+  el.firstChild.children[1].onchange(); // simulate onchange event, setting the cookie
+  _COOKIE_SKIP = false; // stop cookie prevention
+  pref && removeElement(el); // remove element if preference is preset
   
-  var el = document.createElement('div');
+  pref = tool ? tool.preferences.orientation : [].x;
+  task && (pref = task.preferences.orientation || pref);
+  _AUTO_ORIENTATE = (typeof pref != 'undefined') ? false : !(getCookie('_FONTSIZE') == 'false');
+  el = document.createElement('div');
   el.appendChild(getCheckTemplate('autoorientation', 'Auto orientation (layout)', setAutoOrientation, _AUTO_ORIENTATE));
   box.appendChild(el);
+  _COOKIE_SKIP = !!pref;
   el.firstChild.firstChild.onchange();
-  
+  if(pref) { switchOrientation(null, pref); _COOKIE_SKIP = false; }
+  pref && removeElement(el);
+
+  pref = tool ? tool.preferences.transitions : [].x;
+  task && (pref = task.preferences.transitions || pref);
+  _ANIMATE = (typeof pref != 'undefined') ? !(pref == "false") : !(getCookie('_ANIMATE') == 'false');
   el = document.createElement('div');
-  el.appendChild(getCheckTemplate('animations', 'Animations', setAnimation, _ANIMATE));
+  el.appendChild(getCheckTemplate('animations', 'Transitions', setAnimation, _ANIMATE));
   box.appendChild(el);
+  _COOKIE_SKIP = !!pref;
   el.firstChild.firstChild.onchange();
+  _COOKIE_SKIP = false;
+  pref && removeElement(el);
   
   if(document.location.hash.indexOf('url') != -1) {
   el = document.createElement('div');
   el.appendChild(getInputTemplate('current-url', 'URL', generateURL()));
   box.appendChild(el); }
+  
+  box.children.length > 0 && (box.parentElement.style.display = '');
 }
 
 function getWrappedElement(el)
@@ -460,7 +491,7 @@ Spinner.prototype = {
   {
     var spinner = document.getElementById(this.id);
     
-    if($(spinner).hasClass( 'spinner' )) spinner.style.display = 'none';
+    /*if($(spinner).hasClass( 'spinner' ))*/ spinner.style.display = 'none';
     
     spinner.lastElementChild.innerHTML = '';
     spinner.firstElementChild.innerHTML = spinner.dataset.defaultVal || 'choose';
@@ -487,17 +518,18 @@ Spinner.prototype = {
   }
 };
 
-function Item(id, name, spinnerID, parentID, evalText, children, settings, language, taskID)
+function Item(id, name, spinnerID, parentID, evalText, children, settings, preferences, language, taskID)
 {
-  this.id        = id;
-  this.name      = name;
-  this.spinnerID = spinnerID;
-  this.parentID  = parentID;
-  this.children  = children;
-  this.settings  = settings;
-  this.evalText  = evalText;
-  this.language  = language;
-  this.taskID    = taskID;
+  this.id          = id;
+  this.name        = name;
+  this.spinnerID   = spinnerID;
+  this.parentID    = parentID;
+  this.children    = children;
+  this.preferences = preferences;
+  this.settings    = settings;
+  this.evalText    = evalText;
+  this.language    = language;
+  this.taskID      = taskID;
   
   
   // add to parentID's children

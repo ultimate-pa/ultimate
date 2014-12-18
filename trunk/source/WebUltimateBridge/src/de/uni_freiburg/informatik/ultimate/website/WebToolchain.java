@@ -52,6 +52,18 @@ public abstract class WebToolchain {
 	 */
 	private String userInfo;
 	/**
+	 * The websites layout orientation of the interface. "vertical", "horizontal"
+	 */
+	private String layoutOrientation;
+	/**
+	 * The websites font size of the interface. Any String of a number
+	 */
+	private String layoutFontsize;
+	/**
+	 * The websites transition preset of the interface. "true", "false"
+	 */
+	private String layoutTransitions;
+	/**
 	 * The toolchains language being processed.
 	 */
 	private String language;
@@ -111,6 +123,9 @@ public abstract class WebToolchain {
 		this.setTaskName(setTaskName());
 		this.setDescription(setDescription());
 		this.setLanguage(setLanguage());
+		this.setInterfaceLayoutFontsize(setInterfaceLayoutFontsize());
+		this.setInterfaceLayoutOrientation(setInterfaceLayoutOrientation());
+		this.setInterfaceLayoutTransitions(setInterfaceLayoutTransitions());
 		this.setUserInfo(setUserInfo());
 		this.setTools(setTools());
 		this.setToolsLoggingLevel(setToolsLoggingLevel());
@@ -335,6 +350,33 @@ public abstract class WebToolchain {
 	protected abstract String setLanguage();
 
 	/**
+	 * Setter for layout font size for the interface on the website.
+	 * 
+	 * @return the fontsize string
+	 */
+	protected String setInterfaceLayoutFontsize() {
+        return null;
+	}
+
+	/**
+	 * Setter for layout orientation for the interface on the website.
+	 * 
+	 * @return the orientation string
+	 */
+	protected String setInterfaceLayoutOrientation() {
+        return null;
+	}
+
+	/**
+	 * Setter for layout transitions preset for the interface on the website.
+	 * 
+	 * @return the transitions string
+	 */
+	protected String setInterfaceLayoutTransitions() {
+        return null;
+	}
+	
+	/**
 	 * Setter for the user info for this specific toolchain used on the website.
 	 * 
 	 * @return the user info string
@@ -422,6 +464,36 @@ public abstract class WebToolchain {
 	}
 
 	/**
+	 * Setter for the interface font size on the website.
+	 * 
+	 * @param language
+	 *            the fontsize string to set
+	 */
+	protected final void setInterfaceLayoutFontsize(String fontsize) {
+		this.layoutFontsize = fontsize;
+	}
+
+	/**
+	 * Setter for the interface orientation on the website.
+	 * 
+	 * @param language
+	 *            the orientation string to set
+	 */
+	protected final void setInterfaceLayoutOrientation(String orientation) {
+		this.layoutOrientation = orientation;
+	}
+
+	/**
+	 * Setter for the interface transitions on the website.
+	 * 
+	 * @param language
+	 *            the transitions preset string to set
+	 */
+	protected final void setInterfaceLayoutTransitions(String transition) {
+		this.layoutTransitions = transition;
+	}
+
+	/**
 	 * Setter for the user information shown on the website
 	 * 
 	 * @return
@@ -482,5 +554,32 @@ public abstract class WebToolchain {
 	 */
 	public String getLanguage() {
 		return language;
+	}
+
+	/**
+	 * Getter for the tools HTML layout fontsize.
+	 * 
+	 * @return the fontsize.
+	 */
+	public String getInterfaceLayoutFontsize() {
+		return layoutFontsize;
+	}
+
+	/**
+	 * Getter for the tools HTML layout orientation.
+	 * 
+	 * @return the orientation.
+	 */
+	public String getInterfaceLayoutOrientation() {
+		return layoutOrientation;
+	}
+
+	/**
+	 * Getter for the tools HTML layout transitions preset.
+	 * 
+	 * @return the transitions preset.
+	 */
+	public String getInterfaceLayoutTransitions() {
+		return layoutTransitions;
 	}
 }

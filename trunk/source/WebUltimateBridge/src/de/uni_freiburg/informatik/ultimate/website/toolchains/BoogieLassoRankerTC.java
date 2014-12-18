@@ -65,6 +65,36 @@ public class BoogieLassoRankerTC extends WebToolchain {
     /*
      * (non-Javadoc)
      * 
+     * @see de.uni_freiburg.informatik.ultimate.website.WebToolchain#setInterfaceLayoutFontSize()
+     */
+    @Override
+    protected String setInterfaceLayoutFontsize() {
+        return super.setInterfaceLayoutFontsize();
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see de.uni_freiburg.informatik.ultimate.website.WebToolchain#setInterfaceLayoutOrientation()
+     */
+    @Override
+    protected String setInterfaceLayoutOrientation() {
+        return super.setInterfaceLayoutOrientation();
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see de.uni_freiburg.informatik.ultimate.website.WebToolchain#setInterfaceLayoutTransitions()
+     */
+    @Override
+    protected String setInterfaceLayoutTransitions() {
+        return super.setInterfaceLayoutTransitions();
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
      * @see de.uni_freiburg.informatik.ultimate.website.WebToolchain#setUserInfo()
      */
     @Override

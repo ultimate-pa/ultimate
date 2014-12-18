@@ -372,6 +372,11 @@ function removeElement(el)
   el.parentElement.removeChild(el);
 }
 
+function isHidden(el)
+{
+  return (el.offsetParent === null);
+}
+
 function wait(ms)
 {
     var start = new Date().getTime();
@@ -481,6 +486,8 @@ Obj.eachElement = function(obj, callback) {
 
 function setCookie(c_name,value,exdays)
 {
+  if(_COOKIE_SKIP) { _COOKIE_SKIP = false; return; }
+  
   var exdate=new Date();
   exdate.setDate(exdate.getDate() + exdays);
   var c_value=escape(value) + ((exdays==null) ? "" : "; expires="+exdate.toUTCString());

@@ -26,6 +26,18 @@ var _ITEMS =
                           "<c:out value="${tc.getId()}" default="" />",
                         </c:forEach>
                       ],
+                      "preferences":
+                      {
+                         <c:if test="${w.value.getInterfaceLayoutFontsize() ne null}">
+                           "fontsize": "<c:out value="${w.value.getInterfaceLayoutFontsize()}" default="" />",
+                         </c:if>
+                         <c:if test="${w.value.getInterfaceLayoutOrientation() ne null}">
+                           "orientation": "<c:out value="${w.value.getInterfaceLayoutOrientation()}" default="" />",
+                         </c:if>
+                         <c:if test="${w.value.getInterfaceLayoutTransitions() ne null}">
+                           "transitions": "<c:out value="${w.value.getInterfaceLayoutTransitions()}" default="" />",
+                         </c:if>
+                      },
                       "parentID": null,
                       "evalText": "<c:out value="${w.value.getLabel()}" default="" />"
                     },
@@ -52,14 +64,26 @@ var _ITEMS =
 	                            </c:forEach>
 	                          </c:forEach>
 	                        ],
-	                        "settings":
-	                        [
-	                          <c:forEach items="${tc.getTools()}" var="tool">
-	                            <c:forEach items="${tool.getUserChangeableSettings()}" var="setting">
-	                              "<c:out value="${setting.getSettingIdentifier()}" default="" />",
-	                            </c:forEach>
-	                          </c:forEach>
-	                        ]
+                          "settings":
+                          [
+                            <c:forEach items="${tc.getTools()}" var="tool">
+                              <c:forEach items="${tool.getUserChangeableSettings()}" var="setting">
+                                "<c:out value="${setting.getSettingIdentifier()}" default="" />",
+                              </c:forEach>
+                            </c:forEach>
+                          ],
+                          "preferences":
+                          {
+                             <c:if test="${tc.getInterfaceLayoutFontsize() ne null}">
+                               "fontsize": "<c:out value="${tc.getInterfaceLayoutFontsize()}" default="" />",
+                             </c:if>
+                             <c:if test="${tc.getInterfaceLayoutOrientation() ne null}">
+                               "orientation": "<c:out value="${tc.getInterfaceLayoutOrientation()}" default="" />",
+                             </c:if>
+                             <c:if test="${tc.getInterfaceLayoutTransitions() ne null}">
+                               "transitions": "<c:out value="${tc.getInterfaceLayoutTransitions()}" default="" />",
+                             </c:if>
+                          }
 	                      },
 	                  </c:forEach>
                   </c:forEach>

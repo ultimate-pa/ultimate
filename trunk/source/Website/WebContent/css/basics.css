@@ -159,10 +159,24 @@ body {
 #brand-logo {
   height: 55px;
   width: 48px;
+  margin-right: -10px;
   padding: 9px;
   
   background: url(../img/ultimate_logo.png) center no-repeat;
   background-size: 48px 54px;
+  
+  cursor: pointer;
+}
+
+#brand-label {
+	display: table;
+	padding-left: 10px;
+}
+
+#brand-label.away {
+	display: block;
+	width: 0px;
+	visibility: hidden;
 }
 
 #brand-label, .breadcrumb {
@@ -227,6 +241,7 @@ body {
 
 .button.spinner.visible.selection .label {
   color: inherit;
+  word-break: break-all;
 }
 
 .button:hover  .img,
@@ -289,6 +304,7 @@ body {
 
 /* TODO: if label name is too vaste, show it as tooltip */
 .button:hover           .label,
+.button.show            .label,
 .button.active          .label,
 .button:active          .label,
 .button.spinner.visible .label {
@@ -310,7 +326,7 @@ body {
 .button.spinner.visible:active .label,
 .button.spinner.visible.active .label {
   padding-left: 15px;
-  border: 1px solid #EEE;
+  border: 1px solid #DDD;
 }
 
 .animate .button:hover .label {
@@ -617,7 +633,7 @@ body {
   margin-left: 15px;
 }
 
-.button:hover > .box {
+.button.hidden:hover > .box {
   opacity: .5;
 }
 
@@ -1117,7 +1133,8 @@ div.msg-description {
 
 .messages-item div {
   display: table-cell;
-  vertical-align: middle;
+  /* icon, line and column not to be centered vertically */
+  vertical-align: top;
 }
 
 .messages-item div {
@@ -1135,17 +1152,29 @@ div.msg-description {
   text-align: inherit;
   vertical-align: top;
   line-height: 20px;
+  word-break: break-all;
+  word-wrap: break-word;
   word-break: break-word;
+  
+  -webkit-hyphens: auto;
+     -moz-hyphens: auto;
+      -ms-hyphens: auto;
+       -o-hyphens: auto;
+          hyphens: auto;
 }
 
 .msg-description .msg-text {
   width: 100%;
   float: left;
   white-space: pre-wrap;
+  
+  font-family: 'Droid Sans Mono', monospace;
+	/* font-family: monospace; */
+	font-size: 75%;
 }
 
 .messages-item .msg-icon {
-  background: center no-repeat;
+  background: center 10px no-repeat;
 }
 
 .msg-icon.error {

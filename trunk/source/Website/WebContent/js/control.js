@@ -5,11 +5,12 @@ window.onresize     = alignContent;
 
 var _EDITOR, _CUR_LANG,_LAST_MARKER;
 var _COOKIE_EX_DAYS = 365;
-var _SERVER         = "../WebsiteEclipseBridge/if?callback=?";
-var _INIT_CODE      = "// Enter Code here ...";
-var _ANIMATE        = !(getCookie("_ANIMATE") == "false");
-var _AUTO_ORIENTATE = !(getCookie("_AUTO_ORIENTATE") == "false");
-var _FONTSIZE       = getCookie("_FONTSIZE") || 100;
+var _COOKIE_SKIP    = false;
+var _SERVER         = '../WebsiteEclipseBridge/if?callback=?';
+var _INIT_CODE      = '// Enter Code here ...';
+var _ANIMATE        = !(getCookie('_ANIMATE') == 'false');
+var _AUTO_ORIENTATE = !(getCookie('_AUTO_ORIENTATE') == 'false');
+var _FONTSIZE       = getCookie('_FONTSIZE') || 100;
 var _SPINNER        = {};
 var _INFO = new Array();
 // an editor event occurs, this is not null for 100ms
@@ -39,6 +40,8 @@ function initInterfaceControl()
   moveHandler();
 
   var actions = $('#messages-actions')[0];
+  
+  $('#brand-logo')[0].onclick = function() { window.location = './';  };
   
   actions.children[0].onclick   = function() { switchMessageView(false); };
   actions.children[1].onclick   = switchOrientation;
@@ -154,8 +157,74 @@ function alignInterfaceContent()
     switchOrientation(false);
   }
   
+  if(_EVENT) window.clearTimeout(_EVENT);
+  _EVENT = setTimeout(alignHeaderWidth, 50);
+  
   alignDropdownBoxes();
   setTimeout(alignDropdownBoxes, 500);
+}
+
+function alignHeaderWidth(stop)
+{
+  $(document.body ).removeClass( 'animate' );
+
+  var toolLabel  = document.getElementById('tool').firstElementChild;
+  var taskLabel  = document.getElementById('task').firstElementChild;
+  var header     = document.getElementById('header');
+  var leftWidth  = header.children[0].clientWidth;
+  var rightWidth = header.children[1].clientWidth;
+  var list = $('.right .int.button');
+
+  if(!stop && header.clientWidth > leftWidth + rightWidth + 50)
+  {
+    $('#tool')[0].firstElementChild.style.maxWidth = '';
+    $('#task')[0].firstElementChild.style.maxWidth = '';
+  }
+  
+  if(header.clientWidth < leftWidth + rightWidth + 100)
+  {
+    var last = null;
+    if(!stop) list.each(  function() { $(this).addClass( 'show' ); });
+    // header is smaller than a gap of 150px between left and right
+    list.each(  function() {
+        if($(this).hasClass( 'show' )) { last = this; }
+        if(last) { $(last).removeClass( 'show' ); }
+        else { $('#brand-label').addClass( 'away' ); }
+    });
+  }
+  
+  if(header.clientWidth > leftWidth + rightWidth + 255 && $('#brand-label').hasClass( 'away' ))
+  {
+    // header is wider than a gap of 250px between left and right
+    $('#brand-label').removeClass( 'away' );
+    setTimeout(alignHeaderWidth, 3, ++stop);
+    return;
+  }
+  
+  if(header.clientWidth > leftWidth + rightWidth + 300)
+  {
+    // header is wider than a gap of 250px between left and right
+    list.each(  function() {
+        if(!$(this).hasClass( 'show' ) && !isHidden(this))
+          { $(this).addClass( 'show' ); return false; }
+    });
+  }
+
+  if(!stop) stop = 0;
+  if(stop == 4 && header.clientWidth < leftWidth + rightWidth + 30)
+  {
+    var diff = -header.clientWidth + leftWidth + rightWidth + 40;
+    toolLabel.style.maxWidth = Math.max(100, toolLabel.clientWidth - diff) + 'px';
+  }
+  if(stop == 5 && header.clientWidth < leftWidth + rightWidth + 30)
+  {
+    var diff = -header.clientWidth + leftWidth + rightWidth + 40;
+    taskLabel.style.maxWidth = Math.max(100, taskLabel.clientWidth - diff) + 'px';
+  }
+  if(stop == 5) { $(document.body ).addClass( _ANIMATE ? 'animate' : '' ); return; }
+  
+  setTimeout(alignHeaderWidth, 3, ++stop);
+  _EVENT = null;
 }
 
 function alignDropdownBoxes()

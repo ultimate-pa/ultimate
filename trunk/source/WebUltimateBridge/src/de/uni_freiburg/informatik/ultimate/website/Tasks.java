@@ -134,6 +134,9 @@ public class Tasks {
 		name = "Lasso Ranker";
 		description = "This is to synthesize ranking functions of lasso programs.";
 		w = new Worker(name, "rank", description, null);
+		// w.setInterfaceLayoutFontsize("40"); // sample for overwriting fontsize setting
+		// w.setInterfaceLayoutOrientation("vertical"); // sample for overwriting orientation setting
+		// w.setInterfaceLayoutTransitions("false"); // sample for overwriting animations setting
 		// w.setContentURL("http://localhost:8080/Website/json/lasso_ranker.json"); // sample for setting an optional url
 		worker.put(w.getId(), w);
 
