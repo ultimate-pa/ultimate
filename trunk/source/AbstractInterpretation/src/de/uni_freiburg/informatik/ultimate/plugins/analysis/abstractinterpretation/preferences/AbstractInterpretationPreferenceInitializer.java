@@ -10,6 +10,7 @@ import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceIn
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceItem;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceItem.IUltimatePreferenceItemValidator;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceItem.PreferenceType;
+import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 
 public class AbstractInterpretationPreferenceInitializer extends
 		UltimatePreferenceInitializer {
@@ -86,7 +87,7 @@ public class AbstractInterpretationPreferenceInitializer extends
 				DEF_WIDENING_FIXEDNUMBERS, PreferenceType.String));
 		preferenceItems.add(new UltimatePreferenceItem<Boolean>(LABEL_WIDENING_AUTONUMBERS,
 				DEF_WIDENING_AUTONUMBERS, PreferenceType.Boolean));
-
+		
 		preferenceItems.add(new UltimatePreferenceItem<Boolean>(LABEL_STATE_ANNOTATIONS,
 								DEF_STATE_ANNOTATIONS, PreferenceType.Boolean));
 		preferenceItems.add(new UltimatePreferenceItem<Boolean>(LABEL_LOGSTATES_CONSOLE,

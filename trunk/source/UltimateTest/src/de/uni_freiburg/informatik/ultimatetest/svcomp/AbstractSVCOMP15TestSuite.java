@@ -23,8 +23,8 @@ import de.uni_freiburg.informatik.ultimatetest.decider.ITestResultDecider;
 import de.uni_freiburg.informatik.ultimatetest.decider.SafetyCheckTestResultDecider;
 import de.uni_freiburg.informatik.ultimatetest.evals.ColumnDefinition;
 import de.uni_freiburg.informatik.ultimatetest.evals.ConversionContext;
-import de.uni_freiburg.informatik.ultimatetest.evals.TACAS2015Summary;
-import de.uni_freiburg.informatik.ultimatetest.evals.TACAS2015Summary.Aggregate;
+import de.uni_freiburg.informatik.ultimatetest.evals.LatexSummary;
+import de.uni_freiburg.informatik.ultimatetest.evals.LatexSummary.Aggregate;
 import de.uni_freiburg.informatik.ultimatetest.summary.IIncrementalLog;
 import de.uni_freiburg.informatik.ultimatetest.summary.ITestSummary;
 import de.uni_freiburg.informatik.ultimatetest.summary.IncrementalLogWithVMParameters;
@@ -178,7 +178,7 @@ public abstract class AbstractSVCOMP15TestSuite extends UltimateTestSuite {
 		return new ITestSummary[] { 
 				new SVCOMP15TestSummary(getClass()), 
 				new TraceAbstractionTestSummary(getClass()),
-				new TACAS2015Summary(getClass(), benchmarks, columnDef), 
+				new LatexSummary(getClass(), benchmarks, columnDef), 
 		};
 		//@formatter:on
 	}

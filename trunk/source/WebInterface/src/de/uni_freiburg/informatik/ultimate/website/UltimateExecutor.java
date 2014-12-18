@@ -52,6 +52,7 @@ public class UltimateExecutor {
 			setUserSettings(paramList, tcId, tc);
 
 			// create temporary files to run ultimate on
+			//TODO: Ensure that the triple settings, input, toolchain has the same ID 
 			inputFile = writeTemporaryFile("codeFile", code, getFileExtension(taskId));
 			settingsFile = writeTemporaryFile("settingsFile", tc.getSettingFileContent(), ".epf");
 			toolchainFile = writeTemporaryFile("tcFile", tc.getToolchainXML(), ".xml");
@@ -131,6 +132,7 @@ public class UltimateExecutor {
 	}
 
 	private File writeTemporaryFile(String name, String content, String fileExtension) throws IOException {
+		//TODO: Ensure that the triple settings, input, toolchain has the same ID 
 		File codeFile = File.createTempFile(name, fileExtension);
 		BufferedWriter out = new BufferedWriter(new FileWriter(codeFile));
 		out.write(content);

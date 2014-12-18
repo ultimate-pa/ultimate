@@ -60,7 +60,7 @@ public class TAPreferences {
 				INTERPOLATION.class);
 
 		m_InterpolantAutomaton = m_Prefs.getEnum(
-				TraceAbstractionPreferenceInitializer.LABEL_InterpolantAutomaton,
+				TraceAbstractionPreferenceInitializer.LABEL_INTERPOLANT_AUTOMATON,
 				InterpolantAutomaton.class);
 
 		m_DumpAutomata = m_Prefs
@@ -98,7 +98,7 @@ public class TAPreferences {
 	}
 
 	public boolean allErrorLocsAtOnce() {
-		return m_Prefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_AllErrorsAtOnce);
+		return m_Prefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_ALL_ERRORS_AT_ONCE);
 	}
 
 
@@ -185,15 +185,15 @@ public class TAPreferences {
 	}
 
 	public boolean cutOffRequiresSameTransition() {
-		return m_Prefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_cutOff);
+		return m_Prefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_CUTOFF);
 	}
 
 	public boolean unfoldingToNet() {
-		return m_Prefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_unfolding2Net);
+		return m_Prefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_UNFOLDING2NET);
 	}
 
 	public String order() {
-		return m_Prefs.getString(TraceAbstractionPreferenceInitializer.LABEL_Order);
+		return m_Prefs.getString(TraceAbstractionPreferenceInitializer.LABEL_ORDER);
 	}
 
 

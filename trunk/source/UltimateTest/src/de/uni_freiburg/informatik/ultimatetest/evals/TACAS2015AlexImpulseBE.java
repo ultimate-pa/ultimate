@@ -4,7 +4,7 @@ import java.util.List;
 
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
 
-public class TACAS2015AlexImpulseBE extends AbstractEvaluationTestSuite {
+public class TACAS2015AlexImpulseBE extends TACAS2015 {
 
 	@Override
 	protected void createTestCasesForReal(List<UltimateTestCase> testcases) {

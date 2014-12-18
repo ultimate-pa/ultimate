@@ -106,19 +106,19 @@ public class WitnessBugs extends AbstractBugTestSuite {
 
 		// all contested Impulse examples
 		addImpulse32bitPrecise("examples/svcomp/seq-mthreaded/pals_floodmax.3_false-unreach-call.2.ufo.BOUNDED-6.pals.c");
-		addImpulse32bitPrecise("examples/svcomp/seq-mthreaded/pals_floodmax.3_false-unreach-call.3.ufo.BOUNDED-6.pals.c");
-		addImpulse32bitPrecise("examples/svcomp/seq-mthreaded/pals_floodmax.3_false-unreach-call.4.ufo.BOUNDED-6.pals.c");
-		addImpulse32bitPrecise("examples/svcomp/seq-mthreaded/pals_opt-floodmax.3_false-unreach-call.4.ufo.BOUNDED-6.pals.c");
-		addImpulse32bitPrecise("examples/svcomp/seq-mthreaded/pals_opt-floodmax.3_false-unreach-call.1.ufo.BOUNDED-6.pals.c");
-		addImpulse32bitPrecise("examples/svcomp/seq-mthreaded/pals_lcr.3_false-unreach-call.1.ufo.BOUNDED-6.pals.c");
-		addImpulse32bitPrecise("examples/svcomp/seq-mthreaded/pals_lcr-var-start-time.3_false-unreach-call.2.ufo.BOUNDED-6.pals.c");
-		addImpulse32bitPrecise("examples/svcomp/seq-mthreaded/pals_floodmax.3_false-unreach-call.1.ufo.BOUNDED-6.pals.c");
-		addImpulse32bitPrecise("examples/svcomp/seq-mthreaded/pals_opt-floodmax.3_false-unreach-call.3.ufo.BOUNDED-6.pals.c");
-		addImpulse32bitPrecise("examples/svcomp/seq-mthreaded/pals_opt-floodmax.3_false-unreach-call.2.ufo.BOUNDED-6.pals.c");
-		addImpulse32bitPrecise("examples/svcomp/seq-mthreaded/pals_lcr-var-start-time.3_false-unreach-call.1.ufo.BOUNDED-6.pals.c");
-		addImpulse32bitPrecise("examples/svcomp/loops/verisec_OpenSER__cases1_stripFullBoth_arr_false-unreach-call.i");
-		addImpulse32bitPrecise("examples/svcomp/ssh/s3_srvr.blast.07_false-unreach-call.i.cil.c");
-		addImpulse32bitPrecise("examples/svcomp/ssh/s3_srvr.blast.01_false-unreach-call.i.cil.c");
+//		addImpulse32bitPrecise("examples/svcomp/seq-mthreaded/pals_floodmax.3_false-unreach-call.3.ufo.BOUNDED-6.pals.c");
+//		addImpulse32bitPrecise("examples/svcomp/seq-mthreaded/pals_floodmax.3_false-unreach-call.4.ufo.BOUNDED-6.pals.c");
+//		addImpulse32bitPrecise("examples/svcomp/seq-mthreaded/pals_opt-floodmax.3_false-unreach-call.4.ufo.BOUNDED-6.pals.c");
+//		addImpulse32bitPrecise("examples/svcomp/seq-mthreaded/pals_opt-floodmax.3_false-unreach-call.1.ufo.BOUNDED-6.pals.c");
+//		addImpulse32bitPrecise("examples/svcomp/seq-mthreaded/pals_lcr.3_false-unreach-call.1.ufo.BOUNDED-6.pals.c");
+//		addImpulse32bitPrecise("examples/svcomp/seq-mthreaded/pals_lcr-var-start-time.3_false-unreach-call.2.ufo.BOUNDED-6.pals.c");
+//		addImpulse32bitPrecise("examples/svcomp/seq-mthreaded/pals_floodmax.3_false-unreach-call.1.ufo.BOUNDED-6.pals.c");
+//		addImpulse32bitPrecise("examples/svcomp/seq-mthreaded/pals_opt-floodmax.3_false-unreach-call.3.ufo.BOUNDED-6.pals.c");
+//		addImpulse32bitPrecise("examples/svcomp/seq-mthreaded/pals_opt-floodmax.3_false-unreach-call.2.ufo.BOUNDED-6.pals.c");
+//		addImpulse32bitPrecise("examples/svcomp/seq-mthreaded/pals_lcr-var-start-time.3_false-unreach-call.1.ufo.BOUNDED-6.pals.c");
+//		addImpulse32bitPrecise("examples/svcomp/loops/verisec_OpenSER__cases1_stripFullBoth_arr_false-unreach-call.i");
+//		addImpulse32bitPrecise("examples/svcomp/ssh/s3_srvr.blast.07_false-unreach-call.i.cil.c");
+//		addImpulse32bitPrecise("examples/svcomp/ssh/s3_srvr.blast.01_false-unreach-call.i.cil.c");
 		// end conttested
 	}
 

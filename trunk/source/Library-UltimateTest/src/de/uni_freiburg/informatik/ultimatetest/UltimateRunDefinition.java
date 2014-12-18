@@ -76,7 +76,6 @@ public class UltimateRunDefinition {
 		} else {
 			return path;
 		}
-
 	}
 
 	@Override

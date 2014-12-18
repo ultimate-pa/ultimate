@@ -96,6 +96,42 @@ public class Util {
 		return relative.getAbsolutePath();
 	}
 
+	public static String removeTrunkExamplesPrefix(String path) {
+		String trunk = Util.getPathFromTrunk("");
+		String examples = trunk + File.separator + "examples" + File.separator;
+		int lastIndexOf = path.lastIndexOf(examples);
+		if (lastIndexOf != -1) {
+			String trunkated = path.substring(lastIndexOf + examples.length(), path.length());
+			return trunkated;
+		} else {
+			return path;
+		}
+	}
+
+	public static String removeTrunkSettingsPrefix(String path) {
+		String trunk = Util.getPathFromTrunk("");
+		String examples = trunk + File.separator + "examples" + File.separator + "settings" + File.separator;
+		int lastIndexOf = path.lastIndexOf(examples);
+		if (lastIndexOf != -1) {
+			String trunkated = path.substring(lastIndexOf + examples.length(), path.length());
+			return trunkated;
+		} else {
+			return path;
+		}
+	}
+
+	public static String removeTrunkToolchainPrefix(String path) {
+		String trunk = Util.getPathFromTrunk("");
+		String examples = trunk + File.separator + "examples" + File.separator + "toolchains" + File.separator;
+		int lastIndexOf = path.lastIndexOf(examples);
+		if (lastIndexOf != -1) {
+			String trunkated = path.substring(lastIndexOf + examples.length(), path.length());
+			return trunkated;
+		} else {
+			return path;
+		}
+	}
+
 	/***
 	 * Filters a list of files based on a given regex. Returns a collection of
 	 * files of which the path matches the regex.
@@ -132,7 +168,8 @@ public class Util {
 	 * Returns only the name of the file without directories.
 	 */
 	private static String generateLogfilename(ITestLogfile testSummary) {
-		String filename = testSummary.getDescriptiveLogName() + " " + de.uni_freiburg.informatik.ultimate.core.util.CoreUtil.getCurrentDateTimeAsString()
+		String filename = testSummary.getDescriptiveLogName() + " "
+				+ de.uni_freiburg.informatik.ultimate.core.util.CoreUtil.getCurrentDateTimeAsString()
 				+ testSummary.getFilenameExtension();
 		return filename;
 	}
@@ -154,7 +191,8 @@ public class Util {
 		} else {
 			dir = f.getParent() + File.separator;
 		}
-		String name = "UltimateTest Summary " + description + de.uni_freiburg.informatik.ultimate.core.util.CoreUtil.getCurrentDateTimeAsString() + ".log";
+		String name = "UltimateTest Summary " + description
+				+ de.uni_freiburg.informatik.ultimate.core.util.CoreUtil.getCurrentDateTimeAsString() + ".log";
 
 		return dir + name;
 	}
@@ -363,13 +401,16 @@ public class Util {
 		map.put(".*_true-unreach-call.*", SafetyCheckerOverallResult.SAFE);
 		// false-unreach-call is the SV-COMP annotation for safe
 		map.put(".*_false-unreach-call.*", SafetyCheckerOverallResult.UNSAFE);
-		// true-valid-memsafety is the SV-COMP annotation for safe wrt. memory safety
+		// true-valid-memsafety is the SV-COMP annotation for safe wrt. memory
+		// safety
 		map.put(".*_true-valid-memsafety.*", SafetyCheckerOverallResult.SAFE);
-		// false-valid-deref is the SV-COMP annotation for unsafe wrt. pointer dereference
+		// false-valid-deref is the SV-COMP annotation for unsafe wrt. pointer
+		// dereference
 		map.put(".*_false-valid-deref.*", SafetyCheckerOverallResult.UNSAFE_DEREF);
 		// false-valid-free is the SV-COMP annotation for unsafe wrt. free
 		map.put(".*_false-valid-free.*", SafetyCheckerOverallResult.UNSAFE_FREE);
-		// false-valid-memtrack is the SV-COMP annotation for unsafe wrt. memory leaks
+		// false-valid-memtrack is the SV-COMP annotation for unsafe wrt. memory
+		// leaks
 		map.put(".*_false-valid-memtrack.*", SafetyCheckerOverallResult.UNSAFE_MEMTRACK);
 		return map;
 	}
@@ -460,7 +501,8 @@ public class Util {
 	@SuppressWarnings("rawtypes")
 	public static <E extends ICsvProviderProvider<?>> Collection<E> getCsvProviderProviderFromUltimateResults(
 			Map<String, List<IResult>> ultimateIResults, Class<E> benchmarkClass) {
-		Collection<BenchmarkResult> benchmarks = de.uni_freiburg.informatik.ultimate.core.util.CoreUtil.filterResults(ultimateIResults, BenchmarkResult.class);
+		Collection<BenchmarkResult> benchmarks = de.uni_freiburg.informatik.ultimate.core.util.CoreUtil.filterResults(
+				ultimateIResults, BenchmarkResult.class);
 		return getCsvProviderProviderFromBenchmarkResults(benchmarks, benchmarkClass);
 	}
 

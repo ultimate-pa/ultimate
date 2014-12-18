@@ -192,7 +192,7 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 			TraceAbstractionBenchmarks taBenchmark, Collection<ProgramPoint> errorLocs) {
 		BasicCegarLoop basicCegarLoop;
 		LanguageOperation languageOperation = (new UltimatePreferenceStore(Activator.s_PLUGIN_ID)).getEnum(
-				TraceAbstractionPreferenceInitializer.LABEL_LanguageOperation,
+				TraceAbstractionPreferenceInitializer.LABEL_LANGUAGE_OPERATION,
 				LanguageOperation.class);
 		if (languageOperation == LanguageOperation.DIFFERENCE) {		
 			if (taPrefs.interpolantAutomaton() == InterpolantAutomaton.TOTALINTERPOLATION) {

@@ -25,11 +25,10 @@ import de.uni_freiburg.informatik.ultimatetest.util.Util;
 
 /**
  * 
- * 
  * @author dietsch@informatik.uni-freiburg.de
  * 
  */
-public class TACAS2015Summary extends NewTestSummary {
+public class LatexSummary extends NewTestSummary {
 
 	public enum Aggregate {
 		Sum, Max, Average, Ignore
@@ -41,7 +40,7 @@ public class TACAS2015Summary extends NewTestSummary {
 	private final List<ColumnDefinition> mColumnDefinitions;
 	private final int mLatexTableHeaderCount;
 
-	public TACAS2015Summary(Class<? extends UltimateTestSuite> ultimateTestSuite,
+	public LatexSummary(Class<? extends UltimateTestSuite> ultimateTestSuite,
 			Collection<Class<? extends ICsvProviderProvider<? extends Object>>> benchmarks,
 			ColumnDefinition[] columnDefinitions) {
 		super(ultimateTestSuite);

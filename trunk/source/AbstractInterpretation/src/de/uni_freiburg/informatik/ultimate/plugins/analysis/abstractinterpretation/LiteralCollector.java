@@ -66,7 +66,7 @@ public class LiteralCollector extends RCFGEdgeVisitor {
 	public LiteralCollector(INestedWordAutomaton nwa, Logger logger){
 		m_logger = logger;
 		
-		for(Object x : nwa.getInitialStates()){
+		for(Object x : nwa.getAlphabet()){
 			CodeBlock initial = (CodeBlock)x;
 			visit(initial);
 		}

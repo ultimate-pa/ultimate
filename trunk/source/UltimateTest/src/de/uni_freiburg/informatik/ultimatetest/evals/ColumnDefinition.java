@@ -1,6 +1,6 @@
 package de.uni_freiburg.informatik.ultimatetest.evals;
 
-import de.uni_freiburg.informatik.ultimatetest.evals.TACAS2015Summary.Aggregate;
+import de.uni_freiburg.informatik.ultimatetest.evals.LatexSummary.Aggregate;
 
 /**
  * 

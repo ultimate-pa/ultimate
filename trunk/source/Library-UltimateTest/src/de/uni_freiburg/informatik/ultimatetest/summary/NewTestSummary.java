@@ -110,25 +110,31 @@ public abstract class NewTestSummary implements ITestSummary {
 
 	}
 
+	protected PartitionedResults getAllResultsPartitioned() {
+		return partitionResults(mResults.entrySet());
+	}
+
 	protected PartitionedResults partitionResults(Collection<Entry<UltimateRunDefinition, ExtendedResult>> all) {
 		final LinkedHashSet<Entry<UltimateRunDefinition, ExtendedResult>> goodResults = new LinkedHashSet<>();
-		goodResults.addAll(de.uni_freiburg.informatik.ultimate.core.util.CoreUtil.where(all, new ITestSummaryResultPredicate() {
-			@Override
-			public boolean check(Entry<UltimateRunDefinition, ExtendedResult> entry) {
-				return entry.getValue().Result == TestResult.SUCCESS;
-			}
-		}));
+		goodResults.addAll(de.uni_freiburg.informatik.ultimate.core.util.CoreUtil.where(all,
+				new ITestSummaryResultPredicate() {
+					@Override
+					public boolean check(Entry<UltimateRunDefinition, ExtendedResult> entry) {
+						return entry.getValue().Result == TestResult.SUCCESS;
+					}
+				}));
 
 		final LinkedHashSet<Entry<UltimateRunDefinition, ExtendedResult>> timeoutResults = new LinkedHashSet<>();
-		timeoutResults.addAll(de.uni_freiburg.informatik.ultimate.core.util.CoreUtil.where(all, new ITestSummaryResultPredicate() {
-			@Override
-			public boolean check(Entry<UltimateRunDefinition, ExtendedResult> entry) {
-				return (entry.getValue().Result == TestResult.UNKNOWN && entry.getValue().Message.toLowerCase()
-						.contains("timeout"));
-			}
-		}));
-		Collection<Entry<UltimateRunDefinition, ExtendedResult>> errorResults = de.uni_freiburg.informatik.ultimate.core.util.CoreUtil.where(all,
+		timeoutResults.addAll(de.uni_freiburg.informatik.ultimate.core.util.CoreUtil.where(all,
 				new ITestSummaryResultPredicate() {
+					@Override
+					public boolean check(Entry<UltimateRunDefinition, ExtendedResult> entry) {
+						return (entry.getValue().Result == TestResult.UNKNOWN && entry.getValue().Message.toLowerCase()
+								.contains("timeout"));
+					}
+				}));
+		Collection<Entry<UltimateRunDefinition, ExtendedResult>> errorResults = de.uni_freiburg.informatik.ultimate.core.util.CoreUtil
+				.where(all, new ITestSummaryResultPredicate() {
 					@Override
 					public boolean check(Entry<UltimateRunDefinition, ExtendedResult> entry) {
 						return !goodResults.contains(entry) && !timeoutResults.contains(entry);
@@ -136,15 +142,16 @@ public abstract class NewTestSummary implements ITestSummary {
 				});
 
 		final LinkedHashSet<Entry<UltimateRunDefinition, ExtendedResult>> unsafeResults = new LinkedHashSet<>();
-		unsafeResults.addAll(de.uni_freiburg.informatik.ultimate.core.util.CoreUtil.where(goodResults, new ITestSummaryResultPredicate() {
-			@Override
-			public boolean check(Entry<UltimateRunDefinition, ExtendedResult> entry) {
-				return entry.getValue().Message.contains("UNSAFE");
-			}
-		}));
-
-		Collection<Entry<UltimateRunDefinition, ExtendedResult>> safeResults = de.uni_freiburg.informatik.ultimate.core.util.CoreUtil.where(goodResults,
+		unsafeResults.addAll(de.uni_freiburg.informatik.ultimate.core.util.CoreUtil.where(goodResults,
 				new ITestSummaryResultPredicate() {
+					@Override
+					public boolean check(Entry<UltimateRunDefinition, ExtendedResult> entry) {
+						return entry.getValue().Message.contains("UNSAFE");
+					}
+				}));
+
+		Collection<Entry<UltimateRunDefinition, ExtendedResult>> safeResults = de.uni_freiburg.informatik.ultimate.core.util.CoreUtil
+				.where(goodResults, new ITestSummaryResultPredicate() {
 					@Override
 					public boolean check(Entry<UltimateRunDefinition, ExtendedResult> entry) {
 						return !unsafeResults.contains(entry);
@@ -171,38 +178,76 @@ public abstract class NewTestSummary implements ITestSummary {
 		rtr.ExpectedSafe = expectedSafe;
 		rtr.ExpectedUnsafe = expectedUnsafe;
 
-		rtr.Success = de.uni_freiburg.informatik.ultimate.core.util.CoreUtil.where(all, new ITestSummaryResultPredicate() {
-			@Override
-			public boolean check(Entry<UltimateRunDefinition, ExtendedResult> entry) {
-				return entry.getValue().Result == TestResult.SUCCESS;
-			}
-		});
+		rtr.Success = de.uni_freiburg.informatik.ultimate.core.util.CoreUtil.where(all,
+				new ITestSummaryResultPredicate() {
+					@Override
+					public boolean check(Entry<UltimateRunDefinition, ExtendedResult> entry) {
+						return entry.getValue().Result == TestResult.SUCCESS;
+					}
+				});
 
-		rtr.Unknown = de.uni_freiburg.informatik.ultimate.core.util.CoreUtil.where(all, new ITestSummaryResultPredicate() {
-			@Override
-			public boolean check(Entry<UltimateRunDefinition, ExtendedResult> entry) {
-				return entry.getValue().Result == TestResult.UNKNOWN;
-			}
-		});
+		rtr.Unknown = de.uni_freiburg.informatik.ultimate.core.util.CoreUtil.where(all,
+				new ITestSummaryResultPredicate() {
+					@Override
+					public boolean check(Entry<UltimateRunDefinition, ExtendedResult> entry) {
+						return entry.getValue().Result == TestResult.UNKNOWN;
+					}
+				});
 
-		rtr.Failure = de.uni_freiburg.informatik.ultimate.core.util.CoreUtil.where(all, new ITestSummaryResultPredicate() {
-			@Override
-			public boolean check(Entry<UltimateRunDefinition, ExtendedResult> entry) {
-				return entry.getValue().Result == TestResult.FAIL;
-			}
-		});
+		rtr.Failure = de.uni_freiburg.informatik.ultimate.core.util.CoreUtil.where(all,
+				new ITestSummaryResultPredicate() {
+					@Override
+					public boolean check(Entry<UltimateRunDefinition, ExtendedResult> entry) {
+						return entry.getValue().Result == TestResult.FAIL;
+					}
+				});
 
 		return rtr;
 	}
 
 	protected class PartitionedResults {
+		/**
+		 * All results (unpartitioned)
+		 */
 		public Collection<Entry<UltimateRunDefinition, ExtendedResult>> All;
+
+		/**
+		 * Subset of partition "All" where Result is UNKNOWN and result message
+		 * contains "timeout" in any casing
+		 */
 		public Collection<Entry<UltimateRunDefinition, ExtendedResult>> Timeout;
+
+		/**
+		 * Results where Result is not SUCCESS and which are not in partition
+		 * "Timeout".
+		 */
 		public Collection<Entry<UltimateRunDefinition, ExtendedResult>> Error;
+
+		/**
+		 * Subset of partition "Success" where result message contains the
+		 * string "UNSAFE"
+		 */
 		public Collection<Entry<UltimateRunDefinition, ExtendedResult>> Unsafe;
+	
+		/**
+		 * Subset of partition "Success" where result message contains the
+		 * string "SAFE"
+		 */
 		public Collection<Entry<UltimateRunDefinition, ExtendedResult>> Safe;
+		
+		/**
+		 * Results where Result is SUCCESS
+		 */
 		public Collection<Entry<UltimateRunDefinition, ExtendedResult>> Success;
+		
+		/**
+		 * Results where Result is UNKNOWN
+		 */
 		public Collection<Entry<UltimateRunDefinition, ExtendedResult>> Unknown;
+		
+		/**
+		 * Results where Result is FAILURE
+		 */
 		public Collection<Entry<UltimateRunDefinition, ExtendedResult>> Failure;
 		public int ExpectedSafe;
 		public int ExpectedUnsafe;
@@ -231,10 +276,14 @@ public abstract class NewTestSummary implements ITestSummary {
 		}
 	}
 
-	protected interface IMyReduce<T> extends de.uni_freiburg.informatik.ultimate.core.util.CoreUtil.IReduce<T, Entry<UltimateRunDefinition, ExtendedResult>> {
+	protected interface IMyReduce<T>
+			extends
+			de.uni_freiburg.informatik.ultimate.core.util.CoreUtil.IReduce<T, Entry<UltimateRunDefinition, ExtendedResult>> {
 	}
 
-	protected interface ITestSummaryResultPredicate extends de.uni_freiburg.informatik.ultimate.core.util.CoreUtil.IPredicate<Entry<UltimateRunDefinition, ExtendedResult>> {
+	protected interface ITestSummaryResultPredicate
+			extends
+			de.uni_freiburg.informatik.ultimate.core.util.CoreUtil.IPredicate<Entry<UltimateRunDefinition, ExtendedResult>> {
 	}
 
 }

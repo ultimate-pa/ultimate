@@ -1,39 +1,34 @@
 package de.uni_freiburg.informatik.ultimatetest.evals;
 
+import java.util.ArrayList;
 import java.util.List;
 
-import de.uni_freiburg.informatik.ultimatetest.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
-import de.uni_freiburg.informatik.ultimatetest.decider.ITestResultDecider;
-import de.uni_freiburg.informatik.ultimatetest.decider.LTLCheckerTestResultDecider;
 import de.uni_freiburg.informatik.ultimatetest.evals.LatexSummary.Aggregate;
+import de.uni_freiburg.informatik.ultimatetest.summary.ITestSummary;
 
-public class LTLChecker extends AbstractEvaluationTestSuite {
-
-	@Override
-	public ITestResultDecider constructITestResultDecider(UltimateRunDefinition urd) {
-		return new LTLCheckerTestResultDecider(urd, false);
-	}
+public class TraceAbstractionWithAbstractInterpretation extends AbstractEvaluationTestSuite {
 
 	@Override
 	protected void createTestCasesForReal(List<UltimateTestCase> testcases) {
-		addTestCasesFixed("LtlSoftwareModelCheckingC.xml", "LtlSoftwareModelCheckingC.epf", testcases);
+		addTestCasesFixed("AbstractInterpretationC.xml", "AbsIntOrTASingle.epf", testcases);
+		addTestCasesFixed("AutomizerC.xml", "AbsIntOrTASingle.epf", testcases);
+		addTestCasesFixed("AutomizerCWithTA.xml", "TAWithAbsInt.epf", testcases);
 	}
 
 	@Override
 	protected int getFilesPerCategory() {
-		return 20;
+		return -1;
 	}
 
 	@Override
 	protected String[] getDirectories() {
-		return new String[] { "examples/LTL/rers/", };
-		// return super.getDirectories();
+		return new String[] { "examples/programs/regression/c/" };
 	}
 
 	@Override
 	protected int getTimeout() {
-		return 20 * 60 * 1000;
+		return 60 * 1000;
 	}
 
 	@Override
@@ -53,6 +48,17 @@ public class LTLChecker extends AbstractEvaluationTestSuite {
 	@Override
 	protected String[] getFileEndings() {
 		return new String[] { ".c" };
+	}
+
+	@Override
+	protected ITestSummary[] constructTestSummaries() {
+		ITestSummary[] summaries = super.constructTestSummaries();
+		ArrayList<ITestSummary> rtr = new ArrayList<>();
+		for (ITestSummary summary : summaries) {
+			rtr.add(summary);
+		}
+		rtr.add(new ComparativeSummary(getClass()));
+		return rtr.toArray(new ITestSummary[0]);
 	}
 
 }
