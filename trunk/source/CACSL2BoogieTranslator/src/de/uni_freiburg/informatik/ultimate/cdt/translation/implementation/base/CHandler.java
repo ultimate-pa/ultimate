@@ -2949,17 +2949,22 @@ public class CHandler implements ICHandler {
 		case IASTBinaryExpression.op_divideAssign:
 		case IASTBinaryExpression.op_divide:
 			operator = Operator.ARITHDIV;
+			/* In C the semantics of integer division is "rounding towards zero".
+			 * In Boogie euclidian division is used.
+			 * We translate a / b into
+			 *  (a < 0) ? ( (b < 0) ? (a/b)+1 : (a/b)-1) : a/b
+			 */
 			if (bothAreIntegerLiterals) {
 				constantResult = 
 						leftValue
 							.divide(rightValue).toString();
 				return new IntegerLiteral(loc, constantResult);
 			} else {
-				BinaryExpression leftLowerZero = new BinaryExpression(loc, 
+				BinaryExpression leftSmallerZero = new BinaryExpression(loc, 
 						BinaryExpression.Operator.COMPLT, 
 						left,
 						new IntegerLiteral(loc, SFO.NR0));
-				BinaryExpression rightLowerZero = new BinaryExpression(loc, 
+				BinaryExpression rightSmallerZero = new BinaryExpression(loc, 
 						BinaryExpression.Operator.COMPLT, 
 						right,
 						new IntegerLiteral(loc, SFO.NR0));
@@ -2968,7 +2973,7 @@ public class CHandler implements ICHandler {
 					if (leftValue.signum() == 1) {
 						return normalDivision;
 					} else if (leftValue.signum() == -1) {
-						return new IfThenElseExpression(loc, rightLowerZero, 
+						return new IfThenElseExpression(loc, rightSmallerZero, 
 									new BinaryExpression(loc, 
 											BinaryExpression.Operator.ARITHMINUS, 
 											normalDivision, 
@@ -2982,14 +2987,14 @@ public class CHandler implements ICHandler {
 					}
 				} else if (right instanceof IntegerLiteral) {
 					if (rightValue.signum() == 1) {
-						return new IfThenElseExpression(loc, leftLowerZero, 
+						return new IfThenElseExpression(loc, leftSmallerZero, 
 								new BinaryExpression(loc, 
 										BinaryExpression.Operator.ARITHPLUS, 
 										normalDivision, 
 										new IntegerLiteral(loc, SFO.NR1)), 
 								normalDivision);
 					} else if (rightValue.signum() == -1) {
-						return new IfThenElseExpression(loc, leftLowerZero, 
+						return new IfThenElseExpression(loc, leftSmallerZero, 
 									new BinaryExpression(loc, 
 											BinaryExpression.Operator.ARITHMINUS, 
 											normalDivision, 
@@ -2999,8 +3004,8 @@ public class CHandler implements ICHandler {
 						assert false : "program divides by (constant) 0";
 					}
 				} else {
-					return new IfThenElseExpression(loc, leftLowerZero, 
-							new IfThenElseExpression(loc, rightLowerZero, 
+					return new IfThenElseExpression(loc, leftSmallerZero, 
+							new IfThenElseExpression(loc, rightSmallerZero, 
 									new BinaryExpression(loc, 
 											BinaryExpression.Operator.ARITHMINUS, 
 											normalDivision, 
@@ -3015,6 +3020,11 @@ public class CHandler implements ICHandler {
 		case IASTBinaryExpression.op_moduloAssign:
 		case IASTBinaryExpression.op_modulo:
 			operator = Operator.ARITHMOD;
+			/* In C the semantics of integer division is "rounding towards zero".
+			 * In Boogie euclidian division is used.
+			 * We translate a % b into
+			 *  (a < 0) ? ( (b < 0) ? (a%b)-b : (a%b)+b) : a%b
+			 */
 			//modulo on bigInteger does not seem to follow the "multiply, add, and get the result back"-rule, together with its division..
 			if (bothAreIntegerLiterals) {
 				if (leftValue.signum() == 1) {
@@ -3042,11 +3052,11 @@ public class CHandler implements ICHandler {
 				}
 				return new IntegerLiteral(loc, constantResult);
 			} else {
-				BinaryExpression leftLowerZero = new BinaryExpression(loc, 
+				BinaryExpression leftSmallerZero = new BinaryExpression(loc, 
 						BinaryExpression.Operator.COMPLT, 
 						left,
 						new IntegerLiteral(loc, SFO.NR0));
-				BinaryExpression rightLowerZero = new BinaryExpression(loc, 
+				BinaryExpression rightSmallerZero = new BinaryExpression(loc, 
 						BinaryExpression.Operator.COMPLT, 
 						right,
 						new IntegerLiteral(loc, SFO.NR0));
@@ -3055,7 +3065,7 @@ public class CHandler implements ICHandler {
 					if (leftValue.signum() == 1) {
 						return normalModulo;
 					} else if (leftValue.signum() == -1) {
-						return new IfThenElseExpression(loc, rightLowerZero, 
+						return new IfThenElseExpression(loc, rightSmallerZero, 
 								new BinaryExpression(loc, 
 										BinaryExpression.Operator.ARITHPLUS, 
 										normalModulo, 
@@ -3069,14 +3079,14 @@ public class CHandler implements ICHandler {
 					}
 				} else if (right instanceof IntegerLiteral) {
 					if (rightValue.signum() == 1) {
-						return new IfThenElseExpression(loc, leftLowerZero, 
+						return new IfThenElseExpression(loc, leftSmallerZero, 
 								new BinaryExpression(loc, 
 										BinaryExpression.Operator.ARITHMINUS, 
 										normalModulo, 
 										right), 
 										normalModulo);
 					} else if (rightValue.signum() == -1) {
-						return new IfThenElseExpression(loc, leftLowerZero, 
+						return new IfThenElseExpression(loc, leftSmallerZero, 
 								new BinaryExpression(loc, 
 										BinaryExpression.Operator.ARITHPLUS, 
 										normalModulo, 
@@ -3086,8 +3096,8 @@ public class CHandler implements ICHandler {
 						assert false : "program divides by (constant) 0";
 					}
 				} else {
-					return new IfThenElseExpression(loc, leftLowerZero, 
-							new IfThenElseExpression(loc, rightLowerZero, 
+					return new IfThenElseExpression(loc, leftSmallerZero, 
+							new IfThenElseExpression(loc, rightSmallerZero, 
 									new BinaryExpression(loc, 
 											BinaryExpression.Operator.ARITHPLUS, 
 											normalModulo, 
