@@ -27,7 +27,12 @@ public class LTLChecker extends AbstractEvaluationTestSuite {
 
 	@Override
 	protected String[] getDirectories() {
-		return new String[] { "examples/LTL/rers/", };
+		// @formatter:off
+		return new String[] { 
+//				"examples/LTL/rers/", 
+				"examples/LTL/system/battery_control.c"
+		};
+		// @formatter:on
 		// return super.getDirectories();
 	}
 

@@ -1,7 +1,9 @@
 package de.uni_freiburg.informatik.ultimatetest.evals;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -21,9 +23,8 @@ import de.uni_freiburg.informatik.ultimatetest.summary.IIncrementalLog;
 import de.uni_freiburg.informatik.ultimatetest.summary.ITestSummary;
 import de.uni_freiburg.informatik.ultimatetest.summary.IncrementalLogWithVMParameters;
 import de.uni_freiburg.informatik.ultimatetest.traceabstraction.TestSummaryWithBenchmarkResults;
+import de.uni_freiburg.informatik.ultimatetest.util.Util;
 
-
-//TODO: There is some bug in the limit routine. FInd it and kill it (the limitTestFiles design is abysmal)  
 /**
  * @author dietsch@informatik.uni-freiburg.de
  * 
@@ -37,12 +38,11 @@ public abstract class AbstractEvaluationTestSuite extends AbstractModelCheckerTe
 		if (mTestCases.size() == 0) {
 			List<UltimateTestCase> testcases = new ArrayList<>();
 
+			// after this call, mTestCases is empty and testcases contains the
+			// actual test cases
 			createTestCasesForReal(testcases);
 
-			if (getFilesPerCategory() != -1) {
-				mTestCases = testcases;
-			}
-
+			mTestCases = testcases;
 			mIncrementalLog.setCountTotal(mTestCases.size());
 		}
 		return super.createTestCases();
@@ -63,9 +63,21 @@ public abstract class AbstractEvaluationTestSuite extends AbstractModelCheckerTe
 
 	/**
 	 * Which directories relative to the Ultimate trunk should be used to run
-	 * the test? Each directory represents one category
+	 * the test? Per default, each subdirectory containing valid input files
+	 * represents a category. You can overwrite
+	 * {@link #useParentDirectoryAsCategory()} to use each entry of
+	 * getDirectories as category instead.
 	 */
 	protected abstract String[] getDirectories();
+
+	/**
+	 * @return true iff the distinct set of parent directory names of all actual
+	 *         input files should be used as category, false iff each entry of
+	 *         {@link #getDirectories()} should be used as category.
+	 */
+	protected boolean useParentDirectoryAsCategory() {
+		return true;
+	}
 
 	/**
 	 * Specify how many files per directory should be used
@@ -88,8 +100,12 @@ public abstract class AbstractEvaluationTestSuite extends AbstractModelCheckerTe
 	protected abstract String[] getFileEndings();
 
 	protected void addTestCasesFixed(String toolchain, String setting, List<UltimateTestCase> testcases) {
+		// this method collects all wanted testcases and uses mTestCases as
+		// cache
 		addTestCases(toolchain, setting, getDirectories(), getFileEndings(), getTimeout());
-		testcases.addAll(limitTestFiles());
+		// this method clears mTestcases and adds the real selection to the
+		// testcases list
+		limitTestFiles(testcases);
 	}
 
 	@Override
@@ -115,26 +131,37 @@ public abstract class AbstractEvaluationTestSuite extends AbstractModelCheckerTe
 		return new IIncrementalLog[] { mIncrementalLog, new TestSummaryWithBenchmarkResults(this.getClass()) };
 	}
 
-	private List<UltimateTestCase> limitTestFiles() {
+	private void limitTestFiles(List<UltimateTestCase> testcases) {
 		if (getFilesPerCategory() == -1) {
-			return new ArrayList<>();
+			// just take them all
+			testcases.addAll(mTestCases);
+			mTestCases = new ArrayList<>();
+			return;
 		}
-		List<UltimateTestCase> testcases = new ArrayList<>();
 
-		Set<String> categories = CoreUtil.selectDistinct(mTestCases, new CoreUtil.IReduce<String, UltimateTestCase>() {
-			@Override
-			public String reduce(UltimateTestCase entry) {
-				return entry.getUltimateRunDefinition().getInput().getParentFile().getName();
+		List<UltimateTestCase> currentTestcases = new ArrayList<>();
+		Set<String> categories = null;
+		if (useParentDirectoryAsCategory()) {
+			categories = CoreUtil.selectDistinct(mTestCases, new CoreUtil.IReduce<String, UltimateTestCase>() {
+				@Override
+				public String reduce(UltimateTestCase entry) {
+					return entry.getUltimateRunDefinition().getInput().getParentFile().getAbsolutePath();
+				}
+			});
+		} else {
+			categories = new HashSet<>();
+			for (String dir : getDirectories()) {
+				categories.add(new File(Util.getPathFromTrunk(dir)).getAbsolutePath());
 			}
-		});
+		}
 
 		for (final String category : categories) {
-			testcases.addAll(CoreUtil.where(mTestCases, new CoreUtil.IPredicate<UltimateTestCase>() {
+			currentTestcases.addAll(CoreUtil.where(mTestCases, new CoreUtil.IPredicate<UltimateTestCase>() {
 				int i = 0;
 
 				@Override
 				public boolean check(UltimateTestCase entry) {
-					if (entry.getUltimateRunDefinition().getInput().getParentFile().getName().equals(category)) {
+					if (entry.getUltimateRunDefinition().getInput().getAbsolutePath().startsWith(category)) {
 						if (i < getFilesPerCategory()) {
 							i++;
 							return true;
@@ -144,8 +171,8 @@ public abstract class AbstractEvaluationTestSuite extends AbstractModelCheckerTe
 				}
 			}));
 		}
+		testcases.addAll(currentTestcases);
 		mTestCases = new ArrayList<>();
-		return testcases;
 	}
 
 	@Override

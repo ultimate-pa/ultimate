@@ -20,12 +20,17 @@ public class TraceAbstractionWithAbstractInterpretation extends AbstractEvaluati
 	protected int getFilesPerCategory() {
 		return -1;
 	}
+	
+	@Override
+	protected boolean useParentDirectoryAsCategory() {
+		return false;
+	}
 
 	@Override
 	protected String[] getDirectories() {
 		return new String[] { "examples/programs/regression/c/" };
 	}
-
+	
 	@Override
 	protected int getTimeout() {
 		return 60 * 1000;
