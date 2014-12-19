@@ -2,6 +2,7 @@ package de.uni_freiburg.informatik.ultimate.boogie.procedureinliner;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 
 import org.apache.log4j.Logger;
 
@@ -9,7 +10,6 @@ import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
 import de.uni_freiburg.informatik.ultimate.boogie.preprocessor.Activator;
 import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.refactoring.MappingExecutor;
-import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.refactoring.StringMapper;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.*;
@@ -111,13 +111,14 @@ public class ScopePrefixer implements IUnmanagedObserver {
 	private Procedure unite(Procedure declaration, Procedure implementation) {
 		HashMap<String, String> mapping = generateMapping(declaration.getInParams(), implementation.getInParams());
 		mapping.putAll(generateMapping(declaration.getOutParams(), implementation.getOutParams()));
-		StringMapper mapper = new StringMapper(mapping);
-		// TODO Also unite where clauses?
-		// TODO keep Location and Attributes (?)
-		// TODO refactor Attributes?
-		return new Procedure( null, new Attribute[0], declaration.getIdentifier(),
+		MappingExecutor mappingExec = new MappingExecutor(mapping);
+		// TODO Also unite where clauses (is this even possible)?
+		// TODO refactor, unite Attributes?
+		if (declaration.getAttributes().length > 0 || implementation.getAttributes().length > 0)
+			throw new UnsupportedOperationException("Attributes arn't supported yet.");
+		return new Procedure(implementation.getLocation(), new Attribute[0], declaration.getIdentifier(),
 				implementation.getTypeParams(), implementation.getInParams(), implementation.getOutParams(),
-				MappingExecutor.mapVariables(declaration.getSpecification(), mapper), implementation.getBody());
+				mappingExec.map(declaration.getSpecification()), implementation.getBody());
 	}
 
 	private HashMap<String, String> generateMapping(VarList[] oldVars, VarList[] newVars) {
@@ -132,37 +133,83 @@ public class ScopePrefixer implements IUnmanagedObserver {
 		return mapping;
 	}
 	
-	private void addScopePrefix() {
+	// part 2, make variable names globally unique ///////////////////////////////////////////////////////////////////
+	
+	private void addScopePrefix() { // TODO rename
 		Declaration[] oldDecls = mAstUnit.getDeclarations();
 		Declaration[] newDecls = new Declaration[oldDecls.length];
-		for (int i = 0; i < oldDecls.length; ++i) {
-			newDecls[i] = addScopePrefix(oldDecls[i]);
+		
+		// Create sets of existing variable names
+		HashMap<String, HashSet<String>> varIds = new HashMap<String, HashSet<String>>(oldDecls.length+1);
+		HashSet<String> globalIds = new HashSet<String>();
+		// Build 
+		for (Declaration decl : oldDecls) {
+			if (decl instanceof VariableDeclaration) {
+				globalIds.addAll(varIds((VariableDeclaration) decl));
+			} else if (decl instanceof Procedure) {
+				Procedure d = (Procedure) decl;
+				varIds.put(d.getIdentifier(), varIds(d));
+			}
+			// else (TypeDeclaration, Axiom, FunctionDeclaration) nothing to do?
 		}
-		// TODO when addScopePrefix(Declaration decl) implemented:
-		// mAstUnit.setDeclarations(newDecls);
+		// Create mapping of variable names for every procedure (global variables keep their name)
+		HashSet<String> existingIds = new HashSet<String>(globalIds);
+		HashMap<String, HashMap<String, String>> mappings = new HashMap<String, HashMap<String, String>>();
+		for (String procId : varIds.keySet()) {
+			HashMap<String, String> mapping = new HashMap<String, String>();
+			for(String oldId : varIds.get(procId)) {
+				String newId;
+				int uniqueAddition = 1;
+				do { // TODO increase performance by storing last uniqueAddition number
+					newId = procId + "_" + oldId;
+					if (uniqueAddition > 1)
+						newId += "#" + uniqueAddition;
+					++uniqueAddition;
+				} while (existingIds.contains(newId));
+				mapping.put(oldId, newId);
+				existingIds.add(newId);
+			}
+			mappings.put(procId, mapping);
+		}
+		
+		// Rename the variables according to the mapping
+		for (int i = 0; i < oldDecls.length; ++i) {
+			if (oldDecls[i] instanceof Procedure) {
+				Procedure p = (Procedure) oldDecls[i];
+				MappingExecutor mappingExec = new MappingExecutor(mappings.get(p.getIdentifier()));
+				newDecls[i] = mappingExec.map(p);
+			} else {
+				newDecls[i] = oldDecls[i]; // only procedure variables are renamed
+			}
+		}
+		mAstUnit.setDeclarations(newDecls);
 	}
 	
-	private Declaration addScopePrefix(Declaration decl) {
-		// TODO implement
-		if (decl instanceof TypeDeclaration) {
-			// rename attributes?
-			return null;
+	private HashSet<String> varIds(Procedure proc) {
+		HashSet<String> ids = new HashSet<String>();
+		ids.addAll(varIds(proc.getInParams()));
+		ids.addAll(varIds(proc.getOutParams()));
+		ids.addAll(varIds(proc.getBody().getLocalVars()));
+		// TODO add local variables from quantifiers (?)
+		return ids;
+	}
+	
+	private HashSet<String> varIds(VariableDeclaration... varDecls) {
+		HashSet<String> ids = new HashSet<String>();
+		for (VariableDeclaration varDecl : varDecls) {
+			ids.addAll(varIds(varDecl.getVariables()));			
 		}
-		if (decl instanceof FunctionDeclaration) {
-			FunctionDeclaration d = (FunctionDeclaration) decl;
-			// TODO rename global variables in body
-			return null;
+		return ids;
+	}
+	
+	private HashSet<String> varIds(VarList[] varLists) {
+		HashSet<String> ids = new HashSet<String>();
+		for (VarList vl : varLists) {
+			for (String id : vl.getIdentifiers()) {
+				ids.add(id);
+			}
 		}
-		if (decl instanceof Axiom) {
-			return null;
-		}
-		if (decl instanceof VariableDeclaration) {
-			return null;
-		}
-		if (decl instanceof Procedure) {
-			return null;
-		}
-		return null;
+		return ids;
 	}
 	
 }

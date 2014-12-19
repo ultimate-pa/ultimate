@@ -1,4 +1,5 @@
-var globalVar : int;
+var globalVar, z : int;
+var d : int;
 
 procedure f(a : int, b : int, c : int, d : int)
   returns (x : int, y : int, z : int);
@@ -14,6 +15,17 @@ implementation f(z : int, a : int, c : int, y : int)
   b := (a + c) - (y + z);
   x := b - d;
   globalVar := b + c * c * a - d;
+}
+
+procedure g(a : int, x : int) returns (y : int, b : int)
+requires a * x > a;
+ensures y + b > x;
+modifies z, d;
+{
+  d := 41;
+  z := 21;
+  y := a;
+  b := x;
 }
 
 
