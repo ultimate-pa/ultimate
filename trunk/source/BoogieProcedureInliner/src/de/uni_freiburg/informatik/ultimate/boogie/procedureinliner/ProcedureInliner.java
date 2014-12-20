@@ -182,7 +182,10 @@ public class ProcedureInliner implements IUnmanagedObserver {
 				ArrayList<VariableLHS> lhs = new ArrayList<VariableLHS>();
 				for (VarList vl : callee.getInParams()) {
 					for (String id : vl.getIdentifiers()) {
-						lhs.add(new VariableLHS(null, id)); // TODO keep IType and DeclarationInformation
+						// TODO is this declInfo really the right one?
+						DeclarationInformation declInfo = new DeclarationInformation(
+								DeclarationInformation.StorageClass.LOCAL, proc.getIdentifier());
+						lhs.add(new VariableLHS(null, vl.getType().getBoogieType(), id, declInfo));
 					}
 				}
 				assert lhs.size() == cs.getArguments().length;
@@ -196,7 +199,10 @@ public class ProcedureInliner implements IUnmanagedObserver {
 				ArrayList<Expression> rhs = new ArrayList<Expression>();
 				for (VarList vl : callee.getOutParams()) {
 					for (String id : vl.getIdentifiers()) {
-						rhs.add(new IdentifierExpression(null, id)); // TODO keep IType and DeclarationInformation
+						// TODO is this declInfo really the right one?
+						DeclarationInformation declInfo = new DeclarationInformation(
+								DeclarationInformation.StorageClass.LOCAL, proc.getIdentifier());
+						rhs.add(new IdentifierExpression(null, vl.getType().getBoogieType(), id, declInfo));
 					}
 				}
 				assert cs.getLhs().length == rhs.size();
@@ -244,8 +250,8 @@ public class ProcedureInliner implements IUnmanagedObserver {
 		String startLabel, endLabel;
 		int uniqueNumber = 1;
 		do {
-			startLabel = "inline_" + proc.getIdentifier();
-			endLabel = "end_" + proc.getIdentifier();
+			startLabel = "call_" + proc.getIdentifier();
+			endLabel = "endCall_" + proc.getIdentifier();
 			if (uniqueNumber > 1) {
 				startLabel += "#" + uniqueNumber;
 				endLabel += "#" + uniqueNumber;
