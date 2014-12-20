@@ -16,7 +16,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.*;
 
 /**
  * Observer, which unites specifications and implementations of procedures
- * and gives every global variable and variable in the procedures an unique name.
+ * and gives every global variable and local variable a globally unique name.
  * 
  * @author schaetzc@informatik.uni-freiburg.de
  */
