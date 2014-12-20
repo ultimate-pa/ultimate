@@ -20,13 +20,13 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.*;
  * 
  * @author schaetzc@informatik.uni-freiburg.de
  */
-public class ScopePrefixer implements IUnmanagedObserver {
+public class UniqueVariableTransformer implements IUnmanagedObserver {
 
 	private IUltimateServiceProvider mServices;
 	private Logger mLogger;
 	private Unit mAstUnit;
 
-	public ScopePrefixer(IUltimateServiceProvider services) {
+	public UniqueVariableTransformer(IUltimateServiceProvider services) {
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 	}

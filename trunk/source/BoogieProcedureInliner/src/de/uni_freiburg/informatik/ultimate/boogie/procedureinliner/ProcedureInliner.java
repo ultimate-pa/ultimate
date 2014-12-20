@@ -17,7 +17,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.*;
 
 // Inliner for procedures with overall unique variable identifiers.
 // TODO implement
-public class ProcedureInlinerObserver implements IUnmanagedObserver {
+public class ProcedureInliner implements IUnmanagedObserver {
 
 	private IUltimateServiceProvider mServices;
 	private Logger mLogger;
@@ -31,7 +31,7 @@ public class ProcedureInlinerObserver implements IUnmanagedObserver {
 	// Global list of all labels
 	private HashSet<String> mAllLabels = new HashSet<String>();
 	
-	public ProcedureInlinerObserver(IUltimateServiceProvider services) {
+	public ProcedureInliner(IUltimateServiceProvider services) {
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 	}
