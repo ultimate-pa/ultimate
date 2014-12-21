@@ -180,9 +180,11 @@ public class MappingExecutor {
 		if (p.getAttributes().length > 0)
 			throw new UnsupportedOperationException("Attributes aren't supported yet.");
 		Body body = p.getBody();
+		Body newBody = null;
+		if (body != null)
+			newBody = new Body(body.getLocation(), map(body.getLocalVars()), map(body.getBlock()));
 		return new Procedure(p.getLocation(), p.getAttributes(), p.getIdentifier(), p.getTypeParams(),
-				map(p.getInParams()), map(p.getOutParams()), map(p.getSpecification()),
-				new Body(body.getLocation(), map(body.getLocalVars()), map(body.getBlock())));
+				map(p.getInParams()), map(p.getOutParams()), map(p.getSpecification()), newBody);
 	}
 
 	private VariableDeclaration map(VariableDeclaration varDecl) {

@@ -185,11 +185,17 @@ public class UniqueVariableTransformer implements IUnmanagedObserver {
 		mAstUnit.setDeclarations(newDecls);
 	}
 	
+	/**
+	 * Build a set of all non-global variable identifiers inside a Procedure.
+	 * @param proc Procedure.
+	 * @return Set of identifiers from all local variables, in and out parameters.
+	 */
 	private HashSet<String> varIds(Procedure proc) {
 		HashSet<String> ids = new HashSet<String>();
 		ids.addAll(varIds(proc.getInParams()));
 		ids.addAll(varIds(proc.getOutParams()));
-		ids.addAll(varIds(proc.getBody().getLocalVars()));
+		if (proc.getBody() != null)
+			ids.addAll(varIds(proc.getBody().getLocalVars()));
 		// TODO add local variables from quantifiers (?)
 		return ids;
 	}
