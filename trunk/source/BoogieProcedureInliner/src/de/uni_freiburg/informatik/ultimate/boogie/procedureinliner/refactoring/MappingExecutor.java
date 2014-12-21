@@ -130,9 +130,6 @@ public class MappingExecutor {
 			UnaryExpression e = (UnaryExpression) expr;
 			return new UnaryExpression(e.getLocation(), e.getType(), e.getOperator(), map(e.getExpr()));
 		}
-		if (expr instanceof WildcardExpression) {
-			throw new UnsupportedOperationException("WildcardExpressions aren't supported yet.");
-		}
 		// TemporaryPointerExpression is private (should never occur)
 
 		return expr; // assume that expression is a literal => nothing to refactor
@@ -238,12 +235,10 @@ public class MappingExecutor {
 	private LeftHandSide map(LeftHandSide lhs) {
 		if (lhs instanceof VariableLHS) {
 			return map((VariableLHS) lhs);
-		}
-		if (lhs instanceof ArrayLHS) {
+		} else if (lhs instanceof ArrayLHS) {
 			ArrayLHS alhs = (ArrayLHS) lhs;
 			return new ArrayLHS(alhs.getLocation(), alhs.getType(), map(alhs.getArray()), map(alhs.getIndices()));
-		}
-		if (lhs instanceof StructLHS) {
+		} else if (lhs instanceof StructLHS) {
 			StructLHS slhs = (StructLHS) lhs;
 			return new StructLHS(slhs.getLocation(), slhs.getType(), map(slhs.getStruct()), slhs.getField());
 		}

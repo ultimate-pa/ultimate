@@ -223,6 +223,9 @@ public class ProcedureInliner implements IUnmanagedObserver {
 		ArrayList<Statement> flatStat = new ArrayList<Statement>();
 		if (stat instanceof CallStatement) {
 			CallStatement cs = (CallStatement) stat;
+			if (cs.isForall()) {
+				throw new UnsupportedOperationException("Cannot inline \"call forall\" yet.");
+			}
 			Procedure callee = mFlatProcedures.get(cs.getMethodName());
 			if (callee == null) { 
 				callee = mNonFlatProcedures.get(cs.getMethodName());
@@ -300,8 +303,8 @@ public class ProcedureInliner implements IUnmanagedObserver {
 		String startLabel, endLabel;
 		int uniqueNumber = 1;
 		do {
-			startLabel = "call_" + proc.getIdentifier();
-			endLabel = "endCall_" + proc.getIdentifier();
+			startLabel = "body_" + proc.getIdentifier();
+			endLabel = "endBody_" + proc.getIdentifier();
 			if (uniqueNumber > 1) {
 				startLabel += "#" + uniqueNumber;
 				endLabel += "#" + uniqueNumber;
@@ -352,8 +355,8 @@ public class ProcedureInliner implements IUnmanagedObserver {
 				}
 			}
 		}
-		inlineBlock.addAll(assumes);
 		inlineBlock.add(new Label(callLocation, endLabel));
+		inlineBlock.addAll(assumes); // has to be after the endLabel, or it would be skipped, when using return.
 		
 		return inlineBlock;
 	}
