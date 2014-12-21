@@ -181,7 +181,7 @@ public class ProcedureInliner implements IUnmanagedObserver {
 				if (vl.length > 0) {
 					// TODO keep Attributes?
 					// TODO which location is the closest?
-					newLocalVars.add(new VariableDeclaration(callee.getLocation(), new Attribute[0], vl)); 
+					newLocalVars.add(new VariableDeclaration(vl[0].getLocation(), new Attribute[0], vl)); 
 				}
 			}
 			Body calleeBody = callee.getBody();
