@@ -80,7 +80,7 @@ public class ProcedureInliner implements IUnmanagedObserver {
 				Procedure proc = mNonFlatProcedures.get(procId);
 				if (proc == null)
 					continue;
-				flatten(proc, new HashSet<Procedure>());
+				flatten(proc, proc, new HashSet<Procedure>());
 			}
 			ArrayList<Declaration> newDecls = new ArrayList<Declaration>(mNonProcedureDeclarations);
 			newDecls.addAll(mFlatProcedures.values());
@@ -156,9 +156,15 @@ public class ProcedureInliner implements IUnmanagedObserver {
 		}
 		mAstUnit.setDeclarations(newDecls);
 	}
-	
-	// inline all calls inside this procedure
-	private Procedure flatten(Procedure proc, HashSet<Procedure> parents) {
+
+	/**
+	 * Recusivly inline all calls inside this procedure.
+	 * @param proc Procedure which included calls should be inlined.
+	 * @param directParent Procedure which called this Procedure. Use <code>proc</code> if it wasn't called.
+	 * @param parents Parent Procedure, its parent and so on.
+	 * @return Flat Procedure.
+	 */
+	private Procedure flatten(Procedure proc, Procedure directParent, HashSet<Procedure> parents) {
 		if (mFlatProcedures.values().contains(proc)) {
 			return proc;
 		} else if (parents.contains(proc)) {
@@ -168,9 +174,9 @@ public class ProcedureInliner implements IUnmanagedObserver {
 		ArrayList<Statement> newBlock = new ArrayList<Statement>();
 		HashSet<String> callees = new HashSet<String>(); // names of all functions called
 		for (Statement s : body.getBlock()) {
-			newBlock.addAll(flattenStatement(proc, parents, s, callees));
+			newBlock.addAll(flattenStatement(proc, directParent, parents, s, callees));
 		}
-		// Add local variables from all callees
+		// Add local variables, also these from the called procedures (callees)
 		ArrayList<VariableDeclaration> newLocalVars = new ArrayList<VariableDeclaration>();
 		for (VariableDeclaration vd : body.getLocalVars()) {
 			newLocalVars.add(vd);
@@ -201,7 +207,19 @@ public class ProcedureInliner implements IUnmanagedObserver {
 		return newProc;
 	}
 	
-	private ArrayList<Statement> flattenStatement(Procedure proc, HashSet<Procedure> parents, Statement stat, HashSet<String> callees) {
+	/**
+	 * Flatten a statement. A statement is flat, if it doesn't contains a CallStatement.
+	 * (If and While can contain other Statements).
+	 * @param proc Procedure containing the statement.
+	 * @param directParent Procedure which called this Procedure. Use <code>proc</code> if it wasn't called.
+	 * @param parents Parent Procedure, its parent and so on.
+	 * @param stat Statement to flat.
+	 * @param callees All called procedures of the statement will be added (use for local variable declaration).
+	 * @return Flat sequence of statements. Only one statement, iff nothing was called inside the statement.
+	 */
+	private ArrayList<Statement> flattenStatement(Procedure proc, Procedure directParent, HashSet<Procedure> parents,
+			Statement stat, HashSet<String> callees) {
+
 		ArrayList<Statement> flatStat = new ArrayList<Statement>();
 		if (stat instanceof CallStatement) {
 			CallStatement cs = (CallStatement) stat;
@@ -211,7 +229,7 @@ public class ProcedureInliner implements IUnmanagedObserver {
 				assert callee != null;
 				HashSet<Procedure> calleeParents = new HashSet<Procedure>(parents);
 				calleeParents.add(proc);
-				callee = flatten(callee, calleeParents);
+				callee = flatten(callee, proc, calleeParents);
 			}
 			callees.add(callee.getIdentifier());
 			// Assign arguments to input parameters --------------
@@ -220,14 +238,14 @@ public class ProcedureInliner implements IUnmanagedObserver {
 				for (String id : vl.getIdentifiers()) {
 					// TODO is this declInfo really the right one?
 					DeclarationInformation declInfo = new DeclarationInformation(
-							DeclarationInformation.StorageClass.LOCAL, proc.getIdentifier());
+							DeclarationInformation.StorageClass.LOCAL, directParent.getIdentifier());
 					lhs.add(new VariableLHS(cs.getLocation(), vl.getType().getBoogieType(), id, declInfo));
 				}
 			}
 			assert lhs.size() == cs.getArguments().length;
 			if (lhs.size() > 0) {
-				flatStat.add(new AssignmentStatement(
-						null, lhs.toArray(new VariableLHS[lhs.size()]), cs.getArguments()));					
+				flatStat.add(new AssignmentStatement(cs.getLocation(), lhs.toArray(new VariableLHS[lhs.size()]),
+						cs.getArguments()));					
 			}
 			// "call procedure" (inline specification and body) --------------
 			flatStat.addAll(inlineVersion(callee, cs.getLocation(), proc));
@@ -237,19 +255,20 @@ public class ProcedureInliner implements IUnmanagedObserver {
 				for (String id : vl.getIdentifiers()) {
 					// TODO is this declInfo really the right one?
 					DeclarationInformation declInfo = new DeclarationInformation(
-							DeclarationInformation.StorageClass.LOCAL, proc.getIdentifier());
+							DeclarationInformation.StorageClass.LOCAL, directParent.getIdentifier());
 					rhs.add(new IdentifierExpression(cs.getLocation(), vl.getType().getBoogieType(), id, declInfo));
 				}
 			}
 			assert cs.getLhs().length == rhs.size();
 			if (rhs.size() > 0) {
-				flatStat.add(new AssignmentStatement(cs.getLocation(), cs.getLhs(), rhs.toArray(new Expression[rhs.size()])));					
+				flatStat.add(new AssignmentStatement(cs.getLocation(), cs.getLhs(),
+						rhs.toArray(new Expression[rhs.size()])));					
 			}
 		} else if (stat instanceof WhileStatement) {
 			WhileStatement whileStat = (WhileStatement) stat;
 			ArrayList<Statement> whileBody = new ArrayList<Statement>();
 			for (Statement s : whileStat.getBody()) {
-				whileBody.addAll(flattenStatement(proc, parents, s, callees));
+				whileBody.addAll(flattenStatement(proc, directParent, parents, s, callees));
 			}
 			flatStat.add(new WhileStatement(whileStat.getLocation(), whileStat.getCondition(),
 					whileStat.getInvariants(), whileBody.toArray(new Statement[whileBody.size()])));
@@ -258,10 +277,10 @@ public class ProcedureInliner implements IUnmanagedObserver {
 			ArrayList<Statement> thenPart = new ArrayList<Statement>();
 			ArrayList<Statement> elsePart = new ArrayList<Statement>();
 			for (Statement s : ifStat.getThenPart()) {
-				thenPart.addAll(flattenStatement(proc, parents, s, callees));
+				thenPart.addAll(flattenStatement(proc, directParent, parents, s, callees));
 			}
 			for (Statement s : ifStat.getElsePart()) {
-				elsePart.addAll(flattenStatement(proc, parents, s, callees));
+				elsePart.addAll(flattenStatement(proc, directParent, parents, s, callees));
 			}
 			flatStat.add(new IfStatement(ifStat.getLocation(), ifStat.getCondition(),
 					thenPart.toArray(new Statement[thenPart.size()]),
