@@ -438,6 +438,7 @@ public class CfgBuilder {
 				}
 
 				ILocation loc = st.getLocation();
+				assert loc != null : "location of the following statement is null " + st;
 				if (loc.isLoop()) {
 					mLogger.debug("Found loop entry: " + st);
 				}
