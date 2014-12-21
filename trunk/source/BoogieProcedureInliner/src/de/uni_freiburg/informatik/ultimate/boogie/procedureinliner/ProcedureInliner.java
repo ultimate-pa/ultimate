@@ -14,6 +14,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvide
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.*;
+import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 
 // Inliner for procedures with overall unique variable identifiers.
 // TODO implement
@@ -167,51 +168,7 @@ public class ProcedureInliner implements IUnmanagedObserver {
 		ArrayList<Statement> newBlock = new ArrayList<Statement>();
 		HashSet<String> callees = new HashSet<String>(); // names of all functions called
 		for (Statement s : body.getBlock()) {
-			if (s instanceof CallStatement) {
-				CallStatement cs = (CallStatement) s;
-				Procedure callee = mFlatProcedures.get(cs.getMethodName());
-				if (callee == null) { 
-					callee = mNonFlatProcedures.get(cs.getMethodName());
-					assert callee != null;
-					HashSet<Procedure> calleeParents = new HashSet<Procedure>(parents);
-					calleeParents.add(proc);
-					callee = flatten(callee, calleeParents);
-				}
-				callees.add(callee.getIdentifier());
-				// Assign arguments to input parameters --------------
-				ArrayList<VariableLHS> lhs = new ArrayList<VariableLHS>();
-				for (VarList vl : callee.getInParams()) {
-					for (String id : vl.getIdentifiers()) {
-						// TODO is this declInfo really the right one?
-						DeclarationInformation declInfo = new DeclarationInformation(
-								DeclarationInformation.StorageClass.LOCAL, proc.getIdentifier());
-						lhs.add(new VariableLHS(null, vl.getType().getBoogieType(), id, declInfo));
-					}
-				}
-				assert lhs.size() == cs.getArguments().length;
-				if (lhs.size() > 0) {
-					newBlock.add(new AssignmentStatement(
-							null, lhs.toArray(new VariableLHS[lhs.size()]), cs.getArguments()));					
-				}
-				// "call procedure" (inline specification and body) --------------
-				newBlock.addAll(inlineVersion(callee));
-				// assign output parameters --------------
-				ArrayList<Expression> rhs = new ArrayList<Expression>();
-				for (VarList vl : callee.getOutParams()) {
-					for (String id : vl.getIdentifiers()) {
-						// TODO is this declInfo really the right one?
-						DeclarationInformation declInfo = new DeclarationInformation(
-								DeclarationInformation.StorageClass.LOCAL, proc.getIdentifier());
-						rhs.add(new IdentifierExpression(null, vl.getType().getBoogieType(), id, declInfo));
-					}
-				}
-				assert cs.getLhs().length == rhs.size();
-				if (rhs.size() > 0) {
-					newBlock.add(new AssignmentStatement(null, cs.getLhs(), rhs.toArray(new Expression[rhs.size()])));					
-				}
-			} else {
-				newBlock.add(s);
-			}
+			newBlock.addAll(flattenStatement(proc, parents, s, callees));
 		}
 		// Add local variables from all callees
 		ArrayList<VariableDeclaration> newLocalVars = new ArrayList<VariableDeclaration>();
@@ -221,8 +178,11 @@ public class ProcedureInliner implements IUnmanagedObserver {
 		for (String calleeId : callees) {
 			Procedure callee = mFlatProcedures.get(calleeId);
 			for (VarList[] vl : new VarList[][]{callee.getInParams(), callee.getOutParams()}) {
-				if (vl.length > 0)
-					newLocalVars.add(new VariableDeclaration(null, new Attribute[0], vl));
+				if (vl.length > 0) {
+					// TODO keep Attributes?
+					// TODO which location is the closest?
+					newLocalVars.add(new VariableDeclaration(callee.getLocation(), new Attribute[0], vl)); 
+				}
 			}
 			Body calleeBody = callee.getBody();
 			if (calleeBody != null) {
@@ -241,10 +201,81 @@ public class ProcedureInliner implements IUnmanagedObserver {
 		return newProc;
 	}
 	
+	private ArrayList<Statement> flattenStatement(Procedure proc, HashSet<Procedure> parents, Statement stat, HashSet<String> callees) {
+		ArrayList<Statement> flatStat = new ArrayList<Statement>();
+		if (stat instanceof CallStatement) {
+			CallStatement cs = (CallStatement) stat;
+			Procedure callee = mFlatProcedures.get(cs.getMethodName());
+			if (callee == null) { 
+				callee = mNonFlatProcedures.get(cs.getMethodName());
+				assert callee != null;
+				HashSet<Procedure> calleeParents = new HashSet<Procedure>(parents);
+				calleeParents.add(proc);
+				callee = flatten(callee, calleeParents);
+			}
+			callees.add(callee.getIdentifier());
+			// Assign arguments to input parameters --------------
+			ArrayList<VariableLHS> lhs = new ArrayList<VariableLHS>();
+			for (VarList vl : callee.getInParams()) {
+				for (String id : vl.getIdentifiers()) {
+					// TODO is this declInfo really the right one?
+					DeclarationInformation declInfo = new DeclarationInformation(
+							DeclarationInformation.StorageClass.LOCAL, proc.getIdentifier());
+					lhs.add(new VariableLHS(cs.getLocation(), vl.getType().getBoogieType(), id, declInfo));
+				}
+			}
+			assert lhs.size() == cs.getArguments().length;
+			if (lhs.size() > 0) {
+				flatStat.add(new AssignmentStatement(
+						null, lhs.toArray(new VariableLHS[lhs.size()]), cs.getArguments()));					
+			}
+			// "call procedure" (inline specification and body) --------------
+			flatStat.addAll(inlineVersion(callee, cs.getLocation(), proc));
+			// assign output parameters --------------
+			ArrayList<Expression> rhs = new ArrayList<Expression>();
+			for (VarList vl : callee.getOutParams()) {
+				for (String id : vl.getIdentifiers()) {
+					// TODO is this declInfo really the right one?
+					DeclarationInformation declInfo = new DeclarationInformation(
+							DeclarationInformation.StorageClass.LOCAL, proc.getIdentifier());
+					rhs.add(new IdentifierExpression(cs.getLocation(), vl.getType().getBoogieType(), id, declInfo));
+				}
+			}
+			assert cs.getLhs().length == rhs.size();
+			if (rhs.size() > 0) {
+				flatStat.add(new AssignmentStatement(cs.getLocation(), cs.getLhs(), rhs.toArray(new Expression[rhs.size()])));					
+			}
+		} else if (stat instanceof WhileStatement) {
+			WhileStatement whileStat = (WhileStatement) stat;
+			ArrayList<Statement> whileBody = new ArrayList<Statement>();
+			for (Statement s : whileStat.getBody()) {
+				whileBody.addAll(flattenStatement(proc, parents, s, callees));
+			}
+			flatStat.add(new WhileStatement(whileStat.getLocation(), whileStat.getCondition(),
+					whileStat.getInvariants(), whileBody.toArray(new Statement[whileBody.size()])));
+		} else if (stat instanceof IfStatement) {
+			IfStatement ifStat = (IfStatement) stat;
+			ArrayList<Statement> thenPart = new ArrayList<Statement>();
+			ArrayList<Statement> elsePart = new ArrayList<Statement>();
+			for (Statement s : ifStat.getThenPart()) {
+				thenPart.addAll(flattenStatement(proc, parents, s, callees));
+			}
+			for (Statement s : ifStat.getElsePart()) {
+				elsePart.addAll(flattenStatement(proc, parents, s, callees));
+			}
+			flatStat.add(new IfStatement(ifStat.getLocation(), ifStat.getCondition(),
+					thenPart.toArray(new Statement[thenPart.size()]),
+					elsePart.toArray(new Statement[elsePart.size()])));
+		} else { // Statement is already flat			
+			flatStat.add(stat);
+		}
+		return flatStat;
+	}
+	
 	// Create a sequence of Statements, which replaces a single (!: do not use multiple times!) call to this function.
 	// assignments and variable declaration have to be added manually.
 	// only for flat procedures (without calls).
-	private ArrayList<Statement> inlineVersion(Procedure proc) {
+	private ArrayList<Statement> inlineVersion(Procedure proc, ILocation callLocation, Procedure caller) {
 		ArrayList<Statement> inlineBlock = new ArrayList<Statement>();
 		
 		String startLabel, endLabel;
@@ -261,7 +292,7 @@ public class ProcedureInliner implements IUnmanagedObserver {
 		mAllLabels.add(startLabel);
 		mAllLabels.add(endLabel);
 		
-		inlineBlock.add(new Label(null, startLabel));
+		inlineBlock.add(new Label(callLocation, startLabel));
 		
 		Specification[] specs = proc.getSpecification();
 		ArrayList<AssumeStatement> assumes = new ArrayList<AssumeStatement>();
@@ -269,10 +300,10 @@ public class ProcedureInliner implements IUnmanagedObserver {
 			for (Specification spec : specs) {
 				if (spec instanceof RequiresSpecification) {
 					RequiresSpecification s = (RequiresSpecification) spec;
-					inlineBlock.add(new AssertStatement(null, s.getFormula()));
+					inlineBlock.add(new AssertStatement(callLocation, s.getFormula()));
 				} else if (spec instanceof EnsuresSpecification) {
 					EnsuresSpecification s = (EnsuresSpecification) spec;
-					assumes.add(new AssumeStatement(null, s.getFormula()));
+					assumes.add(new AssumeStatement(callLocation, s.getFormula()));
 				}
 				// modifies can be discarded
 				// loopInvarant shouldn't occur here
@@ -284,12 +315,15 @@ public class ProcedureInliner implements IUnmanagedObserver {
 			for (VariableDeclaration vd : body.getLocalVars()) {
 				for (VarList vl : vd.getVariables()) {
 					for (String id : vl.getIdentifiers()) {
-						localVars.add(new VariableLHS(null, id)); // TODO preserve IType and DeclarationInformation
+						// TODO is this declInfo really the right one?
+						DeclarationInformation declInfo = new DeclarationInformation(
+								DeclarationInformation.StorageClass.LOCAL, caller.getIdentifier());
+						localVars.add(new VariableLHS(callLocation, vl.getType().getBoogieType(), id, declInfo));
 					}
 				}
 			}
 			if (localVars.size() > 0)
-				inlineBlock.add(new HavocStatement(null, localVars.toArray(new VariableLHS[localVars.size()])));
+				inlineBlock.add(new HavocStatement(callLocation, localVars.toArray(new VariableLHS[localVars.size()])));
 			
 			for (Statement s : body.getBlock()) {
 				if (s instanceof ReturnStatement) {
@@ -300,7 +334,7 @@ public class ProcedureInliner implements IUnmanagedObserver {
 			}
 		}
 		inlineBlock.addAll(assumes);
-		inlineBlock.add(new Label(null, endLabel));
+		inlineBlock.add(new Label(callLocation, endLabel));
 		
 		return inlineBlock;
 	}
