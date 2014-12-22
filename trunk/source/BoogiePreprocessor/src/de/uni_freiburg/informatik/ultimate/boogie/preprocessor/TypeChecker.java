@@ -364,6 +364,8 @@ public class TypeChecker extends BaseObserver {
 				typeError(expr, "Undeclared identifier " + name + " in " + expr);
 				resultType = errorType;
 			} else {
+				DeclarationInformation declInfo = idexpr.getDeclarationInformation();
+				checkExistingDeclarationInformation(declInfo, info);
 				idexpr.setDeclarationInformation(info.getDeclarationInformation());
 				resultType = info.getType().getUnderlyingType();
 			}
@@ -440,14 +442,30 @@ public class TypeChecker extends BaseObserver {
 		return resultType;
 	}
 
+	/**
+	 * If declInfo is not null then check if is equivalent to the 
+	 * DeclarationInformation stored in VariableInfo.
+	 * Raise an internalError if the DeclarationInformation is not equivalent.
+	 */
+	private static void checkExistingDeclarationInformation(
+			DeclarationInformation declInfo, VariableInfo info) {
+		if (declInfo != null && !declInfo.equals(info.getDeclarationInformation())) {
+			internalError("Incorrect DeclarationInformation. Expected: " 
+						+ info.getDeclarationInformation() + "   Found: " + declInfo);
+		}
+	}
+
 	private BoogieType typecheckLeftHandSide(LeftHandSide lhs) {
 		BoogieType resultType;
 		if (lhs instanceof VariableLHS) {
-			String name = ((VariableLHS) lhs).getIdentifier();
+			VariableLHS vLhs = (VariableLHS) lhs;
+			String name = vLhs.getIdentifier();
 			resultType = checkVarModification(lhs, name);
 			VariableInfo info = findVariable(name);
 			if (info != null) {
-				((VariableLHS) lhs).setDeclarationInformation(info.getDeclarationInformation());
+				DeclarationInformation declInfo = vLhs.getDeclarationInformation();
+				checkExistingDeclarationInformation(declInfo, info);
+				vLhs.setDeclarationInformation(info.getDeclarationInformation());
 			}
 		} else if (lhs instanceof StructLHS) {
 			StructLHS slhs = (StructLHS) lhs;
