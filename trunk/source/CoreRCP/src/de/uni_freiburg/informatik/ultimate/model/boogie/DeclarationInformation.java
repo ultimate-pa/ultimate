@@ -96,4 +96,36 @@ public class DeclarationInformation {
 			return "<" + m_StorageClass.toString() + "," + m_Procedure + ">";
 		}
 	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result
+				+ ((m_Procedure == null) ? 0 : m_Procedure.hashCode());
+		result = prime * result
+				+ ((m_StorageClass == null) ? 0 : m_StorageClass.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		DeclarationInformation other = (DeclarationInformation) obj;
+		if (m_Procedure == null) {
+			if (other.m_Procedure != null)
+				return false;
+		} else if (!m_Procedure.equals(other.m_Procedure))
+			return false;
+		if (m_StorageClass != other.m_StorageClass)
+			return false;
+		return true;
+	}
+	
+	
 }
