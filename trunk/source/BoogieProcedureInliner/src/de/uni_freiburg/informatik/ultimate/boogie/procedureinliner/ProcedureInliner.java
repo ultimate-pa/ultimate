@@ -3,7 +3,6 @@ package de.uni_freiburg.informatik.ultimate.boogie.procedureinliner;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 
 import org.apache.log4j.Logger;
 
@@ -43,6 +42,7 @@ public class ProcedureInliner implements IUnmanagedObserver {
 
 	@Override
 	public void finish() throws Throwable {
+		//mLogger.error(mAstUnit); // debug output
 	}
 
 	@Override
@@ -297,8 +297,12 @@ public class ProcedureInliner implements IUnmanagedObserver {
 	// Create a sequence of Statements, which replaces a single (!: do not use multiple times!) call to this function.
 	// assignments and variable declaration have to be added manually.
 	// only for flat procedures (without calls).
-	private ArrayList<Statement> inlineVersion(Procedure proc, ILocation callLocation, Procedure caller) {
+	private ArrayList<Statement> inlineVersion(Procedure proc, ILocation callLocation, Procedure caller) {		
+		// TODO other statements (and specification?) need to be processed to
+		// --> DelcarationInformations in VariableLHS and IdentifierExpression have to be changed
+		//     from OUTPUT_PARAM -> LOCAL
 		ArrayList<Statement> inlineBlock = new ArrayList<Statement>();
+		DeclInfoTransformer declInfoTransformer = new DeclInfoTransformer(caller.getIdentifier());
 		
 		String startLabel, endLabel;
 		int uniqueNumber = 1;
@@ -351,7 +355,7 @@ public class ProcedureInliner implements IUnmanagedObserver {
 				if (s instanceof ReturnStatement) {
 					inlineBlock.add(new GotoStatement(s.getLocation(), new String[]{endLabel}));
 				} else {
-					inlineBlock.add(s);					
+					inlineBlock.add(declInfoTransformer.processStatement(s));				
 				}
 			}
 		}
