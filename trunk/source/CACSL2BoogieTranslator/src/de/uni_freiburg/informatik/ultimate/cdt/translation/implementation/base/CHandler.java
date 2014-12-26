@@ -2359,7 +2359,8 @@ public class CHandler implements ICHandler {
 									!(((CPrimitive) newPointsToType).isUnsigned()
 											&& ((CPrimitive) exprPointsToType).isUnsigned())
 							) {
-						throw new UnsupportedSyntaxException(loc, "we don't support this cast.");
+						throw new UnsupportedSyntaxException(loc, "unsupported cast: " + exprPointsToType 
+								+ " pointer  to " + newPointsToType + " pointer");
 					}
 
 				} else if ( 
@@ -2369,7 +2370,8 @@ public class CHandler implements ICHandler {
 						((CPrimitive) newPointsToType).getGeneralType() == GENERALPRIMITIVE.INTTYPE
 						&& ((CPrimitive) exprPointsToType).getGeneralType() == GENERALPRIMITIVE.VOID
 						) {
-						throw new UnsupportedSyntaxException(loc, "we don't support this cast.");
+					throw new UnsupportedSyntaxException(loc, "unsupported cast: " + exprPointsToType 
+							+ " pointer  to " + newPointsToType + " pointer");
 				}
 
 
