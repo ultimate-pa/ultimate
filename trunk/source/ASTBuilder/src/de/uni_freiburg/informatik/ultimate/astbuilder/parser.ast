@@ -20,9 +20,10 @@ Node ::=
         ;
 
 Parameter ::=
-        name		: String
-        type		: &String
-        comment		: String
-        isWriteable	: boolean
-        isOptional	: boolean
+        name		    : String
+        type		    : &String
+        comment		    : String
+        isWriteable	    : boolean
+        isWriteableOnce : boolean
+        isOptional	    : boolean
         ;

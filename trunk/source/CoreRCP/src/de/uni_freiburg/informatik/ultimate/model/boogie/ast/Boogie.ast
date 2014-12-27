@@ -303,7 +303,7 @@ Expression ::=
 	     */
 	    IdentifierExpression }
 		identifier : String
-		declarationInformation : ?&DeclarationInformation
+		declarationInformation : ?&!DeclarationInformation
 	| { /** Represents a function application of a (mathematical) function
 	     * declared by a {@see FunctionDeclaration}.	     
 	     */
@@ -530,7 +530,7 @@ LeftHandSide ::=
 	     * a local variable or an output parameter of a procedure.
 	     */
 		identifier : String
-		declarationInformation : ?&DeclarationInformation
+		declarationInformation : ?&!DeclarationInformation
 	| { /**
 	     * An array left-hand-side represents an element of an array.
 	     */

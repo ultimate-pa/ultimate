@@ -382,6 +382,12 @@ public class Emit {
 					mWriter.println();
 					formatComment(mWriter, "    ", setComment);
 					mWriter.println("    public void " + setName + "(" + ptype + " " + pname + ") {");
+					if(parameters[i].isWriteableOnce){
+						mWriter.println("        //Writeable only once");
+						mWriter.println("        if(this." + pname + " != null || " + pname + " == null){");
+						mWriter.println("                throw new AssertionError(\"Value is only writeable once\");");
+						mWriter.println("        }");
+					}
 					mWriter.println("        this." + pname + " = " + pname + ";");
 					mWriter.println("    }");
 				}

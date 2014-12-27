@@ -181,6 +181,9 @@ public class Lexer implements Scanner {
                     return new Symbol(sym.DOCCOMMENT, left, getLineCol(),
                                       comment);
                 }
+            case '!':
+            	advance();
+                return new Symbol(sym.WRITEABLE_ONCE, left, getLineCol());
             case '&':
                 advance();
                 return new Symbol(sym.WRITEABLE, left, getLineCol());

@@ -27,6 +27,11 @@ public class Parameter {
     boolean isWriteable;
 
     /**
+     * True iff this parameter is writeable once.
+     */
+    boolean isWriteableOnce;
+
+    /**
      * True iff this parameter is optional.
      */
     boolean isOptional;
@@ -37,14 +42,16 @@ public class Parameter {
      * @param type the type of this parameter.
      * @param comment the comment of this parameter.
      * @param isWriteable true iff this parameter is writeable.
+     * @param isWriteableOnce true iff this parameter is writeable once.
      * @param isOptional true iff this parameter is optional.
      */
-    public Parameter(String name, String type, String comment, boolean isWriteable, boolean isOptional) {
+    public Parameter(String name, String type, String comment, boolean isWriteable, boolean isWriteableOnce, boolean isOptional) {
         super();
         this.name = name;
         this.type = type;
         this.comment = comment;
         this.isWriteable = isWriteable;
+        this.isWriteableOnce = isWriteableOnce;
         this.isOptional = isOptional;
     }
 
@@ -58,6 +65,7 @@ public class Parameter {
         sb.append(',').append(type);
         sb.append(',').append(comment);
         sb.append(',').append(isWriteable);
+        sb.append(',').append(isWriteableOnce);
         sb.append(',').append(isOptional);
         return sb.append(']').toString();
     }
@@ -100,6 +108,14 @@ public class Parameter {
      */
     public boolean isWriteable() {
         return isWriteable;
+    }
+
+    /**
+     * Checks iff this parameter is writeable once.
+     * @return true iff this parameter is writeable once.
+     */
+    public boolean isWriteableOnce() {
+        return isWriteableOnce;
     }
 
     /**

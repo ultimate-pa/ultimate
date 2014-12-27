@@ -28,6 +28,7 @@ parser code {:
 action code {:
     private static final int WRITEABLE = 1;
     private static final int OPTIONAL  = 2;
+    private static final int WRITEABLE_ONCE  = 4;
 
     Node currentNode = null;
     HashMap<String,Node> symbolTable = new HashMap<String,Node>();
@@ -71,7 +72,7 @@ terminal String IDENT;
 terminal String DOCCOMMENT;
 terminal IMPORT, PACKAGE, IMPLEMENTS, DOT, DDEF, COLON, BAR, STAR, SEMI, COMMA;
 terminal LBRACE, RBRACE, LBRACKET, RBRACKET, LPAREN, RPAREN, LANGLE, RANGLE;
-terminal WRITEABLE, OPTIONAL;
+terminal WRITEABLE, OPTIONAL, WRITEABLE_ONCE;
 
 non terminal NodeDefinitionList, NodeDefinition;
 non terminal Grammar goal;
@@ -223,7 +224,8 @@ Parameter
             comment += ".";
         boolean writeable = (flags.intValue() & WRITEABLE) != 0;
         boolean optional = (flags.intValue() & OPTIONAL) != 0;
-        RESULT = new Parameter(name, type, comment, writeable, optional); 
+        boolean writeable_once = (flags.intValue() & WRITEABLE_ONCE) != 0;
+        RESULT = new Parameter(name, type, comment, writeable, writeable_once, optional); 
      :}
    | Comment_opt IDENT error:err
      {: report_error(err$.left, err$.right, "`:' expected!"); 
@@ -264,4 +266,6 @@ Flags
      {: RESULT = flags | WRITEABLE; :}
    | OPTIONAL Flags:flags
      {: RESULT = flags | OPTIONAL; :}
+   | WRITEABLE_ONCE Flags:flags
+     {: RESULT = flags | WRITEABLE_ONCE; :}     
    ;
