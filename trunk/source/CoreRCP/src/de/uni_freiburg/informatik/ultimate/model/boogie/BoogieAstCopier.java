@@ -32,7 +32,9 @@ public class BoogieAstCopier extends BoogieTransformer {
 		if (expr instanceof IdentifierExpression) {
 			IdentifierExpression idExpr = (IdentifierExpression) expr;
 			IdentifierExpression resultIdExpr = new IdentifierExpression(idExpr.getLocation(), idExpr.getIdentifier());
-			resultIdExpr.setDeclarationInformation(idExpr.getDeclarationInformation());
+			if (idExpr.getDeclarationInformation() != null) {
+				resultIdExpr.setDeclarationInformation(idExpr.getDeclarationInformation());
+			}
 			result = resultIdExpr;
 			ModelUtils.mergeAnnotations(expr, result);
 		}

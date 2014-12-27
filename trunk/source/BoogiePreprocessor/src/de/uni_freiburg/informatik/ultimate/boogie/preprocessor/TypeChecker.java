@@ -365,8 +365,11 @@ public class TypeChecker extends BaseObserver {
 				resultType = errorType;
 			} else {
 				DeclarationInformation declInfo = idexpr.getDeclarationInformation();
-				checkExistingDeclarationInformation(declInfo, info);
-				idexpr.setDeclarationInformation(info.getDeclarationInformation());
+				if (declInfo == null) {
+					idexpr.setDeclarationInformation(info.getDeclarationInformation());
+				} else {
+					checkExistingDeclarationInformation(declInfo, info.getDeclarationInformation());
+				}
 				resultType = info.getType().getUnderlyingType();
 			}
 		} else if (expr instanceof FunctionApplication) {
@@ -443,15 +446,14 @@ public class TypeChecker extends BaseObserver {
 	}
 
 	/**
-	 * If declInfo is not null then check if is equivalent to the 
-	 * DeclarationInformation stored in VariableInfo.
-	 * Raise an internalError if the DeclarationInformation is not equivalent.
+	 * Compare existingDeclInfo with correctDeclInfo and raise an internalError
+	 * if both are not equivalent.
 	 */
 	private static void checkExistingDeclarationInformation(
-			DeclarationInformation declInfo, VariableInfo info) {
-		if (declInfo != null && !declInfo.equals(info.getDeclarationInformation())) {
+			DeclarationInformation existingDeclInfo, DeclarationInformation correctDeclInfo) {
+		if (!existingDeclInfo.equals(correctDeclInfo)) {
 			internalError("Incorrect DeclarationInformation. Expected: " 
-						+ info.getDeclarationInformation() + "   Found: " + declInfo);
+						+ correctDeclInfo + "   Found: " + existingDeclInfo);
 		}
 	}
 
@@ -464,8 +466,11 @@ public class TypeChecker extends BaseObserver {
 			VariableInfo info = findVariable(name);
 			if (info != null) {
 				DeclarationInformation declInfo = vLhs.getDeclarationInformation();
-				checkExistingDeclarationInformation(declInfo, info);
-				vLhs.setDeclarationInformation(info.getDeclarationInformation());
+				if (declInfo == null) {
+					vLhs.setDeclarationInformation(info.getDeclarationInformation());
+				} else {
+					checkExistingDeclarationInformation(declInfo, info.getDeclarationInformation());
+				}
 			}
 		} else if (lhs instanceof StructLHS) {
 			StructLHS slhs = (StructLHS) lhs;
@@ -714,7 +719,11 @@ public class TypeChecker extends BaseObserver {
 				Set<String> modifiedGlobals = m_Proc2ModfiedGlobals.get(name);
 				for (VariableLHS var : ((ModifiesSpecification) s).getIdentifiers()) {
 					DeclarationInformation declInfo = new DeclarationInformation(StorageClass.GLOBAL, null);
-					var.setDeclarationInformation(declInfo);
+					if (var.getDeclarationInformation() == null) {
+						var.setDeclarationInformation(declInfo);
+					} else {
+						checkExistingDeclarationInformation(var.getDeclarationInformation(), declInfo);
+					}
 					String id = var.getIdentifier();
 					if (!m_Globals.contains(id)) {
 						typeError(s, "Modifies clause contains " + id + " which is not a global variable");
