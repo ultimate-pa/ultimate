@@ -96,7 +96,7 @@ public class BoogiePreprocessor implements IAnalysis {
 	 * @author Christian & Matthias
 	 */
 	public static void passAnnotations(BoogieASTNode from, BoogieASTNode to) {
-		if (from.getPayload().hasAnnotation()) {
+		if (from.hasPayload() && from.getPayload().hasAnnotation()) {
 			to.getPayload().getAnnotations().putAll(from.getPayload().getAnnotations());
 		}
 	}
