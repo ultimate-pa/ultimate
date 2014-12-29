@@ -97,7 +97,7 @@ public class LTL2autObserver implements IUnmanagedObserver {
 
 		String ltl2baProperty = getLTL2BAProperty(ltlProperty);
 		AstNode node = getNeverClaim(ltl2baProperty);
-		NestedWordAutomaton<CodeBlock,String> nwa = createNWAFromNeverClaim(node, irs,mSymbolTable);
+		NestedWordAutomaton<CodeBlock, String> nwa = createNWAFromNeverClaim(node, irs, mSymbolTable);
 		mLogger.info("LTL Property is: " + prettyPrintProperty(irs, ltlProperty));
 
 		mNWAContainer = new NWAContainer(nwa);
@@ -183,39 +183,43 @@ public class LTL2autObserver implements IUnmanagedObserver {
 	}
 
 	private Map<String, CheckableExpression> getIRS(String[] entries) throws Throwable {
-		mLogger.debug("Parsing mapping from AP to BoogieCode...");
-		Map<String, CheckableExpression> aps = new HashMap<>();
-		for (String entry : entries) {
-			try {
-				// TODO: finish
-
-				de.uni_freiburg.informatik.ultimate.boogie.parser.Lexer lexer = new Lexer(new InputStreamReader(
-						IOUtils.toInputStream(entry.trim())));
-				de.uni_freiburg.informatik.ultimate.boogie.parser.Parser p = new Parser(lexer);
-				Object x = p.parse().value;
-				// AstNode nodea = (AstNode) p.parse().value;
-				// append node to dictionary of atomic propositions
-				// if (nodea instanceof AtomicProposition) {
-				// aps.put(((AtomicProposition) nodea).getIdent(),
-				// nodea.getOutgoingNodes().get(0));
-				// }
-			} catch (Throwable e) {
-				mLogger.error(String.format("Exception while parsing the atomic proposition \"%s\": %s", entry, e));
-				throw e;
-			}
-		}
-		throw new UnsupportedOperationException();
+		// TODO: finish
+		// mLogger.debug("Parsing mapping from AP to BoogieCode...");
+		// Map<String, CheckableExpression> aps = new HashMap<>();
+		// for (String entry : entries) {
+		// try {
+		//
+		//
+		// de.uni_freiburg.informatik.ultimate.boogie.parser.Lexer lexer = new
+		// Lexer(new InputStreamReader(
+		// IOUtils.toInputStream(entry.trim())));
+		// de.uni_freiburg.informatik.ultimate.boogie.parser.Parser p = new
+		// Parser(lexer);
+		// Object x = p.parse().value;
+		// // AstNode nodea = (AstNode) p.parse().value;
+		// // append node to dictionary of atomic propositions
+		// // if (nodea instanceof AtomicProposition) {
+		// // aps.put(((AtomicProposition) nodea).getIdent(),
+		// // nodea.getOutgoingNodes().get(0));
+		// // }
+		// } catch (Throwable e) {
+		// mLogger.error(String.format("Exception while parsing the atomic proposition \"%s\": %s",
+		// entry, e));
+		// throw e;
+		// }
+		// }
+		throw new UnsupportedOperationException("Unfinished");
 		// return aps;
 	}
 
 	private NestedWordAutomaton<CodeBlock, String> createNWAFromNeverClaim(AstNode neverclaim,
 			Map<String, CheckableExpression> irs, BoogieSymbolTable symbolTable) throws Exception {
-		NestedWordAutomaton<CodeBlock,String> nwa;
+		NestedWordAutomaton<CodeBlock, String> nwa;
 
 		mLogger.debug("Transforming NeverClaim to NestedWordAutomaton...");
 		try {
 			// Build NWA from LTL formula in NeverClaim representation
-			nwa = new Never2Automaton(neverclaim, symbolTable,irs, mLogger, mServices).getAutomaton();
+			nwa = new Never2Automaton(neverclaim, symbolTable, irs, mLogger, mServices).getAutomaton();
 			if (nwa == null) {
 				throw new NullPointerException("nwa is null");
 			}

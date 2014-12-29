@@ -5,6 +5,7 @@ Bundle-SymbolicName: Library-ModelCheckerUtils
 Bundle-Version: 0.0.1
 Bundle-RequiredExecutionEnvironment: JavaSE-1.7
 Export-Package: de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie,
+ de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.normalforms,
  de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt,
  de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays,
  de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms,

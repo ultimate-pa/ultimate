@@ -27,18 +27,21 @@ import de.uni_freiburg.informatik.ultimate.result.CounterExampleResult;
  */
 public class BuchiProgramProduct implements IGenerator {
 
+	private static final boolean UseSBE = !false;
+
 	protected static Logger mLogger;
 	protected List<String> mFileNames;
 
 	private BuchiProductObserver mBuchiProductObserver;
-	private boolean mProcess;
-	private boolean mSkip;
+	private boolean mUseBuchiProductObserver;
+	private boolean mPreviousToolFoundErrors;
 	private IUltimateServiceProvider mServices;
 	private int mUseful;
+	private boolean mModelIsRCFG;
 
 	@Override
 	public GraphType getOutputDefinition() {
-		if (mSkip) {
+		if (mPreviousToolFoundErrors) {
 			return null;
 		}
 
@@ -54,7 +57,7 @@ public class BuchiProgramProduct implements IGenerator {
 
 	@Override
 	public QueryKeyword getQueryKeyword() {
-		if (mSkip) {
+		if (mPreviousToolFoundErrors) {
 			return QueryKeyword.LAST;
 		}
 		return QueryKeyword.ALL;
@@ -63,13 +66,15 @@ public class BuchiProgramProduct implements IGenerator {
 	@Override
 	public void setInputDefinition(GraphType graphType) {
 		switch (graphType.getCreator()) {
-		case "de.uni_freiburg.informatik.ultimate.ltl2aut":
 		case "de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder":
-			mProcess = true;
+			mModelIsRCFG = true;
+		case "de.uni_freiburg.informatik.ultimate.ltl2aut":
+			mUseBuchiProductObserver = true;
 			mUseful++;
 			break;
 		default:
-			mProcess = false;
+			mUseBuchiProductObserver = false;
+			mModelIsRCFG = false;
 			break;
 		}
 	}
@@ -77,18 +82,25 @@ public class BuchiProgramProduct implements IGenerator {
 	@Override
 	public List<IObserver> getObservers() {
 		ArrayList<IObserver> observers = new ArrayList<IObserver>();
-		if (mProcess && !mSkip) {
-			if (mBuchiProductObserver == null) {
-				mBuchiProductObserver = new BuchiProductObserver(mLogger, mServices);
+		if (!mPreviousToolFoundErrors) {
+			if (mModelIsRCFG && UseSBE) {
+				observers.add(new SmallBlockEncoder(mLogger, mServices));
 			}
-			observers.add(mBuchiProductObserver);
+
+			if (mUseBuchiProductObserver) {
+				if (mBuchiProductObserver == null) {
+					mBuchiProductObserver = new BuchiProductObserver(mLogger, mServices);
+				}
+				observers.add(mBuchiProductObserver);
+			}
 		}
 		return observers;
 	}
 
 	@Override
 	public void init() {
-		mProcess = false;
+		mUseBuchiProductObserver = false;
+		mModelIsRCFG = false;
 		mFileNames = new ArrayList<String>();
 		mUseful = 0;
 	}
@@ -134,15 +146,15 @@ public class BuchiProgramProduct implements IGenerator {
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		Collection<CounterExampleResult> cex = CoreUtil.filterResults(services.getResultService().getResults(),
 				CounterExampleResult.class);
-		mSkip = !cex.isEmpty();
+		mPreviousToolFoundErrors = !cex.isEmpty();
 	}
 
 	@Override
 	public void finish() {
-		if (!mSkip && mUseful == 0) {
+		if (!mPreviousToolFoundErrors && mUseful == 0) {
 			throw new IllegalStateException("Was used in a toolchain were it did nothing");
 		}
-		if (mSkip) {
+		if (mPreviousToolFoundErrors) {
 			mLogger.info("Another plugin discovered errors, skipping...");
 		}
 	}
