@@ -81,13 +81,16 @@ public class SafetyCheckTestResultDecider extends ThreeTierTestResultDecider<Saf
 				break;
 			case SAFE:
 			case UNSAFE:
+			case UNSAFE_DEREF:
+			case UNSAFE_FREE:
+			case UNSAFE_MEMTRACK:
 			case UNKNOWN:
 			case SYNTAX_ERROR:
 			case TIMEOUT:
 				m_TestResult = TestResult.UNKNOWN;
 				break;
 			default:
-				throw new UnsupportedOperationException("Forgot to add case");
+				throw new AssertionError("case not implemented: " + overallResultDeterminer.getOverallResult());
 			}
 		}
 
@@ -149,7 +152,7 @@ public class SafetyCheckTestResultDecider extends ThreeTierTestResultDecider<Saf
 				m_TestResult = TestResult.FAIL;
 				break;
 			default:
-				throw new AssertionError("unknown case");
+				throw new AssertionError("case not implemented: " + overallResultDeterminer.getOverallResult());
 			}
 		}
 
@@ -168,7 +171,7 @@ public class SafetyCheckTestResultDecider extends ThreeTierTestResultDecider<Saf
 				m_Message = expectedResultFinder.getExpectedResultFinderMessage();
 				break;
 			default:
-				throw new AssertionError("unknown case");
+				throw new AssertionError("case not implemented: " + expectedResultFinder.getExpectedResultFinderStatus());
 			}
 		}
 
