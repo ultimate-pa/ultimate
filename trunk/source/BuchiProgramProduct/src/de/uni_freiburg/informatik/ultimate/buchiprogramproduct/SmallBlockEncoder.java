@@ -7,7 +7,6 @@ import java.util.HashSet;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.access.BaseObserver;
-import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
@@ -37,9 +36,11 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Sta
 public class SmallBlockEncoder extends BaseObserver {
 
 	private final Logger mLogger;
+	private final ProductBacktranslator mBacktranslator;
 
-	public SmallBlockEncoder(Logger logger, IUltimateServiceProvider services) {
+	public SmallBlockEncoder(Logger logger, ProductBacktranslator backtranslator) {
 		mLogger = logger;
+		mBacktranslator = backtranslator;
 	}
 
 	@Override
@@ -85,6 +86,7 @@ public class SmallBlockEncoder extends BaseObserver {
 												disjunct), mLogger);
 								closed.add(newss);
 								countNewEdges++;
+								mBacktranslator.mapEdges(newss, current);
 							}
 							current.disconnectSource();
 							current.disconnectTarget();

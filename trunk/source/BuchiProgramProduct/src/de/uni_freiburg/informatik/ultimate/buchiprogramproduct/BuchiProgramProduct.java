@@ -14,6 +14,8 @@ import de.uni_freiburg.informatik.ultimate.core.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.IGenerator;
 import de.uni_freiburg.informatik.ultimate.model.GraphType;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.result.CounterExampleResult;
 
 /**
@@ -27,7 +29,7 @@ import de.uni_freiburg.informatik.ultimate.result.CounterExampleResult;
  */
 public class BuchiProgramProduct implements IGenerator {
 
-	private static final boolean UseSBE = !false;
+	private static final boolean UseSBE = false;
 
 	protected static Logger mLogger;
 	protected List<String> mFileNames;
@@ -38,6 +40,8 @@ public class BuchiProgramProduct implements IGenerator {
 	private IUltimateServiceProvider mServices;
 	private int mUseful;
 	private boolean mModelIsRCFG;
+
+	private ProductBacktranslator mBacktranslator;
 
 	@Override
 	public GraphType getOutputDefinition() {
@@ -84,12 +88,12 @@ public class BuchiProgramProduct implements IGenerator {
 		ArrayList<IObserver> observers = new ArrayList<IObserver>();
 		if (!mPreviousToolFoundErrors) {
 			if (mModelIsRCFG && UseSBE) {
-				observers.add(new SmallBlockEncoder(mLogger, mServices));
+				observers.add(new SmallBlockEncoder(mLogger, mBacktranslator));
 			}
 
 			if (mUseBuchiProductObserver) {
 				if (mBuchiProductObserver == null) {
-					mBuchiProductObserver = new BuchiProductObserver(mLogger, mServices);
+					mBuchiProductObserver = new BuchiProductObserver(mLogger, mServices, mBacktranslator);
 				}
 				observers.add(mBuchiProductObserver);
 			}
@@ -146,6 +150,8 @@ public class BuchiProgramProduct implements IGenerator {
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		Collection<CounterExampleResult> cex = CoreUtil.filterResults(services.getResultService().getResults(),
 				CounterExampleResult.class);
+		mBacktranslator = new ProductBacktranslator(CodeBlock.class, Expression.class);
+		mServices.getBacktranslationService().addTranslator(mBacktranslator);
 		mPreviousToolFoundErrors = !cex.isEmpty();
 	}
 

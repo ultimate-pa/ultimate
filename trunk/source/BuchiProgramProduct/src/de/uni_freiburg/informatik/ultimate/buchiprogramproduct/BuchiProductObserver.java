@@ -7,8 +7,6 @@ import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.ltl2aut.never2nwa.NWAContainer;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.result.LTLPropertyCheck;
 
@@ -19,13 +17,15 @@ public class BuchiProductObserver implements IUnmanagedObserver {
 	private NWAContainer mNeverClaimNWAContainer;
 	private Product mProduct;
 	private final IUltimateServiceProvider mServices;
+	private final ProductBacktranslator mBacktranslator;
 
-	public BuchiProductObserver(Logger logger, IUltimateServiceProvider services) {
+	public BuchiProductObserver(Logger logger, IUltimateServiceProvider services, ProductBacktranslator backtranslator) {
 		mLogger = logger;
 		mServices = services;
 		mRcfg = null;
 		mProduct = null;
 		mNeverClaimNWAContainer = null;
+		mBacktranslator = backtranslator;
 	}
 
 	@Override
@@ -40,12 +40,10 @@ public class BuchiProductObserver implements IUnmanagedObserver {
 		}
 
 		mLogger.info("Beginning generation of product automaton");
-		ProductBacktranslator translator = new ProductBacktranslator(CodeBlock.class, Expression.class);
-		mServices.getBacktranslationService().addTranslator(translator);
 
 		try {
 			LTLPropertyCheck ltlAnnot = LTLPropertyCheck.getAnnotation(mNeverClaimNWAContainer);
-			mProduct = new Product(mNeverClaimNWAContainer.getNWA(), mRcfg, ltlAnnot, mServices, translator);
+			mProduct = new Product(mNeverClaimNWAContainer.getNWA(), mRcfg, ltlAnnot, mServices, mBacktranslator);
 			mLogger.info("Product automaton successfully generated");
 		} catch (Exception e) {
 			mLogger.error(String.format(

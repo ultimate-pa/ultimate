@@ -1,11 +1,10 @@
 package de.uni_freiburg.informatik.ultimate.buchiprogramproduct;
 
-import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Map;
-import java.util.Queue;
 
 import org.apache.log4j.Logger;
 
@@ -46,7 +45,7 @@ public class Product {
 
 	private final NestedWordAutomaton<CodeBlock, String> mNWA;
 	private final RootNode mRCFG;
-	private final List<ProgramPoint> mRCFGLocations;
+	private final HashSet<ProgramPoint> mRCFGLocations;
 
 	private HashMap<String, ProgramPoint> mProductLocations;
 
@@ -64,7 +63,7 @@ public class Product {
 			IUltimateServiceProvider services, ProductBacktranslator backtrans) throws Exception {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
-		mRCFGLocations = new ArrayList<ProgramPoint>();
+		mRCFGLocations = new HashSet<ProgramPoint>();
 		mProductLocations = new HashMap<String, ProgramPoint>();
 		mCallEdges = new HashMap<ProgramPoint, ArrayList<Call>>();
 		mNWA = aut;
@@ -99,28 +98,29 @@ public class Product {
 	 * collect all states that are part of the RCFG into a List
 	 */
 	private void collectRCFGLocations() {
-		Queue<ProgramPoint> unhandledLocations = new ArrayDeque<ProgramPoint>();
+		LinkedHashSet<ProgramPoint> unhandledLocations = new LinkedHashSet<ProgramPoint>();
 
 		for (RCFGEdge p : ((RootNode) mRCFG).getOutgoingEdges()) {
 			unhandledLocations.add((ProgramPoint) p.getTarget());
 		}
 		// collect all Nodes in the RCFG for the product
-		ProgramPoint cp;
-		while (unhandledLocations.peek() != null) {
-			cp = unhandledLocations.poll();
-			mRCFGLocations.add(cp);
-			for (RCFGEdge p : cp.getOutgoingEdges()) {
+		ProgramPoint currentPoint;
+		while (!unhandledLocations.isEmpty()) {
+			currentPoint = unhandledLocations.iterator().next();
+			unhandledLocations.remove(currentPoint);
+			mRCFGLocations.add(currentPoint);
+			for (RCFGEdge p : currentPoint.getOutgoingEdges()) {
 				if (p instanceof Summary) {
 					continue;
 				}
-				if (!(mRCFGLocations.contains(p.getTarget()) || unhandledLocations.contains(p.getTarget()))) {
+				if (!mRCFGLocations.contains(p.getTarget()) && !unhandledLocations.contains(p.getTarget())) {
 					unhandledLocations.add((ProgramPoint) p.getTarget());
 				}
 			}
 			// append selfloops to leafs of the rcfg
-			if (cp.getOutgoingEdges().size() == 0) {
-				mapNewEdge2OldEdge(new StatementSequence(cp, cp, generateNeverClaimAssumeStatement(new BooleanLiteral(
-						null, true)), mLogger), null);
+			if (currentPoint.getOutgoingEdges().size() == 0) {
+				mapNewEdge2OldEdge(new StatementSequence(currentPoint, currentPoint,
+						generateNeverClaimAssumeStatement(new BooleanLiteral(null, true)), mLogger), null);
 			}
 		}
 	}

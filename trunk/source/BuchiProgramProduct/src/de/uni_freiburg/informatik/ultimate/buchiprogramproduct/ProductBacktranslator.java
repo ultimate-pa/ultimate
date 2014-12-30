@@ -36,8 +36,7 @@ public class ProductBacktranslator extends DefaultTranslator<CodeBlock, CodeBloc
 
 		Map<TermVariable, Boolean>[] oldBranchEncoders = null;
 		if (programExecution instanceof RcfgProgramExecution) {
-			RcfgProgramExecution bla = (RcfgProgramExecution) programExecution;
-			oldBranchEncoders = bla.getBranchEncoders();
+			oldBranchEncoders = ((RcfgProgramExecution) programExecution).getBranchEncoders();
 		}
 
 		ArrayList<CodeBlock> newTrace = new ArrayList<>();
@@ -79,7 +78,15 @@ public class ProductBacktranslator extends DefaultTranslator<CodeBlock, CodeBloc
 	}
 
 	void mapEdges(RCFGEdge newEdge, RCFGEdge originalEdge) {
-		mEdgeMapping.put(newEdge, originalEdge);
+		RCFGEdge realOriginalEdge = mEdgeMapping.get(originalEdge);
+		if (realOriginalEdge != null) {
+			// this means we replaced an edge which we already replaced again
+			// with something new, we have to map this to the real original
+			mEdgeMapping.put(newEdge, realOriginalEdge);
+		} else {
+			mEdgeMapping.put(newEdge, originalEdge);
+		}
+
 	}
 
 }
