@@ -2988,7 +2988,7 @@ public class CHandler implements ICHandler {
 						return new IntegerLiteral(loc, SFO.NR0);
 					}
 				} else if (right instanceof IntegerLiteral) {
-					if (rightValue.signum() == 1) {
+					if (rightValue.signum() == 1 || rightValue.signum() == 0) {
 						return new IfThenElseExpression(loc, leftSmallerZero, 
 								new BinaryExpression(loc, 
 										BinaryExpression.Operator.ARITHPLUS, 
@@ -3002,9 +3002,7 @@ public class CHandler implements ICHandler {
 											normalDivision, 
 											new IntegerLiteral(loc, SFO.NR1)), 
 									normalDivision);
-					} else {
-						assert false : "program divides by (constant) 0";
-					}
+					} 
 				} else {
 					return new IfThenElseExpression(loc, leftSmallerZero, 
 							new IfThenElseExpression(loc, rightSmallerZero, 
@@ -3078,7 +3076,7 @@ public class CHandler implements ICHandler {
 						return new IntegerLiteral(loc, SFO.NR0);
 					}
 				} else if (right instanceof IntegerLiteral) {
-					if (rightValue.signum() == 1) {
+					if (rightValue.signum() == 1 || rightValue.signum() == 0) {
 						return new IfThenElseExpression(loc, leftSmallerZero, 
 								new BinaryExpression(loc, 
 										BinaryExpression.Operator.ARITHMINUS, 
@@ -3092,8 +3090,6 @@ public class CHandler implements ICHandler {
 										normalModulo, 
 										right), 
 										normalModulo);
-					} else {
-						assert false : "program divides by (constant) 0";
 					}
 				} else {
 					return new IfThenElseExpression(loc, leftSmallerZero, 
