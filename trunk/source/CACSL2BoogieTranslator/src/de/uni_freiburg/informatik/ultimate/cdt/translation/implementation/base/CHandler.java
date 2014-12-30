@@ -3029,7 +3029,7 @@ public class CHandler implements ICHandler {
 			 */
 			//modulo on bigInteger does not seem to follow the "multiply, add, and get the result back"-rule, together with its division..
 			if (bothAreIntegerLiterals) {
-				if (leftValue.signum() == 1) {
+				if (leftValue.signum() == 1 || leftValue.signum() == 0) {
 					if (rightValue.signum() == 1) {
 						constantResult = 
 								leftValue.mod(rightValue).toString();
@@ -3049,9 +3049,7 @@ public class CHandler implements ICHandler {
 					} else {
 						constantResult = "0";
 					}
-				} else {
-					assert false : "program does modulo 0";
-				}
+				} 
 				return new IntegerLiteral(loc, constantResult);
 			} else {
 				BinaryExpression leftSmallerZero = new BinaryExpression(loc, 
