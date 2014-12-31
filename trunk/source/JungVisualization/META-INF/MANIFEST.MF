@@ -8,6 +8,6 @@ Require-Bundle: Library-Jung,
  Library-log4j,
  UltimateCore,
  de.uni_freiburg.informatik.ultimate.gui
-Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+Bundle-RequiredExecutionEnvironment: JavaSE-1.7
 Bundle-ActivationPolicy: lazy
 Bundle-Activator: de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization.Activator
