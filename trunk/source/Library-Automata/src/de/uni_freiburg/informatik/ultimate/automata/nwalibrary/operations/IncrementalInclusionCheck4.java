@@ -30,6 +30,7 @@ public class IncrementalInclusionCheck4<LETTER,STATE> extends AbstractIncrementa
 	private static Logger s_Logger;
 	private NestedWordAutomaton<LETTER, STATE> local_m_A;
 	private List<NestedWordAutomaton<LETTER, STATE>> local_m_B;
+	private ArrayList<INestedWordAutomaton<LETTER,STATE>> local_m_B2;
 	private StateFactory<STATE> localStateFactory;
 	private IUltimateServiceProvider localServiceProvider;
 	//private int counter;
@@ -97,6 +98,7 @@ public class IncrementalInclusionCheck4<LETTER,STATE> extends AbstractIncrementa
 		completeLeafSet = new ArrayList<Leaf<LETTER,STATE>>();
 		local_m_A = (NestedWordAutomaton<LETTER, STATE>) a;
 		local_m_B = new ArrayList<NestedWordAutomaton<LETTER, STATE>>();
+		local_m_B2 = b;
 		for(INestedWordAutomaton<LETTER,STATE> bn : b){
 			try {
 				addSubtrahend(bn);
