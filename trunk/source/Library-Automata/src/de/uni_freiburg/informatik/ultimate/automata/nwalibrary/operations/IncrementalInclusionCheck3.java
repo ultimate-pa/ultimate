@@ -435,12 +435,17 @@ public class IncrementalInclusionCheck3<LETTER,STATE> extends AbstractIncrementa
 	public String exitMessage() {
 		return "Exit " + operationName();
 	}
-	public Boolean getResult(){
+	/*public Boolean getResult() throws OperationCanceledException{
+		return checkResult(localStateFactory);
+	}*/
+	public Boolean getResult() throws OperationCanceledException{
 		return result == null;
 	}
 	public boolean checkResult(StateFactory<STATE> stateFactory)
 			throws OperationCanceledException {
-		if(((result==null)&&(new IncrementalInclusionCheck2<LETTER, STATE>(localServiceProvider,localStateFactory,local_m_A,local_m_B2).getResult()==null))||((result!=null)&&(new IncrementalInclusionCheck2<LETTER, STATE>(localServiceProvider,localStateFactory,local_m_A,local_m_B2).getResult()!=null))){
+		//INestedWordAutomatonSimple<LETTER, STATE> a;
+		if(getResult().equals((new IncrementalInclusionCheck2<LETTER, STATE>(localServiceProvider,localStateFactory,local_m_A,local_m_B2)).getResult())){
+		//if(getResult2().equals((new InclusionViaDifference(localServiceProvider,localStateFactory,).getCounterexample().getLength()==0))){
 			return true;
 		}
 		else{

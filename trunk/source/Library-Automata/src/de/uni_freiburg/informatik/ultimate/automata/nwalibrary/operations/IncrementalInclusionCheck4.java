@@ -463,6 +463,13 @@ public class IncrementalInclusionCheck4<LETTER,STATE> extends AbstractIncrementa
 	}
 	public boolean checkResult(StateFactory<STATE> stateFactory)
 			throws OperationCanceledException {
-		return true;
+		if(getResult().equals((new IncrementalInclusionCheck2<LETTER, STATE>(localServiceProvider,localStateFactory,local_m_A,local_m_B2)).getResult())){
+			//if(getResult2().equals((new InclusionViaDifference(localServiceProvider,localStateFactory,).getCounterexample().getLength()==0))){
+				return true;
+			}
+			else{
+				return false;
+			}
+
 	}
 }
