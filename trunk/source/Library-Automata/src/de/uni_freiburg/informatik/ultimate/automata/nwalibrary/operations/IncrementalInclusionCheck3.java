@@ -435,8 +435,8 @@ public class IncrementalInclusionCheck3<LETTER,STATE> extends AbstractIncrementa
 	public String exitMessage() {
 		return "Exit " + operationName();
 	}
-	public NestedRun<LETTER,STATE> getResult(){
-		return getCounterexample();
+	public Boolean getResult(){
+		return result == null;
 	}
 	public boolean checkResult(StateFactory<STATE> stateFactory)
 			throws OperationCanceledException {
