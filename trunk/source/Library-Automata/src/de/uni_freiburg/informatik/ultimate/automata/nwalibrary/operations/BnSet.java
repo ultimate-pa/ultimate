@@ -40,6 +40,17 @@ public class BnSet<LETTER,STATE> implements IOperation<LETTER,STATE>{
 		s_Logger.info(exitMessage());
 	}
 	
+	/**
+	 * Constructs a list that consists of a single automaton.
+	 */
+	public BnSet(IUltimateServiceProvider services,INestedWordAutomaton<LETTER,STATE> newAutomata){
+		s_Logger = NestedWordAutomata.getLogger();
+		s_Logger.info(startMessage());
+		automataCollection = new ArrayList<INestedWordAutomaton<LETTER,STATE>>();
+		automataCollection.add(newAutomata);
+		s_Logger.info(exitMessage());
+	}
+	
 	@Override
 	public String operationName() {
 		return "BnSet";
