@@ -11,7 +11,13 @@ while (true) {
 	// Fifth argument: transition density of return transitions in per mille -- use 0 here
 	// Sixth argument: amount of accepting states in per mille.
     NestedWordAutomaton A = getRandomNwa(2, 25, 40, 0, 0, 300);
-	NestedWordAutomaton B = getRandomNwa(2, 25, 240, 0, 0, 300);
-	boolean isIncluded = IncrementalInclusionCheck2(A,BnSet(B));
+	NestedWordAutomaton B1 = getRandomNwa(2, 25, 240, 0, 0, 300);
+	NestedWordAutomaton B2 = getRandomNwa(2, 25, 240, 0, 0, 300);
+	boolean isIncluded = IncrementalInclusionCheck2(A,BnSet(B1, B2));
 	print(isIncluded);
+	isIncluded = IncrementalInclusionCheck3(A,BnSet(B1, B2));
+	print(isIncluded);
+	isIncluded = IncrementalInclusionCheck4(A,BnSet(B1, B2));
+	print(isIncluded);
+
 }
