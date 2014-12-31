@@ -21,6 +21,8 @@ public class JungVisualization implements IOutput {
 
 	private GraphType mGraphType;
 
+	private IUltimateServiceProvider mServices;
+
 	@Override
 	public List<String> getDesiredToolID() {
 		// Never called
@@ -29,7 +31,7 @@ public class JungVisualization implements IOutput {
 
 	@Override
 	public List<IObserver> getObservers() {
-		return Collections.singletonList((IObserver) new JungVisualizationObserver(mLogger, mGraphType));
+		return Collections.singletonList((IObserver) new JungVisualizationObserver(mLogger, mGraphType, mServices));
 	}
 
 	@Override
@@ -68,14 +70,14 @@ public class JungVisualization implements IOutput {
 	}
 
 	@Override
-	public void setToolchainStorage(IToolchainStorage services) {
-		// TODO Auto-generated method stub
-
+	public void setToolchainStorage(IToolchainStorage storage) {
+		
 	}
 
 	@Override
 	public void setServices(IUltimateServiceProvider services) {
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
+		mServices = services;
 	}
 
 	@Override

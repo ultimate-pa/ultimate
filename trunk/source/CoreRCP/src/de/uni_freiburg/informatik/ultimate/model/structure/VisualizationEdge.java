@@ -40,6 +40,10 @@ public final class VisualizationEdge extends
 			return mBacking.toString();
 		}
 	}
+	
+	public Object getBacking(){
+		return mBacking;
+	}
 
 	@Override
 	public boolean equals(Object obj) {

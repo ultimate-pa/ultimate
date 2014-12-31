@@ -244,7 +244,8 @@ public class CoreUtil {
 		ArrayList<E> filteredList = new ArrayList<E>();
 		for (Entry<String, List<IResult>> entry : ultimateIResults.entrySet()) {
 			for (IResult res : entry.getValue()) {
-				if (res.getClass().isAssignableFrom(resClass)) {
+				if (resClass.isAssignableFrom(res.getClass())) {
+//				if (res.getClass().isAssignableFrom(resClass)) {
 					@SuppressWarnings("unchecked")
 					E benchmarkResult = (E) res;
 					filteredList.add((E) benchmarkResult);

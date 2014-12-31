@@ -1,13 +1,18 @@
 package de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
+import de.uni_freiburg.informatik.ultimate.core.services.IToolchainStorage;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.model.GraphType;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.structure.IVisualizable;
@@ -17,6 +22,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization.edit
 import de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization.editor.JungEditorInput;
 import de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization.graph.GraphHandler;
 import de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization.graph.GraphProperties;
+import de.uni_freiburg.informatik.ultimate.result.CounterExampleResult;
+import de.uni_freiburg.informatik.ultimate.result.IProgramExecution;
+import de.uni_freiburg.informatik.ultimate.result.NonterminatingLassoResult;
 
 import org.apache.log4j.Logger;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -48,13 +56,15 @@ public class JungVisualizationObserver implements IUnmanagedObserver {
 
 	private boolean mOpenWindow;
 	private final GraphType mInputGraphType;
+	private final IUltimateServiceProvider mServices;
 
-	public JungVisualizationObserver(Logger logger, GraphType graphType) {
+	public JungVisualizationObserver(Logger logger, GraphType graphType, IUltimateServiceProvider services) {
 		mLogger = logger;
 		mGraph = new DirectedOrderedSparseMultigraph<VisualizationNode, VisualizationEdge>();
 		mGraphLayout = new FRLayout2<VisualizationNode, VisualizationEdge>(mGraph);
 		mVisualizationViewer = new VisualizationViewer<VisualizationNode, VisualizationEdge>(mGraphLayout);
 		mInputGraphType = graphType;
+		mServices = services;
 	}
 
 	@Override
@@ -70,13 +80,45 @@ public class JungVisualizationObserver implements IUnmanagedObserver {
 			mGraph.addVertex(mUltimateRootNode);
 			dfstraverse(mUltimateRootNode, Integer.toString(++mNumberOfRoots));
 			GraphHandler.getInstance().addVisualizationViewer(mVisualizationViewer);
-			GraphProperties.getInstance().setGraphProperties(mVisualizationViewer, mGraph, mUltimateRootNode);
+
+			GraphProperties.getInstance().setGraphProperties(mVisualizationViewer, mGraph, mUltimateRootNode,
+					getCounterExampleTraces(mServices));
 			mOpenWindow = true;
 		} else {
 			mLogger.error("Model is not visualizable: " + root);
 			mOpenWindow = false;
 		}
 		return false;
+	}
+
+	@SuppressWarnings("rawtypes")
+	private ArrayList<LinkedHashSet<Object>> getCounterExampleTraces(IUltimateServiceProvider services) {
+		Collection<CounterExampleResult> finiteCounterExamples = CoreUtil.filterResults(services.getResultService()
+				.getResults(), CounterExampleResult.class);
+		Collection<NonterminatingLassoResult> infiniteCounterExamples = CoreUtil.filterResults(services
+				.getResultService().getResults(), NonterminatingLassoResult.class);
+
+		ArrayList<LinkedHashSet<Object>> traces = new ArrayList<>();
+		for (CounterExampleResult cex : finiteCounterExamples) {
+			traces.add(getTrace(cex.getProgramExecution()));
+		}
+
+		for (NonterminatingLassoResult cex : infiniteCounterExamples) {
+			traces.add(getTrace(cex.getStem(), cex.getLasso()));
+		}
+
+		return traces;
+	}
+
+	@SuppressWarnings("rawtypes")
+	private LinkedHashSet<Object> getTrace(IProgramExecution... programExecutions) {
+		LinkedHashSet<Object> trace = new LinkedHashSet<>();
+		for (IProgramExecution programExecution : programExecutions) {
+			for (int i = 0; i < programExecution.getLength(); ++i) {
+				trace.add(programExecution.getTraceElement(i).getTraceElement());
+			}
+		}
+		return trace;
 	}
 
 	@Override

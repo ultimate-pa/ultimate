@@ -2,12 +2,15 @@ package de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization.gra
 
 import java.awt.Color;
 import java.awt.Font;
+import java.awt.Paint;
 import java.awt.Rectangle;
 import java.awt.Shape;
 import java.awt.font.FontRenderContext;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.geom.RoundRectangle2D;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
 
 import org.apache.commons.collections15.Transformer;
 import org.apache.commons.collections15.functors.ConstantTransformer;
@@ -34,7 +37,6 @@ import edu.uci.ics.jung.graph.Forest;
 import edu.uci.ics.jung.graph.Graph;
 import edu.uci.ics.jung.visualization.VisualizationViewer;
 import edu.uci.ics.jung.visualization.decorators.EllipseVertexShapeTransformer;
-import edu.uci.ics.jung.visualization.decorators.PickableVertexPaintTransformer;
 import edu.uci.ics.jung.visualization.decorators.ToStringLabeller;
 import edu.uci.ics.jung.visualization.renderers.Renderer;
 
@@ -68,21 +70,24 @@ public class GraphProperties {
 	 *            {@link Graph} - directed acyclic graph
 	 * @param rootNode
 	 *            {@link VisualizationNode}
+	 * @param errorTraces
+	 *            List of error traces that should be colored
 	 * @param backEdges
 	 *            List of IEges - backedges to be added
 	 */
 	@SuppressWarnings("unchecked")
-	public void setGraphProperties(VisualizationViewer<VisualizationNode, VisualizationEdge> vv,
-			Graph<VisualizationNode, VisualizationEdge> graph, VisualizationNode rootNode) {
+	public void setGraphProperties(final VisualizationViewer<VisualizationNode, VisualizationEdge> vv,
+			Graph<VisualizationNode, VisualizationEdge> graph, VisualizationNode rootNode,
+			final ArrayList<LinkedHashSet<Object>> errorTraces) {
 		UltimatePreferenceStore store = new UltimatePreferenceStore(Activator.PLUGIN_ID);
 		final Font font = vv.getFont();
 		final FontRenderContext frc = vv.getFontMetrics(font).getFontRenderContext();
 		Layout<VisualizationNode, VisualizationEdge> layout = vv.getGraphLayout();
 
-		Transformer<VisualizationNode, Shape> vertexShapeTransformer;
-		String vertexShapePreference = store.getString(JungPreferenceValues.LABEL_SHAPE_NODE);
-
+		//set node shape and label
 		if (store.getBoolean(JungPreferenceValues.LABEL_ANNOTATED_NODES)) {
+			String vertexShapePreference = store.getString(JungPreferenceValues.LABEL_SHAPE_NODE);
+			Transformer<VisualizationNode, Shape> vertexShapeTransformer;
 			vv.getRenderContext().setVertexLabelTransformer(new ToStringLabeller<VisualizationNode>());
 
 			if (vertexShapePreference.equalsIgnoreCase("RoundRectangle")) {
@@ -120,20 +125,54 @@ public class GraphProperties {
 		}
 		;
 
+		// set node coloring
 		RGB rgb = StringConverter.asRGB(store.getString(JungPreferenceValues.LABEL_COLOR_NODE));
-		Color nodeFillColor = new Color(rgb.red, rgb.green, rgb.blue);
+		final Color nodeFillColor = new Color(rgb.red, rgb.green, rgb.blue);
 
 		rgb = StringConverter.asRGB(store.getString(JungPreferenceValues.LABEL_COLOR_NODE_PICKED));
-		Color nodePickedColor = new Color(rgb.red, rgb.green, rgb.blue);
+		final Color nodePickedColor = new Color(rgb.red, rgb.green, rgb.blue);
 
 		rgb = StringConverter.asRGB(store.getString(JungPreferenceValues.LABEL_COLOR_BACKGROUND));
 		Color backgroundColor = new Color(rgb.red, rgb.green, rgb.blue);
 		vv.setBackground(backgroundColor);
 
-		vv.getRenderContext().setVertexFillPaintTransformer(
-				new PickableVertexPaintTransformer<VisualizationNode>(vv.getPickedVertexState(), nodeFillColor,
-						nodePickedColor));
+		vv.getRenderContext().setVertexFillPaintTransformer(new Transformer<VisualizationNode, Paint>() {
 
+			@Override
+			public Paint transform(VisualizationNode arg0) {
+				if (vv.getPickedVertexState().isPicked(arg0)) {
+					return nodeFillColor;
+				} else {
+					return nodePickedColor;
+				}
+			}
+		});
+
+		// set edge coloring
+		vv.getRenderContext().setEdgeDrawPaintTransformer(new Transformer<VisualizationEdge, Paint>() {
+
+			@Override
+			public Paint transform(VisualizationEdge arg0) {
+				if (vv.getPickedEdgeState().isPicked(arg0)) {
+					return Color.ORANGE;
+				} else if (isPartOfCex(arg0.getBacking())) {
+					return Color.RED;
+				} else {
+					return Color.BLACK;
+				}
+			}
+
+			private boolean isPartOfCex(Object backing) {
+				for (LinkedHashSet<Object> trace : errorTraces) {
+					if (trace.contains(backing)) {
+						return true;
+					}
+				}
+				return false;
+			}
+		});
+
+		// set edge labeling
 		switch (store.getEnum(JungPreferenceValues.LABEL_ANNOTATED_EDGES, EdgeLabels.class)) {
 		case None:
 			break;
@@ -141,13 +180,6 @@ public class GraphProperties {
 			vv.getRenderContext().setEdgeLabelTransformer(new ToStringLabeller<VisualizationEdge>() {
 				public String transform(VisualizationEdge edge) {
 					return edge.toString();
-//					String edgeName = "";
-//					if (edge.getPayload() != null) {
-//						edgeName = edge.getPayload().getName();
-//					} else {
-//						edgeName = edge.toString();
-//					}
-//					return edgeName;
 				}
 			});
 			break;
@@ -174,8 +206,9 @@ public class GraphProperties {
 			layout = new KKLayout<VisualizationNode, VisualizationEdge>(graph);
 			((KKLayout<VisualizationNode, VisualizationEdge>) layout).setMaxIterations(400);
 		} else {
-			MinimumSpanningForest2<VisualizationNode, VisualizationEdge> prim = new MinimumSpanningForest2<VisualizationNode, VisualizationEdge>(
-					graph, new DelegateForest<VisualizationNode, VisualizationEdge>(),
+			@SuppressWarnings("rawtypes")
+			MinimumSpanningForest2<VisualizationNode, VisualizationEdge> prim = new MinimumSpanningForest2<>(graph,
+					new DelegateForest<VisualizationNode, VisualizationEdge>(),
 					DelegateTree.<VisualizationNode, VisualizationEdge> getFactory(), new ConstantTransformer(1.0));
 
 			Forest<VisualizationNode, VisualizationEdge> tree = prim.getForest();
