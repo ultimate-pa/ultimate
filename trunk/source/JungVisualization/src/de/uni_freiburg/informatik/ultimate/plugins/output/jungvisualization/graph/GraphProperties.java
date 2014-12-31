@@ -193,6 +193,7 @@ public class GraphProperties {
 		default:
 			throw new UnsupportedOperationException("New enum value!");
 		}
+		vv.getRenderContext().getEdgeLabelRenderer().setRotateEdgeLabels(false);
 
 		// set preferred Graph Layout, default Layout = KKLayout
 		String prefLayout = store.getString(JungPreferenceValues.LABEL_LAYOUT);
