@@ -20,6 +20,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomat
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.incremental_inclusion.AbstractIncrementalInclusionCheck;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.incremental_inclusion.InclusionViaDifference;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 
 public class IncrementalInclusionCheck2<LETTER,STATE> extends AbstractIncrementalInclusionCheck<LETTER,STATE> implements IOperation<LETTER, STATE>  {
@@ -353,13 +354,65 @@ public class IncrementalInclusionCheck2<LETTER,STATE> extends AbstractIncrementa
 	public Boolean getResult(){
 		return result == null;
 	}
+	@Override
 	public boolean checkResult(StateFactory<STATE> stateFactory)
-			throws OperationCanceledException {
-		if(((result==null)&&(new IncrementalInclusionCheck2<LETTER, STATE>(localServiceProvider,localStateFactory,local_m_A,local_m_B2).getResult()==null))||((result!=null)&&(new IncrementalInclusionCheck2<LETTER, STATE>(localServiceProvider,localStateFactory,local_m_A,local_m_B2).getResult()!=null))){
-			return true;
+			throws AutomataLibraryException {
+		boolean checkResult = compareInclusionCheckResult(localServiceProvider, 
+				localStateFactory, local_m_A, local_m_B2, result);
+		return checkResult;
+//		if(((result==null)&&(new IncrementalInclusionCheck2<LETTER, STATE>(localServiceProvider,localStateFactory,local_m_A,local_m_B2).getResult()==null))||((result!=null)&&(new IncrementalInclusionCheck2<LETTER, STATE>(localServiceProvider,localStateFactory,local_m_A,local_m_B2).getResult()!=null))){
+//			return true;
+//		}
+//		else{
+//			return false;
+//		}
+	}
+	
+	/**
+	 * Compare the result of an inclusion check with an inclusion check based
+	 * on a emptiness/difference operations.
+	 * The NestedRun ctrEx is the result of an inclusion check whose inputs
+	 * are an automaton <b>a</b> and and a list of automata b.
+	 * If the language of <b>a</b> is included in the union of all languages of the
+	 * automata b then ctrEx is null, otherwise ctrEx is a run of <b>a</b> that
+	 * is a counterexample to the inclusion.
+	 * This method returns true if the difference-based inclusion check comes
+	 * up with the same result, i.e., if it find a counterexample if ctrEx is
+	 * non-null and if it does not find a counterexample if ctrEX is null.
+	 * Note that if inclusion does not hold, there may be several 
+	 * counterexamples. Dies method does NOT require that both methods return
+	 * exactly the same counterexample. 
+	 */
+	public static <LETTER, STATE> boolean compareInclusionCheckResult(
+			IUltimateServiceProvider services, 
+			StateFactory<STATE> stateFactory, 
+			NestedWordAutomaton<LETTER, STATE> a, 
+			ArrayList<INestedWordAutomaton<LETTER, STATE>> b, 
+			NestedRun<LETTER,STATE> ctrEx) throws AutomataLibraryException {
+		InclusionViaDifference<LETTER, STATE> ivd = 
+				new InclusionViaDifference<LETTER, STATE>(services, stateFactory, a);
+		// add all b automata
+		for (INestedWordAutomaton<LETTER, STATE> bi : b) {
+			ivd.addSubtrahend(bi);
 		}
-		else{
-			return false;
+		// obtain counterexample, counterexample is null if inclusion holds
+		NestedRun<LETTER, STATE> ivdCounterexample = ivd.getCounterexample();
+		// return true iff both counterexamples are null or both counterexamples
+		// are non-null.
+		boolean result;
+		if (ivdCounterexample == null) {
+			if (ctrEx == null) {
+				result = true;
+			} else {
+				result = false;
+			}
+		} else {
+			if (ctrEx == null) {
+				result = false;
+			} else {
+				result = true;
+			}
 		}
+		return result;
 	}
 }

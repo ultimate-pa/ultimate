@@ -464,14 +464,16 @@ public class IncrementalInclusionCheck4<LETTER,STATE> extends AbstractIncrementa
 		return result == null;
 	}
 	public boolean checkResult(StateFactory<STATE> stateFactory)
-			throws OperationCanceledException {
-		if(getResult().equals((new IncrementalInclusionCheck2<LETTER, STATE>(localServiceProvider,localStateFactory,local_m_A,local_m_B2)).getResult())){
-			//if(getResult2().equals((new InclusionViaDifference(localServiceProvider,localStateFactory,).getCounterexample().getLength()==0))){
-				return true;
-			}
-			else{
-				return false;
-			}
-
+			throws AutomataLibraryException {
+		boolean checkResult = IncrementalInclusionCheck2.compareInclusionCheckResult(
+				localServiceProvider, localStateFactory, local_m_A, local_m_B2, result);
+		return checkResult;
+//		if(getResult().equals((new IncrementalInclusionCheck2<LETTER, STATE>(localServiceProvider,localStateFactory,local_m_A,local_m_B2)).getResult())){
+//			//if(getResult2().equals((new InclusionViaDifference(localServiceProvider,localStateFactory,).getCounterexample().getLength()==0))){
+//				return true;
+//			}
+//			else{
+//				return false;
+//			}
 	}
 }

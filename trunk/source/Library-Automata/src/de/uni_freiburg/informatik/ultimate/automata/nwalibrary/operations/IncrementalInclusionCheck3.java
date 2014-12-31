@@ -441,15 +441,19 @@ public class IncrementalInclusionCheck3<LETTER,STATE> extends AbstractIncrementa
 	public Boolean getResult() throws OperationCanceledException{
 		return result == null;
 	}
+	@Override
 	public boolean checkResult(StateFactory<STATE> stateFactory)
-			throws OperationCanceledException {
-		//INestedWordAutomatonSimple<LETTER, STATE> a;
-		if(getResult().equals((new IncrementalInclusionCheck2<LETTER, STATE>(localServiceProvider,localStateFactory,local_m_A,local_m_B2)).getResult())){
-		//if(getResult2().equals((new InclusionViaDifference(localServiceProvider,localStateFactory,).getCounterexample().getLength()==0))){
-			return true;
-		}
-		else{
-			return false;
-		}
+			throws AutomataLibraryException {
+		boolean checkResult = IncrementalInclusionCheck2.compareInclusionCheckResult(
+				localServiceProvider, localStateFactory, local_m_A, local_m_B2, result);
+		return checkResult;
+//		//INestedWordAutomatonSimple<LETTER, STATE> a;
+//		if(getResult().equals((new IncrementalInclusionCheck2<LETTER, STATE>(localServiceProvider,localStateFactory,local_m_A,local_m_B2)).getResult())){
+//		//if(getResult2().equals((new InclusionViaDifference(localServiceProvider,localStateFactory,).getCounterexample().getLength()==0))){
+//			return true;
+//		}
+//		else{
+//			return false;
+//		}
 	}
 }
