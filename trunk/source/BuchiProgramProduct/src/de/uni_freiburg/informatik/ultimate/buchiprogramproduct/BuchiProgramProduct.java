@@ -29,7 +29,7 @@ import de.uni_freiburg.informatik.ultimate.result.CounterExampleResult;
  */
 public class BuchiProgramProduct implements IGenerator {
 
-	private static final boolean UseSBE = false;
+	private static final boolean UseSBE = !false;
 
 	protected static Logger mLogger;
 	protected List<String> mFileNames;
