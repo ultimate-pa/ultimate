@@ -53,11 +53,12 @@ public class Product {
 
 	private int mHelperUnifique = 0;
 
-	private HashMap<ProgramPoint, ArrayList<Call>> mCallEdges;
+	private HashMap<ProgramPoint, ArrayList<Call>> mOrigRcfgCallLocs2CallEdges;
 
 	private final Logger mLogger;
 	private final IUltimateServiceProvider mServices;
 	private final ProductBacktranslator mBacktranslator;
+	private HashSet<ProgramPoint> mRootSuccessorProgramPoints;
 
 	public Product(NestedWordAutomaton<CodeBlock, String> aut, RootNode rcfg, LTLPropertyCheck ltlAnnot,
 			IUltimateServiceProvider services, ProductBacktranslator backtrans) throws Exception {
@@ -65,7 +66,8 @@ public class Product {
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mRCFGLocations = new HashSet<ProgramPoint>();
 		mProductLocations = new HashMap<String, ProgramPoint>();
-		mCallEdges = new HashMap<ProgramPoint, ArrayList<Call>>();
+		mOrigRcfgCallLocs2CallEdges = new HashMap<ProgramPoint, ArrayList<Call>>();
+		mRootSuccessorProgramPoints = new HashSet<>();
 		mNWA = aut;
 		mRCFG = rcfg;
 		mBacktranslator = backtrans;
@@ -133,6 +135,13 @@ public class Product {
 		final BuchiProgramAcceptingStateAnnotation acceptingNodeAnnotation = new BuchiProgramAcceptingStateAnnotation();
 
 		for (ProgramPoint origpp : mRCFGLocations) {
+
+			if (isNonProductNode(origpp)) {
+				ProgramPoint newPP = createProgramPoint(generateStateName(origpp.getLocationName(), null), origpp);
+				mProductLocations.put(generateStateName(origpp.getLocationName(), null), newPP);
+				continue;
+			}
+
 			for (String nwaState : mNWA.getStates()) {
 				ProgramPoint newPP = createProgramPoint(generateStateName(origpp.getLocationName(), nwaState), origpp);
 				mProductLocations.put(generateStateName(origpp.getLocationName(), nwaState), newPP);
@@ -141,14 +150,13 @@ public class Product {
 				if (mNWA.isFinal(nwaState)) {
 					acceptingNodeAnnotation.annotate(newPP);
 				}
-
-				// inital states
-				if (origpp.getLocationName().equals("ULTIMATE.startENTRY") && mNWA.isInitial(nwaState)) {
-					mapNewEdge2OldEdge(new RootEdge(mRootNode, newPP), null);
-					mRootNode.getRootAnnot().getEntryNodes().put("ULTIMATE.start", newPP);
-				}
 			}
 		}
+	}
+
+	private boolean isNonProductNode(ProgramPoint origpp) {
+		String procname = origpp.getProcedure();
+		return procname.equals("ULTIMATE.init") || procname.equals("ULTIMATE.start");
 	}
 
 	/**
@@ -159,45 +167,129 @@ public class Product {
 	private void createEdges() throws Exception {
 
 		// first, do everything except return edges
-		for (ProgramPoint origRcfgLoc : mRCFGLocations) {
-			for (String nwaLoc : mNWA.getStates()) {
-				ProgramPoint productLoc = mProductLocations
-						.get(generateStateName(origRcfgLoc.getLocationName(), nwaLoc));
-				// For Edge of Node x Edge of node
-				for (RCFGEdge rcfgEdge : origRcfgLoc.getOutgoingEdges()) {
-					if (rcfgEdge instanceof Call) {
-						handleEdgeCall(productLoc, (Call) rcfgEdge, origRcfgLoc, nwaLoc);
-					} else if (rcfgEdge instanceof StatementSequence) {
-						handleEdgeStatementSequence(productLoc, nwaLoc, (StatementSequence) rcfgEdge);
-					} else if (rcfgEdge instanceof Summary) {
-						// we ignore summaries
-						continue;
+		for (ProgramPoint origRcfgSourceLoc : mRCFGLocations) {
+			for (RCFGEdge rcfgEdge : origRcfgSourceLoc.getOutgoingEdges()) {
+				mLogger.debug("Processing " + rcfgEdge.hashCode() + " " + rcfgEdge.getClass().getSimpleName());
+				ProgramPoint origRcfgTargetLoc = (ProgramPoint) rcfgEdge.getTarget();
+				if (isNonProductNode(origRcfgSourceLoc) && isNonProductNode(origRcfgTargetLoc)) {
+					// if the current node and its target belong to ignored
+					// procedures, just replicate the RCFG
+
+					ProgramPoint productSourceLoc = mProductLocations.get(generateStateName(
+							origRcfgSourceLoc.getLocationName(), null));
+					ProgramPoint productTargetLoc = mProductLocations.get(generateStateName(
+							origRcfgTargetLoc.getLocationName(), null));
+
+					assert productSourceLoc != null;
+					assert productTargetLoc != null;
+
+					addRootEdgeIfNecessary(origRcfgSourceLoc, null, productSourceLoc);
+
+					if (rcfgEdge instanceof StatementSequence) {
+						createNewStatementSequence(productSourceLoc, (StatementSequence) rcfgEdge, productTargetLoc,
+								null);
+					} else if (rcfgEdge instanceof Call) {
+						createNewCallEdge(origRcfgSourceLoc, productSourceLoc, (Call) rcfgEdge, productTargetLoc);
 					} else if (rcfgEdge instanceof Return) {
 						// we will handle return in a second iteration
-						continue;
+					} else if (rcfgEdge instanceof Summary) {
+						// we ignore summaries
 					} else {
-						// we encounted an unhandled edge type and have to abort
-						throw new UnsupportedOperationException(
-								"BuchiProgramProduct does not support RCFGEdges of type "
-										+ rcfgEdge.getClass().getSimpleName());
+						throw new AssertionError("Did not expect edge of type " + rcfgEdge.getClass().getSimpleName());
+					}
+
+				} else if (isNonProductNode(origRcfgSourceLoc)) {
+					// if the source is a non-product state and the target is
+					// part of a real product state, we know that it has to be a
+					// call edge
+					// for this edge, we generate new call edges that link the
+					// non-product state with all product states that are
+					// initial states
+					//
+					ProgramPoint productSourceLoc = mProductLocations.get(generateStateName(
+							origRcfgSourceLoc.getLocationName(), null));
+					addRootEdgeIfNecessary(origRcfgSourceLoc, null, productSourceLoc);
+					if (rcfgEdge instanceof Call) {
+						handleEdgeCallFromNonProduct(productSourceLoc, (Call) rcfgEdge, origRcfgSourceLoc);
+					} else {
+						throw new AssertionError();
+					}
+				} else {
+					// if the source is a product state, we know that either the
+					// target is also a product state, or the target is a non
+					// product state and the edge has to be an return
+					// as we ignore return edges in this run, we just make the normal product
+					for (String nwaLoc : mNWA.getStates()) {
+						ProgramPoint productSourceLoc = mProductLocations.get(generateStateName(
+								origRcfgSourceLoc.getLocationName(), nwaLoc));
+						addRootEdgeIfNecessary(origRcfgSourceLoc, nwaLoc, productSourceLoc);
+
+						if (rcfgEdge instanceof StatementSequence) {
+							handleEdgeStatementSequence(productSourceLoc, nwaLoc, (StatementSequence) rcfgEdge);
+						} else if (rcfgEdge instanceof Call) {
+							handleEdgeCall(productSourceLoc, nwaLoc, (Call) rcfgEdge, origRcfgSourceLoc);
+						} else if (rcfgEdge instanceof Return) {
+							// we will handle return in a second iteration
+						} else if (rcfgEdge instanceof Summary) {
+							// we ignore summaries
+						} else {
+							// we encounted an unhandled edge type and have
+							// to abort
+							throw new UnsupportedOperationException(
+									"BuchiProgramProduct does not support RCFGEdges of type "
+											+ rcfgEdge.getClass().getSimpleName());
+						}
 					}
 				}
 			}
 		}
 
 		// second, handle all return edges
-		for (ProgramPoint origRcfgLoc : mRCFGLocations) {
-			for (String nwaLoc : mNWA.getStates()) {
-				ProgramPoint productLoc = mProductLocations
-						.get(generateStateName(origRcfgLoc.getLocationName(), nwaLoc));
-				// For Edge of Node x Edge of node
-				for (RCFGEdge rcfgEdge : origRcfgLoc.getOutgoingEdges()) {
-					if (rcfgEdge instanceof Return) {
-						handleEdgeReturn((Return) rcfgEdge, productLoc, nwaLoc);
+		for (ProgramPoint origRcfgSourceLoc : mRCFGLocations) {
+			for (RCFGEdge rcfgEdge : origRcfgSourceLoc.getOutgoingEdges()) {
+				if (!(rcfgEdge instanceof Return)) {
+					// skip all edges that are not return edges
+					continue;
+				}
+
+				ProgramPoint origRcfgTargetLoc = (ProgramPoint) rcfgEdge.getTarget();
+				if (isNonProductNode(origRcfgSourceLoc) && isNonProductNode(origRcfgTargetLoc)) {
+					ProgramPoint productSourceLoc = mProductLocations.get(generateStateName(
+							origRcfgSourceLoc.getLocationName(), null));
+					ProgramPoint productTargetLoc = mProductLocations.get(generateStateName(
+							origRcfgTargetLoc.getLocationName(), null));
+					Return returnEdge = (Return) rcfgEdge;
+					ArrayList<Call> correspondingCalls = mOrigRcfgCallLocs2CallEdges.get(returnEdge
+							.getCallerProgramPoint());
+					// there must be exactly one coressponding call, as this is
+					// a return for an original call
+					assert correspondingCalls.size() == 1;
+					createNewReturnEdge(productSourceLoc, returnEdge, productTargetLoc, mOrigRcfgCallLocs2CallEdges
+							.get(returnEdge.getCallerProgramPoint()).get(0));
+				} else {
+					for (String nwaLoc : mNWA.getStates()) {
+						ProgramPoint productSourceLoc = mProductLocations.get(generateStateName(
+								origRcfgSourceLoc.getLocationName(), nwaLoc));
+						handleEdgeReturn(productSourceLoc, nwaLoc, (Return) rcfgEdge);
 					}
 				}
 			}
 		}
+	}
+
+	private boolean addRootEdgeIfNecessary(ProgramPoint origRcfgSourceLoc, String nwaState,
+			ProgramPoint productTargetLoc) {
+		if (origRcfgSourceLoc.getIncomingEdges().size() == 1
+				&& origRcfgSourceLoc.getIncomingEdges().get(0) instanceof RootEdge
+				&& (nwaState == null || mNWA.isInitial(nwaState))) {
+			assert productTargetLoc != null;
+			if (!mRootSuccessorProgramPoints.contains(productTargetLoc)) {
+				mapNewEdge2OldEdge(new RootEdge(mRootNode, productTargetLoc), null);
+				mRootSuccessorProgramPoints.add(productTargetLoc);
+			}
+			return true;
+		}
+		return false;
 	}
 
 	private void generateTransFormula() {
@@ -230,11 +322,11 @@ public class Product {
 			targetpp = mProductLocations.get(generateStateName(((ProgramPoint) rcfgEdge.getTarget()).getLocationName(),
 					autTrans.getSucc().toString()));
 			// append statements of rcfg and ltl
-			createNewStatementSequence(productLoc, rcfgEdge, targetpp, autTrans);
+			createNewStatementSequence(productLoc, rcfgEdge, targetpp, autTrans.getLetter());
 		}
 	}
 
-	private void handleEdgeReturn(Return returnEdge, ProgramPoint productLoc, String nwaLoc) {
+	private void handleEdgeReturn(ProgramPoint productLoc, String nwaLoc, Return returnEdge) {
 		// The calls used for the returns are dummy calls,
 		// that have nothing common with the original
 		// call except the caller location, that has to be
@@ -250,12 +342,10 @@ public class Product {
 		ProgramPoint caller = ((ProgramPoint) returnEdge.getCallerProgramPoint());
 
 		assert (caller != null);
-		assert (mCallEdges != null);
-		assert (mCallEdges.get(caller) != null);
-		for (Call call : mCallEdges.get(caller)) {
-			Return r = new Return(productLoc, helper, call, mLogger);
-			r.setTransitionFormula(returnEdge.getTransitionFormula());
-			mapNewEdge2OldEdge(r, returnEdge);
+		assert (mOrigRcfgCallLocs2CallEdges != null);
+		assert (mOrigRcfgCallLocs2CallEdges.get(caller) != null);
+		for (Call call : mOrigRcfgCallLocs2CallEdges.get(caller)) {
+			createNewReturnEdge(productLoc, returnEdge, helper, call);
 		}
 
 		// From the helpernode, the original call target is
@@ -266,39 +356,75 @@ public class Product {
 		for (OutgoingInternalTransition<CodeBlock, String> autTrans : mNWA.internalSuccessors(nwaLoc)) {
 			ProgramPoint targetpp = mProductLocations.get(generateStateName(origRcfgTargetLoc.getLocationName(),
 					autTrans.getSucc().toString()));
-			createNewStatementSequence(helper, null, targetpp, autTrans);
+			if (targetpp == null) {
+				// returns may connect with multiple edges to a single state
+				// that is part of the non-product states
+				targetpp = mProductLocations.get(generateStateName(origRcfgTargetLoc.getLocationName(), null));
+			}
+			createNewStatementSequence(helper, null, targetpp, autTrans.getLetter());
 		}
 	}
 
-	private void handleEdgeCall(ProgramPoint productLoc, Call rcfgEdge, ProgramPoint origRcfgLoc, String nwaState) {
+	private void handleEdgeCall(ProgramPoint productSourceLoc, String nwaSourceState, Call origRcfgEdge,
+			ProgramPoint origRcfgSourceLoc) {
 
-		String helperName = generateHelperStateName(mHelperUnifique + productLoc.getPosition());
-		ProgramPoint origRcfgTargetLoc = (ProgramPoint) rcfgEdge.getTarget();
+		String helperName = generateHelperStateName(productSourceLoc.getPosition());
+		ProgramPoint origRcfgTargetLoc = (ProgramPoint) origRcfgEdge.getTarget();
 		ProgramPoint helper = createProgramPoint(helperName, origRcfgTargetLoc);
 
-		Call call = new Call(productLoc, helper, rcfgEdge.getCallStatement(), mLogger);
-		call.setTransitionFormula(rcfgEdge.getTransitionFormula());
-		mapNewEdge2OldEdge(call, rcfgEdge);
-
-		// store all call edges in hashmap for the handling of return edges
-		// later on
-		ArrayList<Call> calls = mCallEdges.get(origRcfgLoc);
-		if (calls == null) {
-			calls = new ArrayList<>();
-			mCallEdges.put(origRcfgLoc, calls);
-		}
-		calls.add(call);
+		createNewCallEdge(origRcfgSourceLoc, productSourceLoc, origRcfgEdge, helper);
 
 		// From the helpernode, the original call target is
 		// connected with a new
 		// edge with the fitting assumption of the call. The
 		// edge is calculated
 		// like any other edge in the graph.
-		for (OutgoingInternalTransition<CodeBlock, String> autTrans : mNWA.internalSuccessors(nwaState)) {
+		for (OutgoingInternalTransition<CodeBlock, String> autTrans : mNWA.internalSuccessors(nwaSourceState)) {
 			ProgramPoint targetpp = mProductLocations.get(generateStateName(origRcfgTargetLoc.getLocationName(),
 					autTrans.getSucc().toString()));
-			createNewStatementSequence(helper, null, targetpp, autTrans);
+			createNewStatementSequence(helper, null, targetpp, autTrans.getLetter());
 		}
+	}
+
+	private void handleEdgeCallFromNonProduct(ProgramPoint productSourceLoc, Call origRcfgEdge,
+			ProgramPoint origRcfgSourceLoc) {
+
+		ProgramPoint origRcfgTargetLoc = (ProgramPoint) origRcfgEdge.getTarget();
+		for (String initialNWAState : mNWA.getInitialStates()) {
+			ProgramPoint productTargetLoc = mProductLocations.get(generateStateName(
+					origRcfgTargetLoc.getLocationName(), initialNWAState));
+			createNewCallEdge(origRcfgSourceLoc, productSourceLoc, origRcfgEdge, productTargetLoc);
+		}
+	}
+
+	private Return createNewReturnEdge(ProgramPoint productSourceLoc, Return origRcfgEdge,
+			ProgramPoint productTargetLoc, Call correspondingCall) {
+		assert productSourceLoc != null;
+		assert productTargetLoc != null;
+		Return r = new Return(productSourceLoc, productTargetLoc, correspondingCall, mLogger);
+		r.setTransitionFormula(origRcfgEdge.getTransitionFormula());
+		mapNewEdge2OldEdge(r, origRcfgEdge);
+		return r;
+	}
+
+	private Call createNewCallEdge(ProgramPoint origRcfgSourceLoc, ProgramPoint productSourceLoc, Call origRcfgEdge,
+			ProgramPoint productTargetLoc) {
+		assert productSourceLoc != null;
+		assert productTargetLoc != null;
+		Call call = new Call(productSourceLoc, productTargetLoc, origRcfgEdge.getCallStatement(), mLogger);
+		call.setTransitionFormula(origRcfgEdge.getTransitionFormula());
+		mapNewEdge2OldEdge(call, origRcfgEdge);
+
+		// store all call edges in hashmap for the handling of return edges
+		// later on
+		ArrayList<Call> calls = mOrigRcfgCallLocs2CallEdges.get(origRcfgSourceLoc);
+		if (calls == null) {
+			calls = new ArrayList<>();
+			mOrigRcfgCallLocs2CallEdges.put(origRcfgSourceLoc, calls);
+		}
+		calls.add(call);
+
+		return call;
 	}
 
 	private ProgramPoint createProgramPoint(String helperName, ProgramPoint originalState) {
@@ -319,6 +445,10 @@ public class Product {
 			rootAnnot.getLoopLocations().put(rtr, currentLoopLoc);
 		}
 
+		// TODO: It may happen that we have multiple entry points because of the
+		// products; but we can currently only represent one. Do we need to do
+		// something about that?
+
 		ProgramPoint entry = rootAnnot.getEntryNodes().get(originalState.getProcedure());
 		if (entry != null) {
 			rootAnnot.getEntryNodes().put(originalState.getProcedure(), rtr);
@@ -332,31 +462,26 @@ public class Product {
 		return rtr;
 	}
 
-	private void createNewStatementSequence(ProgramPoint currentpp, StatementSequence originalSS,
-			ProgramPoint targetpp, OutgoingInternalTransition<CodeBlock, String> autTrans) {
+	private StatementSequence createNewStatementSequence(ProgramPoint currentpp, StatementSequence originalSS,
+			ProgramPoint targetpp, CodeBlock letter) {
 		ArrayList<Statement> stmts = new ArrayList<Statement>();
 		if (originalSS != null) {
 			stmts.addAll(originalSS.getStatements());
 		}
-		if (autTrans != null) {
-			if (autTrans.getLetter() instanceof StatementSequence) {
-				StatementSequence autTransStmts = (StatementSequence) autTrans.getLetter();
+		if (letter != null) {
+			if (letter instanceof StatementSequence) {
+				StatementSequence autTransStmts = (StatementSequence) letter;
 				stmts.addAll(autTransStmts.getStatements());
 			} else {
-				if (autTrans.getLetter() == null) {
-					throw new NullPointerException("Letter has to be a statement sequence, but is null");
-				} else {
-					throw new UnsupportedOperationException("Letter has to be a statement sequence, but is "
-							+ autTrans.getLetter().getClass().getSimpleName());
-				}
+				throw new UnsupportedOperationException("Letter has to be a statement sequence, but is "
+						+ letter.getClass().getSimpleName());
 			}
-
-			// TODO: autTrans is a codeblock, aka a statement sequence
-			// stmts.add(generateNeverClaimAssumeStatement(autTrans));
 		}
 
 		// create the edge
 		StatementSequence newSS;
+		assert currentpp != null;
+		assert targetpp != null;
 		if (originalSS != null) {
 			newSS = new StatementSequence(currentpp, targetpp, stmts, originalSS.getOrigin(), mLogger);
 		} else {
@@ -366,6 +491,7 @@ public class Product {
 		// TODO: map the new statement sequence to the one from which it
 		// originated (for backtranslation)
 		mapNewEdge2OldEdge(newSS, originalSS);
+		return newSS;
 	}
 
 	private void mapNewEdge2OldEdge(RCFGEdge newEdge, RCFGEdge originalEdge) {
@@ -381,23 +507,25 @@ public class Product {
 	 * Central method to create the product state's names form: P_name __
 	 * Aut_name
 	 * 
-	 * @param name1
+	 * @param rcfgName
 	 *            Name of the state in the RCFG
-	 * @param name2
-	 *            Name of the state in the BA
+	 * @param nwaName
+	 *            Name of the state in the BA / NWA
 	 * @return
 	 */
-	private String generateStateName(String name1, String name2) {
-		if (name1.equals("ULTIMATE.startENTRY") && mNWA.isInitial(name2)) {
+	private String generateStateName(String rcfgName, String nwaName) {
+		if (nwaName == null) {
+			return rcfgName;
+		} else if (rcfgName.equals("ULTIMATE.startENTRY") && mNWA.isInitial(nwaName)) {
 			return "ULTIMATE.start";
 		} else {
-			return name1 + "__" + name2;
+			return rcfgName + "__" + nwaName;
 		}
 	}
 
 	private String generateHelperStateName(String location) {
 		mHelperUnifique++;
-		return "h_" + Integer.toString(mHelperUnifique) + location;
+		return "crhelper" + Integer.toString(mHelperUnifique) + "_" + location;
 	}
 
 }
