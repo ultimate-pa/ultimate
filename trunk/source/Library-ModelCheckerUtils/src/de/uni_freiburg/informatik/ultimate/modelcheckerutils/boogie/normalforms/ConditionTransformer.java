@@ -54,7 +54,7 @@ public class ConditionTransformer<E> {
 		if (dnf == null) {
 			return null;
 		}
-		if (mWrapper.isAtom(dnf)) {
+		if (!mWrapper.isOr(condition)) {
 			return Collections.singleton(dnf);
 		}
 		ArrayList<E> disjuncts = new ArrayList<>();

@@ -65,7 +65,6 @@ public class SmallBlockEncoder extends BaseObserver {
 				}
 				closed.add(current);
 				edges.addAll(current.getTarget().getOutgoingEdges());
-				mLogger.debug("Processing edge " + current.hashCode() + " (" + current.getClass().getSimpleName() + ")");
 				if (current instanceof StatementSequence) {
 					StatementSequence ss = (StatementSequence) current;
 					if (ss.getStatements().size() != 1) {
@@ -76,8 +75,17 @@ public class SmallBlockEncoder extends BaseObserver {
 					if (stmt instanceof AssumeStatement) {
 						AssumeStatement assume = (AssumeStatement) stmt;
 						Collection<Expression> disjuncts = ct.toDnfDisjuncts(assume.getFormula());
-						mLogger.debug("    Edge " + current.hashCode() + " has assume "
-								+ BoogiePrettyPrinter.print(assume.getFormula()));
+						if (mLogger.isDebugEnabled() && disjuncts.size() > 1) {
+							mLogger.debug("Edge " + current.hashCode() + ":");
+							mLogger.debug("    has assume " + BoogiePrettyPrinter.print(assume.getFormula()));
+							StringBuilder sb = new StringBuilder();
+							sb.append("{");
+							for (Expression dis : disjuncts) {
+								sb.append(BoogiePrettyPrinter.print(dis)).append(", ");
+							}
+							sb.delete(sb.length() - 2, sb.length()).append("}");
+							mLogger.debug("    converted to disjuncts " + sb.toString());
+						}
 						if (disjuncts.size() > 1) {
 							countDisjunctiveAssumes++;
 							for (Expression disjunct : disjuncts) {
