@@ -1,5 +1,5 @@
 //#Unsafe
-//@ ltl invariant positive: [](!AP(chainBroken == 1) || []AP(chainBroken == 1));
+//@ ltl invariant positive: []<>AP(otime < time);
 
 #include <stdio.h>
 
@@ -8,7 +8,7 @@ extern void __VERIFIER_assume() __attribute__ ((__noreturn__));
 extern int __VERIFIER_nondet_int() __attribute__ ((__noreturn__));
 
 int error, tempDisplay, warnLED, tempIn, chainBroken,
-warnLight, temp, limit, init;
+warnLight, temp, otime = 0, time = 0, limit, init;
 
 
 void display(int tempdiff, int warning)
@@ -29,26 +29,22 @@ int vinToCels(int kelvin)
 
 void coolantControl()
 {
-	int otime, time = 0;
 	while(1)
 	{
 		otime = time;
-		time = otime + 1;
+		time = otime; //BUG +1;
 		tempIn = __VERIFIER_nondet_int();
 		temp = vinToCels(tempIn);
 		if(temp > limit) 
 		{
 			chainBroken = 1;
-		} else {
-			//BUG
-			chainBroken = 0;
 		}
 	}
 }
 
 int main()
 {
- init = 0;
+    init = 0;
     tempDisplay = 0;
     warnLED = 1;
     tempIn = 0;

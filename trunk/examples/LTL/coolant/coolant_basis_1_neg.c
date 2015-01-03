@@ -1,5 +1,5 @@
 //#Unsafe
-//@ ltl invariant positive: [](!AP(chainBroken == 1) || []AP(chainBroken == 1));
+//@ ltl invariant positive: ![](!AP(chainBroken == 1) || []AP(chainBroken == 1));
 
 #include <stdio.h>
 
@@ -39,10 +39,9 @@ void coolantControl()
 		if(temp > limit) 
 		{
 			chainBroken = 1;
-		} else {
-			//BUG
-			chainBroken = 0;
-		}
+		} //else {
+		//	chainBroken = 0;
+		//}
 	}
 }
 
