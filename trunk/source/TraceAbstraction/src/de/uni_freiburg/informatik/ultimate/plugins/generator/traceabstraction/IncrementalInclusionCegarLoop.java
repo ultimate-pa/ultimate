@@ -1,6 +1,9 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
@@ -9,6 +12,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Accepts;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IncrementalInclusionCheck2;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.RemoveUnreachable;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.incremental_inclusion.AbstractIncrementalInclusionCheck;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.incremental_inclusion.InclusionViaDifference;
@@ -54,14 +58,34 @@ public class IncrementalInclusionCegarLoop extends BasicCegarLoop {
 		switch (m_LanguageOperation) {
 		case DIFFERENCE:
 			throw new AssertionError("wrong cegar loop for this");
-		case INCLUSION:
-			throw new UnsupportedOperationException("not implemented yet");
-		case INCLUSION_VIA_DIFFERENCE:
+		case INCREMENTAL_INCLUSION_2: {
+			List<INestedWordAutomaton<CodeBlock, IPredicate>> empty = Collections.emptyList();
+			m_InclusionCheck = new IncrementalInclusionCheck2<CodeBlock, IPredicate>(
+					m_Services, m_StateFactoryForRefinement, 
+					(INestedWordAutomatonSimple) m_Abstraction, empty);
+		}
+		break;
+		case INCREMENTAL_INCLUSION_3: {
+			List<INestedWordAutomaton<CodeBlock, IPredicate>> empty = Collections.emptyList();
+			m_InclusionCheck = new IncrementalInclusionCheck2<CodeBlock, IPredicate>(
+					m_Services, m_StateFactoryForRefinement, 
+					(INestedWordAutomatonSimple) m_Abstraction, empty);
+		}
+		break;
+		case INCREMENTAL_INCLUSION_4: {
+			List<INestedWordAutomaton<CodeBlock, IPredicate>> empty = Collections.emptyList();
+			m_InclusionCheck = new IncrementalInclusionCheck2<CodeBlock, IPredicate>(
+					m_Services, m_StateFactoryForRefinement, 
+					(INestedWordAutomatonSimple) m_Abstraction, empty);
+		}
+		break;
+		case INCREMENTAL_INCLUSION_VIA_DIFFERENCE: {
 			m_InclusionCheck = new InclusionViaDifference(m_Services, 
 					m_StateFactoryForRefinement, 
 					m_PredicateFactoryInterpolantAutomata, 
 					(INestedWordAutomatonSimple) m_Abstraction);
-			break;
+		}
+		break;
 		default:
 			throw new AssertionError("unknown case");
 		}
@@ -114,6 +138,8 @@ public class IncrementalInclusionCegarLoop extends BasicCegarLoop {
 				DeterministicInterpolantAutomaton determinized = new DeterministicInterpolantAutomaton(m_Services, 
 						m_SmtManager, edgeChecker, (INestedWordAutomaton<CodeBlock, IPredicate>) m_Abstraction, m_InterpolAutomaton, m_TraceChecker, mLogger);
 				m_InclusionCheck.addSubtrahend(determinized);
+				// do this to allow that the automaton is build on the fly
+				m_InclusionCheck.getCounterexample();
 				determinized.finishConstruction();
 				assert (edgeChecker.isAssertionStackEmpty());
 				INestedWordAutomaton<CodeBlock, IPredicate> test = (new RemoveUnreachable<CodeBlock, IPredicate>(m_Services, 
