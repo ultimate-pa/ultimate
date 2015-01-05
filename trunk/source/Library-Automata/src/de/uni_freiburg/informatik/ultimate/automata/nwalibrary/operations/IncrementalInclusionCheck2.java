@@ -21,6 +21,17 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.increm
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.incremental_inclusion.InclusionViaDifference;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 
+/**
+ * 
+ * This is an implementation of incremental inclusion check based on the Bn baseline Algorithm.<br/>
+ * We use InclusionViaDIfference to check its correctness.
+ * 
+ * @author jefferyyjhsu@iis.sinica.edu.tw
+ *
+ * @param <LETTER>
+ * @param <STATE>
+ */
+
 public class IncrementalInclusionCheck2<LETTER,STATE> extends AbstractIncrementalInclusionCheck<LETTER,STATE> implements IOperation<LETTER, STATE>  {
 
 	private static Logger s_Logger;

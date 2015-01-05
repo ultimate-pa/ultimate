@@ -11,6 +11,11 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 
+/**
+ * Utility class that provides an interface for constructing a list of INestedWordAutomatons.  
+ * @author jefferyyjhsu@iis.sinica.edu.tw
+ */
+
 public class NwaList<LETTER,STATE> implements IOperation<LETTER,STATE>{
 
 	ArrayList<INestedWordAutomaton<LETTER,STATE>> automataCollection;

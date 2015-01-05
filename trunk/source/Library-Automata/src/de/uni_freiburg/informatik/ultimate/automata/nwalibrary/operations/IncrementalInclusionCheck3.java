@@ -1,10 +1,8 @@
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 
 import org.apache.log4j.Logger;
@@ -20,9 +18,20 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IncrementalInclusionCheck2.NodeData;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.incremental_inclusion.AbstractIncrementalInclusionCheck;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
+
+/**
+ * 
+ * This is an implementation of incremental inclusion check based on the Rn Algorithm.<br/>
+ * Rn sets are always empty when nodes are being created when expanding trees.
+ * We use InclusionViaDIfference to check its correctness.
+ * 
+ * @author jefferyyjhsu@iis.sinica.edu.tw
+ *
+ * @param <LETTER>
+ * @param <STATE>
+ */
 
 public class IncrementalInclusionCheck3<LETTER,STATE> extends AbstractIncrementalInclusionCheck<LETTER,STATE> implements IOperation<LETTER, STATE> {
 
