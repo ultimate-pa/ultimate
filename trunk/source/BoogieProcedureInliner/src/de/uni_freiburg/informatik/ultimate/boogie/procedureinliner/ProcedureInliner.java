@@ -342,6 +342,8 @@ public class ProcedureInliner implements IUnmanagedObserver {
 			if (localVars.size() > 0)
 				inlineBlock.add(new HavocStatement(callLocation, localVars.toArray(new VariableLHS[localVars.size()])));
 			
+			HashMap<String, String> renamedLabels = new HashMap<String, String>(); // key = old name, value = new name
+			ArrayList<Integer> gotoStatementIndices = new ArrayList<Integer>(); // indicies of all Gotos in List inlineBlock
 			for (Statement s : body.getBlock()) {
 				if (s instanceof ReturnStatement) {
 					inlineBlock.add(new GotoStatement(s.getLocation(), new String[]{endLabel}));
@@ -357,13 +359,38 @@ public class ProcedureInliner implements IUnmanagedObserver {
 							++uniqueNum;
 						} while (mAllLabels.contains(newLabelName));
 						mAllLabels.add(newLabelName);
+						renamedLabels.put(lbl.getName(), newLabelName);
 						inlineBlock.add(new Label(lbl.getLocation(), newLabelName));						
 					} else {
 						inlineBlock.add(lbl);
 					}
 				} else {
+					if (s instanceof GotoStatement)
+						gotoStatementIndices.add(inlineBlock.size());
 					inlineBlock.add(declInfoTransformer.processStatement(s));				
 				}
+			}
+			// Update goto statements to renamed labels
+			for (int i : gotoStatementIndices) {
+				if (inlineBlock.get(i) instanceof GotoStatement) {
+					GotoStatement g = (GotoStatement) inlineBlock.get(i);
+					boolean changed = false;
+					String[] oldLabels = g.getLabels();
+					String[] newLabels = new String[oldLabels.length];
+					for (int j = 0; j < oldLabels.length; ++j) {
+						String newLabelName = renamedLabels.get(oldLabels[j]);						
+						changed = newLabelName != null;
+						if (changed) {
+							newLabels[j] = newLabelName;
+						} else {
+							newLabels[j] = oldLabels[j];
+						}
+					}
+					if (changed) {
+						inlineBlock.set(i, new GotoStatement(g.getLocation(), newLabels));
+					}
+				}
+				
 			}
 		}
 		inlineBlock.add(new Label(callLocation, endLabel));
