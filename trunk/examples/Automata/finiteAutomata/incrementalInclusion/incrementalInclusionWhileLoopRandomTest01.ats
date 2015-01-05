@@ -13,11 +13,11 @@ while (true) {
     NestedWordAutomaton A = getRandomNwa(2, 25, 40, 0, 0, 300);
 	NestedWordAutomaton B1 = getRandomNwa(2, 25, 240, 0, 0, 300);
 	NestedWordAutomaton B2 = getRandomNwa(2, 25, 240, 0, 0, 300);
-	boolean isIncluded = IncrementalInclusionCheck2(A,BnSet(B1, B2));
+	boolean isIncluded = IncrementalInclusionCheck2(A,NwaList(B1, B2));
 	print(isIncluded);
-	isIncluded = IncrementalInclusionCheck3(A,BnSet(B1, B2));
+	isIncluded = IncrementalInclusionCheck3(A,NwaList(B1, B2));
 	print(isIncluded);
-	isIncluded = IncrementalInclusionCheck4(A,BnSet(B1, B2));
+	isIncluded = IncrementalInclusionCheck4(A,NwaList(B1, B2));
 	print(isIncluded);
 
 }
