@@ -368,7 +368,7 @@ public class TypeChecker extends BaseObserver {
 				if (declInfo == null) {
 					idexpr.setDeclarationInformation(info.getDeclarationInformation());
 				} else {
-					checkExistingDeclarationInformation(declInfo, info.getDeclarationInformation());
+					checkExistingDeclarationInformation(name, declInfo, info.getDeclarationInformation());
 				}
 				resultType = info.getType().getUnderlyingType();
 			}
@@ -450,9 +450,9 @@ public class TypeChecker extends BaseObserver {
 	 * if both are not equivalent.
 	 */
 	private static void checkExistingDeclarationInformation(
-			DeclarationInformation existingDeclInfo, DeclarationInformation correctDeclInfo) {
+			String id, DeclarationInformation existingDeclInfo, DeclarationInformation correctDeclInfo) {
 		if (!existingDeclInfo.equals(correctDeclInfo)) {
-			internalError("Incorrect DeclarationInformation. Expected: " 
+			internalError("Incorrect DeclarationInformation of " + id + ". Expected: " 
 						+ correctDeclInfo + "   Found: " + existingDeclInfo);
 		}
 	}
@@ -469,7 +469,7 @@ public class TypeChecker extends BaseObserver {
 				if (declInfo == null) {
 					vLhs.setDeclarationInformation(info.getDeclarationInformation());
 				} else {
-					checkExistingDeclarationInformation(declInfo, info.getDeclarationInformation());
+					checkExistingDeclarationInformation(name, declInfo, info.getDeclarationInformation());
 				}
 			}
 		} else if (lhs instanceof StructLHS) {
@@ -722,7 +722,7 @@ public class TypeChecker extends BaseObserver {
 					if (var.getDeclarationInformation() == null) {
 						var.setDeclarationInformation(declInfo);
 					} else {
-						checkExistingDeclarationInformation(var.getDeclarationInformation(), declInfo);
+						checkExistingDeclarationInformation(var.getIdentifier(), var.getDeclarationInformation(), declInfo);
 					}
 					String id = var.getIdentifier();
 					if (!m_Globals.contains(id)) {
