@@ -4,14 +4,12 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
-import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
@@ -28,7 +26,7 @@ public class IncrementalInclusionCheck2<LETTER,STATE> extends AbstractIncrementa
 	private static Logger s_Logger;
 	private NestedWordAutomaton<LETTER, STATE> local_m_A;
 	private List<NestedWordAutomaton<LETTER, STATE>> local_m_B;
-	private ArrayList<INestedWordAutomaton<LETTER,STATE>> local_m_B2;
+	private List<INestedWordAutomaton<LETTER,STATE>> local_m_B2;
 	private StateFactory<STATE> localStateFactory;
 	private IUltimateServiceProvider localServiceProvider;
 	public HashMap<STATE,ArrayList<NodeData<LETTER,STATE>>> completeTree,currentTree;
@@ -55,7 +53,7 @@ public class IncrementalInclusionCheck2<LETTER,STATE> extends AbstractIncrementa
 	}
 	
 	public IncrementalInclusionCheck2(IUltimateServiceProvider services, StateFactory<STATE> sf,
-			INestedWordAutomatonSimple<LETTER, STATE> a, ArrayList<INestedWordAutomaton<LETTER,STATE>> b){
+			INestedWordAutomatonSimple<LETTER, STATE> a, List<INestedWordAutomaton<LETTER,STATE>> b){
 		super(services,a);
 		localServiceProvider = services;
 		localStateFactory = sf;
@@ -387,7 +385,7 @@ public class IncrementalInclusionCheck2<LETTER,STATE> extends AbstractIncrementa
 			IUltimateServiceProvider services, 
 			StateFactory<STATE> stateFactory, 
 			NestedWordAutomaton<LETTER, STATE> a, 
-			ArrayList<INestedWordAutomaton<LETTER, STATE>> b, 
+			List<INestedWordAutomaton<LETTER, STATE>> b, 
 			NestedRun<LETTER,STATE> ctrEx) throws AutomataLibraryException {
 		InclusionViaDifference<LETTER, STATE> ivd = 
 				new InclusionViaDifference<LETTER, STATE>(services, stateFactory, a);
