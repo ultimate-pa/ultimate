@@ -31,8 +31,8 @@ public class DeclInfoTransformer extends BoogieTransformer {
 	public Expression processExpression(Expression expr) {
 		if (expr instanceof IdentifierExpression) {
 			IdentifierExpression ie = (IdentifierExpression) expr;
-			return new IdentifierExpression(ie.getLocation(), ie.getType(), ie.getIdentifier(),
-					processDeclInfo(ie.getDeclarationInformation()));				
+			DeclarationInformation newDeclInfo = processDeclInfo(ie.getDeclarationInformation());
+			return new IdentifierExpression(ie.getLocation(), ie.getType(), ie.getIdentifier(), newDeclInfo);				
 		} else {
 			return super.processExpression(expr);			
 		}
@@ -42,15 +42,19 @@ public class DeclInfoTransformer extends BoogieTransformer {
 	public LeftHandSide processLeftHandSide(LeftHandSide lhs) {
 		if (lhs instanceof VariableLHS) {
 			VariableLHS vlhs = (VariableLHS) lhs;
-			return new VariableLHS(vlhs.getLocation(), vlhs.getType(), vlhs.getIdentifier(),
-					processDeclInfo(vlhs.getDeclarationInformation()));
+			DeclarationInformation newDeclInfo = processDeclInfo(vlhs.getDeclarationInformation());
+			if (newDeclInfo != null)
+				newDeclInfo = processDeclInfo(newDeclInfo);
+			return new VariableLHS(vlhs.getLocation(), vlhs.getType(), vlhs.getIdentifier(), newDeclInfo);
 		} else {
 			return lhs;			
 		}
 	}
 
 	private DeclarationInformation processDeclInfo(DeclarationInformation declInfo) {
-		if (declInfo.getStorageClass() == DeclarationInformation.StorageClass.GLOBAL) {
+		if (declInfo == null) {
+			return null;
+		} else if (declInfo.getStorageClass() == DeclarationInformation.StorageClass.GLOBAL) {
 			return declInfo;
 		} else if (declInfo.getStorageClass() == DeclarationInformation.StorageClass.QUANTIFIED) {
 			throw new UnsupportedOperationException("Quantifiers aren't supported yet.");

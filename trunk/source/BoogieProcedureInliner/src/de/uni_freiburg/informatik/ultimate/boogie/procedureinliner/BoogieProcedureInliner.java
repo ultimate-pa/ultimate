@@ -52,9 +52,10 @@ public class BoogieProcedureInliner implements IAnalysis {
 	@Override
 	public List<IObserver> getObservers() {
 		ArrayList<IObserver> observers = new ArrayList<IObserver>();
-		observers.add(new TypeChecker(mServices)); // TODO enable "TypeChecker" as a user option
+		observers.add(new TypeChecker(mServices));
 		observers.add(new UniqueVariableTransformer(mServices));
 		observers.add(new ProcedureInliner(mServices));
+		observers.add(new TypeChecker(mServices)); // TODO remove (for debugging -- warns on wrong set types)
 		return observers;
 	}
 
