@@ -16,7 +16,6 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.*;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 
 // Inliner for procedures with overall unique variable identifiers.
-// TODO implement
 public class ProcedureInliner implements IUnmanagedObserver {
 
 	private IUltimateServiceProvider mServices;
@@ -42,7 +41,7 @@ public class ProcedureInliner implements IUnmanagedObserver {
 
 	@Override
 	public void finish() throws Throwable {
-		//mLogger.error(mAstUnit); // debug output
+		mLogger.error(mAstUnit); // debug output
 	}
 
 	@Override
@@ -85,6 +84,7 @@ public class ProcedureInliner implements IUnmanagedObserver {
 			ArrayList<Declaration> newDecls = new ArrayList<Declaration>(mNonProcedureDeclarations);
 			newDecls.addAll(mFlatProcedures.values());
 			mAstUnit.setDeclarations(newDecls.toArray(new Declaration[newDecls.size()]));
+			
 			return false;
 		}
 		return true;
@@ -187,7 +187,7 @@ public class ProcedureInliner implements IUnmanagedObserver {
 				if (vl.length > 0) {
 					// TODO keep Attributes?
 					// TODO which location is the closest?
-					newLocalVars.add(new VariableDeclaration(vl[0].getLocation(), new Attribute[0], vl)); 
+					newLocalVars.add(new VariableDeclaration(callee.getLocation(), new Attribute[0], vl)); 
 				}
 			}
 			Body calleeBody = callee.getBody();
@@ -297,13 +297,10 @@ public class ProcedureInliner implements IUnmanagedObserver {
 	// Create a sequence of Statements, which replaces a single (!: do not use multiple times!) call to this function.
 	// assignments and variable declaration have to be added manually.
 	// only for flat procedures (without calls).
-	private ArrayList<Statement> inlineVersion(Procedure proc, ILocation callLocation, Procedure caller) {		
-		// TODO other statements (and specification?) need to be processed to
-		// --> DelcarationInformations in VariableLHS and IdentifierExpression have to be changed
-		//     from OUTPUT_PARAM -> LOCAL
+	private ArrayList<Statement> inlineVersion(Procedure proc, ILocation callLocation, Procedure caller) {
 		ArrayList<Statement> inlineBlock = new ArrayList<Statement>();
 		DeclInfoTransformer declInfoTransformer = new DeclInfoTransformer(caller.getIdentifier());
-		
+
 		String startLabel, endLabel;
 		int uniqueNumber = 1;
 		do {
@@ -326,10 +323,12 @@ public class ProcedureInliner implements IUnmanagedObserver {
 			for (Specification spec : specs) {
 				if (spec instanceof RequiresSpecification) {
 					RequiresSpecification s = (RequiresSpecification) spec;
-					inlineBlock.add(new AssertStatement(callLocation, s.getFormula()));
+					inlineBlock.add(new AssertStatement(callLocation,
+							declInfoTransformer.processExpression(s.getFormula())));
 				} else if (spec instanceof EnsuresSpecification) {
 					EnsuresSpecification s = (EnsuresSpecification) spec;
-					assumes.add(new AssumeStatement(callLocation, s.getFormula()));
+					assumes.add(new AssumeStatement(callLocation,
+							declInfoTransformer.processExpression(s.getFormula())));
 				}
 				// modifies can be discarded
 				// loopInvarant shouldn't occur here

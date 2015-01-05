@@ -29,24 +29,26 @@ public class DeclInfoTransformer extends BoogieTransformer {
 	
 	@Override
 	public Expression processExpression(Expression expr) {
-		if (!(expr instanceof IdentifierExpression)) {
-			return expr;
+		if (expr instanceof IdentifierExpression) {
+			IdentifierExpression ie = (IdentifierExpression) expr;
+			return new IdentifierExpression(ie.getLocation(), ie.getType(), ie.getIdentifier(),
+					processDeclInfo(ie.getDeclarationInformation()));				
+		} else {
+			return super.processExpression(expr);			
 		}
-		IdentifierExpression ie = (IdentifierExpression) expr;
-		return new IdentifierExpression(ie.getLocation(), ie.getType(), ie.getIdentifier(),
-				processDeclInfo(ie.getDeclarationInformation()));				
 	}
 	
 	@Override
 	public LeftHandSide processLeftHandSide(LeftHandSide lhs) {
-		if (!(lhs instanceof VariableLHS)) {
-			return lhs;
+		if (lhs instanceof VariableLHS) {
+			VariableLHS vlhs = (VariableLHS) lhs;
+			return new VariableLHS(vlhs.getLocation(), vlhs.getType(), vlhs.getIdentifier(),
+					processDeclInfo(vlhs.getDeclarationInformation()));
+		} else {
+			return lhs;			
 		}
-		VariableLHS vlhs = (VariableLHS) lhs;
-		return new VariableLHS(vlhs.getLocation(), vlhs.getType(), vlhs.getIdentifier(),
-				processDeclInfo(vlhs.getDeclarationInformation()));
 	}
-	
+
 	private DeclarationInformation processDeclInfo(DeclarationInformation declInfo) {
 		if (declInfo.getStorageClass() == DeclarationInformation.StorageClass.GLOBAL) {
 			return declInfo;
