@@ -1074,7 +1074,8 @@ public class TestFileInterpreter implements IMessagePrinter {
 			IOperation<String, String> op = getAutomataOperation(oe, arguments);
 			if (op != null) {
 				try {
-					assert op.checkResult(new StringFactory());
+					assert op.checkResult(new StringFactory()) : 
+						"Result of operation " + op.operationName() + " is wrong (according to its checkResult method)";
 					result = op.getResult();
 				} catch (AutomataLibraryException e) {
 					throw new InterpreterException(oe.getLocation(), e.getMessage());
