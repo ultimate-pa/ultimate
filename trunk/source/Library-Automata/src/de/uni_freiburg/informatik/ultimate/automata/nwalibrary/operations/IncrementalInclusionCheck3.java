@@ -84,7 +84,13 @@ public class IncrementalInclusionCheck3<LETTER,STATE> extends AbstractIncrementa
 			covered = false;
 		}
 	}*/
-	
+	@Override
+	public void addSubtrahend(INestedWordAutomatonSimple<LETTER, STATE> nwa) throws AutomataLibraryException {
+		super.addSubtrahend(nwa);
+		local_m_B.add((NestedWordAutomaton<LETTER, STATE>) nwa);
+		local_m_B2.add((NestedWordAutomaton<LETTER, STATE>) nwa);
+		run();
+	}
 	public IncrementalInclusionCheck3(IUltimateServiceProvider services, StateFactory<STATE> sf,
 			INestedWordAutomatonSimple<LETTER, STATE> a, ArrayList<INestedWordAutomaton<LETTER,STATE>> b){
 		super(services,a);
@@ -98,7 +104,7 @@ public class IncrementalInclusionCheck3<LETTER,STATE> extends AbstractIncrementa
 		local_m_B2 = b;
 		for(INestedWordAutomaton<LETTER,STATE> bn : b){
 			try {
-				addSubtrahend(bn);
+				super.addSubtrahend(bn);
 			} catch (AutomataLibraryException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
