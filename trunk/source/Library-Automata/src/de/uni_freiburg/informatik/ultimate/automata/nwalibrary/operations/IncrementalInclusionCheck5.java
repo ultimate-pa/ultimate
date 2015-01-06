@@ -109,7 +109,7 @@ public class IncrementalInclusionCheck5<LETTER,STATE> extends AbstractIncrementa
 		completeLeafSet = new ArrayList<Leaf<LETTER,STATE>>();
 		local_m_A = a;
 		local_m_B = new ArrayList<INestedWordAutomatonSimple<LETTER, STATE>>();
-		local_m_B2 = b;
+		local_m_B2 = new ArrayList<INestedWordAutomatonSimple<LETTER, STATE>>(b);
 		for(INestedWordAutomatonSimple<LETTER,STATE> bn : b){
 			try {
 				super.addSubtrahend(bn);

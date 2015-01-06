@@ -77,7 +77,7 @@ public class IncrementalInclusionCheck2<LETTER,STATE> extends AbstractIncrementa
 		s_Logger.info(startMessage());
 		local_m_A =  a;
 		local_m_B = new ArrayList<INestedWordAutomatonSimple<LETTER, STATE>>();
-		local_m_B2 = b;
+		local_m_B2 = new ArrayList<INestedWordAutomatonSimple<LETTER, STATE>>(b);
 		for(INestedWordAutomatonSimple<LETTER,STATE> bn : b){
 				try {
 					super.addSubtrahend(bn);
