@@ -59,21 +59,21 @@ public class IncrementalInclusionCegarLoop extends BasicCegarLoop {
 		case DIFFERENCE:
 			throw new AssertionError("wrong cegar loop for this");
 		case INCREMENTAL_INCLUSION_2: {
-			List<INestedWordAutomaton<CodeBlock, IPredicate>> empty = Collections.emptyList();
+			List<INestedWordAutomatonSimple<CodeBlock, IPredicate>> empty = Collections.emptyList();
 			m_InclusionCheck = new IncrementalInclusionCheck2<CodeBlock, IPredicate>(
 					m_Services, m_StateFactoryForRefinement, 
 					(INestedWordAutomatonSimple) m_Abstraction, empty);
 		}
 		break;
 		case INCREMENTAL_INCLUSION_3: {
-			List<INestedWordAutomaton<CodeBlock, IPredicate>> empty = Collections.emptyList();
+			List<INestedWordAutomatonSimple<CodeBlock, IPredicate>> empty = Collections.emptyList();
 			m_InclusionCheck = new IncrementalInclusionCheck2<CodeBlock, IPredicate>(
 					m_Services, m_StateFactoryForRefinement, 
 					(INestedWordAutomatonSimple) m_Abstraction, empty);
 		}
 		break;
 		case INCREMENTAL_INCLUSION_4: {
-			List<INestedWordAutomaton<CodeBlock, IPredicate>> empty = Collections.emptyList();
+			List<INestedWordAutomatonSimple<CodeBlock, IPredicate>> empty = Collections.emptyList();
 			m_InclusionCheck = new IncrementalInclusionCheck2<CodeBlock, IPredicate>(
 					m_Services, m_StateFactoryForRefinement, 
 					(INestedWordAutomatonSimple) m_Abstraction, empty);
