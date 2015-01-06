@@ -398,7 +398,7 @@ public class RefineBuchi {
 			break;
 		case ScroogeNondeterminism:
 		case Deterministic:
-			((BuchiInterpolantAutomatonBouncer) interpolantAutomaton).finishConstruction();
+			((BuchiInterpolantAutomatonBouncer) interpolantAutomaton).switchToReadonlyMode();
 			break;
 		default:
 			throw new UnsupportedOperationException("unknown automaton");

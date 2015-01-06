@@ -32,6 +32,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
  * 
  */
 public abstract class AbstractInterpolantAutomaton implements INestedWordAutomatonSimple<CodeBlock, IPredicate> {
+	
+	public enum Mode { ON_THE_FLY_CONSTRUCTION, READ_ONLY }
 
 	protected final IUltimateServiceProvider m_Services;
 	protected final Logger mLogger;
@@ -42,7 +44,7 @@ public abstract class AbstractInterpolantAutomaton implements INestedWordAutomat
 	protected final NestedWordAutomatonCache<CodeBlock, IPredicate> m_Result;
 	protected final NestedWordAutomaton<CodeBlock, IPredicate> m_InterpolantAutomaton;
 
-	private boolean m_ComputationFinished = false;
+	private Mode m_Mode = Mode.ON_THE_FLY_CONSTRUCTION;
 
 	private final InternalSuccessorComputationHelper m_InSucComp;
 	private final CallSuccessorComputationHelper m_CaSucComp;
@@ -74,19 +76,19 @@ public abstract class AbstractInterpolantAutomaton implements INestedWordAutomat
 	 * Announce that computation is finished. From now on this automaton returns
 	 * only existing transitions but does not compute new ones.
 	 */
-	public final void finishConstruction() {
-		if (m_ComputationFinished) {
+	public final void switchToReadonlyMode() {
+		if (m_Mode == Mode.READ_ONLY) {
 			throw new AssertionError("Computation already finished.");
 		} else {
-			m_ComputationFinished = true;
+			m_Mode = Mode.READ_ONLY;
 			clearAssertionStack();
-			mLogger.info(exitMessage());
+			mLogger.info(switchToReadonlyMessage());
 		}
 	}
 
 	protected abstract String startMessage();
 
-	protected abstract String exitMessage();
+	protected abstract String switchToReadonlyMessage();
 
 	protected final LBool computeSuccInternalSolver(IPredicate state, CodeBlock symbol, IPredicate succCand) {
 		if (m_AssertedHier != null) {
@@ -268,7 +270,7 @@ public abstract class AbstractInterpolantAutomaton implements INestedWordAutomat
 	@Override
 	public final Iterable<OutgoingInternalTransition<CodeBlock, IPredicate>> internalSuccessors(IPredicate state,
 			CodeBlock letter) {
-		if (!m_ComputationFinished) {
+		if (m_Mode == Mode.ON_THE_FLY_CONSTRUCTION) {
 			if (!areInternalSuccsComputed(state, letter)) {
 				computeSuccs(state, null, letter, m_InSucComp);
 			}
@@ -286,7 +288,7 @@ public abstract class AbstractInterpolantAutomaton implements INestedWordAutomat
 
 	@Override
 	public final Iterable<OutgoingInternalTransition<CodeBlock, IPredicate>> internalSuccessors(IPredicate state) {
-		if (!m_ComputationFinished) {
+		if (m_Mode == Mode.ON_THE_FLY_CONSTRUCTION) {
 			for (CodeBlock letter : lettersInternal(state)) {
 				if (!areInternalSuccsComputed(state, letter)) {
 					computeSuccs(state, null, letter, m_InSucComp);
@@ -300,7 +302,7 @@ public abstract class AbstractInterpolantAutomaton implements INestedWordAutomat
 	public final Iterable<OutgoingCallTransition<CodeBlock, IPredicate>> callSuccessors(IPredicate state,
 			CodeBlock letter) {
 		Call call = (Call) letter;
-		if (!m_ComputationFinished) {
+		if (m_Mode == Mode.ON_THE_FLY_CONSTRUCTION) {
 			if (!areCallSuccsComputed(state, call)) {
 				computeSuccs(state, null, letter, m_CaSucComp);
 			}
@@ -315,7 +317,7 @@ public abstract class AbstractInterpolantAutomaton implements INestedWordAutomat
 
 	@Override
 	public final Iterable<OutgoingCallTransition<CodeBlock, IPredicate>> callSuccessors(IPredicate state) {
-		if (!m_ComputationFinished) {
+		if (m_Mode == Mode.ON_THE_FLY_CONSTRUCTION) {
 			for (CodeBlock letter : lettersCall(state)) {
 				Call call = (Call) letter;
 				if (!m_Result.callSuccessors(state, call).iterator().hasNext()) {
@@ -330,7 +332,7 @@ public abstract class AbstractInterpolantAutomaton implements INestedWordAutomat
 	public final Iterable<OutgoingReturnTransition<CodeBlock, IPredicate>> returnSucccessors(IPredicate state,
 			IPredicate hier, CodeBlock letter) {
 		Return ret = (Return) letter;
-		if (!m_ComputationFinished) {
+		if (m_Mode == Mode.ON_THE_FLY_CONSTRUCTION) {
 			if (!areReturnSuccsComputed(state, hier, ret)) {
 				computeSuccs(state, hier, letter, m_ReSucComp);
 			}
@@ -346,7 +348,7 @@ public abstract class AbstractInterpolantAutomaton implements INestedWordAutomat
 	@Override
 	public final Iterable<OutgoingReturnTransition<CodeBlock, IPredicate>> returnSuccessorsGivenHier(IPredicate state,
 			IPredicate hier) {
-		if (!m_ComputationFinished) {
+		if (m_Mode == Mode.ON_THE_FLY_CONSTRUCTION) {
 			for (CodeBlock letter : lettersReturn(state)) {
 				Return ret = (Return) letter;
 				if (!m_Result.returnSucccessors(state, hier, ret).iterator().hasNext()) {
@@ -359,7 +361,7 @@ public abstract class AbstractInterpolantAutomaton implements INestedWordAutomat
 
 	@Override
 	public final String toString() {
-		if (m_ComputationFinished) {
+		if (m_Mode == Mode.READ_ONLY) {
 			return (new AtsDefinitionPrinter<String, String>(m_Services, "nwa", this)).getDefinitionAsString();
 		} else {
 			return "automaton under construction";

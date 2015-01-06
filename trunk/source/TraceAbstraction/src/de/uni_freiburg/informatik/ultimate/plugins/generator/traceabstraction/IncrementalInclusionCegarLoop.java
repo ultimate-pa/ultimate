@@ -140,7 +140,7 @@ public class IncrementalInclusionCegarLoop extends BasicCegarLoop {
 				m_InclusionCheck.addSubtrahend(determinized);
 				// do this to allow that the automaton is build on the fly
 				m_InclusionCheck.getCounterexample();
-				determinized.finishConstruction();
+				determinized.switchToReadonlyMode();
 				assert (edgeChecker.isAssertionStackEmpty());
 				INestedWordAutomaton<CodeBlock, IPredicate> test = (new RemoveUnreachable<CodeBlock, IPredicate>(m_Services, 
 						determinized)).getResult();

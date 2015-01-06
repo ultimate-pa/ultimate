@@ -444,7 +444,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 
 						diff = new Difference<CodeBlock, IPredicate>(m_Services, oldAbstraction, determinized, psd2,
 								m_StateFactoryForRefinement, explointSigmaStarConcatOfIA);
-						determinized.finishConstruction();
+						determinized.switchToReadonlyMode();
 						assert (edgeChecker.isAssertionStackEmpty());
 						INestedWordAutomaton<CodeBlock, IPredicate> test = (new RemoveUnreachable<CodeBlock, IPredicate>(
 								m_Services, determinized)).getResult();

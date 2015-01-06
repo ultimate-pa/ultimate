@@ -127,9 +127,9 @@ public class DeterministicInterpolantAutomaton extends AbstractInterpolantAutoma
 	}
 	
 	@Override
-	protected String exitMessage() {
+	protected String switchToReadonlyMessage() {
 		StringBuilder sb = new StringBuilder();
-		sb.append("Resulting deterministic interpolant automaton has ");
+		sb.append("Switched to read-only mode: deterministic interpolant automaton has ");
 		sb.append(m_Result.size()).append(" states. ");
 		return sb.toString();
 	}

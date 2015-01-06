@@ -623,7 +623,7 @@ public class BuchiCegarLoop {
 				throw new AssertionError();
 			}
 		}
-		determinized.finishConstruction();
+		determinized.switchToReadonlyMode();
 		if (m_Pref.dumpAutomata()) {
 			String filename = m_RootNode.getFilename() + "_" + "interpolAutomatonUsedInRefinement" + m_Iteration + "after";
 			writeAutomatonToFile(m_Services, m_InterpolAutomaton, m_Pref.dumpPath(), filename, "");

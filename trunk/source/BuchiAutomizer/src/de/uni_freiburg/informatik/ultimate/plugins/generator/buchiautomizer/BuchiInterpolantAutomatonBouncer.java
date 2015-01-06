@@ -176,9 +176,9 @@ public class BuchiInterpolantAutomatonBouncer extends AbstractInterpolantAutomat
 	}
 
 	@Override
-	protected String exitMessage() {
+	protected String switchToReadonlyMessage() {
 		StringBuilder sb = new StringBuilder();
-		sb.append("Resulting Buchi interpolant automaton has ");
+		sb.append("Switched to read-only mode: Buchi interpolant automaton has ");
 		sb.append(m_Result.size()).append(" states ");
 		sb.append(m_StemResPred2InputPreds.getDomain().size()).append(" stem states ");
 		sb.append(m_LoopResPred2InputPreds.getDomain().size()).append(" non-accepting loop states ");
