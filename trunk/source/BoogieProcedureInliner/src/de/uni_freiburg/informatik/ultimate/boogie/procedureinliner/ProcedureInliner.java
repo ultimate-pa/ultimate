@@ -311,17 +311,23 @@ public class ProcedureInliner implements IUnmanagedObserver {
 		mAllLabels.add(endLabel);
 		
 		Specification[] specs = proc.getSpecification();
-		ArrayList<AssumeStatement> assumes = new ArrayList<AssumeStatement>();
+		ArrayList<Statement> inlinedEnsures = new ArrayList<Statement>();
 		if (specs != null) {
 			for (Specification spec : specs) {
 				if (spec instanceof RequiresSpecification) {
 					RequiresSpecification s = (RequiresSpecification) spec;
-					inlineBlock.add(new AssertStatement(callLocation,
-							declInfoTransformer.processExpression(s.getFormula())));
+					Expression newExpr = declInfoTransformer.processExpression(s.getFormula());
+					if (s.isFree()) {
+						inlineBlock.add(new AssumeStatement(callLocation, newExpr));
+					} else {
+						inlineBlock.add(new AssertStatement(callLocation, newExpr));						
+					}
 				} else if (spec instanceof EnsuresSpecification) {
 					EnsuresSpecification s = (EnsuresSpecification) spec;
-					assumes.add(new AssumeStatement(callLocation,
-							declInfoTransformer.processExpression(s.getFormula())));
+					Expression newExpr = declInfoTransformer.processExpression(s.getFormula());
+					// ensures is always inlined as an assume, because we don't want to check it for every call.
+					// The called procedure remains in the program. The ensures specifications are checked there.
+					inlinedEnsures.add(new AssumeStatement(callLocation, newExpr));
 				} else if (spec instanceof ModifiesSpecification) {
 					ModifiesSpecification s = (ModifiesSpecification) spec;
 					for (VariableLHS id : s.getIdentifiers()) {
@@ -406,7 +412,7 @@ public class ProcedureInliner implements IUnmanagedObserver {
 			}
 		}
 		inlineBlock.add(new Label(callLocation, endLabel));
-		inlineBlock.addAll(assumes); // has to be after the endLabel, or it would be skipped, when using return.
+		inlineBlock.addAll(inlinedEnsures); // has to be after the endLabel, or it would be skipped, when using return.
 		
 		return inlineBlock;
 	}

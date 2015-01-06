@@ -128,6 +128,8 @@ public class MappingExecutor {
 		}
 		if (expr instanceof UnaryExpression) {
 			UnaryExpression e = (UnaryExpression) expr;
+			if (e.getOperator() == UnaryExpression.Operator.OLD)
+				throw new UnsupportedOperationException("old(...) isn't supported yet.");
 			return new UnaryExpression(e.getLocation(), e.getType(), e.getOperator(), map(e.getExpr()));
 		}
 		// TemporaryPointerExpression is private (should never occur)
