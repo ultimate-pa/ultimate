@@ -297,6 +297,7 @@ public class ProcedureInliner implements IUnmanagedObserver {
 	// only for flat procedures (without calls).
 	private ArrayList<Statement> inlineVersion(Procedure proc, ILocation callLocation, Procedure caller) {
 		ArrayList<Statement> inlineBlock = new ArrayList<Statement>();
+		ArrayList<VariableLHS> modifiesGlobalVars = new ArrayList<VariableLHS>();
 		DeclInfoTransformer declInfoTransformer = new DeclInfoTransformer(caller.getIdentifier());
 
 		String endLabel;
@@ -321,13 +322,24 @@ public class ProcedureInliner implements IUnmanagedObserver {
 					EnsuresSpecification s = (EnsuresSpecification) spec;
 					assumes.add(new AssumeStatement(callLocation,
 							declInfoTransformer.processExpression(s.getFormula())));
+				} else if (spec instanceof ModifiesSpecification) {
+					ModifiesSpecification s = (ModifiesSpecification) spec;
+					for (VariableLHS id : s.getIdentifiers()) {
+						modifiesGlobalVars.add(id); // TODO create new VariableLHS with better ILocation
+					}
 				}
 				// modifies can be discarded
 				// loopInvarant shouldn't occur here
 			}		
 		}		
 		Body body = proc.getBody();
-		if (body != null) {
+		if (body == null) {
+			if (modifiesGlobalVars.size() > 0) {
+				VariableLHS[] modifiedVars = new VariableLHS[modifiesGlobalVars.size()];
+				modifiesGlobalVars.toArray(modifiedVars);
+				inlineBlock.add(new HavocStatement(callLocation, modifiedVars));				
+			}
+		} else {
 			ArrayList<VariableLHS> localVars = new ArrayList<VariableLHS>();
 			for (VariableDeclaration vd : body.getLocalVars()) {
 				for (VarList vl : vd.getVariables()) {
