@@ -99,8 +99,9 @@ public class IncrementalInclusionCheck3<LETTER,STATE> extends AbstractIncrementa
 		run();
 	}
 	public IncrementalInclusionCheck3(IUltimateServiceProvider services, StateFactory<STATE> sf,
-			INestedWordAutomatonSimple<LETTER, STATE> a, ArrayList<INestedWordAutomatonSimple<LETTER,STATE>> b){
+			INestedWordAutomatonSimple<LETTER, STATE> a, List<INestedWordAutomatonSimple<LETTER,STATE>> b){
 		super(services,a);
+		IncrementalInclusionCheck2.abortIfContainsCallOrReturn(a);
 		localServiceProvider = services;
 		localStateFactory = sf;
 		s_Logger = NestedWordAutomata.getLogger();

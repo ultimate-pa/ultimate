@@ -71,6 +71,7 @@ public class IncrementalInclusionCheck2<LETTER,STATE> extends AbstractIncrementa
 	public IncrementalInclusionCheck2(IUltimateServiceProvider services, StateFactory<STATE> sf,
 			INestedWordAutomatonSimple<LETTER, STATE> a, List<INestedWordAutomatonSimple<LETTER,STATE>> b){
 		super(services,a);
+		IncrementalInclusionCheck2.abortIfContainsCallOrReturn(a);
 		localServiceProvider = services;
 		localStateFactory = sf;
 		s_Logger = NestedWordAutomata.getLogger();
@@ -428,5 +429,12 @@ public class IncrementalInclusionCheck2<LETTER,STATE> extends AbstractIncrementa
 			}
 		}
 		return result;
+	}
+	
+	
+	public static <LETTER, STATE> void abortIfContainsCallOrReturn(INestedWordAutomatonSimple<LETTER, STATE> a) {
+		if (!a.getCallAlphabet().isEmpty() || !a.getReturnAlphabet().isEmpty()) {
+			throw new UnsupportedOperationException("Operation does not support call or return");
+		}
 	}
 }

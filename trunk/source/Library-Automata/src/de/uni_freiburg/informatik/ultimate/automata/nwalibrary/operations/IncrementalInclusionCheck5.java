@@ -5,7 +5,9 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+
 import org.apache.log4j.Logger;
+
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
@@ -99,8 +101,9 @@ public class IncrementalInclusionCheck5<LETTER,STATE> extends AbstractIncrementa
 		run();
 	}
 	public IncrementalInclusionCheck5(IUltimateServiceProvider services, StateFactory<STATE> sf,
-			INestedWordAutomatonSimple<LETTER, STATE> a, ArrayList<INestedWordAutomatonSimple<LETTER,STATE>> b){
+			INestedWordAutomatonSimple<LETTER, STATE> a, List<INestedWordAutomatonSimple<LETTER,STATE>> b){
 		super(services,a);
+		IncrementalInclusionCheck2.abortIfContainsCallOrReturn(a);
 		//counter = 0;
 		localServiceProvider = services;
 		localStateFactory = sf;
