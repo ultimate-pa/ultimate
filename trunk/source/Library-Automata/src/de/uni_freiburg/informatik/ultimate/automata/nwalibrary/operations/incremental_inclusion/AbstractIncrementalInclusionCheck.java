@@ -81,6 +81,11 @@ public abstract class AbstractIncrementalInclusionCheck<LETTER,STATE> {
 	public void addSubtrahend(INestedWordAutomatonSimple<LETTER, STATE> nwa) throws AutomataLibraryException {
 		m_B.add(nwa);
 	}
+
+
+	public INestedWordAutomatonSimple<LETTER, STATE> getA() {
+		return m_A;
+	}
 	
 	
 
