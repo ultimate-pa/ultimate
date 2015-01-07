@@ -13,6 +13,9 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Accepts;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IncrementalInclusionCheck2;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IncrementalInclusionCheck3;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IncrementalInclusionCheck4;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IncrementalInclusionCheck5;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.RemoveUnreachable;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.incremental_inclusion.AbstractIncrementalInclusionCheck;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.incremental_inclusion.InclusionViaDifference;
@@ -67,14 +70,21 @@ public class IncrementalInclusionCegarLoop extends BasicCegarLoop {
 		break;
 		case INCREMENTAL_INCLUSION_3: {
 			List<INestedWordAutomatonSimple<CodeBlock, IPredicate>> empty = Collections.emptyList();
-			m_InclusionCheck = new IncrementalInclusionCheck2<CodeBlock, IPredicate>(
+			m_InclusionCheck = new IncrementalInclusionCheck3<CodeBlock, IPredicate>(
 					m_Services, m_StateFactoryForRefinement, 
 					(INestedWordAutomatonSimple) m_Abstraction, empty);
 		}
 		break;
 		case INCREMENTAL_INCLUSION_4: {
 			List<INestedWordAutomatonSimple<CodeBlock, IPredicate>> empty = Collections.emptyList();
-			m_InclusionCheck = new IncrementalInclusionCheck2<CodeBlock, IPredicate>(
+			m_InclusionCheck = new IncrementalInclusionCheck4<CodeBlock, IPredicate>(
+					m_Services, m_StateFactoryForRefinement, 
+					(INestedWordAutomatonSimple) m_Abstraction, empty);
+		}
+		break;
+		case INCREMENTAL_INCLUSION_5: {
+			List<INestedWordAutomatonSimple<CodeBlock, IPredicate>> empty = Collections.emptyList();
+			m_InclusionCheck = new IncrementalInclusionCheck5<CodeBlock, IPredicate>(
 					m_Services, m_StateFactoryForRefinement, 
 					(INestedWordAutomatonSimple) m_Abstraction, empty);
 		}
