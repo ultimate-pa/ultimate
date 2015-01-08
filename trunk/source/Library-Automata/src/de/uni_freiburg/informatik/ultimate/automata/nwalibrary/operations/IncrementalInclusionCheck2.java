@@ -10,6 +10,7 @@ import org.apache.log4j.Logger;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
+import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
@@ -66,10 +67,12 @@ public class IncrementalInclusionCheck2<LETTER,STATE> extends AbstractIncrementa
 		super.addSubtrahend(nwa);
 		local_m_B.add(nwa);
 		local_m_B2.add(nwa);
+		if(result!=null&&NestedRunAcceptanceChk(nwa,result)){
 		run();
+		}
 	}
 	public IncrementalInclusionCheck2(IUltimateServiceProvider services, StateFactory<STATE> sf,
-			INestedWordAutomatonSimple<LETTER, STATE> a, List<INestedWordAutomatonSimple<LETTER,STATE>> b){
+			INestedWordAutomatonSimple<LETTER, STATE> a, List<INestedWordAutomatonSimple<LETTER,STATE>> b) throws OperationCanceledException{
 		super(services,a);
 		IncrementalInclusionCheck2.abortIfContainsCallOrReturn(a);
 		localServiceProvider = services;
@@ -93,7 +96,7 @@ public class IncrementalInclusionCheck2<LETTER,STATE> extends AbstractIncrementa
 	}
 	
 	@SuppressWarnings("unchecked")
-	public void run(){
+	public void run() throws OperationCanceledException{
 		/*try {
 			local_m_A = (new Determinize<LETTER,STATE> (localServiceProvider,localStateFactory,local_m_A)).getResult();
 		} catch (OperationCanceledException e) {
@@ -119,6 +122,9 @@ public class IncrementalInclusionCheck2<LETTER,STATE> extends AbstractIncrementa
 				}
 			}
 			else{
+				if (!m_Services.getProgressMonitorService().continueProcessing()) {
+		                throw new OperationCanceledException();
+		        }
 				bufferedTree = null;
 				for(LETTER alphabet:local_m_A.getAlphabet()){
 					if(bufferedTree ==null){
@@ -430,8 +436,35 @@ public class IncrementalInclusionCheck2<LETTER,STATE> extends AbstractIncrementa
 		}
 		return result;
 	}
-	
-	
+	private boolean NestedRunAcceptanceChk(INestedWordAutomatonSimple<LETTER,STATE> bn,NestedRun<LETTER,STATE> word){
+		boolean result = false;
+		HashSet<STATE> curStaSet = null;
+		Iterable<OutgoingInternalTransition<LETTER,STATE>>nextStaSet = null;
+		HashSet<STATE> newStaSet;
+		curStaSet = new HashSet<STATE>();
+		curStaSet.addAll((HashSet<STATE>)bn.getInitialStates());
+		if(word.getWord().length()!=0){
+			for(LETTER alphabet:word.getWord().asList()){
+				newStaSet = new HashSet<STATE>();
+				for(STATE OState:curStaSet){
+					nextStaSet = bn.internalSuccessors(OState, alphabet);
+					for(OutgoingInternalTransition<LETTER,STATE> newState:nextStaSet){
+						newStaSet.add(newState.getSucc());
+					}
+				}
+				curStaSet.clear();
+				curStaSet = newStaSet;
+				//curStaSet = nextStaSet;
+			}
+		}
+		for(STATE state:curStaSet){
+			if(bn.isFinal(state)){
+				result = true;
+				break;
+			}
+		}
+		return result;
+	}
 	public static <LETTER, STATE> void abortIfContainsCallOrReturn(INestedWordAutomatonSimple<LETTER, STATE> a) {
 		if (!a.getCallAlphabet().isEmpty() || !a.getReturnAlphabet().isEmpty()) {
 			throw new UnsupportedOperationException("Operation does not support call or return");

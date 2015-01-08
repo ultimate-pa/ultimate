@@ -96,10 +96,10 @@ public class IncrementalInclusionCheck3<LETTER,STATE> extends AbstractIncrementa
 		super.addSubtrahend(nwa);
 		local_m_B.add(nwa);
 		local_m_B2.add(nwa);
-		run();
+		run2(nwa);
 	}
 	public IncrementalInclusionCheck3(IUltimateServiceProvider services, StateFactory<STATE> sf,
-			INestedWordAutomatonSimple<LETTER, STATE> a, List<INestedWordAutomatonSimple<LETTER,STATE>> b){
+			INestedWordAutomatonSimple<LETTER, STATE> a, List<INestedWordAutomatonSimple<LETTER,STATE>> b) throws OperationCanceledException{
 		super(services,a);
 		IncrementalInclusionCheck2.abortIfContainsCallOrReturn(a);
 		localServiceProvider = services;
@@ -123,7 +123,39 @@ public class IncrementalInclusionCheck3<LETTER,STATE> extends AbstractIncrementa
 		s_Logger.info(exitMessage());
 	}
 	@SuppressWarnings("unchecked")
-	public void run(){
+	public void run2(INestedWordAutomatonSimple<LETTER, STATE> nwa) throws OperationCanceledException{
+		if(!local_m_A.getAlphabet().containsAll(nwa.getAlphabet())){
+			s_Logger.info("Alphabet inconsistent");
+			return;
+		}
+		do{
+			if(result!=null){
+				if (!m_Services.getProgressMonitorService().continueProcessing()) {
+	                throw new OperationCanceledException();
+				}
+				if(refine_exceptionRun()||cover()){
+					break;
+				}
+				bufferedLeaf = null;
+				for(LETTER alphabet:local_m_A.getAlphabet()){
+					if(bufferedLeaf == null){
+						bufferedLeaf = new HashSet<Leaf<LETTER,STATE>>();
+						bufferedLeaf.addAll(expand(alphabet));
+					}
+					else{
+						bufferedLeaf.addAll(expand(alphabet));
+					}
+				}	
+				currentTerminalLeafs.clear();
+				currentTerminalLeafs.addAll(bufferedLeaf);
+			}
+			else{
+				break;
+			}
+		}while(true);
+	}
+	@SuppressWarnings("unchecked")
+	public void run() throws OperationCanceledException{
 		result = null;
 		for(INestedWordAutomatonSimple<LETTER,STATE> B:local_m_B){
 			if(!local_m_A.getAlphabet().containsAll(B.getAlphabet())){
@@ -140,6 +172,9 @@ public class IncrementalInclusionCheck3<LETTER,STATE> extends AbstractIncrementa
 				}
 			}
 			else{
+				if (!m_Services.getProgressMonitorService().continueProcessing()) {
+	                throw new OperationCanceledException();
+				}
 				bufferedLeaf = null;
 				for(LETTER alphabet:local_m_A.getAlphabet()){
 					if(bufferedLeaf == null){
