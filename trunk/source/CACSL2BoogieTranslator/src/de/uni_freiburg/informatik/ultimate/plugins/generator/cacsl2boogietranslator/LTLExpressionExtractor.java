@@ -203,7 +203,7 @@ public class LTLExpressionExtractor {
 								allOfRight = true;
 							}
 						}
-						if (allOfRight && allOfLeft) {
+						if ((allOfRight || right.getResult().isEmpty()) && (allOfLeft || left.getResult().isEmpty())) {
 							mCurrentSubExpression = node;
 						} else {
 							mExpressions.addAll(results);
@@ -275,6 +275,14 @@ public class LTLExpressionExtractor {
 				mExpressions.add(mCurrentSubExpression);
 				mCurrentSubExpression = null;
 			}
+		}
+		
+		@Override
+		public String toString() {
+			if(mExpressions == null || mExpressions.isEmpty()){
+				return "EMTPY";
+			}
+			return mExpressions.toString();
 		}
 	}
 }
