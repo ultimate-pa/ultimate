@@ -92,22 +92,18 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 			mLogger.fatal("DataflowDAG generation threw an exception.", e);
 		}
 
-		
-		ArrayList<Term[]> interpolantsForDags = new ArrayList<>(dags.size());
-		
-		boolean useSalomAA = true;
 		SalomAA<CodeBlock, IPredicate> salomAAUnion = null;
 
 		for (DataflowDAG<TraceCodeBlock> dag : dags) {
 			ArrayList<Term> termsFromDAG = new ArrayList<>();
 			ArrayList<Integer> startsOfSubtreesFromDAG = new ArrayList<>();
 			getTermsFromDAG(dag, termsFromDAG, startsOfSubtreesFromDAG, 0);
-			
+
 			int[] startsOfSubtreesAsInts = new int[startsOfSubtreesFromDAG.size()];
 			for (int i = 0; i < startsOfSubtreesFromDAG.size(); i++)
 				startsOfSubtreesAsInts[i] = startsOfSubtreesFromDAG.get(i);
 
-			
+
 			//assert the terms for the current dag, name them
 			m_SmtManager.getScript().push(1);
 			ArrayList<Term> termNames = new ArrayList<>();
@@ -116,7 +112,7 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 				m_SmtManager.assertTerm(m_SmtManager.getScript().annotate(termsFromDAG.get(i), new Annotation(":named", termName)));
 				termNames.add(m_SmtManager.getScript().term(termName));
 			}
-			
+
 			//check if the current dag is infeasible
 			LBool checkSatResult = m_SmtManager.getScript().checkSat();
 
@@ -130,34 +126,18 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 						traceCheckerWAST.getConstantsToBoogieVar());
 				decorateDagWithInterpolants(dag, predicates);
 
+				//TODO: what about converting the dag to a tree??
 
-				//TODO: what about making the dag to a tree??
-
-				if (useSalomAA) {
-					SalomAA<CodeBlock, IPredicate> aa = computeSalomAAFromDAGandInterpolant(dag);
-					mLogger.debug("compute SalomAA:\n" + aa);
-//					mLogger.debug("Ich bin ein Breakpoint");
-					if (salomAAUnion == null) {
-						salomAAUnion = aa;
-					} else {
-						SAAUnion union = new SAAUnion<>(salomAAUnion, aa);
-						salomAAUnion = union.getResult();
-					}
+				SalomAA<CodeBlock, IPredicate> aa = computeSalomAAFromDAGandInterpolant(dag);
+				mLogger.debug("compute SalomAA:\n" + aa);
+				//					mLogger.debug("Ich bin ein Breakpoint");
+				if (salomAAUnion == null) {
+					salomAAUnion = aa;
 				} else {
-					//.. and from the interpolant and the dag compute an alternating automaton (accepting all the traces in reverse)
-					AlternatingAutomaton<CodeBlock, IPredicate> aa = computeAFAFromDAGandInterpolant(dag);
-					//						trace, dag, termsFromDAG,
-					//						interpolants);
-
-					//.. then, reverse the afa
-					AlternatingAutomaton<CodeBlock, IPredicate> reversedAA = aa;//FIXME insert reverse operation
-
-
-					//.. then, nondeterminize it
-					NonDeterminizeAA<CodeBlock, IPredicate> nonDet = new NonDeterminizeAA<>(m_Services, reversedAA);
-					NestedWordAutomaton<CodeBlock, CompoundState<IPredicate>> nwaFromAA = nonDet.getResult();
+					SAAUnion union = new SAAUnion<>(salomAAUnion, aa);
+					salomAAUnion = union.getResult();
 				}
-				 
+
 				//in the future: 
 				// - reverse and _determinize_ in one step
 				// - perhaps use conjunction of predicates instead of CompoundState
@@ -168,22 +148,12 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 			}
 			mLogger.debug("Ich bin ein Breakpoint");
 
-//			Term[] interpolantForDag = traceCheckerFMIR.computeInterpolants(
-//					termsFromDAG.toArray(new Term[termsFromDAG.size()]), 
-//					startsOfSubtreesAsInts);
-//			interpolantsForDags.add(interpolantForDag);
-			
-//			AlternatingAutomaton<CodeBlock, ProgramPoint> aa = new AlternatingAutomaton<>(alphabet, stateFactory);
 		}
 
 		//.. in the end, build the union of all the nwas we got from the dags, return it
-		if (useSalomAA) {
-			DeterminizeRAFA<CodeBlock> detRev = new DeterminizeRAFA<CodeBlock>(m_Services, salomAAUnion, m_SmtManager, mPredicateUnifier);
-			m_InterpolAutomaton = detRev.getResult();
-		} else {
-			//TODO?
-		}
-		
+		DeterminizeRAFA<CodeBlock> detRev = new DeterminizeRAFA<CodeBlock>(m_Services, salomAAUnion, m_SmtManager, mPredicateUnifier);
+		m_InterpolAutomaton = detRev.getResult();
+
 		//
 		// // super.constructInterpolantAutomaton();
 	}
@@ -192,7 +162,7 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 			IPredicate[] interpolants) {
 		Stack<DataflowDAG<TraceCodeBlock>> stack = new Stack<>();
 		stack.push(dag);
-		
+
 		int currentInterpolantIndex = interpolants.length - 1;
 
 		DataflowDAG<TraceCodeBlock> currentNode = null;
@@ -203,29 +173,29 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 			if (currentNode == dag) { //for the root we take "false"
 				currentNode.getNodeLabel().addInterpolant(mPredicateUnifier.getFalsePredicate());
 			} else {
-//				if (currentNode.getOutgoingNodes().size() > 0) {
-					currentNode.getNodeLabel().addInterpolant(
-//							mPredicateUnifier.
-//							getOrConstructPredicate(
-//									TermVarsProc.computeTermVarsProc(interpolants[currentInterpolantIndex],
-//											this.m_RootNode.getRootAnnot().getBoogie2SMT())));			
-							interpolants[currentInterpolantIndex]);
-					currentInterpolantIndex--;
-//				} else {
-//					currentNode.getNodeLabel().addInterpolant(mPredicateUnifier.getTruePredicate());
-//				}
+				//				if (currentNode.getOutgoingNodes().size() > 0) {
+				currentNode.getNodeLabel().addInterpolant(
+						//							mPredicateUnifier.
+						//							getOrConstructPredicate(
+						//									TermVarsProc.computeTermVarsProc(interpolants[currentInterpolantIndex],
+						//											this.m_RootNode.getRootAnnot().getBoogie2SMT())));			
+						interpolants[currentInterpolantIndex]);
+				currentInterpolantIndex--;
+				//				} else {
+				//					currentNode.getNodeLabel().addInterpolant(mPredicateUnifier.getTruePredicate());
+				//				}
 			}
 
 			stack.addAll(currentNode.getOutgoingNodes());
 		}
-	
+
 	}
-	
-	
+
+
 	private IPredicate[] interpolantsToPredicates(Term[] interpolants, 
 			Map<Term, BoogieVar> constants2BoogieVar) {//copied from NestedSSABuilder
 		IPredicate[] result = new IPredicate[interpolants.length];
-//		assert m_CraigInterpolants.length == craigInt2interpolantIndex.size();
+		//		assert m_CraigInterpolants.length == craigInt2interpolantIndex.size();
 		// assert m_InterpolatedPositions.size() == m_CraigInterpolants.length;
 		PredicateConstructionVisitor m_sfmv = new PredicateConstructionVisitor(constants2BoogieVar);
 		FormulaWalker walker = new FormulaWalker(m_sfmv, m_SmtManager.getScript());
@@ -235,54 +205,54 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 		int craigInterpolPos = 0;
 		for (int resultPos = 0; resultPos < interpolants.length; resultPos++) {
 			int positionOfThisCraigInterpolant = resultPos;
-//			if (craigInterpolPos == m_CraigInterpolants.length) {
-//				// special case where trace ends with return
-//				// we already added all CraigInterpolants
-//				// remaining interpolants are "unknown" and the implicit given
-//				// false at the end
-//				assert m_Trace.isReturnPosition(m_Trace.length() - 1);
-//				positionOfThisCraigInterpolant = Integer.MAX_VALUE;
-//			} else {
-//				positionOfThisCraigInterpolant = craigInt2interpolantIndex.get(craigInterpolPos);
-//			}
-//			assert positionOfThisCraigInterpolant >= resultPos;
-//			if (isInterpolatedPositio(resultPos)) {
-				Term withIndices = interpolants[craigInterpolPos];
-//				assert resultPos == craigInt2interpolantIndex.get(craigInterpolPos);
-				craigInterpolPos++;
-				result[resultPos] = withIndices2Predicate.get(withIndices);
-				if (result[resultPos] == null) {
-					m_sfmv.clearVarsAndProc();
-					Term withoutIndices = walker.process(new FormulaUnLet().unlet(withIndices));
-					Set<BoogieVar> vars = m_sfmv.getVars();
-					String[] procs = m_sfmv.getProcedure().toArray(new String[0]);
-					result[resultPos] = mPredicateUnifier.getOrConstructPredicate(withoutIndices, vars, procs);
-					withIndices2Predicate.put(withIndices, result[resultPos]);
-				}
-//			} else {
-//				result[resultPos] = m_SmtManager.newDontCarePredicate(null);
-//			}
+			//			if (craigInterpolPos == m_CraigInterpolants.length) {
+			//				// special case where trace ends with return
+			//				// we already added all CraigInterpolants
+			//				// remaining interpolants are "unknown" and the implicit given
+			//				// false at the end
+			//				assert m_Trace.isReturnPosition(m_Trace.length() - 1);
+			//				positionOfThisCraigInterpolant = Integer.MAX_VALUE;
+			//			} else {
+			//				positionOfThisCraigInterpolant = craigInt2interpolantIndex.get(craigInterpolPos);
+			//			}
+			//			assert positionOfThisCraigInterpolant >= resultPos;
+			//			if (isInterpolatedPositio(resultPos)) {
+			Term withIndices = interpolants[craigInterpolPos];
+			//				assert resultPos == craigInt2interpolantIndex.get(craigInterpolPos);
+			craigInterpolPos++;
+			result[resultPos] = withIndices2Predicate.get(withIndices);
+			if (result[resultPos] == null) {
+				m_sfmv.clearVarsAndProc();
+				Term withoutIndices = walker.process(new FormulaUnLet().unlet(withIndices));
+				Set<BoogieVar> vars = m_sfmv.getVars();
+				String[] procs = m_sfmv.getProcedure().toArray(new String[0]);
+				result[resultPos] = mPredicateUnifier.getOrConstructPredicate(withoutIndices, vars, procs);
+				withIndices2Predicate.put(withIndices, result[resultPos]);
+			}
+			//			} else {
+			//				result[resultPos] = m_SmtManager.newDontCarePredicate(null);
+			//			}
 		}
 		assert craigInterpolPos == interpolants.length;
 		return result;
 	}
 	private AlternatingAutomaton<CodeBlock, IPredicate> computeAFAFromDAGandInterpolant(
-//			Word<CodeBlock> trace, 
+			//			Word<CodeBlock> trace, 
 			DataflowDAG<TraceCodeBlock> dag
-//			,
-//			ArrayList<Term> termsFromDAG, Term[] interpolants
+			//			,
+			//			ArrayList<Term> termsFromDAG, Term[] interpolants
 			) {
 
 		AlternatingAutomaton<CodeBlock, IPredicate> aa = new AlternatingAutomaton<>(
 				m_Abstraction.getAlphabet(), m_Abstraction.getStateFactory());
 		IPredicate initialState = mPredicateUnifier.getFalsePredicate();
 		IPredicate finalState = mPredicateUnifier.getTruePredicate();
-		
+
 		Stack<DataflowDAG<TraceCodeBlock>> stack = new Stack<>();
 		stack.push(dag);
 		aa.addState(true, false, dag.getOutgoingNodes().size() <= 1, initialState);
 		aa.addState(false, true, true, finalState);
-		
+
 		//build the automaton according to the structure of the dag
 		while (!stack.isEmpty()) {
 			DataflowDAG<TraceCodeBlock> currentDag = stack.pop();
@@ -312,7 +282,7 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 				}
 			}
 		}
-		
+
 		return aa;
 	}
 
@@ -324,12 +294,12 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 				m_Abstraction.getAlphabet(), m_Abstraction.getStateFactory());
 		IPredicate initialState = mPredicateUnifier.getFalsePredicate();
 		IPredicate finalState = mPredicateUnifier.getTruePredicate();
-		
+
 		Stack<DataflowDAG<TraceCodeBlock>> stack = new Stack<>();
 		stack.push(dag);
 		aa.addState(true, false, initialState);
 		aa.addState(false, true, finalState);
-		
+
 		//build the automaton according to the structure of the dag
 		while (!stack.isEmpty()) {
 			DataflowDAG<TraceCodeBlock> currentDag = stack.pop();
@@ -368,19 +338,19 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 
 	private void getTermsFromDAG(DataflowDAG<TraceCodeBlock> dag, ArrayList<Term> terms, 
 			ArrayList<Integer> startsOfSubtrees, int currentSubtree) {
-//		ArrayList<Term>	terms = new ArrayList<>();
-//		for (DataflowDAG<CodeBlock> outNode : dag.getOutgoingNodes()) {
+		//		ArrayList<Term>	terms = new ArrayList<>();
+		//		for (DataflowDAG<CodeBlock> outNode : dag.getOutgoingNodes()) {
 		for (int i = 0; i < dag.getOutgoingNodes().size(); i++) {
 			DataflowDAG<TraceCodeBlock> outNode = dag.getOutgoingNodes().get(i);
-//			getTermsFromDAG(outNode, terms, startsOfSubtrees, currentSubtree + i, traceCheckerFMIR);
+			//			getTermsFromDAG(outNode, terms, startsOfSubtrees, currentSubtree + i, traceCheckerFMIR);
 			getTermsFromDAG(outNode, terms, startsOfSubtrees, 
 					i == 0 ? currentSubtree : terms.size());
 		}
-//		terms.add(dag.getNodeLabel().getTransitionFormula().getFormula());
-//		terms.add(traceCheckerFMIR.getAnnotatedSSATerm(dag.getNodeLabel().getIndex()));
+		//		terms.add(dag.getNodeLabel().getTransitionFormula().getFormula());
+		//		terms.add(traceCheckerFMIR.getAnnotatedSSATerm(dag.getNodeLabel().getIndex()));
 		terms.add(traceCheckerWAST.getSSATerm(dag.getNodeLabel().getIndex()));
 		startsOfSubtrees.add(currentSubtree);
-//		return null;
+		//		return null;
 	}
 
 	//TODO: not nice: this is copied from BasicCegarLoop, only difference: use another TraceChecker
@@ -388,20 +358,20 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 	protected LBool isCounterexampleFeasible() {
 		IPredicate truePredicate = m_SmtManager.newTruePredicate();
 		IPredicate falsePredicate = m_SmtManager.newFalsePredicate();
-//		PredicateUnifier predicateUnifier = new PredicateUnifier(mServices, m_SmtManager, truePredicate, falsePredicate);
+		//		PredicateUnifier predicateUnifier = new PredicateUnifier(mServices, m_SmtManager, truePredicate, falsePredicate);
 		switch (m_Interpolation) {
 		case Craig_NestedInterpolation:
 		case Craig_TreeInterpolation:
 			m_TraceChecker = new TraceCheckerWithAccessibleSSATerms(truePredicate, falsePredicate, new TreeMap<Integer, IPredicate>(),//different TraceChecker, here..
 					NestedWord.nestedWord(m_Counterexample.getWord()), m_SmtManager, m_RootNode.getRootAnnot()
-							.getModGlobVarManager(), m_AssertCodeBlocksIncrementally, m_Services);
+					.getModGlobVarManager(), m_AssertCodeBlocksIncrementally, m_Services);
 			break;
 		case ForwardPredicates:
 		case BackwardPredicates:
 		case FPandBP:
 			m_TraceChecker = new TraceCheckerSpWp(truePredicate, falsePredicate, new TreeMap<Integer, IPredicate>(),
 					NestedWord.nestedWord(m_Counterexample.getWord()), m_SmtManager, m_RootNode.getRootAnnot()
-							.getModGlobVarManager(), m_AssertCodeBlocksIncrementally, UnsatCores.CONJUNCT_LEVEL, true, m_Services);
+					.getModGlobVarManager(), m_AssertCodeBlocksIncrementally, UnsatCores.CONJUNCT_LEVEL, true, m_Services);
 			break;
 		default:
 			throw new UnsupportedOperationException("unsupported interpolation");
@@ -428,14 +398,14 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 			// s_Logger.info(m_TraceChecker.getRcfgProgramExecution());
 			m_RcfgProgramExecution = m_TraceChecker.getRcfgProgramExecution();
 		} else {
-//			AllIntegers allInt = new TraceChecker.AllIntegers(); //difference
-//			m_TraceChecker.computeInterpolants(allInt, predicateUnifier, m_Interpolation); //difference
+			//			AllIntegers allInt = new TraceChecker.AllIntegers(); //difference
+			//			m_TraceChecker.computeInterpolants(allInt, predicateUnifier, m_Interpolation); //difference
 		}
 
-//		m_CegarLoopBenchmark.addTraceCheckerData(m_TraceChecker.getTraceCheckerBenchmark()); //do this somewhere else TODO //difference
+		//		m_CegarLoopBenchmark.addTraceCheckerData(m_TraceChecker.getTraceCheckerBenchmark()); //do this somewhere else TODO //difference
 		// m_TraceCheckerBenchmark.aggregateBenchmarkData(m_TraceChecker.getTraceCheckerBenchmark());
 
 		return feasibility;
 	}
-	
+
 }
