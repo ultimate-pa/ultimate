@@ -65,39 +65,38 @@ public class IncrementalInclusionCheck2<LETTER,STATE> extends AbstractIncrementa
 	}
 	@Override
 	public void addSubtrahend(INestedWordAutomatonSimple<LETTER, STATE> nwa) throws AutomataLibraryException {
-		HashMap<STATE,ArrayList<NodeData<LETTER,STATE>>> bufferedTree = null;
-		HashMap<STATE,ArrayList<NodeData<LETTER,STATE>>> bufferedTree2 = null;
 		super.addSubtrahend(nwa);
 		local_m_B.add(nwa);
 		local_m_B2.add(nwa);
-		addBStates(nwa);
-		do{
-			if(exceptionRun()||cover()){
-				break;
-			}
-			if (!m_Services.getProgressMonitorService().continueProcessing()) {
-                throw new OperationCanceledException();
-        }
-		bufferedTree = null;
-		for(LETTER alphabet:local_m_A.getAlphabet()){
-			if(bufferedTree ==null){
-				bufferedTree = expand(alphabet);
-			}
-			else{
-				bufferedTree2 = expand(alphabet);
-				for(STATE state:bufferedTree2.keySet()){
-					if(bufferedTree.containsKey(state)){
-						bufferedTree.get(state).addAll(bufferedTree2.get(state));
+		run();
+		/*addBStates(nwa);
+			do{
+				if(exceptionRun()||cover()){
+					break;
+				}
+				if (!m_Services.getProgressMonitorService().continueProcessing()) {
+	                throw new OperationCanceledException();
+				}
+				bufferedTree = null;
+				for(LETTER alphabet:local_m_A.getAlphabet()){
+					if(bufferedTree ==null){
+						bufferedTree = expand(alphabet);
 					}
 					else{
-						bufferedTree.put(state, new ArrayList<NodeData<LETTER,STATE>>());
-						bufferedTree.get(state).addAll(bufferedTree2.get(state));
+						bufferedTree2 = expand(alphabet);
+						for(STATE state:bufferedTree2.keySet()){
+							if(bufferedTree.containsKey(state)){
+								bufferedTree.get(state).addAll(bufferedTree2.get(state));
+							}
+							else{
+								bufferedTree.put(state, new ArrayList<NodeData<LETTER,STATE>>());
+								bufferedTree.get(state).addAll(bufferedTree2.get(state));
+							}
+						}
 					}
-				}
 			}
-		}
-		currentTree = bufferedTree;
-		}while(true);
+			currentTree = bufferedTree;
+			}while(true);*/
 	}
 	public IncrementalInclusionCheck2(IUltimateServiceProvider services, StateFactory<STATE> sf,
 			INestedWordAutomatonSimple<LETTER, STATE> a, List<INestedWordAutomatonSimple<LETTER,STATE>> b) throws OperationCanceledException{

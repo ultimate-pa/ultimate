@@ -132,8 +132,8 @@ public class IncrementalInclusionCheck4<LETTER,STATE> extends AbstractIncrementa
 			s_Logger.info("Alphabet inconsistent");
 			return;
 		}
-		do{
-			if(result!=null){
+		if(result!=null){
+			do{
 				if (!m_Services.getProgressMonitorService().continueProcessing()) {
 	                throw new OperationCanceledException();
 				}
@@ -152,11 +152,8 @@ public class IncrementalInclusionCheck4<LETTER,STATE> extends AbstractIncrementa
 				}	
 				currentTerminalLeafs.clear();
 				currentTerminalLeafs.addAll(bufferedLeaf);
-			}
-			else{
-				break;
-			}
-		}while(true);
+			}while(true);
+		}
 	}
 	@SuppressWarnings("unchecked")
 	public void run() throws OperationCanceledException{
@@ -301,7 +298,7 @@ public class IncrementalInclusionCheck4<LETTER,STATE> extends AbstractIncrementa
 	}
 	private boolean refine_exceptionRun(){
 		HashSet<Leaf<LETTER,STATE>> newEdge = new HashSet<Leaf<LETTER,STATE>>(),toBeRemoved = new HashSet<Leaf<LETTER,STATE>>(), toBeRemovedBuffer = new HashSet<Leaf<LETTER,STATE>>();
-		boolean firstRound = true;;
+		boolean firstRound = true;
 		ArrayList<HashSet<STATE>> newBnStates = null;
 		int i;
 		Leaf<LETTER,STATE> cursorLeaf = null,cursorLeaf2 = null,newEdgeLeaf = null;
@@ -422,9 +419,25 @@ public class IncrementalInclusionCheck4<LETTER,STATE> extends AbstractIncrementa
 					toBeRemovedBuffer.add(cursorLeaf3);
 				}
 			}
+			for(Leaf<LETTER,STATE> cursorLeaf3:newEdge){
+				cursorLeaf3.nextLeaf.clear();
+			}
+			for(Leaf<LETTER,STATE> cursorLeaf3:toBeRemovedBuffer){
+				for(Leaf<LETTER,STATE> cursorLeaf4:cursorLeaf3.covering){
+					cursorLeaf4.coveredBy=null;
+				}
+			}
+			for(Leaf<LETTER,STATE> cursorLeaf3:toBeRemoved){
+				for(Leaf<LETTER,STATE> cursorLeaf4:cursorLeaf3.covering){
+					cursorLeaf4.coveredBy=null;
+				}
+			}
 			currentTerminalLeafs.removeAll(toBeRemovedBuffer);
 			completeLeafSet.removeAll(toBeRemoved);
 			currentTerminalLeafs.addAll(newEdge);
+			for(Leaf<LETTER,STATE> cursorLeaf3:newEdge){
+				cursorLeaf3.nextLeaf.clear();
+			}
 		}
 		return result!=null;
 	}
@@ -513,6 +526,7 @@ public class IncrementalInclusionCheck4<LETTER,STATE> extends AbstractIncrementa
 	public Boolean getResult(){
 		return result == null;
 	}
+	@Override
 	public boolean checkResult(StateFactory<STATE> stateFactory)
 			throws AutomataLibraryException {
 		boolean checkResult = IncrementalInclusionCheck2.compareInclusionCheckResult(

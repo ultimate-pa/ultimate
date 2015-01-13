@@ -97,6 +97,10 @@ public class IncrementalInclusionCheck3<LETTER,STATE> extends AbstractIncrementa
 		local_m_B.add(nwa);
 		local_m_B2.add(nwa);
 		run2(nwa);
+		//completeLeafSet = new ArrayList<Leaf<LETTER,STATE>>();
+		//startingLeafs = null;
+		//currentTerminalLeafs = null;
+		//run();
 	}
 	public IncrementalInclusionCheck3(IUltimateServiceProvider services, StateFactory<STATE> sf,
 			INestedWordAutomatonSimple<LETTER, STATE> a, List<INestedWordAutomatonSimple<LETTER,STATE>> b) throws OperationCanceledException{
@@ -117,7 +121,7 @@ public class IncrementalInclusionCheck3<LETTER,STATE> extends AbstractIncrementa
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-			local_m_B.add((INestedWordAutomatonSimple<LETTER, STATE>) bn);
+			local_m_B.add(bn);
 		}
 		run();
 		s_Logger.info(exitMessage());
@@ -128,8 +132,8 @@ public class IncrementalInclusionCheck3<LETTER,STATE> extends AbstractIncrementa
 			s_Logger.info("Alphabet inconsistent");
 			return;
 		}
-		do{
-			if(result!=null){
+		if(result!=null){
+			do{
 				if (!m_Services.getProgressMonitorService().continueProcessing()) {
 	                throw new OperationCanceledException();
 				}
@@ -148,11 +152,8 @@ public class IncrementalInclusionCheck3<LETTER,STATE> extends AbstractIncrementa
 				}	
 				currentTerminalLeafs.clear();
 				currentTerminalLeafs.addAll(bufferedLeaf);
-			}
-			else{
-				break;
-			}
-		}while(true);
+			}while(true);
+		}
 	}
 	@SuppressWarnings("unchecked")
 	public void run() throws OperationCanceledException{
@@ -166,7 +167,7 @@ public class IncrementalInclusionCheck3<LETTER,STATE> extends AbstractIncrementa
 		do{
 			if(currentTerminalLeafs==null){
 				currentTerminalLeafs = expand(null);
-				startingLeafs = (ArrayList<IncrementalInclusionCheck3<LETTER, STATE>.Leaf<LETTER, STATE>>) currentTerminalLeafs.clone();
+				startingLeafs = (ArrayList<Leaf<LETTER, STATE>>) currentTerminalLeafs.clone();
 				if(refine_exceptionRun()||cover()){
 					break;
 				}
@@ -276,7 +277,7 @@ public class IncrementalInclusionCheck3<LETTER,STATE> extends AbstractIncrementa
 	}
 	private boolean refine_exceptionRun(){
 		HashSet<Leaf<LETTER,STATE>> newEdge = new HashSet<Leaf<LETTER,STATE>>(),toBeRemoved = new HashSet<Leaf<LETTER,STATE>>(), toBeRemovedBuffer = new HashSet<Leaf<LETTER,STATE>>();
-		boolean firstRound = true;;
+		boolean firstRound = true;
 		ArrayList<HashSet<STATE>> newBnStates = null;
 		int i;
 		Leaf<LETTER,STATE> cursorLeaf = null,cursorLeaf2 = null,newEdgeLeaf = null;
@@ -395,6 +396,19 @@ public class IncrementalInclusionCheck3<LETTER,STATE> extends AbstractIncrementa
 			for(Leaf<LETTER,STATE> cursorLeaf3 :currentTerminalLeafs){
 				if(toBeRemoved.contains(cursorLeaf3)){
 					toBeRemovedBuffer.add(cursorLeaf3);
+				}
+			}
+			for(Leaf<LETTER,STATE> cursorLeaf3:newEdge){
+				cursorLeaf3.nextLeaf.clear();
+			}
+			for(Leaf<LETTER,STATE> cursorLeaf3:toBeRemovedBuffer){
+				for(Leaf<LETTER,STATE> cursorLeaf4:cursorLeaf3.covering){
+					cursorLeaf4.coveredBy=null;
+				}
+			}
+			for(Leaf<LETTER,STATE> cursorLeaf3:toBeRemoved){
+				for(Leaf<LETTER,STATE> cursorLeaf4:cursorLeaf3.covering){
+					cursorLeaf4.coveredBy=null;
 				}
 			}
 			currentTerminalLeafs.removeAll(toBeRemovedBuffer);
