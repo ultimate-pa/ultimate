@@ -24,9 +24,11 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.SAAUni
 import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
+import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
 import de.uni_freiburg.informatik.ultimate.logic.FormulaWalker;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
+import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
@@ -103,9 +105,14 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 			for (int i = 0; i < startsOfSubtreesFromDAG.size(); i++)
 				startsOfSubtreesAsInts[i] = startsOfSubtreesFromDAG.get(i);
 
+			m_SmtManager.getScript().push(1);
+			//declare all variables (all would not be necessary, but well..
+			for (Term t : traceCheckerWAST.getConstantsToBoogieVar().keySet()) {
+				ApplicationTerm at = (ApplicationTerm) t;
+				m_SmtManager.getScript().declareFun(at.getFunction().getName(), new Sort[0], at.getSort());
+			}
 
 			//assert the terms for the current dag, name them
-			m_SmtManager.getScript().push(1);
 			ArrayList<Term> termNames = new ArrayList<>();
 			for (int i = 0; i < termsFromDAG.size(); i++) {
 				String termName = "afassa_" + i;
