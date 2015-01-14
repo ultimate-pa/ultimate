@@ -14,7 +14,7 @@ void display(int tempdiff, int warning)
 {
 	tempDisplay = tempdiff;
 	warnLED = warning;
-	if (!warning)
+	if (warning != 0)
 	{
 		//No BUG (but not reachable)
 		chainBroken  = 0;
@@ -35,6 +35,7 @@ void coolantControl()
 {
 	while(1)
 	{
+		int warning = 0;
 		otime = time;
 		time = otime +1;
 		tempIn = __VERIFIER_nondet_int();
@@ -56,7 +57,6 @@ int main()
     tempIn = 0;
     error = 0;
     chainBroken = 0;
-    warnLight = 0;
     temp = 0;
     limit = 8;
     init = 1;
@@ -68,8 +68,7 @@ int main()
 		{
 			error = 0;
 			display(0, error);
-		}
-			break;
+			break;	
 		} else {
 			error = 1;
 			display(0, error);

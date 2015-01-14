@@ -1,4 +1,4 @@
-//#Safe
+//#Unsafe
 //@ ltl invariant positive: ![]<>AP(otime < time);
 
 #include <stdio.h>
