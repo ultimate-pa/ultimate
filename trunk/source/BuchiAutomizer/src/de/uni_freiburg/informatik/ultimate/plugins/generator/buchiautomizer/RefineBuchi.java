@@ -374,6 +374,9 @@ public class RefineBuchi {
 			mLogger.info("Bad chosen interpolant automaton: word not accepted");
 			return false;
 		}
+		// 2015-01-14 Matthias: word, stemExtension, and loopExtension are only
+		// different representations of the same word. The following lines
+		// do not make any sense (but might be helpful to reveal a bug.
 		boolean stemExtensionAccepted = (new BuchiAccepts<CodeBlock, IPredicate>(m_Services, oldApi, stemExtension)).getResult();
 		if (!stemExtensionAccepted) {
 			mLogger.info("Bad chosen interpolant automaton: stem extension not accepted");
