@@ -73,22 +73,41 @@ public abstract class AbstractInterpolantAutomaton implements INestedWordAutomat
 	}
 
 	/**
-	 * Announce that computation is finished. From now on this automaton returns
+	 * Switch the mode to READ_ONLY. In this mode the automaton returns
 	 * only existing transitions but does not compute new ones.
 	 */
 	public final void switchToReadonlyMode() {
 		if (m_Mode == Mode.READ_ONLY) {
-			throw new AssertionError("Computation already finished.");
+			throw new AssertionError("already in mode READ_ONLY");
 		} else {
 			m_Mode = Mode.READ_ONLY;
 			clearAssertionStack();
 			mLogger.info(switchToReadonlyMessage());
 		}
 	}
+	
+	/**
+	 * Switch the mode to ON_THE_FLY_CONSTRUCTION. In this mode the automaton
+	 * behaves as follows:
+	 * If the automaton is asked if a transition exists, the automaton checks
+	 * the rules that define this automaton (validity of Hoare triples) and
+	 * constructs the transition on demand.
+	 */
+	public final void switchToOnTheFlyConstructionMode() {
+		if (m_Mode == Mode.ON_THE_FLY_CONSTRUCTION) {
+			throw new AssertionError("already in mode ON_THE_FLY_CONSTRUCTION");
+		} else {
+			m_Mode = Mode.ON_THE_FLY_CONSTRUCTION;
+			mLogger.info(switchToOnTheFlyConstructionMessage());
+		}
+	}
+	
 
 	protected abstract String startMessage();
 
 	protected abstract String switchToReadonlyMessage();
+	
+	protected abstract String switchToOnTheFlyConstructionMessage();
 
 	protected final LBool computeSuccInternalSolver(IPredicate state, CodeBlock symbol, IPredicate succCand) {
 		if (m_AssertedHier != null) {

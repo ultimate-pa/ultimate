@@ -185,6 +185,17 @@ public class BuchiInterpolantAutomatonBouncer extends AbstractInterpolantAutomat
 		sb.append(m_AcceptingResPred2InputPreds.getDomain().size()).append(" accepting loop states ");
 		return sb.toString();
 	}
+	
+	@Override
+	protected String switchToOnTheFlyConstructionMessage() {
+		StringBuilder sb = new StringBuilder();
+		sb.append("Switched to OnTheFlyConstruction mode: Buchi interpolant automaton has ");
+		sb.append(m_Result.size()).append(" states ");
+		sb.append(m_StemResPred2InputPreds.getDomain().size()).append(" stem states ");
+		sb.append(m_LoopResPred2InputPreds.getDomain().size()).append(" non-accepting loop states ");
+		sb.append(m_AcceptingResPred2InputPreds.getDomain().size()).append(" accepting loop states ");
+		return sb.toString();
+	}
 
 	protected void computeSuccs(IPredicate resPred, IPredicate resHier, CodeBlock letter, SuccessorComputationHelper sch) {
 		if (isPredHierLetterFalse(resPred, resHier, letter, sch)) {

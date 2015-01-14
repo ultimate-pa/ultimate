@@ -133,6 +133,14 @@ public class DeterministicInterpolantAutomaton extends AbstractInterpolantAutoma
 		sb.append(m_Result.size()).append(" states. ");
 		return sb.toString();
 	}
+	
+	@Override
+	protected String switchToOnTheFlyConstructionMessage() {
+		StringBuilder sb = new StringBuilder();
+		sb.append("Switched to OnTheFlyConstruction mode: deterministic interpolant automaton has ");
+		sb.append(m_Result.size()).append(" states. ");
+		return sb.toString();
+	}
 
 
 	
