@@ -275,47 +275,22 @@ public class IncrementalInclusionCheck5<LETTER,STATE> extends AbstractIncrementa
 	private boolean cover(){
 		ArrayList<HashSet<STATE>> newBnStates = null;
 		int i;
-		boolean newNodeInCompleteTree = false;
+		boolean newNodeInCompleteTree = false,forceCoveringExecuted = false;
 		boolean containsAllbnState = false;
 		Leaf<LETTER,STATE> BufCurLeaf2 = null, cursorLeaf = null;
-		for(Leaf<LETTER,STATE> curLeaf1 : currentTerminalLeafs){
-			containsAllbnState = false;
-			if(curLeaf1.coveredBy == null){
-				for(Leaf<LETTER,STATE> curLeaf2 : completeLeafSet){
-					BufCurLeaf2 = curLeaf2;
-					if(curLeaf2.coveredBy == null&&curLeaf1!=curLeaf2&&curLeaf1.aState.equals(curLeaf2.aState)){
-						containsAllbnState = true;
-						for(INestedWordAutomatonSimple<LETTER,STATE> bn:curLeaf2.bStates.keySet()){
-							if(curLeaf1.bStates.keySet().contains(bn)){
-								if(!curLeaf1.bStates.get(bn).containsAll(curLeaf2.bStates.get(bn))){
-									containsAllbnState=false;
-								}
-							}
-							else{
-								containsAllbnState = false;
-							}
-							if(!containsAllbnState){
-								break;
-							}
-						}
-						if(containsAllbnState){
-							break;
-						}
-					}
-				}
-				if(containsAllbnState){
-					curLeaf1.coveredBy = BufCurLeaf2;
-					BufCurLeaf2.covering.add(curLeaf1);
-				}
-				else{
-					containsAllbnState = false;
+		do{
+			newNodeInCompleteTree = false;
+			forceCoveringExecuted = false;
+			for(Leaf<LETTER,STATE> curLeaf1 : currentTerminalLeafs){
+				containsAllbnState = false;
+				if(curLeaf1.coveredBy == null){
 					for(Leaf<LETTER,STATE> curLeaf2 : completeLeafSet){
 						BufCurLeaf2 = curLeaf2;
 						if(curLeaf2.coveredBy == null&&curLeaf1!=curLeaf2&&curLeaf1.aState.equals(curLeaf2.aState)){
 							containsAllbnState = true;
 							for(INestedWordAutomatonSimple<LETTER,STATE> bn:curLeaf2.bStates.keySet()){
-								if(curLeaf1.completeBStates.keySet().contains(bn)){
-									if(!curLeaf1.completeBStates.get(bn).containsAll(curLeaf2.bStates.get(bn))){
+								if(curLeaf1.bStates.keySet().contains(bn)){
+									if(!curLeaf1.bStates.get(bn).containsAll(curLeaf2.bStates.get(bn))){
 										containsAllbnState=false;
 									}
 								}
@@ -332,37 +307,63 @@ public class IncrementalInclusionCheck5<LETTER,STATE> extends AbstractIncrementa
 						}
 					}
 					if(containsAllbnState){
-						for(INestedWordAutomatonSimple<LETTER,STATE> bn:BufCurLeaf2.bStates.keySet()){
-							if(!curLeaf1.bStates.containsKey(bn)){
-								newBnStates = NestedRunStates(bn,curLeaf1.word);
-								i = newBnStates.size()-1;
-								cursorLeaf = curLeaf1;
-								while(cursorLeaf!=null){
-									if(!cursorLeaf.bStates.containsKey(bn)){
-										cursorLeaf.bStates.put(bn, newBnStates.get(i));
-										for(Leaf<LETTER,STATE> orgCover:cursorLeaf.covering){
-											if(currentTerminalLeafs.contains(orgCover)){
-												newNodeInCompleteTree = true;
-											}
-											orgCover.coveredBy = null;
-										}
-										cursorLeaf.covering.clear();
-									}
-									cursorLeaf = cursorLeaf.directParentLeaf;
-									i--;
-								}
-							}
-						}
 						curLeaf1.coveredBy = BufCurLeaf2;
 						BufCurLeaf2.covering.add(curLeaf1);
 					}
 					else{
-						newNodeInCompleteTree = true;	
+						containsAllbnState = false;
+						for(Leaf<LETTER,STATE> curLeaf2 : completeLeafSet){
+							BufCurLeaf2 = curLeaf2;
+							if(curLeaf2.coveredBy == null&&curLeaf1!=curLeaf2&&curLeaf1.aState.equals(curLeaf2.aState)){
+								containsAllbnState = true;
+								for(INestedWordAutomatonSimple<LETTER,STATE> bn:curLeaf2.bStates.keySet()){
+									if(curLeaf1.completeBStates.keySet().contains(bn)){
+										if(!curLeaf1.completeBStates.get(bn).containsAll(curLeaf2.bStates.get(bn))){
+											containsAllbnState=false;
+										}
+									}
+									else{
+										containsAllbnState = false;
+									}
+									if(!containsAllbnState){
+										break;
+									}
+								}
+								if(containsAllbnState){
+									break;
+								}
+							}
+						}
+						if(containsAllbnState){
+							for(INestedWordAutomatonSimple<LETTER,STATE> bn:BufCurLeaf2.bStates.keySet()){
+								if(!curLeaf1.bStates.containsKey(bn)){
+									newBnStates = NestedRunStates(bn,curLeaf1.word);
+									i = newBnStates.size()-1;
+									cursorLeaf = curLeaf1;
+									while(cursorLeaf!=null){
+										if(!cursorLeaf.bStates.containsKey(bn)){
+											cursorLeaf.bStates.put(bn, newBnStates.get(i));
+											for(Leaf<LETTER,STATE> orgCover:cursorLeaf.covering){
+												forceCoveringExecuted = true; 
+												orgCover.coveredBy = null;
+											}
+											cursorLeaf.covering.clear();
+										}
+										cursorLeaf = cursorLeaf.directParentLeaf;
+										i--;
+									}
+								}
+							}
+							curLeaf1.coveredBy = BufCurLeaf2;
+							BufCurLeaf2.covering.add(curLeaf1);
+						}
+						else{
+							newNodeInCompleteTree = true;	
+						}
 					}
 				}
 			}
-		}
-		
+		}while(forceCoveringExecuted);
 		return !newNodeInCompleteTree;
 	}
 	private boolean refine_exceptionRun(){
