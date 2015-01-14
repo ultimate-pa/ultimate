@@ -16,6 +16,8 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 						DEF_ExtSolverFlag, PreferenceType.Boolean),
 				new UltimatePreferenceItem<String>(LABEL_ExtSolverCommand,
 						DEF_ExtSolverCommand, PreferenceType.String),
+				new UltimatePreferenceItem<String>(LABEL_ExtSolverLogic,
+						DEF_ExtSolverLogic, PreferenceType.String),
 				new UltimatePreferenceItem<CodeBlockSize>(LABEL_CodeBlockSize,
 						DEF_CodeBlockSize, PreferenceType.Combo, CodeBlockSize.values()),
 				new UltimatePreferenceItem<Boolean>(LABEL_RemoveGotoEdges,
@@ -51,6 +53,11 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 	public static final boolean DEF_ExtSolverFlag = true;
 	public static final String LABEL_ExtSolverCommand = "Command for external solver";
 	public static final String DEF_ExtSolverCommand = "z3 SMTLIB2_COMPLIANT=true -memory:1024 -smt2 -in -t:12000";
+	public static final String LABEL_ExtSolverLogic = "Logic for external solver";
+	public static final String DEF_ExtSolverLogic = "AUFLIRA";
+
+	
+	
 	public static final String LABEL_CodeBlockSize = "Size of a code block";
 	public enum CodeBlockSize { SingleStatement, SequenceOfStatements, LoopFreeBlock };
 	public static final CodeBlockSize DEF_CodeBlockSize = CodeBlockSize.LoopFreeBlock;

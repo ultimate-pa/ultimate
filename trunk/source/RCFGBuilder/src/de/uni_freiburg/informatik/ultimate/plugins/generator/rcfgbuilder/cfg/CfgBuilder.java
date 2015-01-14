@@ -85,6 +85,9 @@ public class CfgBuilder {
 	 * CACSL2Boogie translation.
 	 */
 	public static final String START_PROCEDURE = "ULTIMATE.start";
+	
+	
+	private final String m_LogicForExternalSolver;
 
 	/**
 	 * Root Node of this Ultimate model. I use this to store information that
@@ -126,13 +129,15 @@ public class CfgBuilder {
 		if (useExternalSolver) {
 			String command = (new UltimatePreferenceStore(RCFGBuilder.s_PLUGIN_ID))
 					.getString(PreferenceInitializer.LABEL_ExtSolverCommand);
-
 			m_Script = SolverBuilder.createExternalSolver(mServices, storage, command);
 		} else {
 			m_Script = SolverBuilder.createSMTInterpol(mServices, storage);
 			int timeoutMilliseconds = 30 * 1000;
 			m_Script.setOption(":timeout", String.valueOf(timeoutMilliseconds));
 		}
+		m_LogicForExternalSolver = (new UltimatePreferenceStore(RCFGBuilder.s_PLUGIN_ID))
+				.getString(PreferenceInitializer.LABEL_ExtSolverLogic);
+		
 
 		boolean dumpToFile = (new UltimatePreferenceStore(RCFGBuilder.s_PLUGIN_ID))
 				.getBoolean(PreferenceInitializer.LABEL_DumpToFile);
@@ -179,7 +184,7 @@ public class CfgBuilder {
 			m_Script.setOption(":produce-unsat-cores", true);
 			// m_Script.setOption(":interpolant-check-mode", true);
 			// m_Script.setLogic("AUFNIRA");
-			m_Script.setLogic("AUFLIRA");
+			m_Script.setLogic(m_LogicForExternalSolver);
 			// m_Script.setOption(":verbosity", 0);
 			blackHolesArrays = false;
 		}
