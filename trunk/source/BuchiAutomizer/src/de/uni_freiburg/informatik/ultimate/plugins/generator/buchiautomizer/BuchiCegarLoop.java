@@ -357,6 +357,18 @@ public class BuchiCegarLoop {
 					.getModGlobVarManager(), m_RootNode.getRootAnnot().getBoogie2SMT().getAxioms(),
 					m_BinaryStatePredicateManager, m_Counterexample, generateLassoCheckerIdentifier(), m_Services,
 					mStorage);
+			if (lassoChecker.getLassoCheckResult().getContinueDirective() == ContinueDirective.REPORT_UNKNOWN) {
+				// if result was unknown, then try again but this time add one
+				// iteration of the loop to the stem.
+				// This allows us to verify Vincent's coolant examples
+				mLogger.info("Result of lasso check was UNKNOWN. I will concatenate loop to stem and try again.");
+				NestedRun<CodeBlock, IPredicate> newStem = m_Counterexample.getStem().concatenate(m_Counterexample.getLoop());
+				m_Counterexample = new NestedLassoRun<>(newStem, m_Counterexample.getLoop());
+				lassoChecker = new LassoChecker(m_Interpolation, m_SmtManager, m_RootNode.getRootAnnot()
+						.getModGlobVarManager(), m_RootNode.getRootAnnot().getBoogie2SMT().getAxioms(),
+						m_BinaryStatePredicateManager, m_Counterexample, generateLassoCheckerIdentifier(), m_Services,
+						mStorage);
+			}
 			m_BenchmarkGenerator.stop(BuchiCegarLoopBenchmark.s_LassoAnalysisTime);
 
 			ContinueDirective cd = lassoChecker.getLassoCheckResult().getContinueDirective();
