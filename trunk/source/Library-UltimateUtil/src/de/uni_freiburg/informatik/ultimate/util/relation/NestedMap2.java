@@ -28,7 +28,9 @@ package de.uni_freiburg.informatik.ultimate.util.relation;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Map.Entry;
 import java.util.Set;
 
@@ -70,6 +72,61 @@ public class NestedMap2<K1, K2, V> {
 		return m_K1ToK2ToV.keySet();
 	}
 	
+	public Iterable<Pair<K1,K2>> keys2() {
+		return new Iterable<Pair<K1,K2>>() {
+
+			@Override
+			public Iterator<Pair<K1, K2>> iterator() {
+				return new Iterator<Pair<K1,K2>>() {
+					private Iterator<Entry<K1, Map<K2, V>>> m_Iterator1;
+					private Entry<K1, Map<K2, V>> m_Iterator1Object;
+					private Iterator<K2> m_Iterator2;
+
+					{
+						m_Iterator1 = m_K1ToK2ToV.entrySet().iterator();
+						if (m_Iterator1.hasNext()) {
+							m_Iterator1Object = m_Iterator1.next();
+							m_Iterator2 = m_Iterator1Object.getValue().keySet().iterator();
+						}
+					}
+
+					@Override
+					public boolean hasNext() {
+						if (m_Iterator1Object == null) {
+							return false;
+						} else {
+							return m_Iterator2.hasNext();
+						}
+					}
+
+					@Override
+					public Pair<K1, K2> next() {
+						if (m_Iterator1Object == null) {
+							throw new NoSuchElementException();
+						} else {
+							if (!m_Iterator2.hasNext()) {
+								if (!m_Iterator1.hasNext()) {
+									throw new NoSuchElementException();
+								} else {
+									m_Iterator1Object = m_Iterator1.next();
+									assert m_Iterator1Object.getValue().size() > 0 : "must contain at least one value";
+									m_Iterator2 = m_Iterator1Object.getValue().keySet().iterator();
+								}
+							}
+							return new Pair<K1, K2>(m_Iterator1Object.getKey(), m_Iterator2.next());
+						}
+					}
+
+					@Override
+					public void remove() {
+						throw new UnsupportedOperationException("not yet implemented");
+					}
+				};
+			}
+		};
+		
+	}
+	
 	//TODO more efficient iterable
 	public Iterable<Triple<K1,K2,V>> entrySet() {
 		ArrayList<Triple<K1,K2,V>> result = new ArrayList<Triple<K1,K2,V>>();
@@ -84,6 +141,19 @@ public class NestedMap2<K1, K2, V> {
 	public void addAll(NestedMap2<K1, K2, V> nestedMap) {
 		for (Triple<K1, K2, V> triple : nestedMap.entrySet()) {
 			this.put(triple.getFirst(), triple.getSecond(), triple.getThird());
+		}
+	}
+	
+	public Map<K2, V> remove(K1 k1) {
+		return m_K1ToK2ToV.remove(k1);
+	}
+	
+	public V remove(K1 k1, K2 k2) {
+		Map<K2, V> k2ToV = m_K1ToK2ToV.get(k1);
+		if (k2ToV == null) {
+			return null;
+		} else {
+			return k2ToV.remove(k2);
 		}
 	}
 
