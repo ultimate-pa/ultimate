@@ -379,13 +379,15 @@ public class RefineBuchi {
 		// do not make any sense (but might be helpful to reveal a bug.
 		boolean stemExtensionAccepted = (new BuchiAccepts<CodeBlock, IPredicate>(m_Services, oldApi, stemExtension)).getResult();
 		if (!stemExtensionAccepted) {
-			mLogger.info("Bad chosen interpolant automaton: stem extension not accepted");
-			return false;
+			throw new AssertionError("Bad chosen interpolant automaton: stem extension not accepted");
+//			mLogger.info("Bad chosen interpolant automaton: stem extension not accepted");
+//			return false;
 		}
 		boolean loopExtensionAccepted = (new BuchiAccepts<CodeBlock, IPredicate>(m_Services, oldApi, loopExtension)).getResult();
 		if (!loopExtensionAccepted) {
-			mLogger.info("Bad chosen interpolant automaton: loop extension not accepted");
-			return false;
+			throw new AssertionError("Bad chosen interpolant automaton: loop extension not accepted");
+//			mLogger.info("Bad chosen interpolant automaton: loop extension not accepted");
+//			return false;
 		}
 		return true;
 	}
