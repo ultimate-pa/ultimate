@@ -267,7 +267,7 @@ non terminal Object nested_word_symbol;
  // 2. Alphabets
  terminal Object ALPHABET, CALL_ALPHABET, INTERNAL_ALPHABET, RETURN_ALPHABET;
 // 3. States & Places
-terminal Object STATES, PLACES, INITIAL_STATES, FINAL_STATES, EXISTENTIAL_STATES, UNIVERSAL_STATES;
+terminal Object STATES, PLACES, INITIAL_STATES, FINAL_STATES, TRANSITION_TABLE, ACCEPTING_FUNCTION, EXPR_STATE_NEGATE, EXPR_STATE_AND, EXPR_STATE_OR;
 // 4. Transitions
 terminal Object NET_TRANSITIONS, INTERNAL_TRANSITIONS, CALL_TRANSITIONS, RETURN_TRANSITIONS;
 // 5. 
@@ -280,7 +280,7 @@ non terminal AutomatonAST nwa_definition, petrinetJulian_definition, aa_definiti
 non terminal IdentifierListAST alphabet, call_alphabet, return_alphabet, internal_alphabet;
 //non terminal IdentifierListAST alphabet_opt, petrinet_alphabet, call_alphabet, return_alphabet_opt, return_alphabet, internal_alphabet_opt, internal_alphabet;
 // States & Places
-non terminal IdentifierListAST states, initial_states, final_states, existential_states, universal_states;  
+non terminal IdentifierListAST states, initial_states, final_states;  
 //non terminal IdentifierListAST states_opt, states, initial_states_opt, initial_states, final_states_opt, final_states;  
 non terminal IdentifierListAST places, accepting_places;
 // Transitions & Markings
@@ -293,6 +293,10 @@ non terminal TransitionListAST net_transitions, net_transition_list_opt, net_tra
 non terminal PetriNetTransitionAST  net_transition;
 non terminal IdentifierListAST marking;
 non terminal PetriNetMarkingListAST initial_markings;
+// AlternatingAutomatons
+non terminal IdentifierListAST transition_table_entry;
+non terminal TransitionListAST transition_table, transition_table_list_opt, transition_table_list;
+non terminal String identifier_dnf_expression, identifier_dnf_expression_conjunction, accepting_function;
 
 
 
@@ -1121,25 +1125,58 @@ accepting_places ::= ACCEPTING_PLACES EQ LBRACE:l identifier_list:idList RBRACE:
 
 aa_definition ::=      variable_identifier:id EQ
                         LPAREN:l alphabet:alpha COMMA
-                               existential_states:ex_states COMMA
-                               universal_states:uni_states COMMA
-                               initial_states:init_states COMMA
+                               states:int_states COMMA
                                final_states:fin_states COMMA
-                               internal_transitions:trans
+                               transition_table:trans_table COMMA
+                               accepting_function:acc_function
                         RPAREN:r
                         {: AlternatingAutomatonAST aa = new AlternatingAutomatonAST(getLocation(l$, r$), id);
                           aa.setAlphabet(alpha.getIdentifierList());
-                          aa.setInitialStates(init_states.getIdentifierList());
+                          aa.setStates(int_states.getIdentifierList());
                           aa.setFinalStates(fin_states.getIdentifierList());
-                          aa.setExistentialStates(ex_states.getIdentifierList());
-                          aa.setUniversalStates(uni_states.getIdentifierList());
-                          aa.setTransitions(trans);
+                          aa.setTransitions(trans_table.getTransitions());
+                          aa.setAcceptingFunction(acc_function);
                           m_varDeclarations.put(id, AlternatingAutomatonAST.class);
                           RESULT = aa; :} ;
-
                           
-existential_states ::= EXISTENTIAL_STATES EQ LBRACE:l identifier_list_opt:idList RBRACE:r
-				   {:RESULT = idList; :} ;
+transition_table ::= TRANSITION_TABLE EQ LBRACE:l transition_table_list_opt:tList RBRACE:r
+						{:RESULT = tList; :};
+
+transition_table_list_opt ::= transition_table_list:tList {: RESULT = tList; :} | {:java_cup.runtime.Symbol symb = ((java_cup.runtime.Symbol) CUP$stack.get(CUP$size - 1)); RESULT = new TransitionListAST(getLocation(symb,symb)); :} ;						  
+
+transition_table_list ::= 
+                     transition_table_entry:entry
+					 {: TransitionListAST tList = new TransitionListAST(getLocation(entry$,entry$));
+ 					    tList.addTransition(entry);
+					    RESULT = tList; :} 
+                   | transition_table_list:tList transition_table_entry:entry
+                     {: tList.addTransition(entry);
+                    	RESULT = tList; :} ;
+
+transition_table_entry ::= LPAREN:l identifier:state identifier:letter identifier_dnf_expression:expression RPAREN:r
+               {: IdentifierListAST idList = new IdentifierListAST(getLocation(state$,state$));
+                  idList.addId(state);
+                  idList.addId(letter);
+                  idList.addId(expression);
+                  RESULT = idList; :} ;
+               
+identifier_dnf_expression ::= 
+					  BOOLEAN_LITERAL:bool
+                      {: RESULT = bool.toString(); :} 
+                    | identifier_dnf_expression_conjunction:conjunction
+                      {: RESULT = conjunction; :} 
+                    | identifier_dnf_expression:expression EXPR_STATE_OR identifier_dnf_expression_conjunction:conjunction
+                      {: RESULT = expression + "|" + conjunction; :} ;
+               
+identifier_dnf_expression_conjunction ::= 
+					  identifier:id
+                      {: RESULT = id; :} 
+					| EXPR_STATE_NEGATE identifier:id
+                      {: RESULT = "~" + id; :} 
+                    | identifier_dnf_expression_conjunction:conjunction EXPR_STATE_AND identifier:id
+                      {: RESULT = conjunction + "&" + id; :}
+                    | identifier_dnf_expression_conjunction:conjunction EXPR_STATE_AND EXPR_STATE_NEGATE identifier:id
+                      {: RESULT = conjunction + "&" + "~" + id; :} ;
 				     
-universal_states ::= UNIVERSAL_STATES EQ LBRACE:l identifier_list_opt:idList RBRACE:r
-				   {:RESULT = idList; :} ;
+accepting_function ::= ACCEPTING_FUNCTION EQ identifier_dnf_expression:expression
+				   {: RESULT = expression; :} ;

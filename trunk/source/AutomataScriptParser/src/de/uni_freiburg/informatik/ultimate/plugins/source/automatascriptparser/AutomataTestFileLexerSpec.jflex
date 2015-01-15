@@ -113,8 +113,11 @@ StringCharacter = [^\r\n\"\\]
 
   /* AlternatingAutomata */
   "AlternatingAutomaton"        { m_LastToken = m_CurToken; m_CurToken = "AlternatingAutomaton"; return symbol(sym.ALTERNATING_AUTOMATON); }
-  "universalStates"		        { m_LastToken = m_CurToken; m_CurToken = "universalStates"; return symbol(sym.UNIVERSAL_STATES); }
-  "existentialStates"		    { m_LastToken = m_CurToken; m_CurToken = "existentialStates"; return symbol(sym.EXISTENTIAL_STATES); }
+  "transitionTable"		  	 	{ m_LastToken = m_CurToken; m_CurToken = "transitionTable"; return symbol(sym.TRANSITION_TABLE); }
+  "acceptingFunction"		    { m_LastToken = m_CurToken; m_CurToken = "acceptingFunction"; return symbol(sym.ACCEPTING_FUNCTION); }
+  "~"		    				{ m_LastToken = m_CurToken; m_CurToken = "~"; return symbol(sym.EXPR_STATE_NEGATE); }
+  "&"		    				{ m_LastToken = m_CurToken; m_CurToken = "~"; return symbol(sym.EXPR_STATE_AND); }
+  "|"		    				{ m_LastToken = m_CurToken; m_CurToken = "~"; return symbol(sym.EXPR_STATE_OR); }
   
   // Net transitions  
   "transitions"                     { m_LastToken = m_CurToken; m_CurToken = "transitions"; return symbol(sym.NET_TRANSITIONS); }

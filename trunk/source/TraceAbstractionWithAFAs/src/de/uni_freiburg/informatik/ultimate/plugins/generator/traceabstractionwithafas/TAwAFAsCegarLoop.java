@@ -2,6 +2,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstractionwi
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -14,13 +15,10 @@ import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.AlternatingAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.CompoundState;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.SalomAA;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.NonDeterminizeAA;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.SAAUnion;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.alternating.AA_Union;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.alternating.AlternatingAutomaton;
 import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
@@ -52,8 +50,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstractioncon
  * plan:
  * - von CegarLoopConcurrent erben
  *  --> Produktautomat aus einem parallelen Programm wird automatisch gebaut
- * - computeInterpolantAutomaton Ã¼berschreiben
- * - "Powerset" Einstellung fÃ¼r refine abstraction wÃ¤hlen
+ * - computeInterpolantAutomaton überschreiben
+ * - "Powerset" Einstellung für refine abstraction wählen
  */
 //
 
@@ -78,7 +76,6 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 
 	@Override
 	protected void constructInterpolantAutomaton() throws OperationCanceledException {
-
 		traceCheckerWAST = (TraceCheckerWithAccessibleSSATerms) m_TraceChecker;
 
 		Word<CodeBlock> trace = traceCheckerWAST.getTrace();
@@ -87,23 +84,22 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 		traceCheckerWAST.finishTraceCheckWithoutInterpolantsOrProgramExecution();
 
 		List<DataflowDAG<TraceCodeBlock>> dags = null;
-		try {
-			dags = ReachingDefinitions.computeRDForTrace(trace.asList(), mLogger,
-					mSymbolTable);
-		} catch (Throwable e) {
+		try{
+			dags = ReachingDefinitions.computeRDForTrace(trace.asList(), mLogger, mSymbolTable);
+		}catch(Throwable e){
 			mLogger.fatal("DataflowDAG generation threw an exception.", e);
 		}
 
-		SalomAA<CodeBlock, IPredicate> salomAAUnion = null;
-
-		for (DataflowDAG<TraceCodeBlock> dag : dags) {
+		AlternatingAutomaton<CodeBlock, IPredicate> alternatingAutomatonUnion = null;
+		for(DataflowDAG<TraceCodeBlock> dag : dags){
 			ArrayList<Term> termsFromDAG = new ArrayList<>();
 			ArrayList<Integer> startsOfSubtreesFromDAG = new ArrayList<>();
 			getTermsFromDAG(dag, termsFromDAG, startsOfSubtreesFromDAG, 0);
 
 			int[] startsOfSubtreesAsInts = new int[startsOfSubtreesFromDAG.size()];
-			for (int i = 0; i < startsOfSubtreesFromDAG.size(); i++)
+			for(int i=0;i<startsOfSubtreesFromDAG.size();i++){
 				startsOfSubtreesAsInts[i] = startsOfSubtreesFromDAG.get(i);
+			}
 
 			m_SmtManager.getScript().push(1);
 			//declare all variables (all would not be necessary, but well..
@@ -113,56 +109,57 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 			}
 
 			//assert the terms for the current dag, name them
-			ArrayList<Term> termNames = new ArrayList<>();
-			for (int i = 0; i < termsFromDAG.size(); i++) {
+			ArrayList<Term> termNames = new ArrayList<Term>();
+			for(int i=0;i<termsFromDAG.size();i++){
 				String termName = "afassa_" + i;
 				m_SmtManager.assertTerm(m_SmtManager.getScript().annotate(termsFromDAG.get(i), new Annotation(":named", termName)));
 				termNames.add(m_SmtManager.getScript().term(termName));
 			}
 
-			//check if the current dag is infeasible
-			LBool checkSatResult = m_SmtManager.getScript().checkSat();
-
 			//if the conjunctions of the terms in the current dag is infeasible..
-			if (checkSatResult == LBool.UNSAT) {
+			mLogger.info(dag + "\t" + m_SmtManager.getScript().checkSat());
+			if(m_SmtManager.getScript().checkSat() == LBool.UNSAT){
 				//.. compute tree interpolant for the current dag
-				Term[] interpolants = m_SmtManager.getScript().getInterpolants(
-						termNames.toArray(new Term[termNames.size()]), startsOfSubtreesAsInts);
+				Term[] interpolants = m_SmtManager.getScript().getInterpolants(termNames.toArray(new Term[termNames.size()]), startsOfSubtreesAsInts);
 				m_SmtManager.getScript().pop(1);
-				IPredicate[] predicates = interpolantsToPredicates(interpolants, 
-						traceCheckerWAST.getConstantsToBoogieVar());
+				IPredicate[] predicates = interpolantsToPredicates(interpolants, traceCheckerWAST.getConstantsToBoogieVar());
 				decorateDagWithInterpolants(dag, predicates);
-
+				
 				//TODO: what about converting the dag to a tree??
-
-				SalomAA<CodeBlock, IPredicate> aa = computeSalomAAFromDAGandInterpolant(dag);
-				mLogger.debug("compute SalomAA:\n" + aa);
-				//					mLogger.debug("Ich bin ein Breakpoint");
-				if (salomAAUnion == null) {
-					salomAAUnion = aa;
-				} else {
-					SAAUnion union = new SAAUnion<>(salomAAUnion, aa);
-					salomAAUnion = union.getResult();
+				AlternatingAutomaton<CodeBlock, IPredicate> alternatingAutomaton = computeAlternatingAutomaton(dag);
+				mLogger.debug("compute alternating automaton:\n " + alternatingAutomaton);
+				if(alternatingAutomatonUnion == null){
+					alternatingAutomatonUnion = alternatingAutomaton;
 				}
-
+				else{
+					AA_Union<CodeBlock, IPredicate> union = new AA_Union<CodeBlock, IPredicate>(alternatingAutomatonUnion, alternatingAutomaton);
+					alternatingAutomatonUnion = union.getResult();
+				}
 				//in the future: 
 				// - reverse and _determinize_ in one step
 				// - perhaps use conjunction of predicates instead of CompoundState
 				// - make use of the fact that afas are easy to complement??
 				// - do union operation on r-AFAs??
-			} else {
+			}
+			else{
 				m_SmtManager.getScript().pop(1);
 			}
-			mLogger.debug("Ich bin ein Breakpoint");
-
 		}
-
-		//.. in the end, build the union of all the nwas we got from the dags, return it
-		DeterminizeRAFA<CodeBlock> detRev = new DeterminizeRAFA<CodeBlock>(m_Services, salomAAUnion, m_SmtManager, mPredicateUnifier);
-		m_InterpolAutomaton = detRev.getResult();
-
-		//
-		// // super.constructInterpolantAutomaton();
+		if(alternatingAutomatonUnion != null){
+			//.. in the end, build the union of all the nwas we got from the dags, return it
+			AA_Determination<CodeBlock> determination = new AA_Determination<CodeBlock>(m_Services, alternatingAutomatonUnion, mPredicateUnifier, m_SmtManager);
+			m_InterpolAutomaton = determination.getResult();
+		}
+		else{
+			m_InterpolAutomaton = new NestedWordAutomaton<CodeBlock, IPredicate>(
+				m_Services,
+				m_Abstraction.getAlphabet(),
+				Collections.<CodeBlock>emptySet(),
+				Collections.<CodeBlock>emptySet(),
+				m_Abstraction.getStateFactory()
+			);
+		}
+		// super.constructInterpolantAutomaton();
 	}
 
 	private void decorateDagWithInterpolants(DataflowDAG<TraceCodeBlock> dag,
@@ -243,104 +240,53 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 		assert craigInterpolPos == interpolants.length;
 		return result;
 	}
-	private AlternatingAutomaton<CodeBlock, IPredicate> computeAFAFromDAGandInterpolant(
-			//			Word<CodeBlock> trace, 
-			DataflowDAG<TraceCodeBlock> dag
-			//			,
-			//			ArrayList<Term> termsFromDAG, Term[] interpolants
-			) {
-
-		AlternatingAutomaton<CodeBlock, IPredicate> aa = new AlternatingAutomaton<>(
-				m_Abstraction.getAlphabet(), m_Abstraction.getStateFactory());
+	
+	private AlternatingAutomaton<CodeBlock,IPredicate> computeAlternatingAutomaton(DataflowDAG<TraceCodeBlock> dag){
+		AlternatingAutomaton<CodeBlock, IPredicate> alternatingAutomaton = new  AlternatingAutomaton<CodeBlock, IPredicate>(m_Abstraction.getAlphabet(), m_Abstraction.getStateFactory());
 		IPredicate initialState = mPredicateUnifier.getFalsePredicate();
 		IPredicate finalState = mPredicateUnifier.getTruePredicate();
-
-		Stack<DataflowDAG<TraceCodeBlock>> stack = new Stack<>();
-		stack.push(dag);
-		aa.addState(true, false, dag.getOutgoingNodes().size() <= 1, initialState);
-		aa.addState(false, true, true, finalState);
-
+		alternatingAutomaton.addState(initialState);
+		alternatingAutomaton.setStateFinal(initialState);
+		alternatingAutomaton.addState(finalState);
+		alternatingAutomaton.addAcceptingConjunction(alternatingAutomaton.generateDisjunction(new IPredicate[]{finalState}, new IPredicate[0]));
 		//build the automaton according to the structure of the dag
-		while (!stack.isEmpty()) {
-			DataflowDAG<TraceCodeBlock> currentDag = stack.pop();
-			for (DataflowDAG<TraceCodeBlock> outNode : currentDag.getOutgoingNodes()) {
-				IPredicate outNodePred = outNode.getNodeLabel().getInterpolant();
-				aa.addState(false, false, dag.getOutgoingNodes().size() > 1, outNodePred);
-				aa.addTransition(currentDag.getNodeLabel().getInterpolant(), 
-						currentDag.getNodeLabel().getBlock(), 
-						outNodePred);
-				stack.push(outNode);
-			}
-			if (currentDag.getOutgoingNodes().isEmpty()) {
-				aa.addTransition(currentDag.getNodeLabel().getInterpolant(), 
-						currentDag.getNodeLabel().getBlock(), 
-						finalState);		
-			}
-		}
-
-		//add transitions according to hoare triples
-		//here: eager version
-		for (CodeBlock letter : aa.getAlphabet()) {
-			for (IPredicate sourceState : aa.getStates()) {
-				for (IPredicate targetState : aa.getStates()) {
-					if (m_SmtManager.isInductive(sourceState, letter, targetState) == LBool.UNSAT) {
-						aa.addTransition(sourceState, letter, targetState);
-					}
-				}
-			}
-		}
-
-		return aa;
-	}
-
-	private SalomAA<CodeBlock,IPredicate> computeSalomAAFromDAGandInterpolant(
-			DataflowDAG<TraceCodeBlock> dag
-			) {
-
-		SalomAA<CodeBlock, IPredicate> aa = new SalomAA<>(m_Logger,
-				m_Abstraction.getAlphabet(), m_Abstraction.getStateFactory());
-		IPredicate initialState = mPredicateUnifier.getFalsePredicate();
-		IPredicate finalState = mPredicateUnifier.getTruePredicate();
-
-		Stack<DataflowDAG<TraceCodeBlock>> stack = new Stack<>();
+		Stack<DataflowDAG<TraceCodeBlock>> stack = new Stack<DataflowDAG<TraceCodeBlock>>();
 		stack.push(dag);
-		aa.addState(true, false, initialState);
-		aa.addState(false, true, finalState);
-
-		//build the automaton according to the structure of the dag
-		while (!stack.isEmpty()) {
+		while(!stack.isEmpty()){
 			DataflowDAG<TraceCodeBlock> currentDag = stack.pop();
-			HashSet<IPredicate> targetStates = new HashSet<>();
-			for (DataflowDAG<TraceCodeBlock> outNode : currentDag.getOutgoingNodes()) {
+			HashSet<IPredicate> targetStates = new HashSet<IPredicate>();
+			for(DataflowDAG<TraceCodeBlock> outNode : currentDag.getOutgoingNodes()){
 				IPredicate outNodePred = outNode.getNodeLabel().getInterpolant();
-				aa.addState(false, false, outNodePred);
+				alternatingAutomaton.addState(outNodePred);
 				targetStates.add(outNodePred);
-
 				stack.push(outNode);
 			}
-			if (!targetStates.isEmpty())
-				aa.addTransitionConjunction(currentDag.getNodeLabel().getInterpolant(), 
-						currentDag.getNodeLabel().getBlock(), 
-						targetStates);
-			if (currentDag.getOutgoingNodes().isEmpty()) {
-				aa.addTransitionDisjunct(currentDag.getNodeLabel().getInterpolant(), 
-						currentDag.getNodeLabel().getBlock(), 
-						finalState);		
+			if(!targetStates.isEmpty()){
+				alternatingAutomaton.addTransition(
+					currentDag.getNodeLabel().getBlock(),
+					currentDag.getNodeLabel().getInterpolant(),
+					alternatingAutomaton.generateDisjunction(targetStates.toArray(new IPredicate[targetStates.size()]), new IPredicate[0])
+				);
+			}
+			if(currentDag.getOutgoingNodes().isEmpty()){
+				alternatingAutomaton.addTransition(
+					currentDag.getNodeLabel().getBlock(),
+					currentDag.getNodeLabel().getInterpolant(),
+					alternatingAutomaton.generateDisjunction(new IPredicate[]{finalState}, new IPredicate[0])
+				);
 			}
 		}
-
 		//add transitions according to hoare triples
-		//here: eager version
-		for (CodeBlock letter : aa.getAlphabet()) {
-			for (IPredicate sourceState : aa.getStates()) {
-				for (IPredicate targetState : aa.getStates()) {
-					if (m_SmtManager.isInductive(sourceState, letter, targetState) == LBool.UNSAT) {
-						aa.addTransitionDisjunct(sourceState, letter, targetState);
+		for(CodeBlock letter : alternatingAutomaton.getAlphabet()){
+			for(IPredicate sourceState : alternatingAutomaton.getStates()){
+				for(IPredicate targetState : alternatingAutomaton.getStates()){
+					if(m_SmtManager.isInductive(sourceState, letter, targetState) == LBool.UNSAT){
+						alternatingAutomaton.generateDisjunction(new IPredicate[]{targetState}, new IPredicate[0]);
 					}
 				}
 			}
 		}
-		return aa;
+		return alternatingAutomaton;
 	}
 
 	private void getTermsFromDAG(DataflowDAG<TraceCodeBlock> dag, ArrayList<Term> terms, 

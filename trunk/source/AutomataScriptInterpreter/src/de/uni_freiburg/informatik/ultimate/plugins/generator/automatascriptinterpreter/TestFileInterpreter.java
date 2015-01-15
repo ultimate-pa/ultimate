@@ -1525,6 +1525,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 		String[] baseDirs = { "/de/uni_freiburg/informatik/ultimate/automata/nwalibrary/operations",
 				"/de/uni_freiburg/informatik/ultimate/automata/nwalibrary/operationsOldApi",
 				"/de/uni_freiburg/informatik/ultimate/automata/nwalibrary/operations/minimization",
+				"/de/uni_freiburg/informatik/ultimate/automata/nwalibrary/alternating",
 				"/de/uni_freiburg/informatik/ultimate/automata/nwalibrary/buchiNwa",
 				"/de/uni_freiburg/informatik/ultimate/automata/petrinet/julian",
 				"/de/uni_freiburg/informatik/ultimate/automata/petrinet" };

@@ -1,0 +1,34 @@
+AlternatingAutomaton aa1 = (
+	alphabet = {a b},
+	states = {q0 q1},
+	finalStates = {q1},
+	transitionTable = { 
+		(q0 a q0|~q1)
+		(q0 b q0&~q1)
+		(q1 a ~q0&~q1)
+		(q1 b ~q0|~q1)
+	},
+	acceptingFunction = q0&~q1
+);
+assert(aa_accept(aa1, [a a a b]));
+assert(!aa_accept(aa1, [b a a a]));
+
+AlternatingAutomaton aa2 = (
+	alphabet = {a b},
+	states = {q0 q1 q2},
+	finalStates = {},
+	transitionTable = { 
+		(q0 a q1&q2)
+		(q0 b q1)
+		(q1 a q1&q2)
+		(q1 b q1|q2)
+		(q2 a true)
+		(q2 b q1)
+	},
+	acceptingFunction = q0
+);
+assert(aa_accept(aa2, [b b a]));
+assert(aa_accept(aa2, [a b b b b b b a]));
+assert(!aa_accept(aa2, [b a b a]));
+assert(aa_accept(aa2, [b b a b a a a]));
+assert(aa_accept(aa2, [a a a a a a b b a]));

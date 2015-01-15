@@ -8,6 +8,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -17,6 +18,8 @@ import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StringFactory;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.alternating.AlternatingAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.alternating.BooleanExpression;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Place;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.PetriNetJulian;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
@@ -29,7 +32,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.A
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.PetriNetTransitionAST;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.TransitionListAST.Pair;
 import de.uni_freiburg.informatik.ultimate.result.IResultWithSeverity.Severity;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.AlternatingAutomaton;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 
 /**
@@ -100,65 +102,65 @@ public class AutomataDefinitionInterpreter {
 		
 	}
 	
-	public void interpret(AlternatingAutomatonAST aa) throws IllegalArgumentException {
-		mErrorLocation = aa.getLocation();
-		Set<String> Alphabet = new HashSet<String>(aa.getAlphabet());
-		
-		AlternatingAutomaton<String, String> saa = new AlternatingAutomaton<String, String>(
-				                                     Collections.unmodifiableSet(Alphabet), 
-				                                     new StringFactory());
-		
-		/*
-		 * Now add the states to the NestedWordAutomaton 
-		 */
-		List<String> initStates = aa.getInitialStates();
-		List<String> finalStates = aa.getFinalStates();
-//		List<String> exStates = aa.getExStates();
-//		List<String> uniStates = aa.getUniStates();
-		
-		for (String state : aa.getExStates()) {
-			if (initStates.contains(state)) {
-				if (finalStates.contains(state)) {
-					saa.addState(true, true, true, state);
-				} else {
-					saa.addState(true, false, true, state);
-				}
-			} else if (finalStates.contains(state)) {
-				saa.addState(false, true, true, state);
-			} else {
-				saa.addState(false, false, true, state);
-			}
-		}
-		
-		for (String state : aa.getUniStates()) {
-			if (initStates.contains(state)) {
-				if (finalStates.contains(state)) {
-					saa.addState(true, true, false, state);
-				} else {
-					saa.addState(true, false, false, state);
-				}
-			} else if (finalStates.contains(state)) {
-				saa.addState(false, true, false, state);
-			} else {
-				saa.addState(false, false, false, state);
-			}
-		}
-		
-		
-		/*
-		 * Now add the transitions to the NestedWordAutomaton
-		 */
-		for (Entry<Pair<String, String>, Set<String>> entry : aa.getTransitions().entrySet()) {
-			for (String succ : entry.getValue()) {
-				saa.addTransition(entry.getKey().left, entry.getKey().right, succ);
-			}
-			
-		}
-		
-		mAutomata.put(aa.getName(), saa);
-		
-	}
+	public void interpret(AlternatingAutomatonAST astNode) throws IllegalArgumentException{
+		mErrorLocation = astNode.getLocation();
 
+		HashSet<String> alphabet = new HashSet<String>(astNode.getAlphabet());
+		AlternatingAutomaton<String, String> alternatingAutomaton = new AlternatingAutomaton<String, String>(alphabet, new StringFactory());
+		
+		List<String> states = astNode.getStates();
+		List<String> finalStates = astNode.getFinalStates();
+		for(String state : states){
+			alternatingAutomaton.addState(state);
+			if(finalStates.contains(state)){
+				alternatingAutomaton.setStateFinal(state);
+			}
+		}
+
+		for(Entry<Pair<String, String>, Set<String>> entry : astNode.getTransitions().entrySet()){
+			String expression = entry.getValue().iterator().next();
+			LinkedList<BooleanExpression> booleanExpressions = parseBooleanExpressions(alternatingAutomaton, expression);
+			for(BooleanExpression booleanExpression : booleanExpressions){
+				alternatingAutomaton.addTransition(entry.getKey().right, entry.getKey().left, booleanExpression);
+			}
+		}
+		
+		LinkedList<BooleanExpression> acceptingBooleanExpressions = parseBooleanExpressions(alternatingAutomaton, astNode.getAcceptingFunction());
+		for(BooleanExpression booleanExpression : acceptingBooleanExpressions){
+			alternatingAutomaton.addAcceptingConjunction(booleanExpression);
+		}	
+		
+		mAutomata.put(astNode.getName(), alternatingAutomaton);
+	}
+	
+	private static LinkedList<BooleanExpression> parseBooleanExpressions(AlternatingAutomaton<String, String> alternatingAutomaton, String expression){
+		LinkedList<BooleanExpression> booleanExpressions = new LinkedList<BooleanExpression>();
+		if(expression.equals("true")){
+			booleanExpressions.add(new BooleanExpression(0, 0));
+		}
+		else if(expression.equals("false")){
+			//Not supported yet
+		}
+		else{
+			String[] disjunctiveExpressions = expression.split("\\|");
+			for(String disjunctiveExpression : disjunctiveExpressions){
+				String[] stateExpressions = disjunctiveExpression.split("&");
+				LinkedList<String> resultStates = new LinkedList<String>();
+				LinkedList<String> negatedResultStates = new LinkedList<String>();
+				for(String stateExpression : stateExpressions){
+					if(stateExpression.startsWith("~")){
+						negatedResultStates.add(stateExpression.substring(1));
+					}
+					else{
+						resultStates.add(stateExpression);
+					}
+				}
+				BooleanExpression booleanExpression = alternatingAutomaton.generateDisjunction(resultStates.toArray(new String[resultStates.size()]), negatedResultStates.toArray(new String[negatedResultStates.size()]));
+				booleanExpressions.add(booleanExpression);
+			}
+		}
+		return booleanExpressions;
+	}
 	
 	public void interpret(NestedwordAutomatonAST nwa) throws IllegalArgumentException {
 		mErrorLocation = nwa.getLocation();

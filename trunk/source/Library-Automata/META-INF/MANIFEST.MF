@@ -22,6 +22,7 @@ Export-Package: de.uni_freiburg.informatik.ultimate.automata;
    de.uni_freiburg.informatik.ultimate.automata.nwalibrary,
    org.osgi.framework",
  de.uni_freiburg.informatik.ultimate.automata.nwalibrary;uses:="de.uni_freiburg.informatik.ultimate.automata.petrinet,de.uni_freiburg.informatik.ultimate.automata,de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa",
+ de.uni_freiburg.informatik.ultimate.automata.nwalibrary.alternating,
  de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa,
  de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations;
   uses:="de.uni_freiburg.informatik.ultimate.automata,
