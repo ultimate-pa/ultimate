@@ -15,20 +15,31 @@ assert(!aa_accept(aa1, [b a a a]));
 
 AlternatingAutomaton aa2 = (
 	alphabet = {a b},
-	states = {q0 q1 q2},
+	states = {s0 s1 s2},
 	finalStates = {},
 	transitionTable = { 
-		(q0 a q1&q2)
-		(q0 b q1)
-		(q1 a q1&q2)
-		(q1 b q1|q2)
-		(q2 a true)
-		(q2 b q1)
+		(s0 a s1&s2)
+		(s0 b s1)
+		(s1 a s1&s2)
+		(s1 b s1|s2)
+		(s2 a true)
+		(s2 b s1)
 	},
-	acceptingFunction = q0
+	acceptingFunction = s0
 );
 assert(aa_accept(aa2, [b b a]));
 assert(aa_accept(aa2, [a b b b b b b a]));
 assert(!aa_accept(aa2, [b a b a]));
 assert(aa_accept(aa2, [b b a b a a a]));
 assert(aa_accept(aa2, [a a a a a a b b a]));
+
+AlternatingAutomaton aaUnion = aa_union(aa1, aa2);
+//TestCases aa1
+assert(aa_accept(aaUnion, [a a a b]));
+assert(!aa_accept(aaUnion, [b a a a]));
+//TestCases aa2
+assert(aa_accept(aaUnion, [b b a]));
+assert(aa_accept(aaUnion, [a b b b b b b a]));
+assert(!aa_accept(aaUnion, [b a b a]));
+assert(aa_accept(aaUnion, [b b a b a a a]));
+assert(aa_accept(aaUnion, [a a a a a a b b a]));

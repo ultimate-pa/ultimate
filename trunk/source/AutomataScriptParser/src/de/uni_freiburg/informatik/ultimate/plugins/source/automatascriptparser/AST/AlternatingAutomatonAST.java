@@ -32,7 +32,7 @@ public class AlternatingAutomatonAST extends AutomatonAST{
 		this.states = states;
 	}
 	
-	public List<String> getStates() {
+	public List<String> getStates(){
 		return states;
 	}
 	
