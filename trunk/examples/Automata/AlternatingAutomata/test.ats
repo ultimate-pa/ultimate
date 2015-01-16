@@ -8,10 +8,11 @@ AlternatingAutomaton aa1 = (
 		(q1 a ~q0&~q1)
 		(q1 b ~q0|~q1)
 	},
-	acceptingFunction = q0&~q1
+	acceptingFunction = q0&~q1,
+	isReversed = true
 );
-assert(aa_accept(aa1, [a a a b]));
-assert(!aa_accept(aa1, [b a a a]));
+assert(aa_accepts(aa1, [b a a a]));
+assert(!aa_accepts(aa1, [a b b b]));
 
 AlternatingAutomaton aa2 = (
 	alphabet = {a b},
@@ -25,21 +26,35 @@ AlternatingAutomaton aa2 = (
 		(s2 a true)
 		(s2 b s1)
 	},
-	acceptingFunction = s0
+	acceptingFunction = s0,
+	isReversed = true
 );
-assert(aa_accept(aa2, [b b a]));
-assert(aa_accept(aa2, [a b b b b b b a]));
-assert(!aa_accept(aa2, [b a b a]));
-assert(aa_accept(aa2, [b b a b a a a]));
-assert(aa_accept(aa2, [a a a a a a b b a]));
+assert(aa_accepts(aa2, [a b b]));
+assert(aa_accepts(aa2, [a b b b b b b a]));
+assert(!aa_accepts(aa2, [a b a b]));
+assert(aa_accepts(aa2, [a a a b a b b]));
+assert(aa_accepts(aa2, [a b b a a a a a a]));
 
 AlternatingAutomaton aaUnion = aa_union(aa1, aa2);
 //TestCases aa1
-assert(aa_accept(aaUnion, [a a a b]));
-assert(!aa_accept(aaUnion, [b a a a]));
+assert(aa_accepts(aa1, [b a a a]));
+assert(!aa_accepts(aa1, [a b b b]));
 //TestCases aa2
-assert(aa_accept(aaUnion, [b b a]));
-assert(aa_accept(aaUnion, [a b b b b b b a]));
-assert(!aa_accept(aaUnion, [b a b a]));
-assert(aa_accept(aaUnion, [b b a b a a a]));
-assert(aa_accept(aaUnion, [a a a a a a b b a]));
+assert(aa_accepts(aa2, [a b b]));
+assert(aa_accepts(aa2, [a b b b b b b a]));
+assert(!aa_accepts(aa2, [a b a b]));
+assert(aa_accepts(aa2, [a a a b a b b]));
+assert(aa_accepts(aa2, [a b b a a a a a a]));
+
+NestedWordAutomaton nwa1 = aa_determinizeReversed(aa1);
+//TestCases aa1
+assert(accepts(nwa1, [b a a a]));
+assert(!accepts(nwa1, [a b b b]));
+
+NestedWordAutomaton nwa2 = aa_determinizeReversed(aa2);
+//TestCases aa2
+assert(accepts(nwa2, [a b b]));
+assert(accepts(nwa2, [a b b b b b b a]));
+assert(!accepts(nwa2, [a b a b]));
+assert(accepts(nwa2, [a a a b a b b]));
+assert(accepts(nwa2, [a b b a a a a a a]));

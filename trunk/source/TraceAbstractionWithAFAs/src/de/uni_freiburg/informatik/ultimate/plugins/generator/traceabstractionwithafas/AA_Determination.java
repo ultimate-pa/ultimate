@@ -17,8 +17,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
 
 public class AA_Determination<LETTER> implements IOperation<LETTER, IPredicate>{
 
-	public AA_Determination(IUltimateServiceProvider ultimateServiceProvider, AlternatingAutomaton<LETTER, IPredicate> alternatingAutomaton, PredicateUnifier predicateUnifier, SmtManager smtManager){
+	public AA_Determination(IUltimateServiceProvider ultimateServiceProvider, AlternatingAutomaton<LETTER, IPredicate> alternatingAutomaton, SmtManager smtManager, PredicateUnifier predicateUnifier){
 		this.alternatingAutomaton = alternatingAutomaton;
+		this.smtManager = smtManager;
 		this.predicateUnifier = predicateUnifier;
 		resultAutomaton = new NestedWordAutomaton<LETTER, IPredicate>(
 			ultimateServiceProvider,
@@ -45,8 +46,8 @@ public class AA_Determination<LETTER> implements IOperation<LETTER, IPredicate>{
 		}
 	}
 	private AlternatingAutomaton<LETTER, IPredicate> alternatingAutomaton;
-	private PredicateUnifier predicateUnifier;
 	private SmtManager smtManager;
+	private PredicateUnifier predicateUnifier;
 	private NestedWordAutomaton<LETTER, IPredicate> resultAutomaton;
 
 	private IPredicate getPredicate(long state){
@@ -61,7 +62,7 @@ public class AA_Determination<LETTER> implements IOperation<LETTER, IPredicate>{
 	
 	@Override
 	public String operationName(){
-		return "alternatingDeterminize";
+		return "AA_Determination";
 	}
 
 	@Override

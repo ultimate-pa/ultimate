@@ -19,6 +19,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.alternating.AA_Union;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.alternating.AlternatingAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.alternating.TestAutomaton_1;
 import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
@@ -147,7 +148,7 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 		}
 		if(alternatingAutomatonUnion != null){
 			//.. in the end, build the union of all the nwas we got from the dags, return it
-			AA_Determination<CodeBlock> determination = new AA_Determination<CodeBlock>(m_Services, alternatingAutomatonUnion, mPredicateUnifier, m_SmtManager);
+			AA_Determination<CodeBlock> determination = new AA_Determination<CodeBlock>(m_Services, alternatingAutomatonUnion, m_SmtManager, mPredicateUnifier);
 			m_InterpolAutomaton = determination.getResult();
 		}
 		else{

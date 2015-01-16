@@ -104,10 +104,9 @@ public class AutomataDefinitionInterpreter {
 	
 	public void interpret(AlternatingAutomatonAST astNode) throws IllegalArgumentException{
 		mErrorLocation = astNode.getLocation();
-
 		HashSet<String> alphabet = new HashSet<String>(astNode.getAlphabet());
 		AlternatingAutomaton<String, String> alternatingAutomaton = new AlternatingAutomaton<String, String>(alphabet, new StringFactory());
-		
+		//States
 		List<String> states = astNode.getStates();
 		List<String> finalStates = astNode.getFinalStates();
 		for(String state : states){
@@ -116,7 +115,7 @@ public class AutomataDefinitionInterpreter {
 				alternatingAutomaton.setStateFinal(state);
 			}
 		}
-
+		//Transitions
 		for(Entry<Pair<String, String>, Set<String>> entry : astNode.getTransitions().entrySet()){
 			String expression = entry.getValue().iterator().next();
 			LinkedList<BooleanExpression> booleanExpressions = parseBooleanExpressions(alternatingAutomaton, expression);
@@ -124,12 +123,12 @@ public class AutomataDefinitionInterpreter {
 				alternatingAutomaton.addTransition(entry.getKey().right, entry.getKey().left, booleanExpression);
 			}
 		}
-		
+		//Accepting Function
 		LinkedList<BooleanExpression> acceptingBooleanExpressions = parseBooleanExpressions(alternatingAutomaton, astNode.getAcceptingFunction());
 		for(BooleanExpression booleanExpression : acceptingBooleanExpressions){
 			alternatingAutomaton.addAcceptingConjunction(booleanExpression);
-		}	
-		
+		}
+		alternatingAutomaton.setReversed(astNode.isReversed());
 		mAutomata.put(astNode.getName(), alternatingAutomaton);
 	}
 	

@@ -118,6 +118,7 @@ StringCharacter = [^\r\n\"\\]
   "~"		    				{ m_LastToken = m_CurToken; m_CurToken = "~"; return symbol(sym.EXPR_STATE_NEGATE); }
   "&"		    				{ m_LastToken = m_CurToken; m_CurToken = "~"; return symbol(sym.EXPR_STATE_AND); }
   "|"		    				{ m_LastToken = m_CurToken; m_CurToken = "~"; return symbol(sym.EXPR_STATE_OR); }
+  "isReversed"		    		{ m_LastToken = m_CurToken; m_CurToken = "isReversed"; return symbol(sym.IS_REVERSED); }
   
   // Net transitions  
   "transitions"                     { m_LastToken = m_CurToken; m_CurToken = "transitions"; return symbol(sym.NET_TRANSITIONS); }

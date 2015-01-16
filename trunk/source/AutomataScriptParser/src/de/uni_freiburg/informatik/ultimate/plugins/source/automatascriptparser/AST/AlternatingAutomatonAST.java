@@ -14,6 +14,7 @@ public class AlternatingAutomatonAST extends AutomatonAST{
 	private List<String> finalStates;
 	private Map<Pair<String, String>, Set<String>> transitions;
 	private String acceptingFunction;
+	private boolean isReversed;
 	
 	public AlternatingAutomatonAST(ILocation loc, String name){
 		super(loc);
@@ -58,6 +59,14 @@ public class AlternatingAutomatonAST extends AutomatonAST{
 	
 	public String getAcceptingFunction(){
 		return acceptingFunction;
+	}
+	
+	public void setReversed(boolean isReversed){
+		this.isReversed = isReversed;
+	}
+	
+	public boolean isReversed(){
+		return isReversed;
 	}
 	
 	@Override

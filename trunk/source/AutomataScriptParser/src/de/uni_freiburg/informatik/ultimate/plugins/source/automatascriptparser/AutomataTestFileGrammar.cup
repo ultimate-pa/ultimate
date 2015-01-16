@@ -267,7 +267,7 @@ non terminal Object nested_word_symbol;
  // 2. Alphabets
  terminal Object ALPHABET, CALL_ALPHABET, INTERNAL_ALPHABET, RETURN_ALPHABET;
 // 3. States & Places
-terminal Object STATES, PLACES, INITIAL_STATES, FINAL_STATES, TRANSITION_TABLE, ACCEPTING_FUNCTION, EXPR_STATE_NEGATE, EXPR_STATE_AND, EXPR_STATE_OR;
+terminal Object STATES, PLACES, INITIAL_STATES, FINAL_STATES, TRANSITION_TABLE, ACCEPTING_FUNCTION, EXPR_STATE_NEGATE, EXPR_STATE_AND, EXPR_STATE_OR, IS_REVERSED;
 // 4. Transitions
 terminal Object NET_TRANSITIONS, INTERNAL_TRANSITIONS, CALL_TRANSITIONS, RETURN_TRANSITIONS;
 // 5. 
@@ -297,6 +297,7 @@ non terminal PetriNetMarkingListAST initial_markings;
 non terminal IdentifierListAST transition_table_entry;
 non terminal TransitionListAST transition_table, transition_table_list_opt, transition_table_list;
 non terminal String identifier_dnf_expression, identifier_dnf_expression_conjunction, accepting_function;
+non terminal Boolean is_reversed;
 
 
 
@@ -1128,7 +1129,8 @@ aa_definition ::=      variable_identifier:id EQ
                                states:int_states COMMA
                                final_states:fin_states COMMA
                                transition_table:trans_table COMMA
-                               accepting_function:acc_function
+                               accepting_function:acc_function COMMA
+                               is_reversed:reversed
                         RPAREN:r
                         {: AlternatingAutomatonAST aa = new AlternatingAutomatonAST(getLocation(l$, r$), id);
                           aa.setAlphabet(alpha.getIdentifierList());
@@ -1136,6 +1138,7 @@ aa_definition ::=      variable_identifier:id EQ
                           aa.setFinalStates(fin_states.getIdentifierList());
                           aa.setTransitions(trans_table.getTransitions());
                           aa.setAcceptingFunction(acc_function);
+                          aa.setReversed(reversed.booleanValue());
                           m_varDeclarations.put(id, AlternatingAutomatonAST.class);
                           RESULT = aa; :} ;
                           
@@ -1180,3 +1183,6 @@ identifier_dnf_expression_conjunction ::=
 				     
 accepting_function ::= ACCEPTING_FUNCTION EQ identifier_dnf_expression:expression
 				   {: RESULT = expression; :} ;
+				     
+is_reversed ::= IS_REVERSED EQ BOOLEAN_LITERAL:bool
+                {: RESULT = bool; :} ; 
