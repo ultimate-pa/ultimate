@@ -37,6 +37,7 @@ public class IncrementalInclusionCegarLoop extends BasicCegarLoop {
 	
 	protected AbstractIncrementalInclusionCheck<CodeBlock, IPredicate> m_InclusionCheck;
 	protected final LanguageOperation m_LanguageOperation;
+	protected final List<DeterministicInterpolantAutomaton> m_InterpolantAutomata = new ArrayList<DeterministicInterpolantAutomaton>();
 
 	public IncrementalInclusionCegarLoop(String name, RootNode rootNode,
 			SmtManager smtManager, TAPreferences taPrefs,
@@ -147,10 +148,11 @@ public class IncrementalInclusionCegarLoop extends BasicCegarLoop {
 			case CODENAME_PROJECT_BELLWALD:
 				DeterministicInterpolantAutomaton determinized = new DeterministicInterpolantAutomaton(m_Services, 
 						m_SmtManager, edgeChecker, (INestedWordAutomaton<CodeBlock, IPredicate>) m_Abstraction, m_InterpolAutomaton, m_TraceChecker, mLogger);
+				switchAllInterpolantAutomataToOnTheFlyConstructionMode();
 				m_InclusionCheck.addSubtrahend(determinized);
-				// do this to allow that the automaton is build on the fly
-				m_InclusionCheck.getCounterexample();
-				determinized.switchToReadonlyMode();
+				m_InterpolantAutomata.add(determinized);
+//				determinized.switchToReadonlyMode();
+				switchAllInterpolantAutomataToReadOnlyMode();
 				assert (edgeChecker.isAssertionStackEmpty());
 				INestedWordAutomaton<CodeBlock, IPredicate> test = (new RemoveUnreachable<CodeBlock, IPredicate>(m_Services, 
 						determinized)).getResult();
@@ -188,8 +190,18 @@ public class IncrementalInclusionCegarLoop extends BasicCegarLoop {
 	}
 	
 	
+	private void switchAllInterpolantAutomataToOnTheFlyConstructionMode() {
+		for (DeterministicInterpolantAutomaton ia : m_InterpolantAutomata) {
+			ia.switchToOnTheFlyConstructionMode();
+		}
+	}
 	
-	
+	private void switchAllInterpolantAutomataToReadOnlyMode() {
+		for (DeterministicInterpolantAutomaton ia : m_InterpolantAutomata) {
+			ia.switchToReadonlyMode();
+		}
+	}
+
 	
 
 }
