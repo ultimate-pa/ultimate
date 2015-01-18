@@ -37,7 +37,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.Artifact;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceChecker;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.InterpolatingTraceChecker;
 
 /**
  * CEGAR loop of a trace abstraction. Can be used to check safety and
@@ -120,7 +120,7 @@ public abstract class AbstractCegarLoop {
 	/**
 	 * TraceChecker of this iteration.
 	 */
-	protected TraceChecker m_TraceChecker;
+	protected InterpolatingTraceChecker m_TraceChecker;
 
 	/**
 	 * Interpolant automaton of this iteration.

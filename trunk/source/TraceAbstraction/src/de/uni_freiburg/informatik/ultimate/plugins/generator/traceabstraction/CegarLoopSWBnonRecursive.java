@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.INTERPOLATION;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.Minimization;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.InterpolatingTraceCheckerCraig;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceChecker;
 
@@ -556,19 +557,17 @@ public class CegarLoopSWBnonRecursive extends BasicCegarLoop {
 			}
 		}
 		// test if we found a new path which can be added
-		m_TraceChecker = new TraceChecker(pre, post, pendingContexts, word, m_SmtManager, m_RootNode.getRootAnnot()
+		m_TraceChecker = new InterpolatingTraceCheckerCraig(pre, post, pendingContexts, word, m_SmtManager, m_RootNode.getRootAnnot()
 				.getModGlobVarManager(), /*
 										 * TODO: When Matthias introduced this
 										 * parameter he set the argument to
 										 * AssertCodeBlockOrder.NOT_INCREMENTALLY. Check if you want to set this
 										 * to another value.
-										 */AssertCodeBlockOrder.NOT_INCREMENTALLY,m_Services);
+										 */AssertCodeBlockOrder.NOT_INCREMENTALLY,m_Services, false, m_PredicateUnifier,
+											m_Pref.interpolation());
 
 		if (m_TraceChecker.isCorrect() == LBool.UNSAT) {
 			mLogger.debug("Accepted");
-			m_TraceChecker.computeInterpolants(new TraceChecker.AllIntegers(), m_PredicateUnifier,
-					m_Pref.interpolation());
-
 			addPath(word, m_ActualPath, m_TraceChecker.getInterpolants(), pre, post, pendingContexts);
 			m_nofAdditionalPaths++;
 			return true;
@@ -578,7 +577,6 @@ public class CegarLoopSWBnonRecursive extends BasicCegarLoop {
 		// }
 		else {
 			mLogger.debug("Declined");
-			m_TraceChecker.finishTraceCheckWithoutInterpolantsOrProgramExecution();
 			m_nofDeclinedPaths++;
 			return false;
 		}

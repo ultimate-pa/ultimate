@@ -51,8 +51,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstractioncon
  * plan:
  * - von CegarLoopConcurrent erben
  *  --> Produktautomat aus einem parallelen Programm wird automatisch gebaut
- * - computeInterpolantAutomaton überschreiben
- * - "Powerset" Einstellung für refine abstraction wählen
+ * - computeInterpolantAutomaton ï¿½berschreiben
+ * - "Powerset" Einstellung fï¿½r refine abstraction wï¿½hlen
  */
 //
 
@@ -82,7 +82,7 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 		Word<CodeBlock> trace = traceCheckerWAST.getTrace();
 		mLogger.debug("current trace:");
 		mLogger.debug(trace.toString());
-		traceCheckerWAST.finishTraceCheckWithoutInterpolantsOrProgramExecution();
+		// traceCheckerWAST.finishTraceCheckWithoutInterpolantsOrProgramExecution();
 
 		List<DataflowDAG<TraceCodeBlock>> dags = null;
 		try{
@@ -318,14 +318,16 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 		case Craig_TreeInterpolation:
 			m_TraceChecker = new TraceCheckerWithAccessibleSSATerms(truePredicate, falsePredicate, new TreeMap<Integer, IPredicate>(),//different TraceChecker, here..
 					NestedWord.nestedWord(m_Counterexample.getWord()), m_SmtManager, m_RootNode.getRootAnnot()
-					.getModGlobVarManager(), m_AssertCodeBlocksIncrementally, m_Services);
+					.getModGlobVarManager(), m_AssertCodeBlocksIncrementally, m_Services,
+					true, mPredicateUnifier, m_Interpolation);
 			break;
 		case ForwardPredicates:
 		case BackwardPredicates:
 		case FPandBP:
 			m_TraceChecker = new TraceCheckerSpWp(truePredicate, falsePredicate, new TreeMap<Integer, IPredicate>(),
 					NestedWord.nestedWord(m_Counterexample.getWord()), m_SmtManager, m_RootNode.getRootAnnot()
-					.getModGlobVarManager(), m_AssertCodeBlocksIncrementally, UnsatCores.CONJUNCT_LEVEL, true, m_Services);
+					.getModGlobVarManager(), m_AssertCodeBlocksIncrementally, UnsatCores.CONJUNCT_LEVEL, true, m_Services,
+					true, mPredicateUnifier, m_Interpolation);
 			break;
 		default:
 			throw new UnsupportedOperationException("unsupported interpolation");
@@ -347,7 +349,6 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 					indentation = indentation.substring(0, indentation.length() - 4);
 				}
 			}
-			m_TraceChecker.computeRcfgProgramExecution();
 			// s_Logger.info("Trace with values");
 			// s_Logger.info(m_TraceChecker.getRcfgProgramExecution());
 			m_RcfgProgramExecution = m_TraceChecker.getRcfgProgramExecution();

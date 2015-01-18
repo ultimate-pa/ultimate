@@ -52,6 +52,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Roo
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.HoareAnnotation;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
 import de.uni_freiburg.informatik.ultimate.util.ScopedHashMap;
 
 public class SmtManager {
@@ -231,6 +232,25 @@ public class SmtManager {
 
 	public VariableManager getVariableManager() {
 		return m_Boogie2Smt.getVariableManager();
+	}
+	
+	/**
+	 * Returns the DAG size of the predicate's formula. 
+	 * (DAG size means that similar sub-formulas are counted only once.)
+	 */
+	public int computeDagSizeOfPredicate(IPredicate p) {
+		return (new DAGSize()).size(p.getFormula());
+	}
+	
+	/**
+	 * Computes DAG size for an array of predicates.
+	 */
+	public int[] computeDagSizeOfPredicates(IPredicate[] predicates) {
+		int[] sizeOfPredicates = new int[predicates.length];
+		for (int i = 0; i < predicates.length; i++) {
+			sizeOfPredicates[i] = computeDagSizeOfPredicate(predicates[i]);
+		}
+		return sizeOfPredicates;
 	}
 
 	/**

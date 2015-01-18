@@ -50,8 +50,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.INTERPOLATION;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.UnsatCores;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.InterpolatingTraceCheckerCraig;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceChecker;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.InterpolatingTraceChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceCheckerSpWp;
 import de.uni_freiburg.informatik.ultimate.result.BenchmarkResult;
 import de.uni_freiburg.informatik.ultimate.result.IResult;
@@ -144,9 +145,9 @@ public class LassoChecker {
 
 	private final PredicateUnifier m_PredicateUnifier;
 
-	private TraceChecker m_StemCheck;
-	private TraceChecker m_LoopCheck;
-	private TraceChecker m_ConcatCheck;
+	private InterpolatingTraceChecker m_StemCheck;
+	private InterpolatingTraceChecker m_LoopCheck;
+	private InterpolatingTraceChecker m_ConcatCheck;
 
 	private NestedRun<CodeBlock, IPredicate> m_ConcatenatedCounterexample;
 
@@ -165,15 +166,15 @@ public class LassoChecker {
 		return m_LassoCheckResult;
 	}
 
-	public TraceChecker getStemCheck() {
+	public InterpolatingTraceChecker getStemCheck() {
 		return m_StemCheck;
 	}
 
-	public TraceChecker getLoopCheck() {
+	public InterpolatingTraceChecker getLoopCheck() {
 		return m_LoopCheck;
 	}
 
-	public TraceChecker getConcatCheck() {
+	public InterpolatingTraceChecker getConcatCheck() {
 		return m_ConcatCheck;
 	}
 
@@ -395,12 +396,12 @@ public class LassoChecker {
 			}
 		}
 
-		private TraceChecker checkFeasibilityAndComputeInterpolants(NestedRun<CodeBlock, IPredicate> run) {
-			TraceChecker result;
+		private InterpolatingTraceChecker checkFeasibilityAndComputeInterpolants(NestedRun<CodeBlock, IPredicate> run) {
+			InterpolatingTraceChecker result;
 			switch (m_Interpolation) {
 			case Craig_NestedInterpolation:
 			case Craig_TreeInterpolation:
-				result = new TraceChecker(m_TruePredicate, m_FalsePredicate, new TreeMap<Integer, IPredicate>(),
+				result = new InterpolatingTraceCheckerCraig(m_TruePredicate, m_FalsePredicate, new TreeMap<Integer, IPredicate>(),
 						run.getWord(), m_SmtManager, m_ModifiableGlobalVariableManager,
 						/*
 						 * TODO: When Matthias
@@ -408,7 +409,7 @@ public class LassoChecker {
 						 * set the argument to AssertCodeBlockOrder.NOT_INCREMENTALLY.
 						 * Check if you want to set this
 						 * to a different value.
-						 */AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices);
+						 */AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices, false, m_PredicateUnifier, m_Interpolation);
 				break;
 			case ForwardPredicates:
 			case BackwardPredicates:
@@ -422,15 +423,10 @@ public class LassoChecker {
 						 * Check if you want to set this
 						 * to a different value.
 						 */AssertCodeBlockOrder.NOT_INCREMENTALLY, 
-						 UnsatCores.CONJUNCT_LEVEL, true, mServices);
+						 UnsatCores.CONJUNCT_LEVEL, true, mServices, false, m_PredicateUnifier, m_Interpolation);
 				break;
 			default:
 				throw new UnsupportedOperationException("unsupported interpolation");
-			}
-			if (result.isCorrect() == LBool.UNSAT) {
-				result.computeInterpolants(new TraceChecker.AllIntegers(), m_PredicateUnifier, m_Interpolation);
-			} else {
-				result.finishTraceCheckWithoutInterpolantsOrProgramExecution();
 			}
 			return result;
 		}

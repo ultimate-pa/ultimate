@@ -40,7 +40,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.UnsatCores;
 import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
 
-public class TraceCheckerSpWp extends TraceChecker {
+public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 	/*
 	 * Settings for SVComp: m_useUnsatCore = true;
 	 * m_useUnsatCoreOfFineGranularity = true; m_useLiveVariables = true;
@@ -72,15 +72,22 @@ public class TraceCheckerSpWp extends TraceChecker {
 	private static final boolean s_TransformToCNF = true;
 
 	private AnnotateAndAssertConjunctsOfCodeBlocks m_AnnotateAndAsserterConjuncts;
+	private final PredicateTransformer m_PredicateTransformer;
 
 	public TraceCheckerSpWp(IPredicate precondition, IPredicate postcondition,
 			SortedMap<Integer, IPredicate> pendingContexts, NestedWord<CodeBlock> trace, SmtManager smtManager,
 			ModifiableGlobalVariableManager modifiedGlobals, AssertCodeBlockOrder assertCodeBlocksIncrementally,
-			UnsatCores unsatCores, boolean useLiveVariables, IUltimateServiceProvider services) {
+			UnsatCores unsatCores, boolean useLiveVariables, 
+			IUltimateServiceProvider services, boolean computeRcfgProgramExecution, 
+			PredicateUnifier predicateUnifier, INTERPOLATION interpolation) {
 		super(precondition, postcondition, pendingContexts, trace, smtManager, modifiedGlobals,
-				assertCodeBlocksIncrementally, services);
+				assertCodeBlocksIncrementally, services, computeRcfgProgramExecution, predicateUnifier);
 		m_UnsatCores = unsatCores;
 		m_LiveVariables = useLiveVariables;
+		m_PredicateTransformer = new PredicateTransformer(m_SmtManager, m_ModifiedGlobals, mServices);
+		if (isCorrect() == LBool.UNSAT) {
+			computeInterpolants(new AllIntegers(), interpolation);
+		}
 	}
 
 	@Override
@@ -89,7 +96,7 @@ public class TraceCheckerSpWp extends TraceChecker {
 	}
 
 	@Override
-	public void computeInterpolants(Set<Integer> interpolatedPositions, PredicateUnifier predicateUnifier,
+	public void computeInterpolants(Set<Integer> interpolatedPositions,
 			INTERPOLATION interpolation) {
 		m_TraceCheckerBenchmarkGenerator.start(TraceCheckerBenchmarkType.s_InterpolantComputation);
 		switch (interpolation) {
@@ -114,7 +121,6 @@ public class TraceCheckerSpWp extends TraceChecker {
 		default:
 			throw new UnsupportedOperationException("unsupportedInterpolation");
 		}
-		m_PredicateUnifier = predicateUnifier;
 		try {
 			computeInterpolantsUsingUnsatCore(interpolatedPositions);
 		} catch (ToolchainCanceledException e) {
@@ -331,6 +337,8 @@ public class TraceCheckerSpWp extends TraceChecker {
 			rtf = new RelevantTransFormulas(trace, m_Precondition, m_Postcondition, m_PendingContexts,
 					unsat_coresAsSet, m_ModifiedGlobals, m_SmtManager, m_AAA, m_AnnotateAndAsserterConjuncts);
 			assert stillInfeasible(rtf);
+		} else {
+			throw new AssertionError("unknown case:" + m_UnsatCores);
 		}
 
 		Set<BoogieVar>[] relevantVarsToUseForFPBP = null;
@@ -358,7 +366,7 @@ public class TraceCheckerSpWp extends TraceChecker {
 			}
 //			assert checkPredicatesCorrect(m_InterpolantsFp, trace, tracePrecondition, tracePostcondition, "FP") : "invalid Hoare triple in FP";
 			if (m_CollectInformationAboutSizeOfPredicates) {
-				sizeOfPredicatesFP = computeSizeOfPredicates(m_InterpolantsFp);
+				sizeOfPredicatesFP = m_SmtManager.computeDagSizeOfPredicates(m_InterpolantsFp);
 			}
 		} else if (m_ComputeInterpolantsSp && !m_ComputeInterpolantsFp) {
 			mLogger.debug("Computing forward relevant predicates...");
@@ -382,7 +390,7 @@ public class TraceCheckerSpWp extends TraceChecker {
 			assert checkInterpolantsCorrectBackwards(m_InterpolantsBp, trace, tracePrecondition, tracePostcondition,
 					"BP") : "invalid Hoare triple in BP";
 			if (m_CollectInformationAboutSizeOfPredicates) {
-				sizeOfPredicatesBP = computeSizeOfPredicates(m_InterpolantsBp);
+				sizeOfPredicatesBP = m_SmtManager.computeDagSizeOfPredicates(m_InterpolantsBp);
 			}
 		} else if (m_ComputeInterpolantsWp && !m_ComputeInterpolantsBp) {
 			mLogger.debug("Computing backward relevant predicates...");
@@ -465,13 +473,7 @@ public class TraceCheckerSpWp extends TraceChecker {
 	private boolean stillInfeasible(NestedFormulas<TransFormula, IPredicate> rv) {
 		TraceChecker tc = new TraceChecker(rv.getPrecondition(), rv.getPostcondition(),
 				new TreeMap<Integer, IPredicate>(), rv.getTrace(), m_SmtManager, m_ModifiedGlobals,
-				/*
-				 * TODO : When Matthias introduced this parameter he set the
-				 * argument to AssertCodeBlockOrder.NOT_INCREMENTALLY . Check if
-				 * you want to set this to true .
-				 */
-				AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices);
-		tc.unlockSmtManager();
+				AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices, false);
 		boolean result = (tc.isCorrect() == LBool.UNSAT);
 		return result;
 	}

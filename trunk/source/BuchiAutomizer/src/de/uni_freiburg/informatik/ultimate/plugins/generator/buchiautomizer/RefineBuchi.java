@@ -30,17 +30,18 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPre
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.PreferenceInitializer.BInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CoverageAnalysis.BackwardCoveringInformation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryRefinement;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CoverageAnalysis.BackwardCoveringInformation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataTransitionAppender.EagerInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.InductivityCheck;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.INTERPOLATION;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.UnsatCores;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.InterpolatingTraceChecker;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.InterpolatingTraceCheckerCraig;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceCheckerSpWp;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceCheckerUtils;
 
@@ -168,16 +169,15 @@ public class RefineBuchi {
 		PredicateUnifier pu = new PredicateUnifier(m_Services, m_SmtManager, bspm.getStemPrecondition(),
 				bspm.getHondaPredicate(), bspm.getRankEqAndSi(), bspm.getStemPostcondition());
 		IPredicate[] stemInterpolants;
-		TraceChecker traceChecker;
+		InterpolatingTraceChecker traceChecker;
 		if (BuchiCegarLoop.emptyStem(m_Counterexample)) {
 			stemInterpolants = null;
 		} else {
 
 			traceChecker = constructTraceChecker(bspm.getStemPrecondition(), bspm.getStemPostcondition(), null, stem,
-					m_SmtManager, buchiModGlobalVarManager);
+					m_SmtManager, buchiModGlobalVarManager, pu, m_Interpolation);
 			LBool stemCheck = traceChecker.isCorrect();
 			if (stemCheck == LBool.UNSAT) {
-				traceChecker.computeInterpolants(new TraceChecker.AllIntegers(), pu, m_Interpolation);
 				stemInterpolants = traceChecker.getInterpolants();
 			} else {
 				throw new AssertionError("wrong predicates");
@@ -185,11 +185,10 @@ public class RefineBuchi {
 		}
 
 		traceChecker = constructTraceChecker(bspm.getRankEqAndSi(), bspm.getHondaPredicate(), null, loop, m_SmtManager,
-				buchiModGlobalVarManager);
+				buchiModGlobalVarManager, pu, m_Interpolation);
 		LBool loopCheck = traceChecker.isCorrect();
 		IPredicate[] loopInterpolants;
 		if (loopCheck == LBool.UNSAT) {
-			traceChecker.computeInterpolants(new TraceChecker.AllIntegers(), pu, m_Interpolation);
 			loopInterpolants = traceChecker.getInterpolants();
 		} else {
 			throw new AssertionError();
@@ -325,12 +324,13 @@ public class RefineBuchi {
 		return newAbstraction;
 	}
 
-	private TraceChecker constructTraceChecker(IPredicate precond, IPredicate postcond, Object object,
-			NestedWord<CodeBlock> word, SmtManager smtManager, BuchiModGlobalVarManager buchiModGlobalVarManager) {
+	private InterpolatingTraceChecker constructTraceChecker(IPredicate precond, IPredicate postcond, Object object,
+			NestedWord<CodeBlock> word, SmtManager smtManager, BuchiModGlobalVarManager buchiModGlobalVarManager, 
+			PredicateUnifier pu, INTERPOLATION interpolation) {
 		switch (m_Interpolation) {
 		case Craig_NestedInterpolation:
 		case Craig_TreeInterpolation:
-			return new TraceChecker(precond, postcond, new TreeMap<Integer, IPredicate>(), NestedWord.nestedWord(word),
+			return new InterpolatingTraceCheckerCraig(precond, postcond, new TreeMap<Integer, IPredicate>(), word,
 					m_SmtManager, buchiModGlobalVarManager,
 					/*
 					 * TODO: When Matthias
@@ -338,12 +338,12 @@ public class RefineBuchi {
 					 * set the argument to AssertCodeBlockOrder.NOT_INCREMENTALLY.
 					 * Check if you want to set this
 					 * to a different value.
-					 */AssertCodeBlockOrder.NOT_INCREMENTALLY, m_Services);
+					 */AssertCodeBlockOrder.NOT_INCREMENTALLY, m_Services, false, pu, interpolation);
 		case ForwardPredicates:
 		case BackwardPredicates:
 		case FPandBP:
 			return new TraceCheckerSpWp(precond, postcond, new TreeMap<Integer, IPredicate>(),
-					NestedWord.nestedWord(word), m_SmtManager, buchiModGlobalVarManager,
+					word, m_SmtManager, buchiModGlobalVarManager,
 					/*
 					 * TODO: When Matthias
 					 * introduced this parameter he
@@ -351,7 +351,7 @@ public class RefineBuchi {
 					 * Check if you want to set this
 					 * to a different value.
 					 */AssertCodeBlockOrder.NOT_INCREMENTALLY,
-					 UnsatCores.CONJUNCT_LEVEL, true, m_Services);
+					 UnsatCores.CONJUNCT_LEVEL, true, m_Services, false, pu, interpolation);
 		default:
 			throw new UnsupportedOperationException("unsupported interpolation");
 		}

@@ -46,7 +46,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Ret
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootAnnot;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CoverageAnalysis.BackwardCoveringInformation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.EdgeChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
@@ -54,8 +53,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.INTERPOLATION;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.UnsatCores;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.InterpolatingTraceChecker;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.InterpolatingTraceCheckerCraig;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceCheckerSpWp;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceCheckerUtils;
 import de.uni_freiburg.informatik.ultimate.result.AllSpecificationsHoldResult;
@@ -63,10 +63,10 @@ import de.uni_freiburg.informatik.ultimate.result.BenchmarkResult;
 import de.uni_freiburg.informatik.ultimate.result.CounterExampleResult;
 import de.uni_freiburg.informatik.ultimate.result.GenericResult;
 import de.uni_freiburg.informatik.ultimate.result.IResult;
-import de.uni_freiburg.informatik.ultimate.result.ResultUtil;
-import de.uni_freiburg.informatik.ultimate.result.TimeoutResultAtElement;
 import de.uni_freiburg.informatik.ultimate.result.IResultWithSeverity.Severity;
 import de.uni_freiburg.informatik.ultimate.result.PositiveResult;
+import de.uni_freiburg.informatik.ultimate.result.ResultUtil;
+import de.uni_freiburg.informatik.ultimate.result.TimeoutResultAtElement;
 import de.uni_freiburg.informatik.ultimate.result.UnprovableResult;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProvider;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
@@ -279,7 +279,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		long conjsInSSA = 0;
 		long conjsInUC = 0;	
 
-		TraceChecker traceChecker = null;
+		InterpolatingTraceChecker traceChecker = null;
 
 		for (AnnotatedProgramPoint procRoot : procRootsToCheck) {
 			if (!mServices.getProgressMonitorService().continueProcessing()) {
@@ -321,7 +321,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 					traceChecker = null;
 					switch (GlobalSettings._instance._solverAndInterpolator) {
 					case SMTINTERPOL:
-						traceChecker = new TraceChecker(_predicateUnifier.getTruePredicate(),
+						traceChecker = new InterpolatingTraceCheckerCraig(_predicateUnifier.getTruePredicate(),
 							_predicateUnifier.getFalsePredicate(), // return LBool.UNSAT if trace
 													// is infeasible
 								new TreeMap<Integer, IPredicate>(), errorRun.getWord(), m_smtManager, m_originalRoot
@@ -332,7 +332,8 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 								 * AssertCodeBlockOrder.NOT_INCREMENTALLY .
 								 * Check if you want to set this to a different
 								 * value.
-								 */AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices);
+								 */AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices, true, _predicateUnifier,
+									GlobalSettings._instance._interpolationMode);
 						break;
 					case Z3SPWP:
 						traceChecker = new TraceCheckerSpWp(_predicateUnifier.getTruePredicate(),
@@ -348,7 +349,8 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 								 * value.
 								 */
 								AssertCodeBlockOrder.NOT_INCREMENTALLY,
-								UnsatCores.CONJUNCT_LEVEL, true, mServices);
+								UnsatCores.CONJUNCT_LEVEL, true, mServices, true, _predicateUnifier,
+								GlobalSettings._instance._interpolationMode);
 						break;
 					}
 
@@ -357,16 +359,16 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 //						if (GlobalSettings._instance._predicateUnification == PredicateUnification.PER_ITERATION)
 //							_predicateUnifier = new PredicateUnifier(mServices, m_smtManager);//, m_truePredicate, m_falsePredicate);
 
-						switch (GlobalSettings._instance._solverAndInterpolator) {
-						case SMTINTERPOL:
-							traceChecker.computeInterpolants(new TraceChecker.AllIntegers(), _predicateUnifier,
-									GlobalSettings._instance._interpolationMode);
-							break;
-						case Z3SPWP:
-							traceChecker.computeInterpolants(new TraceChecker.AllIntegers(), _predicateUnifier,
-									INTERPOLATION.ForwardPredicates);
-							break;
-						}
+//						switch (GlobalSettings._instance._solverAndInterpolator) {
+//						case SMTINTERPOL:
+//							traceChecker.computeInterpolants(new InterpolatingTraceChecker.AllIntegers(), _predicateUnifier,
+//									GlobalSettings._instance._interpolationMode);
+//							break;
+//						case Z3SPWP:
+//							traceChecker.computeInterpolants(new InterpolatingTraceChecker.AllIntegers(), _predicateUnifier,
+//									INTERPOLATION.ForwardPredicates);
+//							break;
+//						}
 						
 						//interpolant coverage capability stuff
 						ArrayList<ProgramPoint> programPoints = new ArrayList<>();
@@ -401,7 +403,6 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 						mLogger.warn("This program is UNSAFE, Check terminated with " + iterationsCount
 								+ " iterations.");
 						allSafe = false;
-						traceChecker.computeRcfgProgramExecution();
 						realErrorProgramExecution = traceChecker.getRcfgProgramExecution();
 
 						if (DEBUG)

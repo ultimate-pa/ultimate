@@ -452,39 +452,15 @@ public class BinaryStatePredicateManager {
 			siPredicate = truePredicate;
 		}
 		traceChecker = new TraceChecker(truePredicate, siPredicate, new TreeMap<Integer, IPredicate>(), stem,
-				m_SmtManager, modGlobVarManager, /*
-												 * TODO: When Matthias
-												 * introduced this parameter he
-												 * set the argument to AssertCodeBlockOrder.NOT_INCREMENTALLY.
-												 * Check if you want to set this
-												 * to a different value.
-												 */AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices);
+				m_SmtManager, modGlobVarManager, AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices, false);
 		LBool stemCheck = traceChecker.isCorrect();
-		if (stemCheck == LBool.UNSAT) {
-			traceChecker.finishTraceCheckWithoutInterpolantsOrProgramExecution();
-			// IPredicate[] interpolants = m_TraceChecker.getInterpolants(new
-			// TraceChecker.AllIntegers());
-			// interpolants.toString();
-		} else {
-			traceChecker.finishTraceCheckWithoutInterpolantsOrProgramExecution();
+		if (stemCheck != LBool.UNSAT) {
 			result = false;
 		}
 		traceChecker = new TraceChecker(siPredicate, siPredicate, new TreeMap<Integer, IPredicate>(), stem,
-				m_SmtManager, modGlobVarManager, /*
-				 * TODO: When Matthias
-				 * introduced this parameter he
-				 * set the argument to AssertCodeBlockOrder.NOT_INCREMENTALLY.
-				 * Check if you want to set this
-				 * to a different value.
-				 */AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices);
+				m_SmtManager, modGlobVarManager, AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices, false);
 		LBool loopCheck = traceChecker.isCorrect();
-		if (loopCheck == LBool.UNSAT) {
-			traceChecker.finishTraceCheckWithoutInterpolantsOrProgramExecution();
-			// IPredicate[] interpolants = m_TraceChecker.getInterpolants(new
-			// TraceChecker.AllIntegers());
-			// interpolants.toString();
-		} else {
-			traceChecker.finishTraceCheckWithoutInterpolantsOrProgramExecution();
+		if (loopCheck != LBool.UNSAT) {
 			result = false;
 		}
 		return result;
@@ -492,16 +468,9 @@ public class BinaryStatePredicateManager {
 
 	public boolean checkRankDecrease(NestedWord<CodeBlock> loop, ModifiableGlobalVariableManager modGlobVarManager) {
 		TraceChecker traceChecker = new TraceChecker(m_RankEqualityAndSi, m_RankDecreaseAndBound,
-				new TreeMap<Integer, IPredicate>(), loop, m_SmtManager, modGlobVarManager,
-				/*
-				 * TODO: When Matthias
-				 * introduced this parameter he
-				 * set the argument to AssertCodeBlockOrder.NOT_INCREMENTALLY.
-				 * Check if you want to set this
-				 * to a different value.
-				 */AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices);
+				new TreeMap<Integer, IPredicate>(), loop, m_SmtManager, modGlobVarManager, 
+				AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices, false);
 		LBool loopCheck = traceChecker.isCorrect();
-		traceChecker.finishTraceCheckWithoutInterpolantsOrProgramExecution();
 		return (loopCheck == LBool.UNSAT);
 	}
 

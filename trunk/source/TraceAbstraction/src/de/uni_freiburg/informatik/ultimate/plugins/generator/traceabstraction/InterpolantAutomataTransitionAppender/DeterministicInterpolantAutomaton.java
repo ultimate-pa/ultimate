@@ -23,7 +23,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Di
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.EdgeChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceChecker;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.InterpolatingTraceChecker;
 import de.uni_freiburg.informatik.ultimate.util.HashRelation;
 
 /**
@@ -66,7 +66,7 @@ public class DeterministicInterpolantAutomaton extends AbstractInterpolantAutoma
 			SmtManager smtManager, EdgeChecker edgeChecker,
 			INestedWordAutomaton<CodeBlock, IPredicate> abstraction, 
 			NestedWordAutomaton<CodeBlock, IPredicate> interpolantAutomaton, 
-			TraceChecker traceChecker, Logger  logger) {
+			InterpolatingTraceChecker traceChecker, Logger  logger) {
 		super(services, smtManager ,edgeChecker, abstraction, traceChecker.getPostcondition(), interpolantAutomaton, logger);
 		m_UseLazyEdgeChecks = false;
 		m_PredicateUnifier = traceChecker.getPredicateUnifier();

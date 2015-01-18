@@ -20,7 +20,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Pro
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CoverageAnalysis;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceChecker;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.InterpolatingTraceChecker;
 
 /**
  * Constructs the canonical interpolant automaton. Boolean flags determine if we
@@ -40,7 +40,7 @@ public class CanonicalInterpolantAutomatonBuilder extends CoverageAnalysis {
 
 	private final Map<Integer, Set<IPredicate>> m_AlternativeCallPredecessors = new HashMap<Integer, Set<IPredicate>>();
 
-	public CanonicalInterpolantAutomatonBuilder(IUltimateServiceProvider services, TraceChecker traceChecker, List<ProgramPoint> programPointSequence,
+	public CanonicalInterpolantAutomatonBuilder(IUltimateServiceProvider services, InterpolatingTraceChecker traceChecker, List<ProgramPoint> programPointSequence,
 			InCaReAlphabet<CodeBlock> alphabet, SmtManager smtManager, StateFactory<IPredicate> predicateFactory,
 			Logger logger) {
 		super(services, traceChecker, programPointSequence, logger);

@@ -36,8 +36,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.INTERPOLATION;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.InterpolatingTraceCheckerCraig;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceChecker;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.InterpolatingTraceChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceCheckerUtils.InterpolantsPreconditionPostcondition;
 
 public class TotalInterpolationAutomatonBuilder {
@@ -65,7 +66,7 @@ public class TotalInterpolationAutomatonBuilder {
 	private final IUltimateServiceProvider mServices;
 
 	public TotalInterpolationAutomatonBuilder(INestedWordAutomaton<CodeBlock, IPredicate> abstraction,
-			ArrayList<IPredicate> stateSequence, TraceChecker traceChecker, SmtManager smtManager,
+			ArrayList<IPredicate> stateSequence, InterpolatingTraceChecker traceChecker, SmtManager smtManager,
 			PredicateFactory predicateFactory, ModifiableGlobalVariableManager modifiableGlobals,
 			INTERPOLATION interpolation, IUltimateServiceProvider services) throws OperationCanceledException {
 		super();
@@ -254,21 +255,19 @@ public class TotalInterpolationAutomatonBuilder {
 		IPredicate postcondition = m_Epimorphism.getMapping(last);
 		SortedMap<Integer, IPredicate> pendingContexts = computePendingContexts(run);
 		// SortedMap<Integer, IPredicate> pendingContexts = new TreeMap<>();
-		TraceChecker tc = new TraceChecker(precondition, postcondition, pendingContexts, run.getWord(), m_SmtManager,
+		InterpolatingTraceChecker tc = new InterpolatingTraceCheckerCraig(precondition, postcondition, pendingContexts, run.getWord(), m_SmtManager,
 				m_ModifiedGlobals, /*
 									 * TODO: When Matthias introduced this
 									 * parameter he set the argument to AssertCodeBlockOrder.NOT_INCREMENTALLY.
 									 * Check if you want to set this to true.
-									 */AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices);
+									 */AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices, false, m_PredicateUnifier, m_Interpolation);
 		if (tc.isCorrect() == LBool.UNSAT) {
 			m_BenchmarkGenerator.incrementUsefullRunGeq2();
-			tc.computeInterpolants(new TraceChecker.AllIntegers(), m_PredicateUnifier, m_Interpolation);
 			int additionalInterpolants = addInterpolants(run.getStateSequence(), tc.getInterpolants());
 			m_BenchmarkGenerator.reportAdditionalInterpolants(additionalInterpolants);
 			addTransitions(run.getStateSequence(), tc);
 		} else {
 			m_BenchmarkGenerator.incrementUselessRunGeq2();
-			tc.finishTraceCheckWithoutInterpolantsOrProgramExecution();
 		}
 		m_BenchmarkGenerator.addTraceCheckerData(tc.getTraceCheckerBenchmark());
 	}
@@ -297,7 +296,7 @@ public class TotalInterpolationAutomatonBuilder {
 		return null;
 	}
 
-	private void addTransitions(ArrayList<IPredicate> stateSequence, TraceChecker tc) {
+	private void addTransitions(ArrayList<IPredicate> stateSequence, InterpolatingTraceChecker tc) {
 		InterpolantsPreconditionPostcondition ipp = new InterpolantsPreconditionPostcondition(tc);
 		NestedWord<CodeBlock> nw = NestedWord.nestedWord(tc.getTrace());
 		for (int i = 0; i < nw.length(); i++) {

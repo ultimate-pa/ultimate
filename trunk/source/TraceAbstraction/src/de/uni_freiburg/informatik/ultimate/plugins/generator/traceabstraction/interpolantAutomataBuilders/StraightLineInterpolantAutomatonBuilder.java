@@ -7,6 +7,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvide
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactory;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.InterpolatingTraceChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceCheckerUtils.InterpolantsPreconditionPostcondition;
 
@@ -34,7 +35,7 @@ public class StraightLineInterpolantAutomatonBuilder {
 	public StraightLineInterpolantAutomatonBuilder(
 			IUltimateServiceProvider services, 
 			InCaReAlphabet<CodeBlock> alphabet,
-			TraceChecker traceChecker,
+			InterpolatingTraceChecker traceChecker,
 			PredicateFactory predicateFactory) {
 		m_Services = services;
 		InterpolantsPreconditionPostcondition ipp = 

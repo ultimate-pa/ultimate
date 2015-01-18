@@ -18,8 +18,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.INTERPOLATION;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.UnsatCores;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.InterpolatingTraceCheckerCraig;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceChecker;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.InterpolatingTraceChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceCheckerSpWp;
 
 /**
@@ -89,17 +90,14 @@ public class LoopCannibalizer {
 					NestedWord<CodeBlock> before = m_Loop.subWord(0, i);
 					NestedWord<CodeBlock> after = m_Loop.subWord(i + 1, m_Loop.length() - 1);
 					NestedWord<CodeBlock> shifted = after.concatenate(before);
-					TraceChecker traceChecker = getTraceChecker(shifted, interpolation);
+					InterpolatingTraceChecker traceChecker = getTraceChecker(shifted, interpolation);
 					LBool loopCheck = traceChecker.isCorrect();
 					if (loopCheck == LBool.UNSAT) {
 						IPredicate[] loopInterpolants;
-						traceChecker.computeInterpolants(new TraceChecker.AllIntegers(), m_PredicateUnifier,
-								interpolation);
 						loopInterpolants = traceChecker.getInterpolants();
 						Set<IPredicate> cannibalized = m_PredicateUnifier.cannibalizeAll(false, loopInterpolants);
 						m_ResultPredicates.addAll(cannibalized);
 					} else {
-						traceChecker.finishTraceCheckWithoutInterpolantsOrProgramExecution();
 						mLogger.info("termination argument not suffcient for all loop shiftings");
 					}
 				}
@@ -108,12 +106,12 @@ public class LoopCannibalizer {
 		}
 	}
 
-	private TraceChecker getTraceChecker(NestedWord<CodeBlock> shifted, INTERPOLATION interpolation) {
-		TraceChecker traceChecker;
+	private InterpolatingTraceChecker getTraceChecker(NestedWord<CodeBlock> shifted, INTERPOLATION interpolation) {
+		InterpolatingTraceChecker traceChecker;
 		switch (interpolation) {
 		case Craig_NestedInterpolation:
 		case Craig_TreeInterpolation:
-			traceChecker = new TraceChecker(m_Bspm.getRankEqAndSi(), m_Bspm.getHondaPredicate(),
+			traceChecker = new InterpolatingTraceCheckerCraig(m_Bspm.getRankEqAndSi(), m_Bspm.getHondaPredicate(),
 					new TreeMap<Integer, IPredicate>(), shifted, m_SmtManager, m_buchiModGlobalVarManager,
 					/*
 					 * TODO: When Matthias
@@ -121,7 +119,8 @@ public class LoopCannibalizer {
 					 * set the argument to AssertCodeBlockOrder.NOT_INCREMENTALLY.
 					 * Check if you want to set this
 					 * to a different value.
-					 */AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices);
+					 */AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices, false, m_PredicateUnifier,
+						interpolation);
 			break;
 		case ForwardPredicates:
 		case BackwardPredicates:
@@ -135,7 +134,8 @@ public class LoopCannibalizer {
 					 * Check if you want to set this
 					 * to a different value.
 					 */AssertCodeBlockOrder.NOT_INCREMENTALLY,
-					 UnsatCores.CONJUNCT_LEVEL, true, mServices);
+					 UnsatCores.CONJUNCT_LEVEL, true, mServices, false, m_PredicateUnifier,
+						interpolation);
 			break;
 		default:
 			throw new UnsupportedOperationException("unsupported interpolation");

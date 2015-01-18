@@ -18,6 +18,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.InterpolatingTraceChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceCheckerUtils.InterpolantsPreconditionPostcondition;
 
@@ -53,7 +54,7 @@ public class CoverageAnalysis {
 	protected final InterpolantsPreconditionPostcondition m_IPP;
 
 	public CoverageAnalysis(IUltimateServiceProvider services, 
-			TraceChecker traceChecker,
+			InterpolatingTraceChecker traceChecker,
 			List<ProgramPoint> programPointSequence, Logger logger) {
 		m_Services = services;
 		mLogger = logger;

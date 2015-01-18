@@ -13,9 +13,12 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPre
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceChecker;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.INTERPOLATION;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.InterpolatingTraceChecker;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.InterpolatingTraceCheckerCraig;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
 
-public class TraceCheckerWithAccessibleSSATerms extends TraceChecker {
+public class TraceCheckerWithAccessibleSSATerms extends InterpolatingTraceCheckerCraig {
 	
 	Script m_script;
 
@@ -25,9 +28,11 @@ public class TraceCheckerWithAccessibleSSATerms extends TraceChecker {
 			NestedWord<CodeBlock> trace, SmtManager smtManager,
 			ModifiableGlobalVariableManager modifiedGlobals,
 			AssertCodeBlockOrder assertCodeBlocksIncrementally,
-			IUltimateServiceProvider services) {
+			IUltimateServiceProvider services, boolean computeRcfgProgramExecution, 
+			PredicateUnifier predicateUnifier, INTERPOLATION interpolation) {
 		super(precondition, postcondition, pendingContexts, trace, smtManager,
-				modifiedGlobals, assertCodeBlocksIncrementally, services);
+				modifiedGlobals, assertCodeBlocksIncrementally, services,
+				computeRcfgProgramExecution, predicateUnifier, interpolation);
 		m_script = smtManager.getScript();
 	}
 	

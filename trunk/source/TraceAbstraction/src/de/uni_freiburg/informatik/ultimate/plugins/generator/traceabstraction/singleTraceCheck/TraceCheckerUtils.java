@@ -50,7 +50,7 @@ public class TraceCheckerUtils {
 	 */
 	public static BackwardCoveringInformation computeCoverageCapability(
 			IUltimateServiceProvider services, 
-			TraceChecker traceChecker, Logger logger) {
+			InterpolatingTraceChecker traceChecker, Logger logger) {
 		NestedWord<CodeBlock> trace = NestedWord.nestedWord(traceChecker.getTrace());
 		List<ProgramPoint> programPoints = getSequenceOfProgramPoints(trace);
 		return computeCoverageCapability(services, traceChecker, programPoints, logger);
@@ -58,7 +58,7 @@ public class TraceCheckerUtils {
 	
 	public static BackwardCoveringInformation computeCoverageCapability(
 			IUltimateServiceProvider services, 
-			TraceChecker traceChecker, List<ProgramPoint> programPoints, Logger logger) {
+			InterpolatingTraceChecker traceChecker, List<ProgramPoint> programPoints, Logger logger) {
 		if (traceChecker.isCorrect() != LBool.UNSAT) {
 			throw new AssertionError("We can only build an interpolant "
 					+ "automaton for correct/infeasible traces");
@@ -90,7 +90,7 @@ public class TraceCheckerUtils {
 		private final IPredicate m_Postcondition;
 		private final IPredicate[] m_Interpolants;
 		
-		public InterpolantsPreconditionPostcondition(TraceChecker traceChecker) {
+		public InterpolantsPreconditionPostcondition(InterpolatingTraceChecker traceChecker) {
 			if (traceChecker.isCorrect() != LBool.UNSAT) {
 				throw new AssertionError("We can only build an interpolant "
 						+ "automaton for correct/infeasible traces");

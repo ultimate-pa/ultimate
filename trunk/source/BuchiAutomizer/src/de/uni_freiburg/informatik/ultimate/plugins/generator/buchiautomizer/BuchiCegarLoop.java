@@ -68,7 +68,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.Artifact;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.INTERPOLATION;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceChecker;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.InterpolatingTraceChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceCheckerUtils;
 import de.uni_freiburg.informatik.ultimate.result.LTLPropertyCheck;
 import de.uni_freiburg.informatik.ultimate.result.TerminationArgumentResult;
@@ -592,7 +592,7 @@ public class BuchiCegarLoop {
 
 	private void refineFinite(LassoChecker lassoChecker) throws OperationCanceledException {
 		m_BenchmarkGenerator.start(CegarLoopBenchmarkType.s_AutomataDifference);
-		final TraceChecker traceChecker;
+		final InterpolatingTraceChecker traceChecker;
 		final NestedRun<CodeBlock, IPredicate> run;
 		LassoCheckResult lcr = lassoChecker.getLassoCheckResult();
 		if (lassoChecker.getLassoCheckResult().getStemFeasibility() == TraceCheckResult.INFEASIBLE) {
@@ -651,7 +651,7 @@ public class BuchiCegarLoop {
 		m_BenchmarkGenerator.stop(CegarLoopBenchmarkType.s_AutomataDifference);
 	}
 
-	protected void constructInterpolantAutomaton(TraceChecker traceChecker, NestedRun<CodeBlock, IPredicate> run)
+	protected void constructInterpolantAutomaton(InterpolatingTraceChecker traceChecker, NestedRun<CodeBlock, IPredicate> run)
 			throws OperationCanceledException {
 		CanonicalInterpolantAutomatonBuilder iab = new CanonicalInterpolantAutomatonBuilder(m_Services,
 				traceChecker, CoverageAnalysis.extractProgramPoints(run), new InCaReAlphabet<CodeBlock>(m_Abstraction), m_SmtManager,
