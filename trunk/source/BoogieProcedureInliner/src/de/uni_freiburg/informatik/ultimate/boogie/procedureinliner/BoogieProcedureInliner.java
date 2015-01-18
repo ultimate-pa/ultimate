@@ -12,6 +12,8 @@ import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvide
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.IAnalysis;
 import de.uni_freiburg.informatik.ultimate.model.GraphType;
 import de.uni_freiburg.informatik.ultimate.boogie.preprocessor.TypeChecker;
+import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.preferences.PreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.preferences.PreferenceItem;
 
 /**
  * Tool for inlining oogie procedures.
@@ -92,8 +94,7 @@ public class BoogieProcedureInliner implements IAnalysis {
 
 	@Override
 	public UltimatePreferenceInitializer getPreferences() {
-		// TODO offer preferences for this tool
-		return null;
+		return new PreferenceInitializer();
 	}
 
 	@Override
