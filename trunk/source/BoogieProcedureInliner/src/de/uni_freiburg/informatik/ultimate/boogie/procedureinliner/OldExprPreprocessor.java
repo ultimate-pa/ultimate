@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.boogie.procedureinliner;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -7,8 +8,6 @@ import java.util.Set;
 import java.util.HashSet;
 import java.util.Deque;
 import java.util.ArrayDeque;
-
-import org.omg.CORBA.Current;
 
 import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
@@ -36,7 +35,7 @@ public class OldExprPreprocessor extends BoogieTransformer implements IUnmanaged
 	private IUltimateServiceProvider mServices;
 	
 	/** Maps a procedure (id) to the set of global variables (ids) it can modify, according to its specification. */
-	private Map<String, Set<String>> mModifyClauses = new HashMap<>();
+	private Map<String, Set<String>> mModifyClauses;
 	
 	/**
 	 * All global variables, which can be modified by the procedure, according to its specification.
@@ -84,7 +83,6 @@ public class OldExprPreprocessor extends BoogieTransformer implements IUnmanaged
 
 	@Override
 	public void finish() throws Throwable {
-		System.out.println("\nContains Old: " + mProcsContainingOldExpr + "\n");
 	}
 
 	@Override
@@ -101,20 +99,24 @@ public class OldExprPreprocessor extends BoogieTransformer implements IUnmanaged
 	public boolean process(IElement root) throws Throwable {
 		if (root instanceof Unit) {
 			Unit astUnit = (Unit) root;
-			scanModifyClauses(astUnit);
+			BoogieProcedureFilter filter = new BoogieProcedureFilter(mServices, astUnit);
+			if(!mServices.getProgressMonitorService().continueProcessing()) {
+				return false;
+			}
+			scanModifyClauses(filter.getDeclarations().values());
 			preprocessOldExpr(astUnit);
 			return false;
 		}
-		return false;
+		return true;
 	}
 	
 	/**
 	 * Initializes {@link #mModifyClauses} by scanning all modify clauses inside the ast.
 	 * @param astUnit The Boogie ast.
 	 */
-	private void scanModifyClauses(Unit astUnit) {
-		BoogieProcedureFilter filter = new BoogieProcedureFilter(mServices, astUnit);
-		for (Procedure procDecl : filter.getDeclarations().values()) {
+	private void scanModifyClauses(Collection<Procedure> procedureDeclarations) {
+		mModifyClauses = new HashMap<String, Set<String>>();
+		for (Procedure procDecl : procedureDeclarations) {
 			Set<String> modifiableGlobalVars = new HashSet<>();
 			for (Specification spec : procDecl.getSpecification()) {
 				if (spec instanceof ModifiesSpecification) {
@@ -127,6 +129,10 @@ public class OldExprPreprocessor extends BoogieTransformer implements IUnmanaged
 		}
 	}
 	
+	/**
+	 * Processes the old expressions to contain only Identifiers of global variables.
+	 * @param astUnit Boogie ast to be processed (will be modified).
+	 */
 	private void preprocessOldExpr(Unit astUnit) {
 		mProcsContainingOldExpr = new HashSet<String>();
 		Declaration[] decls = astUnit.getDeclarations();

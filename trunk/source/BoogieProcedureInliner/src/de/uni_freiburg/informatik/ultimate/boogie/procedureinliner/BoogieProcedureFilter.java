@@ -1,21 +1,25 @@
 package de.uni_freiburg.informatik.ultimate.boogie.procedureinliner;
 
 import java.util.Collections;
-import java.util.Map;
-import java.util.Set;
-import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
+import java.util.HashMap;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.*;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
+import de.uni_freiburg.informatik.ultimate.result.IResult;
 import de.uni_freiburg.informatik.ultimate.result.SyntaxErrorResult;
+import de.uni_freiburg.informatik.ultimate.result.UnsupportedSyntaxResult;
 
 /**
  * Takes a Boogie ast and filters out all Procedures.
- * Procedures are distinguished between the Procedures using the keyword "procedure" and Procedures with bodies
+ * Procedures are distinguished between the ones using the keyword "procedure" and the ones with bodies
  * (using the keyword "implementation" or "procedure" with a following body).
  * Note: A Procedure can be both, declaration and implementation! 
+ * 
+ * The filter doesn't support multiple implementations of one procedure, as it is specified in the Boogie standard!
  * 
  * @author schaetzc@informatik.uni-freiburg.de
  */
@@ -23,12 +27,15 @@ public class BoogieProcedureFilter {
 
 	private IUltimateServiceProvider mServices;
 
-	/** All Procedures using the keyword "procedure". Their identifiers are used as keys. */
+	/** All Procedures with a (possibly empty) specification. Their identifiers are used as keys. */
 	private Map<String, Procedure> mDeclarations;
 	
-	/** All Procedures with bodies. Their identifiers are used as keys. One Procedure can have multiple bodies. */
-	private Map<String, Set<Procedure>> mImplementations;
+	/** All Procedures with bodies. Their identifiers are used as keys. */
+	private Map<String, Procedure> mImplementations;
 
+	/** All non-procedure declarations from the ast unit. */
+	private Set<Declaration> mNonProcedureDeclarations;
+	
 	/**
 	 * Creates a new filter.
 	 * @param services ServiceProvider for reporting possible errors.
@@ -51,17 +58,22 @@ public class BoogieProcedureFilter {
 	
 	/**
 	 * Filters a Boogie ast.
-	 * If the ast contains multiple declarations (Procedures using the keyword "procedure") with the same identifier or
-	 * is missing a declaration for an implementation, then the current tool chain is canceled. This will create an
-	 * ErrorResult.
+	 * An ErrorResult will be created and the tool chain will be canceled if...
+	 * - there is an implementation without a declaration.
+	 * - there are multiple declarations of the same procedure.
+	 * - the same procedure has multiple implementations (although this is accepted by the Boogie standard)
+	 * 
 	 * @param astUnit Boogie ast to be filtered.
 	 */
 	public void filter(Unit astUnit) {
 		mDeclarations = new HashMap<String, Procedure>();
-		mImplementations = new HashMap<String, Set<Procedure>>();
+		mImplementations = new HashMap<String, Procedure>();
+		mNonProcedureDeclarations = new HashSet<Declaration>();
 		for (Declaration decl : astUnit.getDeclarations()) {
 			if (decl instanceof Procedure) {
 				filterProcedure((Procedure) decl);
+			} else {
+				mNonProcedureDeclarations.add(decl);
 			}
 		}
 		finishFilteredResults();
@@ -72,9 +84,6 @@ public class BoogieProcedureFilter {
 	 * Returns all procedure declarations from the last filtered Boogie ast.
 	 * The procedure identifiers are used as keys.
 	 * A declaration is a Procedure with a (possibly empty) specification. All declarations use the keyword "procedure".
-	 * 
-	 * It is guaranteed, that {@link #getImplementations()} contains a (possibly empty) set of implementations for every
-	 * declared procedure.
 	 * 
 	 * @return The Procedure declarations.
 	 * 
@@ -87,20 +96,24 @@ public class BoogieProcedureFilter {
 	
 	/**
 	 * Returns all implementations of all procedures from the last filtered Boogie ast.
-	 * The procedure identifiers are used as keys.
+	 * The procedure identifiers are used as keys. The returned map contains no entries for unimplemented procedures.
+	 * It is guaranteed that every key inside the returned map is also present in {@link #getDeclarations()}.
+	 * 
 	 * An implementation is a Procedure with a body. This can be both, a Procedure using the keyword "implementation"
 	 * or a Procedure using the keyword "procedure" with an attached body.
-	 * 
-	 * It is guaranteed, that there is a (possibly empty) set of implementations for every procedure in
-	 * {@link #getDeclarations()}.
 	 *
 	 * @return The Procedure implementations.
 	 * 
 	 * @see #getDeclarations()
 	 * @see Procedure#getBody()
 	 */
-	public Map<String, Set<Procedure>> getImplementations() {
+	public Map<String, Procedure> getImplementations() {
 		return mImplementations;
+	}
+	
+	/** @return All the declarations from the last filtered Boogie ast, that were no procedures. */
+	public Set<Declaration> getNonProcedureDeclarations() {
+		return mNonProcedureDeclarations;
 	}
 	
 	/**
@@ -122,67 +135,68 @@ public class BoogieProcedureFilter {
 		assert declaration.getSpecification() != null;
 		Procedure oldEntry = mDeclarations.put(declaration.getIdentifier(), declaration);
 		if (oldEntry != null) {
-			procedureAlreadyDeclaredError(declaration);
+			multiDeclarationsError(declaration);
 		}
 	}
 	
 	private void addImplementation(Procedure implementation) {
 		assert implementation.getBody() != null;
-		String procId = implementation.getIdentifier();
-		Set<Procedure> implsOfProc = mImplementations.get(procId);
-		if (implsOfProc == null) {
-			implsOfProc = new HashSet<Procedure>();
-			mImplementations.put(procId, implsOfProc);
+		Procedure oldEntry = mImplementations.put(implementation.getIdentifier(), implementation);
+		if (oldEntry != null) {
+			multiImplementationsError(implementation);
 		}
-		implsOfProc.add(implementation);
 	}
 	
-	/**
-	 * Adds empty sets of implementations for all declarations without any implementations
-	 * and makes the filtered results immutable.
-	 */
+	/** Makes the filtered results immutable. */
 	private void finishFilteredResults() {
-		Set<Procedure> noImplementations = Collections.emptySet();
-		for (String procId : mDeclarations.keySet()) {
-			if(mImplementations.containsKey(procId)) {
-				Set<Procedure> immutableVersion = Collections.unmodifiableSet(mImplementations.get(procId));
-				mImplementations.put(procId, immutableVersion);
-			} else {				
-				mImplementations.put(procId, noImplementations);
-			}
-		}
 		mDeclarations = Collections.unmodifiableMap(mDeclarations);
 		mImplementations = Collections.unmodifiableMap(mImplementations);
+		mNonProcedureDeclarations = Collections.unmodifiableSet(mNonProcedureDeclarations);
 	}
 	
 	private void checkForMissingDeclarations() {
 		for (String procId : mImplementations.keySet()) {
 			if (!mDeclarations.containsKey(procId)) {
-				Set<Procedure> implsMissingDecl = mImplementations.get(procId);
-				assert !implsMissingDecl.isEmpty();
-				missingDeclaration(implsMissingDecl.iterator().next());
+				Procedure implMissingDecl = mImplementations.get(procId);
+				missingDeclarationError(implMissingDecl);
 			}
 		}
 	}
 
-	private void procedureAlreadyDeclaredError(Procedure procDecl) {
+	private void multiDeclarationsError(Procedure procDecl) {
 		String description = "Procedure was already declared: " + procDecl.getIdentifier();
 		syntaxError(procDecl.getLocation(), description);
 	}
+	
+	private void multiImplementationsError(Procedure procImpl) {
+		String description = "Multiple procedure implementations aren't supported: " + procImpl.getIdentifier();
+		unsupportedSyntaxError(procImpl.getLocation(), description);
+	}
 
-	private void missingDeclaration(Procedure implementation) {
+	private void missingDeclarationError(Procedure implementation) {
 		String description = "Missing declaration for procedure implementation: " + implementation.getIdentifier();
 		syntaxError(implementation.getLocation(), description);
 	}
 	
-	/**
-	 * Reports a syntax error and cancels the tool chain.
-	 * @param syntaxError Syntax error to be reported.
-	 */
 	private void syntaxError(ILocation location, String description) {
+		errorAndAbort(location, description, new SyntaxErrorResult(Activator.PLUGIN_ID, location, description));
+	}
+	
+	private void unsupportedSyntaxError(ILocation location, String description) {
+		errorAndAbort(location, description,
+				new UnsupportedSyntaxResult<Procedure>(Activator.PLUGIN_ID, location, description));
+	}
+	
+	/**
+	 * Prints an error to the log and cancels the tool chain with the given result.
+	 * @param location Location of the error.
+	 * @param description Description of the error.
+	 * @param error Error result.
+	 */
+	private void errorAndAbort(ILocation location, String description, IResult error) {
 		String pluginId = Activator.PLUGIN_ID;
 		mServices.getLoggingService().getLogger(pluginId).error(location + ": " + description);
-		mServices.getResultService().reportResult(pluginId, new SyntaxErrorResult(pluginId, location, description));
+		mServices.getResultService().reportResult(pluginId, error);
 		mServices.getProgressMonitorService().cancelToolchain();
 	}
 

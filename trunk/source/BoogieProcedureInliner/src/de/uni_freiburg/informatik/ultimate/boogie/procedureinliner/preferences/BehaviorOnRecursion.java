@@ -10,7 +10,8 @@ public enum BehaviorOnRecursion {
 	
 	SKIP("skip"),
 	WARN_AND_SKIP("warn and skip"),
-	ERROR_AND_ABORT("error and abort");
+	ERROR_AND_ABORT("error and abort"),
+	INLINE_LIKE_UNIMPLEMENTED("inline as if the procedure was unimplement");
 
 	private final String mDisplayName;
 	
