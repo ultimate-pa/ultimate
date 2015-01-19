@@ -365,6 +365,16 @@ public class SmtUtils {
 		}
 	}
 	
+	public static boolean isTrue(Term term) {
+		if (term instanceof ApplicationTerm) {
+			ApplicationTerm appTerm = (ApplicationTerm) term;
+			FunctionSymbol fun = appTerm.getFunction();
+			return fun.getApplicationString().equals("true");
+		} else {
+			return false;
+		}
+	}
+	
 	/**
 	 * A constant is an ApplicationTerm with zero parameters whose function
 	 * symbol is not intern.
