@@ -19,18 +19,18 @@ a {
 
 .link-emph a {
   /* text-decoration: underline; */
-  background-color: #DDD;
+  background-color: #E6E6E6;
   
-  -webkit-box-shadow: 0px 0px 20px 3px #EEE inset;
-     -moz-box-shadow: 0px 0px 20px 3px #EEE inset;
-      -ms-box-shadow: 0px 0px 20px 3px #EEE inset;
-       -o-box-shadow: 0px 0px 20px 3px #EEE inset;
-          box-shadow: 0px 0px 20px 3px #EEE inset;
+  -webkit-box-shadow: 0px 0px 20px 3px #FAFAFA inset;
+     -moz-box-shadow: 0px 0px 20px 3px #FAFAFA inset;
+      -ms-box-shadow: 0px 0px 20px 3px #FAFAFA inset;
+       -o-box-shadow: 0px 0px 20px 3px #FAFAFA inset;
+          box-shadow: 0px 0px 20px 3px #FAFAFA inset;
 }
 
 .link-emph a:hover {
   /* color: #000; */
-  background-color: #F6F6F6;
+  background-color: #FFF;
 }
 
 .animate .link-emph a {
@@ -637,6 +637,10 @@ body {
   opacity: .5;
 }
 
+.button.hidden.active:hover > .box {
+  opacity: 1;
+}
+
 .button:active > .box,
 .button.active > .box {
   opacity: 1;
@@ -711,6 +715,59 @@ body {
   right: auto;
 }
 
+#info-bar div:hover .tooltip {
+	display: block;
+}
+
+#header div.tooltip {
+	display: none;
+	position: absolute;
+  padding: 8px;
+  margin: 6px;
+  
+  background-color: #888;
+  line-height: initial;
+  
+  cursor: pointer;
+}
+
+#info-bar .hide .tooltip {
+  left: 50px;
+  
+  box-shadow: 2px 1px 6px -3px #000;
+}
+
+#info-bar .close .tooltip {
+  right: 50px;
+  
+  box-shadow: -2px 1px 6px -3px #000;
+}
+
+.tooltip div {
+	position: absolute;
+  top: 10px;
+  height: 10px;
+  width: 10px;
+  background-color: #888;
+  
+  -webkit-transform: rotateZ(45deg);
+}
+
+#info-bar .hide .tooltip div {
+ left: -5px;
+}
+
+#info-bar .close .tooltip div {
+  right: -5px;
+}
+
+.tooltip label {
+  color: #FFF;
+  font-size: 50%;
+  
+  cursor: pointer;
+}
+
 .shadow {
   position: relative;
   display: block;
@@ -751,7 +808,7 @@ body {
   display: table-cell;
   width: 100%;
   height: 100%; 
-  background-color: #EEE;
+  background-color: #FAFAFA;
   
   z-index: 0;
 }
@@ -1505,7 +1562,7 @@ div.msg-description {
 }
 
 .toolchain-name, .toolchain-buttons > a {
-  background-color: #F3F3F3;
+  background-color: #F6F6F6;
 }
 
 .toolchain-description {

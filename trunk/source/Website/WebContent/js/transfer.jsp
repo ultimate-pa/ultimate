@@ -128,6 +128,7 @@ var _SETTINGS = {
 	                           "type": "<c:out value="${setting.getType()}" default="" />",
 	                           "label": "<c:out value="${setting.getSettingDescription()}" default="" />",
 	                           "value": "<c:out value="${setting.getDefaultValue()[0]}" default="" />",
+	                           "prefix": "sel_tc_<c:out value="${tc.getId()}" default="" />_<c:out value="${tool.getHTMLId()}" default="" />_",
 	                           "items":
 		                           [
 		                              <c:forEach items="${setting.getValues()}" var="item">

@@ -262,8 +262,8 @@ Params:
         </div>
       <div id="info-bar" class="line-top">
         <div id="info-label" class="font-normal color-lighter"></div>
-        <div class="hide"></div>
-        <div class="close"></div>
+        <div class="hide"><div class="tooltip"><div></div><label>remind</label></div></div>
+        <div class="close"><div class="tooltip"><div></div><label>close</label></div></div>
       </div>
       <div class="shadow down"></div>
     </div>

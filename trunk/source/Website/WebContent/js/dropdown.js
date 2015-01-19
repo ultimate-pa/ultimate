@@ -151,6 +151,9 @@ function onToolSelect(self)
   var play = document.getElementById('play');
   var text = self.selected.evalText || play.dataset.defaultVal;
   play.firstElementChild.innerHTML = text;
+  
+  // auto-select task, when current language is set and available
+  setTimeout(function(c){ Arr.foreach(c, function(k,v) { if(editorHasCode() && _ITEMS[v].language == _CUR_LANG) _ITEMS[v].onselect(); }); }, 50, self.selected.children);
 
   if(_EVENT) window.clearTimeout(_EVENT);
   _EVENT = setTimeout(alignHeaderWidth, 50);
@@ -379,7 +382,8 @@ function getDropdownTemplate(id, label, className)
   
   div.firstElementChild.onclick = function()
   {
-    $(this).addClass( 'active' );
+    if($(this).hasClass( 'active' )) $(this).removeClass( 'active' );
+    else $(this).addClass( 'active' );
     var val = _SPINNER[this.id].selected ? _SPINNER[this.id].selected.id : '';
     changeSetting(this.id, val);
   };

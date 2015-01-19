@@ -118,6 +118,12 @@ function removeAnnotation(i)
   _EDITOR.session.setAnnotations(annot);
 }
 
+function editorHasCode(code)
+{
+    code = code || $.trim(_EDITOR.getSession().getValue());
+    return !(code == '' || code == _INIT_CODE);
+}
+
 function addResults(arr, now)
 {
     if(!now) { setTimeout(addResults, _ANIMATE*500, arr, true); return; }
@@ -205,7 +211,9 @@ function getSerializedSettings()
     for(var i in _SPINNER.settings.children)
     {
       if(i == 'length') continue;
-      serializedSettings += '&'+i+'='+encodeURIComponent(_SPINNER.settings.children[i].value);
+      // TODO: prefix is ugly, try to remove it
+      // serializedSettings += '&'+i+'='+encodeURIComponent(_SPINNER.settings.children[i].value);
+      serializedSettings += '&'+_SPINNER.settings.children[i].prefix+i+'='+encodeURIComponent(_SPINNER.settings.children[i].value);
     }
     return serializedSettings;
 }
