@@ -346,10 +346,14 @@ public class TraceChecker {
 		m_TraceCheckerBenchmarkGenerator = getBenchmarkGenerator();
 		m_assertCodeBlocksIncrementally = assertCodeBlocksIncrementally;
 		m_IsSafe = checkTrace();
-		if (m_IsSafe != LBool.UNSAT && computeRcfgProgramExecution) {
-			computeRcfgProgramExecution();
-		} else {
+		if (m_IsSafe == LBool.UNSAT) {
 			if (unlockSmtSolverAlsoIfUnsat) {
+				unlockSmtManager();
+			}
+		} else {
+			if (computeRcfgProgramExecution) {
+				computeRcfgProgramExecution();
+			} else {
 				unlockSmtManager();
 			}
 		}
