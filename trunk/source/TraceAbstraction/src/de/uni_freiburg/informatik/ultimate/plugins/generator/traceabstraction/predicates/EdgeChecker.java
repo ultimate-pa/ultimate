@@ -83,11 +83,7 @@ public class EdgeChecker {
 	}
 
 	public LBool assertPrecondition(IPredicate p) {
-		if (m_SmtManager.getStatus() == SmtManager.Status.IDLE) {
-			m_SmtManager.setStatus(Status.EDGECHECK);
-			m_Script.echo(new QuotedObject(s_StartEdgeCheck));
-		}
-		assert (m_SmtManager.getStatus() == Status.EDGECHECK) : "SmtManager is busy";
+		assert m_SmtManager.isLockOwner(this);
 		assert m_PrePred == null : "PrePred already asserted";
 		assert m_CodeBlock != null : "Assert CodeBlock first!";
 		m_PrePred = p;
@@ -148,7 +144,7 @@ public class EdgeChecker {
 	
 
 	public void unAssertPrecondition() {
-		assert m_SmtManager.getStatus() == Status.EDGECHECK : "No edgecheck in progress";
+		assert m_SmtManager.isLockOwner(this);
 		assert m_PrePred != null : "No PrePred asserted";
 		m_PrePred = null;
 		m_Script.pop(1);
@@ -156,18 +152,14 @@ public class EdgeChecker {
 			m_HierConstants.endScope();
 		}
 		if (m_CodeBlock == null) {
-			m_SmtManager.setStatus(Status.IDLE);
-			m_Script.echo(new QuotedObject(s_EndEdgeCheck));
+			throw new AssertionError("CodeBlock is asserted first");
 		}
 	}
 	
 	
 	public LBool assertCodeBlock(CodeBlock cb) {
-		if (m_SmtManager.getStatus() == Status.IDLE) {
-			m_SmtManager.setStatus(Status.EDGECHECK);
-			m_Script.echo(new QuotedObject(s_StartEdgeCheck));
-		}
-		assert (m_SmtManager.getStatus() == Status.EDGECHECK) : "SmtManager is busy";
+		m_SmtManager.lock(this);
+		m_Script.echo(new QuotedObject(s_StartEdgeCheck));
 		assert m_CodeBlock == null : "CodeBlock already asserted";
 		m_CodeBlock = cb;
 		m_EdgeCheckerBenchmark.continueEdgeCheckerTime();
@@ -233,12 +225,13 @@ public class EdgeChecker {
 
 	
 	public void unAssertCodeBlock() {
+		assert m_SmtManager.isLockOwner(this);
 		assert m_CodeBlock != null : "No CodeBlock asserted";
 		m_CodeBlock = null;
 		m_HierConstants = null;
 		m_Script.pop(1);
 		if (m_PrePred == null) {
-			m_SmtManager.setStatus(Status.IDLE);
+			m_SmtManager.unlock(this);
 			m_Script.echo(new QuotedObject(s_EndEdgeCheck));
 		}
 
@@ -246,7 +239,7 @@ public class EdgeChecker {
 	
 	
 	public LBool assertHierPred(IPredicate p) {
-		assert m_SmtManager.getStatus() == Status.EDGECHECK;
+		assert m_SmtManager.isLockOwner(this);
 		assert m_CodeBlock != null : "assert Return first";
 		assert m_CodeBlock instanceof Return : "assert Return first";
 		assert m_HierPred == null : "HierPred already asserted";
@@ -369,7 +362,7 @@ public class EdgeChecker {
 	}
 
 	public void unAssertHierPred() {
-		assert m_SmtManager.getStatus() == Status.EDGECHECK : "No edgecheck in progress";
+		assert m_SmtManager.isLockOwner(this);
 		assert m_HierPred != null : "No HierPred asserted";
 		m_HierPred = null;
 		m_Script.pop(1);

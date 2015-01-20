@@ -61,7 +61,8 @@ public class SmtManager {
 		IDLE, TRACECHECK, CODEBLOCKCHECK1, CODEBLOCKCHECK2, EDGECHECK
 	};
 
-	private Status m_Status = Status.IDLE;
+//	private Status m_Status = Status.IDLE;
+	private Object m_LockOwner = null;
 
 	private final Boogie2SMT m_Boogie2Smt;
 	private final Script m_Script;
@@ -127,9 +128,9 @@ public class SmtManager {
 		m_ModifiableGlobals = modifiableGlobals;
 	}
 
-	public boolean isIdle() {
-		return getStatus() == Status.IDLE;
-	}
+//	public boolean isIdle() {
+//		return getStatus() == Status.IDLE;
+//	}
 
 	// public Smt2Boogie getSmt2Boogie() {
 	// return m_Smt2Boogie;
@@ -350,29 +351,21 @@ public class SmtManager {
 	// }
 
 	public void startTraceCheck() {
-		if (getStatus() != Status.IDLE) {
-			throw new AssertionError("SmtManager is busy");
-		} else {
-			assert m_TraceCheckStartTime == Long.MIN_VALUE;
-			m_TraceCheckStartTime = System.nanoTime();
-			setStatus(Status.TRACECHECK);
-			m_Script.echo(new QuotedObject("starting trace check"));
-			m_IndexedConstants = new ScopedHashMap<String, Term>();
-			m_Script.push(1);
-		}
+		lock(this);
+		assert m_TraceCheckStartTime == Long.MIN_VALUE;
+		m_TraceCheckStartTime = System.nanoTime();
+		m_Script.echo(new QuotedObject("starting trace check"));
+		m_IndexedConstants = new ScopedHashMap<String, Term>();
+		m_Script.push(1);
 	}
 
 	public void endTraceCheck() {
-		if (getStatus() != Status.TRACECHECK) {
-			throw new AssertionError("SmtManager is not performing a traceCheck");
-		} else {
-			m_TraceCheckTime += (System.nanoTime() - m_TraceCheckStartTime);
-			m_TraceCheckStartTime = Long.MIN_VALUE;
-			m_Script.echo(new QuotedObject("finished trace check"));
-			setStatus(Status.IDLE);
-			m_IndexedConstants = null;
-			m_Script.pop(1);
-		}
+		m_TraceCheckTime += (System.nanoTime() - m_TraceCheckStartTime);
+		m_TraceCheckStartTime = Long.MIN_VALUE;
+		m_Script.echo(new QuotedObject("finished trace check"));
+		m_IndexedConstants = null;
+		m_Script.pop(1);
+		unlock(this);
 	}
 
 	// public void push() {
@@ -583,7 +576,7 @@ public class SmtManager {
 	}
 
 	public LBool isCovered(Term formula1, Term formula2) {
-		assert (getStatus() == Status.IDLE) : "SmtManager is busy";
+		assert !isLocked() : "SmtManager is busy";
 		long startTime = System.nanoTime();
 
 		LBool result = null;
@@ -624,7 +617,7 @@ public class SmtManager {
 	 *         question.
 	 */
 	public LBool isInductive(IPredicate ps1, CodeBlock ta, IPredicate ps2, boolean expectUnsat) {
-		assert (getStatus() == Status.IDLE) : "SmtManager is busy";
+		assert !isLocked() : "SmtManager is busy";
 		long startTime = System.nanoTime();
 
 		if (isDontCare(ps1) || isDontCare(ps2)) {
@@ -790,7 +783,7 @@ public class SmtManager {
 	}
 
 	public LBool isInductiveCall(IPredicate ps1, Call ta, IPredicate ps2, boolean expectUnsat) {
-		assert (getStatus() == Status.IDLE) : "SmtManager is busy";
+		assert !isLocked() : "SmtManager is busy";
 		long startTime = System.nanoTime();
 
 		if (isDontCare(ps1) || isDontCare(ps2)) {
@@ -849,7 +842,7 @@ public class SmtManager {
 	}
 
 	public LBool isInductiveReturn(IPredicate ps1, IPredicate psk, Return ta, IPredicate ps2, boolean expectUnsat) {
-		assert (getStatus() == Status.IDLE) : "SmtManager is busy";
+		assert !isLocked() : "SmtManager is busy";
 		long startTime = System.nanoTime();
 
 		if (isDontCare(ps1) || isDontCare(ps2) || isDontCare(psk)) {
@@ -1588,12 +1581,46 @@ public class SmtManager {
 		return buchi;
 	}
 
-	Status getStatus() {
-		return m_Status;
+//	Status getStatus() {
+//		return m_Status;
+//	}
+//
+//	void setStatus(Status status) {
+//		m_Status = status;
+//	}
+	
+	public void lock(Object lockOwner) {
+		if (lockOwner == null) {
+			throw new NullPointerException("cannot be locked by null");
+		} else {
+			if (m_LockOwner == null) {
+				m_LockOwner = lockOwner;
+				mLogger.debug("SmtManager locked by " + lockOwner.toString());
+			} else {
+				throw new IllegalStateException("SmtManager already locked by " + m_LockOwner.toString());
+			}
+		}
 	}
-
-	void setStatus(Status status) {
-		m_Status = status;
+	
+	public void unlock(Object lockOwner) {
+		if (m_LockOwner == null) {
+			throw new IllegalStateException("SmtManager not locked");
+		} else {
+			if (m_LockOwner == lockOwner) {
+				m_LockOwner = null;
+				mLogger.debug("SmtManager unlocked by " + lockOwner.toString());
+			} else {
+				throw new IllegalStateException("SmtManager locked by " + m_LockOwner.toString());
+			}
+		}
+	}
+	
+	public boolean isLocked() {
+		return m_LockOwner != null;
+	}
+	
+	boolean isLockOwner(Object allegedLockOwner) {
+		return allegedLockOwner == m_LockOwner;
 	}
 
 	private class AuxilliaryTerm extends Term {

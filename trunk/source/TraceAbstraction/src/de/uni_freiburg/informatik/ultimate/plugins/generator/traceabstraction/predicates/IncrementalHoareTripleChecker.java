@@ -192,11 +192,7 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker {
 	
 
 	private LBool assertPrecondition(IPredicate p) {
-		if (m_SmtManager.getStatus() == SmtManager.Status.IDLE) {
-			m_SmtManager.setStatus(Status.EDGECHECK);
-			m_Script.echo(new QuotedObject(s_StartEdgeCheck));
-		}
-		assert (m_SmtManager.getStatus() == Status.EDGECHECK) : "SmtManager is busy";
+		assert m_SmtManager.isLockOwner(this);
 		assert m_AssertedState == null : "PrePred already asserted";
 		assert m_AssertedCodeBlock != null : "Assert CodeBlock first!";
 		m_AssertedState = p;
@@ -257,7 +253,7 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker {
 	
 
 	private void unAssertPrecondition() {
-		assert m_SmtManager.getStatus() == Status.EDGECHECK : "No edgecheck in progress";
+		assert m_SmtManager.isLockOwner(this);
 		assert m_AssertedState != null : "No PrePred asserted";
 		m_AssertedState = null;
 		m_Script.pop(1);
@@ -265,18 +261,14 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker {
 			m_HierConstants.endScope();
 		}
 		if (m_AssertedCodeBlock == null) {
-			m_SmtManager.setStatus(Status.IDLE);
-			m_Script.echo(new QuotedObject(s_EndEdgeCheck));
+			throw new AssertionError("CodeBlock is assigned first");
 		}
 	}
 	
 	
 	private LBool assertCodeBlock(CodeBlock cb) {
-		if (m_SmtManager.getStatus() == Status.IDLE) {
-			m_SmtManager.setStatus(Status.EDGECHECK);
-			m_Script.echo(new QuotedObject(s_StartEdgeCheck));
-		}
-		assert (m_SmtManager.getStatus() == Status.EDGECHECK) : "SmtManager is busy";
+		m_SmtManager.lock(this);
+		m_Script.echo(new QuotedObject(s_StartEdgeCheck));
 		assert m_AssertedCodeBlock == null : "CodeBlock already asserted";
 		m_AssertedCodeBlock = cb;
 		m_EdgeCheckerBenchmark.continueEdgeCheckerTime();
@@ -347,15 +339,17 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker {
 		m_HierConstants = null;
 		m_Script.pop(1);
 		if (m_AssertedState == null) {
-			m_SmtManager.setStatus(Status.IDLE);
+			m_SmtManager.unlock(this);
 			m_Script.echo(new QuotedObject(s_EndEdgeCheck));
+		} else {
+			throw new AssertionError("CodeBlock is unasserted last");
 		}
 
 	}
 	
 	
 	private LBool assertHierPred(IPredicate p) {
-		assert m_SmtManager.getStatus() == Status.EDGECHECK;
+		assert m_SmtManager.isLockOwner(this);
 		assert m_AssertedCodeBlock != null : "assert Return first";
 		assert m_AssertedCodeBlock instanceof Return : "assert Return first";
 		assert m_AssertedHier == null : "HierPred already asserted";
@@ -478,7 +472,7 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker {
 	}
 
 	private void unAssertHierPred() {
-		assert m_SmtManager.getStatus() == Status.EDGECHECK : "No edgecheck in progress";
+		assert m_SmtManager.isLockOwner(this);
 		assert m_AssertedHier != null : "No HierPred asserted";
 		m_AssertedHier = null;
 		m_Script.pop(1);
