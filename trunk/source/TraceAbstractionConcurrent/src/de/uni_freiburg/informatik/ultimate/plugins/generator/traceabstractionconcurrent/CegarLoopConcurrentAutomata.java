@@ -151,7 +151,7 @@ public class CegarLoopConcurrentAutomata extends BasicCegarLoop {
 		mLogger.info("Return Transitions: " + epd.m_AnswerReturnAutomaton + " answers given by automaton "
 				+ epd.m_AnswerReturnCache + " answers given by cache " + epd.m_AnswerReturnSolver
 				+ " answers given by solver");
-		assert m_SmtManager.isIdle();
+		assert !m_SmtManager.isLocked();
 		assert (new InductivityCheck(m_InterpolAutomaton, new EdgeChecker(m_SmtManager, m_ModGlobVarManager), false,
 				true, mLogger)).getResult();
 		// do the following check only to obtain logger messages of
