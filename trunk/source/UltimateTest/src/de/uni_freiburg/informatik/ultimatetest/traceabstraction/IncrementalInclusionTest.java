@@ -49,8 +49,11 @@ public class IncrementalInclusionTest extends
 		"automizer/incrementalInclusion/IncrementalInclusionViaDifference.epf",
 		"automizer/incrementalInclusion/IncrementalInclusion2.epf",
 		"automizer/incrementalInclusion/IncrementalInclusion3.epf",
+		"automizer/incrementalInclusion/IncrementalInclusion3_2.epf",
 		"automizer/incrementalInclusion/IncrementalInclusion4.epf",
+		"automizer/incrementalInclusion/IncrementalInclusion4_2.epf",
 		"automizer/incrementalInclusion/IncrementalInclusion5.epf",
+		"automizer/incrementalInclusion/IncrementalInclusion5_2.epf",
 	};
 	
 	/**
