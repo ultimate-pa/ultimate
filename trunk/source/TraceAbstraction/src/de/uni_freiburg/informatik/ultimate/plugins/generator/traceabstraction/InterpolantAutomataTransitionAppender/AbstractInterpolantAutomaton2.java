@@ -35,7 +35,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
  */
 public abstract class AbstractInterpolantAutomaton2 implements INestedWordAutomatonSimple<CodeBlock, IPredicate> {
 	
-	public enum Mode { ON_THE_FLY_CONSTRUCTION, READ_ONLY }
+	public enum Mode { ON_DEMAND_CONSTRUCTION, READ_ONLY }
 
 	protected final IUltimateServiceProvider m_Services;
 	protected final Logger mLogger;
@@ -47,7 +47,7 @@ public abstract class AbstractInterpolantAutomaton2 implements INestedWordAutoma
 	protected final NestedWordAutomatonCache<CodeBlock, IPredicate> m_Result;
 	protected final NestedWordAutomaton<CodeBlock, IPredicate> m_InterpolantAutomaton;
 
-	private Mode m_Mode = Mode.ON_THE_FLY_CONSTRUCTION;
+	private Mode m_Mode = Mode.ON_DEMAND_CONSTRUCTION;
 
 	private final InternalSuccessorComputationHelper m_InSucComp;
 	private final CallSuccessorComputationHelper m_CaSucComp;
@@ -86,17 +86,17 @@ public abstract class AbstractInterpolantAutomaton2 implements INestedWordAutoma
 	}
 	
 	/**
-	 * Switch the mode to ON_THE_FLY_CONSTRUCTION. In this mode the automaton
+	 * Switch the mode to ON_DEMAND_CONSTRUCTION. In this mode the automaton
 	 * behaves as follows:
 	 * If the automaton is asked if a transition exists, the automaton checks
 	 * the rules that define this automaton (validity of Hoare triples) and
 	 * constructs the transition on demand.
 	 */
-	public final void switchToOnTheFlyConstructionMode() {
-		if (m_Mode == Mode.ON_THE_FLY_CONSTRUCTION) {
-			throw new AssertionError("already in mode ON_THE_FLY_CONSTRUCTION");
+	public final void switchToOnDemandConstructionMode() {
+		if (m_Mode == Mode.ON_DEMAND_CONSTRUCTION) {
+			throw new AssertionError("already in mode ON_DEMAND_CONSTRUCTION");
 		} else {
-			m_Mode = Mode.ON_THE_FLY_CONSTRUCTION;
+			m_Mode = Mode.ON_DEMAND_CONSTRUCTION;
 			mLogger.info(switchToOnTheFlyConstructionMessage());
 		}
 	}
@@ -182,7 +182,7 @@ public abstract class AbstractInterpolantAutomaton2 implements INestedWordAutoma
 	@Override
 	public final Iterable<OutgoingInternalTransition<CodeBlock, IPredicate>> internalSuccessors(IPredicate state,
 			CodeBlock letter) {
-		if (m_Mode == Mode.ON_THE_FLY_CONSTRUCTION) {
+		if (m_Mode == Mode.ON_DEMAND_CONSTRUCTION) {
 			if (!areInternalSuccsComputed(state, letter)) {
 				computeSuccs(state, null, letter, m_InSucComp);
 			}
@@ -200,7 +200,7 @@ public abstract class AbstractInterpolantAutomaton2 implements INestedWordAutoma
 
 	@Override
 	public final Iterable<OutgoingInternalTransition<CodeBlock, IPredicate>> internalSuccessors(IPredicate state) {
-		if (m_Mode == Mode.ON_THE_FLY_CONSTRUCTION) {
+		if (m_Mode == Mode.ON_DEMAND_CONSTRUCTION) {
 			for (CodeBlock letter : lettersInternal(state)) {
 				if (!areInternalSuccsComputed(state, letter)) {
 					computeSuccs(state, null, letter, m_InSucComp);
@@ -214,7 +214,7 @@ public abstract class AbstractInterpolantAutomaton2 implements INestedWordAutoma
 	public final Iterable<OutgoingCallTransition<CodeBlock, IPredicate>> callSuccessors(IPredicate state,
 			CodeBlock letter) {
 		Call call = (Call) letter;
-		if (m_Mode == Mode.ON_THE_FLY_CONSTRUCTION) {
+		if (m_Mode == Mode.ON_DEMAND_CONSTRUCTION) {
 			if (!areCallSuccsComputed(state, call)) {
 				computeSuccs(state, null, letter, m_CaSucComp);
 			}
@@ -229,7 +229,7 @@ public abstract class AbstractInterpolantAutomaton2 implements INestedWordAutoma
 
 	@Override
 	public final Iterable<OutgoingCallTransition<CodeBlock, IPredicate>> callSuccessors(IPredicate state) {
-		if (m_Mode == Mode.ON_THE_FLY_CONSTRUCTION) {
+		if (m_Mode == Mode.ON_DEMAND_CONSTRUCTION) {
 			for (CodeBlock letter : lettersCall(state)) {
 				Call call = (Call) letter;
 				if (!m_Result.callSuccessors(state, call).iterator().hasNext()) {
@@ -244,7 +244,7 @@ public abstract class AbstractInterpolantAutomaton2 implements INestedWordAutoma
 	public final Iterable<OutgoingReturnTransition<CodeBlock, IPredicate>> returnSucccessors(IPredicate state,
 			IPredicate hier, CodeBlock letter) {
 		Return ret = (Return) letter;
-		if (m_Mode == Mode.ON_THE_FLY_CONSTRUCTION) {
+		if (m_Mode == Mode.ON_DEMAND_CONSTRUCTION) {
 			if (!areReturnSuccsComputed(state, hier, ret)) {
 				computeSuccs(state, hier, letter, m_ReSucComp);
 			}
@@ -260,7 +260,7 @@ public abstract class AbstractInterpolantAutomaton2 implements INestedWordAutoma
 	@Override
 	public final Iterable<OutgoingReturnTransition<CodeBlock, IPredicate>> returnSuccessorsGivenHier(IPredicate state,
 			IPredicate hier) {
-		if (m_Mode == Mode.ON_THE_FLY_CONSTRUCTION) {
+		if (m_Mode == Mode.ON_DEMAND_CONSTRUCTION) {
 			for (CodeBlock letter : lettersReturn(state)) {
 				Return ret = (Return) letter;
 				if (!m_Result.returnSucccessors(state, hier, ret).iterator().hasNext()) {

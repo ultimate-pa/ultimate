@@ -221,7 +221,7 @@ public class IncrementalInclusionCegarLoop extends BasicCegarLoop {
 	
 	private void switchAllInterpolantAutomataToOnTheFlyConstructionMode() {
 		for (DeterministicInterpolantAutomaton2 ia : m_InterpolantAutomata) {
-			ia.switchToOnTheFlyConstructionMode();
+			ia.switchToOnDemandConstructionMode();
 		}
 	}
 	
