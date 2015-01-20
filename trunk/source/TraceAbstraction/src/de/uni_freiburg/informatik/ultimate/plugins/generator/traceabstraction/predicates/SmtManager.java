@@ -569,8 +569,8 @@ public class SmtManager {
 		return result;
 	}
 
-	public LBool isCovered(Term formula1, Term formula2) {
-		assert !isLocked() : "SmtManager is busy";
+	public LBool isCovered(Object caller, Term formula1, Term formula2) {
+		assert (m_LockOwner == caller) : "only lock owner may call";
 		long startTime = System.nanoTime();
 
 		LBool result = null;

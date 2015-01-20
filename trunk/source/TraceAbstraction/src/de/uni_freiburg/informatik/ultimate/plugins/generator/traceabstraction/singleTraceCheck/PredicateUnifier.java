@@ -174,7 +174,6 @@ public class PredicateUnifier {
 		if (p != null) {
 			return p;
 		}
-		m_SmtManager.lock(this);
 		HashMap<IPredicate, LBool> impliedPredicates = new HashMap<IPredicate, LBool>();
 		HashMap<IPredicate, LBool> expliedPredicates = new HashMap<IPredicate, LBool>();
 		p = compareWithExistingPredicates(term, vars, impliedPredicates, expliedPredicates);
@@ -209,7 +208,6 @@ public class PredicateUnifier {
 				result = simplifyPredicate(simplifiedTerm, newVars, newProcs.toArray(new String[0]));
 			}
 		}
-		m_SmtManager.unlock(this);
 		addNewPredicate(result, impliedPredicates, expliedPredicates);
 		return result;
 	}
@@ -270,20 +268,23 @@ public class PredicateUnifier {
 		Term closedTerm = PredicateUtils.computeClosedFormula(term, vars, m_SmtManager.getScript());
 		assert impliedPredicats.isEmpty();
 		assert expliedPredicates.isEmpty();
+		m_SmtManager.lock(this);
 		m_SmtManager.getScript().echo(new QuotedObject("begin unification"));
 		for (Term interpolantTerm : m_Term2Predicates.keySet()) {
 			IPredicate interpolant = m_Term2Predicates.get(interpolantTerm);
 			Term interpolantClosedTerm = interpolant.getClosedFormula();
-			LBool implies = m_SmtManager.isCovered(closedTerm, interpolantClosedTerm);
+			LBool implies = m_SmtManager.isCovered(this, closedTerm, interpolantClosedTerm);
 			impliedPredicats.put(interpolant, implies);
-			LBool explies = m_SmtManager.isCovered(interpolantClosedTerm, closedTerm);
+			LBool explies = m_SmtManager.isCovered(this, interpolantClosedTerm, closedTerm);
 			expliedPredicates.put(interpolant, explies);
 			if (implies == LBool.UNSAT && explies == LBool.UNSAT) {
 				m_SmtManager.getScript().echo(new QuotedObject("end unification"));
+				m_SmtManager.unlock(this);
 				return interpolant;
 			}
 		}
 		m_SmtManager.getScript().echo(new QuotedObject("end unification"));
+		m_SmtManager.unlock(this);
 		return null;
 	}
 
