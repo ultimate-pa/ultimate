@@ -96,7 +96,7 @@ public class SmtManager {
 
 	protected int m_SerialNumber;
 
-	private long m_TraceCheckStartTime = Long.MIN_VALUE;
+//	private long m_TraceCheckStartTime = Long.MIN_VALUE;
 
 	private Set<BoogieVar> m_EmptyVars = Collections.emptySet();
 
@@ -350,22 +350,16 @@ public class SmtManager {
 	// return true;
 	// }
 
-	public void startTraceCheck() {
-		lock(this);
-		assert m_TraceCheckStartTime == Long.MIN_VALUE;
-		m_TraceCheckStartTime = System.nanoTime();
+	public void startTraceCheck(Object lockClaimer) {
+		lock(lockClaimer);
 		m_Script.echo(new QuotedObject("starting trace check"));
-		m_IndexedConstants = new ScopedHashMap<String, Term>();
 		m_Script.push(1);
 	}
 
-	public void endTraceCheck() {
-		m_TraceCheckTime += (System.nanoTime() - m_TraceCheckStartTime);
-		m_TraceCheckStartTime = Long.MIN_VALUE;
+	public void endTraceCheck(Object lockOwner) {
 		m_Script.echo(new QuotedObject("finished trace check"));
-		m_IndexedConstants = null;
 		m_Script.pop(1);
-		unlock(this);
+		unlock(lockOwner);
 	}
 
 	// public void push() {

@@ -369,7 +369,7 @@ public class TraceChecker {
 	 */
 	protected LBool checkTrace() {
 		LBool isSafe;
-		m_SmtManager.startTraceCheck();
+		m_SmtManager.startTraceCheck(this);
 	
 		m_TraceCheckerBenchmarkGenerator.start(TraceCheckerBenchmarkType.s_SsaConstruction);
 		m_Nsb = new NestedSsaBuilder(m_Trace, m_SmtManager, m_DefaultTransFormulas,
@@ -525,7 +525,7 @@ public class TraceChecker {
 		return result;
 	}
 
-	public Word<CodeBlock> getTrace() {
+	public NestedWord<CodeBlock> getTrace() {
 		return m_Trace;
 	}
 
@@ -553,7 +553,7 @@ public class TraceChecker {
 	}
 
 	protected void unlockSmtManager() {
-		m_SmtManager.endTraceCheck();
+		m_SmtManager.endTraceCheck(this);
 	}
 
 

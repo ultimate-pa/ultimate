@@ -36,7 +36,7 @@ public abstract class InterpolatingTraceChecker extends TraceChecker implements 
 	protected IPredicate[] m_Interpolants;
 	
 	protected void unlockSmtManager() {
-		m_SmtManager.endTraceCheck();
+		super.unlockSmtManager();
 		if (m_Interpolants != null) {
 			assert !inductivityOfSequenceCanBeRefuted();
 		}

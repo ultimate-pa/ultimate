@@ -67,7 +67,8 @@ public class NestedInterpolantsBuilder {
 
 	public NestedInterpolantsBuilder(SmtManager smtManager, NestedFormulas<Term, Term> annotatdSsa,
 			Map<Term, BoogieVar> m_constants2BoogieVar, PredicateUnifier predicateBuilder,
-			Set<Integer> interpolatedPositions, boolean treeInterpolation, Logger logger) {
+			Set<Integer> interpolatedPositions, boolean treeInterpolation, Logger logger, 
+			TraceChecker traceChecker) {
 		mLogger = logger;
 		m_TreeInterpolation = treeInterpolation;
 		m_Script = smtManager.getScript();
@@ -80,7 +81,7 @@ public class NestedInterpolantsBuilder {
 		m_Trace = annotatdSsa.getTrace();
 
 		computeCraigInterpolants();
-		m_SmtManager.endTraceCheck();
+		traceChecker.unlockSmtManager();
 		for (int i = 0; i < m_CraigInterpolants.length; i++) {
 			logger.debug(new DebugMessage("NestedInterpolant {0}: {1}", i, m_CraigInterpolants[i]));
 		}

@@ -21,51 +21,10 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.INTERPOLATION;
 
 /**
- * Check if a trace fulfills a specification. Provide a Hoare annotation if the
- * check was positive, provide an execution (that violates the specification) if
- * the check was negative.
- * <p>
- * Given
- * <ul>
- * <li>a precondition stated by predicate φ_0
- * <li>a postcondition stated by predicate φ_n
- * <li>a trace (which is a word of CodeBlocks) cb_0 cb_2 ... cb_{n-1},
- * </ul>
- * check if the trace always fulfills the postcondition φ_n if the precondition
- * φ_0 holds before the execution of the trace, i.e. we check if the following
- * inclusion of predicates is valid. post(φ_0, cb_1 cb_2 ... cb_n) ⊆ φ_n
- * <p>
- * A feasibility check of a trace can be seen as the special case of this trace
- * check. A trace is feasible if and only if the trace does not fulfill the
- * specification given by the precondition <i>true</i> and the postcondition
- * <i>false</i>. See Example1.
- * <p>
- * Example1: If
- * <ul>
- * <li>the precondition is the predicate <i>true</i>,
- * <li>the postcondition is the predicate <i>false</i>,
- * <li>and the trace cb_0 cb_1 is x:=0; x!=-1;,
- * </ul>
- * <p>
- * then the trace fulfills its specification.
- * <p>
- * Example2: If
- * <ul>
- * <li>the precondition is the predicate x==0,
- * <li>the postcondition is the predicate x==1,
- * <li>and the trace cb_0 cb_1 is x++; x++;,
- * </ul>
- * <p>
- * then the trace does not fulfill its specification.
- * <p>
- * If the trace fulfills its specification, we can provide a sequence of
- * inductive interpolants which is a sequence of predicates φ_i 0<1<n such the
- * inclusion post(φ_i, cb_i}) ⊆ φ_{i+1} holds for 0⩽i<n. This sequence of
- * predicates can be seen as a Hoare annotation of this single trace.
- * <p>
- * If the trace contains calls and returns the TraceChecker will provide nested
- * interpolants.
- * <p>
+ * Uses Craig interpolation for computation of nested interpolants.
+ * Supports two algorithms.
+ * 1. Matthias' recursive algorithm.
+ * 2. Tree interpolation
  * 
  * @author heizmann@informatik.uni-freiburg.de
  */
@@ -188,7 +147,7 @@ public class InterpolatingTraceCheckerCraig extends InterpolatingTraceChecker {
 			throw new AssertionError("You already computed interpolants");
 		}
 		NestedInterpolantsBuilder nib = new NestedInterpolantsBuilder(m_SmtManager, m_AAA.getAnnotatedSsa(),
-				m_Nsb.getConstants2BoogieVar(), m_PredicateUnifier, interpolatedPositions, true, mLogger);
+				m_Nsb.getConstants2BoogieVar(), m_PredicateUnifier, interpolatedPositions, true, mLogger, this);
 		m_Interpolants = nib.getNestedInterpolants();
 		assert !inductivityOfSequenceCanBeRefuted();
 		assert m_Interpolants != null;
@@ -216,7 +175,7 @@ public class InterpolatingTraceCheckerCraig extends InterpolatingTraceChecker {
 				nonPendingCallPositions);
 
 		NestedInterpolantsBuilder nib = new NestedInterpolantsBuilder(m_SmtManager, m_AAA.getAnnotatedSsa(),
-				m_Nsb.getConstants2BoogieVar(), m_PredicateUnifier, newInterpolatedPositions, false, mLogger);
+				m_Nsb.getConstants2BoogieVar(), m_PredicateUnifier, newInterpolatedPositions, false, mLogger, this);
 		m_Interpolants = nib.getNestedInterpolants();
 		IPredicate oldPrecondition = m_Precondition;
 		IPredicate oldPostcondition = m_Postcondition;
