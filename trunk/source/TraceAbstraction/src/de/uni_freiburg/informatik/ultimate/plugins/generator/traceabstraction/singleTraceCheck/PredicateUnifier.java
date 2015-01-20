@@ -174,6 +174,7 @@ public class PredicateUnifier {
 		if (p != null) {
 			return p;
 		}
+		m_SmtManager.lock(this);
 		HashMap<IPredicate, LBool> impliedPredicates = new HashMap<IPredicate, LBool>();
 		HashMap<IPredicate, LBool> expliedPredicates = new HashMap<IPredicate, LBool>();
 		p = compareWithExistingPredicates(term, vars, impliedPredicates, expliedPredicates);
@@ -208,6 +209,7 @@ public class PredicateUnifier {
 				result = simplifyPredicate(simplifiedTerm, newVars, newProcs.toArray(new String[0]));
 			}
 		}
+		m_SmtManager.unlock(this);
 		addNewPredicate(result, impliedPredicates, expliedPredicates);
 		return result;
 	}
