@@ -140,7 +140,7 @@ public class DeterministicInterpolantAutomaton2 extends AbstractInterpolantAutom
 	@Override
 	protected String switchToOnTheFlyConstructionMessage() {
 		StringBuilder sb = new StringBuilder();
-		sb.append("Switched to OnTheFlyConstruction mode: deterministic interpolant automaton has ");
+		sb.append("Switched to On-DemandConstruction mode: deterministic interpolant automaton has ");
 		sb.append(m_Result.size()).append(" states. ");
 		return sb.toString();
 	}
