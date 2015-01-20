@@ -28,7 +28,7 @@ function getResults()
     
     // get trimmed code from editor
     var trimmedCode = $.trim(_EDITOR.getSession().getValue());
-    if (editorHasCode(trimmedCode))
+    if (!editorHasCode(trimmedCode))
     {
       toast('No code to ' + _SPINNER.tool.selected.evalText);
       _EDITOR.focus();

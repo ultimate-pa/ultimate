@@ -68,7 +68,7 @@ var _ITEMS =
                           [
                             <c:forEach items="${tc.getTools()}" var="tool">
                               <c:forEach items="${tool.getUserChangeableSettings()}" var="setting">
-                                "<c:out value="${setting.getSettingIdentifier()}" default="" />",
+                                "<c:out value="${tc.getId()}" default="" />_<c:out value="${setting.getSettingIdentifier()}" default="" />",
                               </c:forEach>
                             </c:forEach>
                           ],
@@ -122,13 +122,14 @@ var _SETTINGS = {
                     <c:forEach items="${w.value.getToolchains()}" var="tc">
 		                  <c:forEach items="${tc.getTools()}" var="tool">
 		                    <c:forEach items="${tool.getUserChangeableSettings()}" var="setting">
-		                      "<c:out value="${setting.getSettingIdentifier()}" default="" />":
+		                      "<c:out value="${tc.getId()}" default="" />_<c:out value="${setting.getSettingIdentifier()}" default="" />":
 		                      {
 	                           "id": "<c:out value="${setting.getSettingIdentifier()}" default="" />",
 	                           "type": "<c:out value="${setting.getType()}" default="" />",
 	                           "label": "<c:out value="${setting.getSettingDescription()}" default="" />",
 	                           "value": "<c:out value="${setting.getDefaultValue()[0]}" default="" />",
-	                           "prefix": "sel_tc_<c:out value="${tc.getId()}" default="" />_<c:out value="${tool.getHTMLId()}" default="" />_",
+                             // "prefix": "sel_tc_<c:out value="${tc.getId()}" default="" />_<c:out value="${tool.getHTMLId()}" default="" />_",
+                             "prefix": "<c:out value="${tc.getId()}" default="" />_",
 	                           "items":
 		                           [
 		                              <c:forEach items="${setting.getValues()}" var="item">
