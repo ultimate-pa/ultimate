@@ -1,18 +1,12 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 
-import de.uni_freiburg.informatik.ultimate.automata.InCaReCounter;
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
-import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
-import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
@@ -26,19 +20,12 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.model.boogie.GlobalBoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionBenchmarks;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.IBenchmarkDataProvider;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.IBenchmarkType;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.EdgeChecker.EdgeCheckerBenchmarkGenerator;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager.Status;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.IPredicateCoverageChecker;
-import de.uni_freiburg.informatik.ultimate.util.Benchmark;
 import de.uni_freiburg.informatik.ultimate.util.ScopedHashMap;
 
 public class IncrementalHoareTripleChecker implements IHoareTripleChecker {
@@ -78,7 +65,7 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker {
 	
 	
 	@Override
-	public HTTV checkInternal(IPredicate pre, CodeBlock cb, IPredicate succ) {
+	public Validity checkInternal(IPredicate pre, CodeBlock cb, IPredicate succ) {
 		if (m_AssertedHier != null) {
 			this.unAssertHierPred();
 			m_AssertedHier = null;
@@ -97,17 +84,17 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker {
 			LBool quickCheck = this.assertPrecondition(pre);
 			m_AssertedState = pre;
 			if (quickCheck == LBool.UNSAT) {
-				return HTTV.VALID;
+				return Validity.VALID;
 			}
 		}
 		assert m_AssertedState == pre && m_AssertedCodeBlock == cb;
-		HTTV result = this.postInternalImplies(succ);
+		Validity result = this.postInternalImplies(succ);
 		return result;
 	}
 	
 	
 	@Override
-	public HTTV checkCall(IPredicate pre, CodeBlock cb, IPredicate succ) {
+	public Validity checkCall(IPredicate pre, CodeBlock cb, IPredicate succ) {
 		if (m_AssertedHier != null) {
 			this.unAssertHierPred();
 			m_AssertedHier = null;
@@ -126,16 +113,16 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker {
 			LBool quickCheck = this.assertPrecondition(pre);
 			m_AssertedState = pre;
 			if (quickCheck == LBool.UNSAT) {
-				return HTTV.VALID;
+				return Validity.VALID;
 			}
 		}
 		assert m_AssertedState == pre && m_AssertedCodeBlock == cb;
-		HTTV result = this.postCallImplies(succ);
+		Validity result = this.postCallImplies(succ);
 		return result;
 	}
 
 	@Override
-	public HTTV checkReturn(IPredicate preLin, IPredicate preHier,
+	public Validity checkReturn(IPredicate preLin, IPredicate preHier,
 			CodeBlock cb, IPredicate succ) {
 		if (m_AssertedHier != preHier || m_AssertedState != preLin || m_AssertedCodeBlock != cb) {
 			if (m_AssertedHier != null) {
@@ -159,17 +146,17 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker {
 				LBool quickCheck = this.assertPrecondition(preLin);
 				m_AssertedState = preLin;
 				if (quickCheck == LBool.UNSAT) {
-					return HTTV.VALID;
+					return Validity.VALID;
 				}
 			}
 			LBool quickCheck = this.assertHierPred(preHier);
 			m_AssertedHier = preHier;
 			if (quickCheck == LBool.UNSAT) {
-				return HTTV.VALID;
+				return Validity.VALID;
 			}
 		}
 		assert m_AssertedState == preLin && m_AssertedHier == preHier && m_AssertedCodeBlock == cb;
-		HTTV result = this.postReturnImplies(succ);
+		Validity result = this.postReturnImplies(succ);
 		return result;
 	}
 	
@@ -483,7 +470,7 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker {
 	
 	
 	
-	private HTTV postInternalImplies(IPredicate p) {
+	private Validity postInternalImplies(IPredicate p) {
 		assert m_AssertedState != null;
 		assert m_AssertedCodeBlock != null;
 		m_EdgeCheckerBenchmark.continueEdgeCheckerTime();
@@ -535,7 +522,7 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker {
 	
 	
 
-	private HTTV postCallImplies(IPredicate p) {
+	private Validity postCallImplies(IPredicate p) {
 		assert m_AssertedState != null;
 		assert (m_AssertedCodeBlock instanceof Call);
 		m_EdgeCheckerBenchmark.continueEdgeCheckerTime();
@@ -584,7 +571,7 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker {
 
 
 
-	private HTTV postReturnImplies(IPredicate p) {
+	private Validity postReturnImplies(IPredicate p) {
 		assert m_AssertedState != null;
 		assert (m_AssertedCodeBlock instanceof Return);
 		assert m_AssertedHier != null;

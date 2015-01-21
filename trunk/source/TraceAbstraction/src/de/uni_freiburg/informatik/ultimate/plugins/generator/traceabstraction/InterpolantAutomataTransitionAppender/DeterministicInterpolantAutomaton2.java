@@ -24,7 +24,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Di
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.EdgeChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SdHoareTripleChecker;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IHoareTripleChecker.HTTV;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IHoareTripleChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.InterpolatingTraceChecker;
@@ -173,10 +173,10 @@ public class DeterministicInterpolantAutomaton2 extends AbstractInterpolantAutom
 			sch.addTransition(resPred, resHier, letter, m_IaFalseState);
 			return;
 		} else {
-			HTTV sat = sch.sdecToFalse(resPred, resHier, letter);
+			Validity sat = sch.sdecToFalse(resPred, resHier, letter);
 			if (sat == null) {
 				sat = sch.computeSuccWithSolver(resPred, resHier, letter, m_IaFalseState);
-				if (sat == HTTV.VALID) {
+				if (sat == Validity.VALID) {
 					sch.addTransition(resPred, resHier, letter, m_IaFalseState);
 					return;
 				}
@@ -190,7 +190,7 @@ public class DeterministicInterpolantAutomaton2 extends AbstractInterpolantAutom
 			} else if (sch.isInductiveSefloop(resPred, resHier, letter, succCand)) {
 				inputSuccs.add(succCand);
 			} else {
-				HTTV sat = null;
+				Validity sat = null;
 				if (m_UseLazyEdgeChecks) {
 					sat = sch.sdLazyEc(resPred, resHier, letter, succCand);
 				} else {
@@ -200,7 +200,7 @@ public class DeterministicInterpolantAutomaton2 extends AbstractInterpolantAutom
 					sat = sch.computeSuccWithSolver(resPred, resHier, letter, succCand);
 				}
 				assert sch.reviewResult(resPred, resHier, letter, succCand, sat);
-				if (sat == HTTV.VALID) {
+				if (sat == Validity.VALID) {
 					inputSuccs.add(succCand);
 				}
 			}
@@ -306,7 +306,7 @@ public class DeterministicInterpolantAutomaton2 extends AbstractInterpolantAutom
 	
 	
 	@Override
-	protected boolean reviewInductiveInternal(IPredicate state, CodeBlock cb, IPredicate succ, HTTV result) {
+	protected boolean reviewInductiveInternal(IPredicate state, CodeBlock cb, IPredicate succ, Validity result) {
 		clearAssertionStack();
 		LBool reviewResult = super.m_SmtManager.isInductive(state, cb, succ);
 		if (satCompatible(result, reviewResult)) {
@@ -320,7 +320,7 @@ public class DeterministicInterpolantAutomaton2 extends AbstractInterpolantAutom
 
 
 	@Override
-	protected boolean reviewInductiveCall(IPredicate state, Call cb, IPredicate succ, HTTV result) {
+	protected boolean reviewInductiveCall(IPredicate state, Call cb, IPredicate succ, Validity result) {
 		clearAssertionStack();
 		LBool reviewResult = super.m_SmtManager.isInductiveCall(state, cb, succ);
 		if (satCompatible(result, reviewResult)) {
@@ -333,7 +333,7 @@ public class DeterministicInterpolantAutomaton2 extends AbstractInterpolantAutom
 	}
 	
 	@Override
-	protected boolean reviewInductiveReturn(IPredicate state, IPredicate hier, Return cb, IPredicate succ, HTTV result) {
+	protected boolean reviewInductiveReturn(IPredicate state, IPredicate hier, Return cb, IPredicate succ, Validity result) {
 		clearAssertionStack();
 		LBool reviewResult = super.m_SmtManager.isInductiveReturn(state, hier, cb, succ);
 		if (satCompatible(result, reviewResult)) {
@@ -348,7 +348,7 @@ public class DeterministicInterpolantAutomaton2 extends AbstractInterpolantAutom
 	/**
 	 * Return true if results are compatible or one is UNKNOWN
 	 */
-	private boolean satCompatible(HTTV sat1, LBool sat2) {
+	private boolean satCompatible(Validity sat1, LBool sat2) {
 		switch (sat1) {
 		case VALID:
 			return (sat2 == LBool.UNSAT || sat2 == LBool.UNKNOWN);

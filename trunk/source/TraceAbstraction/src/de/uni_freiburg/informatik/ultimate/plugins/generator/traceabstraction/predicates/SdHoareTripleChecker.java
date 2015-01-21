@@ -17,7 +17,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cal
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.EdgeChecker.EdgeCheckerBenchmarkGenerator;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IHoareTripleChecker.HTTV;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IHoareTripleChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.IPredicateCoverageChecker;
 
 public class SdHoareTripleChecker {
@@ -78,16 +78,16 @@ public class SdHoareTripleChecker {
 	 *
 	 * FIXME: Check for precondition false, not for precondition true.
 	 */
-	public HTTV sdecInternalToFalse(IPredicate pre, CodeBlock cb) {
+	public Validity sdecInternalToFalse(IPredicate pre, CodeBlock cb) {
 		Infeasibility infeasiblity = cb.getTransitionFormula().isInfeasible();
 		if (infeasiblity == Infeasibility.UNPROVEABLE) {
 			if (SmtUtils.isTrue(pre.getFormula())) {
 				m_EdgeCheckerBenchmark.getSdCounter().incIn();
-				return HTTV.UNKNOWN;
+				return Validity.UNKNOWN;
 			} else {
 				if (varsDisjoinedFormInVars(pre, cb)) {
 					m_EdgeCheckerBenchmark.getSdCounter().incIn();
-					return HTTV.INVALID;
+					return Validity.INVALID;
 				} else  {
 					return null;
 				}
@@ -95,7 +95,7 @@ public class SdHoareTripleChecker {
 						
 		} else if (infeasiblity == Infeasibility.INFEASIBLE) {
 			m_EdgeCheckerBenchmark.getSdCounter().incIn();
-			return HTTV.VALID;
+			return Validity.VALID;
 		} else if (infeasiblity == Infeasibility.NOT_DETERMINED) {
 			return null;
 		} else {
@@ -141,12 +141,12 @@ public class SdHoareTripleChecker {
 	 * FIXME: Check for preconditions, postcondition? Check at least for
 	 * infeasibility flag of TransFormula.
 	 */
-	public HTTV sdecInteral(IPredicate pre, CodeBlock cb, IPredicate post) {
+	public Validity sdecInteral(IPredicate pre, CodeBlock cb, IPredicate post) {
 		if (m_PredicateCoverageChecker != null) {
-			HTTV sat = MonolithicHoareTripleChecker.lbool2httv(m_PredicateCoverageChecker.isCovered(pre, post));
-			if (sat == HTTV.VALID) {
+			Validity sat = MonolithicHoareTripleChecker.lbool2httv(m_PredicateCoverageChecker.isCovered(pre, post));
+			if (sat == Validity.VALID) {
 				if (Collections.disjoint(pre.getVars(), cb.getTransitionFormula().getAssignedVars())) {
-					return HTTV.VALID;
+					return Validity.VALID;
 				}
 			}
 		}
@@ -168,9 +168,9 @@ public class SdHoareTripleChecker {
 		// now, we know that vars of pre and post are both disjoint from the
 		/// vars of cb. Edge is inductive iff pre implies post
 		if (m_PredicateCoverageChecker != null) {
-			HTTV sat = MonolithicHoareTripleChecker.lbool2httv(m_PredicateCoverageChecker.isCovered(pre, post));
-			if (sat == HTTV.VALID) {
-				return HTTV.VALID;
+			Validity sat = MonolithicHoareTripleChecker.lbool2httv(m_PredicateCoverageChecker.isCovered(pre, post));
+			if (sat == Validity.VALID) {
+				return Validity.VALID;
 			}
 		} else {
 			if (!Collections.disjoint(pre.getVars(), post.getVars())) {
@@ -178,7 +178,7 @@ public class SdHoareTripleChecker {
 			}
 		}
 		m_EdgeCheckerBenchmark.getSdCounter().incIn();
-		return HTTV.INVALID;
+		return Validity.INVALID;
 	}
 	
 	
@@ -191,7 +191,7 @@ public class SdHoareTripleChecker {
 //	}
 	
 	
-	public HTTV sdLazyEcInteral(IPredicate pre, CodeBlock cb, IPredicate post) {
+	public Validity sdLazyEcInteral(IPredicate pre, CodeBlock cb, IPredicate post) {
 		if (isOrIteFormula(post)) {
 			return sdecInteral(pre, cb, post);
 		}
@@ -205,24 +205,24 @@ public class SdHoareTripleChecker {
 			}
 			// occurs neither in pre not in codeBlock, probably unsat
 			m_EdgeCheckerBenchmark.getSdLazyCounter().incIn();
-			return HTTV.INVALID;
+			return Validity.INVALID;
 		}
 		return null;
 	}
 	
-	public HTTV sdecCallToFalse(IPredicate pre, CodeBlock cb) {
+	public Validity sdecCallToFalse(IPredicate pre, CodeBlock cb) {
 		// TODO:
 		// there could be a contradiction if the Call is not a simple call
 		// but interprocedural sequential composition 			
 		if (cb instanceof Call) {
 			m_EdgeCheckerBenchmark.getSdCounter().incCa();
-			return HTTV.INVALID;
+			return Validity.INVALID;
 		} else {
 			return null;
 		}
 	}
 	
-	public HTTV sdecCall(IPredicate pre, CodeBlock cb, IPredicate post) {
+	public Validity sdecCall(IPredicate pre, CodeBlock cb, IPredicate post) {
 		for (BoogieVar bv : post.getVars()) {
 			if (bv.isOldvar()) {
 				//if oldVar occurs this edge might be inductive since 
@@ -242,12 +242,12 @@ public class SdHoareTripleChecker {
 		}
 		if (preHierIndependent(post, pre, (Call) cb)) {
 			m_EdgeCheckerBenchmark.getSdCounter().incCa();
-			return HTTV.INVALID;
+			return Validity.INVALID;
 		}
 		return null;
 	}
 	
-	public HTTV sdLazyEcCall(IPredicate pre, Call cb, IPredicate post) {
+	public Validity sdLazyEcCall(IPredicate pre, Call cb, IPredicate post) {
 		if (isOrIteFormula(post)) {
 			return sdecCall(pre, cb, post);
 		}
@@ -265,27 +265,27 @@ public class SdHoareTripleChecker {
 				}
 			}
 			m_EdgeCheckerBenchmark.getSdLazyCounter().incCa();
-			return HTTV.INVALID;
+			return Validity.INVALID;
 		}
 		return null;
 	}
 	
 	
-	public HTTV sdecReturn(IPredicate pre, IPredicate hier, CodeBlock cb, IPredicate post) {
+	public Validity sdecReturn(IPredicate pre, IPredicate hier, CodeBlock cb, IPredicate post) {
 		Return ret = (Return) cb;
 		Call call = ret.getCorrespondingCall();
 		if (hierPostIndependent(hier, ret, post) 
 				&& preHierIndependent(pre, hier, call)
 				&& prePostIndependent(pre, ret, post)) {
 			m_EdgeCheckerBenchmark.getSdCounter().incRe();
-			return HTTV.INVALID;
+			return Validity.INVALID;
 
 		}
 		return null;
 	}
 	
 	
-	public HTTV sdLazyEcReturn(IPredicate pre, IPredicate hier, Return cb, IPredicate post) {
+	public Validity sdLazyEcReturn(IPredicate pre, IPredicate hier, Return cb, IPredicate post) {
 		if (isOrIteFormula(post)) {
 			return sdecReturn(pre, hier, cb, post);
 		}
@@ -359,7 +359,7 @@ public class SdHoareTripleChecker {
 				}
 			}
 			m_EdgeCheckerBenchmark.getSdLazyCounter().incRe();
-			return HTTV.INVALID;
+			return Validity.INVALID;
 		}
 		return null;
 	}
@@ -463,7 +463,7 @@ public class SdHoareTripleChecker {
 	 * Returns HTTV.VALID if selfloop is inductive. Returns null if we are
 	 * not able to determinie inductivity selfloop. 
 	 */
-	public HTTV sdecInternalSelfloop(IPredicate p, CodeBlock cb) {
+	public Validity sdecInternalSelfloop(IPredicate p, CodeBlock cb) {
 		Set<BoogieVar> assignedVars = cb.getTransitionFormula().getAssignedVars();
 		Set<BoogieVar> occVars = p.getVars();
 		for (BoogieVar occVar : occVars) {
@@ -471,14 +471,14 @@ public class SdHoareTripleChecker {
 				return null;
 			}
 		}
-		return HTTV.VALID;
+		return Validity.VALID;
 	}
 	
 	
 	/**
 	 * Returns UNSAT if p contains only non-old globals.
 	 */
-	public HTTV sdecCallSelfloop(IPredicate p, CodeBlock cb) {
+	public Validity sdecCallSelfloop(IPredicate p, CodeBlock cb) {
 		for (BoogieVar bv : p.getVars()) {
 			if (bv.isGlobal()) {
 				if (bv.isOldvar()) {
@@ -488,12 +488,12 @@ public class SdHoareTripleChecker {
 				return null;
 			}
 		}
-		return HTTV.VALID;
+		return Validity.VALID;
 	}
 	
 	
 	
-	public HTTV sdecReturnSelfloopPre(IPredicate p, Return ret) {
+	public Validity sdecReturnSelfloopPre(IPredicate p, Return ret) {
 		Set<BoogieVar> assignedVars = ret.getTransitionFormula().getAssignedVars();
 		for (BoogieVar bv : p.getVars()) {
 			if (bv.isGlobal()) {
@@ -508,11 +508,11 @@ public class SdHoareTripleChecker {
 				return null;
 			}
 		}
-		return HTTV.VALID;
+		return Validity.VALID;
 	}
 	
 	
-	public HTTV sdecReturnSelfloopHier(IPredicate p, Return ret) {
+	public Validity sdecReturnSelfloopHier(IPredicate p, Return ret) {
 		Set<BoogieVar> assignedVars = ret.getTransitionFormula().getAssignedVars();
 		String proc = ret.getCorrespondingCall().getCallStatement().getMethodName();
 		Set<BoogieVar> modifiableGlobals = 
@@ -526,7 +526,7 @@ public class SdHoareTripleChecker {
 				return null;
 			}
 		}
-		return HTTV.VALID;
+		return Validity.VALID;
 	}
 	
 

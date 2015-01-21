@@ -18,31 +18,31 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 	}
 
 	@Override
-	public HTTV checkInternal(IPredicate pre, CodeBlock cb, IPredicate succ) {
+	public Validity checkInternal(IPredicate pre, CodeBlock cb, IPredicate succ) {
 		return lbool2httv(m_SmtManager.isInductive(pre, cb, succ));
 	}
 
 	@Override
-	public HTTV checkCall(IPredicate pre, CodeBlock cb, IPredicate succ) {
+	public Validity checkCall(IPredicate pre, CodeBlock cb, IPredicate succ) {
 		return lbool2httv(m_SmtManager.isInductiveCall(pre, (Call) cb, succ));
 	}
 
 	@Override
-	public HTTV checkReturn(IPredicate preLin, IPredicate preHier,
+	public Validity checkReturn(IPredicate preLin, IPredicate preHier,
 			CodeBlock cb, IPredicate succ) {
 		return lbool2httv(m_SmtManager.isInductiveReturn(preLin, preHier, (Return) cb, succ));
 	}
 
 	
 	
-	public static HTTV lbool2httv(LBool lbool) {
+	public static Validity lbool2httv(LBool lbool) {
 		switch (lbool) {
 		case SAT:
-			return HTTV.INVALID;
+			return Validity.INVALID;
 		case UNKNOWN:
-			return HTTV.UNKNOWN;
+			return Validity.UNKNOWN;
 		case UNSAT:
-			return HTTV.VALID;
+			return Validity.VALID;
 		default:
 			throw new AssertionError();
 		}

@@ -17,7 +17,7 @@ public interface IHoareTripleChecker {
 	/**
 	 * Hoare Triple Truth Value. This is the result of a Hoare triple check.
 	 */
-	public enum HTTV { VALID, INVALID, UNKNOWN, NOT_CHECKED };
+	public enum Validity { VALID, INVALID, UNKNOWN, NOT_CHECKED };
 	
 	
 	/**
@@ -27,7 +27,7 @@ public interface IHoareTripleChecker {
 	 * the program is in the same procedure before and after the CodeBlock cb
 	 * was executed.
 	 */
-	public HTTV checkInternal(IPredicate pre, CodeBlock cb, IPredicate succ);
+	public Validity checkInternal(IPredicate pre, CodeBlock cb, IPredicate succ);
 	
 	/**
 	 * Check if the Hoare triple 
@@ -35,7 +35,7 @@ public interface IHoareTripleChecker {
 	 * is valid for a call transition. Here, the CodeBlock has to be a call 
 	 * statement.
 	 */
-	public HTTV checkCall(IPredicate pre, CodeBlock cb, IPredicate succ);
+	public Validity checkCall(IPredicate pre, CodeBlock cb, IPredicate succ);
 	
 	/**
 	 * Check if the Hoare quadruple 
@@ -46,7 +46,7 @@ public interface IHoareTripleChecker {
 	 * a set of states of the calling procedure before the call, and succ
 	 * is the IPredicate that describes a set of states of the called procedure.
 	 */
-	public HTTV checkReturn(IPredicate preLin, IPredicate preHier, CodeBlock cb, IPredicate succ); 
+	public Validity checkReturn(IPredicate preLin, IPredicate preHier, CodeBlock cb, IPredicate succ); 
 
 
 	

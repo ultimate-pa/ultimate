@@ -645,7 +645,8 @@ public class BuchiCegarLoop {
 					m_RefineBuchi.getInterpolAutomatonUsedInRefinement());
 		}
 		m_MDBenchmark.reportTrivialModule(m_Iteration, m_InterpolAutomaton.size());
-		assert (new InductivityCheck(m_InterpolAutomaton, ec, false, true, mLogger)).getResult();
+		assert (new InductivityCheck(m_InterpolAutomaton, m_SmtManager, m_RootNode.getRootAnnot()
+				.getModGlobVarManager(), false, true, m_Services)).getResult();
 		m_Abstraction = diff.getResult();
 		m_BenchmarkGenerator.addEdgeCheckerData(ec.getEdgeCheckerBenchmark());
 		m_BenchmarkGenerator.stop(CegarLoopBenchmarkType.s_AutomataDifference);
@@ -663,8 +664,8 @@ public class BuchiCegarLoop {
 		// assert((new BuchiAccepts<CodeBlock, IPredicate>(m_InterpolAutomaton,
 		// m_Counterexample.getNestedLassoWord())).getResult()) :
 		// "Interpolant automaton broken!";
-		assert (new InductivityCheck(m_InterpolAutomaton, new EdgeChecker(m_SmtManager, m_RootNode.getRootAnnot()
-				.getModGlobVarManager()), false, true, mLogger)).getResult();
+		assert (new InductivityCheck(m_InterpolAutomaton, m_SmtManager, m_RootNode.getRootAnnot()
+				.getModGlobVarManager(), false, true, m_Services)).getResult();
 	}
 
 	private TerminationArgumentResult<RcfgElement> constructTAResult(TerminationArgument terminationArgument,

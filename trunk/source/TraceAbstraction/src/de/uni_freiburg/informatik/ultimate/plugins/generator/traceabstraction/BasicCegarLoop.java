@@ -278,8 +278,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		}
 		m_CegarLoopBenchmark.stop(CegarLoopBenchmarkType.s_BasicInterpolantAutomatonTime);
 		assert (accepts(m_InterpolAutomaton, m_Counterexample.getWord())) : "Interpolant automaton broken!";
-		assert (new InductivityCheck(m_InterpolAutomaton, new EdgeChecker(m_SmtManager, m_ModGlobVarManager), false,
-				true, mLogger)).getResult();
+		assert (new InductivityCheck(m_InterpolAutomaton, m_SmtManager, m_ModGlobVarManager, false,	true, m_Services)).getResult();
 	}
 
 	@Override
@@ -353,11 +352,11 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 							+ " answers given by solver");
 					assert m_SmtManager.isLocked();
 					assert (new InductivityCheck(m_InterpolAutomaton,
-							new EdgeChecker(m_SmtManager, m_ModGlobVarManager), false, true, mLogger)).getResult();
+							m_SmtManager, m_ModGlobVarManager, false, true, m_Services)).getResult();
 					// do the following check only to obtain logger messages of
 					// checkInductivity
-					assert (new InductivityCheck(epd.getRejectionCache(), new EdgeChecker(m_SmtManager,
-							m_ModGlobVarManager), true, false, mLogger).getResult() | true);
+					assert (new InductivityCheck(epd.getRejectionCache(), m_SmtManager,
+							m_ModGlobVarManager, true, false, m_Services).getResult() | true);
 					break;
 
 				case LAZYPOST:
@@ -382,11 +381,11 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 							+ " answers given by solver");
 					assert m_SmtManager.isLocked();
 					assert (new InductivityCheck(m_InterpolAutomaton,
-							new EdgeChecker(m_SmtManager, m_ModGlobVarManager), false, true, mLogger)).getResult();
+							m_SmtManager, m_ModGlobVarManager, false, true, m_Services)).getResult();
 					// do the following check only to obtain logger messages of
 					// checkInductivity
-					assert (new InductivityCheck(lpd.getRejectionCache(), new EdgeChecker(m_SmtManager,
-							m_ModGlobVarManager), true, false, mLogger)).getResult() | true;
+					assert (new InductivityCheck(lpd.getRejectionCache(), m_SmtManager,
+							m_ModGlobVarManager, true, false, m_Services)).getResult() | true;
 					break;
 
 				case SELFLOOP:
@@ -459,8 +458,8 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 						// throw new
 						// AssertionError("counterexample not accepted by interpolant automaton");
 						// }
-						assert (new InductivityCheck(test, new EdgeChecker(m_SmtManager, m_ModGlobVarManager), false,
-								true, mLogger)).getResult();
+						assert (new InductivityCheck(test, m_SmtManager, m_ModGlobVarManager, false,
+								true, m_Services)).getResult();
 					}
 					break;
 				default:
@@ -749,7 +748,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		}
 
 		if (m_ComputeHoareAnnotation) {
-			assert (new InductivityCheck(dia, new EdgeChecker(m_SmtManager, m_ModGlobVarManager), false, true, mLogger))
+			assert (new InductivityCheck(dia, m_SmtManager, m_ModGlobVarManager, false, true, m_Services))
 					.getResult() : "Not inductive";
 		}
 		if (m_Pref.dumpAutomata()) {

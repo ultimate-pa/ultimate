@@ -351,8 +351,8 @@ public abstract class AbstractCegarLoop {
 			mLogger.info("Interpolant automaton has " + m_InterpolAutomaton.sizeInformation());
 
 			if (m_Pref.computeHoareAnnotation()) {
-				assert (new InductivityCheck((INestedWordAutomaton) m_Abstraction, new EdgeChecker(m_SmtManager,
-						m_ModGlobVarManager), false, true, mLogger)).getResult() : "Not inductive";
+				assert (new InductivityCheck((INestedWordAutomaton) m_Abstraction, m_SmtManager,
+						m_ModGlobVarManager, false, true, m_Services)).getResult() : "Not inductive";
 			}
 
 			if (m_Iteration <= m_Pref.watchIteration() && m_Pref.artifact() == Artifact.ABSTRACTION) {

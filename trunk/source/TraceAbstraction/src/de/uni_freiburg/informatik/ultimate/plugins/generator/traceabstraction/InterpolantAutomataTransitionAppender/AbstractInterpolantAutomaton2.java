@@ -23,7 +23,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cal
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IHoareTripleChecker;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IHoareTripleChecker.HTTV;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IHoareTripleChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SdHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 
@@ -296,10 +296,10 @@ public abstract class AbstractInterpolantAutomaton2 implements INestedWordAutoma
 		public abstract void addTransition(IPredicate resPred, IPredicate resHier, CodeBlock letter,
 				IPredicate iaFalseState);
 
-		public abstract HTTV computeSuccWithSolver(IPredicate resPred, IPredicate resHier, CodeBlock letter,
+		public abstract Validity computeSuccWithSolver(IPredicate resPred, IPredicate resHier, CodeBlock letter,
 				IPredicate iaFalseState);
 
-		public abstract HTTV sdecToFalse(IPredicate resPred, IPredicate resHier, CodeBlock letter);
+		public abstract Validity sdecToFalse(IPredicate resPred, IPredicate resHier, CodeBlock letter);
 
 		public abstract Collection<IPredicate> getSuccsInterpolantAutomaton(IPredicate resPred, IPredicate resHier,
 				CodeBlock letter);
@@ -307,12 +307,12 @@ public abstract class AbstractInterpolantAutomaton2 implements INestedWordAutoma
 		public abstract boolean isInductiveSefloop(IPredicate resPred, IPredicate resHier, CodeBlock letter,
 				IPredicate succCand);
 
-		public abstract HTTV sdec(IPredicate resPred, IPredicate resHier, CodeBlock letter, IPredicate succCand);
+		public abstract Validity sdec(IPredicate resPred, IPredicate resHier, CodeBlock letter, IPredicate succCand);
 
-		public abstract HTTV sdLazyEc(IPredicate resPred, IPredicate resHier, CodeBlock letter, IPredicate succCand);
+		public abstract Validity sdLazyEc(IPredicate resPred, IPredicate resHier, CodeBlock letter, IPredicate succCand);
 
 		public abstract boolean reviewResult(IPredicate resPred, IPredicate resHier, CodeBlock letter,
-				IPredicate succCand, HTTV result);
+				IPredicate succCand, Validity result);
 
 		public abstract void reportCacheEntry(IPredicate resPred, IPredicate resHier, CodeBlock letter,
 				NwaCacheBookkeeping<CodeBlock, IPredicate> cacheBookkeeping);
@@ -338,14 +338,14 @@ public abstract class AbstractInterpolantAutomaton2 implements INestedWordAutoma
 		}
 
 		@Override
-		public HTTV computeSuccWithSolver(IPredicate resPred, IPredicate resHier, CodeBlock letter,
+		public Validity computeSuccWithSolver(IPredicate resPred, IPredicate resHier, CodeBlock letter,
 				IPredicate inputSucc) {
 			assert resHier == null;
 			return m_IHoareTripleChecker.checkInternal(resPred, letter, inputSucc);
 		}
 
 		@Override
-		public HTTV sdecToFalse(IPredicate resPred, IPredicate resHier, CodeBlock letter) {
+		public Validity sdecToFalse(IPredicate resPred, IPredicate resHier, CodeBlock letter) {
 			assert resHier == null;
 			return m_EdgeChecker.sdecInternalToFalse(resPred, letter);
 		}
@@ -365,7 +365,7 @@ public abstract class AbstractInterpolantAutomaton2 implements INestedWordAutoma
 		@Override
 		public boolean isInductiveSefloop(IPredicate resPred, IPredicate resHier, CodeBlock letter, IPredicate succCand) {
 			assert resHier == null;
-			if ((resPred == succCand) && (m_EdgeChecker.sdecInternalSelfloop(resPred, letter) == HTTV.VALID)) {
+			if ((resPred == succCand) && (m_EdgeChecker.sdecInternalSelfloop(resPred, letter) == Validity.VALID)) {
 				return true;
 			} else {
 				return false;
@@ -373,20 +373,20 @@ public abstract class AbstractInterpolantAutomaton2 implements INestedWordAutoma
 		}
 
 		@Override
-		public HTTV sdec(IPredicate resPred, IPredicate resHier, CodeBlock letter, IPredicate succCand) {
+		public Validity sdec(IPredicate resPred, IPredicate resHier, CodeBlock letter, IPredicate succCand) {
 			assert resHier == null;
 			return m_EdgeChecker.sdecInteral(resPred, letter, succCand);
 		}
 
 		@Override
-		public HTTV sdLazyEc(IPredicate resPred, IPredicate resHier, CodeBlock letter, IPredicate succCand) {
+		public Validity sdLazyEc(IPredicate resPred, IPredicate resHier, CodeBlock letter, IPredicate succCand) {
 			assert resHier == null;
 			return m_EdgeChecker.sdLazyEcInteral(resPred, letter, succCand);
 		}
 
 		@Override
 		public boolean reviewResult(IPredicate resPred, IPredicate resHier, CodeBlock letter, IPredicate succCand,
-				HTTV result) {
+				Validity result) {
 			assert resHier == null;
 			return reviewInductiveInternal(resPred, letter, succCand, result);
 		}
@@ -420,14 +420,14 @@ public abstract class AbstractInterpolantAutomaton2 implements INestedWordAutoma
 		}
 
 		@Override
-		public HTTV computeSuccWithSolver(IPredicate resPred, IPredicate resHier, CodeBlock letter,
+		public Validity computeSuccWithSolver(IPredicate resPred, IPredicate resHier, CodeBlock letter,
 				IPredicate inputSucc) {
 			assert resHier == null;
 			return m_IHoareTripleChecker.checkCall(resPred, letter, inputSucc);
 		}
 
 		@Override
-		public HTTV sdecToFalse(IPredicate resPred, IPredicate resHier, CodeBlock letter) {
+		public Validity sdecToFalse(IPredicate resPred, IPredicate resHier, CodeBlock letter) {
 			assert resHier == null;
 			return m_EdgeChecker.sdecCallToFalse(resPred, letter);
 		}
@@ -447,7 +447,7 @@ public abstract class AbstractInterpolantAutomaton2 implements INestedWordAutoma
 		@Override
 		public boolean isInductiveSefloop(IPredicate resPred, IPredicate resHier, CodeBlock letter, IPredicate succCand) {
 			assert resHier == null;
-			if ((resPred == succCand) && (m_EdgeChecker.sdecCallSelfloop(resPred, letter) == HTTV.VALID)) {
+			if ((resPred == succCand) && (m_EdgeChecker.sdecCallSelfloop(resPred, letter) == Validity.VALID)) {
 				return true;
 			} else {
 				return false;
@@ -455,20 +455,20 @@ public abstract class AbstractInterpolantAutomaton2 implements INestedWordAutoma
 		}
 
 		@Override
-		public HTTV sdec(IPredicate resPred, IPredicate resHier, CodeBlock letter, IPredicate succCand) {
+		public Validity sdec(IPredicate resPred, IPredicate resHier, CodeBlock letter, IPredicate succCand) {
 			assert resHier == null;
 			return m_EdgeChecker.sdecCall(resPred, letter, succCand);
 		}
 
 		@Override
-		public HTTV sdLazyEc(IPredicate resPred, IPredicate resHier, CodeBlock letter, IPredicate succCand) {
+		public Validity sdLazyEc(IPredicate resPred, IPredicate resHier, CodeBlock letter, IPredicate succCand) {
 			assert resHier == null;
 			return m_EdgeChecker.sdLazyEcCall(resPred, (Call) letter, succCand);
 		}
 
 		@Override
 		public boolean reviewResult(IPredicate resPred, IPredicate resHier, CodeBlock letter, IPredicate succCand,
-				HTTV result) {
+				Validity result) {
 			assert resHier == null;
 			return reviewInductiveCall(resPred, (Call) letter, succCand, result);
 		}
@@ -499,13 +499,13 @@ public abstract class AbstractInterpolantAutomaton2 implements INestedWordAutoma
 		}
 
 		@Override
-		public HTTV computeSuccWithSolver(IPredicate resPred, IPredicate resHier, CodeBlock letter,
+		public Validity computeSuccWithSolver(IPredicate resPred, IPredicate resHier, CodeBlock letter,
 				IPredicate inputSucc) {
 			return m_IHoareTripleChecker.checkReturn(resPred, resHier, letter, inputSucc);
 		}
 
 		@Override
-		public HTTV sdecToFalse(IPredicate resPred, IPredicate resHier, CodeBlock letter) {
+		public Validity sdecToFalse(IPredicate resPred, IPredicate resHier, CodeBlock letter) {
 			// sat if (not only if!) resPred and resHier are independent,
 			// hence we can use the "normal" sdec method
 			return m_EdgeChecker.sdecReturn(resPred, resHier, letter, m_IaFalseState);
@@ -524,10 +524,10 @@ public abstract class AbstractInterpolantAutomaton2 implements INestedWordAutoma
 
 		@Override
 		public boolean isInductiveSefloop(IPredicate resPred, IPredicate resHier, CodeBlock letter, IPredicate succCand) {
-			if ((resPred == succCand) && (m_EdgeChecker.sdecReturnSelfloopPre(resPred, (Return) letter) == HTTV.VALID)) {
+			if ((resPred == succCand) && (m_EdgeChecker.sdecReturnSelfloopPre(resPred, (Return) letter) == Validity.VALID)) {
 				return true;
 			} else if ((resHier == succCand)
-					&& (m_EdgeChecker.sdecReturnSelfloopHier(resHier, (Return) letter) == HTTV.VALID)) {
+					&& (m_EdgeChecker.sdecReturnSelfloopHier(resHier, (Return) letter) == Validity.VALID)) {
 				return true;
 			} else {
 				return false;
@@ -535,18 +535,18 @@ public abstract class AbstractInterpolantAutomaton2 implements INestedWordAutoma
 		}
 
 		@Override
-		public HTTV sdec(IPredicate resPred, IPredicate resHier, CodeBlock letter, IPredicate succCand) {
+		public Validity sdec(IPredicate resPred, IPredicate resHier, CodeBlock letter, IPredicate succCand) {
 			return m_EdgeChecker.sdecReturn(resPred, resHier, letter, succCand);
 		}
 
 		@Override
-		public HTTV sdLazyEc(IPredicate resPred, IPredicate resHier, CodeBlock letter, IPredicate succCand) {
+		public Validity sdLazyEc(IPredicate resPred, IPredicate resHier, CodeBlock letter, IPredicate succCand) {
 			return m_EdgeChecker.sdLazyEcReturn(resPred, resHier, (Return) letter, succCand);
 		}
 
 		@Override
 		public boolean reviewResult(IPredicate resPred, IPredicate resHier, CodeBlock letter, IPredicate succCand,
-				HTTV result) {
+				Validity result) {
 			return reviewInductiveReturn(resPred, resHier, (Return) letter, succCand, result);
 		}
 
@@ -559,11 +559,11 @@ public abstract class AbstractInterpolantAutomaton2 implements INestedWordAutoma
 	}
 
 	protected abstract boolean reviewInductiveInternal(IPredicate resPred, CodeBlock letter, IPredicate succCand,
-			HTTV result);
+			Validity result);
 
-	protected abstract boolean reviewInductiveCall(IPredicate resPred, Call letter, IPredicate succCand, HTTV result);
+	protected abstract boolean reviewInductiveCall(IPredicate resPred, Call letter, IPredicate succCand, Validity result);
 
 	protected abstract boolean reviewInductiveReturn(IPredicate resPred, IPredicate resHier, Return letter,
-			IPredicate succCand, HTTV result);
+			IPredicate succCand, Validity result);
 
 }

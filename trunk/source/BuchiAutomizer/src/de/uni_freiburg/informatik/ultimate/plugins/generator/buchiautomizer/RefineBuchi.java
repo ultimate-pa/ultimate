@@ -206,7 +206,7 @@ public class RefineBuchi {
 		}
 		BuchiEdgeChecker ec = new BuchiEdgeChecker(m_SmtManager, buchiModGlobalVarManager);
 		ec.putDecreaseEqualPair(bspm.getHondaPredicate(), bspm.getRankEqAndSi());
-		assert (new InductivityCheck(m_InterpolAutomaton, ec, false, true, mLogger)).getResult();
+		assert (new InductivityCheck(m_InterpolAutomaton, m_SmtManager, buchiModGlobalVarManager, false, true, m_Services)).getResult();
 		assert (new BuchiAccepts<CodeBlock, IPredicate>(m_Services, m_InterpolAutomaton, m_Counterexample.getNestedLassoWord()))
 				.getResult();
 		switch (setting.getInterpolantAutomaton()) {

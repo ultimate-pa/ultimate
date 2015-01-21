@@ -185,8 +185,8 @@ public class IncrementalInclusionCegarLoop extends BasicCegarLoop {
 //				assert (edgeChecker.isAssertionStackEmpty());
 				INestedWordAutomaton<CodeBlock, IPredicate> test = (new RemoveUnreachable<CodeBlock, IPredicate>(m_Services, 
 						determinized)).getResult();
-				assert (new InductivityCheck(test, new EdgeChecker(m_SmtManager, m_ModGlobVarManager), false,
-						true, mLogger)).getResult();
+				assert (new InductivityCheck(test, m_SmtManager, m_ModGlobVarManager, false,
+						true, m_Services)).getResult();
 				acceptedByDeterminized = (new Accepts<CodeBlock, IPredicate>(
 						determinized,
 						(NestedWord<CodeBlock>) m_Counterexample.getWord())).getResult();

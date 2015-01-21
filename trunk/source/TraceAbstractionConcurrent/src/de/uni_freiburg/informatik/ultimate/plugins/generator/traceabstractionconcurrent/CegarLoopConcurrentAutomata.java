@@ -64,8 +64,8 @@ public class CegarLoopConcurrentAutomata extends BasicCegarLoop {
 
 		m_CegarLoopBenchmark.stop(CegarLoopBenchmarkType.s_BasicInterpolantAutomatonTime);
 		assert (accepts(m_InterpolAutomaton, m_Counterexample.getWord())) : "Interpolant automaton broken!";
-		assert (new InductivityCheck(m_InterpolAutomaton, new EdgeChecker(m_SmtManager, m_ModGlobVarManager), false,
-				true, mLogger)).getResult() : "Not inductive";
+		assert (new InductivityCheck(m_InterpolAutomaton, m_SmtManager, m_ModGlobVarManager, false,
+				true, m_Services)).getResult() : "Not inductive";
 	}
 
 	@Override
@@ -152,12 +152,12 @@ public class CegarLoopConcurrentAutomata extends BasicCegarLoop {
 				+ epd.m_AnswerReturnCache + " answers given by cache " + epd.m_AnswerReturnSolver
 				+ " answers given by solver");
 		assert !m_SmtManager.isLocked();
-		assert (new InductivityCheck(m_InterpolAutomaton, new EdgeChecker(m_SmtManager, m_ModGlobVarManager), false,
-				true, mLogger)).getResult();
+		assert (new InductivityCheck(m_InterpolAutomaton, m_SmtManager, m_ModGlobVarManager, false,
+				true, m_Services)).getResult();
 		// do the following check only to obtain logger messages of
 		// checkInductivity
-		assert (new InductivityCheck(epd.getRejectionCache(), new EdgeChecker(m_SmtManager, m_ModGlobVarManager), true,
-				false, mLogger).getResult() | true);
+		assert (new InductivityCheck(epd.getRejectionCache(), m_SmtManager, m_ModGlobVarManager, true,
+				false, m_Services).getResult() | true);
 
 		if (m_RemoveDeadEnds) {
 			if (m_ComputeHoareAnnotation) {
