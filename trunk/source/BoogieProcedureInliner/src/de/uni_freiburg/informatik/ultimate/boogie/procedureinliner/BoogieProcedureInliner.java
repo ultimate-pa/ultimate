@@ -16,7 +16,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.preferences.P
 import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.preferences.PreferenceItem;
 
 /**
- * Tool for inlining oogie procedures.
+ * Tool for inlining Boogie procedures.
  * Currently under construction -- do not use.
  * 
  * @author schaetzc@informatik.uni-freiburg.de
