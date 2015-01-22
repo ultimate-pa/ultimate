@@ -4,6 +4,7 @@ import java.util.HashMap;
 
 import org.apache.log4j.Logger;
 
+import de.uni_freiburg.informatik.ultimate.model.ModelUtils;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.*;
 
 // TODO map variables in attributes (?)
@@ -35,23 +36,26 @@ public class MappingExecutor {
 	}
 
 	public Specification map(Specification spec) {
+		Specification newSpec = null;
 		if (spec instanceof ModifiesSpecification) {
 			ModifiesSpecification s = (ModifiesSpecification) spec;
-			return new ModifiesSpecification(s.getLocation(), s.isFree(), map(s.getIdentifiers()));
-		}
-		if (spec instanceof RequiresSpecification) {
+			newSpec = new ModifiesSpecification(s.getLocation(), s.isFree(), map(s.getIdentifiers()));
+		} else if (spec instanceof RequiresSpecification) {
 			RequiresSpecification s = (RequiresSpecification) spec;
-			return new RequiresSpecification(s.getLocation(), s.isFree(), map(s.getFormula()));
-		} 
-		if (spec instanceof EnsuresSpecification) {
+			newSpec = new RequiresSpecification(s.getLocation(), s.isFree(), map(s.getFormula()));
+		} else if (spec instanceof EnsuresSpecification) {
 			EnsuresSpecification s = (EnsuresSpecification) spec;
-			return new EnsuresSpecification(s.getLocation(), s.isFree(), map(s.getFormula()));
-		}
-		if (spec instanceof LoopInvariantSpecification) {
+			newSpec = new EnsuresSpecification(s.getLocation(), s.isFree(), map(s.getFormula()));
+		} else if (spec instanceof LoopInvariantSpecification) {
 			LoopInvariantSpecification s = (LoopInvariantSpecification) spec;
-			return new LoopInvariantSpecification(s.getLocation(), s.isFree(), map(s.getFormula()));
+			newSpec = new LoopInvariantSpecification(s.getLocation(), s.isFree(), map(s.getFormula()));
 		}
-		return spec; // assume the specification has nothing to rename
+		if (newSpec == null) {
+			return spec; // assume the specification has nothing to rename			
+		} else {
+			ModelUtils.mergeAnnotations(spec, newSpec);
+			return newSpec;
+		}
 	}
 
 	public Specification[] map(Specification[] specs) {
@@ -71,41 +75,33 @@ public class MappingExecutor {
 	}
 	
 	public Expression map(Expression expr) {
-		// trivial case ----
-		if (expr instanceof IdentifierExpression) {
+		Expression newExpr = null;
+		if (expr instanceof IdentifierExpression) { // trivial case
 			IdentifierExpression e = (IdentifierExpression) expr;
-			return new IdentifierExpression(e.getLocation(), e.getType(), mMapper.map(e.getIdentifier()),
+			newExpr =  new IdentifierExpression(e.getLocation(), e.getType(), mMapper.map(e.getIdentifier()),
 					e.getDeclarationInformation());
-		}
-		// non-trivial cases ----
-		if (expr instanceof ArrayAccessExpression) {
+		} else if (expr instanceof ArrayAccessExpression) {
 			ArrayAccessExpression e = (ArrayAccessExpression) expr;
-			return new ArrayAccessExpression(e.getLocation(), e.getType(), map(e.getArray()), map(e.getIndices()));
-		}
-		if (expr instanceof ArrayStoreExpression) {
+			newExpr = new ArrayAccessExpression(e.getLocation(), e.getType(), map(e.getArray()), map(e.getIndices()));
+		} else if (expr instanceof ArrayStoreExpression) {
 			ArrayStoreExpression e = (ArrayStoreExpression) expr;
-			return new ArrayStoreExpression(e.getLocation(), e.getType(), map(e.getArray()), map(e.getIndices()),
+			newExpr = new ArrayStoreExpression(e.getLocation(), e.getType(), map(e.getArray()), map(e.getIndices()),
 					map(e.getValue()));
-		}
-		if (expr instanceof BinaryExpression) {
+		} else if (expr instanceof BinaryExpression) {
 			BinaryExpression e = (BinaryExpression) expr;
-			return new BinaryExpression(e.getLocation(), e.getOperator(), map(e.getLeft()), map(e.getRight()));
-		}
-		if (expr instanceof BitVectorAccessExpression) {
+			newExpr = new BinaryExpression(e.getLocation(), e.getOperator(), map(e.getLeft()), map(e.getRight()));
+		} else if (expr instanceof BitVectorAccessExpression) {
 			BitVectorAccessExpression e = (BitVectorAccessExpression) expr;
-			return new BitVectorAccessExpression(e.getLocation(), e.getType(), map(e.getBitvec()), e.getEnd(),
+			newExpr = new BitVectorAccessExpression(e.getLocation(), e.getType(), map(e.getBitvec()), e.getEnd(),
 					e.getStart());
-		}
-		if (expr instanceof FunctionApplication) {
+		} else if (expr instanceof FunctionApplication) {
 			FunctionApplication e = (FunctionApplication) expr;
-			return new FunctionApplication(e.getLocation(), e.getType(), e.getIdentifier(), map(e.getArguments()));
-		}
-		if (expr instanceof IfThenElseExpression) {
+			newExpr = new FunctionApplication(e.getLocation(), e.getType(), e.getIdentifier(), map(e.getArguments()));
+		} else if (expr instanceof IfThenElseExpression) {
 			IfThenElseExpression e = (IfThenElseExpression) expr;
-			return new IfThenElseExpression(e.getLocation(), e.getType(), map(e.getCondition()), map(e.getThenPart()),
+			newExpr = new IfThenElseExpression(e.getLocation(), e.getType(), map(e.getCondition()), map(e.getThenPart()),
 					map(e.getElsePart()));
-		}
-		if (expr instanceof QuantifierExpression) {
+		} else if (expr instanceof QuantifierExpression) {
 			throw new UnsupportedOperationException("Quantifiers aren't supported yet.");
 			// TODO support
 			/*
@@ -116,17 +112,14 @@ public class MappingExecutor {
 					map(e.getSubformula())); // Rename bound variables, too <---+
 					
 			*/
-		}
-		if (expr instanceof StructAccessExpression) {
+		} else if (expr instanceof StructAccessExpression) {
 			StructAccessExpression e = (StructAccessExpression) expr;
-			return new StructAccessExpression(e.getLocation(), e.getType(), map(e.getStruct()), e.getField());
-		}
-		if (expr instanceof StructConstructor) {
+			newExpr = new StructAccessExpression(e.getLocation(), e.getType(), map(e.getStruct()), e.getField());
+		} else if (expr instanceof StructConstructor) {
 			StructConstructor e = (StructConstructor) expr;
-			return new StructConstructor(expr.getLocation(), e.getType(), e.getFieldIdentifiers(),
+			newExpr = new StructConstructor(expr.getLocation(), e.getType(), e.getFieldIdentifiers(),
 					map(e.getFieldValues()));
-		}
-		if (expr instanceof UnaryExpression) {
+		} else if (expr instanceof UnaryExpression) {
 			UnaryExpression e = (UnaryExpression) expr;
 			if (e.getOperator() == UnaryExpression.Operator.OLD)
 				throw new UnsupportedOperationException("old(...) isn't supported yet.");
@@ -134,7 +127,12 @@ public class MappingExecutor {
 		}
 		// TemporaryPointerExpression is private (should never occur)
 
-		return expr; // assume that expression is a literal => nothing to refactor
+		if (newExpr == null) {
+			return expr; // assume that expression is a literal => nothing to refactor			
+		} else {
+			ModelUtils.mergeAnnotations(expr, newExpr);
+			return newExpr;
+		}
 	}
 	
 	public Expression[] map(Expression[] exprs) {
@@ -148,8 +146,10 @@ public class MappingExecutor {
 	public VarList map(VarList varList) {
 		if (varList.getWhereClause() != null)
 			throw new UnsupportedOperationException("Where clauses aren't supported yet.");
-		return new VarList(varList.getLocation(),
+		VarList newVarList = new VarList(varList.getLocation(),
 				map(varList.getIdentifiers()), varList.getType(), /*WhereClause*/ null);
+		ModelUtils.mergeAnnotations(varList, newVarList);
+		return newVarList;
 	}
 	
 	public VarList[] map(VarList[] varLists) {
@@ -161,8 +161,10 @@ public class MappingExecutor {
 	}
 
 	public VariableLHS map(VariableLHS var) {
-		return new VariableLHS(var.getLocation(), var.getType(), mMapper.map(var.getIdentifier()),
-				var.getDeclarationInformation());
+		VariableLHS newVar = new VariableLHS(var.getLocation(), var.getType(),
+				mMapper.map(var.getIdentifier()), var.getDeclarationInformation());
+		ModelUtils.mergeAnnotations(var, newVar);
+		return newVar;
 	}
 	
 	public VariableLHS[] map(VariableLHS[] vars) {
@@ -182,14 +184,19 @@ public class MappingExecutor {
 		Body newBody = null;
 		if (body != null)
 			newBody = new Body(body.getLocation(), map(body.getLocalVars()), map(body.getBlock()));
-		return new Procedure(p.getLocation(), p.getAttributes(), p.getIdentifier(), p.getTypeParams(),
+		Procedure newProc = new Procedure(p.getLocation(), p.getAttributes(), p.getIdentifier(), p.getTypeParams(),
 				map(p.getInParams()), map(p.getOutParams()), map(p.getSpecification()), newBody);
+		ModelUtils.mergeAnnotations(p, newProc);
+		return newProc;
 	}
 
 	private VariableDeclaration map(VariableDeclaration varDecl) {
 		if (varDecl.getAttributes().length > 0)
 			throw new UnsupportedOperationException("Attributes aren't supported yet.");
-		return new VariableDeclaration(varDecl.getLocation(), varDecl.getAttributes(), map(varDecl.getVariables()));
+		VariableDeclaration newVarDecl = new VariableDeclaration(varDecl.getLocation(),
+				varDecl.getAttributes(), map(varDecl.getVariables()));
+		ModelUtils.mergeAnnotations(varDecl, newVarDecl);
+		return newVarDecl;
 	}
 	
 	private VariableDeclaration[] map(VariableDeclaration[] varDecls) {
@@ -201,50 +208,55 @@ public class MappingExecutor {
 	}
 	
 	private Statement map(Statement stat) {
+		Statement newStat = null;
 		if (stat instanceof AssertStatement) {
 			AssertStatement s = (AssertStatement) stat;
-			return new AssertStatement(s.getLocation(), map(s.getFormula()));
-		}
-		if (stat instanceof AssignmentStatement) {
+			newStat = new AssertStatement(s.getLocation(), map(s.getFormula()));
+		} else if (stat instanceof AssignmentStatement) {
 			AssignmentStatement s = (AssignmentStatement) stat;
-			return new AssignmentStatement(s.getLocation(), map(s.getLhs()), map(s.getRhs()));
-		}
-		if (stat instanceof AssumeStatement) {
+			newStat = new AssignmentStatement(s.getLocation(), map(s.getLhs()), map(s.getRhs()));
+		} else if (stat instanceof AssumeStatement) {
 			AssumeStatement s = (AssumeStatement) stat;
-			return new AssumeStatement(s.getLocation(), map(s.getFormula()));
-		}
-		if (stat instanceof CallStatement) {
+			newStat = new AssumeStatement(s.getLocation(), map(s.getFormula()));
+		} else if (stat instanceof CallStatement) {
 			CallStatement s = (CallStatement) stat;
-			return new CallStatement(s.getLocation(), s.isForall(), map(s.getLhs()), s.getMethodName(),
+			newStat = new CallStatement(s.getLocation(), s.isForall(), map(s.getLhs()), s.getMethodName(),
 					map(s.getArguments()));
-		}
-		if (stat instanceof HavocStatement) {
+		} else if (stat instanceof HavocStatement) {
 			HavocStatement s = (HavocStatement) stat;
-			return new HavocStatement(s.getLocation(), map(s.getIdentifiers()));
-		}
-		if (stat instanceof IfStatement) {
+			newStat = new HavocStatement(s.getLocation(), map(s.getIdentifiers()));
+		} else if (stat instanceof IfStatement) {
 			IfStatement s = (IfStatement) stat;
-			return new IfStatement(s.getLocation(), map(s.getCondition()), map(s.getThenPart()), map(s.getElsePart()));
-		}
-		if (stat instanceof WhileStatement) {
+			newStat = new IfStatement(s.getLocation(), map(s.getCondition()), map(s.getThenPart()), map(s.getElsePart()));
+		} else if (stat instanceof WhileStatement) {
 			WhileStatement s = (WhileStatement) stat;
-			return new WhileStatement(s.getLocation(), map(s.getCondition()), map(s.getInvariants()), map(s.getBody()));
+			newStat = new WhileStatement(s.getLocation(), map(s.getCondition()), map(s.getInvariants()), map(s.getBody()));
 		}
-		// nothing to do for: BreakStatement, GotoStatement, Label, ReturnStatement
-		return stat;
+		if (newStat == null) {
+			return stat;// nothing to do for: BreakStatement, GotoStatement, Label, ReturnStatement
+		} else {
+			ModelUtils.mergeAnnotations(stat, newStat);
+			return newStat;
+		}
 	}
 
 	private LeftHandSide map(LeftHandSide lhs) {
+		LeftHandSide newLhs = null;
 		if (lhs instanceof VariableLHS) {
-			return map((VariableLHS) lhs);
+			newLhs = map((VariableLHS) lhs);
 		} else if (lhs instanceof ArrayLHS) {
 			ArrayLHS alhs = (ArrayLHS) lhs;
-			return new ArrayLHS(alhs.getLocation(), alhs.getType(), map(alhs.getArray()), map(alhs.getIndices()));
+			newLhs = new ArrayLHS(alhs.getLocation(), alhs.getType(), map(alhs.getArray()), map(alhs.getIndices()));
 		} else if (lhs instanceof StructLHS) {
 			StructLHS slhs = (StructLHS) lhs;
-			return new StructLHS(slhs.getLocation(), slhs.getType(), map(slhs.getStruct()), slhs.getField());
+			newLhs = new StructLHS(slhs.getLocation(), slhs.getType(), map(slhs.getStruct()), slhs.getField());
 		}
-		throw new UnsupportedOperationException("Cannot process unknown LHS: " + lhs.getClass().getName());
+		if (newLhs == null) {
+			throw new UnsupportedOperationException("Cannot process unknown LHS: " + lhs.getClass().getName());			
+		} else {
+			ModelUtils.mergeAnnotations(lhs, newLhs);
+			return newLhs;
+		}
 	}
 	
 	private LeftHandSide[] map(LeftHandSide[] lhs) {

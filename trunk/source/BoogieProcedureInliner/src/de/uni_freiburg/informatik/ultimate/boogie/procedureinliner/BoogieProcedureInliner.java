@@ -57,9 +57,9 @@ public class BoogieProcedureInliner implements IAnalysis {
 
 		ArrayList<IObserver> observers = new ArrayList<IObserver>();
 		observers.add(new TypeChecker(mServices));
-		observers.add(oldExprPreprocessor);		
-		//observers.add(new UniqueVariableTransformer(mServices));
-		//observers.add(new ProcedureInliner(mServices));
+		//observers.add(oldExprPreprocessor);		
+		observers.add(new UniqueVariableTransformer(mServices));
+		observers.add(new ProcedureInliner(mServices));
 		observers.add(new TypeChecker(mServices)); // TODO remove (for debugging -- warns on wrong set types)
 		return observers;
 	}

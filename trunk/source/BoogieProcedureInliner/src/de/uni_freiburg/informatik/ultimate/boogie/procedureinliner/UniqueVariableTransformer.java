@@ -115,7 +115,7 @@ public class UniqueVariableTransformer implements IUnmanagedObserver {
 		// TODO Also unite where clauses (is this even possible)?
 		// TODO refactor, unite Attributes?
 		if (declaration.getAttributes().length > 0 || implementation.getAttributes().length > 0)
-			throw new UnsupportedOperationException("Attributes arn't supported yet.");
+			throw new UnsupportedOperationException("Attributes aren't supported yet.");
 		return new Procedure(implementation.getLocation(), new Attribute[0], declaration.getIdentifier(),
 				implementation.getTypeParams(), implementation.getInParams(), implementation.getOutParams(),
 				mappingExec.map(declaration.getSpecification()), implementation.getBody());
