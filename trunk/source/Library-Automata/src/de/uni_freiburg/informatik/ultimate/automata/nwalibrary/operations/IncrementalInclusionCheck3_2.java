@@ -32,7 +32,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvide
  */
 
 public class IncrementalInclusionCheck3_2<LETTER,STATE> extends AbstractIncrementalInclusionCheck<LETTER,STATE> implements IOperation<LETTER, STATE> {
-
+	public int counter_run = 0, counter_total_nodes = 0 ;
 	private static Logger s_Logger;
 	private INestedWordAutomatonSimple<LETTER, STATE> local_m_A;
 	private List<INestedWordAutomatonSimple<LETTER, STATE>> local_m_B;
@@ -102,6 +102,9 @@ public class IncrementalInclusionCheck3_2<LETTER,STATE> extends AbstractIncremen
 		local_m_B.add(nwa);
 		local_m_B2.add(nwa);
 		run2(nwa);
+		s_Logger.info("total:"+counter_total_nodes+"nodes");
+		s_Logger.info(completeLeafSet.size()+"nodes in the end");
+		s_Logger.info("total:"+counter_run+"runs");
 		//completeLeafSet = new ArrayList<Leaf<LETTER,STATE>>();
 		//startingLeafs = null;
 		//currentTerminalLeafs = null;
@@ -142,6 +145,7 @@ public class IncrementalInclusionCheck3_2<LETTER,STATE> extends AbstractIncremen
 				if (!m_Services.getProgressMonitorService().continueProcessing()) {
 	                throw new OperationCanceledException();
 				}
+				counter_run++;
 				if(refine_exceptionRun()||cover()){
 					break;
 				}
@@ -170,6 +174,7 @@ public class IncrementalInclusionCheck3_2<LETTER,STATE> extends AbstractIncremen
 			}
 		}
 		do{
+			counter_run++;
 			if(currentTerminalLeafs==null){
 				currentTerminalLeafs = expand(null);
 				startingLeafs = (ArrayList<Leaf<LETTER, STATE>>) currentTerminalLeafs.clone();
@@ -210,6 +215,7 @@ public class IncrementalInclusionCheck3_2<LETTER,STATE> extends AbstractIncremen
 				newLeaf.setParent(null);
 				newLeaf.bStates = new HashMap<INestedWordAutomatonSimple<LETTER,STATE>,HashSet<STATE>>();
 				nextTerminal.add(newLeaf);
+				counter_total_nodes++;
 				completeLeafSet.add(newLeaf);
 			}
 		}
@@ -228,6 +234,7 @@ public class IncrementalInclusionCheck3_2<LETTER,STATE> extends AbstractIncremen
 						}
 						oldLeaf.nextLeaf.get(alphabet).add(newLeaf);
 						completeLeafSet.add(newLeaf);
+						counter_total_nodes++;
 						nextTerminal.add(newLeaf);
 					}	
 				}
@@ -334,6 +341,9 @@ public class IncrementalInclusionCheck3_2<LETTER,STATE> extends AbstractIncremen
 												newEdgeLeaf = cursorLeaf;
 											}
 										}
+										else{
+											break;
+										}
 										cursorLeaf = cursorLeaf.directParentLeaf;
 										firstRound = false;
 										i--;
@@ -373,6 +383,9 @@ public class IncrementalInclusionCheck3_2<LETTER,STATE> extends AbstractIncremen
 											if(firstRound == false&&CoveringCheck(cursorLeaf)){
 												newEdgeLeaf = cursorLeaf;
 											}
+										}
+										else{
+											break;
 										}
 										cursorLeaf = cursorLeaf.directParentLeaf;
 										firstRound = false;
@@ -570,6 +583,9 @@ public class IncrementalInclusionCheck3_2<LETTER,STATE> extends AbstractIncremen
 	
 	@Override
 	public String exitMessage() {
+		s_Logger.info("total:"+counter_total_nodes+"nodes");
+		s_Logger.info(completeLeafSet.size()+"nodes in the end");
+		s_Logger.info("total:"+counter_run+"runs");
 		return "Exit " + operationName();
 	}
 	/*public Boolean getResult() throws OperationCanceledException{
