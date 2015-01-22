@@ -42,12 +42,20 @@ public class DeclInfoTransformer extends BoogieTransformer {
 	public LeftHandSide processLeftHandSide(LeftHandSide lhs) {
 		if (lhs instanceof VariableLHS) {
 			VariableLHS vlhs = (VariableLHS) lhs;
-			DeclarationInformation newDeclInfo = processDeclInfo(vlhs.getDeclarationInformation());
+			DeclarationInformation newDeclInfo = vlhs.getDeclarationInformation();
 			if (newDeclInfo != null)
 				newDeclInfo = processDeclInfo(newDeclInfo);
 			return new VariableLHS(vlhs.getLocation(), vlhs.getType(), vlhs.getIdentifier(), newDeclInfo);
+		} else if (lhs instanceof StructLHS) {
+			StructLHS slhs = (StructLHS) lhs;
+			LeftHandSide newStruct = processLeftHandSide(slhs.getStruct());
+			return new StructLHS(slhs.getLocation(), slhs.getType(), newStruct, slhs.getField());
+		} else if (lhs instanceof ArrayLHS) {
+			ArrayLHS alhs = (ArrayLHS) lhs;
+			LeftHandSide newArray = processLeftHandSide(alhs.getArray());
+			return new ArrayLHS(alhs.getLocation(), alhs.getType(), newArray, alhs.getIndices());
 		} else {
-			return lhs;			
+			throw new UnsupportedOperationException("Unknown LHS: " + lhs);
 		}
 	}
 
