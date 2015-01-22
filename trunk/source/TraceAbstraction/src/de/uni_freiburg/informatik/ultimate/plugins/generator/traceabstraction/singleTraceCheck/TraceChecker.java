@@ -113,7 +113,7 @@ public class TraceChecker {
 	protected AnnotateAndAsserter m_AAA;
 	protected final LBool m_IsSafe;
 	protected RcfgProgramExecution m_RcfgProgramExecution;
-	protected final DefaultTransFormulas m_DefaultTransFormulas;
+	protected final NestedFormulas<TransFormula, IPredicate> m_NestedFormulas;
 	protected NestedSsaBuilder m_Nsb;
 	protected final TraceCheckerBenchmarkGenerator m_TraceCheckerBenchmarkGenerator;
 	protected final AssertCodeBlockOrder m_assertCodeBlocksIncrementally;
@@ -327,7 +327,7 @@ public class TraceChecker {
 	 */
 	protected TraceChecker(IPredicate precondition, IPredicate postcondition,
 			SortedMap<Integer, IPredicate> pendingContexts, NestedWord<CodeBlock> trace, SmtManager smtManager,
-			ModifiableGlobalVariableManager modifiedGlobals, DefaultTransFormulas defaultTransFormulas,
+			ModifiableGlobalVariableManager modifiedGlobals, NestedFormulas<TransFormula, IPredicate> rv,
 			AssertCodeBlockOrder assertCodeBlocksIncrementally, IUltimateServiceProvider services,
 			boolean computeRcfgProgramExecution, boolean unlockSmtSolverAlsoIfUnsat) {
 		mServices = services;
@@ -342,7 +342,7 @@ public class TraceChecker {
 					+ "null, if there are no pending contexts, use an empty map");
 		}
 		m_PendingContexts = pendingContexts;
-		m_DefaultTransFormulas = defaultTransFormulas;
+		m_NestedFormulas = rv;
 		m_TraceCheckerBenchmarkGenerator = getBenchmarkGenerator();
 		m_assertCodeBlocksIncrementally = assertCodeBlocksIncrementally;
 		m_IsSafe = checkTrace();
@@ -372,8 +372,8 @@ public class TraceChecker {
 		m_SmtManager.startTraceCheck(this);
 	
 		m_TraceCheckerBenchmarkGenerator.start(TraceCheckerBenchmarkType.s_SsaConstruction);
-		m_Nsb = new NestedSsaBuilder(m_Trace, m_SmtManager, m_DefaultTransFormulas,
-				m_DefaultTransFormulas.getModifiableGlobalVariableManager(), mLogger);
+		m_Nsb = new NestedSsaBuilder(m_Trace, m_SmtManager, m_NestedFormulas,
+				m_ModifiedGlobals, mLogger);
 		NestedFormulas<Term, Term> ssa = m_Nsb.getSsa();
 		m_TraceCheckerBenchmarkGenerator.stop(TraceCheckerBenchmarkType.s_SsaConstruction);
 	
@@ -420,15 +420,19 @@ public class TraceChecker {
 	 * of trace check is UNSAT) we throw an Error.
 	 */
 	private void computeRcfgProgramExecution() {
+		if (!(m_NestedFormulas instanceof DefaultTransFormulas)) {
+			throw new AssertionError("program execution only computable if "
+					+ "m_NestedFormulas instanceof DefaultTransFormulas");
+		}
 		if (m_IsSafe == LBool.SAT) {
-			if (!m_DefaultTransFormulas.hasBranchEncoders()) {
+			if (!((DefaultTransFormulas) m_NestedFormulas).hasBranchEncoders()) {
 				unlockSmtManager();
-				DefaultTransFormulas withBE = new DefaultTransFormulas(m_DefaultTransFormulas.getTrace(),
-						m_DefaultTransFormulas.getPrecondition(), m_DefaultTransFormulas.getPostcondition(),
+				DefaultTransFormulas withBE = new DefaultTransFormulas(m_NestedFormulas.getTrace(),
+						m_NestedFormulas.getPrecondition(), m_NestedFormulas.getPostcondition(),
 						m_PendingContexts, m_ModifiedGlobals, true);
-				TraceChecker tc = new TraceChecker(m_DefaultTransFormulas.getPrecondition(),
-						m_DefaultTransFormulas.getPostcondition(), m_PendingContexts,
-						m_DefaultTransFormulas.getTrace(), m_SmtManager, m_ModifiedGlobals, withBE,
+				TraceChecker tc = new TraceChecker(m_NestedFormulas.getPrecondition(),
+						m_NestedFormulas.getPostcondition(), m_PendingContexts,
+						m_NestedFormulas.getTrace(), m_SmtManager, m_ModifiedGlobals, withBE,
 						AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices, true, true);
 				assert tc.isCorrect() == LBool.SAT;
 				m_RcfgProgramExecution = tc.getRcfgProgramExecution();
@@ -454,7 +458,7 @@ public class TraceChecker {
 		Map<TermVariable, Boolean>[] branchEncoders = new Map[0];
 		unlockSmtManager();
 		m_TraceCheckFinished = true;
-		return new RcfgProgramExecution(m_DefaultTransFormulas.getTrace().lettersAsList(), emptyMap, branchEncoders);
+		return new RcfgProgramExecution(m_NestedFormulas.getTrace().lettersAsList(), emptyMap, branchEncoders);
 	}
 
 	/**
@@ -462,7 +466,7 @@ public class TraceChecker {
 	 * violated (result of trace check is SAT).
 	 */
 	private RcfgProgramExecution computeRcfgProgramExecutionCaseSAT(NestedSsaBuilder nsb) {
-		RelevantVariables relVars = new RelevantVariables(m_DefaultTransFormulas, m_ModifiedGlobals);
+		RelevantVariables relVars = new RelevantVariables(m_NestedFormulas, m_ModifiedGlobals);
 		RcfgProgramExecutionBuilder rpeb = new RcfgProgramExecutionBuilder(m_ModifiedGlobals,
 				(NestedWord<CodeBlock>) m_Trace, relVars, m_SmtManager.getBoogie2Smt().getBoogie2SmtSymbolTable());
 		for (int i = 0; i < m_Trace.length(); i++) {

@@ -10,10 +10,12 @@ import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.BinaryNumericRelation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.BinaryRelation.NoRelationOfThisKindException;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.BinaryRelation.RelationSymbol;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 
 
@@ -26,16 +28,17 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
  */
 public class AnnotateAndAssertConjunctsOfCodeBlocks extends AnnotateAndAssertCodeBlocks {
 	
-	protected final DefaultTransFormulas m_DefaultTransFormulas;
+	protected final NestedFormulas<TransFormula, IPredicate> m_NestedFormulas;
 	private final Map<Term,Term> m_Annotated2Original = new HashMap<Term,Term>();
 	private final SplitEqualityMapping m_SplitEqualityMapping = new SplitEqualityMapping();
 	
 	private final static boolean m_SplitEqualities = true;
 
 	public AnnotateAndAssertConjunctsOfCodeBlocks(SmtManager smtManager, 
-			NestedFormulas<Term, Term> nestedSSA, DefaultTransFormulas defaultTransformulas, Logger logger) {
+			NestedFormulas<Term, Term> nestedSSA, 
+			NestedFormulas<TransFormula, IPredicate> nestedFormulas, Logger logger) {
 		super(smtManager, nestedSSA,logger);
-		m_DefaultTransFormulas = defaultTransformulas;
+		m_NestedFormulas = nestedFormulas;
 	}
 	
 	
@@ -112,7 +115,7 @@ public class AnnotateAndAssertConjunctsOfCodeBlocks extends AnnotateAndAssertCod
 	@Override
 	protected Term annotateAndAssertPrecondition() {
 		String name = super.precondAnnotation();
-		Term original = m_DefaultTransFormulas.getPrecondition().getFormula();
+		Term original = m_NestedFormulas.getPrecondition().getFormula();
 		Term indexed = m_SSA.getPrecondition();
 		return annotateAndAssertConjuncts(name, original, indexed);
 	}
@@ -122,7 +125,7 @@ public class AnnotateAndAssertConjunctsOfCodeBlocks extends AnnotateAndAssertCod
 	@Override
 	protected Term annotateAndAssertPostcondition() {
 		String name = super.postcondAnnotation();
-		Term original = m_DefaultTransFormulas.getPostcondition().getFormula();
+		Term original = m_NestedFormulas.getPostcondition().getFormula();
 		Term indexed = m_Script.term("not", m_SSA.getPostcondition());
 		return annotateAndAssertConjunction(name, original, indexed);
 	}
@@ -136,7 +139,7 @@ public class AnnotateAndAssertConjunctsOfCodeBlocks extends AnnotateAndAssertCod
 			 name = internalAnnotation(position);
 		}
 		
-		Term original = m_DefaultTransFormulas.getFormulaFromNonCallPos(position).getFormula();
+		Term original = m_NestedFormulas.getFormulaFromNonCallPos(position).getFormula();
 		Term indexed = m_SSA.getFormulaFromNonCallPos(position);
 		Term annotated = annotateAndAssertConjuncts(name, original, indexed);
 		return annotated;
@@ -145,7 +148,7 @@ public class AnnotateAndAssertConjunctsOfCodeBlocks extends AnnotateAndAssertCod
 	@Override
 	protected Term annotateAndAssertLocalVarAssignemntCall(int position) {
 		String name = super.localVarAssignemntCallAnnotation(position);
-		Term original = m_DefaultTransFormulas.getLocalVarAssignment(position).getFormula();
+		Term original = m_NestedFormulas.getLocalVarAssignment(position).getFormula();
 		Term indexed = m_SSA.getLocalVarAssignment(position);
 		return annotateAndAssertConjuncts(name, original, indexed);
 	}
@@ -153,7 +156,7 @@ public class AnnotateAndAssertConjunctsOfCodeBlocks extends AnnotateAndAssertCod
 	@Override
 	protected Term annotateAndAssertGlobalVarAssignemntCall(int position) {
 		String name = super.globalVarAssignemntAnnotation(position);
-		Term original = m_DefaultTransFormulas.getGlobalVarAssignment(position).getFormula();
+		Term original = m_NestedFormulas.getGlobalVarAssignment(position).getFormula();
 		Term indexed = m_SSA.getGlobalVarAssignment(position);
 		return annotateAndAssertConjuncts(name, original, indexed);
 	}
@@ -161,7 +164,7 @@ public class AnnotateAndAssertConjunctsOfCodeBlocks extends AnnotateAndAssertCod
 	@Override
 	protected Term annotateAndAssertOldVarAssignemntCall(int position) {
 		String name = super.oldVarAssignemntCallAnnotation(position);
-		Term original = m_DefaultTransFormulas.getOldVarAssignment(position).getFormula();
+		Term original = m_NestedFormulas.getOldVarAssignment(position).getFormula();
 		Term indexed = m_SSA.getOldVarAssignment(position);
 		return annotateAndAssertConjuncts(name, original, indexed);
 	}
@@ -170,7 +173,7 @@ public class AnnotateAndAssertConjunctsOfCodeBlocks extends AnnotateAndAssertCod
 	protected Term annotateAndAssertPendingContext(
 			int positionOfPendingContext, int pendingContextCode) {
 		String name = super.pendingContextAnnotation(pendingContextCode);
-		Term original = m_DefaultTransFormulas.getPendingContext(positionOfPendingContext).getFormula();
+		Term original = m_NestedFormulas.getPendingContext(positionOfPendingContext).getFormula();
 		Term indexed = m_SSA.getPendingContext(positionOfPendingContext);
 		return annotateAndAssertConjuncts(name, original, indexed);
 	}
@@ -180,7 +183,7 @@ public class AnnotateAndAssertConjunctsOfCodeBlocks extends AnnotateAndAssertCod
 	protected Term annotateAndAssertLocalVarAssignemntPendingContext(
 			int positionOfPendingReturn, int pendingContextCode) {
 		String name = super.localVarAssignemntPendingReturnAnnotation(pendingContextCode);
-		Term original = m_DefaultTransFormulas.getLocalVarAssignment(positionOfPendingReturn).getFormula();
+		Term original = m_NestedFormulas.getLocalVarAssignment(positionOfPendingReturn).getFormula();
 		Term indexed = m_SSA.getLocalVarAssignment(positionOfPendingReturn);
 		return annotateAndAssertConjuncts(name, original, indexed);
 	}
@@ -190,7 +193,7 @@ public class AnnotateAndAssertConjunctsOfCodeBlocks extends AnnotateAndAssertCod
 	protected Term annotateAndAssertOldVarAssignemntPendingContext(
 			int positionOfPendingReturn, int pendingContextCode) {
 		String name = super.oldVarAssignemntPendingReturnAnnotation(pendingContextCode);
-		Term original = m_DefaultTransFormulas.getOldVarAssignment(positionOfPendingReturn).getFormula();
+		Term original = m_NestedFormulas.getOldVarAssignment(positionOfPendingReturn).getFormula();
 		Term indexed = m_SSA.getOldVarAssignment(positionOfPendingReturn);
 		return annotateAndAssertConjuncts(name, original, indexed);
 	}

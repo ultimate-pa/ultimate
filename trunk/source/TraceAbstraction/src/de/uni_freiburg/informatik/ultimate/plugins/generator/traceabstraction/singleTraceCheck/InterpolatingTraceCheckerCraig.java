@@ -105,7 +105,7 @@ public class InterpolatingTraceCheckerCraig extends InterpolatingTraceChecker {
 
 	private boolean testRelevantVars() {
 		boolean result = true;
-		RelevantVariables rv = new RelevantVariables(m_DefaultTransFormulas, m_ModifiedGlobals);
+		RelevantVariables rv = new RelevantVariables(m_NestedFormulas, m_ModifiedGlobals);
 		for (int i = 0; i < m_Interpolants.length; i++) {
 			IPredicate itp = m_Interpolants[i];
 			Set<BoogieVar> vars = itp.getVars();

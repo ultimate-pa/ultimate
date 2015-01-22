@@ -336,10 +336,10 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 		} else if (m_UnsatCores == UnsatCores.CONJUNCT_LEVEL) {
 			rtf = new RelevantTransFormulas(trace, m_Precondition, m_Postcondition, m_PendingContexts,
 					unsat_coresAsSet, m_ModifiedGlobals, m_SmtManager, m_AAA, m_AnnotateAndAsserterConjuncts);
-			assert stillInfeasible(rtf);
 		} else {
 			throw new AssertionError("unknown case:" + m_UnsatCores);
 		}
+		assert stillInfeasible(rtf) : "incorrect Unsatisfiable Core";
 
 		Set<BoogieVar>[] relevantVarsToUseForFPBP = null;
 
@@ -472,8 +472,8 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 	 */
 	private boolean stillInfeasible(NestedFormulas<TransFormula, IPredicate> rv) {
 		TraceChecker tc = new TraceChecker(rv.getPrecondition(), rv.getPostcondition(),
-				new TreeMap<Integer, IPredicate>(), rv.getTrace(), m_SmtManager, m_ModifiedGlobals,
-				AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices, false);
+				new TreeMap<Integer, IPredicate>(), rv.getTrace(), m_SmtManager, m_ModifiedGlobals, rv,
+				AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices, false, true);
 		boolean result = (tc.isCorrect() == LBool.UNSAT);
 		return result;
 	}
@@ -922,7 +922,7 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 	protected AnnotateAndAssertCodeBlocks getAnnotateAndAsserterCodeBlocks(NestedFormulas<Term, Term> ssa) {
 		if (m_AnnotateAndAsserterConjuncts == null) {
 			m_AnnotateAndAsserterConjuncts = new AnnotateAndAssertConjunctsOfCodeBlocks(m_SmtManager, ssa,
-					m_DefaultTransFormulas, mLogger);
+					m_NestedFormulas, mLogger);
 		}
 		return m_AnnotateAndAsserterConjuncts;
 	}
