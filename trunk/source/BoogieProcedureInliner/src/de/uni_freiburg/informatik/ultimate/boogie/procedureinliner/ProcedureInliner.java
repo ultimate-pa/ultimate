@@ -373,7 +373,7 @@ public class ProcedureInliner implements IUnmanagedObserver {
 						do {
 							newLabelName = lbl.getName();
 							if (uniqueNum > 1)
-								newLabelName += "#" + uniqueNumber;
+								newLabelName += "#" + uniqueNum;
 							++uniqueNum;
 						} while (mAllLabels.contains(newLabelName));
 						mAllLabels.add(newLabelName);
