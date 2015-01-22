@@ -1,4 +1,15 @@
+// Author: heizmann@informatik.uni-freiburg.de, Jeffery Hsu
+// Date: 2015-01-22
+
+// File contains the automata that were used by Ultimate Automizer while 
+// verifying the Boogie program examples/programs/real-life/s3_clnt_1_Safe.bpl
+// up to iteration 10.
 //
+// The automaton A has the shape of the control flow graph (we call it control
+// automaton or error automaton) the automata B_{0},...,B_{9} are the
+// interpolant automata that were constructed during the verification.
+// 
+// The inclusion A ⊆ (B_{1} ∪ ... ∪ B_{9}) does not hold.
 
 boolean isIncluded = Jeffery_Test_2(A,NwaList(NwaList(NwaList(NwaList(NwaList(NwaList(NwaList(NwaList(NwaList(B0, B1), B2),B3),B4),B5),B6),B7),B8),B9),3);
 print (isIncluded);
