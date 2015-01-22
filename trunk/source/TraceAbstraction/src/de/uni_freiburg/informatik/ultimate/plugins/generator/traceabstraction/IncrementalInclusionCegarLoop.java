@@ -200,8 +200,10 @@ public class IncrementalInclusionCegarLoop extends BasicCegarLoop {
 				throw new UnsupportedOperationException();
 			}
 			if (m_Pref.dumpAutomata()) {
-				String filename = "InterpolantAutomaton_Iteration" + m_Iteration;
-				super.writeAutomatonToFile(m_InterpolAutomaton, filename);
+				for (int i=0; i<m_InterpolantAutomata.size(); i++) {
+					String filename = "IncrementalInclusion_Interation" + m_Iteration + "_InterpolantAutomaton" + i;
+					super.writeAutomatonToFile(m_InterpolantAutomata.get(i), filename);
+				}
 			}
 		} finally {
 //			m_CegarLoopBenchmark.addEdgeCheckerData(edgeChecker.getEdgeCheckerBenchmark());
