@@ -53,6 +53,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.in
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantAutomataBuilders.TwoTrackInterpolantAutomatonBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.EdgeChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IncrementalHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.InductivityCheck;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
@@ -278,7 +279,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		}
 		m_CegarLoopBenchmark.stop(CegarLoopBenchmarkType.s_BasicInterpolantAutomatonTime);
 		assert (accepts(m_InterpolAutomaton, m_Counterexample.getWord())) : "Interpolant automaton broken!";
-		assert (new InductivityCheck(m_InterpolAutomaton, m_SmtManager, m_ModGlobVarManager, false,	true, m_Services)).getResult();
+		assert (new InductivityCheck(m_Services, m_InterpolAutomaton, false, true,	new IncrementalHoareTripleChecker(m_SmtManager, m_ModGlobVarManager))).getResult();
 	}
 
 	@Override
@@ -351,12 +352,12 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 							+ epd.m_AnswerReturnCache + " answers given by cache " + epd.m_AnswerReturnSolver
 							+ " answers given by solver");
 					assert m_SmtManager.isLocked();
-					assert (new InductivityCheck(m_InterpolAutomaton,
-							m_SmtManager, m_ModGlobVarManager, false, true, m_Services)).getResult();
+					assert (new InductivityCheck(m_Services,
+							m_InterpolAutomaton, false, true, new IncrementalHoareTripleChecker(m_SmtManager, m_ModGlobVarManager))).getResult();
 					// do the following check only to obtain logger messages of
 					// checkInductivity
-					assert (new InductivityCheck(epd.getRejectionCache(), m_SmtManager,
-							m_ModGlobVarManager, true, false, m_Services).getResult() | true);
+					assert (new InductivityCheck(m_Services, epd.getRejectionCache(),
+							true, false, new IncrementalHoareTripleChecker(m_SmtManager, m_ModGlobVarManager)).getResult() | true);
 					break;
 
 				case LAZYPOST:
@@ -380,12 +381,12 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 							+ lpd.m_AnswerReturnCache + " answers given by cache " + lpd.m_AnswerReturnSolver
 							+ " answers given by solver");
 					assert m_SmtManager.isLocked();
-					assert (new InductivityCheck(m_InterpolAutomaton,
-							m_SmtManager, m_ModGlobVarManager, false, true, m_Services)).getResult();
+					assert (new InductivityCheck(m_Services,
+							m_InterpolAutomaton, false, true, new IncrementalHoareTripleChecker(m_SmtManager, m_ModGlobVarManager))).getResult();
 					// do the following check only to obtain logger messages of
 					// checkInductivity
-					assert (new InductivityCheck(lpd.getRejectionCache(), m_SmtManager,
-							m_ModGlobVarManager, true, false, m_Services)).getResult() | true;
+					assert (new InductivityCheck(m_Services, lpd.getRejectionCache(),
+							true, false, new IncrementalHoareTripleChecker(m_SmtManager, m_ModGlobVarManager))).getResult() | true;
 					break;
 
 				case SELFLOOP:
@@ -458,8 +459,8 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 						// throw new
 						// AssertionError("counterexample not accepted by interpolant automaton");
 						// }
-						assert (new InductivityCheck(test, m_SmtManager, m_ModGlobVarManager, false,
-								true, m_Services)).getResult();
+						assert (new InductivityCheck(m_Services, test, false, true,
+								new IncrementalHoareTripleChecker(m_SmtManager, m_ModGlobVarManager))).getResult();
 					}
 					break;
 				default:
@@ -748,7 +749,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		}
 
 		if (m_ComputeHoareAnnotation) {
-			assert (new InductivityCheck(dia, m_SmtManager, m_ModGlobVarManager, false, true, m_Services))
+			assert (new InductivityCheck(m_Services, dia, false, true, new IncrementalHoareTripleChecker(m_SmtManager, m_ModGlobVarManager)))
 					.getResult() : "Not inductive";
 		}
 		if (m_Pref.dumpAutomata()) {

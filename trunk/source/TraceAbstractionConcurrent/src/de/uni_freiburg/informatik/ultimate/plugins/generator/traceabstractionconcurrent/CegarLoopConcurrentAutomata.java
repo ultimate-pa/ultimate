@@ -33,6 +33,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.In
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantAutomataBuilders.StraightLineInterpolantAutomatonBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.EdgeChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IMLPredicate;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IncrementalHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.InductivityCheck;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
@@ -64,8 +65,8 @@ public class CegarLoopConcurrentAutomata extends BasicCegarLoop {
 
 		m_CegarLoopBenchmark.stop(CegarLoopBenchmarkType.s_BasicInterpolantAutomatonTime);
 		assert (accepts(m_InterpolAutomaton, m_Counterexample.getWord())) : "Interpolant automaton broken!";
-		assert (new InductivityCheck(m_InterpolAutomaton, m_SmtManager, m_ModGlobVarManager, false,
-				true, m_Services)).getResult() : "Not inductive";
+		assert (new InductivityCheck(m_Services, m_InterpolAutomaton, false, true,
+				new IncrementalHoareTripleChecker(m_SmtManager, m_ModGlobVarManager))).getResult() : "Not inductive";
 	}
 
 	@Override
@@ -152,12 +153,12 @@ public class CegarLoopConcurrentAutomata extends BasicCegarLoop {
 				+ epd.m_AnswerReturnCache + " answers given by cache " + epd.m_AnswerReturnSolver
 				+ " answers given by solver");
 		assert !m_SmtManager.isLocked();
-		assert (new InductivityCheck(m_InterpolAutomaton, m_SmtManager, m_ModGlobVarManager, false,
-				true, m_Services)).getResult();
+		assert (new InductivityCheck(m_Services, m_InterpolAutomaton, false, true,
+				new IncrementalHoareTripleChecker(m_SmtManager, m_ModGlobVarManager))).getResult();
 		// do the following check only to obtain logger messages of
 		// checkInductivity
-		assert (new InductivityCheck(epd.getRejectionCache(), m_SmtManager, m_ModGlobVarManager, true,
-				false, m_Services).getResult() | true);
+		assert (new InductivityCheck(m_Services, epd.getRejectionCache(), true, false,
+				new IncrementalHoareTripleChecker(m_SmtManager, m_ModGlobVarManager)).getResult() | true);
 
 		if (m_RemoveDeadEnds) {
 			if (m_ComputeHoareAnnotation) {

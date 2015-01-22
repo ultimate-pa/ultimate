@@ -62,6 +62,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.In
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantAutomataBuilders.CanonicalInterpolantAutomatonBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.EdgeChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IncrementalHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.InductivityCheck;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
@@ -645,8 +646,7 @@ public class BuchiCegarLoop {
 					m_RefineBuchi.getInterpolAutomatonUsedInRefinement());
 		}
 		m_MDBenchmark.reportTrivialModule(m_Iteration, m_InterpolAutomaton.size());
-		assert (new InductivityCheck(m_InterpolAutomaton, m_SmtManager, m_RootNode.getRootAnnot()
-				.getModGlobVarManager(), false, true, m_Services)).getResult();
+		assert (new InductivityCheck(m_Services, m_InterpolAutomaton, false, true, new IncrementalHoareTripleChecker(m_SmtManager, m_RootNode.getRootAnnot().getModGlobVarManager()))).getResult();
 		m_Abstraction = diff.getResult();
 		m_BenchmarkGenerator.addEdgeCheckerData(ec.getEdgeCheckerBenchmark());
 		m_BenchmarkGenerator.stop(CegarLoopBenchmarkType.s_AutomataDifference);
@@ -664,8 +664,7 @@ public class BuchiCegarLoop {
 		// assert((new BuchiAccepts<CodeBlock, IPredicate>(m_InterpolAutomaton,
 		// m_Counterexample.getNestedLassoWord())).getResult()) :
 		// "Interpolant automaton broken!";
-		assert (new InductivityCheck(m_InterpolAutomaton, m_SmtManager, m_RootNode.getRootAnnot()
-				.getModGlobVarManager(), false, true, m_Services)).getResult();
+		assert (new InductivityCheck(m_Services, m_InterpolAutomaton, false, true, new IncrementalHoareTripleChecker(m_SmtManager, m_RootNode.getRootAnnot().getModGlobVarManager()))).getResult();
 	}
 
 	private TerminationArgumentResult<RcfgElement> constructTAResult(TerminationArgument terminationArgument,
