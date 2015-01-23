@@ -24,10 +24,10 @@ public class Svcomp_Reach_SimpleMemoryModel extends
 		};
 	
 	// Time out for each test case in milliseconds
-	private static int m_Timeout = 20000;
+	private static int m_Timeout = 60 * 1000;
 
 	private static final boolean m_AutomizerWithForwardPredicates = true;
-	private static final boolean m_AutomizerWithBackwardPredicates = true;
+	private static final boolean m_AutomizerWithBackwardPredicates = false;
 	
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
