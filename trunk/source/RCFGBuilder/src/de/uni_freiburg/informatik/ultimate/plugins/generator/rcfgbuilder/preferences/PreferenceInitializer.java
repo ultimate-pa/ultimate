@@ -53,6 +53,7 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 	public static final boolean DEF_ExtSolverFlag = true;
 	public static final String LABEL_ExtSolverCommand = "Command for external solver";
 	public static final String DEF_ExtSolverCommand = "z3 SMTLIB2_COMPLIANT=true -memory:1024 -smt2 -in -t:12000";
+//	public static final String DEF_ExtSolverCommand = "cvc4-2014-07-03-x86_64-linux-opt --incremental --print-success";
 	public static final String LABEL_ExtSolverLogic = "Logic for external solver";
 	public static final String DEF_ExtSolverLogic = "AUFLIRA";
 
