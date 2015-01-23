@@ -1,3 +1,22 @@
+// Author: heizmann@informatik.uni-freiburg.de, Jeffery Hsu
+// Date: 2015-01-23
+
+// File contains the automata that were used by Ultimate Automizer while 
+// verifying the Boogie program examples/programs/real-life/s3_clnt_1_Safe.bpl
+// with the setting INCREMENTAL_INCLUSION_VIA_DIFFERENCE up to iteration 10.
+// Overall 24 iterations were needed.
+//
+// The automaton A has the shape of the control flow graph (we call it control
+// automaton or error automaton) the automata B_{0},...,B_{9} are the
+// interpolant automata that were constructed during the verification.
+// 
+// The inclusion A ⊆ (B_{1} ∪ ... ∪ B_{9}) does not hold.
+
+
+
+
+
+
 // Testfile dumped by Ultimate at 2015/01/23 12:58:13
 //
 // 
