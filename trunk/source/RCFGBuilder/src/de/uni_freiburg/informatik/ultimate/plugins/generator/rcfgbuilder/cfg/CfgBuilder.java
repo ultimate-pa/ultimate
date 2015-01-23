@@ -3,8 +3,10 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -21,6 +23,7 @@ import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceSt
 import de.uni_freiburg.informatik.ultimate.core.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.LoggingScript;
+import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.annotation.IAnnotations;
@@ -180,7 +183,7 @@ public class CfgBuilder {
 			blackHolesArrays = false;
 		} else {
 			m_Script.setOption(":produce-models", true);
-			m_Script.setOption(":produce-proofs", true);
+//			m_Script.setOption(":produce-proofs", true);
 			m_Script.setOption(":produce-unsat-cores", true);
 			// m_Script.setOption(":interpolant-check-mode", true);
 			// m_Script.setLogic("AUFNIRA");
@@ -188,6 +191,14 @@ public class CfgBuilder {
 			// m_Script.setOption(":verbosity", 0);
 			blackHolesArrays = false;
 		}
+		String advertising = System.lineSeparator() + "    SMT script generated on " + 
+				(new SimpleDateFormat("yyyy/MM/dd")).format(new Date()) + 
+				" by Ultimate. http://ultimate.informatik.uni-freiburg.de/" + 
+				System.lineSeparator();
+		m_Script.setInfo(":source",	new QuotedObject(advertising));
+		m_Script.setInfo(":smt-lib-version", "2.0");
+		m_Script.setInfo(":category", new QuotedObject("industrial"));
+		
 		m_BoogieDeclarations = new BoogieDeclarations(unit, mLogger);
 		m_Boogie2smt = new Boogie2SMT(m_Script, m_BoogieDeclarations, blackHolesArrays, mServices);
 		m_RootAnnot = new RootAnnot(m_BoogieDeclarations, m_Boogie2smt, m_Backtranslator);
