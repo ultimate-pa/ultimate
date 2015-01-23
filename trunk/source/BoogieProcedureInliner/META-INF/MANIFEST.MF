@@ -11,3 +11,4 @@ Require-Bundle: Library-log4j,
  org.eclipse.ui
 Bundle-RequiredExecutionEnvironment: JavaSE-1.7
 Bundle-ActivationPolicy: lazy
+Import-Package: de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util

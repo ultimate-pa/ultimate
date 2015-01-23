@@ -12,6 +12,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvide
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.IAnalysis;
 import de.uni_freiburg.informatik.ultimate.model.GraphType;
 import de.uni_freiburg.informatik.ultimate.boogie.preprocessor.TypeChecker;
+import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.callgraph.CallGraphBuilder;
 import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.preferences.PreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.preferences.PreferenceItem;
 
@@ -53,14 +54,16 @@ public class BoogieProcedureInliner implements IAnalysis {
 
 	@Override
 	public List<IObserver> getObservers() {
+		CallGraphBuilder callGraphBuilder = new CallGraphBuilder(mServices);
 		OldExprPreprocessor oldExprPreprocessor = new OldExprPreprocessor(mServices);
 
 		ArrayList<IObserver> observers = new ArrayList<IObserver>();
 		observers.add(new TypeChecker(mServices));
+		observers.add(callGraphBuilder);
 		//observers.add(oldExprPreprocessor);		
-		observers.add(new UniqueVariableTransformer(mServices));
-		observers.add(new ProcedureInliner(mServices));
-		observers.add(new TypeChecker(mServices)); // TODO remove (for debugging -- warns on wrong set types)
+		//observers.add(new UniqueVariableTransformer(mServices));
+		//observers.add(new ProcedureInliner(mServices));
+		//observers.add(new TypeChecker(mServices)); // TODO remove (for debugging -- warns on wrong set types)
 		return observers;
 	}
 
