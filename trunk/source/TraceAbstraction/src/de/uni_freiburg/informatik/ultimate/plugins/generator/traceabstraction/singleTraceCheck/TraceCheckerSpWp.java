@@ -361,7 +361,8 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 			computeForwardRelevantPredicates(relevantVarsToUseForFPBP, rtf, trace, tracePrecondition, m_LiveVariables,
 					numberOfQuantifiedPredicates);
 			mLogger.debug("Checking inductivity of forward relevant predicates...");
-			if (!checkPredicatesCorrect(m_InterpolantsFp, trace, tracePrecondition, tracePostcondition, "FP")) {
+			if (!TraceCheckerUtils.checkInterpolantsInductivityForward(m_InterpolantsFp, 
+					trace, tracePrecondition, tracePostcondition, m_PendingContexts, "FP", m_SmtManager, m_ModifiedGlobals, mLogger)) {
 				throw new AssertionError("invalid Hoare triple in FP");
 			}
 //			assert checkPredicatesCorrect(m_InterpolantsFp, trace, tracePrecondition, tracePostcondition, "FP") : "invalid Hoare triple in FP";
@@ -373,7 +374,9 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 			computeForwardRelevantPredicates(relevantVarsToUseForFPBP, rtf, trace, tracePrecondition, false,
 					numberOfQuantifiedPredicates);
 			mLogger.debug("Checking inductivity of forward relevant predicates...");
-			assert checkPredicatesCorrect(m_InterpolantsFp, trace, tracePrecondition, tracePostcondition, "FP") : "invalid Hoare triple in FP";
+			assert TraceCheckerUtils.checkInterpolantsInductivityForward(m_InterpolantsFp, 
+					trace, tracePrecondition, tracePostcondition, m_PendingContexts, "FP", 
+					m_SmtManager, m_ModifiedGlobals, mLogger) : "invalid Hoare triple in FP";
 		}
 
 		if (m_LogInformation) {
@@ -387,8 +390,9 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 			computeBackwardRelevantPredicates(relevantVarsToUseForFPBP, rtf, trace, tracePostcondition,
 					m_LiveVariables, numberOfQuantifiedPredicates);
 			mLogger.debug("Checking inductivity of backward relevant predicates...");
-			assert checkInterpolantsCorrectBackwards(m_InterpolantsBp, trace, tracePrecondition, tracePostcondition,
-					"BP") : "invalid Hoare triple in BP";
+			assert TraceCheckerUtils.checkInterpolantsInductivityBackward(m_InterpolantsBp, 
+					trace, tracePrecondition, tracePostcondition, m_PendingContexts, "BP", 
+					m_SmtManager, m_ModifiedGlobals, mLogger) : "invalid Hoare triple in BP";
 			if (m_CollectInformationAboutSizeOfPredicates) {
 				sizeOfPredicatesBP = m_SmtManager.computeDagSizeOfPredicates(m_InterpolantsBp);
 			}
@@ -397,8 +401,9 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 			computeBackwardRelevantPredicates(relevantVarsToUseForFPBP, rtf, trace, tracePostcondition, false,
 					numberOfQuantifiedPredicates);
 			mLogger.debug("Checking inductivity of backward relevant predicates...");
-			assert checkInterpolantsCorrectBackwards(m_InterpolantsBp, trace, tracePrecondition, tracePostcondition,
-					"BP") : "invalid Hoare triple in BP";
+			assert TraceCheckerUtils.checkInterpolantsInductivityBackward(m_InterpolantsBp, 
+					trace, tracePrecondition, tracePostcondition, m_PendingContexts, "BP", 
+					m_SmtManager, m_ModifiedGlobals, mLogger) : "invalid Hoare triple in BP";
 		}
 
 		((TraceCheckerBenchmarkSpWpGenerator) super.m_TraceCheckerBenchmarkGenerator).setPredicateData(
@@ -822,100 +827,6 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 					+ (result == LBool.UNSAT ? "valid" : (result == LBool.SAT ? "not valid" : result)));
 			assert (result == LBool.UNSAT || result == LBool.UNKNOWN) : "checkSPImpliesWP failed";
 		}
-	}
-
-	/***
-	 * Checks whether the given predicates are inductive (correct). For each
-	 * statement st_i from the given trace, it checks whether {predicates[i-1]}
-	 * st_i {predicates[i]} is a Hoare triple.
-	 */
-	boolean checkPredicatesCorrect(IPredicate[] predicates, Word<CodeBlock> trace, IPredicate tracePrecondition,
-			IPredicate tracePostcondition, String computation) {
-		LBool result;
-		for (int i = -1; i < predicates.length; i++) {
-			result = isHoareTriple(i + 1, tracePrecondition, tracePostcondition, predicates, trace);
-			if (result == LBool.SAT) {
-				mLogger.debug("Trace length: " + trace.length());
-				mLogger.debug("Stmt: " + (i + 1));
-				return false;
-			}
-			assert result == LBool.UNSAT || result == LBool.UNKNOWN : "invalid Hoare triple in " + computation;
-		}
-		return true;
-	}
-
-	/***
-	 * Checks whether the given predicates are inductive (correct). For each
-	 * statement st_i from the given trace, it checks whether {predicates[i-1]}
-	 * st_i {predicates[i]} is a Hoare triple, but it starts at the end of the
-	 * list of predicates and proceeds backwards. This ensures, that we get the
-	 * first statement st, such that the corresponding Hoare triple is wrong.
-	 * 
-	 * @see checkPredicatesCorrect
-	 */
-	boolean checkInterpolantsCorrectBackwards(IPredicate[] interpolants, Word<CodeBlock> trace,
-			IPredicate tracePrecondition, IPredicate tracePostcondition, String computation) {
-		LBool result;
-		for (int i = interpolants.length; i >= 0; i--) {
-			result = isHoareTriple(i, tracePrecondition, tracePostcondition, interpolants, trace);
-			if (result == LBool.SAT) {
-				mLogger.debug("Trace length: " + trace.length());
-				mLogger.debug("Stmt: " + i);
-				return false;
-			}
-			assert result == LBool.UNSAT || result == LBool.UNKNOWN : "invalid Hoare triple in " + computation;
-		}
-		return true;
-	}
-
-	private IPredicate getInterpolantAtPosition(int i, IPredicate tracePrecondition, IPredicate tracePostcondition,
-			IPredicate[] interpolants) {
-		assert (i >= -1 && i <= interpolants.length);
-		if (i == -1) {
-			return tracePrecondition;
-		} else if (i == interpolants.length) {
-			return tracePostcondition;
-		} else {
-			return interpolants[i];
-		}
-	}
-
-	/***
-	 * Checks for a given statement st, a predicate %PHI and a predicate %PSI,
-	 * whether the Hoare triple {%PHI} st {%PSI} is correct.
-	 */
-	private LBool isHoareTriple(int i, IPredicate tracePrecondition, IPredicate tracePostcondition,
-			IPredicate[] interpolants, Word<CodeBlock> trace) {
-		IPredicate pre = getInterpolantAtPosition(i - 1, tracePrecondition, tracePostcondition, interpolants);
-		IPredicate post = getInterpolantAtPosition(i, tracePrecondition, tracePostcondition, interpolants);
-		CodeBlock cb = trace.getSymbol(i);
-		EdgeChecker ec = new EdgeChecker(m_SmtManager, m_ModifiedGlobals, m_PredicateUnifier.getCoverageRelation());
-		ec.assertCodeBlock(cb);
-		ec.assertPrecondition(pre);
-		LBool result;
-		if (cb instanceof Call) {
-			result = ec.postCallImplies(post);
-		} else if (cb instanceof Return) {
-			NestedWord<CodeBlock> nw = (NestedWord<CodeBlock>) trace;
-			assert nw.isReturnPosition(i);
-			int callPosition = nw.getCallPosition(i);
-			IPredicate callPredecessor = getInterpolantAtPosition(callPosition - 1, tracePrecondition,
-					tracePostcondition, interpolants);
-			ec.assertHierPred(callPredecessor);
-			result = ec.postReturnImplies(post);
-			ec.unAssertHierPred();
-		} else if (cb instanceof InterproceduralSequentialComposition) {
-			result = ec.postInternalImplies(post);
-		} else {
-			assert (cb instanceof SequentialComposition) || (cb instanceof ParallelComposition)
-					|| (cb instanceof StatementSequence) || (cb instanceof Summary);
-			result = ec.postInternalImplies(post);
-		}
-		ec.unAssertPrecondition();
-		ec.unAssertCodeBlock();
-		mLogger.debug("Hoare triple {" + pre + "}, " + cb + " {" + post + "} is "
-				+ (result == LBool.UNSAT ? "valid" : (result == LBool.SAT ? "not valid" : result)));
-		return result;
 	}
 
 	@Override
