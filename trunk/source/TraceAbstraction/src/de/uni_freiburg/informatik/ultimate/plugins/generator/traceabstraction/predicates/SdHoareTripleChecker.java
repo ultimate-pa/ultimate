@@ -143,7 +143,7 @@ public class SdHoareTripleChecker {
 	 */
 	public Validity sdecInteral(IPredicate pre, CodeBlock cb, IPredicate post) {
 		if (m_PredicateCoverageChecker != null) {
-			Validity sat = MonolithicHoareTripleChecker.lbool2httv(m_PredicateCoverageChecker.isCovered(pre, post));
+			Validity sat = MonolithicHoareTripleChecker.lbool2validity(m_PredicateCoverageChecker.isCovered(pre, post));
 			if (sat == Validity.VALID) {
 				if (Collections.disjoint(pre.getVars(), cb.getTransitionFormula().getAssignedVars())) {
 					return Validity.VALID;
@@ -168,7 +168,7 @@ public class SdHoareTripleChecker {
 		// now, we know that vars of pre and post are both disjoint from the
 		/// vars of cb. Edge is inductive iff pre implies post
 		if (m_PredicateCoverageChecker != null) {
-			Validity sat = MonolithicHoareTripleChecker.lbool2httv(m_PredicateCoverageChecker.isCovered(pre, post));
+			Validity sat = MonolithicHoareTripleChecker.lbool2validity(m_PredicateCoverageChecker.isCovered(pre, post));
 			if (sat == Validity.VALID) {
 				return Validity.VALID;
 			}

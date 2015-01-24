@@ -5,6 +5,7 @@ import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.EdgeChecker.EdgeCheckerBenchmarkGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IHoareTripleChecker;
 
 /**
@@ -64,6 +65,11 @@ public class BuchiHoareTripleChecker implements IHoareTripleChecker {
 		preLin = replaceIfRankDecreasePredicate(preLin);
 		preHier = replaceIfRankDecreasePredicate(preHier);
 		return m_IHoareTripleChecker.checkReturn(preLin, preHier, cb, succ);
+	}
+
+
+	public EdgeCheckerBenchmarkGenerator getEdgeCheckerBenchmark() {
+		return m_IHoareTripleChecker.getEdgeCheckerBenchmark();
 	}
 
 	

@@ -59,6 +59,7 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker {
 //		return m_SmtManager;
 //	}
 	
+	@Override
 	public EdgeCheckerBenchmarkGenerator getEdgeCheckerBenchmark() {
 		return m_EdgeCheckerBenchmark;
 	}
@@ -517,7 +518,7 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker {
 		}
 		m_Script.pop(1);
 		m_EdgeCheckerBenchmark.stopEdgeCheckerTime();
-		return MonolithicHoareTripleChecker.lbool2httv(isSat);
+		return MonolithicHoareTripleChecker.lbool2validity(isSat);
 	}
 	
 	
@@ -566,7 +567,7 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker {
 		}
 		m_Script.pop(1);
 		m_EdgeCheckerBenchmark.stopEdgeCheckerTime();
-		return MonolithicHoareTripleChecker.lbool2httv(isSat);
+		return MonolithicHoareTripleChecker.lbool2validity(isSat);
 	}
 
 
@@ -642,7 +643,7 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker {
 		m_Script.pop(1);
 		m_HierConstants.endScope();
 		m_EdgeCheckerBenchmark.stopEdgeCheckerTime();
-		return MonolithicHoareTripleChecker.lbool2httv(isSat);
+		return MonolithicHoareTripleChecker.lbool2validity(isSat);
 	}
 	
 
