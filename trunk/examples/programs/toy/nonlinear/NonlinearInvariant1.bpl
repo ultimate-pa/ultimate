@@ -2,26 +2,36 @@
 /*
  * Date: 2015-01-24
  * Author: heizmann@informatik.uni-freiburg.de
+ * 
+ * What is proven here?
+ * If we increase the absolute value but retain the sign of operands, then
+ * having a positive value is an invariant of the product.
+ * 
+ * We infer the (nonlinear) loop invariant (tmp1 * tmp2). This expression does
+ * not occur in the program.
  *
  */
-var a,b: int;
 
-procedure main() returns ()
-modifies a,b;
+procedure main(in1, in2: int) returns (out1, out2: int)
+requires in1 * in2 > 0;
+ensures out1 * out2 > 0;
 {
-  assume a * b > 0;
+  var tmp1,tmp2: int;
+  
+  tmp1 := in1;
+  tmp2 := in2;
   while (*) {
-    if (a >= 0)  {
-        a := a + 1;
+    if (tmp1 >= 0)  {
+        tmp1 := tmp1 + 1;
     } else {
-        a := a - 1;
+        tmp1 := tmp1 - 1;
     }
-    if (b >= 0)  {
-        b := b + 1;
+    if (tmp2 >= 0)  {
+        tmp2 := tmp2 + 1;
     } else {
-        b := b - 1;
+        tmp2 := tmp2 - 1;
     }
   }
-  assert a * b > 0;
-  
+  out1 := tmp1;
+  out2 := tmp2;
 }
