@@ -203,7 +203,7 @@ public class TraceCheckerUtils {
 		if (trace.isCallPosition(i)) {
 			assert (cb instanceof Call) : "not Call at call position";
 			result = htc.checkCall(predecessor, cb, successor);
-			logger.debug(new DebugMessage("{0}: Hoare triple {{1}} {2} {{3}} is {4}", 
+			logger.info(new DebugMessage("{0}: Hoare triple '{'{1}'}' {2} '{'{3}'}' is {4}", 
 					i, predecessor, cb, successor, result));
 		} else if (trace.isReturnPosition(i)) {
 			assert (cb instanceof Return) : "not Call at call position";
@@ -212,16 +212,16 @@ public class TraceCheckerUtils {
 				hierarchicalPredecessor = pendingContexts.get(i);
 			} else {
 				int callPosition = trace.getCallPosition(i);
-				hierarchicalPredecessor = ipp.getInterpolant(callPosition - 1);
+				hierarchicalPredecessor = ipp.getInterpolant(callPosition);
 			}
 			result = htc.checkReturn(predecessor, hierarchicalPredecessor, cb, successor);
-			logger.debug(new DebugMessage("{0}: Hoare quadruple {{1}} {{5}} {2} {{3}} is {4}", 
+			logger.info(new DebugMessage("{0}: Hoare quadruple '{'{1}'}' '{'{5}'}' {2} '{'{3}'}' is {4}", 
 					i, predecessor, cb, successor, result, hierarchicalPredecessor));
 		} else if (trace.isInternalPosition(i)) {
 			assert (cb instanceof SequentialComposition) || (cb instanceof ParallelComposition)
 			|| (cb instanceof StatementSequence) || (cb instanceof Summary);
 			result = htc.checkInternal(predecessor, cb, successor);
-			logger.debug(new DebugMessage("{0}: Hoare triple {{1}} {2} {{3}} is {4}", 
+			logger.info(new DebugMessage("{0}: Hoare triple '{'{1}'}' {2} '{'{3}'}' is {4}", 
 					i, predecessor, cb, successor, result));
 		} else {
 			throw new AssertionError("unsupported position");
