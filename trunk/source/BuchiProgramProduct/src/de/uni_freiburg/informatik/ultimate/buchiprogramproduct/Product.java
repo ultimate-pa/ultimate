@@ -60,6 +60,11 @@ public class Product {
 	private final ProductBacktranslator mBacktranslator;
 	private HashSet<ProgramPoint> mRootSuccessorProgramPoints;
 
+	private final BuchiProgramAcceptingStateAnnotation mAcceptingNodeAnnotation;
+
+	private HashSet<ProgramPoint> mRcfgLeafs;
+	private HashSet<ProgramPoint> mProductLeafs;
+
 	public Product(NestedWordAutomaton<CodeBlock, String> aut, RootNode rcfg, LTLPropertyCheck ltlAnnot,
 			IUltimateServiceProvider services, ProductBacktranslator backtrans) throws Exception {
 		mServices = services;
@@ -71,6 +76,9 @@ public class Product {
 		mNWA = aut;
 		mRCFG = rcfg;
 		mBacktranslator = backtrans;
+		mAcceptingNodeAnnotation = new BuchiProgramAcceptingStateAnnotation();
+		mRcfgLeafs = new HashSet<>();
+		mProductLeafs = new HashSet<>();
 
 		// create the new root node
 		mRootNode = new RootNode(mRCFG.getPayload().getLocation(), mRCFG.getRootAnnot());
@@ -90,6 +98,13 @@ public class Product {
 		createProductStates();
 		createEdges();
 		generateTransFormula();
+		makeLeafsAccepting();
+	}
+
+	private void makeLeafsAccepting() {
+		for (ProgramPoint point : mProductLeafs) {
+			mAcceptingNodeAnnotation.annotate(point);
+		}
 	}
 
 	public RootNode getProductRCFG() {
@@ -119,10 +134,12 @@ public class Product {
 					unhandledLocations.add((ProgramPoint) p.getTarget());
 				}
 			}
-			// append selfloops to leafs of the rcfg
+			// append selfloops to leafs of the rcfg and save those leafs 
+			//(product states resulting from them will be marked accepting later)
 			if (currentPoint.getOutgoingEdges().size() == 0) {
 				mapNewEdge2OldEdge(new StatementSequence(currentPoint, currentPoint,
 						generateNeverClaimAssumeStatement(new BooleanLiteral(null, true)), mLogger), null);
+				mRcfgLeafs.add(currentPoint);
 			}
 		}
 	}
@@ -132,25 +149,31 @@ public class Product {
 	 * name
 	 */
 	private void createProductStates() {
-		final BuchiProgramAcceptingStateAnnotation acceptingNodeAnnotation = new BuchiProgramAcceptingStateAnnotation();
 
 		for (ProgramPoint origpp : mRCFGLocations) {
 
 			if (isNonProductNode(origpp)) {
 				ProgramPoint newPP = createProgramPoint(generateStateName(origpp.getLocationName(), null), origpp);
-				mProductLocations.put(generateStateName(origpp.getLocationName(), null), newPP);
+				updateProductStates(origpp, newPP, generateStateName(origpp.getLocationName(), null));
 				continue;
 			}
 
 			for (String nwaState : mNWA.getStates()) {
 				ProgramPoint newPP = createProgramPoint(generateStateName(origpp.getLocationName(), nwaState), origpp);
-				mProductLocations.put(generateStateName(origpp.getLocationName(), nwaState), newPP);
+				updateProductStates(origpp, newPP, generateStateName(origpp.getLocationName(), nwaState));
 
 				// accepting states (just check for AcceptingNodeAnnotation)
 				if (mNWA.isFinal(nwaState)) {
-					acceptingNodeAnnotation.annotate(newPP);
+					mAcceptingNodeAnnotation.annotate(newPP);
 				}
 			}
+		}
+	}
+
+	private void updateProductStates(ProgramPoint origpp, ProgramPoint newPP, String statename) {
+		mProductLocations.put(statename, newPP);
+		if (mRcfgLeafs.contains(origpp)) {
+			mProductLeafs.add(newPP);
 		}
 	}
 
@@ -218,7 +241,8 @@ public class Product {
 					// if the source is a product state, we know that either the
 					// target is also a product state, or the target is a non
 					// product state and the edge has to be an return
-					// as we ignore return edges in this run, we just make the normal product
+					// as we ignore return edges in this run, we just make the
+					// normal product
 					for (String nwaLoc : mNWA.getStates()) {
 						ProgramPoint productSourceLoc = mProductLocations.get(generateStateName(
 								origRcfgSourceLoc.getLocationName(), nwaLoc));

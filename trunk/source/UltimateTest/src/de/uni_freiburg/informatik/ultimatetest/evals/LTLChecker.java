@@ -22,14 +22,16 @@ public class LTLChecker extends AbstractEvaluationTestSuite {
 
 	@Override
 	protected int getFilesPerCategory() {
-		return 20;
+		return -1;
 	}
 
 	@Override
 	protected String[] getDirectories() {
 		// @formatter:off
 		return new String[] { 
-				"examples/LTL/rers/", 
+//				"examples/LTL/rers/",
+//				"examples/LTL/coolant/",
+				"examples/LTL/bugs/",
 //				"examples/LTL/system/battery_control.c"
 
 				//all the examples that had soundness errors  

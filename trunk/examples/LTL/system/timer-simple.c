@@ -1,25 +1,28 @@
 //#Unsafe
-//@ ltl invariant someinv: !([](AP(x == 0) ==> <>(AP(y == 1))));
+//@ ltl invariant someinv: !([](AP(timer_1 == 0) ==> <>(AP(output_1 == 1))));
 
-int x=0;
-int y=0;
+int timer_1;
+int output_1;
 	
-void foo(){
-	x++;
-	if(x>=10){
-		x=0;
+void run_timer(){
+	timer_1++;
+	if(timer_1>=10){
+		timer_1=0;
 	}
 }
 
 void main()
 {
+	timer_1 = 0;
+	output_1 = 0;
+
     while(1){
-		foo();
+		run_timer();
 		
-		if(x==0){
-			y=1;
+		if(timer_1==0){
+			output_1=1;
 		} else{
-			y=0;
+			output_1=0;
 		}
     }
 }
