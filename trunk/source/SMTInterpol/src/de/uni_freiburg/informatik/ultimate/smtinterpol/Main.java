@@ -170,14 +170,15 @@ public final class Main {
 		}
 		if (solver == null)
 			solver = new SMTInterpol();
-		solver.setOption(":print-success", printSuccess);
+		parser.setSolver(solver);
+		parser.setOption(":print-success", printSuccess);
 		if (verbosity != null)
 			solver.setOption(":verbosity", verbosity);
 		if (timeout != null)
 			solver.setOption(":timeout", timeout);
 		if (seed != null)
 			solver.setOption(":random-seed", seed);
-		int exitCode = parser.run(solver, filename);
+		int exitCode = parser.parseFile(filename);
 		System.exit(exitCode);
 	}
 

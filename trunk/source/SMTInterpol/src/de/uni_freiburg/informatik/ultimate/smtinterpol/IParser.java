@@ -27,12 +27,24 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
  * @author Juergen Christ
  */
 public interface IParser {
+    /**
+	 * Set the backend solver.  This must be called before setting any
+	 * options or including a file.
+	 */
+	public void setSolver(Script solver);
+
+	/**
+	 * Set an option.  This should piped through to the underlying solver.
+	 * An implementing class may use this to react to certain options,
+	 * e.g., :print-success.
+	 */
+	public void setOption(String option, Object value);
+
 	/**
 	 * Parse a specific file. If the filename is <code>null</code>, the
-	 * parser should parse standard input,
-	 * @param script    The script that should be used.
+	 * parser should parse standard input.
 	 * @param filename  The name of the file to parse.
 	 * @return Exit code.
 	 */
-	public int run(Script script, String filename); 
+	public int parseFile(String filename); 
 }

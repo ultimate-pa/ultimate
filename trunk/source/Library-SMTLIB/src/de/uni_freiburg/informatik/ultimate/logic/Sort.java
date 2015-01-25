@@ -94,7 +94,7 @@ public final class Sort {
 	 * @return the name.
 	 */
 	public String getIndexedName() {
-		String name = PrintTerm.quoteIdentifier(mSymbol.getName());
+		String name = Identifier.quoteIdentifier(mSymbol.getName());
 		if (mIndices == null)
 			return name;
 		StringBuilder sb = new StringBuilder();

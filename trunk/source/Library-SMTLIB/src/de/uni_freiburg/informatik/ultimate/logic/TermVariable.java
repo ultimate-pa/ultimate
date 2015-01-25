@@ -68,7 +68,7 @@ public class TermVariable extends Term {
 	 * The SMTLIB representation of the term.
 	 */
 	public String toString() {
-		return PrintTerm.quoteIdentifier(mName);
+		return Identifier.quoteIdentifier(mName);
 	}
 
 	static final int hashVariable(String name, Sort sort) {

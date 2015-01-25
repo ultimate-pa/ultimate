@@ -44,6 +44,7 @@ import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbolFactory;
+import de.uni_freiburg.informatik.ultimate.logic.Identifier;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Model;
 import de.uni_freiburg.informatik.ultimate.logic.NoopScript;
@@ -1375,16 +1376,28 @@ public class SMTInterpol extends NoopScript {
 	}
 
 	@Override
+	/**
+	 * The set-info command.  SMTInterpol ignores these except for
+	 * <code>(set-info :status sat|unsat|unknown)</code>. 
+	 * The status will be used to issue a warning if the status of the next
+	 * check-sat command differs.
+	 */
 	public void setInfo(String info, Object value) {
-		if (info.equals(":status")
-			&& value instanceof String) {
-			if (value.equals("sat")) {
+		if (info.equals(":status")) {
+			String id;
+			if (value instanceof Identifier) 
+				id = ((Identifier) value).getIdentifier();
+			else if (value instanceof String)
+				id = (String) value;
+			else
+				return; // Ignore invalid set-info
+			if (id.equals("sat")) {
 				mStatus = LBool.SAT;
 				mStatusSet = "sat";
-			} else if (value.equals("unsat")) {
+			} else if (id.equals("unsat")) {
 				mStatus = LBool.UNSAT;
 				mStatusSet = "unsat";
-			} else if (value.equals("unknown")) {
+			} else if (id.equals("unknown")) {
 				mStatus = LBool.UNKNOWN;
 				mStatusSet = "unknown";
 			}

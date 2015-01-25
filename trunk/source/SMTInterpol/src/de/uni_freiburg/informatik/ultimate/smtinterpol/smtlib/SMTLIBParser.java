@@ -28,9 +28,23 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.IParser;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.MySymbolFactory;
 
 public class SMTLIBParser implements IParser {
+	/**
+	 * The underlying solver.
+	 */
+	Script mSolver;
 
 	@Override
-	public int run(Script solver, String filename) {
+	public void setSolver(Script solver) {
+		this.mSolver = solver;
+	}
+
+	@Override
+	public void setOption(String option, Object value) {
+		mSolver.setOption(option, value);
+	}
+
+	@Override
+	public int parseFile(String filename) {
 		try {
 			MySymbolFactory symfactory = new MySymbolFactory();
 			Reader reader;
@@ -44,7 +58,7 @@ public class SMTLIBParser implements IParser {
 			lexer.setSymbolFactory(symfactory);
 			Parser parser = new Parser(lexer, symfactory);
 			parser.setFileName(filename);
-			parser.setSolver(solver, false);
+			parser.setSolver(mSolver, false);
 			parser.parse();
 			Term[] interpolants = parser.benchmark.check();
 			if (interpolants != null) {

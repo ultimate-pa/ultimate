@@ -258,7 +258,7 @@ public class FunctionSymbol {
 	 */
 	public String toString() {
 		StringBuffer sb = new StringBuffer();
-		String name = PrintTerm.quoteIdentifier(mName);
+		String name = Identifier.quoteIdentifier(mName);
 		sb.append('(');
 		if (mIndices == null)
 			sb.append(name);
@@ -326,7 +326,7 @@ public class FunctionSymbol {
 	 * @return the string representation.
 	 */
 	public String getApplicationString() {
-		String name = PrintTerm.quoteIdentifier(mName);
+		String name = Identifier.quoteIdentifier(mName);
 		if (mIndices == null && !isReturnOverload())
 			return name;
 		StringBuffer sb = new StringBuffer();

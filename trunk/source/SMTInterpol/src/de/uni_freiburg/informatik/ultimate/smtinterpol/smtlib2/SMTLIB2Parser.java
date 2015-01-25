@@ -23,20 +23,27 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.IParser;
 
 public class SMTLIB2Parser implements IParser {
+	private ParseEnvironment mParseEnv;
 
 	@Override
-	public int run(Script solver, String filename) {
+	public void setSolver(Script solver) {
+		mParseEnv = new ParseEnvironment(solver);
+	}
+
+	@Override
+	public void setOption(String option, Object value) {
+		mParseEnv.setOption(option, value);
+	}
+
+	@Override
+	public int parseFile(String filename) {
 		if (filename == null)
 			filename = "<stdin>";
-        ParseEnvironment parseEnv = new ParseEnvironment(solver);
-        try {
-        	// Have to carry this option through
-        	parseEnv.setOption(":print-success",
-        			solver.getOption(":print-success"));
-        	parseEnv.parseScript(filename);
-        } catch (SMTLIBException se) {
-        	parseEnv.printError(se.getMessage());
-        }
+		try {
+			mParseEnv.parseScript(filename);
+		} catch (SMTLIBException se) {
+			mParseEnv.printError(se.getMessage());
+		}
 		return 0;
 	}
 

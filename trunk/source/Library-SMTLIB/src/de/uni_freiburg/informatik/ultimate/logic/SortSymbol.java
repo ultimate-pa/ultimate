@@ -135,7 +135,7 @@ public class SortSymbol {
 	 * @return the string representation.
 	 */
 	public String toString() {
-		return "(" + PrintTerm.quoteIdentifier(mName) + " " + mNumParams + ")";
+		return "(" + Identifier.quoteIdentifier(mName) + " " + mNumParams + ")";
 	}
 	
 	/**

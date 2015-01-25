@@ -32,63 +32,19 @@ public class PrintTerm {
 	 */
 	private final ArrayDeque<Object> mTodo = new ArrayDeque<Object>();
 	/**
-	 * Convert a term into an appendable.
-	 * @param appender The appendable.
-	 * @param term     The term.
-	 */
-	public void append(Appendable appender, Term term) {
-		try {
-			mTodo.push(term);
-			run(appender);
-		} catch (IOException ex) {
-			throw new RuntimeException("Appender throws IOException", ex);
-		}
-	}
-	/**
-	 * Convert a sort into an appendable.  Note that sorts can get pretty long,
-	 * too.  Hence we do this non-recursively to prevent stack overflows.
-	 * @param appender The appendable.
-	 * @param sort     The sort.
-	 */
-	public void append(Appendable appender, Sort sort) {
-		try {
-			mTodo.push(sort);
-			run(appender);
-		} catch (IOException ex) {
-			throw new RuntimeException("Appender throws IOException", ex);
-		}
-	}
-	/**
-	 * Append an s-expression.  The s-expression might contain terms.
+	 * Append an object to print.  This can be a term, a sort, 
+	 * an Identifier (java type String), a number (BigInteger/BigDecimal),
+	 * an s-expression (java type Object[]), a string (QuotedObject).
 	 * @param appender The appendable.
 	 * @param sexpr    The s-expression.
 	 */
-	public void append(Appendable appender, Object[] sexpr) {
+	public void append(Appendable appender, Object sexpr) {
 		try {
 			mTodo.push(sexpr);
 			run(appender);
 		} catch (IOException ex) {
 			throw new RuntimeException("Appender throws IOException", ex);
 		}
-	}
-	/**
-	 * Ensure the identifier is SMTLIB 2 compliant.  If a symbol that is not
-	 * allowed due to the SMTLIB 2 standard is encountered, the whole identifier
-	 * will be quoted.
-	 * @param id An unquoted identifier.
-	 * @return SMTLIB 2 compliant identifier.
-	 */
-	public static String quoteIdentifier(String id) {
-		assert id.indexOf('|')  < 0 && id.indexOf('\\') < 0;
-		for (int idx = 0; idx < id.length(); idx++) {
-			char c = id.charAt(idx);
-			if (!(c >= 'A' && c <= 'Z')
-				&& !(c >= 'a' && c <= 'z')
-				&& !(c >= '0' && c <= '9' && idx > 0)
-				&& "~!@$%^&*_+-=<>.?/".indexOf(c) < 0)
-				return "|" + id + "|";
-		}
-		return id;
 	}
 	
 	private void run(Appendable appender) throws IOException {

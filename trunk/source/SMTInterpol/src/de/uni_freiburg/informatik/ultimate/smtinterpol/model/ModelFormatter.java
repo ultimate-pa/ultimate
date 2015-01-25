@@ -22,7 +22,7 @@ import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.IRAConstantFormatter;
-import de.uni_freiburg.informatik.ultimate.logic.PrintTerm;
+import de.uni_freiburg.informatik.ultimate.logic.Identifier;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -80,7 +80,7 @@ public class ModelFormatter {
 		TermVariable[] vars = new TermVariable[paramSorts.length];
 		for (int i = 0; i < vars.length; ++i)
 			vars[i] = t.createTermVariable("@p" + i, paramSorts[i]);
-		mString.append("(define-fun ").append(PrintTerm.quoteIdentifier(
+		mString.append("(define-fun ").append(Identifier.quoteIdentifier(
 				f.getName())).append(" (");
 		for (int i = 0; i < vars.length; ++i)
 			mString.append('(').append(vars[i]).append(' ').

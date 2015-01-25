@@ -292,7 +292,7 @@ specConstant ::= NUMERAL:n {: RESULT = n; :}
              | BINARY:n {: RESULT = n; :}
              | STRING:n {: RESULT = new QuotedObject(n); :};
 sExpr ::= specConstant
-        | symbol
+        | symbol:id {: RESULT = new Identifier(id); :}
         | KEYWORD
         | LPAR sExpr*:s RPAR {: RESULT = s; :};
 
@@ -340,7 +340,7 @@ attribute ::= keywordNoAttr:k attributeValue?:v {: RESULT = new Annotation(k, v)
         | CNAMED:k symbol:v {: RESULT = new Annotation(k, v); :}
         | CPATTERN:k LPAR term*:t RPAR {: RESULT = new Annotation(k, t); :};
 attributeValue ::= specConstant
-        | symbol
+        | symbol:id {: RESULT = new Identifier(id); :}
         | LPAR sExpr*:s RPAR {: RESULT = s; :};
 attributeLogic  ::= keywordNoLogic:k  attributeValue?:v
                     {: RESULT = new Annotation(k, v); :};

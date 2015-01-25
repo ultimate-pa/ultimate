@@ -100,6 +100,17 @@ public class AIGERFrontEnd implements IParser {
 		mCol = 0;
 	}
 
+
+	@Override
+	public void setSolver(Script solver) {
+		this.mSolver = solver;
+	}
+
+	@Override
+	public void setOption(String option, Object value) {
+		mSolver.setOption(option, value);
+	}
+
 	private void reportError(String msg) {
 		System.err.print(mFilename);
 		System.err.print(':');
@@ -369,8 +380,7 @@ public class AIGERFrontEnd implements IParser {
 	}
 
 	@Override
-	public int run(Script solver, String filename) {
-		mSolver = solver;
+	public int parseFile(String filename) {
 		if (filename == null) {
 			filename = "<stdin>";
 			mInputStream = System.in;

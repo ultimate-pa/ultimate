@@ -8,6 +8,7 @@ import org.apache.log4j.Logger;
 import de.uni_freiburg.informatik.ultimate.core.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Assignments;
+import de.uni_freiburg.informatik.ultimate.logic.Identifier;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Model;
 import de.uni_freiburg.informatik.ultimate.logic.NoopScript;
@@ -66,7 +67,7 @@ public class Scriptor extends NoopScript {
 				sb.append(" ");
 				if (value instanceof String) {
 					// symbol
-					sb.append(PrintTerm.quoteIdentifier((String) value));
+					sb.append(Identifier.quoteIdentifier((String) value));
 				} else if (value instanceof Object[]) {
 					// s-expr
 					new PrintTerm().append(sb, (Object[]) value);
@@ -83,20 +84,12 @@ public class Scriptor extends NoopScript {
 	@Override
 	public void setInfo(String info, Object value) {
 		StringBuilder sb = new StringBuilder();
-		sb.append("(set-info ").append(info);
-		if (value != null) {
-			sb.append(" ");
-			if (value instanceof String) {
-				// symbol
-				sb.append(PrintTerm.quoteIdentifier((String) value));
-			} else if (value instanceof Object[]) {
-				// s-expr
-				new PrintTerm().append(sb, (Object[]) value);
-			} else {
-				sb.append(value.toString());
-			}
-		}
+		sb.append("(set-info ");
+		sb.append(info);
+		sb.append(' ');
+		new PrintTerm().append(sb, value);
 		sb.append(")");
+		sb.append(System.lineSeparator());
 		m_Executor.input(sb.toString());
 		m_Executor.parseSuccess();
 	}
@@ -104,7 +97,7 @@ public class Scriptor extends NoopScript {
 	@Override
 	public void declareSort(String sort, int arity) throws SMTLIBException {
 		super.declareSort(sort, arity);
-		StringBuilder sb = new StringBuilder("(declare-sort ").append(PrintTerm.quoteIdentifier(sort));
+		StringBuilder sb = new StringBuilder("(declare-sort ").append(Identifier.quoteIdentifier(sort));
 		sb.append(" ").append(arity).append(")");
 		m_Executor.input(sb.toString());
 		m_Executor.parseSuccess();
@@ -116,7 +109,7 @@ public class Scriptor extends NoopScript {
 		PrintTerm pt = new PrintTerm();
 		StringBuilder sb = new StringBuilder();
 		sb.append("(define-sort ");
-		sb.append(PrintTerm.quoteIdentifier(sort));
+		sb.append(Identifier.quoteIdentifier(sort));
 		sb.append(" (");
 		String delim = "";
 		for (Sort s : sortParams) {
@@ -137,7 +130,7 @@ public class Scriptor extends NoopScript {
 		PrintTerm pt = new PrintTerm();
 		StringBuilder sb = new StringBuilder();
 		sb.append("(declare-fun ");
-		sb.append(PrintTerm.quoteIdentifier(fun));
+		sb.append(Identifier.quoteIdentifier(fun));
 		sb.append(" (");
 		String delim = "";
 		for (Sort s : paramSorts) {
@@ -158,7 +151,7 @@ public class Scriptor extends NoopScript {
 		PrintTerm pt = new PrintTerm();
 		StringBuilder sb = new StringBuilder();
 		sb.append("(define-fun ");
-		sb.append(PrintTerm.quoteIdentifier(fun));
+		sb.append(Identifier.quoteIdentifier(fun));
 		sb.append(" (");
 		String delim = "";
 		for (TermVariable t : params) {
