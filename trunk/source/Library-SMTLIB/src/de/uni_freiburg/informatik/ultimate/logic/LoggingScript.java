@@ -138,7 +138,7 @@ public class LoggingScript implements Script {
 		mPw.print("(set-option ");
 		mPw.print(opt);
 		mPw.print(' ');
-		new PrintTerm().append(mPw, value);
+		mPw.print(value);
 		mPw.println(")");
 		mScript.setOption(opt, value);
 	}
@@ -148,7 +148,7 @@ public class LoggingScript implements Script {
 		mPw.print("(set-info ");
 		mPw.print(info);
 		mPw.print(' ');
-		new PrintTerm().append(mPw, value);
+		mPw.print(value);
 		mPw.println(")");
 		mScript.setInfo(info, value);
 	}

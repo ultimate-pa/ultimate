@@ -32,13 +32,38 @@ public class PrintTerm {
 	 */
 	private final ArrayDeque<Object> mTodo = new ArrayDeque<Object>();
 	/**
-	 * Append an object to print.  This can be a term, a sort, 
-	 * an Identifier (java type String), a number (BigInteger/BigDecimal),
-	 * an s-expression (java type Object[]), a string (QuotedObject).
+	 * Convert a term into an appendable.
+	 * @param appender The appendable.
+	 * @param term     The term.
+	 */
+	public void append(Appendable appender, Term term) {
+		try {
+			mTodo.push(term);
+			run(appender);
+		} catch (IOException ex) {
+			throw new RuntimeException("Appender throws IOException", ex);
+		}
+	}
+	/**
+	 * Convert a sort into an appendable.  Note that sorts can get pretty long,
+	 * too.  Hence we do this non-recursively to prevent stack overflows.
+	 * @param appender The appendable.
+	 * @param sort     The sort.
+	 */
+	public void append(Appendable appender, Sort sort) {
+		try {
+			mTodo.push(sort);
+			run(appender);
+		} catch (IOException ex) {
+			throw new RuntimeException("Appender throws IOException", ex);
+		}
+	}
+	/**
+	 * Append an s-expression.  The s-expression might contain terms.
 	 * @param appender The appendable.
 	 * @param sexpr    The s-expression.
 	 */
-	public void append(Appendable appender, Object sexpr) {
+	public void append(Appendable appender, Object[] sexpr) {
 		try {
 			mTodo.push(sexpr);
 			run(appender);
@@ -73,8 +98,6 @@ public class PrintTerm {
 				((Term)next).toStringHelper(mTodo);
 			} else if (next instanceof Sort) {
 				((Sort)next).toStringHelper(mTodo);
-			} else if (next instanceof String) {
-				appender.append(quoteIdentifier((String) next));
 			} else if (next instanceof Object[]) {
 				Object[] arr = (Object[]) next;
 				mTodo.addLast(")");
