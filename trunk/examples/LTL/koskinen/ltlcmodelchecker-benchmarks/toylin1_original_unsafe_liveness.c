@@ -11,7 +11,6 @@
 // Property: c > 5 => AF(resp > 5)
 
 //#Unsafe
-//Bug: auskommentierte endlosschleife am ende -> bug
 //@ ltl invariant positive: !AP(c > 5) || <>AP(resp > 5);
 extern void __VERIFIER_error() __attribute__ ((__noreturn__));
 extern void __VERIFIER_assume() __attribute__ ((__noreturn__));
