@@ -16,7 +16,7 @@ public class CallGraphEdgeLabel {
 		public boolean isRecursive() {
 			return ordinal() >= EXTERN_RECURSIVE_CALL.ordinal();
 		}
-	}
+	} 
 	
 	private String mCalleProcedureId;
 	private EdgeType mEdgeType;
@@ -27,6 +27,7 @@ public class CallGraphEdgeLabel {
 
 	public CallGraphEdgeLabel(String calleeProcedureId, EdgeType edgeTpye) {
 		mCalleProcedureId = calleeProcedureId;
+		mEdgeType = edgeTpye;
 	}
 	
 	public String getCalleeProcedureId() {
@@ -60,6 +61,16 @@ public class CallGraphEdgeLabel {
 		if (mEdgeType != other.mEdgeType)
 			return false;
 		return true;
+	}
+	
+	@Override
+	public String toString() {
+		StringBuilder sb = new StringBuilder();
+		sb.append(mEdgeType);
+		sb.append('(');
+		sb.append(mCalleProcedureId);
+		sb.append(')');
+		return sb.toString();
 	}
 
 

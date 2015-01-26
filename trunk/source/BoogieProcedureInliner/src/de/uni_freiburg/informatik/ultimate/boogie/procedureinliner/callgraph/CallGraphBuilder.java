@@ -1,5 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.callgraph;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -9,6 +11,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.log4j.Logger;
+
 import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
 import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.Activator;
@@ -17,13 +21,17 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.T
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.*;
+import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
+import de.uni_freiburg.informatik.ultimate.result.IResult;
+import de.uni_freiburg.informatik.ultimate.result.SyntaxErrorResult;
+import de.uni_freiburg.informatik.ultimate.result.UnsupportedSyntaxResult;
 
 public class CallGraphBuilder implements IUnmanagedObserver {
 	
 	private IUltimateServiceProvider mServices;
 
 	/** All Declarations from the last processed Boogie ast, other than Procedures. */
-	private Set<Declaration> mNonProcedureDeclarations;
+	private Collection<Declaration> mNonProcedureDeclarations;
 
 	/**
 	 * All nodes from the call graph of the last processed Boogie program.
@@ -49,7 +57,7 @@ public class CallGraphBuilder implements IUnmanagedObserver {
 	
 	@Override
 	public void init() {
-		mNonProcedureDeclarations = new HashSet<Declaration>();
+		mNonProcedureDeclarations = new ArrayList<Declaration>();
 		mCallGraphNodes = new HashMap<String, CallGraphNode>();
 		mRecursiveComponents = null;
 		mRecursiveProcedures = null;
@@ -74,6 +82,7 @@ public class CallGraphBuilder implements IUnmanagedObserver {
 
 	@Override
 	public void finish() {
+		mNonProcedureDeclarations = Collections.unmodifiableCollection(mNonProcedureDeclarations);
 		mCallGraphNodes = Collections.unmodifiableMap(mCallGraphNodes);
 		findRecursiveComponents();
 		setAllEdgeTypes();
@@ -91,7 +100,7 @@ public class CallGraphBuilder implements IUnmanagedObserver {
 			if (node.getProcedureWithSpecification() == null) {
 				node.setProcedureWithSpecification(procedure);				
 			} else {
-				// ERROR, procedure was already defined/specified
+				multipleDeclarationsError(procedure);
 			}
 		}
 		if (procedure.getBody() != null) {
@@ -99,7 +108,7 @@ public class CallGraphBuilder implements IUnmanagedObserver {
 				node.setProcedureWithBody(procedure);
 				registerCallStatementsInGraph(node, procedure.getBody().getBlock());				
 			} else {
-				// ERROR, procedure was already implemented (multiple implementations aren't supported)
+				multipleImplementationsError(procedure);
 			}
 		}
 	}
@@ -167,8 +176,12 @@ public class CallGraphBuilder implements IUnmanagedObserver {
 		for (CallGraphNode node : mCallGraphNodes.values()) {
 			String simpleNodeRepresentation = node.getId();
 			LinkedHashSet<String> simpleOutgoingNodesRepresentation = new LinkedHashSet<>();
-			for (CallGraphNode outgoingNode : node.getOutgoingNodes()) {
-				simpleOutgoingNodesRepresentation.add(outgoingNode.getId());
+			List<CallGraphNode> outgoingNodes = node.getOutgoingNodes();
+			List<CallGraphEdgeLabel> outgoingEdgeLabels = node.getOutgoingEdgeLabels();
+			for (int i = 0; i < outgoingNodes.size(); ++i) {
+				if (outgoingEdgeLabels.get(i).getEdgeType() != EdgeType.CALL_FORALL) {
+					simpleOutgoingNodesRepresentation.add(outgoingNodes.get(i).getId());					
+				}
 			}
 			simpleGraphRepresentation.put(simpleNodeRepresentation, simpleOutgoingNodesRepresentation);
 		}
@@ -194,14 +207,20 @@ public class CallGraphBuilder implements IUnmanagedObserver {
 		CallGraphNode calleeNode = mCallGraphNodes.get(calleeProcedureId);
 		Set<String> calleeRecursiveComponent = recursiveComponentOf(calleeProcedureId);
 		if (calleeRecursiveComponent == null) {
-			return callerRecursiveComponent == calleeRecursiveComponent ?
-					EdgeType.INTERN_RECURSIVE_CALL : EdgeType.EXTERN_RECURSIVE_CALL;
-		} else {
 			return calleeNode.getProcedureWithBody() == null ?
 					EdgeType.SIMPLE_CALL_UNIMPLEMENTED : EdgeType.SIMPLE_CALL_IMPLEMENTED;
+		} else {
+			return callerRecursiveComponent == calleeRecursiveComponent ?
+					EdgeType.INTERN_RECURSIVE_CALL : EdgeType.EXTERN_RECURSIVE_CALL;
 		}
 	}
 
+	/**
+	 * Returns the recursive component of the procedure with the given id.
+	 * The same object is returned for all procedures of the same component, so reference equality can be used.
+	 * @param procedureId Identifier of a procedure.
+	 * @return The procedures recursive component or null, if it isn't recursive.
+	 */
 	private Set<String> recursiveComponentOf(String procedureId) {
 		for (Set<String> component : mRecursiveComponents) {
 			if (component.contains(procedureId)) {
@@ -211,5 +230,36 @@ public class CallGraphBuilder implements IUnmanagedObserver {
 		return null;
 	}
 	
+	private void multipleDeclarationsError(Procedure procDecl) {
+		String description = "Procedure was already declared: " + procDecl.getIdentifier();
+		syntaxError(procDecl.getLocation(), description);
+	}
+	
+	private void syntaxError(ILocation location, String description) {
+		errorAndAbort(location, description, new SyntaxErrorResult(Activator.PLUGIN_ID, location, description));
+	}
+	
+	private void multipleImplementationsError(Procedure procImpl) {
+		String description = "Multiple procedure implementations aren't supported: " + procImpl.getIdentifier();
+		unsupportedSyntaxError(procImpl.getLocation(), description);
+	}
+	
+	private void unsupportedSyntaxError(ILocation location, String description) {
+		errorAndAbort(location, description,
+				new UnsupportedSyntaxResult<Procedure>(Activator.PLUGIN_ID, location, description));
+	}
+	
+	/**
+	 * Prints an error to the log and cancels the tool chain with the given result.
+	 * @param location Location of the error.
+	 * @param description Description of the error.
+	 * @param error Error result.
+	 */
+	private void errorAndAbort(ILocation location, String description, IResult error) {
+		String pluginId = Activator.PLUGIN_ID;
+		mServices.getLoggingService().getLogger(pluginId).error(location + ": " + description);
+		mServices.getResultService().reportResult(pluginId, error);
+		mServices.getProgressMonitorService().cancelToolchain();
+	}
 
 }

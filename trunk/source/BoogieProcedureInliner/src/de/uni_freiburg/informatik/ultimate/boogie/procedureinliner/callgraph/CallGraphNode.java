@@ -13,7 +13,7 @@ public class CallGraphNode extends ModifiableLabeledEdgesMultigraph<CallGraphNod
 
 	private static final long serialVersionUID = -937014582193693103L;
 
-	private String mId;
+	private final String mId;
 	private Procedure mProcedureWithSpecification;
 	private Procedure mProcedureWithBody;
 
@@ -21,6 +21,10 @@ public class CallGraphNode extends ModifiableLabeledEdgesMultigraph<CallGraphNod
 		mId = id;
 	}
 	
+	public String getId() {
+		return mId;
+	}
+
 	public void setProcedureWithSpecificationAndBody(Procedure p) {
 		setProcedureWithSpecification(p);
 		setProcedureWithBody(p);
@@ -38,9 +42,6 @@ public class CallGraphNode extends ModifiableLabeledEdgesMultigraph<CallGraphNod
 		mProcedureWithBody = p;
 	}
 	
-	public String getId() {
-		return mId;
-	}
 	
 	public Procedure getProcedureWithSpecificationAndBody() {
 		assert mProcedureWithBody == mProcedureWithSpecification;
