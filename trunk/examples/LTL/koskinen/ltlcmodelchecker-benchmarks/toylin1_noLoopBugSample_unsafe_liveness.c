@@ -1,3 +1,4 @@
+//#Unsafe
 // *************************************************************
 //
 //     Branching-time reasoning for infinite-state systems
@@ -10,7 +11,7 @@
 // Benchmark: toylin1.c
 // Property: c > 5 => AF(resp > 5)
 
-//#Unsafe
+
 //Bug: Endlosschleife am Ende geloescht -> Property wird
 //nicht mehr richtig gecheckt.
 //@ ltl invariant positive: !AP(c > 5) || <>AP(resp > 5);

@@ -1,4 +1,4 @@
-//#Safe
+//#Unsafe
 // ****************************************************
 //
 //     Making Prophecies with Decision Predicates
@@ -45,15 +45,13 @@ void ExReleaseFastMutex() {}
 #define HtTryAllocatePort nondet
 #define SetFlags nondet
 
+   
+int main() {
+
    WarmPollPeriod = __VERIFIER_nondet_int();
    status = __VERIFIER_nondet_int();
    polling = __VERIFIER_nondet_int();
    PowerStateIsAC = __VERIFIER_nondet_int();
-
-   
-int main() {
-
-
    
    if( NT_SUCCESS( status ) ) {
        ExAcquireFastMutex();
@@ -92,6 +90,7 @@ int main() {
                            goto loc_continue;
                        }
                        if( STATUS_TIMEOUT == status ) {
+if(nondet()) polling = 0;
                            if( __VERIFIER_nondet_int() ) {
                                // try to acquire port
                                if( HtTryAllocatePort() ) {

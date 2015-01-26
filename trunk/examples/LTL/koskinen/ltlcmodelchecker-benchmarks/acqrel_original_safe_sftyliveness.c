@@ -1,3 +1,4 @@
+//#Safe
 // *************************************************************
 //
 //     Branching-time reasoning for infinite-state systems
@@ -10,7 +11,7 @@
 // Benchmark: acqrel.c
 // Property: AG(a => AF r)
  
-//#Safe
+
 //@ ltl invariant positive: []( ! AP(a == 0) || <> AP(r == 0));
 extern void __VERIFIER_error() __attribute__ ((__noreturn__));
 extern void __VERIFIER_assume() __attribute__ ((__noreturn__));

@@ -1,3 +1,4 @@
+//#Unsafe
 // *************************************************************
 //
 //     Branching-time reasoning for infinite-state systems
@@ -10,7 +11,7 @@
 // Benchmark: pgstreambug.c
 // Property: AG( AFAG(ret==OK)  \/ added<=0 )
 
-//#Unsafe
+
 //@ ltl invariant positive: []( <>[]AP(ret == 1) || AP(added <= 0));
 extern void __VERIFIER_error() __attribute__ ((__noreturn__));
 extern void __VERIFIER_assume() __attribute__ ((__noreturn__));

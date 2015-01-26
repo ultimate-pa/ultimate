@@ -7,19 +7,13 @@
 //                     July 2010
 //
 // ****************************************************
-// Benchmark: win2.c
-// Property: G(a => F r) 
-
+// Benchmark: win8.c
+// Property: G(a => F r)
 
 //@ ltl invariant positive: [](! AP(status != 0) || <> AP(polling!= 0));
 extern void __VERIFIER_error() __attribute__ ((__noreturn__));
 extern void __VERIFIER_assume() __attribute__ ((__noreturn__));
 extern int __VERIFIER_nondet_int() __attribute__ ((__noreturn__));
-
-int WarmPollPeriod;
-int status;
-int polling;
-int PowerStateIsAC;
 #define NT_SUCCESS(s) s>0
 #define STATUS_SUCCESS 1
 #define STATUS_UNSUCCESSFUL 0
@@ -44,17 +38,22 @@ void ExReleaseFastMutex() {}
 #define HtRegGetDword nondet
 #define HtTryAllocatePort nondet
 #define SetFlags nondet
-
+#define CountLookup nondet
+int WarmPollPeriod;
+int status;
+int polling;
+int PowerStateIsAC;
+int Count;
+LARGE_INTEGER   timeOut1;
+UCHAR           deviceStatus;
+PCHAR           devId;
+BOOLEAN         requestRescan;
    WarmPollPeriod = __VERIFIER_nondet_int();
    status = __VERIFIER_nondet_int();
    polling = __VERIFIER_nondet_int();
    PowerStateIsAC = __VERIFIER_nondet_int();
-
-   
+   Count = __VERIFIER_nondet_int();
 int main() {
-
-
-   
    if( NT_SUCCESS( status ) ) {
        ExAcquireFastMutex();
        SetFlags();
@@ -70,16 +69,15 @@ int main() {
        {
            if (__VERIFIER_nondet_int()) {
                // We've got it.  Now get a pointer to it.
-               polling = 1;
                if(__VERIFIER_nondet_int()) {
 //---------------------------------------------
                {
-                   LARGE_INTEGER   timeOut1;
+  	  	   LARGE_INTEGER   timeOut1;
                    NTSTATUS        status;
                    UCHAR           deviceStatus;
                    PCHAR           devId;
                    BOOLEAN         requestRescan;
-                   const ULONG     pollingFailureThreshold = 10; //pick an arbitrary but reasonable number
+                   Count = CountLookup();
                    do {
                        if( PowerStateIsAC ) {
                        } else {
@@ -89,7 +87,7 @@ int main() {
                            break;
                        }
                        if( !PowerStateIsAC ) {
-                           goto loc_continue;
+			 //goto mylabl;
                        }
                        if( STATUS_TIMEOUT == status ) {
                            if( __VERIFIER_nondet_int() ) {
@@ -127,13 +125,11 @@ int main() {
                            } else {
                            }
                        }
-		   loc_continue: { int ddd; ddd = ddd; }
-                   } while( TRUE );
+		   mylabl: { int ddd; ddd = ddd; }
+                   } while( --Count>0 );
                }
 //---------------------------------------------
-                   polling = 0;
                } else {
-                   polling = 0;
                    // error
                }
            } else {

@@ -1,3 +1,4 @@
+//#Safe
 // *************************************************************
 //
 //     Branching-time reasoning for infinite-state systems
@@ -10,7 +11,7 @@
 // Benchmark: pgdropbuf.c
 // Property: istemp => AG(A!=1)
 
-//#Unsafe
+
 //@ ltl invariant positive: AP(istemp == 0) || []AP(A != 1);
 extern void __VERIFIER_error() __attribute__ ((__noreturn__));
 extern void __VERIFIER_assume() __attribute__ ((__noreturn__));

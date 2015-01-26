@@ -1,3 +1,4 @@
+//#Safe
 // *************************************************************
 //
 //     Branching-time reasoning for infinite-state systems

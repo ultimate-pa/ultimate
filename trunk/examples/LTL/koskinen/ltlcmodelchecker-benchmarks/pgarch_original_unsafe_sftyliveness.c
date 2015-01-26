@@ -1,3 +1,4 @@
+//#Unsafe
 // *************************************************************
 //
 //     Branching-time reasoning for infinite-state systems
@@ -11,7 +12,7 @@
 // Property: AG AF wakened==1
 
 
-//#Unsafe
+
 //@ ltl invariant positive: []<>AP(wakend == 1);
 extern void __VERIFIER_error() __attribute__ ((__noreturn__));
 extern void __VERIFIER_assume() __attribute__ ((__noreturn__));

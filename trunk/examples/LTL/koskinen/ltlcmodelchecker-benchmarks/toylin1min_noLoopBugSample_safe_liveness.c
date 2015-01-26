@@ -1,3 +1,4 @@
+//#Safe
 // *************************************************************
 //
 //     Branching-time reasoning for infinite-state systems
@@ -10,7 +11,7 @@
 // Benchmark: toylin1.c
 // Property: c > 5 => AF(resp > 5)
 
-//#Unsafe
+
 //@ ltl invariant positive: !<>AP(c > 5);
 extern void __VERIFIER_error() __attribute__ ((__noreturn__));
 extern void __VERIFIER_assume() __attribute__ ((__noreturn__));
