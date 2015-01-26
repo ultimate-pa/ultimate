@@ -50,6 +50,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingReturnTra
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Accepts;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -225,7 +226,7 @@ public class IsEmptyWithAI<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		m_nwa = nwa;
 		m_aI = new AbstractInterpreterTA(services);
 		m_predicateMap = predicateMap;
-		results = m_aI.processNWA(nwa, root, programPointMap);
+		results = m_aI.processNWA((INestedWordAutomaton<CodeBlock, Object>) nwa, root, programPointMap);
 		dummyEmptyStackState = m_nwa.getEmptyStackState();
 		m_StartStates = m_nwa.getInitialStates();
 		m_GoalStates = m_nwa.getFinalStates();
@@ -706,8 +707,8 @@ public class IsEmptyWithAI<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		return correct;
 	}
 	
-	public Map<ProgramPoint, Object> getTermsToProgramPoints(){
-		return m_aI.getTermsToProgramPoints();
+	public Map<Object, Term> getTerms(){
+		return m_aI.getTermMap();
 	}
 
 }

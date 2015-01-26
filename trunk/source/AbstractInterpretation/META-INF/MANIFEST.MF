@@ -8,6 +8,8 @@ Require-Bundle: UltimateCore,
  Library-log4j,
  Library-SMTLIB,
  BoogiePreprocessor,
+ Library-UltimateUtil,
+ Library-ModelCheckerUtils,
  de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder,
  de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies,
  de.uni_freiburg.informatik.ultimate.automata

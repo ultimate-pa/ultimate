@@ -872,9 +872,9 @@ public class AbstractInterpretationBoogieVisitor {
 	}
 
 	private ArrayData getArrayData(String arrayIdentifier, DeclarationInformation declarationInformation) {
-		Map<Pair<String, DeclarationInformation>, ArrayData> arrayDataMap = (m_declarationInformation.getStorageClass() == StorageClass.GLOBAL ? m_resultingState
+		Map<Pair, ArrayData> arrayDataMap = (m_declarationInformation.getStorageClass() == StorageClass.GLOBAL ? m_resultingState
 				.getGlobalScope() : m_resultingState.getCurrentScope()).getArrays();
-		AbstractState.Pair<String, DeclarationInformation> pair = m_currentState.new Pair<String, DeclarationInformation>(arrayIdentifier, declarationInformation);
+		AbstractState.Pair pair = m_currentState.new Pair(arrayIdentifier, declarationInformation);
 		ArrayData arrayData = arrayDataMap.get(pair);
 		if (arrayData == null) {
 			arrayData = m_resultingState.new ArrayData(arrayIdentifier, declarationInformation);

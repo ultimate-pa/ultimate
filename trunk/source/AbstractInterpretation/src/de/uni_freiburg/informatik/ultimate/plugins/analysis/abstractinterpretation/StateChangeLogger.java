@@ -12,7 +12,6 @@ import java.util.Map;
 
 import org.apache.log4j.Logger;
 
-import de.uni_freiburg.informatik.ultimate.model.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.AbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.AbstractState.ArrayData;
@@ -133,7 +132,7 @@ public class StateChangeLogger implements IAbstractStateChangeListener {
 			output.append(String.format("\tCall stack level: %s\t\t(%s)\n",
 					(cs == null) ? "GLOBAL" : cs.getMethodName(),
 					(cs == null) ? "---" : cs.hashCode()));
-			Map<Pair<String, DeclarationInformation>, IAbstractValue<?>> values = cse.getValues();
+			Map<Pair, IAbstractValue<?>> values = cse.getValues();
 			if (!values.isEmpty()) {
 				output.append("\t\tValues:\n");
 				for (Pair identifier : values.keySet()) {
@@ -141,7 +140,7 @@ public class StateChangeLogger implements IAbstractStateChangeListener {
 					output.append(String.format("\t\t\t%s -> %s\n", identifier, value));
 				}
 			}
-			Map<Pair<String, DeclarationInformation>, ArrayData> arrays = cse.getArrays();
+			Map<Pair, ArrayData> arrays = cse.getArrays();
 			if (!arrays.isEmpty()) {
 				output.append("\t\tArrays:\n");
 				for (Pair identifier : arrays.keySet()) {

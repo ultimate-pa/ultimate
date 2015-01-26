@@ -10,7 +10,6 @@ import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.annotation.AbstractAnnotations;
-import de.uni_freiburg.informatik.ultimate.model.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.AbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.AbstractState.ArrayData;
@@ -60,8 +59,8 @@ public class AbstractInterpretationAnnotations extends AbstractAnnotations {
 				List<ScopedAbstractState> callstack = state.getCallStack();
 				for (ScopedAbstractState cse : callstack) {
 					// array -> (value, has unclear indices)
-					Map<Pair<String, DeclarationInformation>, Map<String, Object>> arrayInfo = new LinkedHashMap<Pair<String, DeclarationInformation>, Map<String, Object>>(2);
-					Map<Pair<String, DeclarationInformation>, ArrayData> arrays = cse.getArrays();
+					Map<Pair, Map<String, Object>> arrayInfo = new LinkedHashMap<Pair, Map<String, Object>>(2);
+					Map<Pair, ArrayData> arrays = cse.getArrays();
 					for (Pair ident : arrays.keySet()) {
 						ArrayData a = arrays.get(ident);
 						Map<String, Object> aInfo = new LinkedHashMap<String, Object>();

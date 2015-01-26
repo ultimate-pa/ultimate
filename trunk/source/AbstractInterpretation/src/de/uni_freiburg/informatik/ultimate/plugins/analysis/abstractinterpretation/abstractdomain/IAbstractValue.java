@@ -3,11 +3,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain;
 
-import de.uni_freiburg.informatik.ultimate.model.boogie.DeclarationInformation;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain.AbstractState.Pair;
-
 /**
- * IAbstractValue stores the value of a variable in an abstract dromain.
+ * IAbstractValue stores the value of a variable in an abstract domain.
  * 
  * @author Christopher Dillo
  *

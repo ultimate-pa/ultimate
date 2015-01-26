@@ -19,6 +19,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.InCaReAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Accepts;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Difference;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsEmpty;
@@ -34,8 +35,10 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.senwa.DifferenceS
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.TermVarsProc;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.ta.IsEmptyWithAI;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
@@ -55,6 +58,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IncrementalHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.InductivityCheck;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.Artifact;
@@ -140,7 +144,6 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 
 				for (Object s : ((INestedWordAutomatonOldApi<?, ?>) m_Abstraction).getStates()) {
 					ISLPredicate ip = (ISLPredicate) s;
-					// SPredicate sp = (SPredicate) s;
 					ProgramPoint pp = ip.getProgramPoint();
 					programPointMap.put(ip, pp);
 					predicateMap.put(pp, ip);
@@ -149,10 +152,13 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 						(INestedWordAutomatonOldApi<CodeBlock, IPredicate>) m_Abstraction, m_Services,
 						super.m_RootNode, programPointMap, predicateMap);
 				m_Counterexample = emptyWithAI.getNestedRun();
+				
+				
+				
+				getTermAutomaton((INestedWordAutomaton<CodeBlock, IPredicate>) m_Abstraction, emptyWithAI.getTerms());
 
 				// TODO: So den neuen AI automaten in TA integrieren
-				// m_Abstraction = new Difference(services, stateFactory,
-				// m_Abstraction, emptyWithAI.getAbstraction())
+				//m_Abstraction = (IAutomaton<CodeBlock, IPredicate>) new Difference(m_Services, m_StateFactory, m_Abstraction, emptyWithAI.getAbstraction());
 			} else {
 				m_Counterexample = (new IsEmpty<CodeBlock, IPredicate>(
 						(INestedWordAutomatonOldApi<CodeBlock, IPredicate>) m_Abstraction)).getNestedRun();
@@ -173,6 +179,25 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 			// s_Logger.debug(m_RunAnalyzer.getOccurence());
 			return false;
 		}
+	}
+
+	private NestedWordAutomaton<CodeBlock, IPredicate> getTermAutomaton(INestedWordAutomaton<CodeBlock, IPredicate> nwa, Map<Object, Term> terms) {
+		NestedWordAutomaton<CodeBlock, IPredicate> result =
+				new NestedWordAutomaton<CodeBlock, IPredicate>(m_Services, nwa.getInternalAlphabet(), nwa.getCallAlphabet(), nwa.getReturnAlphabet(), nwa.getStateFactory());
+		Collection<IPredicate> oldAutomatonStates = nwa.getStates();
+		
+		for (Object oldState : oldAutomatonStates)
+		{
+			ISLPredicate ip = (ISLPredicate) oldState;
+			TermVarsProc termVarsProc = new TermVarsProc(terms.get(oldState), ip.getVars(), ip.getProcedures(), terms.get(oldState));
+			SPredicate sp = m_SmtManager.newSPredicate(ip.getProgramPoint(), termVarsProc);
+			
+			result.addState(nwa.getInitialStates().contains(sp), 
+					nwa.getFinalStates().contains(sp), 
+					sp);
+		}
+		
+		return result;
 	}
 
 	@Override
