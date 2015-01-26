@@ -11,13 +11,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
-
 import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
 import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.Activator;
 import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.callgraph.CallGraphEdgeLabel.EdgeType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.TarjanSCC;
+import de.uni_freiburg.informatik.ultimate.core.services.IProgressMonitorService;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.*;
@@ -29,7 +28,8 @@ import de.uni_freiburg.informatik.ultimate.result.UnsupportedSyntaxResult;
 public class CallGraphBuilder implements IUnmanagedObserver {
 	
 	private IUltimateServiceProvider mServices;
-
+	private IProgressMonitorService mProgressMonitorService;
+	
 	/** All Declarations from the last processed Boogie ast, other than Procedures. */
 	private Collection<Declaration> mNonProcedureDeclarations;
 
@@ -49,10 +49,10 @@ public class CallGraphBuilder implements IUnmanagedObserver {
 	
 	/** Flat view of {@link #mRecursiveComponents}. */
 	private Set<String> mRecursiveProcedures;
-
 	
 	public CallGraphBuilder(IUltimateServiceProvider services) {
 		mServices = services;
+		mProgressMonitorService = services.getProgressMonitorService();
 	}
 	
 	@Override
@@ -70,7 +70,9 @@ public class CallGraphBuilder implements IUnmanagedObserver {
 
 	@Override
 	public boolean process(IElement element) throws Throwable {
-		if (element instanceof Procedure) {
+		if(!mProgressMonitorService.continueProcessing()) {
+			return false;
+		} else if (element instanceof Procedure) {
 			processProcedure((Procedure) element);
 			return false;
 		} else if (element instanceof Declaration) {
@@ -93,6 +95,23 @@ public class CallGraphBuilder implements IUnmanagedObserver {
 		return false;
 	}
 
+	/**
+	 * Gets the builded call graph, containing all Boogie Procedures from the last run.
+	 * The Procedure identifiers are used as keys. The values are the nodes from the call graph.
+	 * @return Call graph from the last run.
+	 */
+	public Map<String, CallGraphNode> getCallGraph() {
+		return mCallGraphNodes;
+	}
+	
+	/**
+	 * Gets all the Boogie declarations from the last run, other than Procedures. 
+	 * @return Non-Procedure Boogie Declarations.
+	 */
+	public Collection<Declaration> getNonProcedureDeclarations() {
+		return mNonProcedureDeclarations;
+	}
+	
 	private void processProcedure(Procedure procedure) {
 		String procedureId = procedure.getIdentifier();
 		CallGraphNode node = getOrCreateNode(procedureId);
@@ -259,7 +278,7 @@ public class CallGraphBuilder implements IUnmanagedObserver {
 		String pluginId = Activator.PLUGIN_ID;
 		mServices.getLoggingService().getLogger(pluginId).error(location + ": " + description);
 		mServices.getResultService().reportResult(pluginId, error);
-		mServices.getProgressMonitorService().cancelToolchain();
+		mProgressMonitorService.cancelToolchain();
 	}
 
 }
