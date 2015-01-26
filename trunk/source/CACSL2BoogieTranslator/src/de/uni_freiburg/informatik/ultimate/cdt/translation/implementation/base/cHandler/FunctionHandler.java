@@ -606,7 +606,7 @@ public class FunctionHandler {
 
 	private Result handleFunctionCallGivenNameAndArguments(Dispatcher main, MemoryHandler memoryHandler,
 			StructHandler structHandler, ILocation loc, String methodName, IASTInitializerClause[] arguments) {
-		if (methodName.equals("malloc") || methodName.equals("alloca") || methodName.equals("__builtin_alloca")) {
+		if (methodName.equals("malloc") || methodName.equals("alloca") || methodName.equals("__builtin_alloca")) {//TODO: add calloc
 			assert arguments.length == 1;
 			Result sizeRes = main.dispatch(arguments[0]);
 			assert sizeRes instanceof ResultExpression;

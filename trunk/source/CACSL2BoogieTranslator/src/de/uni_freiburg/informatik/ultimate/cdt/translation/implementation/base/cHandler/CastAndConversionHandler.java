@@ -93,17 +93,17 @@ public class CastAndConversionHandler {
 						if (!rIsBigger) {
 							//does not fit, need to convert signedInt l
 							if (wraparoundOverflows)
-								doIntOverflowTreatment(main, memoryHandler, iLoc, leftRex);
+								doIntOverflowTreatment(main, memoryHandler, iLoc, leftRex, rCPrim);
 						}
 						if (wraparoundOverflows)
 							doIntOverflowTreatment(main, memoryHandler, iLoc, rightRex);
 						//if lIsBigger, it fits, if both are false, we don't know
 						// do nothing either way..
-					} else if (!rCPrim.isUnsigned() && lCPrim.isUnsigned()) {//l is signed r unsigned
+					} else if (lCPrim.isUnsigned() && !rCPrim.isUnsigned()) {//l is unsigned r signed
 						if (!lIsBigger) {
 							//does not fit, need to convert signedInt r
 							if (wraparoundOverflows)
-								doIntOverflowTreatment(main, memoryHandler, iLoc, rightRex);
+								doIntOverflowTreatment(main, memoryHandler, iLoc, rightRex, lCPrim);
 						}
 						if (wraparoundOverflows)
 							doIntOverflowTreatment(main, memoryHandler, iLoc, leftRex);
@@ -162,27 +162,26 @@ public class CastAndConversionHandler {
 		}
 	}
 	
-	public static void doIntOverflowTreatmentIfApplicable(Dispatcher main, MemoryHandler memoryHandler,
-			ILocation loc, ResultExpression rex) {
-		if (main.cHandler.getUnsignedTreatment() == UNSIGNED_TREATMENT.IGNORE)
-			return;
-		
-		boolean isRexUnsigned = rex.lrVal.cType instanceof CPrimitive
-				&& ((CPrimitive) rex.lrVal.cType).isUnsigned()
-				&& !rex.lrVal.isIntFromPointer;
-		
-		if (isRexUnsigned)
-			doIntOverflowTreatment(main, memoryHandler, loc, rex);
+//	public static void doIntOverflowTreatmentIfApplicable(Dispatcher main, MemoryHandler memoryHandler,
+//			ILocation loc, ResultExpression rex) {
+//		if (main.cHandler.getUnsignedTreatment() == UNSIGNED_TREATMENT.IGNORE)
+//			return;
+//		
+//		boolean isRexUnsigned = rex.lrVal.cType instanceof CPrimitive
+//				&& ((CPrimitive) rex.lrVal.cType).isUnsigned()
+//				&& !rex.lrVal.isIntFromPointer;
+//		
+//		if (isRexUnsigned)
+//			doIntOverflowTreatment(main, memoryHandler, loc, rex);
+//	}
+	public static void doIntOverflowTreatment(Dispatcher main, MemoryHandler memoryHandler, ILocation loc,
+			ResultExpression rex) {
+		doIntOverflowTreatment(main, memoryHandler, loc, rex, rex.lrVal.cType.getUnderlyingType());
 	}
 	
 	public static void doIntOverflowTreatment(Dispatcher main, MemoryHandler memoryHandler, ILocation loc,
-			ResultExpression rex) {
-		//FIXME  it is not always correct to take the size of rex's lrval's ctype, in case of a comparison we may need to take the
-		// size of the other value's type
-		CType ulType = rex.lrVal.cType.getUnderlyingType();
-		//special treatment for unsigned integer types
-
-		BigInteger maxValue = getMaxValueOfPrimitiveType(memoryHandler, ulType);
+			ResultExpression rex, CType targetType) {
+		BigInteger maxValue = getMaxValueOfPrimitiveType(memoryHandler, targetType);
 
 		if (main.cHandler.getUnsignedTreatment() == UNSIGNED_TREATMENT.ASSUME_ALL) {
 			AssumeStatement assumeGeq0 = new AssumeStatement(loc, new BinaryExpression(loc, BinaryExpression.Operator.COMPGEQ,
@@ -218,7 +217,7 @@ public class CastAndConversionHandler {
 				.pow(byteSize * 8);
 		} else {
 			maxValue = new BigInteger("2")
-				.pow((byteSize - 1) * 8);
+				.pow(byteSize * 8 - 1);
 		}
 		return maxValue;
 	}
