@@ -618,11 +618,11 @@ public class AbstractInterpreterTA extends RCFGEdgeVisitor {
 			letter = tr.getLetter();
 			succ = tr.getSucc();
 		} else if (type == "call") {
-			OutgoingInternalTransition<CodeBlock, Object> tr = (OutgoingInternalTransition<CodeBlock, Object>) transition;
+			OutgoingCallTransition<CodeBlock, Object> tr = (OutgoingCallTransition<CodeBlock, Object>) transition;
 			letter = tr.getLetter();
 			succ = tr.getSucc();
 		} else if (type == "return") {
-			OutgoingInternalTransition<CodeBlock, Object> tr = (OutgoingInternalTransition<CodeBlock, Object>) transition;
+			OutgoingReturnTransition<CodeBlock, Object> tr = (OutgoingReturnTransition<CodeBlock, Object>) transition;
 			letter = tr.getLetter();
 			succ = tr.getSucc();
 		}
