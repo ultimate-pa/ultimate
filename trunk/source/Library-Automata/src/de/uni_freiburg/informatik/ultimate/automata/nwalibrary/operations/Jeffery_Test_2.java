@@ -39,6 +39,7 @@ public class Jeffery_Test_2<LETTER,STATE> implements IOperation<LETTER,STATE>{
 			INestedWordAutomatonSimple<LETTER, STATE> a, List<INestedWordAutomatonSimple<LETTER,STATE>> b,int num) throws AutomataLibraryException{
 		switch(num){
 		default:
+			break;
 		case 2:
 			result1 = (new IncrementalInclusionCheck2<LETTER,STATE>(services,sf,a,b)).getResult();
 			IncrementalInclusionCheck2<LETTER,STATE> IIC2 = (new IncrementalInclusionCheck2<LETTER,STATE>(services,sf,a,b.subList(0, 1)));
@@ -70,6 +71,30 @@ public class Jeffery_Test_2<LETTER,STATE> implements IOperation<LETTER,STATE>{
 				IIC5.addSubtrahend(b.get(i));
 			}
 			result2 = IIC5.getResult();
+			break;
+		case 32:
+			result1 = (new IncrementalInclusionCheck3_2<LETTER,STATE>(services,sf,a,b)).getResult();
+			IncrementalInclusionCheck3_2<LETTER,STATE> IIC3_2 = (new IncrementalInclusionCheck3_2<LETTER,STATE>(services,sf,a,b.subList(0, 1)));
+			for(int i=1;i<b.size();i++){
+				IIC3_2.addSubtrahend(b.get(i));
+			}
+			result2 = IIC3_2.getResult();
+			break;
+		case 42:
+			result1 = (new IncrementalInclusionCheck4_2<LETTER,STATE>(services,sf,a,b)).getResult();
+			IncrementalInclusionCheck4_2<LETTER,STATE> IIC4_2 = (new IncrementalInclusionCheck4_2<LETTER,STATE>(services,sf,a,b.subList(0, 1)));
+			for(int i=1;i<b.size();i++){
+				IIC4_2.addSubtrahend(b.get(i));
+			}
+			result2 = IIC4_2.getResult();
+			break;
+		case 52:
+			result1 = (new IncrementalInclusionCheck5_2<LETTER,STATE>(services,sf,a,b)).getResult();
+			IncrementalInclusionCheck5_2<LETTER,STATE> IIC5_2 = (new IncrementalInclusionCheck5_2<LETTER,STATE>(services,sf,a,b.subList(0, 1)));
+			for(int i=1;i<b.size();i++){
+				IIC5_2.addSubtrahend(b.get(i));
+			}
+			result2 = IIC5_2.getResult();
 			break;
 		}
 	}

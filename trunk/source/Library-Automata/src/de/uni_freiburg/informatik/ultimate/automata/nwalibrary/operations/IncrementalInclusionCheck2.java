@@ -34,7 +34,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvide
  */
 
 public class IncrementalInclusionCheck2<LETTER,STATE> extends AbstractIncrementalInclusionCheck<LETTER,STATE> implements IOperation<LETTER, STATE>  {
-
+	public int counter_run = 0, counter_total_nodes = 0 ;
 	private static Logger s_Logger;
 	private INestedWordAutomatonSimple<LETTER, STATE> local_m_A;
 	private List<INestedWordAutomatonSimple<LETTER, STATE>> local_m_B;
@@ -68,7 +68,12 @@ public class IncrementalInclusionCheck2<LETTER,STATE> extends AbstractIncrementa
 		super.addSubtrahend(nwa);
 		local_m_B.add(nwa);
 		local_m_B2.add(nwa);
-		run();
+		if(result!=null){
+			run();
+		}
+		s_Logger.info("total:"+counter_total_nodes+"nodes");
+		s_Logger.info(counter_total_nodes+"nodes in the end");
+		s_Logger.info("total:"+counter_run+"runs");
 		/*addBStates(nwa);
 			do{
 				if(exceptionRun()||cover()){
@@ -142,6 +147,7 @@ public class IncrementalInclusionCheck2<LETTER,STATE> extends AbstractIncrementa
 			}
 		}
 		do{
+			counter_run++;
 			if(currentTree==null){
 				currentTree = expand(null);
 				if(exceptionRun()||cover()){
@@ -256,6 +262,7 @@ public class IncrementalInclusionCheck2<LETTER,STATE> extends AbstractIncrementa
 						tempBNodeData.bStates.get(automata).add(Bstate);
 					}
 				}
+				counter_total_nodes++;
 				nextNodes.get(state).add(tempBNodeData);
 			}
 		}
@@ -277,6 +284,7 @@ public class IncrementalInclusionCheck2<LETTER,STATE> extends AbstractIncrementa
 								}
 							}
 						}
+						counter_total_nodes++;
 						nextNodes.get(ATransition.getSucc()).add(tempBNodeData);
 					}
 				}
@@ -397,6 +405,9 @@ public class IncrementalInclusionCheck2<LETTER,STATE> extends AbstractIncrementa
 	
 	@Override
 	public String exitMessage() {
+		s_Logger.info("total:"+counter_total_nodes+"nodes");
+		s_Logger.info(counter_total_nodes+"nodes in the end");
+		s_Logger.info("total:"+counter_run+"runs");
 		return "Exit " + operationName();
 	}
 	public Boolean getResult(){

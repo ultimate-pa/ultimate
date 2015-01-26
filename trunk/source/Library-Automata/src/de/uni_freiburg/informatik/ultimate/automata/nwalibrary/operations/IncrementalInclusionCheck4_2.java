@@ -5,6 +5,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.apache.log4j.Logger;
 
@@ -486,7 +487,7 @@ public class IncrementalInclusionCheck4_2<LETTER,STATE> extends AbstractIncremen
 		boolean breakLoop = false;
 		HashSet<STATE> newStaSet;
 		curStaSet = new HashSet<STATE>();
-		curStaSet.addAll((HashSet<STATE>)bn.getInitialStates());
+		curStaSet.addAll((Set<STATE>)bn.getInitialStates());
 		result.add((HashSet<STATE>) curStaSet.clone());
 		int i;
 		if(word.getWord().length()!=0){
@@ -543,7 +544,7 @@ public class IncrementalInclusionCheck4_2<LETTER,STATE> extends AbstractIncremen
 		Iterable<OutgoingInternalTransition<LETTER,STATE>>nextStaSet = null;
 		HashSet<STATE> newStaSet;
 		curStaSet = new HashSet<STATE>();
-		curStaSet.addAll((HashSet<STATE>)bn.getInitialStates());
+		curStaSet.addAll((Set<STATE>)bn.getInitialStates());
 		if(word.getWord().length()!=0){
 			for(LETTER alphabet:word.getWord().asList()){
 				newStaSet = new HashSet<STATE>();
