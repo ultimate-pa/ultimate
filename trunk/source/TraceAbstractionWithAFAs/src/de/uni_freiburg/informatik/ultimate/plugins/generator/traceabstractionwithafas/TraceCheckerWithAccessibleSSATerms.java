@@ -33,15 +33,8 @@ public class TraceCheckerWithAccessibleSSATerms extends TraceChecker {
 			PredicateUnifier predicateUnifier, INTERPOLATION interpolation) {
 		super(precondition, postcondition, pendingContexts, trace, smtManager, modifiedGlobals, 
 				assertCodeBlocksIncrementally, services, computeRcfgProgramExecution);
-//		super(precondition, postcondition, pendingContexts, trace, smtManager,
-//				modifiedGlobals, assertCodeBlocksIncrementally, services,
-//				computeRcfgProgramExecution, predicateUnifier, interpolation);
 		m_script = smtManager.getScript();
 	}
-	
-//	public Term[] computeInterpolants(Term[] partition, int[] startOfSubtree) {
-//		return m_script.getInterpolants(partition, startOfSubtree);
-//	}
 	
 	public void traceCheckFinished() {
 		m_TraceCheckFinished = true;
