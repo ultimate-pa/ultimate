@@ -163,7 +163,7 @@ public class IncrementalInclusionCegarLoop extends BasicCegarLoop {
 //				m_TraceChecker.getPredicateUnifier().getCoverageRelation());
 		IHoareTripleChecker edgeChecker = new MonolithicHoareTripleChecker(m_SmtManager);
 		
-		boolean acceptedByDeterminized;
+		boolean progress;
 		try {
 			mLogger.debug("Start constructing difference");
 			// assert(oldAbstraction.getStateFactory() ==
@@ -185,11 +185,18 @@ public class IncrementalInclusionCegarLoop extends BasicCegarLoop {
 						determinized)).getResult();
 				assert (new InductivityCheck(m_Services, test, false, true,
 						new IncrementalHoareTripleChecker(m_SmtManager, m_ModGlobVarManager))).getResult();
-				acceptedByDeterminized = (new Accepts<CodeBlock, IPredicate>(
+				boolean acceptedByDeterminized = (new Accepts<CodeBlock, IPredicate>(
 						determinized,
 						(NestedWord<CodeBlock>) m_Counterexample.getWord())).getResult();
+				progress = acceptedByDeterminized;
 				break;
 			case POWERSET:
+				m_InclusionCheck.addSubtrahend(m_InterpolAutomaton);
+				boolean acceptedByIA = (new Accepts<CodeBlock, IPredicate>(
+						m_InterpolAutomaton,
+						(NestedWord<CodeBlock>) m_Counterexample.getWord())).getResult();
+				progress = acceptedByIA;
+				break;
 			case BESTAPPROXIMATION:
 			case EAGERPOST:
 			case LAZYPOST:
@@ -209,13 +216,11 @@ public class IncrementalInclusionCegarLoop extends BasicCegarLoop {
 //			m_CegarLoopBenchmark.addEdgeCheckerData(edgeChecker.getEdgeCheckerBenchmark());
 			m_CegarLoopBenchmark.stop(CegarLoopBenchmarkType.s_AutomataDifference);
 		}
-
-		if (acceptedByDeterminized) {
+		if (progress) {
 			return true;
 		} else {
 			return false;
 		}
-
 	}
 	
 	
