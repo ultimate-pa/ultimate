@@ -68,6 +68,7 @@ public class IncrementalInclusionCheck2<LETTER,STATE> extends AbstractIncrementa
 		super.addSubtrahend(nwa);
 		local_m_B.add(nwa);
 		local_m_B2.add(nwa);
+		counter_total_nodes = 0;
 		if(result!=null){
 			run();
 		}
