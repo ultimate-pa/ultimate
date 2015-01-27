@@ -58,7 +58,7 @@ public class InclusionViaDifference<LETTER, STATE> extends
 	private INestedWordAutomatonSimple<LETTER, STATE> m_Difference;
 	private NestedRun<LETTER, STATE> m_AcceptingRun;
 	
-	private final boolean m_RemoveDeadEnds = true;
+	private final boolean m_RemoveDeadEnds = !true;
 
 	
 	public InclusionViaDifference(IUltimateServiceProvider services,
