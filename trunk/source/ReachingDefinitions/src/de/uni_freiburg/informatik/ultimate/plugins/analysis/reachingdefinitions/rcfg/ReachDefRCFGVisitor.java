@@ -173,7 +173,7 @@ public class ReachDefRCFGVisitor extends RCFGEdgeVisitor {
 
 		}
 
-		return new ReachDefBoogieAnnotator(predecessors, stmtAnnotation, mStatementProvider, mLogger, mBuilderTable);
+		return new ReachDefBoogieAnnotator(predecessors, stmtAnnotation, mLogger, mBuilderTable);
 	}
 
 	private HashMap<RCFGEdge, HashSet<ReachDefStatementAnnotation>> mPreMap;

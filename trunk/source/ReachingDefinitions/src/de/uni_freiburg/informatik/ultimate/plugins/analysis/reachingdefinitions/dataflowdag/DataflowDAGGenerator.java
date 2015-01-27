@@ -16,6 +16,7 @@ import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.annotations.IAnnotationProvider;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.annotations.IndexedStatement;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.annotations.ReachDefEdgeAnnotation;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.annotations.ReachDefStatementAnnotation;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.boogie.ScopedBoogieVar;
@@ -83,10 +84,10 @@ public class DataflowDAGGenerator extends BaseObserver {
 
 		while (!store.isEmpty()) {
 			current = store.removeFirst();
-			Set<Entry<ScopedBoogieVar, HashSet<Statement>>> uses = getUse(current);
-			for (Entry<ScopedBoogieVar, HashSet<Statement>> use : uses) {
-				for (Statement stmt : use.getValue()) {
-					DataflowDAG<Statement> next = new DataflowDAG<Statement>(stmt);
+			Set<Entry<ScopedBoogieVar, HashSet<IndexedStatement>>> uses = getUse(current);
+			for (Entry<ScopedBoogieVar, HashSet<IndexedStatement>> use : uses) {
+				for (IndexedStatement stmt : use.getValue()) {
+					DataflowDAG<Statement> next = new DataflowDAG<Statement>(stmt.getStatement());
 					current.addOutgoingNode(next, use.getKey());
 					store.addFirst(next); // use last for BFS
 				}
@@ -96,10 +97,10 @@ public class DataflowDAGGenerator extends BaseObserver {
 
 	}
 
-	private Set<Entry<ScopedBoogieVar, HashSet<Statement>>> getUse(DataflowDAG<Statement> current) {
+	private Set<Entry<ScopedBoogieVar, HashSet<IndexedStatement>>> getUse(DataflowDAG<Statement> current) {
 		ReachDefStatementAnnotation annot = mStatementProvider.getAnnotation(current.getNodeLabel());
 		assert annot != null;
-		HashMap<ScopedBoogieVar, HashSet<Statement>> use = annot.getUse();
+		HashMap<ScopedBoogieVar, HashSet<IndexedStatement>> use = annot.getUse();
 		assert use != null;
 		return use.entrySet();
 	}

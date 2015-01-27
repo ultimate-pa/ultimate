@@ -5,7 +5,6 @@ import java.util.Collection;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.annotations.IAnnotationProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.annotations.ReachDefBaseAnnotation;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.annotations.ReachDefStatementAnnotation;
 
@@ -16,17 +15,19 @@ public class ReachDefBoogieAnnotator {
 	private Collection<ReachDefStatementAnnotation> mPredecessors;
 	private ReachDefStatementAnnotation mCurrent;
 	private final Logger mLogger;
-	private final IAnnotationProvider<ReachDefStatementAnnotation> mProvider;
 
 	public ReachDefBoogieAnnotator(Collection<ReachDefStatementAnnotation> predecessors,
-			ReachDefStatementAnnotation current, IAnnotationProvider<ReachDefStatementAnnotation> provider,
-			Logger logger, ScopedBoogieVarBuilder builder) {
+			ReachDefStatementAnnotation current, Logger logger, ScopedBoogieVarBuilder builder) {
+		this(predecessors, current, logger, builder, null);
+	}
+
+	public ReachDefBoogieAnnotator(Collection<ReachDefStatementAnnotation> predecessors,
+			ReachDefStatementAnnotation current, Logger logger, ScopedBoogieVarBuilder builder, String key) {
 		assert current != null;
 		mPredecessors = predecessors;
 		mCurrent = current;
-		mVisitor = new ReachDefBoogieVisitor(current, builder);
+		mVisitor = new ReachDefBoogieVisitor(current, builder,key);
 		mLogger = logger;
-		mProvider = provider;
 	}
 
 	/**
@@ -36,7 +37,6 @@ public class ReachDefBoogieAnnotator {
 	 */
 	public boolean annotate(Statement stmt) throws Throwable {
 		ReachDefBaseAnnotation old = mCurrent.clone();
-		assert old.equals(mProvider.getAnnotation(stmt)) && old.equals(mCurrent);
 		union(mCurrent, mPredecessors);
 
 		if (mLogger.isDebugEnabled()) {

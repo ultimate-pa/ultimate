@@ -4,11 +4,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map;
 
-import org.apache.log4j.Logger;
-
 import de.uni_freiburg.informatik.ultimate.access.BaseObserver;
 import de.uni_freiburg.informatik.ultimate.automata.ExampleNWAFactory;
-import de.uni_freiburg.informatik.ultimate.boogie.type.PreprocessorAnnotation;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
@@ -24,8 +21,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
  */
 public class TraceAbstractionWithAFAsObserver extends BaseObserver {
 
-	private final Logger mLogger;
-
 	/**
 	 * Root Node of this Ultimate model. I use this to store information that
 	 * should be passed to the next plugin. The Successors of this node exactly
@@ -37,7 +32,6 @@ public class TraceAbstractionWithAFAsObserver extends BaseObserver {
 
 	public TraceAbstractionWithAFAsObserver(IUltimateServiceProvider services) {
 		mServices = services;
-		mLogger = mServices.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
 	}
 
 	@Override
@@ -49,9 +43,12 @@ public class TraceAbstractionWithAFAsObserver extends BaseObserver {
 		TraceAbstractionBenchmarks taBenchmarks = new TraceAbstractionBenchmarks(rootAnnot);
 		TAPreferences taPrefs = new TAPreferences();
 
-		//TODO: Now you can get instances of your library classes for the current toolchain like this: 
-		//NWA is nevertheless very broken, as its static initialization prevents parallelism 
-		//Surprisingly, this call lazily initializes the static fields of NWA Lib and, like magic, the toolchain works ...
+		// TODO: Now you can get instances of your library classes for the
+		// current toolchain like this:
+		// NWA is nevertheless very broken, as its static initialization
+		// prevents parallelism
+		// Surprisingly, this call lazily initializes the static fields of NWA
+		// Lib and, like magic, the toolchain works ...
 		mServices.getServiceInstance(ExampleNWAFactory.class);
 
 		Map<String, Collection<ProgramPoint>> proc2errNodes = rootAnnot.getErrorNodes();
@@ -60,16 +57,8 @@ public class TraceAbstractionWithAFAsObserver extends BaseObserver {
 			errNodesOfAllProc.addAll(errNodeOfProc);
 		}
 
-		PreprocessorAnnotation pa = PreprocessorAnnotation.getAnnotation(root);
-		if (pa == null || pa.getSymbolTable() == null) {
-			String errorMsg = "No symbol table found on given RootNode.";
-			mLogger.fatal(errorMsg);
-			throw new UnsupportedOperationException(errorMsg);
-		}
-
 		TAwAFAsCegarLoop cegarLoop = new TAwAFAsCegarLoop("bla", rootNode, smtManager, taBenchmarks, taPrefs,
-				errNodesOfAllProc, taPrefs.interpolation(), taPrefs.computeHoareAnnotation(), mServices,
-				pa.getSymbolTable());
+				errNodesOfAllProc, taPrefs.interpolation(), taPrefs.computeHoareAnnotation(), mServices);
 
 		Result result = cegarLoop.iterate();
 

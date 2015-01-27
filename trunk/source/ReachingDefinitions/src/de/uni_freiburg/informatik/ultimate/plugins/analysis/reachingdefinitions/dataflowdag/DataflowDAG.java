@@ -27,9 +27,9 @@ public class DataflowDAG<T> extends ModifiableLabeledEdgesMultigraph<DataflowDAG
 			return "NULL";
 		}
 		if (mNodeLabel instanceof Statement) {
-			return BoogiePrettyPrinter.print((Statement) mNodeLabel);
+			return "[" + mNodeLabel.hashCode() + "]: " + BoogiePrettyPrinter.print((Statement) mNodeLabel);
 		}
-		return mNodeLabel.toString();
+		return "[" + mNodeLabel.hashCode() + "]: " + mNodeLabel.toString();
 	}
 
 	public void printGraphDebug(Logger logger) {

@@ -11,8 +11,8 @@ public class ReachDefStatementAnnotation extends ReachDefBaseAnnotation {
 
 	private static final long serialVersionUID = 1L;
 
-	private HashMap<ScopedBoogieVar, HashSet<Statement>> mDefs;
-	private HashMap<ScopedBoogieVar, HashSet<Statement>> mUse;
+	private HashMap<ScopedBoogieVar, HashSet<IndexedStatement>> mDefs;
+	private HashMap<ScopedBoogieVar, HashSet<IndexedStatement>> mUse;
 
 	public ReachDefStatementAnnotation() {
 		mDefs = new HashMap<>();
@@ -23,26 +23,30 @@ public class ReachDefStatementAnnotation extends ReachDefBaseAnnotation {
 		mDefs.remove(variable);
 	}
 
-	public boolean addDef(ScopedBoogieVar variable, Statement stmt) {
-		HashSet<Statement> rtr = mDefs.get(variable);
+	// public boolean addDef(ScopedBoogieVar variable, Statement stmt) {
+	// return addDef(variable, stmt, null);
+	// }
+
+	public boolean addDef(ScopedBoogieVar variable, Statement stmt, String key) {
+		HashSet<IndexedStatement> rtr = mDefs.get(variable);
 		if (rtr == null) {
 			rtr = new HashSet<>();
 			mDefs.put(variable, rtr);
 		}
-		return rtr.add(stmt);
+		return rtr.add(new IndexedStatement(stmt, key));
 	}
 
-	public boolean addUse(ScopedBoogieVar variable, Statement stmt) {
-		HashSet<Statement> rtr = mUse.get(variable);
+	public boolean addUse(ScopedBoogieVar variable, Statement stmt, String key) {
+		HashSet<IndexedStatement> rtr = mUse.get(variable);
 		if (rtr == null) {
 			rtr = new HashSet<>();
 			mUse.put(variable, rtr);
 		}
 
-		return rtr.add(stmt);
+		return rtr.add(new IndexedStatement(stmt, key));
 	}
-	
-	public Collection<Statement> getDef(ScopedBoogieVar variableName){
+
+	public Collection<IndexedStatement> getDef(ScopedBoogieVar variableName) {
 		return getDefs().get(variableName);
 	}
 
@@ -62,8 +66,8 @@ public class ReachDefStatementAnnotation extends ReachDefBaseAnnotation {
 
 		boolean rtr = false;
 		for (ScopedBoogieVar key : other.mDefs.keySet()) {
-			for (Statement stmt : other.mDefs.get(key)) {
-				rtr = addDef(key, stmt) || rtr;
+			for (IndexedStatement stmt : other.mDefs.get(key)) {
+				rtr = addDef(key, stmt.getStatement(), stmt.getKey()) || rtr;
 			}
 		}
 		return rtr;
@@ -79,12 +83,12 @@ public class ReachDefStatementAnnotation extends ReachDefBaseAnnotation {
 	}
 
 	@Override
-	public HashMap<ScopedBoogieVar, HashSet<Statement>> getDefs() {
+	public HashMap<ScopedBoogieVar, HashSet<IndexedStatement>> getDefs() {
 		return mDefs;
 	}
 
 	@Override
-	public HashMap<ScopedBoogieVar, HashSet<Statement>> getUse() {
+	public HashMap<ScopedBoogieVar, HashSet<IndexedStatement>> getUse() {
 		return mUse;
 	}
 

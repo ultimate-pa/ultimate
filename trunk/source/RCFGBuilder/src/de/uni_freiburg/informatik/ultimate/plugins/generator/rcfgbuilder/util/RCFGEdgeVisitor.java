@@ -54,6 +54,9 @@ public class RCFGEdgeVisitor {
 	}
 
 	protected void visit(ParallelComposition c) {
+		for(CodeBlock b : c.getCodeBlocks()){
+			visit(b);
+		}
 	}
 
 	protected void visit(Return c) {

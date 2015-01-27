@@ -3,11 +3,10 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-
 import org.apache.log4j.Logger;
-
 import de.uni_freiburg.informatik.ultimate.access.IObserver;
 import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
+import de.uni_freiburg.informatik.ultimate.boogie.type.PreprocessorAnnotation;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
@@ -24,6 +23,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.rcfg.ReachDefRCFG;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.trace.ReachDefTrace;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 
 public class ReachingDefinitions implements IAnalysis {
 
@@ -95,6 +95,11 @@ public class ReachingDefinitions implements IAnalysis {
 	}
 
 	public static List<DataflowDAG<TraceCodeBlock>> computeRDForTrace(List<CodeBlock> trace, Logger logger,
+			RootNode rootNode) throws Throwable {
+		return computeRDForTrace(trace, logger, PreprocessorAnnotation.getAnnotation(rootNode).getSymbolTable());
+	}
+
+	public static List<DataflowDAG<TraceCodeBlock>> computeRDForTrace(List<CodeBlock> trace, Logger logger,
 			BoogieSymbolTable symbolTable) throws Throwable {
 		IAnnotationProvider<ReachDefEdgeAnnotation> edgeProvider = new ReachDefMapAnnotationProvider<>();
 		IAnnotationProvider<ReachDefStatementAnnotation> stmtProvider = new ReachDefMapAnnotationProvider<>();
@@ -115,7 +120,7 @@ public class ReachingDefinitions implements IAnalysis {
 	@Override
 	public void finish() {
 		// TODO Auto-generated method stub
-		
+
 	}
 
 }

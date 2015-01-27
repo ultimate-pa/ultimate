@@ -14,14 +14,16 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.RC
 
 class DefCollector extends RCFGEdgeVisitor {
 
-	private HashMap<ScopedBoogieVar, HashSet<Statement>> mDefs;
+	private HashMap<ScopedBoogieVar, HashSet<IndexedStatement>> mDefs;
 	private final IAnnotationProvider<ReachDefStatementAnnotation> mAnnotationProvider;
+	private final String mKey;
 
-	DefCollector(IAnnotationProvider<ReachDefStatementAnnotation> provider) {
+	DefCollector(IAnnotationProvider<ReachDefStatementAnnotation> provider, String key) {
 		mAnnotationProvider = provider;
+		mKey = key;
 	}
 
-	HashMap<ScopedBoogieVar, HashSet<Statement>> collect(RCFGEdge edge) {
+	HashMap<ScopedBoogieVar, HashSet<IndexedStatement>> collect(RCFGEdge edge) {
 		if (mDefs == null) {
 			mDefs = new HashMap<>();
 			visit(edge);
@@ -48,9 +50,17 @@ class DefCollector extends RCFGEdgeVisitor {
 			return;
 		}
 
-		ReachDefBaseAnnotation annot = mAnnotationProvider.getAnnotation(stmts.get(stmts.size() - 1));
+		ReachDefBaseAnnotation annot = getAnnotation(stmts);
 		if (annot != null) {
 			mDefs = annot.getDefs();
+		}
+	}
+
+	private ReachDefBaseAnnotation getAnnotation(List<Statement> stmts) {
+		if (mKey == null) {
+			return mAnnotationProvider.getAnnotation(stmts.get(stmts.size() - 1));
+		} else {
+			return mAnnotationProvider.getAnnotation(stmts.get(stmts.size() - 1), mKey);
 		}
 	}
 

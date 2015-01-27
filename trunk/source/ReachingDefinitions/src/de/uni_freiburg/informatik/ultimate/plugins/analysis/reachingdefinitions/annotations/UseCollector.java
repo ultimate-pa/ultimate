@@ -3,6 +3,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.boogie.ScopedBoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
@@ -10,14 +11,16 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Sta
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.RCFGEdgeVisitor;
 
 class UseCollector extends RCFGEdgeVisitor {
-	private HashMap<ScopedBoogieVar, HashSet<Statement>> mUse;
+	private HashMap<ScopedBoogieVar, HashSet<IndexedStatement>> mUse;
 	private final IAnnotationProvider<ReachDefStatementAnnotation> mAnnotationProvider;
+	private final String mKey;
 
-	UseCollector(IAnnotationProvider<ReachDefStatementAnnotation> provider) {
+	UseCollector(IAnnotationProvider<ReachDefStatementAnnotation> provider, String key) {
 		mAnnotationProvider = provider;
+		mKey = key;
 	}
 
-	HashMap<ScopedBoogieVar, HashSet<Statement>> collect(RCFGEdge edge) {
+	HashMap<ScopedBoogieVar, HashSet<IndexedStatement>> collect(RCFGEdge edge) {
 		if (mUse == null) {
 			mUse = new HashMap<>();
 			visit(edge);
@@ -35,11 +38,19 @@ class UseCollector extends RCFGEdgeVisitor {
 			return;
 		}
 
-		for(Statement stmt : stmts){
-			ReachDefBaseAnnotation annot = mAnnotationProvider.getAnnotation(stmt);
+		for (Statement stmt : stmts) {
+			ReachDefBaseAnnotation annot = getAnnotation(stmt);
 			if (annot != null) {
 				unionUse(annot);
 			}
+		}
+	}
+
+	private ReachDefBaseAnnotation getAnnotation(Statement stmt) {
+		if (mKey == null) {
+			return mAnnotationProvider.getAnnotation(stmt);
+		} else {
+			return mAnnotationProvider.getAnnotation(stmt, mKey);
 		}
 	}
 
@@ -48,27 +59,27 @@ class UseCollector extends RCFGEdgeVisitor {
 			return;
 		}
 
-		HashMap<ScopedBoogieVar, HashSet<Statement>> otheruse = other.getUse();
+		HashMap<ScopedBoogieVar, HashSet<IndexedStatement>> otheruse = other.getUse();
 
 		if (otheruse == null || otheruse == mUse) {
 			return;
 		}
 
 		for (ScopedBoogieVar key : otheruse.keySet()) {
-			for (Statement stmt : otheruse.get(key)) {
-				addUse(key, stmt);
+			for (IndexedStatement stmt : otheruse.get(key)) {
+				addUse(key, stmt.getStatement(), stmt.getKey());
 			}
 		}
 
 	}
 
-	private void addUse(ScopedBoogieVar variable, Statement stmt) {
-		HashSet<Statement> rtr = mUse.get(variable);
+	private void addUse(ScopedBoogieVar variable, Statement stmt, String key) {
+		HashSet<IndexedStatement> rtr = mUse.get(variable);
 		if (rtr == null) {
 			rtr = new HashSet<>();
 			mUse.put(variable, rtr);
 
 		}
-		rtr.add(stmt);
+		rtr.add(new IndexedStatement(stmt, key));
 	}
 }

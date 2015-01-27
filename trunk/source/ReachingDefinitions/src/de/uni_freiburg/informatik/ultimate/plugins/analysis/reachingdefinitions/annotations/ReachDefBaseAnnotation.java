@@ -3,7 +3,6 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions
 import java.util.HashMap;
 import java.util.HashSet;
 import de.uni_freiburg.informatik.ultimate.model.annotation.AbstractAnnotations;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.boogie.ScopedBoogieVar;
 
@@ -28,15 +27,15 @@ public abstract class ReachDefBaseAnnotation extends AbstractAnnotations {
 		}
 	}
 
-	protected abstract HashMap<ScopedBoogieVar, HashSet<Statement>> getDefs();
+	protected abstract HashMap<ScopedBoogieVar, HashSet<IndexedStatement>> getDefs();
 
-	protected abstract HashMap<ScopedBoogieVar, HashSet<Statement>> getUse();
+	protected abstract HashMap<ScopedBoogieVar, HashSet<IndexedStatement>> getUse();
 
 	public ReachDefBaseAnnotation() {
 		super();
 	}
 
-	private String prettyPrintDefUse(HashMap<ScopedBoogieVar, HashSet<Statement>> map) {
+	private String prettyPrintDefUse(HashMap<ScopedBoogieVar, HashSet<IndexedStatement>> map) {
 		if (map.isEmpty()) {
 			return "Empty";
 		}
@@ -45,12 +44,15 @@ public abstract class ReachDefBaseAnnotation extends AbstractAnnotations {
 
 		for (ScopedBoogieVar s : map.keySet()) {
 			sb.append(s.getIdentifier()).append(": {");
-			HashSet<Statement> set = map.get(s);
+			HashSet<IndexedStatement> set = map.get(s);
 			if (set.isEmpty()) {
 				continue;
 			}
-			for (Statement stmt : map.get(s)) {
-				sb.append(BoogiePrettyPrinter.print(stmt)).append(", ");
+			for (IndexedStatement stmt : map.get(s)) {
+				if (stmt.getKey() != null) {
+					sb.append(stmt.getKey()).append(" ");
+				}
+				sb.append(BoogiePrettyPrinter.print(stmt.getStatement())).append(", ");
 			}
 			sb.delete(sb.length() - 2, sb.length());
 			sb.append("}, ");
@@ -80,14 +82,15 @@ public abstract class ReachDefBaseAnnotation extends AbstractAnnotations {
 		return compareMap(getDefs(), arg0.getDefs()) && compareMap(getUse(), arg0.getUse());
 	}
 
-	private boolean compareMap(HashMap<ScopedBoogieVar, HashSet<Statement>> mine, HashMap<ScopedBoogieVar, HashSet<Statement>> theirs) {
+	private boolean compareMap(HashMap<ScopedBoogieVar, HashSet<IndexedStatement>> mine,
+			HashMap<ScopedBoogieVar, HashSet<IndexedStatement>> theirs) {
 		if (mine != null && theirs != null) {
 			for (ScopedBoogieVar key : mine.keySet()) {
-				HashSet<Statement> myStmts = mine.get(key);
-				HashSet<Statement> theirStmts = theirs.get(key);
+				HashSet<IndexedStatement> myStmts = mine.get(key);
+				HashSet<IndexedStatement> theirStmts = theirs.get(key);
 
 				if (myStmts != null && theirStmts != null && myStmts.size() == theirStmts.size()) {
-					for (Statement myStmt : myStmts) {
+					for (IndexedStatement myStmt : myStmts) {
 						if (!theirStmts.contains(myStmt)) {
 							return false;
 						}
@@ -115,18 +118,18 @@ public abstract class ReachDefBaseAnnotation extends AbstractAnnotations {
 		return prettyPrintDefUse(getUse());
 	}
 
-	protected HashMap<ScopedBoogieVar, HashSet<Statement>> copy(HashMap<ScopedBoogieVar, HashSet<Statement>> other) {
+	protected HashMap<ScopedBoogieVar, HashSet<IndexedStatement>> copy(HashMap<ScopedBoogieVar, HashSet<IndexedStatement>> other) {
 		if (other == null) {
 			return null;
 		}
-		HashMap<ScopedBoogieVar, HashSet<Statement>> newmap = new HashMap<>();
+		HashMap<ScopedBoogieVar, HashSet<IndexedStatement>> newmap = new HashMap<>();
 		for (ScopedBoogieVar key : other.keySet()) {
-			HashSet<Statement> otherset = other.get(key);
+			HashSet<IndexedStatement> otherset = other.get(key);
 			if (otherset == null) {
 				continue;
 			}
-			HashSet<Statement> newset = new HashSet<>();
-			for (Statement stmt : otherset) {
+			HashSet<IndexedStatement> newset = new HashSet<>();
+			for (IndexedStatement stmt : otherset) {
 				newset.add(stmt);
 			}
 			newmap.put(key, newset);

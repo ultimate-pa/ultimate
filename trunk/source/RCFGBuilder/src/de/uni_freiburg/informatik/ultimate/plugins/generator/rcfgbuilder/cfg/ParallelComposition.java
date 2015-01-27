@@ -129,4 +129,8 @@ public class ParallelComposition extends CodeBlock {
 		return sb.toString();
 	}
 
+	public CodeBlock[] getCodeBlocks() {
+		return m_CodeBlocks;
+	}
+
 }

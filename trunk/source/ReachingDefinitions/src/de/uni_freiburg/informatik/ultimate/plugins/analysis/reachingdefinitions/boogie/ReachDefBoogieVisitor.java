@@ -8,6 +8,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IdentifierExpression
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableLHS;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.annotations.IndexedStatement;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.annotations.ReachDefStatementAnnotation;
 
 public class ReachDefBoogieVisitor extends BoogieVisitor {
@@ -19,11 +20,17 @@ public class ReachDefBoogieVisitor extends BoogieVisitor {
 	private boolean mIsAssume;
 	private ReachDefStatementAnnotation mOldRD;
 	private ScopedBoogieVarBuilder mBuilder;
+	private final String mKey;
 
 	public ReachDefBoogieVisitor(ReachDefStatementAnnotation current, ScopedBoogieVarBuilder builder) {
+		this(current, builder, null);
+	}
+
+	public ReachDefBoogieVisitor(ReachDefStatementAnnotation current, ScopedBoogieVarBuilder builder, String key) {
 		assert current != null;
 		mCurrentRD = current;
 		mBuilder = builder;
+		mKey = key;
 	}
 
 	public void process(Statement node) throws Throwable {
@@ -48,7 +55,7 @@ public class ReachDefBoogieVisitor extends BoogieVisitor {
 	@Override
 	protected void visit(VariableLHS lhs) {
 		super.visit(lhs);
-		UpdateDef(mBuilder.getScopedBoogieVar(lhs), mCurrentStatement);
+		updateDef(mBuilder.getScopedBoogieVar(lhs), mCurrentStatement);
 	}
 
 	@Override
@@ -66,29 +73,29 @@ public class ReachDefBoogieVisitor extends BoogieVisitor {
 		if (mIsAssume) {
 			// if we are inside an assume, every identifier expression is a use
 			// and a def
-			UpdateUse(current);
-			UpdateDef(current, mCurrentStatement);
+			updateUse(current);
+			updateDef(current, mCurrentStatement);
 
 		} else {
 			// if we are not inside an assume, it depends on the side we are on
 			if (mIsLHS) {
-				UpdateDef(current, mCurrentStatement);
+				updateDef(current, mCurrentStatement);
 			} else {
-				UpdateUse(current);
+				updateUse(current);
 			}
 		}
 	}
 
-	private void UpdateDef(ScopedBoogieVar identifier, Statement currentStatement) {
+	private void updateDef(ScopedBoogieVar identifier, Statement currentStatement) {
 		mCurrentRD.removeAllDefs(identifier);
-		mCurrentRD.addDef(identifier, currentStatement);
+		mCurrentRD.addDef(identifier, currentStatement, mKey);
 	}
 
-	private void UpdateUse(ScopedBoogieVar id) {
-		Collection<Statement> stmts = mOldRD.getDef(id);
+	private void updateUse(ScopedBoogieVar id) {
+		Collection<IndexedStatement> stmts = mOldRD.getDef(id);
 		if (stmts != null) {
-			for (Statement stmt : stmts) {
-				mCurrentRD.addUse(id, stmt);
+			for (IndexedStatement stmt : stmts) {
+				mCurrentRD.addUse(id, stmt.getStatement(), stmt.getKey());
 			}
 		}
 	}

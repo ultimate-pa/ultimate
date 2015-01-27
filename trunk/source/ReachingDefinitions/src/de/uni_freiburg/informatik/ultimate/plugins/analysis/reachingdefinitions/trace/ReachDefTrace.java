@@ -14,13 +14,17 @@ import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.annotations.IAnnotationProvider;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.annotations.IndexedStatement;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.annotations.ReachDefEdgeAnnotation;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.annotations.ReachDefStatementAnnotation;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.boogie.ScopedBoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.boogie.ScopedBoogieVarBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.dataflowdag.DataflowDAG;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.dataflowdag.TraceCodeBlock;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.SequentialComposition;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.RCFGEdgeVisitor;
 
@@ -40,9 +44,12 @@ public class ReachDefTrace {
 	}
 
 	public List<DataflowDAG<TraceCodeBlock>> process(List<CodeBlock> trace) throws Throwable {
-		annotateReachingDefinitions(trace);
-		List<BlockAndAssumes> assumes = findAssumes(trace);
-		List<DataflowDAG<TraceCodeBlock>> rtr = buildDAG(trace, assumes);
+
+		List<CodeBlock> traceCopy = new ArrayList<>(trace);
+
+		annotateReachingDefinitions(traceCopy);
+		List<BlockAndAssumes> assumes = findAssumes(traceCopy);
+		List<DataflowDAG<TraceCodeBlock>> rtr = buildDAG(traceCopy, assumes);
 
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug("#" + rtr.size() + " dataflow DAGs constructed");
@@ -73,44 +80,58 @@ public class ReachDefTrace {
 		store.add(current);
 
 		while (!store.isEmpty()) {
+
 			current = store.removeFirst();
-			Set<Entry<ScopedBoogieVar, HashSet<Statement>>> uses = getUse(current);
-			for (Entry<ScopedBoogieVar, HashSet<Statement>> use : uses) {
-				for (Statement stmt : use.getValue()) {
+			mLogger.debug("Current: " + current.toString());
+
+			Set<Entry<ScopedBoogieVar, HashSet<IndexedStatement>>> uses = getUse(current);
+			if (uses.isEmpty()) {
+				mLogger.debug("Uses are empty");
+			}
+			for (Entry<ScopedBoogieVar, HashSet<IndexedStatement>> use : uses) {
+				for (IndexedStatement stmt : use.getValue()) {
 					TraceCodeBlock nextBlock = getBlockContainingStatement(trace, stmt);
 					assert nextBlock != null;
 					assert nextBlock.getBlock() != null;
 					DataflowDAG<TraceCodeBlock> next = new DataflowDAG<TraceCodeBlock>(nextBlock);
+
+					if (current.getNodeLabel().equals(next.getNodeLabel())) {
+						mLogger.debug("Samn");
+					}
 					current.connectOutgoing(next, use.getKey());
 					store.addFirst(next); // use last for BFS
+					mLogger.debug("Adding: " + next.toString());
 				}
 			}
 		}
 		return root;
 	}
 
-	private TraceCodeBlock getBlockContainingStatement(List<CodeBlock> trace, final Statement stmt) {
+	private TraceCodeBlock getBlockContainingStatement(List<CodeBlock> trace, final IndexedStatement stmt) {
 		StatementFinder finder = new StatementFinder();
 		ISearchPredicate<Statement> predicate = new ISearchPredicate<Statement>() {
 			@Override
 			public boolean is(Statement object) {
-				return object.equals(stmt);
+				return object.equals(stmt.getStatement());
 			}
 		};
-		for (int i = trace.size() - 1; i >= 0; --i) {
-			CodeBlock current = trace.get(i);
-			List<Statement> lil = finder.start(current, predicate);
-			if (!lil.isEmpty()) {
-				return new TraceCodeBlock(trace, current, i);
-			}
+
+		int pos = Integer.valueOf(stmt.getKey());
+		CodeBlock current = trace.get(pos);
+		List<Statement> lil = finder.start(current, predicate);
+		if (!lil.isEmpty()) {
+			return new TraceCodeBlock(trace, current, pos);
 		}
 		return null;
 	}
 
-	private Set<Entry<ScopedBoogieVar, HashSet<Statement>>> getUse(DataflowDAG<TraceCodeBlock> current) {
-		ReachDefEdgeAnnotation annot = mEdgeProvider.getAnnotation(current.getNodeLabel().getBlock());
+	private Set<Entry<ScopedBoogieVar, HashSet<IndexedStatement>>> getUse(DataflowDAG<TraceCodeBlock> current) {
+		String key = String.valueOf(current.getNodeLabel().getIndex());
+		CodeBlock block = current.getNodeLabel().getBlock();
+		ReachDefEdgeAnnotation annot = mEdgeProvider.getAnnotation(block, key);
 		assert annot != null;
-		HashMap<ScopedBoogieVar, HashSet<Statement>> use = annot.getUse();
+		assert annot.getKey().equals(key);
+		HashMap<ScopedBoogieVar, HashSet<IndexedStatement>> use = annot.getUse();
 		assert use != null;
 		return use.entrySet();
 	}
@@ -118,14 +139,36 @@ public class ReachDefTrace {
 	private void annotateReachingDefinitions(List<CodeBlock> trace) {
 		ScopedBoogieVarBuilder builder = new ScopedBoogieVarBuilder(mSymbolTable);
 		for (int i = 0; i < trace.size(); i++) {
-			CodeBlock current = null;
+			CodeBlock predecessor = null;
+			CodeBlock current = trace.get(i);
 			if (i != 0) {
-				current = trace.get(i - 1);
+				predecessor = trace.get(i - 1);
 			}
-
-			new ReachDefTraceVisitor(mStatementProvider, mEdgeProvider, current, mLogger, builder)
-					.process(trace.get(i));
+			assert checkElement(current);
+			new ReachDefTraceVisitor(mStatementProvider, mEdgeProvider, predecessor, mLogger, builder, i)
+					.process(current);
 		}
+	}
+
+	private boolean checkElement(CodeBlock current) {
+		if (current instanceof StatementSequence) {
+			StatementSequence ss = (StatementSequence) current;
+			return ss.getStatements().size() < 2;
+		} else if (current instanceof Call) {
+			return true;
+		} else if (current instanceof Return) {
+			return true;
+		} else if (current instanceof SequentialComposition) {
+			SequentialComposition sc = (SequentialComposition) current;
+			for(CodeBlock cb : sc.getCodeBlocks()){
+				if(!checkElement(cb)){
+					return false;
+				}
+			}
+			return true;
+		}
+		// everything else is not supported
+		return false;
 	}
 
 	private List<BlockAndAssumes> findAssumes(List<CodeBlock> trace) {
