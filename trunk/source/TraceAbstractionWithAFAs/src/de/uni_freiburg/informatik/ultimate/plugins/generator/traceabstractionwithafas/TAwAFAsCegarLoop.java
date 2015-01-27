@@ -81,15 +81,15 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 //		traceCheckerWAST = (TraceCheckerWithAccessibleSSATerms) m_TraceChecker;
 
 		Word<CodeBlock> trace = traceCheckerWAST.getTrace();
-		m_Logger.debug("current trace:");
-		m_Logger.debug(trace.toString());
+		mLogger.debug("current trace:");
+		mLogger.debug(trace.toString());
 		// traceCheckerWAST.finishTraceCheckWithoutInterpolantsOrProgramExecution();
 
 		List<DataflowDAG<TraceCodeBlock>> dags = null;
 		try{
-			dags = ReachingDefinitions.computeRDForTrace(trace.asList(), m_Logger, m_SymbolTable);
+			dags = ReachingDefinitions.computeRDForTrace(trace.asList(), mLogger, m_SymbolTable);
 		}catch(Throwable e){
-			m_Logger.fatal("DataflowDAG generation threw an exception.", e);
+			mLogger.fatal("DataflowDAG generation threw an exception.", e);
 		}
 
 		AlternatingAutomaton<CodeBlock, IPredicate> alternatingAutomatonUnion = null;
@@ -119,7 +119,7 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 			}
 
 			//if the conjunctions of the terms in the current dag is infeasible..
-			m_Logger.info(dag + "\t" + m_SmtManager.getScript().checkSat());
+			mLogger.info(dag + "\t" + m_SmtManager.getScript().checkSat());
 			if(m_SmtManager.getScript().checkSat() == LBool.UNSAT){
 				//.. compute tree interpolant for the current dag
 				Term[] interpolants = m_SmtManager.getScript().getInterpolants(termNames.toArray(new Term[termNames.size()]), startsOfSubtreesAsInts);
@@ -129,7 +129,7 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 				
 				//TODO: what about converting the dag to a tree??
 				AlternatingAutomaton<CodeBlock, IPredicate> alternatingAutomaton = computeAlternatingAutomaton(dag);
-				m_Logger.debug("compute alternating automaton:\n " + alternatingAutomaton);
+				mLogger.debug("compute alternating automaton:\n " + alternatingAutomaton);
 				if(alternatingAutomatonUnion == null){
 					alternatingAutomatonUnion = alternatingAutomaton;
 				}
@@ -175,7 +175,7 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 
 		while(!stack.isEmpty()) {
 			currentNode = stack.pop();
-			m_Logger.debug("visiting node " + currentNode.getNodeLabel().toString());
+			mLogger.debug("visiting node " + currentNode.getNodeLabel().toString());
 			if (currentNode == dag) { //for the root we take "false"
 				currentNode.getNodeLabel().addInterpolant(m_PredicateUnifier.getFalsePredicate());
 			} else {
@@ -340,7 +340,7 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 		}
 		LBool feasibility = traceCheckerWAST.isCorrect();
 		if (feasibility != LBool.UNSAT) {
-			m_Logger.info("Counterexample might be feasible");
+			mLogger.info("Counterexample might be feasible");
 			NestedWord<CodeBlock> counterexample = NestedWord.nestedWord(m_Counterexample.getWord());
 			String indentation = "";
 			indentation += "  ";
