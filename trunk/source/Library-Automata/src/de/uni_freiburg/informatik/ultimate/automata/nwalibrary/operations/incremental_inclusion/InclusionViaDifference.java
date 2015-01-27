@@ -63,28 +63,27 @@ public class InclusionViaDifference<LETTER, STATE> extends
 	
 	public InclusionViaDifference(IUltimateServiceProvider services,
 			StateFactory<STATE> stateFactory,
-			INestedWordAutomatonSimple<LETTER, STATE> a) {
-		super(services, a);
-		m_StateFactoryIntersect = stateFactory;
-		m_StateFactoryDeterminize = stateFactory;
-		// initialize difference. B_1,...,B_n is emtpy
-		m_Difference = a;
+			INestedWordAutomatonSimple<LETTER, STATE> a) throws OperationCanceledException {
+		this(services, stateFactory, stateFactory, a);
+		
 	}
 	
 	/**
 	 * Constructor that uses different stateFactories for intersection and
 	 * determinization. This is currently needed when we use the inclusion
 	 * check in program verification. 
+	 * @throws OperationCanceledException 
 	 */
 	public InclusionViaDifference(IUltimateServiceProvider services,
 			StateFactory<STATE> stateFactoryIntersect,
 			StateFactory<STATE> stateFactoryDeterminize,
-			INestedWordAutomatonSimple<LETTER, STATE> a) {
+			INestedWordAutomatonSimple<LETTER, STATE> a) throws OperationCanceledException {
 		super(services, a);
 		m_StateFactoryIntersect = stateFactoryIntersect;
 		m_StateFactoryDeterminize = stateFactoryDeterminize;
 		// initialize difference. B_1,...,B_n is emtpy
 		m_Difference = a;
+		m_AcceptingRun = (new IsEmpty<LETTER, STATE>(m_Difference)).getNestedRun();
 	}
 
 	@Override
