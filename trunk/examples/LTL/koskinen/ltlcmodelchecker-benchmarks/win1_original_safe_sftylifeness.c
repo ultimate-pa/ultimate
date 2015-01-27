@@ -1,18 +1,17 @@
 //#Safe
-// *************************************************************
+// ****************************************************
 //
-//     Branching-time reasoning for infinite-state systems
+//     Making Prophecies with Decision Predicates
 //
 //              Byron Cook * Eric Koskinen
 //                     July 2010
 //
-// *************************************************************
+// ****************************************************
 
 // Benchmark: win1.c
-// Property: AG(a => AF r)
+// Property: G(a => F r)
 
-
-//@ ltl invariant positive: [](!AP(a != 0) || <>AP(r != 0));
+//@ ltl invariant positive: [](!AP(a!= 0) || <>AP(r != 0));
 extern void __VERIFIER_error() __attribute__ ((__noreturn__));
 extern void __VERIFIER_assume() __attribute__ ((__noreturn__));
 extern int __VERIFIER_nondet_int() __attribute__ ((__noreturn__));
@@ -53,9 +52,11 @@ KIRQL             CancelIrql;
 BOOLEAN           LockHeld;
 SERIAL_TIMEOUTS   CurrentTimeouts;
 
-void init() { 
 
-}
+  A = R = 0; 
+  status = STATUS_UNSUCCESSFUL; 
+  CurrentTimeouts = __VERIFIER_nondet_int();
+  k = __VERIFIER_nondet_int();
 
 void KeAcquireSpinLock(int * lp, int * ip) {
   (*lp) = 1;
@@ -84,10 +85,6 @@ void RemoveReferenceAndCompleteRequest(int a, int b) {}
 
 void main()
 {
-  a = r = 0; 
-  status = STATUS_UNSUCCESSFUL; 
-  CurrentTimeouts = __VERIFIER_nondet_int();
-  k = __VERIFIER_nondet_int();
 
   a = 1; a = 0; // KeAcquireSpinLock( &lock, &OldIrql);
 
@@ -113,7 +110,7 @@ void main()
 
     // IoSetCancelRoutine(Irp, NULL);
     IoReleaseCancelSpinLock(CancelIrql);
-    r = 1; r = 0; // KeReleaseSpinLock(&lock, OldIrql);
+    r = 1;r = 0; // KeReleaseSpinLock(&lock, OldIrql);
 
     //CALL TO TryToSatisfyRead( deviceExtension);
     {
@@ -121,7 +118,7 @@ void main()
       Irp=NULL;
       LockHeld = TRUE;
 
-      a = 1; a = 0; //KeAcquireSpinLock(&lock,&OldIrql);
+      a = 1; a= 0; //KeAcquireSpinLock(&lock,&OldIrql);
 
       if (__VERIFIER_nondet_int() && __VERIFIER_nondet_int()) {
 	//

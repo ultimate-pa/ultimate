@@ -29,16 +29,16 @@ extern int __VERIFIER_nondet_int() __attribute__ ((__noreturn__));
 #define TRUE 1
 void ExAcquireFastMutex() {}
 void ExReleaseFastMutex() {}
-#define GetStatus nondet
-#define IoInvalidateDeviceRelations nondet
-#define KeWaitForSingleObject nondet
-#define P4ReadRawIeee1284DeviceId nondet
-#define HTPnpFindDeviceIdKeys nondet
-#define HtFreePort nondet
-#define HtRegGetDword nondet
-#define HtTryAllocatePort nondet
-#define SetFlags nondet
-#define CountLookup nondet
+#define GetStatus __VERIFIER_nondet_int
+#define IoInvalidateDeviceRelations __VERIFIER_nondet_int
+#define KeWaitForSingleObject __VERIFIER_nondet_int
+#define P4ReadRawIeee1284DeviceId __VERIFIER_nondet_int
+#define HTPnpFindDeviceIdKeys __VERIFIER_nondet_int
+#define HtFreePort __VERIFIER_nondet_int
+#define HtRegGetDword __VERIFIER_nondet_int
+#define HtTryAllocatePort __VERIFIER_nondet_int
+#define SetFlags __VERIFIER_nondet_int
+#define CountLookup __VERIFIER_nondet_int
 int WarmPollPeriod;
 int status;
 int polling;
@@ -142,4 +142,3 @@ int main() {
        HTPnpFindDeviceIdKeys();
    }
 }
-int main() {}

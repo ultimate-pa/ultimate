@@ -35,15 +35,15 @@ int PowerStateIsAC;
 #define TRUE 1
 void ExAcquireFastMutex() {}
 void ExReleaseFastMutex() {}
-#define GetStatus nondet
-#define IoInvalidateDeviceRelations nondet
-#define KeWaitForSingleObject nondet
-#define P4ReadRawIeee1284DeviceId nondet
-#define HTPnpFindDeviceIdKeys nondet
-#define HtFreePort nondet
-#define HtRegGetDword nondet
-#define HtTryAllocatePort nondet
-#define SetFlags nondet
+#define GetStatus __VERIFIER_nondet_int
+#define IoInvalidateDeviceRelations __VERIFIER_nondet_int
+#define KeWaitForSingleObject __VERIFIER_nondet_int
+#define P4ReadRawIeee1284DeviceId __VERIFIER_nondet_int
+#define HTPnpFindDeviceIdKeys __VERIFIER_nondet_int
+#define HtFreePort __VERIFIER_nondet_int
+#define HtRegGetDword __VERIFIER_nondet_int
+#define HtTryAllocatePort __VERIFIER_nondet_int
+#define SetFlags __VERIFIER_nondet_int
 
    
 int main() {
@@ -90,7 +90,7 @@ int main() {
                            goto loc_continue;
                        }
                        if( STATUS_TIMEOUT == status ) {
-if(nondet()) polling = 0;
+if(__VERIFIER_nondet_int()) polling = 0;
                            if( __VERIFIER_nondet_int() ) {
                                // try to acquire port
                                if( HtTryAllocatePort() ) {
@@ -145,4 +145,3 @@ if(nondet()) polling = 0;
        HTPnpFindDeviceIdKeys();
    }
 }
-int main() {}

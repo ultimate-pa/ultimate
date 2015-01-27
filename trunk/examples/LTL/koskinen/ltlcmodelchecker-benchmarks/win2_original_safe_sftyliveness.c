@@ -35,15 +35,15 @@ int PowerStateIsAC;
 #define TRUE 1
 void ExAcquireFastMutex() {}
 void ExReleaseFastMutex() {}
-#define GetStatus nondet
-#define IoInvalidateDeviceRelations nondet
-#define KeWaitForSingleObject nondet
-#define P4ReadRawIeee1284DeviceId nondet
-#define HTPnpFindDeviceIdKeys nondet
-#define HtFreePort nondet
-#define HtRegGetDword nondet
-#define HtTryAllocatePort nondet
-#define SetFlags nondet
+#define GetStatus __VERIFIER_nondet_int
+#define IoInvalidateDeviceRelations __VERIFIER_nondet_int
+#define KeWaitForSingleObject __VERIFIER_nondet_int
+#define P4ReadRawIeee1284DeviceId __VERIFIER_nondet_int
+#define HTPnpFindDeviceIdKeys __VERIFIER_nondet_int
+#define HtFreePort __VERIFIER_nondet_int
+#define HtRegGetDword __VERIFIER_nondet_int
+#define HtTryAllocatePort __VERIFIER_nondet_int
+#define SetFlags __VERIFIER_nondet_int
 
    WarmPollPeriod = __VERIFIER_nondet_int();
    status = __VERIFIER_nondet_int();
@@ -52,9 +52,6 @@ void ExReleaseFastMutex() {}
 
    
 int main() {
-
-
-   
    if( NT_SUCCESS( status ) ) {
        ExAcquireFastMutex();
        SetFlags();
@@ -75,7 +72,7 @@ int main() {
 //---------------------------------------------
                {
                    LARGE_INTEGER   timeOut1;
-                   NTSTATUS        status;
+                  //NTSTATUS        status;
                    UCHAR           deviceStatus;
                    PCHAR           devId;
                    BOOLEAN         requestRescan;
@@ -146,4 +143,3 @@ int main() {
        HTPnpFindDeviceIdKeys();
    }
 }
-int main() {}

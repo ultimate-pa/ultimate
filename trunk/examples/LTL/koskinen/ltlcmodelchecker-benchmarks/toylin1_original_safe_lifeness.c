@@ -1,16 +1,14 @@
-//#Unsafe
-// *************************************************************
+// ****************************************************
 //
-//     Branching-time reasoning for infinite-state systems
+//     Making Prophecies with Decision Predicates
 //
 //              Byron Cook * Eric Koskinen
 //                     July 2010
 //
-// *************************************************************
+// ****************************************************
 
 // Benchmark: toylin1.c
-// Property: c > 5 => AF(resp > 5)
-
+// Property: c > 5 => F(resp > 5)
 
 //@ ltl invariant positive: !AP(c > 5) || <>AP(resp > 5);
 extern void __VERIFIER_error() __attribute__ ((__noreturn__));
@@ -19,24 +17,24 @@ extern int __VERIFIER_nondet_int() __attribute__ ((__noreturn__));
 
 int c;
 int servers ;
-int resp; //can never get > 4
+int resp;
 int curr_serv;
 
-  c = __VERIFIER_nondet_int();
 
+  c = __VERIFIER_nondet_int(); 
   servers = 4;
   resp = 0;
   curr_serv = servers;
 
+
 int main() {
-  __VERIFIER_assume(c>0);
+__VERIFIER_assume(c>0);
   while(curr_serv > 0) {
     if(__VERIFIER_nondet_int()) {
-      c--; 
-	  curr_serv--;
+      c--; curr_serv--;
       resp++;
     } else {
-	 __VERIFIER_assume(c < curr_serv);
+      __VERIFIER_assume(c < curr_serv);
       curr_serv--;
     }
   }

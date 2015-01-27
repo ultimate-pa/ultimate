@@ -1,25 +1,20 @@
 //#Safe
-// *************************************************************
+// ****************************************************
 //
-//     Branching-time reasoning for infinite-state systems
+//     Making Prophecies with Decision Predicates
 //
 //              Byron Cook * Eric Koskinen
 //                     July 2010
 //
-// *************************************************************
+// ****************************************************
 
 // Benchmark: pgstream.c
-// Property: AG( AFAG(ret==STATUS_OK)  \/ added<=0 )
-
+// Property: G( FG(ret==OK)  \/ added<=0 )
 
 //@ ltl invariant positive: []( <>[]AP(ret == 1) || AP(added <= 0));
 extern void __VERIFIER_error() __attribute__ ((__noreturn__));
 extern void __VERIFIER_assume() __attribute__ ((__noreturn__));
 extern int __VERIFIER_nondet_int() __attribute__ ((__noreturn__));
-
-//Ultimante Changes:
-// if ... endif preprocessor blocks preprocessor code deleted
-// preprocessorcode in property changed to actual value
 
 #include <stdio.h>
 #define AF_INET 1
@@ -28,6 +23,8 @@ extern int __VERIFIER_nondet_int() __attribute__ ((__noreturn__));
 #define IS_AF_UNIX(a) __VERIFIER_nondet_int()
 #define IS_AF_UNIX(a) __VERIFIER_nondet_int()
 
+#define HAVE_IPV6 1
+#define HAVE_UNIX_SOCKETS 1
 #define PG_SOMAXCONN 10
 #define SOCK_STREAM 1
 #define STATUS_ERROR 0
@@ -90,17 +87,17 @@ int addrs;
   listen_index = 0;
   added = 0;
   MAXADDR = __VERIFIER_nondet_int();
-  addrs = __VERIFIER_nondet_int();
-
+  addrs = __VERIFIER_nondet_int(); 
   MaxBackends = __VERIFIER_nondet_int();
-
   ret = __VERIFIER_nondet_int();
 
 void main()
 {
-  __VERIFIER_assume(MaxBackends>0);
-  __VERIFIER_assume(addrs>=0);
+__VERIFIER_assume(addrs>=0);
+ __VERIFIER_assume(MaxBackends>0);
         /* Initialize hint structure */
+
+
         if (family == AF_UNIX)
         {
                 /* Lock_AF_UNIX will also fill in sock_path. */
@@ -109,6 +106,7 @@ void main()
                 service = sock_path;
         }
         else
+ /* HAVE_UNIX_SOCKETS */
         {
                 snprintf(1, sizeof(1), "%d", portNumber);
                 service = 1;
@@ -194,6 +192,7 @@ void main()
                         }
                 }
 
+
                 if (__VERIFIER_nondet_int()) // addr_ai_family == AF_INET6)
                 {
 		  if (__VERIFIER_nondet_int()) // setsockopt(fd, IPPROTO_IPV6, IPV6_V6ONLY,
@@ -206,6 +205,7 @@ void main()
                                 goto loc_continue;
                         }
                 }
+
 
                 /*
                  * Note: This might fail on some OS's, like Linux older than
@@ -231,6 +231,7 @@ void main()
                         closesocket(fd);
                         goto loc_continue;
                 }
+
 
                 if (addr_ai_family == AF_UNIX)
                 {

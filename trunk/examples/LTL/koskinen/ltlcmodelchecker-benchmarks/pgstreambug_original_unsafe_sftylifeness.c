@@ -1,16 +1,15 @@
 //#Unsafe
-// *************************************************************
+// ****************************************************
 //
-//     Branching-time reasoning for infinite-state systems
+//     Making Prophecies with Decision Predicates
 //
 //              Byron Cook * Eric Koskinen
 //                     July 2010
 //
-// *************************************************************
+// ****************************************************
 
 // Benchmark: pgstreambug.c
-// Property: AG( AFAG(ret==OK)  \/ added<=0 )
-
+// Property: G( FG(ret==OK)  \/ added<=0 )
 
 //@ ltl invariant positive: []( <>[]AP(ret == 1) || AP(added <= 0));
 extern void __VERIFIER_error() __attribute__ ((__noreturn__));
@@ -84,23 +83,19 @@ int ret;
 char *sock_path;
 int addrs;
 
-
   one = 1;
   listen_index = 0;
   added = 0;
   MAXADDR = __VERIFIER_nondet_int();
   addrs = __VERIFIER_nondet_int();
-
-  MaxBackends = __VERIFIER_nondet_int();
-
+  MaxBackends = __VERIFIER_nondet_int(); 
   ret = __VERIFIER_nondet_int();
 
 void main()
 {
-  __VERIFIER_assume(MaxBackends>0);
-  __VERIFIER_assume(addrs>=0);
+__VERIFIER_assume(addrs>=0);
+__VERIFIER_assume(MaxBackends>0);
         /* Initialize hint structure */
-
 
         if (family == AF_UNIX)
         {
@@ -196,7 +191,6 @@ void main()
                         }
                 }
 
-
                 if (__VERIFIER_nondet_int()) // addr_ai_family == AF_INET6)
                 {
 		  if (__VERIFIER_nondet_int()) // setsockopt(fd, IPPROTO_IPV6, IPV6_V6ONLY,
@@ -236,6 +230,7 @@ void main()
                         goto loc_continue;
                 }
 
+
                 if (addr_ai_family == AF_UNIX)
                 {
 		  if (__VERIFIER_nondet_int() != STATUS_OK)
@@ -244,6 +239,7 @@ void main()
                                 break;
                         }
                 }
+
 
                 /*
                  * Select appropriate accept-queue length limit.  PG_SOMAXCONN is

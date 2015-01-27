@@ -1,28 +1,27 @@
 //#Safe
-// *************************************************************
+// ****************************************************
 //
-//     Branching-time reasoning for infinite-state systems
+//     Making Prophecies with Decision Predicates
 //
 //              Byron Cook * Eric Koskinen
 //                     July 2010
 //
-// *************************************************************
+// ****************************************************
 
 // Benchmark: acqrel.c
-// Property: AG(a => AF r)
- 
+// Property: G(a => F r)
 
-//@ ltl invariant positive: []( ! AP(a == 0) || <> AP(r == 0));
+//@ ltl invariant positive: [](! AP(a != 0) || <> AP(r!= 0));
 extern void __VERIFIER_error() __attribute__ ((__noreturn__));
 extern void __VERIFIER_assume() __attribute__ ((__noreturn__));
 extern int __VERIFIER_nondet_int() __attribute__ ((__noreturn__));
 
-int a = 0;
-int r = 0;
+a = 0;
+r = 0;
 
 int main() {
-  int n;
-  while(__VERIFIER_nondet_int() == 1) {
+   int n;
+  while(__VERIFIER_nondet_int()) {
     a = 1;
     a = 0;
     n = __VERIFIER_nondet_int();

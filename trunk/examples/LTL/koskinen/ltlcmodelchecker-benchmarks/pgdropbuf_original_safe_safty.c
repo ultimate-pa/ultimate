@@ -1,18 +1,17 @@
 //#Safe
-// *************************************************************
+// ****************************************************
 //
-//     Branching-time reasoning for infinite-state systems
+//     Making Prophecies with Decision Predicates
 //
 //              Byron Cook * Eric Koskinen
 //                     July 2010
 //
-// *************************************************************
+// ****************************************************
 
 // Benchmark: pgdropbuf.c
-// Property: istemp => AG(A!=1)
+// Property: istemp => G(A!=1)
 
-
-//@ ltl invariant positive: AP(istemp == 0) || []AP(A != 1);
+//@ ltl invariant positive: !AP(istemp) || [] AP(A!=1);
 extern void __VERIFIER_error() __attribute__ ((__noreturn__));
 extern void __VERIFIER_assume() __attribute__ ((__noreturn__));
 extern int __VERIFIER_nondet_int() __attribute__ ((__noreturn__));
@@ -24,7 +23,6 @@ extern int __VERIFIER_nondet_int() __attribute__ ((__noreturn__));
 #define __builtin___snprintf_chk(a,b,c,d,e,f) {}
 #define __builtin___object_size(a,b) __VERIFIER_nondet_int()
 
-int istemp;
 int family;
 char *hostName;
 unsigned short portNumber;
@@ -61,7 +59,7 @@ int addrs;
  */
 
 int rnode;
-
+int istemp;
 int firstDelBlock;
 int A; int R;
 char *bufHdr;
@@ -85,18 +83,23 @@ int NLocBuffer;
 int i;
 int NBuffers;
 int bufHdr_refcount;
-void StrategyInvalidateBuffer() //TPYECHEKERerr:(int bufHdr) 
-{}
-void WaitIO() //TPYECHEKERerr:(int a) 
-{}
+void StrategyInvalidateBuffer(int bufHdr) {}
+void WaitIO(int a) {}
 int RelFileNodeEquals(int a, int b) { return __VERIFIER_nondet_int(); }
 
-//void DropRelFileNodeBuffers(RelFileNode rnode, bool istemp,   BlockNumber firstDelBlock)
-void main() {
-  istemp = __VERIFIER_nondet_int(); A = R = 0;
+
+
+  istemp = __VERIFIER_nondet_int();
+  A = 0;
+  R = 0;
   NLocBuffer = __VERIFIER_nondet_int();
   NBuffers = __VERIFIER_nondet_int();
-  
+
+
+
+
+//void DropRelFileNodeBuffers(RelFileNode rnode, bool istemp,   BlockNumber firstDelBlock)
+void body() {
         if (istemp==1)
         {
                 for (i = 0; i < NLocBuffer; i++)
@@ -136,7 +139,7 @@ recheck:
                          */
                         if (bufHdr_flags & BM_IO_IN_PROGRESS)
                         {
-                                WaitIO(); //TPYECHEKERerr:bufHdr);
+                                WaitIO(bufHdr);
 
                                 /*
                                  * By now, the buffer very possibly belongs to some other
@@ -164,7 +167,7 @@ recheck:
                         /*
                          * And mark the buffer as no longer occupied by this rel.
                          */
-                        StrategyInvalidateBuffer(); //TPYECHEKERerr: bufHdr);
+                        StrategyInvalidateBuffer(bufHdr);
                 }
         }
 

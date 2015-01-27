@@ -1,19 +1,17 @@
-//#Unsafe
-// *************************************************************
+//#Safe
+// ****************************************************
 //
-//     Branching-time reasoning for infinite-state systems
+//     Making Prophecies with Decision Predicates
 //
 //              Byron Cook * Eric Koskinen
 //                     July 2010
 //
-// *************************************************************
+// ****************************************************
 
 // Benchmark: pgarch.c
-// Property: AG AF wakened==1
+// Property: G F wakend==1
 
-
-
-//@ ltl invariant positive: []<>AP(wakend == 1);
+//@ ltl invariant positive: []<>AP(wakend==1);
 extern void __VERIFIER_error() __attribute__ ((__noreturn__));
 extern void __VERIFIER_assume() __attribute__ ((__noreturn__));
 extern int __VERIFIER_nondet_int() __attribute__ ((__noreturn__));
@@ -31,10 +29,9 @@ int          curtime;
 #define PGC_SIGHUP 1
 int got_SIGHUP;
 int wakend;
-
-  
-wakend = 1; 
-got_SIGHUP = __VERIFIER_nondet_int();
+void init() {
+  wakend = 1; got_SIGHUP = __VERIFIER_nondet_int();
+}
 
 void ProcessConfigFile(int a) {}
 int XLogArchivingActive() { return __VERIFIER_nondet_int(); }
