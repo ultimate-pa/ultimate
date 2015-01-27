@@ -349,8 +349,7 @@ public class IntersectNwa<LETTER, STATE> implements INestedWordAutomatonSimple<L
 
 	@Override
 	public int size() {
-		// TODO Auto-generated method stub
-		return 0;
+		return m_res2prod.size();
 	}
 
 	@Override
@@ -360,8 +359,7 @@ public class IntersectNwa<LETTER, STATE> implements INestedWordAutomatonSimple<L
 
 	@Override
 	public String sizeInformation() {
-		// TODO Auto-generated method stub
-		return null;
+		return "currently " + size() + " states, but on-demand construction may add more states";
 	}
 
 

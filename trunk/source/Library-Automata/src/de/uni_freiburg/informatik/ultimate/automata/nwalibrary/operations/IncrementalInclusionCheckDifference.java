@@ -39,7 +39,7 @@ public class IncrementalInclusionCheckDifference<LETTER, STATE> extends Inclusio
 	
 	@Override
 	public String exitMessage() {
-		return "Exit " + operationName();
+		return "Exit " + operationName() + ". Result has " + size() + " states.";
 	}
 	public Boolean getResult() throws OperationCanceledException{
 		return getCounterexample() == null;

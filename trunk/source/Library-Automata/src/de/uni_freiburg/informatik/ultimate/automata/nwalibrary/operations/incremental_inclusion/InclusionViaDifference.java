@@ -56,6 +56,7 @@ public class InclusionViaDifference<LETTER, STATE> extends
 	private final StateFactory<STATE> m_StateFactoryIntersect;
 	private final StateFactory<STATE> m_StateFactoryDeterminize;
 	private INestedWordAutomatonSimple<LETTER, STATE> m_Difference;
+	private NestedRun<LETTER, STATE> m_AcceptingRun;
 	
 	private final boolean m_RemoveDeadEnds = true;
 
@@ -88,8 +89,7 @@ public class InclusionViaDifference<LETTER, STATE> extends
 
 	@Override
 	public NestedRun<LETTER, STATE> getCounterexample() throws OperationCanceledException {
-		NestedRun<LETTER, STATE> acceptingRun = (new IsEmpty<LETTER, STATE>(m_Difference)).getNestedRun();
-		return acceptingRun;
+		return m_AcceptingRun;
 	}
 
 	@Override
@@ -107,6 +107,11 @@ public class InclusionViaDifference<LETTER, STATE> extends
 		} else {
 			m_Difference = difference;
 		}
+		m_AcceptingRun = (new IsEmpty<LETTER, STATE>(m_Difference)).getNestedRun();
+	}
+	
+	public int size() {
+		return m_Difference.size();
 	}
 	
 
