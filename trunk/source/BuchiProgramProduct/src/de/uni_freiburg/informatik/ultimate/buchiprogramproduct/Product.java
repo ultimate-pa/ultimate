@@ -5,10 +5,11 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.zip.Checksum;
 
-import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
@@ -18,6 +19,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
+import de.uni_freiburg.informatik.ultimate.model.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.annot.BuchiProgramAcceptingStateAnnotation;
@@ -31,6 +33,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Ret
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootAnnot;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.SequentialComposition;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence.Origin;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
@@ -74,10 +77,6 @@ public class Product {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 
-		// REMOVE: Set logging to debug while coding
-//		Level oldLevel = mLogger.getLevel();
-//		mLogger.setLevel(Level.DEBUG);
-
 		// parameters
 		mNWA = aut;
 		mRcfgRoot = rcfg;
@@ -115,7 +114,6 @@ public class Product {
 		pruneNonProductEnd();
 
 		generateTransFormula();
-//		mLogger.setLevel(oldLevel);
 	}
 
 	public RootNode getProductRCFG() {
@@ -208,25 +206,12 @@ public class Product {
 		for (ProgramPoint origRcfgSourceLoc : mRCFGLocations) {
 			for (RCFGEdge rcfgEdge : origRcfgSourceLoc.getOutgoingEdges()) {
 				if (rcfgEdge instanceof Summary) {
-					// we ignore summaries
-					// TODO: But we should not! under certain circumstances
-					// summaries are important.
-					// Use them like statement sequences; their transformula is
-					// the place were we put the jucy stuff
-					// repairing their call may be difficult
-					// Summary summaryEdge = (Summary) rcfgEdge;
-					// Summary annot = summaryEdge;
-					// if (annot.calledProcedureHasImplementation()) {
-					// //do nothing if analysis is interprocedural
-					// //add summary otherwise
-					// if (!m_Interprocedural) {
-					// internalAlphabet.add(annot);
-					// }
-					// }
-					// else {
-					// internalAlphabet.add(annot);
-					// }
-					continue;
+					// we ignore summaries for which procedures have
+					// implementations
+					Summary summaryEdge = (Summary) rcfgEdge;
+					if (summaryEdge.calledProcedureHasImplementation()) {
+						continue;
+					}
 				}
 
 				if (rcfgEdge instanceof Return) {
@@ -234,7 +219,11 @@ public class Product {
 					continue;
 				}
 
-				mLogger.debug("Processing " + rcfgEdge.hashCode() + " " + rcfgEdge.getClass().getSimpleName());
+				if (mLogger.isDebugEnabled()) {
+					mLogger.debug("Processing [" + rcfgEdge.hashCode() + "][" + rcfgEdge.getClass().getSimpleName()
+							+ "] " + rcfgEdge.getSource() + " --> " + rcfgEdge.getTarget());
+				}
+
 				ProgramPoint origRcfgTargetLoc = (ProgramPoint) rcfgEdge.getTarget();
 				if (isNonProductNode(origRcfgSourceLoc) && isNonProductNode(origRcfgTargetLoc)) {
 					// if the current node and its target belong to ignored
@@ -252,6 +241,8 @@ public class Product {
 								null);
 					} else if (rcfgEdge instanceof Call) {
 						createNewCallEdge(origRcfgSourceLoc, productSourceLoc, (Call) rcfgEdge, productTargetLoc);
+					} else if (rcfgEdge instanceof Summary) {
+						createNewSummaryEdge(productSourceLoc, (Summary) rcfgEdge, productTargetLoc);
 					} else {
 						throw new AssertionError("Did not expect edge of type " + rcfgEdge.getClass().getSimpleName());
 					}
@@ -271,6 +262,8 @@ public class Product {
 					addRootEdgeIfNecessary(origRcfgSourceLoc, null, productSourceLoc);
 					if (rcfgEdge instanceof Call) {
 						handleEdgeCallFromNonProduct(productSourceLoc, (Call) rcfgEdge, origRcfgSourceLoc);
+					} else if (rcfgEdge instanceof Summary) {
+						handleEdgeSummaryFromNonProduct(productSourceLoc, (Summary) rcfgEdge, origRcfgSourceLoc);
 					} else {
 						throw new AssertionError();
 					}
@@ -292,6 +285,8 @@ public class Product {
 							handleEdgeStatementSequence(productSourceLoc, nwaLoc, (StatementSequence) rcfgEdge);
 						} else if (rcfgEdge instanceof Call) {
 							handleEdgeCall(productSourceLoc, nwaLoc, (Call) rcfgEdge, origRcfgSourceLoc);
+						} else if (rcfgEdge instanceof Summary) {
+							handleEdgeSummary(productSourceLoc, nwaLoc, (Summary) rcfgEdge);
 						} else {
 							// we encounted an unhandled edge type and have
 							// to abort
@@ -526,6 +521,8 @@ public class Product {
 					if (edge instanceof StatementSequence) {
 						tfb.addTransitionFormulas((CodeBlock) edge, pairs.getKey());
 						assert ((StatementSequence) edge).getTransitionFormula() != null;
+					} else if (edge instanceof Summary) {
+						tfb.addTransitionFormulas((CodeBlock) edge, pairs.getKey());
 					}
 				}
 			}
@@ -591,6 +588,36 @@ public class Product {
 		}
 	}
 
+	private void handleEdgeSummary(ProgramPoint productSourceLoc, String nwaLoc, Summary summary) {
+		ProgramPoint targetpp;
+		for (OutgoingInternalTransition<CodeBlock, String> autTrans : mNWA.internalSuccessors(nwaLoc)) {
+			targetpp = mProductLocations.get(generateStateName(((ProgramPoint) summary.getTarget()), autTrans.getSucc()
+					.toString()));
+			Summary sum = createNewSummaryEdge(productSourceLoc, summary, targetpp);
+			StatementSequence ss = new StatementSequence(productSourceLoc, targetpp, checkLetter(autTrans.getLetter()),
+					Origin.IMPLEMENTATION, mLogger);
+
+			Boogie2SMT b2smt = mProductRoot.getRootAnnot().getBoogie2SMT();
+			TransFormulaBuilder tfb = new TransFormulaBuilder(b2smt, mServices);
+			tfb.addTransitionFormulas((CodeBlock) ss, ((ProgramPoint) summary.getSource()).getProcedure());
+
+			new SequentialComposition(productSourceLoc, targetpp, mProductRoot.getRootAnnot().getBoogie2SMT(),
+					mProductRoot.getRootAnnot().getModGlobVarManager(), true, true, mServices, new CodeBlock[] { sum,
+							ss });
+		}
+	}
+
+	private void handleEdgeSummaryFromNonProduct(ProgramPoint productSourceLoc, Summary rcfgEdge,
+			ProgramPoint origRcfgSourceLoc) {
+		ProgramPoint origRcfgTargetLoc = (ProgramPoint) rcfgEdge.getTarget();
+		for (String initialNWAState : mNWA.getInitialStates()) {
+			ProgramPoint productTargetLoc = mProductLocations
+					.get(generateStateName(origRcfgTargetLoc, initialNWAState));
+			createNewSummaryEdge(productSourceLoc, rcfgEdge, productTargetLoc);
+		}
+
+	}
+
 	private void handleEdgeCall(ProgramPoint productSourceLoc, String nwaSourceState, Call origRcfgEdge,
 			ProgramPoint origRcfgSourceLoc) {
 
@@ -621,6 +648,20 @@ public class Product {
 					.get(generateStateName(origRcfgTargetLoc, initialNWAState));
 			createNewCallEdge(origRcfgSourceLoc, productSourceLoc, origRcfgEdge, productTargetLoc);
 		}
+	}
+
+	private Summary createNewSummaryEdge(ProgramPoint productSourceLoc, Summary origSummary,
+			ProgramPoint productTargetLoc) {
+		assert productSourceLoc != null;
+		assert productTargetLoc != null;
+		Summary sum = new Summary(productSourceLoc, productTargetLoc, origSummary.getCallStatement(), false, mLogger);
+		sum.setTransitionFormula(origSummary.getTransitionFormula());
+
+		if (mLogger.isDebugEnabled()) {
+			mLogger.debug("Created summary edge (" + productSourceLoc + ", " + productTargetLoc + ") for call "
+					+ BoogiePrettyPrinter.print(((Summary) origSummary).getCallStatement()));
+		}
+		return sum;
 	}
 
 	private Return createNewReturnEdge(ProgramPoint productSourceLoc, Return origRcfgEdge,
@@ -703,15 +744,7 @@ public class Product {
 		if (originalSS != null) {
 			stmts.addAll(originalSS.getStatements());
 		}
-		if (letter != null) {
-			if (letter instanceof StatementSequence) {
-				StatementSequence autTransStmts = (StatementSequence) letter;
-				stmts.addAll(autTransStmts.getStatements());
-			} else {
-				throw new UnsupportedOperationException("Letter has to be a statement sequence, but is "
-						+ letter.getClass().getSimpleName());
-			}
-		}
+		stmts.addAll(checkLetter(letter));
 
 		// create the edge
 		StatementSequence newSS;
@@ -725,6 +758,19 @@ public class Product {
 
 		mapNewEdge2OldEdge(newSS, originalSS);
 		return newSS;
+	}
+
+	private List<Statement> checkLetter(CodeBlock letter) {
+		if (letter != null) {
+			if (letter instanceof StatementSequence) {
+				StatementSequence autTransStmts = (StatementSequence) letter;
+				return autTransStmts.getStatements();
+			} else {
+				throw new UnsupportedOperationException("Letter has to be a statement sequence, but is "
+						+ letter.getClass().getSimpleName());
+			}
+		}
+		return new ArrayList<>();
 	}
 
 	private void mapNewEdge2OldEdge(RCFGEdge newEdge, RCFGEdge originalEdge) {
