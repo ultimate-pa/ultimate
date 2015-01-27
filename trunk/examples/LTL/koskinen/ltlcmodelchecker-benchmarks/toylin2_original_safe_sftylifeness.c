@@ -28,12 +28,13 @@ int resp;
 int curr_serv;
 int serversdiv2;
 
-
-
+c = __VERIFIER_nondet_int();
+servers = __VERIFIER_nondet_int(); 
+serversdiv2 = __VERIFIER_nondet_int();
+  
 int main() {
-  c = __VERIFIER_nondet_int(); __VERIFIER_assume(c>0);
-  servers = __VERIFIER_nondet_int(); __VERIFIER_assume(servers>0);
-  serversdiv2 = __VERIFIER_nondet_int();
+__VERIFIER_assume(servers>0 && c > 0); 
+
   if(__VERIFIER_nondet_int())
     __VERIFIER_assume(serversdiv2+serversdiv2==servers);
   else

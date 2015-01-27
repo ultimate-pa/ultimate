@@ -93,8 +93,7 @@ int addrs;
 
 void main()
 {
-__VERIFIER_assume(addrs>=0);
-__VERIFIER_assume(MaxBackends>0);
+__VERIFIER_assume(addrs>=0 && MaxBackends>0);
         /* Initialize hint structure */
 
         if (family == AF_UNIX)
