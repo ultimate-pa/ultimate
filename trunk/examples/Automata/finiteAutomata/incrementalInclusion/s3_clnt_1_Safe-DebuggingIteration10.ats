@@ -11,20 +11,22 @@
 // 
 // The inclusion A ⊆ (B_{1} ∪ ... ∪ B_{9}) does not hold.
 
-boolean isIncluded = Jeffery_Test_2(A,NwaList(NwaList(NwaList(NwaList(NwaList(NwaList(NwaList(NwaList(NwaList(B0, B1), B2),B3),B4),B5),B6),B7),B8),B9),3);
-print (isIncluded);
-boolean isIncluded2 = Jeffery_Test_2(A,NwaList(NwaList(NwaList(NwaList(NwaList(NwaList(NwaList(NwaList(NwaList(B0, B1), B2),B3),B4),B5),B6),B7),B8),B9),4);
-print (isIncluded2);
-boolean isIncluded3 = Jeffery_Test_2(A,NwaList(NwaList(NwaList(NwaList(NwaList(NwaList(NwaList(NwaList(NwaList(B0, B1), B2),B3),B4),B5),B6),B7),B8),B9),5);
+String isIncluded1 = Jeffery_Test_3(A,NwaList(NwaList(NwaList(NwaList(NwaList(NwaList(NwaList(NwaList(NwaList(B0, B1), B2),B3),B4),B5),B6),B7),B8),B9),1);
+print (isIncluded1);
+String isIncluded3 = Jeffery_Test_3(A,NwaList(NwaList(NwaList(NwaList(NwaList(NwaList(NwaList(NwaList(NwaList(B0, B1), B2),B3),B4),B5),B6),B7),B8),B9),3);
 print (isIncluded3);
-boolean isIncluded4 = Jeffery_Test_2(A,NwaList(NwaList(NwaList(NwaList(NwaList(NwaList(NwaList(NwaList(NwaList(B0, B1), B2),B3),B4),B5),B6),B7),B8),B9),32);
+String isIncluded4 = Jeffery_Test_3(A,NwaList(NwaList(NwaList(NwaList(NwaList(NwaList(NwaList(NwaList(NwaList(B0, B1), B2),B3),B4),B5),B6),B7),B8),B9),4);
 print (isIncluded4);
-boolean isIncluded5 = Jeffery_Test_2(A,NwaList(NwaList(NwaList(NwaList(NwaList(NwaList(NwaList(NwaList(NwaList(B0, B1), B2),B3),B4),B5),B6),B7),B8),B9),42);
+String isIncluded5 = Jeffery_Test_3(A,NwaList(NwaList(NwaList(NwaList(NwaList(NwaList(NwaList(NwaList(NwaList(B0, B1), B2),B3),B4),B5),B6),B7),B8),B9),5);
 print (isIncluded5);
-boolean isIncluded6 = Jeffery_Test_2(A,NwaList(NwaList(NwaList(NwaList(NwaList(NwaList(NwaList(NwaList(NwaList(B0, B1), B2),B3),B4),B5),B6),B7),B8),B9),52);
-print (isIncluded6);
-boolean isIncluded7 = Jeffery_Test_2(A,NwaList(NwaList(NwaList(NwaList(NwaList(NwaList(NwaList(NwaList(NwaList(B0, B1), B2),B3),B4),B5),B6),B7),B8),B9),2);
-print (isIncluded7);
+String isIncluded32 = Jeffery_Test_3(A,NwaList(NwaList(NwaList(NwaList(NwaList(NwaList(NwaList(NwaList(NwaList(B0, B1), B2),B3),B4),B5),B6),B7),B8),B9),32);
+print (isIncluded32);
+String isIncluded42 = Jeffery_Test_3(A,NwaList(NwaList(NwaList(NwaList(NwaList(NwaList(NwaList(NwaList(NwaList(B0, B1), B2),B3),B4),B5),B6),B7),B8),B9),42);
+print (isIncluded42);
+String isIncluded52 = Jeffery_Test_3(A,NwaList(NwaList(NwaList(NwaList(NwaList(NwaList(NwaList(NwaList(NwaList(B0, B1), B2),B3),B4),B5),B6),B7),B8),B9),52);
+print (isIncluded52);
+String isIncluded2 = Jeffery_Test_3(A,NwaList(NwaList(NwaList(NwaList(NwaList(NwaList(NwaList(NwaList(NwaList(B0, B1), B2),B3),B4),B5),B6),B7),B8),B9),2);
+print (isIncluded2);
 
 
 
