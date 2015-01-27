@@ -30,16 +30,16 @@ import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvide
 
 
 public class Jeffery_Test_3<LETTER,STATE> implements IOperation<LETTER,STATE>{
-	static int sumNodeInTheEnd2 = 0,sumNodeInTheEnd3 = 0,sumNodeInTheEnd4 = 0,sumNodeInTheEnd5 = 0,sumNodeInTheEnd32 = 0,sumNodeInTheEnd42 = 0,sumNodeInTheEnd52 = 0;
-	static int sumTotalNode2 = 0,sumTotalNode3 = 0,sumTotalNode4 = 0,sumTotalNode5 = 0,sumTotalNode32 = 0,sumTotalNode42 = 0,sumTotalNode52 = 0;
-	static int sumRun2 = 0,sumRun3 = 0,sumRun4 = 0,sumRun5 = 0,sumRun32 = 0,sumRun42 = 0,sumRun52 = 0;
-	static int testnum2 = 0,testnum3 = 0,testnum4 = 0,testnum5 = 0,testnum32 = 0,testnum42 = 0,testnum52 = 0;
-	static long time2 = 0, time3 = 0,time4 = 0, time5 = 0, time32 = 0, time42 = 0, time52 = 0, timeBuffer;
+	static long sumNodeInTheEnd2 = 0,sumNodeInTheEnd3 = 0,sumNodeInTheEnd4 = 0,sumNodeInTheEnd5 = 0,sumNodeInTheEnd32 = 0,sumNodeInTheEnd42 = 0,sumNodeInTheEnd52 = 0;
+	static long sumTotalNode2 = 0,sumTotalNode3 = 0,sumTotalNode4 = 0,sumTotalNode5 = 0,sumTotalNode32 = 0,sumTotalNode42 = 0,sumTotalNode52 = 0;
+	static long sumRun2 = 0,sumRun3 = 0,sumRun4 = 0,sumRun5 = 0,sumRun32 = 0,sumRun42 = 0,sumRun52 = 0;
+	static long testnum1 = 0,testnum2 = 0,testnum3 = 0,testnum4 = 0,testnum5 = 0,testnum32 = 0,testnum42 = 0,testnum52 = 0;
+	static long time1 = 0,time2 = 0, time3 = 0,time4 = 0, time5 = 0, time32 = 0, time42 = 0, time52 = 0, timeBuffer;
 	static boolean init = false;
 	
 	ArrayList<INestedWordAutomaton<LETTER,STATE>> automataCollection;
 	private static Logger s_Logger;
-	int avgNodeInTheEnd = 0,avgNodeGenerated = 0,avgRun = 0,testNum;
+	long avgNodeInTheEnd = 0,avgNodeGenerated = 0,avgRun = 0,testNum;
 	long avgTime = 0;
 	boolean result;
 	public Jeffery_Test_3(IUltimateServiceProvider services, StateFactory<STATE> sf,
@@ -47,6 +47,21 @@ public class Jeffery_Test_3<LETTER,STATE> implements IOperation<LETTER,STATE>{
 		
 		switch(num){
 		default:
+		case 1:
+			timeBuffer = (new Date()).getTime();
+			IncrementalInclusionCheckDifference<LETTER,STATE> IIC1 = (new IncrementalInclusionCheckDifference<LETTER,STATE>(services,sf,a,b.subList(0, 1)));
+			for(int i=1;i<b.size();i++){
+				IIC1.addSubtrahend(b.get(i));
+			}
+			time1+=(new Date()).getTime()-timeBuffer;
+			testnum1++;
+			testNum = testnum1;
+			avgRun = -1;
+			avgNodeGenerated = -1;
+			avgNodeInTheEnd = -1;
+			avgTime = time1/testNum;
+			result = IIC1.getResult();
+			break;
 		case 2:
 			timeBuffer = (new Date()).getTime();
 			IncrementalInclusionCheck2<LETTER,STATE> IIC2 = (new IncrementalInclusionCheck2<LETTER,STATE>(services,sf,a,b.subList(0, 1)));
@@ -194,7 +209,7 @@ public class Jeffery_Test_3<LETTER,STATE> implements IOperation<LETTER,STATE>{
 	
 	@Override
 	public String getResult(){
-		return ("avg Nodes in the end:"+avgNodeInTheEnd+" avg Nodes generated:"+avgNodeGenerated+" avgRuns:"+avgRun+" Total test:"+testNum+" avg Time:"+avgTime);
+		return ("avg Nodes in the end:"+avgNodeInTheEnd+" avg Nodes generated:"+avgNodeGenerated+" avgRuns:"+avgRun+" Total test:"+testNum+" avg Time:"+avgTime+" Result:"+result);
 	}
 	/*public String getResult() throws OperationCanceledException {
 		return "Jeffery_Test_3_result:"+automataCollection.size();
