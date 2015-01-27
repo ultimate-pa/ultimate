@@ -56,6 +56,8 @@ public class InclusionViaDifference<LETTER, STATE> extends
 	private final StateFactory<STATE> m_StateFactoryIntersect;
 	private final StateFactory<STATE> m_StateFactoryDeterminize;
 	private INestedWordAutomatonSimple<LETTER, STATE> m_Difference;
+	
+	private final boolean m_RemoveDeadEnds = true;
 
 	
 	public InclusionViaDifference(IUltimateServiceProvider services,
@@ -99,8 +101,12 @@ public class InclusionViaDifference<LETTER, STATE> extends
 				new ComplementDeterministicNwa<>(determinized);
 		INestedWordAutomatonSimple<LETTER, STATE> difference =
 				new IntersectNwa<>(m_Difference, complemented, m_StateFactoryIntersect, false);
-		 INestedWordAutomatonOldApi<LETTER, STATE> removedDeadEnds = (new RemoveDeadEnds<LETTER, STATE>(m_Services, difference)).getResult();
-		m_Difference = removedDeadEnds;
+		if (m_RemoveDeadEnds) {
+			INestedWordAutomatonOldApi<LETTER, STATE> removedDeadEnds = (new RemoveDeadEnds<LETTER, STATE>(m_Services, difference)).getResult();
+			m_Difference = removedDeadEnds;
+		} else {
+			m_Difference = difference;
+		}
 	}
 	
 
