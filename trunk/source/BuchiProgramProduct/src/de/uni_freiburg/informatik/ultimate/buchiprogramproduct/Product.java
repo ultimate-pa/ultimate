@@ -75,8 +75,8 @@ public class Product {
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 
 		// REMOVE: Set logging to debug while coding
-		Level oldLevel = mLogger.getLevel();
-		mLogger.setLevel(Level.DEBUG);
+//		Level oldLevel = mLogger.getLevel();
+//		mLogger.setLevel(Level.DEBUG);
 
 		// parameters
 		mNWA = aut;
@@ -115,7 +115,7 @@ public class Product {
 		pruneNonProductEnd();
 
 		generateTransFormula();
-		mLogger.setLevel(oldLevel);
+//		mLogger.setLevel(oldLevel);
 	}
 
 	public RootNode getProductRCFG() {
