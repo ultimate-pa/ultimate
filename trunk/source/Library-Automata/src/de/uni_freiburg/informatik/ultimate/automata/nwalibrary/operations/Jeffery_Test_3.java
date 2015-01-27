@@ -30,8 +30,8 @@ import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvide
 
 
 public class Jeffery_Test_3<LETTER,STATE> implements IOperation<LETTER,STATE>{
-	static long sumNodeInTheEnd2 = 0,sumNodeInTheEnd3 = 0,sumNodeInTheEnd4 = 0,sumNodeInTheEnd5 = 0,sumNodeInTheEnd32 = 0,sumNodeInTheEnd42 = 0,sumNodeInTheEnd52 = 0;
-	static long sumTotalNode2 = 0,sumTotalNode3 = 0,sumTotalNode4 = 0,sumTotalNode5 = 0,sumTotalNode32 = 0,sumTotalNode42 = 0,sumTotalNode52 = 0;
+	static long sumNodeInTheEnd1 = 0,sumNodeInTheEnd2 = 0,sumNodeInTheEnd3 = 0,sumNodeInTheEnd4 = 0,sumNodeInTheEnd5 = 0,sumNodeInTheEnd32 = 0,sumNodeInTheEnd42 = 0,sumNodeInTheEnd52 = 0;
+	static long sumTotalNode1 = 0,sumTotalNode2 = 0,sumTotalNode3 = 0,sumTotalNode4 = 0,sumTotalNode5 = 0,sumTotalNode32 = 0,sumTotalNode42 = 0,sumTotalNode52 = 0;
 	static long sumRun2 = 0,sumRun3 = 0,sumRun4 = 0,sumRun5 = 0,sumRun32 = 0,sumRun42 = 0,sumRun52 = 0;
 	static long testnum1 = 0,testnum2 = 0,testnum3 = 0,testnum4 = 0,testnum5 = 0,testnum32 = 0,testnum42 = 0,testnum52 = 0;
 	static long time1 = 0,time2 = 0, time3 = 0,time4 = 0, time5 = 0, time32 = 0, time42 = 0, time52 = 0, timeBuffer;
@@ -56,9 +56,11 @@ public class Jeffery_Test_3<LETTER,STATE> implements IOperation<LETTER,STATE>{
 			time1+=(new Date()).getTime()-timeBuffer;
 			testnum1++;
 			testNum = testnum1;
+			sumTotalNode1+=IIC1.size();
+			sumNodeInTheEnd1+=IIC1.size();
 			avgRun = -1;
-			avgNodeGenerated = -1;
-			avgNodeInTheEnd = -1;
+			avgNodeGenerated = sumTotalNode1/testNum;
+			avgNodeInTheEnd = sumNodeInTheEnd1/testNum;
 			avgTime = time1/testNum;
 			result = IIC1.getResult();
 			break;
