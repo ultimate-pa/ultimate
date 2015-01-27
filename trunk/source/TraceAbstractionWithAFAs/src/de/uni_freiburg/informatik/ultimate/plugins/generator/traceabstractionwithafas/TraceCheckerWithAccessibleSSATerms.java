@@ -17,8 +17,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.InterpolatingTraceChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.InterpolatingTraceCheckerCraig;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceChecker;
 
-public class TraceCheckerWithAccessibleSSATerms extends InterpolatingTraceCheckerCraig {
+public class TraceCheckerWithAccessibleSSATerms extends TraceChecker {
 	
 	Script m_script;
 
@@ -30,14 +31,20 @@ public class TraceCheckerWithAccessibleSSATerms extends InterpolatingTraceChecke
 			AssertCodeBlockOrder assertCodeBlocksIncrementally,
 			IUltimateServiceProvider services, boolean computeRcfgProgramExecution, 
 			PredicateUnifier predicateUnifier, INTERPOLATION interpolation) {
-		super(precondition, postcondition, pendingContexts, trace, smtManager,
-				modifiedGlobals, assertCodeBlocksIncrementally, services,
-				computeRcfgProgramExecution, predicateUnifier, interpolation);
+		super(precondition, postcondition, pendingContexts, trace, smtManager, modifiedGlobals, 
+				assertCodeBlocksIncrementally, services, computeRcfgProgramExecution);
+//		super(precondition, postcondition, pendingContexts, trace, smtManager,
+//				modifiedGlobals, assertCodeBlocksIncrementally, services,
+//				computeRcfgProgramExecution, predicateUnifier, interpolation);
 		m_script = smtManager.getScript();
 	}
 	
-	public Term[] computeInterpolants(Term[] partition, int[] startOfSubtree) {
-		return m_script.getInterpolants(partition, startOfSubtree);
+//	public Term[] computeInterpolants(Term[] partition, int[] startOfSubtree) {
+//		return m_script.getInterpolants(partition, startOfSubtree);
+//	}
+	
+	public void traceCheckFinished() {
+		m_TraceCheckFinished = true;
 	}
 	
 	public Term getAnnotatedSSATerm(int position) {

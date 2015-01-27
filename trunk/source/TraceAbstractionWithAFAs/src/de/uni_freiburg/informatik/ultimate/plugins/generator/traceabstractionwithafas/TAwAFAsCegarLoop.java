@@ -15,6 +15,7 @@ import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.alternating.AA_Union;
@@ -42,6 +43,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.INTERPOLATION;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.UnsatCores;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.InterpolatingTraceCheckerCraig;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.InterpolatingTraceCheckerPathInvariantsWithFallback;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateConstructionVisitor;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceCheckerSpWp;
@@ -58,10 +61,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstractioncon
 
 public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 
-	private final BoogieSymbolTable mSymbolTable;
-	private PredicateUnifier mPredicateUnifier;
-	private TraceCheckerWithAccessibleSSATerms traceCheckerWAST = null; //TODO move this declaration up
-	private Logger m_Logger;
+	private final BoogieSymbolTable m_SymbolTable;
+	private PredicateUnifier m_PredicateUnifier;
+	private TraceCheckerWithAccessibleSSATerms traceCheckerWAST = null; //we need our own tracechecker, here..
 
 	public TAwAFAsCegarLoop(String name, RootNode rootNode, SmtManager smtManager,
 			TraceAbstractionBenchmarks traceAbstractionBenchmarks, TAPreferences taPrefs,
@@ -69,26 +71,25 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 			IUltimateServiceProvider services, BoogieSymbolTable table) {
 		super(name, rootNode, smtManager, traceAbstractionBenchmarks, taPrefs, errorLocs, services);
 		assert table != null;
-		mSymbolTable = table;
-		mPredicateUnifier = new PredicateUnifier(services, smtManager, smtManager.newTruePredicate(), smtManager.newFalsePredicate());
-		m_Logger = services.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
+		m_SymbolTable = table;
+		m_PredicateUnifier = new PredicateUnifier(services, smtManager, smtManager.newTruePredicate(), smtManager.newFalsePredicate());
 	}
 
 
 	@Override
 	protected void constructInterpolantAutomaton() throws OperationCanceledException {
-		traceCheckerWAST = (TraceCheckerWithAccessibleSSATerms) m_TraceChecker;
+//		traceCheckerWAST = (TraceCheckerWithAccessibleSSATerms) m_TraceChecker;
 
 		Word<CodeBlock> trace = traceCheckerWAST.getTrace();
-		mLogger.debug("current trace:");
-		mLogger.debug(trace.toString());
+		m_Logger.debug("current trace:");
+		m_Logger.debug(trace.toString());
 		// traceCheckerWAST.finishTraceCheckWithoutInterpolantsOrProgramExecution();
 
 		List<DataflowDAG<TraceCodeBlock>> dags = null;
 		try{
-			dags = ReachingDefinitions.computeRDForTrace(trace.asList(), mLogger, mSymbolTable);
+			dags = ReachingDefinitions.computeRDForTrace(trace.asList(), m_Logger, m_SymbolTable);
 		}catch(Throwable e){
-			mLogger.fatal("DataflowDAG generation threw an exception.", e);
+			m_Logger.fatal("DataflowDAG generation threw an exception.", e);
 		}
 
 		AlternatingAutomaton<CodeBlock, IPredicate> alternatingAutomatonUnion = null;
@@ -118,7 +119,7 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 			}
 
 			//if the conjunctions of the terms in the current dag is infeasible..
-			mLogger.info(dag + "\t" + m_SmtManager.getScript().checkSat());
+			m_Logger.info(dag + "\t" + m_SmtManager.getScript().checkSat());
 			if(m_SmtManager.getScript().checkSat() == LBool.UNSAT){
 				//.. compute tree interpolant for the current dag
 				Term[] interpolants = m_SmtManager.getScript().getInterpolants(termNames.toArray(new Term[termNames.size()]), startsOfSubtreesAsInts);
@@ -128,7 +129,7 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 				
 				//TODO: what about converting the dag to a tree??
 				AlternatingAutomaton<CodeBlock, IPredicate> alternatingAutomaton = computeAlternatingAutomaton(dag);
-				mLogger.debug("compute alternating automaton:\n " + alternatingAutomaton);
+				m_Logger.debug("compute alternating automaton:\n " + alternatingAutomaton);
 				if(alternatingAutomatonUnion == null){
 					alternatingAutomatonUnion = alternatingAutomaton;
 				}
@@ -148,7 +149,7 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 		}
 		if(alternatingAutomatonUnion != null){
 			//.. in the end, build the union of all the nwas we got from the dags, return it
-			AA_Determination<CodeBlock> determination = new AA_Determination<CodeBlock>(m_Services, alternatingAutomatonUnion, m_SmtManager, mPredicateUnifier);
+			AA_Determination<CodeBlock> determination = new AA_Determination<CodeBlock>(m_Services, alternatingAutomatonUnion, m_SmtManager, m_PredicateUnifier);
 			m_InterpolAutomaton = determination.getResult();
 		}
 		else{
@@ -174,9 +175,9 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 
 		while(!stack.isEmpty()) {
 			currentNode = stack.pop();
-			mLogger.debug("visiting node " + currentNode.getNodeLabel().toString());
+			m_Logger.debug("visiting node " + currentNode.getNodeLabel().toString());
 			if (currentNode == dag) { //for the root we take "false"
-				currentNode.getNodeLabel().addInterpolant(mPredicateUnifier.getFalsePredicate());
+				currentNode.getNodeLabel().addInterpolant(m_PredicateUnifier.getFalsePredicate());
 			} else {
 				//				if (currentNode.getOutgoingNodes().size() > 0) {
 				currentNode.getNodeLabel().addInterpolant(
@@ -231,7 +232,7 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 				Term withoutIndices = walker.process(new FormulaUnLet().unlet(withIndices));
 				Set<BoogieVar> vars = m_sfmv.getVars();
 				String[] procs = m_sfmv.getProcedure().toArray(new String[0]);
-				result[resultPos] = mPredicateUnifier.getOrConstructPredicate(withoutIndices, vars, procs);
+				result[resultPos] = m_PredicateUnifier.getOrConstructPredicate(withoutIndices, vars, procs);
 				withIndices2Predicate.put(withIndices, result[resultPos]);
 			}
 			//			} else {
@@ -244,8 +245,8 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 	
 	private AlternatingAutomaton<CodeBlock,IPredicate> computeAlternatingAutomaton(DataflowDAG<TraceCodeBlock> dag){
 		AlternatingAutomaton<CodeBlock, IPredicate> alternatingAutomaton = new  AlternatingAutomaton<CodeBlock, IPredicate>(m_Abstraction.getAlphabet(), m_Abstraction.getStateFactory());
-		IPredicate initialState = mPredicateUnifier.getFalsePredicate();
-		IPredicate finalState = mPredicateUnifier.getTruePredicate();
+		IPredicate initialState = m_PredicateUnifier.getFalsePredicate();
+		IPredicate finalState = m_PredicateUnifier.getTruePredicate();
 		alternatingAutomaton.addState(initialState);
 		alternatingAutomaton.setStateFinal(initialState);
 		alternatingAutomaton.addState(finalState);
@@ -310,36 +311,42 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 	//TODO: not nice: this is copied from BasicCegarLoop, only difference: use another TraceChecker
 	@Override
 	protected LBool isCounterexampleFeasible() {
-		IPredicate truePredicate = m_SmtManager.newTruePredicate();
-		IPredicate falsePredicate = m_SmtManager.newFalsePredicate();
-		//		PredicateUnifier predicateUnifier = new PredicateUnifier(mServices, m_SmtManager, truePredicate, falsePredicate);
+		PredicateUnifier predicateUnifier = new PredicateUnifier(m_Services, m_SmtManager);
+		IPredicate truePredicate = predicateUnifier.getTruePredicate();
+		IPredicate falsePredicate = predicateUnifier.getFalsePredicate();
+
 		switch (m_Interpolation) {
-		case Craig_NestedInterpolation:
+//		case Craig_NestedInterpolation:
 		case Craig_TreeInterpolation:
-			m_TraceChecker = new TraceCheckerWithAccessibleSSATerms(truePredicate, falsePredicate, new TreeMap<Integer, IPredicate>(),//different TraceChecker, here..
+			traceCheckerWAST = new TraceCheckerWithAccessibleSSATerms(truePredicate, falsePredicate, new TreeMap<Integer, IPredicate>(),
 					NestedWord.nestedWord(m_Counterexample.getWord()), m_SmtManager, m_RootNode.getRootAnnot()
-					.getModGlobVarManager(), m_AssertCodeBlocksIncrementally, m_Services,
-					true, mPredicateUnifier, m_Interpolation);
+							.getModGlobVarManager(), m_AssertCodeBlocksIncrementally, m_Services, true, predicateUnifier, m_Interpolation);
 			break;
-		case ForwardPredicates:
-		case BackwardPredicates:
-		case FPandBP:
-			m_TraceChecker = new TraceCheckerSpWp(truePredicate, falsePredicate, new TreeMap<Integer, IPredicate>(),
-					NestedWord.nestedWord(m_Counterexample.getWord()), m_SmtManager, m_RootNode.getRootAnnot()
-					.getModGlobVarManager(), m_AssertCodeBlocksIncrementally, UnsatCores.CONJUNCT_LEVEL, true, m_Services,
-					true, mPredicateUnifier, m_Interpolation);
-			break;
+//		case ForwardPredicates:
+//		case BackwardPredicates:
+//		case FPandBP:
+//			m_TraceChecker = new TraceCheckerSpWp(truePredicate, falsePredicate, new TreeMap<Integer, IPredicate>(),
+//					NestedWord.nestedWord(m_Counterexample.getWord()), m_SmtManager, m_RootNode.getRootAnnot()
+//							.getModGlobVarManager(), m_AssertCodeBlocksIncrementally, m_UnsatCores, m_UseLiveVariables,
+//					m_Services, true, predicateUnifier, m_Interpolation);
+//			break;
+//		case PathInvariants:
+//			m_TraceChecker = new InterpolatingTraceCheckerPathInvariantsWithFallback(
+//					truePredicate, falsePredicate, new TreeMap<Integer, IPredicate>(),
+//					(NestedRun<CodeBlock, IPredicate>) m_Counterexample, m_SmtManager, m_ModGlobVarManager, 
+//					m_AssertCodeBlocksIncrementally, m_Services, true, predicateUnifier);
 		default:
 			throw new UnsupportedOperationException("unsupported interpolation");
 		}
-		LBool feasibility = m_TraceChecker.isCorrect();
+		LBool feasibility = traceCheckerWAST.isCorrect();
 		if (feasibility != LBool.UNSAT) {
-			mLogger.info("Counterexample might be feasible");
+			m_Logger.info("Counterexample might be feasible");
 			NestedWord<CodeBlock> counterexample = NestedWord.nestedWord(m_Counterexample.getWord());
 			String indentation = "";
 			indentation += "  ";
 			for (int j = 0; j < counterexample.length(); j++) {
-				String stmts = counterexample.getSymbol(j).getPrettyPrintedStatements();
+				// String stmts =
+				// counterexample.getSymbol(j).getPrettyPrintedStatements();
 				// System.out.println(indentation + stmts);
 				// s_Logger.info(indentation + stmts);
 				if (counterexample.isCallPosition(j)) {
@@ -351,16 +358,68 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 			}
 			// s_Logger.info("Trace with values");
 			// s_Logger.info(m_TraceChecker.getRcfgProgramExecution());
-			m_RcfgProgramExecution = m_TraceChecker.getRcfgProgramExecution();
-		} else {
-			//			AllIntegers allInt = new TraceChecker.AllIntegers(); //difference
-			//			m_TraceChecker.computeInterpolants(allInt, predicateUnifier, m_Interpolation); //difference
+			m_RcfgProgramExecution = traceCheckerWAST.getRcfgProgramExecution();
 		}
-
-		//		m_CegarLoopBenchmark.addTraceCheckerData(m_TraceChecker.getTraceCheckerBenchmark()); //do this somewhere else TODO //difference
+		traceCheckerWAST.traceCheckFinished();
+		m_CegarLoopBenchmark.addTraceCheckerData(traceCheckerWAST.getTraceCheckerBenchmark());
 		// m_TraceCheckerBenchmark.aggregateBenchmarkData(m_TraceChecker.getTraceCheckerBenchmark());
 
 		return feasibility;
+		
+		
+		
+		
+//		IPredicate truePredicate = m_SmtManager.newTruePredicate();
+//		IPredicate falsePredicate = m_SmtManager.newFalsePredicate();
+//		//		PredicateUnifier predicateUnifier = new PredicateUnifier(mServices, m_SmtManager, truePredicate, falsePredicate);
+//		switch (m_Interpolation) {
+//		case Craig_NestedInterpolation:
+//		case Craig_TreeInterpolation:
+//			m_TraceChecker = new TraceCheckerWithAccessibleSSATerms(truePredicate, falsePredicate, new TreeMap<Integer, IPredicate>(),//different TraceChecker, here..
+//					NestedWord.nestedWord(m_Counterexample.getWord()), m_SmtManager, m_RootNode.getRootAnnot()
+//					.getModGlobVarManager(), m_AssertCodeBlocksIncrementally, m_Services,
+//					true, mPredicateUnifier, m_Interpolation);
+//			break;
+//		case ForwardPredicates:
+//		case BackwardPredicates:
+//		case FPandBP:
+//			m_TraceChecker = new TraceCheckerSpWp(truePredicate, falsePredicate, new TreeMap<Integer, IPredicate>(),
+//					NestedWord.nestedWord(m_Counterexample.getWord()), m_SmtManager, m_RootNode.getRootAnnot()
+//					.getModGlobVarManager(), m_AssertCodeBlocksIncrementally, UnsatCores.CONJUNCT_LEVEL, true, m_Services,
+//					true, mPredicateUnifier, m_Interpolation);
+//			break;
+//		default:
+//			throw new UnsupportedOperationException("unsupported interpolation");
+//		}
+//		LBool feasibility = m_TraceChecker.isCorrect();
+//		if (feasibility != LBool.UNSAT) {
+//			mLogger.info("Counterexample might be feasible");
+//			NestedWord<CodeBlock> counterexample = NestedWord.nestedWord(m_Counterexample.getWord());
+//			String indentation = "";
+//			indentation += "  ";
+//			for (int j = 0; j < counterexample.length(); j++) {
+//				String stmts = counterexample.getSymbol(j).getPrettyPrintedStatements();
+//				// System.out.println(indentation + stmts);
+//				// s_Logger.info(indentation + stmts);
+//				if (counterexample.isCallPosition(j)) {
+//					indentation += "    ";
+//				}
+//				if (counterexample.isReturnPosition(j)) {
+//					indentation = indentation.substring(0, indentation.length() - 4);
+//				}
+//			}
+//			// s_Logger.info("Trace with values");
+//			// s_Logger.info(m_TraceChecker.getRcfgProgramExecution());
+//			m_RcfgProgramExecution = m_TraceChecker.getRcfgProgramExecution();
+//		} else {
+//			//			AllIntegers allInt = new TraceChecker.AllIntegers(); //difference
+//			//			m_TraceChecker.computeInterpolants(allInt, predicateUnifier, m_Interpolation); //difference
+//		}
+//
+//		//		m_CegarLoopBenchmark.addTraceCheckerData(m_TraceChecker.getTraceCheckerBenchmark()); //do this somewhere else TODO //difference
+//		// m_TraceCheckerBenchmark.aggregateBenchmarkData(m_TraceChecker.getTraceCheckerBenchmark());
+//
+//		return feasibility;
 	}
 
 }
