@@ -42,7 +42,7 @@ public abstract class AbstractInterpolantAutomaton2 implements INestedWordAutoma
 
 	protected final SmtManager m_SmtManager;
 	protected final IHoareTripleChecker m_IHoareTripleChecker;
-	protected final SdHoareTripleChecker m_EdgeChecker;
+	protected final SdHoareTripleChecker m_SdHoareTripleChecker;
 	protected final IPredicate m_IaFalseState;
 	protected final NestedWordAutomatonCache<CodeBlock, IPredicate> m_Result;
 	protected final NestedWordAutomaton<CodeBlock, IPredicate> m_InterpolantAutomaton;
@@ -61,7 +61,7 @@ public abstract class AbstractInterpolantAutomaton2 implements INestedWordAutoma
 		m_Services = services;
 		mLogger = logger;
 		m_SmtManager = smtManager;
-		m_EdgeChecker = new SdHoareTripleChecker(modglobvarman);
+		m_SdHoareTripleChecker = new SdHoareTripleChecker(modglobvarman);
 		m_IHoareTripleChecker = hoareTripleChecker;
 		m_IaFalseState = falseState;
 		m_InterpolantAutomaton = interpolantAutomaton;
@@ -347,7 +347,7 @@ public abstract class AbstractInterpolantAutomaton2 implements INestedWordAutoma
 		@Override
 		public Validity sdecToFalse(IPredicate resPred, IPredicate resHier, CodeBlock letter) {
 			assert resHier == null;
-			return m_EdgeChecker.sdecInternalToFalse(resPred, letter);
+			return m_SdHoareTripleChecker.sdecInternalToFalse(resPred, letter);
 		}
 
 		@Override
@@ -365,7 +365,7 @@ public abstract class AbstractInterpolantAutomaton2 implements INestedWordAutoma
 		@Override
 		public boolean isInductiveSefloop(IPredicate resPred, IPredicate resHier, CodeBlock letter, IPredicate succCand) {
 			assert resHier == null;
-			if ((resPred == succCand) && (m_EdgeChecker.sdecInternalSelfloop(resPred, letter) == Validity.VALID)) {
+			if ((resPred == succCand) && (m_SdHoareTripleChecker.sdecInternalSelfloop(resPred, letter) == Validity.VALID)) {
 				return true;
 			} else {
 				return false;
@@ -375,13 +375,13 @@ public abstract class AbstractInterpolantAutomaton2 implements INestedWordAutoma
 		@Override
 		public Validity sdec(IPredicate resPred, IPredicate resHier, CodeBlock letter, IPredicate succCand) {
 			assert resHier == null;
-			return m_EdgeChecker.sdecInteral(resPred, letter, succCand);
+			return m_SdHoareTripleChecker.sdecInteral(resPred, letter, succCand);
 		}
 
 		@Override
 		public Validity sdLazyEc(IPredicate resPred, IPredicate resHier, CodeBlock letter, IPredicate succCand) {
 			assert resHier == null;
-			return m_EdgeChecker.sdLazyEcInteral(resPred, letter, succCand);
+			return m_SdHoareTripleChecker.sdLazyEcInteral(resPred, letter, succCand);
 		}
 
 		@Override
@@ -429,7 +429,7 @@ public abstract class AbstractInterpolantAutomaton2 implements INestedWordAutoma
 		@Override
 		public Validity sdecToFalse(IPredicate resPred, IPredicate resHier, CodeBlock letter) {
 			assert resHier == null;
-			return m_EdgeChecker.sdecCallToFalse(resPred, letter);
+			return m_SdHoareTripleChecker.sdecCallToFalse(resPred, letter);
 		}
 
 		@Override
@@ -447,7 +447,7 @@ public abstract class AbstractInterpolantAutomaton2 implements INestedWordAutoma
 		@Override
 		public boolean isInductiveSefloop(IPredicate resPred, IPredicate resHier, CodeBlock letter, IPredicate succCand) {
 			assert resHier == null;
-			if ((resPred == succCand) && (m_EdgeChecker.sdecCallSelfloop(resPred, letter) == Validity.VALID)) {
+			if ((resPred == succCand) && (m_SdHoareTripleChecker.sdecCallSelfloop(resPred, letter) == Validity.VALID)) {
 				return true;
 			} else {
 				return false;
@@ -457,13 +457,13 @@ public abstract class AbstractInterpolantAutomaton2 implements INestedWordAutoma
 		@Override
 		public Validity sdec(IPredicate resPred, IPredicate resHier, CodeBlock letter, IPredicate succCand) {
 			assert resHier == null;
-			return m_EdgeChecker.sdecCall(resPred, letter, succCand);
+			return m_SdHoareTripleChecker.sdecCall(resPred, letter, succCand);
 		}
 
 		@Override
 		public Validity sdLazyEc(IPredicate resPred, IPredicate resHier, CodeBlock letter, IPredicate succCand) {
 			assert resHier == null;
-			return m_EdgeChecker.sdLazyEcCall(resPred, (Call) letter, succCand);
+			return m_SdHoareTripleChecker.sdLazyEcCall(resPred, (Call) letter, succCand);
 		}
 
 		@Override
@@ -508,7 +508,7 @@ public abstract class AbstractInterpolantAutomaton2 implements INestedWordAutoma
 		public Validity sdecToFalse(IPredicate resPred, IPredicate resHier, CodeBlock letter) {
 			// sat if (not only if!) resPred and resHier are independent,
 			// hence we can use the "normal" sdec method
-			return m_EdgeChecker.sdecReturn(resPred, resHier, letter, m_IaFalseState);
+			return m_SdHoareTripleChecker.sdecReturn(resPred, resHier, letter, m_IaFalseState);
 		}
 
 		@Override
@@ -524,10 +524,10 @@ public abstract class AbstractInterpolantAutomaton2 implements INestedWordAutoma
 
 		@Override
 		public boolean isInductiveSefloop(IPredicate resPred, IPredicate resHier, CodeBlock letter, IPredicate succCand) {
-			if ((resPred == succCand) && (m_EdgeChecker.sdecReturnSelfloopPre(resPred, (Return) letter) == Validity.VALID)) {
+			if ((resPred == succCand) && (m_SdHoareTripleChecker.sdecReturnSelfloopPre(resPred, (Return) letter) == Validity.VALID)) {
 				return true;
 			} else if ((resHier == succCand)
-					&& (m_EdgeChecker.sdecReturnSelfloopHier(resHier, (Return) letter) == Validity.VALID)) {
+					&& (m_SdHoareTripleChecker.sdecReturnSelfloopHier(resHier, (Return) letter) == Validity.VALID)) {
 				return true;
 			} else {
 				return false;
@@ -536,12 +536,12 @@ public abstract class AbstractInterpolantAutomaton2 implements INestedWordAutoma
 
 		@Override
 		public Validity sdec(IPredicate resPred, IPredicate resHier, CodeBlock letter, IPredicate succCand) {
-			return m_EdgeChecker.sdecReturn(resPred, resHier, letter, succCand);
+			return m_SdHoareTripleChecker.sdecReturn(resPred, resHier, letter, succCand);
 		}
 
 		@Override
 		public Validity sdLazyEc(IPredicate resPred, IPredicate resHier, CodeBlock letter, IPredicate succCand) {
-			return m_EdgeChecker.sdLazyEcReturn(resPred, resHier, (Return) letter, succCand);
+			return m_SdHoareTripleChecker.sdLazyEcReturn(resPred, resHier, (Return) letter, succCand);
 		}
 
 		@Override
