@@ -30,39 +30,59 @@ import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvide
 
 
 public class Jeffery_Test_3<LETTER,STATE> implements IOperation<LETTER,STATE>{
-	static long sumNodeInTheEnd1 = 0,sumNodeInTheEnd2 = 0,sumNodeInTheEnd3 = 0,sumNodeInTheEnd4 = 0,sumNodeInTheEnd5 = 0,sumNodeInTheEnd32 = 0,sumNodeInTheEnd42 = 0,sumNodeInTheEnd52 = 0;
-	static long sumTotalNode1 = 0,sumTotalNode2 = 0,sumTotalNode3 = 0,sumTotalNode4 = 0,sumTotalNode5 = 0,sumTotalNode32 = 0,sumTotalNode42 = 0,sumTotalNode52 = 0;
-	static long sumRun2 = 0,sumRun3 = 0,sumRun4 = 0,sumRun5 = 0,sumRun32 = 0,sumRun42 = 0,sumRun52 = 0;
-	static long testnum1 = 0,testnum2 = 0,testnum3 = 0,testnum4 = 0,testnum5 = 0,testnum32 = 0,testnum42 = 0,testnum52 = 0;
-	static long time1 = 0,time2 = 0, time3 = 0,time4 = 0, time5 = 0, time32 = 0, time42 = 0, time52 = 0, timeBuffer;
-	static boolean init = false;
-	
+	static long trueSumNodeInTheEnd1 = 0,trueSumNodeInTheEnd2 = 0,trueSumNodeInTheEnd3 = 0,trueSumNodeInTheEnd4 = 0,trueSumNodeInTheEnd5 = 0,trueSumNodeInTheEnd32 = 0,trueSumNodeInTheEnd42 = 0,trueSumNodeInTheEnd52 = 0;
+	static long trueSumTotalNode1 = 0,trueSumTotalNode2 = 0,trueSumTotalNode3 = 0,trueSumTotalNode4 = 0,trueSumTotalNode5 = 0,trueSumTotalNode32 = 0,trueSumTotalNode42 = 0,trueSumTotalNode52 = 0;
+	static long trueSumRun2 = 0,trueSumRun3 = 0,trueSumRun4 = 0,trueSumRun5 = 0,trueSumRun32 = 0,trueSumRun42 = 0,trueSumRun52 = 0;
+	static long trueTestnum1 = 0,trueTestnum2 = 0,trueTestnum3 = 0,trueTestnum4 = 0,trueTestnum5 = 0,trueTestnum32 = 0,trueTestnum42 = 0,trueTestnum52 = 0;
+	static long trueTime1 = 0,trueTime2 = 0, trueTime3 = 0,trueTime4 = 0, trueTime5 = 0, trueTime32 = 0, trueTime42 = 0, trueTime52 = 0, timeBuffer;
+	static long falseSumNodeInTheEnd1 = 0,falseSumNodeInTheEnd2 = 0,falseSumNodeInTheEnd3 = 0,falseSumNodeInTheEnd4 = 0,falseSumNodeInTheEnd5 = 0,falseSumNodeInTheEnd32 = 0,falseSumNodeInTheEnd42 = 0,falseSumNodeInTheEnd52 = 0;
+	static long falseSumTotalNode1 = 0,falseSumTotalNode2 = 0,falseSumTotalNode3 = 0,falseSumTotalNode4 = 0,falseSumTotalNode5 = 0,falseSumTotalNode32 = 0,falseSumTotalNode42 = 0,falseSumTotalNode52 = 0;
+	static long falseSumRun2 = 0,falseSumRun3 = 0,falseSumRun4 = 0,falseSumRun5 = 0,falseSumRun32 = 0,falseSumRun42 = 0,falseSumRun52 = 0;
+	static long falseTestnum1 = 0,falseTestnum2 = 0,falseTestnum3 = 0,falseTestnum4 = 0,falseTestnum5 = 0,falseTestnum32 = 0,falseTestnum42 = 0,falseTestnum52 = 0;
+	static long falseTime1 = 0,falseTime2 = 0, falseTime3 = 0,falseTime4 = 0, falseTime5 = 0, falseTime32 = 0, falseTime42 = 0, falseTime52 = 0;
+	static long trueAvgNodeInTheEnd = 0, trueAvgNodeGenerated = 0,trueAvgRun = 0,trueTestNum = 0,trueAvgTime = 0;
+	static long falseAvgNodeInTheEnd = 0, falseAvgNodeGenerated = 0,falseAvgRun = 0,falseTestNum = 0,falseAvgTime = 0;
 	ArrayList<INestedWordAutomaton<LETTER,STATE>> automataCollection;
 	private static Logger s_Logger;
-	long avgNodeInTheEnd = 0,avgNodeGenerated = 0,avgRun = 0,testNum;
-	long avgTime = 0;
-	boolean result;
 	public Jeffery_Test_3(IUltimateServiceProvider services, StateFactory<STATE> sf,
 			INestedWordAutomatonSimple<LETTER, STATE> a, List<INestedWordAutomatonSimple<LETTER,STATE>> b,int num) throws AutomataLibraryException{
 		
 		switch(num){
 		default:
+			
 		case 1:
 			timeBuffer = (new Date()).getTime();
 			IncrementalInclusionCheckDifference<LETTER,STATE> IIC1 = (new IncrementalInclusionCheckDifference<LETTER,STATE>(services,sf,a,b.subList(0, 1)));
 			for(int i=1;i<b.size();i++){
 				IIC1.addSubtrahend(b.get(i));
 			}
-			time1+=(new Date()).getTime()-timeBuffer;
-			testnum1++;
-			testNum = testnum1;
-			sumTotalNode1+=IIC1.size();
-			sumNodeInTheEnd1+=IIC1.size();
-			avgRun = -1;
-			avgNodeGenerated = sumTotalNode1/testNum;
-			avgNodeInTheEnd = sumNodeInTheEnd1/testNum;
-			avgTime = time1/testNum;
-			result = IIC1.getResult();
+			timeBuffer=(new Date()).getTime()-timeBuffer;
+			if(IIC1.getResult()){
+				trueTime1+=timeBuffer;
+				trueTestnum1++;
+				trueSumTotalNode1+=IIC1.size();
+				trueSumNodeInTheEnd1+=IIC1.size();
+			}
+			else{
+				falseTime1+=timeBuffer;
+				falseTestnum1++;
+				falseSumTotalNode1+=IIC1.size();
+				falseSumNodeInTheEnd1+=IIC1.size();	
+			}
+			if(trueTestnum1!=0){
+				trueAvgNodeInTheEnd = trueSumTotalNode1/trueTestnum1;
+				trueAvgNodeGenerated = trueSumNodeInTheEnd1/trueTestnum1;
+				trueAvgRun = 0;
+				trueTestNum = trueTestnum1;
+				trueAvgTime = trueTime1/trueTestnum1;
+			}
+			if(falseTestnum1!=0){
+				falseAvgNodeInTheEnd = falseSumTotalNode1/falseTestnum1;
+				falseAvgNodeGenerated = falseSumNodeInTheEnd1/falseTestnum1;
+				falseAvgRun = 0;
+				falseTestNum = falseTestnum1;
+				falseAvgTime = falseTime1/falseTestnum1;
+			}
 			break;
 		case 2:
 			timeBuffer = (new Date()).getTime();
@@ -70,17 +90,35 @@ public class Jeffery_Test_3<LETTER,STATE> implements IOperation<LETTER,STATE>{
 			for(int i=1;i<b.size();i++){
 				IIC2.addSubtrahend(b.get(i));
 			}
-			time2+=(new Date()).getTime()-timeBuffer;
-			testnum2++;
-			testNum = testnum2;
-			sumRun2+=IIC2.counter_run;
-			sumTotalNode2+=IIC2.counter_total_nodes;
-			sumNodeInTheEnd2+=IIC2.counter_total_nodes;
-			avgRun = sumRun2/testNum;
-			avgNodeGenerated = sumTotalNode2/testNum;
-			avgNodeInTheEnd = sumNodeInTheEnd2/testNum;
-			avgTime = time2/testNum;
-			result = IIC2.getResult();
+			timeBuffer=(new Date()).getTime()-timeBuffer;
+			if(IIC2.getResult()){
+				trueTime2+=timeBuffer;
+				trueTestnum2++;
+				trueSumRun2+=IIC2.counter_run;
+				trueSumTotalNode2+=IIC2.counter_total_nodes;
+				trueSumNodeInTheEnd2+=IIC2.counter_total_nodes;
+			}
+			else{
+				falseTime2+=timeBuffer;
+				falseTestnum2++;
+				falseSumRun2+=IIC2.counter_run;
+				falseSumTotalNode2+=IIC2.counter_total_nodes;
+				falseSumNodeInTheEnd2+=IIC2.counter_total_nodes;
+			}
+			if(trueTestnum2!=0){
+				trueAvgNodeInTheEnd = trueSumTotalNode2/trueTestnum2;
+				trueAvgNodeGenerated = trueSumNodeInTheEnd2/trueTestnum2;
+				trueAvgRun = trueSumRun2/trueTestnum2;
+				trueTestNum = trueTestnum2;
+				trueAvgTime = trueTime2/trueTestnum2;
+			}
+			if(falseTestnum2!=0){
+				falseAvgNodeInTheEnd = falseSumTotalNode2/falseTestnum2;
+				falseAvgNodeGenerated = falseSumNodeInTheEnd2/falseTestnum2;
+				falseAvgRun = falseSumRun2/falseTestnum2;
+				falseTestNum = falseTestnum2;
+				falseAvgTime = falseTime2/falseTestnum2;
+			}
 			break;
 		case 3:
 			timeBuffer = (new Date()).getTime();
@@ -88,17 +126,35 @@ public class Jeffery_Test_3<LETTER,STATE> implements IOperation<LETTER,STATE>{
 			for(int i=1;i<b.size();i++){
 				IIC3.addSubtrahend(b.get(i));
 			}
-			time3+=(new Date()).getTime()-timeBuffer;
-			testnum3++;
-			testNum = testnum3;
-			sumRun3+=IIC3.counter_run;
-			sumTotalNode3+=IIC3.counter_total_nodes;
-			sumNodeInTheEnd3+=IIC3.completeLeafSet.size();
-			avgRun = sumRun3/testNum;
-			avgNodeGenerated = sumTotalNode3/testNum;
-			avgNodeInTheEnd = sumNodeInTheEnd3/testNum;
-			avgTime = time3/testNum;
-			result = IIC3.getResult();
+			timeBuffer=(new Date()).getTime()-timeBuffer;
+			if(IIC3.getResult()){
+				trueTime3+=timeBuffer;
+				trueTestnum3++;
+				trueSumRun3+=IIC3.counter_run;
+				trueSumTotalNode3+=IIC3.counter_total_nodes;
+				trueSumNodeInTheEnd3+=IIC3.completeLeafSet.size();
+			}
+			else{
+				falseTime3+=timeBuffer;
+				falseTestnum3++;
+				falseSumRun3+=IIC3.counter_run;
+				falseSumTotalNode3+=IIC3.counter_total_nodes;
+				falseSumNodeInTheEnd3+=IIC3.completeLeafSet.size();
+			}
+			if(trueTestnum3!=0){
+				trueAvgNodeInTheEnd = trueSumTotalNode3/trueTestnum3;
+				trueAvgNodeGenerated = trueSumNodeInTheEnd3/trueTestnum3;
+				trueAvgRun = trueSumRun3/trueTestnum3;
+				trueTestNum = trueTestnum3;
+				trueAvgTime = trueTime3/trueTestnum3;
+			}
+			if(falseTestnum3!=0){
+				falseAvgNodeInTheEnd = falseSumTotalNode3/falseTestnum3;
+				falseAvgNodeGenerated = falseSumNodeInTheEnd3/falseTestnum3;
+				falseAvgRun = falseSumRun3/falseTestnum3;
+				falseTestNum = falseTestnum3;
+				falseAvgTime = falseTime3/falseTestnum3;
+			}
 			break;
 		case 4:
 			timeBuffer = (new Date()).getTime();
@@ -106,17 +162,35 @@ public class Jeffery_Test_3<LETTER,STATE> implements IOperation<LETTER,STATE>{
 			for(int i=1;i<b.size();i++){
 				IIC4.addSubtrahend(b.get(i));
 			}
-			time4+=(new Date()).getTime()-timeBuffer;
-			testnum4++;
-			testNum = testnum4;
-			sumRun4+=IIC4.counter_run;
-			sumTotalNode4+=IIC4.counter_total_nodes;
-			sumNodeInTheEnd4+=IIC4.completeLeafSet.size();
-			avgRun = sumRun4/testNum;
-			avgNodeGenerated = sumTotalNode4/testNum;
-			avgNodeInTheEnd = sumNodeInTheEnd4/testNum;
-			avgTime = time4/testNum;
-			result = IIC4.getResult();
+			timeBuffer=(new Date()).getTime()-timeBuffer;
+			if(IIC4.getResult()){
+				trueTime4+=timeBuffer;
+				trueTestnum4++;
+				trueSumRun4+=IIC4.counter_run;
+				trueSumTotalNode4+=IIC4.counter_total_nodes;
+				trueSumNodeInTheEnd4+=IIC4.completeLeafSet.size();
+			}
+			else{
+				falseTime4+=timeBuffer;
+				falseTestnum4++;
+				falseSumRun4+=IIC4.counter_run;
+				falseSumTotalNode4+=IIC4.counter_total_nodes;
+				falseSumNodeInTheEnd4+=IIC4.completeLeafSet.size();
+			}
+			if(trueTestnum4!=0){
+				trueAvgNodeInTheEnd = trueSumTotalNode4/trueTestnum4;
+				trueAvgNodeGenerated = trueSumNodeInTheEnd4/trueTestnum4;
+				trueAvgRun = trueSumRun4/trueTestnum4;
+				trueTestNum = trueTestnum4;
+				trueAvgTime = trueTime4/trueTestnum4;
+			}
+			if(falseTestnum4!=0){
+				falseAvgNodeInTheEnd = falseSumTotalNode4/falseTestnum4;
+				falseAvgNodeGenerated = falseSumNodeInTheEnd4/falseTestnum4;
+				falseAvgRun = falseSumRun4/falseTestnum4;
+				falseTestNum = falseTestnum4;
+				falseAvgTime = falseTime4/falseTestnum4;
+			}
 			break;
 		case 5:
 			timeBuffer = (new Date()).getTime();
@@ -124,17 +198,35 @@ public class Jeffery_Test_3<LETTER,STATE> implements IOperation<LETTER,STATE>{
 			for(int i=1;i<b.size();i++){
 				IIC5.addSubtrahend(b.get(i));
 			}
-			time5+=(new Date()).getTime()-timeBuffer;
-			testnum5++;
-			testNum = testnum5;
-			sumRun5+=IIC5.counter_run;
-			sumTotalNode5+=IIC5.counter_total_nodes;
-			sumNodeInTheEnd5+=IIC5.completeLeafSet.size();
-			avgRun = sumRun5/testNum;
-			avgNodeGenerated = sumTotalNode5/testNum;
-			avgNodeInTheEnd = sumNodeInTheEnd5/testNum;
-			avgTime = time5/testNum;
-			result = IIC5.getResult();
+			timeBuffer=(new Date()).getTime()-timeBuffer;
+			if(IIC5.getResult()){
+				trueTime5+=timeBuffer;
+				trueTestnum5++;
+				trueSumRun5+=IIC5.counter_run;
+				trueSumTotalNode5+=IIC5.counter_total_nodes;
+				trueSumNodeInTheEnd5+=IIC5.completeLeafSet.size();
+			}
+			else{
+				falseTime5+=timeBuffer;
+				falseTestnum5++;
+				falseSumRun5+=IIC5.counter_run;
+				falseSumTotalNode5+=IIC5.counter_total_nodes;
+				falseSumNodeInTheEnd5+=IIC5.completeLeafSet.size();
+			}
+			if(trueTestnum5!=0){
+				trueAvgNodeInTheEnd = trueSumTotalNode5/trueTestnum5;
+				trueAvgNodeGenerated = trueSumNodeInTheEnd5/trueTestnum5;
+				trueAvgRun = trueSumRun5/trueTestnum5;
+				trueTestNum = trueTestnum5;
+				trueAvgTime = trueTime5/trueTestnum5;
+			}
+			if(falseTestnum5!=0){
+				falseAvgNodeInTheEnd = falseSumTotalNode5/falseTestnum5;
+				falseAvgNodeGenerated = falseSumNodeInTheEnd5/falseTestnum5;
+				falseAvgRun = falseSumRun5/falseTestnum5;
+				falseTestNum = falseTestnum5;
+				falseAvgTime = falseTime5/falseTestnum5;
+			}
 			break;
 		case 32:
 			timeBuffer = (new Date()).getTime();
@@ -142,17 +234,35 @@ public class Jeffery_Test_3<LETTER,STATE> implements IOperation<LETTER,STATE>{
 			for(int i=1;i<b.size();i++){
 				IIC3_2.addSubtrahend(b.get(i));
 			}
-			time32+=(new Date()).getTime()-timeBuffer;
-			testnum32++;
-			testNum = testnum32;
-			sumRun32+=IIC3_2.counter_run;
-			sumTotalNode32+=IIC3_2.counter_total_nodes;
-			sumNodeInTheEnd32+=IIC3_2.completeLeafSet.size();
-			avgRun = sumRun32/testNum;
-			avgNodeGenerated = sumTotalNode32/testNum;
-			avgNodeInTheEnd = sumNodeInTheEnd32/testNum;
-			avgTime = time32/testNum;
-			result = IIC3_2.getResult();
+			timeBuffer=(new Date()).getTime()-timeBuffer;
+			if(IIC3_2.getResult()){
+				trueTime32+=timeBuffer;
+				trueTestnum32++;
+				trueSumRun32+=IIC3_2.counter_run;
+				trueSumTotalNode32+=IIC3_2.counter_total_nodes;
+				trueSumNodeInTheEnd32+=IIC3_2.completeLeafSet.size();
+			}
+			else{
+				falseTime32+=timeBuffer;
+				falseTestnum32++;
+				falseSumRun32+=IIC3_2.counter_run;
+				falseSumTotalNode32+=IIC3_2.counter_total_nodes;
+				falseSumNodeInTheEnd32+=IIC3_2.completeLeafSet.size();
+			}
+			if(trueTestnum32!=0){
+				trueAvgNodeInTheEnd = trueSumTotalNode32/trueTestnum32;
+				trueAvgNodeGenerated = trueSumNodeInTheEnd32/trueTestnum32;
+				trueAvgRun = trueSumRun32/trueTestnum32;
+				trueTestNum = trueTestnum32;
+				trueAvgTime = trueTime32/trueTestnum32;
+			}
+			if(falseTestnum32!=0){
+				falseAvgNodeInTheEnd = falseSumTotalNode32/falseTestnum32;
+				falseAvgNodeGenerated = falseSumNodeInTheEnd32/falseTestnum32;
+				falseAvgRun = falseSumRun32/falseTestnum32;
+				falseTestNum = falseTestnum32;
+				falseAvgTime = falseTime32/falseTestnum32;
+			}
 			break;
 		case 42:
 			timeBuffer = (new Date()).getTime();
@@ -160,17 +270,35 @@ public class Jeffery_Test_3<LETTER,STATE> implements IOperation<LETTER,STATE>{
 			for(int i=1;i<b.size();i++){
 				IIC4_2.addSubtrahend(b.get(i));
 			}
-			time42+=(new Date()).getTime()-timeBuffer;
-			testnum42++;
-			testNum = testnum42;
-			sumRun42+=IIC4_2.counter_run;
-			sumTotalNode42+=IIC4_2.counter_total_nodes;
-			sumNodeInTheEnd42+=IIC4_2.completeLeafSet.size();
-			avgRun = sumRun42/testNum;
-			avgNodeGenerated = sumTotalNode42/testNum;
-			avgNodeInTheEnd = sumNodeInTheEnd42/testNum;
-			avgTime = time42/testNum;
-			result = IIC4_2.getResult();
+			timeBuffer=(new Date()).getTime()-timeBuffer;
+			if(IIC4_2.getResult()){
+				trueTime42+=timeBuffer;
+				trueTestnum42++;
+				trueSumRun42+=IIC4_2.counter_run;
+				trueSumTotalNode42+=IIC4_2.counter_total_nodes;
+				trueSumNodeInTheEnd42+=IIC4_2.completeLeafSet.size();
+			}
+			else{
+				falseTime42+=timeBuffer;
+				falseTestnum42++;
+				falseSumRun42+=IIC4_2.counter_run;
+				falseSumTotalNode42+=IIC4_2.counter_total_nodes;
+				falseSumNodeInTheEnd42+=IIC4_2.completeLeafSet.size();
+			}
+			if(trueTestnum42!=0){
+				trueAvgNodeInTheEnd = trueSumTotalNode42/trueTestnum42;
+				trueAvgNodeGenerated = trueSumNodeInTheEnd42/trueTestnum42;
+				trueAvgRun = trueSumRun42/trueTestnum42;
+				trueTestNum = trueTestnum42;
+				trueAvgTime = trueTime42/trueTestnum42;
+			}
+			if(falseTestnum42!=0){
+				falseAvgNodeInTheEnd = falseSumTotalNode42/falseTestnum42;
+				falseAvgNodeGenerated = falseSumNodeInTheEnd42/falseTestnum42;
+				falseAvgRun = falseSumRun42/falseTestnum42;
+				falseTestNum = falseTestnum42;
+				falseAvgTime = falseTime42/falseTestnum42;
+			}
 			break;
 		case 52:
 			timeBuffer = (new Date()).getTime();
@@ -178,17 +306,35 @@ public class Jeffery_Test_3<LETTER,STATE> implements IOperation<LETTER,STATE>{
 			for(int i=1;i<b.size();i++){
 				IIC5_2.addSubtrahend(b.get(i));
 			}
-			time52+=(new Date()).getTime()-timeBuffer;
-			testnum52++;
-			testNum = testnum52;
-			sumRun52+=IIC5_2.counter_run;
-			sumTotalNode52+=IIC5_2.counter_total_nodes;
-			sumNodeInTheEnd52+=IIC5_2.completeLeafSet.size();
-			avgRun = sumRun52/testNum;
-			avgNodeGenerated = sumTotalNode52/testNum;
-			avgNodeInTheEnd = sumNodeInTheEnd52/testNum;
-			avgTime = time52/testNum;
-			result = IIC5_2.getResult();
+			timeBuffer=(new Date()).getTime()-timeBuffer;
+			if(IIC5_2.getResult()){
+				trueTime52+=timeBuffer;
+				trueTestnum52++;
+				trueSumRun52+=IIC5_2.counter_run;
+				trueSumTotalNode52+=IIC5_2.counter_total_nodes;
+				trueSumNodeInTheEnd52+=IIC5_2.completeLeafSet.size();
+			}
+			else{
+				falseTime52+=timeBuffer;
+				falseTestnum52++;
+				falseSumRun52+=IIC5_2.counter_run;
+				falseSumTotalNode52+=IIC5_2.counter_total_nodes;
+				falseSumNodeInTheEnd52+=IIC5_2.completeLeafSet.size();
+			}
+			if(trueTestnum52!=0){
+				trueAvgNodeInTheEnd = trueSumTotalNode52/trueTestnum52;
+				trueAvgNodeGenerated = trueSumNodeInTheEnd52/trueTestnum52;
+				trueAvgRun = trueSumRun52/trueTestnum52;
+				trueTestNum = trueTestnum52;
+				trueAvgTime = trueTime52/trueTestnum52;
+			}
+			if(falseTestnum52!=0){
+				falseAvgNodeInTheEnd = falseSumTotalNode52/falseTestnum52;
+				falseAvgNodeGenerated = falseSumNodeInTheEnd52/falseTestnum52;
+				falseAvgRun = falseSumRun52/falseTestnum52;
+				falseTestNum = falseTestnum52;
+				falseAvgTime = falseTime52/falseTestnum52;
+			}
 			break;
 		}
 	}
@@ -211,7 +357,9 @@ public class Jeffery_Test_3<LETTER,STATE> implements IOperation<LETTER,STATE>{
 	
 	@Override
 	public String getResult(){
-		return ("avg Nodes in the end:"+avgNodeInTheEnd+" avg Nodes generated:"+avgNodeGenerated+" avgRuns:"+avgRun+" Total test:"+testNum+" avg Time:"+avgTime+" Result:"+result);
+		String log = "\r\nTrue cases: avg Nodes in the end:"+trueAvgNodeInTheEnd+" avg Nodes generated:"+trueAvgNodeGenerated+" avgRuns:"+trueAvgRun+" Total test:"+trueTestNum+" avg Time:"+trueAvgTime+
+				"\r\nFalse cases: avg Nodes in the end:"+falseAvgNodeInTheEnd+" avg Nodes generated:"+falseAvgNodeGenerated+" avgRuns:"+falseAvgRun+" Total test:"+falseTestNum+" avg Time:"+falseAvgTime;
+		return log;
 	}
 	/*public String getResult() throws OperationCanceledException {
 		return "Jeffery_Test_3_result:"+automataCollection.size();
