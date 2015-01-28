@@ -1,4 +1,4 @@
-package de.uni_freiburg.informatik.ultimate.buchiprogramproduct;
+package de.uni_freiburg.informatik.ultimate.buchiprogramproduct.optimizercfg;
 
 import java.util.ArrayDeque;
 import java.util.Collection;
@@ -7,6 +7,7 @@ import java.util.HashSet;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.access.BaseObserver;
+import de.uni_freiburg.informatik.ultimate.buchiprogramproduct.ProductBacktranslator;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;

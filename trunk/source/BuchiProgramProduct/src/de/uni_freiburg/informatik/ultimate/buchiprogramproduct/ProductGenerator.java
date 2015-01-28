@@ -8,7 +8,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.zip.Checksum;
 
 import org.apache.log4j.Logger;
 
@@ -48,7 +47,7 @@ import de.uni_freiburg.informatik.ultimate.result.LTLPropertyCheck;
  * @author Langenfeld
  * 
  */
-public class Product {
+public class ProductGenerator {
 	// constants
 	private static final String sHelperStatePrefix = "crhelper";
 
@@ -71,7 +70,7 @@ public class Product {
 	// state
 	private int mHelperUnifique;
 
-	public Product(NestedWordAutomaton<CodeBlock, String> aut, RootNode rcfg, LTLPropertyCheck ltlAnnot,
+	public ProductGenerator(NestedWordAutomaton<CodeBlock, String> aut, RootNode rcfg, LTLPropertyCheck ltlAnnot,
 			IUltimateServiceProvider services, ProductBacktranslator backtrans) throws Exception {
 		// services and logger
 		mServices = services;

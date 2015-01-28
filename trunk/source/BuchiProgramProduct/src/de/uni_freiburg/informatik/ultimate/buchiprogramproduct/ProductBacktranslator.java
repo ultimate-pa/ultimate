@@ -77,7 +77,7 @@ public class ProductBacktranslator extends DefaultTranslator<CodeBlock, CodeBloc
 		return super.translateExpression(expression);
 	}
 
-	void mapEdges(RCFGEdge newEdge, RCFGEdge originalEdge) {
+	public void mapEdges(RCFGEdge newEdge, RCFGEdge originalEdge) {
 		RCFGEdge realOriginalEdge = mEdgeMapping.get(originalEdge);
 		if (realOriginalEdge != null) {
 			// this means we replaced an edge which we already replaced again

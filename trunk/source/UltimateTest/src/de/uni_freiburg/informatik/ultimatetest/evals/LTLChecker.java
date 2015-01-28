@@ -31,11 +31,12 @@ public class LTLChecker extends AbstractEvaluationTestSuite {
 		return new String[] { 
 //				"examples/LTL/rers/",
 //				"examples/LTL/coolant/",
-				"examples/LTL/bugs/",
-				"examples/LTL/koskinen/ltlcmodelchecker-benchmarks/",
+//				"examples/LTL/bugs/",
+//				"examples/LTL/koskinen/ltlcmodelchecker-benchmarks/",
 
 //				"examples/LTL/koskinen/ltlcmodelchecker-benchmarks/pgstream_original_safe_sftyliveness.c",
 //				"examples/LTL/koskinen/ltlcmodelchecker-benchmarks/win1_original_safe_sftyliveness.c",
+				"examples/LTL/koskinen/ltlcmodelchecker-benchmarks/pgdropbuf_original_safe_safty.c",
 
 				
 				
@@ -52,7 +53,7 @@ public class LTLChecker extends AbstractEvaluationTestSuite {
 
 	@Override
 	protected int getTimeout() {
-		return 20 * 60 * 1000;
+		return 1 * 60 * 1000;
 	}
 
 	@Override

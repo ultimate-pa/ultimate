@@ -7,6 +7,7 @@ import java.util.List;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.access.IObserver;
+import de.uni_freiburg.informatik.ultimate.buchiprogramproduct.optimizercfg.SmallBlockEncoder;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
@@ -121,8 +122,8 @@ public class BuchiProgramProduct implements IGenerator {
 
 	@Override
 	public IElement getModel() {
-		if (mBuchiProductObserver.getProduct() != null) {
-			return mBuchiProductObserver.getProduct().getProductRCFG();
+		if (mBuchiProductObserver.getModel() != null) {
+			return mBuchiProductObserver.getModel();
 		} else {
 			return null;
 		}

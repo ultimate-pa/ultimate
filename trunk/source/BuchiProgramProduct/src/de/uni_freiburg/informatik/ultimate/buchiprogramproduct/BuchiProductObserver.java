@@ -4,6 +4,7 @@ import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
+import de.uni_freiburg.informatik.ultimate.buchiprogramproduct.optimizeproduct.RemoveInfeasibleEdges;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.ltl2aut.never2nwa.NWAContainer;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
@@ -15,7 +16,7 @@ public class BuchiProductObserver implements IUnmanagedObserver {
 	private final Logger mLogger;
 	private RootNode mRcfg;
 	private NWAContainer mNeverClaimNWAContainer;
-	private Product mProduct;
+	private RootNode mProduct;
 	private final IUltimateServiceProvider mServices;
 	private final ProductBacktranslator mBacktranslator;
 
@@ -38,13 +39,16 @@ public class BuchiProductObserver implements IUnmanagedObserver {
 		if (mNeverClaimNWAContainer == null || mRcfg == null) {
 			return;
 		}
-
 		mLogger.info("Beginning generation of product automaton");
 
 		try {
 			LTLPropertyCheck ltlAnnot = LTLPropertyCheck.getAnnotation(mNeverClaimNWAContainer);
-			mProduct = new Product(mNeverClaimNWAContainer.getNWA(), mRcfg, ltlAnnot, mServices, mBacktranslator);
-			mLogger.info("Product automaton successfully generated");
+			mProduct = new ProductGenerator(mNeverClaimNWAContainer.getNWA(), mRcfg, ltlAnnot, mServices,
+					mBacktranslator).getProductRCFG();
+			mLogger.info("Finished generation of product automaton successfully");
+
+			mProduct = new RemoveInfeasibleEdges(mProduct, mServices).getResult();
+
 		} catch (Exception e) {
 			mLogger.error(String.format(
 					"BuchiProgramProduct encountered an error during product automaton generation:\n %s", e));
@@ -62,7 +66,7 @@ public class BuchiProductObserver implements IUnmanagedObserver {
 		return false;
 	}
 
-	public Product getProduct() {
+	public IElement getModel() {
 		return mProduct;
 	}
 
