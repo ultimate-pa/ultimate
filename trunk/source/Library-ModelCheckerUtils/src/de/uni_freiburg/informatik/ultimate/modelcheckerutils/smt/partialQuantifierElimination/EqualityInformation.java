@@ -55,7 +55,7 @@ public class EqualityInformation {
 		BinaryEqualityRelation[] binaryRelations = new BinaryEqualityRelation[context.length];
 
 		// stage 1: check if there is an "=" or "distinct" term where the
-		// givenTerm is on one hand sie of the relation.
+		// givenTerm is on one hand side of the relation.
 		for (int i = 0; i < context.length; i++) {
 			if (!isSubterm(givenTerm, context[i])) {
 				continue;
@@ -109,6 +109,11 @@ public class EqualityInformation {
 						equalTerm = equality.getParameters()[1];
 					} catch (NotAffineException e) {
 						// no representation where var is on lhs
+						continue;
+					}
+					if (isSubterm(givenTerm, equalTerm)) {
+						// this case occurs e.g. if the given term also occurs
+						// in some select term
 						continue;
 					}
 					if (forbiddenTerm != null && isSubterm(forbiddenTerm, equalTerm)) {
