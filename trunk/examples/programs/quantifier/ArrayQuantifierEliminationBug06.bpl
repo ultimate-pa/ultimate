@@ -1,3 +1,10 @@
+//#Safe
+// Date: 2014-01-27
+// Author: Matthias Heizmann
+// Reveals bug in quantifier elimination up to revision 13376.
+// Using DER we replaced for the term ∃x (a[x] == x) the variable x by a[x]
+// although, a[x] contains x itself.
+
 implementation check(#in~ad1 : $Pointer$, #in~b : int) returns (#res : int){
     var #t~mem0 : int;
     var ~ad1 : $Pointer$;
