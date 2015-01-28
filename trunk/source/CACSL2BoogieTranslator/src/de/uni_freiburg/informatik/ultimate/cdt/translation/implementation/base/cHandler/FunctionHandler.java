@@ -725,14 +725,7 @@ public class FunctionHandler {
 					in = ConvExpr.rexBoolToIntIfNecessary(loc, in);
 				}
 				// implicit casts
-				if (in.lrVal.cType instanceof CPrimitive) {
-					if (((CPrimitive) in.lrVal.cType).getGeneralType() == GENERALPRIMITIVE.INTTYPE) {
-						if (expectedParamType instanceof CPointer) {
-							in.lrVal = new RValue(MemoryHandler.constructPointerFromBaseAndOffset(new IntegerLiteral(
-									loc, "0"), in.lrVal.getValue(), loc), in.lrVal.cType);
-						}
-					}
-				}
+				in.lrVal = main.cHandler.castToType(loc, (RValue) in.lrVal, expectedParamType);
 			}
 			args.add(in.lrVal.getValue());
 			stmt.addAll(in.stmt);
