@@ -1,0 +1,42 @@
+// Author: heizmann@informatik.uni-freiburg.de
+// Date: 2014-08-11
+//
+// Test incremental inclusion with random automata
+
+	// First argument: size of alphabet
+	// Second argument: number of states
+	// Third argument: transition density of internal transitions in per mille
+	// Fourth argument: transition density of call transitions in per mille -- use 0 here
+	// Fifth argument: transition density of return transitions in per mille -- use 0 here
+	// Sixth argument: amount of accepting states in per mille
+	int i = 0;
+	while(i<99){
+		NestedWordAutomaton A = getRandomNwa(100, 100, 500, 0, 0, 10);
+		NestedWordAutomaton B = getRandomNwa(100, 100, 200, 0, 0, 100);
+		Jeffery_Test_3(A,NwaList(B),1);
+		Jeffery_Test_3(A,NwaList(B),2);
+		Jeffery_Test_3(A,NwaList(B),3);
+//		Jeffery_Test_3(A,NwaList(B),32);
+		Jeffery_Test_3(A,NwaList(B),4);
+		Jeffery_Test_3(A,NwaList(B),42);
+		Jeffery_Test_3(A,NwaList(B),5);
+		Jeffery_Test_3(A,NwaList(B),52);
+	i++;	
+	}
+	NestedWordAutomaton A = getRandomNwa(100, 100, 500, 0, 0, 10);
+	NestedWordAutomaton B = getRandomNwa(100, 100, 200, 0, 0, 100);
+	//print(A);
+	//print(B);
+	print(Jeffery_Test_3(A,NwaList(B),1));
+	print(Jeffery_Test_3(A,NwaList(B),2));
+	print(Jeffery_Test_3(A,NwaList(B),3));
+//	print(Jeffery_Test_3(A,NwaList(B),32));
+	print(Jeffery_Test_3(A,NwaList(B),4));
+	print(Jeffery_Test_3(A,NwaList(B),42));
+	print(Jeffery_Test_3(A,NwaList(B),5));
+	print(Jeffery_Test_3(A,NwaList(B),52));	
+	//isIncluded = IncrementalInclusionCheck4(A,NwaList(B1, B2));
+	//print(isIncluded);
+	//isIncluded = IncrementalInclusionCheck5(A,NwaList(B1, B2));
+	//print(isIncluded);
+
