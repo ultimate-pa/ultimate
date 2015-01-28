@@ -22,6 +22,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 import de.uni_freiburg.informatik.ultimate.core.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.logic.Identifier;
 import de.uni_freiburg.informatik.ultimate.logic.LoggingScript;
 import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -195,7 +196,7 @@ public class CfgBuilder {
 				(new SimpleDateFormat("yyyy/MM/dd")).format(new Date()) + 
 				" by Ultimate. http://ultimate.informatik.uni-freiburg.de/" + 
 				System.lineSeparator();
-		m_Script.setInfo(":source",	new QuotedObject(advertising));
+		m_Script.setInfo(":source",	new Identifier(advertising));
 		m_Script.setInfo(":smt-lib-version", "2.0");
 		m_Script.setInfo(":category", new QuotedObject("industrial"));
 		
