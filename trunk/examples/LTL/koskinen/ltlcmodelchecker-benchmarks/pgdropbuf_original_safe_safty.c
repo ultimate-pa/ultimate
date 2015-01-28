@@ -11,7 +11,7 @@
 // Benchmark: pgdropbuf.c
 // Property: istemp => G(A!=1)
 
-//@ ltl invariant positive: !AP(istemp) || [] AP(A!=1);
+//@ ltl invariant positive: !AP(istemp != 0) || [] AP(A!=1);
 extern void __VERIFIER_error() __attribute__ ((__noreturn__));
 extern void __VERIFIER_assume() __attribute__ ((__noreturn__));
 extern int __VERIFIER_nondet_int() __attribute__ ((__noreturn__));

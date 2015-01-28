@@ -2,12 +2,11 @@ package de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization.act
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.Collection;
-import java.util.Iterator;
 
 import de.uni_freiburg.informatik.ultimate.model.structure.VisualizationEdge;
 import de.uni_freiburg.informatik.ultimate.model.structure.VisualizationNode;
-import de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization.graph.GraphHandler;
+import de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization.actions.MenuActions.Mode;
+import de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization.editor.JungEditorInput;
 import edu.uci.ics.jung.visualization.VisualizationViewer;
 import edu.uci.ics.jung.visualization.control.DefaultModalGraphMouse;
 import edu.uci.ics.jung.visualization.control.ModalGraphMouse;
@@ -28,6 +27,12 @@ public class ContextMenuActions implements ActionListener {
 	public static final String ACTION_KEYHELP = "Key help";// 4
 	public static final String ACTION_COLLAPSE = "Collapse";// 5
 	public static final String ACTION_EXTEND = "Extend";// 6
+	private final JungEditorInput mEditorInput;
+
+	public ContextMenuActions(JungEditorInput editorInput) {
+		assert editorInput != null;
+		mEditorInput = editorInput;
+	}
 
 	@Override
 	public void actionPerformed(ActionEvent e) {
@@ -35,30 +40,20 @@ public class ContextMenuActions implements ActionListener {
 		String actionCommmand = e.getActionCommand();
 
 		if (actionCommmand.equals(ACTION_EXPORT)) {
-			MenuActions.exportAsSVG();
+			CommandExportAsSVG cmd = new CommandExportAsSVG();
+			cmd.exportAsSVG(mEditorInput);
 		} else if (actionCommmand.equals(ACTION_PICKING)) {
-			Collection<VisualizationViewer<VisualizationNode, VisualizationEdge>> openedVVs = GraphHandler
-					.getInstance().getVisualizationViewers().values();
-			Iterator<VisualizationViewer<VisualizationNode, VisualizationEdge>> itr = openedVVs.iterator();
-			while (itr.hasNext()) {
-
-				((DefaultModalGraphMouse<?, ?>) itr.next().getGraphMouse()).setMode(ModalGraphMouse.Mode.PICKING);
-				MenuActions.setMode(ACTION_PICKING);
-			}
+			((DefaultModalGraphMouse<?, ?>) mEditorInput.getViewer().getGraphMouse())
+					.setMode(ModalGraphMouse.Mode.PICKING);
+			mEditorInput.setMode(Mode.PICKING);
 		} else if (actionCommmand.equals(ACTION_TRANSFORMING)) {
-			Collection<VisualizationViewer<VisualizationNode, VisualizationEdge>> openedVVs = GraphHandler
-					.getInstance().getVisualizationViewers().values();
-			Iterator<VisualizationViewer<VisualizationNode, VisualizationEdge>> itr = openedVVs.iterator();
-			while (itr.hasNext()) {
-				VisualizationViewer<VisualizationNode, VisualizationEdge> current = itr.next();
-				DefaultModalGraphMouse<?, ?> mouse = ((DefaultModalGraphMouse<?, ?>) current.getGraphMouse());
-				mouse.setMode(ModalGraphMouse.Mode.TRANSFORMING);
-				MenuActions.setMode(ACTION_TRANSFORMING);
-			}
+			VisualizationViewer<VisualizationNode, VisualizationEdge> current = mEditorInput.getViewer();
+			DefaultModalGraphMouse<?, ?> mouse = ((DefaultModalGraphMouse<?, ?>) current.getGraphMouse());
+			mouse.setMode(ModalGraphMouse.Mode.TRANSFORMING);
+			mEditorInput.setMode(Mode.TRANSFORMING);
 		} else if (actionCommmand.equals(ACTION_KEYHELP)) {
-			MenuActions.openKeyHelp();
+			CommandShowKeyHelp cmd = new CommandShowKeyHelp();
+			cmd.openKeyHelp();
 		}
-
 	}
-
 }

@@ -59,5 +59,7 @@ public class JungPreferenceValues {
 	public static final String LABEL_COLOR_BACKGROUND = "Background color:";
 
 	public static final String LABEL_SHAPE_NODE = "Choose node shape:";
+	
+	public static final String LABEL_WHICH_MODEL = "Which models should be visualized?";
 
 }

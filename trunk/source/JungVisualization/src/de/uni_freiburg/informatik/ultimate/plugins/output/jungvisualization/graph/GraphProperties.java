@@ -49,17 +49,17 @@ import edu.uci.ics.jung.visualization.renderers.Renderer;
  */
 public class GraphProperties {
 
-	private static GraphProperties instance = new GraphProperties();
-
-	private VisualizationViewer<VisualizationNode, VisualizationEdge> vv;
-
-	public VisualizationViewer<VisualizationNode, VisualizationEdge> getVVforLayout() {
-		return vv;
-	}
-
-	public static GraphProperties getInstance() {
-		return instance;
-	}
+//	private static GraphProperties instance = new GraphProperties();
+//
+//	private VisualizationViewer<VisualizationNode, VisualizationEdge> vv;
+//
+//	public VisualizationViewer<VisualizationNode, VisualizationEdge> getVVforLayout() {
+//		return vv;
+//	}
+//
+//	public static GraphProperties getInstance() {
+//		return instance;
+//	}
 
 	/**
 	 * Sets all graph properties necessary to paint the graph.
@@ -76,7 +76,7 @@ public class GraphProperties {
 	 *            List of IEges - backedges to be added
 	 */
 	@SuppressWarnings("unchecked")
-	public void setGraphProperties(final VisualizationViewer<VisualizationNode, VisualizationEdge> vv,
+	public static void setGraphProperties(final VisualizationViewer<VisualizationNode, VisualizationEdge> vv,
 			Graph<VisualizationNode, VisualizationEdge> graph, VisualizationNode rootNode,
 			final ArrayList<LinkedHashSet<Object>> errorTraces) {
 		UltimatePreferenceStore store = new UltimatePreferenceStore(Activator.PLUGIN_ID);
@@ -217,7 +217,7 @@ public class GraphProperties {
 					tree);
 			layout = new StaticLayout<VisualizationNode, VisualizationEdge>(graph, layout1);
 		}
-		this.vv = vv;
+//		this.vv = vv;
 		vv.setGraphLayout(layout);
 
 	}

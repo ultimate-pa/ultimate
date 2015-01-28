@@ -8,24 +8,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 
-import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
-import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
-import de.uni_freiburg.informatik.ultimate.core.services.IToolchainStorage;
-import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.core.util.CoreUtil;
-import de.uni_freiburg.informatik.ultimate.model.GraphType;
-import de.uni_freiburg.informatik.ultimate.model.IElement;
-import de.uni_freiburg.informatik.ultimate.model.structure.IVisualizable;
-import de.uni_freiburg.informatik.ultimate.model.structure.VisualizationEdge;
-import de.uni_freiburg.informatik.ultimate.model.structure.VisualizationNode;
-import de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization.editor.JungEditor;
-import de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization.editor.JungEditorInput;
-import de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization.graph.GraphHandler;
-import de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization.graph.GraphProperties;
-import de.uni_freiburg.informatik.ultimate.result.CounterExampleResult;
-import de.uni_freiburg.informatik.ultimate.result.IProgramExecution;
-import de.uni_freiburg.informatik.ultimate.result.NonterminatingLassoResult;
-
 import org.apache.log4j.Logger;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
@@ -36,6 +18,21 @@ import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.progress.UIJob;
 
+import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
+import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.util.CoreUtil;
+import de.uni_freiburg.informatik.ultimate.model.GraphType;
+import de.uni_freiburg.informatik.ultimate.model.IElement;
+import de.uni_freiburg.informatik.ultimate.model.structure.IVisualizable;
+import de.uni_freiburg.informatik.ultimate.model.structure.VisualizationEdge;
+import de.uni_freiburg.informatik.ultimate.model.structure.VisualizationNode;
+import de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization.editor.JungEditor;
+import de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization.editor.JungEditorInput;
+import de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization.graph.GraphProperties;
+import de.uni_freiburg.informatik.ultimate.result.CounterExampleResult;
+import de.uni_freiburg.informatik.ultimate.result.IProgramExecution;
+import de.uni_freiburg.informatik.ultimate.result.NonterminatingLassoResult;
 import edu.uci.ics.jung.algorithms.layout.FRLayout2;
 import edu.uci.ics.jung.algorithms.layout.Layout;
 import edu.uci.ics.jung.graph.DirectedOrderedSparseMultigraph;
@@ -79,9 +76,9 @@ public class JungVisualizationObserver implements IUnmanagedObserver {
 			mUltimateRootNode = ((IVisualizable) root).getVisualizationGraph();
 			mGraph.addVertex(mUltimateRootNode);
 			dfstraverse(mUltimateRootNode, Integer.toString(++mNumberOfRoots));
-			GraphHandler.getInstance().addVisualizationViewer(mVisualizationViewer);
+//			GraphHandler.getInstance().addVisualizationViewer(mVisualizationViewer);
 
-			GraphProperties.getInstance().setGraphProperties(mVisualizationViewer, mGraph, mUltimateRootNode,
+			GraphProperties.setGraphProperties(mVisualizationViewer, mGraph, mUltimateRootNode,
 					getCounterExampleTraces(mServices));
 			mOpenWindow = true;
 		} else {
@@ -129,7 +126,6 @@ public class JungVisualizationObserver implements IUnmanagedObserver {
 				public IStatus runInUIThread(IProgressMonitor mon) {
 					// here we are in UI-thread so we can call
 					IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
-
 					openGraphEditor(window);
 					return Status.OK_STATUS;
 				}
@@ -149,7 +145,7 @@ public class JungVisualizationObserver implements IUnmanagedObserver {
 	 */
 	private void openGraphEditor(IWorkbenchWindow workbenchWindow) {
 		String name = getName(mInputGraphType);
-		JungEditorInput editorInput = new JungEditorInput(name);
+		JungEditorInput editorInput = new JungEditorInput(name, mVisualizationViewer);
 		try {
 			workbenchWindow.getActivePage().openEditor(editorInput, JungEditor.ID, true);
 		} catch (PartInitException pie) {

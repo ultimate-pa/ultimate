@@ -7,11 +7,13 @@ import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.access.IObserver;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 import de.uni_freiburg.informatik.ultimate.core.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.IOutput;
 import de.uni_freiburg.informatik.ultimate.model.GraphType;
 import de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization.preferences.JungPreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization.preferences.JungPreferenceValues;
 
 public class JungVisualization implements IOutput {
 
@@ -36,8 +38,8 @@ public class JungVisualization implements IOutput {
 
 	@Override
 	public QueryKeyword getQueryKeyword() {
-		// Use last model
-		return QueryKeyword.LAST;
+		UltimatePreferenceStore ups = new UltimatePreferenceStore(getPluginID());
+		return ups.getEnum(JungPreferenceValues.LABEL_WHICH_MODEL, QueryKeyword.class);
 	}
 
 	@Override
@@ -71,7 +73,7 @@ public class JungVisualization implements IOutput {
 
 	@Override
 	public void setToolchainStorage(IToolchainStorage storage) {
-		
+
 	}
 
 	@Override

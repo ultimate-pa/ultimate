@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.AbstractInterpretationAnnotations;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.IAbstractStateChangeListener;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.LiteralCollector;
@@ -211,6 +212,11 @@ public class AbstractInterpreterTA extends RCFGEdgeVisitor {
 		// Java 7; this should be the behavior that replace exhibits. Please check if this was intended 
 		if(annotations.containsKey(element)){
 			annotations.put(element, states);	
+		}
+		
+		if(element instanceof IElement){
+			AbstractInterpretationAnnotations anno = new AbstractInterpretationAnnotations(states);
+			anno.annotate((IElement) element);
 		}
 	}
 
