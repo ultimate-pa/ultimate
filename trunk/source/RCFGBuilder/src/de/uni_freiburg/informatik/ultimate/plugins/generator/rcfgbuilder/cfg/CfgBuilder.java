@@ -63,7 +63,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Weakest
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence.Origin;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.PreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.PreferenceInitializer.CodeBlockSize;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.PreferenceInitializer.Solver;
 import de.uni_freiburg.informatik.ultimate.result.Check;
+import de.uni_freiburg.informatik.ultimate.smtsolver.external.ScriptorWithGetInterpolants.ExternalInterpolator;
 import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
 
 /**
@@ -124,21 +126,45 @@ public class CfgBuilder {
 		m_Backtranslator = backtranslator;
 		m_AddAssumeForEachAssert = (new UltimatePreferenceStore(RCFGBuilder.s_PLUGIN_ID))
 				.getBoolean(PreferenceInitializer.LABEL_ASSUME_FOR_ASSERT);
-		boolean useExternalSolver = (new UltimatePreferenceStore(RCFGBuilder.s_PLUGIN_ID))
-				.getBoolean(PreferenceInitializer.LABEL_ExtSolverFlag);
+		Solver solver = (new UltimatePreferenceStore(RCFGBuilder.s_PLUGIN_ID))
+				.getEnum(PreferenceInitializer.LABEL_Solver, Solver.class);
 
 		m_CodeBlockSize = (new UltimatePreferenceStore(RCFGBuilder.s_PLUGIN_ID)).getEnum(
 				PreferenceInitializer.LABEL_CodeBlockSize, CodeBlockSize.class);
 
-		if (useExternalSolver) {
+		switch (solver) {
+		case External_DefaultMode:
+		{
 			String command = (new UltimatePreferenceStore(RCFGBuilder.s_PLUGIN_ID))
-					.getString(PreferenceInitializer.LABEL_ExtSolverCommand);
+				.getString(PreferenceInitializer.LABEL_ExtSolverCommand);
 			m_Script = SolverBuilder.createExternalSolver(mServices, storage, command);
-		} else {
+		}
+		break;
+		case External_PrincessInterpolationMode:
+		{
+			String command = (new UltimatePreferenceStore(RCFGBuilder.s_PLUGIN_ID))
+				.getString(PreferenceInitializer.LABEL_ExtSolverCommand);
+			m_Script = SolverBuilder.createExternalSolverWithInterpolation(mServices, storage, command, ExternalInterpolator.PRINCESS);
+		}
+		break;
+		case External_Z3InterpolationMode:
+		{
+			String command = (new UltimatePreferenceStore(RCFGBuilder.s_PLUGIN_ID))
+				.getString(PreferenceInitializer.LABEL_ExtSolverCommand);
+			m_Script = SolverBuilder.createExternalSolverWithInterpolation(mServices, storage, command, ExternalInterpolator.IZ3);
+		}
+		break;
+		case Internal_SMTInterpol:
+		{
 			m_Script = SolverBuilder.createSMTInterpol(mServices, storage);
 			int timeoutMilliseconds = 30 * 1000;
 			m_Script.setOption(":timeout", String.valueOf(timeoutMilliseconds));
 		}
+		break;
+		default:
+			throw new AssertionError("unknown solver");
+		}
+		
 		m_LogicForExternalSolver = (new UltimatePreferenceStore(RCFGBuilder.s_PLUGIN_ID))
 				.getString(PreferenceInitializer.LABEL_ExtSolverLogic);
 		
@@ -168,30 +194,33 @@ public class CfgBuilder {
 				throw new AssertionError(e);
 			}
 		}
-
-		boolean blackHolesArrays;
-		if (!useExternalSolver) {
-			m_Script.setOption(":produce-models", true);
-			m_Script.setOption(":produce-interpolants", true);
+		
+		m_Script.setOption(":produce-models", true);
+		switch (solver) {
+		case External_DefaultMode:
 			m_Script.setOption(":produce-unsat-cores", true);
+			m_Script.setLogic(m_LogicForExternalSolver);
+		break;
+		case External_PrincessInterpolationMode:
+		case External_Z3InterpolationMode:
+			m_Script.setOption(":produce-interpolants", true);
+			m_Script.setLogic(m_LogicForExternalSolver);
+		break;
+		case Internal_SMTInterpol:
+			m_Script.setOption(":produce-unsat-cores", true);
+			m_Script.setOption(":produce-interpolants", true);
 			m_Script.setOption(":interpolant-check-mode", true);
 			m_Script.setOption(":proof-transformation", "LU");
 			// m_Script.setOption(":proof-transformation", "RPI");
 			// m_Script.setOption(":proof-transformation", "LURPI");
 			// m_Script.setOption(":proof-transformation", "RPILU");
+			// m_Script.setOption(":verbosity", 0);
 			m_Script.setLogic("QF_AUFLIRA");
-			// m_Script.setOption(":verbosity", 0);
-			blackHolesArrays = false;
-		} else {
-			m_Script.setOption(":produce-models", true);
-//			m_Script.setOption(":produce-proofs", true);
-			m_Script.setOption(":produce-unsat-cores", true);
-			// m_Script.setOption(":interpolant-check-mode", true);
-			// m_Script.setLogic("AUFNIRA");
-			m_Script.setLogic(m_LogicForExternalSolver);
-			// m_Script.setOption(":verbosity", 0);
-			blackHolesArrays = false;
+		break;
+		default:
+			throw new AssertionError("unknown solver");
 		}
+
 		String advertising = System.lineSeparator() + "    SMT script generated on " + 
 				(new SimpleDateFormat("yyyy/MM/dd")).format(new Date()) + 
 				" by Ultimate. http://ultimate.informatik.uni-freiburg.de/" + 
@@ -201,6 +230,7 @@ public class CfgBuilder {
 		m_Script.setInfo(":category", new QuotedObject("industrial"));
 		
 		m_BoogieDeclarations = new BoogieDeclarations(unit, mLogger);
+		boolean blackHolesArrays = false;
 		m_Boogie2smt = new Boogie2SMT(m_Script, m_BoogieDeclarations, blackHolesArrays, mServices);
 		m_RootAnnot = new RootAnnot(m_BoogieDeclarations, m_Boogie2smt, m_Backtranslator);
 
