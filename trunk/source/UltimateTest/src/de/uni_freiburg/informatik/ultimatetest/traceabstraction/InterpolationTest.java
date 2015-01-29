@@ -14,7 +14,7 @@ import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
 public class InterpolationTest extends
 		AbstractTraceAbstractionTestSuite {
 	private static final String[] m_Directories = {
-		"examples/programs/regression/bpl/",
+		"examples/programs/regression/",
 //		"examples/programs/quantifier",
 //		"examples/programs/recursivePrograms",
 //		"examples/programs/toy"
@@ -23,7 +23,7 @@ public class InterpolationTest extends
 	};
 	
 	// Time out for each test case in milliseconds
-	private static int m_Timeout = 10 * 000;
+	private static int m_Timeout = 10 * 1000;
 
 	private static final boolean s_ForwardPredicates = true;
 	private static final boolean s_SMTInterpol = true;
@@ -78,13 +78,13 @@ public class InterpolationTest extends
 		if (s_Princess) {
 			addTestCases(
 					"AutomizerBpl.xml",
-					"automizer/interpolation/iZ3.epf",
+					"automizer/interpolation/Princess.epf",
 				    m_Directories,
 				    new String[] {".bpl"},
 				    m_Timeout);
 			addTestCases(
 					"AutomizerC.xml",
-					"automizer/interpolation/iZ3.epf",
+					"automizer/interpolation/Princess.epf",
 				    m_Directories,
 				    new String[] {".c", ".i"},
 				    m_Timeout);
