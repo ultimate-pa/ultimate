@@ -17,11 +17,13 @@ public class DeclarationInformation {
 		 */
 		GLOBAL,
 		/**
-		 * "In" parameter of a procedure or function declaration
+		 * "In" parameter of a function declaration or
+		 * procedure declaration (with or without body/implementation)
 		 */
 		PROC_FUNC_INPARAM,
 		/**
-		 * "Out" parameter of a procedure or function declaration
+		 * "Out" parameter of function declaration or 
+		 * procedure declaration (with or without body/implementation)
 		 */
 		PROC_FUNC_OUTPARAM,
 		/**
