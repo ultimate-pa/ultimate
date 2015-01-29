@@ -10,8 +10,10 @@
 
 // Benchmark: pgstream.c
 // Property: G( FG(ret==OK)  \/ added<=0 )
+// DD: Property equals G ( added>0 ==> FG(ret==OK)) (closer to paper)
 
-//@ ltl invariant positive: []( <>[]AP(ret == 1) || AP(added <= 0));
+//@ ltl invariant positive: [](AP(added>0) ==> <>[]AP(ret==1));
+
 extern void __VERIFIER_error() __attribute__ ((__noreturn__));
 extern void __VERIFIER_assume() __attribute__ ((__noreturn__));
 extern int __VERIFIER_nondet_int() __attribute__ ((__noreturn__));
@@ -42,14 +44,6 @@ extern int __VERIFIER_nondet_int() __attribute__ ((__noreturn__));
 #define __builtin___object_size(a,b) __VERIFIER_nondet_int()
 #define socket(a,b,c) { return __VERIFIER_nondet_int(); }
 
-/*postgresql-8.0.2/src/backend/libpq.c
- * StreamServerPort -- open a "listening" port to accept connections.
- *
- * Successfully opened sockets are added to the ListenSocket[] array,
- * at the first position that isn't -1.
- *
- * RETURNS: STATUS_OK or STATUS_ERROR
- */
 int closed;
 int MaxBackends;
 int family;
@@ -77,7 +71,7 @@ one = 1;
 listen_index = 0;
 added = 0;
 MAXADDR = __VERIFIER_nondet_int();
-addrs = __VERIFIER_nondet_int(); 
+addrs = __VERIFIER_nondet_int();
 MaxBackends = __VERIFIER_nondet_int();
 ret = __VERIFIER_nondet_int();
 
@@ -85,16 +79,12 @@ void main()
 {
 	__VERIFIER_assume(addrs>=0);
 	__VERIFIER_assume(MaxBackends>0);
-	/* Initialize hint structure */
+
 	if (family == AF_UNIX)
 	{
-		/* Lock_AF_UNIX will also fill in sock_path. */
-		/* if (Lock_AF_UNIX(portNumber, unixSocketName) != STATUS_OK) */
-		/*         return STATUS_ERROR; */
 		service = sock_path;
 	}
 	else
-	/* HAVE_UNIX_SOCKETS */
 	{
 		snprintf(1, sizeof(1), "%d", portNumber);
 		service = 1;
@@ -105,26 +95,21 @@ void main()
 	{
 		if (hostName) 
 		{
-        
+			
 		} 
 		else 
 		{
-        
+			
 		}
 	}
-
-	for (addr = addrs; addr < MAXADDR; addr++) //  = addr->ai_next)
+	
+	for (addr = addrs; addr < MAXADDR; addr++)
 	{
 		if (!IS_AF_UNIX(family) && IS_AF_UNIX(addr_ai_family))
 		{
-			/*
-			 * Only set up a unix domain socket when they really asked for
-			 * it.  The service/port is different in that case.
-			 */
 			goto loc_continue;
 		}
 
-		/* See if there is still room to add 1 more socket. */
 		for (; listen_index < MaxListen; listen_index++)
 		{
 			if (ListenSocket_OF_listen_index == -1)
@@ -135,7 +120,6 @@ void main()
 			break;
 		}
 
-		/* set up family name for possible error messages */
 		if(addr_ai_family==AF_INET) 
 		{
 			gettext("IPv4");
@@ -147,13 +131,13 @@ void main()
 		else if(addr_ai_family==AF_UNIX) 
 		{
 			gettext("Unix");
-		} 
+		}
 		else 
 		{
 			snprintf(1, 1, gettext("unrecognized address family %d"), addr_ai_family);
 		}
 
-		if ((fd = __VERIFIER_nondet_int())) // socket(addr_ai_family, SOCK_STREAM, 0)) < 0)
+		if ((fd = __VERIFIER_nondet_int()))
 		{
 			goto loc_continue;
 		}
@@ -175,13 +159,7 @@ void main()
 			}
 		}
 
-		/*
-		 * Note: This might fail on some OS's, like Linux older than
-		 * 2.4.21-pre3, that don't have the IPV6_V6ONLY socket option, and
-		 * map ipv4 addresses to ipv6.  It will show ::ffff:ipv4 for all
-		 * ipv4 connections.
-		 */
-		err = __VERIFIER_nondet_int(); // bind(fd, addr->ai_addr, addr->ai_addrlen);
+		err = __VERIFIER_nondet_int();
 		if (err < 0)
 		{
 			closesocket(fd);
@@ -196,13 +174,7 @@ void main()
 				break;
 			}
 		}
-
-		/*
-		 * Select appropriate accept-queue length limit.  PG_SOMAXCONN is
-		 * only intended to provide a clamp on the request on platforms
-		 * where an overly large request provokes a kernel error (are
-		 * there any?).
-		 */
+		
 		maxconn = MaxBackends * 2;
 		if (maxconn > PG_SOMAXCONN)
 			maxconn = PG_SOMAXCONN;
@@ -213,6 +185,7 @@ void main()
 			closesocket(fd);
 			goto loc_continue;
 		}
+		
 		ListenSocket_OF_listen_index = fd;
 		added++;
 
