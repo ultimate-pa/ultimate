@@ -54,13 +54,11 @@ public class BoogieProcedureInliner implements IAnalysis {
 
 	@Override
 	public List<IObserver> getObservers() {
-		CallGraphBuilder callGraphBuilder = new CallGraphBuilder(mServices);
 		//OldExprPreprocessor oldExprPreprocessor = new OldExprPreprocessor(mServices);
 
 		ArrayList<IObserver> observers = new ArrayList<IObserver>();
 		observers.add(new TypeChecker(mServices));
-		observers.add(callGraphBuilder);
-		observers.add(new Inliner(mServices, callGraphBuilder));
+		observers.add(new Inliner(mServices));
 		//observers.add(oldExprPreprocessor);
 		//observers.add(new UniqueVariableTransformer(mServices));
 		//observers.add(new ProcedureInliner(mServices));

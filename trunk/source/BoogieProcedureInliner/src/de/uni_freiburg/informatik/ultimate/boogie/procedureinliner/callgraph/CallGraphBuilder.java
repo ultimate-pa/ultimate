@@ -11,24 +11,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
-import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
-import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.Activator;
 import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.callgraph.CallGraphEdgeLabel.EdgeType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.TarjanSCC;
-import de.uni_freiburg.informatik.ultimate.core.services.IProgressMonitorService;
-import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.*;
-import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
-import de.uni_freiburg.informatik.ultimate.result.IResult;
-import de.uni_freiburg.informatik.ultimate.result.SyntaxErrorResult;
-import de.uni_freiburg.informatik.ultimate.result.UnsupportedSyntaxResult;
 
-public class CallGraphBuilder implements IUnmanagedObserver {
-	
-	private IUltimateServiceProvider mServices;
-	private IProgressMonitorService mProgressMonitorService;
+public class CallGraphBuilder {
 	
 	/** All Declarations from the last processed Boogie ast, other than Procedures. */
 	private Collection<Declaration> mNonProcedureDeclarations;
@@ -49,50 +36,26 @@ public class CallGraphBuilder implements IUnmanagedObserver {
 	
 	/** Flat view of {@link #mRecursiveComponents}. */
 	private Set<String> mRecursiveProcedures;
-	
-	public CallGraphBuilder(IUltimateServiceProvider services) {
-		mServices = services;
-		mProgressMonitorService = services.getProgressMonitorService();
-	}
-	
-	@Override
-	public void init() {
-		mNonProcedureDeclarations = new ArrayList<Declaration>();
-		mCallGraphNodes = new HashMap<String, CallGraphNode>();
-		mRecursiveComponents = null;
-		mRecursiveProcedures = null;
-	}
 
-	@Override
-	public WalkerOptions getWalkerOptions() {
-		return null;
-	}
-
-	@Override
-	public boolean process(IElement element) throws Throwable {
-		if(!mProgressMonitorService.continueProcessing()) {
-			return false;
-		} else if (element instanceof Procedure) {
-			processProcedure((Procedure) element);
-			return false;
-		} else if (element instanceof Declaration) {
-			mNonProcedureDeclarations.add((Declaration) element);
-			return false;
+	/**
+	 * Creates a call graph for a given Boogie ast.
+	 * The graph contains all procedures and implementations.
+	 * All other declarations from the Boogie ast are separately stored.
+	 * @param boogieAstUnit Boogie ast.
+	 * @throws CallGraphBuildException A procedure had multiple declarations or implementations.
+	 * @see #getCallGraph()
+	 * @see #getNonProcedureDeclarations()
+	 */
+	public void buildCallGraph(Unit boogieAstUnit) throws CallGraphBuildException {
+		init();
+		for (Declaration declaration : boogieAstUnit.getDeclarations()) {
+			if (declaration instanceof Procedure) {
+				processProcedure((Procedure) declaration);
+			} else {
+				mNonProcedureDeclarations.add(declaration);
+			}
 		}
-		return true;
-	}
-
-	@Override
-	public void finish() {
-		mNonProcedureDeclarations = Collections.unmodifiableCollection(mNonProcedureDeclarations);
-		mCallGraphNodes = Collections.unmodifiableMap(mCallGraphNodes);
-		findRecursiveComponents();
-		setAllEdgeTypes();
-	}
-
-	@Override
-	public boolean performedChanges() {
-		return false;
+		finish();
 	}
 
 	/**
@@ -112,14 +75,28 @@ public class CallGraphBuilder implements IUnmanagedObserver {
 		return mNonProcedureDeclarations;
 	}
 	
-	private void processProcedure(Procedure procedure) {
+	public void init() {
+		mNonProcedureDeclarations = new ArrayList<Declaration>();
+		mCallGraphNodes = new HashMap<String, CallGraphNode>();
+		mRecursiveComponents = null;
+		mRecursiveProcedures = null;
+	}
+
+	public void finish() {
+		mNonProcedureDeclarations = Collections.unmodifiableCollection(mNonProcedureDeclarations);
+		mCallGraphNodes = Collections.unmodifiableMap(mCallGraphNodes);
+		findRecursiveComponents();
+		setAllEdgeTypes();
+	}
+	
+	private void processProcedure(Procedure procedure) throws CallGraphBuildException {
 		String procedureId = procedure.getIdentifier();
 		CallGraphNode node = getOrCreateNode(procedureId);
 		if (procedure.getSpecification() != null) {
 			if (node.getProcedureWithSpecification() == null) {
 				node.setProcedureWithSpecification(procedure);				
 			} else {
-				multipleDeclarationsError(procedure);
+				throw new ProcedureAlreadyDeclaredException(procedure);
 			}
 		}
 		if (procedure.getBody() != null) {
@@ -127,7 +104,7 @@ public class CallGraphBuilder implements IUnmanagedObserver {
 				node.setProcedureWithBody(procedure);
 				registerCallStatementsInGraph(node, procedure.getBody().getBlock());				
 			} else {
-				multipleImplementationsError(procedure);
+				throw new MultipleImplementationsException(procedure);
 			}
 		}
 	}
@@ -140,8 +117,7 @@ public class CallGraphBuilder implements IUnmanagedObserver {
 		}
 		return node;
 	}
-	
-	
+
 	private void registerCallStatementsInGraph(CallGraphNode callerNode, Statement[] statementBlock) {
 		for (Statement statement : statementBlock) {
 			if (statement instanceof CallStatement) {
@@ -247,38 +223,6 @@ public class CallGraphBuilder implements IUnmanagedObserver {
 			}
 		}
 		return null;
-	}
-	
-	private void multipleDeclarationsError(Procedure procDecl) {
-		String description = "Procedure was already declared: " + procDecl.getIdentifier();
-		syntaxError(procDecl.getLocation(), description);
-	}
-	
-	private void syntaxError(ILocation location, String description) {
-		errorAndAbort(location, description, new SyntaxErrorResult(Activator.PLUGIN_ID, location, description));
-	}
-	
-	private void multipleImplementationsError(Procedure procImpl) {
-		String description = "Multiple procedure implementations aren't supported: " + procImpl.getIdentifier();
-		unsupportedSyntaxError(procImpl.getLocation(), description);
-	}
-	
-	private void unsupportedSyntaxError(ILocation location, String description) {
-		errorAndAbort(location, description,
-				new UnsupportedSyntaxResult<Procedure>(Activator.PLUGIN_ID, location, description));
-	}
-	
-	/**
-	 * Prints an error to the log and cancels the tool chain with the given result.
-	 * @param location Location of the error.
-	 * @param description Description of the error.
-	 * @param error Error result.
-	 */
-	private void errorAndAbort(ILocation location, String description, IResult error) {
-		String pluginId = Activator.PLUGIN_ID;
-		mServices.getLoggingService().getLogger(pluginId).error(location + ": " + description);
-		mServices.getResultService().reportResult(pluginId, error);
-		mProgressMonitorService.cancelToolchain();
 	}
 
 }

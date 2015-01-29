@@ -48,14 +48,23 @@ public class TopologicalSorter<N extends ILabeledEdgesMultigraph<N,L>, L> {
 		mOutgoingEdgesFilter = outgoingEdgesFilter;
 	}
 	
+	/** @see #reversedTopologicalOrdering(Collection) */
+	public List<N> topologicalOrdering(Collection<N> graph) {
+		List<N> ordering = reversedTopologicalOrdering(graph);
+		if (ordering != null) {
+			Collections.reverse(ordering);			
+		}
+		return ordering;
+	}
+	
 	/**
-	 * Creates a topological order of an acyclic directed graph (DAG).
+	 * Creates a reversed topological ordering of an acyclic directed graph (DAG).
 	 * There are no guarantees, if a node inside <code>graph</code> has a child that isn't part of
 	 * <code>graph</code> (except if the edge from the node to it's child isn't accept by the filter).
 	 * @param graph All nodes of the graph to be sorted. Duplicates will be ignored.
-	 * @return Topological ordering of the graph. null iff the graph contained a circle.
+	 * @return Topological ordering of the nodes. null iff the graph contained a circle.
 	 */
-	public List<N> sortTopological(Collection<N> graph) {
+	public List<N> reversedTopologicalOrdering(Collection<N> graph) {
 		mUnmarkedNodes = new HashSet<N>(graph);
 		mTemporarilyMarkedNodes = new HashSet<N>();
 		mPermanentlyMarkedNodes = new HashSet<N>();
@@ -67,7 +76,6 @@ public class TopologicalSorter<N extends ILabeledEdgesMultigraph<N,L>, L> {
 				return null;
 			} 
 		}
-		Collections.reverse(mTopolicalSorting);
 		return mTopolicalSorting;
 	}
 

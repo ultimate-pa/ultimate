@@ -6,6 +6,7 @@ import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
+import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.callgraph.CallGraphBuildException;
 import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.callgraph.CallGraphBuilder;
 import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.callgraph.CallGraphEdgeLabel;
 import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.callgraph.CallGraphNode;
@@ -21,21 +22,17 @@ public class Inliner implements IUnmanagedObserver {
 	private IUltimateServiceProvider mServices;
 	private IProgressMonitorService mProgressMonitorService;
 	
-	private CallGraphBuilder mCallGraphBuilder;
-	private Map<String, CallGraphNode> mCallGraph;
+	private Unit mAstUnit;
 	private Collection<Declaration> mNonProcedureDeclarations;
+	private Map<String, CallGraphNode> mCallGraph;
+	List<CallGraphNode> mReversedTopologicalOrdering;
 	
-	
-	public Inliner(IUltimateServiceProvider services, CallGraphBuilder callGraphBuilder) {
+	public Inliner(IUltimateServiceProvider services) {
 		mServices = services;
-		mProgressMonitorService = services.getProgressMonitorService();
-		mCallGraphBuilder = callGraphBuilder;
 	}
 	
 	@Override
 	public void init() {
-		mCallGraph = mCallGraphBuilder.getCallGraph();
-		mNonProcedureDeclarations = mCallGraphBuilder.getNonProcedureDeclarations();
 	}
 
 	@Override
@@ -44,23 +41,45 @@ public class Inliner implements IUnmanagedObserver {
 
 	@Override
 	public WalkerOptions getWalkerOptions() {
-		if(mProgressMonitorService.continueProcessing()) {
-			List<CallGraphNode> topologicalOrdering = new TopologicalSorter<CallGraphNode, CallGraphEdgeLabel>(
-					new SimpleCallFilter()).sortTopological(mCallGraph.values());
-			// TODO inline procedures, using the call graph
-			// TODO build new ast Unit using the inlined procedures and nonProcedureDeclarations
-		}
 		return null;
 	}
 
 	@Override
 	public boolean performedChanges() {
-		return false;
+		return true; // assumption
 	}
 
 	@Override
 	public boolean process(IElement root) throws Throwable {
-		return false;
+		if (!mProgressMonitorService.continueProcessing()) {
+			return false;
+		} else if (root instanceof Unit) {
+			mAstUnit = (Unit) root;
+			inline();
+			return false;
+		} else {
+			return true;
+		}
+	}
+
+	private void inline() {
+		try {
+			buildCallGraph();
+		} catch (CallGraphBuildException buildException) {
+			buildException.logErrorAndCancelToolchain(mServices, Activator.PLUGIN_ID);
+			return;
+		}
+		// TODO inline procedures, using the call graph
+		// TODO build new ast Unit using the inlined procedures and nonProcedureDeclarations
+	}
+	
+	private void buildCallGraph() throws CallGraphBuildException {
+		CallGraphBuilder callGraphBuilder = new CallGraphBuilder();
+		callGraphBuilder.buildCallGraph(mAstUnit);
+		mCallGraph = callGraphBuilder.getCallGraph();
+		mNonProcedureDeclarations = callGraphBuilder.getNonProcedureDeclarations();
+		mReversedTopologicalOrdering = new TopologicalSorter<CallGraphNode, CallGraphEdgeLabel>(new SimpleCallFilter())
+				.reversedTopologicalOrdering(mCallGraph.values());
 	}
 
 }
