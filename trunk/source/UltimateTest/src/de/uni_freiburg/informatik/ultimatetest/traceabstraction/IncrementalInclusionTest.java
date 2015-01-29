@@ -45,15 +45,24 @@ public class IncrementalInclusionTest extends
 	 * 
 	 */
 	private static final String[] m_Settings = {
-		"automizer/incrementalInclusion/Difference.epf",
-		"automizer/incrementalInclusion/IncrementalInclusionViaDifference.epf",
-		"automizer/incrementalInclusion/IncrementalInclusion2.epf",
-		"automizer/incrementalInclusion/IncrementalInclusion3.epf",
-		"automizer/incrementalInclusion/IncrementalInclusion3_2.epf",
-		"automizer/incrementalInclusion/IncrementalInclusion4.epf",
-		"automizer/incrementalInclusion/IncrementalInclusion4_2.epf",
-		"automizer/incrementalInclusion/IncrementalInclusion5.epf",
-		"automizer/incrementalInclusion/IncrementalInclusion5_2.epf",
+//		"automizer/incrementalInclusion/Difference.epf",
+//		"automizer/incrementalInclusion/IncrementalInclusionViaDifference.epf",
+//		"automizer/incrementalInclusion/IncrementalInclusion2.epf",
+//		"automizer/incrementalInclusion/IncrementalInclusion3.epf",
+//		"automizer/incrementalInclusion/IncrementalInclusion3_2.epf",
+//		"automizer/incrementalInclusion/IncrementalInclusion4.epf",
+//		"automizer/incrementalInclusion/IncrementalInclusion4_2.epf",
+//		"automizer/incrementalInclusion/IncrementalInclusion5.epf",
+//		"automizer/incrementalInclusion/IncrementalInclusion5_2.epf",
+		"automizer/incrementalInclusion/noDeadEndsRemoval/Difference.epf",
+		"automizer/incrementalInclusion/noDeadEndsRemoval/IncrementalInclusionViaDifference.epf",
+		"automizer/incrementalInclusion/noDeadEndsRemoval/IncrementalInclusion2.epf",
+		"automizer/incrementalInclusion/noDeadEndsRemoval/IncrementalInclusion3.epf",
+		"automizer/incrementalInclusion/noDeadEndsRemoval/IncrementalInclusion3_2.epf",
+		"automizer/incrementalInclusion/noDeadEndsRemoval/IncrementalInclusion4.epf",
+		"automizer/incrementalInclusion/noDeadEndsRemoval/IncrementalInclusion4_2.epf",
+		"automizer/incrementalInclusion/noDeadEndsRemoval/IncrementalInclusion5.epf",
+		"automizer/incrementalInclusion/noDeadEndsRemoval/IncrementalInclusion5_2.epf",
 	};
 	
 	/**
