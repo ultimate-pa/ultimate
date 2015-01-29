@@ -1,20 +1,20 @@
-//#Unsafe
-//@ ltl invariant positive: !(AP(init == 0) U( (AP(init == 1) U [] AP(init == 3)) || [] AP(init == 1)));
+//#Safe
+//@ ltl invariant positive: []( (AP(limit > -273) || AP(limit < 10)) ==> (AP(tempIn < 0) ==> <> AP(warnLED == 1)) );
 
-#include <stdio.h> 
+#include <stdio.h>  
 
 extern void __VERIFIER_error() __attribute__ ((__noreturn__));
 extern void __VERIFIER_assume() __attribute__ ((__noreturn__));
 extern int __VERIFIER_nondet_int() __attribute__ ((__noreturn__));
 
-int error, tempDisplay, warnLED, tempIn, chainBroken,
-warnLight, temp, otime = 0, time = 0, limit, init = 0;
+int error, tempDisplay, warnLED = 0, tempIn = 0, chainBroken,
+ temp, otime = 0, time = 0, limit = 0, init = 0;
 
 
 void display(int tempdiff, int warning)
 {
 	tempDisplay = tempdiff;
-	warnLED = warning;
+	warnLED = 0;
 }
 
 int vinToCels(int kelvin)
@@ -50,7 +50,6 @@ int main()
     tempIn = 0;
     error = 0;
     chainBroken = 0;
-    warnLight = 0;
     temp = 0;
     limit = 8;
     init = 1;
