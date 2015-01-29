@@ -11,6 +11,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.TerminationRequest;
 import de.uni_freiburg.informatik.ultimate.smtsolver.external.Scriptor;
+import de.uni_freiburg.informatik.ultimate.smtsolver.external.ScriptorWithGetInterpolants;
+import de.uni_freiburg.informatik.ultimate.smtsolver.external.ScriptorWithGetInterpolants.ExternalInterpolator;
 
 /**
  * Wrapper that constructs SMTInterpol or an external solver.
@@ -33,6 +35,13 @@ public class SolverBuilder {
 			String command) throws IOException {
 		Logger solverLogger = services.getLoggingService().getLoggerForExternalTool(sSolverLoggerName);
 		Script script = new Scriptor(command, solverLogger, services, storage);
+		return script;
+	}
+	
+	public static Script createExternalSolverWithInterpolation(IUltimateServiceProvider services, IToolchainStorage storage,
+			String command, ExternalInterpolator externalInterpolator) throws IOException {
+		Logger solverLogger = services.getLoggingService().getLoggerForExternalTool(sSolverLoggerName);
+		Script script = new ScriptorWithGetInterpolants(command, solverLogger, services, storage, externalInterpolator);
 		return script;
 	}
 
