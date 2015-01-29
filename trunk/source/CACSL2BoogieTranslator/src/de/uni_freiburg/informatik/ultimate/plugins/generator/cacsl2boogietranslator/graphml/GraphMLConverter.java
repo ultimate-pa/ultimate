@@ -28,6 +28,8 @@ public class GraphMLConverter {
 	private final CACSLProgramExecution mProgramExecution;
 
 	public GraphMLConverter(CACSLProgramExecution translatedProgramExecution) {
+		assert translatedProgramExecution != null;
+		assert translatedProgramExecution.getLength() > 0;
 		mProgramExecution = translatedProgramExecution;
 	}
 
@@ -244,24 +246,26 @@ public class GraphMLConverter {
 		return current;
 	}
 
-//	private int skipGlobalDeclarations(int currentIdx, CACSLProgramExecution programExecution) {
-//		int i = currentIdx;
-//		for (; i < programExecution.getLength(); i++) {
-//			AtomicTraceElement<CACSLLocation> currentATE = programExecution.getTraceElement(i);
-//			CACSLLocation currentLoc = currentATE.getTraceElement();
-//			if (currentLoc instanceof CLocation) {
-//				CLocation currentCLoc = (CLocation) currentLoc;
-//				if (currentCLoc.getNode() instanceof CASTSimpleDeclaration) {
-//					if (currentCLoc.getNode().getParent() instanceof CASTTranslationUnit) {
-//						// it is a global, go on
-//						continue;
-//					}
-//				}
-//			}
-//			break;
-//		}
-//		return i;
-//	}
+	// private int skipGlobalDeclarations(int currentIdx, CACSLProgramExecution
+	// programExecution) {
+	// int i = currentIdx;
+	// for (; i < programExecution.getLength(); i++) {
+	// AtomicTraceElement<CACSLLocation> currentATE =
+	// programExecution.getTraceElement(i);
+	// CACSLLocation currentLoc = currentATE.getTraceElement();
+	// if (currentLoc instanceof CLocation) {
+	// CLocation currentCLoc = (CLocation) currentLoc;
+	// if (currentCLoc.getNode() instanceof CASTSimpleDeclaration) {
+	// if (currentCLoc.getNode().getParent() instanceof CASTTranslationUnit) {
+	// // it is a global, go on
+	// continue;
+	// }
+	// }
+	// }
+	// break;
+	// }
+	// return i;
+	// }
 
 	private int collapseToSingleTraceElement(int currentIdx, CACSLProgramExecution programExecution) {
 		int i = currentIdx;
@@ -280,17 +284,17 @@ public class GraphMLConverter {
 	}
 
 	/**
-	 * Change the default {@link DirectedSparseGraph} s.t. the nodes and edges written
-	 * are ordered lexicographically.
-	 * DirectedSparseGraph
+	 * Change the default {@link DirectedSparseGraph} s.t. the nodes and edges
+	 * written are ordered lexicographically. DirectedSparseGraph
+	 * 
 	 * @author dietsch@informatik.uni-freiburg.de
 	 */
 	private class OrderedDirectedSparseGraph<V, E> extends DirectedSparseGraph<V, E> {
 		private static final long serialVersionUID = -8539872407688620571L;
-		
+
 		public OrderedDirectedSparseGraph() {
 			super();
-			vertices = new LinkedHashMap<V, Pair<Map<V,E>>>(); 
+			vertices = new LinkedHashMap<V, Pair<Map<V, E>>>();
 			edges = new LinkedHashMap<>();
 		}
 	}

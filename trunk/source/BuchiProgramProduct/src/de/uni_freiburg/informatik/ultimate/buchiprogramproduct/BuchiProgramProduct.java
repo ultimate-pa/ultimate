@@ -151,9 +151,11 @@ public class BuchiProgramProduct implements IGenerator {
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		Collection<CounterExampleResult> cex = CoreUtil.filterResults(services.getResultService().getResults(),
 				CounterExampleResult.class);
-		mBacktranslator = new ProductBacktranslator(CodeBlock.class, Expression.class);
-		mServices.getBacktranslationService().addTranslator(mBacktranslator);
 		mPreviousToolFoundErrors = !cex.isEmpty();
+		mBacktranslator = new ProductBacktranslator(CodeBlock.class, Expression.class);
+		if (!mPreviousToolFoundErrors) {
+			mServices.getBacktranslationService().addTranslator(mBacktranslator);
+		}
 	}
 
 	@Override
