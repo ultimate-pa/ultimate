@@ -31,7 +31,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
  */
 public class Scriptor extends NoopScript {
 
-	private Executor m_Executor;
+	protected Executor m_Executor;
 	private LBool m_Status = LBool.UNKNOWN;
 
 	/**

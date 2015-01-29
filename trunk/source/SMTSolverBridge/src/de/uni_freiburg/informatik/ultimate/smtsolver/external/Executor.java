@@ -191,4 +191,9 @@ class Executor {
 	public Object parseGetOptionResult() {
 		return (Object) parse(LexerSymbols.GETOPTION).value;
 	}
+	
+	public Term parseTerm() {
+	    return (Term) parse(LexerSymbols.GETTERM).value; 
+	}
+
 }
