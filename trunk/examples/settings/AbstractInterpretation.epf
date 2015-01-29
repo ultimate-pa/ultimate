@@ -7,7 +7,7 @@
 /instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation/Set\ of\ numbers\ for\ widening\ (comma-separated\ list)=0, 1, -128, 127
 #Fri Aug 29 01:43:52 CEST 2014
 \!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder=
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Use\ external\ solver\ instead\ of\ SMTInterpol=false
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/SMT\ solver=Internal_SMTInterpol
 file_export_version=3.0
 @de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder=0.0.1
 #Tue Aug 12 14:10:21 CEST 2014
