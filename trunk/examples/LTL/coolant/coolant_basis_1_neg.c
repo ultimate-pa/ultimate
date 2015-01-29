@@ -1,7 +1,6 @@
 //#Unsafe
-//@ ltl invariant positive: ![](!AP(chainBroken == 1) || []AP(chainBroken == 1));
+//@ ltl invariant positive: ![](AP(chainBroken == 1) ==> []AP(chainBroken == 1));
 
-// <> (AP(chainBroken == 1) && <> AP(chainBroken != 1));
 
 
 #include <stdio.h>
