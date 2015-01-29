@@ -17,7 +17,9 @@ public class PrefStrings {
 	public static final String s_CACSL_VALUE_Base = "BASE";
 	public static final String s_CACSL_VALUE_Svcomp = "SV_COMP14";
 	
-	public static final String s_RCFG_LABEL_ExternalSolver = "Use\\ external\\ solver\\ instead\\ of\\ SMTInterpol";
+	public static final String s_RCFG_LABEL_Solver = "SMT\\ solver";
+	public static final String s_RCFG_VALUE_SMTInterpol = "Internal_SMTInterpol";
+	public static final String s_RCFG_VALUE_ExternalDefMo = "External_DefaultMode";
 	public static final String s_RCFG_LABEL_BlockSize = "Size\\ of\\ a\\ code\\ block";
 	public static final String s_RCFG_VALUE_Single = "SingleStatement";
 	public static final String s_RCFG_VALUE_Seq = "SequenceOfStatements";

@@ -101,8 +101,9 @@ public class BoogieTraceAbstractionTC extends WebToolchain {
 		List<Setting> oRCFGB = new ArrayList<Setting>();
 		List<Setting> mRCFGB = new ArrayList<Setting>();
 		tools.add(new Tool(PrefStrings.s_rcfgBuilder, oRCFGB, mRCFGB, LoggingLevel.WARN));
-        oRCFGB.add(new Setting(PrefStrings.s_RCFG_LABEL_ExternalSolver, Setting.SettingType.BOOLEAN,
-                "external solver", "false", false));
+        oRCFGB.add(new Setting(PrefStrings.s_RCFG_LABEL_Solver, PrefStrings.s_RCFG_LABEL_Solver,
+        		new String[] { PrefStrings.s_RCFG_VALUE_SMTInterpol }, false, new String[] {
+        		PrefStrings.s_RCFG_VALUE_SMTInterpol, PrefStrings.s_RCFG_VALUE_ExternalDefMo }, false));
 
         List<Setting> oTrAbs = new ArrayList<Setting>();
         List<Setting> mTrAbs = new ArrayList<Setting>();
