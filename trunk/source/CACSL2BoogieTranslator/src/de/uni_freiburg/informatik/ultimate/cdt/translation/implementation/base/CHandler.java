@@ -3325,12 +3325,12 @@ public class CHandler implements ICHandler {
 
 		if (node instanceof IASTWhileStatement || node instanceof IASTForStatement) {
 			bodyBlock.add(0, ifStmt);
+			bodyBlock.addAll(0, condResult.stmt);
 			if (node instanceof IASTWhileStatement)
 				bodyBlock.add(0, new Label(loc, loopLabel));
-			bodyBlock.addAll(0, condResult.stmt);
 		} else if (node instanceof IASTDoStatement) {
-			bodyBlock.addAll(condResult.stmt);
 			bodyBlock.add(new Label(loc, loopLabel));
+			bodyBlock.addAll(condResult.stmt);
 			bodyBlock.add(ifStmt);
 		}
 
