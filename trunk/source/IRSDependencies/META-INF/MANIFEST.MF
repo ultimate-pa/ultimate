@@ -9,8 +9,8 @@ Require-Bundle: UltimateCore,
  Library-ModelCheckerUtils,
  Library-UltimateUtil,
  BoogieParser,
- de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder
+ de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder,
+ de.uni_freiburg.informatik.ultimate.automata
 Bundle-RequiredExecutionEnvironment: JavaSE-1.7
 Bundle-ActivationPolicy: lazy
 Export-Package: de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.loopdetector
-Import-Package: de.uni_freiburg.informatik.ultimate.automata.nwalibrary
