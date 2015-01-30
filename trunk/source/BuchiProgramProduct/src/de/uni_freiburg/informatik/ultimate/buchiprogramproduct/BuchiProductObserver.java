@@ -4,6 +4,8 @@ import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
+import de.uni_freiburg.informatik.ultimate.buchiprogramproduct.optimizeproduct.MaximizeFinalStates;
+import de.uni_freiburg.informatik.ultimate.buchiprogramproduct.optimizeproduct.MinimizeLinearStates;
 import de.uni_freiburg.informatik.ultimate.buchiprogramproduct.optimizeproduct.RemoveInfeasibleEdges;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.ltl2aut.never2nwa.NWAContainer;
@@ -47,7 +49,17 @@ public class BuchiProductObserver implements IUnmanagedObserver {
 					mBacktranslator).getProductRCFG();
 			mLogger.info("Finished generation of product automaton successfully");
 
-			mProduct = new RemoveInfeasibleEdges(mProduct, mServices).getResult();
+			boolean optimize = true;
+			while (optimize) {
+				RemoveInfeasibleEdges opt1 = new RemoveInfeasibleEdges(mProduct, mServices);
+				mProduct = opt1.getResult();
+				MaximizeFinalStates opt2 = new MaximizeFinalStates(mProduct, mServices);
+				mProduct = opt2.getResult();
+				MinimizeLinearStates opt3 = new MinimizeLinearStates(mProduct, mServices);
+				mProduct = opt3.getResult();
+
+				optimize = opt1.IsGraphChanged() || opt2.IsGraphChanged() || opt3.IsGraphChanged();
+			}
 
 		} catch (Exception e) {
 			mLogger.error(String.format(

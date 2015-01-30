@@ -179,7 +179,7 @@ class ModelTranslationContainer implements IBacktranslationService {
 		} else {
 			ITranslator<STE, TTE, SE, TE> translator = (ITranslator<STE, TTE, SE, TE>) remaining.pop();
 			IProgramExecution<TTE, TE> translated = translator.translateProgramExecution(programExecution);
-			assert programExecution.getLength() == 0 || translated.getLength() > 0;
+//			assert programExecution.getLength() == 0 || translated.getLength() > 0;
 			return translateProgramExecution(remaining, translated);
 		}
 	}

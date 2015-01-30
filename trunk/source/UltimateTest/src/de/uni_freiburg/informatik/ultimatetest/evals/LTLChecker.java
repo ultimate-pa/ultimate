@@ -31,18 +31,18 @@ public class LTLChecker extends AbstractEvaluationTestSuite {
 		return new String[] { 
 //				"examples/LTL/rers/",
 //				"examples/LTL/coolant/",
-//				"examples/LTL/bugs/",
-//				"examples/LTL/koskinen/ltlcmodelchecker-benchmarks/",
+				"examples/LTL/bugs/",
+				"examples/LTL/koskinen/ltlcmodelchecker-benchmarks/",
+//				"examples/LTL/system/timer-intermediate.c"
 
-//				"examples/LTL/koskinen/ltlcmodelchecker-benchmarks/pgstream_original_safe_sftyliveness.c",
-//				"examples/LTL/koskinen/ltlcmodelchecker-benchmarks/win1_original_safe_sftyliveness.c",
-				"examples/LTL/koskinen/ltlcmodelchecker-benchmarks/pgdropbuf_original_safe_safty.c",
+//				"examples/LTL/koskinen/ltlcmodelchecker-benchmarks/11-apache_accept_liveness.c",
+				
+				//java.lang.UnsupportedOperationException: function symbols not yet supported
 
+				//"variables on heap are not supported in ACSL code right now."
+//				"examples/LTL/koskinen/ltlcmodelchecker-benchmarks/win5_original_safe_sftylifeness.c",
 				
-				
-//				"examples/LTL/system/battery_control.c"
-				
-				//all the examples that had soundness errors  
+				//RERS examples with soundness errors  
 //				"examples/LTL/rers/Problem14_prop_010.c",
 //				"examples/LTL/rers/Problem14_prop_002.c",
 
@@ -53,7 +53,7 @@ public class LTLChecker extends AbstractEvaluationTestSuite {
 
 	@Override
 	protected int getTimeout() {
-		return 1 * 60 * 1000;
+		return 2 * 60 * 1000;
 	}
 
 	@Override
