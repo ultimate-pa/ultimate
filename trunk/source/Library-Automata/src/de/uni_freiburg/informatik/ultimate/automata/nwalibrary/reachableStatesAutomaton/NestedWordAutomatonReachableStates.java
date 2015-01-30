@@ -1598,7 +1598,7 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 		private NestedLassoRun<LETTER, STATE> m_NestedLassoRun;
 		private int m_AcceptingBalls = 0;
 
-		Collection<SCC> getBalls() {
+		public Collection<SCC> getBalls() {
 			return m_Balls;
 		}
 
