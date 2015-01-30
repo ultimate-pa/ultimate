@@ -1,4 +1,4 @@
-//#Safe
+﻿//#Safe
 // ****************************************************
 //
 //     Making Prophecies with Decision Predicates
@@ -12,9 +12,9 @@
 // Property: istemp => G(A!=1)
 // Remarks by DD:
 // - The first property from the paper is Gp, the second G(p ==> Fq). 
-// - It seems to me, the best variant for Gp is [](AP(A!=1 || R==0)), as this expresses that the lock is never released before it is aquired 
-
-//@ ltl invariant positive: [](AP(A!=1 || R==0));
+// - It seems to me, the best variant for Gp is [](AP(A!=1 || RELEASE==0)), as this expresses that the lock is never released before it is aquired 
+ 
+//@ ltl invariant positive: []( AP(A!=1 || RELEASE==0));
 
 extern void __VERIFIER_error() __attribute__ ((__noreturn__));
 extern void __VERIFIER_assume() __attribute__ ((__noreturn__));
@@ -53,7 +53,7 @@ int addrs;
 int rnode;
 int istemp;
 int firstDelBlock;
-int A; int R;
+int A; int RELEASE;
 char *bufHdr;
 int bufHdr_tag_blockNum;
 int bufHdr_tag_blockNum;
@@ -81,7 +81,7 @@ int RelFileNodeEquals(int a, int b)
 
 istemp = __VERIFIER_nondet_int();
 A = 0;
-R = 0;
+RELEASE = 0;
 NLocBuffer = __VERIFIER_nondet_int();
 NBuffers = __VERIFIER_nondet_int();
 
@@ -129,7 +129,7 @@ recheck:
 		}
 	}
 
-	R = 1; R = 0; //LWLockRelease(BufMgrLock);
+	RELEASE = 1; RELEASE = 0; //LWLockRelease(BufMgrLock);
 my_exit:
 	while(1) { int yyy;yyy=yyy;}
 }

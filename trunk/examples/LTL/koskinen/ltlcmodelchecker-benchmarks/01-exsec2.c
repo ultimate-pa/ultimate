@@ -17,6 +17,6 @@ void main()
 	
 	x = 0;
 	x = 1;
-	while (true) {}
+	while (1) {}
 }
 

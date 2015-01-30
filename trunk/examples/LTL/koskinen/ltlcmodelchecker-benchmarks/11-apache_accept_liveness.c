@@ -12,10 +12,9 @@
 // Property: (G!die_now) -> (GF do_ACCEPT)
 //
 // Remarks by DD:
-// - It seems that ([] AP(die_now == 0)) never holds, so the property will be fulfilled trivially 
+// - It seems that ([] AP(die_now == 0)) never holds, so the property will be fulfilled trivially, because [] AP(die_now == 0) runs into TO but real property runs through fast 
 
-//@ ltl invariant positive: ([] AP(die_now == 0));
-// ltl invariant positive: ([] AP(die_now == 0)) ==> ([]<>AP(do_ACCEPT != 0));
+//@ ltl invariant positive: ([] AP(die_now == 0)) ==> ([]<>AP(do_ACCEPT != 0));
 
 extern void __VERIFIER_error() __attribute__ ((__noreturn__));
 extern void __VERIFIER___VERIFIER_assume() __attribute__ ((__noreturn__));
