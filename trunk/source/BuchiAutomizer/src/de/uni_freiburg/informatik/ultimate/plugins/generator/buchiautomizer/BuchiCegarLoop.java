@@ -46,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.Refi
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.annot.BuchiProgramAcceptingStateAnnotation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.PreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.PreferenceInitializer.BInterpolantAutomaton;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.RcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RcfgElement;
@@ -431,6 +432,14 @@ public class BuchiCegarLoop {
 					m_BenchmarkGenerator.setResult(Result.UNKNOWN);
 					return Result.UNKNOWN;
 				case REPORT_NONTERMINATION:
+					if (lassoWasOverapproximated()) {
+						m_MDBenchmark.reportRemainderModule(m_Abstraction.size(), false);
+						if (m_ConstructTermcompProof) {
+							m_TermcompProofBenchmark.reportRemainderModule(false);
+						}
+						m_BenchmarkGenerator.setResult(Result.UNKNOWN);
+						return Result.UNKNOWN;
+					}
 					m_NonterminationArgument = lassoChecker.getNonTerminationArgument();
 					m_MDBenchmark.reportRemainderModule(m_Abstraction.size(), true);
 					if (m_ConstructTermcompProof) {
@@ -467,6 +476,13 @@ public class BuchiCegarLoop {
 		}
 		m_BenchmarkGenerator.setResult(Result.TIMEOUT);
 		return Result.TIMEOUT;
+	}
+	
+	private boolean lassoWasOverapproximated() {
+		NestedWord<CodeBlock> stem = m_Counterexample.getStem().getWord();
+		NestedWord<CodeBlock> loop = m_Counterexample.getLoop().getWord();
+		return (RcfgProgramExecution.containsOverapproximationFlag(stem.asList()) || 
+				RcfgProgramExecution.containsOverapproximationFlag(loop.asList()));
 	}
 
 	/**

@@ -44,6 +44,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Term2Express
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BinaryStatePredicateManager;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.RcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RcfgElement;
@@ -142,6 +143,10 @@ public class LassoRankerStarter {
 			try {
 				NonTerminationArgument arg = la.checkNonTermination(nontermination_settings);
 				if (arg != null) {
+					if (lassoWasOverapproximated()) {
+						reportFailBecauseOfOverapproximationResult();
+						return;
+					}
 					reportNonTerminationResult(arg);
 					return;
 				}
@@ -193,6 +198,11 @@ public class LassoRankerStarter {
 			}
 		}
 		reportNoResult(templates);
+	}
+	
+	private boolean lassoWasOverapproximated() {
+		return (RcfgProgramExecution.containsOverapproximationFlag(m_Stem.asList()) || 
+				RcfgProgramExecution.containsOverapproximationFlag(m_Loop.asList()));
 	}
 
 	public TransFormula constructTransformula(NestedWord<CodeBlock> nw) {
@@ -398,6 +408,25 @@ public class LassoRankerStarter {
 		mLogger.info(sb.toString());
 		reportResult(result);
 	}
+	
+	/**
+	 * Report that no result has been found and that the reason might be
+	 * that the lasso was overapproximated. 
+	 * 
+	 * @param preferences
+	 *            the current preferences
+	 */
+	private void reportFailBecauseOfOverapproximationResult() {
+		NoResult<RcfgElement> result = new NoResult<RcfgElement>(m_Honda, Activator.s_PLUGIN_NAME,
+				getTranslatorSequence());
+		result.setShortDescription("LassoRanker could not prove termination");
+		StringBuilder sb = new StringBuilder();
+		sb.append("LassoRanker could not prove termination " + "or nontermination of the given linear lasso program.\n");
+		sb.append("The reason might be that LassoRanker had to use an overapproximation of the original lasso.");
+		result.setLongDescription(sb.toString());
+		mLogger.info(sb.toString());
+		reportResult(result);
+	}
 
 	/**
 	 * Report that there was a timeout. TODO: which templates already failed,
@@ -431,6 +460,8 @@ public class LassoRankerStarter {
 				Activator.s_PLUGIN_NAME, getTranslatorSequence(), message);
 		reportResult(result);
 	}
+	
+	
 
 	/**
 	 * Report a result back to the Ultimate toolchain
