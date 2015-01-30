@@ -25,6 +25,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations;
 
+import java.util.Collection;
+
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
@@ -32,6 +34,9 @@ import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.NestedWordAutomatonReachableStates;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.NestedWordAutomatonReachableStates.StronglyConnectedComponents;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.NestedWordAutomatonReachableStates.StronglyConnectedComponents.SCC;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 
@@ -56,15 +61,27 @@ public class LoopComplexity<LETTER, STATE> implements IOperation<LETTER, STATE> 
 	
 
 	public LoopComplexity(IUltimateServiceProvider services,
-			INestedWordAutomaton<LETTER, STATE> operand) {
+			INestedWordAutomaton<LETTER, STATE> operand) throws OperationCanceledException {
 		super();
 		m_Services = services;
 		m_Logger = m_Services.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
 		m_Operand = operand;
 		m_Logger.info(this.startMessage());
 		
-		m_Result = 42;
+		m_Result = compute(operand);
 		m_Logger.info(this.exitMessage());
+	}
+
+	private Integer compute(INestedWordAutomaton<LETTER, STATE> operand) throws OperationCanceledException {
+		NestedWordAutomatonReachableStates<LETTER, STATE> nwars = 
+				new NestedWordAutomatonReachableStates<>(m_Services, operand);
+		NestedWordAutomatonReachableStates<LETTER, STATE>.StronglyConnectedComponents sccs = 
+				nwars.getOrComputeStronglyConnectedComponents();
+		Collection<NestedWordAutomatonReachableStates<LETTER, STATE>.StronglyConnectedComponents.SCC> balls = sccs.getBalls();
+		for (SCC scc : balls) {
+			scc.getAllStates();
+		}
+		return null;
 	}
 
 	@Override
