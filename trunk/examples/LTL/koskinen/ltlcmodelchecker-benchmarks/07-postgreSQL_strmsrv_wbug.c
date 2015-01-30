@@ -1,4 +1,4 @@
-//#Unsafe
+//#Safe
 // ****************************************************
 //
 //     Making Prophecies with Decision Predicates
@@ -14,7 +14,7 @@
 
 //@ ltl invariant positive: [](AP(added>0) ==> <>[]AP(ret==1));
 // DD: The property is indeed safe.
-// - The for-loop in L107 never survives the break in L121, therefore added>0 is never true. 
+// - The for-loop in L108 never survives the break in L122, therefore added>0 is never true. 
 
 extern void __VERIFIER_error() __attribute__ ((__noreturn__));
 extern void __VERIFIER_assume() __attribute__ ((__noreturn__));

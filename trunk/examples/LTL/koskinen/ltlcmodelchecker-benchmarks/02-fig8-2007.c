@@ -1,3 +1,4 @@
+//#Safe
 // ****************************************************
 //
 //     Making Prophecies with Decision Predicates
@@ -6,11 +7,12 @@
 //                     July 2010
 //
 // ****************************************************
-
+//
 // Benchmark: fig8-2007.c
 // Property: G(a => F r)
 
-//@ ltl invariant positive: [](! AP(set != 0) || <> AP(unset!= 0));
+//@ ltl invariant positive: [](AP(set != 0) ==> <> AP(unset!= 0));
+
 extern void __VERIFIER_error() __attribute__ ((__noreturn__));
 extern void __VERIFIER_assume() __attribute__ ((__noreturn__));
 extern int __VERIFIER_nondet_int() __attribute__ ((__noreturn__));

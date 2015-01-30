@@ -10,8 +10,13 @@
 
 // Benchmark: pgdropbuf.c
 // Property: istemp => G(A!=1)
+// Remarks by DD:
+// - The first property from the paper is Gp, the second G(p ==> Fq). 
+// - It seems to me, the best variant for G(p ==> Fq) is [](AP(istemp!=1) ==> []AP(A!=1)), as this 
+//   is close to the comment in the file, and 
 
-//@ ltl invariant positive:  (AP(istemp!=1) ==> []AP(A!=1));
+//@ ltl invariant positive:  [](AP(istemp!=1) ==> []AP(A!=1));
+
 extern void __VERIFIER_error() __attribute__ ((__noreturn__));
 extern void __VERIFIER_assume() __attribute__ ((__noreturn__));
 extern int __VERIFIER_nondet_int() __attribute__ ((__noreturn__));

@@ -8,11 +8,11 @@
 //
 // ****************************************************
 
-// Benchmark: win6.c
-// Property: F G WItemsNum >= 1
+// Benchmark: win7.c
+// Property: G F WItemsNum >= 1
 
+//@ ltl invariant positive: []<> AP(WItemsNum >= 1 );
 
-//@ ltl invariant positive: <>[]AP(WItemsNum >= 1 );
 extern void __VERIFIER_error() __attribute__ ((__noreturn__));
 extern void __VERIFIER_assume() __attribute__ ((__noreturn__));
 extern int __VERIFIER_nondet_int() __attribute__ ((__noreturn__));

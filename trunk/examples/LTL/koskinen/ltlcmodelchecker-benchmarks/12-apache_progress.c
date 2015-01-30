@@ -1,4 +1,4 @@
-//#Safe
+//
 // ****************************************************
 //
 //     Making Prophecies with Decision Predicates
@@ -10,9 +10,11 @@
 
 // Benchmark: apache.c
 // Property: (G!die_now) -> (GF do_ACCEPT)
+// Remarks by DD:
+// - In the paper, the property for apache progress is G(p ==> (Fq1 || Fq2))
+// - I dont know what the property should be! 
 
-
-//@ ltl invariant positive: !([] !AP(die_now != 0)) || []<>AP(do_ACCEPT != 0);
+// ltl invariant positive: !([] !AP(die_now != 0)) || []<>AP(do_ACCEPT != 0);
 extern void __VERIFIER_error() __attribute__ ((__noreturn__));
 extern void __VERIFIER___VERIFIER_assume() __attribute__ ((__noreturn__));
 extern int __VERIFIER_nondet_int() __attribute__ ((__noreturn__));

@@ -1,4 +1,4 @@
-//#Safe
+//#Unsafe
 // ****************************************************
 //
 //     Making Prophecies with Decision Predicates
@@ -7,13 +7,23 @@
 //                     July 2010
 //
 // ****************************************************
-// Benchmark: win8.c
-// Property: G(a => F r)
+// Benchmark: win2.c
+// Property: G(a => F r) 
 
-//@ ltl invariant positive: [](! AP(status != 0) || <> AP(polling!= 0));
+// Remarks by DD:
+// - In the paper, the property for windows os fragment 2 is FGp
+// - I think this should be []<>AP(polling==1), as it states that we will eventually continue to poll (non-starvation), and as polling is a variable that changes in the bugged file
+
+//@ ltl invariant positive: []<>AP(polling==1);
+
 extern void __VERIFIER_error() __attribute__ ((__noreturn__));
 extern void __VERIFIER_assume() __attribute__ ((__noreturn__));
 extern int __VERIFIER_nondet_int() __attribute__ ((__noreturn__));
+
+int WarmPollPeriod;
+int status;
+int polling;
+int PowerStateIsAC;
 #define NT_SUCCESS(s) s>0
 #define STATUS_SUCCESS 1
 #define STATUS_UNSUCCESSFUL 0
@@ -38,21 +48,13 @@ void ExReleaseFastMutex() {}
 #define HtRegGetDword __VERIFIER_nondet_int
 #define HtTryAllocatePort __VERIFIER_nondet_int
 #define SetFlags __VERIFIER_nondet_int
-#define CountLookup __VERIFIER_nondet_int
-int WarmPollPeriod;
-int status;
-int polling;
-int PowerStateIsAC;
-int Count;
-LARGE_INTEGER   timeOut1;
-UCHAR           deviceStatus;
-PCHAR           devId;
-BOOLEAN         requestRescan;
-   WarmPollPeriod = __VERIFIER_nondet_int();
-   status = __VERIFIER_nondet_int();
-   polling = __VERIFIER_nondet_int();
-   PowerStateIsAC = __VERIFIER_nondet_int();
-   Count = __VERIFIER_nondet_int();
+
+WarmPollPeriod = __VERIFIER_nondet_int();
+status = __VERIFIER_nondet_int();
+polling = __VERIFIER_nondet_int();
+PowerStateIsAC = __VERIFIER_nondet_int();
+
+
 int main() {
    if( NT_SUCCESS( status ) ) {
        ExAcquireFastMutex();
@@ -69,15 +71,16 @@ int main() {
        {
            if (__VERIFIER_nondet_int()) {
                // We've got it.  Now get a pointer to it.
+               polling = 1;
                if(__VERIFIER_nondet_int()) {
 //---------------------------------------------
                {
-  	  	   LARGE_INTEGER   timeOut1;
+                   LARGE_INTEGER   timeOut1;
                    NTSTATUS        status;
                    UCHAR           deviceStatus;
                    PCHAR           devId;
                    BOOLEAN         requestRescan;
-                   Count = CountLookup();
+                   const ULONG     pollingFailureThreshold = 10; //pick an arbitrary but reasonable number
                    do {
                        if( PowerStateIsAC ) {
                        } else {
@@ -87,9 +90,12 @@ int main() {
                            break;
                        }
                        if( !PowerStateIsAC ) {
-			 //goto mylabl;
+                           goto loc_continue;
                        }
                        if( STATUS_TIMEOUT == status ) {
+						   if(__VERIFIER_nondet_int()) 
+							   polling = 0;
+						   
                            if( __VERIFIER_nondet_int() ) {
                                // try to acquire port
                                if( HtTryAllocatePort() ) {
@@ -125,11 +131,13 @@ int main() {
                            } else {
                            }
                        }
-		   mylabl: { int ddd; ddd = ddd; }
-                   } while( --Count>0 );
+		   loc_continue: { int ddd; ddd = ddd; }
+                   } while( TRUE );
                }
 //---------------------------------------------
+                   polling = 0;
                } else {
+                   polling = 0;
                    // error
                }
            } else {

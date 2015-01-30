@@ -1,4 +1,4 @@
-//#Unsafe
+//#Safe
 // ****************************************************
 //
 //     Making Prophecies with Decision Predicates
@@ -9,9 +9,12 @@
 // ****************************************************
 // Benchmark: win2.c
 // Property: G(a => F r) 
+// Remarks by DD:
+// - In the paper, the property for windows os fragment 2 is FGp
+// - I think this should be []<>AP(polling==1), as it states that we will eventually continue to poll (non-starvation), and as polling is a variable that changes in the bugged file
 
+//@ ltl invariant positive: []<>AP(polling==1);
 
-//@ ltl invariant positive: [](! AP(status != 0) || <> AP(polling!= 0));
 extern void __VERIFIER_error() __attribute__ ((__noreturn__));
 extern void __VERIFIER_assume() __attribute__ ((__noreturn__));
 extern int __VERIFIER_nondet_int() __attribute__ ((__noreturn__));
@@ -45,14 +48,13 @@ void ExReleaseFastMutex() {}
 #define HtTryAllocatePort __VERIFIER_nondet_int
 #define SetFlags __VERIFIER_nondet_int
 
-   
-int main() {
+WarmPollPeriod = __VERIFIER_nondet_int();
+status = __VERIFIER_nondet_int();
+polling = __VERIFIER_nondet_int();
+PowerStateIsAC = __VERIFIER_nondet_int();
 
-   WarmPollPeriod = __VERIFIER_nondet_int();
-   status = __VERIFIER_nondet_int();
-   polling = __VERIFIER_nondet_int();
-   PowerStateIsAC = __VERIFIER_nondet_int();
-   
+
+int main() {
    if( NT_SUCCESS( status ) ) {
        ExAcquireFastMutex();
        SetFlags();
@@ -90,7 +92,6 @@ int main() {
                            goto loc_continue;
                        }
                        if( STATUS_TIMEOUT == status ) {
-if(__VERIFIER_nondet_int()) polling = 0;
                            if( __VERIFIER_nondet_int() ) {
                                // try to acquire port
                                if( HtTryAllocatePort() ) {

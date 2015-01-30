@@ -7,11 +7,12 @@
 //                     July 2010
 //
 // ****************************************************
-
+//
 // Benchmark: acqrel.c
 // Property: G(a => F r)
 
-//@ ltl invariant positive: [](! AP(a != 0) || <> AP(r!= 0));
+//@ ltl invariant positive: [](AP(a != 0) ==> <> AP(r!= 0));
+
 extern void __VERIFIER_error() __attribute__ ((__noreturn__));
 extern void __VERIFIER_assume() __attribute__ ((__noreturn__));
 extern int __VERIFIER_nondet_int() __attribute__ ((__noreturn__));

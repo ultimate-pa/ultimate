@@ -1,4 +1,4 @@
-//#Safe
+//
 // ****************************************************
 //
 //     Making Prophecies with Decision Predicates
@@ -10,9 +10,11 @@
 
 // Benchmark: win4.c
 // Property: G(keA => F keR)
+//
+// Remarks by DD:
+// - In the paper, the first property is G(p ==> Fq) and the second is (Fa) || (Fb)
+// - I have no idea what the second property should be.
 
-
-//@ ltl invariant positive: [](!AP(keA != 0) || <>AP(keR != 0));
 extern void __VERIFIER_error() __attribute__ ((__noreturn__));
 extern void __VERIFIER_assume() __attribute__ ((__noreturn__));
 extern int __VERIFIER_nondet_int() __attribute__ ((__noreturn__));

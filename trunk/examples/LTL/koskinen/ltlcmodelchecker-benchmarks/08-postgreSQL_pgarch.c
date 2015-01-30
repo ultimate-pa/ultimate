@@ -14,7 +14,10 @@
 // Remarks by DD: 
 // - Indeed, this property does not hold! Koskinen said it holds.
 // - I moved the init function at the beginning of main (Koskinens Tool just uses an init function for the initial state)
-//@ ltl invariant positive: []<>AP(wakend==1);
+// - In the paper, the property is FG p, in the benchmark it is GFp; we use the one from the paper!
+
+//@ ltl invariant positive: <>[]AP(wakend==1);
+
 extern void __VERIFIER_error() __attribute__ ((__noreturn__));
 extern void __VERIFIER_assume() __attribute__ ((__noreturn__));
 extern int __VERIFIER_nondet_int() __attribute__ ((__noreturn__));

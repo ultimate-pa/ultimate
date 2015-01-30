@@ -1,4 +1,4 @@
-//#Unsafe
+//#Safe
 // ****************************************************
 //
 //     Making Prophecies with Decision Predicates
@@ -11,8 +11,8 @@
 // Benchmark: win6.c
 // Property: F G WItemsNum >= 1
 
-
 //@ ltl invariant positive: <>[]AP(WItemsNum >= 1 );
+
 extern void __VERIFIER_error() __attribute__ ((__noreturn__));
 extern void __VERIFIER_assume() __attribute__ ((__noreturn__));
 extern int __VERIFIER_nondet_int() __attribute__ ((__noreturn__));
@@ -28,7 +28,7 @@ void callback2() {}
 void main() {
     WItemsNum = __VERIFIER_nondet_int();
     while(1) {
-        while(WItemsNum<=5 && MoreWItems()) {
+        while(WItemsNum<=5 || MoreWItems()) {
                if (WItemsNum<=5) {
                    callback1();
                    WItemsNum++;
