@@ -86,7 +86,7 @@ public class RcfgProgramExecution implements IProgramExecution<CodeBlock, Expres
 		return m_PartialProgramStateMapping.get(-1);
 	}
 
-	private boolean containsOverapproximationFlag(List<CodeBlock> trace) {
+	public static boolean containsOverapproximationFlag(List<CodeBlock> trace) {
 		for (CodeBlock cb : trace) {
 			if (cb.getPayload().hasAnnotation()) {
 				HashMap<String, IAnnotations> annotations = cb.getPayload().getAnnotations();
