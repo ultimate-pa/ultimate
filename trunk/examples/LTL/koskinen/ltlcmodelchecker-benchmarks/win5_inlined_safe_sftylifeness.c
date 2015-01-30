@@ -224,7 +224,8 @@ NTSTATUS main()
 			{
 				status = STATUS_BUFFER_TOO_SMALL;
 			}
-			if (Mask & SERIAL_PURGE_RXABORT) 
+			//DD: Changed & to && to prevent LassoRanker error
+			if (Mask && SERIAL_PURGE_RXABORT) 
 			{
 				keA = 1; keA = 0; 
 				lock = 1; OldIrql = irql;
