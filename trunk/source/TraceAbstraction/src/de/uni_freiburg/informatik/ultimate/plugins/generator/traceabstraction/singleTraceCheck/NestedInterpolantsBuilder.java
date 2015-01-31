@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.Stack;
 
@@ -14,12 +15,13 @@ import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
-import de.uni_freiburg.informatik.ultimate.logic.FormulaWalker;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SafeSubstitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.TermVarsProc;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SPredicate;
@@ -32,7 +34,6 @@ public class NestedInterpolantsBuilder {
 
 	final Script m_Script;
 	final SmtManager m_SmtManager;
-	final PredicateConstructionVisitor m_sfmv;
 
 	Term[] m_CraigInterpolants;
 	final PrintWriter m_IterationPW = null;
@@ -64,6 +65,8 @@ public class NestedInterpolantsBuilder {
 	private Stack<Integer> m_startOfSubtreeStack;
 
 	private final boolean m_TreeInterpolation;
+	
+	private final SafeSubstitution m_Const2RepTvSubst;
 
 	public NestedInterpolantsBuilder(SmtManager smtManager, NestedFormulas<Term, Term> annotatdSsa,
 			Map<Term, BoogieVar> m_constants2BoogieVar, PredicateUnifier predicateBuilder,
@@ -76,9 +79,13 @@ public class NestedInterpolantsBuilder {
 		m_PredicateBuilder = predicateBuilder;
 		m_AnnotSSA = annotatdSsa;
 		m_CraigInterpolants = new Term[m_AnnotSSA.getTrace().length() - 1];
-		m_sfmv = new PredicateConstructionVisitor(m_constants2BoogieVar);
 		m_InterpolatedPositions = interpolatedPositions;
 		m_Trace = annotatdSsa.getTrace();
+		HashMap<Term, Term> const2RepTv = new HashMap<Term, Term>();
+		for (Entry<Term, BoogieVar> entry : m_constants2BoogieVar.entrySet()) {
+			const2RepTv.put(entry.getKey(), entry.getValue().getTermVariable());
+		}
+		m_Const2RepTvSubst = new SafeSubstitution(m_Script, const2RepTv);
 
 		computeCraigInterpolants();
 		traceChecker.unlockSmtManager();
@@ -459,7 +466,6 @@ public class NestedInterpolantsBuilder {
 		IPredicate[] result = new IPredicate[m_Trace.length() - 1];
 		assert m_CraigInterpolants.length == craigInt2interpolantIndex.size();
 		// assert m_InterpolatedPositions.size() == m_CraigInterpolants.length;
-		FormulaWalker walker = new FormulaWalker(m_sfmv, m_Script);
 
 		Map<Term, IPredicate> withIndices2Predicate = new HashMap<Term, IPredicate>();
 
@@ -483,11 +489,10 @@ public class NestedInterpolantsBuilder {
 				craigInterpolPos++;
 				result[resultPos] = withIndices2Predicate.get(withIndices);
 				if (result[resultPos] == null) {
-					m_sfmv.clearVarsAndProc();
-					Term withoutIndices = walker.process(new FormulaUnLet().unlet(withIndices));
-					Set<BoogieVar> vars = m_sfmv.getVars();
-					String[] procs = m_sfmv.getProcedure().toArray(new String[0]);
-					result[resultPos] = m_PredicateBuilder.getOrConstructPredicate(withoutIndices, vars, procs);
+					
+					Term withoutIndices = m_Const2RepTvSubst.transform(withIndices);
+					TermVarsProc tvp = TermVarsProc.computeTermVarsProc(withoutIndices, m_SmtManager.getBoogie2Smt());
+					result[resultPos] = m_PredicateBuilder.getOrConstructPredicate(tvp);
 					withIndices2Predicate.put(withIndices, result[resultPos]);
 				}
 			} else {
