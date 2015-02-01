@@ -36,7 +36,7 @@ public class InterpolationPreferenceChecker {
 		case ForwardPredicates:
 		case PathInvariants:
 			legalSolverSettings.add(Solver.Internal_SMTInterpol);
-			legalSolverSettings.add(Solver.External_Z3InterpolationMode);
+			legalSolverSettings.add(Solver.External_DefaultMode);
 			break;
 		default:
 			throw new AssertionError("unknown option " + interpolation);
