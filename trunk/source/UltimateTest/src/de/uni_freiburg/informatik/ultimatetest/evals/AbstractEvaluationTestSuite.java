@@ -124,6 +124,7 @@ public abstract class AbstractEvaluationTestSuite extends AbstractModelCheckerTe
 
 		return new ITestSummary[] { 
 				new LatexOverviewSummary(getClass(), benchmarks, columnDef),
+				new LatexDetailedSummary(getClass(), benchmarks, columnDef),
 				new TraceAbstractionTestSummary(getClass()), 
 				new CsvSummary(getClass(), benchmarks, columnDef),
 				new HTMLSummary(getClass(), benchmarks, columnDef)

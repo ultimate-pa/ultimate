@@ -25,7 +25,7 @@ public class CsvSummary extends BaseCsvProviderSummary {
 	public String getSummaryLog() {
 		StringBuilder sb = new StringBuilder();
 		PartitionedResults results = partitionResults(mResults.entrySet());
-		ICsvProvider<String> csvTotal = makePrintCsvProviderFromResults(results.All);
+		ICsvProvider<String> csvTotal = makePrintCsvProviderFromResults(results.All, mColumnDefinitions);
 		csvTotal.toCsv(sb, null);
 		sb.append(CoreUtil.getPlatformLineSeparator());
 

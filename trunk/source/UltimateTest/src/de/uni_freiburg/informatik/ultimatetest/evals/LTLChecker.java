@@ -29,22 +29,24 @@ public class LTLChecker extends AbstractEvaluationTestSuite {
 	protected String[] getDirectories() {
 		// @formatter:off
 		return new String[] { 
-//				"examples/LTL/rers/",
+//				"examples/LTL/rers/P14/",
+//				"examples/LTL/rers/P15/",
+//				"examples/LTL/rers/P16/",
+//				"examples/LTL/rers/P17/",
+//				"examples/LTL/rers/P18/",
+//				"examples/LTL/rers/P19/",
 //				"examples/LTL/coolant/",
-				"examples/LTL/bugs/",
-				"examples/LTL/koskinen/ltlcmodelchecker-benchmarks/",
-//				"examples/LTL/system/timer-intermediate.c"
-
-//				"examples/LTL/koskinen/ltlcmodelchecker-benchmarks/11-apache_accept_liveness.c",
+//				"examples/LTL/koskinen/ltlcmodelchecker-benchmarks/",
+	
+//				"examples/LTL/bugs/",				
+//				"examples/LTL/simple/",
 				
-				//java.lang.UnsupportedOperationException: function symbols not yet supported
+				"examples/LTL/simple/rers-test-inlined.c",
+				"examples/LTL/simple/rers-test-inlined_withtmp.c",
 
-				//"variables on heap are not supported in ACSL code right now."
-//				"examples/LTL/koskinen/ltlcmodelchecker-benchmarks/win5_original_safe_sftylifeness.c",
-				
 				//RERS examples with soundness errors  
-//				"examples/LTL/rers/Problem14_prop_010.c",
-//				"examples/LTL/rers/Problem14_prop_002.c",
+//				"examples/LTL/rers/P14/Problem14_prop_010.c",
+//				"examples/LTL/rers/P14/Problem14_prop_002.c",
 
 		};
 		// @formatter:on
@@ -72,7 +74,7 @@ public class LTLChecker extends AbstractEvaluationTestSuite {
 						
 				new ColumnDefinition(
 						"Overall iterations", "Iterations",
-						ConversionContext.Keep(), Aggregate.Sum, Aggregate.Average),
+						ConversionContext.BestFitNumber(), Aggregate.Sum, Aggregate.Average),
 				new ColumnDefinition(
 						"Overall time", "BA analysis time",
 						ConversionContext.Divide(1000000000, 2, " s"), Aggregate.Sum, Aggregate.Average),
@@ -107,16 +109,16 @@ public class LTLChecker extends AbstractEvaluationTestSuite {
 						
 				new ColumnDefinition(
 						"Trivial modules", "Trivial modules",
-						ConversionContext.Keep(), Aggregate.Sum, Aggregate.Average),
+						ConversionContext.BestFitNumber(), Aggregate.Sum, Aggregate.Average),
 				new ColumnDefinition(
 						"Deterministic modules", "Deterministic modules",
-						ConversionContext.Keep(), Aggregate.Sum, Aggregate.Average),
+						ConversionContext.BestFitNumber(), Aggregate.Sum, Aggregate.Average),
 				new ColumnDefinition(
 						"Nondeterministic modules", "Nondeterministic modules",
-						ConversionContext.Keep(), Aggregate.Sum, Aggregate.Average),
+						ConversionContext.BestFitNumber(), Aggregate.Sum, Aggregate.Average),
 				new ColumnDefinition(
 						"Remainer module", "Remainder",
-						ConversionContext.Keep(), Aggregate.Ignore, Aggregate.Ignore),						
+						ConversionContext.BestFitNumber(), Aggregate.Ignore, Aggregate.Ignore),						
 				new ColumnDefinition(
 						"Avg Locs trivial modules", "Avg Locs trivial modules",
 						ConversionContext.BestFitNumber(), Aggregate.Sum, Aggregate.Average),

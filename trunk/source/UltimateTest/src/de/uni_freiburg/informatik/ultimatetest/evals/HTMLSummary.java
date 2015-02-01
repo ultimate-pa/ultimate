@@ -44,15 +44,18 @@ public class HTMLSummary extends BaseCsvProviderSummary {
 		partitions.add(new AbstractMap.SimpleEntry<String, Collection<Entry<UltimateRunDefinition, ExtendedResult>>>(
 				"Error", results.Error));
 
+		ArrayList<ColumnDefinition> prefixedColumnDefinitions = new ArrayList<>();
+		prefixedColumnDefinitions.addAll(ColumnDefinitionUtil.getColumnDefinitionForPrefix());
+		prefixedColumnDefinitions.addAll(mColumnDefinitions);
+
 		for (Entry<String, Collection<Entry<UltimateRunDefinition, ExtendedResult>>> entry : partitions) {
 			if (entry.getValue().size() == 0) {
 				continue;
 			}
 			sb.append("<h2>").append(entry.getKey()).append("</h2>").append(linebreak);
-			ICsvProvider<String> csvTotal = makePrintCsvProviderFromResults(entry.getValue());
-			mColumnDefinitions.addAll(0, ColumnDefinitionUtil.getColumnDefinitionForPrefix());
-			csvTotal = ColumnDefinitionUtil.makeHumanReadable(csvTotal, mColumnDefinitions);
-			ColumnDefinitionUtil.renameHeadersToLatexTitles(csvTotal, mColumnDefinitions);
+			ICsvProvider<String> csvTotal = makePrintCsvProviderFromResults(entry.getValue(), mColumnDefinitions);
+			csvTotal = ColumnDefinitionUtil.makeHumanReadable(csvTotal, prefixedColumnDefinitions);
+			ColumnDefinitionUtil.renameHeadersToLatexTitles(csvTotal, prefixedColumnDefinitions);
 			CsvUtils.toHTML(csvTotal, sb, false, null);
 			sb.append(CoreUtil.getPlatformLineSeparator());
 		}

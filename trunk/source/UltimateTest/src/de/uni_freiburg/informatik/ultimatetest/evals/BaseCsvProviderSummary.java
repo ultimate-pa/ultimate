@@ -63,7 +63,8 @@ public abstract class BaseCsvProviderSummary extends NewTestSummary {
 	}
 
 	protected ICsvProvider<String> makePrintCsvProviderFromResults(
-			Collection<Entry<UltimateRunDefinition, ExtendedResult>> goodResults) {
+			Collection<Entry<UltimateRunDefinition, ExtendedResult>> goodResults,
+			List<ColumnDefinition> columnDefinitions) {
 		ICsvProvider<String> current = new SimpleCsvProvider<>(new ArrayList<String>());
 		for (Entry<UltimateRunDefinition, ExtendedResult> entry : goodResults) {
 			ICsvProvider<?> provider = mCsvProvider.get(entry.getKey());

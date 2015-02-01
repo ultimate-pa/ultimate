@@ -26,6 +26,7 @@ import de.uni_freiburg.informatik.ultimatetest.evals.ColumnDefinition.Aggregate;
 import de.uni_freiburg.informatik.ultimatetest.evals.ConversionContext;
 import de.uni_freiburg.informatik.ultimatetest.evals.CsvSummary;
 import de.uni_freiburg.informatik.ultimatetest.evals.HTMLSummary;
+import de.uni_freiburg.informatik.ultimatetest.evals.LatexDetailedSummary;
 import de.uni_freiburg.informatik.ultimatetest.evals.LatexOverviewSummary;
 import de.uni_freiburg.informatik.ultimatetest.summary.IIncrementalLog;
 import de.uni_freiburg.informatik.ultimatetest.summary.ITestSummary;
@@ -181,6 +182,7 @@ public abstract class AbstractSVCOMP15TestSuite extends UltimateTestSuite {
 				new SVCOMP15TestSummary(getClass()), 
 				new TraceAbstractionTestSummary(getClass()),
 				new LatexOverviewSummary(getClass(), benchmarks, columnDef), 
+				new LatexDetailedSummary(getClass(), benchmarks, columnDef),
 				new CsvSummary(getClass(), benchmarks, columnDef),
 				new HTMLSummary(getClass(), benchmarks, columnDef)
 		};
