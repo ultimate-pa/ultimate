@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
-import de.uni_freiburg.informatik.ultimatetest.evals.LatexSummary.Aggregate;
+import de.uni_freiburg.informatik.ultimatetest.evals.ColumnDefinition.Aggregate;
 import de.uni_freiburg.informatik.ultimatetest.summary.ITestSummary;
 
 public class TraceAbstractionWithAbstractInterpretation extends AbstractEvaluationTestSuite {

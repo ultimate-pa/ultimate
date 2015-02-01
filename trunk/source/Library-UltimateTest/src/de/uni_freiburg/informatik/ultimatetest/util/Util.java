@@ -167,7 +167,7 @@ public class Util {
 	 * Get filename for the file in which an ITestSummary will be written.
 	 * Returns only the name of the file without directories.
 	 */
-	private static String generateLogfilename(ITestLogfile testSummary) {
+	public static String generateLogfilename(ITestLogfile testSummary) {
 		String filename = testSummary.getDescriptiveLogName() + " "
 				+ de.uni_freiburg.informatik.ultimate.core.util.CoreUtil.getCurrentDateTimeAsString()
 				+ testSummary.getFilenameExtension();

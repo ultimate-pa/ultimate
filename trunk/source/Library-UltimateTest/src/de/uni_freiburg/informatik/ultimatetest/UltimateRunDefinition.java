@@ -1,7 +1,6 @@
 package de.uni_freiburg.informatik.ultimatetest;
 
 import java.io.File;
-
 import de.uni_freiburg.informatik.ultimatetest.util.Util;
 
 /**

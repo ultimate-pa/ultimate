@@ -5,5 +5,8 @@
          point="de.uni_freiburg.informatik.ultimate.ep.generator">
       <impl class="de.uni_freiburg.informatik.ultimate.buchiprogramproduct.BuchiProgramProduct"/>
    </extension>
+   <extension point="org.eclipse.core.runtime.preferences">
+    <initializer class="de.uni_freiburg.informatik.ultimate.buchiprogramproduct.preferences.PreferenceInitializer" />
+ </extension>
 
 </plugin>

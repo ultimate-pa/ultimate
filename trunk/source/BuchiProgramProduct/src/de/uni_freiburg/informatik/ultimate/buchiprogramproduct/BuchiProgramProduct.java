@@ -8,7 +8,9 @@ import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.access.IObserver;
 import de.uni_freiburg.informatik.ultimate.buchiprogramproduct.optimizercfg.SmallBlockEncoder;
+import de.uni_freiburg.informatik.ultimate.buchiprogramproduct.preferences.PreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 import de.uni_freiburg.informatik.ultimate.core.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.util.CoreUtil;
@@ -29,8 +31,6 @@ import de.uni_freiburg.informatik.ultimate.result.CounterExampleResult;
  * 
  */
 public class BuchiProgramProduct implements IGenerator {
-
-	private static final boolean UseSBE = !false;
 
 	protected static Logger mLogger;
 	protected List<String> mFileNames;
@@ -88,7 +88,8 @@ public class BuchiProgramProduct implements IGenerator {
 	public List<IObserver> getObservers() {
 		ArrayList<IObserver> observers = new ArrayList<IObserver>();
 		if (!mPreviousToolFoundErrors) {
-			if (mModelIsRCFG && UseSBE) {
+			if (mModelIsRCFG
+					&& new UltimatePreferenceStore(Activator.PLUGIN_ID).getBoolean(PreferenceInitializer.OPTIMIZE_SBE)) {
 				observers.add(new SmallBlockEncoder(mLogger, mBacktranslator));
 			}
 
@@ -136,7 +137,7 @@ public class BuchiProgramProduct implements IGenerator {
 
 	@Override
 	public UltimatePreferenceInitializer getPreferences() {
-		return null;
+		return new PreferenceInitializer();
 	}
 
 	@Override

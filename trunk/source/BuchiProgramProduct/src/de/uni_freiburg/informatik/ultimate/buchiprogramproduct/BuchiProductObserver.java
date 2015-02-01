@@ -4,13 +4,19 @@ import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.buchiprogramproduct.benchmark.SizeBenchmark;
 import de.uni_freiburg.informatik.ultimate.buchiprogramproduct.optimizeproduct.MaximizeFinalStates;
 import de.uni_freiburg.informatik.ultimate.buchiprogramproduct.optimizeproduct.MinimizeLinearStates;
 import de.uni_freiburg.informatik.ultimate.buchiprogramproduct.optimizeproduct.RemoveInfeasibleEdges;
+import de.uni_freiburg.informatik.ultimate.buchiprogramproduct.preferences.PreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.ltl2aut.never2nwa.NWAContainer;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
+import de.uni_freiburg.informatik.ultimate.result.BenchmarkResult;
 import de.uni_freiburg.informatik.ultimate.result.LTLPropertyCheck;
 
 public class BuchiProductObserver implements IUnmanagedObserver {
@@ -41,31 +47,67 @@ public class BuchiProductObserver implements IUnmanagedObserver {
 		if (mNeverClaimNWAContainer == null || mRcfg == null) {
 			return;
 		}
-		mLogger.info("Beginning generation of product automaton");
 
+		// measure size of nwa and rcfg
+		reportSizeBenchmark("Initial property automaton", mNeverClaimNWAContainer.getNWA());
+		reportSizeBenchmark("Initial RCFG", mRcfg);
+
+		mLogger.info("Beginning generation of product automaton");
+		UltimatePreferenceStore ups = new UltimatePreferenceStore(Activator.PLUGIN_ID);
 		try {
 			LTLPropertyCheck ltlAnnot = LTLPropertyCheck.getAnnotation(mNeverClaimNWAContainer);
 			mProduct = new ProductGenerator(mNeverClaimNWAContainer.getNWA(), mRcfg, ltlAnnot, mServices,
 					mBacktranslator).getProductRCFG();
 			mLogger.info("Finished generation of product automaton successfully");
+			reportSizeBenchmark("Initial product", mProduct);
+			while (true) {
+				boolean continueOptimization = false;
 
-			boolean optimize = true;
-			while (optimize) {
-				RemoveInfeasibleEdges opt1 = new RemoveInfeasibleEdges(mProduct, mServices);
-				mProduct = opt1.getResult();
-				MaximizeFinalStates opt2 = new MaximizeFinalStates(mProduct, mServices);
-				mProduct = opt2.getResult();
-				MinimizeLinearStates opt3 = new MinimizeLinearStates(mProduct, mServices);
-				mProduct = opt3.getResult();
+				if (ups.getBoolean(PreferenceInitializer.OPTIMIZE_REMOVE_INFEASIBLE_EDGES)) {
+					RemoveInfeasibleEdges opt1 = new RemoveInfeasibleEdges(mProduct, mServices);
+					mProduct = opt1.getResult();
+					continueOptimization = continueOptimization || opt1.IsGraphChanged();
+				}
 
-				optimize = opt1.IsGraphChanged() || opt2.IsGraphChanged() || opt3.IsGraphChanged();
+				if (ups.getBoolean(PreferenceInitializer.OPTIMIZE_MAXIMIZE_FINAL_STATES)) {
+					MaximizeFinalStates opt2 = new MaximizeFinalStates(mProduct, mServices);
+					mProduct = opt2.getResult();
+					continueOptimization = continueOptimization || opt2.IsGraphChanged();
+				}
+
+				if (ups.getBoolean(PreferenceInitializer.OPTIMIZE_MINIMIZE_LINEAR_STATES)) {
+					MinimizeLinearStates opt3 = new MinimizeLinearStates(mProduct, mServices);
+					mProduct = opt3.getResult();
+					continueOptimization = continueOptimization || opt3.IsGraphChanged();
+				}
+
+				if (ups.getBoolean(PreferenceInitializer.OPTIMIZE_UNTIL_FIXPOINT) && continueOptimization) {
+					continue;
+				}
+				break;
 			}
+			reportSizeBenchmark("Optimized Product", mProduct);
 
 		} catch (Exception e) {
 			mLogger.error(String.format(
 					"BuchiProgramProduct encountered an error during product automaton generation:\n %s", e));
 			throw e;
 		}
+		return;
+	}
+
+	private void reportSizeBenchmark(String message, NestedWordAutomaton<CodeBlock, String> nwa) {
+		reportSizeBenchmark(message, new SizeBenchmark(nwa, message));
+	}
+
+	private void reportSizeBenchmark(String message, RootNode root) {
+		reportSizeBenchmark(message, new SizeBenchmark(root, message));
+	}
+
+	private void reportSizeBenchmark(String message, SizeBenchmark bench) {
+		mLogger.info(message + " " + bench);
+		mServices.getResultService().reportResult(Activator.PLUGIN_ID,
+				new BenchmarkResult<>(Activator.PLUGIN_ID, message, bench));
 	}
 
 	@Override

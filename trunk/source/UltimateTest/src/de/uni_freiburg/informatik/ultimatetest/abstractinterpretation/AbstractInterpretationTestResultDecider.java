@@ -89,8 +89,6 @@ public class AbstractInterpretationTestResultDecider extends TestResultDecider {
 
 	@Override
 	public TestResult getTestResult(IResultService resultService) {
-		System.gc();
-		
 		Logger log = Logger.getLogger(AbstractInterpretationTestResultDecider.class);
 		Collection<String> customMessages = new LinkedList<String>();
 		final TestResult testoutcome;
@@ -201,8 +199,6 @@ public class AbstractInterpretationTestResultDecider extends TestResultDecider {
 
 	@Override
 	public TestResult getTestResult(IResultService resultService, Throwable e) {
-		System.gc();
-		
 		generateResultMessageAndCategory(new ActualResult(ActualResultType.EXCEPTION_OR_ERROR,
 				new ExceptionOrErrorResult("Ultimate", e)));
 		Logger log = Logger.getLogger(AbstractInterpretationTestResultDecider.class);

@@ -22,9 +22,11 @@ import de.uni_freiburg.informatik.ultimatetest.UltimateTestSuite;
 import de.uni_freiburg.informatik.ultimatetest.decider.ITestResultDecider;
 import de.uni_freiburg.informatik.ultimatetest.decider.SafetyCheckTestResultDecider;
 import de.uni_freiburg.informatik.ultimatetest.evals.ColumnDefinition;
+import de.uni_freiburg.informatik.ultimatetest.evals.ColumnDefinition.Aggregate;
 import de.uni_freiburg.informatik.ultimatetest.evals.ConversionContext;
-import de.uni_freiburg.informatik.ultimatetest.evals.LatexSummary;
-import de.uni_freiburg.informatik.ultimatetest.evals.LatexSummary.Aggregate;
+import de.uni_freiburg.informatik.ultimatetest.evals.CsvSummary;
+import de.uni_freiburg.informatik.ultimatetest.evals.HTMLSummary;
+import de.uni_freiburg.informatik.ultimatetest.evals.LatexOverviewSummary;
 import de.uni_freiburg.informatik.ultimatetest.summary.IIncrementalLog;
 import de.uni_freiburg.informatik.ultimatetest.summary.ITestSummary;
 import de.uni_freiburg.informatik.ultimatetest.summary.IncrementalLogWithVMParameters;
@@ -150,7 +152,7 @@ public abstract class AbstractSVCOMP15TestSuite extends UltimateTestSuite {
 					"Runtime (ns)", "Avg. runtime",
 					ConversionContext.Divide(1000000000, 2, " s"), Aggregate.Sum, Aggregate.Average),	
 			new ColumnDefinition(
-					"Allocated memory end (bytes)", "Mem{-}ory",
+					"Allocated memory end (bytes)", "Memory",
 					ConversionContext.Divide(1048576, 2, " MB"), Aggregate.Max, Aggregate.Average),
 			new ColumnDefinition(
 					"Overall iterations", "Iter{-}ations",
@@ -178,7 +180,9 @@ public abstract class AbstractSVCOMP15TestSuite extends UltimateTestSuite {
 		return new ITestSummary[] { 
 				new SVCOMP15TestSummary(getClass()), 
 				new TraceAbstractionTestSummary(getClass()),
-				new LatexSummary(getClass(), benchmarks, columnDef), 
+				new LatexOverviewSummary(getClass(), benchmarks, columnDef), 
+				new CsvSummary(getClass(), benchmarks, columnDef),
+				new HTMLSummary(getClass(), benchmarks, columnDef)
 		};
 		//@formatter:on
 	}

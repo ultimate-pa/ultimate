@@ -47,13 +47,14 @@ public class UltimateTestCase {
 		System.gc();
 		System.runFinalization();
 		System.gc();
+		Runtime.getRuntime().gc();
 
 		// start debug code: use this only in controlled situations!
-		// try {
-		// Thread.sleep(500);
-		// } catch (InterruptedException e1) {
-		// }
-		// HeapDumper.dumpHeap("F:\\tmp\\ultimate benchmarks\\heapdump", false);
+//		try {
+//			Thread.sleep(500);
+//		} catch (InterruptedException e1) {
+//		}
+//		HeapDumper.dumpHeap("F:\\tmp\\ultimate benchmarks\\heapdump", false);
 		// end debug ode
 
 		Throwable th = null;

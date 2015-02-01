@@ -6,7 +6,7 @@ import de.uni_freiburg.informatik.ultimatetest.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
 import de.uni_freiburg.informatik.ultimatetest.decider.ITestResultDecider;
 import de.uni_freiburg.informatik.ultimatetest.decider.LTLCheckerTestResultDecider;
-import de.uni_freiburg.informatik.ultimatetest.evals.LatexSummary.Aggregate;
+import de.uni_freiburg.informatik.ultimatetest.evals.ColumnDefinition.Aggregate;
 
 public class LTLChecker extends AbstractEvaluationTestSuite {
 
@@ -53,7 +53,7 @@ public class LTLChecker extends AbstractEvaluationTestSuite {
 
 	@Override
 	protected int getTimeout() {
-		return 2 * 60 * 1000;
+		return 20 * 60 * 1000;
 	}
 
 	@Override
@@ -61,11 +61,71 @@ public class LTLChecker extends AbstractEvaluationTestSuite {
 		// @formatter:off
 		return new ColumnDefinition[]{
 				new ColumnDefinition(
-						"Runtime (ns)", "Avg. runtime",
+						"Runtime (ns)", "Total time",
 						ConversionContext.Divide(1000000000, 2, " s"), Aggregate.Sum, Aggregate.Average),	
 				new ColumnDefinition(
-						"Allocated memory end (bytes)", "Mem{-}ory",
+						"Allocated memory end (bytes)", "Alloc. Memory",
 						ConversionContext.Divide(1048576, 2, " MB"), Aggregate.Max, Aggregate.Average),
+				new ColumnDefinition(
+						"Peak memory consumption (bytes)", "Peak Memory",
+						ConversionContext.Divide(1048576, 2, " MB"), Aggregate.Max, Aggregate.Average),
+						
+				new ColumnDefinition(
+						"Overall iterations", "Iterations",
+						ConversionContext.Keep(), Aggregate.Sum, Aggregate.Average),
+				new ColumnDefinition(
+						"Overall time", "BA analysis time",
+						ConversionContext.Divide(1000000000, 2, " s"), Aggregate.Sum, Aggregate.Average),
+				new ColumnDefinition(
+						"Minimization time", "BA minimization time",
+						ConversionContext.Divide(1000000000, 2, " s"), Aggregate.Sum, Aggregate.Average),
+				
+				new ColumnDefinition(
+						"Initial property automaton Locations", "Initial property automaton Locations",
+						ConversionContext.BestFitNumber(), Aggregate.Ignore, Aggregate.Average),
+				new ColumnDefinition(
+						"Initial property automaton Edges", "Initial property automaton Edges",
+						ConversionContext.BestFitNumber(), Aggregate.Ignore, Aggregate.Average),
+				new ColumnDefinition(
+						"Initial RCFG Locations", "Initial RCFG Locations",
+						ConversionContext.BestFitNumber(), Aggregate.Ignore, Aggregate.Average),
+				new ColumnDefinition(
+						"Initial RCFG Edges", "Initial RCFG Edges",
+						ConversionContext.BestFitNumber(), Aggregate.Ignore, Aggregate.Average),
+				new ColumnDefinition(
+						"Initial product Locations", "Initial product Locations",
+						ConversionContext.BestFitNumber(), Aggregate.Ignore, Aggregate.Average),
+				new ColumnDefinition(
+						"Initial product Edges", "Initial product Edges",
+						ConversionContext.BestFitNumber(), Aggregate.Ignore, Aggregate.Average),
+				new ColumnDefinition(
+						"Optimized Product Locations", "Optimized Product Locations",
+						ConversionContext.BestFitNumber(), Aggregate.Ignore, Aggregate.Average),
+				new ColumnDefinition(
+						"Optimized Product Edges", "Optimized Product Edges",
+						ConversionContext.BestFitNumber(), Aggregate.Ignore, Aggregate.Average),						
+						
+				new ColumnDefinition(
+						"Trivial modules", "Trivial modules",
+						ConversionContext.Keep(), Aggregate.Sum, Aggregate.Average),
+				new ColumnDefinition(
+						"Deterministic modules", "Deterministic modules",
+						ConversionContext.Keep(), Aggregate.Sum, Aggregate.Average),
+				new ColumnDefinition(
+						"Nondeterministic modules", "Nondeterministic modules",
+						ConversionContext.Keep(), Aggregate.Sum, Aggregate.Average),
+				new ColumnDefinition(
+						"Remainer module", "Remainder",
+						ConversionContext.Keep(), Aggregate.Ignore, Aggregate.Ignore),						
+				new ColumnDefinition(
+						"Avg Locs trivial modules", "Avg Locs trivial modules",
+						ConversionContext.BestFitNumber(), Aggregate.Sum, Aggregate.Average),
+				new ColumnDefinition(
+						"Avg Locs deterministic modules", "Avg Locs deterministic modules",
+						ConversionContext.BestFitNumber(), Aggregate.Sum, Aggregate.Average),
+				new ColumnDefinition(
+						"Avg Locs nondeterministic modules", "Avg Locs nondeterministic modules",
+						ConversionContext.BestFitNumber(), Aggregate.Sum, Aggregate.Average),						
 			};
 		// @formatter:on
 	}

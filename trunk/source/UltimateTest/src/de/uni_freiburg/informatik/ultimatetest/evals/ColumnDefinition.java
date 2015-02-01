@@ -1,13 +1,15 @@
 package de.uni_freiburg.informatik.ultimatetest.evals;
 
-import de.uni_freiburg.informatik.ultimatetest.evals.LatexSummary.Aggregate;
-
 /**
  * 
  * @author dietsch@informatik.uni-freiburg.de
  * 
  */
 public class ColumnDefinition {
+	public enum Aggregate {
+		Sum, Max, Average, Ignore
+	}
+
 	private final String ColumnToKeep;
 	private final String LatexTableTitle;
 	private final ConversionContext ConversionContext;

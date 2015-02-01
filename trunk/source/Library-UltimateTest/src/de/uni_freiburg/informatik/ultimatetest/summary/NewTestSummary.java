@@ -2,7 +2,7 @@ package de.uni_freiburg.informatik.ultimatetest.summary;
 
 import java.io.File;
 import java.util.Collection;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map.Entry;
 
@@ -18,11 +18,11 @@ import de.uni_freiburg.informatik.ultimatetest.decider.ITestResultDecider.TestRe
  */
 public abstract class NewTestSummary implements ITestSummary {
 
-	protected HashMap<UltimateRunDefinition, ExtendedResult> mResults;
+	protected LinkedHashMap<UltimateRunDefinition, ExtendedResult> mResults;
 	private Class<? extends UltimateTestSuite> mUltimateTestSuite;
 
 	public NewTestSummary(Class<? extends UltimateTestSuite> ultimateTestSuite) {
-		mResults = new HashMap<>();
+		mResults = new LinkedHashMap<>();
 		mUltimateTestSuite = ultimateTestSuite;
 	}
 

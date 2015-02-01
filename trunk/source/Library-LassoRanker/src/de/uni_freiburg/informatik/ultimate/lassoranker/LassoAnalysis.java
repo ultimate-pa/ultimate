@@ -187,7 +187,6 @@ public class LassoAnalysis {
 		// This is now a good time to do garbage collection to free the memory
 		// allocated during preprocessing. Hopefully it is then available when
 		// we call the SMT solver.
-		System.gc();
 	}
 
 	/**

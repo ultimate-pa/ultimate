@@ -1,6 +1,6 @@
 package de.uni_freiburg.informatik.ultimatetest.evals;
 
-import de.uni_freiburg.informatik.ultimatetest.evals.LatexSummary.Aggregate;
+import de.uni_freiburg.informatik.ultimatetest.evals.ColumnDefinition.Aggregate;
 
 public abstract class TACAS2015 extends AbstractEvaluationTestSuite {
 

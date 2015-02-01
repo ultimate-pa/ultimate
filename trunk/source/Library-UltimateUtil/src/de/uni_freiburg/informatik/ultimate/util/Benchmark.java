@@ -340,7 +340,6 @@ public class Benchmark implements ICsvProviderProvider<Double> {
 		private void start() {
 			mStartMemorySizeBytes = Runtime.getRuntime().totalMemory();
 			mStartMemoryFreeSizeBytes = Runtime.getRuntime().freeMemory();
-
 			long startMemoryUsageBytes = 0;
 			for (MemoryPoolMXBean bean : mMemoryPoolBeans) {
 				bean.resetPeakUsage();
@@ -364,6 +363,7 @@ public class Benchmark implements ICsvProviderProvider<Double> {
 				}
 			}
 			mPeakMemorySizeBytes = Math.max(mPeakMemorySizeBytes, Math.max(stopMemoryUsage, mStartPeakMemorySizeBytes));
+//			Runtime.getRuntime().gc();
 		}
 
 		private void reset() {

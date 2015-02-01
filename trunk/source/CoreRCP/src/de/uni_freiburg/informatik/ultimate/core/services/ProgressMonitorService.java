@@ -22,8 +22,12 @@ public class ProgressMonitorService implements IStorable, IToolchainCancel, IPro
 		mCancelRequest = false;
 	}
 
-	/* (non-Javadoc)
-	 * @see de.uni_freiburg.informatik.ultimate.core.services.IProgressMonitorService#continueProcessing()
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * de.uni_freiburg.informatik.ultimate.core.services.IProgressMonitorService
+	 * #continueProcessing()
 	 */
 	@Override
 	public boolean continueProcessing() {
@@ -34,16 +38,24 @@ public class ProgressMonitorService implements IStorable, IToolchainCancel, IPro
 		return !cancel;
 	}
 
-	/* (non-Javadoc)
-	 * @see de.uni_freiburg.informatik.ultimate.core.services.IProgressMonitorService#setSubtask(java.lang.String)
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * de.uni_freiburg.informatik.ultimate.core.services.IProgressMonitorService
+	 * #setSubtask(java.lang.String)
 	 */
 	@Override
 	public void setSubtask(String task) {
 		mMonitor.subTask(task);
 	}
 
-	/* (non-Javadoc)
-	 * @see de.uni_freiburg.informatik.ultimate.core.services.IProgressMonitorService#setDeadline(long)
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * de.uni_freiburg.informatik.ultimate.core.services.IProgressMonitorService
+	 * #setDeadline(long)
 	 */
 	@Override
 	public void setDeadline(long date) {
@@ -68,6 +80,9 @@ public class ProgressMonitorService implements IStorable, IToolchainCancel, IPro
 	@Override
 	public void destroy() {
 		mMonitor.done();
+		mMonitor = null;
+		mToolchainCancel = null;
+		mLogger = null;
 	}
 
 	@Override

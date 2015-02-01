@@ -7,7 +7,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.buchiprogramproduct.benchmark.SizeBenchmark;
 import de.uni_freiburg.informatik.ultimate.core.util.CoreUtil;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.ModuleDecompositionBenchmark;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.TimingBenchmark;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.CodeCheckBenchmarks;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionBenchmarks;
@@ -115,11 +117,17 @@ public abstract class AbstractEvaluationTestSuite extends AbstractModelCheckerTe
 		benchmarks.add(Benchmark.class);
 		benchmarks.add(TraceAbstractionBenchmarks.class);
 		benchmarks.add(CodeCheckBenchmarks.class);
+		benchmarks.add(ModuleDecompositionBenchmark.class);
+		benchmarks.add(SizeBenchmark.class);
 
 		ColumnDefinition[] columnDef = getColumnDefinitions();
 
-		return new ITestSummary[] { new LatexSummary(getClass(), benchmarks, columnDef),
-				new TraceAbstractionTestSummary(getClass()), };
+		return new ITestSummary[] { 
+				new LatexOverviewSummary(getClass(), benchmarks, columnDef),
+				new TraceAbstractionTestSummary(getClass()), 
+				new CsvSummary(getClass(), benchmarks, columnDef),
+				new HTMLSummary(getClass(), benchmarks, columnDef)
+		};
 
 	}
 

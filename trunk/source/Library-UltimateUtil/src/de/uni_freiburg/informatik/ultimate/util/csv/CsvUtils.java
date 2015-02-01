@@ -10,7 +10,7 @@ import java.util.Map;
 
 /**
  * 
- * @author dietsch
+ * @author dietsch@informatik.uni-freiburg.de
  * 
  */
 public class CsvUtils {
@@ -423,18 +423,4 @@ public class CsvUtils {
 		}
 		return false;
 	}
-
-	// public class NumbersFormatter implements IExplicitConverter<Object,
-	// String>
-	// {
-	// public NumbersFormatter(){
-	//
-	// }
-	// @Override
-	// public String convert(Object something) {
-	// return null;
-	// }
-	//
-	// }
-
 }

@@ -5,11 +5,12 @@ Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.buchiprogramproduct;sin
 Bundle-Version: 0.0.1
 Bundle-Activator: de.uni_freiburg.informatik.ultimate.buchiprogramproduct.Activator
 Require-Bundle: Library-log4j,
+ Library-UltimateUtil,
  UltimateCore,
  Library-ModelCheckerUtils,
  BoogiePreprocessor,
  Library-SMTLIB,
- de.uni_freiburg.informatik.ultimate.ltl2aut,
+  de.uni_freiburg.informatik.ultimate.ltl2aut,
  de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder,
  JavaCup,
  de.uni_freiburg.informatik.ultimate.automata,
@@ -21,3 +22,4 @@ Import-Package: junit.framework,
  org.junit,
  org.junit.runner,
  org.junit.runners
+Export-Package: de.uni_freiburg.informatik.ultimate.buchiprogramproduct.benchmark

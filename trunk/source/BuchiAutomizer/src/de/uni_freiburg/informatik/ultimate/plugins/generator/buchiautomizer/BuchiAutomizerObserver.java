@@ -88,7 +88,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 		BuchiCegarLoopBenchmarkGenerator benchGen = bcl.getBenchmarkGenerator();
 		benchGen.stop(BuchiCegarLoopBenchmark.s_OverallTime);
 
-		IResult benchDecomp = new BenchmarkResult<Double>(Activator.s_PLUGIN_ID,
+		IResult benchDecomp = new BenchmarkResult<String>(Activator.s_PLUGIN_ID,
 				"Constructed decomposition of program", bcl.getMDBenchmark());
 		reportResult(benchDecomp);
 

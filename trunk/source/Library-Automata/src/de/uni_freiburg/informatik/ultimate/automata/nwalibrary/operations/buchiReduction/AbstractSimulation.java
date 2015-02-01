@@ -384,7 +384,6 @@ public abstract class AbstractSimulation<LETTER,STATE> {
         this.e.clear();
         this.eI.clear();
         this.v0.clear();
-        System.gc();
     }
 
     /**
