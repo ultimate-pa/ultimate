@@ -275,7 +275,7 @@ public class LatexDetailedSummary extends BaseCsvProviderSummary {
 					}
 				}));
 
-		results.sort(new Comparator<Entry<UltimateRunDefinition, ExtendedResult>>() {
+		Collections.sort(results, new Comparator<Entry<UltimateRunDefinition, ExtendedResult>>() {
 			@Override
 			public int compare(Entry<UltimateRunDefinition, ExtendedResult> o1,
 					Entry<UltimateRunDefinition, ExtendedResult> o2) {
