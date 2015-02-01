@@ -29,20 +29,21 @@ public class LTLChecker extends AbstractEvaluationTestSuite {
 	protected String[] getDirectories() {
 		// @formatter:off
 		return new String[] { 
-//				"examples/LTL/rers/P14/",
-//				"examples/LTL/rers/P15/",
-//				"examples/LTL/rers/P16/",
-//				"examples/LTL/rers/P17/",
-//				"examples/LTL/rers/P18/",
-//				"examples/LTL/rers/P19/",
-//				"examples/LTL/coolant/",
-//				"examples/LTL/koskinen/ltlcmodelchecker-benchmarks/",
+				"examples/LTL/rers/P14/",
+				"examples/LTL/rers/P15/",
+				"examples/LTL/rers/P16/",
+				"examples/LTL/rers/P17/",
+				"examples/LTL/rers/P18/",
+				"examples/LTL/rers/P19/",
+				"examples/LTL/coolant/",
+				"examples/LTL/koskinen/ltlcmodelchecker-benchmarks/",
 	
 //				"examples/LTL/bugs/",				
 //				"examples/LTL/simple/",
 				
-				"examples/LTL/simple/rers-test-inlined.c",
-				"examples/LTL/simple/rers-test-inlined_withtmp.c",
+//				"examples/LTL/simple/rers-test.c",				
+//				"examples/LTL/simple/rers-test-inlined.c",
+//				"examples/LTL/simple/rers-test-inlined_withtmp.c",
 
 				//RERS examples with soundness errors  
 //				"examples/LTL/rers/P14/Problem14_prop_010.c",

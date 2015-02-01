@@ -1,6 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.buchiprogramproduct.optimizeproduct;
 
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 
@@ -11,6 +12,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.SequentialComposition;
 
@@ -21,7 +23,7 @@ public class MinimizeLinearStates extends BaseProductOptimizer {
 	public MinimizeLinearStates(RootNode product, IUltimateServiceProvider services) {
 		super(product, services);
 		mLogger.info("Removed " + mRemovedEdges + " edges and " + mRemovedLocations
-				+ " and replaced them with sequential compositions");
+				+ " locations and replaced them with sequential compositions");
 	}
 
 	@Override
@@ -40,13 +42,19 @@ public class MinimizeLinearStates extends BaseProductOptimizer {
 			RCFGEdge current = edges.removeFirst();
 			if (closed.contains(current)) {
 				continue;
+			} else if (current.getTarget() == null || current.getSource() == null) {
+				// disconnected edges can remain in the queue if they were
+				// inserted previously
+				continue;
 			}
 			closed.add(current);
 
 			ProgramPoint target = (ProgramPoint) current.getTarget();
-
-			if (target.getIncomingEdges().size() == 1 && target.getOutgoingEdges().size() == 1) {
-				// its a candidate
+			if (current instanceof RootEdge) {
+				edges.addAll(current.getTarget().getOutgoingEdges());
+			} else if (new HashSet<>(target.getIncomingNodes()).size() == 1
+					&& new HashSet<>(target.getOutgoingNodes()).size() == 1) {
+				// // its a candidate
 				edges.addAll(processCandidate(root, target));
 			} else {
 				edges.addAll(current.getTarget().getOutgoingEdges());
@@ -64,49 +72,83 @@ public class MinimizeLinearStates extends BaseProductOptimizer {
 	 * @return A list of edges that should be processed next
 	 */
 	private List<RCFGEdge> processCandidate(RootNode root, ProgramPoint target) {
-		// this node has exactly one incoming and one outgoing edge,
-		// so we have the two edges
-		// e1 = (q1,st1,q2)
-		// e2 = (q2,st2,q3)
-		RCFGEdge predEdge = target.getIncomingEdges().get(0);
-		RCFGEdge succEdge = target.getOutgoingEdges().get(0);
+		// this node has exactly one predecessor and one successor, but may have
+		// more edges
+		// so we have the incoming edges
+		// ei = (q1,sti,q2) in Ei
+		// and the outoging edges
+		// eo = (q2,sto,q3) in Eo
+		// and we will try to replace them by |Ei| * |Eo| edges
 
-		if (!(predEdge instanceof CodeBlock) || !(succEdge instanceof CodeBlock)) {
-			// if one of the edges is no codeblock, it is a root edge, and we
-			// cannot apply the rule
-			return target.getOutgoingEdges();
+		// a precondition is that there is only one predecessor and one
+		// successor, so this is enough to get it
+		ProgramPoint pred = (ProgramPoint) target.getIncomingEdges().get(0).getSource();
+		ProgramPoint succ = (ProgramPoint) target.getOutgoingEdges().get(0).getTarget();
+
+		if (!checkEdges(target.getIncomingEdges(), target.getOutgoingEdges())) {
+			// the edges do not fulfill the conditions, return
+			return succ.getOutgoingEdges();
 		}
-
-		if (predEdge instanceof Call && succEdge instanceof Return) {
-			// this is allowed, continue
-		} else if (predEdge instanceof Return || predEdge instanceof Call || succEdge instanceof Return
-				|| succEdge instanceof Call) {
-			// we can only compose (Call,Return), no other combination of Call /
-			// Return.
-			return target.getOutgoingEdges();
-		}
-
-		ProgramPoint pred = (ProgramPoint) predEdge.getSource();
-		ProgramPoint succ = (ProgramPoint) succEdge.getTarget();
 
 		if (BuchiProgramAcceptingStateAnnotation.getAnnotation(pred) != null
 				|| BuchiProgramAcceptingStateAnnotation.getAnnotation(target) == null
 				|| BuchiProgramAcceptingStateAnnotation.getAnnotation(succ) != null) {
-			// we will not change the acceptance condition, so we delete e1 and
-			// e2 and q2
-			// and add the new edge (q1,st1;st2,q3)
-			predEdge.disconnectSource();
-			predEdge.disconnectTarget();
-			succEdge.disconnectSource();
-			succEdge.disconnectTarget();
-			mRemovedEdges += 2;
+			// we will not change the acceptance conditions, so we can start
+			// with creating new edges
+			// for each ei from Ei and for each eo from Eo we add a new edge
+			// (q1,st1;st2,q3)
 
-			new SequentialComposition(pred, succ, root.getRootAnnot().getBoogie2SMT(), root.getRootAnnot()
-					.getModGlobVarManager(), true, true, mServices, new CodeBlock[] { (CodeBlock) predEdge,
-					(CodeBlock) succEdge });
+			List<RCFGEdge> predEdges = new ArrayList<RCFGEdge>(target.getIncomingEdges());
+			List<RCFGEdge> succEdges = new ArrayList<RCFGEdge>(target.getOutgoingEdges());
+
+			for (RCFGEdge predEdge : predEdges) {
+				predEdge.disconnectSource();
+				predEdge.disconnectTarget();
+			}
+
+			for (RCFGEdge succEdge : succEdges) {
+				succEdge.disconnectSource();
+				succEdge.disconnectTarget();
+			}
+
+			for (RCFGEdge predEdge : predEdges) {
+				for (RCFGEdge succEdge : succEdges) {
+					SequentialComposition sc = new SequentialComposition(pred, succ, root.getRootAnnot()
+							.getBoogie2SMT(), root.getRootAnnot().getModGlobVarManager(), true, true, mServices,
+							new CodeBlock[] { (CodeBlock) predEdge, (CodeBlock) succEdge });
+					assert sc.getTarget() != null;
+					assert sc.getSource() != null;
+				}
+			}
+
+			mRemovedEdges += predEdges.size() + succEdges.size();
+
 		}
 		return succ.getOutgoingEdges();
 
+	}
+
+	private boolean checkEdges(List<RCFGEdge> predEdges, List<RCFGEdge> succEdges) {
+		for (RCFGEdge predEdge : predEdges) {
+			for (RCFGEdge succEdge : succEdges) {
+				if (!(predEdge instanceof CodeBlock) || !(succEdge instanceof CodeBlock)) {
+					// if one of the edges is no codeblock, it is a root edge,
+					// and we cannot apply the rule
+					return false;
+				}
+
+				if (predEdge instanceof Call && succEdge instanceof Return) {
+					// this is allowed, continue
+				} else if (predEdge instanceof Return || predEdge instanceof Call || succEdge instanceof Return
+						|| succEdge instanceof Call) {
+					// we can only compose (Call,Return), no other combination
+					// of Call /
+					// Return.
+					return false;
+				}
+			}
+		}
+		return true;
 	}
 
 	@Override
