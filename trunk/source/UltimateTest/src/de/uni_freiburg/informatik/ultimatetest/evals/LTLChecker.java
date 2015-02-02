@@ -29,16 +29,17 @@ public class LTLChecker extends AbstractEvaluationTestSuite {
 	protected String[] getDirectories() {
 		// @formatter:off
 		return new String[] { 
-				"examples/LTL/rers/P14/",
-				"examples/LTL/rers/P15/",
-				"examples/LTL/rers/P16/",
-				"examples/LTL/rers/P17/",
-				"examples/LTL/rers/P18/",
-				"examples/LTL/rers/P19/",
-				"examples/LTL/coolant/",
-				"examples/LTL/koskinen/ltlcmodelchecker-benchmarks/",
+//				"examples/LTL/rers/P14/",
+//				"examples/LTL/rers/P15/",
+//				"examples/LTL/rers/P16/",
+//				"examples/LTL/rers/P17/",
+//				"examples/LTL/rers/P18/",
+//				"examples/LTL/rers/P19/",
+//				"examples/LTL/coolant/",
+//				"examples/LTL/koskinen/ltlcmodelchecker-benchmarks/",
 	
-//				"examples/LTL/bugs/",				
+				"examples/LTL/bugs/",
+//				"examples/LTL/bugs/Simple_ex1.c",				
 //				"examples/LTL/simple/",
 				
 //				"examples/LTL/simple/rers-test.c",				
@@ -56,7 +57,7 @@ public class LTLChecker extends AbstractEvaluationTestSuite {
 
 	@Override
 	protected int getTimeout() {
-		return 20 * 60 * 1000;
+		return 2 * 60 * 1000;
 	}
 
 	@Override
@@ -119,7 +120,7 @@ public class LTLChecker extends AbstractEvaluationTestSuite {
 						ConversionContext.BestFitNumber(), Aggregate.Sum, Aggregate.Average),
 				new ColumnDefinition(
 						"Remainer module", "Remainder",
-						ConversionContext.BestFitNumber(), Aggregate.Ignore, Aggregate.Ignore),						
+						ConversionContext.Keep(), Aggregate.Ignore, Aggregate.Ignore),						
 				new ColumnDefinition(
 						"Avg Locs trivial modules", "Avg Locs trivial modules",
 						ConversionContext.BestFitNumber(), Aggregate.Sum, Aggregate.Average),
