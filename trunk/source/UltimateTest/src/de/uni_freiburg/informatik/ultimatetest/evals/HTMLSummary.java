@@ -3,6 +3,8 @@ package de.uni_freiburg.informatik.ultimatetest.evals;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map.Entry;
 
@@ -53,7 +55,22 @@ public class HTMLSummary extends BaseCsvProviderSummary {
 				continue;
 			}
 			sb.append("<h2>").append(entry.getKey()).append("</h2>").append(linebreak);
-			ICsvProvider<String> csvTotal = makePrintCsvProviderFromResults(entry.getValue(), mColumnDefinitions);
+
+			//sort by variant
+			List<Entry<UltimateRunDefinition, ExtendedResult>> currentPartition = new ArrayList<>(entry.getValue());
+			Collections.sort(currentPartition, new Comparator<Entry<UltimateRunDefinition, ExtendedResult>>() {
+				@Override
+				public int compare(Entry<UltimateRunDefinition, ExtendedResult> o1,
+						Entry<UltimateRunDefinition, ExtendedResult> o2) {
+					int nameCompare = o1.getKey().getInput().compareTo(o2.getKey().getInput());
+					if (nameCompare == 0) {
+						return o1.getKey().getSettings().getName().compareTo(o2.getKey().getSettings().getName());
+					}
+					return nameCompare;
+				}
+			});
+
+			ICsvProvider<String> csvTotal = makePrintCsvProviderFromResults(currentPartition, mColumnDefinitions);
 			csvTotal = ColumnDefinitionUtil.makeHumanReadable(csvTotal, prefixedColumnDefinitions);
 			ColumnDefinitionUtil.renameHeadersToLatexTitles(csvTotal, prefixedColumnDefinitions);
 			CsvUtils.toHTML(csvTotal, sb, false, null);

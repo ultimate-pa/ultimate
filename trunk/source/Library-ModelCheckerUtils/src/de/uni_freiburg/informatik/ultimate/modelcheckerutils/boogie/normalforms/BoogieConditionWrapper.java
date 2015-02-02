@@ -113,16 +113,16 @@ public class BoogieConditionWrapper implements IConditionWrapper<Expression> {
 		return unifiedOperands.iterator();
 	}
 
-//	private String printExpressionCollection(Collection<Expression> exp) {
-//		StringBuilder sb = new StringBuilder();
-//		sb.append("[");
-//		for (Expression e : exp) {
-//			sb.append(BoogiePrettyPrinter.print(e)).append(", ");
-//		}
-//		sb.delete(sb.length() - 2, sb.length());
-//		sb.append("]");
-//		return sb.toString();
-//	}
+	// private String printExpressionCollection(Collection<Expression> exp) {
+	// StringBuilder sb = new StringBuilder();
+	// sb.append("[");
+	// for (Expression e : exp) {
+	// sb.append(BoogiePrettyPrinter.print(e)).append(", ");
+	// }
+	// sb.delete(sb.length() - 2, sb.length());
+	// sb.append("]");
+	// return sb.toString();
+	// }
 
 	@Override
 	public Expression makeNot(Expression operand) {
@@ -242,26 +242,13 @@ public class BoogieConditionWrapper implements IConditionWrapper<Expression> {
 		if (one == null || other == null) {
 			return false;
 		}
-//		System.out.println(BoogiePrettyPrinter.print(one) + " equals? " + BoogiePrettyPrinter.print(other));
+
+		if (one.getClass().equals(other.getClass())) {
+			if (one instanceof BooleanLiteral) {
+				return ((BooleanLiteral) one).getValue() == ((BooleanLiteral) other).getValue();
+			}
+		}
+
 		return one.equals(other);
 	}
-
-	// private static class EmptyIterator implements Iterator<Expression> {
-	//
-	// @Override
-	// public boolean hasNext() {
-	// return false;
-	// }
-	//
-	// @Override
-	// public Expression next() {
-	// throw new UnsupportedOperationException();
-	// }
-	//
-	// @Override
-	// public void remove() {
-	//
-	// }
-	// }
-
 }

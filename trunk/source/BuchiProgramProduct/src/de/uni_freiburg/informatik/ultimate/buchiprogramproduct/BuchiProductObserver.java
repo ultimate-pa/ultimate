@@ -6,6 +6,7 @@ import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.buchiprogramproduct.benchmark.SizeBenchmark;
+import de.uni_freiburg.informatik.ultimate.buchiprogramproduct.optimizeproduct.AssumeMerger;
 import de.uni_freiburg.informatik.ultimate.buchiprogramproduct.optimizeproduct.MaximizeFinalStates;
 import de.uni_freiburg.informatik.ultimate.buchiprogramproduct.optimizeproduct.MinimizeLinearStates;
 import de.uni_freiburg.informatik.ultimate.buchiprogramproduct.optimizeproduct.RemoveInfeasibleEdges;
@@ -60,6 +61,7 @@ public class BuchiProductObserver implements IUnmanagedObserver {
 					mBacktranslator).getProductRCFG();
 			mLogger.info("Finished generation of product automaton successfully");
 			reportSizeBenchmark("Initial product", mProduct);
+
 			while (true) {
 				boolean continueOptimization = false;
 
@@ -79,6 +81,12 @@ public class BuchiProductObserver implements IUnmanagedObserver {
 					MinimizeLinearStates opt3 = new MinimizeLinearStates(mProduct, mServices);
 					mProduct = opt3.getResult();
 					continueOptimization = continueOptimization || opt3.IsGraphChanged();
+				}
+
+				if (ups.getBoolean(PreferenceInitializer.OPTIMIZE_SIMPLIFY_ASSUMES)) {
+					AssumeMerger opt4 = new AssumeMerger(mProduct, mServices);
+					mProduct = opt4.getResult();
+					continueOptimization = continueOptimization || opt4.IsGraphChanged();
 				}
 
 				if (ups.getBoolean(PreferenceInitializer.OPTIMIZE_UNTIL_FIXPOINT) && continueOptimization) {

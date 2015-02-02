@@ -342,10 +342,10 @@ public class ConditionTransformer<E> {
 		while (iter.hasNext()) {
 			E f = iter.next();
 
-			if (f == neutral) {
+			if (mWrapper.isEqual(f, neutral)) {
 				continue;
 			}
-			if (f == absorbing) {
+			if (mWrapper.isEqual(f, absorbing)) {
 				return f;
 			}
 

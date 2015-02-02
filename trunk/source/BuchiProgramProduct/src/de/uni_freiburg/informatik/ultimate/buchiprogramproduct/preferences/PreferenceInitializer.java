@@ -11,6 +11,7 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 	public static final String OPTIMIZE_MAXIMIZE_FINAL_STATES = "Maximize final states of the product";
 	public static final String OPTIMIZE_MINIMIZE_LINEAR_STATES = "Minimize linear states of the product";
 	public static final String OPTIMIZE_REMOVE_INFEASIBLE_EDGES = "Remove infeasible edges from the product";
+	public static final String OPTIMIZE_SIMPLIFY_ASSUMES = "Simplify assume statements";
 	public static final String OPTIMIZE_UNTIL_FIXPOINT = "Apply product optimizations until nothing changes";
 
 	@Override
@@ -23,6 +24,7 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 				new UltimatePreferenceItem<Boolean>(OPTIMIZE_MAXIMIZE_FINAL_STATES, true, PreferenceType.Boolean),
 				new UltimatePreferenceItem<Boolean>(OPTIMIZE_MINIMIZE_LINEAR_STATES, true, PreferenceType.Boolean),
 				new UltimatePreferenceItem<Boolean>(OPTIMIZE_REMOVE_INFEASIBLE_EDGES, true, PreferenceType.Boolean),
+				new UltimatePreferenceItem<Boolean>(OPTIMIZE_SIMPLIFY_ASSUMES, true, PreferenceType.Boolean),
 				new UltimatePreferenceItem<Boolean>(OPTIMIZE_UNTIL_FIXPOINT, true, PreferenceType.Boolean), 
 				
 		};
