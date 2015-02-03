@@ -23,7 +23,7 @@ public class TopologicalSorter<N extends ILabeledEdgesMultigraph<N,L>, L> {
 		private static final long serialVersionUID = -7189895863479876025L;
 	}
 	
-	ILabeledEdgesFilter<L> mOutgoingEdgesFilter;
+	ILabeledEdgesFilter<N, L> mOutgoingEdgesFilter;
 	
 	Set<N> mUnmarkedNodes;
 	Set<N> mTemporarilyMarkedNodes;
@@ -31,9 +31,9 @@ public class TopologicalSorter<N extends ILabeledEdgesMultigraph<N,L>, L> {
 	List<N> mTopolicalSorting;
 
 	public TopologicalSorter() {
-		this(new ILabeledEdgesFilter<L>() {
+		this(new ILabeledEdgesFilter<N, L>() {
 			@Override
-			public boolean accept(L outgoingEdgeLabel) {
+			public boolean accept(N source, L outgoingEdgeLabel, N target) {
 				return true;
 			}
 		});
@@ -44,7 +44,7 @@ public class TopologicalSorter<N extends ILabeledEdgesMultigraph<N,L>, L> {
 	 * This can be used to sort an graph with cycles, if the cycle building edges aren't accepted by the filter.
 	 * @param outgoingEdgesFilter Filter to be applied on outgoing edges -- only accepted edges will be used.
 	 */
-	public TopologicalSorter(ILabeledEdgesFilter<L> outgoingEdgesFilter) {
+	public TopologicalSorter(ILabeledEdgesFilter<N, L> outgoingEdgesFilter) {
 		mOutgoingEdgesFilter = outgoingEdgesFilter;
 	}
 	
@@ -87,7 +87,7 @@ public class TopologicalSorter<N extends ILabeledEdgesMultigraph<N,L>, L> {
 			markTemporarily(node);
 			for (N outgoingNode : node.getOutgoingNodes()) {
 				// using "getOutgoingLabel" is not efficient, but the only way without using a less-generic graph type.
-				if (mOutgoingEdgesFilter.accept(node.getOutgoingEdgeLabel(outgoingNode))) {
+				if (mOutgoingEdgesFilter.accept(node, node.getOutgoingEdgeLabel(outgoingNode), outgoingNode)) {
 					visit(outgoingNode);
 				}
 			}

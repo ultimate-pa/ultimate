@@ -5,10 +5,10 @@ package de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.callgraph;
  * 
  * @author schaetzc@informatik.uni-freiburg.de
  */
-public class SimpleCallFilter implements ILabeledEdgesFilter<CallGraphEdgeLabel> {
+public class SimpleCallFilter implements ILabeledEdgesFilter<CallGraphNode, CallGraphEdgeLabel> {
 
 	@Override
-	public boolean accept(CallGraphEdgeLabel outgoingEdgeLabel) {
+	public boolean accept(CallGraphNode source, CallGraphEdgeLabel outgoingEdgeLabel, CallGraphNode target) {
 		return outgoingEdgeLabel.getEdgeType().isSimpleCall();
 	}
 
