@@ -8,29 +8,22 @@ public class TACAS2015MatthiasAlgoMemSafety extends TACAS2015 {
 
 	@Override
 	protected void createTestCasesForReal(List<UltimateTestCase> testcases) {
-
-//		addTestCasesFixed("AutomizerC.xml", "TACASInterpolation2015/Automizer-FP-mem.epf", testcases);
-		addTestCasesFixed("AutomizerC.xml", "automizer/ForwardPredicates.epf", testcases);
-//		"automizer/ForwardPredicates.epf"
+		addTestCasesFixed("AutomizerC.xml", "TACASInterpolation2015/SP-mem.epf", testcases);
+		addTestCasesFixed("AutomizerC.xml", "TACASInterpolation2015/SP-IC-mem.epf", testcases);
+		addTestCasesFixed("AutomizerC.xml", "TACASInterpolation2015/SP-LV-mem.epf", testcases);
+		addTestCasesFixed("AutomizerC.xml", "TACASInterpolation2015/SP-IC-LV-mem.epf", testcases);
 	}
 
 	@Override
 	protected String[] getDirectories() {
 		// @formatter:off
 		String[] directories = {
-				// not good for CodeCheck
-//			"examples/svcomp/eca-rers2012/",
-//				"examples/svcomp/loop-invgen/",
-//				"examples/svcomp/loop-new/",				
-				
-//			"examples/svcomp/ntdrivers-simplified/",
-//   		"examples/svcomp/ssh-simplified/", 
-//			"examples/svcomp/locks/",
-//			"examples/svcomp/recursive/", 
-//			"examples/svcomp/systemc/",
-//				"examples/svcomp/heap-manipulation/"
-				"examples/svcomp/memsafety/"
-//				"examples/svcomp/ntdrivers/"
+//			"examples/svcomp/memsafety/",
+//			"examples/svcomp/memsafety-ext/",
+//			"examples/svcomp/list-ext-properties/"
+
+			//our best category
+			"examples/svcomp/memory-alloca/",
 		};
 		return directories;
 		// @formatter:on
@@ -38,7 +31,12 @@ public class TACAS2015MatthiasAlgoMemSafety extends TACAS2015 {
 
 	@Override
 	protected int getFilesPerCategory() {
-		return 50;
+		return -1;
+	}
+	
+	@Override
+	protected String[] getFileEndings() {
+		return new String[] { ".i" };
 	}
 
 }

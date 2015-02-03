@@ -18,16 +18,16 @@ public class TACAS2015Matthias extends TACAS2015 {
 
 	@Override
 	protected int getFilesPerCategory() {
-		return 50;
+		return -1;
 	}
 
 	@Override
 	protected String[] getDirectories() {
-		return new String[] { 
-				"examples/svcomp/recursive/",
-				"examples/svcomp/systemc/",
-		};
-//		 return super.getDirectories();
+//		return new String[] { 
+//				"examples/svcomp/recursive/",
+//				"examples/svcomp/systemc/",
+//		};
+		 return super.getDirectories();
 	}
 
 }

@@ -137,10 +137,10 @@ public class LatexOverviewSummary extends BaseCsvProviderSummary {
 			sb.append("\\end{tabu}}").append(br);
 			sb.append("\\caption{Results for ").append(removeInvalidCharsForLatex(tool)).append(".}").append(br);
 			sb.append("\\end{table}").append(br);
-
-			// append finishing code
-			appendEnd(sb, br);
 		}
+
+		// append finishing code
+		appendEnd(sb, br);
 	}
 
 	private void appendEnd(StringBuilder sb, String br) {

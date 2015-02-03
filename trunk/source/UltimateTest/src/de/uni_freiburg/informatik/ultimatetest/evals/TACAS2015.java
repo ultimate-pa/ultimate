@@ -63,6 +63,6 @@ public abstract class TACAS2015 extends AbstractEvaluationTestSuite {
 
 	@Override
 	protected String[] getFileEndings() {
-		return new String[] { "*.c" };
+		return new String[] { ".c" };
 	}
 }

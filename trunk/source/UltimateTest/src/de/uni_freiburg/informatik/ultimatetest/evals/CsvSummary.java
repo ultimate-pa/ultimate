@@ -31,4 +31,9 @@ public class CsvSummary extends BaseCsvProviderSummary {
 
 		return sb.toString();
 	}
+	
+	@Override
+	public String getFilenameExtension() {
+		return ".csv";
+	}
 }

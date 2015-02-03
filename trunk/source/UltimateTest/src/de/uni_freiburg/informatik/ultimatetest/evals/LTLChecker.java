@@ -18,6 +18,7 @@ public class LTLChecker extends AbstractEvaluationTestSuite {
 	@Override
 	protected void createTestCasesForReal(List<UltimateTestCase> testcases) {
 		addTestCasesFixed("LtlSoftwareModelCheckingC.xml", "LtlSoftwareModelCheckingC.epf", testcases);
+//		addTestCasesFixed("LtlSoftwareModelCheckingC.xml", "LtlSoftwareModelCheckingC-nosimpl.epf", testcases);
 	}
 
 	@Override
@@ -36,9 +37,9 @@ public class LTLChecker extends AbstractEvaluationTestSuite {
 //				"examples/LTL/rers/P18/",
 //				"examples/LTL/rers/P19/",
 //				"examples/LTL/coolant/",
-//				"examples/LTL/koskinen/ltlcmodelchecker-benchmarks/",
+				"examples/LTL/koskinen/ltlcmodelchecker-benchmarks/",
 	
-				"examples/LTL/bugs/",
+//				"examples/LTL/bugs/",
 //				"examples/LTL/bugs/Simple_ex1.c",				
 //				"examples/LTL/simple/",
 				
@@ -57,7 +58,7 @@ public class LTLChecker extends AbstractEvaluationTestSuite {
 
 	@Override
 	protected int getTimeout() {
-		return 2 * 60 * 1000;
+		return 4 * 60 * 1000;
 	}
 
 	@Override
