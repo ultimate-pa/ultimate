@@ -11,11 +11,6 @@ public abstract class TACAS2015 extends AbstractEvaluationTestSuite {
 	protected String[] getDirectories() {
 		// @formatter:off
 		String[] directories = {
-				// not good for CodeCheck
-//			"examples/svcomp/eca-rers2012/",
-//				"examples/svcomp/loop-invgen/",
-//				"examples/svcomp/loop-new/",				
-				
 			"examples/svcomp/ntdrivers-simplified/",
 	   		"examples/svcomp/ssh-simplified/", 
 			"examples/svcomp/locks/",
@@ -25,6 +20,11 @@ public abstract class TACAS2015 extends AbstractEvaluationTestSuite {
 		return directories;
 		// @formatter:on
 	}
+	
+	@Override
+	protected int getFilesPerCategory() {
+		return -1;
+	}	
 
 	@Override
 	protected ColumnDefinition[] getColumnDefinitions() {
