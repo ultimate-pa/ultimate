@@ -14,6 +14,10 @@
 // Remarks by DD:
 // - In the paper, the first property is G(p ==> Fq) and the second is (Fa) || (Fb)
 // - I have no idea what the second property should be.
+// - Eric said AF(phi_io_compl==1) \/ AF(phi_nSUC_ret)
+
+//@ ltl invariant positive: <>AP(phi_io_compl==1) || <>AP(phi_nSUC_ret == 1);
+
 
 extern void __VERIFIER_error() __attribute__ ((__noreturn__));
 extern void __VERIFIER_assume() __attribute__ ((__noreturn__));

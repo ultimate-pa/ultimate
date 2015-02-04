@@ -13,8 +13,9 @@
 // Remarks by DD:
 // - The first property from the paper is Gp, the second G(p ==> Fq). 
 // - It seems to me, the best variant for Gp is [](AP(A!=1 || RELEASE==0)), as this expresses that the lock is never released before it is aquired 
+// - Eric said the property is AG(A!=1) \/ istemp!=1
  
-//@ ltl invariant positive: []( AP(A!=1 || RELEASE==0));
+//@ ltl invariant positive: AP(istemp==0) ==> [](AP(A!=1));
 
 extern void __VERIFIER_error() __attribute__ ((__noreturn__));
 extern void __VERIFIER_assume() __attribute__ ((__noreturn__));

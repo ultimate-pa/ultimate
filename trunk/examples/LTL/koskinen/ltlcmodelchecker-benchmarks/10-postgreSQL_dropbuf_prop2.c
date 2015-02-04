@@ -13,9 +13,10 @@
 // Remarks by DD:
 // - The first property from the paper is Gp, the second G(p ==> Fq). 
 // - It seems to me, the best variant for G(p ==> Fq) is [](AP(istemp!=1) ==> []AP(A!=1)), as this 
-//   is close to the comment in the file, and 
+//   is close to the comment in the file 
+// - Eric said   AG(  AF(R==1) \/ (A!=1) )
 
-//@ ltl invariant positive:  [](AP(istemp!=1) ==> []AP(A!=1));
+//@ ltl invariant positive:  [](AP(A==1) ==> <>AP(R==1));
 
 extern void __VERIFIER_error() __attribute__ ((__noreturn__));
 extern void __VERIFIER_assume() __attribute__ ((__noreturn__));

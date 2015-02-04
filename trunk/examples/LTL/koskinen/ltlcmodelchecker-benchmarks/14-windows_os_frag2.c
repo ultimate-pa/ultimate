@@ -12,8 +12,9 @@
 // Remarks by DD:
 // - In the paper, the property for windows os fragment 2 is FGp
 // - I think this should be []<>AP(polling==1), as it states that we will eventually continue to poll (non-starvation), and as polling is a variable that changes in the bugged file
+// - Eric said AF AG polling==1
 
-//@ ltl invariant positive: []<>AP(polling==1);
+//@ ltl invariant positive: <>[]AP(polling==1);
 
 extern void __VERIFIER_error() __attribute__ ((__noreturn__));
 extern void __VERIFIER_assume() __attribute__ ((__noreturn__));
