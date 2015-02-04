@@ -1,6 +1,6 @@
 #Thu Jan 29 03:26:46 CET 2015
 \!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder=
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Command\ for\ external\ solver=princess +incremental +stdin -timeout\=12000
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Command\ for\ external\ solver=princess +incremental +stdin -timeoutPer\=12000
 file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/SMT\ solver=External_PrincessInterpolationMode
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Size\ of\ a\ code\ block=SequenceOfStatements
