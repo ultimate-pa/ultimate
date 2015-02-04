@@ -120,7 +120,10 @@ void main() {
 recheck:
 		if (RelFileNodeEquals(bufHdr_tag_rnode, rnode) && bufHdr_tag_blockNum >= firstDelBlock)
 		{
-			if (bufHdr_flags & BM_IO_IN_PROGRESS)
+			//DD: replaced the line
+			//if (bufHdr_flags & BM_IO_IN_PROGRESS)
+			//with this
+			if (bufHdr_flags)
 			{
 				WaitIO(bufHdr);
 				goto recheck;
