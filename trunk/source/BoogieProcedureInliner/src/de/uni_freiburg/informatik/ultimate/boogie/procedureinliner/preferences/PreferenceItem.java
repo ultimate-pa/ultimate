@@ -9,7 +9,7 @@ import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceIt
  * All items from the plug-in's preferences.
  * The current set preferences can be queried on each item.
  * Each item contains the label name, default value and list choices (if available).
- * The preferences dialog should show these items in the same order as in this enum.
+ * The preferences dialog should show the items in the order of this enum.
  * 
  * @author schaetzc@informatik.uni-freiburg.de
  */
@@ -18,13 +18,13 @@ public enum PreferenceItem {
 	LABEL___ENABLE_INLINING_FOR("Enable inlining for"),
 	INLINE_UNIMPLEMENTED("calls of unimplemented procedures", true, PreferenceType.Boolean),
 	INLINE_IMPLEMENTED("calls of implemented procedures", true, PreferenceType.Boolean),
-	INLINE_SINGLE_CALLS_ONLY("single calls only", true, PreferenceType.Boolean),
-	INLINE_FREE_CALLS("call-forall statements", true, PreferenceType.Boolean),
+	INLINE_SINGLE_CALLS_ONLY("single calls only", false, PreferenceType.Boolean),
+	INLINE_CALL_FORALL("call-forall statements (This is the only setting, that affects call-forall statements)",
+			true, PreferenceType.Boolean),
 	
 	LABEL___USER_LIST("\nUser list (procedure ids, separated by whitespace)"),
 	USER_LIST("User list", "", PreferenceType.MultilineString),
-	USER_LIST_TYPE("user list type", UserListType.BLACKLIST_RESTRICT,
-			PreferenceType.Combo, UserListType.values()),
+	USER_LIST_TYPE("user list type", UserListType.BLACKLIST_RESTRICT, PreferenceType.Combo, UserListType.values()),
 
 	LABEL___BEHAVIOR_ON_RECURSION("\nBehavior on attempts to inline calls to (possibly) recursive procedures"),
 	BEHAVIOR_ON_EXTERN_RECUSRIVE_CALL("Extern calls", BehaviorOnRecursion.SKIP,

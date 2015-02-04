@@ -186,13 +186,10 @@ public class CallGraphBuilder {
 	private void setAllEdgeTypes() {
 		for (CallGraphNode callerNode : mCallGraphNodes.values()) {
 			Set<String> callerRecursiveComponent = recursiveComponentOf(callerNode.getId());
-			List<CallGraphEdgeLabel> outgoingEdgeLabels = callerNode.getOutgoingEdgeLabels();
-			for (int i = 0; i < outgoingEdgeLabels.size(); ++i) {
-				CallGraphEdgeLabel label = outgoingEdgeLabels.get(i);
+			for (CallGraphEdgeLabel label : callerNode.getOutgoingEdgeLabels()) {
 				String calleeProcedureId = label.getCalleeProcedureId();
 				if (label.getEdgeType() != EdgeType.CALL_FORALL) {
-					EdgeType edgeType = findEdgeTypeForNormalCall(callerRecursiveComponent, calleeProcedureId);
-					outgoingEdgeLabels.set(i, new CallGraphEdgeLabel(calleeProcedureId, edgeType));
+					label.setEdgeType(findEdgeTypeForNormalCall(callerRecursiveComponent, calleeProcedureId));
 				}
 			}
 		}

@@ -5,8 +5,9 @@ import de.uni_freiburg.informatik.ultimate.model.structure.ModifiableLabeledEdge
 
 /**
  * Node of a Boogie call graph.
- * A Node is a procedure, where the directed edges are the calls inside this procedure.
- *  
+ * A Node represents a procedure, where the directed edges are the calls inside this procedure.
+ * Multiple calls to the same procedure occur multiple times. The order of all calls is preserved.
+ * 
  * @author schaetzc@informatik.uni-freiburg.de
  */
 public class CallGraphNode extends ModifiableLabeledEdgesMultigraph<CallGraphNode, CallGraphEdgeLabel> {
@@ -24,11 +25,6 @@ public class CallGraphNode extends ModifiableLabeledEdgesMultigraph<CallGraphNod
 	public String getId() {
 		return mId;
 	}
-
-	public void setProcedureWithSpecificationAndBody(Procedure p) {
-		setProcedureWithSpecification(p);
-		setProcedureWithBody(p);
-	}
 	
 	public void setProcedureWithSpecification(Procedure p) {
 		assert p == null || p.getIdentifier().equals(mId);
@@ -41,13 +37,7 @@ public class CallGraphNode extends ModifiableLabeledEdgesMultigraph<CallGraphNod
 		assert p == null || p.getBody() != null;
 		mProcedureWithBody = p;
 	}
-	
-	
-	public Procedure getProcedureWithSpecificationAndBody() {
-		assert mProcedureWithBody == mProcedureWithSpecification;
-		return mProcedureWithBody;
-	}
-	
+
 	public Procedure getProcedureWithSpecification() {
 		return mProcedureWithSpecification;
 	}
@@ -55,9 +45,31 @@ public class CallGraphNode extends ModifiableLabeledEdgesMultigraph<CallGraphNod
 	public Procedure getProcedureWithBody() {
 		return mProcedureWithBody;
 	}
+
+	public boolean isImplemented() {
+		return mProcedureWithBody != null;
+	}
+	
+	/**
+	 * Iterates over all outgoing edge labels, looking for set inline flags.
+	 * @return A call statement inside the procedure should be inlined.
+	 * @see CallGraphEdgeLabel#getInlineFlag()
+	 */
+	public boolean hasInlineFlags() {
+		for (CallGraphEdgeLabel edgeLabel : getOutgoingEdgeLabels()) {
+			if (edgeLabel.getInlineFlag()) {
+				return true;
+			}
+		}
+		return false;
+	}
 	
 	@Override
 	public String toString() {
-		return mId;
+		StringBuilder sb = new StringBuilder();
+		sb.append(mId);
+		sb.append(isImplemented() ? "(implemented)" : "(unimplemented)");
+		sb.append(getOutgoingEdgeLabels());
+		return sb.toString();
 	}
 }

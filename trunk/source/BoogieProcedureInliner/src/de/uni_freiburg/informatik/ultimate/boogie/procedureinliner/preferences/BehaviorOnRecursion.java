@@ -18,12 +18,5 @@ public enum BehaviorOnRecursion {
 	private BehaviorOnRecursion(String displayName) {
 		mDisplayName = displayName;
 	}
-	
-	/*
-	@Override
-	public String toString() {
-		return mDisplayName;
-	}
-	*/
 
 }

@@ -12,7 +12,7 @@ import de.uni_freiburg.informatik.ultimate.model.structure.ILabeledEdgesMultigra
  * @param <N> Type of the graph nodes.
  * @param <L> Type of the graph edge labels.
  */
-interface ILabeledEdgesFilter<N extends ILabeledEdgesMultigraph<N,L>, L> {
+public interface ILabeledEdgesFilter<N extends ILabeledEdgesMultigraph<N,L>, L> {
 	
 	/**
 	 * Determines whether to use an outgoing edge or not.
