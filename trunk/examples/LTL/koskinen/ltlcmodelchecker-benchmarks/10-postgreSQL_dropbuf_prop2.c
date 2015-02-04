@@ -88,6 +88,9 @@ NLocBuffer = __VERIFIER_nondet_int();
 NBuffers = __VERIFIER_nondet_int();
 
 void main() {
+	//DD: If NBuffers is not larger than 1, the property is trivially not satisfied. So I added the following line:
+	__VERIFIER_assume(NBuffers>1);
+	//end	
 	if (istemp==1)
 	{
 		for (i = 0; i < NLocBuffer; i++)
