@@ -14,6 +14,7 @@
 // - The first property from the paper is Gp, the second G(p ==> Fq). 
 // - It seems to me, the best variant for Gp is [](AP(A!=1 || RELEASE==0)), as this expresses that the lock is never released before it is aquired 
 // - Eric said the property is AG(A!=1) \/ istemp!=1
+// - contains inline changes! 
  
 //@ ltl invariant positive: AP(istemp==0) ==> [](AP(A!=1));
 
@@ -79,7 +80,6 @@ int RelFileNodeEquals(int a, int b)
 	return __VERIFIER_nondet_int(); 
 }
 
-
 istemp = __VERIFIER_nondet_int();
 A = 0;
 RELEASE = 0;
@@ -87,8 +87,6 @@ NLocBuffer = __VERIFIER_nondet_int();
 NBuffers = __VERIFIER_nondet_int();
 
 void main() {
-	//DD: If NBuffers is not larger than 1, the property is trivially not satisfied. So I added the following line:
-	__VERIFIER_assume(NBuffers>1);
 	if (istemp==1)
 	{
 		for (i = 0; i < NLocBuffer; i++)
@@ -97,8 +95,13 @@ void main() {
 			if (RelFileNodeEquals(bufHdr_tag_rnode, rnode) && bufHdr_tag_blockNum >= firstDelBlock)
 			{
 				if (LocalRefCount_i != 0) ;
-				
-				bufHdr_flags &= ~(BM_DIRTY | BM_JUST_DIRTIED);
+
+				//DD: replaced the line
+				//bufHdr_flags &= ~(BM_DIRTY | BM_JUST_DIRTIED);
+				//with this
+				bufHdr_flags = 0;
+				//because x = 0 & ... is always 0 				
+				//end
 				bufHdr_cntxDirty = 0;
 				bufHdr_tag_rnode_relNode = 1; // InvalidOid;
 			}
@@ -122,8 +125,12 @@ recheck:
 
 			if (bufHdr_refcount != 0);
 
-
-			bufHdr_flags &= ~(BM_DIRTY | BM_JUST_DIRTIED);
+			//DD: replaced the line
+			//bufHdr_flags &= ~(BM_DIRTY | BM_JUST_DIRTIED);
+			//with this
+			bufHdr_flags = 0;
+			//because x = 0 & ... is always 0 
+			//end
 			bufHdr_cntxDirty = 0;
 
 			StrategyInvalidateBuffer(bufHdr);
