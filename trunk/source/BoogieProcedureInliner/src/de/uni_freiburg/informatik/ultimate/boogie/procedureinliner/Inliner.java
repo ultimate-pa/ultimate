@@ -36,12 +36,8 @@ public class Inliner implements IUnmanagedObserver {
 
 	/**
 	 * Creates a new observer, which inlines Boogie procedures.
-	 * 
-	 * @param services
-	 *            Service provider.
-	 * @param inlineSelector
-	 *            Selector, which sets the inline flags for all edges of the
-	 *            call graph.
+	 * @param services Service provider.
+	 * @param inlineSelector Selector, which sets the inline flags for all edges of the call graph.
 	 */
 	public Inliner(IUltimateServiceProvider services, IInlineSelector inlineSelector) {
 		mServices = services;
