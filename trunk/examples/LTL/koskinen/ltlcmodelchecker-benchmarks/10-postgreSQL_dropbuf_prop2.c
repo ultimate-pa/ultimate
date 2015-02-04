@@ -9,14 +9,14 @@
 // ****************************************************
 
 // Benchmark: pgdropbuf.c
-// Property: istemp => G(A!=1)
+// Property: istemp => G(smalla!=1)
 // Remarks by DD:
 // - The first property from the paper is Gp, the second G(p ==> Fq). 
-// - It seems to me, the best variant for G(p ==> Fq) is [](AP(istemp!=1) ==> []AP(A!=1)), as this 
+// - It seems to me, the best variant for G(p ==> Fq) is [](AP(istemp!=1) ==> []AP(smalla!=1)), as this 
 //   is close to the comment in the file 
-// - Eric said   AG(  AF(R==1) \/ (A!=1) )
+// - Eric said   AG(  AF(smallr==1) \/ (smalla!=1) )
 
-//@ ltl invariant positive:  [](AP(A==1) ==> <>AP(R==1));
+//@ ltl invariant positive:  [](AP(smalla==1) ==> <>AP(smallr==1));
 
 extern void __VERIFIER_error() __attribute__ ((__noreturn__));
 extern void __VERIFIER_assume() __attribute__ ((__noreturn__));
@@ -55,7 +55,7 @@ int addrs;
 int rnode;
 int istemp;
 int firstDelBlock;
-int A; int R;
+int smalla; int smallr;
 char *bufHdr;
 int bufHdr_tag_blockNum;
 int bufHdr_tag_blockNum;
@@ -82,8 +82,8 @@ int RelFileNodeEquals(int a, int b)
 
 
 istemp = __VERIFIER_nondet_int();
-A = 0;
-R = 0;
+smalla = 0;
+smallr = 0;
 NLocBuffer = __VERIFIER_nondet_int();
 NBuffers = __VERIFIER_nondet_int();
 
@@ -107,7 +107,7 @@ void main() {
 		goto my_exit;
 	}
 
-	A = 1; A = 0; // LWLockAcquire(BufMgrLock, LW_EXCLUSIVE);
+	smalla = 1; smalla = 0; // LWLockAcquire(BufMgrLock, LW_EXCLUSIVE);
 
 	for (i = 1; i <= NBuffers; i++)
 	{
@@ -131,7 +131,7 @@ recheck:
 		}
 	}
 
-	R = 1; R = 0; //LWLockRelease(BufMgrLock);
+	smallr = 1; smallr = 0; //LWLockRelease(BufMgrLock);
 my_exit:
 	while(1) { int yyy;yyy=yyy;}
 }
