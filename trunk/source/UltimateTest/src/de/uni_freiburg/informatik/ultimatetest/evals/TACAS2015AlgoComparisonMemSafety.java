@@ -28,6 +28,8 @@ public class TACAS2015AlgoComparisonMemSafety extends TACAS2015 {
 
 			//our best category
 			"examples/svcomp/memory-alloca/",
+
+
 		};
 		return directories;
 		// @formatter:on

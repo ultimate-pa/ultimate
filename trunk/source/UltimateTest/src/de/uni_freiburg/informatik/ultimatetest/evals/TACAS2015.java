@@ -34,8 +34,8 @@ public abstract class TACAS2015 extends AbstractEvaluationTestSuite {
 						"Runtime (ns)", "Avg. runtime",
 						ConversionContext.Divide(1000000000, 2, " s"), Aggregate.Sum, Aggregate.Average),	
 				new ColumnDefinition(
-						"Allocated memory end (bytes)", "Mem{-}ory",
-						ConversionContext.Divide(1048576, 2, " MB"), Aggregate.Max, Aggregate.Average),
+						"Peak memory consumption (bytes)", "Mem{-}ory",
+						ConversionContext.Divide(1048576, 2, " MB"), Aggregate.Max, Aggregate.Average),						
 				new ColumnDefinition(
 						"Overall iterations", "Iter{-}ations",
 						ConversionContext.BestFitNumber(), Aggregate.Ignore, Aggregate.Average),
