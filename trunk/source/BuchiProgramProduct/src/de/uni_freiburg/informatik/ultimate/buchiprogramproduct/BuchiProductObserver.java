@@ -62,6 +62,8 @@ public class BuchiProductObserver implements IUnmanagedObserver {
 			mLogger.info("Finished generation of product automaton successfully");
 			reportSizeBenchmark("Initial product", mProduct);
 
+			int maxIters = 3;
+			
 			while (true) {
 				boolean continueOptimization = false;
 
@@ -89,7 +91,8 @@ public class BuchiProductObserver implements IUnmanagedObserver {
 					continueOptimization = continueOptimization || opt4.IsGraphChanged();
 				}
 
-				if (ups.getBoolean(PreferenceInitializer.OPTIMIZE_UNTIL_FIXPOINT) && continueOptimization) {
+				if (ups.getBoolean(PreferenceInitializer.OPTIMIZE_UNTIL_FIXPOINT) && continueOptimization && maxIters > 0) {
+					maxIters--;
 					continue;
 				}
 				break;
