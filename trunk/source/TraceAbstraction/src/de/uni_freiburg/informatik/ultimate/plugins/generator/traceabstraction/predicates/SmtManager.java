@@ -13,6 +13,7 @@ import java.util.Set;
 
 import org.apache.log4j.Logger;
 
+import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
@@ -42,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.Basi
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.TermVarsProc;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.RCFGBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
@@ -50,8 +52,11 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCF
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.PreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.PreferenceInitializer.Solver;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.HoareAnnotation;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.INTERPOLATION;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
 import de.uni_freiburg.informatik.ultimate.util.ScopedHashMap;
 
@@ -103,6 +108,15 @@ public class SmtManager {
 	private final IUltimateServiceProvider mServices;
 
 	private final Logger mLogger;
+	
+	/**
+	 * Switch to produce-interpolants mode before each trace check and leave the
+	 * produce-interpolants mode afterwards 
+	 * (needed for princess it can only deal with quantifiers if not in
+	 * produce-interpolants mode)
+	 * 
+	 */
+	private final boolean m_InterpolationModeSwitchNeeded;
 
 	/**
 	 * Whenever you do an edge check with the old method (not edge checker),
@@ -120,6 +134,7 @@ public class SmtManager {
 			IUltimateServiceProvider services) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
+		m_InterpolationModeSwitchNeeded = interpolationModeSwitchNeeded();
 		m_NoProcedure = new String[0];
 		m_DontCareTerm = new AuxilliaryTerm("don't care");
 		m_EmptyStackTerm = new AuxilliaryTerm("emptyStack");
@@ -353,13 +368,29 @@ public class SmtManager {
 	public void startTraceCheck(Object lockClaimer) {
 		lock(lockClaimer);
 		m_Script.echo(new QuotedObject("starting trace check"));
+		if (m_InterpolationModeSwitchNeeded) {
+			m_Script.setOption(":produce-interpolants", true);
+		}
 		m_Script.push(1);
 	}
 
 	public void endTraceCheck(Object lockOwner) {
+		if (m_InterpolationModeSwitchNeeded) {
+			m_Script.setOption(":produce-interpolants", false);
+		}
 		m_Script.echo(new QuotedObject("finished trace check"));
 		m_Script.pop(1);
 		unlock(lockOwner);
+	}
+	
+	public boolean interpolationModeSwitchNeeded() {
+		Solver solver = (new UltimatePreferenceStore(RCFGBuilder.s_PLUGIN_ID))
+				.getEnum(PreferenceInitializer.LABEL_Solver, Solver.class);
+		if (solver == Solver.External_PrincessInterpolationMode) {
+			return true;
+		} else {
+			return false;
+		}
 	}
 
 	// public void push() {
