@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.boogie.procedureinliner;
 
+import de.uni_freiburg.informatik.ultimate.model.IType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.DeclarationInformation;
 
 /**
@@ -11,18 +12,18 @@ public class VarMapKey {
 	
 	private String mVarId;
 	private DeclarationInformation mDeclInfo;
-	private String mTypeId;
+	private IType mType;
 	
 	/**
 	 * Creates a new key.
 	 * @param varId Original identifier of the variable.
 	 * @param declInfo Original DeclarationInformation of the variable.
-	 * @param typeId Original type identifier of the variable.
+	 * @param type Type of the variable.
 	 */
-	public VarMapKey(String varId, DeclarationInformation declInfo, String typeId) {
-		this.mVarId = varId;
-		this.mDeclInfo = declInfo;
-		this.mTypeId = typeId;
+	public VarMapKey(String varId, DeclarationInformation declInfo, IType type) {
+		mVarId = varId;
+		mDeclInfo = declInfo;
+		mType = type;
 	}
 
 	/** @return Original identifier of the variable. */
@@ -35,9 +36,9 @@ public class VarMapKey {
 		return mDeclInfo;
 	}
 
-	/** @return Original type identifier of the variable. */
-	public String getTypeId() {
-		return mTypeId;
+	/** @return Type of the variable. */
+	public IType getType() {
+		return mType;
 	}
 
 	@Override
@@ -45,7 +46,7 @@ public class VarMapKey {
 		final int prime = 31;
 		int result = 1;
 		result = prime * result + ((mDeclInfo == null) ? 0 : mDeclInfo.hashCode());
-		result = prime * result + ((mTypeId == null) ? 0 : mTypeId.hashCode());
+		result = prime * result + ((mType == null) ? 0 : mType.hashCode());
 		result = prime * result + ((mVarId == null) ? 0 : mVarId.hashCode());
 		return result;
 	}
@@ -64,10 +65,10 @@ public class VarMapKey {
 				return false;
 		} else if (!mDeclInfo.equals(other.mDeclInfo))
 			return false;
-		if (mTypeId == null) {
-			if (other.mTypeId != null)
+		if (mType == null) {
+			if (other.mType != null)
 				return false;
-		} else if (!mTypeId.equals(other.mTypeId))
+		} else if (!mType.equals(other.mType))
 			return false;
 		if (mVarId == null) {
 			if (other.mVarId != null)
@@ -77,5 +78,9 @@ public class VarMapKey {
 		return true;
 	}
 
-	
+	@Override
+	public String toString() {
+		return "VarMapKey [mVarId=" + mVarId + ", mDeclInfo=" + mDeclInfo + ", mType=" + mType + "]";
+	}
+
 }
