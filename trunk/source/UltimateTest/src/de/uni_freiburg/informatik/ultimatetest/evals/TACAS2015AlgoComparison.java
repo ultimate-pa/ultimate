@@ -43,4 +43,9 @@ public class TACAS2015AlgoComparison extends TACAS2015 {
 		return directories;
 		// @formatter:on
 	}
+	
+	@Override
+	protected int getFilesPerCategory() {
+		return -1;
+	}
 }

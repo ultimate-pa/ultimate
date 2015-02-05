@@ -46,6 +46,6 @@ public class TACAS2015AlgoComparisonArray extends TACAS2015 {
 
 	@Override
 	protected int getFilesPerCategory() {
-		return 1;
+		return -1;
 	}
 }
