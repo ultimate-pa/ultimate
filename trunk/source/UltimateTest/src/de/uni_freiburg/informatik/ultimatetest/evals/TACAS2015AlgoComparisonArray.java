@@ -38,6 +38,7 @@ public class TACAS2015AlgoComparisonArray extends TACAS2015 {
 		    "examples/svcomp/heap-manipulation",
 		    "examples/svcomp/list-properties",
 		    "examples/svcomp/ldv-regression",
+		    "examples/svcomp/loops",
 		};
 		return directories;
 		// @formatter:on
