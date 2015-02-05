@@ -13,12 +13,13 @@ public class TACAS2015AlgoComparisonArray extends TACAS2015 {
 		addTestCasesFixed("AutomizerC.xml", "TACASInterpolation2015/SP-LV.epf", testcases);
 		addTestCasesFixed("AutomizerC.xml", "TACASInterpolation2015/SP-IC-LV.epf", testcases);
 		addTestCasesFixed("AutomizerC.xml", "TACASInterpolation2015/Automizer-SMTInterpol.epf", testcases);
-//		addTestCasesFixed("AutomizerC.xml", "TACASInterpolation2015/Automizer-Princess.epf", testcases);
+	    addTestCasesFixed("AutomizerC.xml", "TACASInterpolation2015/Automizer-Princess.epf", testcases);
 		addTestCasesFixed("CodeCheckNoBE-C.xml", "TACASInterpolation2015/Kojak-SP.epf", testcases);
 		addTestCasesFixed("CodeCheckNoBE-C.xml", "TACASInterpolation2015/Kojak-SP-IC.epf", testcases);
 		addTestCasesFixed("CodeCheckNoBE-C.xml", "TACASInterpolation2015/Kojak-SP-LV.epf", testcases);
 		addTestCasesFixed("CodeCheckNoBE-C.xml", "TACASInterpolation2015/Kojak-SP-IC-LV.epf", testcases);
-		addTestCasesFixed("CodeCheckNoBE-C.xml", "TACASInterpolation2015/Kojak-TreeInterpolation-nBE.epf", testcases);		
+		addTestCasesFixed("CodeCheckNoBE-C.xml", "TACASInterpolation2015/Kojak-SMTInterpol.epf", testcases);
+		addTestCasesFixed("CodeCheckNoBE-C.xml", "TACASInterpolation2015/Kojak-Princess.epf", testcases);
 	}
 
 	@Override
@@ -41,5 +42,10 @@ public class TACAS2015AlgoComparisonArray extends TACAS2015 {
 	@Override
 	protected String[] getFileEndings() {
 		return new String[] { ".i" };
+	}
+
+	@Override
+	protected int getFilesPerCategory() {
+		return 1;
 	}
 }
