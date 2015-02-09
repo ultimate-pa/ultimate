@@ -28,6 +28,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPre
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.TermVarsProc;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IHoareTripleChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 
@@ -108,8 +109,8 @@ public class PredicateUnifier {
 	 * predicate.
 	 */
 	void declarePredicate(IPredicate predicate) {
-		HashMap<IPredicate, LBool> impliedPredicates = new HashMap<IPredicate, LBool>();
-		HashMap<IPredicate, LBool> expliedPredicates = new HashMap<IPredicate, LBool>();
+		HashMap<IPredicate, Validity> impliedPredicates = new HashMap<IPredicate, Validity>();
+		HashMap<IPredicate, Validity> expliedPredicates = new HashMap<IPredicate, Validity>();
 		IPredicate storedPredicate = compareWithExistingPredicates(predicate.getFormula(), predicate.getVars(),
 				impliedPredicates, expliedPredicates);
 		if (storedPredicate == null) {
@@ -174,8 +175,8 @@ public class PredicateUnifier {
 		if (p != null) {
 			return p;
 		}
-		HashMap<IPredicate, LBool> impliedPredicates = new HashMap<IPredicate, LBool>();
-		HashMap<IPredicate, LBool> expliedPredicates = new HashMap<IPredicate, LBool>();
+		HashMap<IPredicate, Validity> impliedPredicates = new HashMap<IPredicate, Validity>();
+		HashMap<IPredicate, Validity> expliedPredicates = new HashMap<IPredicate, Validity>();
 		p = compareWithExistingPredicates(term, vars, impliedPredicates, expliedPredicates);
 		if (p != null) {
 			return p;
@@ -240,7 +241,7 @@ public class PredicateUnifier {
 		return predicate;
 	}
 
-	private void addNewPredicate(IPredicate pred, Map<IPredicate, LBool> implied, Map<IPredicate, LBool> explied) {
+	private void addNewPredicate(IPredicate pred, Map<IPredicate, Validity> implied, Map<IPredicate, Validity> explied) {
 		m_Term2Predicates.put(pred.getFormula(), pred);
 		m_CoverageRelation.addPredicate(pred, implied, explied);
 	}
@@ -264,7 +265,7 @@ public class PredicateUnifier {
 	 * @return
 	 */
 	private IPredicate compareWithExistingPredicates(Term term, Set<BoogieVar> vars,
-			HashMap<IPredicate, LBool> impliedPredicats, HashMap<IPredicate, LBool> expliedPredicates) {
+			HashMap<IPredicate, Validity> impliedPredicats, HashMap<IPredicate, Validity> expliedPredicates) {
 		Term closedTerm = PredicateUtils.computeClosedFormula(term, vars, m_SmtManager.getScript());
 		assert impliedPredicats.isEmpty();
 		assert expliedPredicates.isEmpty();
@@ -273,11 +274,11 @@ public class PredicateUnifier {
 		for (Term interpolantTerm : m_Term2Predicates.keySet()) {
 			IPredicate interpolant = m_Term2Predicates.get(interpolantTerm);
 			Term interpolantClosedTerm = interpolant.getClosedFormula();
-			LBool implies = m_SmtManager.isCovered(this, closedTerm, interpolantClosedTerm);
+			Validity implies = m_SmtManager.isCovered(this, closedTerm, interpolantClosedTerm);
 			impliedPredicats.put(interpolant, implies);
-			LBool explies = m_SmtManager.isCovered(this, interpolantClosedTerm, closedTerm);
+			Validity explies = m_SmtManager.isCovered(this, interpolantClosedTerm, closedTerm);
 			expliedPredicates.put(interpolant, explies);
-			if (implies == LBool.UNSAT && explies == LBool.UNSAT) {
+			if (implies == Validity.VALID && explies == Validity.VALID) {
 				m_SmtManager.getScript().echo(new QuotedObject("end unification"));
 				m_SmtManager.unlock(this);
 				return interpolant;
@@ -377,11 +378,11 @@ public class PredicateUnifier {
 	}
 
 	public class CoverageRelation implements IPredicateCoverageChecker {
-		Map<IPredicate, Map<IPredicate, LBool>> m_Lhs2Rhs2lbool = new HashMap<IPredicate, Map<IPredicate, LBool>>();
+		Map<IPredicate, Map<IPredicate, Validity>> m_Lhs2Rhs2lbool = new HashMap<IPredicate, Map<IPredicate, Validity>>();
 
-		void addPredicate(IPredicate pred, Map<IPredicate, LBool> implied, Map<IPredicate, LBool> explied) {
-			for (Entry<IPredicate, Map<IPredicate, LBool>> entry : m_Lhs2Rhs2lbool.entrySet()) {
-				LBool lBool = explied.get(entry.getKey());
+		void addPredicate(IPredicate pred, Map<IPredicate, Validity> implied, Map<IPredicate, Validity> explied) {
+			for (Entry<IPredicate, Map<IPredicate, Validity>> entry : m_Lhs2Rhs2lbool.entrySet()) {
+				Validity lBool = explied.get(entry.getKey());
 				assert lBool != null;
 				entry.getValue().put(pred, lBool);
 			}
@@ -389,19 +390,29 @@ public class PredicateUnifier {
 		}
 
 		@Override
-		public LBool isCovered(IPredicate lhs, IPredicate rhs) {
+		public Validity isCovered(IPredicate lhs, IPredicate rhs) {
 			if (lhs == rhs) {
-				return LBool.UNSAT;
+				return Validity.VALID;
 			}
-			Map<IPredicate, LBool> rhs2LBool = m_Lhs2Rhs2lbool.get(lhs);
-			if (rhs2LBool == null) {
+			Map<IPredicate, Validity> rhs2validity = m_Lhs2Rhs2lbool.get(lhs);
+			if (rhs2validity == null) {
 				throw new AssertionError("unknown predicate" + lhs);
 			}
-			LBool lbool = rhs2LBool.get(rhs);
+			Validity lbool = rhs2validity.get(rhs);
 			if (lbool == null) {
 				throw new AssertionError("unknown predicate" + rhs);
 			}
 			return lbool;
+		}
+
+		@Override
+		public Validity isEquivalentToTrue(IPredicate pred) {
+			return isCovered(m_TruePredicate, pred);
+		}
+
+		@Override
+		public Validity isEquivalentToFalse(IPredicate pred) {
+			return isCovered(pred, m_FalsePredicate);
 		}
 
 	}

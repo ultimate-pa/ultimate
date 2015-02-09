@@ -35,6 +35,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Ret
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionBenchmarks;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.IBenchmarkDataProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.IBenchmarkType;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IHoareTripleChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager.Status;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.IPredicateCoverageChecker;
 import de.uni_freiburg.informatik.ultimate.util.Benchmark;
@@ -883,8 +884,8 @@ public class EdgeChecker {
 	 */
 	public LBool sdecInteral(IPredicate pre, CodeBlock cb, IPredicate post) {
 		if (m_PredicateCoverageChecker != null) {
-			LBool sat = m_PredicateCoverageChecker.isCovered(pre, post);
-			if (sat == LBool.UNSAT) {
+			Validity sat = m_PredicateCoverageChecker.isCovered(pre, post);
+			if (sat == Validity.VALID) {
 				if (Collections.disjoint(pre.getVars(), cb.getTransitionFormula().getAssignedVars())) {
 					return LBool.UNSAT;
 				}
@@ -908,8 +909,8 @@ public class EdgeChecker {
 		// now, we know that vars of pre and post are both disjoint from the
 		/// vars of cb. Edge is inductive iff pre implies post
 		if (m_PredicateCoverageChecker != null) {
-			LBool sat = m_PredicateCoverageChecker.isCovered(pre, post);
-			if (sat == LBool.UNSAT) {
+			Validity sat = m_PredicateCoverageChecker.isCovered(pre, post);
+			if (sat == Validity.VALID) {
 				return LBool.UNSAT;
 			}
 		} else {

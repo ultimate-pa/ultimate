@@ -518,7 +518,7 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker {
 		}
 		m_Script.pop(1);
 		m_EdgeCheckerBenchmark.stopEdgeCheckerTime();
-		return MonolithicHoareTripleChecker.lbool2validity(isSat);
+		return SmtManager.lbool2validity(isSat);
 	}
 	
 	
@@ -567,7 +567,7 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker {
 		}
 		m_Script.pop(1);
 		m_EdgeCheckerBenchmark.stopEdgeCheckerTime();
-		return MonolithicHoareTripleChecker.lbool2validity(isSat);
+		return SmtManager.lbool2validity(isSat);
 	}
 
 
@@ -643,7 +643,7 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker {
 		m_Script.pop(1);
 		m_HierConstants.endScope();
 		m_EdgeCheckerBenchmark.stopEdgeCheckerTime();
-		return MonolithicHoareTripleChecker.lbool2validity(isSat);
+		return SmtManager.lbool2validity(isSat);
 	}
 	
 

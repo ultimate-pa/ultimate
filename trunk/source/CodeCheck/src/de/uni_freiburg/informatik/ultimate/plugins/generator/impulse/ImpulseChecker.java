@@ -25,6 +25,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.EdgeChecker;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IHoareTripleChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
@@ -391,10 +392,10 @@ public class ImpulseChecker extends CodeChecker {
 	boolean isStrongerPredicate(AnnotatedProgramPoint node1,
 			AnnotatedProgramPoint node2) {
 		
-		boolean result = m_predicateUnifier.getCoverageRelation().isCovered(node1.getPredicate(), node2.getPredicate()) == LBool.UNSAT;
+		boolean result = m_predicateUnifier.getCoverageRelation().isCovered(node1.getPredicate(), node2.getPredicate()) == Validity.VALID;
 		//System.err.printf("%s > %s  :: %s\n", predicate1, predicate2, result);
 		if (result) {
-			boolean converse = m_predicateUnifier.getCoverageRelation().isCovered(node2.getPredicate(), node1.getPredicate()) == LBool.UNSAT;
+			boolean converse = m_predicateUnifier.getCoverageRelation().isCovered(node2.getPredicate(), node1.getPredicate()) == Validity.VALID;
 			result &= !converse || (converse && node1._nodeID > node2._nodeID);
 		}
 		return result;

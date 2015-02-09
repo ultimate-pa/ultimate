@@ -23,7 +23,7 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 	@Override
 	public Validity checkInternal(IPredicate pre, CodeBlock cb, IPredicate succ) {
 		m_EdgeCheckerBenchmark.continueEdgeCheckerTime();
-		Validity result = lbool2validity(m_SmtManager.isInductive(pre, cb, succ));
+		Validity result = SmtManager.lbool2validity(m_SmtManager.isInductive(pre, cb, succ));
 		m_EdgeCheckerBenchmark.stopEdgeCheckerTime();
 		switch (result) {
 		case INVALID:
@@ -44,7 +44,7 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 	@Override
 	public Validity checkCall(IPredicate pre, CodeBlock cb, IPredicate succ) {
 		m_EdgeCheckerBenchmark.continueEdgeCheckerTime();
-		Validity result =  lbool2validity(m_SmtManager.isInductiveCall(pre, (Call) cb, succ));
+		Validity result =  SmtManager.lbool2validity(m_SmtManager.isInductiveCall(pre, (Call) cb, succ));
 		m_EdgeCheckerBenchmark.stopEdgeCheckerTime();
 		switch (result) {
 		case INVALID:
@@ -66,7 +66,7 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 	public Validity checkReturn(IPredicate preLin, IPredicate preHier,
 			CodeBlock cb, IPredicate succ) {
 		m_EdgeCheckerBenchmark.continueEdgeCheckerTime();
-		Validity result =  lbool2validity(m_SmtManager.isInductiveReturn(preLin, preHier, (Return) cb, succ));
+		Validity result =  SmtManager.lbool2validity(m_SmtManager.isInductiveReturn(preLin, preHier, (Return) cb, succ));
 		m_EdgeCheckerBenchmark.stopEdgeCheckerTime();
 		switch (result) {
 		case INVALID:
@@ -88,17 +88,4 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 		return m_EdgeCheckerBenchmark;
 	}
 
-	public static Validity lbool2validity(LBool lbool) {
-		switch (lbool) {
-		case SAT:
-			return Validity.INVALID;
-		case UNKNOWN:
-			return Validity.UNKNOWN;
-		case UNSAT:
-			return Validity.VALID;
-		default:
-			throw new AssertionError();
-		}
-		
-	}
 }

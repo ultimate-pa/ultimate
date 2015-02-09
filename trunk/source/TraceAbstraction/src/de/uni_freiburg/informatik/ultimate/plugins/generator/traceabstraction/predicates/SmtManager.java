@@ -56,6 +56,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.prefere
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.PreferenceInitializer.Solver;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.HoareAnnotation;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IHoareTripleChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.INTERPOLATION;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
 import de.uni_freiburg.informatik.ultimate.util.ScopedHashMap;
@@ -600,21 +601,21 @@ public class SmtManager {
 		return result;
 	}
 
-	public LBool isCovered(Object caller, Term formula1, Term formula2) {
+	public Validity isCovered(Object caller, Term formula1, Term formula2) {
 		assert (m_LockOwner == caller) : "only lock owner may call";
 		long startTime = System.nanoTime();
 
-		LBool result = null;
+		final Validity result;
 		// tivial case
 		if (formula1 == False() || formula2 == True()) {
 			m_TrivialCoverQueries++;
-			result = Script.LBool.UNSAT;
+			result = Validity.VALID;
 		} else {
 			m_Script.push(1);
 			assertTerm(formula1);
 			Term negFormula2 = m_Script.term("not", formula2);
 			assertTerm(negFormula2);
-			result = m_Script.checkSat();
+			result = lbool2validity(m_Script.checkSat());
 			m_NontrivialCoverQueries++;
 			m_Script.pop(1);
 		}
@@ -1690,6 +1691,20 @@ public class SmtManager {
 		@Override
 		public int hashCode() {
 			throw new UnsupportedOperationException("Auxiliary term must not be contained in any collection");
+		}
+	}
+	
+	
+	public static Validity lbool2validity(LBool lbool) {
+		switch (lbool) {
+		case SAT:
+			return Validity.INVALID;
+		case UNKNOWN:
+			return Validity.UNKNOWN;
+		case UNSAT:
+			return Validity.VALID;
+		default:
+			throw new AssertionError();
 		}
 	}
 

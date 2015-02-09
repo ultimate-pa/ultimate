@@ -16,6 +16,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IHoareTripleChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.InterpolatingTraceChecker;
@@ -88,14 +89,14 @@ public class CoverageAnalysis {
 						// trivially covered and backedges already contained
 						m_Trivial++;
 					} else {
-						LBool lbool = m_PredicateUnifier.getCoverageRelation().isCovered(
+						Validity lbool = m_PredicateUnifier.getCoverageRelation().isCovered(
 								currentPredicate, previousPredicate);
 						processCoveringResult(i, previousOccurrence, lbool);
 						switch (lbool) {
-						case UNSAT:
+						case VALID:
 							m_Unsat++;
 							break;
-						case SAT:
+						case INVALID:
 							m_Sat++;
 							break;
 						case UNKNOWN:
@@ -135,7 +136,7 @@ public class CoverageAnalysis {
 	}
 
 	protected void processCoveringResult(int currentPosition,
-			int previousOccurrence, LBool lbool) {
+			int previousOccurrence, Validity lbool) {
 		// do nothing
 	}
 
