@@ -1,3 +1,6 @@
+//#Safe
+//@ ltl invariant positive: []( <>AP(phi_io_compl == 1) || <>AP(phi_nSUC_ret == 1));
+
 #include "../ctl.h"
 
 // gcc diag.c 2>&1 | grep referen | perl -p -e 's/^  "_/int /; s/",.*$/() { }/'
@@ -8,7 +11,11 @@ is called, or a value other than STATUS_SUCCESS is returned.
 */
 
 // comes from /cygdrive/c/slam/wdk/src_5043/wdm/1394/driver/1394diag
-//@ ltl invariant positive: <>AP(phi_io_compl==1) || <>AP(phi_nSUC_ret == 1);
+
+extern void __VERIFIER_error() __attribute__ ((__noreturn__));
+extern void __VERIFIER_assume() __attribute__ ((__noreturn__));
+extern int __VERIFIER_nondet_int() __attribute__ ((__noreturn__));
+
 
 #define NTSTATUS int
 #define PIRP int
@@ -131,17 +138,15 @@ unsigned int pc;
 //int __phi() { return CAG(COR(  CAF(CAP(ioR == 1)), CAP(ioA != 1) )); }
 /* prove that either IoCompleteRequest is called, 
    or a value other than STATUS_SUCCESS is returned. */
-int __phi() { return COR(
+/*int __phi() { return COR(
 			 CAF(CAP(phi_io_compl == 1)),
-			 CAF(CAP(phi_nSUC_ret  == 1))); }
+			 CAF(CAP(phi_nSUC_ret  == 1))); }*/
 
-int nondet() { int r; return r; }
-void assert(int e) { if(!e) { SLIC_ERROR: goto SLIC_ERROR; } }
-void assume(int e) { if (!e) while(1); } 
 
-void init() {
-  keA = keR = ioA = ioR = 0; phi_nSUC_ret = 0; phi_io_compl = 0;
-}
+  keA = keR = ioA = ioR = 0;
+  phi_nSUC_ret = 0; 
+  phi_io_compl = 0;
+
 
 void KeAcquireSpinLock(int * lp, int * ip) { keA = 1; keA = 0;
    (*lp) = 1;
@@ -180,7 +185,7 @@ int ExFreePool2(int a, int b) { }
 int IoCompleteRequest(int a) { phi_io_compl = 1; }
 
 int main() {
-   if (nondet()) {
+   if (__VERIFIER_nondet_int()) {
 
        // haven't stopped yet, lets do so
        ntStatus = t1394Diag_PnpStopDevice(DeviceObject, Irp);
@@ -192,10 +197,10 @@ int main() {
    // lets free up any crom data structs we've allocated...
    KeAcquireSpinLock(&lock3, &Irql);
 
-   k1 = nondet();
+   k1 = __VERIFIER_nondet_int();
    while (k1>0) {
 
-       CromData = nondet();
+       CromData = __VERIFIER_nondet_int();
 
        // get struct off list
        k1--;
@@ -203,10 +208,10 @@ int main() {
        // need to free up everything associated with this allocate...
        if (CromData)
        {
-           if (nondet())
+           if (__VERIFIER_nondet_int())
                ExFreePool0();
 
-           if (nondet())
+           if (__VERIFIER_nondet_int())
                IoFreeMdl();
 
            // we already checked CromData
@@ -218,23 +223,23 @@ int main() {
 
    KeAcquireSpinLock(&lock1, &Irql);
 
-   k2 = nondet();
+   k2 = __VERIFIER_nondet_int();
    while (k2>0) {
 
-     AsyncAddressData = nondet();
+     AsyncAddressData = __VERIFIER_nondet_int();
 
        // get struct off list
-       AsyncAddressData = nondet();
+       AsyncAddressData = __VERIFIER_nondet_int();
        k2--;
 
        // need to free up everything associated with this allocate...
-       if (nondet())
+       if (__VERIFIER_nondet_int())
            IoFreeMdl();
 
-       if (nondet())
+       if (__VERIFIER_nondet_int())
            ExFreePool0();
 
-       if (nondet())
+       if (__VERIFIER_nondet_int())
            ExFreePool0();
 
        if (AsyncAddressData)
@@ -248,13 +253,13 @@ int main() {
 
        KeAcquireSpinLock(&lock4, &Irql);
 
-       k3 = nondet();
+       k3 = __VERIFIER_nondet_int();
        if (k3>0) {
 
-	 IsochDetachData = nondet();
-	 i = nondet();
+	 IsochDetachData = __VERIFIER_nondet_int();
+	 i = __VERIFIER_nondet_int();
 
-           IsochDetachData = nondet();
+           IsochDetachData = __VERIFIER_nondet_int();
            k3--;
 
 
@@ -273,13 +278,13 @@ int main() {
 
    // remove any isoch resource data
 
-   k4 = nondet();
+   k4 = __VERIFIER_nondet_int();
    while (TRUE) {
 
        KeAcquireSpinLock(&lock5, &Irql);
        if (k4>0) {
 
-           IsochResourceData = nondet();
+           IsochResourceData = __VERIFIER_nondet_int();
            k4--;
 
            KeReleaseSpinLock(&lock5, Irql);
@@ -287,9 +292,9 @@ int main() {
 
            if (IsochResourceData) {
 
-	       pIrb = nondet();
-               ResourceIrp = nondet();
-               StackSize = nondet();
+	       pIrb = __VERIFIER_nondet_int();
+               ResourceIrp = __VERIFIER_nondet_int();
+               StackSize = __VERIFIER_nondet_int();
                ResourceIrp = IoAllocateIrp(StackSize, FALSE);
 
                if (ResourceIrp == NULL) {
@@ -326,13 +331,13 @@ int main() {
    // get rid of any pending bus reset notify requests
    KeAcquireSpinLock(&lock6, &Irql);
 
-   k5 = nondet();
+   k5 = __VERIFIER_nondet_int();
    while (k5>0) {
 
        prevCancel = NULL;
 
        // get the irp off of the list
-       BusResetIrp = nondet();
+       BusResetIrp = __VERIFIER_nondet_int();
        k5--;
 
 
@@ -353,6 +358,4 @@ int main() {
      phi_nSUC_ret = 1;
    }
    while(1) {}
-} // t1394Diag_PnpRemoveDevice
-
-int main() {}
+}
