@@ -847,5 +847,12 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 	public CegarLoopBenchmarkGenerator getCegarLoopBenchmark() {
 		return m_CegarLoopBenchmark;
 	}
+	
+	/**
+	 * method called at the end of the cegar loop 
+	 */
+	public void finish() {
+		// do nothing
+	}
 
 }

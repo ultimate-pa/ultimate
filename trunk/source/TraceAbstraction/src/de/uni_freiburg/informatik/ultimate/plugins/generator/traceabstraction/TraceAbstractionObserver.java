@@ -210,6 +210,7 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 		}
 
 		Result result = basicCegarLoop.iterate();
+		basicCegarLoop.finish();
 		CegarLoopBenchmarkGenerator cegarLoopBenchmarkGenerator = basicCegarLoop.getCegarLoopBenchmark();
 		cegarLoopBenchmarkGenerator.stop(CegarLoopBenchmarkType.s_OverallTime);
 		taBenchmark.aggregateBenchmarkData(cegarLoopBenchmarkGenerator);

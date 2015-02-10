@@ -28,6 +28,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataTransitionAppender.DeterministicInterpolantAutomaton2;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.EfficientHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IncrementalHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.InductivityCheck;
@@ -42,6 +43,7 @@ public class IncrementalInclusionCegarLoop extends BasicCegarLoop {
 	protected AbstractIncrementalInclusionCheck<CodeBlock, IPredicate> m_InclusionCheck;
 	protected final LanguageOperation m_LanguageOperation;
 	protected final List<DeterministicInterpolantAutomaton2> m_InterpolantAutomata = new ArrayList<DeterministicInterpolantAutomaton2>();
+	protected final List<IHoareTripleChecker> m_HoareTripleChecker = new ArrayList<IHoareTripleChecker>();
 
 	public IncrementalInclusionCegarLoop(String name, RootNode rootNode,
 			SmtManager smtManager, TAPreferences taPrefs,
@@ -162,6 +164,7 @@ public class IncrementalInclusionCegarLoop extends BasicCegarLoop {
 //		EdgeChecker edgeChecker = new EdgeChecker(m_SmtManager, m_RootNode.getRootAnnot().getModGlobVarManager(),
 //				m_TraceChecker.getPredicateUnifier().getCoverageRelation());
 		IHoareTripleChecker edgeChecker = new MonolithicHoareTripleChecker(m_SmtManager);
+		edgeChecker = new EfficientHoareTripleChecker(edgeChecker, m_ModGlobVarManager, m_TraceChecker.getPredicateUnifier().getCoverageRelation(), m_SmtManager);
 		
 		boolean progress;
 		try {
@@ -178,6 +181,7 @@ public class IncrementalInclusionCegarLoop extends BasicCegarLoop {
 				switchAllInterpolantAutomataToOnTheFlyConstructionMode();
 				m_InclusionCheck.addSubtrahend(determinized);
 				m_InterpolantAutomata.add(determinized);
+				m_HoareTripleChecker.add(edgeChecker);
 //				determinized.switchToReadonlyMode();
 				switchAllInterpolantAutomataToReadOnlyMode();
 //				assert (edgeChecker.isAssertionStackEmpty());
@@ -234,6 +238,15 @@ public class IncrementalInclusionCegarLoop extends BasicCegarLoop {
 		for (DeterministicInterpolantAutomaton2 ia : m_InterpolantAutomata) {
 			ia.switchToReadonlyMode();
 		}
+	}
+	
+	@Override
+	public void finish() {
+		assert m_HoareTripleChecker.size() == m_InterpolantAutomata.size();
+		for (IHoareTripleChecker htc : m_HoareTripleChecker) {
+			m_CegarLoopBenchmark.addEdgeCheckerData(htc.getEdgeCheckerBenchmark());
+		}
+		
 	}
 
 	
