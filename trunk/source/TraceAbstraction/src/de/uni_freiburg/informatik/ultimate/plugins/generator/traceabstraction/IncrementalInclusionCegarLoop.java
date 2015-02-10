@@ -164,7 +164,7 @@ public class IncrementalInclusionCegarLoop extends BasicCegarLoop {
 //		EdgeChecker edgeChecker = new EdgeChecker(m_SmtManager, m_RootNode.getRootAnnot().getModGlobVarManager(),
 //				m_TraceChecker.getPredicateUnifier().getCoverageRelation());
 		IHoareTripleChecker edgeChecker = new MonolithicHoareTripleChecker(m_SmtManager);
-		edgeChecker = new EfficientHoareTripleChecker(edgeChecker, m_ModGlobVarManager, m_TraceChecker.getPredicateUnifier().getCoverageRelation(), m_SmtManager);
+//		edgeChecker = new EfficientHoareTripleChecker(edgeChecker, m_ModGlobVarManager, m_TraceChecker.getPredicateUnifier().getCoverageRelation(), m_SmtManager);
 		
 		boolean progress;
 		try {
