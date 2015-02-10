@@ -11,15 +11,4 @@ public interface IPredicateCoverageChecker {
 	 */
 	public Validity isCovered(IPredicate lhs, IPredicate rhs);
 
-	/**
-	 * Returns validity of true ==> pred.getFormula().
-	 */
-	public Validity isEquivalentToTrue(IPredicate pred);
-
-	/**
-	 * 
-	 * Returns validity of pred.getFormula() ==> false.
-	 */
-	public Validity isEquivalentToFalse(IPredicate pred);
-
 }

@@ -405,15 +405,5 @@ public class PredicateUnifier {
 			return lbool;
 		}
 
-		@Override
-		public Validity isEquivalentToTrue(IPredicate pred) {
-			return isCovered(m_TruePredicate, pred);
-		}
-
-		@Override
-		public Validity isEquivalentToFalse(IPredicate pred) {
-			return isCovered(pred, m_FalsePredicate);
-		}
-
 	}
 }
