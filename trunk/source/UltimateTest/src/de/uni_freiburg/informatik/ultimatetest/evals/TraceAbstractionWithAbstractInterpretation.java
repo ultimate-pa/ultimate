@@ -28,7 +28,10 @@ public class TraceAbstractionWithAbstractInterpretation extends AbstractEvaluati
 
 	@Override
 	protected String[] getDirectories() {
-		return new String[] { "examples/programs/regression/c/" };
+		return new String[] { 
+//				"examples/programs/regression/c/" 
+		"examples/programs/regression/c/ShortCircuit-SideEffect-ForStatement-Unsafe.c"		
+		};
 	}
 	
 	@Override

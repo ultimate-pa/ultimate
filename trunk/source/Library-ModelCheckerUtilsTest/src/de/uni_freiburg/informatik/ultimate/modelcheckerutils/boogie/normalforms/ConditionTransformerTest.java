@@ -7,6 +7,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IdentifierExpression;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.output.BoogiePrettyPrinter;
 
@@ -53,6 +54,42 @@ public class ConditionTransformerTest {
 		return new IdentifierExpression(null, varname);
 	}
 
+	/**
+	 * No Typechecking!
+	 */
+	private Expression term(Expression var, int lit, Operator op) {
+		return new BinaryExpression(null, op, var, new IntegerLiteral(null, String.valueOf(lit)));
+	}
+
+	@Test
+	public void TestRewriteA() {
+		Expression input = term(mA, 1, Operator.COMPNEQ);
+		Expression afterRewrite = or(term(mA, 1, Operator.COMPLT), term(mA, 1, Operator.COMPGT));
+		TestRewrite(input, afterRewrite);
+	}
+
+	@Test
+	public void TestRewriteB() {
+		Expression input = or(mExp2, term(mA, 1, Operator.COMPNEQ));
+		Expression afterRewrite = or(or(mExp2, term(mA, 1, Operator.COMPGT)),term(mA, 1, Operator.COMPLT));
+		TestRewrite(input, afterRewrite);
+	}
+
+	@Test
+	public void TestSimplifyA() {
+		Expression input = and(mA, mA);
+		Expression afterSimplify = mA;
+		TestSimplify(input, afterSimplify);
+	}
+
+	// @Test
+	public void TestSimplifyB() {
+		// TODO: Implement this
+		Expression input = and(mA, or(mA, mB));
+		Expression afterSimplify = mA;
+		TestSimplify(input, afterSimplify);
+	}
+
 	@Test
 	public void TestA() {
 		Expression input = not(mExp1);
@@ -83,6 +120,34 @@ public class ConditionTransformerTest {
 		Expression nnf = or(or(not(mA), and(not(mC), not(mB))), and(not(mD), not(mA)));
 		Expression dnf = or(and(not(mC), not(mB)), not(mA));
 		Test(input, nnf, dnf);
+	}
+
+	private void TestRewrite(Expression input, Expression afterRewrite) {
+
+		ConditionTransformer<Expression> ct = new ConditionTransformer<>(new BoogieConditionWrapper());
+		System.out.println();
+		System.out.println("Input: " + printExpression(input));
+		ct.simplify(input);
+		Expression result = ct.rewriteNotEquals(input);
+		System.out.println("Rewri: " + printExpression(result));
+
+		Assert.assertEquals("Rewrite of " + printExpression(input) + "not correct,", printExpression(result),
+				printExpression(afterRewrite));
+
+	}
+
+	private void TestSimplify(Expression input, Expression afterSimplify) {
+
+		ConditionTransformer<Expression> ct = new ConditionTransformer<>(new BoogieConditionWrapper());
+		System.out.println();
+		System.out.println("Input: " + printExpression(input));
+		ct.simplify(input);
+		Expression result = ct.simplify(input);
+		System.out.println("Simpl: " + printExpression(result));
+
+		Assert.assertEquals("Simplify of " + printExpression(input) + "not correct,", printExpression(result),
+				printExpression(afterSimplify));
+
 	}
 
 	private void Test(Expression input, Expression afterNnf, Expression afterDnf) {

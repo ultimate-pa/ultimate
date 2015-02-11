@@ -49,6 +49,55 @@ public class ConditionTransformer<E> {
 		return current;
 	}
 
+	/**
+	 * Replace all terms of the form x != y with x < y || x > y
+	 * 
+	 */
+	public E rewriteNotEquals(E formula) {
+		if (formula == null) {
+			return null;
+		}
+
+		if (mWrapper.isAtom(formula)) {
+			return mWrapper.rewriteNotEquals(formula);
+		} else if (mWrapper.isNot(formula)) {
+			return mWrapper.makeNot(rewriteNotEquals(mWrapper.getOperand(formula)));
+		} else if (mWrapper.isAnd(formula)) {
+			ArrayDeque<E> operands = new ArrayDeque<>();
+			Iterator<E> iter = mWrapper.getOperands(formula);
+			while (iter.hasNext()) {
+				E operand = rewriteNotEquals(iter.next());
+				iter.remove();
+				operands.addFirst(operand);
+			}
+			return mWrapper.makeAnd(operands.iterator());
+		} else if (mWrapper.isOr(formula)) {
+			ArrayDeque<E> operands = new ArrayDeque<>();
+			Iterator<E> iter = mWrapper.getOperands(formula);
+			while (iter.hasNext()) {
+				E operand = rewriteNotEquals(iter.next());
+				iter.remove();
+				operands.addFirst(operand);
+			}
+			return mWrapper.makeOr(operands.iterator());
+		} else {
+			throw new UnsupportedOperationException();
+		}
+	}
+
+	private Collection<E> toTermsTopLevel(E formula) {
+		if (formula == null) {
+			return null;
+		}
+
+		ArrayList<E> terms = new ArrayList<>();
+		Iterator<E> iter = mWrapper.getOperands(formula);
+		while (iter.hasNext()) {
+			terms.add(iter.next());
+		}
+		return terms;
+	}
+
 	public Collection<E> toDnfDisjuncts(E condition) {
 		E dnf = toDnf(condition);
 		if (dnf == null) {
@@ -57,12 +106,7 @@ public class ConditionTransformer<E> {
 		if (!mWrapper.isOr(condition)) {
 			return Collections.singleton(dnf);
 		}
-		ArrayList<E> disjuncts = new ArrayList<>();
-		Iterator<E> iter = mWrapper.getOperands(dnf);
-		while (iter.hasNext()) {
-			disjuncts.add(iter.next());
-		}
-		return disjuncts;
+		return toTermsTopLevel(dnf);
 	}
 
 	private E simplifyDnf(E formula) {
@@ -148,7 +192,7 @@ public class ConditionTransformer<E> {
 		return set;
 	}
 
-	private E simplify(E current) {
+	public E simplify(E current) {
 		// TODO: Simplify negations by e.g. converting !(a == b) to (a != b)
 		// TODO: Simplify overlapping and/or, e.g. a && (a || b) -> a
 		if (mWrapper.isAnd(current) || mWrapper.isOr(current)) {

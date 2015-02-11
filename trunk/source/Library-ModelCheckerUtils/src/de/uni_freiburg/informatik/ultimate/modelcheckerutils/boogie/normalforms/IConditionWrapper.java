@@ -30,6 +30,8 @@ public interface IConditionWrapper<E> {
 	E makeNot(E operand);
 
 	E getOperand(E formula);
+	
+	E rewriteNotEquals(E atom);
 
 	Iterator<E> getOperands(E formula);
 

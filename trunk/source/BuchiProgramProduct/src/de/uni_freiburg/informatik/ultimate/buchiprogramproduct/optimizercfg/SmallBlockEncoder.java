@@ -75,7 +75,7 @@ public class SmallBlockEncoder extends BaseObserver {
 					Statement stmt = ss.getStatements().get(0);
 					if (stmt instanceof AssumeStatement) {
 						AssumeStatement assume = (AssumeStatement) stmt;
-						Collection<Expression> disjuncts = ct.toDnfDisjuncts(assume.getFormula());
+						Collection<Expression> disjuncts = ct.toDnfDisjuncts(ct.rewriteNotEquals(assume.getFormula()));
 						if (mLogger.isDebugEnabled() && disjuncts.size() > 1) {
 							mLogger.debug("Edge " + current.hashCode() + ":");
 							mLogger.debug("    has assume " + BoogiePrettyPrinter.print(assume.getFormula()));

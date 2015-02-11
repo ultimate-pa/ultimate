@@ -251,4 +251,19 @@ public class BoogieConditionWrapper implements IConditionWrapper<Expression> {
 
 		return one.equals(other);
 	}
+
+	@Override
+	public Expression rewriteNotEquals(Expression atom) {
+		if (atom instanceof BinaryExpression) {
+			BinaryExpression binexp = (BinaryExpression) atom;
+			if (binexp.getOperator() == Operator.COMPNEQ) {
+				Expression left = new BinaryExpression(atom.getLocation(), Operator.COMPLT, binexp.getLeft(),
+						binexp.getRight());
+				Expression right = new BinaryExpression(atom.getLocation(), Operator.COMPGT, binexp.getLeft(),
+						binexp.getRight());
+				return new BinaryExpression(atom.getLocation(), Operator.LOGICOR, left, right);
+			}
+		}
+		return atom;
+	}
 }

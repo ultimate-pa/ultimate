@@ -7,10 +7,14 @@ import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.buchiprogramproduct.benchmark.SizeBenchmark;
 import de.uni_freiburg.informatik.ultimate.buchiprogramproduct.optimizeproduct.AssumeMerger;
+import de.uni_freiburg.informatik.ultimate.buchiprogramproduct.optimizeproduct.BaseProductOptimizer;
 import de.uni_freiburg.informatik.ultimate.buchiprogramproduct.optimizeproduct.MaximizeFinalStates;
-import de.uni_freiburg.informatik.ultimate.buchiprogramproduct.optimizeproduct.MinimizeLinearStates;
+import de.uni_freiburg.informatik.ultimate.buchiprogramproduct.optimizeproduct.MinimizeStatesMultiEdgeMultiNode;
+import de.uni_freiburg.informatik.ultimate.buchiprogramproduct.optimizeproduct.MinimizeStatesMultiEdgeSingleNode;
+import de.uni_freiburg.informatik.ultimate.buchiprogramproduct.optimizeproduct.MinimizeStatesSingleEdgeSingleNode;
 import de.uni_freiburg.informatik.ultimate.buchiprogramproduct.optimizeproduct.RemoveInfeasibleEdges;
 import de.uni_freiburg.informatik.ultimate.buchiprogramproduct.preferences.PreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.buchiprogramproduct.preferences.PreferenceInitializer.MinimizeStates;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.ltl2aut.never2nwa.NWAContainer;
@@ -62,9 +66,14 @@ public class BuchiProductObserver implements IUnmanagedObserver {
 			mLogger.info("Finished generation of product automaton successfully");
 			reportSizeBenchmark("Initial product", mProduct);
 
-			int maxIters = 3;
-			
+			int maxIters = ups.getInt(PreferenceInitializer.OPTIMIZE_MAX_ITERATIONS) - 1;
+			if (maxIters < 0) {
+				maxIters = -1;
+			}
+			int i = 1;
 			while (true) {
+				mLogger.debug("==== Optimization #" + i + "====");
+				++i;
 				boolean continueOptimization = false;
 
 				if (ups.getBoolean(PreferenceInitializer.OPTIMIZE_REMOVE_INFEASIBLE_EDGES)) {
@@ -79,8 +88,25 @@ public class BuchiProductObserver implements IUnmanagedObserver {
 					continueOptimization = continueOptimization || opt2.IsGraphChanged();
 				}
 
-				if (ups.getBoolean(PreferenceInitializer.OPTIMIZE_MINIMIZE_LINEAR_STATES)) {
-					MinimizeLinearStates opt3 = new MinimizeLinearStates(mProduct, mServices);
+				MinimizeStates minimizeStates = ups.getEnum(PreferenceInitializer.OPTIMIZE_MINIMIZE_STATES,
+						MinimizeStates.class);
+
+				if (minimizeStates != MinimizeStates.NONE) {
+					BaseProductOptimizer opt3;
+					switch (minimizeStates) {
+					case SINGLE:
+						opt3 = new MinimizeStatesSingleEdgeSingleNode(mProduct, mServices);
+						break;
+					case SINGLE_NODE_MULTI_EDGE:
+						opt3 = new MinimizeStatesMultiEdgeSingleNode(mProduct, mServices);
+						break;
+					case MULTI:
+						opt3 = new MinimizeStatesMultiEdgeMultiNode(mProduct, mServices);
+						break;
+					default:
+						throw new IllegalArgumentException(minimizeStates + " is an unknown enum value!");
+
+					}
 					mProduct = opt3.getResult();
 					continueOptimization = continueOptimization || opt3.IsGraphChanged();
 				}
@@ -91,8 +117,11 @@ public class BuchiProductObserver implements IUnmanagedObserver {
 					continueOptimization = continueOptimization || opt4.IsGraphChanged();
 				}
 
-				if (ups.getBoolean(PreferenceInitializer.OPTIMIZE_UNTIL_FIXPOINT) && continueOptimization && maxIters > 0) {
-					maxIters--;
+				if (ups.getBoolean(PreferenceInitializer.OPTIMIZE_UNTIL_FIXPOINT) && continueOptimization
+						&& maxIters != 0) {
+					if (maxIters > 0) {
+						maxIters--;
+					}
 					continue;
 				}
 				break;

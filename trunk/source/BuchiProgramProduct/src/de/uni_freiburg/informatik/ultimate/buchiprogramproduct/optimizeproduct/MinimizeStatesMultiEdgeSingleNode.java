@@ -16,11 +16,11 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Roo
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.SequentialComposition;
 
-public class MinimizeLinearStates extends BaseProductOptimizer {
+public class MinimizeStatesMultiEdgeSingleNode extends BaseProductOptimizer {
 
 	private IUltimateServiceProvider mServices;
 
-	public MinimizeLinearStates(RootNode product, IUltimateServiceProvider services) {
+	public MinimizeStatesMultiEdgeSingleNode(RootNode product, IUltimateServiceProvider services) {
 		super(product, services);
 		mLogger.info("Removed " + mRemovedEdges + " edges and " + mRemovedLocations
 				+ " locations and replaced them with sequential compositions");
@@ -122,6 +122,7 @@ public class MinimizeLinearStates extends BaseProductOptimizer {
 			}
 
 			mRemovedEdges += predEdges.size() + succEdges.size();
+			return pred.getOutgoingEdges();
 
 		}
 		return succ.getOutgoingEdges();

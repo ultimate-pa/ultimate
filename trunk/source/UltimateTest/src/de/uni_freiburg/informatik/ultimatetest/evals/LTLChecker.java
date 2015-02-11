@@ -17,7 +17,7 @@ public class LTLChecker extends AbstractEvaluationTestSuite {
 
 	@Override
 	protected void createTestCasesForReal(List<UltimateTestCase> testcases) {
-		addTestCasesFixed("LtlSoftwareModelCheckingC.xml", "LtlSoftwareModelCheckingC.epf", testcases);
+		addTestCasesFixed("LTLAutomizerC.xml", "LtlAutomizerC.epf", testcases);
 //		addTestCasesFixed("LtlSoftwareModelCheckingC.xml", "LtlSoftwareModelCheckingC-nosimpl.epf", testcases);
 	}
 
@@ -38,18 +38,13 @@ public class LTLChecker extends AbstractEvaluationTestSuite {
 //				"examples/LTL/rers/P19/",
 //				"examples/LTL/coolant/",
 				"examples/LTL/koskinen/ltlcmodelchecker-benchmarks/",
-	
 //				"examples/LTL/bugs/",
-//				"examples/LTL/bugs/Simple_ex1.c",				
-//				"examples/LTL/simple/",
-				
-//				"examples/LTL/simple/rers-test.c",				
-//				"examples/LTL/simple/rers-test-inlined.c",
-//				"examples/LTL/simple/rers-test-inlined_withtmp.c",
 
-				//RERS examples with soundness errors  
-//				"examples/LTL/rers/P14/Problem14_prop_010.c",
-//				"examples/LTL/rers/P14/Problem14_prop_002.c",
+				//RERS examples with NO_RESULT  
+//				"examples/LTL/rers2012/P14/Problem14_prop_005.c",
+				
+				//Koskinen examples with problems
+//				"examples/LTL/koskinen/ltlcmodelchecker-benchmarks/18-windows_os_frag4_prop2-new.c",
 
 		};
 		// @formatter:on
@@ -58,7 +53,7 @@ public class LTLChecker extends AbstractEvaluationTestSuite {
 
 	@Override
 	protected int getTimeout() {
-		return 4 * 60 * 1000;
+		return 20 * 60 * 1000;
 	}
 
 	@Override

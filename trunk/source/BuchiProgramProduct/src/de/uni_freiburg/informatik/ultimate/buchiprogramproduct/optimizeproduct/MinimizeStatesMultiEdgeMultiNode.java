@@ -22,9 +22,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Roo
  * @author dietsch@informatik.uni-freiburg.de
  *
  */
-public class MinimizeStatesWithYVTransformation extends BaseProductOptimizer {
+public class MinimizeStatesMultiEdgeMultiNode extends BaseProductOptimizer {
 
-	public MinimizeStatesWithYVTransformation(RootNode product, IUltimateServiceProvider services) {
+	public MinimizeStatesMultiEdgeMultiNode(RootNode product, IUltimateServiceProvider services) {
 		super(product, services);
 		// TODO Auto-generated constructor stub
 	}
