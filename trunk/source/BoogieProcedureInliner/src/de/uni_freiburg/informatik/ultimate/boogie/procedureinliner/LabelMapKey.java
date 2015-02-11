@@ -13,6 +13,15 @@ public class LabelMapKey {
 	private int mCallNumber;
 	
 	/**
+	 * Creates a new key for a label of the procedure, used as the entry point of inlining.
+	 * @param labelId Original identifier of the label.
+	 * @param procedureId Identifier of the original procedure, containing the label.
+	 */
+	public LabelMapKey(String labelId, String procedureId) {
+		this(labelId, procedureId, false, 0);
+	}
+
+	/**
 	 * Creates a new key.
 	 * @param labelId Original identifier of the label.
 	 * @param procedureId Identifier of the original procedure, containing the label.
@@ -25,7 +34,7 @@ public class LabelMapKey {
 		mIsReturnLabel = isReturnLabel;
 		mCallNumber = callNumber;
 	}
-
+	
 	/** @return Original identifier of the label. */
 	public String getLabelId() {
 		return mLabelId;
