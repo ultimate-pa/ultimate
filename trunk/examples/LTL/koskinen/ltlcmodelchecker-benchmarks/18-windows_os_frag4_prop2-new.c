@@ -1,5 +1,5 @@
 //#Safe
-//@ ltl invariant positive: []( <>AP(phi_io_compl == 1) || <>AP(phi_nSUC_ret == 1));
+//@ ltl invariant positive: <>AP(phi_io_compl == 1) || <>AP(phi_nSUC_ret == 1);
 
 #include "../ctl.h"
 

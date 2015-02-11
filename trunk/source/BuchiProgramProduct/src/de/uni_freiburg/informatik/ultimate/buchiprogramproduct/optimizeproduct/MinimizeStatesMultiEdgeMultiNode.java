@@ -29,11 +29,6 @@ public class MinimizeStatesMultiEdgeMultiNode extends BaseProductOptimizer {
 		// TODO Auto-generated constructor stub
 	}
 
-	@Override
-	protected void init(RootNode root, IUltimateServiceProvider services) {
-		// TODO Auto-generated method stub
-
-	}
 
 	@Override
 	protected RootNode process(RootNode root) {

@@ -10,22 +10,28 @@ import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.buchiprogramproduct.Activator;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.TransFormulaBuilder;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootAnnot;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
 
 public abstract class BaseProductOptimizer {
-
-	protected final RootNode mResult;
+	protected final IUltimateServiceProvider mServices;
 	protected final Logger mLogger;
+	
+	protected final RootNode mResult;
 	protected int mRemovedEdges;
 	protected int mRemovedLocations;
+	
 
 	public BaseProductOptimizer(RootNode product, IUltimateServiceProvider services) {
 		assert services != null;
 		assert product != null;
-
+		mServices = services;
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mRemovedEdges = 0;
 		mRemovedLocations = 0;
@@ -33,7 +39,9 @@ public abstract class BaseProductOptimizer {
 		mResult = process(product);
 	}
 
-	protected abstract void init(RootNode root, IUltimateServiceProvider services);
+	protected void init(RootNode root, IUltimateServiceProvider services){
+		
+	}
 
 	protected abstract RootNode process(RootNode root);
 
@@ -88,6 +96,13 @@ public abstract class BaseProductOptimizer {
 
 	public RootNode getResult() {
 		return mResult;
+	}
+
+	protected void generateTransFormula(RootNode root, StatementSequence ss) {
+		Boogie2SMT b2smt = root.getRootAnnot().getBoogie2SMT();
+		TransFormulaBuilder tfb = new TransFormulaBuilder(b2smt, mServices);
+		tfb.addTransitionFormulas((CodeBlock) ss, ((ProgramPoint) ss.getSource()).getProcedure());
+		assert ss.getTransitionFormula() != null;
 	}
 
 }

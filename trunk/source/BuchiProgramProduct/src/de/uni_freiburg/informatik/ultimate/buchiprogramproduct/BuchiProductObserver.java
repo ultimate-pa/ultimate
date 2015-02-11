@@ -57,7 +57,7 @@ public class BuchiProductObserver implements IUnmanagedObserver {
 		// measure size of nwa and rcfg
 		reportSizeBenchmark("Initial property automaton", mNeverClaimNWAContainer.getNWA());
 		reportSizeBenchmark("Initial RCFG", mRcfg);
-
+		
 		mLogger.info("Beginning generation of product automaton");
 		UltimatePreferenceStore ups = new UltimatePreferenceStore(Activator.PLUGIN_ID);
 		try {
@@ -113,7 +113,7 @@ public class BuchiProductObserver implements IUnmanagedObserver {
 				}
 
 				if (ups.getBoolean(PreferenceInitializer.OPTIMIZE_SIMPLIFY_ASSUMES)) {
-					AssumeMerger opt4 = new AssumeMerger(mProduct, mServices);
+					BaseProductOptimizer opt4 = new AssumeMerger(mProduct, mServices);
 					mProduct = opt4.getResult();
 					continueOptimization = continueOptimization || opt4.IsGraphChanged();
 				}

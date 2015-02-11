@@ -18,17 +18,10 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Seq
 
 public class MinimizeStatesMultiEdgeSingleNode extends BaseProductOptimizer {
 
-	private IUltimateServiceProvider mServices;
-
 	public MinimizeStatesMultiEdgeSingleNode(RootNode product, IUltimateServiceProvider services) {
 		super(product, services);
 		mLogger.info("Removed " + mRemovedEdges + " edges and " + mRemovedLocations
 				+ " locations and replaced them with sequential compositions");
-	}
-
-	@Override
-	protected void init(RootNode root, IUltimateServiceProvider services) {
-		mServices = services;
 	}
 
 	@Override

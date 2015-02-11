@@ -11,10 +11,8 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.output.BoogiePrettyPrinter;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.normalforms.BoogieConditionWrapper;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.normalforms.ConditionTransformer;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ParallelComposition;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
@@ -27,7 +25,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.RC
 public class AssumeMerger extends BaseProductOptimizer {
 
 	private int mAssumesMerged;
-	private IUltimateServiceProvider mServices;
 
 	public AssumeMerger(RootNode product, IUltimateServiceProvider services) {
 		super(product, services);
@@ -37,7 +34,6 @@ public class AssumeMerger extends BaseProductOptimizer {
 	@Override
 	protected void init(RootNode root, IUltimateServiceProvider services) {
 		mAssumesMerged = 0;
-		mServices = services;
 	}
 
 	@Override
@@ -190,13 +186,6 @@ public class AssumeMerger extends BaseProductOptimizer {
 		} else {
 			return false;
 		}
-	}
-
-	private void generateTransFormula(RootNode root, StatementSequence ss) {
-		Boogie2SMT b2smt = root.getRootAnnot().getBoogie2SMT();
-		TransFormulaBuilder tfb = new TransFormulaBuilder(b2smt, mServices);
-		tfb.addTransitionFormulas((CodeBlock) ss, ((ProgramPoint) ss.getSource()).getProcedure());
-		assert ss.getTransitionFormula() != null;
 	}
 
 	@Override

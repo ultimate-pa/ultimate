@@ -6,6 +6,7 @@ Bundle-Version: 0.0.1
 Bundle-Activator: de.uni_freiburg.informatik.ultimate.ltl2aut.Activator
 Require-Bundle: Library-log4j,
  UltimateCore,
+ Library-ModelCheckerUtils,
  BoogieParser,
  BoogiePreprocessor,
  de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder,

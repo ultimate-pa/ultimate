@@ -24,10 +24,13 @@ import de.uni_freiburg.informatik.ultimate.ltl2aut.ast.SkipStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BooleanLiteral;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.normalforms.BoogieConditionWrapper;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.normalforms.ConditionTransformer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence.Origin;
@@ -171,6 +174,7 @@ public class Never2Automaton {
 	}
 
 	private CodeBlock getAssume(AstNode condition) throws Exception {
+		ConditionTransformer<Expression> ct = new ConditionTransformer<>(new BoogieConditionWrapper());
 		if (condition instanceof Name) {
 			// this may be already translated by the IRS
 			Name name = (Name) condition;
@@ -180,7 +184,8 @@ public class Never2Automaton {
 				if (checkExpr.getStatements() != null) {
 					stmts.addAll(checkExpr.getStatements());
 				}
-				stmts.add(new AssumeStatement(checkExpr.getExpression().getLocation(), checkExpr.getExpression()));
+				
+				stmts.add(new AssumeStatement(checkExpr.getExpression().getLocation(), ct.rewriteNotEquals(checkExpr.getExpression())));
 				return new StatementSequence(null, null, stmts, Origin.ASSERT, mLogger);
 			} else {
 				mLogger.warn("Root condition is a name, but no mapping in IRS found: " + name.getIdent());
@@ -194,7 +199,7 @@ public class Never2Automaton {
 		if (checkExpr.getStatements() != null) {
 			stmts.addAll(checkExpr.getStatements());
 		}
-		stmts.add(new AssumeStatement(checkExpr.getExpression().getLocation(), checkExpr.getExpression()));
+		stmts.add(new AssumeStatement(checkExpr.getExpression().getLocation(), ct.rewriteNotEquals(checkExpr.getExpression())));
 		return new StatementSequence(null, null, stmts, Origin.ASSERT, mLogger);
 	}
 
