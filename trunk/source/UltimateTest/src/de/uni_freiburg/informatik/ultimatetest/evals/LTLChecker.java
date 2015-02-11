@@ -30,15 +30,15 @@ public class LTLChecker extends AbstractEvaluationTestSuite {
 	protected String[] getDirectories() {
 		// @formatter:off
 		return new String[] { 
-//				"examples/LTL/rers/P14/",
-//				"examples/LTL/rers/P15/",
-//				"examples/LTL/rers/P16/",
-//				"examples/LTL/rers/P17/",
-//				"examples/LTL/rers/P18/",
-//				"examples/LTL/rers/P19/",
+//				"examples/LTL/rers2012/P14/",
+//				"examples/LTL/rers2012/P15/",
+//				"examples/LTL/rers2012/P16/",
+//				"examples/LTL/rers2012/P17/",
+//				"examples/LTL/rers2012/P18/",
+//				"examples/LTL/rers2012/P19/",
 //				"examples/LTL/coolant/",
-				"examples/LTL/koskinen/ltlcmodelchecker-benchmarks/",
-//				"examples/LTL/bugs/",
+//				"examples/LTL/koskinen/ltlcmodelchecker-benchmarks/",
+				"examples/LTL/bugs/",
 
 				//RERS examples with NO_RESULT  
 //				"examples/LTL/rers2012/P14/Problem14_prop_005.c",

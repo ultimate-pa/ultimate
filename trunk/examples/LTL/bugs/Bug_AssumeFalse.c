@@ -2,8 +2,8 @@
 
 //@ ltl invariant positive: ( <>[] ( AP(output == 0)));
 
-extern void __VERIFIER_assume() __attribute__ ((__noreturn__));
-extern int __VERIFIER_nondet_int() __attribute__ ((__noreturn__));
+extern void __VERIFIER_assume();
+extern int __VERIFIER_nondet_int();
 
 int output, input;
 

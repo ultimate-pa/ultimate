@@ -23,6 +23,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.result.BenchmarkResult;
 import de.uni_freiburg.informatik.ultimate.result.LTLPropertyCheck;
+import de.uni_freiburg.informatik.ultimate.result.TimeoutResult;
 
 public class BuchiProductObserver implements IUnmanagedObserver {
 
@@ -115,6 +116,12 @@ public class BuchiProductObserver implements IUnmanagedObserver {
 					AssumeMerger opt4 = new AssumeMerger(mProduct, mServices);
 					mProduct = opt4.getResult();
 					continueOptimization = continueOptimization || opt4.IsGraphChanged();
+				}
+
+				if (!mServices.getProgressMonitorService().continueProcessing()) {
+					mServices.getResultService().reportResult(Activator.PLUGIN_ID,
+							new TimeoutResult(Activator.PLUGIN_ID, "Timeout during product optimization"));
+					return;
 				}
 
 				if (ups.getBoolean(PreferenceInitializer.OPTIMIZE_UNTIL_FIXPOINT) && continueOptimization
