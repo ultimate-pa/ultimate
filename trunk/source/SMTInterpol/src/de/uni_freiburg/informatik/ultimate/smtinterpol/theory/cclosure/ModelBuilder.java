@@ -111,7 +111,8 @@ public class ModelBuilder {
 				Term smtterm = term.toSMTTerm(t);
 				if (smtterm.getSort().isNumericSort()) {
 					Rational v;
-					if (term.getSharedTerm() != null) // NOPMD
+					if (term.getSharedTerm() != null
+							&& term.getSharedTerm().validShared()) // NOPMD
 						v = ste.evaluate(term.getSharedTerm(), t);
 					else if (smtterm instanceof ConstantTerm)
 						v = (Rational) ((ConstantTerm) smtterm).getValue();

@@ -233,15 +233,13 @@ public class LinVar implements Comparable<LinVar> {
 	 * @return <code>false</code> iff <code>mlbound<=mcurval<=mubound</code>. 
 	 */
 	public boolean outOfBounds() {
-		if (mUpper instanceof LiteralReason
-			|| (isInt() && mUpper != null)) {
+		if (mUpper != null) {
 			if (mCurval.mA.equals(mUpper.getExactBound().mA))
 				fixEpsilon();
 			if (mUpper.getExactBound().less(mCurval))
 				return true;
 		}
-		if (mLower instanceof LiteralReason
-			|| (isInt() && mLower != null)) {
+		if (mLower != null) {
 			if (mCurval.mA.equals(mLower.getExactBound().mA))
 				fixEpsilon();
 			if (mCurval.less(mLower.getExactBound()))

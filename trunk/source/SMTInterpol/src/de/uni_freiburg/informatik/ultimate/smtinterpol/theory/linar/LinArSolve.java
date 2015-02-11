@@ -126,8 +126,6 @@ public class LinArSolve implements ITheory {
 	long mPivotTime;
 	/** Number of literals created due to composites. */
 	int mCompositeCreateLit;
-	/** Number of branches since the last cut. */
-	private int mBranchCtr;
 
 	// Statistics
 	int mNumCuts;
@@ -441,7 +439,9 @@ public class LinArSolve implements ITheory {
 		if (reason.isUpper()) {
 			if (var.mUpper == reason) {
 				var.mUpper = reason.getOldReason();
-				if (!var.mBasic) { // NOPMD
+				if (var.mDead) {
+					/* do nothing for simplified variables */
+				} else if (!var.mBasic) { // NOPMD
 					updatePropagationCountersOnBacktrack(
 							var, reason.getBound(), var.getUpperBound(), true);
 					if (var.mCurval.less(var.getLowerBound()))
@@ -455,7 +455,9 @@ public class LinArSolve implements ITheory {
 		} else {
 			if (var.mLower == reason) {
 				var.mLower = reason.getOldReason();
-				if (!var.mBasic) { // NOPMD
+				if (var.mDead) {
+					/* do nothing for simplified variables */
+				} else if (!var.mBasic) { // NOPMD
 					updatePropagationCountersOnBacktrack(
 							var, reason.getBound(), var.getLowerBound(), false);
 					if (var.getUpperBound().less(var.mCurval))
@@ -595,6 +597,7 @@ public class LinArSolve implements ITheory {
 			return c;
 		assert mOob.isEmpty();
 		mutate();
+		assert mOob.isEmpty();
 		Map<ExactInfinitNumber, List<SharedTerm>> cong = getSharedCongruences();
 		assert checkClean();
 		mEngine.getLogger().debug(new DebugMessage("cong: {0}", cong));
@@ -999,12 +1002,13 @@ public class LinArSolve implements ITheory {
 		for (LinVar var : mLinvars) {
 			if (var.mBasic) {
 				StringBuilder sb = new StringBuilder();
-				sb.append(var).append(" ; ");
+				sb.append(var.mHeadEntry.mCoeff).append('*').append(var).
+				append(" ; ");
 				for (MatrixEntry entry = var.mHeadEntry.mNextInRow;
-			         entry != var.mHeadEntry; entry = entry.mNextInRow) {
+						entry != var.mHeadEntry; entry = entry.mNextInRow) {
 					sb.append(" ; ").append(entry.mCoeff)
 						.append('*').append(entry.mColumn);
-				}				
+				}
 				logger.debug(sb.toString());
 			}
 		}
@@ -1013,7 +1017,7 @@ public class LinArSolve implements ITheory {
 	public void dumpConstraints(Logger logger) {
 		for (LinVar var : mLinvars) {
 			StringBuilder sb = new StringBuilder();
-			sb.append(var).append(": ");
+			sb.append(var).append(var.mIsInt ? "[int]" : "[real]").append(": ");
 			InfinitNumber lower = var.getLowerBound();
 			if (lower != InfinitNumber.NEGATIVE_INFINITY)
 				sb.append("lower: ").append(var.getLowerBound()).append(" <= ");
@@ -1060,6 +1064,8 @@ public class LinArSolve implements ITheory {
 	
 	@Override
 	public void dumpModel(Logger logger) {
+		dumpTableaux(logger);
+		dumpConstraints(logger);
 		prepareModel();
 		logger.info("Assignments:");
 		for (LinVar var : mLinvars) {
@@ -1188,6 +1194,7 @@ public class LinArSolve implements ITheory {
 	private Clause ensureIntegrals() {
 		boolean isIntegral = true;
 		for (LinVar lv : mIntVars) {
+			lv.fixEpsilon();
 			if (!lv.mCurval.isIntegral())
 				isIntegral = false;
 		}
@@ -1195,42 +1202,16 @@ public class LinArSolve implements ITheory {
 			return null;
 
 		Logger logger = mEngine.getLogger();
-		if (logger.isDebugEnabled())
+		if (logger.isDebugEnabled()) {
 			dumpTableaux(logger);
+			dumpConstraints(logger);
+		}
 
 		// Satisfiable in the reals
 		assert mOob.isEmpty();
 		long start;
 		if (Config.PROFILE_TIME)
 			start = System.nanoTime();
-		while (mBranchCtr++ < 5) {
-			LinVar best = null;
-			for (LinVar lv : mIntVars) {
-				if (lv.mCurval.isIntegral())
-					continue;
-				if (best == null)
-					best = lv;
-				else if (lv.getUpperBound().sub(lv.getLowerBound()).less(
-						best.getUpperBound().sub(best.getLowerBound())))
-					best = lv;
-			}
-			if (best == null)
-				return null;
-			if (best.mCurval.less(best.getLowerBound())
-				|| best.getUpperBound().less(best.mCurval)) {
-				mOob.add(best);
-				mNumCuts++;
-			} else {
-				Literal branch = generateConstraint(
-						best, best.mCurval.floor(), false);
-				mSuggestions.add(branch);
-				mNumBranches++;
-			}
-			Clause c = fixOobs();
-			if (c != null)
-				return c;
-		}
-		mBranchCtr = 0;
 		CutCreator cutter = new CutCreator(this);
 		cutter.generateCuts();
 		if (Config.PROFILE_TIME)
@@ -1238,7 +1219,7 @@ public class LinArSolve implements ITheory {
 		Clause c = checkPendingConflict();
 		if (c != null)
 			return c;
-		c = fixOobs();
+		c = checkpoint();
 		if (c != null)
 			return c;
 		return null;
@@ -1486,6 +1467,10 @@ public class LinArSolve implements ITheory {
 			bc = new BoundConstraint(rbound, var, mEngine.getAssertionStackLevel());
 			assert bc.mVar.checkCoeffChain();
 			mEngine.addAtom(bc);
+			if (var.getUpperBound().lesseq(rbound))
+				mProplist.add(bc);
+			if (rbound.less(var.getLowerBound()))
+				mProplist.add(bc.negate());
 		}
 		return isLowerBound ? bc.negate() : bc;
 	}
@@ -1628,6 +1613,7 @@ public class LinArSolve implements ITheory {
 			TreeMap<LinVar,Rational> coeffs = removeVar(v);
 			updateSimps(v,coeffs);
 			newsimps.put(v,coeffs);
+			mOob.remove(v);
 			mPropBounds.remove(v);
 		}
 		mSimps.putAll(newsimps);
@@ -1760,27 +1746,26 @@ public class LinArSolve implements ITheory {
      * @param lower Lower bound to compute.
      * @param upper Upper bound to compute.
      */
-	private void freedom(LinVar var, MutableRational lower,
-			MutableRational upper) {
-		// never assign lower or upper using = but use setValue
-		lower.setValue(var.getLowerBound().mA);
-		upper.setValue(var.getUpperBound().mA);
+	private void freedom(LinVar var, MutableInfinitNumber lower,
+			MutableInfinitNumber upper) {
+		lower.assign(var.getLowerBound());
+		upper.assign(var.getUpperBound());
 		// fast path: Fixed variable
 		if (lower.equals(upper))
 			return;
-		Rational maxBelow = Rational.NEGATIVE_INFINITY;
-		Rational minAbove = Rational.POSITIVE_INFINITY;
+		InfinitNumber maxBelow = InfinitNumber.NEGATIVE_INFINITY;
+		InfinitNumber minAbove = InfinitNumber.POSITIVE_INFINITY;
 		for (MatrixEntry me = var.mHeadEntry.mNextInCol; me != var.mHeadEntry;
 			me = me.mNextInCol) {
 			Rational coeff = Rational.valueOf(
 					me.mRow.mHeadEntry.mCoeff.negate(), me.mCoeff);
-			Rational below = me.mRow.getLowerBound().mA.sub(
-					me.mRow.mCurval.mA).mul(coeff);
-			Rational above = me.mRow.getUpperBound().mA.sub(
-					me.mRow.mCurval.mA).mul(coeff);
+			InfinitNumber below = me.mRow.getLowerBound().sub(
+					me.mRow.mCurval).mul(coeff);
+			InfinitNumber above = me.mRow.getUpperBound().sub(
+					me.mRow.mCurval).mul(coeff);
 			if (coeff.isNegative()) {
 				// reverse orders
-				Rational t = below;
+				InfinitNumber t = below;
 				below = above;
 				above = t;
 			}
@@ -1790,12 +1775,12 @@ public class LinArSolve implements ITheory {
 			if (above.compareTo(minAbove) < 0)
 				minAbove = above;
 		}
-		maxBelow = maxBelow.add(var.mCurval.mA);
-		minAbove = minAbove.add(var.mCurval.mA);
-		if (maxBelow.compareTo(lower.toRational()) > 0)
-			lower.setValue(maxBelow);
-		if (minAbove.compareTo(upper.toRational()) < 0)
-			upper.setValue(minAbove);
+		maxBelow = maxBelow.add(var.mCurval);
+		minAbove = minAbove.add(var.mCurval);
+		if (maxBelow.compareTo(lower.toInfinitNumber()) > 0)
+			lower.assign(maxBelow);
+		if (minAbove.compareTo(upper.toInfinitNumber()) < 0)
+			upper.assign(minAbove);
 	}
 	/**
 	 * Mutate a model such that less variables have the same value.
@@ -1804,8 +1789,8 @@ public class LinArSolve implements ITheory {
 	 * distinct values, we still compute a lot of stuff.
 	 */
 	private void mutate() {
-		MutableRational lower = new MutableRational(0,1);
-		MutableRational upper = new MutableRational(0,1);
+		MutableInfinitNumber lower = new MutableInfinitNumber();
+		MutableInfinitNumber upper = new MutableInfinitNumber();
 		Map<Rational,Set<Rational>> sharedPoints = 
 				new TreeMap<Rational, Set<Rational>>();
 		Set<Rational> prohib = new TreeSet<Rational>();
@@ -1871,11 +1856,12 @@ public class LinArSolve implements ITheory {
 			// it by eps, otherwise incrementing by a multiple of gcd.inverse()
 			// will preserve integrity of all depending variables. 
 			Rational lcm = gcd.inverse();
-			Rational chosen = choose(lower,upper,prohib,sharedPoints,lcm,lv.mCurval.mA);
-			assert (chosen.compareTo(lower.toRational()) >= 0
-					&& chosen.compareTo(upper.toRational()) <= 0);
-			if (!chosen.equals(lv.mCurval.mA))
-				updateVariableValue(lv, new InfinitNumber(chosen, 0));
+			InfinitNumber chosen = 
+					choose(lower,upper,prohib,sharedPoints,lcm,lv.mCurval);
+			assert (chosen.compareTo(lower.toInfinitNumber()) >= 0
+					&& chosen.compareTo(upper.toInfinitNumber()) <= 0);
+			if (!chosen.equals(lv.mCurval))
+				updateVariableValue(lv, chosen);
 		}
 	}
 	
@@ -1965,71 +1951,74 @@ public class LinArSolve implements ITheory {
      * @param currentValue Value currently assigned to a variable.
      * @return
      */
-	private Rational choose(MutableRational lower,
-			MutableRational upper,
+	private InfinitNumber choose(MutableInfinitNumber lower,
+			MutableInfinitNumber upper,
 			Set<Rational> prohibitions,
 			Map<Rational,Set<Rational>> sharedPoints,
-			Rational lcm, Rational currentValue) {
+			Rational lcm, InfinitNumber currentValue) {
 		// Check if variable is fixed or allowed.
 		if (upper.equals(lower)
-			|| (!prohibitions.contains(currentValue))
-				&& !hasSharing(sharedPoints, Rational.ZERO))
+			|| (!prohibitions.contains(currentValue.mA)
+				&& !hasSharing(sharedPoints, Rational.ZERO)))
 			return currentValue;
 		
 		if (lcm == Rational.POSITIVE_INFINITY) {
 			/* use binary search to find the candidate */
-			Rational low = lower.toRational();
-			if (low == Rational.NEGATIVE_INFINITY) {
-				if (upper.signum() > 0)
-					low = Rational.ZERO;
+			InfinitNumber low = lower.toInfinitNumber();
+			if (low.isInfinity()) {
+				if (upper.mA.signum() > 0)
+					low = InfinitNumber.ZERO;
 				else
-					low = upper.toRational().sub(Rational.ONE);
+					low = upper.toInfinitNumber().sub(InfinitNumber.ONE);
 			}
-			Rational mid = upper.toRational().add(low).div(Rational.TWO);
-			if (mid == Rational.POSITIVE_INFINITY)
-				mid = low.add(Rational.ONE);
-			while (prohibitions.contains(mid)
-					|| hasSharing(sharedPoints, mid.sub(currentValue)))
+			InfinitNumber mid =
+					upper.toInfinitNumber().add(low).div(Rational.TWO);
+			if (mid.isInfinity())
+				mid = low.add(InfinitNumber.ONE);
+			while (prohibitions.contains(mid.mA)
+					|| hasSharing(sharedPoints, mid.sub(currentValue).mA)) {
 				mid = mid.add(low).div(Rational.TWO);
+			}
 			return mid;
 		} else {
 			/* We should change it.  We search upwards and downwards by
 			 * incrementing and decrementing currentValue by lcm. 
 			 */
-			MutableRational up = new MutableRational(currentValue);
-			MutableRational down = new MutableRational(currentValue);
+			MutableInfinitNumber up = new MutableInfinitNumber(currentValue);
+			MutableInfinitNumber down = new MutableInfinitNumber(currentValue);
+			InfinitNumber ilcm = new InfinitNumber(lcm, 0);
 			while (true) {
-				up.add(lcm);
+				up.add(ilcm);
 				if (up.compareTo(upper) > 0)
 					break;
-				Rational cur = up.toRational();
-				if (!prohibitions.contains(cur)
-					&& !hasSharing(sharedPoints, cur.sub(currentValue)))
+				InfinitNumber cur = up.toInfinitNumber();
+				if (!prohibitions.contains(cur.mA)
+					&& !hasSharing(sharedPoints, cur.sub(currentValue).mA))
 					return cur;
 				
-				down.sub(lcm);
+				down.sub(ilcm);
 				if (down.compareTo(lower) < 0)
 					break;
-				cur = down.toRational();
-				if (!prohibitions.contains(cur)
-					&& !hasSharing(sharedPoints, cur.sub(currentValue)))
+				cur = down.toInfinitNumber();
+				if (!prohibitions.contains(cur.mA)
+					&& !hasSharing(sharedPoints, cur.sub(currentValue).mA))
 					return cur;
 			}
-			up.add(lcm);
+			up.add(ilcm);
 			while (up.compareTo(upper) <= 0) {
-				Rational cur = up.toRational();
-				if (!prohibitions.contains(cur)
-					&& !hasSharing(sharedPoints, cur.sub(currentValue)))
+				InfinitNumber cur = up.toInfinitNumber();
+				if (!prohibitions.contains(cur.mA)
+					&& !hasSharing(sharedPoints, cur.sub(currentValue).mA))
 					return cur;
-				up.add(lcm);
+				up.add(ilcm);
 			}
-			down.sub(lcm);
+			down.sub(ilcm);
 			while (down.compareTo(lower) >= 0) {
-				Rational cur = down.toRational();
-				if (!prohibitions.contains(cur)
-					&& !hasSharing(sharedPoints, cur.sub(currentValue)))
+				InfinitNumber cur = down.toInfinitNumber();
+				if (!prohibitions.contains(cur.mA)
+					&& !hasSharing(sharedPoints, cur.sub(currentValue).mA))
 					return cur;
-				down.sub(lcm);
+				down.sub(ilcm);
 			}
 			// this can only be reached in the integer case.
 			return currentValue;
@@ -2067,7 +2056,7 @@ public class LinArSolve implements ITheory {
 				if (cceq.getLASharedData().getDecideStatus() != null) { // NOPMD
 					if (cceq.getDecideStatus() == cceq.negate())
 						return generateEqualityClause(cceq);
-					else if	(cceq.getDecideStatus() == null)
+					else if (cceq.getDecideStatus() == null)
 						mProplist.add(cceq);
 					else
 						mEngine.getLogger().debug(

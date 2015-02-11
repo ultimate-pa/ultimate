@@ -195,8 +195,7 @@ public class Clausifier {
 					FunctionSymbol fs = at.getFunction();
 					// Don't descend into interpreted function symbols unless
 					// it is a select or store
-					if (!fs.isInterpreted() || fs.getName() == "select"
-							|| fs.getName() == "store" || fs.getName() == "@diff")
+					if (Clausifier.needCCTerm(fs))
 						return fs;
 				}
 				return null;
@@ -1630,7 +1629,7 @@ public class Clausifier {
 		return res;
 	}
 	
-	private boolean needCCTerm(FunctionSymbol fs) {
+	private static boolean needCCTerm(FunctionSymbol fs) {
 		return !fs.isInterpreted() || fs.getName() == "select"
 				|| fs.getName() == "store" || fs.getName() == "@diff";
 	}

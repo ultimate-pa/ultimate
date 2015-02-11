@@ -659,7 +659,7 @@ public class Interpolator {
 							        mTheory.numeral(mixedFactor.numerator())));
 						FunctionSymbol divisible = mTheory.getFunctionWithResult(
 						        "divisible", 
-								new BigInteger[] {mixedFactor.numerator()},
+								new BigInteger[] {mixedFactor.numerator().abs()},
 								null, mTheory.getSort("Int"));
 						interpolant = mTheory.and(
 						        interpolant, mTheory.term(divisible, sharedTerm));

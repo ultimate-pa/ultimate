@@ -314,7 +314,9 @@ public class SMTInterpol extends NoopScript {
 			if (value instanceof String) {
 				try {
 					return new BigInteger((String) value);
-				} catch (NumberFormatException ignored) { /* ignored */ }
+				} catch (NumberFormatException ignored) { 
+					/* fall through into error case */
+				}
 			}
 			throw new SMTLIBException("Option " + getName()
 					+ " expects a numeral value");
@@ -1262,15 +1264,23 @@ public class SMTInterpol extends NoopScript {
 							tmpBench.assertTerm(tmpBench.term("not", ipls[i]));
 					} catch (SMTLIBException exc) {
 						mLogger.error("Could not assert interpolant", exc);
+						error = true;
 					}
 					LBool res = tmpBench.checkSat();
-					if (res != LBool.UNSAT) {
+					if (res == LBool.SAT) {
 						if (mDDFriendly)
 							System.exit(2);
 						mLogger.error(new DebugMessage(
 						        "Interpolant {0} not inductive: "
 								+ " (Check returned {1})", i, res));
 						error = true;
+					} else if (res == LBool.UNKNOWN) {
+						ReasonUnknown ru = tmpBench.mReasonUnknown;
+						mLogger.warn("Unable to check validity of interpolant: "
+								+ ru);
+						// I don't set the error flag here since I am not sure
+						// whether this is a real error or not.  Maybe we should
+						// base this on ru?
 					}
 					tmpBench.pop(1);
 					// Check symbol condition
@@ -1663,6 +1673,13 @@ public class SMTInterpol extends NoopScript {
 			if (mDDFriendly)
 				System.exit(4); // NOCHECKSTYLE
 			throw new SMTLIBException("Context is inconsistent");
+		}
+		if (mStatus != LBool.SAT) {
+			// Once we have incomplete solvers we might check mReasonUnknown...
+			if (mDDFriendly)
+				System.exit(9);
+			throw new SMTLIBException(
+					"Cannot construct model since solving did not complete");
 		}
 		if (mModel == null) {
 			mModel = new

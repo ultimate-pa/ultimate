@@ -62,12 +62,12 @@ public class Annotation {
 		if (obj instanceof Annotation) {
 			Annotation annot = (Annotation) obj;
 			return mKey.equals(annot.mKey)
-				&& mValue == null ? annot.mValue == null
+				&& (mValue == null ? annot.mValue == null
 					: mValue instanceof Object[] 
 					&& annot.mValue instanceof Object[]
 						? Arrays.deepEquals((Object[]) mValue, 
 										  (Object[]) annot.mValue)
-						: mValue.equals(annot.mValue);
+						: mValue.equals(annot.mValue));
 		}
 		return false;
 	}
