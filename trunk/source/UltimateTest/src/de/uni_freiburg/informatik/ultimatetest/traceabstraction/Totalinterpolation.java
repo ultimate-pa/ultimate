@@ -14,17 +14,19 @@ import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
 public class Totalinterpolation extends
 		AbstractTraceAbstractionTestSuite {
 	private static final String[] m_Directories = { 
-		"examples/programs/regression",
+//		"examples/programs/regression",
 //		"examples/programs/toy",
 //		"examples/programs/recursivePrograms",
 //		"examples/programs/random",
 //		"examples/programs/scaleable",
 //		"examples/programs/real-life",
 //		"examples/programs/reals"
+//		"examples/svcomp/ssh-simplified",
+		"examples/svcomp/systemc"
 	};
 	
 	// Time out for each test case in milliseconds
-	private static int m_Timeout = 60000;
+	private static int m_Timeout = 300 * 1000;
 
 	private static final boolean s_Boogie_TreeInterpolants = true;
 	private static final boolean s_C_TreeInterpolants = true;
@@ -39,8 +41,6 @@ public class Totalinterpolation extends
 					"automizer/TreeInterpolants.epf",
 				    m_Directories,
 				    new String[] {".bpl"},
-//				    "Treeinterpolants",
-//				    "Boogie",
 				    m_Timeout);
 		} 
 		if (s_C_TreeInterpolants) {
@@ -49,8 +49,6 @@ public class Totalinterpolation extends
 					"automizer/TreeInterpolants.epf",
 				    m_Directories,
 				    new String[] {".c", ".i"},
-//				    "Treeinterpolants",
-//				    "C",
 				    m_Timeout);
 		}
 		
@@ -60,8 +58,6 @@ public class Totalinterpolation extends
 					"automizer/TreeInterpolants_TotalInterpolation.epf",
 				    m_Directories,
 				    new String[] {".bpl"},
-//				    "Treeinterpolants with totalinterpolation",
-//				    "Boogie",
 				    m_Timeout);
 		} 
 		if (s_C_TreeInterpolantsWithTotalinterpolation) {
@@ -70,8 +66,6 @@ public class Totalinterpolation extends
 					"automizer/TreeInterpolants_TotalInterpolation.epf",
 				    m_Directories,
 				    new String[] {".c", ".i"},
-//				    "Treeinterpolants with totalinterpolation",
-//				    "C",
 				    m_Timeout);
 		}
 		return super.createTestCases();
