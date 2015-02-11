@@ -24,7 +24,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IHoareTripleChecker.Validity;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SdHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 
 /**
@@ -42,7 +41,6 @@ public abstract class AbstractInterpolantAutomaton2 implements INestedWordAutoma
 
 	protected final SmtManager m_SmtManager;
 	protected final IHoareTripleChecker m_IHoareTripleChecker;
-	protected final SdHoareTripleChecker m_SdHoareTripleChecker;
 	protected final IPredicate m_IaFalseState;
 	protected final NestedWordAutomatonCache<CodeBlock, IPredicate> m_Result;
 	protected final NestedWordAutomaton<CodeBlock, IPredicate> m_InterpolantAutomaton;
@@ -54,14 +52,13 @@ public abstract class AbstractInterpolantAutomaton2 implements INestedWordAutoma
 	private final ReturnSuccessorComputationHelper m_ReSucComp;
 
 	public AbstractInterpolantAutomaton2(IUltimateServiceProvider services, 
-			SmtManager smtManager, ModifiableGlobalVariableManager modglobvarman, IHoareTripleChecker hoareTripleChecker,
+			SmtManager smtManager, IHoareTripleChecker hoareTripleChecker,
 			INestedWordAutomaton<CodeBlock, IPredicate> abstraction, IPredicate falseState,
 			NestedWordAutomaton<CodeBlock, IPredicate> interpolantAutomaton, Logger logger) {
 		super();
 		m_Services = services;
 		mLogger = logger;
 		m_SmtManager = smtManager;
-		m_SdHoareTripleChecker = new SdHoareTripleChecker(modglobvarman);
 		m_IHoareTripleChecker = hoareTripleChecker;
 		m_IaFalseState = falseState;
 		m_InterpolantAutomaton = interpolantAutomaton;
@@ -299,20 +296,8 @@ public abstract class AbstractInterpolantAutomaton2 implements INestedWordAutoma
 		public abstract Validity computeSuccWithSolver(IPredicate resPred, IPredicate resHier, CodeBlock letter,
 				IPredicate iaFalseState);
 
-		public abstract Validity sdecToFalse(IPredicate resPred, IPredicate resHier, CodeBlock letter);
-
 		public abstract Collection<IPredicate> getSuccsInterpolantAutomaton(IPredicate resPred, IPredicate resHier,
 				CodeBlock letter);
-
-		public abstract boolean isInductiveSefloop(IPredicate resPred, IPredicate resHier, CodeBlock letter,
-				IPredicate succCand);
-
-		public abstract Validity sdec(IPredicate resPred, IPredicate resHier, CodeBlock letter, IPredicate succCand);
-
-		public abstract Validity sdLazyEc(IPredicate resPred, IPredicate resHier, CodeBlock letter, IPredicate succCand);
-
-		public abstract boolean reviewResult(IPredicate resPred, IPredicate resHier, CodeBlock letter,
-				IPredicate succCand, Validity result);
 
 		public abstract void reportCacheEntry(IPredicate resPred, IPredicate resHier, CodeBlock letter,
 				NwaCacheBookkeeping<CodeBlock, IPredicate> cacheBookkeeping);
@@ -345,12 +330,6 @@ public abstract class AbstractInterpolantAutomaton2 implements INestedWordAutoma
 		}
 
 		@Override
-		public Validity sdecToFalse(IPredicate resPred, IPredicate resHier, CodeBlock letter) {
-			assert resHier == null;
-			return m_SdHoareTripleChecker.sdecInternalToFalse(resPred, letter);
-		}
-
-		@Override
 		public Collection<IPredicate> getSuccsInterpolantAutomaton(IPredicate resPred, IPredicate resHier,
 				CodeBlock letter) {
 			assert resHier == null;
@@ -360,35 +339,6 @@ public abstract class AbstractInterpolantAutomaton2 implements INestedWordAutoma
 			} else {
 				return succs;
 			}
-		}
-
-		@Override
-		public boolean isInductiveSefloop(IPredicate resPred, IPredicate resHier, CodeBlock letter, IPredicate succCand) {
-			assert resHier == null;
-			if ((resPred == succCand) && (m_SdHoareTripleChecker.sdecInternalSelfloop(resPred, letter) == Validity.VALID)) {
-				return true;
-			} else {
-				return false;
-			}
-		}
-
-		@Override
-		public Validity sdec(IPredicate resPred, IPredicate resHier, CodeBlock letter, IPredicate succCand) {
-			assert resHier == null;
-			return m_SdHoareTripleChecker.sdecInteral(resPred, letter, succCand);
-		}
-
-		@Override
-		public Validity sdLazyEc(IPredicate resPred, IPredicate resHier, CodeBlock letter, IPredicate succCand) {
-			assert resHier == null;
-			return m_SdHoareTripleChecker.sdLazyEcInteral(resPred, letter, succCand);
-		}
-
-		@Override
-		public boolean reviewResult(IPredicate resPred, IPredicate resHier, CodeBlock letter, IPredicate succCand,
-				Validity result) {
-			assert resHier == null;
-			return reviewInductiveInternal(resPred, letter, succCand, result);
 		}
 
 		@Override
@@ -427,12 +377,6 @@ public abstract class AbstractInterpolantAutomaton2 implements INestedWordAutoma
 		}
 
 		@Override
-		public Validity sdecToFalse(IPredicate resPred, IPredicate resHier, CodeBlock letter) {
-			assert resHier == null;
-			return m_SdHoareTripleChecker.sdecCallToFalse(resPred, letter);
-		}
-
-		@Override
 		public Collection<IPredicate> getSuccsInterpolantAutomaton(IPredicate resPred, IPredicate resHier,
 				CodeBlock letter) {
 			assert resHier == null;
@@ -442,35 +386,6 @@ public abstract class AbstractInterpolantAutomaton2 implements INestedWordAutoma
 			} else {
 				return succs;
 			}
-		}
-
-		@Override
-		public boolean isInductiveSefloop(IPredicate resPred, IPredicate resHier, CodeBlock letter, IPredicate succCand) {
-			assert resHier == null;
-			if ((resPred == succCand) && (m_SdHoareTripleChecker.sdecCallSelfloop(resPred, letter) == Validity.VALID)) {
-				return true;
-			} else {
-				return false;
-			}
-		}
-
-		@Override
-		public Validity sdec(IPredicate resPred, IPredicate resHier, CodeBlock letter, IPredicate succCand) {
-			assert resHier == null;
-			return m_SdHoareTripleChecker.sdecCall(resPred, letter, succCand);
-		}
-
-		@Override
-		public Validity sdLazyEc(IPredicate resPred, IPredicate resHier, CodeBlock letter, IPredicate succCand) {
-			assert resHier == null;
-			return m_SdHoareTripleChecker.sdLazyEcCall(resPred, (Call) letter, succCand);
-		}
-
-		@Override
-		public boolean reviewResult(IPredicate resPred, IPredicate resHier, CodeBlock letter, IPredicate succCand,
-				Validity result) {
-			assert resHier == null;
-			return reviewInductiveCall(resPred, (Call) letter, succCand, result);
 		}
 
 		@Override
@@ -505,13 +420,6 @@ public abstract class AbstractInterpolantAutomaton2 implements INestedWordAutoma
 		}
 
 		@Override
-		public Validity sdecToFalse(IPredicate resPred, IPredicate resHier, CodeBlock letter) {
-			// sat if (not only if!) resPred and resHier are independent,
-			// hence we can use the "normal" sdec method
-			return m_SdHoareTripleChecker.sdecReturn(resPred, resHier, letter, m_IaFalseState);
-		}
-
-		@Override
 		public Collection<IPredicate> getSuccsInterpolantAutomaton(IPredicate resPred, IPredicate resHier,
 				CodeBlock letter) {
 			Collection<IPredicate> succs = m_InterpolantAutomaton.succReturn(resPred, resHier, letter);
@@ -523,47 +431,11 @@ public abstract class AbstractInterpolantAutomaton2 implements INestedWordAutoma
 		}
 
 		@Override
-		public boolean isInductiveSefloop(IPredicate resPred, IPredicate resHier, CodeBlock letter, IPredicate succCand) {
-			if ((resPred == succCand) && (m_SdHoareTripleChecker.sdecReturnSelfloopPre(resPred, (Return) letter) == Validity.VALID)) {
-				return true;
-			} else if ((resHier == succCand)
-					&& (m_SdHoareTripleChecker.sdecReturnSelfloopHier(resHier, (Return) letter) == Validity.VALID)) {
-				return true;
-			} else {
-				return false;
-			}
-		}
-
-		@Override
-		public Validity sdec(IPredicate resPred, IPredicate resHier, CodeBlock letter, IPredicate succCand) {
-			return m_SdHoareTripleChecker.sdecReturn(resPred, resHier, letter, succCand);
-		}
-
-		@Override
-		public Validity sdLazyEc(IPredicate resPred, IPredicate resHier, CodeBlock letter, IPredicate succCand) {
-			return m_SdHoareTripleChecker.sdLazyEcReturn(resPred, resHier, (Return) letter, succCand);
-		}
-
-		@Override
-		public boolean reviewResult(IPredicate resPred, IPredicate resHier, CodeBlock letter, IPredicate succCand,
-				Validity result) {
-			return reviewInductiveReturn(resPred, resHier, (Return) letter, succCand, result);
-		}
-
-		@Override
 		public void reportCacheEntry(IPredicate resPred, IPredicate resHier, CodeBlock letter,
 				NwaCacheBookkeeping<CodeBlock, IPredicate> cacheBookkeeping) {
 			cacheBookkeeping.reportCachedReturn(resPred, resHier, letter);
 		}
 
 	}
-
-	protected abstract boolean reviewInductiveInternal(IPredicate resPred, CodeBlock letter, IPredicate succCand,
-			Validity result);
-
-	protected abstract boolean reviewInductiveCall(IPredicate resPred, Call letter, IPredicate succCand, Validity result);
-
-	protected abstract boolean reviewInductiveReturn(IPredicate resPred, IPredicate resHier, Return letter,
-			IPredicate succCand, Validity result);
 
 }

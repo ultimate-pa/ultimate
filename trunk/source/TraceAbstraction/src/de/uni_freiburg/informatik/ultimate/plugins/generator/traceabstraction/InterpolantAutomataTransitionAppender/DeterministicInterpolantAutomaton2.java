@@ -21,13 +21,11 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cal
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.DivisibilityPredicateGenerator;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.EdgeChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IHoareTripleChecker;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SdHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IHoareTripleChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.InterpolatingTraceChecker;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.util.HashRelation;
 
 /**
@@ -43,13 +41,9 @@ public class DeterministicInterpolantAutomaton2 extends AbstractInterpolantAutom
 			new HashRelation<IPredicate, IPredicate>();
 
 
-	private final IPredicate m_IaFalseState;
 	private final IPredicate m_IaTrueState;
 	
 	private final Set<IPredicate> m_NonTrivialPredicates;
-
-	private final boolean m_UseLazyEdgeChecks;
-	
 
 	private final PredicateUnifier m_PredicateUnifier;
 	
@@ -70,8 +64,7 @@ public class DeterministicInterpolantAutomaton2 extends AbstractInterpolantAutom
 			INestedWordAutomaton<CodeBlock, IPredicate> abstraction, 
 			NestedWordAutomaton<CodeBlock, IPredicate> interpolantAutomaton, 
 			InterpolatingTraceChecker traceChecker, Logger  logger) {
-		super(services, smtManager, modglobvarman, hoareTripleChecker, abstraction, traceChecker.getPostcondition(), interpolantAutomaton, logger);
-		m_UseLazyEdgeChecks = false;
+		super(services, smtManager, hoareTripleChecker, abstraction, traceChecker.getPostcondition(), interpolantAutomaton, logger);
 		m_PredicateUnifier = traceChecker.getPredicateUnifier();
 		Collection<IPredicate> allPredicates;
 		if (m_Cannibalize ) {
@@ -101,7 +94,6 @@ public class DeterministicInterpolantAutomaton2 extends AbstractInterpolantAutom
 		assert allPredicates.contains(m_IaTrueState);
 		m_Result.addState(true, false, m_IaTrueState);
 		m_ResPred2InputPreds.addPair(m_IaTrueState, m_IaTrueState);
-		m_IaFalseState = traceChecker.getPostcondition();
 		assert m_IaFalseState.getFormula().toString().equals("false");
 		assert allPredicates.contains(m_IaFalseState);
 		m_Result.addState(false, true, m_IaFalseState);
@@ -173,13 +165,10 @@ public class DeterministicInterpolantAutomaton2 extends AbstractInterpolantAutom
 			sch.addTransition(resPred, resHier, letter, m_IaFalseState);
 			return;
 		} else {
-			Validity sat = sch.sdecToFalse(resPred, resHier, letter);
-			if (sat == null) {
-				sat = sch.computeSuccWithSolver(resPred, resHier, letter, m_IaFalseState);
-				if (sat == Validity.VALID) {
-					sch.addTransition(resPred, resHier, letter, m_IaFalseState);
-					return;
-				}
+			Validity sat = sch.computeSuccWithSolver(resPred, resHier, letter, m_IaFalseState);
+			if (sat == Validity.VALID) {
+				sch.addTransition(resPred, resHier, letter, m_IaFalseState);
+				return;
 			}
 		}
 		// check all other predicates
@@ -187,19 +176,8 @@ public class DeterministicInterpolantAutomaton2 extends AbstractInterpolantAutom
 		for (IPredicate succCand : m_NonTrivialPredicates) {
 			if (automatonSuccs.contains(succCand)) {
 				inputSuccs.add(succCand);
-			} else if (sch.isInductiveSefloop(resPred, resHier, letter, succCand)) {
-				inputSuccs.add(succCand);
 			} else {
-				Validity sat = null;
-				if (m_UseLazyEdgeChecks) {
-					sat = sch.sdLazyEc(resPred, resHier, letter, succCand);
-				} else {
-					sat = sch.sdec(resPred, resHier, letter, succCand);
-				}
-				if (sat == null) {
-					sat = sch.computeSuccWithSolver(resPred, resHier, letter, succCand);
-				}
-				assert sch.reviewResult(resPred, resHier, letter, succCand, sat);
+				Validity sat = sch.computeSuccWithSolver(resPred, resHier, letter, succCand);
 				if (sat == Validity.VALID) {
 					inputSuccs.add(succCand);
 				}
@@ -285,7 +263,6 @@ public class DeterministicInterpolantAutomaton2 extends AbstractInterpolantAutom
 			IPredicate resSucc = m_InputPreds2ResultPreds.get(succs);
 			if (resSucc == null) {
 				TermVarsProc conjunction = m_SmtManager.and(succs.toArray(new IPredicate[0]));
-				clearAssertionStack();
 				resSucc = m_PredicateUnifier.getOrConstructPredicate(conjunction);
 				m_InputPreds2ResultPreds.put(succs, resSucc);
 				for (IPredicate succ : succs) {
@@ -303,46 +280,6 @@ public class DeterministicInterpolantAutomaton2 extends AbstractInterpolantAutom
 	}
 	
 	
-	
-	
-	@Override
-	protected boolean reviewInductiveInternal(IPredicate state, CodeBlock cb, IPredicate succ, Validity result) {
-		clearAssertionStack();
-		LBool reviewResult = super.m_SmtManager.isInductive(state, cb, succ);
-		if (satCompatible(result, reviewResult)) {
-			return true;
-		} else {
-			throw new AssertionError("Result: " + result 
-					+ "  Review result: " + reviewResult);
-		}
-	}
-	
-
-
-	@Override
-	protected boolean reviewInductiveCall(IPredicate state, Call cb, IPredicate succ, Validity result) {
-		clearAssertionStack();
-		LBool reviewResult = super.m_SmtManager.isInductiveCall(state, cb, succ);
-		if (satCompatible(result, reviewResult)) {
-			return true;
-		} else {
-			throw new AssertionError("Result: " + result 
-					+ "  Review result: " + reviewResult);
-		}
-
-	}
-	
-	@Override
-	protected boolean reviewInductiveReturn(IPredicate state, IPredicate hier, Return cb, IPredicate succ, Validity result) {
-		clearAssertionStack();
-		LBool reviewResult = super.m_SmtManager.isInductiveReturn(state, hier, cb, succ);
-		if (satCompatible(result, reviewResult)) {
-			return true;
-		} else {
-			throw new AssertionError("Result: " + result 
-					+ "  Review result: " + reviewResult);
-		}
-	}
 	
 	
 	/**
@@ -392,13 +329,6 @@ public class DeterministicInterpolantAutomaton2 extends AbstractInterpolantAutom
 			return succs.iterator().hasNext();
 		}
 	}
-
-	
-	private void clearAssertionStack() {
-		// TODO Auto-generated method stub
-		
-	}
-
 	
 	
 }
