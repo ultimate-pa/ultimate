@@ -354,6 +354,7 @@ public class TraceChecker {
 			if (computeRcfgProgramExecution) {
 				computeRcfgProgramExecution();
 			} else {
+				m_TraceCheckFinished = true;
 				unlockSmtManager();
 			}
 		}
