@@ -26,6 +26,9 @@ public class BenchmarkData implements IBenchmarkDataProvider {
 		if (m_BenchmarkType == null) {
 			assert m_Key2Value.isEmpty() : "may not contain data if type is not known";
 			m_BenchmarkType = benchmarkDataProvider.getBenchmarkType();
+			if (m_BenchmarkType == null) {
+				return;
+			}
 			for (String key : m_BenchmarkType.getKeys()) {
 				Object value = benchmarkDataProvider.getValue(key);
 				// TODO: maybe we want to allow null values
@@ -35,6 +38,9 @@ public class BenchmarkData implements IBenchmarkDataProvider {
 				m_Key2Value.put(key, value);
 			}
 		} else {
+			if (benchmarkDataProvider.getBenchmarkType() == null) {
+				return;
+			}
 			//TODO: maybe we want to allow different types and only the keys
 			// have to be the same...
 			if (m_BenchmarkType != benchmarkDataProvider.getBenchmarkType()) {
