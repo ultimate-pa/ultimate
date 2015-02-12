@@ -8,6 +8,7 @@ import java.util.Collections;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -57,6 +58,12 @@ public class InlineVersionTransformer extends BoogieTransformer {
 		public Map<VarMapKey, VarMapValue> initVarMap() {
 			return new HashMap<VarMapKey, VarMapValue>(mGlobalVars);
 		}
+		
+		public void initVarIdManager(IdManager varIdManager) {
+			for (VarMapKey globalVarKey : mGlobalVars.keySet()) {
+				varIdManager.addId(globalVarKey.getVarId());
+			}
+		}
 	}
 
 	private IUltimateServiceProvider mServices;
@@ -72,37 +79,41 @@ public class InlineVersionTransformer extends BoogieTransformer {
 	 * Contains the number of (in the order of the program) processed calls
 	 * inside the procedures of {@link #mProcedureStack}.
 	 */
-	private Deque<Integer> mCallGraphEdgeStack = new ArrayDeque<>();
+	private Deque<Integer> mEdgeIndexStack = new ArrayDeque<>();
 	
-	/** Counts for each procedure, how often it was called in the inlining process. */
+	/**
+	 * Counts for each procedure, how often it was called in the inlining process.
+	 * The parameters and local variables of a Procedure are mapped, iff call counter > 0.
+	 */
 	private Map<String, Integer> mCallCounter = new HashMap<>();
 	
 	/** Determines, in how many nested "old(...)" expression the processing takes place. */
 	private int mOldExprDepthCounter = 0;
 	
 	/** Variables which have to be added to the local variables of the entry point. */
-	private List<VariableDeclaration> mInlinedVariables = new ArrayList<>();
+	private List<VariableDeclaration> mInlinedVars = new ArrayList<>();
 	
 	/** Mapping from old variable identifiers to new ones. */
-	private Map<VarMapKey, VarMapValue> mVariablesMap; // initialized by the GlobalScopeInitializer inside the ctor
+	private Map<VarMapKey, VarMapValue> mVarMap; // initialized by the GlobalScopeInitializer inside the ctor
 	
 	/** Manages the used variable identifiers. */
-	private IdManager mVariablesIdManager = new IdManager();
+	private IdManager mVarIdManager = new IdManager();
 
 	/** Mapping from the old label identifiers to new ones. */
-	private Map<LabelMapKey, String> mLabelsMap = new HashMap<>();
+	private Map<LabelMapKey, String> mLabelMap = new HashMap<>();
 	
 	/** Manages the used label identifiers. */
-	private IdManager mLabelsIdManager = new IdManager();
+	private IdManager mLabelIdManager = new IdManager();
 	
 	public InlineVersionTransformer(IUltimateServiceProvider services, GlobalScopeInitializer globalScopeInit) {
 		mServices = services;
-		mVariablesMap = globalScopeInit.initVarMap();
+		mVarMap = globalScopeInit.initVarMap();
+		globalScopeInit.initVarIdManager(mVarIdManager);
 	}
 
 	public Procedure inlineCallsInside(CallGraphNode entryNode) throws CancelToolchainException {
 		mProcedureStack.push(entryNode);
-		mCallGraphEdgeStack.push(0);
+		mEdgeIndexStack.push(0);
 		
 		mapVariablesOfCurrentProcedure();
 		Procedure proc = entryNode.getProcedureWithBody();
@@ -111,7 +122,7 @@ public class InlineVersionTransformer extends BoogieTransformer {
 			Body body = proc.getBody();
 			List<VariableDeclaration> newLocalVars = new ArrayList<>();
 			newLocalVars.addAll(Arrays.asList(body.getLocalVars()));
-			newLocalVars.addAll(mInlinedVariables);
+			newLocalVars.addAll(mInlinedVars);
 			List<Statement> newBlock = new ArrayList<>();
 			for (Statement stat : body.getBlock()) {
 				newBlock.addAll(flattenStatement(stat));
@@ -128,7 +139,7 @@ public class InlineVersionTransformer extends BoogieTransformer {
 		}
 
 		mProcedureStack.pop();
-		mCallGraphEdgeStack.pop();
+		mEdgeIndexStack.pop();
 
 		return newProc;
 	}
@@ -154,24 +165,93 @@ public class InlineVersionTransformer extends BoogieTransformer {
 	}
 	
 	private void mapVariablesOfCurrentProcedure() {
-		
-		// TODO map parameters of procedure and implementation to the same identifiers (this is vital!)
+		CallGraphNode proc = mProcedureStack.peek();		
+		Integer callCounter = mCallCounter.get(proc.getId());
+		if (callCounter != null && callCounter > 0) {
+			return;
+		} else {
+			Procedure procWithSpec = proc.getProcedureWithSpecification();
+			Procedure procWithBody = proc.getProcedureWithBody();
+			
+			boolean isImplemented = proc.isImplemented();
+			if (isImplemented && !proc.isCombined()) {
+				mapProcedureParametersToSameValue(procWithSpec.getInParams(), procWithBody.getInParams(), true);
+				mapProcedureParametersToSameValue(procWithSpec.getOutParams(), procWithBody.getOutParams(), false);
+			} else {
+				mapProcedureParameters(procWithSpec);
+				if (isImplemented) {
+					mapProcedureParameters(procWithBody);
+				}
+			}
 
-		CallGraphNode proc = mProcedureStack.peek();
-		Procedure procWithSpec = proc.getProcedureWithSpecification();
-		Procedure procWithBody = proc.getProcedureWithBody();
-		mapProcedureParameters(procWithSpec);
-		if (proc.isImplemented()) {
-			if (!proc.isCombined()) {
-				mapProcedureParameters(procWithBody);
-			}
-			Body body = procWithBody.getBody();
-			for (VariableDeclaration localVarDecl : body.getLocalVars()) {
-				mapLocalVariables(localVarDecl);
-			}
+			if (proc.isImplemented()) {
+				Body body = procWithBody.getBody();
+				for (VariableDeclaration localVarDecl : body.getLocalVars()) {
+					mapLocalVariables(localVarDecl);
+				}
+			}			
 		}
 	}
-	
+
+	private void mapProcedureParametersToSameValue(VarList[] paramsProcDecl, VarList[] paramsProcImpl,
+			boolean inParams) {
+		boolean inEntryProc = inEntryProcedure();
+		String originalProcId = mProcedureStack.peek().getId();
+		String entryProcId = mProcedureStack.peekLast().getId();
+		StorageClass storageClassProcDecl =
+				inParams ? StorageClass.PROC_FUNC_INPARAM : StorageClass.PROC_FUNC_OUTPARAM;
+		StorageClass storageClassProcImpl =
+				inParams ? StorageClass.IMPLEMENTATION_INPARAM : StorageClass.IMPLEMENTATION_OUTPARAM;
+		DeclarationInformation oldDeclInfoProcDecl = new DeclarationInformation(storageClassProcDecl, originalProcId);
+		DeclarationInformation oldDeclInfoProcImpl = new DeclarationInformation(storageClassProcImpl, originalProcId);
+		DeclarationInformation newDeclInfo = new DeclarationInformation(StorageClass.LOCAL, entryProcId);
+
+		List<VariableDeclaration> inlinedVars = new ArrayList<>();
+		final int gProcDecl = 0;
+		final int gProcImpl = 1;
+		// Only one identifier and location can be used for the new variable.
+		final int gUsed = gProcImpl;
+		final int gUnused = (gUsed+1) % 2;
+		VarListIterator iterator = new VarListIterator(paramsProcDecl, paramsProcImpl);
+		while (iterator.hasNext()) {
+			iterator.next();
+			
+			// Map parameters of implementation and declaration to the same identifiers
+			String usedParamId = iterator.currentId(gUsed);
+			String newParamId;
+			if (inEntryProc) {
+				newParamId = usedParamId;
+			} else {
+				newParamId = mVarIdManager.makeAndAddUniqueId(originalProcId, usedParamId);				
+			}
+			VarMapKey keyProcDecl = new VarMapKey(iterator.currentId(gProcDecl), oldDeclInfoProcDecl, false);
+			VarMapKey keyProcImpl = new VarMapKey(iterator.currentId(gProcImpl), oldDeclInfoProcImpl, false);
+			VarMapValue value = new VarMapValue(newParamId, newDeclInfo);
+			mVarMap.put(keyProcDecl, value);
+			mVarMap.put(keyProcImpl, value);
+			
+			if (!inEntryProc) {
+				// Create locale VariableDeclaration for inlining into entry procedure
+				VarList usedVarList = iterator.currentVarList(gUsed);
+				VarList unusedVarList = iterator.currentVarList(gUnused);
+				ILocation location = usedVarList.getLocation();
+				String[] identifiers = { newParamId };
+				assert usedVarList.getType().getBoogieType().equals(unusedVarList.getType().getBoogieType());
+				ASTType type = usedVarList.getType();
+				Expression whereClause = usedVarList.getWhereClause();
+				if (whereClause != null) {
+					whereClause = processExpression(whereClause);
+				}
+				Attribute[] attrs = {};
+				VarList variables = new VarList(location, identifiers, type, whereClause);
+				ModelUtils.mergeAnnotations(usedVarList, variables);
+				ModelUtils.mergeAnnotations(unusedVarList, variables);
+				inlinedVars.add(new VariableDeclaration(location, attrs, new VarList[]{ variables }));				
+			}
+		}
+		mInlinedVars.addAll(inlinedVars);
+	}
+
 	private void mapLocalVariables(VariableDeclaration varDecl) {
 		List<VarList> inlinedVars = mapVariables(varDecl.getVariables(), StorageClass.LOCAL);
 		if (!inEntryProcedure()) {
@@ -180,7 +260,7 @@ public class InlineVersionTransformer extends BoogieTransformer {
 			inlinedVars.toArray(newVarLists);
 			VariableDeclaration newVarDecl = new VariableDeclaration(varDecl.getLocation(), newAttrs, newVarLists);
 			ModelUtils.mergeAnnotations(varDecl, newVarDecl);
-			mInlinedVariables.add(newVarDecl);
+			mInlinedVars.add(newVarDecl);
 		}
 	}
 
@@ -196,7 +276,7 @@ public class InlineVersionTransformer extends BoogieTransformer {
 			VarList[] newVarLists = new VarList[inlinedVars.size()];
 			inlinedVars.toArray(newVarLists);
 			VariableDeclaration newVarDecl = new VariableDeclaration(proc.getLocation(), newAttrs, newVarLists);
-			mInlinedVariables.add(newVarDecl);
+			mInlinedVars.add(newVarDecl);
 		}
 	}
 	
@@ -246,18 +326,18 @@ public class InlineVersionTransformer extends BoogieTransformer {
 			for (String varId : varList.getIdentifiers()) {
 				String newVarId;
 				if (inEntryProcedure()) {
-					newVarId = mVariablesIdManager.addId(varId);
+					newVarId = mVarIdManager.addId(varId);
 				} else {
 					// DeclarationInformations of quantified vars contain no procedure, hence the prefix doesn't too.
 					String prefix = isQuantified ? "quantified" : originalProcId;
-					newVarId = mVariablesIdManager.makeAndAddUniqueId(prefix, varId);
+					newVarId = mVarIdManager.makeAndAddUniqueId(prefix, varId);
 					newVarIds.add(newVarId);
 				}
 				VarMapKey key = new VarMapKey(varId, oldDeclInfo, false);
 				VarMapValue value = new VarMapValue(newVarId, newDeclInfo);
 				// quantified vars with the same id could be already mapped -- don't change the mapping for them!
-				if (!mVariablesMap.containsKey(key)) {
-					mVariablesMap.put(key, value);					
+				if (!mVarMap.containsKey(key)) {
+					mVarMap.put(key, value);					
 				} else {
 					assert isQuantified;
 				}
@@ -313,7 +393,7 @@ public class InlineVersionTransformer extends BoogieTransformer {
 		} else if (stat instanceof Label) {
 			String labelName = ((Label) stat).getName();
 			LabelMapKey key = new LabelMapKey(labelName, mProcedureStack.peek().getId());
-			mLabelsMap.put(key, labelName);
+			mLabelMap.put(key, labelName);
 		}
 	}
 	
