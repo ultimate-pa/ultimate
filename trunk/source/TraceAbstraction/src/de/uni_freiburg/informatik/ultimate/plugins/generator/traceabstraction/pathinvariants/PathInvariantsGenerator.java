@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants;
 
+import java.util.ArrayList;
 import java.util.Map;
 
 import org.apache.log4j.Logger;
@@ -10,7 +11,9 @@ import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvide
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.IInterpolantGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
@@ -43,6 +46,11 @@ public class PathInvariantsGenerator implements IInterpolantGenerator {
 		m_ModifiableGlobalVariableManager = modGlobVarManager;
 		m_SmtManager = smtManager;
 		
+		ArrayList<ProgramPoint> sequenceOfProgramPoints = new ArrayList<>();
+		for (IPredicate pred : m_Run.getStateSequence()) {
+			sequenceOfProgramPoints.add(((ISLPredicate) pred).getProgramPoint());
+		}
+		
 	}
 
 	@Override
@@ -65,6 +73,12 @@ public class PathInvariantsGenerator implements IInterpolantGenerator {
 		throw new UnsupportedOperationException("Call/Return not supported yet");
 	}
 
+	/**
+	 * Returns a sequence of interpolants (see definition in 
+	 * {@link IInterpolantGenerator}) the trace which is m_Run.getWord()
+	 * with an additional property. If the ProgramPoint and position i and k 
+	 * coincide the the interpolants at position i and k coincide.
+	 */
 	@Override
 	public IPredicate[] getInterpolants() {
 		// TODO Auto-generated method stub

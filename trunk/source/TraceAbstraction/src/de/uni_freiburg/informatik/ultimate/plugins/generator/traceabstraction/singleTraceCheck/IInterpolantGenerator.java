@@ -33,6 +33,10 @@ public interface IInterpolantGenerator {
 
 	public abstract Map<Integer, IPredicate> getPendingContexts();
 
+	/**
+	 * Return a sequence of predicates that is a sequence of interpolations
+	 * according to the definition given above.
+	 */
 	public abstract IPredicate[] getInterpolants();
 
 }
