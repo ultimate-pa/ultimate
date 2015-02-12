@@ -57,7 +57,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.prefere
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.HoareAnnotation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IHoareTripleChecker.Validity;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.INTERPOLATION;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
 import de.uni_freiburg.informatik.ultimate.util.ScopedHashMap;
 
@@ -1398,12 +1397,12 @@ public class SmtManager {
 		if (ps2.getFormula() == m_Script.term("false")) {
 			return;
 		}
-		EdgeChecker edgeChecker = new EdgeChecker(this, m_ModifiableGlobals);
-		LBool testRes = edgeChecker.sdecReturn(ps1, psk, ta, ps2);
+		SdHoareTripleCheckerHelper sdhtch = new SdHoareTripleCheckerHelper(m_ModifiableGlobals);
+		Validity testRes = sdhtch.sdecReturn(ps1, psk, ta, ps2);
 		if (testRes != null) {
 			// assert testRes == result : "my return dataflow check failed";
-			if (testRes != result) {
-				edgeChecker.sdecReturn(ps1, psk, ta, ps2);
+			if (testRes != lbool2validity(result)) {
+				sdhtch.sdecReturn(ps1, psk, ta, ps2);
 			}
 		}
 	}
@@ -1413,12 +1412,12 @@ public class SmtManager {
 		if (ps2.getFormula() == m_Script.term("false")) {
 			return;
 		}
-		EdgeChecker edgeChecker = new EdgeChecker(this, m_ModifiableGlobals);
-		LBool testRes = edgeChecker.sdecCall(ps1, ta, ps2);
+		SdHoareTripleCheckerHelper sdhtch = new SdHoareTripleCheckerHelper(m_ModifiableGlobals);
+		Validity testRes = sdhtch.sdecCall(ps1, ta, ps2);
 		if (testRes != null) {
-			assert testRes == result : "my call dataflow check failed";
+			assert testRes == lbool2validity(result) : "my call dataflow check failed";
 			// if (testRes != result) {
-			// edgeChecker.sdecReturn(ps1, psk, ta, ps2);
+			// sdhtch.sdecReturn(ps1, psk, ta, ps2);
 			// }
 		}
 	}
@@ -1426,35 +1425,35 @@ public class SmtManager {
 	// FIXME: remove once enough tested
 	private void testMyInternalDataflowCheck(IPredicate ps1, CodeBlock ta, IPredicate ps2, LBool result) {
 		if (ps2.getFormula() == m_Script.term("false")) {
-			EdgeChecker edgeChecker = new EdgeChecker(this, m_ModifiableGlobals);
-			LBool testRes = edgeChecker.sdecInternalToFalse(ps1, ta);
+			SdHoareTripleCheckerHelper sdhtch = new SdHoareTripleCheckerHelper(m_ModifiableGlobals);
+			Validity testRes = sdhtch.sdecInternalToFalse(ps1, ta);
 			if (testRes != null) {
-				assert testRes == result || testRes == LBool.UNKNOWN && result == LBool.SAT : "my internal dataflow check failed";
+				assert testRes == lbool2validity(result) || testRes == lbool2validity(LBool.UNKNOWN) && result == LBool.SAT : "my internal dataflow check failed";
 				// if (testRes != result) {
-				// edgeChecker.sdecInternalToFalse(ps1, ta);
+				// sdhtch.sdecInternalToFalse(ps1, ta);
 				// }
 			}
 			return;
 		}
 		if (ps1 == ps2) {
-			EdgeChecker edgeChecker = new EdgeChecker(this, m_ModifiableGlobals);
-			LBool testRes = edgeChecker.sdecInternalSelfloop(ps1, ta);
+			SdHoareTripleCheckerHelper sdhtch = new SdHoareTripleCheckerHelper(m_ModifiableGlobals);
+			Validity testRes = sdhtch.sdecInternalSelfloop(ps1, ta);
 			if (testRes != null) {
-				assert testRes == result : "my internal dataflow check failed";
+				assert testRes == lbool2validity(result) : "my internal dataflow check failed";
 				// if (testRes != result) {
-				// edgeChecker.sdecReturn(ps1, psk, ta, ps2);
+				// sdhtch.sdecReturn(ps1, psk, ta, ps2);
 				// }
 			}
 		}
 		if (ta.getTransitionFormula().isInfeasible() == Infeasibility.INFEASIBLE) {
 			return;
 		}
-		EdgeChecker edgeChecker = new EdgeChecker(this, m_ModifiableGlobals);
-		LBool testRes = edgeChecker.sdecInteral(ps1, ta, ps2);
+		SdHoareTripleCheckerHelper sdhtch = new SdHoareTripleCheckerHelper(m_ModifiableGlobals);
+		Validity testRes = sdhtch.sdecInteral(ps1, ta, ps2);
 		if (testRes != null) {
-			assert testRes == result : "my internal dataflow check failed";
+			assert testRes == lbool2validity(result) : "my internal dataflow check failed";
 			// if (testRes != result) {
-			// edgeChecker.sdecReturn(ps1, psk, ta, ps2);
+			// sdhtch.sdecReturn(ps1, psk, ta, ps2);
 			// }
 		}
 		if (testRes == null && result == LBool.SAT) {
@@ -1626,6 +1625,7 @@ public class SmtManager {
 				if (m_LockOwner instanceof ILockerHolderWithVoluntaryLockRelease) {
 					mLogger.debug("Asking " + m_LockOwner + " to release lock");
 					((ILockerHolderWithVoluntaryLockRelease) m_LockOwner).releaseLock();
+					lock(lockOwner);
 				} else {
 					throw new IllegalStateException("SmtManager already locked by " + m_LockOwner.toString());
 				}
