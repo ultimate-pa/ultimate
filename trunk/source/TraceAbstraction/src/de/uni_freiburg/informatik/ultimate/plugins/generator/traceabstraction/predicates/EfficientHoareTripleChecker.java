@@ -11,7 +11,7 @@ public class EfficientHoareTripleChecker implements IHoareTripleChecker {
 	private static final boolean m_ReviewSdResultsIfAssertionsEnabled = true;
 	
 	private final IHoareTripleChecker m_SmtBasedHoareTripleChecker;
-	private final SimpleDataflowHoareTripleChecker m_SdHoareTripleChecker;
+	private final SdHoareTripleChecker m_SdHoareTripleChecker;
 	private final IHoareTripleChecker m_hoareTripleCheckerForReview;
 	
 	
@@ -23,7 +23,7 @@ public class EfficientHoareTripleChecker implements IHoareTripleChecker {
 			SmtManager smtManager) {
 		super();
 		m_SmtBasedHoareTripleChecker = smtBasedHoareTripleChecker;
-		m_SdHoareTripleChecker = new SimpleDataflowHoareTripleChecker(modGlobVarManager, predicateUnifier);
+		m_SdHoareTripleChecker = new SdHoareTripleChecker(modGlobVarManager, predicateUnifier);
 		m_hoareTripleCheckerForReview = new MonolithicHoareTripleChecker(smtManager);
 	}
 
