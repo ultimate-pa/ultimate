@@ -13,6 +13,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.QuantifierExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression;
+import de.uni_freiburg.informatik.ultimate.model.boogie.output.BoogiePrettyPrinter;
 
 public class BoogieConditionWrapper implements IConditionWrapper<Expression> {
 
@@ -253,7 +254,7 @@ public class BoogieConditionWrapper implements IConditionWrapper<Expression> {
 	}
 
 	@Override
-	public Expression rewriteNotEquals(Expression atom) {
+	public Expression rewritePredNotEquals(Expression atom) {
 		if (atom instanceof BinaryExpression) {
 			BinaryExpression binexp = (BinaryExpression) atom;
 			if (binexp.getOperator() == Operator.COMPNEQ) {
@@ -265,5 +266,58 @@ public class BoogieConditionWrapper implements IConditionWrapper<Expression> {
 			}
 		}
 		return atom;
+	}
+
+	@Override
+	public Expression negatePred(Expression atom) {
+		if (atom instanceof BinaryExpression) {
+			BinaryExpression binexp = (BinaryExpression) atom;
+			Operator negatedOp;
+			switch (binexp.getOperator()) {
+			case ARITHDIV:
+			case ARITHMINUS:
+			case ARITHMOD:
+			case ARITHMUL:
+			case ARITHPLUS:
+			case BITVECCONCAT:
+				throw new UnsupportedOperationException("Cannot negate non-boolean terms");
+			case LOGICAND:
+			case LOGICIFF:
+			case LOGICIMPLIES:
+			case LOGICOR:
+				throw new UnsupportedOperationException(BoogiePrettyPrinter.print(atom) + " is no predicate");
+			case COMPPO:
+				throw new UnsupportedOperationException("Dont know how to negate partial order");
+			case COMPEQ:
+				negatedOp = Operator.COMPNEQ;
+				break;
+			case COMPGEQ:
+				negatedOp = Operator.COMPLT;
+				break;
+			case COMPGT:
+				negatedOp = Operator.COMPLEQ;
+				break;
+			case COMPLEQ:
+				negatedOp = Operator.COMPGT;
+				break;
+			case COMPLT:
+				negatedOp = Operator.COMPGEQ;
+				break;
+			case COMPNEQ:
+				negatedOp = Operator.COMPEQ;
+				break;
+			default:
+				throw new UnsupportedOperationException("Unknown operator");
+			}
+			return new BinaryExpression(atom.getLocation(), negatedOp, binexp.getLeft(), binexp.getRight());
+		} else if (atom instanceof BooleanLiteral) {
+			BooleanLiteral lit = (BooleanLiteral) atom;
+			return new BooleanLiteral(lit.getLocation(), !lit.getValue());
+		}
+		if (atom != null) {
+			throw new UnsupportedOperationException(BoogiePrettyPrinter.print(atom) + " is no predicate");
+		} else {
+			throw new NullPointerException();
+		}
 	}
 }

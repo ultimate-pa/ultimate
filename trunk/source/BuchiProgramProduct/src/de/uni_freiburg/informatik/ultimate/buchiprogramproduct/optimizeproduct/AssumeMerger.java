@@ -112,9 +112,8 @@ public class AssumeMerger extends BaseProductOptimizer {
 			// them into multiple edges
 			assert newStmts.size() == 1;
 			AssumeStatement stmt = (AssumeStatement) newStmts.get(0);
-			BoogieConditionWrapper bcw = new BoogieConditionWrapper();
-			ConditionTransformer<Expression> ct = new ConditionTransformer<>(bcw);
-			Collection<Expression> disjuncts = ct.toDnfDisjuncts(stmt.getFormula());
+			ConditionTransformer<Expression> ct = new ConditionTransformer<>(new BoogieConditionWrapper());
+			Collection<Expression> disjuncts = ct.toDnfDisjuncts(ct.rewriteNotEquals(stmt.getFormula()));
 			if (disjuncts.size() > 1) {
 				// yes we can
 				for (Expression disjunct : disjuncts) {
@@ -146,7 +145,7 @@ public class AssumeMerger extends BaseProductOptimizer {
 			}
 			assumeExpressions.add(stmt.getFormula());
 		}
-		
+
 		BoogieConditionWrapper bcw = new BoogieConditionWrapper();
 		ConditionTransformer<Expression> ct = new ConditionTransformer<>(bcw);
 		int assumeExprSize = assumeExpressions.size();

@@ -38,13 +38,13 @@ public class LTLChecker extends AbstractEvaluationTestSuite {
 //				"examples/LTL/rers2012/P19/",
 //				"examples/LTL/coolant/",
 //				"examples/LTL/koskinen/ltlcmodelchecker-benchmarks/",
-				"examples/LTL/bugs/",
+//				"examples/LTL/bugs/",
 
 				//RERS examples with NO_RESULT  
 //				"examples/LTL/rers2012/P14/Problem14_prop_005.c",
 				
 				//Koskinen examples with problems
-//				"examples/LTL/koskinen/ltlcmodelchecker-benchmarks/18-windows_os_frag4_prop2-new.c",
+				"examples/LTL/koskinen/ltlcmodelchecker-benchmarks/18-windows_os_frag4_prop2-new.c",
 
 		};
 		// @formatter:on

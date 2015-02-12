@@ -31,7 +31,9 @@ public interface IConditionWrapper<E> {
 
 	E getOperand(E formula);
 	
-	E rewriteNotEquals(E atom);
+	E rewritePredNotEquals(E atom);
+	
+	E negatePred(E atom);
 
 	Iterator<E> getOperands(E formula);
 

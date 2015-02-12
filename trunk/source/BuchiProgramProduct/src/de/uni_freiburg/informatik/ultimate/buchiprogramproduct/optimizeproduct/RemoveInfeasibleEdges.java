@@ -55,24 +55,21 @@ public class RemoveInfeasibleEdges extends BaseProductOptimizer {
 		}
 
 		Infeasibility result = cb.getTransitionFormula().isInfeasible();
-		mLogger.debug(result + ": " + cb);
 
 		switch (result) {
 		case INFEASIBLE:
+			mLogger.debug("Removing " + result + ": " + cb);
 			cb.disconnectSource();
 			cb.disconnectTarget();
 			mRemovedEdges++;
 			break;
 		case NOT_DETERMINED:
-			// TODO: determine it?
 			break;
 		case UNPROVEABLE:
-			// fail fast;
-			// TODO: this should be a result!
 			break;
 		}
 	}
-	
+
 	public boolean IsGraphChanged() {
 		return mRemovedEdges > 0 || mRemovedLocations > 0;
 	}

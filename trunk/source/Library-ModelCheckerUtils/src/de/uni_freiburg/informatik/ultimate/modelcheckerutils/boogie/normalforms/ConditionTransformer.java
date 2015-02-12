@@ -50,18 +50,24 @@ public class ConditionTransformer<E> {
 	}
 
 	/**
-	 * Replace all terms of the form x != y with x < y || x > y
-	 * 
+	 * <ol>
+	 * <li>Convert formula in NNF. 
+	 * <li>Pull negations further in, e.g. convert !(x != y) to (x == y) 
+	 * <li>Replace all terms of the form x != y  with x < y || x > y
+	 * </ol>
 	 */
 	public E rewriteNotEquals(E formula) {
 		if (formula == null) {
 			return null;
 		}
 
+		formula = toNnf(formula);
+
 		if (mWrapper.isAtom(formula)) {
-			return mWrapper.rewriteNotEquals(formula);
+			return mWrapper.rewritePredNotEquals(formula);
 		} else if (mWrapper.isNot(formula)) {
-			return mWrapper.makeNot(rewriteNotEquals(mWrapper.getOperand(formula)));
+			//because the formula is in NNF, the negation can only be in front of a term
+			return rewriteNotEquals(mWrapper.negatePred(mWrapper.getOperand(formula)));
 		} else if (mWrapper.isAnd(formula)) {
 			ArrayDeque<E> operands = new ArrayDeque<>();
 			Iterator<E> iter = mWrapper.getOperands(formula);
@@ -319,7 +325,7 @@ public class ConditionTransformer<E> {
 				return makeNnf(mWrapper.getOperand(operand));
 			} else if (mWrapper.isOr(operand)) {
 				// use de morgan
-				ArrayList<E> inner = new ArrayList<>();
+				ArrayDeque<E> inner = new ArrayDeque<>();
 				Iterator<E> iter = mWrapper.getOperands(operand);
 				while (iter.hasNext()) {
 					inner.add(makeNnf(mWrapper.makeNot(iter.next())));
@@ -327,7 +333,7 @@ public class ConditionTransformer<E> {
 				return mWrapper.makeAnd(inner.iterator());
 			} else if (mWrapper.isAnd(operand)) {
 				// use de morgan
-				ArrayList<E> inner = new ArrayList<>();
+				ArrayDeque<E> inner = new ArrayDeque<>();
 				Iterator<E> iter = mWrapper.getOperands(operand);
 				while (iter.hasNext()) {
 					inner.add(makeNnf(mWrapper.makeNot(iter.next())));
@@ -343,14 +349,14 @@ public class ConditionTransformer<E> {
 		} else {
 			// its no atom, its no not, descend
 			if (mWrapper.isOr(condition)) {
-				ArrayList<E> inner = new ArrayList<>();
+				ArrayDeque<E> inner = new ArrayDeque<>();
 				Iterator<E> iter = mWrapper.getOperands(condition);
 				while (iter.hasNext()) {
 					inner.add(makeNnf(iter.next()));
 				}
 				return mWrapper.makeOr(inner.iterator());
 			} else if (mWrapper.isAnd(condition)) {
-				ArrayList<E> inner = new ArrayList<>();
+				ArrayDeque<E> inner = new ArrayDeque<>();
 				Iterator<E> iter = mWrapper.getOperands(condition);
 				while (iter.hasNext()) {
 					inner.add(makeNnf(iter.next()));

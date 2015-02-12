@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.buchiprogramproduct;
 
+import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
@@ -71,52 +72,19 @@ public class BuchiProductObserver implements IUnmanagedObserver {
 			if (maxIters < 0) {
 				maxIters = -1;
 			}
+			Level old = mLogger.getLevel();
+			mLogger.setLevel(Level.DEBUG);
 			int i = 1;
 			while (true) {
 				mLogger.debug("==== Optimization #" + i + "====");
 				++i;
 				boolean continueOptimization = false;
 
-				if (ups.getBoolean(PreferenceInitializer.OPTIMIZE_REMOVE_INFEASIBLE_EDGES)) {
-					RemoveInfeasibleEdges opt1 = new RemoveInfeasibleEdges(mProduct, mServices);
-					mProduct = opt1.getResult();
-					continueOptimization = continueOptimization || opt1.IsGraphChanged();
-				}
-
-				if (ups.getBoolean(PreferenceInitializer.OPTIMIZE_MAXIMIZE_FINAL_STATES)) {
-					MaximizeFinalStates opt2 = new MaximizeFinalStates(mProduct, mServices);
-					mProduct = opt2.getResult();
-					continueOptimization = continueOptimization || opt2.IsGraphChanged();
-				}
-
-				MinimizeStates minimizeStates = ups.getEnum(PreferenceInitializer.OPTIMIZE_MINIMIZE_STATES,
-						MinimizeStates.class);
-
-				if (minimizeStates != MinimizeStates.NONE) {
-					BaseProductOptimizer opt3;
-					switch (minimizeStates) {
-					case SINGLE:
-						opt3 = new MinimizeStatesSingleEdgeSingleNode(mProduct, mServices);
-						break;
-					case SINGLE_NODE_MULTI_EDGE:
-						opt3 = new MinimizeStatesMultiEdgeSingleNode(mProduct, mServices);
-						break;
-					case MULTI:
-						opt3 = new MinimizeStatesMultiEdgeMultiNode(mProduct, mServices);
-						break;
-					default:
-						throw new IllegalArgumentException(minimizeStates + " is an unknown enum value!");
-
-					}
-					mProduct = opt3.getResult();
-					continueOptimization = continueOptimization || opt3.IsGraphChanged();
-				}
-
-				if (ups.getBoolean(PreferenceInitializer.OPTIMIZE_SIMPLIFY_ASSUMES)) {
-					BaseProductOptimizer opt4 = new AssumeMerger(mProduct, mServices);
-					mProduct = opt4.getResult();
-					continueOptimization = continueOptimization || opt4.IsGraphChanged();
-				}
+				continueOptimization = optimizeRemoveInfeasibleEdges(ups, continueOptimization);
+				continueOptimization = optimizeMaximizeFinalStates(ups, continueOptimization);
+				continueOptimization = optimizeSimplifyAssumes(ups, continueOptimization);
+				continueOptimization = optimizeMinimizeStates(ups, continueOptimization);
+				continueOptimization = optimizeSimplifyAssumes(ups, continueOptimization);
 
 				if (!mServices.getProgressMonitorService().continueProcessing()) {
 					mServices.getResultService().reportResult(Activator.PLUGIN_ID,
@@ -134,6 +102,7 @@ public class BuchiProductObserver implements IUnmanagedObserver {
 				break;
 			}
 			reportSizeBenchmark("Optimized Product", mProduct);
+			mLogger.setLevel(Level.DEBUG);
 
 		} catch (Exception e) {
 			mLogger.error(String.format(
@@ -141,6 +110,59 @@ public class BuchiProductObserver implements IUnmanagedObserver {
 			throw e;
 		}
 		return;
+	}
+
+	private boolean optimizeRemoveInfeasibleEdges(UltimatePreferenceStore ups, boolean continueOptimization) {
+		if (ups.getBoolean(PreferenceInitializer.OPTIMIZE_REMOVE_INFEASIBLE_EDGES)) {
+			RemoveInfeasibleEdges opt1 = new RemoveInfeasibleEdges(mProduct, mServices);
+			mProduct = opt1.getResult();
+			continueOptimization = continueOptimization || opt1.IsGraphChanged();
+		}
+		return continueOptimization;
+	}
+
+	private boolean optimizeMaximizeFinalStates(UltimatePreferenceStore ups, boolean continueOptimization) {
+		if (ups.getBoolean(PreferenceInitializer.OPTIMIZE_MAXIMIZE_FINAL_STATES)) {
+			MaximizeFinalStates opt2 = new MaximizeFinalStates(mProduct, mServices);
+			mProduct = opt2.getResult();
+			continueOptimization = continueOptimization || opt2.IsGraphChanged();
+		}
+		return continueOptimization;
+	}
+
+	private boolean optimizeMinimizeStates(UltimatePreferenceStore ups, boolean continueOptimization) {
+		MinimizeStates minimizeStates = ups.getEnum(PreferenceInitializer.OPTIMIZE_MINIMIZE_STATES,
+				MinimizeStates.class);
+
+		if (minimizeStates != MinimizeStates.NONE) {
+			BaseProductOptimizer opt3;
+			switch (minimizeStates) {
+			case SINGLE:
+				opt3 = new MinimizeStatesSingleEdgeSingleNode(mProduct, mServices);
+				break;
+			case SINGLE_NODE_MULTI_EDGE:
+				opt3 = new MinimizeStatesMultiEdgeSingleNode(mProduct, mServices);
+				break;
+			case MULTI:
+				opt3 = new MinimizeStatesMultiEdgeMultiNode(mProduct, mServices);
+				break;
+			default:
+				throw new IllegalArgumentException(minimizeStates + " is an unknown enum value!");
+
+			}
+			mProduct = opt3.getResult();
+			continueOptimization = continueOptimization || opt3.IsGraphChanged();
+		}
+		return continueOptimization;
+	}
+
+	private boolean optimizeSimplifyAssumes(UltimatePreferenceStore ups, boolean continueOptimization) {
+		if (ups.getBoolean(PreferenceInitializer.OPTIMIZE_SIMPLIFY_ASSUMES)) {
+			BaseProductOptimizer opt4 = new AssumeMerger(mProduct, mServices);
+			mProduct = opt4.getResult();
+			continueOptimization = continueOptimization || opt4.IsGraphChanged();
+		}
+		return continueOptimization;
 	}
 
 	private void reportSizeBenchmark(String message, NestedWordAutomaton<CodeBlock, String> nwa) {

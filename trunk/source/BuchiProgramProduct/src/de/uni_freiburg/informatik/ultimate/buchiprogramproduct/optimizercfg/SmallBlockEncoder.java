@@ -66,6 +66,11 @@ public class SmallBlockEncoder extends BaseObserver {
 				}
 				closed.add(current);
 				edges.addAll(current.getTarget().getOutgoingEdges());
+				if (mLogger.isDebugEnabled()) {
+					mLogger.debug("Processing edge " + current.hashCode() + ":");
+					mLogger.debug("    " + current);
+				}
+
 				if (current instanceof StatementSequence) {
 					StatementSequence ss = (StatementSequence) current;
 					if (ss.getStatements().size() != 1) {
@@ -75,17 +80,25 @@ public class SmallBlockEncoder extends BaseObserver {
 					Statement stmt = ss.getStatements().get(0);
 					if (stmt instanceof AssumeStatement) {
 						AssumeStatement assume = (AssumeStatement) stmt;
-						Collection<Expression> disjuncts = ct.toDnfDisjuncts(ct.rewriteNotEquals(assume.getFormula()));
-						if (mLogger.isDebugEnabled() && disjuncts.size() > 1) {
-							mLogger.debug("Edge " + current.hashCode() + ":");
+						Expression expr = ct.rewriteNotEquals(assume.getFormula());
+						if (mLogger.isDebugEnabled()) {
 							mLogger.debug("    has assume " + BoogiePrettyPrinter.print(assume.getFormula()));
-							StringBuilder sb = new StringBuilder();
-							sb.append("{");
-							for (Expression dis : disjuncts) {
-								sb.append(BoogiePrettyPrinter.print(dis)).append(", ");
+							mLogger.debug("    after rewrite " + BoogiePrettyPrinter.print(expr));
+						}
+						Collection<Expression> disjuncts = ct.toDnfDisjuncts(expr);
+						if (mLogger.isDebugEnabled()) {
+							if (disjuncts.size() > 1) {
+								StringBuilder sb = new StringBuilder();
+								sb.append("{");
+								for (Expression dis : disjuncts) {
+									sb.append(BoogiePrettyPrinter.print(dis)).append(", ");
+								}
+								sb.delete(sb.length() - 2, sb.length()).append("}");
+								mLogger.debug("    converted to disjuncts " + sb.toString());
+							} else {
+								mLogger.debug("    only one disjunct "
+										+ BoogiePrettyPrinter.print(disjuncts.iterator().next()));
 							}
-							sb.delete(sb.length() - 2, sb.length()).append("}");
-							mLogger.debug("    converted to disjuncts " + sb.toString());
 						}
 						if (disjuncts.size() > 1) {
 							countDisjunctiveAssumes++;

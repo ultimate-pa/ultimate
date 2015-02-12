@@ -221,6 +221,7 @@ public class ProductGenerator {
 				if (mLogger.isDebugEnabled()) {
 					mLogger.debug("Processing [" + rcfgEdge.hashCode() + "][" + rcfgEdge.getClass().getSimpleName()
 							+ "] " + rcfgEdge.getSource() + " --> " + rcfgEdge.getTarget());
+					mLogger.debug("\t" + rcfgEdge);
 				}
 
 				ProgramPoint origRcfgTargetLoc = (ProgramPoint) rcfgEdge.getTarget();

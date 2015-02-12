@@ -1,5 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.normalforms;
 
+import java.util.HashMap;
+
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -13,6 +15,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.output.BoogiePrettyPrint
 
 public class ConditionTransformerTest {
 
+	private final HashMap<String, Expression> mIdentifier;
 	private final Expression mExp4;
 	private final Expression mExp3;
 	private final Expression mExp2;
@@ -23,6 +26,7 @@ public class ConditionTransformerTest {
 	private final Expression mExp1;
 
 	public ConditionTransformerTest() {
+		mIdentifier = new HashMap<>();
 		mA = var("A");
 		mB = var("B");
 		mC = var("C");
@@ -51,7 +55,12 @@ public class ConditionTransformerTest {
 	}
 
 	private Expression var(String varname) {
-		return new IdentifierExpression(null, varname);
+		Expression exp = mIdentifier.get(varname);
+		if (exp == null) {
+			exp = new IdentifierExpression(null, varname);
+			mIdentifier.put(varname, exp);
+		}
+		return exp;
 	}
 
 	/**
@@ -71,7 +80,18 @@ public class ConditionTransformerTest {
 	@Test
 	public void TestRewriteB() {
 		Expression input = or(mExp2, term(mA, 1, Operator.COMPNEQ));
-		Expression afterRewrite = or(or(mExp2, term(mA, 1, Operator.COMPGT)),term(mA, 1, Operator.COMPLT));
+		Expression afterRewrite = or(or(and(and(or(mA, mD), or(mB, mC)), mA), term(mA, 1, Operator.COMPGT)),
+				term(mA, 1, Operator.COMPLT));
+		TestRewrite(input, afterRewrite);
+	}
+
+	@Test
+	public void TestRewriteC() {
+		Expression input = and(and(not(term(mA, 0, Operator.COMPNEQ)), not(term(mB, 1, Operator.COMPEQ))),
+				not(term(mC, 1, Operator.COMPEQ)));
+		Expression afterRewrite = and(
+				and(term(mA, 0, Operator.COMPEQ), or(term(mB, 1, Operator.COMPLT), term(mB, 1, Operator.COMPGT))),
+				or(term(mC, 1, Operator.COMPLT), term(mC, 1, Operator.COMPGT)));
 		TestRewrite(input, afterRewrite);
 	}
 
@@ -120,6 +140,19 @@ public class ConditionTransformerTest {
 		Expression nnf = or(or(not(mA), and(not(mC), not(mB))), and(not(mD), not(mA)));
 		Expression dnf = or(and(not(mC), not(mB)), not(mA));
 		Test(input, nnf, dnf);
+	}
+
+	@Test
+	public void TestE() {
+		// (((A || B) && (C || D)) && (E || F)) && (G || H)
+		Expression input = and(and(and(or(var("A"), var("B")), or(var("C"), var("D"))), or(var("E"), var("F"))),
+				or(var("G"), var("H")));
+		Expression afterNNF = and(and(and(or(var("B"), var("A")), or(var("D"), var("C"))), or(var("F"), var("E"))),
+				or(var("H"), var("G")));
+		ConditionTransformer<Expression> ct = new ConditionTransformer<>(new BoogieConditionWrapper());
+		input = ct.rewriteNotEquals(input);
+		
+		Test(input, afterNNF, input);
 	}
 
 	private void TestRewrite(Expression input, Expression afterRewrite) {

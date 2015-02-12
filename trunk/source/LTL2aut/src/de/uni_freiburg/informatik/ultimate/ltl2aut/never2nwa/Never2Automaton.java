@@ -1,6 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.ltl2aut.never2nwa;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -115,9 +116,7 @@ public class Never2Automaton {
 		} else if (branch instanceof Name) {
 			return;
 		} else if (branch instanceof OptionStatement) {
-			// add transitions
 
-			CodeBlock cond = getAssume(((OptionStatement) branch).getCondition());
 			// option.body .goto .name
 			String succ = ((Name) branch.getOutgoingNodes().get(0).getOutgoingNodes().get(0)).getIdent();
 
@@ -125,7 +124,11 @@ public class Never2Automaton {
 				mAutomaton.addState(succ.endsWith("init"), succ.startsWith("accept"), succ);
 			}
 
-			mAutomaton.addInternalTransition(pred, cond, succ);
+			// add transitions
+			for (CodeBlock cond : getAssume(((OptionStatement) branch).getCondition())) {
+				mAutomaton.addInternalTransition(pred, cond, succ);
+			}
+
 		} else {
 			for (AstNode a : branch.getOutgoingNodes()) {
 				collectStates(a, pred);
@@ -158,7 +161,7 @@ public class Never2Automaton {
 		else if (branch instanceof Name)
 			return;
 		else if (branch instanceof OptionStatement) {
-			symbols.add(getAssume(((OptionStatement) branch).getCondition()));
+			symbols.addAll(getAssume(((OptionStatement) branch).getCondition()));
 		} else {
 			for (AstNode a : branch.getOutgoingNodes()) {
 				visitAstForSymbols(a, symbols);
@@ -173,20 +176,14 @@ public class Never2Automaton {
 		return ss;
 	}
 
-	private CodeBlock getAssume(AstNode condition) throws Exception {
-		ConditionTransformer<Expression> ct = new ConditionTransformer<>(new BoogieConditionWrapper());
+	private List<CodeBlock> getAssume(AstNode condition) throws Exception {
+
 		if (condition instanceof Name) {
 			// this may be already translated by the IRS
 			Name name = (Name) condition;
 			CheckableExpression checkExpr = mIRS.get(name.getIdent().toUpperCase());
 			if (checkExpr != null) {
-				List<Statement> stmts = new ArrayList<>();
-				if (checkExpr.getStatements() != null) {
-					stmts.addAll(checkExpr.getStatements());
-				}
-				
-				stmts.add(new AssumeStatement(checkExpr.getExpression().getLocation(), ct.rewriteNotEquals(checkExpr.getExpression())));
-				return new StatementSequence(null, null, stmts, Origin.ASSERT, mLogger);
+				return getAssumeFromCheckableExpression(checkExpr);
 			} else {
 				mLogger.warn("Root condition is a name, but no mapping in IRS found: " + name.getIdent());
 			}
@@ -195,12 +192,29 @@ public class Never2Automaton {
 		// this could be an actual neverclaim and we have to translate it
 		// manually
 		CheckableExpression checkExpr = toBoogieAst(condition);
-		List<Statement> stmts = new ArrayList<>();
+		return getAssumeFromCheckableExpression(checkExpr);
+	}
+
+	private List<CodeBlock> getAssumeFromCheckableExpression(CheckableExpression checkExpr) {
+		ArrayList<CodeBlock> rtr = new ArrayList<>();
+		List<Statement> preStmts = new ArrayList<>();
 		if (checkExpr.getStatements() != null) {
-			stmts.addAll(checkExpr.getStatements());
+			preStmts.addAll(checkExpr.getStatements());
 		}
-		stmts.add(new AssumeStatement(checkExpr.getExpression().getLocation(), ct.rewriteNotEquals(checkExpr.getExpression())));
-		return new StatementSequence(null, null, stmts, Origin.ASSERT, mLogger);
+
+		ILocation loc = checkExpr.getExpression().getLocation();
+		for (Expression expr : toDNF(checkExpr.getExpression())) {
+			List<Statement> stmts = new ArrayList<>(preStmts);
+			stmts.add(new AssumeStatement(loc, expr));
+			rtr.add(new StatementSequence(null, null, stmts, Origin.ASSERT, mLogger));
+		}
+		return rtr;
+	}
+
+	private Collection<Expression> toDNF(Expression expr) {
+		ConditionTransformer<Expression> ct = new ConditionTransformer<>(new BoogieConditionWrapper());
+		expr = ct.rewriteNotEquals(expr);
+		return ct.toDnfDisjuncts(expr);
 	}
 
 	/**
