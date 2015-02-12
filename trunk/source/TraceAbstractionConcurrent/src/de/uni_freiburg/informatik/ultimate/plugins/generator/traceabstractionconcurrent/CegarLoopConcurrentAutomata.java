@@ -11,6 +11,7 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.InCaReAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
@@ -18,6 +19,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomat
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Accepts;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Difference;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.PowersetDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.IOpWithDelayedDeadEndRemoval;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.senwa.DifferenceSenwa;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
@@ -29,7 +31,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Ba
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopBenchmarkType;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionBenchmarks;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataTransitionAppender.PostDeterminizer;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataTransitionAppender.DeterministicInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantAutomataBuilders.StraightLineInterpolantAutomatonBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.EdgeChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IMLPredicate;
@@ -135,30 +137,25 @@ public class CegarLoopConcurrentAutomata extends BasicCegarLoop {
 
 		IOpWithDelayedDeadEndRemoval<CodeBlock, IPredicate> diff;
 
-		PostDeterminizer epd = new PostDeterminizer(m_Services, edgeChecker, m_ComputeHoareAnnotation, m_InterpolAutomaton, true,
-				m_PredicateFactoryInterpolantAutomata);
+		DeterministicInterpolantAutomaton determinized = new DeterministicInterpolantAutomaton(
+				m_Services, m_SmtManager, edgeChecker, oldAbstraction, m_InterpolAutomaton,
+				m_TraceChecker, mLogger);
+		// ComplementDeterministicNwa<CodeBlock, IPredicate>
+		// cdnwa = new ComplementDeterministicNwa<>(dia);
+		PowersetDeterminizer<CodeBlock, IPredicate> psd2 = new PowersetDeterminizer<CodeBlock, IPredicate>(
+				determinized, false, m_PredicateFactoryInterpolantAutomata);
+
 		if (m_Pref.differenceSenwa()) {
-			diff = new DifferenceSenwa<CodeBlock, IPredicate>(m_Services, oldAbstraction, m_InterpolAutomaton, epd, false);
+			diff = new DifferenceSenwa<CodeBlock, IPredicate>(m_Services, oldAbstraction, (INestedWordAutomaton<CodeBlock, IPredicate>) determinized, psd2, false);
 		} else {
-			diff = new Difference<CodeBlock, IPredicate>(m_Services, oldAbstraction, m_InterpolAutomaton, epd,
+			diff = new Difference<CodeBlock, IPredicate>(m_Services, oldAbstraction, determinized, psd2,
 					m_StateFactoryForRefinement, explointSigmaStarConcatOfIA);
 		}
-		mLogger.info("Internal Transitions: " + epd.m_AnswerInternalAutomaton + " answers given by automaton "
-				+ epd.m_AnswerInternalCache + " answers given by cache " + epd.m_AnswerInternalSolver
-				+ " answers given by solver");
-		mLogger.info("Call Transitions: " + epd.m_AnswerCallAutomaton + " answers given by automaton "
-				+ epd.m_AnswerCallCache + " answers given by cache " + epd.m_AnswerCallSolver
-				+ " answers given by solver");
-		mLogger.info("Return Transitions: " + epd.m_AnswerReturnAutomaton + " answers given by automaton "
-				+ epd.m_AnswerReturnCache + " answers given by cache " + epd.m_AnswerReturnSolver
-				+ " answers given by solver");
 		assert !m_SmtManager.isLocked();
 		assert (new InductivityCheck(m_Services, m_InterpolAutomaton, false, true,
 				new IncrementalHoareTripleChecker(m_SmtManager, m_ModGlobVarManager))).getResult();
 		// do the following check only to obtain logger messages of
 		// checkInductivity
-		assert (new InductivityCheck(m_Services, epd.getRejectionCache(), true, false,
-				new IncrementalHoareTripleChecker(m_SmtManager, m_ModGlobVarManager)).getResult() | true);
 
 		if (m_RemoveDeadEnds) {
 			if (m_ComputeHoareAnnotation) {
