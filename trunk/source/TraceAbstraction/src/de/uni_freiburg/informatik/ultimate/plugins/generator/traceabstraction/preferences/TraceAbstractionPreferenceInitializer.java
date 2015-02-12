@@ -37,6 +37,8 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 				new UltimatePreferenceItem<String>(LABEL_DUMPPATH, DEF_DUMPPATH, PreferenceType.Directory),
 				new UltimatePreferenceItem<InterpolantAutomatonEnhancement>(LABEL_InterpolantAutomatonEnhancement,
 						InterpolantAutomatonEnhancement.PREDICATE_ABSTRACTION, PreferenceType.Combo, InterpolantAutomatonEnhancement.values()),
+				new UltimatePreferenceItem<HoareTripleChecks>(LABEL_HoareTripleChecks,
+						HoareTripleChecks.INCREMENTAL, PreferenceType.Combo, HoareTripleChecks.values()),
 				new UltimatePreferenceItem<LanguageOperation>(LABEL_LANGUAGE_OPERATION, LanguageOperation.DIFFERENCE,
 						PreferenceType.Combo, LanguageOperation.values()),
 				new UltimatePreferenceItem<Boolean>(LABEL_DIFFERENCE_SENWA, DEF_DIFFERENCE_SENWA,
@@ -78,6 +80,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final String LABEL_DUMPAUTOMATA = "Dump automata to files";
 	public static final String LABEL_DUMPPATH = "Dump formulas of problems in the following path";
 	public static final String LABEL_InterpolantAutomatonEnhancement = "Interpolant automaton enhancement";
+	public static final String LABEL_HoareTripleChecks = "Hoare triple checks";
 	public static final String LABEL_DIFFERENCE_SENWA = "DifferenceSenwa operation instead classical Difference";
 	public static final String LABEL_MINIMIZE = "Minimization of abstraction";
 	public static final String LABEL_CONCURRENCY = "Automaton type used in concurrency analysis";
@@ -156,6 +159,10 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 		INCREMENTAL_INCLUSION_3, INCREMENTAL_INCLUSION_3_2, 
 		INCREMENTAL_INCLUSION_4, INCREMENTAL_INCLUSION_4_2, 
 		INCREMENTAL_INCLUSION_5, INCREMENTAL_INCLUSION_5_2,
+	}
+	
+	public enum HoareTripleChecks {
+		MONOLITHIC, INCREMENTAL
 	}
 
 }

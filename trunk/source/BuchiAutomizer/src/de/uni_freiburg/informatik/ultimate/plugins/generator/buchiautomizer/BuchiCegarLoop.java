@@ -292,7 +292,7 @@ public class BuchiCegarLoop {
 		mLogger.info("Hoare is " + m_Pref.computeHoareAnnotation());
 		mLogger.info("Compute interpolants for " + m_Interpolation);
 		mLogger.info("Backedges is " + m_Pref.interpolantAutomaton());
-		mLogger.info("Determinization is " + m_Pref.determinization());
+		mLogger.info("Determinization is " + m_Pref.interpolantAutomatonEnhancement());
 		mLogger.info("Difference is " + m_Pref.differenceSenwa());
 		mLogger.info("Minimize is " + m_Pref.minimize());
 

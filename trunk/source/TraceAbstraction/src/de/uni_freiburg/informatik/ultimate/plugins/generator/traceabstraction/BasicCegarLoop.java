@@ -47,15 +47,20 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Roo
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CoverageAnalysis.BackwardCoveringInformation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataTransitionAppender.BestApproximationDeterminizer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataTransitionAppender.DeterministicInterpolantAutomaton;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataTransitionAppender.DeterministicInterpolantAutomaton2;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataTransitionAppender.NondeterministicInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataTransitionAppender.SelfloopDeterminizer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantAutomataBuilders.CanonicalInterpolantAutomatonBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantAutomataBuilders.StraightLineInterpolantAutomatonBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantAutomataBuilders.TotalInterpolationAutomatonBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantAutomataBuilders.TwoTrackInterpolantAutomatonBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.EdgeChecker;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.EfficientHoareTripleChecker;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IncrementalHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.InductivityCheck;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.MonolithicHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.InterpolationPreferenceChecker;
@@ -321,8 +326,23 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		INestedWordAutomatonOldApi<CodeBlock, IPredicate> oldAbstraction = (INestedWordAutomatonOldApi<CodeBlock, IPredicate>) m_Abstraction;
 		// Map<IPredicate, Set<IPredicate>> removedDoubleDeckers = null;
 		// Map<IPredicate, IPredicate> context2entry = null;
-		EdgeChecker edgeChecker = new EdgeChecker(m_SmtManager, m_RootNode.getRootAnnot().getModGlobVarManager(),
-				m_TraceChecker.getPredicateUnifier().getCoverageRelation());
+		
+		final IHoareTripleChecker solverHtc;
+		switch (m_Pref.getHoareTripleChecks()) {
+		case MONOLITHIC:
+			solverHtc = new MonolithicHoareTripleChecker(m_SmtManager);
+			break;
+		case INCREMENTAL:
+			solverHtc = new IncrementalHoareTripleChecker(m_SmtManager, m_ModGlobVarManager);
+			break;
+		default:
+			throw new AssertionError("unknown value");
+		}
+		
+		IHoareTripleChecker htc = new EfficientHoareTripleChecker(solverHtc, 
+				m_RootNode.getRootAnnot().getModGlobVarManager(), 
+				m_TraceChecker.getPredicateUnifier(), m_SmtManager);
+		
 		try {
 			if (m_DifferenceInsteadOfIntersection) {
 				mLogger.debug("Start constructing difference");
@@ -331,7 +351,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 
 				IOpWithDelayedDeadEndRemoval<CodeBlock, IPredicate> diff;
 
-				switch (m_Pref.determinization()) {
+				switch (m_Pref.interpolantAutomatonEnhancement()) {
 				case NONE:
 					PowersetDeterminizer<CodeBlock, IPredicate> psd = new PowersetDeterminizer<CodeBlock, IPredicate>(
 							m_InterpolAutomaton, true, m_PredicateFactoryInterpolantAutomata);
@@ -380,9 +400,14 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 					if (m_Pref.differenceSenwa()) {
 						throw new UnsupportedOperationException();
 					} else {
-						DeterministicInterpolantAutomaton determinized = new DeterministicInterpolantAutomaton(
-								m_Services, m_SmtManager, edgeChecker, oldAbstraction, m_InterpolAutomaton,
-								m_TraceChecker, mLogger);
+						DeterministicInterpolantAutomaton2 determinized = new DeterministicInterpolantAutomaton2(
+								m_Services, m_SmtManager, m_ModGlobVarManager, htc, oldAbstraction, m_InterpolAutomaton,
+								m_TraceChecker.getPredicateUnifier(), mLogger);
+//						NondeterministicInterpolantAutomaton determinized = new NondeterministicInterpolantAutomaton(
+//								m_Services, m_SmtManager, m_ModGlobVarManager, htc, oldAbstraction, m_InterpolAutomaton, 
+//								m_TraceChecker.getPredicateUnifier(), mLogger);
+						
+						
 						// ComplementDeterministicNwa<CodeBlock, IPredicate>
 						// cdnwa = new ComplementDeterministicNwa<>(dia);
 						PowersetDeterminizer<CodeBlock, IPredicate> psd2 = new PowersetDeterminizer<CodeBlock, IPredicate>(
@@ -391,7 +416,6 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 						diff = new Difference<CodeBlock, IPredicate>(m_Services, oldAbstraction, determinized, psd2,
 								m_StateFactoryForRefinement, explointSigmaStarConcatOfIA);
 						determinized.switchToReadonlyMode();
-						assert (edgeChecker.isAssertionStackEmpty());
 						INestedWordAutomaton<CodeBlock, IPredicate> test = (new RemoveUnreachable<CodeBlock, IPredicate>(
 								m_Services, determinized)).getResult();
 						// boolean ctxAccepted = (new Accepts<CodeBlock,
@@ -456,7 +480,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 				m_Abstraction = intersect.getResult();
 			}
 		} finally {
-			m_CegarLoopBenchmark.addEdgeCheckerData(edgeChecker.getEdgeCheckerBenchmark());
+			m_CegarLoopBenchmark.addEdgeCheckerData(htc.getEdgeCheckerBenchmark());
 			m_CegarLoopBenchmark.stop(CegarLoopBenchmarkType.s_AutomataDifference);
 		}
 
@@ -644,7 +668,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 			throws OperationCanceledException {
 		mLogger.debug("Start determinization");
 		INestedWordAutomatonOldApi<CodeBlock, IPredicate> dia;
-		switch (m_Pref.determinization()) {
+		switch (m_Pref.interpolantAutomatonEnhancement()) {
 		case NONE:
 			PowersetDeterminizer<CodeBlock, IPredicate> psd = new PowersetDeterminizer<CodeBlock, IPredicate>(
 					m_InterpolAutomaton, true, m_PredicateFactoryInterpolantAutomata);

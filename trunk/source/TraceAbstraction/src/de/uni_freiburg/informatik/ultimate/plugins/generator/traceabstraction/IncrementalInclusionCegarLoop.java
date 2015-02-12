@@ -175,7 +175,7 @@ public class IncrementalInclusionCegarLoop extends BasicCegarLoop {
 
 			IOpWithDelayedDeadEndRemoval<CodeBlock, IPredicate> diff;
 
-			switch (m_Pref.determinization()) {
+			switch (m_Pref.interpolantAutomatonEnhancement()) {
 			case PREDICATE_ABSTRACTION:
 				DeterministicInterpolantAutomaton2 determinized = new DeterministicInterpolantAutomaton2(m_Services, 
 						m_SmtManager, m_ModGlobVarManager, edgeChecker, (INestedWordAutomaton<CodeBlock, IPredicate>) m_Abstraction, m_InterpolAutomaton, m_TraceChecker.getPredicateUnifier(), mLogger);

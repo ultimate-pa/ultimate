@@ -83,7 +83,7 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 		settings += " Hoare:" + taPrefs.computeHoareAnnotation();
 		settings += " " + (taPrefs.differenceSenwa() ? "SeNWA" : "NWA");
 		settings += " Interpolation:" + taPrefs.interpolation();
-		settings += " Determinization: " + taPrefs.determinization();
+		settings += " Determinization: " + taPrefs.interpolantAutomatonEnhancement();
 		System.out.println(settings);
 
 		SmtManager smtManager = new SmtManager(rootAnnot.getBoogie2SMT(), rootAnnot.getModGlobVarManager(), mServices);

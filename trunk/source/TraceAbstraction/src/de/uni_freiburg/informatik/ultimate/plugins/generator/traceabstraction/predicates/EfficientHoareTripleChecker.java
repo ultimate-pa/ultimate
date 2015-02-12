@@ -32,15 +32,13 @@ public class EfficientHoareTripleChecker implements IHoareTripleChecker {
 		final Validity sdResult = m_SdHoareTripleChecker.checkInternal(pre, cb, succ);
 		if (sdResult != Validity.UNKNOWN) {
 			if (m_ReviewSdResultsIfAssertionsEnabled) {
-				Validity reviewResult = m_hoareTripleCheckerForReview.checkInternal(pre, cb, succ);
-				assert resultCompatible(sdResult, reviewResult);
+				assert reviewInductiveInternal(pre, cb, succ, sdResult);
 			}
 			return sdResult;
 		} else {
 			Validity result = m_SmtBasedHoareTripleChecker.checkInternal(pre, cb, succ);
 			if (m_ReviewSmtResultsIfAssertionsEnabled) {
-				Validity reviewResult = m_hoareTripleCheckerForReview.checkInternal(pre, cb, succ);
-				assert resultCompatible(sdResult, reviewResult);
+				assert reviewInductiveInternal(pre, cb, succ, result);
 			}
 			return result;
 		}
@@ -51,15 +49,13 @@ public class EfficientHoareTripleChecker implements IHoareTripleChecker {
 		final Validity sdResult = m_SdHoareTripleChecker.checkCall(pre, cb, succ);
 		if (sdResult != Validity.UNKNOWN) {
 			if (m_ReviewSdResultsIfAssertionsEnabled) {
-				Validity reviewResult = m_hoareTripleCheckerForReview.checkCall(pre, cb, succ);
-				assert resultCompatible(sdResult, reviewResult);
+				assert reviewInductiveCall(pre, cb, succ, sdResult);
 			}
 			return sdResult;
 		} else {
 			Validity result = m_SmtBasedHoareTripleChecker.checkCall(pre, cb, succ);
 			if (m_ReviewSmtResultsIfAssertionsEnabled) {
-				Validity reviewResult = m_hoareTripleCheckerForReview.checkCall(pre, cb, succ);
-				assert resultCompatible(sdResult, reviewResult);
+				assert reviewInductiveCall(pre, cb, succ, result);
 			}
 			return result;
 		}
@@ -71,15 +67,13 @@ public class EfficientHoareTripleChecker implements IHoareTripleChecker {
 		final Validity sdResult = m_SdHoareTripleChecker.checkReturn(preLin, preHier, cb, succ);
 		if (sdResult != Validity.UNKNOWN) {
 			if (m_ReviewSdResultsIfAssertionsEnabled) {
-				Validity reviewResult = m_hoareTripleCheckerForReview.checkReturn(preLin, preHier, cb, succ);
-				assert resultCompatible(sdResult, reviewResult);
+				assert reviewInductiveReturn(preLin, preHier, cb, succ, sdResult);
 			}
 			return sdResult;
 		} else {
 			Validity result = m_SmtBasedHoareTripleChecker.checkReturn(preLin, preHier, cb, succ);
 			if (m_ReviewSmtResultsIfAssertionsEnabled) {
-				Validity reviewResult = m_hoareTripleCheckerForReview.checkReturn(preLin, preHier, cb, succ);
-				assert resultCompatible(sdResult, reviewResult);
+				assert reviewInductiveReturn(preLin, preHier, cb, succ, result);
 			}
 			return result;
 		}
@@ -91,7 +85,9 @@ public class EfficientHoareTripleChecker implements IHoareTripleChecker {
 	}
 	
 	
-	private boolean resultCompatible(Validity result, Validity reviewResult) {
+	private boolean reviewInductiveInternal(IPredicate state, CodeBlock cb, IPredicate succ, Validity result) {
+		unlockSmtSolverWorkaround();
+		Validity reviewResult = m_hoareTripleCheckerForReview.checkInternal(state, cb, succ);
 		if (resultCompatibleHelper(result, reviewResult)) {
 			return true;
 		} else {
@@ -99,6 +95,30 @@ public class EfficientHoareTripleChecker implements IHoareTripleChecker {
 					+ "  Review result: " + reviewResult);
 		}
 	}
+	
+	private boolean reviewInductiveCall(IPredicate state, CodeBlock cb, IPredicate succ, Validity result) {
+		unlockSmtSolverWorkaround();
+		Validity reviewResult = m_hoareTripleCheckerForReview.checkCall(state, cb, succ);
+		if (resultCompatibleHelper(result, reviewResult)) {
+			return true;
+		} else {
+			throw new AssertionError("Result: " + result 
+					+ "  Review result: " + reviewResult);
+		}
+
+	}
+	
+	private boolean reviewInductiveReturn(IPredicate state, IPredicate hier, CodeBlock cb, IPredicate succ, Validity result) {
+		unlockSmtSolverWorkaround();
+		Validity reviewResult = m_hoareTripleCheckerForReview.checkReturn(state, hier, cb, succ);
+		if (resultCompatibleHelper(result, reviewResult)) {
+			return true;
+		} else {
+			throw new AssertionError("Result: " + result 
+					+ "  Review result: " + reviewResult);
+		}
+	}
+	
 	
 	/**
 	 * Return true if results are compatible or one is UNKNOWN
@@ -113,6 +133,16 @@ public class EfficientHoareTripleChecker implements IHoareTripleChecker {
 			return true;
 		default:
 			throw new UnsupportedOperationException();
+		}
+	}
+	
+	/**
+	 * Ask m_SmtBasedHoareTripleChecker to release its lock if it is an
+	 * IncrementalHoareTripleChecker.
+	 */
+	public void unlockSmtSolverWorkaround() {
+		if (m_SmtBasedHoareTripleChecker instanceof IncrementalHoareTripleChecker) {
+			((IncrementalHoareTripleChecker) m_SmtBasedHoareTripleChecker).releaseLock();
 		}
 	}
 

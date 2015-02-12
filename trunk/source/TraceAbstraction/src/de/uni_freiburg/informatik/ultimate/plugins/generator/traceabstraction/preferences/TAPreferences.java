@@ -2,6 +2,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.p
 
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.HoareTripleChecks;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.INTERPOLATION;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.Minimization;
@@ -21,6 +22,7 @@ public class TAPreferences {
 	private final boolean m_Hoare;
 	private final Concurrency m_Concurrency;
 	private final boolean m_SeperateViolationCheck = true;
+	private final HoareTripleChecks m_HoareTripleChecks;
 	private UltimatePreferenceStore m_Prefs;
 
 	public enum Artifact {
@@ -71,6 +73,9 @@ public class TAPreferences {
 		m_Determiniation = m_Prefs.getEnum(
 				TraceAbstractionPreferenceInitializer.LABEL_InterpolantAutomatonEnhancement,
 				InterpolantAutomatonEnhancement.class);
+		
+		m_HoareTripleChecks = m_Prefs.getEnum(
+				TraceAbstractionPreferenceInitializer.LABEL_HoareTripleChecks, HoareTripleChecks.class);
 
 		m_Minimize = m_Prefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_MINIMIZE,Minimization.class);
 
@@ -154,8 +159,14 @@ public class TAPreferences {
 	/**
 	 * @return the determinization
 	 */
-	public InterpolantAutomatonEnhancement determinization() {
+	public InterpolantAutomatonEnhancement interpolantAutomatonEnhancement() {
 		return m_Determiniation;
+	}
+	
+
+
+	public HoareTripleChecks getHoareTripleChecks() {
+		return m_HoareTripleChecks;
 	}
 
 	/**

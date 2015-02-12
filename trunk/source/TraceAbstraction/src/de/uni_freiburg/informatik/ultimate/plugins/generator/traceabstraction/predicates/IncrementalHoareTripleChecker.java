@@ -26,9 +26,10 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cal
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.EdgeChecker.EdgeCheckerBenchmarkGenerator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager.ILockerHolderWithVoluntaryLockRelease;
 import de.uni_freiburg.informatik.ultimate.util.ScopedHashMap;
 
-public class IncrementalHoareTripleChecker implements IHoareTripleChecker {
+public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILockerHolderWithVoluntaryLockRelease  {
 	
 	private final SmtManager m_SmtManager;
 	private final Script m_Script;
@@ -178,6 +179,10 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker {
 		}
 	}
 	
+	@Override
+	public void releaseLock() {
+		clearAssertionStack();
+	}
 
 	private LBool assertPrecondition(IPredicate p) {
 		assert m_SmtManager.isLockOwner(this);
