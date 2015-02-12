@@ -17,7 +17,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.Determinization;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.InterpolantAutomatonEnhancement;
 
 public class PredicateFactory extends StateFactory<IPredicate> {
 	
@@ -44,10 +44,8 @@ public class PredicateFactory extends StateFactory<IPredicate> {
 
 	@Override
 	public IPredicate determinize(Map<IPredicate, Set<IPredicate>> down2up) {
-		if (m_Pref.computeHoareAnnotation() || 
-				m_Pref.determinization() == Determinization.STRONGESTPOST) {
-			assert ((m_Pref.interprocedural() && 
-					m_Pref.determinization() != Determinization.STRONGESTPOST)
+		if (m_Pref.computeHoareAnnotation()) {
+			assert ((m_Pref.interprocedural())
 					|| down2up.keySet().size() <= 1) : "more than one down state";
 
 			List<IPredicate> upPredicates = new ArrayList<IPredicate>();

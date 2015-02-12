@@ -7,7 +7,7 @@ import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceIt
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.Artifact;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.Concurrency;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.Determinization;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.InterpolantAutomatonEnhancement;
 
 public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceInitializer {
 
@@ -35,8 +35,8 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 						InterpolantAutomaton.CANONICAL, PreferenceType.Combo, InterpolantAutomaton.values()),
 				new UltimatePreferenceItem<Boolean>(LABEL_DUMPAUTOMATA, DEF_DUMPAUTOMATA, PreferenceType.Boolean),
 				new UltimatePreferenceItem<String>(LABEL_DUMPPATH, DEF_DUMPPATH, PreferenceType.Directory),
-				new UltimatePreferenceItem<Determinization>(LABEL_DETERMINIZATION,
-						Determinization.CODENAME_PROJECT_BELLWALD, PreferenceType.Combo, Determinization.values()),
+				new UltimatePreferenceItem<InterpolantAutomatonEnhancement>(LABEL_InterpolantAutomatonEnhancement,
+						InterpolantAutomatonEnhancement.PREDICATE_ABSTRACTION, PreferenceType.Combo, InterpolantAutomatonEnhancement.values()),
 				new UltimatePreferenceItem<LanguageOperation>(LABEL_LANGUAGE_OPERATION, LanguageOperation.DIFFERENCE,
 						PreferenceType.Combo, LanguageOperation.values()),
 				new UltimatePreferenceItem<Boolean>(LABEL_DIFFERENCE_SENWA, DEF_DIFFERENCE_SENWA,
@@ -77,7 +77,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final String LABEL_INTERPOLANT_AUTOMATON = "Interpolant automaton";
 	public static final String LABEL_DUMPAUTOMATA = "Dump automata to files";
 	public static final String LABEL_DUMPPATH = "Dump formulas of problems in the following path";
-	public static final String LABEL_DETERMINIZATION = "Determinization algorithm";
+	public static final String LABEL_InterpolantAutomatonEnhancement = "Interpolant automaton enhancement";
 	public static final String LABEL_DIFFERENCE_SENWA = "DifferenceSenwa operation instead classical Difference";
 	public static final String LABEL_MINIMIZE = "Minimization of abstraction";
 	public static final String LABEL_CONCURRENCY = "Automaton type used in concurrency analysis";

@@ -46,10 +46,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Roo
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CoverageAnalysis.BackwardCoveringInformation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataTransitionAppender.BestApproximationDeterminizer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataTransitionAppender.DeterministicInterpolantAutomaton;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataTransitionAppender.EagerInterpolantAutomaton;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataTransitionAppender.PostDeterminizer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataTransitionAppender.SelfloopDeterminizer;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataTransitionAppender.StrongestPostDeterminizer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantAutomataBuilders.CanonicalInterpolantAutomatonBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantAutomataBuilders.StraightLineInterpolantAutomatonBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantAutomataBuilders.TotalInterpolationAutomatonBuilder;
@@ -331,7 +328,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 				IOpWithDelayedDeadEndRemoval<CodeBlock, IPredicate> diff;
 
 				switch (m_Pref.determinization()) {
-				case POWERSET:
+				case NONE:
 					PowersetDeterminizer<CodeBlock, IPredicate> psd = new PowersetDeterminizer<CodeBlock, IPredicate>(
 							m_InterpolAutomaton, true, m_PredicateFactoryInterpolantAutomata);
 					if (m_Pref.differenceSenwa()) {
@@ -342,7 +339,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 								psd, m_StateFactoryForRefinement, explointSigmaStarConcatOfIA);
 					}
 					break;
-				case BESTAPPROXIMATION:
+				case BESTAPPROXIMATION_DEPRECATED:
 					BestApproximationDeterminizer bed = new BestApproximationDeterminizer(m_SmtManager, m_Pref,
 							m_InterpolAutomaton, m_PredicateFactoryInterpolantAutomata);
 					diff = new Difference<CodeBlock, IPredicate>(m_Services, oldAbstraction, m_InterpolAutomaton, bed,
@@ -358,64 +355,6 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 							+ bed.m_AnswerReturnCache + " answers given by cache " + bed.m_AnswerReturnSolver
 							+ " answers given by solver");
 					break;
-
-				case EAGERPOST:
-					PostDeterminizer epd = new PostDeterminizer(m_Services, edgeChecker, m_ComputeHoareAnnotation,
-							m_InterpolAutomaton, true, m_PredicateFactoryInterpolantAutomata);
-					if (m_Pref.differenceSenwa()) {
-						diff = new DifferenceSenwa<CodeBlock, IPredicate>(m_Services, oldAbstraction,
-								m_InterpolAutomaton, epd, false);
-					} else {
-						diff = new Difference<CodeBlock, IPredicate>(m_Services, oldAbstraction, m_InterpolAutomaton,
-								epd, m_StateFactoryForRefinement, explointSigmaStarConcatOfIA);
-					}
-					mLogger.info("Internal Transitions: " + epd.m_AnswerInternalAutomaton
-							+ " answers given by automaton " + epd.m_AnswerInternalCache + " answers given by cache "
-							+ epd.m_AnswerInternalSolver + " answers given by solver");
-					mLogger.info("Call Transitions: " + epd.m_AnswerCallAutomaton + " answers given by automaton "
-							+ epd.m_AnswerCallCache + " answers given by cache " + epd.m_AnswerCallSolver
-							+ " answers given by solver");
-					mLogger.info("Return Transitions: " + epd.m_AnswerReturnAutomaton + " answers given by automaton "
-							+ epd.m_AnswerReturnCache + " answers given by cache " + epd.m_AnswerReturnSolver
-							+ " answers given by solver");
-					assert m_SmtManager.isLocked();
-					assert (new InductivityCheck(m_Services,
-							m_InterpolAutomaton, false, true, new IncrementalHoareTripleChecker(m_SmtManager, m_ModGlobVarManager))).getResult();
-					// do the following check only to obtain logger messages of
-					// checkInductivity
-					assert (new InductivityCheck(m_Services, epd.getRejectionCache(),
-							true, false, new IncrementalHoareTripleChecker(m_SmtManager, m_ModGlobVarManager)).getResult() | true);
-					break;
-
-				case LAZYPOST:
-					PostDeterminizer lpd = new PostDeterminizer(m_Services, edgeChecker, m_ComputeHoareAnnotation,
-							m_InterpolAutomaton, false, m_PredicateFactoryInterpolantAutomata);
-					if (m_Pref.differenceSenwa()) {
-						diff = new DifferenceSenwa<CodeBlock, IPredicate>(m_Services, oldAbstraction,
-								m_InterpolAutomaton, lpd, false);
-					} else {
-						diff = new Difference<CodeBlock, IPredicate>(m_Services, oldAbstraction, m_InterpolAutomaton,
-								lpd, m_StateFactoryForRefinement, explointSigmaStarConcatOfIA);
-					}
-
-					mLogger.info("Internal Transitions: " + lpd.m_AnswerInternalAutomaton
-							+ " answers given by automaton " + lpd.m_AnswerInternalCache + " answers given by cache "
-							+ lpd.m_AnswerInternalSolver + " answers given by solver");
-					mLogger.info("Call Transitions: " + lpd.m_AnswerCallAutomaton + " answers given by automaton "
-							+ lpd.m_AnswerCallCache + " answers given by cache " + lpd.m_AnswerCallSolver
-							+ " answers given by solver");
-					mLogger.info("Return Transitions: " + lpd.m_AnswerReturnAutomaton + " answers given by automaton "
-							+ lpd.m_AnswerReturnCache + " answers given by cache " + lpd.m_AnswerReturnSolver
-							+ " answers given by solver");
-					assert m_SmtManager.isLocked();
-					assert (new InductivityCheck(m_Services,
-							m_InterpolAutomaton, false, true, new IncrementalHoareTripleChecker(m_SmtManager, m_ModGlobVarManager))).getResult();
-					// do the following check only to obtain logger messages of
-					// checkInductivity
-					assert (new InductivityCheck(m_Services, lpd.getRejectionCache(),
-							true, false, new IncrementalHoareTripleChecker(m_SmtManager, m_ModGlobVarManager))).getResult() | true;
-					break;
-
 				case SELFLOOP:
 					SelfloopDeterminizer sed = new SelfloopDeterminizer(m_SmtManager, m_Pref, m_InterpolAutomaton,
 							m_PredicateFactoryInterpolantAutomata);
@@ -433,32 +372,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 					mLogger.info("Return Selfloops: " + sed.m_ReturnSelfloop + " Return NonSelfloops "
 							+ sed.m_ReturnNonSelfloop);
 					break;
-				case STRONGESTPOST:
-					StrongestPostDeterminizer spd = new StrongestPostDeterminizer(edgeChecker, m_Pref,
-							m_InterpolAutomaton, m_PredicateFactoryInterpolantAutomata);
-					if (m_Pref.differenceSenwa()) {
-						diff = new DifferenceSenwa<CodeBlock, IPredicate>(m_Services, oldAbstraction,
-								m_InterpolAutomaton, spd, false);
-					} else {
-						diff = new Difference<CodeBlock, IPredicate>(m_Services, oldAbstraction, m_InterpolAutomaton,
-								spd, m_StateFactoryForRefinement, explointSigmaStarConcatOfIA);
-					}
-					break;
-				case NEWEAGER:
-					if (m_Pref.differenceSenwa()) {
-						throw new UnsupportedOperationException();
-					} else {
-						EagerInterpolantAutomaton determinized = new EagerInterpolantAutomaton(m_Services, edgeChecker,
-								m_InterpolAutomaton);
-						PowersetDeterminizer<CodeBlock, IPredicate> psd2 = new PowersetDeterminizer<CodeBlock, IPredicate>(
-								determinized, true, m_PredicateFactoryInterpolantAutomata);
-						diff = new Difference<CodeBlock, IPredicate>(m_Services, oldAbstraction, determinized, psd2,
-								m_StateFactoryForRefinement, explointSigmaStarConcatOfIA);
-						determinized.finishConstruction();
-						assert (edgeChecker.isAssertionStackEmpty());
-					}
-					break;
-				case CODENAME_PROJECT_BELLWALD:
+				case PREDICATE_ABSTRACTION:
 					if (m_Pref.differenceSenwa()) {
 						throw new UnsupportedOperationException();
 					} else {
@@ -724,18 +638,17 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 
 	protected INestedWordAutomatonOldApi<CodeBlock, IPredicate> determinizeInterpolantAutomaton()
 			throws OperationCanceledException {
-		EdgeChecker edgeChecker = new EdgeChecker(m_SmtManager, m_RootNode.getRootAnnot().getModGlobVarManager());
 		mLogger.debug("Start determinization");
 		INestedWordAutomatonOldApi<CodeBlock, IPredicate> dia;
 		switch (m_Pref.determinization()) {
-		case POWERSET:
+		case NONE:
 			PowersetDeterminizer<CodeBlock, IPredicate> psd = new PowersetDeterminizer<CodeBlock, IPredicate>(
 					m_InterpolAutomaton, true, m_PredicateFactoryInterpolantAutomata);
 			DeterminizeDD<CodeBlock, IPredicate> dabps = new DeterminizeDD<CodeBlock, IPredicate>(m_Services,
 					m_InterpolAutomaton, psd);
 			dia = dabps.getResult();
 			break;
-		case BESTAPPROXIMATION:
+		case BESTAPPROXIMATION_DEPRECATED:
 			BestApproximationDeterminizer bed = new BestApproximationDeterminizer(m_SmtManager, m_Pref,
 					m_InterpolAutomaton, m_PredicateFactoryInterpolantAutomata);
 			DeterminizeDD<CodeBlock, IPredicate> dab = new DeterminizeDD<CodeBlock, IPredicate>(m_Services,
@@ -749,28 +662,6 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 					m_InterpolAutomaton, sed);
 			dia = dabsl.getResult();
 			break;
-		case STRONGESTPOST:
-			StrongestPostDeterminizer spd = new StrongestPostDeterminizer(edgeChecker, m_Pref, m_InterpolAutomaton,
-					m_PredicateFactoryInterpolantAutomata);
-			DeterminizeDD<CodeBlock, IPredicate> dabsp = new DeterminizeDD<CodeBlock, IPredicate>(m_Services,
-					m_InterpolAutomaton, spd);
-			dia = dabsp.getResult();
-			break;
-		case EAGERPOST:
-			PostDeterminizer epd = new PostDeterminizer(m_Services, edgeChecker, m_ComputeHoareAnnotation,
-					m_InterpolAutomaton, true, m_PredicateFactoryInterpolantAutomata);
-			DeterminizeDD<CodeBlock, IPredicate> dep = new DeterminizeDD<CodeBlock, IPredicate>(m_Services,
-					m_InterpolAutomaton, epd);
-			dia = dep.getResult();
-			break;
-		case LAZYPOST:
-			PostDeterminizer lpd = new PostDeterminizer(m_Services, edgeChecker, m_ComputeHoareAnnotation,
-					m_InterpolAutomaton, true, m_PredicateFactoryInterpolantAutomata);
-			DeterminizeDD<CodeBlock, IPredicate> dlpd = new DeterminizeDD<CodeBlock, IPredicate>(m_Services,
-					m_InterpolAutomaton, lpd);
-			dia = dlpd.getResult();
-			break;
-
 		default:
 			throw new UnsupportedOperationException();
 		}

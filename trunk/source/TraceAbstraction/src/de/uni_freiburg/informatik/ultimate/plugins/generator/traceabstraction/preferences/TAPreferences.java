@@ -16,7 +16,7 @@ public class TAPreferences {
 	private final InterpolantAutomaton m_InterpolantAutomaton;
 	private final boolean m_DumpAutomata;
 	private final String m_DumpPath;
-	private final Determinization m_Determiniation;
+	private final InterpolantAutomatonEnhancement m_Determiniation;
 	private final Minimization m_Minimize;
 	private final boolean m_Hoare;
 	private final Concurrency m_Concurrency;
@@ -28,8 +28,8 @@ public class TAPreferences {
 	}
 
 
-	public enum Determinization {
-		POWERSET, BESTAPPROXIMATION, SELFLOOP, STRONGESTPOST, EAGERPOST, LAZYPOST, NEWEAGER, CODENAME_PROJECT_BELLWALD
+	public enum InterpolantAutomatonEnhancement {
+		NONE, BESTAPPROXIMATION_DEPRECATED, SELFLOOP, EAGER, PREDICATE_ABSTRACTION
 	}
 
 
@@ -69,8 +69,8 @@ public class TAPreferences {
 		m_DumpPath = m_Prefs.getString(TraceAbstractionPreferenceInitializer.LABEL_DUMPPATH);
 
 		m_Determiniation = m_Prefs.getEnum(
-				TraceAbstractionPreferenceInitializer.LABEL_DETERMINIZATION,
-				Determinization.class);
+				TraceAbstractionPreferenceInitializer.LABEL_InterpolantAutomatonEnhancement,
+				InterpolantAutomatonEnhancement.class);
 
 		m_Minimize = m_Prefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_MINIMIZE,Minimization.class);
 
@@ -154,7 +154,7 @@ public class TAPreferences {
 	/**
 	 * @return the determinization
 	 */
-	public Determinization determinization() {
+	public InterpolantAutomatonEnhancement determinization() {
 		return m_Determiniation;
 	}
 
