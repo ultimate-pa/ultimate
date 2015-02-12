@@ -386,7 +386,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 						// ComplementDeterministicNwa<CodeBlock, IPredicate>
 						// cdnwa = new ComplementDeterministicNwa<>(dia);
 						PowersetDeterminizer<CodeBlock, IPredicate> psd2 = new PowersetDeterminizer<CodeBlock, IPredicate>(
-								determinized, false, m_PredicateFactoryInterpolantAutomata);
+								determinized, true, m_PredicateFactoryInterpolantAutomata);
 
 						diff = new Difference<CodeBlock, IPredicate>(m_Services, oldAbstraction, determinized, psd2,
 								m_StateFactoryForRefinement, explointSigmaStarConcatOfIA);

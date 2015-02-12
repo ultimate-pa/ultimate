@@ -1648,6 +1648,10 @@ public class SmtManager {
 	boolean isLockOwner(Object allegedLockOwner) {
 		return allegedLockOwner == m_LockOwner;
 	}
+	
+	public interface LockerHolderWithVoluntaryLockRelease {
+		public void releaseLock();
+	}
 
 	private class AuxilliaryTerm extends Term {
 

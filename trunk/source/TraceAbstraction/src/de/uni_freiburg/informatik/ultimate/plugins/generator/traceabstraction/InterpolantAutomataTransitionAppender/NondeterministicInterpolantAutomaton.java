@@ -10,6 +10,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IHoareTripleChecker;
@@ -38,10 +39,10 @@ public class NondeterministicInterpolantAutomaton extends TotalInterpolantAutoma
 				interpolantAutomaton, logger);
 		Collection<IPredicate> allPredicates = interpolantAutomaton.getStates(); 
 		
-		assert m_IaTrueState.getFormula().toString().equals("true");
+		assert SmtUtils.isTrue(m_IaTrueState.getFormula());
 		assert allPredicates.contains(m_IaTrueState);
 		m_Result.addState(true, false, m_IaTrueState);
-		assert m_IaFalseState.getFormula().toString().equals("false");
+		assert SmtUtils.isFalse(m_IaFalseState.getFormula());
 		assert allPredicates.contains(m_IaFalseState);
 		m_Result.addState(false, true, m_IaFalseState);
 
@@ -95,6 +96,9 @@ public class NondeterministicInterpolantAutomaton extends TotalInterpolantAutoma
 					inputSuccs.add(succCand);
 				}
 			}
+		}
+		if (inputSuccs.isEmpty()) {
+			inputSuccs.add(m_IaTrueState);
 		}
 	}
 

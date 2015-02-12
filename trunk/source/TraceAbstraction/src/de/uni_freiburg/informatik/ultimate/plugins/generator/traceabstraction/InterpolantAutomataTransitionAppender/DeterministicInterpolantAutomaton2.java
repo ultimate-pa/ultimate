@@ -56,12 +56,12 @@ public class DeterministicInterpolantAutomaton2 extends TotalInterpolantAutomato
 			SmtManager smtManager, ModifiableGlobalVariableManager modglobvarman, IHoareTripleChecker hoareTripleChecker,
 			INestedWordAutomaton<CodeBlock, IPredicate> abstraction, 
 			NestedWordAutomaton<CodeBlock, IPredicate> interpolantAutomaton, 
-			InterpolatingTraceChecker traceChecker, Logger  logger) {
+			PredicateUnifier predicateUnifier, Logger  logger) {
 		super(services, smtManager, hoareTripleChecker, abstraction, 
-				traceChecker.getPredicateUnifier().getFalsePredicate(), 
-				traceChecker.getPredicateUnifier().getTruePredicate(), 
+				predicateUnifier.getFalsePredicate(), 
+				predicateUnifier.getTruePredicate(), 
 				interpolantAutomaton, logger);
-		m_PredicateUnifier = traceChecker.getPredicateUnifier();
+		m_PredicateUnifier = predicateUnifier;
 		Collection<IPredicate> allPredicates;
 		if (m_Cannibalize ) {
 			allPredicates = m_PredicateUnifier.cannibalizeAll(m_SplitNumericEqualities, interpolantAutomaton.getStates().toArray(new IPredicate[0]));
