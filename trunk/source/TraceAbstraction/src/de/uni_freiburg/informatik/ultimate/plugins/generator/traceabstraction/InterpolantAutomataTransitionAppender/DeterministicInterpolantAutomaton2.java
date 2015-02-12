@@ -58,8 +58,8 @@ public class DeterministicInterpolantAutomaton2 extends TotalInterpolantAutomato
 			NestedWordAutomaton<CodeBlock, IPredicate> interpolantAutomaton, 
 			PredicateUnifier predicateUnifier, Logger  logger) {
 		super(services, smtManager, hoareTripleChecker, abstraction, 
-				predicateUnifier.getFalsePredicate(), 
 				predicateUnifier.getTruePredicate(), 
+				predicateUnifier.getFalsePredicate(), 
 				interpolantAutomaton, logger);
 		m_PredicateUnifier = predicateUnifier;
 		Collection<IPredicate> allPredicates;
