@@ -802,6 +802,7 @@ public class AbstractInterpreter extends RCFGEdgeVisitor {
 				e.printStackTrace();
 				return null;
 		}*/
+		return result;
 	}
 
 	private void reportUnsupportedSyntaxResult(IElement location, String message) {
