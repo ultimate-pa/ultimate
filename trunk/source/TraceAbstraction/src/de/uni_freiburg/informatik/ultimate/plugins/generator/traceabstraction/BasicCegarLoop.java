@@ -327,21 +327,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		// Map<IPredicate, Set<IPredicate>> removedDoubleDeckers = null;
 		// Map<IPredicate, IPredicate> context2entry = null;
 		
-		final IHoareTripleChecker solverHtc;
-		switch (m_Pref.getHoareTripleChecks()) {
-		case MONOLITHIC:
-			solverHtc = new MonolithicHoareTripleChecker(m_SmtManager);
-			break;
-		case INCREMENTAL:
-			solverHtc = new IncrementalHoareTripleChecker(m_SmtManager, m_ModGlobVarManager);
-			break;
-		default:
-			throw new AssertionError("unknown value");
-		}
-		
-		IHoareTripleChecker htc = new EfficientHoareTripleChecker(solverHtc, 
-				m_RootNode.getRootAnnot().getModGlobVarManager(), 
-				m_TraceChecker.getPredicateUnifier(), m_SmtManager);
+		IHoareTripleChecker htc = getEfficientHoareTripleChecker();
 		
 		try {
 			if (m_DifferenceInsteadOfIntersection) {
@@ -526,6 +512,25 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 			return true;
 		}
 
+	}
+
+	protected IHoareTripleChecker getEfficientHoareTripleChecker()
+			throws AssertionError {
+		final IHoareTripleChecker solverHtc;
+		switch (m_Pref.getHoareTripleChecks()) {
+		case MONOLITHIC:
+			solverHtc = new MonolithicHoareTripleChecker(m_SmtManager);
+			break;
+		case INCREMENTAL:
+			solverHtc = new IncrementalHoareTripleChecker(m_SmtManager, m_ModGlobVarManager);
+			break;
+		default:
+			throw new AssertionError("unknown value");
+		}
+		IHoareTripleChecker htc = new EfficientHoareTripleChecker(solverHtc, 
+				m_RootNode.getRootAnnot().getModGlobVarManager(), 
+				m_TraceChecker.getPredicateUnifier(), m_SmtManager);
+		return htc;
 	}
 
 	/**
