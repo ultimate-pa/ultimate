@@ -79,7 +79,6 @@ public class BuchiProductObserver implements IUnmanagedObserver {
 
 				continueOptimization = optimizeRemoveInfeasibleEdges(ups, continueOptimization);
 				continueOptimization = optimizeMaximizeFinalStates(ups, continueOptimization);
-//				continueOptimization = optimizeSimplifyAssumes(ups, continueOptimization);
 				continueOptimization = optimizeMinimizeStates(ups, continueOptimization);
 				continueOptimization = optimizeSimplifyAssumes(ups, continueOptimization);
 

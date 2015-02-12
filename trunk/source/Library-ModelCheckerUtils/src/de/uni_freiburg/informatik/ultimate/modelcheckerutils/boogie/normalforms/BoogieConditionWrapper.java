@@ -280,11 +280,13 @@ public class BoogieConditionWrapper implements IConditionWrapper<Expression> {
 			case ARITHMUL:
 			case ARITHPLUS:
 			case BITVECCONCAT:
+				//this is a type error and should not happen
 				throw new UnsupportedOperationException("Cannot negate non-boolean terms");
 			case LOGICAND:
 			case LOGICIFF:
 			case LOGICIMPLIES:
 			case LOGICOR:
+				//this is a contract violation and should not happen
 				throw new UnsupportedOperationException(BoogiePrettyPrinter.print(atom) + " is no predicate");
 			case COMPPO:
 				throw new UnsupportedOperationException("Dont know how to negate partial order");
@@ -314,10 +316,7 @@ public class BoogieConditionWrapper implements IConditionWrapper<Expression> {
 			BooleanLiteral lit = (BooleanLiteral) atom;
 			return new BooleanLiteral(lit.getLocation(), !lit.getValue());
 		}
-		if (atom != null) {
-			throw new UnsupportedOperationException(BoogiePrettyPrinter.print(atom) + " is no predicate");
-		} else {
-			throw new NullPointerException();
-		}
+		//cannot negate anything else
+		return atom;
 	}
 }

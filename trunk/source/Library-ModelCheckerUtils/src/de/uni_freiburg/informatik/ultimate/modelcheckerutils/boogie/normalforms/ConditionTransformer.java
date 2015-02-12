@@ -51,9 +51,9 @@ public class ConditionTransformer<E> {
 
 	/**
 	 * <ol>
-	 * <li>Convert formula in NNF. 
-	 * <li>Pull negations further in, e.g. convert !(x != y) to (x == y) 
-	 * <li>Replace all terms of the form x != y  with x < y || x > y
+	 * <li>Convert formula in NNF.
+	 * <li>Pull negations further in, e.g. convert !(x != y) to (x == y)
+	 * <li>Replace all terms of the form x != y with x < y || x > y
 	 * </ol>
 	 */
 	public E rewriteNotEquals(E formula) {
@@ -66,8 +66,17 @@ public class ConditionTransformer<E> {
 		if (mWrapper.isAtom(formula)) {
 			return mWrapper.rewritePredNotEquals(formula);
 		} else if (mWrapper.isNot(formula)) {
-			//because the formula is in NNF, the negation can only be in front of a term
-			return rewriteNotEquals(mWrapper.negatePred(mWrapper.getOperand(formula)));
+			// because the formula is in NNF, the negation can only be in front
+			// of a term
+			E oper = mWrapper.getOperand(formula);
+			E neg = mWrapper.negatePred(oper);
+			if (oper == neg) {
+				//the operand cannot be negated any more 
+				return formula;
+			} else {
+				//the operand was negated
+				return neg;
+			}
 		} else if (mWrapper.isAnd(formula)) {
 			ArrayDeque<E> operands = new ArrayDeque<>();
 			Iterator<E> iter = mWrapper.getOperands(formula);
