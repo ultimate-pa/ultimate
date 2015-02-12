@@ -19,7 +19,7 @@ public class MinimizeStatesSingleEdgeSingleNode extends BaseProductOptimizer {
 	public MinimizeStatesSingleEdgeSingleNode(RootNode product, IUltimateServiceProvider services) {
 		super(product, services);
 		mLogger.info("Removed " + mRemovedEdges + " edges and " + mRemovedLocations
-				+ " and replaced them with sequential compositions");
+				+ " locations and replaced them with sequential compositions");
 	}
 
 
@@ -104,7 +104,7 @@ public class MinimizeStatesSingleEdgeSingleNode extends BaseProductOptimizer {
 			mRemovedEdges += 2;
 
 			new SequentialComposition(pred, succ, root.getRootAnnot().getBoogie2SMT(), root.getRootAnnot()
-					.getModGlobVarManager(), true, true, mServices, new CodeBlock[] { (CodeBlock) predEdge,
+					.getModGlobVarManager(), false, false, mServices, new CodeBlock[] { (CodeBlock) predEdge,
 					(CodeBlock) succEdge });
 			
 			if (mLogger.isDebugEnabled()) {

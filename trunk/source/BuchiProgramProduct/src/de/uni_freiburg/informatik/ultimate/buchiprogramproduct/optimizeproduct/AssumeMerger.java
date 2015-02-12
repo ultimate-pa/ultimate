@@ -19,6 +19,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Pro
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence.Origin;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.RCFGEdgeVisitor;
 
@@ -195,10 +196,16 @@ public class AssumeMerger extends BaseProductOptimizer {
 	private class StatementExtractor extends RCFGEdgeVisitor {
 
 		private List<Statement> mStatements;
+		private boolean mHasSummary;
 
 		private List<Statement> process(RCFGEdge edge) {
 			mStatements = new ArrayList<>();
+			mHasSummary = false;
 			visit(edge);
+			if (mHasSummary) {
+				mLogger.debug(edge + " contains summaries, skipping...");
+				return new ArrayList<>();
+			}
 			return mStatements;
 		}
 
@@ -210,6 +217,12 @@ public class AssumeMerger extends BaseProductOptimizer {
 		@Override
 		protected void visit(StatementSequence c) {
 			mStatements.addAll(c.getStatements());
+			super.visit(c);
+		}
+
+		@Override
+		protected void visit(Summary c) {
+			mHasSummary = true;
 			super.visit(c);
 		}
 	}

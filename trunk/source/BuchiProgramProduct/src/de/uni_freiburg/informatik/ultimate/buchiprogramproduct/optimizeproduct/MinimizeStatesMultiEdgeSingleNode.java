@@ -6,6 +6,7 @@ import java.util.HashSet;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.annot.BuchiProgramAcceptingStateAnnotation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -113,10 +114,26 @@ public class MinimizeStatesMultiEdgeSingleNode extends BaseProductOptimizer {
 
 			int newEdges = 0;
 			for (RCFGEdge predEdge : predEdges) {
+				CodeBlock predCB = (CodeBlock) predEdge;
+				if (predCB.getTransitionFormula().isInfeasible() == Infeasibility.INFEASIBLE) {
+					if(mLogger.isDebugEnabled()){
+						mLogger.debug("Already infeasible: "+predCB);	
+					}
+					continue;
+				}
 				for (RCFGEdge succEdge : succEdges) {
+					CodeBlock succCB = (CodeBlock) succEdge;
+
+					if (succCB.getTransitionFormula().isInfeasible() == Infeasibility.INFEASIBLE) {
+						if(mLogger.isDebugEnabled()){
+							mLogger.debug("Already infeasible: "+succCB);	
+						}
+						continue;
+					}
+
 					SequentialComposition sc = new SequentialComposition(pred, succ, root.getRootAnnot()
-							.getBoogie2SMT(), root.getRootAnnot().getModGlobVarManager(), true, true, mServices,
-							new CodeBlock[] { (CodeBlock) predEdge, (CodeBlock) succEdge });
+							.getBoogie2SMT(), root.getRootAnnot().getModGlobVarManager(), false, false, mServices,
+							new CodeBlock[] { predCB, succCB });
 					assert sc.getTarget() != null;
 					assert sc.getSource() != null;
 					newEdges++;

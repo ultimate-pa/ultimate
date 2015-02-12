@@ -27,6 +27,7 @@ public class MinimizeStatesMultiEdgeMultiNode extends BaseProductOptimizer {
 	public MinimizeStatesMultiEdgeMultiNode(RootNode product, IUltimateServiceProvider services) {
 		super(product, services);
 		// TODO Auto-generated constructor stub
+		throw new UnsupportedOperationException();
 	}
 
 
