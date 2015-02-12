@@ -10,14 +10,12 @@ import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
-import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.callgraph.CallGraphBuildException;
 import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.callgraph.CallGraphBuilder;
 import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.callgraph.CallGraphEdgeLabel;
 import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.callgraph.CallGraphNode;
 import de.uni_freiburg.informatik.ultimate.core.services.IProgressMonitorService;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
-import de.uni_freiburg.informatik.ultimate.model.IType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.*;
 
 public class Inliner implements IUnmanagedObserver {
@@ -71,40 +69,39 @@ public class Inliner implements IUnmanagedObserver {
 			return false;
 		} else if (root instanceof Unit) {
 			mAstUnit = (Unit) root;
-			inline();
+			try {
+				inline();
+			} catch (CancelToolchainException cte) {
+				cte.logErrorAndCancelToolchain(mServices, Activator.PLUGIN_ID);
+			}
 			return false;
 		} else {
 			return true;
 		}
 	}
 
-	private void inline() {
-		try {
-			buildCallGraph();
-		} catch (CallGraphBuildException buildException) {
-			buildException.logErrorAndCancelToolchain(mServices, Activator.PLUGIN_ID);
-			return;
-		}
+	private void inline() throws CancelToolchainException {
+		buildCallGraph();
 		mInlineSelector.setInlineFlags(mCallGraph);
-
+		
 		InlineVersionTransformer.GlobalScopeInitializer globalScopeInit =
 				new InlineVersionTransformer.GlobalScopeInitializer(mNonProcedureDeclarations);
 		for (CallGraphNode node : mCallGraph.values()) {
-			if (node.isImplemented() && containsCallsToBeInlined(node)) {
+			if (node.isImplemented() && node.hasInlineFlags()) {
 				InlineVersionTransformer transformer = new InlineVersionTransformer(mServices, globalScopeInit);
-				mNewProceduresWithBody.put(node.getId(), transformer.process(node));
+				mNewProceduresWithBody.put(node.getId(), transformer.inlineCallsInside(node));
 			}
 		}
 		writeNewDeclarationsToAstUnit();
 	}
 
-	private void buildCallGraph() throws CallGraphBuildException {
+	private void buildCallGraph() throws CancelToolchainException {
 		CallGraphBuilder callGraphBuilder = new CallGraphBuilder();
 		callGraphBuilder.buildCallGraph(mAstUnit);
 		mCallGraph = callGraphBuilder.getCallGraph();
 		mNonProcedureDeclarations = callGraphBuilder.getNonProcedureDeclarations();
 	}
-
+	
 	private void writeNewDeclarationsToAstUnit() {
 		List<Declaration> newDeclarations = new ArrayList<>();
 		newDeclarations.addAll(mNonProcedureDeclarations);
@@ -114,12 +111,11 @@ public class Inliner implements IUnmanagedObserver {
 			Procedure newProcWithBody = mNewProceduresWithBody.get(node.getId());
 			if (newProcWithBody == null) {
 				newDeclarations.add(oldProcWithSpec);
-				if (node.isImplemented() && oldProcWithBody != oldProcWithSpec) {
+				if (node.isImplemented() && !node.isCombined()) {
 					newDeclarations.add(oldProcWithBody);
 				}
 			} else {
-				if (newProcWithBody.getSpecification() == null) {
-					assert oldProcWithSpec.getBody() == null;
+				if (!node.isCombined()) {
 					newDeclarations.add(oldProcWithSpec);
 				}
 				newDeclarations.add(newProcWithBody);
@@ -127,14 +123,4 @@ public class Inliner implements IUnmanagedObserver {
 		}
 		mAstUnit.setDeclarations(newDeclarations.toArray(new Declaration[newDeclarations.size()]));
 	}
-
-	private boolean containsCallsToBeInlined(CallGraphNode node) {
-		for (CallGraphEdgeLabel outgoingEdgeLabel : node.getOutgoingEdgeLabels()) {
-			if (outgoingEdgeLabel.getInlineFlag()) {
-				return true;
-			}
-		}
-		return false;
-	}
-
 }

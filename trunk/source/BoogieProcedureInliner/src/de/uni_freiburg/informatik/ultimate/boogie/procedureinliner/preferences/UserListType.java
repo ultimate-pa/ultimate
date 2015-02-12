@@ -20,5 +20,10 @@ public enum UserListType {
 	private UserListType(String displayName) {
 		mDisplayName = displayName;
 	}
+	
+	/** @return The user list type is {@link #BLACKLIST_ONLY} or {@link #WHITELIST_ONLY} */
+	public boolean isOnly() {
+		return this == BLACKLIST_ONLY || this == WHITELIST_ONLY;
+	}
 
 }

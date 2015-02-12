@@ -12,18 +12,18 @@ public class VarMapKey {
 	
 	private String mVarId;
 	private DeclarationInformation mDeclInfo;
-	private IType mType;
-	
+	private boolean mInOldExpr;
+
 	/**
 	 * Creates a new key.
 	 * @param varId Original identifier of the variable.
 	 * @param declInfo Original DeclarationInformation of the variable.
-	 * @param type Type of the variable.
+	 * @param inOldExpr IdentifierExpression of the variable appeared inside an "old(...)" expression.
 	 */
-	public VarMapKey(String varId, DeclarationInformation declInfo, IType type) {
+	public VarMapKey(String varId, DeclarationInformation declInfo, boolean inOldExpr) {
 		mVarId = varId;
 		mDeclInfo = declInfo;
-		mType = type;
+		mInOldExpr = inOldExpr;
 	}
 
 	/** @return Original identifier of the variable. */
@@ -36,9 +36,9 @@ public class VarMapKey {
 		return mDeclInfo;
 	}
 
-	/** @return Type of the variable. */
-	public IType getType() {
-		return mType;
+	/** @return The variable identifier was used inside an "old(...)" expression. */
+	public boolean isInOldExpr() {
+		return mInOldExpr;
 	}
 
 	@Override
@@ -46,7 +46,7 @@ public class VarMapKey {
 		final int prime = 31;
 		int result = 1;
 		result = prime * result + ((mDeclInfo == null) ? 0 : mDeclInfo.hashCode());
-		result = prime * result + ((mType == null) ? 0 : mType.hashCode());
+		result = prime * result + (mInOldExpr ? 1231 : 1237);
 		result = prime * result + ((mVarId == null) ? 0 : mVarId.hashCode());
 		return result;
 	}
@@ -65,10 +65,7 @@ public class VarMapKey {
 				return false;
 		} else if (!mDeclInfo.equals(other.mDeclInfo))
 			return false;
-		if (mType == null) {
-			if (other.mType != null)
-				return false;
-		} else if (!mType.equals(other.mType))
+		if (mInOldExpr != other.mInOldExpr)
 			return false;
 		if (mVarId == null) {
 			if (other.mVarId != null)
@@ -80,7 +77,7 @@ public class VarMapKey {
 
 	@Override
 	public String toString() {
-		return "VarMapKey [mVarId=" + mVarId + ", mDeclInfo=" + mDeclInfo + ", mType=" + mType + "]";
+		return "VarMapKey [mVarId=" + mVarId + ", mDeclInfo=" + mDeclInfo + ", mInOldExpr=" + mInOldExpr + "]";
 	}
 
 }

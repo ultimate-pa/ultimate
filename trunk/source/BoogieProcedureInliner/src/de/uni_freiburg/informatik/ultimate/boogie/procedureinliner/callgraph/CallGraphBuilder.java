@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.CancelToolchainException;
 import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.callgraph.CallGraphEdgeLabel.EdgeType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.TarjanSCC;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.*;
@@ -42,11 +43,11 @@ public class CallGraphBuilder {
 	 * The graph contains all procedures and implementations.
 	 * All other declarations from the Boogie ast are separately stored.
 	 * @param boogieAstUnit Boogie ast.
-	 * @throws CallGraphBuildException A procedure had multiple declarations or implementations.
+	 * @throws CancelToolchainException A procedure had multiple declarations or implementations.
 	 * @see #getCallGraph()
 	 * @see #getNonProcedureDeclarations()
 	 */
-	public void buildCallGraph(Unit boogieAstUnit) throws CallGraphBuildException {
+	public void buildCallGraph(Unit boogieAstUnit) throws CancelToolchainException {
 		init();
 		for (Declaration declaration : boogieAstUnit.getDeclarations()) {
 			if (declaration instanceof Procedure) {
@@ -89,7 +90,7 @@ public class CallGraphBuilder {
 		setAllEdgeTypes();
 	}
 	
-	private void processProcedure(Procedure procedure) throws CallGraphBuildException {
+	private void processProcedure(Procedure procedure) throws CancelToolchainException {
 		String procedureId = procedure.getIdentifier();
 		CallGraphNode node = getOrCreateNode(procedureId);
 		if (procedure.getSpecification() != null) {

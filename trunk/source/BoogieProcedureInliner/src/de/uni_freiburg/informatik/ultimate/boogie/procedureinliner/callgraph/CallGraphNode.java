@@ -51,6 +51,18 @@ public class CallGraphNode extends ModifiableLabeledEdgesMultigraph<CallGraphNod
 	}
 	
 	/**
+	 * @return The procedure is declared and implemented in the same object.
+	 * 		   {@link #getProcedureWithSpecification()} and {@link #getProcedureWithBody()} will return the same object;
+	 */
+	public boolean isCombined() {
+		return mProcedureWithSpecification == mProcedureWithBody;
+	}
+	
+	public boolean isPolymorphic() {
+		return mProcedureWithSpecification.getTypeParams().length > 0;
+	}
+	
+	/**
 	 * Iterates over all outgoing edge labels, looking for set inline flags.
 	 * @return A call statement inside the procedure should be inlined.
 	 * @see CallGraphEdgeLabel#getInlineFlag()

@@ -1,16 +1,17 @@
 package de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.callgraph;
 
 import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.Activator;
+import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.CancelToolchainException;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Procedure;
 import de.uni_freiburg.informatik.ultimate.result.AbstractResult;
 import de.uni_freiburg.informatik.ultimate.result.UnsupportedSyntaxResult;
 
-public class MultipleImplementationsException extends CallGraphBuildException {
+public class MultipleImplementationsException extends CancelToolchainException {
 
 	private static final long serialVersionUID = -8103254229768742587L;
 
 	public MultipleImplementationsException(Procedure procedure) {
-		super("Multiple implementations aren't supported: " + procedure.getIdentifier(), procedure);
+		super("Multiple implementations aren't supported: " + procedure.getIdentifier(), procedure.getLocation());
 	}
 
 	@Override

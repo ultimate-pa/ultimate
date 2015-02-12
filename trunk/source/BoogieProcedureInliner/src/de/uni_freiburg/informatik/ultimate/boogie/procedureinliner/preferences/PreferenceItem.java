@@ -15,23 +15,21 @@ import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceIt
  */
 public enum PreferenceItem {
 
-	LABEL___ENABLE_INLINING_FOR("Enable inlining for"),
-	INLINE_UNIMPLEMENTED("calls of unimplemented procedures", true, PreferenceType.Boolean),
-	INLINE_IMPLEMENTED("calls of implemented procedures", true, PreferenceType.Boolean),
-	INLINE_SINGLE_CALLS_ONLY("single calls only", false, PreferenceType.Boolean),
-	INLINE_CALL_FORALL("call-forall statements (This is the only setting, that affects call-forall statements)",
-			true, PreferenceType.Boolean),
+	LABEL___ENABLE_INLINING_FOR("Enable inlining for ..."),
+	INLINE_UNIMPLEMENTED("calls to unimplemented procedures", true, PreferenceType.Boolean),
+	INLINE_IMPLEMENTED("calls to implemented procedures", true, PreferenceType.Boolean),
+	INLINE_CALL_FORALL("call-forall statements", true, PreferenceType.Boolean),
 	
+	LABEL___IGNORE_CALLS("\nIgnore calls to ..."),
+	IGNORE_POLYMORPHIC("and inside polymorphic procedures *", true, PreferenceType.Boolean),
+	IGNORE_RECURSIVE("recursive procedures *", true, PreferenceType.Boolean),
+	IGNORE_MULTIPLE_CALLED("procedures, called more than once", false, PreferenceType.Boolean),
+	NOTE___CANCEL_TOOLCHAIN("* = or else the toolchain will be canceled"),
+
 	LABEL___USER_LIST("\nUser list (procedure ids, separated by whitespace)"),
 	USER_LIST("User list", "", PreferenceType.MultilineString),
 	USER_LIST_TYPE("user list type", UserListType.BLACKLIST_RESTRICT, PreferenceType.Combo, UserListType.values()),
 
-	LABEL___BEHAVIOR_ON_RECURSION("\nBehavior on attempts to inline calls to (possibly) recursive procedures"),
-	BEHAVIOR_ON_EXTERN_RECUSRIVE_CALL("Extern calls", BehaviorOnRecursion.SKIP,
-			PreferenceType.Combo, BehaviorOnRecursion.values()),
-	BEHAVIOR_ON_INTERN_RECUSRIVE_CALL("Intern calls", BehaviorOnRecursion.WARN_AND_SKIP,
-			PreferenceType.Combo, BehaviorOnRecursion.values()),
-	
 	LABEL___SPECIFICATION_INLINING("\nSpecification inlining"),
 	ASSUME_PRE_AFTER_ASSERT("Assume inlined preconditions after assertion", true, PreferenceType.Boolean);
 
@@ -78,11 +76,7 @@ public enum PreferenceItem {
 	public UserListType getUserListTypeValue() {
 		return new UltimatePreferenceStore(Activator.PLUGIN_ID).getEnum(mName, UserListType.class);
 	}
-	
-	public BehaviorOnRecursion getBehaviorOnRecursionValue() {
-		return new UltimatePreferenceStore(Activator.PLUGIN_ID).getEnum(mName, BehaviorOnRecursion.class);
-	}
-	
+
 	public UltimatePreferenceItem<?> newUltimatePreferenceItem() {
 		return new UltimatePreferenceItem<Object>(mName, mDefaultValue, mType, mChoices);
 	}

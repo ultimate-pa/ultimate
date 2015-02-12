@@ -24,13 +24,13 @@ public class IdManager {
 	
 	/**
 	 * Adds an id to this manager. The id will be registered as it is.
+	 * It is possible to add an already added identifier using this method!
 	 * @param id An identifier.
-	 * @throws IllegalStateException The id was already registered.
+	 * @return The identifier.
 	 */
-	public void addId(String id) throws IllegalStateException {
-		if(!mIds.add(id)) {
-			throw new IllegalStateException("Identifier was already registered: " + id);
-		}
+	public String addId(String id){
+		mIds.add(id);
+		return id;
 	}
 
 	/**
