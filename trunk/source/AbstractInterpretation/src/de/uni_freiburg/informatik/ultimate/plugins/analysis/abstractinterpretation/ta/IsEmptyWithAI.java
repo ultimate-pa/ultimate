@@ -60,6 +60,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCF
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RcfgElement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
+import de.uni_freiburg.informatik.ultimate.result.Check;
 import de.uni_freiburg.informatik.ultimate.result.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.result.UnprovableResult;
 
@@ -233,12 +234,14 @@ public class IsEmptyWithAI<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		s_Logger.info(startMessage());
 
 		if (results.equals(null)) {
-			m_acceptingRun = getAcceptingRun();
+			m_acceptingRun = null;
 		} else {
 			for (UnprovableResult<RcfgElement, CodeBlock, Expression> x : results) {
-				if (x != null) {
+				if ((x != null) && (x.getCheckedSpecification().getSpec() != Check.Spec.UNKNOWN)) {
 					m_acceptingRun = getAcceptingRun(x);
+					break;
 				}
+				m_acceptingRun = null;
 			}
 		}
 		s_Logger.info(exitMessage());

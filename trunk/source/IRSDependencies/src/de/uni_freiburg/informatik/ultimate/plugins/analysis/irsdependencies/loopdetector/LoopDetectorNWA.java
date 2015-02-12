@@ -3,9 +3,11 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.loo
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Queue;
 import java.util.Stack;
 
 import org.apache.log4j.Logger;
@@ -19,9 +21,11 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.Transitionlet;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.Activator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGNode;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 
 /**
@@ -60,6 +64,8 @@ public class LoopDetectorNWA extends BaseObserver {
 	private final HashMap<ProgramPoint, HashMap<Object, Object>> mLoopEntryExit;
 	
 	INestedWordAutomaton m_nwa;
+	int m_maxLength;
+	Map<Object, List> m_incomingEdgesMap = new HashMap<Object, List>();
 
 	public LoopDetectorNWA(IUltimateServiceProvider services) {
 		mServices = services;
@@ -74,33 +80,39 @@ public class LoopDetectorNWA extends BaseObserver {
 
 	public boolean process(INestedWordAutomaton nwa, Map<Object, ProgramPoint> ppMap) throws Throwable {
 		m_nwa = nwa;
-		List<Object> moreIncomingEdges = new ArrayList<Object>();
-		for (Object i : m_nwa.getStates()){
-			int numberOfEdges = 0;
-			for (Object o : m_nwa.callPredecessors(i)){
-				numberOfEdges++;
+		m_maxLength = nwa.getStates().size();
+		List<Object> possibleLoopHeads = new ArrayList<Object>();
+		
+		//check which States could be loophead (the have to have more than one incoming edge)
+		for (Object state : m_nwa.getStates()){
+			LinkedList<Object> incomingEdges = new LinkedList<Object>();
+			int edges = 0;
+			for (Object c : m_nwa.callPredecessors(state)){
+				incomingEdges.add(c);
+				edges++;
 			}
-			for (Object o : m_nwa.returnPredecessors(i)){
-				numberOfEdges++;
+			for (Object r : m_nwa.returnPredecessors(state)){
+				incomingEdges.add(r);
+				edges++;
 			}
-			for (Object o : m_nwa.internalPredecessors(i)){
-				numberOfEdges++;
+			for (Object i : m_nwa.internalPredecessors(state)){
+				incomingEdges.add(i);
+				edges++;
 			}
-			if (numberOfEdges > 1){
-				moreIncomingEdges.add(i);
+			m_incomingEdgesMap.put(state, incomingEdges);
+			if (edges > 1){
+				possibleLoopHeads.add(state);
 			}
 		}
-		if (moreIncomingEdges.size() > 0) {
-			List<Transitionlet> transitions = new ArrayList<Transitionlet>();
-			List<Object> visitedStates = new ArrayList<Object>();
+		if (possibleLoopHeads.size() > 0) {
 			HashMap<Object, Object> inout = new HashMap();
-			Object toPut = null;
-			for (Object i : moreIncomingEdges) {
-				processState(i, i, transitions, visitedStates);
-				if (transitions != null) {
-					toPut = i;
+			for (Object p : possibleLoopHeads) {
+				List<Transitionlet> transitions = new LinkedList<Transitionlet>();
+				List<Object> visitedStates = new LinkedList<Object>();
+				List<Transitionlet> result = processState(p, p, transitions, visitedStates);
+				if ((result != null) && (!result.isEmpty())) {
 					inout.put(transitions.get(0).getLetter(), transitions.get(transitions.size()-1).getLetter());
-					mLoopEntryExit.put(ppMap.get(toPut), inout);
+					mLoopEntryExit.put(ppMap.get(p), inout);
 				}
 			}
 		}
@@ -109,39 +121,47 @@ public class LoopDetectorNWA extends BaseObserver {
 	
 	private List<Transitionlet> processState(Object actualState, Object loopEntryState, List<Transitionlet> path, List<Object> visitedStates)
 	{
-		if (visitedStates.contains(actualState))
-		{
-			return null;
+		List<Transitionlet> emptyPath = new LinkedList<Transitionlet>();
+		
+		if ((visitedStates.contains(actualState)) || (path.size() > m_maxLength)) {
+			return emptyPath;
 		}
-		visitedStates.add(actualState);
-		for (Object o : m_nwa.internalSuccessors(actualState)) {
-			OutgoingInternalTransition intSuccLet = (OutgoingInternalTransition) o;
-			path.add((Transitionlet) o);
-			Object succ = intSuccLet.getSucc();
-			if (succ == loopEntryState) {
-				return path;
-			} else {
-				processState(succ, loopEntryState, path, visitedStates);
-			}
+		if (actualState != loopEntryState) {
+			visitedStates.add(actualState);
 		}
-		for (Object o : m_nwa.callSuccessors(actualState)) {
-			OutgoingCallTransition callSuccLet = (OutgoingCallTransition) o;
-			path.add((Transitionlet) o);
-			Object succ = callSuccLet.getSucc();
-			if (succ == loopEntryState) {
-				return path;
+		for (Object pred : m_incomingEdgesMap.get(actualState)) {
+			if (pred instanceof IncomingInternalTransition) {
+				IncomingInternalTransition p = (IncomingInternalTransition) pred;
+				Object pre = p.getPred();
+				if (pre == loopEntryState) {
+					return path;
+				} else if (visitedStates.contains(pre)) {
+					return emptyPath;
+				}
+				path.add(p);
+				path = processState(pre, loopEntryState, path, visitedStates);
+			} else if (pred instanceof IncomingCallTransition) {
+				IncomingCallTransition p = (IncomingCallTransition) pred;
+				Object pre = p.getPred();
+				if (pre == loopEntryState) {
+					return path;
+				} else if (visitedStates.contains(pre)) {
+					return emptyPath;
+				}
+				path.add(p);
+				path = processState(pre, loopEntryState, path, visitedStates);
+			} else if (pred instanceof IncomingReturnTransition) {
+				IncomingReturnTransition p = (IncomingReturnTransition) pred;
+				Object pre = p.getHierPred();
+				if (pre == loopEntryState) {
+					return path;
+				} else if (visitedStates.contains(pre)) {
+					return emptyPath;
+				}
+				path.add(p);
+				path = processState(pre, loopEntryState, path, visitedStates);
 			} else {
-				processState(succ, loopEntryState, path, visitedStates);
-			}
-		}
-		for (Object o : m_nwa.returnSuccessors(actualState)) {
-			OutgoingReturnTransition retSuccLet = (OutgoingReturnTransition) o;
-			path.add((Transitionlet) o);
-			Object succ = retSuccLet.getSucc();
-			if (succ == loopEntryState) {
-				return path;
-			} else {
-				processState(succ, loopEntryState, path, visitedStates);
+				return emptyPath;
 			}
 		}
 		return path;

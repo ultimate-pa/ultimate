@@ -4,6 +4,9 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation;
 
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.PrintWriter;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -212,8 +215,7 @@ public class AbstractInterpreter extends RCFGEdgeVisitor {
 
 		// check existing states: super/sub/widening/merging
 		Set<AbstractState> unprocessedStates = new HashSet<AbstractState>();
-		Set<AbstractState> statesToRemove = new HashSet<AbstractState>();
-		for (AbstractState s : statesAtNode) {
+		Set<AbstractState> statesToRemove = new HashSet<AbstractState>();		for (AbstractState s : statesAtNode) {
 			// TODO: FIX
 			if (!(fromEdge instanceof Return) && s.isSuper(newState)) {
 				mLogger.debug("NO!");
@@ -460,7 +462,7 @@ public class AbstractInterpreter extends RCFGEdgeVisitor {
 		}
 	}
 
-	protected List<UnprovableResult<RcfgElement, CodeBlock, Expression>> visitNodes(boolean runsOnNWA) {
+	/*protected List<UnprovableResult<RcfgElement, CodeBlock, Expression>> visitNodes(boolean runsOnNWA) {
 		List<UnprovableResult<RcfgElement, CodeBlock, Expression>> result = new ArrayList<UnprovableResult<RcfgElement, CodeBlock, Expression>>();
 		RCFGNode node = (RCFGNode) mNodesToVisit.poll();
 
@@ -511,7 +513,7 @@ public class AbstractInterpreter extends RCFGEdgeVisitor {
 														// empty
 		}
 		return result;
-	}
+	}*/
 
 	@Override
 	protected void visit(RCFGEdge e) {
@@ -554,7 +556,7 @@ public class AbstractInterpreter extends RCFGEdgeVisitor {
 		}
 	}
 
-	protected UnprovableResult<RcfgElement, CodeBlock, Expression> visit(RCFGEdge e, boolean runsOnNWA) {
+	/*protected UnprovableResult<RcfgElement, CodeBlock, Expression> visit(RCFGEdge e, boolean runsOnNWA) {
 		UnprovableResult<RcfgElement, CodeBlock, Expression> result = null;
 		mLogger.debug("Visiting: " + e.getSource() + " -> " + e.getTarget());
 
@@ -595,7 +597,7 @@ public class AbstractInterpreter extends RCFGEdgeVisitor {
 			}
 		}
 		return result;
-	}
+	}*/
 
 	@Override
 	protected void visit(RootEdge e) {
@@ -766,17 +768,18 @@ public class AbstractInterpreter extends RCFGEdgeVisitor {
 	 */
 	private UnprovableResult<RcfgElement, CodeBlock, Expression> reportErrorResult(ProgramPoint location,
 			AbstractState state, boolean runsOnNWA) {
+		
+		//PrintWriter writer;
+		//try {
+		//	writer = new PrintWriter(new FileOutputStream(new File("E:\\AbstractInterpretation.txt"), true));
 		RcfgProgramExecution programExecution = new RcfgProgramExecution(state.getTrace(),
 				new HashMap<Integer, ProgramState<Expression>>(), null);
 
 		UnprovableResult<RcfgElement, CodeBlock, Expression> result = new UnprovableResult<RcfgElement, CodeBlock, Expression>(
 				Activator.s_PLUGIN_NAME, location, mServices.getBacktranslationService(), programExecution);
 
-		if (runsOnNWA) {
-			return result;
-		} else {
-			mServices.getResultService().reportResult(Activator.s_PLUGIN_ID, result);
-		}
+		mServices.getResultService().reportResult(Activator.s_PLUGIN_ID, result);
+		
 
 		if (mStopAfterAnyError) {
 			mContinueProcessing = false;
@@ -787,7 +790,18 @@ public class AbstractInterpreter extends RCFGEdgeVisitor {
 				mContinueProcessing = false;
 			mLogger.info("Abstract interpretation finished after reaching all error locations");
 		}
+		//TODO Fabian
+		/*String wr = location.getProcedure();
+		wr = wr + " "+state.toString() + " "+result.getFailurePath().toString() + " " + result.toString();
+		writer.append(wr);
+		writer.append("\n*************\n");
+		writer.close();
 		return result;
+		} catch (FileNotFoundException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+				return null;
+		}*/
 	}
 
 	private void reportUnsupportedSyntaxResult(IElement location, String message) {

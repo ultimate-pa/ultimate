@@ -37,6 +37,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvide
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
+import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.TermVarsProc;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.ta.IsEmptyWithAI;
@@ -151,6 +152,11 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 						(INestedWordAutomatonOldApi<CodeBlock, IPredicate>) m_Abstraction, m_Services,
 						super.m_RootNode, programPointMap, predicateMap);
 				m_Counterexample = emptyWithAI.getNestedRun();
+				if (m_Counterexample == null) {
+					m_Counterexample = (new IsEmpty<CodeBlock, IPredicate>(
+							(INestedWordAutomatonOldApi<CodeBlock, IPredicate>) m_Abstraction)).getNestedRun();
+				
+				}
 				
 				
 				
@@ -188,11 +194,11 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		for (Object oldState : oldAutomatonStates)
 		{
 			ISLPredicate ip = (ISLPredicate) oldState;
-			TermVarsProc termVarsProc = new TermVarsProc(terms.get(oldState), ip.getVars(), ip.getProcedures(), terms.get(oldState));
+			//TermVarsProc termVarsProc = new TermVarsProc(terms.get(oldState), ip.getVars(), ip.getProcedures(), terms.get(oldState));
+			TermVarsProc termVarsProc = new TermVarsProc(terms.get(oldState), null, null, terms.get(oldState));
 			SPredicate sp = m_SmtManager.newSPredicate(ip.getProgramPoint(), termVarsProc);
-			
-			result.addState(nwa.getInitialStates().contains(sp), 
-					nwa.getFinalStates().contains(sp), 
+			result.addState(nwa.getInitialStates().contains(ip), 
+					nwa.getFinalStates().contains(ip), 
 					sp);
 		}
 		

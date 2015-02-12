@@ -57,6 +57,10 @@ public class UnprovableResult<ELEM extends IElement, TE extends IElement, E> ext
 		mProgramExecution = programExecution;
 		mFailurePath = ResultUtil.getLocationSequence(programExecution);
 	}
+	
+	public Check getCheckedSpecification() {
+		return mCheckedSpecification;
+	}
 
 	@Override
 	public String getShortDescription() {
