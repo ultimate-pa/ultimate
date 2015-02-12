@@ -16,7 +16,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IHoareTripleChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.InterpolatingTraceChecker;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
 
 /**
  * Nondeterministic interpolant automaton with on-demand construction.
@@ -32,10 +32,10 @@ public class NondeterministicInterpolantAutomaton extends TotalInterpolantAutoma
 			SmtManager smtManager, ModifiableGlobalVariableManager modglobvarman, IHoareTripleChecker hoareTripleChecker,
 			INestedWordAutomaton<CodeBlock, IPredicate> abstraction, 
 			NestedWordAutomaton<CodeBlock, IPredicate> interpolantAutomaton, 
-			InterpolatingTraceChecker traceChecker, Logger  logger) {
+			PredicateUnifier predicateUnifier, Logger  logger) {
 		super(services, smtManager, hoareTripleChecker, abstraction, 
-				traceChecker.getPredicateUnifier().getFalsePredicate(), 
-				traceChecker.getPredicateUnifier().getTruePredicate(), 
+				predicateUnifier.getTruePredicate(), 
+				predicateUnifier.getFalsePredicate(), 
 				interpolantAutomaton, logger);
 		Collection<IPredicate> allPredicates = interpolantAutomaton.getStates(); 
 		
