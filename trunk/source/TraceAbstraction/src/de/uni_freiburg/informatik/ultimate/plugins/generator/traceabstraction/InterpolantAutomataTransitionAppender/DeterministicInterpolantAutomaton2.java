@@ -12,14 +12,10 @@ import org.apache.log4j.Logger;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.TermVarsProc;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.DivisibilityPredicateGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IHoareTripleChecker.Validity;
@@ -33,7 +29,7 @@ import de.uni_freiburg.informatik.ultimate.util.HashRelation;
  * @author Matthias Heizmann
  *
  */
-public class DeterministicInterpolantAutomaton2 extends AbstractInterpolantAutomaton2 {
+public class DeterministicInterpolantAutomaton2 extends TotalInterpolantAutomaton {
 	
 	private final Map<Set<IPredicate>, IPredicate> m_InputPreds2ResultPreds = 
 			new HashMap<Set<IPredicate>, IPredicate>();
@@ -41,11 +37,8 @@ public class DeterministicInterpolantAutomaton2 extends AbstractInterpolantAutom
 			new HashRelation<IPredicate, IPredicate>();
 
 
-	private final IPredicate m_IaTrueState;
-	
-	private final Set<IPredicate> m_NonTrivialPredicates;
-
 	private final PredicateUnifier m_PredicateUnifier;
+	protected final Set<IPredicate> m_NonTrivialPredicates;
 	
 	/**
 	 * Split up predicates in their conjuncts. 
@@ -64,7 +57,10 @@ public class DeterministicInterpolantAutomaton2 extends AbstractInterpolantAutom
 			INestedWordAutomaton<CodeBlock, IPredicate> abstraction, 
 			NestedWordAutomaton<CodeBlock, IPredicate> interpolantAutomaton, 
 			InterpolatingTraceChecker traceChecker, Logger  logger) {
-		super(services, smtManager, hoareTripleChecker, abstraction, traceChecker.getPostcondition(), interpolantAutomaton, logger);
+		super(services, smtManager, hoareTripleChecker, abstraction, 
+				traceChecker.getPredicateUnifier().getFalsePredicate(), 
+				traceChecker.getPredicateUnifier().getTruePredicate(), 
+				interpolantAutomaton, logger);
 		m_PredicateUnifier = traceChecker.getPredicateUnifier();
 		Collection<IPredicate> allPredicates;
 		if (m_Cannibalize ) {
@@ -89,7 +85,6 @@ public class DeterministicInterpolantAutomaton2 extends AbstractInterpolantAutom
 			}
 		}
 		
-		m_IaTrueState = traceChecker.getPrecondition();
 		assert m_IaTrueState.getFormula().toString().equals("true");
 		assert allPredicates.contains(m_IaTrueState);
 		m_Result.addState(true, false, m_IaTrueState);
@@ -139,63 +134,29 @@ public class DeterministicInterpolantAutomaton2 extends AbstractInterpolantAutom
 
 
 	
-	protected void computeSuccs(IPredicate resPred, IPredicate resHier, 
-			CodeBlock letter, SuccessorComputationHelper sch) {
-		// if (linear) predecessor is false, the successor is false
-		if (sch.isLinearPredecessorFalse(resPred)) {
-			sch.addTransition(resPred, resHier, letter, m_IaFalseState);
-			return;
-		}
-		// if (hierarchical) predecessor is false, the successor is false
-		if (sch.isHierarchicalPredecessorFalse(resHier)) {
-			sch.addTransition(resPred, resHier, letter, m_IaFalseState);
-			return;
-		} 
-		// if the letter is already infeasible, the successor is false
-		if (letter.getTransitionFormula().isInfeasible() == Infeasibility.INFEASIBLE) {
-			sch.addTransition(resPred, resHier, letter, m_IaFalseState);
-			return;
-		}
-		// get all successor whose inductivity we already know from the
-		// input interpolant automaton
-		final Collection<IPredicate> automatonSuccs = 
-				getConjunctSuccsInterpolantAutomaton(resPred, resHier, letter, sch);
-		// check if false is implied
-		if (automatonSuccs.contains(m_IaFalseState)){
-			sch.addTransition(resPred, resHier, letter, m_IaFalseState);
-			return;
-		} else {
-			Validity sat = sch.computeSuccWithSolver(resPred, resHier, letter, m_IaFalseState);
-			if (sat == Validity.VALID) {
-				sch.addTransition(resPred, resHier, letter, m_IaFalseState);
-				return;
-			}
-		}
-		// check all other predicates
-		final Set<IPredicate> inputSuccs = new HashSet<IPredicate>();
+	protected void addOtherSuccessors(IPredicate resPred, IPredicate resHier,
+			CodeBlock letter, SuccessorComputationHelper sch,
+			final Set<IPredicate> inputSuccs) {
 		for (IPredicate succCand : m_NonTrivialPredicates) {
-			if (automatonSuccs.contains(succCand)) {
-				inputSuccs.add(succCand);
-			} else {
+			if (!inputSuccs.contains(succCand)) {
 				Validity sat = sch.computeSuccWithSolver(resPred, resHier, letter, succCand);
 				if (sat == Validity.VALID) {
 					inputSuccs.add(succCand);
 				}
 			}
 		}
-		IPredicate resSucc = getOrConstructPredicate(inputSuccs);
-		sch.addTransition(resPred, resHier, letter, resSucc);
 	}
 
 
 	/**
-	 * Returns all successors of resPred, resHier, and letter in automaton.
+	 * Add all successors of resPred, resHier, and letter in automaton.
 	 * If resPred and resHier were constructed as a conjunction of 
 	 * inputPredicates, we also take the conjuncts.
+	 * @param inputSuccs 
 	 */
-	private Collection<IPredicate> getConjunctSuccsInterpolantAutomaton(
+	protected void addInputAutomatonSuccs(
 			IPredicate resPred, IPredicate resHier, CodeBlock letter,
-			SuccessorComputationHelper sch) {
+			SuccessorComputationHelper sch, Set<IPredicate> inputSuccs) {
 		final Set<IPredicate> resPredConjuncts = m_ResPred2InputPreds.getImage(resPred);
 		assert resPredConjuncts != null;
 		final Set<IPredicate> resHierConjuncts;
@@ -204,50 +165,23 @@ public class DeterministicInterpolantAutomaton2 extends AbstractInterpolantAutom
 		} else {
 			resHierConjuncts = m_ResPred2InputPreds.getImage(resHier);
 		}
-		Collection<IPredicate> result;
 		if (resPredConjuncts.size() == 1 && 
 				(resHier == null || resHierConjuncts.size() == 1)) {
-			result = sch.getSuccsInterpolantAutomaton(resPred, resHier, letter);
+			inputSuccs.addAll(sch.getSuccsInterpolantAutomaton(resPred, resHier, letter));
 		} else {
-			result = new HashSet<IPredicate>();
 			for (IPredicate inputPred : resPredConjuncts) {
 				if (resHier == null) {
-					result = sch.getSuccsInterpolantAutomaton(inputPred, null, letter);
+					inputSuccs.addAll(sch.getSuccsInterpolantAutomaton(inputPred, null, letter));
 				} else {
 					for (IPredicate inputHier : resHierConjuncts) {
-						result = sch.getSuccsInterpolantAutomaton(inputPred, inputHier, letter);
+						inputSuccs.addAll(sch.getSuccsInterpolantAutomaton(inputPred, inputHier, letter));
 					}
 				}
 			}
 		}
-		return result;
 	}
 
 
-	/**
-	 * Returns true iff  both of the following are true: 
-	 *  - m_InterpolantAutomaton contains resPred
-	 *  - resHier is null or m_InterpolantAutomaton contains resHier
-	 */
-	private boolean interpolantAutomatonContainsStates(IPredicate resPred,
-			IPredicate resHier) {
-		Collection<IPredicate> states = m_InterpolantAutomaton.getStates();
-		if (states.contains(resPred)) {
-			if (resHier == null || states.contains(resHier)) {
-				return true;
-			} else {
-				return false;
-			}
-		} else {
-			return false;
-		}
-	}
-
-
-	
-
-
-	
 
 
 	private IPredicate getOrConstructPredicate(Set<IPredicate> succs) {
@@ -278,56 +212,13 @@ public class DeterministicInterpolantAutomaton2 extends AbstractInterpolantAutom
 		}
 		return result;
 	}
-	
-	
-	
-	
-	/**
-	 * Return true if results are compatible or one is UNKNOWN
-	 */
-	private boolean satCompatible(Validity sat1, LBool sat2) {
-		switch (sat1) {
-		case VALID:
-			return (sat2 == LBool.UNSAT || sat2 == LBool.UNKNOWN);
-		case INVALID:
-			return (sat2 == LBool.SAT || sat2 == LBool.UNKNOWN);
-		case UNKNOWN:
-			return true;
-		default:
-			throw new UnsupportedOperationException();
-		}
-	}
-	
 
 	@Override
-	protected boolean areInternalSuccsComputed(IPredicate state, CodeBlock letter) {
-		Collection<IPredicate> succs = m_Result.succInternal(state, letter);
-		if (succs == null) {
-			return false;
-		} else {
-			return succs.iterator().hasNext();
-		}
-	}
-
-	@Override
-	protected boolean areCallSuccsComputed(IPredicate state, Call call) {
-		Collection<IPredicate> succs = m_Result.succCall(state, call);
-		if (succs == null) {
-			return false;
-		} else {
-			return succs.iterator().hasNext();
-		}
-	}
-
-
-	@Override
-	protected boolean areReturnSuccsComputed(IPredicate state, IPredicate hier,	Return ret) {
-		Collection<IPredicate> succs = m_Result.succReturn(state, hier, ret);
-		if (succs == null) {
-			return false;
-		} else {
-			return succs.iterator().hasNext();
-		}
+	protected void constructSuccessorsAndTransitions(IPredicate resPred,
+			IPredicate resHier, CodeBlock letter, 
+			SuccessorComputationHelper sch, Set<IPredicate> inputSuccs) {
+		IPredicate resSucc = getOrConstructPredicate(inputSuccs);
+		sch.addTransition(resPred, resHier, letter, resSucc);
 	}
 	
 	
