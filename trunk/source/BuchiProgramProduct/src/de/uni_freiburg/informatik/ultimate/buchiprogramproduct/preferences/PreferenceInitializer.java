@@ -28,7 +28,7 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 				new UltimatePreferenceItem<String>("Product Optimizations", "", PreferenceType.Label),
 				new UltimatePreferenceItem<Boolean>(OPTIMIZE_MAXIMIZE_FINAL_STATES, true, PreferenceType.Boolean),
 				new UltimatePreferenceItem<MinimizeStates>(OPTIMIZE_MINIMIZE_STATES,
-						MinimizeStates.SINGLE_NODE_MULTI_EDGE, PreferenceType.Combo, MinimizeStates.values()),
+						MinimizeStates.SINGLE, PreferenceType.Combo, MinimizeStates.values()),
 				new UltimatePreferenceItem<Boolean>(OPTIMIZE_REMOVE_INFEASIBLE_EDGES, true, PreferenceType.Boolean),
 				new UltimatePreferenceItem<Boolean>(OPTIMIZE_SIMPLIFY_ASSUMES, true, PreferenceType.Boolean),
 				new UltimatePreferenceItem<Boolean>(OPTIMIZE_UNTIL_FIXPOINT, true, PreferenceType.Boolean),

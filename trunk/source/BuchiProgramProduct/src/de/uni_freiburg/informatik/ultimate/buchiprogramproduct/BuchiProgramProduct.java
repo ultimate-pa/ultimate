@@ -32,8 +32,8 @@ import de.uni_freiburg.informatik.ultimate.result.CounterExampleResult;
  */
 public class BuchiProgramProduct implements IGenerator {
 
-	protected static Logger mLogger;
-	protected List<String> mFileNames;
+	private Logger mLogger;
+	private List<String> mFileNames;
 
 	private BuchiProductObserver mBuchiProductObserver;
 	private boolean mUseBuchiProductObserver;

@@ -109,7 +109,7 @@ public class ConditionTransformer<E> {
 		if (dnf == null) {
 			return null;
 		}
-		if (!mWrapper.isOr(condition)) {
+		if (!mWrapper.isOr(dnf)) {
 			return Collections.singleton(dnf);
 		}
 		return toTermsTopLevel(dnf);

@@ -41,7 +41,10 @@ public class MinimizeStatesMultiEdgeSingleNode extends BaseProductOptimizer {
 				continue;
 			}
 			closed.add(current);
-
+			if (mLogger.isDebugEnabled()) {
+				mLogger.debug("Processing edge " + current.hashCode());
+				mLogger.debug("    " + current);
+			}
 			ProgramPoint target = (ProgramPoint) current.getTarget();
 			if (current instanceof RootEdge) {
 				edges.addAll(current.getTarget().getOutgoingEdges());
@@ -91,6 +94,10 @@ public class MinimizeStatesMultiEdgeSingleNode extends BaseProductOptimizer {
 			// for each ei from Ei and for each eo from Eo we add a new edge
 			// (q1,st1;st2,q3)
 
+			if (mLogger.isDebugEnabled()) {
+				mLogger.debug("    will remove " + target.getLocationName());
+			}
+
 			List<RCFGEdge> predEdges = new ArrayList<RCFGEdge>(target.getIncomingEdges());
 			List<RCFGEdge> succEdges = new ArrayList<RCFGEdge>(target.getOutgoingEdges());
 
@@ -104,6 +111,7 @@ public class MinimizeStatesMultiEdgeSingleNode extends BaseProductOptimizer {
 				succEdge.disconnectTarget();
 			}
 
+			int newEdges = 0;
 			for (RCFGEdge predEdge : predEdges) {
 				for (RCFGEdge succEdge : succEdges) {
 					SequentialComposition sc = new SequentialComposition(pred, succ, root.getRootAnnot()
@@ -111,7 +119,12 @@ public class MinimizeStatesMultiEdgeSingleNode extends BaseProductOptimizer {
 							new CodeBlock[] { (CodeBlock) predEdge, (CodeBlock) succEdge });
 					assert sc.getTarget() != null;
 					assert sc.getSource() != null;
+					newEdges++;
 				}
+			}
+
+			if (mLogger.isDebugEnabled()) {
+				mLogger.debug("    removed " + (predEdges.size() + succEdges.size()) + ", added " + newEdges + " edges");
 			}
 
 			mRemovedEdges += predEdges.size() + succEdges.size();

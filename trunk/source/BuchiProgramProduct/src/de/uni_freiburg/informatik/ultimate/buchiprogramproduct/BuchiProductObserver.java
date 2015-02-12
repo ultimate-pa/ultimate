@@ -1,6 +1,5 @@
 package de.uni_freiburg.informatik.ultimate.buchiprogramproduct;
 
-import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
@@ -72,8 +71,6 @@ public class BuchiProductObserver implements IUnmanagedObserver {
 			if (maxIters < 0) {
 				maxIters = -1;
 			}
-			Level old = mLogger.getLevel();
-			mLogger.setLevel(Level.DEBUG);
 			int i = 1;
 			while (true) {
 				mLogger.debug("==== Optimization #" + i + "====");
@@ -82,7 +79,7 @@ public class BuchiProductObserver implements IUnmanagedObserver {
 
 				continueOptimization = optimizeRemoveInfeasibleEdges(ups, continueOptimization);
 				continueOptimization = optimizeMaximizeFinalStates(ups, continueOptimization);
-				continueOptimization = optimizeSimplifyAssumes(ups, continueOptimization);
+//				continueOptimization = optimizeSimplifyAssumes(ups, continueOptimization);
 				continueOptimization = optimizeMinimizeStates(ups, continueOptimization);
 				continueOptimization = optimizeSimplifyAssumes(ups, continueOptimization);
 
@@ -102,7 +99,6 @@ public class BuchiProductObserver implements IUnmanagedObserver {
 				break;
 			}
 			reportSizeBenchmark("Optimized Product", mProduct);
-			mLogger.setLevel(Level.DEBUG);
 
 		} catch (Exception e) {
 			mLogger.error(String.format(

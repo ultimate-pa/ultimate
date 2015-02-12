@@ -36,7 +36,10 @@ public class MinimizeStatesSingleEdgeSingleNode extends BaseProductOptimizer {
 				continue;
 			}
 			closed.add(current);
-
+			if (mLogger.isDebugEnabled()) {
+				mLogger.debug("Processing edge " + current.hashCode());
+				mLogger.debug("    " + current);
+			}
 			ProgramPoint target = (ProgramPoint) current.getTarget();
 
 			if (target.getIncomingEdges().size() == 1 && target.getOutgoingEdges().size() == 1) {
@@ -89,6 +92,11 @@ public class MinimizeStatesSingleEdgeSingleNode extends BaseProductOptimizer {
 			// we will not change the acceptance condition, so we delete e1 and
 			// e2 and q2
 			// and add the new edge (q1,st1;st2,q3)
+			
+			if (mLogger.isDebugEnabled()) {
+				mLogger.debug("    will remove " + target.getLocationName());
+			}
+			
 			predEdge.disconnectSource();
 			predEdge.disconnectTarget();
 			succEdge.disconnectSource();
@@ -98,6 +106,11 @@ public class MinimizeStatesSingleEdgeSingleNode extends BaseProductOptimizer {
 			new SequentialComposition(pred, succ, root.getRootAnnot().getBoogie2SMT(), root.getRootAnnot()
 					.getModGlobVarManager(), true, true, mServices, new CodeBlock[] { (CodeBlock) predEdge,
 					(CodeBlock) succEdge });
+			
+			if (mLogger.isDebugEnabled()) {
+				mLogger.debug("    removed 2, added 2 edges");
+			}
+			
 			return pred.getOutgoingEdges();
 		}
 		return succ.getOutgoingEdges();
