@@ -1623,7 +1623,12 @@ public class SmtManager {
 				m_LockOwner = lockOwner;
 				mLogger.debug("SmtManager locked by " + lockOwner.toString());
 			} else {
-				throw new IllegalStateException("SmtManager already locked by " + m_LockOwner.toString());
+				if (m_LockOwner instanceof ILockerHolderWithVoluntaryLockRelease) {
+					mLogger.debug("Asking " + m_LockOwner + " to release lock");
+					((ILockerHolderWithVoluntaryLockRelease) m_LockOwner).releaseLock();
+				} else {
+					throw new IllegalStateException("SmtManager already locked by " + m_LockOwner.toString());
+				}
 			}
 		}
 	}
@@ -1649,7 +1654,7 @@ public class SmtManager {
 		return allegedLockOwner == m_LockOwner;
 	}
 	
-	public interface LockerHolderWithVoluntaryLockRelease {
+	public interface ILockerHolderWithVoluntaryLockRelease {
 		public void releaseLock();
 	}
 
