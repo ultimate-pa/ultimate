@@ -95,7 +95,8 @@ class MotzkinTransformation extends InstanceCounting {
 	private final AnalysisType m_analysis_type;
 	
 	/**
-	 * Whether the generated terms should be annotated
+	 * Whether the generated terms should be annotated.
+	 * This can be helpful if you read the SMT script while debugging.
 	 */
 	private boolean m_annotate_terms;
 	
@@ -134,7 +135,9 @@ class MotzkinTransformation extends InstanceCounting {
 	 * 
 	 * @param script The SMTLib script
 	 * @param linear should the transformed formula be linear?
-	 * @param annotate annotate the transformed term?
+	 * @param annotate annotate the transformed term? (This can be helpful if 
+	 * you read the SMT script while debugging.)
+	 * 		
 	 */
 	public MotzkinTransformation(Script script,
 			AnalysisType termination_analysis, boolean annotate) {
