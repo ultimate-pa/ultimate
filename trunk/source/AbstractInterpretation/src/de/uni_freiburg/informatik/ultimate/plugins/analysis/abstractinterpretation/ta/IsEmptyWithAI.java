@@ -85,7 +85,7 @@ public class IsEmptyWithAI<LETTER, STATE> implements IOperation<LETTER, STATE> {
 
 	@Override
 	public String operationName() {
-		return "isEmpty";
+		return "isEmptyWithAI";
 	}
 
 	@Override
@@ -233,15 +233,20 @@ public class IsEmptyWithAI<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		m_GoalStates = m_nwa.getFinalStates();
 		s_Logger.info(startMessage());
 
-		if (results.equals(null)) {
-			m_acceptingRun = null;
-		} else {
+		m_acceptingRun = null;
+		if (results != null && results.size() > 0) {
+			s_Logger.info("Found " + results.size() + " possible error paths");
 			for (UnprovableResult<RcfgElement, CodeBlock, Expression> x : results) {
-				if ((x != null) && (x.getCheckedSpecification().getSpec() != Check.Spec.UNKNOWN)) {
+				if (x != null) {
 					m_acceptingRun = getAcceptingRun(x);
 					break;
 				}
-				m_acceptingRun = null;
+				// TODO: Why check for Check.Spec.Unknown?
+				// if ((x != null) && (x.getCheckedSpecification().getSpec() !=
+				// Check.Spec.UNKNOWN)) {
+				// m_acceptingRun = getAcceptingRun(x);
+				// break;
+				// }
 			}
 		}
 		s_Logger.info(exitMessage());
@@ -253,15 +258,16 @@ public class IsEmptyWithAI<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	 * goalStates defines where the run that we search has to end.
 	 */
 	public IsEmptyWithAI(INestedWordAutomaton<LETTER, STATE> nwa, Set<STATE> startStates, Set<STATE> goalStates) {
-		m_nwa = nwa;
-		assert m_nwa.getStates().containsAll(startStates) : "unknown states";
-		assert m_nwa.getStates().containsAll(goalStates) : "unknown states";
-		dummyEmptyStackState = m_nwa.getEmptyStackState();
-		m_StartStates = startStates;
-		m_GoalStates = goalStates;
-		s_Logger.info(startMessage());
-		m_acceptingRun = getAcceptingRun();
-		s_Logger.info(exitMessage());
+		throw new UnsupportedOperationException();
+		// m_nwa = nwa;
+		// assert m_nwa.getStates().containsAll(startStates) : "unknown states";
+		// assert m_nwa.getStates().containsAll(goalStates) : "unknown states";
+		// dummyEmptyStackState = m_nwa.getEmptyStackState();
+		// m_StartStates = startStates;
+		// m_GoalStates = goalStates;
+		// s_Logger.info(startMessage());
+		// m_acceptingRun = getAcceptingRun();
+		// s_Logger.info(exitMessage());
 	}
 
 	/**
@@ -425,7 +431,8 @@ public class IsEmptyWithAI<LETTER, STATE> implements IOperation<LETTER, STATE> {
 			executionStates.add((STATE) m_predicateMap.get(state));
 		}
 		// add the last state
-		executionStates.add((STATE) m_predicateMap.get(((RCFGEdge) executionLetters.get(executionLetters.size() - 1)).getTarget()));
+		executionStates.add((STATE) m_predicateMap.get(((RCFGEdge) executionLetters.get(executionLetters.size() - 1))
+				.getTarget()));
 
 		// start with an empty word
 		NestedWord<LETTER> currentWord = new NestedWord<>((LETTER[]) new RCFGEdge[0], new int[0]);
@@ -709,8 +716,8 @@ public class IsEmptyWithAI<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		}
 		return correct;
 	}
-	
-	public Map<Object, Term> getTerms(){
+
+	public Map<Object, Term> getTerms() {
 		return m_aI.getTermMap();
 	}
 

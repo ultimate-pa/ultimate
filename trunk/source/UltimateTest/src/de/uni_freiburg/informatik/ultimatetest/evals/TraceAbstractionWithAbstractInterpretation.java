@@ -11,8 +11,8 @@ public class TraceAbstractionWithAbstractInterpretation extends AbstractEvaluati
 
 	@Override
 	protected void createTestCasesForReal(List<UltimateTestCase> testcases) {
-		addTestCasesFixed("AbstractInterpretationC.xml", "AbsIntOrTASingle.epf", testcases);
-		addTestCasesFixed("AutomizerC.xml", "AbsIntOrTASingle.epf", testcases);
+//		addTestCasesFixed("AbstractInterpretationC.xml", "AbsIntOrTASingle.epf", testcases);
+//		addTestCasesFixed("AutomizerC.xml", "AbsIntOrTASingle.epf", testcases);
 		addTestCasesFixed("AutomizerCWithTA.xml", "TAWithAbsInt.epf", testcases);
 	}
 
@@ -20,7 +20,7 @@ public class TraceAbstractionWithAbstractInterpretation extends AbstractEvaluati
 	protected int getFilesPerCategory() {
 		return -1;
 	}
-	
+
 	@Override
 	protected boolean useParentDirectoryAsCategory() {
 		return false;
@@ -29,14 +29,18 @@ public class TraceAbstractionWithAbstractInterpretation extends AbstractEvaluati
 	@Override
 	protected String[] getDirectories() {
 		return new String[] { 
-//				"examples/programs/regression/c/" 
-		"examples/programs/regression/c/ShortCircuit-SideEffect-ForStatement-Unsafe.c"		
+//				"examples/programs/regression/c/",
+//				"examples/svcomp/locks/",
+				
+				//soundness errors: 
+				"examples/programs/regression/c/ACSL-Paranthesis.c",
+		// "examples/programs/regression/c/ShortCircuit-SideEffect-ForStatement-Unsafe.c"
 		};
 	}
-	
+
 	@Override
 	protected int getTimeout() {
-		return 60 * 1000;
+		return 20* 60 * 1000;
 	}
 
 	@Override

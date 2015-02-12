@@ -206,8 +206,7 @@ public class AbstractInterpretationBoogieVisitor {
 
 	protected void visitCall(CallStatement statement) {
 		String methodName = statement.getMethodName();
-		
-		
+
 		// add scope level for entered method
 		m_resultingState.pushStackLayer(statement);
 
@@ -217,9 +216,7 @@ public class AbstractInterpretationBoogieVisitor {
 
 		// fetch method declaration to get input parameters
 		List<Declaration> methodDecList = m_symbolTable.getFunctionOrProcedureDeclaration(methodName);
-		
-		
-		
+
 		if (methodDecList.size() >= 1) {
 			Declaration methodDec = methodDecList.get(0);
 			VarList[] parameters = null;
@@ -242,7 +239,8 @@ public class AbstractInterpretationBoogieVisitor {
 							mLogger.warn(String.format("Invalid number method \"%s\" input parameter argument %d",
 									methodName, i));
 						} else {
-							m_resultingState.declareIdentifier(identifiers[0], m_declarationInformation, argValue, false);
+							m_resultingState.declareIdentifier(identifiers[0], m_declarationInformation, argValue,
+									false);
 						}
 					}
 				} else {
@@ -292,14 +290,16 @@ public class AbstractInterpretationBoogieVisitor {
 									"Invalid number of identifiers for procedure \"%s\" output parameter argument %d",
 									procedureName, i));
 						} else {
-							IAbstractValue<?> returnValue = m_currentState.readValue(identifiers[0], m_declarationInformation, false);
+							IAbstractValue<?> returnValue = m_currentState.readValue(identifiers[0],
+									m_declarationInformation, false);
 							if (returnValue == null)
 								returnValue = getTopValueForType(parameters[i].getType().getBoogieType());
 							evaluateLeftHandSide(leftHandSides[i]);
-							boolean writeSuccessful = m_resultingState.writeValue(m_lhsIdentifier, m_declarationInformation, returnValue);
+							boolean writeSuccessful = m_resultingState.writeValue(m_lhsIdentifier,
+									m_declarationInformation, returnValue);
 							if (!writeSuccessful)
-								m_resultingState.declareIdentifier(m_lhsIdentifier, m_declarationInformation, returnValue,
-										m_declarationInformation.getStorageClass() == StorageClass.GLOBAL);
+								m_resultingState.declareIdentifier(m_lhsIdentifier, m_declarationInformation,
+										returnValue, m_declarationInformation.getStorageClass() == StorageClass.GLOBAL);
 						}
 					}
 				} else {
@@ -345,7 +345,8 @@ public class AbstractInterpretationBoogieVisitor {
 						rhsValue = booleanFromAbstractValue(rhsValue);
 
 					mLogger.debug(String.format("Assignment: %s := %s", identifier, rhsValue));
-					boolean writeSuccessful = m_resultingState.writeValue(identifier, m_declarationInformation, rhsValue);
+					boolean writeSuccessful = m_resultingState.writeValue(identifier, m_declarationInformation,
+							rhsValue);
 					if (!writeSuccessful)
 						m_resultingState.declareIdentifier(identifier, m_declarationInformation, rhsValue,
 								m_declarationInformation.getStorageClass() == StorageClass.GLOBAL);
@@ -707,7 +708,7 @@ public class AbstractInterpretationBoogieVisitor {
 	}
 
 	protected void visit(ArrayStoreExpression expr) {
-		
+
 		m_resultValue = evaluateExpression(expr.getValue());
 		boolean onlySingleIndices = evaluateArrayIdentifier(expr.getArray(), expr.getIndices());
 
@@ -718,7 +719,8 @@ public class AbstractInterpretationBoogieVisitor {
 		if (onlySingleIndices) {
 			// store value
 			mLogger.debug(String.format("Array store: %s := %s", m_lhsIdentifier, m_resultValue));
-			boolean writeSuccessful = m_resultingState.writeValue(m_lhsIdentifier, m_declarationInformation, m_resultValue);
+			boolean writeSuccessful = m_resultingState.writeValue(m_lhsIdentifier, m_declarationInformation,
+					m_resultValue);
 			if (!writeSuccessful)
 				m_resultingState.declareIdentifier(m_lhsIdentifier, m_declarationInformation, m_resultValue,
 						m_declarationInformation.getStorageClass() == StorageClass.GLOBAL);
@@ -736,7 +738,7 @@ public class AbstractInterpretationBoogieVisitor {
 
 	protected void visit(ArrayAccessExpression expr) {
 		boolean onlySingleIndices = evaluateArrayIdentifier(expr.getArray(), expr.getIndices());
-		
+
 		ArrayData arrayData = getArrayData(m_arrayIdentifier, m_declarationInformation);
 
 		if (onlySingleIndices) {
@@ -982,7 +984,7 @@ public class AbstractInterpretationBoogieVisitor {
 
 	private IAbstractValue<?> havocValue(String identifier, DeclarationInformation declarationInformation, IType type) {
 		// is an array?
-		
+
 		if (type instanceof ArrayType) {
 			ArrayData arrayData = getArrayData(identifier, declarationInformation);
 			arrayData.setIndicesUnclear();
@@ -1128,7 +1130,9 @@ public class AbstractInterpretationBoogieVisitor {
 				if (binOp.getLeft() instanceof IdentifierExpression) {
 					IdentifierExpression ieLeft = (IdentifierExpression) binOp.getLeft();
 
-					appliedAssumption = applyAssumptionResult(ieLeft.getIdentifier(), ieLeft.getDeclarationInformation(), assumeResult) || appliedAssumption;
+					appliedAssumption = applyAssumptionResult(ieLeft.getIdentifier(),
+							ieLeft.getDeclarationInformation(), assumeResult)
+							|| appliedAssumption;
 				}
 
 				/*
@@ -1173,7 +1177,9 @@ public class AbstractInterpretationBoogieVisitor {
 						rightHandAssumeResult = null;
 					}
 					if (rightHandAssumeResult != null)
-						appliedAssumption = applyAssumptionResult(ieRight.getIdentifier(), ieRight.getDeclarationInformation(), rightHandAssumeResult) || appliedAssumption;
+						appliedAssumption = applyAssumptionResult(ieRight.getIdentifier(),
+								ieRight.getDeclarationInformation(), rightHandAssumeResult)
+								|| appliedAssumption;
 				}
 				break;
 			default:
@@ -1192,7 +1198,8 @@ public class AbstractInterpretationBoogieVisitor {
 		return appliedAssumption;
 	}
 
-	private boolean applyAssumptionResult(String identifier, DeclarationInformation declarationInformation, IAbstractValue<?> assumeResult) {
+	private boolean applyAssumptionResult(String identifier, DeclarationInformation declarationInformation,
+			IAbstractValue<?> assumeResult) {
 		IAbstractValue<?> oldValue = m_resultingState.readValue(identifier, declarationInformation, false);
 		if (oldValue != null) {
 			IAbstractValue<?> newValue = oldValue.compareIsEqual(assumeResult);

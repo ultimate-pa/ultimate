@@ -153,17 +153,14 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 						super.m_RootNode, programPointMap, predicateMap);
 				m_Counterexample = emptyWithAI.getNestedRun();
 				if (m_Counterexample == null) {
-					m_Counterexample = (new IsEmpty<CodeBlock, IPredicate>(
-							(INestedWordAutomatonOldApi<CodeBlock, IPredicate>) m_Abstraction)).getNestedRun();
-				
+					// TODO: So den neuen AI automaten in TA integrieren
+					// m_Abstraction = (IAutomaton<CodeBlock, IPredicate>) new
+					// Difference(m_Services, m_StateFactory, m_Abstraction,
+					// emptyWithAI.getAbstraction());
+					getTermAutomaton((INestedWordAutomaton<CodeBlock, IPredicate>) m_Abstraction,
+							emptyWithAI.getTerms());
 				}
-				
-				
-				
-				getTermAutomaton((INestedWordAutomaton<CodeBlock, IPredicate>) m_Abstraction, emptyWithAI.getTerms());
 
-				// TODO: So den neuen AI automaten in TA integrieren
-				//m_Abstraction = (IAutomaton<CodeBlock, IPredicate>) new Difference(m_Services, m_StateFactory, m_Abstraction, emptyWithAI.getAbstraction());
 			} else {
 				m_Counterexample = (new IsEmpty<CodeBlock, IPredicate>(
 						(INestedWordAutomatonOldApi<CodeBlock, IPredicate>) m_Abstraction)).getNestedRun();
@@ -186,22 +183,21 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		}
 	}
 
-	private NestedWordAutomaton<CodeBlock, IPredicate> getTermAutomaton(INestedWordAutomaton<CodeBlock, IPredicate> nwa, Map<Object, Term> terms) {
-		NestedWordAutomaton<CodeBlock, IPredicate> result =
-				new NestedWordAutomaton<CodeBlock, IPredicate>(m_Services, nwa.getInternalAlphabet(), nwa.getCallAlphabet(), nwa.getReturnAlphabet(), nwa.getStateFactory());
+	private NestedWordAutomaton<CodeBlock, IPredicate> getTermAutomaton(
+			INestedWordAutomaton<CodeBlock, IPredicate> nwa, Map<Object, Term> terms) {
+		NestedWordAutomaton<CodeBlock, IPredicate> result = new NestedWordAutomaton<CodeBlock, IPredicate>(m_Services,
+				nwa.getInternalAlphabet(), nwa.getCallAlphabet(), nwa.getReturnAlphabet(), nwa.getStateFactory());
 		Collection<IPredicate> oldAutomatonStates = nwa.getStates();
-		
-		for (Object oldState : oldAutomatonStates)
-		{
+
+		for (Object oldState : oldAutomatonStates) {
 			ISLPredicate ip = (ISLPredicate) oldState;
-			//TermVarsProc termVarsProc = new TermVarsProc(terms.get(oldState), ip.getVars(), ip.getProcedures(), terms.get(oldState));
+			// TermVarsProc termVarsProc = new TermVarsProc(terms.get(oldState),
+			// ip.getVars(), ip.getProcedures(), terms.get(oldState));
 			TermVarsProc termVarsProc = new TermVarsProc(terms.get(oldState), null, null, terms.get(oldState));
 			SPredicate sp = m_SmtManager.newSPredicate(ip.getProgramPoint(), termVarsProc);
-			result.addState(nwa.getInitialStates().contains(ip), 
-					nwa.getFinalStates().contains(ip), 
-					sp);
+			result.addState(nwa.getInitialStates().contains(ip), nwa.getFinalStates().contains(ip), sp);
 		}
-		
+
 		return result;
 	}
 
@@ -214,9 +210,10 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		switch (m_Interpolation) {
 		case Craig_NestedInterpolation:
 		case Craig_TreeInterpolation:
-			m_TraceChecker = new InterpolatingTraceCheckerCraig(truePredicate, falsePredicate, new TreeMap<Integer, IPredicate>(),
-					NestedWord.nestedWord(m_Counterexample.getWord()), m_SmtManager, m_RootNode.getRootAnnot()
-							.getModGlobVarManager(), m_AssertCodeBlocksIncrementally, m_Services, true, predicateUnifier, m_Interpolation);
+			m_TraceChecker = new InterpolatingTraceCheckerCraig(truePredicate, falsePredicate,
+					new TreeMap<Integer, IPredicate>(), NestedWord.nestedWord(m_Counterexample.getWord()),
+					m_SmtManager, m_RootNode.getRootAnnot().getModGlobVarManager(), m_AssertCodeBlocksIncrementally,
+					m_Services, true, predicateUnifier, m_Interpolation);
 			break;
 		case ForwardPredicates:
 		case BackwardPredicates:
@@ -227,10 +224,10 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 					m_Services, true, predicateUnifier, m_Interpolation);
 			break;
 		case PathInvariants:
-			m_TraceChecker = new InterpolatingTraceCheckerPathInvariantsWithFallback(
-					truePredicate, falsePredicate, new TreeMap<Integer, IPredicate>(),
-					(NestedRun<CodeBlock, IPredicate>) m_Counterexample, m_SmtManager, m_ModGlobVarManager, 
-					m_AssertCodeBlocksIncrementally, m_Services, true, predicateUnifier);
+			m_TraceChecker = new InterpolatingTraceCheckerPathInvariantsWithFallback(truePredicate, falsePredicate,
+					new TreeMap<Integer, IPredicate>(), (NestedRun<CodeBlock, IPredicate>) m_Counterexample,
+					m_SmtManager, m_ModGlobVarManager, m_AssertCodeBlocksIncrementally, m_Services, true,
+					predicateUnifier);
 		default:
 			throw new UnsupportedOperationException("unsupported interpolation");
 		}
@@ -309,7 +306,8 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		}
 		m_CegarLoopBenchmark.stop(CegarLoopBenchmarkType.s_BasicInterpolantAutomatonTime);
 		assert (accepts(m_InterpolAutomaton, m_Counterexample.getWord())) : "Interpolant automaton broken!";
-		assert (new InductivityCheck(m_Services, m_InterpolAutomaton, false, true,	new IncrementalHoareTripleChecker(m_SmtManager, m_ModGlobVarManager))).getResult();
+		assert (new InductivityCheck(m_Services, m_InterpolAutomaton, false, true, new IncrementalHoareTripleChecker(
+				m_SmtManager, m_ModGlobVarManager))).getResult();
 	}
 
 	@Override
@@ -406,8 +404,8 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 						// throw new
 						// AssertionError("counterexample not accepted by interpolant automaton");
 						// }
-						assert (new InductivityCheck(m_Services, test, false, true,
-								new IncrementalHoareTripleChecker(m_SmtManager, m_ModGlobVarManager))).getResult();
+						assert (new InductivityCheck(m_Services, test, false, true, new IncrementalHoareTripleChecker(
+								m_SmtManager, m_ModGlobVarManager))).getResult();
 					}
 					break;
 				default:
@@ -673,8 +671,8 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		}
 
 		if (m_ComputeHoareAnnotation) {
-			assert (new InductivityCheck(m_Services, dia, false, true, new IncrementalHoareTripleChecker(m_SmtManager, m_ModGlobVarManager)))
-					.getResult() : "Not inductive";
+			assert (new InductivityCheck(m_Services, dia, false, true, new IncrementalHoareTripleChecker(m_SmtManager,
+					m_ModGlobVarManager))).getResult() : "Not inductive";
 		}
 		if (m_Pref.dumpAutomata()) {
 			String filename = "InterpolantAutomatonDeterminized_Iteration" + m_Iteration;
@@ -744,9 +742,9 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 	public CegarLoopBenchmarkGenerator getCegarLoopBenchmark() {
 		return m_CegarLoopBenchmark;
 	}
-	
+
 	/**
-	 * method called at the end of the cegar loop 
+	 * method called at the end of the cegar loop
 	 */
 	public void finish() {
 		// do nothing
