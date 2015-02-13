@@ -139,7 +139,7 @@ public class DeterministicInterpolantAutomaton2 extends TotalInterpolantAutomato
 	protected void addOtherSuccessors(IPredicate resPred, IPredicate resHier,
 			CodeBlock letter, SuccessorComputationHelper sch,
 			final Set<IPredicate> inputSuccs) {
-		for (IPredicate succCand : m_NonTrivialPredicates) {
+		for (IPredicate succCand : selectSuccessorCandidates(resPred, resHier)) {
 			if (!inputSuccs.contains(succCand)) {
 				Validity sat = sch.computeSuccWithSolver(resPred, resHier, letter, succCand);
 				if (sat == Validity.VALID) {
