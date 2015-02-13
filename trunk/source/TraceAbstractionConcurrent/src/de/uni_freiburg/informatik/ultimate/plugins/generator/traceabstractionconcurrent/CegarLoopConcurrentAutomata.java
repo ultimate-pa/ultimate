@@ -142,7 +142,7 @@ public class CegarLoopConcurrentAutomata extends BasicCegarLoop {
 
 		DeterministicInterpolantAutomaton2 determinized = new DeterministicInterpolantAutomaton2(
 				m_Services, m_SmtManager, m_ModGlobVarManager, htc, oldAbstraction, m_InterpolAutomaton,
-				m_TraceChecker.getPredicateUnifier(), mLogger);
+				m_TraceChecker.getPredicateUnifier(), mLogger, false);
 		// ComplementDeterministicNwa<CodeBlock, IPredicate>
 		// cdnwa = new ComplementDeterministicNwa<>(dia);
 		PowersetDeterminizer<CodeBlock, IPredicate> psd2 = new PowersetDeterminizer<CodeBlock, IPredicate>(

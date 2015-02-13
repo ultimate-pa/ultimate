@@ -66,6 +66,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.InterpolationPreferenceChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.Artifact;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.InterpolantAutomatonEnhancement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.INTERPOLATION;
@@ -383,12 +384,15 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 							+ sed.m_ReturnNonSelfloop);
 					break;
 				case PREDICATE_ABSTRACTION:
+				case PREDICATE_ABSTRACTION_CONSERVATIVE:
 					if (m_Pref.differenceSenwa()) {
 						throw new UnsupportedOperationException();
 					} else {
+						boolean conservativeSuccessorCandidateSelection = 
+								(m_Pref.interpolantAutomatonEnhancement() == InterpolantAutomatonEnhancement.PREDICATE_ABSTRACTION_CONSERVATIVE);
 						DeterministicInterpolantAutomaton2 determinized = new DeterministicInterpolantAutomaton2(
 								m_Services, m_SmtManager, m_ModGlobVarManager, htc, oldAbstraction, m_InterpolAutomaton,
-								m_TraceChecker.getPredicateUnifier(), mLogger);
+								m_TraceChecker.getPredicateUnifier(), mLogger, conservativeSuccessorCandidateSelection);
 //						NondeterministicInterpolantAutomaton determinized = new NondeterministicInterpolantAutomaton(
 //								m_Services, m_SmtManager, m_ModGlobVarManager, htc, oldAbstraction, m_InterpolAutomaton, 
 //								m_TraceChecker.getPredicateUnifier(), mLogger);

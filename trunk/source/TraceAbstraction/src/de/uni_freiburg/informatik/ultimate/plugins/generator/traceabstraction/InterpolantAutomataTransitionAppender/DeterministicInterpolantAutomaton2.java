@@ -20,7 +20,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Di
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IHoareTripleChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.InterpolatingTraceChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.util.HashRelation;
 
@@ -45,9 +44,10 @@ public class DeterministicInterpolantAutomaton2 extends TotalInterpolantAutomato
 	 * First experiments on few examples showed that this is decreasing the
 	 * performance.
 	 */
-	private boolean m_Cannibalize = false;
-	private boolean m_SplitNumericEqualities = true;
-	private boolean m_DivisibilityPredicates = false;
+	private final boolean m_Cannibalize = false;
+	private final boolean m_SplitNumericEqualities = true;
+	private final boolean m_DivisibilityPredicates = false;
+	private final boolean m_ConservativeSuccessorCandidateSelection;
 	
 
 	
@@ -56,11 +56,13 @@ public class DeterministicInterpolantAutomaton2 extends TotalInterpolantAutomato
 			SmtManager smtManager, ModifiableGlobalVariableManager modglobvarman, IHoareTripleChecker hoareTripleChecker,
 			INestedWordAutomaton<CodeBlock, IPredicate> abstraction, 
 			NestedWordAutomaton<CodeBlock, IPredicate> interpolantAutomaton, 
-			PredicateUnifier predicateUnifier, Logger  logger) {
+			PredicateUnifier predicateUnifier, Logger logger, 
+			boolean conservativeSuccessorCandidateSelection) {
 		super(services, smtManager, hoareTripleChecker, abstraction, 
 				predicateUnifier.getTruePredicate(), 
 				predicateUnifier.getFalsePredicate(), 
 				interpolantAutomaton, logger);
+		m_ConservativeSuccessorCandidateSelection = conservativeSuccessorCandidateSelection;
 		m_PredicateUnifier = predicateUnifier;
 		Collection<IPredicate> allPredicates;
 		if (m_Cannibalize ) {
@@ -133,7 +135,7 @@ public class DeterministicInterpolantAutomaton2 extends TotalInterpolantAutomato
 	}
 
 
-	
+	@Override
 	protected void addOtherSuccessors(IPredicate resPred, IPredicate resHier,
 			CodeBlock letter, SuccessorComputationHelper sch,
 			final Set<IPredicate> inputSuccs) {
@@ -145,6 +147,31 @@ public class DeterministicInterpolantAutomaton2 extends TotalInterpolantAutomato
 				}
 			}
 		}
+	}
+	
+	private Set<IPredicate> selectSuccessorCandidates(IPredicate resPred, IPredicate resHier) {
+		if (m_ConservativeSuccessorCandidateSelection ) {
+			return selectSuccessorCandidates_TryConservative(resPred, resHier);
+		} else {
+			return selectSuccessorCandidates_TryAll();
+		}
+		
+	}
+	
+	private Set<IPredicate> selectSuccessorCandidates_TryConservative(IPredicate resPred, IPredicate resHier) {
+		Set<IPredicate> succCands;
+		if (resHier != null) {
+			succCands = new HashSet<IPredicate>();
+			succCands.addAll(m_ResPred2InputPreds.getImage(resPred));
+			succCands.addAll(m_ResPred2InputPreds.getImage(resHier));
+		} else {
+			succCands = m_ResPred2InputPreds.getImage(resPred);
+		}
+		return succCands;
+	}
+	
+	private Set<IPredicate> selectSuccessorCandidates_TryAll() {
+		return m_NonTrivialPredicates;		
 	}
 
 

@@ -36,6 +36,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.MonolithicHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.InterpolantAutomatonEnhancement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.INTERPOLATION;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.LanguageOperation;
 
@@ -177,8 +178,14 @@ public class IncrementalInclusionCegarLoop extends BasicCegarLoop {
 
 			switch (m_Pref.interpolantAutomatonEnhancement()) {
 			case PREDICATE_ABSTRACTION:
+			case PREDICATE_ABSTRACTION_CONSERVATIVE:
+				boolean conservativeSuccessorCandidateSelection = 
+					(m_Pref.interpolantAutomatonEnhancement() == InterpolantAutomatonEnhancement.PREDICATE_ABSTRACTION_CONSERVATIVE);
 				DeterministicInterpolantAutomaton2 determinized = new DeterministicInterpolantAutomaton2(m_Services, 
-						m_SmtManager, m_ModGlobVarManager, edgeChecker, (INestedWordAutomaton<CodeBlock, IPredicate>) m_Abstraction, m_InterpolAutomaton, m_TraceChecker.getPredicateUnifier(), mLogger);
+						m_SmtManager, m_ModGlobVarManager, edgeChecker, 
+						(INestedWordAutomaton<CodeBlock, IPredicate>) m_Abstraction, 
+						m_InterpolAutomaton, m_TraceChecker.getPredicateUnifier(), mLogger,
+						conservativeSuccessorCandidateSelection);
 				switchAllInterpolantAutomataToOnTheFlyConstructionMode();
 				m_InclusionCheck.addSubtrahend(determinized);
 				m_InterpolantAutomata.add(determinized);
