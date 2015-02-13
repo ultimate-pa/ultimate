@@ -36,7 +36,6 @@ public class DeterministicInterpolantAutomaton2 extends TotalInterpolantAutomato
 			new HashRelation<IPredicate, IPredicate>();
 
 
-	private final PredicateUnifier m_PredicateUnifier;
 	protected final Set<IPredicate> m_NonTrivialPredicates;
 	
 	/**
@@ -59,11 +58,9 @@ public class DeterministicInterpolantAutomaton2 extends TotalInterpolantAutomato
 			PredicateUnifier predicateUnifier, Logger logger, 
 			boolean conservativeSuccessorCandidateSelection) {
 		super(services, smtManager, hoareTripleChecker, abstraction, 
-				predicateUnifier.getTruePredicate(), 
-				predicateUnifier.getFalsePredicate(), 
+				predicateUnifier, 
 				interpolantAutomaton, logger);
 		m_ConservativeSuccessorCandidateSelection = conservativeSuccessorCandidateSelection;
-		m_PredicateUnifier = predicateUnifier;
 		Collection<IPredicate> allPredicates;
 		if (m_Cannibalize ) {
 			allPredicates = m_PredicateUnifier.cannibalizeAll(m_SplitNumericEqualities, interpolantAutomaton.getStates().toArray(new IPredicate[0]));
@@ -141,9 +138,11 @@ public class DeterministicInterpolantAutomaton2 extends TotalInterpolantAutomato
 			final Set<IPredicate> inputSuccs) {
 		for (IPredicate succCand : selectSuccessorCandidates(resPred, resHier)) {
 			if (!inputSuccs.contains(succCand)) {
-				Validity sat = sch.computeSuccWithSolver(resPred, resHier, letter, succCand);
-				if (sat == Validity.VALID) {
-					inputSuccs.add(succCand);
+				if (!m_OmitIntricatePredicates || !isIntricatePredicate(succCand)) {
+					Validity sat = sch.computeSuccWithSolver(resPred, resHier, letter, succCand);
+					if (sat == Validity.VALID) {
+						inputSuccs.add(succCand);
+					}
 				}
 			}
 		}
@@ -155,7 +154,6 @@ public class DeterministicInterpolantAutomaton2 extends TotalInterpolantAutomato
 		} else {
 			return selectSuccessorCandidates_TryAll();
 		}
-		
 	}
 	
 	private Set<IPredicate> selectSuccessorCandidates_TryConservative(IPredicate resPred, IPredicate resHier) {

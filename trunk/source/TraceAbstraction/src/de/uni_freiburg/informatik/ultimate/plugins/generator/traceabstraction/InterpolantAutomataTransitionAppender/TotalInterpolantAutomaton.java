@@ -17,23 +17,27 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Ret
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IHoareTripleChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
 
 public abstract class TotalInterpolantAutomaton extends
 		AbstractInterpolantAutomaton2 {
+	
+	protected final boolean m_OmitIntricatePredicates = true;
 
 	protected final IPredicate m_IaTrueState;
+	protected final PredicateUnifier m_PredicateUnifier;
 
 
 	public TotalInterpolantAutomaton(IUltimateServiceProvider services,
 			SmtManager smtManager, IHoareTripleChecker hoareTripleChecker,
 			INestedWordAutomaton<CodeBlock, IPredicate> abstraction,
-			IPredicate trueState,
-			IPredicate falseState,
+			PredicateUnifier predicateUnifier,
 			NestedWordAutomaton<CodeBlock, IPredicate> interpolantAutomaton,
 			Logger logger) {
 		super(services, smtManager, hoareTripleChecker, abstraction,
-				falseState, interpolantAutomaton, logger);
-		m_IaTrueState = trueState;
+				predicateUnifier.getFalsePredicate(), interpolantAutomaton, logger);
+		m_PredicateUnifier = predicateUnifier;
+		m_IaTrueState = predicateUnifier.getTruePredicate();
 	}
 
 	protected void computeSuccs(IPredicate resPred, IPredicate resHier, CodeBlock letter,
@@ -62,15 +66,37 @@ public abstract class TotalInterpolantAutomaton extends
 			sch.addTransition(resPred, resHier, letter, m_IaFalseState);
 			return;
 		} else {
-			Validity sat = sch.computeSuccWithSolver(resPred, resHier, letter, m_IaFalseState);
-			if (sat == Validity.VALID) {
-				sch.addTransition(resPred, resHier, letter, m_IaFalseState);
-				return;
+			if (m_OmitIntricatePredicates && !isIntricatePredecessor(resPred, resHier)) {
+				Validity sat = sch.computeSuccWithSolver(resPred, resHier, letter, m_IaFalseState);
+				if (sat == Validity.VALID) {
+					sch.addTransition(resPred, resHier, letter, m_IaFalseState);
+					return;
+				}
 			}
 		}
 		// check all other predicates
-		addOtherSuccessors(resPred, resHier, letter, sch, inputSuccs);
+		if (!m_OmitIntricatePredicates || !isIntricatePredecessor(resPred, resHier)) {
+			addOtherSuccessors(resPred, resHier, letter, sch, inputSuccs);
+		}
 		constructSuccessorsAndTransitions(resPred, resHier, letter, sch, inputSuccs);
+	}
+	
+	private boolean isIntricatePredecessor(IPredicate resPred, IPredicate resHier) {
+		if (resHier == null) {
+			return isIntricatePredicate(resPred);
+		} else {
+			return isIntricatePredicate(resPred) || isIntricatePredicate(resHier);
+		}
+	}
+	
+	protected boolean isIntricatePredicate(IPredicate pred) {
+		Validity equivalentToTrue = m_PredicateUnifier.getCoverageRelation().isCovered(m_IaTrueState, pred);
+		Validity equivalentToFalse = m_PredicateUnifier.getCoverageRelation().isCovered(pred, m_IaFalseState);
+		if (equivalentToTrue == Validity.UNKNOWN || equivalentToFalse == Validity.UNKNOWN) {
+			return true;
+		} else {
+			return false;
+		}
 	}
 	
 	

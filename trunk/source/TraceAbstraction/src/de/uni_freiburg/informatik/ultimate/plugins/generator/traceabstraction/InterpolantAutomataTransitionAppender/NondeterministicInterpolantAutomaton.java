@@ -34,8 +34,7 @@ public class NondeterministicInterpolantAutomaton extends TotalInterpolantAutoma
 			NestedWordAutomaton<CodeBlock, IPredicate> interpolantAutomaton, 
 			PredicateUnifier predicateUnifier, Logger  logger) {
 		super(services, smtManager, hoareTripleChecker, abstraction, 
-				predicateUnifier.getTruePredicate(), 
-				predicateUnifier.getFalsePredicate(), 
+				predicateUnifier, 
 				interpolantAutomaton, logger);
 		Collection<IPredicate> allPredicates = interpolantAutomaton.getStates(); 
 		
