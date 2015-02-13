@@ -17,8 +17,8 @@ public class LTLChecker extends AbstractEvaluationTestSuite {
 
 	@Override
 	protected void createTestCasesForReal(List<UltimateTestCase> testcases) {
-		addTestCasesFixed("LTLAutomizerC.xml", "LtlAutomizerC.epf", testcases);
-		addTestCasesFixed("LTLAutomizerC.xml", "LtlAutomizerC-NondetBuchi.epf", testcases);
+		addTestCasesFixed("LTLAutomizerC.xml", "ltlAutomizer/LtlAutomizerC.epf", testcases);
+//		addTestCasesFixed("LTLAutomizerC.xml", "ltlAutomizer/LtlAutomizerC-NondetBuchi.epf", testcases);
 //		addTestCasesFixed("LTL_BPP_C.xml", "LtlAutomizerC.epf", testcases);
 //		addTestCasesFixed("LtlSoftwareModelCheckingC.xml", "LtlSoftwareModelCheckingC-nosimpl.epf", testcases);
 	}

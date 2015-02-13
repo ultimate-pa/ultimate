@@ -1183,13 +1183,13 @@ public class CfgBuilder {
 			}
 
 			for (RCFGEdge transEdge : oldLocNode.getIncomingEdges()) {
-				newLocNode.addIncoming(transEdge);
 				transEdge.setTarget(newLocNode);
+				newLocNode.addIncoming(transEdge);
 			}
 			oldLocNode.clearIncoming();
 			for (RCFGEdge transEdge : oldLocNode.getOutgoingEdges()) {
-				newLocNode.addOutgoing(transEdge);
 				transEdge.setSource(newLocNode);
+				newLocNode.addOutgoing(transEdge);
 			}
 			oldLocNode.clearOutgoing();
 			if (oldLocNode.getBoogieASTNode() != null && oldLocNode.getBoogieASTNode().getLocation().isLoop()) {

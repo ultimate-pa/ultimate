@@ -128,6 +128,7 @@ public abstract class ModifiableExplicitEdgesMultigraph<V extends IModifiableExp
 	@Override
 	public boolean addOutgoing(E outgoing) {
 		if (outgoing != null) {
+			assert outgoing.getSource() == this;
 			return mOutgoingEdges.add(outgoing);
 		}
 		return false;
@@ -183,6 +184,7 @@ public abstract class ModifiableExplicitEdgesMultigraph<V extends IModifiableExp
 	@Override
 	public boolean addIncoming(E incoming) {
 		if (incoming != null) {
+			assert incoming.getTarget() == this;
 			return mIncomingEdges.add(incoming);
 		}
 		return false;

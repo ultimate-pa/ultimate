@@ -14,6 +14,7 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 	public static final String OPTIMIZE_SBE = "Use small block encoding for initial RCFG";
 	public static final String OPTIMIZE_MAXIMIZE_FINAL_STATES = "Maximize final states of the product";
 	public static final String OPTIMIZE_MINIMIZE_STATES = "Minimize states using the strategy";
+	public static final String OPTIMIZE_MINIMIZE_STATES_IGNORE_BLOWUP = "Minimize state even if more edges are added than removed.";
 	public static final String OPTIMIZE_REMOVE_INFEASIBLE_EDGES = "Remove infeasible edges from the product";
 	public static final String OPTIMIZE_SIMPLIFY_ASSUMES = "Simplify assume statements";
 	public static final String OPTIMIZE_UNTIL_FIXPOINT = "Apply product optimizations until nothing changes";
@@ -27,9 +28,11 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 
 				new UltimatePreferenceItem<String>("Product Optimizations", "", PreferenceType.Label),
 				new UltimatePreferenceItem<Boolean>(OPTIMIZE_MAXIMIZE_FINAL_STATES, true, PreferenceType.Boolean),
-				new UltimatePreferenceItem<MinimizeStates>(OPTIMIZE_MINIMIZE_STATES,
-						MinimizeStates.NONE, PreferenceType.Combo, MinimizeStates.values()),
-				new UltimatePreferenceItem<Boolean>(OPTIMIZE_REMOVE_INFEASIBLE_EDGES, false, PreferenceType.Boolean),
+				new UltimatePreferenceItem<MinimizeStates>(OPTIMIZE_MINIMIZE_STATES, MinimizeStates.MULTI,
+						PreferenceType.Combo, MinimizeStates.values()),
+				new UltimatePreferenceItem<Boolean>(OPTIMIZE_MINIMIZE_STATES_IGNORE_BLOWUP, false,
+						PreferenceType.Boolean),
+				new UltimatePreferenceItem<Boolean>(OPTIMIZE_REMOVE_INFEASIBLE_EDGES, true, PreferenceType.Boolean),
 				new UltimatePreferenceItem<Boolean>(OPTIMIZE_SIMPLIFY_ASSUMES, true, PreferenceType.Boolean),
 				new UltimatePreferenceItem<Boolean>(OPTIMIZE_UNTIL_FIXPOINT, true, PreferenceType.Boolean),
 				new UltimatePreferenceItem<Integer>(OPTIMIZE_MAX_ITERATIONS, 0, PreferenceType.Integer),
