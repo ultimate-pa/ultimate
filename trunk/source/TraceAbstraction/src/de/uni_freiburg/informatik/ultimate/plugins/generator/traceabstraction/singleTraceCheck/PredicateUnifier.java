@@ -1,6 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -78,8 +79,7 @@ public class PredicateUnifier {
 		} else {
 			m_FalsePredicate = falsePredicate;
 		}
-		declarePredicate(m_TruePredicate);
-		declarePredicate(m_FalsePredicate);
+		declareTruePredicateAndFalsePredicate();
 		for (IPredicate pred : initialPredicates) {
 			declarePredicate(pred);
 		}
@@ -91,6 +91,17 @@ public class PredicateUnifier {
 
 	public IPredicate getFalsePredicate() {
 		return m_FalsePredicate;
+	}
+	
+	private void declareTruePredicateAndFalsePredicate() {
+		HashMap<IPredicate, Validity> impliedByTrue = new HashMap<IPredicate, Validity>();
+		Map<IPredicate, Validity> expliedByTrue = Collections.emptyMap();
+		addNewPredicate(m_TruePredicate, impliedByTrue, expliedByTrue);
+		HashMap<IPredicate, Validity> impliedByFalse = new HashMap<IPredicate, Validity>();
+		impliedByFalse.put(m_TruePredicate, Validity.VALID);
+		Map<IPredicate, Validity> expliedByFalse = 
+				Collections.singletonMap(m_TruePredicate, Validity.INVALID);
+		addNewPredicate(m_FalsePredicate, impliedByFalse, expliedByFalse);
 	}
 
 
@@ -214,34 +225,30 @@ public class PredicateUnifier {
 	}
 
 	private IPredicate simplifyPredicate(Term term, Set<BoogieVar> vars, String[] procs) {
+		assert !SmtUtils.isTrue(term) : "illegal predicate: true";
+		assert !SmtUtils.isFalse(term) : "illegal predicate: false";
 		assert !m_Term2Predicates.containsKey(term);
 		IPredicate predicate;
-		if (equivalentToTrue(term)) {
-			Term trueTerm = m_SmtManager.getScript().term("true");
-			predicate = m_Term2Predicates.get(trueTerm);
-			if (predicate == null) {
-				predicate = m_SmtManager.newTruePredicate();
-			}
-			mLogger.warn("Interpolant was equivalent to true");
-		} else if (equivalentToFalse(term)) {
-			Term falseTerm = m_SmtManager.getScript().term("false");
-			predicate = m_Term2Predicates.get(falseTerm);
-			if (predicate == null) {
-				predicate = m_SmtManager.newFalsePredicate();
-			}
-			mLogger.warn("Interpolant was equivalent to false");
-		} else {
-			if (m_BringTermsToPositiveNormalForm) {
-				term = (new AffineSubtermNormalizer(m_SmtManager.getScript(), mLogger)).transform(term);
-			}
-			Term closedTerm = PredicateUtils.computeClosedFormula(term, vars, m_SmtManager.getScript());
-			predicate = m_SmtManager.newPredicate(term, procs, vars, closedTerm);
+		if (m_BringTermsToPositiveNormalForm) {
+			term = (new AffineSubtermNormalizer(m_SmtManager.getScript(), mLogger)).transform(term);
 		}
+		Term closedTerm = PredicateUtils.computeClosedFormula(term, vars, m_SmtManager.getScript());
+		predicate = m_SmtManager.newPredicate(term, procs, vars, closedTerm);
 		assert predicate != null;
 		return predicate;
 	}
 
-	private void addNewPredicate(IPredicate pred, Map<IPredicate, Validity> implied, Map<IPredicate, Validity> explied) {
+	/**
+	 * Add a new predicate. Uses the HashMap implied for its own data structure.
+	 * Hence you must not use this HashMap for other purposes.
+	 * @param pred
+	 * @param implied 
+	 * 	Set of pairs (p,val) such that val is the validity of the implication pred ==> p.
+	 * @param explied
+	 *  Set of pairs (p,val) such that val is the validity of the explication pred <== p.
+	 */
+	private void addNewPredicate(IPredicate pred, 
+			HashMap<IPredicate, Validity> implied, Map<IPredicate, Validity> explied) {
 		m_Term2Predicates.put(pred.getFormula(), pred);
 		m_CoverageRelation.addPredicate(pred, implied, explied);
 	}
@@ -378,10 +385,10 @@ public class PredicateUnifier {
 	}
 
 	public class CoverageRelation implements IPredicateCoverageChecker {
-		Map<IPredicate, Map<IPredicate, Validity>> m_Lhs2Rhs2lbool = new HashMap<IPredicate, Map<IPredicate, Validity>>();
+		Map<IPredicate, HashMap<IPredicate, Validity>> m_Lhs2Rhs2lbool = new HashMap<IPredicate, HashMap<IPredicate, Validity>>();
 
-		void addPredicate(IPredicate pred, Map<IPredicate, Validity> implied, Map<IPredicate, Validity> explied) {
-			for (Entry<IPredicate, Map<IPredicate, Validity>> entry : m_Lhs2Rhs2lbool.entrySet()) {
+		void addPredicate(IPredicate pred, HashMap<IPredicate, Validity> implied, Map<IPredicate, Validity> explied) {
+			for (Entry<IPredicate, HashMap<IPredicate, Validity>> entry : m_Lhs2Rhs2lbool.entrySet()) {
 				Validity lBool = explied.get(entry.getKey());
 				assert lBool != null;
 				entry.getValue().put(pred, lBool);
