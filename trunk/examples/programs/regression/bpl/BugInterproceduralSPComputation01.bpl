@@ -6,11 +6,11 @@ Author: musab@informatik.uni-freiburg.de
 */
 
 
-procedure p2(x: int) returns (res: int);
+procedure proc() returns (res: int);
 
-implementation p2(x : int) returns (res: int)
+implementation proc() returns (res: int)
 {
-  res := x;
+  res := 0;
   return;
 }
 
@@ -20,10 +20,8 @@ procedure Main() returns ();
 implementation Main() returns ()
 {
   var z : int;
-  var y : int;
-  y := 0;
-  call z := p2(y);
-  assert(z >= 0);
+  call z := proc();
+  assert(z == 0);
 }
 
 
