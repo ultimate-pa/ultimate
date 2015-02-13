@@ -15,6 +15,8 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 	public static final String LABEL_TOOLARGUMENT = "Command line string ($1 will be replaced with the property)";
 	public static final String LABEL_PROPERTYFROMFILE = "Read property from file";
 	public static final String LABEL_PPROPERTY = "Property to check";
+	public static final String LABEL_OPTIMIZE_SBE = "Use small block encoding";
+	public static final String LABEL_OPTIMIZE_REWRITEASSUME = "Rewrite not equals during small block encoding";
 
 	/*
 	 * default values for the different preferences
@@ -31,7 +33,9 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 				new UltimatePreferenceItem<String>(LABEL_TOOLARGUMENT, DEF_TOOLARGUMENT, PreferenceType.String),
 				new UltimatePreferenceItem<Boolean>(LABEL_PROPERTYFROMFILE, DEF_PROPERTYFROMFILE,
 						PreferenceType.Boolean),
-				new UltimatePreferenceItem<String>(LABEL_PPROPERTY, DEF_PPROPERTY, PreferenceType.MultilineString) };
+				new UltimatePreferenceItem<String>(LABEL_PPROPERTY, DEF_PPROPERTY, PreferenceType.MultilineString),
+				new UltimatePreferenceItem<Boolean>(LABEL_OPTIMIZE_SBE, true, PreferenceType.Boolean),
+				new UltimatePreferenceItem<Boolean>(LABEL_OPTIMIZE_REWRITEASSUME, false, PreferenceType.Boolean), };
 	}
 
 	@Override

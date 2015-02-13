@@ -6,6 +6,9 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 
+import de.uni_freiburg.informatik.ultimate.buchiprogramproduct.Activator;
+import de.uni_freiburg.informatik.ultimate.buchiprogramproduct.preferences.PreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
@@ -14,18 +17,16 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.output.BoogiePrettyPrint
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.normalforms.BoogieConditionWrapper;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.normalforms.ConditionTransformer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ParallelComposition;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence.Origin;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.RCFGEdgeVisitor;
 
 public class AssumeMerger extends BaseProductOptimizer {
 
 	private int mAssumesMerged;
+	private boolean mRewriteNotEquals;
 
 	public AssumeMerger(RootNode product, IUltimateServiceProvider services) {
 		super(product, services);
@@ -35,6 +36,8 @@ public class AssumeMerger extends BaseProductOptimizer {
 	@Override
 	protected void init(RootNode root, IUltimateServiceProvider services) {
 		mAssumesMerged = 0;
+		mRewriteNotEquals = new UltimatePreferenceStore(Activator.PLUGIN_ID)
+				.getBoolean(PreferenceInitializer.OPTIMIZE_SIMPLIFY_ASSUMES_REWRITENOTEQUALS);
 	}
 
 	@Override
@@ -60,7 +63,7 @@ public class AssumeMerger extends BaseProductOptimizer {
 	}
 
 	private void mergeEdge(RootNode root, CodeBlock current) {
-		List<Statement> stmts = new StatementExtractor().process(current);
+		List<Statement> stmts = new StatementExtractor(mLogger).process(current);
 		if (stmts.size() < 2) {
 			// there is nothing to merge here
 			return;
@@ -114,7 +117,12 @@ public class AssumeMerger extends BaseProductOptimizer {
 			assert newStmts.size() == 1;
 			AssumeStatement stmt = (AssumeStatement) newStmts.get(0);
 			ConditionTransformer<Expression> ct = new ConditionTransformer<>(new BoogieConditionWrapper());
-			Collection<Expression> disjuncts = ct.toDnfDisjuncts(ct.rewriteNotEquals(stmt.getFormula()));
+
+			Expression formula = stmt.getFormula();
+			if (mRewriteNotEquals) {
+				formula = ct.rewriteNotEquals(formula);
+			}
+			Collection<Expression> disjuncts = ct.toDnfDisjuncts(formula);
 			if (disjuncts.size() > 1) {
 				// yes we can
 				for (Expression disjunct : disjuncts) {
@@ -192,39 +200,4 @@ public class AssumeMerger extends BaseProductOptimizer {
 	public boolean IsGraphChanged() {
 		return mAssumesMerged > 0;
 	}
-
-	private class StatementExtractor extends RCFGEdgeVisitor {
-
-		private List<Statement> mStatements;
-		private boolean mHasSummary;
-
-		private List<Statement> process(RCFGEdge edge) {
-			mStatements = new ArrayList<>();
-			mHasSummary = false;
-			visit(edge);
-			if (mHasSummary) {
-				mLogger.debug(edge + " contains summaries, skipping...");
-				return new ArrayList<>();
-			}
-			return mStatements;
-		}
-
-		@Override
-		protected void visit(ParallelComposition c) {
-			throw new UnsupportedOperationException("Cannot merge ParallelComposition");
-		}
-
-		@Override
-		protected void visit(StatementSequence c) {
-			mStatements.addAll(c.getStatements());
-			super.visit(c);
-		}
-
-		@Override
-		protected void visit(Summary c) {
-			mHasSummary = true;
-			super.visit(c);
-		}
-	}
-
 }

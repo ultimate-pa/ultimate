@@ -26,7 +26,7 @@ public abstract class BaseMinimizeStates extends BaseProductOptimizer {
 	public BaseMinimizeStates(RootNode product, IUltimateServiceProvider services) {
 		super(product, services);
 		mLogger.info("Removed " + mRemovedEdges + " edges and " + mRemovedLocations
-				+ " locations and replaced them with sequential compositions");
+				+ " locations");
 	}
 
 	@Override
@@ -38,30 +38,29 @@ public abstract class BaseMinimizeStates extends BaseProductOptimizer {
 
 	@Override
 	protected RootNode process(RootNode root) {
-		ArrayDeque<RCFGEdge> edges = new ArrayDeque<>();
-		HashSet<RCFGEdge> closed = new HashSet<>();
+		ArrayDeque<RCFGNode> nodes = new ArrayDeque<>();
+		HashSet<RCFGNode> closed = new HashSet<>();
 
-		edges.addAll(root.getOutgoingEdges());
+		nodes.addAll(root.getOutgoingNodes());
 
-		while (!edges.isEmpty()) {
-			RCFGEdge current = edges.removeFirst();
+		while (!nodes.isEmpty()) {
+			RCFGNode current = nodes.removeFirst();
 			if (closed.contains(current)) {
-				continue;
-			} else if (current.getTarget() == null || current.getSource() == null) {
-				// disconnected edges could remain in the queue if they were
-				// inserted previously
 				continue;
 			}
 			closed.add(current);
 			if (mLogger.isDebugEnabled()) {
-				mLogger.debug("Processing edge " + current.hashCode());
-				mLogger.debug("    " + current);
+				mLogger.debug("Processing node " + current + " [" + current.hashCode() + "]");
 			}
-			ProgramPoint target = (ProgramPoint) current.getTarget();
-			if (current instanceof RootEdge) {
-				edges.addAll(current.getTarget().getOutgoingEdges());
+			if (current.getIncomingEdges().size() == 1 && current.getIncomingEdges().get(0) instanceof RootEdge) {
+				nodes.addAll(current.getOutgoingNodes());
 			} else {
-				edges.addAll(processCandidate(root, target));
+				Collection<? extends RCFGEdge> edges = processCandidate(root, (ProgramPoint) current);
+				for (RCFGEdge edge : edges) {
+					if (!closed.contains(edge.getTarget())) {
+						nodes.add(edge.getTarget());
+					}
+				}
 			}
 		}
 		if (mRemovedEdges > 0) {
@@ -113,13 +112,13 @@ public abstract class BaseMinimizeStates extends BaseProductOptimizer {
 
 	protected boolean checkAllNodes(List<RCFGNode> predNodes, List<RCFGNode> succNodes) {
 		for (RCFGNode predNode : predNodes) {
-			if(BuchiProgramAcceptingStateAnnotation.getAnnotation(predNode) == null){
+			if (BuchiProgramAcceptingStateAnnotation.getAnnotation(predNode) == null) {
 				return false;
 			}
 		}
-		
+
 		for (RCFGNode succNode : succNodes) {
-			if(BuchiProgramAcceptingStateAnnotation.getAnnotation(succNode) == null){
+			if (BuchiProgramAcceptingStateAnnotation.getAnnotation(succNode) == null) {
 				return false;
 			}
 		}

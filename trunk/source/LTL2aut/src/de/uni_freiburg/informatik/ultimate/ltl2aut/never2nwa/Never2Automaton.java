@@ -2,6 +2,7 @@ package de.uni_freiburg.informatik.ultimate.ltl2aut.never2nwa;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -11,6 +12,7 @@ import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
+import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.ltl2aut.ast.AstNode;
 import de.uni_freiburg.informatik.ultimate.ltl2aut.ast.BinaryOperator;
@@ -22,6 +24,7 @@ import de.uni_freiburg.informatik.ultimate.ltl2aut.ast.Name;
 import de.uni_freiburg.informatik.ultimate.ltl2aut.ast.Not;
 import de.uni_freiburg.informatik.ultimate.ltl2aut.ast.OptionStatement;
 import de.uni_freiburg.informatik.ultimate.ltl2aut.ast.SkipStatement;
+import de.uni_freiburg.informatik.ultimate.ltl2aut.preferences.PreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BooleanLiteral;
@@ -54,6 +57,9 @@ public class Never2Automaton {
 
 	private NestedWordAutomaton<CodeBlock, String> mAutomaton;
 
+	private final boolean mUseSBE;
+	private final boolean mRewriteAssumeDuringSBE;
+
 	/**
 	 * The Never2Automaton instance will build a Büchi automaton from the input.
 	 * 
@@ -68,6 +74,11 @@ public class Never2Automaton {
 		mLogger = logger;
 		mNeverClaim = ast;
 		mIRS = irs;
+
+		UltimatePreferenceStore ups = new UltimatePreferenceStore(
+				de.uni_freiburg.informatik.ultimate.ltl2aut.Activator.PLUGIN_ID);
+		mUseSBE = ups.getBoolean(PreferenceInitializer.LABEL_OPTIMIZE_SBE);
+		mRewriteAssumeDuringSBE = ups.getBoolean(PreferenceInitializer.LABEL_OPTIMIZE_REWRITEASSUME);
 
 		mAutomaton = new NestedWordAutomaton<CodeBlock, String>(m_Services, collectAlphabet(), null, // call
 				null, // return
@@ -203,7 +214,7 @@ public class Never2Automaton {
 		}
 
 		ILocation loc = checkExpr.getExpression().getLocation();
-		for (Expression expr : toDNF(checkExpr.getExpression())) {
+		for (Expression expr : simplify(checkExpr.getExpression())) {
 			List<Statement> stmts = new ArrayList<>(preStmts);
 			stmts.add(new AssumeStatement(loc, expr));
 			rtr.add(new StatementSequence(null, null, stmts, Origin.ASSERT, mLogger));
@@ -211,10 +222,16 @@ public class Never2Automaton {
 		return rtr;
 	}
 
-	private Collection<Expression> toDNF(Expression expr) {
-		ConditionTransformer<Expression> ct = new ConditionTransformer<>(new BoogieConditionWrapper());
-		expr = ct.rewriteNotEquals(expr);
-		return ct.toDnfDisjuncts(expr);
+	private Collection<Expression> simplify(Expression expr) {
+		if (mUseSBE) {
+			ConditionTransformer<Expression> ct = new ConditionTransformer<>(new BoogieConditionWrapper());
+			if (mRewriteAssumeDuringSBE) {
+				expr = ct.rewriteNotEquals(expr);
+			}
+			return ct.toDnfDisjuncts(expr);
+		} else {
+			return Collections.singleton(expr);
+		}
 	}
 
 	/**

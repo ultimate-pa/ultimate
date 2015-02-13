@@ -2,16 +2,19 @@ package de.uni_freiburg.informatik.ultimate.buchiprogramproduct.optimizeproduct;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.SequentialComposition;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence.Origin;
 
 /**
  * Most aggressive minimization. Tries to remove states no matter what.
@@ -63,7 +66,12 @@ public class MinimizeStatesMultiEdgeMultiNode extends BaseMinimizeStates {
 		// SequentialComposition disconnects the edges and we wont get their
 		// source/target information afterwards)
 		ArrayList<EdgeConstructionInfo> infos = new ArrayList<>();
-		for (RCFGEdge predEdge : predEdges) {
+		StatementExtractor extractor = new StatementExtractor(mLogger);
+
+		Iterator<RCFGEdge> predIter = predEdges.iterator();
+		while (predIter.hasNext()) {
+			RCFGEdge predEdge = predIter.next();
+
 			CodeBlock predCB = (CodeBlock) predEdge;
 			if (predCB.getTransitionFormula().isInfeasible() == Infeasibility.INFEASIBLE) {
 				if (mLogger.isDebugEnabled()) {
@@ -71,7 +79,19 @@ public class MinimizeStatesMultiEdgeMultiNode extends BaseMinimizeStates {
 				}
 				continue;
 			}
-			for (RCFGEdge succEdge : succEdges) {
+			List<Statement> first = extractor.process(predCB);
+			if (extractor.hasSummary()) {
+				// we cannot remove or use this edge, it is a summary
+				predIter.remove();
+				if (mLogger.isDebugEnabled()) {
+					mLogger.debug("    skipping because it contains summaries: " + predCB);
+				}
+				continue;
+			}
+
+			Iterator<RCFGEdge> succIter = succEdges.iterator();
+			while (succIter.hasNext()) {
+				RCFGEdge succEdge = succIter.next();
 				CodeBlock succCB = (CodeBlock) succEdge;
 
 				if (succCB.getTransitionFormula().isInfeasible() == Infeasibility.INFEASIBLE) {
@@ -80,8 +100,20 @@ public class MinimizeStatesMultiEdgeMultiNode extends BaseMinimizeStates {
 					}
 					continue;
 				}
+
+				List<Statement> second = extractor.process(succCB);
+				if (extractor.hasSummary()) {
+					// we cannot remove or use this edge, it is a summary
+					succIter.remove();
+					if (mLogger.isDebugEnabled()) {
+						mLogger.debug("    skipping because it contains summaries: " + succCB);
+					}
+					continue;
+				}
+
 				infos.add(new EdgeConstructionInfo((ProgramPoint) predEdge.getSource(), (ProgramPoint) succEdge
-						.getTarget(), predCB, succCB));
+						.getTarget(), first, second));
+
 			}
 		}
 
@@ -97,12 +129,10 @@ public class MinimizeStatesMultiEdgeMultiNode extends BaseMinimizeStates {
 
 		ArrayList<RCFGEdge> rtr = new ArrayList<>();
 		for (EdgeConstructionInfo info : infos) {
-			SequentialComposition sc = new SequentialComposition(info.getSource(), info.getTarget(), root
-					.getRootAnnot().getBoogie2SMT(), root.getRootAnnot().getModGlobVarManager(), false, false,
-					mServices, new CodeBlock[] { info.getFirst(), info.getSecond() });
-			assert sc.getTarget() != null;
-			assert sc.getSource() != null;
-			rtr.add(sc);
+			StatementSequence ss = new StatementSequence(info.getSource(), info.getTarget(), info.getStatements(),
+					Origin.IMPLEMENTATION, mLogger);
+			generateTransFormula(root, ss);
+			rtr.add(ss);
 		}
 
 		if (mLogger.isDebugEnabled()) {
@@ -123,15 +153,15 @@ public class MinimizeStatesMultiEdgeMultiNode extends BaseMinimizeStates {
 			return mTarget;
 		}
 
-		CodeBlock getFirst() {
-			return mFirst;
+		List<Statement> getStatements() {
+			ArrayList<Statement> rtr = new ArrayList<>();
+			rtr.addAll(mFirst);
+			rtr.addAll(mSecond);
+			return rtr;
 		}
 
-		CodeBlock getSecond() {
-			return mSecond;
-		}
-
-		public EdgeConstructionInfo(ProgramPoint source, ProgramPoint target, CodeBlock first, CodeBlock second) {
+		public EdgeConstructionInfo(ProgramPoint source, ProgramPoint target, List<Statement> first,
+				List<Statement> second) {
 			this.mSource = source;
 			this.mTarget = target;
 			this.mFirst = first;
@@ -140,8 +170,8 @@ public class MinimizeStatesMultiEdgeMultiNode extends BaseMinimizeStates {
 
 		ProgramPoint mSource;
 		ProgramPoint mTarget;
-		CodeBlock mFirst;
-		CodeBlock mSecond;
+		List<Statement> mFirst;
+		List<Statement> mSecond;
 	}
 
 }

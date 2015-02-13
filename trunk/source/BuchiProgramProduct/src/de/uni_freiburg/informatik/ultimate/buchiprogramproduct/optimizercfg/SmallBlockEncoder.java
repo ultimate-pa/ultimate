@@ -7,7 +7,10 @@ import java.util.HashSet;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.access.BaseObserver;
+import de.uni_freiburg.informatik.ultimate.buchiprogramproduct.Activator;
 import de.uni_freiburg.informatik.ultimate.buchiprogramproduct.ProductBacktranslator;
+import de.uni_freiburg.informatik.ultimate.buchiprogramproduct.preferences.PreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
@@ -38,10 +41,13 @@ public class SmallBlockEncoder extends BaseObserver {
 
 	private final Logger mLogger;
 	private final ProductBacktranslator mBacktranslator;
+	private final boolean mRewriteAssumes;
 
 	public SmallBlockEncoder(Logger logger, ProductBacktranslator backtranslator) {
 		mLogger = logger;
 		mBacktranslator = backtranslator;
+		mRewriteAssumes = new UltimatePreferenceStore(Activator.PLUGIN_ID)
+				.getBoolean(PreferenceInitializer.OPTIMIZE_SBE_REWRITENOTEQUALS);
 	}
 
 	@Override
@@ -80,10 +86,16 @@ public class SmallBlockEncoder extends BaseObserver {
 					Statement stmt = ss.getStatements().get(0);
 					if (stmt instanceof AssumeStatement) {
 						AssumeStatement assume = (AssumeStatement) stmt;
-						Expression expr = ct.rewriteNotEquals(assume.getFormula());
+						Expression expr = assume.getFormula();
+						if (mRewriteAssumes) {
+							expr = ct.rewriteNotEquals(expr);
+						}
+
 						if (mLogger.isDebugEnabled()) {
 							mLogger.debug("    has assume " + BoogiePrettyPrinter.print(assume.getFormula()));
-							mLogger.debug("    after rewrite " + BoogiePrettyPrinter.print(expr));
+							if (mRewriteAssumes) {
+								mLogger.debug("    after rewrite " + BoogiePrettyPrinter.print(expr));
+							}
 						}
 						Collection<Expression> disjuncts = ct.toDnfDisjuncts(expr);
 						if (mLogger.isDebugEnabled()) {
