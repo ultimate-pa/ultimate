@@ -1,6 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -13,6 +14,7 @@ import org.apache.log4j.Logger;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.AnnotatedTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
+import de.uni_freiburg.informatik.ultimate.logic.CheckClosedTerm;
 import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -192,52 +194,44 @@ public class PredicateUnifier {
 		if (p != null) {
 			return p;
 		}
-		Term simplifiedTerm = SmtUtils.simplify(m_SmtManager.getScript(), term, mServices); 
 		final IPredicate result;
-		if (simplifiedTerm == term) {
-			// no simplification possible
-			result = simplifyPredicate(term, vars, procs);
-		} else {
-			if (m_Term2Predicates.containsKey(simplifiedTerm)) {
-				// this case can occur only if theorem prover says UNKNOWN
-				// on equivalence checks
-				result = m_Term2Predicates.get(simplifiedTerm);
-			} else {
-				HashSet<TermVariable> tvs = new HashSet<TermVariable>();
-				for (TermVariable tv : simplifiedTerm.getFreeVars()) {
-					tvs.add(tv);
-				}
-				Set<BoogieVar> newVars = new HashSet<BoogieVar>();
-				Set<String> newProcs = new HashSet<String>();
-				for (BoogieVar bv : vars) {
-					if (tvs.contains(bv.getTermVariable())) {
-						newVars.add(bv);
-						if (bv.getProcedure() != null) {
-							newProcs.add(bv.getProcedure());
-						}
-					}
-				}
-				result = simplifyPredicate(simplifiedTerm, newVars, newProcs.toArray(new String[0]));
-			}
-		}
-		addNewPredicate(result, impliedPredicates, expliedPredicates);
-		return result;
-	}
-
-	private IPredicate simplifyPredicate(Term term, Set<BoogieVar> vars, String[] procs) {
 		assert !SmtUtils.isTrue(term) : "illegal predicate: true";
 		assert !SmtUtils.isFalse(term) : "illegal predicate: false";
 		assert !m_Term2Predicates.containsKey(term);
-		IPredicate predicate;
-		if (m_BringTermsToPositiveNormalForm) {
-			term = (new AffineSubtermNormalizer(m_SmtManager.getScript(), mLogger)).transform(term);
+		Term simplifiedTerm = term;
+		if (true) {
+			simplifiedTerm = SmtUtils.simplify(m_SmtManager.getScript(), term, mServices);
 		}
-		Term closedTerm = PredicateUtils.computeClosedFormula(term, vars, m_SmtManager.getScript());
-		predicate = m_SmtManager.newPredicate(term, procs, vars, closedTerm);
-		assert predicate != null;
-		return predicate;
+		if (m_BringTermsToPositiveNormalForm) {
+			simplifiedTerm = (new AffineSubtermNormalizer(m_SmtManager.getScript(), mLogger)).transform(term);
+		}
+		Term closedTerm = PredicateUtils.computeClosedFormula(simplifiedTerm, vars, m_SmtManager.getScript());
+		if (simplifiedTerm == term) {
+			result = m_SmtManager.newPredicate(term, procs, vars, closedTerm);
+		} else {
+			Set<TermVariable> tvs = new HashSet<TermVariable>(
+					Arrays.asList(simplifiedTerm.getFreeVars()));
+			Set<BoogieVar> newVars = new HashSet<BoogieVar>();
+			Set<String> newProcs = new HashSet<String>();
+			for (BoogieVar bv : vars) {
+				if (tvs.contains(bv.getTermVariable())) {
+					newVars.add(bv);
+					if (bv.getProcedure() != null) {
+						newProcs.add(bv.getProcedure());
+					}
+				}
+			}
+			result = m_SmtManager.newPredicate(simplifiedTerm, 
+					newProcs.toArray(new String[newProcs.size()]), 
+					newVars, closedTerm);
+		}
+		addNewPredicate(result, impliedPredicates, expliedPredicates);
+		assert new CheckClosedTerm().isClosed(result.getClosedFormula());
+		assert varsIsSupersetOfFreeTermVariables(result.getFormula(), result.getVars());
+		return result;
 	}
 
+	
 	/**
 	 * Add a new predicate. Uses the HashMap implied for its own data structure.
 	 * Hence you must not use this HashMap for other purposes.
