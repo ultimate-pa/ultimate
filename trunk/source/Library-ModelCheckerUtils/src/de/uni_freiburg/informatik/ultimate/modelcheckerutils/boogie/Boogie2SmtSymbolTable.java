@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
+import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -72,18 +73,25 @@ public class Boogie2SmtSymbolTable {
 		m_TypeSortTranslator = typeSortTranslator;
 		m_BoogieDeclarations = boogieDeclarations;
 		
+		m_Script.echo(new QuotedObject("Start declaration of constants"));
 		for (ConstDeclaration decl : m_BoogieDeclarations.getConstDeclarations()) {
 			declareConstants(decl);
 		}
+		m_Script.echo(new QuotedObject("Finished declaration of constants"));
 		
+		m_Script.echo(new QuotedObject("Start declaration of functions"));
 		for (FunctionDeclaration decl : m_BoogieDeclarations.getFunctionDeclarations()) {
 			declareFunction(decl);
 		}
+		m_Script.echo(new QuotedObject("Finished declaration of functions"));
 		
+		m_Script.echo(new QuotedObject("Start declaration of global variables"));
 		for (VariableDeclaration decl : m_BoogieDeclarations.getGlobalVarDeclarations()) {
 			declareGlobalVariables(decl);
 		}
+		m_Script.echo(new QuotedObject("Finished declaration global variables"));
 		
+		m_Script.echo(new QuotedObject("Start declaration of local variables"));
 		for (String procId : m_BoogieDeclarations.getProcSpecification().keySet()) {
 			Procedure procSpec = m_BoogieDeclarations.getProcSpecification().get(procId);
 			Procedure procImpl = m_BoogieDeclarations.getProcImplementation().get(procId);
@@ -93,6 +101,7 @@ public class Boogie2SmtSymbolTable {
 				declareSpecImpl(procSpec, procImpl);
 			}
 		}
+		m_Script.echo(new QuotedObject("Finished declaration local variables"));
 	}
 
 	private void putNew(String procId, String varId, BoogieVar bv, Map<String, Map<String, BoogieVar>> map) {
