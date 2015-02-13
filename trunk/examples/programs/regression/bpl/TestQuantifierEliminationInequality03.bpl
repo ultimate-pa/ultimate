@@ -9,7 +9,6 @@ var upper, lower, x, a,b,c: int;
 
 
 procedure proc() returns ()
-modifies a, b;
 {
   assume upper >= x;
   assume x >= lower;
@@ -23,11 +22,7 @@ modifies a, b;
   while (*) {
     //prevent large block encoding
   }
-//   a := a+1;
-//   b := b+1;
   assert upper >= lower + 2;
-
-
 }
 
 

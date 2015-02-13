@@ -10,7 +10,7 @@
  *
  */
 
-procedure SAS09paper(z: int)
+procedure SAS09paper()
 {
   var x, y: int;
 

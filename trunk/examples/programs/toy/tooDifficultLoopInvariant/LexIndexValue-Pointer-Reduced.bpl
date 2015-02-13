@@ -11,12 +11,10 @@ implementation main() returns ()
   var offset, length: int;
   offset := 0;
   length := 1048;
-  while (offset < 1048)
+  while (offset < length)
   {
-    assert offset % 4 == 0;
-    assert 4 + offset <= 1048;
+    assert 4 + offset <= length;
     offset := offset + 4;
-    assert offset % 4 == 0;
   }
 }
 
