@@ -28,18 +28,18 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 	protected UltimatePreferenceItem<?>[] initDefaultPreferences() {
 		return new UltimatePreferenceItem<?>[] {
 				new UltimatePreferenceItem<String>("RCFG Optimizations", "", PreferenceType.Label),
-				new UltimatePreferenceItem<Boolean>(OPTIMIZE_SBE, true, PreferenceType.Boolean),
+				new UltimatePreferenceItem<Boolean>(OPTIMIZE_SBE, false, PreferenceType.Boolean),
 				new UltimatePreferenceItem<Boolean>(OPTIMIZE_SBE_REWRITENOTEQUALS, false, PreferenceType.Boolean),
 
 				new UltimatePreferenceItem<String>("Product Optimizations", "", PreferenceType.Label),
 				new UltimatePreferenceItem<Boolean>(OPTIMIZE_MAXIMIZE_FINAL_STATES, true, PreferenceType.Boolean),
-				new UltimatePreferenceItem<MinimizeStates>(OPTIMIZE_MINIMIZE_STATES, MinimizeStates.SINGLE_NODE_MULTI_EDGE,
+				new UltimatePreferenceItem<MinimizeStates>(OPTIMIZE_MINIMIZE_STATES, MinimizeStates.MULTI,
 						PreferenceType.Combo, MinimizeStates.values()),
-				new UltimatePreferenceItem<Boolean>(OPTIMIZE_MINIMIZE_STATES_IGNORE_BLOWUP, true,
+				new UltimatePreferenceItem<Boolean>(OPTIMIZE_MINIMIZE_STATES_IGNORE_BLOWUP, false,
 						PreferenceType.Boolean),
 				new UltimatePreferenceItem<Boolean>(OPTIMIZE_REMOVE_INFEASIBLE_EDGES, true, PreferenceType.Boolean),
 				new UltimatePreferenceItem<Boolean>(OPTIMIZE_REMOVE_SINK_STATES, true, PreferenceType.Boolean),
-				new UltimatePreferenceItem<Boolean>(OPTIMIZE_SIMPLIFY_ASSUMES, true, PreferenceType.Boolean),
+				new UltimatePreferenceItem<Boolean>(OPTIMIZE_SIMPLIFY_ASSUMES, false, PreferenceType.Boolean),
 				new UltimatePreferenceItem<Boolean>(OPTIMIZE_SIMPLIFY_ASSUMES_SBE, false, PreferenceType.Boolean),
 				new UltimatePreferenceItem<Boolean>(OPTIMIZE_SIMPLIFY_ASSUMES_REWRITENOTEQUALS, false,
 						PreferenceType.Boolean),
