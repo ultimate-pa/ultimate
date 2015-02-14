@@ -18,9 +18,11 @@ public class LTLChecker extends AbstractEvaluationTestSuite {
 	@Override
 	protected void createTestCasesForReal(List<UltimateTestCase> testcases) {
 		addTestCasesFixed("LTLAutomizerC.xml", "ltlAutomizer/LtlAutomizerC.epf", testcases);
+//		addTestCasesFixed("LTLAutomizerC.xml", "ltlAutomizer/LtlAutomizerC-SBE.epf", testcases);
+		addTestCasesFixed("LTLAutomizerC.xml", "ltlAutomizer/LtlAutomizerC-SBE+SimplifyAssumesSBE.epf", testcases);
+
 //		addTestCasesFixed("LTLAutomizerC.xml", "ltlAutomizer/LtlAutomizerC-NondetBuchi.epf", testcases);
-//		addTestCasesFixed("LTL_BPP_C.xml", "LtlAutomizerC.epf", testcases);
-//		addTestCasesFixed("LtlSoftwareModelCheckingC.xml", "LtlSoftwareModelCheckingC-nosimpl.epf", testcases);
+
 	}
 
 	@Override
@@ -32,15 +34,15 @@ public class LTLChecker extends AbstractEvaluationTestSuite {
 	protected String[] getDirectories() {
 		// @formatter:off
 		return new String[] { 
-				"examples/LTL/rers2012/P14/",
-				"examples/LTL/rers2012correctencoding/P14/",
+//				"examples/LTL/rers2012/P14/",
+//				"examples/LTL/rers2012correctencoding/P14/",
 //				"examples/LTL/rers2012/P15/",
 //				"examples/LTL/rers2012/P16/",
 //				"examples/LTL/rers2012/P17/",
 //				"examples/LTL/rers2012/P18/",
 //				"examples/LTL/rers2012/P19/",
-//				"examples/LTL/coolant/",
-//				"examples/LTL/koskinen/ltlcmodelchecker-benchmarks/",
+				"examples/LTL/coolant/",
+				"examples/LTL/koskinen/ltlcmodelchecker-benchmarks/",
 //				"examples/LTL/bugs/",
 //				"examples/LTL/bugs/Bug_AssumeFalse.c",
 				

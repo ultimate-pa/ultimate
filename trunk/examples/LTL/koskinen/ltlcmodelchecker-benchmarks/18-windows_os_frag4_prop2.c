@@ -1,28 +1,21 @@
 //#Safe
-//
-// ****************************************************
-//
-//     Making Prophecies with Decision Predicates
-//
-//              Byron Cook * Eric Koskinen
-//                     July 2010
-//
-// ****************************************************
+//@ ltl invariant positive: <>AP(phi_io_compl == 1) || <>AP(phi_nSUC_ret == 1);
 
-// Benchmark: win4.c
-// Property: G(keA => F keR)
-//
-// Remarks by DD:
-// - In the paper, the first property is G(p ==> Fq) and the second is (Fa) || (Fb)
-// - I have no idea what the second property should be.
-// - Eric said AF(phi_io_compl==1) \/ AF(phi_nSUC_ret)
+#include "../ctl.h"
 
-//@ ltl invariant positive: <>AP(phi_io_compl==1) || <>AP(phi_nSUC_ret == 1);
+// gcc diag.c 2>&1 | grep referen | perl -p -e 's/^  "_/int /; s/",.*$/() { }/'
 
+/*
+prove that either IoCompleteRequest
+is called, or a value other than STATUS_SUCCESS is returned.
+*/
+
+// comes from /cygdrive/c/slam/wdk/src_5043/wdm/1394/driver/1394diag
 
 extern void __VERIFIER_error() __attribute__ ((__noreturn__));
 extern void __VERIFIER_assume() __attribute__ ((__noreturn__));
 extern int __VERIFIER_nondet_int() __attribute__ ((__noreturn__));
+
 
 #define NTSTATUS int
 #define PIRP int
@@ -137,9 +130,23 @@ PDRIVER_CANCEL  prevCancel;
 
 
 int keA; int keR; int ioA; int ioR;
+int phi_nSUC_ret; int phi_io_compl;
 
-  keA = 0;
-  keR = 0;
+unsigned int pc;
+// AG(A => AF(R)
+//int __phi() { return CAG(COR(  CAF(CAP(keR == 1)), CAP(keA != 1) )); }
+//int __phi() { return CAG(COR(  CAF(CAP(ioR == 1)), CAP(ioA != 1) )); }
+/* prove that either IoCompleteRequest is called, 
+   or a value other than STATUS_SUCCESS is returned. */
+/*int __phi() { return COR(
+			 CAF(CAP(phi_io_compl == 1)),
+			 CAF(CAP(phi_nSUC_ret  == 1))); }*/
+
+
+  keA = keR = ioA = ioR = 0;
+  phi_nSUC_ret = 0; 
+  phi_io_compl = 0;
+
 
 void KeAcquireSpinLock(int * lp, int * ip) { keA = 1; keA = 0;
    (*lp) = 1;
@@ -175,7 +182,7 @@ int IoSetCancelRoutine(int a) { }
 int ExFreePool0() { }
 int ExFreePool1(int a) { }
 int ExFreePool2(int a, int b) { }
-int IoCompleteRequest(int a) { }
+int IoCompleteRequest(int a) { phi_io_compl = 1; }
 
 int main() {
    if (__VERIFIER_nondet_int()) {
@@ -188,7 +195,7 @@ int main() {
 
 
    // lets free up any crom data structs we've allocated...
-   keA = 1; keA = 0; KeAcquireSpinLock(&lock3, &Irql);
+   KeAcquireSpinLock(&lock3, &Irql);
 
    k1 = __VERIFIER_nondet_int();
    while (k1>0) {
@@ -212,9 +219,9 @@ int main() {
        }
    }
 
-   keR = 1; keR = 0; KeReleaseSpinLock(&lock3, Irql);
+   KeReleaseSpinLock(&lock3, Irql);
 
-   keA = 1; keA = 0; KeAcquireSpinLock(&lock1, &Irql);
+   KeAcquireSpinLock(&lock1, &Irql);
 
    k2 = __VERIFIER_nondet_int();
    while (k2>0) {
@@ -239,12 +246,12 @@ int main() {
            ExFreePool0();
    }
 
-   keR = 1; keR = 0; KeReleaseSpinLock(&lock1, Irql);
+   KeReleaseSpinLock(&lock1, Irql);
 
    // free up any attached isoch buffers
    while (TRUE) {
 
-       keA = 1; keA = 0; KeAcquireSpinLock(&lock4, &Irql);
+       KeAcquireSpinLock(&lock4, &Irql);
 
        k3 = __VERIFIER_nondet_int();
        if (k3>0) {
@@ -257,14 +264,14 @@ int main() {
 
 
            KeCancelTimer();
-           keR = 1; keR = 0; KeReleaseSpinLock(&lock4, Irql);
+           KeReleaseSpinLock(&lock4, Irql);
 
 
            t1394_IsochCleanup(IsochDetachData);
        }
        else {
 
-           keR = 1; keR = 0; KeReleaseSpinLock(&lock4, Irql);
+           KeReleaseSpinLock(&lock4, Irql);
            break;
        }
    }
@@ -274,13 +281,13 @@ int main() {
    k4 = __VERIFIER_nondet_int();
    while (TRUE) {
 
-       keA = 1; keA = 0; KeAcquireSpinLock(&lock5, &Irql);
+       KeAcquireSpinLock(&lock5, &Irql);
        if (k4>0) {
 
            IsochResourceData = __VERIFIER_nondet_int();
            k4--;
 
-           keR = 1; keR = 0; KeReleaseSpinLock(&lock5, Irql);
+           KeReleaseSpinLock(&lock5, Irql);
 
 
            if (IsochResourceData) {
@@ -308,7 +315,6 @@ int main() {
                        ntStatus = t1394_SubmitIrpSynch(ResourceIrp, pIrb);
 
 
-
                        ExFreePool1(pIrb);
                        IoFreeIrp(ResourceIrp);
                    }
@@ -317,13 +323,13 @@ int main() {
        }
        else {
 
-           keR = 1; keR = 0; KeReleaseSpinLock(&lock5, Irql);
+           KeReleaseSpinLock(&lock5, Irql);
            break;
        }
    }
 
    // get rid of any pending bus reset notify requests
-   keA = 1; keA = 0; KeAcquireSpinLock(&lock6, &Irql);
+   KeAcquireSpinLock(&lock6, &Irql);
 
    k5 = __VERIFIER_nondet_int();
    while (k5>0) {
@@ -345,9 +351,11 @@ int main() {
        ExFreePool1(BusResetIrp);
    }
 
-   keR = 1; keR = 0; KeReleaseSpinLock(&lock6, Irql);
+   KeReleaseSpinLock(&lock6, Irql);
 
    // free up the symbolic link
-
-   while(1);
+   if(ntStatus != STATUS_SUCCESS) { 
+     phi_nSUC_ret = 1;
+   }
+   while(1) {}
 }

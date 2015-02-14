@@ -136,7 +136,7 @@ public abstract class BaseMinimizeStates extends BaseProductOptimizer {
 
 	@Override
 	public boolean IsGraphChanged() {
-		return mRemovedEdges > 0 || mRemovedLocations > 0;
+		return mRemovedLocations > 0;
 	}
 
 }
