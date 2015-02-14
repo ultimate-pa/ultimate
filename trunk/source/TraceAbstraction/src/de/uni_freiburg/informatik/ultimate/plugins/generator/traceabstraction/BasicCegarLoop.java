@@ -396,8 +396,6 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 //						NondeterministicInterpolantAutomaton determinized = new NondeterministicInterpolantAutomaton(
 //								m_Services, m_SmtManager, m_ModGlobVarManager, htc, oldAbstraction, m_InterpolAutomaton, 
 //								m_TraceChecker.getPredicateUnifier(), mLogger);
-						
-						
 						// ComplementDeterministicNwa<CodeBlock, IPredicate>
 						// cdnwa = new ComplementDeterministicNwa<>(dia);
 						PowersetDeterminizer<CodeBlock, IPredicate> psd2 = new PowersetDeterminizer<CodeBlock, IPredicate>(
@@ -408,16 +406,15 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 						determinized.switchToReadonlyMode();
 						INestedWordAutomaton<CodeBlock, IPredicate> test = (new RemoveUnreachable<CodeBlock, IPredicate>(
 								m_Services, determinized)).getResult();
-						// boolean ctxAccepted = (new Accepts<CodeBlock,
-						// IPredicate>(
-						// (INestedWordAutomatonOldApi<CodeBlock, IPredicate>)
-						// test,
-						// (NestedWord<CodeBlock>)
-						// m_Counterexample.getWord())).getResult();
-						// if (!ctxAccepted) {
-						// throw new
-						// AssertionError("counterexample not accepted by interpolant automaton");
-						// }
+						if (m_Pref.dumpAutomata()) {
+							String filename = "EnhancedInterpolantAutomaton_Iteration" + m_Iteration;
+							super.writeAutomatonToFile(test, filename);
+						}
+						boolean ctxAccepted = (new Accepts<CodeBlock,IPredicate>(test,
+										(NestedWord<CodeBlock>)	m_Counterexample.getWord(), true, false)).getResult();
+						if (!ctxAccepted) {
+							throw new AssertionError("enhanced interpolant automaton broken: counterexample not accepted");
+						}
 						assert (new InductivityCheck(m_Services, test, false, true, new IncrementalHoareTripleChecker(
 								m_SmtManager, m_ModGlobVarManager))).getResult();
 					}
