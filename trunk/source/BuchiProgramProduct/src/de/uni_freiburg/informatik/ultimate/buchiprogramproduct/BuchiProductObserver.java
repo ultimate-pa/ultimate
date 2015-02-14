@@ -13,6 +13,7 @@ import de.uni_freiburg.informatik.ultimate.buchiprogramproduct.optimizeproduct.M
 import de.uni_freiburg.informatik.ultimate.buchiprogramproduct.optimizeproduct.MinimizeStatesMultiEdgeSingleNode;
 import de.uni_freiburg.informatik.ultimate.buchiprogramproduct.optimizeproduct.MinimizeStatesSingleEdgeSingleNode;
 import de.uni_freiburg.informatik.ultimate.buchiprogramproduct.optimizeproduct.RemoveInfeasibleEdges;
+import de.uni_freiburg.informatik.ultimate.buchiprogramproduct.optimizeproduct.RemoveSinkStates;
 import de.uni_freiburg.informatik.ultimate.buchiprogramproduct.preferences.PreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.buchiprogramproduct.preferences.PreferenceInitializer.MinimizeStates;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
@@ -78,9 +79,17 @@ public class BuchiProductObserver implements IUnmanagedObserver {
 				boolean continueOptimization = false;
 
 				continueOptimization = optimizeRemoveInfeasibleEdges(ups, continueOptimization);
+				
+				RemoveSinkStates rss = new RemoveSinkStates(mProduct,mServices);
+				mProduct = rss.getResult();
+				continueOptimization = continueOptimization || rss.IsGraphChanged();
+				
 				continueOptimization = optimizeMaximizeFinalStates(ups, continueOptimization);
 				continueOptimization = optimizeMinimizeStates(ups, continueOptimization);
 				continueOptimization = optimizeSimplifyAssumes(ups, continueOptimization);
+				
+
+				
 
 				if (!mServices.getProgressMonitorService().continueProcessing()) {
 					mServices.getResultService().reportResult(Activator.PLUGIN_ID,

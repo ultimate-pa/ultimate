@@ -32,7 +32,7 @@ public class LTLChecker extends AbstractEvaluationTestSuite {
 	protected String[] getDirectories() {
 		// @formatter:off
 		return new String[] { 
-				"examples/LTL/rers2012/P14/",
+//				"examples/LTL/rers2012/P14/",
 //				"examples/LTL/rers2012/P15/",
 //				"examples/LTL/rers2012/P16/",
 //				"examples/LTL/rers2012/P17/",
@@ -41,9 +41,11 @@ public class LTLChecker extends AbstractEvaluationTestSuite {
 //				"examples/LTL/coolant/",
 //				"examples/LTL/koskinen/ltlcmodelchecker-benchmarks/",
 //				"examples/LTL/bugs/",
-
-				//RERS examples with NO_RESULT  
-//				"examples/LTL/rers2012/P14/Problem14_prop_005.c",
+//				"examples/LTL/bugs/Bug_AssumeFalse.c",
+				
+				//RERS examples with NO_RESULT
+//				"examples/LTL/bugs/Bug_ProcedureAssumeFalse.c",
+				"examples/LTL/rers2012/P14/Problem14_prop_014.c",
 				
 				//Koskinen examples with problems
 //				"examples/LTL/koskinen/ltlcmodelchecker-benchmarks/18-windows_os_frag4_prop2-new.c",
@@ -55,7 +57,7 @@ public class LTLChecker extends AbstractEvaluationTestSuite {
 
 	@Override
 	protected int getTimeout() {
-		return 20 * 60 * 1000;
+		return 1 * 60 * 1000;
 	}
 
 	@Override

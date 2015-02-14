@@ -26,7 +26,7 @@ public abstract class BaseMinimizeStates extends BaseProductOptimizer {
 	public BaseMinimizeStates(RootNode product, IUltimateServiceProvider services) {
 		super(product, services);
 		mLogger.info("Removed " + mRemovedEdges + " edges and " + mRemovedLocations
-				+ " locations");
+				+ " locations by large block encoding");
 	}
 
 	@Override

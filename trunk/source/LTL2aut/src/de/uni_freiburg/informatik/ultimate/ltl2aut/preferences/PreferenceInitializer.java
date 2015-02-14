@@ -34,7 +34,7 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 				new UltimatePreferenceItem<Boolean>(LABEL_PROPERTYFROMFILE, DEF_PROPERTYFROMFILE,
 						PreferenceType.Boolean),
 				new UltimatePreferenceItem<String>(LABEL_PPROPERTY, DEF_PPROPERTY, PreferenceType.MultilineString),
-				new UltimatePreferenceItem<Boolean>(LABEL_OPTIMIZE_SBE, true, PreferenceType.Boolean),
+				new UltimatePreferenceItem<Boolean>(LABEL_OPTIMIZE_SBE, false, PreferenceType.Boolean),
 				new UltimatePreferenceItem<Boolean>(LABEL_OPTIMIZE_REWRITEASSUME, false, PreferenceType.Boolean), };
 	}
 
