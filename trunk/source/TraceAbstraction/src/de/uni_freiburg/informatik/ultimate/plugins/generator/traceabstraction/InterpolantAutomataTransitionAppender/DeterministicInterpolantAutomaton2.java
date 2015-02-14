@@ -138,7 +138,7 @@ public class DeterministicInterpolantAutomaton2 extends TotalInterpolantAutomato
 			final Set<IPredicate> inputSuccs) {
 		for (IPredicate succCand : selectSuccessorCandidates(resPred, resHier)) {
 			if (!inputSuccs.contains(succCand)) {
-				if (!m_OmitIntricatePredicates || !isIntricatePredicate(succCand)) {
+				if (!m_OmitIntricatePredicates || !m_PredicateUnifier.isIntricatePredicate(succCand)) {
 					Validity sat = sch.computeSuccWithSolver(resPred, resHier, letter, succCand);
 					if (sat == Validity.VALID) {
 						inputSuccs.add(succCand);

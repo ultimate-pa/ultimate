@@ -122,16 +122,13 @@ public class PredicateUnifier {
 	 * predicate.
 	 */
 	void declarePredicate(IPredicate predicate) {
-		HashMap<IPredicate, Validity> impliedPredicates = new HashMap<IPredicate, Validity>();
-		HashMap<IPredicate, Validity> expliedPredicates = new HashMap<IPredicate, Validity>();
-		IPredicate storedPredicate = compareWithExistingPredicates(predicate.getFormula(), predicate.getVars(),
-				impliedPredicates, expliedPredicates);
-		if (storedPredicate == null) {
-			addNewPredicate(predicate, impliedPredicates, expliedPredicates);
-		} else {
-			if (storedPredicate != predicate) {
+		PredicateComparison pc = new PredicateComparison(predicate.getFormula(), predicate.getVars());
+		if (pc.isEquivalentToExistingPredicate()) {
+			if (pc.getEquivalantPredicate() != predicate) {
 				throw new AssertionError("There is already an" + " equivalent predicate");
 			}
+		} else {
+			addNewPredicate(predicate, pc.getImpliedPredicates(), pc.getExpliedPredicates());
 		}
 	}
 
@@ -188,26 +185,24 @@ public class PredicateUnifier {
 		if (p != null) {
 			return p;
 		}
-		HashMap<IPredicate, Validity> impliedPredicates = new HashMap<IPredicate, Validity>();
-		HashMap<IPredicate, Validity> expliedPredicates = new HashMap<IPredicate, Validity>();
-		p = compareWithExistingPredicates(term, vars, impliedPredicates, expliedPredicates);
-		if (p != null) {
-			return p;
+		
+		PredicateComparison pc = new PredicateComparison(term, vars);
+		if (pc.isEquivalentToExistingPredicate()) {
+			return pc.getEquivalantPredicate();
 		}
 		final IPredicate result;
 		assert !SmtUtils.isTrue(term) : "illegal predicate: true";
 		assert !SmtUtils.isFalse(term) : "illegal predicate: false";
 		assert !m_Term2Predicates.containsKey(term);
 		Term simplifiedTerm = term;
-		if (true) {
+		if (!pc.isIntricatePredicate()) {
 			simplifiedTerm = SmtUtils.simplify(m_SmtManager.getScript(), term, mServices);
 		}
 		if (m_BringTermsToPositiveNormalForm) {
 			simplifiedTerm = (new AffineSubtermNormalizer(m_SmtManager.getScript(), mLogger)).transform(term);
 		}
-		Term closedTerm = PredicateUtils.computeClosedFormula(simplifiedTerm, vars, m_SmtManager.getScript());
 		if (simplifiedTerm == term) {
-			result = m_SmtManager.newPredicate(term, procs, vars, closedTerm);
+			result = m_SmtManager.newPredicate(term, procs, vars, pc.getClosedTerm());
 		} else {
 			Set<TermVariable> tvs = new HashSet<TermVariable>(
 					Arrays.asList(simplifiedTerm.getFreeVars()));
@@ -221,11 +216,13 @@ public class PredicateUnifier {
 					}
 				}
 			}
+			Term closedTerm = PredicateUtils.computeClosedFormula(
+					simplifiedTerm, vars, m_SmtManager.getScript());
 			result = m_SmtManager.newPredicate(simplifiedTerm, 
 					newProcs.toArray(new String[newProcs.size()]), 
 					newVars, closedTerm);
 		}
-		addNewPredicate(result, impliedPredicates, expliedPredicates);
+		addNewPredicate(result, pc.getImpliedPredicates(), pc.getExpliedPredicates());
 		assert new CheckClosedTerm().isClosed(result.getClosedFormula());
 		assert varsIsSupersetOfFreeTermVariables(result.getFormula(), result.getVars());
 		return result;
@@ -247,6 +244,33 @@ public class PredicateUnifier {
 		m_CoverageRelation.addPredicate(pred, implied, explied);
 	}
 
+
+//	private IPredicate compareWithExistingPredicates(Term term, Set<BoogieVar> vars,
+//			HashMap<IPredicate, Validity> impliedPredicats, HashMap<IPredicate, Validity> expliedPredicates) {
+//		Term closedTerm = PredicateUtils.computeClosedFormula(term, vars, m_SmtManager.getScript());
+//		assert impliedPredicats.isEmpty();
+//		assert expliedPredicates.isEmpty();
+//		m_SmtManager.lock(this);
+//		m_SmtManager.getScript().echo(new QuotedObject("begin unification"));
+//		for (Term interpolantTerm : m_Term2Predicates.keySet()) {
+//			IPredicate interpolant = m_Term2Predicates.get(interpolantTerm);
+//			Term interpolantClosedTerm = interpolant.getClosedFormula();
+//			Validity implies = m_SmtManager.isCovered(this, closedTerm, interpolantClosedTerm);
+//			impliedPredicats.put(interpolant, implies);
+//			Validity explies = m_SmtManager.isCovered(this, interpolantClosedTerm, closedTerm);
+//			expliedPredicates.put(interpolant, explies);
+//			if (implies == Validity.VALID && explies == Validity.VALID) {
+//				m_SmtManager.getScript().echo(new QuotedObject("end unification"));
+//				m_SmtManager.unlock(this);
+//				return interpolant;
+//			}
+//		}
+//		m_SmtManager.getScript().echo(new QuotedObject("end unification"));
+//		m_SmtManager.unlock(this);
+//		return null;
+//	}
+	
+	
 	/**
 	 * Compare Term term whose free variables represent the BoogieVars vars with
 	 * all predicates that this Predicate unifier knows. If there exists a
@@ -254,41 +278,153 @@ public class PredicateUnifier {
 	 * predicate is returned. Otherwise we return null and HashMaps
 	 * impliedPredicats and expliedPredicates are filled with information about
 	 * implications between term and existing Predicates.
-	 * 
-	 * @param term
-	 * @param vars
-	 * @param impliedPredicats
-	 *            Has to be empty, will be filled with all IPredicates implied
-	 *            by term.
-	 * @param expliedPredicates
-	 *            Has to be empty, will be filled with all IPredicates that
-	 *            imply term.
+	 * ImpliedPredicates will be filled with all IPredicates implied by term.
+	 * ImpliedPredicates will be filled with all IPredicates that imply term.
 	 * @return
 	 */
-	private IPredicate compareWithExistingPredicates(Term term, Set<BoogieVar> vars,
-			HashMap<IPredicate, Validity> impliedPredicats, HashMap<IPredicate, Validity> expliedPredicates) {
-		Term closedTerm = PredicateUtils.computeClosedFormula(term, vars, m_SmtManager.getScript());
-		assert impliedPredicats.isEmpty();
-		assert expliedPredicates.isEmpty();
-		m_SmtManager.lock(this);
-		m_SmtManager.getScript().echo(new QuotedObject("begin unification"));
-		for (Term interpolantTerm : m_Term2Predicates.keySet()) {
-			IPredicate interpolant = m_Term2Predicates.get(interpolantTerm);
-			Term interpolantClosedTerm = interpolant.getClosedFormula();
-			Validity implies = m_SmtManager.isCovered(this, closedTerm, interpolantClosedTerm);
-			impliedPredicats.put(interpolant, implies);
-			Validity explies = m_SmtManager.isCovered(this, interpolantClosedTerm, closedTerm);
-			expliedPredicates.put(interpolant, explies);
-			if (implies == Validity.VALID && explies == Validity.VALID) {
-				m_SmtManager.getScript().echo(new QuotedObject("end unification"));
-				m_SmtManager.unlock(this);
-				return interpolant;
+	private class PredicateComparison {
+		private final Term m_closedTerm;
+		private final HashMap<IPredicate, Validity> impliedPredicates = new HashMap<IPredicate, Validity>();
+		private final HashMap<IPredicate, Validity> expliedPredicates = new HashMap<IPredicate, Validity>();
+		private final IPredicate m_EquivalantPredicate;
+		private boolean m_IsIntricatePredicate;
+		
+		public Term getClosedTerm() {
+			if (m_EquivalantPredicate != null) {
+				throw new IllegalAccessError("not accessible, we found an equivalent predicate");
 			}
+			return m_closedTerm;
 		}
-		m_SmtManager.getScript().echo(new QuotedObject("end unification"));
-		m_SmtManager.unlock(this);
-		return null;
+
+		public HashMap<IPredicate, Validity> getImpliedPredicates() {
+			if (m_EquivalantPredicate != null) {
+				throw new IllegalAccessError("not accessible, we found an equivalent predicate");
+			}
+
+			return impliedPredicates;
+		}
+
+		public HashMap<IPredicate, Validity> getExpliedPredicates() {
+			if (m_EquivalantPredicate != null) {
+				throw new IllegalAccessError("not accessible, we found an equivalent predicate");
+			}
+
+			return expliedPredicates;
+		}
+
+		public IPredicate getEquivalantPredicate() {
+			if (m_EquivalantPredicate == null) {
+				throw new IllegalAccessError("accessible only if equivalent to existing predicate");
+			}
+			return m_EquivalantPredicate;
+		}
+
+		public boolean isIntricatePredicate() {
+			if (m_EquivalantPredicate != null) {
+				throw new IllegalAccessError("not accessible, we found an equivalent predicate");
+			}
+
+			return m_IsIntricatePredicate;
+		}
+		
+		public boolean isEquivalentToExistingPredicate() {
+			return m_EquivalantPredicate != null;
+		}
+
+
+		PredicateComparison(Term term, Set<BoogieVar> vars) {
+			m_closedTerm = PredicateUtils.computeClosedFormula(term, vars, m_SmtManager.getScript());
+			m_SmtManager.lock(this);
+			m_SmtManager.getScript().echo(new QuotedObject("begin unification"));
+			
+			m_EquivalantPredicate = compare();
+
+			m_SmtManager.getScript().echo(new QuotedObject("end unification"));
+			m_SmtManager.unlock(this);
+		}
+		
+		
+		private IPredicate compare() {
+			// check if false
+			Validity impliesFalse = m_SmtManager.isCovered(this, m_closedTerm, m_FalsePredicate.getFormula());
+			switch (impliesFalse) {
+			case VALID:
+				return m_FalsePredicate;
+			case INVALID:
+				impliedPredicates.put(m_FalsePredicate, Validity.INVALID);
+				break;
+			case UNKNOWN:
+				mLogger.warn(new DebugMessage("unable to proof that {0} is different from false", m_closedTerm));
+				impliedPredicates.put(m_FalsePredicate, Validity.UNKNOWN);
+				m_IsIntricatePredicate = true;
+				break;
+			case NOT_CHECKED:
+				throw new AssertionError("we wanted it checked");
+			default:
+				throw new AssertionError("unknown case");
+			}
+			// every predicate is implied by false
+			expliedPredicates.put(m_FalsePredicate, Validity.VALID);
+			
+			// check if true
+			Validity impliedByTrue = m_SmtManager.isCovered(this, m_TruePredicate.getClosedFormula(), m_closedTerm);
+			switch (impliedByTrue) {
+			case VALID:
+				return m_TruePredicate;
+			case INVALID:
+				expliedPredicates.put(m_TruePredicate, Validity.INVALID);
+				break;
+			case UNKNOWN:
+				mLogger.warn(new DebugMessage("unable to proof that {0} is different from true", m_closedTerm));
+				expliedPredicates.put(m_TruePredicate, Validity.UNKNOWN);
+				m_IsIntricatePredicate = true;
+				break;
+			case NOT_CHECKED:
+				throw new AssertionError("we wanted it checked");
+			default:
+				throw new AssertionError("unknown case");
+			}
+			// every predicate implies by true
+			impliedPredicates.put(m_TruePredicate, Validity.VALID);
+			
+			// if predicate is intricate we do not compare against others
+			if (m_IsIntricatePredicate) {
+				for (IPredicate other : m_Term2Predicates.values()) {
+					if (other == m_TruePredicate || other == m_FalsePredicate) {
+						continue;
+					}
+					impliedPredicates.put(other, Validity.NOT_CHECKED);
+					expliedPredicates.put(other, Validity.NOT_CHECKED);
+					continue;
+				}
+				return null;
+			}
+			
+			for (IPredicate other : m_Term2Predicates.values()) {
+				if (other == m_TruePredicate || other == m_FalsePredicate) {
+					continue;
+				}
+				// we do not compare againts intricate predicates
+				if (PredicateUnifier.this.isIntricatePredicate(other)) {
+					impliedPredicates.put(other, Validity.NOT_CHECKED);
+					expliedPredicates.put(other, Validity.NOT_CHECKED);
+					continue;
+				}
+				Term otherClosedTerm = other.getClosedFormula();
+				Validity implies = m_SmtManager.isCovered(this, m_closedTerm, otherClosedTerm);
+				impliedPredicates.put(other, implies);
+				Validity explies = m_SmtManager.isCovered(this, otherClosedTerm, m_closedTerm);
+				expliedPredicates.put(other, explies);
+				if (implies == Validity.VALID && explies == Validity.VALID) {
+					return other;
+				}
+			}
+			// no predicate was equivalent
+			return null;
+		}
 	}
+	
+	
 
 	private boolean equivalentToFalse(Term term) {
 		LBool sat = Util.checkSat(m_SmtManager.getScript(), term);
@@ -304,6 +440,21 @@ public class PredicateUnifier {
 			// term + " is equivalent to false");
 		default:
 			throw new AssertionError();
+		}
+	}
+
+	/**
+	 * We call a predicate "intricate" if we were unable to find our if it is
+	 * equivalent to "true" or if we were unable to find out it it is equivalent
+	 * to "false".
+	 */
+	public boolean isIntricatePredicate(IPredicate pred) {
+		Validity equivalentToTrue = getCoverageRelation().isCovered(m_TruePredicate, pred);
+		Validity equivalentToFalse = getCoverageRelation().isCovered(pred, m_FalsePredicate);
+		if (equivalentToTrue == Validity.UNKNOWN || equivalentToFalse == Validity.UNKNOWN) {
+			return true;
+		} else {
+			return false;
 		}
 	}
 

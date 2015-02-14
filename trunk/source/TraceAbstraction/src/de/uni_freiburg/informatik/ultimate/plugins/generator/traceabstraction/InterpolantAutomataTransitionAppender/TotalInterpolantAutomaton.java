@@ -83,21 +83,13 @@ public abstract class TotalInterpolantAutomaton extends
 	
 	private boolean isIntricatePredecessor(IPredicate resPred, IPredicate resHier) {
 		if (resHier == null) {
-			return isIntricatePredicate(resPred);
+			return m_PredicateUnifier.isIntricatePredicate(resPred);
 		} else {
-			return isIntricatePredicate(resPred) || isIntricatePredicate(resHier);
+			return m_PredicateUnifier.isIntricatePredicate(resPred) || m_PredicateUnifier.isIntricatePredicate(resHier);
 		}
 	}
 	
-	protected boolean isIntricatePredicate(IPredicate pred) {
-		Validity equivalentToTrue = m_PredicateUnifier.getCoverageRelation().isCovered(m_IaTrueState, pred);
-		Validity equivalentToFalse = m_PredicateUnifier.getCoverageRelation().isCovered(pred, m_IaFalseState);
-		if (equivalentToTrue == Validity.UNKNOWN || equivalentToFalse == Validity.UNKNOWN) {
-			return true;
-		} else {
-			return false;
-		}
-	}
+
 	
 	
 
