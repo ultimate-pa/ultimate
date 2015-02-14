@@ -11,14 +11,16 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 		NONE, SINGLE, SINGLE_NODE_MULTI_EDGE, MULTI
 	}
 
-	public static final String OPTIMIZE_SBE = "Use small block encoding for initial RCFG";
-	public static final String OPTIMIZE_SBE_REWRITENOTEQUALS = "Rewrite not equals during small block encoding";
+	public static final String OPTIMIZE_SBE = "Use SBE for initial RCFG";
+	public static final String OPTIMIZE_SBE_REWRITENOTEQUALS = "Rewrite not equals during SBE";
 	public static final String OPTIMIZE_MAXIMIZE_FINAL_STATES = "Maximize final states of the product";
-	public static final String OPTIMIZE_MINIMIZE_STATES = "Minimize states using the strategy";
-	public static final String OPTIMIZE_MINIMIZE_STATES_IGNORE_BLOWUP = "Minimize state even if more edges are added than removed.";
-	public static final String OPTIMIZE_REMOVE_INFEASIBLE_EDGES = "Remove infeasible edges from the product";
+	public static final String OPTIMIZE_MINIMIZE_STATES = "Minimize states using LBE with the strategy";
+	public static final String OPTIMIZE_MINIMIZE_STATES_IGNORE_BLOWUP = "Minimize states even if more edges are added than removed.";
+	public static final String OPTIMIZE_REMOVE_INFEASIBLE_EDGES = "Remove infeasible edges";
+	public static final String OPTIMIZE_REMOVE_SINK_STATES = "Remove sink states";
 	public static final String OPTIMIZE_SIMPLIFY_ASSUMES = "Simplify assume statements";
-	public static final String OPTIMIZE_SIMPLIFY_ASSUMES_REWRITENOTEQUALS = "Rewrite not equals when simplifying assume statements";
+	public static final String OPTIMIZE_SIMPLIFY_ASSUMES_SBE = "Use SBE during assume simplification";
+	public static final String OPTIMIZE_SIMPLIFY_ASSUMES_REWRITENOTEQUALS = "Rewrite not equals when simplifying assume statements with SBE";
 	public static final String OPTIMIZE_UNTIL_FIXPOINT = "Apply product optimizations until nothing changes";
 	public static final String OPTIMIZE_MAX_ITERATIONS = "Optimize not more than (<=0 means until nothing changes)";
 
@@ -31,12 +33,14 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 
 				new UltimatePreferenceItem<String>("Product Optimizations", "", PreferenceType.Label),
 				new UltimatePreferenceItem<Boolean>(OPTIMIZE_MAXIMIZE_FINAL_STATES, true, PreferenceType.Boolean),
-				new UltimatePreferenceItem<MinimizeStates>(OPTIMIZE_MINIMIZE_STATES, MinimizeStates.SINGLE,
+				new UltimatePreferenceItem<MinimizeStates>(OPTIMIZE_MINIMIZE_STATES, MinimizeStates.SINGLE_NODE_MULTI_EDGE,
 						PreferenceType.Combo, MinimizeStates.values()),
-				new UltimatePreferenceItem<Boolean>(OPTIMIZE_MINIMIZE_STATES_IGNORE_BLOWUP, false,
+				new UltimatePreferenceItem<Boolean>(OPTIMIZE_MINIMIZE_STATES_IGNORE_BLOWUP, true,
 						PreferenceType.Boolean),
 				new UltimatePreferenceItem<Boolean>(OPTIMIZE_REMOVE_INFEASIBLE_EDGES, true, PreferenceType.Boolean),
-				new UltimatePreferenceItem<Boolean>(OPTIMIZE_SIMPLIFY_ASSUMES, false, PreferenceType.Boolean),
+				new UltimatePreferenceItem<Boolean>(OPTIMIZE_REMOVE_SINK_STATES, true, PreferenceType.Boolean),
+				new UltimatePreferenceItem<Boolean>(OPTIMIZE_SIMPLIFY_ASSUMES, true, PreferenceType.Boolean),
+				new UltimatePreferenceItem<Boolean>(OPTIMIZE_SIMPLIFY_ASSUMES_SBE, false, PreferenceType.Boolean),
 				new UltimatePreferenceItem<Boolean>(OPTIMIZE_SIMPLIFY_ASSUMES_REWRITENOTEQUALS, false,
 						PreferenceType.Boolean),
 				new UltimatePreferenceItem<Boolean>(OPTIMIZE_UNTIL_FIXPOINT, true, PreferenceType.Boolean),

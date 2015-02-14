@@ -27,6 +27,7 @@ public class AssumeMerger extends BaseProductOptimizer {
 
 	private int mAssumesMerged;
 	private boolean mRewriteNotEquals;
+	private boolean mUseSBE;
 
 	public AssumeMerger(RootNode product, IUltimateServiceProvider services) {
 		super(product, services);
@@ -38,6 +39,8 @@ public class AssumeMerger extends BaseProductOptimizer {
 		mAssumesMerged = 0;
 		mRewriteNotEquals = new UltimatePreferenceStore(Activator.PLUGIN_ID)
 				.getBoolean(PreferenceInitializer.OPTIMIZE_SIMPLIFY_ASSUMES_REWRITENOTEQUALS);
+		mUseSBE = new UltimatePreferenceStore(Activator.PLUGIN_ID)
+		.getBoolean(PreferenceInitializer.OPTIMIZE_SIMPLIFY_ASSUMES_SBE);
 	}
 
 	@Override
@@ -111,7 +114,7 @@ public class AssumeMerger extends BaseProductOptimizer {
 				break;
 			}
 		}
-		if (allAssumes) {
+		if (mUseSBE && allAssumes) {
 			// a new edge would contain only assumes. We check if we can split
 			// them into multiple edges
 			assert newStmts.size() == 1;

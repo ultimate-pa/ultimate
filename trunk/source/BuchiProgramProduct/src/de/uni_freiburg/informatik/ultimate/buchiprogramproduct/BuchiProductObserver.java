@@ -58,7 +58,7 @@ public class BuchiProductObserver implements IUnmanagedObserver {
 		// measure size of nwa and rcfg
 		reportSizeBenchmark("Initial property automaton", mNeverClaimNWAContainer.getNWA());
 		reportSizeBenchmark("Initial RCFG", mRcfg);
-		
+
 		mLogger.info("Beginning generation of product automaton");
 		UltimatePreferenceStore ups = new UltimatePreferenceStore(Activator.PLUGIN_ID);
 		try {
@@ -79,17 +79,10 @@ public class BuchiProductObserver implements IUnmanagedObserver {
 				boolean continueOptimization = false;
 
 				continueOptimization = optimizeRemoveInfeasibleEdges(ups, continueOptimization);
-				
-				RemoveSinkStates rss = new RemoveSinkStates(mProduct,mServices);
-				mProduct = rss.getResult();
-				continueOptimization = continueOptimization || rss.IsGraphChanged();
-				
+				continueOptimization = optimizeRemoveSinkStates(ups, continueOptimization);
 				continueOptimization = optimizeMaximizeFinalStates(ups, continueOptimization);
 				continueOptimization = optimizeMinimizeStates(ups, continueOptimization);
 				continueOptimization = optimizeSimplifyAssumes(ups, continueOptimization);
-				
-
-				
 
 				if (!mServices.getProgressMonitorService().continueProcessing()) {
 					mServices.getResultService().reportResult(Activator.PLUGIN_ID,
@@ -114,6 +107,15 @@ public class BuchiProductObserver implements IUnmanagedObserver {
 			throw e;
 		}
 		return;
+	}
+
+	private boolean optimizeRemoveSinkStates(UltimatePreferenceStore ups, boolean continueOptimization) {
+		if (ups.getBoolean(PreferenceInitializer.OPTIMIZE_REMOVE_SINK_STATES)) {
+			RemoveSinkStates rss = new RemoveSinkStates(mProduct, mServices);
+			mProduct = rss.getResult();
+			continueOptimization = continueOptimization || rss.IsGraphChanged();
+		}
+		return continueOptimization;
 	}
 
 	private boolean optimizeRemoveInfeasibleEdges(UltimatePreferenceStore ups, boolean continueOptimization) {
