@@ -1,6 +1,8 @@
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.alternating;
 
 import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.HashMap;
 
@@ -95,12 +97,15 @@ public class AlternatingAutomaton<LETTER, STATE> implements IAutomaton<LETTER, S
 	
 	public long resolveLetter(LETTER letter, long currentStates){
 		BooleanExpression[] letterTransitions = transitionFunction.get(letter);
-		long tmpCurrentStates = currentStates;
-		for(int i=0;i<states.size();i++){
-			boolean result = letterTransitions[i].getResult(tmpCurrentStates);
-			currentStates = BitUtil.setBit(currentStates, i, result);
+		if(letterTransitions != null){
+			long tmpCurrentStates = currentStates;
+			for(int i=0;i<states.size();i++){
+				boolean result = ((letterTransitions[i] != null)?letterTransitions[i].getResult(tmpCurrentStates):false);
+				currentStates = BitUtil.setBit(currentStates, i, result);
+			}
+			return currentStates;
 		}
-		return currentStates;
+		return 0;
 	}
 	
 	public ArrayList<STATE> getStates(){
@@ -149,5 +154,60 @@ public class AlternatingAutomaton<LETTER, STATE> implements IAutomaton<LETTER, S
 	@Override
 	public String sizeInformation(){
 		return "Number of states";
+	}
+	
+	@Override
+	public String toString(){
+		String text = "[AlternatingAutomaton\n\tAlphabet = {";
+		Iterator<LETTER> letterIterator = alphabet.iterator();
+		int r = 0;
+		while(letterIterator.hasNext()){
+			if(r != 0){
+				text += ", ";
+			}
+			text += letterIterator.next();
+			r++;
+		}
+		text += "}\n\tStates = {";
+		for(int i=0;i<states.size();i++){
+			if(i != 0){
+				text += ", ";
+			}
+			text += states.get(i);
+		}
+		text += "}\n\tFinalStates = {";
+		r = 0;
+		for(int i=0;i<states.size();i++){
+			if(BitUtil.getBit(finalStatesBitVector, i)){
+				if(r != 0){
+					text += ", ";
+				}
+				text += states.get(i);
+				r++;
+			}
+		}
+		text += "}\n\tAcceptingFunction = " + acceptingFunction.toString(states) + "\n\tTransistions = {\n";
+		r = 0;
+		for(Entry<LETTER, BooleanExpression[]> entry : transitionFunction.entrySet()){
+			text += "\t\t" + entry.getKey() + " => {\n";
+			int z = 0;
+			for(int i=0;i<states.size();i++){
+				if(entry.getValue()[i] != null){
+					if(z != 0){
+						text += ",\n";
+					}
+					text += "\t\t\t" + states.get(i) + " => " + entry.getValue()[i].toString(states);
+					z++;
+				}
+			}
+			text += "\n\t\t}";
+			if(r != (transitionFunction.size() - 1)){
+				text += ",";
+			}
+			text += "\n";
+			r++;
+		}
+		text += "\t}\n]";
+		return text;
 	}
 }

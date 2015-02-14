@@ -17,8 +17,9 @@ import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.alternating.AA_Union;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.alternating.AA_MergedUnion;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.alternating.AlternatingAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.alternating.BooleanExpression;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
@@ -120,9 +121,7 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 				termNames.add(m_SmtManager.getScript().term(termName));
 			}
 
-			// if the conjunctions of the terms in the current dag is
-			// infeasible..
-			mLogger.info(dag + "\t" + m_SmtManager.getScript().checkSat());
+			// if the conjunctions of the terms in the current dag is infeasible..
 			if (m_SmtManager.getScript().checkSat() == LBool.UNSAT) {
 				// .. compute tree interpolant for the current dag
 				Term[] interpolants = m_SmtManager.getScript().getInterpolants(
@@ -138,9 +137,8 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 				if (alternatingAutomatonUnion == null) {
 					alternatingAutomatonUnion = alternatingAutomaton;
 				} else {
-					AA_Union<CodeBlock, IPredicate> union = new AA_Union<CodeBlock, IPredicate>(
-							alternatingAutomatonUnion, alternatingAutomaton);
-					alternatingAutomatonUnion = union.getResult();
+					AA_MergedUnion<CodeBlock, IPredicate> mergedUnion = new AA_MergedUnion<CodeBlock, IPredicate>(alternatingAutomatonUnion, alternatingAutomaton);
+					alternatingAutomatonUnion = mergedUnion.getResult();
 				}
 				// in the future:
 				// - reverse and _determinize_ in one step
@@ -152,16 +150,21 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 				m_SmtManager.getScript().pop(1);
 			}
 		}
+		mLogger.info(alternatingAutomatonUnion);
 		if (alternatingAutomatonUnion != null) {
 			// .. in the end, build the union of all the nwas we got from the
 			// dags, return it
-			AA_Determination<CodeBlock> determination = new AA_Determination<CodeBlock>(m_Services,
-					alternatingAutomatonUnion, m_SmtManager, m_PredicateUnifier);
+			AA_Determination<CodeBlock> determination = new AA_Determination<CodeBlock>(m_Services, alternatingAutomatonUnion, m_SmtManager, m_PredicateUnifier);
 			m_InterpolAutomaton = determination.getResult();
+			mLogger.info(m_InterpolAutomaton);
 		} else {
-			m_InterpolAutomaton = new NestedWordAutomaton<CodeBlock, IPredicate>(m_Services,
-					m_Abstraction.getAlphabet(), Collections.<CodeBlock> emptySet(),
-					Collections.<CodeBlock> emptySet(), m_Abstraction.getStateFactory());
+			m_InterpolAutomaton = new NestedWordAutomaton<CodeBlock, IPredicate>(
+				m_Services,
+				m_Abstraction.getAlphabet(),
+				Collections.<CodeBlock>emptySet(),
+				Collections.<CodeBlock>emptySet(),
+				m_Abstraction.getStateFactory()
+			);
 		}
 	}
 
@@ -212,45 +215,54 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 		return result;
 	}
 
-	private AlternatingAutomaton<CodeBlock, IPredicate> computeAlternatingAutomaton(DataflowDAG<TraceCodeBlock> dag) {
-		AlternatingAutomaton<CodeBlock, IPredicate> alternatingAutomaton = new AlternatingAutomaton<CodeBlock, IPredicate>(
-				m_Abstraction.getAlphabet(), m_Abstraction.getStateFactory());
+	private AlternatingAutomaton<CodeBlock, IPredicate> computeAlternatingAutomaton(DataflowDAG<TraceCodeBlock> dag){
+		AlternatingAutomaton<CodeBlock, IPredicate> alternatingAutomaton = new AlternatingAutomaton<CodeBlock, IPredicate>(m_Abstraction.getAlphabet(), m_Abstraction.getStateFactory());
 		IPredicate initialState = m_PredicateUnifier.getFalsePredicate();
 		IPredicate finalState = m_PredicateUnifier.getTruePredicate();
 		alternatingAutomaton.addState(initialState);
-		alternatingAutomaton.setStateFinal(initialState);
 		alternatingAutomaton.addState(finalState);
-		alternatingAutomaton.addAcceptingConjunction(alternatingAutomaton.generateDisjunction(
-				new IPredicate[] { finalState }, new IPredicate[0]));
-		// build the automaton according to the structure of the dag
+		alternatingAutomaton.setStateFinal(initialState);
+		alternatingAutomaton.addAcceptingConjunction(alternatingAutomaton.generateDisjunction(new IPredicate[]{finalState}, new IPredicate[0]));
+		//Build the automaton according to the structure of the DAG
 		Stack<DataflowDAG<TraceCodeBlock>> stack = new Stack<DataflowDAG<TraceCodeBlock>>();
 		stack.push(dag);
-		while (!stack.isEmpty()) {
+		while(!stack.isEmpty()){
 			DataflowDAG<TraceCodeBlock> currentDag = stack.pop();
 			HashSet<IPredicate> targetStates = new HashSet<IPredicate>();
-			for (DataflowDAG<TraceCodeBlock> outNode : currentDag.getOutgoingNodes()) {
+			for(DataflowDAG<TraceCodeBlock> outNode : currentDag.getOutgoingNodes()){
 				IPredicate outNodePred = outNode.getNodeLabel().getInterpolant();
 				alternatingAutomaton.addState(outNodePred);
 				targetStates.add(outNodePred);
 				stack.push(outNode);
 			}
-			if (!targetStates.isEmpty()) {
-				alternatingAutomaton.addTransition(currentDag.getNodeLabel().getBlock(), currentDag.getNodeLabel()
-						.getInterpolant(), alternatingAutomaton.generateDisjunction(
-						targetStates.toArray(new IPredicate[targetStates.size()]), new IPredicate[0]));
+			BooleanExpression booleanExpression = alternatingAutomaton.generateDisjunction(new IPredicate[]{currentDag.getNodeLabel().getInterpolant()}, new IPredicate[0]);
+			if(!targetStates.isEmpty()){
+				for(IPredicate targetState : targetStates){
+					alternatingAutomaton.addTransition(
+						currentDag.getNodeLabel().getBlock(),
+						targetState,
+						booleanExpression
+					);
+				}
 			}
-			if (currentDag.getOutgoingNodes().isEmpty()) {
-				alternatingAutomaton.addTransition(currentDag.getNodeLabel().getBlock(), currentDag.getNodeLabel()
-						.getInterpolant(), alternatingAutomaton.generateDisjunction(new IPredicate[] { finalState },
-						new IPredicate[0]));
+			else{
+				alternatingAutomaton.addTransition(
+					currentDag.getNodeLabel().getBlock(),
+					finalState,
+					booleanExpression
+				);
 			}
 		}
-		// add transitions according to hoare triples
-		for (CodeBlock letter : alternatingAutomaton.getAlphabet()) {
-			for (IPredicate sourceState : alternatingAutomaton.getStates()) {
-				for (IPredicate targetState : alternatingAutomaton.getStates()) {
-					if (m_SmtManager.isInductive(sourceState, letter, targetState) == LBool.UNSAT) {
-						alternatingAutomaton.generateDisjunction(new IPredicate[] { targetState }, new IPredicate[0]);
+		//Add transitions according to hoare triples
+		for(CodeBlock letter : alternatingAutomaton.getAlphabet()){
+			for(IPredicate sourceState : alternatingAutomaton.getStates()){
+				for(IPredicate targetState : alternatingAutomaton.getStates()){
+					if(m_SmtManager.isInductive(sourceState, letter, targetState) == LBool.UNSAT){
+						/*alternatingAutomaton.addTransition(
+							letter,
+							sourceState,
+							alternatingAutomaton.generateDisjunction(new IPredicate[]{targetState}, new IPredicate[0])
+						);*/
 					}
 				}
 			}

@@ -7,9 +7,9 @@ import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 
-public class AA_Union<LETTER, STATE> implements IOperation<LETTER, STATE>{
+public class AA_MergedUnion<LETTER, STATE> implements IOperation<LETTER, STATE>{
 
-	public AA_Union(AlternatingAutomaton<LETTER, STATE> automaton1, AlternatingAutomaton<LETTER, STATE> automaton2){
+	public AA_MergedUnion(AlternatingAutomaton<LETTER, STATE> automaton1, AlternatingAutomaton<LETTER, STATE> automaton2){
 		assert automaton1.getAlphabet().equals(automaton2.getAlphabet());
 		assert (automaton1.isReversed() == automaton2.isReversed());
 		resultAutomaton = new AlternatingAutomaton<>(automaton1.getAlphabet(), automaton1.getStateFactory());
@@ -20,7 +20,9 @@ public class AA_Union<LETTER, STATE> implements IOperation<LETTER, STATE>{
 			}
 		}
 		for(STATE state : automaton2.getStates()){
-			resultAutomaton.addState(state);
+			if(!resultAutomaton.getStates().contains(state)){
+				resultAutomaton.addState(state);
+			}
 			if(automaton2.isStateFinal(state)){
 				resultAutomaton.setStateFinal(state);
 			}
@@ -43,7 +45,7 @@ public class AA_Union<LETTER, STATE> implements IOperation<LETTER, STATE>{
 
 	@Override
 	public String operationName(){
-		return "AA_Union";
+		return "AA_MergedUnion";
 	}
 
 	@Override

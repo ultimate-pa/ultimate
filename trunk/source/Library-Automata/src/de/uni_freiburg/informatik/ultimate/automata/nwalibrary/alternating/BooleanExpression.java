@@ -1,5 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.alternating;
 
+import java.util.List;
+
 public class BooleanExpression{
 
 	public BooleanExpression(long alpha, long beta){
@@ -36,5 +38,29 @@ public class BooleanExpression{
 			booleanExpression.nextConjunctExpression = nextConjunctExpression.cloneShifted(amount);
 		}
 		return booleanExpression;
+	}
+	
+	public <T> String toString(List<T> variables){
+		String text = "";
+		int r = 0;
+		for(int i=0;i<variables.size();i++){
+			if(BitUtil.getBit(alpha, i)){
+				if(r != 0){
+					text += " ^ ";
+				}
+				if(!BitUtil.getBit(beta, i)){
+					text += "~";
+				}
+				text += variables.get(i);
+				r++;
+			}
+		}
+		if(nextConjunctExpression != null){
+			if(r > 1){
+				text = "(" + text + ")";
+			}
+			text += " v " + nextConjunctExpression.toString(variables);
+		}
+		return text;
 	}
 }

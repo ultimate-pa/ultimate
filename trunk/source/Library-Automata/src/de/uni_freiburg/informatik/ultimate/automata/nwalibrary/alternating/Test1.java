@@ -7,5 +7,6 @@ public class Test1{
 		long startNanoTime = System.nanoTime();
 		TestCase.test(automaton, TestAutomaton_1.TEST_CASES);
 		System.out.println(((System.nanoTime() - startNanoTime) / 1000000f) + " ms");
+		System.out.println(automaton);
 	}
 }

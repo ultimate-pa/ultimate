@@ -36,7 +36,7 @@ public class AA_Determination<LETTER> implements IOperation<LETTER, IPredicate>{
 			IPredicate predicate = getPredicate(state);
 			for(LETTER letter : alternatingAutomaton.getAlphabet()){
 				long nextState = alternatingAutomaton.resolveLetter(letter, state);
-				IPredicate nextPredicate = getPredicate(state);
+				IPredicate nextPredicate = getPredicate(nextState);
 				if(!resultAutomaton.getStates().contains(nextPredicate)){
 					resultAutomaton.addState(false, alternatingAutomaton.getAcceptingFunction().getResult(nextState), nextPredicate);
 					newStates.add(nextState);
