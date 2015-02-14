@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
@@ -184,27 +185,28 @@ public class DeterministicInterpolantAutomaton2 extends TotalInterpolantAutomato
 			SuccessorComputationHelper sch, Set<IPredicate> inputSuccs) {
 		final Set<IPredicate> resPredConjuncts = m_ResPred2InputPreds.getImage(resPred);
 		assert resPredConjuncts != null;
-		final Set<IPredicate> resHierConjuncts;
+		final IterableWithAdditionalElement<IPredicate> resPredConjunctsWithTrue = 
+				new IterableWithAdditionalElement<IPredicate>(resPredConjuncts, m_IaTrueState);
+		final IterableWithAdditionalElement<IPredicate> resHierConjunctsWithTrue;
 		if (resHier == null) {
-			resHierConjuncts = null;
+			resHierConjunctsWithTrue = null;
 		} else {
+			Set<IPredicate> resHierConjuncts;
 			resHierConjuncts = m_ResPred2InputPreds.getImage(resHier);
+			resHierConjunctsWithTrue = new IterableWithAdditionalElement<IPredicate>(resHierConjuncts, m_IaTrueState);
 		}
-		if (resPredConjuncts.size() == 1 && 
-				(resHier == null || resHierConjuncts.size() == 1)) {
-			inputSuccs.addAll(sch.getSuccsInterpolantAutomaton(resPred, resHier, letter));
-		} else {
-			for (IPredicate inputPred : resPredConjuncts) {
-				if (resHier == null) {
-					inputSuccs.addAll(sch.getSuccsInterpolantAutomaton(inputPred, null, letter));
-				} else {
-					for (IPredicate inputHier : resHierConjuncts) {
-						inputSuccs.addAll(sch.getSuccsInterpolantAutomaton(inputPred, inputHier, letter));
-					}
+		for (IPredicate inputPred : resPredConjunctsWithTrue) {
+			if (resHier == null) {
+				inputSuccs.addAll(sch.getSuccsInterpolantAutomaton(inputPred, null, letter));
+			} else {
+				for (IPredicate inputHier : resHierConjunctsWithTrue) {
+					inputSuccs.addAll(sch.getSuccsInterpolantAutomaton(inputPred, inputHier, letter));
 				}
 			}
 		}
 	}
+
+	
 
 
 
