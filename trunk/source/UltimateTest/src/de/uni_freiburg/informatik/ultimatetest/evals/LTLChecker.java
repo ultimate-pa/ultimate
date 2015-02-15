@@ -64,7 +64,7 @@ public class LTLChecker extends AbstractEvaluationTestSuite {
 
 	@Override
 	protected int getTimeout() {
-		return 1 * 60 * 1000;
+		return 30 * 60 * 1000;
 	}
 
 	@Override
