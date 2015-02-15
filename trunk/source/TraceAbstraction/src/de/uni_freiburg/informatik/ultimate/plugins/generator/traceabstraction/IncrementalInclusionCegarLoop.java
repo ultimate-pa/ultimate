@@ -27,8 +27,9 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPre
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataTransitionAppender.AbstractInterpolantAutomaton2;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataTransitionAppender.DeterministicInterpolantAutomaton2;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataTransitionAppender.TotalInterpolantAutomaton;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataTransitionAppender.NondeterministicInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.EfficientHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IncrementalHoareTripleChecker;
@@ -44,7 +45,7 @@ public class IncrementalInclusionCegarLoop extends BasicCegarLoop {
 	
 	protected AbstractIncrementalInclusionCheck<CodeBlock, IPredicate> m_InclusionCheck;
 	protected final LanguageOperation m_LanguageOperation;
-	protected final List<DeterministicInterpolantAutomaton2> m_InterpolantAutomata = new ArrayList<DeterministicInterpolantAutomaton2>();
+	protected final List<AbstractInterpolantAutomaton2> m_InterpolantAutomata = new ArrayList<AbstractInterpolantAutomaton2>();
 	protected final List<IHoareTripleChecker> m_HoareTripleChecker = new ArrayList<IHoareTripleChecker>();
 
 	public IncrementalInclusionCegarLoop(String name, RootNode rootNode,
@@ -179,6 +180,7 @@ public class IncrementalInclusionCegarLoop extends BasicCegarLoop {
 			switch (m_Pref.interpolantAutomatonEnhancement()) {
 			case PREDICATE_ABSTRACTION:
 			case PREDICATE_ABSTRACTION_CONSERVATIVE:
+			{
 				boolean conservativeSuccessorCandidateSelection = 
 					(m_Pref.interpolantAutomatonEnhancement() == InterpolantAutomatonEnhancement.PREDICATE_ABSTRACTION_CONSERVATIVE);
 				DeterministicInterpolantAutomaton2 determinized = new DeterministicInterpolantAutomaton2(m_Services, 
@@ -190,17 +192,29 @@ public class IncrementalInclusionCegarLoop extends BasicCegarLoop {
 				m_InclusionCheck.addSubtrahend(determinized);
 				m_InterpolantAutomata.add(determinized);
 				m_HoareTripleChecker.add(edgeChecker);
-//				determinized.switchToReadonlyMode();
 				switchAllInterpolantAutomataToReadOnlyMode();
-//				assert (edgeChecker.isAssertionStackEmpty());
 				INestedWordAutomaton<CodeBlock, IPredicate> test = (new RemoveUnreachable<CodeBlock, IPredicate>(m_Services, 
 						determinized)).getResult();
 				assert (new InductivityCheck(m_Services, test, false, true,
 						new IncrementalHoareTripleChecker(m_SmtManager, m_ModGlobVarManager))).getResult();
-				boolean acceptedByDeterminized = (new Accepts<CodeBlock, IPredicate>(
-						determinized,
-						(NestedWord<CodeBlock>) m_Counterexample.getWord())).getResult();
-				progress = acceptedByDeterminized;
+				progress = true;
+				break;
+			}
+			case EAGER:
+				NondeterministicInterpolantAutomaton nondet = new NondeterministicInterpolantAutomaton(m_Services, 
+						m_SmtManager, m_ModGlobVarManager, edgeChecker, 
+						(INestedWordAutomaton<CodeBlock, IPredicate>) m_Abstraction, 
+						m_InterpolAutomaton, m_TraceChecker.getPredicateUnifier(), mLogger);
+				switchAllInterpolantAutomataToOnTheFlyConstructionMode();
+				m_InclusionCheck.addSubtrahend(nondet);
+				m_InterpolantAutomata.add(nondet);
+				m_HoareTripleChecker.add(edgeChecker);
+				switchAllInterpolantAutomataToReadOnlyMode();
+				INestedWordAutomaton<CodeBlock, IPredicate> test = (new RemoveUnreachable<CodeBlock, IPredicate>(m_Services, 
+						nondet)).getResult();
+				assert (new InductivityCheck(m_Services, test, false, true,
+						new IncrementalHoareTripleChecker(m_SmtManager, m_ModGlobVarManager))).getResult();
+				progress = true;
 				break;
 			case NONE:
 				m_InclusionCheck.addSubtrahend(m_InterpolAutomaton);
@@ -233,13 +247,13 @@ public class IncrementalInclusionCegarLoop extends BasicCegarLoop {
 	
 	
 	private void switchAllInterpolantAutomataToOnTheFlyConstructionMode() {
-		for (TotalInterpolantAutomaton ia : m_InterpolantAutomata) {
+		for (AbstractInterpolantAutomaton2 ia : m_InterpolantAutomata) {
 			ia.switchToOnDemandConstructionMode();
 		}
 	}
 	
 	private void switchAllInterpolantAutomataToReadOnlyMode() {
-		for (TotalInterpolantAutomaton ia : m_InterpolantAutomata) {
+		for (AbstractInterpolantAutomaton2 ia : m_InterpolantAutomata) {
 			ia.switchToReadonlyMode();
 		}
 	}

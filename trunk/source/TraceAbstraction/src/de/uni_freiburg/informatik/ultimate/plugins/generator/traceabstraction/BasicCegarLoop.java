@@ -47,6 +47,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Roo
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CoverageAnalysis.BackwardCoveringInformation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataTransitionAppender.BestApproximationDeterminizer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataTransitionAppender.DeterministicInterpolantAutomaton2;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataTransitionAppender.NondeterministicInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataTransitionAppender.SelfloopDeterminizer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantAutomataBuilders.CanonicalInterpolantAutomatonBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantAutomataBuilders.StraightLineInterpolantAutomatonBuilder;
@@ -422,6 +423,34 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 								m_SmtManager, m_ModGlobVarManager))).getResult();
 					}
 					break;
+				case EAGER:
+				{
+					NondeterministicInterpolantAutomaton nondet = new NondeterministicInterpolantAutomaton(m_Services, 
+							m_SmtManager, m_ModGlobVarManager, htc, 
+							(INestedWordAutomaton<CodeBlock, IPredicate>) m_Abstraction, 
+							m_InterpolAutomaton, m_TraceChecker.getPredicateUnifier(), mLogger);
+					PowersetDeterminizer<CodeBlock, IPredicate> psd2 = new PowersetDeterminizer<CodeBlock, IPredicate>(
+							nondet, true, m_PredicateFactoryInterpolantAutomata);
+					diff = new Difference<CodeBlock, IPredicate>(m_Services, oldAbstraction, nondet, psd2,
+							m_StateFactoryForRefinement, explointSigmaStarConcatOfIA);
+					nondet.switchToReadonlyMode();
+					INestedWordAutomaton<CodeBlock, IPredicate> test = (new RemoveUnreachable<CodeBlock, IPredicate>(
+							m_Services, nondet)).getResult();
+					if (m_Pref.dumpAutomata()) {
+						String filename = "EnhancedInterpolantAutomaton_Iteration" + m_Iteration;
+						super.writeAutomatonToFile(test, filename);
+					}
+					boolean ctxAccepted = (new Accepts<CodeBlock,IPredicate>(test,
+							(NestedWord<CodeBlock>)	m_Counterexample.getWord(), true, false)).getResult();
+					if (!ctxAccepted) {
+						throw new AssertionError("enhanced interpolant automaton in iteration " + 
+								m_Iteration + " broken: counterexample of length " + 
+								m_Counterexample.getLength() + " not accepted");
+					}
+					assert (new InductivityCheck(m_Services, test, false, true, new IncrementalHoareTripleChecker(
+							m_SmtManager, m_ModGlobVarManager))).getResult();
+				}
+				break;
 				default:
 					throw new UnsupportedOperationException();
 				}
