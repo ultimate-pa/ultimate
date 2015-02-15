@@ -20,6 +20,7 @@ import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.SubchainTyp
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.ToolchainData;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 import de.uni_freiburg.informatik.ultimate.core.services.GenericServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.services.IResultService;
 import de.uni_freiburg.informatik.ultimate.core.services.LoggingService;
 import de.uni_freiburg.informatik.ultimate.core.services.PreludeProvider;
 import de.uni_freiburg.informatik.ultimate.core.services.ProgressMonitorService;
@@ -34,7 +35,10 @@ import de.uni_freiburg.informatik.ultimate.model.PersistenceAwareModelManager;
 import de.uni_freiburg.informatik.ultimate.model.repository.StoreObjectException;
 import de.uni_freiburg.informatik.ultimate.plugins.ResultNotifier;
 import de.uni_freiburg.informatik.ultimate.result.BenchmarkResult;
+import de.uni_freiburg.informatik.ultimate.result.GenericResult;
+import de.uni_freiburg.informatik.ultimate.result.IResultWithSeverity.Severity;
 import de.uni_freiburg.informatik.ultimate.util.Benchmark;
+import de.uni_freiburg.informatik.ultimate.util.VMUtils;
 
 /**
  * 
@@ -241,19 +245,20 @@ public class ToolchainManager {
 				}
 
 			} finally {
+				IResultService resultService = mToolchainData.getServices().getResultService();
+				resultService.reportResult(Activator.s_PLUGIN_ID, new GenericResult(Activator.s_PLUGIN_ID,
+						"VM Information", VMUtils.getVMInfos(), Severity.INFO));
 				if (useBenchmark) {
 					bench.stopAll();
+					bench.printResult();
+					mBenchmark.printResult();
 
-					bench.report();
-					mBenchmark.report();
-					mToolchainData
-							.getServices()
-							.getResultService()
-							.reportResult(
-									Activator.s_PLUGIN_ID,
-									new BenchmarkResult<Double>(Activator.s_PLUGIN_ID, "Toolchain Benchmarks",
-											mBenchmark));
+					// report benchmark results
+					resultService.reportResult(Activator.s_PLUGIN_ID, new BenchmarkResult<Double>(
+							Activator.s_PLUGIN_ID, "Toolchain Benchmarks", mBenchmark));
+
 				}
+
 				new ResultNotifier(mCurrentController, mToolchainData.getServices()).processResults();
 				mModelManager.removeAll();
 				mLogger.info("#######################  End " + getLogPrefix() + " #######################");

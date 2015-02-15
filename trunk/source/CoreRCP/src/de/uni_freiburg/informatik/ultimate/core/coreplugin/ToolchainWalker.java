@@ -62,15 +62,13 @@ final class ToolchainWalker implements IToolchainCancel {
 
 		// iterate over toolchain
 		for (Object o : chain.getToolchain().getPluginOrSubchain()) {
-			// If a cancel-request was initiated during the loop,
-			// obey it!
-			if (!service.continueProcessing() || monitor.isCanceled() || this.mToolchainCancelRequest) {
-				mLogger.info("Toolchain execution was canceled (Timeout or user)");
-				return;
-			}
-			// Otherwise deal with the current toolchain element
+
+			// Deal with the current toolchain element
 			if (o instanceof PluginType) {
 				PluginType plugin = (PluginType) o;
+				if (shouldCancel(data, service, monitor, plugin.getId())) {
+					return;
+				}
 				processPlugin(data, plugin);
 				// each successful plugin advances progress bar by 1
 				progress.worked(1);
@@ -78,18 +76,41 @@ final class ToolchainWalker implements IToolchainCancel {
 				progress.setWorkRemaining(work_remain);
 			} else if (o instanceof SubchainType) {
 				SubchainType subchain = (SubchainType) o;
+				if (shouldCancel(data, service, monitor, subchain.toString())) {
+					return;
+				}
 				// a subchain starts a subprocess that may consume 1 tick
 				processSubchain(data, subchain, progress.newChild(1));
 				progress.worked(1);
 				work_remain--;
 				progress.setWorkRemaining(work_remain);
 			} else {
+				if (o != null) {
+					mLogger.warn("Unknown toolchain element " + o.getClass().getSimpleName() + ", skipping...");
+				} else {
+					mLogger.warn("Toolchain element is NULL, skipping...");
+				}
 				continue;
 			}
 		}
 		// TODO: DD: check if this is needed / correct.
 		monitor.done();
 
+	}
+
+	private boolean shouldCancel(CompleteToolchainData data, IProgressMonitorService service, IProgressMonitor monitor,
+			String pluginId) {
+		if (!service.continueProcessing() || monitor.isCanceled() || this.mToolchainCancelRequest) {
+			// If a cancel-request occurred during the loop, honor it
+			data.getToolchain()
+					.getServices()
+					.getResultService()
+					.reportResult(Activator.s_PLUGIN_ID,
+							new TimeoutResult(Activator.s_PLUGIN_ID, "Timeout occured before executing " + pluginId));
+			mLogger.info("Toolchain execution was canceled (Timeout or user) before executing " + pluginId);
+			return true;
+		}
+		return false;
 	}
 
 	/**

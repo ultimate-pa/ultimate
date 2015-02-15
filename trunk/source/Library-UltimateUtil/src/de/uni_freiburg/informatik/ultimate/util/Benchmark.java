@@ -145,7 +145,7 @@ public class Benchmark implements ICsvProviderProvider<Double> {
 		mWatches = new HashMap<String, Watch>();
 	}
 
-	public void report() {
+	public void printResult() {
 		for (Watch s : getSortedWatches()) {
 			mLogger.info(s);
 		}
