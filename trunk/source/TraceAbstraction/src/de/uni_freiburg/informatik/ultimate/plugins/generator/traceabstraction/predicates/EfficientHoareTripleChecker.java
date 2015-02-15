@@ -4,6 +4,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGl
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.EdgeChecker.EdgeCheckerBenchmarkGenerator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager.ILockerHolderWithVoluntaryLockRelease;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
 
 public class EfficientHoareTripleChecker implements IHoareTripleChecker {
@@ -141,8 +142,13 @@ public class EfficientHoareTripleChecker implements IHoareTripleChecker {
 	 * IncrementalHoareTripleChecker.
 	 */
 	public void unlockSmtSolverWorkaround() {
-		if (m_SmtBasedHoareTripleChecker instanceof IncrementalHoareTripleChecker) {
-			((IncrementalHoareTripleChecker) m_SmtBasedHoareTripleChecker).releaseLock();
+		if (m_SmtBasedHoareTripleChecker instanceof ILockerHolderWithVoluntaryLockRelease) {
+			((ILockerHolderWithVoluntaryLockRelease) m_SmtBasedHoareTripleChecker).releaseLock();
+		} else if (m_SmtBasedHoareTripleChecker instanceof ProtectiveHoareTripleChecker) {
+			IHoareTripleChecker protectedHtc = ((ProtectiveHoareTripleChecker) m_SmtBasedHoareTripleChecker).getProtectedHoareTripleChecker();
+			if (protectedHtc instanceof ILockerHolderWithVoluntaryLockRelease) {
+				((ILockerHolderWithVoluntaryLockRelease) protectedHtc).releaseLock();
+			}
 		}
 	}
 

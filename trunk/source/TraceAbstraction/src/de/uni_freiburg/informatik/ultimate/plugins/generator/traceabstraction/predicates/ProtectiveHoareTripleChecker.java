@@ -58,10 +58,18 @@ public class ProtectiveHoareTripleChecker implements IHoareTripleChecker {
 			return m_ProtectedHoareTripleChecker.checkReturn(preLin, preHier, cb, succ);
 		}
 	}
+	
+	
 
 	@Override
 	public EdgeCheckerBenchmarkGenerator getEdgeCheckerBenchmark() {
 		return m_ProtectedHoareTripleChecker.getEdgeCheckerBenchmark();
 	}
+
+	public IHoareTripleChecker getProtectedHoareTripleChecker() {
+		return m_ProtectedHoareTripleChecker;
+	}
+	
+	
 
 }
