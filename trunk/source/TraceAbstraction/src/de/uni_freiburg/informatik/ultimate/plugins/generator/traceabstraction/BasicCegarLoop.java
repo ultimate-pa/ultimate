@@ -414,7 +414,9 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 						boolean ctxAccepted = (new Accepts<CodeBlock,IPredicate>(test,
 										(NestedWord<CodeBlock>)	m_Counterexample.getWord(), true, false)).getResult();
 						if (!ctxAccepted) {
-							throw new AssertionError("enhanced interpolant automaton broken: counterexample not accepted");
+							throw new AssertionError("enhanced interpolant automaton in iteration " + 
+									m_Iteration + " broken: counterexample of length " + 
+									m_Counterexample.getLength() + " not accepted");
 						}
 						assert (new InductivityCheck(m_Services, test, false, true, new IncrementalHoareTripleChecker(
 								m_SmtManager, m_ModGlobVarManager))).getResult();
