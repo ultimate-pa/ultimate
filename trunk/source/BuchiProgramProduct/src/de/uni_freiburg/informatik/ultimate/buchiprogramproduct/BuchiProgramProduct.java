@@ -33,8 +33,6 @@ import de.uni_freiburg.informatik.ultimate.result.CounterExampleResult;
 public class BuchiProgramProduct implements IGenerator {
 
 	private Logger mLogger;
-	private List<String> mFileNames;
-
 	private BuchiProductObserver mBuchiProductObserver;
 	private boolean mUseBuchiProductObserver;
 	private boolean mPreviousToolFoundErrors;
@@ -107,7 +105,6 @@ public class BuchiProgramProduct implements IGenerator {
 	public void init() {
 		mUseBuchiProductObserver = false;
 		mModelIsRCFG = false;
-		mFileNames = new ArrayList<String>();
 		mUseful = 0;
 	}
 

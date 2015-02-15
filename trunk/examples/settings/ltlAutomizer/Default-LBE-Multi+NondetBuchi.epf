@@ -1,3 +1,28 @@
+#Sun Feb 15 11:34:07 CET 2015
+/instance/de.uni_freiburg.informatik.ultimate.buchiprogramproduct/Minimize\ states\ even\ if\ more\ edges\ are\ added\ than\ removed.=false
+@de.uni_freiburg.informatik.ultimate.buchiprogramproduct=0.0.1
+\!/instance/de.uni_freiburg.informatik.ultimate.buchiprogramproduct=
+/instance/de.uni_freiburg.informatik.ultimate.buchiprogramproduct/Rewrite\ not\ equals\ when\ simplifying\ assume\ statements\ with\ SBE=false
+/instance/de.uni_freiburg.informatik.ultimate.buchiprogramproduct/Rewrite\ not\ equals\ during\ SBE=false
+/instance/de.uni_freiburg.informatik.ultimate.buchiprogramproduct/Simplify\ assume\ statements=false
+/instance/de.uni_freiburg.informatik.ultimate.buchiprogramproduct/Use\ SBE\ during\ assume\ simplification=false
+file_export_version=3.0
+/instance/de.uni_freiburg.informatik.ultimate.buchiprogramproduct/Optimize\ not\ more\ than\ (<\=0\ means\ until\ nothing\ changes)=0
+/instance/de.uni_freiburg.informatik.ultimate.buchiprogramproduct/Remove\ sink\ states=true
+/instance/de.uni_freiburg.informatik.ultimate.buchiprogramproduct/Use\ SBE\ for\ initial\ RCFG=false
+/instance/de.uni_freiburg.informatik.ultimate.buchiprogramproduct/Maximize\ final\ states\ of\ the\ product=true
+/instance/de.uni_freiburg.informatik.ultimate.buchiprogramproduct/Remove\ infeasible\ edges=true
+/instance/de.uni_freiburg.informatik.ultimate.buchiprogramproduct/Minimize\ states\ using\ LBE\ with\ the\ strategy=MULTI
+/instance/de.uni_freiburg.informatik.ultimate.buchiprogramproduct/Apply\ product\ optimizations\ until\ nothing\ changes=true
+#Thu Jan 29 10:39:03 CET 2015
+/instance/de.uni_freiburg.informatik.ultimate.ltl2aut/Read\ property\ from\ file=true
+file_export_version=3.0
+@de.uni_freiburg.informatik.ultimate.ltl2aut=0.0.1
+/instance/de.uni_freiburg.informatik.ultimate.ltl2aut/Path\ to\ LTL*BA\ executable\ (LTL2BA,\ LTL3BA)=ltl2ba
+/instance/de.uni_freiburg.informatik.ultimate.ltl2aut/Property\ to\ check=[] a \r\n a\: x > 42
+/instance/de.uni_freiburg.informatik.ultimate.ltl2aut/Use\ small\ block\ encoding=false
+/instance/de.uni_freiburg.informatik.ultimate.ltl2aut/Rewrite\ not\ equals\ during\ small\ block\ encoding=false
+\!/instance/de.uni_freiburg.informatik.ultimate.ltl2aut=
 #Tue Feb 10 17:05:29 CET 2015
 /instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker/Multiphase\ template\ size=3
 file_export_version=3.0
@@ -43,13 +68,6 @@ file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer/ScroogeNondeterminism\ stem=true
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer/ScroogeNondeterminism\ loop=true
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer/Bouncer\ loop=true
-#Tue Feb 10 17:05:29 CET 2015
-/instance/de.uni_freiburg.informatik.ultimate.ltl2aut/Read\ property\ from\ file=true
-file_export_version=3.0
-@de.uni_freiburg.informatik.ultimate.ltl2aut=0.0.1
-/instance/de.uni_freiburg.informatik.ultimate.ltl2aut/Path\ to\ LTL*BA\ executable\ (LTL2BA,\ LTL3BA)=ltl2ba
-/instance/de.uni_freiburg.informatik.ultimate.ltl2aut/Property\ to\ check=[] a \r\n a\: x > 42
-\!/instance/de.uni_freiburg.informatik.ultimate.ltl2aut=
 #Tue Feb 10 17:05:29 CET 2015
 file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck/tree\ interpolation\ mode\ for\ smtinterpol\ \n\ (internal\:\ tree,\ a\ la\ matthias\:\ nested)=ForwardPredicates

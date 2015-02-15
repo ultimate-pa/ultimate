@@ -17,12 +17,15 @@ public class LTLChecker extends AbstractEvaluationTestSuite {
 
 	@Override
 	protected void createTestCasesForReal(List<UltimateTestCase> testcases) {
-		addTestCasesFixed("LTLAutomizerC.xml", "ltlAutomizer/LtlAutomizerC.epf", testcases);
-//		addTestCasesFixed("LTLAutomizerC.xml", "ltlAutomizer/LtlAutomizerC-SBE.epf", testcases);
-		addTestCasesFixed("LTLAutomizerC.xml", "ltlAutomizer/LtlAutomizerC-SBE+SimplifyAssumesSBE.epf", testcases);
-
-//		addTestCasesFixed("LTLAutomizerC.xml", "ltlAutomizer/LtlAutomizerC-NondetBuchi.epf", testcases);
-
+		addTestCasesFixed("LTLAutomizerC.xml", "ltlAutomizer/Default-LBE-Multi+NondetBuchi.epf", testcases);
+		addTestCasesFixed("LTLAutomizerC.xml", "ltlAutomizer/Default-LBE-Multi+SBE+SimplifyAssumesSBE.epf", testcases);
+		addTestCasesFixed("LTLAutomizerC.xml", "ltlAutomizer/Default-LBE-Multi+SBE.epf", testcases);
+		addTestCasesFixed("LTLAutomizerC.xml", "ltlAutomizer/Default-LBE-Multi.epf", testcases);
+		addTestCasesFixed("LTLAutomizerC.xml", "ltlAutomizer/Default-LBE-Single.epf", testcases);
+		addTestCasesFixed("LTLAutomizerC.xml", "ltlAutomizer/Default-LBE-SNME.epf", testcases);
+		addTestCasesFixed("LTLAutomizerC.xml", "ltlAutomizer/None+SBE+SimplifyAssumesSBE.epf", testcases);
+		addTestCasesFixed("LTLAutomizerC.xml", "ltlAutomizer/None+SBE.epf", testcases);
+		addTestCasesFixed("LTLAutomizerC.xml", "ltlAutomizer/None.epf", testcases);
 	}
 
 	@Override
@@ -43,7 +46,7 @@ public class LTLChecker extends AbstractEvaluationTestSuite {
 //				"examples/LTL/rers2012/P19/",
 				"examples/LTL/coolant/",
 				"examples/LTL/koskinen/ltlcmodelchecker-benchmarks/",
-//				"examples/LTL/bugs/",
+				"examples/LTL/bugs/",
 //				"examples/LTL/bugs/Bug_AssumeFalse.c",
 				
 				//RERS examples with NO_RESULT
@@ -52,7 +55,7 @@ public class LTLChecker extends AbstractEvaluationTestSuite {
 //				"examples/LTL/rers2012correctencoding/P14/Problem14_prop_014.c",
 				
 				//Koskinen examples with problems
-//				"examples/LTL/koskinen/ltlcmodelchecker-benchmarks/18-windows_os_frag4_prop2-new.c",
+//				"examples/LTL/koskinen/ltlcmodelchecker-benchmarks/09-postgreSQL_dropbuf_prop1.c",
 
 		};
 		// @formatter:on
@@ -61,7 +64,7 @@ public class LTLChecker extends AbstractEvaluationTestSuite {
 
 	@Override
 	protected int getTimeout() {
-		return 20 * 60 * 1000;
+		return 1 * 60 * 1000;
 	}
 
 	@Override

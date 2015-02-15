@@ -69,6 +69,8 @@ public class MinimizeStatesMultiEdgeMultiNode extends BaseMinimizeStates {
 		StatementExtractor extractor = new StatementExtractor(mLogger);
 
 		Iterator<RCFGEdge> predIter = predEdges.iterator();
+		boolean canRemovePredEdges = true;
+		boolean canRemoveSuccEdges = true;
 		while (predIter.hasNext()) {
 			RCFGEdge predEdge = predIter.next();
 
@@ -83,6 +85,7 @@ public class MinimizeStatesMultiEdgeMultiNode extends BaseMinimizeStates {
 			if (extractor.hasSummary()) {
 				// we cannot remove or use this edge, it is a summary
 				predIter.remove();
+				canRemoveSuccEdges = false;
 				if (mLogger.isDebugEnabled()) {
 					mLogger.debug("    skipping because it contains summaries: " + predCB);
 				}
@@ -90,6 +93,7 @@ public class MinimizeStatesMultiEdgeMultiNode extends BaseMinimizeStates {
 			}
 
 			Iterator<RCFGEdge> succIter = succEdges.iterator();
+
 			while (succIter.hasNext()) {
 				RCFGEdge succEdge = succIter.next();
 				CodeBlock succCB = (CodeBlock) succEdge;
@@ -105,6 +109,7 @@ public class MinimizeStatesMultiEdgeMultiNode extends BaseMinimizeStates {
 				if (extractor.hasSummary()) {
 					// we cannot remove or use this edge, it is a summary
 					succIter.remove();
+					canRemovePredEdges = false;
 					if (mLogger.isDebugEnabled()) {
 						mLogger.debug("    skipping because it contains summaries: " + succCB);
 					}
@@ -116,15 +121,24 @@ public class MinimizeStatesMultiEdgeMultiNode extends BaseMinimizeStates {
 
 			}
 		}
-
-		for (RCFGEdge predEdge : predEdges) {
-			predEdge.disconnectSource();
-			predEdge.disconnectTarget();
+		int removedEdges = 0;
+		if (canRemovePredEdges) {
+			// if one of the successor edges is a summary edge, we are not
+			// allowed to remove the predecessor edges
+			for (RCFGEdge predEdge : predEdges) {
+				predEdge.disconnectSource();
+				predEdge.disconnectTarget();
+				removedEdges++;
+			}
 		}
-
-		for (RCFGEdge succEdge : succEdges) {
-			succEdge.disconnectSource();
-			succEdge.disconnectTarget();
+		if (canRemoveSuccEdges) {
+			// if one of the predecessor edges is a summary edge, we are not
+			// allowed to remove the successor edges
+			for (RCFGEdge succEdge : succEdges) {
+				succEdge.disconnectSource();
+				succEdge.disconnectTarget();
+				removedEdges++;
+			}
 		}
 
 		ArrayList<RCFGEdge> rtr = new ArrayList<>();
@@ -136,10 +150,10 @@ public class MinimizeStatesMultiEdgeMultiNode extends BaseMinimizeStates {
 		}
 
 		if (mLogger.isDebugEnabled()) {
-			mLogger.debug("    removed " + (predEdges.size() + succEdges.size()) + ", added " + rtr.size() + " edges");
+			mLogger.debug("    removed " + removedEdges + ", added " + rtr.size() + " edges");
 		}
 
-		mRemovedEdges += predEdges.size() + succEdges.size();
+		mRemovedEdges += removedEdges;
 		// we added new edges to all predecessors, we have to recheck them now
 		return rtr;
 	}
