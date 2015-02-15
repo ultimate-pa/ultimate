@@ -9,8 +9,12 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 
+import org.apache.log4j.Level;
+import org.apache.log4j.Priority;
+
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.Automaton2UltimateModel;
+import de.uni_freiburg.informatik.ultimate.automata.HistogramOfIterable;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
@@ -183,6 +187,10 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 			}
 			// m_RunAnalyzer = new RunAnalyzer(m_Counterexample);
 			mLogger.info("Found potential Counterexample");
+			if (mLogger.getLevel().isGreaterOrEqual(Priority.INFO)) {
+				mLogger.info("Counterexample histogram " + 
+						new HistogramOfIterable<CodeBlock>(m_Counterexample.getWord()));
+			}
 			// s_Logger.info("Cutpoints: " + m_RunAnalyzer.getCutpoints());
 			// s_Logger.debug(m_RunAnalyzer.getOccurence());
 			return false;
