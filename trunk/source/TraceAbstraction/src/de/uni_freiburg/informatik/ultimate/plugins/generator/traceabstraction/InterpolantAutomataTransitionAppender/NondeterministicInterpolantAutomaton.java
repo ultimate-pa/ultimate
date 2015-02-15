@@ -103,13 +103,37 @@ public class NondeterministicInterpolantAutomaton extends TotalInterpolantAutoma
 
 
 	/**
-	 * Add all successors of input automaton
-	 * @param inputSuccs 
+	 * Add all successors of input automaton. As an optimization, we omit
+	 * the "true" state if it is a successor. Additionally, we also add
+	 * all successors of the "true" state.
 	 */
 	protected void addInputAutomatonSuccs(
 			IPredicate resPred, IPredicate resHier, CodeBlock letter,
 			SuccessorComputationHelper sch, Set<IPredicate> inputSuccs) {
-			inputSuccs.addAll(sch.getSuccsInterpolantAutomaton(resPred, resHier, letter));
+			Collection<IPredicate> succs = 
+					sch.getSuccsInterpolantAutomaton(resPred, resHier, letter);
+			copyAllButTrue(inputSuccs, succs);
+			Collection<IPredicate> succsOfTrue = 
+					sch.getSuccsInterpolantAutomaton(m_IaTrueState, resHier, letter);
+			copyAllButTrue(inputSuccs, succsOfTrue);
+			if (resHier != null) {
+				Collection<IPredicate> succsForResPredTrue = 
+						sch.getSuccsInterpolantAutomaton(resPred, m_IaTrueState, letter);
+				copyAllButTrue(inputSuccs, succsForResPredTrue);
+				Collection<IPredicate> succsForTrueTrue = 
+						sch.getSuccsInterpolantAutomaton(m_IaTrueState, m_IaTrueState, letter);
+				copyAllButTrue(inputSuccs, succsForTrueTrue);
+			}
+	}
+	
+	private void copyAllButTrue(Set<IPredicate> target,	Collection<IPredicate> source) {
+		for (IPredicate pred : source) {
+			if (pred == m_IaTrueState) {
+				// do nothing, transition to the "true" state are useless
+			} else {
+				target.add(pred);
+			}
+		}
 	}
 
 	@Override
