@@ -22,8 +22,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
 public abstract class TotalInterpolantAutomaton extends
 		AbstractInterpolantAutomaton2 {
 	
-	protected final boolean m_OmitIntricatePredicates = true;
-
 	protected final IPredicate m_IaTrueState;
 	protected final PredicateUnifier m_PredicateUnifier;
 
@@ -66,30 +64,17 @@ public abstract class TotalInterpolantAutomaton extends
 			sch.addTransition(resPred, resHier, letter, m_IaFalseState);
 			return;
 		} else {
-			if (m_OmitIntricatePredicates && !isIntricatePredecessor(resPred, resHier)) {
-				Validity sat = sch.computeSuccWithSolver(resPred, resHier, letter, m_IaFalseState);
-				if (sat == Validity.VALID) {
-					sch.addTransition(resPred, resHier, letter, m_IaFalseState);
-					return;
-				}
+			Validity sat = sch.computeSuccWithSolver(resPred, resHier, letter, m_IaFalseState);
+			if (sat == Validity.VALID) {
+				sch.addTransition(resPred, resHier, letter, m_IaFalseState);
+				return;
 			}
 		}
 		// check all other predicates
-		if (!m_OmitIntricatePredicates || !isIntricatePredecessor(resPred, resHier)) {
-			addOtherSuccessors(resPred, resHier, letter, sch, inputSuccs);
-		}
+		addOtherSuccessors(resPred, resHier, letter, sch, inputSuccs);
 		constructSuccessorsAndTransitions(resPred, resHier, letter, sch, inputSuccs);
 	}
 	
-	private boolean isIntricatePredecessor(IPredicate resPred, IPredicate resHier) {
-		if (resHier == null) {
-			return m_PredicateUnifier.isIntricatePredicate(resPred);
-		} else {
-			return m_PredicateUnifier.isIntricatePredicate(resPred) || m_PredicateUnifier.isIntricatePredicate(resHier);
-		}
-	}
-	
-
 	
 	
 

@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
@@ -139,11 +138,9 @@ public class DeterministicInterpolantAutomaton2 extends TotalInterpolantAutomato
 			final Set<IPredicate> inputSuccs) {
 		for (IPredicate succCand : selectSuccessorCandidates(resPred, resHier)) {
 			if (!inputSuccs.contains(succCand)) {
-				if (!m_OmitIntricatePredicates || !m_PredicateUnifier.isIntricatePredicate(succCand)) {
-					Validity sat = sch.computeSuccWithSolver(resPred, resHier, letter, succCand);
-					if (sat == Validity.VALID) {
-						inputSuccs.add(succCand);
-					}
+				Validity sat = sch.computeSuccWithSolver(resPred, resHier, letter, succCand);
+				if (sat == Validity.VALID) {
+					inputSuccs.add(succCand);
 				}
 			}
 		}

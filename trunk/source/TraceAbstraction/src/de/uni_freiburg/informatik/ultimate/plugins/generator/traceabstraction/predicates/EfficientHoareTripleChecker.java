@@ -22,7 +22,7 @@ public class EfficientHoareTripleChecker implements IHoareTripleChecker {
 			PredicateUnifier predicateUnifier, 
 			SmtManager smtManager) {
 		super();
-		m_SmtBasedHoareTripleChecker = smtBasedHoareTripleChecker;
+		m_SmtBasedHoareTripleChecker = new ProtectiveHoareTripleChecker(smtBasedHoareTripleChecker, predicateUnifier);
 		m_SdHoareTripleChecker = new SdHoareTripleChecker(modGlobVarManager, predicateUnifier);
 		m_hoareTripleCheckerForReview = new MonolithicHoareTripleChecker(smtManager);
 	}
