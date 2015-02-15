@@ -7,16 +7,16 @@ package de.uni_freiburg.informatik.ultimate.result;
  */
 public abstract class AbstractResult implements IResult {
 	
-	final protected String m_Plugin; 
+	final protected String mPlugin; 
 	
 	public AbstractResult(String plugin) {
 		super();
-		m_Plugin = plugin;
+		mPlugin = plugin;
 	}
 	
 	@Override
 	public final String getPlugin() {
-		return m_Plugin;
+		return mPlugin;
 	}
 	
 	@Override

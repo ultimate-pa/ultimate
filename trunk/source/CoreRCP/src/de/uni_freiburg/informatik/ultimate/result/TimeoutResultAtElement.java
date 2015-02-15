@@ -25,7 +25,7 @@ public class TimeoutResultAtElement<ELEM extends IElement>
 	
 	@Override
 	public String getShortDescription() {
-		return "Timeout";
+		return "Timeout (" + mPlugin + ")";
 	}
 
 	@Override
