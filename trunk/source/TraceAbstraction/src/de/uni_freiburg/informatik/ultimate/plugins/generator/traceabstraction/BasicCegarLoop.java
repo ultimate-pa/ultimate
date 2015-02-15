@@ -187,7 +187,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 			}
 			// m_RunAnalyzer = new RunAnalyzer(m_Counterexample);
 			mLogger.info("Found potential Counterexample");
-			if (mLogger.getLevel().isGreaterOrEqual(Priority.INFO)) {
+			if (mLogger.isInfoEnabled()) {
 				mLogger.info("Counterexample histogram " + 
 						new HistogramOfIterable<CodeBlock>(m_Counterexample.getWord()));
 			}
