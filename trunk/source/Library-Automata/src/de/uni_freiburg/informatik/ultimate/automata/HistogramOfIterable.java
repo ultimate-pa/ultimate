@@ -32,7 +32,12 @@ import java.util.Map;
 
 /**
  * Maps elements of an Iterable to the number of its occurrence.
- * Visualizes this in a sorted array that lists the occurrences of each element.
+ * Visualizes this in a sorted array that lists the occurrences of each element
+ * as follows.
+ * The array has one entry for each different (compared via .equals) element of
+ * the Iterable.
+ * The array counts how often the entry occurs in the Iterable.
+ * The array is sorted wrt. to a descending order. 
  * @author Matthias Heizmann
  *
  * @param <E>
