@@ -1,6 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.buchiprogramproduct.optimizeproduct;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 
@@ -9,6 +10,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.SequentialComposition;
 
@@ -26,11 +28,12 @@ public class MinimizeStatesMultiEdgeSingleNode extends BaseMinimizeStates {
 	}
 
 	@Override
-	protected List<RCFGEdge> processCandidate(RootNode root, ProgramPoint target) {
+	protected Collection<? extends RCFGNode> processCandidate(RootNode root, ProgramPoint target,
+			HashSet<RCFGNode> closed) {
 
 		if (new HashSet<>(target.getIncomingNodes()).size() != 1
 				|| new HashSet<>(target.getOutgoingNodes()).size() != 1) {
-			return target.getOutgoingEdges();
+			return target.getOutgoingNodes();
 		}
 
 		// this node has exactly one predecessor and one successor, but may have
@@ -48,12 +51,12 @@ public class MinimizeStatesMultiEdgeSingleNode extends BaseMinimizeStates {
 
 		if (!checkTargetNode(target) && !checkNodePair(pred, succ)) {
 			// the nodes do not fulfill the conditions, return
-			return target.getOutgoingEdges();
+			return target.getOutgoingNodes();
 		}
 
 		if (!checkEdgePairs(target.getIncomingEdges(), target.getOutgoingEdges())) {
 			// the edges do not fulfill the conditions, return
-			return target.getOutgoingEdges();
+			return target.getOutgoingNodes();
 		}
 
 		// all conditions are met so we can start with creating new edges
@@ -111,7 +114,7 @@ public class MinimizeStatesMultiEdgeSingleNode extends BaseMinimizeStates {
 
 		mRemovedEdges += predEdges.size() + succEdges.size();
 		// we added new edges to pred, we have to recheck them now
-		return pred.getOutgoingEdges();
+		return pred.getOutgoingNodes();
 	}
 
 }

@@ -1,11 +1,13 @@
 package de.uni_freiburg.informatik.ultimate.buchiprogramproduct.optimizeproduct;
 
-import java.util.List;
+import java.util.Collection;
+import java.util.HashSet;
 
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.SequentialComposition;
 
@@ -23,10 +25,11 @@ public class MinimizeStatesSingleEdgeSingleNode extends BaseMinimizeStates {
 	}
 
 	@Override
-	protected List<RCFGEdge> processCandidate(RootNode root, ProgramPoint target) {
+	protected Collection<? extends RCFGNode> processCandidate(RootNode root, ProgramPoint target,
+			HashSet<RCFGNode> closed) {
 
 		if (target.getIncomingEdges().size() != 1 || target.getOutgoingEdges().size() != 1) {
-			return target.getOutgoingEdges();
+			return target.getOutgoingNodes();
 		}
 
 		// this node has exactly one incoming and one outgoing edge,
@@ -41,12 +44,12 @@ public class MinimizeStatesSingleEdgeSingleNode extends BaseMinimizeStates {
 
 		if (!checkTargetNode(target) && !checkNodePair(pred, succ)) {
 			// the nodes do not fulfill the conditions, return
-			return target.getOutgoingEdges();
+			return target.getOutgoingNodes();
 		}
 
 		if (!checkEdgePair(predEdge, succEdge)) {
 			// the edges do not fulfill the conditions, return
-			return target.getOutgoingEdges();
+			return target.getOutgoingNodes();
 		}
 
 		// all conditions are met so we can start with creating new edges
@@ -70,7 +73,7 @@ public class MinimizeStatesSingleEdgeSingleNode extends BaseMinimizeStates {
 			mLogger.debug("    removed 2, added 2 edges");
 		}
 		// we added new edges to pred, we have to recheck them now
-		return pred.getOutgoingEdges();
+		return pred.getOutgoingNodes();
 
 	}
 }

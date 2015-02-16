@@ -32,8 +32,7 @@ import org.eclipse.ui.IWorkbenchPreferencePage;
  * @author Björn Buchhold
  * 
  */
-public abstract class AbstractDetailsPreferencePage extends PreferencePage
-		implements IWorkbenchPreferencePage {
+public abstract class AbstractDetailsPreferencePage extends PreferencePage implements IWorkbenchPreferencePage {
 
 	// The list that displays the current settings
 	private List detailList;
@@ -76,8 +75,7 @@ public abstract class AbstractDetailsPreferencePage extends PreferencePage
 
 		// Create a data that takes up the extra space in the dialog and spans
 		// both columns.
-		data = new GridData(GridData.FILL_HORIZONTAL
-				| GridData.VERTICAL_ALIGN_BEGINNING);
+		data = new GridData(GridData.FILL_HORIZONTAL | GridData.VERTICAL_ALIGN_BEGINNING);
 		buttonComposite.setLayoutData(data);
 
 		Button addButton = new Button(buttonComposite, SWT.PUSH | SWT.CENTER);
@@ -87,14 +85,13 @@ public abstract class AbstractDetailsPreferencePage extends PreferencePage
 			public void widgetSelected(SelectionEvent event) {
 				String text = newEntryText.getText();
 				if (entryIsValid(text)) {
-					detailList.add(newEntryText.getText(), detailList
-							.getItemCount());
+					detailList.add(newEntryText.getText(), detailList.getItemCount());
 					fillInfoLabel(detailList);
 				}
 			}
 		});
 
-		//newEntryText = new Text(buttonComposite, SWT.BORDER);
+		// newEntryText = new Text(buttonComposite, SWT.BORDER);
 		newEntryText = new Combo(buttonComposite, SWT.BORDER | SWT.DROP_DOWN);
 		// Create a data that takes up the extra space in the dialog .
 		data = new GridData(GridData.FILL_HORIZONTAL);
@@ -102,7 +99,7 @@ public abstract class AbstractDetailsPreferencePage extends PreferencePage
 		newEntryText.setLayoutData(data);
 		// fill combo with data
 		String[] comboContent = getComboSupply();
-		for (String s: comboContent) {
+		for (String s : comboContent) {
 			newEntryText.add(s);
 		}
 		// select first item
@@ -122,8 +119,11 @@ public abstract class AbstractDetailsPreferencePage extends PreferencePage
 		editButton.setText("Edit Selected"); //$NON-NLS-1$
 		editButton.addSelectionListener(new SelectionAdapter() {
 			public void widgetSelected(SelectionEvent event) {
-				String content = detailList.getItem(detailList
-						.getSelectionIndex());
+				int index = detailList.getSelectionIndex();
+				if (index == -1) {
+					return;
+				}
+				String content = detailList.getItem(index);
 				newEntryText.setText(content);
 				detailList.remove(detailList.getSelectionIndex());
 				fillInfoLabel(detailList);
@@ -145,9 +145,9 @@ public abstract class AbstractDetailsPreferencePage extends PreferencePage
 		data = new GridData(GridData.FILL_HORIZONTAL);
 		data.grabExcessHorizontalSpace = true;
 		infoLabel.setLayoutData(data);
-		
+
 		fillInfoLabel(detailList);
-		
+
 		return entryTable;
 	}
 
@@ -155,7 +155,8 @@ public abstract class AbstractDetailsPreferencePage extends PreferencePage
 
 	/**
 	 * void fillInfoLabel
-	 * @param detailList 
+	 * 
+	 * @param detailList
 	 */
 	private void fillInfoLabel(List detailList) {
 		String content = getInfoContent(detailList);
@@ -172,8 +173,7 @@ public abstract class AbstractDetailsPreferencePage extends PreferencePage
 		}
 		String logLevel = text.substring(eqIndex + 1).toUpperCase();
 
-		if (!Arrays.asList(CorePreferenceInitializer.VALUE_VALID_LOG_LEVELS)
-				.contains(logLevel)) {
+		if (!Arrays.asList(CorePreferenceInitializer.VALUE_VALID_LOG_LEVELS).contains(logLevel)) {
 			raiseInvalidLogLevelError();
 			return false;
 		}

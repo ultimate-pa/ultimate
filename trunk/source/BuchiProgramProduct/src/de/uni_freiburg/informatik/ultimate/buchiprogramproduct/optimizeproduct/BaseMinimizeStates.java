@@ -55,12 +55,7 @@ public abstract class BaseMinimizeStates extends BaseProductOptimizer {
 			if (current.getIncomingEdges().size() == 1 && current.getIncomingEdges().get(0) instanceof RootEdge) {
 				nodes.addAll(current.getOutgoingNodes());
 			} else {
-				Collection<? extends RCFGEdge> edges = processCandidate(root, (ProgramPoint) current);
-				for (RCFGEdge edge : edges) {
-					if (!closed.contains(edge.getTarget())) {
-						nodes.add(edge.getTarget());
-					}
-				}
+				nodes.addAll(processCandidate(root, (ProgramPoint) current, closed));
 			}
 		}
 		if (mRemovedEdges > 0) {
@@ -70,7 +65,7 @@ public abstract class BaseMinimizeStates extends BaseProductOptimizer {
 		return root;
 	}
 
-	protected abstract Collection<? extends RCFGEdge> processCandidate(RootNode root, ProgramPoint target);
+	protected abstract Collection<? extends RCFGNode> processCandidate(RootNode root, ProgramPoint target, HashSet<RCFGNode> closed);
 
 	protected boolean checkEdgePairs(List<RCFGEdge> predEdges, List<RCFGEdge> succEdges) {
 		if (!mIgnoreBlowup) {
@@ -107,6 +102,12 @@ public abstract class BaseMinimizeStates extends BaseProductOptimizer {
 			// Return.
 			return false;
 		}
+
+		// if one of the edges is a self loop, we cannot use it
+		if (predEdge.getTarget() == predEdge.getSource() || succEdge.getTarget() == succEdge.getSource()) {
+			return false;
+		}
+
 		return true;
 	}
 

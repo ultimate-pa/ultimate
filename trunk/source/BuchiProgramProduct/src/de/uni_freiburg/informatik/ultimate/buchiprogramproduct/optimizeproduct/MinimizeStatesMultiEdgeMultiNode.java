@@ -2,6 +2,7 @@ package de.uni_freiburg.informatik.ultimate.buchiprogramproduct.optimizeproduct;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 
@@ -29,7 +30,8 @@ public class MinimizeStatesMultiEdgeMultiNode extends BaseMinimizeStates {
 	}
 
 	@Override
-	protected Collection<? extends RCFGEdge> processCandidate(RootNode root, ProgramPoint target) {
+	protected Collection<? extends RCFGNode> processCandidate(RootNode root, ProgramPoint target,
+			HashSet<RCFGNode> closed) {
 		// we have the incoming edges
 		// ei = (qi,sti,q) in EI
 		// and the outgoing edges
@@ -42,12 +44,12 @@ public class MinimizeStatesMultiEdgeMultiNode extends BaseMinimizeStates {
 		if (!incomingNodes.isEmpty() && !outgoingNodes.isEmpty() && !checkTargetNode(target)
 				&& !checkAllNodes(incomingNodes, outgoingNodes)) {
 			// the nodes do not fulfill the conditions, return
-			return target.getOutgoingEdges();
+			return target.getOutgoingNodes();
 		}
 
 		if (!checkEdgePairs(target.getIncomingEdges(), target.getOutgoingEdges())) {
 			// the edges do not fulfill the conditions, return
-			return target.getOutgoingEdges();
+			return target.getOutgoingNodes();
 		}
 
 		// we will not change the acceptance conditions, so we can start
@@ -56,7 +58,7 @@ public class MinimizeStatesMultiEdgeMultiNode extends BaseMinimizeStates {
 		// we add a new edge (qi,sti;stj,qj)
 
 		if (mLogger.isDebugEnabled()) {
-			mLogger.debug("    will remove " + target.getLocationName());
+			mLogger.debug("    will try to remove " + target.getLocationName());
 		}
 
 		List<RCFGEdge> predEdges = new ArrayList<RCFGEdge>(target.getIncomingEdges());
@@ -141,12 +143,25 @@ public class MinimizeStatesMultiEdgeMultiNode extends BaseMinimizeStates {
 			}
 		}
 
-		ArrayList<RCFGEdge> rtr = new ArrayList<>();
+		ArrayList<RCFGNode> rtr = new ArrayList<>();
 		for (EdgeConstructionInfo info : infos) {
 			StatementSequence ss = new StatementSequence(info.getSource(), info.getTarget(), info.getStatements(),
 					Origin.IMPLEMENTATION, mLogger);
 			generateTransFormula(root, ss);
-			rtr.add(ss);
+			// we changed the edges of the predecessor, we have to re-check
+			// them. We therefore need to remove them from the closed set.
+			rtr.add(ss.getSource());
+			closed.remove(ss.getSource());
+		}
+
+		if (!canRemovePredEdges) {
+			// if we did not remove all pred edges, we have to add all possible
+			// successors of the node we wanted to remove
+			rtr.addAll(target.getOutgoingNodes());
+			if (mLogger.isDebugEnabled()) {
+				mLogger.debug("    could not remove " + target.getLocationName()
+						+ ", because some incoming edges are left");
+			}
 		}
 
 		if (mLogger.isDebugEnabled()) {
@@ -154,7 +169,6 @@ public class MinimizeStatesMultiEdgeMultiNode extends BaseMinimizeStates {
 		}
 
 		mRemovedEdges += removedEdges;
-		// we added new edges to all predecessors, we have to recheck them now
 		return rtr;
 	}
 
