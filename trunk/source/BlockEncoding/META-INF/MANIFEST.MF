@@ -9,6 +9,6 @@ Require-Bundle: UltimateCore,
  Library-ModelCheckerUtils,
  de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder
 Bundle-ActivationPolicy: lazy
-Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+Bundle-RequiredExecutionEnvironment: JavaSE-1.7
 Export-Package: de.uni_freiburg.informatik.ultimate.blockencoding.model,
  de.uni_freiburg.informatik.ultimate.blockencoding.model.interfaces
