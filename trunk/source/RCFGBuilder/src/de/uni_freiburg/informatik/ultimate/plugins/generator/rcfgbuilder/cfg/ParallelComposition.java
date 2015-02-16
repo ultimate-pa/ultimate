@@ -1,6 +1,8 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg;
 
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
@@ -22,7 +24,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.prefere
 public class ParallelComposition extends CodeBlock {
 
 	private static final long serialVersionUID = -221110423926589618L;
-	private final CodeBlock[] m_CodeBlocks;
+	private final List<CodeBlock> m_CodeBlocks;
 	private final String m_PrettyPrinted;
 	private final Map<TermVariable, CodeBlock> m_BranchIndicator2CodeBlock = new HashMap<TermVariable, CodeBlock>();
 	private final IUltimateServiceProvider mServices;
@@ -54,34 +56,34 @@ public class ParallelComposition extends CodeBlock {
 		}
 	}
 
-	public ParallelComposition(ProgramPoint source, ProgramPoint target, Boogie2SMT boogie2smt,
-			IUltimateServiceProvider services, CodeBlock... codeBlocks) {
-		super(source, target, services.getLoggingService().getLogger(Activator.PLUGIN_ID));
+	ParallelComposition(int serialNumber, ProgramPoint source, ProgramPoint target, Boogie2SMT boogie2smt,
+			IUltimateServiceProvider services, List<CodeBlock> codeBlocks) {
+		super(serialNumber, source, target, services.getLoggingService().getLogger(Activator.PLUGIN_ID));
 		mServices = services;
 		Script script = boogie2smt.getScript();
 		this.m_CodeBlocks = codeBlocks;
 
 		String prettyPrinted = "";
 
-		TransFormula[] transFormulas = new TransFormula[codeBlocks.length];
-		TransFormula[] transFormulasWithBranchEncoders = new TransFormula[codeBlocks.length];
-		TermVariable[] branchIndicator = new TermVariable[codeBlocks.length];
-		for (int i = 0; i < codeBlocks.length; i++) {
-			if (!(codeBlocks[i] instanceof StatementSequence || codeBlocks[i] instanceof SequentialComposition || codeBlocks[i] instanceof ParallelComposition)) {
+		TransFormula[] transFormulas = new TransFormula[codeBlocks.size()];
+		TransFormula[] transFormulasWithBranchEncoders = new TransFormula[codeBlocks.size()];
+		TermVariable[] branchIndicator = new TermVariable[codeBlocks.size()];
+		for (int i = 0; i < codeBlocks.size(); i++) {
+			if (!(codeBlocks.get(i) instanceof StatementSequence || codeBlocks.get(i) instanceof SequentialComposition || codeBlocks.get(i) instanceof ParallelComposition)) {
 				throw new IllegalArgumentException("Only StatementSequence,"
 						+ " SequentialComposition, and ParallelComposition supported");
 			}
-			codeBlocks[i].disconnectSource();
-			codeBlocks[i].disconnectTarget();
-			prettyPrinted += "PARALLEL" + codeBlocks[i].getPrettyPrintedStatements();
-			transFormulas[i] = codeBlocks[i].getTransitionFormula();
-			transFormulasWithBranchEncoders[i] = codeBlocks[i].getTransitionFormulaWithBranchEncoders();
-			String varname = "LBE" + codeBlocks[i].getSerialNumer();
+			codeBlocks.get(i).disconnectSource();
+			codeBlocks.get(i).disconnectTarget();
+			prettyPrinted += "PARALLEL" + codeBlocks.get(i).getPrettyPrintedStatements();
+			transFormulas[i] = codeBlocks.get(i).getTransitionFormula();
+			transFormulasWithBranchEncoders[i] = codeBlocks.get(i).getTransitionFormulaWithBranchEncoders();
+			String varname = "LBE" + codeBlocks.get(i).getSerialNumer();
 			Sort boolSort = script.sort("Bool");
 			TermVariable tv = script.variable(varname, boolSort);
 			branchIndicator[i] = tv;
-			m_BranchIndicator2CodeBlock.put(branchIndicator[i], codeBlocks[i]);
-			ModelUtils.mergeAnnotations(codeBlocks[i], this);
+			m_BranchIndicator2CodeBlock.put(branchIndicator[i], codeBlocks.get(i));
+			ModelUtils.mergeAnnotations(codeBlocks.get(i), this);
 		}
 		// workaround: set annotation with this pluginId again, because it was
 		// overwritten by the mergeAnnotations method
@@ -103,11 +105,6 @@ public class ParallelComposition extends CodeBlock {
 		return m_PrettyPrinted;
 	}
 
-	@Override
-	public CodeBlock getCopy(ProgramPoint source, ProgramPoint target) {
-		throw new UnsupportedOperationException();
-	}
-
 	public Map<TermVariable, CodeBlock> getBranchIndicator2CodeBlock() {
 		return m_BranchIndicator2CodeBlock;
 	}
@@ -121,16 +118,16 @@ public class ParallelComposition extends CodeBlock {
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
 		sb.append("BeginParallelComposition{");
-		for (int i = 0; i < m_CodeBlocks.length; i++) {
+		for (int i = 0; i < m_CodeBlocks.size(); i++) {
 			sb.append("ParallelCodeBlock" + i + ": ");
-			sb.append(m_CodeBlocks[i]);
+			sb.append(m_CodeBlocks.get(i));
 		}
 		sb.append("}EndParallelComposition");
 		return sb.toString();
 	}
 
-	public CodeBlock[] getCodeBlocks() {
-		return m_CodeBlocks;
+	public List<CodeBlock> getCodeBlocks() {
+		return Collections.unmodifiableList(m_CodeBlocks);
 	}
 
 }

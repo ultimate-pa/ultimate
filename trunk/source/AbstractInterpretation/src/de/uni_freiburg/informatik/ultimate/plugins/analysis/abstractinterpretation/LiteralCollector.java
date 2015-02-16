@@ -109,7 +109,7 @@ public class LiteralCollector extends RCFGEdgeVisitor {
 	protected void visit(SequentialComposition c) {
 		super.visit(c);
 
-		CodeBlock[] blocks = c.getCodeBlocks();
+		List<CodeBlock> blocks = c.getCodeBlocks();
 
 		for (CodeBlock b : blocks)
 			visit(b);

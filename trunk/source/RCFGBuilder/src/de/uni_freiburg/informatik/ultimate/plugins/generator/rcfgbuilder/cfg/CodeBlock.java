@@ -52,8 +52,7 @@ public abstract class CodeBlock extends RCFGEdge {
 
 	protected final Logger mLogger;
 
-	private final int m_Serialnumber = s_SerialNumberCounter++;
-	public static int s_SerialNumberCounter = 0;
+	private final int m_Serialnumber;
 
 	protected TransFormula m_TransitionFormula;
 	protected TransFormula m_TransitionFormulaWithBranchEncoders;
@@ -67,10 +66,43 @@ public abstract class CodeBlock extends RCFGEdge {
 	 */
 	private static final int MAX_NAME_LENGTH = 20;
 
+	CodeBlock(int serialNumber, ProgramPoint source, ProgramPoint target, Logger logger) {
+		super(source, target, 
+				(source == null ? new Payload() : new Payload(source.getPayload().getLocation(), 
+				"Matthias does not know what he should use here as a name")));
+		m_Serialnumber = serialNumber;
+		mLogger = logger;
+		m_Annotation = new RCFGEdgeAnnotation(this) {
+
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			protected Object getFieldValue(String field) {
+				return CodeBlock.this.getFieldValue(field);
+			}
+
+			@Override
+			protected String[] getFieldNames() {
+				return CodeBlock.this.getFieldNames();
+			}
+		};
+		getPayload().getAnnotations().put(Activator.PLUGIN_ID, m_Annotation);
+		connectSource(source);
+		connectTarget(target);
+	}
+	
+	/**
+	 * This constructor is for subclasses that are not constructed by 
+	 * the CodeBlockFactory.
+	 * All these CodeBlocks will have serial number "-1" and hence they will
+	 * have the same hash code. 
+	 */
+	@Deprecated
 	public CodeBlock(ProgramPoint source, ProgramPoint target, Logger logger) {
 		super(source, target, 
 				(source == null ? new Payload() : new Payload(source.getPayload().getLocation(), 
 				"Matthias does not know what he should use here as a name")));
+		m_Serialnumber = -1;
 		mLogger = logger;
 		m_Annotation = new RCFGEdgeAnnotation(this) {
 
@@ -123,13 +155,6 @@ public abstract class CodeBlock extends RCFGEdge {
 	protected abstract String[] getFieldNames();
 
 	public abstract String getPrettyPrintedStatements();
-
-	/**
-	 * Construct a copy of this CodeBlock with new source and target. This is
-	 * only used while removing auxilliary GotoEdges. TODO: Make this package
-	 * private and move it to same folder als the CfgBulder.
-	 */
-	public abstract CodeBlock getCopy(ProgramPoint source, ProgramPoint target);
 
 	public TransFormula getTransitionFormula() {
 		return m_TransitionFormula;

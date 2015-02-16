@@ -2,6 +2,7 @@ package de.uni_freiburg.informatik.ultimate.buchiprogramproduct.optimizercfg;
 
 import java.util.ArrayDeque;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 
 import org.apache.log4j.Logger;
@@ -11,6 +12,8 @@ import de.uni_freiburg.informatik.ultimate.buchiprogramproduct.Activator;
 import de.uni_freiburg.informatik.ultimate.buchiprogramproduct.ProductBacktranslator;
 import de.uni_freiburg.informatik.ultimate.buchiprogramproduct.preferences.PreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
+import de.uni_freiburg.informatik.ultimate.core.services.IStorable;
+import de.uni_freiburg.informatik.ultimate.core.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
@@ -18,6 +21,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.normalforms.BoogieConditionWrapper;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.normalforms.ConditionTransformer;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlockFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
@@ -42,9 +46,11 @@ public class SmallBlockEncoder extends BaseObserver {
 	private final Logger mLogger;
 	private final ProductBacktranslator mBacktranslator;
 	private final boolean mRewriteAssumes;
+	private final CodeBlockFactory mCbf;
 
-	public SmallBlockEncoder(Logger logger, ProductBacktranslator backtranslator) {
+	public SmallBlockEncoder(Logger logger, ProductBacktranslator backtranslator, IToolchainStorage mStorage) {
 		mLogger = logger;
+		mCbf = (CodeBlockFactory) mStorage.getStorable(CodeBlockFactory.s_CodeBlockFactoryKeyInToolchainStorage);
 		mBacktranslator = backtranslator;
 		mRewriteAssumes = new UltimatePreferenceStore(Activator.PLUGIN_ID)
 				.getBoolean(PreferenceInitializer.OPTIMIZE_SBE_REWRITENOTEQUALS);
@@ -115,9 +121,9 @@ public class SmallBlockEncoder extends BaseObserver {
 						if (disjuncts.size() > 1) {
 							countDisjunctiveAssumes++;
 							for (Expression disjunct : disjuncts) {
-								StatementSequence newss = new StatementSequence((ProgramPoint) current.getSource(),
+								StatementSequence newss = mCbf.constructStatementSequence((ProgramPoint) current.getSource(),
 										(ProgramPoint) current.getTarget(), new AssumeStatement(assume.getLocation(),
-												disjunct), mLogger);
+												disjunct));
 								closed.add(newss);
 								countNewEdges++;
 								mBacktranslator.mapEdges(newss, current);

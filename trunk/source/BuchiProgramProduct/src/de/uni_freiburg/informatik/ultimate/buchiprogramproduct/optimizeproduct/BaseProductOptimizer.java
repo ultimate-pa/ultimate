@@ -9,10 +9,12 @@ import java.util.Map.Entry;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.buchiprogramproduct.Activator;
+import de.uni_freiburg.informatik.ultimate.core.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlockFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootAnnot;
@@ -26,13 +28,15 @@ public abstract class BaseProductOptimizer {
 	protected final RootNode mResult;
 	protected int mRemovedEdges;
 	protected int mRemovedLocations;
+	protected final CodeBlockFactory mCbf;
 	
 
-	public BaseProductOptimizer(RootNode product, IUltimateServiceProvider services) {
+	public BaseProductOptimizer(RootNode product, IUltimateServiceProvider services, IToolchainStorage storage) {
 		assert services != null;
 		assert product != null;
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
+		mCbf = (CodeBlockFactory) storage.getStorable(CodeBlockFactory.s_CodeBlockFactoryKeyInToolchainStorage);
 		mRemovedEdges = 0;
 		mRemovedLocations = 0;
 		init(product, services);

@@ -6,6 +6,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 
+import de.uni_freiburg.informatik.ultimate.core.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula.Infeasibility;
@@ -25,8 +26,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Sta
  */
 public class MinimizeStatesMultiEdgeMultiNode extends BaseMinimizeStates {
 
-	public MinimizeStatesMultiEdgeMultiNode(RootNode product, IUltimateServiceProvider services) {
-		super(product, services);
+	public MinimizeStatesMultiEdgeMultiNode(RootNode product, IUltimateServiceProvider services, IToolchainStorage storage) {
+		super(product, services, storage);
 	}
 
 	@Override
@@ -145,8 +146,8 @@ public class MinimizeStatesMultiEdgeMultiNode extends BaseMinimizeStates {
 
 		ArrayList<RCFGNode> rtr = new ArrayList<>();
 		for (EdgeConstructionInfo info : infos) {
-			StatementSequence ss = new StatementSequence(info.getSource(), info.getTarget(), info.getStatements(),
-					Origin.IMPLEMENTATION, mLogger);
+			StatementSequence ss = mCbf.constructStatementSequence(info.getSource(), info.getTarget(), info.getStatements(),
+					Origin.IMPLEMENTATION);
 			generateTransFormula(root, ss);
 			// we changed the edges of the predecessor, we have to re-check
 			// them. We therefore need to remove them from the closed set.

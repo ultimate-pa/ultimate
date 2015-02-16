@@ -31,6 +31,7 @@ import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Unit;
 import de.uni_freiburg.informatik.ultimate.model.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlockFactory;
 import de.uni_freiburg.informatik.ultimate.result.LTLPropertyCheck;
 import de.uni_freiburg.informatik.ultimate.result.LTLPropertyCheck.CheckableExpression;
 
@@ -97,7 +98,8 @@ public class LTL2autObserver implements IUnmanagedObserver {
 
 		String ltl2baProperty = getLTL2BAProperty(ltlProperty);
 		AstNode node = getNeverClaim(ltl2baProperty);
-		NestedWordAutomaton<CodeBlock, String> nwa = createNWAFromNeverClaim(node, irs, mSymbolTable);
+		CodeBlockFactory cbf = (CodeBlockFactory) mStorage.getStorable(CodeBlockFactory.s_CodeBlockFactoryKeyInToolchainStorage);
+		NestedWordAutomaton<CodeBlock, String> nwa = createNWAFromNeverClaim(node, irs, mSymbolTable, cbf);
 		mLogger.info("LTL Property is: " + prettyPrintProperty(irs, ltlProperty));
 
 		mNWAContainer = new NWAContainer(nwa);
@@ -213,13 +215,13 @@ public class LTL2autObserver implements IUnmanagedObserver {
 	}
 
 	private NestedWordAutomaton<CodeBlock, String> createNWAFromNeverClaim(AstNode neverclaim,
-			Map<String, CheckableExpression> irs, BoogieSymbolTable symbolTable) throws Exception {
+			Map<String, CheckableExpression> irs, BoogieSymbolTable symbolTable, CodeBlockFactory cbf) throws Exception {
 		NestedWordAutomaton<CodeBlock, String> nwa;
 
 		mLogger.debug("Transforming NeverClaim to NestedWordAutomaton...");
 		try {
 			// Build NWA from LTL formula in NeverClaim representation
-			nwa = new Never2Automaton(neverclaim, symbolTable, irs, mLogger, mServices).getAutomaton();
+			nwa = new Never2Automaton(neverclaim, symbolTable, irs, mLogger, mServices, cbf).getAutomaton();
 			if (nwa == null) {
 				throw new NullPointerException("nwa is null");
 			}

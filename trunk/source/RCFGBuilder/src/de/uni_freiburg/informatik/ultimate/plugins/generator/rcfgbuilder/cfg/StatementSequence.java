@@ -49,23 +49,23 @@ public class StatementSequence extends CodeBlock {
 	private final static String[] s_AttribFields = { "Statements", "PrettyPrintedStatements", "TransitionFormula",
 			"OccurenceInCounterexamples" };
 
-	public StatementSequence(ProgramPoint source, ProgramPoint target, Statement st, Logger logger) {
-		super(source, target, logger);
+	StatementSequence(int serialNumber, ProgramPoint source, ProgramPoint target, Statement st, Logger logger) {
+		super(serialNumber, source, target, logger);
 		m_Origin = Origin.IMPLEMENTATION;
 		this.addStatement(st);
 		updatePayloadName();
 	}
 
-	public StatementSequence(ProgramPoint source, ProgramPoint target, Statement st, Origin origin, Logger logger) {
-		super(source, target, logger);
+	StatementSequence(int serialNumber, ProgramPoint source, ProgramPoint target, Statement st, Origin origin, Logger logger) {
+		super(serialNumber, source, target, logger);
 		m_Origin = origin;
 		this.addStatement(st);
 		updatePayloadName();
 	}
 
-	public StatementSequence(ProgramPoint source, ProgramPoint target, List<Statement> stmts, Origin origin,
+	StatementSequence(int serialNumber, ProgramPoint source, ProgramPoint target, List<Statement> stmts, Origin origin,
 			Logger logger) {
-		super(source, target, logger);
+		super(serialNumber, source, target, logger);
 		m_Statements.addAll(stmts);
 		m_Origin = origin;
 		m_PrettyPrintedStatements = "";
@@ -74,15 +74,7 @@ public class StatementSequence extends CodeBlock {
 		}
 		updatePayloadName();
 	}
-
-	@Override
-	public CodeBlock getCopy(ProgramPoint source, ProgramPoint target) {
-		CodeBlock copy;
-		copy = new StatementSequence(source, target, m_Statements, m_Origin, mLogger);
-		copy.setTransitionFormula(getTransitionFormula());
-		return copy;
-	}
-
+	
 	@Override
 	protected String[] getFieldNames() {
 		return s_AttribFields;

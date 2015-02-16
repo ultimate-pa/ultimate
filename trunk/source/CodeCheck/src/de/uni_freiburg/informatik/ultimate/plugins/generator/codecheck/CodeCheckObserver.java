@@ -155,7 +155,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 				m_smtManager.getScript());
 
 		RCFG2AnnotatedRCFG r2ar = new RCFG2AnnotatedRCFG(m_smtManager, mLogger);
-		m_graphRoot = r2ar.convert(m_originalRoot, _predicateUnifier.getTruePredicate());
+		m_graphRoot = r2ar.convert(mServices, m_originalRoot, _predicateUnifier.getTruePredicate());
 
 		_graphWriter.writeGraphAsImage(m_graphRoot,
 				String.format("graph_%s_originalAfterConversion", _graphWriter._graphCounter));

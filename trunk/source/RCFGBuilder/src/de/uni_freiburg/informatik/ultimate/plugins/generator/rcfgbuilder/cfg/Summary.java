@@ -47,21 +47,13 @@ public class Summary extends CodeBlock {
 		}
 	}
 
-	public Summary(ProgramPoint source, ProgramPoint target, CallStatement st,
+	Summary(int serialNumber, ProgramPoint source, ProgramPoint target, CallStatement st,
 			boolean calledProcedureHasImplementation, Logger logger) {
-		super(source, target, logger);
+		super(serialNumber, source, target, logger);
 		m_CallStatement = st;
 		m_CalledProcedureHasImplementation = calledProcedureHasImplementation;
 		m_PrettyPrintedStatements = BoogiePrettyPrinter.print(st);
 		updatePayloadName();
-	}
-
-	@Override
-	public CodeBlock getCopy(ProgramPoint source, ProgramPoint target) {
-		CodeBlock copy;
-		copy = new Summary(source, target, m_CallStatement, m_CalledProcedureHasImplementation, mLogger);
-		copy.setTransitionFormula(getTransitionFormula());
-		return copy;
 	}
 
 	@Override

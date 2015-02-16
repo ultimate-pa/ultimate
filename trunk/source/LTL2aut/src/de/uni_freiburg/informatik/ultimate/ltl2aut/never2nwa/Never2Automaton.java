@@ -36,6 +36,7 @@ import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.normalforms.BoogieConditionWrapper;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.normalforms.ConditionTransformer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlockFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence.Origin;
 import de.uni_freiburg.informatik.ultimate.result.LTLPropertyCheck.CheckableExpression;
@@ -54,6 +55,7 @@ public class Never2Automaton {
 	private final AstNode mNeverClaim;
 	private final Logger mLogger;
 	private final Map<String, CheckableExpression> mIRS;
+	private final CodeBlockFactory mCbf;
 
 	private NestedWordAutomaton<CodeBlock, String> mAutomaton;
 
@@ -66,14 +68,16 @@ public class Never2Automaton {
 	 * @param ast
 	 * @param irs
 	 * @param services
+	 * @param cbf 
 	 * @throws Exception
 	 */
 	public Never2Automaton(AstNode ast, BoogieSymbolTable boogieSymbolTable, Map<String, CheckableExpression> irs,
-			Logger logger, IUltimateServiceProvider services) throws Exception {
+			Logger logger, IUltimateServiceProvider services, CodeBlockFactory cbf) throws Exception {
 		m_Services = services;
 		mLogger = logger;
 		mNeverClaim = ast;
 		mIRS = irs;
+		mCbf = cbf;
 
 		UltimatePreferenceStore ups = new UltimatePreferenceStore(
 				de.uni_freiburg.informatik.ultimate.ltl2aut.Activator.PLUGIN_ID);
@@ -182,8 +186,8 @@ public class Never2Automaton {
 
 	private CodeBlock getAssumeTrue() {
 		ILocation loc = null;
-		StatementSequence ss = new StatementSequence(null, null,
-				new AssumeStatement(loc, new BooleanLiteral(loc, true)), mLogger);
+		StatementSequence ss = mCbf.constructStatementSequence(null, null,
+				new AssumeStatement(loc, new BooleanLiteral(loc, true)));
 		return ss;
 	}
 
@@ -217,7 +221,7 @@ public class Never2Automaton {
 		for (Expression expr : simplify(checkExpr.getExpression())) {
 			List<Statement> stmts = new ArrayList<>(preStmts);
 			stmts.add(new AssumeStatement(loc, expr));
-			rtr.add(new StatementSequence(null, null, stmts, Origin.ASSERT, mLogger));
+			rtr.add(mCbf.constructStatementSequence(null, null, stmts, Origin.ASSERT));
 		}
 		return rtr;
 	}

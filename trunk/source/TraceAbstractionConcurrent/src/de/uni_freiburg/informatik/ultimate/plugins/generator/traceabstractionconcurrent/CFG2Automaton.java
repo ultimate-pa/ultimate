@@ -109,8 +109,8 @@ public abstract class CFG2Automaton {
 			codeBlocks.add(succSS);
 			current = (ProgramPoint) succSS.getTarget();
 		}
-		return new SequentialComposition(entry, exit, m_RootAnnot.getBoogie2SMT(), m_RootAnnot.getModGlobVarManager(),
-				true, false, mServices, codeBlocks.toArray(new CodeBlock[0]));
+		return m_RootAnnot.getCodeBlockFactory().constructSequentialComposition(entry, exit,
+				true, false, codeBlocks);
 	}
 
 	/**

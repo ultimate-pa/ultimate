@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -118,6 +119,8 @@ public class CfgBuilder {
 	private final IUltimateServiceProvider mServices;
 	
 	private final boolean m_AddAssumeForEachAssert;
+
+	private CodeBlockFactory m_Cbf;
 
 	public CfgBuilder(Unit unit, RCFGBacktranslator backtranslator, IUltimateServiceProvider services,
 			IToolchainStorage storage) throws IOException {
@@ -232,7 +235,9 @@ public class CfgBuilder {
 		m_BoogieDeclarations = new BoogieDeclarations(unit, mLogger);
 		boolean blackHolesArrays = false;
 		m_Boogie2smt = new Boogie2SMT(m_Script, m_BoogieDeclarations, blackHolesArrays, mServices);
-		m_RootAnnot = new RootAnnot(m_BoogieDeclarations, m_Boogie2smt, m_Backtranslator);
+		m_RootAnnot = new RootAnnot(mServices, m_BoogieDeclarations, m_Boogie2smt, m_Backtranslator);
+		m_Cbf = m_RootAnnot.getCodeBlockFactory();
+		storage.putStorable(CodeBlockFactory.s_CodeBlockFactoryKeyInToolchainStorage, m_Cbf);
 
 	}
 
@@ -282,8 +287,8 @@ public class CfgBuilder {
 		for (Summary se : m_ImplementationSummarys) {
 			addCallTransitionAndReturnTransition(se);
 		}
-		m_RootAnnot.m_ModifiableGlobalVariableManager = new ModifiableGlobalVariableManager(
-				m_BoogieDeclarations.getModifiedVars(), m_Boogie2smt);
+//		m_RootAnnot.m_ModifiableGlobalVariableManager = new ModifiableGlobalVariableManager(
+//				m_BoogieDeclarations.getModifiedVars(), m_Boogie2smt);
 		m_CodeBlockSize = (new UltimatePreferenceStore(RCFGBuilder.s_PLUGIN_ID)).getEnum(
 				PreferenceInitializer.LABEL_CodeBlockSize, CodeBlockSize.class);
 		if (m_CodeBlockSize == CodeBlockSize.LoopFreeBlock) {
@@ -359,12 +364,12 @@ public class CfgBuilder {
 		TransFormula outParams2CallerVars = m_RootAnnot.getBoogie2SMT().getStatements2TransFormula()
 				.resultAssignment(st, caller);
 
-		Call call = new Call(callerNode, calleeEntryLoc, st, mLogger);
+		Call call = m_Cbf.constructCall(callerNode, calleeEntryLoc, st);
 		call.setTransitionFormula(arguments2InParams);
 
 		ProgramPoint returnNode = (ProgramPoint) edge.getTarget();
 		ProgramPoint calleeExitLoc = m_RootAnnot.m_exitNode.get(callee);
-		Return returnAnnot = new Return(calleeExitLoc, returnNode, call, mLogger);
+		Return returnAnnot = m_Cbf.constructReturn(calleeExitLoc, returnNode, call);
 		returnAnnot.setTransitionFormula(outParams2CallerVars);
 	}
 
@@ -699,7 +704,7 @@ public class CfgBuilder {
 							+ " transition as successor of " + mother);
 					for (RCFGEdge grandchild : child.getOutgoingEdges()) {
 						ProgramPoint target = (ProgramPoint) grandchild.getTarget();
-						CodeBlock edge = ((CodeBlock) grandchild).getCopy(mother, target);
+						CodeBlock edge = m_Cbf.copyCodeBlock((CodeBlock) grandchild, mother, target);
 						if (edge instanceof GotoEdge) {
 							m_GotoEdges.add((GotoEdge) edge);
 						} else {
@@ -708,7 +713,10 @@ public class CfgBuilder {
 					}
 				}
 			}
+			
 		}
+
+
 
 		/**
 		 * Builds the control flow graph of a single procedure according to a
@@ -787,8 +795,7 @@ public class CfgBuilder {
 					passAllAnnotations(spec, assumeSt);
 					m_Backtranslator.putAux(assumeSt, new BoogieASTNode[] { spec });
 					ProgramPoint errorLocNode = addErrorNode(m_currentProcedureName, spec);
-					CodeBlock assumeEdge = new StatementSequence(finalNode, errorLocNode, assumeSt, Origin.ENSURES,
-							mLogger);
+					CodeBlock assumeEdge = m_Cbf.constructStatementSequence(finalNode, errorLocNode, assumeSt, Origin.ENSURES);
 					passAllAnnotations(spec, assumeEdge);
 					passAllAnnotations(spec, errorLocNode);
 					m_Edges.add(assumeEdge);
@@ -959,7 +966,7 @@ public class CfgBuilder {
 				return;
 			}
 			if (m_current instanceof ProgramPoint) {
-				StatementSequence codeBlock = new StatementSequence((ProgramPoint) m_current, null, st, origin, mLogger);
+				StatementSequence codeBlock = m_Cbf.constructStatementSequence((ProgramPoint) m_current, null, st, origin);
 				passAllAnnotations(st, codeBlock);
 				m_Edges.add(codeBlock);
 				m_current = codeBlock;
@@ -975,7 +982,7 @@ public class CfgBuilder {
 					ProgramPoint locNode = new ProgramPoint(locName, m_currentProcedureName, false, st);
 					((CodeBlock) m_current).connectTarget(locNode);
 					m_procLocNodes.put(locName, locNode);
-					StatementSequence codeBlock = new StatementSequence(locNode, null, st, origin, mLogger);
+					StatementSequence codeBlock = m_Cbf.constructStatementSequence(locNode, null, st, origin);
 					passAllAnnotations(st, codeBlock);
 					m_Edges.add(codeBlock);
 					m_current = codeBlock;
@@ -1004,8 +1011,7 @@ public class CfgBuilder {
 			passAllAnnotations(st, assumeError);
 			m_Backtranslator.putAux(assumeError, new BoogieASTNode[] { st });
 			ProgramPoint errorLocNode = addErrorNode(m_currentProcedureName, st);
-			StatementSequence assumeErrorCB = new StatementSequence(locNode, errorLocNode, assumeError, Origin.ASSERT,
-					mLogger);
+			StatementSequence assumeErrorCB = m_Cbf.constructStatementSequence(locNode, errorLocNode, assumeError, Origin.ASSERT);
 			passAllAnnotations(st, errorLocNode);
 			passAllAnnotations(st, assumeErrorCB);
 			m_Edges.add(assumeErrorCB);
@@ -1024,7 +1030,7 @@ public class CfgBuilder {
 			}
 			passAllAnnotations(st, assumeSafe);
 			m_Backtranslator.putAux(assumeSafe, new BoogieASTNode[] { st });
-			StatementSequence assumeSafeCB = new StatementSequence(locNode, null, assumeSafe, Origin.ASSERT, mLogger);
+			StatementSequence assumeSafeCB = m_Cbf.constructStatementSequence(locNode, null, assumeSafe, Origin.ASSERT);
 			passAllAnnotations(st, assumeSafeCB);
 			// add a new TransEdge labeled with st as successor of the
 			// last constructed LocNode
@@ -1056,7 +1062,7 @@ public class CfgBuilder {
 				// Add an auxiliary GotoEdge and a LocNode
 				// for each target of the GotoStatement.
 				ProgramPoint targetLocNode = getLocNodeforLabel(label, st);
-				m_GotoEdges.add(new GotoEdge(locNode, targetLocNode, mLogger));
+				m_GotoEdges.add(m_Cbf.constructGotoEdge(locNode, targetLocNode));
 			}
 			// We have not constructed a new node that should be used in the
 			// next iteration step, therefore setting m_current to null.
@@ -1087,11 +1093,11 @@ public class CfgBuilder {
 			String callee = st.getMethodName();
 			Summary summaryEdge;
 			if (m_BoogieDeclarations.getProcImplementation().containsKey(callee)) {
-				summaryEdge = new Summary(locNode, returnNode, st, true, mLogger);
+				summaryEdge = m_Cbf.constructSummary(locNode, returnNode, st, true);
 				passAllAnnotations(st, summaryEdge);
 				m_ImplementationSummarys.add(summaryEdge);
 			} else {
-				summaryEdge = new Summary(locNode, returnNode, st, false, mLogger);
+				summaryEdge = m_Cbf.constructSummary(locNode, returnNode, st, false);
 				passAllAnnotations(st, summaryEdge);
 			}
 			m_Edges.add(summaryEdge);
@@ -1122,8 +1128,7 @@ public class CfgBuilder {
 					passAllAnnotations(st, assumeSt);
 					m_Backtranslator.putAux(assumeSt, new BoogieASTNode[] { st, spec });
 					ProgramPoint errorLocNode = addErrorNode(m_currentProcedureName, st);
-					StatementSequence errorCB = new StatementSequence(locNode, errorLocNode, assumeSt, Origin.REQUIRES,
-							mLogger);
+					StatementSequence errorCB = m_Cbf.constructStatementSequence(locNode, errorLocNode, assumeSt, Origin.REQUIRES);
 					passAllAnnotations(spec, errorCB);
 					passAllAnnotations(spec, errorLocNode);
 					m_Edges.add(errorCB);
@@ -1263,8 +1268,10 @@ public class CfgBuilder {
 			CodeBlock outgoing = (CodeBlock) pp.getOutgoingEdges().get(0);
 			ProgramPoint predecessor = (ProgramPoint) incoming.getSource();
 			ProgramPoint successor = (ProgramPoint) outgoing.getTarget();
-			new SequentialComposition(predecessor, successor, m_Boogie2smt, m_RootAnnot.getModGlobVarManager(),
-					m_SimplifyCodeBlocks, false, mServices, incoming, outgoing);
+			List<CodeBlock> sequence = new ArrayList<>(2);
+			sequence.add(incoming);
+			sequence.add(outgoing);
+			m_Cbf.constructSequentialComposition(predecessor, successor, m_SimplifyCodeBlocks, false, sequence);
 			if (!sequentialQueue.contains(predecessor)) {
 				List<CodeBlock> outEdges = superfluousParallel(predecessor);
 				if (outEdges != null) {
@@ -1275,7 +1282,7 @@ public class CfgBuilder {
 
 		private void composeParallel(ProgramPoint pp, List<CodeBlock> outgoing) {
 			ProgramPoint successor = (ProgramPoint) outgoing.get(0).getTarget();
-			new ParallelComposition(pp, successor, m_Boogie2smt, mServices, outgoing.toArray(new CodeBlock[0]));
+			m_Cbf.constructParallelComposition(pp, successor, Collections.unmodifiableList(outgoing));
 			if (superfluousSequential(pp)) {
 				sequentialQueue.add(pp);
 			} else {
@@ -1346,49 +1353,6 @@ public class CfgBuilder {
 		}
 	}
 
-	/**
-	 * Represents an edge without any effect to the programs variables. While
-	 * constructing the CFG of a Boogie program these edges are used temporarily
-	 * but do not occur in the result.
-	 * 
-	 * @author heizmann@informatik.uni-freiburg.de
-	 * 
-	 */
-	public class GotoEdge extends CodeBlock {
-
-		private static final long serialVersionUID = -2923506946454722306L;
-
-		public GotoEdge(ProgramPoint source, ProgramPoint target, Logger logger) {
-			super(source, target, logger);
-			assert (target != null);
-		}
-
-		@Override
-		public void updatePayloadName() {
-			getPayload().setName("goto");
-		}
-
-		@Override
-		public String getPrettyPrintedStatements() {
-			return "goto " + mTarget.toString();
-		}
-
-		@Override
-		protected String[] getFieldNames() {
-			return new String[] {};
-		}
-
-		@Override
-		public CodeBlock getCopy(ProgramPoint source, ProgramPoint target) {
-			return new GotoEdge(source, target, this.mLogger);
-		}
-
-		@Override
-		public String toString() {
-			return "goto;";
-		}
-
-	}
 
 	private static void passAllAnnotations(BoogieASTNode node, RcfgElement cb) {
 		if (node.getPayload().hasAnnotation()) {

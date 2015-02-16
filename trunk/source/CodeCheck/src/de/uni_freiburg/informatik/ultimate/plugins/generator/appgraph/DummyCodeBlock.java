@@ -3,7 +3,6 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.appgraph;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 
 public class DummyCodeBlock extends CodeBlock {
 
@@ -25,12 +24,6 @@ public class DummyCodeBlock extends CodeBlock {
 		return null;
 	}
 
-	@Override
-	public CodeBlock getCopy(ProgramPoint source, ProgramPoint target) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-	
 	@Override
 	public String toString() {
 		return "DUMMYCODEBLOCK";

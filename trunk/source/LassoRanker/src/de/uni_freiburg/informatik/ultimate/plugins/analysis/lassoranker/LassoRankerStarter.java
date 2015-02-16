@@ -3,6 +3,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -212,7 +213,7 @@ public class LassoRankerStarter {
 		boolean extPqe = true;
 		boolean tranformToCNF = false;
 		boolean withBranchEncoders = false;
-		CodeBlock[] codeBlocks = nw.asList().toArray(new CodeBlock[0]);
+		List<CodeBlock> codeBlocks = Collections.unmodifiableList(nw.asList());
 		return SequentialComposition.getInterproceduralTransFormula(boogie2smt, modGlobVarManager, simplify, extPqe,
 				tranformToCNF, withBranchEncoders, mLogger, mServices, codeBlocks);
 	}

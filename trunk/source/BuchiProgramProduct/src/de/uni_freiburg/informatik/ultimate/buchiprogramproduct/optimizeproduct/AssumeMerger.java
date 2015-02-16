@@ -9,6 +9,7 @@ import java.util.List;
 import de.uni_freiburg.informatik.ultimate.buchiprogramproduct.Activator;
 import de.uni_freiburg.informatik.ultimate.buchiprogramproduct.preferences.PreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
+import de.uni_freiburg.informatik.ultimate.core.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
@@ -29,8 +30,8 @@ public class AssumeMerger extends BaseProductOptimizer {
 	private boolean mRewriteNotEquals;
 	private boolean mUseSBE;
 
-	public AssumeMerger(RootNode product, IUltimateServiceProvider services) {
-		super(product, services);
+	public AssumeMerger(RootNode product, IUltimateServiceProvider services, IToolchainStorage storage) {
+		super(product, services, storage);
 		mLogger.info("Merged " + mAssumesMerged + " AssumeStatements");
 	}
 
@@ -129,17 +130,17 @@ public class AssumeMerger extends BaseProductOptimizer {
 			if (disjuncts.size() > 1) {
 				// yes we can
 				for (Expression disjunct : disjuncts) {
-					StatementSequence ss = new StatementSequence((ProgramPoint) current.getSource(),
+					StatementSequence ss = mCbf.constructStatementSequence((ProgramPoint) current.getSource(),
 							(ProgramPoint) current.getTarget(), new AssumeStatement(stmt.getLocation(), disjunct),
-							Origin.IMPLEMENTATION, mLogger);
+							Origin.IMPLEMENTATION);
 					generateTransFormula(root, ss);
 				}
 				return;
 			}
 			// no, we cannot, just make a normal edge
 		}
-		StatementSequence ss = new StatementSequence((ProgramPoint) current.getSource(),
-				(ProgramPoint) current.getTarget(), newStmts, Origin.IMPLEMENTATION, mLogger);
+		StatementSequence ss = mCbf.constructStatementSequence((ProgramPoint) current.getSource(),
+				(ProgramPoint) current.getTarget(), newStmts, Origin.IMPLEMENTATION);
 		generateTransFormula(root, ss);
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug("Replacing first with second:");

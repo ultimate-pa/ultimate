@@ -33,11 +33,11 @@ class DefCollector extends RCFGEdgeVisitor {
 
 	@Override
 	protected void visit(SequentialComposition c) {
-		CodeBlock[] blck = c.getCodeBlocks();
-		if (blck == null || blck.length == 0) {
+		List<CodeBlock> blck = c.getCodeBlocks();
+		if (blck == null || blck.isEmpty()) {
 			return;
 		}
-		super.visit(blck[blck.length - 1]);
+		super.visit(blck.get(blck.size() - 1));
 	}
 
 	@Override

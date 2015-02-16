@@ -22,7 +22,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.prefere
 public class SequentialComposition extends CodeBlock {
 
 	private static final long serialVersionUID = 9192152338120598669L;
-	private final CodeBlock[] m_CodeBlocks;
+	private final List<CodeBlock> m_CodeBlocks;
 	private final String m_PrettyPrinted;
 
 	/**
@@ -52,34 +52,34 @@ public class SequentialComposition extends CodeBlock {
 		}
 	}
 
-	public SequentialComposition(ProgramPoint source, ProgramPoint target, Boogie2SMT boogie2smt,
+	SequentialComposition(int serialNumber, ProgramPoint source, ProgramPoint target, Boogie2SMT boogie2smt,
 			ModifiableGlobalVariableManager modGlobVarManager, boolean simplify, boolean extPqe,
-			IUltimateServiceProvider services, CodeBlock... codeBlocks) {
-		super(source, target, services.getLoggingService().getLogger(Activator.PLUGIN_ID));
+			IUltimateServiceProvider services, List<CodeBlock> codeBlocks) {
+		super(serialNumber, source, target, services.getLoggingService().getLogger(Activator.PLUGIN_ID));
 		this.m_CodeBlocks = codeBlocks;
 
 		StringBuilder prettyPrinted = new StringBuilder();
 
 		int numberCalls = 0;
 		int numberReturns = 0;
-		for (int i = 0; i < codeBlocks.length; i++) {
-			if (codeBlocks[i] instanceof InterproceduralSequentialComposition) {
+		for (int i = 0; i < codeBlocks.size(); i++) {
+			if (codeBlocks.get(i) instanceof InterproceduralSequentialComposition) {
 				throw new IllegalArgumentException("InterproceduralSequentialComposition "
 						+ "must not participate in sequential compositions");
-			} else if (codeBlocks[i] instanceof Call) {
+			} else if (codeBlocks.get(i) instanceof Call) {
 				numberCalls++;
-			} else if (codeBlocks[i] instanceof Return) {
+			} else if (codeBlocks.get(i) instanceof Return) {
 				numberReturns++;
-			} else if (codeBlocks[i] instanceof StatementSequence || codeBlocks[i] instanceof SequentialComposition
-					|| codeBlocks[i] instanceof ParallelComposition || codeBlocks[i] instanceof Summary) {
+			} else if (codeBlocks.get(i) instanceof StatementSequence || codeBlocks.get(i) instanceof SequentialComposition
+					|| codeBlocks.get(i) instanceof ParallelComposition || codeBlocks.get(i) instanceof Summary) {
 				// do nothing
 			} else {
 				throw new IllegalArgumentException("unknown CodeBlock");
 			}
-			codeBlocks[i].disconnectSource();
-			codeBlocks[i].disconnectTarget();
-			prettyPrinted.append(codeBlocks[i].getPrettyPrintedStatements());
-			ModelUtils.mergeAnnotations(codeBlocks[i], this);
+			codeBlocks.get(i).disconnectSource();
+			codeBlocks.get(i).disconnectTarget();
+			prettyPrinted.append(codeBlocks.get(i).getPrettyPrintedStatements());
+			ModelUtils.mergeAnnotations(codeBlocks.get(i), this);
 		}
 		// workaround: set annotation with this pluginId again, because it was
 		// overwritten by the mergeAnnotations method
@@ -109,12 +109,7 @@ public class SequentialComposition extends CodeBlock {
 		return m_PrettyPrinted;
 	}
 
-	@Override
-	public CodeBlock getCopy(ProgramPoint source, ProgramPoint target) {
-		throw new UnsupportedOperationException();
-	}
-
-	public CodeBlock[] getCodeBlocks() {
+	public List<CodeBlock> getCodeBlocks() {
 		return m_CodeBlocks;
 	}
 
@@ -132,7 +127,7 @@ public class SequentialComposition extends CodeBlock {
 	 */
 	public static TransFormula getInterproceduralTransFormula(Boogie2SMT boogie2smt,
 			ModifiableGlobalVariableManager modGlobVarManager, boolean simplify, boolean extPqe, boolean tranformToCNF,
-			boolean withBranchEncoders, Logger logger, IUltimateServiceProvider services, CodeBlock... codeBlocks) {
+			boolean withBranchEncoders, Logger logger, IUltimateServiceProvider services, List<CodeBlock> codeBlocks) {
 		return getInterproceduralTransFormula(boogie2smt, modGlobVarManager, simplify, extPqe, tranformToCNF,
 				withBranchEncoders, null, null, null, logger, services, codeBlocks);
 	}
@@ -140,29 +135,29 @@ public class SequentialComposition extends CodeBlock {
 	private static TransFormula getInterproceduralTransFormula(Boogie2SMT boogie2smt,
 			ModifiableGlobalVariableManager modGlobVarManager, boolean simplify, boolean extPqe, boolean tranformToCNF,
 			boolean withBranchEncoders, TransFormula[] beforeCall, Call call, Return ret, Logger logger,
-			IUltimateServiceProvider services, CodeBlock... codeBlocks) {
+			IUltimateServiceProvider services, List<CodeBlock> codeBlocks) {
 		List<TransFormula> beforeFirstPendingCall = new ArrayList<TransFormula>();
 		Call lastUnmatchedCall = null;
 		int callsSinceLastUnmatchedCall = 0;
 		int returnsSinceLastUnmatchedCall = 0;
 		List<CodeBlock> afterLastUnmatchedCall = new ArrayList<CodeBlock>();
-		for (int i = 0; i < codeBlocks.length; i++) {
+		for (int i = 0; i < codeBlocks.size(); i++) {
 			if (lastUnmatchedCall == null) {
-				if (codeBlocks[i] instanceof Call) {
-					lastUnmatchedCall = (Call) codeBlocks[i];
+				if (codeBlocks.get(i) instanceof Call) {
+					lastUnmatchedCall = (Call) codeBlocks.get(i);
 				} else {
-					assert !(codeBlocks[i] instanceof Return);
+					assert !(codeBlocks.get(i) instanceof Return);
 					if (withBranchEncoders) {
-						beforeFirstPendingCall.add(codeBlocks[i].getTransitionFormulaWithBranchEncoders());
+						beforeFirstPendingCall.add(codeBlocks.get(i).getTransitionFormulaWithBranchEncoders());
 					} else {
-						beforeFirstPendingCall.add(codeBlocks[i].getTransitionFormula());
+						beforeFirstPendingCall.add(codeBlocks.get(i).getTransitionFormula());
 					}
 				}
 			} else {
-				if (codeBlocks[i] instanceof Return) {
+				if (codeBlocks.get(i) instanceof Return) {
 					if (callsSinceLastUnmatchedCall == returnsSinceLastUnmatchedCall) {
-						Return correspondingReturn = (Return) codeBlocks[i];
-						CodeBlock[] codeBlocksBetween = afterLastUnmatchedCall.toArray(new CodeBlock[0]);
+						Return correspondingReturn = (Return) codeBlocks.get(i);
+						List<CodeBlock> codeBlocksBetween = new ArrayList<CodeBlock>(afterLastUnmatchedCall);
 						TransFormula localTransFormula = getInterproceduralTransFormula(boogie2smt, modGlobVarManager,
 								simplify, extPqe, tranformToCNF, withBranchEncoders, null, lastUnmatchedCall,
 								correspondingReturn, logger, services, codeBlocksBetween);
@@ -173,14 +168,14 @@ public class SequentialComposition extends CodeBlock {
 						afterLastUnmatchedCall = new ArrayList<CodeBlock>();
 					} else {
 						returnsSinceLastUnmatchedCall++;
-						afterLastUnmatchedCall.add(codeBlocks[i]);
+						afterLastUnmatchedCall.add(codeBlocks.get(i));
 					}
 					assert (callsSinceLastUnmatchedCall >= returnsSinceLastUnmatchedCall);
-				} else if (codeBlocks[i] instanceof Call) {
+				} else if (codeBlocks.get(i) instanceof Call) {
 					callsSinceLastUnmatchedCall++;
-					afterLastUnmatchedCall.add(codeBlocks[i]);
+					afterLastUnmatchedCall.add(codeBlocks.get(i));
 				} else {
-					afterLastUnmatchedCall.add(codeBlocks[i]);
+					afterLastUnmatchedCall.add(codeBlocks.get(i));
 				}
 			}
 		}
@@ -194,7 +189,7 @@ public class SequentialComposition extends CodeBlock {
 		} else {
 			// there is a pending call in codeBlocks
 			assert (ret == null) : "no pending call between call and return possible!";
-			CodeBlock[] codeBlocksBetween = afterLastUnmatchedCall.toArray(new CodeBlock[0]);
+			List<CodeBlock> codeBlocksBetween = afterLastUnmatchedCall;
 			tfForCodeBlocks = getInterproceduralTransFormula(boogie2smt, modGlobVarManager, simplify, extPqe,
 					tranformToCNF, withBranchEncoders, beforeFirstPendingCall.toArray(new TransFormula[0]),
 					lastUnmatchedCall, null, logger, services, codeBlocksBetween);

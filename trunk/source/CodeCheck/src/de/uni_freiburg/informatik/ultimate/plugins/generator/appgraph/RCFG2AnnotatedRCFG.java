@@ -6,6 +6,7 @@ import java.util.Map.Entry;
 
 import org.apache.log4j.Logger;
 
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
@@ -27,7 +28,7 @@ public class RCFG2AnnotatedRCFG {
 		mLogger = logger;
 	}
 
-	public ImpRootNode convert(RootNode oldRoot, IPredicate truePredicate) {
+	public ImpRootNode convert(IUltimateServiceProvider mServices, RootNode oldRoot, IPredicate truePredicate) {
 		// m_callPredToReturnPreds =
 		// new HashMap<AnnotatedProgramPoint,
 		// ArrayList<AnnotatedProgramPoint>>();
@@ -35,7 +36,7 @@ public class RCFG2AnnotatedRCFG {
 		// ImpRootAnnot(oldRoot.getRootAnnot().getBoogieDeclarations(),
 		// oldRoot.getRootAnnot().getBoogie2SMT(), null); //,
 		// m_callPredToReturnPreds);
-		RootAnnot ra = new RootAnnot(oldRoot.getRootAnnot().getBoogieDeclarations(), // FIXME:
+		RootAnnot ra = new RootAnnot(mServices, oldRoot.getRootAnnot().getBoogieDeclarations(), // FIXME:
 																						// do
 																						// we
 																						// need

@@ -32,19 +32,11 @@ public class Call extends CodeBlock {
 	private final static String[] s_AttribFields = { "CallStatement", "PrettyPrintedStatements", "TransitionFormula",
 			"OccurenceInCounterexamples" };
 
-	public Call(ProgramPoint source, ProgramPoint target, CallStatement st, Logger logger) {
-		super(source, target, logger);
+	Call(int serialNumber, ProgramPoint source, ProgramPoint target, CallStatement st, Logger logger) {
+		super(serialNumber, source, target, logger);
 		m_CallStatement = st;
 		m_PrettyPrintedStatements = BoogiePrettyPrinter.print(st);
 		updatePayloadName();
-	}
-
-	@Override
-	public CodeBlock getCopy(ProgramPoint source, ProgramPoint target) {
-		CodeBlock copy;
-		copy = new Call(source, target, m_CallStatement, mLogger);
-		copy.setTransitionFormula(getTransitionFormula());
-		return copy;
 	}
 
 	@Override

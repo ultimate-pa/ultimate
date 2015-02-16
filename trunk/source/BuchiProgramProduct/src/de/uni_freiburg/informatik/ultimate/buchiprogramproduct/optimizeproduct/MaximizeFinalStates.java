@@ -4,6 +4,7 @@ import java.util.ArrayDeque;
 import java.util.HashSet;
 import java.util.List;
 
+import de.uni_freiburg.informatik.ultimate.core.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.annot.BuchiProgramAcceptingStateAnnotation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
@@ -14,8 +15,8 @@ public class MaximizeFinalStates extends BaseProductOptimizer {
 
 	private int mNewAcceptingStates;
 
-	public MaximizeFinalStates(RootNode product, IUltimateServiceProvider services) {
-		super(product, services);
+	public MaximizeFinalStates(RootNode product, IUltimateServiceProvider services, IToolchainStorage storage) {
+		super(product, services, storage);
 		mLogger.info(mNewAcceptingStates + " new accepting states");
 	}
 

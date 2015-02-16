@@ -67,8 +67,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.loopdetector.LoopDetectorNWA;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.RcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CfgBuilder.GotoEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.GotoEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ParallelComposition;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
@@ -960,10 +960,10 @@ public class AbstractInterpreterTA extends RCFGEdgeVisitor {
 		// backup, as the member variable is manipulated during iterating the
 		// CodeBlocks
 
-		CodeBlock[] blocks = c.getCodeBlocks();
+		List<CodeBlock> blocks = c.getCodeBlocks();
 
-		for (int i = 0; i < blocks.length; i++) {
-			visit(blocks[i]);
+		for (int i = 0; i < blocks.size(); i++) {
+			visit(blocks.get(i));
 			m_currentState = mResultingState;
 			// so the next CodeBlocks current state is this states' result state
 

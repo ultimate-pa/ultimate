@@ -1,10 +1,12 @@
 package de.uni_freiburg.informatik.ultimate.buchiprogramproduct.optimizeproduct;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 
+import de.uni_freiburg.informatik.ultimate.core.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -23,8 +25,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Seq
  */
 public class MinimizeStatesMultiEdgeSingleNode extends BaseMinimizeStates {
 
-	public MinimizeStatesMultiEdgeSingleNode(RootNode product, IUltimateServiceProvider services) {
-		super(product, services);
+	public MinimizeStatesMultiEdgeSingleNode(RootNode product, IUltimateServiceProvider services, IToolchainStorage storage) {
+		super(product, services, storage);
 	}
 
 	@Override
@@ -99,9 +101,9 @@ public class MinimizeStatesMultiEdgeSingleNode extends BaseMinimizeStates {
 					continue;
 				}
 
-				SequentialComposition sc = new SequentialComposition(pred, succ, root.getRootAnnot().getBoogie2SMT(),
-						root.getRootAnnot().getModGlobVarManager(), false, false, mServices, new CodeBlock[] { predCB,
-								succCB });
+				SequentialComposition sc = mCbf.constructSequentialComposition(
+						pred, succ, false, false, 
+						Arrays.asList(new CodeBlock[] { predCB,	succCB }));
 				assert sc.getTarget() != null;
 				assert sc.getSource() != null;
 				newEdges++;

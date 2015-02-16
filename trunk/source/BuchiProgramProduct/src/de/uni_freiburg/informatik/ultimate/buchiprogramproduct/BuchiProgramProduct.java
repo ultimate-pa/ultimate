@@ -41,6 +41,7 @@ public class BuchiProgramProduct implements IGenerator {
 	private boolean mModelIsRCFG;
 
 	private ProductBacktranslator mBacktranslator;
+	private IToolchainStorage mStorage;
 
 	@Override
 	public GraphType getOutputDefinition() {
@@ -88,12 +89,12 @@ public class BuchiProgramProduct implements IGenerator {
 		if (!mPreviousToolFoundErrors) {
 			if (mModelIsRCFG
 					&& new UltimatePreferenceStore(Activator.PLUGIN_ID).getBoolean(PreferenceInitializer.OPTIMIZE_SBE)) {
-				observers.add(new SmallBlockEncoder(mLogger, mBacktranslator));
+				observers.add(new SmallBlockEncoder(mLogger, mBacktranslator, mStorage));
 			}
 
 			if (mUseBuchiProductObserver) {
 				if (mBuchiProductObserver == null) {
-					mBuchiProductObserver = new BuchiProductObserver(mLogger, mServices, mBacktranslator);
+					mBuchiProductObserver = new BuchiProductObserver(mLogger, mServices, mBacktranslator, mStorage);
 				}
 				observers.add(mBuchiProductObserver);
 			}
@@ -138,8 +139,8 @@ public class BuchiProgramProduct implements IGenerator {
 	}
 
 	@Override
-	public void setToolchainStorage(IToolchainStorage services) {
-
+	public void setToolchainStorage(IToolchainStorage storage) {
+		mStorage = storage;
 	}
 
 	@SuppressWarnings("rawtypes")

@@ -22,18 +22,10 @@ public class Return extends CodeBlock {
 
 	private final Call m_CorrespondingCall;
 
-	public Return(ProgramPoint source, ProgramPoint target, Call correspondingCall, Logger logger) {
-		super(source, target, logger);
+	Return(int serialNumber, ProgramPoint source, ProgramPoint target, Call correspondingCall, Logger logger) {
+		super(serialNumber, source, target, logger);
 		m_CorrespondingCall = correspondingCall;
 		updatePayloadName();
-	}
-
-	@Override
-	public CodeBlock getCopy(ProgramPoint source, ProgramPoint target) {
-		CodeBlock copy;
-		copy = new Return(source, target, m_CorrespondingCall, mLogger);
-		copy.setTransitionFormula(getTransitionFormula());
-		return copy;
 	}
 
 	@Override

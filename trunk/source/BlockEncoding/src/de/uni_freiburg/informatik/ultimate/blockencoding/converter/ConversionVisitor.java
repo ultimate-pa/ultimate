@@ -5,6 +5,8 @@ package de.uni_freiburg.informatik.ultimate.blockencoding.converter;
 
 import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -38,10 +40,9 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGl
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CfgBuilder.GotoEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.InterproceduralSequentialComposition;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ParallelComposition;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlockFactory;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.GotoEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
@@ -88,6 +89,8 @@ public class ConversionVisitor implements IMinimizationVisitor {
 
 	private final IUltimateServiceProvider mServices;
 
+	private final CodeBlockFactory mCbf;
+
 	/**
 	 * @param boogie2smt
 	 * @param root
@@ -104,6 +107,7 @@ public class ConversionVisitor implements IMinimizationVisitor {
 		mCheckForMultipleFormula = new HashMap<IMinimizedEdge, Integer>();
 		mTransFormBuilder = new TransFormulaBuilder(boogie2smt, mServices);
 		mModGlobalVarManager = root.getRootAnnot().getModGlobVarManager();
+		mCbf = root.getRootAnnot().getCodeBlockFactory();
 		mSeqComposedBlocks = new Stack<ArrayList<CodeBlock>>();
 		mHasConjunctionAsParent = new HashSet<IMinimizedEdge>();
 		if (heuristic == null) {
@@ -204,8 +208,8 @@ public class ConversionVisitor implements IMinimizationVisitor {
 					cb = replaceGotoEdge(cb, null);
 				} else if (edge instanceof ShortcutErrEdge) {
 					if (cb instanceof ShortcutCodeBlock) {
-						cb = new InterproceduralSequentialComposition(null, null, mBoogie2SMT, mModGlobalVarManager,
-								false, false, ((ShortcutCodeBlock) cb).getCodeBlocks(), mLogger, mServices);
+						cb = mCbf.constuctInterproceduralSequentialComposition(null, null,
+								false, false, Arrays.asList(((ShortcutCodeBlock) cb).getCodeBlocks()));
 					} else {
 						throw new IllegalArgumentException("Converted CodeBlock for ShortcutErrEdge"
 								+ " is no ShortcutCodeBlock");
@@ -413,14 +417,14 @@ public class ConversionVisitor implements IMinimizationVisitor {
 						return new ShortcutCodeBlock(null, null, new CodeBlock[] { replaceGotoEdge(gotoEdges.get(0),
 								gotoEdges.get(1)) }, mLogger);
 					}
-					return new SequentialComposition(null, null, mBoogie2SMT, mModGlobalVarManager, false, false,
-							mServices, replaceGotoEdge(gotoEdges.get(0), gotoEdges.get(1)));
+					return mCbf.constructSequentialComposition(null, null, false, false,
+							Collections.singletonList(replaceGotoEdge(gotoEdges.get(0), gotoEdges.get(1))));
 				}
 				if (edge instanceof ShortcutErrEdge) {
 					return new ShortcutCodeBlock(null, null, composeEdges.toArray(new CodeBlock[0]), mLogger);
 				}
-				return new SequentialComposition(null, null, mBoogie2SMT, mModGlobalVarManager, false, false, mServices,
-						composeEdges.toArray(new CodeBlock[0]));
+				return mCbf.constructSequentialComposition(null, null, false, false,
+						Collections.unmodifiableList(composeEdges));
 			}
 			if (edge instanceof DisjunctionEdge) {
 				ArrayList<CodeBlock> composeEdges = new ArrayList<CodeBlock>();
@@ -460,8 +464,10 @@ public class ConversionVisitor implements IMinimizationVisitor {
 						|| composeEdges.get(1) instanceof ShortcutCodeBlock) {
 					throw new IllegalArgumentException("Shortcut is contained in ParallelComposition?");
 				}
-				return new ParallelComposition(null, null, mBoogie2SMT, mServices, composeEdges.get(0),
-						composeEdges.get(1));
+				List<CodeBlock> parallelCodeBlocks = new ArrayList<>();
+				parallelCodeBlocks.add(composeEdges.get(0));
+				parallelCodeBlocks.add(composeEdges.get(1));
+				return mCbf.constructParallelComposition(null, null, parallelCodeBlocks);
 			}
 		}
 		// should never reach this end here?
@@ -485,14 +491,14 @@ public class ConversionVisitor implements IMinimizationVisitor {
 		// -> so basically we create a new instance of the CodeBlock,
 		// this is necessary to avoid mixing of the models
 		if (cb instanceof StatementSequence) {
-			copyOfCodeBlock = new StatementSequence(null, null, ((StatementSequence) cb).getStatements(),
-					((StatementSequence) cb).getOrigin(), mLogger);
+			copyOfCodeBlock = mCbf.constructStatementSequence(null, null, ((StatementSequence) cb).getStatements(),
+					((StatementSequence) cb).getOrigin());
 		}
 		if (cb instanceof Call) {
-			copyOfCodeBlock = new Call(null, null, ((Call) cb).getCallStatement(), mLogger);
+			copyOfCodeBlock = mCbf.constructCall(null, null, ((Call) cb).getCallStatement());
 		}
 		if (cb instanceof Return) {
-			copyOfCodeBlock = new Return(null, null, ((Return) cb).getCorrespondingCall(), mLogger);
+			copyOfCodeBlock = mCbf.constructReturn(null, null, ((Return) cb).getCorrespondingCall());
 		}
 		if (cb instanceof Summary) {
 			// This situation can happen, if a Call/Return/Summary-Edges are
@@ -524,11 +530,11 @@ public class ConversionVisitor implements IMinimizationVisitor {
 	private CodeBlock replaceGotoEdge(CodeBlock gotoEdge, CodeBlock secondGotoEdge) {
 		StatementSequence replacement = null;
 		if (secondGotoEdge == null) {
-			replacement = new StatementSequence(null, null, new AssumeStatement(gotoEdge.getPayload().getLocation(),
-					new BooleanLiteral(gotoEdge.getPayload().getLocation(), true)), mLogger);
+			replacement = mCbf.constructStatementSequence(null, null, new AssumeStatement(gotoEdge.getPayload().getLocation(),
+					new BooleanLiteral(gotoEdge.getPayload().getLocation(), true)));
 		} else {
-			replacement = new StatementSequence(null, null, new AssumeStatement(gotoEdge.getPayload().getLocation(),
-					new BooleanLiteral(gotoEdge.getPayload().getLocation(), true)), mLogger);
+			replacement = mCbf.constructStatementSequence(null, null, new AssumeStatement(gotoEdge.getPayload().getLocation(),
+					new BooleanLiteral(gotoEdge.getPayload().getLocation(), true)));
 		}
 		String procId = gotoEdge.getPreceedingProcedure();
 		mTransFormBuilder.addTransitionFormulas(replacement, procId);

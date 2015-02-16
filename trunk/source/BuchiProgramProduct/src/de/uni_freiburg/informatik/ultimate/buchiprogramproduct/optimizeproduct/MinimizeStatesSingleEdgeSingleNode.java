@@ -1,15 +1,16 @@
 package de.uni_freiburg.informatik.ultimate.buchiprogramproduct.optimizeproduct;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 
+import de.uni_freiburg.informatik.ultimate.core.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.SequentialComposition;
 
 /**
  * Least aggressive minimization (besides no attempt). Tries to remove states
@@ -20,8 +21,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Seq
  */
 public class MinimizeStatesSingleEdgeSingleNode extends BaseMinimizeStates {
 
-	public MinimizeStatesSingleEdgeSingleNode(RootNode product, IUltimateServiceProvider services) {
-		super(product, services);
+	public MinimizeStatesSingleEdgeSingleNode(RootNode product, IUltimateServiceProvider services, IToolchainStorage storage) {
+		super(product, services, storage);
 	}
 
 	@Override
@@ -65,9 +66,8 @@ public class MinimizeStatesSingleEdgeSingleNode extends BaseMinimizeStates {
 		succEdge.disconnectTarget();
 		mRemovedEdges += 2;
 
-		new SequentialComposition(pred, succ, root.getRootAnnot().getBoogie2SMT(), root.getRootAnnot()
-				.getModGlobVarManager(), false, false, mServices, new CodeBlock[] { (CodeBlock) predEdge,
-				(CodeBlock) succEdge });
+		mCbf.constructSequentialComposition(pred, succ, false, false, 
+				Arrays.asList(new CodeBlock[] { (CodeBlock) predEdge, (CodeBlock) succEdge }));
 
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug("    removed 2, added 2 edges");

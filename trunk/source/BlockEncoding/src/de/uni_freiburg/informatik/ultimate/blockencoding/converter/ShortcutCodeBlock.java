@@ -60,22 +60,6 @@ public class ShortcutCodeBlock extends CodeBlock {
 		return null;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg
-	 * .CodeBlock
-	 * #getCopy(de.uni_freiburg.informatik.ultimate.plugins.generator.
-	 * rcfgbuilder .cfg.ProgramPoint,
-	 * de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder
-	 * .cfg.ProgramPoint)
-	 */
-	@Override
-	public CodeBlock getCopy(ProgramPoint source, ProgramPoint target) {
-		return null;
-	}
-
 	/**
 	 * @return the codeBlocks
 	 */

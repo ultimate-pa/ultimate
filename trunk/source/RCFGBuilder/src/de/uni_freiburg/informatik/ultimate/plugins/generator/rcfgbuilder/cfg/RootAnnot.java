@@ -3,6 +3,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.model.annotation.AbstractAnnotations;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
@@ -81,18 +82,10 @@ public class RootAnnot extends AbstractAnnotations {
 	final HashMap<ProgramPoint,ILocation> m_LoopLocations = new HashMap<ProgramPoint,ILocation>();
 	
 
-	/**
-	 * TODO
-	 */
-//	private Smt2Boogie m_BoogieVar2SmtVar;
-	private Boogie2SMT m_Boogie2SMT;
-	ModifiableGlobalVariableManager m_ModifiableGlobalVariableManager;
-
-
-
-
-
-	private RCFGBacktranslator m_Backtranslator;
+	private final Boogie2SMT m_Boogie2SMT;
+	private final ModifiableGlobalVariableManager m_ModifiableGlobalVariableManager;
+	private final CodeBlockFactory m_CodeBlockFactory;
+	private final RCFGBacktranslator m_Backtranslator;
 
 
 
@@ -108,11 +101,16 @@ public class RootAnnot extends AbstractAnnotations {
 		"locNodes", "loopEntry"
 	};
 	
-	public RootAnnot(BoogieDeclarations boogieDeclarations,
+	public RootAnnot(IUltimateServiceProvider services, 
+			BoogieDeclarations boogieDeclarations,
 			Boogie2SMT m_Boogie2smt, RCFGBacktranslator backtranslator) {
 		m_BoogieDeclarations = boogieDeclarations;
 		m_Boogie2SMT = m_Boogie2smt;
 		m_Backtranslator = backtranslator;
+		m_ModifiableGlobalVariableManager = new ModifiableGlobalVariableManager(
+				m_BoogieDeclarations.getModifiedVars(), m_Boogie2smt);
+		m_CodeBlockFactory = new CodeBlockFactory(
+				services, m_Boogie2SMT, m_ModifiableGlobalVariableManager);
 	}
 	
 	@Override
@@ -182,6 +180,12 @@ public class RootAnnot extends AbstractAnnotations {
 	public BoogieDeclarations getBoogieDeclarations() {
 		return m_BoogieDeclarations;
 	}
+	
+	public CodeBlockFactory getCodeBlockFactory() {
+		return m_CodeBlockFactory;
+	}
+	
+	
 
 	
 

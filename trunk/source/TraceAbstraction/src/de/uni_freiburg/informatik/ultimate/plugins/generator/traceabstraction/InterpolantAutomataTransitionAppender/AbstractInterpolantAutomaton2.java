@@ -17,7 +17,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingInternalT
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -27,7 +26,29 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 
 /**
- * Superclass for interpolant automata that are build on-the-fly.
+ * Superclass for interpolant automata that are build on-demand.
+ * An interpolant automaton in an automaton
+ * <ul>
+ * <li> whose letters are CodeBlocks
+ * <li> whose states are IPredicates
+ * <li> whose accepting state is an IPredicate whose formula is "false"
+ * <li> that has a transition (ψ, st, φ) only if the Hoare triple {ψ} st {φ}
+ *  is valid.
+ * </ul>
+ *  
+ *  The on-demand construction works as follows.
+ *  Initially, the automaton does not have any transitions.
+ *  The automaton is always in one of the following two modes 
+ *  Mode.ON_DEMAND_CONSTRUCTION or Mode.READ_ONLY.
+ *  The use can switch between both modes using the 
+ *  {@code #switchToOnDemandConstructionMode()} and the 
+ *  {@code #switchToReadonlyMode()} methods.
+ *  New transitions are only added if the automaton is in 
+ *  ON_DEMAND_CONSTRUCTION mode.
+ *  New transitions are only added on-demand while the user asks the for 
+ *  successors (e.g., via the {@code #internalSuccessors(IPredicate)} method.
+ *  If the automaton is asked for successors of a given state ψ, the automaton
+ *  first checks its cache ({@code #m_Result}). TODO continue documentation...
  * 
  * @author Matthias Heizmann
  * 

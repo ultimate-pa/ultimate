@@ -17,6 +17,7 @@ import de.uni_freiburg.informatik.ultimate.buchiprogramproduct.optimizeproduct.R
 import de.uni_freiburg.informatik.ultimate.buchiprogramproduct.preferences.PreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.buchiprogramproduct.preferences.PreferenceInitializer.MinimizeStates;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
+import de.uni_freiburg.informatik.ultimate.core.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.ltl2aut.never2nwa.NWAContainer;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
@@ -34,10 +35,12 @@ public class BuchiProductObserver implements IUnmanagedObserver {
 	private RootNode mProduct;
 	private final IUltimateServiceProvider mServices;
 	private final ProductBacktranslator mBacktranslator;
+	private final IToolchainStorage mStorage;
 
-	public BuchiProductObserver(Logger logger, IUltimateServiceProvider services, ProductBacktranslator backtranslator) {
+	public BuchiProductObserver(Logger logger, IUltimateServiceProvider services, ProductBacktranslator backtranslator, IToolchainStorage storage) {
 		mLogger = logger;
 		mServices = services;
+		mStorage = storage;
 		mRcfg = null;
 		mProduct = null;
 		mNeverClaimNWAContainer = null;
@@ -111,7 +114,7 @@ public class BuchiProductObserver implements IUnmanagedObserver {
 
 	private boolean optimizeRemoveSinkStates(UltimatePreferenceStore ups, boolean continueOptimization) {
 		if (ups.getBoolean(PreferenceInitializer.OPTIMIZE_REMOVE_SINK_STATES)) {
-			RemoveSinkStates rss = new RemoveSinkStates(mProduct, mServices);
+			RemoveSinkStates rss = new RemoveSinkStates(mProduct, mServices, mStorage);
 			mProduct = rss.getResult();
 			continueOptimization = continueOptimization || rss.IsGraphChanged();
 		}
@@ -120,7 +123,7 @@ public class BuchiProductObserver implements IUnmanagedObserver {
 
 	private boolean optimizeRemoveInfeasibleEdges(UltimatePreferenceStore ups, boolean continueOptimization) {
 		if (ups.getBoolean(PreferenceInitializer.OPTIMIZE_REMOVE_INFEASIBLE_EDGES)) {
-			RemoveInfeasibleEdges opt1 = new RemoveInfeasibleEdges(mProduct, mServices);
+			RemoveInfeasibleEdges opt1 = new RemoveInfeasibleEdges(mProduct, mServices, mStorage);
 			mProduct = opt1.getResult();
 			continueOptimization = continueOptimization || opt1.IsGraphChanged();
 		}
@@ -129,7 +132,7 @@ public class BuchiProductObserver implements IUnmanagedObserver {
 
 	private boolean optimizeMaximizeFinalStates(UltimatePreferenceStore ups, boolean continueOptimization) {
 		if (ups.getBoolean(PreferenceInitializer.OPTIMIZE_MAXIMIZE_FINAL_STATES)) {
-			MaximizeFinalStates opt2 = new MaximizeFinalStates(mProduct, mServices);
+			MaximizeFinalStates opt2 = new MaximizeFinalStates(mProduct, mServices, mStorage);
 			mProduct = opt2.getResult();
 			continueOptimization = continueOptimization || opt2.IsGraphChanged();
 		}
@@ -144,13 +147,13 @@ public class BuchiProductObserver implements IUnmanagedObserver {
 			BaseProductOptimizer opt3;
 			switch (minimizeStates) {
 			case SINGLE:
-				opt3 = new MinimizeStatesSingleEdgeSingleNode(mProduct, mServices);
+				opt3 = new MinimizeStatesSingleEdgeSingleNode(mProduct, mServices, mStorage);
 				break;
 			case SINGLE_NODE_MULTI_EDGE:
-				opt3 = new MinimizeStatesMultiEdgeSingleNode(mProduct, mServices);
+				opt3 = new MinimizeStatesMultiEdgeSingleNode(mProduct, mServices, mStorage);
 				break;
 			case MULTI:
-				opt3 = new MinimizeStatesMultiEdgeMultiNode(mProduct, mServices);
+				opt3 = new MinimizeStatesMultiEdgeMultiNode(mProduct, mServices, mStorage);
 				break;
 			default:
 				throw new IllegalArgumentException(minimizeStates + " is an unknown enum value!");
@@ -164,7 +167,7 @@ public class BuchiProductObserver implements IUnmanagedObserver {
 
 	private boolean optimizeSimplifyAssumes(UltimatePreferenceStore ups, boolean continueOptimization) {
 		if (ups.getBoolean(PreferenceInitializer.OPTIMIZE_SIMPLIFY_ASSUMES)) {
-			BaseProductOptimizer opt4 = new AssumeMerger(mProduct, mServices);
+			BaseProductOptimizer opt4 = new AssumeMerger(mProduct, mServices, mStorage);
 			mProduct = opt4.getResult();
 			continueOptimization = continueOptimization || opt4.IsGraphChanged();
 		}

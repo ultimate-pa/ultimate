@@ -25,6 +25,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.anno
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlockFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGNode;
@@ -64,6 +65,7 @@ public class ProductGenerator {
 	private final HashSet<ProgramPoint> mRootSuccessorProgramPoints;
 	private final HashMap<ProgramPoint, ArrayList<Call>> mOrigRcfgCallLocs2CallEdges;
 	private final NestedWordAutomaton<CodeBlock, String> mNWA;
+	private final CodeBlockFactory mCbf;
 
 	private final HashSet<ProgramPoint> mHelperProductStates;
 
@@ -79,6 +81,7 @@ public class ProductGenerator {
 		// parameters
 		mNWA = aut;
 		mRcfgRoot = rcfg;
+		mCbf = mRcfgRoot.getRootAnnot().getCodeBlockFactory();
 		mBacktranslator = backtrans;
 
 		// state
@@ -143,8 +146,8 @@ public class ProductGenerator {
 			// collect all sinks and add self loops to them
 			if (currentPoint.getOutgoingEdges().size() == 0) {
 				mRcfgSinks.add(currentPoint);
-				mapNewEdge2OldEdge(new StatementSequence(currentPoint, currentPoint,
-						generateNeverClaimAssumeStatement(new BooleanLiteral(null, true)), mLogger), null);
+				mapNewEdge2OldEdge(mCbf.constructStatementSequence(currentPoint, currentPoint,
+						generateNeverClaimAssumeStatement(new BooleanLiteral(null, true))), null);
 			}
 		}
 	}
@@ -392,8 +395,8 @@ public class ProductGenerator {
 			}
 
 			// we add a self loop that will be used later
-			StatementSequence ss = new StatementSequence(helper, helper,
-					generateNeverClaimAssumeStatement(new BooleanLiteral(null, true)), mLogger);
+			StatementSequence ss = mCbf.constructStatementSequence(helper, helper,
+					generateNeverClaimAssumeStatement(new BooleanLiteral(null, true)));
 			mapNewEdge2OldEdge(ss, null);
 
 			// determine what kind of loop has to be added to this state based
@@ -594,16 +597,18 @@ public class ProductGenerator {
 			targetpp = mProductLocations.get(generateStateName(((ProgramPoint) summary.getTarget()), autTrans.getSucc()
 					.toString()));
 			Summary sum = createNewSummaryEdge(productSourceLoc, summary, targetpp);
-			StatementSequence ss = new StatementSequence(productSourceLoc, targetpp, checkLetter(autTrans.getLetter()),
-					Origin.IMPLEMENTATION, mLogger);
+			StatementSequence ss = mCbf.constructStatementSequence(productSourceLoc, targetpp, checkLetter(autTrans.getLetter()),
+					Origin.IMPLEMENTATION);
 
 			Boogie2SMT b2smt = mProductRoot.getRootAnnot().getBoogie2SMT();
 			TransFormulaBuilder tfb = new TransFormulaBuilder(b2smt, mServices);
 			tfb.addTransitionFormulas((CodeBlock) ss, ((ProgramPoint) summary.getSource()).getProcedure());
+			
+			List<CodeBlock> sumAndSs = new ArrayList<>();
+			sumAndSs.add(sum);
+			sumAndSs.add(ss);
 
-			new SequentialComposition(productSourceLoc, targetpp, mProductRoot.getRootAnnot().getBoogie2SMT(),
-					mProductRoot.getRootAnnot().getModGlobVarManager(), true, true, mServices, new CodeBlock[] { sum,
-							ss });
+			mCbf.constructSequentialComposition(productSourceLoc, targetpp, true, true, sumAndSs);
 		}
 	}
 
@@ -654,7 +659,7 @@ public class ProductGenerator {
 			ProgramPoint productTargetLoc) {
 		assert productSourceLoc != null;
 		assert productTargetLoc != null;
-		Summary sum = new Summary(productSourceLoc, productTargetLoc, origSummary.getCallStatement(), false, mLogger);
+		Summary sum = mCbf.constructSummary(productSourceLoc, productTargetLoc, origSummary.getCallStatement(), false);
 		sum.setTransitionFormula(origSummary.getTransitionFormula());
 
 		if (mLogger.isDebugEnabled()) {
@@ -668,7 +673,7 @@ public class ProductGenerator {
 			ProgramPoint productTargetLoc, Call correspondingCall) {
 		assert productSourceLoc != null;
 		assert productTargetLoc != null;
-		Return r = new Return(productSourceLoc, productTargetLoc, correspondingCall, mLogger);
+		Return r = mCbf.constructReturn(productSourceLoc, productTargetLoc, correspondingCall);
 		r.setTransitionFormula(origRcfgEdge.getTransitionFormula());
 		mLogger.debug("Created return edge (" + productSourceLoc + ", " + productTargetLoc + ") for call from "
 				+ correspondingCall.getSource());
@@ -681,7 +686,7 @@ public class ProductGenerator {
 			ProgramPoint productTargetLoc) {
 		assert productSourceLoc != null;
 		assert productTargetLoc != null;
-		Call call = new Call(productSourceLoc, productTargetLoc, origRcfgEdge.getCallStatement(), mLogger);
+		Call call = mCbf.constructCall(productSourceLoc, productTargetLoc, origRcfgEdge.getCallStatement());
 		call.setTransitionFormula(origRcfgEdge.getTransitionFormula());
 		mapNewEdge2OldEdge(call, origRcfgEdge);
 
@@ -751,9 +756,9 @@ public class ProductGenerator {
 		assert currentpp != null;
 		assert targetpp != null;
 		if (originalSS != null) {
-			newSS = new StatementSequence(currentpp, targetpp, stmts, originalSS.getOrigin(), mLogger);
+			newSS = mCbf.constructStatementSequence(currentpp, targetpp, stmts, originalSS.getOrigin());
 		} else {
-			newSS = new StatementSequence(currentpp, targetpp, stmts, Origin.IMPLEMENTATION, mLogger);
+			newSS = mCbf.constructStatementSequence(currentpp, targetpp, stmts, Origin.IMPLEMENTATION);
 		}
 
 		mapNewEdge2OldEdge(newSS, originalSS);
