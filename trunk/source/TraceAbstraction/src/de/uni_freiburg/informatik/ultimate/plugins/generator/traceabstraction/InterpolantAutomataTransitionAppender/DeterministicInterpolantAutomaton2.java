@@ -96,13 +96,29 @@ public class DeterministicInterpolantAutomaton2 extends TotalInterpolantAutomato
 		m_NonTrivialPredicates = new HashSet<IPredicate>();
 		for (IPredicate state : allPredicates) {
 			if (state != m_IaTrueState && state != m_IaFalseState) {
-				m_ResPred2InputPreds.addPair(state, state);
+				processResPredInputPredsMapping(state);
 				m_NonTrivialPredicates.add(state);
 			}
 		}
 
 		mLogger.info(startMessage());
-		
+	}
+
+	/**
+	 * Add add input states that are 
+	 * 1. implied by resPred
+	 * 2. contained in m_InterpolantAutomaton
+	 * 3. different from "true"
+	 * to the  m_ResPred2InputPreds Map
+	 */
+	private void processResPredInputPredsMapping(IPredicate resPred) {
+		Set<IPredicate> impliedPredicates = 
+				m_PredicateUnifier.getCoverageRelation().getCoveringPredicates(resPred);
+		for (IPredicate impliedPredicate : impliedPredicates) {
+			if (impliedPredicate != m_IaTrueState && m_InterpolantAutomaton.getStates().contains(impliedPredicate)) {
+				m_ResPred2InputPreds.addPair(resPred, impliedPredicate);
+			}
+		}
 	}
 	
 	@Override
@@ -209,6 +225,7 @@ public class DeterministicInterpolantAutomaton2 extends TotalInterpolantAutomato
 
 
 	private IPredicate getOrConstructPredicate(Set<IPredicate> succs) {
+//		assert m_InterpolantAutomaton.getStates().containsAll(succs);
 		final IPredicate result;
 		if (succs.isEmpty()) {
 			result = m_IaTrueState;
@@ -224,11 +241,13 @@ public class DeterministicInterpolantAutomaton2 extends TotalInterpolantAutomato
 				resSucc = m_PredicateUnifier.getOrConstructPredicate(conjunction);
 				m_InputPreds2ResultPreds.put(succs, resSucc);
 				for (IPredicate succ : succs) {
+//					assert m_InterpolantAutomaton.getStates().contains(succ);
 					if (m_NonTrivialPredicates.contains(succ)) {
 						m_ResPred2InputPreds.addPair(resSucc, succ);
 					}
 				}
 				if (!m_Result.contains(resSucc)) {
+					processResPredInputPredsMapping(resSucc);
 					m_Result.addState(false, false, resSucc);
 				}
 			} 
