@@ -21,7 +21,7 @@ public class Svcomp_Memsafety extends
 		};
 	
 	// Time out for each test case in milliseconds
-	private static int m_Timeout = 30 * 1000;
+	private static int m_Timeout = 60 * 1000;
 
 	private static final boolean m_AutomizerWithForwardPredicates = true;
 	private static final boolean m_AutomizerWithBackwardPredicates = !true;
@@ -33,19 +33,31 @@ public class Svcomp_Memsafety extends
 					"AutomizerC.xml",
 					"automizer/ForwardPredicates_SvcompMemsafety.epf",
 				    m_Directories,
-				    new String[] {".c", ".i"},
-//				    "Trace Abstraction via Forward Predicates (SP)",
-//				    "CFilesForwardPredicates",
+				    new String[] {".i"},
 				    m_Timeout);
 		}
+		if (m_AutomizerWithForwardPredicates) {
+			addTestCases(
+					"AutomizerC.xml",
+					"automizer/ForwardPredicates_SvcompMemsafetyConservative.epf",
+				    m_Directories,
+				    new String[] {".i"},
+				    m_Timeout);
+		}
+//		if (m_AutomizerWithForwardPredicates) {
+//			addTestCases(
+//					"AutomizerC.xml",
+//					"automizer/ForwardPredicates_SvcompMemsafetyAdditionalAssume.epf",
+//				    m_Directories,
+//				    new String[] {".i"},
+//				    m_Timeout);
+//		}
 		if (m_AutomizerWithBackwardPredicates) {
 			addTestCases(
 					"AutomizerC.xml",
 					"automizer/BackwardPredicates_SvcompMemsafety.epf",
 				    m_Directories,
 				    new String[] {".c", ".i"},
-//				    "automizer/BackwardPredicates.epf",
-//				    "CFilesBackwardPredicates",
 				    m_Timeout);
 		}
 		return super.createTestCases();
