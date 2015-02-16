@@ -14,6 +14,7 @@ import org.apache.log4j.Logger;
 import de.uni_freiburg.informatik.ultimate.automata.AtsDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.AtsDefinitionPrinter.Labeling;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
+import de.uni_freiburg.informatik.ultimate.automata.HistogramOfIterable;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
@@ -578,6 +579,12 @@ public class BuchiCegarLoop {
 			return true;
 		} else {
 			m_Counterexample = ec.getAcceptingNestedLassoRun();
+			if (mLogger.isInfoEnabled()) {
+				mLogger.info("Counterexample stem histogram " + 
+						(new HistogramOfIterable<CodeBlock>(m_Counterexample.getStem().getWord())));
+				mLogger.info("Counterexample loop histogram " + 
+						(new HistogramOfIterable<CodeBlock>(m_Counterexample.getLoop().getWord())));
+			}
 			assert m_Counterexample.getLoop().getLength() > 1;
 			return false;
 		}
