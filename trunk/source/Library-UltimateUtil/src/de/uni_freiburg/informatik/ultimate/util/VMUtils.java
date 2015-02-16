@@ -6,7 +6,7 @@ import java.lang.management.RuntimeMXBean;
 /**
  * 
  * @author dietsch@informatik.uni-freiburg.de
- *
+ * 
  */
 public class VMUtils {
 
@@ -29,6 +29,12 @@ public class VMUtils {
 		} catch (Error err) {
 			sb.append("Error accessing VM information: ").append(err).append(br);
 		}
-		return sb.delete(sb.length()-br.length(), sb.length()).toString();
+		return sb.delete(sb.length() - br.length(), sb.length()).toString();
+	}
+
+	public static boolean areAssertionsEnabled() {
+		boolean rtr = false;
+		assert rtr = true;
+		return rtr;
 	}
 }

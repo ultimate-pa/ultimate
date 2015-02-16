@@ -246,8 +246,14 @@ public class ToolchainManager {
 
 			} finally {
 				IResultService resultService = mToolchainData.getServices().getResultService();
-				resultService.reportResult(Activator.s_PLUGIN_ID, new GenericResult(Activator.s_PLUGIN_ID,
-						"VM Information", VMUtils.getVMInfos(), Severity.INFO));
+				// resultService.reportResult(Activator.s_PLUGIN_ID, new
+				// GenericResult(Activator.s_PLUGIN_ID,
+				// "VM Information", VMUtils.getVMInfos(), Severity.INFO));
+				if (VMUtils.areAssertionsEnabled()) {
+					resultService.reportResult(Activator.s_PLUGIN_ID, new GenericResult(Activator.s_PLUGIN_ID,
+							"Assertions are enabled", "Assertions are enabled", Severity.INFO));
+				}
+
 				if (useBenchmark) {
 					bench.stopAll();
 					bench.printResult();
