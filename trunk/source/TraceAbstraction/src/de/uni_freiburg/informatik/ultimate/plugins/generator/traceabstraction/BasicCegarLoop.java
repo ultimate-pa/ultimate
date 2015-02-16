@@ -101,6 +101,9 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 	protected final boolean m_ComputeHoareAnnotation;
 
 	protected final AssertCodeBlockOrder m_AssertCodeBlocksIncrementally;
+	
+	protected final boolean m_AbstractInterpretationMode;
+	private NestedWordAutomaton<CodeBlock, IPredicate> m_AiInterpolAutomaton;
 
 	public BasicCegarLoop(String name, RootNode rootNode, SmtManager smtManager, TAPreferences taPrefs,
 			Collection<ProgramPoint> errorLocs, INTERPOLATION interpolation, boolean computeHoareAnnotation,
@@ -108,6 +111,8 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 
 		super(services, name, rootNode, smtManager, taPrefs, errorLocs, services.getLoggingService().getLogger(
 				Activator.s_PLUGIN_ID));
+		m_AbstractInterpretationMode = new UltimatePreferenceStore(Activator.s_PLUGIN_ID)
+			.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_USE_ABSTRACT_INTERPRETATION);
 		m_Interpolation = interpolation;
 		InterpolationPreferenceChecker.check(Activator.s_PLUGIN_NAME, interpolation);
 		m_ComputeHoareAnnotation = computeHoareAnnotation;
@@ -141,8 +146,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 	@Override
 	protected boolean isAbstractionCorrect() throws OperationCanceledException {
 		try {
-			if (new UltimatePreferenceStore(Activator.s_PLUGIN_ID)
-					.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_USE_ABSTRACT_INTERPRETATION)) {
+			if (m_AbstractInterpretationMode) {
 				Map<Object, ProgramPoint> programPointMap = new HashMap<Object, ProgramPoint>();
 				Map<ProgramPoint, Object> predicateMap = new HashMap<ProgramPoint, Object>();
 
@@ -161,7 +165,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 					// m_Abstraction = (IAutomaton<CodeBlock, IPredicate>) new
 					// Difference(m_Services, m_StateFactory, m_Abstraction,
 					// emptyWithAI.getAbstraction());
-					getTermAutomaton((INestedWordAutomaton<CodeBlock, IPredicate>) m_Abstraction,
+					m_AiInterpolAutomaton = getTermAutomaton((INestedWordAutomaton<CodeBlock, IPredicate>) m_Abstraction,
 							emptyWithAI.getTerms());
 				}
 
@@ -321,7 +325,9 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 	@Override
 	protected boolean refineAbstraction() throws AutomataLibraryException {
 		NestedWordAutomaton<CodeBlock, IPredicate> interpolAutomaton = m_InterpolAutomaton;
-		
+		if (m_AbstractInterpretationMode) {
+			refineWithGivenAutomaton(m_AiInterpolAutomaton);
+		}
 		return refineWithGivenAutomaton(interpolAutomaton);
 
 	}
