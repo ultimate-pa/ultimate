@@ -156,7 +156,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 						(INestedWordAutomatonOldApi<CodeBlock, IPredicate>) m_Abstraction, m_Services,
 						super.m_RootNode, programPointMap, predicateMap);
 				m_Counterexample = emptyWithAI.getNestedRun();
-				if (m_Counterexample == null) {
+				if (m_Counterexample != null) {
 					// TODO: So den neuen AI automaten in TA integrieren
 					// m_Abstraction = (IAutomaton<CodeBlock, IPredicate>) new
 					// Difference(m_Services, m_StateFactory, m_Abstraction,
@@ -320,8 +320,18 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 
 	@Override
 	protected boolean refineAbstraction() throws AutomataLibraryException {
+		NestedWordAutomaton<CodeBlock, IPredicate> interpolAutomaton = m_InterpolAutomaton;
+		
+		return refineWithGivenAutomaton(interpolAutomaton);
+
+	}
+
+	private boolean refineWithGivenAutomaton(
+			NestedWordAutomaton<CodeBlock, IPredicate> interpolAutomaton)
+			throws AssertionError, OperationCanceledException,
+			AutomataLibraryException {
 		m_StateFactoryForRefinement.setIteration(super.m_Iteration);
-		// howDifferentAreInterpolants(m_InterpolAutomaton.getStates());
+		// howDifferentAreInterpolants(interpolAutomaton.getStates());
 
 		m_CegarLoopBenchmark.start(CegarLoopBenchmarkType.s_AutomataDifference);
 		boolean explointSigmaStarConcatOfIA = !m_ComputeHoareAnnotation;
@@ -336,26 +346,26 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 			if (m_DifferenceInsteadOfIntersection) {
 				mLogger.debug("Start constructing difference");
 				// assert(oldAbstraction.getStateFactory() ==
-				// m_InterpolAutomaton.getStateFactory());
+				// interpolAutomaton.getStateFactory());
 
 				IOpWithDelayedDeadEndRemoval<CodeBlock, IPredicate> diff;
 
 				switch (m_Pref.interpolantAutomatonEnhancement()) {
 				case NONE:
 					PowersetDeterminizer<CodeBlock, IPredicate> psd = new PowersetDeterminizer<CodeBlock, IPredicate>(
-							m_InterpolAutomaton, true, m_PredicateFactoryInterpolantAutomata);
+							interpolAutomaton, true, m_PredicateFactoryInterpolantAutomata);
 					if (m_Pref.differenceSenwa()) {
 						diff = new DifferenceSenwa<CodeBlock, IPredicate>(m_Services, oldAbstraction,
-								m_InterpolAutomaton, psd, false);
+								interpolAutomaton, psd, false);
 					} else {
-						diff = new Difference<CodeBlock, IPredicate>(m_Services, oldAbstraction, m_InterpolAutomaton,
+						diff = new Difference<CodeBlock, IPredicate>(m_Services, oldAbstraction, interpolAutomaton,
 								psd, m_StateFactoryForRefinement, explointSigmaStarConcatOfIA);
 					}
 					break;
 				case BESTAPPROXIMATION_DEPRECATED:
 					BestApproximationDeterminizer bed = new BestApproximationDeterminizer(m_SmtManager, m_Pref,
-							m_InterpolAutomaton, m_PredicateFactoryInterpolantAutomata);
-					diff = new Difference<CodeBlock, IPredicate>(m_Services, oldAbstraction, m_InterpolAutomaton, bed,
+							interpolAutomaton, m_PredicateFactoryInterpolantAutomata);
+					diff = new Difference<CodeBlock, IPredicate>(m_Services, oldAbstraction, interpolAutomaton, bed,
 							m_StateFactoryForRefinement, explointSigmaStarConcatOfIA);
 
 					mLogger.info("Internal Transitions: " + bed.m_AnswerInternalAutomaton
@@ -369,13 +379,13 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 							+ " answers given by solver");
 					break;
 				case SELFLOOP:
-					SelfloopDeterminizer sed = new SelfloopDeterminizer(m_SmtManager, m_Pref, m_InterpolAutomaton,
+					SelfloopDeterminizer sed = new SelfloopDeterminizer(m_SmtManager, m_Pref, interpolAutomaton,
 							m_PredicateFactoryInterpolantAutomata);
 					if (m_Pref.differenceSenwa()) {
 						diff = new DifferenceSenwa<CodeBlock, IPredicate>(m_Services, oldAbstraction,
-								m_InterpolAutomaton, sed, false);
+								interpolAutomaton, sed, false);
 					} else {
-						diff = new Difference<CodeBlock, IPredicate>(m_Services, oldAbstraction, m_InterpolAutomaton,
+						diff = new Difference<CodeBlock, IPredicate>(m_Services, oldAbstraction, interpolAutomaton,
 								sed, m_StateFactoryForRefinement, explointSigmaStarConcatOfIA);
 					}
 					mLogger.info("Internal Selfloops: " + sed.m_InternalSelfloop + " Internal NonSelfloops "
@@ -393,10 +403,10 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 						boolean conservativeSuccessorCandidateSelection = 
 								(m_Pref.interpolantAutomatonEnhancement() == InterpolantAutomatonEnhancement.PREDICATE_ABSTRACTION_CONSERVATIVE);
 						DeterministicInterpolantAutomaton2 determinized = new DeterministicInterpolantAutomaton2(
-								m_Services, m_SmtManager, m_ModGlobVarManager, htc, oldAbstraction, m_InterpolAutomaton,
+								m_Services, m_SmtManager, m_ModGlobVarManager, htc, oldAbstraction, interpolAutomaton,
 								m_TraceChecker.getPredicateUnifier(), mLogger, conservativeSuccessorCandidateSelection);
 //						NondeterministicInterpolantAutomaton determinized = new NondeterministicInterpolantAutomaton(
-//								m_Services, m_SmtManager, m_ModGlobVarManager, htc, oldAbstraction, m_InterpolAutomaton, 
+//								m_Services, m_SmtManager, m_ModGlobVarManager, htc, oldAbstraction, interpolAutomaton, 
 //								m_TraceChecker.getPredicateUnifier(), mLogger);
 						// ComplementDeterministicNwa<CodeBlock, IPredicate>
 						// cdnwa = new ComplementDeterministicNwa<>(dia);
@@ -428,7 +438,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 					NondeterministicInterpolantAutomaton nondet = new NondeterministicInterpolantAutomaton(m_Services, 
 							m_SmtManager, m_ModGlobVarManager, htc, 
 							(INestedWordAutomaton<CodeBlock, IPredicate>) m_Abstraction, 
-							m_InterpolAutomaton, m_TraceChecker.getPredicateUnifier(), mLogger);
+							interpolAutomaton, m_TraceChecker.getPredicateUnifier(), mLogger);
 					PowersetDeterminizer<CodeBlock, IPredicate> psd2 = new PowersetDeterminizer<CodeBlock, IPredicate>(
 							nondet, true, m_PredicateFactoryInterpolantAutomata);
 					diff = new Difference<CodeBlock, IPredicate>(m_Services, oldAbstraction, nondet, psd2,
@@ -469,11 +479,11 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 				// m_DeadEndRemovalTime = diff.getDeadEndRemovalTime();
 				if (m_Pref.dumpAutomata()) {
 					String filename = "InterpolantAutomaton_Iteration" + m_Iteration;
-					super.writeAutomatonToFile(m_InterpolAutomaton, filename);
+					super.writeAutomatonToFile(interpolAutomaton, filename);
 				}
 			} else {// complement and intersection instead of difference
 
-				INestedWordAutomatonOldApi<CodeBlock, IPredicate> dia = determinizeInterpolantAutomaton();
+				INestedWordAutomatonOldApi<CodeBlock, IPredicate> dia = determinizeInterpolantAutomaton(interpolAutomaton);
 
 				mLogger.debug("Start complementation");
 				INestedWordAutomatonOldApi<CodeBlock, IPredicate> nia = (new ComplementDD<CodeBlock, IPredicate>(
@@ -484,7 +494,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 				if (m_Iteration <= m_Pref.watchIteration() && m_Pref.artifact() == Artifact.NEG_INTERPOLANT_AUTOMATON) {
 					m_ArtifactAutomaton = nia;
 				}
-				assert (oldAbstraction.getStateFactory() == m_InterpolAutomaton.getStateFactory());
+				assert (oldAbstraction.getStateFactory() == interpolAutomaton.getStateFactory());
 				mLogger.debug("Start intersection");
 				IntersectDD<CodeBlock, IPredicate> intersect = new IntersectDD<CodeBlock, IPredicate>(m_Services,
 						false, oldAbstraction, nia);
@@ -544,7 +554,6 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		} else {
 			return true;
 		}
-
 	}
 
 	protected IHoareTripleChecker getEfficientHoareTripleChecker()
@@ -702,30 +711,31 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 	// return result;
 	// }
 
-	protected INestedWordAutomatonOldApi<CodeBlock, IPredicate> determinizeInterpolantAutomaton()
-			throws OperationCanceledException {
+	protected INestedWordAutomatonOldApi<CodeBlock, IPredicate> determinizeInterpolantAutomaton(
+			INestedWordAutomaton<CodeBlock, IPredicate> interpolAutomaton
+			) throws OperationCanceledException {
 		mLogger.debug("Start determinization");
 		INestedWordAutomatonOldApi<CodeBlock, IPredicate> dia;
 		switch (m_Pref.interpolantAutomatonEnhancement()) {
 		case NONE:
 			PowersetDeterminizer<CodeBlock, IPredicate> psd = new PowersetDeterminizer<CodeBlock, IPredicate>(
-					m_InterpolAutomaton, true, m_PredicateFactoryInterpolantAutomata);
+					interpolAutomaton, true, m_PredicateFactoryInterpolantAutomata);
 			DeterminizeDD<CodeBlock, IPredicate> dabps = new DeterminizeDD<CodeBlock, IPredicate>(m_Services,
-					m_InterpolAutomaton, psd);
+					interpolAutomaton, psd);
 			dia = dabps.getResult();
 			break;
 		case BESTAPPROXIMATION_DEPRECATED:
 			BestApproximationDeterminizer bed = new BestApproximationDeterminizer(m_SmtManager, m_Pref,
-					m_InterpolAutomaton, m_PredicateFactoryInterpolantAutomata);
+					(NestedWordAutomaton<CodeBlock, IPredicate>) interpolAutomaton, m_PredicateFactoryInterpolantAutomata);
 			DeterminizeDD<CodeBlock, IPredicate> dab = new DeterminizeDD<CodeBlock, IPredicate>(m_Services,
-					m_InterpolAutomaton, bed);
+					interpolAutomaton, bed);
 			dia = dab.getResult();
 			break;
 		case SELFLOOP:
-			SelfloopDeterminizer sed = new SelfloopDeterminizer(m_SmtManager, m_Pref, m_InterpolAutomaton,
+			SelfloopDeterminizer sed = new SelfloopDeterminizer(m_SmtManager, m_Pref, interpolAutomaton,
 					m_PredicateFactoryInterpolantAutomata);
 			DeterminizeDD<CodeBlock, IPredicate> dabsl = new DeterminizeDD<CodeBlock, IPredicate>(m_Services,
-					m_InterpolAutomaton, sed);
+					interpolAutomaton, sed);
 			dia = dabsl.getResult();
 			break;
 		default:
