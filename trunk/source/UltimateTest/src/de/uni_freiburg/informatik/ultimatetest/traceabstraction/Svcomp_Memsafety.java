@@ -44,6 +44,22 @@ public class Svcomp_Memsafety extends
 				    new String[] {".i"},
 				    m_Timeout);
 		}
+		if (m_AutomizerWithForwardPredicates) {
+			addTestCases(
+					"AutomizerC.xml",
+					"automizer/ForwardPredicates_SvcompMemsafetyLbe.epf",
+				    m_Directories,
+				    new String[] {".i"},
+				    m_Timeout);
+		}
+		if (m_AutomizerWithForwardPredicates) {
+			addTestCases(
+					"AutomizerC.xml",
+					"automizer/ForwardPredicates_SvcompMemsafetyLbeConservative.epf",
+				    m_Directories,
+				    new String[] {".i"},
+				    m_Timeout);
+		}
 //		if (m_AutomizerWithForwardPredicates) {
 //			addTestCases(
 //					"AutomizerC.xml",
