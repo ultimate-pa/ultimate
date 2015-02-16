@@ -610,8 +610,8 @@ public class BoogieOutput {
 		if (decl.getBody() == null)
 			sb.append(";");
 		if (decl.getSpecification() != null) {
+			sb.append(sLinebreak);
 			for (Specification spec : decl.getSpecification()) {
-				sb.append(sLinebreak);
 				appendSpecification(sb, spec);
 			}
 		}
@@ -657,7 +657,7 @@ public class BoogieOutput {
 		} else {
 			throw new IllegalArgumentException(spec.toString());
 		}
-		sb.append(";" + sLinebreak);
+		sb.append(";").append(sLinebreak);
 	}
 
 	/**
