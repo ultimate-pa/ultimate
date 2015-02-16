@@ -6,9 +6,11 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import java.io.File;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -20,6 +22,7 @@ import java.util.Set;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IncomingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingReturnTransition;
@@ -101,6 +104,7 @@ public class AbstractInterpreterTA extends RCFGEdgeVisitor {
 
 	// object(node) <list<predecessors> list<successors>>
 	private final LinkedList<Object> m_nodesToVisit = new LinkedList<Object>();
+	private final Deque<Object> m_nodesToVisitDFS = new ArrayDeque<Object>();
 	private final LinkedList<Object> mCallSources = new LinkedList<>();
 	Map<Object, ProgramPoint> m_programPointMap = new HashMap<Object, ProgramPoint>();
 
@@ -174,11 +178,16 @@ public class AbstractInterpreterTA extends RCFGEdgeVisitor {
 	private String m_stringWideningOpName;
 	private String m_stringMergeOpName;
 
+	// ULTIMATE.start
+	private final String m_ultimateStartProcName = "ULTIMATE.start";
+
+	private List<UnprovableResult<RcfgElement, CodeBlock, Expression>> m_result;
 	private INestedWordAutomaton<CodeBlock, Object> m_nwa;
 
 	public AbstractInterpreterTA(IUltimateServiceProvider services) {
 		m_services = services;
-		mLogger = m_services.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
+		mLogger = m_services.getLoggingService().getLogger(
+				Activator.s_PLUGIN_ID);
 
 		fetchPreferences();
 
@@ -207,7 +216,8 @@ public class AbstractInterpreterTA extends RCFGEdgeVisitor {
 		}
 
 		if (element instanceof IElement) {
-			AbstractInterpretationAnnotations anno = new AbstractInterpretationAnnotations(states);
+			AbstractInterpretationAnnotations anno = new AbstractInterpretationAnnotations(
+					states);
 			anno.annotate((IElement) element);
 		}
 	}
@@ -225,7 +235,8 @@ public class AbstractInterpreterTA extends RCFGEdgeVisitor {
 
 	// private boolean putStateToNode(AbstractState state, RCFGNode node,
 	// RCFGEdge fromEdge) {
-	private boolean putStateToNode(AbstractState state, Object nwaState, Object nwaLetter) {
+	private boolean putStateToNode(AbstractState state, Object nwaState,
+			Object nwaLetter) {
 		List<AbstractState> statesAtNode = m_states.get(nwaState);
 		if (statesAtNode == null) {
 			statesAtNode = new LinkedList<AbstractState>();
@@ -233,21 +244,26 @@ public class AbstractInterpreterTA extends RCFGEdgeVisitor {
 		}
 
 		AbstractState newState = state;
-		List<AbstractState> statesAtNodeBackup = new ArrayList<AbstractState>(statesAtNode);
+		List<AbstractState> statesAtNodeBackup = new ArrayList<AbstractState>(
+				statesAtNode);
 
 		// check for loop entry / widening
 		boolean applyLoopWidening = false;
-		if ((nwaState != null) && m_loopEntryNodes.containsKey(nwaState)) {
+		if ((nwaState != null)
+				&& m_loopEntryNodes
+						.containsKey(m_programPointMap.get(nwaState))) {
 			LoopStackElement le = newState.popLoopEntry();
-			while ((le != null) && (le.getLoopNode() != null) && (le.getLoopNode() != nwaState)
+			while ((le != null) && (le.getLoopNode() != null)
+					&& (le.getLoopNode() != nwaState)
 					&& (le.getExitEdge() == nwaLetter))
 				le = newState.popLoopEntry();
-			if ((le != null) && (newState.peekLoopEntry().getIterationCount(nwaState) >= m_iterationsUntilWidening))
+			if ((le != null)
+					&& (newState.peekLoopEntry().getIterationCount(nwaState) >= m_iterationsUntilWidening))
 				applyLoopWidening = true;
 		}
 		// check for recursive method exit / widening
 		boolean applyRecursionWidening = false;
-		if (m_recursionEntryNodes.contains(nwaState))
+		if (m_recursionEntryNodes.contains(m_programPointMap.get(nwaState)))
 			applyRecursionWidening = newState.getRecursionCount() >= m_iterationsUntilWidening;
 
 		// check existing states: super/sub/widening/merging
@@ -261,14 +277,16 @@ public class AbstractInterpreterTA extends RCFGEdgeVisitor {
 			if (s.isProcessed()) {
 				if (newState.isSuccessor(s)) {
 					// widen after loop if possible
-					if (applyLoopWidening && (s.peekLoopEntry().getIterationCount(nwaState) > 0)) {
+					if (applyLoopWidening
+							&& (s.peekLoopEntry().getIterationCount(nwaState) > 0)) {
 						newState = s.widen(newState);
 						mLogger.debug(String.format("Widening at %s", nwaState));
 					}
 					// widen at new recursive call if possible
 					if (applyRecursionWidening) {
 						newState = s.widen(newState);
-						mLogger.debug(String.format("Widening after recursion at %s", nwaState));
+						mLogger.debug(String.format(
+								"Widening after recursion at %s", nwaState));
 					}
 
 					statesToRemove.add(s); // remove old obsolete nodes
@@ -297,9 +315,11 @@ public class AbstractInterpreterTA extends RCFGEdgeVisitor {
 		statesAtNode.add(newState);
 		if (nwaLetter != null) {
 			Transitionlet<CodeBlock, Object> it = (Transitionlet<CodeBlock, Object>) nwaLetter;
-			notifyStateChangeListeners((RCFGEdge) it.getLetter(), statesAtNodeBackup, state, newState);
+			notifyStateChangeListeners((RCFGEdge) it.getLetter(),
+					statesAtNodeBackup, state, newState);
 		} else {
-			notifyStateChangeListeners((RCFGEdge) nwaLetter, statesAtNodeBackup, state, newState);
+			notifyStateChangeListeners((RCFGEdge) nwaLetter,
+					statesAtNodeBackup, state, newState);
 		}
 		if (m_generateStateAnnotations)
 			annotateElement(nwaState, statesAtNode);
@@ -307,11 +327,12 @@ public class AbstractInterpreterTA extends RCFGEdgeVisitor {
 	}
 
 	public List<UnprovableResult<RcfgElement, CodeBlock, Expression>> processNWA(
-			INestedWordAutomaton<CodeBlock, Object> nwa, RootNode rn, Map<Object, ProgramPoint> programPointMap) {
+			INestedWordAutomaton<CodeBlock, Object> nwa, RootNode rn,
+			Map<Object, ProgramPoint> programPointMap) {
 		m_programPointMap = programPointMap;
 		m_nwa = nwa;
+		m_result = new ArrayList<UnprovableResult<RcfgElement, CodeBlock, Expression>>();
 
-		List<UnprovableResult<RcfgElement, CodeBlock, Expression>> result = null;
 		// RootNode root = rn;
 		m_errorLocs.clear();
 		m_reachedErrorLocs.clear();
@@ -326,7 +347,8 @@ public class AbstractInterpreterTA extends RCFGEdgeVisitor {
 			if (m_stateChangeLogFile) {
 				File sourceFile = new File(rn.getFilename());
 				DateFormat dfm = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss");
-				fileName = sourceFile.getName() + "_AI_" + dfm.format(new Date()) + ".txt";
+				fileName = sourceFile.getName() + "_AI_"
+						+ dfm.format(new Date()) + ".txt";
 				if (m_stateChangeLogUseSourcePath) {
 					fileDir = sourceFile.getParent();
 				} else {
@@ -336,8 +358,9 @@ public class AbstractInterpreterTA extends RCFGEdgeVisitor {
 					fileDir = new File(m_stateChangeLogPath).getAbsolutePath();
 				}
 			}
-			StateChangeLogger scl = new StateChangeLogger(mLogger, m_stateChangeLogConsole, m_stateChangeLogFile,
-					fileDir + File.separatorChar + fileName);
+			StateChangeLogger scl = new StateChangeLogger(mLogger,
+					m_stateChangeLogConsole, m_stateChangeLogFile, fileDir
+							+ File.separatorChar + fileName);
 			this.registerStateChangeListener(scl);
 		}
 
@@ -346,17 +369,22 @@ public class AbstractInterpreterTA extends RCFGEdgeVisitor {
 		m_numbersForWidening.addAll(m_fixedNumbersForWidening);
 		// collect literals if preferences say so
 		if (m_widening_autoNumbers) {
-			LiteralCollector literalCollector = new LiteralCollector(nwa, mLogger);
+			LiteralCollector literalCollector = new LiteralCollector(nwa,
+					mLogger);
 			m_numbersForWidening.addAll(literalCollector.getResult());
 		}
 
 		// domain factories chosen in preferences
-		m_intDomainFactory = makeDomainFactory(m_intDomainID, m_intWideningOpName, m_intMergeOpName);
-		m_realDomainFactory = makeDomainFactory(m_realDomainID, m_realWideningOpName, m_realMergeOpName);
-		m_boolDomainFactory = makeDomainFactory(m_boolDomainID, m_boolWideningOpName, m_boolMergeOpName);
-		m_bitVectorDomainFactory = makeDomainFactory(m_bitVectorDomainID, m_bitVectorWideningOpName,
-				m_bitVectorMergeOpName);
-		m_stringDomainFactory = makeDomainFactory(m_stringDomainID, m_stringWideningOpName, m_stringMergeOpName);
+		m_intDomainFactory = makeDomainFactory(m_intDomainID,
+				m_intWideningOpName, m_intMergeOpName);
+		m_realDomainFactory = makeDomainFactory(m_realDomainID,
+				m_realWideningOpName, m_realMergeOpName);
+		m_boolDomainFactory = makeDomainFactory(m_boolDomainID,
+				m_boolWideningOpName, m_boolMergeOpName);
+		m_bitVectorDomainFactory = makeDomainFactory(m_bitVectorDomainID,
+				m_bitVectorWideningOpName, m_bitVectorMergeOpName);
+		m_stringDomainFactory = makeDomainFactory(m_stringDomainID,
+				m_stringWideningOpName, m_stringMergeOpName);
 
 		// fetch loop nodes with their entry/exit edges
 		LoopDetectorNWA loopDetector = new LoopDetectorNWA(m_services);
@@ -374,40 +402,58 @@ public class AbstractInterpreterTA extends RCFGEdgeVisitor {
 		}
 		m_symbolTable = pa.getSymbolTable();
 
-		m_boogieVisitor = new AbstractInterpretationBoogieVisitor(mLogger, m_symbolTable, m_intDomainFactory,
-				m_realDomainFactory, m_boolDomainFactory, m_bitVectorDomainFactory, m_stringDomainFactory);
+		m_boogieVisitor = new AbstractInterpretationBoogieVisitor(mLogger,
+				m_symbolTable, m_intDomainFactory, m_realDomainFactory,
+				m_boolDomainFactory, m_bitVectorDomainFactory,
+				m_stringDomainFactory);
+
+		// TODO: entryNodes?
+		Map<String, ProgramPoint> entryNodes = rn.getRootAnnot()
+				.getEntryNodes();
+		ProgramPoint mainEntry = entryNodes.get(m_mainMethodName);
+
+		// check for ULTIMATE.start and recursive methods
+		for (String s : entryNodes.keySet()) {
+			ProgramPoint entryNode = entryNodes.get(s);
+			// check for ULTIMATE.start
+			if (entryNode.getProcedure().startsWith(m_ultimateStartProcName))
+				mainEntry = entryNode;
+			// check for recursive methods
+			Collection<ProgramPoint> methodNodes = rn.getRootAnnot()
+					.getProgramPoints().get(s).values();
+			for (RCFGEdge e : entryNode.getIncomingEdges()) {
+				if (methodNodes.contains(e.getSource())) {
+					// entryNode belongs to recursive method
+					m_recursionEntryNodes.add(entryNode);
+				}
+			}
+		}
 
 		m_errorLocs.addAll(nwa.getFinalStates());
 
-		/*
-		 * Map<String,Collection<ProgramPoint>> errorLocMap =
-		 * rn.getRootAnnot().getErrorNodes(); for (String s :
-		 * errorLocMap.keySet()) m_errorLocs.addAll(errorLocMap.get(s));
-		 */
+		for (Object nwaState : nwa.getInitialStates()) {
+			AbstractState state = new AbstractState(mLogger,
+					m_intDomainFactory, m_realDomainFactory,
+					m_boolDomainFactory, m_bitVectorDomainFactory,
+					m_stringDomainFactory);
 
-		// (IAbstractValue<?>)rn.getRootAnnot().getBoogie2SMT();
+			m_nodesToVisit.add(nwaState);
 
-		for (Object nwaState : nwa.getStates()) {
-			AbstractState state = new AbstractState(mLogger, m_intDomainFactory, m_realDomainFactory,
-					m_boolDomainFactory, m_bitVectorDomainFactory, m_stringDomainFactory);
-
-			// putStateToNode(state, i, ((CodeBlock) predecessor.getLetter());
 			putStateToNode(state, nwaState, null);
 		}
 
-		for (Object i : nwa.getInitialStates()) {
-			m_nodesToVisit.add(i);
-		}
+		visitNodes();
+		//m_nodesToVisitDFS.addAll(m_nodesToVisit);
+		//visitNodesDFS();
 
-		result = visitNodes();
-
-		Boogie2SmtSymbolTable b2smtst = rn.getRootAnnot().getBoogie2SMT().getBoogie2SmtSymbolTable();
+		Boogie2SmtSymbolTable b2smtst = rn.getRootAnnot().getBoogie2SMT()
+				.getBoogie2SmtSymbolTable();
 		Script script = rn.getRootAnnot().getScript();
 		extractTerms(nwa, b2smtst, script);
 		getTermMap();
 
 		// don't report anything here
-		return result;
+		return m_result;
 	}
 
 	/**
@@ -415,22 +461,29 @@ public class AbstractInterpreterTA extends RCFGEdgeVisitor {
 	 * @param b2smtst
 	 * @param script
 	 */
-	private void extractTerms(INestedWordAutomaton<CodeBlock, Object> nwa, Boogie2SmtSymbolTable b2smtst, Script script) {
+	private void extractTerms(INestedWordAutomaton<CodeBlock, Object> nwa,
+			Boogie2SmtSymbolTable b2smtst, Script script) {
 		mLogger.debug("Extracting terms...");
 		for (Object currentState : nwa.getStates()) {
-			List<AbstractState> abstractStatesAtNode = mAnnotations.get(currentState);
+			List<AbstractState> abstractStatesAtNode = mAnnotations
+					.get(currentState);
 			Term[] termsAtActualNode = new Term[0];
 			if (abstractStatesAtNode != null) {
 				for (int j = 0; j < abstractStatesAtNode.size(); j++) {
 					AbstractState s = abstractStatesAtNode.get(j);
-					termsAtActualNode = new Term[s.getCurrentScope().getValues().entrySet().size()];
+					termsAtActualNode = new Term[s.getCurrentScope()
+							.getValues().entrySet().size()];
 					int k = 0;
-					for (Entry<Pair, IAbstractValue<?>> entry : s.getCurrentScope().getValues().entrySet()) {
+					for (Entry<Pair, IAbstractValue<?>> entry : s
+							.getCurrentScope().getValues().entrySet()) {
 						Pair p = entry.getKey();
-						IAbstractValue<?> abstractValue = s.getCurrentScope().getValues().get(p);
-						BoogieVar boogieVar = b2smtst.getBoogieVar(p.getString(), p.getDeclaration(), false);
+						IAbstractValue<?> abstractValue = s.getCurrentScope()
+								.getValues().get(p);
+						BoogieVar boogieVar = b2smtst.getBoogieVar(
+								p.getString(), p.getDeclaration(), false);
 						TermVariable termVariable = boogieVar.getTermVariable();
-						termsAtActualNode[k] = abstractValueToTerm(script, abstractValue, termVariable);
+						termsAtActualNode[k] = abstractValueToTerm(script,
+								abstractValue, termVariable);
 						k++;
 					}
 				}
@@ -445,7 +498,8 @@ public class AbstractInterpreterTA extends RCFGEdgeVisitor {
 			} else if (termsAtActualNode.length == 1) {
 				combinedTermAtActualNode = termsAtActualNode[0];
 			} else {
-				combinedTermAtActualNode = script.term("and", termsAtActualNode);
+				combinedTermAtActualNode = script
+						.term("and", termsAtActualNode);
 			}
 			m_termMap.put(currentState, combinedTermAtActualNode);
 		}
@@ -457,7 +511,8 @@ public class AbstractInterpreterTA extends RCFGEdgeVisitor {
 	 * @param termVariable
 	 * @return
 	 */
-	private Term abstractValueToTerm(Script script, IAbstractValue<?> abstractValue, TermVariable termVariable) {
+	private Term abstractValueToTerm(Script script,
+			IAbstractValue<?> abstractValue, TermVariable termVariable) {
 		if (abstractValue.getClass().equals(IntervalValue.class)) {
 			IntervalValue intervalValue = (IntervalValue) abstractValue;
 			Term lowerBound = null;
@@ -475,12 +530,15 @@ public class AbstractInterpreterTA extends RCFGEdgeVisitor {
 					lowerBound = lower.toTerm(termVariable.getSort());
 					return script.term("=", lowerBound, termVariable);
 				}
-			} else if ((lower == Rational.NEGATIVE_INFINITY) && (upper == Rational.POSITIVE_INFINITY)) {
+			} else if ((lower == Rational.NEGATIVE_INFINITY)
+					&& (upper == Rational.POSITIVE_INFINITY)) {
 				return script.term("true");
-			} else if ((lower == Rational.NEGATIVE_INFINITY) && (upper.isRational())) {
+			} else if ((lower == Rational.NEGATIVE_INFINITY)
+					&& (upper.isRational())) {
 				upperBound = upper.toTerm(termVariable.getSort());
 				return script.term(">=", upperBound, termVariable);
-			} else if ((lower.isRational()) && (upper == Rational.POSITIVE_INFINITY)) {
+			} else if ((lower.isRational())
+					&& (upper == Rational.POSITIVE_INFINITY)) {
 				lowerBound = lower.toTerm(termVariable.getSort());
 				return script.term("<=", lowerBound, termVariable);
 			} else
@@ -501,16 +559,19 @@ public class AbstractInterpreterTA extends RCFGEdgeVisitor {
 				signTerm = script.term("false");
 				return script.term("=", signTerm, termVariable);
 			} else if (signValue.getValue() == Sign.MINUS) {
-				signTerm = Rational.valueOf(0, 0).toTerm(termVariable.getSort());
+				signTerm = Rational.valueOf(0, 0)
+						.toTerm(termVariable.getSort());
 				return script.term("<", signTerm, termVariable);
 			} else if (signValue.getValue() == Sign.PLUS) {
-				signTerm = Rational.valueOf(0, 0).toTerm(termVariable.getSort());
+				signTerm = Rational.valueOf(0, 0)
+						.toTerm(termVariable.getSort());
 				return script.term(">", signTerm, termVariable);
 			} else if (signValue.getValue() == Sign.PLUSMINUS) {
 				signTerm = script.term("true");
 				return script.term("=", signTerm, termVariable);
 			} else {
-				signTerm = Rational.valueOf(0, 0).toTerm(termVariable.getSort());
+				signTerm = Rational.valueOf(0, 0)
+						.toTerm(termVariable.getSort());
 				return script.term("=", signTerm, termVariable);
 			}
 		} else if (abstractValue.getClass().equals(TopBottomValue.class)) {
@@ -527,129 +588,288 @@ public class AbstractInterpreterTA extends RCFGEdgeVisitor {
 		return m_termMap;
 	}
 
-	protected List<UnprovableResult<RcfgElement, CodeBlock, Expression>> visitNodes() {
-		List<UnprovableResult<RcfgElement, CodeBlock, Expression>> result = new ArrayList<UnprovableResult<RcfgElement, CodeBlock, Expression>>();
-		Object currentNWAState = m_nodesToVisit.poll();
-		// Iterable<OutgoingInternalTransition<CodeBlock, Object>> predecessors
-		// =
-		// m_nodePredecessors.get(object);
+	protected void visitNodes() {
+		while (!m_nodesToVisit.isEmpty()) {
+			Object currentNWAState = m_nodesToVisit.poll();
 
-		if (currentNWAState != null) {
-			m_callStatementsAtCalls.clear();
-			m_callStatementsAtSummaries.clear();
+			if (currentNWAState != null) {
+				m_callStatementsAtCalls.clear();
+				m_callStatementsAtSummaries.clear();
 
-			List<AbstractState> statesAtNode = m_states.get(currentNWAState);
-			mLogger.debug(String.format("---- PROCESSING NODE %S %S----", currentNWAState, currentNWAState.getClass()
-					.getSimpleName()));
-			// process all unprocessed states at the node
-			boolean hasUnprocessed = true;
-			while (hasUnprocessed && m_continueProcessing) {
-				AbstractState unprocessedState = null;
-				for (AbstractState s : statesAtNode) {
-					if (!s.isProcessed()) {
-						unprocessedState = s;
-						break;
+				List<AbstractState> statesAtNode = m_states
+						.get(currentNWAState);
+				mLogger.debug(String.format("---- PROCESSING NODE %S %S----",
+						currentNWAState, currentNWAState.getClass()
+								.getSimpleName()));
+				// process all unprocessed states at the node
+				boolean hasUnprocessed = true;
+				while (hasUnprocessed && m_continueProcessing) {
+					AbstractState unprocessedState = null;
+					for (AbstractState s : statesAtNode) {
+						if (!s.isProcessed()) {
+							unprocessedState = s;
+							break;
+						}
 					}
-				}
-				if (unprocessedState != null) {
-					m_currentState = unprocessedState;
-					m_currentState.setProcessed(true);
+					if (unprocessedState != null) {
+						m_currentState = unprocessedState;
+						m_currentState.setProcessed(true);
 
-					m_currentNode = currentNWAState;
+						m_currentNode = currentNWAState;
 
-					for (OutgoingInternalTransition<CodeBlock, Object> e : m_nwa.internalSuccessors(currentNWAState)) {
-						mResultingState = null;
-						result.add(visit(e, "internal"));
+						for (OutgoingInternalTransition<CodeBlock, Object> e : m_nwa
+								.internalSuccessors(currentNWAState)) {
+							mResultingState = null;
+							visit(e);
+						}
+						for (OutgoingCallTransition<CodeBlock, Object> e : m_nwa
+								.callSuccessors(currentNWAState)) {
+							mResultingState = null;
+							// mCallSources.add(currentNWAState);
+							visit(e);
+						}
+						for (OutgoingReturnTransition<CodeBlock, Object> e : m_nwa
+								.returnSuccessors(currentNWAState)) {
+							// if (!mCallSources.isEmpty() && e.getHierPred() ==
+							// mCallSources.getLast()) {
+							// mCallSources.removeLast();
+							mResultingState = null;
+							visit(e);
+							// }
+						}
+					} else {
+						hasUnprocessed = false;
 					}
-					for (OutgoingCallTransition<CodeBlock, Object> e : m_nwa.callSuccessors(currentNWAState)) {
-						mResultingState = null;
-						// mCallSources.add(currentNWAState);
-						result.add(visit(e, "call"));
-					}
-					for (OutgoingReturnTransition<CodeBlock, Object> e : m_nwa.returnSuccessors(currentNWAState)) {
-						// if (!mCallSources.isEmpty() && e.getHierPred() ==
-						// mCallSources.getLast()) {
-						// mCallSources.removeLast();
-						mResultingState = null;
-						result.add(visit(e, "return"));
-						// }
-					}
-				} else {
-					hasUnprocessed = false;
-				}
-				// abort if asked to cancel
-				m_continueProcessing = m_continueProcessing
-						&& m_services.getProgressMonitorService().continueProcessing();
-			} // hasUnprocessed
+					// abort if asked to cancel
+					m_continueProcessing = m_continueProcessing
+							&& m_services.getProgressMonitorService()
+									.continueProcessing();
+				} // hasUnprocessed
 
-			// remove states if they aren't needed for possible widening anymore
-			int incomingSize = m_nwa.lettersInternalIncoming(currentNWAState).size()
-					+ m_nwa.lettersReturnIncoming(currentNWAState).size()
-					+ m_nwa.lettersCallIncoming(currentNWAState).size();
-			if (incomingSize <= 1)
-				m_states.remove(currentNWAState);
+				// remove states if they aren't needed for possible widening
+				// anymore
+				int incomingSize = m_nwa.lettersInternalIncoming(
+						currentNWAState).size()
+						+ m_nwa.lettersReturnIncoming(currentNWAState).size()
+						+ m_nwa.lettersCallIncoming(currentNWAState).size();
+				if (incomingSize <= 1)
+					m_states.remove(currentNWAState);
 
-			if (!m_callStatementsAtCalls.containsAll(m_callStatementsAtSummaries))
-				reportUnsupportedSyntaxResult((IElement) currentNWAState,
-						"Abstract interpretation plug-in can't verify "
-								+ "programs which contain procedures without implementations.");
+				if (!m_callStatementsAtCalls
+						.containsAll(m_callStatementsAtSummaries))
+					reportUnsupportedSyntaxResult(
+							(IElement) currentNWAState,
+							"(NWA) Abstract interpretation plug-in can't verify "
+									+ "programs which contain procedures without implementations.");
 
-			if (m_continueProcessing)
-				result.addAll(visitNodes()); // repeat until m_nodesToVisit is
-												// empty
+				if (!m_continueProcessing)
+					break;
+			}
 		}
-		return result;
+		return;
 	}
 
-	protected UnprovableResult<RcfgElement, CodeBlock, Expression> visit(Object transition, String type) {
-		// protected UnprovableResult<RcfgElement, CodeBlock, Expression>
-		// visit(RCFGEdge e, boolean runsOnNWA) {
-		UnprovableResult<RcfgElement, CodeBlock, Expression> result = null;
+	protected void visitNodesDFS() {
+		while (!m_nodesToVisitDFS.isEmpty()) {
+			Object currentObject = m_nodesToVisitDFS.pop();
+			if (currentObject != null) {
+				if ((currentObject instanceof OutgoingInternalTransition)
+						|| (currentObject instanceof OutgoingCallTransition)
+						|| (currentObject instanceof OutgoingReturnTransition)) {
+					visitDFS(currentObject);
+				} else {
+
+					m_callStatementsAtCalls.clear();
+					m_callStatementsAtSummaries.clear();
+
+					List<AbstractState> statesAtNode = m_states
+							.get(currentObject);
+					mLogger.debug(String.format(
+							"---- PROCESSING NODE %S %S----", currentObject,
+							currentObject.getClass().getSimpleName()));
+					// process all unprocessed states at the node
+					boolean hasUnprocessed = true;
+					while (hasUnprocessed && m_continueProcessing) {
+						AbstractState unprocessedState = null;
+						for (AbstractState s : statesAtNode) {
+							if (!s.isProcessed()) {
+								unprocessedState = s;
+								break;
+							}
+						}
+						if (unprocessedState != null) {
+							m_currentState = unprocessedState;
+							m_currentState.setProcessed(true);
+
+							m_currentNode = currentObject;
+
+							for (OutgoingInternalTransition<CodeBlock, Object> e : m_nwa
+									.internalSuccessors(currentObject)) {
+								m_nodesToVisitDFS.push(e);
+							}
+							for (OutgoingCallTransition<CodeBlock, Object> e : m_nwa
+									.callSuccessors(currentObject)) {
+								m_nodesToVisitDFS.push(e);
+							}
+							for (OutgoingReturnTransition<CodeBlock, Object> e : m_nwa
+									.returnSuccessors(currentObject)) {
+								m_nodesToVisitDFS.push(e);
+							}
+						} else {
+							hasUnprocessed = false;
+						}
+						// abort if asked to cancel
+						m_continueProcessing = m_continueProcessing
+								&& m_services.getProgressMonitorService()
+										.continueProcessing();
+					} // hasUnprocessed
+
+					// remove states if they aren't needed for possible widening
+					// anymore
+					int incomingSize = m_nwa.lettersInternalIncoming(
+							currentObject).size()
+							+ m_nwa.lettersReturnIncoming(currentObject).size()
+							+ m_nwa.lettersCallIncoming(currentObject).size();
+					if (incomingSize <= 1)
+						m_states.remove(currentObject);
+
+					if (!m_callStatementsAtCalls
+							.containsAll(m_callStatementsAtSummaries))
+						reportUnsupportedSyntaxResult(
+								(IElement) currentObject,
+								"(NWA) Abstract interpretation plug-in can't verify "
+										+ "programs which contain procedures without implementations.");
+
+					if (!m_continueProcessing)
+						break;
+				}
+			}
+		}
+		return;
+	}
+
+	protected void visitDFS(Object transition) {
+		mResultingState = null;
 		CodeBlock letter = null;
 		Object succ = null;
-		if (type == "internal") {
+		if (transition instanceof OutgoingInternalTransition) {
 			OutgoingInternalTransition<CodeBlock, Object> tr = (OutgoingInternalTransition<CodeBlock, Object>) transition;
 			letter = tr.getLetter();
 			succ = tr.getSucc();
-		} else if (type == "call") {
+		} else if (transition instanceof OutgoingCallTransition) {
 			OutgoingCallTransition<CodeBlock, Object> tr = (OutgoingCallTransition<CodeBlock, Object>) transition;
 			letter = tr.getLetter();
 			succ = tr.getSucc();
-		} else if (type == "return") {
+		} else if (transition instanceof OutgoingReturnTransition) {
 			OutgoingReturnTransition<CodeBlock, Object> tr = (OutgoingReturnTransition<CodeBlock, Object>) transition;
 			letter = tr.getLetter();
 			succ = tr.getSucc();
+		} else {
+			return;
 		}
 
 		super.visit((RCFGEdge) letter);
 
 		String evaluationError = m_boogieVisitor.getErrorMessage();
 		if (!evaluationError.isEmpty()) {
-			reportUnsupportedSyntaxResult((IElement) transition, evaluationError);
+			reportUnsupportedSyntaxResult((IElement) transition,
+					evaluationError);
 
 			mResultingState = null; // return, abort, stop.
 		}
 
 		if (mResultingState == null) {
 			mLogger.debug("No resulting state, ignoring target node");
-			return result; // do not process target node!
+			return; // do not process target node!
 		}
 
-		Map<Object, Object> loopEdges = m_loopEntryNodes.get(m_currentNode);
+		Map<Object, Object> loopEdges = m_loopEntryNodes.get(m_programPointMap
+				.get(m_currentNode));
 		if (loopEdges != null) {
 			Object exitEdge = loopEdges.get(letter);
 			if (exitEdge != null)
-				mResultingState.pushLoopEntry((ProgramPoint) m_currentNode, (RCFGEdge) exitEdge);
+				mResultingState.pushLoopEntry(
+						(ProgramPoint) m_programPointMap.get(m_currentNode),
+						(RCFGEdge) exitEdge);
 		}
 
 		mResultingState.addCodeBlockToTrace((CodeBlock) letter);
 
 		if (succ != null) {
 			if (putStateToNode(mResultingState, succ, transition)) {
-				if (m_errorLocs.contains(succ) && !m_reachedErrorLocs.contains(succ)) {
+				if (m_errorLocs.contains(succ)
+						&& !m_reachedErrorLocs.contains(succ)) {
 					m_reachedErrorLocs.add(succ);
 					ProgramPoint pp = m_programPointMap.get(succ);
-					result = reportErrorResult(pp, mResultingState);
+					reportErrorResult(pp, mResultingState);
+				} else {
+					if (!m_nodesToVisitDFS.contains(succ))
+						m_nodesToVisitDFS.push(succ);
+				}
+			} else {
+				mLogger.debug("Skipping successors");
+			}
+		} else {
+			mLogger.debug("There is no successor");
+		}
+		return;
+	}
+
+	protected void visit(Object transition) {
+		// protected UnprovableResult<RcfgElement, CodeBlock, Expression>
+		// visit(RCFGEdge e, boolean runsOnNWA) {
+		CodeBlock letter = null;
+		Object succ = null;
+		if (transition instanceof OutgoingInternalTransition) {
+			OutgoingInternalTransition<CodeBlock, Object> tr = (OutgoingInternalTransition<CodeBlock, Object>) transition;
+			letter = tr.getLetter();
+			succ = tr.getSucc();
+		} else if (transition instanceof OutgoingCallTransition) {
+			OutgoingCallTransition<CodeBlock, Object> tr = (OutgoingCallTransition<CodeBlock, Object>) transition;
+			letter = tr.getLetter();
+			succ = tr.getSucc();
+		} else if (transition instanceof OutgoingReturnTransition) {
+			OutgoingReturnTransition<CodeBlock, Object> tr = (OutgoingReturnTransition<CodeBlock, Object>) transition;
+			letter = tr.getLetter();
+			succ = tr.getSucc();
+		} else {
+			return;
+		}
+
+		super.visit((RCFGEdge) letter);
+
+		String evaluationError = m_boogieVisitor.getErrorMessage();
+		if (!evaluationError.isEmpty()) {
+			reportUnsupportedSyntaxResult((IElement) transition,
+					evaluationError);
+
+			mResultingState = null; // return, abort, stop.
+		}
+
+		if (mResultingState == null) {
+			mLogger.debug("No resulting state, ignoring target node");
+			return; // do not process target node!
+		}
+
+		Map<Object, Object> loopEdges = m_loopEntryNodes.get(m_programPointMap
+				.get(m_currentNode));
+		if (loopEdges != null) {
+			Object exitEdge = loopEdges.get(letter);
+			if (exitEdge != null)
+				mResultingState.pushLoopEntry(
+						(ProgramPoint) m_programPointMap.get(m_currentNode),
+						(RCFGEdge) exitEdge);
+		}
+
+		mResultingState.addCodeBlockToTrace((CodeBlock) letter);
+
+		if (succ != null) {
+			if (putStateToNode(mResultingState, succ, transition)) {
+				if (m_errorLocs.contains(succ)
+						&& !m_reachedErrorLocs.contains(succ)) {
+					m_reachedErrorLocs.add(succ);
+					ProgramPoint pp = m_programPointMap.get(succ);
+					reportErrorResult(pp, mResultingState);
 				} else {
 					if (!m_nodesToVisit.contains(succ))
 						m_nodesToVisit.add(succ);
@@ -657,10 +877,10 @@ public class AbstractInterpreterTA extends RCFGEdgeVisitor {
 			} else {
 				mLogger.debug("Skipping successors");
 			}
-		}else{
+		} else {
 			mLogger.debug("There is no successor");
 		}
-		return result;
+		return;
 	}
 
 	@Override
@@ -701,13 +921,15 @@ public class AbstractInterpreterTA extends RCFGEdgeVisitor {
 	protected void visit(ParallelComposition c) {
 		mLogger.debug("> ParallelComposition START");
 
-		Collection<CodeBlock> blocks = c.getBranchIndicator2CodeBlock().values();
+		Collection<CodeBlock> blocks = c.getBranchIndicator2CodeBlock()
+				.values();
 
 		// process all blocks wrt. the current state and merge all resulting
 		// states
 		AbstractState mergedState = null;
 		for (CodeBlock block : blocks) {
-			mLogger.debug(String.format("Parallel: %s", block.getPrettyPrintedStatements()));
+			mLogger.debug(String.format("Parallel: %s",
+					block.getPrettyPrintedStatements()));
 			visit(block);
 			if (mResultingState != null) {
 				if (mergedState == null) {
@@ -726,7 +948,8 @@ public class AbstractInterpreterTA extends RCFGEdgeVisitor {
 	protected void visit(Return c) {
 		mLogger.debug("> Return");
 
-		mResultingState = m_boogieVisitor.evaluateReturnStatement(c.getCallStatement(), m_currentState);
+		mResultingState = m_boogieVisitor.evaluateReturnStatement(
+				c.getCallStatement(), m_currentState);
 	}
 
 	@Override
@@ -759,7 +982,7 @@ public class AbstractInterpreterTA extends RCFGEdgeVisitor {
 
 		m_callStatementsAtSummaries.add(c.getCallStatement());
 		mResultingState = null; // do not process target node (ignore summary
-									// edges)
+								// edges)
 	}
 
 	@Override
@@ -773,7 +996,8 @@ public class AbstractInterpreterTA extends RCFGEdgeVisitor {
 			for (int i = 0; i < statements.size(); i++) {
 				Statement s = statements.get(i);
 				if (s != null) {
-					mResultingState = m_boogieVisitor.evaluateStatement(s, mResultingState);
+					mResultingState = m_boogieVisitor.evaluateStatement(s,
+							mResultingState);
 					if (mResultingState == null)
 						break;
 				}
@@ -789,7 +1013,8 @@ public class AbstractInterpreterTA extends RCFGEdgeVisitor {
 	 * @return True if it has been added, false if not, i.e. if it was already
 	 *         registered
 	 */
-	public boolean registerStateChangeListener(IAbstractStateChangeListener listener) {
+	public boolean registerStateChangeListener(
+			IAbstractStateChangeListener listener) {
 		return m_stateChangeListeners.add(listener);
 	}
 
@@ -801,7 +1026,8 @@ public class AbstractInterpreterTA extends RCFGEdgeVisitor {
 	 * @return True if it was in the list and has been removed, false if it
 	 *         wasn't there to begin with
 	 */
-	public boolean removeStateChangeListener(IAbstractStateChangeListener listener) {
+	public boolean removeStateChangeListener(
+			IAbstractStateChangeListener listener) {
 		return m_stateChangeListeners.remove(listener);
 	}
 
@@ -813,10 +1039,12 @@ public class AbstractInterpreterTA extends RCFGEdgeVisitor {
 	 * @param newState
 	 * @param mergedState
 	 */
-	private void notifyStateChangeListeners(RCFGEdge viaEdge, List<AbstractState> oldStates, AbstractState newState,
+	private void notifyStateChangeListeners(RCFGEdge viaEdge,
+			List<AbstractState> oldStates, AbstractState newState,
 			AbstractState mergedState) {
 		for (IAbstractStateChangeListener l : m_stateChangeListeners) {
-			List<AbstractState> statesCopy = new ArrayList<AbstractState>(oldStates.size());
+			List<AbstractState> statesCopy = new ArrayList<AbstractState>(
+					oldStates.size());
 			statesCopy.addAll(oldStates);
 			l.onStateChange(viaEdge, statesCopy, newState, mergedState);
 		}
@@ -830,31 +1058,37 @@ public class AbstractInterpreterTA extends RCFGEdgeVisitor {
 	 * @param state
 	 *            The abstract state at the error location
 	 */
-	private UnprovableResult<RcfgElement, CodeBlock, Expression> reportErrorResult(ProgramPoint location,
-			AbstractState state) {
-		RcfgProgramExecution programExecution = new RcfgProgramExecution(state.getTrace(),
+	private UnprovableResult<RcfgElement, CodeBlock, Expression> reportErrorResult(
+			ProgramPoint location, AbstractState state) {
+		RcfgProgramExecution programExecution = new RcfgProgramExecution(
+				state.getTrace(),
 				new HashMap<Integer, ProgramState<Expression>>(), null);
 
 		UnprovableResult<RcfgElement, CodeBlock, Expression> result = new UnprovableResult<RcfgElement, CodeBlock, Expression>(
-				Activator.s_PLUGIN_NAME, location, m_services.getBacktranslationService(), programExecution);
+				Activator.s_PLUGIN_NAME, location,
+				m_services.getBacktranslationService(), programExecution);
 
 		if (m_stopAfterAnyError) {
 			m_continueProcessing = false;
-			mLogger.info(String.format("Abstract interpretation finished after reaching error location %s",
-					location.toString()));
+			mLogger.info(String
+					.format("Abstract interpretation finished after reaching error location %s",
+							location.toString()));
 		} else if (m_stopAfterAllErrors) {
 			if (m_reachedErrorLocs.containsAll(m_errorLocs))
 				m_continueProcessing = false;
 			mLogger.info("Abstract interpretation finished after reaching all error locations");
 		}
+		m_result.add(result);
 		return result;
 	}
 
 	private void reportUnsupportedSyntaxResult(IElement location, String message) {
-		UnsupportedSyntaxResult<IElement> result = new UnsupportedSyntaxResult<IElement>(location,
-				Activator.s_PLUGIN_NAME, m_services.getBacktranslationService(), message);
+		UnsupportedSyntaxResult<IElement> result = new UnsupportedSyntaxResult<IElement>(
+				location, Activator.s_PLUGIN_NAME,
+				m_services.getBacktranslationService(), message);
 
-		m_services.getResultService().reportResult(Activator.s_PLUGIN_ID, result);
+		m_services.getResultService().reportResult(Activator.s_PLUGIN_ID,
+				result);
 
 		m_continueProcessing = false;
 	}
@@ -863,29 +1097,37 @@ public class AbstractInterpreterTA extends RCFGEdgeVisitor {
 	 * Reports safety of the program as the plugin's result
 	 */
 	private void reportSafeResult() {
-		m_services.getResultService().reportResult(Activator.s_PLUGIN_ID,
-				new AllSpecificationsHoldResult(Activator.s_PLUGIN_NAME, "No error locations were reached."));
+		m_services.getResultService().reportResult(
+				Activator.s_PLUGIN_ID,
+				new AllSpecificationsHoldResult(Activator.s_PLUGIN_NAME,
+						"No error locations were reached."));
 	}
 
 	/**
 	 * Reports a timeout of the analysis
 	 */
 	private void reportTimeoutResult() {
-		m_services.getResultService().reportResult(Activator.s_PLUGIN_ID,
-				new TimeoutResult(Activator.s_PLUGIN_NAME, "Analysis aborted."));
+		m_services.getResultService()
+				.reportResult(
+						Activator.s_PLUGIN_ID,
+						new TimeoutResult(Activator.s_PLUGIN_NAME,
+								"Analysis aborted."));
 	}
 
 	/**
 	 * Get preferences from the preference store
 	 */
 	private void fetchPreferences() {
-		UltimatePreferenceStore prefs = new UltimatePreferenceStore(Activator.s_PLUGIN_ID);
+		UltimatePreferenceStore prefs = new UltimatePreferenceStore(
+				Activator.s_PLUGIN_ID);
 
-		m_mainMethodName = prefs.getString(AbstractInterpretationPreferenceInitializer.LABEL_MAIN_METHOD_NAME);
+		m_mainMethodName = prefs
+				.getString(AbstractInterpretationPreferenceInitializer.LABEL_MAIN_METHOD_NAME);
 
 		m_iterationsUntilWidening = prefs
 				.getInt(AbstractInterpretationPreferenceInitializer.LABEL_ITERATIONS_UNTIL_WIDENING);
-		m_parallelStatesUntilMerge = prefs.getInt(AbstractInterpretationPreferenceInitializer.LABEL_STATES_UNTIL_MERGE);
+		m_parallelStatesUntilMerge = prefs
+				.getInt(AbstractInterpretationPreferenceInitializer.LABEL_STATES_UNTIL_MERGE);
 
 		m_widening_fixedNumbers = prefs
 				.getString(AbstractInterpretationPreferenceInitializer.LABEL_WIDENING_FIXEDNUMBERS);
@@ -894,45 +1136,65 @@ public class AbstractInterpreterTA extends RCFGEdgeVisitor {
 
 		m_generateStateAnnotations = prefs
 				.getBoolean(AbstractInterpretationPreferenceInitializer.LABEL_STATE_ANNOTATIONS);
-		m_stateChangeLogConsole = prefs.getBoolean(AbstractInterpretationPreferenceInitializer.LABEL_LOGSTATES_CONSOLE);
-		m_stateChangeLogFile = prefs.getBoolean(AbstractInterpretationPreferenceInitializer.LABEL_LOGSTATES_FILE);
+		m_stateChangeLogConsole = prefs
+				.getBoolean(AbstractInterpretationPreferenceInitializer.LABEL_LOGSTATES_CONSOLE);
+		m_stateChangeLogFile = prefs
+				.getBoolean(AbstractInterpretationPreferenceInitializer.LABEL_LOGSTATES_FILE);
 		m_stateChangeLogUseSourcePath = prefs
 				.getBoolean(AbstractInterpretationPreferenceInitializer.LABEL_LOGSTATES_USESOURCEPATH);
-		m_stateChangeLogPath = prefs.getString(AbstractInterpretationPreferenceInitializer.LABEL_LOGSTATES_PATH);
+		m_stateChangeLogPath = prefs
+				.getString(AbstractInterpretationPreferenceInitializer.LABEL_LOGSTATES_PATH);
 
-		String stopAfter = prefs.getString(AbstractInterpretationPreferenceInitializer.LABEL_STOPAFTER);
-		m_stopAfterAnyError = (stopAfter.equals(AbstractInterpretationPreferenceInitializer.OPTION_STOPAFTER_ANYERROR));
+		String stopAfter = prefs
+				.getString(AbstractInterpretationPreferenceInitializer.LABEL_STOPAFTER);
+		m_stopAfterAnyError = (stopAfter
+				.equals(AbstractInterpretationPreferenceInitializer.OPTION_STOPAFTER_ANYERROR));
 		m_stopAfterAllErrors = (stopAfter
 				.equals(AbstractInterpretationPreferenceInitializer.OPTION_STOPAFTER_ALLERRORS));
 
-		m_intDomainID = prefs.getString(AbstractInterpretationPreferenceInitializer.LABEL_INTDOMAIN);
+		m_intDomainID = prefs
+				.getString(AbstractInterpretationPreferenceInitializer.LABEL_INTDOMAIN);
 		m_intWideningOpName = prefs.getString(String.format(
-				AbstractInterpretationPreferenceInitializer.LABEL_WIDENINGOP, m_intDomainID));
-		m_intMergeOpName = prefs.getString(String.format(AbstractInterpretationPreferenceInitializer.LABEL_MERGEOP,
+				AbstractInterpretationPreferenceInitializer.LABEL_WIDENINGOP,
+				m_intDomainID));
+		m_intMergeOpName = prefs.getString(String.format(
+				AbstractInterpretationPreferenceInitializer.LABEL_MERGEOP,
 				m_intDomainID));
 
-		m_realDomainID = prefs.getString(AbstractInterpretationPreferenceInitializer.LABEL_REALDOMAIN);
+		m_realDomainID = prefs
+				.getString(AbstractInterpretationPreferenceInitializer.LABEL_REALDOMAIN);
 		m_realWideningOpName = prefs.getString(String.format(
-				AbstractInterpretationPreferenceInitializer.LABEL_WIDENINGOP, m_realDomainID));
-		m_realMergeOpName = prefs.getString(String.format(AbstractInterpretationPreferenceInitializer.LABEL_MERGEOP,
+				AbstractInterpretationPreferenceInitializer.LABEL_WIDENINGOP,
+				m_realDomainID));
+		m_realMergeOpName = prefs.getString(String.format(
+				AbstractInterpretationPreferenceInitializer.LABEL_MERGEOP,
 				m_realDomainID));
 
-		m_boolDomainID = prefs.getString(AbstractInterpretationPreferenceInitializer.LABEL_BOOLDOMAIN);
+		m_boolDomainID = prefs
+				.getString(AbstractInterpretationPreferenceInitializer.LABEL_BOOLDOMAIN);
 		m_boolWideningOpName = prefs.getString(String.format(
-				AbstractInterpretationPreferenceInitializer.LABEL_WIDENINGOP, m_boolDomainID));
-		m_boolMergeOpName = prefs.getString(String.format(AbstractInterpretationPreferenceInitializer.LABEL_MERGEOP,
+				AbstractInterpretationPreferenceInitializer.LABEL_WIDENINGOP,
+				m_boolDomainID));
+		m_boolMergeOpName = prefs.getString(String.format(
+				AbstractInterpretationPreferenceInitializer.LABEL_MERGEOP,
 				m_boolDomainID));
 
-		m_bitVectorDomainID = prefs.getString(AbstractInterpretationPreferenceInitializer.LABEL_BITVECTORDOMAIN);
+		m_bitVectorDomainID = prefs
+				.getString(AbstractInterpretationPreferenceInitializer.LABEL_BITVECTORDOMAIN);
 		m_bitVectorWideningOpName = prefs.getString(String.format(
-				AbstractInterpretationPreferenceInitializer.LABEL_WIDENINGOP, m_bitVectorDomainID));
+				AbstractInterpretationPreferenceInitializer.LABEL_WIDENINGOP,
+				m_bitVectorDomainID));
 		m_bitVectorMergeOpName = prefs.getString(String.format(
-				AbstractInterpretationPreferenceInitializer.LABEL_MERGEOP, m_bitVectorDomainID));
+				AbstractInterpretationPreferenceInitializer.LABEL_MERGEOP,
+				m_bitVectorDomainID));
 
-		m_stringDomainID = prefs.getString(AbstractInterpretationPreferenceInitializer.LABEL_STRINGDOMAIN);
+		m_stringDomainID = prefs
+				.getString(AbstractInterpretationPreferenceInitializer.LABEL_STRINGDOMAIN);
 		m_stringWideningOpName = prefs.getString(String.format(
-				AbstractInterpretationPreferenceInitializer.LABEL_WIDENINGOP, m_stringDomainID));
-		m_stringMergeOpName = prefs.getString(String.format(AbstractInterpretationPreferenceInitializer.LABEL_MERGEOP,
+				AbstractInterpretationPreferenceInitializer.LABEL_WIDENINGOP,
+				m_stringDomainID));
+		m_stringMergeOpName = prefs.getString(String.format(
+				AbstractInterpretationPreferenceInitializer.LABEL_MERGEOP,
 				m_stringDomainID));
 	}
 
@@ -943,7 +1205,8 @@ public class AbstractInterpreterTA extends RCFGEdgeVisitor {
 	 * @return An abstract domain factory for the abstract domain system given
 	 *         by its ID
 	 */
-	private IAbstractDomainFactory<?> makeDomainFactory(String domainID, String wideningOpName, String mergeOpName) {
+	private IAbstractDomainFactory<?> makeDomainFactory(String domainID,
+			String wideningOpName, String mergeOpName) {
 		if (domainID.equals(TopBottomDomainFactory.getDomainID()))
 			return new TopBottomDomainFactory(mLogger);
 
@@ -954,12 +1217,13 @@ public class AbstractInterpreterTA extends RCFGEdgeVisitor {
 			return new SignDomainFactory(mLogger, wideningOpName, mergeOpName);
 
 		if (domainID.equals(IntervalDomainFactory.getDomainID()))
-			return new IntervalDomainFactory(mLogger, new HashSet<String>(m_numbersForWidening), wideningOpName,
-					mergeOpName);
+			return new IntervalDomainFactory(mLogger, new HashSet<String>(
+					m_numbersForWidening), wideningOpName, mergeOpName);
 
 		// default ADS: TOPBOTTOM
-		mLogger.warn(String.format("Unknown abstract domain system \"%s\" chosen, using \"%s\" instead", domainID,
-				TopBottomDomainFactory.getDomainID()));
+		mLogger.warn(String
+				.format("Unknown abstract domain system \"%s\" chosen, using \"%s\" instead",
+						domainID, TopBottomDomainFactory.getDomainID()));
 		return new TopBottomDomainFactory(mLogger);
 	}
 }
