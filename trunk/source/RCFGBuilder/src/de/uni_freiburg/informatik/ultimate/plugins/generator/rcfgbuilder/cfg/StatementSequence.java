@@ -33,14 +33,14 @@ public class StatementSequence extends CodeBlock {
 		ENSURES, REQUIRES, IMPLEMENTATION, ASSERT
 	};
 
-	List<Statement> m_Statements;
-	String m_PrettyPrintedStatements;
+	private final List<Statement> m_Statements = new ArrayList<Statement>();
+	private String m_PrettyPrintedStatements = "";
 	/**
 	 * m_Origin stores the origin of this InternalEdge, which could be either be
 	 * the ensures specification, the requires specification or the
 	 * implementation of a program.
 	 */
-	Origin m_Origin;
+	private final Origin m_Origin;
 
 	/**
 	 * The published attributes. Update this and getFieldValue() if you add new
@@ -66,7 +66,7 @@ public class StatementSequence extends CodeBlock {
 	public StatementSequence(ProgramPoint source, ProgramPoint target, List<Statement> stmts, Origin origin,
 			Logger logger) {
 		super(source, target, logger);
-		m_Statements = stmts;
+		m_Statements.addAll(stmts);
 		m_Origin = origin;
 		m_PrettyPrintedStatements = "";
 		for (Statement st : stmts) {
@@ -108,10 +108,6 @@ public class StatementSequence extends CodeBlock {
 		} else {
 			throw new IllegalArgumentException("Only Assignment, Assume and"
 					+ " HavocStatement allowed in InternalEdge.");
-		}
-		if (m_Statements == null) {
-			m_Statements = new ArrayList<Statement>();
-			m_PrettyPrintedStatements = "";
 		}
 		m_Statements.add(st);
 		m_PrettyPrintedStatements += BoogiePrettyPrinter.print(st);
