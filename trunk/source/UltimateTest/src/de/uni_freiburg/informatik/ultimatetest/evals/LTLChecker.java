@@ -61,6 +61,11 @@ public class LTLChecker extends AbstractEvaluationTestSuite {
 		// @formatter:on
 		// return super.getDirectories();
 	}
+	
+	@Override
+	protected boolean useParentDirectoryAsCategory() {
+		return false;
+	}
 
 	@Override
 	protected int getTimeout() {
