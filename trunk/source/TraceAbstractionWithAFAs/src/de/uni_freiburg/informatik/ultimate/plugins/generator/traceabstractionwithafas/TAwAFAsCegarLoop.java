@@ -13,13 +13,22 @@ import java.util.TreeMap;
 
 import org.apache.log4j.Level;
 
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
+import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.alternating.AA_MergedUnion;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.alternating.AlternatingAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.alternating.BooleanExpression;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Accepts;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Difference;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.PowersetDeterminizer;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.IOpWithDelayedDeadEndRemoval;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.senwa.DifferenceSenwa;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
@@ -36,10 +45,21 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopBenchmarkType;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionBenchmarks;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataTransitionAppender.DeterministicInterpolantAutomaton;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataTransitionAppender.DeterministicInterpolantAutomaton2;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.EdgeChecker;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.EfficientHoareTripleChecker;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IHoareTripleChecker;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IncrementalHoareTripleChecker;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.InductivityCheck;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.MonolithicHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.INTERPOLATION;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.Minimization;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateConstructionVisitor;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstractionconcurrent.CegarLoopConcurrentAutomata;
@@ -317,4 +337,101 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 
 		return feasibility;
 	}
+	
+	@Override
+	protected boolean refineAbstraction() throws AutomataLibraryException { //copied
+		m_StateFactoryForRefinement.setIteration(super.m_Iteration);
+
+		m_CegarLoopBenchmark.start(CegarLoopBenchmarkType.s_AutomataDifference);
+		boolean explointSigmaStarConcatOfIA = !m_ComputeHoareAnnotation;
+
+		INestedWordAutomatonOldApi<CodeBlock, IPredicate> oldAbstraction = (INestedWordAutomatonOldApi<CodeBlock, IPredicate>) m_Abstraction;
+		IHoareTripleChecker htc = this.getEfficientHoareTripleChecker(); //change to CegarLoopConcurrentAutomata
+		mLogger.debug("Start constructing difference");
+		assert (oldAbstraction.getStateFactory() == m_InterpolAutomaton.getStateFactory());
+
+		IOpWithDelayedDeadEndRemoval<CodeBlock, IPredicate> diff;
+
+		DeterministicInterpolantAutomaton2 determinized = new DeterministicInterpolantAutomaton2(
+				m_Services, m_SmtManager, m_ModGlobVarManager, htc, oldAbstraction, m_InterpolAutomaton,
+				this.m_PredicateUnifier, mLogger, false);//change to CegarLoopConcurrentAutomata
+		// ComplementDeterministicNwa<CodeBlock, IPredicate>
+		// cdnwa = new ComplementDeterministicNwa<>(dia);
+		PowersetDeterminizer<CodeBlock, IPredicate> psd2 = new PowersetDeterminizer<CodeBlock, IPredicate>(
+				determinized, false, m_PredicateFactoryInterpolantAutomata);
+
+		if (m_Pref.differenceSenwa()) {
+			diff = new DifferenceSenwa<CodeBlock, IPredicate>(m_Services, oldAbstraction, (INestedWordAutomaton<CodeBlock, IPredicate>) determinized, psd2, false);
+		} else {
+			diff = new Difference<CodeBlock, IPredicate>(m_Services, oldAbstraction, determinized, psd2,
+					m_StateFactoryForRefinement, explointSigmaStarConcatOfIA);
+		}
+		assert !m_SmtManager.isLocked();
+		assert (new InductivityCheck(m_Services, m_InterpolAutomaton, false, true,
+				new IncrementalHoareTripleChecker(m_SmtManager, m_ModGlobVarManager))).getResult();
+		// do the following check only to obtain logger messages of
+		// checkInductivity
+
+		if (m_RemoveDeadEnds) {
+			if (m_ComputeHoareAnnotation) {
+				Difference<CodeBlock, IPredicate> difference = (Difference<CodeBlock, IPredicate>) diff;
+				m_Haf.updateOnIntersection(difference.getFst2snd2res(), difference.getResult());
+			}
+			diff.removeDeadEnds();
+			if (m_ComputeHoareAnnotation) {
+				m_Haf.addDeadEndDoubleDeckers(diff);
+			}
+		}
+
+		m_Abstraction = (IAutomaton<CodeBlock, IPredicate>) diff.getResult();
+		// m_DeadEndRemovalTime = diff.getDeadEndRemovalTime();
+		if (m_Pref.dumpAutomata()) {
+			String filename = "InterpolantAutomaton_Iteration" + m_Iteration;
+			super.writeAutomatonToFile(m_InterpolAutomaton, filename);
+		}
+
+		m_CegarLoopBenchmark.stop(CegarLoopBenchmarkType.s_AutomataDifference);
+
+		Minimization minimization = m_Pref.minimize();
+		switch (minimization) {
+		case NONE:
+			break;
+		case MINIMIZE_SEVPA:
+		case SHRINK_NWA:
+			minimizeAbstraction(m_StateFactoryForRefinement, m_PredicateFactoryResultChecking, minimization);
+			break;
+		default:
+			throw new AssertionError();
+		}
+
+		boolean stillAccepted = (new Accepts<CodeBlock, IPredicate>(
+				(INestedWordAutomatonOldApi<CodeBlock, IPredicate>) m_Abstraction,
+				(NestedWord<CodeBlock>) m_Counterexample.getWord())).getResult();
+		if (stillAccepted) {
+			return false;
+		} else {
+			return true;
+		}
+	}
+	
+	
+	protected IHoareTripleChecker getEfficientHoareTripleChecker() //copied
+			throws AssertionError {
+		final IHoareTripleChecker solverHtc;
+		switch (m_Pref.getHoareTripleChecks()) {
+		case MONOLITHIC:
+			solverHtc = new MonolithicHoareTripleChecker(m_SmtManager);
+			break;
+		case INCREMENTAL:
+			solverHtc = new IncrementalHoareTripleChecker(m_SmtManager, m_ModGlobVarManager);
+			break;
+		default:
+			throw new AssertionError("unknown value");
+		}
+		IHoareTripleChecker htc = new EfficientHoareTripleChecker(solverHtc, 
+				m_RootNode.getRootAnnot().getModGlobVarManager(), 
+				this.m_PredicateUnifier, m_SmtManager); //only change to method in BasicCegarLoop
+		return htc;
+	}
+
 }
