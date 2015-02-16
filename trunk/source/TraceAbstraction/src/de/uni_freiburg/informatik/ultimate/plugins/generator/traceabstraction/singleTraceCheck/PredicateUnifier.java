@@ -5,8 +5,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 
 import org.apache.log4j.Logger;
@@ -16,10 +16,8 @@ import de.uni_freiburg.informatik.ultimate.logic.AnnotatedTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
 import de.uni_freiburg.informatik.ultimate.logic.CheckClosedTerm;
 import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
-import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.AffineSubtermNormalizer;
@@ -34,6 +32,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Ac
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IHoareTripleChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
+import de.uni_freiburg.informatik.ultimate.util.HashRelation;
+import de.uni_freiburg.informatik.ultimate.util.relation.NestedMap2;
 
 /**
  * Data structure that stores for each term a unique predicate. 
@@ -47,6 +47,7 @@ public class PredicateUnifier {
 
 	private final SmtManager m_SmtManager;
 	private final Map<Term, IPredicate> m_Term2Predicates;
+	private final List<IPredicate> m_KnownPredicates = new ArrayList<IPredicate>();
 	private final CoverageRelation m_CoverageRelation = new CoverageRelation();
 	private boolean m_BringTermsToPositiveNormalForm = true;
 	private final Logger mLogger;
@@ -96,14 +97,16 @@ public class PredicateUnifier {
 	}
 	
 	private void declareTruePredicateAndFalsePredicate() {
-		HashMap<IPredicate, Validity> impliedByTrue = new HashMap<IPredicate, Validity>();
+		Map<IPredicate, Validity> impliedByTrue = Collections.emptyMap();
 		Map<IPredicate, Validity> expliedByTrue = Collections.emptyMap();
-		addNewPredicate(m_TruePredicate, impliedByTrue, expliedByTrue);
-		HashMap<IPredicate, Validity> impliedByFalse = new HashMap<IPredicate, Validity>();
-		impliedByFalse.put(m_TruePredicate, Validity.VALID);
+		addNewPredicate(m_TruePredicate, m_TruePredicate.getFormula(), 
+				m_TruePredicate.getFormula(), impliedByTrue, expliedByTrue);
+		Map<IPredicate, Validity> impliedByFalse = 
+				Collections.singletonMap(m_TruePredicate, Validity.VALID);
 		Map<IPredicate, Validity> expliedByFalse = 
 				Collections.singletonMap(m_TruePredicate, Validity.INVALID);
-		addNewPredicate(m_FalsePredicate, impliedByFalse, expliedByFalse);
+		addNewPredicate(m_FalsePredicate, m_FalsePredicate.getFormula(),
+				m_FalsePredicate.getFormula(), impliedByFalse, expliedByFalse);
 	}
 
 
@@ -128,7 +131,8 @@ public class PredicateUnifier {
 				throw new AssertionError("There is already an" + " equivalent predicate");
 			}
 		} else {
-			addNewPredicate(predicate, pc.getImpliedPredicates(), pc.getExpliedPredicates());
+			addNewPredicate(predicate, predicate.getFormula(), predicate.getFormula(), 
+					pc.getImpliedPredicates(), pc.getExpliedPredicates());
 		}
 	}
 
@@ -222,7 +226,7 @@ public class PredicateUnifier {
 					newProcs.toArray(new String[newProcs.size()]), 
 					newVars, closedTerm);
 		}
-		addNewPredicate(result, pc.getImpliedPredicates(), pc.getExpliedPredicates());
+		addNewPredicate(result, term, simplifiedTerm, pc.getImpliedPredicates(), pc.getExpliedPredicates());
 		assert new CheckClosedTerm().isClosed(result.getClosedFormula());
 		assert varsIsSupersetOfFreeTermVariables(result.getFormula(), result.getVars());
 		return result;
@@ -230,18 +234,22 @@ public class PredicateUnifier {
 
 	
 	/**
-	 * Add a new predicate. Uses the HashMap implied for its own data structure.
-	 * Hence you must not use this HashMap for other purposes.
+	 * Add a new predicate. 
 	 * @param pred
+	 * @param simplifiedTerm 
+	 * @param term 
 	 * @param implied 
 	 * 	Set of pairs (p,val) such that val is the validity of the implication pred ==> p.
 	 * @param explied
 	 *  Set of pairs (p,val) such that val is the validity of the explication pred <== p.
 	 */
-	private void addNewPredicate(IPredicate pred, 
-			HashMap<IPredicate, Validity> implied, Map<IPredicate, Validity> explied) {
-		m_Term2Predicates.put(pred.getFormula(), pred);
+	private void addNewPredicate(IPredicate pred, Term term, Term simplifiedTerm, 
+			Map<IPredicate, Validity> implied, Map<IPredicate, Validity> explied) {
+		m_Term2Predicates.put(term, pred);
+		m_Term2Predicates.put(simplifiedTerm, pred);
 		m_CoverageRelation.addPredicate(pred, implied, explied);
+		assert !m_KnownPredicates.contains(pred) : "predicate already known";
+		m_KnownPredicates.add(pred);
 	}
 
 
@@ -389,7 +397,7 @@ public class PredicateUnifier {
 			
 			// if predicate is intricate we do not compare against others
 			if (m_IsIntricatePredicate) {
-				for (IPredicate other : m_Term2Predicates.values()) {
+				for (IPredicate other : m_KnownPredicates) {
 					if (other == m_TruePredicate || other == m_FalsePredicate) {
 						continue;
 					}
@@ -426,23 +434,6 @@ public class PredicateUnifier {
 	
 	
 
-	private boolean equivalentToFalse(Term term) {
-		LBool sat = Util.checkSat(m_SmtManager.getScript(), term);
-		switch (sat) {
-		case UNSAT:
-			return true;
-		case SAT:
-			return false;
-		case UNKNOWN:
-			mLogger.warn(new DebugMessage("assuming that {0} is not equivalent to false", term));
-			return false;
-			// throw new UnsupportedOperationException("Unable to decide if " +
-			// term + " is equivalent to false");
-		default:
-			throw new AssertionError();
-		}
-	}
-
 	/**
 	 * We call a predicate "intricate" if we were unable to find our if it is
 	 * equivalent to "true" or if we were unable to find out it it is equivalent
@@ -458,23 +449,6 @@ public class PredicateUnifier {
 		}
 	}
 
-	private boolean equivalentToTrue(Term term) {
-		Term negation = m_SmtManager.getScript().term("not", term);
-		LBool sat = Util.checkSat(m_SmtManager.getScript(), negation);
-		switch (sat) {
-		case UNSAT:
-			return true;
-		case SAT:
-			return false;
-		case UNKNOWN:
-			mLogger.warn(new DebugMessage("assuming that {0} is not equivalent to true", term));
-			return false;
-			// throw new UnsupportedOperationException("Unable to decide if " +
-			// term + " is equivalent to true");
-		default:
-			throw new AssertionError();
-		}
-	}
 
 	/**
 	 * Given a term "cut up" all its conjuncts. We bring the term in CNF and
@@ -525,20 +499,34 @@ public class PredicateUnifier {
 		return result;
 	}
 
-	public CoverageRelation getCoverageRelation() {
+	public IPredicateCoverageChecker getCoverageRelation() {
 		return m_CoverageRelation;
 	}
 
 	public class CoverageRelation implements IPredicateCoverageChecker {
-		Map<IPredicate, HashMap<IPredicate, Validity>> m_Lhs2Rhs2lbool = new HashMap<IPredicate, HashMap<IPredicate, Validity>>();
 
-		void addPredicate(IPredicate pred, HashMap<IPredicate, Validity> implied, Map<IPredicate, Validity> explied) {
-			for (Entry<IPredicate, HashMap<IPredicate, Validity>> entry : m_Lhs2Rhs2lbool.entrySet()) {
-				Validity lBool = explied.get(entry.getKey());
-				assert lBool != null;
-				entry.getValue().put(pred, lBool);
+		NestedMap2<IPredicate, IPredicate, Validity> m_Lhs2RhsValidity = new NestedMap2<IPredicate, IPredicate, Validity>();
+		HashRelation<IPredicate, IPredicate> m_ImpliedPredicates = new HashRelation<IPredicate, IPredicate>();
+		HashRelation<IPredicate, IPredicate> m_ExpliedPredicates = new HashRelation<IPredicate, IPredicate>();
+		
+		void addPredicate(IPredicate pred, Map<IPredicate, Validity> implied, Map<IPredicate, Validity> explied) {
+			assert !m_KnownPredicates.contains(pred) : "predicate already known";
+			for (IPredicate known : m_KnownPredicates) {
+				Validity implies = implied.get(known);
+				Validity explies = explied.get(known);
+				Validity oldimpl = m_Lhs2RhsValidity.put(pred, known, implies);
+				assert oldimpl == null : "entry existed !";
+				Validity oldexpl = m_Lhs2RhsValidity.put(known, pred, explies);
+				assert oldexpl == null : "entry existed !";
+				if (implies == Validity.VALID) {
+					m_ImpliedPredicates.addPair(pred, known);
+				}
+				if (explies == Validity.VALID) {
+					m_ImpliedPredicates.addPair(known, pred);
+				}
 			}
-			m_Lhs2Rhs2lbool.put(pred, implied);
+			m_ImpliedPredicates.addPair(pred, pred);
+			m_ExpliedPredicates.addPair(pred, pred);
 		}
 
 		@Override
@@ -546,15 +534,23 @@ public class PredicateUnifier {
 			if (lhs == rhs) {
 				return Validity.VALID;
 			}
-			Map<IPredicate, Validity> rhs2validity = m_Lhs2Rhs2lbool.get(lhs);
-			if (rhs2validity == null) {
-				throw new AssertionError("unknown predicate" + lhs);
+			Validity result = m_Lhs2RhsValidity.get(lhs, rhs);
+			if (result == null) {
+				throw new AssertionError("at least one of both input predicates is unknown");
 			}
-			Validity lbool = rhs2validity.get(rhs);
-			if (lbool == null) {
-				throw new AssertionError("unknown predicate" + rhs);
-			}
-			return lbool;
+			return result;
+		}
+		
+
+		@Override
+		public Set<IPredicate> getCoveringPredicates(IPredicate pred) {
+			return Collections.unmodifiableSet(m_ImpliedPredicates.getImage(pred));
+		}
+		
+
+		@Override
+		public Set<IPredicate> getCoveredPredicates(IPredicate pred) {
+			return Collections.unmodifiableSet(m_ExpliedPredicates.getImage(pred));
 		}
 
 	}
