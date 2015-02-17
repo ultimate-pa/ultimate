@@ -174,9 +174,8 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 		if (alternatingAutomatonUnion != null) {
 			// .. in the end, build the union of all the nwas we got from the
 			// dags, return it
-			AA_Determination<CodeBlock> determination = new AA_Determination<CodeBlock>(m_Services, alternatingAutomatonUnion, m_SmtManager, m_PredicateUnifier);
+			RAFA_Determination<CodeBlock> determination = new RAFA_Determination<CodeBlock>(m_Services, alternatingAutomatonUnion, m_SmtManager, m_PredicateUnifier);
 			m_InterpolAutomaton = determination.getResult();
-			mLogger.info(m_InterpolAutomaton);
 		} else {
 			m_InterpolAutomaton = new NestedWordAutomaton<CodeBlock, IPredicate>(
 				m_Services,
@@ -241,8 +240,8 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 		IPredicate finalState = m_PredicateUnifier.getTruePredicate();
 		alternatingAutomaton.addState(initialState);
 		alternatingAutomaton.addState(finalState);
-		alternatingAutomaton.setStateFinal(initialState);
-		alternatingAutomaton.addAcceptingConjunction(alternatingAutomaton.generateDisjunction(new IPredicate[]{finalState}, new IPredicate[0]));
+		alternatingAutomaton.setStateFinal(finalState);
+		alternatingAutomaton.addAcceptingConjunction(alternatingAutomaton.generateDisjunction(new IPredicate[]{initialState}, new IPredicate[0]));
 		//Build the automaton according to the structure of the DAG
 		Stack<DataflowDAG<TraceCodeBlock>> stack = new Stack<DataflowDAG<TraceCodeBlock>>();
 		stack.push(dag);
@@ -255,38 +254,42 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 				targetStates.add(outNodePred);
 				stack.push(outNode);
 			}
-			BooleanExpression booleanExpression = alternatingAutomaton.generateDisjunction(new IPredicate[]{currentDag.getNodeLabel().getInterpolant()}, new IPredicate[0]);
 			if(!targetStates.isEmpty()){
-				for(IPredicate targetState : targetStates){
-					alternatingAutomaton.addTransition(
-						currentDag.getNodeLabel().getBlock(),
-						targetState,
-						booleanExpression
-					);
-				}
+				alternatingAutomaton.addTransition(
+					currentDag.getNodeLabel().getBlock(),
+					currentDag.getNodeLabel().getInterpolant(),
+					alternatingAutomaton.generateDisjunction(targetStates.toArray(new IPredicate[targetStates.size()]), new IPredicate[0])
+				);
 			}
 			else{
 				alternatingAutomaton.addTransition(
 					currentDag.getNodeLabel().getBlock(),
-					finalState,
-					booleanExpression
+					currentDag.getNodeLabel().getInterpolant(),
+					alternatingAutomaton.generateDisjunction(new IPredicate[]{finalState}, new IPredicate[0])
 				);
 			}
 		}
 		//Add transitions according to hoare triples
 		for(CodeBlock letter : alternatingAutomaton.getAlphabet()){
 			for(IPredicate sourceState : alternatingAutomaton.getStates()){
+				if(sourceState == m_PredicateUnifier.getFalsePredicate()){
+					continue;
+				}
 				for(IPredicate targetState : alternatingAutomaton.getStates()){
+					if(targetState == m_PredicateUnifier.getTruePredicate()){
+						continue;
+					}
 					if(m_SmtManager.isInductive(sourceState, letter, targetState) == LBool.UNSAT){
-						/*alternatingAutomaton.addTransition(
+						alternatingAutomaton.addTransition(
 							letter,
-							sourceState,
-							alternatingAutomaton.generateDisjunction(new IPredicate[]{targetState}, new IPredicate[0])
-						);*/
+							targetState,
+							alternatingAutomaton.generateDisjunction(new IPredicate[]{sourceState}, new IPredicate[0])
+						);
 					}
 				}
 			}
 		}
+		alternatingAutomaton.setReversed(true);
 		return alternatingAutomaton;
 	}
 

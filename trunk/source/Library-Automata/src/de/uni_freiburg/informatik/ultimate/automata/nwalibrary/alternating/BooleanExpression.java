@@ -13,12 +13,24 @@ public class BooleanExpression{
 	private BooleanExpression nextConjunctExpression;
 	
 	public void addConjunction(BooleanExpression booleanExpression){
-		if(nextConjunctExpression != null){
-			nextConjunctExpression.addConjunction(booleanExpression);
+		if(!containsConjunction(booleanExpression)){
+			if(nextConjunctExpression != null){
+				nextConjunctExpression.addConjunction(booleanExpression);
+			}
+			else{
+				nextConjunctExpression = booleanExpression;
+			}
 		}
-		else{
-			nextConjunctExpression = booleanExpression;
+	}
+	
+	public boolean containsConjunction(BooleanExpression booleanExpression){
+		if(equals(booleanExpression)){
+			return true;
 		}
+		else if(nextConjunctExpression != null){
+			nextConjunctExpression.containsConjunction(booleanExpression);
+		}
+		return false;
 	}
 	
 	public boolean getResult(long bitVector){
@@ -38,6 +50,10 @@ public class BooleanExpression{
 			booleanExpression.nextConjunctExpression = nextConjunctExpression.cloneShifted(amount);
 		}
 		return booleanExpression;
+	}
+	
+	public boolean equals(BooleanExpression booleanExpression){
+		return ((alpha == booleanExpression.alpha) && (beta == booleanExpression.beta));
 	}
 	
 	public <T> String toString(List<T> variables){
