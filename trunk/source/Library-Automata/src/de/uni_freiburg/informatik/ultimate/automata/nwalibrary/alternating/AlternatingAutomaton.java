@@ -26,9 +26,11 @@ public class AlternatingAutomaton<LETTER, STATE> implements IAutomaton<LETTER, S
 	private boolean isReversed;
 	
 	public void addState(STATE state){
-		int stateIndex = states.size();
-		states.add(state);
-		statesIndices.put(state, stateIndex);
+		if(!states.contains(state)){
+			int stateIndex = states.size();
+			states.add(state);
+			statesIndices.put(state, stateIndex);
+		}
 	}
 	
 	public void addTransition(LETTER letter, STATE state, BooleanExpression booleanExpression){

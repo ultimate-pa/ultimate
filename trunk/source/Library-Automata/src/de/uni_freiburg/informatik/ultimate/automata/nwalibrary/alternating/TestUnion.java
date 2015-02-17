@@ -7,7 +7,7 @@ public class TestUnion{
 	public static void main(String[] args){
 		TestAutomaton_1 automaton1 = new TestAutomaton_1();
 		TestAutomaton_2 automaton2 = new TestAutomaton_2();
-		AA_Union<String, String> union = new AA_Union<String, String>(automaton1, automaton2);
+		AA_MergedUnion<String, String> union = new AA_MergedUnion<String, String>(automaton1, automaton2);
 		try{
 			AlternatingAutomaton<String, String> resultAutomaton = union.getResult();
 			long startNanoTime = System.nanoTime();

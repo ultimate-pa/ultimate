@@ -20,9 +20,7 @@ public class AA_MergedUnion<LETTER, STATE> implements IOperation<LETTER, STATE>{
 			}
 		}
 		for(STATE state : automaton2.getStates()){
-			if(!resultAutomaton.getStates().contains(state)){
-				resultAutomaton.addState(state);
-			}
+			resultAutomaton.addState(state);
 			if(automaton2.isStateFinal(state)){
 				resultAutomaton.setStateFinal(state);
 			}
