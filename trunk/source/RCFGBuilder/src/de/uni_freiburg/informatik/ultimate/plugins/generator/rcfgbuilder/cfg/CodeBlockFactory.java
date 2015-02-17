@@ -47,46 +47,64 @@ public class CodeBlockFactory implements IStorable {
 
 	
 	
-	public Call constructCall(ProgramPoint source, ProgramPoint target, CallStatement call) {
+	public Call constructCall(ProgramPoint source, ProgramPoint target, 
+			CallStatement call) {
 		return new Call(m_SerialNumberCounter++, source, target, call, m_Logger);
 	}
 	
-	public InterproceduralSequentialComposition constuctInterproceduralSequentialComposition(ProgramPoint source, ProgramPoint target, boolean simplify, boolean extPqe, List<CodeBlock> codeBlocks) {
-		return new InterproceduralSequentialComposition(m_SerialNumberCounter++, source, target, m_Boogie2smt, m_MgvManager, simplify, extPqe, codeBlocks, m_Logger, m_Services);
+	public InterproceduralSequentialComposition constuctInterproceduralSequentialComposition(ProgramPoint source, ProgramPoint target, 
+			boolean simplify, boolean extPqe, List<CodeBlock> codeBlocks) {
+		return new InterproceduralSequentialComposition(m_SerialNumberCounter++, source, target, 
+				m_Boogie2smt, m_MgvManager, simplify, extPqe, codeBlocks, m_Logger, m_Services);
 	}
 	
 	public GotoEdge constructGotoEdge(ProgramPoint source, ProgramPoint target) {
 		return new GotoEdge(m_SerialNumberCounter++, source, target, m_Logger);
 	}
 	
-	public ParallelComposition constructParallelComposition(ProgramPoint source, ProgramPoint target, List<CodeBlock> codeBlocks) {
-		return new ParallelComposition(m_SerialNumberCounter++, source, target, m_Boogie2smt, m_Services, codeBlocks);
+	public ParallelComposition constructParallelComposition(ProgramPoint source, ProgramPoint target, 
+			List<CodeBlock> codeBlocks) {
+		return new ParallelComposition(m_SerialNumberCounter++, source, target, 
+				m_Boogie2smt, m_Services, codeBlocks);
 	}
 	
-	public Return constructReturn(ProgramPoint source, ProgramPoint target, Call correspondingCall) {
-		return new Return(m_SerialNumberCounter, source, target, correspondingCall, m_Logger);
+	public Return constructReturn(
+			ProgramPoint source, ProgramPoint target, Call correspondingCall) {
+		return new Return(m_SerialNumberCounter++, source, target, 
+				correspondingCall, m_Logger);
 	}
 
-	public SequentialComposition constructSequentialComposition(
-			ProgramPoint source, ProgramPoint target, boolean simplify, boolean extPqe, List<CodeBlock> codeBlocks) {
-		return new SequentialComposition(m_SerialNumberCounter++, source, target, m_Boogie2smt, m_MgvManager, simplify, extPqe, m_Services, codeBlocks);
+	public SequentialComposition constructSequentialComposition(ProgramPoint source, ProgramPoint target, 
+			boolean simplify, boolean extPqe, List<CodeBlock> codeBlocks) {
+		return new SequentialComposition(m_SerialNumberCounter++, source, target, 
+				m_Boogie2smt, m_MgvManager, simplify, extPqe, m_Services, codeBlocks);
 	}
 	
-	public StatementSequence constructStatementSequence(ProgramPoint source, ProgramPoint target, Statement st) {
-		return new StatementSequence(m_SerialNumberCounter, source, target, st, m_Logger);
+	public StatementSequence constructStatementSequence(ProgramPoint source, ProgramPoint target, 
+			Statement st) {
+		return new StatementSequence(m_SerialNumberCounter++, source, target, 
+				st, m_Logger);
 	}
 	
-	public StatementSequence constructStatementSequence(ProgramPoint source, ProgramPoint target, Statement st, Origin origin) {
-		return new StatementSequence(m_SerialNumberCounter, source, target, st, origin, m_Logger);
+	public StatementSequence constructStatementSequence(ProgramPoint source, ProgramPoint target, 
+			Statement st, Origin origin) {
+		return new StatementSequence(m_SerialNumberCounter++, source, target, 
+				st, origin, m_Logger);
 	}
 	
-	public StatementSequence constructStatementSequence(ProgramPoint source, ProgramPoint target, List<Statement> stmts, Origin origin) {
-		return new StatementSequence(m_SerialNumberCounter, source, target, stmts, origin, m_Logger);
+	public StatementSequence constructStatementSequence(ProgramPoint source, ProgramPoint target, 
+			List<Statement> stmts, Origin origin) {
+		return new StatementSequence(m_SerialNumberCounter++, source, target, 
+				stmts, origin, m_Logger);
 	}
 	
-	public Summary constructSummary(ProgramPoint source, ProgramPoint target, CallStatement st, boolean calledProcedureHasImplementation) {
-		return new Summary(m_SerialNumberCounter, source, target, st, calledProcedureHasImplementation, m_Logger);
+	public Summary constructSummary(ProgramPoint source, ProgramPoint target, 
+			CallStatement st, boolean calledProcedureHasImplementation) {
+		return new Summary(m_SerialNumberCounter++, source, target, 
+				st, calledProcedureHasImplementation, m_Logger);
 	}
+	
+	
 	
 	
 	public CodeBlock copyCodeBlock(CodeBlock codeBlock, ProgramPoint source, ProgramPoint target) {
