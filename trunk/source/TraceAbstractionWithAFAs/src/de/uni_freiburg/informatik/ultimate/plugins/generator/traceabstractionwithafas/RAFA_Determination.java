@@ -15,9 +15,10 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPre
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
 
-public class AA_Determination<LETTER> implements IOperation<LETTER, IPredicate>{
+public class RAFA_Determination<LETTER> implements IOperation<LETTER, IPredicate>{
 
-	public AA_Determination(IUltimateServiceProvider ultimateServiceProvider, AlternatingAutomaton<LETTER, IPredicate> alternatingAutomaton, SmtManager smtManager, PredicateUnifier predicateUnifier){
+	public RAFA_Determination(IUltimateServiceProvider ultimateServiceProvider, AlternatingAutomaton<LETTER, IPredicate> alternatingAutomaton, SmtManager smtManager, PredicateUnifier predicateUnifier){
+		assert alternatingAutomaton.isReversed();
 		this.alternatingAutomaton = alternatingAutomaton;
 		this.smtManager = smtManager;
 		this.predicateUnifier = predicateUnifier;
@@ -64,7 +65,7 @@ public class AA_Determination<LETTER> implements IOperation<LETTER, IPredicate>{
 	
 	@Override
 	public String operationName(){
-		return "AA_Determination";
+		return "RAFA_Determination";
 	}
 
 	@Override
