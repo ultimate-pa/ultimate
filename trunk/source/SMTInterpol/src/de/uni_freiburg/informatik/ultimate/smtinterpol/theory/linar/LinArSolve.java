@@ -1977,7 +1977,11 @@ public class LinArSolve implements ITheory {
 				mid = low.add(InfinitNumber.ONE);
 			while (prohibitions.contains(mid.mA)
 					|| hasSharing(sharedPoints, mid.sub(currentValue).mA)) {
+				InfinitNumber old = mid;
 				mid = mid.add(low).div(Rational.TWO);
+				if (mid.equals(old)) {
+					throw new AssertionError("mid did not change, value was: mid=" + mid + " low=" + low);
+				}
 			}
 			return mid;
 		} else {
