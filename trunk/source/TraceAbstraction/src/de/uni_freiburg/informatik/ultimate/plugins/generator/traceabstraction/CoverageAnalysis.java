@@ -50,6 +50,7 @@ public class CoverageAnalysis {
 	private int m_Sat;
 	private int m_Unknown;
 	private int m_Trivial;
+	private int m_Notchecked;
 	
 	protected final TraceChecker m_TraceChecker;
 	protected final InterpolantsPreconditionPostcondition m_IPP;
@@ -102,6 +103,9 @@ public class CoverageAnalysis {
 						case UNKNOWN:
 							m_Unknown++;
 							break;
+						case NOT_CHECKED:
+							m_Notchecked++;
+							break;
 						default:
 							throw new AssertionError();
 						}
@@ -115,11 +119,12 @@ public class CoverageAnalysis {
 		postprocess();
 		
 		mLogger.info("Checked inductivity of " +
-				(m_Unsat+m_Sat+m_Unknown+m_Trivial) +	" backedges. " + 
+				(m_Unsat+m_Sat+m_Unknown+m_Trivial+m_Notchecked) +	" backedges. " + 
 				m_Unsat + " proven. " + 
 				m_Sat + " refuted. " + 
 				m_Unknown + " times theorem prover too weak." +
-				m_Trivial + " trivial.");
+				m_Trivial + " trivial." +
+				m_Notchecked + " not checked.");
 
 	}
 
@@ -161,7 +166,7 @@ public class CoverageAnalysis {
 	
 	
 	public BackwardCoveringInformation getBackwardCoveringInformation() {
-		int potentialBackwardCoverings = (m_Unsat+m_Sat+m_Unknown+m_Trivial);
+		int potentialBackwardCoverings = (m_Unsat+m_Sat+m_Unknown+m_Trivial+m_Notchecked);
 		int successfullBackwardCoverings = m_Unsat+m_Trivial;
 		return new BackwardCoveringInformation(potentialBackwardCoverings, successfullBackwardCoverings);
 	}
