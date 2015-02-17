@@ -27,12 +27,16 @@ public class AA_Union<LETTER, STATE> implements IOperation<LETTER, STATE>{
 		}
 		for(Entry<LETTER, BooleanExpression[]> entry : automaton1.getTransitionFunction().entrySet()){
 			for(int i=0;i<automaton1.getStates().size();i++){
-				resultAutomaton.addTransition(entry.getKey(), automaton1.getStates().get(i), entry.getValue()[i]);
+				if(entry.getValue()[i] != null){
+					resultAutomaton.addTransition(entry.getKey(), automaton1.getStates().get(i), entry.getValue()[i]);
+				}
 			}
 		}
 		for(Entry<LETTER, BooleanExpression[]> entry : automaton2.getTransitionFunction().entrySet()){
 			for(int i=0;i<automaton2.getStates().size();i++){
-				resultAutomaton.addTransition(entry.getKey(), automaton2.getStates().get(i), entry.getValue()[i]);
+				if(entry.getValue()[i] != null){
+					resultAutomaton.addTransition(entry.getKey(), automaton2.getStates().get(i), entry.getValue()[i]);
+				}
 			}
 		}
 		resultAutomaton.addAcceptingConjunction(automaton1.getAcceptingFunction());
