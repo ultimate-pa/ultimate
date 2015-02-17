@@ -1304,9 +1304,10 @@ public class EdgeChecker {
 		private static EdgeCheckerBenchmarkType s_Instance = new EdgeCheckerBenchmarkType();
 		public final static String s_SdCounter = "trivial";
 		public final static String s_SdLazyCounter = "lazy";
-		public final static String s_SolverCounterSat = "nontrivialSat";
-		public final static String s_SolverCounterUnsat = "nontrivialUnsat";
-		public final static String s_SolverCounterUnknown = "nontrivialUnknown";
+		public final static String s_SolverCounterSat = "Sat";
+		public final static String s_SolverCounterUnsat = "Unsat";
+		public final static String s_SolverCounterUnknown = "Unknown";
+		public final static String s_SolverCounterNotchecked = "NotChecked";
 		public final static String s_EdgeCheckerTime = "EdgeCheckerTime";
 		
 		public static EdgeCheckerBenchmarkType getInstance() {
@@ -1317,7 +1318,7 @@ public class EdgeChecker {
 		public Collection<String> getKeys() {
 			return Arrays.asList(new String[] { s_SdCounter, s_SdLazyCounter, 
 					s_SolverCounterSat, s_SolverCounterUnsat, 
-					s_SolverCounterUnknown, s_EdgeCheckerTime });
+					s_SolverCounterUnknown, s_SolverCounterNotchecked, s_EdgeCheckerTime });
 		}
 		
 		@Override
@@ -1328,6 +1329,7 @@ public class EdgeChecker {
 			case s_SolverCounterSat: 
 			case s_SolverCounterUnsat:
 			case s_SolverCounterUnknown:
+			case s_SolverCounterNotchecked:
 				InCaReCounter resultInCaReCounter = (InCaReCounter) value1;
 				InCaReCounter inCaReCounter2 = (InCaReCounter) value2;
 				resultInCaReCounter.add(inCaReCounter2);
@@ -1347,9 +1349,10 @@ public class EdgeChecker {
 			sb.append("EdgeChecker queries: ");
 			sb.append(benchmarkData.getValue(s_SdCounter) + " trivial, ");
 			sb.append(benchmarkData.getValue(s_SdLazyCounter) + " lazy, ");
-			sb.append(benchmarkData.getValue(s_SolverCounterSat) + " nontrivialSat,");
-			sb.append(benchmarkData.getValue(s_SolverCounterUnsat) + " nontrivialUnsat,");
-			sb.append(benchmarkData.getValue(s_SolverCounterUnknown) + " nontrivialUnknown.");
+			sb.append(benchmarkData.getValue(s_SolverCounterSat) + " Sat,");
+			sb.append(benchmarkData.getValue(s_SolverCounterUnsat) + " Unsat,");
+			sb.append(benchmarkData.getValue(s_SolverCounterUnknown) + " Unknown,");
+			sb.append(benchmarkData.getValue(s_SolverCounterNotchecked) + " NotChecked.");
 			sb.append(" EdgeChecker time: ");
 			long time = (long) benchmarkData.getValue(s_EdgeCheckerTime);
 			sb.append(TraceAbstractionBenchmarks.prettyprintNanoseconds(time));
@@ -1369,6 +1372,7 @@ public class EdgeChecker {
 		protected final InCaReCounter m_SolverCounterSat;
 		protected final InCaReCounter m_SolverCounterUnsat;
 		protected final InCaReCounter m_SolverCounterUnknown;
+		protected final InCaReCounter m_SolverCounterNotChecked;
 		protected final Benchmark m_Benchmark;
 
 		protected boolean m_Running = false;
@@ -1379,6 +1383,7 @@ public class EdgeChecker {
 			m_SolverCounterSat = new InCaReCounter();
 			m_SolverCounterUnsat = new InCaReCounter();
 			m_SolverCounterUnknown = new InCaReCounter();
+			m_SolverCounterNotChecked= new InCaReCounter();
 			m_Benchmark = new Benchmark();
 			m_Benchmark.register(EdgeCheckerBenchmarkType.s_EdgeCheckerTime);
 		}
@@ -1396,6 +1401,9 @@ public class EdgeChecker {
 		}
 		public InCaReCounter getSolverCounterUnknown() {
 			return m_SolverCounterUnknown;
+		}
+		public InCaReCounter getSolverCounterNotChecked() {
+			return m_SolverCounterNotChecked;
 		}
 		public long getEdgeCheckerTime() {
 			return (long) m_Benchmark.getElapsedTime(EdgeCheckerBenchmarkType.s_EdgeCheckerTime, TimeUnit.NANOSECONDS);
@@ -1426,6 +1434,8 @@ public class EdgeChecker {
 				return m_SolverCounterUnsat;
 			case EdgeCheckerBenchmarkType.s_SolverCounterUnknown:
 				return m_SolverCounterUnknown;
+			case EdgeCheckerBenchmarkType.s_SolverCounterNotchecked:
+				return m_SolverCounterNotChecked;
 			case EdgeCheckerBenchmarkType.s_EdgeCheckerTime:
 				return getEdgeCheckerTime();
 			default:
