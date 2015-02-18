@@ -1,5 +1,5 @@
 #Sun Feb 15 11:34:07 CET 2015
-/instance/de.uni_freiburg.informatik.ultimate.buchiprogramproduct/Minimize\ states\ even\ if\ more\ edges\ are\ added\ than\ removed.=false
+/instance/de.uni_freiburg.informatik.ultimate.buchiprogramproduct/Minimize\ states\ even\ if\ more\ edges\ are\ added\ than\ removed.=true
 @de.uni_freiburg.informatik.ultimate.buchiprogramproduct=0.0.1
 \!/instance/de.uni_freiburg.informatik.ultimate.buchiprogramproduct=
 /instance/de.uni_freiburg.informatik.ultimate.buchiprogramproduct/Rewrite\ not\ equals\ when\ simplifying\ assume\ statements\ with\ SBE=false

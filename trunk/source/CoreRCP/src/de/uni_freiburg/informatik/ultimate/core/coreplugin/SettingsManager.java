@@ -1,9 +1,14 @@
 package de.uni_freiburg.informatik.ultimate.core.coreplugin;
 
+import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.HashMap;
 
 import org.apache.log4j.Logger;
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.preferences.ConfigurationScope;
 import org.eclipse.core.runtime.preferences.DefaultScope;
@@ -13,7 +18,10 @@ import org.eclipse.core.runtime.preferences.IEclipsePreferences.IPreferenceChang
 import org.eclipse.core.runtime.preferences.IEclipsePreferences.PreferenceChangeEvent;
 import org.osgi.service.prefs.BackingStoreException;
 
+import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
+import de.uni_freiburg.informatik.ultimate.ep.interfaces.ICore;
+import de.uni_freiburg.informatik.ultimate.ep.interfaces.IUltimatePlugin;
 
 class SettingsManager {
 
@@ -32,7 +40,7 @@ class SettingsManager {
 		logDefaultPreferences(pluginId, pluginName);
 	}
 
-	void loadPreferencesFromFile(String filename) {
+	void loadPreferencesFromFile(ICore core, String filename) {
 		if (filename != null && !filename.isEmpty()) {
 			mLogger.debug("--------------------------------------------------------------------------------");
 			mLogger.info("Loading settings from " + filename);
@@ -44,6 +52,22 @@ class SettingsManager {
 					mLogger.warn("Did not attach debug property logger");
 				} else {
 					mLogger.info("Loading preferences was successful");
+					mLogger.info("Preferences different from defaults:");
+					boolean isSomePluginDifferent = false;
+					for (IUltimatePlugin plugin : core.getRegisteredUltimatePlugins()) {
+						String[] delta = new UltimatePreferenceStore(plugin.getPluginID()).getDeltaPreferencesStrings();
+						if (delta != null && delta.length > 0) {
+							isSomePluginDifferent = true;
+							mLogger.info("Preferences of " + plugin.getPluginName() + " differ from their defaults:");
+							for (String s : delta) {
+								mLogger.info(" * " + s);
+							}
+						}
+					}
+					if (!isSomePluginDifferent) {
+						mLogger.info("All preferences are set to their defaults");
+					}
+
 				}
 			} catch (Exception e) {
 				mLogger.error("Could not load preferences because of exception: ", e);
@@ -55,6 +79,47 @@ class SettingsManager {
 		} else {
 			mLogger.info("Loading settings from empty filename is not possible");
 		}
+	}
+
+	void savePreferences(ICore core, String filename) {
+		if (filename != null && !filename.isEmpty()) {
+			mLogger.info("Saving preferences to file " + filename);
+			try {
+				File f = new File(filename);
+				if (f.isFile() && f.exists()) {
+					f.delete();
+				}
+				FileOutputStream fis = new FileOutputStream(filename);
+
+				for (IUltimatePlugin plugin : core.getRegisteredUltimatePlugins()) {
+					new UltimatePreferenceStore(plugin.getPluginID()).exportPreferences(fis);
+				}
+
+				fis.flush();
+				fis.close();
+			} catch (FileNotFoundException e) {
+				mLogger.error("Saving preferences failed with exception: ", e);
+			} catch (IOException e) {
+				mLogger.error("Saving preferences failed with exception: ", e);
+			} catch (CoreException e) {
+				mLogger.error("Saving preferences failed with exception: ", e);
+			}
+		}
+	}
+
+	void resetPreferences(ICore core) {
+		mLogger.info("Resetting all preferences to default values...");
+		for (IUltimatePlugin plugin : core.getRegisteredUltimatePlugins()) {
+			UltimatePreferenceInitializer preferences = plugin.getPreferences();
+			if (preferences != null) {
+				mLogger.info("Resetting " + plugin.getPluginName() + " preferences to default values");
+				preferences.resetDefaults();
+			} else {
+				mLogger.info(plugin.getPluginName() + " provides no preferences, ignoring...");
+			}
+
+		}
+		mLogger.info("Finished resetting all preferences to default values...");
 	}
 
 	private void logDefaultPreferences(String pluginID, String pluginName) {

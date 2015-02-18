@@ -2,6 +2,7 @@ package de.uni_freiburg.informatik.ultimate.core.preferences;
 
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map.Entry;
@@ -16,6 +17,8 @@ import org.eclipse.core.runtime.preferences.IEclipsePreferences.IPreferenceChang
 import org.eclipse.core.runtime.preferences.IScopeContext;
 import org.eclipse.core.runtime.preferences.InstanceScope;
 import org.osgi.service.prefs.BackingStoreException;
+
+import de.uni_freiburg.informatik.ultimate.core.util.CoreUtil;
 
 public class UltimatePreferenceStore {
 
@@ -248,8 +251,9 @@ public class UltimatePreferenceStore {
 	public String getDefaultPreferencesString() {
 		StringBuilder sb = new StringBuilder();
 		try {
+			String br = CoreUtil.getPlatformLineSeparator();
 			for (String key : getDefault().keys()) {
-				sb.append(key).append("=").append(getDefault().get(key, "NO DEFAULT SET")).append("\n");
+				sb.append(key).append("=").append(getDefault().get(key, "NO DEFAULT SET")).append(br);
 			}
 		} catch (BackingStoreException e) {
 			e.printStackTrace();
@@ -261,14 +265,41 @@ public class UltimatePreferenceStore {
 	public String getCurrentPreferencesString() {
 		StringBuilder sb = new StringBuilder();
 		try {
+			String br = CoreUtil.getPlatformLineSeparator();
 			for (String key : getDefault().keys()) {
-				sb.append(key).append("=").append(getString(key, "NO DEFAULT SET")).append("\n");
+				sb.append(key).append("=").append(getString(key, "NO DEFAULT SET")).append(br);
 			}
 		} catch (BackingStoreException e) {
 			e.printStackTrace();
 			return "";
 		}
 		return sb.toString();
+	}
+
+	/**
+	 * Get an array of strings were each entry represents all preferences that
+	 * differ from their default values.
+	 * 
+	 */
+	public String[] getDeltaPreferencesStrings() {
+		ArrayList<String> rtr = new ArrayList<>();
+		String fallback = "NO DEFAULT SET";
+		try {
+			IEclipsePreferences defaults = getDefault();
+			IEclipsePreferences instance = getInstance();
+			for (String defaultKey : defaults.keys()) {
+				String defaultValue = defaults.get(defaultKey, fallback);
+				String currentValue = instance.get(defaultKey, defaultValue);
+				if (!currentValue.equals(defaultValue)) {
+					rtr.add(defaultKey + "=" + currentValue);
+				}
+			}
+		} catch (BackingStoreException e) {
+			e.printStackTrace();
+			return null;
+		}
+
+		return rtr.toArray(new String[0]);
 	}
 
 	@Override

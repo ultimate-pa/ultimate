@@ -16,8 +16,7 @@ import org.osgi.service.prefs.BackingStoreException;
  * @author dietsch
  * 
  */
-public abstract class UltimatePreferenceInitializer extends
-		AbstractPreferenceInitializer {
+public abstract class UltimatePreferenceInitializer extends AbstractPreferenceInitializer {
 
 	private final UltimatePreferenceItem<?>[] mPreferenceDescriptors;
 	private final UltimatePreferenceStore mPreferenceStore;
@@ -37,18 +36,22 @@ public abstract class UltimatePreferenceInitializer extends
 	 */
 	@Override
 	public void initializeDefaultPreferences() {
-		IEclipsePreferences defaults = mPreferenceStore
-				.getDefaultEclipsePreferences();
+		IEclipsePreferences defaults = mPreferenceStore.getDefaultEclipsePreferences();
+		initializePreferences(defaults);
+	}
 
+	public void resetDefaults() {
+		initializePreferences(new UltimatePreferenceStore(getPlugID()).getEclipsePreferences());
+	}
+
+	private void initializePreferences(IEclipsePreferences prefs) {
 		for (UltimatePreferenceItem<?> item : mPreferenceDescriptors) {
 			switch (item.getType()) {
 			case Boolean:
-				defaults.putBoolean(item.getLabel(),
-						(Boolean) item.getDefaultValue());
+				prefs.putBoolean(item.getLabel(), (Boolean) item.getDefaultValue());
 				break;
 			case Integer:
-				defaults.putInt(item.getLabel(),
-						(Integer) item.getDefaultValue());
+				prefs.putInt(item.getLabel(), (Integer) item.getDefaultValue());
 				break;
 			case Directory:
 			case String:
@@ -58,28 +61,26 @@ public abstract class UltimatePreferenceInitializer extends
 			case Path:
 			case File:
 			case Color:
-				defaults.put(item.getLabel(), item.getDefaultValue().toString());
+				prefs.put(item.getLabel(), item.getDefaultValue().toString());
 				break;
 			case Label:
 				// A Label is not really a preference; its just nice for
 				// automatic generation of preference pages
 				break;
 			default:
-				throw new UnsupportedOperationException(
-						"You need to implement the new enum type \""
-								+ item.getType() + "\" here");
+				throw new UnsupportedOperationException("You need to implement the new enum type \"" + item.getType()
+						+ "\" here");
 			}
 
 		}
 		try {
-			defaults.sync();
+			prefs.sync();
 		} catch (BackingStoreException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		// FIXME: For debug purposes
-		// System.out.println(mPreferenceStore.getDefaultPreferencesString());
-
+//		System.out.println(mPreferenceStore.getDefaultPreferencesString());
 	}
 
 	public UltimatePreferenceItem<?>[] getDefaultPreferences() {
@@ -112,6 +113,6 @@ public abstract class UltimatePreferenceInitializer extends
 	 * 
 	 * @return
 	 */
-	public abstract String getPreferencePageTitle() ;
+	public abstract String getPreferencePageTitle();
 
 }

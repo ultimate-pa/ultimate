@@ -49,6 +49,11 @@ public interface ICore {
 	void loadPreferences(String absolutePath);
 
 	/**
+	 * Reset all preferences to their default values.
+	 */
+	void resetPreferences();
+
+	/**
 	 * Get an instance of every {@link IUltimatePlugin} that is known to the
 	 * Core (this will load every UltimatePlugin).
 	 * 

@@ -1,4 +1,4 @@
-﻿//#Unsafe
+//#Unsafe
 // ****************************************************
 //
 //     Making Prophecies with Decision Predicates

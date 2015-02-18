@@ -1,14 +1,9 @@
 package de.uni_freiburg.informatik.ultimate.core.coreplugin;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.log4j.Logger;
-import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IConfigurationElement;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.jobs.IJobChangeEvent;
@@ -19,7 +14,6 @@ import org.eclipse.equinox.app.IApplicationContext;
 
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences.CorePreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 import de.uni_freiburg.informatik.ultimate.core.services.LoggingService;
 import de.uni_freiburg.informatik.ultimate.core.services.ToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.ep.ExtensionPoints;
@@ -119,34 +113,17 @@ public class UltimateCore implements IApplication, ICore, IUltimatePlugin {
 
 	@Override
 	public void loadPreferences(String absolutePath) {
-		mSettingsManager.loadPreferencesFromFile(absolutePath);
+		mSettingsManager.loadPreferencesFromFile(this, absolutePath);
 	}
 
 	@Override
 	public void savePreferences(String filename) {
-		if (filename != null && !filename.isEmpty()) {
-			mLogger.info("Saving preferences to file " + filename);
-			try {
-				File f = new File(filename);
-				if (f.isFile() && f.exists()) {
-					f.delete();
-				}
-				FileOutputStream fis = new FileOutputStream(filename);
+		mSettingsManager.savePreferences(this, filename);
+	}
 
-				for (IUltimatePlugin plugin : getRegisteredUltimatePlugins()) {
-					new UltimatePreferenceStore(plugin.getPluginID()).exportPreferences(fis);
-				}
-
-				fis.flush();
-				fis.close();
-			} catch (FileNotFoundException e) {
-				mLogger.error("Saving preferences failed with exception: ", e);
-			} catch (IOException e) {
-				mLogger.error("Saving preferences failed with exception: ", e);
-			} catch (CoreException e) {
-				mLogger.error("Saving preferences failed with exception: ", e);
-			}
-		}
+	@Override
+	public void resetPreferences() {
+		mSettingsManager.resetPreferences(this);
 	}
 
 	@Override
@@ -235,7 +212,7 @@ public class UltimateCore implements IApplication, ICore, IUltimatePlugin {
 
 		String settingsfile = mCmdLineArgs.getSettings();
 		if (settingsfile != null) {
-			mSettingsManager.loadPreferencesFromFile(settingsfile);
+			mSettingsManager.loadPreferencesFromFile(this, settingsfile);
 		}
 
 		try {

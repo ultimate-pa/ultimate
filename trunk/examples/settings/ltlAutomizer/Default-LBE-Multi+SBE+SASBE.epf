@@ -57,6 +57,9 @@ file_export_version=3.0
 \!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer=
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer/Try\ twofold\ refinement=false
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer/Compute\ Interpolants\ along\ a\ Counterexample=Craig_TreeInterpolation
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer/ScroogeNondeterminism\ stem=false
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer/ScroogeNondeterminism\ loop=false
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer/Bouncer\ loop=false
 #Sat Feb 14 20:45:11 CET 2015
 \!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator=
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Check\ if\ freed\ pointer\ was\ valid=false
