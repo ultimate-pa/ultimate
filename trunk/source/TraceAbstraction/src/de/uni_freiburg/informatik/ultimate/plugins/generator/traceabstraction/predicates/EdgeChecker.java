@@ -823,11 +823,11 @@ public class EdgeChecker {
 		Infeasibility infeasiblity = cb.getTransitionFormula().isInfeasible();
 		if (infeasiblity == Infeasibility.UNPROVEABLE) {
 			if (pre.getFormula() == m_Script.term("true")) {
-				m_EdgeCheckerBenchmark.getSdCounter().incIn();
+				m_EdgeCheckerBenchmark.getSDtfsCounter().incIn();
 				return LBool.UNKNOWN;
 			} else {
 				if (varsDisjoinedFormInVars(pre, cb)) {
-					m_EdgeCheckerBenchmark.getSdCounter().incIn();
+					m_EdgeCheckerBenchmark.getSDtfsCounter().incIn();
 					return LBool.SAT;
 				} else  {
 					return null;
@@ -835,7 +835,7 @@ public class EdgeChecker {
 			}
 						
 		} else if (infeasiblity == Infeasibility.INFEASIBLE) {
-			m_EdgeCheckerBenchmark.getSdCounter().incIn();
+			m_EdgeCheckerBenchmark.getSDtfsCounter().incIn();
 			return LBool.UNSAT;
 		} else if (infeasiblity == Infeasibility.NOT_DETERMINED) {
 			return null;
@@ -918,7 +918,7 @@ public class EdgeChecker {
 				return null;
 			}
 		}
-		m_EdgeCheckerBenchmark.getSdCounter().incIn();
+		m_EdgeCheckerBenchmark.getSDsCounter().incIn();
 		return LBool.SAT;
 	}
 	
@@ -956,7 +956,7 @@ public class EdgeChecker {
 		// there could be a contradiction if the Call is not a simple call
 		// but interprocedural sequential composition 			
 		if (cb instanceof Call) {
-			m_EdgeCheckerBenchmark.getSdCounter().incCa();
+			m_EdgeCheckerBenchmark.getSDtfsCounter().incCa();
 			return LBool.SAT;
 		} else {
 			return null;
@@ -982,7 +982,7 @@ public class EdgeChecker {
 			return null;
 		}
 		if (preHierIndependent(post, pre, (Call) cb)) {
-			m_EdgeCheckerBenchmark.getSdCounter().incCa();
+			m_EdgeCheckerBenchmark.getSDsCounter().incCa();
 			return LBool.SAT;
 		}
 		return null;
@@ -1018,7 +1018,7 @@ public class EdgeChecker {
 		if (hierPostIndependent(hier, ret, post) 
 				&& preHierIndependent(pre, hier, call)
 				&& prePostIndependent(pre, ret, post)) {
-			m_EdgeCheckerBenchmark.getSdCounter().incRe();
+			m_EdgeCheckerBenchmark.getSDsCounter().incRe();
 			return LBool.SAT;
 
 		}
@@ -1302,7 +1302,9 @@ public class EdgeChecker {
 	public static class EdgeCheckerBenchmarkType implements IBenchmarkType {
 		
 		private static EdgeCheckerBenchmarkType s_Instance = new EdgeCheckerBenchmarkType();
-		public final static String s_SdCounter = "trivial";
+		public final static String s_SDtfs = "SDtfs";
+		public final static String s_SDslu = "SDslu";
+		public final static String s_SDs = "SDs";
 		public final static String s_SdLazyCounter = "lazy";
 		public final static String s_SolverCounterSat = "Sat";
 		public final static String s_SolverCounterUnsat = "Unsat";
@@ -1316,7 +1318,8 @@ public class EdgeChecker {
 		
 		@Override
 		public Collection<String> getKeys() {
-			return Arrays.asList(new String[] { s_SdCounter, s_SdLazyCounter, 
+			return Arrays.asList(new String[] { s_SDtfs, s_SDslu, s_SDs, 
+					s_SdLazyCounter, 
 					s_SolverCounterSat, s_SolverCounterUnsat, 
 					s_SolverCounterUnknown, s_SolverCounterNotchecked, s_EdgeCheckerTime });
 		}
@@ -1324,7 +1327,9 @@ public class EdgeChecker {
 		@Override
 		public Object aggregate(String key, Object value1, Object value2) {
 			switch (key) {
-			case s_SdCounter:
+			case s_SDtfs:
+			case s_SDslu:
+			case s_SDs:
 			case s_SdLazyCounter:
 			case s_SolverCounterSat: 
 			case s_SolverCounterUnsat:
@@ -1347,7 +1352,9 @@ public class EdgeChecker {
 		public String prettyprintBenchmarkData(IBenchmarkDataProvider benchmarkData) {
 			StringBuilder sb = new StringBuilder();
 			sb.append("EdgeChecker queries: ");
-			sb.append(benchmarkData.getValue(s_SdCounter) + " trivial, ");
+			sb.append(benchmarkData.getValue(s_SDtfs) + " SDtfs, ");
+			sb.append(benchmarkData.getValue(s_SDslu) + " SDslu, ");
+			sb.append(benchmarkData.getValue(s_SDs) + " SDs, ");
 			sb.append(benchmarkData.getValue(s_SdLazyCounter) + " lazy, ");
 			sb.append(benchmarkData.getValue(s_SolverCounterSat) + " Sat,");
 			sb.append(benchmarkData.getValue(s_SolverCounterUnsat) + " Unsat,");
@@ -1367,7 +1374,9 @@ public class EdgeChecker {
 	
 	public static class EdgeCheckerBenchmarkGenerator implements IBenchmarkDataProvider {
 		
-		protected final InCaReCounter m_SdCounter;
+		protected final InCaReCounter m_SDtfsCounter;
+		protected final InCaReCounter m_SDsluCounter;
+		protected final InCaReCounter m_SDsCounter;
 		protected final InCaReCounter m_SdLazyCounter;
 		protected final InCaReCounter m_SolverCounterSat;
 		protected final InCaReCounter m_SolverCounterUnsat;
@@ -1378,7 +1387,9 @@ public class EdgeChecker {
 		protected boolean m_Running = false;
 
 		public EdgeCheckerBenchmarkGenerator() {
-			m_SdCounter = new InCaReCounter();
+			m_SDtfsCounter = new InCaReCounter();
+			m_SDsluCounter = new InCaReCounter();
+			m_SDsCounter = new InCaReCounter();
 			m_SdLazyCounter = new InCaReCounter();
 			m_SolverCounterSat = new InCaReCounter();
 			m_SolverCounterUnsat = new InCaReCounter();
@@ -1387,8 +1398,15 @@ public class EdgeChecker {
 			m_Benchmark = new Benchmark();
 			m_Benchmark.register(EdgeCheckerBenchmarkType.s_EdgeCheckerTime);
 		}
-		public InCaReCounter getSdCounter() {
-			return m_SdCounter;
+
+		public InCaReCounter getSDtfsCounter() {
+			return m_SDtfsCounter;
+		}
+		public InCaReCounter getSDsluCounter() {
+			return m_SDsluCounter;
+		}
+		public InCaReCounter getSDsCounter() {
+			return m_SDsCounter;
 		}
 		public InCaReCounter getSdLazyCounter() {
 			return m_SdLazyCounter;
@@ -1424,8 +1442,12 @@ public class EdgeChecker {
 		}
 		public Object getValue(String key) {
 			switch (key) {
-			case EdgeCheckerBenchmarkType.s_SdCounter:
-				return m_SdCounter;
+			case EdgeCheckerBenchmarkType.s_SDtfs:
+				return m_SDtfsCounter;
+			case EdgeCheckerBenchmarkType.s_SDslu:
+				return m_SDsluCounter;
+			case EdgeCheckerBenchmarkType.s_SDs:
+				return m_SDsCounter;
 			case EdgeCheckerBenchmarkType.s_SdLazyCounter:
 				return m_SdLazyCounter;
 			case EdgeCheckerBenchmarkType.s_SolverCounterSat: 

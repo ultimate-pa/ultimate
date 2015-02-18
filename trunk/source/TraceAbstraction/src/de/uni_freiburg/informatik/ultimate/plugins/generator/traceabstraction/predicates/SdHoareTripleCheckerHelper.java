@@ -87,20 +87,13 @@ public class SdHoareTripleCheckerHelper {
 	public Validity sdecInternalToFalse(IPredicate pre, CodeBlock cb) {
 		Infeasibility infeasiblity = cb.getTransitionFormula().isInfeasible();
 		if (infeasiblity == Infeasibility.UNPROVEABLE) {
-			if (SmtUtils.isTrue(pre.getFormula())) {
-				m_EdgeCheckerBenchmark.getSdCounter().incIn();
-				return Validity.UNKNOWN;
-			} else {
-				if (varsDisjoinedFormInVars(pre, cb)) {
-					m_EdgeCheckerBenchmark.getSdCounter().incIn();
-					return Validity.INVALID;
-				} else  {
-					return null;
-				}
+			if (varsDisjoinedFormInVars(pre, cb)) {
+				m_EdgeCheckerBenchmark.getSDtfsCounter().incIn();
+				return Validity.INVALID;
+			} else  {
+				return null;
 			}
-						
 		} else if (infeasiblity == Infeasibility.INFEASIBLE) {
-			m_EdgeCheckerBenchmark.getSdCounter().incIn();
 			return Validity.VALID;
 		} else if (infeasiblity == Infeasibility.NOT_DETERMINED) {
 			return null;
@@ -152,6 +145,7 @@ public class SdHoareTripleCheckerHelper {
 			Validity sat = m_PredicateCoverageChecker.isCovered(pre, post);
 			if (sat == Validity.VALID) {
 				if (Collections.disjoint(pre.getVars(), cb.getTransitionFormula().getAssignedVars())) {
+					m_EdgeCheckerBenchmark.getSDsluCounter().incIn();
 					return Validity.VALID;
 				}
 			}
@@ -176,6 +170,7 @@ public class SdHoareTripleCheckerHelper {
 		if (m_PredicateCoverageChecker != null) {
 			Validity sat = m_PredicateCoverageChecker.isCovered(pre, post);
 			if (sat == Validity.VALID) {
+				m_EdgeCheckerBenchmark.getSDsluCounter().incIn();
 				return Validity.VALID;
 			}
 		} else {
@@ -183,7 +178,7 @@ public class SdHoareTripleCheckerHelper {
 				return null;
 			}
 		}
-		m_EdgeCheckerBenchmark.getSdCounter().incIn();
+		m_EdgeCheckerBenchmark.getSDsCounter().incIn();
 		return Validity.INVALID;
 	}
 	
@@ -221,7 +216,7 @@ public class SdHoareTripleCheckerHelper {
 		// there could be a contradiction if the Call is not a simple call
 		// but interprocedural sequential composition 			
 		if (cb instanceof Call) {
-			m_EdgeCheckerBenchmark.getSdCounter().incCa();
+			m_EdgeCheckerBenchmark.getSDtfsCounter().incCa();
 			return Validity.INVALID;
 		} else {
 			return null;
@@ -247,7 +242,7 @@ public class SdHoareTripleCheckerHelper {
 			return null;
 		}
 		if (preHierIndependent(post, pre, (Call) cb)) {
-			m_EdgeCheckerBenchmark.getSdCounter().incCa();
+			m_EdgeCheckerBenchmark.getSDsCounter().incCa();
 			return Validity.INVALID;
 		}
 		return null;
@@ -283,7 +278,7 @@ public class SdHoareTripleCheckerHelper {
 		if (hierPostIndependent(hier, ret, post) 
 				&& preHierIndependent(pre, hier, call)
 				&& prePostIndependent(pre, ret, post)) {
-			m_EdgeCheckerBenchmark.getSdCounter().incRe();
+			m_EdgeCheckerBenchmark.getSDsCounter().incRe();
 			return Validity.INVALID;
 
 		}
@@ -477,6 +472,7 @@ public class SdHoareTripleCheckerHelper {
 				return null;
 			}
 		}
+		m_EdgeCheckerBenchmark.getSDsluCounter().incIn();
 		return Validity.VALID;
 	}
 	
@@ -494,6 +490,7 @@ public class SdHoareTripleCheckerHelper {
 				return null;
 			}
 		}
+		m_EdgeCheckerBenchmark.getSDsluCounter().incCa();
 		return Validity.VALID;
 	}
 	
@@ -514,6 +511,7 @@ public class SdHoareTripleCheckerHelper {
 				return null;
 			}
 		}
+		m_EdgeCheckerBenchmark.getSDsluCounter().incRe();
 		return Validity.VALID;
 	}
 	

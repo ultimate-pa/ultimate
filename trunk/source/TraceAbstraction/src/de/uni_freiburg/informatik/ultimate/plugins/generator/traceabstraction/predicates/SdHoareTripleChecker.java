@@ -138,8 +138,21 @@ public class SdHoareTripleChecker implements IHoareTripleChecker {
 			}
 			if (SmtUtils.isFalse(succ.getFormula())) {
 				Validity toFalse = this.sdecToFalse(preLin, preHier, cb);
-				if (toFalse == Validity.INVALID) {
-					return Validity.INVALID;
+				if (toFalse == null) {
+					// do nothing an continue with other checks
+				} else {
+					switch (toFalse) {
+					case INVALID:
+						return Validity.INVALID;
+					case NOT_CHECKED:
+						throw new AssertionError("unchecked predicate");
+					case UNKNOWN:
+						throw new AssertionError("this case should have been filtered out before");
+					case VALID:
+						throw new AssertionError("this case should have been filtered out before");
+					default:
+						throw new AssertionError("unknown case");
+					}
 				}
 			}
 			final Validity general;
