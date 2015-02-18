@@ -31,6 +31,7 @@ package de.uni_freiburg.informatik.ultimate.automata;
  *
  */
 public class InCaReCounter {
+	private static final boolean m_ToStringIsSum = true;
 	private int m_Internal;
 	private int m_Call;
 	private int m_Return;
@@ -65,7 +66,11 @@ public class InCaReCounter {
 	
 	@Override
 	public String toString() {
-		return m_Internal + "In " + m_Call + "Ca " + m_Return + "Re"; 
+		if (m_ToStringIsSum) {
+			return String.valueOf(m_Internal + m_Call + m_Return);
+		} else {
+			return m_Internal + "In " + m_Call + "Ca " + m_Return + "Re";
+		}
 	}
 	
 	
