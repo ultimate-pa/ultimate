@@ -29,14 +29,20 @@ public class SdHoareTripleCheckerHelper {
 	
 	
 	public SdHoareTripleCheckerHelper(ModifiableGlobalVariableManager modGlobVarManager, 
-			IPredicateCoverageChecker predicateCoverageChecker) {
+			IPredicateCoverageChecker predicateCoverageChecker, 
+			EdgeCheckerBenchmarkGenerator edgeCheckerBenchmarkGenerator) {
 		m_ModifiableGlobalVariableManager = modGlobVarManager;
-		m_EdgeCheckerBenchmark = new EdgeCheckerBenchmarkGenerator();
 		m_PredicateCoverageChecker = predicateCoverageChecker;
+		if (edgeCheckerBenchmarkGenerator == null) {
+			m_EdgeCheckerBenchmark = new EdgeCheckerBenchmarkGenerator();
+		} else {
+			m_EdgeCheckerBenchmark = edgeCheckerBenchmarkGenerator;
+		}
 	}
 	
-	public SdHoareTripleCheckerHelper(ModifiableGlobalVariableManager modGlobVarManager) {
-		this(modGlobVarManager, null);
+	public SdHoareTripleCheckerHelper(ModifiableGlobalVariableManager modGlobVarManager, 
+			EdgeCheckerBenchmarkGenerator edgeCheckerBenchmarkGenerator) {
+		this(modGlobVarManager, null, edgeCheckerBenchmarkGenerator);
 	}
 	
 	

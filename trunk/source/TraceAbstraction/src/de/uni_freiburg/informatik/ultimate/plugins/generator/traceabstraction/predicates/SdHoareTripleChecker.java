@@ -30,11 +30,13 @@ public class SdHoareTripleChecker implements IHoareTripleChecker {
 
 	
 	public SdHoareTripleChecker(ModifiableGlobalVariableManager modGlobVarManager, 
-			PredicateUnifier predicateUnifier) {
+			PredicateUnifier predicateUnifier, 
+			EdgeCheckerBenchmarkGenerator edgeCheckerBenchmarkGenerator) {
 		m_PredicateCoverageChecker = predicateUnifier.getCoverageRelation();
 		m_TruePredicate = predicateUnifier.getTruePredicate();
 		m_FalsePredicate = predicateUnifier.getFalsePredicate();
-		m_SdHoareTripleChecker = new SdHoareTripleCheckerHelper(modGlobVarManager, m_PredicateCoverageChecker);
+		m_SdHoareTripleChecker = new SdHoareTripleCheckerHelper(modGlobVarManager, 
+				m_PredicateCoverageChecker, edgeCheckerBenchmarkGenerator);
 		
 	}
 	

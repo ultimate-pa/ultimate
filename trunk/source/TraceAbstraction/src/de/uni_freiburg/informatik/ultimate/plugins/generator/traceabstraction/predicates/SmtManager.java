@@ -65,6 +65,8 @@ public class SmtManager {
 	enum Status {
 		IDLE, TRACECHECK, CODEBLOCKCHECK1, CODEBLOCKCHECK2, EDGECHECK
 	};
+	
+	private final boolean m_ExtendedDebugOutputInScript = false;
 
 //	private Status m_Status = Status.IDLE;
 	private Object m_LockOwner = null;
@@ -619,6 +621,9 @@ public class SmtManager {
 			m_Script.pop(1);
 		}
 		m_SatCheckTime += (System.nanoTime() - startTime);
+		if (m_ExtendedDebugOutputInScript && result == Validity.UNKNOWN) {
+			m_Script.echo(new QuotedObject("Result of preceeding check-sat was UNKNOWN"));
+		}
 		return result;
 	}
 
@@ -1397,7 +1402,7 @@ public class SmtManager {
 		if (ps2.getFormula() == m_Script.term("false")) {
 			return;
 		}
-		SdHoareTripleCheckerHelper sdhtch = new SdHoareTripleCheckerHelper(m_ModifiableGlobals);
+		SdHoareTripleCheckerHelper sdhtch = new SdHoareTripleCheckerHelper(m_ModifiableGlobals, null);
 		Validity testRes = sdhtch.sdecReturn(ps1, psk, ta, ps2);
 		if (testRes != null) {
 			// assert testRes == result : "my return dataflow check failed";
@@ -1412,7 +1417,7 @@ public class SmtManager {
 		if (ps2.getFormula() == m_Script.term("false")) {
 			return;
 		}
-		SdHoareTripleCheckerHelper sdhtch = new SdHoareTripleCheckerHelper(m_ModifiableGlobals);
+		SdHoareTripleCheckerHelper sdhtch = new SdHoareTripleCheckerHelper(m_ModifiableGlobals, null);
 		Validity testRes = sdhtch.sdecCall(ps1, ta, ps2);
 		if (testRes != null) {
 			assert testRes == lbool2validity(result) : "my call dataflow check failed";
@@ -1425,7 +1430,7 @@ public class SmtManager {
 	// FIXME: remove once enough tested
 	private void testMyInternalDataflowCheck(IPredicate ps1, CodeBlock ta, IPredicate ps2, LBool result) {
 		if (ps2.getFormula() == m_Script.term("false")) {
-			SdHoareTripleCheckerHelper sdhtch = new SdHoareTripleCheckerHelper(m_ModifiableGlobals);
+			SdHoareTripleCheckerHelper sdhtch = new SdHoareTripleCheckerHelper(m_ModifiableGlobals, null);
 			Validity testRes = sdhtch.sdecInternalToFalse(ps1, ta);
 			if (testRes != null) {
 				assert testRes == lbool2validity(result) || testRes == lbool2validity(LBool.UNKNOWN) && result == LBool.SAT : "my internal dataflow check failed";
@@ -1436,7 +1441,7 @@ public class SmtManager {
 			return;
 		}
 		if (ps1 == ps2) {
-			SdHoareTripleCheckerHelper sdhtch = new SdHoareTripleCheckerHelper(m_ModifiableGlobals);
+			SdHoareTripleCheckerHelper sdhtch = new SdHoareTripleCheckerHelper(m_ModifiableGlobals, null);
 			Validity testRes = sdhtch.sdecInternalSelfloop(ps1, ta);
 			if (testRes != null) {
 				assert testRes == lbool2validity(result) : "my internal dataflow check failed";
@@ -1448,7 +1453,7 @@ public class SmtManager {
 		if (ta.getTransitionFormula().isInfeasible() == Infeasibility.INFEASIBLE) {
 			return;
 		}
-		SdHoareTripleCheckerHelper sdhtch = new SdHoareTripleCheckerHelper(m_ModifiableGlobals);
+		SdHoareTripleCheckerHelper sdhtch = new SdHoareTripleCheckerHelper(m_ModifiableGlobals, null);
 		Validity testRes = sdhtch.sdecInteral(ps1, ta, ps2);
 		if (testRes != null) {
 			assert testRes == lbool2validity(result) : "my internal dataflow check failed";

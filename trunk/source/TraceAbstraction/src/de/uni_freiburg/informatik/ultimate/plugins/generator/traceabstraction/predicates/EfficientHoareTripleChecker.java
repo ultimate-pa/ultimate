@@ -24,7 +24,8 @@ public class EfficientHoareTripleChecker implements IHoareTripleChecker {
 			SmtManager smtManager) {
 		super();
 		m_SmtBasedHoareTripleChecker = new ProtectiveHoareTripleChecker(smtBasedHoareTripleChecker, predicateUnifier);
-		m_SdHoareTripleChecker = new SdHoareTripleChecker(modGlobVarManager, predicateUnifier);
+		m_SdHoareTripleChecker = new SdHoareTripleChecker(modGlobVarManager, 
+				predicateUnifier, m_SmtBasedHoareTripleChecker.getEdgeCheckerBenchmark());
 		m_hoareTripleCheckerForReview = new MonolithicHoareTripleChecker(smtManager);
 	}
 
