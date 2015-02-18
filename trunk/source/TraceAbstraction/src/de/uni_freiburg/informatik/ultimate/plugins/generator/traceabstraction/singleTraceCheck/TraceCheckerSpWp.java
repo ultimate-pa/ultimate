@@ -361,11 +361,13 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 			computeForwardRelevantPredicates(relevantVarsToUseForFPBP, rtf, trace, tracePrecondition, m_LiveVariables,
 					numberOfQuantifiedPredicates);
 			mLogger.debug("Checking inductivity of forward relevant predicates...");
-			if (!TraceCheckerUtils.checkInterpolantsInductivityForward(m_InterpolantsFp, 
-					trace, tracePrecondition, tracePostcondition, m_PendingContexts, "FP", m_SmtManager, m_ModifiedGlobals, mLogger)) {
-				throw new AssertionError("invalid Hoare triple in FP");
-			}
-//			assert checkPredicatesCorrect(m_InterpolantsFp, trace, tracePrecondition, tracePostcondition, "FP") : "invalid Hoare triple in FP";
+//			if (!TraceCheckerUtils.checkInterpolantsInductivityForward(m_InterpolantsFp, 
+//					trace, tracePrecondition, tracePostcondition, m_PendingContexts, "FP", m_SmtManager, m_ModifiedGlobals, mLogger)) {
+//				throw new AssertionError("invalid Hoare triple in FP");
+//			}
+			assert TraceCheckerUtils.checkInterpolantsInductivityForward(m_InterpolantsFp, 
+					trace, tracePrecondition, tracePostcondition, m_PendingContexts, "FP", 
+					m_SmtManager, m_ModifiedGlobals, mLogger) : "invalid Hoare triple in FP";
 			if (m_CollectInformationAboutSizeOfPredicates) {
 				sizeOfPredicatesFP = m_SmtManager.computeDagSizeOfPredicates(m_InterpolantsFp);
 			}
