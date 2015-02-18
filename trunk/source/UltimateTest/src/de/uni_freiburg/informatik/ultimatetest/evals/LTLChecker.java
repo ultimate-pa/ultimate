@@ -17,15 +17,22 @@ public class LTLChecker extends AbstractEvaluationTestSuite {
 
 	@Override
 	protected void createTestCasesForReal(List<UltimateTestCase> testcases) {
-		addTestCasesFixed("LTLAutomizerC.xml", "ltlAutomizer/Default-LBE-Multi+NondetBuchi.epf", testcases);
-		addTestCasesFixed("LTLAutomizerC.xml", "ltlAutomizer/Default-LBE-Multi+SBE+SimplifyAssumesSBE.epf", testcases);
-		addTestCasesFixed("LTLAutomizerC.xml", "ltlAutomizer/Default-LBE-Multi+SBE.epf", testcases);
-		addTestCasesFixed("LTLAutomizerC.xml", "ltlAutomizer/Default-LBE-Multi.epf", testcases);
-		addTestCasesFixed("LTLAutomizerC.xml", "ltlAutomizer/Default-LBE-Single.epf", testcases);
-		addTestCasesFixed("LTLAutomizerC.xml", "ltlAutomizer/Default-LBE-SNME.epf", testcases);
-		addTestCasesFixed("LTLAutomizerC.xml", "ltlAutomizer/None+SBE+SimplifyAssumesSBE.epf", testcases);
-		addTestCasesFixed("LTLAutomizerC.xml", "ltlAutomizer/None+SBE.epf", testcases);
-		addTestCasesFixed("LTLAutomizerC.xml", "ltlAutomizer/None.epf", testcases);
+		addTestCasesFixed("LTLAutomizerC.xml", "Default+SBE+SASBE.epf", testcases);
+		addTestCasesFixed("LTLAutomizerC.xml", "Default+SBE.epf", testcases);
+		addTestCasesFixed("LTLAutomizerC.xml", "Default-LBE-Multi+IB.epf", testcases);
+		addTestCasesFixed("LTLAutomizerC.xml", "Default-LBE-Multi+NondetBuchi.epf", testcases);
+		addTestCasesFixed("LTLAutomizerC.xml", "Default-LBE-Multi+SBE+SASBE+IB.ep", testcases);
+		addTestCasesFixed("LTLAutomizerC.xml", "Default-LBE-Multi+SBE+SASBE.epf", testcases);
+		addTestCasesFixed("LTLAutomizerC.xml", "Default-LBE-Multi+SBE.epf", testcases);
+		addTestCasesFixed("LTLAutomizerC.xml", "Default-LBE-Multi.epf", testcases);
+		addTestCasesFixed("LTLAutomizerC.xml", "Default-LBE-Single.epf", testcases);
+		addTestCasesFixed("LTLAutomizerC.xml", "Default-LBE-SNME.epf", testcases);
+		addTestCasesFixed("LTLAutomizerC.xml", "Default.epf", testcases);
+		addTestCasesFixed("LTLAutomizerC.xml", "None+LBE-Multi.epf", testcases);
+		addTestCasesFixed("LTLAutomizerC.xml", "None+SBE+SASBE.epf", testcases);
+		addTestCasesFixed("LTLAutomizerC.xml", "None+SBE.epf", testcases);
+		addTestCasesFixed("LTLAutomizerC.xml", "None.epf", testcases);
+
 	}
 
 	@Override
@@ -44,9 +51,9 @@ public class LTLChecker extends AbstractEvaluationTestSuite {
 //				"examples/LTL/rers2012/P17/",
 //				"examples/LTL/rers2012/P18/",
 //				"examples/LTL/rers2012/P19/",
-				"examples/LTL/coolant/",
-				"examples/LTL/koskinen/ltlcmodelchecker-benchmarks/",
-				"examples/LTL/bugs/",
+//				"examples/LTL/coolant/",
+//				"examples/LTL/koskinen/ltlcmodelchecker-benchmarks/",
+//				"examples/LTL/bugs/",
 //				"examples/LTL/bugs/Bug_AssumeFalse.c",
 				
 				//RERS examples with NO_RESULT
@@ -56,7 +63,16 @@ public class LTLChecker extends AbstractEvaluationTestSuite {
 				
 				//Koskinen examples with problems
 //				"examples/LTL/koskinen/ltlcmodelchecker-benchmarks/09-postgreSQL_dropbuf_prop1.c",
-
+				"examples/LTL/koskinen/ltlcmodelchecker-benchmarks/03-toyacquirerelease.c",
+				"examples/LTL/koskinen/ltlcmodelchecker-benchmarks/04-toylinarith1.c",
+				"examples/LTL/koskinen/ltlcmodelchecker-benchmarks/05-toylinarith2.c",
+				"examples/LTL/koskinen/ltlcmodelchecker-benchmarks/19-windows_os_frag5.c",
+				"examples/LTL/koskinen/ltlcmodelchecker-benchmarks/13-windows_os_frag1.c",
+				"examples/LTL/koskinen/ltlcmodelchecker-benchmarks/23-windows_os_frag8.c",
+				"examples/LTL/bugs/Bug_ProcedureDNF.c",
+				"examples/LTL/rers2012/P14/Problem14_prop_025.c",
+				"examples/LTL/rers2012/P14/Problem14_prop_035.c",
+				"examples/LTL/rers2012/P14/Problem14_prop_049.c", 
 		};
 		// @formatter:on
 		// return super.getDirectories();
@@ -69,7 +85,8 @@ public class LTLChecker extends AbstractEvaluationTestSuite {
 
 	@Override
 	protected int getTimeout() {
-		return 30 * 60 * 1000;
+		return 60 * 1000;
+//		return 30 * 60 * 1000;
 	}
 
 	@Override
