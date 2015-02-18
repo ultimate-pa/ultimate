@@ -44,18 +44,34 @@ public class Svcomp_Memsafety extends
 				    new String[] {".i"},
 				    m_Timeout);
 		}
+//		if (m_AutomizerWithForwardPredicates) {
+//			addTestCases(
+//					"AutomizerC.xml",
+//					"automizer/ForwardPredicates_SvcompMemsafetyLbe.epf",
+//				    m_Directories,
+//				    new String[] {".i"},
+//				    m_Timeout);
+//		}
+//		if (m_AutomizerWithForwardPredicates) {
+//			addTestCases(
+//					"AutomizerC.xml",
+//					"automizer/ForwardPredicates_SvcompMemsafetyLbeConservative.epf",
+//				    m_Directories,
+//				    new String[] {".i"},
+//				    m_Timeout);
+//		}
 		if (m_AutomizerWithForwardPredicates) {
 			addTestCases(
-					"AutomizerC.xml",
-					"automizer/ForwardPredicates_SvcompMemsafetyLbe.epf",
+					"AutomizerCWithBlockEncoding.xml",
+					"automizer/ForwardPredicates_SvcompMemsafetySeqbe.epf",
 				    m_Directories,
 				    new String[] {".i"},
 				    m_Timeout);
 		}
 		if (m_AutomizerWithForwardPredicates) {
 			addTestCases(
-					"AutomizerC.xml",
-					"automizer/ForwardPredicates_SvcompMemsafetyLbeConservative.epf",
+					"AutomizerCWithBlockEncoding.xml",
+					"automizer/ForwardPredicates_SvcompMemsafetySeqbeConservative.epf",
 				    m_Directories,
 				    new String[] {".i"},
 				    m_Timeout);
