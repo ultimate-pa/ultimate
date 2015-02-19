@@ -42,6 +42,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 public class SimplifyPreprocessor extends TransitionPreProcessor {
 	private final IUltimateServiceProvider mServices;
 	
+	public static final String s_Description = "Simplify formula using SimplifyDDA";
+	
 	public SimplifyPreprocessor(IUltimateServiceProvider services) {
 		super();
 		mServices = services;
@@ -49,7 +51,7 @@ public class SimplifyPreprocessor extends TransitionPreProcessor {
 	
 	@Override
 	public String getDescription() {
-		return "Simplify formula using SimplifyDDA";
+		return s_Description;
 	}
 	
 	@Override

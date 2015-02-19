@@ -49,6 +49,9 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Dnf
 public class DNF extends TransitionPreProcessor {
 	private final IUltimateServiceProvider mServices;
 	
+	public static final String s_Description = 
+			"Transform into disjunctive normal form";
+	
 	public DNF(IUltimateServiceProvider services) {
 		super();
 		mServices = services;
@@ -56,7 +59,7 @@ public class DNF extends TransitionPreProcessor {
 	
 	@Override
 	public String getDescription() {
-		return "Transform into disjunctive normal form";
+		return s_Description;
 	}
 	
 	@Override

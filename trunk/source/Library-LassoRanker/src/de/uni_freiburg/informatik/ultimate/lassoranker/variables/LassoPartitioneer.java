@@ -59,6 +59,8 @@ import de.uni_freiburg.informatik.ultimate.util.relation.NestedMap2;
  *
  */
 public class LassoPartitioneer extends LassoPreProcessor {
+	public static final String s_Description = "LassoPartitioneer";
+	
 	private final IUltimateServiceProvider m_Services;
 	private enum Part { STEM, LOOP };
 	
@@ -321,7 +323,7 @@ public class LassoPartitioneer extends LassoPreProcessor {
 
 	@Override
 	public String getDescription() {
-		return this.getClass().getSimpleName();
+		return s_Description;
 	}
 
 }

@@ -42,9 +42,12 @@ import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
  */
 public class RewriteEquality extends TransformerPreProcessor {
 	
+	public static final String s_Description = 
+			"Replaces atoms of the form a = b with (a <= b /\\ a >= b)";
+	
 	@Override
 	public String getDescription() {
-		return "Replaces atoms of the form a = b with (a <= b /\\ a >= b)";
+		return s_Description;
 	}
 	
 	@Override

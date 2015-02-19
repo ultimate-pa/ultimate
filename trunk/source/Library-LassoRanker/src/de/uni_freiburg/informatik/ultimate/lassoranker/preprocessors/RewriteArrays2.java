@@ -60,6 +60,9 @@ public class RewriteArrays2 extends LassoPreProcessor {
 
 	private final Logger mLogger;
 	private final IUltimateServiceProvider mServices;
+	
+	public static final String s_Description = 
+			"Removes arrays by introducing new variables for each relevant array cell";
 
 	static final String s_AuxArray = "auxArray";
 
@@ -91,8 +94,7 @@ public class RewriteArrays2 extends LassoPreProcessor {
 
 	@Override
 	public String getDescription() {
-		return "Removes arrays by introducing new variables for each "
-				+ "relevant array cell";
+		return s_Description;
 	}
 
 	@Override

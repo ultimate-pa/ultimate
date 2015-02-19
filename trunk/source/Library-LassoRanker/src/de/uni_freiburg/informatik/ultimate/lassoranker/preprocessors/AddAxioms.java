@@ -39,6 +39,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Util;
  * @author Jan Leike
  */
 public class AddAxioms extends TransitionPreProcessor {
+	public static final String s_Description = "Add axioms to the transition";
+
 	
 	private final Term[] m_axioms;
 	
@@ -64,6 +66,6 @@ public class AddAxioms extends TransitionPreProcessor {
 	
 	@Override
 	public String getDescription() {
-		return "Add axioms to the transition";
+		return s_Description;
 	}
 }

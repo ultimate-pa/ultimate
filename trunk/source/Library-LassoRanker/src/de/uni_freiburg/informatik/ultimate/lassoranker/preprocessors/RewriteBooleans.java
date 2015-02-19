@@ -51,6 +51,8 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
  * @author Jan Leike, Matthias Heizmann
  */
 public class RewriteBooleans extends TransformerPreProcessor {
+	public static final String s_Description = "Replace boolean variables by integer variables";
+	
 	private static final String s_repInPostfix  = "_in_bool";
 	private static final String s_repOutPostfix = "_out_bool";
 	private static final String s_repVarSortName = "Int"; // FIXME: this should depend on the logic
@@ -149,7 +151,7 @@ public class RewriteBooleans extends TransformerPreProcessor {
 	
 	@Override
 	public String getDescription() {
-		return "Replace boolean variables by integer variables";
+		return s_Description;
 	}
 	
 	@Override

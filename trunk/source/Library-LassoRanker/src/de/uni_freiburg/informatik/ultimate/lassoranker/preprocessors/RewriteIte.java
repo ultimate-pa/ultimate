@@ -41,9 +41,11 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.IteRemover;
  * @author Matthias Heizmann, Jan Leike
  */
 public class RewriteIte extends TransitionPreProcessor {
+	public static final String s_Description = "Remove if-then-else terms.";
+	
 	@Override
 	public String getDescription() {
-		return "Remove if-then-else terms.";
+		return s_Description;
 	}
 	
 	@Override

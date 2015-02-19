@@ -46,6 +46,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.VariableMana
  * unsound for the inductiveness property.
  */
 public class MatchInVars extends TransitionPreProcessor {
+	public static final String s_Description = 
+			"Add a corresponding inVar for all outVars";
 
 	/**
 	 * Factory for construction of auxVars.
@@ -59,7 +61,7 @@ public class MatchInVars extends TransitionPreProcessor {
 
 	@Override
 	public String getDescription() {
-		return "Add a corresponding inVar for all outVars";
+		return s_Description;
 	}
 	
 	@Override
