@@ -31,6 +31,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.TreeSet;
 
 import de.uni_freiburg.informatik.ultimate.lassoranker.Lasso;
 import de.uni_freiburg.informatik.ultimate.lassoranker.LinearTransition;
@@ -41,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
 
 
 /**
@@ -360,4 +362,26 @@ public class LassoBuilder {
 		LinearTransition loop = LinearTransition.fromTransFormulaLR(loopTF);
 		return new Lasso(stem, loop);
 	}
+
+	public static int computeMaxDagSize(Collection<TransFormulaLR> components) {
+		TreeSet<Integer> sizes = new TreeSet<>();
+		for (TransFormulaLR tflr : components) {
+			int dagSize = (new DAGSize()).size(tflr.getFormula());
+			sizes.add(dagSize);
+		}
+		if (sizes.isEmpty()) {
+			return 0;
+		} else {
+			return sizes.descendingIterator().next();
+		}
+	}
+	
+	public int computeMaxDagSizeStem() {
+		return computeMaxDagSize(m_stem_components_t);
+	}
+	
+	public int computeMaxDagSizeLoop() {
+		return computeMaxDagSize(m_loop_components_t);
+	}
+
 }

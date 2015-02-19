@@ -33,7 +33,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.TreeSet;
 
 import org.apache.log4j.Logger;
 
@@ -49,7 +48,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.NonTheorySymbol;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Cnf;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
 import de.uni_freiburg.informatik.ultimate.util.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.UnionFind;
 import de.uni_freiburg.informatik.ultimate.util.relation.NestedMap2;
@@ -190,10 +188,10 @@ public class LassoPartitioneer extends LassoPreProcessor {
 				+ " Stem components after: " + m_NewStem.size()
 				+ " Loop components after: " + m_NewLoop.size();
 		m_Logger.info(messageC);
-		String messageS = "Stem maxDagSize before: " + computeMaxDagSize(stem_components)
-				+ " Loop maxDagSize before: " + computeMaxDagSize(loop_components)
-				+ " Stem maxDagSize after: " + computeMaxDagSize(m_NewStem)
-				+ " Loop maxDagSize after: " + computeMaxDagSize(m_NewLoop);
+		String messageS = "Stem maxDagSize before: " + LassoBuilder.computeMaxDagSize(stem_components)
+				+ " Loop maxDagSize before: " + LassoBuilder.computeMaxDagSize(loop_components)
+				+ " Stem maxDagSize after: " + LassoBuilder.computeMaxDagSize(m_NewStem)
+				+ " Loop maxDagSize after: " + LassoBuilder.computeMaxDagSize(m_NewLoop);
 		m_Logger.info(messageS);
 
 		if (!m_DryRun) {
@@ -204,20 +202,6 @@ public class LassoPartitioneer extends LassoPreProcessor {
 		}
 	}
 	
-	private static int computeMaxDagSize(Collection<TransFormulaLR> components) {
-		TreeSet<Integer> sizes = new TreeSet<>();
-		for (TransFormulaLR tflr : components) {
-			int dagSize = (new DAGSize()).size(tflr.getFormula());
-			sizes.add(dagSize);
-		}
-		if (sizes.isEmpty()) {
-			return 0;
-		} else {
-			return sizes.descendingIterator().next();
-		}
-	}
-
-
 	private TransFormulaLR constructTransFormulaLR(
 			Part part, Set<Term> equivalentConjuncts, Set<NonTheorySymbol<?>> equivalentVariablesWithoutConjunct) {
 		TransFormulaLR transformulaLR;

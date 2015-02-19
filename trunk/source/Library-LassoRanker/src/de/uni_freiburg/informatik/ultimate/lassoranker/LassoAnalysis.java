@@ -28,7 +28,9 @@ package de.uni_freiburg.informatik.ultimate.lassoranker;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import org.apache.log4j.Logger;
@@ -132,6 +134,11 @@ public class LassoAnalysis {
 	 * Includes e.g., the number  of Motzkin's Theorem applications.
 	 */
 	private TerminationAnalysisBenchmark m_LassoTerminationAnalysisBenchmark;
+	
+	/**
+	 * Benchmark data from the preprocessing of the lasso.
+	 */
+	private PreprocessingBenchmark m_PreprocessingBenchmark;
 
 	/**
 	 * Constructor for the LassoRanker interface. Calling this invokes the
@@ -231,11 +238,18 @@ public class LassoAnalysis {
 		LassoBuilder lassoBuilder = new LassoBuilder(m_old_script, m_Boogie2SMT,
 				m_stem_transition, m_loop_transition);
 		assert lassoBuilder.isSane();
+		m_PreprocessingBenchmark = new PreprocessingBenchmark(
+				lassoBuilder.computeMaxDagSizeStem(), 
+				lassoBuilder.computeMaxDagSizeLoop());
 		// Apply preprocessors
 		for (LassoPreProcessor preprocessor : this.getPreProcessors(lassoBuilder,
 				m_preferences.overapproximateArrayIndexConnection)) {
 			mLogger.debug(preprocessor.getDescription());
 			preprocessor.process(lassoBuilder);
+			m_PreprocessingBenchmark.addPreprocessingData(
+					preprocessor.getDescription(), 
+					lassoBuilder.computeMaxDagSizeStem(), 
+					lassoBuilder.computeMaxDagSizeLoop());
 		}
 		
 		assert lassoBuilder.isSane();
@@ -318,6 +332,10 @@ public class LassoAnalysis {
 	
 	public TerminationAnalysisBenchmark getTerminationAnalysisBenchmark() {
 		return m_LassoTerminationAnalysisBenchmark;
+	}
+	
+	public PreprocessingBenchmark getPreprocessingBenchmark() {
+		return m_PreprocessingBenchmark;
 	}
 	
 	protected String benchmarkScriptMessage(LBool constraintSat, RankingTemplate template) {
@@ -420,5 +438,71 @@ public class LassoAnalysis {
 		mLogger.debug(benchmarkScriptMessage(constraintSat, template));
 		tas.close();
 		return (constraintSat == LBool.SAT) ? tas.getArgument() : null;
+	}
+	
+	public class PreprocessingBenchmark {
+		private final int m_IntialMaxDagSizeStem;
+		private final int m_IntialMaxDagSizeLoop;
+		private final List<String> m_Preprocessors = new ArrayList<>();
+		private final List<Integer> m_MaxDagSizeStemAbsolut = new ArrayList<Integer>();
+		private final List<Integer> m_MaxDagSizeLoopAbsolut = new ArrayList<Integer>();;
+		private final List<Float> m_MaxDagSizeStemRelative = new ArrayList<Float>();
+		private final List<Float> m_MaxDagSizeLoopRelative = new ArrayList<Float>();
+		public PreprocessingBenchmark(int intialMaxDagSizeStem, int intialMaxDagSizeLoop) {
+			super();
+			m_IntialMaxDagSizeStem = intialMaxDagSizeStem;
+			m_IntialMaxDagSizeLoop = intialMaxDagSizeLoop;
+		}
+		public void addPreprocessingData(String description,
+				int computeMaxDagSizeStem, int computeMaxDagSizeLoop) {
+			m_Preprocessors.add(description);
+			m_MaxDagSizeStemAbsolut.add(computeMaxDagSizeStem);
+			m_MaxDagSizeLoopAbsolut.add(computeMaxDagSizeLoop);
+			m_MaxDagSizeStemRelative.add(computeQuotiontOfLastTwoEntries(
+					m_MaxDagSizeStemAbsolut, m_IntialMaxDagSizeStem));
+			m_MaxDagSizeLoopRelative.add(computeQuotiontOfLastTwoEntries(
+					m_MaxDagSizeLoopAbsolut, m_IntialMaxDagSizeLoop));
+			
+		}
+		
+		public float computeQuotiontOfLastTwoEntries(List<Integer> list, int initialValue) {
+			int lastEntry;
+			int secondLastEntry;
+			if (list.size() == 0) {
+				throw new IllegalArgumentException();
+			} else {
+				lastEntry = list.get(list.size() - 1);
+				if (list.size() == 1) {
+					secondLastEntry = initialValue; 
+				} else {
+					secondLastEntry = list.get(list.size() - 2);
+				}
+			}
+			return ((float) lastEntry) / ((float) secondLastEntry);
+		}
+		public int getIntialMaxDagSizeStem() {
+			return m_IntialMaxDagSizeStem;
+		}
+		public int getIntialMaxDagSizeLoop() {
+			return m_IntialMaxDagSizeLoop;
+		}
+		public List<String> getPreprocessors() {
+			return m_Preprocessors;
+		}
+		public List<Float> getMaxDagSizeStemRelative() {
+			return m_MaxDagSizeStemRelative;
+		}
+		public List<Float> getMaxDagSizeLoopRelative() {
+			return m_MaxDagSizeLoopRelative;
+		}
+		
+		
+		public String pp(List<PreprocessingBenchmark> benchmarks) {
+			int numberSteps = 0;
+			return null;
+			
+		}
+		
+
 	}
 }
