@@ -20,7 +20,7 @@ import de.uni_freiburg.informatik.ultimatetest.evals.ColumnDefinition.Aggregate;
  * @author dietsch@informatik.uni-freiburg.de
  * 
  */
-public class LatexOverviewSummary extends BaseCsvProviderSummary {
+public class LatexOverviewSummary extends LatexSummary {
 
 	private final int mLatexTableHeaderCount;
 
@@ -173,26 +173,20 @@ public class LatexOverviewSummary extends BaseCsvProviderSummary {
 	private void makeTableBody(StringBuilder sb, PartitionedResults results, String toolname) {
 		// make header
 
-		Set<String> folders = CoreUtil.selectDistinct(results.All, new IMyReduce<String>() {
-			@Override
-			public String reduce(Entry<UltimateRunDefinition, ExtendedResult> entry) {
-				return entry.getKey().getInput().getParentFile().getName();
-			}
-		});
+		Set<String> distinctSuffixes = getDistinctFolderSuffixes(results);
 
 		int i = 0;
-		for (final String folder : folders) {
+		for (final String suffix : distinctSuffixes) {
 			PartitionedResults resultsPerFolder = partitionResults(CoreUtil.where(results.All,
 					new ITestSummaryResultPredicate() {
 						@Override
 						public boolean check(Entry<UltimateRunDefinition, ExtendedResult> entry) {
-							return entry.getKey().getInput().getParentFile().getName().equals(folder);
+							return entry.getKey().getInput().getParent().endsWith(suffix);
 						}
 					}));
 			i++;
-			makeFolderRow(sb, resultsPerFolder, folder, i >= folders.size());
+			makeFolderRow(sb, resultsPerFolder, suffix, i >= distinctSuffixes.size());
 		}
-
 	}
 
 	private void makeFolderRow(StringBuilder sb, PartitionedResults results, String folder, boolean last) {
@@ -210,7 +204,7 @@ public class LatexOverviewSummary extends BaseCsvProviderSummary {
 		sb.append("\\multirow{");
 		sb.append(variants.size() * resultRows);
 		sb.append("}{*}{\\folder{");
-		sb.append(folder);
+		sb.append(removeInvalidCharsForLatex(folder));
 		sb.append("}} &").append(br);
 
 		// count expected unsafe & row header unsafe
@@ -376,13 +370,5 @@ public class LatexOverviewSummary extends BaseCsvProviderSummary {
 		}
 		sb.append("\\\\");
 		sb.append(br);
-	}
-
-	private boolean isInvalidForLatex(String cell) {
-		return cell == null || cell.contains("[");
-	}
-
-	private String removeInvalidCharsForLatex(String cell) {
-		return cell.replace("_", "\\_");
 	}
 }

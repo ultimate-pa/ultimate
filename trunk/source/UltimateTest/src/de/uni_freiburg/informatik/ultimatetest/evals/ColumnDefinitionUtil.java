@@ -14,6 +14,7 @@ import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProvider;
 import de.uni_freiburg.informatik.ultimate.util.csv.SimpleCsvProvider;
 import de.uni_freiburg.informatik.ultimatetest.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimatetest.evals.ColumnDefinition.Aggregate;
+import de.uni_freiburg.informatik.ultimatetest.util.Util;
 
 /**
  * 
@@ -221,7 +222,7 @@ public class ColumnDefinitionUtil {
 		int rows = provider.getRowHeaders().size();
 		for (int i = 0; i < rows; i++) {
 			List<String> resultRow = new ArrayList<>();
-			resultRow.add(urd.getInput().getParentFile().getName());
+			resultRow.add(Util.removeTrunkExamplesPrefix(urd.getInput().getParent()));
 			resultRow.add(urd.getInput().getName());
 			resultRow.add(urd.getSettings().getName());
 			resultRow.add(urd.getToolchain().getName());

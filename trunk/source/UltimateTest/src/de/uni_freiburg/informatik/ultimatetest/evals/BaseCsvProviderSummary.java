@@ -40,9 +40,9 @@ public abstract class BaseCsvProviderSummary extends NewTestSummary {
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public void addResult(UltimateRunDefinition urd, TestResult threeValuedResult, String category, String message,
+	public void addResult(UltimateRunDefinition urd, TestResult threeValuedResult, String resultCategory, String message,
 			String testname, IResultService resultService) {
-		super.addResult(urd, threeValuedResult, category, message, testname, resultService);
+		super.addResult(urd, threeValuedResult, resultCategory, message, testname, resultService);
 		if (resultService == null) {
 			return;
 		}
@@ -63,16 +63,16 @@ public abstract class BaseCsvProviderSummary extends NewTestSummary {
 	}
 
 	protected ICsvProvider<String> makePrintCsvProviderFromResults(
-			Collection<Entry<UltimateRunDefinition, ExtendedResult>> goodResults,
+			Collection<Entry<UltimateRunDefinition, ExtendedResult>> results,
 			List<ColumnDefinition> columnDefinitions) {
 		ICsvProvider<String> current = new SimpleCsvProvider<>(new ArrayList<String>());
-		for (Entry<UltimateRunDefinition, ExtendedResult> entry : goodResults) {
+		for (Entry<UltimateRunDefinition, ExtendedResult> entry : results) {
 			ICsvProvider<?> provider = mCsvProvider.get(entry.getKey());
 			if (provider == null) {
 				continue;
 			}
 			current = CsvUtils.concatenateRows(current, ColumnDefinitionUtil.preparePrintProvider(provider,
-					entry.getKey(), entry.getValue().Message, mColumnDefinitions));
+					entry.getKey(), entry.getValue().Message, columnDefinitions));
 		}
 		return current;
 	}

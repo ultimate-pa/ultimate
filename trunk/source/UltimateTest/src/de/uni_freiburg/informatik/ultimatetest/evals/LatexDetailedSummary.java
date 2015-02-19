@@ -22,7 +22,7 @@ import de.uni_freiburg.informatik.ultimatetest.evals.ColumnDefinition.Aggregate;
  * @author dietsch@informatik.uni-freiburg.de
  * 
  */
-public class LatexDetailedSummary extends BaseCsvProviderSummary {
+public class LatexDetailedSummary extends LatexSummary {
 
 	private final int mLatexTableHeaderCount;
 
@@ -125,7 +125,8 @@ public class LatexDetailedSummary extends BaseCsvProviderSummary {
 
 			// end table
 			sb.append("\\end{tabu}}").append(br);
-			sb.append("\\caption{Results for ").append(removeInvalidCharsForLatex(tool)).append(".}").append(br);
+			sb.append("\\caption{Results for ").append(removeInvalidCharsForLatex(tool)).append(".}")
+					.append(br);
 			sb.append("\\end{table}").append(br);
 		}
 		// append finishing code
@@ -160,24 +161,19 @@ public class LatexDetailedSummary extends BaseCsvProviderSummary {
 	}
 
 	private void makeTableBody(StringBuilder sb, PartitionedResults results, String toolname, int additionalTableHeaders) {
-		Set<String> folders = CoreUtil.selectDistinct(results.All, new IMyReduce<String>() {
-			@Override
-			public String reduce(Entry<UltimateRunDefinition, ExtendedResult> entry) {
-				return entry.getKey().getInput().getParentFile().getName();
-			}
-		});
+		Set<String> distinctSuffixes = getDistinctFolderSuffixes(results);
 
 		int i = 0;
-		for (final String folder : folders) {
+		for (final String suffix : distinctSuffixes) {
 			PartitionedResults resultsPerFolder = partitionResults(CoreUtil.where(results.All,
 					new ITestSummaryResultPredicate() {
 						@Override
 						public boolean check(Entry<UltimateRunDefinition, ExtendedResult> entry) {
-							return entry.getKey().getInput().getParentFile().getName().equals(folder);
+							return entry.getKey().getInput().getParent().endsWith(suffix);
 						}
 					}));
 			i++;
-			makeFolderRow(sb, resultsPerFolder, folder, i >= folders.size(), additionalTableHeaders);
+			makeFolderRow(sb, resultsPerFolder, suffix, i >= distinctSuffixes.size(), additionalTableHeaders);
 		}
 	}
 
@@ -203,7 +199,7 @@ public class LatexDetailedSummary extends BaseCsvProviderSummary {
 		sb.append("\\multirow{");
 		sb.append(folderRows);
 		sb.append("}{*}{\\folder{");
-		sb.append(folder);
+		sb.append(removeInvalidCharsForLatex(folder));
 		sb.append("}}").append(br);
 
 		// row header unsafe
@@ -380,13 +376,5 @@ public class LatexDetailedSummary extends BaseCsvProviderSummary {
 			sb.append("\\\\");
 			sb.append(br);
 		}
-	}
-
-	private boolean isInvalidForLatex(String cell) {
-		return cell == null || cell.contains("[");
-	}
-
-	private String removeInvalidCharsForLatex(String cell) {
-		return cell.replace("_", "\\_");
 	}
 }
