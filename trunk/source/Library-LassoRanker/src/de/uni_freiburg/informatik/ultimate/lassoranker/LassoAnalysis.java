@@ -246,10 +246,18 @@ public class LassoAnalysis {
 				m_preferences.overapproximateArrayIndexConnection)) {
 			mLogger.debug(preprocessor.getDescription());
 			preprocessor.process(lassoBuilder);
-			m_PreprocessingBenchmark.addPreprocessingData(
-					preprocessor.getDescription(), 
-					lassoBuilder.computeMaxDagSizeStem(), 
-					lassoBuilder.computeMaxDagSizeLoop());
+			if (preprocessor instanceof LassoPartitioneer) {
+				LassoPartitioneer lp = (LassoPartitioneer) preprocessor;
+				m_PreprocessingBenchmark.addPreprocessingData(
+						preprocessor.getDescription(), 
+						lp.maxDagSizeNewStem(), 
+						lp.maxDagSizeNewLoop());
+			} else {
+				m_PreprocessingBenchmark.addPreprocessingData(
+						preprocessor.getDescription(), 
+						lassoBuilder.computeMaxDagSizeStem(), 
+						lassoBuilder.computeMaxDagSizeLoop());
+			}
 		}
 		
 		assert lassoBuilder.isSane();
