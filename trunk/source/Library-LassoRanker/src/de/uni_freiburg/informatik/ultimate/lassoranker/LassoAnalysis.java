@@ -440,7 +440,7 @@ public class LassoAnalysis {
 		return (constraintSat == LBool.SAT) ? tas.getArgument() : null;
 	}
 	
-	public class PreprocessingBenchmark {
+	public static class PreprocessingBenchmark {
 		private final int m_IntialMaxDagSizeStem;
 		private final int m_IntialMaxDagSizeLoop;
 		private final List<String> m_Preprocessors = new ArrayList<>();
@@ -497,10 +497,105 @@ public class LassoAnalysis {
 		}
 		
 		
-		public String pp(List<PreprocessingBenchmark> benchmarks) {
-			int numberSteps = 0;
-			return null;
-			
+		public static String prettyprint(List<PreprocessingBenchmark> benchmarks) {
+			if (benchmarks.isEmpty()) {
+				return "";
+			}
+			List<String> preprocessors = benchmarks.get(0).getPreprocessors();
+			List<String> preprocessorAbbreviations = computeAbbrev(preprocessors);
+			float[] stemData = new float[preprocessors.size()];
+			float[] loopData = new float[preprocessors.size()];
+			int stemAverageInitial = 0;
+			int loopAverageInitial = 0;
+			for (PreprocessingBenchmark pb : benchmarks) {
+				addListElements(stemData, pb.getMaxDagSizeStemRelative());
+				addListElements(loopData, pb.getMaxDagSizeLoopRelative());
+				stemAverageInitial += pb.getIntialMaxDagSizeStem();
+				loopAverageInitial += pb.getIntialMaxDagSizeLoop();
+			}
+			divideAllEntries(stemData, benchmarks.size());
+			divideAllEntries(loopData, benchmarks.size());
+			stemAverageInitial /= benchmarks.size();
+			loopAverageInitial /= benchmarks.size();
+			StringBuilder sb = new StringBuilder();
+			sb.append("Stem: ");
+			sb.append("inital");
+			sb.append(stemAverageInitial);
+			sb.append(" ");
+			sb.append(ppOne(stemData, preprocessorAbbreviations));
+			sb.append("  ");
+			sb.append("Loop: ");
+			sb.append("inital");
+			sb.append(loopAverageInitial);
+			sb.append(" ");
+			sb.append(ppOne(loopData, preprocessorAbbreviations));
+			return sb.toString();
+		}
+		
+		private static List<String> computeAbbrev(List<String> preprocessors) {
+			List<String> result = new ArrayList<>();
+			for (String description : preprocessors) {
+				result.add(computeAbbrev(description));
+			}
+			return result;
+		}
+		
+		private static String computeAbbrev(String ppId) {
+			switch (ppId) {
+			case DNF.s_Description:
+				return "dnf";
+			case SimplifyPreprocessor.s_Description:
+				return "smp";
+			case RewriteArrays2.s_Description:
+				return "arr";
+			case RewriteEquality.s_Description:
+				return "eq";
+			case RewriteStrictInequalities.s_Description:
+				return "sie";
+			case LassoPartitioneer.s_Description:
+				return "lsp";
+			case RemoveNegation.s_Description:
+				return "neg";
+			case RewriteDivision.s_Description:
+				return "div";
+			case RewriteBooleans.s_Description:
+				return "bol";
+			case MatchInVars.s_Description:
+				return "miv";
+			case RewriteTrueFalse.s_Description:
+				return "tf";
+			case RewriteIte.s_Description:
+				return "ite";
+			case AddAxioms.s_Description:
+				return "ax";
+			default:
+				return "ukn";
+			}
+		}
+		private static String ppOne(float[] relativeEqualizedData, List<String> preprocessorAbbreviations) {
+			StringBuilder sb = new StringBuilder();
+			for (int i=0; i<relativeEqualizedData.length; i++) {
+				sb.append(preprocessorAbbreviations.get(i));
+				sb.append(String.valueOf(makePercent(relativeEqualizedData[i])));
+				sb.append(" ");
+			}
+			return sb.toString();
+		}
+		
+		private static int makePercent(float f) {
+			return (int) Math.floor(f * 100);
+		}
+		private static void addListElements(float[] modifiedArray, List<Float> incrementList) {
+			assert modifiedArray.length == incrementList.size();
+			for (int i=0; i<modifiedArray.length; i++) {
+				modifiedArray[i] += incrementList.get(i);
+			}
+		}
+		
+		private static void divideAllEntries(float[] modifiedArray, int divisor) {
+			for (int i=0; i<modifiedArray.length; i++) {
+				modifiedArray[i] /= (float) divisor;
+			}
 		}
 		
 
