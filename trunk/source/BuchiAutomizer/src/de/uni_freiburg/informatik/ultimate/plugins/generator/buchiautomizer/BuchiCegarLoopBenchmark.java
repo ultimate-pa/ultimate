@@ -5,9 +5,11 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.lassoranker.LassoAnalysis.PreprocessingBenchmark;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BuchiCegarLoop.Result;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopBenchmarkType;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CoverageAnalysis.BackwardCoveringInformation;
@@ -174,6 +176,10 @@ public class BuchiCegarLoopBenchmark extends CegarLoopBenchmarkType implements I
 		LassoAnalysisResults lar = 
 				(LassoAnalysisResults) benchmarkData.getValue(s_LassoAnalysisResults);
 		sb.append(lar.toString());
+		
+		sb.append(s_LassoPreprocessingBenchmarks);
+		List<PreprocessingBenchmark> ppbench = (List<PreprocessingBenchmark>) benchmarkData.getValue(s_LassoPreprocessingBenchmarks);
+		sb.append(PreprocessingBenchmark.prettyprint(ppbench));
 		return sb.toString();
 	}
 	
