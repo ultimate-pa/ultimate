@@ -316,6 +316,7 @@ public class LassoAnalysis {
 				new StemAndLoopPreProcessor(new RewriteBooleans(lassoBuilder.getReplacementVarFactory(), lassoBuilder.getScript())),
 				new StemAndLoopPreProcessor(new RewriteIte()),
 				new StemAndLoopPreProcessor(new RewriteEquality()),
+				new StemAndLoopPreProcessor(new SimplifyPreprocessor(mServices)),
 				new StemAndLoopPreProcessor(new DNF(mServices)),
 				new StemAndLoopPreProcessor(new SimplifyPreprocessor(mServices)),
 				new StemAndLoopPreProcessor(new RewriteTrueFalse()),
