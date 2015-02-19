@@ -325,5 +325,14 @@ public class LassoPartitioneer extends LassoPreProcessor {
 	public String getDescription() {
 		return s_Description;
 	}
+	
+	public int maxDagSizeNewStem() {
+		return LassoBuilder.computeMaxDagSize(m_NewStem);
+	}
+	
+	public int maxDagSizeNewLoop() {
+		return LassoBuilder.computeMaxDagSize(m_NewLoop);
+	}
+
 
 }
