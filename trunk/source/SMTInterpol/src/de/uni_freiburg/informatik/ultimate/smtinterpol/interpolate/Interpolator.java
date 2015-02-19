@@ -869,7 +869,7 @@ public class Interpolator {
 				for (Entry<LinVar, BigInteger> en : lv.getLinTerm().entrySet()) {
 					LinVar var = en.getKey();
 					Occurrence occ = 
-						mSymbolPartition.get(en.getKey().getSharedTerm());
+						getOccurrence(en.getKey().getSharedTerm());
 					if (occ.isALocal(part)) {
 						Rational coeff = 
 								Rational.valueOf(en.getValue(), BigInteger.ONE);

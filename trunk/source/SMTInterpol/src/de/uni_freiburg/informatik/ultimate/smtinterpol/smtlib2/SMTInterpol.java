@@ -1893,4 +1893,14 @@ public class SMTInterpol extends NoopScript {
 		}
 		return mTimer;
 	}
+
+	@Override
+	public void exit() {
+		if (mTimer != null) {
+			mTimer.cancel();
+			mTimer = null;
+		}
+		super.exit();
+	}
+
 }

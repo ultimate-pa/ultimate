@@ -24,6 +24,7 @@ import java.util.HashMap;
 import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
+import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.linar.MutableAffinTerm;
@@ -36,24 +37,93 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.linar.LAAnnotation
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.linar.LAEquality;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.linar.LinVar;
 
+/**
+ * The Interpolator for linear arithmetic.  This computes the interpolants
+ * with the algorithm described in "Proof Tree Preserving Interpolation"
+ * in the version "newtechreport.pdf" in this repository.
+ *
+ * In particular we need to compute leaf interpolants for trichotomy
+ * <pre>a < b \/ a == b \/ a > b</pre>,
+ * for simple conflicts with Farkas coefficients, and for resolution steps.
+ * 
+ * If we have a more complex LAAnnotation we internally break it down to
+ * resolution steps on simple leaf clauses.
+ * 
+ * @author Jochen Hoenicke, Alexander Nutz
+ */
 public class LAInterpolator {
 
 	Interpolator mInterpolator;
+	/**
+	 * The annotation of the clause for which we compute an interpolant.
+	 */
 	LAAnnotation mAnnotation;
 
-	HashMap<LAAnnotation, AnnotInfo> mAuxInfos 
-	    = new HashMap<LAAnnotation, AnnotInfo>();
+	/**
+	 * A hash map mapping to each subannotation of mAnnotation the partial
+	 * interpolant and some auxiliary information.
+	 */
+	HashMap<LAAnnotation, AnnotInfo> mAuxInfos =
+			new HashMap<LAAnnotation, AnnotInfo>();
 
+	/**
+	 * This class stores partial interpolants and auxiliary information
+	 * for each sub-annotation.
+	 * 
+	 * This extends Occurence, i.e., it also knows if it is A local,
+	 * B local, or mixed in every partition.  This occurence is the 
+	 * occurence of the "proved literal" <code>mSum &lt= 0</code>. 
+	 */
 	class AnnotInfo extends Interpolator.Occurrence {
+		/**
+		 * The annotation for which the auxiliary information is stored
+		 * in this class.
+		 */
 		LAAnnotation mMyAnnotation;
 		
-		private MutableAffinTerm mSum;		
+		/**
+		 * The pseudo literal that this sub annotation proves.  Basically
+		 * a sub-annotation is a resolution proof that proves a clause
+		 * where this pseudo literal occurs positively.  It is used by its
+		 * parent annotation negatively, so there is a hidden resolution
+		 * step combining the parent annotation and the subannotation.
+		 * 
+		 * The literal is stored as a mutable affine term, i.e., the literal
+		 * is mSum &lt;= 0.  It is equivalent to
+		 * <pre>mMyAnnotation.getLinVar() &lt;= mMyAnnotation.getBound()</pre>
+		 */
+		private MutableAffinTerm mSum;
+		/**
+		 * For each partition, this stores the partial interpolant.
+		 * This is the partial interpolant of the clause this 
+		 * sub-annotation proves.
+		 */
 		Interpolant[] mInterpolants;
 
+		/**
+		 * For each partition, this stores the mixed part of mSum.
+		 * This is the sum of the A part of mSum, i.e., the A part of the
+		 * literal <code>mSum &lt;= 0</code>.  It is <code>null</null> if \
+		 * the literal is not mixed in that partition. 
+		 */
 		InterpolatorAffineTerm[] mMixedSums;
+		/**
+		 * If the literal mSum &lt;= 0 is mixed, this denotes the auxiliary
+		 * variable our algorithm introduces for this literal.
+		 */
 		TermVariable mAuxVar;
+		/**
+		 * This is 1, if mSum is an integer, eps otherwise.
+		 */
 		InfinitNumber mEpsilon;
 		
+		/**
+		 * The default constructor.  This computes all the necessary fields
+		 * except for the partial interpolants.  The partial interpolants
+		 * are computed by the LAAnnotation.
+		 * @param auxAnnot The annotation for which we compute partial
+		 * interpolants and auxiliary information.
+		 */
 		public AnnotInfo(LAAnnotation auxAnnot) {
 			mInterpolator.super();
 			mMyAnnotation = auxAnnot;
@@ -65,17 +135,24 @@ public class LAInterpolator {
 			}
 		}
 		
+		/**
+		 * Compute mSum and mEpsilon.
+		 */
 		private void computeSum() {
 			mSum = new MutableAffinTerm();
 			mSum.add(Rational.ONE, mMyAnnotation.getLinVar());
 			mSum.add(mMyAnnotation.getBound().negate());
 			mEpsilon = mMyAnnotation.getLinVar().getEpsilon();
 		}
+
+		/**
+		 * Compute the occurrence.
+		 */
 		private void color() {
 			boolean isFirst = true;
 			for (LinVar lv : mSum.getSummands().keySet()) {
 				Interpolator.Occurrence occ = 
-						mInterpolator.mSymbolPartition.get(lv.getSharedTerm());
+						mInterpolator.getOccurrence(lv.getSharedTerm());
 				assert (occ != null);
 				if (isFirst) {
 					mInA.or(occ.mInA);
@@ -88,17 +165,21 @@ public class LAInterpolator {
 			}
 		}
 
+		/**
+		 * Compute mMixedSums and set mAuxVar.
+		 */
 		private void computeMixedSums() {
 			BitSet shared = new BitSet();
 			shared.or(mInA);
 			shared.or(mInB);
 			if (shared.nextClearBit(0) == mInterpolator.mNumInterpolants)
 				return;
-			
+
+			Sort sort = mInterpolator.mTheory.getSort(
+					mMyAnnotation.getLinVar().isInt() ? "Int" : "Real");
 			mMixedSums = new InterpolatorAffineTerm[mInterpolator.mNumInterpolants];
 			mAuxVar = 
-				mInterpolator.mTheory.createFreshTermVariable("msaux", 
-						mSum.getSort(mInterpolator.mTheory));
+				mInterpolator.mTheory.createFreshTermVariable("msaux", sort);
 
 			for (int part = 0; part < mInterpolator.mNumInterpolants; part++) {
 				if (isMixed(part)) {
@@ -107,8 +188,7 @@ public class LAInterpolator {
 					LinVar lv = mMyAnnotation.getLinVar();
 
 					for (Entry<LinVar, BigInteger> en : lv.getLinTerm().entrySet()) {
-						Occurrence occ = 
-							mInterpolator.mSymbolPartition.get(
+						Occurrence occ = mInterpolator.getOccurrence(
 									en.getKey().getSharedTerm());
 
 						if (occ.isALocal(part)) {
@@ -118,29 +198,48 @@ public class LAInterpolator {
 						}
 					}
 					sumApart.add(Rational.MONE, mAuxVar); 
-				
+
 					mMixedSums[part] = sumApart;
 				}
 			}
 		}
-		
+
 		/**
-		 * @return
+		 * This returns the proved literal <code>sum</code>.  The proved 
+		 * literal is really <code>sum &lt;= 0</code>.  This is the literal
+		 * that occurs positively in the clause proved by this subannotation.
+		 * @return the "proved literal".
 		 */
 		private MutableAffinTerm getSum() {
 			return mSum;
-			
 		}
-		
+
+		/**
+		 * Return the A part of <code>getSum() &lt= 0</code>.  The literal
+		 * must be mixed in the partition.
+		 * @param part the partition for which to compute the A part.
+		 * @return the A part. 
+		 */
 		InterpolatorAffineTerm getMixedSum(int part) {
 			return mMixedSums[part];
 		}
 
+		/**
+		 * Return the epsilon.  This is 1 for integer constraints, eps for
+		 * rational constraints.
+		 * @return the epsilon. 
+		 */
 		public InfinitNumber getEpsilon() {
 			return mEpsilon;
 		}
 	}
 
+	/**
+	 * Create a new linear arithmetic interpolator for a root LAAnnotation.
+	 * @param interpolator  the global interpolator.
+	 * @param theoryAnnotation the annotation of a leaf clause.  This must
+	 * be a root LAAnnoation, i.e., parent must be <code>null</code>.
+	 */
 	public LAInterpolator(Interpolator interpolator,
 			LAAnnotation theoryAnnotation) {
 		mInterpolator = interpolator;
@@ -150,9 +249,10 @@ public class LAInterpolator {
 	/**
 	 * Compute the summary, aux variable and interpolants for a annotation
 	 * or sub-annotation.  This function caches the information, so that
-	 * it is only computed once.
+	 * it is only computed once.  This is where the partial interpolants
+	 * are computed.
 	 * @param auxAnnot The annotation of which the information should be
-	 * 	computed.
+	 * computed.
 	 * @return An AnnotInfo containing all the information.
 	 */
 	private AnnotInfo computeAuxAnnotations(LAAnnotation auxAnnot) {
@@ -165,11 +265,17 @@ public class LAInterpolator {
 		for (int i = 0; i < mInterpolator.mNumInterpolants; i++)
 			result.mInterpolants[i] = new Interpolant();
  
+		/* Compute the partial interpolants etc. for all child annotations. */
 		for (LAAnnotation annot : auxAnnot.getAuxAnnotations().keySet())
 			computeAuxAnnotations(annot); 
+		/* Compute the partial interpolants of this annotation without
+		 * child annotations.  This is a leaf in the final resolution tree.
+		 */
 		interpolateLeaf(auxAnnot, result);
+		/* Resolve the partial interpolants with each child annotation. */
 		interpolateInnerNode(auxAnnot, result);
 
+		/* Cache the result for the future. */
 		mAuxInfos.put(auxAnnot, result);		
 		return result;
 	}
@@ -183,14 +289,21 @@ public class LAInterpolator {
 	 * not yet contain the interpolant for its own sub-annotations.
 	 * You have to call interpolateInnerNode afterwards.
 	 * 
-	 * The interpolant is computed by summing up the A-part of all
-	 * sub-annotations, literals, and the negated summary of this annotation. 
+	 * Normally, the interpolant is computed by summing up the A-part of all
+	 * sub-annotations, literals, and the negated summary of this annotation.
+	 * 
+	 * For trichotomy clauses we have to return the special trichotomy
+	 * interpolant, 
+	 * <pre>LA(x1 + x2 &lt= 0, 0, x1 + x2 &lt= 0 and
+	 *         (x1 + x2 &lt 0 or EQ(x, x1)))</pre>
+	 * in the mixed case. 
+	 *
 	 * @param auxAnnot the sub-proof that is interpolated.
 	 * @param result the normalized and rounded summary of auxAnnot.
 	 */
 	private void interpolateLeaf(LAAnnotation auxAnnot, AnnotInfo result) {
 		InterpolatorAffineTerm[] ipl =
-		        new InterpolatorAffineTerm[mInterpolator.mNumInterpolants + 1];
+				new InterpolatorAffineTerm[mInterpolator.mNumInterpolants + 1];
 		for (int part = 0; part < ipl.length; part++)
 			ipl[part] = new InterpolatorAffineTerm();
 		@SuppressWarnings("unchecked")
@@ -225,7 +338,7 @@ public class LAInterpolator {
 				if (result.isALocal(part)) {
 					ipl[part].add(coeff, result.getSum());
 					ipl[part].add(result.getEpsilon());
-				}	
+				}
 				part++;
 			}
 		}
@@ -254,7 +367,7 @@ public class LAInterpolator {
 		/* Add the A-part of the literals in this annotation.
 		 */
 		for (Entry<Literal, Rational> entry : auxAnnot.getCoefficients().entrySet()) {
-			
+
 			Literal lit = entry.getKey().negate();
 			Rational factor = entry.getValue();
 			if (lit.getAtom() instanceof BoundConstraint || lit instanceof LAEquality) {
@@ -263,7 +376,7 @@ public class LAInterpolator {
 				if (lit.getAtom() instanceof BoundConstraint) {
 					assert factor.signum() == lit.getSign();
 					BoundConstraint bc = (BoundConstraint) lit.getAtom();
-					bound =	lit.getSign() > 0 ? bc.getBound() : bc.getInverseBound();
+					bound = lit.getSign() > 0 ? bc.getBound() : bc.getInverseBound();
 					lv = bc.getVar();
 				} else  {
 					assert lit instanceof LAEquality;
@@ -281,7 +394,7 @@ public class LAInterpolator {
 						assert (info.mMixedVar != null);
 						ipl[part].add(factor, info.getAPart(part));
 						ipl[part].add(factor.negate(), info.mMixedVar);
-	
+
 						if (auxVars[part] == null)
 							auxVars[part] = new ArrayList<TermVariable>();
 						auxVars[part].add(info.mMixedVar);
@@ -316,7 +429,7 @@ public class LAInterpolator {
 		}
 		assert (ipl[ipl.length - 1].isConstant() 
 				&& InfinitNumber.ZERO.less(ipl[ipl.length - 1].getConstant()));
-		
+
 		/*
 		 * Save the interpolants computed for this leaf into the result array.
 		 */
@@ -324,6 +437,13 @@ public class LAInterpolator {
 			Rational normFactor = ipl[part].isConstant() ? Rational.ONE
 					: ipl[part].getGCD().inverse().abs();
 			ipl[part].mul(normFactor);
+			/* Round up the (negated) constant if all terms in the interpolant
+			 * are known to be integer.  This is sound since
+			 * x <= 0  is equivalent to ceil(x) <= 0.
+			 */
+			if (ipl[part].isInt())
+				ipl[part].mConstant = ipl[part].getConstant().ceil();
+
 			if (auxVars[part] != null) { // NOPMD
 				/* This is a mixed interpolant with auxiliary variables.
 				 * Prepare an LATerm that wraps the interpolant.
@@ -331,7 +451,7 @@ public class LAInterpolator {
 				InfinitNumber k;
 				Term F;
 				if (equalityInfo != null) { // NOPMD
-					/* This is a mixed trichotomy class.  This requires a
+					/* This is a mixed trichotomy clause.  This requires a
 					 * very special interpolant.
 					 */
 					assert equalityInfo.isMixed(part);
@@ -339,15 +459,16 @@ public class LAInterpolator {
 					assert normFactor == Rational.ONE;
 					InterpolatorAffineTerm less = 
 						new InterpolatorAffineTerm(ipl[part]).add(
-						        InfinitNumber.EPSILON);
+								InfinitNumber.EPSILON);
 					k = InfinitNumber.ZERO;
 					F = mInterpolator.mTheory.and(
 							ipl[part].toLeq0(mInterpolator.mTheory),
 							mInterpolator.mTheory.or(less.toLeq0(mInterpolator.mTheory),
-							        mInterpolator.mTheory.equals(
-							                equalityInfo.getMixedVar(), 
-							                auxVars[part].iterator().next())));
+								mInterpolator.mTheory.equals(
+									equalityInfo.getMixedVar(), 
+									auxVars[part].iterator().next())));
 				} else {
+					/* Just the inequalities are mixed. */
 					if (ipl[part].isInt())
 						k = InfinitNumber.ONE.negate();
 					else
@@ -363,8 +484,8 @@ public class LAInterpolator {
 					&& equalityInfo.isALocal(part) != inequalityInfo.isALocal(part)) {
 					/* special case: Nelson-Oppen conflict, a < b and b < a in
 					 * one partition, a != b in the other.
-					 * If a != b is in A, the interpolant is simply a != b
-					 * If a != b is in B, the interpolant is simply a == b
+					 * If a != b is in A, the interpolant is simply a != b.
+					 * If a != b is in B, the interpolant is simply a == b.
 					 */
 					Literal thisIpl = equalityInfo.isALocal(part) 
 						? equality.negate() : equality;
@@ -416,12 +537,17 @@ public class LAInterpolator {
 					/* Literal in A: or */
 					result.mInterpolants[part].mTerm = mInterpolator.mTheory.
 							or(result.mInterpolants[part].mTerm,
-							        subInfo.mInterpolants[part].mTerm);
+									subInfo.mInterpolants[part].mTerm);
 				}
 			}
 		}
 	}
-	
+
+	/**
+	 * Computes partial interpolants for the clause proved by the root
+	 * LAAnnotation.
+	 * @return an array containing the partial tree interpolants.
+	 */
 	public Interpolant[] computeInterpolants() {
 		AnnotInfo annotInfo = computeAuxAnnotations(mAnnotation);
 		return annotInfo.mInterpolants;
