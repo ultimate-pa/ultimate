@@ -10,6 +10,7 @@ import java.util.Map;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import de.uni_freiburg.informatik.ultimate.core.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.website.Setting.SettingType;
 
 public class UltimateExecutor {
@@ -32,30 +33,27 @@ public class UltimateExecutor {
 		File toolchainFile = null;
 
 		try {
-			String[] taskIDs = paramList.get("taskID");
-			String[] tcIDs = paramList.get("tcID");
-			String[] codes = paramList.get("code");
-			if (taskIDs.length != 1 || tcIDs.length != 1 || codes.length != 1) {
-				throw new IllegalArgumentException("Illegal arguments!");
-			}
-			String taskId = taskIDs[0];
-			String tcId = tcIDs[0];
-			String code = codes[0];
+			String taskId = getCheckedArgument(paramList, "taskID");
+			String tcId = getCheckedArgument(paramList, "tcID");
+			String code = getCheckedArgument(paramList, "code");
+
 			mLogger.logDebug("Execute ultimate for: " + taskId + ", " + tcId);
 
 			WebToolchain tc = getToolchain(taskId, tcId);
 			if (tc == null) {
-				throw new IllegalArgumentException("Invalid toolchain id: " + tcId);
+				throw new IllegalArgumentException("Invalid toolchain ID: " + tcId);
 			}
 			// Build the setting ids to be requested
 			// and put the values into the settings object
 			setUserSettings(paramList, tcId, tc);
 
 			// create temporary files to run ultimate on
-			//TODO: Ensure that the triple settings, input, toolchain has the same ID 
-			inputFile = writeTemporaryFile("codeFile", code, getFileExtension(taskId));
-			settingsFile = writeTemporaryFile("settingsFile", tc.getSettingFileContent(), ".epf");
-			toolchainFile = writeTemporaryFile("tcFile", tc.getToolchainXML(), ".xml");
+			String timestamp = CoreUtil.getCurrentDateTimeAsString();
+			inputFile = writeTemporaryFile(timestamp + "_input", code, getFileExtension(taskId));
+			settingsFile = writeTemporaryFile(timestamp + "_settings", tc.getSettingFileContent(), ".epf");
+			toolchainFile = writeTemporaryFile(timestamp + "_toolchain", tc.getToolchainXML(), ".xml");
+
+			// run ultimate
 			runUltimate(json, inputFile, settingsFile, toolchainFile);
 
 		} catch (IllegalArgumentException e) {
@@ -67,11 +65,10 @@ public class UltimateExecutor {
 			e.printStackTrace();
 			json = new JSONObject();
 			json.put("error", "Internal server error (IO)!");
-			mLogger.logDebug("There was an unexpected Exception!" + e.getMessage());
+			mLogger.logDebug("There was an IO Exception:" + e.getMessage());
 		} catch (Exception e) {
-			mLogger.logDebug("failed construct ULTIMATE run, run ULTIMATE, and present results"
-					+ System.getProperty("line.separator") + e.toString() + System.getProperty("line.separator")
-					+ e.getMessage());
+			mLogger.logDebug("There was an Exception: " + e.getClass().getSimpleName());
+			mLogger.logDebug(e.toString());
 			json.put("error", "Internal server error (Generic)!");
 		} finally {
 			postProcessTemporaryFiles(settingsFile, toolchainFile, inputFile);
@@ -80,6 +77,23 @@ public class UltimateExecutor {
 			json.put("error", "Internal server error (Unexpected behaviour)!");
 		}
 		return json;
+	}
+
+	private String getCheckedArgument(Map<String, String[]> paramList, String paramId) {
+		if (paramList == null) {
+			throw new IllegalArgumentException("No parameter were transmitted (paramList == null)");
+		}
+		String[] rtr = paramList.get(paramId);
+
+		if (rtr == null) {
+			throw new IllegalArgumentException("The parameter \"" + paramId + "\" was not supplied");
+		}
+		if (rtr.length != 1) {
+			throw new IllegalArgumentException("The parameter \"" + paramId
+					+ "\" has an unexpected length (Expected 1, but was " + rtr.length + ")");
+		}
+
+		return rtr[0];
 	}
 
 	/**
@@ -132,7 +146,6 @@ public class UltimateExecutor {
 	}
 
 	private File writeTemporaryFile(String name, String content, String fileExtension) throws IOException {
-		//TODO: Ensure that the triple settings, input, toolchain has the same ID 
 		File codeFile = File.createTempFile(name, fileExtension);
 		BufferedWriter out = new BufferedWriter(new FileWriter(codeFile));
 		out.write(content);
@@ -166,43 +179,33 @@ public class UltimateExecutor {
 		return fileExtension;
 	}
 
-	private void setUserSettings(Map<String, String[]> paramList, String tcId, WebToolchain tc) {
-		String settingPrefix = "sel_tc_" + tcId + "_";
-		for (Tool tool : tc.getTools()) {
+	private void setUserSettings(Map<String, String[]> paramList, String toolchainId, WebToolchain toolchain) {
+		for (Tool tool : toolchain.getTools()) {
 			for (Setting setting : tool.getUserChangeableSettings()) {
-				String sid = settingPrefix + tool.getHTMLId() + "_" + setting.getSettingIdentifier();
-				if (paramList.containsKey(sid)) {
-					if (setting.getType() != SettingType.DROPDOWN && paramList.get(sid).length != 1) {
-						throw new IllegalArgumentException("Setting ID not unique: " + sid);
-					}
-					switch (setting.getType()) {
-					case BOOLEAN:
-						if (!paramList.get(sid)[0].equals(setting.getSettingIdentifier())) {
-							throw new IllegalArgumentException("The checkbox value '" + paramList.get(sid)
-									+ "' is unexpected for " + sid);
-						}
-						// contained in param list means true
-						setting.setBooleanValue("true");
-						break;
-					case DROPDOWN:
-						setting.setDropDownValue(paramList.get(sid));
-						break;
-					case INTEGER:
-						setting.setIntValue(paramList.get(sid)[0]);
-						break;
-					case STRING:
-						setting.setStringValue(paramList.get(sid)[0]);
-						break;
-					default:
-
-					}
-				} else {
-					if (setting.getType().equals(SettingType.BOOLEAN)) {
-						setting.setBooleanValue("false");
-					}
+				String sid = toolchainId + "_" + setting.getSettingIdentifier();
+				if (!paramList.containsKey(sid)) {
+					continue;
 				}
-				// else default value will be used (i.e. for
-				// mandatory settings)
+
+				if (setting.getType() != SettingType.DROPDOWN && paramList.get(sid).length != 1) {
+					throw new IllegalArgumentException("Setting ID not unique: " + sid);
+				}
+				switch (setting.getType()) {
+				case BOOLEAN:
+					setting.setBooleanValue(paramList.get(sid)[0]);
+					break;
+				case DROPDOWN:
+					setting.setDropDownValue(paramList.get(sid));
+					break;
+				case INTEGER:
+					setting.setIntValue(paramList.get(sid)[0]);
+					break;
+				case STRING:
+					setting.setStringValue(paramList.get(sid)[0]);
+					break;
+				default:
+					throw new IllegalArgumentException("Setting type " + setting.getType() + " is unknown");
+				}
 			}
 		}
 	}
@@ -210,6 +213,9 @@ public class UltimateExecutor {
 	private WebToolchain getToolchain(String taskId, String tcId) {
 		// get user settings for this toolchain
 		ArrayList<WebToolchain> tcs = Tasks.getActiveToolchains().get(taskId);
+		if (tcs == null) {
+			return null;
+		}
 		WebToolchain tc = null;
 		for (WebToolchain currentTC : tcs) {
 			if (currentTC.getId().equals(tcId)) {

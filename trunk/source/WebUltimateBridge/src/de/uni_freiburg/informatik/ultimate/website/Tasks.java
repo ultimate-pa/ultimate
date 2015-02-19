@@ -6,6 +6,8 @@ package de.uni_freiburg.informatik.ultimate.website;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
+
 import de.uni_freiburg.informatik.ultimate.website.toolchains.AutomtaScriptTC;
 import de.uni_freiburg.informatik.ultimate.website.toolchains.BoogieBuchiAutomizerTC;
 import de.uni_freiburg.informatik.ultimate.website.toolchains.BoogieConcurrentTraceAbstractionTC;
@@ -27,7 +29,7 @@ public class Tasks {
 	 * that should be shown.
 	 */
 	@SuppressWarnings("rawtypes")
-	private static final Class[] actTCs =
+	private static final Class[] sActToolchains =
 						{
 							AutomtaScriptTC.class, 
 							BoogieTraceAbstractionTC.class,
@@ -41,15 +43,15 @@ public class Tasks {
 	/**
 	 * The String representations of TaskNames.
 	 */
-	private static final Map<TaskNames, String> taskString = new HashMap<Tasks.TaskNames, String>();
+	private static final Map<TaskNames, String> sTaskStrings = new HashMap<Tasks.TaskNames, String>();
 	/**
 	 * Active toolchains, listed by their task(s).
 	 */
-	private static final Map<String, ArrayList<WebToolchain>> activeToolchains = new HashMap<String, ArrayList<WebToolchain>>();
+	private static final Map<String, ArrayList<WebToolchain>> sActiveToolchains = new HashMap<String, ArrayList<WebToolchain>>();
 	/**
 	 * All generalized toolchains by their names.
 	 */
-	private static final Map<String, Worker> worker = new HashMap<String, Worker>();
+	private static final Map<String, Worker> sWorkers = new HashMap<String, Worker>();
 
 	/**
 	 * @author Markus Lindenmann
@@ -98,15 +100,15 @@ public class Tasks {
 	 */
 	private static void initTaskNames() {
 		// String should have at most 30 chars and must not be empty!
-		taskString.put(TaskNames.AUTOMATA_SCRIPT,        "Run Automata Script");
-		taskString.put(TaskNames.RunSmt2Script,          "Run Smt2Script (not yet available)");
-		taskString.put(TaskNames.VerifyBoogie, 	         "Verify Boogie");
-		taskString.put(TaskNames.VerifyC,                "Verify C");
-		taskString.put(TaskNames.TERMINATION_BOOGIE,     "Analyze Termination Boogie");
-		taskString.put(TaskNames.TERMINATION_C,          "Analyze Termination C");
-		taskString.put(TaskNames.RANK_SYNTHESIS_BOOGIE,  "Synthesize ranking function Boogie");
-		taskString.put(TaskNames.RANK_SYNTHESIS_C,       "Synthesize ranking function C");
-		taskString.put(TaskNames.VerifyConcurrentBoogie, "Verify concurrent Boogie");
+		sTaskStrings.put(TaskNames.AUTOMATA_SCRIPT,        "Run Automata Script");
+		sTaskStrings.put(TaskNames.RunSmt2Script,          "Run Smt2Script (not yet available)");
+		sTaskStrings.put(TaskNames.VerifyBoogie, 	       "Verify Boogie");
+		sTaskStrings.put(TaskNames.VerifyC,                "Verify C");
+		sTaskStrings.put(TaskNames.TERMINATION_BOOGIE,     "Analyze Termination Boogie");
+		sTaskStrings.put(TaskNames.TERMINATION_C,          "Analyze Termination C");
+		sTaskStrings.put(TaskNames.RANK_SYNTHESIS_BOOGIE,  "Synthesize ranking function Boogie");
+		sTaskStrings.put(TaskNames.RANK_SYNTHESIS_C,       "Synthesize ranking function C");
+		sTaskStrings.put(TaskNames.VerifyConcurrentBoogie, "Verify concurrent Boogie");
 	}
 	
 	/**
@@ -115,21 +117,23 @@ public class Tasks {
 	private static void initWorkers() {
 		String description, name;
 
+		System.out.println("Call of de.uni_freiburg.informatik.ultimate.website.Tasks.initWorkers() method");
+		
 		name = "Trace Abstraction";
 		description = "An implementation of trace abstraction being able to verify programs.";
 		Worker w = new Worker(name, "verify", description, null);
 		w.setLogoURL("img/tool_logo.png");
-		worker.put(w.getId(), w);
+		sWorkers.put(w.getId(), w);
 
 		name = "Concurrent Trace Abstraction";
 		description = null;
 		w = new Worker(name, "verify", description, null);
-		worker.put(w.getId(), w);
+		sWorkers.put(w.getId(), w);
 
 		name = "Büchi Automizer";
 		description = "This is a new approach for termination analysis based on Büchi automata.";
 		w = new Worker(name, "analyze", description, null);
-		worker.put(w.getId(), w);
+		sWorkers.put(w.getId(), w);
 
 		name = "Lasso Ranker";
 		description = "This is to synthesize ranking functions of lasso programs.";
@@ -138,13 +142,13 @@ public class Tasks {
 		// w.setInterfaceLayoutOrientation("vertical"); // sample for overwriting orientation setting
 		// w.setInterfaceLayoutTransitions("false"); // sample for overwriting animations setting
 		// w.setContentURL("http://localhost:8080/Website/json/lasso_ranker.json"); // sample for setting an optional url
-		worker.put(w.getId(), w);
+		sWorkers.put(w.getId(), w);
 
 		name = "Automata Script";
 		description = null;
 		w = new Worker(name, "run", description, null);
 		w.setUserInfo(""); // sample user information, being shown on Automata Script page
-		worker.put(w.getId(), w);
+		sWorkers.put(w.getId(), w);
 		
 		attachToolchainsToWorker();
 	}
@@ -155,17 +159,18 @@ public class Tasks {
 	 * @return 
 	 */
 	private static void attachToolchainsToWorker() {
+		System.out.println("Call of de.uni_freiburg.informatik.ultimate.website.Tasks.attachToolchainsToWorker() method");
 		for (Map.Entry<String, ArrayList<WebToolchain>> tcPair : getActiveToolchains().entrySet()) {
 			/*
 			tcPair.getKey();    // Taskname
 			tcPair.getValue();	// ArrayList<WebToolchain>>
 			*/
 			for (WebToolchain toolchain : tcPair.getValue()) {
-				if (!worker.containsKey(Worker.toKey(toolchain.getName()))) {
-					worker.put(Worker.toKey(toolchain.getName()), new Worker(toolchain.getName(), null, null, null));
+				if (!sWorkers.containsKey(Worker.toKey(toolchain.getName()))) {
+					sWorkers.put(Worker.toKey(toolchain.getName()), new Worker(toolchain.getName(), null, null, null));
 					System.out.println("Added " + toolchain.getName()  + " to Worker Array"); 
 				}
-				worker.get(Worker.toKey(toolchain.getName())).addToolchain(toolchain);
+				sWorkers.get(Worker.toKey(toolchain.getName())).addToolchain(toolchain);
 			}
 		}
 	}
@@ -194,10 +199,10 @@ public class Tasks {
 	 * @return a map of <code>TaskNames</code> to its String representation
 	 */
 	public static final Map<TaskNames, String> getTaskString() {
-		if (taskString.isEmpty()) {
+		if (sTaskStrings.isEmpty()) {
 			initTaskNames();
 		}
-		return taskString;
+		return sTaskStrings;
 	}
 
 	/**
@@ -206,8 +211,13 @@ public class Tasks {
 	 * @return a map of Worker name to workers
 	 */
 	public final static Map<String, Worker> getWorker() {
-		if (worker.isEmpty()) {
+		System.out.println("Call of de.uni_freiburg.informatik.ultimate.website.Tasks.getWorker() method");
+		if (sWorkers.isEmpty()) {
 			initWorkers();
+			System.out.println("Initialized workers, "+sWorkers.size()+" workers available:");
+			for(Entry<String, Worker> worker : sWorkers.entrySet()){
+				System.out.println(worker.getKey());
+			}
 		}
 
 		// sort map by key
@@ -218,7 +228,7 @@ public class Tasks {
 		for (String key : keys) { w.put(key, worker.get(key));}
 		return w;*/
 		
-		return worker;
+		return sWorkers;
 	}
 
 	/**
@@ -261,19 +271,20 @@ public class Tasks {
 	 */
 	@SuppressWarnings("unchecked")
 	public final static Map<String, ArrayList<WebToolchain>> getActiveToolchains() {
-		if (activeToolchains.isEmpty()) {
-			for (Class<WebToolchain> c : actTCs) {
+		System.out.println("Call of de.uni_freiburg.informatik.ultimate.website.Example.getActiveToolchains() method");
+		if (sActiveToolchains.isEmpty()) {
+			for (Class<WebToolchain> c : sActToolchains) {
 				WebToolchain tc;
 				try {
 					tc = (WebToolchain) c.getConstructor().newInstance(
 							(Object[]) null);
 					for (TaskNames tn : tc.getTaskName()) {
-						if (!activeToolchains.containsKey(tn.toString())) {
-							activeToolchains.put(tn.toString(),
+						if (!sActiveToolchains.containsKey(tn.toString())) {
+							sActiveToolchains.put(tn.toString(),
 									new ArrayList<WebToolchain>());
 							System.out.println("Added " + c.getCanonicalName()  + " to " +tn.toString()); 
 						}
-						activeToolchains.get(tn.toString()).add(tc);
+						sActiveToolchains.get(tn.toString()).add(tc);
 					}
 				} catch (Exception e) {
 					System.out.println("Cannot add: " + c.toString());
@@ -281,6 +292,6 @@ public class Tasks {
 				}
 			}
 		}
-		return activeToolchains;
+		return sActiveToolchains;
 	}
 }

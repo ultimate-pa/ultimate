@@ -124,7 +124,7 @@ public class Example {
 	 * @return a map of example files.
 	 */
 	public static Map<Tasks.TaskNames, ArrayList<Example>> getExamples() {
-		System.out.println("Call of getExamples method");
+		System.out.println("Call of de.uni_freiburg.informatik.ultimate.website.Example.getExamples() method");
 		if (sortedMap.isEmpty()) {
 			System.out.println("sortedMap is empty");
 			init();
