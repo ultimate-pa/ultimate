@@ -2,7 +2,9 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
+import de.uni_freiburg.informatik.ultimate.lassoranker.LassoAnalysis.PreprocessingBenchmark;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BuchiCegarLoopBenchmark.LassoAnalysisResults;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.LassoChecker.ContinueDirective;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.LassoChecker.LassoCheckResult;
@@ -18,6 +20,9 @@ public class BuchiCegarLoopBenchmarkGenerator extends CegarLoopBenchmarkGenerato
 	LassoAnalysisResults m_LassoAnalysisResults = new LassoAnalysisResults();
 	private BackwardCoveringInformation m_BciFinite = new BackwardCoveringInformation(0, 0);
 	private BackwardCoveringInformation m_BciBuchi = new BackwardCoveringInformation(0, 0);
+	
+	private final List<PreprocessingBenchmark> m_PreprocessingBenchmarks = 
+			new ArrayList<PreprocessingBenchmark>();
 	
 	@Override
 	public IBenchmarkType getBenchmarkType() {
@@ -66,6 +71,8 @@ public class BuchiCegarLoopBenchmarkGenerator extends CegarLoopBenchmarkGenerato
 			return m_BciFinite;
 		case BuchiCegarLoopBenchmark.s_InterpolantCoveringCapabilityBuchi:
 			return m_BciBuchi;
+		case BuchiCegarLoopBenchmark.s_LassoPreprocessingBenchmarks:
+			return m_PreprocessingBenchmarks;
 		default:
 			return super.getValue(key);
 		}
@@ -73,6 +80,7 @@ public class BuchiCegarLoopBenchmarkGenerator extends CegarLoopBenchmarkGenerato
 
 	public void reportLassoAnalysis(LassoChecker lassoChecker) {
 		LassoCheckResult lcr = lassoChecker.getLassoCheckResult();
+		m_PreprocessingBenchmarks.addAll(lassoChecker.getPreprocessingBenchmarks());
 		ContinueDirective cd = lcr.getContinueDirective();
 		switch (cd) {
 

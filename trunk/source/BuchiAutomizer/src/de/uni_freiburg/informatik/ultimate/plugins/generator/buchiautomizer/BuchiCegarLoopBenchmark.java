@@ -27,6 +27,7 @@ public class BuchiCegarLoopBenchmark extends CegarLoopBenchmarkType implements I
 	public static final String s_LassoAnalysisResults = "LassoAnalysisResults";
 	public static final String s_InterpolantCoveringCapabilityFinite = "InterpolantCoveringCapabilityFinite";
 	public static final String s_InterpolantCoveringCapabilityBuchi = "InterpolantCoveringCapabilityBuchi";
+	public static final String s_LassoPreprocessingBenchmarks = "LassoPreprocessingBenchmarks";
 	
 	public static BuchiCegarLoopBenchmark getInstance() {
 		return s_Instance;
@@ -42,6 +43,7 @@ public class BuchiCegarLoopBenchmark extends CegarLoopBenchmarkType implements I
 		keyList.add(s_LassoAnalysisResults);
 		keyList.add(s_InterpolantCoveringCapabilityFinite);
 		keyList.add(s_InterpolantCoveringCapabilityBuchi);
+		keyList.add(s_LassoPreprocessingBenchmarks);
 		return keyList;
 	}
 	
@@ -82,6 +84,8 @@ public class BuchiCegarLoopBenchmark extends CegarLoopBenchmarkType implements I
 			BackwardCoveringInformation bci1 = (BackwardCoveringInformation) value1;
 			BackwardCoveringInformation bci2 = (BackwardCoveringInformation) value2;
 			return new BackwardCoveringInformation(bci1, bci2);
+		case s_LassoPreprocessingBenchmarks:
+			throw new AssertionError("not yet implemented");
 		default:
 			return super.aggregate(key, value1, value2);
 		}
