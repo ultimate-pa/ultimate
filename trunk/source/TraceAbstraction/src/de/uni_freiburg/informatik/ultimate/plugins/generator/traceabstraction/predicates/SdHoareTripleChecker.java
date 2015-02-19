@@ -161,8 +161,19 @@ public class SdHoareTripleChecker implements IHoareTripleChecker {
 			} else {			
 				general = sdec(preLin, preHier, cb, succ);
 			}
-			if (general == Validity.INVALID) {
-				return Validity.INVALID;
+			if (general != null) {
+				switch (general) {
+				case INVALID:
+					return Validity.INVALID;
+				case NOT_CHECKED:
+					throw new AssertionError("unchecked predicate");
+				case UNKNOWN:
+					throw new AssertionError("this case should have been filtered out before");
+				case VALID:
+					return Validity.VALID;
+				default:
+					throw new AssertionError("unknown case");
+				}
 			}
 			return Validity.UNKNOWN;
 		}
