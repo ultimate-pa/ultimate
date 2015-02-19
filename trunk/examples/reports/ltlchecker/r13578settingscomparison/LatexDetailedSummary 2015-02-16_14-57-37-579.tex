@@ -1,5 +1,5 @@
-\documentclass[a4paper]{article}
-\usepackage[a4paper, margin=1.5cm, top=1.1cm]{geometry}
+\documentclass[a2paper,landscape]{article}
+\usepackage[a2paper, margin=1.5cm, top=1.1cm]{geometry}
 \usepackage[table]{xcolor} 
 \usepackage[utf8]{inputenc}
 \usepackage{amsmath,amssymb}
@@ -15,10 +15,8 @@
 \newcommand{\headcolor}{}
 \newcommand{\header}[1]{\parbox{2.8em}{\centering #1}\headcolor}
 \newcommand{\folder}[1]{\parbox{5em}{#1}}
-\begin{table}
-\centering
-\resizebox{\linewidth}{!}{%
-\begin{tabu} to \linewidth {llllrrrrrrrrrrrrrrrrrrrrr}
+
+\begin{longtabu} to \linewidth {llllrrrrrrrrrrrrrrrrrrrrr}
 \toprule
   \header{}& 
   \header{Result}&
@@ -554,7 +552,7 @@
  &  &  &  &  &  &  &  &  &  &  &  &  &  &  &  &  &  &  &  &  &  &  & \\
 \bottomrule
 & & & & & & & & & & & & & & & & & & & & & & & & \\
-\end{tabu}}
 \caption{Results for LTLAutomizerC.xml.}
-\end{table}
+\end{longtabu}
+
 \end{document}
