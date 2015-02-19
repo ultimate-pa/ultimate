@@ -20,6 +20,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lassoranker.AnalysisType;
 import de.uni_freiburg.informatik.ultimate.lassoranker.LassoAnalysis;
+import de.uni_freiburg.informatik.ultimate.lassoranker.LassoAnalysis.PreprocessingBenchmark;
 import de.uni_freiburg.informatik.ultimate.lassoranker.LassoRankerPreferences;
 import de.uni_freiburg.informatik.ultimate.lassoranker.exceptions.TermException;
 import de.uni_freiburg.informatik.ultimate.lassoranker.nontermination.NonTerminationAnalysisSettings;
@@ -50,9 +51,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.INTERPOLATION;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.UnsatCores;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.InterpolatingTraceChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.InterpolatingTraceCheckerCraig;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.InterpolatingTraceChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceCheckerSpWp;
 import de.uni_freiburg.informatik.ultimate.result.BenchmarkResult;
 import de.uni_freiburg.informatik.ultimate.result.IResult;
@@ -162,6 +163,9 @@ public class LassoChecker {
 	
 	private final LassoCheckResult m_LassoCheckResult;
 	
+	private final List<PreprocessingBenchmark> m_preprocessingBenchmarks = 
+			new ArrayList<PreprocessingBenchmark>();
+	
 	public LassoCheckResult getLassoCheckResult() {
 		return m_LassoCheckResult;
 	}
@@ -189,6 +193,10 @@ public class LassoChecker {
 
 	public NonTerminationArgument getNonTerminationArgument() {
 		return m_NonterminationArgument;
+	}
+	
+	public List<PreprocessingBenchmark> getPreprocessingBenchmarks() {
+		return m_preprocessingBenchmarks;
 	}
 
 	public LassoChecker(INTERPOLATION interpolation, SmtManager smtManager,
@@ -594,6 +602,7 @@ public class LassoChecker {
 				boolean overapproximateArrayIndexConnection = false;
 				la = new LassoAnalysis(m_SmtManager.getScript(), m_SmtManager.getBoogie2Smt(), stemTF, loopTF,
 						m_Axioms.toArray(new Term[m_Axioms.size()]), constructLassoRankerPreferences(withStem, overapproximateArrayIndexConnection ), mServices, mStorage);
+				m_preprocessingBenchmarks.add(la.getPreprocessingBenchmark());
 			} catch (TermException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
