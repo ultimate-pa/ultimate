@@ -20,10 +20,10 @@ public class LTLChecker extends AbstractEvaluationTestSuite {
 //		addTestCasesFixed("LTLAutomizerC.xml", "ltlAutomizer/Default+SBE+SASBE.epf", testcases);
 //		addTestCasesFixed("LTLAutomizerC.xml", "ltlAutomizer/Default+SBE.epf", testcases);
 //		addTestCasesFixed("LTLAutomizerC.xml", "ltlAutomizer/Default-LBE-Multi+IB.epf", testcases);
-		addTestCasesFixed("LTLAutomizerC.xml", "ltlAutomizer/Default-LBE-Multi+NondetBuchi.epf", testcases);
+//		addTestCasesFixed("LTLAutomizerC.xml", "ltlAutomizer/Default-LBE-Multi+NondetBuchi.epf", testcases);
 //		addTestCasesFixed("LTLAutomizerC.xml", "ltlAutomizer/Default-LBE-Multi+SBE+SASBE+IB.ep", testcases);
-		addTestCasesFixed("LTLAutomizerC.xml", "ltlAutomizer/Default-LBE-Multi+SBE+SASBE.epf", testcases);
-		addTestCasesFixed("LTLAutomizerC.xml", "ltlAutomizer/Default-LBE-Multi+SBE+SASBE+NondetBuchi.epf", testcases);
+//		addTestCasesFixed("LTLAutomizerC.xml", "ltlAutomizer/Default-LBE-Multi+SBE+SASBE.epf", testcases);
+//		addTestCasesFixed("LTLAutomizerC.xml", "ltlAutomizer/Default-LBE-Multi+SBE+SASBE+NondetBuchi.epf", testcases);
 //		addTestCasesFixed("LTLAutomizerC.xml", "ltlAutomizer/Default-LBE-Multi+SBE.epf", testcases);
 //		addTestCasesFixed("LTLAutomizerC.xml", "ltlAutomizer/Default-LBE-Multi+SBE+IB.epf", testcases);
 		addTestCasesFixed("LTLAutomizerC.xml", "ltlAutomizer/Default-LBE-Multi.epf", testcases);
@@ -46,7 +46,7 @@ public class LTLChecker extends AbstractEvaluationTestSuite {
 		// @formatter:off
 		return new String[] { 
 //				"examples/LTL/rers2012/P14/",
-				"examples/LTL/rers2012correctencoding/P14/",
+//				"examples/LTL/rers2012correctencoding/P14/",
 //				"examples/LTL/rers2012/P15/",
 //				"examples/LTL/rers2012/P16/",
 //				"examples/LTL/rers2012/P17/",
@@ -54,7 +54,7 @@ public class LTLChecker extends AbstractEvaluationTestSuite {
 //				"examples/LTL/rers2012/P19/",
 //				"examples/LTL/coolant/",
 //				"examples/LTL/koskinen/ltlcmodelchecker-benchmarks/",
-//				"examples/LTL/bugs/",
+				"examples/LTL/bugs/",
 //				"examples/LTL/bugs/Bug_AssumeFalse.c",
 				
 				//RERS examples with NO_RESULT

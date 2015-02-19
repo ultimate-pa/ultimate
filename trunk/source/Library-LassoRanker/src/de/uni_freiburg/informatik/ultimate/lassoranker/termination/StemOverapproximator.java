@@ -45,14 +45,13 @@ import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 
-
 /**
- * Simplify the Lasso's Stem by creating an overapproximation.
- * Since this is an overapproximation, it can only be used for termination
- * analysis, not nontermination analysis.
+ * Simplify the Lasso's Stem by creating an overapproximation. Since this is an
+ * overapproximation, it can only be used for termination analysis, not
+ * nontermination analysis.
  * 
- * The overapproximation works by selecting inequalities from the stem that
- * are implied by all disjuncts:
+ * The overapproximation works by selecting inequalities from the stem that are
+ * implied by all disjuncts:
  * 
  * new_stem = /\ { ineq ∈ old_stem | old_stem -> ineq }
  * 
@@ -62,43 +61,54 @@ import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
  */
 class StemOverapproximator {
 	private boolean m_annotate_terms;
-	
+
 	/**
-	 * This setting makes the overapproximation somewhat better but also
-	 * much slower.
+	 * This setting makes the overapproximation somewhat better but also much
+	 * slower.
 	 */
 	private static final boolean s_less_efficient_and_more_complete = false;
-	
+
 	/**
-	 * If approximation fails, return the transition 'true'.
-	 * If this is set to false, the original transition will be returned.
+	 * If approximation fails, return the transition 'true'. If this is set to
+	 * false, the original transition will be returned.
 	 */
 	private static final boolean s_return_true_if_approximation_fails = false;
-	
+
 	/**
 	 * This script is a new script of QF_LRA that belongs only to this object
 	 */
 	private Script m_script;
-	
+
 	/**
 	 * Create a new StemOverapproximator
-	 * @param preferences LassoRanker preferences regarding new SMT scripts
-	 * @throws IOException 
+	 * 
+	 * @param preferences
+	 *            LassoRanker preferences regarding new SMT scripts
+	 * @throws IOException
 	 */
-	public StemOverapproximator(LassoRankerPreferences preferences,
-			IUltimateServiceProvider services, IToolchainStorage storage) throws IOException {
+	public StemOverapproximator(LassoRankerPreferences preferences, IUltimateServiceProvider services,
+			IToolchainStorage storage) throws IOException {
 		m_annotate_terms = preferences.annotate_terms;
-		
+
 		// Create a new QF_LRA script
 		m_script = SMTSolver.newScript(preferences, "SimplifySIs", services, storage);
 		m_script.setLogic(Logics.QF_LRA);
 	}
-	
+
+	@Override
+	protected void finalize() throws Throwable {
+		if (m_script != null) {
+			m_script.exit();
+			m_script = null;
+		}
+		super.finalize();
+	}
+
 	public LinearTransition overapproximate(LinearTransition stem) {
 		if (stem.getNumPolyhedra() < 2) {
 			return stem; // nothing to do
 		}
-		
+
 		Collection<LinearInequality> candidate_lis = new HashSet<LinearInequality>();
 		if (s_less_efficient_and_more_complete) {
 			// Add all linear inequalities occuring somewhere in the stem to the
@@ -110,14 +120,14 @@ class StemOverapproximator {
 			candidate_lis.addAll(stem.getPolyhedra().get(0));
 			candidate_lis.addAll(stem.getPolyhedra().get(1));
 		}
-		
+
 		List<LinearInequality> new_stem = new ArrayList<LinearInequality>();
 		for (LinearInequality candidate_li : candidate_lis) {
 			// Check if stem -> candidate_li
 			m_script.push(1);
 			for (List<LinearInequality> polyhedron : stem.getPolyhedra()) {
-				MotzkinTransformation motzkin = new MotzkinTransformation(m_script,
-						AnalysisType.Linear, m_annotate_terms);
+				MotzkinTransformation motzkin = new MotzkinTransformation(m_script, AnalysisType.Linear,
+						m_annotate_terms);
 				motzkin.add_inequalities(polyhedron);
 				LinearInequality li = new LinearInequality(candidate_li);
 				li.negate();
@@ -130,7 +140,7 @@ class StemOverapproximator {
 			}
 			m_script.pop(1);
 		}
-		
+
 		if (new_stem.isEmpty()) {
 			if (s_return_true_if_approximation_fails) {
 				return LinearTransition.getTranstionTrue();
@@ -138,8 +148,7 @@ class StemOverapproximator {
 				return stem;
 			}
 		} else {
-			return new LinearTransition(Collections.singletonList(new_stem),
-					stem.getInVars(), stem.getOutVars());
+			return new LinearTransition(Collections.singletonList(new_stem), stem.getInVars(), stem.getOutVars());
 		}
 	}
 }

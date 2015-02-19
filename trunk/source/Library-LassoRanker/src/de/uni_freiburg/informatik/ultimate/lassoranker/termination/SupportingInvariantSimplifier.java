@@ -83,6 +83,7 @@ class SupportingInvariantSimplifier {
 	protected void finalize() throws Throwable {
 		if (m_script != null) {
 			m_script.exit();
+			m_script = null;
 		}
 		super.finalize();
 	}
