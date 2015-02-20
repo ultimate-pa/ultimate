@@ -19,6 +19,7 @@ option symbols = LexerSymbols;
 option java15, compact_red, newpositions;
 
 parser code {:
+	public static final String s_EOF = "EOF";
 	String filename;
 	Iterator<Symbol> m_AnswerIterator;
 	
@@ -39,7 +40,7 @@ parser code {:
 			location = bsym.getLocation();
 	    } else if ((sym instanceof Symbol) 
 	    	       && ((Symbol)sym).sym == LexerSymbols.EOF) {
-	    	location = "EOF";
+	    	location = s_EOF;
 	    } else
 	        location = "UNKNOWN";
 	    
@@ -456,7 +457,7 @@ keyword ::= KEYWORD | keywordAttr | keywordTheoryLogic | keywordOption |
 
 errorResponse ::= UNSUPPORTED {: if (true) throw new UnsupportedOperationException(); :}
                 | LPAR ERRORSYM STRING:err RPAR {: if (true) throw new SMTLIBException(err); :}
-                | EOF {: if (true) throw new SMTLIBException("EOF"); :}
+                | EOF {: if (true) throw new SMTLIBException(s_EOF); :}
                 ;
 
 genResponse ::= SUCCESS

@@ -160,7 +160,11 @@ class Executor {
 		try {
 			return m_Parser.parse();
 		} catch (SMTLIBException ex) {
-			throw new SMTLIBException("stderr output of " + mSolverCmd + ": " + stderr, ex);
+			if (ex.getMessage().equals(Parser.s_EOF)) {
+				throw new SMTLIBException("stderr output of " + mSolverCmd + ": " + stderr, ex);
+			} else {
+				throw ex;
+			}
 		} catch (UnsupportedOperationException ex) {
 			throw ex;
 		} catch (Exception ex) {
