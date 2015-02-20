@@ -2,24 +2,25 @@
 implementation f() returns (f : int){
     var #t~mem1 : int;
 
-    #t~mem1 := #memoryPointer[p2];
+    call #t~mem1 := readPointer(p2, 4);
     call writePointer(#t~mem1, p1, 4);
     havoc #t~mem1;
 }
 
 implementation main() returns (main : int){
-    var #t~ret4 : int;
-    var #t~mem7 : int;
-    var #t~mem8, tmp : int;
+    var ret : int;
+    var tmp7 : int;
+    var tmp8 : int;
 
-    #memoryPointer[p2] := b;
-    call #t~ret4 := f();
-    call write~int(#t~ret4, a, 4);
-    #memory_int[b] := 8;
-    #memoryPointer[b] := 8;
-    #t~mem7 := #memoryPointer[p1];
-    call #t~mem8 := read~int(#t~mem7, 4);
-    assert (#t~mem8 == 8);
+    call writePointer(b, p2, 4);
+    call ret := f();
+    call write~int(ret, a, 4);
+    call write~int(8, b, 4);
+//    call tmp7 := readPointer(p1, 4);
+	tmp7 := memPtr[p1];
+    call tmp8 := read~int(tmp7, 4);
+// 	tmp8 := memInt[tmp7];
+    assert (tmp8 == 8);
     return;
 }
 
@@ -41,37 +42,42 @@ implementation ULTIMATE.start() returns (){
     call #t~ret9 := main();
 }
 
-var #memory_int : [int]int;
+var #NULL : int;
+
+var memInt : [int]int;
 
 procedure write~int(#value : int, #ptr : int, #sizeOfWrittenType : int) returns ();
-modifies #memory_int, #memoryPointer;
-ensures #memory_int == old(#memory_int)[#ptr := #value];
-ensures #memoryPointer == old(#memoryPointer)[#ptr := #memoryPointer[#ptr]];
+modifies memInt, memPtr;
+ensures memInt == old(memInt)[#ptr := #value];
+ensures memPtr == old(memPtr)[#ptr := memPtr[#ptr]];
 
 
 procedure read~int(#ptr : int, #sizeOfReadType : int) returns (#value : int);
-ensures #value == #memory_int[#ptr];
+ensures #value == memInt[#ptr];
 
 
-var #memoryPointer : [int]int;
+var memPtr : [int]int;
 
 procedure writePointer(#value : int, #ptr : int, #sizeOfWrittenType : int) returns ();
-modifies #memory_int, #memoryPointer;
-ensures #memoryPointer == old(#memoryPointer)[#ptr := #value];
+modifies memInt, memPtr;
+ensures memPtr == old(memPtr)[#ptr := #value];
+procedure readPointer(#ptr : int, #sizeOfReadType : int) returns (#value : int);
+ensures #value == memPtr[#ptr];
+
 
 
 procedure f() returns (f : int);
-modifies #memoryPointer, #memory_int;
+modifies memPtr, memInt;
 
 procedure main() returns (main : int);
-modifies #memoryPointer, #memory_int;
+modifies memPtr, memInt;
 
 procedure ULTIMATE.init() returns ();
-modifies a, b, p1, p2, #memory_int, #memoryPointer;
-modifies #memory_int, #memoryPointer;
+modifies a, b, p1, p2, memInt, memPtr;
+modifies memInt, memPtr;
 
 procedure ULTIMATE.start() returns ();
-modifies a, b, p1, p2, #memory_int, #memoryPointer, #memoryPointer, #memory_int;
+modifies a, b, p1, p2, memInt, memPtr, memPtr, memInt;
 
-modifies #memoryPointer, #memory_int;
+modifies memPtr, memInt;
 
