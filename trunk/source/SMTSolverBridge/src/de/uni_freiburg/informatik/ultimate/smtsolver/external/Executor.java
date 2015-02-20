@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.smtsolver.external;
 
+import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.InputStream;
@@ -134,11 +135,19 @@ class Executor {
 
 	public Symbol parse(int what) {
 		List<Symbol> answer = readAnswer();
+		String stderr = "";
 
 		// clear the std error buffer as it blocks when it runs full
 		try {
-			while (mStdErr.available() > 0) {
-				mStdErr.read();
+			if (mStdErr.available() > 0) {
+				StringBuilder sb = new StringBuilder();
+				while (mStdErr.available() > 0) {
+					int i = mStdErr.read();
+					char c = (char) i;
+					sb.append(c);
+				}
+				stderr = sb.toString();
+				mLogger.warn("stderr output of " + mSolverCmd + ": " + stderr);
 			}
 		} catch (IOException e) {
 			// we don't care what happens on stdErr
@@ -151,7 +160,7 @@ class Executor {
 		try {
 			return m_Parser.parse();
 		} catch (SMTLIBException ex) {
-			throw ex;
+			throw new SMTLIBException("stderr output of " + mSolverCmd + ": " + stderr, ex);
 		} catch (UnsupportedOperationException ex) {
 			throw ex;
 		} catch (Exception ex) {
