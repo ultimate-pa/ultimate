@@ -477,8 +477,7 @@ public class TransFormula implements Serializable {
 				}
 			}
 			for (TermVariable auxVar : transFormula[i].getAuxVars()) {
-				TermVariable newAuxVar = boogie2smt.getVariableManager().constructFreshTermVariable(auxVar.getName(),
-						auxVar.getSort());
+				TermVariable newAuxVar = boogie2smt.getVariableManager().constructFreshCopy(auxVar);
 				subsitutionMapping.put(auxVar, newAuxVar);
 				auxVars.add(newAuxVar);
 			}

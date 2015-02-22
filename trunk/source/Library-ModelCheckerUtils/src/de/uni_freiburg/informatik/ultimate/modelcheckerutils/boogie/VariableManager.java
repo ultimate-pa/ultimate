@@ -11,17 +11,33 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 /**
  * Constructs fresh TermVariables (i.e., TermVariables that have not been used
- * before).
+ * before). Each constructed TermVariable is named as follows.
+ * The name start with the prefix "v_".
+ * Next follows the "basename" which is e.g., the name of a BoogieVar or a
+ * name given by the caller of the VariableManager.
+ * The name ends with the suffix "_n" where n is number that we use to ensure
+ * that each variable is unique.
+ * 
  * @author Matthias Heizmann
  *
  */
 public class VariableManager {
-	private final MultiElementCounter<String> m_TvForBoogieVarCounter = 
+	private final MultiElementCounter<String> m_TvForBasenameCounter = 
 			new MultiElementCounter<String>();
 	private final Map<TermVariable, Term> m_TermVariable2Constant = 
 			new HashMap<TermVariable, Term>();
 	private final MultiElementCounter<TermVariable> m_ConstForTvCounter = 
 			new MultiElementCounter<TermVariable>();
+	/**
+	 * Whenever we construct a TermVariable we store its basename.
+	 * This is either the name of the BoogieVar for which it was constructed
+	 * or the name for that it was constructed.
+	 * Whenever we have to construct a fresh copy of a TermVariable
+	 * we use the basename of this TermVariable to obtain a unique but very
+	 * similar name for the new copy.
+	 */
+	private final Map<TermVariable, String> m_Tv2Basename = 
+			new HashMap<TermVariable, String>();
 	private final Script m_Script;
 	
 	VariableManager(Script script) {
@@ -29,19 +45,34 @@ public class VariableManager {
 	}
 	
 	public TermVariable constructFreshTermVariable(BoogieVar bv) {
-		final String name = bv.toString();
-		final Integer newIndex = m_TvForBoogieVarCounter.increase(name);
+		final String basename = bv.toString();
+		final Integer newIndex = m_TvForBasenameCounter.increase(basename);
 		final Sort sort = bv.getTermVariable().getSort();
 		TermVariable result = m_Script.variable(
-				"v_" + name + "_" + newIndex, sort);
+				"v_" + basename + "_" + newIndex, sort);
+		m_Tv2Basename.put(result, basename);
+		return result;
+	}
+	
+	public TermVariable constructFreshCopy(TermVariable tv) {
+		String basename = m_Tv2Basename.get(tv);
+		if (basename == null) {
+			throw new IllegalArgumentException("unknown TermVariable " + tv);
+		}
+		final Integer newIndex = m_TvForBasenameCounter.increase(basename);
+		TermVariable result = m_Script.variable(
+				"v_" + basename + "_" + newIndex, tv.getSort());
+		m_Tv2Basename.put(result, basename);
 		return result;
 	}
 	
 	public TermVariable constructFreshTermVariable(String name, Sort sort) {
-		final Integer newIndex = m_TvForBoogieVarCounter.increase(name);
 		String withoutSmtQuoteChar = SmtUtils.removeSmtQuoteCharacters(name);
+		final Integer newIndex = m_TvForBasenameCounter.increase(withoutSmtQuoteChar);
+		
 		TermVariable result = m_Script.variable(
 				"v_" + withoutSmtQuoteChar + "_" + newIndex, sort);
+		m_Tv2Basename.put(result, withoutSmtQuoteChar);
 		return result;
 	}
 	
@@ -83,11 +114,12 @@ public class VariableManager {
 	 * same combination of bv and suffix.
 	 */
 	public TermVariable constructTermVariableWithSuffix(BoogieVar bv, String suffix) {
-		final String name = bv.toString();
-		final Integer newIndex = m_TvForBoogieVarCounter.increase(name);
+		final String basename = bv.toString() + SmtUtils.removeSmtQuoteCharacters(suffix);
+		final Integer newIndex = m_TvForBasenameCounter.increase(basename);
 		final Sort sort = bv.getTermVariable().getSort();
 		TermVariable result = m_Script.variable(
-				"v_" + name + "_" + newIndex, sort);
+				"v_" + basename + "_" + newIndex, sort);
+		m_Tv2Basename.put(result, basename);
 		return result;
 	}
 	
