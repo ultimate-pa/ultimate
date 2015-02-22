@@ -13,7 +13,7 @@ import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
  */
 public class Totalinterpolation extends
 		AbstractTraceAbstractionTestSuite {
-	private static final String[] m_Directories = { 
+	private static final String[] m_Programs = { 
 //		"examples/programs/regression",
 //		"examples/programs/toy",
 //		"examples/programs/recursivePrograms",
@@ -22,52 +22,55 @@ public class Totalinterpolation extends
 //		"examples/programs/real-life",
 //		"examples/programs/reals"
 //		"examples/svcomp/ssh-simplified",
-		"examples/svcomp/systemc"
+//		"examples/svcomp/systemc"
+		"examples/svcomp/eca-rers2012",
 	};
 	
+	/**
+	 * List of path to setting files. 
+	 * Ultimate will run on each program with each setting that is defined here.
+	 * The path are defined relative to the folder "trunk/examples/settings/",
+	 * because we assume that all settings files are in this folder.
+	 * 
+	 */
+	private static final String[] m_Settings = {
+		"automizer/incrementalInclusion/TreeInterpolants.epf",
+		"automizer/incrementalInclusion/TreeInterpolants_Conservative.epf",
+		"automizer/incrementalInclusion/TreeInterpolants_LBE.epf",
+		"automizer/incrementalInclusion/TreeInterpolants_TotalInterpolation.epf",
+		"automizer/incrementalInclusion/TreeInterpolants_TotalInterpolation_Conservative.epf",
+		"automizer/incrementalInclusion/TreeInterpolants_TotalInterpolation_LBE.epf",
+	};
+	
+	
 	// Time out for each test case in milliseconds
-	private static int m_Timeout = 300 * 1000;
+	private static int m_Timeout = 5 * 60 * 1000;
 
-	private static final boolean s_Boogie_TreeInterpolants = true;
-	private static final boolean s_C_TreeInterpolants = true;
-	private static final boolean s_Boogie_TreeInterpolantsWithTotalinterpolation = true;
-	private static final boolean s_C_TreeInterpolantsWithTotalinterpolation = true;
+	private static final boolean m_Boogie = true;
+	private static final boolean m_C = true;
 	
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
-		if (s_Boogie_TreeInterpolants) {
-			addTestCases(
-					"AutomizerBpl.xml",
-					"automizer/TreeInterpolants.epf",
-				    m_Directories,
-				    new String[] {".bpl"},
-				    m_Timeout);
-		} 
-		if (s_C_TreeInterpolants) {
-			addTestCases(
-					"AutomizerC.xml",
-					"automizer/TreeInterpolants.epf",
-				    m_Directories,
-				    new String[] {".c", ".i"},
-				    m_Timeout);
+		for (String setting : m_Settings) {
+			if (m_Boogie) {
+				addTestCases(
+						"AutomizerBpl.xml",
+						setting,
+						m_Programs,
+						new String[] {".bpl"},
+						m_Timeout);
+			}
+			if (m_C) {
+				addTestCases(
+						"AutomizerC.xml",
+						setting,
+						m_Programs,
+						new String[] {".c", ".i"},
+						m_Timeout);
+			}
 		}
 		
-		if (s_Boogie_TreeInterpolantsWithTotalinterpolation) {
-			addTestCases(
-					"AutomizerBpl.xml",
-					"automizer/TreeInterpolants_TotalInterpolation.epf",
-				    m_Directories,
-				    new String[] {".bpl"},
-				    m_Timeout);
-		} 
-		if (s_C_TreeInterpolantsWithTotalinterpolation) {
-			addTestCases(
-					"AutomizerC.xml",
-					"automizer/TreeInterpolants_TotalInterpolation.epf",
-				    m_Directories,
-				    new String[] {".c", ".i"},
-				    m_Timeout);
-		}
+
 		return super.createTestCases();
 	}
 }
