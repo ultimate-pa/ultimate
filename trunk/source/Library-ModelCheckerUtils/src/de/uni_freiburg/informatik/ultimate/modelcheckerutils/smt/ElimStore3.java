@@ -203,7 +203,9 @@ public class ElimStore3 {
 
 		ArrayList<Term> additionalConjuncs = new ArrayList<Term>();
 		Term intermediateResult = subst.transform(othersT);
-		assert writtenFrom != null || !Arrays.asList(intermediateResult.getFreeVars()).contains(eliminatee) : "var is still there";
+		if (writtenFrom == null && Arrays.asList(intermediateResult.getFreeVars()).contains(eliminatee)) {
+			throw new AssertionError("var is still there " + eliminatee);
+		}
 		if (write) {
 			Term a_heir;
 			ArrayIndex idx_write;
