@@ -54,7 +54,7 @@ public class Boogie2SMT {
 		m_BlackHoleArrays = blackHoleArrays;
 		m_BoogieDeclarations = boogieDeclarations;
 		m_Script = script;
-		m_VariableManager = new VariableManager(m_Script);
+		m_VariableManager = new VariableManager(m_Script, mServices);
 
 		m_TypeSortTranslator = new TypeSortTranslator(boogieDeclarations.getTypeDeclarations(), m_Script,
 				m_BlackHoleArrays, mServices);

@@ -3,6 +3,10 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.apache.log4j.Logger;
+
+import de.uni_freiburg.informatik.ultimate.boogie.preprocessor.Activator;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -22,6 +26,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
  *
  */
 public class VariableManager {
+	private final IUltimateServiceProvider m_Services;
+	private final Logger m_Logger;
 	private final MultiElementCounter<String> m_TvForBasenameCounter = 
 			new MultiElementCounter<String>();
 	private final Map<TermVariable, Term> m_TermVariable2Constant = 
@@ -40,7 +46,9 @@ public class VariableManager {
 			new HashMap<TermVariable, String>();
 	private final Script m_Script;
 	
-	VariableManager(Script script) {
+	VariableManager(Script script, IUltimateServiceProvider services) {
+		m_Services = services;
+		m_Logger = m_Services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		m_Script = script;
 	}
 	
@@ -57,7 +65,9 @@ public class VariableManager {
 	public TermVariable constructFreshCopy(TermVariable tv) {
 		String basename = m_Tv2Basename.get(tv);
 		if (basename == null) {
-			throw new IllegalArgumentException("unknown TermVariable " + tv);
+			m_Logger.warn("TermVariabe " + tv + 
+					" not constructed by VariableManager. Cannot ensure absence of name clashes.");
+			basename = SmtUtils.removeSmtQuoteCharacters(tv.getName());
 		}
 		final Integer newIndex = m_TvForBasenameCounter.increase(basename);
 		TermVariable result = m_Script.variable(
