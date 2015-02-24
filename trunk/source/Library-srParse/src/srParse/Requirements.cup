@@ -258,6 +258,12 @@ realtimepattern ::=
          RESULT.mergeCDDs(buildVec(q, p));
          RESULT.setDuration(d);
       :}
+  | AFTER expression:p HOLDS FOR duration:d COMMA? THEN expression:q HOLDS
+      {: RESULT = new srParsePattern();
+         RESULT.setPattern(RESULT.new BndEntryConditionPattern());
+	 RESULT.mergeCDDs(buildVec(q, p));
+	 RESULT.setDuration(d);
+      :}
   ;
 
 expression ::= QUOTE expr:e QUOTE {: RESULT = e; :}

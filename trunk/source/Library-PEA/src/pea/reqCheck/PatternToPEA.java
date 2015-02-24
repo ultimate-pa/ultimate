@@ -172,12 +172,12 @@ public class PatternToPEA {
     
     //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     //Existence Pattern
-    //mu� noch f�r 3scopes erweitert werden
+    //muß noch für 3scopes erweitert werden
     //Scope Globally
     public PhaseEventAutomata existencePattern(CDD P, CDD Q, CDD R, String scope) {
     	PhaseEventAutomata ctA;
     	if (scope.contains("Globally")){
-    		System.out.println("Existence-Globally: Hier mu� die Methode noch erweitert werden");
+    		System.out.println("Existence-Globally: Hier muß die Methode noch erweitert werden");
 		//CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
 			//    new CounterTrace.DCPhase(P.negate()),
 			    //new CounterTrace.DCPhase(),
@@ -198,11 +198,11 @@ public class PatternToPEA {
     		}
     	else
     	if (scope.contains("until")){
-    		System.out.println("Existence-Until: Hier mu� die Methode noch erweitert werden");
+    		System.out.println("Existence-Until: Hier muß die Methode noch erweitert werden");
         	}
     	else	
     	if (scope.contains("After")){
-    		System.out.println("Existence-After: Hier mu� die Methode noch erweitert werden");
+    		System.out.println("Existence-After: Hier muß die Methode noch erweitert werden");
     	}
     	else
     		if(scope.contains("Between")){
@@ -741,7 +741,7 @@ public class PatternToPEA {
     //in Entwicklung
     public PhaseEventAutomata maxDurationPattern(CDD P, CDD Q, CDD R, int timebound, String scope) {
     	PhaseEventAutomata ctA, ctA2;
-    	//mit der auskommentierten Zeile sind wir n�her an der Semantik von Konrad/Cheng, aber in der Benutzung ist 
+    	//mit der auskommentierten Zeile sind wir näher an der Semantik von Konrad/Cheng, aber in der Benutzung ist 
     	//diese Version die einfachere
     	if (scope.contains("Globally")){
     	CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
@@ -823,7 +823,7 @@ public class PatternToPEA {
     
   //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     //bounded Response Pattern
-    //(au�er between) validiert
+    //(außer between) validiert
     public PhaseEventAutomata bndResponsePattern(CDD P, CDD Q, CDD R, CDD S, int timebound, String scope) {
     	PhaseEventAutomata ctA;
     	if (scope.contains("Globally")){
@@ -985,7 +985,7 @@ public class PatternToPEA {
     public PhaseEventAutomata responsePattern(CDD P, CDD Q, CDD R, CDD S, String scope) {
     	PhaseEventAutomata ctA;
     	if (scope.contains("Globally")){
-    		//hier brauchen wir einen anderen Mechanismus denn S.negate m��te bis zum ende des intervalls gelten
+    		//hier brauchen wir einen anderen Mechanismus denn S.negate müßte bis zum ende des intervalls gelten
     		CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
      	    	   new CounterTrace.DCPhase()
      	    	});
@@ -1007,7 +1007,7 @@ public class PatternToPEA {
     		}
     	else
     	if (scope.contains("until")){
-    		//hier brauchen wir einen anderen Mechanismus denn S.negate m��te bis zum ende des intervalls gelten
+    		//hier brauchen wir einen anderen Mechanismus denn S.negate müßte bis zum ende des intervalls gelten
     		CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
 					new CounterTrace.DCPhase(),
     	    	});    	
@@ -1017,7 +1017,7 @@ public class PatternToPEA {
         	}
     	else	
     	if (scope.contains("After")){
-    		//hier brauchen wir einen anderen Mechanismus denn S.negate m��te bis zum ende des intervalls gelten
+    		//hier brauchen wir einen anderen Mechanismus denn S.negate müßte bis zum ende des intervalls gelten
     		CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
         			new CounterTrace.DCPhase()
         		 });          		 
@@ -1048,8 +1048,100 @@ public class PatternToPEA {
     }
     
   //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    //bounded Entry Condition Pattern
+    public PhaseEventAutomata bndEntryConditionPattern(CDD P, CDD Q, CDD R, CDD S, int timebound, String scope) {
+    	PhaseEventAutomata ctA, ctA2;
+    	if (scope.contains("Globally")){
+    		CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
+    	    	    new CounterTrace.DCPhase(),
+    	    	    new CounterTrace.DCPhase(P, CounterTrace.BOUND_GREATER, timebound),
+    	    	    new CounterTrace.DCPhase(S.negate()),
+    	    	    new CounterTrace.DCPhase()
+    	    	});
+    	    	ctA = compiler.compile("inv1"+nameindex, ct); //ctA.dump();
+    	    	nameindex++;
+    	    
+    	    	return ctA;
+    	    	//return mctA;
+	}
+    	else 
+    	if (scope.contains("Before")){
+    		CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
+    				new CounterTrace.DCPhase(R.negate()),
+    				new CounterTrace.DCPhase(P.and(R.negate()), CounterTrace.BOUND_GREATER, timebound),
+    				new CounterTrace.DCPhase(S.negate().and(R.negate())),
+    	    	    new CounterTrace.DCPhase()
+    	    	});
+    	    	ctA = compiler.compile("inv"+nameindex, ct); //ctA.dump();
+    	    	nameindex++;
+    	    	return ctA;
+    		}
+    	else
+    	if (scope.contains("until")){
+    		CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
+    		           	    
+            	    new CounterTrace.DCPhase(),
+            	    new CounterTrace.DCPhase(Q.and(R.negate())),
+            	    new CounterTrace.DCPhase(R.negate()),
+            	    new CounterTrace.DCPhase(P.and(R.negate()), CounterTrace.BOUND_GREATER, timebound),
+            	    new CounterTrace.DCPhase(S.negate().and(R.negate())),
+            	    new CounterTrace.DCPhase()
+            	});
+            	ctA = compiler.compile("inv"+nameindex, ct); //ctA.dump();
+            	nameindex++;
+            	
+            	return ctA;
+        	}
+    	else	
+    	if (scope.contains("After")){
+        	CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
+        	    new CounterTrace.DCPhase(),
+        	    new CounterTrace.DCPhase(Q),
+        	    new CounterTrace.DCPhase(),
+	    	    new CounterTrace.DCPhase(P, CounterTrace.BOUND_GREATER, timebound),
+	    	    new CounterTrace.DCPhase(S.negate()),
+        	    new CounterTrace.DCPhase()
+        	});
+        	ctA = compiler.compile("inv"+nameindex, ct); //ctA.dump();
+        	nameindex++;
+        	return ctA;
+    	}
+    	else
+    		if(scope.contains("Between")){
+    			CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
+    					 new CounterTrace.DCPhase(),
+    	            	    new CounterTrace.DCPhase(Q.and(R.negate())),
+    	            	    new CounterTrace.DCPhase(R.negate()),
+    	            	    new CounterTrace.DCPhase(P.and(R.negate()),CounterTrace.BOUND_GREATER, timebound),
+    	            	    new CounterTrace.DCPhase(S.negate().and(R.negate())),
+    	            	    new CounterTrace.DCPhase(R.negate()),
+    	            	    new CounterTrace.DCPhase(R),
+    	            	    new CounterTrace.DCPhase()
+                	});
+                	ctA = compiler.compile("inv"+nameindex, ct); //ctA.dump();              
+                   	nameindex++;
+        	    	return ctA;
+    		
+    		}
+    	CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
+	    	    new CounterTrace.DCPhase()});
+    	ctA = compiler.compile("NoKnownScope", ct);
+    	return ctA;
+    }
+    
+  //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    //invariant Pattern
+    //validiert
+    public PhaseEventAutomata invariantPattern(CDD P, CDD Q, CDD R, CDD S, String scope) {
+    	PhaseEventAutomata ctA;
+    	 ctA = absencePattern(P.and(S.negate()),Q,R, scope);
+    	 return ctA;
+	
+    }
+    
+  //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     //bounded Invariance Pattern
-    //(au�er between) validiert
+    //(außer between) validiert
     public PhaseEventAutomata bndInvariancePattern(CDD P, CDD Q, CDD R, CDD S, int timebound, String scope) {
     	PhaseEventAutomata ctA, ctA2;
     	if (scope.contains("Globally")){
@@ -1133,16 +1225,6 @@ public class PatternToPEA {
 	    	    new CounterTrace.DCPhase()});
     	ctA = compiler.compile("NoKnownScope", ct);
     	return ctA;
-    }
-    
-  //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    //invariant Pattern
-    //validiert
-    public PhaseEventAutomata invariantPattern(CDD P, CDD Q, CDD R, CDD S, String scope) {
-    	PhaseEventAutomata ctA;
-    	 ctA = absencePattern(P.and(S.negate()),Q,R, scope);
-    	 return ctA;
-	
     }
     
 //    //Scope Before R
@@ -1247,16 +1329,16 @@ public class PatternToPEA {
 	CDD R = BooleanDecision.create("R");
 	CDD Q = BooleanDecision.create("Q");		
     
-	//Zweimal sich wiedersprechende BoundedInvariance Anforderungen; Der resultierende Automat ist nur f�r den Fall 
-	// G(not(P)) erf�llbar;
+	//Zweimal sich wiedersprechende BoundedInvariance Anforderungen; Der resultierende Automat ist nur für den Fall 
+	// G(not(P)) erfüllbar;
     //ct1A = bndInvariance(P, S,10);
     //ct2A = bndInvariance(P, S.negate(),10);
     //ctParallel = ct1A.parallel(ct2A);
     //ctParallel.dump();
     
 	//Zwei sich widersprechende Anforderungen 
-	//P--> neg(S) gilt f�r mindestens 11 time units
-	//P--> S gilt in h�chstens 10 time units
+	//P--> neg(S) gilt für mindestens 11 time units
+	//P--> S gilt in höchstens 10 time units
 	ct1A = bndInvariancePattern(P,Q,R,S.negate(),6, "Globally");   
     ct2A = bndResponsePattern(P,Q,R,S,10, "Globally");
     //ct3A = universalityPattern(P,Q,R,"Globally");
@@ -1266,16 +1348,31 @@ public class PatternToPEA {
     //ctParallel.dumpDot();
 
     ct1A = absencePattern(P,Q,R, "Before");
-    ct1A.dump();
+    //ct1A.dump();
+    
+    ct1A=bndEntryConditionPattern(P,Q,R,S,100,"Globally");
+   ct1A.dump();
+   DOTWriter dotwriter = new DOTWriter("D:/Globally.dot", ct1A);//ctParallel
+   dotwriter.write();
+   
+   ct1A=bndEntryConditionPattern(P,Q,R,S,100,"After");
+   dotwriter.write("D:/After.dot", ct1A);
+   
+   ct1A=bndEntryConditionPattern(P,Q,R,S,100,"until");
+   dotwriter.write("D:/Until.dot", ct1A);
+   
+   ct1A=bndEntryConditionPattern(P,Q,R,S,100,"Between");
+   dotwriter.write("D:/Between.dot", ct1A);
+   
+   ct1A=bndEntryConditionPattern(P,Q,R,S,100,"Before");
+   dotwriter.write("D:/Before.dot", ct1A);
    
 
     
     //ct1A = responseChainPattern21(P,Q,R,S,T,"Between");
     //ct1A = precedenceChainPattern21(P,Q,R,S,T,"Globally");
     //ct1A.dump();
-    
-    DOTWriter dotwriter = new DOTWriter("C:/Test.dot", ct1A);//ctParallel
-    dotwriter.write();
+  
     ct1A = this.testPrecedenceVac(P, S, R);
     dotwriter.write("C:/vacuous/TestPrecVac.dot", ct1A);
     

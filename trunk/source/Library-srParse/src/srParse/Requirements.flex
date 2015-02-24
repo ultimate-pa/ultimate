@@ -18,7 +18,6 @@ import java_cup.runtime.Symbol;
 %public
 
 %{
-  private StringBuffer string = new StringBuffer();
   private MySymbolFactory symFactory = new MySymbolFactory();
   
   private Symbol symbol(int type) {
