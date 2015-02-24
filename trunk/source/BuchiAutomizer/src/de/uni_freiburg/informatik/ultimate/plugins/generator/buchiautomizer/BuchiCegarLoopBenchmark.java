@@ -184,17 +184,40 @@ public class BuchiCegarLoopBenchmark extends CegarLoopBenchmarkType implements I
 		sb.append(lar.toString());
 		
 		sb.append(s_LassoPreprocessingBenchmarks);
+		sb.append(": ");
 		List<PreprocessingBenchmark> ppbench = (List<PreprocessingBenchmark>) benchmarkData.getValue(s_LassoPreprocessingBenchmarks);
 		sb.append(PreprocessingBenchmark.prettyprint(ppbench));
 		sb.append(s_LassoTerminationAnalysisBenchmarks);
+		sb.append(": ");
 		List<TerminationAnalysisBenchmark> tabbench = (List<TerminationAnalysisBenchmark>) benchmarkData.getValue(s_LassoTerminationAnalysisBenchmarks);
-		sb.append(aggregateTermBench(tabbench));
+		sb.append(prettyPrintTerminationAnalysisBenchmark(tabbench));
 		return sb.toString();
 	}
 	
-//	private String prettyPrintTerminationAnalysisBenchmark(List<TerminationAnalysisBenchmark> benchmarks) {
-//		
-//	}
+	private String prettyPrintTerminationAnalysisBenchmark(List<TerminationAnalysisBenchmark> benchmarks) {
+		if (benchmarks.size() == 0) {
+			return "not available";
+		}
+		StringBuilder sb = new StringBuilder();
+		ICsvProvider<Object> aggr =  aggregateTermBench(benchmarks);
+		int offset = 0;
+		for (String title : aggr.getColumnTitles()) {
+			sb.append(title);
+			sb.append(": ");
+			if (title.equals(TerminationAnalysisBenchmark.s_Label_Time)) {
+				long value = (long) aggr.getRow(0).get(offset);
+				value = value / 1000000;
+				sb.append(value);
+				sb.append("ms");
+			} else {
+				int value = (int) aggr.getRow(0).get(offset);
+				sb.append(value);
+			}
+			sb.append(" ");
+			offset++;
+		}
+		return sb.toString();
+	}
 	
 	
 	private ICsvProvider<Object> aggregateTermBench(List<TerminationAnalysisBenchmark> benchmarks) {
