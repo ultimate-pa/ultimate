@@ -45,6 +45,18 @@ import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
 public class TerminationAnalysisBenchmark
 		implements ICsvProviderProvider<Object> {
 	
+	// column headers of the resulting csv
+	public static final String s_Label_Template = "Template";
+	public static final String s_Label_Degree = "Degree";
+	public static final String s_Label_ConstraintsSatisfiability = "ConstraintsSatisfiability";
+	public static final String s_Label_Time = "Time";
+	public static final String s_Label_VariablesStem = "VariablesStem";
+	public static final String s_Label_VariablesLoop = "VariablesLoop";
+	public static final String s_Label_DisjunctsStem = "DisjunctsStem";
+	public static final String s_Label_DisjunctsLoop = "DisjunctsLoop";
+	public static final String s_Label_SupportingInvariants = "SupportingInvariants";
+	public static final String s_Label_MotzkinApplications = "MotzkinApplications";
+	
 	private final LBool m_ConstraintsSatisfiability;
 	private final int m_VariablesStem;
 	private final int m_VariablesLoop;
@@ -134,18 +146,21 @@ public class TerminationAnalysisBenchmark
 	
 	public Map<String, Object> getKeyValueMap() {
 		Map<String, Object> result = new LinkedHashMap<String, Object>();
-		result.put("Template", m_Template);
-		result.put("Degree", m_Degree);
-		result.put("ConstraintsSatisfiability", m_ConstraintsSatisfiability);
-		result.put("Time", m_Time);
-		result.put("VariablesStem", m_VariablesStem);
-		result.put("VariablesLoop", m_VariablesLoop);
-		result.put("DisjunctsStem", m_DisjunctsStem);
-		result.put("DisjunctsLoop", m_DisjunctsLoop);
-		result.put("SupportingInvariants", m_SupportingInvariants);
-		result.put("MotzkinApplications", m_MotzkinApplications);
+		result.put(s_Label_Template, m_Template);
+		result.put(s_Label_Degree, m_Degree);
+		result.put(s_Label_ConstraintsSatisfiability, m_ConstraintsSatisfiability);
+		result.put(s_Label_Time, m_Time);
+		result.put(s_Label_VariablesStem, m_VariablesStem);
+		result.put(s_Label_VariablesLoop, m_VariablesLoop);
+		result.put(s_Label_DisjunctsStem, m_DisjunctsStem);
+		result.put(s_Label_DisjunctsLoop, m_DisjunctsLoop);
+		result.put(s_Label_SupportingInvariants, m_SupportingInvariants);
+		result.put(s_Label_MotzkinApplications, m_MotzkinApplications);
 		return Collections.unmodifiableMap(result);
 	}
+	
+
+	
 	
 	@Override
 	public ICsvProvider<Object> createCvsProvider() {
