@@ -76,7 +76,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
  * 
  * @author Jan Leike
  */
-class MotzkinTransformation extends InstanceCounting {
+public class MotzkinTransformation extends InstanceCounting {
 	/**
 	 * Prefix for the Motzkin coefficients λ and μ
 	 */
