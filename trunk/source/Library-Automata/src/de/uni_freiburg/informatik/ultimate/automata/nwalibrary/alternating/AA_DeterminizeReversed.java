@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.alternating;
 
+import java.util.BitSet;
 import java.util.Collections;
 import java.util.LinkedList;
 
@@ -11,25 +12,26 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomat
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 
-public class AA_DeterminizeReversed<LETTER> implements IOperation<LETTER, Long>{
+public class AA_DeterminizeReversed<LETTER> implements IOperation<LETTER, BitSet>{
 
-	public AA_DeterminizeReversed(IUltimateServiceProvider ultimateServiceProvider, AlternatingAutomaton<LETTER, Long> alternatingAutomaton){
-		resultAutomaton = new NestedWordAutomaton<LETTER, Long>(
-			ultimateServiceProvider,
-			alternatingAutomaton.getAlphabet(),
-			Collections.<LETTER>emptySet(),
-			Collections.<LETTER>emptySet(),
-			alternatingAutomaton.getStateFactory()
-		);
-		LinkedList<Long> newStates = new LinkedList<Long>();
+	public AA_DeterminizeReversed(IUltimateServiceProvider ultimateServiceProvider, AlternatingAutomaton<LETTER, BitSet> alternatingAutomaton){
+		resultAutomaton = new NestedWordAutomaton<LETTER, BitSet>(
+				ultimateServiceProvider,
+				alternatingAutomaton.getAlphabet(),
+				Collections.<LETTER>emptySet(),
+				Collections.<LETTER>emptySet(),
+				alternatingAutomaton.getStateFactory()
+			);
+		LinkedList<BitSet> newStates = new LinkedList<BitSet>();
 		newStates.add(alternatingAutomaton.getFinalStatesBitVector());
 		while(!newStates.isEmpty()){
-			long state = newStates.getFirst();
+			BitSet state = newStates.getFirst();
 			boolean isInitial = (state == alternatingAutomaton.getFinalStatesBitVector());
 			boolean isFinal = alternatingAutomaton.getAcceptingFunction().getResult(state);
 			resultAutomaton.addState(isInitial, isFinal, state);
 			for(LETTER letter : alternatingAutomaton.getAlphabet()){
-				long nextState = alternatingAutomaton.resolveLetter(letter, state);
+				BitSet nextState = (BitSet) state.clone();
+				alternatingAutomaton.resolveLetter(letter, nextState);
 				resultAutomaton.addInternalTransition(state, letter, nextState);
 				if(!resultAutomaton.getStates().contains(nextState)){
 					if(!newStates.contains(nextState)){
@@ -40,7 +42,7 @@ public class AA_DeterminizeReversed<LETTER> implements IOperation<LETTER, Long>{
 			newStates.removeFirst();
 		}
 	}
-	private NestedWordAutomaton<LETTER, Long> resultAutomaton;
+	private NestedWordAutomaton<LETTER, BitSet> resultAutomaton;
 	
 	@Override
 	public String operationName(){
@@ -58,12 +60,12 @@ public class AA_DeterminizeReversed<LETTER> implements IOperation<LETTER, Long>{
 	}
 
 	@Override
-	public NestedWordAutomaton<LETTER, Long> getResult() throws OperationCanceledException{
+	public NestedWordAutomaton<LETTER, BitSet> getResult() throws OperationCanceledException{
 		return resultAutomaton;
 	}
 
 	@Override
-	public boolean checkResult(StateFactory<Long> stateFactory) throws AutomataLibraryException{
+	public boolean checkResult(StateFactory<BitSet> stateFactory) throws AutomataLibraryException{
 		return true;
 	}
 }

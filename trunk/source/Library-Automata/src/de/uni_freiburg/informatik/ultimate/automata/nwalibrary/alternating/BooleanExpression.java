@@ -1,15 +1,16 @@
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.alternating;
 
+import java.util.BitSet;
 import java.util.List;
 
 public class BooleanExpression{
 
-	public BooleanExpression(long alpha, long beta){
+	public BooleanExpression(BitSet alpha, BitSet beta){
 		this.alpha = alpha;
 		this.beta = beta;
 	}
-	private long alpha;
-	private long beta;
+	private BitSet alpha;
+	private BitSet beta;
 	private BooleanExpression nextConjunctExpression;
 	
 	public void addConjunction(BooleanExpression booleanExpression){
@@ -33,9 +34,11 @@ public class BooleanExpression{
 		return false;
 	}
 	
-	public boolean getResult(long bitVector){
-		long result = ((bitVector & alpha) ^ beta);
-		if(result == 0){
+	public boolean getResult(BitSet bitVector){
+		BitSet result = (BitSet) bitVector.clone();
+		result.and(alpha);
+		result.xor(beta);
+		if(result.isEmpty()){
 			return true;
 		}
 		else if(nextConjunctExpression != null){
@@ -45,7 +48,13 @@ public class BooleanExpression{
 	}
 	
 	public BooleanExpression cloneShifted(int amount){
-		BooleanExpression booleanExpression = new BooleanExpression(alpha << amount, beta << amount);
+		BitSet shiftedAlpha = new BitSet(alpha.size() + amount);
+		BitSet shiftedBeta = new BitSet(beta.size() + amount);
+		for(int i=0;i<alpha.size();i++){
+			shiftedAlpha.set(i + amount, alpha.get(i));
+			shiftedBeta.set(i + amount, beta.get(i));
+		}
+		BooleanExpression booleanExpression = new BooleanExpression(shiftedAlpha, shiftedBeta);
 		if(nextConjunctExpression != null){
 			booleanExpression.nextConjunctExpression = nextConjunctExpression.cloneShifted(amount);
 		}
@@ -53,18 +62,18 @@ public class BooleanExpression{
 	}
 	
 	public boolean equals(BooleanExpression booleanExpression){
-		return ((alpha == booleanExpression.alpha) && (beta == booleanExpression.beta));
+		return (alpha.equals(booleanExpression.alpha) && beta.equals(booleanExpression.beta));
 	}
 	
 	public <T> String toString(List<T> variables){
 		String text = "";
 		int r = 0;
 		for(int i=0;i<variables.size();i++){
-			if(BitUtil.getBit(alpha, i)){
+			if(alpha.get(i)){
 				if(r != 0){
 					text += " ^ ";
 				}
-				if(!BitUtil.getBit(beta, i)){
+				if(!beta.get(i)){
 					text += "~";
 				}
 				text += variables.get(i);

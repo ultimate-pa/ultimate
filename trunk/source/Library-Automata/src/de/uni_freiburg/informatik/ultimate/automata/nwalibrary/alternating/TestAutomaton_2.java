@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.alternating;
 
+import java.util.BitSet;
 import java.util.HashSet;
 
 import de.uni_freiburg.informatik.ultimate.automata.Word;
@@ -17,7 +18,7 @@ public class TestAutomaton_2 extends AlternatingAutomaton<String, String>{
 		addState(state3);
 		addTransition(a, state1, generateDisjunction(new String[]{state2, state3}, new String[]{}));
 		addTransition(a, state2, generateDisjunction(new String[]{state2, state3}, new String[]{}));
-		addTransition(a, state3, new BooleanExpression(0, 0));
+		addTransition(a, state3, new BooleanExpression(new BitSet(), new BitSet()));
 		addTransition(b, state1, generateDisjunction(new String[]{state2}, new String[]{}));
 		addTransition(b, state2, generateDisjunction(new String[]{state2}, new String[]{}));
 		addTransition(b, state2, generateDisjunction(new String[]{state3}, new String[]{}));

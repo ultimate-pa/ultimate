@@ -4,6 +4,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.automatascriptinterpreter;
 
 import java.util.ArrayList;
+import java.util.BitSet;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -135,7 +136,7 @@ public class AutomataDefinitionInterpreter {
 	private static LinkedList<BooleanExpression> parseBooleanExpressions(AlternatingAutomaton<String, String> alternatingAutomaton, String expression){
 		LinkedList<BooleanExpression> booleanExpressions = new LinkedList<BooleanExpression>();
 		if(expression.equals("true")){
-			booleanExpressions.add(new BooleanExpression(0, 0));
+			booleanExpressions.add(new BooleanExpression(new BitSet(), new BitSet()));
 		}
 		else if(expression.equals("false")){
 			//Not supported yet
