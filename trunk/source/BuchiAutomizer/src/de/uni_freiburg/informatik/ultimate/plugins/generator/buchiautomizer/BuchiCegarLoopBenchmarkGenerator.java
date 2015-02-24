@@ -5,6 +5,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.lassoranker.LassoAnalysis.PreprocessingBenchmark;
+import de.uni_freiburg.informatik.ultimate.lassoranker.termination.TerminationAnalysisBenchmark;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BuchiCegarLoopBenchmark.LassoAnalysisResults;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.LassoChecker.ContinueDirective;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.LassoChecker.LassoCheckResult;
@@ -23,6 +24,8 @@ public class BuchiCegarLoopBenchmarkGenerator extends CegarLoopBenchmarkGenerato
 	
 	private final List<PreprocessingBenchmark> m_PreprocessingBenchmarks = 
 			new ArrayList<PreprocessingBenchmark>();
+	private final List<TerminationAnalysisBenchmark> m_TerminationAnalysisBenchmarks =
+			new ArrayList<>();
 	
 	@Override
 	public IBenchmarkType getBenchmarkType() {
@@ -73,6 +76,9 @@ public class BuchiCegarLoopBenchmarkGenerator extends CegarLoopBenchmarkGenerato
 			return m_BciBuchi;
 		case BuchiCegarLoopBenchmark.s_LassoPreprocessingBenchmarks:
 			return m_PreprocessingBenchmarks;
+		case BuchiCegarLoopBenchmark.s_LassoTerminationAnalysisBenchmarks:
+			return m_TerminationAnalysisBenchmarks;
+
 		default:
 			return super.getValue(key);
 		}
@@ -81,6 +87,7 @@ public class BuchiCegarLoopBenchmarkGenerator extends CegarLoopBenchmarkGenerato
 	public void reportLassoAnalysis(LassoChecker lassoChecker) {
 		LassoCheckResult lcr = lassoChecker.getLassoCheckResult();
 		m_PreprocessingBenchmarks.addAll(lassoChecker.getPreprocessingBenchmarks());
+		m_TerminationAnalysisBenchmarks.addAll(lassoChecker.getTerminationAnalysisBenchmarks());
 		ContinueDirective cd = lcr.getContinueDirective();
 		switch (cd) {
 

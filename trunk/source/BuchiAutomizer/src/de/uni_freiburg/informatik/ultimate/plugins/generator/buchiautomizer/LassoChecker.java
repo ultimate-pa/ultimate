@@ -26,6 +26,7 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.exceptions.TermException;
 import de.uni_freiburg.informatik.ultimate.lassoranker.nontermination.NonTerminationAnalysisSettings;
 import de.uni_freiburg.informatik.ultimate.lassoranker.nontermination.NonTerminationArgument;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.SupportingInvariant;
+import de.uni_freiburg.informatik.ultimate.lassoranker.termination.TerminationAnalysisBenchmark;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.TerminationAnalysisSettings;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.TerminationArgument;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.templates.AffineTemplate;
@@ -166,6 +167,9 @@ public class LassoChecker {
 	private final List<PreprocessingBenchmark> m_preprocessingBenchmarks = 
 			new ArrayList<PreprocessingBenchmark>();
 	
+	private final List<TerminationAnalysisBenchmark> m_TerminationAnalysisBenchmarks =
+			new ArrayList<TerminationAnalysisBenchmark>();
+	
 	public LassoCheckResult getLassoCheckResult() {
 		return m_LassoCheckResult;
 	}
@@ -197,6 +201,10 @@ public class LassoChecker {
 	
 	public List<PreprocessingBenchmark> getPreprocessingBenchmarks() {
 		return m_preprocessingBenchmarks;
+	}
+	
+	public List<TerminationAnalysisBenchmark> getTerminationAnalysisBenchmarks() {
+		return m_TerminationAnalysisBenchmarks;
 	}
 
 	public LassoChecker(INTERPOLATION interpolation, SmtManager smtManager,
@@ -709,8 +717,10 @@ public class LassoChecker {
 			try {
 				TerminationAnalysisSettings settings = constructTASettings();
 				termArg = la.tryTemplate(rft, settings);
+				TerminationAnalysisBenchmark bench = la.getTerminationAnalysisBenchmark();
+				m_TerminationAnalysisBenchmarks.add(bench);
 				if (m_TemplateBenchmarkMode) {
-					IResult benchmarkResult = new BenchmarkResult<>(Activator.s_PLUGIN_ID, "LassoTerminationAnalysisBenchmarks", la.getTerminationAnalysisBenchmark());
+					IResult benchmarkResult = new BenchmarkResult<>(Activator.s_PLUGIN_ID, "LassoTerminationAnalysisBenchmarks", bench);
 					mServices.getResultService().reportResult(Activator.s_PLUGIN_ID, benchmarkResult);
 				}
 			} catch (SMTLIBException e) {

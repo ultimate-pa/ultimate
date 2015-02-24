@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.lassoranker.LassoAnalysis.PreprocessingBenchmark;
+import de.uni_freiburg.informatik.ultimate.lassoranker.termination.TerminationAnalysisBenchmark;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BuchiCegarLoop.Result;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopBenchmarkType;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CoverageAnalysis.BackwardCoveringInformation;
@@ -17,6 +18,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.be
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.IBenchmarkDataProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.IBenchmarkType;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.EdgeChecker.EdgeCheckerBenchmarkType;
+import de.uni_freiburg.informatik.ultimate.util.csv.CsvUtils;
+import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProvider;
 
 public class BuchiCegarLoopBenchmark extends CegarLoopBenchmarkType implements IBenchmarkType {
 	
@@ -30,6 +33,7 @@ public class BuchiCegarLoopBenchmark extends CegarLoopBenchmarkType implements I
 	public static final String s_InterpolantCoveringCapabilityFinite = "InterpolantCoveringCapabilityFinite";
 	public static final String s_InterpolantCoveringCapabilityBuchi = "InterpolantCoveringCapabilityBuchi";
 	public static final String s_LassoPreprocessingBenchmarks = "LassoPreprocessingBenchmarks";
+	public static final String s_LassoTerminationAnalysisBenchmarks = "LassoTerminationAnalysisBenchmarks";
 	
 	public static BuchiCegarLoopBenchmark getInstance() {
 		return s_Instance;
@@ -46,6 +50,7 @@ public class BuchiCegarLoopBenchmark extends CegarLoopBenchmarkType implements I
 		keyList.add(s_InterpolantCoveringCapabilityFinite);
 		keyList.add(s_InterpolantCoveringCapabilityBuchi);
 		keyList.add(s_LassoPreprocessingBenchmarks);
+		keyList.add(s_LassoTerminationAnalysisBenchmarks);
 		return keyList;
 	}
 	
@@ -87,6 +92,7 @@ public class BuchiCegarLoopBenchmark extends CegarLoopBenchmarkType implements I
 			BackwardCoveringInformation bci2 = (BackwardCoveringInformation) value2;
 			return new BackwardCoveringInformation(bci1, bci2);
 		case s_LassoPreprocessingBenchmarks:
+		case s_LassoTerminationAnalysisBenchmarks:
 			throw new AssertionError("not yet implemented");
 		default:
 			return super.aggregate(key, value1, value2);
@@ -180,8 +186,35 @@ public class BuchiCegarLoopBenchmark extends CegarLoopBenchmarkType implements I
 		sb.append(s_LassoPreprocessingBenchmarks);
 		List<PreprocessingBenchmark> ppbench = (List<PreprocessingBenchmark>) benchmarkData.getValue(s_LassoPreprocessingBenchmarks);
 		sb.append(PreprocessingBenchmark.prettyprint(ppbench));
+		sb.append(s_LassoTerminationAnalysisBenchmarks);
+		List<TerminationAnalysisBenchmark> tabbench = (List<TerminationAnalysisBenchmark>) benchmarkData.getValue(s_LassoTerminationAnalysisBenchmarks);
+		sb.append(aggregateTermBench(tabbench));
 		return sb.toString();
 	}
+	
+//	private String prettyPrintTerminationAnalysisBenchmark(List<TerminationAnalysisBenchmark> benchmarks) {
+//		
+//	}
+	
+	
+	private ICsvProvider<Object> aggregateTermBench(List<TerminationAnalysisBenchmark> benchmarks) {
+		List<ICsvProvider<Object>> list = new ArrayList<ICsvProvider<Object>>();
+		for (TerminationAnalysisBenchmark benchmark : benchmarks) {
+			list.add(benchmark.createCvsProvider());
+		}
+		ICsvProvider<Object> allRows = CsvUtils.concatenateRows(list);
+		ICsvProvider<Object> numericColumns = CsvUtils.projectColumn(
+				allRows, new String[]{
+				TerminationAnalysisBenchmark.s_Label_Time, 
+				TerminationAnalysisBenchmark.s_Label_VariablesStem, 
+				TerminationAnalysisBenchmark.s_Label_VariablesLoop, 
+				TerminationAnalysisBenchmark.s_Label_DisjunctsStem, 
+				TerminationAnalysisBenchmark.s_Label_DisjunctsLoop, 
+				TerminationAnalysisBenchmark.s_Label_SupportingInvariants, 
+				TerminationAnalysisBenchmark.s_Label_MotzkinApplications });
+		return numericColumns;
+	}
+	
 	
 	public static class LassoAnalysisResults implements IBenchmarkDataProvider, IBenchmarkType {
 		public static final String s_LassoNonterminating = "nont";
