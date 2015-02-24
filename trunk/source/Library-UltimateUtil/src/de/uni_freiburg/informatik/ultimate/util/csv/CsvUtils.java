@@ -308,6 +308,19 @@ public class CsvUtils {
 		}
 		return result;
 	}
+	
+	/**
+	 * Creates a new ICsvProvider that contains the rows of all input CSV providers.
+	 * The result is obtained by an iterative application of 
+	 * {@link #concatenateRows(ICsvProvider, ICsvProvider)}.
+	 */
+	public static <T, K extends ICsvProvider<T>> ICsvProvider<T> concatenateRows(List<K> csvProviders) {
+		ICsvProvider<T> result = new SimpleCsvProvider<>(new ArrayList<String>());
+		for (ICsvProvider<T> csvProvider : csvProviders) {
+			result = concatenateRows(result, csvProvider);
+		}
+		return result;
+	}
 
 	/**
 	 * Given a list of values and a list of (not strictly) ascending positive
