@@ -41,7 +41,7 @@ public class Nnf {
 	}
 	
 	public Term transform(Term term) {
-		assert m_QuantifiedVariables == null;
+//		assert m_QuantifiedVariables == null;
 		m_QuantifiedVariables = new ArrayList<List<TermVariable>>();
 		List<TermVariable> firstQuantifierBlock = new ArrayList<TermVariable>();
 		m_QuantifiedVariables.add(firstQuantifierBlock);

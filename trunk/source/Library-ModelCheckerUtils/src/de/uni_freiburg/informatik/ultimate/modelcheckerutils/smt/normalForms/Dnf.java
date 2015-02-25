@@ -1,9 +1,11 @@
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms;
 
+import java.util.List;
+
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.logic.Util;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 
 /**
  * Transform Boolean Term into disjunctive normal form.
@@ -46,15 +48,20 @@ public class Dnf extends Xnf {
 		}
 
 		@Override
-		public Term innerConnective(Script script, Term... params) {
-			Term result = Util.and(m_Script, params);
+		public Term innerConnective(Script script, List<Term> params) {
+			Term result = SmtUtils.and(m_Script, params);
 			return result;
 		}
 
 		@Override
-		public Term outerConnective(Script script, Term... params) {
-			Term result = Util.or(m_Script, params);
+		public Term outerConnective(Script script, List<Term> params) {
+			Term result = SmtUtils.or(m_Script, params);
 			return result;
+		}
+
+		@Override
+		public Term[] getOuterJuncts(Term term) {
+			return SmtUtils.getDisjuncts(term);
 		}
 
 	}
