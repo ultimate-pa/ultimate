@@ -1,6 +1,21 @@
+<%@ page import="de.uni_freiburg.informatik.ultimate.website.WebToolchain"%>
+<%@ page import="de.uni_freiburg.informatik.ultimate.website.Tasks"%>
+<%@ page import="de.uni_freiburg.informatik.ultimate.website.Worker"%>
+<%@ page import="de.uni_freiburg.informatik.ultimate.website.Example"%>
+<%@page import="org.json.simple.JSONObject"%>
+<%@ page import="java.util.*"%>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
 <%@ page language="java" contentType="application/javascript; charset=UTF-8" pageEncoding="UTF-8"%>
-
+<%
+  int s = PageContext.SESSION_SCOPE;
+  @SuppressWarnings("unchecked")
+	Map<Tasks.TaskNames, ArrayList<Example>> examples = (Map<Tasks.TaskNames, ArrayList<Example>>) pageContext.getAttribute("examples", s);
+  @SuppressWarnings("unchecked")
+  Map<String, Worker> currentWorker = (Map<String, Worker>) pageContext.getAttribute("currentWorker", s);
+  @SuppressWarnings("unchecked")
+  Map<String, Worker> worker = (Map<String, Worker>) pageContext.getAttribute("worker", s);
+  JSONObject content = (JSONObject) pageContext.getAttribute("content", s);
+%>
 
 var _SERVER_INFO =
             [
