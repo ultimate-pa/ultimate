@@ -34,12 +34,12 @@ public class Totalinterpolation extends
 	 * 
 	 */
 	private static final String[] m_Settings = {
-		"automizer/incrementalInclusion/TreeInterpolants.epf",
-		"automizer/incrementalInclusion/TreeInterpolants_Conservative.epf",
-		"automizer/incrementalInclusion/TreeInterpolants_LBE.epf",
-		"automizer/incrementalInclusion/TreeInterpolants_TotalInterpolation.epf",
-		"automizer/incrementalInclusion/TreeInterpolants_TotalInterpolation_Conservative.epf",
-		"automizer/incrementalInclusion/TreeInterpolants_TotalInterpolation_LBE.epf",
+		"automizer/totalinterpolation/TreeInterpolants.epf",
+		"automizer/totalinterpolation/TreeInterpolants_Conservative.epf",
+		"automizer/totalinterpolation/TreeInterpolants_LBE.epf",
+		"automizer/totalinterpolation/TreeInterpolants_TotalInterpolation.epf",
+		"automizer/totalinterpolation/TreeInterpolants_TotalInterpolation_Conservative.epf",
+		"automizer/totalinterpolation/TreeInterpolants_TotalInterpolation_LBE.epf",
 	};
 	
 	
