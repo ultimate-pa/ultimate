@@ -3,6 +3,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -222,12 +223,14 @@ public class BuchiCegarLoopBenchmark extends CegarLoopBenchmarkType implements I
 	
 	private ICsvProvider<Object> aggregateTermBench(List<TerminationAnalysisBenchmark> benchmarks) {
 		List<ICsvProvider<Object>> list = new ArrayList<ICsvProvider<Object>>();
+		benchmarks = Collections.singletonList(mostMotzkin(benchmarks));
 		for (TerminationAnalysisBenchmark benchmark : benchmarks) {
 			list.add(benchmark.createCvsProvider());
 		}
 		ICsvProvider<Object> allRows = CsvUtils.concatenateRows(list);
 		ICsvProvider<Object> numericColumns = CsvUtils.projectColumn(
 				allRows, new String[]{
+				TerminationAnalysisBenchmark.s_Label_Degree,
 				TerminationAnalysisBenchmark.s_Label_Time, 
 				TerminationAnalysisBenchmark.s_Label_VariablesStem, 
 				TerminationAnalysisBenchmark.s_Label_VariablesLoop, 
@@ -236,6 +239,17 @@ public class BuchiCegarLoopBenchmark extends CegarLoopBenchmarkType implements I
 				TerminationAnalysisBenchmark.s_Label_SupportingInvariants, 
 				TerminationAnalysisBenchmark.s_Label_MotzkinApplications });
 		return numericColumns;
+	}
+	
+	private TerminationAnalysisBenchmark mostMotzkin(List<TerminationAnalysisBenchmark> benchmarks) {
+		int mostMotzkin = 0;
+		TerminationAnalysisBenchmark mostMotzkinTab = null;
+		for (TerminationAnalysisBenchmark benchmark : benchmarks) {
+			if (benchmark.getMotzkinApplications() > mostMotzkin) {
+				mostMotzkinTab = benchmark;
+			}
+		}
+		return mostMotzkinTab;
 	}
 	
 	
