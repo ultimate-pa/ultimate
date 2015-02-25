@@ -20,8 +20,8 @@ import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
  * In order to understand the variable names and the documentation
  * replace "outer" by "conjunct" and "inner" by "disjunct" for CNF, and
  * replace "outer" by "disjunct" and "inner" by "conjunct" for DNF.
- * In documentation we use the greek letter iota 'ι' to denote the inner 
- * connective and we use the greek letter omikron 'o' to denote the outer
+ * In documentation we use the Greek letter iota 'ι' to denote the inner 
+ * connective and we use the Greek letter omikron 'o' to denote the outer
  * connective.
  * 
  * @author heizmann@informatik.uni-freiburg.de
@@ -202,14 +202,14 @@ public abstract class Xnf extends Nnf {
 		private boolean addIfNoAtomContained(XJunction innerJunction,
 				HashSet<XJunction> set, XJunction xjunction) {
 			boolean modified = false;
-			for (Entry<Term, Polarity> atom : innerJunction.entrySet()) {
-				if (xjunction.contains(atom)) {
+			for (Entry<Term, Polarity> literal : innerJunction.entrySet()) {
+				if (xjunction.contains(literal.getKey(), literal.getValue())) {
 					// do not add
 					modified = true;
 					return modified;
-				} else if (xjunction.containsNegation(atom)) {
+				} else if (xjunction.containsNegation(literal.getKey(), literal.getValue())) {
 					// remove negation and add to result
-					xjunction.remove(atom.getKey());
+					xjunction.remove(literal.getKey());
 					modified = true;
 				}
 			}
