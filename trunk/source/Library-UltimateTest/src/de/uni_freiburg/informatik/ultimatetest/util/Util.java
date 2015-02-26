@@ -93,6 +93,9 @@ public class Util {
 	public static String getPathFromTrunk(String path) {
 		File trunk = new File(System.getProperty("user.dir")).getParentFile().getParentFile();
 		File relative = new File(trunk.getAbsolutePath() + File.separator + path);
+		if (!relative.exists()) {
+			throw new IllegalArgumentException("Path " + relative.getAbsolutePath() + " does not exist.");
+		}
 		return relative.getAbsolutePath();
 	}
 
