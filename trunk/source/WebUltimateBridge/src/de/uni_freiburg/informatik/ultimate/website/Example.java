@@ -33,47 +33,47 @@ public class Example {
 	/**
 	 * The files content.
 	 */
-	private String fileContent;
+	private String mFileContent;
 	/**
 	 * The files name; a String describing the file - this is the name shown to
 	 * the web user in a dropdown box.
 	 */
-	private String fileName;
+	private String mFileName;
 	/**
 	 * The path to the file - actually the files real name without an absolute
 	 * path! This is used by the Class Loader to find the file!
 	 */
-	private String filePath;
+	private String mFilePath;
 	/**
 	 * The examples identifier used to uniquely identify the example on
 	 * communication between client and server.
 	 */
-	private String id;
+	private String mId;
 	/**
 	 * The taskNames for which these example is applicable.
 	 */
-	private Tasks.TaskNames[] taskNames;
+	private Tasks.TaskNames[] mTaskNames;
 	/**
 	 * The map of examples - generated automatically and holding the
 	 * representations of the examples, sorted by the corresponding task(s).
 	 * This implies, that examples with multiple tasks are contained multiply!
 	 */
-	private static final Map<Tasks.TaskNames, ArrayList<Example>> sortedMap = new HashMap<Tasks.TaskNames, ArrayList<Example>>();
+	private static final Map<Tasks.TaskNames, ArrayList<Example>> mExamplesByTask = new HashMap<Tasks.TaskNames, ArrayList<Example>>();
 	/**
 	 * Set of IDs - used to verify, that the ids are really unique!
 	 */
-	private static final Set<String> ids = new HashSet<String>();
+	private static final Set<String> mIds = new HashSet<String>();
 	/**
 	 * List of examples, sorted by their ids - each example is therefore
 	 * contained only once!
 	 */
-	private static final Map<String, Example> list = new HashMap<String, Example>();
+	private static final Map<String, Example> mExamplesById = new HashMap<String, Example>();
 
 	/**
 	 * Initialize the Example lists.
 	 */
 	private static void init() {
-		System.out.println("Initializing Examples.");
+		SimpleLogger.log("Initializing Examples.");
 		ArrayList<Example> list = new ArrayList<Example>();
 		list.add(new Example("Example C File", "exampleCFile", "exampleFile.c",
 				new Tasks.TaskNames[] { Tasks.TaskNames.VerifyC }));
@@ -106,7 +106,7 @@ public class Example {
 		// TODO : add more/new examples here
 		for (Example e : list) {
 			try {
-				new Example(e.fileName, e.id, e.taskNames, readFile(e.filePath));
+				new Example(e.mFileName, e.mId, e.mTaskNames, readFile(e.mFilePath));
 			} catch (IOException ex) {
 				/* file cannot be parsed -> skip it! */
 				ex.printStackTrace();
@@ -124,12 +124,11 @@ public class Example {
 	 * @return a map of example files.
 	 */
 	public static Map<Tasks.TaskNames, ArrayList<Example>> getExamples() {
-		System.out.println("Call of de.uni_freiburg.informatik.ultimate.website.Example.getExamples() method");
-		if (sortedMap.isEmpty()) {
-			System.out.println("sortedMap is empty");
+		if (mExamplesByTask.isEmpty()) {
+			SimpleLogger.log("sortedMap is empty");
 			init();
 		}
-		return sortedMap;
+		return mExamplesByTask;
 	}
 
 	/**
@@ -156,7 +155,7 @@ public class Example {
 			throw new IllegalArgumentException(
 					"Example must be assign to at least one TaskName!");
 		}
-		if (ids.contains(id)) {
+		if (mIds.contains(id)) {
 			throw new IllegalArgumentException("ID must be unique! " + 
 					"Not unique: " + name + " " + id);
 		}
@@ -171,17 +170,17 @@ public class Example {
 			throw new IllegalArgumentException(
 					"ID must be element of (a-Z0-9)*");
 		}
-		this.fileName = name;
-		this.fileContent = content;
-		this.id = id;
-		ids.add(id);
+		this.mFileName = name;
+		this.mFileContent = content;
+		this.mId = id;
+		mIds.add(id);
 		for (Tasks.TaskNames tn : taskNames) {
-			if (!sortedMap.containsKey(tn)) {
-				sortedMap.put(tn, new ArrayList<Example>());
+			if (!mExamplesByTask.containsKey(tn)) {
+				mExamplesByTask.put(tn, new ArrayList<Example>());
 			}
-			sortedMap.get(tn).add(this);
+			mExamplesByTask.get(tn).add(this);
 		}
-		list.put(id, this);
+		mExamplesById.put(id, this);
 	}
 
 	/**
@@ -198,10 +197,10 @@ public class Example {
 	 */
 	private Example(String name, String id, String path,
 			Tasks.TaskNames[] taskNames) {
-		this.fileName = name;
-		this.filePath = path;
-		this.taskNames = taskNames;
-		this.id = id;
+		this.mFileName = name;
+		this.mFilePath = path;
+		this.mTaskNames = taskNames;
+		this.mId = id;
 	}
 
 	/**
@@ -247,13 +246,13 @@ public class Example {
 	 */
 	static private String[] filenamesOfFilesInSubdirectory(String dirSuffix) {
 		String dir = "/resources/examples/" + dirSuffix;
-		System.out.println("Trying to get all files in directory " + dir);
+		SimpleLogger.log("Trying to get all files in directory " + dir);
 		URL dirURL = Example.class.getClassLoader().getResource(dir);
 		if (dirURL == null) {
-			System.out.println("Folder " + dir + " does not exist");
+			SimpleLogger.log("Folder " + dir + " does not exist");
 			return new String[0];
 		}
-		System.out.println("URL " + dirURL);
+		SimpleLogger.log("URL " + dirURL);
 		String protocol = dirURL.getProtocol();
 		File dirFile = null;
 		if (protocol.equals("file")) {
@@ -261,7 +260,7 @@ public class Example {
 				dirFile = new File(dirURL.toURI());
 			} catch (URISyntaxException e) {
 				e.printStackTrace();
-				System.out.println("Failed");
+				SimpleLogger.log("Failed");
 				return new String[0];
 			}
 		} else if (protocol.equals("bundleresource")) {
@@ -270,16 +269,16 @@ public class Example {
 				dirFile = new File(fileURL.toURI());
 			} catch (Exception e) {
 				e.printStackTrace();
-				System.out.println("Failed");
+				SimpleLogger.log("Failed");
 				return new String[0];
 			}
 		} else {
-			System.out.println("Unkown protocol " + protocol);
+			SimpleLogger.log("Unkown protocol " + protocol);
 			return new String[0];
 		}
 		String[] content = dirFile.list();
 		if (content == null) {
-			System.out.println("No folder:" + dirURL);
+			SimpleLogger.log("No folder:" + dirURL);
 			return new String[0];
 		} else {
 			Arrays.sort(content);
@@ -319,7 +318,7 @@ public class Example {
 	 * @return the fileContent
 	 */
 	public String getFileContent() {
-		return fileContent;
+		return mFileContent;
 	}
 
 	/**
@@ -328,7 +327,7 @@ public class Example {
 	 * @return the fileName
 	 */
 	public String getFileName() {
-		return fileName;
+		return mFileName;
 	}
 
 	/**
@@ -337,7 +336,7 @@ public class Example {
 	 * @return the taskNames
 	 */
 	public Tasks.TaskNames[] getTaskNames() {
-		return taskNames;
+		return mTaskNames;
 	}
 
 	/**
@@ -346,7 +345,7 @@ public class Example {
 	 * @return the id
 	 */
 	public String getId() {
-		return id;
+		return mId;
 	}
 
 	/**
@@ -357,13 +356,13 @@ public class Example {
 	 * @return the corresponding example or null, if ID not found!
 	 */
 	public static final Example get(String id) {
-		System.out.println("Get example for id " + id);
-		if (list.isEmpty()) {
-			System.out.println("Example list is empty");
+		SimpleLogger.log("Get example for id " + id);
+		if (mExamplesById.isEmpty()) {
+			SimpleLogger.log("Example list is empty");
 			init();
 		}
-		if (ids.contains(id)) {
-			return list.get(id);
+		if (mIds.contains(id)) {
+			return mExamplesById.get(id);
 		}
 		return null;
 	}

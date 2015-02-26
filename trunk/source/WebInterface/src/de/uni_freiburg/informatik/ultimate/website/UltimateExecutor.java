@@ -5,8 +5,6 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Map;
-
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -21,11 +19,11 @@ public class UltimateExecutor {
 		mLogger = logger;
 	}
 
-	public JSONObject executeUltimate(Map<String, String[]> requestParams) throws JSONException {
-		return handleActionExecute(requestParams);
+	public JSONObject executeUltimate(Request internalRequest) throws JSONException {
+		return handleActionExecute(internalRequest);
 	}
 
-	private JSONObject handleActionExecute(Map<String, String[]> paramList) throws JSONException {
+	private JSONObject handleActionExecute(Request internalRequest) throws JSONException {
 		JSONObject json = new JSONObject();
 
 		File inputFile = null;
@@ -33,19 +31,20 @@ public class UltimateExecutor {
 		File toolchainFile = null;
 
 		try {
-			String taskId = getCheckedArgument(paramList, "taskID");
-			String tcId = getCheckedArgument(paramList, "tcID");
-			String code = getCheckedArgument(paramList, "code");
+			String taskId = getCheckedArgument(internalRequest, "taskID");
+			String tcId = getCheckedArgument(internalRequest, "tcID");
+			String code = getCheckedArgument(internalRequest, "code");
 
-			mLogger.logDebug("Execute ultimate for: " + taskId + ", " + tcId);
+			mLogger.log("Preparing to execute Ultimate for task ID " + taskId + " and toolchain ID " + tcId + "...");
 
 			WebToolchain tc = getToolchain(taskId, tcId);
 			if (tc == null) {
-				throw new IllegalArgumentException("Invalid toolchain ID: " + tcId);
+				throw new IllegalArgumentException("Invalid task or toolchain ID. taskID=" + taskId + ", toolchainID="
+						+ tcId);
 			}
 			// Build the setting ids to be requested
 			// and put the values into the settings object
-			setUserSettings(paramList, tcId, tc);
+			setUserSettings(internalRequest, tcId, tc);
 
 			// create temporary files to run ultimate on
 			String timestamp = CoreUtil.getCurrentDateTimeAsString();
@@ -53,8 +52,11 @@ public class UltimateExecutor {
 			settingsFile = writeTemporaryFile(timestamp + "_settings", tc.getSettingFileContent(), ".epf");
 			toolchainFile = writeTemporaryFile(timestamp + "_toolchain", tc.getToolchainXML(), ".xml");
 
+			mLogger.log("Written temporary files to " + inputFile.getParent() + " with timestamp " + timestamp);
+
 			// run ultimate
 			runUltimate(json, inputFile, settingsFile, toolchainFile);
+			mLogger.log("Finished executing Ultimate for task ID " + taskId + " and toolchain ID " + tcId + "...");
 
 		} catch (IllegalArgumentException e) {
 			e.printStackTrace();
@@ -79,11 +81,8 @@ public class UltimateExecutor {
 		return json;
 	}
 
-	private String getCheckedArgument(Map<String, String[]> paramList, String paramId) {
-		if (paramList == null) {
-			throw new IllegalArgumentException("No parameter were transmitted (paramList == null)");
-		}
-		String[] rtr = paramList.get(paramId);
+	private String getCheckedArgument(Request internalRequest, String paramId) {
+		String[] rtr = internalRequest.get(paramId);
 
 		if (rtr == null) {
 			throw new IllegalArgumentException("The parameter \"" + paramId + "\" was not supplied");
@@ -179,29 +178,29 @@ public class UltimateExecutor {
 		return fileExtension;
 	}
 
-	private void setUserSettings(Map<String, String[]> paramList, String toolchainId, WebToolchain toolchain) {
+	private void setUserSettings(Request internalRequest, String toolchainId, WebToolchain toolchain) {
 		for (Tool tool : toolchain.getTools()) {
 			for (Setting setting : tool.getUserChangeableSettings()) {
 				String sid = toolchainId + "_" + setting.getSettingIdentifier();
-				if (!paramList.containsKey(sid)) {
+				if (!internalRequest.containsKey(sid)) {
 					continue;
 				}
 
-				if (setting.getType() != SettingType.DROPDOWN && paramList.get(sid).length != 1) {
+				if (setting.getType() != SettingType.DROPDOWN && internalRequest.get(sid).length != 1) {
 					throw new IllegalArgumentException("Setting ID not unique: " + sid);
 				}
 				switch (setting.getType()) {
 				case BOOLEAN:
-					setting.setBooleanValue(paramList.get(sid)[0]);
+					setting.setBooleanValue(internalRequest.get(sid)[0]);
 					break;
 				case DROPDOWN:
-					setting.setDropDownValue(paramList.get(sid));
+					setting.setDropDownValue(internalRequest.get(sid));
 					break;
 				case INTEGER:
-					setting.setIntValue(paramList.get(sid)[0]);
+					setting.setIntValue(internalRequest.get(sid)[0]);
 					break;
 				case STRING:
-					setting.setStringValue(paramList.get(sid)[0]);
+					setting.setStringValue(internalRequest.get(sid)[0]);
 					break;
 				default:
 					throw new IllegalArgumentException("Setting type " + setting.getType() + " is unknown");

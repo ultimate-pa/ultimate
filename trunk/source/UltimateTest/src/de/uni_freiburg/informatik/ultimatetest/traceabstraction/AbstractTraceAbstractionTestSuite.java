@@ -19,12 +19,17 @@ public abstract class AbstractTraceAbstractionTestSuite extends AbstractModelChe
 
 	@Override
 	protected ITestSummary[] constructTestSummaries() {
-		return new ITestSummary[] { new TraceAbstractionTestSummary(this.getClass()),
-				new CsvConcatenator(this.getClass(), TraceAbstractionBenchmarks.class) };
+		return new ITestSummary[] { 
+				new TraceAbstractionTestSummary(this.getClass()),
+				new CsvConcatenator(this.getClass(), TraceAbstractionBenchmarks.class) 
+		};
 	}
 
 	@Override
 	protected IIncrementalLog[] constructIncrementalLog() {
-		return new IIncrementalLog[] { new TestSummaryWithBenchmarkResults(this.getClass()) };
+		return new IIncrementalLog[] { 
+				new TestSummaryWithBenchmarkResults(this.getClass()) 
+				
+		};
 	}
 }

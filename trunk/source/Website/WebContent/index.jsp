@@ -67,6 +67,7 @@ Params:
    * setting request variables
    *
    */
+   session.setMaxInactiveInterval(600); //600
   int s = PageContext.SESSION_SCOPE;
   String tool   = request.getParameter("tool");
   String task   = request.getParameter("task");
@@ -140,8 +141,9 @@ Params:
   pageContext.setAttribute("multipleTools", multipleTools);
   pageContext.setAttribute("multipleTasks", multipleTasks);
   pageContext.setAttribute("content", jsonObject, s);
-  System.out.println(pageContext.getAttribute("tasks"));
-  System.out.println(pageContext.getAttribute("worker"));
+  System.out.println("index.jsp: tasks: " + pageContext.getAttribute("tasks"));
+  System.out.println("index.jsp: worker: " + pageContext.getAttribute("worker"));
+  System.out.println("index.jsp: worker, s: "+ pageContext.getAttribute("worker",s));
 
 %>
 <%@ page language="java" contentType="text/html; charset=ISO-8859-1" pageEncoding="ISO-8859-1"%>

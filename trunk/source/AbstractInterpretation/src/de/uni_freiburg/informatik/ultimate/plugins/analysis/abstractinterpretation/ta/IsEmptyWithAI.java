@@ -259,15 +259,6 @@ public class IsEmptyWithAI<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	 */
 	public IsEmptyWithAI(INestedWordAutomaton<LETTER, STATE> nwa, Set<STATE> startStates, Set<STATE> goalStates) {
 		throw new UnsupportedOperationException();
-		// m_nwa = nwa;
-		// assert m_nwa.getStates().containsAll(startStates) : "unknown states";
-		// assert m_nwa.getStates().containsAll(goalStates) : "unknown states";
-		// dummyEmptyStackState = m_nwa.getEmptyStackState();
-		// m_StartStates = startStates;
-		// m_GoalStates = goalStates;
-		// s_Logger.info(startMessage());
-		// m_acceptingRun = getAcceptingRun();
-		// s_Logger.info(exitMessage());
 	}
 
 	/**

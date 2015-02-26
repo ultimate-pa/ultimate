@@ -198,14 +198,18 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		NestedWordAutomaton<CodeBlock, IPredicate> result = new NestedWordAutomaton<CodeBlock, IPredicate>(m_Services,
 				nwa.getInternalAlphabet(), nwa.getCallAlphabet(), nwa.getReturnAlphabet(), nwa.getStateFactory());
 		Collection<IPredicate> oldAutomatonStates = nwa.getStates();
-
+		
+		HashSet<IPredicate> predicates = new HashSet<>(); 
+		
 		for (Object oldState : oldAutomatonStates) {
 			ISLPredicate ip = (ISLPredicate) oldState;
 
 			Term term = terms.get(oldState);
 			TermVarsProc tvp = TermVarsProc.computeTermVarsProc(term, m_SmtManager.getBoogie2Smt());
 			IPredicate newPred = predicateUnifier.getOrConstructPredicate(tvp);
-			result.addState(nwa.getInitialStates().contains(ip), nwa.getFinalStates().contains(ip), newPred);
+			if(predicates.add(newPred)){
+				result.addState(nwa.isInitial(ip), nwa.isFinal(ip), newPred);	
+			}
 		}
 
 		return result;

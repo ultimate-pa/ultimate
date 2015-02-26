@@ -25,6 +25,11 @@ public class RcfgProgramExecution implements IProgramExecution<CodeBlock, Expres
 	private final Map<TermVariable, Boolean>[] m_BranchEncoders;
 	private final boolean m_Overapproximation;
 
+	@SuppressWarnings("unchecked")
+	public RcfgProgramExecution(List<CodeBlock> trace, Map<Integer, ProgramState<Expression>> partialProgramStateMapping) {
+		this(trace, partialProgramStateMapping, new ArrayList<Map<TermVariable, Boolean>>().toArray(new Map[0]));
+	}
+
 	public RcfgProgramExecution(List<CodeBlock> trace,
 			Map<Integer, ProgramState<Expression>> partialProgramStateMapping,
 			Map<TermVariable, Boolean>[] branchEncoders) {

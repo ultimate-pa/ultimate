@@ -12,13 +12,14 @@ public class TraceAbstractionWithAbstractInterpretation extends AbstractEvaluati
 	@Override
 	protected void createTestCasesForReal(List<UltimateTestCase> testcases) {
 //		addTestCasesFixed("AbstractInterpretationC.xml", "AbsIntOrTASingle.epf", testcases);
-		addTestCasesFixed("AutomizerC.xml", "AbsIntOrTASingle.epf", testcases);
-		addTestCasesFixed("AutomizerCWithTA.xml", "TAWithAbsInt.epf", testcases);
+//		addTestCasesFixed("AutomizerC.xml", "ai/Automizer.epf", testcases);
+		addTestCasesFixed("AutomizerC.xml", "ai/Automizer+AI.epf", testcases);
+//		addTestCasesFixed("AutomizerC.xml", "ai/Automizer+AI-Fast.epf", testcases);
 	}
 
 	@Override
 	protected int getFilesPerCategory() {
-		return 10;
+		return -1;
 	}
 
 	@Override
@@ -30,12 +31,11 @@ public class TraceAbstractionWithAbstractInterpretation extends AbstractEvaluati
 	protected String[] getDirectories() {
 		// @formatter:off
 		return new String[] { 
-				"examples/programs/regression/c/", 
-				"examples/svcomp/locks/",
+//				"examples/programs/regression/c/", 
+//				"examples/svcomp/locks/",
 
-				// soundness errors:
-//				 "examples/programs/regression/c/ACSL-Paranthesis.c",
-				// "examples/programs/regression/c/ShortCircuit-SideEffect-ForStatement-Unsafe.c"
+				// current bugs:
+				"examples/programs/regression/c/NestedDeclarators.c",
 		};
 		// @formatter:on
 	}

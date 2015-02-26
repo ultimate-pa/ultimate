@@ -55,6 +55,7 @@ public class UltimateWebController implements IController {
 
 	@Override
 	public int init(ICore core, ILoggingService loggingService) {
+		//TODO Use own logging service to prefix each ultimate log line with the session id 
 		return mExternalUltimateCore.init(core, loggingService, mSettingsFile, 0, mInputFile, null);
 	}
 

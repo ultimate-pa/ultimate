@@ -15,6 +15,7 @@
   @SuppressWarnings("unchecked")
   Map<String, Worker> worker = (Map<String, Worker>) pageContext.getAttribute("worker", s);
   JSONObject content = (JSONObject) pageContext.getAttribute("content", s);
+  System.out.println("transfer.jsp: worker, s: "+ pageContext.getAttribute("worker",s));
 %>
 
 var _SERVER_INFO =
