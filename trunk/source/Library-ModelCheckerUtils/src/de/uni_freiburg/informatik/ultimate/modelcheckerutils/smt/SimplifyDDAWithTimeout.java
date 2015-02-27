@@ -600,7 +600,7 @@ public class SimplifyDDAWithTimeout extends NonRecursive {
 	 */
 	private Redundancy getRedundancy(Term term) {
 		if (!mServices.getProgressMonitorService().continueProcessing()) {
-			throw new ToolchainCanceledException();
+			throw new ToolchainCanceledException(this.getClass());
 		}
 		LBool isTermConstraining =
 				Util.checkSat(mScript, Util.not(mScript, term));

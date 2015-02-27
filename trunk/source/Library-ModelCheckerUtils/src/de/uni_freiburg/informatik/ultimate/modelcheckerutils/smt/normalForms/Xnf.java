@@ -128,7 +128,7 @@ public abstract class Xnf extends Nnf {
 			Set<XJunction> tidyResOuterSet = new HashSet<XJunction>(resOuterJunction);
 			for (XJunction resInnerSet : resOuterJunction) {
 				if (!mServices.getProgressMonitorService().continueProcessing()) {
-					throw new ToolchainCanceledException();
+					throw new ToolchainCanceledException(this.getClass());
 				}
 				if (tidyResOuterSet.contains(resInnerSet)) {
 					Iterator<XJunction> it = tidyResOuterSet.iterator();
@@ -365,7 +365,7 @@ public abstract class Xnf extends Nnf {
 					if (loopCounter == 10000) {
 //						System.out.println("Outer size " + result.size());
 						if (!mServices.getProgressMonitorService().continueProcessing()) {
-							throw new ToolchainCanceledException();
+							throw new ToolchainCanceledException(this.getClass());
 						} else {
 							loopCounter = 0; 
 						}

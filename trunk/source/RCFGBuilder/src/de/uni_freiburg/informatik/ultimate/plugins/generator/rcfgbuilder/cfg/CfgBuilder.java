@@ -485,7 +485,7 @@ public class CfgBuilder {
 
 				if (!mServices.getProgressMonitorService().continueProcessing()) {
 					mLogger.warn("Timeout while constructing control flow graph");
-					throw new ToolchainCanceledException();
+					throw new ToolchainCanceledException(this.getClass());
 				}
 
 				ILocation loc = st.getLocation();

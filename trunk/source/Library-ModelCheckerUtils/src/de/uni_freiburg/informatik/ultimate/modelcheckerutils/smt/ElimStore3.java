@@ -114,7 +114,7 @@ public class ElimStore3 {
 		while (true) {
 			assert eliminatee.getSort().isArraySort();
 			if (!mServices.getProgressMonitorService().continueProcessing()) {
-				throw new ToolchainCanceledException();
+				throw new ToolchainCanceledException(this.getClass());
 			}
 			if (quantifier == QuantifiedFormula.EXISTS) {
 				conjuncts = SmtUtils.getConjuncts(term);

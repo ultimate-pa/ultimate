@@ -10,15 +10,23 @@ public class ToolchainCanceledException extends RuntimeException {
 	private static final long serialVersionUID = 7090759880566576629L;
 	
 	private final static String s_Message = "Timout or Toolchain cancelled by user";
+	private final Class<?> m_ClassOfThrower; 
 
-	public ToolchainCanceledException() {
+	public ToolchainCanceledException(Class<?> thrower) {
 		super(s_Message);
+		m_ClassOfThrower = thrower;
 	}
 
 	@Override
 	public String getMessage() {
 		return super.getMessage();
 	}
-
 	
+	/**
+	 * Get the class of the object that has thrown this Exception.
+	 * @return
+	 */
+	public Class<?> getClassOfThrower() {
+		return m_ClassOfThrower;
+	}
 }
