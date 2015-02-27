@@ -562,7 +562,7 @@ public class AbstractInterpreter extends RCFGEdgeVisitor {
 				ProgramPoint pp = (ProgramPoint) targetNode;
 				if (mErrorLocs.contains(pp) && !mReachedErrorLocs.contains(pp)) {
 					mReachedErrorLocs.add(pp);
-					reportErrorResult(pp, mResultingState, false);
+					reportErrorResult(pp, mResultingState);
 				} else {
 					if (!mNodesToVisit.contains(targetNode)) {
 						mNodesToVisit.add(targetNode);
@@ -571,40 +571,6 @@ public class AbstractInterpreter extends RCFGEdgeVisitor {
 			}
 		}
 	}
-
-	/*
-	 * protected UnprovableResult<RcfgElement, CodeBlock, Expression>
-	 * visit(RCFGEdge e, boolean runsOnNWA) { UnprovableResult<RcfgElement,
-	 * CodeBlock, Expression> result = null; mLogger.debug("Visiting: " +
-	 * e.getSource() + " -> " + e.getTarget());
-	 * 
-	 * super.visit(e);
-	 * 
-	 * String evaluationError = mBoogieVisitor.getErrorMessage(); if
-	 * (!evaluationError.isEmpty()) { reportUnsupportedSyntaxResult(e,
-	 * evaluationError);
-	 * 
-	 * mResultingState = null; // return, abort, stop. }
-	 * 
-	 * if (mResultingState == null) return result; // do not process target
-	 * node!
-	 * 
-	 * Map<RCFGEdge, RCFGEdge> loopEdges = mLoopEntryNodes.get(mCurrentNode); if
-	 * (loopEdges != null) { RCFGEdge exitEdge = loopEdges.get(e); if (exitEdge
-	 * != null) mResultingState.pushLoopEntry((ProgramPoint) mCurrentNode,
-	 * exitEdge); }
-	 * 
-	 * mResultingState.addCodeBlockToTrace((CodeBlock) e);
-	 * 
-	 * RCFGNode targetNode = e.getTarget(); if (targetNode != null) { if
-	 * (putStateToNode(mResultingState, targetNode, e)) { ProgramPoint pp =
-	 * (ProgramPoint) targetNode; if (mErrorLocs.contains(pp) &&
-	 * !mReachedErrorLocs.contains(pp)) { mReachedErrorLocs.add(pp);
-	 * 
-	 * result = reportErrorResult(pp, mResultingState, runsOnNWA); } else { if
-	 * (!mNodesToVisit.contains(targetNode)) { mNodesToVisit.add(targetNode); }
-	 * } } } return result; }
-	 */
 
 	@Override
 	protected void visit(RootEdge e) {
@@ -782,7 +748,7 @@ public class AbstractInterpreter extends RCFGEdgeVisitor {
 	 *            The abstract state at the error location
 	 */
 	private UnprovableResult<RcfgElement, CodeBlock, Expression> reportErrorResult(
-			ProgramPoint location, AbstractState state, boolean runsOnNWA) {
+			ProgramPoint location, AbstractState state) {
 
 		RcfgProgramExecution programExecution = new RcfgProgramExecution(
 				state.getTrace(),

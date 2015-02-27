@@ -6,11 +6,9 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import java.io.File;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
-import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -89,6 +87,7 @@ import de.uni_freiburg.informatik.ultimate.result.UnsupportedSyntaxResult;
  * @author Christopher Dillo modified for usage on NWA by Fabian Schillinger
  * 
  */
+@SuppressWarnings({ "unused" })
 public class AbstractInterpreterTA extends RCFGEdgeVisitor {
 
 	private final IUltimateServiceProvider m_services;
@@ -101,16 +100,11 @@ public class AbstractInterpreterTA extends RCFGEdgeVisitor {
 	private IAbstractDomainFactory<?> m_bitVectorDomainFactory;
 	private IAbstractDomainFactory<?> m_stringDomainFactory;
 
-	// object(node) <list<predecessors> list<successors>>
 	private final LinkedList<Object> m_nodesToVisit = new LinkedList<Object>();
-	private final Deque<Object> m_nodesToVisitDFS = new ArrayDeque<Object>();
-	private final LinkedList<Object> mCallSources = new LinkedList<>();
 	Map<Object, ProgramPoint> m_programPointMap = new HashMap<Object, ProgramPoint>();
 
 	private final Map<Object, List<AbstractState>> m_states = new HashMap<Object, List<AbstractState>>();
 	private final Map<Object, List<AbstractState>> mAnnotations = new HashMap<Object, List<AbstractState>>();
-	// private final Map<RCFGNode, List<AbstractState>> m_states = new
-	// HashMap<RCFGNode, List<AbstractState>>();
 
 	private AbstractState m_currentState, mResultingState;
 
@@ -232,6 +226,7 @@ public class AbstractInterpreterTA extends RCFGEdgeVisitor {
 
 	// private boolean putStateToNode(AbstractState state, RCFGNode node,
 	// RCFGEdge fromEdge) {
+	@SuppressWarnings("unchecked")
 	private boolean putStateToNode(AbstractState state, Object nwaState, Object nwaLetter) {
 		List<AbstractState> statesAtNode = m_states.get(nwaState);
 		if (statesAtNode == null) {
@@ -618,139 +613,9 @@ public class AbstractInterpreterTA extends RCFGEdgeVisitor {
 		return;
 	}
 
-	protected void visitNodesDFS() {
-		while (!m_nodesToVisitDFS.isEmpty()) {
-			Object currentObject = m_nodesToVisitDFS.pop();
-			if (currentObject != null) {
-				if ((currentObject instanceof OutgoingInternalTransition)
-						|| (currentObject instanceof OutgoingCallTransition)
-						|| (currentObject instanceof OutgoingReturnTransition)) {
-					visitDFS(currentObject);
-				} else {
+	
 
-					m_callStatementsAtCalls.clear();
-					m_callStatementsAtSummaries.clear();
-
-					List<AbstractState> statesAtNode = m_states.get(currentObject);
-					mLogger.debug(String.format("---- PROCESSING NODE %S %S----", currentObject, currentObject
-							.getClass().getSimpleName()));
-					// process all unprocessed states at the node
-					boolean hasUnprocessed = true;
-					while (hasUnprocessed && m_continueProcessing) {
-						AbstractState unprocessedState = null;
-						for (AbstractState s : statesAtNode) {
-							if (!s.isProcessed()) {
-								unprocessedState = s;
-								break;
-							}
-						}
-						if (unprocessedState != null) {
-							m_currentState = unprocessedState;
-							m_currentState.setProcessed(true);
-
-							m_currentNode = currentObject;
-
-							for (OutgoingInternalTransition<CodeBlock, Object> e : m_nwa
-									.internalSuccessors(currentObject)) {
-								m_nodesToVisitDFS.push(e);
-							}
-							for (OutgoingCallTransition<CodeBlock, Object> e : m_nwa.callSuccessors(currentObject)) {
-								m_nodesToVisitDFS.push(e);
-							}
-							for (OutgoingReturnTransition<CodeBlock, Object> e : m_nwa.returnSuccessors(currentObject)) {
-								m_nodesToVisitDFS.push(e);
-							}
-						} else {
-							hasUnprocessed = false;
-						}
-						// abort if asked to cancel
-						m_continueProcessing = m_continueProcessing
-								&& m_services.getProgressMonitorService().continueProcessing();
-					} // hasUnprocessed
-
-					// remove states if they aren't needed for possible widening
-					// anymore
-					int incomingSize = m_nwa.lettersInternalIncoming(currentObject).size()
-							+ m_nwa.lettersReturnIncoming(currentObject).size()
-							+ m_nwa.lettersCallIncoming(currentObject).size();
-					if (incomingSize <= 1)
-						m_states.remove(currentObject);
-
-					if (!m_callStatementsAtCalls.containsAll(m_callStatementsAtSummaries))
-						reportUnsupportedSyntaxResult((IElement) currentObject,
-								"(NWA) Abstract interpretation plug-in can't verify "
-										+ "programs which contain procedures without implementations.");
-
-					if (!m_continueProcessing)
-						break;
-				}
-			}
-		}
-		return;
-	}
-
-	protected void visitDFS(Object transition) {
-		mResultingState = null;
-		CodeBlock letter = null;
-		Object succ = null;
-		if (transition instanceof OutgoingInternalTransition) {
-			OutgoingInternalTransition<CodeBlock, Object> tr = (OutgoingInternalTransition<CodeBlock, Object>) transition;
-			letter = tr.getLetter();
-			succ = tr.getSucc();
-		} else if (transition instanceof OutgoingCallTransition) {
-			OutgoingCallTransition<CodeBlock, Object> tr = (OutgoingCallTransition<CodeBlock, Object>) transition;
-			letter = tr.getLetter();
-			succ = tr.getSucc();
-		} else if (transition instanceof OutgoingReturnTransition) {
-			OutgoingReturnTransition<CodeBlock, Object> tr = (OutgoingReturnTransition<CodeBlock, Object>) transition;
-			letter = tr.getLetter();
-			succ = tr.getSucc();
-		} else {
-			return;
-		}
-
-		super.visit((RCFGEdge) letter);
-
-		String evaluationError = m_boogieVisitor.getErrorMessage();
-		if (!evaluationError.isEmpty()) {
-			reportUnsupportedSyntaxResult((IElement) transition, evaluationError);
-
-			mResultingState = null; // return, abort, stop.
-		}
-
-		if (mResultingState == null) {
-			mLogger.debug("No resulting state, ignoring target node");
-			return; // do not process target node!
-		}
-
-		Map<Object, Object> loopEdges = m_loopEntryNodes.get(m_programPointMap.get(m_currentNode));
-		if (loopEdges != null) {
-			Object exitEdge = loopEdges.get(letter);
-			if (exitEdge != null)
-				mResultingState.pushLoopEntry((ProgramPoint) m_programPointMap.get(m_currentNode), (RCFGEdge) exitEdge);
-		}
-
-		mResultingState.addCodeBlockToTrace((CodeBlock) letter);
-
-		if (succ != null) {
-			if (putStateToNode(mResultingState, succ, transition)) {
-				if (m_errorLocs.contains(succ) && !m_reachedErrorLocs.contains(succ)) {
-					m_reachedErrorLocs.add(succ);
-					ProgramPoint pp = m_programPointMap.get(succ);
-					reportErrorResult(pp, mResultingState);
-				} else {
-					if (!m_nodesToVisitDFS.contains(succ))
-						m_nodesToVisitDFS.push(succ);
-				}
-			} else {
-				mLogger.debug("Skipping successors");
-			}
-		} else {
-			mLogger.debug("There is no successor");
-		}
-		return;
-	}
-
+	@SuppressWarnings("unchecked")
 	protected void visit(Object transition) {
 		// protected UnprovableResult<RcfgElement, CodeBlock, Expression>
 		// visit(RCFGEdge e, boolean runsOnNWA) {
@@ -882,7 +747,7 @@ public class AbstractInterpreterTA extends RCFGEdgeVisitor {
 
 	@Override
 	protected void visit(SequentialComposition c) {
-		mLogger.debug("> SequentialComposition START");
+		mLogger.debug("> " + "SequentialComposition" + " START");
 
 		AbstractState currentState = m_currentState;
 		// backup, as the member variable is manipulated during iterating the

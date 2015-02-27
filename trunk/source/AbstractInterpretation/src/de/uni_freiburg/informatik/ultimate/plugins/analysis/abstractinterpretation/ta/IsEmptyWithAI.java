@@ -90,7 +90,8 @@ public class IsEmptyWithAI<LETTER, STATE> implements IOperation<LETTER, STATE> {
 
 	@Override
 	public String startMessage() {
-		return "Start " + operationName() + ". Operand " + m_nwa.sizeInformation();
+		return "Start " + operationName() + ". Operand "
+				+ m_nwa.sizeInformation();
 	}
 
 	@Override
@@ -98,7 +99,9 @@ public class IsEmptyWithAI<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		if (m_acceptingRun == null) {
 			return "Finished " + operationName() + ". No accepting run.";
 		} else {
-			return "Finished " + operationName() + ". Found accepting run of length " + m_acceptingRun.getLength();
+			return "Finished " + operationName()
+					+ ". Found accepting run of length "
+					+ m_acceptingRun.getLength();
 		}
 	}
 
@@ -221,13 +224,18 @@ public class IsEmptyWithAI<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	 * Default constructor. Here we search a run from the initial states of the
 	 * automaton to the final states of the automaton.
 	 */
-	public IsEmptyWithAI(INestedWordAutomaton<LETTER, STATE> nwa, IUltimateServiceProvider services, RootNode root,
-			Map<Object, ProgramPoint> programPointMap, Map<ProgramPoint, Object> predicateMap) {
+	@SuppressWarnings("unchecked")
+	public IsEmptyWithAI(INestedWordAutomaton<LETTER, STATE> nwa,
+			IUltimateServiceProvider services, RootNode root,
+			Map<Object, ProgramPoint> programPointMap,
+			Map<ProgramPoint, Object> predicateMap) {
 		List<UnprovableResult<RcfgElement, CodeBlock, Expression>> results = null;
 		m_nwa = nwa;
 		m_aI = new AbstractInterpreterTA(services);
 		m_predicateMap = predicateMap;
-		results = m_aI.processNWA((INestedWordAutomaton<CodeBlock, Object>) nwa, root, programPointMap);
+		results = m_aI.processNWA(
+				(INestedWordAutomaton<CodeBlock, Object>) nwa, root,
+				programPointMap);
 		dummyEmptyStackState = m_nwa.getEmptyStackState();
 		m_StartStates = m_nwa.getInitialStates();
 		m_GoalStates = m_nwa.getFinalStates();
@@ -257,7 +265,8 @@ public class IsEmptyWithAI<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	 * startStates defines where the run that we search has to start. The set of
 	 * goalStates defines where the run that we search has to end.
 	 */
-	public IsEmptyWithAI(INestedWordAutomaton<LETTER, STATE> nwa, Set<STATE> startStates, Set<STATE> goalStates) {
+	public IsEmptyWithAI(INestedWordAutomaton<LETTER, STATE> nwa,
+			Set<STATE> startStates, Set<STATE> goalStates) {
 		throw new UnsupportedOperationException();
 	}
 
@@ -351,6 +360,7 @@ public class IsEmptyWithAI<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	 * Get an accepting run of the automaton passed to the constructor. Return
 	 * null if the automaton does not accept any nested word.
 	 */
+	@SuppressWarnings("unused")
 	private NestedRun<LETTER, STATE> getAcceptingRun() {
 		for (STATE state : m_StartStates) {
 			enqueueAndMarkVisited(state, dummyEmptyStackState);
@@ -367,16 +377,19 @@ public class IsEmptyWithAI<LETTER, STATE> implements IOperation<LETTER, STATE> {
 
 			processSummaries(state, stateK);
 
-			for (OutgoingInternalTransition<LETTER, STATE> internalTransition : m_nwa.internalSuccessors(state)) {
+			for (OutgoingInternalTransition<LETTER, STATE> internalTransition : m_nwa
+					.internalSuccessors(state)) {
 				LETTER symbol = internalTransition.getLetter();
 				STATE succ = internalTransition.getSucc();
 				if (!wasVisited(succ, stateK)) {
-					addRunInformationInternal(succ, stateK, symbol, state, stateK);
+					addRunInformationInternal(succ, stateK, symbol, state,
+							stateK);
 					enqueueAndMarkVisited(succ, stateK);
 				}
 			}
 
-			for (OutgoingCallTransition<LETTER, STATE> callTransition : m_nwa.callSuccessors(state)) {
+			for (OutgoingCallTransition<LETTER, STATE> callTransition : m_nwa
+					.callSuccessors(state)) {
 				LETTER symbol = callTransition.getLetter();
 				STATE succ = callTransition.getSucc();
 				// add these information even in already visited
@@ -392,15 +405,16 @@ public class IsEmptyWithAI<LETTER, STATE> implements IOperation<LETTER, STATE> {
 				continue;
 			}
 
-			for (OutgoingReturnTransition<LETTER, STATE> returnTransition : m_nwa.returnSuccessorsGivenHier(state,
-					stateK)) {
+			for (OutgoingReturnTransition<LETTER, STATE> returnTransition : m_nwa
+					.returnSuccessorsGivenHier(state, stateK)) {
 				LETTER symbol = returnTransition.getLetter();
 				STATE succ = returnTransition.getSucc();
 				for (STATE stateKK : getCallStatesOfCallState(stateK)) {
 					addSummary(stateK, succ, state, symbol);
 					if (!wasVisited(succ, stateKK)) {
 						enqueueAndMarkVisited(succ, stateKK);
-						addRunInformationReturn(succ, stateKK, symbol, state, stateK);
+						addRunInformationReturn(succ, stateKK, symbol, state,
+								stateK);
 					}
 
 				}
@@ -409,24 +423,29 @@ public class IsEmptyWithAI<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		return null;
 	}
 
+	@SuppressWarnings({ "unchecked" })
 	private NestedRun<LETTER, STATE> getAcceptingRun(
 			UnprovableResult<RcfgElement, CodeBlock, Expression> unprovableResult) {
-		IProgramExecution<CodeBlock, Expression> execution = unprovableResult.getProgramExecution();
+		IProgramExecution<CodeBlock, Expression> execution = unprovableResult
+				.getProgramExecution();
 		List<LETTER> executionLetters = new ArrayList<LETTER>();
 		ArrayList<STATE> executionStates = new ArrayList<STATE>();
 
 		for (int i = 0; i < execution.getLength(); i++) {
-			RCFGEdge traceElement = (RCFGEdge) execution.getTraceElement(i).getTraceElement();
+			RCFGEdge traceElement = (RCFGEdge) execution.getTraceElement(i)
+					.getTraceElement();
 			RCFGNode state = traceElement.getSource();
 			executionLetters.add((LETTER) traceElement);
 			executionStates.add((STATE) m_predicateMap.get(state));
 		}
 		// add the last state
-		executionStates.add((STATE) m_predicateMap.get(((RCFGEdge) executionLetters.get(executionLetters.size() - 1))
-				.getTarget()));
+		executionStates
+				.add((STATE) m_predicateMap.get(((RCFGEdge) executionLetters
+						.get(executionLetters.size() - 1)).getTarget()));
 
 		// start with an empty word
-		NestedWord<LETTER> currentWord = new NestedWord<>((LETTER[]) new RCFGEdge[0], new int[0]);
+		NestedWord<LETTER> currentWord = new NestedWord<>(
+				(LETTER[]) new RCFGEdge[0], new int[0]);
 		for (LETTER currentLetter : executionLetters) {
 			// for every letter, build a single word and let the concatenate
 			// function do its magic
@@ -434,16 +453,20 @@ public class IsEmptyWithAI<LETTER, STATE> implements IOperation<LETTER, STATE> {
 			NestedWord<LETTER> nxtWord;
 			if (currentLetter instanceof Call) {
 				// make it a pending call
-				nxtWord = new NestedWord<LETTER>(currentLetter, NestedWord.PLUS_INFINITY);
+				nxtWord = new NestedWord<LETTER>(currentLetter,
+						NestedWord.PLUS_INFINITY);
 			} else if (currentLetter instanceof Return) {
-				nxtWord = new NestedWord<LETTER>(currentLetter, NestedWord.MINUS_INFINITY);
+				nxtWord = new NestedWord<LETTER>(currentLetter,
+						NestedWord.MINUS_INFINITY);
 			} else {
-				nxtWord = new NestedWord<LETTER>(currentLetter, NestedWord.INTERNAL_POSITION);
+				nxtWord = new NestedWord<LETTER>(currentLetter,
+						NestedWord.INTERNAL_POSITION);
 			}
 			currentWord = currentWord.concatenate(nxtWord);
 		}
 
-		NestedRun<LETTER, STATE> rtr = new NestedRun<LETTER, STATE>(currentWord, executionStates);
+		NestedRun<LETTER, STATE> rtr = new NestedRun<LETTER, STATE>(
+				currentWord, executionStates);
 		return rtr;
 	}
 
@@ -457,14 +480,16 @@ public class IsEmptyWithAI<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		if (m_summaryReturnPred.containsKey(state)) {
 			assert (m_summaryReturnSymbol.containsKey(state));
 			Map<STATE, STATE> succ2ReturnPred = m_summaryReturnPred.get(state);
-			Map<STATE, LETTER> succ2ReturnSymbol = m_summaryReturnSymbol.get(state);
+			Map<STATE, LETTER> succ2ReturnSymbol = m_summaryReturnSymbol
+					.get(state);
 			for (STATE succ : succ2ReturnPred.keySet()) {
 				assert (succ2ReturnSymbol.containsKey(succ));
 				STATE returnPred = succ2ReturnPred.get(succ);
 				LETTER symbol = succ2ReturnSymbol.get(succ);
 				if (!wasVisited(succ, stateK)) {
 					enqueueAndMarkVisited(succ, stateK);
-					addRunInformationReturn(succ, stateK, symbol, returnPred, state);
+					addRunInformationReturn(succ, stateK, symbol, returnPred,
+							state);
 				}
 			}
 
@@ -477,14 +502,17 @@ public class IsEmptyWithAI<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	 * about the predecessor (state,stateK) under an internal transition and a
 	 * run of length two from state to succ.
 	 */
-	private void addRunInformationInternal(STATE succ, STATE succK, LETTER symbol, STATE state, STATE stateK) {
-		Map<STATE, NestedRun<LETTER, STATE>> succK2run = m_internalSubRun.get(succ);
+	private void addRunInformationInternal(STATE succ, STATE succK,
+			LETTER symbol, STATE state, STATE stateK) {
+		Map<STATE, NestedRun<LETTER, STATE>> succK2run = m_internalSubRun
+				.get(succ);
 		if (succK2run == null) {
 			succK2run = new HashMap<STATE, NestedRun<LETTER, STATE>>();
 			m_internalSubRun.put(succ, succK2run);
 		}
 		assert (succK2run.get(succK) == null);
-		NestedRun<LETTER, STATE> run = new NestedRun<LETTER, STATE>(state, symbol, NestedWord.INTERNAL_POSITION, succ);
+		NestedRun<LETTER, STATE> run = new NestedRun<LETTER, STATE>(state,
+				symbol, NestedWord.INTERNAL_POSITION, succ);
 		succK2run.put(succK, run);
 	}
 
@@ -494,11 +522,13 @@ public class IsEmptyWithAI<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	 * length two from state to succ. If (succ,succK) was visited for the first
 	 * time, store also stateK in m_callFirst.
 	 */
-	private void addRunInformationCall(STATE succ, STATE succK, LETTER symbol, STATE state, STATE stateK) {
+	private void addRunInformationCall(STATE succ, STATE succK, LETTER symbol,
+			STATE state, STATE stateK) {
 		// s_Logger.debug("Call SubrunInformation: From ("+succ+","+succK+
 		// ") can go to ("+state+","+stateK+")");
 		assert (state == succK);
-		Map<STATE, Map<STATE, NestedRun<LETTER, STATE>>> succK2stateK2Run = m_callSubRun.get(succ);
+		Map<STATE, Map<STATE, NestedRun<LETTER, STATE>>> succK2stateK2Run = m_callSubRun
+				.get(succ);
 		Map<STATE, STATE> succK2FirstStateK = m_callFirst.get(succ);
 		if (succK2stateK2Run == null) {
 			succK2stateK2Run = new HashMap<STATE, Map<STATE, NestedRun<LETTER, STATE>>>();
@@ -509,7 +539,8 @@ public class IsEmptyWithAI<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		if (!succK2FirstStateK.containsKey(succK)) {
 			succK2FirstStateK.put(succK, stateK);
 		}
-		Map<STATE, NestedRun<LETTER, STATE>> stateK2Run = succK2stateK2Run.get(succK);
+		Map<STATE, NestedRun<LETTER, STATE>> stateK2Run = succK2stateK2Run
+				.get(succK);
 		if (stateK2Run == null) {
 			stateK2Run = new HashMap<STATE, NestedRun<LETTER, STATE>>();
 			succK2stateK2Run.put(succK, stateK2Run);
@@ -518,7 +549,8 @@ public class IsEmptyWithAI<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		// transitions from stateK to state. (But in this case we always want to
 		// take the one that was first discovered.)
 		// assert(!stateK2Run.containsKey(stateK));
-		NestedRun<LETTER, STATE> run = new NestedRun<LETTER, STATE>(state, symbol, NestedWord.PLUS_INFINITY, succ);
+		NestedRun<LETTER, STATE> run = new NestedRun<LETTER, STATE>(state,
+				symbol, NestedWord.PLUS_INFINITY, succ);
 		stateK2Run.put(stateK, run);
 	}
 
@@ -527,8 +559,10 @@ public class IsEmptyWithAI<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	 * about the predecessor (state,stateK) under a return transition and a run
 	 * of length two from state to succ. Store also succK to m_returnPredStateK.
 	 */
-	private void addRunInformationReturn(STATE succ, STATE succK, LETTER symbol, STATE state, STATE stateK) {
-		Map<STATE, NestedRun<LETTER, STATE>> succK2SubRun = m_returnSubRun.get(succ);
+	private void addRunInformationReturn(STATE succ, STATE succK,
+			LETTER symbol, STATE state, STATE stateK) {
+		Map<STATE, NestedRun<LETTER, STATE>> succK2SubRun = m_returnSubRun
+				.get(succ);
 		Map<STATE, STATE> succK2PredStateK = m_returnPredStateK.get(succ);
 		if (succK2SubRun == null) {
 			assert (succK2PredStateK == null);
@@ -539,7 +573,8 @@ public class IsEmptyWithAI<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		}
 		assert (!succK2SubRun.containsKey(succK));
 		assert (!succK2PredStateK.containsKey(succK));
-		NestedRun<LETTER, STATE> run = new NestedRun<LETTER, STATE>(state, symbol, NestedWord.MINUS_INFINITY, succ);
+		NestedRun<LETTER, STATE> run = new NestedRun<LETTER, STATE>(state,
+				symbol, NestedWord.MINUS_INFINITY, succ);
 		succK2SubRun.put(succK, run);
 		succK2PredStateK.put(succK, stateK);
 	}
@@ -572,9 +607,12 @@ public class IsEmptyWithAI<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	/**
 	 * Store information about a discovered summary.
 	 */
-	private void addSummary(STATE stateBeforeCall, STATE stateAfterReturn, STATE stateBeforeReturn, LETTER returnSymbol) {
-		Map<STATE, STATE> succ2ReturnPred = m_summaryReturnPred.get(stateBeforeCall);
-		Map<STATE, LETTER> succ2ReturnSymbol = m_summaryReturnSymbol.get(stateBeforeCall);
+	private void addSummary(STATE stateBeforeCall, STATE stateAfterReturn,
+			STATE stateBeforeReturn, LETTER returnSymbol) {
+		Map<STATE, STATE> succ2ReturnPred = m_summaryReturnPred
+				.get(stateBeforeCall);
+		Map<STATE, LETTER> succ2ReturnSymbol = m_summaryReturnSymbol
+				.get(stateBeforeCall);
 		if (succ2ReturnPred == null) {
 			assert (succ2ReturnSymbol == null);
 			succ2ReturnPred = new HashMap<STATE, STATE>();
@@ -600,13 +638,14 @@ public class IsEmptyWithAI<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	private NestedRun<LETTER, STATE> constructRun(STATE state, STATE stateK) {
 		// s_Logger.debug("Reconstruction from " + state + " " + stateK);
 		NestedRun<LETTER, STATE> run = new NestedRun<LETTER, STATE>(state);
-		while (!m_StartStates.contains(state) || !m_reconstructionStack.isEmpty()) {
+		while (!m_StartStates.contains(state)
+				|| !m_reconstructionStack.isEmpty()) {
 			if (computeInternalSubRun(state, stateK)) {
 			} else if (computeCallSubRun(state, stateK)) {
 			} else if (computeReturnSubRun(state, stateK)) {
 			} else {
-				s_Logger.warn("No Run ending in pair " + state + "  " + stateK + " with reconstructionStack"
-						+ m_reconstructionStack);
+				s_Logger.warn("No Run ending in pair " + state + "  " + stateK
+						+ " with reconstructionStack" + m_reconstructionStack);
 				throw new AssertionError();
 			}
 			run = m_ReconstructionOneStepRun.concatenate(run);
@@ -622,7 +661,8 @@ public class IsEmptyWithAI<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	 * topmost stack element.
 	 */
 	private boolean computeInternalSubRun(STATE state, STATE stateK) {
-		Map<STATE, NestedRun<LETTER, STATE>> k2InternalMap = m_internalSubRun.get(state);
+		Map<STATE, NestedRun<LETTER, STATE>> k2InternalMap = m_internalSubRun
+				.get(state);
 		if (k2InternalMap != null) {
 			NestedRun<LETTER, STATE> run = k2InternalMap.get(stateK);
 			if (run != null) {
@@ -640,9 +680,11 @@ public class IsEmptyWithAI<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	 * stack element.
 	 */
 	private boolean computeCallSubRun(STATE state, STATE stateK) {
-		Map<STATE, Map<STATE, NestedRun<LETTER, STATE>>> k2CallMap = m_callSubRun.get(state);
+		Map<STATE, Map<STATE, NestedRun<LETTER, STATE>>> k2CallMap = m_callSubRun
+				.get(state);
 		if (k2CallMap != null) {
-			Map<STATE, NestedRun<LETTER, STATE>> callMap = k2CallMap.get(stateK);
+			Map<STATE, NestedRun<LETTER, STATE>> callMap = k2CallMap
+					.get(stateK);
 			if (callMap != null) {
 				if (m_reconstructionStack.isEmpty()) {
 					STATE predK = m_callFirst.get(state).get(stateK);
@@ -652,7 +694,8 @@ public class IsEmptyWithAI<LETTER, STATE> implements IOperation<LETTER, STATE> {
 				} else {
 					STATE predKcandidate = m_reconstructionStack.peek();
 					if (callMap.containsKey(predKcandidate)) {
-						m_ReconstructionOneStepRun = callMap.get(predKcandidate);
+						m_ReconstructionOneStepRun = callMap
+								.get(predKcandidate);
 						m_ReconstructionPredK = predKcandidate;
 						m_reconstructionStack.pop();
 						return true;
@@ -670,7 +713,8 @@ public class IsEmptyWithAI<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	 * topmost stack element.
 	 */
 	private boolean computeReturnSubRun(STATE state, STATE stateK) {
-		Map<STATE, NestedRun<LETTER, STATE>> succK2SubRun = m_returnSubRun.get(state);
+		Map<STATE, NestedRun<LETTER, STATE>> succK2SubRun = m_returnSubRun
+				.get(state);
 		if (succK2SubRun != null) {
 			Map<STATE, STATE> succK2PredStateK = m_returnPredStateK.get(state);
 			assert (succK2PredStateK != null);
@@ -691,18 +735,21 @@ public class IsEmptyWithAI<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		return m_acceptingRun == null;
 	}
 
-	public NestedRun<LETTER, STATE> getNestedRun() throws OperationCanceledException {
+	public NestedRun<LETTER, STATE> getNestedRun()
+			throws OperationCanceledException {
 		return m_acceptingRun;
 	}
 
 	@Override
-	public boolean checkResult(StateFactory<STATE> stateFactory) throws OperationCanceledException {
+	public boolean checkResult(StateFactory<STATE> stateFactory)
+			throws OperationCanceledException {
 		boolean correct = true;
 		if (m_acceptingRun == null) {
 			s_Logger.warn("Emptiness not double checked ");
 		} else {
 			s_Logger.info("Correctness of emptinessCheck not tested.");
-			correct = (new Accepts<LETTER, STATE>(m_nwa, m_acceptingRun.getWord())).getResult();
+			correct = (new Accepts<LETTER, STATE>(m_nwa,
+					m_acceptingRun.getWord())).getResult();
 			s_Logger.info("Finished testing correctness of emptinessCheck");
 		}
 		return correct;
