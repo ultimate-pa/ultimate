@@ -84,7 +84,7 @@ import de.uni_freiburg.informatik.ultimate.result.UnprovableResult;
 import de.uni_freiburg.informatik.ultimate.result.UnsupportedSyntaxResult;
 
 /**
- * @author Christopher Dillo modified for usage on NWA by Fabian Schillinger
+ * @author Christopher Dillo. modified for usage on NWA by Fabian Schillinger
  * 
  */
 @SuppressWarnings({ "unused" })
