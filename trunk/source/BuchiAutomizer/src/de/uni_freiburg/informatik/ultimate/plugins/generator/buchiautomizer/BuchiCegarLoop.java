@@ -191,6 +191,12 @@ public class BuchiCegarLoop {
 
 	private final IToolchainStorage mStorage;
 
+	private Class<?> m_ClassInWhichTimeoutOccurred;
+	
+	public Class<?> getClassInWhichTimeoutOccurred() {
+		return m_ClassInWhichTimeoutOccurred;
+	}
+
 	public NonTerminationArgument getNonTerminationArgument() {
 		return m_NonterminationArgument;
 	}
@@ -320,10 +326,11 @@ public class BuchiCegarLoop {
 		boolean initalAbstractionCorrect;
 		try {
 			initalAbstractionCorrect = isAbstractionCorrect();
-		} catch (OperationCanceledException e1) {
+		} catch (AutomataLibraryException e1) {
 			mLogger.warn("Verification cancelled");
 			m_MDBenchmark.reportRemainderModule(m_Abstraction.size(), false);
 			m_BenchmarkGenerator.setResult(Result.TIMEOUT);
+			m_ClassInWhichTimeoutOccurred = e1.getClassOfThrower();
 			return Result.TIMEOUT;
 		}
 		if (initalAbstractionCorrect) {
@@ -340,13 +347,14 @@ public class BuchiCegarLoop {
 			boolean abstractionCorrect;
 			try {
 				abstractionCorrect = isAbstractionCorrect();
-			} catch (OperationCanceledException e1) {
+			} catch (AutomataLibraryException e1) {
 				mLogger.warn("Verification cancelled");
 				m_MDBenchmark.reportRemainderModule(m_Abstraction.size(), false);
 				if (m_ConstructTermcompProof) {
 					m_TermcompProofBenchmark.reportRemainderModule(false);
 				}
 				m_BenchmarkGenerator.setResult(Result.TIMEOUT);
+				m_ClassInWhichTimeoutOccurred = e1.getClassOfThrower();
 				return Result.TIMEOUT;
 			}
 			if (abstractionCorrect) {
@@ -378,6 +386,7 @@ public class BuchiCegarLoop {
 							mStorage);
 				}
 			} catch (ToolchainCanceledException e) {
+				m_ClassInWhichTimeoutOccurred = e.getClassOfThrower();
 				m_BenchmarkGenerator.setResult(Result.TIMEOUT);
 				return Result.TIMEOUT;
 			} finally {
@@ -480,9 +489,11 @@ public class BuchiCegarLoop {
 				m_BenchmarkGenerator.reportAbstractionSize(m_Abstraction.size(), m_Iteration);
 
 			} catch (AutomataLibraryException e) {
+				m_ClassInWhichTimeoutOccurred = e.getClassOfThrower();
 				m_BenchmarkGenerator.setResult(Result.TIMEOUT);
 				return Result.TIMEOUT;
 			} catch (ToolchainCanceledException e) {
+				m_ClassInWhichTimeoutOccurred = e.getClassOfThrower();
 				m_BenchmarkGenerator.setResult(Result.TIMEOUT);
 				return Result.TIMEOUT;
 			}
@@ -504,7 +515,7 @@ public class BuchiCegarLoop {
 	 * @throws AutomataLibraryException
 	 * @throws AssertionError
 	 */
-	private void reduceAbstractionSize() throws OperationCanceledException, AutomataLibraryException, AssertionError {
+	private void reduceAbstractionSize() throws AutomataLibraryException, AutomataLibraryException, AssertionError {
 		m_BenchmarkGenerator.start(BuchiCegarLoopBenchmark.s_NonLiveStateRemoval);
 		try {
 			m_Abstraction = (new RemoveNonLiveStates<CodeBlock, IPredicate>(m_Services, m_Abstraction)).getResult();
@@ -551,7 +562,7 @@ public class BuchiCegarLoop {
 			try {
 				newAbstraction = m_RefineBuchi.refineBuchi(m_Abstraction, m_Counterexample, m_Iteration, rs,
 						lassoChecker.getBinaryStatePredicateManager(), bmgvm, m_Interpolation, m_BenchmarkGenerator);
-			} catch (OperationCanceledException e) {
+			} catch (AutomataLibraryException e) {
 				m_BenchmarkGenerator.stop(CegarLoopBenchmarkType.s_AutomataDifference);
 				throw e;
 			}
@@ -584,7 +595,7 @@ public class BuchiCegarLoop {
 		throw new AssertionError("no settings was sufficient");
 	}
 
-	private boolean isAbstractionCorrect() throws OperationCanceledException {
+	private boolean isAbstractionCorrect() throws AutomataLibraryException {
 		BuchiIsEmpty<CodeBlock, IPredicate> ec = new BuchiIsEmpty<CodeBlock, IPredicate>(m_Services, m_Abstraction);
 		if (ec.getResult()) {
 			return true;
@@ -627,7 +638,7 @@ public class BuchiCegarLoop {
 				acceptingNodes);
 	}
 
-	private void refineFinite(LassoChecker lassoChecker) throws OperationCanceledException {
+	private void refineFinite(LassoChecker lassoChecker) throws AutomataLibraryException {
 		m_BenchmarkGenerator.start(CegarLoopBenchmarkType.s_AutomataDifference);
 		final InterpolatingTraceChecker traceChecker;
 		final NestedRun<CodeBlock, IPredicate> run;
@@ -667,7 +678,7 @@ public class BuchiCegarLoop {
 		} catch (AutomataLibraryException e) {
 			if (e instanceof OperationCanceledException) {
 				m_BenchmarkGenerator.stop(CegarLoopBenchmarkType.s_AutomataDifference);
-				throw (OperationCanceledException) e;
+				throw (AutomataLibraryException) e;
 			} else {
 				throw new AssertionError();
 			}
@@ -689,7 +700,7 @@ public class BuchiCegarLoop {
 	}
 
 	protected void constructInterpolantAutomaton(InterpolatingTraceChecker traceChecker, NestedRun<CodeBlock, IPredicate> run)
-			throws OperationCanceledException {
+			throws AutomataLibraryException {
 		CanonicalInterpolantAutomatonBuilder iab = new CanonicalInterpolantAutomatonBuilder(m_Services,
 				traceChecker, CoverageAnalysis.extractProgramPoints(run), new InCaReAlphabet<CodeBlock>(m_Abstraction), m_SmtManager,
 				m_Abstraction.getStateFactory(), mLogger);
