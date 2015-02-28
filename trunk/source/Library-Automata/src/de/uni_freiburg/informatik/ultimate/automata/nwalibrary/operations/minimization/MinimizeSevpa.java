@@ -137,7 +137,7 @@ public class MinimizeSevpa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 			final INestedWordAutomatonOldApi<LETTER,STATE> operand,
 			Collection<Set<STATE>> equivalenceClasses,
 			StateFactory<STATE> stateFactoryConstruction)
-					throws AutomataLibraryException {
+					throws OperationCanceledException {
 		m_Services = services;
 		m_operand = operand;
 		if (operand instanceof IDoubleDeckerAutomaton<?, ?>) {
@@ -173,7 +173,7 @@ public class MinimizeSevpa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	 */
 	private NestedWordAutomaton<LETTER,STATE> minimize(
 			Collection<Set<STATE>> equivalenceClasses)
-					throws AutomataLibraryException {
+					throws OperationCanceledException {
 		if (m_operand != null) {
 			hopcroftDfaMinimization(equivalenceClasses);
 		}
@@ -189,7 +189,7 @@ public class MinimizeSevpa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	 */
 	private void hopcroftDfaMinimization(
 			Collection<Set<STATE>> equivalenceClasses)
-					throws AutomataLibraryException {
+					throws OperationCanceledException {
 		
 		// intermediate container for the states
 		StatesContainer states = new StatesContainer(m_operand);
@@ -218,7 +218,7 @@ public class MinimizeSevpa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	private NestedWordAutomaton<LETTER, STATE> mergeStates(
 			StatesContainer states,
 			Collection<Set<STATE>> equivalenceClasses)
-					throws AutomataLibraryException {
+					throws OperationCanceledException {
 		
 		// creation of the initial partition (if not passed in the constructor)
 		if (equivalenceClasses == null) {
@@ -338,7 +338,7 @@ public class MinimizeSevpa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	 * @throws OperationCanceledException iff cancel signal is received
 	 */
 	private void refinePartition()
-			throws AutomataLibraryException {
+			throws OperationCanceledException {
 		/*
 		 * naiveSplit used as long as possible
 		 * then switch to more complicated but sound split

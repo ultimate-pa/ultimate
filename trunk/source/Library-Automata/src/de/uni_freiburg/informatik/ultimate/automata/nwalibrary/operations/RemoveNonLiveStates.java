@@ -75,7 +75,7 @@ public class RemoveNonLiveStates<LETTER,STATE> implements IOperation<LETTER,STAT
 	 */
 	public RemoveNonLiveStates(IUltimateServiceProvider services,
 			INestedWordAutomatonSimple<LETTER,STATE> nwa)
-			throws AutomataLibraryException {
+			throws OperationCanceledException {
 		m_Services = services;
 		m_Input = nwa;
 		s_Logger.info(startMessage());
@@ -107,7 +107,7 @@ public class RemoveNonLiveStates<LETTER,STATE> implements IOperation<LETTER,STAT
 
 
 	@Override
-	public INestedWordAutomatonOldApi<LETTER, STATE> getResult() throws AutomataLibraryException {
+	public INestedWordAutomatonOldApi<LETTER, STATE> getResult() throws OperationCanceledException {
 		return m_Result;
 	}
 	
