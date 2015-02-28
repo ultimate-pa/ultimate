@@ -1,9 +1,9 @@
 {
   "id": "home",
-  "description": "Ultimate is a...",
+  "description": "<span style=\"font-variant:small-caps\">Ultimate</span> is a program analysis framework. <span style=\"font-variant:small-caps\">Ultimate</span> consists of several plugins that perform steps of an program analysis, e.g., parsing source code, transforming programs from one representation to another, or analyze programs. Toolchains of these plugins can perform complex tasks, e.g., verify that a C program fulfills a given specification.",
   "user_info": "",
   "animate": "true",
-  "html": "false",
+  "html": "true",
   "sections":
   [
     {
@@ -18,6 +18,13 @@
         "Termination analysis for C programs (currently only Lasso Programs supported)",
         "Termination analysis for Boogie programs (currently only Lasso Programs supported)"
       ],
+      "link_deco": "false"
+    },
+    {
+      "title": "eclipse CDT",
+      "type": "text",
+      "html": "true",
+      "content": "We are planing to release an Eclipse CDT plugin that is able to use all toolchains of <span style=\"font-variant:small-caps\">Ultimate</span>.",
       "link_deco": "false"
     },
     {
