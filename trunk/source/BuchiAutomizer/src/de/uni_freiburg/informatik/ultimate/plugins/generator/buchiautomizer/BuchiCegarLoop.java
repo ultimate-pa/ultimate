@@ -488,7 +488,7 @@ public class BuchiCegarLoop {
 				}
 				m_BenchmarkGenerator.reportAbstractionSize(m_Abstraction.size(), m_Iteration);
 
-			} catch (AutomataLibraryException e) {
+			} catch (OperationCanceledException e) {
 				m_ClassInWhichTimeoutOccurred = e.getClassOfThrower();
 				m_BenchmarkGenerator.setResult(Result.TIMEOUT);
 				return Result.TIMEOUT;
@@ -496,6 +496,8 @@ public class BuchiCegarLoop {
 				m_ClassInWhichTimeoutOccurred = e.getClassOfThrower();
 				m_BenchmarkGenerator.setResult(Result.TIMEOUT);
 				return Result.TIMEOUT;
+			} finally {
+				m_BenchmarkGenerator.stop(BuchiCegarLoopBenchmark.s_AutomataDifference);
 			}
 			m_InterpolAutomaton = null;
 		}
@@ -515,7 +517,7 @@ public class BuchiCegarLoop {
 	 * @throws AutomataLibraryException
 	 * @throws AssertionError
 	 */
-	private void reduceAbstractionSize() throws AutomataLibraryException, AutomataLibraryException, AssertionError {
+	private void reduceAbstractionSize() throws OperationCanceledException, AssertionError {
 		m_BenchmarkGenerator.start(BuchiCegarLoopBenchmark.s_NonLiveStateRemoval);
 		try {
 			m_Abstraction = (new RemoveNonLiveStates<CodeBlock, IPredicate>(m_Services, m_Abstraction)).getResult();
@@ -539,6 +541,8 @@ public class BuchiCegarLoop {
 			assert (minimizeOp.checkResult(m_PredicateFactoryResultChecking));
 			INestedWordAutomatonOldApi<CodeBlock, IPredicate> minimized = minimizeOp.getResult();
 			m_Abstraction = minimized;
+		} catch (AutomataLibraryException e) {
+			throw new AssertionError(e.getMessage());
 		} finally {
 			m_BenchmarkGenerator.stop(CegarLoopBenchmarkType.s_AutomataMinimizationTime);
 		}
@@ -548,7 +552,7 @@ public class BuchiCegarLoop {
 	}
 
 	private INestedWordAutomatonOldApi<CodeBlock, IPredicate> refineBuchi(LassoChecker lassoChecker)
-			throws AutomataLibraryException {
+			throws OperationCanceledException {
 		m_BenchmarkGenerator.start(CegarLoopBenchmarkType.s_AutomataDifference);
 		int stage = 0;
 		BuchiModGlobalVarManager bmgvm = new BuchiModGlobalVarManager(lassoChecker.getBinaryStatePredicateManager()
@@ -562,9 +566,13 @@ public class BuchiCegarLoop {
 			try {
 				newAbstraction = m_RefineBuchi.refineBuchi(m_Abstraction, m_Counterexample, m_Iteration, rs,
 						lassoChecker.getBinaryStatePredicateManager(), bmgvm, m_Interpolation, m_BenchmarkGenerator);
-			} catch (AutomataLibraryException e) {
+			} catch (OperationCanceledException e) {
 				m_BenchmarkGenerator.stop(CegarLoopBenchmarkType.s_AutomataDifference);
 				throw e;
+			} catch (AutomataLibraryException e) {
+				throw new AssertionError(e.getMessage());
+			} finally {
+				m_BenchmarkGenerator.stop(BuchiCegarLoopBenchmark.s_LassoAnalysisTime);
 			}
 			if (newAbstraction != null) {
 				if (m_ConstructTermcompProof) {
@@ -638,7 +646,7 @@ public class BuchiCegarLoop {
 				acceptingNodes);
 	}
 
-	private void refineFinite(LassoChecker lassoChecker) throws AutomataLibraryException {
+	private void refineFinite(LassoChecker lassoChecker) throws OperationCanceledException {
 		m_BenchmarkGenerator.start(CegarLoopBenchmarkType.s_AutomataDifference);
 		final InterpolatingTraceChecker traceChecker;
 		final NestedRun<CodeBlock, IPredicate> run;
@@ -678,7 +686,7 @@ public class BuchiCegarLoop {
 		} catch (AutomataLibraryException e) {
 			if (e instanceof OperationCanceledException) {
 				m_BenchmarkGenerator.stop(CegarLoopBenchmarkType.s_AutomataDifference);
-				throw (AutomataLibraryException) e;
+				throw (OperationCanceledException) e;
 			} else {
 				throw new AssertionError();
 			}
@@ -700,7 +708,7 @@ public class BuchiCegarLoop {
 	}
 
 	protected void constructInterpolantAutomaton(InterpolatingTraceChecker traceChecker, NestedRun<CodeBlock, IPredicate> run)
-			throws AutomataLibraryException {
+			throws OperationCanceledException {
 		CanonicalInterpolantAutomatonBuilder iab = new CanonicalInterpolantAutomatonBuilder(m_Services,
 				traceChecker, CoverageAnalysis.extractProgramPoints(run), new InCaReAlphabet<CodeBlock>(m_Abstraction), m_SmtManager,
 				m_Abstraction.getStateFactory(), mLogger);
