@@ -4,6 +4,7 @@ import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
+import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 
 public class AA_MergedUnion<LETTER, STATE> implements IOperation<LETTER, STATE>{
@@ -60,7 +61,7 @@ public class AA_MergedUnion<LETTER, STATE> implements IOperation<LETTER, STATE>{
 	}
 
 	@Override
-	public AlternatingAutomaton<LETTER, STATE> getResult() throws AutomataLibraryException{
+	public AlternatingAutomaton<LETTER, STATE> getResult() throws OperationCanceledException{
 		return resultAutomaton;
 	}
 

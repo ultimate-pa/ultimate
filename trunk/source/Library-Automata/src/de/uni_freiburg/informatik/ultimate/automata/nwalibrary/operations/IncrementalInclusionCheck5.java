@@ -135,7 +135,7 @@ public class IncrementalInclusionCheck5<LETTER,STATE> extends AbstractIncrementa
 		s_Logger.info(exitMessage());
 	}
 	@SuppressWarnings("unchecked")
-	public void run2(INestedWordAutomatonSimple<LETTER, STATE> nwa) throws AutomataLibraryException{
+	public void run2(INestedWordAutomatonSimple<LETTER, STATE> nwa) throws OperationCanceledException{
 		if(!local_m_A.getAlphabet().containsAll(nwa.getAlphabet())){
 			s_Logger.info("Alphabet inconsistent");
 			return;

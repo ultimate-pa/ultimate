@@ -63,7 +63,7 @@ public class InclusionViaDifference<LETTER, STATE> extends
 	
 	public InclusionViaDifference(IUltimateServiceProvider services,
 			StateFactory<STATE> stateFactory,
-			INestedWordAutomatonSimple<LETTER, STATE> a) throws AutomataLibraryException {
+			INestedWordAutomatonSimple<LETTER, STATE> a) throws OperationCanceledException {
 		this(services, stateFactory, stateFactory, a);
 		
 	}
@@ -77,7 +77,7 @@ public class InclusionViaDifference<LETTER, STATE> extends
 	public InclusionViaDifference(IUltimateServiceProvider services,
 			StateFactory<STATE> stateFactoryIntersect,
 			StateFactory<STATE> stateFactoryDeterminize,
-			INestedWordAutomatonSimple<LETTER, STATE> a) throws AutomataLibraryException {
+			INestedWordAutomatonSimple<LETTER, STATE> a) throws OperationCanceledException {
 		super(services, a);
 		m_StateFactoryIntersect = stateFactoryIntersect;
 		m_StateFactoryDeterminize = stateFactoryDeterminize;
@@ -87,7 +87,7 @@ public class InclusionViaDifference<LETTER, STATE> extends
 	}
 
 	@Override
-	public NestedRun<LETTER, STATE> getCounterexample() throws AutomataLibraryException {
+	public NestedRun<LETTER, STATE> getCounterexample() throws OperationCanceledException {
 		return m_AcceptingRun;
 	}
 

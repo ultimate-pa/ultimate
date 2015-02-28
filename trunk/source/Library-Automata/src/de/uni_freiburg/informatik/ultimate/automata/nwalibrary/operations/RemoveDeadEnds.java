@@ -70,7 +70,7 @@ public class RemoveDeadEnds<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	 */
 	public RemoveDeadEnds(IUltimateServiceProvider services,
 			INestedWordAutomatonSimple<LETTER,STATE> nwa)
-			throws AutomataLibraryException {
+			throws OperationCanceledException {
 		m_Services = services;
 		m_Input = nwa;
 		s_Logger.info(startMessage());
@@ -102,12 +102,12 @@ public class RemoveDeadEnds<LETTER,STATE> implements IOperation<LETTER,STATE> {
 
 
 	@Override
-	public INestedWordAutomatonOldApi<LETTER, STATE> getResult() throws AutomataLibraryException {
+	public INestedWordAutomatonOldApi<LETTER, STATE> getResult() throws OperationCanceledException {
 		return m_Result;
 	}
 	
 	@Override
-	public boolean checkResult(StateFactory<STATE> stateFactory) throws AutomataLibraryException {
+	public boolean checkResult(StateFactory<STATE> stateFactory) throws OperationCanceledException {
 		s_Logger.info("Start testing correctness of " + operationName());
 		boolean correct = true;
 //		correct &= (ResultChecker.nwaLanguageInclusion(m_Input, m_Result) == null);

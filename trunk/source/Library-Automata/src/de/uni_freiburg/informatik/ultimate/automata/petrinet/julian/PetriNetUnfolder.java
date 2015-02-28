@@ -168,7 +168,7 @@ public class PetriNetUnfolder<S, C> implements IOperation<S, C> {
 	public PetriNetUnfolder(IUltimateServiceProvider services, 
 			PetriNetJulian<S, C> net, order Order,
 			boolean sameTransitionCutOff, boolean stopIfAcceptingRunFound)
-			throws AutomataLibraryException {
+			throws OperationCanceledException {
 		m_Services = services;
 		this.m_Net = net;
 		this.m_StopIfAcceptingRunFound = stopIfAcceptingRunFound;
@@ -195,7 +195,7 @@ public class PetriNetUnfolder<S, C> implements IOperation<S, C> {
 		s_Logger.info(m_Statistics.coRelationInformation());
 	}
 
-	private void computeUnfolding() throws AutomataLibraryException {
+	private void computeUnfolding() throws OperationCanceledException {
 		m_PossibleExtensions.update(m_Unfolding.getDummyRoot());
 
 		while (!m_PossibleExtensions.isEmpy()) {
@@ -319,7 +319,7 @@ public class PetriNetUnfolder<S, C> implements IOperation<S, C> {
 	 * @throws AssertionError 
 	 * @throws OperationCanceledException 
 	 */
-	public PetriNetRun<S, C> getAcceptingRun() throws AutomataLibraryException, AssertionError {
+	public PetriNetRun<S, C> getAcceptingRun() throws OperationCanceledException, AssertionError {
 		return m_Run;
 	}
 
@@ -328,7 +328,7 @@ public class PetriNetUnfolder<S, C> implements IOperation<S, C> {
 	 * net.
 	 * @throws OperationCanceledException 
 	 */
-	public BranchingProcess<S, C> getFinitePrefix() throws AutomataLibraryException {
+	public BranchingProcess<S, C> getFinitePrefix() throws OperationCanceledException {
 		return m_Unfolding;
 	}
 

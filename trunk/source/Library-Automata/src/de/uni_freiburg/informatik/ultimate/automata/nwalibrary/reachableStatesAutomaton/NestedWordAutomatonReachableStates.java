@@ -149,7 +149,7 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 
 	public NestedWordAutomatonReachableStates(IUltimateServiceProvider services,
 			INestedWordAutomatonSimple<LETTER, STATE> operand)
-			throws AutomataLibraryException {
+			throws OperationCanceledException {
 		m_Services = services;
 		this.m_Operand = operand;
 		m_InternalAlphabet = operand.getInternalAlphabet();
@@ -634,7 +634,7 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 		private final LinkedList<StateContainer<LETTER, STATE>> m_ForwardWorklist = new LinkedList<StateContainer<LETTER, STATE>>();
 		private final LinkedList<StateContainer<LETTER, STATE>> m_DownPropagationWorklist = new LinkedList<StateContainer<LETTER, STATE>>();
 
-		ReachableStatesComputation() throws AutomataLibraryException {
+		ReachableStatesComputation() throws OperationCanceledException {
 			addInitialStates(m_Operand.getInitialStates());
 
 			do {
@@ -1633,7 +1633,7 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 					+ m_AllStatesOfSccsWithoutCallAndReturn.size());
 		}
 
-		public void computeNestedLassoRuns(boolean onePerScc) throws AutomataLibraryException {
+		public void computeNestedLassoRuns(boolean onePerScc) throws OperationCanceledException {
 			if (onePerScc) {
 				throw new UnsupportedOperationException("not yet implemented");
 			}
@@ -1715,7 +1715,7 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 			m_NestedLassoRun = method4;
 		}
 
-		public List<NestedLassoRun<LETTER, STATE>> getAllNestedLassoRuns() throws AutomataLibraryException {
+		public List<NestedLassoRun<LETTER, STATE>> getAllNestedLassoRuns() throws OperationCanceledException {
 			if (buchiIsEmpty()) {
 				return Collections.emptyList();
 			} else {

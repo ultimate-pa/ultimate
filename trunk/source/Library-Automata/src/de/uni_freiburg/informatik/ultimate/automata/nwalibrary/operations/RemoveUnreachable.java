@@ -65,7 +65,7 @@ public class RemoveUnreachable<LETTER,STATE> implements IOperation<LETTER,STATE>
 	 */
 	public RemoveUnreachable(IUltimateServiceProvider services,
 			INestedWordAutomatonSimple<LETTER,STATE> nwa)
-			throws AutomataLibraryException {
+			throws OperationCanceledException {
 		m_Services = services;
 		m_Input = nwa;
 		s_Logger.info(startMessage());
@@ -93,7 +93,7 @@ public class RemoveUnreachable<LETTER,STATE> implements IOperation<LETTER,STATE>
 
 
 	@Override
-	public NestedWordAutomatonReachableStates<LETTER,STATE> getResult() throws AutomataLibraryException {
+	public NestedWordAutomatonReachableStates<LETTER,STATE> getResult() throws OperationCanceledException {
 		return m_Result;
 	}
 

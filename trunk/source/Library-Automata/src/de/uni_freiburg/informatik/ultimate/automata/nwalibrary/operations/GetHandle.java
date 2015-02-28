@@ -30,6 +30,7 @@ import org.apache.log4j.Logger;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
+import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IncomingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IncomingInternalTransition;
@@ -63,7 +64,7 @@ public class GetHandle<LETTER, STATE> implements IOperation<LETTER,STATE> {
 	private enum NoHandleReason { MULTI_INITIAL, CYCLE_SHAPE, MULTI_INIT_SUCC }
 	private NoHandleReason m_NoHandleReason;
 
-	public GetHandle(INestedWordAutomaton<LETTER, STATE> operand) throws AutomataLibraryException {
+	public GetHandle(INestedWordAutomaton<LETTER, STATE> operand) throws OperationCanceledException {
 		m_Operand = operand;
 		s_Logger.info(startMessage());
 		if (m_Operand.getInitialStates().size() != 1) {
@@ -170,7 +171,7 @@ public class GetHandle<LETTER, STATE> implements IOperation<LETTER,STATE> {
 	}
 
 	@Override
-	public NestedRun<LETTER,STATE> getResult() throws AutomataLibraryException {
+	public NestedRun<LETTER,STATE> getResult() throws OperationCanceledException {
 		return m_Handle;
 	}
 

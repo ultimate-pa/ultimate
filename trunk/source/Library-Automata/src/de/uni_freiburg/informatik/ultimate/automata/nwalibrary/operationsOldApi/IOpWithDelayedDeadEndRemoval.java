@@ -27,7 +27,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi
 
 import java.text.MessageFormat;
 
-import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
+import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 
 public interface IOpWithDelayedDeadEndRemoval<LETTER, STATE> {
@@ -36,7 +36,7 @@ public interface IOpWithDelayedDeadEndRemoval<LETTER, STATE> {
 	
 	public boolean removeDeadEnds();
 	
-	public INestedWordAutomatonOldApi<LETTER,STATE> getResult() throws AutomataLibraryException;
+	public INestedWordAutomatonOldApi<LETTER,STATE> getResult() throws OperationCanceledException;
 	
 	public long getDeadEndRemovalTime();
 	

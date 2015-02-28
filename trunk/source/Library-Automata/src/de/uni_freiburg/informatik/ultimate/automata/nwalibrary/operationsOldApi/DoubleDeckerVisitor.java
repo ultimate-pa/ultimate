@@ -165,7 +165,7 @@ public abstract class DoubleDeckerVisitor<LETTER, STATE> implements IOpWithDelay
 		m_Services = services;
 	}
 
-	public INestedWordAutomatonOldApi<LETTER, STATE> getResult() throws AutomataLibraryException {
+	public INestedWordAutomatonOldApi<LETTER, STATE> getResult() throws OperationCanceledException {
 		return m_TraversedNwa;
 	}
 
@@ -285,7 +285,7 @@ public abstract class DoubleDeckerVisitor<LETTER, STATE> implements IOpWithDelay
 		return Collections.unmodifiableMap(m_Marked_Up2Down);
 	}
 
-	protected final void traverseDoubleDeckerGraph() throws AutomataLibraryException {
+	protected final void traverseDoubleDeckerGraph() throws OperationCanceledException {
 		Collection<STATE> initialStates = getInitialStates();
 		for (STATE state : initialStates) {
 			DoubleDecker<STATE> initialDoubleDecker = new DoubleDecker<STATE>(m_TraversedNwa.getEmptyStackState(),

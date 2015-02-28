@@ -71,14 +71,14 @@ public abstract class AbstractIncrementalInclusionCheck<LETTER,STATE> {
 	 * A ⊆ B_0 ∪ ... ∪ B_n holds. 
 	 * @throws OperationCanceledException 
 	 */
-	public abstract NestedRun<LETTER,STATE> getCounterexample() throws AutomataLibraryException;
+	public abstract NestedRun<LETTER,STATE> getCounterexample() throws OperationCanceledException;
 	
 	
 	/**
 	 * Add automaton B_{n+1} to our set of subtrahends B_0,...,B_n.
 	 * @throws AutomataLibraryException 
 	 */
-	public void addSubtrahend(INestedWordAutomatonSimple<LETTER, STATE> nwa) throws AutomataLibraryException {
+	public void addSubtrahend(INestedWordAutomatonSimple<LETTER, STATE> nwa) throws OperationCanceledException, AutomataLibraryException {
 		m_B.add(nwa);
 	}
 

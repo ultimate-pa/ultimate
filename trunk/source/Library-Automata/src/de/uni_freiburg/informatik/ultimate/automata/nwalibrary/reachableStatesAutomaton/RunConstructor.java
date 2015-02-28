@@ -290,7 +290,7 @@ class RunConstructor<LETTER,STATE> {
 	 * m_Start.
 	 * @throws OperationCanceledException 
 	 */
-	NestedRun<LETTER, STATE> constructRun() throws AutomataLibraryException {
+	NestedRun<LETTER, STATE> constructRun() throws OperationCanceledException {
 		//TODO: Check if this timeout check is responsible for problems.
 		if (!m_Services.getProgressMonitorService().continueProcessing()) {
 			throw new OperationCanceledException(this.getClass());
