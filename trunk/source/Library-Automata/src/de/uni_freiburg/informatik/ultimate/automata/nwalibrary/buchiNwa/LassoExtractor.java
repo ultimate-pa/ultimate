@@ -30,9 +30,9 @@ import java.util.List;
 
 import org.apache.log4j.Logger;
 
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
-import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.NestedWordAutomatonReachableStates;
@@ -50,7 +50,7 @@ public class LassoExtractor<LETTER, STATE> implements IOperation<LETTER,STATE> {
 	private List<NestedLassoWord<LETTER>> m_NestedLassoWords;
 
 	public LassoExtractor(IUltimateServiceProvider services,
-			INestedWordAutomatonSimple<LETTER, STATE> operand) throws OperationCanceledException {
+			INestedWordAutomatonSimple<LETTER, STATE> operand) throws AutomataLibraryException {
 		m_Services = services;
 		m_Operand = operand;
 		s_Logger.info(startMessage());
@@ -74,7 +74,7 @@ public class LassoExtractor<LETTER, STATE> implements IOperation<LETTER,STATE> {
 	}
 
 	@Override
-	public List<NestedLassoWord<LETTER>> getResult() throws OperationCanceledException {
+	public List<NestedLassoWord<LETTER>> getResult() throws AutomataLibraryException {
 		return m_NestedLassoWords;
 	}
 
@@ -97,7 +97,7 @@ public class LassoExtractor<LETTER, STATE> implements IOperation<LETTER,STATE> {
 
 	@Override
 	public boolean checkResult(StateFactory<STATE> stateFactory)
-			throws OperationCanceledException {
+			throws AutomataLibraryException {
 		return true;
 	}
 

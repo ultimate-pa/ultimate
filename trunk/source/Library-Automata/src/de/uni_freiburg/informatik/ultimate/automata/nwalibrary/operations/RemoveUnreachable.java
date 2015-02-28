@@ -29,6 +29,7 @@ import java.util.Set;
 
 import org.apache.log4j.Logger;
 
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
@@ -64,7 +65,7 @@ public class RemoveUnreachable<LETTER,STATE> implements IOperation<LETTER,STATE>
 	 */
 	public RemoveUnreachable(IUltimateServiceProvider services,
 			INestedWordAutomatonSimple<LETTER,STATE> nwa)
-			throws OperationCanceledException {
+			throws AutomataLibraryException {
 		m_Services = services;
 		m_Input = nwa;
 		s_Logger.info(startMessage());
@@ -92,13 +93,13 @@ public class RemoveUnreachable<LETTER,STATE> implements IOperation<LETTER,STATE>
 
 
 	@Override
-	public NestedWordAutomatonReachableStates<LETTER,STATE> getResult() throws OperationCanceledException {
+	public NestedWordAutomatonReachableStates<LETTER,STATE> getResult() throws AutomataLibraryException {
 		return m_Result;
 	}
 
 	
 	@Override
-	public boolean checkResult(StateFactory<STATE> stateFactory) throws OperationCanceledException {
+	public boolean checkResult(StateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		boolean correct = true;
 		if (m_Input instanceof INestedWordAutomatonOldApi) {
 			s_Logger.info("Start testing correctness of " + operationName());

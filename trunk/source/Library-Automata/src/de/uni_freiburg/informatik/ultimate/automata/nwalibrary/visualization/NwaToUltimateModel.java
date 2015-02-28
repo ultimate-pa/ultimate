@@ -31,8 +31,8 @@ import java.util.Map;
 
 import org.apache.log4j.Logger;
 
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
-import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingCallTransition;
@@ -53,7 +53,7 @@ public class NwaToUltimateModel<LETTER,STATE> {
 		m_Services = services;
 	}
 
-	public IElement getUltimateModelOfNwa(INestedWordAutomatonSimple<LETTER,STATE> nwaSimple) throws OperationCanceledException {
+	public IElement getUltimateModelOfNwa(INestedWordAutomatonSimple<LETTER,STATE> nwaSimple) throws AutomataLibraryException {
 		final INestedWordAutomaton<LETTER,STATE> nwa;
 		if (nwaSimple instanceof INestedWordAutomaton) {
 			nwa = (INestedWordAutomaton<LETTER, STATE>) nwaSimple;

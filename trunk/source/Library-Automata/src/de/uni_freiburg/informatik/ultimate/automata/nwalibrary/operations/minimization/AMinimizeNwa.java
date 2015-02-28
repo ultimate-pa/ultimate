@@ -211,9 +211,9 @@ public abstract class AMinimizeNwa<LETTER, STATE>
 	 * @throws OperationCanceledException thrown to enforce termination.
 	 */
 	protected final void checkForContinuation()
-			throws OperationCanceledException {
+			throws AutomataLibraryException {
 		if (!m_Services.getProgressMonitorService().continueProcessing()) {
-			throw new OperationCanceledException();
+			throw new OperationCanceledException(this.getClass());
 		}
 	}
 	

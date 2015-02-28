@@ -271,7 +271,7 @@ public class DifferenceDD<LETTER,STATE> extends DoubleDeckerBuilder<LETTER,STATE
 		this.minuend = minuend;
 		this.subtrahend = subtrahend;
 		if (!NestedWordAutomaton.sameAlphabet(this.minuend, this.subtrahend)) {
-			throw new AutomataLibraryException("Unable to apply operation to automata with different alphabets.");
+			throw new AutomataLibraryException(this.getClass(), "Unable to apply operation to automata with different alphabets.");
 		}
 		s_Logger.info(startMessage());
 		this.subtrahendAuxilliaryEmptyStackState = 
@@ -314,7 +314,7 @@ public class DifferenceDD<LETTER,STATE> extends DoubleDeckerBuilder<LETTER,STATE
 		this.minuend = minuend;
 		this.subtrahend = subtrahend;
 		if (!NestedWordAutomaton.sameAlphabet(this.minuend, this.subtrahend)) {
-			throw new AutomataLibraryException("Unable to apply operation to automata with different alphabets.");
+			throw new AutomataLibraryException(this.getClass(), "Unable to apply operation to automata with different alphabets.");
 		}
 		s_Logger.info(startMessage());
 		this.subtrahendAuxilliaryEmptyStackState = 

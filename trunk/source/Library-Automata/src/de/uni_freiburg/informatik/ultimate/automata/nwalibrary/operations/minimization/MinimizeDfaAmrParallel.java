@@ -210,7 +210,7 @@ public class MinimizeDfaAmrParallel<LETTER, STATE> extends
 	 */
 	public MinimizeDfaAmrParallel(final IUltimateServiceProvider services, final StateFactory<STATE> stateFactory,
 			final INestedWordAutomaton<LETTER, STATE> operand)
-			throws OperationCanceledException, AutomataLibraryException {
+			throws AutomataLibraryException, AutomataLibraryException {
 		this(services, stateFactory, operand, null);
 	}
 
@@ -228,7 +228,7 @@ public class MinimizeDfaAmrParallel<LETTER, STATE> extends
 	 */
 	public MinimizeDfaAmrParallel(final IUltimateServiceProvider services, final StateFactory<STATE> stateFactory,
 			final INestedWordAutomaton<LETTER, STATE> operand,
-			final Interrupt interrupt) throws OperationCanceledException,
+			final Interrupt interrupt) throws AutomataLibraryException,
 			AutomataLibraryException {
 		super(services, stateFactory, "MinimizeAMR", operand, interrupt);
 		m_services=services;
@@ -300,7 +300,7 @@ public class MinimizeDfaAmrParallel<LETTER, STATE> extends
 
 	public void minimizeParallel(final LinkedBlockingQueue<Runnable> taskQueue,
 			final MinimizeDfaHopcroftParallel<LETTER, STATE> hopcroft)
-			throws OperationCanceledException {
+			throws AutomataLibraryException {
 		m_taskQueue = taskQueue;
 		m_hopcroftAlgorithm = hopcroft;
 		s_logger.info("Amr: Incremental Algorithm starts initialization");
@@ -336,7 +336,7 @@ public class MinimizeDfaAmrParallel<LETTER, STATE> extends
 	 *             thrown when execution is cancelled
 	 */
 	private INestedWordAutomaton<LETTER, STATE> minimize()
-			throws OperationCanceledException {
+			throws AutomataLibraryException {
 		// initialize data structures
 		if (!s_parallel) {
 			preprocess();

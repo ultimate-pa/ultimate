@@ -39,7 +39,6 @@ import org.apache.log4j.Logger;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
-import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Place;
@@ -72,7 +71,7 @@ public class FinitePrefix2PetriNet<L, C> implements IOperation<L, C> {
 	}
 
 	@Override
-	public PetriNetJulian<L, C> getResult() throws OperationCanceledException {
+	public PetriNetJulian<L, C> getResult() throws AutomataLibraryException {
 		return m_Net;
 	}
 	
@@ -241,7 +240,7 @@ public class FinitePrefix2PetriNet<L, C> implements IOperation<L, C> {
 		try {
 			assert ResultChecker.petriNetLanguageEquivalence(m_Services, old_net, m_Net) : 
 				"The language recognized by the FinitePrefix2PetriNet is not equal to the language of the original net.";
-		} catch (OperationCanceledException e1) {
+		} catch (AutomataLibraryException e1) {
 			e1.printStackTrace();
 		}
 	}
@@ -307,7 +306,7 @@ public class FinitePrefix2PetriNet<L, C> implements IOperation<L, C> {
 
 	@Override
 	public boolean checkResult(StateFactory<C> stateFactory)
-			throws OperationCanceledException {
+			throws AutomataLibraryException {
 		return true;
 	}
 }

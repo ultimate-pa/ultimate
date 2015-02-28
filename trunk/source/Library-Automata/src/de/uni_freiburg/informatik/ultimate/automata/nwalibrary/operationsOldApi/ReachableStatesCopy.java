@@ -69,7 +69,7 @@ public class ReachableStatesCopy<LETTER,STATE> extends DoubleDeckerBuilder<LETTE
 			INestedWordAutomatonOldApi<LETTER,STATE> nwa,
 			boolean totalize, boolean complement,
 			boolean removeDeadEnds, boolean removeNonLiveStates)
-			throws OperationCanceledException {
+			throws AutomataLibraryException {
 		super(services);
 		if (complement && !totalize) {
 			throw new IllegalArgumentException("complement requires totalize");
@@ -94,7 +94,7 @@ public class ReachableStatesCopy<LETTER,STATE> extends DoubleDeckerBuilder<LETTE
 	
 	public ReachableStatesCopy(IUltimateServiceProvider services,
 			INestedWordAutomatonOldApi<LETTER,STATE> nwa)
-			throws OperationCanceledException {
+			throws AutomataLibraryException {
 		super(services);
 		m_Input = nwa;
 		s_Logger.info(startMessage());
@@ -232,7 +232,7 @@ public class ReachableStatesCopy<LETTER,STATE> extends DoubleDeckerBuilder<LETTE
 	}
 	
 	
-	public final INestedWordAutomatonOldApi<LETTER,STATE> getResult() throws OperationCanceledException {
+	public final INestedWordAutomatonOldApi<LETTER,STATE> getResult() throws AutomataLibraryException {
 		return m_TraversedNwa;
 	}
 

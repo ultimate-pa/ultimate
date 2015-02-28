@@ -36,9 +36,9 @@ import petruchio.cov.Backward;
 import petruchio.cov.SimpleList;
 import petruchio.interfaces.petrinet.Place;
 import petruchio.interfaces.petrinet.Transition;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
-import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
@@ -176,13 +176,13 @@ public class EmptinessPetruchio<S,C> implements IOperation<S,C> {
 	}
 	
 	
-	public NestedRun<S,C> getResult() throws OperationCanceledException {
+	public NestedRun<S,C> getResult() throws AutomataLibraryException {
 		return m_AcceptedRun;
 	}
 
 	@Override
 	public boolean checkResult(StateFactory<C> stateFactory)
-			throws OperationCanceledException {
+			throws AutomataLibraryException {
 		s_Logger.info("Testing correctness of emptinessCheck");
 
 		boolean correct = true;

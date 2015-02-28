@@ -1,6 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.alternating;
 
-import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 
 public class TestUnion{
 
@@ -14,7 +14,7 @@ public class TestUnion{
 			TestCase.test(resultAutomaton, TestAutomaton_1.TEST_CASES);
 			TestCase.test(resultAutomaton, TestAutomaton_2.TEST_CASES);
 			System.out.println(((System.nanoTime() - startNanoTime) / 1000000f) + " ms");
-		}catch(OperationCanceledException ex){
+		}catch(AutomataLibraryException ex){
 			ex.printStackTrace();
 		}
 	}

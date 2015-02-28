@@ -118,7 +118,7 @@ public class MinimizeSevpa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	 */
 	public MinimizeSevpa(IUltimateServiceProvider services,
 			INestedWordAutomatonOldApi<LETTER,STATE> operand)
-			throws OperationCanceledException {
+			throws AutomataLibraryException {
 		this(services, operand, null, operand.getStateFactory());
 	}
 	
@@ -137,7 +137,7 @@ public class MinimizeSevpa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 			final INestedWordAutomatonOldApi<LETTER,STATE> operand,
 			Collection<Set<STATE>> equivalenceClasses,
 			StateFactory<STATE> stateFactoryConstruction)
-					throws OperationCanceledException {
+					throws AutomataLibraryException {
 		m_Services = services;
 		m_operand = operand;
 		if (operand instanceof IDoubleDeckerAutomaton<?, ?>) {
@@ -173,7 +173,7 @@ public class MinimizeSevpa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	 */
 	private NestedWordAutomaton<LETTER,STATE> minimize(
 			Collection<Set<STATE>> equivalenceClasses)
-					throws OperationCanceledException {
+					throws AutomataLibraryException {
 		if (m_operand != null) {
 			hopcroftDfaMinimization(equivalenceClasses);
 		}
@@ -189,14 +189,14 @@ public class MinimizeSevpa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	 */
 	private void hopcroftDfaMinimization(
 			Collection<Set<STATE>> equivalenceClasses)
-					throws OperationCanceledException {
+					throws AutomataLibraryException {
 		
 		// intermediate container for the states
 		StatesContainer states = new StatesContainer(m_operand);
 		
 		// cancel if signal is received
 		if (!m_Services.getProgressMonitorService().continueProcessing()) {
-			throw new OperationCanceledException();
+			throw new OperationCanceledException(this.getClass());
 		}
 		
 	
@@ -218,7 +218,7 @@ public class MinimizeSevpa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	private NestedWordAutomaton<LETTER, STATE> mergeStates(
 			StatesContainer states,
 			Collection<Set<STATE>> equivalenceClasses)
-					throws OperationCanceledException {
+					throws AutomataLibraryException {
 		
 		// creation of the initial partition (if not passed in the constructor)
 		if (equivalenceClasses == null) {
@@ -338,7 +338,7 @@ public class MinimizeSevpa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	 * @throws OperationCanceledException iff cancel signal is received
 	 */
 	private void refinePartition()
-			throws OperationCanceledException {
+			throws AutomataLibraryException {
 		/*
 		 * naiveSplit used as long as possible
 		 * then switch to more complicated but sound split
@@ -421,7 +421,7 @@ public class MinimizeSevpa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 				
 				// cancel iteration iff cancel signal is received
 				if (!m_Services.getProgressMonitorService().continueProcessing()) {
-					throw new OperationCanceledException();
+					throw new OperationCanceledException(this.getClass());
 				}
 			}
 			
@@ -2752,7 +2752,7 @@ public class MinimizeSevpa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	
 	@Override
 	public INestedWordAutomatonOldApi<LETTER,STATE> getResult()
-			throws OperationCanceledException {
+			throws AutomataLibraryException {
 		return m_nwa;
 	}
 

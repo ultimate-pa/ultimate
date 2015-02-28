@@ -35,7 +35,6 @@ import org.apache.log4j.Logger;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
-import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.Senwa;
@@ -80,7 +79,7 @@ public class SenwaBuilder<LETTER, STATE> implements ISuccessorVisitor<LETTER, ST
 	
 	
 	public SenwaBuilder(IUltimateServiceProvider services, 
-			INestedWordAutomatonOldApi<LETTER, STATE> nwa) throws OperationCanceledException {
+			INestedWordAutomatonOldApi<LETTER, STATE> nwa) throws AutomataLibraryException {
 		m_Services = services;
 		m_Nwa = nwa;
 		s_Logger.info(startMessage());
@@ -179,7 +178,7 @@ public class SenwaBuilder<LETTER, STATE> implements ISuccessorVisitor<LETTER, ST
 		return resSuccs;
 	}
 	
-	public Senwa<LETTER,STATE> getResult() throws OperationCanceledException {
+	public Senwa<LETTER,STATE> getResult() throws AutomataLibraryException {
 		return m_Senwa;
 	}
 

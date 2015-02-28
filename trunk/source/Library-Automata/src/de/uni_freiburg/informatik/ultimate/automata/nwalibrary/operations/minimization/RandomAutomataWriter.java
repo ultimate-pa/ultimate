@@ -11,7 +11,6 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.GetRandomDfa;
@@ -105,7 +104,7 @@ public class RandomAutomataWriter<LETTER, STATE> implements
 	}
 
 	@Override
-	public Object getResult() throws OperationCanceledException {
+	public Object getResult() throws AutomataLibraryException {
 		// TODO Auto-generated method stub
 		return null;
 	}

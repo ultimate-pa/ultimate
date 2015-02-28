@@ -30,7 +30,6 @@ import org.apache.log4j.Logger;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
-import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
@@ -98,7 +97,7 @@ public class Intersect<LETTER,STATE> implements IOperation<LETTER,STATE> {
 
 	@Override
 	public INestedWordAutomatonOldApi<LETTER, STATE> getResult()
-			throws OperationCanceledException {
+			throws AutomataLibraryException {
 		return m_Result;
 	}
 

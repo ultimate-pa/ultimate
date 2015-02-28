@@ -27,9 +27,9 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa;
 
 import org.apache.log4j.Logger;
 
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
-import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
@@ -76,7 +76,7 @@ public class BuchiComplementSVW<LETTER,STATE> implements IOperation<LETTER,STATE
 		
 	public BuchiComplementSVW(IUltimateServiceProvider services,
 			INestedWordAutomatonOldApi<LETTER,STATE> operand)
-			throws OperationCanceledException {
+			throws AutomataLibraryException {
 		m_Services = services;
 		m_Operand = operand;
 		s_Logger.info(startMessage());
@@ -86,13 +86,13 @@ public class BuchiComplementSVW<LETTER,STATE> implements IOperation<LETTER,STATE
 
 	@Override
 	public INestedWordAutomatonOldApi<LETTER,STATE> getResult()
-			throws OperationCanceledException {
+			throws AutomataLibraryException {
 		return m_Result;
 	}
 
 	@Override
 	public boolean checkResult(StateFactory<STATE> stateFactory)
-			throws OperationCanceledException {
+			throws AutomataLibraryException {
 		return ResultChecker.buchiComplement(m_Services, m_Operand, m_Result);
 	}
 	

@@ -4,9 +4,9 @@ import java.util.ArrayList;
 
 import org.apache.log4j.Logger;
 
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
-import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
@@ -72,7 +72,7 @@ public class NwaList<LETTER,STATE> implements IOperation<LETTER,STATE>{
 	}
 	
 	@Override
-	public ArrayList<INestedWordAutomaton<LETTER,STATE>> getResult() throws OperationCanceledException {
+	public ArrayList<INestedWordAutomaton<LETTER,STATE>> getResult() throws AutomataLibraryException {
 		return automataCollection;
 	}
 	/*public String getResult() throws OperationCanceledException {
@@ -80,7 +80,7 @@ public class NwaList<LETTER,STATE> implements IOperation<LETTER,STATE>{
 	}*/
 	
 	public boolean checkResult(StateFactory<STATE> stateFactory)
-			throws OperationCanceledException {
+			throws AutomataLibraryException {
 		return true;
 	}
 	

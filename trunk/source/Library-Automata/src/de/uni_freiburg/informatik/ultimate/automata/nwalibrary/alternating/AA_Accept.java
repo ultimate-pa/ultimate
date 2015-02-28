@@ -2,13 +2,12 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.alternating;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 
 public class AA_Accept<LETTER,STATE> implements IOperation<LETTER,STATE>{
 	
-	public AA_Accept(AlternatingAutomaton<LETTER,STATE> alternatingAutomaton, Word<LETTER> word) throws OperationCanceledException{
+	public AA_Accept(AlternatingAutomaton<LETTER,STATE> alternatingAutomaton, Word<LETTER> word) throws AutomataLibraryException{
 		isAccepted = alternatingAutomaton.accepts(word);
 	}
 	private boolean isAccepted;

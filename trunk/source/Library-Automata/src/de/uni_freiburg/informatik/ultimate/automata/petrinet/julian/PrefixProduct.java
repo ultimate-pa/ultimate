@@ -37,7 +37,6 @@ import org.apache.log4j.Logger;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
-import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
@@ -132,7 +131,7 @@ public class PrefixProduct<S,C> implements IOperation<S,C> {
 		computeResult();
 	}
 	
-	public PetriNetJulian<S,C> getResult() throws OperationCanceledException {
+	public PetriNetJulian<S,C> getResult() throws AutomataLibraryException {
 		return this.m_Result;
 	}
 	

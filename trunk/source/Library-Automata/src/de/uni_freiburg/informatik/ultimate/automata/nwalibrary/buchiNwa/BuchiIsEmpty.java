@@ -27,9 +27,9 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa;
 
 import org.apache.log4j.Logger;
 
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
-import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.NestedWordAutomatonReachableStates;
@@ -52,7 +52,7 @@ public class BuchiIsEmpty<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	final Boolean m_Result;
 	
 	public BuchiIsEmpty(IUltimateServiceProvider services,
-			INestedWordAutomatonSimple<LETTER, STATE> nwa) throws OperationCanceledException {
+			INestedWordAutomatonSimple<LETTER, STATE> nwa) throws AutomataLibraryException {
 		m_Services = services;
 		m_Nwa = nwa;
 		s_Logger.info(startMessage());
@@ -83,7 +83,7 @@ public class BuchiIsEmpty<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	}
 
 	@Override
-	public Boolean getResult() throws OperationCanceledException {
+	public Boolean getResult() throws AutomataLibraryException {
 		return m_Result;
 	}
 	
@@ -92,7 +92,7 @@ public class BuchiIsEmpty<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		NestedWordAutomata.getLogger();	
 	
 	
-	public NestedLassoRun<LETTER,STATE> getAcceptingNestedLassoRun() throws OperationCanceledException {
+	public NestedLassoRun<LETTER,STATE> getAcceptingNestedLassoRun() throws AutomataLibraryException {
 		if (m_Result) {
 			s_Logger.info("There is no accepting nested lasso run");
 			return null;
@@ -104,7 +104,7 @@ public class BuchiIsEmpty<LETTER,STATE> implements IOperation<LETTER,STATE> {
 
 	@Override
 	public boolean checkResult(StateFactory<STATE> stateFactory)
-			throws OperationCanceledException {
+			throws AutomataLibraryException {
 		return true;
 	}
 

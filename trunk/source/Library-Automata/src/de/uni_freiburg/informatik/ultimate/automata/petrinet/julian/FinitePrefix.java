@@ -27,9 +27,9 @@ package de.uni_freiburg.informatik.ultimate.automata.petrinet.julian;
 
 import org.apache.log4j.Logger;
 
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
-import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.PetriNetUnfolder.order;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
@@ -44,7 +44,7 @@ public class FinitePrefix<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	private final BranchingProcess<LETTER,STATE> m_Result;
 	
 	public FinitePrefix(IUltimateServiceProvider services, 
-			PetriNetJulian<LETTER,STATE> operand) throws OperationCanceledException {
+			PetriNetJulian<LETTER,STATE> operand) throws AutomataLibraryException {
 		m_Services = services;
 		m_Operand = operand;
 		s_Logger.info(startMessage());
@@ -71,13 +71,13 @@ public class FinitePrefix<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	}
 
 	@Override
-	public BranchingProcess<LETTER,STATE> getResult() throws OperationCanceledException {
+	public BranchingProcess<LETTER,STATE> getResult() throws AutomataLibraryException {
 		return m_Result;
 	}
 
 	@Override
 	public boolean checkResult(StateFactory<STATE> stateFactory)
-			throws OperationCanceledException {
+			throws AutomataLibraryException {
 		return true;
 	}
 

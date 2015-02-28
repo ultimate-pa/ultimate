@@ -8,7 +8,6 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.AlternatingAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.CompoundState;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
@@ -157,7 +156,7 @@ public class NonDeterminizeAA<LETTER, STATE> implements IOperation<LETTER, STATE
 
 	@Override
 //	public Object getResult() throws OperationCanceledException {
-	public NestedWordAutomaton<LETTER, CompoundState<STATE>> getResult() throws OperationCanceledException {
+	public NestedWordAutomaton<LETTER, CompoundState<STATE>> getResult() throws AutomataLibraryException {
 		return newAutomaton;
 	}
 

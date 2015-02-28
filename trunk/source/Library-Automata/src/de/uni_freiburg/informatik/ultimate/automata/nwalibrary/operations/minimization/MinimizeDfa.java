@@ -82,7 +82,7 @@ public class MinimizeDfa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	 * @throws OperationCanceledException 
 	 */
     public MinimizeDfa(IUltimateServiceProvider services, INestedWordAutomatonOldApi<LETTER,STATE> operand)
-            throws OperationCanceledException {
+            throws AutomataLibraryException {
     	m_Services = services;
         if (new HasUnreachableStates<LETTER,STATE>(m_Services, operand)
 				.result()) {
@@ -118,7 +118,7 @@ public class MinimizeDfa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	 *            the table
      * @throws OperationCanceledException 
 	 */
-	private void calculateTable(ArrayList<STATE> states, boolean[][] table) throws OperationCanceledException {
+	private void calculateTable(ArrayList<STATE> states, boolean[][] table) throws AutomataLibraryException {
 		// we iterate on the table to get all the equivalent states
 		boolean makeNextIteration = true;
 		while (makeNextIteration) {
@@ -147,7 +147,7 @@ public class MinimizeDfa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 					}
 				}
 				if (!m_Services.getProgressMonitorService().continueProcessing()) {
-					throw new OperationCanceledException();
+					throw new OperationCanceledException(this.getClass());
 				}
 			}
 		}

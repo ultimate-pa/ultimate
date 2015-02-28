@@ -30,7 +30,6 @@ import org.apache.log4j.Logger;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
-import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
@@ -78,7 +77,7 @@ public class Complement<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	public Complement(IUltimateServiceProvider services,
 			INestedWordAutomatonSimple<LETTER,STATE> operand, 
 			IStateDeterminizer<LETTER,STATE> stateDeterminizer, 
-			StateFactory<STATE> sf) throws OperationCanceledException {
+			StateFactory<STATE> sf) throws AutomataLibraryException {
 		m_Services = services;
 		m_Operand = operand;
 		m_StateDeterminizer = stateDeterminizer;
@@ -90,7 +89,7 @@ public class Complement<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	
 	public Complement(IUltimateServiceProvider services,
 			StateFactory<STATE> stateFactory, 
-			INestedWordAutomatonSimple<LETTER,STATE> operand) throws OperationCanceledException {
+			INestedWordAutomatonSimple<LETTER,STATE> operand) throws AutomataLibraryException {
 		m_Services = services;
 		m_Operand = operand;
 		m_StateDeterminizer = new PowersetDeterminizer<LETTER, STATE>(operand, true, stateFactory);
@@ -100,7 +99,7 @@ public class Complement<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		s_Logger.info(exitMessage());
 	}
 	
-	private void computeComplement() throws OperationCanceledException {
+	private void computeComplement() throws AutomataLibraryException {
 		if (m_Operand instanceof DeterminizeNwa) {
 			m_Determinized = (DeterminizeNwa<LETTER, STATE>) m_Operand;
 			m_Complement = new ComplementDeterministicNwa<LETTER, STATE>(m_Determinized);
@@ -118,7 +117,7 @@ public class Complement<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		m_Result = new NestedWordAutomatonReachableStates<LETTER, STATE>(m_Services, m_Complement);
 	}
 	
-	private boolean tryWithoutDeterminization() throws OperationCanceledException {
+	private boolean tryWithoutDeterminization() throws AutomataLibraryException {
 		assert (m_StateDeterminizer instanceof PowersetDeterminizer);
 		TotalizeNwa<LETTER, STATE> totalized = new TotalizeNwa<LETTER, STATE>(m_Operand, m_StateFactory);
 		ComplementDeterministicNwa<LETTER,STATE> complemented = new ComplementDeterministicNwa<LETTER, STATE>(totalized);
@@ -140,7 +139,7 @@ public class Complement<LETTER,STATE> implements IOperation<LETTER,STATE> {
 
 	@Override
 	public INestedWordAutomatonOldApi<LETTER, STATE> getResult()
-			throws OperationCanceledException {
+			throws AutomataLibraryException {
 		return m_Result;
 	}
 	

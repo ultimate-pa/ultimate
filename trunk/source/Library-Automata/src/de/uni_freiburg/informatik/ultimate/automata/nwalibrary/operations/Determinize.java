@@ -30,7 +30,6 @@ import org.apache.log4j.Logger;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
-import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
@@ -75,7 +74,7 @@ public class Determinize<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	
 	public Determinize(IUltimateServiceProvider services,
 			StateFactory<STATE> stateFactory, 
-			INestedWordAutomatonSimple<LETTER,STATE> input) throws OperationCanceledException {
+			INestedWordAutomatonSimple<LETTER,STATE> input) throws AutomataLibraryException {
 		m_Services = services;
 		this.stateDeterminizer = new PowersetDeterminizer<LETTER, STATE>(input, true, stateFactory);
 		this.m_StateFactory = stateFactory;

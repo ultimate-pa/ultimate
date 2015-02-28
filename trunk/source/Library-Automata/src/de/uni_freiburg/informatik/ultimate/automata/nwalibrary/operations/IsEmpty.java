@@ -35,9 +35,9 @@ import java.util.Stack;
 
 import org.apache.log4j.Logger;
 
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
-import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.DoubleDecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
@@ -742,18 +742,18 @@ public class IsEmpty<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	}
 	
 	@Override
-	public Boolean getResult() throws OperationCanceledException {
+	public Boolean getResult() throws AutomataLibraryException {
 		return m_acceptingRun == null;
 	}
 
 
-	public NestedRun<LETTER,STATE> getNestedRun() throws OperationCanceledException {
+	public NestedRun<LETTER,STATE> getNestedRun() throws AutomataLibraryException {
 		return m_acceptingRun;
 	}
 
 	@Override
 	public boolean checkResult(StateFactory<STATE> stateFactory)
-			throws OperationCanceledException {
+			throws AutomataLibraryException {
 		boolean correct = true;
 		if (m_acceptingRun == null) {
 			s_Logger.warn("Emptiness not double checked ");

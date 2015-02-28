@@ -33,7 +33,6 @@ import org.apache.log4j.Logger;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
-import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
@@ -134,7 +133,7 @@ public class BuchiDifferenceFKV<LETTER,STATE> implements IOperation<LETTER,STATE
 
 	@Override
 	public INestedWordAutomatonOldApi<LETTER, STATE> getResult()
-			throws OperationCanceledException {
+			throws AutomataLibraryException {
 		return m_Result;
 	}
 	
@@ -148,7 +147,7 @@ public class BuchiDifferenceFKV<LETTER,STATE> implements IOperation<LETTER,STATE
 
 	@Override
 	public boolean checkResult(StateFactory<STATE> stateFactory)
-			throws OperationCanceledException {
+			throws AutomataLibraryException {
 		boolean underApproximationOfComplement = false;
 		boolean correct = true;
 			s_Logger.info("Start testing correctness of " + operationName());
@@ -193,7 +192,7 @@ public class BuchiDifferenceFKV<LETTER,STATE> implements IOperation<LETTER,STATE
 	private boolean checkAcceptance(NestedLassoWord<LETTER> nlw,
 			INestedWordAutomatonOldApi<LETTER, STATE> operand1, 
 			INestedWordAutomatonOldApi<LETTER, STATE> operand2,
-			boolean underApproximationOfComplement) throws OperationCanceledException {
+			boolean underApproximationOfComplement) throws AutomataLibraryException {
 		boolean correct;
 		boolean op1 = (new BuchiAccepts<LETTER, STATE>(m_Services, operand1, nlw)).getResult();
 		boolean op2 = (new BuchiAccepts<LETTER, STATE>(m_Services, operand2, nlw)).getResult();

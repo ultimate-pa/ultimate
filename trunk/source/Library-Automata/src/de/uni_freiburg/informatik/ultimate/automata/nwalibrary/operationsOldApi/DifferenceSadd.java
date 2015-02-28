@@ -151,7 +151,7 @@ public class DifferenceSadd<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		this.minuend = minuend;
 		this.subtrahend = subtrahend;
 		if (!NestedWordAutomaton.sameAlphabet(this.minuend, this.subtrahend)) {
-			throw new AutomataLibraryException("Unable to apply operation to automata with different alphabets.");
+			throw new AutomataLibraryException(this.getClass(), "Unable to apply operation to automata with different alphabets.");
 		}
 		this.stateDeterminizer = stateDeterminizer;
 		s_Logger.info(startMessage());
@@ -182,7 +182,7 @@ public class DifferenceSadd<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		this.minuend = minuend;
 		this.subtrahend = subtrahend;
 		if (!NestedWordAutomaton.sameAlphabet(this.minuend, this.subtrahend)) {
-			throw new AutomataLibraryException("Unable to apply operation to automata with different alphabets.");
+			throw new AutomataLibraryException(this.getClass(), "Unable to apply operation to automata with different alphabets.");
 		}
 		this.stateDeterminizer = new PowersetDeterminizer<LETTER,STATE>(subtrahend, true, stateFactory);
 		s_Logger.info(startMessage());

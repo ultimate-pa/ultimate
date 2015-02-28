@@ -32,6 +32,7 @@ import java.util.Set;
 
 import org.apache.log4j.Logger;
 
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
@@ -167,7 +168,7 @@ public class PetriNetUnfolder<S, C> implements IOperation<S, C> {
 	public PetriNetUnfolder(IUltimateServiceProvider services, 
 			PetriNetJulian<S, C> net, order Order,
 			boolean sameTransitionCutOff, boolean stopIfAcceptingRunFound)
-			throws OperationCanceledException {
+			throws AutomataLibraryException {
 		m_Services = services;
 		this.m_Net = net;
 		this.m_StopIfAcceptingRunFound = stopIfAcceptingRunFound;
@@ -194,7 +195,7 @@ public class PetriNetUnfolder<S, C> implements IOperation<S, C> {
 		s_Logger.info(m_Statistics.coRelationInformation());
 	}
 
-	private void computeUnfolding() throws OperationCanceledException {
+	private void computeUnfolding() throws AutomataLibraryException {
 		m_PossibleExtensions.update(m_Unfolding.getDummyRoot());
 
 		while (!m_PossibleExtensions.isEmpy()) {
@@ -232,7 +233,7 @@ public class PetriNetUnfolder<S, C> implements IOperation<S, C> {
 			// }
 
 			if (!m_Services.getProgressMonitorService().continueProcessing()) {
-				throw new OperationCanceledException();
+				throw new OperationCanceledException(this.getClass());
 			}
 		}
 	}
@@ -318,7 +319,7 @@ public class PetriNetUnfolder<S, C> implements IOperation<S, C> {
 	 * @throws AssertionError 
 	 * @throws OperationCanceledException 
 	 */
-	public PetriNetRun<S, C> getAcceptingRun() throws OperationCanceledException, AssertionError {
+	public PetriNetRun<S, C> getAcceptingRun() throws AutomataLibraryException, AssertionError {
 		return m_Run;
 	}
 
@@ -327,7 +328,7 @@ public class PetriNetUnfolder<S, C> implements IOperation<S, C> {
 	 * net.
 	 * @throws OperationCanceledException 
 	 */
-	public BranchingProcess<S, C> getFinitePrefix() throws OperationCanceledException {
+	public BranchingProcess<S, C> getFinitePrefix() throws AutomataLibraryException {
 		return m_Unfolding;
 	}
 
@@ -413,13 +414,13 @@ public class PetriNetUnfolder<S, C> implements IOperation<S, C> {
 	}
 
 	@Override
-	public BranchingProcess<S, C> getResult() throws OperationCanceledException {
+	public BranchingProcess<S, C> getResult() throws AutomataLibraryException {
 		return m_Unfolding;
 	}
 
 	@Override
 	public boolean checkResult(StateFactory<C> stateFactory)
-			throws OperationCanceledException {
+			throws AutomataLibraryException {
 		s_Logger.info("Testing correctness of emptinessCheck");
 
 		boolean correct = true;

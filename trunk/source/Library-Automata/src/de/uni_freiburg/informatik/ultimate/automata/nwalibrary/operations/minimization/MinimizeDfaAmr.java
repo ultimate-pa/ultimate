@@ -143,7 +143,7 @@ public class MinimizeDfaAmr<LETTER, STATE>
 	public MinimizeDfaAmr(final IUltimateServiceProvider services,
 			final StateFactory<STATE> stateFactory,
 			final INestedWordAutomaton<LETTER, STATE> operand)
-			throws OperationCanceledException, AutomataLibraryException {
+			throws AutomataLibraryException, AutomataLibraryException {
 		this(services, stateFactory, operand, null);
 	}
 	
@@ -159,7 +159,7 @@ public class MinimizeDfaAmr<LETTER, STATE>
 			final StateFactory<STATE> stateFactory,
 			final INestedWordAutomaton<LETTER, STATE> operand,
 			final Interrupt interrupt)
-			throws OperationCanceledException, AutomataLibraryException {
+			throws AutomataLibraryException, AutomataLibraryException {
 		super(services, stateFactory, "MinimizeAMR", operand, interrupt);
 		
 		assert super.checkForDfa() : "The input automaton is no DFA.";
@@ -223,7 +223,7 @@ public class MinimizeDfaAmr<LETTER, STATE>
 	 * @throws OperationCanceledException thrown when execution is cancelled
 	 */
 	private INestedWordAutomaton<LETTER, STATE> minimize()
-			throws OperationCanceledException {
+			throws AutomataLibraryException {
 		// initialize data structures
 		preprocess();
 		

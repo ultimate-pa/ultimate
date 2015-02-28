@@ -68,7 +68,7 @@ public class BuchiReduce<LETTER,STATE> implements IOperation<LETTER,STATE> {
      * @throws OperationCanceledException 
      */
     public BuchiReduce(IUltimateServiceProvider services, StateFactory<STATE> stateFactory, INestedWordAutomatonOldApi<LETTER,STATE> operand)
-            throws OperationCanceledException {
+            throws AutomataLibraryException {
     	m_Services = services;
     	m_Operand = operand;
         BuchiReduce.s_Logger.info(startMessage());

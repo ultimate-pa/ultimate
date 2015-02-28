@@ -30,7 +30,6 @@ import org.apache.log4j.Logger;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
-import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
@@ -72,7 +71,7 @@ public class BuchiComplementRE<LETTER,STATE> implements IOperation<LETTER,STATE>
 	}
 
 	@Override
-	public INestedWordAutomatonOldApi<LETTER,STATE> getResult() throws OperationCanceledException {
+	public INestedWordAutomatonOldApi<LETTER,STATE> getResult() throws AutomataLibraryException {
 		if (m_buchiComplementREApplicable) {
 			return m_Result;
 		} else {
@@ -131,7 +130,7 @@ public class BuchiComplementRE<LETTER,STATE> implements IOperation<LETTER,STATE>
 
 	@Override
 	public boolean checkResult(StateFactory<STATE> stateFactory)
-			throws OperationCanceledException {
+			throws AutomataLibraryException {
 		return ResultChecker.buchiComplement(m_Services, m_Operand, m_Result);
 	}
 

@@ -37,7 +37,6 @@ import org.apache.log4j.Logger;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
-import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
@@ -336,7 +335,7 @@ public class DifferenceBlackAndWhite<S,C> implements IOperation<S,C> {
 	
 	
 
-	public PetriNetJulian<S,C> getResult() throws OperationCanceledException {
+	public PetriNetJulian<S,C> getResult() throws AutomataLibraryException {
 		assert (isPreSuccPlaceInNet(m_Result));
 		assert (isPreSuccTransitionInNet(m_Result));
 		return m_Result;

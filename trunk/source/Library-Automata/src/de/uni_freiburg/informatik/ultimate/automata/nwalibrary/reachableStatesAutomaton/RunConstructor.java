@@ -35,6 +35,7 @@ import java.util.SortedMap;
 import java.util.Stack;
 import java.util.TreeMap;
 
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IncomingCallTransition;
@@ -289,10 +290,10 @@ class RunConstructor<LETTER,STATE> {
 	 * m_Start.
 	 * @throws OperationCanceledException 
 	 */
-	NestedRun<LETTER, STATE> constructRun() throws OperationCanceledException {
+	NestedRun<LETTER, STATE> constructRun() throws AutomataLibraryException {
 		//TODO: Check if this timeout check is responsible for problems.
 		if (!m_Services.getProgressMonitorService().continueProcessing()) {
-			throw new OperationCanceledException();
+			throw new OperationCanceledException(this.getClass());
 		}
 		assert !m_SummaryMustContainAccepting || m_Goal != null;
 		if (!m_FindSummary && m_Nwars.isInitial(m_Start.getState())) {

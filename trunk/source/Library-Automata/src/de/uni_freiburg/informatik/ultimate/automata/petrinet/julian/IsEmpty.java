@@ -27,9 +27,9 @@ package de.uni_freiburg.informatik.ultimate.automata.petrinet.julian;
 
 import org.apache.log4j.Logger;
 
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
-import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNet2FiniteAutomaton;
@@ -47,7 +47,7 @@ public class IsEmpty<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	private final Boolean m_Result;
 	
 	public IsEmpty(IUltimateServiceProvider services, 
-			PetriNetJulian<LETTER,STATE> operand) throws OperationCanceledException {
+			PetriNetJulian<LETTER,STATE> operand) throws AutomataLibraryException {
 		m_Services = services;
 		m_Operand = operand;
 		s_Logger.info(startMessage());
@@ -76,13 +76,13 @@ public class IsEmpty<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	}
 
 	@Override
-	public Boolean getResult() throws OperationCanceledException {
+	public Boolean getResult() throws AutomataLibraryException {
 		return m_Result;
 	}
 
 	@Override
 	public boolean checkResult(StateFactory<STATE> stateFactory)
-			throws OperationCanceledException {
+			throws AutomataLibraryException {
 		INestedWordAutomatonOldApi<LETTER, STATE> finiteAutomaton = (new PetriNet2FiniteAutomaton<>(m_Services, m_Operand)).getResult();
 		boolean automatonEmpty = (new de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsEmpty(finiteAutomaton)).getResult();
 		return (m_Result == automatonEmpty);

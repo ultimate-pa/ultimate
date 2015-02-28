@@ -105,7 +105,7 @@ public class BuchiIntersectNwa<LETTER, STATE> implements INestedWordAutomatonSim
 		m_FstOperand = fstOperand;
 		m_SndOperand = sndOperand;
 		if (!NestedWordAutomaton.sameAlphabet(m_FstOperand, m_SndOperand)) {
-			throw new AutomataLibraryException("Unable to apply operation to automata with different alphabets.");
+			throw new AutomataLibraryException(this.getClass(), "Unable to apply operation to automata with different alphabets.");
 		}
 
 		m_StateFactory = sf;

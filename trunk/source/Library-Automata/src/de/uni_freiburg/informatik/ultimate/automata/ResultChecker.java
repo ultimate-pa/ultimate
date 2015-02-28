@@ -143,7 +143,7 @@ public class ResultChecker<LETTER,STATE> {
 
 	
 	public static boolean buchiComplement(IUltimateServiceProvider services, INestedWordAutomatonOldApi operand,
-										  INestedWordAutomatonOldApi result) throws OperationCanceledException {
+										  INestedWordAutomatonOldApi result) throws AutomataLibraryException {
 		if (resultCheckStackHeight >= maxResultCheckStackHeight) return true;
 		resultCheckStackHeight++;
 		s_Logger.info("Testing correctness of complementBuchi");
@@ -179,7 +179,7 @@ public class ResultChecker<LETTER,STATE> {
 	
 	public static boolean buchiComplementSVW(IUltimateServiceProvider services, 
 			INestedWordAutomatonOldApi operand,
-			INestedWordAutomatonOldApi result) throws OperationCanceledException {
+			INestedWordAutomatonOldApi result) throws AutomataLibraryException {
 		if (resultCheckStackHeight >= maxResultCheckStackHeight) return true;
 		resultCheckStackHeight++;
 		s_Logger.info("Testing correctness of complementBuchiSVW");
@@ -294,7 +294,7 @@ public class ResultChecker<LETTER,STATE> {
 	public static <LETTER, STATE> INestedWordAutomatonOldApi<LETTER, STATE> getOldApiNwa(
 			IUltimateServiceProvider services,
 			INestedWordAutomatonSimple<LETTER, STATE> nwa)
-			throws OperationCanceledException {
+			throws AutomataLibraryException {
 		if (nwa instanceof INestedWordAutomatonOldApi) {
 			return (INestedWordAutomatonOldApi<LETTER, STATE>) nwa;
 		} else {
@@ -325,7 +325,7 @@ public class ResultChecker<LETTER,STATE> {
 		}
     }
     
-	public static <LETTER,STATE> NestedLassoWord<LETTER> getRandomNestedLassoWord(INestedWordAutomatonSimple<LETTER, STATE> automaton, int size) throws OperationCanceledException {
+	public static <LETTER,STATE> NestedLassoWord<LETTER> getRandomNestedLassoWord(INestedWordAutomatonSimple<LETTER, STATE> automaton, int size) throws AutomataLibraryException {
 		NestedWord<LETTER> stem = (new GetRandomNestedWord<LETTER, STATE>(automaton, size)).getResult();
 		NestedWord<LETTER> loop = (new GetRandomNestedWord<LETTER, STATE>(automaton, size)).getResult();
 		return new NestedLassoWord<LETTER>(stem, loop);

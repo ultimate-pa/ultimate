@@ -45,6 +45,7 @@ import java.util.Map.Entry;
 import java.util.PriorityQueue;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
@@ -185,7 +186,7 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 	public ShrinkNwa(final IUltimateServiceProvider services,
 			final StateFactory<STATE> stateFactory,
 			final INestedWordAutomaton<LETTER,STATE> operand)
-			throws OperationCanceledException {
+			throws AutomataLibraryException {
 		this(services, stateFactory, operand, false, 0, false, 0, false, false);
 	}
 	
@@ -215,7 +216,7 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 			final boolean firstReturnSplit,
 			final int firstReturnSplitAlternative,
 			final boolean splitAllCallPreds, final boolean returnSplitNaive)
-			throws OperationCanceledException {
+			throws AutomataLibraryException {
 		this(services, stateFactory, operand, null, false, false, splitOutgoing,
 				splitRandomSize, firstReturnSplit,
 				firstReturnSplitAlternative, splitAllCallPreds,
@@ -257,7 +258,7 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 			final boolean firstReturnSplit,
 			final int firstReturnSplitAlternative,
 			final boolean splitAllCallPreds, final boolean returnSplitNaive)
-					throws OperationCanceledException {
+					throws AutomataLibraryException {
 		super(services, stateFactory, "shrinkNwa", operand);
 		if (STAT_RETURN_SIZE) {
 			try {
@@ -414,7 +415,7 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 	 */
 	private void minimize(final boolean isFiniteAutomaton,
 			final Iterable<Set<STATE>> modules, final boolean includeMapping)
-			throws OperationCanceledException {
+			throws AutomataLibraryException {
 		if (STATISTICS) {
 			m_wholeTime -= new GregorianCalendar().getTimeInMillis();
 		}
@@ -433,7 +434,7 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 			while (m_workListIntCall.hasNext()) {
 				// cancel if signal is received
 				if (!m_Services.getProgressMonitorService().continueProcessing()) {
-					throw new OperationCanceledException();
+					throw new OperationCanceledException(this.getClass());
 				}
 				
 				EquivalenceClass a = m_workListIntCall.next();
@@ -451,7 +452,7 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 			outer: while (true) {
 				// cancel if signal is received
 				if (!m_Services.getProgressMonitorService().continueProcessing()) {
-					throw new OperationCanceledException();
+					throw new OperationCanceledException(this.getClass());
 				}
 				
 				// internals and calls
@@ -459,7 +460,7 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 					// cancel if signal is received
 					if (!m_Services.getProgressMonitorService().continueProcessing())
 							{
-						throw new OperationCanceledException();
+						throw new OperationCanceledException(this.getClass());
 					}
 					
 					EquivalenceClass a = m_workListIntCall.next();

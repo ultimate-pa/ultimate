@@ -8,7 +8,6 @@ import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.DNFAsBitSetList;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.SalomAA;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
@@ -100,7 +99,7 @@ public class SAAUnion<LETTER, STATE> implements IOperation<LETTER, STATE> {
 
 	@Override
 //	public Object getResult() throws OperationCanceledException {
-	public SalomAA getResult() throws OperationCanceledException {
+	public SalomAA getResult() throws AutomataLibraryException {
 		return m_result;
 	}
 

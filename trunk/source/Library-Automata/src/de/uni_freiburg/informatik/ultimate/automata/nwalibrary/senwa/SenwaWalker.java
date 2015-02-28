@@ -36,6 +36,7 @@ import java.util.Set;
 
 import org.apache.log4j.Logger;
 
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.DoubleDecker;
@@ -100,7 +101,7 @@ public class SenwaWalker<LETTER,STATE> {
 	protected ISuccessorVisitor<LETTER, STATE> m_SuccVisit;
 	private long m_DeadEndRemovalTime;
 	
-	public SenwaWalker(IUltimateServiceProvider services, Senwa<LETTER,STATE> senwa, ISuccessorVisitor<LETTER, STATE> succVisit, boolean removeDeadEnds) throws OperationCanceledException {
+	public SenwaWalker(IUltimateServiceProvider services, Senwa<LETTER,STATE> senwa, ISuccessorVisitor<LETTER, STATE> succVisit, boolean removeDeadEnds) throws AutomataLibraryException {
 		m_Services = services;
 		m_TraversedSenwa = senwa;
 		m_SuccVisit = succVisit;
@@ -110,7 +111,7 @@ public class SenwaWalker<LETTER,STATE> {
 	
 
 	
-	public INestedWordAutomatonOldApi<LETTER,STATE> getResult() throws OperationCanceledException {
+	public INestedWordAutomatonOldApi<LETTER,STATE> getResult() throws AutomataLibraryException {
 		return m_TraversedSenwa;
 	}
 	
@@ -216,7 +217,7 @@ public class SenwaWalker<LETTER,STATE> {
 //	}
 
 	
-	protected final void traverseDoubleDeckerGraph() throws OperationCanceledException {
+	protected final void traverseDoubleDeckerGraph() throws AutomataLibraryException {
 		Iterable<STATE> initialStates = m_SuccVisit.getInitialStates();
 		for (STATE state : initialStates) {
 			enqueueAndMark(state);
@@ -260,7 +261,7 @@ public class SenwaWalker<LETTER,STATE> {
 			}
 			
 			if (!m_Services.getProgressMonitorService().continueProcessing()) {
-				throw new OperationCanceledException();
+				throw new OperationCanceledException(this.getClass());
 			}
 			
 			

@@ -66,7 +66,7 @@ public class MinimizeDfaSimulation<LETTER,STATE> implements IOperation<LETTER,ST
      */
     public MinimizeDfaSimulation(IUltimateServiceProvider services, 
     		StateFactory<STATE> stateFactory, INestedWordAutomatonOldApi<LETTER,STATE> operand)
-            throws OperationCanceledException {
+            throws AutomataLibraryException {
     	m_Services = services;
     	m_Operand = operand;
         MinimizeDfaSimulation.s_Logger.info(startMessage());

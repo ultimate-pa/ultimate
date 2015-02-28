@@ -44,6 +44,7 @@ import java.util.Stack;
 
 import org.apache.log4j.Logger;
 
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
@@ -107,7 +108,7 @@ public abstract class AbstractSimulation<LETTER,STATE> {
      */
     public AbstractSimulation(IUltimateServiceProvider services,
     		INestedWordAutomatonOldApi<LETTER,STATE> ba, boolean useSCCs, StateFactory<STATE> stateFactory)
-            throws OperationCanceledException {
+            throws AutomataLibraryException {
     	m_Services = services;
         this.v0 = new HashSet<Player0Vertex<LETTER,STATE>>();
         this.v1 = new HashSet<Player1Vertex<LETTER,STATE>>();
@@ -118,7 +119,7 @@ public abstract class AbstractSimulation<LETTER,STATE> {
         doSimulation(ba);
     }
     
-    void doSimulation(INestedWordAutomatonOldApi<LETTER,STATE> ba) throws OperationCanceledException {
+    void doSimulation(INestedWordAutomatonOldApi<LETTER,STATE> ba) throws AutomataLibraryException {
     	long startTime = System.currentTimeMillis();
         generateGameGraph(ba);
         if(useSCCs) { // calculate reduction with SCC
@@ -147,7 +148,7 @@ public abstract class AbstractSimulation<LETTER,STATE> {
      * @throws OperationCanceledException
      */
     protected abstract void generateGameGraph(INestedWordAutomatonOldApi<LETTER,STATE> ba)
-            throws OperationCanceledException;
+            throws AutomataLibraryException;
 
     /**
      * Adds an edge to the edge set and the inverse edge set.
@@ -183,7 +184,7 @@ public abstract class AbstractSimulation<LETTER,STATE> {
      */
     private void efficientLiftingAlgorithm(int l_inf,
             Set<Vertex<LETTER,STATE>> scc)
-            throws OperationCanceledException {
+            throws AutomataLibraryException {
         // init STATE in all vertices and create the working list
         Stack<Vertex<LETTER,STATE>> wL = new Stack<Vertex<LETTER, STATE>>();
         if(useSCCs) {
@@ -248,7 +249,7 @@ public abstract class AbstractSimulation<LETTER,STATE> {
             }
             if (!m_Services.getProgressMonitorService().continueProcessing()) {
                 s_Logger.debug("Stopped in efficientLiftingAlgorithm");
-                throw new OperationCanceledException();
+                throw new OperationCanceledException(this.getClass());
             }
         }
     }
@@ -374,7 +375,7 @@ public abstract class AbstractSimulation<LETTER,STATE> {
      * @throws OperationCanceledException
      */
     protected abstract void generateBuchiAutomaton(INestedWordAutomatonOldApi<LETTER,STATE> m_Operand)
-            throws OperationCanceledException;
+            throws AutomataLibraryException;
     /**
      * Helper method to clear memory, if winning strategy was calculated. This
      * is meant to be done manually after the calculation, because the order of

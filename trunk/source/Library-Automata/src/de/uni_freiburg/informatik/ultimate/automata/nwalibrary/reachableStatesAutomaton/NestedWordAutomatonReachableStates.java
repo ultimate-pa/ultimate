@@ -43,6 +43,7 @@ import java.util.Stack;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.AtsDefinitionPrinter;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.InCaReCounter;
 import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
@@ -148,7 +149,7 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 
 	public NestedWordAutomatonReachableStates(IUltimateServiceProvider services,
 			INestedWordAutomatonSimple<LETTER, STATE> operand)
-			throws OperationCanceledException {
+			throws AutomataLibraryException {
 		m_Services = services;
 		this.m_Operand = operand;
 		m_InternalAlphabet = operand.getInternalAlphabet();
@@ -633,7 +634,7 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 		private final LinkedList<StateContainer<LETTER, STATE>> m_ForwardWorklist = new LinkedList<StateContainer<LETTER, STATE>>();
 		private final LinkedList<StateContainer<LETTER, STATE>> m_DownPropagationWorklist = new LinkedList<StateContainer<LETTER, STATE>>();
 
-		ReachableStatesComputation() throws OperationCanceledException {
+		ReachableStatesComputation() throws AutomataLibraryException {
 			addInitialStates(m_Operand.getInitialStates());
 
 			do {
@@ -673,7 +674,7 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 						m_DownPropagationWorklist.add(cont);
 					}
 					if (!m_Services.getProgressMonitorService().continueProcessing()) {
-						throw new OperationCanceledException();
+						throw new OperationCanceledException(this.getClass());
 					}
 				}
 				while (m_ForwardWorklist.isEmpty() && !m_DownPropagationWorklist.isEmpty()) {
@@ -685,7 +686,7 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 						// (Settings:settings/TACASInterpolation2015/ForwardPredicates.epf,
 						// Toolchain:toolchains/AutomizerC.xml)
 
-						throw new OperationCanceledException();
+						throw new OperationCanceledException(this.getClass());
 					}
 
 					StateContainer<LETTER, STATE> cont = m_DownPropagationWorklist.remove(0);
@@ -1632,7 +1633,7 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 					+ m_AllStatesOfSccsWithoutCallAndReturn.size());
 		}
 
-		public void computeNestedLassoRuns(boolean onePerScc) throws OperationCanceledException {
+		public void computeNestedLassoRuns(boolean onePerScc) throws AutomataLibraryException {
 			if (onePerScc) {
 				throw new UnsupportedOperationException("not yet implemented");
 			}
@@ -1673,7 +1674,7 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 			}
 		}
 
-		public void computeShortNestedLassoRun() throws OperationCanceledException {
+		public void computeShortNestedLassoRun() throws AutomataLibraryException {
 			StateContainer<LETTER, STATE> lowestSerialNumber = null;
 			StateContainer<LETTER, STATE> newlowestSerialNumber = null;
 			SCC sccOfLowest = null;
@@ -1714,7 +1715,7 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 			m_NestedLassoRun = method4;
 		}
 
-		public List<NestedLassoRun<LETTER, STATE>> getAllNestedLassoRuns() throws OperationCanceledException {
+		public List<NestedLassoRun<LETTER, STATE>> getAllNestedLassoRuns() throws AutomataLibraryException {
 			if (buchiIsEmpty()) {
 				return Collections.emptyList();
 			} else {
@@ -1725,7 +1726,7 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 			}
 		}
 
-		public NestedLassoRun<LETTER, STATE> getNestedLassoRun() throws OperationCanceledException {
+		public NestedLassoRun<LETTER, STATE> getNestedLassoRun() throws AutomataLibraryException {
 			if (buchiIsEmpty()) {
 				return null;
 			} else {

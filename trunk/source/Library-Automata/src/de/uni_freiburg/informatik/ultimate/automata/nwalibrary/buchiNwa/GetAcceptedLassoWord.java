@@ -27,9 +27,9 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa;
 
 import org.apache.log4j.Logger;
 
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
-import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
@@ -43,7 +43,7 @@ public class GetAcceptedLassoWord<LETTER, STATE> implements IOperation<LETTER,ST
 	private final NestedLassoWord<LETTER> m_AcceptedWord;
 
 	public GetAcceptedLassoWord(IUltimateServiceProvider services,
-			INestedWordAutomatonOldApi<LETTER, STATE> operand) throws OperationCanceledException {
+			INestedWordAutomatonOldApi<LETTER, STATE> operand) throws AutomataLibraryException {
 		m_Services = services;
 		m_Operand = operand;
 		s_Logger.info(startMessage());
@@ -58,7 +58,7 @@ public class GetAcceptedLassoWord<LETTER, STATE> implements IOperation<LETTER,ST
 	}
 
 	@Override
-	public NestedLassoWord<LETTER> getResult() throws OperationCanceledException {
+	public NestedLassoWord<LETTER> getResult() throws AutomataLibraryException {
 		return m_AcceptedWord;
 	}
 
@@ -82,7 +82,7 @@ public class GetAcceptedLassoWord<LETTER, STATE> implements IOperation<LETTER,ST
 
 	@Override
 	public boolean checkResult(StateFactory<STATE> stateFactory)
-			throws OperationCanceledException {
+			throws AutomataLibraryException {
 		return true;
 	}
 

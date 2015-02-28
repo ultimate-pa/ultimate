@@ -30,7 +30,6 @@ import org.apache.log4j.Logger;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
-import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
@@ -91,7 +90,7 @@ public class IsIncluded<LETTER, STATE> implements IOperation<LETTER,STATE> {
 	}
 
 	@Override
-	public Boolean getResult() throws OperationCanceledException {
+	public Boolean getResult() throws AutomataLibraryException {
 		return m_Result;
 	}
 
@@ -101,7 +100,7 @@ public class IsIncluded<LETTER, STATE> implements IOperation<LETTER,STATE> {
 
 	@Override
 	public boolean checkResult(StateFactory<STATE> stateFactory)
-			throws OperationCanceledException {
+			throws AutomataLibraryException {
 		return true;
 	}
 	

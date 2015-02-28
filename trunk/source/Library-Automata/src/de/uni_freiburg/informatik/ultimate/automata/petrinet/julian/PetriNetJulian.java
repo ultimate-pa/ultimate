@@ -36,7 +36,6 @@ import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
-import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
@@ -246,14 +245,14 @@ public class PetriNetJulian<S, C> implements IPetriNet<S, C> {
 
 
 
-	public PetriNetRun<S, C> acceptingRun() throws OperationCanceledException {
+	public PetriNetRun<S, C> acceptingRun() throws AutomataLibraryException {
 		// NestedRun<S, C> test = getAcceptingNestedRun();
 		// System.out.print(test);
 		return (new PetriNetUnfolder<S, C>(m_Services, this, PetriNetUnfolder.order.ERV,
 				false, true)).getAcceptingRun();
 	}
 
-	public NestedRun<S, C> getAcceptingNestedRun() throws OperationCanceledException {
+	public NestedRun<S, C> getAcceptingNestedRun() throws AutomataLibraryException {
 		EmptinessPetruchio<S, C> ep = new EmptinessPetruchio<S, C>(m_Services, this);
 		NestedRun<S, C> result = ep.getResult();
 

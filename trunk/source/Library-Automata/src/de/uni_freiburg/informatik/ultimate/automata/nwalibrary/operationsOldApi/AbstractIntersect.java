@@ -116,7 +116,7 @@ public abstract class AbstractIntersect<LETTER,STATE> extends DoubleDeckerBuilde
 		m_FstNwa = fstNwa;
 		m_SndNwa = sndNwa;
 		if (!NestedWordAutomaton.sameAlphabet(m_FstNwa, m_SndNwa)) {
-			throw new AutomataLibraryException("Unable to apply operation to automata with different alphabets.");
+			throw new AutomataLibraryException(this.getClass(), "Unable to apply operation to automata with different alphabets.");
 		}
 
 		m_ContentFactory = m_FstNwa.getStateFactory();

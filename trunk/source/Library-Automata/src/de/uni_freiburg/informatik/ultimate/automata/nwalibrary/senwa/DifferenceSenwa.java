@@ -36,7 +36,6 @@ import org.apache.log4j.Logger;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
-import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
@@ -119,7 +118,7 @@ public class DifferenceSenwa<LETTER, STATE> implements
 	public DifferenceSenwa(IUltimateServiceProvider services,
 			INestedWordAutomatonOldApi<LETTER,STATE> minuend,
 			INestedWordAutomatonOldApi<LETTER,STATE> subtrahend)
-					throws OperationCanceledException {
+					throws AutomataLibraryException {
 		m_Services = services;
 		contentFactory = minuend.getStateFactory();
 		this.minuend = minuend;
@@ -144,7 +143,7 @@ public class DifferenceSenwa<LETTER, STATE> implements
 			INestedWordAutomaton<LETTER,STATE> subtrahend,
 			IStateDeterminizer<LETTER,STATE> stateDeterminizer,
 			boolean removeDeadEndsImmediately)
-					throws OperationCanceledException {
+					throws AutomataLibraryException {
 		m_Services = services;
 		contentFactory = minuend.getStateFactory();
 		if (minuend instanceof INestedWordAutomatonOldApi) {
@@ -301,7 +300,7 @@ public class DifferenceSenwa<LETTER, STATE> implements
 		return resSuccs;
 	}
 	
-	public Senwa<LETTER,STATE> getResult() throws OperationCanceledException {
+	public Senwa<LETTER,STATE> getResult() throws AutomataLibraryException {
 		return m_Senwa;
 	}
 	

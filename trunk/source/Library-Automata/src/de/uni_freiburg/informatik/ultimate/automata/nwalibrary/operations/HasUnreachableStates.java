@@ -31,9 +31,9 @@ import java.util.Set;
 
 import org.apache.log4j.Logger;
 
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
-import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.DoubleDecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
@@ -60,7 +60,7 @@ public class HasUnreachableStates<LETTER,STATE> extends DoubleDeckerVisitor<LETT
 
 	
 	public HasUnreachableStates(IUltimateServiceProvider services,
-			INestedWordAutomatonOldApi<LETTER,STATE> operand) throws OperationCanceledException {
+			INestedWordAutomatonOldApi<LETTER,STATE> operand) throws AutomataLibraryException {
 		super(services);
 		m_TraversedNwa = operand;
 		s_Logger.info(startMessage());
@@ -151,7 +151,7 @@ public class HasUnreachableStates<LETTER,STATE> extends DoubleDeckerVisitor<LETT
 
 	@Override
 	public boolean checkResult(StateFactory<STATE> stateFactory)
-			throws OperationCanceledException {
+			throws AutomataLibraryException {
 		return true;
 	}
 	

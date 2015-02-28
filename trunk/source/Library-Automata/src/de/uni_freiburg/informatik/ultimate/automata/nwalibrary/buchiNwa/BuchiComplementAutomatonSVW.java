@@ -38,6 +38,7 @@ import java.util.Set;
 
 import org.apache.log4j.Logger;
 
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
@@ -82,7 +83,7 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 
 	public BuchiComplementAutomatonSVW(IUltimateServiceProvider services, 
 			INestedWordAutomatonOldApi<LETTER, STATE> origAutomaton)
-			throws OperationCanceledException {
+			throws AutomataLibraryException {
 		m_Services = services;
 		m_TMA = new TransitionMonoidAutomaton(origAutomaton);
 		m_Alphabet = origAutomaton.getInternalAlphabet();
@@ -101,7 +102,7 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 	 *         <b>Use with caution!</b> The automaton has to be computed
 	 *         entirely.
 	 */
-	public NestedWordAutomaton<LETTER, STATE> toNestedWordAutomaton() throws OperationCanceledException {
+	public NestedWordAutomaton<LETTER, STATE> toNestedWordAutomaton() throws AutomataLibraryException {
 		NestedWordAutomaton<LETTER, STATE> result = 
 				new NestedWordAutomaton<LETTER, STATE>(m_Services, m_Alphabet, null, null,
 				m_StateFactory);
@@ -129,7 +130,7 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 				}
 			}
 			if (!m_Services.getProgressMonitorService().continueProcessing()) {
-				throw new OperationCanceledException();
+				throw new OperationCanceledException(this.getClass());
 			}
 		}
 		m_BuildCompleted = true; // side effect of the BF traversal
@@ -574,7 +575,7 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 		 * are simply represented by Integer objects.
 		 */
 		public TransitionMonoidAutomaton(INestedWordAutomatonOldApi<LETTER, STATE> origAutomaton)
-				throws OperationCanceledException {
+				throws AutomataLibraryException {
 			m_OrigAutomaton = origAutomaton;
 			Collection<LETTER> alphabet = origAutomaton.getInternalAlphabet();
 
@@ -725,7 +726,7 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 			 * @return the copy of the transition profile τ(ε), i.e. the initial
 			 *         state of the TMA
 			 */
-			public TransitionProfile() throws OperationCanceledException {
+			public TransitionProfile() throws AutomataLibraryException {
 				m_IsInitial = true;
 				for (STATE q : m_OrigAutomaton.getStates()) {
 					if (m_OrigAutomaton.isFinal(q))
@@ -739,7 +740,7 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 			 * @param a
 			 * @return the transition profile τ(a) for letter {@code a}
 			 */
-			public TransitionProfile(LETTER a) throws OperationCanceledException {
+			public TransitionProfile(LETTER a) throws AutomataLibraryException {
 				for (STATE p : m_OrigAutomaton.getStates()) {
 					boolean p_isFinal = m_OrigAutomaton.isFinal(p);
 					for (STATE q : m_OrigAutomaton.succInternal(p, a)) {

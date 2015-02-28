@@ -33,9 +33,12 @@ public class AutomataLibraryException extends Exception {
 	private static final long serialVersionUID = 1643349110083991967L;
 	
 	private final String m_Message;
+
+	protected final Class<?> m_ClassOfThrower;
 	
-	public AutomataLibraryException(String message) {
+	public AutomataLibraryException(Class<?> thrower, String message) {
 		m_Message = message;
+		m_ClassOfThrower = thrower;
 	}
 	
 	@Override
@@ -43,4 +46,11 @@ public class AutomataLibraryException extends Exception {
 		return m_Message;
 	}
 
+	/**
+	 * Get the class of the object that has thrown this Exception.
+	 * @return
+	 */
+	public Class<?> getClassOfThrower() {
+		return m_ClassOfThrower;
+	}
 }

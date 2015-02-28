@@ -40,8 +40,8 @@ import java.util.TreeSet;
 
 import org.apache.log4j.Logger;
 
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
-import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.DoubleDecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomatonCache;
@@ -122,7 +122,7 @@ public class BuchiComplementFKVNwa<LETTER,STATE> implements INestedWordAutomaton
 	public BuchiComplementFKVNwa(IUltimateServiceProvider services,
 			INestedWordAutomatonSimple<LETTER,STATE> operand,
 			IStateDeterminizer<LETTER,STATE> stateDeterminizer,
-			StateFactory<STATE> stateFactory) throws OperationCanceledException {
+			StateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		m_Services = services;
 		m_Operand = operand;
 		m_StateFactory = stateFactory;

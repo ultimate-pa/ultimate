@@ -33,7 +33,6 @@ import java.util.Stack;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
@@ -82,14 +81,14 @@ public class GetRandomNestedWord<LETTER, STATE> implements IOperation<LETTER, ST
 	}
 	
 	@Override
-	public NestedWord<LETTER> getResult() throws OperationCanceledException {
+	public NestedWord<LETTER> getResult() throws AutomataLibraryException {
 		return m_Result;
 	}
 
 
 	@Override
 	public boolean checkResult(StateFactory<STATE> stateFactory)
-			throws OperationCanceledException, AutomataLibraryException {
+			throws AutomataLibraryException, AutomataLibraryException {
 		return true;
 	}
 	

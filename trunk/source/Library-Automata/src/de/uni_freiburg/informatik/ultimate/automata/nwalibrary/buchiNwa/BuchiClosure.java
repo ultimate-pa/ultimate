@@ -30,9 +30,9 @@ import java.util.List;
 
 import org.apache.log4j.Logger;
 
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
-import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
@@ -87,7 +87,7 @@ public class BuchiClosure<LETTER,STATE> implements IOperation<LETTER,STATE> {
 
 
 	public BuchiClosure(IUltimateServiceProvider services,
-			INestedWordAutomatonOldApi<LETTER,STATE> input) throws OperationCanceledException {
+			INestedWordAutomatonOldApi<LETTER,STATE> input) throws AutomataLibraryException {
 		m_Services = services;
 		this.m_Operand = input;
 		s_Logger.info(startMessage());
@@ -102,7 +102,7 @@ public class BuchiClosure<LETTER,STATE> implements IOperation<LETTER,STATE> {
 
 	@Override
 	public boolean checkResult(StateFactory<STATE> stateFactory)
-			throws OperationCanceledException {
+			throws AutomataLibraryException {
 		boolean correct = true;
 		s_Logger.info("Start testing correctness of " + operationName());
 		INestedWordAutomatonOldApi<LETTER, STATE> operandOldApi = 
@@ -128,7 +128,7 @@ public class BuchiClosure<LETTER,STATE> implements IOperation<LETTER,STATE> {
 
 
 	@Override
-	public INestedWordAutomaton<LETTER, STATE> getResult() throws OperationCanceledException {
+	public INestedWordAutomaton<LETTER, STATE> getResult() throws AutomataLibraryException {
 		return m_Result;
 	}
 

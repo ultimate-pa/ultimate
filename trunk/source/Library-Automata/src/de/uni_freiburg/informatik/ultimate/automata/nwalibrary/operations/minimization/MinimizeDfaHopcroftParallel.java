@@ -225,7 +225,7 @@ public class MinimizeDfaHopcroftParallel<LETTER, STATE> extends
 	 */
 	public MinimizeDfaHopcroftParallel(final IUltimateServiceProvider services, final StateFactory<STATE> stateFactory,
 			final INestedWordAutomaton<LETTER, STATE> operand,
-			final Interrupt interrupt) throws OperationCanceledException,
+			final Interrupt interrupt) throws AutomataLibraryException,
 			AutomataLibraryException {
 		this(services, operand);
 		m_interrupt = interrupt;

@@ -29,6 +29,7 @@ import java.util.HashMap;
 
 import org.apache.log4j.Logger;
 
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonEpimorphism;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
@@ -103,7 +104,7 @@ public class SuperDifference<LETTER, STATE> implements IOperation<LETTER, STATE>
 
 	@Override
 	public INestedWordAutomaton<LETTER, STATE> getResult()
-			throws OperationCanceledException
+			throws AutomataLibraryException
 	{
 		return m_Result;
 	}
@@ -130,7 +131,7 @@ public class SuperDifference<LETTER, STATE> implements IOperation<LETTER, STATE>
 			INestedWordAutomaton<LETTER, STATE> subtrahend,
 			AutomatonEpimorphism<STATE> automatonEpimorhpism, 
 			boolean minimize)
-			throws OperationCanceledException 
+			throws AutomataLibraryException 
 	{
 		m_Services = services;
 		m_Minuend = minuend;
@@ -415,7 +416,7 @@ public class SuperDifference<LETTER, STATE> implements IOperation<LETTER, STATE>
 
 	@Override
 	public boolean checkResult(StateFactory stateFactory)
-			throws OperationCanceledException 
+			throws AutomataLibraryException 
 	{
 		// TODO Auto-generated method stub
 		return false;

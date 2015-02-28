@@ -25,6 +25,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization;
 
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
@@ -73,7 +74,7 @@ public class MinimizeBrzozowski<LETTER, STATE>
 	public MinimizeBrzozowski(IUltimateServiceProvider services,
 			StateFactory<STATE> stateFactory, 
 			INestedWordAutomaton<LETTER, STATE> operand)
-			throws OperationCanceledException {
+			throws AutomataLibraryException {
 		super(services, stateFactory, "MinimizeBrzozowski", operand);
 		
 		assert super.checkForFiniteAutomaton() :
@@ -91,7 +92,7 @@ public class MinimizeBrzozowski<LETTER, STATE>
 	 * @throws OperationCanceledException thrown when execution is cancelled
 	 */
 	private INestedWordAutomaton<LETTER, STATE> minimize()
-			throws OperationCanceledException {
+			throws AutomataLibraryException {
 		INestedWordAutomaton<LETTER, STATE> automaton = m_operand;
 		for (int i = 0; i < 2; ++i) {
 			super.checkForContinuation();
@@ -153,7 +154,7 @@ public class MinimizeBrzozowski<LETTER, STATE>
 			return new Determinize<LETTER, STATE>(m_Services, m_StateFactory, automaton).getResult();
 		}
 		// this case cannot occur
-		catch (OperationCanceledException e) {
+		catch (AutomataLibraryException e) {
 			e.printStackTrace();
 			return automaton;
 		}

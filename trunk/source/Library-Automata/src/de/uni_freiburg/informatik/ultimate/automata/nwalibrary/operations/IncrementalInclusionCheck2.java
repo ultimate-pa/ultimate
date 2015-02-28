@@ -86,7 +86,7 @@ public class IncrementalInclusionCheck2<LETTER,STATE> extends AbstractIncrementa
 					break;
 				}
 				if (!m_Services.getProgressMonitorService().continueProcessing()) {
-	                throw new OperationCanceledException();
+	                throw new OperationCanceledException(this.getClass());
 				}
 				bufferedTree = null;
 				for(LETTER alphabet:local_m_A.getAlphabet()){
@@ -112,7 +112,7 @@ public class IncrementalInclusionCheck2<LETTER,STATE> extends AbstractIncrementa
 		s_Logger.info(exitMessage());
 	}
 	public IncrementalInclusionCheck2(IUltimateServiceProvider services, StateFactory<STATE> sf,
-			INestedWordAutomatonSimple<LETTER, STATE> a, List<INestedWordAutomatonSimple<LETTER,STATE>> b) throws OperationCanceledException{
+			INestedWordAutomatonSimple<LETTER, STATE> a, List<INestedWordAutomatonSimple<LETTER,STATE>> b) throws AutomataLibraryException{
 		super(services,a);
 		IncrementalInclusionCheck2.abortIfContainsCallOrReturn(a);
 		localServiceProvider = services;
@@ -136,7 +136,7 @@ public class IncrementalInclusionCheck2<LETTER,STATE> extends AbstractIncrementa
 	}
 	
 	@SuppressWarnings("unchecked")
-	public void run() throws OperationCanceledException{
+	public void run() throws AutomataLibraryException{
 		/*try {
 			local_m_A = (new Determinize<LETTER,STATE> (localServiceProvider,localStateFactory,local_m_A)).getResult();
 		} catch (OperationCanceledException e) {
@@ -164,7 +164,7 @@ public class IncrementalInclusionCheck2<LETTER,STATE> extends AbstractIncrementa
 			}
 			else{
 				if (!m_Services.getProgressMonitorService().continueProcessing()) {
-		                throw new OperationCanceledException();
+		                throw new OperationCanceledException(this.getClass());
 		        }
 				bufferedTree = null;
 				for(LETTER alphabet:local_m_A.getAlphabet()){

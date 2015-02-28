@@ -6,7 +6,6 @@ import java.util.LinkedList;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.alternating.AlternatingAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
@@ -60,7 +59,7 @@ public class AA_DeterminizeReversed<LETTER> implements IOperation<LETTER, BitSet
 	}
 
 	@Override
-	public NestedWordAutomaton<LETTER, BitSet> getResult() throws OperationCanceledException{
+	public NestedWordAutomaton<LETTER, BitSet> getResult() throws AutomataLibraryException{
 		return resultAutomaton;
 	}
 

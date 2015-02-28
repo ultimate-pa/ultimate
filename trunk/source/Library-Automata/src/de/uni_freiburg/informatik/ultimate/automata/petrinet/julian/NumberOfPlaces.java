@@ -25,8 +25,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.petrinet.julian;
 
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 
@@ -61,13 +61,13 @@ public class NumberOfPlaces<LETTER, STATE> implements IOperation<LETTER,STATE> {
 	}
 
 	@Override
-	public Integer getResult() throws OperationCanceledException {
+	public Integer getResult() throws AutomataLibraryException {
 		return m_Net.getPlaces().size();
 	}
 
 	@Override
 	public boolean checkResult(StateFactory<STATE> stateFactory)
-			throws OperationCanceledException {
+			throws AutomataLibraryException {
 		return true;
 	}
 

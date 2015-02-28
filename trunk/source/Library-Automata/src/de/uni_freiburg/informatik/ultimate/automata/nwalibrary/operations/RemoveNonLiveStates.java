@@ -32,6 +32,7 @@ import java.util.Set;
 
 import org.apache.log4j.Logger;
 
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
@@ -74,7 +75,7 @@ public class RemoveNonLiveStates<LETTER,STATE> implements IOperation<LETTER,STAT
 	 */
 	public RemoveNonLiveStates(IUltimateServiceProvider services,
 			INestedWordAutomatonSimple<LETTER,STATE> nwa)
-			throws OperationCanceledException {
+			throws AutomataLibraryException {
 		m_Services = services;
 		m_Input = nwa;
 		s_Logger.info(startMessage());
@@ -106,12 +107,12 @@ public class RemoveNonLiveStates<LETTER,STATE> implements IOperation<LETTER,STAT
 
 
 	@Override
-	public INestedWordAutomatonOldApi<LETTER, STATE> getResult() throws OperationCanceledException {
+	public INestedWordAutomatonOldApi<LETTER, STATE> getResult() throws AutomataLibraryException {
 		return m_Result;
 	}
 	
 	@Override
-	public boolean checkResult(StateFactory<STATE> stateFactory) throws OperationCanceledException {
+	public boolean checkResult(StateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		s_Logger.info("Start testing correctness of " + operationName());
 		boolean correct = true;
 //		correct &= (ResultChecker.nwaLanguageInclusion(m_Input, m_Result) == null);
@@ -220,7 +221,7 @@ public class RemoveNonLiveStates<LETTER,STATE> implements IOperation<LETTER,STAT
 	}
 	
 	private boolean checkAcceptance(NestedLassoWord<LETTER> nlw,
-			INestedWordAutomatonOldApi<LETTER, STATE> operand) throws OperationCanceledException {
+			INestedWordAutomatonOldApi<LETTER, STATE> operand) throws AutomataLibraryException {
 		boolean op = (new BuchiAccepts<LETTER, STATE>(m_Services, operand, nlw)).getResult();
 		boolean res = (new BuchiAccepts<LETTER, STATE>(m_Services, m_Result, nlw)).getResult();
 		boolean correct = (op == res);

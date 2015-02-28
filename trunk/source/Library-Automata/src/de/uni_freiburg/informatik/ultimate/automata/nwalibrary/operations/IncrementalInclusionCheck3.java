@@ -113,7 +113,7 @@ public class IncrementalInclusionCheck3<LETTER,STATE> extends AbstractIncrementa
 		//run();
 	}
 	public IncrementalInclusionCheck3(IUltimateServiceProvider services, StateFactory<STATE> sf,
-			INestedWordAutomatonSimple<LETTER, STATE> a, List<INestedWordAutomatonSimple<LETTER,STATE>> b) throws OperationCanceledException{
+			INestedWordAutomatonSimple<LETTER, STATE> a, List<INestedWordAutomatonSimple<LETTER,STATE>> b) throws AutomataLibraryException{
 		super(services,a);
 		IncrementalInclusionCheck2.abortIfContainsCallOrReturn(a);
 		localServiceProvider = services;
@@ -137,7 +137,7 @@ public class IncrementalInclusionCheck3<LETTER,STATE> extends AbstractIncrementa
 		s_Logger.info(exitMessage());
 	}
 	@SuppressWarnings("unchecked")
-	public void run2(INestedWordAutomatonSimple<LETTER, STATE> nwa) throws OperationCanceledException{
+	public void run2(INestedWordAutomatonSimple<LETTER, STATE> nwa) throws AutomataLibraryException{
 		if(!local_m_A.getAlphabet().containsAll(nwa.getAlphabet())){
 			s_Logger.info("Alphabet inconsistent");
 			return;
@@ -145,7 +145,7 @@ public class IncrementalInclusionCheck3<LETTER,STATE> extends AbstractIncrementa
 		if(result!=null){
 			do{
 				if (!m_Services.getProgressMonitorService().continueProcessing()) {
-	                throw new OperationCanceledException();
+	                throw new OperationCanceledException(this.getClass());
 				}
 				counter_run++;
 				if(refine_exceptionRun()||cover()){
@@ -167,7 +167,7 @@ public class IncrementalInclusionCheck3<LETTER,STATE> extends AbstractIncrementa
 		}
 	}
 	@SuppressWarnings("unchecked")
-	public void run() throws OperationCanceledException{
+	public void run() throws AutomataLibraryException{
 		result = null;
 		for(INestedWordAutomatonSimple<LETTER,STATE> B:local_m_B){
 			if(!local_m_A.getAlphabet().containsAll(B.getAlphabet())){
@@ -186,7 +186,7 @@ public class IncrementalInclusionCheck3<LETTER,STATE> extends AbstractIncrementa
 			}
 			else{
 				if (!m_Services.getProgressMonitorService().continueProcessing()) {
-	                throw new OperationCanceledException();
+	                throw new OperationCanceledException(this.getClass());
 				}
 				bufferedLeaf = null;
 				for(LETTER alphabet:local_m_A.getAlphabet()){
@@ -522,7 +522,7 @@ public class IncrementalInclusionCheck3<LETTER,STATE> extends AbstractIncrementa
 	/*public Boolean getResult() throws OperationCanceledException{
 		return checkResult(localStateFactory);
 	}*/
-	public Boolean getResult() throws OperationCanceledException{
+	public Boolean getResult() throws AutomataLibraryException{
 		return result == null;
 	}
 	@Override

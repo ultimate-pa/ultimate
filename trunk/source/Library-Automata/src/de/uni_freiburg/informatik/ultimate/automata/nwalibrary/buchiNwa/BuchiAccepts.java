@@ -33,6 +33,7 @@ import java.util.Stack;
 
 import org.apache.log4j.Logger;
 
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
@@ -111,7 +112,7 @@ public class BuchiAccepts<LETTER,STATE> extends AbstractAcceptance<LETTER,STATE>
 	 *  always rejected its loop contains pending returns.  
 	 * @throws OperationCanceledException 
 	 */
-	public BuchiAccepts(IUltimateServiceProvider services, INestedWordAutomatonOldApi<LETTER,STATE> nwa, NestedLassoWord<LETTER> nlw) throws OperationCanceledException{
+	public BuchiAccepts(IUltimateServiceProvider services, INestedWordAutomatonOldApi<LETTER,STATE> nwa, NestedLassoWord<LETTER> nlw) throws AutomataLibraryException{
 		m_Services = services;
 		m_Nwa = nwa;
 		
@@ -147,7 +148,7 @@ public class BuchiAccepts<LETTER,STATE> extends AbstractAcceptance<LETTER,STATE>
 		s_Logger.info(exitMessage());
 	}
 
-	private boolean buchiAccepts() throws OperationCanceledException {
+	private boolean buchiAccepts() throws AutomataLibraryException {
 		// First compute all states in which the automaton can be after 
 		// processing the stem and lasso^*
 		// Honda denotes the part of the lasso where stem and loop are connected.
@@ -159,7 +160,7 @@ public class BuchiAccepts<LETTER,STATE> extends AbstractAcceptance<LETTER,STATE>
 				currentConfigs = successorConfigurations(currentConfigs, m_Stem, i,
 						m_Nwa, false);
 				if (!m_Services.getProgressMonitorService().continueProcessing()) {
-					throw new OperationCanceledException();
+					throw new OperationCanceledException(this.getClass());
 				}
 			}
 			hondaStates = getTopMostStackElemets(currentConfigs);
@@ -173,7 +174,7 @@ public class BuchiAccepts<LETTER,STATE> extends AbstractAcceptance<LETTER,STATE>
 				currentConfigs = successorConfigurations(
 						currentConfigs, m_Loop, i, m_Nwa, false);
 				if (!m_Services.getProgressMonitorService().continueProcessing()) {
-					throw new OperationCanceledException();
+					throw new OperationCanceledException(this.getClass());
 				}
 			}
 			newHondaStates = getTopMostStackElemets(currentConfigs);
@@ -193,7 +194,7 @@ public class BuchiAccepts<LETTER,STATE> extends AbstractAcceptance<LETTER,STATE>
 	 * the honda state.
 	 * @throws OperationCanceledException 
 	 */
-	private boolean repeatedLoopLeadsAgainToHondaState(STATE hondaState) throws OperationCanceledException {
+	private boolean repeatedLoopLeadsAgainToHondaState(STATE hondaState) throws AutomataLibraryException {
 		// Store in currentConfigsVisitedAccepting / currentConfigsNotVisitedAccepting
 		// which configurations belong to a run which has already visited an
 		// accepting state.
@@ -221,7 +222,7 @@ public class BuchiAccepts<LETTER,STATE> extends AbstractAcceptance<LETTER,STATE>
 						removeAcceptingConfigurations(currentConfigsNotVisitedAccepting, m_Nwa);
 				currentConfigsVisitedAccepting.addAll(justVisitedAccepting);
 				if (!m_Services.getProgressMonitorService().continueProcessing()) {
-					throw new OperationCanceledException();
+					throw new OperationCanceledException(this.getClass());
 				}
 			}
 			
@@ -292,7 +293,7 @@ public class BuchiAccepts<LETTER,STATE> extends AbstractAcceptance<LETTER,STATE>
 
 	@Override
 	public boolean checkResult(StateFactory<STATE> stateFactory)
-			throws OperationCanceledException {
+			throws AutomataLibraryException {
 		return true;
 	}
 	

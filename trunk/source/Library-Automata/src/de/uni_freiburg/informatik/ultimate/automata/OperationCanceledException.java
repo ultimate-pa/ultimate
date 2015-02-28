@@ -25,10 +25,16 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata;
 
+/**
+ * Exception that is thrown by automata operations if they detected that the
+ * caller requested a cancellation of the operation (e.g., because a timeout
+ * was reached).
+ * @author Matthias Heizmann
+ *
+ */
 public class OperationCanceledException extends AutomataLibraryException {
-
-	public OperationCanceledException() {
-		super("Timeout");
+	public OperationCanceledException(Class<?> thrower) {
+		super(thrower, "Timeout");
 	}
 
 	/**
@@ -41,5 +47,5 @@ public class OperationCanceledException extends AutomataLibraryException {
 		return super.getMessage();
 	}
 
-	
+
 }

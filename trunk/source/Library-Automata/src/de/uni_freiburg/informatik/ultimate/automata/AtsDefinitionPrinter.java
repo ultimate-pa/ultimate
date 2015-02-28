@@ -141,7 +141,7 @@ public class AtsDefinitionPrinter<LETTER,STATE> {
 				} else {
 					try {
 						nwa = new NestedWordAutomatonReachableStates<LETTER, STATE>(m_Services, (INestedWordAutomatonSimple<LETTER, STATE>) automaton);
-					} catch (OperationCanceledException e) {
+					} catch (AutomataLibraryException e) {
 						throw new AssertionError("Timeout while preparing automaton for printing.");
 					}
 				}

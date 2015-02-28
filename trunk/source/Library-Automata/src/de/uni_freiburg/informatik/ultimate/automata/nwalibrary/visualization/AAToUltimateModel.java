@@ -25,7 +25,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.visualization;
 
-import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.AlternatingAutomaton;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 
@@ -34,7 +34,7 @@ public class AAToUltimateModel<LETTER,STATE> {
 //	private static Logger s_Logger = 
 //		NestedWordAutomata.getLogger();
 //	
-	public IElement getUltimateModelOfAA(AlternatingAutomaton<LETTER,STATE> aaSimple) throws OperationCanceledException {
+	public IElement getUltimateModelOfAA(AlternatingAutomaton<LETTER,STATE> aaSimple) throws AutomataLibraryException {
 //		final AlternatingAutomaton<LETTER,STATE> aa;
 //		aa = (AlternatingAutomaton<LETTER, STATE>) aaSimple;
 		System.out.println("Foo");

@@ -34,6 +34,7 @@ import java.util.Set;
 
 import org.apache.log4j.Logger;
 
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
@@ -55,7 +56,7 @@ public class BuchiIsEmptyXW<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	private final IUltimateServiceProvider m_Services;
 	
 	public BuchiIsEmptyXW(IUltimateServiceProvider services, 
-			INestedWordAutomatonOldApi<LETTER, STATE> nwa) throws OperationCanceledException {
+			INestedWordAutomatonOldApi<LETTER, STATE> nwa) throws AutomataLibraryException {
 		m_Services = services;
 		m_nwa = nwa;
 		s_Logger.info(startMessage());
@@ -80,7 +81,7 @@ public class BuchiIsEmptyXW<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	}
 
 	@Override
-	public Boolean getResult() throws OperationCanceledException {
+	public Boolean getResult() throws AutomataLibraryException {
 		return m_Result;
 	}
 	
@@ -341,7 +342,7 @@ public class BuchiIsEmptyXW<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	 * @throws OperationCanceledException 
 	 */
 	// Requires collections of transitions to be final. 
-	public boolean checkEmptiness() throws OperationCanceledException {
+	public boolean checkEmptiness() throws AutomataLibraryException {
 		Worklist worklist = new Worklist();
 		Set<STATE> allStates = new HashSet<STATE>();
 		Set<STATE> acceptingStates = new HashSet<STATE>();
@@ -414,7 +415,7 @@ public class BuchiIsEmptyXW<LETTER,STATE> implements IOperation<LETTER,STATE> {
 					reachabilityBridge, worklist);
 			
 			if (!m_Services.getProgressMonitorService().continueProcessing()) {
-				throw new OperationCanceledException();
+				throw new OperationCanceledException(this.getClass());
 			}
 		}
 
@@ -439,7 +440,7 @@ public class BuchiIsEmptyXW<LETTER,STATE> implements IOperation<LETTER,STATE> {
 					callAlphabet, returnAlphabet, reachabilityBridge, 
 					reachabilityBridgeA, worklist);
 			if (!m_Services.getProgressMonitorService().continueProcessing()) {
-				throw new OperationCanceledException();
+				throw new OperationCanceledException(this.getClass());
 			}
 		}
 		
@@ -476,7 +477,7 @@ public class BuchiIsEmptyXW<LETTER,STATE> implements IOperation<LETTER,STATE> {
 			extendPathBeyondOrigin(workPair.source,workPair.target, 
 					reachabilityBridgeC, worklist);
 			if (!m_Services.getProgressMonitorService().continueProcessing()) {
-				throw new OperationCanceledException();
+				throw new OperationCanceledException(this.getClass());
 			}
 		}
 		
@@ -919,7 +920,7 @@ public class BuchiIsEmptyXW<LETTER,STATE> implements IOperation<LETTER,STATE> {
 
 	@Override
 	public boolean checkResult(StateFactory<STATE> stateFactory)
-			throws OperationCanceledException {
+			throws AutomataLibraryException {
 		return true;
 	}
 

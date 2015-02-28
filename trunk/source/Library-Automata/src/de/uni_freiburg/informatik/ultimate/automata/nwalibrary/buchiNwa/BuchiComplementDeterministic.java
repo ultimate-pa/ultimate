@@ -31,9 +31,9 @@ import java.util.HashMap;
 
 import org.apache.log4j.Logger;
 
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
-import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.DoubleDecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
@@ -88,7 +88,7 @@ public class BuchiComplementDeterministic<LETTER,STATE> extends DoubleDeckerVisi
 	}
 	
 	public BuchiComplementDeterministic(IUltimateServiceProvider services,
-			INestedWordAutomatonOldApi<LETTER,STATE> nwa) throws OperationCanceledException {
+			INestedWordAutomatonOldApi<LETTER,STATE> nwa) throws AutomataLibraryException {
 		super(services);
 		m_Operand = nwa;
 		m_ContentFactory = m_Operand.getStateFactory();
@@ -116,7 +116,7 @@ public class BuchiComplementDeterministic<LETTER,STATE> extends DoubleDeckerVisi
 	
 	@Override
 	public INestedWordAutomatonOldApi<LETTER, STATE> getResult()
-			throws OperationCanceledException {
+			throws AutomataLibraryException {
 		return m_TraversedNwa;
 	}
 
@@ -244,7 +244,7 @@ public class BuchiComplementDeterministic<LETTER,STATE> extends DoubleDeckerVisi
 
 	@Override
 	public boolean checkResult(StateFactory<STATE> stateFactory)
-			throws OperationCanceledException {
+			throws AutomataLibraryException {
 		return ResultChecker.buchiComplement(m_Services, m_Operand, m_TraversedNwa);
 	}
 

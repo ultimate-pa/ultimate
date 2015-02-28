@@ -31,7 +31,6 @@ import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.NestedWordAutomatonReachableStates;
@@ -61,7 +60,7 @@ public class LoopComplexity<LETTER, STATE> implements IOperation<LETTER, STATE> 
 	
 
 	public LoopComplexity(IUltimateServiceProvider services,
-			INestedWordAutomaton<LETTER, STATE> operand) throws OperationCanceledException {
+			INestedWordAutomaton<LETTER, STATE> operand) throws AutomataLibraryException {
 		super();
 		m_Services = services;
 		m_Logger = m_Services.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
@@ -72,7 +71,7 @@ public class LoopComplexity<LETTER, STATE> implements IOperation<LETTER, STATE> 
 		m_Logger.info(this.exitMessage());
 	}
 
-	private Integer compute(INestedWordAutomaton<LETTER, STATE> operand) throws OperationCanceledException {
+	private Integer compute(INestedWordAutomaton<LETTER, STATE> operand) throws AutomataLibraryException {
 		NestedWordAutomatonReachableStates<LETTER, STATE> nwars = 
 				new NestedWordAutomatonReachableStates<>(m_Services, operand);
 		NestedWordAutomatonReachableStates<LETTER, STATE>.StronglyConnectedComponents sccs = 
@@ -101,7 +100,7 @@ public class LoopComplexity<LETTER, STATE> implements IOperation<LETTER, STATE> 
 	}
 
 	@Override
-	public Integer getResult() throws OperationCanceledException {
+	public Integer getResult() throws AutomataLibraryException {
 		return m_Result;
 	}
 

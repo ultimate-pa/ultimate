@@ -33,7 +33,6 @@ import org.apache.log4j.Logger;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
-import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
@@ -115,7 +114,7 @@ public class BuchiIntersect<LETTER,STATE> implements IOperation<LETTER,STATE> {
 
 	@Override
 	public NestedWordAutomatonReachableStates<LETTER, STATE> getResult()
-			throws OperationCanceledException {
+			throws AutomataLibraryException {
 		return m_Result;
 	}
 
@@ -139,7 +138,7 @@ public class BuchiIntersect<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		return correct;
 	}
 	
-	private boolean resultCheckWithRandomWords() throws OperationCanceledException {
+	private boolean resultCheckWithRandomWords() throws AutomataLibraryException {
 		INestedWordAutomatonOldApi<LETTER, STATE> fstOperandOldApi = 
 				ResultChecker.getOldApiNwa(m_Services, m_FstOperand);
 		INestedWordAutomatonOldApi<LETTER, STATE> sndOperandOldApi = 
@@ -185,7 +184,7 @@ public class BuchiIntersect<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	
 	private boolean checkAcceptance(NestedLassoWord<LETTER> nlw,
 			INestedWordAutomatonOldApi<LETTER, STATE> operand1,
-			INestedWordAutomatonOldApi<LETTER, STATE> operand2) throws OperationCanceledException {
+			INestedWordAutomatonOldApi<LETTER, STATE> operand2) throws AutomataLibraryException {
 		boolean op1 = (new BuchiAccepts<LETTER, STATE>(m_Services, operand1, nlw)).getResult();
 		boolean op2 = (new BuchiAccepts<LETTER, STATE>(m_Services, operand2, nlw)).getResult();
 		boolean res = (new BuchiAccepts<LETTER, STATE>(m_Services, m_Result, nlw)).getResult();

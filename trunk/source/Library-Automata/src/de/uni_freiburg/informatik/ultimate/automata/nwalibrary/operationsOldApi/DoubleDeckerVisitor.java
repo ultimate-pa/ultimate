@@ -39,6 +39,7 @@ import java.util.Set;
 
 import org.apache.log4j.Logger;
 
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.DoubleDecker;
@@ -164,7 +165,7 @@ public abstract class DoubleDeckerVisitor<LETTER, STATE> implements IOpWithDelay
 		m_Services = services;
 	}
 
-	public INestedWordAutomatonOldApi<LETTER, STATE> getResult() throws OperationCanceledException {
+	public INestedWordAutomatonOldApi<LETTER, STATE> getResult() throws AutomataLibraryException {
 		return m_TraversedNwa;
 	}
 
@@ -284,7 +285,7 @@ public abstract class DoubleDeckerVisitor<LETTER, STATE> implements IOpWithDelay
 		return Collections.unmodifiableMap(m_Marked_Up2Down);
 	}
 
-	protected final void traverseDoubleDeckerGraph() throws OperationCanceledException {
+	protected final void traverseDoubleDeckerGraph() throws AutomataLibraryException {
 		Collection<STATE> initialStates = getInitialStates();
 		for (STATE state : initialStates) {
 			DoubleDecker<STATE> initialDoubleDecker = new DoubleDecker<STATE>(m_TraversedNwa.getEmptyStackState(),
@@ -335,7 +336,7 @@ public abstract class DoubleDeckerVisitor<LETTER, STATE> implements IOpWithDelay
 				}
 			}
 			if (!m_Services.getProgressMonitorService().continueProcessing()) {
-				throw new OperationCanceledException();
+				throw new OperationCanceledException(this.getClass());
 			}
 
 		}

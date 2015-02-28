@@ -10,7 +10,6 @@ import org.apache.log4j.Logger;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
-import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
@@ -390,10 +389,8 @@ public class MinimizeDfaParallel<LETTER, STATE> extends
 					}
 
 				}
-			} catch (OperationCanceledException e) {
-				e.printStackTrace();
 			} catch (AutomataLibraryException e) {
-				e.printStackTrace();
+				throw new AssertionError("unhandeled AutomataLibraryException");
 			}
 		}
 
@@ -413,7 +410,7 @@ public class MinimizeDfaParallel<LETTER, STATE> extends
 		}
 
 		@Override
-		public Object getResult() throws OperationCanceledException {
+		public Object getResult() throws AutomataLibraryException {
 			return m_algorithm.getResult();
 		}
 

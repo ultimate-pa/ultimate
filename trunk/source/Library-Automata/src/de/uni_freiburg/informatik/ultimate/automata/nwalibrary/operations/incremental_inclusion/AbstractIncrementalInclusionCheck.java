@@ -71,7 +71,7 @@ public abstract class AbstractIncrementalInclusionCheck<LETTER,STATE> {
 	 * A ⊆ B_0 ∪ ... ∪ B_n holds. 
 	 * @throws OperationCanceledException 
 	 */
-	public abstract NestedRun<LETTER,STATE> getCounterexample() throws OperationCanceledException;
+	public abstract NestedRun<LETTER,STATE> getCounterexample() throws AutomataLibraryException;
 	
 	
 	/**

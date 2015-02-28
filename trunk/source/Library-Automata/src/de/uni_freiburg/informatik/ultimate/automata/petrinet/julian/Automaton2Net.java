@@ -30,7 +30,6 @@ import org.apache.log4j.Logger;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
-import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
@@ -54,7 +53,7 @@ public class Automaton2Net<LETTER, STATE> implements IOperation<LETTER,STATE> {
 	}
 
 	@Override
-	public IPetriNet<LETTER, STATE> getResult() throws OperationCanceledException {
+	public IPetriNet<LETTER, STATE> getResult() throws AutomataLibraryException {
 		return m_Net;
 	}
 
@@ -77,7 +76,7 @@ public class Automaton2Net<LETTER, STATE> implements IOperation<LETTER,STATE> {
 
 	@Override
 	public boolean checkResult(StateFactory<STATE> stateFactory)
-			throws OperationCanceledException {
+			throws AutomataLibraryException {
 		return true;
 	}
 

@@ -37,6 +37,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
@@ -66,7 +67,7 @@ public class DirectSimulation<LETTER,STATE> extends AbstractSimulation<LETTER, S
      */
     public DirectSimulation(IUltimateServiceProvider services, 
     		INestedWordAutomatonOldApi<LETTER,STATE> ba, boolean useSCCs, StateFactory<STATE> stateFactory)
-            throws OperationCanceledException {
+            throws AutomataLibraryException {
     	super(services, ba, useSCCs, stateFactory);
     }
 
@@ -78,7 +79,7 @@ public class DirectSimulation<LETTER,STATE> extends AbstractSimulation<LETTER, S
      * @throws OperationCanceledException
      */
     protected void generateGameGraph(INestedWordAutomatonOldApi<LETTER,STATE> ba)
-            throws OperationCanceledException {
+            throws AutomataLibraryException {
     	NestedMap2<STATE, STATE, Player1Vertex<LETTER,STATE>> map1 = new NestedMap2<STATE, STATE, Player1Vertex<LETTER,STATE>>();
         // Calculate v1 [paper ref 10]
         for (STATE q0 : ba.getStates()) {
@@ -90,7 +91,7 @@ public class DirectSimulation<LETTER,STATE> extends AbstractSimulation<LETTER, S
             }
             if (!m_Services.getProgressMonitorService().continueProcessing()) {
                 s_Logger.debug("Stopped in generateGameGraph/calculating v0 und v1");
-                throw new OperationCanceledException();
+                throw new OperationCanceledException(this.getClass());
             }
         }
         // Calculate v0 and edges [paper ref 10, 11, 12]
@@ -121,7 +122,7 @@ public class DirectSimulation<LETTER,STATE> extends AbstractSimulation<LETTER, S
             }
             if (!m_Services.getProgressMonitorService().continueProcessing()) {
                 s_Logger.debug("Stopped in generateGameGraph/calculating v0 und v1");
-                throw new OperationCanceledException();
+                throw new OperationCanceledException(this.getClass());
             }
         }
         infinity++; // global infinity = (# of pr==1 nodes) + 1
@@ -149,7 +150,7 @@ public class DirectSimulation<LETTER,STATE> extends AbstractSimulation<LETTER, S
      * @throws OperationCanceledException
      */
     protected void generateBuchiAutomaton(INestedWordAutomatonOldApi<LETTER,STATE> m_Operand)
-            throws OperationCanceledException {
+            throws AutomataLibraryException {
         // determine which states to merge
     	UnionFind<STATE> uf = new UnionFind<>();
     	for (STATE state : m_Operand.getStates()) {
@@ -177,7 +178,7 @@ public class DirectSimulation<LETTER,STATE> extends AbstractSimulation<LETTER, S
 
         if (!m_Services.getProgressMonitorService().continueProcessing()) {
             s_Logger.debug("Stopped in generateBuchiAutomaton/table filled");
-            throw new OperationCanceledException();
+            throw new OperationCanceledException(this.getClass());
         }
 
         // merge states
@@ -210,7 +211,7 @@ public class DirectSimulation<LETTER,STATE> extends AbstractSimulation<LETTER, S
         
         if (!m_Services.getProgressMonitorService().continueProcessing()) {
             s_Logger.debug("Stopped in generateBuchiAutomaton/states added to result BA");
-            throw new OperationCanceledException();
+            throw new OperationCanceledException(this.getClass());
         }
 
     }

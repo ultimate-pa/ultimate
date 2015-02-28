@@ -31,6 +31,7 @@ import java.util.HashSet;
 
 import org.apache.log4j.Logger;
 
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
@@ -76,7 +77,7 @@ public class Accepts<S, C> implements IOperation<S, C> {
 	
 
 	public Accepts(IUltimateServiceProvider services, 
-			PetriNetJulian<S, C> net, Word<S> nWord) throws OperationCanceledException {
+			PetriNetJulian<S, C> net, Word<S> nWord) throws AutomataLibraryException {
 		m_Services = services;
 		this.net = net;
 		this.nWord = nWord;
@@ -87,18 +88,18 @@ public class Accepts<S, C> implements IOperation<S, C> {
 		s_Logger.info(exitMessage());
 	}
 
-	public Boolean getResult() throws OperationCanceledException {
+	public Boolean getResult() throws AutomataLibraryException {
 		return m_Result;
 	}
 
 	private boolean getResultHelper(int position,
-	        Marking<S, C> marking) throws OperationCanceledException {
+	        Marking<S, C> marking) throws AutomataLibraryException {
 		if (position >= nWord.length())
 			return net.isAccepting(marking);
 		
 		
 		if (!m_Services.getProgressMonitorService().continueProcessing()) {
-			throw new OperationCanceledException();
+			throw new OperationCanceledException(this.getClass());
 		}
 
 		S symbol = nWord.getSymbol(position);
@@ -130,7 +131,7 @@ public class Accepts<S, C> implements IOperation<S, C> {
 
 	@Override
 	public boolean checkResult(StateFactory<C> stateFactory)
-			throws OperationCanceledException {
+			throws AutomataLibraryException {
 
 		s_Logger.info("Testing correctness of accepts");
 
