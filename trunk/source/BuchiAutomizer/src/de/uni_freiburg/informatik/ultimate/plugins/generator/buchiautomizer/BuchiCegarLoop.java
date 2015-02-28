@@ -498,8 +498,6 @@ public class BuchiCegarLoop {
 				m_ClassInWhichTimeoutOccurred = e.getClassOfThrower();
 				m_BenchmarkGenerator.setResult(Result.TIMEOUT);
 				return Result.TIMEOUT;
-			} finally {
-				m_BenchmarkGenerator.stop(BuchiCegarLoopBenchmark.s_AutomataDifference);
 			}
 			m_InterpolAutomaton = null;
 		}
@@ -571,10 +569,11 @@ public class BuchiCegarLoop {
 			} catch (OperationCanceledException e) {
 				m_BenchmarkGenerator.stop(CegarLoopBenchmarkType.s_AutomataDifference);
 				throw e;
+			} catch (ToolchainCanceledException e) {
+				m_BenchmarkGenerator.stop(CegarLoopBenchmarkType.s_AutomataDifference);
+				throw e;
 			} catch (AutomataLibraryException e) {
 				throw new AssertionError(e.getMessage());
-			} finally {
-				m_BenchmarkGenerator.stop(BuchiCegarLoopBenchmark.s_LassoAnalysisTime);
 			}
 			if (newAbstraction != null) {
 				if (m_ConstructTermcompProof) {
