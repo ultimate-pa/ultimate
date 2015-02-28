@@ -146,16 +146,16 @@ final class ToolchainWalker implements IToolchainCancel {
 
 		try {
 			pc.run();
-		} catch (Throwable e) {
-			if (e instanceof ToolchainCanceledException) {
-				TimeoutResult timeoutResult = new TimeoutResult(plugin.getId(), e.getMessage());
+		} catch (ToolchainCanceledException e) {
+			String longDescription = ToolchainCanceledException.s_Message + 
+					" while executing " + e.getClassOfThrower().getSimpleName(); 
+				TimeoutResult timeoutResult = new TimeoutResult(plugin.getId(), longDescription);
 				data.getToolchain().getServices().getResultService().reportResult(plugin.getId(), timeoutResult);
 				mLogger.info("Toolchain cancelled while executing plugin" + plugin.getId() + ". Reason: "
 						+ e.getMessage());
-			} else {
-				mLogger.error("The Plugin " + plugin.getId() + " has thrown an Exception!", e);
-				throw new ToolchainExceptionWrapper(plugin.getId(), e);
-			}
+		} catch (Throwable e) {
+			mLogger.error("The Plugin " + plugin.getId() + " has thrown an Exception!", e);
+			throw new ToolchainExceptionWrapper(plugin.getId(), e);
 		} finally {
 			if (mBench != null) {
 				mBench.stop(pc.toString());
