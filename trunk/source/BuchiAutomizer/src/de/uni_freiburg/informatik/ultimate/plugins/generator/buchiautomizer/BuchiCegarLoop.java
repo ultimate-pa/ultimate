@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.termination.SupportingInv
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.TerminationArgument;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.rankingfunctions.RankingFunction;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.LassoChecker.ContinueDirective;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.LassoChecker.LassoCheckResult;
@@ -61,8 +62,11 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryRefinement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryResultChecking;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataTransitionAppender.DeterministicInterpolantAutomaton;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataTransitionAppender.DeterministicInterpolantAutomaton2;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantAutomataBuilders.CanonicalInterpolantAutomatonBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.EdgeChecker;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.EfficientHoareTripleChecker;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IncrementalHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.InductivityCheck;
@@ -674,9 +678,13 @@ public class BuchiCegarLoop {
 		BackwardCoveringInformation bci = TraceCheckerUtils.computeCoverageCapability(m_Services, traceChecker, mLogger);
 		m_BenchmarkGenerator.addBackwardCoveringInformationFinite(bci);
 		constructInterpolantAutomaton(traceChecker, run);
-		EdgeChecker ec = new EdgeChecker(m_SmtManager, m_RootNode.getRootAnnot().getModGlobVarManager());
-		DeterministicInterpolantAutomaton determinized = new DeterministicInterpolantAutomaton(m_Services, m_SmtManager, ec,
-				m_Abstraction, m_InterpolAutomaton, traceChecker, mLogger);
+		
+		ModifiableGlobalVariableManager modGlobVarManager = m_RootNode.getRootAnnot().getModGlobVarManager();
+		final IHoareTripleChecker solverHtc = new IncrementalHoareTripleChecker(m_SmtManager, modGlobVarManager);
+		IHoareTripleChecker htc = new EfficientHoareTripleChecker(solverHtc, modGlobVarManager, traceChecker.getPredicateUnifier(), m_SmtManager);
+		
+		DeterministicInterpolantAutomaton2 determinized = new DeterministicInterpolantAutomaton2(m_Services, m_SmtManager, modGlobVarManager, htc,
+				m_Abstraction, m_InterpolAutomaton, traceChecker.getPredicateUnifier(), mLogger, false);
 		PowersetDeterminizer<CodeBlock, IPredicate> psd = new PowersetDeterminizer<CodeBlock, IPredicate>(determinized,
 				true, m_DefaultStateFactory);
 		DifferenceDD<CodeBlock, IPredicate> diff = null;
@@ -703,7 +711,7 @@ public class BuchiCegarLoop {
 		m_MDBenchmark.reportTrivialModule(m_Iteration, m_InterpolAutomaton.size());
 		assert (new InductivityCheck(m_Services, m_InterpolAutomaton, false, true, new IncrementalHoareTripleChecker(m_SmtManager, m_RootNode.getRootAnnot().getModGlobVarManager()))).getResult();
 		m_Abstraction = diff.getResult();
-		m_BenchmarkGenerator.addEdgeCheckerData(ec.getEdgeCheckerBenchmark());
+		m_BenchmarkGenerator.addEdgeCheckerData(htc.getEdgeCheckerBenchmark());
 		m_BenchmarkGenerator.stop(CegarLoopBenchmarkType.s_AutomataDifference);
 	}
 
