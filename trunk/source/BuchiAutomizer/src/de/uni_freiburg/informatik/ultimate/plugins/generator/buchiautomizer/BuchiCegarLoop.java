@@ -541,6 +541,8 @@ public class BuchiCegarLoop {
 			assert (minimizeOp.checkResult(m_PredicateFactoryResultChecking));
 			INestedWordAutomatonOldApi<CodeBlock, IPredicate> minimized = minimizeOp.getResult();
 			m_Abstraction = minimized;
+		} catch (OperationCanceledException e) {
+			throw e;
 		} catch (AutomataLibraryException e) {
 			throw new AssertionError(e.getMessage());
 		} finally {
