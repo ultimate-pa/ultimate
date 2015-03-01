@@ -41,10 +41,15 @@ public class Dnf extends Xnf {
 		public String outerConnectiveSymbol() {
 			return "or";
 		}
+		
+		@Override
+		public String innerJunctionName() {
+			return "conjuction";
+		}
 
 		@Override
-		public String innerConnectiveNeutralElement() {
-			return "true";
+		public String outerJunctionName() {
+			return "disjunction";
 		}
 
 		@Override

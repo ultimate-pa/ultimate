@@ -54,10 +54,19 @@ public class XJunction {
 	}
 
 	/**
-	 * Constructs an empty xJunction.
+	 * Constructs an empty XJunction.
 	 */
 	public XJunction() {
 		m_PolarityMap = new HashMap<Term, Polarity>();
+	}
+	
+	/**
+	 * Constructs an XJunction hat contains a single literal given by the pair
+	 * (atom, polarity).
+	 */
+	public XJunction(Term atom, Polarity polarity) {
+		m_PolarityMap = new HashMap<Term, Polarity>();
+		m_PolarityMap.put(atom, polarity);
 	}
 
 

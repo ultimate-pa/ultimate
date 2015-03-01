@@ -1,11 +1,13 @@
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.Stack;
 
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
@@ -41,12 +43,12 @@ public abstract class Xnf extends Nnf {
 		public abstract String innerConnectiveSymbol();
 		public abstract String outerConnectiveSymbol();
 		
-		public abstract String innerConnectiveNeutralElement();
+		public abstract String innerJunctionName();
+		public abstract String outerJunctionName();
 		
 		public abstract Term innerConnective(Script script, List<Term> params);
 		public abstract Term outerConnective(Script script, List<Term> params);
 		
-//		public abstract Term[] getInnerJuncts(Term term);
 		public abstract Term[] getOuterJuncts(Term term);
 		
 		@Override
@@ -56,7 +58,6 @@ public abstract class Xnf extends Nnf {
 			if (functionSymbolName.equals(innerConnectiveSymbol())) {
 				// case where the connective of the formula is inner connective
 				// of the normal form.
-//				System.out.println("DAG size " + (new DagSizePrinter(Util.and(m_Script, newArgs))));
 				Term[] resOuterJuncts = applyDistributivityAndOr(newArgs);
 				result = outerConnective(m_Script, Arrays.asList(resOuterJuncts));
 			} else if (functionSymbolName.equals(outerConnectiveSymbol())) {
@@ -74,341 +75,357 @@ public abstract class Xnf extends Nnf {
 		 * outerJuncts).
 		 * E.g., ((A o B) ι (C ο D)) is transformed to 
 		 * (A ι C) o (A ι D) o (B ι C) o (B ι D)
+		 * In order to keep the result small optimizations are applied.
 		 * @param inputInnerJunction
 		 * @return
 		 */
 		private Term[] applyDistributivityAndOr(Term[] inputInnerJunction) {
-//			System.out.println("InnerJuncts " + inputInnerJunction.length);
-			
-			
-			
 
-			XJunction elementsOfSingletonOuterJuncts = new XJunction();
-			
-			Set<XJunction> innerJunctionOfOuterJunctions = new HashSet<>();
-			for (Term inputInnerJunct : inputInnerJunction) {
-				Term[] inputOuterJunction = getOuterJuncts(inputInnerJunct);
+			ResultInnerJunctions first;
+			{
+				Set<XJunction> innerJunctionOfOuterJunctions = 
+						convertInnerJunctionOfOuterJunctionsToSet(inputInnerJunction);
 				try {
-					innerJunctionOfOuterJunctions.add(new XJunction(inputOuterJunction));
-				} catch (AtomAndNegationException e) {
-					// do nothing - outerJunction is true/false
+					first = new ResultInnerJunctions(innerJunctionOfOuterJunctions);
+					innerJunctionOfOuterJunctions = null;
+				} catch (AtomAndNegationException e1) {
+					// innerJunctionOfOuterJunctions contains the singleton {φ}
+					// and the singleton {¬φ}.
+					// Hence the result is equivalent to the annihilator of the 
+					// innerJunction resp. the neutral element of the 
+					// outerJunction (true for ∧, false for ∨)
+					return new Term[0];
 				}
 			}
-			try {
-				innerJunctionOfOuterJunctions = resolutionLike(elementsOfSingletonOuterJuncts, innerJunctionOfOuterJunctions);
-			} catch (AtomAndNegationException e) {
-				// result is true/false
-				return new Term[0];
+			
+			if (first.numberOfUnprocessedOuterJunctions() > 5) {
+				m_Logger.warn("expecting exponential blowup for input size " + first.numberOfUnprocessedOuterJunctions());
 			}
 			
-			if (innerJunctionOfOuterJunctions.size() > 5) {
-				System.out.println("exponential blowup for input size " + innerJunctionOfOuterJunctions.size());
-			}
-			// result outerJunction of innerJunction e.g. for CNF this is a 
-			// conjunction of disjunctions
+			// iteratively apply distributivity until we have a set of innerJunctions.
 			Set<XJunction> resOuterJunction = new HashSet<XJunction>();
-			// first we add the empty innerJunction
-			// for CNF this is empty disjunction (which is equivalent to false)
-			XJunction initialInnerJunction = new XJunction();
-			resOuterJunction.add(initialInnerJunction);
-			for (XJunction inputOuterJunction : innerJunctionOfOuterJunctions) {
-				// we iterate over each innerJunct of the input 
-//				Term[] inputOuterJunction = getOuterJuncts(inputInnerJunct);
-//				XJunction inputOuters = BooleanTermWithPolarity.computePolarityMap(inputOuterJunction);
-//				if (inputOuters == null) {
-//					// for CNF: inputOuters equivalent to false
-//					// we do not modify resOuterJunction
-//				} else {
-					resOuterJunction = product(resOuterJunction, inputOuterJunction);
-//				}
+			Stack<ResultInnerJunctions> todoStack = new Stack<ResultInnerJunctions>();
+			todoStack.add(first);
+			while (!todoStack.isEmpty()) {
+				ResultInnerJunctions top = todoStack.pop();
+				if (top.isProcessedToInnerJunction()) {
+					resOuterJunction.add(top.getInnerJunction());
+				} else {
+					todoStack.addAll(top.processOneOuterJunction());
+				}
+				if (!mServices.getProgressMonitorService().continueProcessing()) {
+					throw new ToolchainCanceledException(this.getClass());
+				}
 			}
-			// remove all sets for which a strict subset is contained
-			// for CNF: if there is {A,B} and {A} we may remove {A,B}
-			// (A || B) && A is equivalent to A
-			Set<XJunction> tidyResOuterSet = new HashSet<XJunction>(resOuterJunction);
+			
+			boolean timeConsumingSimplification = (resOuterJunction.size() > 5000);
+			if (timeConsumingSimplification) {
+				m_Logger.warn("Simplifying " + outerJunctionName() + " of " 
+						+ resOuterJunction.size() + " " + innerJunctionName() + 
+						"s. " + "This might take some time...");
+			}
+			
+			// Simplify by keeping only minimal (with respect to set inclusion)
+			// outerJunctions.
+			XJunctionPosetMinimalElements pme = new XJunctionPosetMinimalElements();
 			for (XJunction resInnerSet : resOuterJunction) {
 				if (!mServices.getProgressMonitorService().continueProcessing()) {
 					throw new ToolchainCanceledException(this.getClass());
 				}
-				if (tidyResOuterSet.contains(resInnerSet)) {
-					Iterator<XJunction> it = tidyResOuterSet.iterator();
-					while (it.hasNext()) {
-						XJunction tidyResInnerSet = it.next();
-						if (tidyResInnerSet != resInnerSet && 
-								tidyResInnerSet.entrySet().containsAll(resInnerSet.entrySet())) {
-							it.remove();
-						}
-					}
-				}
+				pme.add(resInnerSet);
 			}
-			Term[] resInnerTerms = new Term[tidyResOuterSet.size()];
+			
+			if (timeConsumingSimplification) {
+				m_Logger.info("Simplified to " + outerJunctionName() + " of " 
+						+ pme.getElements().size() + " " + innerJunctionName() + 
+						"s. ");
+			}
+			
+			// Construct terms.
+			Term[] resInnerTerms = new Term[pme.getElements().size()];
 			int i = 0;
-			for (XJunction resInnerSet : tidyResOuterSet) {
-				XJunction withSingletons;
-				try {
-					withSingletons = XJunction.disjointUnion(resInnerSet, elementsOfSingletonOuterJuncts);
-				} catch (AtomAndNegationException e) {
-					throw new AssertionError("atom and negation? xjunction should have been removed");
-				}
-				resInnerTerms[i] = 
-						innerConnective(m_Script, withSingletons.toTermList(m_Script));
+			for (XJunction resInnerSet : pme.getElements()) {
+				resInnerTerms[i] = innerConnective(m_Script, resInnerSet.toTermList(m_Script));
 				i++;
 			}
 			assert i==resInnerTerms.length;
 			return resInnerTerms;
 		}
 		
-		public Set<XJunction> resolutionLike(XJunction innerJunction, Set<XJunction> innerJunctionOfOuterJunctions) throws AtomAndNegationException {
-			while (true) {
-				boolean modified = moveSingletons(innerJunction, innerJunctionOfOuterJunctions);
-				if (!modified) {
-					return innerJunctionOfOuterJunctions;
-				}
-				Set<XJunction> newinnerJunctionOfOuterJunctions = modify(innerJunction, innerJunctionOfOuterJunctions);
-				if (newinnerJunctionOfOuterJunctions == innerJunctionOfOuterJunctions) {
-					return innerJunctionOfOuterJunctions;
-				} else {
-					innerJunctionOfOuterJunctions = newinnerJunctionOfOuterJunctions;
-				}
-			}
-			
-			
-			
-		}
-		private Set<XJunction> modify(XJunction innerJunction,
-				Set<XJunction> innerJunctionOfOuterJunctions) {
-			HashSet<XJunction> newi = new HashSet<XJunction>();
-			boolean modified = false;
-			for (XJunction xjunction : innerJunctionOfOuterJunctions) {
-				boolean xjunctionNotAddedOrModified = 
-						addIfNoAtomContained(innerJunction, newi, xjunction); 
-				modified |= xjunctionNotAddedOrModified;
-			}
-			if (modified) {
-				return newi;
-			} else {
-				return innerJunctionOfOuterJunctions;
-			}
-		}
 		/**
-		 * Add xjunction to set if xjunction and innerJunction are disjoint.
-		 * We mean disjoint in the sense that no atom (with same polarity) is
-		 * contained in both.
-		 * Additionally, we remove from xjunction all atoms that occur negated
-		 * in innerJunction. 
-		 * @return true iff xjunction was modified before adding or not added
-		 * at all.
+		 * Convert an innerJunction of outerJunctions given as an array of terms
+		 * into a Set of XJunctions. 
 		 */
-		private boolean addIfNoAtomContained(XJunction innerJunction,
-				HashSet<XJunction> set, XJunction xjunction) {
-			boolean modified = false;
-			for (Entry<Term, Polarity> literal : innerJunction.entrySet()) {
-				if (xjunction.contains(literal.getKey(), literal.getValue())) {
-					// do not add
-					modified = true;
-					return modified;
-				} else if (xjunction.containsNegation(literal.getKey(), literal.getValue())) {
-					// remove negation and add to result
-					xjunction.remove(literal.getKey());
-					modified = true;
-				}
-			}
-			set.add(xjunction);
-			return modified;
-		}
-		private boolean moveSingletons(XJunction innerJunction,
-				Set<XJunction> innerJunctionOfOuterJunctions)
-				throws AtomAndNegationException {
-			boolean someSingletonMoved = false;
-			Iterator<XJunction> it = innerJunctionOfOuterJunctions.iterator();
-			while (it.hasNext()) {
-				XJunction outerJunction = it.next();
-				if (outerJunction.size() == 1) {
-					Entry<Term, Polarity> singleton = outerJunction.entrySet().iterator().next();
-					innerJunction.add(singleton.getKey(), singleton.getValue());
-					someSingletonMoved = true;
-					it.remove();
-				}
-			}
-			return someSingletonMoved;
-		}
-		
-//		/**
-//		 * Given an outerJunctionOfInnerJunctions, add atom to each 
-//		 * innerJunction.
-//		 * Optimization 1:
-//		 * If an innerJunction already contains "(not atom)" we drop this
-//		 * innerJunction.
-//		 * This optimization corresponds to the fact that
-//		 *     (((not A) ι B) o (C_1 ι C2)) ι A
-//		 * and
-//		 *     (C_1 ι C2 ι A)
-//		 * are equivalent.
-//		 * 
-//		 * Optimization 2:
-//		 * We check if the singleton {atom} is an an outerJunct of the 
-//		 * outerJunctionOfInnerJunctions Set. 
-//		 * If this is the case we do not add anything and instead remove all
-//		 * other innerJunctions from the outerJunctionOfInnerJunctions Set.
-//		 * This optimization corresponds to the fact that
-//		 *     (A o (B_1 ι B2) o (C_1 ι C2)) ι A
-//		 * and 
-//		 *     A
-//		 * are equivalent.
-//		 */
-//		private void product(HashSet<XJunction> outerJunctionOfInnerJunctions, BooleanTermWithPolarity atom) {
-//			XJunction singleton = Collections.singletonMap(atom.getTerm(), atom.getPolarity());
-//			if (outerJunctionOfInnerJunctions.contains(singleton)) {
-//				// case where outerJunction contains already the singleton
-//				// {atom} (see Optimization 2 above)
-//				outerJunctionOfInnerJunctions.retainAll(Collections.singleton(singleton));
-//				assert outerJunctionOfInnerJunctions.size() == 1;
-//			} else {
-//				// for efficiency we reuse the old set in this case
-//				Iterator<XJunction> it = outerJunctionOfInnerJunctions.iterator();
-//				while (it.hasNext()) {
-//					// add atom to innerJunction. If is was already contained
-//					// with a different polarity we remove this innerJunction
-//					// (see Optimization 1 above)
-//					XJunction innerJunction = it.next();
-//					boolean containedWithOppositePolarity = 
-//							BooleanTermWithPolarity.checkForNegation(innerJunction, atom.getTerm(), atom.getPolarity());
-//					if (containedWithOppositePolarity) {
-//						it.remove();
-//					} else {
-//						innerJunction.put(atom.getTerm(), atom.getPolarity());
-//					}
-//				}
-//			}
-//		}
-		
-		
-		/**
-		 * Given an outerJunctionOfInnerJunctions and a set of atoms.
-		 * We return an outerJunction of innerJunctions that is obtained by 
-		 * taking atoms.size() copies of the input. In each copy we add 
-		 * different atom.
-		 * Formally, given an outerJunctionOfInnerJunctions
-		 *     o_{i} ι_{i_k} X_{i_k}
-		 * and a set of atoms
-		 *     a_1,...,a_m
-		 * we return the following outerJunction of innerJunctions.
-		 *     o_{j=1,...,m} o_{i} ι_{i_k} (X_{i_k} ∪ {a_j})
-		 * The result is a new HashSet, however both inputs are modified.
-		 * The result is not exactly the set defined above but an equivalent
-		 * set (equivalent wrt. Boolean algebra), because we apply the following
-		 * Optimizations.
-		 *  
-		 * Optimization 1:
-		 * If an innerJunction already contains "(not atom)" we drop this
-		 * innerJunction.
-		 * This optimization corresponds to the fact that
-		 *     (((not A) ι B) o (C_1 ι C2)) ι A
-		 * and
-		 *     (C_1 ι C2 ι A)
-		 * are equivalent.
-		 * 
-		 * Optimization 2:
- 		 * In a preprocessing step, we check if there is an element x in 
-		 * atoms, such that the singleton {x} is in an outerJunct.
-		 * If this is the case, 
-		 * - we remove x from atoms, 
-		 * - we remove {x} from outerJunctionOfInnerJunctions, and
-		 * - we add {x} to the result.
-		 * This optimization corresponds to the fact that
-		 *     (A o (B_1 ι B2) o (C_1 ι C2))  ι (A o D)
-		 * and 
-		 *     (A o (B_1 ι B2 ι D) o (C_1 ι C2 ι D))
-		 * are equivalent.
-		 */
-		private Set<XJunction> product(Set<XJunction> outerJunctionOfInnerJunctions, XJunction atoms) {
-//			System.out.println("Atoms " + atoms.size());
-			Set<XJunction> result = new HashSet<XJunction>();
-			// above mentioned preprocessing
-			Iterator<XJunction> it = outerJunctionOfInnerJunctions.iterator();
-			while (it.hasNext()) {
-				XJunction outerJunct = it.next();
-				if (outerJunct.size() == 1) {
-					Entry<Term, Polarity> singletonInnerJunction = outerJunct.entrySet().iterator().next();
-					Term singletonInnerJunctionTerm = singletonInnerJunction.getKey();
-					Polarity singletonInnerJuntionPolarity = singletonInnerJunction.getValue();
-					atoms.getPolarity(singletonInnerJunctionTerm);
-					if (atoms.getPolarity(singletonInnerJunctionTerm) == singletonInnerJuntionPolarity) {
-						// element with same polarization is contained
-						atoms.remove(singletonInnerJunctionTerm);
-						result.add(outerJunct);
-						it.remove();
-					}
-				}
-			}
-			// for CNF: we iterate over all disjuncts
-			for (Entry<Term, Polarity> atom : atoms.entrySet()) {
-				int loopCounter = 0;
-				for (XJunction innerJunction : outerJunctionOfInnerJunctions) {
-					if (innerJunction.containsNegation(atom.getKey(), atom.getValue())) {
-						// the element with the other polarization was already
-						// contained. We omit new Outer since it is trivial
-						// In terms of CNF: we have a conjunct of the
-						// form (A \/ ...) and we added (not A) hence this 
-						// conjunct is equivalent to true and we should remove 
-						// it from the conjunction.
-					} else {
-						XJunction newOuter = new XJunction(innerJunction);
-						try {
-							newOuter.add(atom.getKey(), atom.getValue());
-						} catch (AtomAndNegationException e) {
-							throw new AssertionError("checked before");
-						}
-						result.add(newOuter);
-					}
-					
-					if (loopCounter == 10000) {
-//						System.out.println("Outer size " + result.size());
-						if (!mServices.getProgressMonitorService().continueProcessing()) {
-							throw new ToolchainCanceledException(this.getClass());
-						} else {
-							loopCounter = 0; 
-						}
-					} 
-					loopCounter++;
-
+		private Set<XJunction> convertInnerJunctionOfOuterJunctionsToSet(
+				Term[] inputInnerJunction) {
+			Set<XJunction> result = new HashSet<>();
+			for (Term inputInnerJunct : inputInnerJunction) {
+				Term[] inputOuterJunction = getOuterJuncts(inputInnerJunct);
+				try {
+					result.add(new XJunction(inputOuterJunction));
+				} catch (AtomAndNegationException e) {
+					// do nothing, we omit this outerJunction because it is
+					// equivalent to the neutral element of the inner connective
+					// (true for ∧, false for ∨)
 				}
 			}
 			return result;
 		}
-
-	}
-	
-	
-	class XJunctionPosetMinimalElements {
-		private final Set<XJunction> m_Elements = new HashSet<XJunction>();
 		
-		
-		public void add(XJunction xjunction) {
-			Iterator<XJunction> it = m_Elements.iterator();
-			while (it.hasNext()) {
-				XJunction existing = it.next();
-				if(existing.isSubset(xjunction)) {
-					// add nothing
-					return;
+		/**
+		 * Represents a an innerJunction of outerJunctions using
+		 * <ul> 
+		 * <li> one innerJunction given as an XJunction (m_InnerJuncts) and
+		 * <li> one innerJunction of outerJunctions given as a set of 
+		 * XJunctions (m_UnprocessedInnerJunctionOfOuterJunctions).
+		 * </ul>
+		 *    (m_InnerJuncts ι (outerJunction_1 ι ... ι outerJunction_n))
+		 * This class can be used to successively apply distributivity to
+		 * get rid of the outerJunctions. Therefore objects of this class
+		 * are split into a set of such objects, one for each outerJunct.
+		 * 
+		 * @author Matthias Heizmann
+		 *
+		 */
+		private class ResultInnerJunctions {
+			private final XJunction m_InnerJuncts;
+			private final Set<XJunction> m_UnprocessedInnerJunctionOfOuterJunctions;
+			
+			public ResultInnerJunctions(Set<XJunction> innerJunctionOfOuterJunctions) throws AtomAndNegationException {
+				XJunction innerJuncts = new XJunction(); 
+				m_UnprocessedInnerJunctionOfOuterJunctions = moveOutwardsAbsorbeAndMpsimplify(innerJuncts, innerJunctionOfOuterJunctions);
+				m_InnerJuncts = innerJuncts;
+			}
+			
+			public ResultInnerJunctions(XJunction innerJuncts, Set<XJunction> innerJunctionOfOuterJunctions) throws AtomAndNegationException {
+				XJunction newInnerJuncts = new XJunction();
+				m_UnprocessedInnerJunctionOfOuterJunctions = moveOutwardsAbsorbeAndMpsimplify(newInnerJuncts, innerJunctionOfOuterJunctions);
+				m_InnerJuncts = XJunction.disjointUnion(innerJuncts, newInnerJuncts);
+			}
+			
+			public boolean isProcessedToInnerJunction() {
+				return m_UnprocessedInnerJunctionOfOuterJunctions.isEmpty();
+			}
+			
+			public int numberOfUnprocessedOuterJunctions() {
+				return m_UnprocessedInnerJunctionOfOuterJunctions.size();
+			}
+			
+			public XJunction getInnerJunction() {
+				return m_InnerJuncts;
+			}
+			
+			public List<ResultInnerJunctions> processOneOuterJunction() {
+				Iterator<XJunction> it = m_UnprocessedInnerJunctionOfOuterJunctions.iterator();
+				XJunction next = it.next();
+				it.remove();
+				ArrayList<ResultInnerJunctions> result = new ArrayList<>(next.size());
+				for (Entry<Term, Polarity> entry : next.entrySet()) {
+					XJunction singletonInnerJunct = new XJunction(entry.getKey(), entry.getValue());
+					Set<XJunction> innerJunctionOfOuterJunctions = new HashSet<XJunction>(m_UnprocessedInnerJunctionOfOuterJunctions);
+					innerJunctionOfOuterJunctions.add(singletonInnerJunct);
+					XJunction innerJunctions = new XJunction(m_InnerJuncts);
+					try {
+						ResultInnerJunctions rij = new ResultInnerJunctions(innerJunctions, innerJunctionOfOuterJunctions);
+						result.add(rij);
+					} catch (AtomAndNegationException e) {
+						// omit this ResultInnerJunctions it is equivalent to true/false
+					}
 				}
-				if(xjunction.isSubset(existing)) {
-					it.remove();
+				return result;
+			}
+			
+			/**
+			 * Given an innerJunction and an innerJunction of outerJunctions, we 
+			 * consider this an an innerJunction
+			 * (innerJunction ι (outerJunction_1 ι ... ι outerJunction_n))
+			 * and move as many elements as possible to innerJunction by applying 
+			 * equivalence transformations.
+			 * 
+			 * @param innerJunction input and output of this method. This method
+			 * adds new elements to this XJunction.
+			 * @param innerJunctionOfOuterJunctions input of this method, but also
+			 * used to store intermediate data. It is modified and should not be 
+			 * used by the caller after calling this method.
+			 * However the XJunction contained in this set are not modified.
+			 * @return and innerJunction of outerJunction that is together with
+			 * the modified innerJunction equivalent to the input.
+			 * @throws AtomAndNegationException thrown if we detect that the input
+			 * is equivalent to the annihilating element of the inner connective
+			 */
+			private Set<XJunction> moveOutwardsAbsorbeAndMpsimplify(
+					XJunction innerJunction, 
+					Set<XJunction> innerJunctionOfOuterJunctions) throws AtomAndNegationException {
+				while (true) {
+					boolean modified = moveSingletonsOutwards(innerJunction, innerJunctionOfOuterJunctions);
+					if (!modified) {
+						return innerJunctionOfOuterJunctions;
+					}
+					Set<XJunction> newinnerJunctionOfOuterJunctions = applyAbsorbeAndMpsimplify(innerJunction, innerJunctionOfOuterJunctions);
+					if (newinnerJunctionOfOuterJunctions == innerJunctionOfOuterJunctions) {
+						return innerJunctionOfOuterJunctions;
+					} else {
+						innerJunctionOfOuterJunctions = newinnerJunctionOfOuterJunctions;
+					}
 				}
 			}
-			m_Elements.add(xjunction);
-		}
+
+			/**
+			 * Remove from innerJunctionOfOuterJunctions all XJunctions that are
+			 * singletons and move their elements to innerJunction.
+			 * @param innerJunction is modified and used as input and output of 
+			 * this method
+			 * @param innerJunctionOfOuterJunctions is modified and input and 
+			 * output of this method
+			 * @return true iff innerJunctionOfOuterJunctions contained a singleton
+			 * (note that if the result is false this means especially that the
+			 * inputs were not modified)
+			 * @throws AtomAndNegationException the resulting innerJunction would
+			 * be equivalent to the annihilating element of the inner connective.
+			 */
+			private boolean moveSingletonsOutwards(XJunction innerJunction,
+					Set<XJunction> innerJunctionOfOuterJunctions)
+							throws AtomAndNegationException {
+				boolean someSingletonContained = false;
+				Iterator<XJunction> it = innerJunctionOfOuterJunctions.iterator();
+				while (it.hasNext()) {
+					XJunction outerJunction = it.next();
+					if (outerJunction.size() == 1) {
+						Entry<Term, Polarity> singleton = outerJunction.entrySet().iterator().next();
+						innerJunction.add(singleton.getKey(), singleton.getValue());
+						someSingletonContained = true;
+						it.remove();
+					}
+				}
+				return someSingletonContained;
+			}
 
 
-		public Set<XJunction> getElements() {
-			return m_Elements;
+
+			/**
+			 * Given an innerJunction and an innerJunction of outerJunctions, we 
+			 * consider this an an innerJunction
+			 * (innerJunction ι (outerJunction_1 ι ... ι outerJunction_n))
+			 * and simplify the innerJunction of outerJunctions by applying two
+			 * simplification rules.
+			 * <ul>
+			 *  <li> 1. Absorption. If innerJunction and outerJunction_i share
+			 *  a common element, we drop outerJunction_i from the innerJunction
+			 *  of outerJuncts.
+			 *  <li> 2. Mpsimplify. If innerJunction contains a formula φ and one
+			 *  outerJunction of outerJunction_i is ¬φ we remove this outerJunction
+			 *  from outerJunction_i.
+			 * </ul>
+			 * @param innerJunction above mentioned innerJunction, not modified by 
+			 * this methods
+			 * @param innerJunctionOfOuterJunctions above mentioned innerJunction 
+			 * of outerJunctions, not modified by this method
+			 * @return innerJunction of outerJunctions which is simplified with 
+			 * respect to innerJunction as mentioned above. If no simplification
+			 * was possible innerJunctionOfOuterJunctions (same Object) is returned
+			 * otherwise a new HashSet is returned.
+			 */
+			private Set<XJunction> applyAbsorbeAndMpsimplify(XJunction innerJunction,
+					Set<XJunction> innerJunctionOfOuterJunctions) {
+				HashSet<XJunction> newInnerJunctionOfOuterJunctions = new HashSet<XJunction>();
+				boolean modified = false;
+				for (XJunction outerJunction : innerJunctionOfOuterJunctions) {
+					XJunction newOuterJunction = applyAbsorbeAndMpsimplify(innerJunction, outerJunction);
+					if (newOuterJunction == null) {
+						// do not add, absorbed by innerJunction
+						modified = true;
+					} else if (outerJunction == newOuterJunction) {
+						// nothing was simplified
+						newInnerJunctionOfOuterJunctions.add(newOuterJunction);
+					} else {
+						// some elements were removed
+						assert (outerJunction.size() > newOuterJunction.size());
+						newInnerJunctionOfOuterJunctions.add(newOuterJunction);
+					}
+				}
+				if (modified) {
+					return newInnerJunctionOfOuterJunctions;
+				} else {
+					return innerJunctionOfOuterJunctions;
+				}
+			}
+
+			/**
+			 * Given an innerJunction and an outerJunction, we consider this as an
+			 * inner Junction
+			 *     (innerJunction ι outerJunction)
+			 * and simplify outerJunction with respect to innerJunction.
+			 * If innerJunction and outerJunction share a common literal we 
+			 * simplify outerJunction to the neutral element of the innerJunction
+			 * (absorption) and return null to indicate that.
+			 * If there is a literal in outerJunction that occurs with the opposite
+			 * polarity in innerJunction, we remove it from the outerJunction
+			 * (mpsimplify, reminiscent to modus ponens). In fact, outerJunction
+			 * is never modified, if we have to modify it, we return a new XJunction
+			 * instead. If we do not have to modify it, we return the input
+			 * outerJunction.
+			 */
+			private XJunction applyAbsorbeAndMpsimplify(XJunction innerJunction,
+					XJunction outerJunction) {
+				XJunction resultOuterJunction = outerJunction;
+				for (Entry<Term, Polarity> literal : innerJunction.entrySet()) {
+					if (outerJunction.contains(literal.getKey(), literal.getValue())) {
+						return null;
+					} else if (outerJunction.containsNegation(literal.getKey(), literal.getValue())) {
+						// remove negation
+						if (resultOuterJunction == outerJunction) {
+							resultOuterJunction = new XJunction(outerJunction);
+						}
+						resultOuterJunction.remove(literal.getKey());
+					}
+				}
+				return resultOuterJunction;
+			}
 		}
 		
-		public int size() {
-			return m_Elements.size();
+		
+		/**
+		 * Represents a Set of XJunction with the following property.
+		 * The set cannot contain two elements that are comparable via 
+		 * inclusion.
+		 * Whenever we add an element xjunction_new such that for some existing
+		 * xjunction xjunction_old the inclusion 
+		 *     xjunction_old ⊆ xjunction_new
+		 * the new element xjunction_new is discarded.
+		 * Whenever we add an element xjunction_new we remove all existing
+		 * xjunctions xjunction_old for which the inclusion
+		 *     xjunction_new ⊆ xjunction_old
+		 * hols.
+		 * 
+		 * @author Matthias Heizmann
+		 *
+		 */
+		class XJunctionPosetMinimalElements {
+			private final Set<XJunction> m_Elements = new HashSet<XJunction>();
+			
+			public void add(XJunction xjunction) {
+				Iterator<XJunction> it = m_Elements.iterator();
+				while (it.hasNext()) {
+					XJunction existing = it.next();
+					if(existing.isSubset(xjunction)) {
+						// add nothing
+						return;
+					}
+					if(xjunction.isSubset(existing)) {
+						it.remove();
+					}
+				}
+				m_Elements.add(xjunction);
+			}
+
+
+			public Set<XJunction> getElements() {
+				return m_Elements;
+			}
+			
+			public int size() {
+				return m_Elements.size();
+			}
 		}
-		
-		
 	}
-
 }

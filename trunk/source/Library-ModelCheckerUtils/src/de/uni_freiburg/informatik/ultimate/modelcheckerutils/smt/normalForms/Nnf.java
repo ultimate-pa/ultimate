@@ -5,6 +5,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.log4j.Logger;
+
+import de.uni_freiburg.informatik.ultimate.boogie.preprocessor.Activator;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
@@ -26,14 +29,15 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 public class Nnf {
 	
 	protected final Script m_Script;
+	protected final Logger m_Logger;
 	private final NnfTransformerHelper m_NnfTransformerHelper;
 	private List<List<TermVariable>> m_QuantifiedVariables;
 	
 	public Nnf(Script script, IUltimateServiceProvider services) {
 		super();
 		m_Script = script;
+		m_Logger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		m_NnfTransformerHelper = getNnfTransformerHelper(services);
-		
 	}
 	
 	protected NnfTransformerHelper getNnfTransformerHelper(IUltimateServiceProvider services) {
