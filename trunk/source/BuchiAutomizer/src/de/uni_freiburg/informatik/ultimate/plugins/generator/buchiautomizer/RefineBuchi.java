@@ -34,7 +34,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Co
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryRefinement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataTransitionAppender.EagerInterpolantAutomaton;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IncrementalHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.InductivityCheck;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.MonolithicHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
@@ -206,8 +205,7 @@ public class RefineBuchi {
 			String message = setting.toString();
 			BuchiCegarLoop.writeAutomatonToFile(m_Services, m_InterpolAutomaton, m_DumpPath, filename, message);
 		}
-		BuchiEdgeChecker ec = new BuchiEdgeChecker(m_SmtManager, buchiModGlobalVarManager);
-		ec.putDecreaseEqualPair(bspm.getHondaPredicate(), bspm.getRankEqAndSi());
+
 		BuchiHoareTripleChecker bhtc = new BuchiHoareTripleChecker(new MonolithicHoareTripleChecker(m_SmtManager));
 		//BuchiHoareTripleChecker bhtc = new BuchiHoareTripleChecker(new IncrementalHoareTripleChecker(m_SmtManager, buchiModGlobalVarManager));
 		bhtc.putDecreaseEqualPair(bspm.getHondaPredicate(), bspm.getRankEqAndSi());
@@ -219,7 +217,8 @@ public class RefineBuchi {
 			m_InterpolAutomatonUsedInRefinement = m_InterpolAutomaton;
 			break;
 		case EagerNondeterminism:
-
+			BuchiEdgeChecker ec = new BuchiEdgeChecker(m_SmtManager, buchiModGlobalVarManager);
+			ec.putDecreaseEqualPair(bspm.getHondaPredicate(), bspm.getRankEqAndSi());
 			m_InterpolAutomatonUsedInRefinement = new EagerInterpolantAutomaton(m_Services, ec, m_InterpolAutomaton);
 			break;
 		case ScroogeNondeterminism:
@@ -247,7 +246,7 @@ public class RefineBuchi {
 				loopInterpolantsForRefinement.add(bspm.getRankEqAndSi());
 			}
 
-			m_InterpolAutomatonUsedInRefinement = new BuchiInterpolantAutomatonBouncer(m_SmtManager, bspm, ec,
+			m_InterpolAutomatonUsedInRefinement = new BuchiInterpolantAutomatonBouncer(m_SmtManager, bspm, bhtc,
 					BuchiCegarLoop.emptyStem(m_Counterexample), stemInterpolantsForRefinement,
 					loopInterpolantsForRefinement, BuchiCegarLoop.emptyStem(m_Counterexample) ? null
 							: stem.getSymbol(stem.length() - 1), loop.getSymbol(loop.length() - 1), m_Abstraction,
@@ -308,7 +307,7 @@ public class RefineBuchi {
 		// INestedWordAutomatonOldApi<CodeBlock, IPredicate> oldApi = (new
 		// RemoveUnreachable<CodeBlock,
 		// IPredicate>(m_InterpolAutomatonUsedInRefinement)).getResult();
-		benchmarkGenerator.addEdgeCheckerData(ec.getEdgeCheckerBenchmark());
+		benchmarkGenerator.addEdgeCheckerData(bhtc.getEdgeCheckerBenchmark());
 		m_InterpolAutomaton = null;
 		boolean isUseful = isUsefulInterpolantAutomaton(m_InterpolAutomatonUsedInRefinement, m_Counterexample);
 		if (!isUseful) {

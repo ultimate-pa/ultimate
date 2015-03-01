@@ -17,7 +17,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cal
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactory;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataTransitionAppender.AbstractInterpolantAutomaton;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataTransitionAppender.AbstractInterpolantAutomaton2;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IHoareTripleChecker;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IHoareTripleChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.util.HashRelation;
@@ -29,7 +31,7 @@ import de.uni_freiburg.informatik.ultimate.util.HashRelation;
  * @author Matthias Heizmann
  * 
  */
-public class BuchiInterpolantAutomatonBouncer extends AbstractInterpolantAutomaton {
+public class BuchiInterpolantAutomatonBouncer extends AbstractInterpolantAutomaton2 {
 
 	private final NwaCacheBookkeeping<CodeBlock, IPredicate> m_ResultBookkeeping = new NwaCacheBookkeeping<CodeBlock, IPredicate>();
 
@@ -82,13 +84,13 @@ public class BuchiInterpolantAutomatonBouncer extends AbstractInterpolantAutomat
 	private final IUltimateServiceProvider mServices;
 
 	public BuchiInterpolantAutomatonBouncer(SmtManager smtManager, BinaryStatePredicateManager bspm,
-			BuchiEdgeChecker edgeChecker, boolean emtpyStem, Set<IPredicate> stemInterpolants,
+			BuchiHoareTripleChecker bhtc, boolean emtpyStem, Set<IPredicate> stemInterpolants,
 			Set<IPredicate> loopInterpolants, CodeBlock hondaEntererStem, CodeBlock hondaEntererLoop,
 			INestedWordAutomaton<CodeBlock, IPredicate> abstraction, boolean scroogeNondeterminismStem,
 			boolean scroogeNondeterminismLoop, boolean hondaBouncerStem, boolean hondaBouncerLoop,
 			PredicateFactory predicateFactory, PredicateUnifier stemPU, PredicateUnifier loopPU,
 			IPredicate falsePredicate, IUltimateServiceProvider services) {
-		super(services, smtManager, edgeChecker, abstraction, falsePredicate, null, services.getLoggingService().getLogger(
+		super(services, smtManager, bhtc, abstraction, falsePredicate, null, services.getLoggingService().getLogger(
 				Activator.s_PLUGIN_ID));
 		mServices = services;
 		m_Bspm = bspm;
@@ -239,14 +241,9 @@ public class BuchiInterpolantAutomatonBouncer extends AbstractInterpolantAutomat
 
 	private boolean isFalseSucc(IPredicate resPred, IPredicate resHier, CodeBlock letter, SuccessorComputationHelper sch) {
 		final boolean result;
-		LBool sat = sch.sdecToFalse(resPred, resHier, letter);
-		if (sat == null) {
-			sat = sch.computeSuccWithSolver(resPred, resHier, letter, m_IaFalseState);
-			if (sat == LBool.UNSAT) {
-				result = true;
-			} else {
-				result = false;
-			}
+		Validity validity = sch.computeSuccWithSolver(resPred, resHier, letter, m_IaFalseState);
+		if (validity == Validity.VALID) {
+			result = true;
 		} else {
 			result = false;
 		}
@@ -270,8 +267,8 @@ public class BuchiInterpolantAutomatonBouncer extends AbstractInterpolantAutomat
 			SuccessorComputationHelper sch) {
 		final Set<IPredicate> inputSuccsWithoutAux = new HashSet<IPredicate>();
 		for (IPredicate succCand : m_InputAuxFreePredicates) {
-			LBool sat = sch.computeSuccWithSolver(resPred, resHier, letter, succCand);
-			if (sat == LBool.UNSAT) {
+			Validity validity = sch.computeSuccWithSolver(resPred, resHier, letter, succCand);
+			if (validity == Validity.VALID) {
 				inputSuccsWithoutAux.add(succCand);
 			}
 		}
@@ -294,7 +291,7 @@ public class BuchiInterpolantAutomatonBouncer extends AbstractInterpolantAutomat
 		if (!m_Result.contains(rankDecreaseAndBound)) {
 			m_Result.addState(isInitial, true, rankDecreaseAndBound);
 		}
-		((BuchiEdgeChecker) m_EdgeChecker).putDecreaseEqualPair(rankDecreaseAndBound, rankEquality);
+		((BuchiHoareTripleChecker) m_IHoareTripleChecker).putDecreaseEqualPair(rankDecreaseAndBound, rankEquality);
 		return rankDecreaseAndBound;
 	}
 
@@ -320,8 +317,8 @@ public class BuchiInterpolantAutomatonBouncer extends AbstractInterpolantAutomat
 			SuccessorComputationHelper sch) {
 		final Set<IPredicate> inputSuccs = new HashSet<IPredicate>();
 		for (IPredicate succCand : m_InputStemPredicates) {
-			LBool sat = sch.computeSuccWithSolver(resPred, resHier, letter, succCand);
-			if (sat == LBool.UNSAT) {
+			Validity validity = sch.computeSuccWithSolver(resPred, resHier, letter, succCand);
+			if (validity == Validity.VALID) {
 				inputSuccs.add(succCand);
 			}
 		}
@@ -346,14 +343,14 @@ public class BuchiInterpolantAutomatonBouncer extends AbstractInterpolantAutomat
 
 	private IPredicate addAcceptingSuccLoop(IPredicate resPred, IPredicate resHier, CodeBlock letter,
 			SuccessorComputationHelper sch) {
-		LBool satDecr = sch.computeSuccWithSolver(resPred, resHier, letter, m_Bspm.getRankDecreaseAndBound());
-		if (satDecr != LBool.UNSAT) {
+		Validity validityDecr = sch.computeSuccWithSolver(resPred, resHier, letter, m_Bspm.getRankDecreaseAndBound());
+		if (validityDecr != Validity.VALID) {
 			return null;
 		}
 		final Set<IPredicate> inputSuccsWithoutAux = new HashSet<IPredicate>();
 		for (IPredicate succCand : m_InputAuxFreePredicates) {
-			LBool sat = sch.computeSuccWithSolver(resPred, resHier, letter, succCand);
-			if (sat == LBool.UNSAT) {
+			Validity validity = sch.computeSuccWithSolver(resPred, resHier, letter, succCand);
+			if (validity == Validity.VALID) {
 				inputSuccsWithoutAux.add(succCand);
 			}
 		}
@@ -366,8 +363,8 @@ public class BuchiInterpolantAutomatonBouncer extends AbstractInterpolantAutomat
 			SuccessorComputationHelper sch) {
 		final Set<IPredicate> inputSuccs = new HashSet<IPredicate>();
 		for (IPredicate succCand : m_InputLoopPredicates) {
-			LBool sat = sch.computeSuccWithSolver(resPred, resHier, letter, succCand);
-			if (sat == LBool.UNSAT) {
+			Validity validity = sch.computeSuccWithSolver(resPred, resHier, letter, succCand);
+			if (validity == Validity.VALID) {
 				inputSuccs.add(succCand);
 			}
 		}
@@ -383,7 +380,6 @@ public class BuchiInterpolantAutomatonBouncer extends AbstractInterpolantAutomat
 		IPredicate resSucc = inputPreds2ResultPreds.get(succs);
 		if (resSucc == null) {
 			TermVarsProc conjunction = m_SmtManager.and(succs.toArray(new IPredicate[0]));
-			clearAssertionStack();
 			resSucc = predicateUnifier.getOrConstructPredicate(conjunction);
 			assert resSucc != m_IaFalseState : "false should have been handeled before";
 			inputPreds2ResultPreds.put(succs, resSucc);
@@ -429,25 +425,6 @@ public class BuchiInterpolantAutomatonBouncer extends AbstractInterpolantAutomat
 	@Override
 	protected boolean areReturnSuccsComputed(IPredicate state, IPredicate hier, Return ret) {
 		return m_ResultBookkeeping.isCachedReturn(state, hier, ret);
-	}
-
-	@Override
-	protected boolean reviewInductiveInternal(IPredicate resPred, CodeBlock letter, IPredicate succCand, LBool result) {
-		mLogger.warn("result reviewing not implemented");
-		return true;
-	}
-
-	@Override
-	protected boolean reviewInductiveCall(IPredicate resPred, Call letter, IPredicate succCand, LBool result) {
-		mLogger.warn("result reviewing not implemented");
-		return true;
-	}
-
-	@Override
-	protected boolean reviewInductiveReturn(IPredicate resPred, IPredicate resHier, Return letter, IPredicate succCand,
-			LBool result) {
-		mLogger.warn("result reviewing not implemented");
-		return true;
 	}
 
 }
