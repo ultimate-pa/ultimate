@@ -52,13 +52,13 @@ public class ResetAndRedoToolChainOldTCAction extends RunToolchainAction impleme
 			return;
 		}
 
-		String inputFile = getInputFileFromUser("Select input file...");
-		if (inputFile == null) {
+		File[] inputFiles = getInputFilesFromUser("Select input file...");
+		if (inputFiles == null) {
 			return;
 		}
 
 		BasicToolchainJob tcj = new GuiToolchainJob("Processing Toolchain", mCore, mController, mLogger, toolchain,
-				new File(inputFile), prelude == null ? null : new PreludeProvider(prelude.getAbsolutePath(), mLogger));
+				inputFiles, prelude == null ? null : new PreludeProvider(prelude.getAbsolutePath(), mLogger));
 		tcj.schedule();
 
 	}

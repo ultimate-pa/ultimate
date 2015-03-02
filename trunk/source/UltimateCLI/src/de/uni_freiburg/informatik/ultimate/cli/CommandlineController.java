@@ -85,9 +85,9 @@ public class CommandlineController implements IController {
 			mLogger.fatal(e1);
 			return -1;
 		}
-		File bplFile = new File(p.getBoogieFile());
-		if (!bplFile.exists() || !bplFile.canRead()) {
-			mLogger.fatal("Input file not found. Path was: " + p.getBoogieFile());
+		File inputFile = new File(p.getInputFile());
+		if (!inputFile.exists() || !inputFile.canRead()) {
+			mLogger.fatal("Input file not found. Path was: " + p.getInputFile());
 			return -1;
 		}
 
@@ -95,8 +95,8 @@ public class CommandlineController implements IController {
 		PreludeProvider preludeFile = new PreludeProvider(p.getPreludeFile(), mLogger);
 
 		try {
-			BasicToolchainJob tcj = new DefaultToolchainJob("Processing Toolchain", core, this, mLogger, bplFile,
-					preludeFile);
+			BasicToolchainJob tcj = new DefaultToolchainJob("Processing Toolchain", core, this, mLogger,
+					new File[] { inputFile }, preludeFile);
 			tcj.schedule();
 			// in non-GUI mode, we must wait until job has finished!
 			tcj.join();

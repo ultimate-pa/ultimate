@@ -135,6 +135,16 @@ public class GraphMLConverter {
 				return null;
 			}
 		});
+		
+		graphWriter.addVertexData("violation", null, "false", new Transformer<WitnessNode, String>() {
+			@Override
+			public String transform(WitnessNode arg0) {
+				if (arg0.isError()) {
+					return "true";
+				}
+				return null;
+			}
+		});
 
 		Hypergraph<WitnessNode, WitnessEdge> graph = getGraph();
 
@@ -210,14 +220,21 @@ public class GraphMLConverter {
 			current = next;
 		}
 
-		for (int i = 0; i < mProgramExecution.getLength(); ++i) {
+		int progExecLength = mProgramExecution.getLength();
+		for (int i = 0; i < progExecLength; ++i) {
 
 			// i = skipGlobalDeclarations(i, mProgramExecution);
 			i = collapseToSingleTraceElement(i, mProgramExecution);
 
 			AtomicTraceElement<CACSLLocation> currentATE = mProgramExecution.getTraceElement(i);
 			ProgramState<IASTExpression> currentState = mProgramExecution.getProgramState(i);
-			next = fac.createWitnessNode();
+			if (i == progExecLength - 1) {
+				// the last node is the error location
+				next = fac.createErrorWitnessNode();
+			} else {
+				next = fac.createWitnessNode();
+			}
+
 			graph.addVertex(next);
 			if (currentState == null) {
 				graph.addEdge(fac.createWitnessEdge(currentATE), current, next);
@@ -232,7 +249,7 @@ public class GraphMLConverter {
 
 	private WitnessNode insertStartNodeAndDummyEdges(WitnessNodeEdgeFactory fac,
 			DirectedSparseGraph<WitnessNode, WitnessEdge> graph, int numberOfUselessEdgesAfterStart) {
-		WitnessNode current = fac.createWitnessNode(true);
+		WitnessNode current = fac.createInitialWitnessNode();
 		WitnessNode next = null;
 		graph.addVertex(current);
 

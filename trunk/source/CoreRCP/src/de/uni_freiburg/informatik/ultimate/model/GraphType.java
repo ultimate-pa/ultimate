@@ -7,6 +7,8 @@ import java.io.File;
 import java.io.Serializable;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 
@@ -64,12 +66,12 @@ public class GraphType implements Serializable {
 		AST, CG, CFG, DFG, CST, TS, PG, OTHER
 	}
 
-	public GraphType(String creatorPluginID, Type type, List<String> fileNames) {
+	public GraphType(String creatorPluginID, Type type, Collection<String> fileNames) {
 		Assert.isNotNull(fileNames);
 		Assert.isNotNull(type);
-		this.m_Creator = creatorPluginID;
-		this.m_Type = type;
-		this.m_FileNames = fileNames;
+		m_Creator = creatorPluginID;
+		m_Type = type;
+		m_FileNames = new ArrayList<String>(fileNames);
 
 		init();
 	}

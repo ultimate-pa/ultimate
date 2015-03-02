@@ -15,30 +15,30 @@ import de.uni_freiburg.informatik.ultimatetest.util.Util;
  * 
  */
 public class UltimateRunDefinition {
-	private final File m_Input;
-	private final File m_Settings;
-	private final File m_Toolchain;
+	private final File mInput;
+	private final File mSettings;
+	private final File mToolchain;
 
 	public UltimateRunDefinition(File input, File settings, File toolchain) {
 		super();
 		if (input == null || toolchain == null) {
 			throw new IllegalArgumentException("Toolchain and Input may not be null");
 		}
-		m_Input = input;
-		m_Settings = settings;
-		m_Toolchain = toolchain;
+		mInput = input;
+		mSettings = settings;
+		mToolchain = toolchain;
 	}
 
 	public File getInput() {
-		return m_Input;
+		return mInput;
 	}
 
 	public File getSettings() {
-		return m_Settings;
+		return mSettings;
 	}
 
 	public File getToolchain() {
-		return m_Toolchain;
+		return mToolchain;
 	}
 
 	@Override
@@ -47,7 +47,7 @@ public class UltimateRunDefinition {
 	}
 
 	public String generateLongStringRepresentation() {
-		return "Input: " + m_Input + ", Settings: " + m_Settings + ", Toolchain: " + m_Toolchain;
+		return "Input: " + mInput + ", Settings: " + mSettings + ", Toolchain: " + mToolchain;
 	}
 
 	public String generateShortStringRepresentation() {
@@ -81,9 +81,9 @@ public class UltimateRunDefinition {
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + ((m_Input == null) ? 0 : m_Input.hashCode());
-		result = prime * result + ((m_Settings == null) ? 0 : m_Settings.hashCode());
-		result = prime * result + ((m_Toolchain == null) ? 0 : m_Toolchain.hashCode());
+		result = prime * result + ((mInput == null) ? 0 : mInput.hashCode());
+		result = prime * result + ((mSettings == null) ? 0 : mSettings.hashCode());
+		result = prime * result + ((mToolchain == null) ? 0 : mToolchain.hashCode());
 		return result;
 	}
 
@@ -96,20 +96,20 @@ public class UltimateRunDefinition {
 		if (getClass() != obj.getClass())
 			return false;
 		UltimateRunDefinition other = (UltimateRunDefinition) obj;
-		if (m_Input == null) {
-			if (other.m_Input != null)
+		if (mInput == null) {
+			if (other.mInput != null)
 				return false;
-		} else if (!m_Input.equals(other.m_Input))
+		} else if (!mInput.equals(other.mInput))
 			return false;
-		if (m_Settings == null) {
-			if (other.m_Settings != null)
+		if (mSettings == null) {
+			if (other.mSettings != null)
 				return false;
-		} else if (!m_Settings.equals(other.m_Settings))
+		} else if (!mSettings.equals(other.mSettings))
 			return false;
-		if (m_Toolchain == null) {
-			if (other.m_Toolchain != null)
+		if (mToolchain == null) {
+			if (other.mToolchain != null)
 				return false;
-		} else if (!m_Toolchain.equals(other.m_Toolchain))
+		} else if (!mToolchain.equals(other.mToolchain))
 			return false;
 		return true;
 	}

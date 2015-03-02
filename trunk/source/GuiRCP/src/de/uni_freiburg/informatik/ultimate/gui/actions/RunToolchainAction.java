@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.regex.Pattern;
 
 import javax.xml.bind.JAXBException;
 
@@ -49,20 +50,27 @@ public abstract class RunToolchainAction extends Action {
 		setImageDescriptor(AbstractUIPlugin.imageDescriptorFromPlugin(GuiController.sPLUGINID, imageFilePath));
 	}
 
-	protected File getLastInputFile() {
+	protected File[] getLastInputFiles() {
 		String lastInputFilePath = new UltimatePreferenceStore(GuiController.sPLUGINID)
 				.getString(IPreferencesKeys.LASTPATH);
 		if (lastInputFilePath == null || lastInputFilePath.isEmpty()) {
 			// there is no last input file saved
 			return null;
 		}
-		File lastInputFile = new File(lastInputFilePath);
+		String[] singlePaths = lastInputFilePath.split(Pattern.quote(File.pathSeparator));
+		ArrayList<File> rtr = new ArrayList<>();
 
-		if (!lastInputFile.canRead()) {
-			// there is an inputfile saved, but its not there anymore
-			return null;
+		for (String path : singlePaths) {
+			File f = new File(path);
+			if (f.canRead()) {
+				// there is an inputfile saved and it is still there
+				rtr.add(f);
+			}
 		}
-		return lastInputFile;
+		if (rtr.size() > 0) {
+			return rtr.toArray(new File[0]);
+		}
+		return null;
 	}
 
 	protected ToolchainData getLastToolchainData() {
@@ -79,7 +87,7 @@ public abstract class RunToolchainAction extends Action {
 		}
 	}
 
-	protected String getInputFileFromUser(String dialogTitle) {
+	protected File[] getInputFilesFromUser(String dialogTitle) {
 
 		ArrayList<String> extensions = new ArrayList<String>();
 		ArrayList<String> names = new ArrayList<String>();
@@ -98,16 +106,36 @@ public abstract class RunToolchainAction extends Action {
 		fd.setText(dialogTitle);
 
 		UltimatePreferenceStore prefStore = new UltimatePreferenceStore(GuiController.sPLUGINID);
-		String lastPath = prefStore.getString(IPreferencesKeys.LASTPATH, null);
+
 		fd.setFilterExtensions(extensions.toArray(new String[extensions.size()]));
 		fd.setFilterNames(names.toArray(new String[names.size()]));
-		fd.setFileName(lastPath);
-		String rtr = fd.open();
 
-		if (rtr != null) {
-			prefStore.put(IPreferencesKeys.LASTPATH, rtr);
+		File[] lastInput = getLastInputFiles();
+		if (lastInput != null && lastInput.length > 0) {
+			fd.setFileName(lastInput[0].getAbsolutePath());
 		}
-		return rtr;
+
+		fd.open();
+		String[] fileNames = fd.getFileNames();
+		String path = fd.getFilterPath();
+
+		if (fileNames != null && fileNames.length > 0) {
+			StringBuilder sb = new StringBuilder();
+			for (String name : fileNames) {
+				sb.append(path).append(File.separator).append(name).append(File.pathSeparator);
+			}
+			sb.delete(sb.length() - 1, sb.length());
+			prefStore.put(IPreferencesKeys.LASTPATH, sb.toString());
+		}
+
+		ArrayList<File> rtr = new ArrayList<>();
+		for (String filename : fileNames) {
+			File file = new File(path + File.separator + filename);
+			if (file.isFile() && file.exists()) {
+				rtr.add(file);
+			}
+		}
+		return rtr.toArray(new File[0]);
 	}
 
 	private Collection<ISource> getAvailableSourcePlugins() {

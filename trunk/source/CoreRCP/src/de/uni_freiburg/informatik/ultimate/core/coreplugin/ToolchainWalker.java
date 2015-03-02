@@ -162,13 +162,15 @@ final class ToolchainWalker implements IToolchainCancel {
 			}
 			// did the plug-in have a serialization child element?
 			SerializeType st = plugin.getSerialize();
-			if (st != null)
+			if (st != null) {
 				processSerializeStmt(data, st);
+			}
 
 			// did the plug-in have a dropmodels child element?
 			DropmodelType dt = plugin.getDropmodels();
-			if (dt != null)
+			if (dt != null) {
 				processDropmodelStmt(data, dt);
+			}
 
 		}
 	}
@@ -299,11 +301,13 @@ final class ToolchainWalker implements IToolchainCancel {
 		ArrayList<GraphType> models = new ArrayList<GraphType>();
 		GraphType graphType = null;
 		if (serializeType.getParser() != null) {
-			graphType = mModelManager.getGraphTypeByGeneratorPluginId(data.getParser().getPluginID());
-			if (graphType != null)
-				models.add(graphType);
-			else {
-				mLogger.warn("Parser model could not be found!");
+			for (ISource parser : data.getParsers()) {
+				graphType = mModelManager.getGraphTypeByGeneratorPluginId(parser.getPluginID());
+				if (graphType != null) {
+					models.add(graphType);
+				} else {
+					mLogger.warn("Parser model could not be found!");
+				}
 			}
 		}
 		for (ModelType modelType : serializeType.getModel()) {
@@ -317,6 +321,7 @@ final class ToolchainWalker implements IToolchainCancel {
 			else
 				mLogger.warn("Model " + modelType.getId() + " could not be found!");
 		}
+
 		for (GraphType model : models) {
 			try {
 				mLogger.debug("Attempting to serialize model " + model.toString() + " ...");
@@ -339,15 +344,18 @@ final class ToolchainWalker implements IToolchainCancel {
 	private final void processDropmodelStmt(CompleteToolchainData data, DropmodelType dt) {
 		if (dt.getParser() != null) {
 			GraphType g = null;
-			g = this.mModelManager.getGraphTypeByGeneratorPluginId(data.getParser().getPluginID());
-			mLogger.debug("Attempting to drop parser model...");
-			if (g != null) {
-				boolean success = this.mModelManager.removeItem(g);
+			for (ISource parser : data.getParsers()) {
+				g = this.mModelManager.getGraphTypeByGeneratorPluginId(parser.getPluginID());
+				mLogger.debug("Attempting to drop parser model...");
+				if (g != null) {
+					boolean success = this.mModelManager.removeItem(g);
 
-				if (success)
-					mLogger.info("Dropping  model succeeded.");
-				else
-					mLogger.warn("Failed to remove parser model.");
+					if (success) {
+						mLogger.info("Dropping  model succeeded.");
+					} else {
+						mLogger.warn("Failed to remove parser model.");
+					}
+				}
 			}
 		}
 
@@ -382,12 +390,12 @@ final class ToolchainWalker implements IToolchainCancel {
 	final class CompleteToolchainData {
 
 		private ToolchainData mToolchain;
-		private ISource mParser;
+		private ISource[] mParsers;
 		private IController mController;
 
-		CompleteToolchainData(ToolchainData toolchain, ISource parser, IController controller) {
+		CompleteToolchainData(ToolchainData toolchain, ISource[] parsers, IController controller) {
 			mToolchain = toolchain;
-			mParser = parser;
+			mParsers = parsers;
 			mController = controller;
 		}
 
@@ -395,8 +403,8 @@ final class ToolchainWalker implements IToolchainCancel {
 			return mToolchain;
 		}
 
-		final ISource getParser() {
-			return mParser;
+		final ISource[] getParsers() {
+			return mParsers;
 		}
 
 		final IController getController() {

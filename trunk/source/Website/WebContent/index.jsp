@@ -5,7 +5,7 @@ Params:
 - task={VerifyBoogie, VerifyC, RunAutomataTestFile, RunSmt2Script}
 - sample={}
 --%>
-<%@page import="org.apache.catalina.core.ApplicationContext"%>
+<%@ page import="org.apache.catalina.core.ApplicationContext"%>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
 <%@ page trimDirectiveWhitespaces="true"%>
 <%@ page import="java.util.*"%>
@@ -20,17 +20,17 @@ Params:
 <%@ page import="java.text.SimpleDateFormat"%>
 
 
-<%@page import="java.io.BufferedReader"%>
-<%@page import="java.io.InputStream"%>
-<%@page import="java.io.InputStreamReader"%>
-<%@page import="java.net.HttpURLConnection"%>
-<%@page import="java.net.URLEncoder"%>
-<%@page import="java.net.URLDecoder"%>
-<%@page import="java.net.URL"%>
+<%@ page import="java.io.BufferedReader"%>
+<%@ page import="java.io.InputStream"%>
+<%@ page import="java.io.InputStreamReader"%>
+<%@ page import="java.net.HttpURLConnection"%>
+<%@ page import="java.net.URLEncoder"%>
+<%@ page import="java.net.URLDecoder"%>
+<%@ page import="java.net.URL"%>
 
-<%@page import="org.json.simple.JSONObject"%>
-<%@page import="org.json.simple.JSONValue"%>
-<%@page import="org.json.simple.JSONArray"%>
+<%@ page import="org.json.simple.JSONObject"%>
+<%@ page import="org.json.simple.JSONValue"%>
+<%@ page import="org.json.simple.JSONArray"%>
 
 <%!
   String getData(String address) throws Exception {
@@ -141,9 +141,12 @@ Params:
   pageContext.setAttribute("multipleTools", multipleTools);
   pageContext.setAttribute("multipleTasks", multipleTasks);
   pageContext.setAttribute("content", jsonObject, s);
-  System.out.println("index.jsp: tasks: " + pageContext.getAttribute("tasks"));
-  System.out.println("index.jsp: worker: " + pageContext.getAttribute("worker"));
-  System.out.println("index.jsp: worker, s: "+ pageContext.getAttribute("worker",s));
+  System.out.println("index.jsp DEBUG");
+  System.out.println("index.jsp: pc.tasks: " + pageContext.getAttribute("tasks"));
+  System.out.println("index.jsp: pc.worker, s: "+ pageContext.getAttribute("worker",s));
+  System.out.println("index.jsp: worker: " + worker);
+  System.out.println("index.jsp: task: " + task);
+  
 
 %>
 <%@ page language="java" contentType="text/html; charset=ISO-8859-1" pageEncoding="ISO-8859-1"%>

@@ -6,16 +6,22 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietransl
  * 
  */
 public class WitnessNode {
-	private boolean mIsEntry;
+	private final boolean mIsEntry;
 	private final String mId;
+	private final boolean mIsError;
 
-	WitnessNode(boolean isEntry, long currentNodeId) {
+	WitnessNode(long currentNodeId, boolean isEntry, boolean isError) {
 		mIsEntry = isEntry;
+		mIsError = isError;
 		mId = "N" + String.valueOf(currentNodeId);
 	}
 
 	public boolean isEntry() {
 		return mIsEntry;
+	}
+	
+	public boolean isError(){
+		return mIsError;
 	}
 
 	public String getName() {

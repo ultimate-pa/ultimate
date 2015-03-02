@@ -13,9 +13,9 @@ import de.uni_freiburg.informatik.ultimate.ep.interfaces.IToolchain;
 
 public class GuiToolchainJob extends DefaultToolchainJob {
 
-	public GuiToolchainJob(String name, ICore core, GuiController controller, File boogieFiles,
+	public GuiToolchainJob(String name, ICore core, GuiController controller, File[] inputFiles,
 			PreludeProvider preludefile, Logger logger) {
-		super(name, core, controller, logger, boogieFiles, preludefile);
+		super(name, core, controller, logger, inputFiles, preludefile);
 	}
 
 	public GuiToolchainJob(String name, ICore core, IController controller, Logger logger, IToolchain toolchain) {
@@ -23,8 +23,8 @@ public class GuiToolchainJob extends DefaultToolchainJob {
 	}
 
 	public GuiToolchainJob(String name, ICore core, IController controller, Logger logger, ToolchainData data,
-			File inputfile, PreludeProvider prelude) {
-		super(name, core, controller, logger, data, inputfile, prelude);
+			File[] inputFiles, PreludeProvider prelude) {
+		super(name, core, controller, logger, data, inputFiles, prelude);
 	}
 
 	@Override

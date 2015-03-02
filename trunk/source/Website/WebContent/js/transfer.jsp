@@ -2,20 +2,35 @@
 <%@ page import="de.uni_freiburg.informatik.ultimate.website.Tasks"%>
 <%@ page import="de.uni_freiburg.informatik.ultimate.website.Worker"%>
 <%@ page import="de.uni_freiburg.informatik.ultimate.website.Example"%>
-<%@page import="org.json.simple.JSONObject"%>
+<%@ page import="org.json.simple.JSONObject"%>
 <%@ page import="java.util.*"%>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
 <%@ page language="java" contentType="application/javascript; charset=UTF-8" pageEncoding="UTF-8"%>
 <%
-  int s = PageContext.SESSION_SCOPE;
+	int s = PageContext.SESSION_SCOPE;
+ 
   @SuppressWarnings("unchecked")
 	Map<Tasks.TaskNames, ArrayList<Example>> examples = (Map<Tasks.TaskNames, ArrayList<Example>>) pageContext.getAttribute("examples", s);
   @SuppressWarnings("unchecked")
   Map<String, Worker> currentWorker = (Map<String, Worker>) pageContext.getAttribute("currentWorker", s);
   @SuppressWarnings("unchecked")
+  
   Map<String, Worker> worker = (Map<String, Worker>) pageContext.getAttribute("worker", s);
   JSONObject content = (JSONObject) pageContext.getAttribute("content", s);
-  System.out.println("transfer.jsp: worker, s: "+ pageContext.getAttribute("worker",s));
+  
+  System.out.println("transfer.jsp DEBUG");
+  System.out.println("transfer.jsp: content: "+content);
+	if (worker != null) {
+		for (Map.Entry<String, Worker> entry : worker.entrySet()) {
+			System.out.println("transfer.jsp: worker entry: " + entry.getKey() + "=" + entry.getValue());
+		}
+	}
+	System.out.println("transfer.jsp: currentWorker: " + currentWorker);
+	System.out.println("transfer.jsp: pc.worker: " + pageContext.getAttribute("worker"));
+	System.out.println("transfer.jsp: pc.worker, s: " + pageContext.getAttribute("worker", s));
+// 	System.out.println("transfer.jsp: session.worker: " + session.getAttribute("worker"));
+// 	System.out.println("transfer.jsp: session.worker, s: " + session.getAttribute("worker",s));
+	
 %>
 
 var _SERVER_INFO =

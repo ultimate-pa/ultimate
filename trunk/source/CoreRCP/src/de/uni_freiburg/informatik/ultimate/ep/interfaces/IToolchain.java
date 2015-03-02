@@ -36,7 +36,7 @@ public interface IToolchain {
 	 * @param inputfiles
 	 *            input files as array of File
 	 */
-	public void setInputFile(File inputfiles);
+	public void setInputFiles(File[] inputfiles);
 
 	/**
 	 * Call to define the tools that should be used in this toolchain.
@@ -57,10 +57,10 @@ public interface IToolchain {
 	public ToolchainData setToolSelection(IProgressMonitor monitor, ToolchainData data);
 
 	/**
-	 * Initiates a parser for the previously set input files, possibly with a
+	 * Initiates parsers for the previously set input files, possibly with a
 	 * special prelude file.
 	 * 
-	 * If this method returns false, you do not have a valid parser for the
+	 * If this method returns false, you do not have a valid parser for at least one of the
 	 * selected files.
 	 * 
 	 * 
@@ -70,14 +70,14 @@ public interface IToolchain {
 	 * @return True iff there is a usable parser for the given files and its
 	 *         initialization worked. False otherwise.
 	 */
-	public boolean initializeParser(PreludeProvider preludefile);
+	public boolean initializeParsers(PreludeProvider preludefile);
 
 	/**
-	 * Runs the previously select parser
+	 * Runs the previously select parsers
 	 * 
 	 * @throws Exception
 	 */
-	public void runParser() throws Exception;
+	public void runParsers() throws Exception;
 
 	/**
 	 * If everything has been properly initiated, this method will process the

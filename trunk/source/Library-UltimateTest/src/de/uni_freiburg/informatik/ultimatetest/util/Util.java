@@ -90,6 +90,11 @@ public class Util {
 		return relative.getAbsolutePath();
 	}
 
+	/**
+	 * Prefix the parameter "path" with the path to the trunk folder of the Ultimate repository on the current machine. 
+	 * @param path
+	 * @return
+	 */
 	public static String getPathFromTrunk(String path) {
 		File trunk = new File(System.getProperty("user.dir")).getParentFile().getParentFile();
 		File relative = new File(trunk.getAbsolutePath() + File.separator + path);
@@ -147,7 +152,7 @@ public class Util {
 		ArrayList<File> singleFiles = new ArrayList<File>();
 
 		for (File f : files) {
-			String path = f.getAbsolutePath().replaceAll("\\\\", "/");
+			String path = f.getAbsolutePath();
 			if (path.matches(regex)) {
 				singleFiles.add(f);
 			}

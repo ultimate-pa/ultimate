@@ -87,11 +87,11 @@ public class ExternalUltimateCore {
 		return init(core, loggingService, null, 0, null, null);
 	}
 
-	public int init(ICore core, ILoggingService loggingService, File inputFile) {
-		return init(core, loggingService, null, 0, inputFile, null);
+	public int init(ICore core, ILoggingService loggingService, File[] inputFiles) {
+		return init(core, loggingService, null, 0, inputFiles, null);
 	}
 
-	public int init(ICore core, ILoggingService loggingService, File settingsFile, long deadline, File inputFile,
+	public int init(ICore core, ILoggingService loggingService, File settingsFile, long deadline, File[] inputFiles,
 			PreludeProvider prelude) {
 		Logger logger = null;
 		try {
@@ -105,7 +105,7 @@ public class ExternalUltimateCore {
 			if (settingsFile != null) {
 				core.loadPreferences(settingsFile.getAbsolutePath());
 			}
-			mJob = getToolchainJob(core, mController, logger, inputFile, prelude);
+			mJob = getToolchainJob(core, mController, logger, inputFiles, prelude);
 			if (deadline > 0) {
 				mJob.setDeadline(deadline);
 			}
@@ -128,8 +128,8 @@ public class ExternalUltimateCore {
 	}
 
 	protected ManualReleaseToolchainJob getToolchainJob(ICore core, IController controller, Logger logger,
-			File inputFile, PreludeProvider prelude) {
-		return new ManualReleaseToolchainJob("Processing Toolchain", core, controller, logger, inputFile, prelude);
+			File[] inputFiles, PreludeProvider prelude) {
+		return new ManualReleaseToolchainJob("Processing Toolchain", core, controller, logger, inputFiles, prelude);
 	}
 
 	public void complete() {
@@ -142,9 +142,9 @@ public class ExternalUltimateCore {
 
 	protected class ManualReleaseToolchainJob extends DefaultToolchainJob {
 
-		public ManualReleaseToolchainJob(String name, ICore core, IController controller, Logger logger, File input,
+		public ManualReleaseToolchainJob(String name, ICore core, IController controller, Logger logger, File[] inputs,
 				PreludeProvider preludefile) {
-			super(name, core, controller, logger, input, preludefile);
+			super(name, core, controller, logger, inputs, preludefile);
 		}
 
 		@Override

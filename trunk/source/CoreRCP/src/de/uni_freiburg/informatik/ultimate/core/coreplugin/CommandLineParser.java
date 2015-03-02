@@ -25,13 +25,13 @@ public class CommandLineParser {
 	
 	public void printUsage() {
 		System.err.println("Ultimate Command Line Usage:");
-		System.err.println("./Ultimate --help | --console [<toolchain file> <boogie file> [--prelude <file>] [--settings <file>]] ");
+		System.err.println("./Ultimate --help | --console [<toolchain file> <input file> [--prelude <file>] [--settings <file>]] ");
 		System.err.println("No argument will run Ultimate in GUI mode.");
 		System.err.println("Only the --console argument will run Ultimate in interactive command-line mode.");
 		System.err.println("Your parsed arguments were:");
 		System.err.println("Prelude File:"+ prelude_file);
 		System.err.println("Tool File:" + tool_file);
-		System.err.println("Boogie File:" + boogie_file);
+		System.err.println("Input File:" + boogie_file);
 		System.err.println("Settings file:" + m_Settings);
 		System.err.println("Console mode:" + String.valueOf(console_mode));
 		System.err.println("Interactive mode:" + String.valueOf(interactive_mode));
@@ -98,7 +98,7 @@ public class CommandLineParser {
 		return tool_file;
 	}
 	
-	public String getBoogieFile() {
+	public String getInputFile() {
 		return boogie_file;
 	}
 	

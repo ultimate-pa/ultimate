@@ -64,8 +64,8 @@ public class ResetAndRedoToolChainAction extends RunToolchainAction implements I
 	}
 	
 	private BasicToolchainJob getToolchainJobFromPreferences() {
-		File lastInputFile = getLastInputFile();
-		if (lastInputFile == null) {
+		File[] lastInputFiles = getLastInputFiles();
+		if (lastInputFiles == null) {
 			return null;
 		}
 
@@ -78,6 +78,6 @@ public class ResetAndRedoToolChainAction extends RunToolchainAction implements I
 			return null;
 		}
 		return new GuiToolchainJob("Re-running toolchain from preferences...", mCore, mController, mLogger, toolchain,
-				lastInputFile, prelude == null ? null : new PreludeProvider(prelude.getAbsolutePath(), mLogger));
+				lastInputFiles, prelude == null ? null : new PreludeProvider(prelude.getAbsolutePath(), mLogger));
 	}
 }

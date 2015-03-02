@@ -11,9 +11,9 @@ import de.uni_freiburg.informatik.ultimate.ep.interfaces.ICore;
 
 public class TestToolchainJob extends DefaultToolchainJob {
 
-	public TestToolchainJob(String name, ICore core, IController controller, Logger logger, File input,
+	public TestToolchainJob(String name, ICore core, IController controller, Logger logger, File[] inputFiles,
 			PreludeProvider preludefile) {
-		super(name, core, controller, logger, input, preludefile);
+		super(name, core, controller, logger, inputFiles, preludefile);
 	}
 
 	@Override

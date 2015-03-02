@@ -44,15 +44,15 @@ public class ResetAndRedoToolChainNewTCAction extends RunToolchainAction impleme
 		// Execute new toolchain on current file(s)
 
 		// are there any current files?
-		File lastInputFile = getLastInputFile();
-		if (lastInputFile == null) {
+		File[] lastInputFiles = getLastInputFiles();
+		if (lastInputFiles == null) {
 			MessageDialog
 					.openError(mWorkbenchWindow.getShell(), "Error Occurred", "You don't have any old input files");
 			return;
 		}
 
 		File prelude = PreludeContribution.getPreludeFile();
-		BasicToolchainJob tcj = new GuiToolchainJob("Processing Toolchain", mCore, mController, lastInputFile,
+		BasicToolchainJob tcj = new GuiToolchainJob("Processing Toolchain", mCore, mController, lastInputFiles,
 				prelude == null ? null : new PreludeProvider(prelude.getAbsolutePath(), mLogger), mLogger);
 		tcj.schedule();
 	}

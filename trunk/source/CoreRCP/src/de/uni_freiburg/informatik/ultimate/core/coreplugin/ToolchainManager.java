@@ -2,7 +2,10 @@ package de.uni_freiburg.informatik.ultimate.core.coreplugin;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -113,15 +116,15 @@ public class ToolchainManager {
 		private final Benchmark mBenchmark;
 
 		private ToolchainData mToolchainData;
-		private ISource mParser;
-		private File mInputFiles;
+		private Map<File, ISource> mParsers;
+		private File[] mInputFiles;
 		private ToolchainWalker mToolchainWalker;
 
 		private Toolchain(long id, IModelManager modelManager) {
 			mId = id;
 			mModelManager = modelManager;
 			mBenchmark = new Benchmark();
-
+			mParsers = new LinkedHashMap<File, ISource>();
 		}
 
 		/*************************** IToolchain Implementation ****************************/
@@ -151,7 +154,7 @@ public class ToolchainManager {
 		}
 
 		@Override
-		public void setInputFile(File files) {
+		public void setInputFiles(File[] files) {
 			mInputFiles = files;
 		}
 
@@ -186,36 +189,48 @@ public class ToolchainManager {
 		}
 
 		@Override
-		public boolean initializeParser(PreludeProvider preludefile) {
-			mParser = selectParser(mInputFiles);
-
-			if (mParser == null) {
-				mLogger.warn(getLogPrefix() + ": No parsers available");
+		public boolean initializeParsers(PreludeProvider preludefile) {
+			if (mInputFiles == null || mInputFiles.length == 0) {
+				mLogger.fatal(getLogPrefix() + ": No input files specified");
 				return false;
 			}
 
-			// set prelude file if present
-			if (preludefile != null) {
-				mParser.setPreludeFile(preludefile.getPreludeFile());
-			} else {
-				mParser.setPreludeFile(null);
+			for (File inputFile : mInputFiles) {
+				ISource parser = selectParser(inputFile);
+
+				if (parser == null) {
+					mLogger.warn(getLogPrefix() + ": No parsers available for " + inputFile.getAbsolutePath());
+					return false;
+				}
+
+				// set prelude file if present
+				if (preludefile != null) {
+					parser.setPreludeFile(preludefile.getPreludeFile());
+				} else {
+					parser.setPreludeFile(null);
+				}
+				mParsers.put(inputFile, parser);
 			}
-
-			mLogger.info(getLogPrefix() + ": Parser successfully initiated...");
-
+			mLogger.info(getLogPrefix() + ": Parser(s) successfully initiated...");
 			return true;
 		}
 
 		@Override
-		public void runParser() throws Exception {
-			IElement element = runParser(mInputFiles, mParser);
-			GraphType t = mParser.getOutputDefinition();
-			if (t == null) {
-				String errorMsg = mParser.getPluginName() + " returned invalid Output Definition";
-				mLogger.fatal(getLogPrefix() + ": " + errorMsg + ", aborting...");
-				throw new IllegalArgumentException(errorMsg);
+		public void runParsers() throws Exception {
+			for (Entry<File, ISource> entry : mParsers.entrySet()) {
+				ISource parser = entry.getValue();
+				File input = entry.getKey();
+
+				IElement element = runParser(input, parser);
+				GraphType t = parser.getOutputDefinition();
+				if (t == null) {
+					String errorMsg = parser.getPluginName() + " returned invalid output definition for file "
+							+ input.getAbsolutePath();
+					mLogger.fatal(getLogPrefix() + ": " + errorMsg + ", aborting...");
+					throw new IllegalArgumentException(errorMsg);
+				}
+				addAST(element, t);
 			}
-			addAST(element, t);
 		}
 
 		@Override
@@ -234,8 +249,9 @@ public class ToolchainManager {
 							+ ": There is no model present. Did you run a ISource or IGenerator plugin in your toolchain?");
 					throw new IllegalStateException("There is no model present.");
 				}
-				CompleteToolchainData data = mToolchainWalker.new CompleteToolchainData(mToolchainData, mParser,
-						mCurrentController);
+
+				CompleteToolchainData data = mToolchainWalker.new CompleteToolchainData(mToolchainData, mParsers
+						.values().toArray(new ISource[0]), mCurrentController);
 
 				mToolchainWalker.walk(data, mToolchainData.getServices().getProgressMonitorService(), monitor);
 				if (ups.getBoolean(CorePreferenceInitializer.LABEL_WITNESS_GEN)) {
@@ -372,7 +388,7 @@ public class ToolchainManager {
 			return;
 		}
 
-		private final ISource selectParser(final File files) {
+		private final ISource selectParser(final File file) {
 			// how many parsers does m_SourcePlugins provide?
 			ArrayList<ISource> usableParsers = new ArrayList<ISource>();
 			ISource parser = null;
@@ -382,9 +398,15 @@ public class ToolchainManager {
 			// how many of these parsers can be used on our input file?
 			for (String parserId : parserIds) {
 				ISource p = mPluginFactory.createTool(parserId);
-				if (p != null && p.parseable(files)) {
-					mLogger.info(getLogPrefix() + ": Parser " + p.getPluginName() + " is usable.");
+				if (p != null && p.parseable(file)) {
+					mLogger.info(getLogPrefix() + ": Parser " + p.getPluginName() + " is usable for "
+							+ file.getAbsolutePath());
 					usableParsers.add(p);
+				} else {
+					if (mLogger.isDebugEnabled()) {
+						mLogger.debug(getLogPrefix() + ": Parser " + p.getPluginName() + " is not usable for "
+								+ file.getAbsolutePath());
+					}
 				}
 			}
 

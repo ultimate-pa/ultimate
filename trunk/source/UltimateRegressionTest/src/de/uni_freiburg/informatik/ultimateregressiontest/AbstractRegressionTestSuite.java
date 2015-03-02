@@ -3,6 +3,7 @@ package de.uni_freiburg.informatik.ultimateregressiontest;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.regex.Matcher;
 
 import de.uni_freiburg.informatik.ultimatetest.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimatetest.UltimateStarter;
@@ -70,7 +71,12 @@ public abstract class AbstractRegressionTestSuite extends UltimateTestSuite {
 
 		for (File toolchain : toolchainFiles) {
 			String toolchainName = toolchain.getName().replaceAll("\\..*", "");
-			for (File settings : settingsFiles) {
+			String localRegex = Matcher.quoteReplacement(toolchain.getParent())
+					+ ".*";
+			
+			Collection<File> relevantSettings = Util.filterFiles(settingsFiles, localRegex);
+
+			for (File settings : relevantSettings) {
 				String settingsName = settings.getName().replaceAll("\\..*", "");
 
 				if (settingsName.startsWith(toolchainName)) {
@@ -137,6 +143,11 @@ public abstract class AbstractRegressionTestSuite extends UltimateTestSuite {
 
 		public File getSettingsFile() {
 			return mSettingsFile;
+		}
+
+		@Override
+		public String toString() {
+			return "Toolchain:" + getToolchainFile() + " Settings:" + getSettingsFile();
 		}
 
 		private File mToolchainFile;

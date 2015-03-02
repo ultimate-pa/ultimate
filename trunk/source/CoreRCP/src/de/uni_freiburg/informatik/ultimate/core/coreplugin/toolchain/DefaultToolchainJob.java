@@ -23,7 +23,7 @@ import de.uni_freiburg.informatik.ultimate.result.ExceptionOrErrorResult;
  */
 public class DefaultToolchainJob extends BasicToolchainJob {
 
-	private File mInputFile;
+	private File[] mInputFiles;
 	protected IToolchain mToolchain;
 
 	/**
@@ -42,12 +42,12 @@ public class DefaultToolchainJob extends BasicToolchainJob {
 	 *            A {@link PreludeProvider} describing the prelude the parser
 	 *            should use.
 	 */
-	public DefaultToolchainJob(String name, ICore core, IController controller, Logger logger, File input,
+	public DefaultToolchainJob(String name, ICore core, IController controller, Logger logger, File[] input,
 			PreludeProvider preludefile) {
 		super(name, core, controller, logger);
 		setUser(true);
 		setSystem(false);
-		mInputFile = input;
+		setInputFiles(input);
 		mPreludeFile = preludefile;
 		mJobMode = ChainMode.DEFAULT;
 	}
@@ -82,11 +82,11 @@ public class DefaultToolchainJob extends BasicToolchainJob {
 	 * @param prelude
 	 */
 	public DefaultToolchainJob(String name, ICore core, IController controller, Logger logger, ToolchainData data,
-			File input, PreludeProvider prelude) {
+			File[] input, PreludeProvider prelude) {
 		super(name, core, controller, logger);
 		setUser(true);
 		setSystem(false);
-		mInputFile = input;
+		setInputFiles(input);
 		mPreludeFile = prelude;
 		mChain = data;
 		mJobMode = ChainMode.DEFAULT;
@@ -95,6 +95,13 @@ public class DefaultToolchainJob extends BasicToolchainJob {
 	private void setToolchain(IToolchain toolchain) {
 		assert toolchain != null;
 		mToolchain = toolchain;
+	}
+	
+	private void setInputFiles(File[] inputFiles){
+		if(inputFiles == null || inputFiles.length==0){
+			throw new IllegalArgumentException("No input files given");
+		}
+		mInputFiles = inputFiles;
 	}
 
 	/**
@@ -133,7 +140,7 @@ public class DefaultToolchainJob extends BasicToolchainJob {
 			setServices(data.getServices());
 			monitor.worked(1);
 
-			mToolchain.runParser();
+			mToolchain.runParsers();
 			monitor.worked(1);
 
 			returnstatus = mToolchain.processToolchain(monitor);
@@ -170,12 +177,12 @@ public class DefaultToolchainJob extends BasicToolchainJob {
 			mToolchain.init(monitor);
 			monitor.worked(1);
 
-			mToolchain.setInputFile(mInputFile);
+			mToolchain.setInputFiles(mInputFiles);
 			monitor.worked(1);
 
-			retval = mToolchain.initializeParser(mPreludeFile);
+			retval = mToolchain.initializeParsers(mPreludeFile);
 			if (!retval) {
-				throw new Exception();
+				throw new RuntimeException("Parser initialization failed");
 			}
 			monitor.worked(1);
 
@@ -193,7 +200,7 @@ public class DefaultToolchainJob extends BasicToolchainJob {
 			setServices(mChain.getServices());
 			monitor.worked(1);
 
-			mToolchain.runParser();
+			mToolchain.runParsers();
 			monitor.worked(1);
 
 			returnstatus = mToolchain.processToolchain(monitor);

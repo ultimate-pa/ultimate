@@ -32,7 +32,7 @@
    </launcher>
 
    <vm>
-      <windows include="false">org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.6</windows>
+      <windows include="false">org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.7</windows>
    </vm>
 
    <plugins>
@@ -51,8 +51,8 @@
       <plugin id="TraceAbstraction"/>
       <plugin id="UltimateCore"/>
       <plugin id="com.ibm.icu"/>
-      <plugin id="javax.annotation" fragment=""/>
-      <plugin id="javax.inject" fragment=""/>
+      <plugin id="javax.annotation"/>
+      <plugin id="javax.inject"/>
       <plugin id="javax.xml"/>
       <plugin id="org.apache.batik.css"/>
       <plugin id="org.apache.batik.util"/>
@@ -65,24 +65,24 @@
       <plugin id="org.eclipse.core.expressions"/>
       <plugin id="org.eclipse.core.jobs"/>
       <plugin id="org.eclipse.core.runtime"/>
-      <plugin id="org.eclipse.e4.core.commands" fragment=""/>
-      <plugin id="org.eclipse.e4.core.contexts" fragment=""/>
-      <plugin id="org.eclipse.e4.core.di" fragment=""/>
-      <plugin id="org.eclipse.e4.core.di.extensions" fragment=""/>
-      <plugin id="org.eclipse.e4.core.services" fragment=""/>
-      <plugin id="org.eclipse.e4.ui.bindings" fragment=""/>
-      <plugin id="org.eclipse.e4.ui.css.core" fragment=""/>
-      <plugin id="org.eclipse.e4.ui.css.swt" fragment=""/>
-      <plugin id="org.eclipse.e4.ui.css.swt.theme" fragment=""/>
-      <plugin id="org.eclipse.e4.ui.di" fragment=""/>
-      <plugin id="org.eclipse.e4.ui.model.workbench" fragment=""/>
-      <plugin id="org.eclipse.e4.ui.services" fragment=""/>
-      <plugin id="org.eclipse.e4.ui.widgets" fragment=""/>
-      <plugin id="org.eclipse.e4.ui.workbench" fragment=""/>
-      <plugin id="org.eclipse.e4.ui.workbench.addons.swt" fragment=""/>
-      <plugin id="org.eclipse.e4.ui.workbench.renderers.swt" fragment=""/>
-      <plugin id="org.eclipse.e4.ui.workbench.swt" fragment=""/>
-      <plugin id="org.eclipse.e4.ui.workbench3" fragment=""/>
+      <plugin id="org.eclipse.e4.core.commands"/>
+      <plugin id="org.eclipse.e4.core.contexts"/>
+      <plugin id="org.eclipse.e4.core.di"/>
+      <plugin id="org.eclipse.e4.core.di.extensions"/>
+      <plugin id="org.eclipse.e4.core.services"/>
+      <plugin id="org.eclipse.e4.ui.bindings"/>
+      <plugin id="org.eclipse.e4.ui.css.core"/>
+      <plugin id="org.eclipse.e4.ui.css.swt"/>
+      <plugin id="org.eclipse.e4.ui.css.swt.theme"/>
+      <plugin id="org.eclipse.e4.ui.di"/>
+      <plugin id="org.eclipse.e4.ui.model.workbench"/>
+      <plugin id="org.eclipse.e4.ui.services"/>
+      <plugin id="org.eclipse.e4.ui.widgets"/>
+      <plugin id="org.eclipse.e4.ui.workbench"/>
+      <plugin id="org.eclipse.e4.ui.workbench.addons.swt"/>
+      <plugin id="org.eclipse.e4.ui.workbench.renderers.swt"/>
+      <plugin id="org.eclipse.e4.ui.workbench.swt"/>
+      <plugin id="org.eclipse.e4.ui.workbench3"/>
       <plugin id="org.eclipse.emf.common"/>
       <plugin id="org.eclipse.emf.ecore"/>
       <plugin id="org.eclipse.emf.ecore.change"/>
