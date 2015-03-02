@@ -164,7 +164,7 @@ Params:
     
     
     <script type="text/javascript" charset="utf-8" src="//ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
-    <script type="text/javascript" charset="utf-8" src="http://crypto-js.googlecode.com/svn/tags/3.1.2/build/rollups/md5.js"></script>
+    <script type="text/javascript" charset="utf-8" src="<%=request.getScheme()%>://crypto-js.googlecode.com/svn/tags/3.1.2/build/rollups/md5.js"></script>
     <script type="text/javascript" charset="utf-8" src="./js/transfer.jsp?tool=<c:out value="${tool}" default=""/>"></script>
     <script type="text/javascript" charset="utf-8" src="./js/ace-min/ace.js"></script>
     <script>window.define = ace.define;window.require = ace.require;</script>
