@@ -16,8 +16,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Stack;
 
-import javax.print.DocFlavor.STRING;
-
 import org.apache.log4j.Logger;
 import org.eclipse.cdt.core.dom.ast.IASTASMDeclaration;
 import org.eclipse.cdt.core.dom.ast.IASTArrayDeclarator;
@@ -177,8 +175,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietransla
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.POINTER_CHECKMODE;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.UNSIGNED_TREATMENT;
 import de.uni_freiburg.informatik.ultimate.result.Check;
-import de.uni_freiburg.informatik.ultimate.result.LTLPropertyCheck;
 import de.uni_freiburg.informatik.ultimate.result.Check.Spec;
+import de.uni_freiburg.informatik.ultimate.result.LTLPropertyCheck;
 import de.uni_freiburg.informatik.ultimate.result.LTLPropertyCheck.CheckableExpression;
 
 /**
@@ -190,6 +188,14 @@ import de.uni_freiburg.informatik.ultimate.result.LTLPropertyCheck.CheckableExpr
  * @date 01.02.2012
  */
 public class CHandler implements ICHandler {
+	
+	/**
+	 * If set to true we say Unsupported Syntax if there is some cast of
+	 * pointers.
+	 * Right now we are unable to handle casts of pointers soundly. However
+	 * these soundness errors occur seldom.
+	 */
+	private final static boolean s_PointerCastIsUnsupportedSyntax = false;
 
 	//the CHandler knows all its different Handlers..
 	protected ArrayHandler mArrayHandler;
@@ -2343,7 +2349,7 @@ public class CHandler implements ICHandler {
 			expr = expr.switchToRValueIfNecessary(main, mMemoryHandler, mStructHandler, loc);
 		}
 
-		if (newCType instanceof CPointer && expr.lrVal.cType instanceof CPointer) {
+		if (s_PointerCastIsUnsupportedSyntax && newCType instanceof CPointer && expr.lrVal.cType instanceof CPointer) {
 			CType newPointsToType = ((CPointer) newCType).pointsToType;
 			CType exprPointsToType = ((CPointer) expr.lrVal.cType).pointsToType;
 			if (newPointsToType instanceof CPrimitive
@@ -2373,10 +2379,7 @@ public class CHandler implements ICHandler {
 					throw new UnsupportedSyntaxException(loc, "unsupported cast: " + exprPointsToType 
 							+ " pointer  to " + newPointsToType + " pointer");
 				}
-
-
 			}
-
 		}
 
 		expr.lrVal = castToType(loc, (RValue) expr.lrVal, newCType);
