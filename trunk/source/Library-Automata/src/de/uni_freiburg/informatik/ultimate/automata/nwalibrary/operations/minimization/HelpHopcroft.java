@@ -2,6 +2,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minim
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Queue;
 
 /**
  * Helper Task for processing information from the Incremental algorithm for the
@@ -28,8 +29,8 @@ public class HelpHopcroft implements Runnable {
 	 * @param state2
 	 */
 	public HelpHopcroft(final MinimizeDfaAmrParallel<?, ?> incremental,
-			final MinimizeDfaHopcroftParallel<?, ?> hopcroft, final int state1,
-			final int state2) {
+			final MinimizeDfaHopcroftParallel<?, ?> hopcroft,
+			final int state1, final int state2) {
 		m_incrementalAlgorithm = incremental;
 		m_hopcroftAlgorithm = hopcroft;
 		m_state1 = state1;
@@ -38,40 +39,44 @@ public class HelpHopcroft implements Runnable {
 
 	@Override
 	public void run() {
+		ArrayList<Integer> setToRemove = null;
+
 		// If a set in partition of Hopcroft contains state1 and state2 check
 		// whether all states in that set are equivalent.
-		ArrayList<int[]> setList = m_hopcroftAlgorithm.getSetList();
+		Queue<ArrayList<Integer>> setList = m_hopcroftAlgorithm.getSetList();
+		// Return in case of empty set list.
+		if (setList.isEmpty()) {
+			return;
+		}
 		synchronized (setList) {
-			// Return in case of empty set list.
-			if (setList.size() < 1) {
-				return;
-			}
-			for (int[] set : setList) {
-				if (Arrays.asList(set).contains(m_state1)
-						&& Arrays.asList(set).contains(m_state2)) {
+			for (ArrayList<Integer> set : setList) {
+				if (set == null) {
+					continue;
+				}
+				if (set.contains(m_state1) && set.contains(m_state2)) {
 					boolean eq = true;
-					for (int i = 0; i < set.length - 1 && eq; i++) {
-						for (int j = i + 1; j < set.length && eq; j++) {
-							if (m_incrementalAlgorithm.find(set[i]) != m_incrementalAlgorithm
-									.find(set[j])) {
+					for (int i = 0; i < set.size() - 1 && eq; i++) {
+						for (int j = i + 1; j < set.size() && eq; j++) {
+							if (m_incrementalAlgorithm.find(set.get(i)) != m_incrementalAlgorithm
+									.find(set.get(j))) {
 								eq = false;
 							}
 						}
 					}
 					if (eq) {
-						setList.remove(set);
-						ArrayList<int[]> partitions = m_hopcroftAlgorithm
+						setToRemove = set;
+						Queue<ArrayList<Integer>> partitions = m_hopcroftAlgorithm
 								.getFinalPartitions();
-						synchronized (partitions) {
-							if (partitions != null) {
-								partitions.add(set);
-							}
+						if (partitions != null) {
+							partitions.add(set);
 						}
-
 					}
+
 				}
+			}
+			if (setToRemove != null) {
+				setList.remove(setToRemove);
 			}
 		}
 	}
-
 }
