@@ -49,7 +49,11 @@ public class NondeterministicInterpolantAutomaton extends TotalInterpolantAutoma
 		for (IPredicate state : allPredicates) {
 			if (state != m_IaTrueState && state != m_IaFalseState) {
 				m_NonTrivialPredicates.add(state);
-				m_Result.addState(false, false, state);
+				// the following two lines are important if not (only) 
+				// true/false are initial/final states of the automaton.
+				boolean isInitial = interpolantAutomaton.isInitial(state);
+				boolean isFinal = interpolantAutomaton.isFinal(state);
+				m_Result.addState(isInitial, isFinal, state);
 			}
 		}
 
