@@ -33,7 +33,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Roo
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CoverageAnalysis.BackwardCoveringInformation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryRefinement;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataTransitionAppender.EagerInterpolantAutomaton;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataTransitionAppender.NondeterministicInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.InductivityCheck;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.MonolithicHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
@@ -217,9 +217,14 @@ public class RefineBuchi {
 			m_InterpolAutomatonUsedInRefinement = m_InterpolAutomaton;
 			break;
 		case EagerNondeterminism:
-			BuchiEdgeChecker ec = new BuchiEdgeChecker(m_SmtManager, buchiModGlobalVarManager);
-			ec.putDecreaseEqualPair(bspm.getHondaPredicate(), bspm.getRankEqAndSi());
-			m_InterpolAutomatonUsedInRefinement = new EagerInterpolantAutomaton(m_Services, ec, m_InterpolAutomaton);
+			if (!m_InterpolAutomaton.getStates().contains(pu.getTruePredicate())) {
+				m_InterpolAutomaton.addState(false, false, pu.getTruePredicate());
+			}
+			if (!m_InterpolAutomaton.getStates().contains(pu.getFalsePredicate())) {
+				m_InterpolAutomaton.addState(false, true, pu.getFalsePredicate());
+			}
+			m_InterpolAutomatonUsedInRefinement = new NondeterministicInterpolantAutomaton(m_Services, m_SmtManager, 
+					buchiModGlobalVarManager, bhtc, m_Abstraction, m_InterpolAutomaton, pu, mLogger);
 			break;
 		case ScroogeNondeterminism:
 		case Deterministic:
@@ -403,7 +408,7 @@ public class RefineBuchi {
 			// do nothing
 			break;
 		case EagerNondeterminism:
-			((EagerInterpolantAutomaton) interpolantAutomaton).finishConstruction();
+			((NondeterministicInterpolantAutomaton) interpolantAutomaton).switchToReadonlyMode();
 			break;
 		case ScroogeNondeterminism:
 		case Deterministic:
