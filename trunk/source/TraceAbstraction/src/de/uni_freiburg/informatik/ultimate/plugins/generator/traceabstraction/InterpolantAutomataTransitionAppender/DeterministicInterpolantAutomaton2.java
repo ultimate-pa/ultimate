@@ -86,11 +86,11 @@ public class DeterministicInterpolantAutomaton2 extends TotalInterpolantAutomato
 		
 		assert m_IaTrueState.getFormula().toString().equals("true");
 		assert allPredicates.contains(m_IaTrueState);
-		m_Result.addState(true, false, m_IaTrueState);
+		m_AlreadyConstrucedAutomaton.addState(true, false, m_IaTrueState);
 		m_ResPred2InputPreds.addPair(m_IaTrueState, m_IaTrueState);
 		assert m_IaFalseState.getFormula().toString().equals("false");
 		assert allPredicates.contains(m_IaFalseState);
-		m_Result.addState(false, true, m_IaFalseState);
+		m_AlreadyConstrucedAutomaton.addState(false, true, m_IaFalseState);
 		m_ResPred2InputPreds.addPair(m_IaFalseState, m_IaFalseState);
 
 		m_NonTrivialPredicates = new HashSet<IPredicate>();
@@ -115,7 +115,7 @@ public class DeterministicInterpolantAutomaton2 extends TotalInterpolantAutomato
 		Set<IPredicate> impliedPredicates = 
 				m_PredicateUnifier.getCoverageRelation().getCoveringPredicates(resPred);
 		for (IPredicate impliedPredicate : impliedPredicates) {
-			if (impliedPredicate != m_IaTrueState && m_InterpolantAutomaton.getStates().contains(impliedPredicate)) {
+			if (impliedPredicate != m_IaTrueState && m_InputInterpolantAutomaton.getStates().contains(impliedPredicate)) {
 				m_ResPred2InputPreds.addPair(resPred, impliedPredicate);
 			}
 		}
@@ -135,7 +135,7 @@ public class DeterministicInterpolantAutomaton2 extends TotalInterpolantAutomato
 	protected String switchToReadonlyMessage() {
 		StringBuilder sb = new StringBuilder();
 		sb.append("Switched to read-only mode: deterministic interpolant automaton has ");
-		sb.append(m_Result.size()).append(" states. ");
+		sb.append(m_AlreadyConstrucedAutomaton.size()).append(" states. ");
 		return sb.toString();
 	}
 	
@@ -143,7 +143,7 @@ public class DeterministicInterpolantAutomaton2 extends TotalInterpolantAutomato
 	protected String switchToOnTheFlyConstructionMessage() {
 		StringBuilder sb = new StringBuilder();
 		sb.append("Switched to On-DemandConstruction mode: deterministic interpolant automaton has ");
-		sb.append(m_Result.size()).append(" states. ");
+		sb.append(m_AlreadyConstrucedAutomaton.size()).append(" states. ");
 		return sb.toString();
 	}
 
@@ -231,8 +231,8 @@ public class DeterministicInterpolantAutomaton2 extends TotalInterpolantAutomato
 			result = m_IaTrueState;
 		} else if (succs.size() == 1) {
 			result = succs.iterator().next();
-			if (!m_Result.contains(result)) {
-				m_Result.addState(false, false, result);
+			if (!m_AlreadyConstrucedAutomaton.contains(result)) {
+				m_AlreadyConstrucedAutomaton.addState(false, false, result);
 			}
 		} else {
 			IPredicate resSucc = m_InputPreds2ResultPreds.get(succs);
@@ -246,9 +246,9 @@ public class DeterministicInterpolantAutomaton2 extends TotalInterpolantAutomato
 						m_ResPred2InputPreds.addPair(resSucc, succ);
 					}
 				}
-				if (!m_Result.contains(resSucc)) {
+				if (!m_AlreadyConstrucedAutomaton.contains(resSucc)) {
 					processResPredInputPredsMapping(resSucc);
-					m_Result.addState(false, false, resSucc);
+					m_AlreadyConstrucedAutomaton.addState(false, false, resSucc);
 				}
 			} 
 			result = resSucc;

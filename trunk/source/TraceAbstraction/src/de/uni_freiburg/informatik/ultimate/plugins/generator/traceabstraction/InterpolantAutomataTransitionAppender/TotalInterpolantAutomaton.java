@@ -91,7 +91,7 @@ public abstract class TotalInterpolantAutomaton extends
 
 	@Override
 	protected boolean areInternalSuccsComputed(IPredicate state, CodeBlock letter) {
-		Collection<IPredicate> succs = m_Result.succInternal(state, letter);
+		Collection<IPredicate> succs = m_AlreadyConstrucedAutomaton.succInternal(state, letter);
 		if (succs == null) {
 			return false;
 		} else {
@@ -101,7 +101,7 @@ public abstract class TotalInterpolantAutomaton extends
 
 	@Override
 	protected boolean areCallSuccsComputed(IPredicate state, Call call) {
-		Collection<IPredicate> succs = m_Result.succCall(state, call);
+		Collection<IPredicate> succs = m_AlreadyConstrucedAutomaton.succCall(state, call);
 		if (succs == null) {
 			return false;
 		} else {
@@ -112,7 +112,7 @@ public abstract class TotalInterpolantAutomaton extends
 	@Override
 	protected boolean areReturnSuccsComputed(IPredicate state, IPredicate hier,
 			Return ret) {
-		Collection<IPredicate> succs = m_Result.succReturn(state, hier, ret);
+		Collection<IPredicate> succs = m_AlreadyConstrucedAutomaton.succReturn(state, hier, ret);
 		if (succs == null) {
 			return false;
 		} else {

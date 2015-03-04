@@ -40,10 +40,10 @@ public class NondeterministicInterpolantAutomaton extends TotalInterpolantAutoma
 		
 		assert SmtUtils.isTrue(m_IaTrueState.getFormula());
 		assert allPredicates.contains(m_IaTrueState);
-		m_Result.addState(true, false, m_IaTrueState);
+		m_AlreadyConstrucedAutomaton.addState(true, false, m_IaTrueState);
 		assert SmtUtils.isFalse(m_IaFalseState.getFormula());
 		assert allPredicates.contains(m_IaFalseState);
-		m_Result.addState(false, true, m_IaFalseState);
+		m_AlreadyConstrucedAutomaton.addState(false, true, m_IaFalseState);
 
 		m_NonTrivialPredicates = new HashSet<IPredicate>();
 		for (IPredicate state : allPredicates) {
@@ -53,7 +53,7 @@ public class NondeterministicInterpolantAutomaton extends TotalInterpolantAutoma
 				// true/false are initial/final states of the automaton.
 				boolean isInitial = interpolantAutomaton.isInitial(state);
 				boolean isFinal = interpolantAutomaton.isFinal(state);
-				m_Result.addState(isInitial, isFinal, state);
+				m_AlreadyConstrucedAutomaton.addState(isInitial, isFinal, state);
 			}
 		}
 
@@ -75,7 +75,7 @@ public class NondeterministicInterpolantAutomaton extends TotalInterpolantAutoma
 	protected String switchToReadonlyMessage() {
 		StringBuilder sb = new StringBuilder();
 		sb.append("Switched to read-only mode: nondeterministic interpolant automaton has ");
-		sb.append(m_Result.size()).append(" states. ");
+		sb.append(m_AlreadyConstrucedAutomaton.size()).append(" states. ");
 		return sb.toString();
 	}
 	
@@ -83,7 +83,7 @@ public class NondeterministicInterpolantAutomaton extends TotalInterpolantAutoma
 	protected String switchToOnTheFlyConstructionMessage() {
 		StringBuilder sb = new StringBuilder();
 		sb.append("Switched to On-DemandConstruction mode: nondeterministic interpolant automaton has ");
-		sb.append(m_Result.size()).append(" states. ");
+		sb.append(m_AlreadyConstrucedAutomaton.size()).append(" states. ");
 		return sb.toString();
 	}
 
