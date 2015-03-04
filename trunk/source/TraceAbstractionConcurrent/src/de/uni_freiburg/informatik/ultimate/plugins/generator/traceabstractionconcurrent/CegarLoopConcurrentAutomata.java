@@ -131,7 +131,8 @@ public class CegarLoopConcurrentAutomata extends BasicCegarLoop {
 		INestedWordAutomatonOldApi<CodeBlock, IPredicate> oldAbstraction = (INestedWordAutomatonOldApi<CodeBlock, IPredicate>) m_Abstraction;
 		Map<IPredicate, Set<IPredicate>> removedDoubleDeckers = null;
 		Map<IPredicate, IPredicate> context2entry = null;
-		IHoareTripleChecker htc = super.getEfficientHoareTripleChecker();
+		IHoareTripleChecker htc = getEfficientHoareTripleChecker(m_Pref.getHoareTripleChecks(), 
+				m_SmtManager, m_ModGlobVarManager, m_TraceChecker.getPredicateUnifier());
 		mLogger.debug("Start constructing difference");
 		assert (oldAbstraction.getStateFactory() == m_InterpolAutomaton.getStateFactory());
 

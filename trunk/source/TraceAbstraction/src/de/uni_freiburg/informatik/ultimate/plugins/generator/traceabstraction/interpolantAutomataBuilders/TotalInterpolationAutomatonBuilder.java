@@ -28,17 +28,20 @@ import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.BenchmarkData;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.IBenchmarkDataProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.IBenchmarkType;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.EdgeChecker;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IHoareTripleChecker;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IHoareTripleChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.HoareTripleChecks;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.INTERPOLATION;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.InterpolatingTraceChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.InterpolatingTraceCheckerCraig;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.InterpolatingTraceChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceCheckerUtils.InterpolantsPreconditionPostcondition;
 
 public class TotalInterpolationAutomatonBuilder {
@@ -58,7 +61,7 @@ public class TotalInterpolationAutomatonBuilder {
 	// private final IPredicate m_TruePredicate;
 	// private final IPredicate m_FalsePredicate;
 	private final AutomatonEpimorphism<IPredicate> m_Epimorphism;
-	private final EdgeChecker m_EdgeChecker;
+	private final IHoareTripleChecker m_Htc;
 	private final ModifiableGlobalVariableManager m_ModifiedGlobals;
 	private final INTERPOLATION m_Interpolation;
 
@@ -68,7 +71,7 @@ public class TotalInterpolationAutomatonBuilder {
 	public TotalInterpolationAutomatonBuilder(INestedWordAutomaton<CodeBlock, IPredicate> abstraction,
 			ArrayList<IPredicate> stateSequence, InterpolatingTraceChecker traceChecker, SmtManager smtManager,
 			PredicateFactory predicateFactory, ModifiableGlobalVariableManager modifiableGlobals,
-			INTERPOLATION interpolation, IUltimateServiceProvider services) throws OperationCanceledException {
+			INTERPOLATION interpolation, IUltimateServiceProvider services, HoareTripleChecks hoareTripleChecks) throws OperationCanceledException {
 		super();
 		mServices = services;
 		m_StateSequence = stateSequence;
@@ -95,7 +98,8 @@ public class TotalInterpolationAutomatonBuilder {
 			m_Annotated.add(lastAutomatonState);
 			m_Worklist.add(lastAutomatonState);
 		}
-		m_EdgeChecker = new EdgeChecker(m_SmtManager, m_ModifiedGlobals);
+		m_Htc = BasicCegarLoop.getEfficientHoareTripleChecker(hoareTripleChecks, 
+				m_SmtManager, m_ModifiedGlobals, m_PredicateUnifier);
 		for (IPredicate state : stateSequence) {
 			m_Worklist.add(state);
 			m_Annotated.add(state);
@@ -104,7 +108,7 @@ public class TotalInterpolationAutomatonBuilder {
 			IPredicate p = m_Worklist.removeFirst();
 			doThings(p);
 		}
-		m_BenchmarkGenerator.addEdgeCheckerData(m_EdgeChecker.getEdgeCheckerBenchmark());
+		m_BenchmarkGenerator.addEdgeCheckerData(m_Htc.getEdgeCheckerBenchmark());
 	}
 
 	private void doThings(IPredicate p) throws OperationCanceledException {
@@ -190,47 +194,35 @@ public class TotalInterpolationAutomatonBuilder {
 
 	private void checkRunOfLenthOne(IPredicate predItp, Transitionlet<CodeBlock, IPredicate> transition,
 			IPredicate succItp) {
-		assert m_EdgeChecker.isAssertionStackEmpty();
-		m_EdgeChecker.assertCodeBlock(transition.getLetter());
 		if (transition instanceof OutgoingInternalTransition) {
 			OutgoingInternalTransition<CodeBlock, IPredicate> internalTrans = (OutgoingInternalTransition<CodeBlock, IPredicate>) transition;
-			m_EdgeChecker.assertPrecondition(predItp);
-			LBool lbool = m_EdgeChecker.postInternalImplies(succItp);
-			if (lbool == LBool.UNSAT) {
+			Validity validity = m_Htc.checkInternal(predItp, transition.getLetter(), succItp);
+			if (validity == Validity.VALID) {
 				m_IA.addInternalTransition(predItp, internalTrans.getLetter(), succItp);
 			}
 		} else if (transition instanceof OutgoingCallTransition) {
 			OutgoingCallTransition<CodeBlock, IPredicate> callTrans = (OutgoingCallTransition<CodeBlock, IPredicate>) transition;
-			m_EdgeChecker.assertPrecondition(predItp);
-			LBool lbool = m_EdgeChecker.postCallImplies(succItp);
-			if (lbool == LBool.UNSAT) {
+			Validity validity = m_Htc.checkCall(predItp, callTrans.getLetter(), succItp);
+			if (validity == Validity.VALID) {
 				m_IA.addCallTransition(predItp, callTrans.getLetter(), succItp);
 			}
 		} else if (transition instanceof OutgoingReturnTransition) {
 			OutgoingReturnTransition<CodeBlock, IPredicate> returnTrans = (OutgoingReturnTransition<CodeBlock, IPredicate>) transition;
 			IPredicate hierPredItp = m_Epimorphism.getMapping(returnTrans.getHierPred());
-			m_EdgeChecker.assertPrecondition(predItp);
-			m_EdgeChecker.assertHierPred(hierPredItp);
-			LBool lbool = m_EdgeChecker.postReturnImplies(succItp);
-			if (lbool == LBool.UNSAT) {
+			Validity validity = m_Htc.checkReturn(predItp, hierPredItp, returnTrans.getLetter(), succItp);
+			if (validity == Validity.VALID) {
 				m_IA.addReturnTransition(predItp, hierPredItp, returnTrans.getLetter(), succItp);
 			}
-			m_EdgeChecker.unAssertHierPred();
 		} else if (transition instanceof SummaryReturnTransition) {
 			SummaryReturnTransition<CodeBlock, IPredicate> summaryTrans = (SummaryReturnTransition<CodeBlock, IPredicate>) transition;
 			IPredicate linPredItp = m_Epimorphism.getMapping(summaryTrans.getLinPred());
-			m_EdgeChecker.assertPrecondition(linPredItp);
-			m_EdgeChecker.assertHierPred(predItp);
-			LBool lbool = m_EdgeChecker.postReturnImplies(succItp);
-			if (lbool == LBool.UNSAT) {
+			Validity validity = m_Htc.checkReturn(linPredItp, predItp, summaryTrans.getLetter(), succItp);
+			if (validity == Validity.VALID) {
 				m_IA.addReturnTransition(linPredItp, predItp, summaryTrans.getLetter(), succItp);
 			}
-			m_EdgeChecker.unAssertHierPred();
 		} else {
 			throw new AssertionError("unsupported" + transition.getClass());
 		}
-		m_EdgeChecker.unAssertPrecondition();
-		m_EdgeChecker.unAssertCodeBlock();
 	}
 
 	private void caseDistinction(IPredicate p, Transitionlet<CodeBlock, IPredicate> transition, IPredicate succ) {

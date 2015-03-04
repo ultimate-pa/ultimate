@@ -38,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvide
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.TermVarsProc;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.ta.IsEmptyWithAI;
@@ -66,6 +67,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.InterpolantAutomatonEnhancement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.HoareTripleChecks;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.INTERPOLATION;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.Minimization;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.UnsatCores;
@@ -312,7 +314,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 			TotalInterpolationAutomatonBuilder iab = new TotalInterpolationAutomatonBuilder(abstraction,
 					counterexample.getStateSequence(), m_TraceChecker, m_SmtManager,
 					m_PredicateFactoryInterpolantAutomata, m_RootNode.getRootAnnot().getModGlobVarManager(),
-					m_Interpolation, m_Services);
+					m_Interpolation, m_Services, m_Pref.getHoareTripleChecks());
 			m_InterpolAutomaton = iab.getResult();
 			m_CegarLoopBenchmark.addTotalInterpolationData(iab.getTotalInterpolationBenchmark());
 		}
@@ -350,7 +352,8 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		// Map<IPredicate, Set<IPredicate>> removedDoubleDeckers = null;
 		// Map<IPredicate, IPredicate> context2entry = null;
 
-		IHoareTripleChecker htc = getEfficientHoareTripleChecker();
+		IHoareTripleChecker htc = getEfficientHoareTripleChecker(m_Pref.getHoareTripleChecks(), 
+				m_SmtManager, m_ModGlobVarManager, m_TraceChecker.getPredicateUnifier());
 
 		try {
 			if (m_DifferenceInsteadOfIntersection) {
@@ -565,20 +568,23 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		}
 	}
 
-	protected IHoareTripleChecker getEfficientHoareTripleChecker() throws AssertionError {
+	public static IHoareTripleChecker getEfficientHoareTripleChecker(
+			HoareTripleChecks hoareTripleChecks, SmtManager smtManager, 
+			ModifiableGlobalVariableManager modGlobVarManager, 
+			PredicateUnifier predicateUnifier) throws AssertionError {
 		final IHoareTripleChecker solverHtc;
-		switch (m_Pref.getHoareTripleChecks()) {
+		switch (hoareTripleChecks) {
 		case MONOLITHIC:
-			solverHtc = new MonolithicHoareTripleChecker(m_SmtManager);
+			solverHtc = new MonolithicHoareTripleChecker(smtManager);
 			break;
 		case INCREMENTAL:
-			solverHtc = new IncrementalHoareTripleChecker(m_SmtManager, m_ModGlobVarManager);
+			solverHtc = new IncrementalHoareTripleChecker(smtManager, modGlobVarManager);
 			break;
 		default:
 			throw new AssertionError("unknown value");
 		}
-		IHoareTripleChecker htc = new EfficientHoareTripleChecker(solverHtc, m_RootNode.getRootAnnot()
-				.getModGlobVarManager(), m_TraceChecker.getPredicateUnifier(), m_SmtManager);
+		IHoareTripleChecker htc = new EfficientHoareTripleChecker(solverHtc, 
+				modGlobVarManager, predicateUnifier, smtManager);
 		return htc;
 	}
 
