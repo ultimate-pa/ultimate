@@ -241,15 +241,36 @@ public class Util {
 	}
 
 	/**
-	 * Returns recursively all files in a directory that have a path which is
-	 * matched by regex. If root is a file, a collection containing root is
-	 * returned (ignoring the regex)
+	 * Returns recursively all files in a directory that have a path whose 
+	 * suffix beyond root is matched by regex. If root is a file, a collection 
+	 * containing root is returned (ignoring the regex)
+	 * E.g., your file root has the absolute path
+	 *   /home/horst/ultimate/
+	 * and your regex is *horst* you obtain the files that contain the String
+	 * "horst" if the prefix "/home/horst/ultimate/" was removed.
 	 * 
 	 * @param root
 	 * @param regex
 	 * @return
 	 */
 	public static Collection<File> getFilesRegex(File root, String[] regex) {
+		return getFilesRegex(root.getAbsolutePath(), root, regex);
+	}
+	
+	
+	/**
+	 * Returns recursively all files in a directory that have a path whose 
+	 * suffix beyond the String prefix is matched by regex. If root is a file, 
+	 * a collection containing root is returned (ignoring the regex).
+	 * 
+	 * @param root
+	 * @param regex
+	 * @return
+	 */
+	private static Collection<File> getFilesRegex(String prefix, File root, String[] regex) {
+		if (!root.getAbsolutePath().startsWith(prefix)) {
+			throw new IllegalArgumentException("prefix is no prefix of root.getAbsolutePath()");
+		}
 		ArrayList<File> rtr = new ArrayList<File>();
 
 		if (root.isFile()) {
@@ -265,7 +286,7 @@ public class Util {
 
 		for (File f : list) {
 			if (f.isDirectory()) {
-				rtr.addAll(getFilesRegex(f, regex));
+				rtr.addAll(getFilesRegex(prefix, f, regex));
 			} else {
 
 				if (regex == null || regex.length == 0) {
@@ -273,12 +294,13 @@ public class Util {
 				} else {
 					for (String s : regex) {
 						try {
-							if (f.getAbsolutePath().matches(s)) {
+							String suffix = f.getAbsolutePath().substring(prefix.length());
+							if (suffix.matches(s)) {
 								rtr.add(f);
 								break;
 							}
 						} catch (Exception e) {
-
+							throw e;
 						}
 
 					}
@@ -287,6 +309,7 @@ public class Util {
 		}
 		return rtr;
 	}
+	
 
 	public static <E> Collection<E> uniformN(Collection<E> collection, int n) {
 		ArrayList<E> rtr = new ArrayList<E>(n);
