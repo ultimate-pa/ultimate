@@ -17,20 +17,6 @@
   
   Map<String, Worker> worker = (Map<String, Worker>) pageContext.getAttribute("worker", s);
   JSONObject content = (JSONObject) pageContext.getAttribute("content", s);
-  
-  System.out.println("transfer.jsp DEBUG");
-  System.out.println("transfer.jsp: content: "+content);
-	if (worker != null) {
-		for (Map.Entry<String, Worker> entry : worker.entrySet()) {
-			System.out.println("transfer.jsp: worker entry: " + entry.getKey() + "=" + entry.getValue());
-		}
-	}
-	System.out.println("transfer.jsp: currentWorker: " + currentWorker);
-	System.out.println("transfer.jsp: pc.worker: " + pageContext.getAttribute("worker"));
-	System.out.println("transfer.jsp: pc.worker, s: " + pageContext.getAttribute("worker", s));
-// 	System.out.println("transfer.jsp: session.worker: " + session.getAttribute("worker"));
-// 	System.out.println("transfer.jsp: session.worker, s: " + session.getAttribute("worker",s));
-	
 %>
 
 var _SERVER_INFO =

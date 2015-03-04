@@ -44,12 +44,19 @@ public class Tool {
 	 * @param loggingLevel
 	 *            the level of Ultimates output for this specific tool.
 	 */
-	public Tool(String id, List<Setting> optionalSettings,
-			List<Setting> mandatorySettings, LoggingLevel loggingLevel) {
+	public Tool(String id, List<Setting> optionalSettings, List<Setting> mandatorySettings, LoggingLevel loggingLevel) {
 		this.id = id;
 		this.optionalSettings = optionalSettings;
 		this.mandatorySettings = mandatorySettings;
 		this.loggingLevel = loggingLevel;
+	}
+
+	/**
+	 * Constructor which sets everything to defaults.
+	 * @param id
+	 */
+	public Tool(String id) {
+		this(id, new ArrayList<Setting>(), new ArrayList<Setting>(), LoggingLevel.WARN);
 	}
 
 	/**
@@ -69,8 +76,7 @@ public class Tool {
 	 *         code.
 	 */
 	public String getHTMLId() {
-		String s = id.replaceAll(
-				"[^\\p{L}\\p{N}]", "");
+		String s = id.replaceAll("[^\\p{L}\\p{N}]", "");
 		return s.substring(0, s.length()).toLowerCase();
 	}
 
@@ -93,7 +99,7 @@ public class Tool {
 		}
 		return userchangeableSettings;
 	}
-	
+
 	/**
 	 * Getter for the list of <i>not</i> user changeable settings for this tool.
 	 * 
@@ -122,7 +128,7 @@ public class Tool {
 	public List<Setting> getMandatorySettings() {
 		return mandatorySettings;
 	}
-	
+
 	/**
 	 * Getter for the list of optional settings.
 	 * 

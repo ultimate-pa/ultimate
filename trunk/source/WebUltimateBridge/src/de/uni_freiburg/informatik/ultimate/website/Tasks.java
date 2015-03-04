@@ -179,6 +179,11 @@ public class Tasks {
 		w = new Worker(name, "analyze", description, null);
 		sWorkers.put(w.getId(), w);
 
+		name = "LTL Automizer";
+		description = "An LTL software model checker based on separation of (in)feasibility and (non-)termination proofs.";
+		w = new Worker(name, "analyze", description, null);
+		sWorkers.put(w.getId(), w);
+
 		name = "Lasso Ranker";
 		description = "This is to synthesize ranking functions of lasso programs.";
 		w = new Worker(name, "rank", description, null);
@@ -228,7 +233,7 @@ public class Tasks {
 	 */
 	private static void initTaskNames() {
 		SimpleLogger.log("Initializing task names...");
-		
+
 		// String should have at most 30 chars and must not be empty!
 		sTaskStrings.put(TaskNames.AUTOMATA_SCRIPT, "Run Automata Script");
 		sTaskStrings.put(TaskNames.RunSmt2Script, "Run Smt2Script (not yet available)");
@@ -239,7 +244,7 @@ public class Tasks {
 		sTaskStrings.put(TaskNames.RANK_SYNTHESIS_BOOGIE, "Synthesize ranking function Boogie");
 		sTaskStrings.put(TaskNames.RANK_SYNTHESIS_C, "Synthesize ranking function C");
 		sTaskStrings.put(TaskNames.VerifyConcurrentBoogie, "Verify concurrent Boogie");
-		
+
 		SimpleLogger.log("Finished initializing task names");
 		SimpleLogger.log("The following " + sTaskStrings.size() + " task names are present:");
 		for (Entry<TaskNames, String> entry : sTaskStrings.entrySet()) {
@@ -256,8 +261,7 @@ public class Tasks {
 				for (TaskNames taskName : tc.getTaskName()) {
 					if (!sActiveToolchains.containsKey(taskName.toString())) {
 						sActiveToolchains.put(taskName.toString(), new ArrayList<WebToolchain>());
-						SimpleLogger.log("Added toolchain " + tc.getId() + " to task "
-								+ taskName.toString());
+						SimpleLogger.log("Added toolchain " + tc.getId() + " to task " + taskName.toString());
 					}
 					sActiveToolchains.get(taskName.toString()).add(tc);
 				}

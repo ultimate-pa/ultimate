@@ -74,7 +74,7 @@ public class AutomtaScriptTC extends WebToolchain {
      */
     @Override
     protected String setUserInfo() {
-        return "Sample: defined in 'de.uni_freiburg.informatik.ultimate.website.toolchains:AutomataScriptTC.java'";
+        return null;
     }
 
     /*

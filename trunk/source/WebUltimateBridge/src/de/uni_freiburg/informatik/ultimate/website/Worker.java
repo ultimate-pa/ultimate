@@ -64,12 +64,12 @@ public class Worker {
 	 * 
 	 * @param name
 	 *            the ultimate name for this toolchain collection.
-	 * @param toolchains
-	 *            a list of toolchains for this worker.
 	 * @param label
 	 *            the label to be shown on website to execute. Can be null
 	 * @param description
 	 *            the description for this worker on the website. Can be null
+	 * @param toolchains
+	 *            a list of toolchains for this worker.
 	 */
 	public Worker(String name, String label, String description, ArrayList<WebToolchain> toolchains) {
 		this.name              = name;

@@ -11,72 +11,36 @@ import de.uni_freiburg.informatik.ultimate.website.WebToolchain;
 
 public class BoogieBuchiAutomizerTC extends WebToolchain {
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * de.uni_freiburg.informatik.ultimate.website.Toolchain#setDescription()
-	 */
 	@Override
 	protected String setDescription() {
 		return "Büchi Automizer toolchain";
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.website.Toolchain#setName()
-	 */
 	@Override
 	protected String setName() {
 		return "Büchi Automizer";
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.website.Toolchain#setId()
-	 */
 	@Override
 	protected String setId() {
 		return "boogieBuchiAutomizer";
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.website.Toolchain#setTaskName()
-	 */
 	@Override
 	protected TaskNames[] setTaskName() {
 		return new TaskNames[] { TaskNames.TERMINATION_BOOGIE };
 	}
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see de.uni_freiburg.informatik.ultimate.website.WebToolchain#setLanguage()
-     */
     @Override
     protected String setLanguage() {
         return "boogie";
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see de.uni_freiburg.informatik.ultimate.website.WebToolchain#setUserInfo()
-     */
     @Override
     protected String setUserInfo() {
         return null;
     }
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.website.Toolchain#setTools()
-	 */
 	@Override
 	protected List<Tool> setTools() {
 		return boogieTools();
@@ -85,21 +49,18 @@ public class BoogieBuchiAutomizerTC extends WebToolchain {
 	static List<Tool> boogieTools() {
 		List<Tool> tools = new ArrayList<Tool>();
 		
-		List<Setting> oPre = new ArrayList<Setting>();
-		List<Setting> mPre = new ArrayList<Setting>();
-		tools.add(new Tool(PrefStrings.s_boogiePreprocessor,
-				oPre, mPre, LoggingLevel.WARN));
+		tools.add(new Tool(PrefStrings.s_boogiePreprocessor));
 		
 		List<Setting> oRCFGB = new ArrayList<Setting>();
 		List<Setting> mRCFGB = new ArrayList<Setting>();
-		tools.add(new Tool(PrefStrings.s_rcfgBuilder, oRCFGB, mRCFGB, LoggingLevel.WARN));
         oRCFGB.add(new Setting(PrefStrings.s_RCFG_LABEL_Solver, PrefStrings.s_RCFG_LABEL_Solver,
         		new String[] { PrefStrings.s_RCFG_VALUE_SMTInterpol }, false, new String[] {
         		PrefStrings.s_RCFG_VALUE_SMTInterpol, PrefStrings.s_RCFG_VALUE_ExternalDefMo }, false));
         oRCFGB.add(new Setting(PrefStrings.s_RCFG_LABEL_BlockSize, PrefStrings.s_RCFG_LABEL_BlockSize,
         		new String[] { PrefStrings.s_RCFG_VALUE_Seq }, false, new String[] {
         		PrefStrings.s_RCFG_VALUE_Single, PrefStrings.s_RCFG_VALUE_Seq, PrefStrings.s_RCFG_VALUE_Block }, false));
-        
+		tools.add(new Tool(PrefStrings.s_rcfgBuilder, oRCFGB, mRCFGB, LoggingLevel.WARN));
+		
 		List<Setting> oBE = new ArrayList<Setting>();
 		List<Setting> mBE = new ArrayList<Setting>();
 		tools.add(new Tool(PrefStrings.s_blockencoding, oBE, mBE, LoggingLevel.WARN));
@@ -126,25 +87,11 @@ public class BoogieBuchiAutomizerTC extends WebToolchain {
 		return tools;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * de.uni_freiburg.informatik.ultimate.website.Toolchain#setPluginsLoggingLevel
-	 * ()
-	 */
 	@Override
 	protected LoggingLevel setPluginsLoggingLevel() {
 		return LoggingLevel.INFO;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * de.uni_freiburg.informatik.ultimate.website.Toolchain#setToolsLoggingLevel
-	 * ()
-	 */
 	@Override
 	protected LoggingLevel setToolsLoggingLevel() {
 		return LoggingLevel.INFO;
