@@ -51,7 +51,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
 public class NondeterministicInterpolantAutomaton extends TotalInterpolantAutomaton {
 	
 	protected final Set<IPredicate> m_NonTrivialPredicates;
-	protected final boolean m_ConservativeConstructionMode;
+	protected final boolean m_ConservativeSuccessorCandidateSelection;
 	
 
 	public NondeterministicInterpolantAutomaton(IUltimateServiceProvider services, 
@@ -59,11 +59,11 @@ public class NondeterministicInterpolantAutomaton extends TotalInterpolantAutoma
 			INestedWordAutomaton<CodeBlock, IPredicate> abstraction, 
 			NestedWordAutomaton<CodeBlock, IPredicate> interpolantAutomaton, 
 			PredicateUnifier predicateUnifier, Logger  logger, 
-			boolean conservativeConstructionMode) {
+			boolean conservativeSuccessorCandidateSelection) {
 		super(services, smtManager, hoareTripleChecker, abstraction, 
 				predicateUnifier, 
 				interpolantAutomaton, logger);
-		m_ConservativeConstructionMode = conservativeConstructionMode;
+		m_ConservativeSuccessorCandidateSelection = conservativeSuccessorCandidateSelection;
 		Collection<IPredicate> allPredicates = interpolantAutomaton.getStates(); 
 		
 		assert SmtUtils.isTrue(m_IaTrueState.getFormula());
@@ -121,7 +121,7 @@ public class NondeterministicInterpolantAutomaton extends TotalInterpolantAutoma
 			CodeBlock letter, SuccessorComputationHelper sch,
 			final Set<IPredicate> inputSuccs) {
 		Set<IPredicate> successorCandidates;
-		if (m_ConservativeConstructionMode) {
+		if (m_ConservativeSuccessorCandidateSelection) {
 			if (resHier == null) {
 				successorCandidates = Collections.singleton(resPred);
 			} else {
