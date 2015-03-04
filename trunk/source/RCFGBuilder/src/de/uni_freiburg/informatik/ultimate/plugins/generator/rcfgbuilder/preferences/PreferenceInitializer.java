@@ -55,7 +55,7 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 	public static final String DEF_ExtSolverCommand_CVC4 = "cvc4-2014-07-03-x86_64-linux-opt --incremental --print-success";
 	public static final String DEF_ExtSolverCommand_Princess = "princess +incremental +stdin -timeout=12000";
 	public static final String LABEL_ExtSolverLogic = "Logic for external solver";
-	public static final String DEF_ExtSolverLogic = "AUFLIRA";
+	public static final String DEF_ExtSolverLogic = "AUFNIRA";
 
 	
 	
