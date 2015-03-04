@@ -25,10 +25,18 @@ import de.uni_freiburg.informatik.ultimate.util.HashRelation;
 
 /**
  * Deterministic interpolant automaton with on-demand construction.
+ * The successor state for a given state ψ and a CodeBlock cb are is 
+ * constructed as follows.
+ * First we construct a set S of successors very similar to the construction
+ * in {@see NondeterministicInterpolantAutomaton}. However, since this automaton
+ * is deterministic, we do not have several successors. Instead, we take
+ * as successor the conjunction of all IPredicates in S.
+ * If the IPredicate that represents this conjunction is not yet a state of
+ * this automaton, we add this state.
  * @author Matthias Heizmann
  *
  */
-public class DeterministicInterpolantAutomaton2 extends TotalInterpolantAutomaton {
+public class DeterministicInterpolantAutomaton extends TotalInterpolantAutomaton {
 	
 	private final Map<Set<IPredicate>, IPredicate> m_InputPreds2ResultPreds = 
 			new HashMap<Set<IPredicate>, IPredicate>();
@@ -51,7 +59,7 @@ public class DeterministicInterpolantAutomaton2 extends TotalInterpolantAutomato
 
 	
 
-	public DeterministicInterpolantAutomaton2(IUltimateServiceProvider services, 
+	public DeterministicInterpolantAutomaton(IUltimateServiceProvider services, 
 			SmtManager smtManager, ModifiableGlobalVariableManager modglobvarman, IHoareTripleChecker hoareTripleChecker,
 			INestedWordAutomaton<CodeBlock, IPredicate> abstraction, 
 			NestedWordAutomaton<CodeBlock, IPredicate> interpolantAutomaton, 

@@ -47,7 +47,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Pro
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CoverageAnalysis.BackwardCoveringInformation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataTransitionAppender.BestApproximationDeterminizer;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataTransitionAppender.DeterministicInterpolantAutomaton2;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataTransitionAppender.DeterministicInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataTransitionAppender.NondeterministicInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataTransitionAppender.SelfloopDeterminizer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantAutomataBuilders.CanonicalInterpolantAutomatonBuilder;
@@ -414,7 +414,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 						throw new UnsupportedOperationException();
 					} else {
 						boolean conservativeSuccessorCandidateSelection = (m_Pref.interpolantAutomatonEnhancement() == InterpolantAutomatonEnhancement.PREDICATE_ABSTRACTION_CONSERVATIVE);
-						DeterministicInterpolantAutomaton2 determinized = new DeterministicInterpolantAutomaton2(
+						DeterministicInterpolantAutomaton determinized = new DeterministicInterpolantAutomaton(
 								m_Services, m_SmtManager, m_ModGlobVarManager, htc, oldAbstraction, interpolAutomaton,
 								m_TraceChecker.getPredicateUnifier(), mLogger, conservativeSuccessorCandidateSelection);
 						// NondeterministicInterpolantAutomaton determinized =

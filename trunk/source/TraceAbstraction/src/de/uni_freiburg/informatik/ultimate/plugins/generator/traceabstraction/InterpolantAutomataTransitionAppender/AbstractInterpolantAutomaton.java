@@ -60,7 +60,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
  * @author Matthias Heizmann
  * 
  */
-public abstract class AbstractInterpolantAutomaton2 implements INestedWordAutomatonSimple<CodeBlock, IPredicate> {
+public abstract class AbstractInterpolantAutomaton implements INestedWordAutomatonSimple<CodeBlock, IPredicate> {
 	
 	public enum Mode { ON_DEMAND_CONSTRUCTION, READ_ONLY }
 
@@ -79,7 +79,7 @@ public abstract class AbstractInterpolantAutomaton2 implements INestedWordAutoma
 	private final CallSuccessorComputationHelper m_CaSucComp;
 	private final ReturnSuccessorComputationHelper m_ReSucComp;
 
-	public AbstractInterpolantAutomaton2(IUltimateServiceProvider services, 
+	public AbstractInterpolantAutomaton(IUltimateServiceProvider services, 
 			SmtManager smtManager, IHoareTripleChecker hoareTripleChecker,
 			INestedWordAutomaton<CodeBlock, IPredicate> abstraction, IPredicate falseState,
 			NestedWordAutomaton<CodeBlock, IPredicate> interpolantAutomaton, Logger logger) {

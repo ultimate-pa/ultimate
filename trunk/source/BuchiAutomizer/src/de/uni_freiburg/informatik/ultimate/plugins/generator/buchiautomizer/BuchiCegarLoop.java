@@ -61,7 +61,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Ho
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryRefinement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryResultChecking;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataTransitionAppender.DeterministicInterpolantAutomaton2;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataTransitionAppender.DeterministicInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantAutomataBuilders.CanonicalInterpolantAutomatonBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.EfficientHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IHoareTripleChecker;
@@ -682,7 +682,7 @@ public class BuchiCegarLoop {
 		final IHoareTripleChecker solverHtc = new IncrementalHoareTripleChecker(m_SmtManager, modGlobVarManager);
 		IHoareTripleChecker htc = new EfficientHoareTripleChecker(solverHtc, modGlobVarManager, traceChecker.getPredicateUnifier(), m_SmtManager);
 		
-		DeterministicInterpolantAutomaton2 determinized = new DeterministicInterpolantAutomaton2(m_Services, m_SmtManager, modGlobVarManager, htc,
+		DeterministicInterpolantAutomaton determinized = new DeterministicInterpolantAutomaton(m_Services, m_SmtManager, modGlobVarManager, htc,
 				m_Abstraction, m_InterpolAutomaton, traceChecker.getPredicateUnifier(), mLogger, false);
 		PowersetDeterminizer<CodeBlock, IPredicate> psd = new PowersetDeterminizer<CodeBlock, IPredicate>(determinized,
 				true, m_DefaultStateFactory);

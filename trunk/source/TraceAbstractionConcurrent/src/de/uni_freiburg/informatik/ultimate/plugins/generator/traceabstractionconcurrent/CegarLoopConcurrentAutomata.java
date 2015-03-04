@@ -31,7 +31,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Ba
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopBenchmarkType;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionBenchmarks;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataTransitionAppender.DeterministicInterpolantAutomaton2;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataTransitionAppender.DeterministicInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantAutomataBuilders.StraightLineInterpolantAutomatonBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IMLPredicate;
@@ -138,7 +138,7 @@ public class CegarLoopConcurrentAutomata extends BasicCegarLoop {
 
 		IOpWithDelayedDeadEndRemoval<CodeBlock, IPredicate> diff;
 
-		DeterministicInterpolantAutomaton2 determinized = new DeterministicInterpolantAutomaton2(
+		DeterministicInterpolantAutomaton determinized = new DeterministicInterpolantAutomaton(
 				m_Services, m_SmtManager, m_ModGlobVarManager, htc, oldAbstraction, m_InterpolAutomaton,
 				m_TraceChecker.getPredicateUnifier(), mLogger, false);
 		// ComplementDeterministicNwa<CodeBlock, IPredicate>

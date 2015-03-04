@@ -37,7 +37,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  * @author Matthias Heizmann
  */
 public abstract class TotalInterpolantAutomaton extends
-		AbstractInterpolantAutomaton2 {
+		AbstractInterpolantAutomaton {
 	
 	protected final IPredicate m_IaTrueState;
 	protected final PredicateUnifier m_PredicateUnifier;

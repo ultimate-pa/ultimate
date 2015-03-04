@@ -46,7 +46,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Pro
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopBenchmarkType;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionBenchmarks;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataTransitionAppender.DeterministicInterpolantAutomaton2;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataTransitionAppender.DeterministicInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.EfficientHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IncrementalHoareTripleChecker;
@@ -351,7 +351,7 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 
 		IOpWithDelayedDeadEndRemoval<CodeBlock, IPredicate> diff;
 
-		DeterministicInterpolantAutomaton2 determinized = new DeterministicInterpolantAutomaton2(
+		DeterministicInterpolantAutomaton determinized = new DeterministicInterpolantAutomaton(
 				m_Services, m_SmtManager, m_ModGlobVarManager, htc, oldAbstraction, m_InterpolAutomaton,
 				this.m_PredicateUnifier, mLogger, false);//change to CegarLoopConcurrentAutomata
 		// ComplementDeterministicNwa<CodeBlock, IPredicate>

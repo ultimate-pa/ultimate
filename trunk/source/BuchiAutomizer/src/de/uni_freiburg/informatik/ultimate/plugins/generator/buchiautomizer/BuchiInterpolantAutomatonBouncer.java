@@ -17,7 +17,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cal
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactory;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataTransitionAppender.AbstractInterpolantAutomaton2;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataTransitionAppender.AbstractInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IHoareTripleChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
@@ -31,7 +31,7 @@ import de.uni_freiburg.informatik.ultimate.util.HashRelation;
  * @author Matthias Heizmann
  * 
  */
-public class BuchiInterpolantAutomatonBouncer extends AbstractInterpolantAutomaton2 {
+public class BuchiInterpolantAutomatonBouncer extends AbstractInterpolantAutomaton {
 
 	private final NwaCacheBookkeeping<CodeBlock, IPredicate> m_ResultBookkeeping = new NwaCacheBookkeeping<CodeBlock, IPredicate>();
 
