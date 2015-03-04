@@ -447,11 +447,14 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 								m_SmtManager, m_ModGlobVarManager))).getResult();
 					}
 					break;
-				case EAGER: {
+				case EAGER:
+				case EAGER_CONSERVATIVE:
+				{
+					boolean conservativeSuccessorCandidateSelection = (m_Pref.interpolantAutomatonEnhancement() == InterpolantAutomatonEnhancement.EAGER_CONSERVATIVE);
 					NondeterministicInterpolantAutomaton nondet = new NondeterministicInterpolantAutomaton(m_Services,
 							m_SmtManager, m_ModGlobVarManager, htc,
 							(INestedWordAutomaton<CodeBlock, IPredicate>) m_Abstraction, interpolAutomaton,
-							predicateUnifier, mLogger);
+							predicateUnifier, mLogger, conservativeSuccessorCandidateSelection);
 					PowersetDeterminizer<CodeBlock, IPredicate> psd2 = new PowersetDeterminizer<CodeBlock, IPredicate>(
 							nondet, true, m_PredicateFactoryInterpolantAutomata);
 					diff = new Difference<CodeBlock, IPredicate>(m_Services, oldAbstraction, nondet, psd2,

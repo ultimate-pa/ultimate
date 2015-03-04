@@ -1,6 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataTransitionAppender;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -20,22 +21,49 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
 
 /**
  * Nondeterministic interpolant automaton with on-demand construction.
+ * The set of successor states S for a given state ψ and a CodeBlock cb are 
+ * constructed as follows.
+ * First, we check if state state ψ is the "false" state. If this is the case
+ * S is the singleton set {false} and the construction is finished. Otherwise,
+ * we add to S all states φ such that (ψ, cb, φ) is a transition in 
+ * the given interpolant automaton {@code #m_InputInterpolantAutomaton} (which
+ * is typically the "canonical interpolant automaton" that was constructed for
+ * a given trace).
+ * In case S contains the state "false", we set S to the singleton set {false}
+ * and return. Otherwise, we try to add more states to S.
+ * How may states we try depends on the construction
+ * mode.
+ * <ul>
+ * <li> If we are in the conservative construction mode 
+ * ({@code #m_ConservativeConstructionMode} is true) we check if the Hoare 
+ * triple (ψ, cb, ψ) is valid. If this is the case we add ψ to S.
+ * <li> If we are in the non-conservative construction mode 
+ * ({@code #m_ConservativeConstructionMode} is false) we check for each 
+ * nontrivial predicate φ (i.e., each predicate but "true" and "false") if the
+ * Hoare triple (ψ, cb, φ) is valid. Whenever the Hoare triple is valid, we
+ * add φ to the set S.
+ * </ul>
+ * Finally, we check if S is empty. If this is the case, we add "true" to
+ * S. Hence this automaton is total because S is never empty.
+ * 
  * @author Matthias Heizmann
- *
  */
 public class NondeterministicInterpolantAutomaton extends TotalInterpolantAutomaton {
 	
 	protected final Set<IPredicate> m_NonTrivialPredicates;
+	protected final boolean m_ConservativeConstructionMode;
 	
 
 	public NondeterministicInterpolantAutomaton(IUltimateServiceProvider services, 
 			SmtManager smtManager, ModifiableGlobalVariableManager modglobvarman, IHoareTripleChecker hoareTripleChecker,
 			INestedWordAutomaton<CodeBlock, IPredicate> abstraction, 
 			NestedWordAutomaton<CodeBlock, IPredicate> interpolantAutomaton, 
-			PredicateUnifier predicateUnifier, Logger  logger) {
+			PredicateUnifier predicateUnifier, Logger  logger, 
+			boolean conservativeConstructionMode) {
 		super(services, smtManager, hoareTripleChecker, abstraction, 
 				predicateUnifier, 
 				interpolantAutomaton, logger);
+		m_ConservativeConstructionMode = conservativeConstructionMode;
 		Collection<IPredicate> allPredicates = interpolantAutomaton.getStates(); 
 		
 		assert SmtUtils.isTrue(m_IaTrueState.getFormula());
@@ -92,6 +120,21 @@ public class NondeterministicInterpolantAutomaton extends TotalInterpolantAutoma
 	protected void addOtherSuccessors(IPredicate resPred, IPredicate resHier,
 			CodeBlock letter, SuccessorComputationHelper sch,
 			final Set<IPredicate> inputSuccs) {
+		Set<IPredicate> successorCandidates;
+		if (m_ConservativeConstructionMode) {
+			if (resHier == null) {
+				successorCandidates = Collections.singleton(resPred);
+			} else {
+				// we are computing successors for a return transition
+				// let's use the linear predecessor and the hierarchical
+				// predecessor.
+				successorCandidates = new HashSet<IPredicate>(2);
+				successorCandidates.add(resPred);
+				successorCandidates.add(resHier);
+			}
+		} else {
+			successorCandidates = m_NonTrivialPredicates;
+		}
 		for (IPredicate succCand : m_NonTrivialPredicates) {
 			if (!inputSuccs.contains(succCand)) {
 				Validity sat = sch.computeSuccWithSolver(resPred, resHier, letter, succCand);

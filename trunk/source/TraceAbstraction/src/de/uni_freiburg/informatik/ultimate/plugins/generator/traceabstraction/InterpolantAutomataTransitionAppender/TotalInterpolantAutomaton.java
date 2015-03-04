@@ -19,6 +19,23 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
 
+/**
+ * Abstract subclass of AbstractInterpolantAutomaton that represents
+ * interpolant automata that are total.
+ * (An automaton is total if for each state and each letter, there is at least
+ * one outgoing transition).
+ * Totality of the automaton allows us a simpler on-demand construction.
+ * Assume the user wants to know if the state ψ has outgoing transitions and
+ * the automaton that is constructed so far does not have any successors for
+ * the state ψ. Do we have to construct successors for ψ?
+ * If the automaton is total the answer is yes, because the automaton must have
+ * outgoing transitions.
+ * (In termination analysis we need very small automata, we want to save
+ * transitions that just go to a sink state, prefer non total automata and
+ * therefore need additional data structures to track if for a given state
+ * the existence of successors was already analyzed.) 
+ * @author Matthias Heizmann
+ */
 public abstract class TotalInterpolantAutomaton extends
 		AbstractInterpolantAutomaton2 {
 	

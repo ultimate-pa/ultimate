@@ -201,10 +201,13 @@ public class IncrementalInclusionCegarLoop extends BasicCegarLoop {
 				break;
 			}
 			case EAGER:
+			case EAGER_CONSERVATIVE:
+			{
+				boolean conservativeSuccessorCandidateSelection = m_Pref.interpolantAutomatonEnhancement() == m_Pref.interpolantAutomatonEnhancement();
 				NondeterministicInterpolantAutomaton nondet = new NondeterministicInterpolantAutomaton(m_Services, 
 						m_SmtManager, m_ModGlobVarManager, edgeChecker, 
 						(INestedWordAutomaton<CodeBlock, IPredicate>) m_Abstraction, 
-						m_InterpolAutomaton, m_TraceChecker.getPredicateUnifier(), mLogger);
+						m_InterpolAutomaton, m_TraceChecker.getPredicateUnifier(), mLogger, conservativeSuccessorCandidateSelection);
 				switchAllInterpolantAutomataToOnTheFlyConstructionMode();
 				m_InclusionCheck.addSubtrahend(nondet);
 				m_InterpolantAutomata.add(nondet);
@@ -216,6 +219,7 @@ public class IncrementalInclusionCegarLoop extends BasicCegarLoop {
 						new IncrementalHoareTripleChecker(m_SmtManager, m_ModGlobVarManager))).getResult();
 				progress = true;
 				break;
+			}
 			case NONE:
 				m_InclusionCheck.addSubtrahend(m_InterpolAutomaton);
 				boolean acceptedByIA = (new Accepts<CodeBlock, IPredicate>(

@@ -224,7 +224,7 @@ public class RefineBuchi {
 				m_InterpolAutomaton.addState(false, true, pu.getFalsePredicate());
 			}
 			m_InterpolAutomatonUsedInRefinement = new NondeterministicInterpolantAutomaton(m_Services, m_SmtManager, 
-					buchiModGlobalVarManager, bhtc, m_Abstraction, m_InterpolAutomaton, pu, mLogger);
+					buchiModGlobalVarManager, bhtc, m_Abstraction, m_InterpolAutomaton, pu, mLogger, false);
 			break;
 		case ScroogeNondeterminism:
 		case Deterministic:
