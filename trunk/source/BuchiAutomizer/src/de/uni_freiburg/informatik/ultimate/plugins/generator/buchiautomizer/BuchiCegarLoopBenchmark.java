@@ -18,7 +18,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Co
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.BenchmarkData;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.IBenchmarkDataProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.IBenchmarkType;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.EdgeChecker.EdgeCheckerBenchmarkType;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.HoareTripleCheckerBenchmarkType;
 import de.uni_freiburg.informatik.ultimate.util.csv.CsvUtils;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProvider;
 
@@ -123,7 +123,7 @@ public class BuchiCegarLoopBenchmark extends CegarLoopBenchmarkType implements I
 		if (ecData.getBenchmarkType() == null) {
 			ecTime = 0L;
 		} else {
-			ecTime = (Long) ecData.getValue(EdgeCheckerBenchmarkType.s_EdgeCheckerTime);
+			ecTime = (Long) ecData.getValue(HoareTripleCheckerBenchmarkType.s_EdgeCheckerTime);
 		}
 		
 		sb.append("Construction of modules took ");

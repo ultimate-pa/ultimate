@@ -16,7 +16,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPre
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.EdgeChecker.EdgeCheckerBenchmarkGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IHoareTripleChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.IPredicateCoverageChecker;
 
@@ -24,29 +23,29 @@ public class SdHoareTripleCheckerHelper {
 	
 	private final ModifiableGlobalVariableManager m_ModifiableGlobalVariableManager;
 	
-	private final EdgeCheckerBenchmarkGenerator m_EdgeCheckerBenchmark;
+	private final HoareTripleCheckerBenchmarkGenerator m_EdgeCheckerBenchmark;
 	private final IPredicateCoverageChecker m_PredicateCoverageChecker;
 	
 	
 	public SdHoareTripleCheckerHelper(ModifiableGlobalVariableManager modGlobVarManager, 
 			IPredicateCoverageChecker predicateCoverageChecker, 
-			EdgeCheckerBenchmarkGenerator edgeCheckerBenchmarkGenerator) {
+			HoareTripleCheckerBenchmarkGenerator edgeCheckerBenchmarkGenerator) {
 		m_ModifiableGlobalVariableManager = modGlobVarManager;
 		m_PredicateCoverageChecker = predicateCoverageChecker;
 		if (edgeCheckerBenchmarkGenerator == null) {
-			m_EdgeCheckerBenchmark = new EdgeCheckerBenchmarkGenerator();
+			m_EdgeCheckerBenchmark = new HoareTripleCheckerBenchmarkGenerator();
 		} else {
 			m_EdgeCheckerBenchmark = edgeCheckerBenchmarkGenerator;
 		}
 	}
 	
 	public SdHoareTripleCheckerHelper(ModifiableGlobalVariableManager modGlobVarManager, 
-			EdgeCheckerBenchmarkGenerator edgeCheckerBenchmarkGenerator) {
+			HoareTripleCheckerBenchmarkGenerator edgeCheckerBenchmarkGenerator) {
 		this(modGlobVarManager, null, edgeCheckerBenchmarkGenerator);
 	}
 	
 	
-	public EdgeCheckerBenchmarkGenerator getEdgeCheckerBenchmark() {
+	public HoareTripleCheckerBenchmarkGenerator getEdgeCheckerBenchmark() {
 		return m_EdgeCheckerBenchmark;
 	}
 	

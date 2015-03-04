@@ -25,7 +25,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPre
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.EdgeChecker.EdgeCheckerBenchmarkGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager.ILockerHolderWithVoluntaryLockRelease;
 import de.uni_freiburg.informatik.ultimate.util.ScopedHashMap;
 
@@ -43,7 +42,7 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 	public final static boolean m_AddDebugInformation = !false;
 	public final static boolean m_UnletTerms = true;
 	
-	private final EdgeCheckerBenchmarkGenerator m_EdgeCheckerBenchmark;
+	private final HoareTripleCheckerBenchmarkGenerator m_EdgeCheckerBenchmark;
 	
 	private static final String s_StartEdgeCheck = "starting to check validity of Hoare triples";
 	private static final String s_EndEdgeCheck = "finished to check validity of Hoare triples";
@@ -53,7 +52,7 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 		m_SmtManager = smtManager;
 		m_ModifiableGlobalVariableManager = modGlobVarManager;
 		m_Script = smtManager.getScript();
-		m_EdgeCheckerBenchmark = new EdgeCheckerBenchmarkGenerator();
+		m_EdgeCheckerBenchmark = new HoareTripleCheckerBenchmarkGenerator();
 	}
 	
 //	public SmtManager getSmtManager() {
@@ -61,7 +60,7 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 //	}
 	
 	@Override
-	public EdgeCheckerBenchmarkGenerator getEdgeCheckerBenchmark() {
+	public HoareTripleCheckerBenchmarkGenerator getEdgeCheckerBenchmark() {
 		return m_EdgeCheckerBenchmark;
 	}
 	

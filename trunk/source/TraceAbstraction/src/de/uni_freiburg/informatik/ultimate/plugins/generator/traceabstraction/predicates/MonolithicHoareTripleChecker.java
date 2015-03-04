@@ -5,19 +5,18 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPre
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.EdgeChecker.EdgeCheckerBenchmarkGenerator;
 
 public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 	
 	private final SmtManager m_SmtManager;
-	private EdgeCheckerBenchmarkGenerator m_EdgeCheckerBenchmark;
+	private HoareTripleCheckerBenchmarkGenerator m_EdgeCheckerBenchmark;
 	
 	
 
 	public MonolithicHoareTripleChecker(SmtManager smtManager) {
 		super();
 		m_SmtManager = smtManager;
-		m_EdgeCheckerBenchmark = new EdgeCheckerBenchmarkGenerator();
+		m_EdgeCheckerBenchmark = new HoareTripleCheckerBenchmarkGenerator();
 	}
 
 	@Override
@@ -84,7 +83,7 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 		return result;
 	}
 
-	public EdgeCheckerBenchmarkGenerator getEdgeCheckerBenchmark() {
+	public HoareTripleCheckerBenchmarkGenerator getEdgeCheckerBenchmark() {
 		return m_EdgeCheckerBenchmark;
 	}
 

@@ -6,7 +6,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPre
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.EdgeChecker.EdgeCheckerBenchmarkGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.IPredicateCoverageChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
 
@@ -31,7 +30,7 @@ public class SdHoareTripleChecker implements IHoareTripleChecker {
 	
 	public SdHoareTripleChecker(ModifiableGlobalVariableManager modGlobVarManager, 
 			PredicateUnifier predicateUnifier, 
-			EdgeCheckerBenchmarkGenerator edgeCheckerBenchmarkGenerator) {
+			HoareTripleCheckerBenchmarkGenerator edgeCheckerBenchmarkGenerator) {
 		m_PredicateCoverageChecker = predicateUnifier.getCoverageRelation();
 		m_TruePredicate = predicateUnifier.getTruePredicate();
 		m_FalsePredicate = predicateUnifier.getFalsePredicate();
@@ -58,7 +57,7 @@ public class SdHoareTripleChecker implements IHoareTripleChecker {
 	}
 
 	@Override
-	public EdgeCheckerBenchmarkGenerator getEdgeCheckerBenchmark() {
+	public HoareTripleCheckerBenchmarkGenerator getEdgeCheckerBenchmark() {
 		return m_SdHoareTripleChecker.getEdgeCheckerBenchmark();
 	}
 	

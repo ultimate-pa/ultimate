@@ -2,7 +2,6 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.p
 
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.EdgeChecker.EdgeCheckerBenchmarkGenerator;
 
 /**
  * Object that implement this interface check if Hoare Triples are valid.
@@ -49,7 +48,7 @@ public interface IHoareTripleChecker {
 	 */
 	public Validity checkReturn(IPredicate preLin, IPredicate preHier, CodeBlock cb, IPredicate succ);
 
-	public abstract EdgeCheckerBenchmarkGenerator getEdgeCheckerBenchmark(); 
+	public abstract HoareTripleCheckerBenchmarkGenerator getEdgeCheckerBenchmark(); 
 
 
 	
