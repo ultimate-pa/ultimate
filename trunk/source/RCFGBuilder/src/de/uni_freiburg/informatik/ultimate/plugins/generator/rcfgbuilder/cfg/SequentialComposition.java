@@ -13,7 +13,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGl
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.RCFGBuilder;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.PreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer;
 
 /**
  * Edge in a recursive control flow graph that represents a sequence of
@@ -87,7 +87,7 @@ public class SequentialComposition extends CodeBlock {
 		checkNumberOfCallsAndReturns(numberCalls, numberReturns);
 
 		boolean s_TransformToCNF = (new UltimatePreferenceStore(RCFGBuilder.s_PLUGIN_ID))
-				.getBoolean(PreferenceInitializer.LABEL_CNF);
+				.getBoolean(RcfgPreferenceInitializer.LABEL_CNF);
 
 		m_TransitionFormula = getInterproceduralTransFormula(boogie2smt, modGlobVarManager, simplify, extPqe,
 				s_TransformToCNF, false, mLogger, services, codeBlocks);

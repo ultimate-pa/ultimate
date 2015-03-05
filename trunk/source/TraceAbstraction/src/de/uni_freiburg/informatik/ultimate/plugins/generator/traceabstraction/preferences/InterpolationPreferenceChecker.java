@@ -5,8 +5,8 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.RCFGBuilder;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.PreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.PreferenceInitializer.Solver;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer.Solver;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.INTERPOLATION;
 
 /**
@@ -20,7 +20,7 @@ public class InterpolationPreferenceChecker {
 	
 	public static void check (String pluginName, INTERPOLATION interpolation) {
 		Solver solver = (new UltimatePreferenceStore(RCFGBuilder.s_PLUGIN_ID))
-				.getEnum(PreferenceInitializer.LABEL_Solver, Solver.class);
+				.getEnum(RcfgPreferenceInitializer.LABEL_Solver, Solver.class);
 		Set<Solver> legalSolverSettings = new HashSet<Solver>();
 		switch (interpolation) {
 		case Craig_TreeInterpolation:
@@ -45,7 +45,7 @@ public class InterpolationPreferenceChecker {
 			String errorMessage = "Incompatible preferences. You want to use " 
 				+ interpolation + " in the " + pluginName + 
 				" plugin. This requires that " + 
-				PreferenceInitializer.LABEL_Solver + 
+				RcfgPreferenceInitializer.LABEL_Solver + 
 				" in the " + RCFGBuilder.s_PLUGIN_ID + 
 				" has one of the following values. " +
 				legalSolverSettings.toString();

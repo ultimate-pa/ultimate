@@ -5,7 +5,7 @@ import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceIt
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceItem.PreferenceType;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Activator;
 
-public class PreferenceInitializer extends UltimatePreferenceInitializer {
+public class RcfgPreferenceInitializer extends UltimatePreferenceInitializer {
 
 	@Override
 	protected UltimatePreferenceItem<?>[] initDefaultPreferences() {

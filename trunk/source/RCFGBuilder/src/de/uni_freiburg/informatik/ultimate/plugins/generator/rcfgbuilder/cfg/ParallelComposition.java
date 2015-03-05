@@ -15,7 +15,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.RCFGBuilder;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.PreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer;
 
 /**
  * Edge in a recursive control flow graph that represents a set of CodeBlocks of
@@ -91,7 +91,7 @@ public class ParallelComposition extends CodeBlock {
 		m_PrettyPrinted = prettyPrinted;
 
 		boolean s_TransformToCNF = (new UltimatePreferenceStore(RCFGBuilder.s_PLUGIN_ID))
-				.getBoolean(PreferenceInitializer.LABEL_CNF);
+				.getBoolean(RcfgPreferenceInitializer.LABEL_CNF);
 
 		m_TransitionFormula = TransFormula.parallelComposition(mLogger, mServices, this.getSerialNumer(), boogie2smt,
 				null, s_TransformToCNF, transFormulas);

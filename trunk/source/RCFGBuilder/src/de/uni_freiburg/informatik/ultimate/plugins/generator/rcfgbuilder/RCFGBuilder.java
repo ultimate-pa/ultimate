@@ -10,7 +10,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvide
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.IGenerator;
 import de.uni_freiburg.informatik.ultimate.model.GraphType;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.PreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer;
 
 /**
  * Main class of Plug-In RCFGBuilder
@@ -87,7 +87,7 @@ public class RCFGBuilder implements IGenerator {
 
 	@Override
 	public UltimatePreferenceInitializer getPreferences() {
-		return new PreferenceInitializer();
+		return new RcfgPreferenceInitializer();
 	}
 
 	@Override

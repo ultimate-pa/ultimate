@@ -11,7 +11,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.GotoEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.PreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.result.SyntaxErrorResult;
 
 /**
@@ -33,7 +33,7 @@ public class TransFormulaBuilder {
 		mServices = services;
 		m_Boogie2smt = boogie2smt;
 		m_SimplifyCodeBlocks = (new UltimatePreferenceStore(RCFGBuilder.s_PLUGIN_ID))
-				.getBoolean(PreferenceInitializer.LABEL_Simplify);
+				.getBoolean(RcfgPreferenceInitializer.LABEL_Simplify);
 	}
 
 	/**

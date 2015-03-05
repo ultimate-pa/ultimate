@@ -61,9 +61,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.RCFGBui
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.WeakestPrecondition;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence.Origin;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.PreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.PreferenceInitializer.CodeBlockSize;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.PreferenceInitializer.Solver;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer.CodeBlockSize;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer.Solver;
 import de.uni_freiburg.informatik.ultimate.result.Check;
 import de.uni_freiburg.informatik.ultimate.smtsolver.external.ScriptorWithGetInterpolants.ExternalInterpolator;
 import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
@@ -127,32 +127,32 @@ public class CfgBuilder {
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		m_Backtranslator = backtranslator;
 		m_AddAssumeForEachAssert = (new UltimatePreferenceStore(RCFGBuilder.s_PLUGIN_ID))
-				.getBoolean(PreferenceInitializer.LABEL_ASSUME_FOR_ASSERT);
+				.getBoolean(RcfgPreferenceInitializer.LABEL_ASSUME_FOR_ASSERT);
 		Solver solver = (new UltimatePreferenceStore(RCFGBuilder.s_PLUGIN_ID))
-				.getEnum(PreferenceInitializer.LABEL_Solver, Solver.class);
+				.getEnum(RcfgPreferenceInitializer.LABEL_Solver, Solver.class);
 
 		m_CodeBlockSize = (new UltimatePreferenceStore(RCFGBuilder.s_PLUGIN_ID)).getEnum(
-				PreferenceInitializer.LABEL_CodeBlockSize, CodeBlockSize.class);
+				RcfgPreferenceInitializer.LABEL_CodeBlockSize, CodeBlockSize.class);
 
 		switch (solver) {
 		case External_DefaultMode:
 		{
 			String command = (new UltimatePreferenceStore(RCFGBuilder.s_PLUGIN_ID))
-				.getString(PreferenceInitializer.LABEL_ExtSolverCommand);
+				.getString(RcfgPreferenceInitializer.LABEL_ExtSolverCommand);
 			m_Script = SolverBuilder.createExternalSolver(mServices, storage, command);
 		}
 		break;
 		case External_PrincessInterpolationMode:
 		{
 			String command = (new UltimatePreferenceStore(RCFGBuilder.s_PLUGIN_ID))
-				.getString(PreferenceInitializer.LABEL_ExtSolverCommand);
+				.getString(RcfgPreferenceInitializer.LABEL_ExtSolverCommand);
 			m_Script = SolverBuilder.createExternalSolverWithInterpolation(mServices, storage, command, ExternalInterpolator.PRINCESS);
 		}
 		break;
 		case External_Z3InterpolationMode:
 		{
 			String command = (new UltimatePreferenceStore(RCFGBuilder.s_PLUGIN_ID))
-				.getString(PreferenceInitializer.LABEL_ExtSolverCommand);
+				.getString(RcfgPreferenceInitializer.LABEL_ExtSolverCommand);
 			m_Script = SolverBuilder.createExternalSolverWithInterpolation(mServices, storage, command, ExternalInterpolator.IZ3);
 		}
 		break;
@@ -168,14 +168,14 @@ public class CfgBuilder {
 		}
 		
 		m_LogicForExternalSolver = (new UltimatePreferenceStore(RCFGBuilder.s_PLUGIN_ID))
-				.getString(PreferenceInitializer.LABEL_ExtSolverLogic);
+				.getString(RcfgPreferenceInitializer.LABEL_ExtSolverLogic);
 		
 
 		boolean dumpToFile = (new UltimatePreferenceStore(RCFGBuilder.s_PLUGIN_ID))
-				.getBoolean(PreferenceInitializer.LABEL_DumpToFile);
+				.getBoolean(RcfgPreferenceInitializer.LABEL_DumpToFile);
 		if (dumpToFile) {
 			String directory = (new UltimatePreferenceStore(RCFGBuilder.s_PLUGIN_ID))
-					.getString(PreferenceInitializer.LABEL_Path);
+					.getString(RcfgPreferenceInitializer.LABEL_Path);
 			directory += (directory.endsWith(System.getProperty("file.separator")) ? "" : System
 					.getProperty("file.separator"));
 			String filename;
@@ -289,7 +289,7 @@ public class CfgBuilder {
 //		m_RootAnnot.m_ModifiableGlobalVariableManager = new ModifiableGlobalVariableManager(
 //				m_BoogieDeclarations.getModifiedVars(), m_Boogie2smt);
 		m_CodeBlockSize = (new UltimatePreferenceStore(RCFGBuilder.s_PLUGIN_ID)).getEnum(
-				PreferenceInitializer.LABEL_CodeBlockSize, CodeBlockSize.class);
+				RcfgPreferenceInitializer.LABEL_CodeBlockSize, CodeBlockSize.class);
 		if (m_CodeBlockSize == CodeBlockSize.LoopFreeBlock) {
 			new LargeBlockEncoding();
 		}
@@ -586,7 +586,7 @@ public class CfgBuilder {
 
 			// Remove auxiliary GotoTransitions
 			boolean removeGotoEdges = (new UltimatePreferenceStore(RCFGBuilder.s_PLUGIN_ID))
-					.getBoolean(PreferenceInitializer.LABEL_RemoveGotoEdges);
+					.getBoolean(RcfgPreferenceInitializer.LABEL_RemoveGotoEdges);
 			if (removeGotoEdges) {
 				mLogger.debug("Starting removal of auxiliaryGotoTransitions");
 				while (!(m_GotoEdges.isEmpty())) {
@@ -1230,7 +1230,7 @@ public class CfgBuilder {
 
 		public LargeBlockEncoding() {
 			m_SimplifyCodeBlocks = (new UltimatePreferenceStore(RCFGBuilder.s_PLUGIN_ID))
-					.getBoolean(PreferenceInitializer.LABEL_Simplify);
+					.getBoolean(RcfgPreferenceInitializer.LABEL_Simplify);
 
 			for (String proc : m_RootAnnot.m_LocNodes.keySet()) {
 				for (String position : m_RootAnnot.m_LocNodes.get(proc).keySet()) {
