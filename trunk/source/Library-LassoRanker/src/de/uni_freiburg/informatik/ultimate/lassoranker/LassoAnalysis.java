@@ -449,6 +449,12 @@ public class LassoAnalysis {
 		return (constraintSat == LBool.SAT) ? tas.getArgument() : null;
 	}
 	
+	/**
+	 * Objects for collecting data from the preprocessing steps.
+	 * 
+	 * @author Matthias Heizmann
+	 *
+	 */
 	public static class PreprocessingBenchmark {
 		private final int m_IntialMaxDagSizeStem;
 		private final int m_IntialMaxDagSizeLoop;
@@ -484,7 +490,14 @@ public class LassoAnalysis {
 				if (list.size() == 1) {
 					secondLastEntry = initialValue; 
 				} else {
-					secondLastEntry = list.get(list.size() - 2);
+					// use third last entry if second last preprocessor was
+					// the Lasso Partitioneer (because right now the lasso 
+					// LassoPartitioneer does not do any modifications
+					if (m_Preprocessors.get(list.size() - 2).equals(LassoPartitioneer.s_Description)) {
+						secondLastEntry = list.get(list.size() - 3);
+					} else {
+						secondLastEntry = list.get(list.size() - 2);
+					}
 				}
 			}
 			return ((float) lastEntry) / ((float) secondLastEntry);
