@@ -241,7 +241,6 @@ loc_22:
  if (nondet_bool()) {
   if (!( v8 <= v16 )) goto end;
   v13 = 1+v13;
-  v13 = 1+v13;
   v8 = 1+v8;
   goto loc_CP_24;
  }

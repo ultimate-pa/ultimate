@@ -48,7 +48,6 @@ loc_5:
   v1 = 0;
   v3 = nondet();
   v2 = 0;
-  v2 = 0;
   goto loc_CP_2;
  }
  goto end;

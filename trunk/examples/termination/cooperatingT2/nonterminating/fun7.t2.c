@@ -265,12 +265,9 @@ loc_18:
  goto end;
 loc_16:
 loc_10:
-loc_10:
-loc_8:
 loc_8:
 loc_12:
 loc_2:
-loc_1:
 loc_1:
 end:
 ;

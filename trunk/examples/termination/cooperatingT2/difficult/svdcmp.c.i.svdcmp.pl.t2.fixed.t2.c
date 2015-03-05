@@ -627,7 +627,6 @@ loc_54:
  if (nondet_bool()) {
   v5 = nondet();
   v6 = nondet();
-  v6 = nondet();
   v2 = nondet();
   v18 = nondet();
   goto loc_CP_53;

@@ -566,7 +566,6 @@ loc_35:
   v14 = nondet();
   v23 = nondet();
   v27 = nondet();
-  v27 = nondet();
   v31 = -1+v31;
   goto loc_CP_34;
  }

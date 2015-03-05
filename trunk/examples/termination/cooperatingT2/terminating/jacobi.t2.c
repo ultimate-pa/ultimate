@@ -413,7 +413,6 @@ loc_41:
  }
  goto end;
 loc_25:
-loc_25:
 end:
 ;
 }

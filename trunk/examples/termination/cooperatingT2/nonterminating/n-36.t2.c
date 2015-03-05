@@ -43,7 +43,6 @@ loc_CP_1:
   v16 = nondet();
   v17 = nondet();
   v10 = nondet();
-  v10 = nondet();
   v15 = v9;
   if (!( v15 <= 0 )) goto end;
   v15 = nondet();
@@ -62,7 +61,6 @@ loc_CP_1:
   if (!( 1+v16-v17 <= 0 )) goto end;
   v16 = nondet();
   v17 = nondet();
-  v10 = nondet();
   v10 = nondet();
   v15 = v9;
   if (!( 0 <= -1+v15 )) goto end;
@@ -87,7 +85,6 @@ loc_CP_1:
   v16 = nondet();
   v17 = nondet();
   v10 = nondet();
-  v10 = nondet();
   v15 = v11;
   if (!( v15 <= 0 )) goto end;
   v15 = nondet();
@@ -106,7 +103,6 @@ loc_CP_1:
   if (!( 0 <= v16-v17 )) goto end;
   v16 = nondet();
   v17 = nondet();
-  v10 = nondet();
   v10 = nondet();
   v15 = v11;
   if (!( 0 <= -1+v15 )) goto end;
@@ -131,7 +127,6 @@ loc_CP_1:
   v16 = nondet();
   v17 = nondet();
   v10 = nondet();
-  v10 = nondet();
   v15 = v9;
   if (!( 0 <= -1+v15 )) goto end;
   v15 = nondet();
@@ -151,7 +146,6 @@ loc_CP_1:
   if (!( 0 <= v16-v17 )) goto end;
   v16 = nondet();
   v17 = nondet();
-  v10 = nondet();
   v10 = nondet();
   v15 = v11;
   if (!( 0 <= -1+v15 )) goto end;
@@ -243,7 +237,6 @@ loc_10:
   goto loc_6;
  }
  goto end;
-loc_6:
 loc_6:
 loc_11:
 end:

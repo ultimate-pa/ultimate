@@ -169,7 +169,6 @@ loc_9:
  if (nondet_bool()) {
   if (!( 1 <= v52 )) goto end;
   v1 = nondet();
-  v1 = nondet();
   v52 = -1+v52;
   v21 = nondet();
   goto loc_6;

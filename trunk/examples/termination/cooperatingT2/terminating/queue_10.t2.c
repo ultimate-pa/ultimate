@@ -120,7 +120,6 @@ loc_2:
 loc_17:
  if (nondet_bool()) {
   v1 = 0;
-  v1 = 0;
   goto loc_CP_6;
  }
  goto end;

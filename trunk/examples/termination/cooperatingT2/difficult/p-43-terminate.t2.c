@@ -711,16 +711,6 @@ loc_54:
  }
  goto end;
 loc_22:
-loc_22:
-loc_22:
-loc_22:
-loc_3:
-loc_3:
-loc_3:
-loc_3:
-loc_3:
-loc_3:
-loc_3:
 loc_3:
 end:
 ;

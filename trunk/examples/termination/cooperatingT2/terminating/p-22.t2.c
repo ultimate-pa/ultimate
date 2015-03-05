@@ -18,7 +18,6 @@ loc_CP_0:
  if (nondet_bool()) {
   if (!( v2 <= 0 )) goto end;
   v1 = nondet();
-  v1 = nondet();
   goto loc_2;
  }
  goto end;
@@ -36,7 +35,6 @@ loc_3:
  if (nondet_bool()) {
   if (!( v2 <= 0 )) goto end;
   v1 = nondet();
-  v1 = nondet();
   goto loc_2;
  }
  goto end;
@@ -45,7 +43,6 @@ loc_4:
   goto loc_3;
  }
  goto end;
-loc_2:
 loc_2:
 end:
 ;

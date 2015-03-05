@@ -6131,14 +6131,6 @@ loc_1:
  }
  goto end;
 loc_45:
-loc_45:
-loc_45:
-loc_45:
-loc_45:
-loc_45:
-loc_45:
-loc_45:
-loc_45:
 end:
 ;
 }

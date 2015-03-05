@@ -197,8 +197,6 @@ loc_17:
  }
  goto end;
 loc_2:
-loc_2:
-loc_2:
 end:
 ;
 }

@@ -14,11 +14,9 @@ loc_13:
 loc_CP_1:
  if (nondet_bool()) {
   if (!( -1*v3+v4 <= 0 )) goto end;
-  if (!( -1*v3+v4 <= 0 )) goto end;
   goto loc_3;
  }
  if (nondet_bool()) {
-  if (!( -1*v3+v4 <= 0 )) goto end;
   if (!( -1*v3+v4 <= 0 )) goto end;
   if (!( v3 <= v4 )) goto end;
   if (!( v4 <= v3 )) goto end;
@@ -28,7 +26,6 @@ loc_CP_1:
   goto loc_5;
  }
  if (nondet_bool()) {
-  if (!( -1*v3+v4 <= 0 )) goto end;
   if (!( -1*v3+v4 <= 0 )) goto end;
   if (!( v3 <= v4 )) goto end;
   if (!( v4 <= v3 )) goto end;

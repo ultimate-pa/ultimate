@@ -13,11 +13,9 @@ loc_7:
 loc_CP_1:
  if (nondet_bool()) {
   if (!( -1*v2+v3 <= 0 )) goto end;
-  if (!( -1*v2+v3 <= 0 )) goto end;
   goto loc_3;
  }
  if (nondet_bool()) {
-  if (!( -1*v2+v3 <= 0 )) goto end;
   if (!( -1*v2+v3 <= 0 )) goto end;
   if (!( v2 <= v3 )) goto end;
   if (!( v3 <= v2 )) goto end;

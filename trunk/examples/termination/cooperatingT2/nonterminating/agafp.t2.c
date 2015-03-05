@@ -1762,7 +1762,6 @@ loc_6:
  }
  goto end;
 loc_13:
-loc_13:
 end:
 ;
 }

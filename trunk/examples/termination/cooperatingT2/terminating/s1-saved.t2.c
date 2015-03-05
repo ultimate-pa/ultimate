@@ -1043,10 +1043,6 @@ loc_1:
  }
  goto end;
 loc_3:
-loc_3:
-loc_3:
-loc_3:
-loc_3:
 end:
 ;
 }

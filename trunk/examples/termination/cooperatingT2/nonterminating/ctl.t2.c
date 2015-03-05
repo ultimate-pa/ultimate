@@ -310,11 +310,6 @@ loc_30:
   goto loc_3;
  }
  goto end;
-loc_3:
-loc_3:
-loc_3:
-loc_3:
-loc_3:
 loc_1:
 loc_3:
 end:

@@ -41,8 +41,6 @@ loc_CP_2:
   v13 = v1;
   v1 = nondet();
   if (!( 0 <= v7 )) goto end;
-  if (!( 0 <= v7 )) goto end;
-  if (!( 0 <= v7 )) goto end;
   v15 = v4;
   if (!( 0 <= v7 )) goto end;
   goto loc_6;
@@ -53,7 +51,6 @@ loc_CP_5:
   if (!( 0 <= v3 )) goto end;
   if (!( v15 <= 0 )) goto end;
   if (!( 0 <= v15 )) goto end;
-  v1 = nondet();
   v1 = nondet();
   goto loc_3;
  }
@@ -88,7 +85,6 @@ loc_1:
   v15 = v4;
   if (!( v15 <= 0 )) goto end;
   if (!( 0 <= v15 )) goto end;
-  v1 = nondet();
   v1 = nondet();
   goto loc_3;
  }
@@ -141,7 +137,6 @@ loc_8:
   goto loc_CP_5;
  }
  goto end;
-loc_3:
 loc_3:
 end:
 ;

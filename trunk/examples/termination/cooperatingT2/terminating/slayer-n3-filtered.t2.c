@@ -231,7 +231,6 @@ loc_CP_10:
   if (!( 1 <= v21 )) goto end;
   if (!( 2 <= v36 )) goto end;
   if (!( 0 <= v3 )) goto end;
-  if (!( 0 <= v3 )) goto end;
   if (!( v3 <= 0 )) goto end;
   if (!( 1 <= v36 )) goto end;
   if (!( 1 <= v21 )) goto end;
@@ -596,7 +595,6 @@ loc_3:
   if (!( 100 <= v21 )) goto end;
   if (!( v21 <= 100 )) goto end;
   if (!( v36 <= 0 )) goto end;
-  if (!( v36 <= 0 )) goto end;
   v35 = v39;
   goto loc_1;
  }
@@ -890,11 +888,6 @@ loc_8:
   goto loc_CP_9;
  }
  goto end;
-loc_1:
-loc_1:
-loc_1:
-loc_1:
-loc_1:
 loc_1:
 end:
 ;

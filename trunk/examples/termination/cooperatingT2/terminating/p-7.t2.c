@@ -61,7 +61,6 @@ loc_5:
  }
  goto end;
 loc_4:
-loc_4:
 end:
 ;
 }

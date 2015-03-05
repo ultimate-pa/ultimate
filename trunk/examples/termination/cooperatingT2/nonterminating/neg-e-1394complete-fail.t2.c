@@ -181,7 +181,6 @@ loc_12:
  if (nondet_bool()) {
   if (!( 1 <= v47 )) goto end;
   v1 = nondet();
-  v1 = nondet();
   v47 = -1+v47;
   v17 = nondet();
   goto loc_9;

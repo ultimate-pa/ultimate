@@ -25,7 +25,6 @@ loc_CP_1:
 loc_CP_2:
  if (nondet_bool()) {
   if (!( v4 <= 0 )) goto end;
-  if (!( v4 <= 0 )) goto end;
   goto loc_CP_1;
  }
  if (nondet_bool()) {

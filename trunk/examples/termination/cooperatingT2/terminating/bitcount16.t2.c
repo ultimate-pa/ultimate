@@ -48,9 +48,6 @@ loc_3:
   v4 = v2;
   v5 = v4;
   v5 = nondet();
-  v5 = nondet();
-  v5 = nondet();
-  v5 = nondet();
   v8 = v5;
   v11 = v8;
   goto loc_4;

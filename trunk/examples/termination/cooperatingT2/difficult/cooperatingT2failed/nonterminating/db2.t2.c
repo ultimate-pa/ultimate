@@ -2630,7 +2630,6 @@ loc_1:
  }
  goto end;
 loc_5:
-loc_5:
 end:
 ;
 }

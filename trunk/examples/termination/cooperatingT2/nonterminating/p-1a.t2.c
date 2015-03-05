@@ -43,8 +43,6 @@ loc_0:
   v10 = nondet();
   v9 = nondet();
   v3 = nondet();
-  v3 = nondet();
-  v2 = nondet();
   v2 = nondet();
   goto loc_CP_1;
  }

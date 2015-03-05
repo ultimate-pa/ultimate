@@ -883,7 +883,6 @@ loc_1:
  }
  goto end;
 loc_23:
-loc_23:
 end:
 ;
 }

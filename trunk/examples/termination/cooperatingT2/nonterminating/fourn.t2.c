@@ -189,7 +189,6 @@ loc_5:
   if (!( v4 <= v12 )) goto end;
   v5 = -1*v2+v3+v4;
   v21 = nondet();
-  v21 = nondet();
   v4 = v4+v11;
   goto loc_CP_4;
  }

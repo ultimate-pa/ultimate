@@ -3129,16 +3129,6 @@ loc_16:
  }
  goto end;
 loc_8:
-loc_8:
-loc_8:
-loc_8:
-loc_8:
-loc_8:
-loc_8:
-loc_8:
-loc_8:
-loc_8:
-loc_8:
 end:
 ;
 }

@@ -11,7 +11,6 @@ loc_2:
 loc_0:
  if (nondet_bool()) {
   v1 = nondet();
-  v1 = nondet();
   goto loc_1;
  }
  goto end;

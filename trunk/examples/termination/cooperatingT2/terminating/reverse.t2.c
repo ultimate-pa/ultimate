@@ -1342,10 +1342,6 @@ loc_78:
  }
  goto end;
 loc_34:
-loc_34:
-loc_34:
-loc_34:
-loc_34:
 end:
 ;
 }

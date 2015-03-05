@@ -151,7 +151,6 @@ loc_11:
  }
  if (nondet_bool()) {
   v2 = nondet();
-  v2 = nondet();
   goto loc_9;
  }
  goto end;
@@ -291,7 +290,6 @@ loc_30:
   goto loc_29;
  }
  if (nondet_bool()) {
-  v1 = nondet();
   v1 = nondet();
   goto loc_29;
  }

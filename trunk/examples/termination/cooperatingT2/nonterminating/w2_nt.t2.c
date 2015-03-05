@@ -54,10 +54,7 @@ loc_CP_4:
   if (!( 0 <= v9 )) goto end;
   v1 = nondet();
   if (!( 0 <= v9 )) goto end;
-  if (!( 0 <= v9 )) goto end;
   v16 = nondet();
-  if (!( 0 <= v9 )) goto end;
-  if (!( 0 <= v9 )) goto end;
   if (!( 0 <= v9 )) goto end;
   v15 = nondet();
   v23 = v15;
@@ -103,7 +100,6 @@ loc_3:
   v10 = 2;
   v17 = nondet();
   v16 = nondet();
-  if (!( 0 <= v10 )) goto end;
   if (!( 0 <= v10 )) goto end;
   v22 = v5;
   if (!( 0 <= v10 )) goto end;

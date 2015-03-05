@@ -35,7 +35,6 @@ loc_CP_1:
   v15 = v7;
   v15 = nondet();
   v9 = nondet();
-  v9 = nondet();
   v14 = v10;
   if (!( 0 <= -1+v14 )) goto end;
   v14 = nondet();
@@ -51,7 +50,6 @@ loc_CP_1:
   v15 = v7;
   v15 = nondet();
   v9 = nondet();
-  v9 = nondet();
   v14 = v10;
   if (!( v14 <= 0 )) goto end;
   v14 = nondet();
@@ -65,7 +63,6 @@ loc_CP_1:
   v17 = nondet();
   v15 = v7;
   v15 = nondet();
-  v9 = nondet();
   v9 = nondet();
   v14 = v10;
   if (!( 0 <= -1+v14 )) goto end;

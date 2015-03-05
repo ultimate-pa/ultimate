@@ -38,7 +38,6 @@ loc_CP_0:
   if (!( -1*v8+v12 <= 0 )) goto end;
   v1 = v7;
   if (!( 0 <= v11 )) goto end;
-  if (!( 0 <= v11 )) goto end;
   v18 = v1;
   v5 = v18;
   v18 = 0;

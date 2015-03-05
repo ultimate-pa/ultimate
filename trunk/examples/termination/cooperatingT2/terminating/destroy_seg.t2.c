@@ -617,10 +617,6 @@ loc_11:
  }
  goto end;
 loc_7:
-loc_7:
-loc_7:
-loc_7:
-loc_7:
 end:
 ;
 }

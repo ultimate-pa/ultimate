@@ -1266,7 +1266,6 @@ loc_1:
  }
  goto end;
 loc_16:
-loc_16:
 end:
 ;
 }

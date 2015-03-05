@@ -101,7 +101,6 @@ loc_2:
 loc_13:
  if (nondet_bool()) {
   v1 = nondet();
-  v1 = nondet();
   goto loc_CP_3;
  }
  goto end;

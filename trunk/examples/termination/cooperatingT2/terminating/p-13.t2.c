@@ -24,7 +24,6 @@ loc_0:
  }
  goto end;
 loc_1:
-loc_1:
 end:
 ;
 }
