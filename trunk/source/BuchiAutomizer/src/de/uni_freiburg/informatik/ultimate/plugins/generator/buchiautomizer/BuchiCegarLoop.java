@@ -165,7 +165,7 @@ public class BuchiCegarLoop {
 
 	private final PredicateFactoryRefinement m_StateFactoryForRefinement;
 
-	private final ModuleDecompositionBenchmark m_MDBenchmark;
+	private final BuchiAutomizerModuleDecompositionBenchmark m_MDBenchmark;
 
 	private final BuchiCegarLoopBenchmarkGenerator m_BenchmarkGenerator;
 
@@ -210,7 +210,7 @@ public class BuchiCegarLoop {
 		m_Services = services;
 		mStorage = storage;
 		mLogger = m_Services.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
-		m_MDBenchmark = new ModuleDecompositionBenchmark(m_Services.getBacktranslationService());
+		m_MDBenchmark = new BuchiAutomizerModuleDecompositionBenchmark(m_Services.getBacktranslationService());
 		this.m_Name = "BuchiCegarLoop";
 		this.m_RootNode = rootNode;
 		this.m_SmtManager = smtManager;
@@ -817,7 +817,7 @@ public class BuchiCegarLoop {
 		new AtsDefinitionPrinter<String, String>(services, filename, path + "/" + filename, m_PrintAutomataLabeling, message, automaton);
 	}
 
-	public ModuleDecompositionBenchmark getMDBenchmark() {
+	public BuchiAutomizerModuleDecompositionBenchmark getMDBenchmark() {
 		return m_MDBenchmark;
 	}
 

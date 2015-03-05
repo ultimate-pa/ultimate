@@ -100,7 +100,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 			reportResult(termcompProof);
 		}
 
-		TimingBenchmark timingBenchmark = new TimingBenchmark(benchGen);
+		BuchiAutomizerTimingBenchmark timingBenchmark = new BuchiAutomizerTimingBenchmark(benchGen);
 		IResult benchTiming = new BenchmarkResult<>(Activator.s_PLUGIN_ID, "Timing statistics", timingBenchmark);
 		reportResult(benchTiming);
 

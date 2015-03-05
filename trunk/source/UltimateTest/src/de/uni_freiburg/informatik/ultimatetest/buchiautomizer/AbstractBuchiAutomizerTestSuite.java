@@ -2,8 +2,8 @@ package de.uni_freiburg.informatik.ultimatetest.buchiautomizer;
 
 import java.util.ArrayList;
 
-import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.ModuleDecompositionBenchmark;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.TimingBenchmark;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BuchiAutomizerModuleDecompositionBenchmark;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BuchiAutomizerTimingBenchmark;
 import de.uni_freiburg.informatik.ultimate.util.Benchmark;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
 import de.uni_freiburg.informatik.ultimatetest.AbstractModelCheckerTestSuite;
@@ -33,9 +33,9 @@ public abstract class AbstractBuchiAutomizerTestSuite extends AbstractModelCheck
 	protected ITestSummary[] constructTestSummaries() {
 		ArrayList<Class<? extends ICsvProviderProvider<? extends Object>>> benchmarks = 
 				new ArrayList<Class<? extends ICsvProviderProvider<? extends Object>>>();
-		benchmarks.add(TimingBenchmark.class);
+		benchmarks.add(BuchiAutomizerTimingBenchmark.class);
 		benchmarks.add(Benchmark.class);
-		benchmarks.add(ModuleDecompositionBenchmark.class);
+		benchmarks.add(BuchiAutomizerModuleDecompositionBenchmark.class);
 
 		ColumnDefinition[] columnDef = new ColumnDefinition[] { new ColumnDefinition(
 				"Runtime (ns)", "Avg. runtime",
@@ -43,7 +43,7 @@ public abstract class AbstractBuchiAutomizerTestSuite extends AbstractModelCheck
 
 		return new ITestSummary[] { 
 				new TraceAbstractionTestSummary(this.getClass()),
-				new CsvConcatenator(this.getClass(), TimingBenchmark.class), 
+				new CsvConcatenator(this.getClass(), BuchiAutomizerTimingBenchmark.class), 
 				new LatexOverviewSummary(getClass(), benchmarks, columnDef),
 				new LatexDetailedSummary(getClass(), benchmarks, columnDef),
 //				new CsvSummary(getClass(), benchmarks, columnDef),

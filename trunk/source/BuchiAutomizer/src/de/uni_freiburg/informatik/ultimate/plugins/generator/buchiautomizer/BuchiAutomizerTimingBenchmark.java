@@ -4,10 +4,10 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.be
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProvider;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
 
-public class TimingBenchmark implements ICsvProviderProvider<Object>{
+public class BuchiAutomizerTimingBenchmark implements ICsvProviderProvider<Object>{
 	private BenchmarkData m_BenchmarkData;
 	
-	public TimingBenchmark(BuchiCegarLoopBenchmarkGenerator benchGen) {
+	public BuchiAutomizerTimingBenchmark(BuchiCegarLoopBenchmarkGenerator benchGen) {
 		m_BenchmarkData = new BenchmarkData();
 		m_BenchmarkData.aggregateBenchmarkData(benchGen);
 	}

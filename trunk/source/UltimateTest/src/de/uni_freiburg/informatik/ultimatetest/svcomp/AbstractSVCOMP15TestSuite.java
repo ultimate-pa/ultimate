@@ -9,7 +9,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.TimingBenchmark;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BuchiAutomizerTimingBenchmark;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.CodeCheckBenchmarks;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionBenchmarks;
 import de.uni_freiburg.informatik.ultimate.util.Benchmark;
@@ -143,7 +143,7 @@ public abstract class AbstractSVCOMP15TestSuite extends UltimateTestSuite {
 		//@formatter:off
 		ArrayList<Class<? extends ICsvProviderProvider<? extends Object>>> benchmarks
 			= new ArrayList<Class<? extends ICsvProviderProvider<? extends Object>>>();
-		benchmarks.add(TimingBenchmark.class);
+		benchmarks.add(BuchiAutomizerTimingBenchmark.class);
 		benchmarks.add(Benchmark.class);
 		benchmarks.add(TraceAbstractionBenchmarks.class);
 		benchmarks.add(CodeCheckBenchmarks.class);

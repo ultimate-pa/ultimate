@@ -13,7 +13,7 @@ import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProvider;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
 import de.uni_freiburg.informatik.ultimate.util.csv.SimpleCsvProvider;
 
-public class ModuleDecompositionBenchmark implements ICsvProviderProvider<String> {
+public class BuchiAutomizerModuleDecompositionBenchmark implements ICsvProviderProvider<String> {
 
 	private final TreeMap<Integer, Integer> m_ModuleSizeTrivial = new TreeMap<Integer, Integer>();
 	private final TreeMap<Integer, Integer> m_ModuleSizeDeterministic = new TreeMap<Integer, Integer>();
@@ -28,7 +28,7 @@ public class ModuleDecompositionBenchmark implements ICsvProviderProvider<String
 	private boolean m_RemainderModuleNonterminationKnown;
 	private IBacktranslationService mBacktranslationService;
 
-	public ModuleDecompositionBenchmark(IBacktranslationService service) {
+	public BuchiAutomizerModuleDecompositionBenchmark(IBacktranslationService service) {
 		mBacktranslationService = service;
 	}
 

@@ -6,7 +6,7 @@ package de.uni_freiburg.informatik.ultimatetest.buchiautomizer;
 import java.util.Collection;
 
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.TerminationAnalysisBenchmark;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.TimingBenchmark;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BuchiAutomizerTimingBenchmark;
 import de.uni_freiburg.informatik.ultimatetest.TraceAbstractionTestSummary;
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
 import de.uni_freiburg.informatik.ultimatetest.summary.CsvConcatenator;
@@ -44,7 +44,7 @@ public class BuchiAutomizerTemplateBenchmarkMode extends
 		return new ITestSummary[] {
 				new TraceAbstractionTestSummary(this.getClass()),
 				new CsvConcatenator(this.getClass(), TerminationAnalysisBenchmark.class),
-				new CsvConcatenator(this.getClass(), TimingBenchmark.class),
+				new CsvConcatenator(this.getClass(), BuchiAutomizerTimingBenchmark.class),
 		};
 	}
 	
