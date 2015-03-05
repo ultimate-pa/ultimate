@@ -20,13 +20,13 @@ public class BuchiAutomizerDefaultTests extends
 //		"examples/programs/quantifier",
 //		"examples/programs/recursivePrograms",
 //		"examples/programs/toy"
-		"examples/programs/termination/toPLDI",
+//		"examples/programs/termination/toPLDI",
 //		"examples/termination/cooperatingT2/difficult/solved",
-//		"examples/termination/cooperatingT2",
+		"examples/termination/cooperatingT2",
 	};
 	
 	// Time out for each test case in milliseconds
-	private static int m_Timeout = 10 * 1000;
+	private static int m_Timeout = 120 * 1000;
 
 	private static final boolean s_UseMediumBlockEncoding = !false;
 	private static final String s_MediumBlockEncodingSetting = "buchiAutomizer/staged300Forward-Z3.epf";
