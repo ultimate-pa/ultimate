@@ -13,7 +13,7 @@ public class RcfgPreferenceInitializer extends UltimatePreferenceInitializer {
 				new UltimatePreferenceItem<Boolean>(LABEL_ASSUME_FOR_ASSERT,
 						DEF_ASSUME_FOR_ASSERT, PreferenceType.Boolean),
 				new UltimatePreferenceItem<Solver>(LABEL_Solver,
-						Solver.External_DefaultMode, PreferenceType.Combo, Solver.values()),
+						DEF_Solver, PreferenceType.Combo, Solver.values()),
 				new UltimatePreferenceItem<String>(LABEL_ExtSolverCommand,
 						DEF_ExtSolverCommand_Z3, PreferenceType.String),
 				new UltimatePreferenceItem<String>(LABEL_ExtSolverLogic,
@@ -50,6 +50,7 @@ public class RcfgPreferenceInitializer extends UltimatePreferenceInitializer {
 	public static final String LABEL_ASSUME_FOR_ASSERT = "Add additional assume for each assert";
 	public static final boolean DEF_ASSUME_FOR_ASSERT = false;
 	public static final String LABEL_Solver = "SMT solver";
+	public static final Solver DEF_Solver = Solver.External_DefaultMode;
 	public static final String LABEL_ExtSolverCommand = "Command for external solver";
 	public static final String DEF_ExtSolverCommand_Z3 = "z3 SMTLIB2_COMPLIANT=true -memory:1024 -smt2 -in -t:12000";
 	public static final String DEF_ExtSolverCommand_CVC4 = "cvc4-2014-07-03-x86_64-linux-opt --incremental --print-success";
