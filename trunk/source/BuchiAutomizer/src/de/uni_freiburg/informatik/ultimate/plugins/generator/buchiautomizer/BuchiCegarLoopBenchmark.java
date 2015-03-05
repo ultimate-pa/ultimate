@@ -12,6 +12,7 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.lassoranker.LassoAnalysis.PreprocessingBenchmark;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.TerminationAnalysisBenchmark;
+import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BuchiCegarLoop.Result;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopBenchmarkType;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CoverageAnalysis.BackwardCoveringInformation;
@@ -223,13 +224,14 @@ public class BuchiCegarLoopBenchmark extends CegarLoopBenchmarkType implements I
 	
 	private ICsvProvider<Object> aggregateTermBench(List<TerminationAnalysisBenchmark> benchmarks) {
 		List<ICsvProvider<Object>> list = new ArrayList<ICsvProvider<Object>>();
-		benchmarks = Collections.singletonList(mostMotzkin(benchmarks));
+		benchmarks = Collections.singletonList(mostMotzkinButUnknownFirst(benchmarks));
 		for (TerminationAnalysisBenchmark benchmark : benchmarks) {
 			list.add(benchmark.createCvsProvider());
 		}
 		ICsvProvider<Object> allRows = CsvUtils.concatenateRows(list);
 		ICsvProvider<Object> numericColumns = CsvUtils.projectColumn(
 				allRows, new String[]{
+				TerminationAnalysisBenchmark.s_Label_ConstraintsSatisfiability,
 				TerminationAnalysisBenchmark.s_Label_Degree,
 				TerminationAnalysisBenchmark.s_Label_Time, 
 				TerminationAnalysisBenchmark.s_Label_VariablesStem, 
@@ -241,15 +243,32 @@ public class BuchiCegarLoopBenchmark extends CegarLoopBenchmarkType implements I
 		return numericColumns;
 	}
 	
-	private TerminationAnalysisBenchmark mostMotzkin(List<TerminationAnalysisBenchmark> benchmarks) {
+	private TerminationAnalysisBenchmark mostMotzkinButUnknownFirst(List<TerminationAnalysisBenchmark> benchmarks) {
+		boolean foundUnknown = false;
 		int mostMotzkin = 0;
-		TerminationAnalysisBenchmark mostMotzkinTab = null;
+		TerminationAnalysisBenchmark mostDifficult = null;
 		for (TerminationAnalysisBenchmark benchmark : benchmarks) {
-			if (benchmark.getMotzkinApplications() > mostMotzkin) {
-				mostMotzkinTab = benchmark;
+			if (foundUnknown == false) {
+				if (benchmark.getConstraintsSatisfiability() == LBool.UNKNOWN) {
+					foundUnknown = true;
+					mostDifficult = benchmark;
+					mostMotzkin = benchmark.getMotzkinApplications();
+				} else {
+					if (benchmark.getMotzkinApplications() > mostMotzkin) {
+						mostDifficult = benchmark;
+						mostMotzkin = benchmark.getMotzkinApplications();
+					}
+				}
+			} else {
+				if (benchmark.getConstraintsSatisfiability() == LBool.UNKNOWN) {
+					if (benchmark.getMotzkinApplications() > mostMotzkin) {
+						mostDifficult = benchmark;
+						mostMotzkin = benchmark.getMotzkinApplications();
+					}
+				}
 			}
 		}
-		return mostMotzkinTab;
+		return mostDifficult;
 	}
 	
 	
