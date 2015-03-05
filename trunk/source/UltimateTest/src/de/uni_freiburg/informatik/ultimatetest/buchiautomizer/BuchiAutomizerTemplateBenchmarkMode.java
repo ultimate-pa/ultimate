@@ -12,7 +12,7 @@ import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
 import de.uni_freiburg.informatik.ultimatetest.summary.CsvConcatenator;
 import de.uni_freiburg.informatik.ultimatetest.summary.IIncrementalLog;
 import de.uni_freiburg.informatik.ultimatetest.summary.ITestSummary;
-import de.uni_freiburg.informatik.ultimatetest.traceabstraction.TestSummaryWithBenchmarkResults;
+import de.uni_freiburg.informatik.ultimatetest.traceabstraction.IncrementalLogWithBenchmarkResults;
 
 /**
  * @author heizmann@informatik.uni-freiburg.de
@@ -50,7 +50,7 @@ public class BuchiAutomizerTemplateBenchmarkMode extends
 	
 	@Override
 	protected IIncrementalLog[] constructIncrementalLog() {
-		return new IIncrementalLog[] { new TestSummaryWithBenchmarkResults(this.getClass()) };
+		return new IIncrementalLog[] { new IncrementalLogWithBenchmarkResults(this.getClass()) };
 	}
 	
 	

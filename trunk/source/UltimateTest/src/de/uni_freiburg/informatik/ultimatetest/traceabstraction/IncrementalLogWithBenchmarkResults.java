@@ -19,9 +19,9 @@ import de.uni_freiburg.informatik.ultimatetest.summary.DefaultIncrementalLogfile
  * @author dietsch@informatik.uni-freiburg.de
  * 
  */
-public class TestSummaryWithBenchmarkResults extends DefaultIncrementalLogfile {
+public class IncrementalLogWithBenchmarkResults extends DefaultIncrementalLogfile {
 
-	public TestSummaryWithBenchmarkResults(Class<? extends UltimateTestSuite> ultimateTestSuite) {
+	public IncrementalLogWithBenchmarkResults(Class<? extends UltimateTestSuite> ultimateTestSuite) {
 		super(ultimateTestSuite);
 	}
 

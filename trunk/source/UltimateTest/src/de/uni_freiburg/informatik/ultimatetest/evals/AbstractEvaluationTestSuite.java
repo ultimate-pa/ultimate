@@ -24,7 +24,7 @@ import de.uni_freiburg.informatik.ultimatetest.decider.SafetyCheckTestResultDeci
 import de.uni_freiburg.informatik.ultimatetest.summary.IIncrementalLog;
 import de.uni_freiburg.informatik.ultimatetest.summary.ITestSummary;
 import de.uni_freiburg.informatik.ultimatetest.summary.IncrementalLogWithVMParameters;
-import de.uni_freiburg.informatik.ultimatetest.traceabstraction.TestSummaryWithBenchmarkResults;
+import de.uni_freiburg.informatik.ultimatetest.traceabstraction.IncrementalLogWithBenchmarkResults;
 import de.uni_freiburg.informatik.ultimatetest.util.Util;
 
 /**
@@ -137,7 +137,7 @@ public abstract class AbstractEvaluationTestSuite extends AbstractModelCheckerTe
 		if (mIncrementalLog == null) {
 			mIncrementalLog = new IncrementalLogWithVMParameters(this.getClass(), getTimeout());
 		}
-		return new IIncrementalLog[] { mIncrementalLog, new TestSummaryWithBenchmarkResults(this.getClass()) };
+		return new IIncrementalLog[] { mIncrementalLog, new IncrementalLogWithBenchmarkResults(this.getClass()) };
 	}
 
 	private void limitTestFiles(List<UltimateTestCase> testcases) {

@@ -20,7 +20,7 @@ import de.uni_freiburg.informatik.ultimatetest.evals.LatexOverviewSummary;
 import de.uni_freiburg.informatik.ultimatetest.summary.CsvConcatenator;
 import de.uni_freiburg.informatik.ultimatetest.summary.IIncrementalLog;
 import de.uni_freiburg.informatik.ultimatetest.summary.ITestSummary;
-import de.uni_freiburg.informatik.ultimatetest.traceabstraction.TestSummaryWithBenchmarkResults;
+import de.uni_freiburg.informatik.ultimatetest.traceabstraction.IncrementalLogWithBenchmarkResults;
 
 public abstract class AbstractBuchiAutomizerTestSuite extends AbstractModelCheckerTestSuite {
 
@@ -55,7 +55,7 @@ public abstract class AbstractBuchiAutomizerTestSuite extends AbstractModelCheck
 	@Override
 	protected IIncrementalLog[] constructIncrementalLog() {
 		return new IIncrementalLog[] { 
-				new TestSummaryWithBenchmarkResults(this.getClass()) 
+				new IncrementalLogWithBenchmarkResults(this.getClass()) 
 		};
 	}
 

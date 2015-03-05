@@ -17,7 +17,7 @@ import de.uni_freiburg.informatik.ultimatetest.lassoranker.LassoRankerTestResult
 import de.uni_freiburg.informatik.ultimatetest.summary.CsvConcatenator;
 import de.uni_freiburg.informatik.ultimatetest.summary.IIncrementalLog;
 import de.uni_freiburg.informatik.ultimatetest.summary.ITestSummary;
-import de.uni_freiburg.informatik.ultimatetest.traceabstraction.TestSummaryWithBenchmarkResults;
+import de.uni_freiburg.informatik.ultimatetest.traceabstraction.IncrementalLogWithBenchmarkResults;
 import de.uni_freiburg.informatik.ultimatetest.util.Util;
 
 /**
@@ -72,7 +72,7 @@ public class LassoRankerTestSuite extends UltimateTestSuite {
 
 	@Override
 	protected IIncrementalLog[] constructIncrementalLog() {
-		return new IIncrementalLog[] { new TestSummaryWithBenchmarkResults(this.getClass()) };
+		return new IIncrementalLog[] { new IncrementalLogWithBenchmarkResults(this.getClass()) };
 	}
 
 	@Override

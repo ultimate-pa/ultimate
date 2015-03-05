@@ -28,7 +28,7 @@ public abstract class AbstractTraceAbstractionTestSuite extends AbstractModelChe
 	@Override
 	protected IIncrementalLog[] constructIncrementalLog() {
 		return new IIncrementalLog[] { 
-				new TestSummaryWithBenchmarkResults(this.getClass()) 
+				new IncrementalLogWithBenchmarkResults(this.getClass()) 
 				
 		};
 	}

@@ -11,7 +11,7 @@ import de.uni_freiburg.informatik.ultimatetest.decider.SafetyCheckTestResultDeci
 import de.uni_freiburg.informatik.ultimatetest.summary.IIncrementalLog;
 import de.uni_freiburg.informatik.ultimatetest.summary.ITestSummary;
 import de.uni_freiburg.informatik.ultimatetest.summary.IncrementalLogWithVMParameters;
-import de.uni_freiburg.informatik.ultimatetest.traceabstraction.TestSummaryWithBenchmarkResults;
+import de.uni_freiburg.informatik.ultimatetest.traceabstraction.IncrementalLogWithBenchmarkResults;
 
 public abstract class AbstractBugTestSuite extends AbstractModelCheckerTestSuite {
 
@@ -51,7 +51,7 @@ public abstract class AbstractBugTestSuite extends AbstractModelCheckerTestSuite
 		if (mIncrementalLog == null) {
 			mIncrementalLog = new IncrementalLogWithVMParameters(getClass(), getTimeout());
 		}
-		return new IIncrementalLog[] { mIncrementalLog, new TestSummaryWithBenchmarkResults(getClass()) };
+		return new IIncrementalLog[] { mIncrementalLog, new IncrementalLogWithBenchmarkResults(getClass()) };
 	}
 
 }
