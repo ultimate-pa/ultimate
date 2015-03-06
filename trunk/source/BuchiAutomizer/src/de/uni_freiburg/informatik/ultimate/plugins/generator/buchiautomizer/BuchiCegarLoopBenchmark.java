@@ -211,6 +211,9 @@ public class BuchiCegarLoopBenchmark extends CegarLoopBenchmarkType implements I
 				value = value / 1000000;
 				sb.append(value);
 				sb.append("ms");
+			} else if (title.equals(TerminationAnalysisBenchmark.s_Label_ConstraintsSatisfiability)) {
+				LBool value = (LBool) aggr.getRow(0).get(offset);
+				sb.append(value);
 			} else {
 				int value = (int) aggr.getRow(0).get(offset);
 				sb.append(value);
