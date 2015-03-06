@@ -108,7 +108,9 @@ Params:
    *
    */
   String url = "";
-  String filename = URLEncoder.encode(tool, "ISO-8859-1");
+//   String filename = URLEncoder.encode(tool, "ISO-8859-1");
+  String filename = URLEncoder.encode(tool, "UTF-8");
+
   
   if (ui.equals("home")){
 	// setting home page url
@@ -129,8 +131,12 @@ Params:
 //   System.out.println("Port:    "+request.getServerPort());
 //   System.out.println("Context: "+request.getContextPath());
   String str = "";
-  try{ str = getData(url); }
-  catch (Exception e) { str = "{ \"description\": \"Error fetching JSON.  ("+URLDecoder.decode(url, "ISO-8859-1")+")\" }"; }
+  try{ 
+	  str = getData(url); 
+  }
+  catch (Exception e) { 
+	  str = "{ \"description\": \"Error fetching JSON.  ("+URLDecoder.decode(url, "UTF-8")+")\" }"; 
+  }
 
   JSONObject jsonObject = (JSONObject)  JSONValue.parse(str); // for { a: {}, b: {} } JSONs (Object)
   /*

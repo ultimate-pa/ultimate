@@ -5,6 +5,8 @@ Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.witnessparser;singleton
 Bundle-Version: 0.0.1
 Bundle-Activator: de.uni_freiburg.informatik.ultimate.witnessparser.Activator
 Require-Bundle: UltimateCore,
- Library-log4j
+ Library-log4j,
+ Library-Jung
 Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-1.7
+Export-Package: de.uni_freiburg.informatik.ultimate.witnessparser.graph

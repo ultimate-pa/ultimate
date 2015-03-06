@@ -30,9 +30,7 @@ import de.uni_freiburg.informatik.ultimate.model.acsl.LTLPrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.GlobalLTLInvariant;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieAstCopier;
-import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieTransformer;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BoogieASTNode;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Unit;
 import de.uni_freiburg.informatik.ultimate.model.structure.WrapperNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer;
@@ -76,8 +74,9 @@ public class CACSL2BoogieTranslatorObserver implements IUnmanagedObserver {
 	public boolean process(IElement root) {
 		if (!(root instanceof WrapperNode) || !((((WrapperNode) root).getBacking()) instanceof IASTTranslationUnit)) {
 			// input not in expected format
-			mLogger.error("Unexpected input object!");
-			throw new IllegalArgumentException("Not a valid input type!");
+//			mLogger.error("Unexpected input object!");
+//			throw new IllegalArgumentException("Not a valid input type!");
+			return false;
 		}
 		IASTTranslationUnit inputTU = (IASTTranslationUnit) ((WrapperNode) root).getBacking();
 

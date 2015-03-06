@@ -47,7 +47,7 @@ public class CACSL2BoogieTranslator implements IGenerator {
 
 	@Override
 	public QueryKeyword getQueryKeyword() {
-		return QueryKeyword.LAST;
+		return QueryKeyword.ALL;
 	}
 
 	@Override

@@ -47,7 +47,7 @@ public class LoadSourceFilesAction extends RunToolchainAction implements IWorkbe
 	public final void run() {
 		File[] fp = getInputFilesFromUser(s_DIALOG_NAME);
 
-		if (fp != null) {
+		if (fp != null && fp.length>0) {
 			File prelude = PreludeContribution.getPreludeFile();
 			BasicToolchainJob tcj = new GuiToolchainJob("Processing Toolchain", mCore, mController, fp,
 					prelude == null ? null : new PreludeProvider(prelude.getAbsolutePath(), mLogger), mLogger);
