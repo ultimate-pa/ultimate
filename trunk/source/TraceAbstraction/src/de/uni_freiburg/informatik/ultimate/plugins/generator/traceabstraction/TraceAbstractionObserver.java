@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.result.ResultUtil;
 import de.uni_freiburg.informatik.ultimate.result.TimeoutResultAtElement;
 import de.uni_freiburg.informatik.ultimate.result.UnprovableResult;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
+import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNode;
 
 /**
  * Auto-Generated Stub for the plug-in's Observer
@@ -49,6 +50,7 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 	private final IUltimateServiceProvider mServices;
 	
 	private RootNode m_RcfgRootNode;
+	private WitnessNode m_WitnessNode;
 
 
 	public TraceAbstractionObserver(IUltimateServiceProvider services) {
@@ -67,10 +69,13 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 
 	@Override
 	public boolean process(IElement root) {
-		if (!(root instanceof RootNode)) {
-			return true;
+		if (root instanceof RootNode) {
+			m_RcfgRootNode = (RootNode) root;
 		}
-		m_RcfgRootNode = (RootNode) root;
+		if (root instanceof WitnessNode) {
+			m_WitnessNode = root;
+		}
+
 		return false;
 	}
 

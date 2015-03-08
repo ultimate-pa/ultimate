@@ -45,7 +45,7 @@ public class TraceAbstraction implements IGenerator {
 
 	@Override
 	public QueryKeyword getQueryKeyword() {
-		return QueryKeyword.LAST;
+		return QueryKeyword.ALL;
 	}
 
 	@Override
