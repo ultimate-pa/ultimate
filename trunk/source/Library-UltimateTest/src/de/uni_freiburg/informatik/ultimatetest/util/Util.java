@@ -474,6 +474,21 @@ public class Util {
 		map.put(".*_false-termination.*", TerminationAnalysisOverallResult.NONTERMINATING);
 		return map;
 	}
+	
+	/**
+	 * Returns a map from keywords to verification results. We use keywords in
+	 * paths to specify expected verification results. If a key of this map
+	 * is a substring of the path, the value of this map is the expected
+	 * verification result of a termination analysis.
+	 */
+	public static Map<String, TerminationAnalysisOverallResult> constructPathKeywordMap_TerminationAnalysis() {
+		Map<String, TerminationAnalysisOverallResult> map = new HashMap<String, TerminationAnalysisOverallResult>();
+		// we sometimes put terminating examples in a folder with this name
+		map.put("/terminating", TerminationAnalysisOverallResult.TERMINATING);
+		// we sometimes put nonterminating examples in a folder with this name
+		map.put("/nonterminating", TerminationAnalysisOverallResult.NONTERMINATING);
+		return map;
+	}
 
 	/**
 	 * Returns a map from keywords to verification results. We use keywords in

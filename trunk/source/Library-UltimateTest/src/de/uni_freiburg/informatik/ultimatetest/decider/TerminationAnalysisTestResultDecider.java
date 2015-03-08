@@ -28,7 +28,7 @@ public class TerminationAnalysisTestResultDecider extends
 	public IExpectedResultFinder<TerminationAnalysisOverallResult> constructExpectedResultFinder() {
 		return new KeywordBasedExpectedResultFinder<TerminationAnalysisOverallResult>(
 				Util.constructFilenameKeywordMap_TerminationAnalysis(), 
-				null, 
+				Util.constructPathKeywordMap_TerminationAnalysis(), 
 				Util.constructFirstlineKeywordMap_TerminationAnalysis());
 	}
 
