@@ -73,7 +73,7 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 			m_RcfgRootNode = (RootNode) root;
 		}
 		if (root instanceof WitnessNode) {
-			m_WitnessNode = root;
+			m_WitnessNode = (WitnessNode) root;
 		}
 
 		return false;
