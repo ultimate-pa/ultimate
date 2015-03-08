@@ -71,9 +71,6 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 			return true;
 		}
 		m_RcfgRootNode = (RootNode) root;
-		
-		runCegarLoops();
-
 		return false;
 	}
 
@@ -325,8 +322,7 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 
 	@Override
 	public void finish() {
-		// TODO Auto-generated method stub
-
+		runCegarLoops();
 	}
 
 	@Override
