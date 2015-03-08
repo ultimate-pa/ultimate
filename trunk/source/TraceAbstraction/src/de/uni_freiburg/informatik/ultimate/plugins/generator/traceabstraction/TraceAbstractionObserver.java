@@ -47,6 +47,9 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 
 	private final Logger mLogger;
 	private final IUltimateServiceProvider mServices;
+	
+	private RootNode m_RcfgRootNode;
+
 
 	public TraceAbstractionObserver(IUltimateServiceProvider services) {
 		mServices = services;
@@ -67,16 +70,15 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 		if (!(root instanceof RootNode)) {
 			return true;
 		}
+		m_RcfgRootNode = (RootNode) root;
+		
+		runCegarLoops();
 
-		// TODO: Now you can get instances of your library classes for the
-		// current toolchain like this:
-		// NWA is nevertheless very broken, as its static initialization
-		// prevents parallelism
-		// Surprisingly, this call lazily initializes the static fields of NWA
-		// Lib and, like magic, the toolchain works ...
-		mServices.getServiceInstance(ExampleNWAFactory.class);
+		return false;
+	}
 
-		RootAnnot rootAnnot = ((RootNode) root).getRootAnnot();
+	private void runCegarLoops() {
+		RootAnnot rootAnnot = m_RcfgRootNode.getRootAnnot();
 		TAPreferences taPrefs = new TAPreferences();
 
 		String settings = "Automizer settings:";
@@ -100,14 +102,14 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 
 		if (taPrefs.allErrorLocsAtOnce()) {
 			String name = "AllErrorsAtOnce";
-			iterate(name, (RootNode) root, taPrefs, smtManager, traceAbstractionBenchmark, errNodesOfAllProc);
+			iterate(name, m_RcfgRootNode, taPrefs, smtManager, traceAbstractionBenchmark, errNodesOfAllProc);
 		} else {
 			for (ProgramPoint errorLoc : errNodesOfAllProc) {
 				String name = errorLoc.getLocationName();
 				ArrayList<ProgramPoint> errorLocs = new ArrayList<ProgramPoint>(1);
 				errorLocs.add(errorLoc);
 				mServices.getProgressMonitorService().setSubtask(errorLoc.toString());
-				iterate(name, (RootNode) root, taPrefs, smtManager, traceAbstractionBenchmark, errorLocs);
+				iterate(name, m_RcfgRootNode, taPrefs, smtManager, traceAbstractionBenchmark, errorLocs);
 			}
 		}
 		if (m_OverallResult == Result.SAFE) {
@@ -127,7 +129,7 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 		mLogger.debug("Continue processing: " + mServices.getProgressMonitorService().continueProcessing());
 		if (taPrefs.computeHoareAnnotation() && m_OverallResult != Result.TIMEOUT
 				&& mServices.getProgressMonitorService().continueProcessing()) {
-			assert (smtManager.cfgInductive((RootNode) root));
+			assert (smtManager.cfgInductive(m_RcfgRootNode));
 
 			IBacktranslationService translator_sequence = mServices.getBacktranslationService();
 
@@ -184,8 +186,6 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 		}
 
 		m_graphroot = m_Artifact;
-
-		return false;
 	}
 
 	private void iterate(String name, RootNode root, TAPreferences taPrefs, SmtManager smtManager,
