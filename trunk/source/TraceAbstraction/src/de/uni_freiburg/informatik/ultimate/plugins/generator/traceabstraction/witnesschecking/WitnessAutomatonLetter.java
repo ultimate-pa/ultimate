@@ -9,9 +9,16 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Par
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.SequentialComposition;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
+import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessEdge;
 
 public class WitnessAutomatonLetter {
+	WitnessEdge m_WitnessEdge;
 	
+	public WitnessAutomatonLetter(WitnessEdge we) {
+		m_WitnessEdge = we;
+	}
+
+
 	public boolean isCompatible(CodeBlock cb) {
 		if (cb instanceof Call) {
 			Call call = (Call) cb;
@@ -90,8 +97,16 @@ public class WitnessAutomatonLetter {
 	
 
 	private boolean isCompatible(ILocation location) {
-		//something with line numbers
-		return false;
+		int witnessLine = m_WitnessEdge.getLocation().getStartLine();
+		return (location.getStartLine() <= witnessLine && location.getEndLine() >= witnessLine);
 	}
+
+
+	@Override
+	public String toString() {
+		return m_WitnessEdge.toString();
+	}
+	
+	
 
 }
