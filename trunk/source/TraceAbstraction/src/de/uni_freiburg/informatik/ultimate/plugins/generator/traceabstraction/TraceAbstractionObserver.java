@@ -9,6 +9,7 @@ import org.apache.log4j.Logger;
 import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
 import de.uni_freiburg.informatik.ultimate.automata.ExampleNWAFactory;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 import de.uni_freiburg.informatik.ultimate.core.services.IBacktranslationService;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
@@ -28,6 +29,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.LanguageOperation;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.witnesschecking.WitnessAutomatonLetter;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.witnesschecking.WitnessModelToAutomatonTransformer;
 import de.uni_freiburg.informatik.ultimate.result.AllSpecificationsHoldResult;
 import de.uni_freiburg.informatik.ultimate.result.BenchmarkResult;
 import de.uni_freiburg.informatik.ultimate.result.CounterExampleResult;
@@ -50,7 +53,7 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 	private final IUltimateServiceProvider mServices;
 	
 	private RootNode m_RcfgRootNode;
-	private WitnessNode m_WitnessNode;
+	private static WitnessNode m_WitnessNode;
 
 
 	public TraceAbstractionObserver(IUltimateServiceProvider services) {
@@ -74,12 +77,14 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 		}
 		if (root instanceof WitnessNode) {
 			m_WitnessNode = (WitnessNode) root;
+			if (m_RcfgRootNode != null) {
+				throw new AssertionError("Witness mus come before RCFG");
+			}
 		}
-
 		return false;
 	}
 
-	private void runCegarLoops() {
+	private void runCegarLoops(NestedWordAutomaton<WitnessAutomatonLetter, WitnessNode> witnessAutomaton) {
 		RootAnnot rootAnnot = m_RcfgRootNode.getRootAnnot();
 		TAPreferences taPrefs = new TAPreferences();
 
@@ -327,7 +332,17 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 
 	@Override
 	public void finish() {
-		runCegarLoops();
+		if (m_RcfgRootNode != null) {
+			NestedWordAutomaton<WitnessAutomatonLetter, WitnessNode> witnessAutomaton;
+			if (m_WitnessNode != null) {
+				witnessAutomaton = (new WitnessModelToAutomatonTransformer(m_WitnessNode, mServices)).getResult();
+			} else {
+				witnessAutomaton = null;
+			}
+			runCegarLoops(witnessAutomaton);
+			// prevent more executions
+//			m_RcfgRootNode = null;
+		}
 	}
 
 	@Override
