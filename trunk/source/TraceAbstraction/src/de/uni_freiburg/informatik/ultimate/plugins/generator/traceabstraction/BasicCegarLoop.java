@@ -17,6 +17,7 @@ import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.InCaReAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
@@ -25,6 +26,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Accept
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Difference;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsEmpty;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.PowersetDeterminizer;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.RemoveDeadEnds;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.RemoveUnreachable;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.MinimizeSevpa;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.ShrinkNwa;
@@ -76,6 +78,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceCheckerSpWp;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceCheckerUtils;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.witnesschecking.WitnessAutomatonLetter;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.witnesschecking.WitnessProductAutomaton;
+import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNode;
 
 /**
  * Subclass of AbstractCegarLoop which provides all algorithms for checking
@@ -105,6 +110,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 
 	protected final boolean m_AbstractInterpretationMode;
 	private Map<Object, Term> m_AITermMap;
+	private NestedWordAutomaton<WitnessAutomatonLetter, WitnessNode> m_WitnessAutomaton;
 
 	public BasicCegarLoop(String name, RootNode rootNode, SmtManager smtManager, TAPreferences taPrefs,
 			Collection<ProgramPoint> errorLocs, INTERPOLATION interpolation, boolean computeHoareAnnotation,
@@ -142,6 +148,11 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 
 		m_Abstraction = cFG2NestedWordAutomaton.getNestedWordAutomaton(super.m_RootNode, m_StateFactoryForRefinement,
 				super.m_ErrorLocs);
+		if (m_WitnessAutomaton != null) {
+			WitnessProductAutomaton wpa = new WitnessProductAutomaton(m_Services, (INestedWordAutomatonSimple<CodeBlock, IPredicate>) m_Abstraction, m_WitnessAutomaton, m_SmtManager);
+			INestedWordAutomatonSimple<CodeBlock, IPredicate> test = (new RemoveUnreachable<CodeBlock, IPredicate>(m_Services, wpa)).getResult();
+			m_Abstraction = (new RemoveDeadEnds<CodeBlock, IPredicate>(m_Services, wpa)).getResult();
+		}
 	}
 
 	@Override
@@ -836,6 +847,12 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 	 */
 	public void finish() {
 		// do nothing
+	}
+
+	public void setWitnessAutomaton(
+			NestedWordAutomaton<WitnessAutomatonLetter, WitnessNode> witnessAutomaton) {
+		m_WitnessAutomaton = witnessAutomaton;
+		
 	}
 
 }

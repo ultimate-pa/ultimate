@@ -109,14 +109,14 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 
 		if (taPrefs.allErrorLocsAtOnce()) {
 			String name = "AllErrorsAtOnce";
-			iterate(name, m_RcfgRootNode, taPrefs, smtManager, traceAbstractionBenchmark, errNodesOfAllProc);
+			iterate(name, m_RcfgRootNode, taPrefs, smtManager, traceAbstractionBenchmark, errNodesOfAllProc, witnessAutomaton);
 		} else {
 			for (ProgramPoint errorLoc : errNodesOfAllProc) {
 				String name = errorLoc.getLocationName();
 				ArrayList<ProgramPoint> errorLocs = new ArrayList<ProgramPoint>(1);
 				errorLocs.add(errorLoc);
 				mServices.getProgressMonitorService().setSubtask(errorLoc.toString());
-				iterate(name, m_RcfgRootNode, taPrefs, smtManager, traceAbstractionBenchmark, errorLocs);
+				iterate(name, m_RcfgRootNode, taPrefs, smtManager, traceAbstractionBenchmark, errorLocs, witnessAutomaton);
 			}
 		}
 		if (m_OverallResult == Result.SAFE) {
@@ -196,7 +196,7 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 	}
 
 	private void iterate(String name, RootNode root, TAPreferences taPrefs, SmtManager smtManager,
-			TraceAbstractionBenchmarks taBenchmark, Collection<ProgramPoint> errorLocs) {
+			TraceAbstractionBenchmarks taBenchmark, Collection<ProgramPoint> errorLocs, NestedWordAutomaton<WitnessAutomatonLetter, WitnessNode> witnessAutomaton) {
 		BasicCegarLoop basicCegarLoop;
 		LanguageOperation languageOperation = (new UltimatePreferenceStore(Activator.s_PLUGIN_ID)).getEnum(
 				TraceAbstractionPreferenceInitializer.LABEL_LANGUAGE_OPERATION,
@@ -215,6 +215,7 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 			basicCegarLoop = new IncrementalInclusionCegarLoop(name, root, smtManager, taPrefs, errorLocs, taPrefs.interpolation(), 
 					taPrefs.computeHoareAnnotation(), mServices, languageOperation);
 		}
+		basicCegarLoop.setWitnessAutomaton(witnessAutomaton);
 
 		Result result = basicCegarLoop.iterate();
 		basicCegarLoop.finish();
