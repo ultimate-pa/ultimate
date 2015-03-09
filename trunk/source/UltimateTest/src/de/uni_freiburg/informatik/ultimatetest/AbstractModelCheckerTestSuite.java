@@ -85,6 +85,15 @@ public abstract class AbstractModelCheckerTestSuite extends UltimateTestSuite {
 		}
 		addTestCases(toolchainFile, settingsFile, testFiles, deadline);
 	}
+	
+	protected void addTestCasesRegExp(String toolchain, String settings, String[] regExp, long deadline) {
+
+		File toolchainFile = new File(Util.getPathFromTrunk(mPathToToolchains + toolchain));
+		File settingsFile = new File(Util.getPathFromTrunk(mPathToSettings + settings));
+		File trunk = new File(Util.getPathFromTrunk("/"));
+		Collection<File> testFiles = Util.getFilesRegex(trunk, regExp);
+		addTestCases(toolchainFile, settingsFile, testFiles, deadline);
+	}
 
 	protected void addTestCases(String toolchain, String settings,
 			DirectoryFileEndingsPair[] directoryFileEndingsPairs, long deadline) {

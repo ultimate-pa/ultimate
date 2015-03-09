@@ -639,9 +639,9 @@ public class CfgBuilder {
 		 * @return List of {@code EnsuresSpecification}s that contains only one
 		 *         {@code EnsuresSpecification} which is true.
 		 */
-		private List<EnsuresSpecification> getDummyEnsuresSpecifications() {
-			Expression dummyExpr = new BooleanLiteral(null, BoogieType.boolType, true);
-			EnsuresSpecification dummySpec = new EnsuresSpecification(null, false, dummyExpr);
+		private List<EnsuresSpecification> getDummyEnsuresSpecifications(ILocation loc) {
+			Expression dummyExpr = new BooleanLiteral(loc, BoogieType.boolType, true);
+			EnsuresSpecification dummySpec = new EnsuresSpecification(loc, false, dummyExpr);
 			ArrayList<EnsuresSpecification> dummySpecs = new ArrayList<EnsuresSpecification>(1);
 			dummySpecs.add(dummySpec);
 			return dummySpecs;
@@ -762,7 +762,8 @@ public class CfgBuilder {
 			// Assume the ensures specification at the end of the procedure.
 			List<EnsuresSpecification> ensures = m_BoogieDeclarations.getEnsures().get(m_currentProcedureName);
 			if (ensures == null || ensures.isEmpty()) {
-				ensures = getDummyEnsuresSpecifications();
+				Procedure proc = m_BoogieDeclarations.getProcSpecification().get(m_currentProcedureName);
+				ensures = getDummyEnsuresSpecifications(proc.getLocation());
 			}
 			ProgramPoint finalNode = m_RootAnnot.m_finalNode.get(m_currentProcedureName);
 			m_lastLabelName = finalNode.getLocationName();

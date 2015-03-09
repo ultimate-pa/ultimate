@@ -17,15 +17,15 @@ import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
 public class ForwardBackwardTest extends
 		AbstractTraceAbstractionTestSuite {
 	private static final String[] m_Directories = {
-		"examples/programs/regression",
+		"/examples/programs/regression/.*\\.c|/examples/programs/regression/.*\\.bpl",
 //		"examples/programs/quantifier",
-		"examples/programs/recursivePrograms",
-		"examples/programs/toy"
+//		"examples/programs/recursivePrograms",
+//		"examples/programs/toy"
 	};
 	
 	private static final boolean m_TraceAbstractionBoogieWithBackwardPredicates = !true;
 	private static final boolean m_TraceAbstractionBoogieWithForwardPredicates = !true;
-	private static final boolean m_TraceAbstractionBoogieWithFPandBP = true;
+	private static final boolean m_TraceAbstractionBoogieWithFPandBP = !true;
 	private static final boolean m_TraceAbstractionCWithBackwardPredicates = !true;
 	private static final boolean m_TraceAbstractionCWithForwardPredicates = !true;		
 	private static final boolean m_TraceAbstractionCWithFPandBP = true;
@@ -75,11 +75,10 @@ public class ForwardBackwardTest extends
 				    m_Timeout);
 		}
 		if (m_TraceAbstractionCWithFPandBP) {
-			addTestCases(
+			addTestCasesRegExp(
 					"AutomizerC.xml",
 					"automizer/ForwardPredicatesAndBackwardPredicates.epf",
 				    m_Directories,
-				    new String[] {".c", ".i"},
 				    m_Timeout);
 		}
 		return super.createTestCases();

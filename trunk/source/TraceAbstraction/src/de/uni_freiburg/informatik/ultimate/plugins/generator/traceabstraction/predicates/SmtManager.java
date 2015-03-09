@@ -59,6 +59,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Ho
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IHoareTripleChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
 import de.uni_freiburg.informatik.ultimate.util.ScopedHashMap;
+import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNode;
 
 public class SmtManager {
 
@@ -1591,6 +1592,12 @@ public class SmtManager {
 	public SPredicate newTrueSLPredicate(ProgramPoint pp) {
 		SPredicate pred = new SPredicate(pp, m_SerialNumber++, m_NoProcedure, m_Script.term("true"), m_EmptyVars,
 				m_Script.term("true"));
+		return pred;
+	}
+	
+	public SPredicate newTrueSLPredicateWithWitnessNode(ProgramPoint pp, WitnessNode witnessNode) {
+		SPredicate pred = new SPredicateWithWitnessNode(pp, m_SerialNumber++, m_NoProcedure, m_Script.term("true"), m_EmptyVars,
+				m_Script.term("true"), witnessNode);
 		return pred;
 	}
 

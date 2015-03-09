@@ -51,8 +51,8 @@ public class WitnessProductAutomaton implements INestedWordAutomatonSimple<CodeB
 			m_StutteringSteps = stutteringSteps;
 			m_ResultState = constructNewResultState(cfgAutomatonState, witnessAutomatonState);
 		}
-		private ISLPredicate constructNewResultState(IPredicate cfgAutomatonState, WitnessNode witnessAutomatonState) {
-			return m_SmtManager.newTrueSLPredicate(((ISLPredicate) cfgAutomatonState).getProgramPoint()); 
+		private ISLPredicate constructNewResultState(IPredicate cfgAutomatonState, WitnessNode witnessNode) {
+			return m_SmtManager.newTrueSLPredicateWithWitnessNode(((ISLPredicate) cfgAutomatonState).getProgramPoint(), witnessNode); 
 		}
 		
 		public IPredicate getCfgAutomatonState() {
@@ -287,16 +287,19 @@ public class WitnessProductAutomaton implements INestedWordAutomatonSimple<CodeB
 		boolean wsWasAdded = false;
 		ArrayDeque<WitnessNode> wsSuccStates = new ArrayDeque<WitnessNode>();
 		Set<WitnessNode> visited = new HashSet<WitnessNode>();
-		wsSuccStates.add(ps.getWitnessNode());
-		while (wsSuccStates.isEmpty()) {
+		wsSuccStates.addAll(skipNonCodeBlockEdges(ps.getWitnessNode()));
+		while (!wsSuccStates.isEmpty()) {
 			WitnessNode ws = wsSuccStates.removeFirst();
 			for (OutgoingInternalTransition<WitnessAutomatonLetter, WitnessNode> out : m_WitnessAutomaton.internalSuccessors(ws)) {
-				if (!visited.contains(out.getSucc())) {
-					visited.add(out.getSucc());
-					if (out.getLetter().isCompatible(cb)) {
-						ProductState succProd = getOrConstructProductState(cfgSucc, out.getSucc(), 0);
-						result.add(succProd.getResultState());
-						wsSuccStates.addLast(out.getSucc());
+				for (WitnessNode succ : skipNonCodeBlockEdges(out.getSucc())) {
+					if (!visited.contains(succ)) {
+						visited.add(succ);
+						if (out.getLetter().isCompatible(cb)) {
+							ProductState succProd = getOrConstructProductState(cfgSucc, succ, 0);
+							result.add(succProd.getResultState());
+							wsSuccStates.addLast(succ);
+							wsWasAdded = true;
+						}
 					}
 				}
 			}
@@ -307,5 +310,28 @@ public class WitnessProductAutomaton implements INestedWordAutomatonSimple<CodeB
 		}
 		return result;
 	}
+	
+	private Collection<WitnessNode> skipNonCodeBlockEdges(WitnessNode node) {
+		Set<WitnessNode> result = new HashSet<WitnessNode>();
+		for (OutgoingInternalTransition<WitnessAutomatonLetter, WitnessNode> out : m_WitnessAutomaton.internalSuccessors(node)) {
+			if (isNonCodeBlockEdge(out.getLetter())) {
+				result.addAll(skipNonCodeBlockEdges(out.getSucc()));
+			} else {
+				result.add(node);
+			}
+		}
+		return result;
+	}
+	
+	private boolean isNonCodeBlockEdge(WitnessAutomatonLetter edge) {
+		if (edge.isPureAssumptionEdge()) {
+			return true;
+		} else if (edge.isProbalyDeclaration()) {
+			return true;
+		} else {
+			return false;
+		}
+	}
+
 
 }

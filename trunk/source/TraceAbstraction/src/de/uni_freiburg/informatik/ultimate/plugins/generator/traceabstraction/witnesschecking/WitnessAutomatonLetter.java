@@ -17,6 +17,14 @@ public class WitnessAutomatonLetter {
 	public WitnessAutomatonLetter(WitnessEdge we) {
 		m_WitnessEdge = we;
 	}
+	
+	public boolean isPureAssumptionEdge() {
+		return m_WitnessEdge.getLocation().getStartLine() == 0;
+	}
+	
+	public boolean isProbalyDeclaration() {
+		return m_WitnessEdge.getSourceCode().contains("int");
+	}
 
 
 	public boolean isCompatible(CodeBlock cb) {
