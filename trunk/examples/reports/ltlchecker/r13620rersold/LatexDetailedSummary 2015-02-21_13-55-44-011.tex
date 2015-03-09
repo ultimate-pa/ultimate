@@ -1,5 +1,5 @@
-\documentclass[a2paper,landscape]{article}
-\usepackage[a2paper, margin=1.5cm, top=1.1cm]{geometry}
+\documentclass[a4paper]{article}
+\usepackage[a4paper, margin=1.5cm, top=1.1cm]{geometry}
 \usepackage[table]{xcolor} 
 \usepackage[utf8]{inputenc}
 \usepackage{amsmath,amssymb}
@@ -15,8 +15,10 @@
 \newcommand{\headcolor}{}
 \newcommand{\header}[1]{\parbox{2.8em}{\centering #1}\headcolor}
 \newcommand{\folder}[1]{\parbox{5em}{#1}}
-
-\begin{longtabu} to \linewidth {llllrrrrrrrrrrrrrrrrrrrrr}
+\begin{table}
+\centering
+\resizebox{\linewidth}{!}{%
+\begin{tabu} to \linewidth {llllrrrrrrrrrrrrrrrrrrrrr}
 \toprule
   \header{}& 
   \header{Result}&
@@ -254,7 +256,7 @@
  &  & Problem14\_prop\_049.c & Default-LBE-Multi+SBE+SASBE.epf & 786.42 s & 7282.00 MB & 4925.88 MB & 0 & 0.00 s & 0.00 s & 7 & 20 & 548 & 1.7 K & 3.8 K & 33.6 K & 2.4 K & 19.0 K & - & - & - & - & - & - & -\\
 \bottomrule
 & & & & & & & & & & & & & & & & & & & & & & & & \\
+\end{tabu}}
 \caption{Results for LTLAutomizerC.xml.}
-\end{longtabu}
-
+\end{table}
 \end{document}

@@ -35,7 +35,7 @@ import de.uni_freiburg.informatik.ultimate.model.IModelManager;
  * <li>execute each {@link IObserver} on the current model with
  * <ul>
  * <li> {@link IObserver#getWalkerOptions()}
- * <li> {@link IObserver#init()}
+ * <li> {@link IObserver#init(GraphType, int, int)}
  * <li>use an {@link IWalker} to run {@link IObserver} on model
  * <li> {@link IObserver#finish()}
  * <li>if tool is an instance of {@link IGenerator}, store model in the
@@ -103,7 +103,7 @@ public class PluginConnector {
 			GraphType currentModel = models.get(i);
 			mTool.setInputDefinition(currentModel);
 			List<IObserver> observers = mTool.getObservers();
-			runTool(observers, currentModel);
+			runTool(observers, currentModel, mMax - i - 1, mMax);
 			++mCurrent;
 		}
 		mTool.finish();
@@ -118,27 +118,29 @@ public class PluginConnector {
 		return mTool.getPluginName();
 	}
 
-	private void runTool(List<IObserver> observers, GraphType currentModel) throws Throwable {
+	private void runTool(List<IObserver> observers, GraphType currentModel, int currentModelIndex, int numberOfModels)
+			throws Throwable {
 		IElement entryNode = getEntryPoint(currentModel);
 
 		if (mTool instanceof IGenerator) {
 			IGenerator tool = (IGenerator) mTool;
 			for (IObserver observer : observers) {
-				runObserver(observer, currentModel, entryNode);
+				runObserver(observer, currentModel, entryNode, currentModelIndex, numberOfModels);
 				retrieveModel(tool, observer.toString());
 			}
 		} else {
 			for (IObserver observer : observers) {
-				runObserver(observer, currentModel, entryNode);
+				runObserver(observer, currentModel, entryNode, currentModelIndex, numberOfModels);
 			}
 		}
 	}
 
-	private void runObserver(IObserver observer, GraphType currentModel, IElement entryNode) throws Throwable {
+	private void runObserver(IObserver observer, GraphType currentModel, IElement entryNode, int currentModelIndex,
+			int numberOfModels) throws Throwable {
 		logObserverRun(observer, currentModel);
 		IWalker walker = selectWalker(currentModel, observer.getWalkerOptions());
 		walker.addObserver(observer);
-		observer.init();
+		observer.init(currentModel, currentModelIndex, numberOfModels);
 		walker.run(entryNode);
 		observer.finish();
 		mHasPerformedChanges = mHasPerformedChanges || observer.performedChanges();

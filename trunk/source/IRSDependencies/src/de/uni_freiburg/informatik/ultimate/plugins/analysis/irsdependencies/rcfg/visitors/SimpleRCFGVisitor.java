@@ -4,6 +4,7 @@ import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.access.IObserver;
 import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
+import de.uni_freiburg.informatik.ultimate.model.GraphType;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGNode;
 
@@ -47,7 +48,7 @@ public abstract class SimpleRCFGVisitor implements IObserver {
 	public abstract boolean abortAll();
 
 	@Override
-	public void init() {
+	public void init(GraphType modelType, int currentModelIndex, int numberOfModels) {
 	}
 
 	@Override

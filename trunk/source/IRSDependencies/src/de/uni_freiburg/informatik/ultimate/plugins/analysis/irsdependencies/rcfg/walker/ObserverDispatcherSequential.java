@@ -23,7 +23,7 @@ public class ObserverDispatcherSequential extends ObserverDispatcher
 		}
 		for (SimpleRCFGVisitor visitor : mObservers) {
 			mCurrentVisitor = visitor;
-			mCurrentVisitor.init();
+			mCurrentVisitor.init(null, 0, 1);
 			mWalker.startFrom((RootNode) node);
 			mCurrentVisitor.finish();
 		}

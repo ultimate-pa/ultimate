@@ -3,6 +3,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.obs
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.access.BaseObserver;
+import de.uni_freiburg.informatik.ultimate.model.GraphType;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.boogie.SymbolTable;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.boogie.SymbolTableTransformer;
@@ -17,9 +18,9 @@ public class SymbolTableCreator extends BaseObserver
 	}
 	
 	@Override
-	public void init()
+	public void init(GraphType modelType, int currentModelIndex, int numberOfModels)
 	{
-		super.init();
+		super.init(modelType, currentModelIndex, numberOfModels);
 		mSymbolTable = new SymbolTable();
 	}
 	

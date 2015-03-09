@@ -12,6 +12,7 @@ import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
 import de.uni_freiburg.informatik.ultimate.boogie.DSITransformer.preferences.PreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
+import de.uni_freiburg.informatik.ultimate.model.GraphType;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.ModelUtils;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieTransformer;
@@ -303,7 +304,7 @@ public final class DSITransformerObserver extends BoogieTransformer implements
 	}
 
 	// @Override
-	public void init() {
+	public void init(GraphType modelType, int currentModelIndex, int numberOfModels) {
 		mLogger.info("Initializing DSITransformer...");
 		procedures = new HashMap<String, ProcedureContainer>();
 

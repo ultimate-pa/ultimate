@@ -53,8 +53,8 @@ public class LTLChecker extends AbstractEvaluationTestSuite {
 //				"examples/LTL/rers2012/P18/",
 //				"examples/LTL/rers2012/P19/",
 //				"examples/LTL/coolant/",
-//				"examples/LTL/koskinen/ltlcmodelchecker-benchmarks/",
-				"examples/LTL/bugs/",
+				"examples/LTL/koskinen/ltlcmodelchecker-benchmarks/",
+//				"examples/LTL/bugs/",
 //				"examples/LTL/bugs/Bug_AssumeFalse.c",
 				
 				//RERS examples with NO_RESULT
@@ -83,7 +83,7 @@ public class LTLChecker extends AbstractEvaluationTestSuite {
 	@Override
 	protected int getTimeout() {
 //		return 180 * 1000;
-		return 20 * 60 * 1000;
+		return 3 * 60 * 1000;
 	}
 
 	@Override

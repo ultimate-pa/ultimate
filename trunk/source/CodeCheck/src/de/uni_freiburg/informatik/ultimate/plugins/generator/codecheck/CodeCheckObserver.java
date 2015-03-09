@@ -18,6 +18,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
+import de.uni_freiburg.informatik.ultimate.model.GraphType;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
@@ -654,7 +655,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 	}
 
 	@Override
-	public void init() {
+	public void init(GraphType modelType, int currentModelIndex, int numberOfModels) {
 		// TODO Auto-generated method stub
 
 	}

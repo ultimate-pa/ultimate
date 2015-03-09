@@ -27,6 +27,7 @@ import de.uni_freiburg.informatik.ultimate.ltl2aut.ast.AstNode;
 import de.uni_freiburg.informatik.ultimate.ltl2aut.never2nwa.NWAContainer;
 import de.uni_freiburg.informatik.ultimate.ltl2aut.never2nwa.Never2Automaton;
 import de.uni_freiburg.informatik.ultimate.ltl2aut.preferences.PreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.model.GraphType;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Unit;
 import de.uni_freiburg.informatik.ultimate.model.boogie.output.BoogiePrettyPrinter;
@@ -63,7 +64,7 @@ public class LTL2autObserver implements IUnmanagedObserver {
 	}
 
 	@Override
-	public void init() {
+	public void init(GraphType modelType, int currentModelIndex, int numberOfModels) {
 		mNWAContainer = null;
 		mInputFile = null;
 		mSymbolTable = null;

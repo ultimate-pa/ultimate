@@ -12,6 +12,7 @@ import java.util.ArrayDeque;
 import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.model.GraphType;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieTransformer;
 import de.uni_freiburg.informatik.ultimate.model.boogie.DeclarationInformation;
@@ -78,7 +79,7 @@ public class OldExprPreprocessor extends BoogieTransformer implements IUnmanaged
 	}
 	
 	@Override
-	public void init() throws Throwable {
+	public void init(GraphType modelType, int currentModelIndex, int numberOfModels) throws Throwable {
 	}
 
 	@Override

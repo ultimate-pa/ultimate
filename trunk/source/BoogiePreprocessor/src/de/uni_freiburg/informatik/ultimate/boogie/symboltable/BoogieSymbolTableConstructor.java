@@ -5,6 +5,7 @@ import org.apache.log4j.Logger;
 import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
 import de.uni_freiburg.informatik.ultimate.boogie.type.PreprocessorAnnotation;
+import de.uni_freiburg.informatik.ultimate.model.GraphType;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVisitor;
 import de.uni_freiburg.informatik.ultimate.model.boogie.DeclarationInformation.StorageClass;
@@ -37,7 +38,7 @@ public class BoogieSymbolTableConstructor extends BoogieVisitor implements IUnma
 	}
 	
 	@Override
-	public void init() throws Throwable {
+	public void init(GraphType modelType, int currentModelIndex, int numberOfModels) throws Throwable {
 		mCurrentScope = StorageClass.GLOBAL;
 		mCurrentDeclaration = null;
 		mCurrentScopeName = null;

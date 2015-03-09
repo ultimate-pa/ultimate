@@ -65,7 +65,7 @@ public class JungVisualizationObserver implements IUnmanagedObserver {
 	}
 
 	@Override
-	public void init() {
+	public void init(GraphType modelType, int currentModelIndex, int numberOfModels) {
 		mSeenList = new HashMap<IElement, String>();
 		mNumberOfRoots = -1;
 	}

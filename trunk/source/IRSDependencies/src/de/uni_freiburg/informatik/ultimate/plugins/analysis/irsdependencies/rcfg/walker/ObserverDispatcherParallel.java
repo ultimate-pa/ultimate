@@ -29,7 +29,7 @@ public class ObserverDispatcherParallel extends ObserverDispatcher
 
 		for (SimpleRCFGVisitor visitor : mObservers) {
 			mVisitorStateAbortCurrent.put(visitor, true);
-			visitor.init();
+			visitor.init(null, 0, 1);
 		}
 
 		mWalker.startFrom((RootNode) node);
