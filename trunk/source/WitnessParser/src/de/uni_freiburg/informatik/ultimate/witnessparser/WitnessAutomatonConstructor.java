@@ -14,6 +14,7 @@ import org.apache.log4j.Logger;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessEdge;
+import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessEdgeAnnotation;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessLocation;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNode;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNodeAnnotation;
@@ -142,22 +143,32 @@ public class WitnessAutomatonConstructor {
 					WitnessNode source = createNode(data.getSource());
 					WitnessNode target = createNode(data.getTarget());
 
-					// TODO: save this
-					// String neg = data.getProperties().get("negated");
-
 					String linestr = data.getProperties().get("originline");
+
+					// set line to line if there is a valid line, -1 otherwise
 					int line = 0;
 					if (linestr != null) {
 						try {
 							line = Integer.valueOf(linestr);
 						} catch (Exception ex) {
-							// ignore exception
+							line = -1;
 						}
+					} else {
+						line = -1;
 					}
 					String orgfile = data.getProperties().get("originfile");
 					String sourcecode = data.getProperties().get("sourcecode");
+
 					WitnessLocation loc = new WitnessLocation(orgfile, line);
-					return new WitnessEdge(source, target, data.getId(), loc, sourcecode);
+					WitnessEdge edge = new WitnessEdge(source, target, data.getId(), loc, sourcecode);
+
+					WitnessEdgeAnnotation annot = new WitnessEdgeAnnotation(data.getProperties().get("negated"), data
+							.getProperties().get("enterFunction"), data.getProperties().get("returnFrom"), data
+							.getProperties().get("tokens"), data.getProperties().get("assumption"));
+					if (!annot.isEmpty()) {
+						annot.annotate(edge);
+					}
+					return edge;
 				}
 			};
 			Transformer<HyperEdgeMetadata, WitnessEdge> hyperEdgeTransformer = new Transformer<HyperEdgeMetadata, WitnessEdge>() {
