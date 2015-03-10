@@ -86,7 +86,7 @@ public class TraceAbstraction implements IGenerator {
 
 	@Override
 	public IElement getModel() {
-		return this.m_Observer.getRoot();
+		return this.m_Observer.getRootOfNewModel();
 	}
 
 	@Override
