@@ -22,8 +22,15 @@ import de.uni_freiburg.informatik.ultimate.core.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.util.ExceptionUtils;
 
+/**
+ * 
+ * @author dietsch@informatik.uni-freiburg.de
+ *
+ */
 public final class MonitoredProcess implements IStorable {
 
+	//TODO: Add method to start external process with a forced timeout 
+	
 	private final Logger mLogger;
 	private final IToolchainStorage mStorage;
 	private final IUltimateServiceProvider mServices;
@@ -135,8 +142,9 @@ public final class MonitoredProcess implements IStorable {
 	/**
 	 * 
 	 * @param millis
-	 * @return -1 iff the process is still running, the return code of the
-	 *         thread otherwise
+	 * @return A {@link MonitoredProcessState} instance indicating whether the
+	 *         process is still running or not and if not, what the return code
+	 *         is
 	 * @throws InterruptedException
 	 */
 	public MonitoredProcessState waitfor(long millis) throws InterruptedException {

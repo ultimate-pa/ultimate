@@ -1,123 +1,140 @@
 package de.uni_freiburg.informatik.ultimate.core.coreplugin;
 
+import java.util.ArrayList;
+
 /**
  * A rudimentary parser for the Ultimate command-line.
  * 
  * @author Christian Simon
- *
+ * 
  */
 public class CommandLineParser {
-	
-	private boolean interactive_mode = false;
-	private boolean console_mode = false;
-	private boolean exit_app = false;
-	private String prelude_file = null;
-	private String tool_file;
-	private String boogie_file;
-	private String m_Settings;
-	
-	private static final String s_PLUGIN_NAME="Command Line Parser";
-	private static final String s_PLUGIN_ID="de.uni_freiburg.informatik.ultimate.core.coreplugin.CommandLineParser";
-	
+
+	private boolean mInteractiveMode = false;
+	private boolean mConsoleMode = false;
+	private boolean mExit = false;
+	private String mPreludeFile = null;
+	private String mToolchainFile;
+	private String[] mInputFiles;
+	private String mSettingsFile;
+
+	private static final String s_PLUGIN_NAME = "Command Line Parser";
+	private static final String s_PLUGIN_ID = "de.uni_freiburg.informatik.ultimate.core.coreplugin.CommandLineParser";
+
 	public CommandLineParser() {
-				
+
 	}
-	
+
 	public void printUsage() {
 		System.err.println("Ultimate Command Line Usage:");
-		System.err.println("./Ultimate --help | --console [<toolchain file> <input file> [--prelude <file>] [--settings <file>]] ");
+		System.err
+				.println("./Ultimate --help | --console [<toolchain file> <input file>+ [--prelude <file>] [--settings <file>]] ");
 		System.err.println("No argument will run Ultimate in GUI mode.");
 		System.err.println("Only the --console argument will run Ultimate in interactive command-line mode.");
 		System.err.println("Your parsed arguments were:");
-		System.err.println("Prelude File:"+ prelude_file);
-		System.err.println("Tool File:" + tool_file);
-		System.err.println("Input File:" + boogie_file);
-		System.err.println("Settings file:" + m_Settings);
-		System.err.println("Console mode:" + String.valueOf(console_mode));
-		System.err.println("Interactive mode:" + String.valueOf(interactive_mode));
-		System.err.println("Exit Switch:" + String.valueOf(exit_app));
+		System.err.println("Prelude File:" + mPreludeFile);
+		System.err.println("Tool File:" + mToolchainFile);
+		System.err.println("Input File:" + mInputFiles);
+		System.err.println("Settings file:" + mSettingsFile);
+		System.err.println("Console mode:" + String.valueOf(mConsoleMode));
+		System.err.println("Interactive mode:" + String.valueOf(mInteractiveMode));
+		System.err.println("Exit Switch:" + String.valueOf(mExit));
 	}
-	
-	
+
 	public void parse(String[] args) {
 		int argc = args.length;
-		
+
 		// iterate over command lines
-		for (int i=0; i<argc; i++) {
-			
-			if (args[i].compareTo("--help")==0) {
-				exit_app = true;
+		for (int i = 0; i < argc; i++) {
+
+			if (args[i].compareTo("--help") == 0) {
+				mExit = true;
 				return;
 			}
-			
-			if (args[i].compareTo("--console")==0) {
-				console_mode = true;
-				interactive_mode = true;
+
+			if (args[i].compareTo("--console") == 0) {
+				mConsoleMode = true;
+				mInteractiveMode = true;
 				continue;
 			}
-			
-			if (console_mode == true && tool_file == null && prelude_file == null) {
-				interactive_mode = false;
+
+			if (mConsoleMode == true && mToolchainFile == null && mPreludeFile == null) {
+				mInteractiveMode = false;
 				// Now get the two remaining files
 				try {
-					tool_file = new String(args[i]);
-					boogie_file = new String(args[++i]);
+					mToolchainFile = new String(args[i]);
+					++i;
+					ArrayList<String> inputFiles = new ArrayList<>();
+					while (i < args.length) {
+						String current = args[i];
+						if (current.startsWith("--")) {
+							break;
+						}
+						inputFiles.add(current);
+						++i;
+					}
+					if (inputFiles.isEmpty()) {
+						mExit = true;
+						return;
+					} else {
+						mInputFiles = inputFiles.toArray(new String[0]);
+					}
 					continue;
 				} catch (Exception e) {
-					exit_app = true;
+					mExit = true;
 					return;
 				}
 			}
 			// parse the optional prelude file
-			if (console_mode == true && tool_file != null && boogie_file != null) {
+			if (mConsoleMode == true && mToolchainFile != null && mInputFiles != null) {
 
-			if (args[i].compareTo("--prelude")==0) {
-				try {
-					prelude_file = args[++i];	
-					return;
-				} catch (Exception e) {
-					exit_app = true;
-					return;
+				if (args[i].compareTo("--prelude") == 0) {
+					try {
+						mPreludeFile = args[++i];
+						return;
+					} catch (Exception e) {
+						mExit = true;
+						return;
+					}
+				}
+				if (args[i].compareTo("--settings") == 0) {
+					try {
+						mSettingsFile = args[++i];
+					} catch (Exception e) {
+						mExit = true;
+						return;
+					}
 				}
 			}
-			if (args[i].compareTo("--settings")==0) {
-				try {
-					m_Settings = args[++i];
-				} catch (Exception e) {
-					exit_app = true;
-					return;
-				}
-			}
-			}
-			
+
 		}
-		
+
 	}
-	
+
 	public String getToolFile() {
-		return tool_file;
+		return mToolchainFile;
 	}
-	
-	public String getInputFile() {
-		return boogie_file;
+
+	public String[] getInputFile() {
+		return mInputFiles;
 	}
-	
+
 	public String getPreludeFile() {
-		return prelude_file;
+		return mPreludeFile;
 	}
-	
+
 	public boolean getExitSwitch() {
-		return exit_app;
+		return mExit;
 	}
-	
+
 	public boolean getConsoleSwitch() {
-		return console_mode;
+		return mConsoleMode;
 	}
-	
+
 	public boolean getInteractiveSwitch() {
-		return interactive_mode;
+		return mInteractiveMode;
 	}
-	
+
 	public String getName() {
 		return s_PLUGIN_NAME;
 	}
@@ -127,7 +144,7 @@ public class CommandLineParser {
 	}
 
 	public String getSettings() {
-		return m_Settings;
+		return mSettingsFile;
 	}
-	
+
 }

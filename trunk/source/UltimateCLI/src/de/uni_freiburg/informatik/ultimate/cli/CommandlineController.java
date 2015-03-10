@@ -85,10 +85,14 @@ public class CommandlineController implements IController {
 			mLogger.fatal(e1);
 			return -1;
 		}
-		File inputFile = new File(p.getInputFile());
-		if (!inputFile.exists() || !inputFile.canRead()) {
-			mLogger.fatal("Input file not found. Path was: " + p.getInputFile());
-			return -1;
+		ArrayList<File> inputFiles = new ArrayList<>();
+		for (String inputfilePath : p.getInputFile()) {
+			File inputFile = new File(inputfilePath);
+			if (!inputFile.exists() || !inputFile.canRead()) {
+				mLogger.fatal("Input file not found. Path was: " + p.getInputFile());
+				return -1;
+			}
+			inputFiles.add(inputFile);
 		}
 
 		// handle prelude file
@@ -96,7 +100,7 @@ public class CommandlineController implements IController {
 
 		try {
 			BasicToolchainJob tcj = new DefaultToolchainJob("Processing Toolchain", core, this, mLogger,
-					new File[] { inputFile }, preludeFile);
+					inputFiles.toArray(new File[0]), preludeFile);
 			tcj.schedule();
 			// in non-GUI mode, we must wait until job has finished!
 			tcj.join();
