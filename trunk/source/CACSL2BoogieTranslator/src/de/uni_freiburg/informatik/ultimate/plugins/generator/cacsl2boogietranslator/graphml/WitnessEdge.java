@@ -47,11 +47,17 @@ public class WitnessEdge {
 		return mATE != null;
 	}
 
-	public boolean isNegated() {
+	public String getControl() {
 		if (!hasStep()) {
-			return false;
+			return null;
 		}
-		return mATE.hasStepInfo(StepInfo.CONDITION_EVAL_FALSE);
+		if (mATE.hasStepInfo(StepInfo.CONDITION_EVAL_FALSE)) {
+			return "condition-false";
+		} else if (mATE.hasStepInfo(StepInfo.CONDITION_EVAL_FALSE)) {
+			return "condition-true";
+		} else {
+			return null;
+		}
 	}
 
 	public String getLineNumber() {

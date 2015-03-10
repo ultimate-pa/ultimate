@@ -81,13 +81,10 @@ public class GraphMLConverter {
 			}
 		});
 
-		graphWriter.addEdgeData("negated", null, "false", new Transformer<WitnessEdge, String>() {
+		graphWriter.addEdgeData("control", null, null, new Transformer<WitnessEdge, String>() {
 			@Override
 			public String transform(WitnessEdge arg0) {
-				if (arg0.isNegated()) {
-					return "true";
-				}
-				return null;
+				return arg0.getControl();
 			}
 		});
 
@@ -165,44 +162,6 @@ public class GraphMLConverter {
 		}
 	}
 
-	// private Hypergraph<WitnessNode, WitnessEdge> getGraph() {
-	// DirectedSparseGraph<WitnessNode, WitnessEdge> graph = new
-	// DirectedSparseGraph<>();
-	// WitnessNodeEdgeFactory fac = new WitnessNodeEdgeFactory();
-	//
-	// WitnessNode current = insertStartNodeAndDummyEdges(fac, graph, 0);
-	// WitnessNode next = null;
-	//
-	// // Looks like they use assumptions before their statements, so why not
-	// // ...
-	// ProgramState<IASTExpression> assumptionState = null;
-	//
-	// for (int i = 0; i < mProgramExecution.getLength(); ++i) {
-	//
-	// i = skipGlobalDeclarations(i, mProgramExecution);
-	// i = collapseToSingleTraceElement(i, mProgramExecution);
-	// if (i == 0) {
-	// //we only use our initial state if we did not skip initial states
-	// assumptionState = mProgramExecution.getInitialProgramState();
-	// }
-	//
-	// AtomicTraceElement<CACSLLocation> currentATE =
-	// mProgramExecution.getTraceElement(i);
-	// next = fac.createWitnessNode();
-	// graph.addVertex(next);
-	// if (assumptionState == null) {
-	// graph.addEdge(fac.createWitnessEdge(currentATE), current, next);
-	// } else {
-	// graph.addEdge(fac.createWitnessEdge(currentATE, assumptionState),
-	// current, next);
-	// }
-	// current = next;
-	// assumptionState = mProgramExecution.getProgramState(i);
-	// }
-	//
-	// return graph;
-	// }
-
 	private Hypergraph<WitnessNode, WitnessEdge> getGraph() {
 		DirectedSparseGraph<WitnessNode, WitnessEdge> graph = new OrderedDirectedSparseGraph<>();
 		WitnessNodeEdgeFactory fac = new WitnessNodeEdgeFactory();
@@ -262,27 +221,6 @@ public class GraphMLConverter {
 
 		return current;
 	}
-
-	// private int skipGlobalDeclarations(int currentIdx, CACSLProgramExecution
-	// programExecution) {
-	// int i = currentIdx;
-	// for (; i < programExecution.getLength(); i++) {
-	// AtomicTraceElement<CACSLLocation> currentATE =
-	// programExecution.getTraceElement(i);
-	// CACSLLocation currentLoc = currentATE.getTraceElement();
-	// if (currentLoc instanceof CLocation) {
-	// CLocation currentCLoc = (CLocation) currentLoc;
-	// if (currentCLoc.getNode() instanceof CASTSimpleDeclaration) {
-	// if (currentCLoc.getNode().getParent() instanceof CASTTranslationUnit) {
-	// // it is a global, go on
-	// continue;
-	// }
-	// }
-	// }
-	// break;
-	// }
-	// return i;
-	// }
 
 	private int collapseToSingleTraceElement(int currentIdx, CACSLProgramExecution programExecution) {
 		int i = currentIdx;

@@ -8,6 +8,7 @@ import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.regex.Pattern;
 
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BuchiAutomizerTimingBenchmark;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.CodeCheckBenchmarks;
@@ -226,7 +227,14 @@ public abstract class AbstractSVCOMP15TestSuite extends UltimateTestSuite {
 				if (line.isEmpty()) {
 					continue;
 				}
-				regexes.add(".*" + line.replace(".", "\\.").replace("*", ".*"));
+
+				// the regexprs in the SVCOMP .set files are not platform
+				// independent, so we change them slightly here
+				line = line.replace("/", Pattern.quote(String.valueOf(File.separatorChar)));
+				line = line.replace(".", "\\.").replace("*", ".*");
+				line = ".*" + line;
+
+				regexes.add(line);
 
 			}
 			in.close();
