@@ -19,7 +19,7 @@ public class WitnessAutomatonLetter {
 	}
 	
 	public boolean isPureAssumptionEdge() {
-		return m_WitnessEdge.getLocation().getStartLine() == 0;
+		return m_WitnessEdge.getLocation().getStartLine() == -1;
 	}
 	
 	public boolean isProbalyDeclaration() {

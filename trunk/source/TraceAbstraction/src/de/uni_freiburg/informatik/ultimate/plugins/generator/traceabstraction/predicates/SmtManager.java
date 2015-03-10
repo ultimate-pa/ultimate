@@ -1595,9 +1595,9 @@ public class SmtManager {
 		return pred;
 	}
 	
-	public SPredicate newTrueSLPredicateWithWitnessNode(ProgramPoint pp, WitnessNode witnessNode) {
+	public SPredicate newTrueSLPredicateWithWitnessNode(ProgramPoint pp, WitnessNode witnessNode, Integer stutteringSteps) {
 		SPredicate pred = new SPredicateWithWitnessNode(pp, m_SerialNumber++, m_NoProcedure, m_Script.term("true"), m_EmptyVars,
-				m_Script.term("true"), witnessNode);
+				m_Script.term("true"), witnessNode, stutteringSteps);
 		return pred;
 	}
 

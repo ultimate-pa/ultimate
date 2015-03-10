@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -10,7 +11,9 @@ import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvide
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.IGenerator;
 import de.uni_freiburg.informatik.ultimate.model.GraphType;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNode;
 
 /**
  * Main class of Plug-In TraceAbstraction
@@ -28,6 +31,8 @@ public class TraceAbstraction implements IGenerator {
 	private GraphType m_InputDefinition;
 	private IToolchainStorage mStorage;
 	private IUltimateServiceProvider mServices;
+	private RootNodeFilterObserver<RootNode> m_RcfgRootFilter;
+	private RootNodeFilterObserver<WitnessNode> m_WitnessRootFilter;
 
 	@Override
 	public String getPluginName() {
@@ -41,6 +46,8 @@ public class TraceAbstraction implements IGenerator {
 
 	@Override
 	public void init() {
+		m_RcfgRootFilter = new RootNodeFilterObserver<RootNode>(RootNode.class);
+		m_WitnessRootFilter = new RootNodeFilterObserver<WitnessNode>(WitnessNode.class);
 	}
 
 	@Override
@@ -62,7 +69,11 @@ public class TraceAbstraction implements IGenerator {
 	@Override
 	public List<IObserver> getObservers() {
 		m_Observer = new TraceAbstractionObserver(mServices);
-		return Collections.singletonList((IObserver) m_Observer);
+		List<IObserver> observers = new ArrayList<IObserver>();
+//		observers.add(m_RcfgRootFilter);
+//		observers.add(m_WitnessRootFilter);
+		observers.add(m_Observer);
+		return observers;
 	}
 
 	public GraphType getOutputDefinition() {

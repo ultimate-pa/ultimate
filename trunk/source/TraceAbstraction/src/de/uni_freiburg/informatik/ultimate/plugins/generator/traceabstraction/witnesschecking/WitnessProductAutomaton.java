@@ -49,10 +49,10 @@ public class WitnessProductAutomaton implements INestedWordAutomatonSimple<CodeB
 			m_CfgAutomatonState = cfgAutomatonState;
 			m_WitnessNode = witnessAutomatonState;
 			m_StutteringSteps = stutteringSteps;
-			m_ResultState = constructNewResultState(cfgAutomatonState, witnessAutomatonState);
+			m_ResultState = constructNewResultState(cfgAutomatonState, witnessAutomatonState, stutteringSteps);
 		}
-		private ISLPredicate constructNewResultState(IPredicate cfgAutomatonState, WitnessNode witnessNode) {
-			return m_SmtManager.newTrueSLPredicateWithWitnessNode(((ISLPredicate) cfgAutomatonState).getProgramPoint(), witnessNode); 
+		private ISLPredicate constructNewResultState(IPredicate cfgAutomatonState, WitnessNode witnessNode, Integer stutteringSteps) {
+			return m_SmtManager.newTrueSLPredicateWithWitnessNode(((ISLPredicate) cfgAutomatonState).getProgramPoint(), witnessNode, stutteringSteps); 
 		}
 		
 		public IPredicate getCfgAutomatonState() {
@@ -67,6 +67,10 @@ public class WitnessProductAutomaton implements INestedWordAutomatonSimple<CodeB
 		public ISLPredicate getResultState() {
 			return m_ResultState;
 		}
+		@Override
+		public String toString() {
+			return m_ResultState.toString();
+		}
 	}
 	
 	public WitnessProductAutomaton(
@@ -79,7 +83,7 @@ public class WitnessProductAutomaton implements INestedWordAutomatonSimple<CodeB
 		m_SmtManager = smtManager;
 		m_InitialStates = constructInitialStates();
 		m_FinalStates = new HashSet<IPredicate>();
-		m_StutteringStepsLimit = 9;
+		m_StutteringStepsLimit = 2;
 		m_EmptyStackState = m_ControlFlowAutomaton.getStateFactory().createEmptyStackState();
 	}
 
@@ -304,7 +308,7 @@ public class WitnessProductAutomaton implements INestedWordAutomatonSimple<CodeB
 				}
 			}
 		}
-		if (!wsWasAdded && ps.getStutteringSteps() < m_StutteringStepsLimit) {
+		if (ps.getStutteringSteps() < m_StutteringStepsLimit) {
 			ProductState succProd = getOrConstructProductState(cfgSucc, ps.getWitnessNode(), ps.getStutteringSteps() + 1);
 			result.add(succProd.getResultState());
 		}
@@ -313,12 +317,17 @@ public class WitnessProductAutomaton implements INestedWordAutomatonSimple<CodeB
 	
 	private Collection<WitnessNode> skipNonCodeBlockEdges(WitnessNode node) {
 		Set<WitnessNode> result = new HashSet<WitnessNode>();
+		boolean hasOutgoingNodes = false;
 		for (OutgoingInternalTransition<WitnessAutomatonLetter, WitnessNode> out : m_WitnessAutomaton.internalSuccessors(node)) {
+			hasOutgoingNodes = true;
 			if (isNonCodeBlockEdge(out.getLetter())) {
 				result.addAll(skipNonCodeBlockEdges(out.getSucc()));
 			} else {
 				result.add(node);
 			}
+		}
+		if (!hasOutgoingNodes) {
+			result.add(node);
 		}
 		return result;
 	}
