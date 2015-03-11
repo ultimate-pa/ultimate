@@ -93,9 +93,10 @@ public class BuchiComplementFKV<LETTER,STATE> implements IOperation<LETTER,STATE
 				m_Complemented.getRankStates() + " rank states" +
 			" the highest rank that occured is " + m_Complemented.getHighesRank();
 	}
-
-
-
+	
+	public int getHighestRank() {
+		return m_Complemented.getHighesRank();
+	}
 
 	public BuchiComplementFKV(IUltimateServiceProvider services,
 			StateFactory<STATE> stateFactory, 

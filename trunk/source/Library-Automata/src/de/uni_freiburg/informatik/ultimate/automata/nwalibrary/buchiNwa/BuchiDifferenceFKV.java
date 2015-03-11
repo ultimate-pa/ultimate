@@ -86,7 +86,9 @@ public class BuchiDifferenceFKV<LETTER,STATE> implements IOperation<LETTER,STATE
 			" the highest rank that occured is " + m_SndComplemented.getHighesRank();
 	}
 	
-	
+	public int getHighestRank() {
+		return m_SndComplemented.getHighesRank();
+	}
 	
 	
 	public BuchiDifferenceFKV(IUltimateServiceProvider services,
