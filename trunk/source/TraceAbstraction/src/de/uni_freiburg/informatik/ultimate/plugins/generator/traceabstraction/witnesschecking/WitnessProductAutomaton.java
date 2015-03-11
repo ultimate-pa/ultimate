@@ -16,8 +16,17 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingInternalT
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
+import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.InterproceduralSequentialComposition;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ParallelComposition;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.SequentialComposition;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.util.relation.NestedMap3;
@@ -85,7 +94,7 @@ public class WitnessProductAutomaton implements INestedWordAutomatonSimple<CodeB
 		m_SmtManager = smtManager;
 		m_InitialStates = constructInitialStates();
 		m_FinalStates = new HashSet<IPredicate>();
-		m_StutteringStepsLimit = 2;
+		m_StutteringStepsLimit = 42;
 		m_EmptyStackState = m_ControlFlowAutomaton.getStateFactory().createEmptyStackState();
 	}
 
@@ -300,7 +309,7 @@ public class WitnessProductAutomaton implements INestedWordAutomatonSimple<CodeB
 				for (WitnessNode succ : skipNonCodeBlockEdges(out.getSucc())) {
 					if (!visited.contains(succ)) {
 						visited.add(succ);
-						if (out.getLetter().isCompatible(cb, out.getLetter())) {
+						if (isCompatible(cb, out.getLetter())) {
 							ProductState succProd = getOrConstructProductState(cfgSucc, succ, 0);
 							result.add(succProd.getResultState());
 							wsSuccStates.addLast(succ);
@@ -322,10 +331,10 @@ public class WitnessProductAutomaton implements INestedWordAutomatonSimple<CodeB
 		boolean hasOutgoingNodes = false;
 		for (OutgoingInternalTransition<WitnessAutomatonLetter, WitnessNode> out : m_WitnessAutomaton.internalSuccessors(node)) {
 			hasOutgoingNodes = true;
-			if (isNonCodeBlockEdge(out.getLetter())) {
-				result.addAll(skipNonCodeBlockEdges(out.getSucc()));
-			} else {
+			if (isCodeBlockEdge(out.getLetter())) {
 				result.add(node);
+			} else {
+				result.addAll(skipNonCodeBlockEdges(out.getSucc()));
 			}
 		}
 		if (!hasOutgoingNodes) {
@@ -334,7 +343,7 @@ public class WitnessProductAutomaton implements INestedWordAutomatonSimple<CodeB
 		return result;
 	}
 	
-	private boolean isNonCodeBlockEdge(WitnessAutomatonLetter edge) {
+	private boolean isCodeBlockEdge(WitnessAutomatonLetter edge) {
 		return m_WitnessLocationMatcher.isMatchedWitnessEdge(edge);
 //		if (edge.isPureAssumptionEdge()) {
 //			return true;
@@ -343,6 +352,93 @@ public class WitnessProductAutomaton implements INestedWordAutomatonSimple<CodeB
 //		} else {
 //			return false;
 //		}
+	}
+	
+	
+	
+	
+	public boolean isCompatible(CodeBlock cb, WitnessAutomatonLetter wal) {
+		if (cb instanceof Call) {
+			Call call = (Call) cb;
+			return isCompatible(call, wal);
+		} else if (cb instanceof InterproceduralSequentialComposition) {
+			InterproceduralSequentialComposition isc = (InterproceduralSequentialComposition) cb;
+			return isCompatible(isc, wal);
+		} else if (cb instanceof ParallelComposition) {
+			ParallelComposition pc = (ParallelComposition) cb;
+			return isCompatible(pc, wal);
+		} else if (cb instanceof Return) {
+			Return ret = (Return) cb;
+			return isCompatible(ret, wal);
+		} else if (cb instanceof SequentialComposition) {
+			SequentialComposition sc = (SequentialComposition) cb;
+			return isCompatible(sc, wal);
+		} else if (cb instanceof StatementSequence) {
+			StatementSequence ss = (StatementSequence) cb;
+			return isCompatible(ss, wal);
+		} else if (cb instanceof Summary) {
+			Summary sum = (Summary) cb;
+			return isCompatible(sum.getCallStatement(), wal);
+		} else {
+			throw new AssertionError("unknown type of CodeBlock");
+		}
+	}
+
+	
+	boolean isCompatible(Call call, WitnessAutomatonLetter wal) {
+		return isCompatible(call.getCallStatement(), wal);
+	}
+	
+	boolean isCompatible(InterproceduralSequentialComposition isc, WitnessAutomatonLetter wal) {
+		for (CodeBlock cb : isc.getCodeBlocks()) {
+			if (isCompatible(cb, wal)) {
+				return true;
+			}
+		}
+		return false;
+	}
+	
+
+
+	boolean isCompatible(ParallelComposition pc, WitnessAutomatonLetter wal) {
+		for (CodeBlock cb : pc.getCodeBlocks()) {
+			if (isCompatible(cb, wal)) {
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	boolean isCompatible(Return ret, WitnessAutomatonLetter wal) {
+		return isCompatible(ret.getPayload().getLocation(), wal);
+	}
+	
+	boolean isCompatible(SequentialComposition sc, WitnessAutomatonLetter wal) {
+		for (CodeBlock cb : sc.getCodeBlocks()) {
+			if (isCompatible(cb, wal)) {
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	boolean isCompatible(StatementSequence ss, WitnessAutomatonLetter wal) {
+		for (Statement st : ss.getStatements()) {
+			if (isCompatible(st, wal)) {
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	boolean isCompatible(Statement st, WitnessAutomatonLetter wal) {
+		return isCompatible(st.getLocation(), wal);
+	}
+	
+	
+
+	private boolean isCompatible(ILocation location, WitnessAutomatonLetter wal) {
+		return m_WitnessLocationMatcher.isCompatible(location, wal);
 	}
 
 

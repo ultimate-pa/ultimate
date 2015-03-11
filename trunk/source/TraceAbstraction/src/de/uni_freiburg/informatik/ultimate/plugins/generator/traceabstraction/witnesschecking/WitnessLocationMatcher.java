@@ -18,6 +18,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Par
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.SequentialComposition;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.util.HashRelation;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNode;
@@ -100,6 +101,9 @@ public class WitnessLocationMatcher {
 		} else if (cb instanceof StatementSequence) {
 			StatementSequence ss = (StatementSequence) cb;
 			matchLocations(ss);
+		} else if (cb instanceof Summary) {
+			Summary sum = (Summary) cb;
+			matchLocations(sum.getCallStatement());
 		} else {
 			throw new AssertionError("unknown type of CodeBlock");
 		}
