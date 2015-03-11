@@ -22,12 +22,12 @@ public class TraceAbstractionTestSummary extends NewTestSummary {
 	/**
 	 * A map from file names to benchmark results.
 	 */
-	private Map<UltimateRunDefinition, Collection<BenchmarkResult>> m_TraceAbstractionBenchmarks;
+	private Map<UltimateRunDefinition, Collection<ICsvProvider<?>>> m_TraceAbstractionBenchmarks;
 
 	public TraceAbstractionTestSummary(Class<? extends UltimateTestSuite> ultimateTestSuite) {
 		super(ultimateTestSuite);
 		mCount = 0;
-		m_TraceAbstractionBenchmarks = new HashMap<UltimateRunDefinition, Collection<BenchmarkResult>>();
+		m_TraceAbstractionBenchmarks = new HashMap<UltimateRunDefinition, Collection<ICsvProvider<?>>>();
 	}
 
 	@Override
@@ -52,10 +52,24 @@ public class TraceAbstractionTestSummary extends NewTestSummary {
 
 	}
 
+	@SuppressWarnings("rawtypes")
 	public void addTraceAbstractionBenchmarks(UltimateRunDefinition ultimateRunDefinition,
 			Collection<BenchmarkResult> benchmarkResults) {
 		assert !m_TraceAbstractionBenchmarks.containsKey(ultimateRunDefinition) : "benchmarks already added";
-		m_TraceAbstractionBenchmarks.put(ultimateRunDefinition, benchmarkResults);
+
+		if (benchmarkResults != null && !benchmarkResults.isEmpty()) {
+			ArrayList<ICsvProvider<?>> providers = new ArrayList<>(benchmarkResults.size());
+			for (BenchmarkResult result : benchmarkResults) {
+				// exclude the extensive ultimate benchmark object
+				if (result.getBenchmark().getClass() == Benchmark.class) {
+					continue;
+				}
+				providers.add(result.getBenchmark().createCvsProvider());
+			}
+			if (!providers.isEmpty()) {
+				m_TraceAbstractionBenchmarks.put(ultimateRunDefinition, providers);
+			}
+		}
 	}
 
 	@Override
@@ -116,15 +130,14 @@ public class TraceAbstractionTestSummary extends NewTestSummary {
 			for (Entry<UltimateRunDefinition, ExtendedResult> currentResult : entry.getValue()) {
 				sb.append("\t\t").append(currentResult.getKey()).append(CoreUtil.getPlatformLineSeparator());
 				// Add TraceAbstraction benchmarks
-				Collection<BenchmarkResult> benchmarks = m_TraceAbstractionBenchmarks.get(currentResult.getKey());
-				if (benchmarks == null) {
-					sb.append(indent).append("No benchmark results available.").append(CoreUtil.getPlatformLineSeparator());
+				Collection<ICsvProvider<?>> benchmarkProviders = m_TraceAbstractionBenchmarks.get(currentResult
+						.getKey());
+				if (benchmarkProviders == null) {
+					sb.append(indent).append("No benchmark results available.")
+							.append(CoreUtil.getPlatformLineSeparator());
 				} else {
-					for (BenchmarkResult<Object> benchmark : benchmarks) {
-						//exclude the extensive ultimate benchmark object
-						if (benchmark.getBenchmark().getClass() != Benchmark.class) {
-							appendProvider(sb, indent, benchmark.getBenchmark().createCvsProvider());
-						}
+					for (ICsvProvider<?> benchmarkProvider : benchmarkProviders) {
+						appendProvider(sb, indent, benchmarkProvider);
 					}
 				}
 			}
