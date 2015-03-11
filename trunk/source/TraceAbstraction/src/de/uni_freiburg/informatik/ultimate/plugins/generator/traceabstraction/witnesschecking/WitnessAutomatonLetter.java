@@ -25,40 +25,44 @@ public class WitnessAutomatonLetter {
 	public boolean isProbalyDeclaration() {
 		return m_WitnessEdge.getSourceCode().contains("int");
 	}
+	
+	public int getLineNumber() {
+		return m_WitnessEdge.getLocation().getStartLine();
+	}
 
 
-	public boolean isCompatible(CodeBlock cb) {
+	public boolean isCompatible(CodeBlock cb, WitnessAutomatonLetter wal) {
 		if (cb instanceof Call) {
 			Call call = (Call) cb;
-			return isCompatible(call);
+			return isCompatible(call, wal);
 		} else if (cb instanceof InterproceduralSequentialComposition) {
 			InterproceduralSequentialComposition isc = (InterproceduralSequentialComposition) cb;
-			return isCompatible(isc);
+			return isCompatible(isc, wal);
 		} else if (cb instanceof ParallelComposition) {
 			ParallelComposition pc = (ParallelComposition) cb;
-			return isCompatible(pc);
+			return isCompatible(pc, wal);
 		} else if (cb instanceof Return) {
 			Return ret = (Return) cb;
-			return isCompatible(ret);
+			return isCompatible(ret, wal);
 		} else if (cb instanceof SequentialComposition) {
 			SequentialComposition sc = (SequentialComposition) cb;
-			return isCompatible(sc);
+			return isCompatible(sc, wal);
 		} else if (cb instanceof StatementSequence) {
 			StatementSequence ss = (StatementSequence) cb;
-			return isCompatible(ss);
+			return isCompatible(ss, wal);
 		} else {
 			throw new AssertionError("unknown type of CodeBlock");
 		}
 	}
 
 	
-	boolean isCompatible(Call call) {
-		return isCompatible(call.getCallStatement());
+	boolean isCompatible(Call call, WitnessAutomatonLetter wal) {
+		return isCompatible(call.getCallStatement(), wal);
 	}
 	
-	boolean isCompatible(InterproceduralSequentialComposition isc) {
+	boolean isCompatible(InterproceduralSequentialComposition isc, WitnessAutomatonLetter wal) {
 		for (CodeBlock cb : isc.getCodeBlocks()) {
-			if (isCompatible(cb)) {
+			if (isCompatible(cb, wal)) {
 				return true;
 			}
 		}
@@ -67,38 +71,38 @@ public class WitnessAutomatonLetter {
 	
 
 
-	boolean isCompatible(ParallelComposition pc) {
+	boolean isCompatible(ParallelComposition pc, WitnessAutomatonLetter wal) {
 		for (CodeBlock cb : pc.getCodeBlocks()) {
-			if (isCompatible(cb)) {
+			if (isCompatible(cb, wal)) {
 				return true;
 			}
 		}
 		return false;
 	}
 	
-	boolean isCompatible(Return ret) {
+	boolean isCompatible(Return ret, WitnessAutomatonLetter wal) {
 		return isCompatible(ret.getPayload().getLocation());
 	}
 	
-	boolean isCompatible(SequentialComposition sc) {
+	boolean isCompatible(SequentialComposition sc, WitnessAutomatonLetter wal) {
 		for (CodeBlock cb : sc.getCodeBlocks()) {
-			if (isCompatible(cb)) {
+			if (isCompatible(cb, wal)) {
 				return true;
 			}
 		}
 		return false;
 	}
 	
-	boolean isCompatible(StatementSequence ss) {
+	boolean isCompatible(StatementSequence ss, WitnessAutomatonLetter wal) {
 		for (Statement st : ss.getStatements()) {
-			if (isCompatible(st)) {
+			if (isCompatible(st, wal)) {
 				return true;
 			}
 		}
 		return false;
 	}
 	
-	boolean isCompatible(Statement st) {
+	boolean isCompatible(Statement st, WitnessAutomatonLetter wal) {
 		return isCompatible(st.getLocation());
 	}
 	

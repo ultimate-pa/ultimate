@@ -34,6 +34,7 @@ public class WitnessProductAutomaton implements INestedWordAutomatonSimple<CodeB
 	private final Set<IPredicate> m_InitialStates;
 	private final Set<IPredicate> m_FinalStates;
 	private final Integer m_StutteringStepsLimit;
+	private final WitnessLocationMatcher m_WitnessLocationMatcher;
 	
 	private class ProductState {
 		private final IPredicate m_CfgAutomatonState;
@@ -78,6 +79,7 @@ public class WitnessProductAutomaton implements INestedWordAutomatonSimple<CodeB
 			INestedWordAutomatonSimple<CodeBlock, IPredicate> controlFlowAutomaton,
 			NestedWordAutomaton<WitnessAutomatonLetter, WitnessNode> witnessAutomaton,
 			SmtManager smtManager) {
+		m_WitnessLocationMatcher = new WitnessLocationMatcher(services, controlFlowAutomaton, witnessAutomaton);
 		m_ControlFlowAutomaton = controlFlowAutomaton;
 		m_WitnessAutomaton = witnessAutomaton;
 		m_SmtManager = smtManager;
@@ -298,7 +300,7 @@ public class WitnessProductAutomaton implements INestedWordAutomatonSimple<CodeB
 				for (WitnessNode succ : skipNonCodeBlockEdges(out.getSucc())) {
 					if (!visited.contains(succ)) {
 						visited.add(succ);
-						if (out.getLetter().isCompatible(cb)) {
+						if (out.getLetter().isCompatible(cb, out.getLetter())) {
 							ProductState succProd = getOrConstructProductState(cfgSucc, succ, 0);
 							result.add(succProd.getResultState());
 							wsSuccStates.addLast(succ);
@@ -333,13 +335,14 @@ public class WitnessProductAutomaton implements INestedWordAutomatonSimple<CodeB
 	}
 	
 	private boolean isNonCodeBlockEdge(WitnessAutomatonLetter edge) {
-		if (edge.isPureAssumptionEdge()) {
-			return true;
-		} else if (edge.isProbalyDeclaration()) {
-			return true;
-		} else {
-			return false;
-		}
+		return m_WitnessLocationMatcher.isMatchedWitnessEdge(edge);
+//		if (edge.isPureAssumptionEdge()) {
+//			return true;
+//		} else if (edge.isProbalyDeclaration()) {
+//			return true;
+//		} else {
+//			return false;
+//		}
 	}
 
 
