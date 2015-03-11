@@ -45,4 +45,17 @@ public class WitnessEdge extends ModifiableMultigraphEdge<WitnessNode, WitnessEd
 		}
 		return sb.toString();
 	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result
+				+ ((mLocation == null) ? 0 : mLocation.hashCode());
+		result = prime * result + ((mName == null) ? 0 : mName.hashCode());
+		result = prime * result
+				+ ((mSourceCode == null) ? 0 : mSourceCode.hashCode());
+		return result;
+	}
+
 }

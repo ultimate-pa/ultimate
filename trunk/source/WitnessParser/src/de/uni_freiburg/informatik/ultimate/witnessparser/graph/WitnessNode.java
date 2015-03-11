@@ -19,5 +19,9 @@ public class WitnessNode extends ModifiableExplicitEdgesMultigraph<WitnessNode, 
 	public String toString() {
 		return mName;
 	}
-	
+
+	@Override
+	public int hashCode() {
+		return mName.hashCode();
+	}
 }
