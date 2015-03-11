@@ -54,7 +54,8 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 	
 	private RootNode m_RcfgRootNode;
 	private IElement m_RootOfNewModel;
-	private static WitnessNode m_WitnessNode;
+	private WitnessNode m_WitnessNode;
+	private boolean m_LastModel = false;
 
 
 	public TraceAbstractionObserver(IUltimateServiceProvider services) {
@@ -67,35 +68,42 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 	@Override
 	public boolean process(IElement root) {
 		if (root instanceof RootNode) {
-			m_RcfgRootNode = (RootNode) root;
-		}
-		if (root instanceof WitnessNode) {
-			m_WitnessNode = (WitnessNode) root;
-			if (m_RcfgRootNode != null) {
-				throw new AssertionError("Witness mus come before RCFG");
+			if (m_RcfgRootNode == null) {
+				m_RcfgRootNode = (RootNode) root;
+			} else {
+				throw new UnsupportedOperationException("two RCFG models");
 			}
 		}
+		if (root instanceof WitnessNode) {
+			if (m_WitnessNode == null) {
+				m_WitnessNode = (WitnessNode) root;
+			} else {
+				throw new UnsupportedOperationException("two witness models");
+			}
+		}
+		
+		
 		return false;
 	}
 
-
-
-
-
 	@Override
 	public void finish() {
-		if (m_RcfgRootNode != null) {
-			NestedWordAutomaton<WitnessAutomatonLetter, WitnessNode> witnessAutomaton;
-			if (m_WitnessNode != null) {
-				witnessAutomaton = (new WitnessModelToAutomatonTransformer(m_WitnessNode, mServices)).getResult();
+		if (m_LastModel) {
+			if (m_RcfgRootNode == null) {
+				throw new UnsupportedOperationException("TraceAbstraction needs an RCFG");
 			} else {
-				witnessAutomaton = null;
+				NestedWordAutomaton<WitnessAutomatonLetter, WitnessNode> witnessAutomaton;
+				if (m_WitnessNode == null) {
+					witnessAutomaton = null;
+				} else {
+					mLogger.warn("Found a witness automaton. I will only consider traces that are accepted by the witness automaton");
+					witnessAutomaton = (new WitnessModelToAutomatonTransformer(m_WitnessNode, mServices)).getResult();
+				}
+				TraceAbstractionStarter tas = new TraceAbstractionStarter(mServices, m_RcfgRootNode, witnessAutomaton);
+				m_RootOfNewModel = tas.getRootOfNewModel();
 			}
-			TraceAbstractionStarter tas = new TraceAbstractionStarter(mServices, m_RcfgRootNode, witnessAutomaton);
-			m_RootOfNewModel = tas.getRootOfNewModel();
 		}
 	}
-	
 	
 	/**
 	 * @return the root of the CFG.
@@ -112,8 +120,9 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 
 	@Override
 	public void init(GraphType modelType, int currentModelIndex, int numberOfModels) {
-		// TODO Auto-generated method stub
-
+		if (currentModelIndex == numberOfModels -1) {
+			m_LastModel = true;
+		}
 	}
 
 	@Override
