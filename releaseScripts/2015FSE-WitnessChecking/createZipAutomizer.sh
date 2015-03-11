@@ -16,6 +16,7 @@ cp "$TERMTOOLCHAIN" "$TARGETDIR"/"$TOOLNAME"Termination.xml
 cp LICENSE* "$TARGETDIR"/
 cp ${SETTINGS} "$TARGETDIR"/.
 cp Ultimate.py "$TARGETDIR"/
+cp UltimateWitnessChecker.py "$TARGETDIR"/
 cp Ultimate.ini "$TARGETDIR"/
 cp README "$TARGETDIR"/
 
