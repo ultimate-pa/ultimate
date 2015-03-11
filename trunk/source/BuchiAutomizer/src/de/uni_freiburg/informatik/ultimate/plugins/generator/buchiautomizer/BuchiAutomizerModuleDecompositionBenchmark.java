@@ -18,7 +18,7 @@ public class BuchiAutomizerModuleDecompositionBenchmark implements ICsvProviderP
 	private final TreeMap<Integer, Integer> m_ModuleSizeTrivial = new TreeMap<Integer, Integer>();
 	private final TreeMap<Integer, Integer> m_ModuleSizeDeterministic = new TreeMap<Integer, Integer>();
 	private final TreeMap<Integer, Integer> m_ModuleSizeNondeterministic = new TreeMap<Integer, Integer>();
-	private final TreeMap<Integer, TerminationArgumentResult<RcfgElement>> m_RankingFunction = new TreeMap<Integer, TerminationArgumentResult<RcfgElement>>();
+	private final TreeMap<Integer, String> m_RankingFunction = new TreeMap<Integer, String>();
 	/**
 	 * Is there a remainder module? A remainder module contains remaining traces
 	 * if decomposition into modules failed. Null if yet unknown.
@@ -45,7 +45,7 @@ public class BuchiAutomizerModuleDecompositionBenchmark implements ICsvProviderP
 	}
 
 	void reportRankingFunction(Integer iteration, TerminationArgumentResult<RcfgElement> tar) {
-		m_RankingFunction.put(iteration, tar);
+		m_RankingFunction.put(iteration, prettyPrintRankingFunction(tar));
 	}
 
 	void reportRemainderModule(int numberLocations, boolean nonterminationKnown) {
@@ -108,14 +108,14 @@ public class BuchiAutomizerModuleDecompositionBenchmark implements ICsvProviderP
 		}
 		for (Entry<Integer, Integer> entry : m_ModuleSizeDeterministic.entrySet()) {
 			sb.append("One deterministic module has ");
-			sb.append(prettyPrintRankingFunction(m_RankingFunction.get(entry.getKey())));
+			sb.append(m_RankingFunction.get(entry.getKey()));
 			sb.append(" and consists of ");
 			sb.append(entry.getValue());
 			sb.append(" locations. ");
 		}
 		for (Entry<Integer, Integer> entry : m_ModuleSizeNondeterministic.entrySet()) {
 			sb.append("One nondeterministic module has ");
-			sb.append(prettyPrintRankingFunction(m_RankingFunction.get(entry.getKey())));
+			sb.append(m_RankingFunction.get(entry.getKey()));
 			sb.append(" and consists of ");
 			sb.append(entry.getValue());
 			sb.append(" locations. ");
