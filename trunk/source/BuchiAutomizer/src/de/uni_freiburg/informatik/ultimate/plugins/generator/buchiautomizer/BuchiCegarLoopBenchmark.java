@@ -27,6 +27,7 @@ public class BuchiCegarLoopBenchmark extends CegarLoopBenchmarkType implements I
 	
 	private static final BuchiCegarLoopBenchmark s_Instance = new BuchiCegarLoopBenchmark();
 	
+	public static final String s_HighestRank = "HighestRank";
 	public static final String s_NonLiveStateRemoval = "NonLiveStateRemoval";
 	public static final String s_BuchiClosure = "BuchiClosure";
 	public static final String s_NontrivialModuleStages = "NontrivialModuleStages";
@@ -41,9 +42,13 @@ public class BuchiCegarLoopBenchmark extends CegarLoopBenchmarkType implements I
 		return s_Instance;
 	}
 
+
+
+
 	@Override
 	public Collection<String> getKeys() {
 		ArrayList<String> keyList = new ArrayList<String>(super.getKeys());
+		keyList.add(s_HighestRank);
 		keyList.add(s_NonLiveStateRemoval);
 		keyList.add(s_BuchiClosure);
 		keyList.add(s_NontrivialModuleStages);
@@ -95,6 +100,7 @@ public class BuchiCegarLoopBenchmark extends CegarLoopBenchmarkType implements I
 			return new BackwardCoveringInformation(bci1, bci2);
 		case s_LassoPreprocessingBenchmarks:
 		case s_LassoTerminationAnalysisBenchmarks:
+		case s_HighestRank:
 			throw new AssertionError("not yet implemented");
 		default:
 			return super.aggregate(key, value1, value2);
@@ -133,6 +139,11 @@ public class BuchiCegarLoopBenchmark extends CegarLoopBenchmarkType implements I
 		sb.append(". ");
 		sb.append("Büchi inclusion checks took ");
 		sb.append(prettyprintNanoseconds(differenceTime - ecTime));
+		sb.append(". ");
+		
+		sb.append("Highest rank in rank-based complementation ");
+		Integer highestRank = (Integer) benchmarkData.getValue(s_HighestRank);
+		sb.append(highestRank);
 		sb.append(". ");
 		
 		sb.append("Minimization removed ");

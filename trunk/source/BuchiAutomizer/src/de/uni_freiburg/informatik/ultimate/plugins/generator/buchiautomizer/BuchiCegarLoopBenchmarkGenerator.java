@@ -21,6 +21,7 @@ public class BuchiCegarLoopBenchmarkGenerator extends CegarLoopBenchmarkGenerato
 	LassoAnalysisResults m_LassoAnalysisResults = new LassoAnalysisResults();
 	private BackwardCoveringInformation m_BciFinite = new BackwardCoveringInformation(0, 0);
 	private BackwardCoveringInformation m_BciBuchi = new BackwardCoveringInformation(0, 0);
+	private int m_HighestRank = 0;
 	
 	private final List<PreprocessingBenchmark> m_PreprocessingBenchmarks = 
 			new ArrayList<PreprocessingBenchmark>();
@@ -66,6 +67,8 @@ public class BuchiCegarLoopBenchmarkGenerator extends CegarLoopBenchmarkGenerato
 			} catch (StopwatchStillRunningException e) {
 				throw new AssertionError("clock still running: " + key);
 			}
+		case BuchiCegarLoopBenchmark.s_HighestRank:
+			return m_HighestRank;
 		case BuchiCegarLoopBenchmark.s_NontrivialModuleStages:
 			return m_NontrivialModuleStages;
 		case BuchiCegarLoopBenchmark.s_LassoAnalysisResults:
@@ -153,6 +156,10 @@ public class BuchiCegarLoopBenchmarkGenerator extends CegarLoopBenchmarkGenerato
 		default:
 			throw new AssertionError("unknown case");
 		}
+	}
+
+	public void reportHighestRank(int highestRank) {
+		m_HighestRank = Math.max(m_HighestRank, highestRank);
 	}
 	
 }

@@ -269,7 +269,7 @@ public class RefineBuchi {
 			BuchiDifferenceFKV<CodeBlock, IPredicate> diff = new BuchiDifferenceFKV<CodeBlock, IPredicate>(m_Services, 
 					m_Abstraction, m_InterpolAutomatonUsedInRefinement, stateDeterminizer, m_StateFactoryForRefinement);
 			finishComputation(m_InterpolAutomatonUsedInRefinement, setting);
-
+			benchmarkGenerator.reportHighestRank(diff.getHighestRank());
 			assert diff.checkResult(m_StateFactoryInterpolAutom);
 
 			// s_Logger.warn("START: minimization test");
@@ -300,6 +300,7 @@ public class RefineBuchi {
 					m_Services, 
 					m_InterpolAutomatonUsedInRefinement, stateDeterminizer);
 			finishComputation(m_InterpolAutomatonUsedInRefinement, setting);
+			benchmarkGenerator.reportHighestRank(complNwa.getHighestRank());
 			assert (complNwa.checkResult(m_StateFactoryInterpolAutom));
 			INestedWordAutomatonOldApi<CodeBlock, IPredicate> complement = complNwa.getResult();
 			assert !(new BuchiAccepts<CodeBlock, IPredicate>(m_Services, complement, m_Counterexample.getNestedLassoWord()))
