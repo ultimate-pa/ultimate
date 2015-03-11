@@ -68,6 +68,7 @@ public class CommandLineParser {
 					while (i < args.length) {
 						String current = args[i];
 						if (current.startsWith("--")) {
+							--i;
 							break;
 						}
 						inputFiles.add(current);
