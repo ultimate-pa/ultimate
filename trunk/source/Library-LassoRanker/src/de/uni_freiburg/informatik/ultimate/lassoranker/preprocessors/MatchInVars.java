@@ -65,7 +65,7 @@ public class MatchInVars extends TransitionPreProcessor {
 	}
 	
 	@Override
-	protected TransFormulaLR process(Script script, TransFormulaLR tf) throws TermException {
+	public TransFormulaLR process(Script script, TransFormulaLR tf) throws TermException {
 		for (Map.Entry<RankVar, Term> entry : tf.getOutVars().entrySet()) {
 			if (!tf.getInVars().containsKey(entry.getKey())) {
 				TermVariable inVar = m_VariableManager.constructFreshTermVariable(

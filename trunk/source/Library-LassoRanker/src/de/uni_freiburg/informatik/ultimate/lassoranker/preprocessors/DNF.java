@@ -72,7 +72,7 @@ public class DNF extends TransitionPreProcessor {
 	}
 	
 	@Override
-	protected TransFormulaLR process(Script script, TransFormulaLR tf) throws TermException {
+	public TransFormulaLR process(Script script, TransFormulaLR tf) throws TermException {
 		Dnf dnf = new Dnf(script, mServices);
 		tf.setFormula(dnf.transform(tf.getFormula()));
 		return tf;

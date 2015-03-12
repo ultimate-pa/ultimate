@@ -61,7 +61,7 @@ public class SimplifyPreprocessor extends TransitionPreProcessor {
 	}
 	
 	@Override
-	protected TransFormulaLR process(Script script, TransFormulaLR tf) throws TermException {
+	public TransFormulaLR process(Script script, TransFormulaLR tf) throws TermException {
 		Term simplified = SmtUtils.simplify(script, tf.getFormula(), mServices);
 		tf.setFormula(simplified);
 		return tf;

@@ -56,7 +56,7 @@ public class AddAxioms extends TransitionPreProcessor {
 	}
 	
 	@Override
-	protected TransFormulaLR process(Script script, TransFormulaLR tf) throws TermException {
+	public TransFormulaLR process(Script script, TransFormulaLR tf) throws TermException {
 		Term formula = tf.getFormula();
 		Term axioms = Util.and(script, m_axioms);
 		formula = Util.and(script, formula, axioms);

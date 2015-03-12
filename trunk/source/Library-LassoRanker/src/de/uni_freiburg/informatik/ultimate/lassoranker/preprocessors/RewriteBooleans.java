@@ -155,7 +155,7 @@ public class RewriteBooleans extends TransformerPreProcessor {
 	}
 	
 	@Override
-	protected TransFormulaLR process(Script script, TransFormulaLR tf) throws TermException {
+	public TransFormulaLR process(Script script, TransFormulaLR tf) throws TermException {
 		this.generateRepVars(tf);
 		return super.process(m_Script, tf);
 	}

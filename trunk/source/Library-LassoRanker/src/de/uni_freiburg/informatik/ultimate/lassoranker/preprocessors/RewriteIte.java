@@ -58,7 +58,7 @@ public class RewriteIte extends TransitionPreProcessor {
 	}
 	
 	@Override
-	protected TransFormulaLR process(Script script, TransFormulaLR tf) throws TermException {
+	public TransFormulaLR process(Script script, TransFormulaLR tf) throws TermException {
 		IteRemover iteRemover = new IteRemover(script);
 		tf.setFormula(iteRemover.transform(tf.getFormula()));
 		return tf;

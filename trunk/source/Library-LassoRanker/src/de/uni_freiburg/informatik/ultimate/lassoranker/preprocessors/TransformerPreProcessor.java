@@ -51,7 +51,7 @@ public abstract class TransformerPreProcessor extends TransitionPreProcessor {
 	protected abstract TermTransformer getTransformer(Script script);
 	
 	@Override
-	protected TransFormulaLR process(Script script, TransFormulaLR tf) throws TermException {
+	public TransFormulaLR process(Script script, TransFormulaLR tf) throws TermException {
 		TermTransformer transformer = this.getTransformer(script);
 		TransFormulaLR new_tf = new TransFormulaLR(tf);
 		new_tf.setFormula(transformer.transform(tf.getFormula()));

@@ -115,7 +115,7 @@ public class RewriteDivision extends TransformerPreProcessor {
 	}
 	
 	@Override
-	protected TransFormulaLR process(Script script, TransFormulaLR tf) throws TermException {
+	public TransFormulaLR process(Script script, TransFormulaLR tf) throws TermException {
 		// Clear the data structures
 		m_auxVars.clear();
 		m_auxTerms.clear();
