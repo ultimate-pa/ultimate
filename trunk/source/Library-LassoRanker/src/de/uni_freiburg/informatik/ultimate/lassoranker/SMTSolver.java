@@ -32,6 +32,7 @@ import java.io.IOException;
 
 import de.uni_freiburg.informatik.ultimate.core.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.LoggingScript;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -67,7 +68,7 @@ public class SMTSolver {
 	 * @return the new script
 	 * @throws IOException 
 	 */
-	private static Script newScript(boolean useExternalSolver, String smt_solver_command, String dump_filename,
+	public static Script newScript(boolean useExternalSolver, String smt_solver_command, String dump_filename,
 			boolean produce_unsat_cores, IUltimateServiceProvider services, IToolchainStorage storage) throws IOException {
 
 		Script script;
@@ -137,12 +138,12 @@ public class SMTSolver {
 	 *            name of the new constant
 	 * @param sort
 	 *            the sort of the variable
-	 * @return the new variable as a term
+	 * @return the new variable as a ApplicationTerm
 	 * @throws SMTLIBException
 	 *             if something goes wrong, e.g. the name is already defined
 	 */
-	public static Term newConstant(Script script, String name, String sortname) throws SMTLIBException {
+	public static ApplicationTerm newConstant(Script script, String name, String sortname) throws SMTLIBException {
 		script.declareFun(name, new Sort[0], script.sort(sortname));
-		return script.term(name);
+		return (ApplicationTerm) script.term(name);
 	}
 }
