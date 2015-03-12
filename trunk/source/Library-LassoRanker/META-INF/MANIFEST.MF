@@ -18,4 +18,5 @@ Export-Package: de.uni_freiburg.informatik.ultimate.lassoranker,
  de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors,
  de.uni_freiburg.informatik.ultimate.lassoranker.termination,
  de.uni_freiburg.informatik.ultimate.lassoranker.termination.rankingfunctions,
- de.uni_freiburg.informatik.ultimate.lassoranker.termination.templates
+ de.uni_freiburg.informatik.ultimate.lassoranker.termination.templates,
+ de.uni_freiburg.informatik.ultimate.lassoranker.variables
