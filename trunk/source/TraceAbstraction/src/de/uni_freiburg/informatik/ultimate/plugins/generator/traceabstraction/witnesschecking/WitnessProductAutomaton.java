@@ -16,6 +16,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingInternalT
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
@@ -96,7 +97,7 @@ public class WitnessProductAutomaton implements INestedWordAutomatonSimple<CodeB
 		m_SmtManager = smtManager;
 		m_InitialStates = constructInitialStates();
 		m_FinalStates = new HashSet<IPredicate>();
-		m_StutteringStepsLimit = 42;
+		m_StutteringStepsLimit = 12;
 		m_EmptyStackState = m_ControlFlowAutomaton.getStateFactory().createEmptyStackState();
 	}
 
@@ -439,7 +440,11 @@ public class WitnessProductAutomaton implements INestedWordAutomatonSimple<CodeB
 	}
 	
 	boolean isCompatible(Statement st, WitnessAutomatonLetter wal) {
-		return isCompatible(st.getLocation(), wal);
+		if (st instanceof AssumeStatement) {
+			return isCompatible(((AssumeStatement) st).getFormula().getLocation(), wal);
+		} else {
+			return isCompatible(st.getLocation(), wal);
+		}
 	}
 	
 	

@@ -8,6 +8,7 @@ import org.apache.log4j.Logger;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
@@ -151,7 +152,11 @@ public class WitnessLocationMatcher {
 
 
 	private void matchLocations(Statement st) {
-		matchLocations(st.getLocation());
+		if (st instanceof AssumeStatement) {
+			matchLocations(((AssumeStatement) st).getFormula().getLocation());
+		} else {
+			matchLocations(st.getLocation());
+		}
 	}
 
 
