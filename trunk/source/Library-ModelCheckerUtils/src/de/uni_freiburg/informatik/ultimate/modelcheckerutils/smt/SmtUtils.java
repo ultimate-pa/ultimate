@@ -406,4 +406,20 @@ public class SmtUtils {
 	public static Term or(Script script, Collection<Term> terms) {
 		return Util.or(script, terms.toArray(new Term[terms.size()]));
 	}
+	
+	
+	/**
+	 * @return term that is equivalent to lhs <= rhs
+	 */
+	public static Term leq(Script script, Term lhs, Term rhs) {
+		return script.term("<=", lhs, rhs);
+	}
+	
+	/**
+	 * @return term that is equivalent to lhs < rhs
+	 */
+	public static Term less(Script script, Term lhs, Term rhs) {
+		return script.term("<", lhs, rhs);
+	}
+
 }
