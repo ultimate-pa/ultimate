@@ -1,5 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -16,7 +18,10 @@ import java.util.TreeSet;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
+import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
+import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
+import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
@@ -44,6 +49,8 @@ import de.uni_freiburg.informatik.ultimate.util.RelationWithTreeSet;
  ********* 4. Heuristic *********
  * The 4.th heuristic is a mix-up of the 2nd the 3rd heuristic.
  *    
+ ******** 5. Heuristic ************
+ * TODO(Betim)    
  * @author musab@informatik.uni-freiburg.de
  */
 public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndAsserter {
@@ -164,6 +171,7 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 		Map<Integer, Set<Integer>> depth2Statements = partitionStatementsAccordingDepth(m_Trace, rwt, pps);
 		// Report benchmark
 		m_Tcbg.reportnewCodeBlocks(m_Trace.length());
+		
 		// Apply 1. heuristic
 		if (m_AssertCodeBlocksOrder == AssertCodeBlockOrder.OUTSIDE_LOOP_FIRST1) {
 			// Statements outside of a loop have depth 0.
@@ -200,7 +208,12 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 		else if (m_AssertCodeBlocksOrder == AssertCodeBlockOrder.MIX_INSIDE_OUTSIDE) {
 			m_Satisfiable = annotateAndAssertStmtsAccording4Heuristic(m_Trace, callPositions,
 					pendingReturnPositions, depth2Statements);
-		} else {
+		} // Apply 5. Heuristic
+		else if (m_AssertCodeBlocksOrder == AssertCodeBlockOrder.TERMS_WITH_SMALL_CONSTANTS_FIRST) {
+			m_Satisfiable = annotateAndAssertStmtsAccording5Heuristic(m_Trace, callPositions,
+					pendingReturnPositions, depth2Statements);
+		}
+		else {
 			throw new AssertionError("unknown value " + m_AssertCodeBlocksOrder);
 		}
 		mLogger.info("Conjunction of SSA is " + m_Satisfiable);
@@ -276,6 +289,82 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 				return sat;
 			}
 		}
+		return sat;
+	}
+	
+	private boolean hasConstantGreaterThan(Term t, int constantSize) {
+		if (t instanceof ApplicationTerm) {
+			Term[] args = ((ApplicationTerm)t).getParameters();
+			for (int i = 0; i < args.length; i++) {
+				if (hasConstantGreaterThan(args[i], constantSize)) {
+					return true;
+				}
+			}
+		} else if (t instanceof ConstantTerm) {
+			Object val = ((ConstantTerm)t).getValue();
+			if (val instanceof BigInteger) {
+				if (((BigInteger) val).compareTo(new BigInteger(new Integer(constantSize).toString())) > 0) {
+					return true;
+				}
+			} else if (val instanceof BigDecimal) {
+				if (((BigDecimal) val).compareTo(new BigDecimal(new Integer(constantSize).toString())) > 0) {
+					return true;
+				}
+			} else {
+				throw new UnsupportedOperationException("ConstantTerm is neither BigInter nor BigDecimal, therefore comparison is not possible!");
+			}
+			
+		} 
+//		else {
+//			throw new UnsupportedOperationException("This term type \"" + t.getClass().getSimpleName() + "\" is not supported!");
+//		}
+		return false;
+	}
+	
+	/**
+	 * TODO (Betim): DOcumentation!
+	 * @param trace
+	 * @param constantSize
+	 * @return
+	 */
+	private Set<Integer> partitionStmtsAccordingToConstantSize(NestedWord<CodeBlock> trace,	int constantSize) {
+		Set<Integer> result = new HashSet<Integer>();
+		
+		for (int i = 0; i < trace.length(); i++) {
+			Term t = trace.getSymbolAt(i).getTransitionFormula().getFormula();
+			if (!hasConstantGreaterThan(t, constantSize)) {
+				result.add(i);
+			}
+		}
+		return result;
+	}
+	
+	/**
+	 * TODO(Betim): Documentation!
+	 * @param trace
+	 * @param callPositions
+	 * @param pendingReturnPositions
+	 * @param depth2Statements
+	 * @return
+	 */
+	private LBool annotateAndAssertStmtsAccording5Heuristic(
+			NestedWord<CodeBlock> trace, Collection<Integer> callPositions,
+			Collection<Integer> pendingReturnPositions,
+			Map<Integer, Set<Integer>> depth2Statements) {
+		// Choose statements that contains only constants <= 10 and assert them
+		int constantSize = 10;
+		Set<Integer> stmtsToAssert = partitionStmtsAccordingToConstantSize(trace, constantSize);
+		buildAnnotatedSsaAndAssertTermsWithPriorizedOrder(trace, callPositions, pendingReturnPositions, stmtsToAssert);
+		LBool sat = m_SmtManager.getScript().checkSat();
+		if (sat == LBool.UNSAT) {
+			return sat;
+		}
+		// Then assert the rest of statements
+		Set<Integer> remainingStmts = integerSetDifference(getSetOfIntegerForGivenInterval(0, trace.length()), stmtsToAssert);
+		buildAnnotatedSsaAndAssertTermsWithPriorizedOrder(trace, callPositions, pendingReturnPositions, 
+				remainingStmts);
+		sat = m_SmtManager.getScript().checkSat();
+
 		return sat;
 	}
 
