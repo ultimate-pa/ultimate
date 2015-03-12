@@ -60,6 +60,10 @@ public class WitnessLocationMatcher {
 	public boolean isCompatible(ILocation loc, WitnessAutomatonLetter wal) {
 		return m_SingleLineLocation2WitnessLetters.containsPair(loc, wal);
 	}
+	
+	public Set<ILocation> getCorrespondingLocations(WitnessAutomatonLetter wal) {
+		return m_WitnessLetters2SingleLineLocations.getImage(wal);
+	}
 
 
 	private void partitionEdges(Set<WitnessAutomatonLetter> internalAlphabet) {

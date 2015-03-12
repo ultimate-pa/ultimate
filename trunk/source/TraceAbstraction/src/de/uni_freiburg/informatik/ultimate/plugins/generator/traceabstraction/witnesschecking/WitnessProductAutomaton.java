@@ -44,6 +44,8 @@ public class WitnessProductAutomaton implements INestedWordAutomatonSimple<CodeB
 	private final Set<IPredicate> m_FinalStates;
 	private final Integer m_StutteringStepsLimit;
 	private final WitnessLocationMatcher m_WitnessLocationMatcher;
+	private final LinkedHashSet<WitnessAutomatonLetter> m_BadWitnessEdges = new LinkedHashSet<WitnessAutomatonLetter>();
+	private final Set<WitnessAutomatonLetter> m_GoodWitnessEdges = new HashSet<WitnessAutomatonLetter>();
 	
 	private class ProductState {
 		private final IPredicate m_CfgAutomatonState;
@@ -299,7 +301,6 @@ public class WitnessProductAutomaton implements INestedWordAutomatonSimple<CodeB
 	private Set<IPredicate> computeSuccessorStates(ProductState ps, CodeBlock cb, IPredicate cfgSucc) {
 		Set<IPredicate> result = new LinkedHashSet<IPredicate>();
 
-		boolean wsWasAdded = false;
 		ArrayDeque<WitnessNode> wsSuccStates = new ArrayDeque<WitnessNode>();
 		Set<WitnessNode> visited = new HashSet<WitnessNode>();
 		wsSuccStates.addAll(skipNonCodeBlockEdges(ps.getWitnessNode()));
@@ -310,10 +311,12 @@ public class WitnessProductAutomaton implements INestedWordAutomatonSimple<CodeB
 					if (!visited.contains(succ)) {
 						visited.add(succ);
 						if (isCompatible(cb, out.getLetter())) {
+							m_GoodWitnessEdges.add(out.getLetter());
 							ProductState succProd = getOrConstructProductState(cfgSucc, succ, 0);
 							result.add(succProd.getResultState());
 							wsSuccStates.addLast(succ);
-							wsWasAdded = true;
+						} else {
+							m_BadWitnessEdges.add(out.getLetter());
 						}
 					}
 				}
@@ -410,7 +413,11 @@ public class WitnessProductAutomaton implements INestedWordAutomatonSimple<CodeB
 	}
 	
 	boolean isCompatible(Return ret, WitnessAutomatonLetter wal) {
-		return isCompatible(ret.getPayload().getLocation(), wal);
+		if (isCompatible(ret.getPayload().getLocation(), wal)) {
+			return true;
+		} else {
+			return isCompatible(ret.getCorrespondingCall(), wal);
+		}
 	}
 	
 	boolean isCompatible(SequentialComposition sc, WitnessAutomatonLetter wal) {
@@ -439,6 +446,30 @@ public class WitnessProductAutomaton implements INestedWordAutomatonSimple<CodeB
 
 	private boolean isCompatible(ILocation location, WitnessAutomatonLetter wal) {
 		return m_WitnessLocationMatcher.isCompatible(location, wal);
+	}
+	
+	public LinkedHashSet<WitnessAutomatonLetter> getBadWitnessEdges() {
+		LinkedHashSet<WitnessAutomatonLetter> result = new LinkedHashSet<WitnessAutomatonLetter>(m_BadWitnessEdges);
+		result.removeAll(m_GoodWitnessEdges);
+		return result;
+	}
+	
+	public String generateBadWitnessInformation() {
+		LinkedHashSet<WitnessAutomatonLetter> allBad = getBadWitnessEdges();
+		if (allBad.isEmpty()) {
+			return "no bad witness edges";
+		} else {
+			WitnessAutomatonLetter firstBad = allBad.iterator().next();
+			Set<ILocation> correspondingLocations = m_WitnessLocationMatcher.getCorrespondingLocations(firstBad);
+			StringBuilder sb = new StringBuilder();
+			sb.append(allBad.size());
+			sb.append(" bad witness edges. ");
+			sb.append("First bad witness edge ");
+			sb.append(firstBad);
+			sb.append(" Corresponding locations: ");
+			sb.append(correspondingLocations);
+			return sb.toString();
+		}
 	}
 
 
