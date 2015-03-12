@@ -50,7 +50,7 @@ public abstract class TransitionPreProcessor {
 	 * @return a new (processed) transition formula
 	 * @throws TermException if processing fails
 	 */
-	protected abstract TransFormulaLR process(
+	public abstract TransFormulaLR process(
 			Script script, TransFormulaLR tf) throws TermException;
 	
 	/**
