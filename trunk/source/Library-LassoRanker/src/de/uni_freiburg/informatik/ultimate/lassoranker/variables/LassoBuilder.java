@@ -61,11 +61,6 @@ public class LassoBuilder {
 	 * The Boogie2SMT object
 	 */
 	private final Boogie2SMT m_boogie2smt;
-	/**
-	 * Table of the created BoogieVarWrapper's such that every BoogieVar
-	 * gets at most one wrapper
-	 */
-	private final Map<BoogieVar, BoogieVarWrapper> m_boogieWrappers;
 	
 	/**
 	 * Collection of all generated replacement TermVariables
@@ -115,7 +110,6 @@ public class LassoBuilder {
 		assert boogie2smt != null;
 		m_Script = script;
 		m_boogie2smt = boogie2smt;
-		m_boogieWrappers = new LinkedHashMap<BoogieVar, BoogieVarWrapper>();
 		m_termVariables = new ArrayList<TermVariable>();
 		m_stem_components_t = new ArrayList<TransFormulaLR>();
 		m_stem_components_nt = m_stem_components_t;
@@ -137,8 +131,10 @@ public class LassoBuilder {
 	public LassoBuilder(Script script, Boogie2SMT boogie2smt, TransFormula stem,
 			TransFormula loop) {
 		this(script, boogie2smt);
-		m_stem_components_t.add(this.buildTransFormula(stem));
-		m_loop_components_t.add(this.buildTransFormula(loop));
+		m_stem_components_t.add(
+				TransFormulaLR.buildTransFormula(stem, m_ReplacementVarFactory));
+		m_loop_components_t.add(
+				TransFormulaLR.buildTransFormula(loop, m_ReplacementVarFactory));
 	}
 	
 	/**
@@ -246,49 +242,6 @@ public class LassoBuilder {
 		m_loop_components_nt = loop_components;
 	}
 	
-	/**
-	 * Wrap BoogieVar's in a one-to-one fashion
-	 */
-	public RankVar fromBoogieVar(BoogieVar boogieVar) {
-		if (m_boogieWrappers.containsKey(boogieVar)) {
-			return m_boogieWrappers.get(boogieVar);
-		} else {
-			BoogieVarWrapper wrapper = new BoogieVarWrapper(boogieVar);
-			m_boogieWrappers.put(boogieVar, wrapper);
-			return wrapper;
-		}
-	}
-	
-
-	
-	/**
-	 * Construct a TransFormulaLR from a TransFormula, adding and translating
-	 * all existing in- and outVars in the process.
-	 * @param transition the TransFormula
-	 */
-	TransFormulaLR buildTransFormula(TransFormula transition) {
-		TransFormulaLR tf = new TransFormulaLR(transition.getFormula());
-		
-		// Add existing in- and outVars
-		for (Map.Entry<BoogieVar, TermVariable> entry
-				: transition.getInVars().entrySet()) {
-			tf.addInVar(fromBoogieVar(entry.getKey()), entry.getValue());
-		}
-		for (Map.Entry<BoogieVar, TermVariable> entry
-				: transition.getOutVars().entrySet()) {
-			tf.addOutVar(fromBoogieVar(entry.getKey()), entry.getValue());
-		}
-		tf.addAuxVars(transition.getAuxVars());
-		
-		// Add constant variables as in- and outVars
-		for (ApplicationTerm constVar : transition.getConstants()) {
-			ReplacementVar repVar = 
-					m_ReplacementVarFactory.getOrConstuctReplacementVar(constVar); 
-			tf.addInVar(repVar, constVar);
-			tf.addOutVar(repVar, constVar);
-		}
-		return tf;
-	}
 	
 	/**
 	 * Run a few sanity checks

@@ -35,8 +35,11 @@ import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.lassoranker.SMTPrettyPrinter;
+import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
 
 
 /**
@@ -92,6 +95,39 @@ public class TransFormulaLR implements Serializable {
 		m_outVars.putAll(other.m_outVars);
 		m_outVarsReverseMapping.putAll(other.m_outVarsReverseMapping);
 		m_AuxVars.addAll(other.getAuxVars());
+	}
+	
+	
+	/**
+	 * Construct a TransFormulaLR from a TransFormula, adding and translating
+	 * all existing in- and outVars in the process.
+	 * @param transition the TransFormula
+	 */
+	public static TransFormulaLR buildTransFormula(TransFormula transition,
+			ReplacementVarFactory replacementVarFactory) {
+		TransFormulaLR tf = new TransFormulaLR(transition.getFormula());
+		
+		// Add existing in- and outVars
+		for (Map.Entry<BoogieVar, TermVariable> entry
+				: transition.getInVars().entrySet()) {
+			tf.addInVar(replacementVarFactory.getOrConstuctBoogieVarWrapper(
+					entry.getKey()), entry.getValue());
+		}
+		for (Map.Entry<BoogieVar, TermVariable> entry
+				: transition.getOutVars().entrySet()) {
+			tf.addOutVar(replacementVarFactory.getOrConstuctBoogieVarWrapper(
+					entry.getKey()), entry.getValue());
+		}
+		tf.addAuxVars(transition.getAuxVars());
+		
+		// Add constant variables as in- and outVars
+		for (ApplicationTerm constVar : transition.getConstants()) {
+			ReplacementVar repVar = 
+					replacementVarFactory.getOrConstuctReplacementVar(constVar); 
+			tf.addInVar(repVar, constVar);
+			tf.addOutVar(repVar, constVar);
+		}
+		return tf;
 	}
 	
 	/**

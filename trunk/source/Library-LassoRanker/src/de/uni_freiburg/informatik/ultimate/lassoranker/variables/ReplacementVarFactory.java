@@ -32,6 +32,7 @@ import java.util.Map;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.VariableManager;
 
 /**
@@ -47,6 +48,11 @@ public class ReplacementVarFactory {
 			new HashMap<Term, ReplacementVar>();
 	private final Map<String, TermVariable> m_AuxVarMapping = 
 			new HashMap<String, TermVariable>();
+	/**
+	 * Maps each BoogieVar to a unique BoogieVarWrapper.
+	 */
+	private final Map<BoogieVar, BoogieVarWrapper> m_BoogieVarWrappers
+		= new HashMap<BoogieVar, BoogieVarWrapper>();
 
 	public ReplacementVarFactory(VariableManager variableManager) {
 		super();
@@ -80,6 +86,20 @@ public class ReplacementVarFactory {
 			}
 		}
 		return auxVar;
+	}
+	
+	
+	/**
+	 * Get unique BoogieVarWrapper for a given BoogieVar.
+	 */
+	public RankVar getOrConstuctBoogieVarWrapper(BoogieVar boogieVar) {
+		if (m_BoogieVarWrappers.containsKey(boogieVar)) {
+			return m_BoogieVarWrappers.get(boogieVar);
+		} else {
+			BoogieVarWrapper wrapper = new BoogieVarWrapper(boogieVar);
+			m_BoogieVarWrappers.put(boogieVar, wrapper);
+			return wrapper;
+		}
 	}
 
 }
