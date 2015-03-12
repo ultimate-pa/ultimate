@@ -3,6 +3,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.p
 import java.util.Collection;
 import java.util.Map;
 
+import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.ControlFlowGraph.Location;
@@ -37,9 +38,9 @@ public interface IInvariantPatternProcessor {
 	 * @param round attempt number, initialized with 0 and increased on each
 	 * attempt; see {@link #getMaxRounds()}
 	 * @return valid configuration satisfying all predicates, or null if no such
-	 * configuration has been found TODO type
+	 * configuration has been found.
 	 */
-	public Map<TermVariable, ?> getValidConfiguration(
+	public Map<TermVariable, ConstantTerm> getValidConfiguration(
 			final Collection<InvariantTransitionPredicate> predicates,
 			final int round);
 	
