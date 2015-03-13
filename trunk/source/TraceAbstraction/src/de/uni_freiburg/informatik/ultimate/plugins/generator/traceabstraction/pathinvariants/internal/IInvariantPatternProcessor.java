@@ -1,11 +1,8 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal;
 
 import java.util.Collection;
-import java.util.Map;
 
-import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
-import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.ControlFlowGraph.Location;
 
 /**
@@ -13,37 +10,56 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pa
  * patterns for each {@link ControlFlowGraph.Location} in an
  * {@link ControlFlowGraph}, and solves the system of all corresponding
  * {@link InvariantTransitionPredicate}s.
+ * 
+ * @param <IPT>
+ *            Invariant Pattern Type: Type used for invariant patterns
  */
-public interface IInvariantPatternProcessor {
+public interface IInvariantPatternProcessor<IPT> {
+
 	/**
 	 * Returns an invariant pattern for the given location.
 	 * 
-	 * Invariant patterns are represented as {@link Term}s containing both
-	 * program variables and pattern variables. See TODO for details on naming
-	 * conventions.
-	 * 
-	 * @param location the location to generate an invariant pattern for
-	 * @param round attempt number, initialized with 0 and increased on each
-	 * attempt; see {@link #getMaxRounds()}
+	 * @param location
+	 *            the location to generate an invariant pattern for
+	 * @param round
+	 *            attempt number, initialized with 0 and increased on each
+	 *            attempt; see {@link #getMaxRounds()}
 	 * @return invariant pattern for location
 	 */
-	public Term getInvariantPatternForLocation(final Location location,
+	public IPT getInvariantPatternForLocation(final Location location,
+			final int round);
+
+	/**
+	 * Attempts to find a valid configuration for all pattern variables,
+	 * satisfying any of the given {@link InvariantTransitionPredicate}s.
+	 * 
+	 * @param predicates
+	 *            the predicates to satisfy
+	 * @param round
+	 *            attempt number, initialized with 0 and increased on each
+	 *            attempt; see {@link #getMaxRounds()}
+	 * @return true if a valid configuration pattern has been found, false
+	 *         otherwise.
+	 */
+	public boolean findValidConfiguration(
+			final Collection<InvariantTransitionPredicate<IPT>> predicates,
 			final int round);
 	
 	/**
-	 * Returns a valid configuration for all pattern variables, satisfying all
-	 * of the given {@link InvariantTransitionPredicate}s.
-	 *  
-	 * @param predicates the predicates to satisfy
-	 * @param round attempt number, initialized with 0 and increased on each
-	 * attempt; see {@link #getMaxRounds()}
-	 * @return valid configuration satisfying all predicates, or null if no such
-	 * configuration has been found.
+	 * Applies the configuration found with
+	 * {@link #findValidConfiguration(Collection, int)} to a given invariant
+	 * pattern.
+	 * 
+	 * The behaviour of this method is undefined, when the last call to
+	 * {@link #findValidConfiguration(Collection, int)} returned false or if
+	 * {@link #findValidConfiguration(Collection, int)} has not yet been called
+	 * at all.
+	 * 
+	 * @param pattern the pattern to apply the configuration to
+	 * @return the predicate representing the invariant found
 	 */
-	public Map<TermVariable, ConstantTerm> getValidConfiguration(
-			final Collection<InvariantTransitionPredicate> predicates,
-			final int round);
-	
+	public IPredicate applyConfiguration(IPT pattern);
+
 	/**
 	 * Returns the maximal number of attempts to re-generate the invariant
 	 * pattern map.

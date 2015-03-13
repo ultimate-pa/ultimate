@@ -3,6 +3,9 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.p
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
@@ -18,13 +21,13 @@ public final class ControlFlowGraph {
 
 	private final Location entry;
 	private final Location exit;
-	private final Collection<Location> locations;
+	private final Map<Location, Collection<Transition>> locations;
 	private final Collection<Transition> transitions;
 
 	/**
 	 * A node in the control flow graph.
 	 */
-	public final class Location {
+	public static final class Location {
 		private final ProgramPoint programPoint;
 
 		/**
@@ -50,7 +53,7 @@ public final class ControlFlowGraph {
 	/**
 	 * An edge in the control flow graph.
 	 */
-	public final class Transition {
+	public static final class Transition {
 		private final TransFormula transFormula;
 		private final Location start;
 		private final Location end;
@@ -104,6 +107,10 @@ public final class ControlFlowGraph {
 	/**
 	 * Creates a control flow graph based on given locations and transitions.
 	 * 
+	 * It is impossible to have a CFG containing the same location multiple
+	 * times. If a location occurs multiple times in a collection, all but one
+	 * occurrence will be discarded.
+	 * 
 	 * @param entry
 	 *            the initial location
 	 * @param exit
@@ -120,10 +127,22 @@ public final class ControlFlowGraph {
 			final Collection<Transition> transitions) {
 		this.entry = entry;
 		this.exit = exit;
-		final Collection<Location> innerLocations = new ArrayList<>(
-				locations.size());
-		innerLocations.addAll(locations);
-		this.locations = Collections.unmodifiableCollection(innerLocations);
+		final Map<Location,Collection<Transition>> innerLocations =
+				new HashMap<>(locations.size());
+		for (final Location location : locations) {
+			innerLocations.put(location, new ArrayList<Transition>());
+		}
+		for (final Transition transition: transitions) {
+			final Collection<Transition> startCol =
+					innerLocations.get(transition.getStart());
+			if (startCol == null) {
+				throw new IllegalArgumentException("Tried to construct CFG "
+						+ "with transitions originating in locations outside "
+						+ "of the CFG.");
+			}
+			startCol.add(transition);
+		}
+		this.locations = Collections.unmodifiableMap(innerLocations);
 		final Collection<Transition> innerTransitions = new ArrayList<>(
 				transitions.size());
 		innerTransitions.addAll(transitions);
@@ -149,12 +168,12 @@ public final class ControlFlowGraph {
 	}
 
 	/**
-	 * Returns a collection of all locations within the graph. Immutable.
+	 * Returns a set of all locations within the graph. Immutable. 
 	 * 
-	 * @return immutable collection of all locations
+	 * @return immutable set of all locations
 	 */
-	public Collection<Location> getLocations() {
-		return locations;
+	public Set<Location> getLocations() {
+		return locations.keySet();
 	}
 
 	/**
@@ -170,11 +189,12 @@ public final class ControlFlowGraph {
 	 * Returns a collection of all transitions originating in a given location.
 	 * 
 	 * @param location
-	 *            the location to get originating transitions for
+	 *            the location to get originating transitions for, must be
+	 *            contained in this CFG
 	 * @return collection of all transitions originating in location
 	 */
 	public Collection<Transition> getTransitionsForLocation(
 			final Location location) {
-		throw new UnsupportedOperationException("not yet implemented");
+		return locations.get(location);
 	}
 }

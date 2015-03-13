@@ -1,12 +1,21 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.Map;
 
-import de.uni_freiburg.informatik.ultimate.core.services.ILoggingService;
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
+
+import de.uni_freiburg.informatik.ultimate.core.services.IProgressMonitorService;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.ControlFlowGraph.Location;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.ControlFlowGraph.Transition;
+import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
 
 /**
  * A generator for a map of invariants to {@link ControlFlowGraph.Location}s
@@ -14,32 +23,23 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  * .
  */
 public final class CFGInvariantsGenerator {
-
-	private final ILoggingService logService;
-	private final PredicateUnifier predicateUnifier;
-	private final SmtManager smtManager;
-	private final ModifiableGlobalVariableManager modGlobVarManager;
+	
+	private final Logger logService;
+	private final IProgressMonitorService pmService;
 
 	/**
 	 * Create a generator for invariant maps on {@link ControlFlowGraph}s.
 	 * 
-	 * @param logService
-	 *            service to use for logging
-	 * @param predicateUnifier
-	 *            the predicate unifier to unify final predicates with
-	 * @param smtManager
-	 *            manager to access SMT stuff(TM) TODO
+	 * @param services
+	 *            Service provider to use, for example for logging and timeouts
 	 * @param modGlobVarManager
-	 *            ??? TODO
+	 *            reserved for future use.
 	 */
-	public CFGInvariantsGenerator(final ILoggingService logService,
-			final PredicateUnifier predicateUnifier,
-			final SmtManager smtManager,
+	public CFGInvariantsGenerator(final IUltimateServiceProvider services,
 			final ModifiableGlobalVariableManager modGlobVarManager) {
-		this.logService = logService;
-		this.predicateUnifier = predicateUnifier;
-		this.smtManager = smtManager;
-		this.modGlobVarManager = modGlobVarManager;
+		this.pmService = services.getProgressMonitorService();
+		this.logService = services.getLoggingService().getLogger(
+				Activator.s_PLUGIN_ID);
 	}
 
 	/**
@@ -51,6 +51,8 @@ public final class CFGInvariantsGenerator {
 	 * {@link IInvariantPatternProcessor#getMaxRounds()} attempts to generate
 	 * such an invariant map. If all attempts fail, this method returns null.
 	 * 
+	 * @param <IPT>
+	 *            Invariant Pattern Type: Type used for invariant patterns
 	 * @param cfg
 	 *            the ControlFlowGraph to generate an invariant map on
 	 * @param precondition
@@ -65,13 +67,69 @@ public final class CFGInvariantsGenerator {
 	 *         processor failed to process its invariant patterns up to its
 	 *         final run.
 	 */
-	public Map<ControlFlowGraph.Location, IPredicate> generateInvariantsFromCFG(
+	public <IPT> Map<Location, IPredicate> generateInvariantsFromCFG(
 			final ControlFlowGraph cfg, final IPredicate precondition,
 			final IPredicate postcondition,
 			final IInvariantPatternProcessorFactory invPatternProcFactory) {
-		final IInvariantPatternProcessor processor = invPatternProcFactory
-				.produce(cfg);
+		final IInvariantPatternProcessor<IPT> processor = invPatternProcFactory
+				.produce(cfg, precondition, postcondition);
 
-		throw new UnsupportedOperationException("not yet implemented");
+		final Collection<Location> locations = cfg.getLocations();
+		final Map<Location, IPT> patterns = new HashMap<Location, IPT>(
+				locations.size());
+		final Collection<Transition> transitions = cfg.getTransitions();
+		final Collection<InvariantTransitionPredicate<IPT>> predicates =
+				new ArrayList<InvariantTransitionPredicate<IPT>>(
+						transitions.size() + 2);
+
+		for (int round = 0; round < processor.getMaxRounds(); round++) {
+			logService.log(Level.INFO, "[CFGInvariants] Round " + round
+					+ " started");
+
+			// Die if we run into timeouts or are otherwise requested to cancel.
+			if (!pmService.continueProcessing()) {
+				throw new ToolchainCanceledException(
+						CFGInvariantsGenerator.class);
+			}
+
+			// Build pattern map
+			patterns.clear();
+			for (final Location location : locations) {
+				patterns.put(location, processor
+						.getInvariantPatternForLocation(location, round));
+			}
+			logService.log(Level.INFO, "[CFGInvariants] Built pattern map.");
+
+			// Build transition predicates
+			predicates.clear();
+			for (final Transition transition : transitions) {
+				final IPT invStart = patterns.get(transition.getStart());
+				final IPT invEnd = patterns.get(transition.getEnd());
+				predicates.add(new InvariantTransitionPredicate<IPT>(invStart,
+						invEnd, transition.getTransFormula()));
+			}
+			logService.log(Level.INFO,
+					"[CFGInvariants] Built " + predicates.size()
+							+ " predicates.");
+
+			// Attempt to find a valid configuration
+			if (processor.findValidConfiguration(predicates, round)) {
+				logService.log(Level.INFO, "[CFGInvariants] Found valid "
+						+ "configuration in round " + round + ".");
+
+				final Map<Location, IPredicate> result =
+						new HashMap<ControlFlowGraph.Location, IPredicate>(
+								locations.size());
+				for (final Location location : locations) {
+					result.put(location, processor.applyConfiguration(patterns
+							.get(location)));
+				}
+				return result;
+			}
+		}
+
+		logService.log(Level.INFO, "[CFGInvariants] No valid configuration "
+				+ "within round bound (" + processor.getMaxRounds() + ").");
+		return null;
 	}
 }
