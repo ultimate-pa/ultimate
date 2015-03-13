@@ -20,12 +20,6 @@ a {
 .link-emph a {
   /* text-decoration: underline; */
   background-color: #E6E6E6;
-  
-  -webkit-box-shadow: 0px 0px 20px 3px #FAFAFA inset;
-     -moz-box-shadow: 0px 0px 20px 3px #FAFAFA inset;
-      -ms-box-shadow: 0px 0px 20px 3px #FAFAFA inset;
-       -o-box-shadow: 0px 0px 20px 3px #FAFAFA inset;
-          box-shadow: 0px 0px 20px 3px #FAFAFA inset;
 }
 
 .link-emph a:hover {
@@ -1676,7 +1670,7 @@ div.toolchain-buttons {
 }
 
 .color-lighter {
-  color: #888;
+  color: #555;
 }
 
 .color-light {

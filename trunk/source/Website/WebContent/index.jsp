@@ -9,19 +9,15 @@ Params:
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
 <%@ page trimDirectiveWhitespaces="true"%>
 <%@ page import="java.util.*"%>
-<%@ page
-	import="de.uni_freiburg.informatik.ultimate.website.WebToolchain"%>
+<%@ page import="de.uni_freiburg.informatik.ultimate.website.WebToolchain"%>
 <%@ page import="de.uni_freiburg.informatik.ultimate.website.Tasks"%>
 <%@ page import="de.uni_freiburg.informatik.ultimate.website.Worker"%>
 <%@ page import="de.uni_freiburg.informatik.ultimate.website.Example"%>
 <%@ page import="de.uni_freiburg.informatik.ultimate.website.Tool"%>
 <%@ page import="de.uni_freiburg.informatik.ultimate.website.Setting"%>
-<%@ page
-	import="de.uni_freiburg.informatik.ultimate.website.toolchains.*"%>
+<%@ page import="de.uni_freiburg.informatik.ultimate.website.toolchains.*"%>
 <%@ page import="java.text.DateFormat"%>
 <%@ page import="java.text.SimpleDateFormat"%>
-
-
 <%@ page import="java.io.BufferedReader"%>
 <%@ page import="java.io.InputStream"%>
 <%@ page import="java.io.InputStreamReader"%>
@@ -103,14 +99,10 @@ Params:
   
 
   /*
-   *
    * fetching JSON data as tool-page
-   *
    */
   String url = "";
-//   String filename = URLEncoder.encode(tool, "ISO-8859-1");
   String filename = URLEncoder.encode(tool, "UTF-8");
-
   
   if (ui.equals("home")){
 	// setting home page url
@@ -126,10 +118,8 @@ Params:
 	  url = "http://ultimate.informatik.uni-freiburg.de/contents/" + filename + ".json";
   }
   System.out.println("Requesting URL "+url);
-//   System.out.println("Schema:  "+request.getScheme() );
-//   System.out.println("Name:    "+request.getServerName());
-//   System.out.println("Port:    "+request.getServerPort());
-//   System.out.println("Context: "+request.getContextPath());
+  System.out.println(request.getScheme() +"://" + request.getServerName() + request.getContextPath() + "/json/home.json");
+
   String str = "";
   try{ 
 	  str = getData(url); 
@@ -177,9 +167,9 @@ Params:
 
 
 <script type="text/javascript" charset="utf-8"
-	src="//ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+	src="./js/jquery.min.js"></script>
 <script type="text/javascript" charset="utf-8"
-	src="<%=request.getScheme()%>://crypto-js.googlecode.com/svn/tags/3.1.2/build/rollups/md5.js"></script>
+	src="./js/md5.js"></script>
 <script type="text/javascript" charset="utf-8"
 	src="./js/transfer.jsp?tool=<c:out value="${tool}" default=""/>"></script>
 <script type="text/javascript" charset="utf-8" src="./js/ace-min/ace.js"></script>
