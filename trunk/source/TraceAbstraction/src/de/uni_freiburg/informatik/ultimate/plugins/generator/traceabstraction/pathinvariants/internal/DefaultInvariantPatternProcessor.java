@@ -8,41 +8,22 @@ import de.uni_freiburg.informatik.ultimate.core.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lassoranker.AnalysisType;
 import de.uni_freiburg.informatik.ultimate.lassoranker.LinearInequality;
-import de.uni_freiburg.informatik.ultimate.lassoranker.LinearTransition;
 import de.uni_freiburg.informatik.ultimate.lassoranker.SMTSolver;
-import de.uni_freiburg.informatik.ultimate.lassoranker.exceptions.TermException;
-import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.AddAxioms;
-import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.DNF;
-import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.MatchInVars;
-import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.RemoveNegation;
-import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.RewriteBooleans;
-import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.RewriteDivision;
-import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.RewriteEquality;
-import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.RewriteIte;
-import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.RewriteStrictInequalities;
-import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.RewriteTrueFalse;
-import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.SimplifyPreprocessor;
-import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.TransformerPreProcessor;
-import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.TransitionPreProcessor;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.MotzkinTransformation;
-import de.uni_freiburg.informatik.ultimate.lassoranker.variables.LassoPartitioneer;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.ReplacementVarFactory;
-import de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaLR;
-import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
-import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
+import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.ControlFlowGraph.Location;
 
 public class DefaultInvariantPatternProcessor implements
-		IInvariantPatternProcessor {
+		IInvariantPatternProcessor<Collection<Collection<LinearInequality>>> {
 
 	private Script m_script;
 	private IUltimateServiceProvider m_Services;
@@ -57,14 +38,13 @@ public class DefaultInvariantPatternProcessor implements
 	private Term[] m_axioms;
 
 	@Override
-	public Term getInvariantPatternForLocation(Location location, int round) {
-		// TODO Auto-generated method stub
-		return null;
+	public Collection<Collection<LinearInequality>> getInvariantPatternForLocation(Location location, int round) {
+		throw new UnsupportedOperationException("not implemented");
 	}
 
 	@Override
-	public Map<TermVariable, ConstantTerm> getValidConfiguration(
-			Collection<InvariantTransitionPredicate> predicates, int round) {
+	public boolean findValidConfiguration(
+			Collection<InvariantTransitionPredicate<Collection<Collection<LinearInequality>>>> predicates, int round) {
 
 		
 		try {
@@ -107,14 +87,18 @@ public class DefaultInvariantPatternProcessor implements
 		}
 		
 		
-		// TODO Auto-generated method stub
-		return null;
+		throw new UnsupportedOperationException("not implemented");
 	}
 
 	@Override
 	public int getMaxRounds() {
-		// TODO Auto-generated method stub
-		return 0;
+		throw new UnsupportedOperationException("not implemented");
+	}
+
+	@Override
+	public IPredicate applyConfiguration(
+			Collection<Collection<LinearInequality>> pattern) {
+		throw new UnsupportedOperationException("not implemented");
 	}
 	
 
