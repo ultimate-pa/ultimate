@@ -322,13 +322,13 @@ public class TerminationArgumentSynthesizer extends ArgumentSynthesizer {
 	 */
 	@Override
 	protected LBool do_synthesis() throws SMTLIBException, TermException, IOException {
+		m_template.init(this);
 		if (m_settings.analysis.isLinear() && m_template.getDegree() > 0) {
 			mLogger.warn("Using a linear SMT query and a templates of degree "
 					+ "> 0, hence this method is incomplete.");
 		}
 		Collection<RankVar> rankVars = getRankVars();
 		Collection<RankVar> siVars = getSIVars();
-		m_template.init(this);
 		mLogger.info("Template has degree " + m_template.getDegree() + ".");
 		mLogger.debug("Variables for ranking functions: " + rankVars);
 		mLogger.debug("Variables for supporting invariants: " + siVars);
