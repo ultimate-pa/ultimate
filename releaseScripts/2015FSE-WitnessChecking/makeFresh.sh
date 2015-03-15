@@ -13,9 +13,8 @@ mvn clean install -Pmaterialize
 popd
 
 svn info ../../. > revision
-REVISION=`svn info ../../. | grep '^Revision:' | sed -e 's/^Revision: //'`
-awk -v rev=$REVISION '/svnRevNumber = '"'"'.*'"'"'/ { print "svnRevNumber = '"'"'" rev "'"'"'"; next }1' Ultimate.py > Ultimate.py.tmp && mv Ultimate.py.tmp Ultimate.py
-awk -v rev=$REVISION '/svnRevNumber = '"'"'.*'"'"'/ { print "svnRevNumber = '"'"'" rev "'"'"'"; next }1' UltimateWitnessChecker.py > UltimateWitnessChecker.py.tmp && mv UltimateWitnessChecker.py.tmp UltimateWitnessChecker.py
+./addRevision.sh Ultimate.py
+./addRevision.sh UltimateWitnessChecker.py
 
 ./createZipAutomizer.sh
 #./createZipCodeCheck.sh
