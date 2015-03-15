@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.witnesschecking;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -33,6 +34,7 @@ public class WitnessLocationMatcher {
 	private final HashRelation<WitnessAutomatonLetter, ILocation> m_WitnessLetters2SingleLineLocations = new HashRelation<>();
 	private final Set<ILocation> m_MultiLineLocations = new HashSet<ILocation>();
 	private final Logger m_Logger;
+	private ArrayList<WitnessAutomatonLetter> m_UnmatchedWitnessLetters;
 
 	public WitnessLocationMatcher(
 			IUltimateServiceProvider services,
@@ -44,11 +46,11 @@ public class WitnessLocationMatcher {
 		matchLocations(controlFlowAutomaton.getInternalAlphabet());
 		matchLocations(controlFlowAutomaton.getCallAlphabet());
 		matchLocations(controlFlowAutomaton.getReturnAlphabet());
-		HashSet<WitnessAutomatonLetter> unmatchedWitnessLetters = new HashSet<WitnessAutomatonLetter>(witnessAutomaton.getInternalAlphabet());
-		unmatchedWitnessLetters.removeAll(m_WitnessLetters2SingleLineLocations.getDomain());
+		m_UnmatchedWitnessLetters = new ArrayList<WitnessAutomatonLetter>(witnessAutomaton.getInternalAlphabet());
+		m_UnmatchedWitnessLetters.removeAll(m_WitnessLetters2SingleLineLocations.getDomain());
 		m_Logger.info(witnessAutomaton.getInternalAlphabet().size() + " witness edges");
 		m_Logger.info(m_PureAnnotationEdges.size() + " pure annotation edges");
-		m_Logger.info(unmatchedWitnessLetters.size() + " unmatched witness edges");
+		m_Logger.info(m_UnmatchedWitnessLetters.size() + " unmatched witness edges");
 		m_Logger.info(m_WitnessLetters2SingleLineLocations.getDomain().size() + " matched witness edges");
 		m_Logger.info(m_SingleLineLocation2WitnessLetters.getDomain().size() + " single line locations");
 		m_Logger.info(m_MultiLineLocations.size() + " multi line locations");
