@@ -34,7 +34,7 @@ import de.uni_freiburg.informatik.ultimate.util.relation.NestedMap3;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNode;
 
 public class WitnessProductAutomaton implements INestedWordAutomatonSimple<CodeBlock, IPredicate> {
-	private final  SmtManager m_SmtManager;
+	private final SmtManager m_SmtManager;
 	private final INestedWordAutomatonSimple<CodeBlock, IPredicate> m_ControlFlowAutomaton;
 	private final INestedWordAutomatonSimple<WitnessAutomatonLetter, WitnessNode> m_WitnessAutomaton;
 	
@@ -43,7 +43,7 @@ public class WitnessProductAutomaton implements INestedWordAutomatonSimple<CodeB
 	private final IPredicate m_EmptyStackState;
 	private final Set<IPredicate> m_InitialStates;
 	private final Set<IPredicate> m_FinalStates;
-	private final Integer m_StutteringStepsLimit;
+	private final Integer m_StutteringStepsLimit = 5;
 	private final WitnessLocationMatcher m_WitnessLocationMatcher;
 	private final LinkedHashSet<WitnessAutomatonLetter> m_BadWitnessEdges = new LinkedHashSet<WitnessAutomatonLetter>();
 	private final Set<WitnessAutomatonLetter> m_GoodWitnessEdges = new HashSet<WitnessAutomatonLetter>();
@@ -97,7 +97,6 @@ public class WitnessProductAutomaton implements INestedWordAutomatonSimple<CodeB
 		m_SmtManager = smtManager;
 		m_InitialStates = constructInitialStates();
 		m_FinalStates = new HashSet<IPredicate>();
-		m_StutteringStepsLimit = 12;
 		m_EmptyStackState = m_ControlFlowAutomaton.getStateFactory().createEmptyStackState();
 	}
 
@@ -311,13 +310,17 @@ public class WitnessProductAutomaton implements INestedWordAutomatonSimple<CodeB
 				for (WitnessNode succ : skipNonCodeBlockEdges(out.getSucc())) {
 					if (!visited.contains(succ)) {
 						visited.add(succ);
-						if (isCompatible(cb, out.getLetter())) {
-							m_GoodWitnessEdges.add(out.getLetter());
-							ProductState succProd = getOrConstructProductState(cfgSucc, succ, 0);
-							result.add(succProd.getResultState());
-							wsSuccStates.addLast(succ);
+						if (isSink(out.getSucc())) {
+							// successor is sink, do nothing
 						} else {
-							m_BadWitnessEdges.add(out.getLetter());
+							if (isCompatible(cb, out.getLetter())) {
+								m_GoodWitnessEdges.add(out.getLetter());
+								ProductState succProd = getOrConstructProductState(cfgSucc, succ, 0);
+								result.add(succProd.getResultState());
+								wsSuccStates.addLast(succ);
+							} else {
+								m_BadWitnessEdges.add(out.getLetter());
+							}
 						}
 					}
 				}
@@ -330,6 +333,13 @@ public class WitnessProductAutomaton implements INestedWordAutomatonSimple<CodeB
 		return result;
 	}
 	
+	/**
+	 * CPA checker marks sinks as "sink", we do not check them right now.
+	 */
+	private boolean isSink(WitnessNode succ) {
+		return (succ.getName().equals("sink"));
+	}
+
 	private Collection<WitnessNode> skipNonCodeBlockEdges(WitnessNode node) {
 		Set<WitnessNode> result = new HashSet<WitnessNode>();
 		boolean hasOutgoingNodes = false;
