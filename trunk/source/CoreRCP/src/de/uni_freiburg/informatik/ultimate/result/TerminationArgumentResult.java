@@ -55,7 +55,14 @@ public class TerminationArgumentResult<P extends IElement> extends AbstractResul
 		sb.append(m_RankingFunctionDescription);
 		sb.append(" ranking function");
 		sb.append(": [");
+		boolean needsComma = false;
 		for (Expression e : m_RankingFunction) {
+			if (needsComma) {
+				sb.append(", ");
+			} else {
+				// this was the first iteration, from now on we need a comma.
+				needsComma = true;
+			}
 			sb.append(mTranslatorSequence.translateExpressionToString(e, Expression.class));
 		}
 		sb.append("]");
