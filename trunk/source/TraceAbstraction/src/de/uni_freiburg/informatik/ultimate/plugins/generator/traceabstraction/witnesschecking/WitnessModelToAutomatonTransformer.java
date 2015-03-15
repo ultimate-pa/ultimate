@@ -14,7 +14,7 @@ import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNodeAnnota
 
 public class WitnessModelToAutomatonTransformer {
 	private final IUltimateServiceProvider m_Services;
-	private final NestedWordAutomaton<WitnessAutomatonLetter, WitnessNode> m_Result;
+	private final NestedWordAutomaton<WitnessEdge, WitnessNode> m_Result;
 	private final WitnessNode m_WitnessRoot;
 	private final ArrayDeque<WitnessNode> worklist = new ArrayDeque<WitnessNode>();
 	
@@ -26,16 +26,16 @@ public class WitnessModelToAutomatonTransformer {
 		m_WitnessRoot = witnessRoot;
 		m_Services = services;
 		
-		Set<WitnessAutomatonLetter> internalAlphabet = new LinkedHashSet<WitnessAutomatonLetter>();
-		Set<WitnessAutomatonLetter> callAlphabet = Collections.emptySet();
-		Set<WitnessAutomatonLetter> returnAlphabet = Collections.emptySet();
+		Set<WitnessEdge> internalAlphabet = new LinkedHashSet<WitnessEdge>();
+		Set<WitnessEdge> callAlphabet = Collections.emptySet();
+		Set<WitnessEdge> returnAlphabet = Collections.emptySet();
 		StateFactory<WitnessNode> stateFactory = new StateFactory<WitnessNode>() {
 		};
-		m_Result = new NestedWordAutomaton<WitnessAutomatonLetter, WitnessNode>(services, internalAlphabet, callAlphabet, returnAlphabet, stateFactory);
+		m_Result = new NestedWordAutomaton<WitnessEdge, WitnessNode>(services, internalAlphabet, callAlphabet, returnAlphabet, stateFactory);
 		constructAutomaton(internalAlphabet);
 	}
 
-	private void constructAutomaton(Set<WitnessAutomatonLetter> internalAlphabet) {
+	private void constructAutomaton(Set<WitnessEdge> internalAlphabet) {
 		addNewState(m_WitnessRoot);
 		while (!worklist.isEmpty()) {
 			WitnessNode current = worklist.removeFirst();
@@ -44,9 +44,8 @@ public class WitnessModelToAutomatonTransformer {
 				if (!m_Result.getStates().contains(successor)) {
 					addNewState(successor);
 				}
-				WitnessAutomatonLetter wal = new WitnessAutomatonLetter(we);
-				internalAlphabet.add(wal);
-				m_Result.addInternalTransition(current, wal, successor);
+				internalAlphabet.add(we);
+				m_Result.addInternalTransition(current, we, successor);
 			}
 		}
 	}
@@ -59,7 +58,7 @@ public class WitnessModelToAutomatonTransformer {
 		worklist.add(successor);
 	}
 
-	public NestedWordAutomaton<WitnessAutomatonLetter, WitnessNode> getResult() {
+	public NestedWordAutomaton<WitnessEdge, WitnessNode> getResult() {
 		return m_Result;
 	}
 	

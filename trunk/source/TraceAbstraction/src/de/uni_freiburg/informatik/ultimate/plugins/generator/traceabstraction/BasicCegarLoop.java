@@ -78,8 +78,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceCheckerSpWp;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceCheckerUtils;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.witnesschecking.WitnessAutomatonLetter;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.witnesschecking.WitnessProductAutomaton;
+import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessEdge;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNode;
 
 /**
@@ -110,7 +110,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 
 	protected final boolean m_AbstractInterpretationMode;
 	private Map<Object, Term> m_AITermMap;
-	private NestedWordAutomaton<WitnessAutomatonLetter, WitnessNode> m_WitnessAutomaton;
+	private NestedWordAutomaton<WitnessEdge, WitnessNode> m_WitnessAutomaton;
 
 	public BasicCegarLoop(String name, RootNode rootNode, SmtManager smtManager, TAPreferences taPrefs,
 			Collection<ProgramPoint> errorLocs, INTERPOLATION interpolation, boolean computeHoareAnnotation,
@@ -853,7 +853,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 	}
 
 	public void setWitnessAutomaton(
-			NestedWordAutomaton<WitnessAutomatonLetter, WitnessNode> witnessAutomaton) {
+			NestedWordAutomaton<WitnessEdge, WitnessNode> witnessAutomaton) {
 		m_WitnessAutomaton = witnessAutomaton;
 		
 	}

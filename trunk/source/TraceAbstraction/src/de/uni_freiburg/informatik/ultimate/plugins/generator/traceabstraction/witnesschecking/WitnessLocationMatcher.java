@@ -23,30 +23,32 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Sta
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.util.HashRelation;
+import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessEdge;
+import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessEdgeAnnotation;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNode;
 
 public class WitnessLocationMatcher {
 
 	private final IUltimateServiceProvider m_Services;
-	private final Set<WitnessAutomatonLetter> m_PureAnnotationEdges = new HashSet<WitnessAutomatonLetter>();
-	private final HashRelation<Integer, WitnessAutomatonLetter> m_LineNumber2WitnessLetter = new HashRelation<>();
-	private final HashRelation<ILocation, WitnessAutomatonLetter> m_SingleLineLocation2WitnessLetters = new HashRelation<>();
-	private final HashRelation<WitnessAutomatonLetter, ILocation> m_WitnessLetters2SingleLineLocations = new HashRelation<>();
+	private final Set<WitnessEdge> m_PureAnnotationEdges = new HashSet<WitnessEdge>();
+	private final HashRelation<Integer, WitnessEdge> m_LineNumber2WitnessLetter = new HashRelation<>();
+	private final HashRelation<ILocation, WitnessEdge> m_SingleLineLocation2WitnessLetters = new HashRelation<>();
+	private final HashRelation<WitnessEdge, ILocation> m_WitnessLetters2SingleLineLocations = new HashRelation<>();
 	private final Set<ILocation> m_MultiLineLocations = new HashSet<ILocation>();
 	private final Logger m_Logger;
-	private ArrayList<WitnessAutomatonLetter> m_UnmatchedWitnessLetters;
+	private ArrayList<WitnessEdge> m_UnmatchedWitnessLetters;
 
 	public WitnessLocationMatcher(
 			IUltimateServiceProvider services,
 			INestedWordAutomatonSimple<CodeBlock, IPredicate> controlFlowAutomaton,
-			NestedWordAutomaton<WitnessAutomatonLetter, WitnessNode> witnessAutomaton) {
+			NestedWordAutomaton<WitnessEdge, WitnessNode> witnessAutomaton) {
 		m_Services = services;
 		m_Logger = m_Services.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
 		partitionEdges(witnessAutomaton.getInternalAlphabet());
 		matchLocations(controlFlowAutomaton.getInternalAlphabet());
 		matchLocations(controlFlowAutomaton.getCallAlphabet());
 		matchLocations(controlFlowAutomaton.getReturnAlphabet());
-		m_UnmatchedWitnessLetters = new ArrayList<WitnessAutomatonLetter>(witnessAutomaton.getInternalAlphabet());
+		m_UnmatchedWitnessLetters = new ArrayList<WitnessEdge>(witnessAutomaton.getInternalAlphabet());
 		m_UnmatchedWitnessLetters.removeAll(m_WitnessLetters2SingleLineLocations.getDomain());
 		m_Logger.info(witnessAutomaton.getInternalAlphabet().size() + " witness edges");
 		m_Logger.info(m_PureAnnotationEdges.size() + " pure annotation edges");
@@ -56,28 +58,22 @@ public class WitnessLocationMatcher {
 		m_Logger.info(m_MultiLineLocations.size() + " multi line locations");
 	}
 
-	public boolean isMatchedWitnessEdge(WitnessAutomatonLetter wal) {
+	public boolean isMatchedWitnessEdge(WitnessEdge wal) {
 		return m_WitnessLetters2SingleLineLocations.getDomain().contains(wal);
 	}
 	
-	public boolean isCompatible(ILocation loc, WitnessAutomatonLetter wal) {
+	public boolean isCompatible(ILocation loc, WitnessEdge wal) {
 		return m_SingleLineLocation2WitnessLetters.containsPair(loc, wal);
 	}
 	
-	public Set<ILocation> getCorrespondingLocations(WitnessAutomatonLetter wal) {
+	public Set<ILocation> getCorrespondingLocations(WitnessEdge wal) {
 		return m_WitnessLetters2SingleLineLocations.getImage(wal);
 	}
 
-
-	private void partitionEdges(Set<WitnessAutomatonLetter> internalAlphabet) {
-		for (WitnessAutomatonLetter wal : internalAlphabet) {
-			if (wal.isPureAssumptionEdge()) {
-				m_PureAnnotationEdges.add(wal);
-			} else {
-				int lineNumber = wal.getLineNumber();
-				m_LineNumber2WitnessLetter.addPair(lineNumber, wal);
-			}
-			
+	private void partitionEdges(Set<WitnessEdge> internalAlphabet) {
+		for (WitnessEdge we : internalAlphabet) {
+			int startline = we.getLocation().getStartLine();
+			m_LineNumber2WitnessLetter.addPair(startline, we);
 		}
 	}
 	
@@ -165,9 +161,9 @@ public class WitnessLocationMatcher {
 
 	private void matchLocations(ILocation location) {
 		if (location.getStartLine() == location.getEndLine()) {
-			Set<WitnessAutomatonLetter> witnessLetters = m_LineNumber2WitnessLetter.getImage(location.getStartLine());
+			Set<WitnessEdge> witnessLetters = m_LineNumber2WitnessLetter.getImage(location.getStartLine());
 			if (witnessLetters != null) {
-				for (WitnessAutomatonLetter wal : witnessLetters) {
+				for (WitnessEdge wal : witnessLetters) {
 					m_SingleLineLocation2WitnessLetters.addPair(location, wal);
 					m_WitnessLetters2SingleLineLocations.addPair(wal, location);
 				}

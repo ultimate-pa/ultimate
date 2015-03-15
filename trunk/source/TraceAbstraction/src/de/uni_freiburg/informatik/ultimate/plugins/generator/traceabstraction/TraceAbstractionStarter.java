@@ -26,7 +26,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.LanguageOperation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.witnesschecking.WitnessAutomatonLetter;
 import de.uni_freiburg.informatik.ultimate.result.AllSpecificationsHoldResult;
 import de.uni_freiburg.informatik.ultimate.result.BenchmarkResult;
 import de.uni_freiburg.informatik.ultimate.result.CounterExampleResult;
@@ -38,6 +37,7 @@ import de.uni_freiburg.informatik.ultimate.result.ResultUtil;
 import de.uni_freiburg.informatik.ultimate.result.TimeoutResultAtElement;
 import de.uni_freiburg.informatik.ultimate.result.UnprovableResult;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
+import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessEdge;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNode;
 
 public class TraceAbstractionStarter {
@@ -47,7 +47,7 @@ public class TraceAbstractionStarter {
 
 	public TraceAbstractionStarter(IUltimateServiceProvider services, 
 			RootNode rcfgRootNode, 
-			NestedWordAutomaton<WitnessAutomatonLetter, WitnessNode> witnessAutomaton) {
+			NestedWordAutomaton<WitnessEdge, WitnessNode> witnessAutomaton) {
 		m_Services = services;
 		m_Logger = m_Services.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
 		runCegarLoops(rcfgRootNode, witnessAutomaton);
@@ -64,7 +64,7 @@ public class TraceAbstractionStarter {
 	
 	
 	
-	private void runCegarLoops(RootNode rcfgRootNode, NestedWordAutomaton<WitnessAutomatonLetter, WitnessNode> witnessAutomaton) {
+	private void runCegarLoops(RootNode rcfgRootNode, NestedWordAutomaton<WitnessEdge, WitnessNode> witnessAutomaton) {
 		RootAnnot rootAnnot = rcfgRootNode.getRootAnnot();
 		TAPreferences taPrefs = new TAPreferences();
 
@@ -177,7 +177,7 @@ public class TraceAbstractionStarter {
 	
 	
 	private void iterate(String name, RootNode root, TAPreferences taPrefs, SmtManager smtManager,
-			TraceAbstractionBenchmarks taBenchmark, Collection<ProgramPoint> errorLocs, NestedWordAutomaton<WitnessAutomatonLetter, WitnessNode> witnessAutomaton) {
+			TraceAbstractionBenchmarks taBenchmark, Collection<ProgramPoint> errorLocs, NestedWordAutomaton<WitnessEdge, WitnessNode> witnessAutomaton) {
 		BasicCegarLoop basicCegarLoop;
 		LanguageOperation languageOperation = (new UltimatePreferenceStore(Activator.s_PLUGIN_ID)).getEnum(
 				TraceAbstractionPreferenceInitializer.LABEL_LANGUAGE_OPERATION,
