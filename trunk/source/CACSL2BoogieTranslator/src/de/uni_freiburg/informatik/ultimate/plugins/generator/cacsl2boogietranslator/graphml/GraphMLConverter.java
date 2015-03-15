@@ -88,10 +88,17 @@ public class GraphMLConverter {
 			}
 		});
 
-		graphWriter.addEdgeData("originline", null, null, new Transformer<WitnessEdge, String>() {
+		graphWriter.addEdgeData("startline", null, null, new Transformer<WitnessEdge, String>() {
 			@Override
 			public String transform(WitnessEdge arg0) {
-				return arg0.getLineNumber();
+				return arg0.getStartLineNumber();
+			}
+		});
+		
+		graphWriter.addEdgeData("endline", null, null, new Transformer<WitnessEdge, String>() {
+			@Override
+			public String transform(WitnessEdge arg0) {
+				return arg0.getEndLineNumber();
 			}
 		});
 

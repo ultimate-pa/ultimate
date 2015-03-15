@@ -20,22 +20,22 @@ public interface ILocation {
 	public String getFileName();
 	
 	/**
-	 * @return Number of line where this {@code Location} begins.
+	 * @return Number of line where this {@code Location} begins. -1 if unknown.
 	 */
 	public int getStartLine();
 	
 	/**
-	 * @return Number of line where this {@code Location} ends.
+	 * @return Number of line where this {@code Location} ends. -1 if unknown.
 	 */
 	public int getEndLine();
 	
 	/**
-	 * @return Number of column where this {@code Location} begins.
+	 * @return Number of column where this {@code Location} begins. -1 if unknown.
 	 */
 	public int getStartColumn();
 	
 	/**
-	 * @return Number of column where this {@code Location} ends.
+	 * @return Number of column where this {@code Location} ends. -1 if unknown.
 	 */
 	public int getEndColumn();
 

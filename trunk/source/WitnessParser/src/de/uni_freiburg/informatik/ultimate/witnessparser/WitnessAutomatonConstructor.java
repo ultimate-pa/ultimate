@@ -143,23 +143,15 @@ public class WitnessAutomatonConstructor {
 					WitnessNode source = createNode(data.getSource());
 					WitnessNode target = createNode(data.getTarget());
 
-					String linestr = data.getProperties().get("originline");
-
-					// set line to line if there is a valid line, -1 otherwise
-					int line = 0;
-					if (linestr != null) {
-						try {
-							line = Integer.valueOf(linestr);
-						} catch (Exception ex) {
-							line = -1;
-						}
-					} else {
-						line = -1;
-					}
+					int startline = getIntValue("startline", data);
+					int endline = getIntValue("endline", data);
+					//TODO: Calculate column from offsets
+					int startoffset = getIntValue("startoffset", data);
+					int endoffset = getIntValue("endoffset", data);
 					String orgfile = data.getProperties().get("originfile");
 					String sourcecode = data.getProperties().get("sourcecode");
 
-					WitnessLocation loc = new WitnessLocation(orgfile, line);
+					WitnessLocation loc = new WitnessLocation(orgfile, startline, endline);
 					WitnessEdge edge = new WitnessEdge(source, target, data.getId(), loc, sourcecode);
 
 					WitnessEdgeAnnotation annot = new WitnessEdgeAnnotation(data.getProperties().get("negated"), data
@@ -170,6 +162,7 @@ public class WitnessAutomatonConstructor {
 					}
 					return edge;
 				}
+
 			};
 			Transformer<HyperEdgeMetadata, WitnessEdge> hyperEdgeTransformer = new Transformer<HyperEdgeMetadata, WitnessEdge>() {
 				@Override
@@ -188,6 +181,23 @@ public class WitnessAutomatonConstructor {
 			e.printStackTrace();
 		}
 		return null;
+	}
+
+	private int getIntValue(String name, EdgeMetadata data) {
+		String linestr = data.getProperties().get(name);
+
+		// set line to line if there is a valid line, -1 otherwise
+		int line = 0;
+		if (linestr != null) {
+			try {
+				line = Integer.valueOf(linestr);
+			} catch (Exception ex) {
+				line = -1;
+			}
+		} else {
+			line = -1;
+		}
+		return line;
 	}
 
 	private WitnessNode createNode(String id) {

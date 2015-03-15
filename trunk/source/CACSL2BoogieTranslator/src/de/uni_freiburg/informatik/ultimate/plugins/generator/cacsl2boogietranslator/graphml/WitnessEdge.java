@@ -60,11 +60,18 @@ public class WitnessEdge {
 		}
 	}
 
-	public String getLineNumber() {
+	public String getStartLineNumber() {
 		if (!hasStep()) {
 			return null;
 		}
 		return String.valueOf(mATE.getStep().getStartLine());
+	}
+	
+	public String getEndLineNumber() {
+		if (!hasStep()) {
+			return null;
+		}
+		return String.valueOf(mATE.getStep().getEndLine());
 	}
 
 	public String getAssumption() {

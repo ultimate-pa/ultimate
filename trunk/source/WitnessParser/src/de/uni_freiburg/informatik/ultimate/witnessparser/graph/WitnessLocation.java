@@ -3,7 +3,7 @@ package de.uni_freiburg.informatik.ultimate.witnessparser.graph;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.result.Check;
 
-public class WitnessLocation implements ILocation{
+public class WitnessLocation implements ILocation {
 
 	private final String mFilename;
 	private int mStartLine;
@@ -11,14 +11,19 @@ public class WitnessLocation implements ILocation{
 	private int mStartColumn;
 	private int mEndColumn;
 
-	public WitnessLocation(String filename, int line){
-		mFilename = filename;
-		mStartLine = line;
-		mEndLine = line;
-		mStartColumn = 0;
-		mEndColumn = 0;
+	public WitnessLocation(String filename, int startline) {
+		this(filename,startline,startline);
 	}
 	
+	
+	public WitnessLocation(String filename, int startline, int endline) {
+		mFilename = filename;
+		mStartLine = startline;
+		mEndLine = endline;
+		mStartColumn = -1;
+		mEndColumn = -1;
+	}
+
 	@Override
 	public String getFileName() {
 		return mFilename;
