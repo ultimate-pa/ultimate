@@ -10,17 +10,18 @@ public class WitnessNodeAnnotation extends AbstractAnnotations {
 
 	private static final long serialVersionUID = 1L;
 	private static final String sKey = Activator.s_PLUGIN_ID + "_Node";
-	private static final String[] sFieldNames = new String[] { "IsInitial", "IsError" };
+	private static final String[] sFieldNames = new String[] { "IsInitial", "IsError", "IsSink" };
 
 	private boolean mIsInitial;
 	private boolean mIsError;
-	
-	public WitnessNodeAnnotation(boolean isInitial, boolean isError){
+	private boolean mIsSink;
+
+	public WitnessNodeAnnotation(boolean isInitial, boolean isError, boolean isSink) {
 		mIsInitial = isInitial;
 		mIsError = isError;
+		mIsSink = isSink;
 	}
-	
-	
+
 	public boolean isInitial() {
 		return mIsInitial;
 	}
@@ -37,6 +38,13 @@ public class WitnessNodeAnnotation extends AbstractAnnotations {
 		mIsError = isError;
 	}
 	
+	public boolean isSink() {
+		return mIsSink;
+	}
+
+	public void setIsSink(boolean isSink) {
+		mIsSink = isSink;
+	}
 
 	@Override
 	protected String[] getFieldNames() {
@@ -50,6 +58,8 @@ public class WitnessNodeAnnotation extends AbstractAnnotations {
 			return mIsInitial;
 		case "IsError":
 			return mIsError;
+		case "IsSink":
+			return mIsSink;
 		}
 		return null;
 	}

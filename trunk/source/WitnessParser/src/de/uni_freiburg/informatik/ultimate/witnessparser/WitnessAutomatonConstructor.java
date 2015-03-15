@@ -120,7 +120,7 @@ public class WitnessAutomatonConstructor {
 				@Override
 				public WitnessNode transform(NodeMetadata data) {
 					WitnessNode node = createNode(data.getId());
-					WitnessNodeAnnotation annot = new WitnessNodeAnnotation(false, false);
+					WitnessNodeAnnotation annot = new WitnessNodeAnnotation(false, false, false);
 
 					String entry = data.getProperties().get("entry");
 					if (entry != null && Boolean.valueOf(entry)) {
@@ -130,6 +130,11 @@ public class WitnessAutomatonConstructor {
 					String error = data.getProperties().get("violation");
 					if (error != null && Boolean.valueOf(error)) {
 						annot.setIsError(true);
+						annot.annotate(node);
+					}
+					String sink = data.getProperties().get("sink");
+					if (sink != null && Boolean.valueOf(sink)) {
+						annot.setIsSink(true);
 						annot.annotate(node);
 					}
 
@@ -145,7 +150,7 @@ public class WitnessAutomatonConstructor {
 
 					int startline = getIntValue("startline", data);
 					int endline = getIntValue("endline", data);
-					//TODO: Calculate column from offsets
+					// TODO: Calculate column from offsets
 					int startoffset = getIntValue("startoffset", data);
 					int endoffset = getIntValue("endoffset", data);
 					String orgfile = data.getProperties().get("originfile");

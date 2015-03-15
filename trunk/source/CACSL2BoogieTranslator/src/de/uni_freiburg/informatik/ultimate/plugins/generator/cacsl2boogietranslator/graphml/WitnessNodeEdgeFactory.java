@@ -17,20 +17,20 @@ public class WitnessNodeEdgeFactory {
 	}
 
 	public WitnessNode createWitnessNode() {
-		return createWitnessNode(false, false);
+		return createWitnessNode(false, false, false);
 	}
 
 	public WitnessNode createInitialWitnessNode() {
-		return createWitnessNode(true, false);
+		return createWitnessNode(true, false, false);
 	}
 
 	public WitnessNode createErrorWitnessNode() {
-		return createWitnessNode(false, true);
+		return createWitnessNode(false, true, false);
 	}
 
-	public WitnessNode createWitnessNode(boolean isInitial, boolean isError) {
+	public WitnessNode createWitnessNode(boolean isInitial, boolean isError, boolean isSink) {
 		mCurrentNodeId++;
-		return new WitnessNode(mCurrentNodeId, isInitial, isError);
+		return new WitnessNode(mCurrentNodeId, isInitial, isError, isSink);
 	}
 
 	public WitnessEdge createWitnessEdge(AtomicTraceElement<CACSLLocation> traceElement,
