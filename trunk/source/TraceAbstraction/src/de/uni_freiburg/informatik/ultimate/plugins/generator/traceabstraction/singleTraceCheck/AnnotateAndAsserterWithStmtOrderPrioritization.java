@@ -211,10 +211,10 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 		} // Apply 5. Heuristic
 		else if (m_AssertCodeBlocksOrder == AssertCodeBlockOrder.TERMS_WITH_SMALL_CONSTANTS_FIRST) {
 			m_Satisfiable = annotateAndAssertStmtsAccording5Heuristic(m_Trace, callPositions,
-					pendingReturnPositions, depth2Statements);
+					pendingReturnPositions);
 		}
 		else {
-			throw new AssertionError("unknown value " + m_AssertCodeBlocksOrder);
+			throw new AssertionError("unknown heuristic " + m_AssertCodeBlocksOrder);
 		}
 		mLogger.info("Conjunction of SSA is " + m_Satisfiable);
 	}
@@ -292,11 +292,11 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 		return sat;
 	}
 	
-	private boolean hasConstantGreaterThan(Term t, int constantSize) {
+	private boolean termHasConstantGreaterThan(Term t, int constantSize) {
 		if (t instanceof ApplicationTerm) {
 			Term[] args = ((ApplicationTerm)t).getParameters();
 			for (int i = 0; i < args.length; i++) {
-				if (hasConstantGreaterThan(args[i], constantSize)) {
+				if (termHasConstantGreaterThan(args[i], constantSize)) {
 					return true;
 				}
 			}
@@ -332,7 +332,7 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 		
 		for (int i = 0; i < trace.length(); i++) {
 			Term t = trace.getSymbolAt(i).getTransitionFormula().getFormula();
-			if (!hasConstantGreaterThan(t, constantSize)) {
+			if (!termHasConstantGreaterThan(t, constantSize)) {
 				result.add(i);
 			}
 		}
@@ -349,13 +349,15 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 	 */
 	private LBool annotateAndAssertStmtsAccording5Heuristic(
 			NestedWord<CodeBlock> trace, Collection<Integer> callPositions,
-			Collection<Integer> pendingReturnPositions,
-			Map<Integer, Set<Integer>> depth2Statements) {
+			Collection<Integer> pendingReturnPositions) {
 		// Choose statements that contains only constants <= 10 and assert them
 		int constantSize = 10;
 		Set<Integer> stmtsToAssert = partitionStmtsAccordingToConstantSize(trace, constantSize);
 		buildAnnotatedSsaAndAssertTermsWithPriorizedOrder(trace, callPositions, pendingReturnPositions, stmtsToAssert);
 		LBool sat = m_SmtManager.getScript().checkSat();
+		// Report benchmarks
+		m_Tcbg.reportnewCheckSat();
+		m_Tcbg.reportnewAssertedCodeBlocks(stmtsToAssert.size());
 		if (sat == LBool.UNSAT) {
 			return sat;
 		}
@@ -364,7 +366,9 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 		buildAnnotatedSsaAndAssertTermsWithPriorizedOrder(trace, callPositions, pendingReturnPositions, 
 				remainingStmts);
 		sat = m_SmtManager.getScript().checkSat();
-
+		// Report benchmarks
+		m_Tcbg.reportnewCheckSat();
+		m_Tcbg.reportnewAssertedCodeBlocks(remainingStmts.size());
 		return sat;
 	}
 

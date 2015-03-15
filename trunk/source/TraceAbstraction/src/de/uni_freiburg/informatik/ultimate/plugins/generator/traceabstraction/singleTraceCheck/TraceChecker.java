@@ -387,7 +387,7 @@ public class TraceChecker {
 			m_AAA = new AnnotateAndAsserter(m_SmtManager, ssa, getAnnotateAndAsserterCodeBlocks(ssa),
 					m_TraceCheckerBenchmarkGenerator, mLogger);
 			// Report the asserted code blocks
-			m_TraceCheckerBenchmarkGenerator.reportnewAssertedCodeBlocks(m_Trace.length());
+//			m_TraceCheckerBenchmarkGenerator.reportnewAssertedCodeBlocks(m_Trace.length());
 		}
 		try {
 			m_AAA.buildAnnotatedSsaAndAssertTerms();
