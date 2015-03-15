@@ -21,6 +21,7 @@ settingsFilePrecise64 = '64bit-precise'
 
 
 #special strings in ultimate output
+unsupportedSyntaxString = 'UnsupportedSyntaxResult'
 safetyString = 'Ultimate proved your program to be correct'
 allSpecString = 'AllSpecificationsHoldResult'
 unsafetyString = 'Ultimate proved your program to be incorrect'
@@ -139,6 +140,8 @@ while True:
     sys.stdout.write('.')
     #sys.stdout.write('Ultimate: ' + line)
     sys.stdout.flush()
+    if (line.find(unsupportedSyntaxString) != -1):
+        safetyResult = 'UNKNOWN-SYNTAX'
     if (terminationMode):
         if (line.find(terminationTrue) != -1):
             safetyResult = 'TRUE'
