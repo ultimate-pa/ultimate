@@ -178,7 +178,7 @@ public class PluginConnector {
 		if (element != null && type != null) {
 			mModelManager.addItem(element, type);
 		} else {
-			mLogger.warn(String.format(
+			mLogger.debug(String.format(
 					"%s did return invalid model for observer %s, skipping insertion in model container",
 					tool.getPluginName(), observer));
 		}

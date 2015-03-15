@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -179,7 +180,7 @@ public class CACSL2BoogieBacktranslator extends
 					// we merge all things in a row that point to the same
 					// location, as they only contain temporary stuff
 					i = findMergeSequence(programExecution, i, loc);
-//					String raw = cnode.getRawSignature(); // debug
+					// String raw = cnode.getRawSignature(); // debug
 					if (ate.getTraceElement() instanceof HavocStatement) {
 						HavocStatement havoc = (HavocStatement) ate.getTraceElement();
 						CheckForTempVars check = new CheckForTempVars();
@@ -206,7 +207,7 @@ public class CACSL2BoogieBacktranslator extends
 		}
 
 		// replace all expr eval occurences with the right atomictraceelements
-		CheckForSubtreeInclusion check = new CheckForSubtreeInclusion();
+		CheckForSubtreeInclusion2 check = new CheckForSubtreeInclusion2();
 		translatedAtomicTraceElements = check.check(translatedAtomicTraceElements);
 
 		return new CACSLProgramExecution(initialState, translatedAtomicTraceElements, translatedProgramStates);
@@ -281,7 +282,8 @@ public class CACSL2BoogieBacktranslator extends
 		// The following code is not necessary anymore because Alex changed the
 		// local var initialisation code s.t the assign statements at the
 		// beginning of each function have their ignore flags set
-		// We keep it for a couple of revisions and throw it out once we are sure we dont need it 
+		// We keep it for a couple of revisions and throw it out once we are
+		// sure we dont need it
 
 		// int j = i + 1;
 		// for (int k = 0; k < fcall.getArguments().length && j <
@@ -686,6 +688,11 @@ public class CACSL2BoogieBacktranslator extends
 		return mBoogie2C.getTempVar2Obj().containsKey(boogieId);
 	}
 
+	/**
+	 * Kept around until I am sure {@link CheckForSubtreeInclusion2} is better in all cases
+	 * @author dietsch@informatik.uni-freiburg.de
+	 *
+	 */
 	private class CheckForSubtreeInclusion {
 
 		protected List<AtomicTraceElement<CACSLLocation>> check(
@@ -712,16 +719,18 @@ public class CACSL2BoogieBacktranslator extends
 				return ate;
 			}
 
-			IASTNode searchTarget = origNode.getParent();
+			for (int j = start; j < translatedAtomicTraceElements.size(); ++j) {
+				AtomicTraceElement<CACSLLocation> current = translatedAtomicTraceElements.get(j);
+				if (!(current.getStep() instanceof CLocation)) {
+					// skip acsl nodes
+					continue;
+				}
+				IASTNode candidateParent = ((CLocation) current.getStep()).getNode();
 
-			while (searchTarget != null) {
-				for (int j = start; j < translatedAtomicTraceElements.size(); ++j) {
-					AtomicTraceElement<CACSLLocation> current = translatedAtomicTraceElements.get(j);
-					if (!(current.getStep() instanceof CLocation)) {
-						continue;
-					}
-					IASTNode candidate = ((CLocation) current.getStep()).getNode();
-					if (searchTarget == candidate) {
+				IASTNode searchTarget = origNode.getParent();
+				while (searchTarget != null) {
+
+					if (searchTarget == candidateParent) {
 						EnumSet<StepInfo> set = ate.getStepInfo();
 						if (set.isEmpty() || set.contains(StepInfo.NONE)) {
 							set = EnumSet.of(newSi);
@@ -730,8 +739,94 @@ public class CACSL2BoogieBacktranslator extends
 						}
 						return new AtomicTraceElement<CACSLLocation>(current.getStep(), ate.getStep(), set);
 					}
+					searchTarget = searchTarget.getParent();
 				}
-				searchTarget = searchTarget.getParent();
+			}
+			return ate;
+		}
+	}
+
+	/**
+	 * A subtree check that sacrifices memory consumption for speed. It is about
+	 * 20x faster, but uses a lookup table.
+	 * 
+	 * A subtree check is used to determine if a trace element is actually a
+	 * nesting of some later trace element in the error path (like in x = x++ +
+	 * ++x, were x++ and ++x are nestings of +, and + is a nesting of the
+	 * assignment).
+	 * 
+	 * There may be a better solution to this (its rather expensive).
+	 * 
+	 * @author dietsch@informatik.uni-freiburg.de
+	 * 
+	 */
+	private class CheckForSubtreeInclusion2 {
+
+		protected List<AtomicTraceElement<CACSLLocation>> check(
+				List<AtomicTraceElement<CACSLLocation>> translatedAtomicTraceElements) {
+
+			// first, compute lookup data structure
+			HashMap<AtomicTraceElement<CACSLLocation>, HashSet<IASTNode>> ateToParents = new HashMap<>();
+			for (int i = 0; i < translatedAtomicTraceElements.size(); ++i) {
+				AtomicTraceElement<CACSLLocation> ate = translatedAtomicTraceElements.get(i);
+
+				if (!(ate.getStep() instanceof CLocation)) {
+					continue;
+				}
+				IASTNode origNode = ((CLocation) ate.getStep()).getNode();
+				HashSet<IASTNode> parents = new HashSet<>();
+
+				IASTNode currentParent = origNode.getParent();
+				while (currentParent != null) {
+					parents.add(currentParent);
+					currentParent = currentParent.getParent();
+				}
+
+				ateToParents.put(ate, parents);
+			}
+
+			// second, compute actual tree inclusion check
+			List<AtomicTraceElement<CACSLLocation>> rtr = new ArrayList<>();
+			for (int i = 0; i < translatedAtomicTraceElements.size(); ++i) {
+				AtomicTraceElement<CACSLLocation> ate = translatedAtomicTraceElements.get(i);
+				rtr.add(check(ate, translatedAtomicTraceElements, i + 1, StepInfo.EXPR_EVAL, ateToParents));
+			}
+			return rtr;
+		}
+
+		private AtomicTraceElement<CACSLLocation> check(AtomicTraceElement<CACSLLocation> ate,
+				List<AtomicTraceElement<CACSLLocation>> translatedAtomicTraceElements, int start, StepInfo newSi,
+				HashMap<AtomicTraceElement<CACSLLocation>, HashSet<IASTNode>> ateToParents) {
+
+			HashSet<IASTNode> parents = ateToParents.get(ate);
+
+			if (parents == null) {
+				// not implemented for ACSL
+				return ate;
+			}
+			IASTNode origNode = ((CLocation) ate.getStep()).getNode();
+
+			if (!(origNode instanceof IASTExpression)) {
+				// do nothing for statements
+				return ate;
+			}
+
+			for (int j = start; j < translatedAtomicTraceElements.size(); ++j) {
+				AtomicTraceElement<CACSLLocation> current = translatedAtomicTraceElements.get(j);
+				if (!(current.getStep() instanceof CLocation)) {
+					// skip acsl nodes
+					continue;
+				}
+				IASTNode candidate = ((CLocation) current.getStep()).getNode();
+				if (parents.contains(candidate)) {
+					EnumSet<StepInfo> set = ate.getStepInfo();
+					if (set.isEmpty() || set.contains(StepInfo.NONE)) {
+						set = EnumSet.of(newSi);
+					} else {
+						set.add(newSi);
+					}
+					return new AtomicTraceElement<CACSLLocation>(current.getStep(), ate.getStep(), set);
+				}
 			}
 			return ate;
 		}
