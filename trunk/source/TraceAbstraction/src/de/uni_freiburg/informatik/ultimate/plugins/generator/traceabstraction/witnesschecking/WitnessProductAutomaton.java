@@ -32,6 +32,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.util.relation.NestedMap3;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNode;
+import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNodeAnnotation;
 
 public class WitnessProductAutomaton implements INestedWordAutomatonSimple<CodeBlock, IPredicate> {
 	private final SmtManager m_SmtManager;
@@ -334,10 +335,15 @@ public class WitnessProductAutomaton implements INestedWordAutomatonSimple<CodeB
 	}
 	
 	/**
-	 * CPA checker marks sinks as "sink", we do not check them right now.
+	 * Nodes can be marked as sink.
 	 */
 	private boolean isSink(WitnessNode succ) {
-		return (succ.getName().equals("sink"));
+		WitnessNodeAnnotation wan = WitnessNodeAnnotation.getAnnotation(succ);
+		if (wan == null) {
+			return false;
+		} else {
+			return wan.isSink();
+		}
 	}
 
 	private Collection<WitnessNode> skipNonCodeBlockEdges(WitnessNode node) {
