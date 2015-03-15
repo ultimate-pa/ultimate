@@ -3,6 +3,8 @@ package de.uni_freiburg.informatik.ultimate.util;
 /**
  * Exception that can be thrown if a plugin detects that the timeout is overdue
  * or a cancellation of the toolchain was requested.
+ * 
+ * The core will create TimeoutResult if this exception is thrown. 
  *
  */
 public class ToolchainCanceledException extends RuntimeException {

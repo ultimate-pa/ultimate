@@ -100,16 +100,23 @@ final class ToolchainWalker implements IToolchainCancel {
 
 	private boolean shouldCancel(CompleteToolchainData data, IProgressMonitorService service, IProgressMonitor monitor,
 			String pluginId) {
-		if (!service.continueProcessing() || monitor.isCanceled() || this.mToolchainCancelRequest) {
-			// If a cancel-request occurred during the loop, honor it
+		// If a cancel-request occurred during the loop, honor it
+		if(mToolchainCancelRequest  || monitor.isCanceled()){
+			mLogger.info("Toolchain execution was canceled (user or tool) before executing " + pluginId);
+			return true;
+			
+		}
+		
+		if (!service.continueProcessing()) {
 			data.getToolchain()
 					.getServices()
 					.getResultService()
 					.reportResult(Activator.s_PLUGIN_ID,
 							new TimeoutResult(Activator.s_PLUGIN_ID, "Timeout occured before executing " + pluginId));
-			mLogger.info("Toolchain execution was canceled (Timeout or user) before executing " + pluginId);
+			mLogger.info("Toolchain execution was canceled (Timeout) before executing " + pluginId);
 			return true;
 		}
+		
 		return false;
 	}
 
