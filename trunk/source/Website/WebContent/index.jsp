@@ -237,8 +237,8 @@ Params:
 				<c:choose>
 					<c:when test="${multipleTasks}">
 						<div class="int breadcrumb button spinner visible font-light"
-							id="task" data-default-val="choose task">
-							<div class="label">choose task</div>
+							id="task" data-default-val="choose language">
+							<div class="label">choose language</div>
 							<div class="box font-average">
 								<c:forEach items="${worker.get(tool).getToolchains()}" var="tc">
 									<div id="<c:out value="${tc.getId()}" />"
@@ -251,14 +251,14 @@ Params:
 					</c:when>
 					<c:when test="${showAll && multipleTools}">
 						<div class="int breadcrumb button spinner visible font-light"
-							id="task" style="display: none;" data-default-val="choose task">
-							<div class="label">choose task</div>
+							id="task" style="display: none;" data-default-val="choose language">
+							<div class="label">choose language</div>
 							<div class="box font-average"></div>
 						</div>
 					</c:when>
 					<c:otherwise>
 						<div class="int breadcrumb spinner visible font-light selection"
-							id="task" data-default-val="choose task">
+							id="task" data-default-val="choose language">
 							<c:set value="${worker.get(tool).getToolchains()[0]}" var="tc" />
 							<div class="label selected" id="<c:out value="${tc.getId()}" />">
 								<c:out value="${tc.getLanguage()}" />

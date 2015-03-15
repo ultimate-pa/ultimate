@@ -65,10 +65,6 @@ function getInInterval(min, val, max)
 function clearSampleAndResults()
 {
   // do not clear on non-visible chars
-  /*if (e.which !== 0 && e.charCode !== 0) {
-      alert(String.fromCharCode(e.keyCode|e.charCode));
-  }*/
-  
   if(!_EVENT) return;
   
   // clear ultimate results
@@ -367,11 +363,11 @@ function highlightCode(r, c)
 function generateURL()
 {
   var url = window.location.protocol + '//' + window.location.host + window.location.pathname + '?ui=int';
-  if(_SPINNER.tool.selected)    url += '&tool=' + _SPINNER.tool.selected.id;
+  if(_SPINNER.tool.selected)    url += '&tool=' + escape(_SPINNER.tool.selected.id);
   else return url;
-  if(_SPINNER.task.selected)    url += '&task=' + _SPINNER.task.selected.id;
+  if(_SPINNER.task.selected)    url += '&task=' + escape(_SPINNER.task.selected.id);
   else return url;
-  if(_SPINNER.samples.selected) url += '&sample=' + _SPINNER.samples.selected.id;
+  if(_SPINNER.samples.selected) url += '&sample=' + escape(_SPINNER.samples.selected.id);
   return url;
 }
 

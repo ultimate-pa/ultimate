@@ -3,7 +3,7 @@
 /* tool and task have children */
 /*******************************/
     
-window.onhashchange = appendSettings;
+window.onhashchange = function() { appendSettings(); }
 
 function initSpinners()
 {
