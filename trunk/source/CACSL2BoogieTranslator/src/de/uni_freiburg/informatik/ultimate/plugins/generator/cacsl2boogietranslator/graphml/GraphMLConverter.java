@@ -176,15 +176,17 @@ public class GraphMLConverter {
 		WitnessNode current = insertStartNodeAndDummyEdges(fac, graph, 0);
 		WitnessNode next = null;
 
+		//removed because of standard change 
 		// Add initial state edge if present; only edge with assumption but no
 		// source code or line number
-		ProgramState<IASTExpression> initialState = mProgramExecution.getInitialProgramState();
-		if (initialState != null) {
-			next = fac.createWitnessNode();
-			graph.addVertex(next);
-			graph.addEdge(fac.createWitnessEdge(initialState), current, next);
-			current = next;
-		}
+//		ProgramState<IASTExpression> initialState = mProgramExecution.getInitialProgramState();
+//		if (initialState != null) {
+//			next = fac.createWitnessNode();
+//			graph.addVertex(next);
+//			graph.addEdge(fac.createWitnessEdge(initialState), current, next);
+//			current = next;
+//		}
+		//end remove
 
 		int progExecLength = mProgramExecution.getLength();
 		for (int i = 0; i < progExecLength; ++i) {
