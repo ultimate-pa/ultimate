@@ -29,9 +29,11 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ConstantFinder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.DagSizePrinter;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.NaiveDestructiveEqualityResolution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.PartialQuantifierElimination;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SafeSubstitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Cnf;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.result.TimeoutResult;
 import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 
@@ -106,17 +108,7 @@ public class TransFormula implements Serializable {
 		// assert m_OutVars.keySet().containsAll(m_InVars.keySet()) :
 		// " strange inVar";
 
-		// compute the assigned/updated variables. A variable is updated by this
-		// transition if it occurs as outVar and
-		// - it does not occur as inVar
-		// - or the inVar is represented by a different TermVariable
-		m_AssignedVars = new HashSet<BoogieVar>();
-		for (BoogieVar var : outVars.keySet()) {
-			assert (outVars.get(var) != null);
-			if (outVars.get(var) != inVars.get(var)) {
-				m_AssignedVars.add(var);
-			}
-		}
+		m_AssignedVars = computeAssignedVars(inVars, outVars);
 		// TODO: The following line is a workaround, in the future the set of
 		// constants will be part of the input and we use findConstants only
 		// in the assertion
@@ -129,9 +121,64 @@ public class TransFormula implements Serializable {
 		// }
 	}
 
+	/**
+	 * compute the assigned/updated variables. A variable is updated by this
+     * transition if it occurs as outVar and
+     * - it does not occur as inVar
+	 * - or the inVar is represented by a different TermVariable
+	 */
+	private HashSet<BoogieVar> computeAssignedVars(
+			Map<BoogieVar, TermVariable> inVars,
+			Map<BoogieVar, TermVariable> outVars) {
+		HashSet<BoogieVar> assignedVars = new HashSet<BoogieVar>();
+		for (BoogieVar var : outVars.keySet()) {
+			assert (outVars.get(var) != null);
+			if (outVars.get(var) != inVars.get(var)) {
+				assignedVars.add(var);
+			}
+		}
+		return assignedVars;
+	}
+
 	public TransFormula(Term formula, Map<BoogieVar, TermVariable> inVars, Map<BoogieVar, TermVariable> outVars,
 			Set<TermVariable> auxVars, Set<TermVariable> branchEncoders, Infeasibility infeasibility, Term closedFormula) {
 		this(formula, inVars, outVars, auxVars, branchEncoders, infeasibility, closedFormula, false);
+	}
+	
+	/**
+	 * Construct TransFormula that represents the identity relation restricted
+	 * to the predicate pred, i.e., if x is the vector of variables occurring
+	 * in pred, the result represents a formula φ(x,x') such that the following
+	 * holds.
+	 * <ul>
+	 * <li> φ(x,x') implies x=x'
+	 * <li> ∃x' φ(x,x') is equivalent to pred
+	 * </ul>
+	 */
+	public TransFormula(IPredicate pred, Boogie2SMT boogie2smt) {
+		VariableManager variableManager = boogie2smt.getVariableManager();
+		Script script = boogie2smt.getScript();
+		
+		Map<Term, Term> substitutionMapping = new HashMap<Term, Term>();
+		Map<BoogieVar, TermVariable> boogieVar2TermVariable = new HashMap<BoogieVar, TermVariable>();
+		for (BoogieVar bv : pred.getVars()) {
+			TermVariable freshTv = variableManager.constructFreshTermVariable(bv);
+			substitutionMapping.put(bv.getTermVariable(), freshTv);
+			boogieVar2TermVariable.put(bv, freshTv);
+		}
+		m_InVars = boogieVar2TermVariable;
+		m_OutVars = boogieVar2TermVariable;
+		m_Formula = (new SafeSubstitution(script, substitutionMapping)).transform(pred.getFormula());
+		if (SmtUtils.isFalse(pred.getFormula())) {
+			m_Infeasibility = Infeasibility.INFEASIBLE;
+		} else {
+			m_Infeasibility = Infeasibility.NOT_DETERMINED;
+		}
+		m_BranchEncoders = Collections.emptySet();
+		m_auxVars = Collections.emptySet();
+		m_Constants = (new ConstantFinder()).findConstants(m_Formula);
+		m_AssignedVars = computeAssignedVars(m_InVars, m_OutVars);
+		m_ClosedFormula = computeClosedFormula(m_Formula, m_InVars, m_OutVars, m_auxVars, false, boogie2smt);
 	}
 
 	/**
