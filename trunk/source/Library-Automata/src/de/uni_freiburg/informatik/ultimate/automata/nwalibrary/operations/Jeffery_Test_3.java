@@ -71,15 +71,15 @@ public class Jeffery_Test_3<LETTER,STATE> implements IOperation<LETTER,STATE>{
 				falseSumNodeInTheEnd1+=IIC1.size();	
 			}
 			if(trueTestnum1!=0){
-				trueAvgNodeInTheEnd = trueSumTotalNode1/trueTestnum1;
-				trueAvgNodeGenerated = trueSumNodeInTheEnd1/trueTestnum1;
+				trueAvgNodeInTheEnd = trueSumNodeInTheEnd1/trueTestnum1;
+				trueAvgNodeGenerated = trueSumTotalNode1/trueTestnum1;
 				trueAvgRun = 0;
 				trueTestNum = trueTestnum1;
 				trueAvgTime = trueTime1/trueTestnum1;
 			}
 			if(falseTestnum1!=0){
-				falseAvgNodeInTheEnd = falseSumTotalNode1/falseTestnum1;
-				falseAvgNodeGenerated = falseSumNodeInTheEnd1/falseTestnum1;
+				falseAvgNodeInTheEnd = falseSumNodeInTheEnd1/falseTestnum1;
+				falseAvgNodeGenerated = falseSumTotalNode1/falseTestnum1;
 				falseAvgRun = 0;
 				falseTestNum = falseTestnum1;
 				falseAvgTime = falseTime1/falseTestnum1;
@@ -107,15 +107,15 @@ public class Jeffery_Test_3<LETTER,STATE> implements IOperation<LETTER,STATE>{
 				falseSumNodeInTheEnd2+=IIC2.counter_total_nodes;
 			}
 			if(trueTestnum2!=0){
-				trueAvgNodeInTheEnd = trueSumTotalNode2/trueTestnum2;
-				trueAvgNodeGenerated = trueSumNodeInTheEnd2/trueTestnum2;
+				trueAvgNodeInTheEnd = trueSumNodeInTheEnd2/trueTestnum2;
+				trueAvgNodeGenerated = trueSumTotalNode2/trueTestnum2;
 				trueAvgRun = trueSumRun2/trueTestnum2;
 				trueTestNum = trueTestnum2;
 				trueAvgTime = trueTime2/trueTestnum2;
 			}
 			if(falseTestnum2!=0){
-				falseAvgNodeInTheEnd = falseSumTotalNode2/falseTestnum2;
-				falseAvgNodeGenerated = falseSumNodeInTheEnd2/falseTestnum2;
+				falseAvgNodeInTheEnd = falseSumNodeInTheEnd2/falseTestnum2;
+				falseAvgNodeGenerated = falseSumTotalNode2/falseTestnum2;
 				falseAvgRun = falseSumRun2/falseTestnum2;
 				falseTestNum = falseTestnum2;
 				falseAvgTime = falseTime2/falseTestnum2;
@@ -143,15 +143,15 @@ public class Jeffery_Test_3<LETTER,STATE> implements IOperation<LETTER,STATE>{
 				falseSumNodeInTheEnd3+=IIC3.completeLeafSet.size();
 			}
 			if(trueTestnum3!=0){
-				trueAvgNodeInTheEnd = trueSumTotalNode3/trueTestnum3;
-				trueAvgNodeGenerated = trueSumNodeInTheEnd3/trueTestnum3;
+				trueAvgNodeInTheEnd = trueSumNodeInTheEnd3/trueTestnum3;
+				trueAvgNodeGenerated = trueSumTotalNode3/trueTestnum3;
 				trueAvgRun = trueSumRun3/trueTestnum3;
 				trueTestNum = trueTestnum3;
 				trueAvgTime = trueTime3/trueTestnum3;
 			}
 			if(falseTestnum3!=0){
-				falseAvgNodeInTheEnd = falseSumTotalNode3/falseTestnum3;
-				falseAvgNodeGenerated = falseSumNodeInTheEnd3/falseTestnum3;
+				falseAvgNodeInTheEnd = falseSumNodeInTheEnd3/falseTestnum3;
+				falseAvgNodeGenerated = falseSumTotalNode3/falseTestnum3;
 				falseAvgRun = falseSumRun3/falseTestnum3;
 				falseTestNum = falseTestnum3;
 				falseAvgTime = falseTime3/falseTestnum3;
@@ -179,15 +179,15 @@ public class Jeffery_Test_3<LETTER,STATE> implements IOperation<LETTER,STATE>{
 				falseSumNodeInTheEnd4+=IIC4.completeLeafSet.size();
 			}
 			if(trueTestnum4!=0){
-				trueAvgNodeInTheEnd = trueSumTotalNode4/trueTestnum4;
-				trueAvgNodeGenerated = trueSumNodeInTheEnd4/trueTestnum4;
+				trueAvgNodeInTheEnd = trueSumNodeInTheEnd4/trueTestnum4;
+				trueAvgNodeGenerated = trueSumTotalNode4/trueTestnum4;
 				trueAvgRun = trueSumRun4/trueTestnum4;
 				trueTestNum = trueTestnum4;
 				trueAvgTime = trueTime4/trueTestnum4;
 			}
 			if(falseTestnum4!=0){
-				falseAvgNodeInTheEnd = falseSumTotalNode4/falseTestnum4;
-				falseAvgNodeGenerated = falseSumNodeInTheEnd4/falseTestnum4;
+				falseAvgNodeInTheEnd = falseSumNodeInTheEnd4/falseTestnum4;
+				falseAvgNodeGenerated = falseSumTotalNode4/falseTestnum4;
 				falseAvgRun = falseSumRun4/falseTestnum4;
 				falseTestNum = falseTestnum4;
 				falseAvgTime = falseTime4/falseTestnum4;
@@ -215,15 +215,15 @@ public class Jeffery_Test_3<LETTER,STATE> implements IOperation<LETTER,STATE>{
 				falseSumNodeInTheEnd5+=IIC5.completeLeafSet.size();
 			}
 			if(trueTestnum5!=0){
-				trueAvgNodeInTheEnd = trueSumTotalNode5/trueTestnum5;
-				trueAvgNodeGenerated = trueSumNodeInTheEnd5/trueTestnum5;
+				trueAvgNodeInTheEnd = trueSumNodeInTheEnd5/trueTestnum5;
+				trueAvgNodeGenerated = trueSumTotalNode5/trueTestnum5;
 				trueAvgRun = trueSumRun5/trueTestnum5;
 				trueTestNum = trueTestnum5;
 				trueAvgTime = trueTime5/trueTestnum5;
 			}
 			if(falseTestnum5!=0){
-				falseAvgNodeInTheEnd = falseSumTotalNode5/falseTestnum5;
-				falseAvgNodeGenerated = falseSumNodeInTheEnd5/falseTestnum5;
+				falseAvgNodeInTheEnd = falseSumNodeInTheEnd5/falseTestnum5;
+				falseAvgNodeGenerated = falseSumTotalNode5/falseTestnum5;
 				falseAvgRun = falseSumRun5/falseTestnum5;
 				falseTestNum = falseTestnum5;
 				falseAvgTime = falseTime5/falseTestnum5;
@@ -251,15 +251,15 @@ public class Jeffery_Test_3<LETTER,STATE> implements IOperation<LETTER,STATE>{
 				falseSumNodeInTheEnd32+=IIC3_2.completeLeafSet.size();
 			}
 			if(trueTestnum32!=0){
-				trueAvgNodeInTheEnd = trueSumTotalNode32/trueTestnum32;
-				trueAvgNodeGenerated = trueSumNodeInTheEnd32/trueTestnum32;
+				trueAvgNodeInTheEnd = trueSumNodeInTheEnd32/trueTestnum32;
+				trueAvgNodeGenerated = trueSumTotalNode32/trueTestnum32;
 				trueAvgRun = trueSumRun32/trueTestnum32;
 				trueTestNum = trueTestnum32;
 				trueAvgTime = trueTime32/trueTestnum32;
 			}
 			if(falseTestnum32!=0){
-				falseAvgNodeInTheEnd = falseSumTotalNode32/falseTestnum32;
-				falseAvgNodeGenerated = falseSumNodeInTheEnd32/falseTestnum32;
+				falseAvgNodeInTheEnd = falseSumNodeInTheEnd32/falseTestnum32;
+				falseAvgNodeGenerated = falseSumTotalNode32/falseTestnum32;
 				falseAvgRun = falseSumRun32/falseTestnum32;
 				falseTestNum = falseTestnum32;
 				falseAvgTime = falseTime32/falseTestnum32;
@@ -287,15 +287,15 @@ public class Jeffery_Test_3<LETTER,STATE> implements IOperation<LETTER,STATE>{
 				falseSumNodeInTheEnd42+=IIC4_2.completeLeafSet.size();
 			}
 			if(trueTestnum42!=0){
-				trueAvgNodeInTheEnd = trueSumTotalNode42/trueTestnum42;
-				trueAvgNodeGenerated = trueSumNodeInTheEnd42/trueTestnum42;
+				trueAvgNodeInTheEnd = trueSumNodeInTheEnd42/trueTestnum42;
+				trueAvgNodeGenerated = trueSumTotalNode42/trueTestnum42;
 				trueAvgRun = trueSumRun42/trueTestnum42;
 				trueTestNum = trueTestnum42;
 				trueAvgTime = trueTime42/trueTestnum42;
 			}
 			if(falseTestnum42!=0){
-				falseAvgNodeInTheEnd = falseSumTotalNode42/falseTestnum42;
-				falseAvgNodeGenerated = falseSumNodeInTheEnd42/falseTestnum42;
+				falseAvgNodeInTheEnd = falseSumNodeInTheEnd42/falseTestnum42;
+				falseAvgNodeGenerated = falseSumTotalNode42/falseTestnum42;
 				falseAvgRun = falseSumRun42/falseTestnum42;
 				falseTestNum = falseTestnum42;
 				falseAvgTime = falseTime42/falseTestnum42;
@@ -323,15 +323,15 @@ public class Jeffery_Test_3<LETTER,STATE> implements IOperation<LETTER,STATE>{
 				falseSumNodeInTheEnd52+=IIC5_2.completeLeafSet.size();
 			}
 			if(trueTestnum52!=0){
-				trueAvgNodeInTheEnd = trueSumTotalNode52/trueTestnum52;
-				trueAvgNodeGenerated = trueSumNodeInTheEnd52/trueTestnum52;
+				trueAvgNodeInTheEnd = trueSumNodeInTheEnd52/trueTestnum52;
+				trueAvgNodeGenerated = trueSumTotalNode52/trueTestnum52;
 				trueAvgRun = trueSumRun52/trueTestnum52;
 				trueTestNum = trueTestnum52;
 				trueAvgTime = trueTime52/trueTestnum52;
 			}
 			if(falseTestnum52!=0){
-				falseAvgNodeInTheEnd = falseSumTotalNode52/falseTestnum52;
-				falseAvgNodeGenerated = falseSumNodeInTheEnd52/falseTestnum52;
+				falseAvgNodeInTheEnd = falseSumNodeInTheEnd52/falseTestnum52;
+				falseAvgNodeGenerated = falseSumTotalNode52/falseTestnum52;
 				falseAvgRun = falseSumRun52/falseTestnum52;
 				falseTestNum = falseTestnum52;
 				falseAvgTime = falseTime52/falseTestnum52;
@@ -358,8 +358,8 @@ public class Jeffery_Test_3<LETTER,STATE> implements IOperation<LETTER,STATE>{
 	
 	@Override
 	public String getResult(){
-		String log = "\r\nTrue cases: avg Nodes in the end:"+trueAvgNodeInTheEnd+" avg Nodes generated:"+trueAvgNodeGenerated+" avgRuns:"+trueAvgRun+" Total test:"+trueTestNum+" avg Time:"+trueAvgTime+
-				"\r\nFalse cases: avg Nodes in the end:"+falseAvgNodeInTheEnd+" avg Nodes generated:"+falseAvgNodeGenerated+" avgRuns:"+falseAvgRun+" Total test:"+falseTestNum+" avg Time:"+falseAvgTime;
+		String log = "\r\nTrue cases: avg Nodes generated:"+trueAvgNodeGenerated+" avg Nodes in the end:"+trueAvgNodeInTheEnd+" avgRuns:"+trueAvgRun+" Total test:"+trueTestNum+" avg Time:"+trueAvgTime+
+				"\r\nFalse cases: avg Nodes generated:"+falseAvgNodeGenerated+" avg Nodes in the end:"+falseAvgNodeInTheEnd+" avgRuns:"+falseAvgRun+" Total test:"+falseTestNum+" avg Time:"+falseAvgTime;
 		return log;
 	}
 	/*public String getResult() throws OperationCanceledException {
