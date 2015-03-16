@@ -140,7 +140,7 @@ public abstract class AbstractCegarLoop {
 	// used for debugging only
 	protected IAutomaton<CodeBlock, IPredicate> m_ArtifactAutomaton;
 	protected PrintWriter m_IterationPW;
-	protected final Labeling m_PrintAutomataLabeling = Labeling.TOSTRING;
+	protected final Labeling m_PrintAutomataLabeling;
 
 	protected CegarLoopBenchmarkGenerator m_CegarLoopBenchmark;
 
@@ -150,12 +150,14 @@ public abstract class AbstractCegarLoop {
 			Collection<ProgramPoint> errorLocs, Logger logger) {
 		m_Services = services;
 		mLogger = logger;
+		this.m_PrintAutomataLabeling = taPrefs.getAutomataFormat();
 		m_ModGlobVarManager = rootNode.getRootAnnot().getModGlobVarManager();
 		this.m_Name = name;
 		this.m_RootNode = rootNode;
 		this.m_SmtManager = smtManager;
 		this.m_Pref = taPrefs;
 		this.m_ErrorLocs = errorLocs;
+		
 	}
 
 	/**

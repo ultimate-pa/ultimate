@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences;
 
+import de.uni_freiburg.informatik.ultimate.automata.AtsDefinitionPrinter.Labeling;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceItem;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceItem.IUltimatePreferenceItemValidator;
@@ -34,6 +35,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 				new UltimatePreferenceItem<InterpolantAutomaton>(LABEL_INTERPOLANT_AUTOMATON,
 						InterpolantAutomaton.CANONICAL, PreferenceType.Combo, InterpolantAutomaton.values()),
 				new UltimatePreferenceItem<Boolean>(LABEL_DUMPAUTOMATA, DEF_DUMPAUTOMATA, PreferenceType.Boolean),
+				new UltimatePreferenceItem<Labeling>(LABEL_AUTOMATAFORMAT, DEF_AUTOMATAFORMAT, PreferenceType.Combo, Labeling.values()),
 				new UltimatePreferenceItem<String>(LABEL_DUMPPATH, DEF_DUMPPATH, PreferenceType.Directory),
 				new UltimatePreferenceItem<InterpolantAutomatonEnhancement>(LABEL_InterpolantAutomatonEnhancement,
 						InterpolantAutomatonEnhancement.PREDICATE_ABSTRACTION, PreferenceType.Combo, InterpolantAutomatonEnhancement.values()),
@@ -78,7 +80,8 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final String LABEL_INTERPOLATED_LOCS = "Compute Interpolants along a Counterexample";
 	public static final String LABEL_INTERPOLANT_AUTOMATON = "Interpolant automaton";
 	public static final String LABEL_DUMPAUTOMATA = "Dump automata to files";
-	public static final String LABEL_DUMPPATH = "Dump formulas of problems in the following path";
+	public static final String LABEL_AUTOMATAFORMAT = "Output format of dumped automata";
+	public static final String LABEL_DUMPPATH = "Dump automata to the following directory";
 	public static final String LABEL_InterpolantAutomatonEnhancement = "Interpolant automaton enhancement";
 	public static final String LABEL_HoareTripleChecks = "Hoare triple checks";
 	public static final String LABEL_DIFFERENCE_SENWA = "DifferenceSenwa operation instead classical Difference";
@@ -121,6 +124,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final INTERPOLATION DEF_INTERPOLANTS = INTERPOLATION.ForwardPredicates;
 	public static final String DEF_ADDITIONAL_EDGES = VALUE_InterpolantAutomaton_Canonical;
 	public static final boolean DEF_DUMPAUTOMATA = false;
+	public static final Labeling DEF_AUTOMATAFORMAT = Labeling.TOSTRING;
 	public static final String DEF_DUMPPATH = ".";
 	public static final boolean DEF_DIFFERENCE_SENWA = false;
 	public static final boolean DEF_MINIMIZE = true;
