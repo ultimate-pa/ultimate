@@ -45,7 +45,7 @@ public class WitnessProductAutomaton implements INestedWordAutomatonSimple<CodeB
 	private final IPredicate m_EmptyStackState;
 	private final Set<IPredicate> m_InitialStates;
 	private final Set<IPredicate> m_FinalStates;
-	private final Integer m_StutteringStepsLimit = 5;
+	private final Integer m_StutteringStepsLimit = 10;
 	private final WitnessLocationMatcher m_WitnessLocationMatcher;
 	private final LinkedHashSet<WitnessEdge> m_BadWitnessEdges = new LinkedHashSet<WitnessEdge>();
 	private final Set<WitnessEdge> m_GoodWitnessEdges = new HashSet<WitnessEdge>();
