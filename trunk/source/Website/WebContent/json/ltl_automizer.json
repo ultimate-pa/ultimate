@@ -1,0 +1,39 @@
+{
+  "id": "ltl_automizer",
+  "description": "<span style=\"font-variant:small-caps\">Ultimate LTL Automizer</span> implements a novel approach to termination analysis in which a program is decomposed into modules. Each module represents a set of traces that share a common termination argument. The decomposition is constructed on demand by \"learning\"  terminating modules from a termination analysis of lasso-shaped sample traces. For this termination analysis of lasso-shaped traces the built-in tool <a href=\"./?ui=tool&amp;tool=lasso_ranker\">LassoRanker</a> is used.",
+  "user_info": "",
+  "animate": "true",
+  "html": "true",
+  "sections":
+  [
+    {
+      "title": "web interface",
+      "type": "interface",
+      "html": "true",
+      "content": "<span style=\"font-variant:small-caps\">Ultimate Büchi Automizer</span> is available via a web interface. Analyising the termination of programs in C has some limitations. We use a theorem prover that does not support non-linear arithmetic and therefore the built-in tool <a href=\"./?ui=tool&amp;tool=lasso_ranker\">LassoRanker</a> can only provide linear ranking functions.",
+      "link_deco": "true",
+      "button": "Open interface"
+    },
+    {
+      "title": "commandline version",
+      "type": "text",
+      "html": "true",
+      "content": "Ultimate Büchi Automizer and the built-in tool <a href=\"./?ui=tool&amp;tool=lasso_ranker\">LassoRanker</a> are in heavy development. A recent version is available on request, please contact <a href=\"http://swt.informatik.uni-freiburg.de/staff/heizmann\">Matthias Heizmann</a>.",
+      "link_deco": "true"
+    },
+    {
+      "title": "commandline version (CAV 2014 submission)",
+      "type": "text",
+      "html": "true",
+      "content": "The <a href=\"cav2014/UltimateCommandline.zip\">commandline version</a> that was used for the evaluation in our CAV 2014 submission is available. This version runs on x86-64 linux machines and has some limitations. In our evaluation we showed the potential ouf our method to prove termination of a general program while using only simple termination arguments for lasso-shaped traces. Therefore, we restricted the built-in tool <a href=\"./?ui=tool&amp;tool=lasso_ranker\">LassoRanker</a> to linear ranking functions.",
+      "link_deco": "true"
+    },
+    {
+      "title": "commandline version (SV-COMP 2014)",
+      "type": "text",
+      "html": "true",
+      "content": "The <a href=\"svcomp2014/UltimateCommandline.zip\">commandline version</a> that was our competition candidate for the demonstration category on termination at the <a href=\"http://sv-comp.sosy-lab.org/2014/\">SV-COMP 2014</a>. This version runs on x86-64 Linux machines and requires that the <a href=\"http://z3.codeplex.com/\">theorem prover Z3</a> is installed. In this version, the built-in tool <a href=\"./?ui=tool&amp;tool=lasso_ranker\">LassoRanker</a> is limited to linear ranking functions and multiphase ranking functions.",
+      "link_deco": "true"
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "id": "automata_script",
+  "description": "<span style=\"font-variant:small-caps\">Ultimate Automata Script</span>!",
+  "user_info": "",
+  "animate": "true",
+  "html": "true",
+  "sections":
+  [
+    {
+      "title": "web interface",
+      "type": "interface",
+      "html": "true",
+      "content": "<span style=\"font-variant:small-caps\">Ultimate Automata Script</span> is available via a web interface.",
+      "link_deco": "false",
+      "button": "Open interface"
+    }
+  ]
+}

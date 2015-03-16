@@ -9,19 +9,23 @@ Params:
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
 <%@ page trimDirectiveWhitespaces="true"%>
 <%@ page import="java.util.*"%>
-<%@ page import="de.uni_freiburg.informatik.ultimate.website.WebToolchain"%>
+<%@ page
+	import="de.uni_freiburg.informatik.ultimate.website.WebToolchain"%>
 <%@ page import="de.uni_freiburg.informatik.ultimate.website.Tasks"%>
 <%@ page import="de.uni_freiburg.informatik.ultimate.website.Worker"%>
 <%@ page import="de.uni_freiburg.informatik.ultimate.website.Example"%>
 <%@ page import="de.uni_freiburg.informatik.ultimate.website.Tool"%>
 <%@ page import="de.uni_freiburg.informatik.ultimate.website.Setting"%>
-<%@ page import="de.uni_freiburg.informatik.ultimate.website.toolchains.*"%>
+<%@ page
+	import="de.uni_freiburg.informatik.ultimate.website.toolchains.*"%>
 <%@ page import="java.text.DateFormat"%>
 <%@ page import="java.text.SimpleDateFormat"%>
 <%@ page import="java.io.BufferedReader"%>
 <%@ page import="java.io.InputStream"%>
 <%@ page import="java.io.InputStreamReader"%>
+<%@ page import="java.io.IOException"%>
 <%@ page import="java.net.HttpURLConnection"%>
+<%@ page import="java.net.URLConnection"%>
 <%@ page import="java.net.URLEncoder"%>
 <%@ page import="java.net.URLDecoder"%>
 <%@ page import="java.net.URL"%>
@@ -34,12 +38,8 @@ Params:
 		URL page = new URL(address);
 		StringBuffer text = new StringBuffer();
 		HttpURLConnection conn = (HttpURLConnection) page.openConnection();
-		conn.connect();
-
-		InputStreamReader in = new InputStreamReader(
-				(InputStream) conn.getContent());
-		// InputStreamReader in = new InputStreamReader(conn.getInputStream());
-		BufferedReader buff = new BufferedReader(in);
+		BufferedReader buff = new BufferedReader(new InputStreamReader(
+				openConnectionCheckRedirects(conn)));
 
 		String line = new String();
 		while (true) {
@@ -50,6 +50,106 @@ Params:
 		}
 		buff.close();
 		return text.toString();
+	}
+	private InputStream openConnectionCheckRedirects(URLConnection c)
+			throws IOException {
+		boolean redir;
+		int redirects = 0;
+		InputStream in = null;
+		do {
+			if (c instanceof HttpURLConnection) {
+				((HttpURLConnection) c).setInstanceFollowRedirects(false);
+			}
+			// We want to open the input stream before getting headers
+			// because getHeaderField() et al swallow IOExceptions.
+			in = c.getInputStream();
+			redir = false;
+			if (c instanceof HttpURLConnection) {
+				HttpURLConnection http = (HttpURLConnection) c;
+				int stat = http.getResponseCode();
+				if (stat >= 300 && stat <= 307 && stat != 306
+						&& stat != HttpURLConnection.HTTP_NOT_MODIFIED) {
+					// we follow redirects in certain cases. For convenience, here is the Wikipedia cutnpaste
+					/*
+					300 Multiple Choices
+					Indicates multiple options for the resource that the client may follow. 
+					It, for instance, could be used to present different format options for video, 
+					list files with different extensions, or word sense disambiguation.
+					
+					301 Moved Permanently
+					This and all future requests should be directed to the given URI.
+					
+					302 Found
+					This is an example of industry practice contradicting the standard. 
+					The HTTP/1.0 specification (RFC 1945) required the client to perform a 
+					temporary redirect (the original describing phrase was "Moved Temporarily"),
+					[6] but popular browsers implemented 302 with the functionality of a 303 See Other. 
+					Therefore, HTTP/1.1 added status codes 303 and 307 to distinguish between the 
+					two behaviours.[7] However, some Web applications and frameworks use the 302 
+					status code as if it were the 303.[8]
+					
+					303 See Other (since HTTP/1.1)
+					The response to the request can be found under another URI using a GET method. 
+					When received in response to a POST (or PUT/DELETE), it should be assumed that 
+					the server has received the data and the redirect should be issued with a separate 
+					GET message.
+					
+					304 Not Modified
+					Indicates that the resource has not been modified since the version specified 
+					by the request headers If-Modified-Since or If-None-Match. This means that there 
+					is no need to retransmit the resource, since the client still has a 
+					previously-downloaded copy.
+					
+					305 Use Proxy (since HTTP/1.1)
+					The requested resource is only available through a proxy, 
+					whose address is provided in the response. Many HTTP clients 
+					(such as Mozilla[9] and Internet Explorer) do not correctly handle responses with 
+					this status code, primarily for security reasons.[10]
+					
+					306 Switch Proxy
+					No longer used. 
+					Originally meant "Subsequent requests should use the specified proxy."[11]
+					
+					307 Temporary Redirect (since HTTP/1.1)
+					In this case, the request should be repeated with another URI; 
+					however, future requests should still use the original URI. 
+					In contrast to how 302 was historically implemented, the request method is not 
+					allowed to be changed when reissuing the original request. For instance, a POST 
+					request should be repeated using another POST request.[12]
+					 */
+
+					URL base = http.getURL();
+					String loc = http.getHeaderField("Location");
+					URL target = null;
+					if (loc != null) {
+						target = new URL(base, loc);
+					}
+					http.disconnect();
+					// Redirection should be allowed only for HTTP and HTTPS
+					// and should be limited to 5 redirections at most.
+					if (target == null
+							|| !(target.getProtocol().equals("http") || target
+									.getProtocol().equals("https"))
+							|| redirects >= 5) {
+						String errorMsg = "";
+						if (target == null) {
+							errorMsg = "Target is null";
+						} else if (redirects >= 5) {
+							errorMsg = "There are more than 5 redirects";
+						} else {
+							errorMsg = "The redirect points to an illegal protocol: "
+									+ target.getProtocol();
+						}
+						throw new IOException("Illegal redirect: " + errorMsg);
+					}
+					redir = true;
+					c = target.openConnection();
+					System.out.println("Followed redirect to " + target);
+					redirects++;
+				}
+			}
+		} while (redir);
+		return in;
 	}%>
 
 <%
@@ -102,29 +202,31 @@ Params:
    * fetching JSON data as tool-page
    */
   String url = "";
-  String filename = URLEncoder.encode(tool, "UTF-8");
+//   String filename = URLEncoder.encode(tool, "UTF-8");
   
   if (ui.equals("home")){
-	// setting home page url
-	  url = "http://127.0.0.1:8081/WebsiteNew/json/home.json";
-	   //url = request.getScheme() +"://" + request.getServerName() + request.getContextPath() + "/json/home.json";
+	  // setting home page url
+// 	  url = "http://127.0.0.1:8081/WebsiteNew/json/home.json";
+	  url = request.getScheme() +"://" + request.getServerName() + request.getContextPath() + "/json/home.json";
 	  //url = request.getContextPath() + "/json/home.json";
   } else if(ui.equals("tool") && worker.containsKey(tool) 
 		  && !(null == worker.get(tool).getContentURL() || worker.get(tool).getContentURL().isEmpty())){
 	// getting tool page URL from worker
-	    url = worker.get(tool).getContentURL();
+    url = worker.get(tool).getContentURL();
   } else {
 	// using standard URL
-	  url = "http://ultimate.informatik.uni-freiburg.de/contents/" + filename + ".json";
+	url = request.getScheme() +"://" + request.getServerName() + request.getContextPath() + "/json/"+tool+".json";
+// 	  url = "http://ultimate.informatik.uni-freiburg.de/contents/" + filename + ".json";
   }
   System.out.println("Requesting URL "+url);
-  System.out.println(request.getScheme() +"://" + request.getServerName() + request.getContextPath() + "/json/home.json");
 
   String str = "";
   try{ 
 	  str = getData(url); 
   }
-  catch (Exception e) { 
+  catch (Exception e) {
+	  System.out.println("Exception while getting URL "+url);
+	  System.out.println(e);
 	  str = "{ \"description\": \"Error fetching JSON.  ("+URLDecoder.decode(url, "UTF-8")+")\" }"; 
   }
 
@@ -166,10 +268,8 @@ Params:
 	href="font/stylesheet.css" charset="utf-8">
 
 
-<script type="text/javascript" charset="utf-8"
-	src="./js/jquery.min.js"></script>
-<script type="text/javascript" charset="utf-8"
-	src="./js/md5.js"></script>
+<script type="text/javascript" charset="utf-8" src="./js/jquery.min.js"></script>
+<script type="text/javascript" charset="utf-8" src="./js/md5.js"></script>
 <script type="text/javascript" charset="utf-8"
 	src="./js/transfer.jsp?tool=<c:out value="${tool}" default=""/>"></script>
 <script type="text/javascript" charset="utf-8" src="./js/ace-min/ace.js"></script>
@@ -251,7 +351,8 @@ Params:
 					</c:when>
 					<c:when test="${showAll && multipleTools}">
 						<div class="int breadcrumb button spinner visible font-light"
-							id="task" style="display: none;" data-default-val="choose language">
+							id="task" style="display: none;"
+							data-default-val="choose language">
 							<div class="label">choose language</div>
 							<div class="box font-average"></div>
 						</div>

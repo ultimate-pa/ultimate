@@ -1,0 +1,46 @@
+{
+  "id": "trace_abstraction",
+  "description": "<span style=\"font-variant:small-caps\">Ultimate Automizer</span> is a software model checker that implements an approach based on automata. It uses the <span style=\"font-variant:small-caps\">Ultimate</span> Automata Library (website available soon).",
+  "user_info": "",
+  "animate": "true",
+  "html": "true",
+  "sections":
+  [
+    {
+      "title": "web interface",
+      "type": "interface",
+      "html": "true",
+      "content": "<span style=\"font-variant:small-caps\">Ultimate Automizer</span> is available via a web interface, in which you can verify C programs.",
+      "link_deco": "false",
+      "button": "Open interface"
+    },
+    {
+      "title": "commandline version",
+      "type": "text",
+      "html": "true",
+      "content": "A <a href=\"https://ultimate.informatik.uni-freiburg.de/downloads/svcomp2015/UltimateAutomizer.zip\">commandline version</a> of Ultimate Automizer is available. This version runs on x86-64 linux machines and is our candiate for the SV-COMP 2015.",
+      "link_deco": "true"
+    },
+    {
+      "title": "commandline version SV-COMP",
+      "type": "text",
+      "html": "true",
+      "content": "With a preliminary version of Ultimate Automizer we participated in the <a href=\"http://sv-comp.sosy-lab.org/2013/\">SV-COMP 2013</a>. We will also partipate in the <a href=\"http://sv-comp.sosy-lab.org/2014/\">SV-COMP 2014</a>.",
+      "link_deco": "true"
+    },
+    {
+      "title": "publications",
+      "type": "list",
+      "html": "true",
+      "content": "",
+      "list":
+      [
+        "Matthias Heizmann, Jochen Hoenicke, Andreas Podelski. <a href=\"http://dx.doi.org/10.1007/978-3-642-39799-8_2\">Software Model Checking for People Who Love Automata. CAV 2013:36-52</a>.",
+        "Matthias Heizmann, Jürgen Christ, Daniel Dietsch, Evren Ermis, Jochen Hoenicke, Markus Lindenmann, Alexander Nutz, Christian Schilling, Andreas Podelski. <a href=\"http://dx.doi.org/10.1007/978-3-642-36742-7_53\">Ultimate Automizer with SMTInterpol - (Competition Contribution). TACAS 2013:641-643</a>.",
+        "Matthias Heizmann, Jochen Hoenicke, Andreas Podelski. <a href=\"http://doi.acm.org/10.1145/1706299.1706353\">Nested interpolants. POPL 2010:471-482</a>.",
+        "Matthias Heizmann, Jochen Hoenicke, Andreas Podelski. <a href=\"http://dx.doi.org/10.1007/978-3-642-03237-0_7\">Refinement of Trace Abstraction. SAS 2009:69-85</a>."
+      ],
+      "link_deco": "true"
+    }
+  ]
+}

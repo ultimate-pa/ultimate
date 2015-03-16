@@ -291,6 +291,10 @@ public class Worker {
 	 * 
 	 */
 	public static String toKey(String name) {
-		return name.toLowerCase().replaceAll("\\s+","_");
+		return name.toLowerCase()
+				.replaceAll("\\s+","_")
+				.replaceAll("ü", "ue")
+				.replaceAll("ö", "oe")
+				.replaceAll("ä", "ae");
 	}
 }
