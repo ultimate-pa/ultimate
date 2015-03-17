@@ -52,8 +52,13 @@ public class Svcomp_Reach_PreciseMemoryModel extends AbstractTraceAbstractionTes
 //		new DirectoryFileEndingsPair("examples/svcomp/ssh/", new String[]{ ".c" }) ,
 	};
 
-	// Time out for each test case in milliseconds
-	private static long m_Timeout = 60 * 1000;
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public long getTimeout() {
+		return 60 * 1000;
+	}
 
 	private static final boolean m_AutomizerWithForwardPredicates = true;
 	private static final boolean m_AutomizerWithBackwardPredicates = false;
@@ -63,14 +68,12 @@ public class Svcomp_Reach_PreciseMemoryModel extends AbstractTraceAbstractionTes
 		if (m_AutomizerWithForwardPredicates) {
 			addTestCases("AutomizerC.xml", 
 					"automizer/ForwardPredicates_SvcompReachPreciseMM.epf", 
-					m_DirectoryFileEndingsPairs,
-					m_Timeout);
+					m_DirectoryFileEndingsPairs);
 		}
 		if (m_AutomizerWithBackwardPredicates) {
 			addTestCases("AutomizerC.xml", 
 					"automizer/BackwardPredicates_SvcompReachPreciseMM.epf", 
-					m_DirectoryFileEndingsPairs,
-					m_Timeout);
+					m_DirectoryFileEndingsPairs);
 		}
 		// return Util.firstN(super.createTestCases(), 3);
 		return super.createTestCases();

@@ -80,8 +80,11 @@ public class LTLChecker extends AbstractEvaluationTestSuite {
 		// return super.getDirectories();
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
-	protected int getTimeout() {
+	protected long getTimeout() {
 //		return 180 * 1000;
 		return 3 * 60 * 1000;
 	}

@@ -59,11 +59,6 @@ public abstract class AbstractEvaluationTestSuite extends AbstractModelCheckerTe
 	protected abstract void createTestCasesForReal(List<UltimateTestCase> testcases);
 
 	/**
-	 * @return Timeout for each test case in milliseconds
-	 */
-	protected abstract int getTimeout();
-
-	/**
 	 * Which directories relative to the Ultimate trunk should be used to run
 	 * the test? Per default, each subdirectory containing valid input files
 	 * represents a category. You can overwrite
@@ -104,7 +99,7 @@ public abstract class AbstractEvaluationTestSuite extends AbstractModelCheckerTe
 	protected void addTestCasesFixed(String toolchain, String setting, List<UltimateTestCase> testcases) {
 		// this method collects all wanted testcases and uses mTestCases as
 		// cache
-		addTestCases(toolchain, setting, getDirectories(), getFileEndings(), getTimeout());
+		addTestCases(toolchain, setting, getDirectories(), getFileEndings());
 		// this method clears mTestcases and adds the real selection to the
 		// testcases list
 		limitTestFiles(testcases);

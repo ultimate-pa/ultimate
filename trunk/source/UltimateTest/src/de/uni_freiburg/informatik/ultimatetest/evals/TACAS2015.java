@@ -4,7 +4,11 @@ import de.uni_freiburg.informatik.ultimatetest.evals.ColumnDefinition.Aggregate;
 
 public abstract class TACAS2015 extends AbstractEvaluationTestSuite {
 
-	protected int getTimeout() {
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	protected long getTimeout() {
 		return 300 * 1000;
 	}
 

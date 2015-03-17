@@ -17,8 +17,13 @@ public class QuantifierFolderTest extends
 		"examples/programs/quantifier/regression" 
 		};
 	
-	// Time out for each test case in milliseconds
-	private static int m_Timeout = 5000;
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public long getTimeout() {
+		return 10 * 1000;
+	}
 
 	private static final boolean s_Boogie = true;
 	private static final boolean s_C = !true;
@@ -30,20 +35,14 @@ public class QuantifierFolderTest extends
 					"AutomizerBpl.xml",
 					"automizer/ForwardPredicates.epf",
 				    m_Directories,
-				    new String[] {".bpl"},
-//				    "Automizer via ForwardPredicates",
-//				    "Boogie",
-				    m_Timeout);
+				    new String[] {".bpl"});
 		} 
 		if (s_C) {
 			addTestCases(
 					"AutomizerC.xml",
 					"automizer/ForwardPredicates.epf",
 				    m_Directories,
-				    new String[] {".c", ".i"},
-//				    "Automizer via ForwardPredicates",
-//				    "C",
-				    m_Timeout);
+				    new String[] {".c", ".i"});
 		}
 		return super.createTestCases();
 	}

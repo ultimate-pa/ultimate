@@ -26,8 +26,11 @@ public class TACAS2015AlgoComparisonArray extends TACAS2015 {
 //		addTestCasesFixed("CodeCheckNoBE-C.xml", "TACASInterpolation2015/Kojak-Princess.epf", testcases);
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
-	protected int getTimeout() {
+	protected long getTimeout() {
 		return 60 * 1000;
 	}
 

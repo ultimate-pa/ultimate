@@ -40,8 +40,11 @@ public class TraceAbstractionWithAbstractInterpretation extends AbstractEvaluati
 		// @formatter:on
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
-	protected int getTimeout() {
+	protected long getTimeout() {
 		return 45 * 1000;
 		// return 20 * 60 * 1000;
 	}

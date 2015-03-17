@@ -30,8 +30,14 @@ public class BuchiAutomizerTemplateBenchmarkMode extends
 //		"examples/termination/AProVE"
 	};
 	
-	// Time out for each test case in milliseconds
-	private static int m_Timeout = 120 * 1000;
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public long getTimeout() {
+		return 120 * 1000;
+	}
+
 
 	private static String s_LargeBlockEncoding = "buchiAutomizer/templateBenchmarkLBE.epf";
 	private static String s_MediumBlockEncoding = "buchiAutomizer/templateBenchmarkBE.epf";
@@ -60,14 +66,12 @@ public class BuchiAutomizerTemplateBenchmarkMode extends
 			"BuchiAutomizerBplWithBlockEncoding.xml",
 			s_Setting,
 		    m_Directories,
-		    new String[] {".bpl"},
-		    m_Timeout);
+		    new String[] {".bpl"});
 		addTestCases(
 			"BuchiAutomizerCWithBlockEncoding.xml",
 			s_Setting,
 			m_Directories,
-			new String[] {".c"},
-			m_Timeout);
+			new String[] {".c"});
 		return super.createTestCases();
 	}
 }

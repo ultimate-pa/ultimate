@@ -27,8 +27,13 @@ public class InliningTest extends
 	private static final boolean m_TraceAbstractionBoogieInline = true;
 	private static final boolean m_TraceAbstractionC = false;
 	private static final boolean m_TraceAbstractionCInline = !true;
-	// Time out for each test case in milliseconds
-	private final static int m_Timeout = 10 * 1000;
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public long getTimeout() {
+		return 10 * 1000;
+	}
 	
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
@@ -37,32 +42,28 @@ public class InliningTest extends
 					"AutomizerBpl.xml",
 					"automizer/ForwardPredicates.epf",
 				    m_Directories,
-				    new String[] {".bpl"},
-				    m_Timeout);
+				    new String[] {".bpl"});
 		}
 		if (m_TraceAbstractionBoogieInline) {
 			addTestCases(
 					"AutomizerBplInline.xml",
 					"automizer/ForwardPredicates.epf",
 				    m_Directories,
-				    new String[] {".bpl"},
-				    m_Timeout);
+				    new String[] {".bpl"});
 		}
 		if (m_TraceAbstractionC) {
 			addTestCases(
 					"AutomizerC.xml",
 					"automizer/ForwardPredicates.epf",
 				    m_Directories,
-				    new String[] {".c", ".i"},
-				    m_Timeout);
+				    new String[] {".c", ".i"});
 		}
 		if (m_TraceAbstractionCInline) {
 			addTestCases(
 					"AutomizerCInline.xml",
 					"automizer/ForwardPredicates.epf",
 				    m_Directories,
-				    new String[] {".c", ".i"},
-				    m_Timeout);
+				    new String[] {".c", ".i"});
 		} 
 		return super.createTestCases();
 	}

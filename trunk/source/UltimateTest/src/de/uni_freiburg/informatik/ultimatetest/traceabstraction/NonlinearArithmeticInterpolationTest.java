@@ -23,8 +23,13 @@ public class NonlinearArithmeticInterpolationTest extends
 	};
 
 	
-	// Time out for each test case in milliseconds
-	private static int m_Timeout = 900 * 1000;
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public long getTimeout() {
+		return 900 * 1000;
+	}
 
 	private static final boolean m_AutomizerWithForwardPredicates = true;
 	
@@ -34,13 +39,11 @@ public class NonlinearArithmeticInterpolationTest extends
 			addTestCases(
 					"AutomizerC.xml",
 					"automizer/nonlinearArithmetic/svComp-64bit-memsafety-Automizer.epf",
-					m_DirectoryFileEndingsPairsMemsafety,
-				    m_Timeout);
+					m_DirectoryFileEndingsPairsMemsafety);
 			addTestCases(
 					"AutomizerC.xml",
 					"automizer/nonlinearArithmetic/svComp-64bit-precise-Automizer.epf",
-					m_DirectoryFileEndingsPairsReach,
-				    m_Timeout);
+					m_DirectoryFileEndingsPairsReach);
 		}
 		return super.createTestCases();
 	}

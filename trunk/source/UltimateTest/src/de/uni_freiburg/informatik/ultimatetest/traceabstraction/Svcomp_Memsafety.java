@@ -20,8 +20,13 @@ public class Svcomp_Memsafety extends
 		"examples/svcomp/memory-alloca/"
 		};
 	
-	// Time out for each test case in milliseconds
-	private static int m_Timeout = 60 * 1000;
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public long getTimeout() {
+		return 60 * 1000;
+	}
 
 	private static final boolean m_AutomizerWithForwardPredicates = true;
 	private static final boolean m_AutomizerWithBackwardPredicates = !true;
@@ -33,16 +38,14 @@ public class Svcomp_Memsafety extends
 					"AutomizerC.xml",
 					"automizer/ForwardPredicates_SvcompMemsafety.epf",
 				    m_Directories,
-				    new String[] {".i"},
-				    m_Timeout);
+				    new String[] {".i"});
 		}
 		if (m_AutomizerWithForwardPredicates) {
 			addTestCases(
 					"AutomizerC.xml",
 					"automizer/ForwardPredicates_SvcompMemsafetyConservative.epf",
 				    m_Directories,
-				    new String[] {".i"},
-				    m_Timeout);
+				    new String[] {".i"});
 		}
 //		if (m_AutomizerWithForwardPredicates) {
 //			addTestCases(
@@ -65,16 +68,14 @@ public class Svcomp_Memsafety extends
 					"AutomizerCWithBlockEncoding.xml",
 					"automizer/ForwardPredicates_SvcompMemsafetySeqbe.epf",
 				    m_Directories,
-				    new String[] {".i"},
-				    m_Timeout);
+				    new String[] {".i"});
 		}
 		if (m_AutomizerWithForwardPredicates) {
 			addTestCases(
 					"AutomizerCWithBlockEncoding.xml",
 					"automizer/ForwardPredicates_SvcompMemsafetySeqbeConservative.epf",
 				    m_Directories,
-				    new String[] {".i"},
-				    m_Timeout);
+				    new String[] {".i"});
 		}
 //		if (m_AutomizerWithForwardPredicates) {
 //			addTestCases(
@@ -89,8 +90,7 @@ public class Svcomp_Memsafety extends
 					"AutomizerC.xml",
 					"automizer/BackwardPredicates_SvcompMemsafety.epf",
 				    m_Directories,
-				    new String[] {".c", ".i"},
-				    m_Timeout);
+				    new String[] {".c", ".i"});
 		}
 		return super.createTestCases();
 	}

@@ -51,8 +51,13 @@ public class InliningTest_Svcomp_Reach_PreciseMemoryModel extends AbstractTraceA
 		
 	};
 
-	// Time out for each test case in milliseconds
-	private static long m_Timeout = 60 * 1000;
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public long getTimeout() {
+		return 60 * 1000;
+	}
 
 	private static final boolean m_AutomizerWithInlining = true;
 	private static final boolean m_AutomizerWithoutInlining = false;
@@ -62,14 +67,12 @@ public class InliningTest_Svcomp_Reach_PreciseMemoryModel extends AbstractTraceA
 		if (m_AutomizerWithInlining) {
 			addTestCases("AutomizerCInline.xml", 
 					"automizer/ForwardPredicates_SvcompReachPreciseMM.epf", 
-					m_DirectoryFileEndingsPairs,
-					m_Timeout);
+					m_DirectoryFileEndingsPairs);
 		}
 		if (m_AutomizerWithoutInlining) {
 			addTestCases("AutomizerC.xml", 
 					"automizer/ForwardPredicates_SvcompReachPreciseMM.epf", 
-					m_DirectoryFileEndingsPairs,
-					m_Timeout);
+					m_DirectoryFileEndingsPairs);
 		}
 		// return Util.firstN(super.createTestCases(), 3);
 		return super.createTestCases();

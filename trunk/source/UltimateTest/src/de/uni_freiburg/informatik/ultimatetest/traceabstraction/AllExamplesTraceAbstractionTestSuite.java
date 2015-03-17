@@ -15,8 +15,13 @@ public class AllExamplesTraceAbstractionTestSuite extends
 		AbstractTraceAbstractionTestSuite {
 	private static final String[] m_Directories = { "examples/programs/" };
 	
-	// Time out for each test case in milliseconds
-	private static int m_Timeout = 20000;
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public long getTimeout() {
+		return 20 * 1000;
+	}
 
 	private static final boolean m_TraceAbstractionWithForwardPredicates = true;
 	private static final boolean m_TraceAbstractionWithBackwardPredicates = true;
@@ -30,40 +35,28 @@ public class AllExamplesTraceAbstractionTestSuite extends
 					"AutomizerBpl.xml",
 					"automizer/ForwardPredicates.epf",
 				    m_Directories,
-				    new String[] {".bpl"},
-//				    "Trace Abstraction via Forward Predicates (SP)",
-//				    "BoogieFilesForwardPredicates",
-				    m_Timeout);
+				    new String[] {".bpl"});
 		} 
 		if (m_TraceAbstractionWithBackwardPredicates) {
 			addTestCases(
 					"AutomizerBpl.xml",
 					"automizer/BackwardPredicates.epf",
 				    m_Directories,
-				    new String[] {".bpl"},
-//				    "Trace Abstraction via Backward Predicates (WP)",
-//				    "BoogieFilesBackwardPredicates",
-				    m_Timeout);
+				    new String[] {".bpl"});
 		}
 		if (m_TraceAbstractionCWithForwardPredicates) {
 			addTestCases(
 					"AutomizerC.xml",
 					"automizer/ForwardPredicates.epf",
 				    m_Directories,
-				    new String[] {".c", ".i"},
-//				    "Trace Abstraction via Forward Predicates (SP)",
-//				    "CFilesForwardPredicates",
-				    m_Timeout);
+				    new String[] {".c", ".i"});
 		}
 		if (m_TraceAbstractionCWithBackwardPredicates) {
 			addTestCases(
 					"AutomizerC.xml",
 					"automizer/BackwardPredicates.epf",
 				    m_Directories,
-				    new String[] {".c", ".i"},
-//				    "Trace Abstraction via Backward Predicates (WP)",
-//				    "CFilesBackwardPredicates",
-				    m_Timeout);
+				    new String[] {".c", ".i"});
 		}
 		return super.createTestCases();
 	}

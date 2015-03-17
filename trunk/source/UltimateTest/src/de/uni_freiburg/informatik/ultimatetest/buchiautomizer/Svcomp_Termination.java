@@ -21,8 +21,14 @@ public class Svcomp_Termination extends AbstractBuchiAutomizerTestSuite {
 		new DirectoryFileEndingsPair("examples/svcomp/termination-numeric/", new String[]{ ".c" }) ,
 	};
 
-	// Time out for each test case in milliseconds
-	private static long m_Timeout = 60 * 1000;
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public long getTimeout() {
+		return 60 * 1000;
+	}
+
 
 	private static final boolean s_UseTasimp = true;
 	private static final String s_TasimpSetting = "buchiAutomizer/staged300Forward-Z3-Tasimp.epf";
@@ -32,8 +38,7 @@ public class Svcomp_Termination extends AbstractBuchiAutomizerTestSuite {
 		if (s_UseTasimp) {
 			addTestCases("BuchiAutomizerCWithBlockEncoding.xml", 
 					s_TasimpSetting, 
-					m_DirectoryFileEndingsPairs,
-					m_Timeout);
+					m_DirectoryFileEndingsPairs);
 		}
 		// return Util.firstN(super.createTestCases(), 3);
 		return super.createTestCases();

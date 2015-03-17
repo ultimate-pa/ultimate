@@ -15,8 +15,11 @@ public class SoundnessBugs extends AbstractBugTestSuite {
 		// "svcomp2015/svComp-32bit-simple-Automizer.epf", testcases);
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
-	protected int getTimeout() {
+	protected long getTimeout() {
 		// default: 300 * 1000
 		return super.getTimeout();
 	}

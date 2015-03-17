@@ -122,8 +122,11 @@ public class WitnessBugs extends AbstractBugTestSuite {
 		// end conttested
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
-	protected int getTimeout() {
+	protected long getTimeout() {
 		// default: 300 * 1000
 		return 900 * 1000;
 		// return super.getTimeout();

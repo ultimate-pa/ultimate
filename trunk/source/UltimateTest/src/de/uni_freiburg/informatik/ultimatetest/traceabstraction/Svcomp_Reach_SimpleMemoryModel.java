@@ -23,8 +23,13 @@ public class Svcomp_Reach_SimpleMemoryModel extends
 		"examples/svcomp/ssh/"
 		};
 	
-	// Time out for each test case in milliseconds
-	private static int m_Timeout = 60 * 1000;
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public long getTimeout() {
+		return 60 * 1000;
+	}
 
 	private static final boolean m_AutomizerWithForwardPredicates = true;
 	private static final boolean m_AutomizerWithBackwardPredicates = false;
@@ -36,20 +41,14 @@ public class Svcomp_Reach_SimpleMemoryModel extends
 					"AutomizerC.xml",
 					"automizer/ForwardPredicates_SvcompReachSimpleMM.epf",
 				    m_Directories,
-				    new String[] {".c", ".i"},
-//				    "Trace Abstraction via Forward Predicates (SP)",
-//				    "CFilesForwardPredicates",
-				    m_Timeout);
+				    new String[] {".c", ".i"});
 		}
 		if (m_AutomizerWithBackwardPredicates) {
 			addTestCases(
 					"AutomizerC.xml",
 					"automizer/BackwardPredicates_SvcompReachSimpleMM.epf",
 				    m_Directories,
-				    new String[] {".c", ".i"},
-//				    "Trace Abstraction via Backward Predicates (BP)",
-//				    "CFilesBackwardPredicates",
-				    m_Timeout);
+				    new String[] {".c", ".i"});
 		}
 		return super.createTestCases();
 	}

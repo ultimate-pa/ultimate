@@ -17,7 +17,11 @@ public abstract class AbstractBugTestSuite extends AbstractModelCheckerTestSuite
 
 	private IncrementalLogWithVMParameters mIncrementalLog;
 
-	protected int getTimeout() {
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	protected long getTimeout() {
 		return 300 * 1000;
 	}
 
@@ -33,7 +37,7 @@ public abstract class AbstractBugTestSuite extends AbstractModelCheckerTestSuite
 	protected abstract void fillTestCases();
 
 	protected void addTestCase(String toolchain, String settings, String input) {
-		addTestCase(toolchain, settings, input, getTimeout());
+		addTestCase(toolchain, settings, input);
 	}
 
 	@Override

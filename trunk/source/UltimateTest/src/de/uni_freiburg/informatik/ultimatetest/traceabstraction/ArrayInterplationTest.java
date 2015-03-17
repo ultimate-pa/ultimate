@@ -30,8 +30,13 @@ public class ArrayInterplationTest extends
 	private static final boolean m_TraceAbstractionCWithBackwardPredicates = false;
 	private static final boolean m_TraceAbstractionCWithForwardPredicates = true;		
 	private static final boolean m_TraceAbstractionCWithFPandBP = false;
-	// Time out for each test case in milliseconds
-	private final static int m_Timeout = 120 * 1000;
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public long getTimeout() {
+		return 120 * 1000;
+	}
 	
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
@@ -40,48 +45,42 @@ public class ArrayInterplationTest extends
 					"AutomizerBpl.xml",
 					"automizer/ForwardPredicates.epf",
 				    m_Directories,
-				    new String[] {".bpl"},
-				    m_Timeout);
+				    new String[] {".bpl"});
 		} 
 		if (m_TraceAbstractionBoogieWithBackwardPredicates) {
 			addTestCases(
 					"AutomizerBpl.xml",
 					"automizer/BackwardPredicates.epf",
 				    m_Directories,
-				    new String[] {".bpl"},
-				    m_Timeout);
+				    new String[] {".bpl"});
 		}
 		if (m_TraceAbstractionBoogieWithFPandBP) {
 			addTestCases(
 					"AutomizerBpl.xml",
 					"automizer/ForwardPredicatesAndBackwardPredicates.epf",
 				    m_Directories,
-				    new String[] {".bpl"},
-				    m_Timeout);
+				    new String[] {".bpl"});
 		}
 		if (m_TraceAbstractionCWithForwardPredicates) {
 			addTestCases(
 					"AutomizerC.xml",
 					"automizer/arrayInterpolationTest/ForwardPredicates.epf",
 				    m_Directories,
-				    new String[] {".c", ".i"},
-				    m_Timeout);
+				    new String[] {".c", ".i"});
 		}
 		if (m_TraceAbstractionCWithBackwardPredicates) {
 			addTestCases(
 					"AutomizerC.xml",
 					"automizer/BackwardPredicates.epf",
 				    m_Directories,
-				    new String[] {".c", ".i"},
-				    m_Timeout);
+				    new String[] {".c", ".i"});
 		}
 		if (m_TraceAbstractionCWithFPandBP) {
 			addTestCases(
 					"AutomizerC.xml",
 					"automizer/ForwardPredicatesAndBackwardPredicates.epf",
 				    m_Directories,
-				    new String[] {".c", ".i"},
-				    m_Timeout);
+				    new String[] {".c", ".i"});
 		}
 		return super.createTestCases();
 	}

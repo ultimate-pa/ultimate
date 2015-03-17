@@ -25,9 +25,14 @@ public class BuchiAutomizerBrainfuck extends
 //		"examples/termination/Brainfuck-terminating",
 	};
 	
-	// Time out for each test case in milliseconds
-	private static int m_Timeout = 10 * 1000;
-
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public long getTimeout() {
+		return 10 * 1000;
+	}
+	
 	private static final String s_LargeBlockEncodingSetting = "buchiAutomizer/staged300Forward-SMTInterpol-LBE.epf";
 	
 	@Override
@@ -36,8 +41,7 @@ public class BuchiAutomizerBrainfuck extends
 			"BuchiAutomizerBplWithBlockEncoding.xml",
 			s_LargeBlockEncodingSetting,
 			m_Directories,
-			new String[] {".bpl"},
-			m_Timeout);
+			new String[] {".bpl"});
 		return super.createTestCases();
 	}
 }

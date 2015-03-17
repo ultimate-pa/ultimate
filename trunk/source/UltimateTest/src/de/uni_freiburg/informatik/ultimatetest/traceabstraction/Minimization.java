@@ -18,8 +18,13 @@ public class Minimization extends
 		"examples/svcomp/recursive/",
 		};
 	
-	// Time out for each test case in milliseconds
-	private static int m_Timeout = 60000;
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public long getTimeout() {
+		return 60 * 1000;
+	}
 
 	private static final boolean s_Boogie_TreeInterpolants_MinimizeSevpa = true;
 	private static final boolean s_C_TreeInterpolants_MinimizeSevpa = true;
@@ -33,20 +38,14 @@ public class Minimization extends
 					"AutomizerBpl.xml",
 					"automizer/TreeInterpolants.epf",
 				    m_Directories,
-				    new String[] {".bpl"},
-//				    "Treeinterpolants MinimizeSevpa",
-//				    "Boogie",
-				    m_Timeout);
+				    new String[] {".bpl"});
 		} 
 		if (s_C_TreeInterpolants_MinimizeSevpa) {
 			addTestCases(
 					"AutomizerC.xml",
 					"automizer/TreeInterpolants.epf",
 				    m_Directories,
-				    new String[] {".c", ".i"},
-//				    "Treeinterpolants MinimizeSevpa",
-//				    "C",
-				    m_Timeout);
+				    new String[] {".c", ".i"});
 		}
 		
 		if (s_Boogie_TreeInterpolants_ShrinkNwa) {
@@ -54,20 +53,14 @@ public class Minimization extends
 					"AutomizerBpl.xml",
 					"automizer/TreeInterpolants_ShrinkNwa.epf",
 				    m_Directories,
-				    new String[] {".bpl"},
-//				    "Treeinterpolants ShrinkNwa",
-//				    "Boogie",
-				    m_Timeout);
+				    new String[] {".bpl"});
 		} 
 		if (s_C_TreeInterpolants_ShrinkNwa) {
 			addTestCases(
 					"AutomizerC.xml",
 					"automizer/TreeInterpolants_ShrinkNwa.epf",
 				    m_Directories,
-				    new String[] {".c", ".i"},
-//				    "Treeinterpolants ShrinkNwa",
-//				    "C",
-				    m_Timeout);
+				    new String[] {".c", ".i"});
 		}
 		return super.createTestCases();
 	}

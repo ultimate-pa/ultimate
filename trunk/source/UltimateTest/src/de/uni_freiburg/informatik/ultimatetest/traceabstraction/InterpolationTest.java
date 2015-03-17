@@ -32,8 +32,13 @@ public class InterpolationTest extends
 	};
 	
 	
-	// Time out for each test case in milliseconds
-	private static int m_Timeout = 10 * 1000;
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public long getTimeout() {
+		return 10 * 1000;
+	}
 
 	private static final boolean s_ForwardPredicates = true;
 	private static final boolean s_SMTInterpol = !true;
@@ -48,56 +53,48 @@ public class InterpolationTest extends
 					"AutomizerBpl.xml",
 					"automizer/interpolation/ForwardPredicates.epf",
 				    m_Directories,
-				    new String[] {".bpl"},
-				    m_Timeout);
+				    new String[] {".bpl"});
 			addTestCases(
 					"AutomizerC.xml",
 					"automizer/interpolation/ForwardPredicates.epf",
 				    m_Directories,
-				    new String[] {".i"},
-				    m_Timeout);
+				    new String[] {".i"});
 		}
 		if (s_SMTInterpol) {
 			addTestCases(
 					"AutomizerBpl.xml",
 					"automizer/interpolation/SMTInterpol.epf",
 				    m_Directories,
-				    new String[] {".bpl"},
-				    m_Timeout);
+				    new String[] {".bpl"});
 			addTestCases(
 					"AutomizerC.xml",
 					"automizer/interpolation/SMTInterpol.epf",
 				    m_Directories,
-				    new String[] {".c", ".i"},
-				    m_Timeout);
+				    new String[] {".c", ".i"});
 		} 
 		if (s_iZ3) {
 			addTestCases(
 					"AutomizerBpl.xml",
 					"automizer/interpolation/iZ3.epf",
 				    m_Directories,
-				    new String[] {".bpl"},
-				    m_Timeout);
+				    new String[] {".bpl"});
 			addTestCases(
 					"AutomizerC.xml",
 					"automizer/interpolation/iZ3.epf",
 				    m_Directories,
-				    new String[] {".c", ".i"},
-				    m_Timeout);
+				    new String[] {".c", ".i"});
 		}
 		if (s_Princess) {
 			addTestCases(
 					"AutomizerBpl.xml",
 					"automizer/interpolation/Princess.epf",
 				    m_Directories,
-				    new String[] {".bpl"},
-				    m_Timeout);
+				    new String[] {".bpl"});
 			addTestCases(
 					"AutomizerC.xml",
 					"automizer/interpolation/Princess.epf",
 				    m_Directories,
-				    new String[] {".i"},
-				    m_Timeout);
+				    new String[] {".i"});
 		} 
 		return super.createTestCases();
 	}

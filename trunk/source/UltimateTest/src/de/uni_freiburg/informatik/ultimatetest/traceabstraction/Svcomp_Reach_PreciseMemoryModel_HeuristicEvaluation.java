@@ -93,8 +93,13 @@ public class Svcomp_Reach_PreciseMemoryModel_HeuristicEvaluation extends
 		"automizer/ForwardPredicates_SvcompReachPreciseMM_Heuristic5.epf",
 	};
 	
-	// Time out for each test case in milliseconds
-	private static long m_Timeout = 60 * 1000;
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public long getTimeout() {
+		return 60 * 1000;
+	}
 	
 
 	@Override
@@ -102,8 +107,7 @@ public class Svcomp_Reach_PreciseMemoryModel_HeuristicEvaluation extends
 		for (String setting : m_Settings) {
 			addTestCases("AutomizerC.xml", 
 					setting, 
-					m_SVCOMP_Examples,
-					m_Timeout);
+					m_SVCOMP_Examples);
 		}
 		
 		for (String setting : m_Settings) {
@@ -111,16 +115,14 @@ public class Svcomp_Reach_PreciseMemoryModel_HeuristicEvaluation extends
 					"AutomizerBpl.xml",
 					setting,
 					m_UltimateRepository,
-				    new String[] {".bpl"},
-				    m_Timeout);
+				    new String[] {".bpl"});
 		}
 		for (String setting : m_Settings) {
 			addTestCases(
 					"AutomizerC.xml",
 					setting,
 					m_UltimateRepository,
-				    new String[] {".c", ".i"},
-				    m_Timeout);
+				    new String[] {".c", ".i"});
 		}
 		return super.createTestCases();
 	}

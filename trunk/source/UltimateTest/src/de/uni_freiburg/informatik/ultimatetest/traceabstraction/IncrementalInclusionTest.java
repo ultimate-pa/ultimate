@@ -77,10 +77,12 @@ public class IncrementalInclusionTest extends
 	private static final boolean m_C = !true;
 
 	/**
-	 * Time out for each test case in milliseconds.
-	 * This will override the timeout that is specified in the settings files.
+	 * {@inheritDoc}
 	 */
-	private final static int m_Timeout = 10 * 1000;
+	@Override
+	public long getTimeout() {
+		return 10 * 1000;
+	}
 	
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
@@ -90,16 +92,14 @@ public class IncrementalInclusionTest extends
 						"AutomizerBpl.xml",
 						setting,
 						m_Programs,
-						new String[] {".bpl"},
-						m_Timeout);
+						new String[] {".bpl"});
 			}
 			if (m_C) {
 				addTestCases(
 						"AutomizerC.xml",
 						setting,
 						m_Programs,
-						new String[] {".c", ".i"},
-						m_Timeout);
+						new String[] {".c", ".i"});
 			}
 		}
 		return super.createTestCases();

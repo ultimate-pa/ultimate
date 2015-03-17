@@ -43,8 +43,13 @@ public class Totalinterpolation extends
 	};
 	
 	
-	// Time out for each test case in milliseconds
-	private static int m_Timeout = 5 * 60 * 1000;
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public long getTimeout() {
+		return 5 * 60 * 1000;
+	}
 
 	private static final boolean m_Boogie = true;
 	private static final boolean m_C = true;
@@ -57,16 +62,14 @@ public class Totalinterpolation extends
 						"AutomizerBpl.xml",
 						setting,
 						m_Programs,
-						new String[] {".bpl"},
-						m_Timeout);
+						new String[] {".bpl"});
 			}
 			if (m_C) {
 				addTestCases(
 						"AutomizerC.xml",
 						setting,
 						m_Programs,
-						new String[] {".c", ".i"},
-						m_Timeout);
+						new String[] {".c", ".i"});
 			}
 		}
 		

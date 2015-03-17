@@ -25,8 +25,14 @@ public class BuchiAutomizerDefaultTests extends
 		"examples/termination/cooperatingT2",
 	};
 	
-	// Time out for each test case in milliseconds
-	private static int m_Timeout = 120 * 1000;
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public long getTimeout() {
+		return 120 * 1000;
+	}
+
 
 	private static final boolean s_UseMediumBlockEncoding = !false;
 	private static final String s_MediumBlockEncodingSetting = "buchiAutomizer/staged300Forward-Z3.epf";
@@ -45,42 +51,36 @@ public class BuchiAutomizerDefaultTests extends
 					"BuchiAutomizerBplWithBlockEncoding.xml",
 					s_MediumBlockEncodingSetting,
 					m_Directories,
-					new String[] {".bpl"},
-					m_Timeout);
+					new String[] {".bpl"});
 			addTestCases(
 					"BuchiAutomizerCWithBlockEncoding.xml",
 					s_MediumBlockEncodingSetting,
 					m_Directories,
-					new String[] {".c"},
-					m_Timeout);
+					new String[] {".c"});
 		}
 		if (s_UseLargeBlockEncoding) {
 			addTestCases(
 					"BuchiAutomizerBplWithBlockEncoding.xml",
 					s_LargeBlockEncodingSetting,
 					m_Directories,
-					new String[] {".bpl"},
-					m_Timeout);
+					new String[] {".bpl"});
 			addTestCases(
 					"BuchiAutomizerCWithBlockEncoding.xml",
 					s_LargeBlockEncodingSetting,
 					m_Directories,
-					new String[] {".c"},
-					m_Timeout);
+					new String[] {".c"});
 		}
 		if (s_UseTasimp) {
 			addTestCases(
 					"BuchiAutomizerBplWithBlockEncoding.xml",
 					s_TasimpSetting,
 					m_Directories,
-					new String[] {".bpl"},
-					m_Timeout);
+					new String[] {".bpl"});
 			addTestCases(
 					"BuchiAutomizerCWithBlockEncoding.xml",
 					s_TasimpSetting,
 					m_Directories,
-					new String[] {".c"},
-					m_Timeout);
+					new String[] {".c"});
 		}
 		return super.createTestCases();
 	}

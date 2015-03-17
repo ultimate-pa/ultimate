@@ -22,8 +22,13 @@ public class CraigInterpolationTest extends
 //		"examples/svcomp/recursive/",
 	};
 	
-	// Time out for each test case in milliseconds
-	private static int m_Timeout = 100000;
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public long getTimeout() {
+		return 100 * 1000;
+	}
 
 	private static final boolean s_Boogie_TreeInterpolants = true;
 	private static final boolean s_C_TreeInterpolants = true;
@@ -38,16 +43,14 @@ public class CraigInterpolationTest extends
 					"AutomizerBpl.xml",
 					"automizer/TreeInterpolants.epf",
 				    m_Directories,
-				    new String[] {".bpl"},
-				    m_Timeout);
+				    new String[] {".bpl"});
 		} 
 		if (s_C_TreeInterpolants) {
 			addTestCases(
 					"AutomizerC.xml",
 					"automizer/TreeInterpolants.epf",
 				    m_Directories,
-				    new String[] {".c", ".i"},
-				    m_Timeout);
+				    new String[] {".c", ".i"});
 		}
 		
 		if (s_Boogie_NestedInterpolants) {
@@ -55,16 +58,14 @@ public class CraigInterpolationTest extends
 					"AutomizerBpl.xml",
 					"automizer/NestedInterpolants.epf",
 				    m_Directories,
-				    new String[] {".bpl"},
-				    m_Timeout);
+				    new String[] {".bpl"});
 		} 
 		if (s_C_NestedInterpolants) {
 			addTestCases(
 					"AutomizerC.xml",
 					"automizer/NestedInterpolants.epf",
 				    m_Directories,
-				    new String[] {".c", ".i"},
-				    m_Timeout);
+				    new String[] {".c", ".i"});
 		}
 		return super.createTestCases();
 	}
