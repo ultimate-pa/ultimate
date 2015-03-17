@@ -55,6 +55,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieDeclarations;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.Settings;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.RCFGBacktranslator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.RCFGBuilder;
@@ -93,7 +94,6 @@ public class CfgBuilder {
 	public static final String START_PROCEDURE = "ULTIMATE.start";
 	
 	
-	private final String m_LogicForExternalSolver;
 
 	/**
 	 * Root Node of this Ultimate model. I use this to store information that
@@ -128,108 +128,14 @@ public class CfgBuilder {
 		m_Backtranslator = backtranslator;
 		m_AddAssumeForEachAssert = (new UltimatePreferenceStore(RCFGBuilder.s_PLUGIN_ID))
 				.getBoolean(RcfgPreferenceInitializer.LABEL_ASSUME_FOR_ASSERT);
-		Solver solver = (new UltimatePreferenceStore(RCFGBuilder.s_PLUGIN_ID))
-				.getEnum(RcfgPreferenceInitializer.LABEL_Solver, Solver.class);
+
 
 		m_CodeBlockSize = (new UltimatePreferenceStore(RCFGBuilder.s_PLUGIN_ID)).getEnum(
 				RcfgPreferenceInitializer.LABEL_CodeBlockSize, CodeBlockSize.class);
 
-		switch (solver) {
-		case External_DefaultMode:
-		{
-			String command = (new UltimatePreferenceStore(RCFGBuilder.s_PLUGIN_ID))
-				.getString(RcfgPreferenceInitializer.LABEL_ExtSolverCommand);
-			m_Script = SolverBuilder.createExternalSolver(mServices, storage, command);
-		}
-		break;
-		case External_PrincessInterpolationMode:
-		{
-			String command = (new UltimatePreferenceStore(RCFGBuilder.s_PLUGIN_ID))
-				.getString(RcfgPreferenceInitializer.LABEL_ExtSolverCommand);
-			m_Script = SolverBuilder.createExternalSolverWithInterpolation(mServices, storage, command, ExternalInterpolator.PRINCESS);
-		}
-		break;
-		case External_Z3InterpolationMode:
-		{
-			String command = (new UltimatePreferenceStore(RCFGBuilder.s_PLUGIN_ID))
-				.getString(RcfgPreferenceInitializer.LABEL_ExtSolverCommand);
-			m_Script = SolverBuilder.createExternalSolverWithInterpolation(mServices, storage, command, ExternalInterpolator.IZ3);
-		}
-		break;
-		case Internal_SMTInterpol:
-		{
-			m_Script = SolverBuilder.createSMTInterpol(mServices, storage);
-			int timeoutMilliseconds = 30 * 1000;
-			m_Script.setOption(":timeout", String.valueOf(timeoutMilliseconds));
-		}
-		break;
-		default:
-			throw new AssertionError("unknown solver");
-		}
-		
-		m_LogicForExternalSolver = (new UltimatePreferenceStore(RCFGBuilder.s_PLUGIN_ID))
-				.getString(RcfgPreferenceInitializer.LABEL_ExtSolverLogic);
-		
-
-		boolean dumpToFile = (new UltimatePreferenceStore(RCFGBuilder.s_PLUGIN_ID))
-				.getBoolean(RcfgPreferenceInitializer.LABEL_DumpToFile);
-		if (dumpToFile) {
-			String directory = (new UltimatePreferenceStore(RCFGBuilder.s_PLUGIN_ID))
-					.getString(RcfgPreferenceInitializer.LABEL_Path);
-			directory += (directory.endsWith(System.getProperty("file.separator")) ? "" : System
-					.getProperty("file.separator"));
-			String filename;
-			{
-				filename = "";
-				if (unit.hasPayload()) {
-					if (unit.getPayload().hasLocation()) {
-						String pathAndFilename = unit.getPayload().getLocation().getFileName();
-						filename = (new File(pathAndFilename)).getName();
-					}
-				}
-			}
-			String fullFilename = directory + filename + ".smt2";
-			try {
-				m_Script = new LoggingScript(m_Script, fullFilename, true);
-				mLogger.info("Dumping SMT Script to " + new File(fullFilename).getAbsolutePath());
-			} catch (FileNotFoundException e) {
-				throw new AssertionError(e);
-			}
-		}
-		
-		m_Script.setOption(":produce-models", true);
-		switch (solver) {
-		case External_DefaultMode:
-			m_Script.setOption(":produce-unsat-cores", true);
-			m_Script.setLogic(m_LogicForExternalSolver);
-		break;
-		case External_PrincessInterpolationMode:
-		case External_Z3InterpolationMode:
-			m_Script.setOption(":produce-interpolants", true);
-			m_Script.setLogic(m_LogicForExternalSolver);
-		break;
-		case Internal_SMTInterpol:
-			m_Script.setOption(":produce-unsat-cores", true);
-			m_Script.setOption(":produce-interpolants", true);
-			m_Script.setOption(":interpolant-check-mode", true);
-			m_Script.setOption(":proof-transformation", "LU");
-			// m_Script.setOption(":proof-transformation", "RPI");
-			// m_Script.setOption(":proof-transformation", "LURPI");
-			// m_Script.setOption(":proof-transformation", "RPILU");
-			// m_Script.setOption(":verbosity", 0);
-			m_Script.setLogic("QF_AUFLIRA");
-		break;
-		default:
-			throw new AssertionError("unknown solver");
-		}
-
-		String advertising = System.lineSeparator() + "    SMT script generated on " + 
-				(new SimpleDateFormat("yyyy/MM/dd")).format(new Date()) + 
-				" by Ultimate. http://ultimate.informatik.uni-freiburg.de/" + 
-				System.lineSeparator();
-		m_Script.setInfo(":source",	new Identifier(advertising));
-		m_Script.setInfo(":smt-lib-version", "2.0");
-		m_Script.setInfo(":category", new QuotedObject("industrial"));
+		String pathAndFilename = unit.getPayload().getLocation().getFileName();
+		String filename = (new File(pathAndFilename)).getName();
+		m_Script = constructAndInitializeSolver(services, storage, filename);
 		
 		m_BoogieDeclarations = new BoogieDeclarations(unit, mLogger);
 		boolean blackHolesArrays = false;
@@ -239,6 +145,111 @@ public class CfgBuilder {
 		storage.putStorable(CodeBlockFactory.s_CodeBlockFactoryKeyInToolchainStorage, m_Cbf);
 
 	}
+
+	/**
+	 * @param services
+	 * @param storage
+	 * @param filename 
+	 */
+	private Script constructAndInitializeSolver(
+			IUltimateServiceProvider services, IToolchainStorage storage, String filename) {
+		Solver solver = (new UltimatePreferenceStore(RCFGBuilder.s_PLUGIN_ID))
+				.getEnum(RcfgPreferenceInitializer.LABEL_Solver, Solver.class);
+		final boolean useExternalSolver;
+		final String commandExternalSolver;
+		final int timeoutSmtInterpol;
+		final ExternalInterpolator externalInterpolator;
+		switch (solver) {
+		case External_DefaultMode:
+		{
+			useExternalSolver = true;
+			commandExternalSolver = (new UltimatePreferenceStore(RCFGBuilder.s_PLUGIN_ID))
+				.getString(RcfgPreferenceInitializer.LABEL_ExtSolverCommand);
+			timeoutSmtInterpol = -1;
+			externalInterpolator = null;
+		}
+		break;
+		case External_PrincessInterpolationMode:
+		{
+			useExternalSolver = true;
+			commandExternalSolver = (new UltimatePreferenceStore(RCFGBuilder.s_PLUGIN_ID))
+				.getString(RcfgPreferenceInitializer.LABEL_ExtSolverCommand);
+			timeoutSmtInterpol = -1;
+			externalInterpolator = ExternalInterpolator.PRINCESS;
+		}
+		break;
+		case External_Z3InterpolationMode:
+		{
+			useExternalSolver = true;
+			commandExternalSolver = (new UltimatePreferenceStore(RCFGBuilder.s_PLUGIN_ID))
+				.getString(RcfgPreferenceInitializer.LABEL_ExtSolverCommand);
+			timeoutSmtInterpol = -1;
+			externalInterpolator = ExternalInterpolator.IZ3;
+		}
+		break;
+		case Internal_SMTInterpol:
+		{
+			useExternalSolver = false;
+			commandExternalSolver = null;
+			timeoutSmtInterpol = 30 * 1000;
+			externalInterpolator = null;
+		}
+		break;
+		default:
+			throw new AssertionError("unknown solver");
+		}
+		
+		final boolean dumpSmtScriptToFile = (new UltimatePreferenceStore(RCFGBuilder.s_PLUGIN_ID))
+				.getBoolean(RcfgPreferenceInitializer.LABEL_DumpToFile);
+		String pathOfDumpedScript = null;
+		if (dumpSmtScriptToFile) {
+			pathOfDumpedScript = (new UltimatePreferenceStore(RCFGBuilder.s_PLUGIN_ID))
+					.getString(RcfgPreferenceInitializer.LABEL_Path);
+		}
+
+		Settings solverSettings = new Settings(useExternalSolver, 
+				commandExternalSolver, timeoutSmtInterpol, externalInterpolator, 
+				dumpSmtScriptToFile, pathOfDumpedScript, filename);
+		Script result = SolverBuilder.buildScript(mServices, storage, solverSettings);
+		
+		String logicForExternalSolver = (new UltimatePreferenceStore(RCFGBuilder.s_PLUGIN_ID))
+				.getString(RcfgPreferenceInitializer.LABEL_ExtSolverLogic);
+		result.setOption(":produce-models", true);
+		switch (solver) {
+		case External_DefaultMode:
+			result.setOption(":produce-unsat-cores", true);
+			result.setLogic(logicForExternalSolver);
+		break;
+		case External_PrincessInterpolationMode:
+		case External_Z3InterpolationMode:
+			result.setOption(":produce-interpolants", true);
+			result.setLogic(logicForExternalSolver);
+		break;
+		case Internal_SMTInterpol:
+			result.setOption(":produce-unsat-cores", true);
+			result.setOption(":produce-interpolants", true);
+			result.setOption(":interpolant-check-mode", true);
+			result.setOption(":proof-transformation", "LU");
+			// m_Script.setOption(":proof-transformation", "RPI");
+			// m_Script.setOption(":proof-transformation", "LURPI");
+			// m_Script.setOption(":proof-transformation", "RPILU");
+			// m_Script.setOption(":verbosity", 0);
+			result.setLogic("QF_AUFLIRA");
+		break;
+		default:
+			throw new AssertionError("unknown solver");
+		}
+
+		String advertising = System.lineSeparator() + "    SMT script generated on " + 
+				(new SimpleDateFormat("yyyy/MM/dd")).format(new Date()) + 
+				" by Ultimate. http://ultimate.informatik.uni-freiburg.de/" + 
+				System.lineSeparator();
+		result.setInfo(":source",	new Identifier(advertising));
+		result.setInfo(":smt-lib-version", "2.0");
+		result.setInfo(":category", new QuotedObject("industrial"));
+		return result;
+	}
+	
 
 	/**
 	 * Build a recursive control flow graph for an unstructured boogie program.
