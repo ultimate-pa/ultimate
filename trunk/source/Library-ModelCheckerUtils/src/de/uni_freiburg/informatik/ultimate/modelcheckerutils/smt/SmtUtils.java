@@ -18,6 +18,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvide
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
+import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -420,6 +421,20 @@ public class SmtUtils {
 	 */
 	public static Term less(Script script, Term lhs, Term rhs) {
 		return script.term("<", lhs, rhs);
+	}
+	
+	/**
+	 * Declare and return a new constant. A constant is a 0-ary application term.
+	 * 
+	 * @param name name of the resulting constant
+	 * @param sort the sort of the resulting constant
+	 * @return resulting constant as a ApplicationTerm
+	 * @throws SMTLIBException
+	 *             if declaration of constant fails, e.g. the name is already defined
+	 */
+	public static ApplicationTerm buildNewConstant(Script script, String name, String sortname) throws SMTLIBException {
+		script.declareFun(name, new Sort[0], script.sort(sortname));
+		return (ApplicationTerm) script.term(name);
 	}
 
 }

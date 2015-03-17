@@ -62,7 +62,7 @@ public class DefaultInvariantPatternProcessor implements
 		// construct new 0-ary function symbol
 		m_script.declareFun("coefficient", new Sort[0], m_script.sort("Real"));
 		// statt dessen lieber
-		Term zeroary = SMTSolver.newConstant(m_script, "coefficient", "Real");
+		Term zeroary = SmtUtils.buildNewConstant(m_script, "coefficient", "Real");
 		Term t1 = null;
 		Term t2 = null;
 		m_script.term("and", t1, t2);

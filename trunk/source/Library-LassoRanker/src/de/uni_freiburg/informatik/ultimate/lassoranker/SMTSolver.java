@@ -129,21 +129,5 @@ public class SMTSolver {
 		return path + File.separator + baseNamePrefix + "_" + constraintsName + ".smt2";
 	}
 
-	/**
-	 * Define a new constant
-	 * 
-	 * @param script
-	 *            SMT Solver
-	 * @param name
-	 *            name of the new constant
-	 * @param sort
-	 *            the sort of the variable
-	 * @return the new variable as a ApplicationTerm
-	 * @throws SMTLIBException
-	 *             if something goes wrong, e.g. the name is already defined
-	 */
-	public static ApplicationTerm newConstant(Script script, String name, String sortname) throws SMTLIBException {
-		script.declareFun(name, new Sort[0], script.sort(sortname));
-		return (ApplicationTerm) script.term(name);
-	}
+
 }

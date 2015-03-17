@@ -209,7 +209,7 @@ public class MotzkinTransformation extends InstanceCounting {
 		for (int i = 0; i < num_coefficients; ++i) {
 			LinearInequality li = m_inequalities.get(i);
 			if (needsMotzkinCoefficient(li)) {
-				Term coefficient = SMTSolver.newConstant(m_script,
+				Term coefficient = SmtUtils.buildNewConstant(m_script,
 						s_motzkin_prefix + this.getInstanceNumber() + "_" + i,
 						"Real");
 				m_coefficients[i] = coefficient;
