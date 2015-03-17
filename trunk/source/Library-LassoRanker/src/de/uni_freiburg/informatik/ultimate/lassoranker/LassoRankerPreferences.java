@@ -29,6 +29,8 @@ package de.uni_freiburg.informatik.ultimate.lassoranker;
 import java.io.File;
 import java.io.Serializable;
 
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.Settings;
+
 
 /**
  * Global preferences for LassoRanker.
@@ -144,5 +146,18 @@ public class LassoRankerPreferences implements Serializable {
 		sb.append("\nFilename of dumped script: ");
 		sb.append(this.baseNameOfDumpedScript);
 		return sb.toString();
+	}
+
+	/**
+	 * Construct Settings for building a solver. 
+	 * @param filenameDumpedScript basename (without path and file ending) of
+	 *  the SMT script that is dumped if dumpSmtSolverScript is set to true
+	 * @return a Settings object that allows us to build a new solver.
+	 */
+	public Settings getSolverConstructionSettings(String filenameDumpedScript) {
+		long timeoutSmtInterpol = 365 * 24 * 60 * 60 * 1000;
+		return new Settings(externalSolver, smt_solver_command, 
+				timeoutSmtInterpol , null, 
+				dumpSmtSolverScript, path_of_dumped_script, filenameDumpedScript);
 	}
 }
