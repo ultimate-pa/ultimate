@@ -21,17 +21,23 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Rcf
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootAnnot;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopBenchmarkGenerator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopBenchmarkType;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.Result;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionBenchmarks;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.Concurrency;
+import de.uni_freiburg.informatik.ultimate.result.BenchmarkResult;
 import de.uni_freiburg.informatik.ultimate.result.Check;
 import de.uni_freiburg.informatik.ultimate.result.CounterExampleResult;
 import de.uni_freiburg.informatik.ultimate.result.IResult;
 import de.uni_freiburg.informatik.ultimate.result.PositiveResult;
 import de.uni_freiburg.informatik.ultimate.result.TimeoutResultAtElement;
 import de.uni_freiburg.informatik.ultimate.result.UnprovableResult;
+import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
 
 /**
  * Auto-Generated Stub for the plug-in's Observer
@@ -71,7 +77,7 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 			errNodesOfAllProc.addAll(errNodeOfProc);
 		}
 
-		AbstractCegarLoop abstractCegarLoop;
+		BasicCegarLoop abstractCegarLoop;
 
 		String name = "AllErrorsAtOnce";
 		if (taPrefs.getConcurrency() == Concurrency.PETRI_NET) {
@@ -83,7 +89,13 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 		} else {
 			throw new IllegalArgumentException();
 		}
+		TraceAbstractionBenchmarks traceAbstractionBenchmark = new TraceAbstractionBenchmarks(rootAnnot);
 		Result result = abstractCegarLoop.iterate();
+		abstractCegarLoop.finish();
+		CegarLoopBenchmarkGenerator cegarLoopBenchmarkGenerator = abstractCegarLoop.getCegarLoopBenchmark();
+		cegarLoopBenchmarkGenerator.stop(CegarLoopBenchmarkType.s_OverallTime);
+		traceAbstractionBenchmark.aggregateBenchmarkData(cegarLoopBenchmarkGenerator);
+		reportBenchmark(traceAbstractionBenchmark);
 
 		switch (result) {
 		case SAFE:
@@ -206,6 +218,14 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 		UnprovableResult<RcfgElement, CodeBlock, Expression> uknRes = new UnprovableResult<RcfgElement, CodeBlock, Expression>(
 				Activator.s_PLUGIN_NAME, errorPP, mServices.getBacktranslationService(), pe);
 		reportResult(uknRes);
+	}
+	
+	private <T> void reportBenchmark(ICsvProviderProvider<T> benchmark) {
+		String shortDescription = "Ultimate Automizer benchmark data";
+		BenchmarkResult<T> res = new BenchmarkResult<T>(Activator.s_PLUGIN_NAME, shortDescription, benchmark);
+		// s_Logger.warn(res.getLongDescription());
+
+		reportResult(res);
 	}
 
 	private void reportResult(IResult res) {

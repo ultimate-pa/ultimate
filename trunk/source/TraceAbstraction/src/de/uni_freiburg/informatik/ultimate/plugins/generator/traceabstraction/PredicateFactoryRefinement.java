@@ -40,7 +40,7 @@ public class PredicateFactoryRefinement extends PredicateFactory {
 	
 	public IPredicate intersection(IPredicate p1, IPredicate p2) {
 		if (p1 instanceof IMLPredicate) {
-			assert m_SmtManager.isDontCare(p2);
+//			assert m_SmtManager.isDontCare(p2);
 			assert !m_Pref.computeHoareAnnotation();
 			return m_SmtManager.newMLDontCarePredicate(((IMLPredicate) p1).getProgramPoints());
 		}

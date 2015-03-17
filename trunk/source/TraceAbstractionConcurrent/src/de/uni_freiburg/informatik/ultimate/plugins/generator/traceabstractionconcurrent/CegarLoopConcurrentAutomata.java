@@ -134,7 +134,7 @@ public class CegarLoopConcurrentAutomata extends BasicCegarLoop {
 		IHoareTripleChecker htc = getEfficientHoareTripleChecker(m_Pref.getHoareTripleChecks(), 
 				m_SmtManager, m_ModGlobVarManager, m_TraceChecker.getPredicateUnifier());
 		mLogger.debug("Start constructing difference");
-		assert (oldAbstraction.getStateFactory() == m_InterpolAutomaton.getStateFactory());
+//		assert (oldAbstraction.getStateFactory() == m_InterpolAutomaton.getStateFactory());
 
 		IOpWithDelayedDeadEndRemoval<CodeBlock, IPredicate> diff;
 
@@ -176,6 +176,7 @@ public class CegarLoopConcurrentAutomata extends BasicCegarLoop {
 			super.writeAutomatonToFile(m_InterpolAutomaton, filename);
 		}
 
+		m_CegarLoopBenchmark.addEdgeCheckerData(htc.getEdgeCheckerBenchmark());
 		m_CegarLoopBenchmark.stop(CegarLoopBenchmarkType.s_AutomataDifference);
 
 		Minimization minimization = m_Pref.minimize();
