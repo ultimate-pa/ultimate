@@ -5,12 +5,14 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Random;
 
 import de.uni_freiburg.informatik.ultimatetest.decider.ITestResultDecider;
 import de.uni_freiburg.informatik.ultimatetest.util.Util;
 
 public abstract class AbstractModelCheckerTestSuite extends UltimateTestSuite {
 	protected List<UltimateTestCase> mTestCases = new ArrayList<UltimateTestCase>();
+	private long s_PseudorandomFileselectionSeed = 19120623;
 	private static final String mPathToSettings = "examples/settings/";
 	private static final String mPathToToolchains = "examples/toolchains/";
 	
@@ -84,7 +86,7 @@ public abstract class AbstractModelCheckerTestSuite extends UltimateTestSuite {
 		File settingsFile = new File(Util.getPathFromTrunk(mPathToSettings + settings));
 		Collection<File> testFiles = new ArrayList<File>();
 		for (String directory : directories) {
-			testFiles.addAll(getInputFiles(directory, fileEndings));
+			testFiles.addAll(getInputFiles(directory, fileEndings, Integer.MAX_VALUE));
 		}
 		addTestCases(toolchainFile, settingsFile, testFiles);
 	}
@@ -106,23 +108,44 @@ public abstract class AbstractModelCheckerTestSuite extends UltimateTestSuite {
 		Collection<File> testFiles = new ArrayList<File>();
 		for (DirectoryFileEndingsPair directoryFileEndingsPair : directoryFileEndingsPairs) {
 			testFiles.addAll(getInputFiles(directoryFileEndingsPair.getDirectory(),
-					directoryFileEndingsPair.getFileEndings()));
+					directoryFileEndingsPair.getFileEndings(), 
+					directoryFileEndingsPair.getLimit()));
 		}
 		addTestCases(toolchainFile, settingsFile, testFiles);
 	}
 
-	private Collection<File> getInputFiles(String directory, String[] fileEndings) {
-		return Util.getFiles(new File(Util.getPathFromTrunk(directory)), fileEndings);
+	/**
+	 * Get input files from directory. Do not take all files but only up to n 
+	 * pseudorandomly selected files.
+	 */
+	private Collection<File> getInputFiles(String directory, String[] fileEndings, int n) {
+		List<File> files = Util.getFiles(new File(Util.getPathFromTrunk(directory)), fileEndings);
+		if (n >= files.size()) {
+			return files;
+		} else {
+			Collections.shuffle(files, new Random(s_PseudorandomFileselectionSeed));
+			ArrayList<File> result = new ArrayList<>(files.subList(0, n - 1));
+			return result;
+		}
 	}
 
 	public static class DirectoryFileEndingsPair {
 		private final String m_Directory;
 		private final String[] m_FileEndings;
+		private final int m_Limit;
 
 		public DirectoryFileEndingsPair(String directory, String[] fileEndings) {
 			super();
 			m_Directory = directory;
 			m_FileEndings = fileEndings;
+			m_Limit = Integer.MAX_VALUE;
+		}
+		
+		public DirectoryFileEndingsPair(String directory, String[] fileEndings, int limit) {
+			super();
+			m_Directory = directory;
+			m_FileEndings = fileEndings;
+			m_Limit = limit;
 		}
 
 		public String getDirectory() {
@@ -131,6 +154,10 @@ public abstract class AbstractModelCheckerTestSuite extends UltimateTestSuite {
 
 		public String[] getFileEndings() {
 			return m_FileEndings;
+		}
+		
+		public int getLimit() {
+			return m_Limit;
 		}
 
 	}
