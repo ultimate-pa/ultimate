@@ -21,8 +21,8 @@ public class BuchiAutomizerBrainfuck extends
 //		"examples/programs/toy"
 //		"examples/termination/cooperatingT2/difficult/solved",
 //		"examples/termination/cooperatingT2/terminating",
-		"examples/termination/Brainfuck/nonterminating",
-//		"examples/termination/Brainfuck-terminating",
+//		"examples/termination/Brainfuck/nonterminating",
+		"examples/termination/Brainfuck-terminating",
 	};
 	
 	/**
@@ -33,7 +33,7 @@ public class BuchiAutomizerBrainfuck extends
 		return 10 * 1000;
 	}
 	
-	private static final String s_LargeBlockEncodingSetting = "buchiAutomizer/staged300Forward-SMTInterpol-LBE.epf";
+	private static final String s_LargeBlockEncodingSetting = "buchiAutomizer/staged300Forward-Z3-LBE.epf";
 	
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
