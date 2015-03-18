@@ -70,7 +70,7 @@ public final class CFGInvariantsGenerator {
 	public <IPT> Map<Location, IPredicate> generateInvariantsFromCFG(
 			final ControlFlowGraph cfg, final IPredicate precondition,
 			final IPredicate postcondition,
-			final IInvariantPatternProcessorFactory invPatternProcFactory) {
+			final IInvariantPatternProcessorFactory<IPT> invPatternProcFactory) {
 		final IInvariantPatternProcessor<IPT> processor = invPatternProcFactory
 				.produce(cfg, precondition, postcondition);
 
@@ -83,14 +83,16 @@ public final class CFGInvariantsGenerator {
 						transitions.size() + 2);
 
 		for (int round = 0; round < processor.getMaxRounds(); round++) {
-			logService.log(Level.INFO, "[CFGInvariants] Round " + round
-					+ " started");
-
 			// Die if we run into timeouts or are otherwise requested to cancel.
 			if (!pmService.continueProcessing()) {
 				throw new ToolchainCanceledException(
 						CFGInvariantsGenerator.class);
 			}
+			
+			// Start round
+			processor.startRound(round);
+			logService.log(Level.INFO, "[CFGInvariants] Round " + round
+					+ " started");
 
 			// Build pattern map
 			patterns.clear();
@@ -113,7 +115,7 @@ public final class CFGInvariantsGenerator {
 							+ " predicates.");
 
 			// Attempt to find a valid configuration
-			if (processor.findValidConfiguration(predicates, round)) {
+			if (processor.hasValidConfiguration(predicates, round)) {
 				logService.log(Level.INFO, "[CFGInvariants] Found valid "
 						+ "configuration in round " + round + ".");
 

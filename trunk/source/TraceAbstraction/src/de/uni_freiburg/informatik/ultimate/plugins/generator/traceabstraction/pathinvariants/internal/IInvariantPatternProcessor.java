@@ -11,10 +11,26 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pa
  * {@link ControlFlowGraph}, and solves the system of all corresponding
  * {@link InvariantTransitionPredicate}s.
  * 
+ * For each round, methods are invoked in the following order:
+ * <ol>
+ *   <li>{@link #startRound(int)}</li>
+ *   <li>
+ *     {@link #getInvariantPatternForLocation(Location, int)} for all locations
+ *   </li>
+ *   <li>{@link #hasValidConfiguration(Collection, int)}</li>
+ * </ol>
+ * 
  * @param <IPT>
  *            Invariant Pattern Type: Type used for invariant patterns
  */
 public interface IInvariantPatternProcessor<IPT> {
+	
+	/**
+	 * Called when a new round is entered.
+	 * 
+	 * @param round
+	 */
+	public void startRound(final int round);
 
 	/**
 	 * Returns an invariant pattern for the given location.
@@ -41,18 +57,18 @@ public interface IInvariantPatternProcessor<IPT> {
 	 * @return true if a valid configuration pattern has been found, false
 	 *         otherwise.
 	 */
-	public boolean findValidConfiguration(
+	public boolean hasValidConfiguration(
 			final Collection<InvariantTransitionPredicate<IPT>> predicates,
 			final int round);
 	
 	/**
 	 * Applies the configuration found with
-	 * {@link #findValidConfiguration(Collection, int)} to a given invariant
+	 * {@link #hasValidConfiguration(Collection, int)} to a given invariant
 	 * pattern.
 	 * 
 	 * The behaviour of this method is undefined, when the last call to
-	 * {@link #findValidConfiguration(Collection, int)} returned false or if
-	 * {@link #findValidConfiguration(Collection, int)} has not yet been called
+	 * {@link #hasValidConfiguration(Collection, int)} returned false or if
+	 * {@link #hasValidConfiguration(Collection, int)} has not yet been called
 	 * at all.
 	 * 
 	 * @param pattern the pattern to apply the configuration to

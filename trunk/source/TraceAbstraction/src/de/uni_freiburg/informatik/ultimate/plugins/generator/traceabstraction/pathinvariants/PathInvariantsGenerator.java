@@ -13,11 +13,8 @@ import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
 import de.uni_freiburg.informatik.ultimate.core.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.Settings;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
@@ -28,6 +25,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pa
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.ControlFlowGraph.Transition;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.IInvariantPatternProcessor;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.IInvariantPatternProcessorFactory;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.ILinearInequalityInvariantPatternStrategy;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.LinearInequalityPatternProcessorFactory;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.LocationIndependentLinearInequalityInvariantPatternStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.IInterpolantGenerator;
@@ -37,15 +37,37 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  * Represents a map of invariants to a run, that has been generated using a
  * {@link IInvariantPatternProcessor} on the run-projected CFG.
  */
-public class PathInvariantsGenerator implements IInterpolantGenerator {
-	
-	private final IUltimateServiceProvider m_Services;
-	private final IToolchainStorage m_Storage;
+public final class PathInvariantsGenerator implements IInterpolantGenerator {
 
 	private final NestedRun<CodeBlock, IPredicate> m_Run;
 	private final IPredicate m_Precondition;
 	private final IPredicate m_Postcondition;
 	private final IPredicate[] m_Interpolants;
+
+	/**
+	 * Creates a default factory.
+	 * 
+	 * @param services
+	 *            Service provider to use, for example for logging and timeouts
+	 * @param storage
+	 *            IToolchainstorage of the current Ultimate toolchain.
+	 * @param predicateUnifier
+	 *            the predicate unifier to unify final predicates with
+	 * @param smtManager
+	 *            the smt manager for constructing the default
+	 *            {@link IInvariantPatternProcessorFactory}
+	 * @return a default invariant pattern processor factory
+	 */
+	private static IInvariantPatternProcessorFactory<?> createDefaultFactory(
+			final IUltimateServiceProvider services,
+			final IToolchainStorage storage,
+			final PredicateUnifier predicateUnifier, final SmtManager smtManager) {
+		final ILinearInequalityInvariantPatternStrategy strategy =
+				new LocationIndependentLinearInequalityInvariantPatternStrategy(
+						1, 1, 1, 2, 5);
+		return new LinearInequalityPatternProcessorFactory(services, storage,
+				predicateUnifier, smtManager, strategy);
+	}
 
 	/**
 	 * Generates a map of invariants to a given run, using an
@@ -55,7 +77,7 @@ public class PathInvariantsGenerator implements IInterpolantGenerator {
 	 * @param services
 	 *            Service provider to use, for example for logging and timeouts
 	 * @param storage
-	 * 			  IToolchainstorage of the current Ultimate toolchain. 
+	 *            IToolchainstorage of the current Ultimate toolchain.
 	 * @param run
 	 *            an infeasible run to project into a CFG. Must only contain
 	 *            {@link ISLPredicate}s as states.
@@ -66,20 +88,19 @@ public class PathInvariantsGenerator implements IInterpolantGenerator {
 	 * @param predicateUnifier
 	 *            the predicate unifier to unify final predicates with
 	 * @param smtManager
-	 *            the smt manager to use with the predicateUnifier, and to for
-	 *            constructing the default
+	 *            the smt manager for constructing the default
 	 *            {@link IInvariantPatternProcessorFactory}
 	 * @param modGlobVarManager
 	 *            reserved for future use.
 	 */
 	public PathInvariantsGenerator(IUltimateServiceProvider services,
-			IToolchainStorage storage,
-			NestedRun<CodeBlock, IPredicate> run, IPredicate precondition,
-			IPredicate postcondition, PredicateUnifier predicateUnifier,
-			SmtManager smtManager,
+			IToolchainStorage storage, NestedRun<CodeBlock, IPredicate> run,
+			IPredicate precondition, IPredicate postcondition,
+			PredicateUnifier predicateUnifier, SmtManager smtManager,
 			ModifiableGlobalVariableManager modGlobVarManager) {
-		// TODO: Implement
-		throw new UnsupportedOperationException("Not implemented.");
+		this(services, run, precondition, postcondition, modGlobVarManager,
+				createDefaultFactory(
+						services, storage, predicateUnifier,smtManager));
 	}
 
 	/**
@@ -89,8 +110,6 @@ public class PathInvariantsGenerator implements IInterpolantGenerator {
 	 * 
 	 * @param services
 	 *            Service provider to use, for example for logging and timeouts
-	 * @param storage
-	 * 			  IToolchainstorage of the current Ultimate toolchain. 
 	 * @param run
 	 *            an infeasible run to project into a CFG. Must only contain
 	 *            {@link ISLPredicate}s as states.
@@ -98,26 +117,17 @@ public class PathInvariantsGenerator implements IInterpolantGenerator {
 	 *            the predicate to use for the first program point in the run
 	 * @param postcondition
 	 *            the predicate to use for the last program point in the run
-	 * @param predicateUnifier
-	 *            the predicate unifier to unify final predicates with
-	 * @param smtManager
-	 *            the smt manager to use with the predicateUnifier
 	 * @param modGlobVarManager
 	 *            reserved for future use.
 	 * @param invPatternProcFactory
 	 *            the factory to use with {@link CFGInvariantsGenerator}.
 	 */
 	public PathInvariantsGenerator(final IUltimateServiceProvider services,
-			final IToolchainStorage storage,
 			final NestedRun<CodeBlock, IPredicate> run,
 			final IPredicate precondition, final IPredicate postcondition,
-			final PredicateUnifier predicateUnifier,
-			final SmtManager smtManager,
 			final ModifiableGlobalVariableManager modGlobVarManager,
-			final IInvariantPatternProcessorFactory invPatternProcFactory) {
+			final IInvariantPatternProcessorFactory<?> invPatternProcFactory) {
 		super();
-		m_Services = services;
-		m_Storage = storage;
 		m_Run = run;
 		m_Precondition = precondition;
 		m_Postcondition = postcondition;
@@ -133,8 +143,8 @@ public class PathInvariantsGenerator implements IInterpolantGenerator {
 		final Collection<Transition> transitions = new ArrayList<>(len - 1);
 
 		for (int i = 0; i < len; i++) {
-			final ISLPredicate pred =
-					(ISLPredicate) m_Run.getStateAtPosition(i);
+			final ISLPredicate pred = (ISLPredicate) m_Run
+					.getStateAtPosition(i);
 			final ProgramPoint programPoint = pred.getProgramPoint();
 
 			Location location = locationsForProgramPoint.get(programPoint);
@@ -226,19 +236,4 @@ public class PathInvariantsGenerator implements IInterpolantGenerator {
 	public IPredicate[] getInterpolants() {
 		return m_Interpolants;
 	}
-	
-	
-	private Script buildSmtSolver() {
-		return SolverBuilder.buildScript(
-				m_Services, m_Storage, buildSolverSettings());
-	}
-	
-	private Settings buildSolverSettings() {
-		boolean dumpSmtScriptToFile = false;
-		String pathOfDumpedScript = ".";
-		String baseNameOfDumpedScript = "contraintSolving";
-		return new Settings(true, "z3 -smt2 -in SMTLIB2_COMPLIANT=true -t:42000", -1, 
-				null, dumpSmtScriptToFile, pathOfDumpedScript, baseNameOfDumpedScript);
-	}
-
 }

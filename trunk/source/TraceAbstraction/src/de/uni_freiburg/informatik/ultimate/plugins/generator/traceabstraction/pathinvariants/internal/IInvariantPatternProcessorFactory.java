@@ -4,18 +4,19 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPre
 
 /**
  * A factory producing {@link IInvariantPatternProcessor}s.
+ * 
+ * @param <IPT>
+ *            Invariant Pattern Type: Type used for invariant patterns
  */
-public interface IInvariantPatternProcessorFactory {
+public interface IInvariantPatternProcessorFactory<IPT> {
 
 	/**
 	 * Produces a new {@link IInvariantPatternProcessor} instance for a given
 	 * {@link ControlFlowGraph}.
 	 * 
-	 * @param <IPT>
-	 *            Invariant Pattern Type: Type used for invariant patterns
 	 * @param cfg
 	 *            the control flow graph to generate a processor for
-	  @param precondition
+	 * @param precondition
 	 *            the invariant on the {@link ControlFlowGraph#getEntry()} of
 	 *            cfg
 	 * @param postcondition
@@ -23,7 +24,6 @@ public interface IInvariantPatternProcessorFactory {
 	 * 
 	 * @return new {@link IInvariantPatternProcessor} instance
 	 */
-	public <IPT> IInvariantPatternProcessor<IPT> produce(
-			final ControlFlowGraph cfg, final IPredicate precondition,
-			final IPredicate postcondition);
+	public IInvariantPatternProcessor<IPT> produce(final ControlFlowGraph cfg,
+			final IPredicate precondition, final IPredicate postcondition);
 }
