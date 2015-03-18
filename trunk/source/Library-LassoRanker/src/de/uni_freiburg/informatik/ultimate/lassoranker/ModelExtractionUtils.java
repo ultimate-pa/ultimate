@@ -184,7 +184,7 @@ public class ModelExtractionUtils {
 	 *             if model extraction fails
 	 */
 	public static Map<Term, Rational> getSimplifiedAssignment(Script script, 
-			ArrayList<Term> variables, Logger logger) throws TermException {
+			Collection<Term> variables, Logger logger) throws TermException {
 		Random rnd = new Random(s_randomSeed);
 		Term zero = script.numeral("0");
 		Map<Term, Rational> val = getValuation(script, variables);

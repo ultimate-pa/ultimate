@@ -3,9 +3,13 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.p
 import java.util.Collection;
 import java.util.Map;
 
+import org.apache.log4j.Logger;
+
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lassoranker.AnalysisType;
 import de.uni_freiburg.informatik.ultimate.lassoranker.LinearInequality;
+import de.uni_freiburg.informatik.ultimate.lassoranker.ModelExtractionUtils;
+import de.uni_freiburg.informatik.ultimate.lassoranker.exceptions.TermException;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.MotzkinTransformation;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
@@ -16,12 +20,14 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.ControlFlowGraph.Location;
 
 public class DefaultInvariantPatternProcessor implements
 		IInvariantPatternProcessor<Collection<Collection<LinearInequality>>> {
 
 	private final IUltimateServiceProvider m_Services;
+	private final Logger m_Logger;
 	private final Script m_Script;
 	
 	
@@ -30,6 +36,7 @@ public class DefaultInvariantPatternProcessor implements
 			Script script) {
 		super();
 		m_Services = services;
+		m_Logger = m_Services.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
 		m_Script = script;
 	}
 
@@ -68,7 +75,20 @@ public class DefaultInvariantPatternProcessor implements
 		case SAT: {
 			// extract values
 			Collection<Term> coefficientsOfAllInvariants = null;
-			Map<Term, Term> val = m_Script.getValue(coefficientsOfAllInvariants.toArray(new Term[coefficientsOfAllInvariants.size()]));
+			Map<Term, Rational> valuation;
+			boolean simplifiedValuation = false;
+			try {
+				if (simplifiedValuation) {
+					valuation = ModelExtractionUtils.getSimplifiedAssignment(
+							m_Script, coefficientsOfAllInvariants, m_Logger);
+				} else {
+					valuation = ModelExtractionUtils.getValuation(
+							m_Script, coefficientsOfAllInvariants);
+				}
+			} catch (TermException e) {
+				e.printStackTrace();
+				throw new AssertionError("model extraction failed");
+			}
 		}
 		break;
 		case UNKNOWN:
