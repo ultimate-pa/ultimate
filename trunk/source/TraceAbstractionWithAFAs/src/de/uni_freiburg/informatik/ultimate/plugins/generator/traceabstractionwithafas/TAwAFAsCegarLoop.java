@@ -28,6 +28,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Differ
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.PowersetDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.IOpWithDelayedDeadEndRemoval;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.senwa.DifferenceSenwa;
+import de.uni_freiburg.informatik.ultimate.core.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
@@ -77,8 +78,8 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 	public TAwAFAsCegarLoop(String name, RootNode rootNode, SmtManager smtManager,
 			TraceAbstractionBenchmarks traceAbstractionBenchmarks, TAPreferences taPrefs,
 			Collection<ProgramPoint> errorLocs, INTERPOLATION interpolation, boolean computeHoareAnnotation,
-			IUltimateServiceProvider services) {
-		super(name, rootNode, smtManager, traceAbstractionBenchmarks, taPrefs, errorLocs, services);
+			IUltimateServiceProvider services, IToolchainStorage storage) {
+		super(name, rootNode, smtManager, traceAbstractionBenchmarks, taPrefs, errorLocs, services, storage);
 		m_PredicateUnifier = new PredicateUnifier(services, smtManager, smtManager.newTruePredicate(),
 				smtManager.newFalsePredicate());
 	}

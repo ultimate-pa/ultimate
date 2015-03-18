@@ -36,6 +36,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.IntersectDD;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.senwa.DifferenceSenwa;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
+import de.uni_freiburg.informatik.ultimate.core.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -114,9 +115,9 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 
 	public BasicCegarLoop(String name, RootNode rootNode, SmtManager smtManager, TAPreferences taPrefs,
 			Collection<ProgramPoint> errorLocs, INTERPOLATION interpolation, boolean computeHoareAnnotation,
-			IUltimateServiceProvider services) {
+			IUltimateServiceProvider services, IToolchainStorage storage) {
 
-		super(services, name, rootNode, smtManager, taPrefs, errorLocs, services.getLoggingService().getLogger(
+		super(services, storage, name, rootNode, smtManager, taPrefs, errorLocs, services.getLoggingService().getLogger(
 				Activator.s_PLUGIN_ID));
 		m_AbstractInterpretationMode = new UltimatePreferenceStore(Activator.s_PLUGIN_ID)
 				.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_USE_ABSTRACT_INTERPRETATION);

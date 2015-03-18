@@ -26,6 +26,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingReturnTra
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.Transitionlet;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.RemoveUnreachable;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.SuperDifference;
+import de.uni_freiburg.informatik.ultimate.core.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
@@ -149,8 +150,8 @@ public class CegarLoopSWBnonRecursive extends BasicCegarLoop {
 	public CegarLoopSWBnonRecursive(String name, RootNode rootNode, SmtManager smtManager,
 			TraceAbstractionBenchmarks traceAbstractionBenchmarks, TAPreferences taPrefs,
 			Collection<ProgramPoint> errorLocs, INTERPOLATION interpolation, boolean computeHoareAnnotation,
-			IUltimateServiceProvider services) {
-		super(name, rootNode, smtManager, taPrefs, errorLocs, interpolation, computeHoareAnnotation, services);
+			IUltimateServiceProvider services, IToolchainStorage storage) {
+		super(name, rootNode, smtManager, taPrefs, errorLocs, interpolation, computeHoareAnnotation, services, storage);
 		m_ErrorPathHistory = new ArrayList<String>();
 		m_nofStates = new ArrayList<Integer>();
 	}

@@ -8,6 +8,7 @@ import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.access.BaseObserver;
 import de.uni_freiburg.informatik.ultimate.automata.ExampleNWAFactory;
+import de.uni_freiburg.informatik.ultimate.core.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
@@ -48,11 +49,13 @@ public class TraceAbstractionWithAFAsObserver extends BaseObserver {
 	private IElement m_graphroot = null;
 
 	private final IUltimateServiceProvider mServices;
+	private final IToolchainStorage m_ToolchainStorage;
 
 	private final Logger mLogger;
 
-	public TraceAbstractionWithAFAsObserver(IUltimateServiceProvider services) {
+	public TraceAbstractionWithAFAsObserver(IUltimateServiceProvider services, IToolchainStorage storage) {
 		mServices = services;
+		m_ToolchainStorage = storage;
 		mLogger = mServices.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
 	}
 
@@ -80,7 +83,7 @@ public class TraceAbstractionWithAFAsObserver extends BaseObserver {
 		}
 
 		TAwAFAsCegarLoop cegarLoop = new TAwAFAsCegarLoop("bla", rootNode, smtManager, taBenchmarks, taPrefs,
-				errNodesOfAllProc, taPrefs.interpolation(), taPrefs.computeHoareAnnotation(), mServices);
+				errNodesOfAllProc, taPrefs.interpolation(), taPrefs.computeHoareAnnotation(), mServices, m_ToolchainStorage);
 
 		Result result = cegarLoop.iterate();
 		

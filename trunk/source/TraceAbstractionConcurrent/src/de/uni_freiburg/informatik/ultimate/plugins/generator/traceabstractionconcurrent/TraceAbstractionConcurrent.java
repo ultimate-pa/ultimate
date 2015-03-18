@@ -25,7 +25,8 @@ public class TraceAbstractionConcurrent implements IGenerator {
 
 	private TraceAbstractionConcurrentObserver m_Observer;
 	private GraphType m_InputDefinition;
-	private IUltimateServiceProvider mServices;
+	private IUltimateServiceProvider m_Services;
+	private IToolchainStorage m_ToolchainStorage;
 
 	@Override
 	public String getPluginName() {
@@ -59,7 +60,7 @@ public class TraceAbstractionConcurrent implements IGenerator {
 
 	@Override
 	public List<IObserver> getObservers() {
-		m_Observer = new TraceAbstractionConcurrentObserver(mServices);
+		m_Observer = new TraceAbstractionConcurrentObserver(m_Services, m_ToolchainStorage);
 		return Collections.singletonList((IObserver) m_Observer);
 	}
 
@@ -90,13 +91,13 @@ public class TraceAbstractionConcurrent implements IGenerator {
 
 	@Override
 	public void setToolchainStorage(IToolchainStorage storage) {
-		// TODO Auto-generated method stub
+		m_ToolchainStorage = storage;
 
 	}
 
 	@Override
 	public void setServices(IUltimateServiceProvider services) {
-		mServices = services;
+		m_Services = services;
 	}
 
 	@Override

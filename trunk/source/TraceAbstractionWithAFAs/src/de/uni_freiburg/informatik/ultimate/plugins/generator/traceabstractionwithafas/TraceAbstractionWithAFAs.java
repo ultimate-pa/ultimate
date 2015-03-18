@@ -26,6 +26,7 @@ public class TraceAbstractionWithAFAs implements IGenerator {
 	private TraceAbstractionWithAFAsObserver m_Observer;
 	private GraphType m_InputDefinition;
 	private IUltimateServiceProvider 		mServices;
+	private IToolchainStorage m_ToolchainStorage;
 	
 	
 	@Override
@@ -60,7 +61,7 @@ public class TraceAbstractionWithAFAs implements IGenerator {
 
 	@Override
 	public List<IObserver> getObservers() {
-		m_Observer = new TraceAbstractionWithAFAsObserver(mServices);
+		m_Observer = new TraceAbstractionWithAFAsObserver(mServices, m_ToolchainStorage);
 		return Collections.singletonList((IObserver) m_Observer);
 	}
 	
@@ -91,7 +92,7 @@ public class TraceAbstractionWithAFAs implements IGenerator {
 
 	@Override
 	public void setToolchainStorage(IToolchainStorage storage) {
-		// TODO Auto-generated method stub
+		m_ToolchainStorage = storage;
 		
 	}
 

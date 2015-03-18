@@ -148,8 +148,8 @@ public abstract class AbstractCegarLoop {
 	protected final IUltimateServiceProvider m_Services;
 	protected final IToolchainStorage m_ToolchainStorage = null;
 
-	public AbstractCegarLoop(IUltimateServiceProvider services, String name, RootNode rootNode, SmtManager smtManager, TAPreferences taPrefs,
-			Collection<ProgramPoint> errorLocs, Logger logger) {
+	public AbstractCegarLoop(IUltimateServiceProvider services, IToolchainStorage storage, String name, RootNode rootNode, SmtManager smtManager,
+			TAPreferences taPrefs, Collection<ProgramPoint> errorLocs, Logger logger) {
 		m_Services = services;
 		mLogger = logger;
 		this.m_PrintAutomataLabeling = taPrefs.getAutomataFormat();

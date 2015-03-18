@@ -42,7 +42,7 @@ public class TraceAbstraction implements IGenerator {
 
 	@Override
 	public void init() {
-		m_Observer = new TraceAbstractionObserver(mServices);
+		m_Observer = new TraceAbstractionObserver(mServices, mStorage);
 		m_Observers = Collections.singletonList((IObserver) m_Observer);
 	}
 

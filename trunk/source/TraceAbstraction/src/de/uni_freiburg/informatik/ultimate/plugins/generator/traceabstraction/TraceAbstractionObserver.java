@@ -5,6 +5,7 @@ import org.apache.log4j.Logger;
 import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.core.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.model.GraphType;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
@@ -18,18 +19,20 @@ import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNode;
  */
 public class TraceAbstractionObserver implements IUnmanagedObserver {
 
-	private final Logger mLogger;
-	private final IUltimateServiceProvider mServices;
+	private final Logger m_Logger;
+	private final IUltimateServiceProvider m_Services;
 	
 	private RootNode m_RcfgRootNode;
 	private IElement m_RootOfNewModel;
 	private WitnessNode m_WitnessNode;
 	private boolean m_LastModel = false;
+	private IToolchainStorage m_Storage;
 
 
-	public TraceAbstractionObserver(IUltimateServiceProvider services) {
-		mServices = services;
-		mLogger = mServices.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
+	public TraceAbstractionObserver(IUltimateServiceProvider services, IToolchainStorage storage) {
+		m_Services = services;
+		m_Storage = storage;
+		m_Logger = m_Services.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
 	}
 
 
@@ -65,10 +68,10 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 				if (m_WitnessNode == null) {
 					witnessAutomaton = null;
 				} else {
-					mLogger.warn("Found a witness automaton. I will only consider traces that are accepted by the witness automaton");
-					witnessAutomaton = (new WitnessModelToAutomatonTransformer(m_WitnessNode, mServices)).getResult();
+					m_Logger.warn("Found a witness automaton. I will only consider traces that are accepted by the witness automaton");
+					witnessAutomaton = (new WitnessModelToAutomatonTransformer(m_WitnessNode, m_Services)).getResult();
 				}
-				TraceAbstractionStarter tas = new TraceAbstractionStarter(mServices, m_RcfgRootNode, witnessAutomaton);
+				TraceAbstractionStarter tas = new TraceAbstractionStarter(m_Services, m_Storage, m_RcfgRootNode, witnessAutomaton);
 				m_RootOfNewModel = tas.getRootOfNewModel();
 			}
 		}

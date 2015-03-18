@@ -9,6 +9,7 @@ import org.apache.log4j.Logger;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 import de.uni_freiburg.informatik.ultimate.core.services.IBacktranslationService;
+import de.uni_freiburg.informatik.ultimate.core.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
@@ -44,11 +45,13 @@ public class TraceAbstractionStarter {
 	
 	private final Logger m_Logger;
 	private final IUltimateServiceProvider m_Services;
+	private final IToolchainStorage m_ToolchainStorage;
 
 	public TraceAbstractionStarter(IUltimateServiceProvider services, 
-			RootNode rcfgRootNode, 
+			IToolchainStorage storage, RootNode rcfgRootNode, 
 			NestedWordAutomaton<WitnessEdge, WitnessNode> witnessAutomaton) {
 		m_Services = services;
+		m_ToolchainStorage = storage;
 		m_Logger = m_Services.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
 		runCegarLoops(rcfgRootNode, witnessAutomaton);
 	}
@@ -185,16 +188,16 @@ public class TraceAbstractionStarter {
 		if (languageOperation == LanguageOperation.DIFFERENCE) {		
 			if (taPrefs.interpolantAutomaton() == InterpolantAutomaton.TOTALINTERPOLATION) {
 				basicCegarLoop = new CegarLoopSWBnonRecursive(name, root, smtManager, taBenchmark, taPrefs, errorLocs,
-						taPrefs.interpolation(), taPrefs.computeHoareAnnotation(), m_Services);
+						taPrefs.interpolation(), taPrefs.computeHoareAnnotation(), m_Services, m_ToolchainStorage);
 				// abstractCegarLoop = new CegarLoopSequentialWithBackedges(name,
 				// root, smtManager, timingStatistics,taPrefs, errorLocs);
 			} else {
 				basicCegarLoop = new BasicCegarLoop(name, root, smtManager, taPrefs, errorLocs, taPrefs.interpolation(),
-						taPrefs.computeHoareAnnotation(), m_Services);
+						taPrefs.computeHoareAnnotation(), m_Services, m_ToolchainStorage);
 			}
 		} else {
 			basicCegarLoop = new IncrementalInclusionCegarLoop(name, root, smtManager, taPrefs, errorLocs, taPrefs.interpolation(), 
-					taPrefs.computeHoareAnnotation(), m_Services, languageOperation);
+					taPrefs.computeHoareAnnotation(), m_Services, m_ToolchainStorage, languageOperation);
 		}
 		basicCegarLoop.setWitnessAutomaton(witnessAutomaton);
 
