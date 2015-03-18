@@ -186,7 +186,7 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 			m_argument = extractArgument(vars_init, vars_honda, vars_ray,
 					lambda);
 		} else if (isSat == LBool.UNKNOWN) {
-			m_script.echo(new QuotedObject(SMTSolver.s_SolverUnknownMessage));
+			m_script.echo(new QuotedObject(ArgumentSynthesizer.s_SolverUnknownMessage));
 		}
 		return isSat;
 	}

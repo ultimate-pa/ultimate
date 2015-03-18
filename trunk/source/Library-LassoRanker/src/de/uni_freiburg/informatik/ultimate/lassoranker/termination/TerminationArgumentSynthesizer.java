@@ -407,7 +407,7 @@ public class TerminationArgumentSynthesizer extends ArgumentSynthesizer {
 						+ before + ".");
 			}
 		} else if (sat == LBool.UNKNOWN) {
-			m_script.echo(new QuotedObject(SMTSolver.s_SolverUnknownMessage));
+			m_script.echo(new QuotedObject(ArgumentSynthesizer.s_SolverUnknownMessage));
 			// Problem: If we use the following line we can receive the
 			// following response which is not SMTLIB2 compliant.
 			// (:reason-unknown canceled)

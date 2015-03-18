@@ -73,6 +73,13 @@ public abstract class ArgumentSynthesizer implements Closeable {
 	public static final long s_randomSeed = 80085;
 
 	protected static final int s_num_of_simultaneous_simplification_tests = 4;
+	
+	/**
+	 * Auxiliary String that we put into the smt script via an echo. This String
+	 * should help to identify the difficult constraints in a bunch of dumped
+	 * smt2 files.
+	 */
+	public static String s_SolverUnknownMessage = "Warning solver responded UNKNOWN to the check-sat above";
 
 	/**
 	 * The SMT script for argument synthesis
