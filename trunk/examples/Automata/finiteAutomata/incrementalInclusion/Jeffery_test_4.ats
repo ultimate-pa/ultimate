@@ -1,0 +1,13 @@
+	int i = 0;
+	while(i<1000){
+		NestedWordAutomaton A = getRandomNwa(2, 10, 5, 0, 0, 1000);
+		NestedWordAutomaton B1 = getRandomNwa(2, 10, 70, 0, 0, 1000);
+		NestedWordAutomaton B2 = getRandomNwa(2, 10, 70, 0, 0, 1000);
+		Jeffery_Test_4(A,NwaList(B1,B2),"/media/user_data/Java/trunk/examples/Automata/finiteAutomata/incrementalInclusion/randomCasesDumpedResults/");
+		i++;
+	}
+	NestedWordAutomaton A = getRandomNwa(2, 10, 5, 0, 0, 1000);
+	NestedWordAutomaton B1 = getRandomNwa(2, 10, 70, 0, 0, 1000);
+	NestedWordAutomaton B2 = getRandomNwa(2, 10, 70, 0, 0, 1000);
+	print(Jeffery_Test_4(A,NwaList(B1,B2)),"/media/user_data/Java/trunk/examples/Automata/finiteAutomata/incrementalInclusion/randomCasesDumpedResults/");
+	
