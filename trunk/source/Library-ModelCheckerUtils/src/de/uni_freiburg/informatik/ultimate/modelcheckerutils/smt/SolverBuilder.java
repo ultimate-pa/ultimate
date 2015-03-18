@@ -1,10 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt;
 
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-
-import javax.management.RuntimeErrorException;
 
 import org.apache.log4j.Logger;
 
@@ -29,21 +26,21 @@ public class SolverBuilder {
 
 	private static final String sSolverLoggerName = "SolverLogger";
 
-	public static Script createSMTInterpol(IUltimateServiceProvider services, IToolchainStorage storage) {
+	private static Script createSMTInterpol(IUltimateServiceProvider services, IToolchainStorage storage) {
 		Logger solverLogger = services.getLoggingService().getLoggerForExternalTool(sSolverLoggerName);
 		TerminationRequest termRequest = new SMTInterpolTerminationRequest(services.getProgressMonitorService());
 		Script script = new SMTInterpol(solverLogger, false, termRequest);
 		return script;
 	}
 
-	public static Script createExternalSolver(IUltimateServiceProvider services, IToolchainStorage storage,
+	private static Script createExternalSolver(IUltimateServiceProvider services, IToolchainStorage storage,
 			String command) throws IOException {
 		Logger solverLogger = services.getLoggingService().getLoggerForExternalTool(sSolverLoggerName);
 		Script script = new Scriptor(command, solverLogger, services, storage);
 		return script;
 	}
 	
-	public static Script createExternalSolverWithInterpolation(IUltimateServiceProvider services, IToolchainStorage storage,
+	private static Script createExternalSolverWithInterpolation(IUltimateServiceProvider services, IToolchainStorage storage,
 			String command, ExternalInterpolator externalInterpolator) throws IOException {
 		Logger solverLogger = services.getLoggingService().getLoggerForExternalTool(sSolverLoggerName);
 		Script script = new ScriptorWithGetInterpolants(command, solverLogger, services, storage, externalInterpolator);
