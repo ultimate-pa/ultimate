@@ -9,8 +9,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import org.apache.log4j.Logger;
 
@@ -18,6 +18,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvide
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
+import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
@@ -435,6 +436,48 @@ public class SmtUtils {
 	public static ApplicationTerm buildNewConstant(Script script, String name, String sortname) throws SMTLIBException {
 		script.declareFun(name, new Sort[0], script.sort(sortname));
 		return (ApplicationTerm) script.term(name);
+	}
+	
+	
+	/**
+	 * Convert a BigDecimal into a Rational. Stolen from Jochen's code
+	 * de.uni_freiburg.informatik.ultimate.smtinterpol.convert.ConvertFormula.
+	 */
+	private static Rational decimalToRational(BigDecimal d) {
+		Rational rat;
+		if (d.scale() <= 0) {
+			BigInteger num = d.toBigInteger();
+			rat = Rational.valueOf(num, BigInteger.ONE);
+		} else {
+			BigInteger num = d.unscaledValue();
+			BigInteger denom = BigInteger.TEN.pow(d.scale());
+			rat = Rational.valueOf(num, denom);
+		}
+		return rat;
+	}
+
+	/**
+	 * Convert a constant term to Rational.
+	 * @param ct
+	 *  constant term that represents a Rational
+	 * @return Rational from the value of ct
+	 * @throws IllegalArgumentException if ct does not represent a Rational.
+	 */
+	public static Rational convertCT(ConstantTerm ct) throws IllegalArgumentException {
+		if (ct.getSort().getName().equals("Rational")) {
+			return (Rational) ct.getValue();
+		} else if (ct.getSort().getName().equals("Real")) {
+			BigDecimal d = (BigDecimal) ct.getValue();
+			return decimalToRational(d);
+		} else if (ct.getSort().getName().equals("Int")) {
+			if (ct.getValue() instanceof Rational) {
+				return (Rational) ct.getValue();
+			} else {
+				Rational r = Rational.valueOf((BigInteger) ct.getValue(), BigInteger.ONE);
+				return r;
+			}
+		} else
+			throw new IllegalArgumentException("Trying to convert a ConstantTerm of unknown sort." + ct);
 	}
 
 }

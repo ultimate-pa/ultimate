@@ -44,6 +44,7 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.LassoRankerPreferences;
 import de.uni_freiburg.informatik.ultimate.lassoranker.LinearInequality;
 import de.uni_freiburg.informatik.ultimate.lassoranker.LinearInequality.PossibleMotzkinCoefficients;
 import de.uni_freiburg.informatik.ultimate.lassoranker.LinearTransition;
+import de.uni_freiburg.informatik.ultimate.lassoranker.ModelExtractionUtils;
 import de.uni_freiburg.informatik.ultimate.lassoranker.SMTSolver;
 import de.uni_freiburg.informatik.ultimate.lassoranker.exceptions.TermException;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.rankingfunctions.RankingFunction;
@@ -383,9 +384,9 @@ public class TerminationArgumentSynthesizer extends ArgumentSynthesizer {
 			Map<Term, Rational> val;
 			if (m_settings.simplify_termination_argument) {
 				mLogger.info("Found a termination argument, trying to simplify.");
-				val = getSimplifiedAssignment(variables);
+				val = ModelExtractionUtils.getSimplifiedAssignment(m_script, variables, mLogger);
 			} else {
-				val = getValuation(variables);
+				val = ModelExtractionUtils.getValuation(m_script, variables);
 			}
 
 			// Extract ranking function and supporting invariants

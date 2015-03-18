@@ -46,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.Lasso;
 import de.uni_freiburg.informatik.ultimate.lassoranker.LassoRankerPreferences;
 import de.uni_freiburg.informatik.ultimate.lassoranker.LinearInequality;
 import de.uni_freiburg.informatik.ultimate.lassoranker.LinearTransition;
+import de.uni_freiburg.informatik.ultimate.lassoranker.ModelExtractionUtils;
 import de.uni_freiburg.informatik.ultimate.lassoranker.SMTPrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.lassoranker.SMTSolver;
 import de.uni_freiburg.informatik.ultimate.lassoranker.exceptions.TermException;
@@ -393,7 +394,7 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 		if (vars.isEmpty()) {
 			return Collections.emptyMap();
 		}
-		Map<Term, Rational> val = getValuation(vars.values());
+		Map<Term, Rational> val = ModelExtractionUtils.getValuation(m_script, vars.values());
 		// Concatenate vars and val
 		Map<RankVar, Rational> state = new LinkedHashMap<RankVar, Rational>();
 		for (Map.Entry<RankVar, Term> entry : vars.entrySet()) {
@@ -419,7 +420,7 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 			Map<RankVar, Rational> state0 = extractState(vars_init);
 			Map<RankVar, Rational> state1 = extractState(vars_honda);
 			Map<RankVar, Rational> ray = extractState(vars_ray);
-			Rational lambda = const2Rational(
+			Rational lambda = ModelExtractionUtils.const2Rational(
 					m_script.getValue(new Term[] {var_lambda}).get(var_lambda));
 			boolean has_stem = !m_lasso.getStem().isTrue();
 			return new NonTerminationArgument(has_stem ? state0 : state1,
