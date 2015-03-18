@@ -19,12 +19,8 @@ import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvide
 
 /**
  * 
- * Parameters are the same as IncrementalInclsuionCheck except for an extra integer parameter.
- * The parameter is used to assign which IncrementalInclusionCheck will be tested.
- * Example: Testing IncrementalInclusionCheck2 -> Jeffery_Test_4(Iservices, sf,
-			a, b,2)
-			Testing IncrementalInclusionCheck3 -> Jeffery_Test_4(Iservices, sf,
-			a, b,3)...
+ * compare speed between difference and IncrementalInclusionCheck4.
+ * If one algorithm is 10 times slower than the other one, the automaton being used will be dumped to a folder which can be assigned by one of the constructor's parameters. 
  * 
  * 
  * @author jefferyyjhsu@iis.sinica.edu.tw
