@@ -1,17 +1,12 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal;
 
-import java.io.IOException;
 import java.util.Collection;
 import java.util.Map;
 
-import de.uni_freiburg.informatik.ultimate.core.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lassoranker.AnalysisType;
-import de.uni_freiburg.informatik.ultimate.lassoranker.LassoRankerPreferences;
 import de.uni_freiburg.informatik.ultimate.lassoranker.LinearInequality;
-import de.uni_freiburg.informatik.ultimate.lassoranker.SMTSolver;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.MotzkinTransformation;
-import de.uni_freiburg.informatik.ultimate.lassoranker.variables.ReplacementVarFactory;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -20,7 +15,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.Settings;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.ControlFlowGraph.Location;
 
@@ -101,18 +95,19 @@ public class DefaultInvariantPatternProcessor implements
 	
 	/**
 	 * Reset solver and initialize it afterwards.
-	 * For initializing, we set the logic to QF_NRA and we set the option
-	 * produce-models to true (this allows us to obtain a satisfying assignment.
+	 * For initializing, we set the option produce-models to true 
+	 * (this allows us to obtain a satisfying assignment) and we set the 
+	 * logic to QF_NRA (nonlinear real arithmetic).
 	 * TODO: Matthias unsat cores might be helpful for debugging.
 	 */
 	private void reinitializeSolver(Script script) {
 		script.reset();
-		script.setLogic(Logics.QF_NRA);
 		script.setOption(":produce-models", true);
 		boolean someExtendedDebugging = false;
 		if (someExtendedDebugging ) {
 			script.setOption(":produce-unsat-cores", true);
 		}
+		script.setLogic(Logics.QF_NRA);
 	}
 	
 
