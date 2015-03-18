@@ -59,8 +59,6 @@ public class CFGLinearizer {
 		Collection<Term> axioms = m_SmtManager.getBoogie2Smt().getAxioms();
 		m_Axioms = axioms.toArray(new Term[axioms.size()]);
 		
-		
-		//Matthias: It might be helpful
 	}
 
 	private LinearTransition makeLinear(TransFormula tf) {

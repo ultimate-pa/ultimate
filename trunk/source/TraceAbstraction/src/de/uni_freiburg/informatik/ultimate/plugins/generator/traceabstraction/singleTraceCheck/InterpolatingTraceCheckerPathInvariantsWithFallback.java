@@ -4,6 +4,7 @@ import java.util.Set;
 import java.util.SortedMap;
 
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
+import de.uni_freiburg.informatik.ultimate.core.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
@@ -24,6 +25,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 public class InterpolatingTraceCheckerPathInvariantsWithFallback extends
 		InterpolatingTraceChecker {
 	
+	private final IToolchainStorage m_Storage;
 	private final NestedRun<CodeBlock, IPredicate> m_NestedRun;
 	
 	public InterpolatingTraceCheckerPathInvariantsWithFallback(
@@ -33,11 +35,13 @@ public class InterpolatingTraceCheckerPathInvariantsWithFallback extends
 			ModifiableGlobalVariableManager modifiedGlobals,
 			AssertCodeBlockOrder assertCodeBlocksIncrementally,
 			IUltimateServiceProvider services,
+			IToolchainStorage storage,
 			boolean computeRcfgProgramExecution,
 			PredicateUnifier predicateUnifier) {
 		super(precondition, postcondition, pendingContexts, run.getWord(), smtManager,
 				modifiedGlobals, assertCodeBlocksIncrementally, services,
 				computeRcfgProgramExecution, predicateUnifier);
+		m_Storage = storage;
 		m_NestedRun = run;
 		if (super.isCorrect() == LBool.UNSAT) {
 			super.unlockSmtManager();
@@ -49,7 +53,7 @@ public class InterpolatingTraceCheckerPathInvariantsWithFallback extends
 	protected void computeInterpolants(Set<Integer> interpolatedPositions,
 			INTERPOLATION interpolation) {
 		PathInvariantsGenerator pathInvariantsGenerator = new PathInvariantsGenerator(
-				super.mServices, m_NestedRun, super.getPrecondition(), 
+				super.mServices, m_Storage, m_NestedRun, super.getPrecondition(), 
 				super.getPostcondition(), m_PredicateUnifier, super.m_SmtManager,
 				m_ModifiedGlobals);
 		IPredicate[] interpolants = pathInvariantsGenerator.getInterpolants();

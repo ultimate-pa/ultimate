@@ -7,6 +7,7 @@ import java.util.Map;
 import de.uni_freiburg.informatik.ultimate.core.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lassoranker.AnalysisType;
+import de.uni_freiburg.informatik.ultimate.lassoranker.LassoRankerPreferences;
 import de.uni_freiburg.informatik.ultimate.lassoranker.LinearInequality;
 import de.uni_freiburg.informatik.ultimate.lassoranker.SMTSolver;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.MotzkinTransformation;
@@ -19,23 +20,24 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.Settings;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.ControlFlowGraph.Location;
 
 public class DefaultInvariantPatternProcessor implements
 		IInvariantPatternProcessor<Collection<Collection<LinearInequality>>> {
 
-	private Script m_script;
-	private IUltimateServiceProvider m_Services;
-	private IToolchainStorage m_Storage;
-	private String filename = null;
-	/**
-	 * Command for Z3.
-	 */
-	public String smt_solver_command = "z3 -smt2 -in SMTLIB2_COMPLIANT=true -t:42000";
-	private ReplacementVarFactory replacementVarFactory;
-	private Script m_RcfgScript;
-	private Term[] m_axioms;
+	private final IUltimateServiceProvider m_Services;
+	private final Script m_Script;
+	
+	
+
+	public DefaultInvariantPatternProcessor(IUltimateServiceProvider services,
+			Script script) {
+		super();
+		m_Services = services;
+		m_Script = script;
+	}
 
 	@Override
 	public Collection<Collection<LinearInequality>> getInvariantPatternForLocation(Location location, int round) {
@@ -46,38 +48,33 @@ public class DefaultInvariantPatternProcessor implements
 	public boolean findValidConfiguration(
 			Collection<InvariantTransitionPredicate<Collection<Collection<LinearInequality>>>> predicates, int round) {
 
+		reinitializeSolver(m_Script);
 		
-		try {
-			m_script = SMTSolver.newScript(true, smt_solver_command, filename , false, m_Services, m_Storage);
-		} catch (IOException e) {
-			throw new RuntimeException(e);
-		}
-		MotzkinTransformation mt = new MotzkinTransformation(m_script, AnalysisType.Nonlinear, false);
+		MotzkinTransformation mt = new MotzkinTransformation(m_Script, AnalysisType.Nonlinear, false);
 		Collection<LinearInequality> linearInequalities = null;
 		mt.add_inequalities(linearInequalities);
 		mt.transform(new Rational[0]);
 		
-		m_script.reset();
-		m_script.setLogic(Logics.QF_NRA);
+
 		// construct new 0-ary function symbol
-		m_script.declareFun("coefficient", new Sort[0], m_script.sort("Real"));
+		m_Script.declareFun("coefficient", new Sort[0], m_Script.sort("Real"));
 		// statt dessen lieber
-		Term zeroary = SmtUtils.buildNewConstant(m_script, "coefficient", "Real");
+		Term zeroary = SmtUtils.buildNewConstant(m_Script, "coefficient", "Real");
 		Term t1 = null;
 		Term t2 = null;
-		m_script.term("and", t1, t2);
-		Util.and(m_script, t1, t2);
-		m_script.term("<=", t1, t2);
-		SmtUtils.leq(m_script, t1, t2);
+		m_Script.term("and", t1, t2);
+		Util.and(m_Script, t1, t2);
+		m_Script.term("<=", t1, t2);
+		SmtUtils.leq(m_Script, t1, t2);
 		
 		Term contraint = null;
-		m_script.assertTerm(contraint);
-		LBool sat = m_script.checkSat();
+		m_Script.assertTerm(contraint);
+		LBool sat = m_Script.checkSat();
 		switch (sat) {
 		case SAT: {
 			// extract values
 			Collection<Term> coefficientsOfAllInvariants = null;
-			Map<Term, Term> val = m_script.getValue(coefficientsOfAllInvariants.toArray(new Term[coefficientsOfAllInvariants.size()]));
+			Map<Term, Term> val = m_Script.getValue(coefficientsOfAllInvariants.toArray(new Term[coefficientsOfAllInvariants.size()]));
 		}
 		break;
 		case UNKNOWN:
@@ -100,6 +97,25 @@ public class DefaultInvariantPatternProcessor implements
 			Collection<Collection<LinearInequality>> pattern) {
 		throw new UnsupportedOperationException("not implemented");
 	}
+	
+	
+	/**
+	 * Reset solver and initialize it afterwards.
+	 * For initializing, we set the logic to QF_NRA and we set the option
+	 * produce-models to true (this allows us to obtain a satisfying assignment.
+	 * TODO: Matthias unsat cores might be helpful for debugging.
+	 */
+	private void reinitializeSolver(Script script) {
+		script.reset();
+		script.setLogic(Logics.QF_NRA);
+		script.setOption(":produce-models", true);
+		boolean someExtendedDebugging = false;
+		if (someExtendedDebugging ) {
+			script.setOption(":produce-unsat-cores", true);
+		}
+	}
+	
+
 	
 
 

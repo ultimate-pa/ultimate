@@ -11,9 +11,13 @@ import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
+import de.uni_freiburg.informatik.ultimate.core.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.Settings;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
@@ -34,6 +38,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  * {@link IInvariantPatternProcessor} on the run-projected CFG.
  */
 public class PathInvariantsGenerator implements IInterpolantGenerator {
+	
+	private final IUltimateServiceProvider m_Services;
+	private final IToolchainStorage m_Storage;
 
 	private final NestedRun<CodeBlock, IPredicate> m_Run;
 	private final IPredicate m_Precondition;
@@ -47,6 +54,8 @@ public class PathInvariantsGenerator implements IInterpolantGenerator {
 	 * 
 	 * @param services
 	 *            Service provider to use, for example for logging and timeouts
+	 * @param storage
+	 * 			  IToolchainstorage of the current Ultimate toolchain. 
 	 * @param run
 	 *            an infeasible run to project into a CFG. Must only contain
 	 *            {@link ISLPredicate}s as states.
@@ -64,6 +73,7 @@ public class PathInvariantsGenerator implements IInterpolantGenerator {
 	 *            reserved for future use.
 	 */
 	public PathInvariantsGenerator(IUltimateServiceProvider services,
+			IToolchainStorage storage,
 			NestedRun<CodeBlock, IPredicate> run, IPredicate precondition,
 			IPredicate postcondition, PredicateUnifier predicateUnifier,
 			SmtManager smtManager,
@@ -79,6 +89,8 @@ public class PathInvariantsGenerator implements IInterpolantGenerator {
 	 * 
 	 * @param services
 	 *            Service provider to use, for example for logging and timeouts
+	 * @param storage
+	 * 			  IToolchainstorage of the current Ultimate toolchain. 
 	 * @param run
 	 *            an infeasible run to project into a CFG. Must only contain
 	 *            {@link ISLPredicate}s as states.
@@ -96,6 +108,7 @@ public class PathInvariantsGenerator implements IInterpolantGenerator {
 	 *            the factory to use with {@link CFGInvariantsGenerator}.
 	 */
 	public PathInvariantsGenerator(final IUltimateServiceProvider services,
+			final IToolchainStorage storage,
 			final NestedRun<CodeBlock, IPredicate> run,
 			final IPredicate precondition, final IPredicate postcondition,
 			final PredicateUnifier predicateUnifier,
@@ -103,6 +116,8 @@ public class PathInvariantsGenerator implements IInterpolantGenerator {
 			final ModifiableGlobalVariableManager modGlobVarManager,
 			final IInvariantPatternProcessorFactory invPatternProcFactory) {
 		super();
+		m_Services = services;
+		m_Storage = storage;
 		m_Run = run;
 		m_Precondition = precondition;
 		m_Postcondition = postcondition;
@@ -210,6 +225,20 @@ public class PathInvariantsGenerator implements IInterpolantGenerator {
 	@Override
 	public IPredicate[] getInterpolants() {
 		return m_Interpolants;
+	}
+	
+	
+	private Script buildSmtSolver() {
+		return SolverBuilder.buildScript(
+				m_Services, m_Storage, buildSolverSettings());
+	}
+	
+	private Settings buildSolverSettings() {
+		boolean dumpSmtScriptToFile = false;
+		String pathOfDumpedScript = ".";
+		String baseNameOfDumpedScript = "contraintSolving";
+		return new Settings(true, "z3 -smt2 -in SMTLIB2_COMPLIANT=true -t:42000", -1, 
+				null, dumpSmtScriptToFile, pathOfDumpedScript, baseNameOfDumpedScript);
 	}
 
 }
