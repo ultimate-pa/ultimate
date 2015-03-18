@@ -84,9 +84,9 @@ public class MinimizeDfaHopcroftPaper<LETTER, STATE> implements IOperation<LETTE
 			}
 
 			// Start minimization.
-			System.out.println(startMessage());
+			s_Logger.info(startMessage());
 			minimizeDfaHopcroft();
-			System.out.println(exitMessage());
+			s_Logger.info(exitMessage());
 		}
 		
 		/**
@@ -559,12 +559,12 @@ public class MinimizeDfaHopcroftPaper<LETTER, STATE> implements IOperation<LETTE
 
 		@Override
 		public String startMessage() {
-			return "Starting minimization";
+			return "Starting MinimizeDfaHopcroftPaper";
 		}
 
 		@Override
 		public String exitMessage() {
-			return "Finished minimization";
+			return "Finished MinimizeDfaHopcroftPaper";
 		}
 
 		@Override
