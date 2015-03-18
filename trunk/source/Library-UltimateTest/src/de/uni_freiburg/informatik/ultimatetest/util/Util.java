@@ -205,7 +205,7 @@ public class Util {
 		return dir + name;
 	}
 
-	public static Collection<File> getFiles(File root, String[] endings) {
+	public static List<File> getFiles(File root, String[] endings) {
 		ArrayList<File> rtr = new ArrayList<File>();
 
 		if (root.isFile()) {
