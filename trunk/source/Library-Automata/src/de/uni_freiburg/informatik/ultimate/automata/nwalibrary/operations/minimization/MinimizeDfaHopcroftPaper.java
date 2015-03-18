@@ -7,6 +7,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.Map;
 
 import org.apache.log4j.Logger;
 
@@ -29,12 +30,16 @@ public class MinimizeDfaHopcroftPaper<LETTER, STATE> implements IOperation<LETTE
 		private NestedWordAutomaton<LETTER, STATE> m_Result;
 		// Input automaton.
 		private INestedWordAutomaton<LETTER, STATE> m_operand;
+		// state factory
+		private StateFactory<STATE> m_stateFactory;
 		// ArrayList and HashMap for mapping STATE to int and vice versa.
 		private ArrayList<STATE> m_int2state;
 		private HashMap<STATE, Integer> m_state2int;
 		// ArrayList and HashMap for mapping LETTER to int and vice versa.
 		private ArrayList<LETTER> m_int2letter;
 		private HashMap<LETTER, Integer> m_letter2int;
+		
+		private HashMap<STATE, STATE> m_oldState2newState;
 		
 		/*******************************************************************//**
 		 * necessary data elements for the minimization algorithm.
@@ -63,17 +68,33 @@ public class MinimizeDfaHopcroftPaper<LETTER, STATE> implements IOperation<LETTE
 
 		/*******************************************************************//**
 		 * Constructor.
-		 * @param operand
 		 */
 		public MinimizeDfaHopcroftPaper(IUltimateServiceProvider services, 
-				INestedWordAutomaton<LETTER, STATE> operand) {
+				INestedWordAutomaton<LETTER, STATE> operand,
+				StateFactory<STATE> stateFactoryConstruction,
+				boolean addMapping) {
 			m_Services = services;
 			this.m_operand = operand;
+			this.m_stateFactory = stateFactoryConstruction;
+			if (addMapping) {
+				this.m_oldState2newState = null;
+			} else {
+				m_oldState2newState = new HashMap<STATE, STATE>(
+						computeHashMapCapacity(m_operand.size()));
+			}
 
 			// Start minimization.
 			System.out.println(startMessage());
 			minimizeDfaHopcroft();
 			System.out.println(exitMessage());
+		}
+		
+		/**
+		 * Constructor without state factory.
+		 */
+		public MinimizeDfaHopcroftPaper(IUltimateServiceProvider services, 
+				INestedWordAutomaton<LETTER, STATE> operand) {
+			this(services, operand, operand.getStateFactory(), false);
 		}
 		
 		/*******************************************************************//**
@@ -440,9 +461,8 @@ public class MinimizeDfaHopcroftPaper<LETTER, STATE> implements IOperation<LETTE
 			m_Result = new NestedWordAutomaton<LETTER, STATE>(
 					m_Services, 
 					m_operand.getInternalAlphabet(), null,
-					null, m_operand.getStateFactory());
+					null, m_stateFactory);
 			
-			StateFactory<STATE> sF = m_operand.getStateFactory();
 			ArrayList<STATE> newStates =
 					new ArrayList<STATE>(m_blocks.m_nOfSets);
 			int blockOfInitState = m_blocks.m_setElemBelongsTo[m_initialState];
@@ -467,7 +487,15 @@ public class MinimizeDfaHopcroftPaper<LETTER, STATE> implements IOperation<LETTE
 					tmp.add(m_int2state.get(elem));
 				}
 				// Build the new state by using the minimize - function of StateFactory.
-				STATE newState = sF.minimize(tmp);
+				STATE newState = m_stateFactory.minimize(tmp);
+				
+				// update mapping 'old state -> new state'
+				if (m_oldState2newState != null) {
+					for (final STATE oldState : tmp) {
+						m_oldState2newState.put(oldState, newState);
+					}
+				}
+				
 				newStates.add(newState);
 				// Add the new state to the new result automaton.
 				boolean isFinalState = false;
@@ -592,5 +620,15 @@ public class MinimizeDfaHopcroftPaper<LETTER, STATE> implements IOperation<LETTE
 					ResultChecker.getOldApiNwa(m_Services,subset),
 					ResultChecker.getOldApiNwa(m_Services,superset),
 					stateFactory) == null;
+		}
+		
+		/**
+		 * Returns a Map from states of the input automaton to states of the output
+		 * automaton. The image of a state oldState is the representative of 
+		 * oldStates equivalence class.
+		 * This method can only be used if the minimization is finished.
+		 */
+		public Map<STATE,STATE> getOldState2newState() {
+			return m_oldState2newState;
 		}
 }

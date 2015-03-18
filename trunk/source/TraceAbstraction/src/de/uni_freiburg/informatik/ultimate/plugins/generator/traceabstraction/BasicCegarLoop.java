@@ -28,6 +28,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsEmpt
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.PowersetDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.RemoveDeadEnds;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.RemoveUnreachable;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.MinimizeDfaHopcroftPaper;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.MinimizeSevpa;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.ShrinkNwa;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.ComplementDD;
@@ -558,6 +559,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		switch (minimization) {
 		case NONE:
 			break;
+		case DFA_HOPCROFT:
 		case MINIMIZE_SEVPA:
 		case SHRINK_NWA:
 			minimizeAbstraction(m_StateFactoryForRefinement, m_PredicateFactoryResultChecking, minimization);
@@ -647,6 +649,19 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 				ShrinkNwa<CodeBlock, IPredicate> minimizeOp = new ShrinkNwa<CodeBlock, IPredicate>(m_Services,
 						predicateFactoryRefinement, newAbstraction, partition, true, false, false, 200, false, 0,
 						false, false);
+				assert minimizeOp.checkResult(resultCheckPredFac);
+				minimized = (new RemoveUnreachable<CodeBlock, IPredicate>(m_Services, minimizeOp.getResult()))
+						.getResult();
+				if (m_ComputeHoareAnnotation) {
+					Map<IPredicate, IPredicate> oldState2newState = minimizeOp.getOldState2newState();
+					m_Haf.updateOnMinimization(oldState2newState, minimized);
+				}
+				break;
+			}
+			case DFA_HOPCROFT: {
+				MinimizeDfaHopcroftPaper<CodeBlock, IPredicate> minimizeOp =
+						new MinimizeDfaHopcroftPaper<CodeBlock, IPredicate>(
+							m_Services, newAbstraction, predicateFactoryRefinement, m_ComputeHoareAnnotation);
 				assert minimizeOp.checkResult(resultCheckPredFac);
 				minimized = (new RemoveUnreachable<CodeBlock, IPredicate>(m_Services, minimizeOp.getResult()))
 						.getResult();
