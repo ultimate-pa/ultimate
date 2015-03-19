@@ -1891,6 +1891,10 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 				return m_RootNode;
 			}
 
+			/**
+			 * @return The state containers of all states that are contained
+			 * in this SCC.
+			 */
 			public Set<StateContainer<LETTER, STATE>> getAllStates() {
 				return m_AllStates;
 			}

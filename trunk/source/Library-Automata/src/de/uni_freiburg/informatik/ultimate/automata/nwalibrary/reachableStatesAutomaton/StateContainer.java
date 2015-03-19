@@ -39,6 +39,22 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingInternalT
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.NestedWordAutomatonReachableStates.ReachProp;
 
+/**
+ * Auxiliary data structure used by {@link NestedWordAutomatonReachableStates}.
+ * This data structure stores
+ * <ul>
+ *    <li> a state
+ *    <li> together with its incoming and outgoing transitions
+ *    <li> the down states of this state
+ *    <li> information about reachability of this state
+ *    <li> field in which algorithms of {@link NestedWordAutomatonReachableStates}
+ *    <li> store temporary data.
+ * </ul>
+ * @author Matthias Heizmann
+ *
+ * @param <LETTER>
+ * @param <STATE>
+ */
 public abstract class StateContainer<LETTER, STATE> {
 	
 	enum DownStateProp {
