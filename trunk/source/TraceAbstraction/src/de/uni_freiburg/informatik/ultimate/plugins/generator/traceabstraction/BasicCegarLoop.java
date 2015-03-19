@@ -672,6 +672,8 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 				break;
 			}
 			case NONE:
+				minimized = (INestedWordAutomatonOldApi<CodeBlock, IPredicate>) m_Abstraction;
+				break;
 			default:
 				throw new AssertionError();
 			}
