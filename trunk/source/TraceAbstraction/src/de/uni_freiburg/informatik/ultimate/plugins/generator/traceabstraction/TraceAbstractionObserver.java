@@ -72,7 +72,7 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 	}
 	
 	private boolean isOriginalRcfg(GraphType currentGraphType) {
-		return currentGraphType.getCreator().equals("de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding");
+		return currentGraphType.getCreator().equals("de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder");
 	}
 
 
