@@ -23,10 +23,12 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 	private final IUltimateServiceProvider m_Services;
 	
 	private RootNode m_RcfgRootNode;
+	private RootNode m_BlockEncodedRcfgRootNode;
 	private IElement m_RootOfNewModel;
 	private WitnessNode m_WitnessNode;
 	private boolean m_LastModel = false;
 	private IToolchainStorage m_Storage;
+	private GraphType m_CurrentGraphType;
 
 
 	public TraceAbstractionObserver(IUltimateServiceProvider services, IToolchainStorage storage) {
@@ -40,10 +42,19 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 	@Override
 	public boolean process(IElement root) {
 		if (root instanceof RootNode) {
-			if (m_RcfgRootNode == null) {
-				m_RcfgRootNode = (RootNode) root;
-			} else {
-				throw new UnsupportedOperationException("two RCFG models");
+			if (isOriginalRcfg(m_CurrentGraphType)) {
+				if (m_RcfgRootNode == null) {
+					m_RcfgRootNode = (RootNode) root;
+				} else {
+					throw new UnsupportedOperationException("two RCFG models form same source");
+				}
+			} 
+			if (isBlockEncodingRcfg(m_CurrentGraphType)) {
+				if (m_BlockEncodedRcfgRootNode == null) {
+					m_BlockEncodedRcfgRootNode = (RootNode) root;
+				} else {
+					throw new UnsupportedOperationException("two RCFG models form same source");
+				}
 			}
 		}
 		if (root instanceof WitnessNode) {
@@ -53,15 +64,30 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 				throw new UnsupportedOperationException("two witness models");
 			}
 		}
-		
-		
 		return false;
 	}
+
+	private boolean isBlockEncodingRcfg(GraphType currentGraphType) {
+		return currentGraphType.getCreator().equals("de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding");
+	}
+	
+	private boolean isOriginalRcfg(GraphType currentGraphType) {
+		return currentGraphType.getCreator().equals("de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding");
+	}
+
+
 
 	@Override
 	public void finish() {
 		if (m_LastModel) {
-			if (m_RcfgRootNode == null) {
+			final RootNode rcfgRootNode;
+			if (m_BlockEncodedRcfgRootNode != null) {
+				rcfgRootNode = m_BlockEncodedRcfgRootNode;
+			} else {
+				rcfgRootNode = m_RcfgRootNode;
+			}
+			
+			if (rcfgRootNode == null) {
 				throw new UnsupportedOperationException("TraceAbstraction needs an RCFG");
 			} else {
 				NestedWordAutomaton<WitnessEdge, WitnessNode> witnessAutomaton;
@@ -71,7 +97,7 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 					m_Logger.warn("Found a witness automaton. I will only consider traces that are accepted by the witness automaton");
 					witnessAutomaton = (new WitnessModelToAutomatonTransformer(m_WitnessNode, m_Services)).getResult();
 				}
-				TraceAbstractionStarter tas = new TraceAbstractionStarter(m_Services, m_Storage, m_RcfgRootNode, witnessAutomaton);
+				TraceAbstractionStarter tas = new TraceAbstractionStarter(m_Services, m_Storage, rcfgRootNode, witnessAutomaton);
 				m_RootOfNewModel = tas.getRootOfNewModel();
 			}
 		}
@@ -92,6 +118,7 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 
 	@Override
 	public void init(GraphType modelType, int currentModelIndex, int numberOfModels) {
+		m_CurrentGraphType = modelType;
 		if (currentModelIndex == numberOfModels -1) {
 			m_LastModel = true;
 		}
