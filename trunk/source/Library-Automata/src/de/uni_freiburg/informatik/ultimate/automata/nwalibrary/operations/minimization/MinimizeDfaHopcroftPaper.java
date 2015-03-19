@@ -83,9 +83,17 @@ public class MinimizeDfaHopcroftPaper<LETTER, STATE> implements IOperation<LETTE
 						computeHashMapCapacity(m_operand.size()));
 			}
 
-			// Start minimization.
 			s_Logger.info(startMessage());
-			minimizeDfaHopcroft();
+			if (m_operand.size() > 0) {
+				// Start minimization.
+				minimizeDfaHopcroft();
+			} else {
+				// Special case: empty automaton.
+				m_Result = new NestedWordAutomaton<LETTER, STATE>(
+						m_Services, 
+						m_operand.getInternalAlphabet(), null,
+						null, m_stateFactory);
+			}
 			s_Logger.info(exitMessage());
 		}
 		
