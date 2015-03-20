@@ -8,14 +8,14 @@ public class TACAS2015AlgoComparisonMemSafety extends TACAS2015 {
 
 	@Override
 	protected void createTestCasesForReal(List<UltimateTestCase> testcases) {
-		addTestCasesFixed("AutomizerC.xml", "TACASInterpolation2015/Automizer/Princess_Interpolation-mem.epf", testcases);
-		addTestCasesFixed("AutomizerC.xml", "TACASInterpolation2015/Automizer/SMTInterpol_Interpolation-mem.epf", testcases);
-		addTestCasesFixed("AutomizerC.xml", "TACASInterpolation2015/Automizer/SMTInterpol_SP-IC-LV-mem.epf", testcases);
-		addTestCasesFixed("AutomizerC.xml", "TACASInterpolation2015/Automizer/Z3_SP-IC-LV-mem.epf", testcases);
-		addTestCasesFixed("AutomizerC.xml", "TACASInterpolation2015/Automizer/SMTInterpol_SP-IC-mem.epf", testcases);
-		addTestCasesFixed("AutomizerC.xml", "TACASInterpolation2015/Automizer/Z3_SP-IC-mem.epf", testcases);
-		addTestCasesFixed("AutomizerC.xml", "TACASInterpolation2015/Automizer/Z3_SP-LV-mem.epf", testcases);
-		addTestCasesFixed("AutomizerC.xml", "TACASInterpolation2015/Automizer/Z3_SP-mem.epf", testcases);
+		addTestCasesFixed("AutomizerCWithBlockEncoding.xml", "TACASInterpolation2015/Automizer/Princess_Interpolation-mem.epf", testcases);
+		addTestCasesFixed("AutomizerCWithBlockEncoding.xml", "TACASInterpolation2015/Automizer/SMTInterpol_Interpolation-mem.epf", testcases);
+		addTestCasesFixed("AutomizerCWithBlockEncoding.xml", "TACASInterpolation2015/Automizer/SMTInterpol_SP-IC-LV-mem.epf", testcases);
+		addTestCasesFixed("AutomizerCWithBlockEncoding.xml", "TACASInterpolation2015/Automizer/Z3_SP-IC-LV-mem.epf", testcases);
+		addTestCasesFixed("AutomizerCWithBlockEncoding.xml", "TACASInterpolation2015/Automizer/SMTInterpol_SP-IC-mem.epf", testcases);
+		addTestCasesFixed("AutomizerCWithBlockEncoding.xml", "TACASInterpolation2015/Automizer/Z3_SP-IC-mem.epf", testcases);
+		addTestCasesFixed("AutomizerCWithBlockEncoding.xml", "TACASInterpolation2015/Automizer/Z3_SP-LV-mem.epf", testcases);
+		addTestCasesFixed("AutomizerCWithBlockEncoding.xml", "TACASInterpolation2015/Automizer/Z3_SP-mem.epf", testcases);
 
 //		addTestCasesFixed("CodeCheckNoBE-C.xml", "TACASInterpolation2015/Kojak-SP-mem.epf", testcases);
 //		addTestCasesFixed("CodeCheckNoBE-C.xml", "TACASInterpolation2015/Kojak-SP-IC-mem.epf", testcases);
@@ -27,9 +27,9 @@ public class TACAS2015AlgoComparisonMemSafety extends TACAS2015 {
 	protected String[] getDirectories() {
 		// @formatter:off
 		String[] directories = {
-//			"examples/svcomp/memsafety/",
-//			"examples/svcomp/memsafety-ext/",
-//			"examples/svcomp/list-ext-properties/"
+			"examples/svcomp/memsafety/",
+			"examples/svcomp/memsafety-ext/",
+			"examples/svcomp/list-ext-properties/",
 
 			//our best category
 			"examples/svcomp/memory-alloca/",
