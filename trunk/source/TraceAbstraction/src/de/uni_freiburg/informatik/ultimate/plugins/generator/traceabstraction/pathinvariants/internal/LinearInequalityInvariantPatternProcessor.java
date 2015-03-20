@@ -2,7 +2,10 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.p
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
@@ -13,7 +16,9 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.LinearInequality;
 import de.uni_freiburg.informatik.ultimate.lassoranker.LinearTransition;
 import de.uni_freiburg.informatik.ultimate.lassoranker.ModelExtractionUtils;
 import de.uni_freiburg.informatik.ultimate.lassoranker.exceptions.TermException;
+import de.uni_freiburg.informatik.ultimate.lassoranker.termination.AffineFunctionGenerator;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.MotzkinTransformation;
+import de.uni_freiburg.informatik.ultimate.lassoranker.variables.RankVar;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -29,6 +34,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.ControlFlowGraph.Location;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.ControlFlowGraph.Transition;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
 
@@ -41,7 +47,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  */
 public final class LinearInequalityInvariantPatternProcessor
 		extends
-		AbstractSMTInvariantPatternProcessor<Collection<Collection<LinearInequality>>> {
+		AbstractSMTInvariantPatternProcessor<Collection<Collection<AffineFunctionGenerator>>> {
+
+	private static final String PREFIX = "liipp_";
 
 	private final Logger logger;
 	private final Script solver;
@@ -51,10 +59,18 @@ public final class LinearInequalityInvariantPatternProcessor
 	private final CachedTransFormulaLinearizer linearizer;
 	private final ControlFlowGraph cfg;
 
+	/**
+	 * The pattern variables, that is the coefficients of program- and helper
+	 * variables.
+	 */
 	private final Collection<Term> patternVariables;
+	/**
+	 * The pattern coefficients, that is the program- and helper variables.
+	 */
+	private final Set<RankVar> patternCoefficients;
 	private Map<Term, Term> validConfiguration;
-	private Collection<Collection<LinearInequality>> entryInvariantPattern;
-	private Collection<Collection<LinearInequality>> exitInvariantPattern;
+	private Collection<Collection<AffineFunctionGenerator>> entryInvariantPattern;
+	private Collection<Collection<AffineFunctionGenerator>> exitInvariantPattern;
 
 	/**
 	 * Creates a pattern processor using linear inequalities as patterns.
@@ -92,6 +108,7 @@ public final class LinearInequalityInvariantPatternProcessor
 		this.cfg = cfg;
 
 		this.patternVariables = new ArrayList<>();
+		this.patternCoefficients = new HashSet<>();
 
 		this.linearizer = new CachedTransFormulaLinearizer(services, smtManager);
 		final Boogie2SMT boogie2smt = smtManager.getBoogie2Smt();
@@ -111,25 +128,44 @@ public final class LinearInequalityInvariantPatternProcessor
 		validConfiguration = null;
 		entryInvariantPattern = null;
 		exitInvariantPattern = null;
+
+		// In the first round, linearize and populate
+		// {@link #patternCoefficients}.
+		if (round == 0) {
+			logger.log(Level.INFO, "[LIIPP] First round, linearizing...");
+			patternCoefficients.clear();
+			for (final Transition transition : cfg.getTransitions()) {
+				final LinearTransition lTransition = linearizer
+						.linearize(transition.getTransFormula());
+				patternCoefficients.addAll(lTransition.getInVars().keySet());
+				patternCoefficients.addAll(lTransition.getOutVars().keySet());
+			}
+			patternCoefficients.addAll(precondition.getInVars().keySet());
+			patternCoefficients.addAll(precondition.getOutVars().keySet());
+			patternCoefficients.addAll(postcondition.getInVars().keySet());
+			patternCoefficients.addAll(postcondition.getOutVars().keySet());
+			logger.log(Level.INFO, "[LIIPP] Linearization complete.");
+		}
 	}
 
 	/**
 	 * {@inheritDoc}
 	 */
 	@Override
-	public Collection<Collection<LinearInequality>> getInvariantPatternForLocation(
+	public Collection<Collection<AffineFunctionGenerator>> getInvariantPatternForLocation(
 			final Location location, final int round) {
 		// Build invariant pattern
 		final int[] dimensions = strategy.getDimensions(location, round);
-		final Collection<Collection<LinearInequality>> disjunction = new ArrayList<>(
+		final Collection<Collection<AffineFunctionGenerator>> disjunction = new ArrayList<>(
 				dimensions[0]);
 		for (int i = 0; i < dimensions[0]; i++) {
-			final Collection<LinearInequality> conjunction = new ArrayList<>(
+			final Collection<AffineFunctionGenerator> conjunction = new ArrayList<>(
 					dimensions[1]);
 			for (int j = 0; j < dimensions[1]; j++) {
-				// TODO: add new linear inequality to conjunction
-				// TODO: add new variables to patternVariables
-				throw new UnsupportedOperationException("not implemented");
+				final AffineFunctionGenerator inequality = new AffineFunctionGenerator(
+						solver, patternCoefficients, PREFIX);
+				patternVariables.addAll(inequality.getVariables());
+				conjunction.add(inequality);
 			}
 			disjunction.add(conjunction);
 		}
@@ -213,7 +249,7 @@ public final class LinearInequalityInvariantPatternProcessor
 	 * @return equivalence term
 	 */
 	private Term buildEquivalenceTerm(final LinearTransition condition,
-			final Collection<Collection<LinearInequality>> pattern) {
+			final Collection<Collection<AffineFunctionGenerator>> pattern) {
 		// TODO: implement
 		throw new UnsupportedOperationException("not implemented");
 	}
@@ -227,7 +263,7 @@ public final class LinearInequalityInvariantPatternProcessor
 	 * @return term true iff the given predicate holds
 	 */
 	private Term buildPredicateTerm(
-			final InvariantTransitionPredicate<Collection<Collection<LinearInequality>>> predicate) {
+			final InvariantTransitionPredicate<Collection<Collection<AffineFunctionGenerator>>> predicate) {
 		// TODO: implement
 		throw new UnsupportedOperationException("not implemented");
 	}
@@ -237,27 +273,27 @@ public final class LinearInequalityInvariantPatternProcessor
 	 */
 	@Override
 	public boolean hasValidConfiguration(
-			final Collection<InvariantTransitionPredicate<Collection<Collection<LinearInequality>>>> predicates,
+			final Collection<InvariantTransitionPredicate<Collection<Collection<AffineFunctionGenerator>>>> predicates,
 			final int round) {
 		logger.log(Level.INFO, "[LIIPP] Start generating terms.");
 		solver.assertTerm(buildEquivalenceTerm(precondition,
 				entryInvariantPattern));
 		solver.assertTerm(buildEquivalenceTerm(postcondition,
 				exitInvariantPattern));
-		for (final InvariantTransitionPredicate<Collection<Collection<LinearInequality>>> predicate : predicates) {
+		for (final InvariantTransitionPredicate<Collection<Collection<AffineFunctionGenerator>>> predicate : predicates) {
 			solver.assertTerm(buildPredicateTerm(predicate));
 		}
-		
+
 		logger.log(Level.INFO, "[LIIPP] Terms generated, checking SAT.");
 		if (solver.checkSat() != LBool.SAT) {
 			// No configuration found
 			logger.log(Level.INFO, "[LIIPP] No solution found.");
 			return false;
 		}
-		
+
 		logger.log(Level.INFO, "[LIIPP] Solution found!");
-		validConfiguration = solver.getValue(
-				patternVariables.toArray(new Term[patternVariables.size()]));
+		validConfiguration = solver.getValue(patternVariables
+				.toArray(new Term[patternVariables.size()]));
 
 		throw new UnsupportedOperationException("not implemented");
 	}
@@ -275,14 +311,21 @@ public final class LinearInequalityInvariantPatternProcessor
 	 */
 	@Override
 	protected Term getTermForPattern(
-			final Collection<Collection<LinearInequality>> pattern) {
+			final Collection<Collection<AffineFunctionGenerator>> pattern) {
+		final Map<RankVar, Term> definitionMap = new HashMap<RankVar, Term>(
+				patternCoefficients.size());
+		for (final RankVar coefficient : patternCoefficients) {
+			definitionMap.put(coefficient, coefficient.getDefinition());
+		}
+
 		final Collection<Term> conjunctions = new ArrayList<Term>(
 				pattern.size());
-		for (final Collection<LinearInequality> conjunct : pattern) {
+		for (final Collection<AffineFunctionGenerator> conjunct : pattern) {
 			final Collection<Term> inequalities = new ArrayList<Term>(
 					conjunct.size());
-			for (final LinearInequality inequality : conjunct) {
-				inequalities.add(inequality.asTerm(solver));
+			for (final AffineFunctionGenerator inequality : conjunct) {
+				inequalities.add(inequality.generate(definitionMap).asTerm(
+						solver));
 			}
 			conjunctions.add(SmtUtils.and(solver, inequalities));
 		}

@@ -19,6 +19,7 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.RewriteStri
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.RewriteTrueFalse;
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.SimplifyPreprocessor;
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.TransitionPreProcessor;
+import de.uni_freiburg.informatik.ultimate.lassoranker.variables.ReplacementVar;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.ReplacementVarFactory;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaLR;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -26,9 +27,10 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 
 /**
- * Class linearizing {@link TransFormula}s. For improved performance, this class
- * keeps a cache of linearization results. Thus, this class should only be used
- * in one single context at a time, to ensure proper garbage collection.
+ * Class linearizing {@link TransFormula}s. For improved performance and
+ * variable management, this class keeps a cache of linearization results. Thus,
+ * this class should only be used in one single context at a time, to ensure
+ * proper garbage collection.
  * 
  * @author (mostly) Matthias Heizmann
  */
@@ -61,9 +63,11 @@ public class CachedTransFormulaLinearizer {
 
 		m_Cache = new HashMap<TransFormula, LinearTransition>();
 	}
-	
+
 	/**
-	 * Performs a transformation, utilizing the cache if possible.
+	 * Performs a transformation, utilizing the cache if possible. If the given
+	 * {@link TransFormula} has not yet been linearized, the result will also
+	 * get added to the cache.
 	 * 
 	 * The input and the output of this transformation are related as follows.
 	 * Let the input be a {@link TransFormula} that represents a formula φ whose
