@@ -242,9 +242,9 @@ public class MinimizeDfaHopcroftPaper<LETTER, STATE> implements IOperation<LETTE
 		 */
 		private void initializeLables() {
 			// TODO: Better size handling.
-			LinkedList<Integer> labels = new LinkedList<Integer>();
-			LinkedList<Integer> heads = new LinkedList<Integer>();
-			LinkedList<Integer> tails = new LinkedList<Integer>();
+			ArrayList<Integer> labels = new ArrayList<Integer>();
+			ArrayList<Integer> heads = new ArrayList<Integer>();
+			ArrayList<Integer> tails = new ArrayList<Integer>();
 			
 			// Iterate over all states in m_int2state.
 			int index = 0;
