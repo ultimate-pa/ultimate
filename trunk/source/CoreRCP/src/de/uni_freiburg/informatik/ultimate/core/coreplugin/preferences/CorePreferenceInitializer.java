@@ -219,7 +219,7 @@ public class CorePreferenceInitializer extends UltimatePreferenceInitializer {
 	// Witness generation
 	public static final String DESC_WITNESS = "Witness generation";
 	public static final String LABEL_WITNESS_GEN = "Generate witness from each counter example result";
-	public static final boolean VALUE_WITNESS_GEN = true;
+	public static final boolean VALUE_WITNESS_GEN = false;
 	public static final String LABEL_WITNESS_LOG = "Log witness";
 	public static final boolean VALUE_WITNESS_LOG = false;
 	public static final String LABEL_WITNESS_WRITE = "Write witness as \"<inputfilename>-witness.graphml\" "
@@ -227,7 +227,7 @@ public class CorePreferenceInitializer extends UltimatePreferenceInitializer {
 	public static final boolean VALUE_WITNESS_WRITE = false;
 	public static final String LABEL_WITNESS_WRITE_WORKINGDIR = "Write witness as \"witness.graphml\" "
 			+ "to working directory";
-	public static final boolean VALUE_WITNESS_WRITE_WORKINGDIR = true;
+	public static final boolean VALUE_WITNESS_WRITE_WORKINGDIR = false;
 	public static final String LABEL_WITNESS_VERIFY = "Verify the witness and generate results";
 	public static final boolean VALUE_WITNESS_VERIFY = false;
 	public static final String LABEL_WITNESS_VERIFIER = "Use the following witness verifier";
