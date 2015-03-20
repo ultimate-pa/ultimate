@@ -82,6 +82,18 @@ public class PhaseBits implements Comparable {
             return o.waiting - waiting;
         return exactbound - o.exactbound;
     }
+    
+    public int getActive() {
+    	return active;
+    }
+
+    public int getWaiting() {
+    	return waiting;
+    }
+
+    public int getExactBound() {
+    	return exactbound;
+    }
 
     /** transform this PhaseBits object into a PhaseSet for easier access */
     public PhaseSet getPhaseSet(DCPhase phases[]) {

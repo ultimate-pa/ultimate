@@ -32,7 +32,7 @@ import java.util.Set;
 import java.util.Vector;
 
 
-public class Phase implements Comparable {
+public class Phase implements Comparable<Phase> {
     int nr;
 
     // SR 2010-07-09
@@ -46,15 +46,17 @@ public class Phase implements Comparable {
     public int flags;
     public CDD dlCheck;
     private Vector<Transition> incomming;
-    private int[] bits_act = new int[0];
-    private int[] bits_exact;
-    private int[] bits_wait;
     String name;
     CDD stateInv;
     CDD clockInv;
     Set<String> stoppedClocks;
     List<Transition> transitions;
     public int ID;
+
+    /** The phase bits used by the powerset construction.
+     * This is only set for automata built from CounterExample traces.
+     */
+    PhaseBits phaseBits;
 
     public Phase(String name, CDD stateInv, CDD clockInv,
         Set<String> stoppedClocks) {
@@ -95,58 +97,8 @@ public class Phase implements Comparable {
         this.isInit = isInit;
     }
 
-    public int[] getBitsAct() {
-        return bits_act;
-    }
-
-    public void setBitsAct(int[] bits) {
-        this.bits_act = bits;
-    }
-
-    private int min(int a, int b) {
-        return (a < b) ? a : b;
-    }
-
-    public void setBitsLength(int len) {
-        if (bits_act == null) {
-            bits_act = new int[len];
-            bits_wait = new int[len];
-            bits_exact = new int[len];
-        } else {
-            int[] ac = new int[len];
-            int[] wa = new int[len];
-            int[] ex = new int[len];
-
-            for (int i = 0; i < min(bits_act.length, len); i++) {
-                ac[i] = bits_act[i];
-                wa[i] = bits_wait[i];
-                ex[i] = bits_exact[i];
-            }
-
-            bits_act = ac;
-            bits_wait = wa;
-            bits_exact = ex;
-        }
-    }
-
-    public int[] getBitsExa() {
-        return bits_exact;
-    }
-
-    public void setBitsExa(int[] bits) {
-        this.bits_exact = bits;
-    }
-
-    public int[] getBitsWait() {
-        return bits_wait;
-    }
-
-    public void setBitsWait(int[] bits) {
-        this.bits_wait = bits;
-    }
-
-    public Vector<Transition> getIncomming() {
-        return incomming;
+    public PhaseBits getPhaseBits() {
+    	return phaseBits;
     }
 
     public CDD getStateInvariant() {
@@ -175,7 +127,7 @@ public class Phase implements Comparable {
 
     /** @return the transition added or modified */
     public Transition addTransition(Phase dest, CDD guard, String[] resets) {
-        Iterator it = transitions.iterator();
+        Iterator<Transition> it = transitions.iterator();
 
         while (it.hasNext()) {
             Transition t = (Transition) it.next();
@@ -221,7 +173,7 @@ public class Phase implements Comparable {
 
         System.err.println("    transitions {");
 
-        Iterator it = transitions.iterator();
+        Iterator<Transition> it = transitions.iterator();
 
         while (it.hasNext())
             System.err.println("       " + it.next());
@@ -234,10 +186,10 @@ public class Phase implements Comparable {
         System.out.println("  " + this.name + " [ label = \"" + stateInv +
             "\\n" + clockInv + "\" shape=ellipse ]");
 
-        Iterator it = transitions.iterator();
+        Iterator<Transition> it = transitions.iterator();
 
         while (it.hasNext()) {
-            Transition t = (Transition) it.next();
+            Transition t = it.next();
             System.out.println("  " + t.getSrc().name + " -> " +
                 t.getDest().name + " [ label = \"" + t.guard + "\" ]");
         }
@@ -273,9 +225,7 @@ public class Phase implements Comparable {
     /* (non-Javadoc)
      * @see java.lang.Comparable#compareTo(java.lang.Object)
      */
-    public int compareTo(Object o) {
-        Phase p = (Phase) o;
-
+    public int compareTo(Phase p) {
         return name.compareTo(p.name);
     }
 
