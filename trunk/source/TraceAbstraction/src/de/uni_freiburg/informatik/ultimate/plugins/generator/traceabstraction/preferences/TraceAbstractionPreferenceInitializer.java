@@ -130,6 +130,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final boolean DEF_MINIMIZE = true;
 	public static final String DEF_CONCURRENCY = VALUE_FINITE_AUTOMATON;
 	public static final boolean DEF_ALL_ERRORS_AT_ONCE = true;
+//	public static final boolean DEF_ALL_ERRORS_AT_ONCE = false;
 
 	public static final boolean DEF_CUTOFF = true;
 	public static final boolean DEF_UNFOLDING2NET = false;
