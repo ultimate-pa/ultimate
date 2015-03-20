@@ -661,7 +661,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 			case DFA_HOPCROFT: {
 				MinimizeDfaHopcroftPaper<CodeBlock, IPredicate> minimizeOp =
 						new MinimizeDfaHopcroftPaper<CodeBlock, IPredicate>(
-							m_Services, newAbstraction, predicateFactoryRefinement, m_ComputeHoareAnnotation);
+							m_Services, newAbstraction, predicateFactoryRefinement, partition, m_ComputeHoareAnnotation);
 				assert minimizeOp.checkResult(resultCheckPredFac);
 				minimized = (new RemoveUnreachable<CodeBlock, IPredicate>(m_Services, minimizeOp.getResult()))
 						.getResult();

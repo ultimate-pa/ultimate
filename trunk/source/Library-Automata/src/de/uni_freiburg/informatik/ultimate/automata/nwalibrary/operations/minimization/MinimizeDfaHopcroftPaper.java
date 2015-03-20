@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.log4j.Logger;
 
@@ -73,6 +74,13 @@ public class MinimizeDfaHopcroftPaper<LETTER, STATE> implements IOperation<LETTE
 				INestedWordAutomaton<LETTER, STATE> operand,
 				StateFactory<STATE> stateFactoryConstruction,
 				boolean addMapping) {
+			this(services, operand, stateFactoryConstruction, null, addMapping);
+		}
+		
+		public MinimizeDfaHopcroftPaper(IUltimateServiceProvider services, 
+				INestedWordAutomaton<LETTER, STATE> operand,
+				StateFactory<STATE> stateFactoryConstruction,
+				Collection<Set<STATE>> initialPartition, boolean addMapping) {
 			m_Services = services;
 			this.m_operand = operand;
 			this.m_stateFactory = stateFactoryConstruction;
@@ -86,7 +94,7 @@ public class MinimizeDfaHopcroftPaper<LETTER, STATE> implements IOperation<LETTE
 			s_Logger.info(startMessage());
 			if (m_operand.size() > 0) {
 				// Start minimization.
-				minimizeDfaHopcroft();
+				minimizeDfaHopcroft(initialPartition);
 			} else {
 				// Special case: empty automaton.
 				m_Result = new NestedWordAutomaton<LETTER, STATE>(
@@ -107,8 +115,9 @@ public class MinimizeDfaHopcroftPaper<LETTER, STATE> implements IOperation<LETTE
 		
 		/*******************************************************************//**
 		 * Step by Step implementation of minimizing finite automaton by Hopcroft.
+		 * @param initialPartition 
 		 */
-		private void minimizeDfaHopcroft() {
+		private void minimizeDfaHopcroft(final Collection<Set<STATE>> initialPartition) {
 			// First make preprocessing on given automata.
 			s_Logger.info("Start preprocessing data ... ");
 			preprocessingData();
@@ -121,7 +130,7 @@ public class MinimizeDfaHopcroftPaper<LETTER, STATE> implements IOperation<LETTE
 			m_blocks.init(m_nOfStates);
 			
 			// Make initial partition.
-			makeInitialPartition();
+			makeInitialPartition(initialPartition);
 			
 			// Make transition partition.
 			makeTransitionPartition();
@@ -271,17 +280,29 @@ public class MinimizeDfaHopcroftPaper<LETTER, STATE> implements IOperation<LETTE
 		 * Make initial partition m_blocks. Therefor allocate memory for arrays
 		 * and set number of final states as marked states.
 		 */
-		private void makeInitialPartition() {
+		private void makeInitialPartition(final Collection<Set<STATE>> initialPartition) {
 			m_setsWithMarkedElements = new int[m_nOfTransitions + 1];
 			m_nOfMarkedElemInSet = new int[m_nOfTransitions + 1];
-			// Is there any finalState?
-			if (m_nOfFinalStates > 0) {
-				// Before splitting mark final state for splitting final states 
-				// and non - final states.
-				for (int i = 0; i < m_finalStates.length; ++i) {
-					m_blocks.mark(m_finalStates[i]);
+			if (initialPartition == null || initialPartition.isEmpty()) {
+				// no initial partition, only separate final states
+				
+				// Is there any finalState?
+				if (m_nOfFinalStates > 0) {
+					// Before splitting mark final state for splitting final states 
+					// and non - final states.
+					for (int i = 0; i < m_finalStates.length; ++i) {
+						m_blocks.mark(m_finalStates[i]);
+					}
+					m_blocks.split();
 				}
-				m_blocks.split();
+			} else {
+				// consider an initial partition
+				for (final Set<STATE> states : initialPartition) {
+					for (final STATE state : states) {
+						m_blocks.mark(m_state2int.get(state));
+					}
+					m_blocks.split();
+				}
 			}
 		}
 		
