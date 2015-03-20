@@ -2,6 +2,7 @@ package pea_to_boogie.main;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.BitSet;
 import java.util.List;
 
 import org.apache.log4j.Level;
@@ -59,7 +60,12 @@ public class PeaToBoogie implements ISource {
 		m_FileNames.add(inputPath);
 		mLogger.info("Parsing: '" + inputPath + "'");
 		srParsePattern[] patterns = new ReqToPEA().genPatterns(inputPath);
-		int combinationNum = Math.min(patterns.length, 3); // TODO preference
+		BitSet vacuityChecks = new BitSet(patterns.length);
+		vacuityChecks.set(0, patterns.length);
+		
+		
+		int combinationNum = Math.min(patterns.length, 2); // TODO preference
+		translator.setVacuityChecks(vacuityChecks);
 		translator.setCombinationNum(combinationNum);
 		translator.setInputFilePath(inputPath);
 		return translator.genBoogie(patterns);

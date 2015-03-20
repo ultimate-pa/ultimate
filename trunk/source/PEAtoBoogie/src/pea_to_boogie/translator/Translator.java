@@ -3,6 +3,7 @@ import java.util.*;
 
 import pea.*;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.*;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.model.location.BoogieLocation;
 import pea_to_boogie.generator.*;
 import req_to_pea.ReqToPEA;
@@ -60,6 +61,11 @@ public class Translator {
      */
     public srParsePattern[] mRequirements;
     
+    
+    /**
+     * The properties for which we check for vacuity. 
+     */
+    public BitSet mVacuityChecks;
     /**
      * The value of combinations of automata. 
      */
@@ -100,6 +106,21 @@ public class Translator {
     public String getBoogieFilePath() {
     	return this.boogieFilePath;
     }
+    
+    /**
+     * Add a bitset containing the numbers of the components for which vacuity
+     * should be checked.
+     * @param vacuityChecks the bitset. Bit i is set if we should check vacuity 
+     * for the i-th property.
+     */
+    public void setVacuityChecks(BitSet vacuityChecks) {
+    	this.mVacuityChecks = vacuityChecks;
+    }
+    
+    public boolean checkVacuity(int propertyNum) {
+    	return mVacuityChecks != null && mVacuityChecks.get(propertyNum);
+    }
+    
     /**
      * Assign a value to the combinationNum.
      * @param num
@@ -107,6 +128,7 @@ public class Translator {
     public void setCombinationNum(int num) {
     	this.combinationNum = num;
     }
+    
     /**
      * Generate global variables. 
      */
@@ -209,18 +231,35 @@ public class Translator {
        }
     }
     /**
-     * Generate the CNF of a list of expressions.
-     * @param exprs: list of expressions.
-     * @param bl: Boogie location. 
+     * Generate the conjunction of a list of expressions.
+     * @param exprs list of expressions.
+     * @param bl Boogie location. 
      * @return the CNF of a list of expressions.
      */
-    public Expression genCNF (List<Expression> exprs, BoogieLocation bl) {
+    public Expression genConjunction (List<Expression> exprs, BoogieLocation bl) {
     	Iterator<Expression> it = exprs.iterator();
     	if (!it.hasNext())
     		return new BooleanLiteral(bl, true);
     	Expression cnf = it.next();
     	while (it.hasNext()) {
     		cnf = new BinaryExpression(bl, BinaryExpression.Operator.LOGICAND,
+    				cnf, it.next());
+  	    }
+    	return cnf;
+    }
+    /**
+     * Generate the disjunction of a list of expressions.
+     * @param exprs list of expressions.
+     * @param bl Boogie location. 
+     * @return the CNF of a list of expressions.
+     */
+    public Expression genDisjunction (List<Expression> exprs, BoogieLocation bl) {
+    	Iterator<Expression> it = exprs.iterator();
+    	if (!it.hasNext())
+    		return new BooleanLiteral(bl, false);
+    	Expression cnf = it.next();
+    	while (it.hasNext()) {
+    		cnf = new BinaryExpression(bl, BinaryExpression.Operator.LOGICOR,
     				cnf, it.next());
   	    }
     	return cnf;
@@ -246,6 +285,19 @@ public class Translator {
 	    
     	return assignment;
     }
+    
+    /**
+     * Generate the delay statements and havoc all primed variables and event variables. 
+     * The code has the form
+     * <pre>
+     * 	   havoc primedVars, eventVars, delta;
+     *     assume delta > 0.0
+     *     clock1 := clock + delta;
+     *     ...
+     * </pre>
+     * @param bl
+     * @return
+     */
     public Statement[] genDelay(BoogieLocation bl) {
     	
     	List<VariableLHS> havocIds = new ArrayList<VariableLHS>();
@@ -277,7 +329,15 @@ public class Translator {
     	}
     	return statements;
     }
-    public Expression genIfCons (int phaseIndex, int autIndex, BoogieLocation bl) {
+    /**
+     * Generate the expression <code>pc<i>autIndex</i> == <i>phaseIndex</i></code> that checks
+     * if the automaton autIndex is currently in the phase phaseIndex.
+     * @param phaseIndex the index of the phase we check for.
+     * @param autIndex   the index of the automaton.
+     * @param bl
+     * @return
+     */
+    public Expression genComparePhaseCounter (int phaseIndex, int autIndex, BoogieLocation bl) {
     	IdentifierExpression identifier = new IdentifierExpression(bl, "pc"+autIndex);
     	IntegerLiteral intLiteral = new IntegerLiteral(bl, 
     			Integer.toString(phaseIndex));
@@ -285,7 +345,13 @@ public class Translator {
     			identifier, intLiteral);
     	return ifCon;
     }
-    public Statement[] genIfSmtDelayBody(Phase phase, BoogieLocation bl) {
+    /**
+     * Creates the code that checks the phase invariant of the given phase.
+     * @param phase the phase whose invariant should be checked.
+     * @param bl
+     * @return the array of (two) statements that check the invariant.
+     */
+    public Statement[] genCheckPhaseInvariant(Phase phase, BoogieLocation bl) {
  	    Expression expr	= new CDDTranslator().CDD_To_Boogie(phase.getClockInvariant(),getBoogieFilePath(), bl);
      	AssumeStatement assumeClInv = new AssumeStatement(bl, expr);
      	expr = new CDDTranslator().CDD_To_Boogie(phase.getStateInvariant(),getBoogieFilePath(), bl);
@@ -340,16 +406,26 @@ public class Translator {
     	  
     	return smtList.get(smtList.size()-1);
     }
-    public Statement genIfSmtDelay(PhaseEventAutomata automaton, int autIndex, BoogieLocation bl) {
+    
+    /**
+     * Check the invariants of the given automaton.  This is an if statement that first checks
+     * in which phase the automaton is and then checks the corresponding invariants.
+     * @param automaton  the automaton to check.
+     * @param autIndex   the index of the automaton to check.
+     * @param bl  The location information to correspond the generated source to
+     * 	the property.
+     * @return The if statement checking the p
+     */
+    public Statement genCheckInvariants(PhaseEventAutomata automaton, int autIndex, BoogieLocation bl) {
     	
     	Phase[] phases = automaton.getPhases();
     	Statement[] statements = new Statement[phases.length];
     	for (int i = 0; i < phases.length; i++) {
-     	  Expression ifCon = genIfCons(i, autIndex, bl);
-     	  Statement [] emptyArray = new Statement[0];
-     	  IfStatement ifStatement = new IfStatement(bl, ifCon, 
-     			  genIfSmtDelayBody(phases[i],bl), emptyArray);
-     	 statements[i] = ifStatement;
+    		Expression ifCon = genComparePhaseCounter(i, autIndex, bl);
+    		Statement [] emptyArray = new Statement[0];
+			IfStatement ifStatement = new IfStatement(bl, ifCon, 
+    				genCheckPhaseInvariant(phases[i],bl), emptyArray);
+    		statements[i] = ifStatement;
     	}
     	Statement statement = joinIfSmts(statements, bl);
     	return statement;
@@ -429,7 +505,7 @@ public class Translator {
     	Phase[] phases = automaton.getPhases();
     	Statement[] statements = new Statement[phases.length];
     	for (int i = 0; i < phases.length; i++) {
-     	  Expression ifCon = genIfCons(i, autIndex, bl);
+     	  Expression ifCon = genComparePhaseCounter(i, autIndex, bl);
      	  Statement[] emptyArray = new Statement[0];
      	  Statement[] outerIfBodySmt = new Statement[1];
      	  outerIfBodySmt[0] = genOuterIfBody(automaton, phases[i], autIndex, bl);
@@ -455,7 +531,7 @@ public class Translator {
       }
     	return statements;
     }
-    public Statement genAssertSmt(int[] permutation, BoogieLocation bl) {
+    public Statement genAssertRTInconsistency(int[] permutation, BoogieLocation bl) {
      	ConditionGenerator conGen = new ConditionGenerator();
      	conGen.setTranslator(this);
      	Expression expr = conGen.nonDLCGenerator(this.automata, permutation, 
@@ -467,45 +543,101 @@ public class Translator {
     	return assertSmt;
     }
     /**
+     * Generate the assertion that is violated if the requirement represented by the given 
+     * automaton is non-vacuous.  The assertion expresses that the automaton always stays in the
+     * early phases and never reaches the last phase.  It may be false if all phases of the
+     * automaton are part of the last phase, in which case this function returns null.
+     * @param pea The automaton for which vacuity is checked.
+     * @param automatonIndex The number of the automaton.
+     * @param bl A boogie location used for all statements.
+     * @return The assertion for non-vacousness or null if the assertion would be false.
+     */
+    private Statement genAssertNonVacuous(PhaseEventAutomata pea,
+			int automatonIndex, BoogieLocation bl) {
+    	Phase[] phases = pea.getPhases();
+
+    	// compute the maximal phase number occurring in the automaton. 
+    	int maxBits = 0;
+    	for (Phase phase : phases) {
+    		PhaseBits bits = phase.getPhaseBits();
+    		int act = bits.getActive();
+    		if (act > maxBits) {
+    			maxBits = act;
+    		}
+    	}
+    	int pnr = 0;
+    	while ((1 << pnr) <= maxBits)
+    		pnr++;
+    	
+    	// check that one of those phases is eventually reached.
+    	List<Expression> checkReached = new ArrayList<Expression>();
+    	for (int i = 0; i < phases.length; i++) {
+    		if ((phases[i].getPhaseBits().getActive() & (1 << (pnr - 1))) == 0)
+    			checkReached.add(genComparePhaseCounter(i, automatonIndex, bl));
+    	}
+    	if (checkReached.isEmpty())
+    		return null;
+		Expression disjunction = genDisjunction(checkReached, bl);
+		ReqCheck check = new ReqCheck(ReqCheck.ReqSpec.VACUOUS, new int[] {automatonIndex}, this);
+		ReqLocation loc = new ReqLocation(check);
+		return new AssertStatement(loc, disjunction);
+	}
+    /**
+     * Create the statements of the main loop of the pea product.  The main loop looks like this
+     * <pre>
+     *    delay statements (havoc delay, eventVar, primedVars, add delay to all clocks)
+     *    check invariants of phases
+     *    assert reachability
+     *    check transitions
+     * </pre>
+     *  
      * @param bl
-     *       Location of the while statement.
+     *          Location of the procedure body.
      * @return
      *        Statements of the while-body.
      */
     public Statement[] genWhileBody (BoogieLocation bl) {
-    	List<Statement> smtList = new ArrayList<Statement>();        
-    	Statement[] delaySmts = genDelay(bl); 
-    	for (int i = 0; i < delaySmts.length; i++) {
-    		smtList.add(delaySmts[i]);
-    	}
+    	List<Statement> stmtList = new ArrayList<Statement>();
+    	stmtList.addAll(Arrays.asList(genDelay(bl)));
        
     	for (int i = 0; i < this.automata.length; i++) {    
-    	    smtList.add(genIfSmtDelay(this.automata[i], i, bl));   	    
+    	    stmtList.add(genCheckInvariants(this.automata[i], i, bl));   	    
     	}
     	int[] automataIndices = new int[automata.length];
     	for(int i = 0; i < this.automata.length; i++) {
     		automataIndices[i] = i;
     	}
     	for (int[] subset : new Permutation().subArrays(automataIndices, this.combinationNum)) {
-    		Statement assertSmt = genAssertSmt(subset, bl);
-    		if (assertSmt != null)
-    			smtList.add(assertSmt);
+    		Statement assertStmt = genAssertRTInconsistency(subset, bl);
+    		if (assertStmt != null)
+    			stmtList.add(assertStmt);
+    	}
+    	for (int i = 0; i < this.automata.length; i++) {
+    		if (checkVacuity(i)) {
+        		Statement assertStmt = genAssertNonVacuous(this.automata[i], i, bl);
+        		if (assertStmt != null)
+        			stmtList.add(assertStmt);
+    		}
     	}
     	for (int i = 0; i < this.automata.length; i++) { 
-    		smtList.add(genOuterIfTransition(this.automata[i], i, bl));   	    
+    		stmtList.add(genOuterIfTransition(this.automata[i], i, bl));   	    
     	}
    	    if (this.stateVars.size() != 0) {
    	    	List<Statement> stateVarsAssigns = genStateVarsAssign(bl);
    	    	for (int i = 0; i < stateVarsAssigns.size(); i++) {
-   	    		smtList.add(stateVarsAssigns.get(i));
+   	    		stmtList.add(stateVarsAssigns.get(i));
    	    	} 
    	    }
     	
-    	Statement[] statements = smtList.toArray(new Statement[smtList.size()]);
+    	Statement[] statements = stmtList.toArray(new Statement[stmtList.size()]);
     	return statements;
     }
-    /**
-     * The while-statement is initialized. 
+    
+	/**
+     * Create the main loop of the pea product.  This is a huge while statement that
+     * contains all transitions of all components.  This procedure calls
+     * {@link genWhileBody} to create the statements of the main loop.
+     *  
      * @param bl
      *          Location of the procedure body.
      * @return
@@ -557,7 +689,7 @@ public class Translator {
     		pcExprs.add(genPcExpr(this.automata[i].getPhases(), this.automata[i].getInit(), i, bl));
     	}
     	
-    	AssumeStatement assumeSmt = new AssumeStatement(bl, genCNF(pcExprs, bl));
+    	AssumeStatement assumeSmt = new AssumeStatement(bl, genConjunction(pcExprs, bl));
     	
     	Statement[] statements = new Statement[2];
     	statements[0] = pcHavoc;
@@ -685,6 +817,5 @@ public class Translator {
         this.automata = automata;
 		genGlobVars ();          
         return genProc();
-	} 	
-
+	}
 }
