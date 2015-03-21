@@ -159,7 +159,7 @@ public final class LinearInequalityInvariantPatternProcessor
 	 * @return unique prefix (within this instance and round)
 	 */
 	protected String newPrefix() {
-		return PREFIX + prefixCounter + PREFIX_SEPARATOR;
+		return PREFIX + (prefixCounter++) + PREFIX_SEPARATOR;
 	}
 
 	/**
