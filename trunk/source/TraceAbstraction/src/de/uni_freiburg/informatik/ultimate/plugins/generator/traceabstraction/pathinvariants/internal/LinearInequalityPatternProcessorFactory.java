@@ -4,7 +4,6 @@ import java.util.Collection;
 
 import de.uni_freiburg.informatik.ultimate.core.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.lassoranker.termination.AffineFunctionGenerator;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.Settings;
@@ -17,7 +16,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  */
 public class LinearInequalityPatternProcessorFactory
 		implements
-		IInvariantPatternProcessorFactory<Collection<Collection<AffineFunctionGenerator>>> {
+		IInvariantPatternProcessorFactory<Collection<Collection<LinearPatternBase>>> {
 
 	protected final IUltimateServiceProvider services;
 	protected final IToolchainStorage storage;

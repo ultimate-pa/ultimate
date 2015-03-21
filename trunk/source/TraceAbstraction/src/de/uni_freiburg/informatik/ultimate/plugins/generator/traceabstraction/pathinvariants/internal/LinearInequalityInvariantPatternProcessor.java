@@ -4,8 +4,13 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import javax.sound.sampled.Line;
+import javax.sound.sampled.LineEvent;
 
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
@@ -16,7 +21,6 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.LinearInequality;
 import de.uni_freiburg.informatik.ultimate.lassoranker.LinearTransition;
 import de.uni_freiburg.informatik.ultimate.lassoranker.ModelExtractionUtils;
 import de.uni_freiburg.informatik.ultimate.lassoranker.exceptions.TermException;
-import de.uni_freiburg.informatik.ultimate.lassoranker.termination.AffineFunctionGenerator;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.MotzkinTransformation;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.RankVar;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
@@ -43,11 +47,13 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  * inequalities on a linear approximation of the program.
  * 
  * The outer collection within the invariant pattern type represents a
- * disjunction, the inner one a conjunction.
+ * disjunction, the inner one a conjunction. Within the inner conjunction, there
+ * are strict and non-strict inequalities. These collections are generated
+ * according to a {@link ILinearInequalityInvariantPatternStrategy}.
  */
 public final class LinearInequalityInvariantPatternProcessor
 		extends
-		AbstractSMTInvariantPatternProcessor<Collection<Collection<AffineFunctionGenerator>>> {
+		AbstractSMTInvariantPatternProcessor<Collection<Collection<LinearPatternBase>>> {
 
 	private static final String PREFIX = "liipp_";
 	private static final String PREFIX_SEPARATOR = "_";
@@ -70,8 +76,8 @@ public final class LinearInequalityInvariantPatternProcessor
 	 */
 	private final Set<RankVar> patternCoefficients;
 	private Map<Term, Term> validConfiguration;
-	private Collection<Collection<AffineFunctionGenerator>> entryInvariantPattern;
-	private Collection<Collection<AffineFunctionGenerator>> exitInvariantPattern;
+	private Collection<Collection<LinearPatternBase>> entryInvariantPattern;
+	private Collection<Collection<LinearPatternBase>> exitInvariantPattern;
 	private int prefixCounter;
 
 	/**
@@ -166,20 +172,22 @@ public final class LinearInequalityInvariantPatternProcessor
 	 * {@inheritDoc}
 	 */
 	@Override
-	public Collection<Collection<AffineFunctionGenerator>> getInvariantPatternForLocation(
+	public Collection<Collection<LinearPatternBase>> getInvariantPatternForLocation(
 			final Location location, final int round) {
 		// Build invariant pattern
 		final int[] dimensions = strategy.getDimensions(location, round);
-		final Collection<Collection<AffineFunctionGenerator>> disjunction = new ArrayList<>(
+		final Collection<Collection<LinearPatternBase>> disjunction = new ArrayList<>(
 				dimensions[0]);
 		for (int i = 0; i < dimensions[0]; i++) {
-			final Collection<AffineFunctionGenerator> conjunction = new ArrayList<>(
+			final Collection<LinearPatternBase> conjunction = new ArrayList<>(
 					dimensions[1]);
 			for (int j = 0; j < dimensions[1]; j++) {
-				final AffineFunctionGenerator inequality = new AffineFunctionGenerator(
-						solver, patternCoefficients, newPrefix());
-				patternVariables.addAll(inequality.getVariables());
-				conjunction.add(inequality);
+				for (final boolean strict : new boolean[] { true, false }) {
+					final LinearPatternBase inequality = new LinearPatternBase(
+							solver, patternCoefficients, newPrefix(), strict);
+					patternVariables.addAll(inequality.getVariables());
+					conjunction.add(inequality);
+				}
 			}
 			disjunction.add(conjunction);
 		}
@@ -249,23 +257,130 @@ public final class LinearInequalityInvariantPatternProcessor
 	}
 
 	/**
+	 * Transforms a pattern into a DNF of linear inequalities relative to a
+	 * given mapping of {@link RankVar}s involved.
+	 * 
+	 * @param pattern
+	 *            the pattern to transform
+	 * @param mapping
+	 *            the mapping to use
+	 * @return transformed pattern, equivalent to the pattern under the mapping
+	 */
+	private static Collection<Collection<LinearInequality>> mapPattern(
+			final Collection<Collection<LinearPatternBase>> pattern,
+			final Map<RankVar, Term> mapping) {
+		final Collection<Collection<LinearInequality>> result = new ArrayList<>(
+				pattern.size());
+		for (final Collection<LinearPatternBase> conjunct : pattern) {
+			final Collection<LinearInequality> mappedConjunct =
+					new ArrayList<>(conjunct.size());
+			for (final LinearPatternBase base : conjunct) {
+				mappedConjunct.add(base.getLinearInequality(mapping));
+			}
+			result.add(mappedConjunct);
+		}
+		return result;
+
+	}
+
+	/**
+	 * Transforms and negates a pattern into a DNF of linear inequalities
+	 * relative to a given mapping of {@link RankVar}s involved.
+	 * 
+	 * @param pattern
+	 *            the pattern to transform
+	 * @param mapping
+	 *            the mapping to use
+	 * @return transformed pattern, equivalent to the negated pattern under the
+	 *         mapping
+	 */
+	private static Collection<Collection<LinearInequality>> mapAndNegatePattern(
+			final Collection<Collection<LinearPatternBase>> pattern,
+			final Map<RankVar, Term> mapping) {
+		// This is the trivial algorithm (expanding). Feel free to optimize ;)
+		// TODO: actually implement it
+//		final int size = mapping.size();
+//		final LinearPatternBase[] current =
+//				new LinearPatternBase[size];
+//		final Iterator<LinearPatternBase>[] next =
+//				new Iterator[size];
+//		final Collection<LinearInequality>[] list =
+//				new Collection[size];
+//		
+//		final Collection<Collection<LinearInequality>> result =
+//				new ArrayList<Collection<LinearInequality>>();
+//		
+//		int cursor = 0;
+//		while (cursor < mapping.size()) {
+//			
+//		}
+		throw new UnsupportedOperationException("not implemented");
+	}
+	
+	/**
+	 * Calculates a DNF of the conjunction of an arbitrary set of DNFs.
+	 * 
+	 * @param dnfs DNFs to conjunct together
+	 * @return DNF representing the conjunction of the DNFs provided
+	 */
+	@SafeVarargs
+	private static Collection<Collection<LinearInequality>> expandConjunction(
+			final Collection<? extends Collection<LinearInequality>>...dnfs) {
+		throw new UnsupportedOperationException("not implemented");
+	}
+	
+	/**
+	 * Transforms a conjunction to an equivalent term representing a disjunction
+	 * of the motzkin transformations of the expanded DNF conjuncts.
+	 * 
+	 * @see #expandConjunction(Collection...)
+	 * @see MotzkinTransformation
+	 * @param dnfs DNFs to conjunct together
+	 * @return term equivalent to the negated term
+	 */
+	@SafeVarargs
+	private final Term transformNegatedConjunction(final
+			Collection<? extends Collection<LinearInequality>>...dnfs){
+		final Collection<Collection<LinearInequality>> conjunctionDNF =
+				expandConjunction(dnfs);
+
+		// Apply Motzkin and generate the conjunction of the resulting Terms
+		final Collection<Term> resultTerms =
+				new ArrayList<Term>(conjunctionDNF.size());
+		for (final Collection<LinearInequality> conjunct : conjunctionDNF) {
+			final MotzkinTransformation transformation =
+					new MotzkinTransformation(
+							solver, AnalysisType.Nonlinear, false);
+			transformation.add_inequalities(conjunct);
+			resultTerms.add(transformation.transform(new Rational[0]));
+		}
+		return SmtUtils.and(solver, resultTerms);
+	}
+
+	/**
 	 * Generates a {@link Term} that is true iff the given
-	 * {@link LinearTransition} is equivalent to a given invariant pattern over
+	 * {@link LinearTransition} implies a given invariant pattern over
 	 * the primed variables of the transition.
 	 * 
 	 * @see #precondition
 	 * @see #postcondition
 	 * @param condition
-	 *            transition to build the equivalence term from, usually a pre-
+	 *            transition to build the implication term from, usually a pre-
 	 *            or postcondition
 	 * @param pattern
 	 *            pattern to build the equivalence term from
 	 * @return equivalence term
 	 */
-	private Term buildEquivalenceTerm(final LinearTransition condition,
-			final Collection<Collection<AffineFunctionGenerator>> pattern) {
-		// TODO: implement
-		throw new UnsupportedOperationException("not implemented");
+	private Term buildImplicationTerm(final LinearTransition condition,
+			final Collection<Collection<LinearPatternBase>> pattern) {
+		final Map<RankVar, Term> primedMapping = condition.getOutVars();
+		
+		final Collection<List<LinearInequality>> conditionDNF =
+				condition.getPolyhedra();
+		final Collection<Collection<LinearInequality>> negPatternDNF =
+				mapAndNegatePattern(pattern, primedMapping);
+		
+		return transformNegatedConjunction(conditionDNF, negPatternDNF);
 	}
 
 	/**
@@ -277,9 +392,21 @@ public final class LinearInequalityInvariantPatternProcessor
 	 * @return term true iff the given predicate holds
 	 */
 	private Term buildPredicateTerm(
-			final InvariantTransitionPredicate<Collection<Collection<AffineFunctionGenerator>>> predicate) {
-		// TODO: implement
-		throw new UnsupportedOperationException("not implemented");
+			final InvariantTransitionPredicate<Collection<Collection<LinearPatternBase>>> predicate) {
+		final LinearTransition transition =
+				linearizer.linearize(predicate.getTransition());
+		final Map<RankVar, Term> unprimedMapping = transition.getInVars();
+		final Map<RankVar, Term> primedMapping = transition.getOutVars();
+		
+		final Collection<Collection<LinearInequality>> startInvariantDNF =
+				mapPattern(predicate.getInvStart(), unprimedMapping);
+		final Collection<Collection<LinearInequality>> endInvariantDNF =
+				mapAndNegatePattern(predicate.getInvEnd(), primedMapping);
+		final Collection<List<LinearInequality>> transitionDNF =
+				transition.getPolyhedra();
+		
+		return transformNegatedConjunction(
+				startInvariantDNF, endInvariantDNF, transitionDNF);
 	}
 
 	/**
@@ -287,14 +414,14 @@ public final class LinearInequalityInvariantPatternProcessor
 	 */
 	@Override
 	public boolean hasValidConfiguration(
-			final Collection<InvariantTransitionPredicate<Collection<Collection<AffineFunctionGenerator>>>> predicates,
+			final Collection<InvariantTransitionPredicate<Collection<Collection<LinearPatternBase>>>> predicates,
 			final int round) {
 		logger.log(Level.INFO, "[LIIPP] Start generating terms.");
-		solver.assertTerm(buildEquivalenceTerm(precondition,
+		solver.assertTerm(buildImplicationTerm(precondition,
 				entryInvariantPattern));
-		solver.assertTerm(buildEquivalenceTerm(postcondition,
+		solver.assertTerm(buildImplicationTerm(postcondition,
 				exitInvariantPattern));
-		for (final InvariantTransitionPredicate<Collection<Collection<AffineFunctionGenerator>>> predicate : predicates) {
+		for (final InvariantTransitionPredicate<Collection<Collection<LinearPatternBase>>> predicate : predicates) {
 			solver.assertTerm(buildPredicateTerm(predicate));
 		}
 
@@ -309,7 +436,7 @@ public final class LinearInequalityInvariantPatternProcessor
 		validConfiguration = solver.getValue(patternVariables
 				.toArray(new Term[patternVariables.size()]));
 
-		throw new UnsupportedOperationException("not implemented");
+		return true;
 	}
 
 	/**
@@ -325,7 +452,7 @@ public final class LinearInequalityInvariantPatternProcessor
 	 */
 	@Override
 	protected Term getTermForPattern(
-			final Collection<Collection<AffineFunctionGenerator>> pattern) {
+			final Collection<Collection<LinearPatternBase>> pattern) {
 		final Map<RankVar, Term> definitionMap = new HashMap<RankVar, Term>(
 				patternCoefficients.size());
 		for (final RankVar coefficient : patternCoefficients) {
@@ -334,12 +461,12 @@ public final class LinearInequalityInvariantPatternProcessor
 
 		final Collection<Term> conjunctions = new ArrayList<Term>(
 				pattern.size());
-		for (final Collection<AffineFunctionGenerator> conjunct : pattern) {
+		for (final Collection<LinearPatternBase> conjunct : pattern) {
 			final Collection<Term> inequalities = new ArrayList<Term>(
 					conjunct.size());
-			for (final AffineFunctionGenerator inequality : conjunct) {
-				inequalities.add(inequality.generate(definitionMap).asTerm(
-						solver));
+			for (final LinearPatternBase inequality : conjunct) {
+				inequalities.add(inequality.getLinearInequality(definitionMap)
+						.asTerm(solver));
 			}
 			conjunctions.add(SmtUtils.and(solver, inequalities));
 		}

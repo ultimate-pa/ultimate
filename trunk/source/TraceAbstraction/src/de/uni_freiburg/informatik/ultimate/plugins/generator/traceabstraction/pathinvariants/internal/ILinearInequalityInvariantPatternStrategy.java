@@ -22,7 +22,9 @@ public interface ILinearInequalityInvariantPatternStrategy {
 	 * 
 	 * @return Array with exactly two fields, the first one containing the
 	 *         number of elements in the outer disjunction and the second one
-	 *         containing the number of elements within each inner conjunction
+	 *         containing the number of elements within each inner conjunction,
+	 *         where each element means
+	 *         "one strict inequality and one non-strict one".
 	 */
 	public int[] getDimensions(final Location location, final int round);
 
