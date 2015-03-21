@@ -50,6 +50,7 @@ public final class LinearInequalityInvariantPatternProcessor
 		AbstractSMTInvariantPatternProcessor<Collection<Collection<AffineFunctionGenerator>>> {
 
 	private static final String PREFIX = "liipp_";
+	private static final String PREFIX_SEPARATOR = "_";
 
 	private final Logger logger;
 	private final Script solver;
@@ -71,6 +72,7 @@ public final class LinearInequalityInvariantPatternProcessor
 	private Map<Term, Term> validConfiguration;
 	private Collection<Collection<AffineFunctionGenerator>> entryInvariantPattern;
 	private Collection<Collection<AffineFunctionGenerator>> exitInvariantPattern;
+	private int prefixCounter;
 
 	/**
 	 * Creates a pattern processor using linear inequalities as patterns.
@@ -128,6 +130,7 @@ public final class LinearInequalityInvariantPatternProcessor
 		validConfiguration = null;
 		entryInvariantPattern = null;
 		exitInvariantPattern = null;
+		prefixCounter = 0;
 
 		// In the first round, linearize and populate
 		// {@link #patternCoefficients}.
@@ -149,6 +152,17 @@ public final class LinearInequalityInvariantPatternProcessor
 	}
 
 	/**
+	 * Generates a new prefix, which is guaranteed (within prefixes generated
+	 * through this method on one single instance) to be unique within the
+	 * current round.
+	 * 
+	 * @return unique prefix (within this instance and round)
+	 */
+	protected String newPrefix() {
+		return PREFIX + prefixCounter + PREFIX_SEPARATOR;
+	}
+
+	/**
 	 * {@inheritDoc}
 	 */
 	@Override
@@ -163,7 +177,7 @@ public final class LinearInequalityInvariantPatternProcessor
 					dimensions[1]);
 			for (int j = 0; j < dimensions[1]; j++) {
 				final AffineFunctionGenerator inequality = new AffineFunctionGenerator(
-						solver, patternCoefficients, PREFIX);
+						solver, patternCoefficients, newPrefix());
 				patternVariables.addAll(inequality.getVariables());
 				conjunction.add(inequality);
 			}
