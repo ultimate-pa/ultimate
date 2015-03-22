@@ -489,7 +489,11 @@ public class NestedInterpolantsBuilder {
 				craigInterpolPos++;
 				result[resultPos] = withIndices2Predicate.get(withIndices);
 				if (result[resultPos] == null) {
-					
+					/* remove all let terms
+					 * added because iZ3's interpolants contain let terms
+					 * better solution: implement support for let terms in SafeSubstitution
+					 */
+					withIndices = (new FormulaUnLet()).transform(withIndices);
 					Term withoutIndices = m_Const2RepTvSubst.transform(withIndices);
 					TermVarsProc tvp = TermVarsProc.computeTermVarsProc(withoutIndices, m_SmtManager.getBoogie2Smt());
 					result[resultPos] = m_PredicateBuilder.getOrConstructPredicate(tvp);
