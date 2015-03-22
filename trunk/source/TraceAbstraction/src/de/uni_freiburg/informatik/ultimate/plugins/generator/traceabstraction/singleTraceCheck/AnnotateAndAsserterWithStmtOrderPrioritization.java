@@ -36,21 +36,30 @@ import de.uni_freiburg.informatik.ultimate.util.RelationWithTreeSet;
  * 
  * Following heuristics are currently implemented:
  ********** 1. Heuristic ********* 
+ * General idea:
  * First, assert all statements which don't occur inside of a loop. Then, check for satisfiability. 
  * If the result of the satisfiability check is not unsatisfiable, then assert the rest of the statements, and return the 
  * result of the unsatisfiability check.
  
  ********* 2. Heuristic *********
+ * General idea:
  * Assert statements in incremental order by their depth, and check after each step for satisfiability. E.g. first assert all
  * statements with depth 0, then assert all statements at depth 1, and so on.
  * 
  ********* 3. Heuristic *********
- * TODO(Betim):
+ * General idea:
+ * Assert statements in decremental order by their depth, and check after each step for satisfiability. E.g. first assert all
+ * statements with depth max_depth, then assert all statements of depth max_depth - 1, and so on.
+ * 
  ********* 4. Heuristic *********
  * The 4.th heuristic is a mix-up of the 2nd the 3rd heuristic.
  *    
  ******** 5. Heuristic ************
- * TODO(Betim)    
+ * General idea:
+ * Assert statements that with small constants first. Then, check for satisfiability.
+ * If the result of the satisfiability check is not unsatisfiable, then assert the rest of the statements, and return the 
+ * result of the unsatisfiability check.
+ *     
  * @author musab@informatik.uni-freiburg.de
  */
 public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndAsserter {
@@ -94,6 +103,11 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 		return result;
 	}
 	
+	/**
+	 * Partition the statement positions between lowerIndex and upperIndex according to their depth. (See documentation for the meaning of 'depth').
+	 * The result is stored in the map 'depth2Statements'.
+	 * The partitioning is done recursively. 
+	 */
 	private void dfsPartitionStatementsAccordingToDepth(Integer lowerIndex,
 			Integer upperIndex, int depth,
 			RelationWithTreeSet<ProgramPoint, Integer> rwt,
@@ -129,8 +143,9 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 		
 	}
 
+	
 	/**
-	 * TODO:
+	 * Add the position 'stmtPos' to the map 'depth2Statements' where the key is the given 'depth'.
 	 */
 	private void addStmtPositionToDepth(int depth,
 			Map<Integer, Set<Integer>> depth2Statements, int stmtPos) {
@@ -144,7 +159,10 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 	}
 
 	
-
+	/**
+	 * 
+	 * Partition the statements of the given trace according to their depth.
+	 */
 	private Map<Integer, Set<Integer>> partitionStatementsAccordingDepth(NestedWord<CodeBlock> trace, RelationWithTreeSet<ProgramPoint, Integer> rwt,
 			List<ProgramPoint> pps) {
 		Map<Integer, Set<Integer>> depth2Statements = new HashMap<Integer, Set<Integer>>();
@@ -152,7 +170,6 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 		dfsPartitionStatementsAccordingToDepth(0, trace.length(), 0, rwt, depth2Statements, pps);
 		
 		return depth2Statements;
-		
 	}
 	
 	@Override
@@ -219,6 +236,9 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 		mLogger.info("Conjunction of SSA is " + m_Satisfiable);
 	}
 
+	/**
+	 * See class description!
+	 */
 	private LBool annotateAndAssertStmtsAccording2Heuristic(NestedWord<CodeBlock> trace,
 			Collection<Integer> callPositions,
 			Collection<Integer> pendingReturnPositions,
@@ -240,6 +260,9 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 		return sat;
 	}
 
+	/**
+	 * See class description!
+	 */
 	private LBool annotateAndAssertStmtsAccording3Heuristic(
 			NestedWord<CodeBlock> trace, Collection<Integer> callPositions,
 			Collection<Integer> pendingReturnPositions,
@@ -264,6 +287,10 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 		}
 		return sat;
 	}
+	
+	/**
+	 * See class description!
+	 */
 	private LBool annotateAndAssertStmtsAccording4Heuristic(
 			NestedWord<CodeBlock> trace, Collection<Integer> callPositions,
 			Collection<Integer> pendingReturnPositions,
@@ -292,6 +319,10 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 		return sat;
 	}
 	
+	/**
+	 * Determines whether the given term 't' contains a constant (a (real/natural) number) that is greater than the given
+	 * size 'constantSize'.
+	 */
 	private boolean termHasConstantGreaterThan(Term t, int constantSize) {
 		if (t instanceof ApplicationTerm) {
 			Term[] args = ((ApplicationTerm)t).getParameters();
@@ -315,17 +346,13 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 			}
 			
 		} 
-//		else {
-//			throw new UnsupportedOperationException("This term type \"" + t.getClass().getSimpleName() + "\" is not supported!");
-//		}
 		return false;
 	}
+
 	
 	/**
-	 * TODO (Betim): DOcumentation!
-	 * @param trace
-	 * @param constantSize
-	 * @return
+	 * Partition the statements of the given trace into two sets. The first set consists of the statements, which contain only constants 
+	 * smaller than or equal to 'constantSize'. The second set contains the statements, which contain only constants greater than 'constantSize'. 
 	 */
 	private Set<Integer> partitionStmtsAccordingToConstantSize(NestedWord<CodeBlock> trace,	int constantSize) {
 		Set<Integer> result = new HashSet<Integer>();
@@ -340,17 +367,12 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 	}
 	
 	/**
-	 * TODO(Betim): Documentation!
-	 * @param trace
-	 * @param callPositions
-	 * @param pendingReturnPositions
-	 * @param depth2Statements
-	 * @return
+	 * See class description!
 	 */
 	private LBool annotateAndAssertStmtsAccording5Heuristic(
 			NestedWord<CodeBlock> trace, Collection<Integer> callPositions,
 			Collection<Integer> pendingReturnPositions) {
-		// Choose statements that contains only constants <= 10 and assert them
+		// Choose statements that contains only constants <= constantSize and assert them
 		int constantSize = 10;
 		Set<Integer> stmtsToAssert = partitionStmtsAccordingToConstantSize(trace, constantSize);
 		buildAnnotatedSsaAndAssertTermsWithPriorizedOrder(trace, callPositions, pendingReturnPositions, stmtsToAssert);
@@ -372,6 +394,9 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 		return sat;
 	}
 
+	/**
+	 * TODO(Betim): DOcumentation!
+	 */
 	private RelationWithTreeSet<ProgramPoint, Integer> computeRelationWithTreeSetForTrace(
 			int lowerIndex, int upperIndex,
 			List<ProgramPoint> pps) {
