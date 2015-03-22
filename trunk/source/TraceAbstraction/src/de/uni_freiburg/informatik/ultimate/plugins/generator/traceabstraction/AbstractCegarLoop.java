@@ -146,8 +146,10 @@ public abstract class AbstractCegarLoop {
 	protected CegarLoopBenchmarkGenerator m_CegarLoopBenchmark;
 
 	protected final IUltimateServiceProvider m_Services;
-	protected final IToolchainStorage m_ToolchainStorage = null;
+	//protected final IToolchainStorage m_ToolchainStorage = null; TODO: this is not what we want, is it?
+	protected final IToolchainStorage m_ToolchainStorage;
 
+	
 	public AbstractCegarLoop(IUltimateServiceProvider services, IToolchainStorage storage, String name, RootNode rootNode, SmtManager smtManager,
 			TAPreferences taPrefs, Collection<ProgramPoint> errorLocs, Logger logger) {
 		m_Services = services;
@@ -159,6 +161,7 @@ public abstract class AbstractCegarLoop {
 		this.m_SmtManager = smtManager;
 		this.m_Pref = taPrefs;
 		this.m_ErrorLocs = errorLocs;
+		this.m_ToolchainStorage = storage;
 		
 	}
 
