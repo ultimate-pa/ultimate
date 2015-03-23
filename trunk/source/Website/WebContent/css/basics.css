@@ -164,6 +164,7 @@ body {
 
 #brand-label {
 	display: table;
+	display: flex;
 	padding-left: 10px;
 }
 

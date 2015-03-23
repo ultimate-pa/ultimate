@@ -92,8 +92,6 @@ function initInfo()
   try { if(_SERVER_INFO) Arr.foreach( _SERVER_INFO, function(k,v){ _INFO.push(v); } ); }
   catch (e) { console.log("transfer.jsp not found!"); }
   
-  _INFO.push('By continuing to browse the ULTIMATE website you are agreeing to our use of cookies.');
-  
   showNextInfo();
 }
 

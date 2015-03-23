@@ -21,11 +21,11 @@
 
 var _SERVER_INFO =
             [
-              <!-- de.uni_freiburg.informatik.ultimate.website.toolchains:*TC.java::setUserInfo() -->
+              <% // de.uni_freiburg.informatik.ultimate.website.toolchains:*TC.java::setUserInfo()%>
               <c:forEach items="${worker[param.tool].getToolchains()}" var="tc">"<c:out value="${tc.getUserInfo()}" default="" escapeXml="false" />",</c:forEach>
-              <!-- de.uni_freiburg.informatik.ultimate.website:Tasks.java::initWorkers() -->
+              <% // de.uni_freiburg.informatik.ultimate.website:Tasks.java::initWorkers()%>
               "<c:out value="${worker[param.tool].getUserInfo()}" default="" />",
-              <!-- /Website/tool.json -->
+              <% // /Website/<tool>.json%>
               "<c:out value="${content.user_info}" default="" />"
             ];
 
