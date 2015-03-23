@@ -67,221 +67,352 @@ import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvide
  *
  */
 public final class GetRandomDfa implements IOperation<String, String> {
+	
+	/**
+	 * Constant for no valid state. Valid states are 0, 1, ...
+	 */
+	public static final int NO_STATE = -1;
+	/**
+	 * Constant for full percentage of 100.
+	 */
+	public static final int PERC_FULL = 100;
+	/**
+	 * Lower bound for percentage of totality.
+	 */
+	public static final int PERC_TOTALITY_BOUND_LOWER = 0;
+	/**
+	 * Upper bound for percentage of totality.
+	 */
+	public static final int PERC_TOTALITY_BOUND_UPPER = PERC_FULL;
+	/**
+	 * Table that contains the amount of all permutations of different DFA
+	 * classes. Dimensions are [size][size * alphabetSize]. Also used for
+	 * caching purpose.
+	 */
+	private static BigInteger[][] permutationsTable;
+	/**
+	 * Prefix for nodes. A node then is called 'prefix + index' where index is
+	 * the index to a node in the node list.
+	 */
+	public static final String PREFIX_NODE = "q";
+	/**
+	 * Prefix for transitions. A transition then is called 'prefix + index'
+	 * where index is the index to a transition in the transition list.
+	 */
+	public static final String PREFIX_TRANSITION = "a";
 
 	/**
-	 * Extracts a DFA that is packed into the int[] array format specified by
-	 * {@link #generatePackedRandomDFA(int, int, int, boolean, boolean)
-	 * generatePackedRandomDFA(...)} and returns it as
-	 * {@link NestedWordAutomaton}.<br />
-	 * Runtime is in <b>O(size * alphabetSize)</b>.
+	 * Generates a uniform distributed random {@link BigInteger} between 0
+	 * (inclusive) and 'upperBound' (exclusive) using a given random generator.<br/><br/>
+	 * Runtime is in:<br/>
+	 * <b>O(2 * random)</b><br/>
+	 * where 'random' are methods of {@link java.util.Random}.
 	 * 
-	 * @param dfa
-	 *            The DFA to extract in the int[] array format specified by
-	 *            {@link #generatePackedRandomDFA(int, int, int, boolean, boolean)
-	 *            generatePackedRandomDFA(...)}
-	 * @param accStates
-	 *            Set that contains all accepting states
-	 * @param transToDelete
-	 *            Set that contains indexes in the DFA sequence of all transitions
-	 *            that should be deleted
-	 * @return As {@link NestedWordAutomaton} extracted DFA
+	 * @param upperBound
+	 *            Upper bound for the generated number (exclusive)
+	 * @param rnd
+	 *            Random generator
+	 * @return Uniform distributed random {@link BigInteger} between 0
+	 *         (inclusive) and 'upperBound' (exclusive)
 	 */
-	private NestedWordAutomaton<String, String> extractPackedDFA(int[] dfa,
-			Set<Integer> accStates, Set<Integer> transToDelete) {
-		List<String> num2State = new ArrayList<String>(m_size);
-		for (int i = 0; i < m_size; ++i) {
-			num2State.add(PREFIX_NODE + i);
+	private static BigInteger nextRandomBigInteger(final BigInteger upperBound,
+			final Random rnd) {
+		BigInteger result = new BigInteger(upperBound.bitLength(), rnd);
+
+		// Converges to one iteration because chance decreases by 0.5 every
+		// step.
+		while (result.compareTo(upperBound) >= 0) {
+			result = new BigInteger(upperBound.bitLength(), rnd);
 		}
-		String initialState = num2State.get(0);
-
-		List<String> num2Letter = new ArrayList<String>(m_alphabetSize);
-		for (int i = 0; i < m_alphabetSize; ++i) {
-			num2Letter.add(PREFIX_TRANSITION + i);
-		}
-
-		StateFactory<String> stateFactory = new StringFactory();
-		NestedWordAutomaton<String, String> result;
-		result = new NestedWordAutomaton<String, String>(m_Services,
-				new HashSet<String>(num2Letter), null, null, stateFactory);
-
-		// Create states
-		for (int i = 0; i < m_size; ++i) {
-			String state = num2State.get(i);
-			boolean isAccepting = accStates.contains(i);
-			boolean isInitial = state.equals(initialState);
-			result.addState(isInitial, isAccepting, state);
-		}
-
-		// Create transitions
-		for (int i = 0; i < dfa.length; i++) {
-			//Skip transition if it should not be contained in the final automata
-			if (transToDelete.contains(i)) {
-				continue;
-			}
-			int predStateIndex = (int) Math.floor((i + 0.0) / m_alphabetSize);
-			int letterIndex = i % m_alphabetSize;
-			int succStateIndex = dfa[i];
-			// Skip transition if it points to a node out of the wished size.
-			// This node is the sink node for non-total DFAs.
-			String predState = num2State.get(predStateIndex);
-			String letter = num2Letter.get(letterIndex);
-			String succState = num2State.get(succStateIndex);
-
-			result.addInternalTransition(predState, letter, succState);
-		}
-
 		return result;
 	}
-
 	/**
-	 * Generates a uniform or non-uniform distributed random connected total
-	 * DFA with a given amount of nodes and size of alphabet.<br />
-	 * Finally returns the DFA in a specific int[] array format.<br /><br />
-	 * The int[] array format is a sequence of numbers that represents a breadth-first
-	 * search where each state and edge is ordered by '<'.<br /><br />
-	 * Example:<br />
-	 * [0,1,0,0,1,2] with 3 nodes and an alphabet of size 2.<br />
-	 * [0,1|0,0|1,2] each of the 3 nodes has 2 outgoing edges where the number denotes
-	 * the destination.<br />
-	 * e.g. 2nd edge of first node points to the second node.
-	 * @return Uniform or non-uniform distributed random connected total
-	 * DFA in a specific int[] array format
+	 * Size of the alphabet.
 	 */
-	public int[] generatePackedRandomDFA() throws IllegalArgumentException {
-		if (m_size < 1 || m_alphabetSize < 1) {
-			throw new IllegalArgumentException(
-					"Neither 'size' nor 'alphabetSize' must be less than one.");
-		}
-		if (m_numOfAccStates < 0 || m_numOfAccStates > m_size) {
-			throw new IllegalArgumentException(
-					"'numOfAccStates' must not exceed 'size' or be less than zero.");
-		}
-		final int SEQUENCE_LENGTH = m_size * m_alphabetSize;
-
-		int[] sequence = new int[SEQUENCE_LENGTH];
-		int curSequenceIndex = 0;
-
-		// Special case where size == 1
-		if (m_size == 1) {
-			for (int i = 0; i < m_alphabetSize; i++) {
-				sequence[curSequenceIndex] = 0;
-				curSequenceIndex++;
-			}
-			return sequence;
-		}
-
-		// Case where size >= 2
-		final Random rnd = new Random();
-
-		if (m_ensureIsUniform) {
-			preCalcPermutationsTable(SEQUENCE_LENGTH);
-		}
-
-		int lastFlag = -1;
-		// Calculate the flags for each node and generate the sequence from left
-		// to right until all nodes are reached by an edge.
-		for (int i = 1; i <= m_size - 1; i++) {
-			int curFlag = generateFlag(i, lastFlag + 1);
-			m_flags.add(curFlag);
-			for (int j = lastFlag + 1; j <= curFlag - 1; j++) {
-				// Only use nodes that were already reached
-				sequence[curSequenceIndex] = rnd.nextInt(i);
-				curSequenceIndex++;
-			}
-			sequence[curSequenceIndex] = i;
-			curSequenceIndex++;
-			lastFlag = curFlag;
-		}
-		// Now all nodes are reached by an edge and the rest of the sequence can
-		// be filled up by using all nodes as edge destinations.
-		for (int i = lastFlag + 1; i <= SEQUENCE_LENGTH - 1; i++) {
-			sequence[curSequenceIndex] = rnd.nextInt(m_size);
-			curSequenceIndex++;
-		}
-
-		if (!m_enableCaching) {
-			permutationsTable = null;
-		}
-
-		return sequence;
-	}
+	private final int m_alphabetSize;
+	/**
+	 * If true enables caching of pre-calculated results for future similar
+	 * requests. If false caching will not be done. Best results can be achieved
+	 * by executing requests with same 'size' and similar 'alphabetSize' behind
+	 * one another.
+	 */
+	private final boolean m_enableCaching;
+	/**
+	 * If true it is ensured that the DFA
+	 * is connected meaning all states are reached.
+	 * If false and if {@link m_percOfTotality} is small
+	 * it may happen that the automata is not connected.
+	 */
+	private final boolean m_ensureIsConnected;
+	/**
+	 * If true ensures a uniform distribution of the connected DFAs at high cost
+	 * of performance for big 'size'. If false random classes of DFAs get
+	 * favored over other random classes but the generation is very fast.
+	 */
+	private final boolean m_ensureIsUniform;
+	/**
+	 * If true ensures that all states reach a final state at cost of
+	 * performance by creating extra final states. If false just
+	 * {@link m_numOfAccStates} final states will be created.
+	 */
+	private final boolean m_ensureStatesReachFinal;
+	/**
+	 * Flags of the DFA specified by {@link #generateFlag(int, int) generateFlag(...)}.
+	 */
+	private final Set<Integer> m_flags;
+	/**
+	 * Number of the accepting states.
+	 */
+	private final int m_numOfAccStates;
+	/**
+	 * Percentage of DFAs totality. If 100 the resulting DFA will be total.
+	 * If 50 about half of the transitions will miss.
+	 * If 0 all transitions that can be deleted,
+	 * by ensuring all states get reached, are missing.
+	 */
+	private final int m_percOfTotality;
+	/**
+	 * Random generator.
+	 */
+	private final Random m_random;
+	/**
+	 * Resulting automaton of generator.
+	 */
+	private final NestedWordAutomaton<String, String> m_result;
+	/**
+	 * Service provider.
+	 */
+	private final IUltimateServiceProvider m_Services;
 
 	/**
-	 * Generates a flag for a given node using the first possible position at
-	 * where it is allowed to appear.<br />
-	 * The flag represents the first edge in the DFA that points to the given
-	 * node, as index in the string format sequence (specified by
-	 * {@link #generatePackedRandomDFA(int, int, int, boolean, boolean)
-	 * generatePackedRandomDFA(...)}).<br />
-	 * It takes the correct probability of each flag, by calculation of the
-	 * number of all possible DFAs with this setting, into account.<br/>
-	 * <br/>
-	 * This method is used by random DFA generation to ensure that some rules
-	 * like <i>'every node must get accessed before it is reached in the
-	 * sequence'</i> are satisfied.<br/>
+	 * Size of the automaton also amount of nodes.
+	 */
+	private final int m_size;
+
+	/**
+	 * Generates a uniform distributed random connected total DFA with a
+	 * given amount of nodes, size of alphabet and
+	 * number of accepting states. It is not ensured that all states reach
+	 * accepting states.<br />
+	 * <br />
+	 * Additionally with following flags:<br />
+	 * int <b>percOfTotality</b> : <b>{@link PERC_TOTALITY_BOUND_UPPER}</b>
+	 * Ensures that the DFA is total.<br />
+	 * boolean <b>ensureIsConnected</b> : <b>true</b> Ensures that all states
+	 * are reached.<br />
+	 * boolean <b>ensureStatesReachFinal</b> : <b>false</b> It is not ensured
+	 * that all states reach a final state.<br />
+	 * boolean <b>ensureIsUniform</b> : <b>true</b> Ensures a uniform
+	 * distribution of the DFAs at high cost of performance for big 'size'.<br/>
+	 * boolean <b>enableCaching</b> : <b>true</b> Enables caching of
+	 * pre-calculated results for future similar requests.<br/>
+	 * Best results can be achieved by executing requests with same 'size' and
+	 * similar 'alphabetSize' behind one another.<br/>
 	 * <br/>
 	 * Runtime is in:<br/>
-	 * <b>O(n * k) * O(random)</b><br/>
+	 * <b>O(n^2 * k) * O(random)</b> if there is a valid cache (n must be
+	 * equals)<br/>
+	 * <b>O(n^3 * k) * O(random)</b> if there is no valid cache<br/>
 	 * where 'n' is the amount of nodes, 'k' the size of the alphabet and
 	 * 'random' methods of {@link java.util.Random}.
 	 * 
-	 * @param node
-	 *            Node to calculate flag for
-	 * @param firstPossiblePos
-	 *            First possible position in the sequence at where the flag is
-	 *            allowed to appear
-	 * @return Flag for the given node
+	 * @param services
+	 *            Service provider
+	 * @param size
+	 *            Amount of nodes
+	 * @param alphabetSize
+	 *            Size of the alphabet
+	 * @param numOfAccStates
+	 *            Number of accepting states
+	 * @return Uniform distributed random total DFA
 	 */
-	private int generateFlag(int node, int firstPossiblePos) {
-		/*
-		 * The length of the sequence before 'node's edges are reached. Flag
-		 * must appear before this to satisfy all rules.
-		 */
-		final int PRE_SEQUENCE_LENGTH = node * m_alphabetSize;
+	public GetRandomDfa(final IUltimateServiceProvider services,
+			final int size, final int alphabetSize,
+			final int numOfAccStates) {
+		this(services, size, alphabetSize, numOfAccStates,
+				PERC_TOTALITY_BOUND_UPPER, true, false, true, true);
+	}
 
-		// If a uniform distribution must not be ensured randomly select a
-		// possible position for the flag.
-		if (!m_ensureIsUniform) {
-			return m_random.nextInt(PRE_SEQUENCE_LENGTH - firstPossiblePos)
-					+ firstPossiblePos;
-		}
+	/**
+	 * Generates a uniform distributed random connected or not-connected total
+	 * or not-total DFA with a given amount of nodes, size of alphabet and
+	 * number of accepting states. It is not ensured that all states reach
+	 * accepting states.<br />
+	 * <br />
+	 * Additionally with following flags:<br />
+	 * boolean <b>ensureStatesReachFinal</b> : <b>false</b> It is not ensured
+	 * that all states reach a final state.<br />
+	 * boolean <b>ensureIsUniform</b> : <b>true</b> Ensures a uniform
+	 * distribution of the DFAs at high cost of performance for big 'size'.<br/>
+	 * boolean <b>enableCaching</b> : <b>true</b> Enables caching of
+	 * pre-calculated results for future similar requests.<br/>
+	 * Best results can be achieved by executing requests with same 'size' and
+	 * similar 'alphabetSize' behind one another.<br/>
+	 * <br/>
+	 * Runtime is in:<br/>
+	 * <b>O(n^2 * k) * O(random)</b> if there is a valid cache (n must be
+	 * equals)<br/>
+	 * <b>O(n^3 * k) * O(random)</b> if there is no valid cache<br/>
+	 * where 'n' is the amount of nodes, 'k' the size of the alphabet and
+	 * 'random' methods of {@link java.util.Random}.
+	 * 
+	 * @param services
+	 *            Service provider
+	 * @param size
+	 *            Amount of nodes
+	 * @param alphabetSize
+	 *            Size of the alphabet
+	 * @param numOfAccStates
+	 *            Number of accepting states
+	 * @param percOfTotality
+	 *            Percentage of DFAs totality. If 1.0 the resulting DFA will be total.
+	 *            If 0.5 about half of the transitions will miss.
+	 *            If 0.0 all transitions that can be deleted,
+	 *            by ensuring all states get reached, are missing.
+	 * @param ensureIsConnected
+	 *            If true it is ensured that the DFA
+	 *            is connected meaning all states are reached.
+	 *            If false and if {@link m_percOfTotality} is small
+	 *            it may happen that the automata is not connected.
+	 * @return Uniform distributed random total DFA
+	 */
+	public GetRandomDfa(final IUltimateServiceProvider services,
+			final int size, final int alphabetSize, final int numOfAccStates,
+			final int percOfTotality, final boolean ensureIsConnected) {
+		this(services, size, alphabetSize, numOfAccStates, percOfTotality,
+				ensureIsConnected, false, true, true);
+	}
 
-		BigInteger permutations = BigInteger.ZERO;
+	/**
+	 * Generates a uniform or non-uniform distributed random connected or
+	 * not-connected total or not-total DFA with a given amount of nodes, size
+	 * of alphabet and number of accepting states.<br />
+	 * <br />
+	 * Additionally with following flags:<br />
+	 * boolean <b>enableCaching</b> : <b>true</b> Enables caching of
+	 * pre-calculated results for future similar requests.<br/>
+	 * Best results can be achieved by executing requests with same 'size' and
+	 * similar 'alphabetSize' behind one another.<br/>
+	 * <br/>
+	 * Runtime is in:<br/>
+	 * <b>O(n^2 * k) * O(random)</b> if result should be uniform and there is a
+	 * valid cache (n must be equals)<br/>
+	 * <b>O(n^3 * k) * O(random)</b> if result should be uniform and there is no
+	 * valid cache<br/>
+	 * <b>O(n * k) * O(random)</b> if result should not be uniform<br/>
+	 * where 'n' is the amount of nodes, 'k' the size of the alphabet and
+	 * 'random' methods of {@link java.util.Random}.
+	 * 
+	 * @param services
+	 *            Service provider
+	 * @param size
+	 *            Amount of nodes
+	 * @param alphabetSize
+	 *            Size of the alphabet
+	 * @param numOfAccStates
+	 *            Number of accepting states which may be just a bottom bound if
+	 *            'ensureStatesReachFinal' is true
+	 * @param percOfTotality
+	 *            Percentage of DFAs totality. If 1.0 the resulting DFA will be total.
+	 *            If 0.5 about half of the transitions will miss.
+	 *            If 0.0 all transitions that can be deleted,
+	 *            by ensuring all states get reached, are missing.
+	 * @param ensureIsConnected
+	 *            If true it is ensured that the DFA
+	 *            is connected meaning all states are reached.
+	 *            If false and if {@link m_percOfTotality} is small
+	 *            it may happen that the automata is not connected.
+	 * @param ensureStatesReachFinal
+	 *            If true ensures that all states reach a final state at cost of
+	 *            performance by creating extra final states. If false just
+	 *            {@link numOfAccStates} final states will be created.
+	 * @param ensureIsUniform
+	 *            If true ensures a uniform distribution of the connected DFAs
+	 *            at high cost of performance for big 'size'. If false random
+	 *            classes of DFAs get favored over other random classes but the
+	 *            generation is very fast.
+	 * @return Uniform or non-uniform distributed random DFA
+	 */
+	public GetRandomDfa(final IUltimateServiceProvider services,
+			final int size, final int alphabetSize, final int numOfAccStates,
+			final int percOfTotality, final boolean ensureIsConnected,
+			final boolean ensureStatesReachFinal,
+			final boolean ensureIsUniform) {
+		this(services, size, alphabetSize, numOfAccStates, percOfTotality,
+				ensureIsConnected, ensureStatesReachFinal,
+				ensureIsUniform, true);
+	}
+	
+	/**
+	 * Generates a uniform or non-uniform distributed random connected or
+	 * not-connected total or not-total DFA with a given amount of nodes and
+	 * size of alphabet.<br/>
+	 * <br/>
+	 * Runtime is in:<br/>
+	 * <b>O(n^3 * k) * O(random)</b> if result should be uniform and caching is
+	 * not enabled<br/>
+	 * <b>O(n * k) * O(random)</b> if result should not be uniform<br/>
+	 * <b>O(n^2 * k) * O(random)</b> if result should be uniform, caching is
+	 * enabled and there is a valid cache (n must be equals)<br/>
+	 * where 'n' is the amount of nodes, 'k' the size of the alphabet and
+	 * 'random' methods of {@link java.util.Random}.
+	 * 
+	 * @param services
+	 *            Service provider
+	 * @param size
+	 *            Amount of nodes
+	 * @param alphabetSize
+	 *            Size of the alphabet
+	 * @param numOfAccStates
+	 *            Number of accepting states which may be just a bottom bound if
+	 *            'ensureStatesReachFinal' is true
+	 * @param percOfTotality
+	 *            Percentage of DFAs totality. If 1.0 the resulting DFA will be total.
+	 *            If 0.5 about half of the transitions will miss.
+	 *            If 0.0 all transitions that can be deleted,
+	 *            by ensuring all states get reached, are missing.
+	 * @param ensureIsConnected
+	 *            If true it is ensured that the DFA
+	 *            is connected meaning all states are reached.
+	 *            If false and if {@link m_percOfTotality} is small
+	 *            it may happen that the automata is not connected.
+	 * @param ensureStatesReachFinal
+	 *            If true ensures that all states reach a final state at cost of
+	 *            performance by creating extra final states. If false just
+	 *            {@link numOfAccStates} final states will be created.
+	 * @param ensureIsUniform
+	 *            If true ensures a uniform distribution of the connected DFAs
+	 *            at high cost of performance for big 'size'. If false random
+	 *            classes of DFAs get favored over other random classes but the
+	 *            generation is very fast.
+	 * @param enableCaching
+	 *            If true enables caching of pre-calculated results for future
+	 *            similar requests. If false caching will not be done. Best
+	 *            results can be achieved by executing requests with same 'size'
+	 *            and similar 'alphabetSize' behind one another.
+	 * @return Uniform or non-uniform distributed random DFA
+	 */
+	public GetRandomDfa(final IUltimateServiceProvider services,
+			final int size, final int alphabetSize, final int numOfAccStates,
+			final int percOfTotality, final boolean ensureIsConnected,
+			final boolean ensureStatesReachFinal,
+			final boolean ensureIsUniform, final boolean enableCaching) {
+		m_Services = services;
+		m_size = size;
+		m_alphabetSize = alphabetSize;
+		m_numOfAccStates = numOfAccStates;
+		m_percOfTotality = percOfTotality;
+		m_ensureIsConnected = ensureIsConnected;
+		m_ensureStatesReachFinal = ensureStatesReachFinal;
+		m_ensureIsUniform = ensureIsUniform;
+		m_enableCaching = enableCaching;
+		m_flags = new HashSet<Integer>(m_size - 1);
 
-		// Contains the numbers of DFAs including a probability of it where the
-		// first occurrence of 'node' is at position 'index'.
-		BigInteger[] permutationsPerStep = new BigInteger[PRE_SEQUENCE_LENGTH
-				- firstPossiblePos];
-
-		int counter = 0;
-		// Calculate the number of DFAs including a probability of it where the
-		// first occurrence of 'node' is between 'firstPossiblePos' and
-		// 'PRE_SEQUENCE_LENGTH - 1'.
-		for (int i = firstPossiblePos; i <= PRE_SEQUENCE_LENGTH - 1; i++) {
-			permutationsPerStep[counter] = permutationsTable[node][i]
-					.multiply(BigInteger.valueOf((int) Math.pow(node, i
-							- firstPossiblePos)));
-			permutations = permutations.add(permutationsPerStep[counter]);
-			counter++;
-		}
-		// Randomly select one of all possible permutations including its
-		// probability
-		BigInteger permutation = nextRandomBigInteger(
-				permutations.add(BigInteger.ONE), m_random);
-
-		counter = 0;
-		// Calculate the flag using the probability of each DFA setting and the
-		// selected permutation
-		for (int i = firstPossiblePos; i <= PRE_SEQUENCE_LENGTH - 1; i++) {
-			if (permutation.compareTo(permutationsPerStep[counter]) < 0) {
-				return i;
-			} else {
-				permutation = permutation
-						.subtract(permutationsPerStep[counter]);
-			}
-			counter++;
-		}
-		return PRE_SEQUENCE_LENGTH - 1;
+		m_random = new Random();
+		int[] dfa = generatePackedRandomDFA();
+		Set<Integer> transToDelete = calcTransitionsToDelete(dfa);
+		Set<Integer> accStates = calcAccStates(dfa, transToDelete);
+		m_result = extractPackedDFA(dfa, accStates, transToDelete);
 	}
 
 	/**
@@ -304,7 +435,7 @@ public final class GetRandomDfa implements IOperation<String, String> {
 	 *            that should be deleted
 	 * @return Set of states that should be accepting
 	 */
-	private Set<Integer> calcAccStates(int[] dfa, Set<Integer> transToDelete) {
+	private Set<Integer> calcAccStates(final int[] dfa, Set<Integer> transToDelete) {
 		LinkedHashSet<Integer> finalStates = new LinkedHashSet<Integer>(
 				m_numOfAccStates);
 		// Initialize list
@@ -398,7 +529,7 @@ public final class GetRandomDfa implements IOperation<String, String> {
 
 		return finalStates;
 	}
-	
+
 	/**
 	 * Calculates the transitions of the DFA that should be deleted.
 	 * Therefore using {@link m_percOfTotality}.
@@ -414,7 +545,7 @@ public final class GetRandomDfa implements IOperation<String, String> {
 	 *            generatePackedRandomDFA(...)}
 	 * @return List of transitions that should get deleted as indexes in the DFA sequence
 	 */
-	private Set<Integer> calcTransitionsToDelete(int[] dfa) {
+	private Set<Integer> calcTransitionsToDelete(final int[] dfa) {
 		if (m_percOfTotality < PERC_TOTALITY_BOUND_LOWER || m_percOfTotality > PERC_TOTALITY_BOUND_UPPER) {
 			throw new IllegalArgumentException(
 					"'percOfTotality' must not exceed '" + PERC_TOTALITY_BOUND_UPPER + "' or be less than "
@@ -489,31 +620,244 @@ public final class GetRandomDfa implements IOperation<String, String> {
 		}
 		return transToDelete;
 	}
+	
+	@Override
+	public boolean checkResult(final StateFactory<String> stateFactory)
+			throws AutomataLibraryException {
+		return true;
+	}
+
+	@Override
+	public String exitMessage() {
+		return "Finished " + operationName() + " Result "
+				+ m_result.sizeInformation() + ".";
+	}
 
 	/**
-	 * Generates a uniform distributed random {@link BigInteger} between 0
-	 * (inclusive) and 'upperBound' (exclusive) using a given random generator.<br/><br/>
-	 * Runtime is in:<br/>
-	 * <b>O(2 * random)</b><br/>
-	 * where 'random' are methods of {@link java.util.Random}.
+	 * Extracts a DFA that is packed into the int[] array format specified by
+	 * {@link #generatePackedRandomDFA(int, int, int, boolean, boolean)
+	 * generatePackedRandomDFA(...)} and returns it as
+	 * {@link NestedWordAutomaton}.<br />
+	 * Runtime is in <b>O(size * alphabetSize)</b>.
 	 * 
-	 * @param upperBound
-	 *            Upper bound for the generated number (exclusive)
-	 * @param rnd
-	 *            Random generator
-	 * @return Uniform distributed random {@link BigInteger} between 0
-	 *         (inclusive) and 'upperBound' (exclusive)
+	 * @param dfa
+	 *            The DFA to extract in the int[] array format specified by
+	 *            {@link #generatePackedRandomDFA(int, int, int, boolean, boolean)
+	 *            generatePackedRandomDFA(...)}
+	 * @param accStates
+	 *            Set that contains all accepting states
+	 * @param transToDelete
+	 *            Set that contains indexes in the DFA sequence of all transitions
+	 *            that should be deleted
+	 * @return As {@link NestedWordAutomaton} extracted DFA
 	 */
-	private static BigInteger nextRandomBigInteger(BigInteger upperBound,
-			Random rnd) {
-		BigInteger result = new BigInteger(upperBound.bitLength(), rnd);
-
-		// Converges to one iteration because chance decreases by 0.5 every
-		// step.
-		while (result.compareTo(upperBound) >= 0) {
-			result = new BigInteger(upperBound.bitLength(), rnd);
+	private NestedWordAutomaton<String, String> extractPackedDFA(
+			final int[] dfa, final Set<Integer> accStates,
+			final Set<Integer> transToDelete) {
+		List<String> num2State = new ArrayList<String>(m_size);
+		for (int i = 0; i < m_size; ++i) {
+			num2State.add(PREFIX_NODE + i);
 		}
+		String initialState = num2State.get(0);
+
+		List<String> num2Letter = new ArrayList<String>(m_alphabetSize);
+		for (int i = 0; i < m_alphabetSize; ++i) {
+			num2Letter.add(PREFIX_TRANSITION + i);
+		}
+
+		StateFactory<String> stateFactory = new StringFactory();
+		NestedWordAutomaton<String, String> result;
+		result = new NestedWordAutomaton<String, String>(m_Services,
+				new HashSet<String>(num2Letter), null, null, stateFactory);
+
+		// Create states
+		for (int i = 0; i < m_size; ++i) {
+			String state = num2State.get(i);
+			boolean isAccepting = accStates.contains(i);
+			boolean isInitial = state.equals(initialState);
+			result.addState(isInitial, isAccepting, state);
+		}
+
+		// Create transitions
+		for (int i = 0; i < dfa.length; i++) {
+			//Skip transition if it should not be contained in the final automata
+			if (transToDelete.contains(i)) {
+				continue;
+			}
+			int predStateIndex = (int) Math.floor((i + 0.0) / m_alphabetSize);
+			int letterIndex = i % m_alphabetSize;
+			int succStateIndex = dfa[i];
+			// Skip transition if it points to a node out of the wished size.
+			// This node is the sink node for non-total DFAs.
+			String predState = num2State.get(predStateIndex);
+			String letter = num2Letter.get(letterIndex);
+			String succState = num2State.get(succStateIndex);
+
+			result.addInternalTransition(predState, letter, succState);
+		}
+
 		return result;
+	}
+
+	/**
+	 * Generates a flag for a given node using the first possible position at
+	 * where it is allowed to appear.<br />
+	 * The flag represents the first edge in the DFA that points to the given
+	 * node, as index in the string format sequence (specified by
+	 * {@link #generatePackedRandomDFA(int, int, int, boolean, boolean)
+	 * generatePackedRandomDFA(...)}).<br />
+	 * It takes the correct probability of each flag, by calculation of the
+	 * number of all possible DFAs with this setting, into account.<br/>
+	 * <br/>
+	 * This method is used by random DFA generation to ensure that some rules
+	 * like <i>'every node must get accessed before it is reached in the
+	 * sequence'</i> are satisfied.<br/>
+	 * <br/>
+	 * Runtime is in:<br/>
+	 * <b>O(n * k) * O(random)</b><br/>
+	 * where 'n' is the amount of nodes, 'k' the size of the alphabet and
+	 * 'random' methods of {@link java.util.Random}.
+	 * 
+	 * @param node
+	 *            Node to calculate flag for
+	 * @param firstPossiblePos
+	 *            First possible position in the sequence at where the flag is
+	 *            allowed to appear
+	 * @return Flag for the given node
+	 */
+	private int generateFlag(final int node, final int firstPossiblePos) {
+		/*
+		 * The length of the sequence before 'node's edges are reached. Flag
+		 * must appear before this to satisfy all rules.
+		 */
+		final int PRE_SEQUENCE_LENGTH = node * m_alphabetSize;
+
+		// If a uniform distribution must not be ensured randomly select a
+		// possible position for the flag.
+		if (!m_ensureIsUniform) {
+			return m_random.nextInt(PRE_SEQUENCE_LENGTH - firstPossiblePos)
+					+ firstPossiblePos;
+		}
+
+		BigInteger permutations = BigInteger.ZERO;
+
+		// Contains the numbers of DFAs including a probability of it where the
+		// first occurrence of 'node' is at position 'index'.
+		BigInteger[] permutationsPerStep = new BigInteger[PRE_SEQUENCE_LENGTH
+				- firstPossiblePos];
+
+		int counter = 0;
+		// Calculate the number of DFAs including a probability of it where the
+		// first occurrence of 'node' is between 'firstPossiblePos' and
+		// 'PRE_SEQUENCE_LENGTH - 1'.
+		for (int i = firstPossiblePos; i <= PRE_SEQUENCE_LENGTH - 1; i++) {
+			permutationsPerStep[counter] = permutationsTable[node][i]
+					.multiply(BigInteger.valueOf((int) Math.pow(node, i
+							- firstPossiblePos)));
+			permutations = permutations.add(permutationsPerStep[counter]);
+			counter++;
+		}
+		// Randomly select one of all possible permutations including its
+		// probability
+		BigInteger permutation = nextRandomBigInteger(
+				permutations.add(BigInteger.ONE), m_random);
+
+		counter = 0;
+		// Calculate the flag using the probability of each DFA setting and the
+		// selected permutation
+		for (int i = firstPossiblePos; i <= PRE_SEQUENCE_LENGTH - 1; i++) {
+			if (permutation.compareTo(permutationsPerStep[counter]) < 0) {
+				return i;
+			} else {
+				permutation = permutation
+						.subtract(permutationsPerStep[counter]);
+			}
+			counter++;
+		}
+		return PRE_SEQUENCE_LENGTH - 1;
+	}
+
+	/**
+	 * Generates a uniform or non-uniform distributed random connected total
+	 * DFA with a given amount of nodes and size of alphabet.<br />
+	 * Finally returns the DFA in a specific int[] array format.<br /><br />
+	 * The int[] array format is a sequence of numbers that represents a breadth-first
+	 * search where each state and edge is ordered by '<'.<br /><br />
+	 * Example:<br />
+	 * [0,1,0,0,1,2] with 3 nodes and an alphabet of size 2.<br />
+	 * [0,1|0,0|1,2] each of the 3 nodes has 2 outgoing edges where the number denotes
+	 * the destination.<br />
+	 * e.g. 2nd edge of first node points to the second node.
+	 * @return Uniform or non-uniform distributed random connected total
+	 * DFA in a specific int[] array format
+	 */
+	public int[] generatePackedRandomDFA() throws IllegalArgumentException {
+		if (m_size < 1 || m_alphabetSize < 1) {
+			throw new IllegalArgumentException(
+					"Neither 'size' nor 'alphabetSize' must be less than one.");
+		}
+		if (m_numOfAccStates < 0 || m_numOfAccStates > m_size) {
+			throw new IllegalArgumentException(
+					"'numOfAccStates' must not exceed 'size' or be less than zero.");
+		}
+		final int SEQUENCE_LENGTH = m_size * m_alphabetSize;
+
+		int[] sequence = new int[SEQUENCE_LENGTH];
+		int curSequenceIndex = 0;
+
+		// Special case where size == 1
+		if (m_size == 1) {
+			for (int i = 0; i < m_alphabetSize; i++) {
+				sequence[curSequenceIndex] = 0;
+				curSequenceIndex++;
+			}
+			return sequence;
+		}
+
+		// Case where size >= 2
+		final Random rnd = new Random();
+
+		if (m_ensureIsUniform) {
+			preCalcPermutationsTable(SEQUENCE_LENGTH);
+		}
+
+		int lastFlag = -1;
+		// Calculate the flags for each node and generate the sequence from left
+		// to right until all nodes are reached by an edge.
+		for (int i = 1; i <= m_size - 1; i++) {
+			int curFlag = generateFlag(i, lastFlag + 1);
+			m_flags.add(curFlag);
+			for (int j = lastFlag + 1; j <= curFlag - 1; j++) {
+				// Only use nodes that were already reached
+				sequence[curSequenceIndex] = rnd.nextInt(i);
+				curSequenceIndex++;
+			}
+			sequence[curSequenceIndex] = i;
+			curSequenceIndex++;
+			lastFlag = curFlag;
+		}
+		// Now all nodes are reached by an edge and the rest of the sequence can
+		// be filled up by using all nodes as edge destinations.
+		for (int i = lastFlag + 1; i <= SEQUENCE_LENGTH - 1; i++) {
+			sequence[curSequenceIndex] = rnd.nextInt(m_size);
+			curSequenceIndex++;
+		}
+
+		if (!m_enableCaching) {
+			permutationsTable = null;
+		}
+
+		return sequence;
+	}
+
+	@Override
+	public NestedWordAutomaton<String, String> getResult() {
+		return m_result;
+	}
+
+	@Override
+	public String operationName() {
+		return "GetRandomDfa";
 	}
 
 	/**
@@ -529,7 +873,7 @@ public final class GetRandomDfa implements IOperation<String, String> {
 	 * @param sequenceLength
 	 *            Length of sequence that must be size * alphabetSize
 	 */
-	private void preCalcPermutationsTable(int sequenceLength) {
+	private void preCalcPermutationsTable(final int sequenceLength) {
 		boolean hasUsableCache = m_enableCaching && permutationsTable != null
 				&& permutationsTable[0] != null
 				&& permutationsTable.length == m_size;
@@ -586,346 +930,6 @@ public final class GetRandomDfa implements IOperation<String, String> {
 		}
 
 		permutationsTable = nextPermutationsTable;
-	}
-
-	/**
-	 * Constant for full percentage of 100.
-	 */
-	public static final int PERC_FULL = 100;
-	/**
-	 * Lower bound for percentage of totality.
-	 */
-	public static final int PERC_TOTALITY_BOUND_LOWER = 0;
-	/**
-	 * Upper bound for percentage of totality.
-	 */
-	public static final int PERC_TOTALITY_BOUND_UPPER = PERC_FULL;
-	/**
-	 * Constant for no valid state. Valid states are 0, 1, ...
-	 */
-	public static final int NO_STATE = -1;
-	/**
-	 * Prefix for nodes. A node then is called 'prefix + index' where index is
-	 * the index to a node in the node list.
-	 */
-	public static final String PREFIX_NODE = "q";
-	/**
-	 * Prefix for transitions. A transition then is called 'prefix + index'
-	 * where index is the index to a transition in the transition list.
-	 */
-	public static final String PREFIX_TRANSITION = "a";
-	/**
-	 * Table that contains the amount of all permutations of different DFA
-	 * classes. Dimensions are [size][size * alphabetSize]. Also used for
-	 * caching purpose.
-	 */
-	private static BigInteger[][] permutationsTable;
-
-	/**
-	 * Size of the alphabet.
-	 */
-	private final int m_alphabetSize;
-	/**
-	 * If true enables caching of pre-calculated results for future similar
-	 * requests. If false caching will not be done. Best results can be achieved
-	 * by executing requests with same 'size' and similar 'alphabetSize' behind
-	 * one another.
-	 */
-	private final boolean m_enableCaching;
-	/**
-	 * If true ensures a uniform distribution of the connected DFAs at high cost
-	 * of performance for big 'size'. If false random classes of DFAs get
-	 * favored over other random classes but the generation is very fast.
-	 */
-	private final boolean m_ensureIsUniform;
-	/**
-	 * If true ensures that all states reach a final state at cost of
-	 * performance by creating extra final states. If false just
-	 * {@link m_numOfAccStates} final states will be created.
-	 */
-	private final boolean m_ensureStatesReachFinal;
-	/**
-	 * Flags of the DFA specified by {@link #generateFlag(int, int) generateFlag(...)}.
-	 */
-	private final Set<Integer> m_flags;
-	/**
-	 * Number of the accepting states.
-	 */
-	private final int m_numOfAccStates;
-	/**
-	 * Percentage of DFAs totality. If 100 the resulting DFA will be total.
-	 * If 50 about half of the transitions will miss.
-	 * If 0 all transitions that can be deleted,
-	 * by ensuring all states get reached, are missing.
-	 */
-	private final int m_percOfTotality;
-	/**
-	 * If true it is ensured that the DFA
-	 * is connected meaning all states are reached.
-	 * If false and if {@link m_percOfTotality} is small
-	 * it may happen that the automata is not connected.
-	 */
-	private final boolean m_ensureIsConnected;
-	/**
-	 * Random generator.
-	 */
-	private final Random m_random;
-	/**
-	 * Resulting automaton of generator.
-	 */
-	private final NestedWordAutomaton<String, String> m_result;
-	/**
-	 * Service provider.
-	 */
-	private final IUltimateServiceProvider m_Services;
-	/**
-	 * Size of the automaton also amount of nodes.
-	 */
-	private final int m_size;
-	
-	/**
-	 * Generates a uniform distributed random connected total DFA with a
-	 * given amount of nodes, size of alphabet and
-	 * number of accepting states. It is not ensured that all states reach
-	 * accepting states.<br />
-	 * <br />
-	 * Additionally with following flags:<br />
-	 * int <b>percOfTotality</b> : <b>{@link PERC_TOTALITY_BOUND_UPPER}</b>
-	 * Ensures that the DFA is total.<br />
-	 * boolean <b>ensureIsConnected</b> : <b>true</b> Ensures that all states
-	 * are reached.<br />
-	 * boolean <b>ensureStatesReachFinal</b> : <b>false</b> It is not ensured
-	 * that all states reach a final state.<br />
-	 * boolean <b>ensureIsUniform</b> : <b>true</b> Ensures a uniform
-	 * distribution of the DFAs at high cost of performance for big 'size'.<br/>
-	 * boolean <b>enableCaching</b> : <b>true</b> Enables caching of
-	 * pre-calculated results for future similar requests.<br/>
-	 * Best results can be achieved by executing requests with same 'size' and
-	 * similar 'alphabetSize' behind one another.<br/>
-	 * <br/>
-	 * Runtime is in:<br/>
-	 * <b>O(n^2 * k) * O(random)</b> if there is a valid cache (n must be
-	 * equals)<br/>
-	 * <b>O(n^3 * k) * O(random)</b> if there is no valid cache<br/>
-	 * where 'n' is the amount of nodes, 'k' the size of the alphabet and
-	 * 'random' methods of {@link java.util.Random}.
-	 * 
-	 * @param services
-	 *            Service provider
-	 * @param size
-	 *            Amount of nodes
-	 * @param alphabetSize
-	 *            Size of the alphabet
-	 * @param numOfAccStates
-	 *            Number of accepting states
-	 * @return Uniform distributed random total DFA
-	 */
-	public GetRandomDfa(IUltimateServiceProvider services, int size,
-			int alphabetSize, int numOfAccStates) {
-		this(services, size, alphabetSize, numOfAccStates,
-				PERC_TOTALITY_BOUND_UPPER, true, false, true, true);
-	}
-
-	/**
-	 * Generates a uniform distributed random connected or not-connected total
-	 * or not-total DFA with a given amount of nodes, size of alphabet and
-	 * number of accepting states. It is not ensured that all states reach
-	 * accepting states.<br />
-	 * <br />
-	 * Additionally with following flags:<br />
-	 * boolean <b>ensureStatesReachFinal</b> : <b>false</b> It is not ensured
-	 * that all states reach a final state.<br />
-	 * boolean <b>ensureIsUniform</b> : <b>true</b> Ensures a uniform
-	 * distribution of the DFAs at high cost of performance for big 'size'.<br/>
-	 * boolean <b>enableCaching</b> : <b>true</b> Enables caching of
-	 * pre-calculated results for future similar requests.<br/>
-	 * Best results can be achieved by executing requests with same 'size' and
-	 * similar 'alphabetSize' behind one another.<br/>
-	 * <br/>
-	 * Runtime is in:<br/>
-	 * <b>O(n^2 * k) * O(random)</b> if there is a valid cache (n must be
-	 * equals)<br/>
-	 * <b>O(n^3 * k) * O(random)</b> if there is no valid cache<br/>
-	 * where 'n' is the amount of nodes, 'k' the size of the alphabet and
-	 * 'random' methods of {@link java.util.Random}.
-	 * 
-	 * @param services
-	 *            Service provider
-	 * @param size
-	 *            Amount of nodes
-	 * @param alphabetSize
-	 *            Size of the alphabet
-	 * @param numOfAccStates
-	 *            Number of accepting states
-	 * @param percOfTotality
-	 *            Percentage of DFAs totality. If 1.0 the resulting DFA will be total.
-	 *            If 0.5 about half of the transitions will miss.
-	 *            If 0.0 all transitions that can be deleted,
-	 *            by ensuring all states get reached, are missing.
-	 * @param ensureIsConnected
-	 *            If true it is ensured that the DFA
-	 *            is connected meaning all states are reached.
-	 *            If false and if {@link m_percOfTotality} is small
-	 *            it may happen that the automata is not connected.
-	 * @return Uniform distributed random total DFA
-	 */
-	public GetRandomDfa(IUltimateServiceProvider services, int size,
-			int alphabetSize, int numOfAccStates, int percOfTotality,
-			boolean ensureIsConnected) {
-		this(services, size, alphabetSize, numOfAccStates, percOfTotality,
-				ensureIsConnected, false, true, true);
-	}
-
-	/**
-	 * Generates a uniform or non-uniform distributed random connected or
-	 * not-connected total or not-total DFA with a given amount of nodes, size
-	 * of alphabet and number of accepting states.<br />
-	 * <br />
-	 * Additionally with following flags:<br />
-	 * boolean <b>enableCaching</b> : <b>true</b> Enables caching of
-	 * pre-calculated results for future similar requests.<br/>
-	 * Best results can be achieved by executing requests with same 'size' and
-	 * similar 'alphabetSize' behind one another.<br/>
-	 * <br/>
-	 * Runtime is in:<br/>
-	 * <b>O(n^2 * k) * O(random)</b> if result should be uniform and there is a
-	 * valid cache (n must be equals)<br/>
-	 * <b>O(n^3 * k) * O(random)</b> if result should be uniform and there is no
-	 * valid cache<br/>
-	 * <b>O(n * k) * O(random)</b> if result should not be uniform<br/>
-	 * where 'n' is the amount of nodes, 'k' the size of the alphabet and
-	 * 'random' methods of {@link java.util.Random}.
-	 * 
-	 * @param services
-	 *            Service provider
-	 * @param size
-	 *            Amount of nodes
-	 * @param alphabetSize
-	 *            Size of the alphabet
-	 * @param numOfAccStates
-	 *            Number of accepting states which may be just a bottom bound if
-	 *            'ensureStatesReachFinal' is true
-	 * @param percOfTotality
-	 *            Percentage of DFAs totality. If 1.0 the resulting DFA will be total.
-	 *            If 0.5 about half of the transitions will miss.
-	 *            If 0.0 all transitions that can be deleted,
-	 *            by ensuring all states get reached, are missing.
-	 * @param ensureIsConnected
-	 *            If true it is ensured that the DFA
-	 *            is connected meaning all states are reached.
-	 *            If false and if {@link m_percOfTotality} is small
-	 *            it may happen that the automata is not connected.
-	 * @param ensureStatesReachFinal
-	 *            If true ensures that all states reach a final state at cost of
-	 *            performance by creating extra final states. If false just
-	 *            {@link numOfAccStates} final states will be created.
-	 * @param ensureIsUniform
-	 *            If true ensures a uniform distribution of the connected DFAs
-	 *            at high cost of performance for big 'size'. If false random
-	 *            classes of DFAs get favored over other random classes but the
-	 *            generation is very fast.
-	 * @return Uniform or non-uniform distributed random DFA
-	 */
-	public GetRandomDfa(IUltimateServiceProvider services, int size,
-			int alphabetSize, int numOfAccStates, int percOfTotality,
-			boolean ensureIsConnected, boolean ensureStatesReachFinal,
-			boolean ensureIsUniform) {
-		this(services, size, alphabetSize, numOfAccStates, percOfTotality,
-				ensureIsConnected, ensureStatesReachFinal,
-				ensureIsUniform, true);
-	}
-
-	/**
-	 * Generates a uniform or non-uniform distributed random connected or
-	 * not-connected total or not-total DFA with a given amount of nodes and
-	 * size of alphabet.<br/>
-	 * <br/>
-	 * Runtime is in:<br/>
-	 * <b>O(n^3 * k) * O(random)</b> if result should be uniform and caching is
-	 * not enabled<br/>
-	 * <b>O(n * k) * O(random)</b> if result should not be uniform<br/>
-	 * <b>O(n^2 * k) * O(random)</b> if result should be uniform, caching is
-	 * enabled and there is a valid cache (n must be equals)<br/>
-	 * where 'n' is the amount of nodes, 'k' the size of the alphabet and
-	 * 'random' methods of {@link java.util.Random}.
-	 * 
-	 * @param services
-	 *            Service provider
-	 * @param size
-	 *            Amount of nodes
-	 * @param alphabetSize
-	 *            Size of the alphabet
-	 * @param numOfAccStates
-	 *            Number of accepting states which may be just a bottom bound if
-	 *            'ensureStatesReachFinal' is true
-	 * @param percOfTotality
-	 *            Percentage of DFAs totality. If 1.0 the resulting DFA will be total.
-	 *            If 0.5 about half of the transitions will miss.
-	 *            If 0.0 all transitions that can be deleted,
-	 *            by ensuring all states get reached, are missing.
-	 * @param ensureIsConnected
-	 *            If true it is ensured that the DFA
-	 *            is connected meaning all states are reached.
-	 *            If false and if {@link m_percOfTotality} is small
-	 *            it may happen that the automata is not connected.
-	 * @param ensureStatesReachFinal
-	 *            If true ensures that all states reach a final state at cost of
-	 *            performance by creating extra final states. If false just
-	 *            {@link numOfAccStates} final states will be created.
-	 * @param ensureIsUniform
-	 *            If true ensures a uniform distribution of the connected DFAs
-	 *            at high cost of performance for big 'size'. If false random
-	 *            classes of DFAs get favored over other random classes but the
-	 *            generation is very fast.
-	 * @param enableCaching
-	 *            If true enables caching of pre-calculated results for future
-	 *            similar requests. If false caching will not be done. Best
-	 *            results can be achieved by executing requests with same 'size'
-	 *            and similar 'alphabetSize' behind one another.
-	 * @return Uniform or non-uniform distributed random DFA
-	 */
-	public GetRandomDfa(IUltimateServiceProvider services, int size,
-			int alphabetSize, int numOfAccStates, int percOfTotality,
-			boolean ensureIsConnected, boolean ensureStatesReachFinal,
-			boolean ensureIsUniform, boolean enableCaching) {
-		m_Services = services;
-		m_size = size;
-		m_alphabetSize = alphabetSize;
-		m_numOfAccStates = numOfAccStates;
-		m_percOfTotality = percOfTotality;
-		m_ensureIsConnected = ensureIsConnected;
-		m_ensureStatesReachFinal = ensureStatesReachFinal;
-		m_ensureIsUniform = ensureIsUniform;
-		m_enableCaching = enableCaching;
-		m_flags = new HashSet<Integer>(m_size - 1);
-
-		m_random = new Random();
-		int[] dfa = generatePackedRandomDFA();
-		Set<Integer> transToDelete = calcTransitionsToDelete(dfa);
-		Set<Integer> accStates = calcAccStates(dfa, transToDelete);
-		m_result = extractPackedDFA(dfa, accStates, transToDelete);
-	}
-
-	@Override
-	public boolean checkResult(StateFactory<String> stateFactory)
-			throws AutomataLibraryException {
-		return true;
-	}
-
-	@Override
-	public String exitMessage() {
-		return "Finished " + operationName() + " Result "
-				+ m_result.sizeInformation() + ".";
-	}
-
-	@Override
-	public NestedWordAutomaton<String, String> getResult() {
-		return m_result;
-	}
-
-	@Override
-	public String operationName() {
-		return "GetRandomDfa";
 	}
 
 	@Override
