@@ -15,9 +15,10 @@ import de.uni_freiburg.informatik.ultimate.website.WebToolchain;
  * @author Markus Lindenmann
  * @author Oleksii Saukh
  * @author Stefan Wissert
+ * @author Matthias Heizmann
  * @date 14.02.2012
  */
-public class CTraceAbstractionTC extends WebToolchain {
+public class CAutomizerTC extends WebToolchain {
 
     /*
      * (non-Javadoc)
@@ -27,7 +28,7 @@ public class CTraceAbstractionTC extends WebToolchain {
      */
     @Override
     protected String setDescription() {
-        return "Trace abstraction toolchain";
+        return "Automizer toolchain";
     }
 
     /*
@@ -37,7 +38,7 @@ public class CTraceAbstractionTC extends WebToolchain {
      */
     @Override
     protected String setName() {
-        return "Trace Abstraction";
+        return "Automizer";
     }
 
     /*
@@ -47,7 +48,7 @@ public class CTraceAbstractionTC extends WebToolchain {
      */
     @Override
     protected String setId() {
-        return "cTraceAbstraction";
+        return "cAutomizer";
     }
 
     /*
@@ -77,7 +78,7 @@ public class CTraceAbstractionTC extends WebToolchain {
      */
     @Override
     protected String setUserInfo() {
-        return null;
+        return "This is the user info";
     }
 
     /*
@@ -89,16 +90,16 @@ public class CTraceAbstractionTC extends WebToolchain {
     protected List<Tool> setTools() {
         List<Tool> tools = new ArrayList<Tool>();
         List<Setting> oCACSL = new ArrayList<Setting>();
-        oCACSL.add(new Setting(PrefStrings.s_CACSL_LABEL_StartFunction, Setting.SettingType.STRING,
+        List<Setting> mCACSL = new ArrayList<Setting>();
+        mCACSL.add(new Setting(PrefStrings.s_CACSL_LABEL_StartFunction, Setting.SettingType.STRING,
                 "Starting procedure: ", "main", true));
-        oCACSL.add(new Setting(PrefStrings.s_CACSL_LABEL_TranslationMode, "Translation Mode",
+        mCACSL.add(new Setting(PrefStrings.s_CACSL_LABEL_TranslationMode, "Translation Mode",
 				new String[] { PrefStrings.s_CACSL_VALUE_Svcomp }, false, new String[] {
         		PrefStrings.s_CACSL_VALUE_Base, PrefStrings.s_CACSL_VALUE_Svcomp }, true));
-        List<Setting> mCACSL = new ArrayList<Setting>();
+        
         tools.add(new Tool(PrefStrings.s_cacsl2boogietranslator, oCACSL, mCACSL,
                 LoggingLevel.WARN));
-
-        tools.addAll(BoogieTraceAbstractionTC.boogieTools());
+        tools.addAll(BoogieAutomizerTC.boogieTools());
         return tools;
     }
 

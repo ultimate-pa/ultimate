@@ -12,10 +12,10 @@ import de.uni_freiburg.informatik.ultimate.website.toolchains.AutomtaScriptTC;
 import de.uni_freiburg.informatik.ultimate.website.toolchains.BoogieBuchiAutomizerTC;
 import de.uni_freiburg.informatik.ultimate.website.toolchains.BoogieConcurrentTraceAbstractionTC;
 import de.uni_freiburg.informatik.ultimate.website.toolchains.BoogieLassoRankerTC;
-import de.uni_freiburg.informatik.ultimate.website.toolchains.BoogieTraceAbstractionTC;
+import de.uni_freiburg.informatik.ultimate.website.toolchains.BoogieAutomizerTC;
 import de.uni_freiburg.informatik.ultimate.website.toolchains.CBuchiAutomizerTC;
 import de.uni_freiburg.informatik.ultimate.website.toolchains.CLassoRankerTC;
-import de.uni_freiburg.informatik.ultimate.website.toolchains.CTraceAbstractionTC;
+import de.uni_freiburg.informatik.ultimate.website.toolchains.CAutomizerTC;
 
 /**
  * @author Markus Lindenmann
@@ -28,8 +28,8 @@ public class Tasks {
 	 * List all toolchains that should be shown. Instantiate all toolchains,
 	 * that should be shown.
 	 */
-	private static final Class<?>[] sToolchainTypes = { AutomtaScriptTC.class, BoogieTraceAbstractionTC.class,
-			CTraceAbstractionTC.class, BoogieLassoRankerTC.class, CLassoRankerTC.class, BoogieBuchiAutomizerTC.class,
+	private static final Class<?>[] sToolchainTypes = { AutomtaScriptTC.class, BoogieAutomizerTC.class,
+			CAutomizerTC.class, BoogieLassoRankerTC.class, CLassoRankerTC.class, BoogieBuchiAutomizerTC.class,
 			CBuchiAutomizerTC.class, BoogieConcurrentTraceAbstractionTC.class };
 	/**
 	 * The String representations of TaskNames.
@@ -163,8 +163,8 @@ public class Tasks {
 
 		String description, name;
 
-		name = "Trace Abstraction";
-		description = "An implementation of trace abstraction being able to verify programs.";
+		name = BoogieAutomizerTC.s_Automizer;
+		description = "Implementation of our automata-theoretic approach to software verification.";
 		Worker w = new Worker(name, "verify", description, null);
 		w.setLogoURL("img/tool_logo.png");
 		sWorkers.put(w.getId(), w);

@@ -17,8 +17,10 @@ import de.uni_freiburg.informatik.ultimate.website.WebToolchain;
  * @author Stefan Wissert
  * @date 14.02.2012
  */
-public class BoogieTraceAbstractionTC extends WebToolchain {
+public class BoogieAutomizerTC extends WebToolchain {
 
+	
+	public static final String s_Automizer = "Automizer";
 	/*
 	 * (non-Javadoc)
 	 * 
@@ -27,7 +29,7 @@ public class BoogieTraceAbstractionTC extends WebToolchain {
 	 */
 	@Override
 	protected String setDescription() {
-		return "Trace abstraction toolchain";
+		return "Automizer toolchain";
 	}
 
 	/*
@@ -37,7 +39,7 @@ public class BoogieTraceAbstractionTC extends WebToolchain {
 	 */
 	@Override
 	protected String setName() {
-		return "Trace Abstraction";
+		return s_Automizer;
 	}
 
 	/*
@@ -47,7 +49,7 @@ public class BoogieTraceAbstractionTC extends WebToolchain {
 	 */
 	@Override
 	protected String setId() {
-		return "boogieTraceAbstraction";
+		return "boogieAutomizer";
 	}
 
 	/*
@@ -77,7 +79,7 @@ public class BoogieTraceAbstractionTC extends WebToolchain {
      */
     @Override
     protected String setUserInfo() {
-        return null;
+        return "Matthias set the user info";
     }
 
 	/*
@@ -107,9 +109,9 @@ public class BoogieTraceAbstractionTC extends WebToolchain {
 
         List<Setting> oTrAbs = new ArrayList<Setting>();
         List<Setting> mTrAbs = new ArrayList<Setting>();
-        oTrAbs.add(new Setting(PrefStrings.s_TA_LABEL_Interpol, Setting.SettingType.STRING,
+        mTrAbs.add(new Setting(PrefStrings.s_TA_LABEL_Interpol, Setting.SettingType.STRING,
                 "interpolation", PrefStrings.s_TA_VALUE_CraigTree, false));
-        oTrAbs.add(new Setting(PrefStrings.s_TA_LABEL_Hoare, Setting.SettingType.BOOLEAN,
+        mTrAbs.add(new Setting(PrefStrings.s_TA_LABEL_Hoare, Setting.SettingType.BOOLEAN,
                 "Compute Hoare Annotation", "true", true));
         tools.add(new Tool(PrefStrings.s_traceAbstraction, oTrAbs, mTrAbs,
                 LoggingLevel.WARN));
