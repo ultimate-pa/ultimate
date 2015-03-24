@@ -27,6 +27,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Identifier;
 import de.uni_freiburg.informatik.ultimate.logic.LoggingScript;
 import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.annotation.IAnnotations;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
@@ -221,9 +222,17 @@ public class CfgBuilder {
 			result.setLogic(logicForExternalSolver);
 		break;
 		case External_PrincessInterpolationMode:
+			result.setOption(":produce-interpolants", true);
+			result.setLogic(logicForExternalSolver);
+		break;
 		case External_Z3InterpolationMode:
 			result.setOption(":produce-interpolants", true);
 			result.setLogic(logicForExternalSolver);
+//			add array-ext function
+//			Sort intSort = result.sort("Int");
+//			Sort boolSort = result.sort("Bool");
+//			Sort arraySort = result.sort("Array", intSort, boolSort);
+//			result.declareFun("array-ext", new Sort[]{arraySort, arraySort}, intSort);
 		break;
 		case Internal_SMTInterpol:
 			result.setOption(":produce-unsat-cores", true);
