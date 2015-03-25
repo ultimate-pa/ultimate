@@ -857,7 +857,7 @@ public final class GetRandomDfa implements IOperation<String, String> {
 
 	@Override
 	public String operationName() {
-		return "GetRandomDfa";
+		return "getRandomDfa";
 	}
 
 	/**
