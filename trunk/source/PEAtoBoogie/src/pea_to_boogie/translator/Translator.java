@@ -560,9 +560,12 @@ public class Translator {
     	int maxBits = 0;
     	for (Phase phase : phases) {
     		PhaseBits bits = phase.getPhaseBits();
-    		int act = bits.getActive();
-    		if (act > maxBits) {
-    			maxBits = act;
+			// ignore start node when computing max phase 
+    		if (bits != null) {
+    			int act = bits.getActive();
+	    		if (act > maxBits) {
+	    			maxBits = act;
+	    		}
     		}
     	}
     	int pnr = 0;
@@ -572,7 +575,8 @@ public class Translator {
     	// check that one of those phases is eventually reached.
     	List<Expression> checkReached = new ArrayList<Expression>();
     	for (int i = 0; i < phases.length; i++) {
-    		if ((phases[i].getPhaseBits().getActive() & (1 << (pnr - 1))) == 0)
+    		PhaseBits bits = phases[i].getPhaseBits();
+    		if (bits == null || (bits.getActive() & (1 << (pnr - 1))) == 0)
     			checkReached.add(genComparePhaseCounter(i, automatonIndex, bl));
     	}
     	if (checkReached.isEmpty())
