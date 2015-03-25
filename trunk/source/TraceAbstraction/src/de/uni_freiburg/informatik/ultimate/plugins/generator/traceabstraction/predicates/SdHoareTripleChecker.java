@@ -85,7 +85,7 @@ public class SdHoareTripleChecker implements IHoareTripleChecker {
 			}
 			
 			boolean unknownCoverage = false;
-			// check if preLin is equivalent to true
+			// check if preLin is equivalent to false
 			switch (m_PredicateCoverageChecker.isCovered(preLin, m_FalsePredicate)) {
 			case INVALID:
 				break;
@@ -93,13 +93,14 @@ public class SdHoareTripleChecker implements IHoareTripleChecker {
 				throw new AssertionError("unchecked predicate");
 			case UNKNOWN:
 				unknownCoverage = true;
+				break;
 			case VALID:
 				return Validity.VALID;
 			default:
 				throw new AssertionError("unknown case");
 			}
 			
-			// check if preHier is equivalent to true
+			// check if preHier is equivalent to false
 			if (preHier != null) {
 				switch (m_PredicateCoverageChecker.isCovered(preHier, m_FalsePredicate)) {
 				case INVALID:
@@ -108,6 +109,7 @@ public class SdHoareTripleChecker implements IHoareTripleChecker {
 					throw new AssertionError("unchecked predicate");
 				case UNKNOWN:
 					unknownCoverage = true;
+					break;
 				case VALID:
 					return Validity.VALID;
 				default:
@@ -123,6 +125,7 @@ public class SdHoareTripleChecker implements IHoareTripleChecker {
 				throw new AssertionError("unchecked predicate");
 			case UNKNOWN:
 				unknownCoverage = true;
+				break;
 			case VALID:
 				return Validity.VALID;
 			default:
