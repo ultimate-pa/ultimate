@@ -6,6 +6,9 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Stack;
 
 import org.eclipse.cdt.core.dom.ast.IASTFunctionDefinition;
@@ -22,7 +25,9 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LocalLValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultContract;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultExpression;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.BoogieASTUtil;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.ConvExpr;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.IACSLHandler;
@@ -50,21 +55,27 @@ import de.uni_freiburg.informatik.ultimate.model.acsl.ast.RealLiteral;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.Requires;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.ACSLResultExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.ValidExpression;
+import de.uni_freiburg.informatik.ultimate.model.annotation.IAnnotations;
+import de.uni_freiburg.informatik.ultimate.model.annotation.Overapprox;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression.Operator;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.EnsuresSpecification;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.HavocStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.LoopInvariantSpecification;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ModifiesSpecification;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.RequiresSpecification;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Specification;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StructAccessExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StructLHS;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.result.Check;
@@ -81,6 +92,7 @@ public class ACSLHandler implements IACSLHandler {
      * To determine the right names, we need to know where we are in the
      * specification.
      */
+
     private enum SPEC_TYPE {
         /**
          * Not specified.
@@ -124,6 +136,7 @@ public class ACSLHandler implements IACSLHandler {
     @Override
     public Result visit(Dispatcher main, CodeAnnot node) {
         if (node instanceof CodeAnnotStmt) {
+            /*
             Result formula = main.dispatch(((Assertion) ((CodeAnnotStmt) node)
                     .getCodeStmt()).getFormula());
             Check check = new Check(Check.Spec.ASSERT);
@@ -132,6 +145,41 @@ public class ACSLHandler implements IACSLHandler {
                     ((Expression) formula.node));
             check.addToNodeAnnot(assertStmt);
             return new Result(assertStmt);
+            */
+            Check check = new Check(Check.Spec.ASSERT);
+            ILocation loc = LocationFactory.createACSLLocation(node, check);
+            ArrayList<Declaration> decl = new ArrayList<Declaration>();
+            ArrayList<Statement> stmt = new ArrayList<Statement>();
+            List<Overapprox> overappr = new ArrayList<Overapprox>();
+            Map<VariableDeclaration, ILocation> emptyAuxVars = new LinkedHashMap<VariableDeclaration, ILocation>();
+
+            Result formula = main.dispatch(((Assertion) ((CodeAnnotStmt) node).getCodeStmt()).getFormula());
+
+            if (formula instanceof ResultExpression) {
+                ResultExpression re = (ResultExpression) formula;
+                formula = re.switchToRValueIfNecessary(main, ((CHandler) main.cHandler).mMemoryHandler, ((CHandler) main.cHandler).mStructHandler, loc);
+                formula = ConvExpr.rexBoolToIntIfNecessary(loc, re);
+                //RValue cond = (RValue) re.lrVal;
+                decl.addAll(re.decl);
+                stmt.addAll(re.stmt);
+                overappr.addAll(re.overappr);
+            }
+
+            // TODO: Handle havoc statements
+
+            AssertStatement assertStmt = new AssertStatement(loc, ((Expression) formula.node));
+            Map<String, IAnnotations> annots = assertStmt.getPayload().getAnnotations();
+            for (Overapprox overapprItem : overappr) {
+                annots.put(Overapprox.getIdentifier(), overapprItem);
+            }
+            stmt.add(assertStmt);
+            if (formula instanceof ResultExpression) {
+                List<HavocStatement> havocs = CHandler.createHavocsForNonMallocAuxVars(((ResultExpression) formula).auxVars);
+                stmt.addAll(havocs);
+            }
+
+            check.addToNodeAnnot(assertStmt);
+            return new ResultExpression(stmt, null, decl, emptyAuxVars, overappr);
         }
         // TODO : other cases
         String msg = "ACSLHandler: Not yet implemented: " + node.toString();

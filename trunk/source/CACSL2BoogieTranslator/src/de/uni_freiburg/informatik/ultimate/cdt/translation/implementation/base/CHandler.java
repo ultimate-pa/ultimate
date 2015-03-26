@@ -374,10 +374,11 @@ public class CHandler implements ICHandler {
 		}
 		ArrayList<Declaration> decl = new ArrayList<Declaration>();
 
-		checkForACSL(main, null, node, null);
+		// TODO(thrax): Check if decl should be passed as null or not.
+		checkForACSL(main, null, decl, node, null);
 
 		for (IASTNode child : node.getChildren()) {
-			checkForACSL(main, null, child, null);
+			checkForACSL(main, null, decl, child, null);
 			Result childRes = main.dispatch(child);
 
 			if (childRes instanceof ResultDeclaration) {
@@ -432,7 +433,8 @@ public class CHandler implements ICHandler {
 		//handle global ACSL stuff
 		//TODO: do it!
 		
-		checkForACSL(main, null, node, null);
+		// TODO(thrax): Check if decl should be passed as null.
+		checkForACSL(main, null, decl, node, null);
 
 		//the overall translation result:
 	    Unit boogieUnit = new Unit(loc, decl.toArray(new Declaration[0]));
@@ -482,7 +484,7 @@ public class CHandler implements ICHandler {
 		}
 
 		for (IASTNode child : node.getChildren()) {
-			checkForACSL(main, stmt, child, null);
+			checkForACSL(main, stmt, decl, child, null);
 			Result r = main.dispatch(child);
 			if (r instanceof ResultExpression) {
 				ResultExpression res = (ResultExpression) r;
@@ -502,7 +504,7 @@ public class CHandler implements ICHandler {
 				stmt.addAll(Arrays.asList(b.getBlock()));
 			}
 		}
-		checkForACSL(main, stmt, null, node);
+		checkForACSL(main, stmt, decl, null, node);
 		if (isNewScopeRequired(parent)) {
 			stmt = mMemoryHandler.insertMallocs(main, stmt);
 			for (SymbolTableValue stv : mSymbolTable.currentScopeValues()) {
@@ -2192,7 +2194,7 @@ public class CHandler implements ICHandler {
 				String msg = "A case/default statement is expected at the beginning of a switch block!";
 				throw new IncorrectSyntaxException(locC, msg);
 			}
-			checkForACSL(main, ifBlock, child, null);
+			checkForACSL(main, ifBlock, decl, child, null);
 			Result r = main.dispatch(child);
 			if (r instanceof ResultExpression) {
 				ResultExpression res = (ResultExpression) r;
@@ -2246,7 +2248,7 @@ public class CHandler implements ICHandler {
 			}
 			stmt.add(ifStmt);
 		}
-		checkForACSL(main, stmt, null, node);
+		checkForACSL(main, stmt, decl, null, node);
 		stmt.add(new Label(loc, breakLabelName));
 		stmt.addAll(createHavocsForNonMallocAuxVars(auxVars));
 		// mallocAuxVars.putAll(getOnlyMallocAuxVars(auxVars));
@@ -2726,7 +2728,7 @@ public class CHandler implements ICHandler {
 	 *            set if called at the end of a <i>compound statement</i> and
 	 *            <code>null</code> otherwise.
 	 */
-	private void checkForACSL(Dispatcher main, ArrayList<Statement> stmt, IASTNode next, IASTNode parent) {
+	private void checkForACSL(Dispatcher main, ArrayList<Statement> stmt, ArrayList<Declaration> decl, IASTNode next, IASTNode parent) {
  		if (mAcsl != null) {
 			if (next instanceof IASTTranslationUnit) {
 				for (ACSLNode globAcsl : mAcsl.mAcsl) {
@@ -2794,7 +2796,14 @@ public class CHandler implements ICHandler {
 							mContract.add(acslNode);
 						} else if (acslNode instanceof CodeAnnot) {
 							Result acslResult = main.dispatch(acslNode);
-							stmt.add((Statement) acslResult.node);
+							if (acslResult instanceof ResultExpression) {
+								// thrax93
+								ResultExpression re = (ResultExpression) acslResult;
+								stmt.addAll(re.stmt);
+								decl.addAll(re.decl);
+							} else {
+								stmt.add((Statement) acslResult.node);
+							}
 						} else {
 							String msg = "Unexpected ACSL comment: " + acslNode.getClass();
 							ILocation loc = LocationFactory.createCLocation(next);
