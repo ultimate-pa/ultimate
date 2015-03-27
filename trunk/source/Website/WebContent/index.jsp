@@ -24,17 +24,21 @@ Params:
 <%@ page import="java.io.InputStream"%>
 <%@ page import="java.io.InputStreamReader"%>
 <%@ page import="java.io.IOException"%>
+<%@ page import="java.io.FileNotFoundException"%>
 <%@ page import="java.net.HttpURLConnection"%>
 <%@ page import="java.net.URLConnection"%>
 <%@ page import="java.net.URLEncoder"%>
 <%@ page import="java.net.URLDecoder"%>
 <%@ page import="java.net.URL"%>
+<%@ page import="java.io.File"%>
+<%@ page import="java.io.FileInputStream"%>
 
 <%@ page import="org.json.simple.JSONObject"%>
 <%@ page import="org.json.simple.JSONValue"%>
 <%@ page import="org.json.simple.JSONArray"%>
 
 <%!String getData(String address) throws Exception {
+	    System.out.println("Requesting URL "+address);
 		URL page = new URL(address);
 		StringBuffer text = new StringBuffer();
 		HttpURLConnection conn = (HttpURLConnection) page.openConnection();
@@ -150,10 +154,32 @@ Params:
 			}
 		} while (redir);
 		return in;
-	}%>
+	}
+	
+	String getFromLocalJson(String jsonPath) throws FileNotFoundException, IOException{
+	    File file = new File(jsonPath);
+	    System.out.println("Requesting content of local JSON file from "+file.getAbsolutePath());
+	    FileInputStream fis = new FileInputStream(file);
+		BufferedReader buff = new BufferedReader(new InputStreamReader(fis));
+		
+		StringBuffer text = new StringBuffer();
+
+		String line = new String();
+		while (true) {
+			line = buff.readLine();
+			if (line == null)
+				break;
+			text.append(line + "\n");
+		}
+		buff.close();
+		return text.toString();
+	}
+	
+	%>
 
 <%
-	Tasks tasks = new Tasks();
+
+  Tasks tasks = new Tasks();
   Map<String, Worker> currentWorker = new HashMap<String, Worker>();
   Map<String, ArrayList<WebToolchain>> toolchains = Tasks.getActiveToolchains();
   Map<String, Worker> worker = Tasks.getWorker();
@@ -201,36 +227,28 @@ Params:
   /*
    * fetching JSON data as tool-page
    */
-  String url = "";
-//   String filename = URLEncoder.encode(tool, "UTF-8");
-  
-  if (ui.equals("home")){
-	  // setting home page url
-// 	  url = "http://127.0.0.1:8081/WebsiteNew/json/home.json";
-	  url = request.getScheme() +"://" + request.getServerName() + request.getContextPath() + "/json/home.json";
-	  //url = request.getContextPath() + "/json/home.json";
-  } else if(ui.equals("tool") && worker.containsKey(tool) 
-		  && !(null == worker.get(tool).getContentURL() || worker.get(tool).getContentURL().isEmpty())){
-	// getting tool page URL from worker
-    url = worker.get(tool).getContentURL();
-  } else {
-	// using standard URL
-	url = request.getScheme() +"://" + request.getServerName() + request.getContextPath() + "/json/"+tool+".json";
-// 	  url = "http://ultimate.informatik.uni-freiburg.de/contents/" + filename + ".json";
-  }
-  System.out.println("Requesting URL "+url);
 
   String str = "";
+
   try{ 
-	  str = getData(url); 
+	  if (ui.equals("home")){
+		  str = getFromLocalJson(request.getServletContext().getRealPath("/json/home.json"));
+	  } else if(ui.equals("tool") && worker.containsKey(tool) 
+			  && !(null == worker.get(tool).getContentURL() || worker.get(tool).getContentURL().isEmpty())){
+		// getting tool page URL from worker
+	    str = getData(worker.get(tool).getContentURL()); 	
+	  } else {
+        str = getFromLocalJson(request.getServletContext().getRealPath("/json/"+tool+".json"));
+	  }
   }
   catch (Exception e) {
-	  System.out.println("Exception while getting URL "+url);
+	  System.out.println("Exception while retrieving data for "+ui+":");
 	  System.out.println(e);
-	  str = "{ \"description\": \"Error fetching JSON.  ("+URLDecoder.decode(url, "UTF-8")+")\" }"; 
+	  str = "{ \"description\": \"Error fetching JSON.  (for "+ui+")\" }"; 
   }
 
   JSONObject jsonObject = (JSONObject)  JSONValue.parse(str); // for { a: {}, b: {} } JSONs (Object)
+
   /*
    *
    * setting session variables

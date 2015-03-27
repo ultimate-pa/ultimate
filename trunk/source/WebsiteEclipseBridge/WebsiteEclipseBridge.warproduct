@@ -17,6 +17,7 @@
       <plugin id="Library-Jung"/>
       <plugin id="Library-LassoRanker"/>
       <plugin id="Library-ModelCheckerUtils"/>
+      <plugin id="Library-ModelCheckerUtilsTest" fragment="true"/>
       <plugin id="Library-SMTLIB"/>
       <plugin id="Library-UltimateUtil"/>
       <plugin id="Library-UltimateUtilTest" fragment="true"/>
@@ -47,6 +48,7 @@
       <plugin id="org.eclipse.cdt.core.linux" fragment="true"/>
       <plugin id="org.eclipse.cdt.core.linux.x86" fragment="true"/>
       <plugin id="org.eclipse.cdt.core.linux.x86_64" fragment="true"/>
+      <plugin id="org.eclipse.cdt.core.native"/>
       <plugin id="org.eclipse.cdt.core.win32" fragment="true"/>
       <plugin id="org.eclipse.cdt.core.win32.x86_64" fragment="true"/>
       <plugin id="org.eclipse.core.commands"/>
@@ -54,6 +56,7 @@
       <plugin id="org.eclipse.core.expressions"/>
       <plugin id="org.eclipse.core.filebuffers"/>
       <plugin id="org.eclipse.core.filesystem"/>
+      <plugin id="org.eclipse.core.filesystem.java7" fragment="true"/>
       <plugin id="org.eclipse.core.filesystem.linux.x86" fragment="true"/>
       <plugin id="org.eclipse.core.filesystem.linux.x86_64" fragment="true"/>
       <plugin id="org.eclipse.core.filesystem.win32.x86_64" fragment="true"/>
@@ -69,12 +72,14 @@
       <plugin id="org.eclipse.equinox.http.servlet"/>
       <plugin id="org.eclipse.equinox.http.servletbridge"/>
       <plugin id="org.eclipse.equinox.preferences"/>
+      <plugin id="org.eclipse.equinox.region" fragment="true"/>
       <plugin id="org.eclipse.equinox.registry"/>
       <plugin id="org.eclipse.equinox.servletbridge"/>
       <plugin id="org.eclipse.equinox.transforms.hook" fragment="true"/>
       <plugin id="org.eclipse.equinox.weaving.hook" fragment="true"/>
       <plugin id="org.eclipse.ltk.core.refactoring"/>
       <plugin id="org.eclipse.osgi"/>
+      <plugin id="org.eclipse.osgi.compatibility.state" fragment="true"/>
       <plugin id="org.eclipse.osgi.services"/>
       <plugin id="org.eclipse.text"/>
       <plugin id="org.hamcrest.core"/>
@@ -122,6 +127,7 @@
       <plugin id="org.eclipse.cdt.core.linux" autoStart="true" startLevel="0" />
       <plugin id="org.eclipse.cdt.core.linux.x86" autoStart="true" startLevel="0" />
       <plugin id="org.eclipse.cdt.core.linux.x86_64" autoStart="true" startLevel="0" />
+      <plugin id="org.eclipse.cdt.core.native" autoStart="true" startLevel="0" />
       <plugin id="org.eclipse.core.commands" autoStart="true" startLevel="0" />
       <plugin id="org.eclipse.core.contenttype" autoStart="true" startLevel="0" />
       <plugin id="org.eclipse.core.expressions" autoStart="true" startLevel="0" />
@@ -151,7 +157,7 @@
 
    <warConfiguration webXml="/WebsiteEclipseBridge/WEB-INF/web.xml" launchIni="/WebsiteEclipseBridge/WEB-INF/launch.ini">
    <libraries>
-      <library path="org.eclipse.equinox.servletbridge_1.2.300.v20130508-1243.jar" fromTarget="true"/>
+      <library path="org.eclipse.equinox.servletbridge_1.3.0.v20140430-1556.jar" fromTarget="true"/>
    </libraries>
    </warConfiguration>
 </product>
