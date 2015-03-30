@@ -87,7 +87,6 @@ public class Svcomp_Reach_PreciseMemoryModel_2TrackAutomatonEvaluation extends
 		"automizer/2TracAutomatonEvaluation/ForwardPredicates_CanonicalAutomaton_SvcompReachPreciseMM.epf",
 		/*** Standard automaton with BackwardPredicates ***/
 		"automizer/2TracAutomatonEvaluation/BackwardPredicates_CanonicalAutomaton_SvcompReachPreciseMM.epf",
-		"automizer/ForwardPredicates_SvcompReachPreciseMM_Heuristic1.epf",
 		/*** 2TrackAutomaton automaton with ForwardPredicates and BackwardPredicates***/
 		"automizer/2TracAutomatonEvaluation/FPandBP_2TrackAutomaton_SvcompReachPreciseMM.epf",
 	};
