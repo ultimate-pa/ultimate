@@ -59,7 +59,7 @@ public class BoogieAutomizerTC extends WebToolchain {
 	 */
 	@Override
 	protected TaskNames[] setTaskName() {
-		return new TaskNames[] { TaskNames.VerifyBoogie };
+		return new TaskNames[] { TaskNames.AUTOMIZER_BOOGIE };
 	}
 
     /*

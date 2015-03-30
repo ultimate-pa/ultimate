@@ -51,35 +51,21 @@ public class Tasks {
 	 * @date 14.02.2012
 	 */
 	public enum TaskNames {
-		/**
-		 * Verify Boogie.
-		 */
-		VerifyBoogie,
-		/**
-		 * Verify C.
-		 */
-		VerifyC,
+		AUTOMIZER_BOOGIE,
+		AUTOMIZER_C,
 
 		TERMINATION_BOOGIE,
-
 		TERMINATION_C,
 
 		RANK_SYNTHESIS_BOOGIE,
-
 		RANK_SYNTHESIS_C,
 
-		/**
-		 * Run automata test file.
-		 */
 		AUTOMATA_SCRIPT,
-		/**
-		 * Verify concurrent Boogie.
-		 */
-		VerifyConcurrentBoogie,
-		/**
-		 * SmtScript. Not implemented yet.
-		 */
-		RunSmt2Script
+
+		CONCURRENT_TRACE_ABSTRACTION_BOOGIE,
+		
+		LTLAUTOMIZER_C,
+
 		// If you add something here, add a String representation to
 		// initTaskNames()
 		// and its supertype (worker) to
@@ -126,14 +112,15 @@ public class Tasks {
 			// return "ats";
 			// case RunSmt2Script:
 			// return "smt2";
-			case VerifyBoogie:
+			case AUTOMIZER_BOOGIE:
 			case TERMINATION_BOOGIE:
 			case RANK_SYNTHESIS_BOOGIE:
-			case VerifyConcurrentBoogie:
+			case CONCURRENT_TRACE_ABSTRACTION_BOOGIE:
 				return "boogie";
-			case VerifyC:
+			case AUTOMIZER_C:
 			case TERMINATION_C:
 			case RANK_SYNTHESIS_C:
+			case LTLAUTOMIZER_C:
 				return "c_cpp";
 			default:
 				return "text";
@@ -180,8 +167,8 @@ public class Tasks {
 		sWorkers.put(w.getId(), w);
 
 		name = "LTL Automizer";
-		description = "An LTL software model checker based on separation of (in)feasibility and (non-)termination proofs.";
-		w = new Worker(name, "analyze", description, null);
+		description = "An LTL software model checker based on Büchi programs.";
+		w = new Worker(name, "verify", description, null);
 		sWorkers.put(w.getId(), w);
 
 		name = "Lasso Ranker";
@@ -236,14 +223,14 @@ public class Tasks {
 
 		// String should have at most 30 chars and must not be empty!
 		sTaskStrings.put(TaskNames.AUTOMATA_SCRIPT, "Run Automata Script");
-		sTaskStrings.put(TaskNames.RunSmt2Script, "Run Smt2Script (not yet available)");
-		sTaskStrings.put(TaskNames.VerifyBoogie, "Verify Boogie");
-		sTaskStrings.put(TaskNames.VerifyC, "Verify C");
+		sTaskStrings.put(TaskNames.AUTOMIZER_BOOGIE, "Verify Boogie");
+		sTaskStrings.put(TaskNames.AUTOMIZER_C, "Verify C");
 		sTaskStrings.put(TaskNames.TERMINATION_BOOGIE, "Analyze Termination Boogie");
 		sTaskStrings.put(TaskNames.TERMINATION_C, "Analyze Termination C");
 		sTaskStrings.put(TaskNames.RANK_SYNTHESIS_BOOGIE, "Synthesize ranking function Boogie");
 		sTaskStrings.put(TaskNames.RANK_SYNTHESIS_C, "Synthesize ranking function C");
-		sTaskStrings.put(TaskNames.VerifyConcurrentBoogie, "Verify concurrent Boogie");
+		sTaskStrings.put(TaskNames.CONCURRENT_TRACE_ABSTRACTION_BOOGIE, "Verify concurrent Boogie");
+		sTaskStrings.put(TaskNames.LTLAUTOMIZER_C, "Verify if C program fulfils LTL property");
 
 		SimpleLogger.log("Finished initializing task names");
 		SimpleLogger.log("The following " + sTaskStrings.size() + " task names are present:");

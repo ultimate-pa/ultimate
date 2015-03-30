@@ -57,16 +57,16 @@ public class Example {
 	 * representations of the examples, sorted by the corresponding task(s).
 	 * This implies, that examples with multiple tasks are contained multiply!
 	 */
-	private static final Map<Tasks.TaskNames, ArrayList<Example>> mExamplesByTask = new HashMap<Tasks.TaskNames, ArrayList<Example>>();
+	private static final Map<Tasks.TaskNames, ArrayList<Example>> sExamplesByTask = new HashMap<Tasks.TaskNames, ArrayList<Example>>();
 	/**
 	 * Set of IDs - used to verify, that the ids are really unique!
 	 */
-	private static final Set<String> mIds = new HashSet<String>();
+	private static final Set<String> sIds = new HashSet<String>();
 	/**
 	 * List of examples, sorted by their ids - each example is therefore
 	 * contained only once!
 	 */
-	private static final Map<String, Example> mExamplesById = new HashMap<String, Example>();
+	private static final Map<String, Example> sExamplesById = new HashMap<String, Example>();
 
 	/**
 	 * Initialize the Example lists.
@@ -74,36 +74,41 @@ public class Example {
 	private static void init() {
 		SimpleLogger.log("Initializing Examples.");
 		ArrayList<Example> list = new ArrayList<Example>();
+
+		Tasks.TaskNames[] verifyC = { Tasks.TaskNames.AUTOMIZER_C };
 		list.add(new Example("Example C File", "exampleCFile", "exampleFile.c",
-				new Tasks.TaskNames[] { Tasks.TaskNames.VerifyC }));
-		list.add(new Example("F-91", "f91", "f91.c", new Tasks.TaskNames[] { Tasks.TaskNames.VerifyC }));
-		// list.add(new Example("addition correct", "additionCorrect",
-		// "additionCorrect.bpl",
-		// new Tasks.TaskNames[] { Tasks.TaskNames.VerifyBoogie }));
-		// list.add(new Example("addition incorrect", "additionIncorrect",
-		// "additionIncorrect.bpl",
-		// new Tasks.TaskNames[] { Tasks.TaskNames.VerifyBoogie }));
-		// list.add(new Example("Moscow.bpl", "Moscow", "Moscow.bpl",
-		// new Tasks.TaskNames[] { Tasks.TaskNames.RANK_SYNTHESIS_BOOGIE }));
-		// list.add(new Example("Bangalore.c", "BangaloreC", "Bangalore.c",
-		// new Tasks.TaskNames[] { Tasks.TaskNames.RANK_SYNTHESIS_C }));
+				verifyC));
+		list.add(new Example("F-91", "f91", "f91.c", verifyC));
+		addAllFilesInExamplesSubfolder(list, "verifyC/", verifyC);
+
+		Tasks.TaskNames[] verifyBoogie = { Tasks.TaskNames.AUTOMIZER_BOOGIE };
+		addAllFilesInExamplesSubfolder(list, "verifyBoogie/", verifyBoogie);
+
+		
 		Tasks.TaskNames[] rankBoogie = { Tasks.TaskNames.RANK_SYNTHESIS_BOOGIE };
 		addAllFilesInExamplesSubfolder(list, "rankBoogie/", rankBoogie);
+		
 		Tasks.TaskNames[] rankC = { Tasks.TaskNames.RANK_SYNTHESIS_C };
 		addAllFilesInExamplesSubfolder(list, "rankC/", rankC);
+		
 		Tasks.TaskNames[] terminatonC = { Tasks.TaskNames.TERMINATION_C };
 		addAllFilesInExamplesSubfolder(list, "terminationC/", terminatonC);
+		
 		Tasks.TaskNames[] terminationBoogie = { Tasks.TaskNames.TERMINATION_BOOGIE };
 		addAllFilesInExamplesSubfolder(list, "terminationBoogie/", terminationBoogie);
-		Tasks.TaskNames[] verifyC = { Tasks.TaskNames.VerifyC };
-		addAllFilesInExamplesSubfolder(list, "verifyC/", verifyC);
+		
+		
 		Tasks.TaskNames[] automataScript = { Tasks.TaskNames.AUTOMATA_SCRIPT };
 		addAllFilesInExamplesSubfolder(list, "AUTOMATA_SCRIPT/", automataScript);
-		Tasks.TaskNames[] verifyBoogie = { Tasks.TaskNames.VerifyBoogie };
-		addAllFilesInExamplesSubfolder(list, "verifyBoogie/", verifyBoogie);
-		Tasks.TaskNames[] verifyConcurrentBoogie = { Tasks.TaskNames.VerifyConcurrentBoogie };
+		
+		Tasks.TaskNames[] verifyConcurrentBoogie = { Tasks.TaskNames.CONCURRENT_TRACE_ABSTRACTION_BOOGIE };
 		addAllFilesInExamplesSubfolder(list, "verifyConcurrentBoogie/", verifyConcurrentBoogie);
-		// TODO : add more/new examples here
+
+		Tasks.TaskNames[] ltlAutomizer = { Tasks.TaskNames.LTLAUTOMIZER_C };
+		addAllFilesInExamplesSubfolder(list, "ltlautomizer/", ltlAutomizer);
+		
+		// load the content for the examples in the list and place it in the
+		// sExamplesByTask map (via the alternate example constructor)
 		for (Example e : list) {
 			try {
 				new Example(e.mFileName, e.mId, e.mTaskNames, readFile(e.mFilePath));
@@ -124,11 +129,11 @@ public class Example {
 	 * @return a map of example files.
 	 */
 	public static Map<Tasks.TaskNames, ArrayList<Example>> getExamples() {
-		if (mExamplesByTask.isEmpty()) {
+		if (sExamplesByTask.isEmpty()) {
 			SimpleLogger.log("sortedMap is empty");
 			init();
 		}
-		return mExamplesByTask;
+		return sExamplesByTask;
 	}
 
 	/**
@@ -153,7 +158,7 @@ public class Example {
 		if (taskNames.length == 0) {
 			throw new IllegalArgumentException("Example must be assign to at least one TaskName!");
 		}
-		if (mIds.contains(id)) {
+		if (sIds.contains(id)) {
 			throw new IllegalArgumentException("ID must be unique! " + "Not unique: " + name + " " + id);
 		}
 		if (id == null || id.equals("")) {
@@ -168,14 +173,14 @@ public class Example {
 		this.mFileName = name;
 		this.mFileContent = content;
 		this.mId = id;
-		mIds.add(id);
+		sIds.add(id);
 		for (Tasks.TaskNames tn : taskNames) {
-			if (!mExamplesByTask.containsKey(tn)) {
-				mExamplesByTask.put(tn, new ArrayList<Example>());
+			if (!sExamplesByTask.containsKey(tn)) {
+				sExamplesByTask.put(tn, new ArrayList<Example>());
 			}
-			mExamplesByTask.get(tn).add(this);
+			sExamplesByTask.get(tn).add(this);
 		}
-		mExamplesById.put(id, this);
+		sExamplesById.put(id, this);
 	}
 
 	/**
@@ -358,11 +363,11 @@ public class Example {
 	 * @return the corresponding example or null, if ID not found!
 	 */
 	public static final Example get(String id) {
-		if (mExamplesById.isEmpty()) {
+		if (sExamplesById.isEmpty()) {
 			SimpleLogger.log("Example list is empty, initializing...");
 			init();
 		}
-		Example ex = mExamplesById.get(id);
+		Example ex = sExamplesById.get(id);
 		if (ex != null) {
 			SimpleLogger.log("Get example returns " + ex.getInfoString());
 		} else {

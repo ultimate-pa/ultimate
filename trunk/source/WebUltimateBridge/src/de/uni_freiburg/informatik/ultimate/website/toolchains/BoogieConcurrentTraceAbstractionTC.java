@@ -54,7 +54,7 @@ public class BoogieConcurrentTraceAbstractionTC extends WebToolchain {
 	 */
 	@Override
 	protected TaskNames[] setTaskName() {
-		return new TaskNames[] { TaskNames.VerifyConcurrentBoogie };
+		return new TaskNames[] { TaskNames.CONCURRENT_TRACE_ABSTRACTION_BOOGIE };
 	}
 
     /*

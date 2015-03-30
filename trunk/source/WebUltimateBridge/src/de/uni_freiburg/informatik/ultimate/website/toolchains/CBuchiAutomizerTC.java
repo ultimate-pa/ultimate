@@ -88,7 +88,7 @@ public class CBuchiAutomizerTC extends WebToolchain {
 		tools.add(new Tool(PrefStrings.s_cacsl2boogietranslator, oCACSL, mCACSL,
 				LoggingLevel.WARN));
 
-		tools.addAll(BoogieBuchiAutomizerTC.boogieTools());
+		tools.addAll(BoogieBuchiAutomizerTC.getToolsForBoogie());
 		return tools;
 	}
 

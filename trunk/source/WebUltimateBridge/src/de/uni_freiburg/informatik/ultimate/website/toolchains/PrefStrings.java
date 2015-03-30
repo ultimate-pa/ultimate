@@ -63,5 +63,7 @@ public class PrefStrings {
 	
 	public static final String s_lassoRanker = "de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker";
 	public static final String s_traceAbstraction = "de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction";
+	public static final String s_ltl2aut="de.uni_freiburg.informatik.ultimate.ltl2aut";
+	public static final String s_buchiProgramProduct ="de.uni_freiburg.informatik.ultimate.buchiprogramproduct";
 	
 }

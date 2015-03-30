@@ -1,38 +1,37 @@
 {
   "id": "ltl_automizer",
-  "description": "<span style=\"font-variant:small-caps\">Ultimate LTL Automizer</span> implements a novel approach to termination analysis in which a program is decomposed into modules. Each module represents a set of traces that share a common termination argument. The decomposition is constructed on demand by \"learning\"  terminating modules from a termination analysis of lasso-shaped sample traces. For this termination analysis of lasso-shaped traces the built-in tool <a href=\"./?ui=tool&amp;tool=lasso_ranker\">LassoRanker</a> is used.",
+  "description": "<span style=\"font-variant:small-caps\">Ultimate LTL Automizer</span> constructs a Büchi program to prove that a C program satisfies an LTL property.<br>It uses a slightly modified version of <a href=\"?ui=tool&tool=buechi_automizer\">Ultimate Büchi Automizer</a> to check whether the Büchi program contains any fair and feasible traces.<br>The conversion of LTL formulas to Büchi automata is done by <a href=\"http://www.lsv.ens-cachan.fr/~gastin/ltl2ba/\">LTL2BA</a>.",
   "user_info": "",
   "animate": "true",
   "html": "true",
-  "sections":
-  [
+  "sections": [
     {
-      "title": "web interface",
+      "title": "Web Interface",
       "type": "interface",
       "html": "true",
-      "content": "<span style=\"font-variant:small-caps\">Ultimate Büchi Automizer</span> is available via a web interface. Analyising the termination of programs in C has some limitations. We use a theorem prover that does not support non-linear arithmetic and therefore the built-in tool <a href=\"./?ui=tool&amp;tool=lasso_ranker\">LassoRanker</a> can only provide linear ranking functions.",
+      "content": "<span style=\"font-variant:small-caps\">Ultimate LTL Automizer</span> is available via a web interface. ",
       "link_deco": "true",
       "button": "Open interface"
     },
     {
-      "title": "commandline version",
+      "title": "Download",
       "type": "text",
       "html": "true",
-      "content": "Ultimate Büchi Automizer and the built-in tool <a href=\"./?ui=tool&amp;tool=lasso_ranker\">LassoRanker</a> are in heavy development. A recent version is available on request, please contact <a href=\"http://swt.informatik.uni-freiburg.de/staff/heizmann\">Matthias Heizmann</a>.",
+      "content": "<span style=\"font-variant:small-caps\">Ultimate LTL Automizer</span> is currently only available upon request. Please contact <a href=\"http://swt.informatik.uni-freiburg.de/staff/dietsch\">Daniel Dietsch</a> if you wish to obtain a copy.",
       "link_deco": "true"
     },
     {
-      "title": "commandline version (CAV 2014 submission)",
+      "title": "CAV 2015 Submission \"Fairness Modulo Theory: A New Approach to LTL Software Model Checking\"",
       "type": "text",
       "html": "true",
-      "content": "The <a href=\"cav2014/UltimateCommandline.zip\">commandline version</a> that was used for the evaluation in our CAV 2014 submission is available. This version runs on x86-64 linux machines and has some limitations. In our evaluation we showed the potential ouf our method to prove termination of a general program while using only simple termination arguments for lasso-shaped traces. Therefore, we restricted the built-in tool <a href=\"./?ui=tool&amp;tool=lasso_ranker\">LassoRanker</a> to linear ranking functions.",
+      "content": "<h4>Extended version of the paper</h4>\n<a href=\"http://ultimate.informatik.uni-freiburg.de/ltlautomizer/document.pdf\">Download the extended version of the paper with a detailed proof in the appendix</a>\n\n<h4>Benchmarks</h4><a href=\"http://ultimate.informatik.uni-freiburg.de/ltlautomizer/benchmarks.zip\">Download the benchmark sets</a>\n\n<h4>Command line version</h4><h5>Installation</h5>In order to use LTL Automizer on your machine you require the following:<ul><li>A version of LTL2BA in your PATH. You can download it from <a href=\"http://www.lsv.ens-cachan.fr/~gastin/ltl2ba/\">the LTL 2 BA website</a>.<li>At least JRE 7 x64. You can download the latest JRE version for your platform from <a href=\"http://www.oracle.com/technetwork/java/javase/downloads/jre8-downloads-2133155.html\">here</a>.<li>A version of LTL Automizer for your platform:<br><a href=\"http://ultimate.informatik.uni-freiburg.de/ltlautomizer/LTLAutomizer_Win64_r13621.zip\">LTL Automizer for Windows 64Bit</a><br><a href=\"http://ultimate.informatik.uni-freiburg.de/ltlautomizer/LTLAutomizer_Linux64_r13621.zip\">LTL Automizer for Linux 64Bit</a></ul>\n<h5>Usage</h5>After you downloaded LTL Automizer, you can execute it with<br><code>./Ultimate LTLAutomizer.xml <inputfile> --settings Default.epf</code><br>\nYour input file should be ANSI C and should contain a <code>main()</code> method. In order to specify an LTL property, you need to add the property to your input file. The syntax is:<br><code>//@ ltl invariant <name>: <formula>;</code><br>The name of the property should be some string. The formula itself must range over global variables of the program. A formula f has the following syntax:<br><code> f := AP(exp) | [] f | <> f | X f | f U f | f R f | f WU f | f || f | !f | f && f | f ==> f | f <==> f </code><br>where <code>exp</code> is some boolean expression over global variables of the program. As <code>X, U, R and WU</code> are operators, you cannot use variables with that name in your formula. \nAlso, we currently support only one LTL property per file and run. \nThe analysis will start after the first statement of <code>main()</code> is executed, i.e. all global initialisation will not be taken into account. \n<h5>Interpreting results</h5><p>LTL Automizer writes quite some output. At the end, you will see something like this:<br>...<br>The results under <code>Results from de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer:</code> contain the actual result, i.e. in this example, <code>Büchi Automizer proved that the LTL property F(G(A)) holds</code> says that the property was proven successfully. </p><h5>Changing time and memory limits</h5><p>This version of LTL Automizer comes with a pre-set timeout of 20 minutes and Java heap space set to 8GB.<br>If you wish to change the timeout, you must edit <code>Default.epf</code>, search the line <code>/instance/UltimateCore/Toolchain\\ timeout\\ in\\ seconds=1200</code> and change the 1200 to something else. 0 disables the timeout.<br>If you want to change the heap space limit, you must edit <code>Ultimate.ini</code> and change the line <code>-Xmx8g</code> to something more appropriate.</p>",
       "link_deco": "true"
     },
     {
-      "title": "commandline version (SV-COMP 2014)",
+      "title": "Developers",
       "type": "text",
       "html": "true",
-      "content": "The <a href=\"svcomp2014/UltimateCommandline.zip\">commandline version</a> that was our competition candidate for the demonstration category on termination at the <a href=\"http://sv-comp.sosy-lab.org/2014/\">SV-COMP 2014</a>. This version runs on x86-64 Linux machines and requires that the <a href=\"http://z3.codeplex.com/\">theorem prover Z3</a> is installed. In this version, the built-in tool <a href=\"./?ui=tool&amp;tool=lasso_ranker\">LassoRanker</a> is limited to linear ranking functions and multiphase ranking functions.",
+      "content": "<span style=\"font-variant:small-caps\">Ultimate LTL Automizer</span> is maintained by <a href=\"http://swt.informatik.uni-freiburg.de/staff/dietsch\">Daniel Dietsch</a>, <a href=\"http://swt.informatik.uni-freiburg.de/staff/heizmann\">Matthias Heizmann</a>, and Vincent Langenfeld. Just write us an email if you need additional information.",
       "link_deco": "true"
     }
   ]

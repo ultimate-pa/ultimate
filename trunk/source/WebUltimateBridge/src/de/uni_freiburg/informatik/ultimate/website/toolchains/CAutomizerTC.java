@@ -58,7 +58,7 @@ public class CAutomizerTC extends WebToolchain {
      */
     @Override
     protected TaskNames[] setTaskName() {
-        return new TaskNames[] { TaskNames.VerifyC };
+        return new TaskNames[] { TaskNames.AUTOMIZER_C };
     }
 
     /*

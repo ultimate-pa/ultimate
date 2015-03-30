@@ -43,10 +43,10 @@ public class BoogieBuchiAutomizerTC extends WebToolchain {
 
 	@Override
 	protected List<Tool> setTools() {
-		return boogieTools();
+		return getToolsForBoogie();
 	}
 	
-	static List<Tool> boogieTools() {
+	static List<Tool> getToolsForBoogie() {
 		List<Tool> tools = new ArrayList<Tool>();
 		
 		tools.add(new Tool(PrefStrings.s_boogiePreprocessor));

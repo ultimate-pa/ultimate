@@ -1,0 +1,15 @@
+<project name="proj1" default="copy_examples" basedir=".">
+	<property name="trunkEx.dir" location="../../../../../examples" />
+	<property name="localEx.dir" location="." />
+	<description>
+        Copy files from trunk/example to local examples before deployment
+    </description>
+
+	<target name="copy_examples">
+		<echo>Copying various files from ${trunkEx.dir} to ${localEx.dir}</echo>
+		<copy todir="${localEx.dir}/ltlautomizer" verbose="true">
+			<fileset dir="${trunkEx.dir}/LTL/coolant" includes="**" />
+		</copy>
+	</target>
+
+</project>

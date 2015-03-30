@@ -9,7 +9,7 @@
 # to this folder
 # Files that are in certain subfolders (e.g., rankBoogie, rankC) of this folder 
 # will be added to the web interface.
-# Before I build a new version of the web interface I (Matthias) will excute
+# Before I build a new version of the web interface I (Matthias) will execute
 # this script.
 # 
 
