@@ -90,3 +90,33 @@ do
 # 	fi
 	cp $i terminationC/
 done
+
+
+
+VERIFY_C=(
+	"../../../../../examples/programs/toy/website/*.c"
+	)
+
+for i in "${VERIFY_C[@]}"
+do
+# 	if [ ! -e "$i" ]; then
+# 		echo "cannot find $i"
+# 		exit 1
+# 	fi
+	cp $i verifyC/
+done
+
+
+
+VERIFY_BOOGIE=(
+	"../../../../../examples/programs/toy/website/*.bpl"
+	)
+
+for i in "${VERIFY_BOOGIE[@]}"
+do
+# 	if [ ! -e "$i" ]; then
+# 		echo "cannot find $i"
+# 		exit 1
+# 	fi
+	cp $i verifyBoogie/
+done
