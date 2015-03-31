@@ -12,6 +12,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieNonOldVar;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieOldVar;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 
 /**
  * Contains information about modifiable global variables and provides 
@@ -197,6 +198,23 @@ public class ModifiableGlobalVariableManager {
 	 */
 	public Map<String, BoogieNonOldVar> getGlobals() {
 		return m_Boogie2smt.getBoogie2SmtSymbolTable().getGlobals();
+	}
+	
+	
+	/**
+	 * @return true iff pred contains an oldvar that is not modifiable by
+	 * procedure proc.
+	 */
+	public boolean containsNonModifiableOldVars(IPredicate pred, String proc) {
+		Set<String> modiableGlobals = m_ModifiedVars.get(proc);
+		for (BoogieVar bv : pred.getVars()) {
+			if (bv.isOldvar()) {
+				if (!modiableGlobals.contains(bv.getIdentifier())) {
+					return true;
+				}
+			}
+		}
+		return false;
 	}
 
 }
