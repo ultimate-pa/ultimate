@@ -131,6 +131,7 @@ public class EfficientHoareTripleChecker implements IHoareTripleChecker {
 		case INVALID:
 			return (validity2 == Validity.INVALID || validity2 == Validity.UNKNOWN);
 		case UNKNOWN:
+		case NOT_CHECKED:
 			return true;
 		default:
 			throw new UnsupportedOperationException();

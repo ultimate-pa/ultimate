@@ -392,7 +392,7 @@ public class PredicateUnifier {
 			default:
 				throw new AssertionError("unknown case");
 			}
-			// every predicate implies by true
+			// every predicate implies true
 			impliedPredicates.put(m_TruePredicate, Validity.VALID);
 			
 			// if predicate is intricate we do not compare against others

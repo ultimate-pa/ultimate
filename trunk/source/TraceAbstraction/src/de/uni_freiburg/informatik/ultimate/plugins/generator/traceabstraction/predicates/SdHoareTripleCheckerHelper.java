@@ -171,6 +171,10 @@ public class SdHoareTripleCheckerHelper {
 			if (sat == Validity.VALID) {
 				m_EdgeCheckerBenchmark.getSDsluCounter().incIn();
 				return Validity.VALID;
+			} else if (sat == Validity.UNKNOWN) {
+				return null;
+			} else if (sat == Validity.NOT_CHECKED) {
+				return null;
 			}
 		} else {
 			if (!Collections.disjoint(pre.getVars(), post.getVars())) {
