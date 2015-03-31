@@ -5,11 +5,13 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import de.uni_freiburg.informatik.ultimate.core.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.website.Setting.SettingType;
+import de.uni_freiburg.informatik.ultimate.website.Tasks.TaskNames;
 
 public class UltimateExecutor {
 
@@ -153,26 +155,26 @@ public class UltimateExecutor {
 	}
 
 	private String getFileExtension(String taskId) {
+		TaskNames taskName = TaskNames.valueOf(taskId);
 		String fileExtension;
-		if (taskId.equals("VerifyC")) {
-			fileExtension = ".c";
-		} else if (taskId.equals("VerifyBoogie")) {
-			fileExtension = ".bpl";
-		} else if (taskId.equals("AUTOMATA_SCRIPT")) {
+
+		switch (taskName) {
+		case AUTOMATA_SCRIPT:
 			fileExtension = ".ats";
-		} else if (taskId.equals("RunSmt2Script")) {
-			fileExtension = ".smt";
-		} else if (taskId.equals("TERMINATION_C")) {
+			break;
+		case AUTOMIZER_BOOGIE:
+		case CONCURRENT_TRACE_ABSTRACTION_BOOGIE:
+		case RANK_SYNTHESIS_BOOGIE:
+		case TERMINATION_BOOGIE:
+			fileExtension = ".bpl";
+			break;
+		case AUTOMIZER_C:
+		case LTLAUTOMIZER_C:
+		case RANK_SYNTHESIS_C:
+		case TERMINATION_C:
 			fileExtension = ".c";
-		} else if (taskId.equals("TERMINATION_BOOGIE")) {
-			fileExtension = ".bpl";
-		} else if (taskId.equals("RANK_SYNTHESIS_C")) {
-			fileExtension = ".c";
-		} else if (taskId.equals("RANK_SYNTHESIS_BOOGIE")) {
-			fileExtension = ".bpl";
-		} else if (taskId.equals("VerifyConcurrentBoogie")) {
-			fileExtension = ".bpl";
-		} else {
+			break;
+		default:
 			throw new IllegalArgumentException("The given taskId is unknown to UltimateInterface: " + taskId);
 		}
 		return fileExtension;

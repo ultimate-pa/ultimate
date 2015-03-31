@@ -31,6 +31,8 @@
       <plugin id="com.ibm.icu"/>
       <plugin id="de.uni_freiburg.informatik.ultimate.automata"/>
       <plugin id="de.uni_freiburg.informatik.ultimate.boogie.printer"/>
+      <plugin id="de.uni_freiburg.informatik.ultimate.buchiprogramproduct"/>
+      <plugin id="de.uni_freiburg.informatik.ultimate.ltl2aut"/>
       <plugin id="de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation"/>
       <plugin id="de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies"/>
       <plugin id="de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker"/>
@@ -43,6 +45,7 @@
       <plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstractionconcurrent"/>
       <plugin id="de.uni_freiburg.informatik.ultimate.witnessparser"/>
       <plugin id="javax.xml"/>
+      <plugin id="org.apache.commons.io"/>
       <plugin id="org.apache.log4j"/>
       <plugin id="org.eclipse.cdt.core"/>
       <plugin id="org.eclipse.cdt.core.linux" fragment="true"/>
@@ -110,6 +113,8 @@
       <plugin id="com.ibm.icu" autoStart="true" startLevel="0" />
       <plugin id="de.uni_freiburg.informatik.ultimate.automata" autoStart="true" startLevel="0" />
       <plugin id="de.uni_freiburg.informatik.ultimate.boogie.printer" autoStart="true" startLevel="0" />
+      <plugin id="de.uni_freiburg.informatik.ultimate.buchiprogramproduct" autoStart="true" startLevel="0" />
+      <plugin id="de.uni_freiburg.informatik.ultimate.ltl2aut" autoStart="true" startLevel="0" />
       <plugin id="de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation" autoStart="true" startLevel="0" />
       <plugin id="de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies" autoStart="true" startLevel="0" />
       <plugin id="de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker" autoStart="true" startLevel="0" />
@@ -122,6 +127,7 @@
       <plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstractionconcurrent" autoStart="true" startLevel="0" />
       <plugin id="de.uni_freiburg.informatik.ultimate.witnessparser" autoStart="true" startLevel="0" />
       <plugin id="javax.xml" autoStart="true" startLevel="0" />
+      <plugin id="org.apache.commons.io" autoStart="true" startLevel="0" />
       <plugin id="org.apache.log4j" autoStart="true" startLevel="0" />
       <plugin id="org.eclipse.cdt.core" autoStart="true" startLevel="0" />
       <plugin id="org.eclipse.cdt.core.linux" autoStart="true" startLevel="0" />

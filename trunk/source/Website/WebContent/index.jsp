@@ -211,17 +211,25 @@ Params:
   Boolean multipleTasks = (worker.containsKey(tool) && worker.get(tool).getToolchains().size() > 1);
 
   // redirect unspecified tool-page to home-page
-  if(ui.equals("tool") && multipleTools && showAll) response.sendRedirect(request.getContextPath() + "/");
+  if(ui.equals("tool") && multipleTools && showAll){
+	  response.sendRedirect(request.getContextPath() + "/");
+  }
   // redirect old-page requests
   try
   {
 	  Tasks.TaskNames.valueOf(task);
-	  if(noUI) response.sendRedirect(request.getContextPath() + "/old.jsp?" + request.getQueryString());
+	  if(noUI){
+		  response.sendRedirect(request.getContextPath() + "/old.jsp?" + request.getQueryString());
+	  }
 	} catch(Exception e){ /* no desired behaviour */ }
   
   // handling invalid worker names
-  if(worker.containsKey(tool)) currentWorker.put(tool, worker.get(tool));
-  else currentWorker = worker;
+  if(worker.containsKey(tool)){
+	  currentWorker.put(tool, worker.get(tool));
+  }
+  else{
+	  currentWorker = worker;
+  }
   
 
   /*

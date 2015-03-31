@@ -14,6 +14,7 @@ import de.uni_freiburg.informatik.ultimate.website.toolchains.BoogieConcurrentTr
 import de.uni_freiburg.informatik.ultimate.website.toolchains.BoogieLassoRankerTC;
 import de.uni_freiburg.informatik.ultimate.website.toolchains.BoogieAutomizerTC;
 import de.uni_freiburg.informatik.ultimate.website.toolchains.CBuchiAutomizerTC;
+import de.uni_freiburg.informatik.ultimate.website.toolchains.CLTLAutomizerTC;
 import de.uni_freiburg.informatik.ultimate.website.toolchains.CLassoRankerTC;
 import de.uni_freiburg.informatik.ultimate.website.toolchains.CAutomizerTC;
 
@@ -30,7 +31,7 @@ public class Tasks {
 	 */
 	private static final Class<?>[] sToolchainTypes = { AutomtaScriptTC.class, BoogieAutomizerTC.class,
 			CAutomizerTC.class, BoogieLassoRankerTC.class, CLassoRankerTC.class, BoogieBuchiAutomizerTC.class,
-			CBuchiAutomizerTC.class, BoogieConcurrentTraceAbstractionTC.class };
+			CBuchiAutomizerTC.class, BoogieConcurrentTraceAbstractionTC.class, CLTLAutomizerTC.class };
 	/**
 	 * The String representations of TaskNames.
 	 */
@@ -51,19 +52,16 @@ public class Tasks {
 	 * @date 14.02.2012
 	 */
 	public enum TaskNames {
-		AUTOMIZER_BOOGIE,
-		AUTOMIZER_C,
+		AUTOMIZER_BOOGIE, AUTOMIZER_C,
 
-		TERMINATION_BOOGIE,
-		TERMINATION_C,
+		TERMINATION_BOOGIE, TERMINATION_C,
 
-		RANK_SYNTHESIS_BOOGIE,
-		RANK_SYNTHESIS_C,
+		RANK_SYNTHESIS_BOOGIE, RANK_SYNTHESIS_C,
 
 		AUTOMATA_SCRIPT,
 
 		CONCURRENT_TRACE_ABSTRACTION_BOOGIE,
-		
+
 		LTLAUTOMIZER_C,
 
 		// If you add something here, add a String representation to

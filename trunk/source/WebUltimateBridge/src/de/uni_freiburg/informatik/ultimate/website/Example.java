@@ -76,37 +76,34 @@ public class Example {
 		ArrayList<Example> list = new ArrayList<Example>();
 
 		Tasks.TaskNames[] verifyC = { Tasks.TaskNames.AUTOMIZER_C };
-		list.add(new Example("Example C File", "exampleCFile", "exampleFile.c",
-				verifyC));
+		list.add(new Example("Example C File", "exampleCFile", "exampleFile.c", verifyC));
 		list.add(new Example("F-91", "f91", "f91.c", verifyC));
 		addAllFilesInExamplesSubfolder(list, "verifyC/", verifyC);
 
 		Tasks.TaskNames[] verifyBoogie = { Tasks.TaskNames.AUTOMIZER_BOOGIE };
 		addAllFilesInExamplesSubfolder(list, "verifyBoogie/", verifyBoogie);
 
-		
 		Tasks.TaskNames[] rankBoogie = { Tasks.TaskNames.RANK_SYNTHESIS_BOOGIE };
 		addAllFilesInExamplesSubfolder(list, "rankBoogie/", rankBoogie);
-		
+
 		Tasks.TaskNames[] rankC = { Tasks.TaskNames.RANK_SYNTHESIS_C };
 		addAllFilesInExamplesSubfolder(list, "rankC/", rankC);
-		
+
 		Tasks.TaskNames[] terminatonC = { Tasks.TaskNames.TERMINATION_C };
 		addAllFilesInExamplesSubfolder(list, "terminationC/", terminatonC);
-		
+
 		Tasks.TaskNames[] terminationBoogie = { Tasks.TaskNames.TERMINATION_BOOGIE };
 		addAllFilesInExamplesSubfolder(list, "terminationBoogie/", terminationBoogie);
-		
-		
+
 		Tasks.TaskNames[] automataScript = { Tasks.TaskNames.AUTOMATA_SCRIPT };
 		addAllFilesInExamplesSubfolder(list, "AUTOMATA_SCRIPT/", automataScript);
-		
+
 		Tasks.TaskNames[] verifyConcurrentBoogie = { Tasks.TaskNames.CONCURRENT_TRACE_ABSTRACTION_BOOGIE };
 		addAllFilesInExamplesSubfolder(list, "verifyConcurrentBoogie/", verifyConcurrentBoogie);
 
 		Tasks.TaskNames[] ltlAutomizer = { Tasks.TaskNames.LTLAUTOMIZER_C };
 		addAllFilesInExamplesSubfolder(list, "ltlautomizer/", ltlAutomizer);
-		
+
 		// load the content for the examples in the list and place it in the
 		// sExamplesByTask map (via the alternate example constructor)
 		for (Example e : list) {
