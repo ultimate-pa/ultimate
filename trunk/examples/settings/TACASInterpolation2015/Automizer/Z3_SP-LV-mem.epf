@@ -31,7 +31,7 @@ file_export_version=3.0
 @de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction=0.0.1
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Compute\ Interpolants\ along\ a\ Counterexample=ForwardPredicates
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Use\ unsat\ cores=IGNORE
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Interpolant\ automaton\ enhancement=EAGER
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Interpolant\ automaton\ enhancement=PREDICATE_ABSTRACTION
 #Sat Oct 18 16:33:58 CEST 2014
 file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck/tree\ interpolation\ mode\ for\ smtinterpol\ \n\ (internal\:\ tree,\ a\ la\ matthias\:\ nested)=ForwardPredicates
