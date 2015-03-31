@@ -8,6 +8,7 @@ public class TACAS2015AlgoComparisonMemSafety extends TACAS2015 {
 
 	@Override
 	protected void createTestCasesForReal(List<UltimateTestCase> testcases) {
+		addTestCasesFixed("AutomizerCWithBlockEncoding.xml", "TACASInterpolation2015/Automizer/Z3_Interpolation-mem.epf", testcases);
 		addTestCasesFixed("AutomizerCWithBlockEncoding.xml", "TACASInterpolation2015/Automizer/Princess_Interpolation-mem.epf", testcases);
 		addTestCasesFixed("AutomizerCWithBlockEncoding.xml", "TACASInterpolation2015/Automizer/SMTInterpol_Interpolation-mem.epf", testcases);
 		addTestCasesFixed("AutomizerCWithBlockEncoding.xml", "TACASInterpolation2015/Automizer/SMTInterpol_SP-IC-LV-mem.epf", testcases);
@@ -33,7 +34,6 @@ public class TACAS2015AlgoComparisonMemSafety extends TACAS2015 {
 
 			//our best category
 			"examples/svcomp/memory-alloca/",
-
 
 		};
 		return directories;

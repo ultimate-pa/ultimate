@@ -8,6 +8,8 @@ public class TACAS2015AlgoComparison extends TACAS2015 {
 
 	@Override
 	protected void createTestCasesForReal(List<UltimateTestCase> testcases) {
+		
+		addTestCasesFixed("AutomizerC.xml", "TACASInterpolation2015/Automizer/Z3_Interpolation.epf", testcases);
 		addTestCasesFixed("AutomizerC.xml", "TACASInterpolation2015/Automizer/Princess_Interpolation.epf", testcases);
 		addTestCasesFixed("AutomizerC.xml", "TACASInterpolation2015/Automizer/SMTInterpol_Interpolation.epf", testcases);
 		addTestCasesFixed("AutomizerC.xml", "TACASInterpolation2015/Automizer/SMTInterpol_SP-IC-LV.epf", testcases);
