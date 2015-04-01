@@ -40,15 +40,16 @@ public class Setting {
 	/**
 	 * Whether this setting was already changed by the user or not.
 	 */
-	private boolean isDefaultValue;
+	private boolean mIsDefaultValue;
 	/**
 	 * The user set value for this setting.
 	 */
-	private Value value;
+	private Value mValue;
 	/**
 	 * The string describing the setting for Ultimate.
 	 */
-	private final String settingString;
+	private final String mSettingString;
+	
 	/**
 	 * The default value, represented in a string. This will later be parsed in
 	 * an appropriate value (e.g. int, bool, etc). <br />
@@ -87,9 +88,9 @@ public class Setting {
 	 *            The type of the setting, describing the domain of the settings
 	 *            value.
 	 * @param ultimateString
-	 *            The string describing the setting for Ultimate.
+	 *            The string describing the setting for Ultimate, i.e. <toolid>/<settingsname>
 	 * @param settingDescription
-	 *            Setting name, represented to the user.
+	 *            Setting name as shown to the user.
 	 * @param defaultValue
 	 *            The default value, represented in a string. This will later be
 	 *            parsed in an appropriate value (e.g. int, bool, etc). <br />
@@ -122,10 +123,10 @@ public class Setting {
 			}
 		}
 		this.type = type;
-		this.settingString = ultimateString;
+		this.mSettingString = ultimateString;
 		this.settingDescription = settingDescription;
 		this.defaultValue = defaultValue;
-		this.value = new Value();
+		this.mValue = new Value();
 		this.isMultiSelectable = isMultiSelectable;
 		this.values = values;
 		this.setDefaultValue(true);
@@ -151,8 +152,7 @@ public class Setting {
 	 * @param isUserModifiable
 	 *            Whether this setting is modifiable by a user.
 	 */
-	public Setting(String ultimateString, SettingType type,
-			String settingDescription, String defaultValue,
+	public Setting(String ultimateString, SettingType type, String settingDescription, String defaultValue,
 			boolean isUserModifiable) {
 		this(type, ultimateString, settingDescription,
 				new String[] { defaultValue }, false, null, isUserModifiable);
@@ -204,13 +204,16 @@ public class Setting {
 	 *            the identifier to check
 	 */
 	private static final void checkIdentifier(String id) {
-		if (id.equals("")) {
-			throw new IllegalArgumentException("identifier: empty name given!");
-		}
-		if (id.length() > 135) {
-			throw new IllegalArgumentException("identifier name too long: "
-					+ id);
-		}
+		//TODO: Repair checking
+		
+//		if (id.equals("")) {
+//			throw new IllegalArgumentException("identifier: empty name given!");
+//		}
+		//TODO: why was this here? 
+//		if (id.length() > 135) {
+//			throw new IllegalArgumentException("identifier name too long: "
+//					+ id);
+//		}
 	}
 
 	/**
@@ -219,7 +222,7 @@ public class Setting {
 	 * @return the settingString
 	 */
 	public String getSettingString() {
-		return settingString;
+		return mSettingString;
 	}
 
 	/**
@@ -229,7 +232,7 @@ public class Setting {
 	 * @return the setting identifier generated from the setting string.
 	 */
 	public String getSettingIdentifier() {
-		String s = settingString.replaceAll(
+		String s = mSettingString.replaceAll(
 				"[^\\p{L}\\p{N}]", "");
 		return s.substring(0, s.length()).toLowerCase();
 	}
@@ -305,7 +308,7 @@ public class Setting {
 							+ type.toString());
 		}
 		int i = Integer.parseInt(value);
-		this.value = new Value(null, i, false);
+		this.mValue = new Value(null, i, false);
 	}
 
 	/**
@@ -336,7 +339,7 @@ public class Setting {
 		if (!isASCII) {
 			throw new IllegalArgumentException("String is not in ASCII");
 		}
-		this.value = new Value(new String[] { value }, 0, false);
+		this.mValue = new Value(new String[] { value }, 0, false);
 	}
 
 	/**
@@ -371,7 +374,7 @@ public class Setting {
 			// contain an empty string!
 			throw new IllegalArgumentException("Not a valid enum value!");
 		}
-		this.value = new Value(values, 0, false);
+		this.mValue = new Value(values, 0, false);
 	}
 
 	/**
@@ -390,7 +393,7 @@ public class Setting {
 							+ type.toString());
 		}
 		boolean b = Boolean.parseBoolean(value);
-		this.value = new Value(null, 0, b);
+		this.mValue = new Value(null, 0, b);
 	}
 
 	/**
@@ -399,7 +402,7 @@ public class Setting {
 	 * @return the set values.
 	 */
 	public String getSetValues() {
-		return this.value.toString();
+		return this.mValue.toString();
 	}
 
 	/**
@@ -407,7 +410,7 @@ public class Setting {
 	 * @return whether the value of this setting was changed.
 	 */
 	boolean isDefaultValue() {
-		return isDefaultValue;
+		return mIsDefaultValue;
 	}
 
 	/**
@@ -415,7 +418,7 @@ public class Setting {
 	 * @param isDefaultValue set whether the value of this setting was changed.
 	 */
 	void setDefaultValue(boolean isDefaultValue) {
-		this.isDefaultValue = isDefaultValue;
+		this.mIsDefaultValue = isDefaultValue;
 	}
 
 	/**

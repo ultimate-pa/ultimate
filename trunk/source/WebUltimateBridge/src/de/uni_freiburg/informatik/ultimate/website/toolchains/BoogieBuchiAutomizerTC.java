@@ -12,88 +12,57 @@ import de.uni_freiburg.informatik.ultimate.website.WebToolchain;
 public class BoogieBuchiAutomizerTC extends WebToolchain {
 
 	@Override
-	protected String setDescription() {
+	protected String defineDescription() {
 		return "Büchi Automizer toolchain";
 	}
 
 	@Override
-	protected String setName() {
+	protected String defineName() {
 		return "Büchi Automizer";
 	}
 
 	@Override
-	protected String setId() {
+	protected String defineId() {
 		return "boogieBuchiAutomizer";
 	}
 
 	@Override
-	protected TaskNames[] setTaskName() {
+	protected TaskNames[] defineTaskName() {
 		return new TaskNames[] { TaskNames.TERMINATION_BOOGIE };
 	}
 
     @Override
-    protected String setLanguage() {
+    protected String defineLanguage() {
         return "boogie";
     }
 
-    @Override
-    protected String setUserInfo() {
-        return null;
-    }
-
 	@Override
-	protected List<Tool> setTools() {
-		return getToolsForBoogie();
+	protected List<Tool> defineTools() {
+		return boogieBuchiAutomizerToolchain();
 	}
 	
-	static List<Tool> getToolsForBoogie() {
+	@Override
+	protected List<Setting> defineAdditionalSettings() {
+		return boogieBuchiAutomizerAdditionalSettings();
+	}
+	
+	static List<Tool> boogieBuchiAutomizerToolchain() {
 		List<Tool> tools = new ArrayList<Tool>();
 		
 		tools.add(new Tool(PrefStrings.s_boogiePreprocessor));
+		tools.add(new Tool(PrefStrings.s_rcfgBuilder));
+		tools.add(new Tool(PrefStrings.s_blockencoding));
+		tools.add(new Tool(PrefStrings.s_buchiautomizer));
 		
-		List<Setting> oRCFGB = new ArrayList<Setting>();
-		List<Setting> mRCFGB = new ArrayList<Setting>();
-        oRCFGB.add(new Setting(PrefStrings.s_RCFG_LABEL_Solver, PrefStrings.s_RCFG_LABEL_Solver,
-        		new String[] { PrefStrings.s_RCFG_VALUE_SMTInterpol }, false, new String[] {
-        		PrefStrings.s_RCFG_VALUE_SMTInterpol, PrefStrings.s_RCFG_VALUE_ExternalDefMo }, false));
-        oRCFGB.add(new Setting(PrefStrings.s_RCFG_LABEL_BlockSize, PrefStrings.s_RCFG_LABEL_BlockSize,
-        		new String[] { PrefStrings.s_RCFG_VALUE_Seq }, false, new String[] {
-        		PrefStrings.s_RCFG_VALUE_Single, PrefStrings.s_RCFG_VALUE_Seq, PrefStrings.s_RCFG_VALUE_Block }, false));
-		tools.add(new Tool(PrefStrings.s_rcfgBuilder, oRCFGB, mRCFGB, LoggingLevel.WARN));
-		
-		List<Setting> oBE = new ArrayList<Setting>();
-		List<Setting> mBE = new ArrayList<Setting>();
-		tools.add(new Tool(PrefStrings.s_blockencoding, oBE, mBE, LoggingLevel.WARN));
-		oBE.add(new Setting(PrefStrings.s_BE_LABEL_CALLMINIMIZE, Setting.SettingType.BOOLEAN,
-				PrefStrings.s_BE_LABEL_CALLMINIMIZE, "true", false));
-		oBE.add(new Setting(PrefStrings.s_BE_LABEL_STRATEGY, PrefStrings.s_BE_LABEL_STRATEGY,
-        		new String[] { PrefStrings.s_BE_VALUE_DisjunctiveRating }, false, new String[] {
-				PrefStrings.s_BE_VALUE_DisjunctiveRating, PrefStrings.s_BE_VALUE_LargeBlock }, true));
-		oBE.add(new Setting(PrefStrings.s_BE_LABEL_RATINGBOUND, Setting.SettingType.STRING,
-				PrefStrings.s_BE_LABEL_RATINGBOUND, "0", false));
-		
-        
-		List<Setting> oBA = new ArrayList<Setting>();
-		List<Setting> mBA = new ArrayList<Setting>();
-		oBA.add(new Setting(PrefStrings.s_TA_LABEL_Interpol, Setting.SettingType.STRING,
-                "interpolation", PrefStrings.s_TA_VALUE_Forward, false));
-		oBA.add(new Setting(PrefStrings.s_BA_LABEL_ExtSolverRank, Setting.SettingType.BOOLEAN,
-				PrefStrings.s_BA_LABEL_ExtSolverRank, "false", false));
-		oBA.add(new Setting(PrefStrings.s_BA_LABEL_Nonlinear, Setting.SettingType.BOOLEAN,
-				"AllowNonlinearConstraints", "false", false));
-		oBA.add(new Setting(PrefStrings.s_BA_LABEL_SimplifyTA, Setting.SettingType.BOOLEAN,
-				PrefStrings.s_BA_LABEL_SimplifyTA, "true", false));
-		tools.add(new Tool(PrefStrings.s_buchiautomizer, oBA, mBA, LoggingLevel.WARN));
 		return tools;
 	}
+	
+	static List<Setting> boogieBuchiAutomizerAdditionalSettings() {
+		List<Setting> rtr = new ArrayList<>();
+		rtr.add(new Setting(PrefStrings.s_BE_LABEL_STRATEGY, PrefStrings.s_BE_LABEL_STRATEGY,
+        		new String[] { PrefStrings.s_BE_VALUE_DisjunctiveRating }, false, new String[] {
+				PrefStrings.s_BE_VALUE_DisjunctiveRating, PrefStrings.s_BE_VALUE_LargeBlock }, true));
 
-	@Override
-	protected LoggingLevel setPluginsLoggingLevel() {
-		return LoggingLevel.INFO;
-	}
-
-	@Override
-	protected LoggingLevel setToolsLoggingLevel() {
-		return LoggingLevel.INFO;
+		return rtr;
 	}
 }

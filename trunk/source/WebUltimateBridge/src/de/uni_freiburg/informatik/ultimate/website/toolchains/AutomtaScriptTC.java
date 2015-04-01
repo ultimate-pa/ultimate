@@ -16,105 +16,48 @@ import de.uni_freiburg.informatik.ultimate.website.WebToolchain;
  */
 public class AutomtaScriptTC extends WebToolchain {
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * de.uni_freiburg.informatik.ultimate.website.Toolchain#setDescription()
-     */
-    @Override
-    protected String setDescription() {
-        return "Automata Script toolchain";
-    }
+	@Override
+	protected String defineDescription() {
+		return "Automata Script toolchain";
+	}
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see de.uni_freiburg.informatik.ultimate.website.Toolchain#setName()
-     */
-    @Override
-    protected String setName() {
-        return "Automata Script";
-    }
+	@Override
+	protected String defineName() {
+		return "Automata Script";
+	}
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see de.uni_freiburg.informatik.ultimate.website.Toolchain#setId()
-     */
-    @Override
-    protected String setId() {
-        return "automataScript";
-    }
+	@Override
+	protected String defineId() {
+		return "automataScript";
+	}
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see de.uni_freiburg.informatik.ultimate.website.Toolchain#setTaskName()
-     */
-    @Override
-    protected TaskNames[] setTaskName() {
-        return new TaskNames[] { TaskNames.AUTOMATA_SCRIPT };
-    }
+	@Override
+	protected TaskNames[] defineTaskName() {
+		return new TaskNames[] { TaskNames.AUTOMATA_SCRIPT };
+	}
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see de.uni_freiburg.informatik.ultimate.website.WebToolchain#setLanguage()
-     */
-    @Override
-    protected String setLanguage() {
-        return "automata";
-    }
+	@Override
+	protected String defineLanguage() {
+		return "automata";
+	}
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see de.uni_freiburg.informatik.ultimate.website.WebToolchain#setUserInfo()
-     */
-    @Override
-    protected String setUserInfo() {
-        return null;
-    }
+	@Override
+	protected List<Tool> defineTools() {
+		List<Tool> tools = new ArrayList<Tool>();
+		
+		tools.add(new Tool(PrefStrings.s_automatascriptinterpreter));
+		
+		return tools;
+	}
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see de.uni_freiburg.informatik.ultimate.website.Toolchain#setTools()
-     */
-    @Override
-    protected List<Tool> setTools() {
-        List<Tool> tools = new ArrayList<Tool>();
-        List<Setting> oCACSL = new ArrayList<Setting>();
-        oCACSL.add(new Setting("/" + PrefStrings.s_automatascriptinterpreter, Setting.SettingType.INTEGER,
-                "Timeout", "10", true));
-        List<Setting> mCACSL = new ArrayList<Setting>();
-        tools.add(new Tool(PrefStrings.s_automatascriptinterpreter, oCACSL, mCACSL,
-                LoggingLevel.WARN));
-        return tools;
-    }
+	@Override
+	protected List<Setting> defineAdditionalSettings() {
+		List<Setting> rtr = new ArrayList<>();
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * de.uni_freiburg.informatik.ultimate.website.Toolchain#setPluginsLoggingLevel
-     * ()
-     */
-    @Override
-    protected LoggingLevel setPluginsLoggingLevel() {
-        return LoggingLevel.INFO;
-    }
+		rtr.add(new Setting("/" + PrefStrings.s_automatascriptinterpreter, Setting.SettingType.INTEGER, "Timeout",
+				"10", true));
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * de.uni_freiburg.informatik.ultimate.website.Toolchain#setToolsLoggingLevel
-     * ()
-     */
-    @Override
-    protected LoggingLevel setToolsLoggingLevel() {
-        return LoggingLevel.INFO;
-    }
+		return rtr;
+	}
+
 }

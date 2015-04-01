@@ -30,15 +30,17 @@ public class UltimateWebController implements IController {
 	private final File mSettingsFile;
 	private final File mInputFile;
 	private final File mToolchainFile;
+	private final long mDeadline;
 
 	private IUltimateServiceProvider mCurrentServices;
 	private final ExternalUltimateCore mExternalUltimateCore;
 
-	public UltimateWebController(File settings, File input, File toolchain) {
+	public UltimateWebController(File settings, File input, File toolchain, long deadline) {
 		mExternalUltimateCore = new ExternalUltimateCore(this);
 		mSettingsFile = settings;
 		mInputFile = input;
 		mToolchainFile = toolchain;
+		mDeadline = deadline;
 	}
 
 	public JSONObject runUltimate(JSONObject json) {
@@ -57,7 +59,10 @@ public class UltimateWebController implements IController {
 	public int init(ICore core, ILoggingService loggingService) {
 		// TODO Use own logging service to prefix each ultimate log line with
 		// the session id
-		return mExternalUltimateCore.init(core, loggingService, mSettingsFile, 0, new File[] { mInputFile }, null);
+		//TODO: check what the whole settings thing means in parallel contexts 
+		//clear old preferences
+		core.resetPreferences();
+		return mExternalUltimateCore.init(core, loggingService, mSettingsFile, mDeadline, new File[] { mInputFile }, null);
 	}
 
 	@Override

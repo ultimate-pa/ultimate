@@ -148,7 +148,7 @@ public class Tasks {
 
 		String description, name;
 
-		name = BoogieAutomizerTC.s_Automizer;
+		name = "Automizer";
 		description = "Implementation of our automata-theoretic approach to software verification.";
 		Worker w = new Worker(name, "verify", description, null);
 		w.setLogoURL("img/tool_logo.png");

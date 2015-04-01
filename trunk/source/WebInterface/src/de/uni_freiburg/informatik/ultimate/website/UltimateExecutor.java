@@ -44,9 +44,9 @@ public class UltimateExecutor {
 				throw new IllegalArgumentException("Invalid task or toolchain ID. taskID=" + taskId + ", toolchainID="
 						+ tcId);
 			}
-			// Build the setting ids to be requested
-			// and put the values into the settings object
-			setUserSettings(internalRequest, tcId, tc);
+			// Apply the current user settings that are contained in the request
+			// to the settings instances defined by the toolchain
+			applyUserSettings(internalRequest, tcId, tc);
 
 			// create temporary files to run ultimate on
 			String timestamp = CoreUtil.getCurrentDateTimeAsString();
@@ -54,10 +54,13 @@ public class UltimateExecutor {
 			settingsFile = writeTemporaryFile(timestamp + "_settings", tc.getSettingFileContent(), ".epf");
 			toolchainFile = writeTemporaryFile(timestamp + "_toolchain", tc.getToolchainXML(), ".xml");
 
+			// TODO: write additional settings file that will be loaded after
+			// the default settings file was loaded Apply additional settings
+
 			mLogger.log("Written temporary files to " + inputFile.getParent() + " with timestamp " + timestamp);
 
 			// run ultimate
-			runUltimate(json, inputFile, settingsFile, toolchainFile);
+			runUltimate(json, inputFile, settingsFile, toolchainFile, tc.getTimeout());
 			mLogger.log("Finished executing Ultimate for task ID " + taskId + " and toolchain ID " + tcId + "...");
 
 		} catch (IllegalArgumentException e) {
@@ -106,11 +109,11 @@ public class UltimateExecutor {
 	 * @return true iff ultimate terminated normally, false otherwise
 	 * @throws JSONException
 	 */
-	private boolean runUltimate(JSONObject json, File inputFile, File settingsFile, File toolchainFile)
+	private boolean runUltimate(JSONObject json, File inputFile, File settingsFile, File toolchainFile, long timeout)
 			throws JSONException {
 		try {
 			mLogger.logDebug("ULTIMATE Application started");
-			UltimateWebController uwc = new UltimateWebController(settingsFile, inputFile, toolchainFile);
+			UltimateWebController uwc = new UltimateWebController(settingsFile, inputFile, toolchainFile, timeout);
 			uwc.runUltimate(json);
 		} catch (Throwable t) {
 			t.printStackTrace();
@@ -180,33 +183,31 @@ public class UltimateExecutor {
 		return fileExtension;
 	}
 
-	private void setUserSettings(Request internalRequest, String toolchainId, WebToolchain toolchain) {
-		for (Tool tool : toolchain.getTools()) {
-			for (Setting setting : tool.getUserChangeableSettings()) {
-				String sid = toolchainId + "_" + setting.getSettingIdentifier();
-				if (!internalRequest.containsKey(sid)) {
-					continue;
-				}
+	private void applyUserSettings(Request internalRequest, String toolchainId, WebToolchain toolchain) {
+		for (Setting setting : toolchain.getUserModifiableSettings()) {
+			String sid = toolchainId + "_" + setting.getSettingIdentifier();
+			if (!internalRequest.containsKey(sid)) {
+				continue;
+			}
 
-				if (setting.getType() != SettingType.DROPDOWN && internalRequest.get(sid).length != 1) {
-					throw new IllegalArgumentException("Setting ID not unique: " + sid);
-				}
-				switch (setting.getType()) {
-				case BOOLEAN:
-					setting.setBooleanValue(internalRequest.get(sid)[0]);
-					break;
-				case DROPDOWN:
-					setting.setDropDownValue(internalRequest.get(sid));
-					break;
-				case INTEGER:
-					setting.setIntValue(internalRequest.get(sid)[0]);
-					break;
-				case STRING:
-					setting.setStringValue(internalRequest.get(sid)[0]);
-					break;
-				default:
-					throw new IllegalArgumentException("Setting type " + setting.getType() + " is unknown");
-				}
+			if (setting.getType() != SettingType.DROPDOWN && internalRequest.get(sid).length != 1) {
+				throw new IllegalArgumentException("Setting ID not unique: " + sid);
+			}
+			switch (setting.getType()) {
+			case BOOLEAN:
+				setting.setBooleanValue(internalRequest.get(sid)[0]);
+				break;
+			case DROPDOWN:
+				setting.setDropDownValue(internalRequest.get(sid));
+				break;
+			case INTEGER:
+				setting.setIntValue(internalRequest.get(sid)[0]);
+				break;
+			case STRING:
+				setting.setStringValue(internalRequest.get(sid)[0]);
+				break;
+			default:
+				throw new IllegalArgumentException("Setting type " + setting.getType() + " is unknown");
 			}
 		}
 	}
