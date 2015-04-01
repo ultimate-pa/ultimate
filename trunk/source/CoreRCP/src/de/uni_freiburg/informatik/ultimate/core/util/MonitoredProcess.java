@@ -10,7 +10,9 @@ import java.io.OutputStreamWriter;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 import java.lang.Thread.State;
+import java.util.ConcurrentModificationException;
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.commons.lang3.StringUtils;
@@ -44,6 +46,7 @@ public final class MonitoredProcess implements IStorable {
 
 	private Thread mMonitor;
 	private int mID;
+	private AtomicBoolean mTimeoutAttached;
 
 	private volatile Process mProcess;
 	private volatile boolean mProcessCompleted;
@@ -71,6 +74,7 @@ public final class MonitoredProcess implements IStorable {
 		// stdinbuffer,
 		// actual process watcher) before returning from exec
 		mWaitForSetup = new Semaphore(-2);
+		mTimeoutAttached = new AtomicBoolean(false);
 	}
 
 	/**
@@ -95,17 +99,6 @@ public final class MonitoredProcess implements IStorable {
 		return mp;
 	}
 
-	private void start(String workingDir, IToolchainStorage storage, String oneLineCmd) {
-		mID = sInstanceCounter.incrementAndGet();
-		storage.putStorable(getKey(mID, oneLineCmd), this);
-
-		mMonitor = new Thread(createProcessRunner(), "MonitoredProcess " + mID + " " + oneLineCmd);
-		mLogger.info(String.format("Starting monitored process %s with %s (exit command is %s, workingDir is %s)", mID,
-				mCommand, mExitCommand, workingDir));
-		mMonitor.start();
-		mWaitForSetup.acquireUninterruptibly();
-	}
-
 	/**
 	 * Execute a command as process. The process will be cleaned when the
 	 * toolchain ends.
@@ -121,11 +114,31 @@ public final class MonitoredProcess implements IStorable {
 		return exec(command.split(" "), null, exitCommand, services, storage);
 	}
 
-	public static MonitoredProcess exec(String command, IUltimateServiceProvider services, IToolchainStorage storage)
-			throws IOException {
-		return exec(command, null, services, storage);
+	// public static MonitoredProcess exec(String command,
+	// IUltimateServiceProvider services, IToolchainStorage storage)
+	// throws IOException {
+	// return exec(command, null, services, storage);
+	// }
+
+	private void start(String workingDir, IToolchainStorage storage, String oneLineCmd) {
+		mID = sInstanceCounter.incrementAndGet();
+		storage.putStorable(getKey(mID, oneLineCmd), this);
+
+		mMonitor = new Thread(createProcessRunner(), "MonitoredProcess " + mID + " " + oneLineCmd);
+		mLogger.info(String.format("Starting monitored process %s with %s (exit command is %s, workingDir is %s)", mID,
+				mCommand, mExitCommand, workingDir));
+		mMonitor.start();
+		mWaitForSetup.acquireUninterruptibly();
 	}
 
+	/**
+	 * Wait forever until the process terminates
+	 * 
+	 * @return A {@link MonitoredProcessState} instance indicating whether the
+	 *         process is still running or not and if not, what the return code
+	 *         is
+	 * @throws InterruptedException
+	 */
 	public MonitoredProcessState waitfor() throws InterruptedException {
 		if (mMonitor.getState().equals(State.TERMINATED)) {
 			return new MonitoredProcessState(false, false, mReturnCode);
@@ -139,8 +152,10 @@ public final class MonitoredProcess implements IStorable {
 	}
 
 	/**
+	 * Wait and block for some time for the normal termination of the process.
 	 * 
 	 * @param millis
+	 *            The time to wait in milliseconds.
 	 * @return A {@link MonitoredProcessState} instance indicating whether the
 	 *         process is still running or not and if not, what the return code
 	 *         is
@@ -159,8 +174,8 @@ public final class MonitoredProcess implements IStorable {
 	}
 
 	/**
-	 * Wait for some time for the normal termination of the process. If it did
-	 * not occur, terminate the process abnormally.
+	 * Wait and block for some time for the normal termination of the process.
+	 * If it did not occur, terminate the process abnormally.
 	 * 
 	 * @param millis
 	 *            The time in milliseconds for which the method waits for the
@@ -192,10 +207,18 @@ public final class MonitoredProcess implements IStorable {
 	 * Wait until the toolchain is cancelled for the termination of the process.
 	 * If it did not occur, terminate the process abnormally.
 	 * 
+	 * @param gracePeriod
+	 *            A time period in milliseconds that this method will wait after
+	 *            a toolchain cancellation request was received before
+	 *            terminating the process. Must be non-negative. 0 means no
+	 *            grace-period.
 	 * @return A {@link MonitoredProcessState} instance containing the return
 	 *         code of the process or -1
 	 */
-	public MonitoredProcessState impatientWaitUntilToolchainTimeout() {
+	public MonitoredProcessState impatientWaitUntilToolchainTimeout(long gracePeriod) {
+		if (gracePeriod < 0) {
+			throw new IllegalArgumentException("gracePeriod must be non-negative");
+		}
 		mLogger.info(String.format("Waiting until toolchain timeout for monitored process %s with %s", mID, mCommand));
 		while (mServices.getProgressMonitorService().continueProcessing()) {
 			try {
@@ -207,12 +230,82 @@ public final class MonitoredProcess implements IStorable {
 				break;
 			}
 		}
+
+		try {
+			MonitoredProcessState state = waitfor(gracePeriod);
+			if (!state.isRunning()) {
+				return state;
+			}
+		} catch (InterruptedException e) {
+		}
+
 		mLogger.warn(String.format(
 				"Toolchain was canceled while waiting for monitored process %s with %s, terminating...", mID, mCommand));
 		forceShutdown();
 		return new MonitoredProcessState(!mMonitor.getState().equals(State.TERMINATED), true, mReturnCode);
 	}
 
+	/**
+	 * Start a timeout for this process. After the set time is over, the process
+	 * will be terminated forcefully. This method is non-blocking. You may only
+	 * call this method once!
+	 * 
+	 * @param millis
+	 *            A time period in milliseconds after which the process should
+	 *            terminate. Must be larger than zero.
+	 */
+	public synchronized void setCountdownToTermination(final long millis) {
+		if (mTimeoutAttached.getAndSet(true)) {
+			throw new ConcurrentModificationException("You tried to attach a timeout twice for the monitored process"
+					+ mID);
+		}
+
+		if (millis <= 0) {
+			throw new IllegalArgumentException("millis must be larger than zero");
+		}
+
+		new Thread(new Runnable() {
+
+			@Override
+			public void run() {
+				impatientWaitUntilTime(millis);
+			}
+		}, "CountdownTimeout watcher for " + mID).start();
+	}
+
+	/**
+	 * Calling this method will force the process to terminate if the toolchain
+	 * terminates, possibly after a grace period. This method is non-blocking.
+	 * You may only call this method once!
+	 * 
+	 * @param gracePeriod
+	 *            A time period in milliseconds that we will wait after a
+	 *            toolchain cancellation request was received before terminating
+	 *            the process. Must be non-negative. 0 means no grace-period.
+	 */
+	public synchronized void setTerminationAfterToolchainTimeout(final long gracePeriod) {
+		if (mTimeoutAttached.getAndSet(true)) {
+			throw new ConcurrentModificationException("You tried to attach a timeout twice for the monitored process"
+					+ mID);
+		}
+
+		if (gracePeriod < 0) {
+			throw new IllegalArgumentException("millis must be non-negative");
+		}
+
+		new Thread(new Runnable() {
+
+			@Override
+			public void run() {
+				impatientWaitUntilToolchainTimeout(gracePeriod);
+			}
+		}, "ToolchainTimeout watcher for " + mID).start();
+	}
+
+	/**
+	 * Force the process to terminate regardless of its state. Will first try to
+	 * use the defined exit command if there is any.
+	 */
 	public synchronized void forceShutdown() {
 		if (isRunning()) {
 			if (mExitCommand != null) {

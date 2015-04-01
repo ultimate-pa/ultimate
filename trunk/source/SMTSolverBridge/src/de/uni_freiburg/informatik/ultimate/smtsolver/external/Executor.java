@@ -1,6 +1,5 @@
 package de.uni_freiburg.informatik.ultimate.smtsolver.external;
 
-import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.InputStream;
@@ -56,6 +55,9 @@ class Executor {
 	private void createProcess() throws IOException {
 		// m_Logger = Logger.getRootLogger();
 		mProcess = MonitoredProcess.exec(mSolverCmd, "(exit)", mServices, mStorage);
+		//TODO: 
+		//Let all processes terminate when the toolchain terminates
+		mProcess.setTerminationAfterToolchainTimeout(20 * 1000);
 
 		if (mProcess == null) {
 			String errorMsg = "Could not create process \"" + mSolverCmd + "\", terminating... ";
@@ -204,9 +206,9 @@ class Executor {
 	public Object parseGetOptionResult() {
 		return (Object) parse(LexerSymbols.GETOPTION).value;
 	}
-	
+
 	public Term parseTerm() {
-	    return (Term) parse(LexerSymbols.GETTERM).value; 
+		return (Term) parse(LexerSymbols.GETTERM).value;
 	}
 
 }
