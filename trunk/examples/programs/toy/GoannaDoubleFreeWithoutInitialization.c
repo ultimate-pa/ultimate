@@ -1,7 +1,8 @@
 //#Safe
 /*
- * Variant of Goanna example where x is not initialized, but there is no
- * memory leak.
+ * Variant of the GoannaDoubleFree example where x is not initialized.
+ * In addition we use an if-then-else to ensure that p is always deallocated
+ * and hence there is no memory leak.
  * 
  * Date: September 2013
  * Author: heizmann@informtik.uni-freiburg.de
