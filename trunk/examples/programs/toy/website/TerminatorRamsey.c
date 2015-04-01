@@ -23,7 +23,7 @@ int main() {
     int x,y, oldx, oldy;
     while (x>0 && y>0) {
         if (copied == 1) {
-            //@assert ( (x<oldx && 0<=oldx) || (y<oldy && 0<=oldy));
+            //@ assert ( (x<oldx && 0<=oldx) || (y<oldy && 0<=oldy));
         } else {
             if (nondet()) {
                 copied = 1;
