@@ -11,8 +11,8 @@ import org.apache.log4j.Logger;
 import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
 import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.callgraph.CallGraphBuilder;
-import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.callgraph.CallGraphEdgeLabel;
 import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.callgraph.CallGraphNode;
+import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.preferences.PreferenceItem;
 import de.uni_freiburg.informatik.ultimate.core.services.IProgressMonitorService;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.model.GraphType;
@@ -87,9 +87,12 @@ public class Inliner implements IUnmanagedObserver {
 		
 		InlineVersionTransformer.GlobalScopeInitializer globalScopeInit =
 				new InlineVersionTransformer.GlobalScopeInitializer(mNonProcedureDeclarations);
+		boolean assumeRequiresAfterAssert = PreferenceItem.ASSUME_REQUIRES_AFTER_ASSERT.getBooleanValue();
+		boolean assertEnsuresBeforeAssume = PreferenceItem.ASSERT_ENSURES_BEFORE_ENSURES.getBooleanValue();
 		for (CallGraphNode node : mCallGraph.values()) {
 			if (node.isImplemented() && node.hasInlineFlags()) {
-				InlineVersionTransformer transformer = new InlineVersionTransformer(mServices, globalScopeInit);
+				InlineVersionTransformer transformer = new InlineVersionTransformer(mServices, globalScopeInit,
+						assumeRequiresAfterAssert, assertEnsuresBeforeAssume);
 				mNewProceduresWithBody.put(node.getId(), transformer.inlineCallsInside(node));
 			}
 		}

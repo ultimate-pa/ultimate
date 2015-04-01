@@ -2,6 +2,7 @@ package de.uni_freiburg.informatik.ultimate.boogie.procedureinliner;
 
 /**
  * Key for the map from old to new label identifiers, used while creating an inline version of a Boogie procedure.
+ * A key can also represent a return statement, because they have to be mapped to gotos to a new label.
  * 
  * @author schaetzc@informatik.uni-freiburg.de
  */
@@ -9,29 +10,26 @@ public class LabelMapKey {
 
 	private String mLabelId;
 	private String mProcedureId;
-	private boolean mIsReturnLabel;
 	private int mCallNumber;
 	
 	/**
-	 * Creates a new key for a label of the procedure, used as the entry point of inlining.
-	 * @param labelId Original identifier of the label.
+	 * Creates a new key for a label of the procedure, used inside the entry point of inlining.
+	 * @param labelId Original identifier of the label, null for return statements.
 	 * @param procedureId Identifier of the original procedure, containing the label.
 	 */
 	public LabelMapKey(String labelId, String procedureId) {
-		this(labelId, procedureId, false, 0);
+		this(labelId, procedureId, 0);
 	}
 
 	/**
 	 * Creates a new key.
-	 * @param labelId Original identifier of the label.
+	 * @param labelId Original identifier of the label. null for return statements.
 	 * @param procedureId Identifier of the original procedure, containing the label.
-	 * @param isReturnLabel The label was created for inlining return statements.
 	 * @param callNumber Number of calls to the procedure with identifier {@code procedureId} before the current call.
 	 */
-	public LabelMapKey(String labelId, String procedureId, boolean isReturnLabel, int callNumber) {
+	public LabelMapKey(String labelId, String procedureId, int callNumber) {
 		mLabelId = labelId;
 		mProcedureId = procedureId;
-		mIsReturnLabel = isReturnLabel;
 		mCallNumber = callNumber;
 	}
 	
@@ -45,9 +43,9 @@ public class LabelMapKey {
 		return mProcedureId;
 	}
 
-	/** @return The label was created for inlining return statements. */
+	/** @return The label was created for inlining return statements (. */
 	public boolean isReturnLabel() {
-		return mIsReturnLabel;
+		return mLabelId == null;
 	}
 
 	/** @return Number of calls to the procedure with identifier {@code procedureId} before the current call. */
@@ -60,7 +58,6 @@ public class LabelMapKey {
 		final int prime = 31;
 		int result = 1;
 		result = prime * result + mCallNumber;
-		result = prime * result + (mIsReturnLabel ? 1231 : 1237);
 		result = prime * result + ((mLabelId == null) ? 0 : mLabelId.hashCode());
 		result = prime * result + ((mProcedureId == null) ? 0 : mProcedureId.hashCode());
 		return result;
@@ -77,8 +74,6 @@ public class LabelMapKey {
 		LabelMapKey other = (LabelMapKey) obj;
 		if (mCallNumber != other.mCallNumber)
 			return false;
-		if (mIsReturnLabel != other.mIsReturnLabel)
-			return false;
 		if (mLabelId == null) {
 			if (other.mLabelId != null)
 				return false;
@@ -94,8 +89,8 @@ public class LabelMapKey {
 
 	@Override
 	public String toString() {
-		return "LabelMapKey [mLabelId=" + mLabelId + ", mProcedureId=" + mProcedureId + ", mIsReturnLabel="
-				+ mIsReturnLabel + ", mCallNumber=" + mCallNumber + "]";
+		return "LabelMapKey [mLabelId=" + mLabelId + ", mProcedureId=" + mProcedureId + ", mCallNumber=" + mCallNumber
+				+ "]";
 	}
 
 }

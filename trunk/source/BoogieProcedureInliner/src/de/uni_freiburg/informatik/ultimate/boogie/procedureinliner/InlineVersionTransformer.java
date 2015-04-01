@@ -76,19 +76,19 @@ public class InlineVersionTransformer extends BoogieTransformer {
 	private Deque<CallGraphNode> mProcedureStack = new ArrayDeque<>();
 	
 	/**
-	 * Contains the number of (in the order of the program) processed calls
+	 * Contains the number of processed calls (in the order of the program)
 	 * inside the procedures of {@link #mProcedureStack}.
 	 */
 	private Deque<Integer> mEdgeIndexStack = new ArrayDeque<>();
 	
 	/**
-	 * Counts for each procedure, how often it was called in the inlining process.
+	 * Counts for each procedure, how much calls to this procedure where inlined during the process.
 	 * The parameters and local variables of a Procedure are mapped, iff call counter > 0.
 	 */
 	private Map<String, Integer> mCallCounter = new HashMap<>();
 	
-	/** Determines, in how many nested "old(...)" expression the processing takes place. */
-	private int mOldExprDepthCounter = 0;
+	/** Contains the (possibly nested) "old(...)" expression(s), in which the processing takes place. */
+	private ArrayDeque<UnaryExpression> mOldExprStack = new ArrayDeque<>();
 	
 	/** Variables which have to be added to the local variables of the entry point. */
 	private List<VariableDeclaration> mInlinedVars = new ArrayList<>();
@@ -105,10 +105,19 @@ public class InlineVersionTransformer extends BoogieTransformer {
 	/** Manages the used label identifiers. */
 	private IdManager mLabelIdManager = new IdManager();
 	
-	public InlineVersionTransformer(IUltimateServiceProvider services, GlobalScopeInitializer globalScopeInit) {
+	/** Assume the inlined "requires" specifications (preconditions) after they were asserted. */
+	private boolean mAssumeRequiresAfterAssert;
+
+	/** Assert the inlined "ensures" spcifications (postconditions) before they are assumed. */
+	private boolean mAssertEnsuresBeforeAssume;
+	
+	public InlineVersionTransformer(IUltimateServiceProvider services, GlobalScopeInitializer globalScopeInit,
+			boolean assumeRequiresAfterAssert, boolean assertEnsuresBeforeAssume) {
 		mServices = services;
 		mVarMap = globalScopeInit.initVarMap();
 		globalScopeInit.initVarIdManager(mVarIdManager);
+		mAssumeRequiresAfterAssert = assumeRequiresAfterAssert;
+		mAssertEnsuresBeforeAssume = assertEnsuresBeforeAssume;
 	}
 
 	public Procedure inlineCallsInside(CallGraphNode entryNode) throws CancelToolchainException {
@@ -116,9 +125,9 @@ public class InlineVersionTransformer extends BoogieTransformer {
 		mEdgeIndexStack.push(0);
 		
 		mapVariablesOfCurrentProcedure();
-		Procedure proc = entryNode.getProcedureWithBody();
 		Procedure newProc = null;
 		if (entryNode.isImplemented()) {
+			Procedure proc = entryNode.getProcedureWithBody();
 			Body body = proc.getBody();
 			List<VariableDeclaration> newLocalVars = new ArrayList<>();
 			newLocalVars.addAll(Arrays.asList(body.getLocalVars()));
@@ -137,7 +146,6 @@ public class InlineVersionTransformer extends BoogieTransformer {
 					proc.getTypeParams(), proc.getInParams(), proc.getOutParams(), proc.getSpecification(), newBody);
 			ModelUtils.mergeAnnotations(proc, newProc);
 		}
-
 		mProcedureStack.pop();
 		mEdgeIndexStack.pop();
 
@@ -165,34 +173,52 @@ public class InlineVersionTransformer extends BoogieTransformer {
 	}
 	
 	private void mapVariablesOfCurrentProcedure() {
-		CallGraphNode proc = mProcedureStack.peek();		
-		Integer callCounter = mCallCounter.get(proc.getId());
-		if (callCounter != null && callCounter > 0) {
-			return;
-		} else {
-			Procedure procWithSpec = proc.getProcedureWithSpecification();
-			Procedure procWithBody = proc.getProcedureWithBody();
-			
-			boolean isImplemented = proc.isImplemented();
-			if (isImplemented && !proc.isCombined()) {
-				mapProcedureParametersToSameValue(procWithSpec.getInParams(), procWithBody.getInParams(), true);
-				mapProcedureParametersToSameValue(procWithSpec.getOutParams(), procWithBody.getOutParams(), false);
+		CallGraphNode proc = mProcedureStack.peek();
+		Procedure procWithSpec = proc.getProcedureWithSpecification();
+		Procedure procWithBody = proc.getProcedureWithBody();		
+		if (proc.isImplemented()) {
+			if (proc.isCombined()) {
+				mapProcedureParameters(procWithBody);				
 			} else {
-				mapProcedureParameters(procWithSpec);
-				if (isImplemented) {
-					mapProcedureParameters(procWithBody);
-				}
+				mapProcedureParametersToSameValue(procWithSpec.getInParams(), procWithBody.getInParams(), true);
+				mapProcedureParametersToSameValue(procWithSpec.getOutParams(), procWithBody.getOutParams(), false);					
 			}
-
-			if (proc.isImplemented()) {
-				Body body = procWithBody.getBody();
-				for (VariableDeclaration localVarDecl : body.getLocalVars()) {
-					mapLocalVariables(localVarDecl);
-				}
-			}			
+			Body body = procWithBody.getBody();
+			for (VariableDeclaration localVarDecl : body.getLocalVars()) {
+				mapLocalVariables(localVarDecl);
+			}
+		} else {
+			mapProcedureParameters(procWithSpec);
 		}
 	}
 
+	private int getCallCounter(String procId) {
+		Integer callCounter = mCallCounter.get(procId);
+		return callCounter == null ? 0 : callCounter;
+		
+	}
+	
+	/**
+	 * Increments the call counter for a given procedure.
+	 * @param procId Identifier of the procedure.
+	 * @return Old call counter value of the procedure.
+	 */
+	private int incrementCallCounter(String procId) {
+		int oldValue = getCallCounter(procId);
+		mCallCounter.put(procId, oldValue + 1);
+		return oldValue;
+	}
+
+	/**
+	 * Increments the edge index on top of the {@link #mEdgeIndexStack}.
+	 * @return The edge index from the top of the stack, before it was incremented.
+	 */
+	private int getAndUpdateEdgeIndex() {
+		int edgeIndex = mEdgeIndexStack.pop();
+		mEdgeIndexStack.push(edgeIndex + 1);
+		return edgeIndex;
+	}
+	
 	private void mapProcedureParametersToSameValue(VarList[] paramsProcDecl, VarList[] paramsProcImpl,
 			boolean inParams) {
 		boolean inEntryProc = inEntryProcedure();
@@ -356,27 +382,56 @@ public class InlineVersionTransformer extends BoogieTransformer {
 	
 	
 	private List<Statement> flattenStatement(Statement stat) {
-		/* TODO implement inlineCall(...)
 		if (stat instanceof CallStatement) {
-			// TODO increment call counter
 			CallStatement call = (CallStatement) stat;
-			int edgeIndex = mCallGraphEdgeStack.pop();
-			mCallGraphEdgeStack.push(edgeIndex + 1);
-			CallGraphNode node = mProcedureStack.peek();
-			CallGraphEdgeLabel edgeLabel = node.getOutgoingEdgeLabels().get(edgeIndex);
+			int edgeIndex = getAndUpdateEdgeIndex();
+			CallGraphNode callerNode = mProcedureStack.peek();
+			CallGraphNode calleeNode = callerNode.getOutgoingNodes().get(edgeIndex);
+			CallGraphEdgeLabel edgeLabel = callerNode.getOutgoingEdgeLabels().get(edgeIndex);
+			assert call.getMethodName().equals(calleeNode.getId())
+				&& call.getMethodName().equals(edgeLabel.getCalleeProcedureId());			
 			if (edgeLabel.getInlineFlag()) {
-				return inlineCall(call);
+				mProcedureStack.push(calleeNode);
+				if (incrementCallCounter(calleeNode.getId()) > 0) {
+					mapVariablesOfCurrentProcedure();
+				}
+				// inline specifications ---------
+				Specification[] specs = calleeNode.getProcedureWithSpecification().getSpecification();
+				List<Statement> assertRequires = new ArrayList<>();
+				List<Statement> assumeRequires = new ArrayList<>();
+				List<Statement> assertEnsures = new ArrayList<>();
+				List<Statement> assumeEnsures = new ArrayList<>();
+				for (Specification spec : processSpecifications(specs)) {
+					ILocation loc = spec.getLocation();
+					if (spec instanceof RequiresSpecification) {
+						Expression formula = ((RequiresSpecification) spec).getFormula();
+						assertRequires.add(new AssertStatement(loc, formula));	
+						if (mAssumeRequiresAfterAssert) {
+							assumeRequires.add(new AssumeStatement(loc, formula));
+						}
+					} else if (spec instanceof EnsuresSpecification) {
+						Expression formula = ((EnsuresSpecification) spec).getFormula();
+						if (mAssertEnsuresBeforeAssume) {
+							assertEnsures.add(new AssertStatement(loc, formula));
+						}
+						assumeEnsures.add(new AssumeStatement(loc, formula));
+					}
+				}
+				// inline body ---------
+				List<Statement> inlinedBody;
+				if (calleeNode.isImplemented()) {
+				} else {
+					
+				}
+
+				
+				
+				mProcedureStack.pop();
 			}
 		}
-		*/
 		return Collections.singletonList(processStatement(stat));
 	}
-	
-	private List<Statement> inlineCall(CallStatement call) {
-		// TODO implement
-		return null;
-	}
-	
+
 	private void registerLabels(Statement[] stats) {
 		for (Statement stat : stats) {
 			registerLabels(stat);

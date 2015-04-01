@@ -31,7 +31,10 @@ public enum PreferenceItem {
 	USER_LIST_TYPE("user list type", UserListType.BLACKLIST_RESTRICT, PreferenceType.Combo, UserListType.values()),
 
 	LABEL___SPECIFICATION_INLINING("\nSpecification inlining"),
-	ASSUME_PRE_AFTER_ASSERT("Assume inlined preconditions after assertion", true, PreferenceType.Boolean);
+	NOTE___ASSERT_REQUIRES("[X] assert precondition/requires"),
+	ASSUME_REQUIRES_AFTER_ASSERT("assume precondition/requires", true, PreferenceType.Boolean),
+	ASSERT_ENSURES_BEFORE_ENSURES("assert postcondition/ensures", false, PreferenceType.Boolean),
+	NOTE___ASSUME_ENSURES("[X] assume postcondition/ensures");
 
 	protected final String mName;
 	protected final Object mDefaultValue;
