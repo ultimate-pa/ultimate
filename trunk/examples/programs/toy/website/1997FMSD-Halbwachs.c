@@ -33,7 +33,7 @@ int main() {
                 break;
             }
             d++;
-            //@assert (d != 10 );
+            //@ assert (d != 10 );
         }
     }
 }
