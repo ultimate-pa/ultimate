@@ -16,6 +16,15 @@ import de.uni_freiburg.informatik.ultimate.website.Tasks.TaskNames;
 public class UltimateExecutor {
 
 	private final ServletLogger mLogger;
+	
+	/**
+	 * Upper bound for the all timeouts that are set by {@link WebToolchain}s.
+	 * While executing a toolchain Ultimate uses the minimum of this number and
+	 * the timeout of the {@link WebToolchain}.
+	 * Reducing this to a small number is helpful if the website is running on
+	 * a computer that is not able to handle many requests in parallel.
+	 */
+	private static final long sTimeoutUpperBound = 24 * 60 * 60 * 1000; 
 
 	public UltimateExecutor(ServletLogger logger) {
 		mLogger = logger;
@@ -60,7 +69,8 @@ public class UltimateExecutor {
 			mLogger.log("Written temporary files to " + inputFile.getParent() + " with timestamp " + timestamp);
 
 			// run ultimate
-			runUltimate(json, inputFile, settingsFile, toolchainFile, tc.getTimeout());
+			long timeout = Math.min(tc.getTimeout(), sTimeoutUpperBound);
+			runUltimate(json, inputFile, settingsFile, toolchainFile, timeout);
 			mLogger.log("Finished executing Ultimate for task ID " + taskId + " and toolchain ID " + tcId + "...");
 
 		} catch (IllegalArgumentException e) {
