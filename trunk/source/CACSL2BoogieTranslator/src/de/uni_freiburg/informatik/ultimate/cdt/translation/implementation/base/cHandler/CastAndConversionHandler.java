@@ -141,9 +141,6 @@ public class CastAndConversionHandler {
 
 		if (lUlType instanceof CPrimitive && rUlType instanceof CPointer
 				|| rUlType instanceof CPrimitive && lUlType instanceof CPointer) {
-			//			if (rePositive.lrVal.getValue() instanceof IntegerLiteral
-			//			&& ((IntegerLiteral) rePositive.lrVal.getValue()).getValue().equals("0")
-			//			&& reNegative.lrVal.cType instanceof CPointer) {	
 			if (lUlType instanceof CPrimitive) {
 				if (left.getValue() instanceof IntegerLiteral
 						&& ((IntegerLiteral) left.getValue()).getValue().equals("0")) {
@@ -162,18 +159,6 @@ public class CastAndConversionHandler {
 		}
 	}
 	
-//	public static void doIntOverflowTreatmentIfApplicable(Dispatcher main, MemoryHandler memoryHandler,
-//			ILocation loc, ResultExpression rex) {
-//		if (main.cHandler.getUnsignedTreatment() == UNSIGNED_TREATMENT.IGNORE)
-//			return;
-//		
-//		boolean isRexUnsigned = rex.lrVal.cType instanceof CPrimitive
-//				&& ((CPrimitive) rex.lrVal.cType).isUnsigned()
-//				&& !rex.lrVal.isIntFromPointer;
-//		
-//		if (isRexUnsigned)
-//			doIntOverflowTreatment(main, memoryHandler, loc, rex);
-//	}
 	public static void doIntOverflowTreatment(Dispatcher main, MemoryHandler memoryHandler, ILocation loc,
 			ResultExpression rex) {
 		doIntOverflowTreatment(main, memoryHandler, loc, rex, rex.lrVal.cType.getUnderlyingType());
