@@ -169,18 +169,13 @@ public class WitnessManager {
 		BufferedInputStream errorStream = new BufferedInputStream(mp.getErrorStream());
 		BufferedInputStream outputStream = new BufferedInputStream(mp.getInputStream());
 
-		boolean hitTimeout = false;
 		String error = convertStreamToString(errorStream);
 		String output = convertStreamToString(outputStream);
 
-		// wait for 1 extra second for the witness checker, then kill it
+		// wait for timeoutInS seconds for the witness checker, then kill it
 		// forcefully
 		mLogger.info("Waiting for " + timeoutInS + "s for CPA Checker...");
-		MonitoredProcessState mps = mp.waitfor(timeoutInS * 1000);
-		if (mps.isRunning()) {
-			mp.forceShutdown();
-			hitTimeout = true;
-		}
+		MonitoredProcessState mps = mp.impatientWaitUntilTime(timeoutInS * 1000);
 		mLogger.info("Return code was " + mps.getReturnCode());
 
 		// TODO: interpret error and output
@@ -192,7 +187,7 @@ public class WitnessManager {
 		} else {
 			StringBuilder sb = new StringBuilder();
 			sb.append("Witness for CEX did not verify");
-			if (hitTimeout) {
+			if (mps.isKilled()) {
 				sb.append(" due to timeout of ");
 				sb.append(timeoutInS);
 				sb.append("s");

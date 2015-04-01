@@ -29,8 +29,6 @@ import de.uni_freiburg.informatik.ultimate.util.ExceptionUtils;
  */
 public final class MonitoredProcess implements IStorable {
 
-	//TODO: Add method to start external process with a forced timeout 
-	
 	private final Logger mLogger;
 	private final IToolchainStorage mStorage;
 	private final IUltimateServiceProvider mServices;
@@ -69,7 +67,8 @@ public final class MonitoredProcess implements IStorable {
 		mStdInStreamPipe = new PipedInputStream(sBufferSize);
 		mStdErrStreamPipe = new PipedInputStream(sBufferSize);
 
-		// wait until all 3 threads are ready (stderr buffer, stdinbuffer,
+		// -2 because we wait until all 3 threads are ready (stderr buffer,
+		// stdinbuffer,
 		// actual process watcher) before returning from exec
 		mWaitForSetup = new Semaphore(-2);
 	}
@@ -101,7 +100,7 @@ public final class MonitoredProcess implements IStorable {
 		storage.putStorable(getKey(mID, oneLineCmd), this);
 
 		mMonitor = new Thread(createProcessRunner(), "MonitoredProcess " + mID + " " + oneLineCmd);
-		mLogger.info(String.format("Starting monitored process with %s (exit command is %s, workingDir is %s)",
+		mLogger.info(String.format("Starting monitored process %s with %s (exit command is %s, workingDir is %s)", mID,
 				mCommand, mExitCommand, workingDir));
 		mMonitor.start();
 		mWaitForSetup.acquireUninterruptibly();
@@ -129,13 +128,13 @@ public final class MonitoredProcess implements IStorable {
 
 	public MonitoredProcessState waitfor() throws InterruptedException {
 		if (mMonitor.getState().equals(State.TERMINATED)) {
-			return new MonitoredProcessState(false, mReturnCode);
+			return new MonitoredProcessState(false, false, mReturnCode);
 		}
 		mMonitor.join();
 		if (mMonitor.getState().equals(State.TERMINATED)) {
-			return new MonitoredProcessState(false, mReturnCode);
+			return new MonitoredProcessState(false, false, mReturnCode);
 		} else {
-			return new MonitoredProcessState(true, mReturnCode);
+			return new MonitoredProcessState(true, false, mReturnCode);
 		}
 	}
 
@@ -149,14 +148,69 @@ public final class MonitoredProcess implements IStorable {
 	 */
 	public MonitoredProcessState waitfor(long millis) throws InterruptedException {
 		if (mMonitor.getState().equals(State.TERMINATED)) {
-			return new MonitoredProcessState(false, mReturnCode);
+			return new MonitoredProcessState(false, false, mReturnCode);
 		}
 		mMonitor.join(millis);
 		if (mMonitor.getState().equals(State.TERMINATED)) {
-			return new MonitoredProcessState(false, mReturnCode);
+			return new MonitoredProcessState(false, false, mReturnCode);
 		} else {
-			return new MonitoredProcessState(true, mReturnCode);
+			return new MonitoredProcessState(true, false, mReturnCode);
 		}
+	}
+
+	/**
+	 * Wait for some time for the normal termination of the process. If it did
+	 * not occur, terminate the process abnormally.
+	 * 
+	 * @param millis
+	 *            The time in milliseconds for which the method waits for the
+	 *            normal termination of the process. Must be non-negative. A
+	 *            value of 0 means waiting forever.
+	 * @return A {@link MonitoredProcessState} instance containing the return
+	 *         code of the process or -1
+	 */
+	public MonitoredProcessState impatientWaitUntilTime(long millis) {
+		if (millis < 0) {
+			throw new IllegalArgumentException("millis has to be non-negative but was " + millis);
+		}
+		mLogger.info(String.format("Waiting %s ms for monitored process %s with %s", millis, mID, mCommand));
+		MonitoredProcessState mps = null;
+		try {
+			mps = waitfor(millis);
+		} catch (InterruptedException e) {
+		}
+		if (mps == null || mps.isRunning()) {
+			mLogger.warn(String.format("Timeout reached for monitored process %s with %s, terminating...", mID,
+					mCommand));
+			forceShutdown();
+			return new MonitoredProcessState(!mMonitor.getState().equals(State.TERMINATED), true, mReturnCode);
+		}
+		return mps;
+	}
+
+	/**
+	 * Wait until the toolchain is cancelled for the termination of the process.
+	 * If it did not occur, terminate the process abnormally.
+	 * 
+	 * @return A {@link MonitoredProcessState} instance containing the return
+	 *         code of the process or -1
+	 */
+	public MonitoredProcessState impatientWaitUntilToolchainTimeout() {
+		mLogger.info(String.format("Waiting until toolchain timeout for monitored process %s with %s", mID, mCommand));
+		while (mServices.getProgressMonitorService().continueProcessing()) {
+			try {
+				MonitoredProcessState state = waitfor(500);
+				if (!state.isRunning()) {
+					return state;
+				}
+			} catch (InterruptedException e) {
+				break;
+			}
+		}
+		mLogger.warn(String.format(
+				"Toolchain was canceled while waiting for monitored process %s with %s, terminating...", mID, mCommand));
+		forceShutdown();
+		return new MonitoredProcessState(!mMonitor.getState().equals(State.TERMINATED), true, mReturnCode);
 	}
 
 	public synchronized void forceShutdown() {
@@ -257,14 +311,20 @@ public final class MonitoredProcess implements IStorable {
 	public class MonitoredProcessState {
 		private final boolean mIsRunning;
 		private final int mReturnCode;
+		private final boolean mIsKilled;
 
-		public MonitoredProcessState(boolean isRunning, int returnCode) {
+		public MonitoredProcessState(boolean isRunning, boolean isKilled, int returnCode) {
 			mIsRunning = isRunning;
 			mReturnCode = returnCode;
+			mIsKilled = isKilled;
 		}
 
 		public boolean isRunning() {
 			return mIsRunning;
+		}
+
+		public boolean isKilled() {
+			return mIsKilled;
 		}
 
 		public int getReturnCode() {
