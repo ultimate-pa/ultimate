@@ -2757,14 +2757,15 @@ public class CHandler implements ICHandler {
 					// ACSL at the end of a function
 					for (ACSLNode acslNode : mAcsl.mAcsl) {
 						if (parent.getFileLocation().getEndingLineNumber() <= acslNode.getStartingLineNumber()) {
-							return; // handle later ...
-						}
-						Result acslResult = main.dispatch(acslNode);
-						if (acslResult.node instanceof Statement) {
-							if (parent.getFileLocation().getEndingLineNumber() >= acslNode.getEndingLineNumber()
-									&& parent.getFileLocation().getStartingLineNumber() <= acslNode
-											.getStartingLineNumber()) {
-								stmt.add((Statement) acslResult.node);
+							return;// handle later ...
+						} else if (parent.getFileLocation().getEndingLineNumber() >= acslNode.getEndingLineNumber()
+								&& parent.getFileLocation().getStartingLineNumber() <= acslNode
+								.getStartingLineNumber()) {
+							Result acslResult = main.dispatch(acslNode);
+							if (acslResult instanceof ResultExpression) {
+								decl.addAll(((ResultExpression) acslResult).decl);
+								stmt.addAll(((ResultExpression) acslResult).stmt);
+								stmt.addAll(createHavocsForNonMallocAuxVars(((ResultExpression) acslResult).auxVars));
 								try {
 									mAcsl = main.nextACSLStatement();
 								} catch (ParseException e1) {
@@ -2772,11 +2773,11 @@ public class CHandler implements ICHandler {
 									ILocation loc = LocationFactory.createCLocation(parent);
 									main.unsupportedSyntax(loc, msg);
 								}
+							} else {
+								String msg = "Unexpected ACSL comment: " + acslResult.node.getClass();
+								ILocation loc = LocationFactory.createCLocation(parent);
+								throw new IncorrectSyntaxException(loc, msg);
 							}
-						} else {
-							String msg = "Unexpected ACSL comment: " + acslResult.node.getClass();
-							ILocation loc = LocationFactory.createCLocation(parent);
-							throw new IncorrectSyntaxException(loc, msg);
 						}
 					}
 				}
