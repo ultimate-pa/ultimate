@@ -6,6 +6,7 @@ package de.uni_freiburg.informatik.ultimatetest.buchiautomizer;
 import java.util.Collection;
 
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
+import de.uni_freiburg.informatik.ultimatetest.AbstractModelCheckerTestSuite.DirectoryFileEndingsPair;
 
 /**
  * @author heizmann@informatik.uni-freiburg.de
@@ -13,7 +14,64 @@ import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
  */
 public class BuchiAutomizerDefaultTests extends
 		AbstractBuchiAutomizerTestSuite {
-	private static final String[] m_Directories = {
+	
+	
+	
+	private static int m_FilesPerDirectoryLimit = Integer.MAX_VALUE;
+
+
+	private static final DirectoryFileEndingsPair[] m_SVCOMP_Examples = {
+//		/*** Category 1. Arrays ***/
+//		new DirectoryFileEndingsPair("examples/svcomp/array-examples/", new String[]{ ".i" }, m_FilesPerDirectoryLimit) ,
+//		
+//		/*** Category 2. Bit Vectors ***/
+//		new DirectoryFileEndingsPair("examples/svcomp/bitvector/", new String[]{ ".i", ".c" }, m_FilesPerDirectoryLimit) ,
+//		new DirectoryFileEndingsPair("examples/svcomp/bitvector-regression/", new String[]{ ".i", ".c" }, m_FilesPerDirectoryLimit) ,
+//		
+//		/*** Category 4. Control Flow and Integer Variables ***/
+//		new DirectoryFileEndingsPair("examples/svcomp/ntdrivers-simplified/", new String[]{".c" }, m_FilesPerDirectoryLimit) ,
+//		new DirectoryFileEndingsPair("examples/svcomp/ssh-simplified/", new String[]{".c" }, m_FilesPerDirectoryLimit) ,
+//		new DirectoryFileEndingsPair("examples/svcomp/locks/", new String[]{".c" }, m_FilesPerDirectoryLimit) ,
+//		
+//		new DirectoryFileEndingsPair("examples/svcomp/loops/", new String[]{".i"}) ,
+//		new DirectoryFileEndingsPair("examples/svcomp/loop-acceleration/", new String[]{".c" }, m_FilesPerDirectoryLimit) ,
+//		new DirectoryFileEndingsPair("examples/svcomp/loop-invgen/", new String[]{".i"}, m_FilesPerDirectoryLimit) ,
+//		new DirectoryFileEndingsPair("examples/svcomp/loop-lit/", new String[]{ ".i", ".c" }, m_FilesPerDirectoryLimit) ,
+//		new DirectoryFileEndingsPair("examples/svcomp/loop-new/", new String[]{".i"}, m_FilesPerDirectoryLimit) ,
+//		
+//		new DirectoryFileEndingsPair("examples/svcomp/eca-rers2012/", new String[]{".c" }, m_FilesPerDirectoryLimit) ,
+//		new DirectoryFileEndingsPair("examples/svcomp/product-lines/", new String[]{".c" }, m_FilesPerDirectoryLimit) ,
+//		
+//		/*** Category 6. Heap Manipulation / Dynamic Data Structures ***/
+//		new DirectoryFileEndingsPair("examples/svcomp/heap-manipulation/", new String[]{ ".i" }, m_FilesPerDirectoryLimit) ,
+//		new DirectoryFileEndingsPair("examples/svcomp/list-properties/", new String[]{ ".i" }, m_FilesPerDirectoryLimit) ,
+//		new DirectoryFileEndingsPair("examples/svcomp/ldv-regression/", new String[]{ ".i" }, m_FilesPerDirectoryLimit) ,
+//		new DirectoryFileEndingsPair("examples/svcomp/ddv-machzwd/", new String[]{ ".i" }, m_FilesPerDirectoryLimit) ,
+//		
+//		/*** Category 7. Memory Safety ***/
+//		new DirectoryFileEndingsPair("examples/svcomp/memsafety/", new String[]{ ".i" }, m_FilesPerDirectoryLimit) ,
+//		new DirectoryFileEndingsPair("examples/svcomp/list-ext-properties/", new String[]{ ".i" }, m_FilesPerDirectoryLimit) ,
+//		new DirectoryFileEndingsPair("examples/svcomp/memory-alloca/", new String[]{ ".i" }, m_FilesPerDirectoryLimit) ,
+//		new DirectoryFileEndingsPair("examples/svcomp/memory-unsafe/", new String[]{ ".i" }, m_FilesPerDirectoryLimit) ,
+//
+//		/*** Category 8. Recursive ***/
+//		new DirectoryFileEndingsPair("examples/svcomp/recursive/", new String[]{ ".c" }, m_FilesPerDirectoryLimit) ,
+//		
+//		/*** Category 9. Sequentialized Concurrent Programs ***/
+//		new DirectoryFileEndingsPair("examples/svcomp/systemc/", new String[]{ ".c" }, m_FilesPerDirectoryLimit) ,
+//		new DirectoryFileEndingsPair("examples/svcomp/seq-mthreaded/", new String[]{ ".c" }, m_FilesPerDirectoryLimit) ,
+//		new DirectoryFileEndingsPair("examples/svcomp/seq-pthread/", new String[]{ ".i" }, m_FilesPerDirectoryLimit) ,
+		
+		/*** Category 12. Termination ***/
+		new DirectoryFileEndingsPair("examples/svcomp/termination-crafted/", new String[]{ ".c" }, m_FilesPerDirectoryLimit) ,
+		new DirectoryFileEndingsPair("examples/svcomp/termination-crafted-lit/", new String[]{ ".c" }, m_FilesPerDirectoryLimit) ,
+		new DirectoryFileEndingsPair("examples/svcomp/termination-memory-alloca/", new String[]{ ".i" }, m_FilesPerDirectoryLimit) ,
+		new DirectoryFileEndingsPair("examples/svcomp/termination-numeric/", new String[]{ ".c" }, m_FilesPerDirectoryLimit) ,
+	};
+	
+	
+	
+	private static final String[] m_UltimateRepository = {
 //		"examples/lassos/",
 //		"examples/lassos/arrays",
 //		"examples/termination/svcomp-sorted/success/",
@@ -22,7 +80,7 @@ public class BuchiAutomizerDefaultTests extends
 //		"examples/programs/toy"
 //		"examples/programs/termination/toPLDI",
 //		"examples/termination/cooperatingT2/difficult/solved",
-		"examples/termination/cooperatingT2",
+//		"examples/termination/cooperatingT2",
 	};
 	
 	/**
@@ -32,56 +90,44 @@ public class BuchiAutomizerDefaultTests extends
 	public long getTimeout() {
 		return 120 * 1000;
 	}
-
-
-	private static final boolean s_UseMediumBlockEncoding = !false;
-	private static final String s_MediumBlockEncodingSetting = "buchiAutomizer/staged300Forward-Z3.epf";
-
-	private static final boolean s_UseLargeBlockEncoding = !false;
-	private static final String s_LargeBlockEncodingSetting = "buchiAutomizer/staged300Forward-Z3-LBE.epf";
-	
-	private static final boolean s_UseTasimp = true;
-	private static final String s_TasimpSetting = "buchiAutomizer/staged300Forward-Z3-Tasimp.epf";
 	
 	
+	/**
+	 * List of path to setting files. 
+	 * Ultimate will run on each program with each setting that is defined here.
+	 * The path are defined relative to the folder "trunk/examples/settings/",
+	 * because we assume that all settings files are in this folder.
+	 * 
+	 */
+	private static final String[] m_Settings = {
+		"buchiAutomizer/staged300Forward-Z3.epf",
+		"buchiAutomizer/staged300Forward-Z3-LBE.epf",
+		"buchiAutomizer/staged300Forward-Z3-Tasimp.epf",
+	};
+
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
-		if (s_UseMediumBlockEncoding) {
-			addTestCases(
-					"BuchiAutomizerBplWithBlockEncoding.xml",
-					s_MediumBlockEncodingSetting,
-					m_Directories,
-					new String[] {".bpl"});
-			addTestCases(
-					"BuchiAutomizerCWithBlockEncoding.xml",
-					s_MediumBlockEncodingSetting,
-					m_Directories,
-					new String[] {".c"});
+		for (String setting : m_Settings) {
+			addTestCases("BuchiAutomizerCWithBlockEncoding.xml", 
+					setting, 
+					m_SVCOMP_Examples);
 		}
-		if (s_UseLargeBlockEncoding) {
+		
+		for (String setting : m_Settings) {
 			addTestCases(
 					"BuchiAutomizerBplWithBlockEncoding.xml",
-					s_LargeBlockEncodingSetting,
-					m_Directories,
-					new String[] {".bpl"});
-			addTestCases(
-					"BuchiAutomizerCWithBlockEncoding.xml",
-					s_LargeBlockEncodingSetting,
-					m_Directories,
-					new String[] {".c"});
+					setting,
+					m_UltimateRepository,
+				    new String[] {".bpl"});
 		}
-		if (s_UseTasimp) {
-			addTestCases(
-					"BuchiAutomizerBplWithBlockEncoding.xml",
-					s_TasimpSetting,
-					m_Directories,
-					new String[] {".bpl"});
+		for (String setting : m_Settings) {
 			addTestCases(
 					"BuchiAutomizerCWithBlockEncoding.xml",
-					s_TasimpSetting,
-					m_Directories,
-					new String[] {".c"});
+					setting,
+					m_UltimateRepository,
+				    new String[] {".c", ".i"});
 		}
 		return super.createTestCases();
 	}
+	
 }
