@@ -175,6 +175,15 @@ public class SdHoareTripleCheckerHelper {
 				return null;
 			} else if (sat == Validity.NOT_CHECKED) {
 				return null;
+			} else if (sat == Validity.INVALID) {
+				String proc = cb.getPreceedingProcedure();
+				assert proc.equals(cb.getSucceedingProcedure()) : "internal statement must not change procedure";
+				if (m_ModifiableGlobalVariableManager.containsNonModifiableOldVars(pre, proc) || 
+						m_ModifiableGlobalVariableManager.containsNonModifiableOldVars(post, proc)) {
+					return null;
+				} else {
+					//continue and return Validity.INVALID
+				}
 			}
 		} else {
 			if (!Collections.disjoint(pre.getVars(), post.getVars())) {
