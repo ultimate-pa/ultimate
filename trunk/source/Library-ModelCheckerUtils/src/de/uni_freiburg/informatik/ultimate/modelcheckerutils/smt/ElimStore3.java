@@ -196,13 +196,23 @@ public class ElimStore3 {
 
 		Script script = mScript;
 		
+		Term intermediateResult = othersT;
+		if (writeInto != null) {
+			// if update is of form (store oldArr idx val) = newArr,
+			// we replace all occurrences of (store oldArr idx val) by newArr.
+			Map<Term, Term> mapping = Collections.singletonMap(
+					(Term) writeInto.getMultiDimensionalStore().getStoreTerm(), (Term) writeInto.getNewArray());
+			SafeSubstitution substStoreTerm = new SafeSubstitution(script, mapping);
+			intermediateResult = substStoreTerm.transform(intermediateResult);
+		}
+		
 		// Indices and corresponding values of a_elim 
 		IndicesAndValues iav = new IndicesAndValues(eliminatee, conjuncts);
-
 		SafeSubstitution subst = new SafeSubstitution(script, iav.getMapping());
 
 		ArrayList<Term> additionalConjuncs = new ArrayList<Term>();
-		Term intermediateResult = subst.transform(othersT);
+		intermediateResult = subst.transform(intermediateResult);
+		
 		if (writtenFrom == null && Arrays.asList(intermediateResult.getFreeVars()).contains(eliminatee)) {
 			throw new AssertionError("var is still there " + eliminatee);
 		}
