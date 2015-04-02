@@ -260,6 +260,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 					new TreeMap<Integer, IPredicate>(), (NestedRun<CodeBlock, IPredicate>) m_Counterexample,
 					m_SmtManager, m_ModGlobVarManager, m_AssertCodeBlocksIncrementally, m_Services, m_ToolchainStorage, true,
 					predicateUnifier);
+			break;
 		default:
 			throw new UnsupportedOperationException("unsupported interpolation");
 		}
