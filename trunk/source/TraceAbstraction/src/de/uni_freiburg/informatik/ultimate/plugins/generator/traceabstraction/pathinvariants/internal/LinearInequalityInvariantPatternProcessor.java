@@ -589,7 +589,7 @@ public final class LinearInequalityInvariantPatternProcessor
 		if (someExtendedDebugging) {
 			solver.setOption(":produce-unsat-cores", true);
 		}
-		solver.setLogic(Logics.QF_NRA);
+		solver.setLogic(Logics.AUFNIRA);
 	}
 
 }
