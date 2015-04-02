@@ -45,7 +45,7 @@ public class TACAS2015AlgoComparison extends TACAS2015 {
 	   		"examples/svcomp/ssh-simplified/", 
  			"examples/svcomp/systemc/",
  			
- 			"examples/svcomp/loop-new",
+ 			
 
 //		    "examples/svcomp/heap-manipulation",
 //		    "examples/svcomp/list-properties",

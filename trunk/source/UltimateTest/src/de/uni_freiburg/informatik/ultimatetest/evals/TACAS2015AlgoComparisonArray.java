@@ -46,6 +46,7 @@ public class TACAS2015AlgoComparisonArray extends TACAS2015 {
 		    "examples/svcomp/loop-acceleration",
 		    "examples/svcomp/loop-invgen",
 		    "examples/svcomp/loop-lit",
+		    "examples/svcomp/loop-new",
 		};
 		return directories;
 		// @formatter:on
