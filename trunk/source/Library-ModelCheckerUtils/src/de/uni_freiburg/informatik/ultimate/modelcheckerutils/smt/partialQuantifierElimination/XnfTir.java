@@ -15,6 +15,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.PartialQuantifierElimination;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSelect;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.AffineRelation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.BinaryNumericRelation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.AffineRelation.TransformInequality;
@@ -136,14 +137,16 @@ public class XnfTir extends XnfPartialQuantifierElimination {
 						if (quantifier == QuantifiedFormula.EXISTS) {
 							 antiDer.add(bnr.getRhs());
 						} else {
-							throw new AssertionError("should have been removed by DER");
+							assert occursInsideSelectTerm(term, eliminatee) : "should have been removed by DER";
+							// no chance to eliminate the variable
 						}
 						break;
 					case EQ:
 						if (quantifier == QuantifiedFormula.FORALL) {
 							 antiDer.add(bnr.getRhs());
 						} else {
-							throw new AssertionError("should have been removed by DER");
+							assert occursInsideSelectTerm(term, eliminatee) : "should have been removed by DER";
+							// no chance to eliminate the variable
 						}
 						break;
 					case GEQ:
@@ -206,7 +209,28 @@ public class XnfTir extends XnfPartialQuantifierElimination {
 		}
 		return resultDisjunctions;
 	}
-	
+
+	/**
+	 * 	@return true iff tv is subterm of some select term in term. 
+	 */
+	private boolean occursInsideSelectTerm(Term term, TermVariable tv) {
+		List<MultiDimensionalSelect> selectTerms = MultiDimensionalSelect.extractSelectShallow(term, true);
+		for (MultiDimensionalSelect mds : selectTerms) {
+			for (Term index : mds.getIndex()) {
+				if (Arrays.asList(index.getFreeVars()).contains(tv)) {
+					return true;
+				}
+			}
+			if (Arrays.asList(mds.getSelectTerm().getFreeVars()).contains(tv)) {
+				return true;
+			}
+			if (Arrays.asList(mds.getArray().getFreeVars()).contains(tv)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
 	private Term buildInequality(String symbol, Term lhs, Term rhs) {
 		Term term = m_Script.term(symbol, lhs, rhs);
 		AffineRelation rel;
