@@ -92,13 +92,25 @@ public class ConversionVisitor implements IMinimizationVisitor {
 	private final CodeBlockFactory mCbf;
 
 	/**
+	 * Simplify TransFormulas of CodeBlocks
+	 */
+	private final boolean mSimplify;
+
+	/**
+	 * Apply an extended (more expensive) partial quantifier elimination to
+	 * eliminate auxiliary variables.
+	 */
+	private boolean m_ExtPqe = false;
+
+	/**
 	 * @param boogie2smt
 	 * @param root
 	 */
 	public ConversionVisitor(Boogie2SMT boogie2smt, RootNode root, IRatingHeuristic heuristic,
-			IUltimateServiceProvider services) {
+			IUltimateServiceProvider services, boolean simplify) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
+		mSimplify = simplify;
 		mRefNodeMap = new HashMap<MinimizedNode, ProgramPoint>();
 		mOrigToNewMap = new HashMap<ProgramPoint, ProgramPoint>();
 		mLocNodesForAnnot = new HashMap<String, HashMap<String, ProgramPoint>>();
@@ -163,6 +175,8 @@ public class ConversionVisitor implements IMinimizationVisitor {
 	 * 
 	 * @param node
 	 *            MinimizedNode to convert
+	 * @param simplify 
+	 * @param extPqe 
 	 */
 	private void internalVisitNode(MinimizedNode node) {
 		// We have no outgoing edges, so we reached an end of the recursion
@@ -201,7 +215,7 @@ public class ConversionVisitor implements IMinimizationVisitor {
 				EncodingStatistics.addToTotalRating(edge.getRating().getRatingValueAsInteger());
 				EncodingStatistics.incTotalEdges();
 				// Convert IMinimizedEdge to valid RCFGEdge
-				cb = convertMinimizedEdge(edge);
+				cb = convertMinimizedEdge(edge, mSimplify, m_ExtPqe);
 				if (cb instanceof GotoEdge) {
 					// it is possible that the found replacement, is Goto-Edge,
 					// which we have to convert in a valid edge
@@ -329,9 +343,11 @@ public class ConversionVisitor implements IMinimizationVisitor {
 	 * 
 	 * @param edge
 	 *            the minimized edge to convert
+	 * @param simplify 
+	 * @param extPqe 
 	 * @return a converted CodeBlock
 	 */
-	private CodeBlock convertMinimizedEdge(IMinimizedEdge edge) {
+	private CodeBlock convertMinimizedEdge(IMinimizedEdge edge, boolean simplify, boolean extPqe) {
 		if (!mServices.getProgressMonitorService().continueProcessing()) {
 			return null;
 		}
@@ -363,7 +379,7 @@ public class ConversionVisitor implements IMinimizationVisitor {
 			}
 			ArrayList<CodeBlock> recConvEdges = new ArrayList<CodeBlock>();
 			for (IMinimizedEdge compEdge : edges) {
-				CodeBlock convEdge = convertMinimizedEdge(compEdge);
+				CodeBlock convEdge = convertMinimizedEdge(compEdge, simplify, extPqe);
 				if (edge instanceof ConjunctionEdge && convEdge != null) {
 					// add on the actual list of the stack
 					mSeqComposedBlocks.peek().add(convEdge);
@@ -417,13 +433,13 @@ public class ConversionVisitor implements IMinimizationVisitor {
 						return new ShortcutCodeBlock(null, null, new CodeBlock[] { replaceGotoEdge(gotoEdges.get(0),
 								gotoEdges.get(1)) }, mLogger);
 					}
-					return mCbf.constructSequentialComposition(null, null, false, false,
+					return mCbf.constructSequentialComposition(null, null, simplify, extPqe,
 							Collections.singletonList(replaceGotoEdge(gotoEdges.get(0), gotoEdges.get(1))));
 				}
 				if (edge instanceof ShortcutErrEdge) {
 					return new ShortcutCodeBlock(null, null, composeEdges.toArray(new CodeBlock[0]), mLogger);
 				}
-				return mCbf.constructSequentialComposition(null, null, false, false,
+				return mCbf.constructSequentialComposition(null, null, simplify, extPqe,
 						Collections.unmodifiableList(composeEdges));
 			}
 			if (edge instanceof DisjunctionEdge) {
