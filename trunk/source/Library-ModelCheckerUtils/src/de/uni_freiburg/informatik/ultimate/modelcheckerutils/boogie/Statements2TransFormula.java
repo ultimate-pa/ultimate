@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -31,11 +32,10 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Specification;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableLHS;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.ModelCheckerUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Expression2Term.IdentifierTranslator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula.Infeasibility;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.NaiveDestructiveEqualityResolution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.partialQuantifierElimination.XnfDer;
 
 /**
  * Translates statements into TransFormulas. The resulting TransFormula encodes
@@ -565,9 +565,8 @@ public class Statements2TransFormula {
 	 * @return
 	 */
 	private Term eliminateAuxVars(Term input, Set<TermVariable> auxVars) {
-		NaiveDestructiveEqualityResolution der = new NaiveDestructiveEqualityResolution(m_Script, mServices
-				.getLoggingService().getLogger(ModelCheckerUtils.sPluginID));
-		Term result = der.eliminate(auxVars, input);
+		XnfDer xnfDer = new XnfDer(m_Script, mServices);
+		Term result = Util.and(m_Script, xnfDer.tryToEliminate(QuantifiedFormula.EXISTS, SmtUtils.getConjuncts(input), auxVars));
 		return result;
 	}
 

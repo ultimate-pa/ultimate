@@ -27,12 +27,12 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.ModelCheckerUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ConstantFinder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.DagSizePrinter;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.NaiveDestructiveEqualityResolution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SafeSubstitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Cnf;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.partialQuantifierElimination.XnfDer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.result.TimeoutResult;
 import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
@@ -568,8 +568,8 @@ public class TransFormula implements Serializable {
 					new DagSizePrinter(formula), new DagSizePrinter(eliminated)));
 			formula = eliminated;
 		} else {
-			NaiveDestructiveEqualityResolution der = new NaiveDestructiveEqualityResolution(script, logger);
-			formula = der.eliminate(auxVars, formula);
+			XnfDer xnfDer = new XnfDer(script, services);
+			formula = Util.and(script, xnfDer.tryToEliminate(QuantifiedFormula.EXISTS, SmtUtils.getConjuncts(formula), auxVars));
 		}
 		if (simplify) {
 			formula = SmtUtils.simplify(script, formula, services);
