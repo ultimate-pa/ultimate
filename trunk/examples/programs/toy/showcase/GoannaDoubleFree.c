@@ -27,7 +27,6 @@ int main() {
         if (x == 1) {
             free(p);
         }
-        x--;
     }
     return 0;
 }

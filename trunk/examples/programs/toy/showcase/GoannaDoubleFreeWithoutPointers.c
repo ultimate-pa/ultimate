@@ -18,6 +18,7 @@
 
 int main() {
     int p, n;
+    p = 42;
     while ( n>=0 ) {
         //@ assert p != 0;
         if (n == 0) {
