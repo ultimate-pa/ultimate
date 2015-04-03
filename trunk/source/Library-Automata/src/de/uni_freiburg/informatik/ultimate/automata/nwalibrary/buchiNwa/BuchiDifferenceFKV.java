@@ -102,7 +102,7 @@ public class BuchiDifferenceFKV<LETTER,STATE> implements IOperation<LETTER,STATE
 		m_StateFactory = m_FstOperand.getStateFactory();
 		m_StateDeterminizer = new PowersetDeterminizer<LETTER,STATE>(sndOperand, true, stateFactory);
 		s_Logger.info(startMessage());
-		computateDifference();
+		constructDifference();
 		s_Logger.info(exitMessage());
 	}
 	
@@ -118,11 +118,11 @@ public class BuchiDifferenceFKV<LETTER,STATE> implements IOperation<LETTER,STATE
 		m_StateFactory = sf;
 		m_StateDeterminizer = stateDeterminizer;
 		s_Logger.info(startMessage());
-		computateDifference();
+		constructDifference();
 		s_Logger.info(exitMessage());
 	}
 	
-	private void computateDifference() throws AutomataLibraryException {
+	private void constructDifference() throws AutomataLibraryException {
 		m_SndComplemented = new BuchiComplementFKVNwa<LETTER, STATE>(m_Services, m_SndOperand, m_StateDeterminizer, m_StateFactory);
 		m_Intersect = new BuchiIntersectNwa<LETTER, STATE>(m_FstOperand, m_SndComplemented, m_StateFactory);
 		m_Result = new NestedWordAutomatonReachableStates<LETTER, STATE>(m_Services, m_Intersect);

@@ -803,7 +803,7 @@ public class BuchiComplementFKVNwa<LETTER,STATE> implements INestedWordAutomaton
 	 * Generates all LevelRanking states that are tight (see 2004ATVA paper)
 	 * and fulfill given LevelRankingConstraints.
 	 */
-	public class TightLevelRankingStateGenerator {
+	private class TightLevelRankingStateGenerator {
 
 		private final List<DoubleDecker<STATE>> m_UnrestrictedDoubleDecker = 
 			new ArrayList<DoubleDecker<STATE>>();
@@ -1087,7 +1087,7 @@ public class BuchiComplementFKVNwa<LETTER,STATE> implements INestedWordAutomaton
 	 * latter property leads to a sound complementation, but it is not mentioned
 	 * in any paper and I do not have a proof for that. 
 	 */
-	public class MatthiasTightLevelRankingStateGenerator extends
+	private class MatthiasTightLevelRankingStateGenerator extends
 											TightLevelRankingStateGenerator {
 
 		public MatthiasTightLevelRankingStateGenerator(
@@ -1158,7 +1158,7 @@ public class BuchiComplementFKVNwa<LETTER,STATE> implements INestedWordAutomaton
 	}
 
 
-	public class HeiMatTightLevelRankingStateGenerator extends
+	private class HeiMatTightLevelRankingStateGenerator extends
 		TightLevelRankingStateGenerator {
 		
 		private final TreeRelation<Integer, DoubleDecker<STATE>> m_UnrestrictedMaxRank2DoubleDecker;
@@ -1613,7 +1613,7 @@ public class BuchiComplementFKVNwa<LETTER,STATE> implements INestedWordAutomaton
 	 * efficient.
 	 *
 	 */
-	public class MaxTightLevelRankingStateGeneratorInitial extends
+	private class MaxTightLevelRankingStateGeneratorInitial extends
 											TightLevelRankingStateGenerator {
 		final List<DoubleDecker<STATE>> m_FinalDoubleDeckers = new ArrayList<DoubleDecker<STATE>>();
 		final List<DoubleDecker<STATE>> m_NonFinalDoubleDeckers = new ArrayList<DoubleDecker<STATE>>();
@@ -1674,7 +1674,7 @@ public class BuchiComplementFKVNwa<LETTER,STATE> implements INestedWordAutomaton
 	/**
 	 * Use this together with MaxTightLevelRankingStateGeneratorInitial.
 	 */
-	public class MaxTightLevelRankingStateGeneratorNonInitial extends TightLevelRankingStateGenerator {
+	private class MaxTightLevelRankingStateGeneratorNonInitial extends TightLevelRankingStateGenerator {
 
 		public MaxTightLevelRankingStateGeneratorNonInitial(
 				LevelRankingConstraint constraint) {
