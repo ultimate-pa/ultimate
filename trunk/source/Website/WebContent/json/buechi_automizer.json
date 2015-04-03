@@ -9,7 +9,7 @@
       "title": "Web Interface",
       "type": "interface",
       "html": "true",
-      "content": "<p> <span style=\"font-variant:small-caps\">Ultimate</span> Automizer is available via a <a href=\"https://monteverdi.informatik.uni-freiburg.de/tomcat//Website/?task=TERMINATION_C&amp;example=1926123293\"> in which you can analyse termination of C programs. This version has some limitations. We use a theorem prover that does not support non-linear arithmetic and therefore the built-in tool </a><a href=\"http://ultimate.informatik.uni-freiburg.de/LassoRanker/\">LassoRanker</a> can only provide linear ranking functions.</p>",
+      "content": "<p> <span style=\"font-variant:small-caps\">Ultimate</span> Automizer is available via a web interface in which you can analyse termination of C programs. This version has some limitations. We use a theorem prover that does not support non-linear arithmetic and therefore the built-in tool <a href=\"http://ultimate.informatik.uni-freiburg.de/LassoRanker/\">LassoRanker</a> can only provide linear ranking functions.</p>",
       "link_deco": "true",
       "button": "Open interface"
     },
