@@ -35,7 +35,7 @@ public class LoggingView extends ViewPart {
 	/**
 	 * the styled text that will contain our logs
 	 */
-	private StyledText styledText;
+	private StyledText mStyledText;
 	private GuiLoggingWindowAppender mAppender;
 	private int oldLineCount;
 
@@ -50,48 +50,45 @@ public class LoggingView extends ViewPart {
 	public void createPartControl(Composite parent) {
 		oldLineCount = 0;
 		parent.setLayout(new GridLayout());
-		styledText = new StyledText(parent, SWT.V_SCROLL | SWT.H_SCROLL
-				| SWT.MULTI | SWT.READ_ONLY | SWT.BORDER);
-		styledText.setFont(new Font(styledText.getFont().getDevice(),
-				"Courier", 10, SWT.NORMAL));
-		styledText.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
-		styledText.addModifyListener(new ModifyListener() {
+		mStyledText = new StyledText(parent, SWT.V_SCROLL | SWT.H_SCROLL | SWT.MULTI | SWT.READ_ONLY | SWT.BORDER);
+		mStyledText.setFont(new Font(mStyledText.getFont().getDevice(), "Courier", 10, SWT.NORMAL));
+		mStyledText.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
+		mStyledText.addModifyListener(new ModifyListener() {
 			public void modifyText(final ModifyEvent e) {
-				styledText.setSelection(styledText.getCharCount());
+				mStyledText.setSelection(mStyledText.getCharCount());
 			}
 		});
-		
+
 		UltimatePreferenceStore preferenceStore = new UltimatePreferenceStore(Activator.s_PLUGIN_ID);
 
 		mAppender = new GuiLoggingWindowAppender();
 		mAppender.init();
-		mAppender.setLayout(new PatternLayout(preferenceStore
-				.getString(CorePreferenceInitializer.LABEL_LOG4J_PATTERN)));
+		mAppender
+				.setLayout(new PatternLayout(preferenceStore.getString(CorePreferenceInitializer.LABEL_LOG4J_PATTERN)));
 
 		// use the root logger to have this appender in all child
 		// loggers
 		Logger.getRootLogger().addAppender(mAppender);
 		Logger.getRootLogger().info("Activated GUI Logging Window for Log4j Subsystem");
 
-		// Listen to preference changes affecting the GUI log output: Pattern and colors
+		// Listen to preference changes affecting the GUI log output: Pattern
+		// and colors
 		preferenceStore.addPreferenceChangeListener(new IPreferenceChangeListener() {
 			@Override
 			public void preferenceChange(PreferenceChangeEvent event) {
-				//do things if it concerns the loggers 
+				// do things if it concerns the loggers
 				String ek = event.getKey();
 				if (ek.equals(CorePreferenceInitializer.LABEL_LOG4J_PATTERN)
 						|| ek.equals(CorePreferenceInitializer.LABEL_COLOR_DEBUG)
 						|| ek.equals(CorePreferenceInitializer.LABEL_COLOR_INFO)
 						|| ek.equals(CorePreferenceInitializer.LABEL_COLOR_WARNING)
 						|| ek.equals(CorePreferenceInitializer.LABEL_COLOR_ERROR)
-						|| ek.equals(CorePreferenceInitializer.LABEL_COLOR_FATAL)
-						)
-				{
+						|| ek.equals(CorePreferenceInitializer.LABEL_COLOR_FATAL)) {
 					refreshPreferenceProperties();
 				}
 			}
 		});
-		
+
 		refreshPreferenceProperties();
 	}
 
@@ -100,7 +97,7 @@ public class LoggingView extends ViewPart {
 	 * 
 	 */
 	public void clear() {
-		styledText.setText("");
+		mStyledText.setText("");
 		oldLineCount = 0;
 	}
 
@@ -112,45 +109,49 @@ public class LoggingView extends ViewPart {
 	 *            new lines..
 	 */
 	public void write(String s) {
-		styledText.append(s);
-		for (int i = oldLineCount; i < styledText.getLineCount(); ++i) {
-			String line = styledText.getLine(i);
+		mStyledText.append(s);
+		for (int i = oldLineCount; i < mStyledText.getLineCount(); ++i) {
+			String line = mStyledText.getLine(i);
 			String[] splits = line.split(" ");
 			if (splits.length < 3) {
 				continue;
 			}
 			String third = splits[2].trim();
-			
+
 			if (third.equals("DEBUG")) {
-				styledText.setLineBackground(i, 1, mColorDebug);
+				mStyledText.setLineBackground(i, 1, mColorDebug);
 			} else if (third.equals("INFO")) {
-				styledText.setLineBackground(i, 1, mColorInfo);
+				mStyledText.setLineBackground(i, 1, mColorInfo);
 			} else if (third.equals("WARN")) {
-				styledText.setLineBackground(i, 1, mColorWarning);
+				mStyledText.setLineBackground(i, 1, mColorWarning);
 			} else if (third.equals("ERROR")) {
-				styledText.setLineBackground(i, 1, mColorError);
+				mStyledText.setLineBackground(i, 1, mColorError);
 			} else if (third.equals("FATAL")) {
-				styledText.setLineBackground(i, 1, mColorFatal);
+				mStyledText.setLineBackground(i, 1, mColorFatal);
 			}
 		}
-		oldLineCount = styledText.getLineCount() - 1;
+		oldLineCount = mStyledText.getLineCount() - 1;
 	}
 
 	@Override
 	public void setFocus() {
-		
+
 	}
-	
+
 	@Override
 	public void dispose() {
+		if (mStyledText != null) {
+			mStyledText.dispose();
+		}
 		super.dispose();
 	}
-	
+
 	private void refreshPreferenceProperties() {
 		UltimatePreferenceStore preferenceStore = new UltimatePreferenceStore(Activator.s_PLUGIN_ID);
 
-		mAppender.setLayout(new PatternLayout(preferenceStore.getString(CorePreferenceInitializer.LABEL_LOG4J_PATTERN)));
-		
+		mAppender
+				.setLayout(new PatternLayout(preferenceStore.getString(CorePreferenceInitializer.LABEL_LOG4J_PATTERN)));
+
 		mColorDebug = colorFromString(preferenceStore.getString(CorePreferenceInitializer.LABEL_COLOR_DEBUG));
 		mColorInfo = colorFromString(preferenceStore.getString(CorePreferenceInitializer.LABEL_COLOR_INFO));
 		mColorWarning = colorFromString(preferenceStore.getString(CorePreferenceInitializer.LABEL_COLOR_WARNING));
@@ -159,8 +160,11 @@ public class LoggingView extends ViewPart {
 	}
 
 	/**
-	 * Create a Color object with the colour given by a string as in PreferenceType.Color
-	 * @param colorString Color as "red,green,blue" where 0 <= red, green, blue <= 255
+	 * Create a Color object with the colour given by a string as in
+	 * PreferenceType.Color
+	 * 
+	 * @param colorString
+	 *            Color as "red,green,blue" where 0 <= red, green, blue <= 255
 	 * @return a Color object with the given colour
 	 */
 	private Color colorFromString(String colorString) {

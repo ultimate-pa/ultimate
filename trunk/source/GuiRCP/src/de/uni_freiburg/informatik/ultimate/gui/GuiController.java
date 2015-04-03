@@ -85,6 +85,9 @@ public class GuiController implements IController {
 			} catch (Exception ex) {
 				mLogger.fatal("An exception occured", ex);
 				return returnCode;
+			} finally {
+				setCurrentToolchain(null);
+				mDisplay.dispose();
 			}
 
 		} else {
@@ -131,7 +134,6 @@ public class GuiController implements IController {
 	}
 
 	public synchronized List<String> selectModel(final List<String> modelNames) {
-
 		mDisplay.syncExec(new Runnable() {
 			public void run() {
 				Shell shell = new Shell(mDisplay);
@@ -171,12 +173,13 @@ public class GuiController implements IController {
 
 	@Override
 	public void displayException(final String description, final Throwable ex) {
-		mDisplay.asyncExec(new Runnable() {
-			public void run() {
-				Shell shell = new Shell(mDisplay);
-//				MessageDialog.openError(shell, "An error occured", description + " " + ex.getMessage());
-			}
-		});
+		// mDisplay.asyncExec(new Runnable() {
+		// public void run() {
+		// Shell shell = new Shell(mDisplay);
+		// // MessageDialog.openError(shell, "An error occured", description +
+		// " " + ex.getMessage());
+		// }
+		// });
 
 	}
 
@@ -195,11 +198,4 @@ public class GuiController implements IController {
 	public IToolchain getCurrentToolchain() {
 		return mCurrentToolchain;
 	}
-
-	@Override
-	protected void finalize() throws Throwable {
-		setCurrentToolchain(null);
-		super.finalize();
-	}
-
 }

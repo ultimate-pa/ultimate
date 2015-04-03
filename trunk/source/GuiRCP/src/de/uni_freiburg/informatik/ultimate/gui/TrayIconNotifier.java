@@ -1,6 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.gui;
 
 import org.eclipse.core.runtime.Platform;
+import org.eclipse.core.runtime.preferences.IPreferencesService;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionEvent;
@@ -31,19 +32,18 @@ public class TrayIconNotifier {
 	}
 
 	private boolean isTrayBalloonEnabled() {
-		return Platform.getPreferencesService().getBoolean("UltimateCore",
-				CorePreferenceInitializer.LABEL_SHOWRESULTNOTIFIERPOPUP,
-				CorePreferenceInitializer.VALUE_SHOWRESULTNOTIFIERPOPUP_DEFAULT,
-				null);
-
+		IPreferencesService prefService = Platform.getPreferencesService();
+		if (prefService == null) {
+			return false;
+		}
+		return prefService.getBoolean("UltimateCore", CorePreferenceInitializer.LABEL_SHOWRESULTNOTIFIERPOPUP,
+				CorePreferenceInitializer.VALUE_SHOWRESULTNOTIFIERPOPUP_DEFAULT, null);
 	}
 
-	void showTrayBalloon(final String shortMessage, final String longMessage,
-			final int style) {
+	void showTrayBalloon(final String shortMessage, final String longMessage, final int style) {
 		if (!isTrayBalloonEnabled()) {
 			return;
 		}
-
 		final Display display = PlatformUI.getWorkbench().getDisplay();
 		final TrayItem trayItem = mWorkbenchAdvisor.getTrayItem();
 		display.asyncExec(new Runnable() {
@@ -61,8 +61,7 @@ public class TrayIconNotifier {
 
 				if (dispshell != null && dispshell.isVisible()) {
 					mIsResultDisplayActive = true;
-					MessageDialog.openInformation(shell, shortMessage,
-							longMessage);
+					MessageDialog.openInformation(shell, shortMessage, longMessage);
 					mIsResultDisplayActive = false;
 
 				} else {
@@ -81,38 +80,35 @@ public class TrayIconNotifier {
 						}
 
 					});
-					PlatformUI.getWorkbench().getWorkbenchWindows()[0]
-							.getShell().addShellListener(new ShellListener() {
+					PlatformUI.getWorkbench().getWorkbenchWindows()[0].getShell().addShellListener(new ShellListener() {
 
-								@Override
-								public void shellActivated(ShellEvent e) {
-									Shell shell = (Shell) e.getSource();
-									shell.removeShellListener(this);
-									MessageDialog.openInformation(shell,
-											shortMessage, longMessage);
-								}
+						@Override
+						public void shellActivated(ShellEvent e) {
+							Shell shell = (Shell) e.getSource();
+							shell.removeShellListener(this);
+							MessageDialog.openInformation(shell, shortMessage, longMessage);
+						}
 
-								@Override
-								public void shellClosed(ShellEvent e) {
-								}
+						@Override
+						public void shellClosed(ShellEvent e) {
+						}
 
-								@Override
-								public void shellDeactivated(ShellEvent e) {
-								}
+						@Override
+						public void shellDeactivated(ShellEvent e) {
+						}
 
-								@Override
-								public void shellDeiconified(ShellEvent e) {
-									Shell shell = (Shell) e.getSource();
-									shell.removeShellListener(this);
-									MessageDialog.openInformation(shell,
-											shortMessage, longMessage);
-								}
+						@Override
+						public void shellDeiconified(ShellEvent e) {
+							Shell shell = (Shell) e.getSource();
+							shell.removeShellListener(this);
+							MessageDialog.openInformation(shell, shortMessage, longMessage);
+						}
 
-								@Override
-								public void shellIconified(ShellEvent e) {
-								}
+						@Override
+						public void shellIconified(ShellEvent e) {
+						}
 
-							});
+					});
 				}
 			}
 		});
