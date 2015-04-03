@@ -1,45 +1,51 @@
 {
-  "id": "trace_abstraction",
-  "description": "<span style=\"font-variant:small-caps\">Ultimate Automizer</span> is a software model checker that implements an approach based on automata. It uses the <span style=\"font-variant:small-caps\">Ultimate</span> Automata Library (website available soon).",
+  "id": "automizer",
+  "description": "<p><span style=\"font-variant:small-caps\">Ultimate</span> Automizer</p>\n<ul> \n <li>is a software model checker that implements an approach based on automata [1,2,3,4]</li> \n <li>is one toolchain of the <a href=\"http://ultimate.informatik.uni-freiburg.de\"><span style=\"font-variant:small-caps\">Ultimate</span> software analysis framework</a></li> \n <li>is maintained by <a href=\"http://swt.informatik.uni-freiburg.de/staff/heizmann\">Matthias Heizmann</a></li> \n <li>uses the <span style=\"font-variant:small-caps\">Ultimate</span> Automata Library (website available soon)</li> \n</ul>",
   "user_info": "",
   "animate": "true",
   "html": "true",
-  "sections":
-  [
+  "sections": [
     {
-      "title": "web interface",
+      "title": "Web Interface",
       "type": "interface",
       "html": "true",
-      "content": "<span style=\"font-variant:small-caps\">Ultimate Automizer</span> is available via a web interface, in which you can verify C programs.",
-      "link_deco": "false",
+      "content": "<p> <span style=\"font-variant:small-caps\">Ultimate</span> Automizer is available via a <a href=\"http://monteverdi.informatik.uni-freiburg.de/ultimate?task=VerifyC\">web interface</a> in which you can verify C programs.</p>",
+      "link_deco": "true",
       "button": "Open interface"
     },
     {
-      "title": "commandline version",
+      "title": "Commandline Version",
       "type": "text",
       "html": "true",
-      "content": "A <a href=\"https://ultimate.informatik.uni-freiburg.de/downloads/svcomp2015/UltimateAutomizer.zip\">commandline version</a> of Ultimate Automizer is available. This version runs on x86-64 linux machines and is our candiate for the SV-COMP 2015.",
+      "content": "<p>A <a href=\"https://ultimate.informatik.uni-freiburg.de/downloads/svcomp2015/UltimateAutomizer.zip\">commandline version</a> of <span style=\"font-variant:small-caps\">Ultimate</span> Automizer is available. This version runs on x86-64 linux machines and is our candiate for the SV-COMP 2015.</p>",
       "link_deco": "true"
     },
     {
-      "title": "commandline version SV-COMP",
+      "title": "SV-COMP",
       "type": "text",
       "html": "true",
-      "content": "With a preliminary version of Ultimate Automizer we participated in the <a href=\"http://sv-comp.sosy-lab.org/2013/\">SV-COMP 2013</a>. We will also partipate in the <a href=\"http://sv-comp.sosy-lab.org/2014/\">SV-COMP 2014</a>.",
+      "content": "<p> With a preliminary version of <span style=\"font-variant: small-caps\">Ultimate</span> Automizer we participated in the <a href=\"http://sv-comp.sosy-lab.org/2013/\">SV-COMP 2013</a>. We will also participate in the <a href=\"http://sv-comp.sosy-lab.org/2014/\">SV-COMP 2014</a>. </p>",
       "link_deco": "true"
     },
     {
-      "title": "publications",
-      "type": "list",
+      "title": "Eclipse CDT",
+      "type": "text",
       "html": "true",
-      "content": "",
-      "list":
-      [
-        "Matthias Heizmann, Jochen Hoenicke, Andreas Podelski. <a href=\"http://dx.doi.org/10.1007/978-3-642-39799-8_2\">Software Model Checking for People Who Love Automata. CAV 2013:36-52</a>.",
-        "Matthias Heizmann, Jürgen Christ, Daniel Dietsch, Evren Ermis, Jochen Hoenicke, Markus Lindenmann, Alexander Nutz, Christian Schilling, Andreas Podelski. <a href=\"http://dx.doi.org/10.1007/978-3-642-36742-7_53\">Ultimate Automizer with SMTInterpol - (Competition Contribution). TACAS 2013:641-643</a>.",
-        "Matthias Heizmann, Jochen Hoenicke, Andreas Podelski. <a href=\"http://doi.acm.org/10.1145/1706299.1706353\">Nested interpolants. POPL 2010:471-482</a>.",
-        "Matthias Heizmann, Jochen Hoenicke, Andreas Podelski. <a href=\"http://dx.doi.org/10.1007/978-3-642-03237-0_7\">Refinement of Trace Abstraction. SAS 2009:69-85</a>."
-      ],
+      "content": "<p>We are planing to release an Eclipse CDT plugin that is able to use all toolchains of <span style=\"font-variant:small-caps\">Ultimate</span>.</p>",
+      "link_deco": "true"
+    },
+    {
+      "title": "Developers",
+      "type": "text",
+      "html": "true",
+      "content": "<p> Since <span style=\"font-variant:small-caps\">Ultimate</span> Automizer is a toolchain of the <a href=\"http://ultimate.informatik.uni-freiburg.de\"><span style=\"font-variant:small-caps\">Ultimate</span> software analysis framework</a>, <a href=\"http://ultimate.informatik.uni-freiburg.de\">many people</a> where involved in the development especially also bachlor students and master students. If you are a student at our university and you like to contribute to <span style=\"font-variant:small-caps\">Ultimate</span> in a project, laboratory, or thesis then contact <a href=\"http://swt.informatik.uni-freiburg.de/staff/heizmann\">Matthias Heizmann</a> or any other <span style=\"font-variant:small-caps\">Ultimate</span> developer. </p>",
+      "link_deco": "true"
+    },
+    {
+      "title": "Related Publications",
+      "type": "text",
+      "html": "true",
+      "content": "<p> [1] <a href=\"http://dx.doi.org/10.1007/978-3-642-39799-8_2\">Matthias Heizmann, Jochen Hoenicke, Andreas Podelski: Software Model Checking for People Who Love Automata. CAV 2013:36-52</a> <br> [2] <a href=\"http://dx.doi.org/10.1007/978-3-642-36742-7_53\">Matthias Heizmann, Jürgen Christ, Daniel Dietsch, Evren Ermis, Jochen Hoenicke, Markus Lindenmann, Alexander Nutz, Christian Schilling, Andreas Podelski: Ultimate Automizer with SMTInterpol - (Competition Contribution). TACAS 2013:641-643</a> <br> [3] <a href=\"http://doi.acm.org/10.1145/1706299.1706353\">Matthias Heizmann, Jochen Hoenicke, Andreas Podelski: Nested interpolants. POPL 2010:471-482</a> <br> [4] <a href=\"http://dx.doi.org/10.1007/978-3-642-03237-0_7\">Matthias Heizmann, Jochen Hoenicke, Andreas Podelski: Refinement of Trace Abstraction. SAS 2009:69-85</a> </p>",
       "link_deco": "true"
     }
   ]

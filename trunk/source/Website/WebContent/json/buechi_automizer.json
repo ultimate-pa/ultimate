@@ -1,38 +1,44 @@
 {
   "id": "buechi_automizer",
-  "description": "<span style=\"font-variant:small-caps\">Ultimate Büchi Automizer</span> implements a novel approach to termination analysis in which a program is decomposed into modules. Each module represents a set of traces that share a common termination argument. The decomposition is constructed on demand by \"learning\"  terminating modules from a termination analysis of lasso-shaped sample traces. For this termination analysis of lasso-shaped traces the built-in tool <a href=\"./?ui=tool&amp;tool=lasso_ranker\">LassoRanker</a> is used.",
+  "description": "<p> Ultimate Büchi Automizer implements a novel approach to termination analysis in which a program is decomposed into modules. Each module represents a set of traces that share a common termination argument. The decomposition is constructed on demand by “learning” terminating modules from a termination analysis of lasso-shaped sample traces. For this termination analysis of lasso-shaped traces the built-in tool <a href=\"http://ultimate.informatik.uni-freiburg.de/LassoRanker/\">LassoRanker</a> is used. \n <!-- Ultimate Büchi Automizer is one toolchain of the <a href=\"http://ultimate.informatik.uni-freiburg.de\"><span style=\"font-variant:small-caps\">Ultimate</span> software analysis framework</a> --> </p>",
   "user_info": "",
   "animate": "true",
   "html": "true",
-  "sections":
-  [
+  "sections": [
     {
-      "title": "web interface",
+      "title": "Web Interface",
       "type": "interface",
       "html": "true",
-      "content": "<span style=\"font-variant:small-caps\">Ultimate Büchi Automizer</span> is available via a web interface. Analyising the termination of programs in C has some limitations. We use a theorem prover that does not support non-linear arithmetic and therefore the built-in tool <a href=\"./?ui=tool&amp;tool=lasso_ranker\">LassoRanker</a> can only provide linear ranking functions.",
+      "content": "<p> <span style=\"font-variant:small-caps\">Ultimate</span> Automizer is available via a <a href=\"https://monteverdi.informatik.uni-freiburg.de/tomcat//Website/?task=TERMINATION_C&amp;example=1926123293\"> in which you can analyse termination of C programs. This version has some limitations. We use a theorem prover that does not support non-linear arithmetic and therefore the built-in tool </a><a href=\"http://ultimate.informatik.uni-freiburg.de/LassoRanker/\">LassoRanker</a> can only provide linear ranking functions.</p>",
       "link_deco": "true",
       "button": "Open interface"
     },
     {
-      "title": "commandline version",
+      "title": "Commandline Version",
       "type": "text",
       "html": "true",
-      "content": "Ultimate Büchi Automizer and the built-in tool <a href=\"./?ui=tool&amp;tool=lasso_ranker\">LassoRanker</a> are in heavy development. A recent version is available on request, please contact <a href=\"http://swt.informatik.uni-freiburg.de/staff/heizmann\">Matthias Heizmann</a>.",
+      "content": "<p>Ultimate Büchi Automizer and the built-in tool <a href=\"http://ultimate.informatik.uni-freiburg.de/LassoRanker/\">LassoRanker</a> are in heavy development. A recent version is available on request, please contact <a href=\"http://swt.informatik.uni-freiburg.de/staff/heizmann\">Matthias Heizmann</a>.</p>",
       "link_deco": "true"
     },
     {
-      "title": "commandline version (CAV 2014 submission)",
+      "title": "Commandline Version (CAV 2014 Submission)",
       "type": "text",
       "html": "true",
-      "content": "The <a href=\"cav2014/UltimateCommandline.zip\">commandline version</a> that was used for the evaluation in our CAV 2014 submission is available. This version runs on x86-64 linux machines and has some limitations. In our evaluation we showed the potential ouf our method to prove termination of a general program while using only simple termination arguments for lasso-shaped traces. Therefore, we restricted the built-in tool <a href=\"./?ui=tool&amp;tool=lasso_ranker\">LassoRanker</a> to linear ranking functions.",
+      "content": "<p>The <a href=\"cav2014/UltimateCommandline.zip\">commandline version</a> that was used for the evaluation in our CAV 2014 submission is available. This version runs on x86-64 linux machines and has some limitations. In our evaluation we showed the potential ouf our method to prove termination of a general program while using only simple termination arguments for lasso-shaped traces. Therefore, we restricted the built-in tool <a href=\"http://ultimate.informatik.uni-freiburg.de/LassoRanker/\">LassoRanker</a> to linear ranking functions.</p>",
       "link_deco": "true"
     },
     {
-      "title": "commandline version (SV-COMP 2014)",
+      "title": "Commandline Version (SV-COMP 2014)",
       "type": "text",
       "html": "true",
-      "content": "The <a href=\"svcomp2014/UltimateCommandline.zip\">commandline version</a> that was our competition candidate for the demonstration category on termination at the <a href=\"http://sv-comp.sosy-lab.org/2014/\">SV-COMP 2014</a>. This version runs on x86-64 Linux machines and requires that the <a href=\"http://z3.codeplex.com/\">theorem prover Z3</a> is installed. In this version, the built-in tool <a href=\"./?ui=tool&amp;tool=lasso_ranker\">LassoRanker</a> is limited to linear ranking functions and multiphase ranking functions.",
+      "content": "<p>The <a href=\"svcomp2014/UltimateCommandline.zip\">commandline version</a> that was our competition candidate for the demonstration category on termination at the <a href=\"http://sv-comp.sosy-lab.org/2014/\">SV-COMP 2014</a>. This version runs on x86-64 Linux machines and requires that the <a href=\"http://z3.codeplex.com/\"> theorem prover Z3</a> is installed. In this version, the built-in tool <a href=\"http://ultimate.informatik.uni-freiburg.de/LassoRanker/\">LassoRanker</a> is limited to linear ranking functions and multiphase ranking functions.</p>",
+      "link_deco": "true"
+    },
+    {
+      "title": "Developers",
+      "type": "text",
+      "html": "true",
+      "content": "<p>Ultimate Buchi Automizer is maintained by <a href=\"http://swt.informatik.uni-freiburg.de/staff/heizmann\">Matthias Heizmann</a>. The built-in tool <a href=\"http://ultimate.informatik.uni-freiburg.de/LassoRanker/\">LassoRanker</a> is maintained by <a href=\"http://swt.informatik.uni-freiburg.de/staff/leike\">Jan Leike</a> and <a href=\"http://swt.informatik.uni-freiburg.de/staff/heizmann\">Matthias Heizmann</a>. Since <span style=\"font-variant:small-caps\">Ultimate</span> Buchi Automizer is a toolchain of the <a href=\"http://ultimate.informatik.uni-freiburg.de\"><span style=\"font-variant:small-caps\">Ultimate</span> software analysis framework</a>, <a href=\"http://ultimate.informatik.uni-freiburg.de\">many people</a> contributed code and ideas. We want to mention especially, Jürgen Christ, Daniel Dietsch, Jochen Hoenicke, Markus Lindenmann, Betim Musa, Alexander Nutz, Christian Schilling, Stefan Wissert, and Andreas Podelski.</p>",
       "link_deco": "true"
     }
   ]

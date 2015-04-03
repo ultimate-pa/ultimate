@@ -14,6 +14,7 @@ import de.uni_freiburg.informatik.ultimate.website.toolchains.BoogieConcurrentTr
 import de.uni_freiburg.informatik.ultimate.website.toolchains.BoogieLassoRankerTC;
 import de.uni_freiburg.informatik.ultimate.website.toolchains.BoogieAutomizerTC;
 import de.uni_freiburg.informatik.ultimate.website.toolchains.CBuchiAutomizerTC;
+import de.uni_freiburg.informatik.ultimate.website.toolchains.CKojakTC;
 import de.uni_freiburg.informatik.ultimate.website.toolchains.CLTLAutomizerTC;
 import de.uni_freiburg.informatik.ultimate.website.toolchains.CLassoRankerTC;
 import de.uni_freiburg.informatik.ultimate.website.toolchains.CAutomizerTC;
@@ -31,7 +32,7 @@ public class Tasks {
 	 */
 	private static final Class<?>[] sToolchainTypes = { AutomtaScriptTC.class, BoogieAutomizerTC.class,
 			CAutomizerTC.class, BoogieLassoRankerTC.class, CLassoRankerTC.class, BoogieBuchiAutomizerTC.class,
-			CBuchiAutomizerTC.class, BoogieConcurrentTraceAbstractionTC.class, CLTLAutomizerTC.class };
+			CBuchiAutomizerTC.class, BoogieConcurrentTraceAbstractionTC.class, CLTLAutomizerTC.class,CKojakTC.class };
 	/**
 	 * The String representations of TaskNames.
 	 */
@@ -62,7 +63,7 @@ public class Tasks {
 
 		CONCURRENT_TRACE_ABSTRACTION_BOOGIE,
 
-		LTLAUTOMIZER_C,
+		LTLAUTOMIZER_C,KOJAK_C
 
 		// If you add something here, add a String representation to
 		// initTaskNames()
@@ -119,6 +120,7 @@ public class Tasks {
 			case TERMINATION_C:
 			case RANK_SYNTHESIS_C:
 			case LTLAUTOMIZER_C:
+			case KOJAK_C:
 				return "c_cpp";
 			default:
 				return "text";
@@ -166,6 +168,11 @@ public class Tasks {
 
 		name = "LTL Automizer";
 		description = "An LTL software model checker based on Büchi programs.";
+		w = new Worker(name, "verify", description, null);
+		sWorkers.put(w.getId(), w);
+		
+		name = "Kojak";
+		description = "A software model checker";
 		w = new Worker(name, "verify", description, null);
 		sWorkers.put(w.getId(), w);
 
@@ -229,6 +236,7 @@ public class Tasks {
 		sTaskStrings.put(TaskNames.RANK_SYNTHESIS_C, "Synthesize ranking function C");
 		sTaskStrings.put(TaskNames.CONCURRENT_TRACE_ABSTRACTION_BOOGIE, "Verify concurrent Boogie");
 		sTaskStrings.put(TaskNames.LTLAUTOMIZER_C, "Verify if C program fulfils LTL property");
+		sTaskStrings.put(TaskNames.KOJAK_C, "Verify C");
 
 		SimpleLogger.log("Finished initializing task names");
 		SimpleLogger.log("The following " + sTaskStrings.size() + " task names are present:");

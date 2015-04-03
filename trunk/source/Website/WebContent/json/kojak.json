@@ -1,0 +1,31 @@
+{
+  "id": "kojak",
+  "description": "<p>Ultimate Kojak is a software model checker that is implemented in the Ultimate framework.</p>",
+  "user_info": "",
+  "animate": "true",
+  "html": "true",
+  "sections": [
+    {
+      "title": "Web Interface",
+      "type": "interface",
+      "html": "true",
+      "content": "<p><span style=\"font-variant:small-caps\">Ultimate</span> Kojak is available via a web interface.</p>",
+      "link_deco": "true",
+      "button": "Open interface"
+    },
+    {
+      "title": "Developers",
+      "type": "text",
+      "html": "true",
+      "content": "<p> Current developers: Alexander Nutz, Mostafa Mahmoud Mohamed<br> Former developer: Evren Ermis </p>",
+      "link_deco": "true"
+    },
+    {
+      "title": "Downloads",
+      "type": "text",
+      "html": "true",
+      "content": "<p><a href=\"UltimateKojakCommandline.zip\">version of Kojak that participated SV-COMP 2014</a></p>\n<p><a href=\"https://ultimate.informatik.uni-freiburg.de/downloads/svcomp2015/UltimateKojak.zip\">version of Kojak that participated in SV-COMP 2015</a></p>",
+      "link_deco": "true"
+    }
+  ]
+}

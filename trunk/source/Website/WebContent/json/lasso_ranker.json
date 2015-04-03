@@ -1,55 +1,44 @@
 {
   "id": "lasso_ranker",
-  "description": "<span style=\"font-variant:small-caps\">Ultimate LassoRanker</span> is a tool for synthesizing termination and nontermination arguments for linear lasso programs via constraint solving.<br><br>The class of programs that <span style=\"font-variant:small-caps\">Ultimate LassoRanker</span> operates on are called lasso programs. As the name indicates, the control flow graph of a lasso program is of a restricted shape: a stem followed by a loop. The figure below shows an example of a lasso program.<br><br><img src=\"http://ultimate.informatik.uni-freiburg.de/LassoRanker/figure1.png\" alt=\"A lasso program\"><br><br><span style=\"font-variant:small-caps\">Ultimate LassoRanker</span> can synthesize termination and nontermination arguments. Termination arguments generated consist of a ranking function and a set of linear inductive supporting invariants. For all states satisfying the invariants, the ranking function decreases after one loop execution. Different ranking functions can be synthesized on the basis on <em>ranking templates</em>. Currently affine-linear, nested, multiphase, lexicographic and piecewise ranking templates are implemented. Please see our TACAS submission for more details.<br><br><span style=\"font-variant:small-caps\">Ultimate LassoRanker</span> is a central component to <a href=\"./?ui=tool&amp;tool=büchi_automizer\"><span style=\"font-variant:small-caps\">Ultimate BuchiAutomizer</span></a>, which extracts lassos from larger programs and generalizes the synthesized termination arguments.",
+  "description": "<p> <span style=\"font-variant:small-caps\">Ultimate LassoRanker</span> is </p>\n<ul> \n <li>a tool for <b>synthesizing termination and nontermination arguments for linear lasso programs</b> via constraint solving,</li> \n <li>one toolchain of the <a href=\"http://ultimate.informatik.uni-freiburg.de\"><span style=\"font-variant:small-caps\">Ultimate</span> software analysis framework</a>,</li> \n <li> a central component to <a href=\"http://ultimate.informatik.uni-freiburg.de/BuchiAutomizer/\"><span style=\"font-variant:small-caps\">Ultimate BuchiAutomizer</span></a>, </li>\n <li>maintained by <a href=\"http://swt.informatik.uni-freiburg.de/staff/heizmann\">Matthias Heizmann</a> and <a href=\"https://users.cecs.anu.edu.au/~leike/\">Jan Leike</a>.</li> \n</ul>\n<p> The class of programs that <span style=\"font-variant:small-caps\">Ultimate LassoRanker</span> operates on are called lasso programs. As the name indicates, the control flow graph of a lasso program is of a restricted shape: a stem followed by a loop. The figure below shows an example of a lasso program. </p>\n<div style=\"text-align:center\"> \n <img src=\"http://ultimate.informatik.uni-freiburg.de/LassoRanker/figure1.png\" hspace=\"2\" vspace=\"2\" alt=\"A lasso program\"> \n</div>\n<p> <span style=\"font-variant:small-caps\">Ultimate LassoRanker</span> can synthesize termination and nontermination arguments. Termination arguments generated consist of a ranking function and a set of linear inductive supporting invariants. For all states satisfying the invariants, the ranking function decreases after one loop execution. Different ranking functions can be synthesized on the basis on <em>ranking templates</em>. Currently affine-linear, nested, multiphase, lexicographic and piecewise ranking templates are implemented. Please see <a href=\"#publications\">our TACAS submission</a> for more details. </p>\n<p> <span style=\"font-variant:small-caps\">Ultimate LassoRanker</span> is a central component to <a href=\"http://ultimate.informatik.uni-freiburg.de/BuchiAutomizer/\"><span style=\"font-variant:small-caps\">Ultimate BuchiAutomizer</span></a>, which extracts lassos from larger programs and generalizes the synthesized termination arguments. </p>",
   "user_info": "",
   "animate": "true",
   "html": "true",
-  "sections":
-  [
+  "sections": [
     {
-      "title": "web interface",
+      "title": "Web Interface",
       "type": "interface",
       "html": "true",
-      "content": "<span style=\"font-variant:small-caps\">Ultimate LassoRanker</span> is available via a web interface. This web interface allows 'playing around' with lasso programs written C or the <a href=\"http://research.microsoft.com/en-us/projects/boogie/\">Boogie</a> intermediate verification language. The version of <span style=\"font-variant:small-caps\">Ultimate LassoRanker</span> called by this interface uses the SMT solver <a href=\"http://ultimate.informatik.uni-freiburg.de/smtinterpol/\">SMTInterpol</a>.<br><br>In case our webserver does not respond you can use <span style=\"font-variant:small-caps\">Ultimate LassoRanker</span> on our (very slow) <a href=\"http://xayn.heizmann.name:14550/Website/?task=RANK_SYNTHESIS_BOOGIE\">backup web server</a>.<br><br>We thank Markus Lindenmann, Oleksii Saukh, and Stefan Wissert for the implementation of <span style=\"font-variant:small-caps\">Ultimate</span>'s web interface.",
+      "content": "<p> <span style=\"font-variant:small-caps\">Ultimate LassoRanker</span> is available via a <a href=\"https://monteverdi.informatik.uni-freiburg.de/tomcat/Website/?task=RANK_SYNTHESIS_BOOGIE\"> web interface</a>. This web interface allows `playing around' with lasso programs written C or the <a href=\"http://research.microsoft.com/en-us/projects/boogie/\">Boogie</a> intermediate verification language. The version of <span style=\"font-variant:small-caps\">Ultimate LassoRanker</span> called by this interface uses the SMT solver <a href=\"http://ultimate.informatik.uni-freiburg.de/smtinterpol/\">SMTInterpol</a>. </p>\n<p> In case our webserver does not respond you can use <span style=\"font-variant:small-caps\">Ultimate LassoRanker</span> on our (very slow) <a href=\"\r\nhttp://xayn.heizmann.name:14550/Website/?task=RANK_SYNTHESIS_BOOGIE\">backup web server</a>. </p>\n<p> We thank Markus Lindenmann, Oleksii Saukh, and Stefan Wissert for the implementation of <span style=\"font-variant:small-caps\">Ultimate</span>'s web interface. </p>",
       "link_deco": "true",
       "button": "Open interface"
     },
     {
-      "title": "publications",
-      "type": "list",
+      "title": "Publications",
+      "type": "text",
       "html": "true",
-      "content": "The theoretical foundations of <span style=\"font-variant:small-caps\">Ultimate LassoRanker</span> are described in the following publications.",
-      "list":
-      [
-        "Jan Leike and Matthias Heizmann. <a href=\"https://users.cecs.anu.edu.au/~leike/Geometric%20Series%20as%20Nontermination%20Arguments%20for%20Linear%20Lasso%20Programs%20-%20Leike%2C%20Heizmann%202014.pdf\">Geometric Series as Nontermination Arguments for Linear Lasso Programs</a>. <a href=\"http://vsl2014.at/meetings/WST-index.html\">International Workshop on Termination</a>, 2014.",
-        "Jan Leike and Matthias Heizmann. <a href=\"https://users.cecs.anu.edu.au/~leike/Ranking%20Templates%20for%20Linear%20Loops%20-%20Leike%2C%20Heizmann%202014.pdf\">Ranking Templates for Linear Loops</a>. In <a href=\"http://www.etaps.org/2014/tacas\">TACAS 2014</a>.",
-        "Matthias Heizmann, Jochen Hoenicke, Jan Leike and Andreas Podelski. <a href=\"https://users.cecs.anu.edu.au/~leike/Linear%20Ranking%20for%20Linear%20Lasso%20Programs%20-%20Heizmann%2C%20Hoenicke%2C%20Leike%2C%20Podelski%202013.pdf\">Linear Ranking for Linear Lasso Programs</a>. In <a href=\"http://www.uet.vnu.edu.vn/atva2013/\">ATVA 2013</a>."
-      ],
+      "content": "<p> The theoretical foundations of <span style=\"font-variant:small-caps\">Ultimate LassoRanker</span> are described in the following publications. </p>\n<ul> \n <li> Jan Leike and Matthias Heizmann. <a href=\"https://users.cecs.anu.edu.au/~leike/Geometric%20Series%20as%20Nontermination%20Arguments%20for%20Linear%20Lasso%20Programs%20-%20Leike%2C%20Heizmann%202014.pdf\">Geometric Series as Nontermination Arguments for Linear Lasso Programs</a>. <a href=\"http://vsl2014.at/meetings/WST-index.html\">International Workshop on Termination</a>, 2014. </li> \n <li> Jan Leike and Matthias Heizmann. <a href=\"https://users.cecs.anu.edu.au/~leike/Ranking%20Templates%20for%20Linear%20Loops%20-%20Leike%2C%20Heizmann%202014.pdf\">Ranking Templates for Linear Loops</a>. In <a href=\"http://www.etaps.org/2014/tacas\">TACAS 2014</a>. </li> \n <li> Matthias Heizmann, Jochen Hoenicke, Jan Leike and Andreas Podelski. <a href=\"https://users.cecs.anu.edu.au/~leike/Linear%20Ranking%20for%20Linear%20Lasso%20Programs%20-%20Heizmann%2C%20Hoenicke%2C%20Leike%2C%20Podelski%202013.pdf\">Linear Ranking for Linear Lasso Programs</a>. In <a href=\"http://www.uet.vnu.edu.vn/atva2013/\">ATVA 2013</a>. </li> \n</ul>",
       "link_deco": "true"
     },
     {
-      "title": "downloads",
+      "title": "Downloads",
       "type": "text",
       "html": "true",
-      "content": "We provide <span style=\"font-variant:small-caps\">Ultimate LassoRanker</span> under the LGPL with a linking exception to Eclipse RCP. We are planing to make our repository publicly available. At the moment a copy of the current source code is available on request. If you are interested in optaining the source code or a binary, please do not hesitate to <a href=\"mailto:Jan Leike <jan.leike@anu.edu.au>\">contact us</a>.",
+      "content": "<p> We provide <span style=\"font-variant:small-caps\">Ultimate LassoRanker</span> under the LGPL with a linking exception to Eclipse RCP. We are planing to make our repository publicly available. At the moment a copy of the current source code is available on request. \n <!--It depends on the <a href=\"http://ultimate.informatik.uni-freiburg.de\"><span style=\"font-variant:small-caps\">Ultimate</span> software analysis framework</a>, which has not been publicly released yet.--> If you are interested in optaining the source code or a binary, please do not hesitate to <a href=\"mailto:Jan%20Leike%20<jan.leike@anu.edu.au>\">contact us</a>. </p>",
       "link_deco": "true"
     },
     {
-      "title": "current restrictions",
-      "type": "list",
-      "html": "false",
-      "content": "",
-      "list":
-      [
-        "For integer programs, computation of the integral hull of the loop transition is required. This is not yet implemented in our tool. Therefore the synthesis of affine-linear ranking functions over integer loops in incomplete."
-      ],
-      "link_deco": "false"
-    },
-    {
-      "title": "SMT solvers",
+      "title": "Current Restrictions",
       "type": "text",
       "html": "true",
-      "content": "<span style=\"font-variant:small-caps\">Ultimate LassoRanker</span> is built to interface with any SMT solver which implements the <a href=\"http://ultimate.informatik.uni-freiburg.de/smtinterpol/\">SMT-LIBv2 standard</a> and is able to produce models of satisfiable formulas. However, it is only tested on <a href=\"http://ultimate.informatik.uni-freiburg.de/smtinterpol/\">SMTInterpol</a> and <a href=\"http://z3.codeplex.com/\">Z3</a>.",
+      "content": "<ul> \n <!--\t<li><span style=\"font-variant:small-caps\">Ultimate LassoRanker</span> currently does not support programs that include arrays.</li>--> \n <li>For integer programs, computation of the integral hull of the loop transition is required. This is not yet implemented in our tool. Therefore the synthesis of affine-linear ranking functions over integer loops in incomplete.</li> \n <!--\r\nThe variables of a lasso program can range over the reals or they can range over the integers.   In both cases, the tool finds a termination argument if (in fact, if and only if)  there is a linear ranking function with non-decreasing supporting invariant.   In the case where the program variables range over the integers, we currently need a restriction on the presentation of the lasso program:  the transition relation of the lasso program must be integral.  Each transition relation can be automatically transformed into an equivalent transition relation that is integral.  The transformation requires the computation of the integer hull of the transition relation.\r\nThe computation of the integer hull of the transition relation is not yet implemented in our tool. Hence, there are lasso programs with integer variables that have a linear ranking function with non-decreasing supporting invariant for which our tool currently does not find a ranking function (e.g., the example ATVA2013-nonIntegral-int.bpl in the web interface).\r\n\r\n\r\nIf the variables have integer domain, the completeness property of our method (if there is a linear ranking function with non-decreasing supporting invariant, our method finds such a termination argument) holds only if the transition relation of the lasso program is integral. Each transition relation can be transformed into one which is integral by computing the integer hull of the transition relation. Computation of an integer hull is not yet implemented on our tool.</li>--> \n</ul>",
+      "link_deco": "true"
+    },
+    {
+      "title": "SMT Solvers",
+      "type": "text",
+      "html": "true",
+      "content": "<p> <span style=\"font-variant:small-caps\">Ultimate LassoRanker</span> is built to interface with any SMT solver which implements the <a href=\"http://ultimate.informatik.uni-freiburg.de/smtinterpol/\">SMT-LIBv2 standard</a> and is able to produce models of satisfiable formulas. However, it is only tested on <a href=\"http://ultimate.informatik.uni-freiburg.de/smtinterpol/\">SMTInterpol</a> and <a href=\"http://z3.codeplex.com/\">Z3</a>. </p>",
       "link_deco": "true"
     }
   ]

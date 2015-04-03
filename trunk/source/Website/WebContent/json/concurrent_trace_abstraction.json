@@ -1,17 +1,16 @@
 {
   "id": "concurrent_trace_abstraction",
-  "description": "<span style=\"font-variant:small-caps\">Ultimate Concurrent Trace Abstraction</span>!",
+  "description": "",
   "user_info": "",
   "animate": "true",
   "html": "true",
-  "sections":
-  [
+  "sections": [
     {
-      "title": "web interface",
+      "title": "Web Interface",
       "type": "interface",
       "html": "true",
-      "content": "<span style=\"font-variant:small-caps\">Ultimate Concurrent Trace Abstraction</span> is available via a web interface.",
-      "link_deco": "false",
+      "content": "<p><span style=\"font-variant:small-caps\">Ultimate Concurrent Trace Abstraction</span> is available via a web interface.</p>",
+      "link_deco": "true",
       "button": "Open interface"
     }
   ]

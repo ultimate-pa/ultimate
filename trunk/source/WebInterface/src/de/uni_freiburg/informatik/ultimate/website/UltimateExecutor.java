@@ -185,6 +185,7 @@ public class UltimateExecutor {
 		case LTLAUTOMIZER_C:
 		case RANK_SYNTHESIS_C:
 		case TERMINATION_C:
+		case KOJAK_C:
 			fileExtension = ".c";
 			break;
 		default:

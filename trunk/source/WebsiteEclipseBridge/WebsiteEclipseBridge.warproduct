@@ -40,6 +40,7 @@
       <plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding"/>
       <plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer"/>
       <plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator"/>
+      <plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck"/>
       <plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder"/>
       <plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction"/>
       <plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstractionconcurrent"/>
@@ -122,6 +123,7 @@
       <plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding" autoStart="true" startLevel="0" />
       <plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer" autoStart="true" startLevel="0" />
       <plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator" autoStart="true" startLevel="0" />
+      <plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck" autoStart="true" startLevel="0" />
       <plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder" autoStart="true" startLevel="0" />
       <plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction" autoStart="true" startLevel="0" />
       <plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstractionconcurrent" autoStart="true" startLevel="0" />

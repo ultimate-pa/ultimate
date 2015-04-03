@@ -12,26 +12,26 @@ import de.uni_freiburg.informatik.ultimate.website.WebToolchain;
 /**
  * @author dietsch@informatik.uni-freiburg.de
  */
-public class CLTLAutomizerTC extends WebToolchain {
+public class CKojakTC extends WebToolchain {
 
 	@Override
 	protected String defineDescription() {
-		return "LTL Automizer toolchain";
+		return "Kojak toolchain";
 	}
 
 	@Override
 	protected String defineName() {
-		return "LTL Automizer";
+		return "Kojak";
 	}
 
 	@Override
 	protected String defineId() {
-		return "cLTLAutomizer";
+		return "cKojak";
 	}
 
 	@Override
 	protected TaskNames[] defineTaskName() {
-		return new TaskNames[] { TaskNames.LTLAUTOMIZER_C };
+		return new TaskNames[] { TaskNames.KOJAK_C };
 	}
 
 	@Override
@@ -40,23 +40,16 @@ public class CLTLAutomizerTC extends WebToolchain {
 	}
 
 	@Override
-	protected String defineUserInfo() {
-		return "Note: The timeout is set to 150s";
-	}
-
-	@Override
 	protected List<Tool> defineTools() {
-		List<Tool> rtr = new ArrayList<Tool>();
+		List<Tool> tools = new ArrayList<Tool>();
 
-		rtr.add(new Tool(PrefStrings.s_cacsl2boogietranslator));
-		rtr.add(new Tool(PrefStrings.s_boogiePreprocessor));
-		rtr.add(new Tool(PrefStrings.s_rcfgBuilder));
-		rtr.add(new Tool(PrefStrings.s_traceAbstraction));
-		rtr.add(new Tool(PrefStrings.s_ltl2aut));
-		rtr.add(new Tool(PrefStrings.s_buchiProgramProduct));
-		rtr.add(new Tool(PrefStrings.s_buchiautomizer));
+		tools.add(new Tool(PrefStrings.s_cacsl2boogietranslator));
+		tools.add(new Tool(PrefStrings.s_boogiePreprocessor));
+		tools.add(new Tool(PrefStrings.s_rcfgBuilder));
+		tools.add(new Tool(PrefStrings.s_blockencoding));
+		tools.add(new Tool(PrefStrings.s_codecheck));
 
-		return rtr;
+		return tools;
 	}
 
 	@Override
@@ -65,19 +58,11 @@ public class CLTLAutomizerTC extends WebToolchain {
 
 		rtr.add(new Setting(PrefStrings.s_CACSL_LABEL_StartFunction, SettingType.STRING, "Starting procedure: ",
 				"main", true));
-		rtr.add(new Setting(PrefStrings.s_TA_LABEL_Hoare, Setting.SettingType.BOOLEAN, "Compute Hoare Annotation",
-				"true", true));
+		rtr.add(new Setting(PrefStrings.s_CACSL_LABEL_TranslationMode, "Translation Mode",
+				new String[] { PrefStrings.s_CACSL_VALUE_Svcomp }, false, new String[] {
+						PrefStrings.s_CACSL_VALUE_Base, PrefStrings.s_CACSL_VALUE_Svcomp }, true));
 
 		return rtr;
 	}
 
-	@Override
-	public long getTimeout() {
-		return 150 * 1000;
-	}
-
-	@Override
-	protected String defineToolchainSettingsFile() {
-		return "LTLAutomizerC-Default.epf";
-	}
 }
