@@ -97,9 +97,10 @@ public class RefineBuchi {
 		private final boolean m_ScroogeNondeterminismStem;
 		private final boolean m_ScroogeNondeterminismLoop;
 		private final boolean m_CannibalizeLoop;
+		private final int m_UsedDefinedMaxRank;
 
 		public RefinementSetting(BInterpolantAutomaton interpolantAutomaton, boolean bouncerStem, boolean bouncerLoop,
-				boolean scroogeNondeterminismStem, boolean scroogeNondeterminismLoop, boolean cannibalizeLoop) {
+				boolean scroogeNondeterminismStem, boolean scroogeNondeterminismLoop, boolean cannibalizeLoop, int userDefinedMaxRank) {
 			super();
 			m_InterpolantAutomaton = interpolantAutomaton;
 			m_BouncerStem = bouncerStem;
@@ -107,6 +108,7 @@ public class RefineBuchi {
 			m_ScroogeNondeterminismStem = scroogeNondeterminismStem;
 			m_ScroogeNondeterminismLoop = scroogeNondeterminismLoop;
 			m_CannibalizeLoop = cannibalizeLoop;
+			m_UsedDefinedMaxRank = userDefinedMaxRank;
 		}
 
 		public BInterpolantAutomaton getInterpolantAutomaton() {
@@ -132,14 +134,25 @@ public class RefineBuchi {
 		public boolean cannibalizeLoop() {
 			return m_CannibalizeLoop;
 		}
+		
+		public int getUsedDefinedMaxRank() {
+			return m_UsedDefinedMaxRank;
+		}
 
 		@Override
 		public String toString() {
-			return "RefinementSetting [m_InterpolantAutomaton=" + m_InterpolantAutomaton + ", m_BouncerStem="
-					+ m_BouncerStem + ", m_BouncerLoop=" + m_BouncerLoop + ", m_ScroogeNondeterminismStem="
-					+ m_ScroogeNondeterminismStem + ", m_ScroogeNondeterminismLoop=" + m_ScroogeNondeterminismLoop
-					+ ", m_CannibalizeLoop=" + m_CannibalizeLoop + "]";
+			return "RefinementSetting [m_InterpolantAutomaton="
+					+ m_InterpolantAutomaton + ", m_BouncerStem="
+					+ m_BouncerStem + ", m_BouncerLoop=" + m_BouncerLoop
+					+ ", m_ScroogeNondeterminismStem="
+					+ m_ScroogeNondeterminismStem
+					+ ", m_ScroogeNondeterminismLoop="
+					+ m_ScroogeNondeterminismLoop + ", m_CannibalizeLoop="
+					+ m_CannibalizeLoop + ", m_UsedDefinedMaxRank="
+					+ m_UsedDefinedMaxRank + "]";
 		}
+
+
 	}
 
 	public INestedWordAutomatonSimple<CodeBlock, IPredicate> getInterpolAutomatonUsedInRefinement() {

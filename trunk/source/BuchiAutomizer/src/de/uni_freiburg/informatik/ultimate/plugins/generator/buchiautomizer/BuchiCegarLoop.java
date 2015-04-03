@@ -265,15 +265,15 @@ public class BuchiCegarLoop {
 		switch (m_InterpolantAutomaton) {
 		case Staged:
 			m_BuchiRefinementSettingSequence.add(m_RefineBuchi.new RefinementSetting(
-					BInterpolantAutomaton.Deterministic, true, false, false, false, true));
+					BInterpolantAutomaton.Deterministic, true, false, false, false, true, Integer.MAX_VALUE));
 			m_BuchiRefinementSettingSequence.add(m_RefineBuchi.new RefinementSetting(
-					BInterpolantAutomaton.Deterministic, true, true, false, false, true));
+					BInterpolantAutomaton.Deterministic, true, true, false, false, true, Integer.MAX_VALUE));
 			m_BuchiRefinementSettingSequence.add(m_RefineBuchi.new RefinementSetting(
-					BInterpolantAutomaton.ScroogeNondeterminism, true, false, true, false, false));
+					BInterpolantAutomaton.ScroogeNondeterminism, true, false, true, false, false, Integer.MAX_VALUE));
 			m_BuchiRefinementSettingSequence.add(m_RefineBuchi.new RefinementSetting(
-					BInterpolantAutomaton.ScroogeNondeterminism, true, true, true, false, false));
+					BInterpolantAutomaton.ScroogeNondeterminism, true, true, true, false, false, Integer.MAX_VALUE));
 			m_BuchiRefinementSettingSequence.add(m_RefineBuchi.new RefinementSetting(
-					BInterpolantAutomaton.ScroogeNondeterminism, false, false, true, true, false));
+					BInterpolantAutomaton.ScroogeNondeterminism, false, false, true, true, false, Integer.MAX_VALUE));
 			break;
 		case LassoAutomaton:
 		case EagerNondeterminism:
@@ -281,7 +281,11 @@ public class BuchiCegarLoop {
 		case Deterministic:
 			m_BuchiRefinementSettingSequence.add(m_RefineBuchi.new RefinementSetting(m_InterpolantAutomaton,
 					m_BouncerStem, m_BouncerLoop, m_ScroogeNondeterminismStem, m_ScroogeNondeterminismLoop,
-					m_CannibalizeLoop));
+					m_CannibalizeLoop, Integer.MAX_VALUE));
+			break;
+		case MAXRANK3:
+			m_BuchiRefinementSettingSequence.add(m_RefineBuchi.new RefinementSetting(
+					BInterpolantAutomaton.ScroogeNondeterminism, true, false, true, false, true, 3));
 			break;
 		default:
 			throw new UnsupportedOperationException("unknown automaton");
