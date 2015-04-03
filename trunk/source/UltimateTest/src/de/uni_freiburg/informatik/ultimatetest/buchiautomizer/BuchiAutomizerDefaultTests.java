@@ -63,10 +63,10 @@ public class BuchiAutomizerDefaultTests extends
 //		new DirectoryFileEndingsPair("examples/svcomp/seq-pthread/", new String[]{ ".i" }, m_FilesPerDirectoryLimit) ,
 		
 		/*** Category 12. Termination ***/
-		new DirectoryFileEndingsPair("examples/svcomp/termination-crafted/", new String[]{ ".c" }, m_FilesPerDirectoryLimit) ,
-		new DirectoryFileEndingsPair("examples/svcomp/termination-crafted-lit/", new String[]{ ".c" }, m_FilesPerDirectoryLimit) ,
-		new DirectoryFileEndingsPair("examples/svcomp/termination-memory-alloca/", new String[]{ ".i" }, m_FilesPerDirectoryLimit) ,
-		new DirectoryFileEndingsPair("examples/svcomp/termination-numeric/", new String[]{ ".c" }, m_FilesPerDirectoryLimit) ,
+//		new DirectoryFileEndingsPair("examples/svcomp/termination-crafted/", new String[]{ ".c" }, m_FilesPerDirectoryLimit) ,
+//		new DirectoryFileEndingsPair("examples/svcomp/termination-crafted-lit/", new String[]{ ".c" }, m_FilesPerDirectoryLimit) ,
+//		new DirectoryFileEndingsPair("examples/svcomp/termination-memory-alloca/", new String[]{ ".i" }, m_FilesPerDirectoryLimit) ,
+//		new DirectoryFileEndingsPair("examples/svcomp/termination-numeric/", new String[]{ ".c" }, m_FilesPerDirectoryLimit) ,
 	};
 	
 	
@@ -79,8 +79,9 @@ public class BuchiAutomizerDefaultTests extends
 //		"examples/programs/recursivePrograms",
 //		"examples/programs/toy"
 //		"examples/programs/termination/toPLDI",
+//		"examples/programs/termination/",
 //		"examples/termination/cooperatingT2/difficult/solved",
-//		"examples/termination/cooperatingT2",
+		"examples/termination/cooperatingT2",
 	};
 	
 	/**
@@ -100,9 +101,13 @@ public class BuchiAutomizerDefaultTests extends
 	 * 
 	 */
 	private static final String[] m_Settings = {
-		"buchiAutomizer/staged300Forward-Z3.epf",
-		"buchiAutomizer/staged300Forward-Z3-LBE.epf",
-		"buchiAutomizer/staged300Forward-Z3-Tasimp.epf",
+//		"buchiAutomizer/staged300Forward-Z3.epf",
+//		"buchiAutomizer/staged300Forward-Z3-LBE.epf",
+//		"buchiAutomizer/staged300Forward-Z3-Tasimp.epf",
+		"buchiAutomizer/stagedCraigNonlinear.epf",
+		"buchiAutomizer/maxrank3CraigNonlinear.epf",
+		"buchiAutomizer/stagedCraigNonlinearLbe.epf",
+		"buchiAutomizer/maxrank3CraigNonlinearLbe.epf",
 	};
 
 	@Override
