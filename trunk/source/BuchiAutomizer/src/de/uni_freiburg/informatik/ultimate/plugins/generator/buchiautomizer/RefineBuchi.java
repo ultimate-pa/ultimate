@@ -267,7 +267,7 @@ public class RefineBuchi {
 		INestedWordAutomatonOldApi<CodeBlock, IPredicate> newAbstraction;
 		if (m_Difference) {
 			BuchiDifferenceFKV<CodeBlock, IPredicate> diff = new BuchiDifferenceFKV<CodeBlock, IPredicate>(m_Services, 
-					m_Abstraction, m_InterpolAutomatonUsedInRefinement, stateDeterminizer, m_StateFactoryForRefinement);
+					m_Abstraction, m_InterpolAutomatonUsedInRefinement, stateDeterminizer, m_StateFactoryForRefinement, Integer.MAX_VALUE);
 			finishComputation(m_InterpolAutomatonUsedInRefinement, setting);
 			benchmarkGenerator.reportHighestRank(diff.getHighestRank());
 			assert diff.checkResult(m_StateFactoryInterpolAutom);

@@ -75,7 +75,7 @@ public class BuchiComplementFKVNwa<LETTER,STATE> implements INestedWordAutomaton
 	 * this is sound. E.g. if the automaton is reverse deterministic a maximal
 	 * rank of 2 is suffient, see paper of Seth Forgaty.
 	 */
-	private final int m_UserDefinedMaxRank = Integer.MAX_VALUE;
+	private final int m_UserDefinedMaxRank;
 	
 	private final INestedWordAutomatonSimple<LETTER,STATE> m_Operand;
 	
@@ -123,7 +123,7 @@ public class BuchiComplementFKVNwa<LETTER,STATE> implements INestedWordAutomaton
 	public BuchiComplementFKVNwa(IUltimateServiceProvider services,
 			INestedWordAutomatonSimple<LETTER,STATE> operand,
 			IStateDeterminizer<LETTER,STATE> stateDeterminizer,
-			StateFactory<STATE> stateFactory) throws OperationCanceledException {
+			StateFactory<STATE> stateFactory, int userDefinedMaxRank) throws OperationCanceledException {
 		m_Services = services;
 		m_Operand = operand;
 		m_StateFactory = stateFactory;
@@ -132,6 +132,7 @@ public class BuchiComplementFKVNwa<LETTER,STATE> implements INestedWordAutomaton
 				operand.getInternalAlphabet(), operand.getCallAlphabet(), 
 				operand.getReturnAlphabet(), m_StateFactory);
 		m_StateDeterminizer = stateDeterminizer;
+		m_UserDefinedMaxRank = userDefinedMaxRank;
 	}
 	
 	
@@ -663,7 +664,7 @@ public class BuchiComplementFKVNwa<LETTER,STATE> implements INestedWordAutomaton
 						// state. we treat this like "O is empty".
 						// (this will safe some states)
 						oCandidate = true;
-						upRank = Integer.MAX_VALUE;
+						upRank = m_UserDefinedMaxRank;
 					}
 					for (OutgoingInternalTransition<LETTER, STATE> trans : 
 									m_Operand.internalSuccessors(up,symbol)) {
@@ -687,7 +688,7 @@ public class BuchiComplementFKVNwa<LETTER,STATE> implements INestedWordAutomaton
 						// state. we treat this like "O is empty".
 						// (this will safe some states)
 						oCandidate = true;
-						upRank = Integer.MAX_VALUE;
+						upRank = m_UserDefinedMaxRank;
 					}
 					for (OutgoingCallTransition<LETTER, STATE> trans : 
 									m_Operand.callSuccessors(up,symbol)) {
@@ -752,7 +753,7 @@ public class BuchiComplementFKVNwa<LETTER,STATE> implements INestedWordAutomaton
 					// state. we treat this like "O is empty".
 					// (this will safe some states)
 					oCandidate = true;
-					upRank = Integer.MAX_VALUE;
+					upRank = m_UserDefinedMaxRank;
 				}
 				for (OutgoingReturnTransition<LETTER, STATE> trans : 
 								m_Operand.returnSucccessors(stateUp,hierUp,symbol)) {

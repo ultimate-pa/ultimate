@@ -28,6 +28,8 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.swing.plaf.basic.BasicInternalFrameTitlePane.MaximizeAction;
+
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
@@ -102,7 +104,7 @@ public class BuchiDifferenceFKV<LETTER,STATE> implements IOperation<LETTER,STATE
 		m_StateFactory = m_FstOperand.getStateFactory();
 		m_StateDeterminizer = new PowersetDeterminizer<LETTER,STATE>(sndOperand, true, stateFactory);
 		s_Logger.info(startMessage());
-		constructDifference();
+		constructDifference(Integer.MAX_VALUE);
 		s_Logger.info(exitMessage());
 	}
 	
@@ -111,19 +113,19 @@ public class BuchiDifferenceFKV<LETTER,STATE> implements IOperation<LETTER,STATE
 			INestedWordAutomatonSimple<LETTER,STATE> fstOperand,
 			INestedWordAutomatonSimple<LETTER,STATE> sndOperand,
 			IStateDeterminizer<LETTER, STATE> stateDeterminizer,
-			StateFactory<STATE> sf) throws AutomataLibraryException {
+			StateFactory<STATE> sf, int userDefinedMaxRank) throws AutomataLibraryException {
 		m_Services = services;
 		m_FstOperand = fstOperand;
 		m_SndOperand = sndOperand;
 		m_StateFactory = sf;
 		m_StateDeterminizer = stateDeterminizer;
 		s_Logger.info(startMessage());
-		constructDifference();
+		constructDifference(userDefinedMaxRank);
 		s_Logger.info(exitMessage());
 	}
 	
-	private void constructDifference() throws AutomataLibraryException {
-		m_SndComplemented = new BuchiComplementFKVNwa<LETTER, STATE>(m_Services, m_SndOperand, m_StateDeterminizer, m_StateFactory);
+	private void constructDifference(int userDefinedMaxRank) throws AutomataLibraryException {
+		m_SndComplemented = new BuchiComplementFKVNwa<LETTER, STATE>(m_Services, m_SndOperand, m_StateDeterminizer, m_StateFactory, userDefinedMaxRank);
 		m_Intersect = new BuchiIntersectNwa<LETTER, STATE>(m_FstOperand, m_SndComplemented, m_StateFactory);
 		m_Result = new NestedWordAutomatonReachableStates<LETTER, STATE>(m_Services, m_Intersect);
 	}

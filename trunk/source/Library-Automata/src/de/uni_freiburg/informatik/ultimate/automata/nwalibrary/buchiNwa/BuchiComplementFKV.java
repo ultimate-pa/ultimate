@@ -106,7 +106,7 @@ public class BuchiComplementFKV<LETTER,STATE> implements IOperation<LETTER,STATE
 		this.m_StateFactory = input.getStateFactory();
 		this.m_Operand = input;
 		s_Logger.info(startMessage());
-		m_Complemented = new BuchiComplementFKVNwa<LETTER, STATE>(m_Services, input,m_StateDeterminizer,m_StateFactory);
+		m_Complemented = new BuchiComplementFKVNwa<LETTER, STATE>(m_Services, input,m_StateDeterminizer,m_StateFactory, m_UserDefinedMaxRank);
 		m_Result = new NestedWordAutomatonReachableStates<LETTER, STATE>(m_Services, m_Complemented);
 		s_Logger.info(exitMessage());
 	}
@@ -118,7 +118,7 @@ public class BuchiComplementFKV<LETTER,STATE> implements IOperation<LETTER,STATE
 		this.m_StateFactory = input.getStateFactory();
 		this.m_Operand = input;
 		s_Logger.info(startMessage());
-		m_Complemented = new BuchiComplementFKVNwa<LETTER, STATE>(m_Services, input,m_StateDeterminizer,m_StateFactory);
+		m_Complemented = new BuchiComplementFKVNwa<LETTER, STATE>(m_Services, input,m_StateDeterminizer,m_StateFactory, m_UserDefinedMaxRank);
 		m_Result = new NestedWordAutomatonReachableStates<LETTER, STATE>(m_Services, m_Complemented);
 		s_Logger.info(exitMessage());
 	}
