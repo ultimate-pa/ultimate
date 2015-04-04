@@ -19,7 +19,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
  */
 public class ScriptorWithGetInterpolants extends Scriptor {
 	
-	public enum ExternalInterpolator { IZ3, PRINCESS };
+	public enum ExternalInterpolator { IZ3, PRINCESS, SMTINTERPOL };
 	
 	private final ExternalInterpolator m_ExternalInterpolator;
 
@@ -33,14 +33,23 @@ public class ScriptorWithGetInterpolants extends Scriptor {
 
     @Override
     public Term[] getInterpolants(Term[] partition) throws SMTLIBException,
-    UnsupportedOperationException {
-    	StringBuilder command = new StringBuilder();
+    											UnsupportedOperationException {
+    	sendInterpolationCommand(partition);
+    	
+    	Term[] interpolants = readInterpolants(partition.length - 1);
+    	return interpolants;
+    }
+    
+	private void sendInterpolationCommand(Term[] partition)
+			throws AssertionError {
+		StringBuilder command = new StringBuilder();
     	PrintTerm pt = new PrintTerm();
     	switch (m_ExternalInterpolator) {
 		case IZ3:
 			command.append("(get-interpolant ");
 			break;
 		case PRINCESS:
+		case SMTINTERPOL:
 			command.append("(get-interpolants ");
 			break;
 		default:
@@ -54,12 +63,29 @@ public class ScriptorWithGetInterpolants extends Scriptor {
     	}
     	command.append(")");
     	super.m_Executor.input(command.toString());
-    	Term[] interpolants = new Term[partition.length - 1];
-    	for (int i=0; i<interpolants.length; i++) {
-    		interpolants[i] = super.m_Executor.parseTerm();
-    	}
-    	return interpolants;
-    }
+	}
+
+	private Term[] readInterpolants(int numberOfInterpolants) throws AssertionError {
+		Term[] interpolants;
+    	switch (m_ExternalInterpolator) {
+		case IZ3:
+		case PRINCESS:
+	    	interpolants = new Term[numberOfInterpolants];
+	    	for (int i=0; i<interpolants.length; i++) {
+	    		interpolants[i] = super.m_Executor.parseTerm();
+	    	}
+
+			break;
+		case SMTINTERPOL:
+			interpolants = super.m_Executor.parseGetAssertionsResult();
+			break;
+		default:
+			throw new AssertionError("unknown m_ExternalInterpolator");
+		}
+		return interpolants;
+	}
+
+
 
 
 }

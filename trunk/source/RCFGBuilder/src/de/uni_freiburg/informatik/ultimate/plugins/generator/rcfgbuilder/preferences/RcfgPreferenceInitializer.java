@@ -43,7 +43,7 @@ public class RcfgPreferenceInitializer extends UltimatePreferenceInitializer {
 		return "RCFG Builder";
 	}
 	
-	public enum Solver { Internal_SMTInterpol, External_PrincessInterpolationMode, External_Z3InterpolationMode, External_DefaultMode };
+	public enum Solver { Internal_SMTInterpol, External_PrincessInterpolationMode, External_SMTInterpolInterpolationMode, External_Z3InterpolationMode, External_DefaultMode };
 	/*
 	 * new preferences that belong to the RCFG Builder 
 	 */

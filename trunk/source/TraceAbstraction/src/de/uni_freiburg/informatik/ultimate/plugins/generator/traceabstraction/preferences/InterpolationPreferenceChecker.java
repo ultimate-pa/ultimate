@@ -25,10 +25,14 @@ public class InterpolationPreferenceChecker {
 		switch (interpolation) {
 		case Craig_TreeInterpolation:
 			legalSolverSettings.add(Solver.Internal_SMTInterpol);
+			legalSolverSettings.add(Solver.External_PrincessInterpolationMode);
+			legalSolverSettings.add(Solver.External_SMTInterpolInterpolationMode);
+			legalSolverSettings.add(Solver.External_Z3InterpolationMode);
 			break;
 		case Craig_NestedInterpolation:
 			legalSolverSettings.add(Solver.Internal_SMTInterpol);
 			legalSolverSettings.add(Solver.External_PrincessInterpolationMode);
+			legalSolverSettings.add(Solver.External_SMTInterpolInterpolationMode);
 			legalSolverSettings.add(Solver.External_Z3InterpolationMode);
 			break;
 		case BackwardPredicates:

@@ -1,7 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -24,10 +23,8 @@ import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceSt
 import de.uni_freiburg.informatik.ultimate.core.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Identifier;
-import de.uni_freiburg.informatik.ultimate.logic.LoggingScript;
 import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
-import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.annotation.IAnnotations;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
@@ -179,6 +176,15 @@ public class CfgBuilder {
 			externalInterpolator = ExternalInterpolator.PRINCESS;
 		}
 		break;
+		case External_SMTInterpolInterpolationMode:
+		{
+			useExternalSolver = true;
+			commandExternalSolver = (new UltimatePreferenceStore(RCFGBuilder.s_PLUGIN_ID))
+				.getString(RcfgPreferenceInitializer.LABEL_ExtSolverCommand);
+			timeoutSmtInterpol = -1;
+			externalInterpolator = ExternalInterpolator.SMTINTERPOL;
+		}
+		break;
 		case External_Z3InterpolationMode:
 		{
 			useExternalSolver = true;
@@ -222,6 +228,7 @@ public class CfgBuilder {
 			result.setLogic(logicForExternalSolver);
 		break;
 		case External_PrincessInterpolationMode:
+		case External_SMTInterpolInterpolationMode:
 			result.setOption(":produce-interpolants", true);
 			result.setLogic(logicForExternalSolver);
 		break;
