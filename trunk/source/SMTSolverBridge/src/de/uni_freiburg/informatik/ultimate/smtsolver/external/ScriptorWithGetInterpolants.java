@@ -40,6 +40,15 @@ public class ScriptorWithGetInterpolants extends Scriptor {
     	return interpolants;
     }
     
+    @Override
+    public Term[] getInterpolants(Term[] partition, int[] startOfSubtree) throws SMTLIBException,
+    											UnsupportedOperationException {
+    	sendInterpolationCommand(partition, startOfSubtree);
+    	
+    	Term[] interpolants = readInterpolants(partition.length - 1);
+    	return interpolants;
+    }
+    
 	private void sendInterpolationCommand(Term[] partition)
 			throws AssertionError {
 		StringBuilder command = new StringBuilder();
@@ -64,6 +73,41 @@ public class ScriptorWithGetInterpolants extends Scriptor {
     	command.append(")");
     	super.m_Executor.input(command.toString());
 	}
+	
+	
+	
+	private void sendInterpolationCommand(Term[] partition, int[] startOfSubtree)
+			throws AssertionError {
+		StringBuilder command = new StringBuilder();
+    	PrintTerm pt = new PrintTerm();
+    	switch (m_ExternalInterpolator) {
+		case IZ3:
+			command.append("(get-interpolant ");
+			break;
+		case PRINCESS:
+		case SMTINTERPOL:
+			command.append("(get-interpolants ");
+			break;
+		default:
+			throw new AssertionError("unknown m_ExternalInterpolator");
+		}
+    	pt.append(command, partition[0]);
+    	for (int i = 1; i < partition.length; ++i) {
+    		int prevStart = startOfSubtree[i - 1];
+    		while (startOfSubtree[i] < prevStart) {
+    			command.append(')');
+    			prevStart = startOfSubtree[prevStart - 1];
+    		}
+    		command.append(' ');
+    		if (startOfSubtree[i] == i)
+    			command.append('(');
+    		pt.append(command, partition[i]);
+    	}
+    	command.append(')');
+    	super.m_Executor.input(command.toString());
+	}
+	
+
 
 	private Term[] readInterpolants(int numberOfInterpolants) throws AssertionError {
 		Term[] interpolants;
