@@ -107,7 +107,7 @@ public class TransFormulaLRWithArrayCells {
 			ReplacementVarFactory replacementVarFactory, Script script,
 			TransFormulaLRWithArrayInformation tflrwai, 
 			IndexSupportingInvariantAnalysis indexSupportingInvariantAnalysis, 
-			Boogie2SMT boogie2smt, ArrayCellRepVarConstructor acrvc, boolean m_overapproximateByOmmitingDisjointIndices) {
+			Boogie2SMT boogie2smt, ArrayCellRepVarConstructor acrvc, boolean m_overapproximateByOmmitingDisjointIndices, boolean isStem) {
 			mServices = services;
 			mLogger = mServices.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
 			m_OverapproximateByOmmitingDisjointIndices = m_overapproximateByOmmitingDisjointIndices;
@@ -135,7 +135,7 @@ public class TransFormulaLRWithArrayCells {
 			
 			
 			
-			indexAnalyzer = new IndexAnalyzer2(m_Result.getFormula(), m_FirstGeneration2Indices, boogie2smt, m_Result, indexSupportingInvariantAnalysis);
+			indexAnalyzer = new IndexAnalyzer2(m_Result.getFormula(), m_FirstGeneration2Indices, boogie2smt, m_Result, indexSupportingInvariantAnalysis, isStem);
 			CellVariableBuilder cvb = new CellVariableBuilder(m_Result, this, replacementVarFactory, mLogger, m_FirstGeneration2Indices, m_ArrayCellInVars, m_ArrayCellOutVars);
 			m_ArrayInstance2Index2CellVariable = cvb.getArrayInstance2Index2CellVariable();
 			m_EquivalentCells = new EquivalentCells[tflrwai.numberOfDisjuncts()];

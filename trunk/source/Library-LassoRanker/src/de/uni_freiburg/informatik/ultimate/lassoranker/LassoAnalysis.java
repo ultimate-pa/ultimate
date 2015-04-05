@@ -312,6 +312,7 @@ public class LassoAnalysis {
 //						mServices
 //				),
 				new RewriteArrays2(true, m_stem_transition, m_loop_transition, mServices, m_ArrayIndexSupportingInvariants),
+//				new LassoPartitioneer(mServices),
 				new StemAndLoopPreProcessor(new RewriteDivision(lassoBuilder.getReplacementVarFactory())),
 				new StemAndLoopPreProcessor(new RewriteBooleans(lassoBuilder.getReplacementVarFactory(), lassoBuilder.getScript())),
 				new StemAndLoopPreProcessor(new RewriteIte()),
