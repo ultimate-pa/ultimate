@@ -311,7 +311,7 @@ public class BinaryStatePredicateManager {
 	Term[] startingFromIPlusList(List<Term> list, int i, List<Term> additionalList) {
 		List<Term> result = new ArrayList<Term>(list.size()+i+list.size());
 		for (int j=i; j<list.size(); j++) {
-			result.add(list.get(i));
+			result.add(list.get(j));
 		}
 		result.addAll(additionalList);
 		return result.toArray(new Term[result.size()]);
