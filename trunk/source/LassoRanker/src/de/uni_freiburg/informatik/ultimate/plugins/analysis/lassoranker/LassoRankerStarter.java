@@ -6,6 +6,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.log4j.Logger;
 
@@ -38,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
@@ -313,7 +315,8 @@ public class LassoRankerStarter {
 	private boolean isTerminationArgumentCorrect(TerminationArgument arg) {
 
 		BinaryStatePredicateManager bspm = new BinaryStatePredicateManager(m_SmtManager, mServices);
-		bspm.computePredicates(false, arg, false, null);
+		Set<BoogieVar> modifiableGlobals = m_RootAnnot.getModGlobVarManager().getModifiedBoogieVars(m_Honda.getProcedure());
+		bspm.computePredicates(false, arg, false, null, modifiableGlobals);
 
 		// check supporting invariants
 		boolean siCorrect = true;

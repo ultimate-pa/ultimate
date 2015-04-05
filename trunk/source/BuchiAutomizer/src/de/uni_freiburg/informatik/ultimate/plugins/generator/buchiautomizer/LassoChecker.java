@@ -48,6 +48,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPre
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.PreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.SequentialComposition;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.INTERPOLATION;
@@ -711,6 +712,9 @@ public class LassoChecker {
 	 */
 	private TerminationArgument tryTemplatesAndComputePredicates(final boolean withStem, LassoAnalysis la,
 			List<RankingTemplate> rankingFunctionTemplates, TransFormula loopTF) throws AssertionError, IOException {
+		String hondaProcedure = ((ISLPredicate) m_Counterexample.getLoop().getStateAtPosition(0)).getProgramPoint().getProcedure();
+		Set<BoogieVar> modifiableGlobals = m_ModifiableGlobalVariableManager.getModifiedBoogieVars(hondaProcedure);
+		
 		TerminationArgument firstTerminationArgument = null;
 		for (RankingTemplate rft : rankingFunctionTemplates) {
 			TerminationArgument termArg;
@@ -735,7 +739,7 @@ public class LassoChecker {
 			if (termArg != null) {
 				assert termArg.getRankingFunction() != null;
 				assert termArg.getSupportingInvariants() != null;
-				m_Bspm.computePredicates(!withStem, termArg, m_RemoveSuperfluousSupportingInvariants, loopTF);
+				m_Bspm.computePredicates(!withStem, termArg, m_RemoveSuperfluousSupportingInvariants, loopTF, modifiableGlobals);
 				assert m_Bspm.providesPredicates();
 				assert areSupportingInvariantsCorrect() : "incorrect supporting invariant with"
 						+ rft.getClass().getSimpleName();
@@ -753,7 +757,7 @@ public class LassoChecker {
 		if (firstTerminationArgument != null) {
 			assert firstTerminationArgument.getRankingFunction() != null;
 			assert firstTerminationArgument.getSupportingInvariants() != null;
-			m_Bspm.computePredicates(!withStem, firstTerminationArgument, m_RemoveSuperfluousSupportingInvariants, loopTF);
+			m_Bspm.computePredicates(!withStem, firstTerminationArgument, m_RemoveSuperfluousSupportingInvariants, loopTF, modifiableGlobals);
 			assert m_Bspm.providesPredicates();
 			return firstTerminationArgument;
 		} else {

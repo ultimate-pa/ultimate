@@ -78,7 +78,8 @@ public class BinaryStatePredicateManager {
 	private final Logger mLogger;
 	private final IUltimateServiceProvider mServices;
 
-	public BinaryStatePredicateManager(SmtManager smtManager, IUltimateServiceProvider services) {
+	public BinaryStatePredicateManager(SmtManager smtManager, 
+			IUltimateServiceProvider services) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
 		m_Script = smtManager.getScript();
@@ -201,9 +202,11 @@ public class BinaryStatePredicateManager {
 	 * @param removeSuperfluousSupportingInvariants 
 	 * @param loopTf TransFormula for loop, has to be provided if we remove
 	 * superfluous supporting invariants.
+	 * @param modifiableGlobals 
 	 */
 	public void computePredicates(boolean loopTermination, TerminationArgument termArg, 
-			boolean removeSuperfluousSupportingInvariants, TransFormula loopTf) {
+			boolean removeSuperfluousSupportingInvariants, TransFormula loopTf, 
+			Set<BoogieVar> modifiableGlobals) {
 		assert m_LoopTermination == null;
 		assert m_TerminationArgument == null;
 		assert m_StemPrecondition == null;
@@ -226,7 +229,7 @@ public class BinaryStatePredicateManager {
 		m_RankDecreaseAndBound = computeRankDecreaseAndBound();
 		m_SiConjunction = computeSiConjunction(m_TerminationArgument.getSupportingInvariants(),
 				m_TerminationArgument.getArrayIndexSupportingInvariants(), 
-				removeSuperfluousSupportingInvariants, loopTf);
+				removeSuperfluousSupportingInvariants, loopTf, modifiableGlobals);
 		boolean siConjunctionIsTrue = isTrue(m_SiConjunction);
 		if (siConjunctionIsTrue) {
 			m_StemPostcondition = unseededPredicate;
@@ -258,11 +261,11 @@ public class BinaryStatePredicateManager {
 		m_ProvidesPredicates = true;
 	}
 
-	private List<Term> removeSuperfluousSupportingInvariants(List<Term> siTerms, TransFormula loopTf) {
+	private List<Term> removeSuperfluousSupportingInvariants(List<Term> siTerms, TransFormula loopTf, Set<BoogieVar> modifiableGlobals) {
 		ArrayList<Term> neededSiTerms = new ArrayList<Term>();
 		for (int i=0; i<siTerms.size(); i++) {
 			Term[] siTermSubset = startingFromIPlusList(siTerms, i+1, neededSiTerms);
-			boolean isSi = isSupportingInvariant(siTermSubset, loopTf);
+			boolean isSi = isSupportingInvariant(siTermSubset, loopTf, modifiableGlobals);
 			if (!isSi) {
 				// we cannot drop the i'th term
 				neededSiTerms.add(siTerms.get(i));
@@ -274,7 +277,7 @@ public class BinaryStatePredicateManager {
 		return neededSiTerms;
 	}
 	
-	private boolean isSupportingInvariant(Term[] siTermSubset, TransFormula loopTf) {
+	private boolean isSupportingInvariant(Term[] siTermSubset, TransFormula loopTf, Set<BoogieVar> modifiableGlobals) {
 		List<Term> siSubsetAndRankEqualityList = new ArrayList<Term>(Arrays.asList(siTermSubset));
 		siSubsetAndRankEqualityList.add(m_RankEquality.getFormula());
 		IPredicate siSubsetAndRankEquality = m_SmtManager.newPredicate(
@@ -291,7 +294,7 @@ public class BinaryStatePredicateManager {
 		LBool sat = PredicateUtils.isInductiveHelper(
 				m_SmtManager.getBoogie2Smt(), 
 				siSubsetAndRankEquality, 
-				siSubsetAndRankDecreaseAndBound, loopTf, null);
+				siSubsetAndRankDecreaseAndBound, loopTf, modifiableGlobals);
 		switch (sat) {
 		case SAT:
 		case UNKNOWN:
@@ -330,7 +333,7 @@ public class BinaryStatePredicateManager {
 			Collection<SupportingInvariant> siList, 
 			Collection<Term> aisi, 
 			boolean removeSuperfluousSupportingInvariants, 
-			TransFormula loopTf) {
+			TransFormula loopTf, Set<BoogieVar> modifiableGlobals) {
 		List<Term> siTerms = new ArrayList<Term>(siList.size() + aisi.size());
 		for (SupportingInvariant si : siList) {
 			Term formula = si.asTerm(m_SmtManager.getScript());
@@ -338,8 +341,8 @@ public class BinaryStatePredicateManager {
 		}
 		siTerms.addAll(aisi);
 		if (removeSuperfluousSupportingInvariants) {
-			assert isSupportingInvariant(siTerms.toArray(new Term[siTerms.size()]), loopTf);
-			siTerms = removeSuperfluousSupportingInvariants(siTerms, loopTf);
+			assert isSupportingInvariant(siTerms.toArray(new Term[siTerms.size()]), loopTf, modifiableGlobals);
+			siTerms = removeSuperfluousSupportingInvariants(siTerms, loopTf, modifiableGlobals);
 		}
 		
 		Term conjunction = SmtUtils.and(m_Script, siTerms);
