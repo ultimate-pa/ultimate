@@ -94,7 +94,7 @@ public class TransFormulaLRWithArrayCells {
 	private final ReplacementVarFactory m_ReplacementVarFactory;
 	private Map<TermVariable, Map<ArrayIndex, TermVariable>> m_ArrayInstance2Index2CellVariable;
 	private EquivalentCells[] m_EquivalentCells;
-	private boolean m_OverapproximateByOmmitingDisjointIndices = true;
+	private final boolean m_OverapproximateByOmmitingDisjointIndices;
 	private HashRelation<TermVariable, ArrayIndex> m_FirstGeneration2Indices;
 	private IndexAnalyzer2 indexAnalyzer;
 	private NestedMap2<TermVariable, ArrayIndex, ArrayCellReplacementVarInformation> m_ArrayCellInVars;
@@ -178,8 +178,8 @@ public class TransFormulaLRWithArrayCells {
 				conjuncts[1] = indexValueConstraints[i];
 				conjuncts[2] = arrayUpdateConstraints[i];
 				conjuncts[3] = arrayEqualityConstraints[i];
-				conjuncts[4] = indexAnalyzer.getAdditionalConjunctsEqualities();
-				disjunctsWithUpdateConstraints[i] = Util.and(m_Script, conjuncts);
+				conjuncts[4] = m_Select2CellVariable[i].transform(indexAnalyzer.getAdditionalConjunctsEqualities());
+				disjunctsWithUpdateConstraints[i] = m_Select2CellVariable[i].transform(Util.and(m_Script, conjuncts));
 			}
 			Term resultDisjuntion = Util.or(m_Script, disjunctsWithUpdateConstraints);
 			HashSet<TermVariable> auxVars = new HashSet<TermVariable>(cvb.getAuxVars());
