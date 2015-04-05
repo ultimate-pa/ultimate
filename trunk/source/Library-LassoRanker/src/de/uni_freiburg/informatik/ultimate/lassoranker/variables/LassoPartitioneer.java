@@ -116,10 +116,10 @@ public class LassoPartitioneer extends LassoPreProcessor {
 		m_LoopSymbolsWithoutConjuncts = new HashSet<>();
 		Collection<TransFormulaLR> stem_components =
 				m_lassoBuilder.getStemComponentsTermination();
-		assert stem_components == m_lassoBuilder.getStemComponentsNonTermination();
+//		assert stem_components == m_lassoBuilder.getStemComponentsNonTermination();
 		Collection<TransFormulaLR> loop_components =
 				m_lassoBuilder.getLoopComponentsTermination();
-		assert loop_components == m_lassoBuilder.getLoopComponentsNonTermination();
+//		assert loop_components == m_lassoBuilder.getLoopComponentsNonTermination();
 		
 		extractSymbols(Part.STEM, stem_components, m_Symbol2StemConjuncts, m_StemSymbolsWithoutConjuncts);
 		extractSymbols(Part.LOOP, loop_components, m_Symbol2LoopConjuncts, m_LoopSymbolsWithoutConjuncts);
@@ -288,7 +288,7 @@ public class LassoPartitioneer extends LassoPreProcessor {
 			Term tvOrConstant,
 			HashRelation<NonTheorySymbol<?>, Term> symbol2Conjuncts) {
 		NonTheorySymbol<?> symbol = constructSymbol(tvOrConstant);
-		if (!symbol2Conjuncts.getDomain().contains(symbol)) {
+		if (!symbol2Conjuncts.getDomain().contains(symbol) && !symbolsWithoutConjuncts.contains(symbol)) {
 			m_EquivalentSymbols.makeEquivalenceClass(symbol);
 			symbolsWithoutConjuncts.add(symbol);
 			TransFormulaLR oldValue = m_Symbol2OriginalTF.put(part, symbol, tf);
