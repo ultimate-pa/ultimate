@@ -1,4 +1,4 @@
-//#rTerminationDerivable
+//#rTermination
 /* The array a models a street with infinitely many farmhouses.
  * Each farmhouse has a finite number of eggs.
  * Because of the zombie apocalypse no new eggs can be produced.
