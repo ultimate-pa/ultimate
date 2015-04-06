@@ -173,6 +173,10 @@ public final class MinimizeIncompleteDfa<LETTER, STATE> extends
 	 */
 	private final NestedWordAutomaton<LETTER, STATE> m_result;
 	/**
+	 * Service provider.
+	 */
+	private final IUltimateServiceProvider m_services;
+	/**
 	 * Mapping for state to the block number where it is contained.
 	 */
 	private final HashMap<Integer, Integer> stateToBlockId;
@@ -207,7 +211,8 @@ public final class MinimizeIncompleteDfa<LETTER, STATE> extends
 	public MinimizeIncompleteDfa(final IUltimateServiceProvider services,
 			final INestedWordAutomaton<LETTER, STATE> operand) {
 		super(services, operand.getStateFactory(), "minimizeICDFA", operand);
-
+		
+		m_services = services;
 		m_operand = operand;
 		blockToId = new LinkedHashMap<LinkedHashSet<Integer>, Integer>(
 				INITIAL_BLOCK_AMOUNT);
@@ -411,8 +416,54 @@ public final class MinimizeIncompleteDfa<LETTER, STATE> extends
 		System.out.println("Q: " + blocks);
 		
 		
-		// TODO Build new automaton
-		return null;
+		return buildMinimizedAutomaton();
+	}
+	
+	/**
+	 * Builds the minimized automaton using the block
+	 * representation of all nodes.
+	 * 
+	 * @return The minimized automaton
+	 */
+	private NestedWordAutomaton<LETTER, STATE> buildMinimizedAutomaton() {
+		NestedWordAutomaton<LETTER, STATE> result =
+				new NestedWordAutomaton<LETTER, STATE>(m_services,
+						m_operand.getInternalAlphabet(),
+						m_operand.getCallAlphabet(),
+						m_operand.getReturnAlphabet(),
+						m_operand.getStateFactory());
+		
+		//Select a representative state for every block
+		LinkedList<Integer> representatives = new LinkedList<Integer>();
+		HashMap<Integer, Integer> blockToRepresentatives =
+				new HashMap<Integer, Integer>();
+		for (LinkedHashSet<Integer> block : blocks) {
+			int stateId = block.iterator().next();
+			STATE state = idToState.get(stateId);
+			representatives.add(stateId);
+			blockToRepresentatives.put(stateToBlockId.get(stateId), stateId);
+			
+			result.addState(m_operand.isInitial(state),
+					m_operand.isFinal(state), state);
+		}
+		
+		//Add adjusted outgoing transitions of every representative
+		for (int state : representatives) {
+			for (OutgoingInternalTransition<LETTER, STATE> trans :
+				stateToOutgoingEdges.get(state)) {
+				//Redirect the destination to the representative of the block
+				int oldDest = stateToId.get(trans.getSucc());
+				int destRepresentative = blockToRepresentatives.get(
+						stateToBlockId.get(oldDest));
+				
+				STATE predState = idToState.get(state);
+				LETTER letter = trans.getLetter();
+				STATE succState = idToState.get(destRepresentative);
+				result.addInternalTransition(predState, letter, succState);
+			}
+		}
+		
+		return result;
 	}
 
 	/**
