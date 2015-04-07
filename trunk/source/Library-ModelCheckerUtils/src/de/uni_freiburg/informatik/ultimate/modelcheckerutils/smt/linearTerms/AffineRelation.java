@@ -197,7 +197,7 @@ public class AffineRelation {
 		Term lhsTerm = SmtUtils.sum(script, m_AffineTerm.getSort(), lhsSummands.toArray(new Term[lhsSummands.size()]));
 		Term rhsTerm = SmtUtils.sum(script, m_AffineTerm.getSort(), rhsSummands.toArray(new Term[rhsSummands.size()]));
 		Term result = script.term(m_RelationSymbol.toString(), lhsTerm, rhsTerm);
-		assert isEquivalent(script, m_OriginalTerm, result) == LBool.UNSAT : "transformation to positive normal form unsound";
+		assert isEquivalent(script, m_OriginalTerm, result) != LBool.SAT : "transformation to positive normal form unsound";
 		return result;
 	}
 
