@@ -9,7 +9,6 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
@@ -127,12 +126,11 @@ public final class MinimizeIncompleteDfa<LETTER, STATE> extends
 		inputAutomata.addInternalTransition(predState, letter, succState);
 		
 		// Use random automaton
-		//inputAutomata = new GetRandomDfa(null, 100, 50, 50).getResult();
+		inputAutomata = new GetRandomDfa(null, 250, 10, 50).getResult();
 
-		// XXX Remove debugging print
 		System.out.println("+++++++++Before minimization:+++++++++");
 		System.out.println();
-		System.out.println(inputAutomata);
+		//System.out.println(inputAutomata);
 
 		// Measure time of algorithm
 		long beforeStamp = System.currentTimeMillis();
@@ -143,14 +141,13 @@ public final class MinimizeIncompleteDfa<LETTER, STATE> extends
 		long afterStamp = System.currentTimeMillis();
 		long timeDiffSec = (afterStamp - beforeStamp);
 
-		// XXX Remove debugging print
 		System.out.println();
 		System.out.println("+++++++++After minimization:+++++++++");
 		System.out.println();
 		System.out.println("Performance: " + timeDiffSec + " ms");
 		System.out.println("Size: " + result.size());
 		System.out.println();
-		System.out.println(result);
+		//System.out.println(result);
 	}
 
 	/**
@@ -251,6 +248,70 @@ public final class MinimizeIncompleteDfa<LETTER, STATE> extends
 		m_result = minimizeICDFA(m_operand);
 	}
 
+	/**
+	 * Builds the minimized automaton using the block
+	 * representation of all nodes.
+	 * 
+	 * @return The minimized automaton
+	 */
+	private NestedWordAutomaton<LETTER, STATE> buildMinimizedAutomaton() {
+		NestedWordAutomaton<LETTER, STATE> result =
+				new NestedWordAutomaton<LETTER, STATE>(m_services,
+						m_operand.getInternalAlphabet(),
+						m_operand.getCallAlphabet(),
+						m_operand.getReturnAlphabet(),
+						m_operand.getStateFactory());
+		
+		// Select a representative state for every block
+		LinkedList<Integer> representatives = new LinkedList<Integer>();
+		HashMap<Integer, Integer> blockToRepresentatives =
+				new HashMap<Integer, Integer>();
+		for (LinkedHashSet<Integer> block : blocks) {
+			if (block == null || block.isEmpty()) {
+				continue;
+			}
+			int stateId = block.iterator().next();
+			STATE state = idToState.get(stateId);
+			representatives.add(stateId);
+			blockToRepresentatives.put(stateToBlockId.get(stateId), stateId);
+			
+			// Determine if the block contains an initial state
+			// If yes, the block also must be initial
+			Collection<STATE> initialStates = m_operand.getInitialStates();
+			boolean isBlockInitial = m_operand.isInitial(state);
+			// If representative is not initial, check if there are
+			// other states that are
+			if (!isBlockInitial) {
+				for (STATE initialState : initialStates) {
+					if (block.contains(stateToId.get(initialState))) {
+						isBlockInitial = true;
+						break;
+					}
+				}
+			}
+			
+			result.addState(isBlockInitial, m_operand.isFinal(state), state);
+		}
+		
+		//Add adjusted outgoing transitions of every representative
+		for (int state : representatives) {
+			for (OutgoingInternalTransition<LETTER, STATE> trans :
+				stateToOutgoingEdges.get(state)) {
+				//Redirect the destination to the representative of the block
+				int oldDest = stateToId.get(trans.getSucc());
+				int destRepresentative = blockToRepresentatives.get(
+						stateToBlockId.get(oldDest));
+				
+				STATE predState = idToState.get(state);
+				LETTER letter = trans.getLetter();
+				STATE succState = idToState.get(destRepresentative);
+				result.addInternalTransition(predState, letter, succState);
+			}
+		}
+		
+		return result;
+	}
+
 	@Override
 	public INestedWordAutomatonSimple<LETTER, STATE> getResult() {
 		return m_result;
@@ -283,17 +344,11 @@ public final class MinimizeIncompleteDfa<LETTER, STATE> extends
 		}
 		Iterator<STATE> states = m_operand.getStates().iterator();
 		Iterator<LETTER> letters = m_operand.getInternalAlphabet().iterator();
-
-		// XXX Remove debugging print
-		System.out.println("+++++++++Minimization:+++++++++");
-
+		
 		for (int i = 0; i < maxAmount; i++) {
 			if (states.hasNext()) {
 				STATE state = states.next();
-
-				// XXX Remove debugging print
-				System.out.println("Put state: " + state + ", id: " + i);
-
+				
 				idToState.put(i, state);
 				stateToId.put(state, i);
 				stateToIncomingEdges.put(i,
@@ -303,18 +358,12 @@ public final class MinimizeIncompleteDfa<LETTER, STATE> extends
 			}
 			if (letters.hasNext()) {
 				LETTER letter = letters.next();
-
-				// XXX Remove debugging print
-				System.out.println("Put letter: " + letter + ", id: " + i);
 				
 				letterToId.put(letter, i);
 			}
 		}
-
-		// XXX Remove debugging print
-		System.out.println();
 	}
-
+	
 	/**
 	 * Minimizes a given incomplete DFAs (Deterministic Finite Automaton).<br/>
 	 * Runtime is in:<br/>
@@ -378,10 +427,6 @@ public final class MinimizeIncompleteDfa<LETTER, STATE> extends
 			blocks.add(otherStatesBlock);
 		}
 		
-		// XXX Remove debugging print
-		System.out.println("Initial Setup:");
-		System.out.println("Q: " + blocks);
-
 		// List also known as "L"
 		LinkedHashSet<LinkedHashSet<Integer>> splitCandidates =
 				new LinkedHashSet<LinkedHashSet<Integer>>();
@@ -394,10 +439,6 @@ public final class MinimizeIncompleteDfa<LETTER, STATE> extends
 			splitCandidates.add(otherStatesBlock);
 		}
 		
-		// XXX Remove debugging print
-		System.out.println("L: " + splitCandidates);
-		int splitRuns = 1;
-
 		// Split blocks until there is no candidate left
 		while (!splitCandidates.isEmpty()) {
 			Iterator<LinkedHashSet<Integer>> splitCandidatesIter =
@@ -423,93 +464,13 @@ public final class MinimizeIncompleteDfa<LETTER, STATE> extends
 
 			splitCandidates.remove(splitter);
 
-			// XXX Remove debugging print
-			System.out.println();
-			System.out.println("Split run " + splitRuns + ":");
-			System.out.println("Q: " + blocks);
-			System.out.println("S: " + splitter);
-			System.out.println("L: " + splitCandidates);
-
 			LinkedList<LinkedHashSet<Integer>> splitCandidatesToAppend =
 					split(splitter, incdfa.getInternalAlphabet().size());
 
 			splitCandidates.addAll(splitCandidatesToAppend);
-
-			// XXX Remove debugging print information
-			splitRuns++;
 		}
-		
-		// XXX Remove debugging print
-		System.out.println();
-		System.out.println("Minimzation finished. Result:");
-		System.out.println("Q: " + blocks);
-		
 		
 		return buildMinimizedAutomaton();
-	}
-	
-	/**
-	 * Builds the minimized automaton using the block
-	 * representation of all nodes.
-	 * 
-	 * @return The minimized automaton
-	 */
-	private NestedWordAutomaton<LETTER, STATE> buildMinimizedAutomaton() {
-		NestedWordAutomaton<LETTER, STATE> result =
-				new NestedWordAutomaton<LETTER, STATE>(m_services,
-						m_operand.getInternalAlphabet(),
-						m_operand.getCallAlphabet(),
-						m_operand.getReturnAlphabet(),
-						m_operand.getStateFactory());
-		
-		// Select a representative state for every block
-		LinkedList<Integer> representatives = new LinkedList<Integer>();
-		HashMap<Integer, Integer> blockToRepresentatives =
-				new HashMap<Integer, Integer>();
-		for (LinkedHashSet<Integer> block : blocks) {
-			if (block == null || block.isEmpty()) {
-				continue;
-			}
-			int stateId = block.iterator().next();
-			STATE state = idToState.get(stateId);
-			representatives.add(stateId);
-			blockToRepresentatives.put(stateToBlockId.get(stateId), stateId);
-			
-			// Determine if the block contains an initial state
-			// If yes, the block also must be initial
-			Collection<STATE> initialStates = m_operand.getInitialStates();
-			boolean isBlockInitial = m_operand.isInitial(state);
-			// If representative is not initial, check if there are
-			// other states that are
-			if (!isBlockInitial) {
-				for (STATE initialState : initialStates) {
-					if (block.contains(stateToId.get(initialState))) {
-						isBlockInitial = true;
-						break;
-					}
-				}
-			}
-			
-			result.addState(isBlockInitial, m_operand.isFinal(state), state);
-		}
-		
-		//Add adjusted outgoing transitions of every representative
-		for (int state : representatives) {
-			for (OutgoingInternalTransition<LETTER, STATE> trans :
-				stateToOutgoingEdges.get(state)) {
-				//Redirect the destination to the representative of the block
-				int oldDest = stateToId.get(trans.getSucc());
-				int destRepresentative = blockToRepresentatives.get(
-						stateToBlockId.get(oldDest));
-				
-				STATE predState = idToState.get(state);
-				LETTER letter = trans.getLetter();
-				STATE succState = idToState.get(destRepresentative);
-				result.addInternalTransition(predState, letter, succState);
-			}
-		}
-		
-		return result;
 	}
 
 	/**
@@ -584,20 +545,7 @@ public final class MinimizeIncompleteDfa<LETTER, STATE> extends
 				stateListByLetter.put(incomingLetter, statesOfLetter);
 			}
 		}
-
-		// XXX Remove debugging print
-		System.out.println();
-		System.out.println("Step 1:");
-		String letterListText = letterList.toString().replaceAll("0", "a")
-				.replaceAll("1", "b").replaceAll("2", "c")
-				.replaceAll("3", "d");
-		System.out.println("l: " + letterListText);
-		for (Map.Entry<Integer, LinkedList<Integer>> entry : stateListByLetter
-				.entrySet()) {
-			System.out.println("l(" + ((char) ('a' + entry.getKey())) + "): "
-					+ entry.getValue());
-		}
-
+		
 		// Step 2
 		// Scan the letterList and update signatures
 		int maxSignatureSize = 0;
@@ -621,20 +569,7 @@ public final class MinimizeIncompleteDfa<LETTER, STATE> extends
 		}
 		stateListByLetter.clear();
 		letterList.clear();
-
-		// XXX Remove debugging print
-		System.out.println();
-		System.out.println("Step 2:");
-		for (Map.Entry<Integer, ArrayList<Integer>> entry : signatures
-				.entrySet()) {
-			String signatureText = entry.getValue().toString()
-					.replaceAll("0", "a").replaceAll("1", "b")
-					.replaceAll("2", "c").replaceAll("3", "d");
-			System.out.println("sig(" + entry.getKey() + "): "
-					+ signatureText);
-		}
-		System.out.println("s: " + splitStates);
-
+		
 		// Step 3
 		// Discriminate the states
 		for (Integer state : splitStates) {
@@ -653,27 +588,7 @@ public final class MinimizeIncompleteDfa<LETTER, STATE> extends
 		for (int blockNumber : splitBlockNumbers) {
 			splitStates.addAll(blockStateMap.get(blockNumber));
 		}
-
-		// XXX Remove debugging print
-		System.out.println();
-		System.out.println("Step 3:");
-		String splitBlockNumbersText = splitBlockNumbers.toString()
-				.replaceAll("0", "I").replaceAll("1", "II")
-				.replaceAll("2", "III").replaceAll("3", "IV")
-				.replaceAll("4", "V").replaceAll("5", "VI")
-				.replaceAll("6", "VII").replaceAll("7", "IIX");
-		System.out.println("l1: " + splitBlockNumbersText);
-		for (Map.Entry<Integer, LinkedList<Integer>> entry : blockStateMap
-				.entrySet()) {
-			String blockStateMapText = entry.getKey().toString()
-					.replaceAll("0", "I").replaceAll("1", "II")
-					.replaceAll("2", "III").replaceAll("3", "IV")
-					.replaceAll("4", "V").replaceAll("5", "VI")
-					.replaceAll("6", "VII").replaceAll("7", "IIX");
-			System.out.println("tb[" + blockStateMapText + "]: "
-					+ entry.getValue());
-		}
-
+		
 		blockStateMap.clear();
 		// Iterate over all signature elements
 		for (int j = 0; j < maxSignatureSize; j++) {
@@ -699,11 +614,6 @@ public final class MinimizeIncompleteDfa<LETTER, STATE> extends
 						.get(stateSigLetter);
 				statesOfLetter.add(state);
 				splitStatesOfLetter.put(stateSigLetter, statesOfLetter);
-
-				// XXX Remove debugging print
-				System.out.println();
-				System.out.println("t[" + ((char) ('a' + stateSigLetter))
-						+ "]: " + statesOfLetter);
 			}
 
 			// Clear and update the split states list
@@ -711,14 +621,6 @@ public final class MinimizeIncompleteDfa<LETTER, STATE> extends
 			for (Integer letter : splitLetters) {
 				splitStates.addAll(splitStatesOfLetter.get(letter));
 			}
-
-			// XXX Remove debugging print
-			System.out.println();
-			String splitLettersText = splitLetters.toString()
-					.replaceAll("0", "a").replaceAll("1", "b")
-					.replaceAll("2", "c").replaceAll("3", "d");
-			System.out.println("l2: " + splitLettersText);
-			System.out.println("s: " + splitStates);
 		}
 		splitLetters.clear();
 
@@ -776,21 +678,6 @@ public final class MinimizeIncompleteDfa<LETTER, STATE> extends
 		// splitStatesBlockWrapper now contains split
 		// information once per block
 
-		// XXX Remove debugging print
-		System.out.println();
-		System.out.println("Step 4:");
-		System.out.print("s: [");
-
-		// XXX Remove debugging print
-		for (LinkedHashSet<Integer> blockContent
-				: splitStatesBlockWrapper.values()) {
-			for (int state : blockContent) {
-				System.out.print(state + ", ");
-			}
-			System.out.print("| ");
-		}
-		System.out.println("]");
-
 		// Save blockNumber of current splitter (before it gets removed)
 		int splitterBlockNumber = blockToId.get(splitter);
 		LinkedList<LinkedHashSet<Integer>> splitCandidatesToAppend =
@@ -837,11 +724,7 @@ public final class MinimizeIncompleteDfa<LETTER, STATE> extends
 
 			// If there are more than one set a splits must be done
 			if (splittings.size() > 1) {
-
-				// XXX Remove debugging print
-				System.out.println("Splitting for block: " + splittings);
-				System.out.println("Removed block: " + originalBlock);
-
+				
 				// Remove old block
 				int oldBlockId = blockToId.get(originalBlock);
 				idToBlock.remove(oldBlockId);
@@ -870,9 +753,6 @@ public final class MinimizeIncompleteDfa<LETTER, STATE> extends
 					if (splitBlockPart.size() > maxSplitPartSize) {
 						biggestSplitPart = splitBlockPart;
 					}
-
-					// XXX Remove debugging print
-					System.out.println("Created block: " + splitBlockPart);
 				}
 
 				// Remove biggest split part if splitter got split
@@ -881,11 +761,6 @@ public final class MinimizeIncompleteDfa<LETTER, STATE> extends
 				}
 			}
 		}
-
-		// XXX Remove debugging print
-		System.out.println("Split candidates to append: "
-				+ splitCandidatesToAppend);
-
 		return splitCandidatesToAppend;
 	}
 }
