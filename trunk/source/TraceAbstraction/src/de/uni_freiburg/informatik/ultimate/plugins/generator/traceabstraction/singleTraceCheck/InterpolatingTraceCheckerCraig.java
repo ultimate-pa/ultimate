@@ -19,6 +19,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.INTERPOLATION;
+import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
 
 /**
  * Uses Craig interpolation for computation of nested interpolants.
@@ -230,8 +231,14 @@ public class InterpolatingTraceCheckerCraig extends InterpolatingTraceChecker {
 			InterpolatingTraceCheckerCraig tc = new InterpolatingTraceCheckerCraig(precondition, interpolantAtReturnPosition, pendingContexts, subtrace,
 					m_SmtManager, m_ModifiedGlobals, m_assertCodeBlocksIncrementally, mServices, false, m_PredicateUnifier, INTERPOLATION.Craig_NestedInterpolation);
 			LBool isSafe = tc.isCorrect();
-			if (isSafe != LBool.UNSAT) {
+			if (isSafe == LBool.SAT) {
 				throw new AssertionError("has to be unsat by construction, we do check only for interpolant computation");
+			} else if (isSafe == LBool.UNKNOWN) {
+				if(mServices.getProgressMonitorService().continueProcessing()) {
+					throw new AssertionError("UNKNOWN during nested interpolation. I don't know how to continue");
+				} else {
+					throw new ToolchainCanceledException(this.getClass());
+				}
 			}
 			// tc.computeInterpolants_Recursive(interpolatedPositions, m_PredicateUnifier);
 			IPredicate[] interpolantSubsequence = tc.getInterpolants();
