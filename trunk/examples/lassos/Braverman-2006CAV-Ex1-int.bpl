@@ -15,7 +15,6 @@ modifies x,y;
 {
   assume(true);
   while (4*x+y > 0) {
-    x := -2*x + 4*y;
-    y := 4*x;
+    x, y := -2*x + 4*y, 4*x;
   }
 }
