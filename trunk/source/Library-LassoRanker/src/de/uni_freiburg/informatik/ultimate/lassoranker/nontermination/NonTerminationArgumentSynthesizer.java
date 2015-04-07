@@ -289,13 +289,13 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 			}
 		}
 		Term t2 = Util.or(m_script, disjunction.toArray(new Term[0]));
-		
+
+		// lambda >= 0
 		Term t3;
 		if (!m_integer_mode) {
-			// lambda >= 0
 			t3 = m_script.term(">=", lambda, m_script.decimal("0"));
 		} else {
-			t3 = m_script.term("true");
+			t3 = m_script.term(">=", lambda, m_script.numeral("0"));
 		}
 
 		mLogger.debug(new DebugMessage("{0}", new SMTPrettyPrinter(t1)));
