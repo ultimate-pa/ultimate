@@ -37,7 +37,6 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
@@ -86,7 +85,6 @@ public class MinimizeDfaAmrParallel<LETTER, STATE> extends
 	/**
 	 * The result automaton.
 	 */
-	// TODO Make this final again?
 	private INestedWordAutomaton<LETTER, STATE> m_result;
 	/**
 	 * The number of states in the input automaton (often used).
@@ -99,12 +97,10 @@ public class MinimizeDfaAmrParallel<LETTER, STATE> extends
 	/**
 	 * Map state -> integer index.
 	 */
-	// TODO Make this final again.
 	private HashMap<STATE, Integer> m_state2int;
 	/**
 	 * Map integer index -> state.
 	 */
-	// TODO Make this final again.
 	private ArrayList<STATE> m_int2state;
 	/**
 	 * Background array for the Union-Find data structure.
@@ -177,17 +173,12 @@ public class MinimizeDfaAmrParallel<LETTER, STATE> extends
 	}
 
 	/**
-	 * Getter for set of inequivalent tuples of states.
+	 * Getter for set of distinguishable tuples of states.
 	 * 
 	 * @return Set of tuples.
 	 */
 	public Set<Tuple> getNeq() {
 		return m_neq;
-	}
-
-	// TODO Debugging information
-	public boolean getParallel() {
-		return s_parallel;
 	}
 
 	/**
@@ -291,14 +282,19 @@ public class MinimizeDfaAmrParallel<LETTER, STATE> extends
 		}
 	}
 
+	/**
+	 * This method is only executed if the algorithm is run non-parallel.
+	 * 
+	 * @throws AutomataLibraryException
+	 */
 	private void executeAlgorithm() throws AutomataLibraryException {
 
 		initialize();
 		// Do time measurement
-		ThreadMXBean bean = ManagementFactory.getThreadMXBean();
-		m_runTime = bean.getThreadCpuTime(Thread.currentThread().getId())
-				/ Math.pow(10, 9);
-		s_logger.info("Incremental CPU Time: " + m_runTime + "sec");
+		// ThreadMXBean bean = ManagementFactory.getThreadMXBean();
+		// m_runTime = bean.getThreadCpuTime(Thread.currentThread().getId())
+		// / Math.pow(10, 9);
+		// s_logger.info("Incremental CPU Time: " + m_runTime + "sec");
 		s_logger.info(exitMessage());
 	}
 
@@ -341,7 +337,8 @@ public class MinimizeDfaAmrParallel<LETTER, STATE> extends
 				m_hashCapNoTuples = Integer.MAX_VALUE;
 			}
 
-			m_neq = new HashSet<Tuple>(m_hashCapNoTuples);
+			m_neq = Collections.synchronizedSet(new HashSet<Tuple>(
+					m_hashCapNoTuples));
 			m_equiv = new SetList();
 			m_path = new SetList();
 			m_stack = new ArrayDeque<StackElem>();
@@ -430,7 +427,6 @@ public class MinimizeDfaAmrParallel<LETTER, STATE> extends
 
 				// termination signal found
 				if ((m_interrupt != null) && (m_interrupt.getStatus())) {
-					// System.out.println("was interrupted");
 					return;
 				}
 
@@ -464,8 +460,6 @@ public class MinimizeDfaAmrParallel<LETTER, STATE> extends
 							m_taskQueue.put(new HelpHopcroft(this,
 									m_hopcroftAlgorithm, tuple.m_first,
 									tuple.m_second));
-							// s_logger.info("Amr: Size of task queue: "
-							// + m_taskQueue.size());
 						} catch (InterruptedException e) {
 							e.printStackTrace();
 						}
@@ -795,7 +789,6 @@ public class MinimizeDfaAmrParallel<LETTER, STATE> extends
 	 *            state
 	 * @return representative of the given state
 	 */
-	// TODO Make this private again
 	public int find(int oldRepresentative) {
 		LinkedList<Integer> path = new LinkedList<Integer>();
 
@@ -838,7 +831,6 @@ public class MinimizeDfaAmrParallel<LETTER, STATE> extends
 	 * @param tuple
 	 *            pair of states that shall be united
 	 */
-	// TODO Make this private again
 	public void union(final Tuple tuple) {
 		synchronized (m_unionFind) {
 			m_unionFind[tuple.m_second] = find(tuple.m_first);

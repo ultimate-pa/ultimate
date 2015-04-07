@@ -1,7 +1,8 @@
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization;
 
-import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Set;
+import java.util.Iterator;
 
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.Tuple;
 
@@ -14,8 +15,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimi
  */
 public class HelpIncremental implements Runnable {
 	private MinimizeDfaAmrParallel<?, ?> m_incrementalAlgorithm;
-	private ArrayList<Integer> m_array1;
-	private ArrayList<Integer> m_array2;
+	private HashSet<Integer> m_array1;
+	private HashSet<Integer> m_array2;
 
 	/**
 	 * For each pair (a, b) of states where w.l.o.g. a in array1, b in array2 we
@@ -27,7 +28,7 @@ public class HelpIncremental implements Runnable {
 	 * @param array2
 	 */
 	public HelpIncremental(MinimizeDfaAmrParallel<?, ?> incremental,
-			ArrayList<Integer> array1, ArrayList<Integer> array2) {
+			HashSet<Integer> array1, HashSet<Integer> array2) {
 		m_incrementalAlgorithm = incremental;
 		m_array1 = array1;
 		m_array2 = array2;
@@ -36,14 +37,18 @@ public class HelpIncremental implements Runnable {
 	@Override
 	public void run() {
 		Set<Tuple> neq = m_incrementalAlgorithm.getNeq();
-		for (int i = 0; i < m_array1.size(); i++) {
-			for (int j = 0; j < m_array2.size(); j++) {
+		for (Iterator<Integer> iter1 = m_array1.iterator(); iter1.hasNext();) {
+			int i = iter1.next();
+			for (Iterator<Integer> iter2 = m_array2.iterator(); iter2.hasNext();) {
 				// Write into m_neq
+
+				int j = iter2.next();
+
 				Tuple tuple;
-				if (m_array1.get(i) < m_array2.get(j)) {
-					tuple = new Tuple(m_array1.get(i), m_array2.get(j));
+				if (i < j) {
+					tuple = new Tuple(i, j);
 				} else {
-					tuple = new Tuple(m_array2.get(j), m_array1.get(i));
+					tuple = new Tuple(j, i);
 				}
 				if (!neq.contains(tuple)) {
 					((Set<Tuple>) neq).add(tuple);

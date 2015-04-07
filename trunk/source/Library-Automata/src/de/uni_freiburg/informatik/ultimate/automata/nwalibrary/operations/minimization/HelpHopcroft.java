@@ -1,8 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Queue;
+import java.util.HashSet;
+import java.util.Iterator;
 
 /**
  * Helper Task for processing information from the Incremental algorithm for the
@@ -15,7 +14,6 @@ public class HelpHopcroft implements Runnable {
 	private MinimizeDfaAmrParallel<?, ?> m_incrementalAlgorithm;
 	private MinimizeDfaHopcroftParallel<?, ?> m_hopcroftAlgorithm;
 	private int m_state1;
-	private int m_state2;
 
 	/**
 	 * The incremental algorithm determined, that state1 and state2 are of the
@@ -29,54 +27,44 @@ public class HelpHopcroft implements Runnable {
 	 * @param state2
 	 */
 	public HelpHopcroft(final MinimizeDfaAmrParallel<?, ?> incremental,
-			final MinimizeDfaHopcroftParallel<?, ?> hopcroft,
-			final int state1, final int state2) {
+			final MinimizeDfaHopcroftParallel<?, ?> hopcroft, final int state1,
+			final int state2) {
 		m_incrementalAlgorithm = incremental;
 		m_hopcroftAlgorithm = hopcroft;
 		m_state1 = state1;
-		m_state2 = state2;
 	}
 
 	@Override
 	public void run() {
-		ArrayList<Integer> setToRemove = null;
-
 		// If a set in partition of Hopcroft contains state1 and state2 check
 		// whether all states in that set are equivalent.
-		Queue<ArrayList<Integer>> setList = m_hopcroftAlgorithm.getSetList();
-		// Return in case of empty set list.
-		if (setList.isEmpty()) {
+		HashSet<Integer> set = null;
+		try {
+			set = m_hopcroftAlgorithm.getBlock(m_state1);
+		} catch (NullPointerException e) {
 			return;
 		}
-		synchronized (setList) {
-			for (ArrayList<Integer> set : setList) {
-				if (set == null) {
-					continue;
-				}
-				if (set.contains(m_state1) && set.contains(m_state2)) {
-					boolean eq = true;
-					for (int i = 0; i < set.size() - 1 && eq; i++) {
-						for (int j = i + 1; j < set.size() && eq; j++) {
-							if (m_incrementalAlgorithm.find(set.get(i)) != m_incrementalAlgorithm
-									.find(set.get(j))) {
-								eq = false;
-							}
-						}
-					}
-					if (eq) {
-						setToRemove = set;
-						Queue<ArrayList<Integer>> partitions = m_hopcroftAlgorithm
-								.getFinalPartitions();
-						if (partitions != null) {
-							partitions.add(set);
-						}
-					}
+		// Return in case of empty set list.
+		if (set == null) {
+			return;
+		}
+		boolean eq = true;
+		assert (set.size() > 1);
+		if (set.size() > 2) {
+			for (Iterator<Integer> iter = set.iterator(); iter.hasNext();) {
+				int elem = iter.next();
 
+				int state1rep = m_incrementalAlgorithm.find(m_state1);
+				if (m_incrementalAlgorithm.find(elem) != state1rep) {
+					eq = false;
 				}
 			}
-			if (setToRemove != null) {
-				setList.remove(setToRemove);
+		}
+		if (eq) {
+			for (int state : set) {
+				m_hopcroftAlgorithm.removePartition(state);
 			}
 		}
 	}
+
 }

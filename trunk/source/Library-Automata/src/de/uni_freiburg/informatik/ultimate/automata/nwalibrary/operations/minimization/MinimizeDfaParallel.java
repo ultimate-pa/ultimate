@@ -3,9 +3,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minim
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.concurrent.Callable;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -16,15 +14,8 @@ import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
-
-// TODO STATE->int, int->STATE only once -> optimize?
-// TODO Generic constructor for Inc and Hopcroft?
-
-// TODO Test with big input
-// TODO What about the state factory for the constructors? Does it work like that?
 
 /**
  * This class manages the parallel computation of minimization by Hopcroft's and
@@ -84,6 +75,7 @@ public class MinimizeDfaParallel<LETTER, STATE> extends
 	 */
 	private final Interrupt m_interrupt;
 
+	
 	private boolean m_hopcroftAlgorithmInitialized = false;
 	private boolean m_incrementalAlgorithmInitialized = false;
 
@@ -144,10 +136,30 @@ public class MinimizeDfaParallel<LETTER, STATE> extends
 	public static boolean PreferAlgorithmThreads = false;
 
 	/**
+	 * GUI Constructor
+	 * 
+	 * @param services
+	 * @param stateFactory	 
+	 * @param operand
+	 * 				input automaton (DFA)
+	 * @throws AutomataLibraryException
+	 * 				thrown when execution is cancelled
+	 * @throws AutomataLibraryException
+	 * 				thrown by DFA check
+	 */
+	public MinimizeDfaParallel(final IUltimateServiceProvider services,
+			final StateFactory<STATE> stateFactory,
+			final INestedWordAutomaton<LETTER, STATE> operand)
+			throws AutomataLibraryException, AutomataLibraryException {
+		this(services, operand);
+	}
+	
+	/**
 	 * Constructor.
 	 * 
+	 * @param services
 	 * @param operand
-	 *            the input automaton
+	 * 			input automaton
 	 */
 	public MinimizeDfaParallel(final IUltimateServiceProvider services,
 			final INestedWordAutomaton<LETTER, STATE> operand) {
@@ -168,8 +180,7 @@ public class MinimizeDfaParallel<LETTER, STATE> extends
 
 		// Create queue
 		m_taskQueue = new LinkedBlockingQueue<Runnable>();
-
-		// TODO Evaluate perfect number of threads.
+		
 		//final int processors = Runtime.getRuntime().availableProcessors();
 		final int processors = 6;
 		m_threads = new ArrayList<WorkingThread>();
@@ -187,7 +198,7 @@ public class MinimizeDfaParallel<LETTER, STATE> extends
 				try {
 					this.wait();
 				} catch (InterruptedException e) {
-					e.printStackTrace();
+					//e.printStackTrace();
 				}
 			}
 		}
@@ -199,8 +210,6 @@ public class MinimizeDfaParallel<LETTER, STATE> extends
 		for (Thread thread : m_threads) {
 			thread.interrupt();
 		}
-		// TODO Remove debug information.
-		//System.out.println("Finished interrupting threads.");
 		synchronized (m_incrementalThread) {
 			m_incrementalThread.notify();
 		}
@@ -217,8 +226,7 @@ public class MinimizeDfaParallel<LETTER, STATE> extends
 		try {
 			m_result = m_resultGetter.call();
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			//e.printStackTrace();
 		}
 
 		m_sb = createConsoleOutput();
@@ -239,7 +247,6 @@ public class MinimizeDfaParallel<LETTER, STATE> extends
 	private void measureTime() {
 		m_cpuTime = new double[m_threads.size() + 2];
 		ThreadMXBean bean = ManagementFactory.getThreadMXBean();
-		Thread thread;
 		for (int i = 0; i < m_threads.size(); i++) {
 			m_cpuTime[i] = bean.getThreadCpuTime(m_threads.get(i).getId());
 		}
@@ -317,8 +324,6 @@ public class MinimizeDfaParallel<LETTER, STATE> extends
 	 * threads.)
 	 */
 	private class WorkingThread extends Thread {
-		// TODO Remove debug information
-		private int counter = 0;
 
 		/**
 		 * Creating the thread.
@@ -329,18 +334,17 @@ public class MinimizeDfaParallel<LETTER, STATE> extends
 			super(name);
 			try {
 				if (PreferHelperThreads && !PreferAlgorithmThreads) {
-					// TODO Evaluation of priorities.
 					setPriority(Thread.MAX_PRIORITY);
 				} else if (!PreferHelperThreads && PreferAlgorithmThreads) {
 					setPriority(Thread.MIN_PRIORITY);
 				}
 			} catch (Exception e) {
-				e.printStackTrace();
+				//e.printStackTrace();
 			}
 			try {
 				setDaemon(true);
 			} catch (Exception e) {
-				e.printStackTrace();
+				//e.printStackTrace();
 			}
 		}
 
@@ -349,26 +353,14 @@ public class MinimizeDfaParallel<LETTER, STATE> extends
 			while (!this.isInterrupted()) {
 				try {
 					assert (!this.isInterrupted());
-					//System.out.println(this.getName() + "Size of task queue: "
-						//+ m_taskQueue.size());
 					Runnable task = m_taskQueue.take();
-					// TODO debug information
-					//System.out.println(this.getName() + "Begin processing task"
-							//+ ++this.counter + "...");
-					//System.out.println(this.getName() + "Size of task queue: "
-							//+ m_taskQueue.size());
 					if (!this.isInterrupted()) {
 						task.run();
 					}
-					//System.out.println(this.getName() + "Task " + this.counter
-						//	+ " finished...");
-					//System.out.println(this.getName() + "Size of task queue: "
-						//	+ m_taskQueue.size());
 					s_logger.info("MAIN: Size of task queue: "
 							+ m_taskQueue.size());
 				} catch (InterruptedException e) {
 					this.interrupt();
-					//System.out.println("Interrupt.");
 				}
 			}
 		}
@@ -411,7 +403,6 @@ public class MinimizeDfaParallel<LETTER, STATE> extends
 			m_mainThread = mainThread;
 
 			try {
-				// TODO Evaluation of priorities
 				if (!PreferAlgorithmThreads && PreferHelperThreads) {
 					setPriority(Thread.MIN_PRIORITY);
 				} else if (PreferAlgorithmThreads && !PreferHelperThreads) {
@@ -423,7 +414,7 @@ public class MinimizeDfaParallel<LETTER, STATE> extends
 			try {
 				setDaemon(true);
 			} catch (Exception e) {
-				e.printStackTrace();
+				//e.printStackTrace();
 			}
 		}
 
@@ -433,7 +424,6 @@ public class MinimizeDfaParallel<LETTER, STATE> extends
 				if (m_chooseAlgorithm.equals(Algorithm.Hopcroft)) {
 
 					s_logger.info("moep1");
-					//System.out.println("moep1");
 					m_algorithm = new MinimizeDfaHopcroftParallel<LETTER, STATE>(
 							m_services, m_operand.getStateFactory(),
 							(INestedWordAutomaton<LETTER, STATE>) m_operand,
@@ -443,33 +433,27 @@ public class MinimizeDfaParallel<LETTER, STATE> extends
 						return;
 					}
 					s_logger.info("moep2");
-					//System.out.println("moep2");
 					m_hopcroftAlgorithm = (MinimizeDfaHopcroftParallel) m_algorithm;
 					m_hopcroftAlgorithmInitialized = true;
 
 					synchronized (m_interrupt) {
 						if (m_incrementalAlgorithmInitialized) {
 							s_logger.info("moep3a");
-						//	System.out.println("moep3a");
 							synchronized (m_incrementalAlgorithm) {
 								m_interrupt.notify();
 							}
 						} else {
 							s_logger.info("moep3b");
-							//System.out.println("moep3b");
 							m_interrupt.wait();
 						}
 					}
 					s_logger.info("moep4");
-					//System.out.println("moep4");
 					m_hopcroftAlgorithm.minimizeParallel(m_taskQueue,
 							m_incrementalAlgorithm);
 					s_logger.info("moep5");
-					//System.out.println("moep5");
 
 				} else {
 					s_logger.info("miep1");
-					//System.out.println("miep1");
 					m_algorithm = new MinimizeDfaAmrParallel<LETTER, STATE>(
 							m_services, m_operand.getStateFactory(), m_operand,
 							m_interrupt, m_int2state, m_state2int);
@@ -478,32 +462,28 @@ public class MinimizeDfaParallel<LETTER, STATE> extends
 						return;
 					}
 					s_logger.info("miep2");
-					//System.out.println("miep2");
 					m_incrementalAlgorithm = (MinimizeDfaAmrParallel) m_algorithm;
 					m_incrementalAlgorithmInitialized = true;
 					synchronized (m_interrupt) {
 						if (m_hopcroftAlgorithmInitialized) {
 							s_logger.info("miep3a");
-							//System.out.println("miep3a");
 							m_interrupt.notify();
 						} else {
 							s_logger.info("miep3b");
-							//System.out.println("miep3b");
 
 							m_interrupt.wait();
 						}
 					}
 					s_logger.info("miep4");
-					//System.out.println("miep4");
 					m_incrementalAlgorithm.minimizeParallel(m_taskQueue,
 							m_hopcroftAlgorithm);
 					s_logger.info("miep5");
-					// System.out.println("miep5");
 				}
 
 				if (isInterrupted()) {
 					return;
 				}
+				
 				synchronized (m_mainThread) {
 					if (m_resultGetter == null) {
 						m_resultGetter = new Callable<INestedWordAutomaton<LETTER, STATE>>() {
@@ -522,8 +502,7 @@ public class MinimizeDfaParallel<LETTER, STATE> extends
 			} catch (AutomataLibraryException e) {
 				throw new AssertionError("unhandeled AutomataLibraryException");
 			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				//e.printStackTrace();
 			}
 		}
 
