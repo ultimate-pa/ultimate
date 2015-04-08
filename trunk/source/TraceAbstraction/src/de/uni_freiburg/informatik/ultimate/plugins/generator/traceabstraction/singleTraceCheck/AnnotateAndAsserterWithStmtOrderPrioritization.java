@@ -20,6 +20,7 @@ import org.apache.log4j.Logger;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
+import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -334,14 +335,13 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 		} else if (t instanceof ConstantTerm) {
 			Object val = ((ConstantTerm)t).getValue();
 			if (val instanceof BigInteger) {
-				if (((BigInteger) val).compareTo(new BigInteger(new Integer(constantSize).toString())) > 0) {
-					return true;
-				}
+				return (((BigInteger) val).compareTo(new BigInteger(new Integer(constantSize).toString())) > 0);
 			} else if (val instanceof BigDecimal) {
-				if (((BigDecimal) val).compareTo(new BigDecimal(new Integer(constantSize).toString())) > 0) {
-					return true;
-				}
-			} else {
+				return (((BigDecimal) val).compareTo(new BigDecimal(new Integer(constantSize).toString())) > 0);
+			}  else if (val instanceof Rational) {
+				return (((Rational) val).compareTo(Rational.valueOf(constantSize, 0)) > 0);
+			}
+			else {
 				throw new UnsupportedOperationException("ConstantTerm is neither BigInter nor BigDecimal, therefore comparison is not possible!");
 			}
 			
