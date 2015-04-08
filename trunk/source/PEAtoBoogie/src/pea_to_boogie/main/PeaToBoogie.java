@@ -63,7 +63,6 @@ public class PeaToBoogie implements ISource {
 		BitSet vacuityChecks = new BitSet(patterns.length);
 		vacuityChecks.set(0, patterns.length);
 		
-		
 		int combinationNum = Math.min(patterns.length, 2); // TODO preference
 		translator.setVacuityChecks(vacuityChecks);
 		translator.setCombinationNum(combinationNum);
@@ -73,7 +72,6 @@ public class PeaToBoogie implements ISource {
 
 	@Override
 	public String[] getFileTypes() {
-		// TODO Auto-generated method stub
 		return new String[] { ".req" };
 	}
 
@@ -89,13 +87,11 @@ public class PeaToBoogie implements ISource {
 
 	@Override
 	public void setPreludeFile(File prelude) {
-		// TODO Auto-generated method stub
 
 	}
 
 	@Override
 	public UltimatePreferenceInitializer getPreferences() {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
@@ -112,7 +108,6 @@ public class PeaToBoogie implements ISource {
 
 	@Override
 	public void finish() {
-		// TODO Auto-generated method stub
 		
 	}
 }

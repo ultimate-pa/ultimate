@@ -556,7 +556,7 @@ public abstract class WebToolchain {
 	 *         timeout.
 	 */
 	public long getTimeout() {
-		return 10 * 1000;
+		return 5 * 60 * 1000;
 	}
 
 	public List<Setting> getUserModifiableSettings() {

@@ -73,7 +73,7 @@ public class CLTLAutomizerTC extends WebToolchain {
 
 	@Override
 	public long getTimeout() {
-		return 150 * 1000;
+		return 15 * 60 * 1000;
 	}
 
 	@Override

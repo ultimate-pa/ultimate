@@ -1,0 +1,57 @@
+#Wed Apr 08 16:42:51 CEST 2015
+/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation/Minimum\ iterations\ before\ widening=10
+file_export_version=3.0
+/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation/Save\ abstract\ states\ as\ node\ annotations=true
+@de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation=0.0.1
+/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation/Parallel\ states\ before\ merging=2
+/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation/Collect\ literals\ from\ the\ RCFG's\ expressions=true
+\!/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation=
+/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation/INTERVAL\ -\ Widening\ operator=Nearest In Set
+#Wed Apr 08 16:42:51 CEST 2015
+\!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder=
+file_export_version=3.0
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Size\ of\ a\ code\ block=SingleStatement
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/SMT\ solver=Internal_SMTInterpol
+@de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder=0.0.1
+#Wed Apr 08 16:42:51 CEST 2015
+\!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator=
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Size\ of\ wchar\ (?)\ (in\ bytes)=4
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Pointer\ to\ allocated\ memory\ at\ dereference=IGNORE
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Check\ array\ bounds\ for\ arrays\ that\ are\ off\ heap=IGNORE
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Check\ for\ the\ main\ procedure\ if\ all\ allocated\ memory\ was\ freed=false
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Translation\ Mode\:=SV_COMP14
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Pointer\ base\ address\ is\ valid\ at\ dereference=IGNORE
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Size\ of\ long\ double\ (in\ bytes)=16
+file_export_version=3.0
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Size\ of\ bool\ (in\ bytes)=1
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Checked\ method.\ Library\ mode\ if\ empty.=main
+@de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator=0.0.1
+#Wed Apr 08 16:42:51 CEST 2015
+file_export_version=3.0
+@de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer=0.0.1
+\!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer=
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer/Try\ twofold\ refinement=false
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer/Compute\ Interpolants\ along\ a\ Counterexample=Craig_TreeInterpolation
+#Wed Apr 08 16:42:51 CEST 2015
+\!/instance/de.uni_freiburg.informatik.ultimate.boogie.printer=
+file_export_version=3.0
+@de.uni_freiburg.informatik.ultimate.boogie.printer=0.0.1
+/instance/de.uni_freiburg.informatik.ultimate.boogie.printer/Dump\ path\:=C\:\\data\\bin\\svcompC
+#Wed Apr 08 16:42:51 CEST 2015
+\!/instance/de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization=
+file_export_version=3.0
+/instance/de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization/Annotate\ edges=Text
+@de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization=0.0.1
+#Wed Apr 08 16:42:51 CEST 2015
+file_export_version=3.0
+/instance/UltimateCore/Toolchain\ timeout\ in\ seconds=300
+\!/instance/UltimateCore=
+@UltimateCore=0.0.1
+/instance/UltimateCore/Generate\ benchmark\ results=true
+/instance/UltimateCore/ultimate.logging.details=de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction\=INFO;de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstractionwithafas\=INFO;de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions\=INFO;
+#Wed Apr 08 16:42:51 CEST 2015
+file_export_version=3.0
+\!/instance/de.uni_freiburg.informatik.ultimate.gui=
+@de.uni_freiburg.informatik.ultimate.gui=0.0.1
+/instance/de.uni_freiburg.informatik.ultimate.gui/LASTPATH=C\:\\data\\bin\\svcompC\\tawafas\\Bakery.bpl
+/instance/de.uni_freiburg.informatik.ultimate.gui/LASTTOOLCHAINPATH=C\:\\Users\\alex\\AppData\\Local\\Temp\\lastUltimateToolchain.xml
