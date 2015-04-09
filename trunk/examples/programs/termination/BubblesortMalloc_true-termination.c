@@ -12,9 +12,9 @@ void bubblesort(int a[], int i) {
         int j = 0;
         while (j < i) {
             if (a[j] > a[i]) {
-				int tmp = a[i];
-				a[i] = a[j];
-				a[j] = tmp;
+                int tmp = a[i];
+                a[i] = a[j];
+                a[j] = tmp;
             }
             j++;
         }
