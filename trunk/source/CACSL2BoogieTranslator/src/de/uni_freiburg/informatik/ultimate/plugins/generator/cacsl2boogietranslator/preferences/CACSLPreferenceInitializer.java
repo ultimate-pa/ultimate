@@ -12,9 +12,9 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 	protected UltimatePreferenceItem<?>[] initDefaultPreferences() {
 		return new UltimatePreferenceItem<?>[] {
 				new UltimatePreferenceItem<TranslationMode>(LABEL_MODE,
-						TranslationMode.BASE, PreferenceType.Radio,
+						TranslationMode.SV_COMP14, PreferenceType.Radio,
 						TranslationMode.values()),
-				new UltimatePreferenceItem<String>(LABEL_MAINPROC, "",
+				new UltimatePreferenceItem<String>(LABEL_MAINPROC, "main",
 						PreferenceType.String),
 				new UltimatePreferenceItem<Boolean>(LABEL_CHECK_SVCOMP_ERRORFUNCTION,
 						true, PreferenceType.Boolean),
