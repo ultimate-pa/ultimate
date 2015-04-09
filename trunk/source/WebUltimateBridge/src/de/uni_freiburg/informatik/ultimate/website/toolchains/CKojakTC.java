@@ -64,5 +64,10 @@ public class CKojakTC extends WebToolchain {
 
 		return rtr;
 	}
+	
+	@Override
+	protected String defineToolchainSettingsFile() {
+		return "CodeCheck-C.epf";
+	}
 
 }
