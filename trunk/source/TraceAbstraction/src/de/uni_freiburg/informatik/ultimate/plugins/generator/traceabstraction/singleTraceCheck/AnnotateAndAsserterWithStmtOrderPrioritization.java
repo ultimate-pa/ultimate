@@ -335,13 +335,12 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 		} else if (t instanceof ConstantTerm) {
 			Object val = ((ConstantTerm)t).getValue();
 			if (val instanceof BigInteger) {
-				return (((BigInteger) val).compareTo(new BigInteger(new Integer(constantSize).toString())) > 0);
+				return (((BigInteger) val).compareTo(BigInteger.valueOf(constantSize)) > 0);
 			} else if (val instanceof BigDecimal) {
-				return (((BigDecimal) val).compareTo(new BigDecimal(new Integer(constantSize).toString())) > 0);
+				return (((BigDecimal) val).compareTo(BigDecimal.valueOf(constantSize)) > 0);
 			}  else if (val instanceof Rational) {
-				return (((Rational) val).compareTo(Rational.valueOf(constantSize, 0)) > 0);
-			}
-			else {
+				return (((Rational) val).compareTo(Rational.valueOf(constantSize, 1)) > 0);
+			} else {
 				throw new UnsupportedOperationException("ConstantTerm is neither BigInter nor BigDecimal, therefore comparison is not possible!");
 			}
 			
