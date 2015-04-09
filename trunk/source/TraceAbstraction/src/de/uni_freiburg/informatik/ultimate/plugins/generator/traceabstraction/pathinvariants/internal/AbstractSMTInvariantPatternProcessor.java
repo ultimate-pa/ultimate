@@ -78,11 +78,11 @@ public abstract class AbstractSMTInvariantPatternProcessor<IPT> implements
 	/**
 	 * {@inheritDoc}
 	 */
-	@Override
-	public IPredicate applyConfiguration(IPT pattern) {
-		final TermTransformer transformer = getConfigurationTransformer();
-		final Term term = transformer.transform(getTermForPattern(pattern));
-		return predicateUnifier.getOrConstructPredicate(TermVarsProc
-				.computeTermVarsProc(term, smtManager.getBoogie2Smt()));
-	}
+//	@Override
+//	public IPredicate applyConfiguration(IPT pattern) {
+//		final TermTransformer transformer = getConfigurationTransformer();
+//		final Term term = transformer.transform(getTermForPattern(pattern));
+//		return predicateUnifier.getOrConstructPredicate(TermVarsProc
+//				.computeTermVarsProc(term, smtManager.getBoogie2Smt()));
+//	}
 }

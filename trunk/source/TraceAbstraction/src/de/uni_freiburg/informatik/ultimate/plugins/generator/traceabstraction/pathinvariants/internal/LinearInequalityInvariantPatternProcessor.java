@@ -33,6 +33,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SafeSubstitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.TermVarsProc;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.ControlFlowGraph.Location;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.ControlFlowGraph.Transition;
@@ -73,6 +74,7 @@ public final class LinearInequalityInvariantPatternProcessor
 	 */
 	private final Set<RankVar> patternCoefficients;
 	private Map<Term, Term> validConfiguration;
+	private Map<Term, Rational> valuation;
 	private Collection<Collection<LinearPatternBase>> entryInvariantPattern;
 	private Collection<Collection<LinearPatternBase>> exitInvariantPattern;
 	private int prefixCounter;
@@ -528,6 +530,20 @@ public final class LinearInequalityInvariantPatternProcessor
 		}
 
 		logger.log(Level.INFO, "[LIIPP] Solution found!");
+		Collection<Term> coefficientsOfAllInvariants = patternVariables;
+		boolean simplifiedValuation = false;
+		try {
+			if (simplifiedValuation) {
+				valuation = ModelExtractionUtils.getSimplifiedAssignment(
+						solver, coefficientsOfAllInvariants, logger);
+			} else {
+				valuation = ModelExtractionUtils.getValuation(solver,
+						coefficientsOfAllInvariants);
+			}
+		} catch (TermException e) {
+			e.printStackTrace();
+			throw new AssertionError("model extraction failed");
+		}
 		validConfiguration = solver.getValue(patternVariables
 				.toArray(new Term[patternVariables.size()]));
 
@@ -562,10 +578,29 @@ public final class LinearInequalityInvariantPatternProcessor
 			for (final LinearPatternBase inequality : conjunct) {
 				inequalities.add(inequality.getLinearInequality(definitionMap)
 						.asTerm(solver));
+				//TODO: use the script form the smtmanager here
+				
 			}
 			conjunctions.add(SmtUtils.and(solver, inequalities));
 		}
 		return SmtUtils.or(solver, conjunctions);
+	}
+	
+	protected Term getValuatedTermForPattern(
+			final Collection<Collection<LinearPatternBase>> pattern) {
+		final Collection<Term> conjunctions = new ArrayList<Term>(
+				pattern.size());
+		for (final Collection<LinearPatternBase> conjunct : pattern) {
+			final Collection<Term> inequalities = new ArrayList<Term>(
+					conjunct.size());
+			for (final LinearPatternBase inequality : conjunct) {
+				inequalities.add(inequality.getAffineFunction(valuation)
+						.asTerm(smtManager.getScript()));
+
+			}
+			conjunctions.add(SmtUtils.and(smtManager.getScript(), inequalities));
+		}
+		return SmtUtils.or(smtManager.getScript(), conjunctions);
 	}
 
 	/**
@@ -579,7 +614,7 @@ public final class LinearInequalityInvariantPatternProcessor
 	/**
 	 * Reset solver and initialize it afterwards. For initializing, we set the
 	 * option produce-models to true (this allows us to obtain a satisfying
-	 * assignment) and we set the logic to QF_NRA (nonlinear real arithmetic).
+	 * assignment) and we set the logic to QF_AUFNIRA.
 	 * TODO: Matthias unsat cores might be helpful for debugging.
 	 */
 	private void reinitializeSolver() {
@@ -590,6 +625,17 @@ public final class LinearInequalityInvariantPatternProcessor
 			solver.setOption(":produce-unsat-cores", true);
 		}
 		solver.setLogic(Logics.AUFNIRA);
+	}
+
+	@Override
+	public IPredicate applyConfiguration(
+			Collection<Collection<LinearPatternBase>> pattern) {
+		// TODO Auto-generated method stub
+		Term term = getValuatedTermForPattern(pattern);
+		//@Matthias: Hier ist der Term mit den eingesetzen Werten
+		//wir brauchen nun ein Predicate dafür
+		return predicateUnifier.getOrConstructPredicate(TermVarsProc
+				.computeTermVarsProc(term, smtManager.getBoogie2Smt()));
 	}
 
 }

@@ -4,8 +4,10 @@ import java.util.Collection;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.lassoranker.LinearInequality;
+import de.uni_freiburg.informatik.ultimate.lassoranker.termination.AffineFunction;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.AffineFunctionGenerator;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.RankVar;
+import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
@@ -69,5 +71,9 @@ public final class LinearPatternBase {
 		final LinearInequality inequality = function.generate(map);
 		inequality.setStrict(strict);
 		return inequality;
+	}
+	
+	public AffineFunction getAffineFunction(final Map<Term, Rational> valuation){
+		return function.extractAffineFunction(valuation);
 	}
 }
