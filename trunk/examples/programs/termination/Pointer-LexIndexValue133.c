@@ -4,6 +4,10 @@
  * Author: heizmann@informatik.uni-freiburg.de
  *
  * 2-lex ranking function: f(k, *p) = (k, *p)
+ * 
+ * We submitted the very similar program
+ *     termination-crafted/SyntaxSupportPointer01_true-termination.c
+ * to the SV-COMP
  *
  */
 
