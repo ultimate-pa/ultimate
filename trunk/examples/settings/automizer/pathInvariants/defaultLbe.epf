@@ -1,0 +1,5 @@
+#Thu Apr 09 17:58:49 CEST 2015
+\!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder=
+file_export_version=3.0
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Size\ of\ a\ code\ block=LoopFreeBlock
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/SMT\ solver=Internal_SMTInterpol
