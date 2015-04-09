@@ -12,8 +12,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import javax.swing.text.html.HTMLDocument.HTMLReader.BlockAction;
+
 import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.callgraph.CallGraphEdgeLabel;
 import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.callgraph.CallGraphNode;
+import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.preferences.PreferenceItem;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.model.ModelUtils;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieTransformer;
@@ -79,8 +82,12 @@ public class InlineVersionTransformer extends BoogieTransformer {
 	private Deque<Integer> mEdgeIndexStack = new ArrayDeque<>();
 	
 	/**
-	 * Counts for each procedure, how much calls to this procedure where inlined during the process.
+	 * Counts for each procedure, how much calls to this procedure where inlined (!) during the process.
+	 * "call forall" statements count too. Non-inlined calls don't count!
 	 * The parameters and local variables of a Procedure are mapped, iff call counter > 0.
+	 * Note: This has nothing to do with the "single calls only" setting ({@link PreferenceItem#IGNORE_MULTIPLE_CALLED}.
+	 * This counter is used to avoid re-mapping of already mapped variable ids, whereas the setting is applied using a
+	 * separate counter on the call graph.
 	 */
 	private Map<String, Integer> mCallCounter = new HashMap<>();
 	
@@ -105,7 +112,7 @@ public class InlineVersionTransformer extends BoogieTransformer {
 	/** Assume the inlined "requires" specifications (preconditions) after they were asserted. */
 	private boolean mAssumeRequiresAfterAssert;
 
-	/** Assert the inlined "ensures" spcifications (postconditions) before they are assumed. */
+	/** Assert the inlined "ensures" specifications (postconditions) before they are assumed. */
 	private boolean mAssertEnsuresBeforeAssume;
 	
 	public InlineVersionTransformer(IUltimateServiceProvider services, GlobalScopeInitializer globalScopeInit,
@@ -117,6 +124,16 @@ public class InlineVersionTransformer extends BoogieTransformer {
 		mAssertEnsuresBeforeAssume = assertEnsuresBeforeAssume;
 	}
 
+	/**
+	 * Creates an equivalent Procedure with inlined calls.
+	 * Only marked calls will be inlined (see {@link CallGraphEdgeLabel#setInlineFlag(boolean)}.
+	 * 
+	 * The returned Procedure has an Specification, iff the original Procedure was combined.
+	 * 
+	 * @param entryNode Call graph node, representing the procedure to be flattened.
+	 * @return Equivalent procedure with inlined calls. {@code null} for unimplemented procedures.
+	 * @throws CancelToolchainException If an error occurred and the toolchain should be canceled.
+	 */
 	public Procedure inlineCallsInside(CallGraphNode entryNode) throws CancelToolchainException {
 		mProcedureStack.push(entryNode);
 		mEdgeIndexStack.push(0);
@@ -126,17 +143,16 @@ public class InlineVersionTransformer extends BoogieTransformer {
 		if (entryNode.isImplemented()) {
 			Procedure proc = entryNode.getProcedureWithBody();
 			Body body = proc.getBody();
-			List<VariableDeclaration> newLocalVars = new ArrayList<>();
-			newLocalVars.addAll(Arrays.asList(body.getLocalVars()));
-			newLocalVars.addAll(mInlinedVars);
+			Statement[] block = body.getBlock();
 			List<Statement> newBlock = new ArrayList<>();
-			for (Statement stat : body.getBlock()) {
+			mapLabels(block);
+			for (Statement stat : block) {
 				newBlock.addAll(flattenStatement(stat));
 			}
-			VariableDeclaration[] newLocalVarsArray = new VariableDeclaration[newLocalVars.size()];
-			newLocalVars.toArray(newLocalVarsArray);
-			Statement[] newBlockArray = new Statement[newBlock.size()];
-			newBlock.toArray(newBlockArray);
+			List<VariableDeclaration> newLocalVars = new ArrayList<>(mInlinedVars);
+			VariableDeclaration[] newLocalVarsArray =
+					newLocalVars.toArray(new VariableDeclaration[newLocalVars.size()]);
+			Statement[] newBlockArray = newBlock.toArray(new Statement[newBlock.size()]);
 			Body newBody = new Body(body.getLocation(), newLocalVarsArray, newBlockArray);
 			ModelUtils.mergeAnnotations(body, newBody);
 			newProc = new Procedure(proc.getLocation(), proc.getAttributes(), proc.getIdentifier(),
@@ -168,7 +184,42 @@ public class InlineVersionTransformer extends BoogieTransformer {
 	private boolean inEntryProcedure() {
 		return mProcedureStack.size() == 1;
 	}
+
+	/**
+	 * Get the number of inlined calls to a procedure.
+	 * @param procId Identifier of the called procedure.
+	 * @return Number of inlined calls to the procedure.
+	 * @see #mCallCounter
+	 */
+	private int getCallCounter(String procId) {
+		Integer callCounter = mCallCounter.get(procId);
+		return callCounter == null ? 0 : callCounter;		
+	}
 	
+	/**
+	 * Increments the call counter for a given procedure.
+	 * Use this method, when a call is inlined.
+	 * @param procId Identifier of the procedure.
+	 * @return Old call counter value of the procedure.
+	 * @see #mCallCounter
+	 */
+	private int incrementCallCounter(String procId) {
+		int oldValue = getCallCounter(procId);
+		mCallCounter.put(procId, oldValue + 1);
+		return oldValue;
+	}
+
+	/**
+	 * Increments the edge index on top of the {@link #mEdgeIndexStack}.
+	 * @return The edge index from the top of the stack, before it was incremented.
+	 */
+	private int getAndUpdateEdgeIndex() {
+		int edgeIndex = mEdgeIndexStack.pop();
+		mEdgeIndexStack.push(edgeIndex + 1);
+		return edgeIndex;
+	}
+
+	/** Map input parameters, output parameters and local variables of the current procedure. */
 	private void mapVariablesOfCurrentProcedure() {
 		CallGraphNode proc = mProcedureStack.peek();
 		Procedure procWithSpec = proc.getProcedureWithSpecification();
@@ -188,32 +239,21 @@ public class InlineVersionTransformer extends BoogieTransformer {
 			mapProcedureParameters(procWithSpec);
 		}
 	}
-
-	private int getCallCounter(String procId) {
-		Integer callCounter = mCallCounter.get(procId);
-		return callCounter == null ? 0 : callCounter;
-		
-	}
 	
-	/**
-	 * Increments the call counter for a given procedure.
-	 * @param procId Identifier of the procedure.
-	 * @return Old call counter value of the procedure.
-	 */
-	private int incrementCallCounter(String procId) {
-		int oldValue = getCallCounter(procId);
-		mCallCounter.put(procId, oldValue + 1);
-		return oldValue;
-	}
-
-	/**
-	 * Increments the edge index on top of the {@link #mEdgeIndexStack}.
-	 * @return The edge index from the top of the stack, before it was incremented.
-	 */
-	private int getAndUpdateEdgeIndex() {
-		int edgeIndex = mEdgeIndexStack.pop();
-		mEdgeIndexStack.push(edgeIndex + 1);
-		return edgeIndex;
+	private void mapProcedureParameters(Procedure proc) {
+		boolean hasSpec = proc.getSpecification() != null;
+		List<VarList> inlinedVars = new ArrayList<>(proc.getInParams().length + proc.getOutParams().length);
+		inlinedVars.addAll(mapVariables(proc.getInParams(),
+				hasSpec ? StorageClass.PROC_FUNC_INPARAM : StorageClass.IMPLEMENTATION_INPARAM));
+		inlinedVars.addAll(mapVariables(proc.getOutParams(),
+				hasSpec ? StorageClass.PROC_FUNC_OUTPARAM : StorageClass.IMPLEMENTATION_OUTPARAM));
+		if (!inEntryProcedure()) {
+			Attribute[] newAttrs = {}; // Parameters can't have Attributes
+			VarList[] newVarLists = new VarList[inlinedVars.size()];
+			inlinedVars.toArray(newVarLists);
+			VariableDeclaration newVarDecl = new VariableDeclaration(proc.getLocation(), newAttrs, newVarLists);
+			mInlinedVars.add(newVarDecl);
+		}
 	}
 	
 	private void mapProcedureParametersToSameValue(VarList[] paramsProcDecl, VarList[] paramsProcImpl,
@@ -230,11 +270,11 @@ public class InlineVersionTransformer extends BoogieTransformer {
 		DeclarationInformation newDeclInfo = new DeclarationInformation(StorageClass.LOCAL, entryProcId);
 
 		List<VariableDeclaration> inlinedVars = new ArrayList<>();
+		// indices
 		final int gProcDecl = 0;
 		final int gProcImpl = 1;
-		// Only one identifier and location can be used for the new variable.
-		final int gUsed = gProcImpl;
-		final int gUnused = (gUsed+1) % 2;
+		final int gUsed = gProcImpl; // only one identifier and location can be used for the new variable
+		final int gUnused = (gUsed+1) % 2; // the remaining index 
 		VarListIterator iterator = new VarListIterator(paramsProcDecl, paramsProcImpl);
 		while (iterator.hasNext()) {
 			iterator.next();
@@ -254,7 +294,7 @@ public class InlineVersionTransformer extends BoogieTransformer {
 			mVarMap.put(keyProcImpl, value);
 			
 			if (!inEntryProc) {
-				// Create locale VariableDeclaration for inlining into entry procedure
+				// Create local VariableDeclaration for inlining into entry procedure
 				VarList usedVarList = iterator.currentVarList(gUsed);
 				VarList unusedVarList = iterator.currentVarList(gUnused);
 				ILocation location = usedVarList.getLocation();
@@ -283,22 +323,6 @@ public class InlineVersionTransformer extends BoogieTransformer {
 			inlinedVars.toArray(newVarLists);
 			VariableDeclaration newVarDecl = new VariableDeclaration(varDecl.getLocation(), newAttrs, newVarLists);
 			ModelUtils.mergeAnnotations(varDecl, newVarDecl);
-			mInlinedVars.add(newVarDecl);
-		}
-	}
-
-	private void mapProcedureParameters(Procedure proc) {
-		boolean hasSpec = proc.getSpecification() != null;
-		List<VarList> inlinedVars = new ArrayList<>(proc.getInParams().length + proc.getOutParams().length);
-		inlinedVars.addAll(mapVariables(proc.getInParams(),
-				hasSpec ? StorageClass.PROC_FUNC_INPARAM : StorageClass.IMPLEMENTATION_INPARAM));
-		inlinedVars.addAll(mapVariables(proc.getOutParams(),
-				hasSpec ? StorageClass.PROC_FUNC_OUTPARAM : StorageClass.IMPLEMENTATION_OUTPARAM));
-		if (!inEntryProcedure()) {
-			Attribute[] newAttrs = {};
-			VarList[] newVarLists = new VarList[inlinedVars.size()];
-			inlinedVars.toArray(newVarLists);
-			VariableDeclaration newVarDecl = new VariableDeclaration(proc.getLocation(), newAttrs, newVarLists);
 			mInlinedVars.add(newVarDecl);
 		}
 	}
@@ -375,9 +399,7 @@ public class InlineVersionTransformer extends BoogieTransformer {
 		}
 		return newVarLists;
 	}
-	
-	
-	
+
 	private List<Statement> flattenStatement(Statement stat) {
 		if (stat instanceof CallStatement) {
 			CallStatement call = (CallStatement) stat;
@@ -386,66 +408,150 @@ public class InlineVersionTransformer extends BoogieTransformer {
 			CallGraphNode calleeNode = callerNode.getOutgoingNodes().get(edgeIndex);
 			CallGraphEdgeLabel edgeLabel = callerNode.getOutgoingEdgeLabels().get(edgeIndex);
 			assert call.getMethodName().equals(calleeNode.getId())
-				&& call.getMethodName().equals(edgeLabel.getCalleeProcedureId());			
+				&& call.getMethodName().equals(edgeLabel.getCalleeProcedureId());		
 			if (edgeLabel.getInlineFlag()) {
-				mProcedureStack.push(calleeNode);
-				if (incrementCallCounter(calleeNode.getId()) > 0) {
+				if (incrementCallCounter(calleeNode.getId()) <= 0) {
 					mapVariablesOfCurrentProcedure();
 				}
-				// inline specifications ---------
-				Specification[] specs = calleeNode.getProcedureWithSpecification().getSpecification();
-				List<Statement> assertRequires = new ArrayList<>();
-				List<Statement> assumeRequires = new ArrayList<>();
-				List<Statement> assertEnsures = new ArrayList<>();
-				List<Statement> assumeEnsures = new ArrayList<>();
-				for (Specification spec : processSpecifications(specs)) {
-					ILocation loc = spec.getLocation();
-					if (spec instanceof RequiresSpecification) {
-						Expression formula = ((RequiresSpecification) spec).getFormula();
-						assertRequires.add(new AssertStatement(loc, formula));	
-						if (mAssumeRequiresAfterAssert) {
-							assumeRequires.add(new AssumeStatement(loc, formula));
-						}
-					} else if (spec instanceof EnsuresSpecification) {
-						Expression formula = ((EnsuresSpecification) spec).getFormula();
-						if (mAssertEnsuresBeforeAssume) {
-							assertEnsures.add(new AssertStatement(loc, formula));
-						}
-						assumeEnsures.add(new AssumeStatement(loc, formula));
-					}
-				}
-				// inline body ---------
-				List<Statement> inlinedBody;
-				if (calleeNode.isImplemented()) {
+				if (call.isForall()) {
+					return inlineCallForall(call, calleeNode);
 				} else {
-					
+					return inlineCall(call, calleeNode);
 				}
-
-				
-				
-				mProcedureStack.pop();
 			}
 		}
 		return Collections.singletonList(processStatement(stat));
 	}
+	
+	private List<Statement> inlineCallForall(CallStatement call, CallGraphNode calleeNode) {
+		throw new UnsupportedOperationException("Call forall isn't supported yet."); // TODO support
+	}
 
-	private void registerLabels(Statement[] stats) {
+	private List<Statement> inlineCall(CallStatement call, CallGraphNode calleeNode) {
+		mProcedureStack.push(calleeNode);
+		final int currentCallCount = getCallCounter(calleeNode.getId());
+		
+		// inline specifications ---------
+		Specification[] specs = calleeNode.getProcedureWithSpecification().getSpecification();
+		List<Statement> assertRequires = new ArrayList<>();
+		List<Statement> assumeRequires = new ArrayList<>();
+		List<Statement> assertEnsures = new ArrayList<>();
+		List<Statement> assumeEnsures = new ArrayList<>();
+		for (Specification spec : processSpecifications(specs)) {
+			ILocation loc = spec.getLocation();
+			if (spec instanceof RequiresSpecification) {
+				Expression formula = ((RequiresSpecification) spec).getFormula();
+				assertRequires.add(new AssertStatement(loc, formula));	
+				if (mAssumeRequiresAfterAssert) {
+					assumeRequires.add(new AssumeStatement(loc, formula));
+				}
+			} else if (spec instanceof EnsuresSpecification) {
+				Expression formula = ((EnsuresSpecification) spec).getFormula();
+				if (mAssertEnsuresBeforeAssume) {
+					// TODO don't assert when callee not implemented?
+					assertEnsures.add(new AssertStatement(loc, formula));
+				}
+				assumeEnsures.add(new AssumeStatement(loc, formula));
+			}
+			// TODO merge Annotations (?)
+		}
+
+		// inline body ---------
+		List<Statement> inlinedBody;
+		if (calleeNode.isImplemented()) {
+			Procedure procWithBody = calleeNode.getProcedureWithBody();
+			Body body = procWithBody.getBody();
+			Statement[] block = body.getBlock();
+			mapLabels(block);
+			mapReturnLabel();
+			
+			// TODO continue work here ---------------------------------------------------------------------------------
+			// ...
+			
+			Label returnLabel = new Label(procWithBody.getLocation(), getCurrentReturnLabelId());
+			// TODO add returnLabel to Body block (before assert/assume POST)
+		} else {
+			// TODO havoc (mind the where clauses!)
+		}
+		
+		mProcedureStack.pop();
+		return null; // TODO change
+	}
+
+	@Override
+	protected Statement processStatement(Statement statement) {
+		Statement newStatement = null;
+		if (statement instanceof Label) {
+			Label label = (Label) statement;
+			newStatement = new Label(label.getLocation(), getNewLabelId(label.getName()));
+		} else if (statement instanceof GotoStatement) {
+			GotoStatement gotoStat = (GotoStatement) statement;
+			String[] labelIds = gotoStat.getLabels();
+			String[] newLabelIds = new String[labelIds.length];
+			for (int i = 0; i < labelIds.length; ++i) {
+				newLabelIds[i] = getNewLabelId(labelIds[i]);
+			}
+			newStatement = new GotoStatement(gotoStat.getLocation(), newLabelIds);
+		} else if (statement instanceof BreakStatement) {
+			BreakStatement breakStat = (BreakStatement) statement;
+			String label = breakStat.getLabel();	
+			newStatement = new BreakStatement(breakStat.getLocation(), label == null ? null : getNewLabelId(label));
+		} else if (statement instanceof ReturnStatement && !inEntryProcedure()) {
+			newStatement = new GotoStatement(statement.getLocation(), new String[] { getCurrentReturnLabelId() });
+		}
+		if (newStatement == null) {
+			return super.processStatement(statement);			
+		} else {
+			ModelUtils.mergeAnnotations(statement, newStatement);
+			return newStatement;
+		}
+	}
+
+	private String getNewLabelId(String oldLabelId) {
+		String newName = mLabelMap.get(oldLabelId);
+		assert newName != null : "Missing mapping for Label: " + oldLabelId;
+		return newName;
+	}
+
+	private void mapReturnLabel() {
+		String procId = mProcedureStack.peek().getId();
+		String returnLabelId = mLabelIdManager.makeAndAddUniqueId(procId, "returnLabel");
+		mLabelMap.put(createCurrentReturnLabelKey() , returnLabelId);
+	}
+	
+	private String getCurrentReturnLabelId() {
+		return mLabelMap.get(createCurrentReturnLabelKey());
+	}
+	
+	private LabelMapKey createCurrentReturnLabelKey() {
+		String procId = mProcedureStack.peek().getId();
+		return new LabelMapKey(null, procId, getCallCounter(procId));
+	}
+	
+	private void mapLabels(Statement[] stats) {
 		for (Statement stat : stats) {
-			registerLabels(stat);
+			mapLabels(stat);
 		}
 	}
 	
-	private void registerLabels(Statement stat) {
+	private void mapLabels(Statement stat) {
 		if (stat instanceof WhileStatement) {
-			registerLabels(((WhileStatement) stat).getBody());
+			mapLabels(((WhileStatement) stat).getBody());
 		} else if (stat instanceof IfStatement) {
 			IfStatement ifStat = (IfStatement) stat;
-			registerLabels(ifStat.getThenPart());
-			registerLabels(ifStat.getElsePart());
+			mapLabels(ifStat.getThenPart());
+			mapLabels(ifStat.getElsePart());
 		} else if (stat instanceof Label) {
-			String labelName = ((Label) stat).getName();
-			LabelMapKey key = new LabelMapKey(labelName, mProcedureStack.peek().getId());
-			mLabelMap.put(key, labelName);
+			String procId = mProcedureStack.peek().getId();
+			String labelId = ((Label) stat).getName();
+			String newLabelId;
+			if (inEntryProcedure()) {
+				newLabelId = mLabelIdManager.addId(procId);
+			} else {
+				newLabelId = mLabelIdManager.makeAndAddUniqueId(procId, labelId);				
+			}
+			LabelMapKey key = new LabelMapKey(labelId, procId, getCallCounter(procId));
+			mLabelMap.put(key, newLabelId);
 		}
 	}
 	

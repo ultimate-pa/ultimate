@@ -14,7 +14,7 @@ public class LabelMapKey {
 	
 	/**
 	 * Creates a new key for a label of the procedure, used inside the entry point of inlining.
-	 * @param labelId Original identifier of the label, null for return statements.
+	 * @param labelId Original identifier of the label.
 	 * @param procedureId Identifier of the original procedure, containing the label.
 	 */
 	public LabelMapKey(String labelId, String procedureId) {
@@ -22,8 +22,8 @@ public class LabelMapKey {
 	}
 
 	/**
-	 * Creates a new key.
-	 * @param labelId Original identifier of the label. null for return statements.
+	 * Creates a new key for a label.
+	 * @param labelId Original identifier of the label. {@code null} for the generated return label.
 	 * @param procedureId Identifier of the original procedure, containing the label.
 	 * @param callNumber Number of calls to the procedure with identifier {@code procedureId} before the current call.
 	 */

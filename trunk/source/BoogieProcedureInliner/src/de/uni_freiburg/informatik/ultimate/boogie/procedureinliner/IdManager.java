@@ -24,7 +24,7 @@ public class IdManager {
 	
 	/**
 	 * Adds an id to this manager. The id will be registered as it is.
-	 * It is possible to add an already added identifier using this method!
+	 * It is possible to add an already added identifier without an error, using this method!
 	 * @param id An identifier.
 	 * @return The identifier.
 	 */

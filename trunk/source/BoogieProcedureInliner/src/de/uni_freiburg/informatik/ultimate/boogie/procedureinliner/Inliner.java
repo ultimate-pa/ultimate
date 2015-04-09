@@ -87,12 +87,11 @@ public class Inliner implements IUnmanagedObserver {
 		
 		InlineVersionTransformer.GlobalScopeInitializer globalScopeInit =
 				new InlineVersionTransformer.GlobalScopeInitializer(mNonProcedureDeclarations);
-		boolean assumeRequiresAfterAssert = PreferenceItem.ASSUME_REQUIRES_AFTER_ASSERT.getBooleanValue();
-		boolean assertEnsuresBeforeAssume = PreferenceItem.ASSERT_ENSURES_BEFORE_ENSURES.getBooleanValue();
 		for (CallGraphNode node : mCallGraph.values()) {
 			if (node.isImplemented() && node.hasInlineFlags()) {
 				InlineVersionTransformer transformer = new InlineVersionTransformer(mServices, globalScopeInit,
-						assumeRequiresAfterAssert, assertEnsuresBeforeAssume);
+						PreferenceItem.ASSUME_REQUIRES_AFTER_ASSERT.getBooleanValue(),
+						PreferenceItem.ASSERT_ENSURES_BEFORE_ASSUME.getBooleanValue());
 				mNewProceduresWithBody.put(node.getId(), transformer.inlineCallsInside(node));
 			}
 		}
@@ -113,7 +112,7 @@ public class Inliner implements IUnmanagedObserver {
 			Procedure oldProcWithSpec = node.getProcedureWithSpecification();
 			Procedure oldProcWithBody = node.getProcedureWithBody();
 			Procedure newProcWithBody = mNewProceduresWithBody.get(node.getId());
-			if (newProcWithBody == null) {
+			if (newProcWithBody == null) { // the procedure had nothing to inline, nothing changed
 				newDeclarations.add(oldProcWithSpec);
 				if (node.isImplemented() && !node.isCombined()) {
 					newDeclarations.add(oldProcWithBody);
