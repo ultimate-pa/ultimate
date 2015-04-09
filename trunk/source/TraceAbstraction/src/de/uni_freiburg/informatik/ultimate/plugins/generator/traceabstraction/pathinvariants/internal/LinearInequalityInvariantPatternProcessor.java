@@ -9,6 +9,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import javax.management.RuntimeErrorException;
+
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
@@ -298,14 +300,14 @@ public final class LinearInequalityInvariantPatternProcessor
 			final Map<RankVar, Term> mapping) {
 		// This is the trivial algorithm (expanding). Feel free to optimize ;)
 		// 1. map Pattern, result is dnf
-		final Collection<Collection<LinearInequality>> mappedPattern = 
-				mapPattern(pattern, mapping);
+		final Collection<Collection<LinearInequality>> mappedPattern = mapPattern(
+				pattern, mapping);
 		// 2. negate every LinearInequality, result is a cnf
-		final Collection<Collection<LinearInequality>> cnfAfterNegation = 
-				new ArrayList<>(mappedPattern.size());
+		final Collection<Collection<LinearInequality>> cnfAfterNegation = new ArrayList<>(
+				mappedPattern.size());
 		for (final Collection<LinearInequality> conjunct : mappedPattern) {
-			final Collection<LinearInequality> disjunctWithNegatedLinearInequalities =
-					new ArrayList<>(conjunct.size());
+			final Collection<LinearInequality> disjunctWithNegatedLinearInequalities = new ArrayList<>(
+					conjunct.size());
 			for (final LinearInequality li : conjunct) {
 				// copy original linear inequality
 				final LinearInequality negatedLi = new LinearInequality(li);
@@ -315,8 +317,7 @@ public final class LinearInequalityInvariantPatternProcessor
 			cnfAfterNegation.add(disjunctWithNegatedLinearInequalities);
 		}
 		// 3. expand the cnf to get a dnf
-		final Collection<Collection<LinearInequality>> mappedAndNegatedPattern =
-				expandCnfToDnf(cnfAfterNegation);
+		final Collection<Collection<LinearInequality>> mappedAndNegatedPattern = expandCnfToDnf(cnfAfterNegation);
 		// 4. return the resulting dnf as the solution
 		return mappedAndNegatedPattern;
 	}
@@ -337,7 +338,7 @@ public final class LinearInequalityInvariantPatternProcessor
 		if (!cnfIterator.hasNext()) {
 			throw new IllegalArgumentException(
 					"Could not convert cnf into dnf,"
-					+ " because empty cnf was given");
+							+ " because empty cnf was given");
 		}
 		// the first disjunct is the initial dnf
 		Collection<LinearInequality> initialDisjunct = cnfIterator.next();
@@ -371,12 +372,12 @@ public final class LinearInequalityInvariantPatternProcessor
 			Collection<LinearInequality> disjunct,
 			Collection<Collection<LinearInequality>> dnf) {
 		// there are disjunct.size() * dnf.size() conjuncts afterwards
-		final Collection<Collection<LinearInequality>> resultDnf = 
-				new ArrayList<>(disjunct.size() * dnf.size());
+		final Collection<Collection<LinearInequality>> resultDnf = new ArrayList<>(
+				disjunct.size() * dnf.size());
 		for (LinearInequality linearInequalityInFirstDisjunct : disjunct) {
 			for (Collection<LinearInequality> conjunctInDnf : dnf) {
-				Collection<LinearInequality> conjunctInResultDnf = 
-						new ArrayList<LinearInequality>(conjunctInDnf.size()+1);
+				Collection<LinearInequality> conjunctInResultDnf = new ArrayList<LinearInequality>(
+						conjunctInDnf.size() + 1);
 				conjunctInResultDnf.addAll(conjunctInDnf);
 				conjunctInResultDnf.add(linearInequalityInFirstDisjunct);
 				resultDnf.add(conjunctInResultDnf);
@@ -426,16 +427,14 @@ public final class LinearInequalityInvariantPatternProcessor
 	@SafeVarargs
 	private final Term transformNegatedConjunction(
 			final Collection<? extends Collection<LinearInequality>>... dnfs) {
-		final Collection<Collection<LinearInequality>> conjunctionDNF = 
-				expandConjunction(dnfs);
+		final Collection<Collection<LinearInequality>> conjunctionDNF = expandConjunction(dnfs);
 
 		// Apply Motzkin and generate the conjunction of the resulting Terms
 		final Collection<Term> resultTerms = new ArrayList<Term>(
 				conjunctionDNF.size());
 		for (final Collection<LinearInequality> conjunct : conjunctionDNF) {
-			final MotzkinTransformation transformation = 
-					new MotzkinTransformation(
-							solver, AnalysisType.Nonlinear, false);
+			final MotzkinTransformation transformation = new MotzkinTransformation(
+					solver, AnalysisType.Nonlinear, false);
 			transformation.add_inequalities(conjunct);
 			resultTerms.add(transformation.transform(new Rational[0]));
 		}
@@ -462,8 +461,8 @@ public final class LinearInequalityInvariantPatternProcessor
 
 		final Collection<List<LinearInequality>> conditionDNF = condition
 				.getPolyhedra();
-		final Collection<Collection<LinearInequality>> negPatternDNF = 
-				mapAndNegatePattern(pattern, primedMapping);
+		final Collection<Collection<LinearInequality>> negPatternDNF = mapAndNegatePattern(
+				pattern, primedMapping);
 		int numberOfInequalities = 0;
 		for (Collection<LinearInequality> conjunct : negPatternDNF) {
 			numberOfInequalities += conjunct.size();
@@ -489,10 +488,10 @@ public final class LinearInequalityInvariantPatternProcessor
 		final Map<RankVar, Term> unprimedMapping = transition.getInVars();
 		final Map<RankVar, Term> primedMapping = transition.getOutVars();
 
-		final Collection<Collection<LinearInequality>> startInvariantDNF = 
-				mapPattern(predicate.getInvStart(), unprimedMapping);
-		final Collection<Collection<LinearInequality>> endInvariantDNF = 
-				mapAndNegatePattern(predicate.getInvEnd(), primedMapping);
+		final Collection<Collection<LinearInequality>> startInvariantDNF = mapPattern(
+				predicate.getInvStart(), unprimedMapping);
+		final Collection<Collection<LinearInequality>> endInvariantDNF = mapAndNegatePattern(
+				predicate.getInvEnd(), primedMapping);
 		int numberOfInequalities = 0;
 		for (Collection<LinearInequality> conjunct : endInvariantDNF) {
 			numberOfInequalities += conjunct.size();
@@ -578,14 +577,14 @@ public final class LinearInequalityInvariantPatternProcessor
 			for (final LinearPatternBase inequality : conjunct) {
 				inequalities.add(inequality.getLinearInequality(definitionMap)
 						.asTerm(solver));
-				//TODO: use the script form the smtmanager here
-				
+				// TODO: use the script form the smtmanager here
+
 			}
 			conjunctions.add(SmtUtils.and(solver, inequalities));
 		}
 		return SmtUtils.or(solver, conjunctions);
 	}
-	
+
 	protected Term getValuatedTermForPattern(
 			final Collection<Collection<LinearPatternBase>> pattern) {
 		final Collection<Term> conjunctions = new ArrayList<Term>(
@@ -598,7 +597,8 @@ public final class LinearInequalityInvariantPatternProcessor
 						.asTerm(smtManager.getScript()));
 
 			}
-			conjunctions.add(SmtUtils.and(smtManager.getScript(), inequalities));
+			conjunctions
+					.add(SmtUtils.and(smtManager.getScript(), inequalities));
 		}
 		return SmtUtils.or(smtManager.getScript(), conjunctions);
 	}
@@ -614,8 +614,8 @@ public final class LinearInequalityInvariantPatternProcessor
 	/**
 	 * Reset solver and initialize it afterwards. For initializing, we set the
 	 * option produce-models to true (this allows us to obtain a satisfying
-	 * assignment) and we set the logic to QF_AUFNIRA.
-	 * TODO: Matthias unsat cores might be helpful for debugging.
+	 * assignment) and we set the logic to QF_AUFNIRA. TODO: Matthias unsat
+	 * cores might be helpful for debugging.
 	 */
 	private void reinitializeSolver() {
 		solver.reset();
@@ -632,10 +632,20 @@ public final class LinearInequalityInvariantPatternProcessor
 			Collection<Collection<LinearPatternBase>> pattern) {
 		// TODO Auto-generated method stub
 		Term term = getValuatedTermForPattern(pattern);
-		//@Matthias: Hier ist der Term mit den eingesetzen Werten
-		//wir brauchen nun ein Predicate dafür
-		return predicateUnifier.getOrConstructPredicate(TermVarsProc
-				.computeTermVarsProc(term, smtManager.getBoogie2Smt()));
+		LinearInequality inequality;
+		try {
+			inequality = LinearInequality.fromTerm(term);
+		} catch (TermException e) {
+			e.printStackTrace();
+			throw new RuntimeException(
+					"Wasn't possible to get a linear inequality back.");
+		}
+		Term booleanTerm = inequality.asTerm(smtManager.getScript());
+		// @Matthias: Hier ist der Term mit den eingesetzen Werten
+		// wir brauchen nun ein Predicate dafür
+		TermVarsProc tvp = TermVarsProc.computeTermVarsProc(booleanTerm,
+				smtManager.getBoogie2Smt());
+		return predicateUnifier.getOrConstructPredicate(tvp);
 	}
 
 }
