@@ -8,8 +8,8 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VarList;
  * Iterates over multiple groups of VarLists at the same time.
  * All groups must have the same number of variables, but the partitioning of the groups into VarLists can differ.
  *
- * This is no java.util.Iterator, because next() would have to return a tuple of elements,
- * which would be unnecessary overhead. You can use this class to access the elements of the tuple instead.
+ * This is no java.util.Iterator, because next() would have to return a tuple of elements, which would be unnecessary
+ * overhead. Instead, you can use this class to access the elements of the current tuple, after calling next().
  *
  * @author schaetzc@informatik.uni-freiburg.de
  */
@@ -22,7 +22,7 @@ public class VarListIterator {
 	private int mVars;
 	
 	/** Current position of the iterator. */
-	private int mCursor;
+	private int mCursor = -1;
 	
 	/** Groups of VarLists. Use mVarListGroups[group][listFromTheGroup]. All groups contain {@link #mVars} variables. */
 	private VarList[][] mVarListGroups;
@@ -88,6 +88,10 @@ public class VarListIterator {
 		return mCursor + 1 < mVars;
 	}
 	
+	/**
+	 * Advance to the next element(s) of this iterator.
+	 * Don't call this 
+	 */
 	public void next() {
 		if (hasNext()) {
 			++mCursor;
@@ -97,11 +101,20 @@ public class VarListIterator {
 	}
 
 	public String currentId(int group) {
+		checkCursorBounds();
 		return currentVarList(group).getIdentifiers()[mIdIndices[group][mCursor]];
 	}
 
 	public VarList currentVarList(int group) {
+		checkCursorBounds();
 		return mVarListGroups[group][mVarListIndices[group][mCursor]];
+	}
+	
+	private void checkCursorBounds() {
+		if (mCursor < 0) {
+			throw new IndexOutOfBoundsException("Need at least one call of next() to access any elements.");
+		}
+		// no need to check "mCursor > mVars" (see hasNext()) 
 	}
 	
 	public boolean varListChanged(int group) {

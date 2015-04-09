@@ -85,13 +85,14 @@ public class Inliner implements IUnmanagedObserver {
 		buildCallGraph();
 		mInlineSelector.setInlineFlags(mCallGraph);
 		
-		InlineVersionTransformer.GlobalScopeInitializer globalScopeInit =
-				new InlineVersionTransformer.GlobalScopeInitializer(mNonProcedureDeclarations);
+		InlineVersionTransformer.GlobalScopeManager globalScopeManager =
+				new InlineVersionTransformer.GlobalScopeManager(mNonProcedureDeclarations);
+		boolean assumeRequiresAfterAssert = PreferenceItem.ASSUME_REQUIRES_AFTER_ASSERT.getBooleanValue();
+		boolean assertEnsuresBeforeAssume = PreferenceItem.ASSERT_ENSURES_BEFORE_ASSUME.getBooleanValue();
 		for (CallGraphNode node : mCallGraph.values()) {
 			if (node.isImplemented() && node.hasInlineFlags()) {
-				InlineVersionTransformer transformer = new InlineVersionTransformer(mServices, globalScopeInit,
-						PreferenceItem.ASSUME_REQUIRES_AFTER_ASSERT.getBooleanValue(),
-						PreferenceItem.ASSERT_ENSURES_BEFORE_ASSUME.getBooleanValue());
+				InlineVersionTransformer transformer = new InlineVersionTransformer(mServices,
+						globalScopeManager, assumeRequiresAfterAssert, assertEnsuresBeforeAssume);
 				mNewProceduresWithBody.put(node.getId(), transformer.inlineCallsInside(node));
 			}
 		}

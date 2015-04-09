@@ -8,8 +8,8 @@ public class InlinePolymorphicException extends CancelToolchainException {
 
 	private static final long serialVersionUID = 6599224094177831810L;
 
-	public InlinePolymorphicException(ILocation location) {
-		super("Polymorphic procedures are unsupported.", location);
+	public InlinePolymorphicException(ILocation location, String procId) {
+		super("Polymorphic procedures are not supported: "  + procId, location);
 	}
 
 	@Override

@@ -33,7 +33,8 @@ public enum PreferenceItem {
 	LABEL___SPECIFICATION_INLINING("\nSpecification inlining (in the same order as shown here)"),
 	NOTE___ASSERT_REQUIRES("[X] assert requires/precondition"),
 	ASSUME_REQUIRES_AFTER_ASSERT("assume requires/precondition", true, PreferenceType.Boolean),
-	ASSERT_ENSURES_BEFORE_ASSUME("assert ensures/postcondition", false, PreferenceType.Boolean),
+	ASSERT_ENSURES_BEFORE_ASSUME(
+			"assert ensures/postcondition (only for implemented procedures)", false, PreferenceType.Boolean),
 	NOTE___ASSUME_ENSURES("[X] assume ensures/postcondition");
 
 	protected final String mName;
