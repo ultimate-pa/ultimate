@@ -25,10 +25,14 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.EdgeChecker;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IHoareTripleChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
+import de.uni_freiburg.informatik.ultimate.util.relation.IsContained;
+import de.uni_freiburg.informatik.ultimate.util.relation.NestedMap3;
+import de.uni_freiburg.informatik.ultimate.util.relation.NestedMap4;
 
 public class ImpulseChecker extends CodeChecker {
 	
@@ -38,7 +42,7 @@ public class ImpulseChecker extends CodeChecker {
 	private int nodeIDs;
 	
 	public ImpulseChecker(IElement root, SmtManager m_smtManager, TAPreferences m_taPrefs, RootNode m_originalRoot, ImpRootNode m_graphRoot,
-			GraphWriter m_graphWriter, EdgeChecker edgeChecker, PredicateUnifier predicateUnifier, Logger logger) {
+			GraphWriter m_graphWriter, IHoareTripleChecker edgeChecker, PredicateUnifier predicateUnifier, Logger logger) {
 		super(root, m_smtManager, m_taPrefs, m_originalRoot, m_graphRoot,
 				m_graphWriter, edgeChecker, predicateUnifier, logger);
 		cloneFinder = new RedirectionFinder(this);
@@ -108,19 +112,29 @@ public class ImpulseChecker extends CodeChecker {
 		if (isValidRedirection(edge, target)) {
 			if (edge instanceof AppHyperEdge) {
 				
-				if (!GlobalSettings._instance.checkSatisfiability || m_smtManager.isInductiveReturn(edge.getSource().getPredicate(), ((AppHyperEdge) edge).getHier().getPredicate(),
-						(Return) edge.getStatement(), m_predicateUnifier.getFalsePredicate()) != LBool.UNSAT)	
+//				if (!GlobalSettings._instance.checkSatisfiability || m_smtManager.isInductiveReturn(edge.getSource().getPredicate(), ((AppHyperEdge) edge).getHier().getPredicate(),
+//						(Return) edge.getStatement(), m_predicateUnifier.getFalsePredicate()) != LBool.UNSAT)	
+				if (!GlobalSettings._instance.checkSatisfiability || 
+						_edgeChecker.checkReturn(edge.getSource().getPredicate(), ((AppHyperEdge) edge).getHier().getPredicate(), 
+								edge.getStatement(), edge.getTarget().getPredicate())
+						  != Validity.VALID);
 					edge.getSource().connectOutgoingReturn(((AppHyperEdge) edge).getHier(), (Return) edge.getStatement(), target);
 			} else {
 				
 				boolean result = !GlobalSettings._instance.checkSatisfiability;
 				if (!result) {
 					if (edge.getStatement() instanceof Call)
-						result = m_smtManager.isInductiveCall(edge.getSource().getPredicate(), (Call) edge.getStatement(),
-								m_predicateUnifier.getFalsePredicate()) != LBool.UNSAT;
+//						result = m_smtManager.isInductiveCall(edge.getSource().getPredicate(), (Call) edge.getStatement(),
+//								m_predicateUnifier.getFalsePredicate()) != LBool.UNSAT;
+						result = _edgeChecker.checkCall(edge.getSource().getPredicate(), edge.getStatement(), 
+								edge.getTarget().getPredicate())
+								 != Validity.VALID;
 					else
-						result = m_smtManager.isInductive(edge.getSource().getPredicate(), edge.getStatement(),
-							m_predicateUnifier.getFalsePredicate()) != LBool.UNSAT;
+//						result = m_smtManager.isInductive(edge.getSource().getPredicate(), edge.getStatement(),
+//							m_predicateUnifier.getFalsePredicate()) != LBool.UNSAT;
+						result = _edgeChecker.checkInternal(edge.getSource().getPredicate(), edge.getStatement(), 
+								edge.getTarget().getPredicate())
+								!= Validity.VALID;
 				}
 				
 				if (result)
@@ -253,13 +267,11 @@ public class ImpulseChecker extends CodeChecker {
 		
 
 		if (GlobalSettings._instance._memoizeNormalEdgeChecks) {
-			if (_satTriples.get(sourceNode.getPredicate()) != null && _satTriples.get(sourceNode.getPredicate()).get(edgeLabel) != null
-					&& _satTriples.get(sourceNode.getPredicate()).get(edgeLabel).contains(destinationNode.getPredicate())) {
+			if (_satTriples.get(sourceNode.getPredicate(), edgeLabel, destinationNode.getPredicate()) == IsContained.IsContained) {
 				memoizationHitsSat++;
 				return true;
 			}
-			if (_unsatTriples.get(sourceNode.getPredicate()) != null && _unsatTriples.get(sourceNode.getPredicate()).get(edgeLabel) != null
-					&& _unsatTriples.get(sourceNode.getPredicate()).get(edgeLabel).contains(destinationNode.getPredicate())) {
+			if (_unsatTriples.get(sourceNode.getPredicate(), edgeLabel, destinationNode.getPredicate()) == IsContained.IsContained) {
 				memoizationHitsUnsat++;
 				return false;
 			}
@@ -267,17 +279,16 @@ public class ImpulseChecker extends CodeChecker {
 
 		boolean result = true;
 		if (edgeLabel instanceof Call)
-			result = m_smtManager.isInductiveCall(sourceNode.getPredicate(), (Call) edgeLabel,
-					destinationNode.getPredicate()) == LBool.UNSAT;
+			result = _edgeChecker.checkCall(sourceNode.getPredicate(), edgeLabel, destinationNode.getPredicate()) == Validity.VALID;
 		else
-			result = m_smtManager.isInductive(sourceNode.getPredicate(), edgeLabel, destinationNode.getPredicate()) == LBool.UNSAT;
+			result = _edgeChecker.checkInternal(sourceNode.getPredicate(), edgeLabel, destinationNode.getPredicate()) == Validity.VALID;
 	
 
 		if (GlobalSettings._instance._memoizeNormalEdgeChecks)
 			if (result)
-				addSatTriple(sourceNode.getPredicate(), edgeLabel, destinationNode.getPredicate());
+				_satTriples.put(sourceNode.getPredicate(), edgeLabel, destinationNode.getPredicate(), IsContained.IsContained);
 			else
-				addUnsatTriple(sourceNode.getPredicate(), edgeLabel, destinationNode.getPredicate());
+				_unsatTriples.put(sourceNode.getPredicate(), edgeLabel, destinationNode.getPredicate(), IsContained.IsContained);
 
 		return result;
 	}
@@ -285,28 +296,29 @@ public class ImpulseChecker extends CodeChecker {
 	public boolean isValidReturnEdge(AnnotatedProgramPoint sourceNode, CodeBlock edgeLabel,
 			AnnotatedProgramPoint destinationNode, AnnotatedProgramPoint callNode) {
 		if (GlobalSettings._instance._memoizeReturnEdgeChecks) {
-			if (_satQuadruples.get(sourceNode.getPredicate()) != null && _satQuadruples.get(sourceNode.getPredicate()).get(callNode) != null
-					&& _satQuadruples.get(sourceNode.getPredicate()).get(callNode).get(edgeLabel) != null
-					&& _satQuadruples.get(sourceNode.getPredicate()).get(callNode).get(edgeLabel).contains(destinationNode.getPredicate())) {
+			if (_satQuadruples.get(sourceNode.getPredicate(), callNode.getPredicate(), edgeLabel, destinationNode.getPredicate()) 
+					== IsContained.IsContained) {
 				memoizationReturnHitsSat++;
 				return true;
 			}
-			if (_unsatQuadruples.get(sourceNode.getPredicate()) != null && _unsatQuadruples.get(sourceNode.getPredicate()).get(callNode) != null
-					&& _unsatQuadruples.get(sourceNode.getPredicate()).get(callNode).get(edgeLabel) != null
-					&& _unsatQuadruples.get(sourceNode.getPredicate()).get(callNode).get(edgeLabel).contains(destinationNode.getPredicate())) {
+			if (_unsatQuadruples.get(sourceNode.getPredicate(), callNode.getPredicate(), edgeLabel, destinationNode.getPredicate()) 
+					== IsContained.IsContained) {
 				memoizationReturnHitsUnsat++;
 				return false;
 			}
 		}
 
-		boolean result = m_smtManager.isInductiveReturn(sourceNode.getPredicate(), callNode.getPredicate(), (Return) edgeLabel,
-				destinationNode.getPredicate()) == LBool.UNSAT;
+		boolean result = _edgeChecker.checkReturn(sourceNode.getPredicate(), callNode.getPredicate(), 
+				edgeLabel, destinationNode.getPredicate())
+				 == Validity.VALID;
 
 		if (GlobalSettings._instance._memoizeReturnEdgeChecks)
 			if (result)
-				addSatQuadruple(sourceNode.getPredicate(), callNode.getPredicate(), edgeLabel, destinationNode.getPredicate());
+				_satQuadruples.put(sourceNode.getPredicate(), callNode.getPredicate(), 
+						edgeLabel, destinationNode.getPredicate(), IsContained.IsContained);
 			else
-				addUnsatQuadruple(sourceNode.getPredicate(), callNode.getPredicate(), edgeLabel, destinationNode.getPredicate());
+				_unsatQuadruples.put(sourceNode.getPredicate(), callNode.getPredicate(), 
+						edgeLabel, destinationNode.getPredicate(), IsContained.IsContained);
 
 		return result;
 	}
@@ -320,8 +332,8 @@ public class ImpulseChecker extends CodeChecker {
 	@Override
 	public boolean codeCheck(NestedRun<CodeBlock, AnnotatedProgramPoint> errorRun, IPredicate[] interpolants,
 			AnnotatedProgramPoint procedureRoot,
-			HashMap<IPredicate, HashMap<CodeBlock, HashSet<IPredicate>>> satTriples,
-			HashMap<IPredicate, HashMap<CodeBlock, HashSet<IPredicate>>> unsatTriples) {
+			NestedMap3<IPredicate, CodeBlock, IPredicate, IsContained> satTriples,
+			NestedMap3<IPredicate, CodeBlock, IPredicate, IsContained> unsatTriples) {
 		this._satTriples = satTriples;
 		this._unsatTriples = unsatTriples;
 		return this.codeCheck(errorRun, interpolants, procedureRoot);
@@ -330,10 +342,10 @@ public class ImpulseChecker extends CodeChecker {
 	@Override
 	public boolean codeCheck(NestedRun<CodeBlock, AnnotatedProgramPoint> errorRun, IPredicate[] interpolants,
 			AnnotatedProgramPoint procedureRoot,
-			HashMap<IPredicate, HashMap<CodeBlock, HashSet<IPredicate>>> satTriples,
-			HashMap<IPredicate, HashMap<CodeBlock, HashSet<IPredicate>>> unsatTriples,
-			HashMap<IPredicate, HashMap<IPredicate, HashMap<CodeBlock, HashSet<IPredicate>>>> satQuadruples,
-			HashMap<IPredicate, HashMap<IPredicate, HashMap<CodeBlock, HashSet<IPredicate>>>> unsatQuadruples) {
+			NestedMap3<IPredicate, CodeBlock, IPredicate, IsContained> satTriples,
+			NestedMap3<IPredicate, CodeBlock, IPredicate, IsContained> unsatTriples,
+			NestedMap4<IPredicate, IPredicate, CodeBlock, IPredicate, IsContained> satQuadruples,
+			NestedMap4<IPredicate, IPredicate, CodeBlock, IPredicate, IsContained> unsatQuadruples) {
 		this._satQuadruples = satQuadruples;
 		this._unsatQuadruples = unsatQuadruples;
 		return this.codeCheck(errorRun, interpolants, procedureRoot, satTriples, unsatTriples);

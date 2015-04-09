@@ -14,9 +14,13 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.appgraph.ImpRootNod
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.EdgeChecker;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
+import de.uni_freiburg.informatik.ultimate.util.relation.IsContained;
+import de.uni_freiburg.informatik.ultimate.util.relation.NestedMap3;
+import de.uni_freiburg.informatik.ultimate.util.relation.NestedMap4;
 
 public abstract class CodeChecker {
 
@@ -25,16 +29,18 @@ public abstract class CodeChecker {
 	protected SmtManager m_smtManager;
 	protected ImpRootNode m_graphRoot;
 
-//	protected IPredicate m_truePredicate;
-//	protected IPredicate m_falsePredicate;
 
-	protected EdgeChecker _edgeChecker;
+	protected IHoareTripleChecker _edgeChecker;
 	protected PredicateUnifier m_predicateUnifier;
 
-	protected HashMap<IPredicate, HashMap<CodeBlock, HashSet<IPredicate>>> _satTriples;
-	protected HashMap<IPredicate, HashMap<CodeBlock, HashSet<IPredicate>>> _unsatTriples;
-	protected HashMap<IPredicate, HashMap<IPredicate, HashMap<CodeBlock, HashSet<IPredicate>>>> _satQuadruples;
-	protected HashMap<IPredicate, HashMap<IPredicate, HashMap<CodeBlock, HashSet<IPredicate>>>> _unsatQuadruples;
+	/*
+	 * Maps for storing edge check results. Not that in case of ImpulseChecker these really are valid, not sat, triples.
+	 * TODO: either change name, make duplicates for ImpulseChecker, or modify ImpulseChecker such that those are really sat triples.
+	 */
+	protected NestedMap3<IPredicate, CodeBlock, IPredicate, IsContained> _satTriples;
+	protected NestedMap3<IPredicate, CodeBlock, IPredicate, IsContained> _unsatTriples;
+	protected NestedMap4<IPredicate, IPredicate, CodeBlock, IPredicate, IsContained> _satQuadruples;
+	protected NestedMap4<IPredicate, IPredicate, CodeBlock, IPredicate, IsContained> _unsatQuadruples;
 
 	// stats
 	protected int memoizationHitsSat = 0;
@@ -45,11 +51,9 @@ public abstract class CodeChecker {
 	protected GraphWriter _graphWriter;
 
 	public CodeChecker(IElement root, SmtManager smtManager, TAPreferences taPrefs, RootNode originalRoot, ImpRootNode graphRoot, GraphWriter graphWriter,
-			EdgeChecker edgeChecker, PredicateUnifier predicateUnifier, Logger logger) {
+			IHoareTripleChecker edgeChecker, PredicateUnifier predicateUnifier, Logger logger) {
 		mLogger = logger;
 		this.m_smtManager = smtManager;
-//		this.m_truePredicate = truePredicate;
-//		this.m_falsePredicate = falsePredicate;
 		this.m_taPrefs = taPrefs;
 		this.m_originalRoot = originalRoot;
 		this.m_graphRoot = graphRoot;
@@ -65,15 +69,15 @@ public abstract class CodeChecker {
 
 	public abstract boolean codeCheck(NestedRun<CodeBlock, AnnotatedProgramPoint> errorRun, IPredicate[] interpolants,
 			AnnotatedProgramPoint procedureRoot,
-			HashMap<IPredicate, HashMap<CodeBlock, HashSet<IPredicate>>> _satTriples,
-			HashMap<IPredicate, HashMap<CodeBlock, HashSet<IPredicate>>> _unsatTriples);
+			NestedMap3<IPredicate, CodeBlock, IPredicate, IsContained> satTriples,
+			NestedMap3<IPredicate, CodeBlock, IPredicate, IsContained> unsatTriples);
 
 	public abstract boolean codeCheck(NestedRun<CodeBlock, AnnotatedProgramPoint> errorRun, IPredicate[] interpolants,
 			AnnotatedProgramPoint procedureRoot,
-			HashMap<IPredicate, HashMap<CodeBlock, HashSet<IPredicate>>> _satTriples,
-			HashMap<IPredicate, HashMap<CodeBlock, HashSet<IPredicate>>> _unsatTriples,
-			HashMap<IPredicate, HashMap<IPredicate, HashMap<CodeBlock, HashSet<IPredicate>>>> _satQuadruples,
-			HashMap<IPredicate, HashMap<IPredicate, HashMap<CodeBlock, HashSet<IPredicate>>>> _unsatQuadruples);
+			NestedMap3<IPredicate, CodeBlock, IPredicate, IsContained> satTriples,
+			NestedMap3<IPredicate, CodeBlock, IPredicate, IsContained> unsatTriples,
+			NestedMap4<IPredicate, IPredicate, CodeBlock, IPredicate, IsContained> satQuadruples,
+			NestedMap4<IPredicate, IPredicate, CodeBlock, IPredicate, IsContained> unsatQuadruples);
 
 	/**
 	 * Given 2 predicates, return a predicate which is the conjunction of both.
@@ -86,8 +90,6 @@ public abstract class CodeChecker {
 	protected IPredicate conjugatePredicates(IPredicate a, IPredicate b) {
 		TermVarsProc tvp = m_smtManager.and(a, b);
 		return m_predicateUnifier.getOrConstructPredicate(tvp);
-		// return m_smtManager.newPredicate(tvp.getFormula(),
-		// tvp.getProcedures(), tvp.getVars(), tvp.getClosedFormula());
 	}
 
 	/**
@@ -99,8 +101,6 @@ public abstract class CodeChecker {
 	protected IPredicate negatePredicate(IPredicate a) {
 		TermVarsProc tvp = m_smtManager.not(a);
 		return m_predicateUnifier.getOrConstructPredicate(tvp);
-		// return m_smtManager.newPredicate(tvp.getFormula(),
-		// tvp.getProcedures(), tvp.getVars(), tvp.getClosedFormula());
 	}
 
 	/**
@@ -112,8 +112,6 @@ public abstract class CodeChecker {
 	 */
 	protected IPredicate negatePredicateNoPU(IPredicate a) {
 		TermVarsProc tvp = m_smtManager.not(a);
-		// return m_predicateUnifier.getOrConstructPredicate(tvp.getFormula(),
-		// tvp.getVars(), tvp.getProcedures());
 		return m_smtManager.newPredicate(tvp.getFormula(), tvp.getProcedures(), tvp.getVars(), tvp.getClosedFormula());
 	}
 
@@ -185,42 +183,5 @@ public abstract class CodeChecker {
 				dfs(child);
 		}
 		return false;
-	}
-	
-
-	protected void addSatTriple(IPredicate pre, CodeBlock stm, IPredicate post) {
-		if (_satTriples.get(pre) == null)
-			_satTriples.put(pre, new HashMap<CodeBlock, HashSet<IPredicate>>());
-		if (_satTriples.get(pre).get(stm) == null)
-			_satTriples.get(pre).put(stm, new HashSet<IPredicate>());
-		_satTriples.get(pre).get(stm).add(post);
-	}
-
-	protected void addUnsatTriple(IPredicate pre, CodeBlock stm, IPredicate post) {
-		if (_unsatTriples.get(pre) == null)
-			_unsatTriples.put(pre, new HashMap<CodeBlock, HashSet<IPredicate>>());
-		if (_unsatTriples.get(pre).get(stm) == null)
-			_unsatTriples.get(pre).put(stm, new HashSet<IPredicate>());
-		_unsatTriples.get(pre).get(stm).add(post);
-	}
-
-	protected void addSatQuadruple(IPredicate pre, IPredicate hier, CodeBlock stm, IPredicate post) {
-		if (_satQuadruples.get(pre) == null)
-			_satQuadruples.put(pre, new HashMap<IPredicate, HashMap<CodeBlock, HashSet<IPredicate>>>());
-		if (_satQuadruples.get(pre).get(hier) == null)
-			_satQuadruples.get(pre).put(hier, new HashMap<CodeBlock, HashSet<IPredicate>>());
-		if (_satQuadruples.get(pre).get(hier).get(stm) == null)
-			_satQuadruples.get(pre).get(hier).put(stm, new HashSet<IPredicate>());
-		_satQuadruples.get(pre).get(hier).get(stm).add(post);
-	}
-
-	protected void addUnsatQuadruple(IPredicate pre, IPredicate hier, CodeBlock stm, IPredicate post) {
-		if (_unsatQuadruples.get(pre) == null)
-			_unsatQuadruples.put(pre, new HashMap<IPredicate, HashMap<CodeBlock, HashSet<IPredicate>>>());
-		if (_unsatQuadruples.get(pre).get(hier) == null)
-			_unsatQuadruples.get(pre).put(hier, new HashMap<CodeBlock, HashSet<IPredicate>>());
-		if (_unsatQuadruples.get(pre).get(hier).get(stm) == null)
-			_unsatQuadruples.get(pre).get(hier).put(stm, new HashSet<IPredicate>());
-		_unsatQuadruples.get(pre).get(hier).get(stm).add(post);
 	}
 }

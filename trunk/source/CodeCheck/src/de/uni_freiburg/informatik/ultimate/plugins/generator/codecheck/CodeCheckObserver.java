@@ -49,6 +49,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Roo
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CoverageAnalysis.BackwardCoveringInformation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.EdgeChecker;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IHoareTripleChecker;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.MonolithicHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
@@ -71,6 +73,9 @@ import de.uni_freiburg.informatik.ultimate.result.TimeoutResultAtElement;
 import de.uni_freiburg.informatik.ultimate.result.UnprovableResult;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProvider;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
+import de.uni_freiburg.informatik.ultimate.util.relation.IsContained;
+import de.uni_freiburg.informatik.ultimate.util.relation.NestedMap3;
+import de.uni_freiburg.informatik.ultimate.util.relation.NestedMap4;
 
 /**
  * Auto-Generated Stub for the plug-in's Observer
@@ -98,14 +103,14 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 
 	SmtManager m_smtManager;
 	public PredicateUnifier _predicateUnifier;
-	EdgeChecker m_edgeChecker;
+	IHoareTripleChecker m_edgeChecker;
 
 	GraphWriter _graphWriter;
 
-	HashMap<IPredicate, HashMap<CodeBlock, HashSet<IPredicate>>> _satTriples;
-	HashMap<IPredicate, HashMap<CodeBlock, HashSet<IPredicate>>> _unsatTriples;
-	HashMap<IPredicate, HashMap<IPredicate, HashMap<CodeBlock, HashSet<IPredicate>>>> _satQuadruples;
-	HashMap<IPredicate, HashMap<IPredicate, HashMap<CodeBlock, HashSet<IPredicate>>>> _unsatQuadruples;
+	NestedMap3<IPredicate, CodeBlock, IPredicate, IsContained> _satTriples;
+	NestedMap3<IPredicate, CodeBlock, IPredicate, IsContained> _unsatTriples;
+	NestedMap4<IPredicate, IPredicate, CodeBlock, IPredicate, IsContained> _satQuadruples;
+	NestedMap4<IPredicate, IPredicate, CodeBlock, IPredicate, IsContained> _unsatQuadruples;
 	Collection<ProgramPoint> mErrNodesOfAllProc;
 	private final IUltimateServiceProvider mServices;
 
@@ -136,7 +141,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 
 		_predicateUnifier = new PredicateUnifier(mServices, m_smtManager);
 
-		m_edgeChecker = new EdgeChecker(m_smtManager, rootAnnot.getModGlobVarManager());
+		m_edgeChecker = new MonolithicHoareTripleChecker(m_smtManager);
 
 		Map<String, Collection<ProgramPoint>> proc2errNodes = rootAnnot.getErrorNodes();
 		mErrNodesOfAllProc = new ArrayList<ProgramPoint>();
@@ -145,12 +150,12 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		}
 
 		if (GlobalSettings._instance._memoizeNormalEdgeChecks) {
-			_satTriples = new HashMap<IPredicate, HashMap<CodeBlock, HashSet<IPredicate>>>();
-			_unsatTriples = new HashMap<IPredicate, HashMap<CodeBlock, HashSet<IPredicate>>>();
+			_satTriples = new NestedMap3<IPredicate, CodeBlock, IPredicate, IsContained>();
+			_unsatTriples = new NestedMap3<IPredicate, CodeBlock, IPredicate, IsContained>();
 		}
 		if (GlobalSettings._instance._memoizeReturnEdgeChecks) {
-			_satQuadruples = new HashMap<IPredicate, HashMap<IPredicate, HashMap<CodeBlock, HashSet<IPredicate>>>>();
-			_unsatQuadruples = new HashMap<IPredicate, HashMap<IPredicate, HashMap<CodeBlock, HashSet<IPredicate>>>>();
+			_satQuadruples = new NestedMap4<IPredicate, IPredicate, CodeBlock, IPredicate, IsContained>();
+			_unsatQuadruples = new NestedMap4<IPredicate, IPredicate, CodeBlock, IPredicate, IsContained>();
 		}
 		_graphWriter = new GraphWriter(GlobalSettings._instance._dotGraphPath, true, true, true, false,
 				m_smtManager.getScript());
@@ -357,19 +362,6 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 
 					LBool isSafe = traceChecker.isCorrect();
 					if (isSafe == LBool.UNSAT) { // trace is infeasible
-//						if (GlobalSettings._instance._predicateUnification == PredicateUnification.PER_ITERATION)
-//							_predicateUnifier = new PredicateUnifier(mServices, m_smtManager);//, m_truePredicate, m_falsePredicate);
-
-//						switch (GlobalSettings._instance._solverAndInterpolator) {
-//						case SMTINTERPOL:
-//							traceChecker.computeInterpolants(new InterpolatingTraceChecker.AllIntegers(), _predicateUnifier,
-//									GlobalSettings._instance._interpolationMode);
-//							break;
-//						case Z3SPWP:
-//							traceChecker.computeInterpolants(new InterpolatingTraceChecker.AllIntegers(), _predicateUnifier,
-//									INTERPOLATION.ForwardPredicates);
-//							break;
-//						}
 						
 						//interpolant coverage capability stuff
 						ArrayList<ProgramPoint> programPoints = new ArrayList<>();
