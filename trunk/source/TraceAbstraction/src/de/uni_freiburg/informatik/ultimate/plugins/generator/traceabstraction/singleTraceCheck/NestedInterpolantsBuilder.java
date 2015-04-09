@@ -2,6 +2,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.s
 
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -14,12 +15,17 @@ import org.apache.log4j.Logger;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
+import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
+import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ApplicationTermFinder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SafeSubstitution;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.TermVarsProc;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -67,6 +73,8 @@ public class NestedInterpolantsBuilder {
 	private final boolean m_TreeInterpolation;
 	
 	private final SafeSubstitution m_Const2RepTvSubst;
+
+	private final boolean m_KenMcMillanWorkaround = false;
 
 	public NestedInterpolantsBuilder(SmtManager smtManager, NestedFormulas<Term, Term> annotatdSsa,
 			Map<Term, BoogieVar> m_constants2BoogieVar, PredicateUnifier predicateBuilder,
@@ -495,6 +503,9 @@ public class NestedInterpolantsBuilder {
 					 */
 					withIndices = (new FormulaUnLet()).transform(withIndices);
 					Term withoutIndices = m_Const2RepTvSubst.transform(withIndices);
+					if (m_KenMcMillanWorkaround ) {
+						withoutIndices = z3ArrayExtPostProcessing(withoutIndices);
+					}
 					TermVarsProc tvp = TermVarsProc.computeTermVarsProc(withoutIndices, m_SmtManager.getBoogie2Smt());
 					result[resultPos] = m_PredicateBuilder.getOrConstructPredicate(tvp);
 					withIndices2Predicate.put(withIndices, result[resultPos]);
@@ -505,6 +516,82 @@ public class NestedInterpolantsBuilder {
 		}
 		assert craigInterpolPos == m_CraigInterpolants.length;
 		return result;
+	}
+
+	private Term z3ArrayExtPostProcessing(Term withoutIndices) {
+		ApplicationTermFinder atf = new ApplicationTermFinder("array-ext", false);
+		Set<ApplicationTerm> arrayExtAppTerms = atf.findMatchingSubterms(withoutIndices);
+		if (arrayExtAppTerms.isEmpty()) {
+			return withoutIndices;
+		}
+		Term[] implications = new Term[arrayExtAppTerms.size()];
+		TermVariable[] replacingTermVariable = new TermVariable[arrayExtAppTerms.size()];
+		Map<Term, Term> substitutionMapping = new HashMap<>();
+		int offset = 0;
+		for (ApplicationTerm appTerm : arrayExtAppTerms) {
+			ArrayExtTerm aet = new ArrayExtTerm(appTerm);
+			replacingTermVariable[offset] = aet.getReplacementTermVariable();
+			implications[offset] = aet.getImplication();
+			substitutionMapping.put(aet.getArrayExtTerm(), aet.getReplacementTermVariable());
+			offset++;
+		}
+		Term result = (new SafeSubstitution(m_Script, substitutionMapping)).transform(withoutIndices);
+		result = Util.and(m_Script, result, Util.and(m_Script, implications));
+		result = m_Script.quantifier(QuantifiedFormula.EXISTS, replacingTermVariable, result);
+		return result;
+	}
+	
+	private class ArrayExtTerm {
+		private final ApplicationTerm m_ArrayExtTerm;
+		private final Term m_FirstArray;
+		private final Term m_SecondArray;
+		private final TermVariable m_ReplacementTermVariable;
+		private final Term m_Implication;
+		
+		public ArrayExtTerm(ApplicationTerm arrayExtTerm) {
+			m_ArrayExtTerm = arrayExtTerm;
+			if (!m_ArrayExtTerm.getFunction().getName().equals("array-ext")) {
+				throw new IllegalArgumentException("no array-ext Term");
+			}
+			if (m_ArrayExtTerm.getParameters().length != 2) {
+				throw new IllegalArgumentException("expected two params");
+			}
+			m_FirstArray = m_ArrayExtTerm.getParameters()[0];
+			m_SecondArray = m_ArrayExtTerm.getParameters()[1];
+			m_ReplacementTermVariable = arrayExtTerm.getTheory().createFreshTermVariable("arrExt", arrayExtTerm.getSort());
+			m_Implication = constructImplication();
+		}
+
+		private Term constructImplication() {
+			Term arraysDistinct = m_Script.term("distinct", m_FirstArray, m_SecondArray);
+			Term firstSelect = m_Script.term("select", m_FirstArray, m_ReplacementTermVariable);
+			Term secondSelect = m_Script.term("select", m_SecondArray, m_ReplacementTermVariable);
+			Term selectDistinct = m_Script.term("distinct", firstSelect, secondSelect);
+			Term implication = Util.implies(m_Script, arraysDistinct, selectDistinct);
+			return implication;
+		}
+
+		public ApplicationTerm getArrayExtTerm() {
+			return m_ArrayExtTerm;
+		}
+
+		public Term getFirstArray() {
+			return m_FirstArray;
+		}
+
+		public Term getSecondArray() {
+			return m_SecondArray;
+		}
+
+		public TermVariable getReplacementTermVariable() {
+			return m_ReplacementTermVariable;
+		}
+
+		public Term getImplication() {
+			return m_Implication;
+		}
+		
+		
 	}
 
 	private static void dumpInterpolationInput(int offset, Term[] interpolInput, List<Integer> indexTranslation,
