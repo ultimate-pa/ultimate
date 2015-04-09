@@ -7,9 +7,47 @@
 
 	<target name="copy_examples">
 		<echo>Copying various files from ${trunkEx.dir} to ${localEx.dir}</echo>
+
 		<copy todir="${localEx.dir}/ltlautomizer" verbose="true">
 			<fileset dir="${trunkEx.dir}/LTL/coolant" includes="**" />
 		</copy>
+		
+		<copy todir="${localEx.dir}/rankC" verbose="true">
+			<fileset dir="${trunkEx.dir}/svcomp/termination-crafted-lit/" includes="*.c" />
+		</copy>
+		
+		<copy todir="${localEx.dir}/rankC" verbose="true">
+			<fileset dir="${trunkEx.dir}/lassos/" includes="*.c" />
+		</copy>
+		
+		<copy todir="${localEx.dir}/rankBoogie" verbose="true">
+			<fileset dir="${trunkEx.dir}/lassos/" includes="*.bpl" />
+		</copy>
+
+		<copy todir="${localEx.dir}/terminationBoogie" verbose="true">
+			<fileset dir="${trunkEx.dir}/programs/termination/showcase" includes="*.bpl" />
+		</copy>
+		
+		<copy todir="${localEx.dir}/terminationBoogie" verbose="true">
+			<fileset dir="${trunkEx.dir}/programs/termination/showcase" includes="*.bpl" />
+		</copy>
+		
+		<copy todir="${localEx.dir}/terminationC" verbose="true">
+			<fileset dir="${trunkEx.dir}/programs/termination/showcase" includes="*.c" />
+		</copy>
+		
+		<copy todir="${localEx.dir}/terminationC" verbose="true">
+			<fileset dir="${trunkEx.dir}/svcomp/termination-crafted-lit/" includes="*.c" />
+		</copy>
+		
+		<copy todir="${localEx.dir}/verifyBoogie" verbose="true">
+			<fileset dir="${trunkEx.dir}/programs/toy/showcase" includes="*.bpl" />
+		</copy>
+		
+		<copy todir="${localEx.dir}/verifyC" verbose="true">
+			<fileset dir="${trunkEx.dir}/programs/toy/showcase" includes="*.c" />
+		</copy>
+		
 	</target>
 
 </project>
