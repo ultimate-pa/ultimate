@@ -6,6 +6,8 @@ package de.uni_freiburg.informatik.ultimate.website;
 import java.util.ArrayList;
 import java.util.Collections;
 
+import de.uni_freiburg.informatik.ultimate.website.toolchains.NameStrings;
+
 /**
  * @author German Fordinal
  * @date 01.11.2014
@@ -111,17 +113,15 @@ public class Worker {
 		if(label != null) return label;
 		
 		switch (name) {
-		case "Trace Abstraction":
-		case "Concurrent Trace Abstraction":
-			  return "verify";
-		case "BüchiAutomizer":
-		case "Büchi Automizer":
-			  return "analyze";
-		case "LassoRanker":
-		case "Lasso Ranker":
-			  return "rank"; // synthesize?
-		case "Automata Script":
-			  return "run";
+		case NameStrings.s_TOOL_Automizer:
+		case NameStrings.s_TOOL_AutomizerConcurrent:
+			  return NameStrings.s_TASK_verify;
+		case NameStrings.s_TOOL_BuchiAutomizer:
+			  return NameStrings.s_TASK_analyze;
+		case NameStrings.s_TOOL_LassoRanker:
+			  return NameStrings.s_TASK_synthesize;
+		case NameStrings.s_TOOL_AutomataScriptInterpreter:
+			  return NameStrings.s_TASK_run;
 		default:
 		  return "No description available";
 		}

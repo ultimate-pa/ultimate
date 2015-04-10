@@ -18,12 +18,12 @@ public class AutomtaScriptTC extends WebToolchain {
 
 	@Override
 	protected String defineDescription() {
-		return "Automata Script toolchain";
+		return NameStrings.s_TOOL_AutomataScriptInterpreter;
 	}
 
 	@Override
 	protected String defineName() {
-		return "Automata Script";
+		return NameStrings.s_TOOL_AutomataScriptInterpreter;
 	}
 
 	@Override
@@ -38,7 +38,27 @@ public class AutomtaScriptTC extends WebToolchain {
 
 	@Override
 	protected String defineLanguage() {
-		return "automata";
+		return "automatascript";
+	}
+
+	@Override
+	protected String defineUserInfo() {
+		return null;
+	}
+	
+	@Override
+	protected String defineInterfaceLayoutFontsize() {
+		return PrefStrings.s_InterfaceLayoutFontsizeDefault;
+	}
+
+	@Override
+	protected String defineInterfaceLayoutOrientation() {
+		return PrefStrings.s_InterfaceLayoutOrientationDefault;
+	}
+
+	@Override
+	protected String defineInterfaceLayoutTransitions() {
+		return PrefStrings.s_InterfaceLayoutTransitionDefault;
 	}
 
 	@Override

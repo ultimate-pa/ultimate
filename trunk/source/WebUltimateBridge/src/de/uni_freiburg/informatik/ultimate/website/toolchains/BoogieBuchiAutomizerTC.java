@@ -13,12 +13,12 @@ public class BoogieBuchiAutomizerTC extends WebToolchain {
 
 	@Override
 	protected String defineDescription() {
-		return "Büchi Automizer toolchain";
+		return NameStrings.s_TOOL_BuchiAutomizer;
 	}
 
 	@Override
 	protected String defineName() {
-		return "Büchi Automizer";
+		return NameStrings.s_TOOL_BuchiAutomizer;
 	}
 
 	@Override
@@ -35,6 +35,26 @@ public class BoogieBuchiAutomizerTC extends WebToolchain {
     protected String defineLanguage() {
         return "boogie";
     }
+
+	@Override
+	protected String defineUserInfo() {
+		return null;
+	}
+	
+	@Override
+	protected String defineInterfaceLayoutFontsize() {
+		return PrefStrings.s_InterfaceLayoutFontsizeDefault;
+	}
+
+	@Override
+	protected String defineInterfaceLayoutOrientation() {
+		return PrefStrings.s_InterfaceLayoutOrientationDefault;
+	}
+
+	@Override
+	protected String defineInterfaceLayoutTransitions() {
+		return PrefStrings.s_InterfaceLayoutTransitionDefault;
+	}
 
 	@Override
 	protected List<Tool> defineTools() {

@@ -12,12 +12,12 @@ public class BoogieLassoRankerTC extends WebToolchain {
 
 	@Override
 	protected String defineDescription() {
-		return "Lasso Ranker toolchain";
+		return NameStrings.s_TOOL_LassoRanker;
 	}
 
 	@Override
 	protected String defineName() {
-		return "Lasso Ranker";
+		return NameStrings.s_TOOL_LassoRanker;
 	}
 
 	@Override
@@ -33,6 +33,26 @@ public class BoogieLassoRankerTC extends WebToolchain {
 	@Override
 	protected String defineLanguage() {
 		return "boogie";
+	}
+
+	@Override
+	protected String defineUserInfo() {
+		return null;
+	}
+	
+	@Override
+	protected String defineInterfaceLayoutFontsize() {
+		return PrefStrings.s_InterfaceLayoutFontsizeDefault;
+	}
+
+	@Override
+	protected String defineInterfaceLayoutOrientation() {
+		return PrefStrings.s_InterfaceLayoutOrientationDefault;
+	}
+
+	@Override
+	protected String defineInterfaceLayoutTransitions() {
+		return PrefStrings.s_InterfaceLayoutTransitionDefault;
 	}
 
 	@Override

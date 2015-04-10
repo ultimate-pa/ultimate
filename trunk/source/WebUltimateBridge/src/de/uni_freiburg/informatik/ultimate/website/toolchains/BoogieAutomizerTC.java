@@ -21,12 +21,12 @@ public class BoogieAutomizerTC extends WebToolchain {
 
 	@Override
 	protected String defineDescription() {
-		return "Automizer toolchain";
+		return NameStrings.s_TOOL_Automizer;
 	}
 
 	@Override
 	protected String defineName() {
-		return "Automizer";
+		return NameStrings.s_TOOL_Automizer;
 	}
 
 	@Override
@@ -46,7 +46,22 @@ public class BoogieAutomizerTC extends WebToolchain {
 
 	@Override
 	protected String defineUserInfo() {
-		return "Matthias set the user info";
+		return null;
+	}
+	
+	@Override
+	protected String defineInterfaceLayoutFontsize() {
+		return PrefStrings.s_InterfaceLayoutFontsizeDefault;
+	}
+
+	@Override
+	protected String defineInterfaceLayoutOrientation() {
+		return PrefStrings.s_InterfaceLayoutOrientationDefault;
+	}
+
+	@Override
+	protected String defineInterfaceLayoutTransitions() {
+		return PrefStrings.s_InterfaceLayoutTransitionDefault;
 	}
 
 	@Override

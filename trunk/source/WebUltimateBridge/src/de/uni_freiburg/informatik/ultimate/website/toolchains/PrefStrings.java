@@ -47,5 +47,13 @@ public class PrefStrings {
 	public static final String s_BE_VALUE_LargeBlock = "LARGE_BLOCK";
 	public static final String s_BE_VALUE_DisjunctiveRating = "DISJUNCTIVE_RATING";
 	
+	
+	
+	/** Webinterface settings **/
+	public static final String s_InterfaceLayoutFontsizeDefault = "100";
+	public static final String s_InterfaceLayoutOrientationDefault = "horizontal";
+	public static final String s_InterfaceLayoutTransitionDefault = "true";
+	
+	
 
 }

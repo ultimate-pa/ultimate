@@ -23,12 +23,12 @@ public class CAutomizerTC extends WebToolchain {
 
 	@Override
 	protected String defineDescription() {
-		return "Automizer toolchain";
+		return NameStrings.s_TOOL_Automizer;
 	}
 
 	@Override
 	protected String defineName() {
-		return "Automizer";
+		return NameStrings.s_TOOL_Automizer;
 	}
 
 	@Override
@@ -42,14 +42,25 @@ public class CAutomizerTC extends WebToolchain {
 	}
 
 	@Override
-	protected String defineLanguage() {
-		return "c";
+	protected String defineUserInfo() {
+		return null;
+	}
+	
+	@Override
+	protected String defineInterfaceLayoutFontsize() {
+		return PrefStrings.s_InterfaceLayoutFontsizeDefault;
 	}
 
 	@Override
-	protected String defineUserInfo() {
-		return "This is a test user info";
+	protected String defineInterfaceLayoutOrientation() {
+		return PrefStrings.s_InterfaceLayoutOrientationDefault;
 	}
+
+	@Override
+	protected String defineInterfaceLayoutTransitions() {
+		return PrefStrings.s_InterfaceLayoutTransitionDefault;
+	}
+
 
 	@Override
 	protected List<Tool> defineTools() {
@@ -72,6 +83,12 @@ public class CAutomizerTC extends WebToolchain {
 	@Override
 	protected String defineToolchainSettingsFile() {
 		return "Automizer.epf";
+	}
+
+	@Override
+	protected String defineLanguage() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }

@@ -18,6 +18,7 @@ import de.uni_freiburg.informatik.ultimate.website.toolchains.CKojakTC;
 import de.uni_freiburg.informatik.ultimate.website.toolchains.CLTLAutomizerTC;
 import de.uni_freiburg.informatik.ultimate.website.toolchains.CLassoRankerTC;
 import de.uni_freiburg.informatik.ultimate.website.toolchains.CAutomizerTC;
+import de.uni_freiburg.informatik.ultimate.website.toolchains.NameStrings;
 
 /**
  * @author Markus Lindenmann
@@ -150,35 +151,35 @@ public class Tasks {
 
 		String description, name;
 
-		name = "Automizer";
-		description = "Implementation of our automata-theoretic approach to software verification.";
-		Worker w = new Worker(name, "verify", description, null);
+		name = NameStrings.s_TOOL_Automizer;
+		description = NameStrings.s_DESCRIPTION_Automizer;
+		Worker w = new Worker(name, NameStrings.s_TASK_verify, description, null);
 		w.setLogoURL("img/tool_logo.png");
 		sWorkers.put(w.getId(), w);
 
-		name = "Concurrent Trace Abstraction";
-		description = null;
-		w = new Worker(name, "verify", description, null);
+		name = NameStrings.s_TOOL_AutomizerConcurrent;
+		description = NameStrings.s_DESCRIPTION_AutomizerConcurrent;
+		w = new Worker(name, NameStrings.s_TASK_verify, description, null);
 		sWorkers.put(w.getId(), w);
 
-		name = "Büchi Automizer";
-		description = "This is a new approach for termination analysis based on Büchi automata.";
-		w = new Worker(name, "analyze", description, null);
+		name = NameStrings.s_TOOL_BuchiAutomizer;
+		description = NameStrings.s_DESCRIPTION_BuchiAutomizer;
+		w = new Worker(name, NameStrings.s_TASK_analyze, description, null);
 		sWorkers.put(w.getId(), w);
 
 		name = "LTL Automizer";
 		description = "An LTL software model checker based on Büchi programs.";
-		w = new Worker(name, "verify", description, null);
+		w = new Worker(name, NameStrings.s_TASK_verify, description, null);
 		sWorkers.put(w.getId(), w);
 		
 		name = "Kojak";
 		description = "A software model checker";
-		w = new Worker(name, "verify", description, null);
+		w = new Worker(name, NameStrings.s_TASK_verify, description, null);
 		sWorkers.put(w.getId(), w);
 
-		name = "Lasso Ranker";
-		description = "This is to synthesize ranking functions of lasso programs.";
-		w = new Worker(name, "rank", description, null);
+		name = NameStrings.s_TOOL_LassoRanker;
+		description = NameStrings.s_DESCRIPTION_LassoRanker;
+		w = new Worker(name, NameStrings.s_TASK_synthesize, description, null);
 		// w.setInterfaceLayoutFontsize("40"); // sample for overwriting
 		// fontsize setting
 		// w.setInterfaceLayoutOrientation("vertical"); // sample for
@@ -189,9 +190,9 @@ public class Tasks {
 		// // sample for setting an optional url
 		sWorkers.put(w.getId(), w);
 
-		name = "Automata Script";
-		description = null;
-		w = new Worker(name, "run", description, null);
+		name = NameStrings.s_TOOL_AutomataScriptInterpreter;
+		description = NameStrings.s_DESCRIPTION_AutomataScriptInterpreter;
+		w = new Worker(name, NameStrings.s_TASK_run, description, null);
 		w.setUserInfo(""); // sample user information, being shown on Automata
 							// Script page
 		sWorkers.put(w.getId(), w);

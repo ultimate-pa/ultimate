@@ -18,17 +18,37 @@ public class BoogieConcurrentTraceAbstractionTC extends WebToolchain {
 
 	@Override
 	protected String defineDescription() {
-		return "Concurrent trace abstraction toolchain";
+		return NameStrings.s_TOOL_AutomizerConcurrent;
 	}
 
 	@Override
 	protected String defineName() {
-		return "Concurrent Trace Abstraction";
+		return NameStrings.s_TOOL_AutomizerConcurrent;
 	}
 
 	@Override
 	protected String defineId() {
 		return "boogieConcurrentTraceAbstr";
+	}
+	
+	@Override
+	protected String defineUserInfo() {
+		return "Convention: we use the procedure ~init to initialize global variables, each other procedure is considered as a thread of a concurrent system";
+	}
+	
+	@Override
+	protected String defineInterfaceLayoutFontsize() {
+		return PrefStrings.s_InterfaceLayoutFontsizeDefault;
+	}
+
+	@Override
+	protected String defineInterfaceLayoutOrientation() {
+		return PrefStrings.s_InterfaceLayoutOrientationDefault;
+	}
+
+	@Override
+	protected String defineInterfaceLayoutTransitions() {
+		return PrefStrings.s_InterfaceLayoutTransitionDefault;
 	}
 
 	@Override
