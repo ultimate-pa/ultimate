@@ -21,7 +21,10 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Rcf
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootAnnot;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.Result;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopBenchmarkGenerator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopBenchmarkType;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionBenchmarks;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.BenchmarkData;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.result.AllSpecificationsHoldResult;
@@ -87,8 +90,14 @@ public class TraceAbstractionWithAFAsObserver extends BaseObserver {
 
 		Result result = cegarLoop.iterate();
 		
-		
-		
+		cegarLoop.finish();
+
+		TraceAbstractionBenchmarks taBenchmark = new TraceAbstractionBenchmarks(rootAnnot);
+		CegarLoopBenchmarkGenerator cegarLoopBenchmarkGenerator = cegarLoop.getCegarLoopBenchmark();
+		cegarLoopBenchmarkGenerator.stop(CegarLoopBenchmarkType.s_OverallTime);
+		taBenchmark.aggregateBenchmarkData(cegarLoopBenchmarkGenerator);
+		reportBenchmark(taBenchmark);
+	
 		if (result == Result.SAFE) {
 			reportPositiveResults(errNodesOfAllProc);
 		} else if (result == Result.UNSAFE) {
