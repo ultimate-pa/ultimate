@@ -202,6 +202,7 @@ public class InlineVersionTransformer extends BoogieTransformer {
 		mProcedureStack.push(entryNode);
 		mEdgeIndexStack.push(0);
 		
+		// TODO /!\ don't map variables from entry procedure hard (possible name collision with global variables)
 		mapVariablesOfCurrentProcedure();
 		Procedure newProc = null;
 		if (entryNode.isImplemented()) {
@@ -600,20 +601,22 @@ public class InlineVersionTransformer extends BoogieTransformer {
 			mapReturnLabel();
 			
 			// havoc local variables from inlined procedure (they are reused for different calls)
-			List<VariableLHS> localVarLHS = new ArrayList<>();
-			DeclarationInformation localDeclInfo = new DeclarationInformation(StorageClass.LOCAL, proc.getIdentifier());
-			for (VariableDeclaration varDecl : body.getLocalVars()) {
-				ILocation varDeclLocation = varDecl.getLocation();
-				for (VarList varList : varDecl.getVariables()) {
-					IType varListType = varList.getType().getBoogieType();
-					for (String varId : varList.getIdentifiers()) {
-						localVarLHS.add(new VariableLHS(varDeclLocation, varListType, varId, localDeclInfo));
+			if (body.getLocalVars().length > 0) {
+				List<VariableLHS> localVarLHS = new ArrayList<>();
+				DeclarationInformation localDeclInfo = new DeclarationInformation(StorageClass.LOCAL, proc.getIdentifier());
+				for (VariableDeclaration varDecl : body.getLocalVars()) {
+					ILocation varDeclLocation = varDecl.getLocation();
+					for (VarList varList : varDecl.getVariables()) {
+						IType varListType = varList.getType().getBoogieType();
+						for (String varId : varList.getIdentifiers()) {
+							localVarLHS.add(new VariableLHS(varDeclLocation, varListType, varId, localDeclInfo));
+						}
 					}
 				}
+				inlinedBody.add(processStatement(
+						new HavocStatement(callLocation, localVarLHS.toArray(new VariableLHS[localVarLHS.size()]))));
 			}
-			inlinedBody.add(processStatement(
-					new HavocStatement(callLocation, localVarLHS.toArray(new VariableLHS[localVarLHS.size()]))));
-			
+
 			// inline body
 			for (Statement stat : block) {
 				inlinedBody.addAll(flattenStatement(stat));

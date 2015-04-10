@@ -56,7 +56,7 @@ public class BoogieProcedureInliner implements IAnalysis {
 		ArrayList<IObserver> observers = new ArrayList<IObserver>();
 		observers.add(new TypeChecker(mServices));
 		observers.add(new Inliner(mServices, new PreferencesInlineSelector()));
-		observers.add(new TypeChecker(mServices)); // TODO remove (for debugging -- warns on wrong set types)
+		//observers.add(new TypeChecker(mServices)); // TODO remove (for debugging -- warns on wrong set types)
 		return observers;
 	}
 	
