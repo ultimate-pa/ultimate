@@ -49,10 +49,13 @@ public class CBuchiAutomizerTC extends WebToolchain {
 	@Override
 	protected List<Setting> defineAdditionalSettings() {
 		List<Setting> rtr = BoogieBuchiAutomizerTC.boogieBuchiAutomizerAdditionalSettings();
-
-		rtr.add(new Setting(PrefStrings.s_CACSL_LABEL_StartFunction, SettingType.STRING, "Starting procedure: ",
-				"main", true));
-
+//		rtr.add(new Setting(PrefStrings.s_CACSL_LABEL_StartFunction, SettingType.STRING, "Starting procedure: ",
+//				"main", true));
 		return rtr;
+	}
+	
+	@Override
+	protected String defineToolchainSettingsFile() {
+		return "BuchiAutomizer.epf";
 	}
 }

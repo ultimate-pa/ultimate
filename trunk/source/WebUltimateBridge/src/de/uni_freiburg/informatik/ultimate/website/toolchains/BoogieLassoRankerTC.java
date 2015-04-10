@@ -61,11 +61,14 @@ public class BoogieLassoRankerTC extends WebToolchain {
 
 	static List<Setting> boogieLassoRankerAdditionalSettings() {
 		List<Setting> rtr = new ArrayList<>();
-
-		rtr.add(new Setting(PrefStrings.s_BE_LABEL_STRATEGY, PrefStrings.s_BE_LABEL_STRATEGY,
-				new String[] { PrefStrings.s_BE_VALUE_DisjunctiveRating }, false, new String[] {
-						PrefStrings.s_BE_VALUE_DisjunctiveRating, PrefStrings.s_BE_VALUE_LargeBlock }, true));
-
+//		rtr.add(new Setting(PrefStrings.s_BE_LABEL_STRATEGY, PrefStrings.s_BE_LABEL_STRATEGY,
+//				new String[] { PrefStrings.s_BE_VALUE_DisjunctiveRating }, false, new String[] {
+//						PrefStrings.s_BE_VALUE_DisjunctiveRating, PrefStrings.s_BE_VALUE_LargeBlock }, true));
 		return rtr;
+	}
+	
+	@Override
+	protected String defineToolchainSettingsFile() {
+		return "LassoRanker.epf";
 	}
 }

@@ -55,12 +55,10 @@ public class BoogieConcurrentTraceAbstractionTC extends WebToolchain {
 	@Override
 	protected List<Setting> defineAdditionalSettings() {
 		List<Setting> rtr = new ArrayList<>();
-
-		rtr.add(new Setting(PrefStrings.s_RCFG_LABEL_BlockSize, "Size of a code block",
-				new String[] { PrefStrings.s_RCFG_VALUE_Single }, false,
-				new String[] { PrefStrings.s_RCFG_VALUE_Single, PrefStrings.s_RCFG_VALUE_Seq,
-						PrefStrings.s_RCFG_VALUE_Block }, true));
-
+//		rtr.add(new Setting(PrefStrings.s_RCFG_LABEL_BlockSize, "Size of a code block",
+//				new String[] { PrefStrings.s_RCFG_VALUE_Single }, false,
+//				new String[] { PrefStrings.s_RCFG_VALUE_Single, PrefStrings.s_RCFG_VALUE_Seq,
+//						PrefStrings.s_RCFG_VALUE_Block }, true));
 		return rtr;
 	}
 	

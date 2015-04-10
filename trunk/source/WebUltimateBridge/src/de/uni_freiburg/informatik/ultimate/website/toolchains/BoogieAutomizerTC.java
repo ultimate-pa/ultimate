@@ -72,9 +72,16 @@ public class BoogieAutomizerTC extends WebToolchain {
 	static List<Setting> boogieAutomizerAdditionalSettings() {
 		List<Setting> rtr = new ArrayList<>();
 
-		rtr.add(new Setting(PrefStrings.s_TA_LABEL_Hoare, Setting.SettingType.BOOLEAN, "Compute Hoare Annotation",
-				"true", true));
+//		rtr.add(new Setting(PrefStrings.s_TA_LABEL_Hoare, Setting.SettingType.BOOLEAN, "Compute Hoare Annotation",
+//				"true", true));
 
 		return rtr;
 	}
+	
+	@Override
+	protected String defineToolchainSettingsFile() {
+		return "Automizer.epf";
+	}
+
+
 }

@@ -33,6 +33,8 @@ public class PrefStrings {
 	public static final String s_CACSL_LABEL_TranslationMode = s_cacsl2boogietranslator + "/Translation\\ Mode\\:";
 	public static final String s_CACSL_VALUE_Base = "BASE";
 	public static final String s_CACSL_VALUE_Svcomp = "SV_COMP14";
+	public static final String s_CACSL_LABEL_MemoryLeak = s_cacsl2boogietranslator + "/Check\\ for\\ the\\ main\\ procedure\\ if\\ all\\ allocated\\ memory\\ was\\ freed";
+	public static final String s_CACSL_LABEL_SignedIntegerOverflow = s_cacsl2boogietranslator + "/Check\\ that\\ no\\ signed\\ integer\\ over-/underflows\\ occur";
 
 	public static final String s_RCFG_LABEL_BlockSize = s_rcfgBuilder + "/Size\\ of\\ a\\ code\\ block";
 	public static final String s_RCFG_VALUE_Single = "SingleStatement";
