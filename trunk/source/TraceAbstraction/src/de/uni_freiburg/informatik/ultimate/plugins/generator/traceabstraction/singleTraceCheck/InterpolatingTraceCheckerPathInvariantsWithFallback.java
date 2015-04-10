@@ -44,6 +44,7 @@ public class InterpolatingTraceCheckerPathInvariantsWithFallback extends
 		m_Storage = storage;
 		m_NestedRun = run;
 		if (super.isCorrect() == LBool.UNSAT) {
+			m_TraceCheckFinished = true;
 			super.unlockSmtManager();
 			computeInterpolants(new AllIntegers(), INTERPOLATION.PathInvariants);
 		}
