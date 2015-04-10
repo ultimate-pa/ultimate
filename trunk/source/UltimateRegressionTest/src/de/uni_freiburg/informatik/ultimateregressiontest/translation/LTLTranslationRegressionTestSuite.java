@@ -27,14 +27,14 @@ public class LTLTranslationRegressionTestSuite extends AbstractRegressionTestSui
 	protected Collection<Pair> getRunConfiguration() {
 		List<Pair> rtr = new ArrayList<>();
 
-		rtr.add(getPair("examples/toolchains/LtlTranslationC.xml", "examples/settings/LtlSoftwareModelCheckingC.epf"));
+		rtr.add(getPair("examples/toolchains/LtlTranslationC.xml", "examples/settings/ltlAutomizer/Default.epf"));
 
 		return rtr;
 	}
 
 	@Override
 	protected Collection<File> getInputFiles(Pair runConfiguration) {
-		return Util.getFiles(getPathFromTrunk("examples/LTL/rers/"), mFiletypesToConsider);
+		return Util.getFiles(getPathFromTrunk("examples/LTL/rers2012/"), mFiletypesToConsider);
 	}
 
 	private Pair getPair(String toolchain, String setting) {

@@ -33,6 +33,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.IACSLHandler;
 import de.uni_freiburg.informatik.ultimate.model.IType;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
+import de.uni_freiburg.informatik.ultimate.model.acsl.ast.ACSLResultExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.ArrayAccessExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.Assertion;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.Assigns;
@@ -53,7 +54,6 @@ import de.uni_freiburg.informatik.ultimate.model.acsl.ast.LoopVariant;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.MallocableExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.RealLiteral;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.Requires;
-import de.uni_freiburg.informatik.ultimate.model.acsl.ast.ACSLResultExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.ValidExpression;
 import de.uni_freiburg.informatik.ultimate.model.annotation.IAnnotations;
 import de.uni_freiburg.informatik.ultimate.model.annotation.Overapprox;

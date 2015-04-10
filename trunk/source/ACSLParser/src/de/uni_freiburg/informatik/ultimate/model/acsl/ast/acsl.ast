@@ -217,7 +217,7 @@ Expression ::=
             Pointer (UnaryExpression with star) or this makes no sense */
         formula : Expression
 	| { /** represents the result value, which is used in contracts */ 
-		ACSLResultExpression }
+		ResultExpression }
 	| { FieldAccessExpression }
 		/** access on fields, like a.x */
 		struct : Expression
