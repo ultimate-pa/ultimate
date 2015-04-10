@@ -117,31 +117,14 @@ public class StructHandler {
 					lVal.getLHS(), field);
 			newValue = new LocalLValue(slhs, cFieldType);
 			
-			//providing information which is later used for havoccing. 
-			//need to do this only here -- assuming the RValue case means that no write is taking place..
+			//only here -- assuming the RValue case means that no write is taking place..
 			if (foType instanceof CUnion) {
 				if (unionFieldToCType == null)
 					unionFieldToCType = new LinkedHashMap<StructLHS, CType>();
 				for (String fieldId : ((CUnion) foType).getFieldIds()) {
-					CType writtenFieldType = ((CUnion) foType).getFieldType(field).getUnderlyingType();
-
 					if (!fieldId.equals(field)) {
-						CType fieldType = ((CUnion) foType).getFieldType(fieldId).getUnderlyingType();
-						
-						//special case struct: we may not havoc fields that are of high enough offset such that the 
-						//written value does not touch them
-						if (fieldType instanceof CStruct) {
-							CStruct innerStructType = (CStruct) fieldType;
-							for (String innerStructFieldId : innerStructType.getFieldIds()) {
-								CType innerStructFieldType = innerStructType.getFieldType(innerStructFieldId).getUnderlyingType();
-
-								StructLHS havocSlhs = new StructLHS(loc, new StructLHS(loc, lVal.getLHS(), fieldId), innerStructFieldId);
-								unionFieldToCType.put(havocSlhs, innerStructFieldType);
-							}
-						} else {
-							StructLHS havocSlhs = new StructLHS(loc, lVal.getLHS(), fieldId);
-							unionFieldToCType.put(havocSlhs, fieldType);
-						}
+						StructLHS havocSlhs = new StructLHS(loc, lVal.getLHS(), fieldId);
+						unionFieldToCType.put(havocSlhs, ((CUnion) foType).getFieldType(fieldId));
 					}
 				}
 			}
