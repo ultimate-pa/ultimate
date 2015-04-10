@@ -18,18 +18,18 @@ public class CallGraphEdgeLabel {
 		}
 	} 
 	
-	private String mCalleProcedureId;
+	private String mCalleeProcedureId;
 	private EdgeType mEdgeType;
 	
 	private boolean mInlineFlag;
 
 	public CallGraphEdgeLabel(String calleeProcedureId, EdgeType edgeTpye) {
-		mCalleProcedureId = calleeProcedureId;
+		mCalleeProcedureId = calleeProcedureId;
 		mEdgeType = edgeTpye;
 	}
 	
 	public String getCalleeProcedureId() {
-		return mCalleProcedureId;
+		return mCalleeProcedureId;
 	}
 	
 	public void setEdgeType(EdgeType edgeType) {
@@ -50,7 +50,7 @@ public class CallGraphEdgeLabel {
 	
 	@Override
 	public String toString() {
-		return mEdgeType + "(" + mCalleProcedureId + ")" + (mInlineFlag ? "*" : "");
+		return mEdgeType + "(" + mCalleeProcedureId + ")" + (mInlineFlag ? "*" : "");
 	}
 
 
