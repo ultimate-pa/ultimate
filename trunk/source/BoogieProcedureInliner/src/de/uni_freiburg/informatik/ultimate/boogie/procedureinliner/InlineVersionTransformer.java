@@ -201,12 +201,12 @@ public class InlineVersionTransformer extends BoogieTransformer {
 	public Procedure inlineCallsInside(CallGraphNode entryNode) throws CancelToolchainException {
 		mProcedureStack.push(entryNode);
 		mEdgeIndexStack.push(0);
-		
-		// TODO /!\ don't map variables from entry procedure hard (possible name collision with global variables)
+
 		mapVariablesOfCurrentProcedure();
 		Procedure newProc = null;
 		if (entryNode.isImplemented()) {
 			Procedure proc = entryNode.getProcedureWithBody();
+			String procId = proc.getIdentifier();
 			Body body = proc.getBody();
 			Statement[] block = body.getBlock();
 			mapLabels(block);
@@ -214,16 +214,41 @@ public class InlineVersionTransformer extends BoogieTransformer {
 			for (Statement stat : block) {
 				newBlock.addAll(flattenStatement(stat));
 			}
+
 			List<VariableDeclaration> newLocalVars = new ArrayList<>();
-			newLocalVars.addAll(Arrays.asList(body.getLocalVars()));
+			DeclarationInformation localDeclInfo = new DeclarationInformation(StorageClass.LOCAL, procId);
+			for (VariableDeclaration localVarDecl : body.getLocalVars()) {
+				Attribute[] attrs = localVarDecl.getAttributes();
+				Attribute[] newAttrs = processAttributes(attrs);
+				VarList[] vars = localVarDecl.getVariables();
+				VarList[] newVars = applyMappingToVarList(vars, localDeclInfo);
+				VariableDeclaration newLocalVarDecl;
+				if (newAttrs != attrs || newVars != vars) {
+					newLocalVarDecl = new VariableDeclaration(localVarDecl.getLocation(), newAttrs, newVars);
+					ModelUtils.mergeAnnotations(localVarDecl, newLocalVarDecl);
+				} else {
+					newLocalVarDecl = localVarDecl;
+				}
+				newLocalVars.add(newLocalVarDecl);
+			}
 			newLocalVars.addAll(mInlinedVars);
-			VariableDeclaration[] newLocalVarsArray =
-					newLocalVars.toArray(new VariableDeclaration[newLocalVars.size()]);
-			Statement[] newBlockArray = newBlock.toArray(new Statement[newBlock.size()]);
-			Body newBody = new Body(body.getLocation(), newLocalVarsArray, newBlockArray);
+
+			Body newBody = new Body(body.getLocation(),
+					newLocalVars.toArray(new VariableDeclaration[newLocalVars.size()]),
+					newBlock.toArray(new Statement[newBlock.size()]));
 			ModelUtils.mergeAnnotations(body, newBody);
-			newProc = new Procedure(proc.getLocation(), proc.getAttributes(), proc.getIdentifier(),
-					proc.getTypeParams(), proc.getInParams(), proc.getOutParams(), proc.getSpecification(), newBody);
+			
+			Specification[] oldSpecs = proc.getSpecification();
+			boolean hasSpec = oldSpecs != null;
+			Specification[] newSpecs = hasSpec ? processSpecifications(oldSpecs) : null;	
+			
+			VarList[] newInParams = applyMappingToVarList(proc.getInParams(), new DeclarationInformation(
+					hasSpec ? StorageClass.PROC_FUNC_INPARAM : StorageClass.IMPLEMENTATION_INPARAM, procId));
+			VarList[] newOutParams = applyMappingToVarList(proc.getOutParams(), new DeclarationInformation(
+					hasSpec ? StorageClass.PROC_FUNC_OUTPARAM : StorageClass.IMPLEMENTATION_OUTPARAM, procId));
+			
+			newProc = new Procedure(proc.getLocation(), processAttributes(proc.getAttributes()), procId,
+					proc.getTypeParams(), newInParams, newOutParams, newSpecs, newBody);
 			ModelUtils.mergeAnnotations(proc, newProc);
 		}
 		mEdgeIndexStack.pop();
@@ -488,7 +513,7 @@ public class InlineVersionTransformer extends BoogieTransformer {
 			for (String varId : varList.getIdentifiers()) {
 				String newVarId;
 				if (inEntryProcedure) {
-					newVarId = mVarIdManager.addId(varId); // TODO make mapping dynamic, avoid collision with globals
+					newVarId = mVarIdManager.makeAndAddUniqueId(varId);
 				} else {
 					// DeclarationInformations of quantified vars contain no procedure, hence the prefix doesn't too.
 					String prefix = isQuantified ? "quantified" : originalProcId;
@@ -855,6 +880,48 @@ public class InlineVersionTransformer extends BoogieTransformer {
 		} else {
 			return super.processExpression(expr);
 		}
+	}
+	
+	protected VarList[] applyMappingToVarList(VarList vls[], DeclarationInformation declInfo) {
+		VarList[] newVls = new VarList[vls.length];
+		boolean changed = false;
+		for (int i = 0; i < vls.length; ++i) {
+			VarList vl = vls[i];
+			VarList newVl = applyMappingToParameters(vl, declInfo);
+			if (newVl != vl) {
+				changed = true;
+			}
+			newVls[i] = newVl;
+		}
+		return changed ? newVls : vls;
+	}
+	
+	protected VarList applyMappingToParameters(VarList vl, DeclarationInformation declInfo) {
+		Expression where = vl.getWhereClause();
+		Expression newWhere = where != null ? processExpression(where) : null;
+		String[] ids = vl.getIdentifiers();
+		String[] newIds = processVarIds(ids, declInfo);
+		if (newWhere != where || ids != newIds) {
+			VarList newVl = new VarList(vl.getLocation(), newIds, vl.getType(), newWhere);
+			ModelUtils.mergeAnnotations(vl, newVl);
+			return newVl;
+		}
+		return vl;
+	}
+	
+	private String[] processVarIds(String[] ids, DeclarationInformation declInfo) {
+		String[] newIds = new String[ids.length];
+		boolean inOldExpr = inInlinedOldExpr();
+		boolean changed = false;
+		for (int i = 0; i < ids.length; ++i) {
+			String id = ids[i];
+			String newId = mVarMap.get(new VarMapKey(id, declInfo, inOldExpr)).getVarId();
+			if (!newId.equals(id)) {
+				changed = true;
+			}
+			newIds[i] = newId;
+		}
+		return changed ? newIds : ids;
 	}
 
 }
