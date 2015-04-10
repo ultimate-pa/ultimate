@@ -168,11 +168,11 @@ public class Statements2TransFormula {
 		case GLOBAL:
 		case LOCAL:
 		case IMPLEMENTATION_OUTPARAM:
+		case PROC_FUNC_OUTPARAM:
 			result = m_Boogie2SmtSymbolTable.getBoogieVar(id, declInfo, false);
 			break;
 		case IMPLEMENTATION_INPARAM:
 		case PROC_FUNC_INPARAM:
-		case PROC_FUNC_OUTPARAM:
 			throw new AssertionError("not modifiable");
 		case IMPLEMENTATION:
 		case PROC_FUNC:

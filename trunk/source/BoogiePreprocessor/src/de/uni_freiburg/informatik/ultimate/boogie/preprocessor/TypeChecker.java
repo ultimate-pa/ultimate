@@ -1037,9 +1037,9 @@ public class TypeChecker extends BaseObserver {
 		m_InParams = new HashSet<String>();
 		m_OutParams = new HashSet<String>();
 		m_LocalVars = new HashSet<String>();
-		DeclarationInformation declInfoInParam = new DeclarationInformation(StorageClass.IMPLEMENTATION_INPARAM,
+		DeclarationInformation declInfoInParam = new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM,
 				impl.getIdentifier());
-		DeclarationInformation declInfoOutParam = new DeclarationInformation(StorageClass.IMPLEMENTATION_OUTPARAM,
+		DeclarationInformation declInfoOutParam = new DeclarationInformation(StorageClass.PROC_FUNC_OUTPARAM,
 				impl.getIdentifier());
 		LinkedList<VariableInfo> allParams = new LinkedList<VariableInfo>();
 		VariableInfo[] procInParams = procInfo.getInParams();
