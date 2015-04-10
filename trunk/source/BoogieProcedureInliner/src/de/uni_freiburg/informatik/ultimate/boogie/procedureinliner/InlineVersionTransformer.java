@@ -469,22 +469,26 @@ public class InlineVersionTransformer extends BoogieTransformer {
 	 */
 	private List<VarList> mapVariables(VarList[] varLists, StorageClass storageClass) {
 		boolean inEntryProcedure = inEntryProcedure();
-		String originalProcId = mProcedureStack.peek().getId();
 		String entryProcId = getEntryProcId();
+		String originalProcId = mProcedureStack.peek().getId();
 		boolean isQuantified = (storageClass == StorageClass.QUANTIFIED);
-		DeclarationInformation oldDeclInfo = new DeclarationInformation(
-				storageClass,
-				isQuantified ? null : originalProcId);
-		DeclarationInformation newDeclInfo = new DeclarationInformation(
-				isQuantified ? StorageClass.QUANTIFIED : StorageClass.LOCAL,
-				isQuantified ? null : entryProcId);
+		String oldDeclInfoProcId = isQuantified ? null : originalProcId;
+		DeclarationInformation oldDeclInfo = new DeclarationInformation(storageClass, oldDeclInfoProcId);
+		DeclarationInformation newDeclInfo;
+		if (inEntryProcedure) {
+			newDeclInfo = oldDeclInfo;
+		} else {
+			StorageClass newStorageClass = isQuantified ? StorageClass.QUANTIFIED : StorageClass.LOCAL;
+			String newDeclInfoProcId = isQuantified ? null : entryProcId;
+			newDeclInfo = new DeclarationInformation(newStorageClass, newDeclInfoProcId);
+		}
 		List<VarList> newVarLists = new ArrayList<>();
 		for (VarList varList : varLists) {
 			List<String> newVarIds = new ArrayList<>();
 			for (String varId : varList.getIdentifiers()) {
 				String newVarId;
 				if (inEntryProcedure) {
-					newVarId = mVarIdManager.addId(varId);
+					newVarId = mVarIdManager.addId(varId); // TODO make mapping dynamic, avoid collision with globals
 				} else {
 					// DeclarationInformations of quantified vars contain no procedure, hence the prefix doesn't too.
 					String prefix = isQuantified ? "quantified" : originalProcId;

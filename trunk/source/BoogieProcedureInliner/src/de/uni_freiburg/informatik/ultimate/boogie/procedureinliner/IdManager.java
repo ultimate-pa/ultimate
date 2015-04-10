@@ -34,15 +34,24 @@ public class IdManager {
 		}
 		return id;
 	}
-
+	/** Convenience method for {@link #makeAndAddUniqueId(String, String)} without prefix. */
+	public String makeAndAddUniqueId(String id) {
+		return makeAndAddUniqueId(null, id);
+	}	
+	
 	/**
 	 * Makes an id unique and adds it to this manager.
 	 * @param prefix Prefix to be used (for instance, the id of the surrounding procedure).
+	 *               The prefix is followed by a delimiter symbol. Use null for no prefix and prefix delimiter.
 	 * @param id An identifier.
 	 * @return The unique and registered version of the id.
 	 */
 	public String makeAndAddUniqueId(String prefix, String id) {
-		final String fixedPart = prefix + PREFIX_DELIM + id;
+		String fixedPart = "";
+		if (prefix != null) {
+			fixedPart = prefix + PREFIX_DELIM;
+		}
+		fixedPart += id;
 		int postFixNumber = 1;
 		String uniqueId = fixedPart;
 		while (mIds.contains(uniqueId)) {
