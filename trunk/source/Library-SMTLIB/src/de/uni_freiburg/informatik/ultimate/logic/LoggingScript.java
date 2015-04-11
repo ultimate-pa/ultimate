@@ -155,18 +155,17 @@ public class LoggingScript implements Script {
 
 	@Override
 	public void declareSort(String sort, int arity) throws SMTLIBException {
-		mScript.declareSort(sort, arity);
 		mPw.print("(declare-sort ");
 		mPw.print(Identifier.quoteIdentifier(sort));
 		mPw.print(' ');
 		mPw.print(arity);
 		mPw.println(")");
+		mScript.declareSort(sort, arity);
 	}
 
 	@Override
 	public void defineSort(String sort, Sort[] sortParams, Sort definition)
 		throws SMTLIBException {
-		mScript.defineSort(sort, sortParams, definition);
 		mPw.print("(define-sort ");
 		mPw.print(Identifier.quoteIdentifier(sort));
 		mPw.print(" (");
@@ -179,12 +178,12 @@ public class LoggingScript implements Script {
 		mPw.print(") ");
 		mTermPrinter.append(mPw, definition);
 		mPw.println(")");
+		mScript.defineSort(sort, sortParams, definition);
 	}
 
 	@Override
 	public void declareFun(String fun, Sort[] paramSorts, Sort resultSort)
 		throws SMTLIBException {
-		mScript.declareFun(fun, paramSorts, resultSort);
 		mPw.print("(declare-fun ");
 		mPw.print(Identifier.quoteIdentifier(fun));
 		mPw.print(" (");
@@ -197,12 +196,12 @@ public class LoggingScript implements Script {
 		mPw.print(") ");
 		mTermPrinter.append(mPw, resultSort);
 		mPw.println(")");
+		mScript.declareFun(fun, paramSorts, resultSort);
 	}
 
 	@Override
 	public void defineFun(String fun, TermVariable[] params, Sort resultSort,
 			Term definition) throws SMTLIBException {
-		mScript.defineFun(fun, params, resultSort, definition);
 		mPw.print("(define-fun ");
 		mPw.print(Identifier.quoteIdentifier(fun));
 		mPw.print(" (");
@@ -220,6 +219,7 @@ public class LoggingScript implements Script {
 		mPw.print(' ');
 		mTermPrinter.append(mPw, formatTerm(definition));
 		mPw.println(")");
+		mScript.defineFun(fun, params, resultSort, definition);
 	}
 
 	@Override
