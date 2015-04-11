@@ -2,11 +2,11 @@ package de.uni_freiburg.informatik.ultimate.website.toolchains;
 
 public class NameStrings {
 	
-	public static final String s_TOOL_AutomataScriptInterpreter = "Automata Script Interpreter";
+	public static final String s_TOOL_AutomataScriptInterpreter = "Automata Script";
 	public static final String s_TOOL_Automizer = "Automizer";
-	public static final String s_TOOL_BuchiAutomizer = "Buchi Automizer";
-	public static final String s_TOOL_LassoRanker = "LassoRanker";
-	public static final String s_TOOL_AutomizerConcurrent = "Automizer Concurrent";
+	public static final String s_TOOL_BuchiAutomizer = "Büchi Automizer";
+	public static final String s_TOOL_LassoRanker = "Lasso Ranker";
+	public static final String s_TOOL_AutomizerConcurrent = "Concurrent Trace Abstraction";
 	
 	public static final String s_DESCRIPTION_Automizer = "Verification of safety properties based on an new automata-theoretic approach to software verification";
 	public static final String s_DESCRIPTION_BuchiAutomizer = "Termination analysis based on Büchi automata";
