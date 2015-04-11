@@ -1037,10 +1037,23 @@ public class TypeChecker extends BaseObserver {
 		m_InParams = new HashSet<String>();
 		m_OutParams = new HashSet<String>();
 		m_LocalVars = new HashSet<String>();
-		DeclarationInformation declInfoInParam = new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM,
-				impl.getIdentifier());
-		DeclarationInformation declInfoOutParam = new DeclarationInformation(StorageClass.PROC_FUNC_OUTPARAM,
-				impl.getIdentifier());
+		DeclarationInformation declInfoInParam;
+		DeclarationInformation declInfoOutParam;
+		// We call this procedure object a pure implementation if it contains 
+		// only the implementation and another procedure object contains the
+		// specification
+		boolean isPureImplementation = (procInfo.getDeclaration() != impl);
+		if (isPureImplementation) {
+			declInfoInParam = new DeclarationInformation(
+					StorageClass.IMPLEMENTATION_INPARAM, impl.getIdentifier());
+			declInfoOutParam = new DeclarationInformation(
+					StorageClass.IMPLEMENTATION_OUTPARAM, impl.getIdentifier());
+		} else {
+			declInfoInParam = new DeclarationInformation(
+					StorageClass.PROC_FUNC_INPARAM, impl.getIdentifier());
+			declInfoOutParam = new DeclarationInformation(
+					StorageClass.PROC_FUNC_OUTPARAM, impl.getIdentifier());
+		}
 		LinkedList<VariableInfo> allParams = new LinkedList<VariableInfo>();
 		VariableInfo[] procInParams = procInfo.getInParams();
 		VariableInfo[] procOutParams = procInfo.getOutParams();
