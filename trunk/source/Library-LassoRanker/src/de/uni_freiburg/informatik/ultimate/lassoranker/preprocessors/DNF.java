@@ -33,6 +33,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.IFreshTermVariableConstructor;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Dnf;
 
 
@@ -47,14 +48,17 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Dnf
  * @author Jan Leike
  */
 public class DNF extends TransitionPreProcessor {
-	private final IUltimateServiceProvider mServices;
+	private final IUltimateServiceProvider m_Services;
+	private final IFreshTermVariableConstructor m_FreshTermVariableConstructor;
 	
 	public static final String s_Description = 
 			"Transform into disjunctive normal form";
 	
-	public DNF(IUltimateServiceProvider services) {
+	public DNF(IUltimateServiceProvider services, 
+			IFreshTermVariableConstructor freshTermVariableConstructor) {
 		super();
-		mServices = services;
+		m_Services = services;
+		m_FreshTermVariableConstructor = freshTermVariableConstructor;
 	}
 	
 	@Override
@@ -73,7 +77,7 @@ public class DNF extends TransitionPreProcessor {
 	
 	@Override
 	public TransFormulaLR process(Script script, TransFormulaLR tf) throws TermException {
-		Dnf dnf = new Dnf(script, mServices);
+		Dnf dnf = new Dnf(script, m_Services, m_FreshTermVariableConstructor);
 		tf.setFormula(dnf.transform(tf.getFormula()));
 		return tf;
 	}

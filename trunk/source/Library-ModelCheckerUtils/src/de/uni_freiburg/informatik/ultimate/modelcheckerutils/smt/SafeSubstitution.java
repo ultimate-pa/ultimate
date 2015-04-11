@@ -32,12 +32,20 @@ import de.uni_freiburg.informatik.ultimate.util.ScopedHashMap;
 public class SafeSubstitution extends TermTransformer {
 	
 	private final Script m_Script;
+	private final IFreshTermVariableConstructor m_FreshTermVariableConstructor;
 	private final ScopedHashMap<Term,Term> m_ScopedSubstitutionMapping;
 	
-	public SafeSubstitution(Script script,
+	public SafeSubstitution(Script script, 
+			Map<Term, Term> substitutionMapping) {
+		this(script, null, substitutionMapping);
+	}
+	
+	public SafeSubstitution(Script script, 
+			IFreshTermVariableConstructor freshTermVariableConstructor,
 			Map<Term, Term> substitutionMapping) {
 		super();
 		m_Script = script;
+		m_FreshTermVariableConstructor = freshTermVariableConstructor;
 		m_ScopedSubstitutionMapping = new ScopedHashMap<Term, Term>();
 		m_ScopedSubstitutionMapping.putAll(substitutionMapping);
 	}
@@ -69,9 +77,16 @@ public class SafeSubstitution extends TermTransformer {
 	private void renameQuantifiedVarsThatOccurInValues(QuantifiedFormula qFormula) {
 		Set<TermVariable> toRename = 
 				varsOccuringInValues(qFormula.getVariables(), m_ScopedSubstitutionMapping);
+		if (!toRename.isEmpty() && m_FreshTermVariableConstructor != null) {
+			throw new UnsupportedOperationException(
+					"Substitution in quantified formula such that substitute "
+					+ "containes quantified variable. This (rare) case is "
+					+ "only supported if you call substitution with fresh "
+					+ "variable construction.");
+		}
 		for (TermVariable var : toRename) {
-				TermVariable freshVariable = var.getTheory().
-						createFreshTermVariable("subst", var.getSort());
+				TermVariable freshVariable = m_FreshTermVariableConstructor.
+						constructFreshTermVariable("subst", var.getSort());
 				m_ScopedSubstitutionMapping.put(var, freshVariable);
 		}
 	}

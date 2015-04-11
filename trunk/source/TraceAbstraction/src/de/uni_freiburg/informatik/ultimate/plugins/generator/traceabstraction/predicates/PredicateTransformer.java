@@ -476,12 +476,12 @@ public class PredicateTransformer {
 				.transform(callerPred.getFormula());
 
 		// 1. CalleePredRenamed and loc vars quantified
-		Term calleePredRenamedQuantified = PartialQuantifierElimination.quantifier(mServices, mLogger, m_Script,
+		Term calleePredRenamedQuantified = PartialQuantifierElimination.quantifier(mServices, mLogger, m_Script, m_SmtManager.getVariableManager(),
 				Script.EXISTS, varsToQuantifyInCalleePred.toArray(new TermVariable[varsToQuantifyInCalleePred.size()]),
 				calleePredVarsRenamedOldVarsToFreshVars, (Term[][]) null);
 		// 2. CallTF and callerPred
 		Term calleRPredANDCallTFRenamedQuantified = PartialQuantifierElimination.quantifier(mServices, mLogger,
-				m_Script, Script.EXISTS, varsToQuantifyInCallerPredAndCallTF
+				m_Script, m_SmtManager.getVariableManager(), Script.EXISTS, varsToQuantifyInCallerPredAndCallTF
 						.toArray(new TermVariable[varsToQuantifyInCallerPredAndCallTF.size()]), Util.and(m_Script,
 						callerPredVarsRenamedToFreshVars, callTermRenamed), (Term[][]) null);
 		// 3. Result

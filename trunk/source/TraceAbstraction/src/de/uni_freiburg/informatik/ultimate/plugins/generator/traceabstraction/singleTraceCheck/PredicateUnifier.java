@@ -456,7 +456,7 @@ public class PredicateUnifier {
 	 */
 	public Set<IPredicate> cannibalize(boolean splitNumericEqualities, Term term) {
 		Set<IPredicate> result = new HashSet<IPredicate>();
-		Term cnf = (new Cnf(m_SmtManager.getScript(), mServices)).transform(term);
+		Term cnf = (new Cnf(m_SmtManager.getScript(), mServices, m_SmtManager.getVariableManager())).transform(term);
 		Term[] conjuncts;
 		if (splitNumericEqualities) {
 			conjuncts = splitNumericEqualities(SmtUtils.getConjuncts(cnf));

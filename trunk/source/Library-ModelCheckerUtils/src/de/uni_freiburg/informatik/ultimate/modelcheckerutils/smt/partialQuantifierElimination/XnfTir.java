@@ -14,6 +14,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.IFreshTermVariableConstructor;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSelect;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.AffineRelation;
@@ -29,9 +30,13 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Dnf
  * @author Matthias Heizmann
  */
 public class XnfTir extends XnfPartialQuantifierElimination {
+	
+	private final IFreshTermVariableConstructor m_FreshTermVariableConstructor;
 
-	public XnfTir(Script script, IUltimateServiceProvider services) {
+	public XnfTir(Script script, IUltimateServiceProvider services, 
+			IFreshTermVariableConstructor freshTermVariableConstructor) {
 		super(script, services);
+		m_FreshTermVariableConstructor = freshTermVariableConstructor;
 	}
 
 	@Override
@@ -198,9 +203,9 @@ public class XnfTir extends XnfPartialQuantifierElimination {
 			Term tmp = PartialQuantifierElimination.composeXjunctsInner(m_Script, quantifier, resultAtoms.toArray(new Term[resultAtoms.size()]));
 			Term disjunction;
 			if (quantifier == QuantifiedFormula.EXISTS) {
-				disjunction = (new Dnf(m_Script, m_Services)).transform(tmp);
+				disjunction = (new Dnf(m_Script, m_Services, m_FreshTermVariableConstructor)).transform(tmp);
 			} else if (quantifier == QuantifiedFormula.FORALL) {
-				disjunction = (new Cnf(m_Script, m_Services)).transform(tmp);
+				disjunction = (new Cnf(m_Script, m_Services, m_FreshTermVariableConstructor)).transform(tmp);
 			} else {
 				throw new AssertionError("unknown quantifier");
 			}

@@ -45,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.IFreshTermVariableConstructor;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.NonTheorySymbol;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Cnf;
@@ -62,6 +63,8 @@ public class LassoPartitioneer extends LassoPreProcessor {
 	public static final String s_Description = "LassoPartitioneer";
 	
 	private final IUltimateServiceProvider m_Services;
+	private final IFreshTermVariableConstructor m_FreshTermVariableConstructor;
+	
 	private enum Part { STEM, LOOP };
 	
 	private final NestedMap2<Part, NonTheorySymbol<?>, TransFormulaLR> m_Symbol2OriginalTF = 
@@ -95,8 +98,10 @@ public class LassoPartitioneer extends LassoPreProcessor {
 	
 	
 	
-	public LassoPartitioneer(IUltimateServiceProvider services) {
+	public LassoPartitioneer(IUltimateServiceProvider services, 
+			IFreshTermVariableConstructor freshTermVariableConstructor) {
 		m_Services = services;
+		m_FreshTermVariableConstructor = freshTermVariableConstructor;
 		m_Logger = m_Services.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
 	}
 
@@ -257,7 +262,7 @@ public class LassoPartitioneer extends LassoPreProcessor {
 			m_AllRankVars.addAll(tf.getInVars().keySet());
 			m_AllRankVars.addAll(tf.getOutVars().keySet());
 			//FIXME CNF conversion should be done in advance if desired
-			Term cnf = (new Cnf(m_Script, m_Services)).transform(tf.getFormula());
+			Term cnf = (new Cnf(m_Script, m_Services, m_FreshTermVariableConstructor)).transform(tf.getFormula());
 			Term[] conjuncts = SmtUtils.getConjuncts(cnf);
 			for (Term conjunct : conjuncts) {
 				Set<NonTheorySymbol<?>> allSymbolsOfConjunct = NonTheorySymbol.extractNonTheorySymbols(conjunct);

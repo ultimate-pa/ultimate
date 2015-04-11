@@ -18,6 +18,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.IFreshTermVariableConstructor;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SafeSubstitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 
@@ -29,13 +30,17 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 public class Nnf {
 	
 	protected final Script m_Script;
+	private static final String s_FreshVariableString = "nnf";
+	private final IFreshTermVariableConstructor m_FreshTermVariableConstructor;
 	protected final Logger m_Logger;
 	private final NnfTransformerHelper m_NnfTransformerHelper;
 	private List<List<TermVariable>> m_QuantifiedVariables;
 	
-	public Nnf(Script script, IUltimateServiceProvider services) {
+	public Nnf(Script script, IUltimateServiceProvider services, 
+			IFreshTermVariableConstructor freshTermVariableConstructor) {
 		super();
 		m_Script = script;
+		m_FreshTermVariableConstructor = freshTermVariableConstructor;
 		m_Logger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		m_NnfTransformerHelper = getNnfTransformerHelper(services);
 	}
@@ -154,7 +159,8 @@ public class Nnf {
 				}
 				Map<Term, Term> substitutionMapping = new HashMap<Term, Term>();
 				for (TermVariable oldTv : qf.getVariables()) {
-					TermVariable freshTv = oldTv.getTheory().createFreshTermVariable("nnf",oldTv.getSort());
+					TermVariable freshTv = m_FreshTermVariableConstructor.
+							constructFreshTermVariable(s_FreshVariableString, oldTv.getSort()); 
 					substitutionMapping.put(oldTv, freshTv);
 					variables.add(freshTv);
 				}

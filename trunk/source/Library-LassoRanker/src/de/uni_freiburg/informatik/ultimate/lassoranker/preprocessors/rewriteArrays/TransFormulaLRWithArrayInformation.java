@@ -47,6 +47,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.IFreshTermVariableConstructor;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SafeSubstitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayEquality;
@@ -81,6 +82,7 @@ public class TransFormulaLRWithArrayInformation {
 	 * The script used to transform the formula
 	 */
 	private final Script m_Script;
+	private final IFreshTermVariableConstructor m_FreshTermVariableConstructor;
 
 	/**
 	 * Mapping from the first generation of an array to all indices that
@@ -112,11 +114,13 @@ public class TransFormulaLRWithArrayInformation {
 	public TransFormulaLRWithArrayInformation(
 			IUltimateServiceProvider services, 
 			TransFormulaLR transFormulaLR, 
-			ReplacementVarFactory replacementVarFactory, Script script) {
+			ReplacementVarFactory replacementVarFactory, Script script, 
+			IFreshTermVariableConstructor freshTermVariableConstructor) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
  		m_TransFormulaLR = transFormulaLR;
  		m_Script = script;
+		m_FreshTermVariableConstructor = freshTermVariableConstructor;
 		m_ReplacementVarFactory = replacementVarFactory;
 		if (!SmtUtils.containsArrayVariables(m_TransFormulaLR.getFormula())) {
 			m_ContainsArrays = false;
@@ -129,7 +133,7 @@ public class TransFormulaLRWithArrayInformation {
 		} else {
 			m_ContainsArrays = true;
 			Term term = SmtUtils.simplify(m_Script, m_TransFormulaLR.getFormula(), mServices);
-			Term dnf = (new Dnf(m_Script, mServices)).transform(term);
+			Term dnf = (new Dnf(m_Script, mServices, m_FreshTermVariableConstructor)).transform(term);
 			dnf = SmtUtils.simplify(m_Script, dnf, mServices);
 			Term[] disjuncts = SmtUtils.getDisjuncts(dnf);
 			sunnf = new Term[disjuncts.length];

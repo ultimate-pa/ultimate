@@ -120,10 +120,11 @@ public class PartialQuantifierElimination {
 	 * @param services
 	 * @param logger
 	 */
-	public static Term quantifier(IUltimateServiceProvider services, Logger logger, Script script, int quantifier,
+	public static Term quantifier(IUltimateServiceProvider services, Logger logger, Script script, 
+			IFreshTermVariableConstructor freshTermVariableConstructor, int quantifier,
 			TermVariable[] vars, Term body, Term[]... patterns) {
 		Set<TermVariable> varSet = new HashSet<TermVariable>(Arrays.asList(vars));
-		body = elim(script, quantifier, varSet, body, services, logger);
+		body = elim(script, quantifier, varSet, body, services, logger, freshTermVariableConstructor);
 		if (varSet.isEmpty()) {
 			return body;
 		} else {
@@ -133,7 +134,8 @@ public class PartialQuantifierElimination {
 	}
 
 	public static Term elim(Script script, int quantifier, final Set<TermVariable> eliminatees, final Term term,
-			IUltimateServiceProvider services, Logger logger) {
+			IUltimateServiceProvider services, Logger logger, 
+			IFreshTermVariableConstructor freshTermVariableConstructor) {
 		Set<TermVariable> occuringVars = new HashSet<TermVariable>(Arrays.asList(term.getFreeVars()));
 		Iterator<TermVariable> it = eliminatees.iterator();
 		while (it.hasNext()) {
@@ -150,9 +152,9 @@ public class PartialQuantifierElimination {
 		// transform to DNF (resp. CNF)
 		result = (new IteRemover(script)).transform(term);
 		if (quantifier == QuantifiedFormula.EXISTS) {
-			result = (new Dnf(script, services)).transform(result);
+			result = (new Dnf(script, services, freshTermVariableConstructor)).transform(result);
 		} else if (quantifier == QuantifiedFormula.FORALL) {
-			result = (new Cnf(script, services)).transform(result);
+			result = (new Cnf(script, services, freshTermVariableConstructor)).transform(result);
 		} else {
 			throw new AssertionError("unknown quantifier");
 		}
@@ -216,7 +218,7 @@ public class PartialQuantifierElimination {
 		Term termAfterTIR;
 		if (USE_TIR) {
 			Set<TermVariable> eliminateesTir = new HashSet<TermVariable>(eliminatees);
-			XnfTir xnfTir = new XnfTir(script, services);
+			XnfTir xnfTir = new XnfTir(script, services, freshTermVariableConstructor);
 			Term[] oldParams = getXjunctsOuter(quantifier, result);
 			Term[] newParams = xnfTir.tryToEliminate(quantifier, oldParams, eliminateesTir);
 			termAfterTIR = composeXjunctsOuter(script, quantifier, newParams);
@@ -259,7 +261,7 @@ public class PartialQuantifierElimination {
 			Term[] newParams = new Term[oldParams.length];
 			for (int i = 0; i < oldParams.length; i++) {
 				Set<TermVariable> eliminateesSOS = new HashSet<TermVariable>(eliminatees);
-				newParams[i] = sos(script, quantifier, oldParams[i], eliminateesSOS, logger, services);
+				newParams[i] = sos(script, quantifier, oldParams[i], eliminateesSOS, logger, services, freshTermVariableConstructor);
 				remainingAndNewAfterSOS.addAll(eliminateesSOS);
 			}
 			termAfterSOS = composeXjunctsOuter(script, quantifier, newParams);
@@ -287,7 +289,7 @@ public class PartialQuantifierElimination {
 			// if term was changed by SOS new elimination might be possible
 			// Before the implementation of IRD we only retried elimination
 			// if SOS introduced more quantified variables.
-			result = elim(script, quantifier, eliminatees, result, services, logger);
+			result = elim(script, quantifier, eliminatees, result, services, logger, freshTermVariableConstructor);
 		}
 		
 		if (eliminatees.isEmpty()) {
@@ -309,7 +311,7 @@ public class PartialQuantifierElimination {
 			Term termAfterUsr = composeXjunctsOuter(script, quantifier, newParams);
 			result = termAfterUsr;
 			if (!xnfUsr.getAffectedEliminatees().isEmpty()) {
-				result = elim(script, quantifier, eliminatees, result, services, logger);
+				result = elim(script, quantifier, eliminatees, result, services, logger, freshTermVariableConstructor);
 			}
 		}
 		
@@ -321,7 +323,7 @@ public class PartialQuantifierElimination {
 
 
 	public static Term sos(Script script, int quantifier, Term term, Set<TermVariable> eliminatees, Logger logger,
-			IUltimateServiceProvider services) {
+			IUltimateServiceProvider services, IFreshTermVariableConstructor freshTermVariableConstructor) {
 		Term result = term;
 		Set<TermVariable> overallAuxVars = new HashSet<TermVariable>();
 		Iterator<TermVariable> it = eliminatees.iterator();
@@ -334,7 +336,7 @@ public class PartialQuantifierElimination {
 				// UnsupportedOperationException("QE for universal quantified arrays not implemented yet.");
 				// }
 				Set<TermVariable> thisIterationAuxVars = new HashSet<TermVariable>();
-				Term elim = (new ElimStore3(script, services)).elim(quantifier, tv, result, thisIterationAuxVars);
+				Term elim = (new ElimStore3(script, freshTermVariableConstructor, services)).elim(quantifier, tv, result, thisIterationAuxVars);
 				logger.debug(new DebugMessage("eliminated quantifier via SOS for {0}, additionally introduced {1}", tv,
 						thisIterationAuxVars));
 				overallAuxVars.addAll(thisIterationAuxVars);

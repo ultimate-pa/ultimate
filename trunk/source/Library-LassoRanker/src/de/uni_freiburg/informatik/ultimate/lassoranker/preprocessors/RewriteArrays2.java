@@ -110,12 +110,14 @@ public class RewriteArrays2 extends LassoPreProcessor {
 		assert old_loop_components == lasso_builder.getLoopComponentsNonTermination();
 		List<TransFormulaLRWithArrayInformation> stemComponents1 = new ArrayList<TransFormulaLRWithArrayInformation>();
 		for (TransFormulaLR stemComponent : old_stem_components) {
-			TransFormulaLRWithArrayInformation test = new TransFormulaLRWithArrayInformation(mServices, stemComponent, replacementVarFactory, m_Script);
+			TransFormulaLRWithArrayInformation test = new TransFormulaLRWithArrayInformation(
+					mServices, stemComponent, replacementVarFactory, m_Script, m_lassoBuilder.getBoogie2SMT().getVariableManager());
 			stemComponents1.add(test);
 		}
 		List<TransFormulaLRWithArrayInformation> loopComponents1 = new ArrayList<TransFormulaLRWithArrayInformation>();
 		for (TransFormulaLR loopComponent : old_loop_components) {
-			TransFormulaLRWithArrayInformation test = new TransFormulaLRWithArrayInformation(mServices, loopComponent, replacementVarFactory, m_Script);
+			TransFormulaLRWithArrayInformation test = new TransFormulaLRWithArrayInformation(
+					mServices, loopComponent, replacementVarFactory, m_Script, m_lassoBuilder.getBoogie2SMT().getVariableManager());
 			loopComponents1.add(test);
 		}
 		ArrayCellRepVarConstructor acrvc = new ArrayCellRepVarConstructor(replacementVarFactory, m_Script, stemComponents1, loopComponents1);

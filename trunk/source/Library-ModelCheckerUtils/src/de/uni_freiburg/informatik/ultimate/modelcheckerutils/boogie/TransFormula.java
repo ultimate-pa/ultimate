@@ -563,7 +563,7 @@ public class TransFormula implements Serializable {
 
 		if (extPqe) {
 			Term eliminated = PartialQuantifierElimination.elim(script, QuantifiedFormula.EXISTS, auxVars, formula,
-					services, logger);
+					services, logger, boogie2smt.getVariableManager());
 			logger.debug(new DebugMessage("DAG size before PQE {0}, DAG size after PQE {1}",
 					new DagSizePrinter(formula), new DagSizePrinter(eliminated)));
 			formula = eliminated;
@@ -590,7 +590,7 @@ public class TransFormula implements Serializable {
 		}
 
 		if (tranformToCNF) {
-			Term cnf = (new Cnf(script, services)).transform(formula);
+			Term cnf = (new Cnf(script, services, boogie2smt.getVariableManager())).transform(formula);
 			formula = cnf;
 		}
 
@@ -1002,7 +1002,7 @@ public class TransFormula implements Serializable {
 		TransFormula.removeSuperfluousVars(resultFormula, newInVars, newOutVars, auxVars);
 
 		if (tranformToCNF) {
-			resultFormula = (new Cnf(script, services)).transform(resultFormula);
+			resultFormula = (new Cnf(script, services, boogie2smt.getVariableManager())).transform(resultFormula);
 		}
 		Term closedFormula = computeClosedFormula(resultFormula, newInVars, newOutVars, auxVars, true, boogie2smt);
 		return new TransFormula(resultFormula, newInVars, newOutVars, auxVars, branchEncoders, inFeasibility,

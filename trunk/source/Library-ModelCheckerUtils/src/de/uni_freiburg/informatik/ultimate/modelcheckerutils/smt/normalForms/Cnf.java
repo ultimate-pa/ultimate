@@ -5,6 +5,7 @@ import java.util.List;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.IFreshTermVariableConstructor;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 
 /**
@@ -14,8 +15,9 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 
 public class Cnf extends Xnf {
 	
-	public Cnf(Script script, IUltimateServiceProvider services) {
-		super(script,services);
+	public Cnf(Script script, IUltimateServiceProvider services, 
+			IFreshTermVariableConstructor freshTermVariableConstructor) {
+		super(script,services, freshTermVariableConstructor);
 	}
 	
 	
