@@ -12,6 +12,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.IFreshTermVariableConstructor;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 /**
  * Constructs fresh TermVariables (i.e., TermVariables that have not been used
@@ -25,7 +26,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
  * @author Matthias Heizmann
  *
  */
-public class VariableManager {
+public class VariableManager implements IFreshTermVariableConstructor {
 	private final IUltimateServiceProvider m_Services;
 	private final Logger m_Logger;
 	private final MultiElementCounter<String> m_TvForBasenameCounter = 
@@ -76,6 +77,10 @@ public class VariableManager {
 		return result;
 	}
 	
+	/* (non-Javadoc)
+	 * @see de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ITermVariableConstructor#constructFreshTermVariable(java.lang.String, de.uni_freiburg.informatik.ultimate.logic.Sort)
+	 */
+	@Override
 	public TermVariable constructFreshTermVariable(String name, Sort sort) {
 		String withoutSmtQuoteChar = SmtUtils.removeSmtQuoteCharacters(name);
 		final Integer newIndex = m_TvForBasenameCounter.increase(withoutSmtQuoteChar);

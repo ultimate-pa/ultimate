@@ -33,7 +33,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.VariableManager;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.IFreshTermVariableConstructor;
 
 /**
  * Factory for constructing ReplacementVars ensures that for each defining
@@ -43,7 +43,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.VariableMana
  */
 public class ReplacementVarFactory {
 	
-	private final VariableManager m_VariableManager;
+	private final IFreshTermVariableConstructor m_VariableManager;
 	private final Map<Term, ReplacementVar> m_RepVarMapping = 
 			new HashMap<Term, ReplacementVar>();
 	private final Map<String, TermVariable> m_AuxVarMapping = 
@@ -54,7 +54,7 @@ public class ReplacementVarFactory {
 	private final Map<BoogieVar, BoogieVarWrapper> m_BoogieVarWrappers
 		= new HashMap<BoogieVar, BoogieVarWrapper>();
 
-	public ReplacementVarFactory(VariableManager variableManager) {
+	public ReplacementVarFactory(IFreshTermVariableConstructor variableManager) {
 		super();
 		m_VariableManager = variableManager;
 	}

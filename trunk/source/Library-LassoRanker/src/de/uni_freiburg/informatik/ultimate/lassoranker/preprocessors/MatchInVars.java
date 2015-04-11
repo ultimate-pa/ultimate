@@ -34,7 +34,7 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaLR;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.VariableManager;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.IFreshTermVariableConstructor;
 
 
 /**
@@ -52,9 +52,9 @@ public class MatchInVars extends TransitionPreProcessor {
 	/**
 	 * Factory for construction of auxVars.
 	 */
-	private final VariableManager m_VariableManager;
+	private final IFreshTermVariableConstructor m_VariableManager;
 	
-	public MatchInVars(VariableManager variableManager) {
+	public MatchInVars(IFreshTermVariableConstructor variableManager) {
 		super();
 		m_VariableManager = variableManager;
 	}
