@@ -210,10 +210,7 @@ public class InlineVersionTransformer extends BoogieTransformer {
 			Body body = proc.getBody();
 			Statement[] block = body.getBlock();
 			mapLabels(block);
-			List<Statement> newBlock = new ArrayList<>();
-			for (Statement stat : block) {
-				newBlock.addAll(flattenStatement(stat));
-			}
+			Statement[] newBlock = flattenStatementsArray(block);
 
 			List<VariableDeclaration> newLocalVars = new ArrayList<>();
 			DeclarationInformation localDeclInfo = new DeclarationInformation(StorageClass.LOCAL, procId);
@@ -234,8 +231,7 @@ public class InlineVersionTransformer extends BoogieTransformer {
 			newLocalVars.addAll(mInlinedVars);
 
 			Body newBody = new Body(body.getLocation(),
-					newLocalVars.toArray(new VariableDeclaration[newLocalVars.size()]),
-					newBlock.toArray(new Statement[newBlock.size()]));
+					newLocalVars.toArray(new VariableDeclaration[newLocalVars.size()]), newBlock);
 			ModelUtils.mergeAnnotations(body, newBody);
 			
 			Specification[] oldSpecs = proc.getSpecification();
@@ -468,7 +464,6 @@ public class InlineVersionTransformer extends BoogieTransformer {
 				// Declare as local variable
 				Declaration origVarDecl = mGlobalScopeManager.getVarDeclaration(id);
 				VarList origVarList = mGlobalScopeManager.getVarListFromDeclaration(id);
-				assert origVarDecl != null && origVarList != null : "Not a global variable or constant!";
 				Attribute[] newAttributes = processAttributes(origVarDecl.getAttributes());
 				ASTType type = origVarList.getType();
 				// TODO Are the used ILocations intuitive?
@@ -525,8 +520,8 @@ public class InlineVersionTransformer extends BoogieTransformer {
 				// quantified vars with the same id could be already mapped -- don't change the mapping for them!
 				if (!mVarMap.containsKey(key)) {
 					mVarMap.put(key, value);					
-				} else {
-					assert isQuantified;
+				} else if (!isQuantified) {
+					throw new AssertionError("A variable wasn't mapped properly: " + key);
 				}
 			}
 			String[] newVarIdsArray = new String[newVarIds.size()];
@@ -540,7 +535,21 @@ public class InlineVersionTransformer extends BoogieTransformer {
 		return newVarLists;
 	}
 
+	private Statement[] flattenStatementsArray(Statement[] stats) throws CancelToolchainException {
+		List<Statement> flatStats = flattenStatements(stats);
+		return flatStats.toArray(new Statement[flatStats.size()]);
+	}
+	
+	private List<Statement> flattenStatements(Statement[] stats) throws CancelToolchainException {
+		List<Statement> newStats = new ArrayList<Statement>();
+		for (Statement stat : stats) {
+			newStats.addAll(flattenStatement(stat));
+		}
+		return newStats;
+	}
+	
 	private List<Statement> flattenStatement(Statement stat) throws CancelToolchainException {
+		Statement newStat = null;
 		if (stat instanceof CallStatement) {
 			CallStatement call = (CallStatement) stat;
 			int edgeIndex = getAndUpdateEdgeIndex();
@@ -565,8 +574,25 @@ public class InlineVersionTransformer extends BoogieTransformer {
 				mProcedureStack.pop();
 				return inlinedCall;
 			}
+		} else if (stat instanceof IfStatement) {
+			IfStatement ifStat = (IfStatement) stat;
+			Expression newCond = processExpression(ifStat.getCondition());
+			Statement[] newThens = flattenStatementsArray(ifStat.getThenPart());
+			Statement[] newElses = flattenStatementsArray(ifStat.getElsePart());
+			newStat = new IfStatement(ifStat.getLocation(), newCond, newThens, newElses);
+		} else if (stat instanceof WhileStatement) {
+			WhileStatement whileStat = (WhileStatement) stat;
+			Expression newCond = processExpression(whileStat.getCondition());
+			LoopInvariantSpecification[] newInvs = processLoopSpecifications(whileStat.getInvariants());
+			Statement[] newBody = flattenStatementsArray(whileStat.getBody());
+			newStat = new WhileStatement(whileStat.getLocation(), newCond, newInvs, newBody);
 		}
-		return Collections.singletonList(processStatement(stat));
+		if (newStat == null) {
+			newStat = processStatement(stat);
+		} else {
+			ModelUtils.mergeAnnotations(stat, newStat);			
+		}
+		return Collections.singletonList(newStat);
 	}
 	
 	private List<Statement> inlineCallForall(CallStatement call, CallGraphNode calleeNode) {
@@ -574,6 +600,8 @@ public class InlineVersionTransformer extends BoogieTransformer {
 	}
 
 	private List<Statement> inlineCall(CallStatement call, CallGraphNode calleeNode) throws CancelToolchainException {
+		VariableLHS[] processedCallLHS = processVariableLHSs(call.getLhs());
+		
 		mInlinedOldVarStack.push(new ArrayList<VariableLHS>());
 
 		if (stackContainsDuplicates()) {
@@ -632,7 +660,8 @@ public class InlineVersionTransformer extends BoogieTransformer {
 			// havoc local variables from inlined procedure (they are reused for different calls)
 			if (body.getLocalVars().length > 0) {
 				List<VariableLHS> localVarLHS = new ArrayList<>();
-				DeclarationInformation localDeclInfo = new DeclarationInformation(StorageClass.LOCAL, proc.getIdentifier());
+				DeclarationInformation localDeclInfo =
+						new DeclarationInformation(StorageClass.LOCAL, proc.getIdentifier());
 				for (VariableDeclaration varDecl : body.getLocalVars()) {
 					ILocation varDeclLocation = varDecl.getLocation();
 					for (VarList varList : varDecl.getVariables()) {
@@ -655,13 +684,17 @@ public class InlineVersionTransformer extends BoogieTransformer {
 			inlinedBody.add(returnLabel);
 
 		} else { // unimplemented procedure
+
 			proc = calleeNode.getProcedureWithSpecification();
 			for (ModifiesSpecification modSpec : modifiesSpecifications) {
-				HavocStatement havocModifiedVars = new HavocStatement(modSpec.getLocation(), modSpec.getIdentifiers());
-				ModelUtils.mergeAnnotations(modSpec, havocModifiedVars);
+				Statement havocModifiedVars = processStatement(
+						new HavocStatement(modSpec.getLocation(), modSpec.getIdentifiers()));
+				ModelUtils.mergeAnnotations(modSpec, havocModifiedVars); // TODO really copy Annotations?
 				inlinedBody.add(havocModifiedVars);
 			}
-			inlinedBody.add(new HavocStatement(proc.getLocation(), call.getLhs()));
+			if (processedCallLHS.length > 0) {
+				inlinedBody.add(new HavocStatement(proc.getLocation(), processedCallLHS));				
+			}
 		}
 		ILocation procLocation = proc.getLocation();
 		boolean procHasSpec = (proc.getSpecification() != null);
@@ -687,19 +720,19 @@ public class InlineVersionTransformer extends BoogieTransformer {
 		// --------- assign out-parameters to target variables from call statement ---------
 		List<Statement> writeFromOutParams = new ArrayList<>();
 		if (proc.getOutParams().length > 0) {
-			VariableLHS[] outVarLHSs = call.getLhs();
-			Expression[] outVarRHSs = new Expression[outVarLHSs.length];
+			Expression[] processedOutParamRHS = new Expression[processedCallLHS.length];
 			VarListIterator outParamsIterator = new VarListIterator(proc.getOutParams());
 			DeclarationInformation outParamDeclInfo = new DeclarationInformation(procHasSpec ?
 					StorageClass.PROC_FUNC_OUTPARAM : StorageClass.IMPLEMENTATION_OUTPARAM,
 					calleeNode.getId());
-			for (int i = 0; i < outVarLHSs.length; ++i) {
+			for (int i = 0; i < processedCallLHS.length; ++i) {
 				outParamsIterator.next();
 				IType outParamType = outParamsIterator.currentVarList(0).getType().getBoogieType();
 				String outParamId =  outParamsIterator.currentId(0);
-				outVarRHSs[i] = new IdentifierExpression(procLocation, outParamType, outParamId, outParamDeclInfo);
+				processedOutParamRHS[i] = processExpression(
+						new IdentifierExpression(procLocation, outParamType, outParamId, outParamDeclInfo));
 			}
-			writeFromOutParams .add(processStatement(new AssignmentStatement(callLocation, outVarLHSs, outVarRHSs)));
+			writeFromOutParams .add(new AssignmentStatement(callLocation, processedCallLHS, processedOutParamRHS));
 		}
 		
 		// --------- keep old state of global vars, which appear inside old() expressions ---------
