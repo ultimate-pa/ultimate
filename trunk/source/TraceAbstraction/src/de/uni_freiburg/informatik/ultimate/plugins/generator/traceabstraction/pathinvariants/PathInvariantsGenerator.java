@@ -156,6 +156,10 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 			locations.add(location);
 
 			if (i > 0) {
+				if (!m_Run.getWord().isInternalPosition(i - 1)) {
+					throw new UnsupportedOperationException(
+							"interprocedural traces are not supported (yet)");
+				}
 				final TransFormula transFormula = m_Run.getSymbol(i - 1)
 						.getTransitionFormula();
 				transitions.add(new Transition(transFormula, locations
