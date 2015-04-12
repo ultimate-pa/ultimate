@@ -87,8 +87,7 @@ public class CAutomizerTC extends WebToolchain {
 
 	@Override
 	protected String defineLanguage() {
-		// TODO Auto-generated method stub
-		return null;
+		return "c";
 	}
 
 }
