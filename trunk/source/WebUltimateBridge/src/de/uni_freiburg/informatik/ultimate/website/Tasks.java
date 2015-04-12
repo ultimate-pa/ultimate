@@ -93,6 +93,10 @@ public class Tasks {
 		if (sWorkers.isEmpty()) {
 			initWorkers();
 		}
+		SimpleLogger.log("returning " + sWorkers.size() + " workers");
+		for (Entry<String, Worker> entry : sWorkers.entrySet()) {
+			SimpleLogger.log("Woker name " + entry.getKey() + " " + entry.getValue());
+		}
 		return sWorkers;
 	}
 

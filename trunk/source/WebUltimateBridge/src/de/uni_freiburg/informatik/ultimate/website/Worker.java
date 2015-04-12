@@ -20,11 +20,11 @@ public class Worker {
 	/**
 	 * The Ultimate ID for the tool.
 	 */
-	private String name;
+	private final String name;
 	/**
 	 * The website description of this worker.
 	 */
-	private String description;
+	private final String description;
 	/**
 	 * The websites execution button text.
 	 */
@@ -56,11 +56,11 @@ public class Worker {
 	/**
 	 * The toochain collection of this worker.
 	 */
-	private ArrayList<WebToolchain> toolchains;
+	private final ArrayList<WebToolchain> toolchains;
 	/**
 	 * The languages of this workers toolchains.
 	 */
-	private ArrayList<String> languages = new ArrayList<String>();
+	private final ArrayList<String> languages = new ArrayList<String>();
 	/**
 	 * Constructor.
 	 * 
@@ -110,21 +110,31 @@ public class Worker {
 	 * @return the label of the name's matching worker.
 	 */
 	public String getLabel(String name) {
-		if(label != null) return label;
-		
-		switch (name) {
-		case NameStrings.s_TOOL_Automizer:
-		case NameStrings.s_TOOL_AutomizerConcurrent:
-			  return NameStrings.s_TASK_verify;
-		case NameStrings.s_TOOL_BuchiAutomizer:
-			  return NameStrings.s_TASK_analyze;
-		case NameStrings.s_TOOL_LassoRanker:
-			  return NameStrings.s_TASK_synthesize;
-		case NameStrings.s_TOOL_AutomataScriptInterpreter:
-			  return NameStrings.s_TASK_run;
-		default:
-		  return "No description available";
+		final String result;
+		if(label != null) {
+			result = label;
+		} else {
+			switch (name) {
+			case NameStrings.s_TOOL_Automizer:
+			case NameStrings.s_TOOL_AutomizerConcurrent:
+				result = NameStrings.s_TASK_verify;
+				break;
+			case NameStrings.s_TOOL_BuchiAutomizer:
+				result = NameStrings.s_TASK_analyze;
+				break;
+			case NameStrings.s_TOOL_LassoRanker:
+				result = NameStrings.s_TASK_synthesize;
+				break;
+			case NameStrings.s_TOOL_AutomataScriptInterpreter:
+				result = NameStrings.s_TASK_run;
+				break;
+			default:
+				result = "No description available";
+				break;
+			}
 		}
+		SimpleLogger.log("getLabel(" + name + ") returned: " + result);
+		return result;
 	}
 
 	/**
@@ -154,6 +164,7 @@ public class Worker {
 	public ArrayList<String> getLanguages() {
 		if (languages.isEmpty()) {
 			for (WebToolchain toolchain : toolchains) {
+				SimpleLogger.log("Toolchain " + toolchain.getId() + " has language " + toolchain.getLanguage());
 				if(!languages.contains(toolchain.getLanguage()))
 					languages.add(toolchain.getLanguage());
 			}
@@ -297,4 +308,16 @@ public class Worker {
 				.replaceAll("ö", "oe")
 				.replaceAll("ä", "ae");
 	}
+
+	@Override
+	public String toString() {
+		return "Worker [id=" + id + ", name=" + name + ", description="
+				+ description + ", label=" + label + ", userInfo=" + userInfo
+				+ ", layoutOrientation=" + layoutOrientation
+				+ ", layoutFontsize=" + layoutFontsize + ", layoutTransitions="
+				+ layoutTransitions + ", contentURL=" + contentURL
+				+ ", logoURL=" + logoURL + ", toolchains=" + toolchains
+				+ ", languages=" + languages + "]";
+	}
+	
 }
