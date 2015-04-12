@@ -6,7 +6,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.log4j.Logger;
+//import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
@@ -23,7 +23,7 @@ public class Inliner implements IUnmanagedObserver {
 
 	private IUltimateServiceProvider mServices;
 	private IProgressMonitorService mProgressMonitorService;
-	private Logger mLogger;
+	//private Logger mLogger;
 
 	private IInlineSelector mInlineSelector;
 
@@ -41,7 +41,7 @@ public class Inliner implements IUnmanagedObserver {
 	public Inliner(IUltimateServiceProvider services, IInlineSelector inlineSelector) {
 		mServices = services;
 		mProgressMonitorService = services.getProgressMonitorService();
-		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
+		//mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mInlineSelector = inlineSelector;
 	}
 

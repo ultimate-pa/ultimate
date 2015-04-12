@@ -3,8 +3,6 @@ package de.uni_freiburg.informatik.ultimate.boogie.procedureinliner;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.log4j.Logger;
-
 import de.uni_freiburg.informatik.ultimate.access.IObserver;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.services.IToolchainStorage;
@@ -17,14 +15,13 @@ import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.preferences.P
 
 /**
  * Tool for inlining Boogie procedures.
- * Currently under construction -- do not use.
+ * Currently under construction. May contain some bugs.
  * 
  * @author schaetzc@informatik.uni-freiburg.de
  */
 public class BoogieProcedureInliner implements IAnalysis {
 
 	private IUltimateServiceProvider mServices;
-	private Logger mLogger;
 	
 	@Override
 	public GraphType getOutputDefinition() {
@@ -69,7 +66,6 @@ public class BoogieProcedureInliner implements IAnalysis {
 	public void setServices(IUltimateServiceProvider services) {
 		// #1
 		mServices = services;
-		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 	}
 
 	@Override
