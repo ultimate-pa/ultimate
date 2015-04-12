@@ -1,6 +1,5 @@
 package de.uni_freiburg.informatik.ultimate.boogie.procedureinliner;
 
-import de.uni_freiburg.informatik.ultimate.model.IType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.DeclarationInformation;
 
 /**
@@ -12,18 +11,29 @@ public class VarMapKey {
 	
 	private String mVarId;
 	private DeclarationInformation mDeclInfo;
-	private boolean mInOldExpr;
+	private String mInOldExprOfProc;
 
+	/**
+	 * Convenience constructor for variables, which didn't appear in (inlined) old() expressions.
+	 * @param varId Original identifier of the variable.
+	 * @param declInfo Original DeclarationInformation of the variable.
+	 */
+	public VarMapKey(String varId, DeclarationInformation declInfo) {
+		this(varId, declInfo, null);
+	}
+	
 	/**
 	 * Creates a new key.
 	 * @param varId Original identifier of the variable.
 	 * @param declInfo Original DeclarationInformation of the variable.
-	 * @param inOldExpr IdentifierExpression of the variable appeared inside an "old(...)" expression.
+	 * @param inOldExprOfProc The variable appeared inside an (inlined) old() expression,
+	 *                        inside the Procedure with the given identifier.
+	 *                        {@code null}, iff the variable wasn't inside an old() expression.
 	 */
-	public VarMapKey(String varId, DeclarationInformation declInfo, boolean inOldExpr) {
+	public VarMapKey(String varId, DeclarationInformation declInfo, String inOldExprOfProc) {
 		mVarId = varId;
 		mDeclInfo = declInfo;
-		mInOldExpr = inOldExpr;
+		mInOldExprOfProc = inOldExprOfProc;
 	}
 
 	/** @return Original identifier of the variable. */
@@ -35,10 +45,13 @@ public class VarMapKey {
 	public DeclarationInformation getDeclInfo() {
 		return mDeclInfo;
 	}
-
-	/** @return The variable identifier was used inside an "old(...)" expression. */
-	public boolean isInOldExpr() {
-		return mInOldExpr;
+	
+	/**
+	 * @return Identifier of the procedure, in which the variable appeared inside an (inlined) old() expression.
+	 *         {@code null}, iff the variable didn't appear in an (inlined) old() expression.
+	 */
+	public String getInOldExprOfProc() {
+		return mInOldExprOfProc;
 	}
 
 	@Override
@@ -46,7 +59,7 @@ public class VarMapKey {
 		final int prime = 31;
 		int result = 1;
 		result = prime * result + ((mDeclInfo == null) ? 0 : mDeclInfo.hashCode());
-		result = prime * result + (mInOldExpr ? 1231 : 1237);
+		result = prime * result + ((mInOldExprOfProc == null) ? 0 : mInOldExprOfProc.hashCode());
 		result = prime * result + ((mVarId == null) ? 0 : mVarId.hashCode());
 		return result;
 	}
@@ -65,7 +78,10 @@ public class VarMapKey {
 				return false;
 		} else if (!mDeclInfo.equals(other.mDeclInfo))
 			return false;
-		if (mInOldExpr != other.mInOldExpr)
+		if (mInOldExprOfProc == null) {
+			if (other.mInOldExprOfProc != null)
+				return false;
+		} else if (!mInOldExprOfProc.equals(other.mInOldExprOfProc))
 			return false;
 		if (mVarId == null) {
 			if (other.mVarId != null)
@@ -77,7 +93,8 @@ public class VarMapKey {
 
 	@Override
 	public String toString() {
-		return "VarMapKey [mVarId=" + mVarId + ", mDeclInfo=" + mDeclInfo + ", mInOldExpr=" + mInOldExpr + "]";
+		return "VarMapKey [mVarId=" + mVarId + ", mDeclInfo=" + mDeclInfo + ", mInOldExprOfProc=" + mInOldExprOfProc
+				+ "]";
 	}
 
 }

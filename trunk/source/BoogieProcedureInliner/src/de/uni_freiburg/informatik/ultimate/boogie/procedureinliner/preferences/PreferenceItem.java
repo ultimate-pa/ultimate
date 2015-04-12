@@ -34,7 +34,7 @@ public enum PreferenceItem {
 	NOTE___ASSERT_REQUIRES("[X] assert requires/precondition"),
 	ASSUME_REQUIRES_AFTER_ASSERT("assume requires/precondition", true, PreferenceType.Boolean),
 	ASSERT_ENSURES_BEFORE_ASSUME(
-			"assert ensures/postcondition (only for implemented procedures)", false, PreferenceType.Boolean),
+			"assert ensures/postcondition of implemented procedures", false, PreferenceType.Boolean),
 	NOTE___ASSUME_ENSURES("[X] assume ensures/postcondition");
 
 	protected final String mName;

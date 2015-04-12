@@ -66,7 +66,7 @@ public class InlineVersionTransformer extends BoogieTransformer {
 			List<String> ids = new ArrayList<>();
 			DeclarationInformation declInfo = new DeclarationInformation(StorageClass.GLOBAL, null);
 			for (String id : varList.getIdentifiers()) {
-				VarMapKey key = new VarMapKey(id, declInfo, false);
+				VarMapKey key = new VarMapKey(id, declInfo);
 				VarMapValue value = new VarMapValue(id, declInfo);
 				mVarMap.put(key, value);
 				ids.add(id);
@@ -257,6 +257,11 @@ public class InlineVersionTransformer extends BoogieTransformer {
 	private String getEntryProcId() {
 		return mProcedureStack.peekLast().getId();
 	}
+	
+	/** @return Identifier of the currently processed procedure. */
+	private String currentProcId() {
+		return mProcedureStack.peek().getId();
+	}
 
 	/**
 	 * Searches the procedure stack for duplicates.
@@ -365,7 +370,7 @@ public class InlineVersionTransformer extends BoogieTransformer {
 	private void mapProcedureParametersToSameValue(VarList[] paramsProcDecl, VarList[] paramsProcImpl,
 			boolean inParams) {
 		boolean inEntryProc = inEntryProcedure();
-		String originalProcId = mProcedureStack.peek().getId();
+		String originalProcId = currentProcId();
 		String entryProcId = getEntryProcId();
 		StorageClass storageClassProcDecl =
 				inParams ? StorageClass.PROC_FUNC_INPARAM : StorageClass.PROC_FUNC_OUTPARAM;
@@ -396,8 +401,8 @@ public class InlineVersionTransformer extends BoogieTransformer {
 			} else {
 				newParamId = mVarIdManager.makeAndAddUniqueId(originalProcId, usedParamId);				
 			}
-			VarMapKey keyProcDecl = new VarMapKey(iterator.currentId(gProcDecl), oldDeclInfoProcDecl, false);
-			VarMapKey keyProcImpl = new VarMapKey(iterator.currentId(gProcImpl), oldDeclInfoProcImpl, false);
+			VarMapKey keyProcDecl = new VarMapKey(iterator.currentId(gProcDecl), oldDeclInfoProcDecl);
+			VarMapKey keyProcImpl = new VarMapKey(iterator.currentId(gProcImpl), oldDeclInfoProcImpl);
 			mVarMap.put(keyProcDecl, new VarMapValue(newParamId, newDeclInfoProcDecl));
 			mVarMap.put(keyProcImpl, new VarMapValue(newParamId, newDeclInfoProcImpl));
 			
@@ -452,14 +457,15 @@ public class InlineVersionTransformer extends BoogieTransformer {
 	 */
 	private void mapVariableInInlinedOldExpr(IdentifierExpression idExpr) {
 		String id = idExpr.getIdentifier();
+		String procId = currentProcId();
 		DeclarationInformation declInfo = idExpr.getDeclarationInformation();
-		VarMapKey keyWithOld = new VarMapKey(id, declInfo, true);
+		VarMapKey keyWithOld = new VarMapKey(id, declInfo, procId);
 		if (!mVarMap.containsKey(keyWithOld)) {
 			VarMapValue value = null;
 			if (declInfo.getStorageClass() == StorageClass.GLOBAL) {
 				// Create mapping
 				DeclarationInformation newDeclInfo = new DeclarationInformation(StorageClass.LOCAL, getEntryProcId());
-				String newId = mVarIdManager.makeAndAddUniqueId(mProcedureStack.peek().getId() + "_old", id);
+				String newId = mVarIdManager.makeAndAddUniqueId(procId + "_old", id);
 				value = new VarMapValue(newId, newDeclInfo);
 				// Declare as local variable
 				Declaration origVarDecl = mGlobalScopeManager.getVarDeclaration(id);
@@ -469,10 +475,11 @@ public class InlineVersionTransformer extends BoogieTransformer {
 				// TODO Are the used ILocations intuitive?
 				VarList[] newVarLists = { new VarList(origVarList.getLocation(), new String[] { newId }, type) };
 				mInlinedVars.add(new VariableDeclaration(origVarDecl.getLocation(), newAttributes, newVarLists));
-				mInlinedOldVarStack.peek().add(new VariableLHS(mInlinedOldExprStack.peek().getLocation(), type.getBoogieType(), id,
+				mInlinedOldVarStack.peek().add(
+						new VariableLHS(mInlinedOldExprStack.peek().getLocation(), type.getBoogieType(), id,
 						new DeclarationInformation(StorageClass.GLOBAL, null)));
 			} else {
-				VarMapKey keyWithoutOld = new VarMapKey(id, declInfo, false);
+				VarMapKey keyWithoutOld = new VarMapKey(id, declInfo);
 				value = mVarMap.get(keyWithoutOld);
 			}
 			mVarMap.put(keyWithOld, value);
@@ -490,7 +497,7 @@ public class InlineVersionTransformer extends BoogieTransformer {
 	private List<VarList> mapVariables(VarList[] varLists, StorageClass storageClass) {
 		boolean inEntryProcedure = inEntryProcedure();
 		String entryProcId = getEntryProcId();
-		String originalProcId = mProcedureStack.peek().getId();
+		String originalProcId = currentProcId();
 		boolean isQuantified = (storageClass == StorageClass.QUANTIFIED);
 		String oldDeclInfoProcId = isQuantified ? null : originalProcId;
 		DeclarationInformation oldDeclInfo = new DeclarationInformation(storageClass, oldDeclInfoProcId);
@@ -515,7 +522,7 @@ public class InlineVersionTransformer extends BoogieTransformer {
 					newVarId = mVarIdManager.makeAndAddUniqueId(prefix, varId);
 					newVarIds.add(newVarId);
 				}
-				VarMapKey key = new VarMapKey(varId, oldDeclInfo, false);
+				VarMapKey key = new VarMapKey(varId, oldDeclInfo);
 				VarMapValue value = new VarMapValue(newVarId, newDeclInfo);
 				// quantified vars with the same id could be already mapped -- don't change the mapping for them!
 				if (!mVarMap.containsKey(key)) {
@@ -603,11 +610,10 @@ public class InlineVersionTransformer extends BoogieTransformer {
 		VariableLHS[] processedCallLHS = processVariableLHSs(call.getLhs());
 		
 		mInlinedOldVarStack.push(new ArrayList<VariableLHS>());
-
 		if (stackContainsDuplicates()) {
 			throw new InlineRecursiveCallException(call);
 		}
-		
+
 		// --------- inline specifications ---------
 		Specification[] specs = calleeNode.getProcedureWithSpecification().getSpecification();
 		List<Statement> assertRequires = new ArrayList<>();
@@ -689,7 +695,7 @@ public class InlineVersionTransformer extends BoogieTransformer {
 			for (ModifiesSpecification modSpec : modifiesSpecifications) {
 				Statement havocModifiedVars = processStatement(
 						new HavocStatement(modSpec.getLocation(), modSpec.getIdentifiers()));
-				ModelUtils.mergeAnnotations(modSpec, havocModifiedVars); // TODO really copy Annotations?
+				ModelUtils.mergeAnnotations(modSpec, havocModifiedVars);
 				inlinedBody.add(havocModifiedVars);
 			}
 			if (processedCallLHS.length > 0) {
@@ -742,7 +748,8 @@ public class InlineVersionTransformer extends BoogieTransformer {
 		Expression[] oldVarRHS = new Expression[oldVars.size()];
 		for (int i = 0; i < oldVars.size(); ++i) {
 			VariableLHS oldVar = oldVars.get(i);
-			VarMapValue mapping = mVarMap.get(new VarMapKey(oldVar.getIdentifier(), declInfoGlobal, true));
+			VarMapKey oldVarKey = new VarMapKey(oldVar.getIdentifier(), declInfoGlobal, proc.getIdentifier());
+			VarMapValue mapping = mVarMap.get(oldVarKey);
 			oldVarLHS[i] = new VariableLHS(callLocation, oldVar.getType(),
 					mapping.getVarId(), mapping.getDeclInfo());
 			oldVarRHS[i] = new IdentifierExpression(callLocation, oldVar.getType(),
@@ -804,7 +811,7 @@ public class InlineVersionTransformer extends BoogieTransformer {
 			VariableLHS varLhs = (VariableLHS) lhs;
 			String id = varLhs.getIdentifier();
 			DeclarationInformation declInfo = varLhs.getDeclarationInformation();
-			VarMapValue mapping = mVarMap.get(new VarMapKey(id, declInfo, inInlinedOldExpr()));
+			VarMapValue mapping = mVarMap.get(new VarMapKey(id, declInfo, inOldExprOfProc()));
 			String newId = mapping.getVarId();
 			DeclarationInformation newDeclInfo = mapping.getDeclInfo();
 			if (id != newId || declInfo != newDeclInfo) {
@@ -829,14 +836,14 @@ public class InlineVersionTransformer extends BoogieTransformer {
 	}
 	
 	private String getNewLabelId(String oldLabelId) {
-		String currentProcId = mProcedureStack.peek().getId();
-		String newName = mLabelMap.get(new LabelMapKey(oldLabelId, currentProcId, getCallCounter(currentProcId)));
+		String procId = currentProcId();
+		String newName = mLabelMap.get(new LabelMapKey(oldLabelId, procId, getCallCounter(procId)));
 		assert newName != null : "Missing mapping for Label: " + oldLabelId;
 		return newName;
 	}
 
 	private void mapReturnLabel() {
-		String procId = mProcedureStack.peek().getId();
+		String procId = currentProcId();
 		String returnLabelId = mLabelIdManager.makeAndAddUniqueId(procId, "returnLabel");
 		mLabelMap.put(createCurrentReturnLabelKey() , returnLabelId);
 	}
@@ -846,7 +853,7 @@ public class InlineVersionTransformer extends BoogieTransformer {
 	}
 	
 	private LabelMapKey createCurrentReturnLabelKey() {
-		String procId = mProcedureStack.peek().getId();
+		String procId = currentProcId();
 		// we can use the call counter, because recursion is forbidden
 		return new LabelMapKey(null, procId, getCallCounter(procId)); 
 	}
@@ -865,7 +872,7 @@ public class InlineVersionTransformer extends BoogieTransformer {
 			mapLabels(ifStat.getThenPart());
 			mapLabels(ifStat.getElsePart());
 		} else if (stat instanceof Label) {
-			String procId = mProcedureStack.peek().getId();
+			String procId = currentProcId();
 			String labelId = ((Label) stat).getName();
 			String newLabelId;
 			if (inEntryProcedure()) {
@@ -884,11 +891,11 @@ public class InlineVersionTransformer extends BoogieTransformer {
 			IdentifierExpression idExpr = (IdentifierExpression) expr;
 			String id = idExpr.getIdentifier();
 			DeclarationInformation declInfo = idExpr.getDeclarationInformation();
-			boolean inInlinedOldExpr = inInlinedOldExpr();
-			if (inInlinedOldExpr) {
+			String inOldExprOfProc = inOldExprOfProc();
+			if (inOldExprOfProc != null) {
 				mapVariableInInlinedOldExpr(idExpr);	
 			}
-			VarMapValue mapping = mVarMap.get(new VarMapKey(id, declInfo, inInlinedOldExpr));
+			VarMapValue mapping = mVarMap.get(new VarMapKey(id, declInfo, inOldExprOfProc));
 			String newId = mapping.getVarId();
 			DeclarationInformation newDeclInfo = mapping.getDeclInfo();
 			if (newId != id || newDeclInfo != declInfo) {
@@ -944,11 +951,10 @@ public class InlineVersionTransformer extends BoogieTransformer {
 	
 	private String[] processVarIds(String[] ids, DeclarationInformation declInfo) {
 		String[] newIds = new String[ids.length];
-		boolean inOldExpr = inInlinedOldExpr();
 		boolean changed = false;
 		for (int i = 0; i < ids.length; ++i) {
 			String id = ids[i];
-			String newId = mVarMap.get(new VarMapKey(id, declInfo, inOldExpr)).getVarId();
+			String newId = mVarMap.get(new VarMapKey(id, declInfo, inOldExprOfProc())).getVarId();
 			if (!newId.equals(id)) {
 				changed = true;
 			}
@@ -956,5 +962,19 @@ public class InlineVersionTransformer extends BoogieTransformer {
 		}
 		return changed ? newIds : ids;
 	}
+	
+	/**
+	 * Creates the last argument for the constructor of VarMapKey.
+	 * @return Current procedure identifier, if processing takes place inside an inlined old() expression,
+	 *         {@code null} otherwise.
+	 */
+	private String inOldExprOfProc() {
+		if (inInlinedOldExpr()) {
+			return currentProcId();
+		} else {
+			return null;
+		}
+	}
+
 
 }

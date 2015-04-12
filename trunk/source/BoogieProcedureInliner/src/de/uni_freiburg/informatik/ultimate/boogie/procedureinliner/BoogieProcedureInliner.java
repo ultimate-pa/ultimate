@@ -59,7 +59,7 @@ public class BoogieProcedureInliner implements IAnalysis {
 		observers.add(new TypeChecker(mServices)); // TODO remove (for debugging -- warns on wrong set types)
 		return observers;
 	}
-	
+
 	@Override
 	public void setToolchainStorage(IToolchainStorage storage) {
 		// #2
@@ -70,8 +70,6 @@ public class BoogieProcedureInliner implements IAnalysis {
 		// #1
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
-		// exceptions: services.getResultService().reportResult(getPluginID(),
-		//               new GenericResult(getPluginID(), "", longDescription, severity));
 	}
 
 	@Override
