@@ -397,7 +397,7 @@ public class InlineVersionTransformer extends BoogieTransformer {
 			String usedParamId = iterator.currentId(gUsed);
 			String newParamId;
 			if (inEntryProc) {
-				newParamId = usedParamId;
+				newParamId = mVarIdManager.makeAndAddUniqueId(usedParamId);
 			} else {
 				newParamId = mVarIdManager.makeAndAddUniqueId(originalProcId, usedParamId);				
 			}

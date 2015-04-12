@@ -34,7 +34,10 @@ public class IdManager {
 		}
 		return id;
 	}
-	/** Convenience method for {@link #makeAndAddUniqueId(String, String)} without prefix. */
+	/**
+	 * Convenience method for {@link #makeAndAddUniqueId(String, String)} without prefix.
+	 * This tries to preserve the original identifier.
+	 */
 	public String makeAndAddUniqueId(String id) {
 		return makeAndAddUniqueId(null, id);
 	}	

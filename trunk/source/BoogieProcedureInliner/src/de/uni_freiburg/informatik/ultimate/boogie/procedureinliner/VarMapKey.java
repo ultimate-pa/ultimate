@@ -93,8 +93,7 @@ public class VarMapKey {
 
 	@Override
 	public String toString() {
-		return "VarMapKey [mVarId=" + mVarId + ", mDeclInfo=" + mDeclInfo + ", mInOldExprOfProc=" + mInOldExprOfProc
-				+ "]";
+		return "VarMapKey[" + mVarId + " " + mDeclInfo + " " + mInOldExprOfProc + "]";
 	}
 
 }
