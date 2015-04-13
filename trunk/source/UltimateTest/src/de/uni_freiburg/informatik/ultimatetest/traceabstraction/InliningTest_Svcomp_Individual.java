@@ -12,8 +12,17 @@ import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
  */
 public class InliningTest_Svcomp_Individual extends AbstractTraceAbstractionTestSuite {
 	
+	// sorted by line count in ascending order
 	private static final String[] m_FILES = {
-		"examples/svcomp/loop-acceleration/diamond_true-unreach-call2.c",
+		//"examples/svcomp/loop-acceleration/diamond_true-unreach-call2.c", // already fails without inlining
+		"examples/svcomp/list-properties/simple_true-unreach-call.i",
+		"examples/svcomp/list-properties/list_flag_true-unreach-call.i",
+		"examples/svcomp/list-properties/alternating_list_true-unreach-call.i",
+		"examples/svcomp/list-properties/splice_true-unreach-call.i",
+		"examples/svcomp/heap-manipulation/sll_to_dll_rev_true-unreach-call.i",
+		"examples/svcomp/heap-manipulation/merge_sort_true-unreach-call.i",
+		"examples/svcomp/list-properties/list_search_true-unreach-call.i",
+		"examples/svcomp/heap-manipulation/bubble_sort_linux_true-unreach-call.i",
 	};
 
 	@Override
