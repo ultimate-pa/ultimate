@@ -160,7 +160,7 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 	public static final String LABEL_REPORT_UNSOUNDNESS_WARNING = "Report unsoundness warnings";
 	public static final String LABEL_CHECK_POINTER_SUBTRACTION_AND_COMPARISON_VALIDITY = "If two pointers are subtracted or compared they have the same base address";
 	public static final String LABEL_UNSIGNED_TREATMENT = "How to treat unsigned ints differently from normal ones";
-	public static final String LABEL_CHECK_SIGNED_INTEGER_BOUNDS = "Check that no signed integer over-/underflows occur";
+	public static final String LABEL_CHECK_SIGNED_INTEGER_BOUNDS = "Check absence of signed integer overflows";
 						
 
 	// typesize stuff
