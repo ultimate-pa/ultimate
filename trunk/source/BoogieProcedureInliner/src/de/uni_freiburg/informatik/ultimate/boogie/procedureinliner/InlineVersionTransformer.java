@@ -580,6 +580,7 @@ public class InlineVersionTransformer extends BoogieTransformer {
 			assert call.getMethodName().equals(calleeNode.getId())
 				&& call.getMethodName().equals(edgeLabel.getCalleeProcedureId());
 			if (edgeLabel.getInlineFlag()) {
+				VariableLHS[] processedCallLHSs = processVariableLHSs(call.getLhs());
 				mProcedureStack.push(calleeNode);
 				mEdgeIndexStack.push(0);
 				if (incrementCallCounter(calleeNode.getId()) <= 0) {
@@ -587,9 +588,9 @@ public class InlineVersionTransformer extends BoogieTransformer {
 				}
 				List<Statement> inlinedCall;
 				if (call.isForall()) {
-					inlinedCall = inlineCallForall(call, calleeNode);
+					inlinedCall = inlineCallForall(call, processedCallLHSs, calleeNode);
 				} else {
-					inlinedCall = inlineCall(call, calleeNode);
+					inlinedCall = inlineCall(call, processedCallLHSs, calleeNode);
 				}
 				mEdgeIndexStack.pop();
 				mProcedureStack.pop();
@@ -620,20 +621,25 @@ public class InlineVersionTransformer extends BoogieTransformer {
 		return Collections.singletonList(newStat);
 	}
 	
-	private List<Statement> inlineCallForall(CallStatement call, CallGraphNode calleeNode) {
+	private List<Statement> inlineCallForall(CallStatement call, VariableLHS[] processedCallLHSs,
+			CallGraphNode calleeNode) {
 		throw new UnsupportedOperationException("Call forall isn't supported yet."); // TODO support
 	}
 
-	private List<Statement> inlineCall(CallStatement call, CallGraphNode calleeNode) throws CancelToolchainException {
-		VariableLHS[] processedCallLHS = processVariableLHSs(call.getLhs()); 
-
+	private List<Statement> inlineCall(CallStatement call, VariableLHS[] processedCallLHS, CallGraphNode calleeNode)
+			throws CancelToolchainException {
+	
 		mInlinedOldVarStack.push(new ArrayList<VariableLHS>());
+
+		String procId = calleeNode.getId();
+		assert procId.equals(call.getMethodName());
 		if (stackContainsDuplicates()) {
 			throw new InlineRecursiveCallException(call);
 		}
 
 		// --------- inline specifications ---------
-		Specification[] specs = calleeNode.getProcedureWithSpecification().getSpecification();
+		Procedure procWithSpec = calleeNode.getProcedureWithSpecification();
+		Specification[] specs = procWithSpec.getSpecification();
 		List<Statement> assertRequires = new ArrayList<>();
 		List<Statement> assumeRequires = new ArrayList<>();
 		List<Statement> assertEnsures = new ArrayList<>();
@@ -673,6 +679,18 @@ public class InlineVersionTransformer extends BoogieTransformer {
 		ILocation callLocation = call.getLocation();
 		Procedure proc;
 		List<Statement> inlinedBody = new ArrayList<>();
+		
+		// havoc out-parameters (they are reused for different calls)
+		VarList[] outParams = procWithSpec.getOutParams();
+		if (outParams.length > 0) {
+			DeclarationInformation declInfo = new DeclarationInformation(StorageClass.PROC_FUNC_OUTPARAM, procId);
+			List<VariableLHS> outParamLHSs = varListsToVarLHSs(outParams, declInfo);
+			if (outParamLHSs.size() > 0) {
+				VariableLHS[] outParamLHSsArray = outParamLHSs.toArray(new VariableLHS[outParamLHSs.size()]);
+				inlinedBody.add(processStatement(new HavocStatement(callLocation, outParamLHSsArray)));				
+			}
+		}
+
 		if (calleeNode.isImplemented()) {
 			proc = calleeNode.getProcedureWithBody();
 			ILocation procLocation = proc.getLocation();
@@ -681,17 +699,11 @@ public class InlineVersionTransformer extends BoogieTransformer {
 			mapLabels(block);
 			mapReturnLabel();
 			
-			// havoc local variables from inlined procedure (they are reused for different calls)
+			// havoc local variables (they are reused for different calls)
 			List<VariableLHS> localVarLHS = new ArrayList<>();
-			DeclarationInformation localDeclInfo = new DeclarationInformation(StorageClass.LOCAL, proc.getIdentifier());
+			DeclarationInformation localDeclInfo = new DeclarationInformation(StorageClass.LOCAL, procId);
 			for (VariableDeclaration varDecl : body.getLocalVars()) {
-				ILocation varDeclLocation = varDecl.getLocation();
-				for (VarList varList : varDecl.getVariables()) {
-					IType varListType = varList.getType().getBoogieType();
-					for (String varId : varList.getIdentifiers()) {
-						localVarLHS.add(new VariableLHS(varDeclLocation, varListType, varId, localDeclInfo));
-					}
-				}
+				localVarLHS.addAll(varListsToVarLHSs(varDecl.getVariables(), localDeclInfo));
 			}
 			if (localVarLHS.size() > 0) {
 				VariableLHS[] localVarLHSArray = localVarLHS.toArray(new VariableLHS[localVarLHS.size()]);
@@ -707,6 +719,7 @@ public class InlineVersionTransformer extends BoogieTransformer {
 
 		} else { // unimplemented procedure
 
+			// havoc global variables from modifies specifications
 			proc = calleeNode.getProcedureWithSpecification();
 			for (ModifiesSpecification modSpec : modifiesSpecifications) {
 				VariableLHS[] modVars = modSpec.getIdentifiers();
@@ -716,9 +729,6 @@ public class InlineVersionTransformer extends BoogieTransformer {
 					ModelUtils.mergeAnnotations(modSpec, havocModifiedVars);
 					inlinedBody.add(havocModifiedVars);
 				}
-			}
-			if (processedCallLHS.length > 0) {
-				inlinedBody.add(new HavocStatement(proc.getLocation(), processedCallLHS));
 			}
 		}
 		ILocation procLocation = proc.getLocation();
@@ -790,6 +800,18 @@ public class InlineVersionTransformer extends BoogieTransformer {
 		inlineBlock.addAll(writeFromOutParams);
 
 		return inlineBlock;
+	}
+	
+	private List<VariableLHS> varListsToVarLHSs(VarList[] varLists, DeclarationInformation declInfo) {
+		List<VariableLHS> varLHSs = new ArrayList<>(3 * varLists.length);
+		for (VarList varList : varLists) {
+			IType type = varList.getType().getBoogieType();
+			ILocation location = varList.getLocation();
+			for (String id : varList.getIdentifiers()) {
+				varLHSs.add(new VariableLHS(location, type, id, declInfo));
+			}
+		}
+		return varLHSs;
 	}
 	
 	@Override
