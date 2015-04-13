@@ -126,7 +126,7 @@ public final class MinimizeIncompleteDfa<LETTER, STATE> extends
 		inputAutomata.addInternalTransition(predState, letter, succState);
 		
 		// Use random automaton
-		inputAutomata = new GetRandomDfa(null, 250, 10, 50).getResult();
+		inputAutomata = new GetRandomDfa(null, 5000, 500, 2500, 100, false, false, false).getResult();
 
 		System.out.println("+++++++++Before minimization:+++++++++");
 		System.out.println();
@@ -463,10 +463,10 @@ public final class MinimizeIncompleteDfa<LETTER, STATE> extends
 			}
 
 			splitCandidates.remove(splitter);
-
+			
 			LinkedList<LinkedHashSet<Integer>> splitCandidatesToAppend =
 					split(splitter, incdfa.getInternalAlphabet().size());
-
+			
 			splitCandidates.addAll(splitCandidatesToAppend);
 		}
 		
@@ -498,8 +498,8 @@ public final class MinimizeIncompleteDfa<LETTER, STATE> extends
 		HashMap<Integer, LinkedList<Integer>> stateListByLetter =
 				new HashMap<Integer, LinkedList<Integer>>();
 		// Signatures of the states.
-		HashMap<Integer, ArrayList<Integer>> signatures =
-				new HashMap<Integer, ArrayList<Integer>>();
+		HashMap<Integer, LinkedList<Integer>> signatures =
+				new HashMap<Integer, LinkedList<Integer>>();
 		// Contains states that are used in splitting procedure.
 		// (Also known as "s").
 		LinkedList<Integer> splitStates = new LinkedList<Integer>();
@@ -517,7 +517,7 @@ public final class MinimizeIncompleteDfa<LETTER, STATE> extends
 		// (Also known as "t" or "t[a]").
 		HashMap<Integer, LinkedList<Integer>> splitStatesOfLetter =
 				new HashMap<Integer, LinkedList<Integer>>();
-
+		
 		// Step 1
 		// Iterate over all states in the splitter block
 		// and setup some data structures
@@ -552,12 +552,12 @@ public final class MinimizeIncompleteDfa<LETTER, STATE> extends
 		for (Integer letter : letterList) {
 			for (Integer state : stateListByLetter.get(letter)) {
 				if (!signatures.containsKey(state)) {
-					signatures.put(state, new ArrayList<Integer>(letterAmount));
+					signatures.put(state, new LinkedList<Integer>());
 					// Remember states that have a signature
 					splitStates.add(state);
 				}
 				// Add letter to states signature
-				ArrayList<Integer> signature = signatures.get(state);
+				LinkedList<Integer> signature = signatures.get(state);
 				signature.add(letter);
 				signatures.put(state, signature);
 
@@ -583,37 +583,49 @@ public final class MinimizeIncompleteDfa<LETTER, STATE> extends
 			statesOfBlock.add(state);
 			blockStateMap.put(blockNumber, statesOfBlock);
 		}
-
+		
 		splitStates.clear();
 		for (int blockNumber : splitBlockNumbers) {
 			splitStates.addAll(blockStateMap.get(blockNumber));
 		}
 		
 		blockStateMap.clear();
+		//Keep references to iterator alive.
+		HashMap<Integer, Iterator<Integer>> signaturesIter =
+				new HashMap<Integer, Iterator<Integer>>();
 		// Iterate over all signature elements
 		for (int j = 0; j < maxSignatureSize; j++) {
 			for (Integer state : splitStates) {
-				ArrayList<Integer> stateSignature = signatures.get(state);
+				
+				LinkedList<Integer> curSignature = signatures.get(state);
+				//Use iterator for fast sequential access
+				Iterator<Integer> curSignatureIter = null;
+				if (!signaturesIter.containsKey(state)) {
+					curSignatureIter = curSignature.iterator();
+					signaturesIter.put(state, curSignatureIter);
+				} else {
+					curSignatureIter = signaturesIter.get(state);
+				}
 
 				// Skip this position for the letter because it
 				// is not that long
-				if (j >= stateSignature.size()) {
+				if (!curSignatureIter.hasNext()) {
 					continue;
 				}
-
-				Integer stateSigLetter = stateSignature.get(j);
+				
+				Integer curSigLetter = curSignatureIter.next();
 
 				// Add state to the state list of this letter
-				if (!splitStatesOfLetter.containsKey(stateSigLetter)) {
-					splitStatesOfLetter.put(stateSigLetter,
+				if (!splitStatesOfLetter.containsKey(curSigLetter)) {
+					splitStatesOfLetter.put(curSigLetter,
 							new LinkedList<Integer>());
 					// Remember letters that are used
-					splitLetters.add(stateSigLetter);
+					splitLetters.add(curSigLetter);
 				}
 				LinkedList<Integer> statesOfLetter = splitStatesOfLetter
-						.get(stateSigLetter);
+						.get(curSigLetter);
 				statesOfLetter.add(state);
-				splitStatesOfLetter.put(stateSigLetter, statesOfLetter);
+				splitStatesOfLetter.put(curSigLetter, statesOfLetter);
 			}
 
 			// Clear and update the split states list
@@ -623,7 +635,7 @@ public final class MinimizeIncompleteDfa<LETTER, STATE> extends
 			}
 		}
 		splitLetters.clear();
-
+		
 		// Step 4
 		// Split the blocks
 
@@ -690,9 +702,9 @@ public final class MinimizeIncompleteDfa<LETTER, STATE> extends
 			LinkedList<LinkedHashSet<Integer>> splittings =
 					new LinkedList<LinkedHashSet<Integer>>();
 			LinkedHashSet<Integer> curSplit = new LinkedHashSet<Integer>();
-			ArrayList<Integer> lastSignature = null;
+			LinkedList<Integer> lastSignature = null;
 			for (int state : blockContent) {
-				ArrayList<Integer> curSignature = signatures.get(state);
+				LinkedList<Integer> curSignature = signatures.get(state);
 				// If next state has a different signature
 				// save old content and create a new splitting.
 				if (!curSignature.equals(lastSignature)) {
