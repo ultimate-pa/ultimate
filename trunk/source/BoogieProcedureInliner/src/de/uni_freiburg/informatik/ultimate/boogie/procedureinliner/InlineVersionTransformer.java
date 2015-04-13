@@ -2,12 +2,12 @@ package de.uni_freiburg.informatik.ultimate.boogie.procedureinliner;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -26,8 +26,21 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.DeclarationInformation.S
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.*;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 
+/**
+ * Transforms a Boogie Procedure into an equivalent version, where contained calls are inlined.
+ * Inlining of CallStatements ca be enabled/disabled, using {@link CallGraphEdgeLabel#setInlineFlag(boolean)}.
+ * An instance of this class should be used only once.
+ * 
+ * @author schaetzc@informatik.uni-freiburg.de
+ */
 public class InlineVersionTransformer extends BoogieTransformer {
 
+	/**
+	 * Used to manage Declarations which aren't changed, but have an effect on the inlining process.
+	 * Instances of this class can and should be reused for different instances of the InlineVersionTransformer.
+	 * 
+	 * @author schaetzc@informatik.uni-freiburg.de
+	 */
 	public static class GlobalScopeManager {
 
 		private Map<VarMapKey, VarMapValue> mVarMap = new HashMap<>();
@@ -107,8 +120,6 @@ public class InlineVersionTransformer extends BoogieTransformer {
 		}
 	}
 
-	private IUltimateServiceProvider mServices;
-
 	private Logger mLogger;
 	
 	private GlobalScopeManager mGlobalScopeManager;
@@ -150,11 +161,13 @@ public class InlineVersionTransformer extends BoogieTransformer {
 	 * Keeps track of global variables, which appeared inside inlined old() expressions.
 	 * Nested inlined procedures need their own old-variables. The top of the stack contains the variables for the
 	 * currently processed procedure.
-	 * The stored VariablesLHS are the unmodified global variables.
+	 * The stored IdentiferExpression are the original Expressions from the inside of the old() expressions.
+	 * If a global variable appeared multiple times in one ore more old() expressions, the IdentiferExpression from
+	 * the first occurrence is used.
 	 * 
 	 * This stack is based on Procedures.
 	 */
-	private Deque<List<VariableLHS>> mInlinedOldVarStack = new ArrayDeque<>();
+	private Deque<Set<IdExprWrapper>> mInlinedOldVarStack = new ArrayDeque<>();
 	
 	/** Variables which have to be added to the local variables of the entry point. */
 	private List<VariableDeclaration> mInlinedVars = new ArrayList<>();
@@ -193,7 +206,6 @@ public class InlineVersionTransformer extends BoogieTransformer {
 	 */
 	public InlineVersionTransformer(IUltimateServiceProvider services, GlobalScopeManager globalScopeManager,
 			boolean assumeRequiresAfterAssert, boolean assertEnsuresBeforeAssume) {
-		mServices = services;
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mGlobalScopeManager = globalScopeManager;
 		mVarMap = globalScopeManager.initVarMap();
@@ -210,57 +222,62 @@ public class InlineVersionTransformer extends BoogieTransformer {
 	 * 
 	 * @param entryNode Call graph node, representing the procedure to be flattened.
 	 * @return Equivalent procedure with inlined calls. {@code null} for unimplemented procedures.
+	 * 
 	 * @throws CancelToolchainException If an error occurred and the toolchain should be canceled.
 	 */
 	public Procedure inlineCallsInside(CallGraphNode entryNode) throws CancelToolchainException {
+		if (!entryNode.isImplemented()) {
+			return null;
+		}
+		
 		mProcedureStack.push(entryNode);
 		mEdgeIndexStack.push(0);
 
 		mapVariablesOfCurrentProcedure();
-		Procedure newProc = null;
-		if (entryNode.isImplemented()) {
-			Procedure proc = entryNode.getProcedureWithBody();
-			String procId = proc.getIdentifier();
-			Body body = proc.getBody();
-			Statement[] block = body.getBlock();
-			mapLabels(block);
-			Statement[] newBlock = flattenStatementsArray(block);
 
-			List<VariableDeclaration> newLocalVars = new ArrayList<>();
-			DeclarationInformation localDeclInfo = new DeclarationInformation(StorageClass.LOCAL, procId);
-			for (VariableDeclaration localVarDecl : body.getLocalVars()) {
-				Attribute[] attrs = localVarDecl.getAttributes();
-				Attribute[] newAttrs = processAttributes(attrs);
-				VarList[] vars = localVarDecl.getVariables();
-				VarList[] newVars = applyMappingToVarList(vars, localDeclInfo);
-				VariableDeclaration newLocalVarDecl;
-				if (newAttrs != attrs || newVars != vars) {
-					newLocalVarDecl = new VariableDeclaration(localVarDecl.getLocation(), newAttrs, newVars);
-					ModelUtils.mergeAnnotations(localVarDecl, newLocalVarDecl);
-				} else {
-					newLocalVarDecl = localVarDecl;
-				}
-				newLocalVars.add(newLocalVarDecl);
+		Procedure proc = entryNode.getProcedureWithBody();
+		String procId = proc.getIdentifier();
+		Body body = proc.getBody();
+		Statement[] block = body.getBlock();
+		mapLabels(block);
+		Statement[] newBlock = flattenStatementsArray(block);
+
+		List<VariableDeclaration> newLocalVars = new ArrayList<>();
+		DeclarationInformation localDeclInfo = new DeclarationInformation(StorageClass.LOCAL, procId);
+		for (VariableDeclaration localVarDecl : body.getLocalVars()) {
+			Attribute[] attrs = localVarDecl.getAttributes();
+			Attribute[] newAttrs = processAttributes(attrs);
+			VarList[] vars = localVarDecl.getVariables();
+			VarList[] newVars = applyMappingToVarList(vars, localDeclInfo);
+			VariableDeclaration newLocalVarDecl;
+			if (newAttrs != attrs || newVars != vars) {
+				newLocalVarDecl = new VariableDeclaration(localVarDecl.getLocation(), newAttrs, newVars);
+				ModelUtils.mergeAnnotations(localVarDecl, newLocalVarDecl);
+			} else {
+				newLocalVarDecl = localVarDecl;
 			}
-			newLocalVars.addAll(mInlinedVars);
-
-			Body newBody = new Body(body.getLocation(),
-					newLocalVars.toArray(new VariableDeclaration[newLocalVars.size()]), newBlock);
-			ModelUtils.mergeAnnotations(body, newBody);
-			
-			Specification[] oldSpecs = proc.getSpecification();
-			boolean hasSpec = oldSpecs != null;
-			Specification[] newSpecs = hasSpec ? processSpecifications(oldSpecs) : null;	
-			
-			VarList[] newInParams = applyMappingToVarList(proc.getInParams(), new DeclarationInformation(
-					hasSpec ? StorageClass.PROC_FUNC_INPARAM : StorageClass.IMPLEMENTATION_INPARAM, procId));
-			VarList[] newOutParams = applyMappingToVarList(proc.getOutParams(), new DeclarationInformation(
-					hasSpec ? StorageClass.PROC_FUNC_OUTPARAM : StorageClass.IMPLEMENTATION_OUTPARAM, procId));
-			
-			newProc = new Procedure(proc.getLocation(), processAttributes(proc.getAttributes()), procId,
-					proc.getTypeParams(), newInParams, newOutParams, newSpecs, newBody);
-			ModelUtils.mergeAnnotations(proc, newProc);
+			newLocalVars.add(newLocalVarDecl);
 		}
+		newLocalVars.addAll(mInlinedVars);
+
+		Body newBody = new Body(body.getLocation(),
+				newLocalVars.toArray(new VariableDeclaration[newLocalVars.size()]), newBlock);
+		ModelUtils.mergeAnnotations(body, newBody);
+		
+		Specification[] oldSpecs = proc.getSpecification();
+		boolean hasSpec = oldSpecs != null;
+		Specification[] newSpecs = hasSpec ? processSpecifications(oldSpecs) : null;	
+		
+		VarList[] newInParams = applyMappingToVarList(proc.getInParams(), new DeclarationInformation(
+				hasSpec ? StorageClass.PROC_FUNC_INPARAM : StorageClass.IMPLEMENTATION_INPARAM, procId));
+		VarList[] newOutParams = applyMappingToVarList(proc.getOutParams(), new DeclarationInformation(
+				hasSpec ? StorageClass.PROC_FUNC_OUTPARAM : StorageClass.IMPLEMENTATION_OUTPARAM, procId));
+		
+		Attribute[] newAttrs = processAttributes(proc.getAttributes());
+		Procedure newProc = new Procedure(proc.getLocation(), newAttrs, procId, proc.getTypeParams(),
+				newInParams, newOutParams, newSpecs, newBody);
+		ModelUtils.mergeAnnotations(proc, newProc);
+
 		mEdgeIndexStack.pop();
 		mProcedureStack.pop();
 
@@ -360,7 +377,14 @@ public class InlineVersionTransformer extends BoogieTransformer {
 		}
 	}
 	
-	// call only once for each procedure
+	
+	/**
+	 * Generates mappings for the parameters of combined procedures (declaration and implementation).
+	 * This will updated {@link #mVarIdManager}, link #mVarMap}, {@link #mInlinedVars}.
+	 * Call only once!
+	 * 
+	 * @param proc Combined procedure
+	 */
 	private void mapProcedureParameters(Procedure proc) {
 		boolean hasSpec = proc.getSpecification() != null;
 		List<VarList> inlinedParams = new ArrayList<>(proc.getInParams().length + proc.getOutParams().length);
@@ -376,9 +400,15 @@ public class InlineVersionTransformer extends BoogieTransformer {
 			mInlinedVars.add(newVarDecl);
 		}
 	}
-	
+
 	/**
-	 * ...
+	 * Generated mappings for the parameters of procedures with separate declaration and implementation.
+	 * This will updated {@link #mVarIdManager}, link #mVarMap}, {@link #mInlinedVars}.
+	 * The n-th variable from both lists will be mapped to the same value.
+	 * Call once for in parameters and once for out parameters.
+	 * 
+	 * @param paramsProcDecl In or out parameters from the Procedure declaration
+	 * @param paramsProcImpl In or out parameters from the Procedure implementation
 	 * @param inParams The given VarLists are input parameters of the procedure (false = output parameters).
 	 */
 	private void mapProcedureParametersToSameValue(VarList[] paramsProcDecl, VarList[] paramsProcImpl,
@@ -453,12 +483,6 @@ public class InlineVersionTransformer extends BoogieTransformer {
 			mInlinedVars.add(newVarDecl);
 		}
 	}
-	
-	private void mapQuantifierParameters(QuantifierExpression quantifierExpr) {
-		mapVariables(quantifierExpr.getParameters(), StorageClass.QUANTIFIED);
-		// quantified vars don't have to be added to the inlined local variables,
-		// because they don't have to be defined as local variables
-	}
 
 	/**
 	 * Adds a mapping for a variable, that is inside an inlined old() expressions.
@@ -489,14 +513,24 @@ public class InlineVersionTransformer extends BoogieTransformer {
 				// TODO Are the used ILocations intuitive?
 				VarList[] newVarLists = { new VarList(origVarList.getLocation(), new String[] { newId }, type) };
 				mInlinedVars.add(new VariableDeclaration(origVarDecl.getLocation(), newAttributes, newVarLists));
-				mInlinedOldVarStack.peek().add(
-						new VariableLHS(mInlinedOldExprStack.peek().getLocation(), type.getBoogieType(), id,
-						new DeclarationInformation(StorageClass.GLOBAL, null)));
 			} else {
 				VarMapKey keyWithoutOld = new VarMapKey(id, declInfo);
 				value = mVarMap.get(keyWithoutOld);
 			}
 			mVarMap.put(keyWithOld, value);
+		}
+	}
+	
+	/**
+	 * Updates {@link #mInlinedOldVarStack} for IdentifierExpressions from inside an old() expressions.
+	 * If it is a global variable, it is added the the collection on top of the stack.
+	 * 
+	 * @param idExpr unprocessed IdentifierExpressions from inside an old() expression.
+	 */
+	private void updateInlinedOldVarStack(IdentifierExpression idExpr) {
+		if (idExpr.getDeclarationInformation().getStorageClass() == StorageClass.GLOBAL) {
+			Set<IdExprWrapper> inlinedOldVars = mInlinedOldVarStack.peek();
+			inlinedOldVars.add(new IdExprWrapper(idExpr));
 		}
 	}
 	
@@ -545,8 +579,7 @@ public class InlineVersionTransformer extends BoogieTransformer {
 					throw new AssertionError("A variable wasn't mapped properly: " + key);
 				}
 			}
-			String[] newVarIdsArray = new String[newVarIds.size()];
-			newVarIds.toArray(newVarIdsArray);
+			String[] newVarIdsArray = newVarIds.toArray(new String[newVarIds.size()]);
 			Expression whereClause = varList.getWhereClause();
 			Expression newWhereClause = whereClause != null ? processExpression(whereClause) : null;
 			VarList newVarList = new VarList(varList.getLocation(), newVarIdsArray, varList.getType(), newWhereClause);
@@ -629,7 +662,7 @@ public class InlineVersionTransformer extends BoogieTransformer {
 	private List<Statement> inlineCall(CallStatement call, VariableLHS[] processedCallLHS, CallGraphNode calleeNode)
 			throws CancelToolchainException {
 	
-		mInlinedOldVarStack.push(new ArrayList<VariableLHS>());
+		mInlinedOldVarStack.push(new HashSet<IdExprWrapper>());
 
 		String procId = calleeNode.getId();
 		assert procId.equals(call.getMethodName());
@@ -693,7 +726,6 @@ public class InlineVersionTransformer extends BoogieTransformer {
 
 		if (calleeNode.isImplemented()) {
 			proc = calleeNode.getProcedureWithBody();
-			ILocation procLocation = proc.getLocation();
 			Body body = proc.getBody();
 			Statement[] block = body.getBlock();
 			mapLabels(block);
@@ -771,18 +803,20 @@ public class InlineVersionTransformer extends BoogieTransformer {
 		}
 		
 		// --------- keep old state of global vars, which appear inside old() expressions ---------
-		List<VariableLHS> oldVars = mInlinedOldVarStack.pop();
+		Set<IdExprWrapper> oldVars = mInlinedOldVarStack.pop();
+		Iterator<IdExprWrapper> oldVarsIterator = oldVars.iterator();
 		DeclarationInformation declInfoGlobal = new DeclarationInformation(StorageClass.GLOBAL, null);
 		VariableLHS[] oldVarLHS = new VariableLHS[oldVars.size()];
 		Expression[] oldVarRHS = new Expression[oldVars.size()];
-		for (int i = 0; i < oldVars.size(); ++i) {
-			VariableLHS oldVar = oldVars.get(i);
-			String oldVarId = oldVar.getIdentifier();
-			DeclarationInformation oldVarDeclInfo = oldVar.getDeclarationInformation();
-			VarMapKey oldVarKey = new VarMapKey(oldVarId, declInfoGlobal, proc.getIdentifier());
-			VarMapValue mapping = mVarMap.get(oldVarKey);
-			oldVarLHS[i] = new VariableLHS(callLocation, oldVar.getType(), mapping.getVarId(), mapping.getDeclInfo());
-			oldVarRHS[i] = new IdentifierExpression(callLocation, oldVar.getType(), oldVarId, oldVarDeclInfo);
+		for (int i = 0; oldVarsIterator.hasNext(); ++i) {
+			IdentifierExpression idExpr = oldVarsIterator.next().getIdExpr();
+			String id = idExpr.getIdentifier();
+			IType type = idExpr.getType();
+			VarMapValue mapping = mVarMap.get(new VarMapKey(id, declInfoGlobal, proc.getIdentifier()));
+			oldVarLHS[i] = new VariableLHS(callLocation, type, mapping.getVarId(), mapping.getDeclInfo());
+			oldVarRHS[i] = new IdentifierExpression(callLocation, type, id, declInfoGlobal);
+			// TODO mergeAnnotations from idExpr to oldVarRHS?
+			// probably not -- only one of possible many idExpr is stored in the set
 		}
 		
 		// --------- build the block to be inserted instead of the call ---------
@@ -934,7 +968,8 @@ public class InlineVersionTransformer extends BoogieTransformer {
 			DeclarationInformation declInfo = idExpr.getDeclarationInformation();
 			String inOldExprOfProc = inOldExprOfProc();
 			if (inOldExprOfProc != null) {
-				mapVariableInInlinedOldExpr(idExpr);	
+				mapVariableInInlinedOldExpr(idExpr); // includes check to avoid mapping of already mapped values	
+				updateInlinedOldVarStack(idExpr);
 			}
 			VarMapValue mapping = mVarMap.get(new VarMapKey(id, declInfo, inOldExprOfProc));
 			String newId = mapping.getVarId();
@@ -947,6 +982,29 @@ public class InlineVersionTransformer extends BoogieTransformer {
 			} else {
 				return idExpr;
 			}
+		} else if (expr instanceof QuantifierExpression) {
+			QuantifierExpression quantExpr = (QuantifierExpression) expr;
+			ILocation location = quantExpr.getLocation();
+			IType type = quantExpr.getType();
+			VarList[] params = quantExpr.getParameters();
+			Attribute[] attrs = quantExpr.getAttributes();
+			Expression formula = quantExpr.getSubformula();
+
+			mapVariables(quantExpr.getParameters(), StorageClass.QUANTIFIED);
+			// quantified vars don't have to be added to the inlined local variables,
+			// because they don't have to be defined as local variables
+
+			VarList[] newParams = applyMappingToVarList(params, new DeclarationInformation(StorageClass.QUANTIFIED, null));
+			Attribute[] newAttrs = processAttributes(attrs);
+			Expression newFormula = processExpression(formula);
+			if (newFormula != formula || newParams != params || newAttrs != attrs) {
+				QuantifierExpression newQuantExpr = new QuantifierExpression(location, type, quantExpr.isUniversal(),
+						quantExpr.getTypeParams(), newParams, newAttrs, newFormula);
+				ModelUtils.mergeAnnotations(quantExpr, newQuantExpr);
+				return newQuantExpr;
+			} else {
+				return quantExpr;
+			}
 		} else if (expr instanceof UnaryExpression
 				&& ((UnaryExpression) expr).getOperator() == UnaryExpression.Operator.OLD
 				&& !inEntryProcedure()) {
@@ -956,19 +1014,25 @@ public class InlineVersionTransformer extends BoogieTransformer {
 			mInlinedOldExprStack.pop();
 			ModelUtils.mergeAnnotations(unaryExpr, newExpr); // TODO is this good or bad?
 			return newExpr;
-		} else if (expr instanceof QuantifierExpression) {
-			throw new UnsupportedOperationException("Quantifiers aren't supported yet."); // TODO support
 		} else {
 			return super.processExpression(expr);
 		}
 	}
 	
+	/**
+	 * Applies the mapping to a VarList. Intended for mapping of procedure parameters.
+	 * This method should be used in place of {@linkplain #processVarLists(VarList[])}.
+
+	 * @param vls Original VarLists.
+	 * @param declInfo Original DeclarationInformation of the variables from the VarLists.
+	 * @return Mapped VarLists (note: the DeclarationInformation might have changed too).
+	 */
 	protected VarList[] applyMappingToVarList(VarList vls[], DeclarationInformation declInfo) {
 		VarList[] newVls = new VarList[vls.length];
 		boolean changed = false;
 		for (int i = 0; i < vls.length; ++i) {
 			VarList vl = vls[i];
-			VarList newVl = applyMappingToParameters(vl, declInfo);
+			VarList newVl = applyMappingToVarList(vl, declInfo);
 			if (newVl != vl) {
 				changed = true;
 			}
@@ -977,7 +1041,15 @@ public class InlineVersionTransformer extends BoogieTransformer {
 		return changed ? newVls : vls;
 	}
 	
-	protected VarList applyMappingToParameters(VarList vl, DeclarationInformation declInfo) {
+	/**
+	 * Applies the mapping to a VarList. Intended for mapping of procedure parameters.
+	 * This method should be used in place of {@linkplain #processVarList(VarList)}.
+	 * 
+	 * @param vl Original VarList.
+	 * @param declInfo Original DeclarationInformation of the variables from the VarList.
+	 * @return Mapped VarList (note: the DeclarationInformation might have changed too).
+	 */
+	private VarList applyMappingToVarList(VarList vl, DeclarationInformation declInfo) {
 		Expression where = vl.getWhereClause();
 		Expression newWhere = where != null ? processExpression(where) : null;
 		String[] ids = vl.getIdentifiers();
@@ -990,6 +1062,12 @@ public class InlineVersionTransformer extends BoogieTransformer {
 		return vl;
 	}
 	
+	/**
+	 * Applies the mapping to identifiers of variables.
+	 * @param ids Original identifiers of variables.
+	 * @param declInfo Original DeclarationInformation of the variables.
+	 * @return Mapped Identifiers (note: the DeclarationInformation might have changed too).
+	 */
 	private String[] applyMappingToVarIds(String[] ids, DeclarationInformation declInfo) {
 		String[] newIds = new String[ids.length];
 		boolean changed = false;
@@ -1002,6 +1080,19 @@ public class InlineVersionTransformer extends BoogieTransformer {
 			newIds[i] = newId;
 		}
 		return changed ? newIds : ids;
+	}
+
+	/**
+	 * Disabled due to parameters restriction of super class.
+	 * We need more parameters for a correct mapping of the variables.
+	 * 
+	 * @see #applyMappingToVarList(VarList, DeclarationInformation)
+	 * @see #applyMappingToVarList(VarList[], DeclarationInformation)
+	 */
+	@Deprecated
+	@Override
+	protected VarList processVarList(VarList varList) {
+		throw new UnsupportedOperationException("Use \"applyMappingToVarList(...)\" instead.");
 	}
 	
 	/**

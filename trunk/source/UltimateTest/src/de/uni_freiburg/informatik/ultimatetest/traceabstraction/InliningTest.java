@@ -17,10 +17,10 @@ public class InliningTest extends
 		AbstractTraceAbstractionTestSuite {
 	private static final String[] m_Directories = {
 		"examples/programs/regression",
-//		"examples/programs/quantifier/",
-//		"examples/programs/quantifier/regression",
-//		"examples/programs/recursivePrograms",
-//		"examples/programs/toy"
+		"examples/programs/quantifier/",
+		"examples/programs/quantifier/regression",
+		"examples/programs/recursivePrograms",
+		"examples/programs/toy"
 	};
 	
 	private static final boolean m_TraceAbstractionBoogie = false;

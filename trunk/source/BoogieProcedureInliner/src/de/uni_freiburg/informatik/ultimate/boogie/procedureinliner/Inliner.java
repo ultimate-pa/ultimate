@@ -19,6 +19,12 @@ import de.uni_freiburg.informatik.ultimate.model.GraphType;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.*;
 
+/**
+ * The actual Inliner.
+ * Builds a call graph, sets inline flags of procedures and inlines the flagged procedures.
+ * 
+ * @author schaetzc@informatik.uni-freiburg.de
+ */
 public class Inliner implements IUnmanagedObserver {
 
 	private IUltimateServiceProvider mServices;

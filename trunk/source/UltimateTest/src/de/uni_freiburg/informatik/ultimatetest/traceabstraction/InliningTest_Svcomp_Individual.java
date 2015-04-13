@@ -12,9 +12,11 @@ import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
  */
 public class InliningTest_Svcomp_Individual extends AbstractTraceAbstractionTestSuite {
 	
-	// sorted by line count in ascending order
+	/** Files to be tested. */
 	private static final String[] m_FILES = {
-		//"examples/svcomp/loop-acceleration/diamond_true-unreach-call2.c", // already fails without inlining
+		// Failed test from before fix of "old(vars) only assigned on first call".
+		// Sorted by line count in ascending order
+		/*
 		"examples/svcomp/list-properties/simple_true-unreach-call.i",
 		"examples/svcomp/list-properties/list_flag_true-unreach-call.i",
 		"examples/svcomp/list-properties/alternating_list_true-unreach-call.i",
@@ -23,6 +25,22 @@ public class InliningTest_Svcomp_Individual extends AbstractTraceAbstractionTest
 		"examples/svcomp/heap-manipulation/merge_sort_true-unreach-call.i",
 		"examples/svcomp/list-properties/list_search_true-unreach-call.i",
 		"examples/svcomp/heap-manipulation/bubble_sort_linux_true-unreach-call.i",
+		*/
+		// Failed tests from after fix of "old(vars) only assigned on first call".
+		"examples/svcomp/loop-acceleration/diamond_true-unreach-call2.c",
+		"examples/svcomp/loop-lit/afnp2014_true-unreach-call.c",
+		"examples/svcomp/loop-lit/bhmr2007_true-unreach-call.c.i",
+		"examples/svcomp/loop-lit/cggmp2005_true-unreach-call.c",
+		"examples/svcomp/loop-lit/cggmp2005_variant_true-unreach-call.c.i",
+		"examples/svcomp/loop-lit/css2003_true-unreach-call.c",
+		"examples/svcomp/loop-lit/gj2007_true-unreach-call.c",
+		"examples/svcomp/loop-lit/gsv2008_true-unreach-call.c",
+		"examples/svcomp/loop-lit/mcmillan2006_true-unreach-call.c",
+		"examples/svcomp/loops/bubble_sort_true-unreach-call.i",
+		"examples/svcomp/loops/linear_sea.ch_true-unreach-call.i",
+		"examples/svcomp/loops/linear_search_false-unreach-call.i",
+		"examples/svcomp/loops/lu.cmp_true-unreach-call.i",
+		"examples/svcomp/loops/ludcmp_false-unreach-call.i",
 	};
 
 	@Override
