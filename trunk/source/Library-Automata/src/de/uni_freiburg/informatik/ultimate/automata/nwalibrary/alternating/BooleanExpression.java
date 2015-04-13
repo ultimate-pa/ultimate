@@ -88,4 +88,16 @@ public class BooleanExpression{
 		}
 		return text;
 	}
+	
+	public BitSet getAlpha() {
+		return alpha;
+	}
+	
+	public BitSet getBeta() {
+		return beta;
+	}
+	
+	public BooleanExpression getNextConjunctExpression() {
+		return nextConjunctExpression;
+	}
 }

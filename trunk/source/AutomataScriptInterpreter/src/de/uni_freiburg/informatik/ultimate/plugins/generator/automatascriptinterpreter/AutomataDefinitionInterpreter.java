@@ -155,7 +155,9 @@ public class AutomataDefinitionInterpreter {
 						resultStates.add(stateExpression);
 					}
 				}
-				BooleanExpression booleanExpression = alternatingAutomaton.generateDisjunction(resultStates.toArray(new String[resultStates.size()]), negatedResultStates.toArray(new String[negatedResultStates.size()]));
+				BooleanExpression booleanExpression = alternatingAutomaton.generateDisjunction(
+						resultStates.toArray(new String[resultStates.size()]), 
+						negatedResultStates.toArray(new String[negatedResultStates.size()]));
 				booleanExpressions.add(booleanExpression);
 			}
 		}
