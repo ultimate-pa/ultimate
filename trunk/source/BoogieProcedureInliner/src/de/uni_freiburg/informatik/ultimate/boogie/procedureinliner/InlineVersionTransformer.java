@@ -12,6 +12,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.log4j.Logger;
+
 import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.callgraph.CallGraphEdgeLabel;
 import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.callgraph.CallGraphNode;
 import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.preferences.PreferenceItem;
@@ -107,6 +109,8 @@ public class InlineVersionTransformer extends BoogieTransformer {
 
 	private IUltimateServiceProvider mServices;
 
+	private Logger mLogger;
+	
 	private GlobalScopeManager mGlobalScopeManager;
 	
 	/**
@@ -190,6 +194,7 @@ public class InlineVersionTransformer extends BoogieTransformer {
 	public InlineVersionTransformer(IUltimateServiceProvider services, GlobalScopeManager globalScopeManager,
 			boolean assumeRequiresAfterAssert, boolean assertEnsuresBeforeAssume) {
 		mServices = services;
+		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mGlobalScopeManager = globalScopeManager;
 		mVarMap = globalScopeManager.initVarMap();
 		globalScopeManager.initVarIdManager(mVarIdManager);
@@ -588,6 +593,10 @@ public class InlineVersionTransformer extends BoogieTransformer {
 				}
 				mEdgeIndexStack.pop();
 				mProcedureStack.pop();
+
+				if (call.getPayload().hasAnnotation()) {
+					mLogger.warn("Discarded annotation of " + call + ": " + call.getPayload().getAnnotations());
+				}
 				return inlinedCall;
 			}
 		} else if (stat instanceof IfStatement) {
