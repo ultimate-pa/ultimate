@@ -6,7 +6,6 @@ package de.uni_freiburg.informatik.ultimatetest.traceabstraction;
 import java.util.Collection;
 
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
-import de.uni_freiburg.informatik.ultimatetest.AbstractModelCheckerTestSuite.DirectoryFileEndingsPair;
 
 /**
  * @author heizmann@informatik.uni-freiburg.de
@@ -16,9 +15,9 @@ public class InterpolationTest extends
 		AbstractTraceAbstractionTestSuite {
 	private static final String[] m_Directories = {
 		"examples/programs/regression/",
-//		"examples/programs/quantifier/",
-//		"examples/programs/recursivePrograms",
-//		"examples/programs/toy"
+		"examples/programs/quantifier/",
+		"examples/programs/recursivePrograms",
+		"examples/programs/toy",
 //		"examples/termination/AProVE"
 //		"examples/svcomp/recursive/",
 //		"examples/svcomp/ssh-simplified/",
@@ -42,8 +41,9 @@ public class InterpolationTest extends
 
 	private static final boolean s_ForwardPredicates = true;
 	private static final boolean s_SMTInterpol = !true;
-	private static final boolean s_iZ3 = true;
+	private static final boolean s_iZ3 = !true;
 	private static final boolean s_Princess = !true;
+	private static final boolean s_CVC4 = true;
 	
 	
 	@Override
@@ -58,7 +58,7 @@ public class InterpolationTest extends
 					"AutomizerC.xml",
 					"automizer/interpolation/ForwardPredicates.epf",
 				    m_Directories,
-				    new String[] {".i"});
+				    new String[] {".i", ".c"});
 		}
 		if (s_SMTInterpol) {
 			addTestCases(
@@ -94,8 +94,20 @@ public class InterpolationTest extends
 					"AutomizerC.xml",
 					"automizer/interpolation/Princess.epf",
 				    m_Directories,
-				    new String[] {".i"});
-		} 
+				    new String[] {".i", ".c"});
+		}
+		if (s_CVC4) {
+			addTestCases(
+					"AutomizerBpl.xml",
+					"automizer/interpolation/CVC4ForwardPredicates.epf",
+				    m_Directories,
+				    new String[] {".bpl"});
+			addTestCases(
+					"AutomizerC.xml",
+					"automizer/interpolation/CVC4ForwardPredicates.epf",
+				    m_Directories,
+				    new String[] {".i", ".c"});
+		}
 		return super.createTestCases();
 	}
 }
