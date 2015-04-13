@@ -38,7 +38,7 @@ public class AutomtaScriptTC extends WebToolchain {
 
 	@Override
 	protected String defineLanguage() {
-		return "automata";
+		return "automata script";
 	}
 
 	@Override
