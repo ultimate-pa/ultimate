@@ -14,8 +14,10 @@ public class TACAS2015AlgoComparisonArray extends TACAS2015 {
 		addTestCasesFixed("AutomizerC.xml", "TACASInterpolation2015/Automizer/SMTInterpol_Interpolation.epf", testcases);
 		addTestCasesFixed("AutomizerC.xml", "TACASInterpolation2015/Automizer/SMTInterpol_SP-IC-LV.epf", testcases);
 		addTestCasesFixed("AutomizerC.xml", "TACASInterpolation2015/Automizer/Z3_SP-IC-LV.epf", testcases);
+		addTestCasesFixed("AutomizerC.xml", "TACASInterpolation2015/Automizer/CVC4_SP-IC-LV.epf", testcases);
 		addTestCasesFixed("AutomizerC.xml", "TACASInterpolation2015/Automizer/SMTInterpol_SP-IC.epf", testcases);
 		addTestCasesFixed("AutomizerC.xml", "TACASInterpolation2015/Automizer/Z3_SP-IC.epf", testcases);
+		addTestCasesFixed("AutomizerC.xml", "TACASInterpolation2015/Automizer/CVC4_SP-IC.epf", testcases);
 		addTestCasesFixed("AutomizerC.xml", "TACASInterpolation2015/Automizer/Z3_SP.epf", testcases);
 		addTestCasesFixed("AutomizerC.xml", "TACASInterpolation2015/Automizer/Z3_SP-LV.epf", testcases);
 

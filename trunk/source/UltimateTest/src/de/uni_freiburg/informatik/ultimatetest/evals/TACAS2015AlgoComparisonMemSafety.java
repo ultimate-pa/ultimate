@@ -13,8 +13,10 @@ public class TACAS2015AlgoComparisonMemSafety extends TACAS2015 {
 		addTestCasesFixed("AutomizerCWithBlockEncoding.xml", "TACASInterpolation2015/Automizer/SMTInterpol_Interpolation-mem.epf", testcases);
 		addTestCasesFixed("AutomizerCWithBlockEncoding.xml", "TACASInterpolation2015/Automizer/SMTInterpol_SP-IC-LV-mem.epf", testcases);
 		addTestCasesFixed("AutomizerCWithBlockEncoding.xml", "TACASInterpolation2015/Automizer/Z3_SP-IC-LV-mem.epf", testcases);
+		addTestCasesFixed("AutomizerCWithBlockEncoding.xml", "TACASInterpolation2015/Automizer/CVC4_SP-IC-LV-mem.epf", testcases);
 		addTestCasesFixed("AutomizerCWithBlockEncoding.xml", "TACASInterpolation2015/Automizer/SMTInterpol_SP-IC-mem.epf", testcases);
 		addTestCasesFixed("AutomizerCWithBlockEncoding.xml", "TACASInterpolation2015/Automizer/Z3_SP-IC-mem.epf", testcases);
+		addTestCasesFixed("AutomizerCWithBlockEncoding.xml", "TACASInterpolation2015/Automizer/CVC4_SP-IC-mem.epf", testcases);
 		addTestCasesFixed("AutomizerCWithBlockEncoding.xml", "TACASInterpolation2015/Automizer/Z3_SP-LV-mem.epf", testcases);
 		addTestCasesFixed("AutomizerCWithBlockEncoding.xml", "TACASInterpolation2015/Automizer/Z3_SP-mem.epf", testcases);
 
