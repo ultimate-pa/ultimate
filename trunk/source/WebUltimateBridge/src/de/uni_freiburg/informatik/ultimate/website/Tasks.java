@@ -212,6 +212,7 @@ public class Tasks {
 		for (Map.Entry<String, ArrayList<WebToolchain>> tcPair : getActiveToolchains().entrySet()) {
 			for (WebToolchain toolchain : tcPair.getValue()) {
 				if (!sWorkers.containsKey(Worker.toKey(toolchain.getName()))) {
+					SimpleLogger.log("Worker for toolchain " + toolchain.getName() + " missing! Adding a worker via a very strange workaround");
 					sWorkers.put(Worker.toKey(toolchain.getName()), new Worker(toolchain.getName(), null, null, null));
 					SimpleLogger.log("Added worker for toolchain " + toolchain.getName());
 				}
