@@ -2,7 +2,7 @@ package de.uni_freiburg.informatik.ultimate.website.toolchains;
 
 public class NameStrings {
 	
-	public static final String s_TOOL_AutomataScriptInterpreter = "Automata Script";
+	public static final String s_TOOL_AutomataScriptInterpreter = "Automata Script Interpreter";
 	public static final String s_TOOL_Automizer = "Automizer";
 	public static final String s_TOOL_BuchiAutomizer = "Büchi Automizer";
 	public static final String s_TOOL_LassoRanker = "Lasso Ranker";
