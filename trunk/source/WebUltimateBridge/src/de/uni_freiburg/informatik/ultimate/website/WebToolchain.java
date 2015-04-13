@@ -52,18 +52,18 @@ public abstract class WebToolchain {
 
 	private static final String sEOL = System.getProperty("line.separator");
 
-	private static final Set<String> ids = new HashSet<String>();
+	private static final Set<String> sIds = new HashSet<String>();
 
 	private String mName;
 	private String mId;
-	private Tasks.TaskNames[] taskName;
-	private String userInfo;
-	private String layoutOrientation;
-	private String layoutFontsize;
-	private String layoutTransitions;
-	private String language;
-	private String description;
-	private List<Tool> tools;
+	private Tasks.TaskNames[] mTaskName;
+	private String mUserInfo;
+	private String mLayoutOrientation;
+	private String mLayoutFontsize;
+	private String mLayoutTransitions;
+	private String mLanguage;
+	private String mDescription;
+	private List<Tool> mTools;
 	private final List<Setting> mSettings;
 
 	public WebToolchain() {
@@ -81,6 +81,10 @@ public abstract class WebToolchain {
 		mSettings = new ArrayList<Setting>();
 		createSettingsFromSettingsFile(defineToolchainSettingsFile());
 		setAdditionalSettings(defineAdditionalSettings());
+
+		if (mLanguage == null) {
+			throw new IllegalArgumentException("defineLanguage() may not return null");
+		}
 	}
 
 	/**
@@ -98,7 +102,7 @@ public abstract class WebToolchain {
 	 * @return the names of the tasks, where this toolchain can be applied.
 	 */
 	public final Tasks.TaskNames[] getTaskName() {
-		return taskName;
+		return mTaskName;
 	}
 
 	/**
@@ -116,7 +120,7 @@ public abstract class WebToolchain {
 	 * @return an ordered list of tools that this toolchain executes.
 	 */
 	public final List<Tool> getTools() {
-		return tools;
+		return mTools;
 	}
 
 	/**
@@ -126,7 +130,7 @@ public abstract class WebToolchain {
 	 * @return a String describing this toolchain
 	 */
 	public final String getDescription() {
-		return this.description;
+		return this.mDescription;
 	}
 
 	/**
@@ -137,7 +141,7 @@ public abstract class WebToolchain {
 	public final String getToolchainXML() {
 		StringBuffer toolchainXML = new StringBuffer("<toolchain>");
 		toolchainXML.append(sEOL);
-		for (Tool t : tools) {
+		for (Tool t : mTools) {
 			toolchainXML.append("\t<plugin id=\"");
 			toolchainXML.append(t.getId());
 			toolchainXML.append("\"/>").append(sEOL);
@@ -292,7 +296,7 @@ public abstract class WebToolchain {
 		if (description.length() > 250) {
 			throw new IllegalArgumentException("String to long!");
 		}
-		this.description = description;
+		this.mDescription = description;
 	}
 
 	/**
@@ -328,10 +332,10 @@ public abstract class WebToolchain {
 		if (!id.matches("[a-z][a-zA-Z0-9]*")) {
 			throw new IllegalArgumentException("ID must be element of (a-z)(a-Z0-9)*");
 		}
-		if (ids.contains(id)) {
+		if (sIds.contains(id)) {
 			throw new IllegalArgumentException("ID must be unique!");
 		}
-		ids.add(id);
+		sIds.add(id);
 		this.mId = id;
 	}
 
@@ -342,7 +346,7 @@ public abstract class WebToolchain {
 	 *            the taskname to set
 	 */
 	protected final void setTaskName(Tasks.TaskNames[] taskName) {
-		this.taskName = taskName;
+		this.mTaskName = taskName;
 	}
 
 	/**
@@ -352,37 +356,37 @@ public abstract class WebToolchain {
 	 *            the language string to set
 	 */
 	protected final void setLanguage(String language) {
-		this.language = language;
+		this.mLanguage = language;
 	}
 
 	/**
 	 * Setter for the interface font size on the website.
 	 * 
-	 * @param language
+	 * @param mLanguage
 	 *            the fontsize string to set
 	 */
 	protected final void setInterfaceLayoutFontsize(String fontsize) {
-		this.layoutFontsize = fontsize;
+		this.mLayoutFontsize = fontsize;
 	}
 
 	/**
 	 * Setter for the interface orientation on the website.
 	 * 
-	 * @param language
+	 * @param mLanguage
 	 *            the orientation string to set
 	 */
 	protected final void setInterfaceLayoutOrientation(String orientation) {
-		this.layoutOrientation = orientation;
+		this.mLayoutOrientation = orientation;
 	}
 
 	/**
 	 * Setter for the interface transitions on the website.
 	 * 
-	 * @param language
+	 * @param mLanguage
 	 *            the transitions preset string to set
 	 */
 	protected final void setInterfaceLayoutTransitions(String transition) {
-		this.layoutTransitions = transition;
+		this.mLayoutTransitions = transition;
 	}
 
 	/**
@@ -391,7 +395,7 @@ public abstract class WebToolchain {
 	 * @return
 	 */
 	protected final void setUserInfo(String userInfo) {
-		this.userInfo = userInfo;
+		this.mUserInfo = userInfo;
 	}
 
 	/**
@@ -407,7 +411,7 @@ public abstract class WebToolchain {
 		if (tools.isEmpty()) {
 			throw new IllegalArgumentException("Empty toolchain is not valid!");
 		}
-		this.tools = tools;
+		this.mTools = tools;
 	}
 
 	private void createSettingsFromSettingsFile(String defineToolchainSettingsFile) {
@@ -511,7 +515,7 @@ public abstract class WebToolchain {
 	 * @return the user information
 	 */
 	public String getUserInfo() {
-		return userInfo;
+		return mUserInfo;
 	}
 
 	/**
@@ -520,7 +524,7 @@ public abstract class WebToolchain {
 	 * @return the toolchains language
 	 */
 	public String getLanguage() {
-		return language;
+		return mLanguage;
 	}
 
 	/**
@@ -529,7 +533,7 @@ public abstract class WebToolchain {
 	 * @return the fontsize.
 	 */
 	public String getInterfaceLayoutFontsize() {
-		return layoutFontsize;
+		return mLayoutFontsize;
 	}
 
 	/**
@@ -538,7 +542,7 @@ public abstract class WebToolchain {
 	 * @return the orientation.
 	 */
 	public String getInterfaceLayoutOrientation() {
-		return layoutOrientation;
+		return mLayoutOrientation;
 	}
 
 	/**
@@ -547,7 +551,7 @@ public abstract class WebToolchain {
 	 * @return the transitions preset.
 	 */
 	public String getInterfaceLayoutTransitions() {
-		return layoutTransitions;
+		return mLayoutTransitions;
 	}
 
 	/**
