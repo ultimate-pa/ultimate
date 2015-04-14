@@ -126,6 +126,7 @@ public class UltimateResultProcessor {
 				packagedResult.longDesc = String.valueOf(r.getLongDescription());
 				packagedResult.type = type;
 				resultList.add(new JSONObject(packagedResult));
+				SimpleLogger.log("added result: " + packagedResult.toString());
 			}
 			json.put("results", new JSONArray(resultList.toArray(new JSONObject[0])));
 		}
