@@ -23,6 +23,7 @@ import de.uni_freiburg.informatik.ultimate.result.NonterminatingLassoResult;
 import de.uni_freiburg.informatik.ultimate.result.PositiveResult;
 import de.uni_freiburg.informatik.ultimate.result.ProcedureContractResult;
 import de.uni_freiburg.informatik.ultimate.result.SyntaxErrorResult;
+import de.uni_freiburg.informatik.ultimate.result.TerminationAnalysisResult;
 import de.uni_freiburg.informatik.ultimate.result.TerminationArgumentResult;
 import de.uni_freiburg.informatik.ultimate.result.TimeoutResultAtElement;
 import de.uni_freiburg.informatik.ultimate.result.TypeErrorResult;
@@ -39,6 +40,7 @@ public class UltimateResultProcessor {
 		ArrayList<JSONObject> resultList = new ArrayList<JSONObject>();
 		for (List<IResult> rList : results.values()) {
 			for (IResult r : rList) {
+				SimpleLogger.log("processing result " + r.getShortDescription());
 				String type = "UNDEF";
 				UltimateResult packagedResult = new UltimateResult();
 				if (r instanceof ExceptionOrErrorResult) {
@@ -83,6 +85,9 @@ public class UltimateResultProcessor {
 				} else if (r instanceof TypeErrorResult<?>) {
 					type = "typeError";
 					packagedResult.logLvl = "error";
+				} else if (r instanceof TerminationAnalysisResult) {
+					type = "positive";
+					packagedResult.logLvl = "info";
 				} else if (r instanceof IResultWithSeverity) {
 					IResultWithSeverity rws = (IResultWithSeverity) r;
 					if (rws.getSeverity().equals(Severity.ERROR)) {
