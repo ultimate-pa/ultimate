@@ -100,4 +100,14 @@ public class UltimateResult {
 	public String getType() {
 		return type;
 	}
+
+	@Override
+	public String toString() {
+		return "UltimateResult [shortDesc=" + shortDesc + ", longDesc="
+				+ longDesc + ", startLNr=" + startLNr + ", endLNr=" + endLNr
+				+ ", startCol=" + startCol + ", endCol=" + endCol + ", logLvl="
+				+ logLvl + ", type=" + type + "]";
+	}
+	
+	
 }
