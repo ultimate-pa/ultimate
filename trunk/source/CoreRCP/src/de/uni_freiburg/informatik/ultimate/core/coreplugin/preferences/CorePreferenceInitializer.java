@@ -133,7 +133,7 @@ public class CorePreferenceInitializer extends UltimatePreferenceInitializer {
 	public static final boolean VALUE_SHOWRESULTNOTIFIERPOPUP_DEFAULT = false;
 
 	public static final String LABEL_BENCHMARK = "Generate benchmark results";
-	public static final boolean VALUE_BENCHMARK_DEFAULT = true;
+	public static final boolean VALUE_BENCHMARK_DEFAULT = false;
 
 	public static final String LABEL_LONG_RESULT = "Show long description of results";
 	public static final boolean VALUE_LONG_RESULT_DEFAULT = true;
