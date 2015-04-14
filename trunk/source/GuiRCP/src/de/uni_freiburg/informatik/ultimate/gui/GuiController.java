@@ -59,6 +59,9 @@ public class GuiController implements IController {
 	 * @return the exit code for the application
 	 */
 	public int init(ICore core, ILoggingService loggingService) {
+		if(loggingService == null){
+			throw new IllegalArgumentException("loggingService may not be null");
+		}
 		mLogger = loggingService.getControllerLogger();
 
 		if (core == null) {

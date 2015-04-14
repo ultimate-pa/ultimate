@@ -31,6 +31,9 @@ import de.uni_freiburg.informatik.ultimate.result.IProgramExecution;
  */
 public interface ITranslator<STE, TTE, SE, TE> {
 
+	/**
+	 * Note: Does not need to preserve instances 
+	 */
 	public TE translateExpression(SE expression);
 
 	public String targetExpressionToString(TE expression);
@@ -38,11 +41,16 @@ public interface ITranslator<STE, TTE, SE, TE> {
 	/**
 	 * Translate trace that is represented as a list of Source Trace Elements
 	 * (resp. list of Target Trace Elements).
+	 * 
+	 * Note: Should preserve instances 
+	 * 
+	 * @return
 	 */
 	public List<TTE> translateTrace(List<STE> trace);
 
 	public List<String> targetTraceToString(List<TTE> trace);
 
+	
 	public IProgramExecution<TTE, TE> translateProgramExecution(IProgramExecution<STE, SE> programExecution);
 
 	public Class<STE> getSourceTraceElementClass();
