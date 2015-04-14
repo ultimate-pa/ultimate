@@ -5,22 +5,16 @@ import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.result.AbstractResult;
 import de.uni_freiburg.informatik.ultimate.result.UnsupportedSyntaxResult;
 
-/**
- * Used when trying to inline polymorphic procedures.
- * 
- * @author schaetzc@informatik.uni-freiburg.de
- */
-public class InlinePolymorphicException extends CancelToolchainException {
+public class InliningUnsupportedException extends CancelToolchainException {
 
-	private static final long serialVersionUID = 6599224094177831810L;
+	private static final long serialVersionUID = 7795426075105131787L;
 
-	public InlinePolymorphicException(ILocation location, String procId) {
-		super("Polymorphic procedures are not supported: "  + procId, location);
+	public InliningUnsupportedException(String message, ILocation location) {
+		super(message, location);
 	}
 
 	@Override
 	protected AbstractResult createResult(String pluginId) {
 		return new UnsupportedSyntaxResult<>(Activator.PLUGIN_ID, getLocation(), getMessage());
 	}
-
 }

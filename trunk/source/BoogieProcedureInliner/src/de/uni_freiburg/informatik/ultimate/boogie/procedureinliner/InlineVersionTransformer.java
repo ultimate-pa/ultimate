@@ -17,14 +17,11 @@ import org.apache.log4j.Logger;
 import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.callgraph.CallGraphEdgeLabel;
 import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.callgraph.CallGraphNode;
 import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.exceptions.CancelToolchainException;
-import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.exceptions.InlineFreeRequiresException;
-import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.exceptions.InlinePolymorphicException;
-import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.exceptions.InlineRecursiveCallException;
+import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.exceptions.InliningUnsupportedException;
 import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.preferences.PreferenceItem;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.model.IType;
 import de.uni_freiburg.informatik.ultimate.model.ModelUtils;
-import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieTransformer;
 import de.uni_freiburg.informatik.ultimate.model.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.model.boogie.DeclarationInformation.StorageClass;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.*;
@@ -37,7 +34,7 @@ import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
  * 
  * @author schaetzc@informatik.uni-freiburg.de
  */
-public class InlineVersionTransformer extends BoogieTransformer {
+public class InlineVersionTransformer extends BoogieCopyTransformer {
 
 	/**
 	 * Used to manage Declarations which aren't changed, but have an effect on the inlining process.
@@ -248,24 +245,16 @@ public class InlineVersionTransformer extends BoogieTransformer {
 
 		List<VariableDeclaration> newLocalVars = new ArrayList<>();
 		DeclarationInformation localDeclInfo = new DeclarationInformation(StorageClass.LOCAL, procId);
-		for (VariableDeclaration localVarDecl : body.getLocalVars()) {
-			Attribute[] attrs = localVarDecl.getAttributes();
-			Attribute[] newAttrs = processAttributes(attrs);
-			VarList[] vars = localVarDecl.getVariables();
-			VarList[] newVars = applyMappingToVarList(vars, localDeclInfo);
-			VariableDeclaration newLocalVarDecl;
-			if (newAttrs != attrs || newVars != vars) {
-				newLocalVarDecl = new VariableDeclaration(localVarDecl.getLocation(), newAttrs, newVars);
-				ModelUtils.mergeAnnotations(localVarDecl, newLocalVarDecl);
-			} else {
-				newLocalVarDecl = localVarDecl;
-			}
-			newLocalVars.add(newLocalVarDecl);
+		for (VariableDeclaration varDecl : body.getLocalVars()) {
+			Attribute[] newAttrs = processAttributes(varDecl.getAttributes());
+			VarList[] newVars = applyMappingToVarList(varDecl.getVariables(), localDeclInfo);
+			VariableDeclaration newVarDecl = new VariableDeclaration(varDecl.getLocation(), newAttrs, newVars);
+			ModelUtils.mergeAnnotations(varDecl, newVarDecl);
+			newLocalVars.add(newVarDecl);
 		}
 		newLocalVars.addAll(mInlinedVars);
-
-		Body newBody = new Body(body.getLocation(),
-				newLocalVars.toArray(new VariableDeclaration[newLocalVars.size()]), newBlock);
+		VariableDeclaration[] newLocalVarsArray = newLocalVars.toArray(new VariableDeclaration[newLocalVars.size()]);
+		Body newBody = new Body(body.getLocation(), newLocalVarsArray, newBlock);
 		ModelUtils.mergeAnnotations(body, newBody);
 		
 		Specification[] oldSpecs = proc.getSpecification();
@@ -363,7 +352,9 @@ public class InlineVersionTransformer extends BoogieTransformer {
 		Procedure procWithSpec = proc.getProcedureWithSpecification();
 		Procedure procWithBody = proc.getProcedureWithBody();
 		if (proc.isPolymorphic()) {
-			throw new InlinePolymorphicException(procWithSpec.getLocation(), proc.getId()); // TODO move to another pos?
+			ILocation location = proc.getProcedureWithSpecification().getLocation();
+			throw new InliningUnsupportedException("Polymorphic procedure " + proc.getId(), location);
+			// polymorphic procedures would need multiple mappings -- one for every call with other types
 		}
 		if (proc.isImplemented()) {
 			if (proc.isCombined()) {
@@ -623,12 +614,7 @@ public class InlineVersionTransformer extends BoogieTransformer {
 				if (incrementCallCounter(calleeNode.getId()) <= 0) {
 					mapVariablesOfCurrentProcedure();
 				}
-				List<Statement> inlinedCall;
-				if (call.isForall()) {
-					inlinedCall = inlineCallForall(call, processedCallLHSs, calleeNode);
-				} else {
-					inlinedCall = inlineCall(call, processedCallLHSs, calleeNode);
-				}
+				List<Statement> inlinedCall = inlineCall(call, processedCallLHSs, calleeNode);
 				mEdgeIndexStack.pop();
 				mProcedureStack.pop();
 
@@ -657,21 +643,29 @@ public class InlineVersionTransformer extends BoogieTransformer {
 		}
 		return Collections.singletonList(newStat);
 	}
-	
-	private List<Statement> inlineCallForall(CallStatement call, VariableLHS[] processedCallLHSs,
-			CallGraphNode calleeNode) {
-		throw new UnsupportedOperationException("Call forall isn't supported yet."); // TODO support
-	}
 
+	/**
+	 * Creates an inline version of a normal call (no call forall).
+	 * 
+	 * @param call Normal CallStatement which should be inlined.
+	 * @param processedCallLHS Processed LHS of the CallStatemente.
+	 *                         The LHS instances from the array need to be unique for each call of this method.
+	 * @param calleeNode CallGrapNode of the called procedure
+	 * @return Inline version of the call.
+	 * 
+	 * @throws CancelToolchainException The program contained constructs which couldn't be inlined (e.g. recursion).
+	 */
 	private List<Statement> inlineCall(CallStatement call, VariableLHS[] processedCallLHS, CallGraphNode calleeNode)
 			throws CancelToolchainException {
-	
+
 		mInlinedOldVarStack.push(new HashSet<IdExprWrapper>());
 
 		String procId = calleeNode.getId();
 		assert procId.equals(call.getMethodName());
 		if (stackContainsDuplicates()) {
-			throw new InlineRecursiveCallException(call);
+			throw new InliningUnsupportedException("Recursive call: " + call, call.getLocation());
+		} else if (call.isForall()) {
+			throw new InliningUnsupportedException("Call forall: " + call, call.getLocation());
 		}
 
 		// --------- inline specifications ---------
@@ -681,36 +675,36 @@ public class InlineVersionTransformer extends BoogieTransformer {
 		List<Statement> assumeRequires = new ArrayList<>();
 		List<Statement> assertEnsures = new ArrayList<>();
 		List<Statement> assumeEnsures = new ArrayList<>();
-		List<ModifiesSpecification> modifiesSpecifications = new ArrayList<>();
-		for (Specification spec : processSpecifications(specs)) {
-			ILocation loc = spec.getLocation();
-			boolean isFree = spec.isFree();
-			if (spec instanceof RequiresSpecification) {
-				Expression formula = ((RequiresSpecification) spec).getFormula();
+		List<ModifiesSpecification> processedModSpecs = new ArrayList<>();
+		for (Specification processedSpec : processSpecifications(specs)) {
+			ILocation loc = processedSpec.getLocation();
+			boolean isFree = processedSpec.isFree();
+			if (processedSpec instanceof RequiresSpecification) {
+				Expression processedFormula = ((RequiresSpecification) processedSpec).getFormula();
 				if (isFree) {
-					throw new InlineFreeRequiresException(call); 
+					throw new InliningUnsupportedException("Free ensures: " + call, call.getLocation()); 
 				} else {
-					AssertStatement assertStat = new AssertStatement(loc, formula);
-					ModelUtils.mergeAnnotations(spec, assertStat);
+					AssertStatement assertStat = new AssertStatement(loc, processedFormula);
+					ModelUtils.mergeAnnotations(processedSpec, assertStat);
 					assertRequires.add(assertStat);					
 				}
 				if (mAssumeRequiresAfterAssert) {
-					AssumeStatement assumeStat = new AssumeStatement(loc, formula);
-					ModelUtils.mergeAnnotations(spec, assumeStat);
+					AssumeStatement assumeStat = new AssumeStatement(loc, processedFormula);
+					ModelUtils.mergeAnnotations(processedSpec, assumeStat);
 					assumeRequires.add(assumeStat);
 				}
-			} else if (spec instanceof EnsuresSpecification) {
-				Expression formula = ((EnsuresSpecification) spec).getFormula();
+			} else if (processedSpec instanceof EnsuresSpecification) {
+				Expression formula = ((EnsuresSpecification) processedSpec).getFormula();
 				if (!isFree && mAssertEnsuresBeforeAssume && calleeNode.isImplemented()) {
 					AssertStatement assertStat = new AssertStatement(loc, formula);
-					ModelUtils.mergeAnnotations(spec, assertStat);
+					ModelUtils.mergeAnnotations(processedSpec, assertStat);
 					assertEnsures.add(assertStat);
 				}
 				AssumeStatement assumeStat = new AssumeStatement(loc, formula);
-				ModelUtils.mergeAnnotations(spec, assumeStat);
+				ModelUtils.mergeAnnotations(processedSpec, assumeStat);
 				assumeEnsures.add(assumeStat);
-			} else if (spec instanceof ModifiesSpecification) {
-				modifiesSpecifications.add((ModifiesSpecification) spec);
+			} else if (processedSpec instanceof ModifiesSpecification) {
+				processedModSpecs.add((ModifiesSpecification) processedSpec);
 			}
 		}
 
@@ -759,10 +753,10 @@ public class InlineVersionTransformer extends BoogieTransformer {
 
 			// havoc global variables from modifies specifications
 			proc = calleeNode.getProcedureWithSpecification();
-			for (ModifiesSpecification modSpec : modifiesSpecifications) {
+			for (ModifiesSpecification modSpec : processedModSpecs) {
 				VariableLHS[] modVars = modSpec.getIdentifiers();
 				if (modVars.length > 0) {
-					modVars = processVariableLHSs(modVars);
+					//modVars = processVariableLHSs(modVars); // TODO keep or delete?
 					Statement havocModifiedVars = new HavocStatement(modSpec.getLocation(), modVars);
 					ModelUtils.mergeAnnotations(modSpec, havocModifiedVars);
 					inlinedBody.add(havocModifiedVars);
@@ -821,8 +815,6 @@ public class InlineVersionTransformer extends BoogieTransformer {
 			VarMapValue mapping = mVarMap.get(new VarMapKey(id, declInfoGlobal, proc.getIdentifier()));
 			oldVarLHS[i] = new VariableLHS(callLocation, type, mapping.getVarId(), mapping.getDeclInfo());
 			oldVarRHS[i] = new IdentifierExpression(callLocation, type, id, declInfoGlobal);
-			// TODO mergeAnnotations from idExpr to oldVarRHS?
-			// probably not -- only one of possible many idExpr is stored in the set
 		}
 		
 		// --------- build the block to be inserted instead of the call ---------
@@ -855,33 +847,33 @@ public class InlineVersionTransformer extends BoogieTransformer {
 	}
 	
 	@Override
-	protected Statement processStatement(Statement statement) {
-		Statement newStatement = null;
-		if (statement instanceof Label) {
-			Label label = (Label) statement;
-			newStatement = new Label(label.getLocation(), getNewLabelId(label.getName()));
-		} else if (statement instanceof GotoStatement) {
-			GotoStatement gotoStat = (GotoStatement) statement;
+	protected Statement processStatement(Statement stat) {
+		Statement newStat = null;
+		if (stat instanceof Label) {
+			Label label = (Label) stat;
+			newStat = new Label(label.getLocation(), getNewLabelId(label.getName()));
+		} else if (stat instanceof GotoStatement) {
+			GotoStatement gotoStat = (GotoStatement) stat;
 			String[] labelIds = gotoStat.getLabels();
 			String[] newLabelIds = new String[labelIds.length];
 			for (int i = 0; i < labelIds.length; ++i) {
 				newLabelIds[i] = getNewLabelId(labelIds[i]);
 			}
-			newStatement = new GotoStatement(gotoStat.getLocation(), newLabelIds);
-		} else if (statement instanceof BreakStatement) {
-			BreakStatement breakStat = (BreakStatement) statement;
+			newStat = new GotoStatement(gotoStat.getLocation(), newLabelIds);
+		} else if (stat instanceof BreakStatement) {
+			BreakStatement breakStat = (BreakStatement) stat;
 			String label = breakStat.getLabel();
 			if (label != null) {
-				newStatement = new BreakStatement(breakStat.getLocation(), getNewLabelId(label));				
+				newStat = new BreakStatement(breakStat.getLocation(), getNewLabelId(label));				
 			}
-		} else if (statement instanceof ReturnStatement && !inEntryProcedure()) {
-			newStatement = new GotoStatement(statement.getLocation(), new String[] { getCurrentReturnLabelId() });
+		} else if (stat instanceof ReturnStatement && !inEntryProcedure()) {
+			newStat = new GotoStatement(stat.getLocation(), new String[] { getCurrentReturnLabelId() });
 		}
-		if (newStatement == null) {
-			return super.processStatement(statement);
+		if (newStat == null) {
+			return super.processStatement(stat);
 		} else {
-			ModelUtils.mergeAnnotations(statement, newStatement);
-			return newStatement;
+			ModelUtils.mergeAnnotations(stat, newStat);
+			return newStat;
 		}
 	}
 	
@@ -890,30 +882,25 @@ public class InlineVersionTransformer extends BoogieTransformer {
 		LeftHandSide newLhs = null;
 		if (lhs instanceof VariableLHS) {
 			VariableLHS varLhs = (VariableLHS) lhs;
-			String id = varLhs.getIdentifier();
 			DeclarationInformation declInfo = varLhs.getDeclarationInformation();
-			VarMapValue mapping = mVarMap.get(new VarMapKey(id, declInfo, inOldExprOfProc()));
+			VarMapValue mapping = mVarMap.get(new VarMapKey(varLhs.getIdentifier(), declInfo, inOldExprOfProc()));
 			String newId = mapping.getVarId();
 			DeclarationInformation newDeclInfo = mapping.getDeclInfo();
-			if (id != newId || declInfo != newDeclInfo) {
-				newLhs = new VariableLHS(varLhs.getLocation(), varLhs.getType(), newId, newDeclInfo);
-			}
+			newLhs = new VariableLHS(varLhs.getLocation(), varLhs.getType(), newId, newDeclInfo);
 		} else if (lhs instanceof StructLHS) {
 			StructLHS structLhs = (StructLHS) lhs;
-			LeftHandSide structStruct = structLhs.getStruct();
-			LeftHandSide newStructStruct = processLeftHandSide(structStruct);
-			if (newStructStruct != structStruct) {
-				newLhs = new StructLHS(structLhs.getLocation(), newStructStruct, structLhs.getField());
-			}
-		} else { // ArrayLHS is handled by the super implementation
-			return super.processLeftHandSide(lhs);
-		}
-		if (newLhs == null) {
-			return lhs;	
+			LeftHandSide newStructStruct = processLeftHandSide(structLhs.getStruct());
+			newLhs = new StructLHS(structLhs.getLocation(), newStructStruct, structLhs.getField());
+		} else if (lhs instanceof ArrayLHS) {
+			ArrayLHS arrayLhs = (ArrayLHS) lhs;
+			LeftHandSide newArray = processLeftHandSide(arrayLhs.getArray());
+			Expression[] newIndices = processExpressions(arrayLhs.getIndices());
+			newLhs = new ArrayLHS(lhs.getLocation(), arrayLhs.getType(), newArray, newIndices);
 		} else {
-			ModelUtils.mergeAnnotations(lhs, newLhs);
-			return newLhs;
+			throw new UnsupportedOperationException("Cannot process unknown LHS: " + lhs.getClass().getName());
 		}
+		ModelUtils.mergeAnnotations(lhs, newLhs);
+		return newLhs;
 	}
 	
 	private String getNewLabelId(String oldLabelId) {
@@ -968,6 +955,7 @@ public class InlineVersionTransformer extends BoogieTransformer {
 	
 	@Override
 	protected Expression processExpression(Expression expr) {
+		Expression newExpr = null;
 		if (expr instanceof IdentifierExpression) {
 			IdentifierExpression idExpr = (IdentifierExpression) expr;
 			String id = idExpr.getIdentifier();
@@ -980,14 +968,7 @@ public class InlineVersionTransformer extends BoogieTransformer {
 			VarMapValue mapping = mVarMap.get(new VarMapKey(id, declInfo, inOldExprOfProc));
 			String newId = mapping.getVarId();
 			DeclarationInformation newDeclInfo = mapping.getDeclInfo();
-			if (newId != id || newDeclInfo != declInfo) {
-				IdentifierExpression newIdExpr = new IdentifierExpression(
-						idExpr.getLocation(), idExpr.getType(), newId, newDeclInfo);
-				ModelUtils.mergeAnnotations(idExpr, newIdExpr);
-				return newIdExpr;
-			} else {
-				return idExpr;
-			}
+			newExpr = new IdentifierExpression(idExpr.getLocation(), idExpr.getType(), newId, newDeclInfo);
 		} else if (expr instanceof QuantifierExpression) {
 			QuantifierExpression quantExpr = (QuantifierExpression) expr;
 			ILocation location = quantExpr.getLocation();
@@ -1003,28 +984,24 @@ public class InlineVersionTransformer extends BoogieTransformer {
 			VarList[] newParams = applyMappingToVarList(params, new DeclarationInformation(StorageClass.QUANTIFIED, null));
 			Attribute[] newAttrs = processAttributes(attrs);
 			Expression newFormula = processExpression(formula);
-			if (newFormula != formula || newParams != params || newAttrs != attrs) {
-				QuantifierExpression newQuantExpr = new QuantifierExpression(location, type, quantExpr.isUniversal(),
-						quantExpr.getTypeParams(), newParams, newAttrs, newFormula);
-				ModelUtils.mergeAnnotations(quantExpr, newQuantExpr);
-				return newQuantExpr;
-			} else {
-				return quantExpr;
-			}
+			newExpr = new QuantifierExpression(location, type, quantExpr.isUniversal(), quantExpr.getTypeParams(),
+					newParams, newAttrs, newFormula);
 		} else if (expr instanceof UnaryExpression
 				&& ((UnaryExpression) expr).getOperator() == UnaryExpression.Operator.OLD
 				&& !inEntryProcedure()) {
 			UnaryExpression unaryExpr = (UnaryExpression) expr;
 			mInlinedOldExprStack.push(unaryExpr);
-			Expression newExpr = processExpression(unaryExpr.getExpr());
+			newExpr = processExpression(unaryExpr.getExpr());
 			mInlinedOldExprStack.pop();
-			ModelUtils.mergeAnnotations(unaryExpr, newExpr); // TODO is this good or bad?
-			return newExpr;
+		} 
+		if (newExpr == null) {
+			return super.processExpression(expr);			
 		} else {
-			return super.processExpression(expr);
+			ModelUtils.mergeAnnotations(expr, newExpr);
+			return newExpr;
 		}
 	}
-	
+
 	/**
 	 * Applies the mapping to a VarList. Intended for mapping of procedure parameters.
 	 * This method should be used in place of {@linkplain #processVarLists(VarList[])}.
