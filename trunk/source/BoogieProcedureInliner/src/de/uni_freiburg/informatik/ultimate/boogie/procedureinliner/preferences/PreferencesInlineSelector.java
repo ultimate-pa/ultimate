@@ -14,6 +14,8 @@ import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.callgraph.Cal
 import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.callgraph.CallGraphNode;
 import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.callgraph.CallGraphEdgeLabel.EdgeType;
 import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.callgraph.ILabeledEdgesFilter;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.RequiresSpecification;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Specification;
 
 /**
  * Selector using the preferences from the BoogieProcedureInliner.
@@ -24,8 +26,9 @@ public class PreferencesInlineSelector implements IInlineSelector {
 	
 	private boolean mInlineUnimplemented;
 	private boolean mInlineImplemented;
-	private boolean mInlineCallForAll;
+	private boolean mIgnoreCallForAll;
 	private boolean mIgnoreRecursive;
+	private boolean mIgnoreWithFreeRequires;
 	private boolean mIgnorePolymorphic;
 	private boolean mIgnoreMultipleCalled;
 	private Collection<String> mUserList;
@@ -41,10 +44,11 @@ public class PreferencesInlineSelector implements IInlineSelector {
 	public PreferencesInlineSelector() {
 		mInlineUnimplemented = PreferenceItem.INLINE_UNIMPLEMENTED.getBooleanValue();
 		mInlineImplemented = PreferenceItem.INLINE_IMPLEMENTED.getBooleanValue();
-		mInlineCallForAll = PreferenceItem.INLINE_CALL_FORALL.getBooleanValue();
+		mIgnoreCallForAll = PreferenceItem.IGNORE_CALL_FORALL.getBooleanValue();
 		mUserList = new HashSet<String>(Arrays.asList(PreferenceItem.USER_LIST.getStringValue().trim().split("\\s+")));
 		mUserListType = PreferenceItem.USER_LIST_TYPE.getUserListTypeValue();
 		mIgnoreRecursive = PreferenceItem.IGNORE_RECURSIVE.getBooleanValue();
+		mIgnoreWithFreeRequires = PreferenceItem.IGNORE_WITH_FREE_REQUIRES.getBooleanValue();
 		mIgnorePolymorphic = PreferenceItem.IGNORE_MULTIPLE_CALLED.getBooleanValue();
 		mIgnoreMultipleCalled = PreferenceItem.IGNORE_MULTIPLE_CALLED.getBooleanValue();
 	}
@@ -79,12 +83,14 @@ public class PreferencesInlineSelector implements IInlineSelector {
 		@Override
 		public boolean accept(CallGraphNode caller, CallGraphEdgeLabel callLabel, CallGraphNode callee) {
 			boolean inline;
-			if (mIgnorePolymorphic && (caller.isPolymorphic() || callee.isPolymorphic())) {
+			if (mIgnoreWithFreeRequires && hasFreeRequiresSpecification(callee)) {
+				inline = false;
+			} else if (mIgnorePolymorphic && (caller.isPolymorphic() || callee.isPolymorphic())) {
 				inline = false;
 			} else if (mIgnoreRecursive && callLabel.getEdgeType().isRecursive()) {
 				inline = false;
-			} else if (mInlineCallForAll && callLabel.getEdgeType() == EdgeType.CALL_FORALL) {
-				inline = true;
+			} else if (mIgnoreCallForAll && callLabel.getEdgeType() == EdgeType.CALL_FORALL) {
+				inline = false;
 			} else {
 				// Assume that all procedures are called only once.
 				boolean isImplemented = callee.isImplemented();
@@ -101,6 +107,15 @@ public class PreferencesInlineSelector implements IInlineSelector {
 			return inline;
 		}
 	};
+	
+	private boolean hasFreeRequiresSpecification(CallGraphNode procNode) {
+		for (Specification spec : procNode.getProcedureWithSpecification().getSpecification()) {
+			if (spec instanceof RequiresSpecification && spec.isFree()) {
+				return true;
+			}
+		}
+		return false;
+	}
 	
 	/** Filter determining whether to set an inline flag or not, using the previously set flag and the user list. */
 	private ILabeledEdgesFilter<CallGraphNode, CallGraphEdgeLabel> mUserListFilter =
@@ -128,6 +143,8 @@ public class PreferencesInlineSelector implements IInlineSelector {
 				case WHITELIST_RESTRICT:
 					inline = inline && inUserList;
 					break;
+				default:
+					throw new IllegalArgumentException("Unknown user list type: " + mUserListType);
 			}
 			return inline;
 		}

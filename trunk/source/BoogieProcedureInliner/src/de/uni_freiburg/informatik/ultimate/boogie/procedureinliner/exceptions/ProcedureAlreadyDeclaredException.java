@@ -1,7 +1,6 @@
-package de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.callgraph;
+package de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.exceptions;
 
 import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.Activator;
-import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.CancelToolchainException;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Procedure;
 import de.uni_freiburg.informatik.ultimate.result.AbstractResult;
 import de.uni_freiburg.informatik.ultimate.result.UnsupportedSyntaxResult;

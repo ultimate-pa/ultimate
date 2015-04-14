@@ -16,6 +16,10 @@ import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.callgraph.CallGraphEdgeLabel;
 import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.callgraph.CallGraphNode;
+import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.exceptions.CancelToolchainException;
+import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.exceptions.InlineFreeRequiresException;
+import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.exceptions.InlinePolymorphicException;
+import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.exceptions.InlineRecursiveCallException;
 import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.preferences.PreferenceItem;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.model.IType;
@@ -683,12 +687,14 @@ public class InlineVersionTransformer extends BoogieTransformer {
 			boolean isFree = spec.isFree();
 			if (spec instanceof RequiresSpecification) {
 				Expression formula = ((RequiresSpecification) spec).getFormula();
-				if (!isFree) {
+				if (isFree) {
+					throw new InlineFreeRequiresException(call); 
+				} else {
 					AssertStatement assertStat = new AssertStatement(loc, formula);
 					ModelUtils.mergeAnnotations(spec, assertStat);
 					assertRequires.add(assertStat);					
 				}
-				if (isFree || mAssumeRequiresAfterAssert) {
+				if (mAssumeRequiresAfterAssert) {
 					AssumeStatement assumeStat = new AssumeStatement(loc, formula);
 					ModelUtils.mergeAnnotations(spec, assumeStat);
 					assumeRequires.add(assumeStat);

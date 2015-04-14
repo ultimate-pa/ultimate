@@ -5,6 +5,8 @@ import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceIt
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceItem.PreferenceType;
 
+import static de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceItem.PreferenceType.Boolean;
+
 /**
  * All items from the plug-in's preferences.
  * The current set preferences can be queried on each item.
@@ -16,20 +18,22 @@ import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceIt
 public enum PreferenceItem {
 
 	LABEL___ENABLE_INLINING_FOR("Enable inlining for ..."),
-	INLINE_UNIMPLEMENTED("calls to unimplemented procedures", true, PreferenceType.Boolean),
-	INLINE_IMPLEMENTED("calls to implemented procedures", true, PreferenceType.Boolean),
-	INLINE_CALL_FORALL("call-forall statements", true, PreferenceType.Boolean),
-	
-	LABEL___IGNORE_CALLS("\nIgnore calls to ..."),
-	IGNORE_POLYMORPHIC("and inside polymorphic procedures *", true, PreferenceType.Boolean),
-	IGNORE_RECURSIVE("recursive procedures *", true, PreferenceType.Boolean),
-	IGNORE_MULTIPLE_CALLED("procedures, called more than once", false, PreferenceType.Boolean),
-	NOTE___CANCEL_TOOLCHAIN("* = or else the toolchain will be canceled"),
+	INLINE_UNIMPLEMENTED("calls to unimplemented procedures", true, Boolean),
+	INLINE_IMPLEMENTED("calls to implemented procedures", true, Boolean),
+
+	LABEL___IGNORE_CALLS("\nIgnore calls ..."),
+	IGNORE_CALL_FORALL("with \'forall\' modifier *", true, PreferenceType.Boolean),
+	IGNORE_WITH_FREE_REQUIRES("to procedures with \'free requires\' specifications *", true, Boolean),
+	IGNORE_POLYMORPHIC("to and inside polymorphic procedures *", true, Boolean),
+	IGNORE_RECURSIVE("to recursive procedures *", true, Boolean),
+	IGNORE_MULTIPLE_CALLED("to procedures, called more than once", false, Boolean),
+	NOTE___UNSUPPORTED("* attempt to inline these will cause an exception"),
 
 	LABEL___USER_LIST("\nUser list (procedure ids, separated by whitespace)"),
 	USER_LIST("User list", "", PreferenceType.MultilineString),
 	USER_LIST_TYPE("user list type", UserListType.BLACKLIST_RESTRICT, PreferenceType.Combo, UserListType.values()),
-
+	NOTE___TYPE_DESCRIPTION(UserListType.description()),
+	
 	LABEL___SPECIFICATION_INLINING("\nSpecification inlining (in the same order as shown here)"),
 	NOTE___ASSERT_REQUIRES("[X] assert requires/precondition"),
 	ASSUME_REQUIRES_AFTER_ASSERT("assume requires/precondition", true, PreferenceType.Boolean),

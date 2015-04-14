@@ -1,4 +1,4 @@
-package de.uni_freiburg.informatik.ultimate.boogie.procedureinliner;
+package de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.exceptions;
 
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;

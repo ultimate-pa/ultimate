@@ -13,18 +13,37 @@ package de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.preferences;
 public enum UserListType {
 
 	/** Inline the set of procedures: PREF. */
-	DISABLED("Disabled"),
-	/** Inline the set of procedures: PREF - LIST. */
-	BLACKLIST_RESTRICT("Use preferences above, but never inline listed procedures"),
-	/** Inline the set of procedures: ALL - LIST. */
-	BLACKLIST_ONLY("Ignore preferences above and inline all UNlisted procedures"),
-	/** Inline the set of procedures: PREF \/ LIST. */
-	WHITELIST_EXTEND("Use preferences above, but always inline listed procedures"),
-	/** Inline the set of procedures: PREF /\ LIST. */
-	WHITELIST_RESTRICT("Use preferences above, but never inline UNlisted procedures"),
+	DISABLED("PREF"),
+	/** Inline the set of procedures: PREF \ LIST. */
+	BLACKLIST_RESTRICT("PREF \\ LIST"),
+	/** Inline the set of procedures: ALL \ LIST. */
+	BLACKLIST_ONLY("ALL \\ LIST"),
+	/** Inline the set of procedures: PREF u LIST. */
+	WHITELIST_EXTEND("PREF u LIST"),
+	/** Inline the set of procedures: PREF n LIST. */
+	WHITELIST_RESTRICT("PREF n LIST"),
 	/** Inline the set of procedures: LIST. */
-	WHITELIST_ONLY("Ignore preferences above and inline listed procedures only");
+	WHITELIST_ONLY("LIST");
 
+	public static String description() {
+		final String indent = "    ";
+		StringBuilder sb = new StringBuilder();
+		sb.append("There are 3 sets of calls:\n");
+		sb.append(indent + "ALL: All calls from the program\n");
+		sb.append(indent + "PREF: Calls, selected by the other preferences\n");
+		sb.append(indent + "LIST: Calls to procedures from the user list\n");
+		sb.append("The user list type defines, how the are mixed:");
+		for (UserListType type : UserListType.values()) {
+			sb.append("\n" + indent);
+			sb.append(type);
+			sb.append(" = ");
+			sb.append(type.getDescription());
+		}
+		return sb.toString();
+	}
+
+	// ---
+	
 	private final String mDescription;
 
 	private UserListType(String displayName) {
@@ -39,5 +58,5 @@ public enum UserListType {
 	public String getDescription() {
 		return mDescription;
 	}
-
+	
 }
