@@ -11,16 +11,13 @@ import de.uni_freiburg.informatik.ultimatetest.AbstractModelCheckerTestSuite.Dir
 /**
  * Test for inlining with all SV-COMP programs that use the precise memory model.
  * @author heizmann@informatik.uni-freiburg.de
- * 
  */
 public class InliningTest_Svcomp_Reach_PreciseMemoryModel extends AbstractTraceAbstractionTestSuite {
 	
-	/**
-	 * Limit the number of files per directory.
-	 */
+	/** Limit the number of files per directory. */
 	private static int m_FilesPerDirectoryLimit = 10;
 	
-	private static final DirectoryFileEndingsPair[] m_SVCOMP_Examples = {
+	private static final DirectoryFileEndingsPair[] s_SVCOMP_Examples = {
 //		/*** Category 1. Arrays ***/
 //		new DirectoryFileEndingsPair("examples/svcomp/array-examples/", new String[]{ ".i" }, m_FilesPerDirectoryLimit) ,
 //		
@@ -63,28 +60,25 @@ public class InliningTest_Svcomp_Reach_PreciseMemoryModel extends AbstractTraceA
 //		new DirectoryFileEndingsPair("examples/svcomp/seq-pthread/", new String[]{ ".i" }, m_FilesPerDirectoryLimit) ,
 	};
 
-	/**
-	 * {@inheritDoc}
-	 */
 	@Override
 	public long getTimeout() {
 		return 60 * 1000;
 	}
 
-	private static final boolean m_AutomizerWithInlining = true;
-	private static final boolean m_AutomizerWithoutInlining = false;
+	private static final boolean sAutomizerWithInlining = true;
+	private static final boolean sAutomizerWithoutInlining = false;
 	
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
-		if (m_AutomizerWithInlining) {
+		if (sAutomizerWithInlining) {
 			addTestCases("AutomizerCInline.xml", 
 					"automizer/ForwardPredicates_SvcompReachPreciseMM.epf", 
-					m_SVCOMP_Examples);
+					s_SVCOMP_Examples);
 		}
-		if (m_AutomizerWithoutInlining) {
+		if (sAutomizerWithoutInlining) {
 			addTestCases("AutomizerC.xml", 
 					"automizer/ForwardPredicates_SvcompReachPreciseMM.epf", 
-					m_SVCOMP_Examples);
+					s_SVCOMP_Examples);
 		}
 		// return Util.firstN(super.createTestCases(), 3);
 		return super.createTestCases();
