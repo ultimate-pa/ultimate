@@ -13,7 +13,7 @@ import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
 public class InliningTest_Svcomp_Individual extends AbstractTraceAbstractionTestSuite {
 	
 	/** Files to be tested. */
-	private static final String[] m_FILES = {
+	private static final String[] sFILES = {
 		// Failed test from before fix of "old(vars) only assigned on first call".
 		// Sorted by line count in ascending order
 		/*
@@ -48,16 +48,16 @@ public class InliningTest_Svcomp_Individual extends AbstractTraceAbstractionTest
 		return 60 * 1000;
 	}
 
-	private static final boolean m_AutomizerWithInlining = true;
-	private static final boolean m_AutomizerWithoutInlining = false;
+	private static final boolean sAutomizerWithInlining = true;
+	private static final boolean sAutomizerWithoutInlining = false;
 	
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
-		for (String file : m_FILES) {
-			if (m_AutomizerWithInlining) {
+		for (String file : sFILES) {
+			if (sAutomizerWithInlining) {
 				addTestCase("AutomizerCInline.xml", "automizer/ForwardPredicates_SvcompReachPreciseMM.epf", file);
 			}
-			if (m_AutomizerWithoutInlining) {
+			if (sAutomizerWithoutInlining) {
 				addTestCase("AutomizerC.xml", "automizer/ForwardPredicates_SvcompReachPreciseMM.epf",  file);
 			}
 		}
