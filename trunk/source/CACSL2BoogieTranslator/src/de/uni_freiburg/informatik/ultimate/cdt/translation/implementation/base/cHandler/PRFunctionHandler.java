@@ -456,12 +456,12 @@ public class PRFunctionHandler extends FunctionHandler {
 //		assert ((MainDispatcher) main).getFunctionToIndex().size() > 0;
 		ResultExpression funcNameRex = (ResultExpression) main.dispatch(functionName);
 		RValue calledFuncRVal = (RValue) funcNameRex.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc).lrVal;
-		CType calledFuncType = calledFuncRVal.cType;
+		CType calledFuncType = calledFuncRVal.cType.getUnderlyingType();
 		if (!(calledFuncType instanceof CFunction)) {
 			// .. because function pointers don't need to be dereferenced in
 			// order to be called
 			if (calledFuncType instanceof CPointer) {
-				calledFuncType = ((CPointer) calledFuncType).pointsToType;
+				calledFuncType = ((CPointer) calledFuncType).pointsToType.getUnderlyingType();
 			}
 		}
 		assert calledFuncType instanceof CFunction : "We need to unpack it further, right?";
