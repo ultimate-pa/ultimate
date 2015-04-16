@@ -586,8 +586,8 @@ public class CHandler implements ICHandler {
 			 * visited one after another.
 			 */
 			for (IASTDeclarator d : node.getDeclarators()) {
-				if (d instanceof IASTFieldDeclarator)
-					throw new UnsupportedSyntaxException(loc, "bitfields are not supported at the moment");
+//				if (d instanceof IASTFieldDeclarator)
+//					throw new UnsupportedSyntaxException(loc, "bitfields are not supported at the moment");
 	
 				ResultDeclaration declResult = (ResultDeclaration) main.dispatch(d);
 
@@ -1627,6 +1627,9 @@ public class CHandler implements ICHandler {
 				ResultExpression rlToInt = ConvExpr.rexBoolToIntIfNecessary(loc, rl);
 				ResultExpression rrToInt = ConvExpr.rexBoolToIntIfNecessary(loc, rr);
 				RValue rval = null;
+				
+				Statement assertOrAssume = null;
+				
 				if ((lType instanceof CPointer) 
 						&& rType instanceof CPrimitive
 						&& ((CPrimitive) rType).getGeneralType() == GENERALPRIMITIVE.INTTYPE) {
@@ -1653,7 +1656,8 @@ public class CHandler implements ICHandler {
 								BinaryExpression.Operator.COMPEQ, new StructAccessExpression(loc, rlToInt.lrVal.getValue(),
 										SFO.POINTER_BASE), new StructAccessExpression(loc, rrToInt.lrVal.getValue(),
 												SFO.POINTER_BASE)));
-						stmt.add(assertStm);
+//						stmt.add(assertStm);
+						assertOrAssume = assertStm;
 						Check chk = new Check(Spec.ILLEGAL_POINTER_ARITHMETIC);
 						chk.addToNodeAnnot(assertStm);
 					} else if (this.mMemoryHandler.getPointerSubtractionAndComparisonValidityCheckMode() == POINTER_CHECKMODE.ASSUME) {
@@ -1661,7 +1665,8 @@ public class CHandler implements ICHandler {
 								BinaryExpression.Operator.COMPEQ, new StructAccessExpression(loc, rlToInt.lrVal.getValue(),
 										SFO.POINTER_BASE), new StructAccessExpression(loc, rrToInt.lrVal.getValue(),
 												SFO.POINTER_BASE)));
-						stmt.add(assumeStm);
+//						stmt.add(assumeStm);
+						assertOrAssume = assumeStm;
 					}
 
 					rval = doPointerArithPointerAndPointer(main, node.getOperator(), loc, (RValue) rlToInt.lrVal,
@@ -1669,6 +1674,8 @@ public class CHandler implements ICHandler {
 				}
 				stmt.addAll(rlToInt.stmt);
 				stmt.addAll(rrToInt.stmt);
+				if (assertOrAssume != null)
+					stmt.add(assertOrAssume);
 				decl.addAll(rlToInt.decl);
 				decl.addAll(rrToInt.decl);
 				auxVars.putAll(rlToInt.auxVars);
