@@ -1279,17 +1279,10 @@ public class CHandler implements ICHandler {
 				decl.addAll(rr.decl);
 				auxVars.putAll(rr.auxVars);
 				overappr.addAll(rr.overappr);
-				//			if (l.lrVal.cType instanceof CPrimitive
-				//					&& ((CPrimitive) l.lrVal.cType).getGeneralType() == GENERALPRIMITIVE.INTTYPE) {
 				ResultExpression rrToInt = ConvExpr.rexBoolToIntIfNecessary(loc, rr);
-				//			}
 				return makeAssignment(main, loc, stmt, l.lrVal, (RValue) rrToInt.lrVal, decl, auxVars, overappr,
-						l.unionFieldIdToCType);// , r.lrVal.cType);
+						l.unionFieldIdToCType);
 			}
-//			} else {
-//				return makeAssignment(main, loc, stmt, l.lrVal, (RValue) rr.lrVal, decl, auxVars, overappr,
-//						l.unionFieldIdToCType);// , r.lrVal.cType);
-//			}
 		}
 		case IASTBinaryExpression.op_equals:
 		case IASTBinaryExpression.op_greaterEqual:
@@ -1345,13 +1338,9 @@ public class CHandler implements ICHandler {
 				if (lType instanceof CPointer || rType instanceof CPointer) {
 					if (!(lType instanceof CPointer)) {
 						rlToInt.lrVal = castToType(loc, (RValue) rlToInt.lrVal, new CPointer(new CPrimitive(PRIMITIVE.VOID)));
-//								new RValue(MemoryHandler.constructPointerFromBaseAndOffset(new IntegerLiteral(loc,
-//								"0"), rlToInt.lrVal.getValue(), loc), new CPrimitive(PRIMITIVE.VOID));
 					}
 					if (!(rType instanceof CPointer)) {
 						rrToInt.lrVal = castToType(loc, (RValue) rrToInt.lrVal, new CPointer(new CPrimitive(PRIMITIVE.VOID)));
-//						new RValue(MemoryHandler.constructPointerFromBaseAndOffset(new IntegerLiteral(loc,
-//								"0"), rrToInt.lrVal.getValue(), loc), new CPrimitive(PRIMITIVE.VOID));
 					}
 				}
 				rval = new RValue(new BinaryExpression(loc, op, rlToInt.lrVal.getValue(), rrToInt.lrVal.getValue()),
@@ -1580,6 +1569,8 @@ public class CHandler implements ICHandler {
 					CType lValueType = ((CArray) lType).getValueType();
 					CType rValueType = ((CArray) rType).getValueType();
 					
+					Statement assertOrAssume = null;
+
 					RValue arrayAddl = null;
 					if (l.lrVal instanceof HeapLValue)
 						arrayAddl = new RValue(((HeapLValue)l.lrVal).getAddress(), new CPointer(lValueType));
@@ -1598,7 +1589,7 @@ public class CHandler implements ICHandler {
 								BinaryExpression.Operator.COMPEQ, new StructAccessExpression(loc, arrayAddl.getValue(),
 										SFO.POINTER_BASE), new StructAccessExpression(loc, arrayAddr.getValue(),
 												SFO.POINTER_BASE)));
-						stmt.add(assertStm);
+						assertOrAssume = assertStm;
 						Check chk = new Check(Spec.ILLEGAL_POINTER_ARITHMETIC);
 						chk.addToNodeAnnot(assertStm);
 					} else if (this.mMemoryHandler.getPointerSubtractionAndComparisonValidityCheckMode() == POINTER_CHECKMODE.ASSUME) {
@@ -1606,7 +1597,7 @@ public class CHandler implements ICHandler {
 								BinaryExpression.Operator.COMPEQ, new StructAccessExpression(loc, arrayAddl.getValue(),
 										SFO.POINTER_BASE), new StructAccessExpression(loc, arrayAddr.getValue(),
 												SFO.POINTER_BASE)));
-						stmt.add(assumeStm);
+						assertOrAssume = assumeStm;
 					}
 
 					rval = doPointerArithPointerAndPointer(main, node.getOperator(), loc, arrayAddl,
@@ -1614,6 +1605,8 @@ public class CHandler implements ICHandler {
 
 					stmt.addAll(l.stmt);
 					stmt.addAll(r.stmt);
+					if (assertOrAssume != null)
+						stmt.add(assertOrAssume);
 					decl.addAll(l.decl);
 					decl.addAll(r.decl);
 					auxVars.putAll(l.auxVars);
@@ -1656,7 +1649,6 @@ public class CHandler implements ICHandler {
 								BinaryExpression.Operator.COMPEQ, new StructAccessExpression(loc, rlToInt.lrVal.getValue(),
 										SFO.POINTER_BASE), new StructAccessExpression(loc, rrToInt.lrVal.getValue(),
 												SFO.POINTER_BASE)));
-//						stmt.add(assertStm);
 						assertOrAssume = assertStm;
 						Check chk = new Check(Spec.ILLEGAL_POINTER_ARITHMETIC);
 						chk.addToNodeAnnot(assertStm);
@@ -1665,7 +1657,6 @@ public class CHandler implements ICHandler {
 								BinaryExpression.Operator.COMPEQ, new StructAccessExpression(loc, rlToInt.lrVal.getValue(),
 										SFO.POINTER_BASE), new StructAccessExpression(loc, rrToInt.lrVal.getValue(),
 												SFO.POINTER_BASE)));
-//						stmt.add(assumeStm);
 						assertOrAssume = assumeStm;
 					}
 
