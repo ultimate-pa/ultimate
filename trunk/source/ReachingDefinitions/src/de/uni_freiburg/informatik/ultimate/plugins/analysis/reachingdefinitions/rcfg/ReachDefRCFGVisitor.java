@@ -39,14 +39,14 @@ public class ReachDefRCFGVisitor extends RCFGEdgeVisitor {
 	private final Logger mLogger;
 	private final IAnnotationProvider<ReachDefEdgeAnnotation> mEdgeProvider;
 	private final IAnnotationProvider<ReachDefStatementAnnotation> mStatementProvider;
-	private final ScopedBoogieVarBuilder mBuilderTable;
+	private final ScopedBoogieVarBuilder mVarBuilder;
 
 	public ReachDefRCFGVisitor(IAnnotationProvider<ReachDefEdgeAnnotation> provider,
 			IAnnotationProvider<ReachDefStatementAnnotation> stmtProvider, Logger logger, ScopedBoogieVarBuilder builder) {
 		mLogger = logger;
 		mEdgeProvider = provider;
 		mStatementProvider = stmtProvider;
-		mBuilderTable = builder;
+		mVarBuilder = builder;
 	}
 
 	/**
@@ -97,7 +97,7 @@ public class ReachDefRCFGVisitor extends RCFGEdgeVisitor {
 			}
 			ReachDefBoogieAnnotator generator = createBoogieAnnotator(edge, s, annot);
 			try {
-				boolean gen = generator.annotate(s);
+				boolean gen = generator.annotate(s,edge.getTransitionFormula());
 				if (mLogger.isDebugEnabled()) {
 					String pre = "            " + edge.hashCode() + " " + BoogiePrettyPrinter.print(s);
 					mLogger.debug(pre + Util.repeat((40 - pre.length()), " ") + " New Use: " + annot.getUseAsString());
@@ -173,7 +173,7 @@ public class ReachDefRCFGVisitor extends RCFGEdgeVisitor {
 
 		}
 
-		return new ReachDefBoogieAnnotator(predecessors, stmtAnnotation, mLogger, mBuilderTable);
+		return new ReachDefBoogieAnnotator(predecessors, stmtAnnotation, mLogger, mVarBuilder);
 	}
 
 	private HashMap<RCFGEdge, HashSet<ReachDefStatementAnnotation>> mPreMap;

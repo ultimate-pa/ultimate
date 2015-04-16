@@ -1,12 +1,16 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.boogie;
 
+import java.util.HashSet;
 import java.util.Hashtable;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
+import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.model.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableLHS;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
 
 public class ScopedBoogieVarBuilder {
 
@@ -18,26 +22,59 @@ public class ScopedBoogieVarBuilder {
 		mVarCache = new Hashtable<>();
 	}
 
-	public ScopedBoogieVar getScopedBoogieVar(VariableLHS lhs) {
-		return getScopedBoogieVar(lhs.getIdentifier(), lhs.getDeclarationInformation());
+	public ScopedBoogieVar getScopedBoogieVar(VariableLHS lhs, TransFormula tf) {
+		return getScopedBoogieVar(lhs.getIdentifier(), lhs.getDeclarationInformation(), tf);
 	}
 
-	public ScopedBoogieVar getScopedBoogieVar(IdentifierExpression identifier) {
-		return getScopedBoogieVar(identifier.getIdentifier(), identifier.getDeclarationInformation());
+	public ScopedBoogieVar getScopedBoogieVar(IdentifierExpression identifier, TransFormula tf) {
+		return getScopedBoogieVar(identifier.getIdentifier(), identifier.getDeclarationInformation(), tf);
 
 	}
 
-	private ScopedBoogieVar getScopedBoogieVar(String identifier, DeclarationInformation info) {
+	private ScopedBoogieVar getScopedBoogieVar(String identifier, DeclarationInformation info, TransFormula tf) {
 		VariableDeclaration decl = (VariableDeclaration) mSymbolTable.getDeclaration(identifier,
 				info.getStorageClass(), info.getProcedure());
 		VariableUID uid = new VariableUID(decl, identifier);
-		
+
 		ScopedBoogieVar rtr = mVarCache.get(uid);
 		if (rtr == null) {
-			rtr = new ScopedBoogieVar(identifier, decl, info);
+			BoogieVar bv = getBoogieVarFromTransformula(identifier, info, tf);
+			rtr = new ScopedBoogieVar(identifier, decl, info, bv);
 			mVarCache.put(uid, rtr);
 		}
 		return rtr;
+	}
+
+	private BoogieVar getBoogieVarFromTransformula(String identifier, DeclarationInformation info, TransFormula tf) {
+		// TODO: Check if this is the "right" way to get the correct BoogieVar
+
+		HashSet<BoogieVar> vars = new HashSet<BoogieVar>();
+		vars.add(getBoogieVarFromSet(identifier, info, tf.getInVars().keySet()));
+		vars.add(getBoogieVarFromSet(identifier, info, tf.getOutVars().keySet()));
+		vars.add(getBoogieVarFromSet(identifier, info, tf.getAssignedVars()));
+		vars.remove(null);
+
+		if (vars.size() != 1) {
+			throw new UnsupportedOperationException("Could not find matching BoogieVar");
+		}
+		return vars.iterator().next();
+	}
+
+	private BoogieVar getBoogieVarFromSet(String identifier, DeclarationInformation info, Set<BoogieVar> vars) {
+		for (BoogieVar in : vars) {
+			if (in.getIdentifier().equals(identifier)) {
+				if (in.isOldvar()) {
+					continue;
+				}
+				if (in.isGlobal()) {
+					return in;
+				}
+				if (in.getProcedure().equals(info.getProcedure())) {
+					return in;
+				}
+			}
+		}
+		return null;
 	}
 
 	private class VariableUID {

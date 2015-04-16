@@ -15,7 +15,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.boogie.ScopedBoogieVarBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.util.Util;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.SequentialComposition;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.RCFGEdgeVisitor;
@@ -75,7 +74,7 @@ public class ReachDefTraceVisitor extends RCFGEdgeVisitor {
 		super.visit(edge);
 	}
 
-	private void processEdge(RCFGEdge edge, List<Statement> stmts) {
+	private void processEdge(CodeBlock edge, List<Statement> stmts) {
 		String key = String.valueOf(mKey);
 		for (Statement stmt : stmts) {
 			ReachDefStatementAnnotation annot = mStatementProvider.getAnnotation(stmt, key);
@@ -85,7 +84,7 @@ public class ReachDefTraceVisitor extends RCFGEdgeVisitor {
 			}
 			ReachDefBoogieAnnotator generator = createBoogieAnnotator(stmts, stmt, annot);
 			try {
-				generator.annotate(stmt);
+				generator.annotate(stmt, edge.getTransitionFormula());
 				if (mLogger.isDebugEnabled()) {
 					String pre = "            " + edge.hashCode() + " " + BoogiePrettyPrinter.print(stmt);
 					mLogger.debug(pre + Util.repeat((40 - pre.length()), " ") + " New Use: " + annot.getUseAsString());

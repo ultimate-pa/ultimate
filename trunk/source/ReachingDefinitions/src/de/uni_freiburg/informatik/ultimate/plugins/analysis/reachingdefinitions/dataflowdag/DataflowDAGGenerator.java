@@ -27,7 +27,7 @@ public class DataflowDAGGenerator extends BaseObserver {
 
 	private final Logger mLogger;
 	private final IAnnotationProvider<ReachDefStatementAnnotation> mStatementProvider;
-	private final IAnnotationProvider<ReachDefEdgeAnnotation> mEdgeProvider;
+//	private final IAnnotationProvider<ReachDefEdgeAnnotation> mEdgeProvider;
 	private final LinkedHashMap<RCFGEdge, List<AssumeStatement>> mEdgesWithAssumes;
 	private List<DataflowDAG<Statement>> mForest;
 
@@ -36,11 +36,9 @@ public class DataflowDAGGenerator extends BaseObserver {
 			LinkedHashMap<RCFGEdge, List<AssumeStatement>> edgesWithAssumes) {
 		mLogger = logger;
 		mStatementProvider = stmtProvider;
-		mEdgeProvider = edgeProvider;
+//		mEdgeProvider = edgeProvider;
 		mEdgesWithAssumes = edgesWithAssumes;
 	}
-
-	// TODO: Nur für traces machen
 
 	@Override
 	public boolean process(IElement root) throws Throwable {

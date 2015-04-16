@@ -8,6 +8,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IdentifierExpression
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableLHS;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.annotations.IndexedStatement;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.annotations.ReachDefStatementAnnotation;
 
@@ -15,6 +16,7 @@ public class ReachDefBoogieVisitor extends BoogieVisitor {
 
 	private ReachDefStatementAnnotation mCurrentRD;
 	private Statement mCurrentStatement;
+	private TransFormula mCurrentTransFormula;
 
 	private boolean mIsLHS;
 	private boolean mIsAssume;
@@ -33,10 +35,11 @@ public class ReachDefBoogieVisitor extends BoogieVisitor {
 		mKey = key;
 	}
 
-	public void process(Statement node) throws Throwable {
+	public void process(Statement node, TransFormula transFormula) throws Throwable {
 		assert node != null;
 		assert mCurrentRD != null;
 		mCurrentStatement = node;
+		mCurrentTransFormula = transFormula;
 		mIsLHS = false;
 		mIsAssume = false;
 		mOldRD = (ReachDefStatementAnnotation) mCurrentRD.clone();
@@ -55,7 +58,7 @@ public class ReachDefBoogieVisitor extends BoogieVisitor {
 	@Override
 	protected void visit(VariableLHS lhs) {
 		super.visit(lhs);
-		updateDef(mBuilder.getScopedBoogieVar(lhs), mCurrentStatement);
+		updateDef(mBuilder.getScopedBoogieVar(lhs, mCurrentTransFormula), mCurrentStatement);
 	}
 
 	@Override
@@ -68,7 +71,7 @@ public class ReachDefBoogieVisitor extends BoogieVisitor {
 	protected void visit(IdentifierExpression identifier) {
 		super.visit(identifier);
 
-		ScopedBoogieVar current = mBuilder.getScopedBoogieVar(identifier);
+		ScopedBoogieVar current = mBuilder.getScopedBoogieVar(identifier, mCurrentTransFormula);
 
 		if (mIsAssume) {
 			// if we are inside an assume, every identifier expression is a use
