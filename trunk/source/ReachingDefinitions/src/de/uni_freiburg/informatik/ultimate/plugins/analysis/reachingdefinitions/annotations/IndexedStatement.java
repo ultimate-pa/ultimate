@@ -1,6 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.annotations;
 
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
+import de.uni_freiburg.informatik.ultimate.model.boogie.output.BoogiePrettyPrinter;
 
 public class IndexedStatement {
 
@@ -11,15 +12,20 @@ public class IndexedStatement {
 		mStatement = stmt;
 		mKey = key;
 	}
-	
-	public Statement getStatement(){
+
+	public Statement getStatement() {
 		return mStatement;
 	}
-	
-	public String getKey(){
+
+	public String getKey() {
 		return mKey;
 	}
-	
+
+	@Override
+	public String toString() {
+		return "[" + mKey + "]: " + mStatement.hashCode() + " " + BoogiePrettyPrinter.print(mStatement);
+	}
+
 	@Override
 	public int hashCode() {
 		final int prime = 31;
@@ -50,5 +56,5 @@ public class IndexedStatement {
 			return false;
 		return true;
 	}
-	
+
 }

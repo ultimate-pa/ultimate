@@ -8,11 +8,13 @@ import java.util.List;
 import java.util.Set;
 import java.util.Map.Entry;
 
+import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
+import de.uni_freiburg.informatik.ultimate.model.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.annotations.IAnnotationProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.annotations.IndexedStatement;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.annotations.ReachDefEdgeAnnotation;
@@ -51,8 +53,15 @@ public class ReachDefTrace {
 		List<BlockAndAssumes> assumes = findAssumes(traceCopy);
 		List<DataflowDAG<TraceCodeBlock>> rtr = buildDAG(traceCopy, assumes);
 
+		//TODO: Optimize by checking the DAGs for uniqueness 
+		
 		if (mLogger.isDebugEnabled()) {
-			mLogger.debug("#" + rtr.size() + " dataflow DAGs constructed");
+			StringBuilder sb = new StringBuilder();
+			for (CodeBlock letter : traceCopy) {
+				sb.append("[").append(letter).append("] ");
+			}
+			mLogger.debug("RD DAGs for " + sb);
+			mLogger.debug("#" + rtr.size() + " DAGs constructed");
 			printDebugForest(rtr);
 		}
 
@@ -65,11 +74,23 @@ public class ReachDefTrace {
 		for (BlockAndAssumes assumeContainer : assumeContainers) {
 			for (AssumeStatement stmt : assumeContainer.getAssumes()) {
 				rtr.add(buildDAG(trace, assumeContainer, stmt));
+				if (mLogger.isDebugEnabled()) {
+					mLogger.debug("Finished " + BoogiePrettyPrinter.print(stmt));
+				}
 			}
 		}
 		return rtr;
 	}
 
+	/**
+	 * Construct a {@link DataflowDAG} from the uses of a trace. The root node
+	 * is
+	 * 
+	 * @param trace
+	 * @param assumeContainer
+	 * @param assume
+	 * @return
+	 */
 	private DataflowDAG<TraceCodeBlock> buildDAG(List<CodeBlock> trace, BlockAndAssumes assumeContainer,
 			AssumeStatement assume) {
 		LinkedList<DataflowDAG<TraceCodeBlock>> store = new LinkedList<>();
@@ -96,7 +117,8 @@ public class ReachDefTrace {
 					DataflowDAG<TraceCodeBlock> next = new DataflowDAG<TraceCodeBlock>(nextBlock);
 
 					if (current.getNodeLabel().equals(next.getNodeLabel())) {
-						mLogger.debug("Samn");
+						mLogger.debug("Staying in the same block; no need to add dependency");
+						continue;
 					}
 					current.connectOutgoing(next, use.getKey());
 					store.addFirst(next); // use last for BFS
@@ -160,8 +182,8 @@ public class ReachDefTrace {
 			return true;
 		} else if (current instanceof SequentialComposition) {
 			SequentialComposition sc = (SequentialComposition) current;
-			for(CodeBlock cb : sc.getCodeBlocks()){
-				if(!checkElement(cb)){
+			for (CodeBlock cb : sc.getCodeBlocks()) {
+				if (!checkElement(cb)) {
 					return false;
 				}
 			}
@@ -206,6 +228,13 @@ public class ReachDefTrace {
 		}
 	}
 
+	/**
+	 * Container class holding a codeblock, all the assume statements contained
+	 * in it and the index of the codeblock in the currently processed trace.
+	 * 
+	 * @author dietsch@informatik.uni-freiburg.de
+	 *
+	 */
 	private class BlockAndAssumes {
 
 		private final List<AssumeStatement> mAssumes;

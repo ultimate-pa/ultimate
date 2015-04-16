@@ -8,7 +8,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Set;
 import java.util.Stack;
 import java.util.TreeMap;
 
@@ -32,16 +31,14 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.senwa.DifferenceSenwa;
 import de.uni_freiburg.informatik.ultimate.core.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
-import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
-import de.uni_freiburg.informatik.ultimate.logic.FormulaWalker;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SafeSubstitution;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.BasicPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.TermVarsProc;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.ReachingDefinitions;
@@ -79,7 +76,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstractioncon
 public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 
 	private PredicateUnifier m_PredicateUnifier;
-	private TraceCheckerWithAccessibleSSATerms m_traceCheckerWAST = null; 
+	private TraceCheckerWithAccessibleSSATerms m_traceCheckerWAST = null;
 
 	public TAwAFAsCegarLoop(String name, RootNode rootNode, SmtManager smtManager,
 			TraceAbstractionBenchmarks traceAbstractionBenchmarks, TAPreferences taPrefs,
@@ -144,7 +141,8 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 				termNames.add(m_SmtManager.getScript().term(termName));
 			}
 
-			// if the conjunctions of the terms in the current dag is infeasible..
+			// if the conjunctions of the terms in the current dag is
+			// infeasible..
 			if (m_SmtManager.getScript().checkSat() == LBool.UNSAT) {
 				// .. compute tree interpolant for the current dag
 				Term[] interpolants = m_SmtManager.getScript().getInterpolants(
@@ -160,7 +158,8 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 				if (alternatingAutomatonUnion == null) {
 					alternatingAutomatonUnion = alternatingAutomaton;
 				} else {
-					AA_MergedUnion<CodeBlock, IPredicate> mergedUnion = new AA_MergedUnion<CodeBlock, IPredicate>(alternatingAutomatonUnion, alternatingAutomaton);
+					AA_MergedUnion<CodeBlock, IPredicate> mergedUnion = new AA_MergedUnion<CodeBlock, IPredicate>(
+							alternatingAutomatonUnion, alternatingAutomaton);
 					alternatingAutomatonUnion = mergedUnion.getResult();
 					assert checkRAFA(alternatingAutomatonUnion);
 				}
@@ -178,16 +177,13 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 		if (alternatingAutomatonUnion != null) {
 			// .. in the end, build the union of all the nwas we got from the
 			// dags, return it
-			RAFA_Determination<CodeBlock> determination = new RAFA_Determination<CodeBlock>(m_Services, alternatingAutomatonUnion, m_SmtManager, m_PredicateUnifier);
+			RAFA_Determination<CodeBlock> determination = new RAFA_Determination<CodeBlock>(m_Services,
+					alternatingAutomatonUnion, m_SmtManager, m_PredicateUnifier);
 			m_InterpolAutomaton = determination.getResult();
 		} else {
-			m_InterpolAutomaton = new NestedWordAutomaton<CodeBlock, IPredicate>(
-				m_Services,
-				m_Abstraction.getAlphabet(),
-				Collections.<CodeBlock>emptySet(),
-				Collections.<CodeBlock>emptySet(),
-				m_Abstraction.getStateFactory()
-			);
+			m_InterpolAutomaton = new NestedWordAutomaton<CodeBlock, IPredicate>(m_Services,
+					m_Abstraction.getAlphabet(), Collections.<CodeBlock> emptySet(),
+					Collections.<CodeBlock> emptySet(), m_Abstraction.getStateFactory());
 		}
 	}
 
@@ -205,8 +201,7 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 			if (currentNode == dag) { // for the root we take "false"
 				currentNode.getNodeLabel().addInterpolant(m_PredicateUnifier.getFalsePredicate());
 			} else {
-				currentNode.getNodeLabel().addInterpolant(
-						interpolants[currentInterpolantIndex]);
+				currentNode.getNodeLabel().addInterpolant(interpolants[currentInterpolantIndex]);
 				currentInterpolantIndex--;
 			}
 			stack.addAll(currentNode.getOutgoingNodes());
@@ -244,70 +239,70 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 		return result;
 	}
 
-	private AlternatingAutomaton<CodeBlock, IPredicate> computeAlternatingAutomaton(DataflowDAG<TraceCodeBlock> dag){
-		AlternatingAutomaton<CodeBlock, IPredicate> alternatingAutomaton = new AlternatingAutomaton<CodeBlock, IPredicate>(m_Abstraction.getAlphabet(), m_Abstraction.getStateFactory());
+	private AlternatingAutomaton<CodeBlock, IPredicate> computeAlternatingAutomaton(DataflowDAG<TraceCodeBlock> dag) {
+		AlternatingAutomaton<CodeBlock, IPredicate> alternatingAutomaton = new AlternatingAutomaton<CodeBlock, IPredicate>(
+				m_Abstraction.getAlphabet(), m_Abstraction.getStateFactory());
 		IPredicate initialState = m_PredicateUnifier.getFalsePredicate();
 		IPredicate finalState = m_PredicateUnifier.getTruePredicate();
 		alternatingAutomaton.addState(initialState);
 		alternatingAutomaton.addState(finalState);
 		alternatingAutomaton.setStateFinal(finalState);
-		alternatingAutomaton.addAcceptingConjunction(alternatingAutomaton.generateDisjunction(new IPredicate[]{initialState}, new IPredicate[0]));
+		alternatingAutomaton.addAcceptingConjunction(alternatingAutomaton.generateDisjunction(
+				new IPredicate[] { initialState }, new IPredicate[0]));
 
-//		IHoareTripleChecker htc = new MonolithicHoareTripleChecker(m_SmtManager);//TODO: switch to efficient htc later, perhaps
+		// IHoareTripleChecker htc = new
+		// MonolithicHoareTripleChecker(m_SmtManager);//TODO: switch to
+		// efficient htc later, perhaps
 		IHoareTripleChecker htc = getEfficientHoareTripleChecker();
 
-		//Build the automaton according to the structure of the DAG
+		// Build the automaton according to the structure of the DAG
 		Stack<DataflowDAG<TraceCodeBlock>> stack = new Stack<DataflowDAG<TraceCodeBlock>>();
 		stack.push(dag);
-		while(!stack.isEmpty()){
+		while (!stack.isEmpty()) {
 			DataflowDAG<TraceCodeBlock> currentDag = stack.pop();
 			HashSet<IPredicate> targetStates = new HashSet<IPredicate>();
-			for(DataflowDAG<TraceCodeBlock> outNode : currentDag.getOutgoingNodes()){
+			for (DataflowDAG<TraceCodeBlock> outNode : currentDag.getOutgoingNodes()) {
 				IPredicate outNodePred = outNode.getNodeLabel().getInterpolant();
 				alternatingAutomaton.addState(outNodePred);
 				targetStates.add(outNodePred);
 				stack.push(outNode);
 			}
-			if(!targetStates.isEmpty()){
-				alternatingAutomaton.addTransition(
-					currentDag.getNodeLabel().getBlock(),
-					currentDag.getNodeLabel().getInterpolant(),
-					alternatingAutomaton.generateDisjunction(targetStates.toArray(new IPredicate[targetStates.size()]), new IPredicate[0])
-				);
-//				assert htc.checkInternal(
-//						m_SmtManager.newPredicate(m_SmtManager.and(targetStates.toArray(new IPredicate[targetStates.size()]))),
-//						currentDag.getNodeLabel().getBlock(),
-//						currentDag.getNodeLabel().getInterpolant()) == Validity.VALID;
-			}
-			else{
-				alternatingAutomaton.addTransition(
-					currentDag.getNodeLabel().getBlock(),
-					currentDag.getNodeLabel().getInterpolant(),
-					alternatingAutomaton.generateDisjunction(new IPredicate[]{finalState}, new IPredicate[0])
-				);
-//				assert htc.checkInternal(
-//						m_SmtManager.newPredicate(m_SmtManager.and(targetStates.toArray(new IPredicate[targetStates.size()]))),
-//						currentDag.getNodeLabel().getBlock(),
-//						currentDag.getNodeLabel().getInterpolant()) == Validity.VALID;
+			if (!targetStates.isEmpty()) {
+				alternatingAutomaton.addTransition(currentDag.getNodeLabel().getBlock(), currentDag.getNodeLabel()
+						.getInterpolant(), alternatingAutomaton.generateDisjunction(
+						targetStates.toArray(new IPredicate[targetStates.size()]), new IPredicate[0]));
+				// assert htc.checkInternal(
+				// m_SmtManager.newPredicate(m_SmtManager.and(targetStates.toArray(new
+				// IPredicate[targetStates.size()]))),
+				// currentDag.getNodeLabel().getBlock(),
+				// currentDag.getNodeLabel().getInterpolant()) ==
+				// Validity.VALID;
+			} else {
+				alternatingAutomaton.addTransition(currentDag.getNodeLabel().getBlock(), currentDag.getNodeLabel()
+						.getInterpolant(), alternatingAutomaton.generateDisjunction(new IPredicate[] { finalState },
+						new IPredicate[0]));
+				// assert htc.checkInternal(
+				// m_SmtManager.newPredicate(m_SmtManager.and(targetStates.toArray(new
+				// IPredicate[targetStates.size()]))),
+				// currentDag.getNodeLabel().getBlock(),
+				// currentDag.getNodeLabel().getInterpolant()) ==
+				// Validity.VALID;
 			}
 		}
 
-		//Add transitions according to hoare triples
-		for(CodeBlock letter : alternatingAutomaton.getAlphabet()){
-			for(IPredicate sourceState : alternatingAutomaton.getStates()){
-				if(sourceState == m_PredicateUnifier.getFalsePredicate()){
+		// Add transitions according to hoare triples
+		for (CodeBlock letter : alternatingAutomaton.getAlphabet()) {
+			for (IPredicate sourceState : alternatingAutomaton.getStates()) {
+				if (sourceState == m_PredicateUnifier.getFalsePredicate()) {
 					continue;
 				}
-				for(IPredicate targetState : alternatingAutomaton.getStates()){
-					if(targetState == m_PredicateUnifier.getTruePredicate()){
+				for (IPredicate targetState : alternatingAutomaton.getStates()) {
+					if (targetState == m_PredicateUnifier.getTruePredicate()) {
 						continue;
 					}
 					if (htc.checkInternal(sourceState, letter, targetState) == Validity.VALID) {
-						alternatingAutomaton.addTransition(
-							letter,
-							targetState,
-							alternatingAutomaton.generateDisjunction(new IPredicate[]{sourceState}, new IPredicate[0])
-						);
+						alternatingAutomaton.addTransition(letter, targetState, alternatingAutomaton
+								.generateDisjunction(new IPredicate[] { sourceState }, new IPredicate[0]));
 					}
 				}
 			}
@@ -364,38 +359,41 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 
 		return feasibility;
 	}
-	
+
 	@Override
-	protected boolean refineAbstraction() throws AutomataLibraryException { //copied
+	protected boolean refineAbstraction() throws AutomataLibraryException { // copied
 		m_StateFactoryForRefinement.setIteration(super.m_Iteration);
 
 		m_CegarLoopBenchmark.start(CegarLoopBenchmarkType.s_AutomataDifference);
 		boolean explointSigmaStarConcatOfIA = !m_ComputeHoareAnnotation;
 
 		INestedWordAutomatonOldApi<CodeBlock, IPredicate> oldAbstraction = (INestedWordAutomatonOldApi<CodeBlock, IPredicate>) m_Abstraction;
-		IHoareTripleChecker htc = this.getEfficientHoareTripleChecker(); //change to CegarLoopConcurrentAutomata
+		IHoareTripleChecker htc = this.getEfficientHoareTripleChecker(); // change
+																			// to
+																			// CegarLoopConcurrentAutomata
 		mLogger.debug("Start constructing difference");
 		assert (oldAbstraction.getStateFactory() == m_InterpolAutomaton.getStateFactory());
 
 		IOpWithDelayedDeadEndRemoval<CodeBlock, IPredicate> diff;
 
-		DeterministicInterpolantAutomaton determinized = new DeterministicInterpolantAutomaton(
-				m_Services, m_SmtManager, m_ModGlobVarManager, htc, oldAbstraction, m_InterpolAutomaton,
-				this.m_PredicateUnifier, mLogger, false);//change to CegarLoopConcurrentAutomata
+		DeterministicInterpolantAutomaton determinized = new DeterministicInterpolantAutomaton(m_Services,
+				m_SmtManager, m_ModGlobVarManager, htc, oldAbstraction, m_InterpolAutomaton, this.m_PredicateUnifier,
+				mLogger, false);// change to CegarLoopConcurrentAutomata
 		// ComplementDeterministicNwa<CodeBlock, IPredicate>
 		// cdnwa = new ComplementDeterministicNwa<>(dia);
 		PowersetDeterminizer<CodeBlock, IPredicate> psd2 = new PowersetDeterminizer<CodeBlock, IPredicate>(
 				determinized, false, m_PredicateFactoryInterpolantAutomata);
 
 		if (m_Pref.differenceSenwa()) {
-			diff = new DifferenceSenwa<CodeBlock, IPredicate>(m_Services, oldAbstraction, (INestedWordAutomaton<CodeBlock, IPredicate>) determinized, psd2, false);
+			diff = new DifferenceSenwa<CodeBlock, IPredicate>(m_Services, oldAbstraction,
+					(INestedWordAutomaton<CodeBlock, IPredicate>) determinized, psd2, false);
 		} else {
 			diff = new Difference<CodeBlock, IPredicate>(m_Services, oldAbstraction, determinized, psd2,
 					m_StateFactoryForRefinement, explointSigmaStarConcatOfIA);
 		}
 		assert !m_SmtManager.isLocked();
-		assert (new InductivityCheck(m_Services, m_InterpolAutomaton, false, true,
-				new IncrementalHoareTripleChecker(m_SmtManager, m_ModGlobVarManager))).getResult();
+		assert (new InductivityCheck(m_Services, m_InterpolAutomaton, false, true, new IncrementalHoareTripleChecker(
+				m_SmtManager, m_ModGlobVarManager))).getResult();
 		// do the following check only to obtain logger messages of
 		// checkInductivity
 
@@ -440,9 +438,8 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 			return true;
 		}
 	}
-	
-	
-	protected IHoareTripleChecker getEfficientHoareTripleChecker() //copied
+
+	protected IHoareTripleChecker getEfficientHoareTripleChecker() // copied
 			throws AssertionError {
 		final IHoareTripleChecker solverHtc;
 		switch (m_Pref.getHoareTripleChecks()) {
@@ -455,71 +452,77 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 		default:
 			throw new AssertionError("unknown value");
 		}
-		IHoareTripleChecker htc = new EfficientHoareTripleChecker(solverHtc, 
-				m_RootNode.getRootAnnot().getModGlobVarManager(), 
-				this.m_PredicateUnifier, m_SmtManager); //only change to method in BasicCegarLoop
+		IHoareTripleChecker htc = new EfficientHoareTripleChecker(solverHtc, m_RootNode.getRootAnnot()
+				.getModGlobVarManager(), this.m_PredicateUnifier, m_SmtManager); // only
+																					// change
+																					// to
+																					// method
+																					// in
+																					// BasicCegarLoop
 		return htc;
 	}
-	
-	IPredicate bexToPredicate(BooleanExpression bex, List<IPredicate> states) {
-//		String text = "";
-		IPredicate pred = m_PredicateUnifier.getTruePredicate();
-//		int r = 0;
-		for(int i = 0; i < states.size(); i++){
-//			if(alpha.get(i)){
-//				if(r != 0){
-//					text += " ^ ";
-//				}
-//				if(!beta.get(i)){
-//					text += "~";
-//				}
-//				text += variables.get(i);
-//				r++;
-//			}
 
-			if(bex.getAlpha().get(i)){
-				pred = m_SmtManager.newPredicate(
-						m_SmtManager.and(pred,
-								!bex.getBeta().get(i) ?
-									m_SmtManager.newPredicate(m_SmtManager.not(states.get(i))) :
-										states.get(i)
-						));
+	IPredicate bexToPredicate(BooleanExpression bex, List<IPredicate> states) {
+		// String text = "";
+		IPredicate pred = m_PredicateUnifier.getTruePredicate();
+		// int r = 0;
+		for (int i = 0; i < states.size(); i++) {
+			// if(alpha.get(i)){
+			// if(r != 0){
+			// text += " ^ ";
+			// }
+			// if(!beta.get(i)){
+			// text += "~";
+			// }
+			// text += variables.get(i);
+			// r++;
+			// }
+
+			if (bex.getAlpha().get(i)) {
+				pred = m_SmtManager.newPredicate(m_SmtManager.and(
+						pred,
+						!bex.getBeta().get(i) ? m_SmtManager.newPredicate(m_SmtManager.not(states.get(i))) : states
+								.get(i)));
 			}
 		}
-		if(bex.getNextConjunctExpression() != null){
-//			if(r > 1){
-//				text = "(" + text + ")";
-//			}
-//			text += " v " + nextConjunctExpression.toString(variables);
-			pred = m_SmtManager.newPredicate(m_SmtManager.or(pred, 
+		if (bex.getNextConjunctExpression() != null) {
+			// if(r > 1){
+			// text = "(" + text + ")";
+			// }
+			// text += " v " + nextConjunctExpression.toString(variables);
+			pred = m_SmtManager.newPredicate(m_SmtManager.or(pred,
 					bexToPredicate(bex.getNextConjunctExpression(), states)));
 		}
-//		return text;
+		// return text;
 		return pred;
 	}
 
 	/**
 	 * return true if the input reversed afa has the properties we wish for
-	 * those properties are:
-	 *  - the corresponding hoare triple of each transition is valid
+	 * those properties are: - the corresponding hoare triple of each transition
+	 * is valid
 	 */
 	private boolean checkRAFA(AlternatingAutomaton<CodeBlock, IPredicate> afa) {
 		MonolithicHoareTripleChecker htc = new MonolithicHoareTripleChecker(m_SmtManager);
 		boolean result = true;
 		for (Entry<CodeBlock, BooleanExpression[]> entry : afa.getTransitionFunction().entrySet()) {
-			for(int i=0;i<afa.getStates().size();i++){
-				if(entry.getValue()[i] != null){
-//					text += "\t\t\t" + states.get(i) + " => " + entry.getValue()[i].toString(states);
+			for (int i = 0; i < afa.getStates().size(); i++) {
+				if (entry.getValue()[i] != null) {
+					// text += "\t\t\t" + states.get(i) + " => " +
+					// entry.getValue()[i].toString(states);
 					IPredicate pre = bexToPredicate(entry.getValue()[i], afa.getStates());
 					IPredicate succ = afa.getStates().get(i);
 					boolean check = htc.checkInternal(pre, entry.getKey(), succ) == Validity.VALID;
 					result &= check;
-					if (!check)
-						mLogger.warn("the following non-inductive transition occurs in the current AFA:\n"
-								+ "pre: " + pre + "\n"
-								+ "stm: " + entry.getKey() + "\n"
-								+ "succ: " + succ
-								);
+					if (!check) {
+						StringBuilder sb = new StringBuilder();
+						sb.append("the following non-inductive transition occurs in the current AFA:").append(
+								CoreUtil.getPlatformLineSeparator());
+						sb.append("pre : ").append(pre).append(CoreUtil.getPlatformLineSeparator());
+						sb.append("stm : ").append(entry.getKey()).append(CoreUtil.getPlatformLineSeparator());
+						sb.append("succ: ").append(succ).append(CoreUtil.getPlatformLineSeparator());
+						mLogger.warn(sb);
+					}
 
 				}
 			}
