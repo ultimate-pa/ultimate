@@ -29,9 +29,9 @@ public class InliningTest_Individual extends AbstractTraceAbstractionTestSuite {
 		"examples/programs/quantifier/regression/copyStructThatIsOnHeap.c",
 	};
 	
-	private static final boolean sTraceAbstractionBoogie = false;
+	private static final boolean sTraceAbstractionBoogie = true;
 	private static final boolean sTraceAbstractionBoogieInline = true;
-	private static final boolean sTraceAbstractionC = false;
+	private static final boolean sTraceAbstractionC = true;
 	private static final boolean sTraceAbstractionCInline = true;
 
 	@Override
