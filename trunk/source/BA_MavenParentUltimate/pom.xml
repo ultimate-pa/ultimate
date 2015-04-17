@@ -44,7 +44,7 @@
 		<sonar.jacoco.reportPath>${project.basedir}/../target/jacoco.exec</sonar.jacoco.reportPath>
 		<sonar.jacoco.itReportPath>${project.basedir}/../target/jacoco-it.exec</sonar.jacoco.itReportPath>
 		<sonar.dynamicAnalysis>reuseReports</sonar.dynamicAnalysis>
-		
+
 		<!-- Jacoco version -->
 		<jacoco.version>0.7.2.201409121644</jacoco.version>
 
@@ -118,13 +118,13 @@
 			<plugin>
 				<groupId>org.codehaus.mojo</groupId>
 				<artifactId>sonar-maven-plugin</artifactId>
-				<version>2.1</version>
+				<version>[2.3,)</version>
 			</plugin>
 		</plugins>
 
 		<pluginManagement>
 			<plugins>
-				<!--This plugin's configuration is used to store Eclipse m2e settings
+				<!--This plugin's configuration is used to store Eclipse m2e settings 
 					only. It has no influence on the Maven build itself. -->
 				<plugin>
 					<groupId>org.eclipse.m2e</groupId>
@@ -198,7 +198,7 @@
 		<module>../JavaCup</module>
 		<module>../RCFGBuilder</module>
 		<module>../AbstractInterpretation</module>
-		
+
 		<module>../CodeCheck</module>
 		<module>../Library-log4j</module>
 		<module>../ACSLParser</module>
@@ -241,9 +241,9 @@
 	<profiles>
 
 		<profile>
-			<!-- The profile coverage is used to generate junit test case coverage
-				through jenkins and sonar. It uses all regression tests, but not UltimateTest,
-				as those tests are very slow and should be executed manually via profile
+			<!-- The profile coverage is used to generate junit test case coverage 
+				through jenkins and sonar. It uses all regression tests, but not UltimateTest, 
+				as those tests are very slow and should be executed manually via profile 
 				manualtest. You should not need to run this profile manually. -->
 			<id>coverage</id>
 
@@ -312,24 +312,19 @@
 		</profile>
 
 		<profile>
-			<!-- The profile manualtest is used to start manual tests from the commandline.
-				It allows you to run all tests, but you should nevertheless specify which suite you want to run, as
-				all the suites may require several days to run. To run this, you can use the following syntax:
-
-				time mvn clean integration-test -Pmanualtest -Dtest=SVCOMP15TestSuite > output.log 2>&1
-
-				You can also use the following options to customize your run:
-				-o enables offline mode, skipping lookup of online repositories
-				-T n uses n threads during build
-				export _JAVA_OPTIONS="-enableassertions" (Linux) or set _JAVA_OPTIONS=-enableassertions (Windows)
-				before the actual command supplies additional options to the test VM without changing this pom.xml
-
-				Further notes: Maven chooses your VM by inspecting JAVA_HOME. Under Windows, you can show it with
-				echo %JAVA_HOME%
-				and change it temporarily with
-				set JAVA_HOME=C:\Program Files\Java\jdk1.8.0_05
-
-				This profile should (probably) only be used manually. -->
+			<!-- The profile manualtest is used to start manual tests from the commandline. 
+				It allows you to run all tests, but you should nevertheless specify which 
+				suite you want to run, as all the suites may require several days to run. 
+				To run this, you can use the following syntax: time mvn clean integration-test 
+				-Pmanualtest -Dtest=SVCOMP15TestSuite > output.log 2>&1 You can also use 
+				the following options to customize your run: -o enables offline mode, skipping 
+				lookup of online repositories -T n uses n threads during build export _JAVA_OPTIONS="-enableassertions" 
+				(Linux) or set _JAVA_OPTIONS=-enableassertions (Windows) before the actual 
+				command supplies additional options to the test VM without changing this 
+				pom.xml Further notes: Maven chooses your VM by inspecting JAVA_HOME. Under 
+				Windows, you can show it with echo %JAVA_HOME% and change it temporarily 
+				with set JAVA_HOME=C:\Program Files\Java\jdk1.8.0_05 This profile should 
+				(probably) only be used manually. -->
 			<id>manualtest</id>
 			<build>
 				<plugins>
