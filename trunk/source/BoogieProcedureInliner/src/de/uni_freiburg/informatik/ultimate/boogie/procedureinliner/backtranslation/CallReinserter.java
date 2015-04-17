@@ -42,7 +42,9 @@ public class CallReinserter {
 				// we returned from one (ore more!) inlined calls
 				CallStatement last;
 				while ((last = mUnreturnedInlinedCalls.pop()) != oCall) {
-					recoveredCalls.add(last);
+					if (last.getLhs().length > 0) {
+						recoveredCalls.add(last);						
+					}
 				}
 			} else {
 				// we entered a new, inlined call

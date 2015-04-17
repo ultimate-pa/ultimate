@@ -27,6 +27,7 @@ public class InliningTest_Svcomp_Individual extends AbstractTraceAbstractionTest
 		"examples/svcomp/heap-manipulation/bubble_sort_linux_true-unreach-call.i",
 		*/
 		// Failed tests from after fix of "old(vars) only assigned on first call".
+		// These tests fail, even without inlining
 		"examples/svcomp/loop-acceleration/diamond_true-unreach-call2.c",
 		"examples/svcomp/loop-lit/afnp2014_true-unreach-call.c",
 		"examples/svcomp/loop-lit/bhmr2007_true-unreach-call.c.i",

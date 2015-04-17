@@ -130,7 +130,7 @@ public class InlinerBacktranslator extends DefaultTranslator<BoogieASTNode, Boog
 					translatedVar2Values.put(translateExpression(variable),
 							translateExpressions(progState.getValues(variable)));
 				}
-				translatedStates.put(translatedTrace.size(), new ProgramState<>(translatedVar2Values));
+				translatedStates.put(translatedTrace.size()-1, new ProgramState<>(translatedVar2Values));
 			}
 		}
 		BoogieProgramExecution translatedExec =  new BoogieProgramExecution(translatedStates, translatedTrace);
