@@ -27,7 +27,7 @@ public class IncrementalInclusionTest extends
 	
 	
 	/** Limit the number of files per directory that are used. */
-	private static int m_FilesPerDirectoryLimit = 1;
+	private static int m_FilesPerDirectoryLimit = 10;
 	
 	private static final DirectoryFileEndingsPair[] s_SVCOMP_Programs = {
 //		/*** Category 1. Arrays ***/
@@ -89,14 +89,14 @@ public class IncrementalInclusionTest extends
 	 */
 	private static final String[] s_Settings = {
 		"automizer/incrementalInclusion/Difference.epf",
-//		"automizer/incrementalInclusion/IncrementalInclusionViaDifference.epf",
-//		"automizer/incrementalInclusion/IncrementalInclusion2.epf",
-//		"automizer/incrementalInclusion/IncrementalInclusion3.epf",
-//		"automizer/incrementalInclusion/IncrementalInclusion3_2.epf",
-//		"automizer/incrementalInclusion/IncrementalInclusion4.epf",
-//		"automizer/incrementalInclusion/IncrementalInclusion4_2.epf",
-//		"automizer/incrementalInclusion/IncrementalInclusion5.epf",
-//		"automizer/incrementalInclusion/IncrementalInclusion5_2.epf",
+		"automizer/incrementalInclusion/IncrementalInclusionViaDifference.epf",
+		"automizer/incrementalInclusion/IncrementalInclusion2.epf",
+		"automizer/incrementalInclusion/IncrementalInclusion3.epf",
+		"automizer/incrementalInclusion/IncrementalInclusion3_2.epf",
+		"automizer/incrementalInclusion/IncrementalInclusion4.epf",
+		"automizer/incrementalInclusion/IncrementalInclusion4_2.epf",
+		"automizer/incrementalInclusion/IncrementalInclusion5.epf",
+		"automizer/incrementalInclusion/IncrementalInclusion5_2.epf",
 //		"automizer/incrementalInclusion/nonDeterministic/Difference.epf",
 //		"automizer/incrementalInclusion/nonDeterministic/IncrementalInclusionViaDifference.epf",
 //		"automizer/incrementalInclusion/nonDeterministic/IncrementalInclusion2.epf",
