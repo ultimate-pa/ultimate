@@ -124,7 +124,7 @@ public abstract class AbstractModelCheckerTestSuite extends UltimateTestSuite {
 			return files;
 		} else {
 			Collections.shuffle(files, new Random(s_PseudorandomFileselectionSeed));
-			ArrayList<File> result = new ArrayList<>(files.subList(0, n - 1));
+			ArrayList<File> result = new ArrayList<>(files.subList(0, n));
 			return result;
 		}
 	}
