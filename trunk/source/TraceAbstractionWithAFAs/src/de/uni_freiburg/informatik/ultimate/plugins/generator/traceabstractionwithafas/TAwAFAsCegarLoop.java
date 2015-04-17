@@ -38,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SafeSubstitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
@@ -141,6 +142,9 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 				if (varToSsaVar.get(bv) == null)
 					varToSsaVar.put(bv, buildVersion(bv));		
 			HashMap<Term, BoogieVar> constantsToBoogieVar = new HashMap<>();
+
+			m_SmtManager.getScript().push(1); //push needs to be here, because getTermsFromDAG declares constants
+
 			getTermsFromDAG(dag, termsFromDAG, startsOfSubtreesFromDAG, 0, varToSsaVar, constantsToBoogieVar);
 
 			//convert ArrayList<Integer> to int[]
@@ -149,15 +153,6 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 				startsOfSubtreesAsInts[i] = startsOfSubtreesFromDAG.get(i);
 			}
 
-			m_SmtManager.getScript().push(1);
-//			// declare all variables (all would not be necessary, but well..
-//			for (Term t : m_traceCheckerWAST.getConstantsToBoogieVar().keySet()) {
-//				ApplicationTerm at = (ApplicationTerm) t;
-//				m_SmtManager.getScript().declareFun(at.getFunction().getName(), new Sort[0], at.getSort());
-//			}
-//			for (ApplicationTerm t : constantsToDeclare) {
-//				m_SmtManager.getScript().declareFun(t.getFunction().getName(), new Sort[0], t.getSort());
-//			}
 
 			// assert the terms for the current dag, name them
 			ArrayList<Term> termNames = new ArrayList<Term>();
@@ -176,10 +171,8 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 				m_SmtManager.getScript().pop(1);
 				IPredicate[] predicates = interpolantsToPredicates(interpolants,
 						constantsToBoogieVar);
-//						m_traceCheckerWAST.getConstantsToBoogieVar());
 				decorateDagWithInterpolants(dag, predicates);
 
-				// TODO: what about converting the dag to a tree??
 				AlternatingAutomaton<CodeBlock, IPredicate> alternatingAutomaton = computeAlternatingAutomaton(dag);
 				mLogger.debug("compute alternating automaton:\n " + alternatingAutomaton);
 				if (alternatingAutomatonUnion == null) {
@@ -189,12 +182,6 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 					alternatingAutomatonUnion = mergedUnion.getResult();
 					assert checkRAFA(alternatingAutomatonUnion);
 				}
-				// in the future:
-				// - reverse and _determinize_ in one step
-				// - perhaps use conjunction of predicates instead of
-				// CompoundState
-				// - make use of the fact that afas are easy to complement??
-				// - do union operation on r-AFAs??
 			} else {
 				m_SmtManager.getScript().pop(1);
 			}
@@ -226,23 +213,28 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 			ArrayList<Integer> startsOfSubtrees, int currentSubtree, HashMap<BoogieVar,Term> varToSsaVar,
 			HashMap<Term,BoogieVar> constantsToBoogieVar) {
 		
-		//only the ssa-version of the variable that is on the write-edge of this node is used in this 
-		//node's ssa. 
-		//All the other nodes get a fresh SSA-version
-
-		assert dag.getIncomingNodes().size() <= 1 : "DataflowDAG is not a tree, expecting a tree";
-		BoogieVar writtenVar = 
-				dag.getIncomingNodes().size() == 1 ?
-						dag.getIncomingEdgeLabel(dag.getIncomingNodes().get(0)).getBoogieVar() :
-							null;
-		Term writtenVarSsa = varToSsaVar.get(writtenVar);
-
 		HashMap<BoogieVar,Term> varToSsaVarNew = new HashMap<>(varToSsaVar);//copy (nice would be immutable maps)
-		
-		for (BoogieVar bv : dag.getNodeLabel().getBlock().getTransitionFormula().getInVars().keySet())
-				varToSsaVarNew.put(bv, buildVersion(bv));
-		for (BoogieVar bv : dag.getNodeLabel().getBlock().getTransitionFormula().getOutVars().keySet())
-				varToSsaVarNew.put(bv, buildVersion(bv));
+		BoogieVar writtenVar = null;
+		Term writtenVarSsa = null;
+
+		if (dag.getNodeLabel().getBlock().getTransitionFormula().getAssignedVars().isEmpty()) {
+			//do nothing -- all the ssa-versions stay the same in an assume
+		} else {
+			//only the ssa-version of the variable that is on the write-edge of this node is used in this 
+			//node's ssa. 
+			//All the other nodes get a fresh SSA-version
+			assert dag.getIncomingNodes().size() <= 1 : "DataflowDAG is not a tree, expecting a tree";
+			writtenVar = 
+					dag.getIncomingNodes().size() == 1 ?
+							dag.getIncomingEdgeLabel(dag.getIncomingNodes().get(0)).getBoogieVar() :
+								null;
+							writtenVarSsa = varToSsaVar.get(writtenVar);
+
+							for (BoogieVar bv : dag.getNodeLabel().getBlock().getTransitionFormula().getInVars().keySet())
+								varToSsaVarNew.put(bv, buildVersion(bv));
+							for (BoogieVar bv : dag.getNodeLabel().getBlock().getTransitionFormula().getOutVars().keySet())
+								varToSsaVarNew.put(bv, buildVersion(bv));
+		}
 		
 		for (int i = 0; i < dag.getOutgoingNodes().size(); i++) {
 			DataflowDAG<TraceCodeBlock> outNode = dag.getOutgoingNodes().get(i);
@@ -275,7 +267,8 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 		}
 		for (Entry<BoogieVar, TermVariable> entry : transFormula.getOutVars().entrySet()) {
 			Term t = null;
-			if (entry.getKey().equals(writtenVar)) {
+			if (writtenVar != null  //in case of an assume statement the written var may be null
+					&& entry.getKey().equals(writtenVar)) { 
 				t = writtenVarSsa;
 			} else {
 				t = varToSsaVarNew.get(entry.getKey());
