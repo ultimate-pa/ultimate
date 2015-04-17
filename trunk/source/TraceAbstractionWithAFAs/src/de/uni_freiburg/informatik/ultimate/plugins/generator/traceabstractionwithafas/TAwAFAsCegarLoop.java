@@ -8,7 +8,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Set;
 import java.util.Stack;
 import java.util.TreeMap;
 
@@ -34,8 +33,6 @@ import de.uni_freiburg.informatik.ultimate.core.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
-import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
-import de.uni_freiburg.informatik.ultimate.logic.FormulaWalker;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -44,12 +41,10 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SafeSubstitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.BasicPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.TermVarsProc;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.ReachingDefinitions;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.boogie.ScopedBoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.dataflowdag.DataflowDAG;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.dataflowdag.TraceCodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -215,14 +210,6 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 			);
 		}
 	}
-
-//	private void recomputeSSA(DataflowDAG<TraceCodeBlock> dag) {
-//		for ( DataflowDAG<TraceCodeBlock> outNode : dag.getOutgoingNodes()) {
-//			ScopedBoogieVar edgeLabel = dag.getOutgoingEdgeLabel(outNode);
-//		}
-//		
-//	}
-
 	
 	/**
 	 * Given DataflowDAG dag, go through it in postorder and add the Terms of the Dagnodes' transition formulas
@@ -233,7 +220,10 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 	private void getTermsFromDAG(DataflowDAG<TraceCodeBlock> dag, ArrayList<Term> terms,
 			ArrayList<Integer> startsOfSubtrees, int currentSubtree, HashMap<BoogieVar,Term> varToSsaVar) {
 		
-		//..
+		//only the ssa-version of the variable that is on the write-edge of this node is used in this 
+		//node's ssa. 
+		//All the other nodes get a fresh SSA-version
+
 		assert dag.getIncomingNodes().size() <= 1 : "DataflowDAG is not a tree, expecting a tree";
 		BoogieVar writtenVar = 
 				dag.getIncomingNodes().size() == 1 ?
@@ -248,25 +238,6 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 		for (BoogieVar bv : dag.getNodeLabel().getBlock().getTransitionFormula().getOutVars().keySet())
 				varToSsaVarNew.put(bv, buildVersion(bv));
 		
-//		// index for variables that occur for the first time here is 0
-//		for (BoogieVar bv : dag.getNodeLabel().getBlock().getTransitionFormula().getInVars().keySet())
-//			if (varToSsaVarNew.get(bv) == null)
-//				varToSsaVarNew.put(bv, buildVersion(bv));
-//		for (BoogieVar bv : dag.getNodeLabel().getBlock().getTransitionFormula().getOutVars().keySet())
-//			if (varToSsaVarNew.get(bv) == null)
-//				varToSsaVarNew.put(bv, buildVersion(bv));
-		
-//		// variables that are read get a fresh ssa-version
-//		for (ScopedBoogieVar edgeLabel : dag.getOutgoingEdgeLabels()) {
-//			varToSsaVarNew.put(edgeLabel.getBoogieVar(), 
-//					buildVersion(edgeLabel.getBoogieVar()));
-//		}
-		//all variables get a fresh ssa-version, in varTossaVarNew
-		//varToSsaVarOld is identical to varToSsaVarNew except for
-		//the one variable that is written here and that is responsible for the outgoing edge
-//		for ()
-//		dag.getIncomingEdgeLabel(dag.getIncomingNodes().get(0)); //we have a tree, really..
-		
 		for (int i = 0; i < dag.getOutgoingNodes().size(); i++) {
 			DataflowDAG<TraceCodeBlock> outNode = dag.getOutgoingNodes().get(i);
 			getTermsFromDAG(outNode, 
@@ -274,7 +245,6 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 					startsOfSubtrees, i == 0 ? currentSubtree : terms.size(), 
 					varToSsaVarNew);
 		}
-//		terms.add(m_traceCheckerWAST.getSSATerm(dag.getNodeLabel().getIndex()));
 		terms.add(computeSsaTerm(dag.getNodeLabel(), writtenVar, writtenVarSsa, varToSsaVarNew));
 		startsOfSubtrees.add(currentSubtree);
 	}
