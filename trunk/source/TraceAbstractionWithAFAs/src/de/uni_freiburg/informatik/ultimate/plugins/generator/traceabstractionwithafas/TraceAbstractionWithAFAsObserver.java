@@ -163,7 +163,7 @@ public class TraceAbstractionWithAFAsObserver extends BaseObserver {
 		return errorPP;
 	}
 	
-	private void reportTimoutResult(Collection<ProgramPoint> errorLocs) {
+	private void reportTimeoutResult(Collection<ProgramPoint> errorLocs) {
 		for (ProgramPoint errorLoc : errorLocs) {
 			ILocation origin = errorLoc.getBoogieASTNode().getLocation().getOrigin();
 			String timeOutMessage = "Unable to prove that "

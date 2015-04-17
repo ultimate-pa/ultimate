@@ -2,7 +2,7 @@ package de.uni_freiburg.informatik.ultimate.result;
 
 /**
  * Use this to report that there was a timeout in cases this timeout is not
- * related to a specific element. (In cases the timout is related to a specific
+ * related to a specific element. (In cases the timeout is related to a specific
  * element, e.g., an error location see TimeoutResultAtElement).
  * 
  * @author Matthias Heizmann

@@ -422,7 +422,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 			else
 				overallResult = Result.INCORRECT;
 		} else {
-			reportTimoutResult(mErrNodesOfAllProc);
+			reportTimeoutResult(mErrNodesOfAllProc);
 		}
 
 		mLogger.debug("MemoizationHitsSat: " + codeChecker.memoizationHitsSat);
@@ -576,7 +576,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		return errorPP;
 	}
 	
-	private void reportTimoutResult(Collection<ProgramPoint> errorLocs) {
+	private void reportTimeoutResult(Collection<ProgramPoint> errorLocs) {
 		for (ProgramPoint errorLoc : errorLocs) {
 			ILocation origin = errorLoc.getBoogieASTNode().getLocation().getOrigin();
 			String timeOutMessage = "Unable to prove that "

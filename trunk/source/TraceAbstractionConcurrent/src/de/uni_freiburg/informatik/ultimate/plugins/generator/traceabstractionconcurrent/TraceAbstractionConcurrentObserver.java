@@ -109,7 +109,7 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 			break;
 		}
 		case TIMEOUT:
-			reportTimoutResult(errNodesOfAllProc);
+			reportTimeoutResult(errNodesOfAllProc);
 			break;
 		case UNKNOWN: {
 			RcfgProgramExecution pe = abstractCegarLoop.getRcfgProgramExecution();
@@ -202,10 +202,10 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 				Activator.s_PLUGIN_NAME, m_Services.getBacktranslationService(), pe));
 	}
 
-	private void reportTimoutResult(Collection<ProgramPoint> errorLocs) {
+	private void reportTimeoutResult(Collection<ProgramPoint> errorLocs) {
 		for (ProgramPoint errorLoc : errorLocs) {
 			ILocation origin = errorLoc.getBoogieASTNode().getLocation().getOrigin();
-			String timeOutMessage = "Timout! Unable to prove that "
+			String timeOutMessage = "Timeout! Unable to prove that "
 					+ origin.getCheck().getPositiveMessage();
 			timeOutMessage += " (line " + origin.getStartLine() + ")";
 			TimeoutResultAtElement<RcfgElement> timeOutRes = new TimeoutResultAtElement<RcfgElement>(errorLoc,

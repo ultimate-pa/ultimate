@@ -218,7 +218,7 @@ public class TraceAbstractionStarter {
 			break;
 		}
 		case TIMEOUT:
-			reportTimoutResult(errorLocs);
+			reportTimeoutResult(errorLocs);
 			if (m_OverallResult != Result.UNSAFE) {
 				m_OverallResult = result;
 			}
@@ -259,7 +259,7 @@ public class TraceAbstractionStarter {
 				m_Services.getBacktranslationService(), pe));
 	}
 
-	private void reportTimoutResult(Collection<ProgramPoint> errorLocs) {
+	private void reportTimeoutResult(Collection<ProgramPoint> errorLocs) {
 		for (ProgramPoint errorLoc : errorLocs) {
 			ILocation origin = errorLoc.getBoogieASTNode().getLocation().getOrigin();
 			String timeOutMessage = "Unable to prove that "

@@ -604,7 +604,7 @@ public class TransFormula implements Serializable {
 
 	}
 
-	private static void reportTimoutResult(IUltimateServiceProvider services) {
+	private static void reportTimeoutResult(IUltimateServiceProvider services) {
 		String timeOutMessage = "Timeout during computation of TransFormula";
 		TimeoutResult timeOutRes = new TimeoutResult(ModelCheckerUtils.sPluginID, timeOutMessage);
 		services.getResultService().reportResult(ModelCheckerUtils.sPluginID, timeOutRes);
