@@ -264,7 +264,12 @@ public class PreRunner extends ASTVisitor {
         			if (lDecl instanceof IASTDeclarator) {
         				if (((IASTDeclarator) lDecl).getPointerOperators() != null
         						&& ((IASTDeclarator) lDecl).getPointerOperators().length > 0) {
-        					variablesOnHeap.add(rDecl);
+        					/* FIXME: why did we do this?? It leads to cp1 being put on the heap in case we have
+        					 * for example cp1 = cp2;
+        					 * where both are declared as char (or other) pointers
+        					 *  --> this was not what I was aiming for when I wrote it, I suppose..
+        					 */
+//        					variablesOnHeap.add(rDecl); 
         				}
         					
         			}
