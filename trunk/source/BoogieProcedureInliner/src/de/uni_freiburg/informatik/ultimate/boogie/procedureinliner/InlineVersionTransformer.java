@@ -335,6 +335,17 @@ public class InlineVersionTransformer extends BoogieCopyTransformer {
 		return mEntryProcId;
 	}
 	
+	/**
+	 * Adds a backtranslation mapping for a BoogieASTNode.
+	 * Use this for all Statements and Specifications.
+	 * 
+	 * There should be at most one inlined node, which maps to the original node,
+	 * to avoid creation of duplicates in the backtranslation. 
+	 * 
+	 * @param inlinedNode The node, which should be backtranslateable.
+	 * @param originalNode Original node, which created the inlined node.
+	 *                     null, if the node should be neglected by the backtranslation.
+	 */
 	private void addBacktranslation(BoogieASTNode inlinedNode, BoogieASTNode originalNode) {
 		CallStatement originalCall = mCallStack.isEmpty() ? null : mCallStack.peek();
 		mBackTransMap.put(inlinedNode, new BackTransValue(mEntryProcId, originalNode, originalCall));
@@ -751,7 +762,7 @@ public class InlineVersionTransformer extends BoogieCopyTransformer {
 				if (mAssumeRequiresAfterAssert) {
 					AssumeStatement assumeStat = new AssumeStatement(loc, processedFormula);
 					ModelUtils.mergeAnnotations(processedSpec, assumeStat);
-					addBacktranslation(assumeStat, spec);
+					addBacktranslation(assumeStat, null); // "assert PRE" is always there and translates to the spec
 					assumeRequires.add(assumeStat);
 				}
 			} else if (processedSpec instanceof EnsuresSpecification) {
@@ -759,7 +770,7 @@ public class InlineVersionTransformer extends BoogieCopyTransformer {
 				if (!isFree && mAssertEnsuresBeforeAssume && calleeNode.isImplemented()) {
 					AssertStatement assertStat = new AssertStatement(loc, formula);
 					ModelUtils.mergeAnnotations(processedSpec, assertStat);
-					addBacktranslation(assertStat, spec);
+					addBacktranslation(assertStat, null); // "assume POST" is always there and translates to the spec
 					assertEnsures.add(assertStat);
 				}
 				AssumeStatement assumeStat = new AssumeStatement(loc, formula);

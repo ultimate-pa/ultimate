@@ -1,7 +1,9 @@
 package de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.backtranslation;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -85,7 +87,9 @@ public class InlinerBacktranslator extends DefaultTranslator<BoogieASTNode, Boog
 		CallReinserter callReinserter = new CallReinserter();
 		for (BoogieASTNode traceElem : trace) {
 			BackTransValue mapping = mBackTransMap.get(traceElem);
-			translatedTrace.addAll(callReinserter.recoverInlinedCallsBefore(mapping));
+			for (AtomicTraceElement<BoogieASTNode> insertedCall : callReinserter.recoverInlinedCallsBefore(mapping)) {
+				translatedTrace.add(insertedCall.getTraceElement());				
+			}
 			if (mapping == null) {
 				translatedTrace.add(traceElem);
 			} else {
@@ -104,13 +108,11 @@ public class InlinerBacktranslator extends DefaultTranslator<BoogieASTNode, Boog
 		CallReinserter callReinserter = new CallReinserter();
 		Map<Integer, ProgramState<Expression>> translatedStates = new HashMap<>();
 		List<AtomicTraceElement<BoogieASTNode>> translatedTrace = new ArrayList<>();
+		//Deque<String> unclosedProcs = new ArrayDeque<>();
 		for (int i = 0; i < length; ++i) {
 			AtomicTraceElement<BoogieASTNode> traceElem = exec.getTraceElement(i);
 			BackTransValue mapping = mBackTransMap.get(traceElem.getTraceElement());
-			for (CallStatement reinsertedCall : callReinserter.recoverInlinedCallsBefore(mapping)) {
-				// TODO use other ctor of AtomicTraceElement?
-				translatedTrace.add(new AtomicTraceElement<BoogieASTNode>(reinsertedCall));
-			}
+			translatedTrace.addAll(callReinserter.recoverInlinedCallsBefore(mapping));
 			if (mapping == null) {
 				// traceElem wasn't affected by inlining
 				translatedTrace.add(traceElem);
@@ -127,8 +129,10 @@ public class InlinerBacktranslator extends DefaultTranslator<BoogieASTNode, Boog
 			if (progState != null) {
 				Map<Expression, Collection<Expression>> translatedVar2Values = new HashMap<>();
 				for (Expression variable : progState.getVariables()) {
-					translatedVar2Values.put(translateExpression(variable),
-							translateExpressions(progState.getValues(variable)));
+					Expression translatedVar = translateExpression(variable);
+					if (keepVariable(translatedVar, null)) { // TODO
+						translatedVar2Values.put(translatedVar, translateExpressions(progState.getValues(variable)));						
+					}
 				}
 				translatedStates.put(translatedTrace.size()-1, new ProgramState<>(translatedVar2Values));
 			}
@@ -136,6 +140,11 @@ public class InlinerBacktranslator extends DefaultTranslator<BoogieASTNode, Boog
 		BoogieProgramExecution translatedExec =  new BoogieProgramExecution(translatedStates, translatedTrace);
 		return translatedExec;
 	}	
+	
+	private boolean keepVariable(Expression translatedVar, String curProcId) {
+		// TODO implement
+		return true;
+	}
 	
 	@Override
 	public String targetExpressionToString(Expression expression) {
