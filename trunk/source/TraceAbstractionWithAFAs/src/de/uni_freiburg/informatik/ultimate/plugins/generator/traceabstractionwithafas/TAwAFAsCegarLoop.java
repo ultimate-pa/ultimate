@@ -140,7 +140,8 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 			for (BoogieVar bv : dag.getNodeLabel().getBlock().getTransitionFormula().getOutVars().keySet())
 				if (varToSsaVar.get(bv) == null)
 					varToSsaVar.put(bv, buildVersion(bv));		
-			getTermsFromDAG(dag, termsFromDAG, startsOfSubtreesFromDAG, 0, varToSsaVar);
+			HashMap<Term, BoogieVar> constantsToBoogieVar = new HashMap<>();
+			getTermsFromDAG(dag, termsFromDAG, startsOfSubtreesFromDAG, 0, varToSsaVar, constantsToBoogieVar);
 
 			//convert ArrayList<Integer> to int[]
 			int[] startsOfSubtreesAsInts = new int[startsOfSubtreesFromDAG.size()];
@@ -149,11 +150,14 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 			}
 
 			m_SmtManager.getScript().push(1);
-			// declare all variables (all would not be necessary, but well..
-			for (Term t : m_traceCheckerWAST.getConstantsToBoogieVar().keySet()) {
-				ApplicationTerm at = (ApplicationTerm) t;
-				m_SmtManager.getScript().declareFun(at.getFunction().getName(), new Sort[0], at.getSort());
-			}
+//			// declare all variables (all would not be necessary, but well..
+//			for (Term t : m_traceCheckerWAST.getConstantsToBoogieVar().keySet()) {
+//				ApplicationTerm at = (ApplicationTerm) t;
+//				m_SmtManager.getScript().declareFun(at.getFunction().getName(), new Sort[0], at.getSort());
+//			}
+//			for (ApplicationTerm t : constantsToDeclare) {
+//				m_SmtManager.getScript().declareFun(t.getFunction().getName(), new Sort[0], t.getSort());
+//			}
 
 			// assert the terms for the current dag, name them
 			ArrayList<Term> termNames = new ArrayList<Term>();
@@ -171,7 +175,8 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 						termNames.toArray(new Term[termNames.size()]), startsOfSubtreesAsInts);
 				m_SmtManager.getScript().pop(1);
 				IPredicate[] predicates = interpolantsToPredicates(interpolants,
-						m_traceCheckerWAST.getConstantsToBoogieVar());
+						constantsToBoogieVar);
+//						m_traceCheckerWAST.getConstantsToBoogieVar());
 				decorateDagWithInterpolants(dag, predicates);
 
 				// TODO: what about converting the dag to a tree??
@@ -218,7 +223,8 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 	 * to have unique variables)
 	 */
 	private void getTermsFromDAG(DataflowDAG<TraceCodeBlock> dag, ArrayList<Term> terms,
-			ArrayList<Integer> startsOfSubtrees, int currentSubtree, HashMap<BoogieVar,Term> varToSsaVar) {
+			ArrayList<Integer> startsOfSubtrees, int currentSubtree, HashMap<BoogieVar,Term> varToSsaVar,
+			HashMap<Term,BoogieVar> constantsToBoogieVar) {
 		
 		//only the ssa-version of the variable that is on the write-edge of this node is used in this 
 		//node's ssa. 
@@ -243,9 +249,9 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 			getTermsFromDAG(outNode, 
 					terms, 
 					startsOfSubtrees, i == 0 ? currentSubtree : terms.size(), 
-					varToSsaVarNew);
+					varToSsaVarNew, constantsToBoogieVar);
 		}
-		terms.add(computeSsaTerm(dag.getNodeLabel(), writtenVar, writtenVarSsa, varToSsaVarNew));
+		terms.add(computeSsaTerm(dag.getNodeLabel(), writtenVar, writtenVarSsa, varToSsaVarNew, constantsToBoogieVar));
 		startsOfSubtrees.add(currentSubtree);
 	}
 
@@ -256,7 +262,7 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 	private Term computeSsaTerm(TraceCodeBlock nodeLabel,
 //			HashMap<BoogieVar,Term> varToSsaVarOld, 
 			BoogieVar writtenVar, Term writtenVarSsa,
-			HashMap<BoogieVar,Term> varToSsaVarNew) {
+			HashMap<BoogieVar,Term> varToSsaVarNew, HashMap<Term,BoogieVar> constantsToBoogieVar) {
 		TransFormula transFormula = nodeLabel.getBlock().getTransitionFormula();
 	
 		Map<TermVariable, Term> substitutionMapping = new HashMap<TermVariable, Term>();
@@ -265,6 +271,7 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
             Term t = varToSsaVarNew.get(entry.getKey());
             assert t != null;
 			substitutionMapping.put(entry.getValue(), t);
+			constantsToBoogieVar.put((ApplicationTerm) t, entry.getKey());
 		}
 		for (Entry<BoogieVar, TermVariable> entry : transFormula.getOutVars().entrySet()) {
 			Term t = null;
@@ -277,6 +284,7 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 //            if (t == null)
 //            	t = buildVersion(entry.getKey());
 			substitutionMapping.put(entry.getValue(), t);
+			constantsToBoogieVar.put((ApplicationTerm) t, entry.getKey());
 		}
 		
 		Term substitutedTerm = (new Substitution(substitutionMapping, m_SmtManager.getScript()))
