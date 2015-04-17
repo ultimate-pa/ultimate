@@ -9,8 +9,10 @@ import java.util.Map;
 //import org.apache.log4j.Logger;
 
 
+
 import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
+import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.backtranslation.InlinerBacktranslator;
 import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.callgraph.CallGraphBuilder;
 import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.callgraph.CallGraphNode;
 import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.exceptions.CancelToolchainException;
@@ -40,7 +42,9 @@ public class Inliner implements IUnmanagedObserver {
 	private Map<String, CallGraphNode> mCallGraph;
 
 	private Map<String, Procedure> mNewProceduresWithBody;
-
+	
+	private InlinerBacktranslator mBacktranslator;
+	
 	/**
 	 * Creates a new observer, which inlines Boogie procedures.
 	 * @param services Service provider.
@@ -51,6 +55,7 @@ public class Inliner implements IUnmanagedObserver {
 		mProgressMonitorService = services.getProgressMonitorService();
 		//mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mInlineSelector = inlineSelector;
+		mBacktranslator = new InlinerBacktranslator(services);
 	}
 
 	@Override
@@ -60,6 +65,7 @@ public class Inliner implements IUnmanagedObserver {
 
 	@Override
 	public void finish() {
+		mServices.getBacktranslationService().addTranslator(mBacktranslator);
 	}
 
 	@Override
@@ -102,6 +108,7 @@ public class Inliner implements IUnmanagedObserver {
 				InlineVersionTransformer transformer = new InlineVersionTransformer(mServices,
 						globalScopeManager, assumeRequiresAfterAssert, assertEnsuresBeforeAssume);
 				mNewProceduresWithBody.put(node.getId(), transformer.inlineCallsInside(node));
+				mBacktranslator.addBacktranslation(transformer);
 			}
 		}
 		writeNewDeclarationsToAstUnit();

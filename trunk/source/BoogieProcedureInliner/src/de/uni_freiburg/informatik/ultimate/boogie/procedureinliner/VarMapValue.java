@@ -32,8 +32,38 @@ public class VarMapValue {
 	}
 
 	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((mDeclInfo == null) ? 0 : mDeclInfo.hashCode());
+		result = prime * result + ((mVarId == null) ? 0 : mVarId.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		VarMapValue other = (VarMapValue) obj;
+		if (mDeclInfo == null) {
+			if (other.mDeclInfo != null)
+				return false;
+		} else if (!mDeclInfo.equals(other.mDeclInfo))
+			return false;
+		if (mVarId == null) {
+			if (other.mVarId != null)
+				return false;
+		} else if (!mVarId.equals(other.mVarId))
+			return false;
+		return true;
+	}
+
+	@Override
 	public String toString() {
 		return "VarMapValue [mVarId=" + mVarId + ", mDeclInfo=" + mDeclInfo + "]";
 	}
-
 }

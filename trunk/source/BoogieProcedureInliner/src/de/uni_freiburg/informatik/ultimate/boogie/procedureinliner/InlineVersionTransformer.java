@@ -126,15 +126,40 @@ public class InlineVersionTransformer extends BoogieCopyTransformer {
 	private GlobalScopeManager mGlobalScopeManager;
 	
 	/**
+	 * The identifier from the entry procedure, which was inlined using this InlineVersionTransformer instance.
+	 * null, if this InlineVersionTransformer instance wasn't used until now.
+	 * Can be used to prohibit reuse of InlineVersionTransformer instances.
+	 */
+	private String mEntryProcId = null;
+	
+	/**
+	 * Original CallStatements, which are currently inlined.
+	 * Whenever the inlining process for call starts, it is pushed onto the stack.
+	 * The call is popped, when it is fully inlined.
+	 * Only used for backtranslation.
+	 * 
+	 * {@link #mProcedureStack} contains the called Procedures.
+	 */
+	private Deque<CallStatement> mCallStack = new ArrayDeque<>();
+	
+	/**
+	 * Mapping from the new generated ASTNodes to their unprocessed origins.
+	 * Only used for backtranslation.
+	 */
+	private Map<BoogieASTNode, BackTransValue> mBackTransMap = new HashMap<>();
+	
+	/**
 	 * Similar to a call stack on execution, this contains the currently processed procedures.
 	 * The entry procedure is on the bottom of the stack.
 	 * Procedures of call-forall statements aren't pushed onto the stack.
 	 * 
 	 * The process...()-Methods will yield different results, depending on the contents of this stack.
 	 * (Mappings differ from procedure to procedure).
+	 * 
+	 * {@link #mCallStack} contains the Statements, that called the Procedures.
 	 */
 	private Deque<CallGraphNode> mProcedureStack = new ArrayDeque<>();
-	
+
 	/**
 	 * Contains the number of processed calls (in the order of the program)
 	 * inside the procedures of {@link #mProcedureStack}.
@@ -227,10 +252,12 @@ public class InlineVersionTransformer extends BoogieCopyTransformer {
 	 * @throws CancelToolchainException If an error occurred and the toolchain should be canceled.
 	 */
 	public Procedure inlineCallsInside(CallGraphNode entryNode) throws CancelToolchainException {
-		if (!entryNode.isImplemented()) {
+		if (mEntryProcId != null) {
+			throw new IllegalStateException("Instance was already used to inline an procedure: " + mEntryProcId);
+		} else if (!entryNode.isImplemented()) {
 			return null;
 		}
-		
+		mEntryProcId = entryNode.getId();
 		mProcedureStack.push(entryNode);
 		mEdgeIndexStack.push(0);
 
@@ -259,7 +286,14 @@ public class InlineVersionTransformer extends BoogieCopyTransformer {
 		
 		Specification[] oldSpecs = proc.getSpecification();
 		boolean hasSpec = oldSpecs != null;
-		Specification[] newSpecs = hasSpec ? processSpecifications(oldSpecs) : null;	
+		Specification[] newSpecs = null;	
+		if (hasSpec) {
+			newSpecs = new Specification[oldSpecs.length];
+			for (int i = 0; i < oldSpecs.length; ++i) {
+				newSpecs[i] = processSpecification(oldSpecs[i]);
+				addBacktranslation(newSpecs[i], oldSpecs[i]);
+			}
+		}
 		
 		VarList[] newInParams = applyMappingToVarList(proc.getInParams(), new DeclarationInformation(
 				hasSpec ? StorageClass.PROC_FUNC_INPARAM : StorageClass.IMPLEMENTATION_INPARAM, procId));
@@ -277,9 +311,33 @@ public class InlineVersionTransformer extends BoogieCopyTransformer {
 		return newProc;
 	}
 	
+	private void checkInstanceUsed() {
+		if (mEntryProcId == null) {
+			throw new IllegalStateException("Instance must have been used for inlining before.");
+		}
+	}
+	
+	/** @return Read-only view of the backtranslation map. */
+	public Map<BoogieASTNode, BackTransValue> getBacktranslationMap() {
+		checkInstanceUsed();
+		return Collections.unmodifiableMap(mBackTransMap);
+	}
+
+	/** @return Read-only view of the variable map. */
+	public Map<VarMapKey, VarMapValue> getVariableMap() {
+		checkInstanceUsed();
+		return Collections.unmodifiableMap(mVarMap);
+	}
+	
 	/** @return Identifier of the procedure, in which the inlining started. */
-	private String getEntryProcId() {
-		return mProcedureStack.peekLast().getId();
+	public String getEntryProcId() {
+		checkInstanceUsed();
+		return mEntryProcId;
+	}
+	
+	private void addBacktranslation(BoogieASTNode inlinedNode, BoogieASTNode originalNode) {
+		CallStatement originalCall = mCallStack.isEmpty() ? null : mCallStack.peek();
+		mBackTransMap.put(inlinedNode, new BackTransValue(mEntryProcId, originalNode, originalCall));
 	}
 	
 	/** @return Identifier of the currently processed procedure. */
@@ -410,7 +468,6 @@ public class InlineVersionTransformer extends BoogieCopyTransformer {
 			boolean inParams) {
 		boolean inEntryProc = inEntryProcedure();
 		String originalProcId = currentProcId();
-		String entryProcId = getEntryProcId();
 		StorageClass storageClassProcDecl =
 				inParams ? StorageClass.PROC_FUNC_INPARAM : StorageClass.PROC_FUNC_OUTPARAM;
 		StorageClass storageClassProcImpl =
@@ -418,9 +475,9 @@ public class InlineVersionTransformer extends BoogieCopyTransformer {
 		DeclarationInformation oldDeclInfoProcDecl = new DeclarationInformation(storageClassProcDecl, originalProcId);
 		DeclarationInformation oldDeclInfoProcImpl = new DeclarationInformation(storageClassProcImpl, originalProcId);
 		DeclarationInformation newDeclInfoProcDecl = new DeclarationInformation(
-				inEntryProc ? storageClassProcDecl : StorageClass.LOCAL, entryProcId);
+				inEntryProc ? storageClassProcDecl : StorageClass.LOCAL, mEntryProcId);
 		DeclarationInformation newDeclInfoProcImpl = new DeclarationInformation(
-				inEntryProc ? storageClassProcImpl : StorageClass.LOCAL, entryProcId);
+				inEntryProc ? storageClassProcImpl : StorageClass.LOCAL, mEntryProcId);
 
 		List<VariableDeclaration> inlinedVars = new ArrayList<>();
 		// indices
@@ -497,7 +554,7 @@ public class InlineVersionTransformer extends BoogieCopyTransformer {
 			VarMapValue value = null;
 			if (declInfo.getStorageClass() == StorageClass.GLOBAL) {
 				// Create mapping
-				DeclarationInformation newDeclInfo = new DeclarationInformation(StorageClass.LOCAL, getEntryProcId());
+				DeclarationInformation newDeclInfo = new DeclarationInformation(StorageClass.LOCAL, mEntryProcId);
 				String newId = mVarIdManager.makeAndAddUniqueId(procId + "_old", id);
 				value = new VarMapValue(newId, newDeclInfo);
 				// Declare as local variable
@@ -539,7 +596,6 @@ public class InlineVersionTransformer extends BoogieCopyTransformer {
 	 */
 	private List<VarList> mapVariables(VarList[] varLists, StorageClass storageClass) {
 		boolean inEntryProcedure = inEntryProcedure();
-		String entryProcId = getEntryProcId();
 		String originalProcId = currentProcId();
 		boolean isQuantified = (storageClass == StorageClass.QUANTIFIED);
 		String oldDeclInfoProcId = isQuantified ? null : originalProcId;
@@ -549,7 +605,7 @@ public class InlineVersionTransformer extends BoogieCopyTransformer {
 			newDeclInfo = oldDeclInfo;
 		} else {
 			StorageClass newStorageClass = isQuantified ? StorageClass.QUANTIFIED : StorageClass.LOCAL;
-			String newDeclInfoProcId = isQuantified ? null : entryProcId;
+			String newDeclInfoProcId = isQuantified ? null : mEntryProcId;
 			newDeclInfo = new DeclarationInformation(newStorageClass, newDeclInfoProcId);
 		}
 		List<VarList> newVarLists = new ArrayList<>();
@@ -609,6 +665,7 @@ public class InlineVersionTransformer extends BoogieCopyTransformer {
 				&& call.getMethodName().equals(edgeLabel.getCalleeProcedureId());
 			if (edgeLabel.getInlineFlag()) {
 				VariableLHS[] processedCallLHSs = processVariableLHSs(call.getLhs());
+				mCallStack.push(call);
 				mProcedureStack.push(calleeNode);
 				mEdgeIndexStack.push(0);
 				if (incrementCallCounter(calleeNode.getId()) <= 0) {
@@ -617,7 +674,7 @@ public class InlineVersionTransformer extends BoogieCopyTransformer {
 				List<Statement> inlinedCall = inlineCall(call, processedCallLHSs, calleeNode);
 				mEdgeIndexStack.pop();
 				mProcedureStack.pop();
-
+				mCallStack.pop();
 				if (call.getPayload().hasAnnotation()) {
 					mLogger.warn("Discarded annotation of " + call + ": " + call.getPayload().getAnnotations());
 				}
@@ -639,7 +696,8 @@ public class InlineVersionTransformer extends BoogieCopyTransformer {
 		if (newStat == null) {
 			newStat = processStatement(stat);
 		} else {
-			ModelUtils.mergeAnnotations(stat, newStat);			
+			ModelUtils.mergeAnnotations(stat, newStat);
+			addBacktranslation(newStat, stat);
 		}
 		return Collections.singletonList(newStat);
 	}
@@ -647,8 +705,8 @@ public class InlineVersionTransformer extends BoogieCopyTransformer {
 	/**
 	 * Creates an inline version of a normal call (no call forall).
 	 * 
-	 * @param call Normal CallStatement which should be inlined.
-	 * @param processedCallLHS Processed LHS of the CallStatemente.
+	 * @param call Normal, unprocessed CallStatement which should be inlined.
+	 * @param processedCallLHS Processed LHS of the CallStatement.
 	 *                         The LHS instances from the array need to be unique for each call of this method.
 	 * @param calleeNode CallGrapNode of the called procedure
 	 * @return Inline version of the call.
@@ -675,8 +733,9 @@ public class InlineVersionTransformer extends BoogieCopyTransformer {
 		List<Statement> assumeRequires = new ArrayList<>();
 		List<Statement> assertEnsures = new ArrayList<>();
 		List<Statement> assumeEnsures = new ArrayList<>();
-		List<ModifiesSpecification> processedModSpecs = new ArrayList<>();
-		for (Specification processedSpec : processSpecifications(specs)) {
+		List<ModifiesSpecification> unprocessedModSpecs = new ArrayList<>();
+		for (Specification spec : specs) {
+			Specification processedSpec = processSpecification(spec);
 			ILocation loc = processedSpec.getLocation();
 			boolean isFree = processedSpec.isFree();
 			if (processedSpec instanceof RequiresSpecification) {
@@ -686,11 +745,13 @@ public class InlineVersionTransformer extends BoogieCopyTransformer {
 				} else {
 					AssertStatement assertStat = new AssertStatement(loc, processedFormula);
 					ModelUtils.mergeAnnotations(processedSpec, assertStat);
-					assertRequires.add(assertStat);					
+					addBacktranslation(assertStat, spec);
+					assertRequires.add(assertStat);
 				}
 				if (mAssumeRequiresAfterAssert) {
 					AssumeStatement assumeStat = new AssumeStatement(loc, processedFormula);
 					ModelUtils.mergeAnnotations(processedSpec, assumeStat);
+					addBacktranslation(assumeStat, spec);
 					assumeRequires.add(assumeStat);
 				}
 			} else if (processedSpec instanceof EnsuresSpecification) {
@@ -698,13 +759,15 @@ public class InlineVersionTransformer extends BoogieCopyTransformer {
 				if (!isFree && mAssertEnsuresBeforeAssume && calleeNode.isImplemented()) {
 					AssertStatement assertStat = new AssertStatement(loc, formula);
 					ModelUtils.mergeAnnotations(processedSpec, assertStat);
+					addBacktranslation(assertStat, spec);
 					assertEnsures.add(assertStat);
 				}
 				AssumeStatement assumeStat = new AssumeStatement(loc, formula);
 				ModelUtils.mergeAnnotations(processedSpec, assumeStat);
+				addBacktranslation(assumeStat, spec);
 				assumeEnsures.add(assumeStat);
 			} else if (processedSpec instanceof ModifiesSpecification) {
-				processedModSpecs.add((ModifiesSpecification) processedSpec);
+				unprocessedModSpecs.add((ModifiesSpecification) processedSpec);
 			}
 		}
 
@@ -720,7 +783,9 @@ public class InlineVersionTransformer extends BoogieCopyTransformer {
 			List<VariableLHS> outParamLHSs = varListsToVarLHSs(outParams, declInfo);
 			if (outParamLHSs.size() > 0) {
 				VariableLHS[] outParamLHSsArray = outParamLHSs.toArray(new VariableLHS[outParamLHSs.size()]);
-				inlinedBody.add(processStatement(new HavocStatement(callLocation, outParamLHSsArray)));				
+				Statement havocOutParams = processStatement(new HavocStatement(callLocation, outParamLHSsArray));
+				addBacktranslation(havocOutParams, null);
+				inlinedBody.add(havocOutParams);
 			}
 		}
 
@@ -739,7 +804,9 @@ public class InlineVersionTransformer extends BoogieCopyTransformer {
 			}
 			if (localVarLHS.size() > 0) {
 				VariableLHS[] localVarLHSArray = localVarLHS.toArray(new VariableLHS[localVarLHS.size()]);
-				inlinedBody.add(processStatement(new HavocStatement(callLocation, localVarLHSArray)));					
+				Statement havocLocalVars = processStatement(new HavocStatement(callLocation, localVarLHSArray));
+				addBacktranslation(havocLocalVars, null);
+				inlinedBody.add(havocLocalVars);
 			}
 
 			// inline body
@@ -747,18 +814,21 @@ public class InlineVersionTransformer extends BoogieCopyTransformer {
 
 			// insert end label (ReturnStatements are inlined as jumps to this label)
 			Label returnLabel = new Label(proc.getLocation(), getCurrentReturnLabelId());
+			addBacktranslation(returnLabel, null);
 			inlinedBody.add(returnLabel);
 
 		} else { // unimplemented procedure
 
 			// havoc global variables from modifies specifications
 			proc = calleeNode.getProcedureWithSpecification();
-			for (ModifiesSpecification modSpec : processedModSpecs) {
-				VariableLHS[] modVars = modSpec.getIdentifiers();
-				if (modVars.length > 0) {
+			for (ModifiesSpecification modSpec : unprocessedModSpecs) {
+				ModifiesSpecification processedModSpec = (ModifiesSpecification) processSpecification(modSpec);
+				VariableLHS[] processedModVars = processedModSpec.getIdentifiers();
+				if (processedModVars.length > 0) {
 					//modVars = processVariableLHSs(modVars); // TODO keep or delete?
-					Statement havocModifiedVars = new HavocStatement(modSpec.getLocation(), modVars);
-					ModelUtils.mergeAnnotations(modSpec, havocModifiedVars);
+					Statement havocModifiedVars = new HavocStatement(processedModSpec.getLocation(), processedModVars);
+					ModelUtils.mergeAnnotations(processedModSpec, havocModifiedVars);
+					addBacktranslation(havocModifiedVars, modSpec); // TODO include this into the IProgramExecution?
 					inlinedBody.add(havocModifiedVars);
 				}
 			}
@@ -781,7 +851,9 @@ public class InlineVersionTransformer extends BoogieCopyTransformer {
 				String inParamId = inParamsIterator.currentId(0);
 				inVarLHSs[i] = new VariableLHS(proc.getLocation(), inParamType, inParamId, inParamDeclInfo);
 			}
-			writeToInParams.add(processStatement(new AssignmentStatement(callLocation, inVarLHSs, inVarRHSs)));
+			Statement assignStat = processStatement(new AssignmentStatement(callLocation, inVarLHSs, inVarRHSs));
+			addBacktranslation(assignStat, null);
+			writeToInParams.add(assignStat);
 		}
 		
 		// --------- assign out-parameters to target variables from call statement ---------
@@ -799,7 +871,9 @@ public class InlineVersionTransformer extends BoogieCopyTransformer {
 				processedOutParamRHS[i] = processExpression(
 						new IdentifierExpression(procLocation, outParamType, outParamId, outParamDeclInfo));
 			}
-			writeFromOutParams .add(new AssignmentStatement(callLocation, processedCallLHS, processedOutParamRHS));
+			Statement assignStat = new AssignmentStatement(callLocation, processedCallLHS, processedOutParamRHS);
+			addBacktranslation(assignStat, null);
+			writeFromOutParams .add(assignStat);
 		}
 		
 		// --------- keep old state of global vars, which appear inside old() expressions ---------
@@ -820,7 +894,10 @@ public class InlineVersionTransformer extends BoogieCopyTransformer {
 		// --------- build the block to be inserted instead of the call ---------
 		List<Statement> inlineBlock = new ArrayList<>();
 		if (oldVarLHS.length > 0) {
-			inlineBlock.add(new AssignmentStatement(callLocation, oldVarLHS, oldVarRHS)); // safe global variables			
+			// safe global variables
+			Statement assignStat = new AssignmentStatement(callLocation, oldVarLHS, oldVarRHS);
+			addBacktranslation(assignStat, null);
+			inlineBlock.add(assignStat);
 		}
 		// note: some lists may be empty
 		inlineBlock.addAll(writeToInParams);
@@ -870,11 +947,12 @@ public class InlineVersionTransformer extends BoogieCopyTransformer {
 			newStat = new GotoStatement(stat.getLocation(), new String[] { getCurrentReturnLabelId() });
 		}
 		if (newStat == null) {
-			return super.processStatement(stat);
+			newStat = super.processStatement(stat);
 		} else {
 			ModelUtils.mergeAnnotations(stat, newStat);
-			return newStat;
 		}
+		addBacktranslation(newStat, stat);
+		return newStat;
 	}
 	
 	@Override
@@ -981,7 +1059,8 @@ public class InlineVersionTransformer extends BoogieCopyTransformer {
 			// quantified vars don't have to be added to the inlined local variables,
 			// because they don't have to be defined as local variables
 
-			VarList[] newParams = applyMappingToVarList(params, new DeclarationInformation(StorageClass.QUANTIFIED, null));
+			VarList[] newParams = applyMappingToVarList(params,
+					new DeclarationInformation(StorageClass.QUANTIFIED, null));
 			Attribute[] newAttrs = processAttributes(attrs);
 			Expression newFormula = processExpression(formula);
 			newExpr = new QuantifierExpression(location, type, quantExpr.isUniversal(), quantExpr.getTypeParams(),
