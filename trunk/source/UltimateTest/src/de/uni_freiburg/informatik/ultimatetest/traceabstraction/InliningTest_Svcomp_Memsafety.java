@@ -31,7 +31,7 @@ public class InliningTest_Svcomp_Memsafety extends AbstractTraceAbstractionTestS
 	}
 
 	private static final boolean sAutomizerWithInlining = true;
-	private static final boolean sAutomizerWithoutInlining = false;
+	private static final boolean sAutomizerWithoutInlining = true;
 	
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
