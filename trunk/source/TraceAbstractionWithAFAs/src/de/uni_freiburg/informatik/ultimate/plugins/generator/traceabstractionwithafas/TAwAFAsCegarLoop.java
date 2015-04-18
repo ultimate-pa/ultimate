@@ -178,7 +178,13 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 				if (alternatingAutomatonUnion == null) {
 					alternatingAutomatonUnion = alternatingAutomaton;
 				} else {
-					AA_MergedUnion<CodeBlock, IPredicate> mergedUnion = new AA_MergedUnion<CodeBlock, IPredicate>(alternatingAutomatonUnion, alternatingAutomaton);
+					mLogger.debug("merging the following two AFAs:\n" 
+							+ "################### 1st AFA: ###################\n"
+							+ alternatingAutomatonUnion + "\n"
+							+ "################### 2nd AFA: ###################\n"
+							+ alternatingAutomaton + "\n");
+					AA_MergedUnion<CodeBlock, IPredicate> mergedUnion = 
+							new AA_MergedUnion<CodeBlock, IPredicate>(alternatingAutomatonUnion, alternatingAutomaton);
 					alternatingAutomatonUnion = mergedUnion.getResult();
 					assert checkRAFA(alternatingAutomatonUnion);
 				}
