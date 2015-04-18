@@ -132,6 +132,7 @@ public class InlineVersionTransformer extends BoogieCopyTransformer {
 	 */
 	private String mEntryProcId = null;
 	
+	// TODO update documentation
 	/**
 	 * Original CallStatements, which are currently inlined.
 	 * Whenever the inlining process for call starts, it is pushed onto the stack.
@@ -140,8 +141,9 @@ public class InlineVersionTransformer extends BoogieCopyTransformer {
 	 * 
 	 * {@link #mProcedureStack} contains the called Procedures.
 	 */
-	private Deque<CallStatement> mCallStack = new ArrayDeque<>();
-	
+	private Deque<Deque<CallStatement>> mCallStack = new ArrayDeque<>(
+			Collections.<Deque<CallStatement>>singleton(new ArrayDeque<CallStatement>()));
+
 	/**
 	 * Mapping from the new generated ASTNodes to their unprocessed origins.
 	 * Only used for backtranslation.
@@ -156,7 +158,7 @@ public class InlineVersionTransformer extends BoogieCopyTransformer {
 	 * The process...()-Methods will yield different results, depending on the contents of this stack.
 	 * (Mappings differ from procedure to procedure).
 	 * 
-	 * {@link #mCallStack} contains the Statements, that called the Procedures.
+	 * {@link #mCallStack} contains the CallStatements, that called the Procedures.
 	 */
 	private Deque<CallGraphNode> mProcedureStack = new ArrayDeque<>();
 
@@ -334,7 +336,8 @@ public class InlineVersionTransformer extends BoogieCopyTransformer {
 		checkInstanceUsed();
 		return mEntryProcId;
 	}
-	
+
+	// TODO update documentation
 	/**
 	 * Adds a backtranslation mapping for a BoogieASTNode.
 	 * Use this for all Statements and Specifications.
@@ -347,8 +350,7 @@ public class InlineVersionTransformer extends BoogieCopyTransformer {
 	 *                     null, if the node should be neglected by the backtranslation.
 	 */
 	private void addBacktranslation(BoogieASTNode inlinedNode, BoogieASTNode originalNode) {
-		CallStatement originalCall = mCallStack.isEmpty() ? null : mCallStack.peek();
-		mBackTransMap.put(inlinedNode, new BackTransValue(mEntryProcId, originalNode, originalCall));
+		mBackTransMap.put(inlinedNode, new BackTransValue(mEntryProcId, mCallStack.peek(), originalNode));
 	}
 	
 	/** @return Identifier of the currently processed procedure. */
@@ -664,6 +666,12 @@ public class InlineVersionTransformer extends BoogieCopyTransformer {
 		return newStats;
 	}
 	
+	private Deque<CallStatement> createUpdatedCallStack(CallStatement newestCall) {
+		Deque<CallStatement> updatedCallStack = new ArrayDeque<CallStatement>(mCallStack.peek());
+		updatedCallStack.push(newestCall);
+		return updatedCallStack;
+	}
+	
 	private List<Statement> flattenStatement(Statement stat) throws CancelToolchainException {
 		Statement newStat = null;
 		if (stat instanceof CallStatement) {
@@ -676,7 +684,7 @@ public class InlineVersionTransformer extends BoogieCopyTransformer {
 				&& call.getMethodName().equals(edgeLabel.getCalleeProcedureId());
 			if (edgeLabel.getInlineFlag()) {
 				VariableLHS[] processedCallLHSs = processVariableLHSs(call.getLhs());
-				mCallStack.push(call);
+				mCallStack.push(createUpdatedCallStack(call));
 				mProcedureStack.push(calleeNode);
 				mEdgeIndexStack.push(0);
 				if (incrementCallCounter(calleeNode.getId()) <= 0) {

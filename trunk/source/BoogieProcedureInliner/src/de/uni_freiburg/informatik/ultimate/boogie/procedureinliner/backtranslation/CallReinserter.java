@@ -2,7 +2,9 @@ package de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.backtranslat
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Deque;
+import java.util.Iterator;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.BackTransValue;
@@ -18,61 +20,72 @@ import de.uni_freiburg.informatik.ultimate.result.IProgramExecution.AtomicTraceE
  * @author schaetzc@informatik.uni-freiburg.de
  */
 public class CallReinserter {
-
-	private Deque<CallStatement> mUnreturnedInlinedCalls = new ArrayDeque<>();
 	
-	/**
-	 * Inlining entry points have no {@link BackTransValue#getOriginalCall()}, which is represented using null.
-	 * null cannot be added to a Collection and is therefore replace with this instance.
-	 */
-	private final CallStatement mEntryCallDummy = new CallStatement(null, false, null, null, null);
+	// TODO document
+	private Deque<BackTransValue> mPrevBackTranslations = new ArrayDeque<>();
 	
-	public List<AtomicTraceElement<BoogieASTNode>> recoverInlinedCallsBefore(BackTransValue curTraceElemBackTransValue) {
+	public List<AtomicTraceElement<BoogieASTNode>> recoverInlinedCallsBefore(BackTransValue curBackTrans) {
 		List<AtomicTraceElement<BoogieASTNode>> recoveredCalls = new ArrayList<>();
-		if (curTraceElemBackTransValue == null) {
+		if (curBackTrans == null) {
 			return recoveredCalls;
 		}
-		CallStatement oCall = curTraceElemBackTransValue.getOriginalCall();
-		if (oCall == null) {
-			oCall = mEntryCallDummy;
-		}
-		if (mUnreturnedInlinedCalls.isEmpty()) {
-			if (oCall != mEntryCallDummy) {
-				// very first node of the entry procedure was already an inlined call
-				recoveredCalls.add(new AtomicTraceElement<BoogieASTNode>(oCall, oCall, StepInfo.PROC_CALL));
-				mUnreturnedInlinedCalls.push(mEntryCallDummy);
+		boolean entryProcChanged = mPrevBackTranslations.isEmpty()
+				|| !curBackTrans.getInlineEntryProcId().equals(mPrevBackTranslations.peek().getInlineEntryProcId());
+		if (entryProcChanged) {
+			for (CallStatement cs : curBackTrans.getOriginalCallStack()) {
+				recoveredCalls.add(makeAtomicCall(cs));
 			}
-			mUnreturnedInlinedCalls.push(oCall);
-			return recoveredCalls;
-		}
-		if (oCall != mUnreturnedInlinedCalls.peek()) {
-			if (mUnreturnedInlinedCalls.contains(oCall)) {
-				// we returned from one (ore more!) inlined calls
-				while (mUnreturnedInlinedCalls.peek() != oCall) {
-					CallStatement last = mUnreturnedInlinedCalls.pop();
-					recoveredCalls.add(new AtomicTraceElement<BoogieASTNode>(last, last, StepInfo.PROC_RETURN));
+			Collections.reverse(recoveredCalls);
+		} else {
+			BackTransValue prevBackTrans = mPrevBackTranslations.pop();
+			Deque<CallStatement> prevStack = prevBackTrans.getOriginalCallStack();
+			Deque<CallStatement> curStack = curBackTrans.getOriginalCallStack();
+			if (prevStack != curStack) {
+				Iterator<CallStatement> prevStackIterator = prevStack.descendingIterator(); // from stack bottom to top
+				Iterator<CallStatement> curStackIterator = curStack.descendingIterator();
+				List<AtomicTraceElement<BoogieASTNode>> returns = new ArrayList<>();
+				List<AtomicTraceElement<BoogieASTNode>> calls = new ArrayList<>();
+				while (prevStackIterator.hasNext() && curStackIterator.hasNext()) {
+					CallStatement prevCS = prevStackIterator.next();
+					CallStatement curCS = curStackIterator.next();
+					if (prevCS != curCS) {
+						returns.add(makeAtomicReturn(prevCS));
+						calls.add(makeAtomicCall(curCS));
+					}
 				}
-			} else {
-				// we entered a new, inlined call
-				mUnreturnedInlinedCalls.push(oCall);
-				recoveredCalls.add(new AtomicTraceElement<BoogieASTNode>(oCall, oCall, StepInfo.PROC_CALL));
+				while (prevStackIterator.hasNext()) {
+					returns.add(makeAtomicReturn(prevStackIterator.next()));
+				}
+				while (curStackIterator.hasNext()) {
+					calls.add(makeAtomicCall(curStackIterator.next()));
+				}
+				Collections.reverse(returns);
+				recoveredCalls.addAll(returns);
+				recoveredCalls.addAll(calls);
 			}
 		}
+		mPrevBackTranslations.push(curBackTrans);
 		return recoveredCalls;
+	}
+	
+	private AtomicTraceElement<BoogieASTNode> makeAtomicCall(CallStatement originalCall) {
+		return new AtomicTraceElement<BoogieASTNode>(originalCall, originalCall, StepInfo.PROC_CALL);
+	}
+	
+	private AtomicTraceElement<BoogieASTNode> makeAtomicReturn(CallStatement originalReturn) {
+		return new AtomicTraceElement<BoogieASTNode>(originalReturn, originalReturn, StepInfo.PROC_RETURN);
 	}
 	
 	/**
 	 * @return Inlined (!) Procedure, from which the last investigated BoogieASTNode
-	 *         ({@linkplain #recoverInlinedCallsBefore(BackTransValue)})
-	 *         was inlined.
+	 *         ({@linkplain #recoverInlinedCallsBefore(BackTransValue)} was inlined.
 	 *         null, if the node was part of an inlining entry procedure or wasn't processed by the inliner at all.
 	 */
 	public String getInlinedProcId() {
-		if (mUnreturnedInlinedCalls.isEmpty()) {
+		if (mPrevBackTranslations.isEmpty()) {
 			return null;
 		} else {
-			return mUnreturnedInlinedCalls.peek().getMethodName();			
+			return mPrevBackTranslations.peek().getInlineEntryProcId();			
 		}
-	}
-	
+	}	
 }

@@ -88,7 +88,7 @@ public class InlinerBacktranslator extends DefaultTranslator<BoogieASTNode, Boog
 		for (BoogieASTNode traceElem : trace) {
 			BackTransValue mapping = mBackTransMap.get(traceElem);
 			for (AtomicTraceElement<BoogieASTNode> insertedCall : callReinserter.recoverInlinedCallsBefore(mapping)) {
-				translatedTrace.add(insertedCall.getTraceElement());				
+				translatedTrace.add(insertedCall.getTraceElement());
 			}
 			if (mapping == null) {
 				translatedTrace.add(traceElem);
@@ -101,25 +101,23 @@ public class InlinerBacktranslator extends DefaultTranslator<BoogieASTNode, Boog
 		}
 		return translatedTrace;
 	}
-	
+
 	public IProgramExecution<BoogieASTNode, Expression> translateProgramExecution(
 			IProgramExecution<BoogieASTNode, Expression> exec) {
 		final int length = exec.getLength();
 		CallReinserter callReinserter = new CallReinserter();
 		Map<Integer, ProgramState<Expression>> translatedStates = new HashMap<>();
 		List<AtomicTraceElement<BoogieASTNode>> translatedTrace = new ArrayList<>();
-		//Deque<String> unclosedProcs = new ArrayDeque<>();
 		for (int i = 0; i < length; ++i) {
 			AtomicTraceElement<BoogieASTNode> traceElem = exec.getTraceElement(i);
 			BackTransValue mapping = mBackTransMap.get(traceElem.getTraceElement());
 			translatedTrace.addAll(callReinserter.recoverInlinedCallsBefore(mapping));
 			if (mapping == null) {
-				// traceElem wasn't affected by inlining
-				translatedTrace.add(traceElem);
+				translatedTrace.add(traceElem); // traceElem wasn't affected by inlining
 			} else {
 				BoogieASTNode originalNode = mapping.getOriginalNode();
 				if (originalNode != null) {
-					// TODO use other ctor of AtomicTraceElement?
+					// TODO specify step and stepInfo
 					translatedTrace.add(new AtomicTraceElement<BoogieASTNode>(originalNode));
 				} else {
 					continue; // discards the associated ProgramState (State makes no sense, without Statement)
@@ -130,7 +128,7 @@ public class InlinerBacktranslator extends DefaultTranslator<BoogieASTNode, Boog
 				Map<Expression, Collection<Expression>> translatedVar2Values = new HashMap<>();
 				for (Expression variable : progState.getVariables()) {
 					Expression translatedVar = translateExpression(variable);
-					if (keepVariable(translatedVar, null)) { // TODO
+					if (keepVariable(translatedVar, null /*<-- replace*/)) { // TODO
 						translatedVar2Values.put(translatedVar, translateExpressions(progState.getValues(variable)));						
 					}
 				}
