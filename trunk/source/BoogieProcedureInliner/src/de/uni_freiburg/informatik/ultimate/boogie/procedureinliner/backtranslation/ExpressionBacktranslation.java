@@ -43,7 +43,6 @@ public class ExpressionBacktranslation extends BoogieTransformer {
 					throw new AssertionError("Ambiguous backtranslation mapping. Different variable names.");
 				}
 			}
-//			assert !criticalKeyCollision(prevValue, entry.getKey()) : ;
 		}
 	}
 	
@@ -68,13 +67,6 @@ public class ExpressionBacktranslation extends BoogieTransformer {
 					+ oldDI + ", " + newDI);
 		}
 	}
-	
-//	private boolean criticalKeyCollision(VarMapKey prevValue, VarMapKey newValue) {
-//		if (prevValue == null) {
-//			return false;
-//		}
-//		return !prevValue.equals(newValue);
-//	}
 
 	@Override
 	public Expression processExpression(Expression expr) {

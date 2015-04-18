@@ -4,8 +4,10 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Deque;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.BackTransValue;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BoogieASTNode;
@@ -110,15 +112,17 @@ public class CallReinserter {
 	}
 	
 	/**
-	 * @return Inlined (!) Procedure, from which the last investigated BoogieASTNode
-	 *         ({@linkplain #recoverInlinedCallsBefore(BackTransValue)} was inlined.
-	 *         null, if the node was part of an inlining entry procedure or wasn't processed by the inliner at all.
+	 * Creates the set of procedures (more specifically, their identifiers), that where called but didn't return yet.
+	 * Note that non-inlined calls aren't included.
+	 * @return Set of unreturned inlined procedures.
 	 */
-	public String getInlinedProcId() {
-		if (mPrevBackTranslations.isEmpty()) {
-			return null;
-		} else {
-			return mPrevBackTranslations.peek().getInlineEntryProcId();			
+	public Set<String> unreturnedInlinedProcedures() {
+		Set<String> unretInldProcs = new HashSet<>();
+		for (BackTransValue btv : mPrevBackTranslations) {
+			for (CallStatement cs : btv.getOriginalCallStack()) {
+				unretInldProcs.add(cs.getMethodName());				
+			}
 		}
+		return unretInldProcs;
 	}	
 }
