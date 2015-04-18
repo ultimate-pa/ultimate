@@ -1,5 +1,9 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal;
 
+import java.io.BufferedOutputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -372,15 +376,10 @@ public final class LinearInequalityInvariantPatternProcessor
 			Collection<LinearInequality> disjunct,
 			Collection<Collection<LinearInequality>> dnf) {
 		// there are disjunct.size() * dnf.size() conjuncts afterwards
-		final Collection<Collection<LinearInequality>> resultDnf = new ArrayList<>(
-				disjunct.size() * dnf.size());
+		final Collection<Collection<LinearInequality>> resultDnf = new ArrayList<>(dnf);
 		for (LinearInequality linearInequalityInFirstDisjunct : disjunct) {
-			for (Collection<LinearInequality> conjunctInDnf : dnf) {
-				Collection<LinearInequality> conjunctInResultDnf = new ArrayList<LinearInequality>(
-						conjunctInDnf.size() + 1);
-				conjunctInResultDnf.addAll(conjunctInDnf);
-				conjunctInResultDnf.add(linearInequalityInFirstDisjunct);
-				resultDnf.add(conjunctInResultDnf);
+			for (Collection<LinearInequality> conjunctInDnf : resultDnf) {
+				conjunctInDnf.add(linearInequalityInFirstDisjunct);
 			}
 		}
 		return resultDnf;

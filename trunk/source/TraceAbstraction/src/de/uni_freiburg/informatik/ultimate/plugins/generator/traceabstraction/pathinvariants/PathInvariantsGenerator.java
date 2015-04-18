@@ -62,9 +62,8 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 			final IUltimateServiceProvider services,
 			final IToolchainStorage storage,
 			final PredicateUnifier predicateUnifier, final SmtManager smtManager) {
-		final ILinearInequalityInvariantPatternStrategy strategy =
-				new LocationIndependentLinearInequalityInvariantPatternStrategy(
-						1, 1, 1, 2, 5);
+		final ILinearInequalityInvariantPatternStrategy strategy = new LocationIndependentLinearInequalityInvariantPatternStrategy(
+				1, 1, 1, 2, 5);
 		return new LinearInequalityPatternProcessorFactory(services, storage,
 				predicateUnifier, smtManager, strategy);
 	}
@@ -99,8 +98,8 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 			PredicateUnifier predicateUnifier, SmtManager smtManager,
 			ModifiableGlobalVariableManager modGlobVarManager) {
 		this(services, run, precondition, postcondition, modGlobVarManager,
-				createDefaultFactory(
-						services, storage, predicateUnifier,smtManager));
+				createDefaultFactory(services, storage, predicateUnifier,
+						smtManager));
 	}
 
 	/**
@@ -135,11 +134,14 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 		final Logger logService = services.getLoggingService().getLogger(
 				Activator.s_PLUGIN_ID);
 
+		logService.log(Level.INFO,
+				"Started with a run of length " + m_Run.getLength());
+
 		// Project path to CFG
 		final int len = m_Run.getLength();
 		final List<Location> locations = new ArrayList<>(len);
-		final Map<ProgramPoint, Location> locationsForProgramPoint =
-				new HashMap<ProgramPoint, Location>(len);
+		final Map<ProgramPoint, Location> locationsForProgramPoint = new HashMap<ProgramPoint, Location>(
+				len);
 		final Collection<Transition> transitions = new ArrayList<>(len - 1);
 
 		for (int i = 0; i < len; i++) {
@@ -189,6 +191,8 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 			}
 			logService.log(Level.INFO, "[PathInvariants] Invariants found and "
 					+ "processed.");
+			logService.log(Level.INFO, "Got a Invariant map of length "
+					+ m_Interpolants.length);
 		} else {
 			m_Interpolants = null;
 			logService.log(Level.INFO, "[PathInvariants] No invariants found.");
@@ -234,10 +238,15 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 	 * the the interpolants at position i and k coincide.
 	 * 
 	 * @return sequence of interpolants according to the run provided in the
-	 *         constructor or null if no such sequence has been found
+	 *         constructor or null if no such sequence has been found; without first
+	 *         interpolant (the precondition)
 	 */
 	@Override
 	public IPredicate[] getInterpolants() {
-		return m_Interpolants;
+		IPredicate[] interpolantMapWithOutFirstInterpolant = new IPredicate[this.m_Interpolants.length - 2];
+		for(int i = 0; i < this.m_Interpolants.length -2; i++){
+			interpolantMapWithOutFirstInterpolant[i] = this.m_Interpolants[i];
+		}
+		return interpolantMapWithOutFirstInterpolant;
 	}
 }
