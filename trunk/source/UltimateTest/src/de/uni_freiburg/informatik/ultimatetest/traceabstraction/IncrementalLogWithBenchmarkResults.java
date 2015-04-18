@@ -77,7 +77,7 @@ public class IncrementalLogWithBenchmarkResults extends DefaultIncrementalLogfil
 		public StringBuilder toLogString(String indent, String lineSeparator) {
 			StringBuilder sb = new StringBuilder();
 
-			sb.append(indent).append(mUltimateRunDefinition.getSettings()).append(lineSeparator);
+			sb.append(indent).append(mUltimateRunDefinition.getSettings()).append(",").append(mUltimateRunDefinition.getToolchain()).append(lineSeparator);
 			sb.append(indent).append("Test result: ").append(mThreeValuedResult).append(lineSeparator);
 			sb.append(indent).append("Message:     ").append(de.uni_freiburg.informatik.ultimate.core.util.CoreUtil.flatten(mMessage, " # ")).append(lineSeparator);
 			if (mFlattenedBenchmarkResults.size() > 0) {
