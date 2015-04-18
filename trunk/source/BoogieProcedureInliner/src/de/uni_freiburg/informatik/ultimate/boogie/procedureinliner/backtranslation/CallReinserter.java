@@ -14,57 +14,90 @@ import de.uni_freiburg.informatik.ultimate.result.IProgramExecution.AtomicTraceE
 import de.uni_freiburg.informatik.ultimate.result.IProgramExecution.AtomicTraceElement.StepInfo;
 
 /**
- * Analyzes a trace from an inlined boogie program and offers calls to be inserted,
- * before/after an new inlined call begins/ends.
+ * Analyzes a trace from an inlined boogie program and offers calls/returns to be inserted,
+ * before an new inlined call begins/ends.
  * 
  * @author schaetzc@informatik.uni-freiburg.de
  */
 public class CallReinserter {
 	
-	// TODO document
+	/** The processing takes place, right after an non-inlined call. */
+	private boolean mAfterNonInlinedCall = false;
+	
+	/**
+	 * Last BackTransValues for all trace sections with the same inline entry point.
+	 * <p>
+	 * There is a BackTransValue for every unreturned non-inlined call.
+	 * The stack height increases after (!) non-inlined calls
+	 * and decreases before non-inlined returns.
+	 */
 	private Deque<BackTransValue> mPrevBackTranslations = new ArrayDeque<>();
 	
-	public List<AtomicTraceElement<BoogieASTNode>> recoverInlinedCallsBefore(BackTransValue curBackTrans) {
+	/**
+	 * 
+	 * @param curTraceElem
+	 * @param curBackTrans
+	 * @return
+	 */
+	public List<AtomicTraceElement<BoogieASTNode>> recoverInlinedCallsBefore(
+			AtomicTraceElement<BoogieASTNode> curTraceElem, BackTransValue curBackTrans) {
 		List<AtomicTraceElement<BoogieASTNode>> recoveredCalls = new ArrayList<>();
-		if (curBackTrans == null) {
-			return recoveredCalls;
+		boolean nonInlinedCall = curTraceElem.hasStepInfo(StepInfo.PROC_CALL);
+		boolean nonInlinedReturn = curTraceElem.hasStepInfo(StepInfo.PROC_RETURN);
+		assert !(nonInlinedCall && nonInlinedReturn) : "Simultaneous call and return: " + curTraceElem;
+
+		if (nonInlinedReturn && !mPrevBackTranslations.isEmpty()) {
+			BackTransValue prevBackTrans = mPrevBackTranslations.peek();
+			if (prevBackTrans != curBackTrans) {
+				mPrevBackTranslations.pop();
+				for (CallStatement cs : prevBackTrans.getOriginalCallStack()) {
+					recoveredCalls.add(makeAtomicReturn(cs));
+				}
+			} // else
+				// there were no inlined nodes inside the called procedure
+			mAfterNonInlinedCall = false;
 		}
-		boolean entryProcChanged = mPrevBackTranslations.isEmpty()
-				|| !curBackTrans.getInlineEntryProcId().equals(mPrevBackTranslations.peek().getInlineEntryProcId());
-		if (entryProcChanged) {
-			for (CallStatement cs : curBackTrans.getOriginalCallStack()) {
-				recoveredCalls.add(makeAtomicCall(cs));
+
+		if (curBackTrans == null) {
+			// goto end
+		} else if (mPrevBackTranslations.isEmpty() || mAfterNonInlinedCall) {
+			Iterator<CallStatement> stackRevIter = curBackTrans.getOriginalCallStack().descendingIterator();
+			while (stackRevIter.hasNext()) {
+				recoveredCalls.add(makeAtomicCall(stackRevIter.next()));
 			}
-			Collections.reverse(recoveredCalls);
 		} else {
 			BackTransValue prevBackTrans = mPrevBackTranslations.pop();
 			Deque<CallStatement> prevStack = prevBackTrans.getOriginalCallStack();
 			Deque<CallStatement> curStack = curBackTrans.getOriginalCallStack();
 			if (prevStack != curStack) {
-				Iterator<CallStatement> prevStackIterator = prevStack.descendingIterator(); // from stack bottom to top
-				Iterator<CallStatement> curStackIterator = curStack.descendingIterator();
+				Iterator<CallStatement> prevStackRevIter = prevStack.descendingIterator(); // from stack bottom to top
+				Iterator<CallStatement> curStackRevIter = curStack.descendingIterator();
 				List<AtomicTraceElement<BoogieASTNode>> returns = new ArrayList<>();
 				List<AtomicTraceElement<BoogieASTNode>> calls = new ArrayList<>();
-				while (prevStackIterator.hasNext() && curStackIterator.hasNext()) {
-					CallStatement prevCS = prevStackIterator.next();
-					CallStatement curCS = curStackIterator.next();
+				while (prevStackRevIter.hasNext() && curStackRevIter.hasNext()) {
+					CallStatement prevCS = prevStackRevIter.next();
+					CallStatement curCS = curStackRevIter.next();
 					if (prevCS != curCS) {
 						returns.add(makeAtomicReturn(prevCS));
 						calls.add(makeAtomicCall(curCS));
 					}
 				}
-				while (prevStackIterator.hasNext()) {
-					returns.add(makeAtomicReturn(prevStackIterator.next()));
+				while (prevStackRevIter.hasNext()) {
+					returns.add(makeAtomicReturn(prevStackRevIter.next()));
 				}
-				while (curStackIterator.hasNext()) {
-					calls.add(makeAtomicCall(curStackIterator.next()));
+				while (curStackRevIter.hasNext()) {
+					calls.add(makeAtomicCall(curStackRevIter.next()));
 				}
 				Collections.reverse(returns);
 				recoveredCalls.addAll(returns);
 				recoveredCalls.addAll(calls);
 			}
 		}
-		mPrevBackTranslations.push(curBackTrans);
+
+		if (curBackTrans != null) {
+			mPrevBackTranslations.push(curBackTrans);
+		}
+		mAfterNonInlinedCall = nonInlinedCall;
 		return recoveredCalls;
 	}
 	

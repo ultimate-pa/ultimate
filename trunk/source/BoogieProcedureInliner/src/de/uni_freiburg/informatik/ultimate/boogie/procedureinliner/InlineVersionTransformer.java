@@ -131,17 +131,27 @@ public class InlineVersionTransformer extends BoogieCopyTransformer {
 	 * Can be used to prohibit reuse of InlineVersionTransformer instances.
 	 */
 	private String mEntryProcId = null;
-	
-	// TODO update documentation
+
 	/**
 	 * Original CallStatements, which are currently inlined.
-	 * Whenever the inlining process for call starts, it is pushed onto the stack.
-	 * The call is popped, when it is fully inlined.
+	 * Calls are pushed to the stack, whenever the inlining process starts, and popped again, when it ends.
+	 * <p>
+	 * Instead of just using one stack for calls, a stack of the described call stacks is used.
+	 * Too push a call:
+	 * <ul>
+	 * <li> Copy the topmost inner stack.
+	 * <li> Push the call onto the copied inner stack.
+	 * <li> Push the copy onto the stack of stacks.
+	 * </ul>
+	 * <p>
+	 * This behaviour allows to use the inner stacks directly for BackTransValues, without the need to copy them
+	 * for every BackTransValue. It also ensures reference equality for equal call stacks.
+	 * <p>
 	 * Only used for backtranslation.
 	 * 
 	 * {@link #mProcedureStack} contains the called Procedures.
 	 */
-	private Deque<Deque<CallStatement>> mCallStack = new ArrayDeque<>(
+	private Deque<Deque<CallStatement>> mCallStackStack = new ArrayDeque<>(
 			Collections.<Deque<CallStatement>>singleton(new ArrayDeque<CallStatement>()));
 
 	/**
@@ -153,12 +163,12 @@ public class InlineVersionTransformer extends BoogieCopyTransformer {
 	/**
 	 * Similar to a call stack on execution, this contains the currently processed procedures.
 	 * The entry procedure is on the bottom of the stack.
-	 * Procedures of call-forall statements aren't pushed onto the stack.
-	 * 
-	 * The process...()-Methods will yield different results, depending on the contents of this stack.
+	 * Procedures of {@code call forall} statements aren't pushed onto the stack.
+	 * <p>
+	 * The {@code process...()}-Methods will yield different results, depending on the contents of this stack.
 	 * (Mappings differ from procedure to procedure).
-	 * 
-	 * {@link #mCallStack} contains the CallStatements, that called the Procedures.
+	 * <p>
+	 * {@link #mCallStackStack} contains the CallStatements, that called the Procedures.
 	 */
 	private Deque<CallGraphNode> mProcedureStack = new ArrayDeque<>();
 
@@ -170,11 +180,12 @@ public class InlineVersionTransformer extends BoogieCopyTransformer {
 	
 	/**
 	 * Counts for each procedure, how much calls to this procedure where inlined (!) during the process.
-	 * "call forall" statements count too. Non-inlined calls don't count!
+	 * {@code call forall} statements count too. Non-inlined calls don't count!<br>
 	 * The parameters and local variables of a Procedure are mapped, iff call counter > 0.
-	 * Note: This has nothing to do with the "single calls only" setting ({@link PreferenceItem#IGNORE_MULTIPLE_CALLED}.
-	 * This counter is used to avoid re-mapping of already mapped variable ids, whereas the setting is applied using a
-	 * separate counter on the call graph.
+	 * <p>
+	 * <b>Note:</b> This has nothing to do with the "single calls only" setting
+	 * ({@link PreferenceItem#IGNORE_MULTIPLE_CALLED}. This counter is used to avoid re-mapping of already mapped
+	 * variable ids, whereas the setting is applied using a separate counter on the call graph.
 	 */
 	private Map<String, Integer> mCallCounter = new HashMap<>();
 	
@@ -187,12 +198,13 @@ public class InlineVersionTransformer extends BoogieCopyTransformer {
 	
 	/**
 	 * Keeps track of global variables, which appeared inside inlined old() expressions.
+	 * <p>
 	 * Nested inlined procedures need their own old-variables. The top of the stack contains the variables for the
-	 * currently processed procedure.
+	 * currently processed procedure.<br>
 	 * The stored IdentiferExpression are the original Expressions from the inside of the old() expressions.
 	 * If a global variable appeared multiple times in one ore more old() expressions, the IdentiferExpression from
 	 * the first occurrence is used.
-	 * 
+	 * <p>
 	 * This stack is based on Procedures.
 	 */
 	private Deque<Set<IdExprWrapper>> mInlinedOldVarStack = new ArrayDeque<>();
@@ -245,7 +257,7 @@ public class InlineVersionTransformer extends BoogieCopyTransformer {
 	/**
 	 * Creates an equivalent Procedure with inlined calls.
 	 * Only marked calls will be inlined (see {@link CallGraphEdgeLabel#setInlineFlag(boolean)}.
-	 * 
+	 * <p>
 	 * The returned Procedure has an Specification, iff the original Procedure was combined.
 	 * 
 	 * @param entryNode Call graph node, representing the procedure to be flattened.
@@ -337,11 +349,10 @@ public class InlineVersionTransformer extends BoogieCopyTransformer {
 		return mEntryProcId;
 	}
 
-	// TODO update documentation
 	/**
 	 * Adds a backtranslation mapping for a BoogieASTNode.
 	 * Use this for all Statements and Specifications.
-	 * 
+	 * <p>
 	 * There should be at most one inlined node, which maps to the original node,
 	 * to avoid creation of duplicates in the backtranslation. 
 	 * 
@@ -350,7 +361,7 @@ public class InlineVersionTransformer extends BoogieCopyTransformer {
 	 *                     null, if the node should be neglected by the backtranslation.
 	 */
 	private void addBacktranslation(BoogieASTNode inlinedNode, BoogieASTNode originalNode) {
-		mBackTransMap.put(inlinedNode, new BackTransValue(mEntryProcId, mCallStack.peek(), originalNode));
+		mBackTransMap.put(inlinedNode, new BackTransValue(mEntryProcId, mCallStackStack.peek(), originalNode));
 	}
 	
 	/** @return Identifier of the currently processed procedure. */
@@ -589,7 +600,6 @@ public class InlineVersionTransformer extends BoogieCopyTransformer {
 	/**
 	 * Updates {@link #mInlinedOldVarStack} for IdentifierExpressions from inside an old() expressions.
 	 * If it is a global variable, it is added the the collection on top of the stack.
-	 * 
 	 * @param idExpr unprocessed IdentifierExpressions from inside an old() expression.
 	 */
 	private void updateInlinedOldVarStack(IdentifierExpression idExpr) {
@@ -667,7 +677,7 @@ public class InlineVersionTransformer extends BoogieCopyTransformer {
 	}
 	
 	private Deque<CallStatement> createUpdatedCallStack(CallStatement newestCall) {
-		Deque<CallStatement> updatedCallStack = new ArrayDeque<CallStatement>(mCallStack.peek());
+		Deque<CallStatement> updatedCallStack = new ArrayDeque<CallStatement>(mCallStackStack.peek());
 		updatedCallStack.push(newestCall);
 		return updatedCallStack;
 	}
@@ -684,7 +694,7 @@ public class InlineVersionTransformer extends BoogieCopyTransformer {
 				&& call.getMethodName().equals(edgeLabel.getCalleeProcedureId());
 			if (edgeLabel.getInlineFlag()) {
 				VariableLHS[] processedCallLHSs = processVariableLHSs(call.getLhs());
-				mCallStack.push(createUpdatedCallStack(call));
+				mCallStackStack.push(createUpdatedCallStack(call));
 				mProcedureStack.push(calleeNode);
 				mEdgeIndexStack.push(0);
 				if (incrementCallCounter(calleeNode.getId()) <= 0) {
@@ -693,7 +703,7 @@ public class InlineVersionTransformer extends BoogieCopyTransformer {
 				List<Statement> inlinedCall = inlineCall(call, processedCallLHSs, calleeNode);
 				mEdgeIndexStack.pop();
 				mProcedureStack.pop();
-				mCallStack.pop();
+				mCallStackStack.pop();
 				if (call.getPayload().hasAnnotation()) {
 					mLogger.warn("Discarded annotation of " + call + ": " + call.getPayload().getAnnotations());
 				}
@@ -713,7 +723,7 @@ public class InlineVersionTransformer extends BoogieCopyTransformer {
 			newStat = new WhileStatement(whileStat.getLocation(), newCond, newInvs, newBody);
 		}
 		if (newStat == null) {
-			newStat = processStatement(stat);
+			newStat = processStatement(stat); // also adds backtranslation
 		} else {
 			ModelUtils.mergeAnnotations(stat, newStat);
 			addBacktranslation(newStat, stat);
@@ -722,7 +732,8 @@ public class InlineVersionTransformer extends BoogieCopyTransformer {
 	}
 
 	/**
-	 * Creates an inline version of a normal call (no call forall).
+	 * Creates an inline version of a call.
+	 * @code{call forall} statements aren't supported.
 	 * 
 	 * @param call Normal, unprocessed CallStatement which should be inlined.
 	 * @param processedCallLHS Processed LHS of the CallStatement.
@@ -844,10 +855,9 @@ public class InlineVersionTransformer extends BoogieCopyTransformer {
 				ModifiesSpecification processedModSpec = (ModifiesSpecification) processSpecification(modSpec);
 				VariableLHS[] processedModVars = processedModSpec.getIdentifiers();
 				if (processedModVars.length > 0) {
-					//modVars = processVariableLHSs(modVars); // TODO keep or delete?
 					Statement havocModifiedVars = new HavocStatement(processedModSpec.getLocation(), processedModVars);
 					ModelUtils.mergeAnnotations(processedModSpec, havocModifiedVars);
-					addBacktranslation(havocModifiedVars, modSpec); // TODO include this into the IProgramExecution?
+					addBacktranslation(havocModifiedVars, modSpec); // TODO remove from backtranslated trace?
 					inlinedBody.add(havocModifiedVars);
 				}
 			}
@@ -1166,7 +1176,6 @@ public class InlineVersionTransformer extends BoogieCopyTransformer {
 	/**
 	 * Disabled due to parameters restriction of super class.
 	 * We need more parameters for a correct mapping of the variables.
-	 * 
 	 * @see #applyMappingToVarList(VarList, DeclarationInformation)
 	 * @see #applyMappingToVarList(VarList[], DeclarationInformation)
 	 */

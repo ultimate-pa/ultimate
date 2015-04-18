@@ -4,20 +4,24 @@ requires true;
 ensures true;
 {
   call doNothing();
+  call doNothing();
 }
 
 
 procedure doNothing()
-ensures true; 
+//requires true;
+//ensures true; 
 {
+  assume true;
 }
 
 
 procedure Main() returns ()
 {
   var z : int;
-  call z := inc(2);
   z := 0;
+  call z := inc(2);
+  //call z := inc(2);
   assert false;
 }
 

@@ -11,6 +11,9 @@ requires (forall bStart : bool :: true);
 ensures (forall bEnd : bool :: true);
 {
 	call c();
+	if (false) {
+	  call b();
+	}
 }
 
 procedure c()
