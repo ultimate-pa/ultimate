@@ -76,7 +76,7 @@ public class InlinerBacktranslator extends DefaultTranslator<BoogieASTNode, Boog
 	public Expression translateExpression(Expression expr) {
 		return mExprBackTrans.processExpression(expr);
 	}
-
+	
 	// Should preserve instances
 	@Override
 	public List<BoogieASTNode> translateTrace(List<BoogieASTNode> trace) {
@@ -143,11 +143,12 @@ public class InlinerBacktranslator extends DefaultTranslator<BoogieASTNode, Boog
 			}
 			ProgramState<Expression> progState = exec.getProgramState(i);
 			if (progState != null) {
-				Set<String> unreturnedInlinedProcedures = callReinserter.unreturnedInlinedProcedures();
+				Set<String> inlinedActiveProcs = callReinserter.unreturnedInlinedProcedures();
 				Map<Expression, Collection<Expression>> translatedVar2Values = new HashMap<>();
 				for (Expression variable : progState.getVariables()) {
-					Expression translatedVar = translateExpression(variable);
-					if (keepVariable(translatedVar, unreturnedInlinedProcedures)) {
+					mExprBackTrans.setInlinedActiveProcedures(inlinedActiveProcs);
+					Expression translatedVar = mExprBackTrans.processExpression(variable);
+					if (mExprBackTrans.processedExprWasActive()) {
 						translatedVar2Values.put(translatedVar, translateExpressions(progState.getValues(variable)));						
 					}
 				}
@@ -156,20 +157,6 @@ public class InlinerBacktranslator extends DefaultTranslator<BoogieASTNode, Boog
 		}
 		BoogieProgramExecution translatedExec =  new BoogieProgramExecution(translatedStates, translatedTrace);
 		return translatedExec;
-	}	
-	
-	private boolean keepVariable(Expression transltdVar, Set<String> unreturnedInlinedProcedures) {
-		// TODO implement
-//		if (transltdVar instanceof IdentifierExpression) {
-//			
-//		}
-//		if (transltdVar instanceof UnaryExpression && ((UnaryExpression) transltdVar).getOperator() == Operator.OLD) {
-//			UnaryExpression unaryExpr= (UnaryExpression) transltdVar;
-//			return keepVariable(unaryExpr.getExpr(), unreturnedInlinedProcedures);
-//		} else if () {
-//			
-//		}
-		return true;
 	}
 	
 	@Override

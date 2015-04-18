@@ -36,10 +36,10 @@ public class CallReinserter {
 	private Deque<BackTransValue> mPrevBackTranslations = new ArrayDeque<>();
 	
 	/**
-	 * 
-	 * @param curTraceElem
-	 * @param curBackTrans
-	 * @return
+	 * Needs to be called for every trace element and in the order of the trace to work correct.
+	 * @param curTraceElem Current trace element.
+	 * @param curBackTrans trace element's value from the backtranslation map.
+	 * @return CallStatements to be inserted before the current trace element.
 	 */
 	public List<AtomicTraceElement<BoogieASTNode>> recoverInlinedCallsBefore(
 			AtomicTraceElement<BoogieASTNode> curTraceElem, BackTransValue curBackTrans) {
@@ -122,6 +122,7 @@ public class CallReinserter {
 			for (CallStatement cs : btv.getOriginalCallStack()) {
 				unretInldProcs.add(cs.getMethodName());				
 			}
+			unretInldProcs.add(btv.getInlineEntryProcId());
 		}
 		return unretInldProcs;
 	}	

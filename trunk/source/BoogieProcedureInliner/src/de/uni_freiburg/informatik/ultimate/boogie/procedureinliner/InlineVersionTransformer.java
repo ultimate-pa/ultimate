@@ -355,6 +355,8 @@ public class InlineVersionTransformer extends BoogieCopyTransformer {
 	 * <p>
 	 * There should be at most one inlined node, which maps to the original node,
 	 * to avoid creation of duplicates in the backtranslation. 
+	 * <p>
+	 * Already mapped values can be overwritten, by calling this method again.
 	 * 
 	 * @param inlinedNode The node, which should be backtranslateable.
 	 * @param originalNode Original node, which created the inlined node.
@@ -1103,11 +1105,12 @@ public class InlineVersionTransformer extends BoogieCopyTransformer {
 			mInlinedOldExprStack.pop();
 		} 
 		if (newExpr == null) {
-			return super.processExpression(expr);			
+			newExpr = super.processExpression(expr);			
 		} else {
 			ModelUtils.mergeAnnotations(expr, newExpr);
-			return newExpr;
 		}
+		addBacktranslation(newExpr, expr);
+		return newExpr;
 	}
 
 	/**

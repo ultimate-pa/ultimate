@@ -1,7 +1,9 @@
 package de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.backtranslation;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.VarMapKey;
 import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.VarMapValue;
@@ -29,6 +31,10 @@ public class ExpressionBacktranslation extends BoogieTransformer {
 
 	private Map<VarMapValue, VarMapKey> mReverseVarMap = new HashMap<>();
 
+	private Set<String> mActiveProcedures = Collections.emptySet();
+	
+	private boolean mProcessedExprWasActive = false;
+	
 	public void reverseAndAddMapping(Map<VarMapKey, VarMapValue> map) {
 		for (Map.Entry<VarMapKey, VarMapValue> entry : map.entrySet()) {
 			VarMapValue key = entry.getValue();
@@ -59,24 +65,46 @@ public class ExpressionBacktranslation extends BoogieTransformer {
 					|| newSC == IMPLEMENTATION_OUTPARAM && oldSC == PROC_FUNC_OUTPARAM) {
 				return new DeclarationInformation(IMPLEMENTATION_OUTPARAM, oldProc);
 			} else {
-				throw new AssertionError("Ambiguous backtranslation mapping. DeclarationInformations cannot be merged: "
+				throw new AssertionError("Ambiguous translation mapping. DeclarationInformations cannot be merged: "
 						+ oldDI + ", " + newDI);
 			}
 		} else {
-			throw new AssertionError("Ambiguous backtranslation mapping. Different declaration procedure: "
+			throw new AssertionError("Ambiguous translation mapping. Different procedure in DeclarationInformation: "
 					+ oldDI + ", " + newDI);
 		}
 	}
 
+	/**
+	 * Sets the set of procedures, whose variables are considered to be active.
+	 * <p>
+	 * A variable is active, if it isn't out of scope (like a local variable of procedure F,
+	 * when the callstack doesn't contain F).
+	 * Global variables and unknown variables (such without a mapping) are always considered to be active.
+	 * <p>
+	 * Calling this method will reset the intern <i>active</i> flag, used by {@link #processedExprWasActive()}.
+	 * 
+	 * @param activeProcedures {@link CallReinserter#unreturnedInlinedProcedures()}
+	 */
+	public void setInlinedActiveProcedures(Set<String> activeProcedures) {
+		mActiveProcedures = activeProcedures;
+		mProcessedExprWasActive = false;
+	}
+
 	@Override
 	public Expression processExpression(Expression expr) {
+		
 		if (expr instanceof IdentifierExpression) {
+			
+			// TODO handle "disguised" structs *
+			// * IdentiferExpression "struct!field", instead of StructAccessExpression
+
 			IdentifierExpression idExpr = (IdentifierExpression) expr;
 			ILocation location = idExpr.getLocation();
 			IType type = idExpr.getType();
 			VarMapKey mapping = mReverseVarMap.get(
 					new VarMapValue(idExpr.getIdentifier(), idExpr.getDeclarationInformation()));
 			if (mapping == null) {
+				mProcessedExprWasActive = true;
 				return expr;
 			}
 			DeclarationInformation translatedDeclInfo = mapping.getDeclInfo();
@@ -86,10 +114,33 @@ public class ExpressionBacktranslation extends BoogieTransformer {
 			if (mapping.getInOldExprOfProc() != null) {
 				newExpr = new UnaryExpression(location, type, Operator.OLD, idExpr);
 			}
+			if (translatedDeclInfo.getStorageClass() == GLOBAL
+					|| translatedDeclInfo.getStorageClass() == QUANTIFIED
+					|| mActiveProcedures.contains(translatedDeclInfo.getProcedure())) {
+				mProcessedExprWasActive = true;
+			}
+			
 			return newExpr;
 		} else {
 			return super.processExpression(expr);			
 		}
+	}
+
+	/**
+	 * Determines whether to keep processed variables in the ProgramState of an ProgramExecution or not.
+	 * <p>
+	 * A variable is active, if it isn't out of scope (like a local variable of procedure F,
+	 * when the callstack doesn't contain F).
+	 * Global variables and unknown variables (such without a mapping) are always considered to be active.
+	 * <p>
+	 * The returned value determines, that at least one of all processed variables was active.
+	 * It is reseted with each call {@link #setInlinedActiveProcedures(Set)}.
+	 * 
+	 * @return One of the processed expressions (since the last call of {@link #setInlinedActiveProcedures(Set)})
+	 *         was active.
+	 */
+	public boolean processedExprWasActive() {
+		return mProcessedExprWasActive;
 	}
 
 }

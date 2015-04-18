@@ -53,7 +53,6 @@ public class Inliner implements IUnmanagedObserver {
 	public Inliner(IUltimateServiceProvider services, IInlineSelector inlineSelector) {
 		mServices = services;
 		mProgressMonitorService = services.getProgressMonitorService();
-		//mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mInlineSelector = inlineSelector;
 		mBacktranslator = new InlinerBacktranslator(services);
 	}
