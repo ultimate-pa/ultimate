@@ -5,6 +5,7 @@ import java.util.Collection;
 import de.uni_freiburg.informatik.ultimate.core.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ScriptWithTermConstructionChecks;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.Settings;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
@@ -69,8 +70,10 @@ public class LinearInequalityInvariantPatternProcessorFactory
 	 * @return SMT solver instance to use
 	 */
 	protected Script produceSmtSolver() {
-		return SolverBuilder.buildScript(services, storage,
+		Script script = SolverBuilder.buildScript(services, storage,
 				produceSolverSettings());
+		script = new ScriptWithTermConstructionChecks(script);
+		return script;
 	}
 
 	/**
@@ -80,7 +83,7 @@ public class LinearInequalityInvariantPatternProcessorFactory
 	 * @return SMT solver settings to use
 	 */
 	protected Settings produceSolverSettings() {
-		boolean dumpSmtScriptToFile = true;
+		boolean dumpSmtScriptToFile = !true;
 		String pathOfDumpedScript = "/home/david/";
 		String baseNameOfDumpedScript = "contraintSolving";
 		return new Settings(true,
