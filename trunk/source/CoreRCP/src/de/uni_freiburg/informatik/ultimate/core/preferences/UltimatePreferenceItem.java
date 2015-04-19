@@ -178,6 +178,11 @@ public class UltimatePreferenceItem<T> {
 		}
 		return rtr;
 	}
+	
+	@Override
+	public String toString() {
+		return "Pref: " + mLabel + " Type=" + mType + ", Default=" + mDefaultValue;
+	}
 
 	public IUltimatePreferenceItemValidator<T> getPreferenceValidator() {
 		return mPreferenceValidator;

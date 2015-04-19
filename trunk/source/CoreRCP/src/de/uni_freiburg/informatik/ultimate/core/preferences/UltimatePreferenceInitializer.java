@@ -41,17 +41,28 @@ public abstract class UltimatePreferenceInitializer extends AbstractPreferenceIn
 	}
 
 	public void resetDefaults() {
-		initializePreferences(new UltimatePreferenceStore(getPlugID()).getEclipsePreferences());
+		initializePreferences(mPreferenceStore.getEclipsePreferences());
 	}
 
 	private void initializePreferences(IEclipsePreferences prefs) {
+		try {
+			prefs.flush();
+			prefs.sync();
+		} catch (BackingStoreException e) {
+			e.printStackTrace();
+		}
+		
 		for (UltimatePreferenceItem<?> item : mPreferenceDescriptors) {
+			String label = item.getLabel();
+			Object value = item.getDefaultValue();
+			prefs.remove(label);
+			
 			switch (item.getType()) {
 			case Boolean:
-				prefs.putBoolean(item.getLabel(), (Boolean) item.getDefaultValue());
+				prefs.putBoolean(label, (Boolean) value);
 				break;
 			case Integer:
-				prefs.putInt(item.getLabel(), (Integer) item.getDefaultValue());
+				prefs.putInt(label, (Integer) value);
 				break;
 			case Directory:
 			case String:
@@ -61,7 +72,7 @@ public abstract class UltimatePreferenceInitializer extends AbstractPreferenceIn
 			case Path:
 			case File:
 			case Color:
-				prefs.put(item.getLabel(), item.getDefaultValue().toString());
+				prefs.put(label, value.toString());
 				break;
 			case Label:
 				// A Label is not really a preference; its just nice for
@@ -74,13 +85,11 @@ public abstract class UltimatePreferenceInitializer extends AbstractPreferenceIn
 
 		}
 		try {
+			prefs.flush();
 			prefs.sync();
 		} catch (BackingStoreException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		// FIXME: For debug purposes
-//		System.out.println(mPreferenceStore.getDefaultPreferencesString());
 	}
 
 	public UltimatePreferenceItem<?>[] getDefaultPreferences() {
