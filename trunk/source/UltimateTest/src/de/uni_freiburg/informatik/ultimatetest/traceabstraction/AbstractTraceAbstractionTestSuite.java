@@ -17,6 +17,7 @@ import de.uni_freiburg.informatik.ultimatetest.evals.ConversionContext;
 import de.uni_freiburg.informatik.ultimatetest.evals.HTMLSummary;
 import de.uni_freiburg.informatik.ultimatetest.evals.LatexDetailedSummary;
 import de.uni_freiburg.informatik.ultimatetest.evals.LatexOverviewSummary;
+import de.uni_freiburg.informatik.ultimatetest.evals.WhoSolvedItSummary;
 import de.uni_freiburg.informatik.ultimatetest.evals.ColumnDefinition.Aggregate;
 import de.uni_freiburg.informatik.ultimatetest.summary.CsvConcatenator;
 import de.uni_freiburg.informatik.ultimatetest.summary.IIncrementalLog;
@@ -77,7 +78,8 @@ public abstract class AbstractTraceAbstractionTestSuite extends AbstractModelChe
 				new LatexOverviewSummary(getClass(), benchmarks, columnDef),
 				new LatexDetailedSummary(getClass(), benchmarks, columnDef),
 //				new CsvSummary(getClass(), benchmarks, columnDef),
-				new HTMLSummary(getClass(), benchmarks, columnDef)
+				new HTMLSummary(getClass(), benchmarks, columnDef),
+				new WhoSolvedItSummary(this.getClass()),
 		};
 	}
 
