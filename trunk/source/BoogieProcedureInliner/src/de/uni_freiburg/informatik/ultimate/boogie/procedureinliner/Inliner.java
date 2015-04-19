@@ -6,10 +6,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-//import org.apache.log4j.Logger;
-
-
-
 import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
 import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.backtranslation.InlinerBacktranslator;
@@ -24,8 +20,7 @@ import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.*;
 
 /**
- * The actual Inliner.
- * Builds a call graph, sets inline flags of procedures and inlines the flagged procedures.
+ * Observer, which builds a call graph, sets inline flags of procedures and inlines the flagged procedures.
  * 
  * @author schaetzc@informatik.uni-freiburg.de
  */
@@ -33,7 +28,6 @@ public class Inliner implements IUnmanagedObserver {
 
 	private IUltimateServiceProvider mServices;
 	private IProgressMonitorService mProgressMonitorService;
-	//private Logger mLogger;
 
 	private IInlineSelector mInlineSelector;
 

@@ -18,6 +18,20 @@ import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.exceptions.Pr
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.TarjanSCC;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.*;
 
+/**
+ * Builds a call graph of a boogie program.
+ * <p>
+ * Procedures are the nodes and calls are the edges. Every call has its own edge.
+ * The edges are labeled with the type of the call (like normal, recursive and so on).
+ * <p>
+ * It is ensured that there is no procedure implementation without declaration and that there is at most one
+ * implementation for every declaration (the latter is a restriction from the Inliner, not from the Boogie language).
+ * 
+ * @see CallGraphNode
+ * @see CallGraphEdgeLabel
+ * 
+ * @author schaetzc@informatik.uni-freiburg.de
+ */
 public class CallGraphBuilder {
 	
 	/** All Declarations from the last processed Boogie ast, other than Procedures. */
