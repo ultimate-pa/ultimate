@@ -14,7 +14,7 @@ public class InliningTest_Svcomp_Individual extends AbstractTraceAbstractionTest
 	
 	/** Files to be tested. */
 	private static final String[] s_SVCOMP_Reach_PreciseMemoryModel = {
-		// Failed tests from before fix of "old(vars) only assigned on first call".
+		// Failed tests from before fix of "old(vars) only assigned on first call". They should pass now.
 		// Sorted by line count in ascending order
 //		"examples/svcomp/list-properties/simple_true-unreach-call.i",
 //		"examples/svcomp/list-properties/list_flag_true-unreach-call.i",
@@ -49,15 +49,17 @@ public class InliningTest_Svcomp_Individual extends AbstractTraceAbstractionTest
 //		"examples/svcomp/list-ext-properties/test-0158_1_true-valid-memsafety.i",
 //		"examples/svcomp/list-ext-properties/test-0214_1_true-valid-memsafety.i",
 //		"examples/svcomp/list-ext-properties/test-0217_1_true-valid-memsafety.i",
-		
+
 		// These tests failed only with inlining. But now they pass, although I didn't changed anything
-//		"examples/svcomp/list-ext-properties/test-0019_1_false-valid-memtrack.i",
+		// ... fail caused by "out of memory" or "connection to SMT solver broken".
 //		"examples/svcomp/memory-alloca/bubblesort-alloca_true-valid-memsafety.i",
 //		"examples/svcomp/memory-alloca/cstrcat-alloca_true-valid-memsafety.i",
 //		"examples/svcomp/memory-alloca/cstrncat-alloca_true-valid-memsafety.i",
+		// ... "ExpectedResult: UNSAFE_MEMTRACK UltimateResult: SAFE", but now passes for mysterious reasons.
+		"examples/svcomp/list-ext-properties/test-0019_1_false-valid-memtrack.i",
 
 		// These tests fail only with inlining.
-		"examples/svcomp/list-ext-properties/test-0158_1_false-valid-memtrack.i", // fail
+		"examples/svcomp/list-ext-properties/test-0158_1_false-valid-memtrack.i",
 	};
 	
 	@Override
