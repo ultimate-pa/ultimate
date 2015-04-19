@@ -430,7 +430,7 @@ public final class LinearInequalityInvariantPatternProcessor
 			final Collection<? extends Collection<LinearInequality>>... dnfs) {
 		this.logger.log(Level.INFO, "[LIIPP] About to invoke motzkin:");
 		for (final Collection<? extends Collection<LinearInequality>> dnf : dnfs) {
-			this.logger.log(Level.INFO, "[LIIPP] dnf to motzkin: " + dnf);
+			this.logger.log(Level.INFO, "[LIIPP] DNF to transform: " + dnf);
 		}
 		final Collection<Collection<LinearInequality>> conjunctionDNF = expandConjunction(dnfs);
 
@@ -438,6 +438,8 @@ public final class LinearInequalityInvariantPatternProcessor
 		final Collection<Term> resultTerms = new ArrayList<Term>(
 				conjunctionDNF.size());
 		for (final Collection<LinearInequality> conjunct : conjunctionDNF) {
+			this.logger.log(Level.INFO,
+					"[LIIPP] Transforming conjunct " + conjunct);
 			final MotzkinTransformation transformation = new MotzkinTransformation(
 					solver, AnalysisType.Nonlinear, false);
 			transformation.add_inequalities(conjunct);
