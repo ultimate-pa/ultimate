@@ -151,6 +151,7 @@ public class ExpressionBacktranslation extends BoogieTransformer {
 	 */
 	private IdentifierExpression processDisguisedStruct(IdentifierExpression disguisedStruct) {
 		String[] idParts = disguisedStruct.getIdentifier().split("!", 2);
+		assert idParts.length == 2 : "IdentifierExpression was no disguised struct: " + disguisedStruct;
 		IdentifierExpression struct = new IdentifierExpression(
 				disguisedStruct.getLocation(), null, idParts[0], disguisedStruct.getDeclarationInformation());
 		IdentifierExpression newStruct = (IdentifierExpression) processExpression(struct);		
