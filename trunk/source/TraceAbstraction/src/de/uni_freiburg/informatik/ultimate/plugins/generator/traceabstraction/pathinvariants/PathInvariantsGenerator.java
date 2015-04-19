@@ -191,8 +191,8 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 			m_Interpolants = new IPredicate[len];
 			for (int i = 0; i < len; i++) {
 				m_Interpolants[i] = invariants.get(locations.get(i));
-				logService.log(Level.INFO, "[LIIPP] Interpolant no " + i + " "
-						+ this.m_Interpolants[i].toString());
+				logService.log(Level.INFO, "[PathInvariants] Interpolant no "
+				        + i + " " + this.m_Interpolants[i].toString());
 			}
 			logService.log(Level.INFO, "[PathInvariants] Invariants found and "
 					+ "processed.");

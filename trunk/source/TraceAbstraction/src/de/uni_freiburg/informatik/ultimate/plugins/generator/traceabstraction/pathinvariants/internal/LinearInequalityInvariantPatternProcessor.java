@@ -486,7 +486,6 @@ public final class LinearInequalityInvariantPatternProcessor
 	 */
 	protected void completeMapping(Map<RankVar, Term> mapping,
 			Map<RankVar, Term> source) {
-		final String prefix = newPrefix() + "replace_";
 		int index = 0;
 		for (final RankVar coefficient : patternCoefficients) {
 			if (mapping.containsKey(coefficient)) {
@@ -650,6 +649,7 @@ public final class LinearInequalityInvariantPatternProcessor
 			e.printStackTrace();
 			throw new AssertionError("model extraction failed");
 		}
+		logger.log(Level.INFO, "[LIIPP] Valuation: " + valuation);
 		validConfiguration = solver.getValue(patternVariables
 				.toArray(new Term[patternVariables.size()]));
 
