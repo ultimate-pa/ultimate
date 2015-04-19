@@ -84,7 +84,7 @@ public class LinearInequalityInvariantPatternProcessorFactory
 	 */
 	protected Settings produceSolverSettings() {
 		boolean dumpSmtScriptToFile = !true;
-		String pathOfDumpedScript = "/home/david/";
+		String pathOfDumpedScript = "~";
 		String baseNameOfDumpedScript = "contraintSolving";
 		return new Settings(true,
 				"z3 -smt2 -in SMTLIB2_COMPLIANT=true -t:42000", -1, null,

@@ -447,6 +447,30 @@ public final class LinearInequalityInvariantPatternProcessor
 	}
 
 	/**
+	 * Completes a given mapping by adding fresh auxiliary terms for any
+	 * coefficient (see {@link #patternCoefficients}) which does not yet have a
+	 * mapping.
+	 * 
+	 * After this method returned, the mapping is guaranteed to contain an entry
+	 * for every coefficient.
+	 * 
+	 * @param mapping
+	 *            mapping to add auxiliary terms to
+	 */
+	protected void completeMapping(Map<RankVar, Term> mapping) {
+		final String prefix = newPrefix() + "replace_";
+		int index = 0;
+		for (final RankVar coefficient : patternCoefficients) {
+			if (mapping.containsKey(coefficient)) {
+				continue;
+			}
+			final Term replacement = SmtUtils.buildNewConstant(solver, prefix
+					+ index++, "Real");
+			mapping.put(coefficient, replacement);
+		}
+	}
+
+	/**
 	 * Generates a {@link Term} that is true iff the given
 	 * {@link LinearTransition} implies a given invariant pattern over the
 	 * primed variables of the transition.
@@ -462,7 +486,8 @@ public final class LinearInequalityInvariantPatternProcessor
 	 */
 	private Term buildImplicationTerm(final LinearTransition condition,
 			final Collection<Collection<LinearPatternBase>> pattern) {
-		final Map<RankVar, Term> primedMapping = condition.getOutVars();
+		Map<RankVar, Term> primedMapping = new HashMap<RankVar, Term>(condition.getOutVars());
+		completeMapping(primedMapping);
 
 		final Collection<List<LinearInequality>> conditionDNF = condition
 				.getPolyhedra();
@@ -494,7 +519,8 @@ public final class LinearInequalityInvariantPatternProcessor
 	 */
 	private Term buildBackwardImplicationTerm(final LinearTransition condition,
 			final Collection<Collection<LinearPatternBase>> pattern) {
-		final Map<RankVar, Term> primedMapping = condition.getOutVars();
+		Map<RankVar, Term> primedMapping = new HashMap<RankVar, Term>(condition.getOutVars());
+		completeMapping(primedMapping);
 
 		final Collection<List<LinearInequality>> conditionDNF = condition
 				.getPolyhedra();
@@ -534,9 +560,11 @@ public final class LinearInequalityInvariantPatternProcessor
 			final InvariantTransitionPredicate<Collection<Collection<LinearPatternBase>>> predicate) {
 		final LinearTransition transition = linearizer.linearize(predicate
 				.getTransition());
-		final Map<RankVar, Term> unprimedMapping = transition.getInVars();
-		final Map<RankVar, Term> primedMapping = transition.getOutVars();
-
+		Map<RankVar, Term> unprimedMapping = new HashMap<RankVar, Term>(transition.getInVars());
+		completeMapping(unprimedMapping);
+		Map<RankVar, Term> primedMapping = new HashMap<RankVar, Term>(transition.getOutVars());
+		completeMapping(primedMapping);
+		
 		final Collection<Collection<LinearInequality>> startInvariantDNF = mapPattern(
 				predicate.getInvStart(), unprimedMapping);
 		final Collection<Collection<LinearInequality>> endInvariantDNF = mapAndNegatePattern(
