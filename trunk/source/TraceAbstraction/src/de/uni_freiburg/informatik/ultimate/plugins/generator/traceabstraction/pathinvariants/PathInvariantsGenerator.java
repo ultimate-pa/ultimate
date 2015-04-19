@@ -26,7 +26,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pa
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.IInvariantPatternProcessor;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.IInvariantPatternProcessorFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.ILinearInequalityInvariantPatternStrategy;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.LinearInequalityPatternProcessorFactory;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.LinearInequalityInvariantPatternProcessorFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.LocationIndependentLinearInequalityInvariantPatternStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
@@ -43,6 +43,7 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 	private final IPredicate m_Precondition;
 	private final IPredicate m_Postcondition;
 	private final IPredicate[] m_Interpolants;
+	private final Logger logger;
 
 	/**
 	 * Creates a default factory.
@@ -64,8 +65,8 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 			final PredicateUnifier predicateUnifier, final SmtManager smtManager) {
 		final ILinearInequalityInvariantPatternStrategy strategy = new LocationIndependentLinearInequalityInvariantPatternStrategy(
 				1, 1, 1, 2, 5);
-		return new LinearInequalityPatternProcessorFactory(services, storage,
-				predicateUnifier, smtManager, strategy);
+		return new LinearInequalityInvariantPatternProcessorFactory(services,
+				storage, predicateUnifier, smtManager, strategy);
 	}
 
 	/**
@@ -134,6 +135,8 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 		final Logger logService = services.getLoggingService().getLogger(
 				Activator.s_PLUGIN_ID);
 
+		this.logger = logService;
+
 		logService.log(Level.INFO,
 				"Started with a run of length " + m_Run.getLength());
 
@@ -188,6 +191,8 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 			m_Interpolants = new IPredicate[len];
 			for (int i = 0; i < len; i++) {
 				m_Interpolants[i] = invariants.get(locations.get(i));
+				logService.log(Level.INFO, "[LIIPP] Interpolant no " + i + " "
+						+ this.m_Interpolants[i].toString());
 			}
 			logService.log(Level.INFO, "[PathInvariants] Invariants found and "
 					+ "processed.");
@@ -238,13 +243,13 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 	 * the the interpolants at position i and k coincide.
 	 * 
 	 * @return sequence of interpolants according to the run provided in the
-	 *         constructor or null if no such sequence has been found; without first
-	 *         interpolant (the precondition)
+	 *         constructor or null if no such sequence has been found; without
+	 *         first interpolant (the precondition)
 	 */
 	@Override
 	public IPredicate[] getInterpolants() {
 		IPredicate[] interpolantMapWithOutFirstInterpolant = new IPredicate[this.m_Interpolants.length - 2];
-		for(int i = 0; i < this.m_Interpolants.length -2; i++){
+		for (int i = 0; i < this.m_Interpolants.length - 2; i++) {
 			interpolantMapWithOutFirstInterpolant[i] = this.m_Interpolants[i];
 		}
 		return interpolantMapWithOutFirstInterpolant;

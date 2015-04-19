@@ -14,7 +14,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
 /**
  * Factory producing {@link LinearInequalityInvariantPatternProcessor}s.
  */
-public class LinearInequalityPatternProcessorFactory
+public class LinearInequalityInvariantPatternProcessorFactory
 		implements
 		IInvariantPatternProcessorFactory<Collection<Collection<LinearPatternBase>>> {
 
@@ -39,7 +39,7 @@ public class LinearInequalityPatternProcessorFactory
 	 * @param strategy
 	 *            the invariant strategy to pass to the produced processor
 	 */
-	public LinearInequalityPatternProcessorFactory(
+	public LinearInequalityInvariantPatternProcessorFactory(
 			final IUltimateServiceProvider services,
 			final IToolchainStorage storage,
 			final PredicateUnifier predUnifier, final SmtManager smtManager,
@@ -80,8 +80,8 @@ public class LinearInequalityPatternProcessorFactory
 	 * @return SMT solver settings to use
 	 */
 	protected Settings produceSolverSettings() {
-		boolean dumpSmtScriptToFile = false;
-		String pathOfDumpedScript = ".";
+		boolean dumpSmtScriptToFile = true;
+		String pathOfDumpedScript = "/home/david/";
 		String baseNameOfDumpedScript = "contraintSolving";
 		return new Settings(true,
 				"z3 -smt2 -in SMTLIB2_COMPLIANT=true -t:42000", -1, null,

@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.Set;
 
@@ -376,7 +377,8 @@ public final class LinearInequalityInvariantPatternProcessor
 			Collection<LinearInequality> disjunct,
 			Collection<Collection<LinearInequality>> dnf) {
 		// there are disjunct.size() * dnf.size() conjuncts afterwards
-		final Collection<Collection<LinearInequality>> resultDnf = new ArrayList<>(dnf);
+		final Collection<Collection<LinearInequality>> resultDnf = new ArrayList<>(
+				dnf);
 		for (LinearInequality linearInequalityInFirstDisjunct : disjunct) {
 			for (Collection<LinearInequality> conjunctInDnf : resultDnf) {
 				conjunctInDnf.add(linearInequalityInFirstDisjunct);
@@ -426,6 +428,10 @@ public final class LinearInequalityInvariantPatternProcessor
 	@SafeVarargs
 	private final Term transformNegatedConjunction(
 			final Collection<? extends Collection<LinearInequality>>... dnfs) {
+		this.logger.log(Level.INFO, "[LIIPP] About to invoke motzkin:");
+		for (final Collection<? extends Collection<LinearInequality>> dnf : dnfs) {
+			this.logger.log(Level.INFO, "[LIIPP] dnf to motzkin: " + dnf);
+		}
 		final Collection<Collection<LinearInequality>> conjunctionDNF = expandConjunction(dnfs);
 
 		// Apply Motzkin and generate the conjunction of the resulting Terms
@@ -473,6 +479,50 @@ public final class LinearInequalityInvariantPatternProcessor
 	}
 
 	/**
+	 * Generates a {@link Term} that is true iff a given invariant pattern over
+	 * the primed variables of the transition implies the given
+	 * {@link LinearTransition}.
+	 * 
+	 * @see #precondition
+	 * @see #postcondition
+	 * @param condition
+	 *            transition to build the implication term from, usually a pre-
+	 *            or postcondition
+	 * @param pattern
+	 *            pattern to build the equivalence term from
+	 * @return equivalence term
+	 */
+	private Term buildBackwardImplicationTerm(final LinearTransition condition,
+			final Collection<Collection<LinearPatternBase>> pattern) {
+		final Map<RankVar, Term> primedMapping = condition.getOutVars();
+
+		final Collection<List<LinearInequality>> conditionDNF = condition
+				.getPolyhedra();
+		Collection<Collection<LinearInequality>> conditionCNF = new ArrayList<>();
+		for (List<LinearInequality> list : conditionDNF) {
+			ArrayList<LinearInequality> newList = new ArrayList<>();
+			for (LinearInequality li : list) {
+				LinearInequality newLi = new LinearInequality(li);
+				newLi.negate();
+				newList.add(newLi);
+			}
+			conditionCNF.add(newList);
+		}
+		Collection<Collection<LinearInequality>> newConditionDNF = expandCnfToDnf(conditionCNF);
+
+		final Collection<Collection<LinearInequality>> PatternDNF = mapPattern(
+				pattern, primedMapping);
+		int numberOfInequalities = 0;
+		for (Collection<LinearInequality> conjunct : PatternDNF) {
+			numberOfInequalities += conjunct.size();
+		}
+		this.logger.log(Level.INFO, "[LIIPP] Got an implication term with "
+				+ numberOfInequalities + " conjuncts");
+
+		return transformNegatedConjunction(newConditionDNF, PatternDNF);
+	}
+
+	/**
 	 * Generates a {@link Term} that is true iff the given
 	 * {@link InvariantTransitionPredicate} holds.
 	 * 
@@ -514,7 +564,7 @@ public final class LinearInequalityInvariantPatternProcessor
 		logger.log(Level.INFO, "[LIIPP] Start generating terms.");
 		solver.assertTerm(buildImplicationTerm(precondition,
 				entryInvariantPattern));
-		solver.assertTerm(buildImplicationTerm(postcondition,
+		solver.assertTerm(buildBackwardImplicationTerm(postcondition,
 				exitInvariantPattern));
 		for (final InvariantTransitionPredicate<Collection<Collection<LinearPatternBase>>> predicate : predicates) {
 			solver.assertTerm(buildPredicateTerm(predicate));
