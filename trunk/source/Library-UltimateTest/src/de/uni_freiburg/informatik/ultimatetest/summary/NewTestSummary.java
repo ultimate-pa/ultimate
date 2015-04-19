@@ -108,6 +108,13 @@ public abstract class NewTestSummary implements ITestSummary {
 			return NewTestSummary.this;
 		}
 
+		@Override
+		public String toString() {
+			return "Toolchain" + Toolchain + ", Setting" + Setting;
+		}
+		
+
+
 	}
 
 	protected PartitionedResults getAllResultsPartitioned() {
