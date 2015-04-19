@@ -92,12 +92,9 @@ public class ExpressionBacktranslation extends BoogieTransformer {
 
 	@Override
 	public Expression processExpression(Expression expr) {
-		
-		if (expr instanceof IdentifierExpression) {
-			
-			// TODO handle "disguised" structs *
-			// * IdentiferExpression "struct!field", instead of StructAccessExpression
-
+		if (isDisguisedStruct(expr)) {
+			return processDisguisedStruct((IdentifierExpression) expr);
+		} else if (expr instanceof IdentifierExpression) {
 			IdentifierExpression idExpr = (IdentifierExpression) expr;
 			ILocation location = idExpr.getLocation();
 			IType type = idExpr.getType();
@@ -119,13 +116,48 @@ public class ExpressionBacktranslation extends BoogieTransformer {
 					|| mActiveProcedures.contains(translatedDeclInfo.getProcedure())) {
 				mProcessedExprWasActive = true;
 			}
-			
 			return newExpr;
 		} else {
 			return super.processExpression(expr);			
 		}
 	}
 
+	/**
+	 * Recognizes IdentifierExpressions, which actually should be StructAcessExpressions.
+	 * <p>
+	 * This method is a workaround, since one would expect structs instead of simple variables.
+	 * Eventually the preprocessor's backtranslation misses them.
+	 * 
+	 * @param expr Expression
+	 * @return The Expression is an IdentifierExpression, which was created by the preprocessor
+	 *         to replace a StructAccessExpression.
+	 */
+	private boolean isDisguisedStruct(Expression expr) {
+		if (expr instanceof IdentifierExpression) {
+			IdentifierExpression idExpr = (IdentifierExpression) expr;
+			return idExpr.getIdentifier().contains("!");
+		}
+		return false;
+	}
+
+	/**
+	 * Backtranslates an IdentifierExpression, which actually should be an StructAcessExpression.
+	 * <p>
+	 * This method is a workaround, since one would expect structs instead of simple variables.
+	 * Eventually the preprocessor's backtranslation misses them.
+	 * 
+	 * @param disguisedStruct IdentifierExpression from the preprocessor, which replaced a struct.
+	 * @return Backtranslated struct as an IdentifierExpression.
+	 */
+	private IdentifierExpression processDisguisedStruct(IdentifierExpression disguisedStruct) {
+		String[] idParts = disguisedStruct.getIdentifier().split("!", 2);
+		IdentifierExpression struct = new IdentifierExpression(
+				disguisedStruct.getLocation(), null, idParts[0], disguisedStruct.getDeclarationInformation());
+		IdentifierExpression newStruct = (IdentifierExpression) processExpression(struct);		
+		return new IdentifierExpression(newStruct.getLocation(), disguisedStruct.getType(),
+				newStruct.getIdentifier() + "!" + idParts[1], newStruct.getDeclarationInformation());
+	} 
+	
 	/**
 	 * Determines whether to keep processed variables in the ProgramState of an ProgramExecution or not.
 	 * <p>

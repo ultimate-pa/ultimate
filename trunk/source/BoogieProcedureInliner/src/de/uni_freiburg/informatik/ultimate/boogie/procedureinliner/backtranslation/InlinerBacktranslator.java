@@ -158,7 +158,7 @@ public class InlinerBacktranslator extends DefaultTranslator<BoogieASTNode, Boog
 		BoogieProgramExecution translatedExec =  new BoogieProgramExecution(translatedStates, translatedTrace);
 		return translatedExec;
 	}
-	
+
 	@Override
 	public String targetExpressionToString(Expression expression) {
 		return BoogiePrettyPrinter.print(expression);
