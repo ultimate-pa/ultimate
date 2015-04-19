@@ -25,6 +25,7 @@ import de.uni_freiburg.informatik.ultimate.smtsolver.external.ScriptorWithGetInt
 public class SolverBuilder {
 
 	private static final String sSolverLoggerName = "SolverLogger";
+	private static final boolean s_UseWrapperScriptWithTermConstructionChecks = false;
 
 	private static Script createSMTInterpol(IUltimateServiceProvider services, IToolchainStorage storage) {
 		Logger solverLogger = services.getLoggingService().getLoggerForExternalTool(sSolverLoggerName);
@@ -98,6 +99,9 @@ public class SolverBuilder {
 		}
 		if (!settings.useExternalSolver()) {
 			result.setOption(":timeout", String.valueOf(settings.getTimeoutSmtInterpol()));
+		}
+		if (s_UseWrapperScriptWithTermConstructionChecks) {
+			result = new ScriptWithTermConstructionChecks(result);
 		}
 		return result;
 	}
