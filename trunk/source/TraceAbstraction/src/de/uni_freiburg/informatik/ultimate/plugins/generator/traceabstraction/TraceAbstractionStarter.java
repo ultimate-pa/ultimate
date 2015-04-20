@@ -3,6 +3,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import org.apache.log4j.Logger;
 
@@ -235,12 +236,23 @@ public class TraceAbstractionStarter {
 		if (taPrefs.computeHoareAnnotation()) {
 			m_Logger.debug("Computing Hoare annotation of CFG");
 			basicCegarLoop.computeCFGHoareAnnotation();
+			writeHoareAnnotationToLogger(root);
 		} else {
 			m_Logger.debug("Ommiting computation of Hoare annotation");
 
 		}
 		m_Artifact = basicCegarLoop.getArtifact();
 	}
+
+	private void writeHoareAnnotationToLogger(RootNode root) {
+		for (Entry<String, Map<String, ProgramPoint>> proc2label2pp : root.getRootAnnot().getProgramPoints().entrySet()) {
+			for (ProgramPoint pp : proc2label2pp.getValue().values()) {
+				HoareAnnotation hoare = getHoareAnnotation(pp);
+				m_Logger.info("At program point  " + pp + "  the Hoare annotation is:  " + hoare.getFormula());
+			}
+		}
+	}
+
 
 	private void reportPositiveResults(Collection<ProgramPoint> errorLocs) {
 		for (ProgramPoint errorLoc : errorLocs) {
