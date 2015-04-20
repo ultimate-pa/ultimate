@@ -175,7 +175,7 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 
 				AlternatingAutomaton<CodeBlock, IPredicate> alternatingAutomaton = computeAlternatingAutomaton(dag);
 				mLogger.info("compute alternating automaton:\n " + alternatingAutomaton);
-				assert alternatingAutomaton.accepts(trace) : "interpolant afa does not accept the trace!";
+				assert alternatingAutomaton.accepts(reverse(trace)) : "interpolant afa does not accept the trace!";
 				if (alternatingAutomatonUnion == null) {
 					alternatingAutomatonUnion = alternatingAutomaton;
 				} else {
@@ -189,13 +189,13 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 					alternatingAutomatonUnion = mergedUnion.getResult();
 					assert checkRAFA(alternatingAutomatonUnion);
 				}
-				assert alternatingAutomatonUnion.accepts(trace) : "interpolant afa does not accept the trace!";
+				assert alternatingAutomatonUnion.accepts(reverse(trace)) : "interpolant afa does not accept the trace!";
 			} else {
 				m_SmtManager.getScript().pop(1);
 			}
 		}
 		mLogger.info(alternatingAutomatonUnion);
-		assert alternatingAutomatonUnion.accepts(trace) : "interpolant afa does not accept the trace!";
+		assert alternatingAutomatonUnion.accepts(reverse(trace)) : "interpolant afa does not accept the trace!";
 //		if (alternatingAutomatonUnion != null) {
 			// .. in the end, build the union of all the nwas we got from the
 			// dags, return it
@@ -212,6 +212,16 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 //		}
 	}
 	
+	private Word<CodeBlock> reverse(Word<CodeBlock> trace) {
+		CodeBlock[] newWord = new CodeBlock[trace.length()];
+		int[] newNestingRelation = new int[trace.length()];
+		for (int i = 0; i < trace.length(); i++) {
+			newWord[trace.length() - 1 - i] = trace.getSymbol(i);
+			newNestingRelation[i] = -2;
+		}
+		return new NestedWord<CodeBlock>(newWord, newNestingRelation);
+	}
+
 	/**
 	 * Given DataflowDAG dag, go through it in postorder and add the Terms of the Dagnodes' transition formulas
 	 * to a term list. Save the nesting in an int array (every entry points to the branching point of its subtree).
@@ -354,7 +364,7 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 		alternatingAutomaton.addState(initialState);
 		alternatingAutomaton.addState(finalState);
 		alternatingAutomaton.setStateFinal(finalState);
-		alternatingAutomaton.addAcceptingConjunction(alternatingAutomaton.generateDisjunction(new IPredicate[]{initialState}, new IPredicate[0]));
+		alternatingAutomaton.addAcceptingConjunction(alternatingAutomaton.generateCube(new IPredicate[]{initialState}, new IPredicate[0]));
 
 		IHoareTripleChecker mhtc = new MonolithicHoareTripleChecker(m_SmtManager);//TODO: switch to efficient htc later, perhaps
 
@@ -374,7 +384,7 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 				alternatingAutomaton.addTransition(
 					currentDag.getNodeLabel().getBlock(),
 					currentDag.getNodeLabel().getInterpolant(),
-					alternatingAutomaton.generateDisjunction(targetStates.toArray(new IPredicate[targetStates.size()]), new IPredicate[0])
+					alternatingAutomaton.generateCube(targetStates.toArray(new IPredicate[targetStates.size()]), new IPredicate[0])
 				);
 				assert mhtc.checkInternal(
 						m_SmtManager.newPredicate(m_SmtManager.and(targetStates.toArray(new IPredicate[targetStates.size()]))),
@@ -385,7 +395,7 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 				alternatingAutomaton.addTransition(
 					currentDag.getNodeLabel().getBlock(),
 					currentDag.getNodeLabel().getInterpolant(),
-					alternatingAutomaton.generateDisjunction(new IPredicate[]{finalState}, new IPredicate[0])
+					alternatingAutomaton.generateCube(new IPredicate[]{finalState}, new IPredicate[0])
 				);
 				assert mhtc.checkInternal(
 						m_SmtManager.newPredicate(m_SmtManager.and(targetStates.toArray(new IPredicate[targetStates.size()]))),
@@ -395,26 +405,26 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 		}
 
 		//Add transitions according to hoare triples
-//		IHoareTripleChecker htc = getEfficientHoareTripleChecker();
-//		for(CodeBlock letter : alternatingAutomaton.getAlphabet()){
-//			for(IPredicate sourceState : alternatingAutomaton.getStates()){
+		IHoareTripleChecker htc = getEfficientHoareTripleChecker();
+		for(CodeBlock letter : alternatingAutomaton.getAlphabet()){
+			for(IPredicate sourceState : alternatingAutomaton.getStates()){
 //				if(sourceState == m_PredicateUnifier.getFalsePredicate()){
 //					continue;
 //				}
-//				for(IPredicate targetState : alternatingAutomaton.getStates()){
+				for(IPredicate targetState : alternatingAutomaton.getStates()){
 //					if(targetState == m_PredicateUnifier.getTruePredicate()){
 //						continue;
 //					}
-//					if (htc.checkInternal(sourceState, letter, targetState) == Validity.VALID) {
-//						alternatingAutomaton.addTransition(
-//							letter,
-//							targetState,
-//							alternatingAutomaton.generateDisjunction(new IPredicate[]{sourceState}, new IPredicate[0])
-//						);
-//					}
-//				}
-//			}
-//		}
+					if (htc.checkInternal(sourceState, letter, targetState) == Validity.VALID) {
+						alternatingAutomaton.addTransition(
+							letter,
+							targetState,
+							alternatingAutomaton.generateCube(new IPredicate[]{sourceState}, new IPredicate[0])
+						);
+					}
+				}
+			}
+		}
 		alternatingAutomaton.setReversed(true);
 		assert checkRAFA(alternatingAutomaton);
 		return alternatingAutomaton;

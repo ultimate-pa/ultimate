@@ -58,7 +58,7 @@ public class AlternatingAutomaton<LETTER, STATE> implements IAutomaton<LETTER, S
 		}
 	}
 	
-	public BooleanExpression generateDisjunction(STATE[] resultStates, STATE[] negatedResultStates){
+	public BooleanExpression generateCube(STATE[] resultStates, STATE[] negatedResultStates){
 		BitSet alpha = new BitSet(states.size());
 		BitSet beta = new BitSet(states.size());
 		for(STATE resultState : resultStates){

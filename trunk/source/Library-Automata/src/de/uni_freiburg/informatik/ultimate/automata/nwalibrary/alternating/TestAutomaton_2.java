@@ -16,14 +16,14 @@ public class TestAutomaton_2 extends AlternatingAutomaton<String, String>{
 		addState(state1);
 		addState(state2);
 		addState(state3);
-		addTransition(a, state1, generateDisjunction(new String[]{state2, state3}, new String[]{}));
-		addTransition(a, state2, generateDisjunction(new String[]{state2, state3}, new String[]{}));
+		addTransition(a, state1, generateCube(new String[]{state2, state3}, new String[]{}));
+		addTransition(a, state2, generateCube(new String[]{state2, state3}, new String[]{}));
 		addTransition(a, state3, new BooleanExpression(new BitSet(), new BitSet()));
-		addTransition(b, state1, generateDisjunction(new String[]{state2}, new String[]{}));
-		addTransition(b, state2, generateDisjunction(new String[]{state2}, new String[]{}));
-		addTransition(b, state2, generateDisjunction(new String[]{state3}, new String[]{}));
-		addTransition(b, state3, generateDisjunction(new String[]{state2}, new String[]{}));
-		addAcceptingConjunction(generateDisjunction(new String[]{state1}, new String[]{}));
+		addTransition(b, state1, generateCube(new String[]{state2}, new String[]{}));
+		addTransition(b, state2, generateCube(new String[]{state2}, new String[]{}));
+		addTransition(b, state2, generateCube(new String[]{state3}, new String[]{}));
+		addTransition(b, state3, generateCube(new String[]{state2}, new String[]{}));
+		addAcceptingConjunction(generateCube(new String[]{state1}, new String[]{}));
 	}
 	public static String a = new String("a");
 	public static String b = new String("b");
