@@ -17,19 +17,19 @@ public class InliningTest_Individual extends AbstractTraceAbstractionTestSuite {
 //		"examples/programs/quantifier/regression/c/Aliasing01-Safe.c",
 		
 		// AssertionError: "Simplification unsound?"
-		"examples/programs/quantifier/regression/ArrowOperator01-read-Safe.c",
-		"examples/programs/quantifier/regression/ArrowOperator03-write-Safe.c",
-		"examples/programs/quantifier/regression/ArrowOperator06-nested-Safe.c",
-		"examples/programs/quantifier/regression/c/SelfReferencingStruct01-Safe.c",
-
+//		"examples/programs/quantifier/regression/ArrowOperator01-read-Safe.c",
+//		"examples/programs/quantifier/regression/ArrowOperator03-write-Safe.c",
+//		"examples/programs/quantifier/regression/ArrowOperator06-nested-Safe.c",
+//		"examples/programs/quantifier/regression/c/SelfReferencingStruct01-Safe.c",
+//
 //		// Error: "Neither filename nor path nor first line contains a keyword that defines the expected result"
 //		// (Error from above, when #Safe or #Unsafe is added)
-		"examples/programs/quantifier/regression/UnconfirmedAliasingProblem2.c",
-		"examples/programs/quantifier/regression/todo/auxVarType.c",
-		"examples/programs/quantifier/regression/copyStructThatIsOnHeap.c",
+//		"examples/programs/quantifier/regression/UnconfirmedAliasingProblem2.c",
+//		"examples/programs/quantifier/regression/todo/auxVarType.c",
+//		"examples/programs/quantifier/regression/copyStructThatIsOnHeap.c",
 		
 		// Error in BoogiePreprocessor, regarding quantifiers
-//		"examples/BoogiePL/schaetzc/TestMultiQuant.bpl",
+		"examples/BoogiePL/schaetzc/TestMultiQuant.bpl",
 	};
 	
 	private static final boolean sTraceAbstractionBoogie = true;

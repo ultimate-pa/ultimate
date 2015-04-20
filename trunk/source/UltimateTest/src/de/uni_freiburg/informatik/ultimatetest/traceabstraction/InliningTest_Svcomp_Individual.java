@@ -27,20 +27,23 @@ public class InliningTest_Svcomp_Individual extends AbstractTraceAbstractionTest
 
 		// Failed tests from after fix of "old(vars) only assigned on first call".
 		// These tests fail, even without inlining
-		"examples/svcomp/loop-acceleration/diamond_true-unreach-call2.c",
-		"examples/svcomp/loop-lit/afnp2014_true-unreach-call.c",
-		"examples/svcomp/loop-lit/bhmr2007_true-unreach-call.c.i",
-		"exampltruees/svcomp/loop-lit/cggmp2005_true-unreach-call.c",
-		"examples/svcomp/loop-lit/cggmp2005_variant_true-unreach-call.c.i",
-		"examples/svcomp/loop-lit/css2003_true-unreach-call.c",
-		"examples/svcomp/loop-lit/gj2007_true-unreach-call.c",
-		"examples/svcomp/loop-lit/gsv2008_true-unreach-call.c",
-		"examples/svcomp/loop-lit/mcmillan2006_true-unreach-call.c",
-		"examples/svcomp/loops/bubble_sort_true-unreach-call.i",
-		"examples/svcomp/loops/linear_sea.ch_true-unreach-call.i",
-		"examples/svcomp/loops/linear_search_false-unreach-call.i",
-		"examples/svcomp/loops/lu.cmp_true-unreach-call.i",
-		"examples/svcomp/loops/ludcmp_false-unreach-call.i",
+//		"examples/svcomp/loop-acceleration/diamond_true-unreach-call2.c",
+//		"examples/svcomp/loop-lit/afnp2014_true-unreach-call.c",
+//		"examples/svcomp/loop-lit/bhmr2007_true-unreach-call.c.i",
+//		"exampltruees/svcomp/loop-lit/cggmp2005_true-unreach-call.c",
+//		"examples/svcomp/loop-lit/cggmp2005_variant_true-unreach-call.c.i",
+//		"examples/svcomp/loop-lit/css2003_true-unreach-call.c",
+//		"examples/svcomp/loop-lit/gj2007_true-unreach-call.c",
+//		"examples/svcomp/loop-lit/gsv2008_true-unreach-call.c",
+//		"examples/svcomp/loop-lit/mcmillan2006_true-unreach-call.c",
+//		"examples/svcomp/loops/bubble_sort_true-unreach-call.i",
+//		"examples/svcomp/loops/linear_sea.ch_true-unreach-call.i",
+//		"examples/svcomp/loops/linear_search_false-unreach-call.i",
+//		"examples/svcomp/loops/lu.cmp_true-unreach-call.i",
+//		"examples/svcomp/loops/ludcmp_false-unreach-call.i",
+		
+		// Ultimate doesn't terminate!
+//		"examples/svcomp/loops/n.c24_false-unreach-call.i",
 	};
 
 	/** Files to be tested. */
@@ -68,7 +71,7 @@ public class InliningTest_Svcomp_Individual extends AbstractTraceAbstractionTest
 	}
 	
 	private static final boolean sReachPreciseMemoryModel = false;
-	private static final boolean sMemsafety = true;
+	private static final boolean sMemsafety = false;
 
 	private static final boolean sAutomizerWithInlining = true;
 	private static final boolean sAutomizerWithoutInlining = true;
