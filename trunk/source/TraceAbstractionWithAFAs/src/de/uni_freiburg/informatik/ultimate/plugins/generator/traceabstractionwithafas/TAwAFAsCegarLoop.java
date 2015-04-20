@@ -175,7 +175,7 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 
 				AlternatingAutomaton<CodeBlock, IPredicate> alternatingAutomaton = computeAlternatingAutomaton(dag);
 				mLogger.info("compute alternating automaton:\n " + alternatingAutomaton);
-				assert alternatingAutomaton.accepts(reverse(trace)) : "interpolant afa does not accept the trace!";
+				assert alternatingAutomaton.accepts(trace) : "interpolant afa does not accept the trace!";
 				if (alternatingAutomatonUnion == null) {
 					alternatingAutomatonUnion = alternatingAutomaton;
 				} else {
@@ -189,19 +189,21 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 					alternatingAutomatonUnion = mergedUnion.getResult();
 					assert checkRAFA(alternatingAutomatonUnion);
 				}
-				assert alternatingAutomatonUnion.accepts(reverse(trace)) : "interpolant afa does not accept the trace!";
+				assert alternatingAutomatonUnion.accepts(trace) : "interpolant afa does not accept the trace!";
 			} else {
 				m_SmtManager.getScript().pop(1);
 			}
 		}
 		mLogger.info(alternatingAutomatonUnion);
-		assert alternatingAutomatonUnion.accepts(reverse(trace)) : "interpolant afa does not accept the trace!";
-//		if (alternatingAutomatonUnion != null) {
-			// .. in the end, build the union of all the nwas we got from the
-			// dags, return it
-			RAFA_Determination<CodeBlock> determination = new RAFA_Determination<CodeBlock>(m_Services, alternatingAutomatonUnion, m_SmtManager, m_PredicateUnifier);
-			m_InterpolAutomaton = determination.getResult();
-//		} else {
+		assert alternatingAutomatonUnion.accepts(trace) : "interpolant afa does not accept the trace!";
+		//		if (alternatingAutomatonUnion != null) {
+		// .. in the end, build the union of all the nwas we got from the
+		// dags, return it
+		RAFA_Determination<CodeBlock> determination = new RAFA_Determination<CodeBlock>(m_Services, alternatingAutomatonUnion, m_SmtManager, m_PredicateUnifier);
+		m_InterpolAutomaton = determination.getResult();
+		assert new Accepts<CodeBlock,IPredicate>(m_InterpolAutomaton, (NestedWord<CodeBlock>) trace).getResult() 
+			: "interpolant automaton does not accept the trace!";
+		//		} else {
 //			m_InterpolAutomaton = new NestedWordAutomaton<CodeBlock, IPredicate>(
 //				m_Services,
 //				m_Abstraction.getAlphabet(),
