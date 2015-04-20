@@ -238,23 +238,26 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 		BoogieVar writtenVar = null;
 		Term writtenVarSsa = null;
 
-		if (dag.getNodeLabel().getBlock().getTransitionFormula().getAssignedVars().isEmpty()) {
 			//do nothing -- all the ssa-versions stay the same in an assume
-		} else {
+//		} else {
 			//only the ssa-version of the variable that is on the write-edge of this node is used in this 
 			//node's ssa. 
 			//All the other nodes get a fresh SSA-version
 			assert dag.getIncomingNodes().size() <= 1 : "DataflowDAG is not a tree, expecting a tree";
-			writtenVar = 
-					dag.getIncomingNodes().size() == 1 ?
+			writtenVar = dag.getIncomingNodes().size() == 1 ?
 							dag.getIncomingEdgeLabel(dag.getIncomingNodes().get(0)).getBoogieVar() :
 								null;
-							writtenVarSsa = varToSsaVar.get(writtenVar);
+			writtenVarSsa = varToSsaVar.get(writtenVar);
 
-							for (BoogieVar bv : dag.getNodeLabel().getBlock().getTransitionFormula().getInVars().keySet())
-								varToSsaVarNew.put(bv, buildVersion(bv));
-							for (BoogieVar bv : dag.getNodeLabel().getBlock().getTransitionFormula().getOutVars().keySet())
-								varToSsaVarNew.put(bv, buildVersion(bv));
+			for (BoogieVar bv : dag.getNodeLabel().getBlock().getTransitionFormula().getInVars().keySet())
+				varToSsaVarNew.put(bv, buildVersion(bv));
+			for (BoogieVar bv : dag.getNodeLabel().getBlock().getTransitionFormula().getOutVars().keySet())
+				varToSsaVarNew.put(bv, buildVersion(bv));
+		if (dag.getNodeLabel().getBlock().getTransitionFormula().getAssignedVars().isEmpty()) {
+			//in case of an assume, the variable on the incoming edge 
+			//(i.e. the variable that is counted as written by this node's statement)
+			//keeps its old version
+			varToSsaVarNew.put(writtenVar, writtenVarSsa);
 		}
 		
 		for (int i = 0; i < dag.getOutgoingNodes().size(); i++) {
@@ -288,15 +291,13 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 		}
 		for (Entry<BoogieVar, TermVariable> entry : transFormula.getOutVars().entrySet()) {
 			Term t = null;
-			if (writtenVar != null  //in case of an assume statement the written var may be null
+			if (writtenVar != null  
 					&& entry.getKey().equals(writtenVar)) { 
 				t = writtenVarSsa;
-			} else {
+			} else { // if writtenVar is null (when we are at the tree's root), just take the value from the map
 				t = varToSsaVarNew.get(entry.getKey());
 			}
             assert t != null;
-//            if (t == null)
-//            	t = buildVersion(entry.getKey());
 			substitutionMapping.put(entry.getValue(), t);
 			constantsToBoogieVar.put((ApplicationTerm) t, entry.getKey());
 		}
