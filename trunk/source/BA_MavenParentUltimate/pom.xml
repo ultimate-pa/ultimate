@@ -49,8 +49,9 @@
 		<jacoco.version>0.7.2.201409121644</jacoco.version>
 
 		<!-- Global arguments for the VM used during junit tests depending on profile -->
-		<manualtest-argline>-Xmx4g -XX:+HeapDumpOnOutOfMemoryError</manualtest-argline>
-		<coverage-argline>-Xmx4g -XX:+HeapDumpOnOutOfMemoryError</coverage-argline>
+		<!-- use -XX:+HeapDumpOnOutOfMemoryError if you want to generate dumps on OutOfMemory exceptions -->
+		<manualtest-argline>-Xmx4g </manualtest-argline>
+		<coverage-argline>-Xmx4g</coverage-argline>
 
 	</properties>
 
@@ -236,6 +237,7 @@
 		<module>../IRSDependencies</module>
 		<module>../Library-ApacheCommonsLang</module>
 		<module>../WitnessParser</module>
+		<module>../BoogieProcedureInliner</module>
 	</modules>
 
 	<profiles>
@@ -262,6 +264,7 @@
 							<threadCount>1</threadCount>
 							<failIfNoTests>false</failIfNoTests>
 							<trimStackTrace>false</trimStackTrace>
+							<redirectTestOutputToFile>true</redirectTestOutputToFile>
 							<!-- if you want to change the argLine, use the global property -->
 							<argLine>${tycho.testArgLine} ${coverage-argline}</argLine>
 
@@ -341,6 +344,7 @@
 							<threadCount>1</threadCount>
 							<failIfNoTests>false</failIfNoTests>
 							<trimStackTrace>false</trimStackTrace>
+							<redirectTestOutputToFile>true</redirectTestOutputToFile>
 							<!-- if you want to change the argLine, use the global property -->
 							<argLine>${manualtest-argline}</argLine>
 
