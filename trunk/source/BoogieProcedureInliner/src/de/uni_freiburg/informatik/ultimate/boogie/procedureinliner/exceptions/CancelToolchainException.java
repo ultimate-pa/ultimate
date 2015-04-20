@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.exceptions;
 
+import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.Activator;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.result.AbstractResult;
@@ -33,7 +34,7 @@ public abstract class CancelToolchainException extends Exception {
 
 	public void logErrorAndCancelToolchain(IUltimateServiceProvider services, String pluginId) {
 		String logMessage = (mLocation == null ?  "" : mLocation + ": ") + getMessage();
-		services.getLoggingService().getLogger(logMessage);
+		services.getLoggingService().getLogger(Activator.PLUGIN_ID).error(logMessage);
 		services.getResultService().reportResult(pluginId, createResult(pluginId));
 		services.getProgressMonitorService().cancelToolchain();
 	}

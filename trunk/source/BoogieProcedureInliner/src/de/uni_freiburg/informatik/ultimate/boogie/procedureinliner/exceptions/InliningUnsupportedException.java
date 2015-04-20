@@ -15,7 +15,7 @@ public class InliningUnsupportedException extends CancelToolchainException {
 	private static final long serialVersionUID = 7795426075105131787L;
 
 	public InliningUnsupportedException(String message, ILocation location) {
-		super(message, location);
+		super("Inlining unsupported: " + message, location);
 	}
 
 	@Override
