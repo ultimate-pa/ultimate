@@ -2,6 +2,8 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.alternating;
 
 import java.util.BitSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 
 public class BooleanExpression{
 
@@ -47,18 +49,20 @@ public class BooleanExpression{
 		return false;
 	}
 	
-	public BooleanExpression cloneShifted(int amount){
-		BitSet shiftedAlpha = new BitSet(alpha.size() + amount);
-		BitSet shiftedBeta = new BitSet(beta.size() + amount);
-		for(int i=0;i<alpha.size();i++){
-			shiftedAlpha.set(i + amount, alpha.get(i));
-			shiftedBeta.set(i + amount, beta.get(i));
-		}
-		BooleanExpression booleanExpression = new BooleanExpression(shiftedAlpha, shiftedBeta);
+	public BooleanExpression cloneShifted(Map<Integer,Integer> shiftMap, int newSize){
+		BitSet shiftedAlpha = new BitSet(newSize);
+		BitSet shiftedBeta = new BitSet(newSize);
+		for (Entry<Integer, Integer> entry : shiftMap.entrySet()) {
+			if (alpha.get(entry.getKey()))
+				shiftedAlpha.set(entry.getValue());
+			if (beta.get(entry.getKey()))
+				shiftedBeta.set(entry.getValue());
+		}	
+		BooleanExpression result = new BooleanExpression(shiftedAlpha, shiftedBeta);
 		if(nextConjunctExpression != null){
-			booleanExpression.nextConjunctExpression = nextConjunctExpression.cloneShifted(amount);
-		}
-		return booleanExpression;
+			result.nextConjunctExpression = nextConjunctExpression.cloneShifted(shiftMap, newSize);
+		}	
+		return result;
 	}
 	
 	public boolean equals(BooleanExpression booleanExpression){
