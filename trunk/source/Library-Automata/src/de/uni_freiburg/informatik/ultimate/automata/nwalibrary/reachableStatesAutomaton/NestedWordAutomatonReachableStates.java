@@ -1623,7 +1623,7 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 			assert (automatonPartitionedBySCCs());
 			for (SCC scc : m_Balls) {
 				if (scc.isAccepting()) {
-					m_AllStatesOfSccsWithoutCallAndReturn.addAll(scc.getAllStates());
+					m_AllStatesOfSccsWithoutCallAndReturn.addAll(scc.getAllStatesContainters());
 					m_AcceptingBalls++;
 				}
 			}
@@ -1641,7 +1641,7 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 			m_NestedLassoRuns = new ArrayList<NestedLassoRun<LETTER, STATE>>();
 			for (SCC scc : m_Balls) {
 				if (scc.isAccepting()) {
-					for (StateContainer<LETTER, STATE> fin : scc.getAcceptingStates()) {
+					for (StateContainer<LETTER, STATE> fin : scc.getAcceptingStatesContainers()) {
 						NestedLassoRun<LETTER, STATE> nlr2 = (new LassoConstructor<LETTER, STATE>(m_Services, 
 								NestedWordAutomatonReachableStates.this, fin, scc)).getNestedLassoRun();
 						if (m_UseAlternativeLassoConstruction) {
@@ -1895,12 +1895,26 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 			 * @return The {@link StateContainer}s of all states that are 
 			 * contained in this SCC.
 			 */
-			public Set<StateContainer<LETTER, STATE>> getAllStates() {
+			public Set<StateContainer<LETTER, STATE>> getAllStatesContainters() {
 				return m_AllStates;
 			}
 
-			public Set<StateContainer<LETTER, STATE>> getAcceptingStates() {
+			public Set<StateContainer<LETTER, STATE>> getAcceptingStatesContainers() {
 				return m_AcceptingStates;
+			}
+			
+			/**
+			 * @return all states (not state containers) of this SCC.
+			 * This methods is not efficient because a new Set is constructed.
+			 * At the moment this is a workaround for Thomas' loop complexity
+			 * project.
+			 */
+			public Set<STATE> getAllStates() {
+				Set<STATE> result = new HashSet<>();
+				for (StateContainer<LETTER, STATE> sc : m_AllStates) {
+					result.add(sc.getState());
+				}
+				return result;
 			}
 
 			public HashRelation<StateContainer<LETTER, STATE>, Summary<LETTER, STATE>> getAcceptingSummariesOfSCC() {
