@@ -174,7 +174,8 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 				decorateDagWithInterpolants(dag, predicates);
 
 				AlternatingAutomaton<CodeBlock, IPredicate> alternatingAutomaton = computeAlternatingAutomaton(dag);
-				mLogger.debug("compute alternating automaton:\n " + alternatingAutomaton);
+				mLogger.info("compute alternating automaton:\n " + alternatingAutomaton);
+				assert alternatingAutomaton.accepts(trace) : "interpolant afa does not accept the trace!";
 				if (alternatingAutomatonUnion == null) {
 					alternatingAutomatonUnion = alternatingAutomaton;
 				} else {
@@ -188,25 +189,27 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 					alternatingAutomatonUnion = mergedUnion.getResult();
 					assert checkRAFA(alternatingAutomatonUnion);
 				}
+				assert alternatingAutomatonUnion.accepts(trace) : "interpolant afa does not accept the trace!";
 			} else {
 				m_SmtManager.getScript().pop(1);
 			}
 		}
 		mLogger.info(alternatingAutomatonUnion);
-		if (alternatingAutomatonUnion != null) {
+		assert alternatingAutomatonUnion.accepts(trace) : "interpolant afa does not accept the trace!";
+//		if (alternatingAutomatonUnion != null) {
 			// .. in the end, build the union of all the nwas we got from the
 			// dags, return it
 			RAFA_Determination<CodeBlock> determination = new RAFA_Determination<CodeBlock>(m_Services, alternatingAutomatonUnion, m_SmtManager, m_PredicateUnifier);
 			m_InterpolAutomaton = determination.getResult();
-		} else {
-			m_InterpolAutomaton = new NestedWordAutomaton<CodeBlock, IPredicate>(
-				m_Services,
-				m_Abstraction.getAlphabet(),
-				Collections.<CodeBlock>emptySet(),
-				Collections.<CodeBlock>emptySet(),
-				m_Abstraction.getStateFactory()
-			);
-		}
+//		} else {
+//			m_InterpolAutomaton = new NestedWordAutomaton<CodeBlock, IPredicate>(
+//				m_Services,
+//				m_Abstraction.getAlphabet(),
+//				Collections.<CodeBlock>emptySet(),
+//				Collections.<CodeBlock>emptySet(),
+//				m_Abstraction.getStateFactory()
+//			);
+//		}
 	}
 	
 	/**
@@ -392,26 +395,26 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 		}
 
 		//Add transitions according to hoare triples
-		IHoareTripleChecker htc = getEfficientHoareTripleChecker();
-		for(CodeBlock letter : alternatingAutomaton.getAlphabet()){
-			for(IPredicate sourceState : alternatingAutomaton.getStates()){
-				if(sourceState == m_PredicateUnifier.getFalsePredicate()){
-					continue;
-				}
-				for(IPredicate targetState : alternatingAutomaton.getStates()){
-					if(targetState == m_PredicateUnifier.getTruePredicate()){
-						continue;
-					}
-					if (htc.checkInternal(sourceState, letter, targetState) == Validity.VALID) {
-						alternatingAutomaton.addTransition(
-							letter,
-							targetState,
-							alternatingAutomaton.generateDisjunction(new IPredicate[]{sourceState}, new IPredicate[0])
-						);
-					}
-				}
-			}
-		}
+//		IHoareTripleChecker htc = getEfficientHoareTripleChecker();
+//		for(CodeBlock letter : alternatingAutomaton.getAlphabet()){
+//			for(IPredicate sourceState : alternatingAutomaton.getStates()){
+//				if(sourceState == m_PredicateUnifier.getFalsePredicate()){
+//					continue;
+//				}
+//				for(IPredicate targetState : alternatingAutomaton.getStates()){
+//					if(targetState == m_PredicateUnifier.getTruePredicate()){
+//						continue;
+//					}
+//					if (htc.checkInternal(sourceState, letter, targetState) == Validity.VALID) {
+//						alternatingAutomaton.addTransition(
+//							letter,
+//							targetState,
+//							alternatingAutomaton.generateDisjunction(new IPredicate[]{sourceState}, new IPredicate[0])
+//						);
+//					}
+//				}
+//			}
+//		}
 		alternatingAutomaton.setReversed(true);
 		assert checkRAFA(alternatingAutomaton);
 		return alternatingAutomaton;
@@ -524,11 +527,8 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 		boolean stillAccepted = (new Accepts<CodeBlock, IPredicate>(
 				(INestedWordAutomatonOldApi<CodeBlock, IPredicate>) m_Abstraction,
 				(NestedWord<CodeBlock>) m_Counterexample.getWord())).getResult();
-		if (stillAccepted) {
-			return false;
-		} else {
-			return true;
-		}
+		assert !stillAccepted : "stillAccepted --> no progress";
+		return !stillAccepted;
 	}
 	
 	
