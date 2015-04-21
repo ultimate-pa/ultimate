@@ -285,6 +285,18 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 			substitutionMapping.put(entry.getValue(), t);
 			constantsToBoogieVar.put((ApplicationTerm) t, entry.getKey());
 		}
+		/*
+		 *  if more than one variable is assigned to, we need an additional substitution for the ones that are not
+		 * the writtenVar (according to the DAG)
+		 * (otherwise we get a statement formula that is equivalent to false)
+		 */
+		for (BoogieVar av : transFormula.getAssignedVars()) {
+			if (!av.equals(writtenVar)) {
+				ApplicationTerm dummyTerm = (ApplicationTerm) buildVersion(av);
+				substitutionMapping.put(transFormula.getOutVars().get(av), dummyTerm);
+				constantsToBoogieVar.put(dummyTerm, av);
+			}
+		}
 		
 		Term substitutedTerm = (new Substitution(substitutionMapping, m_SmtManager.getScript()))
 				.transform(nodeLabel.getBlock().getTransitionFormula().getFormula());
