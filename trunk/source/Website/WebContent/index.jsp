@@ -449,7 +449,7 @@ Params:
 
 		<c:if test="${ui ne 'int'}">
 			<!-- CONTENT (HOME, TOOL) -->
-			<div class="<%=ui%> section">
+			<div class="<%=ui%> section link-emph">
 				<div class="caption">description</div>
 				<div class="text font-normal color-lighter">
 					<c:out value="${content.description}"
