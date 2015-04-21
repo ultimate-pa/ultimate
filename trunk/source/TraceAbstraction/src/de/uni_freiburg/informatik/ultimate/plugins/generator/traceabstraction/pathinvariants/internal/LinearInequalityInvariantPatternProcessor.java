@@ -328,9 +328,25 @@ public final class LinearInequalityInvariantPatternProcessor
 		return mappedAndNegatedPattern;
 	}
 
+	private static <E> Collection<Collection<E>> expandCnfToDnfSingle(
+			final Collection<Collection<E>> dnf, final Collection<E> conjunct) {
+		Collection<Collection<E>> result = new ArrayList<>();
+		for (Collection<E> disjunct : dnf) {
+			for (E item : conjunct) {
+				Collection<E> resultItem = new ArrayList<>();
+				resultItem.addAll(disjunct);
+				resultItem.add(item);
+				result.add(resultItem);
+			}
+		}
+		return result;
+
+	}
+
 	/**
-	 * Transforms a cnf (given as two nested Collections of linear inequalites)
-	 * into dnf (given as two nested Collections of linear inequalites).
+	 * Transforms a cnf (given as two nested Collections of atoms (usually linear inequalites))
+	 * into dnf (given as two nested Collections of atoms (usually linear inequalites)).
+	 * @param <E> type of the atoms
 	 * 
 	 * @param cnf
 	 *            the collection of conjuncts consisting of disjuncts of linear
@@ -338,82 +354,156 @@ public final class LinearInequalityInvariantPatternProcessor
 	 * @return a dnf (Collection of disjuncts consisting of conjuncts of linear
 	 *         inequalities), equivalent to the given cnf
 	 */
-	private static Collection<Collection<LinearInequality>> expandCnfToDnf(
-			final Collection<Collection<LinearInequality>> cnf) {
-		Iterator<Collection<LinearInequality>> cnfIterator = cnf.iterator();
-		if (!cnfIterator.hasNext()) {
-			throw new IllegalArgumentException(
-					"Could not convert cnf into dnf,"
-							+ " because empty cnf was given");
+	private static <E> Collection<Collection<E>> expandCnfToDnf(
+			final Collection<Collection<E>> cnf) {
+		boolean firstElement = true;
+		Collection<Collection<E>> expandedDnf = null;
+		for (Collection<E> conjunct : cnf) {
+			if (firstElement) {
+				expandedDnf = new ArrayList<>();
+				for(E e : conjunct){
+					Collection<E> conjunctSingleton = new ArrayList<>();
+					conjunctSingleton.add(e);
+					expandedDnf.add(conjunctSingleton);
+				}
+				firstElement = false;
+			} else {
+				expandedDnf = expandCnfToDnfSingle(expandedDnf, conjunct);
+			}
 		}
-		// the first disjunct is the initial dnf
-		Collection<LinearInequality> initialDisjunct = cnfIterator.next();
-		Collection<Collection<LinearInequality>> initialDnf = new ArrayList<>(
-				initialDisjunct.size());
-		for (LinearInequality li : initialDisjunct) {
-			Collection<LinearInequality> unitClause = new ArrayList<>(1);
-			unitClause.add(li);
-			initialDnf.add(unitClause);
-		}
-		Collection<Collection<LinearInequality>> resultDnf = initialDnf;
-		while (cnfIterator.hasNext()) {
-			resultDnf = singleExpandationCnfToDnf(cnfIterator.next(), resultDnf);
-		}
-		return resultDnf;
-
+		return expandedDnf;
+		/*
+		 * Iterator<Collection<LinearInequality>> cnfIterator = cnf.iterator();
+		 * if (!cnfIterator.hasNext()) { throw new IllegalArgumentException(
+		 * "Could not convert cnf into dnf," + " because empty cnf was given");
+		 * } // the first disjunct is the initial dnf
+		 * Collection<LinearInequality> initialDisjunct = cnfIterator.next();
+		 * Collection<Collection<LinearInequality>> initialDnf = new
+		 * ArrayList<>( initialDisjunct.size()); for (LinearInequality li :
+		 * initialDisjunct) { Collection<LinearInequality> unitClause = new
+		 * ArrayList<>(1); unitClause.add(li); initialDnf.add(unitClause); }
+		 * Collection<Collection<LinearInequality>> resultDnf = initialDnf;
+		 * while (cnfIterator.hasNext()) { resultDnf =
+		 * singleExpandationCnfToDnf(cnfIterator.next(), resultDnf); } return
+		 * resultDnf;
+		 */
 	}
 
 	/**
-	 * Performs a single expandation on the way from a cnf to an equivalent dnf:
-	 * given: disjunct /\ dnf output: new dnf equivalnt to disjunct /\ dnf
-	 * 
-	 * @param firstDisjunct
-	 *            the first disjunct (conjuncted with the second disjunct they
-	 *            form the cnf given)
-	 * @param cnf
-	 *            the cnf so far
-	 * @return a dnf from this cnf
+	 * Given two disjunctions a and b of conjunctions, this method calculates a
+	 * new disjunction of conjunctions equivalent to a /\ b
 	 */
-	private static Collection<Collection<LinearInequality>> singleExpandationCnfToDnf(
-			Collection<LinearInequality> disjunct,
-			Collection<Collection<LinearInequality>> dnf) {
-		// there are disjunct.size() * dnf.size() conjuncts afterwards
-		final Collection<Collection<LinearInequality>> resultDnf = new ArrayList<>(
-				dnf);
-		for (LinearInequality linearInequalityInFirstDisjunct : disjunct) {
-			for (Collection<LinearInequality> conjunctInDnf : resultDnf) {
-				conjunctInDnf.add(linearInequalityInFirstDisjunct);
+	private static <E> Collection<Collection<E>> expandConjunctionSingle(
+			Collection<Collection<E>> a, Collection<Collection<E>> b) {
+		Collection<Collection<E>> result = new ArrayList<>();
+		for (final Collection<E> aItem : a) {
+			for (final Collection<E> bItem : b) {
+				final Collection<E> resultItem = new ArrayList<>();
+				resultItem.addAll(aItem);
+				resultItem.addAll(bItem);
+				result.add(resultItem);
 			}
 		}
-		return resultDnf;
+		return result;
+	}
+
+	public static void main(String[] args) {
+		boolean cnfexpansion = true;
+		if (!cnfexpansion) {
+			Collection<Collection<String>> a = new ArrayList<>();
+			Collection<String> aItem1 = new ArrayList<>();
+			aItem1.add("a11");
+			aItem1.add("a12");
+			aItem1.add("a13");
+			Collection<String> aItem2 = new ArrayList<>();
+			aItem2.add("a21");
+			aItem2.add("a22");
+			aItem2.add("a23");
+			a.add(aItem1);
+			a.add(aItem2);
+			Collection<Collection<String>> b = new ArrayList<>();
+			Collection<String> bItem1 = new ArrayList<>();
+			bItem1.add("b11");
+			bItem1.add("b12");
+			bItem1.add("b13");
+			Collection<String> bItem2 = new ArrayList<>();
+			bItem2.add("b21");
+			bItem2.add("b22");
+			bItem2.add("b23");
+			b.add(bItem1);
+			b.add(bItem2);
+			Collection<Collection<String>> c = new ArrayList<>();
+			Collection<String> cItem1 = new ArrayList<>();
+			cItem1.add("c11");
+			cItem1.add("c12");
+			cItem1.add("c13");
+			Collection<String> cItem2 = new ArrayList<>();
+			cItem2.add("c21");
+			cItem2.add("c22");
+			cItem2.add("c23");
+			c.add(cItem1);
+			c.add(cItem2);
+			System.out.println(a);
+			System.out.println(b);
+			System.out.println(expandConjunctionSingle(a, b));
+			System.out.println(expandConjunctionSingle(b, c));
+			System.out.println(expandConjunctionSingle(
+					expandConjunctionSingle(a, b), c));
+			System.out.println(expandConjunction(a, b, c));
+		} else {
+			Collection<Collection<String>> cnf = new ArrayList<>();
+			Collection<String> conjunct1 = new ArrayList<>();
+			conjunct1.add("a");
+			conjunct1.add("b");
+			Collection<String> conjunct2 = new ArrayList<>();
+			conjunct2.add("c");
+			conjunct2.add("d");
+			Collection<String> conjunct3 = new ArrayList<>();
+			conjunct3.add("f");
+			conjunct3.add("g");
+			cnf.add(conjunct1);
+			cnf.add(conjunct2);
+			cnf.add(conjunct3);
+			System.out.println(expandCnfToDnf(cnf));
+		}
 	}
 
 	/**
 	 * Calculates a DNF of the conjunction of an arbitrary set of DNFs.
+	 * 
+	 * @param <E>
 	 * 
 	 * @param dnfs
 	 *            DNFs to conjunct together
 	 * @return DNF representing the conjunction of the DNFs provided, returns
 	 *         NULL if no DNFs were given.
 	 */
-	@SafeVarargs
-	private static Collection<Collection<LinearInequality>> expandConjunction(
-			final Collection<? extends Collection<LinearInequality>>... dnfs) {
+	private static <E> Collection<Collection<E>> expandConjunction(
+			final Collection<Collection<E>>... dnfs) {
 		boolean firstElement = true;
-		Collection<Collection<LinearInequality>> expandedDnf = null;
-		for (Collection<? extends Collection<LinearInequality>> currentDnf : dnfs) {
+		Collection<Collection<E>> expandedDnf = null;
+		for (Collection<Collection<E>> currentDnf : dnfs) {
 			if (firstElement) {
-				expandedDnf = (Collection<Collection<LinearInequality>>) currentDnf;
+				expandedDnf = currentDnf;
 				firstElement = false;
 			} else {
-				for (Collection<LinearInequality> currentDisjunct : currentDnf) {
-					expandedDnf = singleExpandationCnfToDnf(currentDisjunct,
-							expandedDnf);
-				}
+				expandedDnf = expandConjunctionSingle(currentDnf, expandedDnf);
 			}
-
 		}
 		return expandedDnf;
+		/**
+		 * boolean firstElement = true; Collection<Collection<LinearInequality>>
+		 * expandedDnf = null; for (Collection<? extends
+		 * Collection<LinearInequality>> currentDnf : dnfs) { if (firstElement)
+		 * { expandedDnf = (Collection<Collection<LinearInequality>>)
+		 * currentDnf; firstElement = false; } else { final
+		 * Collection<Collection<LinearInequality>> newDnf = new ArrayList<>();
+		 * for (Collection<LinearInequality> currentDisjunct : currentDnf) {
+		 * newDnf.addAll(singleExpandationCnfToDnf(currentDisjunct,
+		 * expandedDnf)); } expandedDnf = newDnf; }
+		 * 
+		 * } return expandedDnf;
+		 */
 	}
 
 	/**
@@ -428,7 +518,7 @@ public final class LinearInequalityInvariantPatternProcessor
 	 */
 	@SafeVarargs
 	private final Term transformNegatedConjunction(
-			final Collection<? extends Collection<LinearInequality>>... dnfs) {
+			final Collection<Collection<LinearInequality>>... dnfs) {
 		this.logger.log(Level.INFO, "[LIIPP] About to invoke motzkin:");
 		for (final Collection<? extends Collection<LinearInequality>> dnf : dnfs) {
 			this.logger.log(Level.INFO, "[LIIPP] DNF to transform: " + dnf);
@@ -439,8 +529,8 @@ public final class LinearInequalityInvariantPatternProcessor
 		final Collection<Term> resultTerms = new ArrayList<Term>(
 				conjunctionDNF.size());
 		for (final Collection<LinearInequality> conjunct : conjunctionDNF) {
-			this.logger.log(Level.INFO,
-					"[LIIPP] Transforming conjunct " + conjunct);
+			this.logger.log(Level.INFO, "[LIIPP] Transforming conjunct "
+					+ conjunct);
 			final MotzkinTransformation transformation = new MotzkinTransformation(
 					solver, AnalysisType.Nonlinear, false);
 			transformation.add_inequalities(conjunct);
@@ -518,8 +608,14 @@ public final class LinearInequalityInvariantPatternProcessor
 				condition.getOutVars());
 		completeMapping(primedMapping);
 
-		final Collection<List<LinearInequality>> conditionDNF = condition
+		final Collection<List<LinearInequality>> conditionDNF_ = condition
 				.getPolyhedra();
+		Collection<Collection<LinearInequality>> conditionDNF = new ArrayList<>();
+		for (List<LinearInequality> list : conditionDNF_) {
+			Collection<LinearInequality> newList = new ArrayList<>();
+			newList.addAll(list);
+			conditionDNF.add(newList);
+		}
 		final Collection<Collection<LinearInequality>> negPatternDNF = mapAndNegatePattern(
 				pattern, primedMapping);
 		int numberOfInequalities = 0;
@@ -552,10 +648,10 @@ public final class LinearInequalityInvariantPatternProcessor
 				condition.getOutVars());
 		completeMapping(primedMapping);
 
-		final Collection<List<LinearInequality>> conditionDNF = condition
+		final Collection<List<LinearInequality>> conditionCNF_ = condition
 				.getPolyhedra();
 		Collection<Collection<LinearInequality>> conditionCNF = new ArrayList<>();
-		for (List<LinearInequality> list : conditionDNF) {
+		for (List<LinearInequality> list : conditionCNF_) {
 			ArrayList<LinearInequality> newList = new ArrayList<>();
 			for (LinearInequality li : list) {
 				LinearInequality newLi = new LinearInequality(li);
@@ -607,11 +703,17 @@ public final class LinearInequalityInvariantPatternProcessor
 		}
 		this.logger.log(Level.INFO, "[LIIPP] Got a predicate term with "
 				+ numberOfInequalities + " conjuncts");
-		final Collection<List<LinearInequality>> transitionDNF = transition
+		final Collection<List<LinearInequality>> transitionDNF_ = transition
 				.getPolyhedra();
+		Collection<Collection<LinearInequality>> transitionDNF = new ArrayList<>();
+		for (List<LinearInequality> list : transitionDNF_) {
+			Collection<LinearInequality> newList = new ArrayList<>();
+			newList.addAll(list);
+			transitionDNF.add(newList);
+		}
 
 		return transformNegatedConjunction(startInvariantDNF, endInvariantDNF,
-				transitionDNF);
+				(Collection<Collection<LinearInequality>>) transitionDNF);
 	}
 
 	/**
@@ -748,20 +850,10 @@ public final class LinearInequalityInvariantPatternProcessor
 	@Override
 	public IPredicate applyConfiguration(
 			Collection<Collection<LinearPatternBase>> pattern) {
-		// TODO Auto-generated method stub
 		Term term = getValuatedTermForPattern(pattern);
-		LinearInequality inequality;
-		try {
-			inequality = LinearInequality.fromTerm(term);
-		} catch (TermException e) {
-			e.printStackTrace();
-			throw new RuntimeException(
-					"Wasn't possible to get a linear inequality back.");
-		}
-		Term booleanTerm = inequality.asTerm(smtManager.getScript());
 		// @Matthias: Hier ist der Term mit den eingesetzen Werten
 		// wir brauchen nun ein Predicate dafür
-		TermVarsProc tvp = TermVarsProc.computeTermVarsProc(booleanTerm,
+		TermVarsProc tvp = TermVarsProc.computeTermVarsProc(term,
 				smtManager.getBoogie2Smt());
 		return predicateUnifier.getOrConstructPredicate(tvp);
 	}
