@@ -4,6 +4,7 @@ import java.io.BufferedOutputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.PrintStream;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -696,15 +697,23 @@ public final class LinearInequalityInvariantPatternProcessor
 
 	protected Term getValuatedTermForPattern(
 			final Collection<Collection<LinearPatternBase>> pattern) {
+		final Script script = smtManager.getScript();
+		final Term zero = script.numeral(BigInteger.ZERO);
 		final Collection<Term> conjunctions = new ArrayList<Term>(
 				pattern.size());
 		for (final Collection<LinearPatternBase> conjunct : pattern) {
 			final Collection<Term> inequalities = new ArrayList<Term>(
 					conjunct.size());
 			for (final LinearPatternBase inequality : conjunct) {
-				inequalities.add(inequality.getAffineFunction(valuation)
-						.asTerm(smtManager.getScript()));
-
+				final Term affineFunctionTerm = inequality.getAffineFunction(
+						valuation).asTerm(script);
+				if (inequality.isStrict()) {
+					inequalities.add(SmtUtils.less(script, zero,
+							affineFunctionTerm));
+				} else {
+					inequalities.add(SmtUtils.leq(script, zero,
+							affineFunctionTerm));
+				}
 			}
 			conjunctions
 					.add(SmtUtils.and(smtManager.getScript(), inequalities));

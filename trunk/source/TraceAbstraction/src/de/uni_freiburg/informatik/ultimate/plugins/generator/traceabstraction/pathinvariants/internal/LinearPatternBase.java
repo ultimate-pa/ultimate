@@ -73,6 +73,15 @@ public final class LinearPatternBase {
 		return inequality;
 	}
 	
+	/**
+	 * Returns whether or not this pattern represents a strict term.
+	 * 
+	 * @return true iff the pattern represents a strict term
+	 */
+	public boolean isStrict() {
+		return strict;
+	}
+	
 	public AffineFunction getAffineFunction(final Map<Term, Rational> valuation){
 		return function.extractAffineFunction(valuation);
 	}
