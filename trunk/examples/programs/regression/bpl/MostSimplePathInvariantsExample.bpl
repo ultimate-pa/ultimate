@@ -5,10 +5,11 @@
  *
  */
 
-procedure main()
-{
-  var x, y: int;
+var y: int;
 
+procedure main()
+modifies y;
+{
   assume y >= 5;
   while (*) {
   }
