@@ -123,7 +123,7 @@ public abstract class AbstractEvaluationTestSuite extends AbstractModelCheckerTe
 				new TraceAbstractionTestSummary(getClass()), 
 				new CsvSummary(getClass(), benchmarks, columnDef),
 				new HTMLSummary(getClass(), benchmarks, columnDef),
-				new WhoSolvedItSummary(this.getClass()),
+				new KingOfTheHillSummary(this.getClass()),
 		};
 
 	}

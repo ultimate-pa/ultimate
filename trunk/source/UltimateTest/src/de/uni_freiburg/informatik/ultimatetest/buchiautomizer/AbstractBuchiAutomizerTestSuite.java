@@ -17,7 +17,7 @@ import de.uni_freiburg.informatik.ultimatetest.evals.ConversionContext;
 import de.uni_freiburg.informatik.ultimatetest.evals.HTMLSummary;
 import de.uni_freiburg.informatik.ultimatetest.evals.LatexDetailedSummary;
 import de.uni_freiburg.informatik.ultimatetest.evals.LatexOverviewSummary;
-import de.uni_freiburg.informatik.ultimatetest.evals.WhoSolvedItSummary;
+import de.uni_freiburg.informatik.ultimatetest.evals.KingOfTheHillSummary;
 import de.uni_freiburg.informatik.ultimatetest.summary.CsvConcatenator;
 import de.uni_freiburg.informatik.ultimatetest.summary.IIncrementalLog;
 import de.uni_freiburg.informatik.ultimatetest.summary.ITestSummary;
@@ -49,7 +49,7 @@ public abstract class AbstractBuchiAutomizerTestSuite extends AbstractModelCheck
 				new LatexDetailedSummary(getClass(), benchmarks, columnDef),
 //				new CsvSummary(getClass(), benchmarks, columnDef),
 				new HTMLSummary(getClass(), benchmarks, columnDef),
-				new WhoSolvedItSummary(this.getClass()),
+				new KingOfTheHillSummary(this.getClass()),
 		};
 
 	}

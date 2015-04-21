@@ -29,7 +29,7 @@ import de.uni_freiburg.informatik.ultimatetest.evals.CsvSummary;
 import de.uni_freiburg.informatik.ultimatetest.evals.HTMLSummary;
 import de.uni_freiburg.informatik.ultimatetest.evals.LatexDetailedSummary;
 import de.uni_freiburg.informatik.ultimatetest.evals.LatexOverviewSummary;
-import de.uni_freiburg.informatik.ultimatetest.evals.WhoSolvedItSummary;
+import de.uni_freiburg.informatik.ultimatetest.evals.KingOfTheHillSummary;
 import de.uni_freiburg.informatik.ultimatetest.summary.IIncrementalLog;
 import de.uni_freiburg.informatik.ultimatetest.summary.ITestSummary;
 import de.uni_freiburg.informatik.ultimatetest.summary.IncrementalLogWithVMParameters;
@@ -187,7 +187,7 @@ public abstract class AbstractSVCOMP15TestSuite extends UltimateTestSuite {
 				new LatexDetailedSummary(getClass(), benchmarks, columnDef),
 				new CsvSummary(getClass(), benchmarks, columnDef),
 				new HTMLSummary(getClass(), benchmarks, columnDef),
-				new WhoSolvedItSummary(this.getClass()),
+				new KingOfTheHillSummary(this.getClass()),
 		};
 		//@formatter:on
 	}
