@@ -78,7 +78,6 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 	private int ssaIndex = 1000;
 	
 	private final Map<String, Term> m_IndexedConstants = new HashMap<String, Term>();
-//	private final Map<BoogieVar, TreeMap<Integer, Term>> m_IndexedVarRepresentative = new HashMap<BoogieVar, TreeMap<Integer, Term>>();
 
 	public TAwAFAsCegarLoop(String name, RootNode rootNode, SmtManager smtManager,
 			TraceAbstractionBenchmarks traceAbstractionBenchmarks, TAPreferences taPrefs,
@@ -110,7 +109,6 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 
 	@Override
 	protected void constructInterpolantAutomaton() throws OperationCanceledException {
-//		Word<CodeBlock> trace = m_traceCheckerWAST.getTrace();
 		Word<CodeBlock> trace = m_TraceChecker.getTrace();
 		mLogger.debug("current trace:");
 		mLogger.debug(trace.toString());
@@ -128,7 +126,7 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 			ArrayList<Term> termsFromDAG = new ArrayList<>();
 			ArrayList<Integer> startsOfSubtreesFromDAG = new ArrayList<>();
 			HashMap<BoogieVar, Term> varToSsaVar = new HashMap<>();
-			// index for variables that occur for the first time here is 0
+
 			for (BoogieVar bv : dag.getNodeLabel().getBlock().getTransitionFormula().getInVars().keySet())
 				if (varToSsaVar.get(bv) == null)
 					varToSsaVar.put(bv, buildVersion(bv));
@@ -156,11 +154,11 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 				termNames.add(m_SmtManager.getScript().term(termName));
 			}
 
-			// if the conjunctions of the terms in the current dag is infeasible..
 			if (m_SmtManager.getScript().checkSat() == LBool.UNSAT) {
-				// .. compute tree interpolant for the current dag
+
 				Term[] interpolants = m_SmtManager.getScript().getInterpolants(
 						termNames.toArray(new Term[termNames.size()]), startsOfSubtreesAsInts);
+				
 				m_SmtManager.getScript().pop(1);
 				
 				IPredicate[] predicates = interpolantsToPredicates(interpolants,
@@ -190,22 +188,12 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 		}
 		mLogger.info(alternatingAutomatonUnion);
 		assert alternatingAutomatonUnion.accepts(trace) : "interpolant afa does not accept the trace!";
-		//		if (alternatingAutomatonUnion != null) {
-		// .. in the end, build the union of all the nwas we got from the
-		// dags, return it
+
 		RAFA_Determination<CodeBlock> determination = new RAFA_Determination<CodeBlock>(m_Services, alternatingAutomatonUnion, m_SmtManager, m_PredicateUnifier);
 		m_InterpolAutomaton = determination.getResult();
 		assert new Accepts<CodeBlock,IPredicate>(m_InterpolAutomaton, (NestedWord<CodeBlock>) trace).getResult() 
 			: "interpolant automaton does not accept the trace!";
-		//		} else {
-//			m_InterpolAutomaton = new NestedWordAutomaton<CodeBlock, IPredicate>(
-//				m_Services,
-//				m_Abstraction.getAlphabet(),
-//				Collections.<CodeBlock>emptySet(),
-//				Collections.<CodeBlock>emptySet(),
-//				m_Abstraction.getStateFactory()
-//			);
-//		}
+
 	}
 	
 	private Word<CodeBlock> reverse(Word<CodeBlock> trace) {
@@ -407,13 +395,7 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 		IHoareTripleChecker htc = getEfficientHoareTripleChecker();
 		for(CodeBlock letter : alternatingAutomaton.getAlphabet()){
 			for(IPredicate sourceState : alternatingAutomaton.getStates()){
-//				if(sourceState == m_PredicateUnifier.getFalsePredicate()){
-//					continue;
-//				}
 				for(IPredicate targetState : alternatingAutomaton.getStates()){
-//					if(targetState == m_PredicateUnifier.getTruePredicate()){
-//						continue;
-//					}
 					if (htc.checkInternal(sourceState, letter, targetState) == Validity.VALID) {
 						alternatingAutomaton.addTransition(
 							letter,
@@ -429,44 +411,6 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 		return alternatingAutomaton;
 	}
 
-//	@Override
-//	protected LBool isCounterexampleFeasible() {
-//		PredicateUnifier predicateUnifier = new PredicateUnifier(m_Services, m_SmtManager);
-//		IPredicate truePredicate = predicateUnifier.getTruePredicate();
-//		IPredicate falsePredicate = predicateUnifier.getFalsePredicate();
-//
-//		switch (m_Interpolation) {
-//		case Craig_TreeInterpolation:
-//			m_traceCheckerWAST = new TraceCheckerWithAccessibleSSATerms(truePredicate, falsePredicate,
-//					new TreeMap<Integer, IPredicate>(), NestedWord.nestedWord(m_Counterexample.getWord()),
-//					m_SmtManager, m_RootNode.getRootAnnot().getModGlobVarManager(), m_AssertCodeBlocksIncrementally,
-//					m_Services, true, predicateUnifier, m_Interpolation);
-//			break;
-//		default:
-//			throw new UnsupportedOperationException("unsupported interpolation");
-//		}
-//		LBool feasibility = m_traceCheckerWAST.isCorrect();
-//		if (feasibility != LBool.UNSAT) {
-//			mLogger.info("Counterexample might be feasible");
-//			NestedWord<CodeBlock> counterexample = NestedWord.nestedWord(m_Counterexample.getWord());
-//			String indentation = "";
-//			indentation += "  ";
-//			for (int j = 0; j < counterexample.length(); j++) {
-//				if (counterexample.isCallPosition(j)) {
-//					indentation += "    ";
-//				}
-//				if (counterexample.isReturnPosition(j)) {
-//					indentation = indentation.substring(0, indentation.length() - 4);
-//				}
-//			}
-//			m_RcfgProgramExecution = m_traceCheckerWAST.getRcfgProgramExecution();
-//		}
-//		m_traceCheckerWAST.traceCheckFinished();
-//		m_CegarLoopBenchmark.addTraceCheckerData(m_traceCheckerWAST.getTraceCheckerBenchmark());
-//
-//		return feasibility;
-//	}
-	
 	@Override
 	protected boolean refineAbstraction() throws AutomataLibraryException { //copied
 		m_StateFactoryForRefinement.setIteration(super.m_Iteration);
@@ -621,15 +565,7 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 	 */
 	private Term buildVersion(BoogieVar bv) {
 		int index = getFreshSsaIndex();
-//		TreeMap<Integer, Term> index2constant = m_IndexedVarRepresentative.get(bv);
-//		if (index2constant == null) {
-//			index2constant = new TreeMap<Integer, Term>();
-//			m_IndexedVarRepresentative.put(bv, index2constant);
-//		}
-//		assert !index2constant.containsKey(index) : "version was already constructed";
-
 		Term constant = PredicateUtils.getIndexedConstant(bv, index, m_IndexedConstants, m_SmtManager.getScript());
-//		index2constant.put(index, constant);
 		return constant;
 	}
 }
