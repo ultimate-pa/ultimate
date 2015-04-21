@@ -248,9 +248,28 @@ public class TraceAbstractionStarter {
 		for (Entry<String, Map<String, ProgramPoint>> proc2label2pp : root.getRootAnnot().getProgramPoints().entrySet()) {
 			for (ProgramPoint pp : proc2label2pp.getValue().values()) {
 				HoareAnnotation hoare = getHoareAnnotation(pp);
-				m_Logger.info("At program point  " + pp + "  the Hoare annotation is:  " + hoare.getFormula());
+				if (hoare == null) {
+					m_Logger.info("For program point  " + prettyPrintProgramPoint(pp)
+							+ "  no Hoare annotation was computed.");
+				} else {
+					m_Logger.info("At program point  " + prettyPrintProgramPoint(pp)
+							+ "  the Hoare annotation is:  " + hoare.getFormula());
+				}
 			}
 		}
+	}
+	
+	private static String prettyPrintProgramPoint(ProgramPoint pp) {
+		int startLine = pp.getPayload().getLocation().getStartLine();
+		int endLine = pp.getPayload().getLocation().getStartLine();
+		StringBuilder sb = new StringBuilder();
+		sb.append(pp);
+		if (startLine == endLine) {
+			sb.append("(line " + startLine + ")");
+		} else {
+			sb.append("(lines " + startLine + " " + endLine + ")");
+		}
+		return sb.toString();
 	}
 
 
