@@ -68,24 +68,17 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstractionconcurrent.CegarLoopConcurrentAutomata;
 
-/*
- * plan:
- * - von CegarLoopConcurrent erben
- *  --> Produktautomat aus einem parallelen Programm wird automatisch gebaut
- * - computeInterpolantAutomaton �berschreiben
- * - "Powerset" Einstellung f�r refine abstraction w�hlen
- */
-//
+
 
 public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 
 	private PredicateUnifier m_PredicateUnifier;
 	private TraceCheckerWithAccessibleSSATerms m_traceCheckerWAST = null; 
 	
-	private int ssaIndex = 10;
+	private int ssaIndex = 1000;
 	
 	private final Map<String, Term> m_IndexedConstants = new HashMap<String, Term>();
-	private final Map<BoogieVar, TreeMap<Integer, Term>> m_IndexedVarRepresentative = new HashMap<BoogieVar, TreeMap<Integer, Term>>();
+//	private final Map<BoogieVar, TreeMap<Integer, Term>> m_IndexedVarRepresentative = new HashMap<BoogieVar, TreeMap<Integer, Term>>();
 
 	public TAwAFAsCegarLoop(String name, RootNode rootNode, SmtManager smtManager,
 			TraceAbstractionBenchmarks traceAbstractionBenchmarks, TAPreferences taPrefs,
@@ -117,7 +110,8 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 
 	@Override
 	protected void constructInterpolantAutomaton() throws OperationCanceledException {
-		Word<CodeBlock> trace = m_traceCheckerWAST.getTrace();
+//		Word<CodeBlock> trace = m_traceCheckerWAST.getTrace();
+		Word<CodeBlock> trace = m_TraceChecker.getTrace();
 		mLogger.debug("current trace:");
 		mLogger.debug(trace.toString());
 
@@ -153,7 +147,6 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 				startsOfSubtreesAsInts[i] = startsOfSubtreesFromDAG.get(i);
 			}
 
-
 			// assert the terms for the current dag, name them
 			ArrayList<Term> termNames = new ArrayList<Term>();
 			for (int i = 0; i < termsFromDAG.size(); i++) {
@@ -169,6 +162,7 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 				Term[] interpolants = m_SmtManager.getScript().getInterpolants(
 						termNames.toArray(new Term[termNames.size()]), startsOfSubtreesAsInts);
 				m_SmtManager.getScript().pop(1);
+				
 				IPredicate[] predicates = interpolantsToPredicates(interpolants,
 						constantsToBoogieVar);
 				decorateDagWithInterpolants(dag, predicates);
@@ -238,25 +232,27 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 		BoogieVar writtenVar = null;
 		Term writtenVarSsa = null;
 
-			//do nothing -- all the ssa-versions stay the same in an assume
-//		} else {
-			//only the ssa-version of the variable that is on the write-edge of this node is used in this 
-			//node's ssa. 
-			//All the other nodes get a fresh SSA-version
-			assert dag.getIncomingNodes().size() <= 1 : "DataflowDAG is not a tree, expecting a tree";
-			writtenVar = dag.getIncomingNodes().size() == 1 ?
-							dag.getIncomingEdgeLabel(dag.getIncomingNodes().get(0)).getBoogieVar() :
-								null;
-			writtenVarSsa = varToSsaVar.get(writtenVar);
+		/*
+		 * only the ssa-version of the variable that is on the write-edge of this node is used in this 
+		 * node's ssa. 
+		 * All the other nodes get a fresh SSA-version
+		 */
+		assert dag.getIncomingNodes().size() <= 1 : "DataflowDAG is not a tree, expecting a tree";
+		writtenVar = dag.getIncomingNodes().size() == 1 
+				? dag.getIncomingEdgeLabel(dag.getIncomingNodes().get(0)).getBoogieVar() 
+						: null;
+		writtenVarSsa = varToSsaVar.get(writtenVar);
+		for (BoogieVar bv : dag.getNodeLabel().getBlock().getTransitionFormula().getInVars().keySet())
+			varToSsaVarNew.put(bv, buildVersion(bv));
+		for (BoogieVar bv : dag.getNodeLabel().getBlock().getTransitionFormula().getOutVars().keySet())
+			varToSsaVarNew.put(bv, buildVersion(bv));
 
-			for (BoogieVar bv : dag.getNodeLabel().getBlock().getTransitionFormula().getInVars().keySet())
-				varToSsaVarNew.put(bv, buildVersion(bv));
-			for (BoogieVar bv : dag.getNodeLabel().getBlock().getTransitionFormula().getOutVars().keySet())
-				varToSsaVarNew.put(bv, buildVersion(bv));
+		/* 
+		 * in case of an assume, the variable on the incoming edge 
+		 * (i.e. the variable that is counted as written by this node's statement)
+		 * keeps its old version
+		 */
 		if (dag.getNodeLabel().getBlock().getTransitionFormula().getAssignedVars().isEmpty()) {
-			//in case of an assume, the variable on the incoming edge 
-			//(i.e. the variable that is counted as written by this node's statement)
-			//keeps its old version
 			varToSsaVarNew.put(writtenVar, writtenVarSsa);
 		}
 		
@@ -272,13 +268,13 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 	}
 
 	/**
-	 * varToIndexOld has the versioning for the outvars, varToIndexNew has the versioning for the invars
-	 * (it is that way around essentially because we go from root to leaf in the DataFlowDAG)
+	 * writtenVar is the variable that is written according to the dataflow tree
+	 * the ssa versions for all others are stored in varToSsaVarNew
 	 */
 	private Term computeSsaTerm(TraceCodeBlock nodeLabel,
-//			HashMap<BoogieVar,Term> varToSsaVarOld, 
 			BoogieVar writtenVar, Term writtenVarSsa,
-			HashMap<BoogieVar,Term> varToSsaVarNew, HashMap<Term,BoogieVar> constantsToBoogieVar) {
+			HashMap<BoogieVar,Term> varToSsaVarNew, 
+			HashMap<Term,BoogieVar> constantsToBoogieVar) {
 		TransFormula transFormula = nodeLabel.getBlock().getTransitionFormula();
 	
 		Map<TermVariable, Term> substitutionMapping = new HashMap<TermVariable, Term>();
@@ -433,43 +429,43 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 		return alternatingAutomaton;
 	}
 
-	@Override
-	protected LBool isCounterexampleFeasible() {
-		PredicateUnifier predicateUnifier = new PredicateUnifier(m_Services, m_SmtManager);
-		IPredicate truePredicate = predicateUnifier.getTruePredicate();
-		IPredicate falsePredicate = predicateUnifier.getFalsePredicate();
-
-		switch (m_Interpolation) {
-		case Craig_TreeInterpolation:
-			m_traceCheckerWAST = new TraceCheckerWithAccessibleSSATerms(truePredicate, falsePredicate,
-					new TreeMap<Integer, IPredicate>(), NestedWord.nestedWord(m_Counterexample.getWord()),
-					m_SmtManager, m_RootNode.getRootAnnot().getModGlobVarManager(), m_AssertCodeBlocksIncrementally,
-					m_Services, true, predicateUnifier, m_Interpolation);
-			break;
-		default:
-			throw new UnsupportedOperationException("unsupported interpolation");
-		}
-		LBool feasibility = m_traceCheckerWAST.isCorrect();
-		if (feasibility != LBool.UNSAT) {
-			mLogger.info("Counterexample might be feasible");
-			NestedWord<CodeBlock> counterexample = NestedWord.nestedWord(m_Counterexample.getWord());
-			String indentation = "";
-			indentation += "  ";
-			for (int j = 0; j < counterexample.length(); j++) {
-				if (counterexample.isCallPosition(j)) {
-					indentation += "    ";
-				}
-				if (counterexample.isReturnPosition(j)) {
-					indentation = indentation.substring(0, indentation.length() - 4);
-				}
-			}
-			m_RcfgProgramExecution = m_traceCheckerWAST.getRcfgProgramExecution();
-		}
-		m_traceCheckerWAST.traceCheckFinished();
-		m_CegarLoopBenchmark.addTraceCheckerData(m_traceCheckerWAST.getTraceCheckerBenchmark());
-
-		return feasibility;
-	}
+//	@Override
+//	protected LBool isCounterexampleFeasible() {
+//		PredicateUnifier predicateUnifier = new PredicateUnifier(m_Services, m_SmtManager);
+//		IPredicate truePredicate = predicateUnifier.getTruePredicate();
+//		IPredicate falsePredicate = predicateUnifier.getFalsePredicate();
+//
+//		switch (m_Interpolation) {
+//		case Craig_TreeInterpolation:
+//			m_traceCheckerWAST = new TraceCheckerWithAccessibleSSATerms(truePredicate, falsePredicate,
+//					new TreeMap<Integer, IPredicate>(), NestedWord.nestedWord(m_Counterexample.getWord()),
+//					m_SmtManager, m_RootNode.getRootAnnot().getModGlobVarManager(), m_AssertCodeBlocksIncrementally,
+//					m_Services, true, predicateUnifier, m_Interpolation);
+//			break;
+//		default:
+//			throw new UnsupportedOperationException("unsupported interpolation");
+//		}
+//		LBool feasibility = m_traceCheckerWAST.isCorrect();
+//		if (feasibility != LBool.UNSAT) {
+//			mLogger.info("Counterexample might be feasible");
+//			NestedWord<CodeBlock> counterexample = NestedWord.nestedWord(m_Counterexample.getWord());
+//			String indentation = "";
+//			indentation += "  ";
+//			for (int j = 0; j < counterexample.length(); j++) {
+//				if (counterexample.isCallPosition(j)) {
+//					indentation += "    ";
+//				}
+//				if (counterexample.isReturnPosition(j)) {
+//					indentation = indentation.substring(0, indentation.length() - 4);
+//				}
+//			}
+//			m_RcfgProgramExecution = m_traceCheckerWAST.getRcfgProgramExecution();
+//		}
+//		m_traceCheckerWAST.traceCheckFinished();
+//		m_CegarLoopBenchmark.addTraceCheckerData(m_traceCheckerWAST.getTraceCheckerBenchmark());
+//
+//		return feasibility;
+//	}
 	
 	@Override
 	protected boolean refineAbstraction() throws AutomataLibraryException { //copied
@@ -623,19 +619,17 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 	 * Build constant bv_index that represents BoogieVar bv that obtains a new
 	 * value at position index.
 	 */
-//	private Term buildVersion(BoogieVar bv, int index) {
 	private Term buildVersion(BoogieVar bv) {
 		int index = getFreshSsaIndex();
-		TreeMap<Integer, Term> index2constant = m_IndexedVarRepresentative.get(bv);
-		if (index2constant == null) {
-			index2constant = new TreeMap<Integer, Term>();
-			m_IndexedVarRepresentative.put(bv, index2constant);
-		}
-		assert !index2constant.containsKey(index) : "version was already constructed";
+//		TreeMap<Integer, Term> index2constant = m_IndexedVarRepresentative.get(bv);
+//		if (index2constant == null) {
+//			index2constant = new TreeMap<Integer, Term>();
+//			m_IndexedVarRepresentative.put(bv, index2constant);
+//		}
+//		assert !index2constant.containsKey(index) : "version was already constructed";
 
 		Term constant = PredicateUtils.getIndexedConstant(bv, index, m_IndexedConstants, m_SmtManager.getScript());
-//		Term constant = PredicateUtils.getIndexedConstant(bv, index, new HashMap<String,Term>(), m_SmtManager.getScript());
-		index2constant.put(index, constant);
+//		index2constant.put(index, constant);
 		return constant;
 	}
 }
