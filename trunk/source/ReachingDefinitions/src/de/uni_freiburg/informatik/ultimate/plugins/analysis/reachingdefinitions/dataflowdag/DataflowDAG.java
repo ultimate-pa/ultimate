@@ -33,19 +33,26 @@ public class DataflowDAG<T> extends ModifiableLabeledEdgesMultigraph<DataflowDAG
 	}
 
 	public void printGraphDebug(Logger logger) {
-		printDebugDAG(logger, this, "", "");
+		for (String s : getDebugString().split("\n"))
+			logger.debug(s);
 	}
 
-	private void printDebugDAG(Logger logger, DataflowDAG<T> dag, String edgeLabel, String ident) {
-		if (edgeLabel.isEmpty()) {
-			logger.debug(dag);
+	public String getDebugString() {
+		StringBuilder st = new StringBuilder();
+		getDebugString(st, this, "", "");
+		return st.toString();
+	}
+
+    private void getDebugString(StringBuilder st, DataflowDAG<T> dag, String edgeLabel, String ident) {
+    	if (edgeLabel.isEmpty()) {
+			st.append(dag + "\n");
 		} else {
-			logger.debug(ident + "--" + edgeLabel + "--> " + dag);
+			st.append(ident + "--" + edgeLabel + "--> " + dag + "\n");
 		}
 
 		for (DataflowDAG<T> next : dag.getOutgoingNodes()) {
-			printDebugDAG(logger, next, dag.getOutgoingEdgeLabel(next).toString(), ident + "  ");
+			getDebugString(st, next, dag.getOutgoingEdgeLabel(next).toString(), ident + "  ");
 		}
-	}
+    }
 
 }

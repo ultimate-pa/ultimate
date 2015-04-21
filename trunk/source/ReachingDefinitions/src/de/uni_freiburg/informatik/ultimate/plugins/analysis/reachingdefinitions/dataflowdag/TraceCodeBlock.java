@@ -69,6 +69,7 @@ public class TraceCodeBlock {
 
 	@Override
 	public String toString() {
-		return "[" + mIndex + "] " + mBlock.toString();
+		return "[" + mIndex + "] " + mBlock.toString() 
+				+ (mInterpolant == null ? "" : " itp: " + mInterpolant);
 	}
 }
