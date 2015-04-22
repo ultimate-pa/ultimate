@@ -25,6 +25,14 @@ public class TACAS2015AlgoComparisonMemSafety extends TACAS2015 {
 //		addTestCasesFixed("CodeCheckNoBE-C.xml", "TACASInterpolation2015/Kojak-SP-LV-mem.epf", testcases);
 //		addTestCasesFixed("CodeCheckNoBE-C.xml", "TACASInterpolation2015/Kojak-SP-IC-LV-mem.epf", testcases);
 	}
+	
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	protected long getTimeout() {
+		return 60 * 1000;
+	}
 
 	@Override
 	protected String[] getDirectories() {
