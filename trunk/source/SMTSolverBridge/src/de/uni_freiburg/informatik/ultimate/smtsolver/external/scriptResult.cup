@@ -165,8 +165,8 @@ action code {:
 			return parser.getScript().sort(name, id.getIndices(), args);
 		} catch (SMTLIBException se) {
 			parser.report_error("Undeclared sort ("+id+" "+args.length+")", sym);
+			throw se;
 		}
-		return null;
 	}
 	
 	public Term createTerm(Symbol fsym, String name, BigInteger[] indices, Sort resultSort, Term[] param) {
@@ -178,8 +178,8 @@ action code {:
 			return parser.getScript().term(name, indices, resultSort, param);
 		} catch (SMTLIBException se) {
 			parser.report_error("Undeclared function symbol "+name, fsym);
+			throw se;
 		}
-		return null;
 	}
 
 	public TermVariable createTermVariable(String name, Sort sort) {
@@ -205,8 +205,8 @@ action code {:
   			return parser.getScript().annotate(term, annots);
   		} catch (SMTLIBException se) {
   			parser.report_error(se.getMessage());
+  			throw se;
   		}
-  		return null;
   	}
 :}
 
