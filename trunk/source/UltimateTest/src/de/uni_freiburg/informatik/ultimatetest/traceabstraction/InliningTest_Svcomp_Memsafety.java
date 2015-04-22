@@ -38,10 +38,16 @@ public class InliningTest_Svcomp_Memsafety extends AbstractTraceAbstractionTestS
 			addTestCases("AutomizerCInline.xml", 
 					"automizer/ForwardPredicates_SvcompMemsafety.epf", 
 					s_SVCOMP_Examples);
+			addTestCases("AutomizerCInlineWithBlockEncoding.xml", 
+					"automizer/ForwardPredicates_SvcompMemsafetySeqbe.epf", 
+					s_SVCOMP_Examples);
 		}
 		if (sAutomizerWithoutInlining) {
 			addTestCases("AutomizerC.xml", 
 					"automizer/ForwardPredicates_SvcompMemsafety.epf", 
+					s_SVCOMP_Examples);
+			addTestCases("AutomizerCWithBlockEncoding.xml", 
+					"automizer/ForwardPredicates_SvcompMemsafetySeqbe.epf", 
 					s_SVCOMP_Examples);
 		}
 		// return Util.firstN(super.createTestCases(), 3);
