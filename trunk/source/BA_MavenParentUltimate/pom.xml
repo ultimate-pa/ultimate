@@ -49,7 +49,8 @@
 		<jacoco.version>0.7.2.201409121644</jacoco.version>
 
 		<!-- Global arguments for the VM used during junit tests depending on profile -->
-		<!-- use -XX:+HeapDumpOnOutOfMemoryError if you want to generate dumps on OutOfMemory exceptions -->
+		<!-- use -XX:+HeapDumpOnOutOfMemoryError if you want to generate dumps 
+			on OutOfMemory exceptions -->
 		<manualtest-argline>-Xmx4g </manualtest-argline>
 		<coverage-argline>-Xmx4g</coverage-argline>
 
@@ -264,7 +265,10 @@
 							<threadCount>1</threadCount>
 							<failIfNoTests>false</failIfNoTests>
 							<trimStackTrace>false</trimStackTrace>
-							<redirectTestOutputToFile>true</redirectTestOutputToFile>
+							<!-- redirectTestOutputToFile=false is the default, but to debug strange 
+								maven/junit bugs, you may want to set it to true to have all the test output 
+								written to file -->
+							<redirectTestOutputToFile>false</redirectTestOutputToFile>
 							<!-- if you want to change the argLine, use the global property -->
 							<argLine>${tycho.testArgLine} ${coverage-argline}</argLine>
 
@@ -344,7 +348,10 @@
 							<threadCount>1</threadCount>
 							<failIfNoTests>false</failIfNoTests>
 							<trimStackTrace>false</trimStackTrace>
-							<redirectTestOutputToFile>true</redirectTestOutputToFile>
+							<!-- redirectTestOutputToFile=false is the default, but to debug strange 
+								maven/junit bugs, you may want to set it to true to have all the test output 
+								written to file -->
+							<redirectTestOutputToFile>false</redirectTestOutputToFile>
 							<!-- if you want to change the argLine, use the global property -->
 							<argLine>${manualtest-argline}</argLine>
 

@@ -1,17 +1,23 @@
 package de.uni_freiburg.informatik.ultimate.output.cfgconsoleout;
 
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.logic.PrintTerm;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.model.GraphType;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
+import de.uni_freiburg.informatik.ultimate.model.IPayload;
+import de.uni_freiburg.informatik.ultimate.model.annotation.IAnnotations;
 import de.uni_freiburg.informatik.ultimate.model.structure.IWalkable;
 
 public class CFGConsoleOutObserver implements IUnmanagedObserver {
@@ -20,10 +26,12 @@ public class CFGConsoleOutObserver implements IUnmanagedObserver {
 	private int mNumRoots;
 	private Logger mLogger;
 	private final IUltimateServiceProvider mServices;
+	private final PrintWriter mWriter;
 
 	public CFGConsoleOutObserver(IUltimateServiceProvider services) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
+		mWriter = new PrintWriter(System.out);
 	}
 
 	@Override
@@ -45,9 +53,30 @@ public class CFGConsoleOutObserver implements IUnmanagedObserver {
 	}
 
 	private void dfstraverse(IWalkable node, String numbering) {
+		if(!mLogger.isInfoEnabled()){
+			return;
+		}
+		
 		mSeenList.put(node, numbering);
-		mLogger.info("Node " + numbering + "; Name: " + node.getPayload().getName() + ";Annotations: "
-				+ node.getPayload().getAnnotations());
+		mWriter.println("Node " + numbering + "; Name: " + node.getPayload().getName() + ";Annotations: ");
+		if (node.hasPayload()) {
+			IPayload payload = node.getPayload();
+			if (payload.hasAnnotation()) {
+				for (Entry<String, IAnnotations> annotation : payload.getAnnotations().entrySet()) {
+					mWriter.println("  " + annotation.getKey());
+					for (Entry<String, Object> keyvalue : annotation.getValue().getAnnotationsAsMap().entrySet()) {
+						mWriter.print("    " + keyvalue.getKey() + ": ");
+						if (keyvalue.getValue() instanceof Term) {
+							new PrintTerm().append(mWriter, (Term) keyvalue.getValue());
+						} else {
+							mWriter.print(keyvalue.getValue());
+						}
+						mWriter.println();
+					}
+				}
+			}
+		}
+
 		List<IWalkable> newnodes = new ArrayList<IWalkable>();
 		List<IWalkable> children = node.getSuccessors();
 		int num = -1;
@@ -55,7 +84,7 @@ public class CFGConsoleOutObserver implements IUnmanagedObserver {
 		for (IWalkable n : children) {
 			String backedge = mSeenList.get(n);
 			if (backedge != null)
-				mLogger.info("Back edge from " + numbering + " to " + backedge);
+				mWriter.println("Back edge from " + numbering + " to " + backedge);
 			else {
 				String newnumbering = numbering + "." + (++num);
 				mSeenList.put(n, newnumbering);
