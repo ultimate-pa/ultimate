@@ -62,11 +62,11 @@ public class InliningTest_Svcomp_Reach_PreciseMemoryModel extends AbstractTraceA
 
 	@Override
 	public long getTimeout() {
-		return 60 * 1000;
+		return 30 * 1000;
 	}
 
 	private static final boolean sAutomizerWithInlining = true;
-	private static final boolean sAutomizerWithoutInlining = false;
+	private static final boolean sAutomizerWithoutInlining = true;
 	
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
@@ -74,10 +74,16 @@ public class InliningTest_Svcomp_Reach_PreciseMemoryModel extends AbstractTraceA
 			addTestCases("AutomizerCInline.xml", 
 					"automizer/ForwardPredicates_SvcompReachPreciseMM.epf", 
 					s_SVCOMP_Examples);
+			addTestCases("AutomizerCInlineWithBlockEncoding.xml", 
+					"automizer/ForwardPredicates_SvcompReachPreciseMM_BlockEncoding.epf", 
+					s_SVCOMP_Examples);
 		}
 		if (sAutomizerWithoutInlining) {
 			addTestCases("AutomizerC.xml", 
 					"automizer/ForwardPredicates_SvcompReachPreciseMM.epf", 
+					s_SVCOMP_Examples);
+			addTestCases("AutomizerCWithBlockEncoding.xml", 
+					"automizer/ForwardPredicates_SvcompReachPreciseMM_BlockEncoding.epf", 
 					s_SVCOMP_Examples);
 		}
 		// return Util.firstN(super.createTestCases(), 3);
