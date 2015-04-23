@@ -46,7 +46,7 @@ file_export_version=3.0
 /instance/UltimateCore/Toolchain\ timeout\ in\ seconds=300
 \!/instance/UltimateCore=
 @UltimateCore=0.0.1
-/instance/UltimateCore/Generate\ benchmark\ results=true
+/instance/UltimateCore/Generate\ benchmark\ results=false
 /instance/UltimateCore/ultimate.logging.details=de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction\=INFO;de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstractionwithafas\=INFO;de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions\=INFO;
 #Thu Apr 09 11:30:14 CEST 2015
 file_export_version=3.0
