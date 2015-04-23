@@ -68,6 +68,11 @@ public class ProtectiveHoareTripleChecker implements IHoareTripleChecker {
 	public IHoareTripleChecker getProtectedHoareTripleChecker() {
 		return m_ProtectedHoareTripleChecker;
 	}
+
+	@Override
+	public void releaseLock() {
+		m_ProtectedHoareTripleChecker.releaseLock();
+	}
 	
 	
 

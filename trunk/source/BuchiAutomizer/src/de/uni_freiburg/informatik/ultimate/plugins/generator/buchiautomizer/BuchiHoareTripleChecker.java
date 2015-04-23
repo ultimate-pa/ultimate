@@ -72,6 +72,11 @@ public class BuchiHoareTripleChecker implements IHoareTripleChecker {
 		return m_IHoareTripleChecker.getEdgeCheckerBenchmark();
 	}
 
+
+	@Override
+	public void releaseLock() {
+		m_IHoareTripleChecker.releaseLock();
+	}
 	
 
 }

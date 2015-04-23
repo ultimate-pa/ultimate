@@ -287,4 +287,9 @@ public class SdHoareTripleChecker implements IHoareTripleChecker {
 
 	}
 
+	@Override
+	public void releaseLock() {
+		// do nothing, since objects of this class do not lock the solver
+	}
+
 }

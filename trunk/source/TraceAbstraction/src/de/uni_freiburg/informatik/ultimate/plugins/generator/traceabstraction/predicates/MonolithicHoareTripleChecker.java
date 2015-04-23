@@ -87,4 +87,11 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 		return m_EdgeCheckerBenchmark;
 	}
 
+	@Override
+	public void releaseLock() {
+		// do nothing, since objects of this class do not lock the solver
+	}
+	
+	
+
 }

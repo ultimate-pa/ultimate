@@ -25,10 +25,10 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPre
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager.ILockerHolderWithVoluntaryLockRelease;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager.ILockHolderWithVoluntaryLockRelease;
 import de.uni_freiburg.informatik.ultimate.util.ScopedHashMap;
 
-public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILockerHolderWithVoluntaryLockRelease  {
+public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILockHolderWithVoluntaryLockRelease  {
 	
 	private final SmtManager m_SmtManager;
 	private final Script m_Script;

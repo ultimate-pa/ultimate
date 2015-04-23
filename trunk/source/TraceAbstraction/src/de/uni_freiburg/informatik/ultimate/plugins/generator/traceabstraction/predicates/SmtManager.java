@@ -1634,9 +1634,9 @@ public class SmtManager {
 				m_LockOwner = lockOwner;
 				mLogger.debug("SmtManager locked by " + lockOwner.toString());
 			} else {
-				if (m_LockOwner instanceof ILockerHolderWithVoluntaryLockRelease) {
+				if (m_LockOwner instanceof ILockHolderWithVoluntaryLockRelease) {
 					mLogger.debug("Asking " + m_LockOwner + " to release lock");
-					((ILockerHolderWithVoluntaryLockRelease) m_LockOwner).releaseLock();
+					((ILockHolderWithVoluntaryLockRelease) m_LockOwner).releaseLock();
 					lock(lockOwner);
 				} else {
 					throw new IllegalStateException("SmtManager already locked by " + m_LockOwner.toString());
@@ -1666,7 +1666,7 @@ public class SmtManager {
 		return allegedLockOwner == m_LockOwner;
 	}
 	
-	public interface ILockerHolderWithVoluntaryLockRelease {
+	public interface ILockHolderWithVoluntaryLockRelease {
 		public void releaseLock();
 	}
 

@@ -2,6 +2,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.p
 
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager.ILockHolderWithVoluntaryLockRelease;
 
 /**
  * Object that implement this interface check if Hoare Triples are valid.
@@ -12,7 +13,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  * @author Matthias Heizmann
  *
  */
-public interface IHoareTripleChecker {
+public interface IHoareTripleChecker extends ILockHolderWithVoluntaryLockRelease {
 	
 	/**
 	 * Hoare Triple Truth Value. This is the result of a Hoare triple check.
@@ -47,12 +48,8 @@ public interface IHoareTripleChecker {
 	 * is the IPredicate that describes a set of states of the called procedure.
 	 */
 	public Validity checkReturn(IPredicate preLin, IPredicate preHier, CodeBlock cb, IPredicate succ);
-
+	
+	
 	public abstract HoareTripleCheckerBenchmarkGenerator getEdgeCheckerBenchmark(); 
-
-
-	
-	
-	
 
 }

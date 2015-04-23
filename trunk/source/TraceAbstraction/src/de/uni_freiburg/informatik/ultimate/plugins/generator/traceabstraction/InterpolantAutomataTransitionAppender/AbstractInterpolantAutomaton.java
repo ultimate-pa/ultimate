@@ -106,6 +106,7 @@ public abstract class AbstractInterpolantAutomaton implements INestedWordAutomat
 			throw new AssertionError("already in mode READ_ONLY");
 		} else {
 			m_Mode = Mode.READ_ONLY;
+			m_IHoareTripleChecker.releaseLock();
 			mLogger.info(switchToReadonlyMessage());
 		}
 	}

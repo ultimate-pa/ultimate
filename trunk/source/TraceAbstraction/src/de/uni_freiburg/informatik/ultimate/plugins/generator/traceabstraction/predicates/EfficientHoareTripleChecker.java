@@ -3,7 +3,6 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.p
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager.ILockerHolderWithVoluntaryLockRelease;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
 
 public class EfficientHoareTripleChecker implements IHoareTripleChecker {
@@ -87,7 +86,7 @@ public class EfficientHoareTripleChecker implements IHoareTripleChecker {
 	
 	
 	private boolean reviewInductiveInternal(IPredicate state, CodeBlock cb, IPredicate succ, Validity result) {
-		unlockSmtSolverWorkaround();
+		releaseLock();
 		Validity reviewResult = m_hoareTripleCheckerForReview.checkInternal(state, cb, succ);
 		if (resultCompatibleHelper(result, reviewResult)) {
 			return true;
@@ -98,7 +97,7 @@ public class EfficientHoareTripleChecker implements IHoareTripleChecker {
 	}
 	
 	private boolean reviewInductiveCall(IPredicate state, CodeBlock cb, IPredicate succ, Validity result) {
-		unlockSmtSolverWorkaround();
+		releaseLock();
 		Validity reviewResult = m_hoareTripleCheckerForReview.checkCall(state, cb, succ);
 		if (resultCompatibleHelper(result, reviewResult)) {
 			return true;
@@ -110,7 +109,7 @@ public class EfficientHoareTripleChecker implements IHoareTripleChecker {
 	}
 	
 	private boolean reviewInductiveReturn(IPredicate state, IPredicate hier, CodeBlock cb, IPredicate succ, Validity result) {
-		unlockSmtSolverWorkaround();
+		releaseLock();
 		Validity reviewResult = m_hoareTripleCheckerForReview.checkReturn(state, hier, cb, succ);
 		if (resultCompatibleHelper(result, reviewResult)) {
 			return true;
@@ -138,19 +137,9 @@ public class EfficientHoareTripleChecker implements IHoareTripleChecker {
 		}
 	}
 	
-	/**
-	 * Ask m_SmtBasedHoareTripleChecker to release its lock if it is an
-	 * IncrementalHoareTripleChecker.
-	 */
-	public void unlockSmtSolverWorkaround() {
-		if (m_SmtBasedHoareTripleChecker instanceof ILockerHolderWithVoluntaryLockRelease) {
-			((ILockerHolderWithVoluntaryLockRelease) m_SmtBasedHoareTripleChecker).releaseLock();
-		} else if (m_SmtBasedHoareTripleChecker instanceof ProtectiveHoareTripleChecker) {
-			IHoareTripleChecker protectedHtc = ((ProtectiveHoareTripleChecker) m_SmtBasedHoareTripleChecker).getProtectedHoareTripleChecker();
-			if (protectedHtc instanceof ILockerHolderWithVoluntaryLockRelease) {
-				((ILockerHolderWithVoluntaryLockRelease) protectedHtc).releaseLock();
-			}
-		}
+	@Override
+	public void releaseLock() {
+		m_SmtBasedHoareTripleChecker.releaseLock();
 	}
 
 }
