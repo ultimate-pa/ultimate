@@ -342,6 +342,9 @@ public class PredicateUnifier {
 
 		PredicateComparison(Term term, Set<BoogieVar> vars) {
 			m_closedTerm = PredicateUtils.computeClosedFormula(term, vars, m_SmtManager.getScript());
+			if (m_SmtManager.isLocked()) {
+				m_SmtManager.requestLockRelease();
+			}
 			m_SmtManager.lock(this);
 			m_SmtManager.getScript().echo(new QuotedObject("begin unification"));
 			

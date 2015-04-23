@@ -259,6 +259,9 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 	
 	
 	private LBool assertCodeBlock(CodeBlock cb) {
+		if (m_SmtManager.isLocked()) {
+			m_SmtManager.requestLockRelease();
+		}
 		m_SmtManager.lock(this);
 		m_Script.echo(new QuotedObject(s_StartEdgeCheck));
 		assert m_AssertedCodeBlock == null : "CodeBlock already asserted";
