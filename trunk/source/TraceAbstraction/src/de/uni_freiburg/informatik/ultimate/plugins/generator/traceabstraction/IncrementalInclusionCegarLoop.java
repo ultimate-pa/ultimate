@@ -169,7 +169,7 @@ public class IncrementalInclusionCegarLoop extends BasicCegarLoop {
 //		EdgeChecker edgeChecker = new EdgeChecker(m_SmtManager, m_RootNode.getRootAnnot().getModGlobVarManager(),
 //				m_TraceChecker.getPredicateUnifier().getCoverageRelation());
 		IHoareTripleChecker edgeChecker = new MonolithicHoareTripleChecker(m_SmtManager);
-		edgeChecker = new EfficientHoareTripleChecker(edgeChecker, m_ModGlobVarManager, m_TraceChecker.getPredicateUnifier(), m_SmtManager);
+		edgeChecker = new EfficientHoareTripleChecker(edgeChecker, m_ModGlobVarManager, m_InterpolantGenerator.getPredicateUnifier(), m_SmtManager);
 		
 		boolean progress;
 		try {
@@ -188,7 +188,7 @@ public class IncrementalInclusionCegarLoop extends BasicCegarLoop {
 				DeterministicInterpolantAutomaton determinized = new DeterministicInterpolantAutomaton(m_Services, 
 						m_SmtManager, m_ModGlobVarManager, edgeChecker, 
 						(INestedWordAutomaton<CodeBlock, IPredicate>) m_Abstraction, 
-						m_InterpolAutomaton, m_TraceChecker.getPredicateUnifier(), mLogger,
+						m_InterpolAutomaton, m_InterpolantGenerator.getPredicateUnifier(), mLogger,
 						conservativeSuccessorCandidateSelection);
 				switchAllInterpolantAutomataToOnTheFlyConstructionMode();
 				m_InclusionCheck.addSubtrahend(determinized);
@@ -209,7 +209,7 @@ public class IncrementalInclusionCegarLoop extends BasicCegarLoop {
 				NondeterministicInterpolantAutomaton nondet = new NondeterministicInterpolantAutomaton(m_Services, 
 						m_SmtManager, m_ModGlobVarManager, edgeChecker, 
 						(INestedWordAutomaton<CodeBlock, IPredicate>) m_Abstraction, 
-						m_InterpolAutomaton, m_TraceChecker.getPredicateUnifier(), mLogger, conservativeSuccessorCandidateSelection);
+						m_InterpolAutomaton, m_InterpolantGenerator.getPredicateUnifier(), mLogger, conservativeSuccessorCandidateSelection);
 				switchAllInterpolantAutomataToOnTheFlyConstructionMode();
 				m_InclusionCheck.addSubtrahend(nondet);
 				m_InterpolantAutomata.add(nondet);

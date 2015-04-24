@@ -122,7 +122,7 @@ public abstract class AbstractCegarLoop {
 	/**
 	 * IInterpolantGenerator that was used in the current iteration.
 	 */
-	protected IInterpolantGenerator m_TraceChecker;
+	protected IInterpolantGenerator m_InterpolantGenerator;
 
 	/**
 	 * Interpolant automaton of this iteration.

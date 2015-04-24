@@ -62,7 +62,7 @@ public class CegarLoopConcurrentAutomata extends BasicCegarLoop {
 	protected void constructInterpolantAutomaton() throws OperationCanceledException {
 		m_CegarLoopBenchmark.start(CegarLoopBenchmarkType.s_BasicInterpolantAutomatonTime);
 		StraightLineInterpolantAutomatonBuilder iab = new StraightLineInterpolantAutomatonBuilder(
-				m_Services, new InCaReAlphabet<CodeBlock>(m_Abstraction), m_TraceChecker, m_PredicateFactoryInterpolantAutomata);
+				m_Services, new InCaReAlphabet<CodeBlock>(m_Abstraction), m_InterpolantGenerator, m_PredicateFactoryInterpolantAutomata);
 		m_InterpolAutomaton = iab.getResult();
 		mLogger.info("Interpolatants " + m_InterpolAutomaton.getStates());
 
@@ -133,7 +133,7 @@ public class CegarLoopConcurrentAutomata extends BasicCegarLoop {
 		Map<IPredicate, Set<IPredicate>> removedDoubleDeckers = null;
 		Map<IPredicate, IPredicate> context2entry = null;
 		IHoareTripleChecker htc = getEfficientHoareTripleChecker(m_Pref.getHoareTripleChecks(), 
-				m_SmtManager, m_ModGlobVarManager, m_TraceChecker.getPredicateUnifier());
+				m_SmtManager, m_ModGlobVarManager, m_InterpolantGenerator.getPredicateUnifier());
 		mLogger.debug("Start constructing difference");
 //		assert (oldAbstraction.getStateFactory() == m_InterpolAutomaton.getStateFactory());
 
@@ -141,7 +141,7 @@ public class CegarLoopConcurrentAutomata extends BasicCegarLoop {
 
 		DeterministicInterpolantAutomaton determinized = new DeterministicInterpolantAutomaton(
 				m_Services, m_SmtManager, m_ModGlobVarManager, htc, oldAbstraction, m_InterpolAutomaton,
-				m_TraceChecker.getPredicateUnifier(), mLogger, false);
+				m_InterpolantGenerator.getPredicateUnifier(), mLogger, false);
 		// ComplementDeterministicNwa<CodeBlock, IPredicate>
 		// cdnwa = new ComplementDeterministicNwa<>(dia);
 		PowersetDeterminizer<CodeBlock, IPredicate> psd2 = new PowersetDeterminizer<CodeBlock, IPredicate>(

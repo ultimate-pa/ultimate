@@ -290,7 +290,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		}
 		m_CegarLoopBenchmark.addTraceCheckerData(interpolatingTraceChecker.getTraceCheckerBenchmark());
 		// m_TraceCheckerBenchmark.aggregateBenchmarkData(interpolatingTraceChecker.getTraceCheckerBenchmark());
-		m_TraceChecker = interpolatingTraceChecker;
+		m_InterpolantGenerator = interpolatingTraceChecker;
 		return feasibility;
 	}
 
@@ -301,31 +301,31 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		case CANONICAL: {
 			List<ProgramPoint> programPoints = CoverageAnalysis.extractProgramPoints(m_Counterexample);
 			CanonicalInterpolantAutomatonBuilder iab = new CanonicalInterpolantAutomatonBuilder(m_Services,
-					m_TraceChecker, programPoints, new InCaReAlphabet<CodeBlock>(m_Abstraction), m_SmtManager,
+					m_InterpolantGenerator, programPoints, new InCaReAlphabet<CodeBlock>(m_Abstraction), m_SmtManager,
 					m_PredicateFactoryInterpolantAutomata, mLogger);
 			iab.analyze();
 			m_InterpolAutomaton = iab.getInterpolantAutomaton();
 			mLogger.info("Interpolatants " + m_InterpolAutomaton.getStates());
 
 			// m_CegarLoopBenchmark.addBackwardCoveringInformation(iab.getBackwardCoveringInformation());
-			BackwardCoveringInformation bci = TraceCheckerUtils.computeCoverageCapability(m_Services, m_TraceChecker,
+			BackwardCoveringInformation bci = TraceCheckerUtils.computeCoverageCapability(m_Services, m_InterpolantGenerator,
 					programPoints, mLogger);
 			m_CegarLoopBenchmark.addBackwardCoveringInformation(bci);
 		}
 			break;
 		case SINGLETRACE: {
 			StraightLineInterpolantAutomatonBuilder iab = new StraightLineInterpolantAutomatonBuilder(m_Services,
-					new InCaReAlphabet<CodeBlock>(m_Abstraction), m_TraceChecker, m_PredicateFactoryInterpolantAutomata);
+					new InCaReAlphabet<CodeBlock>(m_Abstraction), m_InterpolantGenerator, m_PredicateFactoryInterpolantAutomata);
 			m_InterpolAutomaton = iab.getResult();
 		}
 			break;
 		case TOTALINTERPOLATION:
 			throw new AssertionError("not supported by this CegarLoop");
 		case TWOTRACK: {
-			if (!(m_TraceChecker instanceof TraceCheckerSpWp)) {
+			if (!(m_InterpolantGenerator instanceof TraceCheckerSpWp)) {
 				throw new AssertionError("TWOTRACK only for TraceCheckerSpWp");
 			}
-			TraceCheckerSpWp traceChecker = (TraceCheckerSpWp) m_TraceChecker;
+			TraceCheckerSpWp traceChecker = (TraceCheckerSpWp) m_InterpolantGenerator;
 			TwoTrackInterpolantAutomatonBuilder ttiab = new TwoTrackInterpolantAutomatonBuilder(m_Services,
 					m_Counterexample, m_SmtManager, traceChecker, m_Abstraction);
 			m_InterpolAutomaton = ttiab.getResult();
@@ -335,7 +335,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 			INestedWordAutomaton<CodeBlock, IPredicate> abstraction = (INestedWordAutomaton<CodeBlock, IPredicate>) m_Abstraction;
 			NestedRun<CodeBlock, IPredicate> counterexample = (NestedRun<CodeBlock, IPredicate>) m_Counterexample;
 			TotalInterpolationAutomatonBuilder iab = new TotalInterpolationAutomatonBuilder(abstraction,
-					counterexample.getStateSequence(), m_TraceChecker, m_SmtManager,
+					counterexample.getStateSequence(), m_InterpolantGenerator, m_SmtManager,
 					m_PredicateFactoryInterpolantAutomata, m_RootNode.getRootAnnot().getModGlobVarManager(),
 					m_Interpolation, m_Services, m_Pref.getHoareTripleChecks());
 			m_InterpolAutomaton = iab.getResult();
@@ -358,7 +358,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 					(INestedWordAutomaton<CodeBlock, IPredicate>) m_Abstraction, m_AITermMap, predUnifier);
 			refineWithGivenAutomaton(aiInterpolAutomaton, predUnifier);
 		}
-		return refineWithGivenAutomaton(interpolAutomaton, m_TraceChecker.getPredicateUnifier());
+		return refineWithGivenAutomaton(interpolAutomaton, m_InterpolantGenerator.getPredicateUnifier());
 
 	}
 
@@ -376,7 +376,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		// Map<IPredicate, IPredicate> context2entry = null;
 
 		IHoareTripleChecker htc = getEfficientHoareTripleChecker(m_Pref.getHoareTripleChecks(), 
-				m_SmtManager, m_ModGlobVarManager, m_TraceChecker.getPredicateUnifier());
+				m_SmtManager, m_ModGlobVarManager, m_InterpolantGenerator.getPredicateUnifier());
 
 		try {
 			if (m_DifferenceInsteadOfIntersection) {
@@ -439,7 +439,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 						boolean conservativeSuccessorCandidateSelection = (m_Pref.interpolantAutomatonEnhancement() == InterpolantAutomatonEnhancement.PREDICATE_ABSTRACTION_CONSERVATIVE);
 						DeterministicInterpolantAutomaton determinized = new DeterministicInterpolantAutomaton(
 								m_Services, m_SmtManager, m_ModGlobVarManager, htc, oldAbstraction, interpolAutomaton,
-								m_TraceChecker.getPredicateUnifier(), mLogger, conservativeSuccessorCandidateSelection);
+								m_InterpolantGenerator.getPredicateUnifier(), mLogger, conservativeSuccessorCandidateSelection);
 						// NondeterministicInterpolantAutomaton determinized =
 						// new NondeterministicInterpolantAutomaton(
 						// m_Services, m_SmtManager, m_ModGlobVarManager, htc,

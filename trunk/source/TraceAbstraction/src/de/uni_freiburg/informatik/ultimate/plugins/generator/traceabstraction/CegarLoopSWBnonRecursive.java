@@ -185,9 +185,9 @@ public class CegarLoopSWBnonRecursive extends BasicCegarLoop {
 				m_NestedAbstraction.getStateFactory());
 
 		// remember some of its properties
-		m_AbstractionInitialState = m_TraceChecker.getPrecondition();
-		m_AbstractionFinalState = m_TraceChecker.getPostcondition();
-		m_PredicateUnifier = m_TraceChecker.getPredicateUnifier();
+		m_AbstractionInitialState = m_InterpolantGenerator.getPrecondition();
+		m_AbstractionFinalState = m_InterpolantGenerator.getPostcondition();
+		m_PredicateUnifier = m_InterpolantGenerator.getPredicateUnifier();
 		m_Epimorphism = new AutomatonEpimorphism<>();
 
 		// // / debugging
@@ -211,7 +211,7 @@ public class CegarLoopSWBnonRecursive extends BasicCegarLoop {
 		// counter example components
 		ArrayList<IPredicate> ce_states = m_CounterExamplePath.getStateSequence();
 		NestedWord<CodeBlock> ce_edges = m_CounterExamplePath.getWord();
-		IPredicate[] ce_interp = m_TraceChecker.getInterpolants();
+		IPredicate[] ce_interp = m_InterpolantGenerator.getInterpolants();
 
 		// -- initialize interpolant automaton --
 		// Add the initial state of the error path
@@ -567,7 +567,7 @@ public class CegarLoopSWBnonRecursive extends BasicCegarLoop {
 										 */AssertCodeBlockOrder.NOT_INCREMENTALLY,m_Services, false, m_PredicateUnifier,
 											m_Pref.interpolation());
 
-		this.m_TraceChecker = traceChecker;
+		this.m_InterpolantGenerator = traceChecker;
 		if (traceChecker.isCorrect() == LBool.UNSAT) {
 			mLogger.debug("Accepted");
 			addPath(word, m_ActualPath, traceChecker.getInterpolants(), pre, post, pendingContexts);
