@@ -38,5 +38,10 @@ public interface IInterpolantGenerator {
 	 * according to the definition given above.
 	 */
 	public abstract IPredicate[] getInterpolants();
+	
+	/**
+	 * @return the PredicateUnifier that was used to construct the interpolants
+	 */
+	public abstract PredicateUnifier getPredicateUnifier();
 
 }

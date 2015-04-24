@@ -43,6 +43,7 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 	private final IPredicate m_Precondition;
 	private final IPredicate m_Postcondition;
 	private final IPredicate[] m_Interpolants;
+	private final PredicateUnifier m_PredicateUnifier;
 	private final Logger logger;
 
 	/**
@@ -98,9 +99,9 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 			IPredicate precondition, IPredicate postcondition,
 			PredicateUnifier predicateUnifier, SmtManager smtManager,
 			ModifiableGlobalVariableManager modGlobVarManager) {
-		this(services, run, precondition, postcondition, modGlobVarManager,
-				createDefaultFactory(services, storage, predicateUnifier,
-						smtManager));
+		this(services, run, precondition, postcondition, predicateUnifier,
+				modGlobVarManager, createDefaultFactory(services, storage, 
+						predicateUnifier, smtManager));
 	}
 
 	/**
@@ -117,6 +118,8 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 	 *            the predicate to use for the first program point in the run
 	 * @param postcondition
 	 *            the predicate to use for the last program point in the run
+	 * @param predicateUnifier
+	 *            the predicate unifier to unify final predicates with
 	 * @param modGlobVarManager
 	 *            reserved for future use.
 	 * @param invPatternProcFactory
@@ -125,12 +128,14 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 	public PathInvariantsGenerator(final IUltimateServiceProvider services,
 			final NestedRun<CodeBlock, IPredicate> run,
 			final IPredicate precondition, final IPredicate postcondition,
+			final PredicateUnifier predicateUnifier,
 			final ModifiableGlobalVariableManager modGlobVarManager,
 			final IInvariantPatternProcessorFactory<?> invPatternProcFactory) {
 		super();
 		m_Run = run;
 		m_Precondition = precondition;
 		m_Postcondition = postcondition;
+		m_PredicateUnifier = predicateUnifier;
 
 		final Logger logService = services.getLoggingService().getLogger(
 				Activator.s_PLUGIN_ID);
@@ -234,6 +239,14 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 	@Override
 	public Map<Integer, IPredicate> getPendingContexts() {
 		throw new UnsupportedOperationException("Call/Return not supported yet");
+	}
+	
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public PredicateUnifier getPredicateUnifier() {
+		return m_PredicateUnifier;
 	}
 
 	/**
