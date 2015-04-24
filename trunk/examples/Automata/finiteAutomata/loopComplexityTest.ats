@@ -20,7 +20,7 @@ NestedWordAutomaton Amod3 = (
   returnTransitions = {}
 );
 
-print print(loopComplexity(Amod3));
+print(loopComplexity(Amod3));
 
 
 
@@ -34,7 +34,7 @@ print print(loopComplexity(Amod3));
 	// Sixth argument: amount of accepting states in per mille
 	int i = 0;
 	while(i<2){
-		NestedWordAutomaton A = getRandomNwa(100, 100, 500, 0, 0, 10);
+		NestedWordAutomaton A = getRandomNwa(7, 2, 500, 0, 0, 10);
 		print(A);
 		print(loopComplexity(A));
 		i++;
