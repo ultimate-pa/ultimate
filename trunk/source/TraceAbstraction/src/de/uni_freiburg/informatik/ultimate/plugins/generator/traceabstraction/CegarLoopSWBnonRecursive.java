@@ -558,7 +558,7 @@ public class CegarLoopSWBnonRecursive extends BasicCegarLoop {
 			}
 		}
 		// test if we found a new path which can be added
-		m_TraceChecker = new InterpolatingTraceCheckerCraig(pre, post, pendingContexts, word, m_SmtManager, m_RootNode.getRootAnnot()
+		InterpolatingTraceCheckerCraig traceChecker = new InterpolatingTraceCheckerCraig(pre, post, pendingContexts, word, m_SmtManager, m_RootNode.getRootAnnot()
 				.getModGlobVarManager(), /*
 										 * TODO: When Matthias introduced this
 										 * parameter he set the argument to
@@ -567,9 +567,10 @@ public class CegarLoopSWBnonRecursive extends BasicCegarLoop {
 										 */AssertCodeBlockOrder.NOT_INCREMENTALLY,m_Services, false, m_PredicateUnifier,
 											m_Pref.interpolation());
 
-		if (m_TraceChecker.isCorrect() == LBool.UNSAT) {
+		this.m_TraceChecker = traceChecker;
+		if (traceChecker.isCorrect() == LBool.UNSAT) {
 			mLogger.debug("Accepted");
-			addPath(word, m_ActualPath, m_TraceChecker.getInterpolants(), pre, post, pendingContexts);
+			addPath(word, m_ActualPath, traceChecker.getInterpolants(), pre, post, pendingContexts);
 			m_nofAdditionalPaths++;
 			return true;
 		}

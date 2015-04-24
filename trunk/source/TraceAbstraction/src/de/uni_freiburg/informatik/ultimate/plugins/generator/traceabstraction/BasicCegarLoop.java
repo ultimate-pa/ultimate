@@ -75,6 +75,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.INTERPOLATION;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.Minimization;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.UnsatCores;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.InterpolatingTraceChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.InterpolatingTraceCheckerCraig;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.InterpolatingTraceCheckerPathInvariantsWithFallback;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
@@ -239,10 +240,11 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		IPredicate truePredicate = predicateUnifier.getTruePredicate();
 		IPredicate falsePredicate = predicateUnifier.getFalsePredicate();
 
+		InterpolatingTraceChecker interpolatingTraceChecker;
 		switch (m_Interpolation) {
 		case Craig_NestedInterpolation:
 		case Craig_TreeInterpolation:
-			m_TraceChecker = new InterpolatingTraceCheckerCraig(truePredicate, falsePredicate,
+			interpolatingTraceChecker = new InterpolatingTraceCheckerCraig(truePredicate, falsePredicate,
 					new TreeMap<Integer, IPredicate>(), NestedWord.nestedWord(m_Counterexample.getWord()),
 					m_SmtManager, m_RootNode.getRootAnnot().getModGlobVarManager(), m_AssertCodeBlocksIncrementally,
 					m_Services, true, predicateUnifier, m_Interpolation);
@@ -250,13 +252,13 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		case ForwardPredicates:
 		case BackwardPredicates:
 		case FPandBP:
-			m_TraceChecker = new TraceCheckerSpWp(truePredicate, falsePredicate, new TreeMap<Integer, IPredicate>(),
+			interpolatingTraceChecker = new TraceCheckerSpWp(truePredicate, falsePredicate, new TreeMap<Integer, IPredicate>(),
 					NestedWord.nestedWord(m_Counterexample.getWord()), m_SmtManager, m_RootNode.getRootAnnot()
 							.getModGlobVarManager(), m_AssertCodeBlocksIncrementally, m_UnsatCores, m_UseLiveVariables,
 					m_Services, true, predicateUnifier, m_Interpolation);
 			break;
 		case PathInvariants:
-			m_TraceChecker = new InterpolatingTraceCheckerPathInvariantsWithFallback(truePredicate, falsePredicate,
+			interpolatingTraceChecker = new InterpolatingTraceCheckerPathInvariantsWithFallback(truePredicate, falsePredicate,
 					new TreeMap<Integer, IPredicate>(), (NestedRun<CodeBlock, IPredicate>) m_Counterexample,
 					m_SmtManager, m_ModGlobVarManager, m_AssertCodeBlocksIncrementally, m_Services, m_ToolchainStorage, true,
 					predicateUnifier);
@@ -264,7 +266,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		default:
 			throw new UnsupportedOperationException("unsupported interpolation");
 		}
-		LBool feasibility = m_TraceChecker.isCorrect();
+		LBool feasibility = interpolatingTraceChecker.isCorrect();
 		if (feasibility != LBool.UNSAT) {
 			mLogger.info("Counterexample might be feasible");
 			NestedWord<CodeBlock> counterexample = NestedWord.nestedWord(m_Counterexample.getWord());
@@ -283,12 +285,12 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 				}
 			}
 			// s_Logger.info("Trace with values");
-			// s_Logger.info(m_TraceChecker.getRcfgProgramExecution());
-			m_RcfgProgramExecution = m_TraceChecker.getRcfgProgramExecution();
+			// s_Logger.info(interpolatingTraceChecker.getRcfgProgramExecution());
+			m_RcfgProgramExecution = interpolatingTraceChecker.getRcfgProgramExecution();
 		}
-		m_CegarLoopBenchmark.addTraceCheckerData(m_TraceChecker.getTraceCheckerBenchmark());
-		// m_TraceCheckerBenchmark.aggregateBenchmarkData(m_TraceChecker.getTraceCheckerBenchmark());
-
+		m_CegarLoopBenchmark.addTraceCheckerData(interpolatingTraceChecker.getTraceCheckerBenchmark());
+		// m_TraceCheckerBenchmark.aggregateBenchmarkData(interpolatingTraceChecker.getTraceCheckerBenchmark());
+		m_TraceChecker = interpolatingTraceChecker;
 		return feasibility;
 	}
 
@@ -320,8 +322,12 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		case TOTALINTERPOLATION:
 			throw new AssertionError("not supported by this CegarLoop");
 		case TWOTRACK: {
+			if (!(m_TraceChecker instanceof TraceCheckerSpWp)) {
+				throw new AssertionError("TWOTRACK only for TraceCheckerSpWp");
+			}
+			TraceCheckerSpWp traceChecker = (TraceCheckerSpWp) m_TraceChecker;
 			TwoTrackInterpolantAutomatonBuilder ttiab = new TwoTrackInterpolantAutomatonBuilder(m_Services,
-					m_Counterexample, m_SmtManager, m_TraceChecker, m_Abstraction);
+					m_Counterexample, m_SmtManager, traceChecker, m_Abstraction);
 			m_InterpolAutomaton = ttiab.getResult();
 			break;
 		}

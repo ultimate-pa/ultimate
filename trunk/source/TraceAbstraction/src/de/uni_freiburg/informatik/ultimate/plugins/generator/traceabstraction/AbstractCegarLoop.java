@@ -38,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.Artifact;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.IInterpolantGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.InterpolatingTraceChecker;
 
 /**
@@ -119,9 +120,9 @@ public abstract class AbstractCegarLoop {
 	protected IAutomaton<CodeBlock, IPredicate> m_Abstraction;
 
 	/**
-	 * TraceChecker of this iteration.
+	 * IInterpolantGenerator that was used in the current iteration.
 	 */
-	protected InterpolatingTraceChecker m_TraceChecker;
+	protected IInterpolantGenerator m_TraceChecker;
 
 	/**
 	 * Interpolant automaton of this iteration.

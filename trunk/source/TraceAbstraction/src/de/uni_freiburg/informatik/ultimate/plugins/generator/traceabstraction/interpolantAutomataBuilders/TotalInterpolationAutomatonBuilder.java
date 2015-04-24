@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.HoareTripleChecks;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.INTERPOLATION;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.IInterpolantGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.InterpolatingTraceChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.InterpolatingTraceCheckerCraig;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
@@ -69,7 +70,7 @@ public class TotalInterpolationAutomatonBuilder {
 	private final IUltimateServiceProvider mServices;
 
 	public TotalInterpolationAutomatonBuilder(INestedWordAutomaton<CodeBlock, IPredicate> abstraction,
-			ArrayList<IPredicate> stateSequence, InterpolatingTraceChecker traceChecker, SmtManager smtManager,
+			ArrayList<IPredicate> stateSequence, IInterpolantGenerator interpolantGenerator, SmtManager smtManager,
 			PredicateFactory predicateFactory, ModifiableGlobalVariableManager modifiableGlobals,
 			INTERPOLATION interpolation, IUltimateServiceProvider services, HoareTripleChecks hoareTripleChecks) throws OperationCanceledException {
 		super();
@@ -78,23 +79,23 @@ public class TotalInterpolationAutomatonBuilder {
 		// m_TraceChecker = traceChecker;
 		m_SmtManager = smtManager;
 		// m_Interpolants = traceChecker.getInterpolants();
-		m_PredicateUnifier = traceChecker.getPredicateUnifier();
+		m_PredicateUnifier = interpolantGenerator.getPredicateUnifier();
 		m_Abstraction = abstraction;
 		InCaReAlphabet<CodeBlock> alphabet = new InCaReAlphabet<CodeBlock>(abstraction);
-		m_IA = (new StraightLineInterpolantAutomatonBuilder(mServices, alphabet, traceChecker, predicateFactory)).getResult();
+		m_IA = (new StraightLineInterpolantAutomatonBuilder(mServices, alphabet, interpolantGenerator, predicateFactory)).getResult();
 		m_ModifiedGlobals = modifiableGlobals;
 		m_Interpolation = interpolation;
 		m_Epimorphism = new AutomatonEpimorphism<IPredicate>();
 		{
 			IPredicate firstAutomatonState = m_StateSequence.get(0);
-			m_Epimorphism.insert(firstAutomatonState, traceChecker.getPrecondition());
+			m_Epimorphism.insert(firstAutomatonState, interpolantGenerator.getPrecondition());
 			m_Annotated.add(firstAutomatonState);
 			m_Worklist.add(firstAutomatonState);
 		}
-		addInterpolants(m_StateSequence, traceChecker.getInterpolants());
+		addInterpolants(m_StateSequence, interpolantGenerator.getInterpolants());
 		{
 			IPredicate lastAutomatonState = m_StateSequence.get(m_StateSequence.size() - 1);
-			m_Epimorphism.insert(lastAutomatonState, traceChecker.getPostcondition());
+			m_Epimorphism.insert(lastAutomatonState, interpolantGenerator.getPostcondition());
 			m_Annotated.add(lastAutomatonState);
 			m_Worklist.add(lastAutomatonState);
 		}

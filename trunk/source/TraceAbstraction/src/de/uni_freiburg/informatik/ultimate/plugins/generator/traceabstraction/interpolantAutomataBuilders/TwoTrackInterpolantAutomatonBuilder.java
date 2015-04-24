@@ -41,13 +41,10 @@ public class TwoTrackInterpolantAutomatonBuilder {
 			IUltimateServiceProvider services, 
 			IRun<CodeBlock,IPredicate> nestedRun,
 			SmtManager smtManager,
-			TraceChecker traceChecker,
+			TraceCheckerSpWp traceChecker,
 			IAutomaton<CodeBlock, IPredicate> abstraction) {
-		if (!(traceChecker instanceof TraceCheckerSpWp)) {
-			throw new UnsupportedOperationException("Wrong trace checker");
-		}
 		m_Services = services;
-		m_TraceCheckerSpWp = (TraceCheckerSpWp) traceChecker;
+		m_TraceCheckerSpWp = traceChecker;
 		m_NestedWord = NestedWord.nestedWord(nestedRun.getWord());
 		m_SmtManager = smtManager;
 		m_TTIA = buildTwoTrackInterpolantAutomaton(abstraction, abstraction.getStateFactory());
