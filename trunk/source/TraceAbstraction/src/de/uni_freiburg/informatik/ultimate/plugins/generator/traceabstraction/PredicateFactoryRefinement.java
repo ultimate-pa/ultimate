@@ -94,7 +94,7 @@ public class PredicateFactoryRefinement extends PredicateFactory {
 				assert false : "minimize empty set???";
 			return m_SmtManager.newDontCarePredicate(pp);
 			}
-			TermVarsProc tvp = m_SmtManager.or(
+			TermVarsProc tvp = m_SmtManager.orWithSimplifyDDA(
 					states.toArray(new IPredicate[0]));
 			if (tvp.getFormula() == m_SmtManager.getDontCareTerm()) {
 				return m_SmtManager.newDontCarePredicate(pp);

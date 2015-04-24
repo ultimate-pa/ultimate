@@ -507,8 +507,16 @@ public class SmtManager {
 		Term closedTerm = PredicateUtils.computeClosedFormula(term, vars, m_Script);
 		return new TermVarsProc(term, vars, procs.toArray(new String[0]), closedTerm);
 	}
-
+	
 	public TermVarsProc or(IPredicate... preds) {
+		return or(false, preds);
+	}
+	
+	public TermVarsProc orWithSimplifyDDA(IPredicate... preds) {
+		return or(true, preds);
+	}
+
+	public TermVarsProc or(boolean withSimplifyDDA, IPredicate... preds) {
 		Set<BoogieVar> vars = new HashSet<BoogieVar>();
 		Set<String> procs = new HashSet<String>();
 		Term term = m_Script.term("false");
@@ -519,6 +527,9 @@ public class SmtManager {
 			vars.addAll(p.getVars());
 			procs.addAll(Arrays.asList(p.getProcedures()));
 			term = Util.or(m_Script, term, p.getFormula());
+		}
+		if (withSimplifyDDA) {
+			term = SmtUtils.simplify(m_Script, term, mServices);
 		}
 		Term closedTerm = PredicateUtils.computeClosedFormula(term, vars, m_Script);
 		return new TermVarsProc(term, vars, procs.toArray(new String[0]), closedTerm);
