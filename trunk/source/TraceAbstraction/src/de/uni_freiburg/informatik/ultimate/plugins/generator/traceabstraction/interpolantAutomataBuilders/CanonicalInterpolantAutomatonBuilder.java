@@ -53,7 +53,7 @@ public class CanonicalInterpolantAutomatonBuilder extends CoverageAnalysis {
 		// interpolant after the CodeBlock
 		IPredicate successorInterpolant = m_IPP.getInterpolant(i + 1);
 		if (!m_IA.getStates().contains(successorInterpolant)) {
-			assert (successorInterpolant != m_TraceChecker.getPostcondition());
+			assert (successorInterpolant != m_InterpolantGenerator.getPostcondition());
 			m_IA.addState(false, false, successorInterpolant);
 		}
 		addTransition(i, i, i + 1);
@@ -68,7 +68,7 @@ public class CanonicalInterpolantAutomatonBuilder extends CoverageAnalysis {
 
 	protected void postprocess() {
 		if (m_SelfloopAtInitial) {
-			IPredicate precond = m_TraceChecker.getPrecondition();
+			IPredicate precond = m_InterpolantGenerator.getPrecondition();
 			for (CodeBlock symbol : m_IA.getInternalAlphabet()) {
 				m_IA.addInternalTransition(precond, symbol, precond);
 			}
@@ -86,7 +86,7 @@ public class CanonicalInterpolantAutomatonBuilder extends CoverageAnalysis {
 		}
 
 		if (m_SelfloopAtFinal) {
-			IPredicate postcond = m_TraceChecker.getPostcondition();
+			IPredicate postcond = m_InterpolantGenerator.getPostcondition();
 			for (CodeBlock symbol : m_IA.getInternalAlphabet()) {
 				m_IA.addInternalTransition(postcond, symbol, postcond);
 			}
@@ -114,8 +114,8 @@ public class CanonicalInterpolantAutomatonBuilder extends CoverageAnalysis {
 		}
 		mLogger.info(interpolantAutomatonType);
 
-		m_IA.addState(true, false, m_TraceChecker.getPrecondition());
-		m_IA.addState(false, true, m_TraceChecker.getPostcondition());
+		m_IA.addState(true, false, m_InterpolantGenerator.getPrecondition());
+		m_IA.addState(false, true, m_InterpolantGenerator.getPostcondition());
 	}
 
 	public NestedWordAutomaton<CodeBlock, IPredicate> getInterpolantAutomaton() {

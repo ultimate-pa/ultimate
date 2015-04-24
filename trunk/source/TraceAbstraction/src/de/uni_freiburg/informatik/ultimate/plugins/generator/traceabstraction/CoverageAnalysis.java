@@ -12,15 +12,14 @@ import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IHoareTripleChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.IInterpolantGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.InterpolatingTraceChecker;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceChecker;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceCheckerUtils.InterpolantsPreconditionPostcondition;
 
 /**
@@ -52,7 +51,7 @@ public class CoverageAnalysis {
 	private int m_Trivial;
 	private int m_Notchecked;
 	
-	protected final TraceChecker m_TraceChecker;
+	protected final IInterpolantGenerator m_InterpolantGenerator;
 	protected final InterpolantsPreconditionPostcondition m_IPP;
 
 	public CoverageAnalysis(IUltimateServiceProvider services, 
@@ -64,7 +63,7 @@ public class CoverageAnalysis {
 		m_NestedWord = NestedWord.nestedWord(traceChecker.getTrace());
 		m_ProgramPointSequence = programPointSequence;
 		m_PredicateUnifier = traceChecker.getPredicateUnifier();
-		m_TraceChecker = traceChecker;
+		m_InterpolantGenerator = traceChecker;
 		m_IPP = new InterpolantsPreconditionPostcondition(traceChecker);
 	}
 	
