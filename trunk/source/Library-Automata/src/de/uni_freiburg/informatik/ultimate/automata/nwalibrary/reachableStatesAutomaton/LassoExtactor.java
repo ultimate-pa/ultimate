@@ -109,7 +109,7 @@ class LassoExtractor<LETTER, STATE> {
 
 		@Override
 		protected int getMaximalIterationNumber() {
-			return m_Scc.getAllStatesContainters().size();
+			return m_Scc.getAllStatesContainers().size();
 		}
 
 		@Override
@@ -145,7 +145,7 @@ class LassoExtractor<LETTER, STATE> {
 				StateContainer<LETTER, STATE> succSc, InCaRe type, 
 				StateContainer<LETTER, STATE> linPred, 
 				boolean summaryUsed, boolean isGuaranteedSucc) {
-			if (!m_Scc.getAllStatesContainters().contains(predSc)) {
+			if (!m_Scc.getAllStatesContainers().contains(predSc)) {
 				return null;
 			}
 			boolean isGuaranteedPred = isGuaranteedSucc;

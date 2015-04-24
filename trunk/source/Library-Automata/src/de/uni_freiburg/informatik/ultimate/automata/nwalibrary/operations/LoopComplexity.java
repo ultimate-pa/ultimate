@@ -78,7 +78,7 @@ public class LoopComplexity<LETTER, STATE> implements IOperation<LETTER, STATE> 
 				nwars.getOrComputeStronglyConnectedComponents();
 		Collection<NestedWordAutomatonReachableStates<LETTER, STATE>.StronglyConnectedComponents.SCC> balls = sccs.getBalls();
 		for (SCC scc : balls) {
-			scc.getAllStatesContainters();
+			scc.getAllStatesContainers();
 		}
 		return null;
 	}

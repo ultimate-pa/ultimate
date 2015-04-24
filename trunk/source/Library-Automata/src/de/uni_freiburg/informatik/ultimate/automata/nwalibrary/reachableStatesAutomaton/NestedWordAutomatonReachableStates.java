@@ -1623,7 +1623,7 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 			assert (automatonPartitionedBySCCs());
 			for (SCC scc : m_Balls) {
 				if (scc.isAccepting()) {
-					m_AllStatesOfSccsWithoutCallAndReturn.addAll(scc.getAllStatesContainters());
+					m_AllStatesOfSccsWithoutCallAndReturn.addAll(scc.getAllStatesContainers());
 					m_AcceptingBalls++;
 				}
 			}
@@ -1895,7 +1895,7 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 			 * @return The {@link StateContainer}s of all states that are 
 			 * contained in this SCC.
 			 */
-			public Set<StateContainer<LETTER, STATE>> getAllStatesContainters() {
+			public Set<StateContainer<LETTER, STATE>> getAllStatesContainers() {
 				return m_AllStates;
 			}
 

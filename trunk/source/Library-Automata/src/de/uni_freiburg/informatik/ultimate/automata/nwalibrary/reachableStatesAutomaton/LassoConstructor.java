@@ -194,7 +194,7 @@ class LassoConstructor<LETTER, STATE> {
 			Map<StateContainer<LETTER, STATE>, SuccessorInfo> succInfo,
 			Transitionlet<LETTER, STATE> inTrans,
 			StateContainer<LETTER, STATE> predSc) {
-		if (m_Scc.getAllStatesContainters().contains(predSc) && !m_Visited.contains(predSc)) {
+		if (m_Scc.getAllStatesContainers().contains(predSc) && !m_Visited.contains(predSc)) {
 			m_Visited.add(predSc);
 			SuccessorInfo info = new SuccessorInfo(inTrans, sc);
 			succInfo.put(predSc, info);
