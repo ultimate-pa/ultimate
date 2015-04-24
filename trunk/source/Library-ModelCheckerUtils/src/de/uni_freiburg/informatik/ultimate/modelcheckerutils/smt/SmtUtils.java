@@ -129,7 +129,7 @@ public class SmtUtils {
 	 * equivalent to (not (= lhs rhs)) but uses only the boolean connectives 
 	 * "and" and "or".
 	 */
-	public static Term binaryBooleanInequality(Script script, Term lhs, Term rhs) {
+	public static Term binaryBooleanNotEquals(Script script, Term lhs, Term rhs) {
 		assert lhs.getSort().getName().equals("Bool");
 		assert rhs.getSort().getName().equals("Bool");
 		Term oneIsTrue = Util.or(script, lhs, rhs);
@@ -478,6 +478,55 @@ public class SmtUtils {
 			}
 		} else
 			throw new IllegalArgumentException("Trying to convert a ConstantTerm of unknown sort." + ct);
+	}
+
+	/**
+	 * Construct term but simplify it using lightweight simplification 
+	 * techniques.
+	 */
+	public static Term termWithLocalSimplification(Script script, FunctionSymbol function, Term[] params) {
+		String applicationString = function.getApplicationString();
+		Term result;
+		switch (applicationString) {
+		case "and":
+			result = Util.and(script, params);
+			break;
+		case "or":
+			result = Util.or(script, params);
+			break;
+		case "not":
+			if (params.length != 1) {
+				throw new IllegalArgumentException("no not term");
+			} else {
+				result = Util.not(script, params[0]);
+			}
+			break;
+		case "=":
+			if (params.length != 2) {
+				throw new UnsupportedOperationException("not yet implemented");
+			} else {
+				result = binaryEquality(script, params[0], params[1]);
+			}
+		case "distinct":
+			if (params.length != 2) {
+				throw new UnsupportedOperationException("not yet implemented");
+			} else {
+				result = Util.not(script, binaryEquality(script, params[0], params[1]));
+			}
+		case "=>":
+			result = Util.implies(script, params);
+		case "ite":
+			if (params.length != 3) {
+				throw new IllegalArgumentException("not ite");
+			} else {
+				result = Util.ite(script, params[0], params[1], params[2]);
+			}
+
+		default:
+			result = script.term(applicationString, params);
+			break;
+		}
+		return result;
 	}
 
 }
