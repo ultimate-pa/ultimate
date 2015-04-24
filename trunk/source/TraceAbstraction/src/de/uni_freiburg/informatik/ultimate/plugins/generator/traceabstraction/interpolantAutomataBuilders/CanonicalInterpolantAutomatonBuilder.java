@@ -20,6 +20,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Pro
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CoverageAnalysis;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.IInterpolantGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.InterpolatingTraceChecker;
 
 /**
@@ -40,10 +41,11 @@ public class CanonicalInterpolantAutomatonBuilder extends CoverageAnalysis {
 
 	private final Map<Integer, Set<IPredicate>> m_AlternativeCallPredecessors = new HashMap<Integer, Set<IPredicate>>();
 
-	public CanonicalInterpolantAutomatonBuilder(IUltimateServiceProvider services, InterpolatingTraceChecker traceChecker, List<ProgramPoint> programPointSequence,
+	public CanonicalInterpolantAutomatonBuilder(IUltimateServiceProvider services, 
+			IInterpolantGenerator interpolantGenerator, List<ProgramPoint> programPointSequence,
 			InCaReAlphabet<CodeBlock> alphabet, SmtManager smtManager, StateFactory<IPredicate> predicateFactory,
 			Logger logger) {
-		super(services, traceChecker, programPointSequence, logger);
+		super(services, interpolantGenerator, programPointSequence, logger);
 		m_IA = new NestedWordAutomaton<CodeBlock, IPredicate>(m_Services, alphabet.getInternalAlphabet(),
 				alphabet.getCallAlphabet(), alphabet.getReturnAlphabet(), predicateFactory);
 		m_SmtManager = smtManager;

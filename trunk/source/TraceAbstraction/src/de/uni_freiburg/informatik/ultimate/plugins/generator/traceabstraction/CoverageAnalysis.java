@@ -55,16 +55,16 @@ public class CoverageAnalysis {
 	protected final InterpolantsPreconditionPostcondition m_IPP;
 
 	public CoverageAnalysis(IUltimateServiceProvider services, 
-			InterpolatingTraceChecker traceChecker,
+			IInterpolantGenerator interpolantGenerator,
 			List<ProgramPoint> programPointSequence, Logger logger) {
 		m_Services = services;
 		mLogger = logger;
-		m_Interpolants = traceChecker.getInterpolants();
-		m_NestedWord = NestedWord.nestedWord(traceChecker.getTrace());
+		m_Interpolants = interpolantGenerator.getInterpolants();
+		m_NestedWord = NestedWord.nestedWord(interpolantGenerator.getTrace());
 		m_ProgramPointSequence = programPointSequence;
-		m_PredicateUnifier = traceChecker.getPredicateUnifier();
-		m_InterpolantGenerator = traceChecker;
-		m_IPP = new InterpolantsPreconditionPostcondition(traceChecker);
+		m_PredicateUnifier = interpolantGenerator.getPredicateUnifier();
+		m_InterpolantGenerator = interpolantGenerator;
+		m_IPP = new InterpolantsPreconditionPostcondition(interpolantGenerator);
 	}
 	
 	public void analyze() {
