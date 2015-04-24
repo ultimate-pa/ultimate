@@ -103,18 +103,14 @@ public class TraceCheckerUtils {
 		private final IPredicate m_Postcondition;
 		private final IPredicate[] m_Interpolants;
 		
-		public InterpolantsPreconditionPostcondition(InterpolatingTraceChecker traceChecker) {
-			if (traceChecker.isCorrect() != LBool.UNSAT) {
-				throw new AssertionError("We can only build an interpolant "
-						+ "automaton for correct/infeasible traces");
-			}
-			if (traceChecker.getInterpolants() == null) {
+		public InterpolantsPreconditionPostcondition(IInterpolantGenerator interpolantGenerator) {
+			if (interpolantGenerator.getInterpolants() == null) {
 				throw new AssertionError("We can only build an interpolant "
 						+ "automaton for which interpolants were computed");
 			}
-			m_Precondition = traceChecker.getPrecondition();
-			m_Postcondition = traceChecker.getPostcondition();
-			m_Interpolants = traceChecker.getInterpolants();
+			m_Precondition = interpolantGenerator.getPrecondition();
+			m_Postcondition = interpolantGenerator.getPostcondition();
+			m_Interpolants = interpolantGenerator.getInterpolants();
 		}
 		
 		public InterpolantsPreconditionPostcondition(IPredicate precondition,
