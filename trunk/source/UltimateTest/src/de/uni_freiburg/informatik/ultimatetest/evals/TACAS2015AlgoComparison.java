@@ -46,15 +46,17 @@ public class TACAS2015AlgoComparison extends TACAS2015 {
 			"examples/svcomp/ntdrivers-simplified/",
 	   		"examples/svcomp/ssh-simplified/", 
  			"examples/svcomp/systemc/",
- 			
- 			
-
-//		    "examples/svcomp/heap-manipulation",
-//		    "examples/svcomp/list-properties",
-//		    "examples/svcomp/ldv-regression",
+		    
+		    "examples/svcomp/ssh",
+		    "examples/svcomp/ntdrivers", 			
 		};
 		return directories;
 		// @formatter:on
+	}
+	
+	@Override
+	protected String[] getFileEndings() {
+		return new String[] { ".c" };
 	}
 	
 	@Override
