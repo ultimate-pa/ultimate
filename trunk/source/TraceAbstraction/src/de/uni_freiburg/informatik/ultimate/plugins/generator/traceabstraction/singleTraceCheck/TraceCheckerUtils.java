@@ -63,7 +63,7 @@ public class TraceCheckerUtils {
 	 */
 	public static BackwardCoveringInformation computeCoverageCapability(
 			IUltimateServiceProvider services, 
-			InterpolatingTraceChecker traceChecker, Logger logger) {
+			IInterpolantGenerator traceChecker, Logger logger) {
 		NestedWord<CodeBlock> trace = NestedWord.nestedWord(traceChecker.getTrace());
 		List<ProgramPoint> programPoints = getSequenceOfProgramPoints(trace);
 		return computeCoverageCapability(services, traceChecker, programPoints, logger);
@@ -71,16 +71,12 @@ public class TraceCheckerUtils {
 	
 	public static BackwardCoveringInformation computeCoverageCapability(
 			IUltimateServiceProvider services, 
-			InterpolatingTraceChecker traceChecker, List<ProgramPoint> programPoints, Logger logger) {
-		if (traceChecker.isCorrect() != LBool.UNSAT) {
-			throw new AssertionError("We can only build an interpolant "
-					+ "automaton for correct/infeasible traces");
-		}
-		if (traceChecker.getInterpolants() == null) {
+			IInterpolantGenerator interpolantGenerator, List<ProgramPoint> programPoints, Logger logger) {
+		if (interpolantGenerator.getInterpolants() == null) {
 			throw new AssertionError("We can only build an interpolant "
 					+ "automaton for which interpolants were computed");
 		}
-		CoverageAnalysis ca = new CoverageAnalysis(services, traceChecker, programPoints, logger);
+		CoverageAnalysis ca = new CoverageAnalysis(services, interpolantGenerator, programPoints, logger);
 		ca.analyze();
 		return ca.getBackwardCoveringInformation();
 	}

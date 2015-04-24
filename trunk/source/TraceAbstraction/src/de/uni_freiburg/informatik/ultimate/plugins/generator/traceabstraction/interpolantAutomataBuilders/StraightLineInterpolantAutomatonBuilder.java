@@ -7,6 +7,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvide
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactory;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.IInterpolantGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.InterpolatingTraceChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceCheckerUtils.InterpolantsPreconditionPostcondition;
@@ -35,26 +36,26 @@ public class StraightLineInterpolantAutomatonBuilder {
 	public StraightLineInterpolantAutomatonBuilder(
 			IUltimateServiceProvider services, 
 			InCaReAlphabet<CodeBlock> alphabet,
-			InterpolatingTraceChecker traceChecker,
+			IInterpolantGenerator interpolantGenerator,
 			PredicateFactory predicateFactory) {
 		m_Services = services;
 		InterpolantsPreconditionPostcondition ipp = 
-				new InterpolantsPreconditionPostcondition(traceChecker);
+				new InterpolantsPreconditionPostcondition(interpolantGenerator);
 		m_Result =	new NestedWordAutomaton<CodeBlock, IPredicate>(
 				m_Services, 
 						alphabet.getInternalAlphabet(),
 						alphabet.getCallAlphabet(),
 						alphabet.getReturnAlphabet(),
 						predicateFactory);
-		addStatesAndTransitions(traceChecker, predicateFactory, ipp);
+		addStatesAndTransitions(interpolantGenerator, predicateFactory, ipp);
 	}
 
-	private void addStatesAndTransitions(TraceChecker traceChecker, 
+	private void addStatesAndTransitions(IInterpolantGenerator interpolantGenerator, 
 			PredicateFactory predicateFactory, InterpolantsPreconditionPostcondition ipp) { 
 
-		m_Result.addState(true, false, traceChecker.getPrecondition());
-		m_Result.addState(false, true, traceChecker.getPostcondition());
-		NestedWord<CodeBlock> trace = (NestedWord<CodeBlock>) traceChecker.getTrace();
+		m_Result.addState(true, false, interpolantGenerator.getPrecondition());
+		m_Result.addState(false, true, interpolantGenerator.getPostcondition());
+		NestedWord<CodeBlock> trace = (NestedWord<CodeBlock>) interpolantGenerator.getTrace();
 		for (int i=0; i<trace.length(); i++) {
 			IPredicate pred = ipp.getInterpolant(i);
 			IPredicate succ = ipp.getInterpolant(i+1);
