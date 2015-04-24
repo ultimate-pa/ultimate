@@ -132,7 +132,7 @@ public class Nnf {
 						// we deliberately call convert() instead of super.convert()
 						// the argument of this call might have been simplified
 						// to a term whose function symbol is neither "and" nor "or"
-						convert(SmtUtils.binaryBooleanInequality(
+						convert(SmtUtils.binaryBooleanNotEquals(
 								m_Script, params[0], params[1]));
 					}
 				} else {
@@ -221,7 +221,7 @@ public class Nnf {
 						// we deliberately call convert() instead of super.convert()
 						// the argument of this call might have been simplified
 						// to a term whose function symbol is neither "and" nor "or"
-						convert(SmtUtils.binaryBooleanInequality(
+						convert(SmtUtils.binaryBooleanNotEquals(
 								m_Script, notParams[0], notParams[1]));
 					}
 				} else if (functionName.equals("distinct") && 
