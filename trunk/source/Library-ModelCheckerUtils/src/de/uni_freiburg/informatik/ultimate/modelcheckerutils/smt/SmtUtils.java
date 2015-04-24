@@ -482,12 +482,12 @@ public class SmtUtils {
 
 	/**
 	 * Construct term but simplify it using lightweight simplification 
-	 * techniques.
+	 * techniques if applicable.
 	 */
-	public static Term termWithLocalSimplification(Script script, FunctionSymbol function, Term[] params) {
-		String applicationString = function.getApplicationString();
+	public static Term termWithLocalSimplification(Script script, 
+			String funcname, Term[] params) {
 		Term result;
-		switch (applicationString) {
+		switch (funcname) {
 		case "and":
 			result = Util.and(script, params);
 			break;
@@ -523,7 +523,7 @@ public class SmtUtils {
 			}
 
 		default:
-			result = script.term(applicationString, params);
+			result = script.term(funcname, params);
 			break;
 		}
 		return result;
