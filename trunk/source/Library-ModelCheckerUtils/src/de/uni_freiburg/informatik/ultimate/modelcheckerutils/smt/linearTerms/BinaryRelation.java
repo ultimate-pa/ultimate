@@ -1,6 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
+import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 /**
@@ -35,7 +36,7 @@ public abstract class BinaryRelation {
 	 * relation ψ ◾ φ is equivalent to the relation ¬(ψ ▷ φ), which is the 
 	 * negated relation.
 	 */
-	protected static RelationSymbol negateRelation(RelationSymbol symb) {
+	public static RelationSymbol negateRelation(RelationSymbol symb) {
 		final RelationSymbol result;
 		switch (symb) {
 		case EQ:
@@ -67,7 +68,7 @@ public abstract class BinaryRelation {
 	 * relation ψ ◾ φ is equivalent to the relation φ ▷ ψ, which is the relation
 	 * where we swaped the parameters.
 	 */
-	protected static RelationSymbol swapParameters(RelationSymbol symb) {
+	public static RelationSymbol swapParameters(RelationSymbol symb) {
 		final RelationSymbol result;
 		switch (symb) {
 		case EQ:
@@ -90,6 +91,33 @@ public abstract class BinaryRelation {
 			break;
 		default:
 			throw new UnsupportedOperationException("unknown numeric relation");
+		}
+		return result;
+	}
+	
+	/**
+	 * Returns the term (relationSymbol lhsTerm rhsTerm) if relationSymbol is
+	 * not a greater-than relation symbol. Otherwise returns an equivalent
+	 * term where relation symbol and parameters are swapped.
+	 */
+	public static Term constructLessNormalForm(Script script, 
+			RelationSymbol relationSymbol, Term lhsTerm, Term rhsTerm)
+			throws AssertionError {
+		Term result;
+		switch (relationSymbol) {
+		case DISTINCT:
+		case EQ:
+		case LEQ:
+		case LESS:
+			result = script.term(relationSymbol.toString(), lhsTerm, rhsTerm);
+			break;
+		case GEQ:
+		case GREATER:
+			RelationSymbol swapped = BinaryRelation.swapParameters(relationSymbol);
+			result = script.term(swapped.toString(), rhsTerm, lhsTerm);
+			break;
+		default:
+			throw new AssertionError("unknown relation symbol");
 		}
 		return result;
 	}

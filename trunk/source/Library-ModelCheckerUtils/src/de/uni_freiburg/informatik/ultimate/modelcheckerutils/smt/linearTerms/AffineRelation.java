@@ -128,7 +128,7 @@ public class AffineRelation {
 	}
 	
 	
-	public void makeNonStrict() {
+	private void makeNonStrict() {
 		if (!m_AffineTerm.getSort().getName().equals("Int")) {
 			throw new UnsupportedOperationException("can only make Int terms non strict");
 		}
@@ -175,7 +175,8 @@ public class AffineRelation {
 
 	/**
 	 * Returns a term representation of this AffineRelation where each summand
-	 * that has a negative coefficient is moved to the right hand side.
+	 * occurs only positive and the greater-than relation symbols are replaced
+	 * by less-than relation symbols.
 	 */
 	public Term positiveNormalForm(Script script) {
 		List<Term> lhsSummands = new ArrayList<Term>();
@@ -196,7 +197,8 @@ public class AffineRelation {
 		}
 		Term lhsTerm = SmtUtils.sum(script, m_AffineTerm.getSort(), lhsSummands.toArray(new Term[lhsSummands.size()]));
 		Term rhsTerm = SmtUtils.sum(script, m_AffineTerm.getSort(), rhsSummands.toArray(new Term[rhsSummands.size()]));
-		Term result = script.term(m_RelationSymbol.toString(), lhsTerm, rhsTerm);
+		Term result = BinaryRelation.constructLessNormalForm(script, m_RelationSymbol, lhsTerm, rhsTerm);
+		result = BinaryRelation.constructLessNormalForm(script, m_RelationSymbol, lhsTerm, rhsTerm);
 		assert isEquivalent(script, m_OriginalTerm, result) != LBool.SAT : "transformation to positive normal form unsound";
 		return result;
 	}
