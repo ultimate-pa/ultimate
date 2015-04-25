@@ -591,6 +591,10 @@ public class LassoChecker {
 
 	private SynthesisResult synthesize(final boolean withStem, TransFormula stemTF, final TransFormula loopTF,
 			boolean containsArrays) throws IOException {
+		if (m_SmtManager.isLocked()) {
+			throw new AssertionError("SMTManager must not be locked at the beginning of synthesis");
+		}
+
 		if (!withStem) {
 			stemTF = getDummyTF();
 		}
