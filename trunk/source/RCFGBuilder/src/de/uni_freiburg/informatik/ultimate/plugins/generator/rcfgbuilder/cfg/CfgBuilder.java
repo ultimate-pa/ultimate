@@ -86,14 +86,6 @@ public class CfgBuilder {
 	private final Logger mLogger;
 
 	/**
-	 * Identifier of the auxiliary start procedure used e.g., by the
-	 * CACSL2Boogie translation.
-	 */
-	public static final String START_PROCEDURE = "ULTIMATE.start";
-	
-	
-
-	/**
 	 * Root Node of this Ultimate model. I use this to store information that
 	 * should be passed to the next plugin. The Successors of this node are
 	 * exactly the entry nodes of procedures.
@@ -1135,8 +1127,7 @@ public class CfgBuilder {
 			// assert statements if current procedure is START_PROCEDURE.
 			//
 			List<RequiresSpecification> requiresNonFree = m_BoogieDeclarations.getRequiresNonFree().get(callee);
-			if (requiresNonFree != null && !requiresNonFree.isEmpty()
-					&& !m_currentProcedureName.equals(START_PROCEDURE)) {
+			if (requiresNonFree != null && !requiresNonFree.isEmpty()) {
 				for (RequiresSpecification spec : requiresNonFree) {
 					// use implementation if available and specification
 					// otherwise. To use the implementation is important in
