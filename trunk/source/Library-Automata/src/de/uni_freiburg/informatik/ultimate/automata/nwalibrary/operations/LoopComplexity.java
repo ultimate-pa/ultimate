@@ -25,15 +25,21 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Set;
 
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.NestedWordAutomatonReachableStates;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.StateContainer;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.NestedWordAutomatonReachableStates.StronglyConnectedComponents;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.NestedWordAutomatonReachableStates.StronglyConnectedComponents.SCC;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator;
@@ -80,7 +86,70 @@ public class LoopComplexity<LETTER, STATE> implements IOperation<LETTER, STATE> 
 		for (SCC scc : balls) {
 			scc.getAllStatesContainers();
 		}
-		return null;
+		// Graph contains no balls.
+		if (balls.isEmpty()) {
+			return 0;
+		} else if (balls.size() == 1) { // Graph itself is a ball.
+			// Build all subgraphs differing from original graph by one vertex.
+			Collection<Integer> subGraphLoopComplexities = new ArrayList<Integer>();
+			Collection<STATE> allstates = operand.getStates();
+			for (STATE stateOut : allstates) {
+				NestedWordAutomaton<LETTER, STATE> nwa = buildSubgraph(operand,
+						stateOut);
+				
+				subGraphLoopComplexities.add(this.compute(nwa));
+			}
+			return 1 + Collections.min(subGraphLoopComplexities);
+		} else { // Graph itself is not a ball.
+			Collection<Integer> ballLoopComplexities = new ArrayList<Integer>();
+			// Build NestedWordAutomaton for each ball and compute Loop Complexity.
+			for (SCC scc : balls) {
+				NestedWordAutomaton<LETTER, STATE> nwa = sccToAutomaton(
+						operand, scc);
+				ballLoopComplexities.add(this.compute(nwa));
+			}
+			return Collections.max(ballLoopComplexities);
+		}
+	}
+
+	private NestedWordAutomaton<LETTER, STATE> buildSubgraph(
+			INestedWordAutomaton<LETTER, STATE> operand, STATE stateOut) {
+		NestedWordAutomaton<LETTER, STATE> nwa = new NestedWordAutomaton<LETTER, STATE>(m_Services, operand.getInternalAlphabet(), operand.getCallAlphabet(), operand.getReturnAlphabet(), operand.getStateFactory());
+		// States to be included in new graph.
+		Collection<STATE> allowedStates = operand.getStates();
+		allowedStates.remove(stateOut);
+		
+		for (STATE state : allowedStates) {
+			nwa.addState(true, true, state);
+		}
+		
+		for (STATE state : allowedStates) {
+			Iterable<OutgoingInternalTransition<LETTER, STATE>> succs = operand.internalSuccessors(state);
+		    for (OutgoingInternalTransition<LETTER, STATE> outtrans : succs) {
+		    	if (allowedStates.contains(outtrans.getSucc())) {
+		    		nwa.addInternalTransition(state, outtrans.getLetter(), outtrans.getSucc());
+		    	}
+		    }
+		}
+		return nwa;
+	}
+
+	private NestedWordAutomaton<LETTER, STATE> sccToAutomaton(
+			INestedWordAutomaton<LETTER, STATE> operand, SCC scc) {
+		NestedWordAutomaton<LETTER, STATE> nwa = new NestedWordAutomaton<LETTER, STATE>(m_Services, operand.getInternalAlphabet(), operand.getCallAlphabet(), operand.getReturnAlphabet(), operand.getStateFactory());
+		Set<STATE> allstates = scc.getAllStates();
+		for (STATE state : allstates) {					
+			nwa.addState(true, true, state);
+		}
+		for (STATE state : allstates) {
+			Iterable<OutgoingInternalTransition<LETTER, STATE>> succs = operand.internalSuccessors(state);
+		    for (OutgoingInternalTransition<LETTER, STATE> outtrans : succs) {
+		    	if (allstates.contains(outtrans.getSucc())) {
+		    		nwa.addInternalTransition(state, outtrans.getLetter(), outtrans.getSucc());
+		    	}
+		    }
+		}
+		return nwa;
 	}
 
 	@Override
