@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.Artifact;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.IInterpolantGenerator;
+import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
 
 /**
  * CEGAR loop of a trace abstraction. Can be used to check safety and
@@ -311,20 +312,29 @@ public abstract class AbstractCegarLoop {
 			if (m_Pref.dumpAutomata()) {
 				dumpInitinalize();
 			}
-
-			LBool isCounterexampleFeasible = isCounterexampleFeasible();
-			if (isCounterexampleFeasible == Script.LBool.SAT) {
-				m_CegarLoopBenchmark.setResult(Result.UNSAFE);
-				return Result.UNSAFE;
-			}
-			if (isCounterexampleFeasible == Script.LBool.UNKNOWN) {
-				m_CegarLoopBenchmark.setResult(Result.UNKNOWN);
-				return Result.UNKNOWN;
+			try {
+				LBool isCounterexampleFeasible = isCounterexampleFeasible();
+				if (isCounterexampleFeasible == Script.LBool.SAT) {
+					m_CegarLoopBenchmark.setResult(Result.UNSAFE);
+					return Result.UNSAFE;
+				}
+				if (isCounterexampleFeasible == Script.LBool.UNKNOWN) {
+					m_CegarLoopBenchmark.setResult(Result.UNKNOWN);
+					return Result.UNKNOWN;
+				}
+			} catch (ToolchainCanceledException e) {
+				mLogger.warn("Verification cancelled");
+				m_CegarLoopBenchmark.setResult(Result.TIMEOUT);
+				return Result.TIMEOUT;
 			}
 
 			try {
 				constructInterpolantAutomaton();
 			} catch (OperationCanceledException e1) {
+				mLogger.warn("Verification cancelled");
+				m_CegarLoopBenchmark.setResult(Result.TIMEOUT);
+				return Result.TIMEOUT;
+			} catch (ToolchainCanceledException e) {
 				mLogger.warn("Verification cancelled");
 				m_CegarLoopBenchmark.setResult(Result.TIMEOUT);
 				return Result.TIMEOUT;
@@ -347,6 +357,10 @@ public abstract class AbstractCegarLoop {
 					// return Result.UNKNOWN;
 				}
 			} catch (OperationCanceledException e) {
+				mLogger.warn("Verification cancelled");
+				m_CegarLoopBenchmark.setResult(Result.TIMEOUT);
+				return Result.TIMEOUT;
+			} catch (ToolchainCanceledException e) {
 				mLogger.warn("Verification cancelled");
 				m_CegarLoopBenchmark.setResult(Result.TIMEOUT);
 				return Result.TIMEOUT;

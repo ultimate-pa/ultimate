@@ -119,8 +119,9 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 		} catch (ToolchainCanceledException e) {
 			mLogger.info("Timeout while computing interpolants");
 			throw e;
+		} finally {
+			m_TraceCheckerBenchmarkGenerator.stop(TraceCheckerBenchmarkType.s_InterpolantComputation);
 		}
-		m_TraceCheckerBenchmarkGenerator.stop(TraceCheckerBenchmarkType.s_InterpolantComputation);
 		m_TraceCheckFinished = true;
 	}
 
