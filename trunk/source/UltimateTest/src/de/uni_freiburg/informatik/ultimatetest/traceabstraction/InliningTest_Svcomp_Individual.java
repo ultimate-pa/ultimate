@@ -61,20 +61,23 @@ public class InliningTest_Svcomp_Individual extends AbstractTraceAbstractionTest
 		// ... "ExpectedResult: UNSAFE_MEMTRACK UltimateResult: SAFE", but now passes for mysterious reasons.
 		"examples/svcomp/list-ext-properties/test-0019_1_false-valid-memtrack.i",
 
-		// These tests fail only with inlining.
+		// These tests fail only with inlining (UNSAFE_MEMTRACK, expected SAFE)
 		"examples/svcomp/list-ext-properties/test-0158_1_false-valid-memtrack.i",
+		"examples/svcomp/memsafety/test-0019_false-valid-memtrack.i", 
+		"examples/svcomp/memsafety/test-0158_false-valid-memtrack.i",
+		"examples/svcomp/memsafety/20051113-1.c_false-valid-memtrack.i",
 	};
-	
+
 	@Override
 	public long getTimeout() {
 		return 60 * 1000;
 	}
-	
-	private static final boolean sReachPreciseMemoryModel = false;
-	private static final boolean sMemsafety = false;
 
+	private static final boolean sReachPreciseMemoryModel = false;
+	private static final boolean sMemsafety = true;
+
+	private static final boolean sAutomizerWithoutInlining = false;
 	private static final boolean sAutomizerWithInlining = true;
-	private static final boolean sAutomizerWithoutInlining = true;
 	
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
