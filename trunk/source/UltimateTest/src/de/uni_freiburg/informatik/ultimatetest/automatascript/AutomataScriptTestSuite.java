@@ -26,7 +26,6 @@ public class AutomataScriptTestSuite extends UltimateTestSuite {
 		"examples/Automata/finiteAutomata", 
 		"examples/Automata/nwa", 
 		"examples/Automata/nwaOperations",
-		"examples/Automata/test",
 	// the following two have still bugs
 	// "examples/Automata/PetriNet",
 	// "examples/Automata/senwa",
