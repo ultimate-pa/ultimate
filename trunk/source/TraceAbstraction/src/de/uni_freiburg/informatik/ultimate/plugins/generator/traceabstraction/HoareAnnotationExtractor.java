@@ -36,7 +36,7 @@ public class HoareAnnotationExtractor extends DoubleDeckerVisitor<CodeBlock, IPr
 		try {
 			traverseDoubleDeckerGraph();
 		} catch (OperationCanceledException e) {
-			s_Logger.warn("Computation of Hoare annotation canceled.");
+			m_Logger.warn("Computation of Hoare annotation canceled.");
 		}
 	}
 
