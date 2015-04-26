@@ -17,6 +17,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.AffineRelation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.NotAffineException;
 import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
+import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
 
 /**
  * Destructive equality resolution (DER) for terms in XNF.
@@ -44,6 +45,9 @@ public class XnfDer extends XjunctPartialQuantifierElimination {
 		Iterator<TermVariable> it = eliminatees.iterator();
 		Term[] resultAtoms = inputAtoms;
 		while (it.hasNext()) {
+			if (!m_Services.getProgressMonitorService().continueProcessing()) {
+				throw new ToolchainCanceledException(this.getClass());
+			}
 			TermVariable tv = it.next();
 			if (!SmtUtils.getFreeVars(Arrays.asList(resultAtoms)).contains(tv)) {
 				// case where var does not occur
