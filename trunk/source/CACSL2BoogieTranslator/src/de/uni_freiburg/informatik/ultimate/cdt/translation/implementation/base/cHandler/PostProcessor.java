@@ -59,6 +59,7 @@ public class PostProcessor {
 	private final LinkedHashSet<String> mInitializedGlobals;
 	private final Dispatcher mDispatcher;
 	private final Logger mLogger;
+	private static final boolean s_DeclareToIntFunction = false;
 
 	/**
 	 * Constructor.
@@ -150,7 +151,9 @@ public class PostProcessor {
 //		Specification toIntSpec = new EnsuresSpecification(ignoreLoc, false, new IfThenElseExpression(ignoreLoc, inRealGeq0, roundDown, roundUp));
 //		decls.add(new Procedure(ignoreLoc, new Attribute[0], SFO.TO_INT, new String[0], oneRealParam, oneIntParam, new Specification[] { toIntSpec }, null));
 
-		decls.add(new FunctionDeclaration(ignoreLoc, new Attribute[0], SFO.TO_INT, new String[0], oneRealParam, intParam));
+		if (s_DeclareToIntFunction ) {
+			decls.add(new FunctionDeclaration(ignoreLoc, new Attribute[0], SFO.TO_INT, new String[0], oneRealParam, intParam));
+		}
 
 		return decls;
 	}
