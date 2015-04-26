@@ -41,10 +41,8 @@ public class TACAS2015AlgoComparisonMemSafety extends TACAS2015 {
 			"examples/svcomp/memsafety/",
 			"examples/svcomp/memsafety-ext/",
 			"examples/svcomp/list-ext-properties/",
-
-			//our best category
 			"examples/svcomp/memory-alloca/",
-
+			"examples/svcomp/memory-unsafe/",
 		};
 		return directories;
 		// @formatter:on
