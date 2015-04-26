@@ -56,7 +56,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvide
 public class BuchiAcceptsRecursive<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	
 	private final IUltimateServiceProvider m_Services;
-	private final Logger s_Logger;
+	private final Logger m_Logger;
 	/**
 	 * stem of the nested lasso word whose acceptance is checked 
 	 */
@@ -114,23 +114,23 @@ public class BuchiAcceptsRecursive<LETTER,STATE> implements IOperation<LETTER,ST
 	public BuchiAcceptsRecursive(IUltimateServiceProvider services,
 			INestedWordAutomatonOldApi<LETTER,STATE> nwa, NestedLassoWord<LETTER> nlw){
 		m_Services = services;
-		s_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
+		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 		m_Nwa = nwa;
 		m_Nlw = nlw;
-		s_Logger.info(startMessage());
+		m_Logger.info(startMessage());
 		
 		m_Stem = nlw.getStem();
 		m_Loop = nlw.getLoop();
 		
 		if (m_Stem.containsPendingReturns()) {
-			s_Logger.warn("This implementation of Buchi acceptance rejects lasso" +
+			m_Logger.warn("This implementation of Buchi acceptance rejects lasso" +
 					" words, where the stem contains pending returns.");
 			m_Accepted = false;
 			return;
 		}
 		
 		if (m_Loop.containsPendingReturns()) {
-			s_Logger.warn("This implementation of Buchi acceptance rejects lasso" +
+			m_Logger.warn("This implementation of Buchi acceptance rejects lasso" +
 					" words, where the loop contains pending returns.");
 			m_Accepted = false;
 			return;
@@ -138,7 +138,7 @@ public class BuchiAcceptsRecursive<LETTER,STATE> implements IOperation<LETTER,ST
 		}
 		
 		if (m_Loop.length() ==0) {
-			s_Logger.debug("LassoWords with empty lasso are rejected by every Büchi" +
+			m_Logger.debug("LassoWords with empty lasso are rejected by every Büchi" +
 					" automaton");
 			m_Accepted = false;
 			return;
@@ -167,7 +167,7 @@ public class BuchiAcceptsRecursive<LETTER,STATE> implements IOperation<LETTER,ST
 					new LinkedList<STATE>());
 		}
 		m_Accepted = result;
-		s_Logger.info(exitMessage());
+		m_Logger.info(exitMessage());
 	}
 
 

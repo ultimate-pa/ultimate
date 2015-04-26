@@ -46,7 +46,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvide
 public class DeterminizeSadd<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	
 	private final IUltimateServiceProvider m_Services;
-	private final Logger s_Logger;
+	private final Logger m_Logger;
 	
 	private Map<Macrostate,STATE> macrostate2detState =
 		new HashMap<Macrostate, STATE>();
@@ -90,9 +90,9 @@ public class DeterminizeSadd<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	public DeterminizeSadd(IUltimateServiceProvider services,
 			INestedWordAutomatonOldApi<LETTER,STATE> nwa) {
 		m_Services = services;
-		s_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
+		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 		m_Operand = nwa;
-		s_Logger.info(startMessage());
+		m_Logger.info(startMessage());
 		result = new NestedWordAutomaton<LETTER,STATE>(
 				m_Services, 
 				m_Operand.getInternalAlphabet(),
@@ -101,7 +101,7 @@ public class DeterminizeSadd<LETTER,STATE> implements IOperation<LETTER,STATE> {
 				m_Operand.getStateFactory());
 		auxilliaryEmptyStackState = m_Operand.getEmptyStackState();
 		determinize();
-		s_Logger.info(exitMessage());
+		m_Logger.info(exitMessage());
 	}
 	
 	public INestedWordAutomatonOldApi<LETTER,STATE> getResult() throws AutomataLibraryException {
@@ -157,7 +157,7 @@ public class DeterminizeSadd<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	}
 	
 	private void determinize() {
-		s_Logger.debug("Starting determinizeSadd. Operand " + m_Operand.sizeInformation());
+		m_Logger.debug("Starting determinizeSadd. Operand " + m_Operand.sizeInformation());
 		Macrostate initialMacroState = new Macrostate();
 
 		for (STATE state : m_Operand.getInitialStates()) {
@@ -171,7 +171,7 @@ public class DeterminizeSadd<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		
 		while(!queue.isEmpty()) {
 			StatePair statePair = queue.remove(0);
-//			s_Logger.debug("Processing: "+ statePair);
+//			m_Logger.debug("Processing: "+ statePair);
 			processStatePair(statePair);
 			if (summary.containsKey(statePair.state)) {
 				for (STATE summarySucc : summary.get(statePair.state)) {
@@ -459,12 +459,12 @@ public class DeterminizeSadd<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	@Override
 	public boolean checkResult(StateFactory<STATE> stateFactory)
 			throws AutomataLibraryException {
-		s_Logger.info("Testing correctness of determinization");
+		m_Logger.info("Testing correctness of determinization");
 		boolean correct = true;
 		INestedWordAutomatonOldApi<LETTER,STATE> resultDD = (new DeterminizeDD<LETTER,STATE>(m_Services, stateFactory, m_Operand)).getResult();
 		correct &= (ResultChecker.nwaLanguageInclusion(m_Services, resultDD,result, stateFactory) == null);
 		correct &= (ResultChecker.nwaLanguageInclusion(m_Services, result,resultDD, stateFactory) == null);
-		s_Logger.info("Finished testing correctness of determinization");
+		m_Logger.info("Finished testing correctness of determinization");
 		return correct;
 	}
 	

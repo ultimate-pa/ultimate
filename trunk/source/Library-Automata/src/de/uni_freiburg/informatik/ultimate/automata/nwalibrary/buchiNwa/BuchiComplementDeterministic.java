@@ -87,7 +87,7 @@ public class BuchiComplementDeterministic<LETTER,STATE> extends DoubleDeckerVisi
 		super(services);
 		m_Operand = nwa;
 		m_ContentFactory = m_Operand.getStateFactory();
-		s_Logger.info(startMessage());
+		m_Logger.info(startMessage());
 		if (m_Operand.isTotal()) {
 			m_TotalizedOperand = m_Operand;
 		}
@@ -101,7 +101,7 @@ public class BuchiComplementDeterministic<LETTER,STATE> extends DoubleDeckerVisi
 				nwa.getReturnAlphabet(),
 				nwa.getStateFactory());
 		traverseDoubleDeckerGraph();
-		s_Logger.info(exitMessage());
+		m_Logger.info(exitMessage());
 		
 	}
 	

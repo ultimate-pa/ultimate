@@ -45,12 +45,12 @@ import de.uni_freiburg.informatik.ultimate.model.IElement;
 
 public class NwaToUltimateModel<LETTER,STATE> {
 	private final IUltimateServiceProvider m_Services;
-	private final Logger s_Logger;
+	private final Logger m_Logger;
 	
 	public NwaToUltimateModel(IUltimateServiceProvider services) {
 		super();
 		m_Services = services;
-		s_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
+		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 	}
 
 	public IElement getUltimateModelOfNwa(INestedWordAutomatonSimple<LETTER,STATE> nwaSimple) throws OperationCanceledException {
@@ -90,7 +90,7 @@ public class NwaToUltimateModel<LETTER,STATE> {
 				else {
 					succVSN = new AutomatonState(succState,
 							nwa.isFinal(succState));
-					s_Logger.debug("Creating Node: " + succVSN.toString());
+					m_Logger.debug("Creating Node: " + succVSN.toString());
 					constructed.put(succState,succVSN);
 					queue.add(succState);
 				}
@@ -107,7 +107,7 @@ public class NwaToUltimateModel<LETTER,STATE> {
 				} else {
 					succVSN = new AutomatonState(succState,
 							nwa.isFinal(succState));
-					s_Logger.debug("Creating Node: " + succVSN.toString());
+					m_Logger.debug("Creating Node: " + succVSN.toString());
 					constructed.put(succState, succVSN);
 					queue.add(succState);
 				}
@@ -123,7 +123,7 @@ public class NwaToUltimateModel<LETTER,STATE> {
 						succVSN = constructed.get(succState);
 					} else {
 						succVSN = new AutomatonState(succState,nwa.isFinal(succState));
-						s_Logger.debug("Creating Node: " + succVSN.toString());
+						m_Logger.debug("Creating Node: " + succVSN.toString());
 						constructed.put(succState, succVSN);
 						queue.add(succState);
 					}

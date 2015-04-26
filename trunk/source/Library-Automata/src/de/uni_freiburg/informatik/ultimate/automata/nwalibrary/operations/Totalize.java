@@ -42,7 +42,7 @@ public class Totalize<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	
 	private final IUltimateServiceProvider m_Services;
 
-	private final Logger s_Logger;
+	private final Logger m_Logger;
 	
 	private final INestedWordAutomatonSimple<LETTER,STATE> m_Operand;
 	private final TotalizeNwa<LETTER, STATE> m_Totalized;
@@ -73,13 +73,13 @@ public class Totalize<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	public Totalize(IUltimateServiceProvider services,
 			INestedWordAutomatonSimple<LETTER,STATE> input) throws AutomataLibraryException {
 		m_Services = services;
-		s_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
+		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 		this.m_StateFactory = input.getStateFactory();
 		this.m_Operand = input;
-		s_Logger.info(startMessage());
+		m_Logger.info(startMessage());
 		m_Totalized = new TotalizeNwa<LETTER, STATE>(input, m_StateFactory);
 		m_Result = new NestedWordAutomatonReachableStates<LETTER, STATE>(m_Services, m_Totalized);
-		s_Logger.info(exitMessage());
+		m_Logger.info(exitMessage());
 	}
 	
 
@@ -93,7 +93,7 @@ public class Totalize<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	@Override
 	public boolean checkResult(StateFactory<STATE> sf) throws AutomataLibraryException {
 		boolean correct = true;
-			s_Logger.info("Start testing correctness of " + operationName());
+			m_Logger.info("Start testing correctness of " + operationName());
 			INestedWordAutomatonOldApi<LETTER, STATE> operandOldApi = ResultChecker.getOldApiNwa(m_Services, m_Operand);
 
 			// should recognize same language imput
@@ -102,7 +102,7 @@ public class Totalize<LETTER,STATE> implements IOperation<LETTER,STATE> {
 			if (!correct) {
 				ResultChecker.writeToFileIfPreferred(m_Services, operationName() + "Failed", "", m_Operand);
 			}
-		s_Logger.info("Finished testing correctness of " + operationName());
+		m_Logger.info("Finished testing correctness of " + operationName());
 		return correct;
 	}
 	

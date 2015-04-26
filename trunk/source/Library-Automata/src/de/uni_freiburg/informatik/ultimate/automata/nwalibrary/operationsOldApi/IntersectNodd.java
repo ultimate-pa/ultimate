@@ -52,7 +52,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvide
 public class IntersectNodd<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	
 	private final IUltimateServiceProvider m_Services;
-	private final Logger s_Logger;
+	private final Logger m_Logger;
 	
 	
 	@Override
@@ -79,12 +79,12 @@ public class IntersectNodd<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	public IntersectNodd (IUltimateServiceProvider services, 
 			INestedWordAutomatonOldApi<LETTER,STATE> nwa, INestedWordAutomatonOldApi<LETTER,STATE> nwa2) {
 		m_Services = services;
-		s_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
+		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 		this.fstOperand = nwa;
 		this.sndOperand = nwa2;
-		s_Logger.info(startMessage());
+		m_Logger.info(startMessage());
 		buildProduct();
-		s_Logger.info(exitMessage());
+		m_Logger.info(exitMessage());
 	}
 	
 	public INestedWordAutomatonOldApi<LETTER,STATE> getResult() throws AutomataLibraryException {
@@ -161,7 +161,7 @@ public class IntersectNodd<LETTER,STATE> implements IOperation<LETTER,STATE> {
 				addReturns(ps, fst, snd, symbol, linPredSet1, linPredSet2);
 			}
 		}
-		s_Logger.debug("Processing at least "+m_ReturnTransitionQueue.size()+ " return transitions.");
+		m_Logger.debug("Processing at least "+m_ReturnTransitionQueue.size()+ " return transitions.");
 		for (STATE s1linPred : m_ReturnTransitionQueue.keySet()) {
 			Map<STATE, STATE> s2linPred2ps = m_pair2ps.get(s1linPred);
 			if (s2linPred2ps != null) {
@@ -329,7 +329,7 @@ public class IntersectNodd<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	@Override
 	public boolean checkResult(StateFactory<STATE> stateFactory)
 			throws AutomataLibraryException {
-		s_Logger.warn("Correctness of IntersectNodd not checked at the moment.");
+		m_Logger.warn("Correctness of IntersectNodd not checked at the moment.");
 		return true;
 	}
 }

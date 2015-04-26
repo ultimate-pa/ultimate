@@ -54,9 +54,9 @@ public class BuchiIsEmpty<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	public BuchiIsEmpty(IUltimateServiceProvider services,
 			INestedWordAutomatonSimple<LETTER, STATE> nwa) throws AutomataLibraryException {
 		m_Services = services;
-		s_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
+		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 		m_Nwa = nwa;
-		s_Logger.info(startMessage());
+		m_Logger.info(startMessage());
 		if (m_Nwa instanceof NestedWordAutomatonReachableStates) {
 			m_Reach = (NestedWordAutomatonReachableStates<LETTER, STATE>) m_Nwa;
 		} else {
@@ -64,7 +64,7 @@ public class BuchiIsEmpty<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		}
 		m_Sccs = m_Reach.getOrComputeStronglyConnectedComponents();
 		m_Result = m_Sccs.buchiIsEmpty();
-		s_Logger.info(exitMessage());
+		m_Logger.info(exitMessage());
 	}
 	
 	@Override
@@ -89,15 +89,15 @@ public class BuchiIsEmpty<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	}
 	
 
-	private final Logger s_Logger;
+	private final Logger m_Logger;
 	
 	
 	public NestedLassoRun<LETTER,STATE> getAcceptingNestedLassoRun() throws AutomataLibraryException {
 		if (m_Result) {
-			s_Logger.info("There is no accepting nested lasso run");
+			m_Logger.info("There is no accepting nested lasso run");
 			return null;
 		} else {
-			s_Logger.info("Starting construction of run");
+			m_Logger.info("Starting construction of run");
 			return m_Sccs.getNestedLassoRun();
 		}
 	}

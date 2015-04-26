@@ -56,7 +56,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvide
  */
 public class BuchiClosureNwa<LETTER, STATE> implements INestedWordAutomatonOldApi<LETTER, STATE>, IDoubleDeckerAutomaton<LETTER, STATE> {
 	private final IUltimateServiceProvider m_Services;
-	private final Logger s_Logger;
+	private final Logger m_Logger;
 	
 	private final INestedWordAutomatonOldApi<LETTER, STATE> m_Operand;
 	private final Set<STATE> m_AcceptingStates;
@@ -67,7 +67,7 @@ public class BuchiClosureNwa<LETTER, STATE> implements INestedWordAutomatonOldAp
 	public BuchiClosureNwa(IUltimateServiceProvider services,
 			INestedWordAutomaton<LETTER, STATE> operand) {
 		m_Services = services;
-		s_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
+		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 		m_Operand = (INestedWordAutomatonOldApi<LETTER, STATE>) operand;
 		m_AcceptingStates = computeSetOfAcceptingStates();
 	}
@@ -79,7 +79,7 @@ public class BuchiClosureNwa<LETTER, STATE> implements INestedWordAutomatonOldAp
 	 */
 	public Set<STATE> computeSetOfAcceptingStates() {
 		Set<STATE> newFinalStates = new HashSet<STATE>();
-		s_Logger.info("Accepting states before buchiClosure: " + m_Operand.getFinalStates().size());
+		m_Logger.info("Accepting states before buchiClosure: " + m_Operand.getFinalStates().size());
 		LinkedHashSet<STATE> worklist = new LinkedHashSet<STATE>();
 		newFinalStates.addAll(m_Operand.getFinalStates());
 		for (STATE fin : m_Operand.getFinalStates()) {
@@ -94,7 +94,7 @@ public class BuchiClosureNwa<LETTER, STATE> implements INestedWordAutomatonOldAp
 				addAllNonFinalPredecessors(state, worklist, newFinalStates);
 			}
 		}
-		s_Logger.info("Accepting states after buchiClosure: " + newFinalStates.size());
+		m_Logger.info("Accepting states after buchiClosure: " + newFinalStates.size());
 		return newFinalStates;
 	}
 	

@@ -47,7 +47,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvide
 public class Accepts<S, C> implements IOperation<S, C> {
 	
 	private final IUltimateServiceProvider m_Services;
-	private final Logger s_Logger;
+	private final Logger m_Logger;
 		
 	@Override
 	public String operationName() {
@@ -79,14 +79,14 @@ public class Accepts<S, C> implements IOperation<S, C> {
 	public Accepts(IUltimateServiceProvider services, 
 			PetriNetJulian<S, C> net, Word<S> nWord) throws AutomataLibraryException {
 		m_Services = services;
-		s_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
+		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 		this.net = net;
 		this.nWord = nWord;
-		s_Logger.info(startMessage());
+		m_Logger.info(startMessage());
 		// this.marking = new HashSet<Place<S, C>>(net.getInitialMarking());
 		// this.position = 0;
 		m_Result = getResultHelper(0,net.getInitialMarking());
-		s_Logger.info(exitMessage());
+		m_Logger.info(exitMessage());
 	}
 
 	public Boolean getResult() throws AutomataLibraryException {
@@ -134,7 +134,7 @@ public class Accepts<S, C> implements IOperation<S, C> {
 	public boolean checkResult(StateFactory<C> stateFactory)
 			throws AutomataLibraryException {
 
-		s_Logger.info("Testing correctness of accepts");
+		m_Logger.info("Testing correctness of accepts");
 
 		NestedWord<S> nw = NestedWord.nestedWord(nWord);
 		boolean resultAutomata = (new de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Accepts(m_Services, 
@@ -142,7 +142,7 @@ public class Accepts<S, C> implements IOperation<S, C> {
 				.getResult();
 		boolean correct = (m_Result == resultAutomata);
 
-		s_Logger.info("Finished testing correctness of accepts");
+		m_Logger.info("Finished testing correctness of accepts");
 
 		return correct;
 

@@ -65,7 +65,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvide
 public abstract class DoubleDeckerVisitor<LETTER, STATE> implements IOpWithDelayedDeadEndRemoval<LETTER, STATE> {
 
 	protected final IUltimateServiceProvider m_Services;
-	protected final Logger s_Logger;
+	protected final Logger m_Logger;
 	public enum ReachFinal {
 		UNKNOWN, AT_LEAST_ONCE
 	}
@@ -161,7 +161,7 @@ public abstract class DoubleDeckerVisitor<LETTER, STATE> implements IOpWithDelay
 	
 	public DoubleDeckerVisitor(IUltimateServiceProvider services) {
 		m_Services = services;
-		s_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
+		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 	}
 
 	public INestedWordAutomatonOldApi<LETTER, STATE> getResult() throws OperationCanceledException {
@@ -339,7 +339,7 @@ public abstract class DoubleDeckerVisitor<LETTER, STATE> implements IOpWithDelay
 			}
 
 		}
-		s_Logger.info("Before removal of dead ends " + m_TraversedNwa.sizeInformation());
+		m_Logger.info("Before removal of dead ends " + m_TraversedNwa.sizeInformation());
 		if (m_RemoveDeadEnds && m_RemoveNonLiveStates) {
 			throw new IllegalArgumentException("RemoveDeadEnds and RemoveNonLiveStates is set");
 		}
@@ -359,22 +359,22 @@ public abstract class DoubleDeckerVisitor<LETTER, STATE> implements IOpWithDelay
 			if (m_TraversedNwa.getInitialStates().isEmpty()) {
 				assert m_TraversedNwa.getStates().isEmpty();
 			}
-			s_Logger.info("After removal of dead ends " + m_TraversedNwa.sizeInformation());
+			m_Logger.info("After removal of dead ends " + m_TraversedNwa.sizeInformation());
 
 		}
 		if (m_RemoveNonLiveStates) {
-			// s_Logger.warn("Minimize before non-live removal: " +
+			// m_Logger.warn("Minimize before non-live removal: " +
 			// ((NestedWordAutomaton<LETTER,STATE>) (new MinimizeDfa<LETTER,
 			// STATE>(m_TraversedNwa)).getResult()).sizeInformation());
 			removeNonLiveStates();
-			// s_Logger.warn("Minimize after non-live removal: " +
+			// m_Logger.warn("Minimize after non-live removal: " +
 			// ((NestedWordAutomaton<LETTER,STATE>) (new MinimizeDfa<LETTER,
 			// STATE>(m_TraversedNwa)).getResult()).sizeInformation());
 			if (m_TraversedNwa.getInitialStates().isEmpty()) {
 				assert m_TraversedNwa.getStates().isEmpty();
 				// m_TraversedNwa = getTotalizedEmptyAutomaton();
 			}
-			s_Logger.info("After removal of nonLiveStates " + m_TraversedNwa.sizeInformation());
+			m_Logger.info("After removal of nonLiveStates " + m_TraversedNwa.sizeInformation());
 		}
 	}
 
@@ -525,7 +525,7 @@ public abstract class DoubleDeckerVisitor<LETTER, STATE> implements IOpWithDelay
 			for (STATE state : m_TraversedNwa.getFinalStates()) {
 				Map<STATE, ReachFinal> down2reachFinal = m_Marked_Up2Down.get(state);
 				if (down2reachFinal == null) {
-					s_Logger.debug("Unreachable final state: " + state);
+					m_Logger.debug("Unreachable final state: " + state);
 				} else {
 					for (STATE down : m_Marked_Up2Down.get(state).keySet()) {
 						nonRetAncest.add(state, down);
@@ -680,7 +680,7 @@ public abstract class DoubleDeckerVisitor<LETTER, STATE> implements IOpWithDelay
 	//
 	// Set<STATE> statesNeverReachFin =
 	// computeStatesThatCanNotReachFinalNewVersion();
-	// // s_Logger.error("STATEs " + m_TraversedNwa.getStates().size());
+	// // m_Logger.error("STATEs " + m_TraversedNwa.getStates().size());
 	// //// new TestFileWriter(m_TraversedNwa, "TheAutomaotn",
 	// TestFileWriter.Labeling.TOSTRING, "test");
 	// // assert statesNeverReachFinal.containsAll(statesNeverReachFin) :
@@ -734,7 +734,7 @@ public abstract class DoubleDeckerVisitor<LETTER, STATE> implements IOpWithDelay
 		}
 		for (STATE state : statesThatShouldNotBeInitialAnyMore) {
 			((NestedWordAutomaton<LETTER, STATE>) m_TraversedNwa).makeStateNonIntial(state);
-			s_Logger.warn("The following state is not final any more: " + state);
+			m_Logger.warn("The following state is not final any more: " + state);
 		}
 
 		for (STATE state : m_DeadEnds) {
@@ -744,7 +744,7 @@ public abstract class DoubleDeckerVisitor<LETTER, STATE> implements IOpWithDelay
 		boolean atLeastOneStateRemoved = !m_DeadEnds.isEmpty();
 		m_DeadEnds = null;
 		m_DeadEndRemovalTime += (System.currentTimeMillis() - startTime);
-		s_Logger.info("After removal of dead ends " + m_TraversedNwa.sizeInformation());
+		m_Logger.info("After removal of dead ends " + m_TraversedNwa.sizeInformation());
 		return atLeastOneStateRemoved;
 	}
 

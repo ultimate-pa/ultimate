@@ -56,7 +56,7 @@ public class NestedWordAutomaton<LETTER, STATE> implements INestedWordAutomatonO
 		INestedWordAutomaton<LETTER, STATE> {
 
 	private final IUltimateServiceProvider m_Services;
-	private final Logger s_Logger;
+	private final Logger m_Logger;
 
 	private Set<LETTER> m_InternalAlphabet;
 	private Set<LETTER> m_CallAlphabet;
@@ -1984,7 +1984,7 @@ public class NestedWordAutomaton<LETTER, STATE> implements INestedWordAutomatonO
 			Set<LETTER> internalAlphabet, Set<LETTER> callAlphabet, Set<LETTER> returnAlphabet,
 			StateFactory<STATE> stateFactory) {
 		m_Services = services;
-		s_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
+		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 		if (internalAlphabet == null) {
 			throw new IllegalArgumentException("nwa must have internal alphabet");
 		}
@@ -2182,7 +2182,7 @@ public class NestedWordAutomaton<LETTER, STATE> implements INestedWordAutomatonO
 	 * maximize set of accepting states
 	 */
 	public void buchiClosure() {
-		s_Logger.info("Accepting states before buchiClosure: " + getFinalStates().size());
+		m_Logger.info("Accepting states before buchiClosure: " + getFinalStates().size());
 		Set<STATE> worklist = new HashSet<STATE>();
 		worklist.addAll(getFinalStates());
 		while (!worklist.isEmpty()) {
@@ -2219,7 +2219,7 @@ public class NestedWordAutomaton<LETTER, STATE> implements INestedWordAutomatonO
 				}
 			}
 		}
-		s_Logger.info("Accepting states after buchiClosure: " + getFinalStates().size());
+		m_Logger.info("Accepting states after buchiClosure: " + getFinalStates().size());
 	}
 
 	/**

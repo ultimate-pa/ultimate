@@ -19,41 +19,41 @@ import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvide
 public class NwaList<LETTER,STATE> implements IOperation<LETTER,STATE>{
 
 	ArrayList<INestedWordAutomaton<LETTER,STATE>> automataCollection;
-	private static Logger s_Logger;
+	private static Logger m_Logger;
 	
 	public NwaList(IUltimateServiceProvider services,INestedWordAutomaton<LETTER,STATE> orginalAutomata, INestedWordAutomaton<LETTER,STATE> newAutomata){
-		s_Logger = services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
-		s_Logger.info(startMessage());
+		m_Logger = services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
+		m_Logger.info(startMessage());
 		automataCollection = new ArrayList<INestedWordAutomaton<LETTER,STATE>>();
 		automataCollection.add(orginalAutomata);
 		automataCollection.add(newAutomata);
-		s_Logger.info(exitMessage());
+		m_Logger.info(exitMessage());
 	}
 	
 	public NwaList(IUltimateServiceProvider services,ArrayList<INestedWordAutomaton<LETTER,STATE>> orginalAutomataCollection, INestedWordAutomaton<LETTER,STATE> newAutomata){
-		s_Logger = services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
-		s_Logger.info(startMessage());
+		m_Logger = services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
+		m_Logger.info(startMessage());
 		automataCollection = orginalAutomataCollection;
 		automataCollection.add(newAutomata);
-		s_Logger.info(exitMessage());
+		m_Logger.info(exitMessage());
 	}
 	public NwaList(IUltimateServiceProvider services,INestedWordAutomaton<LETTER,STATE> newAutomata,ArrayList<INestedWordAutomaton<LETTER,STATE>> orginalAutomataCollection){
-		s_Logger = services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
-		s_Logger.info(startMessage());
+		m_Logger = services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
+		m_Logger.info(startMessage());
 		automataCollection = orginalAutomataCollection;
 		automataCollection.add(newAutomata);
-		s_Logger.info(exitMessage());
+		m_Logger.info(exitMessage());
 	}
 	
 	/**
 	 * Constructs a list that consists of a single automaton.
 	 */
 	public NwaList(IUltimateServiceProvider services,INestedWordAutomaton<LETTER,STATE> newAutomata){
-		s_Logger = services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
-		s_Logger.info(startMessage());
+		m_Logger = services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
+		m_Logger.info(startMessage());
 		automataCollection = new ArrayList<INestedWordAutomaton<LETTER,STATE>>();
 		automataCollection.add(newAutomata);
-		s_Logger.info(exitMessage());
+		m_Logger.info(exitMessage());
 	}
 	
 	@Override

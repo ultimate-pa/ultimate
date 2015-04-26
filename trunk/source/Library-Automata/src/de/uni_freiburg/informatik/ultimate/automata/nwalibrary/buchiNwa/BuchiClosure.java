@@ -50,7 +50,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvide
 public class BuchiClosure<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	
 	private final IUltimateServiceProvider m_Services;
-	private final Logger s_Logger;
+	private final Logger m_Logger;
 
 	private final INestedWordAutomaton<LETTER,STATE> m_Operand;
 	private final INestedWordAutomaton<LETTER, STATE> m_Result;
@@ -84,11 +84,11 @@ public class BuchiClosure<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	public BuchiClosure(IUltimateServiceProvider services,
 			INestedWordAutomatonOldApi<LETTER,STATE> input) throws AutomataLibraryException {
 		m_Services = services;
-		s_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
+		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 		this.m_Operand = input;
-		s_Logger.info(startMessage());
+		m_Logger.info(startMessage());
 		m_Result = new BuchiClosureNwa<LETTER, STATE>(m_Services, (INestedWordAutomatonOldApi) m_Operand);
-		s_Logger.info(exitMessage());
+		m_Logger.info(exitMessage());
 	}
 	
 	
@@ -100,7 +100,7 @@ public class BuchiClosure<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	public boolean checkResult(StateFactory<STATE> stateFactory)
 			throws AutomataLibraryException {
 		boolean correct = true;
-		s_Logger.info("Start testing correctness of " + operationName());
+		m_Logger.info("Start testing correctness of " + operationName());
 		INestedWordAutomatonOldApi<LETTER, STATE> operandOldApi = 
 				ResultChecker.getOldApiNwa(m_Services, m_Operand);
 		List<NestedLassoWord<LETTER>> lassoWords = new ArrayList<NestedLassoWord<LETTER>>();
@@ -116,7 +116,7 @@ public class BuchiClosure<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		}
 		correct &= (operandEmpty == resultEmpty);
 		assert correct;
-		s_Logger.info("Finished testing correctness of " + operationName());
+		m_Logger.info("Finished testing correctness of " + operationName());
 		return correct;
 	}
 	

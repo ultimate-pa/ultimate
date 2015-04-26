@@ -66,7 +66,7 @@ import de.uni_freiburg.informatik.ultimate.util.TreeRelation;
 public class BuchiComplementFKVNwa<LETTER,STATE> implements INestedWordAutomatonSimple<LETTER,STATE> {
 	
 	private final IUltimateServiceProvider m_Services;
-	private final Logger s_Logger;
+	private final Logger m_Logger;
 	
 	/**
 	 * TODO Allow definition of a maximal rank for cases where you know that
@@ -123,7 +123,7 @@ public class BuchiComplementFKVNwa<LETTER,STATE> implements INestedWordAutomaton
 			IStateDeterminizer<LETTER,STATE> stateDeterminizer,
 			StateFactory<STATE> stateFactory, int userDefinedMaxRank) throws OperationCanceledException {
 		m_Services = services;
-		s_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
+		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 		m_Operand = operand;
 		m_StateFactory = stateFactory;
 		m_Cache = new NestedWordAutomatonCache<LETTER, STATE>(
@@ -275,7 +275,7 @@ public class BuchiComplementFKVNwa<LETTER,STATE> implements INestedWordAutomaton
 					new HeiMatTightLevelRankingStateGenerator(constraints);
 				Collection<LevelRankingState> result = gen.computeResult();
 				if (result.size() > 2) {
-					s_Logger.warn("big" + result.size());
+					m_Logger.warn("big" + result.size());
 				}
 				for (LevelRankingState complSucc : result) {
 					STATE resSucc = getOrAdd(complSucc);
@@ -291,7 +291,7 @@ public class BuchiComplementFKVNwa<LETTER,STATE> implements INestedWordAutomaton
 					new HeiMatTightLevelRankingStateGenerator(constraints);
 				Collection<LevelRankingState> result = gen.computeResult();
 				if (result.size() > 4) {
-					s_Logger.warn("big" + result.size());
+					m_Logger.warn("big" + result.size());
 				}
 				for (LevelRankingState complSucc : result) {
 					STATE resSucc = getOrAdd(complSucc);
@@ -828,7 +828,7 @@ public class BuchiComplementFKVNwa<LETTER,STATE> implements INestedWordAutomaton
 		
 
 		Collection<LevelRankingState> computeResult() {
-//			s_Logger.debug("Constructing LevelRankings for" + 
+//			m_Logger.debug("Constructing LevelRankings for" + 
 //									m_UnrestrictedDoubleDecker.toString() + 
 //									m_RestrictedDoubleDecker.toString());
 			
@@ -885,7 +885,7 @@ public class BuchiComplementFKVNwa<LETTER,STATE> implements INestedWordAutomaton
 		}
 		
 		private void constructComplementState() {
-//			s_Logger.debug("Rank " + Arrays.toString(m_UnrestrictedRank) + 
+//			m_Logger.debug("Rank " + Arrays.toString(m_UnrestrictedRank) + 
 //											Arrays.toString(m_RestrictedRank));
 			LevelRankingState result = new LevelRankingState();
 			for (int i=0; i<m_RestrictedRank.length; i++) {
@@ -1287,7 +1287,7 @@ public class BuchiComplementFKVNwa<LETTER,STATE> implements INestedWordAutomaton
 			final int netSurplus = surplusRk - lrwsi.numberUnsatisfiedLowerRanks();
 			final int numberOfOddRankTheWeCouldAssignAdditionally = Math.max(lrwsi.numberUnsatisfiedLowerRanks() - surplusRk, 0);
 			if (numberOfOddRankTheWeCouldAssignAdditionally > 1 && numberOfCopies > 1) {
-				s_Logger.info("Sacrifice!");
+				m_Logger.info("Sacrifice!");
 			}
 
 //			assert constraintToRank.length - maxNumberOfEvenRanksWeMayAssign == numberOfOddRanksThatWeHaveToAssignAdditionally;
@@ -1523,7 +1523,7 @@ public class BuchiComplementFKVNwa<LETTER,STATE> implements INestedWordAutomaton
 						}
 					} else {
 						if (m_SacrificedDoubleDeckers.size() > 1) {
-							s_Logger.warn("unneccessary sacrifice !!! this state is is not needed, "
+							m_Logger.warn("unneccessary sacrifice !!! this state is is not needed, "
 									+ "construction can be optimized, contact Matthias");
 						}
 						rank = m_Lrs.m_HighestRank - 1;

@@ -50,7 +50,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvide
 public class PrefixProduct<S,C> implements IOperation<S,C> {
 	
 	private final IUltimateServiceProvider m_Services;
-	private final Logger s_Logger;
+	private final Logger m_Logger;
 	
 	private final PetriNetJulian<S,C> m_Net;
 	private final NestedWordAutomaton<S,C> m_Nwa;
@@ -121,7 +121,7 @@ public class PrefixProduct<S,C> implements IOperation<S,C> {
 	public PrefixProduct(IUltimateServiceProvider services,
 			PetriNetJulian<S, C> net, NestedWordAutomaton<S, C> nwa) {
 		m_Services = services;
-		s_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
+		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 		this.m_Net = net;
 		this.m_Nwa = nwa;
 		if (nwa.getInitialStates().size() != 1) {
@@ -288,7 +288,7 @@ public class PrefixProduct<S,C> implements IOperation<S,C> {
 	@Override
 	public boolean checkResult(StateFactory<C> stateFactory)
 			throws AutomataLibraryException {
-		s_Logger.info("Testing correctness of prefixProduct");
+		m_Logger.info("Testing correctness of prefixProduct");
 
 		INestedWordAutomatonOldApi op1AsNwa = (new PetriNet2FiniteAutomaton(m_Services, m_Net)).getResult();
 		INestedWordAutomatonOldApi resultAsNwa = (new PetriNet2FiniteAutomaton(m_Services, m_Result)).getResult();
@@ -297,7 +297,7 @@ public class PrefixProduct<S,C> implements IOperation<S,C> {
 		correct &= (new IsIncluded(m_Services, stateFactory, resultAsNwa,nwaResult)).getResult();
 		correct &= (new IsIncluded(m_Services, stateFactory, nwaResult,resultAsNwa)).getResult();
 
-		s_Logger.info("Finished testing correctness of prefixProduct");
+		m_Logger.info("Finished testing correctness of prefixProduct");
 		return correct;
 	}
 	

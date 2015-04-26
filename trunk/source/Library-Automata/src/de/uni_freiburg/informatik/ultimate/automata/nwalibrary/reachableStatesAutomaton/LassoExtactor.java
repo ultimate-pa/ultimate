@@ -64,7 +64,7 @@ import de.uni_freiburg.informatik.ultimate.util.HashRelation;
 class LassoExtractor<LETTER, STATE> {
 	
 	private final IUltimateServiceProvider m_Services;
-	private final Logger s_Logger;
+	private final Logger m_Logger;
 
 	private final NestedWordAutomatonReachableStates<LETTER, STATE> m_Nwars;
 
@@ -76,7 +76,7 @@ class LassoExtractor<LETTER, STATE> {
 			SCC scc, 
 			HashRelation<StateContainer<LETTER, STATE>, Summary<LETTER, STATE>> acceptingSummaries) throws OperationCanceledException {
 		m_Services = services;
-		s_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
+		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 		m_Nwars = nwars;
 		Set<SuccInfo> forbiddenSummaries = Collections.emptySet();
 		LoopFinder lf = new LoopFinder(honda, scc, true, 
@@ -84,11 +84,11 @@ class LassoExtractor<LETTER, STATE> {
 		NestedRun<LETTER, STATE> loop = lf.getNestedRun();
 		assert loop.getLength() > 1 : "looping epsilon transition";
 		NestedRun<LETTER, STATE> stem = (new RunConstructor<LETTER, STATE>(m_Services, m_Nwars, honda)).constructRun();
-		s_Logger.debug("Stem length: " + stem.getLength());
-		s_Logger.debug("Loop length: " + loop.getLength());
+		m_Logger.debug("Stem length: " + stem.getLength());
+		m_Logger.debug("Loop length: " + loop.getLength());
 		m_nlr = new NestedLassoRun<LETTER, STATE>(stem, loop);
-		s_Logger.debug("Stem " + stem);
-		s_Logger.debug("Loop " + loop);
+		m_Logger.debug("Stem " + stem);
+		m_Logger.debug("Loop " + loop);
 		assert (new BuchiAccepts<LETTER, STATE>(m_Services, m_Nwars, m_nlr.getNestedLassoWord())).getResult();
 	}
 

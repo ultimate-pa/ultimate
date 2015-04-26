@@ -47,7 +47,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvide
 public abstract class AbstractAcceptance<LETTER,STATE> {
 
 	protected final IUltimateServiceProvider m_Services;
-	protected final Logger s_Logger;
+	protected final Logger m_Logger;
 	
 	
 	
@@ -55,7 +55,7 @@ public abstract class AbstractAcceptance<LETTER,STATE> {
 	public AbstractAcceptance(IUltimateServiceProvider services) {
 		super();
 		m_Services = services;
-		s_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
+		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 	}
 
 	/**
@@ -135,7 +135,7 @@ public abstract class AbstractAcceptance<LETTER,STATE> {
 				}
 			} else if (nw.isReturnPosition(position)) {
 				if (config.isEmpty()) {
-					s_Logger.warn("Input has pending returns, we reject such words");
+					m_Logger.warn("Input has pending returns, we reject such words");
 				}
 				else {
 					STATE callPred = config.pop();

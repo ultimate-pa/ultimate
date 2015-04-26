@@ -50,7 +50,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvide
 public class BuchiComplementSVW<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	
 	private final IUltimateServiceProvider m_Services;
-	private final Logger s_Logger;
+	private final Logger m_Logger;
 	
 	private INestedWordAutomatonOldApi<LETTER,STATE> m_Operand;
 	private BuchiComplementAutomatonSVW<LETTER,STATE> m_Result;
@@ -77,11 +77,11 @@ public class BuchiComplementSVW<LETTER,STATE> implements IOperation<LETTER,STATE
 			INestedWordAutomatonOldApi<LETTER,STATE> operand)
 			throws AutomataLibraryException {
 		m_Services = services;
-		s_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
+		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 		m_Operand = operand;
-		s_Logger.info(startMessage());
+		m_Logger.info(startMessage());
 		m_Result = new BuchiComplementAutomatonSVW<LETTER, STATE>(m_Services, operand);
-		s_Logger.info(exitMessage());
+		m_Logger.info(exitMessage());
 	}
 
 	@Override

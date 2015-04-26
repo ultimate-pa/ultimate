@@ -46,7 +46,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvide
 public class BuchiDifferenceFKV<LETTER,STATE> implements IOperation<LETTER,STATE> {
 
 	private final IUltimateServiceProvider m_Services;
-	private final Logger s_Logger;
+	private final Logger m_Logger;
 	
 	private final INestedWordAutomatonSimple<LETTER,STATE> m_FstOperand;
 	private final INestedWordAutomatonSimple<LETTER,STATE> m_SndOperand;
@@ -95,14 +95,14 @@ public class BuchiDifferenceFKV<LETTER,STATE> implements IOperation<LETTER,STATE
 			INestedWordAutomatonSimple<LETTER,STATE> sndOperand
 			) throws AutomataLibraryException {
 		m_Services = services;
-		s_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
+		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 		m_FstOperand = fstOperand;
 		m_SndOperand = sndOperand;
 		m_StateFactory = m_FstOperand.getStateFactory();
 		m_StateDeterminizer = new PowersetDeterminizer<LETTER,STATE>(sndOperand, true, stateFactory);
-		s_Logger.info(startMessage());
+		m_Logger.info(startMessage());
 		constructDifference(Integer.MAX_VALUE);
-		s_Logger.info(exitMessage());
+		m_Logger.info(exitMessage());
 	}
 	
 	
@@ -112,14 +112,14 @@ public class BuchiDifferenceFKV<LETTER,STATE> implements IOperation<LETTER,STATE
 			IStateDeterminizer<LETTER, STATE> stateDeterminizer,
 			StateFactory<STATE> sf, int userDefinedMaxRank) throws AutomataLibraryException {
 		m_Services = services;
-		s_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
+		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 		m_FstOperand = fstOperand;
 		m_SndOperand = sndOperand;
 		m_StateFactory = sf;
 		m_StateDeterminizer = stateDeterminizer;
-		s_Logger.info(startMessage());
+		m_Logger.info(startMessage());
 		constructDifference(userDefinedMaxRank);
-		s_Logger.info(exitMessage());
+		m_Logger.info(exitMessage());
 	}
 	
 	private void constructDifference(int userDefinedMaxRank) throws AutomataLibraryException {
@@ -153,7 +153,7 @@ public class BuchiDifferenceFKV<LETTER,STATE> implements IOperation<LETTER,STATE
 			throws AutomataLibraryException {
 		boolean underApproximationOfComplement = false;
 		boolean correct = true;
-			s_Logger.info("Start testing correctness of " + operationName());
+			m_Logger.info("Start testing correctness of " + operationName());
 			INestedWordAutomatonOldApi<LETTER, STATE> fstOperandOldApi = ResultChecker.getOldApiNwa(m_Services, m_FstOperand);
 			INestedWordAutomatonOldApi<LETTER, STATE> sndOperandOldApi = ResultChecker.getOldApiNwa(m_Services, m_SndOperand);
 			List<NestedLassoWord<LETTER>> lassoWords = new ArrayList<NestedLassoWord<LETTER>>();
@@ -188,7 +188,7 @@ public class BuchiDifferenceFKV<LETTER,STATE> implements IOperation<LETTER,STATE
 			if (!correct) {
 				ResultChecker.writeToFileIfPreferred(m_Services, operationName() + "Failed", "", m_FstOperand,m_SndOperand);
 			}
-			s_Logger.info("Finished testing correctness of " + operationName());
+			m_Logger.info("Finished testing correctness of " + operationName());
 		return correct;
 	}
 	

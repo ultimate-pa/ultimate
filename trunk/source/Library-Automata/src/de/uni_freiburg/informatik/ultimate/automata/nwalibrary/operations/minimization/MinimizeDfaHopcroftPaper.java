@@ -25,7 +25,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvide
 public class MinimizeDfaHopcroftPaper<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	private final IUltimateServiceProvider m_Services;
 	// Logger for debug - information.
-	private final Logger s_Logger;
+	private final Logger m_Logger;
 		// Result automaton.
 		private NestedWordAutomaton<LETTER, STATE> m_Result;
 		// Input automaton.
@@ -81,7 +81,7 @@ public class MinimizeDfaHopcroftPaper<LETTER, STATE> implements IOperation<LETTE
 				StateFactory<STATE> stateFactoryConstruction,
 				Collection<Set<STATE>> initialPartition, boolean addMapping) {
 			m_Services = services;
-			s_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
+			m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 			this.m_operand = operand;
 			this.m_stateFactory = stateFactoryConstruction;
 			if (addMapping) {
@@ -91,7 +91,7 @@ public class MinimizeDfaHopcroftPaper<LETTER, STATE> implements IOperation<LETTE
 						computeHashMapCapacity(m_operand.size()));
 			}
 
-			s_Logger.info(startMessage());
+			m_Logger.info(startMessage());
 			if (m_operand.size() > 0) {
 				// Start minimization.
 				minimizeDfaHopcroft(initialPartition);
@@ -102,7 +102,7 @@ public class MinimizeDfaHopcroftPaper<LETTER, STATE> implements IOperation<LETTE
 						m_operand.getInternalAlphabet(), null,
 						null, m_stateFactory);
 			}
-			s_Logger.info(exitMessage());
+			m_Logger.info(exitMessage());
 		}
 		
 		/**
@@ -119,14 +119,14 @@ public class MinimizeDfaHopcroftPaper<LETTER, STATE> implements IOperation<LETTE
 		 */
 		private void minimizeDfaHopcroft(final Collection<Set<STATE>> initialPartition) {
 			// First make preprocessing on given automata.
-			s_Logger.info("Start preprocessing data ... ");
+			m_Logger.info("Start preprocessing data ... ");
 			preprocessingData();
 			// Create Object partition for m_blocks and m_cords.
 			m_blocks = new Partition();
 			m_cords = new Partition();
-			s_Logger.info("completed preprocessing data.");
+			m_Logger.info("completed preprocessing data.");
 			
-			s_Logger.info("Start intitializing partitions ... ");
+			m_Logger.info("Start intitializing partitions ... ");
 			m_blocks.init(m_nOfStates);
 			
 			// Make initial partition.
@@ -134,7 +134,7 @@ public class MinimizeDfaHopcroftPaper<LETTER, STATE> implements IOperation<LETTE
 			
 			// Make transition partition.
 			makeTransitionPartition();
-			s_Logger.info("completed initialization of partitions.");
+			m_Logger.info("completed initialization of partitions.");
 			
 			m_adjacent = new int[m_nOfTransitions];
 			m_F = new int[m_nOfStates + 1];
@@ -145,7 +145,7 @@ public class MinimizeDfaHopcroftPaper<LETTER, STATE> implements IOperation<LETTE
 			/***************************************************************//**
 			 * The core of the Hopcroft - algorithm.
 			 */
-			s_Logger.info("Start with Hopcroft - algorithm");
+			m_Logger.info("Start with Hopcroft - algorithm");
 			int blockIterator = 1, cordsIterator = 0;
 			int i, j;
 			// Iterate over blocks of transitions with same labels.
@@ -606,12 +606,12 @@ public class MinimizeDfaHopcroftPaper<LETTER, STATE> implements IOperation<LETTE
 		@Override
 		public final boolean checkResult(final StateFactory<STATE> stateFactory)
 				throws AutomataLibraryException {
-			s_Logger.info("Start testing correctness of " + operationName());
+			m_Logger.info("Start testing correctness of " + operationName());
 			final String message;
 			
 			if (checkInclusion(m_operand, getResult(), stateFactory)) {
 				if (checkInclusion(getResult(), m_operand, stateFactory)) {
-					s_Logger.info("Finished testing correctness of " +
+					m_Logger.info("Finished testing correctness of " +
 							operationName());
 					return true;
 				}

@@ -98,7 +98,7 @@ public class DeterminizeDD<LETTER,STATE> extends DoubleDeckerBuilder<LETTER,STAT
 		super(services);
 		this.contentFactory = input.getStateFactory();
 		this.m_Operand = input;
-		s_Logger.debug(startMessage());
+		m_Logger.debug(startMessage());
 		this.stateDeterminizer = stateDeterminizer;
 		super.m_TraversedNwa = new NestedWordAutomaton<LETTER,STATE>(
 				m_Services, 
@@ -109,7 +109,7 @@ public class DeterminizeDD<LETTER,STATE> extends DoubleDeckerBuilder<LETTER,STAT
 		m_RemoveDeadEnds = false;
 		traverseDoubleDeckerGraph();
 		assert (m_TraversedNwa.isDeterministic());
-		s_Logger.debug(exitMessage());
+		m_Logger.debug(exitMessage());
 	}
 	
 	public DeterminizeDD(IUltimateServiceProvider services,
@@ -119,7 +119,7 @@ public class DeterminizeDD<LETTER,STATE> extends DoubleDeckerBuilder<LETTER,STAT
 		super(services);
 		this.contentFactory = input.getStateFactory();
 		this.m_Operand = input;
-		s_Logger.debug(startMessage());
+		m_Logger.debug(startMessage());
 		this.stateDeterminizer = new PowersetDeterminizer<LETTER, STATE>(input, true, stateFactory);
 		super.m_TraversedNwa = new NestedWordAutomaton<LETTER,STATE>(
 				m_Services, 
@@ -130,7 +130,7 @@ public class DeterminizeDD<LETTER,STATE> extends DoubleDeckerBuilder<LETTER,STAT
 		m_RemoveDeadEnds = false;
 		traverseDoubleDeckerGraph();
 		assert (m_TraversedNwa.isDeterministic());
-		s_Logger.debug(exitMessage());
+		m_Logger.debug(exitMessage());
 	}
 
 	
@@ -247,12 +247,12 @@ public class DeterminizeDD<LETTER,STATE> extends DoubleDeckerBuilder<LETTER,STAT
 			throws AutomataLibraryException {
 		boolean correct = true;
 		if (stateDeterminizer instanceof PowersetDeterminizer) {
-			s_Logger.info("Testing correctness of determinization");
+			m_Logger.info("Testing correctness of determinization");
 			INestedWordAutomatonOldApi<LETTER, STATE> operandOld = (new RemoveUnreachable(m_Services, m_Operand)).getResult();
 			INestedWordAutomatonOldApi<LETTER,STATE> resultSadd = (new DeterminizeSadd<LETTER,STATE>(m_Services, operandOld)).getResult();
 			correct &= (ResultChecker.nwaLanguageInclusion(m_Services, resultSadd,m_TraversedNwa, stateFactory) == null);
 			correct &= (ResultChecker.nwaLanguageInclusion(m_Services, m_TraversedNwa,resultSadd, stateFactory) == null);
-			s_Logger.info("Finished testing correctness of determinization");
+			m_Logger.info("Finished testing correctness of determinization");
 		
 		}
 		return correct;

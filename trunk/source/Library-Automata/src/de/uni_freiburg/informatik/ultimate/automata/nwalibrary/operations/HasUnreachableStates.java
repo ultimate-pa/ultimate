@@ -56,15 +56,15 @@ public class HasUnreachableStates<LETTER,STATE> extends DoubleDeckerVisitor<LETT
 			INestedWordAutomatonOldApi<LETTER,STATE> operand) throws AutomataLibraryException {
 		super(services);
 		m_TraversedNwa = operand;
-		s_Logger.info(startMessage());
+		m_Logger.info(startMessage());
 		traverseDoubleDeckerGraph();
 		for (STATE state : m_TraversedNwa.getStates()) {
 			if (!m_VisitedStates.contains(state)) {
 				m_UnreachalbeStates++;
-				s_Logger.warn("Unreachalbe state: " + state);
+				m_Logger.warn("Unreachalbe state: " + state);
 			}
 		}
-		s_Logger.info(exitMessage());
+		m_Logger.info(exitMessage());
 	}
 
 	@Override

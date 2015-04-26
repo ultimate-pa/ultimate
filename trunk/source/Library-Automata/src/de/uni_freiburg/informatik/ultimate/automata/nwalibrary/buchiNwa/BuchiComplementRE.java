@@ -41,7 +41,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvide
 public class BuchiComplementRE<LETTER,STATE> implements IOperation<LETTER,STATE> {
 
 	private final IUltimateServiceProvider m_Services;
-	private final Logger s_Logger;
+	private final Logger m_Logger;
 
 	private INestedWordAutomatonOldApi<LETTER,STATE> m_Operand;
 	private INestedWordAutomatonOldApi<LETTER,STATE> m_Result;
@@ -84,13 +84,13 @@ public class BuchiComplementRE<LETTER,STATE> implements IOperation<LETTER,STATE>
 			StateFactory<STATE> stateFactory,
 			INestedWordAutomatonOldApi<LETTER,STATE> operand) throws AutomataLibraryException {
 		m_Services = services;
-		s_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
+		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 		m_Operand = operand;
-		s_Logger.info(startMessage());
+		m_Logger.info(startMessage());
 		INestedWordAutomatonOldApi<LETTER,STATE> operandWithoutNonLiveStates = 
 				(new ReachableStatesCopy<LETTER,STATE>(m_Services, operand, false, false, false, true)).getResult();
 		if (operandWithoutNonLiveStates.isDeterministic()) {
-			s_Logger.info("Rüdigers determinization knack not necessary, already deterministic");
+			m_Logger.info("Rüdigers determinization knack not necessary, already deterministic");
 			m_Result = (new BuchiComplementDeterministic<LETTER,STATE>(m_Services, operandWithoutNonLiveStates)).getResult();
 		}
 		else {
@@ -104,12 +104,12 @@ public class BuchiComplementRE<LETTER,STATE> implements IOperation<LETTER,STATE>
 					(new BuchiIntersectDD<LETTER,STATE>(m_Services, operandWithoutNonLiveStates, determinizedComplement, true)).getResult();
 			NestedLassoRun<LETTER,STATE> run = (new BuchiIsEmpty<LETTER,STATE>(m_Services, intersectionWithOperand)).getAcceptingNestedLassoRun();
 			if (run == null) {
-				s_Logger.info("Rüdigers determinization knack applicable");
+				m_Logger.info("Rüdigers determinization knack applicable");
 				m_buchiComplementREApplicable = true;
 				m_Result = determinizedComplement;
 			}
 			else {
-				s_Logger.info("Rüdigers determinization knack not applicable");
+				m_Logger.info("Rüdigers determinization knack not applicable");
 				m_buchiComplementREApplicable = false;
 				m_Result = null;
 			}
@@ -117,7 +117,7 @@ public class BuchiComplementRE<LETTER,STATE> implements IOperation<LETTER,STATE>
 
 
 		
-		s_Logger.info(exitMessage());
+		m_Logger.info(exitMessage());
 	}
 	
 	

@@ -37,7 +37,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvide
 
 public class GetAcceptedWord<LETTER, STATE> implements IOperation<LETTER,STATE> {
 	private final IUltimateServiceProvider m_Services;
-	private final Logger s_Logger;
+	private final Logger m_Logger;
 
 	INestedWordAutomatonOldApi<LETTER, STATE> m_Operand;
 	NestedWord<LETTER> m_AcceptedWord;
@@ -45,9 +45,9 @@ public class GetAcceptedWord<LETTER, STATE> implements IOperation<LETTER,STATE> 
 	public GetAcceptedWord(IUltimateServiceProvider services,
 			INestedWordAutomatonOldApi<LETTER, STATE> operand) throws AutomataLibraryException {
 		m_Services = services;
-		s_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
+		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 		m_Operand = operand;
-		s_Logger.info(startMessage());
+		m_Logger.info(startMessage());
 		IsEmpty<LETTER, STATE> isEmpty = new IsEmpty<LETTER, STATE>(m_Services, operand);
 		if (isEmpty.getResult()) {
 			throw new IllegalArgumentException(
@@ -55,7 +55,7 @@ public class GetAcceptedWord<LETTER, STATE> implements IOperation<LETTER,STATE> 
 		} else {
 			m_AcceptedWord = isEmpty.getNestedRun().getWord();
 		}
-		s_Logger.info(exitMessage());
+		m_Logger.info(exitMessage());
 	}
 
 	@Override

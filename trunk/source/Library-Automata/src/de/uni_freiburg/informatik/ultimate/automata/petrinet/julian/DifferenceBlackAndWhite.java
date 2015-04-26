@@ -56,7 +56,7 @@ public class DifferenceBlackAndWhite<S,C> implements IOperation<S,C> {
 		return "differenceBlackAndWhite";
 	}
 	
-	private final Logger s_Logger;
+	private final Logger m_Logger;
 	
 	
 	
@@ -100,12 +100,12 @@ public class DifferenceBlackAndWhite<S,C> implements IOperation<S,C> {
 									PetriNetJulian<S,C> net, 
 								   NestedWordAutomaton<S,C> nwa) {
 		m_Services = services;
-		s_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
+		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 		m_Net = net;
 		m_Nwa = nwa;
 		m_ContentFactory = net.getStateFactory();
 		
-		s_Logger.info(startMessage());
+		m_Logger.info(startMessage());
 		
 		Collection<S> netAlphabet = new HashSet<S>(net.getAlphabet());
 		Collection<S> nwaAlpahbet = new HashSet<S>(nwa.getInternalAlphabet());
@@ -139,7 +139,7 @@ public class DifferenceBlackAndWhite<S,C> implements IOperation<S,C> {
 			addBlackAndWhitePlaces();
 			addTransitions();
 		}
-		s_Logger.info(exitMessage());
+		m_Logger.info(exitMessage());
 	}
 	
 	
@@ -171,7 +171,7 @@ public class DifferenceBlackAndWhite<S,C> implements IOperation<S,C> {
 			}
 			m_Selfloop.put(symbol,selfloopStates);
 			m_StateChanger.put(symbol, changerStates);
-			s_Logger.debug(symbol + " " + selfloopStates.size() + 
+			m_Logger.debug(symbol + " " + selfloopStates.size() + 
 				" times selfloop " + changerStates.size() + " times changer");
 		}
 	}
@@ -380,7 +380,7 @@ public class DifferenceBlackAndWhite<S,C> implements IOperation<S,C> {
 	@Override
 	public boolean checkResult(StateFactory<C> stateFactory)
 			throws AutomataLibraryException {
-		s_Logger.info("Testing correctness of differenceBlackAndWhite");
+		m_Logger.info("Testing correctness of differenceBlackAndWhite");
 
 		INestedWordAutomatonOldApi op1AsNwa = (new PetriNet2FiniteAutomaton(m_Services, m_Net)).getResult();
 		INestedWordAutomatonOldApi rcResult = (new DifferenceDD(m_Services, stateFactory, op1AsNwa, m_Nwa)).getResult();
@@ -389,7 +389,7 @@ public class DifferenceBlackAndWhite<S,C> implements IOperation<S,C> {
 		correct &= (ResultChecker.nwaLanguageInclusion(m_Services, resultAsNwa,rcResult,stateFactory) == null);
 		correct &= (ResultChecker.nwaLanguageInclusion(m_Services, rcResult,resultAsNwa,stateFactory) == null);
 
-		s_Logger.info("Finished testing correctness of differenceBlackAndWhite");
+		m_Logger.info("Finished testing correctness of differenceBlackAndWhite");
 		return correct;
 	}
 

@@ -49,7 +49,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvide
  */
 public class MinimizeDfaSimulation<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	private final IUltimateServiceProvider m_Services;
-	private final Logger s_Logger;
+	private final Logger m_Logger;
 
     private INestedWordAutomatonOldApi<LETTER,STATE> m_Result;
     /**
@@ -68,9 +68,9 @@ public class MinimizeDfaSimulation<LETTER,STATE> implements IOperation<LETTER,ST
     		StateFactory<STATE> stateFactory, INestedWordAutomatonOldApi<LETTER,STATE> operand)
             throws AutomataLibraryException {
     	m_Services = services;
-		s_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
+		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
     	m_Operand = operand;
-        s_Logger.info(startMessage());
+        m_Logger.info(startMessage());
         
         m_Result = new DirectSimulation<LETTER,STATE>(m_Services, m_Operand, true, stateFactory).result;
         
@@ -83,7 +83,7 @@ public class MinimizeDfaSimulation<LETTER,STATE> implements IOperation<LETTER,ST
         	}
         }
     	
-        s_Logger.info(exitMessage());
+        m_Logger.info(exitMessage());
     }
     
     @Override
@@ -111,14 +111,14 @@ public class MinimizeDfaSimulation<LETTER,STATE> implements IOperation<LETTER,ST
 	@Override
 	public boolean checkResult(StateFactory<STATE> stateFactory)
 			throws AutomataLibraryException {
-		s_Logger.info("Start testing correctness of " + operationName());
+		m_Logger.info("Start testing correctness of " + operationName());
 		boolean correct = true;
 		correct &= (ResultChecker.nwaLanguageInclusion(m_Services, m_Operand, m_Result, stateFactory) == null);
 		correct &= (ResultChecker.nwaLanguageInclusion(m_Services, m_Result, m_Operand, stateFactory) == null);
 		if (!correct) {
 			ResultChecker.writeToFileIfPreferred(m_Services, operationName() + "Failed", "", m_Operand);
 		}
-		s_Logger.info("Finished testing correctness of " + operationName());
+		m_Logger.info("Finished testing correctness of " + operationName());
 		return correct;
 	}
 }

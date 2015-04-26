@@ -99,11 +99,11 @@ public class IncrementalInclusionCheck5<LETTER,STATE> extends AbstractIncrementa
 	@Override
 	public void addSubtrahend(INestedWordAutomatonSimple<LETTER, STATE> nwa) throws AutomataLibraryException {
 		super.addSubtrahend(nwa);
-		s_Logger.info(startMessage());
+		m_Logger.info(startMessage());
 		local_m_B.add(nwa);
 		local_m_B2.add(nwa);
 		run2(nwa);
-		s_Logger.info(exitMessage());
+		m_Logger.info(exitMessage());
 	}
 	public IncrementalInclusionCheck5(IUltimateServiceProvider services, StateFactory<STATE> sf,
 			INestedWordAutomatonSimple<LETTER, STATE> a, List<INestedWordAutomatonSimple<LETTER,STATE>> b) throws AutomataLibraryException{
@@ -112,7 +112,7 @@ public class IncrementalInclusionCheck5<LETTER,STATE> extends AbstractIncrementa
 		//counter = 0;
 		localServiceProvider = services;
 		localStateFactory = sf;
-		s_Logger.info(startMessage());
+		m_Logger.info(startMessage());
 		completeLeafSet = new ArrayList<Leaf<LETTER,STATE>>();
 		local_m_A = a;
 		local_m_B = new ArrayList<INestedWordAutomatonSimple<LETTER, STATE>>();
@@ -127,12 +127,12 @@ public class IncrementalInclusionCheck5<LETTER,STATE> extends AbstractIncrementa
 			local_m_B.add(bn);
 		}
 		run();
-		s_Logger.info(exitMessage());
+		m_Logger.info(exitMessage());
 	}
 	@SuppressWarnings("unchecked")
 	public void run2(INestedWordAutomatonSimple<LETTER, STATE> nwa) throws OperationCanceledException{
 		if(!local_m_A.getAlphabet().containsAll(nwa.getAlphabet())){
-			s_Logger.info("Alphabet inconsistent");
+			m_Logger.info("Alphabet inconsistent");
 			return;
 		}
 		completeBStatesAdder(null,nwa);
@@ -165,7 +165,7 @@ public class IncrementalInclusionCheck5<LETTER,STATE> extends AbstractIncrementa
 		result = null;
 		for(INestedWordAutomatonSimple<LETTER,STATE> B:local_m_B){
 			if(!local_m_A.getAlphabet().containsAll(B.getAlphabet())){
-				s_Logger.info("Alphabet inconsistent");
+				m_Logger.info("Alphabet inconsistent");
 				return;
 			}
 		}
@@ -202,7 +202,7 @@ public class IncrementalInclusionCheck5<LETTER,STATE> extends AbstractIncrementa
 	}
 	@SuppressWarnings("unchecked")
 	private ArrayList<Leaf<LETTER,STATE>> expand(LETTER alphabet){
-		//s_Logger.info(counter++);
+		//m_Logger.info(counter++);
 		Iterable<OutgoingInternalTransition<LETTER,STATE>>nextStaSet = null;
 		ArrayList<Leaf<LETTER,STATE>> nextTerminal = new ArrayList<Leaf<LETTER,STATE>>();
 		HashSet<STATE> newStaSet;
@@ -601,9 +601,9 @@ public class IncrementalInclusionCheck5<LETTER,STATE> extends AbstractIncrementa
 	
 	@Override
 	public String exitMessage() {
-		s_Logger.info("total:"+counter_total_nodes+"nodes");
-		s_Logger.info(completeLeafSet.size()+"nodes in the end");
-		s_Logger.info("total:"+counter_run+"runs");
+		m_Logger.info("total:"+counter_total_nodes+"nodes");
+		m_Logger.info(completeLeafSet.size()+"nodes in the end");
+		m_Logger.info("total:"+counter_run+"runs");
 		return "Exit " + operationName();
 	}
 	public Boolean getResult(){

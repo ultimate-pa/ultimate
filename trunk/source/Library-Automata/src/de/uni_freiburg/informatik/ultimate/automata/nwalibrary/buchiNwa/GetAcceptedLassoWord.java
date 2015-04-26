@@ -37,7 +37,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvide
 public class GetAcceptedLassoWord<LETTER, STATE> implements IOperation<LETTER,STATE> {
 
 	private final IUltimateServiceProvider m_Services;
-	private final Logger s_Logger;
+	private final Logger m_Logger;
 
 	private final INestedWordAutomatonOldApi<LETTER, STATE> m_Operand;
 	private final NestedLassoWord<LETTER> m_AcceptedWord;
@@ -45,9 +45,9 @@ public class GetAcceptedLassoWord<LETTER, STATE> implements IOperation<LETTER,ST
 	public GetAcceptedLassoWord(IUltimateServiceProvider services,
 			INestedWordAutomatonOldApi<LETTER, STATE> operand) throws AutomataLibraryException {
 		m_Services = services;
-		s_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
+		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 		m_Operand = operand;
-		s_Logger.info(startMessage());
+		m_Logger.info(startMessage());
 		BuchiIsEmpty<LETTER, STATE> isEmpty = new BuchiIsEmpty<LETTER, STATE>(m_Services, operand);
 		if (isEmpty.getResult()) {
 			throw new IllegalArgumentException(
@@ -55,7 +55,7 @@ public class GetAcceptedLassoWord<LETTER, STATE> implements IOperation<LETTER,ST
 		} else {
 			m_AcceptedWord = isEmpty.getAcceptingNestedLassoRun().getNestedLassoWord();
 		}
-		s_Logger.info(exitMessage());
+		m_Logger.info(exitMessage());
 	}
 
 	@Override

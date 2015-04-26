@@ -50,7 +50,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvide
  */
 public class BuchiReduce<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	private final IUltimateServiceProvider m_Services;
-	private final Logger s_Logger;
+	private final Logger m_Logger;
     /**
      * The resulting Buchi automaton.
      */
@@ -70,18 +70,18 @@ public class BuchiReduce<LETTER,STATE> implements IOperation<LETTER,STATE> {
     public BuchiReduce(IUltimateServiceProvider services, StateFactory<STATE> stateFactory, INestedWordAutomatonOldApi<LETTER,STATE> operand)
             throws AutomataLibraryException {
     	m_Services = services;
-		s_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
+		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
     	m_Operand = operand;
-        s_Logger.info(startMessage());
+        m_Logger.info(startMessage());
         
         // Remove dead ends. 
         // Removal of dead ends is no optimization but a requirement for
         // correctness of the algorithm
         m_Operand = new ReachableStatesCopy<LETTER,STATE>(m_Services, operand,false,false,true,false).getResult();
-    	if(s_Logger.isDebugEnabled()) {
+    	if(m_Logger.isDebugEnabled()) {
 	    	StringBuilder msg = new StringBuilder();
 	        msg.append(" W/O dead ends ").append(m_Operand.sizeInformation());
-	        s_Logger.debug(msg.toString());
+	        m_Logger.debug(msg.toString());
     	}
         m_Result = new DelayedSimulation<LETTER,STATE>(m_Services, m_Operand, true, stateFactory).result;
         
@@ -94,7 +94,7 @@ public class BuchiReduce<LETTER,STATE> implements IOperation<LETTER,STATE> {
         	}
         }
     	
-        s_Logger.info(exitMessage());
+        m_Logger.info(exitMessage());
     }
     
     @Override

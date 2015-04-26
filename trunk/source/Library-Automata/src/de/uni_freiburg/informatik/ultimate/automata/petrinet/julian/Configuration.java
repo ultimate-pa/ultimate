@@ -81,7 +81,7 @@ public class Configuration<S, C> extends AbstractSet<Event<S, C>> implements
 				m_Phi.add(e.getTransition());
 			}
 			Collections.sort(m_Phi);
-//			s_Logger.debug("PhiSorted: " + m_Phi);
+//			m_Logger.debug("PhiSorted: " + m_Phi);
 		}
 		// return Collections.unmodifiableList(m_Phi);
 		return m_Phi;
@@ -243,7 +243,7 @@ public class Configuration<S, C> extends AbstractSet<Event<S, C>> implements
 			Transition<S, C> t2 = phi2.get(i);
 			int result = t1.getTotalOrderID() - t2.getTotalOrderID();
 			if (result != 0) {
-//				s_Logger.debug(phi1.toString() + (result < 0 ? "<" : ">")
+//				m_Logger.debug(phi1.toString() + (result < 0 ? "<" : ">")
 //						+ phi2.toString());
 				return result;
 			}

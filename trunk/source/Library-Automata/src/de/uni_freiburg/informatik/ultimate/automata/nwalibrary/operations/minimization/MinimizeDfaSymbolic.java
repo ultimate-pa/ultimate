@@ -39,7 +39,7 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol;
 public class MinimizeDfaSymbolic<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	private final IUltimateServiceProvider m_Services;
 	// Logger for debug - information.
-	private final Logger s_Logger;
+	private final Logger m_Logger;
 	// Result automaton.
 	private NestedWordAutomaton<LETTER, STATE> m_Result;
 	// Input automaton.
@@ -78,7 +78,7 @@ public class MinimizeDfaSymbolic<LETTER, STATE> implements IOperation<LETTER, ST
 	 */
 	public MinimizeDfaSymbolic(IUltimateServiceProvider services, INestedWordAutomatonOldApi<LETTER, STATE> operand) {
 		m_Services = services;
-		s_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
+		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 		this.m_operand = operand;
 
 		// Start minimization.
@@ -87,7 +87,7 @@ public class MinimizeDfaSymbolic<LETTER, STATE> implements IOperation<LETTER, ST
 		minimizeDfaSymbolic();
 		long endTime = System.currentTimeMillis();
 		System.out.println(exitMessage());
-		s_Logger.info("Symbolic minimization time: " + (endTime - startTime) + " ms.");
+		m_Logger.info("Symbolic minimization time: " + (endTime - startTime) + " ms.");
 	}
 
 	private void minimizeDfaSymbolic() {
@@ -232,7 +232,7 @@ public class MinimizeDfaSymbolic<LETTER, STATE> implements IOperation<LETTER, ST
 		 */
 		buildResult();
 		long mainEndTime = System.currentTimeMillis();
-		s_Logger.info("Symbolic main time: " + (mainEndTime - mainStartTime) + " ms");
+		m_Logger.info("Symbolic main time: " + (mainEndTime - mainStartTime) + " ms");
 	}
 
 	/**
@@ -256,7 +256,7 @@ public class MinimizeDfaSymbolic<LETTER, STATE> implements IOperation<LETTER, ST
 			try {
 				m_smtInterpol.declareFun(letter.toString(), m_emptyArray, m_bool);
 			} catch (SMTLIBException e) {
-				s_Logger.error("Function already exists! Not able to build twice!", e);
+				m_Logger.error("Function already exists! Not able to build twice!", e);
 			}
 			Term var = m_smtInterpol.term(letter.toString());
 			m_letter2Formular.put(letter, var);
@@ -690,12 +690,12 @@ public class MinimizeDfaSymbolic<LETTER, STATE> implements IOperation<LETTER, ST
 
 	@Override
 	public final boolean checkResult(final StateFactory<STATE> stateFactory) throws AutomataLibraryException {
-		s_Logger.info("Start testing correctness of " + operationName());
+		m_Logger.info("Start testing correctness of " + operationName());
 		final String message;
 
 		if (checkInclusion(m_operand, getResult(), stateFactory)) {
 			if (checkInclusion(getResult(), m_operand, stateFactory)) {
-				s_Logger.info("Finished testing correctness of " + operationName());
+				m_Logger.info("Finished testing correctness of " + operationName());
 				return true;
 			} else {
 				message = "The result recognizes less words than before.";

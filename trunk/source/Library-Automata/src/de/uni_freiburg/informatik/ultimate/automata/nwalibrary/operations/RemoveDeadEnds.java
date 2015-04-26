@@ -54,7 +54,7 @@ public class RemoveDeadEnds<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	private final NestedWordAutomatonReachableStates<LETTER,STATE> m_Reach;
 	private final INestedWordAutomatonOldApi<LETTER,STATE> m_Result;
 
-	private final Logger s_Logger;
+	private final Logger m_Logger;
 
 	/**
 	 * Given an INestedWordAutomaton nwa return a nested word automaton that has
@@ -71,13 +71,13 @@ public class RemoveDeadEnds<LETTER,STATE> implements IOperation<LETTER,STATE> {
 			INestedWordAutomatonSimple<LETTER,STATE> nwa)
 			throws OperationCanceledException {
 		m_Services = services;
-		s_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
+		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 		m_Input = nwa;
-		s_Logger.info(startMessage());
+		m_Logger.info(startMessage());
 		m_Reach = new NestedWordAutomatonReachableStates<LETTER, STATE>(m_Services, m_Input);
 		m_Reach.computeDeadEnds();
 		m_Result = new NestedWordAutomatonFilteredStates<LETTER, STATE>(m_Services, m_Reach, m_Reach.getWithOutDeadEnds());
-		s_Logger.info(exitMessage());
+		m_Logger.info(exitMessage());
 		assert (new TransitionConsitenceCheck<LETTER, STATE>(m_Result)).consistentForAll();
 	}
 	
@@ -108,7 +108,7 @@ public class RemoveDeadEnds<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	
 	@Override
 	public boolean checkResult(StateFactory<STATE> stateFactory) throws OperationCanceledException {
-		s_Logger.info("Start testing correctness of " + operationName());
+		m_Logger.info("Start testing correctness of " + operationName());
 		boolean correct = true;
 //		correct &= (ResultChecker.nwaLanguageInclusion(m_Input, m_Result) == null);
 //		correct &= (ResultChecker.nwaLanguageInclusion(m_Result, m_Input) == null);
@@ -184,7 +184,7 @@ public class RemoveDeadEnds<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		if (!correct) {
 			ResultChecker.writeToFileIfPreferred(m_Services, operationName() + "Failed", "", m_Input);
 		}
-		s_Logger.info("Finished testing correctness of " + operationName());
+		m_Logger.info("Finished testing correctness of " + operationName());
 		return correct;
 	}
 

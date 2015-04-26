@@ -78,14 +78,14 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 	private Map<STATE, Map<LETTER, Set<STATE>>> m_TransitionsIn = new HashMap<STATE, Map<LETTER, Set<STATE>>>();
 	private Map<STATE, MetaState> m_mapState2MS = new HashMap<STATE, MetaState>();
 
-	private final Logger s_Logger;
+	private final Logger m_Logger;
 	private String UnsupportedOperationMessage = "Transform to NestedWordAutomaton to get full support.";
 
 	public BuchiComplementAutomatonSVW(IUltimateServiceProvider services, 
 			INestedWordAutomatonOldApi<LETTER, STATE> origAutomaton)
 			throws AutomataLibraryException {
 		m_Services = services;
-		s_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
+		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 		m_TMA = new TransitionMonoidAutomaton(origAutomaton);
 		m_Alphabet = origAutomaton.getInternalAlphabet();
 		if (!origAutomaton.getCallAlphabet().isEmpty() || !origAutomaton.getReturnAlphabet().isEmpty()) {
@@ -424,25 +424,25 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 
 	@Override
 	public Set<LETTER> getCallAlphabet() {
-		s_Logger.warn("No nwa. Has no call alphabet.");
+		m_Logger.warn("No nwa. Has no call alphabet.");
 		return new HashSet<LETTER>(0);
 	}
 
 	@Override
 	public Set<LETTER> getReturnAlphabet() {
-		s_Logger.warn("No nwa. Has no return alphabet.");
+		m_Logger.warn("No nwa. Has no return alphabet.");
 		return new HashSet<LETTER>(0);
 	}
 
 	@Override
 	public Set<LETTER> lettersCall(STATE state) {
-		// s_Logger.warn("No nwa. Has no call alphabet.");
+		// m_Logger.warn("No nwa. Has no call alphabet.");
 		return new HashSet<LETTER>(0);
 	}
 
 	@Override
 	public Set<LETTER> lettersReturn(STATE state) {
-		// s_Logger.warn("No nwa. Has no return alphabet.");
+		// m_Logger.warn("No nwa. Has no return alphabet.");
 		return new HashSet<LETTER>(0);
 	}
 

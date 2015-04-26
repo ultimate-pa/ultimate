@@ -67,7 +67,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvide
 public class DifferenceSadd<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	
 	private final IUltimateServiceProvider m_Services;
-	private final Logger s_Logger;
+	private final Logger m_Logger;
 	
 	private final INestedWordAutomatonOldApi<LETTER,STATE> minuend;
 	private final INestedWordAutomatonOldApi<LETTER,STATE> subtrahend;
@@ -146,7 +146,7 @@ public class DifferenceSadd<LETTER,STATE> implements IOperation<LETTER,STATE> {
 			INestedWordAutomatonOldApi<LETTER,STATE> subtrahend,
 			IStateDeterminizer<LETTER,STATE> stateDeterminizer) throws AutomataLibraryException {
 		m_Services = services;
-		s_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
+		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 		contentFactory = minuend.getStateFactory();
 		this.minuend = minuend;
 		this.subtrahend = subtrahend;
@@ -154,7 +154,7 @@ public class DifferenceSadd<LETTER,STATE> implements IOperation<LETTER,STATE> {
 			throw new AutomataLibraryException(this.getClass(), "Unable to apply operation to automata with different alphabets.");
 		}
 		this.stateDeterminizer = stateDeterminizer;
-		s_Logger.info(startMessage());
+		m_Logger.info(startMessage());
 		difference = new NestedWordAutomaton<LETTER,STATE>(
 				m_Services, 
 				minuend.getInternalAlphabet(),
@@ -163,7 +163,7 @@ public class DifferenceSadd<LETTER,STATE> implements IOperation<LETTER,STATE> {
 				minuend.getStateFactory());
 		auxilliaryEmptyStackState = difference.getEmptyStackState();
 		computeDifference();
-		s_Logger.info(exitMessage());
+		m_Logger.info(exitMessage());
 	}
 	
 	/**
@@ -178,7 +178,7 @@ public class DifferenceSadd<LETTER,STATE> implements IOperation<LETTER,STATE> {
 			INestedWordAutomatonOldApi<LETTER,STATE> minuend,
 			INestedWordAutomatonOldApi<LETTER,STATE> subtrahend) throws AutomataLibraryException {
 		m_Services = services;
-		s_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
+		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 		contentFactory = minuend.getStateFactory();
 		this.minuend = minuend;
 		this.subtrahend = subtrahend;
@@ -186,7 +186,7 @@ public class DifferenceSadd<LETTER,STATE> implements IOperation<LETTER,STATE> {
 			throw new AutomataLibraryException(this.getClass(), "Unable to apply operation to automata with different alphabets.");
 		}
 		this.stateDeterminizer = new PowersetDeterminizer<LETTER,STATE>(subtrahend, true, stateFactory);
-		s_Logger.info(startMessage());
+		m_Logger.info(startMessage());
 		difference = new NestedWordAutomaton<LETTER,STATE>(
 				m_Services, 
 				minuend.getInternalAlphabet(),
@@ -195,7 +195,7 @@ public class DifferenceSadd<LETTER,STATE> implements IOperation<LETTER,STATE> {
 				minuend.getStateFactory());
 		auxilliaryEmptyStackState = difference.getEmptyStackState();
 		computeDifference();
-		s_Logger.info(exitMessage());
+		m_Logger.info(exitMessage());
 	}
 	
 	
@@ -287,7 +287,7 @@ public class DifferenceSadd<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		
 		while(!worklist.isEmpty()) {
 			SummaryState<LETTER,STATE> statePair = worklist.remove(0);
-//			s_Logger.debug("Processing: "+ statePair);
+//			m_Logger.debug("Processing: "+ statePair);
 			processSummaryState(statePair);
 			if (summary.containsKey(statePair.presentState)) {
 				for (STATE summarySucc : summary.get(statePair.presentState)) {
@@ -552,7 +552,7 @@ public class DifferenceSadd<LETTER,STATE> implements IOperation<LETTER,STATE> {
 			throws AutomataLibraryException {
 		boolean correct = true;
 		if (stateDeterminizer instanceof PowersetDeterminizer) {
-			s_Logger.info("Start testing correctness of " + operationName());
+			m_Logger.info("Start testing correctness of " + operationName());
 
 			INestedWordAutomatonOldApi<LETTER,STATE> resultDD = 
 					(new DifferenceDD<LETTER,STATE>(m_Services, stateFactory, minuend, subtrahend)).getResult();
@@ -561,9 +561,9 @@ public class DifferenceSadd<LETTER,STATE> implements IOperation<LETTER,STATE> {
 			if (!correct) {
 			ResultChecker.writeToFileIfPreferred(m_Services, operationName() + "Failed", "", minuend,subtrahend);
 			}
-			s_Logger.info("Finished testing correctness of " + operationName());
+			m_Logger.info("Finished testing correctness of " + operationName());
 		} else {
-			s_Logger.warn("Unable to test correctness if state determinzier is not the PowersetDeterminizer.");
+			m_Logger.warn("Unable to test correctness if state determinzier is not the PowersetDeterminizer.");
 		}
 		return correct;
 	}

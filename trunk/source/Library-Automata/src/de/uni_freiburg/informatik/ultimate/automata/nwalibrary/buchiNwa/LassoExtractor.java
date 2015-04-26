@@ -41,7 +41,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvide
 public class LassoExtractor<LETTER, STATE> implements IOperation<LETTER,STATE> {
 
 	private final IUltimateServiceProvider m_Services;
-	private final Logger s_Logger;
+	private final Logger m_Logger;
 
 	private final INestedWordAutomatonSimple<LETTER, STATE> m_Operand;
 	private final NestedWordAutomatonReachableStates<LETTER, STATE> m_Reach;
@@ -52,9 +52,9 @@ public class LassoExtractor<LETTER, STATE> implements IOperation<LETTER,STATE> {
 	public LassoExtractor(IUltimateServiceProvider services,
 			INestedWordAutomatonSimple<LETTER, STATE> operand) throws AutomataLibraryException {
 		m_Services = services;
-		s_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
+		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 		m_Operand = operand;
-		s_Logger.info(startMessage());
+		m_Logger.info(startMessage());
 		if (m_Operand instanceof NestedWordAutomatonReachableStates) {
 			m_Reach = (NestedWordAutomatonReachableStates<LETTER, STATE>) m_Operand;
 		} else {
@@ -71,7 +71,7 @@ public class LassoExtractor<LETTER, STATE> implements IOperation<LETTER,STATE> {
 				m_NestedLassoWords.add(nlr.getNestedLassoWord());
 			}
 		}
-		s_Logger.info(exitMessage());
+		m_Logger.info(exitMessage());
 	}
 
 	@Override

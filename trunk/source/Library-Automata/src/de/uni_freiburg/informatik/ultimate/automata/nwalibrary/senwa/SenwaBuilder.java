@@ -53,7 +53,7 @@ public class SenwaBuilder<LETTER, STATE> implements ISuccessorVisitor<LETTER, ST
 	Map<STATE,Map<STATE,STATE>> m_Entry2Operand2Result = new HashMap<STATE,Map<STATE,STATE>>();
 	
 	
-	private final Logger s_Logger;
+	private final Logger m_Logger;
 	
 	
 	@Override
@@ -80,14 +80,14 @@ public class SenwaBuilder<LETTER, STATE> implements ISuccessorVisitor<LETTER, ST
 	public SenwaBuilder(IUltimateServiceProvider services, 
 			INestedWordAutomatonOldApi<LETTER, STATE> nwa) throws AutomataLibraryException {
 		m_Services = services;
-		s_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
+		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 		m_Nwa = nwa;
-		s_Logger.info(startMessage());
+		m_Logger.info(startMessage());
 		m_Senwa = new Senwa<LETTER, STATE>(m_Services,
 				m_Nwa.getInternalAlphabet(), m_Nwa.getCallAlphabet(), 
 				m_Nwa.getReturnAlphabet(), m_Nwa.getStateFactory());
 		new SenwaWalker<LETTER, STATE>(m_Services, m_Senwa, this, true);
-		s_Logger.info(exitMessage());
+		m_Logger.info(exitMessage());
 	}
 	
 	
@@ -185,14 +185,14 @@ public class SenwaBuilder<LETTER, STATE> implements ISuccessorVisitor<LETTER, ST
 	@Override
 	public boolean checkResult(StateFactory<STATE> stateFactory)
 			throws AutomataLibraryException {
-		s_Logger.info("Start testing correctness of " + operationName());
+		m_Logger.info("Start testing correctness of " + operationName());
 		boolean correct = true;
 		correct &= (ResultChecker.nwaLanguageInclusion(m_Services, m_Nwa, m_Senwa, stateFactory) == null);
 		correct &= (ResultChecker.nwaLanguageInclusion(m_Services, m_Senwa, m_Nwa, stateFactory) == null);
 		if (!correct) {
 			ResultChecker.writeToFileIfPreferred(m_Services, operationName() + "Failed", "", m_Nwa);
 		}
-		s_Logger.info("Finished testing correctness of " + operationName());
+		m_Logger.info("Finished testing correctness of " + operationName());
 		return correct;
 	}
 

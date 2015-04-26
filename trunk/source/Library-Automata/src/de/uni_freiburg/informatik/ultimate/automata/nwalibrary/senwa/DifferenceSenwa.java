@@ -59,7 +59,7 @@ public class DifferenceSenwa<LETTER, STATE> implements
 								IOpWithDelayedDeadEndRemoval<LETTER, STATE>{
 	
 	private final IUltimateServiceProvider m_Services;
-	private final Logger s_Logger;
+	private final Logger m_Logger;
 		
 	private final INestedWordAutomatonOldApi<LETTER,STATE> minuend;
 	private final INestedWordAutomatonOldApi<LETTER,STATE> subtrahend;
@@ -120,11 +120,11 @@ public class DifferenceSenwa<LETTER, STATE> implements
 			INestedWordAutomatonOldApi<LETTER,STATE> subtrahend)
 					throws AutomataLibraryException {
 		m_Services = services;
-		s_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
+		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 		contentFactory = minuend.getStateFactory();
 		this.minuend = minuend;
 		this.subtrahend = subtrahend;
-		s_Logger.info(startMessage());
+		m_Logger.info(startMessage());
 		
 		
 		this.stateDeterminizer = new StateDeterminizerCache<LETTER, STATE>(
@@ -134,7 +134,7 @@ public class DifferenceSenwa<LETTER, STATE> implements
 				minuend.getInternalAlphabet(), minuend.getCallAlphabet(), 
 				minuend.getReturnAlphabet(), minuend.getStateFactory());
 		m_SenwaWalker = new SenwaWalker<LETTER, STATE>(m_Services, m_Senwa, this, true);
-		s_Logger.info(exitMessage());
+		m_Logger.info(exitMessage());
 	}
 	
 	
@@ -146,7 +146,7 @@ public class DifferenceSenwa<LETTER, STATE> implements
 			boolean removeDeadEndsImmediately)
 					throws AutomataLibraryException {
 		m_Services = services;
-		s_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
+		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 		contentFactory = minuend.getStateFactory();
 		if (minuend instanceof INestedWordAutomatonOldApi) {
 			this.minuend = (INestedWordAutomatonOldApi<LETTER, STATE>) minuend;
@@ -158,7 +158,7 @@ public class DifferenceSenwa<LETTER, STATE> implements
 		} else {
 			this.subtrahend = (new RemoveUnreachable<LETTER,STATE>(m_Services, minuend)).getResult();
 		}
-		s_Logger.info(startMessage());
+		m_Logger.info(startMessage());
 		
 		
 		this.stateDeterminizer = new StateDeterminizerCache<LETTER, STATE>(
@@ -168,7 +168,7 @@ public class DifferenceSenwa<LETTER, STATE> implements
 				minuend.getInternalAlphabet(), minuend.getCallAlphabet(), 
 				minuend.getReturnAlphabet(), minuend.getStateFactory());
 		m_SenwaWalker = new SenwaWalker<LETTER, STATE>(m_Services, m_Senwa, this, removeDeadEndsImmediately);
-		s_Logger.info(exitMessage());
+		m_Logger.info(exitMessage());
 	}
 	
 	
@@ -336,7 +336,7 @@ public class DifferenceSenwa<LETTER, STATE> implements
 			throws AutomataLibraryException {
 		boolean correct = true;
 		if (stateDeterminizer instanceof PowersetDeterminizer) {
-			s_Logger.info("Start testing correctness of " + operationName());
+			m_Logger.info("Start testing correctness of " + operationName());
 
 			INestedWordAutomatonOldApi<LETTER,STATE> resultSadd = (new DifferenceSadd<LETTER,STATE>(m_Services, stateFactory, minuend, subtrahend)).getResult();
 			correct &= (ResultChecker.nwaLanguageInclusion(m_Services, resultSadd, m_Senwa, stateFactory) == null);
@@ -344,9 +344,9 @@ public class DifferenceSenwa<LETTER, STATE> implements
 			if (!correct) {
 			ResultChecker.writeToFileIfPreferred(m_Services, operationName() + "Failed", "", minuend,subtrahend);
 			}
-			s_Logger.info("Finished testing correctness of " + operationName());
+			m_Logger.info("Finished testing correctness of " + operationName());
 		} else {
-			s_Logger.warn("Unable to test correctness if state determinzier is not the PowersetDeterminizer.");
+			m_Logger.warn("Unable to test correctness if state determinzier is not the PowersetDeterminizer.");
 		}
 		return correct;
 	}

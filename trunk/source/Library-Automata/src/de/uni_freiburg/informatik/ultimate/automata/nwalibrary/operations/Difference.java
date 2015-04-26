@@ -47,7 +47,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvide
 public class Difference<LETTER,STATE> implements IOperation<LETTER,STATE>, IOpWithDelayedDeadEndRemoval<LETTER, STATE> {
 
 	private final IUltimateServiceProvider m_Services;
-	private final Logger s_Logger;
+	private final Logger m_Logger;
 	
 	private final INestedWordAutomatonSimple<LETTER,STATE> m_FstOperand;
 	private final INestedWordAutomatonSimple<LETTER,STATE> m_SndOperand;
@@ -89,14 +89,14 @@ public class Difference<LETTER,STATE> implements IOperation<LETTER,STATE>, IOpWi
 			INestedWordAutomatonSimple<LETTER,STATE> sndOperand
 			) throws AutomataLibraryException {
 		m_Services = services;
-		s_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
+		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 		m_FstOperand = fstOperand;
 		m_SndOperand = sndOperand;
 		m_StateFactory = m_FstOperand.getStateFactory();
 		m_StateDeterminizer = new PowersetDeterminizer<LETTER,STATE>(sndOperand, true, stateFactory);
-		s_Logger.info(startMessage());
+		m_Logger.info(startMessage());
 		computateDifference(false);
-		s_Logger.info(exitMessage());
+		m_Logger.info(exitMessage());
 	}
 	
 	
@@ -107,14 +107,14 @@ public class Difference<LETTER,STATE> implements IOperation<LETTER,STATE>, IOpWi
 			StateFactory<STATE> sf,
 			boolean finalIsTrap) throws AutomataLibraryException {
 		m_Services = services;
-		s_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
+		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 		m_FstOperand = fstOperand;
 		m_SndOperand = sndOperand;
 		m_StateFactory = sf;
 		m_StateDeterminizer = stateDeterminizer;
-		s_Logger.info(startMessage());
+		m_Logger.info(startMessage());
 		computateDifference(finalIsTrap);
-		s_Logger.info(exitMessage());
+		m_Logger.info(exitMessage());
 	}
 	
 	private void computateDifference(boolean finalIsTrap) throws AutomataLibraryException {
@@ -128,10 +128,10 @@ public class Difference<LETTER,STATE> implements IOperation<LETTER,STATE>, IOpWi
 				m_SndComplemented = sndComplemented;
 				m_Intersect = intersect;
 				m_Result = result;
-				s_Logger.info("Subtrahend was deterministic. Have not used determinization.");
+				m_Logger.info("Subtrahend was deterministic. Have not used determinization.");
 				return;
 			} else {
-			s_Logger.info("Subtrahend was not deterministic. Recomputing result with determinization.");
+			m_Logger.info("Subtrahend was not deterministic. Recomputing result with determinization.");
 			}
 		}
 		m_SndDeterminized = new DeterminizeNwa<LETTER,STATE>(m_Services, m_SndOperand,m_StateDeterminizer,m_StateFactory);
@@ -159,7 +159,7 @@ public class Difference<LETTER,STATE> implements IOperation<LETTER,STATE>, IOpWi
 
 	
 	public boolean checkResult(StateFactory<STATE> sf) throws AutomataLibraryException {
-		s_Logger.info("Start testing correctness of " + operationName());
+		m_Logger.info("Start testing correctness of " + operationName());
 		INestedWordAutomatonOldApi<LETTER, STATE> fstOperandOldApi = ResultChecker.getOldApiNwa(m_Services, m_FstOperand);
 		INestedWordAutomatonOldApi<LETTER, STATE> sndOperandOldApi = ResultChecker.getOldApiNwa(m_Services, m_SndOperand);
 		INestedWordAutomatonOldApi<LETTER, STATE> resultDD = 
@@ -175,7 +175,7 @@ public class Difference<LETTER,STATE> implements IOperation<LETTER,STATE>, IOpWi
 		if (!correct) {
 			ResultChecker.writeToFileIfPreferred(m_Services, operationName() + "Failed", "", m_FstOperand,m_SndOperand);
 		}
-		s_Logger.info("Finished testing correctness of " + operationName());
+		m_Logger.info("Finished testing correctness of " + operationName());
 		return correct;
 	}
 
@@ -187,8 +187,8 @@ public class Difference<LETTER,STATE> implements IOperation<LETTER,STATE>, IOpWi
 	public boolean removeDeadEnds() {
 		m_Result.computeDeadEnds();
 		m_ResultWOdeadEnds = new NestedWordAutomatonFilteredStates<LETTER, STATE>(m_Services, m_Result, m_Result.getWithOutDeadEnds());
-		s_Logger.info("With dead ends: " + m_Result.getStates().size());
-		s_Logger.info("Without dead ends: " + m_ResultWOdeadEnds.getStates().size());
+		m_Logger.info("With dead ends: " + m_Result.getStates().size());
+		m_Logger.info("Without dead ends: " + m_ResultWOdeadEnds.getStates().size());
 		return m_Result.getStates().size() != m_ResultWOdeadEnds.getStates().size();
 	}
 

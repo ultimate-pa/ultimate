@@ -70,7 +70,7 @@ import de.uni_freiburg.informatik.ultimate.util.Utils;
 
 public class IsEmpty<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	private final IUltimateServiceProvider m_Services;
-	private final Logger s_Logger;
+	private final Logger m_Logger;
 	
 	@Override
 	public String operationName() {
@@ -246,15 +246,15 @@ public class IsEmpty<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	public IsEmpty(IUltimateServiceProvider services,
 			INestedWordAutomatonSimple<LETTER,STATE> nwa) {
 		m_Services = services;
-		s_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
+		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 		m_nwa = nwa;
 		dummyEmptyStackState = m_nwa.getEmptyStackState();
 		m_StartStates = Utils.constructHashSet(m_nwa.getInitialStates());
 		m_GoalStateIsAcceptingState = true;
 		m_GoalStates = null;
-		s_Logger.info(startMessage());
+		m_Logger.info(startMessage());
 		m_acceptingRun = getAcceptingRun();
-		s_Logger.info(exitMessage());
+		m_Logger.info(exitMessage());
 	}
 	
 
@@ -267,7 +267,7 @@ public class IsEmpty<LETTER,STATE> implements IOperation<LETTER,STATE> {
 			INestedWordAutomaton<LETTER,STATE> nwa, 
 			Set<STATE> startStates, Set<STATE> goalStates) {
 		m_Services = services;
-		s_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
+		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 		m_nwa = nwa;
 		assert nwa.getStates().containsAll(startStates) : "unknown states";
 		assert nwa.getStates().containsAll(goalStates) : "unknown states";
@@ -275,9 +275,9 @@ public class IsEmpty<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		m_StartStates = startStates;
 		m_GoalStateIsAcceptingState = false;
 		m_GoalStates = goalStates;
-		s_Logger.info(startMessage());
+		m_Logger.info(startMessage());
 		m_acceptingRun = getAcceptingRun();
-		s_Logger.info(exitMessage());
+		m_Logger.info(exitMessage());
 	}
 	
 	/**
@@ -520,7 +520,7 @@ public class IsEmpty<LETTER,STATE> implements IOperation<LETTER,STATE> {
 			LETTER symbol,
 			STATE state,
 			STATE stateK) {
-//		s_Logger.debug("Call SubrunInformation: From ("+succ+","+succK+
+//		m_Logger.debug("Call SubrunInformation: From ("+succ+","+succK+
 //			") can go to ("+state+","+stateK+")");
 		assert(state == succK);
 		Map<STATE, Map<STATE, NestedRun<LETTER,STATE>>> succK2stateK2Run = 
@@ -648,7 +648,7 @@ public class IsEmpty<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	 * length two.
 	 */
 	private NestedRun<LETTER,STATE> constructRun(STATE state, STATE stateK) {
-//		s_Logger.debug("Reconstruction from " + state + " " + stateK);
+//		m_Logger.debug("Reconstruction from " + state + " " + stateK);
 		NestedRun<LETTER,STATE> run = new NestedRun<LETTER,STATE>(state);
 		while (!m_StartStates.contains(state) ||
 				!m_reconstructionStack.isEmpty()) {
@@ -659,7 +659,7 @@ public class IsEmpty<LETTER,STATE> implements IOperation<LETTER,STATE> {
 			else if (computeReturnSubRun(state, stateK)) {
 			}
 			else {
-				s_Logger.warn("No Run ending in pair "+state+ "  "+ stateK + 
+				m_Logger.warn("No Run ending in pair "+state+ "  "+ stateK + 
 						" with reconstructionStack" + m_reconstructionStack);
 				throw new AssertionError();
 			}
@@ -763,12 +763,12 @@ public class IsEmpty<LETTER,STATE> implements IOperation<LETTER,STATE> {
 			throws AutomataLibraryException {
 		boolean correct = true;
 		if (m_acceptingRun == null) {
-			s_Logger.warn("Emptiness not double checked ");
+			m_Logger.warn("Emptiness not double checked ");
 		}
 		else {
-			s_Logger.info("Correctness of emptinessCheck not tested.");
+			m_Logger.info("Correctness of emptinessCheck not tested.");
 			correct = (new Accepts<LETTER, STATE>(m_Services, m_nwa, m_acceptingRun.getWord())).getResult();
-			s_Logger.info("Finished testing correctness of emptinessCheck");
+			m_Logger.info("Finished testing correctness of emptinessCheck");
 		}
 		return correct;
 	}

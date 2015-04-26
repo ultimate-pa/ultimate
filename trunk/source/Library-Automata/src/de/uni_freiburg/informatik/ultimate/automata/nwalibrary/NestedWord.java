@@ -519,7 +519,7 @@ public class NestedWord<LETTER> extends Word<LETTER> {
 	*	Character[] testWord2 = { 'a', 'b', 'c', 'd', 'e', 'f', 'g'}; 
 	*	int[] testRelation2 = { -2 , 3 , -2, 1, -2, NestedWord.MINUS_INFINITY, NestedWord.PLUS_INFINITY };
 	*	NestedWord<Character> nw2 = new NestedWord<Character>(testWord2, testRelation2);
-	*	s_Logger.info("Nested Word:  "+ nw.concatenate(nw2).toString());
+	*	m_Logger.info("Nested Word:  "+ nw.concatenate(nw2).toString());
 	*/
 
 	

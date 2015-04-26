@@ -46,7 +46,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvide
 public class IsIncluded<LETTER, STATE> implements IOperation<LETTER,STATE> {
 	
 	private final IUltimateServiceProvider m_Services;
-	private final Logger s_Logger;
+	private final Logger m_Logger;
 	
 	private final INestedWordAutomatonOldApi<LETTER, STATE> m_Operand1;
 	private final INestedWordAutomatonOldApi<LETTER, STATE> m_Operand2;
@@ -60,15 +60,15 @@ public class IsIncluded<LETTER, STATE> implements IOperation<LETTER,STATE> {
 			INestedWordAutomatonOldApi<LETTER, STATE> nwa1, 
 			INestedWordAutomatonOldApi<LETTER, STATE> nwa2) throws AutomataLibraryException {
 		m_Services = services;
-		s_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
+		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 		m_Operand1 = nwa1;
 		m_Operand2 = nwa2;
-		s_Logger.info(startMessage());
+		m_Logger.info(startMessage());
 		IsEmpty<LETTER, STATE> emptinessCheck = new IsEmpty<LETTER, STATE>(
 				services, (new Difference<LETTER, STATE>(m_Services, stateFactory, nwa1, nwa2)).getResult());
 		m_Result = emptinessCheck.getResult();
 		m_Counterexample = emptinessCheck.getNestedRun();
-		s_Logger.info(exitMessage());
+		m_Logger.info(exitMessage());
 	}
 
 	@Override

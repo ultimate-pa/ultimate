@@ -52,7 +52,7 @@ public class ConcurrentProduct<LETTER,STATE> {
 	
 	private final IUltimateServiceProvider m_Services;
 	
-	private final Logger s_Logger;
+	private final Logger m_Logger;
 	
 	private final boolean m_ConcurrentPrefixProduct;
 
@@ -176,7 +176,7 @@ public class ConcurrentProduct<LETTER,STATE> {
 			INestedWordAutomatonOldApi<LETTER,STATE> nwa1,
 			INestedWordAutomatonOldApi<LETTER,STATE> nwa2, boolean concurrentPrefixProduct) {
 		m_Services = services;
-		s_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
+		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 		m_ConcurrentPrefixProduct = concurrentPrefixProduct;
 		M_Nwa1 = nwa1;
 		M_Nwa2 = nwa2;
@@ -191,7 +191,7 @@ public class ConcurrentProduct<LETTER,STATE> {
 				!nwa1.getReturnAlphabet().isEmpty() ||
 				!nwa2.getCallAlphabet().isEmpty() ||
 				!nwa2.getReturnAlphabet().isEmpty()) {
-			s_Logger.warn("Call alphabet and return alphabet are ignored.");
+			m_Logger.warn("Call alphabet and return alphabet are ignored.");
 		}
 		m_SynchronizationAlphabet = new HashSet<LETTER>(nwa1.getInternalAlphabet());
 		m_SynchronizationAlphabet.retainAll(nwa2.getInternalAlphabet());

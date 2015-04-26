@@ -43,7 +43,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvide
 public class BranchingProcess<S, C> implements IAutomaton<S, C> {
 	
 	private final IUltimateServiceProvider m_Services;
-	private final Logger s_Logger;
+	private final Logger m_Logger;
 	
 	final private Collection<Condition<S, C>> conditions;
 	final private Collection<Event<S, C>> events;
@@ -61,7 +61,7 @@ public class BranchingProcess<S, C> implements IAutomaton<S, C> {
 	public BranchingProcess(IUltimateServiceProvider services,
 			PetriNetJulian<S, C> net, Order<S, C> order) {
 		m_Services = services;
-		s_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
+		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 		this.net = net;
 		this.m_Order = order;
 		this.place2cond = new HashMap<Place<S, C>, Set<Condition<S, C>>>();
@@ -120,7 +120,7 @@ public class BranchingProcess<S, C> implements IAutomaton<S, C> {
 					.get(condition.getPlace());
 			for (Condition<S, C> c : existing) {
 				if (c != condition && isInCoRelation(c, condition)) {
-					s_Logger.debug(c+" in coRelation with "+condition+" but they belong to the same place.");
+					m_Logger.debug(c+" in coRelation with "+condition+" but they belong to the same place.");
 					return false;
 				}
 			}

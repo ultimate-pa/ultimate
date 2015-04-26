@@ -53,7 +53,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvide
 public class GetRandomNwa implements IOperation<String,String> {
 	
 	private final IUltimateServiceProvider m_Services;
-	private final Logger s_Logger;
+	private final Logger m_Logger;
 	
 	private final Random m_Random;
 	private final NestedWordAutomaton<String,String> m_Result;
@@ -81,7 +81,7 @@ public class GetRandomNwa implements IOperation<String,String> {
 			double returnTransitionProbability,
 			double acceptanceDensity) {
 		m_Services = services;
-		s_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
+		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 		m_Random = new Random();
 		m_alphabetSize = alphabetSize;
 		m_size = size;
@@ -113,7 +113,7 @@ public class GetRandomNwa implements IOperation<String,String> {
 			int returnTransitionProbability,
 			int acceptanceDensity) {
 		m_Services = services;
-		s_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
+		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 		m_Random = new Random();
 		m_alphabetSize = alphabetSize;
 		m_size = size;
@@ -200,7 +200,7 @@ public class GetRandomNwa implements IOperation<String,String> {
 		int numOfTransitions =
 					(int) Math.round(internalTransitionDensity * maxNumOfTransitions);
 		if (numOfTransitions < size - 1) {
-			s_Logger.warn("You specified density " + internalTransitionDensity 
+			m_Logger.warn("You specified density " + internalTransitionDensity 
 					+ " for internal transition. This is not sufficient to" +
 					" connect all states with internal transitions.");
 		}

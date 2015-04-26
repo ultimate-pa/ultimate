@@ -112,17 +112,17 @@ public class BuchiAccepts<LETTER,STATE> extends AbstractAcceptance<LETTER,STATE>
 		m_Stem = nlw.getStem();
 		m_Loop = nlw.getLoop();
 		
-		s_Logger.info(startMessage());
+		m_Logger.info(startMessage());
 		
 		if (m_Stem.containsPendingReturns()) {
-			s_Logger.warn("This implementation of Buchi acceptance rejects lasso" +
+			m_Logger.warn("This implementation of Buchi acceptance rejects lasso" +
 					" words, where the stem contains pending returns.");
 			m_Accepted = false;
 			return;
 		}
 		
 		if (m_Loop.containsPendingReturns()) {
-			s_Logger.warn("This implementation of Buchi acceptance rejects lasso" +
+			m_Logger.warn("This implementation of Buchi acceptance rejects lasso" +
 					" words, where the loop contains pending returns.");
 			m_Accepted = false;
 			return;
@@ -130,7 +130,7 @@ public class BuchiAccepts<LETTER,STATE> extends AbstractAcceptance<LETTER,STATE>
 		}
 		
 		if (m_Loop.length() ==0) {
-			s_Logger.debug("LassoWords with empty lasso are rejected by every Büchi" +
+			m_Logger.debug("LassoWords with empty lasso are rejected by every Büchi" +
 					" automaton");
 			m_Accepted = false;
 			return;
@@ -138,7 +138,7 @@ public class BuchiAccepts<LETTER,STATE> extends AbstractAcceptance<LETTER,STATE>
 
 
 		m_Accepted = buchiAccepts();
-		s_Logger.info(exitMessage());
+		m_Logger.info(exitMessage());
 	}
 
 	private boolean buchiAccepts() throws OperationCanceledException {

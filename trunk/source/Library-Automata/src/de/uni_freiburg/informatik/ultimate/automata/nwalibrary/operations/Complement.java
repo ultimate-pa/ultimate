@@ -43,7 +43,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvide
 public class Complement<LETTER,STATE> implements IOperation<LETTER,STATE> {
 
 	private final IUltimateServiceProvider m_Services;
-	private final Logger s_Logger;
+	private final Logger m_Logger;
 	
 	private final INestedWordAutomatonSimple<LETTER,STATE> m_Operand;
 	private DeterminizeNwa<LETTER,STATE> m_Determinized;
@@ -78,26 +78,26 @@ public class Complement<LETTER,STATE> implements IOperation<LETTER,STATE> {
 			IStateDeterminizer<LETTER,STATE> stateDeterminizer, 
 			StateFactory<STATE> sf) throws AutomataLibraryException {
 		m_Services = services;
-		s_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
+		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 		m_Operand = operand;
 		m_StateDeterminizer = stateDeterminizer;
 		m_StateFactory = sf;
-		s_Logger.info(startMessage());
+		m_Logger.info(startMessage());
 		computeComplement();
-		s_Logger.info(exitMessage());
+		m_Logger.info(exitMessage());
 	}
 	
 	public Complement(IUltimateServiceProvider services,
 			StateFactory<STATE> stateFactory, 
 			INestedWordAutomatonSimple<LETTER,STATE> operand) throws AutomataLibraryException {
 		m_Services = services;
-		s_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
+		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 		m_Operand = operand;
 		m_StateDeterminizer = new PowersetDeterminizer<LETTER, STATE>(operand, true, stateFactory);
 		m_StateFactory = stateFactory;
-		s_Logger.info(startMessage());
+		m_Logger.info(startMessage());
 		computeComplement();
-		s_Logger.info(exitMessage());
+		m_Logger.info(exitMessage());
 	}
 	
 	private void computeComplement() throws AutomataLibraryException {
@@ -127,10 +127,10 @@ public class Complement<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		if (!totalized.nonDeterminismInInputDetected()) {
 			m_Complement = complemented;
 			m_Result = result;
-			s_Logger.info("Operand was deterministic. Have not used determinization.");
+			m_Logger.info("Operand was deterministic. Have not used determinization.");
 			return true;
 		} else {
-			s_Logger.info("Operand was not deterministic. Recomputing result with determinization.");
+			m_Logger.info("Operand was not deterministic. Recomputing result with determinization.");
 			return false;
 		}
 	}
@@ -149,7 +149,7 @@ public class Complement<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	public boolean checkResult(StateFactory<STATE> sf) throws AutomataLibraryException {
 		boolean correct = true;
 		if (m_StateDeterminizer instanceof PowersetDeterminizer) {
-			s_Logger.info("Start testing correctness of " + operationName());
+			m_Logger.info("Start testing correctness of " + operationName());
 			INestedWordAutomatonOldApi<LETTER, STATE> operandOldApi = ResultChecker.getOldApiNwa(m_Services, m_Operand);
 
 			// intersection of operand and result should be empty
@@ -167,9 +167,9 @@ public class Complement<LETTER,STATE> implements IOperation<LETTER,STATE> {
 			if (!correct) {
 				ResultChecker.writeToFileIfPreferred(m_Services, operationName() + "Failed", "", m_Operand);
 			}
-			s_Logger.info("Finished testing correctness of " + operationName());
+			m_Logger.info("Finished testing correctness of " + operationName());
 		} else {
-			s_Logger.warn("operation not tested");
+			m_Logger.warn("operation not tested");
 		}
 		return correct;
 	}

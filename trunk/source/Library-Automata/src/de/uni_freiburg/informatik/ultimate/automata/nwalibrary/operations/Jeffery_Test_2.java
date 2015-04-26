@@ -32,7 +32,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvide
 public class Jeffery_Test_2<LETTER,STATE> implements IOperation<LETTER,STATE>{
 
 	ArrayList<INestedWordAutomaton<LETTER,STATE>> automataCollection;
-	private static Logger s_Logger;
+	private static Logger m_Logger;
 	Boolean result1,result2;
 	
 	public Jeffery_Test_2(IUltimateServiceProvider services, StateFactory<STATE> sf,

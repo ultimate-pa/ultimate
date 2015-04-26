@@ -40,7 +40,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvide
 public class IsEmpty<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	private final IUltimateServiceProvider m_Services;
 	
-	private final Logger s_Logger;
+	private final Logger m_Logger;
 
 	private final PetriNetJulian<LETTER,STATE> m_Operand;
 	private final Boolean m_Result;
@@ -48,14 +48,14 @@ public class IsEmpty<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	public IsEmpty(IUltimateServiceProvider services, 
 			PetriNetJulian<LETTER,STATE> operand) throws AutomataLibraryException {
 		m_Services = services;
-		s_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
+		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 		m_Operand = operand;
-		s_Logger.info(startMessage());
+		m_Logger.info(startMessage());
 		PetriNetUnfolder<LETTER,STATE> unf = 
 				new PetriNetUnfolder<LETTER,STATE>(m_Services, operand, order.ERV, false, true);
 		PetriNetRun<LETTER,STATE> run = unf.getAcceptingRun();
 		m_Result = (run == null);
-		s_Logger.info(exitMessage());
+		m_Logger.info(exitMessage());
 	}
 	
 	@Override

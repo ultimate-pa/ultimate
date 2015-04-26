@@ -42,7 +42,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvide
 public class Determinize<LETTER,STATE> implements IOperation<LETTER,STATE> {
 
 	private final IUltimateServiceProvider m_Services;
-	private final Logger s_Logger;
+	private final Logger m_Logger;
 	
 	private final INestedWordAutomatonSimple<LETTER,STATE> m_Operand;
 	private final DeterminizeNwa<LETTER, STATE> m_Determinized;
@@ -75,14 +75,14 @@ public class Determinize<LETTER,STATE> implements IOperation<LETTER,STATE> {
 			StateFactory<STATE> stateFactory, 
 			INestedWordAutomatonSimple<LETTER,STATE> input) throws AutomataLibraryException {
 		m_Services = services;
-		s_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
+		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 		this.stateDeterminizer = new PowersetDeterminizer<LETTER, STATE>(input, true, stateFactory);
 		this.m_StateFactory = stateFactory;
 		this.m_Operand = input;
-		s_Logger.info(startMessage());
+		m_Logger.info(startMessage());
 		m_Determinized = new DeterminizeNwa<LETTER, STATE>(m_Services, input, stateDeterminizer, m_StateFactory);
 		m_Result = new NestedWordAutomatonReachableStates<LETTER, STATE>(m_Services, m_Determinized);
-		s_Logger.info(exitMessage());
+		m_Logger.info(exitMessage());
 	}
 	
 
@@ -97,7 +97,7 @@ public class Determinize<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	public boolean checkResult(StateFactory<STATE> sf) throws AutomataLibraryException {
 		boolean correct = true;
 		if (stateDeterminizer instanceof PowersetDeterminizer) {
-			s_Logger.info("Start testing correctness of " + operationName());
+			m_Logger.info("Start testing correctness of " + operationName());
 			INestedWordAutomatonOldApi<LETTER, STATE> operandOldApi = ResultChecker.getOldApiNwa(m_Services, m_Operand);
 
 			// should have same number of states as old determinization
@@ -110,9 +110,9 @@ public class Determinize<LETTER,STATE> implements IOperation<LETTER,STATE> {
 			if (!correct) {
 				ResultChecker.writeToFileIfPreferred(m_Services, operationName() + "Failed", "", m_Operand);
 			}
-		s_Logger.info("Finished testing correctness of " + operationName());
+		m_Logger.info("Finished testing correctness of " + operationName());
 		} else {
-			s_Logger.warn("result was not tested");
+			m_Logger.warn("result was not tested");
 		}
 		return correct;
 	}

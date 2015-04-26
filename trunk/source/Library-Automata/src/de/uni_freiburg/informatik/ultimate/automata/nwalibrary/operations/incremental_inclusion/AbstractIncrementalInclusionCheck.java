@@ -46,7 +46,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvide
 public abstract class AbstractIncrementalInclusionCheck<LETTER,STATE> {
 	
 	protected final IUltimateServiceProvider m_Services;
-	protected final Logger s_Logger;
+	protected final Logger m_Logger;
 	
 	private final INestedWordAutomatonSimple<LETTER, STATE> m_A;
 	private final List<INestedWordAutomatonSimple<LETTER, STATE>> m_B = new ArrayList<>();
@@ -56,7 +56,7 @@ public abstract class AbstractIncrementalInclusionCheck<LETTER,STATE> {
 			INestedWordAutomatonSimple<LETTER, STATE> a) {
 		super();
 		m_Services = services;
-		s_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
+		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 		if (a == null) {
 			throw new NullPointerException("automaton A must not be null");
 		} else {

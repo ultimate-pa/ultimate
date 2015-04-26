@@ -50,7 +50,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvide
 
 public class PetruchioWrapper<S,C> {
 	private final IUltimateServiceProvider m_Services;
-	private final Logger s_Logger;
+	private final Logger m_Logger;
 	
 	
 	
@@ -69,7 +69,7 @@ public class PetruchioWrapper<S,C> {
 	public PetruchioWrapper(IUltimateServiceProvider services,
 			PetriNetJulian<S,C> net) {
 		m_Services = services;
-		s_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
+		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 		m_NetJulian = net;
 		constructNetPetruchio();
 	}
@@ -121,9 +121,9 @@ public class PetruchioWrapper<S,C> {
 	 * @param filename
 	 */
 	public void writeToFile(String filename) {
-		s_Logger.debug("Writing net to file " + filename);
+		m_Logger.debug("Writing net to file " + filename);
 		petruchio.pn.Converter.writeNet(m_NetPetruchio, filename);
-		s_Logger.info("Accepting places: " + m_NetJulian.getAcceptingPlaces());
+		m_Logger.info("Accepting places: " + m_NetJulian.getAcceptingPlaces());
 	}
 
 	public Map<de.uni_freiburg.informatik.ultimate.automata.petrinet.Place<S, C>, Place> getpJulian2pPetruchio() {

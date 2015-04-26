@@ -89,7 +89,7 @@ public class DirectSimulation<LETTER,STATE> extends AbstractSimulation<LETTER, S
                 map1.put(q0, q1, v1e);
             }
             if (!m_Services.getProgressMonitorService().continueProcessing()) {
-                s_Logger.debug("Stopped in generateGameGraph/calculating v0 und v1");
+                m_Logger.debug("Stopped in generateGameGraph/calculating v0 und v1");
                 throw new OperationCanceledException(this.getClass());
             }
         }
@@ -120,22 +120,22 @@ public class DirectSimulation<LETTER,STATE> extends AbstractSimulation<LETTER, S
                 }
             }
             if (!m_Services.getProgressMonitorService().continueProcessing()) {
-                s_Logger.debug("Stopped in generateGameGraph/calculating v0 und v1");
+                m_Logger.debug("Stopped in generateGameGraph/calculating v0 und v1");
                 throw new OperationCanceledException(this.getClass());
             }
         }
         infinity++; // global infinity = (# of pr==1 nodes) + 1
-        if (s_Logger.isDebugEnabled()) {
-            s_Logger.debug("Infinity is " + infinity);
-            s_Logger.debug("Number of vertices in game graph: "
+        if (m_Logger.isDebugEnabled()) {
+            m_Logger.debug("Infinity is " + infinity);
+            m_Logger.debug("Number of vertices in game graph: "
                     + (v0.size() + v1.size()));
-            s_Logger.debug("Number of vertices in v0: " + v0.size());
-            s_Logger.debug("Number of vertices in v1: " + v1.size());
+            m_Logger.debug("Number of vertices in v0: " + v0.size());
+            m_Logger.debug("Number of vertices in v1: " + v1.size());
             int edges = 0;
             for (HashSet<Vertex<LETTER,STATE>> hs : e.values()) {
                 edges += hs.size();
             }
-            s_Logger.debug("Number of edges in game graph: " + edges);
+            m_Logger.debug("Number of edges in game graph: " + edges);
         }
     }
 
@@ -176,7 +176,7 @@ public class DirectSimulation<LETTER,STATE> extends AbstractSimulation<LETTER, S
         
 
         if (!m_Services.getProgressMonitorService().continueProcessing()) {
-            s_Logger.debug("Stopped in generateBuchiAutomaton/table filled");
+            m_Logger.debug("Stopped in generateBuchiAutomaton/table filled");
             throw new OperationCanceledException(this.getClass());
         }
 
@@ -209,7 +209,7 @@ public class DirectSimulation<LETTER,STATE> extends AbstractSimulation<LETTER, S
         }
         
         if (!m_Services.getProgressMonitorService().continueProcessing()) {
-            s_Logger.debug("Stopped in generateBuchiAutomaton/states added to result BA");
+            m_Logger.debug("Stopped in generateBuchiAutomaton/states added to result BA");
             throw new OperationCanceledException(this.getClass());
         }
 

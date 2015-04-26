@@ -73,7 +73,7 @@ public class AtsDefinitionPrinter<LETTER,STATE> {
 		public enum Labeling { NUMERATE, TOSTRING, QUOTED, BA_FORMAT };
 		
 		private final IUltimateServiceProvider m_Services;
-		private final Logger s_Logger;
+		private final Logger m_Logger;
 		
 		/**
 		 * Print hash modulo this number to get shorter identifiers.
@@ -98,8 +98,8 @@ public class AtsDefinitionPrinter<LETTER,STATE> {
 		public AtsDefinitionPrinter(IUltimateServiceProvider services,
 				String automatonName, String filename, Labeling labels, String message, Object... automata) {
 			m_Services = services;
-			s_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
-			s_Logger.warn("Dumping Testfile");
+			m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
+			m_Logger.warn("Dumping Testfile");
 			initializePrintWriter(filename);
 			m_printWriter.println("// Testfile dumped by Ultimate at "+getDateTime());
 			m_printWriter.println("//");
@@ -116,7 +116,7 @@ public class AtsDefinitionPrinter<LETTER,STATE> {
 		
 		public AtsDefinitionPrinter(IUltimateServiceProvider services, String name, Object automaton) {
 			m_Services = services;
-			s_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
+			m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 			m_StringWriter = new StringWriter();
 			m_printWriter = new PrintWriter(m_StringWriter);
 			printAutomaton(name, automaton, Labeling.TOSTRING);

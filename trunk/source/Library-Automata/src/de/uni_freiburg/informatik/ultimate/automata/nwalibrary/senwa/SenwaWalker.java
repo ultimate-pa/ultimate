@@ -51,7 +51,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvide
 public class SenwaWalker<LETTER,STATE> {
 	
 	private final IUltimateServiceProvider m_Services;
-	private final Logger s_Logger;
+	private final Logger m_Logger;
 	
 	
 	protected Senwa<LETTER,STATE> m_TraversedSenwa;
@@ -102,7 +102,7 @@ public class SenwaWalker<LETTER,STATE> {
 	
 	public SenwaWalker(IUltimateServiceProvider services, Senwa<LETTER,STATE> senwa, ISuccessorVisitor<LETTER, STATE> succVisit, boolean removeDeadEnds) throws AutomataLibraryException {
 		m_Services = services;
-		s_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
+		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 		m_TraversedSenwa = senwa;
 		m_SuccVisit = succVisit;
 		m_RemoveDeadEnds = removeDeadEnds;
@@ -266,7 +266,7 @@ public class SenwaWalker<LETTER,STATE> {
 			
 			
 		}
-		s_Logger.info("Result " + m_TraversedSenwa.sizeInformation());
+		m_Logger.info("Result " + m_TraversedSenwa.sizeInformation());
 		if (m_RemoveDeadEnds && m_RemoveNonLiveStates) {
 			throw new IllegalArgumentException("RemoveDeadEnds and RemoveNonLiveStates is set");
 		}
@@ -278,20 +278,20 @@ public class SenwaWalker<LETTER,STATE> {
 				assert m_TraversedSenwa.getStates().isEmpty();
 				m_TraversedSenwa = getTotalizedEmptyAutomaton();
 			}
-			s_Logger.info("After removal of dead ends " + m_TraversedSenwa.sizeInformation());
+			m_Logger.info("After removal of dead ends " + m_TraversedSenwa.sizeInformation());
 
 		}
 		if (m_RemoveNonLiveStates) {
-//			s_Logger.warn("Minimize before non-live removal: " + 
+//			m_Logger.warn("Minimize before non-live removal: " + 
 //		((NestedWordAutomaton<LETTER,STATE>) (new MinimizeDfa<LETTER, STATE>(m_TraversedNwa)).getResult()).sizeInformation());
 			removeNonLiveStates();
-//			s_Logger.warn("Minimize after non-live removal: " + 
+//			m_Logger.warn("Minimize after non-live removal: " + 
 //		((NestedWordAutomaton<LETTER,STATE>) (new MinimizeDfa<LETTER, STATE>(m_TraversedNwa)).getResult()).sizeInformation());
 			if (m_TraversedSenwa.getInitialStates().isEmpty()) {
 				assert m_TraversedSenwa.getStates().isEmpty();
 //				m_TraversedSenwa = getTotalizedEmptyAutomaton();
 			}
-			s_Logger.info("After removal of nonLiveStates " + m_TraversedSenwa.sizeInformation());
+			m_Logger.info("After removal of nonLiveStates " + m_TraversedSenwa.sizeInformation());
 		}
 
 		
@@ -421,7 +421,7 @@ public class SenwaWalker<LETTER,STATE> {
 //		}
 //		for (STATE state : statesThatShouldNotBeInitialAnyMore) {
 //			m_TraversedSenwa.makeStateNonIntial(state);
-//			s_Logger.warn("The following state is not final any more: " +state);
+//			m_Logger.warn("The following state is not final any more: " +state);
 //		}
 		
 		// remove states which can not reach final, but postpone removal of

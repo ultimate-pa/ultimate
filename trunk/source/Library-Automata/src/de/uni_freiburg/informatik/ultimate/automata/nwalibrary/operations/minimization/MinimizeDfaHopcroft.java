@@ -29,7 +29,7 @@ public class MinimizeDfaHopcroft<LETTER, STATE> implements
 		IOperation<LETTER, STATE> {
 	private final IUltimateServiceProvider m_Services;
 	// Logger for debug - information.
-	private final Logger s_Logger;
+	private final Logger m_Logger;
 	// Result automaton.
 	private INestedWordAutomatonOldApi<LETTER, STATE> m_Result;
 	// Input automaton.
@@ -50,7 +50,7 @@ public class MinimizeDfaHopcroft<LETTER, STATE> implements
 	public MinimizeDfaHopcroft(IUltimateServiceProvider services,
 			INestedWordAutomatonOldApi<LETTER, STATE> operand) {
 		m_Services = services;
-		s_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
+		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 		this.m_operand = operand;
 
 		// Start minimization.
@@ -379,14 +379,14 @@ public class MinimizeDfaHopcroft<LETTER, STATE> implements
 	@Override
 	public final boolean checkResult(final StateFactory<STATE> stateFactory)
 			throws AutomataLibraryException {
-		s_Logger.info("Start testing correctness of " + operationName());
+		m_Logger.info("Start testing correctness of " + operationName());
 		boolean correct = true;
 		correct &= (ResultChecker.nwaLanguageInclusion(m_Services, m_operand, m_Result, stateFactory) == null);
 		correct &= (ResultChecker.nwaLanguageInclusion(m_Services, m_Result, m_operand, stateFactory) == null);
 		if (!correct) {
 			ResultChecker.writeToFileIfPreferred(m_Services, operationName() + "Failed", "", m_operand);
 		}
-		s_Logger.info("Finished testing correctness of " + operationName());
+		m_Logger.info("Finished testing correctness of " + operationName());
 		return correct;
 	}
 }

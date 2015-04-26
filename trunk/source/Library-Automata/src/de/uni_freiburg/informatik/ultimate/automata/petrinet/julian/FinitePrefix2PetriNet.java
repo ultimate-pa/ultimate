@@ -48,7 +48,7 @@ import de.uni_freiburg.informatik.ultimate.util.UnionFind;
 public class FinitePrefix2PetriNet<L, C> implements IOperation<L, C> {
 
 	private final IUltimateServiceProvider m_Services;
-	private final Logger s_Logger;
+	private final Logger m_Logger;
 	
 	BranchingProcess<L, C> m_Input;
 	PetriNetJulian<L, C> m_Net;
@@ -88,20 +88,20 @@ public class FinitePrefix2PetriNet<L, C> implements IOperation<L, C> {
 	public FinitePrefix2PetriNet(IUltimateServiceProvider services, 
 			BranchingProcess<L, C> bp) throws AutomataLibraryException {
 		m_Services = services;
-		s_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
+		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 		// TODO implement merging for markings?
 		m_Input = bp;
-		s_Logger.info(startMessage());
+		m_Logger.info(startMessage());
 
 		Map<Condition<L, C>, Place<L, C>> placeMap = new HashMap<Condition<L, C>, Place<L, C>>();
 		Map<Event<L, C>, Transition<L, C>> transitionMap = new HashMap<Event<L, C>, Transition<L, C>>();
 
-		s_Logger.debug("CONDITIONS:");
+		m_Logger.debug("CONDITIONS:");
 		for (Condition<L, C> c : bp.getConditions())
-			s_Logger.debug(c);
-		s_Logger.debug("EVENTS:");
+			m_Logger.debug(c);
+		m_Logger.debug("EVENTS:");
 		for (Event<L, C> e : bp.getEvents())
-			s_Logger.debug(e.getPredecessorConditions() + " || " + e + " || "
+			m_Logger.debug(e.getPredecessorConditions() + " || " + e + " || "
 					+ e.getSuccessorConditions());
 
 		PetriNetJulian<L, C> old_net = m_Input.getNet();
@@ -212,9 +212,9 @@ public class FinitePrefix2PetriNet<L, C> implements IOperation<L, C> {
 //				placeMap.put(c, place);
 //			}
 //		}
-//		s_Logger.debug("CONDITIONS TO PLACE:");
+//		m_Logger.debug("CONDITIONS TO PLACE:");
 //		for (Map.Entry<Condition<L, C>, Place<L, C>> en : placeMap.entrySet())
-//			s_Logger.debug(en);
+//			m_Logger.debug(en);
 //		for (Event<L, C> e : bp.getEvents()) {
 //			if (e.getTransition() == null)
 //				continue;
@@ -237,7 +237,7 @@ public class FinitePrefix2PetriNet<L, C> implements IOperation<L, C> {
 //			transitionMap.put(e, transition);
 //		}
 
-		s_Logger.info(exitMessage());
+		m_Logger.info(exitMessage());
 		try {
 			assert ResultChecker.petriNetLanguageEquivalence(m_Services, old_net, m_Net) : 
 				"The language recognized by the FinitePrefix2PetriNet is not equal to the language of the original net.";

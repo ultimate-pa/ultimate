@@ -32,7 +32,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvide
 public class MinimizeDfaHopcroftWiki<LETTER, STATE> implements IMinimize,
 		IOperation<LETTER, STATE> {
 	// Logger for debug - information.
-	private final Logger s_Logger;
+	private final Logger m_Logger;
 	// Service provider
 	private final IUltimateServiceProvider m_services;
 	// Result automaton.
@@ -60,7 +60,7 @@ public class MinimizeDfaHopcroftWiki<LETTER, STATE> implements IMinimize,
 	// Constructor.
 	public MinimizeDfaHopcroftWiki(IUltimateServiceProvider services, INestedWordAutomaton<LETTER, STATE> operand) {
 		this.m_services = services;
-		this.s_Logger = m_services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
+		this.m_Logger = m_services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 		this.m_operand = operand;
 
 		// Start minimization.
@@ -629,14 +629,14 @@ public class MinimizeDfaHopcroftWiki<LETTER, STATE> implements IMinimize,
 			throws AutomataLibraryException {
 		// TODO Rewrite and test correctness.
 		/*
-		 * s_Logger.info("Start testing correctness of " + operationName());
+		 * m_Logger.info("Start testing correctness of " + operationName());
 		 * boolean correct = true; correct &=
 		 * (ResultChecker.nwaLanguageInclusion(m_operand, m_result,
 		 * stateFactory) == null); correct &=
 		 * (ResultChecker.nwaLanguageInclusion(m_result, m_operand,
 		 * stateFactory) == null); if (!correct) {
 		 * ResultChecker.writeToFileIfPreferred(operationName() + "Failed", "",
-		 * m_operand); } s_Logger.info("Finished testing correctness of " +
+		 * m_operand); } m_Logger.info("Finished testing correctness of " +
 		 * operationName());
 		 */
 		return true;

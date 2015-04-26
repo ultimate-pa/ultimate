@@ -66,9 +66,9 @@ public class Accepts<LETTER,STATE> extends AbstractAcceptance<LETTER,STATE>
 		this.m_Word = word;
 		this.m_PrefixOfInputIsAccepted = prefixOfIntputIsAccepted;
 		this.m_InputIsSuffixOfAcceptedWord = inputIsSuffixOfAcceptedWord;
-		s_Logger.info(startMessage());
+		m_Logger.info(startMessage());
 		m_IsAccepted = isAccepted();
-		s_Logger.info(exitMessage());
+		m_Logger.info(exitMessage());
 	}
 	public Accepts(IUltimateServiceProvider services,
 			INestedWordAutomatonSimple<LETTER,STATE> automaton, NestedWord<LETTER> word) {

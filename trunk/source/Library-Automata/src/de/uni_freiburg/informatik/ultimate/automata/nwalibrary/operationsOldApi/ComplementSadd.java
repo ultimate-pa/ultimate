@@ -38,7 +38,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvide
 public class ComplementSadd<LETTER, STATE> implements IOperation<LETTER, STATE> {
 
 	private final IUltimateServiceProvider m_Services;
-	private final Logger s_Logger;
+	private final Logger m_Logger;
 
 	protected INestedWordAutomatonOldApi<LETTER, STATE> m_Operand;
 	protected INestedWordAutomatonOldApi<LETTER, STATE> m_DeterminizedOperand;
@@ -70,30 +70,30 @@ public class ComplementSadd<LETTER, STATE> implements IOperation<LETTER, STATE> 
 			INestedWordAutomatonOldApi<LETTER, STATE> operand)
 											throws AutomataLibraryException {
 		m_Services = services;
-		s_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
+		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 		m_Operand = operand;
 
-		s_Logger.info(startMessage());
+		m_Logger.info(startMessage());
 		if (!m_Operand.isDeterministic()) {
 			m_DeterminizedOperand = 
 					(new DeterminizeSadd<LETTER, STATE>(m_Services, m_Operand)).getResult();
 		} else {
 			m_DeterminizedOperand = m_Operand;
-			s_Logger.debug("Operand is already deterministic");
+			m_Logger.debug("Operand is already deterministic");
 		}
 		m_Result = new ReachableStatesCopy<LETTER, STATE>(
 				m_Services, m_DeterminizedOperand, true, true, false, false).getResult();
-		s_Logger.info(exitMessage());
+		m_Logger.info(exitMessage());
 	}
 
 	@Override
 	public boolean checkResult(StateFactory<STATE> stateFactory)
 			throws AutomataLibraryException {
-		s_Logger.debug("Testing correctness of complement");
+		m_Logger.debug("Testing correctness of complement");
 		boolean correct = true;
 		INestedWordAutomatonOldApi intersectionOperandResult = (new IntersectDD(m_Services, false, m_Operand, m_Result)).getResult();
 		correct &=  ((new IsEmpty(m_Services, intersectionOperandResult)).getResult() == true);
-		s_Logger.debug("Finished testing correctness of complement");
+		m_Logger.debug("Finished testing correctness of complement");
 		return correct;
 	}
 

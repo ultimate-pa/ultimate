@@ -84,7 +84,7 @@ public abstract class AbstractSimulation<LETTER,STATE> {
     /**
      * The logger.
      */
-	protected final Logger s_Logger;
+	protected final Logger m_Logger;
     /**
      * Holding the result automaton.
      */
@@ -110,7 +110,7 @@ public abstract class AbstractSimulation<LETTER,STATE> {
     		INestedWordAutomatonOldApi<LETTER,STATE> ba, boolean useSCCs, StateFactory<STATE> stateFactory)
             throws AutomataLibraryException {
     	m_Services = services;
-		s_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
+		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
         this.v0 = new HashSet<Player0Vertex<LETTER,STATE>>();
         this.v1 = new HashSet<Player1Vertex<LETTER,STATE>>();
         this.e = new HashMap<Vertex<LETTER,STATE>, HashSet<Vertex<LETTER, STATE>>>();
@@ -137,7 +137,7 @@ public abstract class AbstractSimulation<LETTER,STATE> {
         clear();
         generateBuchiAutomaton(ba);
         long duration = System.currentTimeMillis() - startTime;
-        s_Logger.info((this.useSCCs ? "SCC version" : "nonSCC version") + 
+        m_Logger.info((this.useSCCs ? "SCC version" : "nonSCC version") + 
         		" took " + duration + " milliseconds.");
     }
 
@@ -249,7 +249,7 @@ public abstract class AbstractSimulation<LETTER,STATE> {
                 }
             }
             if (!m_Services.getProgressMonitorService().continueProcessing()) {
-                s_Logger.debug("Stopped in efficientLiftingAlgorithm");
+                m_Logger.debug("Stopped in efficientLiftingAlgorithm");
                 throw new OperationCanceledException(this.getClass());
             }
         }
@@ -431,7 +431,7 @@ public abstract class AbstractSimulation<LETTER,STATE> {
                     strongconnect(v);
                 }
             }
-            s_Logger.debug("Game graph consists of " + m_SCCs.size() + " SCCs");
+            m_Logger.debug("Game graph consists of " + m_SCCs.size() + " SCCs");
         }
 
         private void strongconnect(Vertex<LETTER,STATE> v) {
@@ -496,7 +496,7 @@ public abstract class AbstractSimulation<LETTER,STATE> {
         	for (SCC scc : m_SCCs) {
         		verticesInAllSccs += scc.getVertices().size();
         	}
-        	s_Logger.debug("The biggest SCC has " + max + " vertices.");
+        	m_Logger.debug("The biggest SCC has " + max + " vertices.");
         	int verticesInGameGraph = v0.size() + v1.size();
         	boolean sameNumberOfVertices = 
         			(verticesInAllSccs == verticesInGameGraph);

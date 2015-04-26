@@ -58,11 +58,11 @@ public class BuchiIsEmptyXW<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	public BuchiIsEmptyXW(IUltimateServiceProvider services, 
 			INestedWordAutomatonOldApi<LETTER, STATE> nwa) throws AutomataLibraryException {
 		m_Services = services;
-		s_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
+		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 		m_nwa = nwa;
-		s_Logger.info(startMessage());
+		m_Logger.info(startMessage());
 		m_Result = checkEmptiness();
-		s_Logger.info(exitMessage());
+		m_Logger.info(exitMessage());
 	}
 	
 	@Override
@@ -97,7 +97,7 @@ public class BuchiIsEmptyXW<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	STATE witnessInitial;
 	STATE witnessCritical;
 
-	private final Logger s_Logger;
+	private final Logger m_Logger;
 	
 	/** Element of worklist, a pair of states. */
 	private class StatePair {	
@@ -315,18 +315,18 @@ public class BuchiIsEmptyXW<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	
 	public NestedLassoRun<LETTER,STATE> getAcceptingNestedLassoRun() {
 		if (m_Result) {
-			s_Logger.info("There is no accepting nested lasso run");
+			m_Logger.info("There is no accepting nested lasso run");
 			return null;
 		} else {
-			s_Logger.info("Starting construction of run");
+			m_Logger.info("Starting construction of run");
 			NestedRun<LETTER,STATE> stem = 
 				reconstructionC(witnessInitial, witnessCritical);
 			NestedRun<LETTER,STATE> loop = 
 				reconstructionAC(witnessCritical, witnessCritical);
 			NestedLassoRun<LETTER,STATE> acceptingNestedLassoRun = 
 										new NestedLassoRun<LETTER,STATE>(stem, loop);
-			s_Logger.debug("Accepting run: " + acceptingNestedLassoRun);
-			s_Logger.debug("Accepted word:  Stem:" + 
+			m_Logger.debug("Accepting run: " + acceptingNestedLassoRun);
+			m_Logger.debug("Accepted word:  Stem:" + 
 					acceptingNestedLassoRun.getStem().getWord() + 
 					" Loop: " +
 					acceptingNestedLassoRun.getLoop().getWord());
@@ -504,17 +504,17 @@ public class BuchiIsEmptyXW<LETTER,STATE> implements IOperation<LETTER,STATE> {
 						targetOfIntialState)) {
 					witnessInitial = initialState;
 					witnessCritical = targetOfIntialState;
-					s_Logger.info("########################################");
-					s_Logger.info("witnessInitial: " + witnessInitial + ", "
+					m_Logger.info("########################################");
+					m_Logger.info("witnessInitial: " + witnessInitial + ", "
 							+ "witnessCritical: " + witnessCritical);
-					s_Logger.info("########################################");
+					m_Logger.info("########################################");
 					return false;
 				}
 			}
 		}
-		s_Logger.info("########################################");
-		s_Logger.info("The NWA is empty.");
-		s_Logger.info("########################################");
+		m_Logger.info("########################################");
+		m_Logger.info("The NWA is empty.");
+		m_Logger.info("########################################");
 		return true;
 	}
 	

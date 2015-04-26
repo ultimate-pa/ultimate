@@ -66,7 +66,7 @@ import de.uni_freiburg.informatik.ultimate.util.HashUtils;
  */
 class ShortestLassoExtractor<LETTER, STATE> {
 	private final IUltimateServiceProvider m_Services;
-	private final Logger s_Logger;
+	private final Logger m_Logger;
 	private final NestedWordAutomatonReachableStates<LETTER, STATE> m_Nwars;
 	
 	List<Set<StackOfFlaggedStates>> m_Iterations = new ArrayList<Set<StackOfFlaggedStates>>();
@@ -85,18 +85,18 @@ class ShortestLassoExtractor<LETTER, STATE> {
 	public ShortestLassoExtractor(IUltimateServiceProvider services, 
 			NestedWordAutomatonReachableStates<LETTER, STATE> nwars, StateContainer<LETTER, STATE> goal) throws OperationCanceledException {
 		m_Services = services;
-		s_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
+		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 		m_Nwars = nwars;
 		m_Goal = goal;
 		addInitialStack(goal);
 		findPath(1);
-		s_Logger.debug("Stem length: " + m_InitFoundIteration);
-		s_Logger.debug("Loop length: " + m_GoalFoundIteration);
+		m_Logger.debug("Stem length: " + m_InitFoundIteration);
+		m_Logger.debug("Loop length: " + m_GoalFoundIteration);
 		constructStem();
 		constructLoop();
 		m_nlr = new NestedLassoRun<LETTER, STATE>(m_Stem, m_Loop);
-		s_Logger.debug("Stem " + m_Stem);
-		s_Logger.debug("Loop " + m_Loop);
+		m_Logger.debug("Stem " + m_Stem);
+		m_Logger.debug("Loop " + m_Loop);
 		assert (new BuchiAccepts<LETTER, STATE>(m_Services, nwars, m_nlr.getNestedLassoWord())).getResult();
 	}
 

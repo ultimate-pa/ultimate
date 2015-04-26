@@ -50,13 +50,13 @@ import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvide
 public class AutomatonEpimorphism<STATE> {
 
 	private final IUltimateServiceProvider m_Services;
-	private final Logger s_Logger;
+	private final Logger m_Logger;
 
 	private HashMap<STATE, STATE> m_epimorphism;
 
 	public AutomatonEpimorphism(IUltimateServiceProvider services) {
 		m_Services = services;
-		s_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
+		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 		m_epimorphism = new HashMap<STATE, STATE>();
 	}
 
@@ -137,7 +137,7 @@ public class AutomatonEpimorphism<STATE> {
 	{
 		for(Entry<STATE, STATE> e : m_epimorphism.entrySet())
 		{
-			s_Logger.debug(e.getKey().toString() + " --> " + e.getValue());
+			m_Logger.debug(e.getKey().toString() + " --> " + e.getValue());
 		}		
 	}
 }

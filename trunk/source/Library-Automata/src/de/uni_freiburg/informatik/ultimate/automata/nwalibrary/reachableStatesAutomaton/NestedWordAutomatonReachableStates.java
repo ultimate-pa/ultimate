@@ -74,7 +74,7 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 		INestedWordAutomaton<LETTER, STATE>, IDoubleDeckerAutomaton<LETTER, STATE> {
 
 	private final IUltimateServiceProvider m_Services;
-	private final Logger s_Logger;
+	private final Logger m_Logger;
 
 	private final INestedWordAutomatonSimple<LETTER, STATE> m_Operand;
 
@@ -151,7 +151,7 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 			INestedWordAutomatonSimple<LETTER, STATE> operand)
 			throws OperationCanceledException {
 		m_Services = services;
-		s_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
+		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 		this.m_Operand = operand;
 		m_InternalAlphabet = operand.getInternalAlphabet();
 		m_CallAlphabet = operand.getCallAlphabet();
@@ -167,13 +167,13 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 						.getAllNestedLassoRuns();
 				for (NestedLassoRun<LETTER, STATE> nlr : runs) {
 					STATE honda = nlr.getLoop().getStateAtPosition(0);
-					s_Logger.debug(new DebugMessage("Test lasso construction for honda state {0}", honda));
+					m_Logger.debug(new DebugMessage("Test lasso construction for honda state {0}", honda));
 					assert (new BuchiAccepts<LETTER, STATE>(m_Services, NestedWordAutomatonReachableStates.this,
 							nlr.getNestedLassoWord())).getResult();
 				}
 
 			}
-			s_Logger.info(stateContainerInformation());
+			m_Logger.info(stateContainerInformation());
 			// assert (new TransitionConsitenceCheck<LETTER,
 			// STATE>(this)).consistentForAll();
 
@@ -701,7 +701,7 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 
 			if (m_ExtRunConstructionTesting) {
 				for (STATE fin : getFinalStates()) {
-					s_Logger.debug(new DebugMessage("Test if can find an accepting run for final state {0}", fin));
+					m_Logger.debug(new DebugMessage("Test if can find an accepting run for final state {0}", fin));
 					NestedRun<LETTER, STATE> run = (new RunConstructor<LETTER, STATE>(
 							m_Services, 
 							NestedWordAutomatonReachableStates.this, m_States.get(fin))).constructRun();
@@ -1629,7 +1629,7 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 				}
 			}
 
-			s_Logger.debug("Automaton consists of " + m_Balls.size() + " InCaSumBalls and " + m_NumberOfNonBallSCCs
+			m_Logger.debug("Automaton consists of " + m_Balls.size() + " InCaSumBalls and " + m_NumberOfNonBallSCCs
 					+ " non ball SCCs " + m_AcceptingBalls + " balls are accepting. Number of states in SCCs "
 					+ m_AllStatesOfSccsWithoutCallAndReturn.size());
 		}
@@ -1691,26 +1691,26 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 			}
 			NestedLassoRun<LETTER, STATE> method4 = (new LassoConstructor<LETTER, STATE>(m_Services, 
 					NestedWordAutomatonReachableStates.this, lowestSerialNumber, sccOfLowest)).getNestedLassoRun();
-			s_Logger.debug("Method4: stem" + method4.getStem().getLength() + " loop" + method4.getLoop().getLength());
+			m_Logger.debug("Method4: stem" + method4.getStem().getLength() + " loop" + method4.getLoop().getLength());
 			if (m_UseAlternativeLassoConstruction) {
 				NestedLassoRun<LETTER, STATE> method0 = (new LassoExtractor<LETTER, STATE>(m_Services, 
 						NestedWordAutomatonReachableStates.this, sccOfLowest.getStateWithLowestSerialNumber(),
 						sccOfLowest, m_AcceptingSummaries)).getNestedLassoRun();
-				s_Logger.debug("Method0: stem" + method0.getStem().getLength() + " loop"
+				m_Logger.debug("Method0: stem" + method0.getStem().getLength() + " loop"
 						+ method0.getLoop().getLength());
 				NestedLassoRun<LETTER, STATE> method1 = (new LassoExtractor<LETTER, STATE>(m_Services, 
 						NestedWordAutomatonReachableStates.this, lowestSerialNumber, sccOfLowest, m_AcceptingSummaries))
 						.getNestedLassoRun();
-				s_Logger.debug("Method1: stem" + method1.getStem().getLength() + " loop"
+				m_Logger.debug("Method1: stem" + method1.getStem().getLength() + " loop"
 						+ method1.getLoop().getLength());
 				NestedLassoRun<LETTER, STATE> method2 = (new ShortestLassoExtractor<LETTER, STATE>(
 						m_Services, NestedWordAutomatonReachableStates.this, lowestSerialNumber)).getNestedLassoRun();
-				s_Logger.debug("Method2: stem" + method2.getStem().getLength() + " loop"
+				m_Logger.debug("Method2: stem" + method2.getStem().getLength() + " loop"
 						+ method2.getLoop().getLength());
 				int method0size = method0.getStem().getLength() + method0.getLoop().getLength();
 				int method1size = method1.getStem().getLength() + method1.getLoop().getLength();
 				int method2size = method2.getStem().getLength() + method1.getLoop().getLength();
-				s_Logger.debug("Method0size" + method0size + " Method1size" + method1size + " Method2size"
+				m_Logger.debug("Method0size" + method0size + " Method1size" + method1size + " Method2size"
 						+ method2size);
 			}
 			m_NestedLassoRun = method4;
@@ -1821,7 +1821,7 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 				statesInAllBalls += scc.getNumberOfStates();
 				max = Math.max(max, scc.getNumberOfStates());
 			}
-			s_Logger.debug("The biggest SCC has " + max + " vertices.");
+			m_Logger.debug("The biggest SCC has " + max + " vertices.");
 			boolean sameNumberOfVertices = (statesInAllBalls + m_NumberOfNonBallSCCs == m_States.size());
 			return sameNumberOfVertices;
 		}

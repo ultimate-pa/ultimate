@@ -31,7 +31,7 @@ public abstract class Order<S, C> implements Comparator<Event<S, C>> {
 	@Override
 	public int compare(Event<S, C> o1, Event<S, C> o2) {
 		if (o1 == o2) {
-			//s_Logger.info("compared " + o1 + " with itsself.");
+			//m_Logger.info("compared " + o1 + " with itsself.");
 			return 0;
 		}
 		Configuration<S, C> c1 = o1.getLocalConfiguration();

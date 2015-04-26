@@ -114,7 +114,7 @@ public abstract class AbstractIntersect<LETTER,STATE> extends DoubleDeckerBuilde
 		}
 
 		m_ContentFactory = m_FstNwa.getStateFactory();
-		s_Logger.info(startMessage());
+		m_Logger.info(startMessage());
 		
 		Set<LETTER> newInternals = new HashSet<LETTER>();
 		newInternals.addAll(m_FstNwa.getInternalAlphabet());
@@ -130,7 +130,7 @@ public abstract class AbstractIntersect<LETTER,STATE> extends DoubleDeckerBuilde
 				newInternals, newCalls,	newReturns,	m_ContentFactory);
 		super.m_TraversedNwa = (NestedWordAutomaton<LETTER,STATE>) m_ResultNwa;
 		super.traverseDoubleDeckerGraph();
-		s_Logger.info(exitMessage());
+		m_Logger.info(exitMessage());
 		
 		if (m_Buchi) {
 			assert (ResultChecker.buchiIntersect(m_Services, m_FstNwa, m_SndNwa, m_ResultNwa));

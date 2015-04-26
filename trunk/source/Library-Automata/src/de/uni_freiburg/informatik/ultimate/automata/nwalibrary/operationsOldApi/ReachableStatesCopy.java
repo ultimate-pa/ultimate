@@ -71,7 +71,7 @@ public class ReachableStatesCopy<LETTER,STATE> extends DoubleDeckerBuilder<LETTE
 		}
 		m_Complement = complement;
 		m_Input = nwa;
-		s_Logger.info(startMessage());
+		m_Logger.info(startMessage());
 		m_TraversedNwa = new DoubleDeckerAutomaton<LETTER,STATE>(
 				m_Services,
 				nwa.getInternalAlphabet(), nwa.getCallAlphabet(),
@@ -83,7 +83,7 @@ public class ReachableStatesCopy<LETTER,STATE> extends DoubleDeckerBuilder<LETTE
 		if (totalize || m_Input.getInitialStates().isEmpty()) {
 			makeAutomatonTotal();
 		}
-		s_Logger.info(exitMessage());
+		m_Logger.info(exitMessage());
 	}
 	
 	
@@ -92,7 +92,7 @@ public class ReachableStatesCopy<LETTER,STATE> extends DoubleDeckerBuilder<LETTE
 			throws AutomataLibraryException {
 		super(services);
 		m_Input = nwa;
-		s_Logger.info(startMessage());
+		m_Logger.info(startMessage());
 		m_TraversedNwa = new DoubleDeckerAutomaton<LETTER,STATE>(
 				m_Services,
 				nwa.getInternalAlphabet(), nwa.getCallAlphabet(),
@@ -102,7 +102,7 @@ public class ReachableStatesCopy<LETTER,STATE> extends DoubleDeckerBuilder<LETTE
 		m_Complement = false;
 		traverseDoubleDeckerGraph();
 		((DoubleDeckerAutomaton<LETTER,STATE>) super.m_TraversedNwa).setUp2Down(getUp2DownMapping());
-		s_Logger.info(exitMessage());
+		m_Logger.info(exitMessage());
 	}
 	
 	private void makeAutomatonTotal() {
@@ -238,7 +238,7 @@ public class ReachableStatesCopy<LETTER,STATE> extends DoubleDeckerBuilder<LETTE
 		
 		boolean correct = true;
 		if (!m_RemoveNonLiveStates) {
-			s_Logger.info("Start testing correctness of " + operationName());
+			m_Logger.info("Start testing correctness of " + operationName());
 			if (!m_Complement) {
 				
 				correct &= (ResultChecker.nwaLanguageInclusion(m_Services, m_Input, m_TraversedNwa, stateFactory) == null);
@@ -260,7 +260,7 @@ public class ReachableStatesCopy<LETTER,STATE> extends DoubleDeckerBuilder<LETTE
 					ResultChecker.writeToFileIfPreferred(m_Services, operationName() + "Failed", "", m_TraversedNwa);
 				}
 			}
-			s_Logger.info("Finished testing correctness of " + operationName());
+			m_Logger.info("Finished testing correctness of " + operationName());
 		}
 		return correct;
 	}

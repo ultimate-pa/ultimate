@@ -266,7 +266,7 @@ public class DifferenceDD<LETTER,STATE> extends DoubleDeckerBuilder<LETTER,STATE
 		if (!NestedWordAutomaton.sameAlphabet(this.minuend, this.subtrahend)) {
 			throw new AutomataLibraryException(this.getClass(), "Unable to apply operation to automata with different alphabets.");
 		}
-		s_Logger.info(startMessage());
+		m_Logger.info(startMessage());
 		this.subtrahendAuxilliaryEmptyStackState = 
 			subtrahend.getEmptyStackState();
 		this.stateDeterminizer = stateDeterminizer;
@@ -286,14 +286,14 @@ public class DifferenceDD<LETTER,STATE> extends DoubleDeckerBuilder<LETTER,STATE
 //					null);
 		traverseDoubleDeckerGraph();
 		((DoubleDeckerAutomaton<LETTER,STATE>) super.m_TraversedNwa).setUp2Down(getUp2DownMapping());
-		s_Logger.info(exitMessage());
-		s_Logger.info("Computed internal successors:" + m_InternalSuccs);
-		s_Logger.info("Internal successors via cache:" + m_InternalSuccsCache);
-		s_Logger.info("Computed call successors:" + m_CallSuccs);
-		s_Logger.info("Call successors via cache:" + m_CallSuccsCache);
-		s_Logger.info("Computed return successors:" + m_ReturnSuccs);
-		s_Logger.info("Return successors via cache:" + m_ReturnSuccsCache);
-		s_Logger.info(m_Unnecessary + " times subtrahend state of successor " +
+		m_Logger.info(exitMessage());
+		m_Logger.info("Computed internal successors:" + m_InternalSuccs);
+		m_Logger.info("Internal successors via cache:" + m_InternalSuccsCache);
+		m_Logger.info("Computed call successors:" + m_CallSuccs);
+		m_Logger.info("Call successors via cache:" + m_CallSuccsCache);
+		m_Logger.info("Computed return successors:" + m_ReturnSuccs);
+		m_Logger.info("Return successors via cache:" + m_ReturnSuccsCache);
+		m_Logger.info(m_Unnecessary + " times subtrahend state of successor " +
 				"was accepting (use sigma star concat closure?)");
 	}
 	
@@ -309,7 +309,7 @@ public class DifferenceDD<LETTER,STATE> extends DoubleDeckerBuilder<LETTER,STATE
 		if (!NestedWordAutomaton.sameAlphabet(this.minuend, this.subtrahend)) {
 			throw new AutomataLibraryException(this.getClass(), "Unable to apply operation to automata with different alphabets.");
 		}
-		s_Logger.info(startMessage());
+		m_Logger.info(startMessage());
 		this.subtrahendAuxilliaryEmptyStackState = 
 			subtrahend.getEmptyStackState();
 		this.stateDeterminizer =
@@ -340,7 +340,7 @@ public class DifferenceDD<LETTER,STATE> extends DoubleDeckerBuilder<LETTER,STATE
 //					null);
 		traverseDoubleDeckerGraph();
 		((DoubleDeckerAutomaton<LETTER,STATE>) super.m_TraversedNwa).setUp2Down(getUp2DownMapping());
-		s_Logger.info(exitMessage());
+		m_Logger.info(exitMessage());
 	}
 
 	
@@ -521,7 +521,7 @@ public class DifferenceDD<LETTER,STATE> extends DoubleDeckerBuilder<LETTER,STATE
 				m_ReturnSuccs++;
 				detSucc = stateDeterminizer.returnSuccessor(
 												detState, detLinPred, symbol);
-//				s_Logger.debug("Successor of state " + detState + " symbol " +
+//				m_Logger.debug("Successor of state " + detState + " symbol " +
 //						symbol + " linPred " + detLinPred + " is " + detSucc);
 				
 				if (m_DetStateCache.containsKey(detSucc)) {
@@ -580,7 +580,7 @@ public class DifferenceDD<LETTER,STATE> extends DoubleDeckerBuilder<LETTER,STATE
 			throws AutomataLibraryException {
 		boolean correct = true;
 		if (stateDeterminizer instanceof PowersetDeterminizer) {
-			s_Logger.info("Start testing correctness of " + operationName());
+			m_Logger.info("Start testing correctness of " + operationName());
 
 			INestedWordAutomatonOldApi<LETTER,STATE> resultSadd = 
 					(new DifferenceSadd<LETTER,STATE>(m_Services, stateFactory, minuend, subtrahend)).getResult();
@@ -589,9 +589,9 @@ public class DifferenceDD<LETTER,STATE> extends DoubleDeckerBuilder<LETTER,STATE
 			if (!correct) {
 			ResultChecker.writeToFileIfPreferred(m_Services, operationName() + "Failed", "", minuend,subtrahend);
 			}
-			s_Logger.info("Finished testing correctness of " + operationName());
+			m_Logger.info("Finished testing correctness of " + operationName());
 		} else {
-			s_Logger.warn("Unable to test correctness if state determinzier is not the PowersetDeterminizer.");
+			m_Logger.warn("Unable to test correctness if state determinzier is not the PowersetDeterminizer.");
 		}
 		return correct;
 	}

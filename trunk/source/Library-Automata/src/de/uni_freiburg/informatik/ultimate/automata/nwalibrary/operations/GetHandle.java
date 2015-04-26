@@ -58,7 +58,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvide
  */
 public class GetHandle<LETTER, STATE> implements IOperation<LETTER,STATE> {
 	private final IUltimateServiceProvider m_Services;
-	private final Logger s_Logger;
+	private final Logger m_Logger;
 
 	private final INestedWordAutomaton<LETTER, STATE> m_Operand;
 	private NestedRun<LETTER,STATE> m_Handle;
@@ -68,9 +68,9 @@ public class GetHandle<LETTER, STATE> implements IOperation<LETTER,STATE> {
 	public GetHandle(IUltimateServiceProvider services,
 			INestedWordAutomaton<LETTER, STATE> operand) throws OperationCanceledException {
 		m_Services = services;
-		s_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
+		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 		m_Operand = operand;
-		s_Logger.info(startMessage());
+		m_Logger.info(startMessage());
 		if (m_Operand.getInitialStates().size() != 1) {
 			m_NoHandleReason = NoHandleReason.MULTI_INITIAL;
 		} else {
@@ -93,7 +93,7 @@ public class GetHandle<LETTER, STATE> implements IOperation<LETTER,STATE> {
 						m_Handle = m_Handle.concatenate(newSuffix);
 					}
 					if (m_Handle.getLength() > m_Operand.size()) {
-						s_Logger.info("automaton has cycle shape");
+						m_Logger.info("automaton has cycle shape");
 						m_Handle = null;
 						m_NoHandleReason = NoHandleReason.CYCLE_SHAPE;
 						break;
@@ -101,7 +101,7 @@ public class GetHandle<LETTER, STATE> implements IOperation<LETTER,STATE> {
 				}
 			}
 		}
-		s_Logger.info(exitMessage());
+		m_Logger.info(exitMessage());
 	}
 	
 	

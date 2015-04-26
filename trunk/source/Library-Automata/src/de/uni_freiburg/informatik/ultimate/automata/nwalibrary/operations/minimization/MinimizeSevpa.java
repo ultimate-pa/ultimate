@@ -67,7 +67,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvide
  */
 public class MinimizeSevpa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	private final IUltimateServiceProvider m_Services;
-	private final Logger s_Logger;
+	private final Logger m_Logger;
 	// old automaton
 	private final INestedWordAutomatonOldApi<LETTER,STATE> m_operand;
 	private final IDoubleDeckerAutomaton<LETTER, STATE> m_doubleDecker;
@@ -139,7 +139,7 @@ public class MinimizeSevpa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 			StateFactory<STATE> stateFactoryConstruction)
 					throws OperationCanceledException {
 		m_Services = services;
-		s_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
+		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 		m_operand = operand;
 		if (operand instanceof IDoubleDeckerAutomaton<?, ?>) {
 			m_doubleDecker = (IDoubleDeckerAutomaton<LETTER, STATE>)operand;
@@ -152,10 +152,10 @@ public class MinimizeSevpa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		
 
 		// must be the last part of the constructor
-		s_Logger.info(startMessage());
+		m_Logger.info(startMessage());
 		minimize(equivalenceClasses);
 		m_MinimizationFinished = true;
-		s_Logger.info(exitMessage());
+		m_Logger.info(exitMessage());
 		
 		if (STATISTICS) {
 			System.out.println("positive splits: " + m_splitsWithChange);
@@ -203,7 +203,7 @@ public class MinimizeSevpa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	
 		// merge non-distinguishable states
 		m_nwa = mergeStates(states, equivalenceClasses);
-		s_Logger.debug("Size after merging identical states: " +
+		m_Logger.debug("Size after merging identical states: " +
 				m_nwa.size());
 	}
 	
@@ -2760,7 +2760,7 @@ public class MinimizeSevpa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	@Override
 	public boolean checkResult(StateFactory<STATE> stateFactory)
 			throws AutomataLibraryException {
-		s_Logger.info("Start testing correctness of " + operationName());
+		m_Logger.info("Start testing correctness of " + operationName());
 		boolean correct = true;
 		correct &= (ResultChecker.nwaLanguageInclusion(m_Services, m_operand, m_nwa, stateFactory) == null);
 		assert correct;
@@ -2769,7 +2769,7 @@ public class MinimizeSevpa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		if (!correct) {
 			ResultChecker.writeToFileIfPreferred(m_Services, operationName() + "Failed", "", m_operand);
 		}
-		s_Logger.info("Finished testing correctness of " + operationName());
+		m_Logger.info("Finished testing correctness of " + operationName());
 		return correct;
 	}
 }
