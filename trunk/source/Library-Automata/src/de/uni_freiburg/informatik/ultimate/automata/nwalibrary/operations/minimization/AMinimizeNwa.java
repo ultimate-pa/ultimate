@@ -29,7 +29,7 @@ import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
+import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
@@ -57,8 +57,7 @@ public abstract class AMinimizeNwa<LETTER, STATE>
 	/**
 	 * The logger.
 	 */
-	protected static final Logger s_logger = 
-			NestedWordAutomata.getLogger();
+	protected final Logger s_logger;
 	
 	/**
 	 * The operation name.
@@ -85,6 +84,7 @@ public abstract class AMinimizeNwa<LETTER, STATE>
 			StateFactory<STATE> stateFactory, final String name,
 			final INestedWordAutomaton<LETTER, STATE> operand) {
 		m_Services = services;
+		s_logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 		m_name = name;
 		m_operand = operand;
 		m_StateFactory = stateFactory;

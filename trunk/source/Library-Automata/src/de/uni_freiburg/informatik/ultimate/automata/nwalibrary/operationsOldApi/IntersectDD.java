@@ -25,19 +25,14 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi;
 
-import org.apache.log4j.Logger;
-
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 
 public class IntersectDD<LETTER, STATE> extends AbstractIntersect<LETTER, STATE>
 		implements IOperation<LETTER, STATE> {
-
-	private static Logger s_Logger = NestedWordAutomata.getLogger();
 
 	public IntersectDD(IUltimateServiceProvider services,
 			INestedWordAutomatonOldApi<LETTER, STATE> fstNwa,

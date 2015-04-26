@@ -29,7 +29,7 @@ import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
+import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
@@ -42,8 +42,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvide
 public class Determinize<LETTER,STATE> implements IOperation<LETTER,STATE> {
 
 	private final IUltimateServiceProvider m_Services;
-	protected static Logger s_Logger = 
-		NestedWordAutomata.getLogger();
+	private final Logger s_Logger;
 	
 	private final INestedWordAutomatonSimple<LETTER,STATE> m_Operand;
 	private final DeterminizeNwa<LETTER, STATE> m_Determinized;
@@ -76,6 +75,7 @@ public class Determinize<LETTER,STATE> implements IOperation<LETTER,STATE> {
 			StateFactory<STATE> stateFactory, 
 			INestedWordAutomatonSimple<LETTER,STATE> input) throws AutomataLibraryException {
 		m_Services = services;
+		s_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 		this.stateDeterminizer = new PowersetDeterminizer<LETTER, STATE>(input, true, stateFactory);
 		this.m_StateFactory = stateFactory;
 		this.m_Operand = input;

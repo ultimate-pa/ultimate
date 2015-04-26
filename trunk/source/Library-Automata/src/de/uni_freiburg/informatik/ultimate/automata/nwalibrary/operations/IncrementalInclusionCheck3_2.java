@@ -5,11 +5,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 
-import org.apache.log4j.Logger;
-
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
@@ -33,7 +30,6 @@ import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvide
 
 public class IncrementalInclusionCheck3_2<LETTER,STATE> extends AbstractIncrementalInclusionCheck<LETTER,STATE> implements IOperation<LETTER, STATE> {
 	public int counter_run = 0, counter_total_nodes = 0 ;
-	private static Logger s_Logger;
 	private INestedWordAutomatonSimple<LETTER, STATE> local_m_A;
 	private List<INestedWordAutomatonSimple<LETTER, STATE>> local_m_B;
 	private ArrayList<INestedWordAutomatonSimple<LETTER,STATE>> local_m_B2;
@@ -116,7 +112,6 @@ public class IncrementalInclusionCheck3_2<LETTER,STATE> extends AbstractIncremen
 		IncrementalInclusionCheck2.abortIfContainsCallOrReturn(a);
 		localServiceProvider = services;
 		localStateFactory = sf;
-		s_Logger = NestedWordAutomata.getLogger();
 		s_Logger.info(startMessage());
 		completeLeafSet = new ArrayList<Leaf<LETTER,STATE>>();
 		local_m_A =  a;

@@ -35,7 +35,7 @@ import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
+import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
@@ -59,8 +59,7 @@ public class DifferenceSenwa<LETTER, STATE> implements
 								IOpWithDelayedDeadEndRemoval<LETTER, STATE>{
 	
 	private final IUltimateServiceProvider m_Services;
-	private static Logger s_Logger = 
-			NestedWordAutomata.getLogger();
+	private final Logger s_Logger;
 		
 	private final INestedWordAutomatonOldApi<LETTER,STATE> minuend;
 	private final INestedWordAutomatonOldApi<LETTER,STATE> subtrahend;
@@ -121,6 +120,7 @@ public class DifferenceSenwa<LETTER, STATE> implements
 			INestedWordAutomatonOldApi<LETTER,STATE> subtrahend)
 					throws AutomataLibraryException {
 		m_Services = services;
+		s_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 		contentFactory = minuend.getStateFactory();
 		this.minuend = minuend;
 		this.subtrahend = subtrahend;
@@ -146,6 +146,7 @@ public class DifferenceSenwa<LETTER, STATE> implements
 			boolean removeDeadEndsImmediately)
 					throws AutomataLibraryException {
 		m_Services = services;
+		s_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 		contentFactory = minuend.getStateFactory();
 		if (minuend instanceof INestedWordAutomatonOldApi) {
 			this.minuend = (INestedWordAutomatonOldApi<LETTER, STATE>) minuend;

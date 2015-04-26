@@ -33,7 +33,7 @@ import java.util.Set;
 
 import org.apache.log4j.Logger;
 
-import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
+import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IncomingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IncomingInternalTransition;
@@ -66,7 +66,7 @@ import de.uni_freiburg.informatik.ultimate.util.HashUtils;
  */
 class ShortestLassoExtractor<LETTER, STATE> {
 	private final IUltimateServiceProvider m_Services;
-	private static Logger s_Logger = NestedWordAutomata.getLogger();
+	private final Logger s_Logger;
 	private final NestedWordAutomatonReachableStates<LETTER, STATE> m_Nwars;
 	
 	List<Set<StackOfFlaggedStates>> m_Iterations = new ArrayList<Set<StackOfFlaggedStates>>();
@@ -85,6 +85,7 @@ class ShortestLassoExtractor<LETTER, STATE> {
 	public ShortestLassoExtractor(IUltimateServiceProvider services, 
 			NestedWordAutomatonReachableStates<LETTER, STATE> nwars, StateContainer<LETTER, STATE> goal) throws OperationCanceledException {
 		m_Services = services;
+		s_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 		m_Nwars = nwars;
 		m_Goal = goal;
 		addInitialStack(goal);

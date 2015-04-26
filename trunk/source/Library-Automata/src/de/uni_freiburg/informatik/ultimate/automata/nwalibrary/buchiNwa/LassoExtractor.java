@@ -32,7 +32,7 @@ import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
+import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.NestedWordAutomatonReachableStates;
@@ -41,7 +41,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvide
 public class LassoExtractor<LETTER, STATE> implements IOperation<LETTER,STATE> {
 
 	private final IUltimateServiceProvider m_Services;
-	private static Logger s_Logger = NestedWordAutomata.getLogger();
+	private final Logger s_Logger;
 
 	private final INestedWordAutomatonSimple<LETTER, STATE> m_Operand;
 	private final NestedWordAutomatonReachableStates<LETTER, STATE> m_Reach;
@@ -52,6 +52,7 @@ public class LassoExtractor<LETTER, STATE> implements IOperation<LETTER,STATE> {
 	public LassoExtractor(IUltimateServiceProvider services,
 			INestedWordAutomatonSimple<LETTER, STATE> operand) throws AutomataLibraryException {
 		m_Services = services;
+		s_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 		m_Operand = operand;
 		s_Logger.info(startMessage());
 		if (m_Operand instanceof NestedWordAutomatonReachableStates) {

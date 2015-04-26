@@ -83,7 +83,7 @@ public class InclusionViaDifference<LETTER, STATE> extends
 		m_StateFactoryDeterminize = stateFactoryDeterminize;
 		// initialize difference. B_1,...,B_n is emtpy
 		m_Difference = a;
-		m_AcceptingRun = (new IsEmpty<LETTER, STATE>(m_Difference)).getNestedRun();
+		m_AcceptingRun = (new IsEmpty<LETTER, STATE>(m_Services, m_Difference)).getNestedRun();
 	}
 
 	@Override
@@ -106,7 +106,7 @@ public class InclusionViaDifference<LETTER, STATE> extends
 		} else {
 			m_Difference = difference;
 		}
-		m_AcceptingRun = (new IsEmpty<LETTER, STATE>(m_Difference)).getNestedRun();
+		m_AcceptingRun = (new IsEmpty<LETTER, STATE>(m_Services, m_Difference)).getNestedRun();
 	}
 	
 	public int size() {

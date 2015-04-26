@@ -4,7 +4,6 @@ import java.io.IOException;
 
 import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
-import de.uni_freiburg.informatik.ultimate.automata.ExampleNWAFactory;
 import de.uni_freiburg.informatik.ultimate.core.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lassoranker.LassoAnalysis;
@@ -41,11 +40,6 @@ public class LassoRankerObserver implements IUnmanagedObserver {
 
 	@Override
 	public boolean process(IElement root) throws IOException {
-		
-		//TODO: Now you can get instances of your library classes for the current toolchain like this: 
-		//NWA is nevertheless very broken, as its static initialization prevents parallelism 
-		//Surprisingly, this call lazily initializes the static fields of NWA Lib and, like magic, the toolchain works ...
-		mServices.getServiceInstance(ExampleNWAFactory.class);
 		
 		if (!(root instanceof RootNode)) {
 			throw new UnsupportedOperationException(

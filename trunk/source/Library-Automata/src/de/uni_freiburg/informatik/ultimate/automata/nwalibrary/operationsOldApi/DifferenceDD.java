@@ -34,11 +34,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
-
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.DoubleDecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.DoubleDeckerAutomaton;
@@ -74,10 +71,6 @@ import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvide
 // represents all final states. Each successor of detFin is detFin itself.
 public class DifferenceDD<LETTER,STATE> extends DoubleDeckerBuilder<LETTER,STATE> 
 							 implements IOperation<LETTER,STATE> {
-	
-	private static Logger s_Logger = 
-		NestedWordAutomata.getLogger();
-	
 	/**
 	 * If set the language of the subtrahend is closed under concatenation with
 	 * sigma star. This means for determinized subtrahends: Once in the final

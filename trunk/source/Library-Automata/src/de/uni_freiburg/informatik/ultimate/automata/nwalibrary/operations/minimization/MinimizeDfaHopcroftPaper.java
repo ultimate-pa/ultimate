@@ -6,7 +6,6 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.Map;
 import java.util.Set;
 
@@ -14,7 +13,7 @@ import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
+import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
@@ -26,7 +25,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvide
 public class MinimizeDfaHopcroftPaper<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	private final IUltimateServiceProvider m_Services;
 	// Logger for debug - information.
-		private static Logger s_Logger = NestedWordAutomata.getLogger();
+	private final Logger s_Logger;
 		// Result automaton.
 		private NestedWordAutomaton<LETTER, STATE> m_Result;
 		// Input automaton.
@@ -82,6 +81,7 @@ public class MinimizeDfaHopcroftPaper<LETTER, STATE> implements IOperation<LETTE
 				StateFactory<STATE> stateFactoryConstruction,
 				Collection<Set<STATE>> initialPartition, boolean addMapping) {
 			m_Services = services;
+			s_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 			this.m_operand = operand;
 			this.m_stateFactory = stateFactoryConstruction;
 			if (addMapping) {

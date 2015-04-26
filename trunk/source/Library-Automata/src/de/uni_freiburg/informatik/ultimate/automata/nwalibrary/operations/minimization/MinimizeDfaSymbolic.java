@@ -11,7 +11,7 @@ import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
+import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
@@ -39,7 +39,7 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol;
 public class MinimizeDfaSymbolic<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	private final IUltimateServiceProvider m_Services;
 	// Logger for debug - information.
-	private static Logger s_Logger = NestedWordAutomata.getLogger();
+	private final Logger s_Logger;
 	// Result automaton.
 	private NestedWordAutomaton<LETTER, STATE> m_Result;
 	// Input automaton.
@@ -78,6 +78,7 @@ public class MinimizeDfaSymbolic<LETTER, STATE> implements IOperation<LETTER, ST
 	 */
 	public MinimizeDfaSymbolic(IUltimateServiceProvider services, INestedWordAutomatonOldApi<LETTER, STATE> operand) {
 		m_Services = services;
+		s_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 		this.m_operand = operand;
 
 		// Start minimization.

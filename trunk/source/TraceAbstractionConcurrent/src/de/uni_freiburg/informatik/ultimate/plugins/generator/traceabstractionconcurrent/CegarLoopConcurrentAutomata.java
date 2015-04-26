@@ -67,7 +67,7 @@ public class CegarLoopConcurrentAutomata extends BasicCegarLoop {
 		mLogger.info("Interpolatants " + m_InterpolAutomaton.getStates());
 
 		m_CegarLoopBenchmark.stop(CegarLoopBenchmarkType.s_BasicInterpolantAutomatonTime);
-		assert (accepts(m_InterpolAutomaton, m_Counterexample.getWord())) : "Interpolant automaton broken!";
+		assert (accepts(m_Services, m_InterpolAutomaton, m_Counterexample.getWord())) : "Interpolant automaton broken!";
 		assert (new InductivityCheck(m_Services, m_InterpolAutomaton, false, true,
 				new IncrementalHoareTripleChecker(m_SmtManager, m_ModGlobVarManager))).getResult() : "Not inductive";
 	}
@@ -192,7 +192,7 @@ public class CegarLoopConcurrentAutomata extends BasicCegarLoop {
 			throw new AssertionError();
 		}
 
-		boolean stillAccepted = (new Accepts<CodeBlock, IPredicate>(
+		boolean stillAccepted = (new Accepts<CodeBlock, IPredicate>(m_Services, 
 				(INestedWordAutomatonOldApi<CodeBlock, IPredicate>) m_Abstraction,
 				(NestedWord<CodeBlock>) m_Counterexample.getWord())).getResult();
 		if (stillAccepted) {

@@ -29,7 +29,7 @@ import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
+import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsEmpty;
@@ -38,7 +38,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvide
 public class ComplementSadd<LETTER, STATE> implements IOperation<LETTER, STATE> {
 
 	private final IUltimateServiceProvider m_Services;
-	private static Logger s_Logger = NestedWordAutomata.getLogger();
+	private final Logger s_Logger;
 
 	protected INestedWordAutomatonOldApi<LETTER, STATE> m_Operand;
 	protected INestedWordAutomatonOldApi<LETTER, STATE> m_DeterminizedOperand;
@@ -70,6 +70,7 @@ public class ComplementSadd<LETTER, STATE> implements IOperation<LETTER, STATE> 
 			INestedWordAutomatonOldApi<LETTER, STATE> operand)
 											throws AutomataLibraryException {
 		m_Services = services;
+		s_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 		m_Operand = operand;
 
 		s_Logger.info(startMessage());
@@ -91,7 +92,7 @@ public class ComplementSadd<LETTER, STATE> implements IOperation<LETTER, STATE> 
 		s_Logger.debug("Testing correctness of complement");
 		boolean correct = true;
 		INestedWordAutomatonOldApi intersectionOperandResult = (new IntersectDD(m_Services, false, m_Operand, m_Result)).getResult();
-		correct &=  ((new IsEmpty(intersectionOperandResult)).getResult() == true);
+		correct &=  ((new IsEmpty(m_Services, intersectionOperandResult)).getResult() == true);
 		s_Logger.debug("Finished testing correctness of complement");
 		return correct;
 	}

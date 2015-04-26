@@ -37,7 +37,7 @@ import java.util.Set;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.AtsDefinitionPrinter;
-import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
+import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 
 
@@ -53,8 +53,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvide
 public class NestedWordAutomatonCache<LETTER,STATE> implements INestedWordAutomatonSimple<LETTER,STATE> {
 	
 	private final IUltimateServiceProvider m_Services;
-	private static Logger s_Logger = 
-		NestedWordAutomata.getLogger();
+	private final Logger s_Logger;
 	
 	
 	private Set<LETTER> m_InternalAlphabet;
@@ -940,6 +939,7 @@ public class NestedWordAutomatonCache<LETTER,STATE> implements INestedWordAutoma
 				Set<LETTER> returnAlphabet,
 			   StateFactory<STATE> stateFactory) {
 		m_Services = services;
+		s_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 		if (internalAlphabet == null) {
 			throw new IllegalArgumentException("nwa must have internal alphabet");
 		}

@@ -28,7 +28,7 @@ package de.uni_freiburg.informatik.ultimate.automata.petrinet.visualization;
 import java.util.Collection;
 import java.util.HashMap;
 
-import de.uni_freiburg.informatik.ultimate.automata.Activator;
+import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Place;
 import de.uni_freiburg.informatik.ultimate.model.IPayload;
 import de.uni_freiburg.informatik.ultimate.model.annotation.DefaultAnnotations;
@@ -54,7 +54,7 @@ public class PlaceNode extends PetriNetVisualizationNode {
 		thisPluginsAnnotations.put("toString",place.toString());
 		thisPluginsAnnotations.put("hashCode",place.hashCode());
 		HashMap<String,IAnnotations> annotations = payload.getAnnotations();
-		annotations.put(Activator.PLUGIN_ID, thisPluginsAnnotations);
+		annotations.put(LibraryIdentifiers.s_LibraryID, thisPluginsAnnotations);
 		
 		if (place.getContent() instanceof IAnnotations) {
 			thisPluginsAnnotations.put("Content", (IAnnotations) place.getContent());

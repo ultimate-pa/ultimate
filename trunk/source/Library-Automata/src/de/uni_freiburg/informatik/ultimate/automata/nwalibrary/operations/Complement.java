@@ -29,7 +29,7 @@ import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
+import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
@@ -43,8 +43,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvide
 public class Complement<LETTER,STATE> implements IOperation<LETTER,STATE> {
 
 	private final IUltimateServiceProvider m_Services;
-	protected static Logger s_Logger = 
-		NestedWordAutomata.getLogger();
+	private final Logger s_Logger;
 	
 	private final INestedWordAutomatonSimple<LETTER,STATE> m_Operand;
 	private DeterminizeNwa<LETTER,STATE> m_Determinized;
@@ -79,6 +78,7 @@ public class Complement<LETTER,STATE> implements IOperation<LETTER,STATE> {
 			IStateDeterminizer<LETTER,STATE> stateDeterminizer, 
 			StateFactory<STATE> sf) throws AutomataLibraryException {
 		m_Services = services;
+		s_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 		m_Operand = operand;
 		m_StateDeterminizer = stateDeterminizer;
 		m_StateFactory = sf;
@@ -91,6 +91,7 @@ public class Complement<LETTER,STATE> implements IOperation<LETTER,STATE> {
 			StateFactory<STATE> stateFactory, 
 			INestedWordAutomatonSimple<LETTER,STATE> operand) throws AutomataLibraryException {
 		m_Services = services;
+		s_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 		m_Operand = operand;
 		m_StateDeterminizer = new PowersetDeterminizer<LETTER, STATE>(operand, true, stateFactory);
 		m_StateFactory = stateFactory;
@@ -154,7 +155,7 @@ public class Complement<LETTER,STATE> implements IOperation<LETTER,STATE> {
 			// intersection of operand and result should be empty
 			INestedWordAutomatonOldApi<LETTER, STATE> intersectionOperandResult = 
 					(new IntersectDD<LETTER, STATE>(m_Services, operandOldApi, m_Result)).getResult();
-			correct &= (new IsEmpty<LETTER, STATE>(intersectionOperandResult)).getResult();
+			correct &= (new IsEmpty<LETTER, STATE>(m_Services, intersectionOperandResult)).getResult();
 			INestedWordAutomatonOldApi<LETTER, STATE> resultDD = 
 					(new ComplementDD<LETTER, STATE>(m_Services, sf, operandOldApi)).getResult();
 			// should have same number of states as old complementation

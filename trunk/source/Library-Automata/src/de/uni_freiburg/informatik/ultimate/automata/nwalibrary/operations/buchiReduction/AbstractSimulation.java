@@ -45,7 +45,7 @@ import java.util.Stack;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
-import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
+import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
@@ -84,7 +84,7 @@ public abstract class AbstractSimulation<LETTER,STATE> {
     /**
      * The logger.
      */
-    protected static Logger s_Logger = NestedWordAutomata.getLogger();
+	protected final Logger s_Logger;
     /**
      * Holding the result automaton.
      */
@@ -110,6 +110,7 @@ public abstract class AbstractSimulation<LETTER,STATE> {
     		INestedWordAutomatonOldApi<LETTER,STATE> ba, boolean useSCCs, StateFactory<STATE> stateFactory)
             throws AutomataLibraryException {
     	m_Services = services;
+		s_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
         this.v0 = new HashSet<Player0Vertex<LETTER,STATE>>();
         this.v1 = new HashSet<Player1Vertex<LETTER,STATE>>();
         this.e = new HashMap<Vertex<LETTER,STATE>, HashSet<Vertex<LETTER, STATE>>>();

@@ -29,7 +29,7 @@ import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
+import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
@@ -46,7 +46,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvide
 public class BuchiIsIncluded<LETTER, STATE> implements IOperation<LETTER,STATE> {
 
 	private final IUltimateServiceProvider m_Services;
-	private static Logger s_Logger = NestedWordAutomata.getLogger();
+	private final Logger s_Logger;
 
 	private final INestedWordAutomatonOldApi<LETTER, STATE> m_Operand1;
 	private final INestedWordAutomatonOldApi<LETTER, STATE> m_Operand2;
@@ -61,6 +61,7 @@ public class BuchiIsIncluded<LETTER, STATE> implements IOperation<LETTER,STATE> 
 			INestedWordAutomatonOldApi<LETTER, STATE> nwa2)
 			throws AutomataLibraryException {
 		m_Services = services;
+		s_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 		m_Operand1 = nwa1;
 		m_Operand2 = nwa2;
 		s_Logger.info(startMessage());

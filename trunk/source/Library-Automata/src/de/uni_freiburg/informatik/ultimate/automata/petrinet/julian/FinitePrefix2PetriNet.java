@@ -38,7 +38,7 @@ import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
+import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Place;
@@ -48,7 +48,7 @@ import de.uni_freiburg.informatik.ultimate.util.UnionFind;
 public class FinitePrefix2PetriNet<L, C> implements IOperation<L, C> {
 
 	private final IUltimateServiceProvider m_Services;
-	private static Logger s_Logger = NestedWordAutomata.getLogger();
+	private final Logger s_Logger;
 	
 	BranchingProcess<L, C> m_Input;
 	PetriNetJulian<L, C> m_Net;
@@ -88,6 +88,7 @@ public class FinitePrefix2PetriNet<L, C> implements IOperation<L, C> {
 	public FinitePrefix2PetriNet(IUltimateServiceProvider services, 
 			BranchingProcess<L, C> bp) throws AutomataLibraryException {
 		m_Services = services;
+		s_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 		// TODO implement merging for markings?
 		m_Input = bp;
 		s_Logger.info(startMessage());

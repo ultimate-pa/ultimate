@@ -29,22 +29,26 @@ import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
+import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 
 public class GetAcceptedWord<LETTER, STATE> implements IOperation<LETTER,STATE> {
-
-	private static Logger s_Logger = NestedWordAutomata.getLogger();
+	private final IUltimateServiceProvider m_Services;
+	private final Logger s_Logger;
 
 	INestedWordAutomatonOldApi<LETTER, STATE> m_Operand;
 	NestedWord<LETTER> m_AcceptedWord;
 
-	public GetAcceptedWord(INestedWordAutomatonOldApi<LETTER, STATE> operand) throws AutomataLibraryException {
+	public GetAcceptedWord(IUltimateServiceProvider services,
+			INestedWordAutomatonOldApi<LETTER, STATE> operand) throws AutomataLibraryException {
+		m_Services = services;
+		s_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 		m_Operand = operand;
 		s_Logger.info(startMessage());
-		IsEmpty<LETTER, STATE> isEmpty = new IsEmpty<LETTER, STATE>(operand);
+		IsEmpty<LETTER, STATE> isEmpty = new IsEmpty<LETTER, STATE>(m_Services, operand);
 		if (isEmpty.getResult()) {
 			throw new IllegalArgumentException(
 					"unable to get word from emtpy language");

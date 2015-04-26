@@ -187,7 +187,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 				}
 
 			} else {
-				m_Counterexample = (new IsEmpty<CodeBlock, IPredicate>(
+				m_Counterexample = (new IsEmpty<CodeBlock, IPredicate>(m_Services, 
 						(INestedWordAutomatonOldApi<CodeBlock, IPredicate>) m_Abstraction)).getNestedRun();
 			}
 		} catch (OperationCanceledException e) {
@@ -344,7 +344,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 			break;
 		}
 		m_CegarLoopBenchmark.stop(CegarLoopBenchmarkType.s_BasicInterpolantAutomatonTime);
-		assert (accepts(m_InterpolAutomaton, m_Counterexample.getWord())) : "Interpolant automaton broken!";
+		assert (accepts(m_Services, m_InterpolAutomaton, m_Counterexample.getWord())) : "Interpolant automaton broken!";
 		assert (new InductivityCheck(m_Services, m_InterpolAutomaton, false, true, new IncrementalHoareTripleChecker(
 				m_SmtManager, m_ModGlobVarManager))).getResult();
 	}
@@ -459,7 +459,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 							String filename = "EnhancedInterpolantAutomaton_Iteration" + m_Iteration;
 							super.writeAutomatonToFile(test, filename);
 						}
-						boolean ctxAccepted = (new Accepts<CodeBlock, IPredicate>(test,
+						boolean ctxAccepted = (new Accepts<CodeBlock, IPredicate>(m_Services, test,
 								(NestedWord<CodeBlock>) m_Counterexample.getWord(), true, false)).getResult();
 						if (!ctxAccepted) {
 							throw new AssertionError("enhanced interpolant automaton in iteration " + m_Iteration
@@ -489,7 +489,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 						String filename = "EnhancedInterpolantAutomaton_Iteration" + m_Iteration;
 						super.writeAutomatonToFile(test, filename);
 					}
-					boolean ctxAccepted = (new Accepts<CodeBlock, IPredicate>(test,
+					boolean ctxAccepted = (new Accepts<CodeBlock, IPredicate>(m_Services, test,
 							(NestedWord<CodeBlock>) m_Counterexample.getWord(), true, false)).getResult();
 					if (!ctxAccepted) {
 						throw new AssertionError("enhanced interpolant automaton in iteration " + m_Iteration
@@ -526,7 +526,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 				mLogger.debug("Start complementation");
 				INestedWordAutomatonOldApi<CodeBlock, IPredicate> nia = (new ComplementDD<CodeBlock, IPredicate>(
 						m_Services, m_PredicateFactoryInterpolantAutomata, dia)).getResult();
-				assert (!accepts(nia, m_Counterexample.getWord()));
+				assert (!accepts(m_Services, nia, m_Counterexample.getWord()));
 				mLogger.info("Complemented interpolant automaton has " + nia.size() + " states");
 
 				if (m_Iteration <= m_Pref.watchIteration() && m_Pref.artifact() == Artifact.NEG_INTERPOLANT_AUTOMATON) {
@@ -585,7 +585,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		// assert a.numberOfIncomingInternalTransitions(p) <= 25 : p + " has "
 		// +a.numberOfIncomingInternalTransitions(p);
 		// }
-		boolean stillAccepted = (new Accepts<CodeBlock, IPredicate>(
+		boolean stillAccepted = (new Accepts<CodeBlock, IPredicate>(m_Services, 
 				(INestedWordAutomatonOldApi<CodeBlock, IPredicate>) m_Abstraction,
 				(NestedWord<CodeBlock>) m_Counterexample.getWord())).getResult();
 		if (stillAccepted) {
@@ -805,7 +805,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 			String filename = "InterpolantAutomatonDeterminized_Iteration" + m_Iteration;
 			writeAutomatonToFile(dia, filename);
 		}
-		assert (accepts(dia, m_Counterexample.getWord()));
+		assert (accepts(m_Services, dia, m_Counterexample.getWord()));
 		mLogger.debug("Sucessfully determinized");
 		return dia;
 	}
@@ -863,9 +863,9 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 				+ " biimplications");
 	}
 
-	protected static boolean accepts(INestedWordAutomaton<CodeBlock, IPredicate> nia, Word<CodeBlock> word)
+	protected static boolean accepts(IUltimateServiceProvider services, INestedWordAutomaton<CodeBlock, IPredicate> nia, Word<CodeBlock> word)
 			throws OperationCanceledException {
-		return (new Accepts<CodeBlock, IPredicate>(nia, NestedWord.nestedWord(word), false, false)).getResult();
+		return (new Accepts<CodeBlock, IPredicate>(services, nia, NestedWord.nestedWord(word), false, false)).getResult();
 	}
 
 	public CegarLoopBenchmarkGenerator getCegarLoopBenchmark() {

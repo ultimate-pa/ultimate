@@ -29,11 +29,8 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
-
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.DoubleDecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
@@ -51,10 +48,6 @@ import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvide
  */
 public class HasUnreachableStates<LETTER,STATE> extends DoubleDeckerVisitor<LETTER,STATE>
 										   implements IOperation<LETTER,STATE> {
-	private static Logger s_Logger = 
-			NestedWordAutomata.getLogger();
-	
-	
 	private final Set<STATE> m_VisitedStates = new HashSet<STATE>();
 	private int m_UnreachalbeStates = 0;
 

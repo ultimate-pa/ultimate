@@ -29,7 +29,7 @@ import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
+import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
@@ -46,8 +46,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvide
 public class IsIncluded<LETTER, STATE> implements IOperation<LETTER,STATE> {
 	
 	private final IUltimateServiceProvider m_Services;
-	private static Logger s_Logger = 
-			NestedWordAutomata.getLogger();
+	private final Logger s_Logger;
 	
 	private final INestedWordAutomatonOldApi<LETTER, STATE> m_Operand1;
 	private final INestedWordAutomatonOldApi<LETTER, STATE> m_Operand2;
@@ -61,11 +60,12 @@ public class IsIncluded<LETTER, STATE> implements IOperation<LETTER,STATE> {
 			INestedWordAutomatonOldApi<LETTER, STATE> nwa1, 
 			INestedWordAutomatonOldApi<LETTER, STATE> nwa2) throws AutomataLibraryException {
 		m_Services = services;
+		s_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 		m_Operand1 = nwa1;
 		m_Operand2 = nwa2;
 		s_Logger.info(startMessage());
 		IsEmpty<LETTER, STATE> emptinessCheck = new IsEmpty<LETTER, STATE>(
-				(new Difference<LETTER, STATE>(m_Services, stateFactory, nwa1, nwa2)).getResult());
+				services, (new Difference<LETTER, STATE>(m_Services, stateFactory, nwa1, nwa2)).getResult());
 		m_Result = emptinessCheck.getResult();
 		m_Counterexample = emptinessCheck.getNestedRun();
 		s_Logger.info(exitMessage());

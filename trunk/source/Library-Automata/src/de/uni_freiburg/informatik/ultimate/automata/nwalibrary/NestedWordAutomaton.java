@@ -39,7 +39,7 @@ import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.AtsDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
-import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
+import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.ConcurrentProduct;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsEmpty;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
@@ -56,7 +56,7 @@ public class NestedWordAutomaton<LETTER, STATE> implements INestedWordAutomatonO
 		INestedWordAutomaton<LETTER, STATE> {
 
 	private final IUltimateServiceProvider m_Services;
-	private static Logger s_Logger = NestedWordAutomata.getLogger();
+	private final Logger s_Logger;
 
 	private Set<LETTER> m_InternalAlphabet;
 	private Set<LETTER> m_CallAlphabet;
@@ -1984,6 +1984,7 @@ public class NestedWordAutomaton<LETTER, STATE> implements INestedWordAutomatonO
 			Set<LETTER> internalAlphabet, Set<LETTER> callAlphabet, Set<LETTER> returnAlphabet,
 			StateFactory<STATE> stateFactory) {
 		m_Services = services;
+		s_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 		if (internalAlphabet == null) {
 			throw new IllegalArgumentException("nwa must have internal alphabet");
 		}
@@ -2173,7 +2174,7 @@ public class NestedWordAutomaton<LETTER, STATE> implements INestedWordAutomatonO
 
 	@Deprecated
 	public NestedRun<LETTER, STATE> getAcceptingNestedRun() throws AutomataLibraryException {
-		NestedRun<LETTER, STATE> result = (new IsEmpty<LETTER, STATE>(this).getNestedRun());
+		NestedRun<LETTER, STATE> result = (new IsEmpty<LETTER, STATE>(m_Services, this).getNestedRun());
 		return result;
 	}
 

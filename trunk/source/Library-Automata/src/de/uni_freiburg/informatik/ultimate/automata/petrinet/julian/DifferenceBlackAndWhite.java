@@ -36,7 +36,7 @@ import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
+import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
@@ -56,8 +56,7 @@ public class DifferenceBlackAndWhite<S,C> implements IOperation<S,C> {
 		return "differenceBlackAndWhite";
 	}
 	
-	private static Logger s_Logger = 
-		NestedWordAutomata.getLogger();
+	private final Logger s_Logger;
 	
 	
 	
@@ -101,6 +100,7 @@ public class DifferenceBlackAndWhite<S,C> implements IOperation<S,C> {
 									PetriNetJulian<S,C> net, 
 								   NestedWordAutomaton<S,C> nwa) {
 		m_Services = services;
+		s_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 		m_Net = net;
 		m_Nwa = nwa;
 		m_ContentFactory = net.getStateFactory();

@@ -34,10 +34,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
-
-import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
-
 // TODO: rewrite this class, possibly split it up to resolve this horrible ambiguity
 /**
  * Represents a Suffix of a Configuration. A Configuration is a Set of Events
@@ -56,7 +52,6 @@ import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
 public class Configuration<S, C> extends AbstractSet<Event<S, C>> implements
 		Comparable<Configuration<S, C>> {
 
-	private static Logger s_Logger = NestedWordAutomata.getLogger();
 	private Set<Event<S, C>> m_Events;
 	private Set<Event<S, C>> m_Min;
 	private ArrayList<Transition<S, C>> m_Phi = null;
@@ -86,7 +81,7 @@ public class Configuration<S, C> extends AbstractSet<Event<S, C>> implements
 				m_Phi.add(e.getTransition());
 			}
 			Collections.sort(m_Phi);
-			s_Logger.debug("PhiSorted: " + m_Phi);
+//			s_Logger.debug("PhiSorted: " + m_Phi);
 		}
 		// return Collections.unmodifiableList(m_Phi);
 		return m_Phi;
@@ -248,8 +243,8 @@ public class Configuration<S, C> extends AbstractSet<Event<S, C>> implements
 			Transition<S, C> t2 = phi2.get(i);
 			int result = t1.getTotalOrderID() - t2.getTotalOrderID();
 			if (result != 0) {
-				s_Logger.debug(phi1.toString() + (result < 0 ? "<" : ">")
-						+ phi2.toString());
+//				s_Logger.debug(phi1.toString() + (result < 0 ? "<" : ">")
+//						+ phi2.toString());
 				return result;
 			}
 		}

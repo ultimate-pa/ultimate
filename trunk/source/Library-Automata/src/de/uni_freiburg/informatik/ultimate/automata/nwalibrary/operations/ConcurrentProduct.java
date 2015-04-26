@@ -33,7 +33,7 @@ import java.util.Set;
 
 import org.apache.log4j.Logger;
 
-import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
+import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
@@ -52,8 +52,7 @@ public class ConcurrentProduct<LETTER,STATE> {
 	
 	private final IUltimateServiceProvider m_Services;
 	
-	private static Logger s_Logger = 
-		NestedWordAutomata.getLogger();
+	private final Logger s_Logger;
 	
 	private final boolean m_ConcurrentPrefixProduct;
 
@@ -177,6 +176,7 @@ public class ConcurrentProduct<LETTER,STATE> {
 			INestedWordAutomatonOldApi<LETTER,STATE> nwa1,
 			INestedWordAutomatonOldApi<LETTER,STATE> nwa2, boolean concurrentPrefixProduct) {
 		m_Services = services;
+		s_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 		m_ConcurrentPrefixProduct = concurrentPrefixProduct;
 		M_Nwa1 = nwa1;
 		M_Nwa2 = nwa2;

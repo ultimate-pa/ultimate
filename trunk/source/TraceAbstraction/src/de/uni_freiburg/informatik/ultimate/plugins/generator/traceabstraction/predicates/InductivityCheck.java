@@ -2,7 +2,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.p
 
 import org.apache.log4j.Logger;
 
-import de.uni_freiburg.informatik.ultimate.automata.Activator;
+import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingInternalTransition;
@@ -41,7 +41,7 @@ public class InductivityCheck {
 			boolean m_AssertInductivity, IHoareTripleChecker hoareTripleChecker) {
 		super();
 		m_Services = services;
-		m_Logger = m_Services.getLoggingService().getLogger(Activator.PLUGIN_ID);
+		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 		this.nwa = m_Nwa;
 		this.m_HoareTripleChecker = hoareTripleChecker;
 		this.m_AntiInductivity = m_AntiInductivity;

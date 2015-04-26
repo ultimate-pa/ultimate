@@ -33,9 +33,10 @@ import org.apache.log4j.Logger;
 import petruchio.interfaces.petrinet.Place;
 import petruchio.interfaces.petrinet.Transition;
 import petruchio.pn.PetriNet;
-import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
+import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.PetriNetJulian;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 
 /**
  * Wraps the Petri net representation used in Tim Straznys Petruchio.
@@ -48,9 +49,8 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.PetriNetJuli
  */
 
 public class PetruchioWrapper<S,C> {
-	
-	private static Logger s_Logger = 
-		NestedWordAutomata.getLogger();
+	private final IUltimateServiceProvider m_Services;
+	private final Logger s_Logger;
 	
 	
 	
@@ -66,7 +66,10 @@ public class PetruchioWrapper<S,C> {
 		new IdentityHashMap<Transition, ITransition<S,C>>();
 
 	
-	public PetruchioWrapper(PetriNetJulian<S,C> net) {
+	public PetruchioWrapper(IUltimateServiceProvider services,
+			PetriNetJulian<S,C> net) {
+		m_Services = services;
+		s_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 		m_NetJulian = net;
 		constructNetPetruchio();
 	}

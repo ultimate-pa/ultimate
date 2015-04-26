@@ -28,14 +28,12 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations;
 import java.util.Set;
 import java.util.Stack;
 
-import org.apache.log4j.Logger;
-
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 
 /**
  * Check if word is accepted by automaton.
@@ -59,13 +57,11 @@ public class Accepts<LETTER,STATE> extends AbstractAcceptance<LETTER,STATE>
 	private final boolean m_InputIsSuffixOfAcceptedWord;
 	private boolean m_IsAccepted;
 
-	private static Logger s_Logger = NestedWordAutomata.getLogger();
-
-
-	public Accepts(INestedWordAutomatonSimple<LETTER,STATE> automaton, NestedWord<LETTER> word,
+	public Accepts(IUltimateServiceProvider services,
+			INestedWordAutomatonSimple<LETTER,STATE> automaton, NestedWord<LETTER> word,
 			boolean prefixOfIntputIsAccepted,
 			boolean inputIsSuffixOfAcceptedWord) {
-		super();
+		super(services);
 		this.m_Automaton = automaton;
 		this.m_Word = word;
 		this.m_PrefixOfInputIsAccepted = prefixOfIntputIsAccepted;
@@ -74,8 +70,9 @@ public class Accepts<LETTER,STATE> extends AbstractAcceptance<LETTER,STATE>
 		m_IsAccepted = isAccepted();
 		s_Logger.info(exitMessage());
 	}
-	public Accepts(INestedWordAutomatonSimple<LETTER,STATE> automaton, NestedWord<LETTER> word) {
-		this(automaton, word, false, false);
+	public Accepts(IUltimateServiceProvider services,
+			INestedWordAutomatonSimple<LETTER,STATE> automaton, NestedWord<LETTER> word) {
+		this(services, automaton, word, false, false);
 	}
 
 	@Override

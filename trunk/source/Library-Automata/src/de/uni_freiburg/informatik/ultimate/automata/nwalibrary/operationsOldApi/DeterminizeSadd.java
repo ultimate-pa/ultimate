@@ -36,7 +36,7 @@ import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
+import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
@@ -46,8 +46,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvide
 public class DeterminizeSadd<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	
 	private final IUltimateServiceProvider m_Services;
-	private static Logger s_Logger = 
-		NestedWordAutomata.getLogger();
+	private final Logger s_Logger;
 	
 	private Map<Macrostate,STATE> macrostate2detState =
 		new HashMap<Macrostate, STATE>();
@@ -91,6 +90,7 @@ public class DeterminizeSadd<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	public DeterminizeSadd(IUltimateServiceProvider services,
 			INestedWordAutomatonOldApi<LETTER,STATE> nwa) {
 		m_Services = services;
+		s_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 		m_Operand = nwa;
 		s_Logger.info(startMessage());
 		result = new NestedWordAutomaton<LETTER,STATE>(

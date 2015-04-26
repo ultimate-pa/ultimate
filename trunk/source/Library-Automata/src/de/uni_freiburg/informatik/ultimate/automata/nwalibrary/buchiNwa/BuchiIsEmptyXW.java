@@ -36,7 +36,7 @@ import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
+import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
@@ -58,6 +58,7 @@ public class BuchiIsEmptyXW<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	public BuchiIsEmptyXW(IUltimateServiceProvider services, 
 			INestedWordAutomatonOldApi<LETTER, STATE> nwa) throws AutomataLibraryException {
 		m_Services = services;
+		s_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 		m_nwa = nwa;
 		s_Logger.info(startMessage());
 		m_Result = checkEmptiness();
@@ -96,8 +97,7 @@ public class BuchiIsEmptyXW<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	STATE witnessInitial;
 	STATE witnessCritical;
 
-	private static Logger s_Logger = 
-		NestedWordAutomata.getLogger();	
+	private final Logger s_Logger;
 	
 	/** Element of worklist, a pair of states. */
 	private class StatePair {	

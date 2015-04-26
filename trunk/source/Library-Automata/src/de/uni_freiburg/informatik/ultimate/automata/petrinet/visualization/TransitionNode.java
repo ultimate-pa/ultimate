@@ -27,7 +27,7 @@ package de.uni_freiburg.informatik.ultimate.automata.petrinet.visualization;
 
 import java.util.HashMap;
 
-import de.uni_freiburg.informatik.ultimate.automata.Activator;
+import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.Transition;
 import de.uni_freiburg.informatik.ultimate.model.IPayload;
 import de.uni_freiburg.informatik.ultimate.model.annotation.DefaultAnnotations;
@@ -49,7 +49,7 @@ public class TransitionNode extends PetriNetVisualizationNode {
 		DefaultAnnotations thisPluginsAnnotations = new DefaultAnnotations();
 		thisPluginsAnnotations.put("hashCode",transition.hashCode());
 		HashMap<String,IAnnotations> annotations = payload.getAnnotations();
-		annotations.put(Activator.PLUGIN_ID, thisPluginsAnnotations);
+		annotations.put(LibraryIdentifiers.s_LibraryID, thisPluginsAnnotations);
 		
 		if (transition.getSymbol() instanceof IAnnotations) {
 			thisPluginsAnnotations.put("Symbol", (IAnnotations) transition.getSymbol());

@@ -35,12 +35,15 @@ import java.util.Set;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
+import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Place;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 
 public class BranchingProcess<S, C> implements IAutomaton<S, C> {
-	private static Logger s_Logger = NestedWordAutomata.getLogger();
+	
+	private final IUltimateServiceProvider m_Services;
+	private final Logger s_Logger;
 	
 	final private Collection<Condition<S, C>> conditions;
 	final private Collection<Event<S, C>> events;
@@ -55,7 +58,10 @@ public class BranchingProcess<S, C> implements IAutomaton<S, C> {
 	
 	private final Order<S,C> m_Order;
 
-	public BranchingProcess(PetriNetJulian<S, C> net, Order<S, C> order) {
+	public BranchingProcess(IUltimateServiceProvider services,
+			PetriNetJulian<S, C> net, Order<S, C> order) {
+		m_Services = services;
+		s_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 		this.net = net;
 		this.m_Order = order;
 		this.place2cond = new HashMap<Place<S, C>, Set<Condition<S, C>>>();

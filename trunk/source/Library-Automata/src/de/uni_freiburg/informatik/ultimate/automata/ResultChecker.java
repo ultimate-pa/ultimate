@@ -25,7 +25,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata;
 
-import java.io.File;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Collection;
@@ -35,7 +34,6 @@ import org.apache.log4j.Logger;
 import org.eclipse.core.runtime.preferences.IScopeContext;
 import org.eclipse.core.runtime.preferences.InstanceScope;
 
-import de.uni_freiburg.informatik.ultimate.automata.AtsDefinitionPrinter.Labeling;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
@@ -54,15 +52,13 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimi
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.DifferenceDD;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNet2FiniteAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.PetriNetJulian;
-import de.uni_freiburg.informatik.ultimate.automata.preferences.PreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 
 @Deprecated
 public class ResultChecker<LETTER,STATE> {
 	
-	private static Logger s_Logger = 
-		NestedWordAutomata.getLogger();
+//	private static Logger logger;
 	
 	private static int resultCheckStackHeight = 0;
 	public static final int maxResultCheckStackHeight = 1;
@@ -79,29 +75,31 @@ public class ResultChecker<LETTER,STATE> {
 	
 	public static boolean reduceBuchi(IUltimateServiceProvider services, INestedWordAutomatonOldApi operand,
 			INestedWordAutomatonOldApi result) throws AutomataLibraryException {
+		Logger logger = services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
+
 		StateFactory stateFactory = operand.getStateFactory();
 		if (resultCheckStackHeight >= maxResultCheckStackHeight)
 			return true;
 		resultCheckStackHeight++;
-		s_Logger.debug("Testing correctness of reduceBuchi");
+		logger.debug("Testing correctness of reduceBuchi");
 		
 		INestedWordAutomatonOldApi minimizedOperand = (new MinimizeDfa(services, operand)).getResult();
 
 		boolean correct = true;
 		NestedLassoRun inOperandButNotInResultBuchi = nwaBuchiLanguageInclusion(services, stateFactory, minimizedOperand,result);
 		if (inOperandButNotInResultBuchi != null) {
-			s_Logger.error("Lasso word accepted by operand, but not by result: " + 
+			logger.error("Lasso word accepted by operand, but not by result: " + 
 					inOperandButNotInResultBuchi.getNestedLassoWord());
 			correct = false;
 		}
 		NestedLassoRun inResultButNotInOperatndBuchi = nwaBuchiLanguageInclusion(services, stateFactory, result,minimizedOperand);
 		if (inResultButNotInOperatndBuchi != null) {
-			s_Logger.error("Lasso word accepted by result, but not by operand: " + 
+			logger.error("Lasso word accepted by result, but not by operand: " + 
 					inResultButNotInOperatndBuchi.getNestedLassoWord());
 			correct = false;
 		}
 
-		s_Logger.debug("Finished testing correctness of reduceBuchi");
+		logger.debug("Finished testing correctness of reduceBuchi");
 		resultCheckStackHeight--;
 		return correct;
 	}
@@ -110,32 +108,35 @@ public class ResultChecker<LETTER,STATE> {
 //										 NestedLassoRun result) {
 //		if (resultCheckStackHeight >= maxResultCheckStackHeight) return true;
 //		resultCheckStackHeight++;
-//		s_Logger.info("Testing correctness of buchiEmptiness");
+//		logger.info("Testing correctness of buchiEmptiness");
 //
 //		boolean correct = true;
 //		if (result == null) {
-//			s_Logger.warn("No check for positive buchiEmptiness");
+//			logger.warn("No check for positive buchiEmptiness");
 //		} else {
 //			correct = (new BuchiAccepts(operand, result.getNestedLassoWord())).getResult();
 //		}
 //
-//		s_Logger.info("Finished testing correctness of buchiEmptiness");
+//		logger.info("Finished testing correctness of buchiEmptiness");
 //		resultCheckStackHeight--;
 //		return correct;
 //	}
 	
 	
-	public static boolean buchiIntersect(INestedWordAutomatonOldApi operand1,
+	public static boolean buchiIntersect(IUltimateServiceProvider services,
+			INestedWordAutomatonOldApi operand1,
 			INestedWordAutomatonOldApi operand2,
 			INestedWordAutomatonOldApi result) {
+		Logger logger = services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
+
 		if (resultCheckStackHeight >= maxResultCheckStackHeight) return true;
 		resultCheckStackHeight++;
-		s_Logger.info("Testing correctness of buchiIntersect");
+		logger.info("Testing correctness of buchiIntersect");
 
 		boolean correct = true;
-		s_Logger.warn("No test for buchiIntersection available yet");
+		logger.warn("No test for buchiIntersection available yet");
 
-		s_Logger.info("Finished testing correctness of buchiIntersect");
+		logger.info("Finished testing correctness of buchiIntersect");
 		resultCheckStackHeight--;
 		return correct;
 	}
@@ -144,9 +145,10 @@ public class ResultChecker<LETTER,STATE> {
 	
 	public static boolean buchiComplement(IUltimateServiceProvider services, INestedWordAutomatonOldApi operand,
 										  INestedWordAutomatonOldApi result) throws AutomataLibraryException {
+		Logger logger = services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 		if (resultCheckStackHeight >= maxResultCheckStackHeight) return true;
 		resultCheckStackHeight++;
-		s_Logger.info("Testing correctness of complementBuchi");
+		logger.info("Testing correctness of complementBuchi");
 		
 		int maxNumberOfStates = Math.max(operand.size(), result.size());
 		boolean correct = true;
@@ -171,7 +173,7 @@ public class ResultChecker<LETTER,STATE> {
 //		boolean correct = (ctx == null);
 //		assert (correct);
 		
-		s_Logger.info("Finished testing correctness of complementBuchi");
+		logger.info("Finished testing correctness of complementBuchi");
 		resultCheckStackHeight--;
 		return correct;
 	}
@@ -180,9 +182,11 @@ public class ResultChecker<LETTER,STATE> {
 	public static boolean buchiComplementSVW(IUltimateServiceProvider services, 
 			INestedWordAutomatonOldApi operand,
 			INestedWordAutomatonOldApi result) throws AutomataLibraryException {
+		Logger logger = services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
+
 		if (resultCheckStackHeight >= maxResultCheckStackHeight) return true;
 		resultCheckStackHeight++;
-		s_Logger.info("Testing correctness of complementBuchiSVW");
+		logger.info("Testing correctness of complementBuchiSVW");
 		
 		int maxNumberOfStates = Math.max(operand.size(), result.size());
 		boolean correct = true;
@@ -218,7 +222,7 @@ public class ResultChecker<LETTER,STATE> {
 //			assert (correct);
 //		}
 
-		s_Logger.info("Finished testing correctness of complementBuchiSVW");
+		logger.info("Finished testing correctness of complementBuchiSVW");
 		resultCheckStackHeight--;
 		return correct;
 	}
@@ -227,9 +231,11 @@ public class ResultChecker<LETTER,STATE> {
 	
 	public static boolean petriNetJulian(IUltimateServiceProvider services, INestedWordAutomatonOldApi op,
 										 PetriNetJulian result) throws AutomataLibraryException {
+		Logger logger = services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
+
 		if (resultCheckStackHeight >= maxResultCheckStackHeight) return true;
 		resultCheckStackHeight++;
-		s_Logger.info("Testing correctness of PetriNetJulian constructor");
+		logger.info("Testing correctness of PetriNetJulian constructor");
 
 		INestedWordAutomatonOldApi resultAutomata = 
 							(new PetriNet2FiniteAutomaton(services, result)).getResult();
@@ -237,7 +243,7 @@ public class ResultChecker<LETTER,STATE> {
 		correct &= (nwaLanguageInclusion(services, resultAutomata,op,op.getStateFactory()) == null);
 		correct &= (nwaLanguageInclusion(services, op,resultAutomata,op.getStateFactory()) == null);
 
-		s_Logger.info("Finished testing correctness of PetriNetJulian constructor");
+		logger.info("Finished testing correctness of PetriNetJulian constructor");
 		resultCheckStackHeight--;
 		return correct;
 	}
@@ -247,23 +253,25 @@ public class ResultChecker<LETTER,STATE> {
 	
 
 	public static boolean petriNetLanguageEquivalence(IUltimateServiceProvider services, PetriNetJulian net1, PetriNetJulian net2) throws AutomataLibraryException {
+		Logger logger = services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
+
 		if (resultCheckStackHeight >= maxResultCheckStackHeight) return true;
 		resultCheckStackHeight++;
-		s_Logger.info("Testing Petri net language equivalence");
+		logger.info("Testing Petri net language equivalence");
 		INestedWordAutomatonOldApi finAuto1 = (new PetriNet2FiniteAutomaton(services, net1)).getResult();
 		INestedWordAutomatonOldApi finAuto2 = (new PetriNet2FiniteAutomaton(services, net2)).getResult();
 		NestedRun subsetCounterex = nwaLanguageInclusion(services, finAuto1, finAuto2, net1.getStateFactory());
 		boolean subset = subsetCounterex == null;
 		if (!subset) {
-			s_Logger.error("Only accepted by first: " + subsetCounterex.getWord());
+			logger.error("Only accepted by first: " + subsetCounterex.getWord());
 		}
 		NestedRun supersetCounterex = nwaLanguageInclusion(services, finAuto2, finAuto1, net1.getStateFactory());
 		boolean superset = supersetCounterex == null;
 		if (!superset) {
-			s_Logger.error("Only accepted by second: " + supersetCounterex.getWord());
+			logger.error("Only accepted by second: " + supersetCounterex.getWord());
 		}
 		boolean result = subset && superset;
-		s_Logger.info("Finished Petri net language equivalence");
+		logger.info("Finished Petri net language equivalence");
 		resultCheckStackHeight--;
 		return result;
 	}
@@ -282,10 +290,10 @@ public class ResultChecker<LETTER,STATE> {
 	public static <LETTER,STATE> NestedRun nwaLanguageInclusion(IUltimateServiceProvider services, INestedWordAutomatonOldApi nwa1, INestedWordAutomatonOldApi nwa2, StateFactory stateFactory) throws AutomataLibraryException {
 		IStateDeterminizer stateDeterminizer = new PowersetDeterminizer<LETTER,STATE>(nwa2, true, stateFactory);
 		INestedWordAutomatonOldApi nwa1MinusNwa2 = (new DifferenceDD(services, nwa1, nwa2, stateDeterminizer, stateFactory, false, false)).getResult();
-		NestedRun inNwa1ButNotInNwa2 = (new IsEmpty(nwa1MinusNwa2)).getNestedRun();
+		NestedRun inNwa1ButNotInNwa2 = (new IsEmpty(services, nwa1MinusNwa2)).getNestedRun();
 		return inNwa1ButNotInNwa2;
 //		if (inNwa1ButNotInNwa2 != null) {
-//			s_Logger.error("Word accepted by nwa1, but not by nwa2: " + 
+//			logger.error("Word accepted by nwa1, but not by nwa2: " + 
 //					inNwa1ButNotInNwa2.getWord());
 //			correct = false;
 //		}
@@ -316,13 +324,13 @@ public class ResultChecker<LETTER,STATE> {
     
     public static void writeToFileIfPreferred(IUltimateServiceProvider services, String filenamePrefix, String message, IAutomaton... automata) {
 		IScopeContext scope = InstanceScope.INSTANCE;
-		UltimatePreferenceStore prefs = new UltimatePreferenceStore(Activator.PLUGIN_ID);
-		boolean writeToFile = prefs.getBoolean(PreferenceInitializer.Name_Write);
-		if (writeToFile) {
-			String directory = prefs.getString(PreferenceInitializer.Name_Path); 
-			String filename = directory + File.separator+filenamePrefix + getDateTime() + ".fat";
-			new AtsDefinitionPrinter(services, filenamePrefix, filename, Labeling.QUOTED, message, automata);
-		}
+		UltimatePreferenceStore prefs = new UltimatePreferenceStore(LibraryIdentifiers.s_LibraryID);
+//		boolean writeToFile = prefs.getBoolean(PreferenceInitializer.Name_Write);
+//		if (writeToFile) {
+//			String directory = prefs.getString(PreferenceInitializer.Name_Path); 
+//			String filename = directory + File.separator+filenamePrefix + getDateTime() + ".fat";
+//			new AtsDefinitionPrinter(services, filenamePrefix, filename, Labeling.QUOTED, message, automata);
+//		}
     }
     
 	public static <LETTER,STATE> NestedLassoWord<LETTER> getRandomNestedLassoWord(INestedWordAutomatonSimple<LETTER, STATE> automaton, int size) throws AutomataLibraryException {

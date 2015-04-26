@@ -13,16 +13,11 @@ import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
-import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
-import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
+import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.MinimizeDfaHopcroft.Partition;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.MinimizeDfaHopcroft.Worklist;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 
 /**
@@ -37,7 +32,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvide
 public class MinimizeDfaHopcroftWiki<LETTER, STATE> implements IMinimize,
 		IOperation<LETTER, STATE> {
 	// Logger for debug - information.
-	private static Logger s_Logger = NestedWordAutomata.getLogger();
+	private final Logger s_Logger;
 	// Service provider
 	private final IUltimateServiceProvider m_services;
 	// Result automaton.
@@ -65,6 +60,7 @@ public class MinimizeDfaHopcroftWiki<LETTER, STATE> implements IMinimize,
 	// Constructor.
 	public MinimizeDfaHopcroftWiki(IUltimateServiceProvider services, INestedWordAutomaton<LETTER, STATE> operand) {
 		this.m_services = services;
+		this.s_Logger = m_services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 		this.m_operand = operand;
 
 		// Start minimization.

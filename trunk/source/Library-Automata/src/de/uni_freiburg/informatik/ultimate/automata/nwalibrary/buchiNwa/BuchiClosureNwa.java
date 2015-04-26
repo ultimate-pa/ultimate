@@ -32,8 +32,9 @@ import java.util.Set;
 
 import org.apache.log4j.Logger;
 
-import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
+import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IDoubleDeckerAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IncomingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IncomingInternalTransition;
@@ -43,6 +44,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingInternalT
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.SummaryReturnTransition;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 
 
 /**
@@ -53,15 +55,20 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.SummaryReturnTran
  * @param <STATE>
  */
 public class BuchiClosureNwa<LETTER, STATE> implements INestedWordAutomatonOldApi<LETTER, STATE>, IDoubleDeckerAutomaton<LETTER, STATE> {
-	private static Logger s_Logger = 
-			NestedWordAutomata.getLogger();
+	private final IUltimateServiceProvider m_Services;
+	private final Logger s_Logger;
 	
 	private final INestedWordAutomatonOldApi<LETTER, STATE> m_Operand;
 	private final Set<STATE> m_AcceptingStates;
 
+
+
 	
-	public BuchiClosureNwa(INestedWordAutomatonOldApi<LETTER, STATE> operand) {
-		m_Operand = operand;
+	public BuchiClosureNwa(IUltimateServiceProvider services,
+			INestedWordAutomaton<LETTER, STATE> operand) {
+		m_Services = services;
+		s_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
+		m_Operand = (INestedWordAutomatonOldApi<LETTER, STATE>) operand;
 		m_AcceptingStates = computeSetOfAcceptingStates();
 	}
 	

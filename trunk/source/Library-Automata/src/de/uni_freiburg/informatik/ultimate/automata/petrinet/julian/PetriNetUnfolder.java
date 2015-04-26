@@ -34,7 +34,7 @@ import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
+import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
@@ -49,7 +49,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvide
 public class PetriNetUnfolder<S, C> implements IOperation<S, C> {
 
 	private final IUltimateServiceProvider m_Services;
-	private static Logger s_Logger = NestedWordAutomata.getLogger();
+	private final Logger s_Logger;
 	
 	private final PetriNetJulian<S, C> m_Net;
 	private final boolean m_StopIfAcceptingRunFound;
@@ -170,12 +170,13 @@ public class PetriNetUnfolder<S, C> implements IOperation<S, C> {
 			boolean sameTransitionCutOff, boolean stopIfAcceptingRunFound)
 			throws OperationCanceledException {
 		m_Services = services;
+		s_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 		this.m_Net = net;
 		this.m_StopIfAcceptingRunFound = stopIfAcceptingRunFound;
 		this.m_SameTransitionCutOff = sameTransitionCutOff;
 		this.m_Order = Order;
 		s_Logger.info(startMessage());
-		this.m_Unfolding = new BranchingProcess<S, C>(net, ESPARZAS_ROEMER_VOGLER_ORDER);
+		this.m_Unfolding = new BranchingProcess<S, C>(m_Services, net, ESPARZAS_ROEMER_VOGLER_ORDER);
 		// this.cutOffEvents = new HashSet<Event<S, C>>();
 		Order<S, C> queueOrder = MC_MILLANS_ORDER;
 		switch (Order) {
@@ -425,14 +426,14 @@ public class PetriNetUnfolder<S, C> implements IOperation<S, C> {
 
 		boolean correct = true;
 		if (m_Run == null) {
-			NestedRun automataRun = (new IsEmpty((new PetriNet2FiniteAutomaton(m_Services, m_Net)).getResult())).getNestedRun();
+			NestedRun<S, C> automataRun = (new IsEmpty<S, C>(m_Services, (new PetriNet2FiniteAutomaton<S, C>(m_Services, m_Net)).getResult())).getNestedRun();
 			if (automataRun != null) {
 				correct = false;
 				s_Logger.error("EmptinessCheck says empty, but net accepts: " + automataRun.getWord());
 			}
 			correct = (automataRun == null);
 		} else {
-			Word word = m_Run.getWord();
+			Word<S> word = m_Run.getWord();
 			if (m_Net.accepts(word)) {
 				correct = true;
 			}

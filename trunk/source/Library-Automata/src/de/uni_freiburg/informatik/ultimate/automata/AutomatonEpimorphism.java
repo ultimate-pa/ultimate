@@ -31,6 +31,7 @@ import java.util.Map.Entry;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 
 /**
  * Given two nondeterministic NWAs nwa_minuend and nwa_subtrahend a
@@ -48,12 +49,14 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutoma
  */
 public class AutomatonEpimorphism<STATE> {
 
-	// For status output
-	private static Logger s_Logger = NestedWordAutomata.getLogger();
+	private final IUltimateServiceProvider m_Services;
+	private final Logger s_Logger;
 
 	private HashMap<STATE, STATE> m_epimorphism;
 
-	public AutomatonEpimorphism() {
+	public AutomatonEpimorphism(IUltimateServiceProvider services) {
+		m_Services = services;
+		s_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 		m_epimorphism = new HashMap<STATE, STATE>();
 	}
 
@@ -70,9 +73,12 @@ public class AutomatonEpimorphism<STATE> {
 	 * @return an epimorphism structure from a1 to a2
 	 */
 	public static AutomatonEpimorphism<String> createFromAutomatonLabels(
+			IUltimateServiceProvider services,
+			
 			INestedWordAutomatonOldApi<String, String> a1,
 			INestedWordAutomatonOldApi<String, String> a2) {
-		AutomatonEpimorphism<String> epimorphism = new AutomatonEpimorphism<String>();
+		Logger logger = services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
+		AutomatonEpimorphism<String> epimorphism = new AutomatonEpimorphism<String>(services);
 
 		// traversing the states
 		for (String state1 : a1.getStates()) {
@@ -80,7 +86,7 @@ public class AutomatonEpimorphism<STATE> {
 
 				// check that "_" is not the last char in the string
 				if (state1.indexOf("_") + 1 == state1.length()) {
-					s_Logger.error("Invalid state name: " + state1);
+					logger.error("Invalid state name: " + state1);
 				}
 
 				// get the name of the epimorph state
@@ -89,7 +95,7 @@ public class AutomatonEpimorphism<STATE> {
 
 				// check that "_" does not occur multiple times
 				if (epimorphState.indexOf("_") != -1) {
-					s_Logger.error("Invalid state name: " + state1);
+					logger.error("Invalid state name: " + state1);
 				}
 
 				// search the state in a2
@@ -102,7 +108,7 @@ public class AutomatonEpimorphism<STATE> {
 
 				// if it is not found, error
 				if (state2 == null) {
-					s_Logger.error("Missing epimorphism partner for: " + state1);
+					logger.error("Missing epimorphism partner for: " + state1);
 				}
 
 				// set the mapping from state1 to state2

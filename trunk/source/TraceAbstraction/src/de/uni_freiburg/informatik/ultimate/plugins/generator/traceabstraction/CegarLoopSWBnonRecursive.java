@@ -188,7 +188,7 @@ public class CegarLoopSWBnonRecursive extends BasicCegarLoop {
 		m_AbstractionInitialState = m_InterpolantGenerator.getPrecondition();
 		m_AbstractionFinalState = m_InterpolantGenerator.getPostcondition();
 		m_PredicateUnifier = m_InterpolantGenerator.getPredicateUnifier();
-		m_Epimorphism = new AutomatonEpimorphism<>();
+		m_Epimorphism = new AutomatonEpimorphism<>(m_Services);
 
 		// // / debugging
 		// {

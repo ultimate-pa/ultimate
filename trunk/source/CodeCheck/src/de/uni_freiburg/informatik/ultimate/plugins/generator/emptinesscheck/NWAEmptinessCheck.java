@@ -41,7 +41,7 @@ public class NWAEmptinessCheck implements IEmptinessCheck {
 	public NestedRun<CodeBlock, AnnotatedProgramPoint> checkForEmptiness(AnnotatedProgramPoint root) {
 		INestedWordAutomatonSimple<CodeBlock, AnnotatedProgramPoint> converted = new MyNWA(root);
 		try {
-			return new IsEmpty<CodeBlock, AnnotatedProgramPoint>(
+			return new IsEmpty<CodeBlock, AnnotatedProgramPoint>(m_Services, 
 					(new RemoveUnreachable<CodeBlock, AnnotatedProgramPoint>(m_Services, converted)).getResult()).getNestedRun();
 		} catch (OperationCanceledException e) {
 			e.printStackTrace();

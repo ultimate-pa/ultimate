@@ -29,7 +29,7 @@ import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
+import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IncomingCallTransition;
@@ -41,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingCallTrans
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 
 
 /**
@@ -56,15 +57,18 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
  * @author Matthias Heizmann
  */
 public class GetHandle<LETTER, STATE> implements IOperation<LETTER,STATE> {
-
-	private static Logger s_Logger = NestedWordAutomata.getLogger();
+	private final IUltimateServiceProvider m_Services;
+	private final Logger s_Logger;
 
 	private final INestedWordAutomaton<LETTER, STATE> m_Operand;
 	private NestedRun<LETTER,STATE> m_Handle;
 	private enum NoHandleReason { MULTI_INITIAL, CYCLE_SHAPE, MULTI_INIT_SUCC }
 	private NoHandleReason m_NoHandleReason;
 
-	public GetHandle(INestedWordAutomaton<LETTER, STATE> operand) throws OperationCanceledException {
+	public GetHandle(IUltimateServiceProvider services,
+			INestedWordAutomaton<LETTER, STATE> operand) throws OperationCanceledException {
+		m_Services = services;
+		s_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 		m_Operand = operand;
 		s_Logger.info(startMessage());
 		if (m_Operand.getInitialStates().size() != 1) {

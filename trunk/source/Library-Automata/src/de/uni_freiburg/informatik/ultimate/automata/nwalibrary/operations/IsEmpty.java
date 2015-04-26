@@ -37,7 +37,7 @@ import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
+import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.DoubleDecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
@@ -48,6 +48,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingCallTrans
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.util.Utils;
 
 
@@ -68,9 +69,8 @@ import de.uni_freiburg.informatik.ultimate.util.Utils;
  */
 
 public class IsEmpty<LETTER,STATE> implements IOperation<LETTER,STATE> {
-	
-	private static Logger s_Logger = 
-		NestedWordAutomata.getLogger();
+	private final IUltimateServiceProvider m_Services;
+	private final Logger s_Logger;
 	
 	@Override
 	public String operationName() {
@@ -243,7 +243,10 @@ public class IsEmpty<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	 * Default constructor. Here we search a run from the initial states
 	 * of the automaton to the final states of the automaton.
 	 */
-	public IsEmpty(INestedWordAutomatonSimple<LETTER,STATE> nwa) {
+	public IsEmpty(IUltimateServiceProvider services,
+			INestedWordAutomatonSimple<LETTER,STATE> nwa) {
+		m_Services = services;
+		s_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 		m_nwa = nwa;
 		dummyEmptyStackState = m_nwa.getEmptyStackState();
 		m_StartStates = Utils.constructHashSet(m_nwa.getInitialStates());
@@ -260,8 +263,11 @@ public class IsEmpty<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	 * startStates defines where the run that we search has to start. The set
 	 * of goalStates defines where the run that we search has to end.
 	 */
-	public IsEmpty(INestedWordAutomaton<LETTER,STATE> nwa, 
+	public IsEmpty(IUltimateServiceProvider services,
+			INestedWordAutomaton<LETTER,STATE> nwa, 
 			Set<STATE> startStates, Set<STATE> goalStates) {
+		m_Services = services;
+		s_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 		m_nwa = nwa;
 		assert nwa.getStates().containsAll(startStates) : "unknown states";
 		assert nwa.getStates().containsAll(goalStates) : "unknown states";
@@ -761,7 +767,7 @@ public class IsEmpty<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		}
 		else {
 			s_Logger.info("Correctness of emptinessCheck not tested.");
-			correct = (new Accepts<LETTER, STATE>(m_nwa, m_acceptingRun.getWord())).getResult();
+			correct = (new Accepts<LETTER, STATE>(m_Services, m_nwa, m_acceptingRun.getWord())).getResult();
 			s_Logger.info("Finished testing correctness of emptinessCheck");
 		}
 		return correct;

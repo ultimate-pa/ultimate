@@ -32,15 +32,11 @@ import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
+import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IStateDeterminizer;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.PowersetDeterminizer;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.NestedWordAutomatonReachableStates;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 
 	
@@ -54,8 +50,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvide
 public class BuchiClosure<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	
 	private final IUltimateServiceProvider m_Services;
-	private static Logger s_Logger = 
-		NestedWordAutomata.getLogger();
+	private final Logger s_Logger;
 
 	private final INestedWordAutomaton<LETTER,STATE> m_Operand;
 	private final INestedWordAutomaton<LETTER, STATE> m_Result;
@@ -89,9 +84,10 @@ public class BuchiClosure<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	public BuchiClosure(IUltimateServiceProvider services,
 			INestedWordAutomatonOldApi<LETTER,STATE> input) throws AutomataLibraryException {
 		m_Services = services;
+		s_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 		this.m_Operand = input;
 		s_Logger.info(startMessage());
-		m_Result = new BuchiClosureNwa((INestedWordAutomatonOldApi) m_Operand);
+		m_Result = new BuchiClosureNwa<LETTER, STATE>(m_Services, (INestedWordAutomatonOldApi) m_Operand);
 		s_Logger.info(exitMessage());
 	}
 	

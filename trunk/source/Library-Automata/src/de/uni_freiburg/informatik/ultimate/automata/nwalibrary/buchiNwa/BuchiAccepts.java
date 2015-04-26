@@ -31,11 +31,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.Stack;
 
-import org.apache.log4j.Logger;
-
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
@@ -54,9 +51,6 @@ import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvide
  */
 public class BuchiAccepts<LETTER,STATE> extends AbstractAcceptance<LETTER,STATE>
 									    implements IOperation<LETTER,STATE> {
-	private final IUltimateServiceProvider m_Services;
-	
-	private static Logger s_Logger =  NestedWordAutomata.getLogger();
 	/**
 	 * stem of the nested lasso word whose acceptance is checked 
 	 */
@@ -113,9 +107,8 @@ public class BuchiAccepts<LETTER,STATE> extends AbstractAcceptance<LETTER,STATE>
 	 * @throws OperationCanceledException 
 	 */
 	public BuchiAccepts(IUltimateServiceProvider services, INestedWordAutomatonOldApi<LETTER,STATE> nwa, NestedLassoWord<LETTER> nlw) throws OperationCanceledException{
-		m_Services = services;
+		super(services);
 		m_Nwa = nwa;
-		
 		m_Stem = nlw.getStem();
 		m_Loop = nlw.getLoop();
 		

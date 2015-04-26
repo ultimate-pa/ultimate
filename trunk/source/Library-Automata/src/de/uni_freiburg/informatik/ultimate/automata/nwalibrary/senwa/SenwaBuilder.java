@@ -34,7 +34,7 @@ import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
+import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.Senwa;
@@ -53,8 +53,7 @@ public class SenwaBuilder<LETTER, STATE> implements ISuccessorVisitor<LETTER, ST
 	Map<STATE,Map<STATE,STATE>> m_Entry2Operand2Result = new HashMap<STATE,Map<STATE,STATE>>();
 	
 	
-	private static Logger s_Logger = 
-			NestedWordAutomata.getLogger();
+	private final Logger s_Logger;
 	
 	
 	@Override
@@ -81,6 +80,7 @@ public class SenwaBuilder<LETTER, STATE> implements ISuccessorVisitor<LETTER, ST
 	public SenwaBuilder(IUltimateServiceProvider services, 
 			INestedWordAutomatonOldApi<LETTER, STATE> nwa) throws AutomataLibraryException {
 		m_Services = services;
+		s_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 		m_Nwa = nwa;
 		s_Logger.info(startMessage());
 		m_Senwa = new Senwa<LETTER, STATE>(m_Services,

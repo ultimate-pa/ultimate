@@ -224,7 +224,7 @@ public class IncrementalInclusionCegarLoop extends BasicCegarLoop {
 			}
 			case NONE:
 				m_InclusionCheck.addSubtrahend(m_InterpolAutomaton);
-				boolean acceptedByIA = (new Accepts<CodeBlock, IPredicate>(
+				boolean acceptedByIA = (new Accepts<CodeBlock, IPredicate>(m_Services, 
 						m_InterpolAutomaton,
 						(NestedWord<CodeBlock>) m_Counterexample.getWord())).getResult();
 				progress = acceptedByIA;

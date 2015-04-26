@@ -32,11 +32,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.log4j.Logger;
-
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.DoubleDecker;
@@ -53,9 +50,6 @@ import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvide
 public class DeterminizeDD<LETTER,STATE> extends DoubleDeckerBuilder<LETTER,STATE> 
 							  implements IOperation<LETTER,STATE>  {
 
-	protected static Logger s_Logger = 
-		NestedWordAutomata.getLogger();
-	
 	protected INestedWordAutomaton<LETTER,STATE> m_Operand;
 	protected IStateDeterminizer<LETTER,STATE> stateDeterminizer;
 	protected StateFactory<STATE> contentFactory;

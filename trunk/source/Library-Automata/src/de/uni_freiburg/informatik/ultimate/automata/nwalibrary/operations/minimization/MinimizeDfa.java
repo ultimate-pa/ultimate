@@ -39,7 +39,7 @@ import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
+import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
@@ -61,7 +61,7 @@ public class MinimizeDfa<LETTER,STATE> implements IOperation<LETTER,STATE> {
     /**
      * The jLogger instance.
      */
-    private static Logger s_Logger = NestedWordAutomata.getLogger();
+	private final Logger s_Logger;
     /**
      * The resulting automaton.
      */
@@ -84,6 +84,7 @@ public class MinimizeDfa<LETTER,STATE> implements IOperation<LETTER,STATE> {
     public MinimizeDfa(IUltimateServiceProvider services, INestedWordAutomatonOldApi<LETTER,STATE> operand)
             throws AutomataLibraryException {
     	m_Services = services;
+		s_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
         if (new HasUnreachableStates<LETTER,STATE>(m_Services, operand)
 				.result()) {
 			throw new IllegalArgumentException("No unreachalbe states allowed");

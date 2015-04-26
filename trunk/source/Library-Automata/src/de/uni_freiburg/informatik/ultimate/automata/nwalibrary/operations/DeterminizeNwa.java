@@ -30,6 +30,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.log4j.Logger;
+
+import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingCallTransition;
@@ -42,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvide
 public class DeterminizeNwa<LETTER, STATE> implements INestedWordAutomatonSimple<LETTER, STATE> {
 	
 	private final IUltimateServiceProvider m_Services;
+	private final Logger s_Logger;
 	
 	private final INestedWordAutomatonSimple<LETTER, STATE> m_Operand;
 	private final NestedWordAutomaton<LETTER, STATE> m_Cache;
@@ -58,6 +62,7 @@ public class DeterminizeNwa<LETTER, STATE> implements INestedWordAutomatonSimple
 			IStateDeterminizer<LETTER, STATE> stateDeterminizer, 
 			StateFactory<STATE> sf) {
 		m_Services = services;
+		s_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 		m_Operand = operand;
 		m_StateDeterminizer = stateDeterminizer;
 		m_StateFactory = sf;

@@ -27,10 +27,9 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations;
 
 import org.apache.log4j.Logger;
 
-import de.uni_freiburg.informatik.ultimate.automata.Activator;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
+import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
@@ -70,7 +69,7 @@ public class IsIncluded2<LETTER, STATE> implements IOperation<LETTER,STATE> {
 			INestedWordAutomatonSimple<LETTER, STATE> b_1,
 			INestedWordAutomatonSimple<LETTER, STATE> b_2) throws AutomataLibraryException {
 		m_Services = services;
-		m_Logger = m_Services.getLoggingService().getLogger(Activator.PLUGIN_ID);
+		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 		m_A = a;
 		m_B1 = b_1;
 		m_B2 = b_2;

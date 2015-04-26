@@ -29,11 +29,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 
-import org.apache.log4j.Logger;
-
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.DoubleDecker;
@@ -53,9 +50,6 @@ import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvide
 
 public class BuchiComplementDeterministic<LETTER,STATE> extends DoubleDeckerVisitor<LETTER,STATE>
 											   implements IOperation<LETTER,STATE> {
-	private static Logger s_Logger = 
-		NestedWordAutomata.getLogger();
-	
 	private final INestedWordAutomatonOldApi<LETTER,STATE> m_Operand;
 	private final INestedWordAutomatonOldApi<LETTER,STATE> m_TotalizedOperand;
 	private final StateFactory<STATE> m_ContentFactory;

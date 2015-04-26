@@ -29,7 +29,7 @@ import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
+import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNet2FiniteAutomaton;
@@ -40,8 +40,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvide
 public class IsEmpty<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	private final IUltimateServiceProvider m_Services;
 	
-	private static Logger s_Logger = 
-			NestedWordAutomata.getLogger();
+	private final Logger s_Logger;
 
 	private final PetriNetJulian<LETTER,STATE> m_Operand;
 	private final Boolean m_Result;
@@ -49,6 +48,7 @@ public class IsEmpty<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	public IsEmpty(IUltimateServiceProvider services, 
 			PetriNetJulian<LETTER,STATE> operand) throws AutomataLibraryException {
 		m_Services = services;
+		s_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 		m_Operand = operand;
 		s_Logger.info(startMessage());
 		PetriNetUnfolder<LETTER,STATE> unf = 
@@ -84,7 +84,7 @@ public class IsEmpty<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	public boolean checkResult(StateFactory<STATE> stateFactory)
 			throws AutomataLibraryException {
 		INestedWordAutomatonOldApi<LETTER, STATE> finiteAutomaton = (new PetriNet2FiniteAutomaton<>(m_Services, m_Operand)).getResult();
-		boolean automatonEmpty = (new de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsEmpty(finiteAutomaton)).getResult();
+		boolean automatonEmpty = (new de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsEmpty<LETTER, STATE>(m_Services, finiteAutomaton)).getResult();
 		return (m_Result == automatonEmpty);
 	}
 

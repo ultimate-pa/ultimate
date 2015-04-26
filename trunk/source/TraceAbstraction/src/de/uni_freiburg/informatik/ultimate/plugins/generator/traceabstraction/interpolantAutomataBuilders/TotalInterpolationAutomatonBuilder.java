@@ -85,7 +85,7 @@ public class TotalInterpolationAutomatonBuilder {
 		m_IA = (new StraightLineInterpolantAutomatonBuilder(mServices, alphabet, interpolantGenerator, predicateFactory)).getResult();
 		m_ModifiedGlobals = modifiableGlobals;
 		m_Interpolation = interpolation;
-		m_Epimorphism = new AutomatonEpimorphism<IPredicate>();
+		m_Epimorphism = new AutomatonEpimorphism<IPredicate>(mServices);
 		{
 			IPredicate firstAutomatonState = m_StateSequence.get(0);
 			m_Epimorphism.insert(firstAutomatonState, interpolantGenerator.getPrecondition());
@@ -337,7 +337,7 @@ public class TotalInterpolationAutomatonBuilder {
 
 	private NestedRun<CodeBlock, IPredicate> findRun(IPredicate p, Set<IPredicate> annotated)
 			throws OperationCanceledException {
-		return (new IsEmpty<CodeBlock, IPredicate>(m_Abstraction, Collections.singleton(p), m_Annotated))
+		return (new IsEmpty<CodeBlock, IPredicate>(mServices, m_Abstraction, Collections.singleton(p), m_Annotated))
 				.getNestedRun();
 	}
 

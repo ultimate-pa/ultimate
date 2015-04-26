@@ -33,7 +33,7 @@ import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
+import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
@@ -47,7 +47,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvide
 public class Accepts<S, C> implements IOperation<S, C> {
 	
 	private final IUltimateServiceProvider m_Services;
-	private static Logger s_Logger = NestedWordAutomata.getLogger();
+	private final Logger s_Logger;
 		
 	@Override
 	public String operationName() {
@@ -79,6 +79,7 @@ public class Accepts<S, C> implements IOperation<S, C> {
 	public Accepts(IUltimateServiceProvider services, 
 			PetriNetJulian<S, C> net, Word<S> nWord) throws AutomataLibraryException {
 		m_Services = services;
+		s_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 		this.net = net;
 		this.nWord = nWord;
 		s_Logger.info(startMessage());
@@ -135,9 +136,9 @@ public class Accepts<S, C> implements IOperation<S, C> {
 
 		s_Logger.info("Testing correctness of accepts");
 
-		NestedWord nw = NestedWord.nestedWord(nWord);
-		boolean resultAutomata = (new de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Accepts(
-				(new PetriNet2FiniteAutomaton(m_Services, net)).getResult(), nw))
+		NestedWord<S> nw = NestedWord.nestedWord(nWord);
+		boolean resultAutomata = (new de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Accepts(m_Services, 
+				(new PetriNet2FiniteAutomaton<S, C>(m_Services, net)).getResult(), nw))
 				.getResult();
 		boolean correct = (m_Result == resultAutomata);
 

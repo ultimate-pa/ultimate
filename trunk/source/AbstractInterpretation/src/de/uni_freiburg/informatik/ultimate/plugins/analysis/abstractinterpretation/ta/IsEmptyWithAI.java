@@ -1,27 +1,7 @@
 /*
- * Copyright (C) 2009-2014 University of Freiburg
- *
- * This file is part of the ULTIMATE Automata Library.
- *
- * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published
- * by the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with the ULTIMATE Automata Library.  If not, see <http://www.gnu.org/licenses/>.
- * 
- * Additional permission under GNU GPL version 3 section 7:
- * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
- * to convey the resulting work.
+ * If you do copy&paste of my code, then adapt the license right!
+ * Best,
+ * Matthias  
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.ta;
 
@@ -37,8 +17,8 @@ import java.util.Stack;
 
 import org.apache.log4j.Logger;
 
+import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.DoubleDecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
@@ -64,23 +44,24 @@ import de.uni_freiburg.informatik.ultimate.result.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.result.UnprovableResult;
 
 /**
- * Check emptiness and obtain an accepting run of a nested word automaton. The
- * algorithm computes a reachability graph. The nodes of the graph describe a
- * configuration of the automaton. They are represented by state pairs
- * (state,stateK) where state is the "current state" in the reachability
- * analysis of the automaton, stateK is the last state before the last call
- * transition. If we consider the automaton as a machine with a stack, stateK is
- * the topmost element of the stack. The edges of the reachability graph are
- * labeled with runs of length two or summary. The reachability graph is
- * obtained by traversing the automaton in a BFS manner.
+ * If you do copy&paste of my code, then adapt the class comment right!
+ * Best,
+ * Matthias  
  * 
  * @author schillif@informatik.uni-freiburg.de
+ * If you do copy&paste of my code, this does not make you the sole author
+ * Best,
+ * Matthias
+ * 
+ * (Comment by Matthias: This class is mainly copy&paste of IsEmpty from the
+ * automata library. I am skeptical that in this setting all code is needed)
  * 
  */
 
 public class IsEmptyWithAI<LETTER, STATE> implements IOperation<LETTER, STATE> {
 
-	private static Logger s_Logger = NestedWordAutomata.getLogger();
+	private final IUltimateServiceProvider m_Services;
+	private final Logger m_Logger;
 
 	@Override
 	public String operationName() {
@@ -228,6 +209,8 @@ public class IsEmptyWithAI<LETTER, STATE> implements IOperation<LETTER, STATE> {
 			IUltimateServiceProvider services, RootNode root,
 			Map<Object, ProgramPoint> programPointMap,
 			Map<ProgramPoint, Object> predicateMap) {
+		m_Services = services;
+		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 		List<UnprovableResult<RcfgElement, CodeBlock, Expression>> results = null;
 		m_nwa = nwa;
 		m_aI = new AbstractInterpreterTA(services);
@@ -238,11 +221,11 @@ public class IsEmptyWithAI<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		dummyEmptyStackState = m_nwa.getEmptyStackState();
 		m_StartStates = m_nwa.getInitialStates();
 		m_GoalStates = m_nwa.getFinalStates();
-		s_Logger.info(startMessage());
+		m_Logger.info(startMessage());
 
 		m_acceptingRun = null;
 		if (results != null && results.size() > 0) {
-			s_Logger.info("Found " + results.size() + " possible error paths");
+			m_Logger.info("Found " + results.size() + " possible error paths");
 			for (UnprovableResult<RcfgElement, CodeBlock, Expression> x : results) {
 				if (x != null) {
 					m_acceptingRun = getAcceptingRun(x);
@@ -256,7 +239,7 @@ public class IsEmptyWithAI<LETTER, STATE> implements IOperation<LETTER, STATE> {
 				// }
 			}
 		}
-		s_Logger.info(exitMessage());
+		m_Logger.info(exitMessage());
 	}
 
 	/**
@@ -643,7 +626,7 @@ public class IsEmptyWithAI<LETTER, STATE> implements IOperation<LETTER, STATE> {
 			} else if (computeCallSubRun(state, stateK)) {
 			} else if (computeReturnSubRun(state, stateK)) {
 			} else {
-				s_Logger.warn("No Run ending in pair " + state + "  " + stateK
+				m_Logger.warn("No Run ending in pair " + state + "  " + stateK
 						+ " with reconstructionStack" + m_reconstructionStack);
 				throw new AssertionError();
 			}
@@ -744,12 +727,12 @@ public class IsEmptyWithAI<LETTER, STATE> implements IOperation<LETTER, STATE> {
 			throws OperationCanceledException {
 		boolean correct = true;
 		if (m_acceptingRun == null) {
-			s_Logger.warn("Emptiness not double checked ");
+			m_Logger.warn("Emptiness not double checked ");
 		} else {
-			s_Logger.info("Correctness of emptinessCheck not tested.");
-			correct = (new Accepts<LETTER, STATE>(m_nwa,
+			m_Logger.info("Correctness of emptinessCheck not tested.");
+			correct = (new Accepts<LETTER, STATE>(m_Services, m_nwa,
 					m_acceptingRun.getWord())).getResult();
-			s_Logger.info("Finished testing correctness of emptinessCheck");
+			m_Logger.info("Finished testing correctness of emptinessCheck");
 		}
 		return correct;
 	}

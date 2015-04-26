@@ -530,7 +530,7 @@ public class BuchiCegarLoop {
 		}
 		m_BenchmarkGenerator.start(BuchiCegarLoopBenchmark.s_BuchiClosure);
 		try {
-			m_Abstraction = (INestedWordAutomatonOldApi<CodeBlock, IPredicate>) (new BuchiClosureNwa<>(m_Abstraction));
+			m_Abstraction = (INestedWordAutomatonOldApi<CodeBlock, IPredicate>) (new BuchiClosureNwa<>(m_Services, m_Abstraction));
 			m_Abstraction = (new RemoveDeadEnds<CodeBlock, IPredicate>(m_Services, m_Abstraction)).getResult();
 		} finally {
 			m_BenchmarkGenerator.stop(BuchiCegarLoopBenchmark.s_BuchiClosure);
@@ -726,7 +726,7 @@ public class BuchiCegarLoop {
 		iab.analyze();
 		m_InterpolAutomaton = iab.getInterpolantAutomaton();
 
-		assert ((new Accepts<CodeBlock, IPredicate>(m_InterpolAutomaton, run.getWord())).getResult()) : "Interpolant automaton broken!";
+		assert ((new Accepts<CodeBlock, IPredicate>(m_Services, m_InterpolAutomaton, run.getWord())).getResult()) : "Interpolant automaton broken!";
 		// assert((new BuchiAccepts<CodeBlock, IPredicate>(m_InterpolAutomaton,
 		// m_Counterexample.getNestedLassoWord())).getResult()) :
 		// "Interpolant automaton broken!";

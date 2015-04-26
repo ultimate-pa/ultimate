@@ -41,7 +41,7 @@ import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
+import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IDoubleDeckerAutomaton;
@@ -67,7 +67,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvide
  */
 public class MinimizeSevpa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	private final IUltimateServiceProvider m_Services;
-	private static Logger s_Logger = NestedWordAutomata.getLogger();
+	private final Logger s_Logger;
 	// old automaton
 	private final INestedWordAutomatonOldApi<LETTER,STATE> m_operand;
 	private final IDoubleDeckerAutomaton<LETTER, STATE> m_doubleDecker;
@@ -139,6 +139,7 @@ public class MinimizeSevpa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 			StateFactory<STATE> stateFactoryConstruction)
 					throws OperationCanceledException {
 		m_Services = services;
+		s_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 		m_operand = operand;
 		if (operand instanceof IDoubleDeckerAutomaton<?, ?>) {
 			m_doubleDecker = (IDoubleDeckerAutomaton<LETTER, STATE>)operand;

@@ -7,11 +7,8 @@ import java.util.HashMap;
 import java.util.concurrent.Callable;
 import java.util.concurrent.LinkedBlockingQueue;
 
-import org.apache.log4j.Logger;
-
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
@@ -25,14 +22,6 @@ import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvide
  */
 public class MinimizeDfaParallel<LETTER, STATE> extends
 		AMinimizeNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
-	/**
-	 * The logger.
-	 */
-	protected static final Logger s_logger = NestedWordAutomata.getLogger();
-	/**
-	 * Service Provider.
-	 */
-	private final IUltimateServiceProvider m_services;
 	/**
 	 * Result automaton.
 	 */
@@ -165,7 +154,6 @@ public class MinimizeDfaParallel<LETTER, STATE> extends
 			final INestedWordAutomaton<LETTER, STATE> operand) {
 		super(services, operand.getStateFactory(), "MinimizeDfaParallel",
 				operand);
-		this.m_services = services;
 		this.m_operand = operand;
 		this.m_interrupt = new Interrupt();
 
@@ -425,7 +413,7 @@ public class MinimizeDfaParallel<LETTER, STATE> extends
 
 					s_logger.info("moep1");
 					m_algorithm = new MinimizeDfaHopcroftParallel<LETTER, STATE>(
-							m_services, m_operand.getStateFactory(),
+							m_Services, m_operand.getStateFactory(),
 							(INestedWordAutomaton<LETTER, STATE>) m_operand,
 							m_interrupt, m_int2state, m_state2int);
 
@@ -455,7 +443,7 @@ public class MinimizeDfaParallel<LETTER, STATE> extends
 				} else {
 					s_logger.info("miep1");
 					m_algorithm = new MinimizeDfaAmrParallel<LETTER, STATE>(
-							m_services, m_operand.getStateFactory(), m_operand,
+							m_Services, m_operand.getStateFactory(), m_operand,
 							m_interrupt, m_int2state, m_state2int);
 
 					if (isInterrupted()) {

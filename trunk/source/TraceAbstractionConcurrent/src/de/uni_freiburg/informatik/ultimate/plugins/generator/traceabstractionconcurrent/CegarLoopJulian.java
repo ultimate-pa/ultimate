@@ -75,7 +75,7 @@ public class CegarLoopJulian extends BasicCegarLoop {
 		mLogger.info("Interpolatants " + m_InterpolAutomaton.getStates());
 
 		m_CegarLoopBenchmark.stop(CegarLoopBenchmarkType.s_BasicInterpolantAutomatonTime);
-		assert (accepts(m_InterpolAutomaton, m_Counterexample.getWord())) : "Interpolant automaton broken!";
+		assert (accepts(m_Services, m_InterpolAutomaton, m_Counterexample.getWord())) : "Interpolant automaton broken!";
 		assert (new InductivityCheck(m_Services, m_InterpolAutomaton, false, true,
 				new IncrementalHoareTripleChecker(m_SmtManager, m_ModGlobVarManager))).getResult() : "Not inductive";
 	}
@@ -125,7 +125,7 @@ public class CegarLoopJulian extends BasicCegarLoop {
 		// Complement the interpolant automaton
 		INestedWordAutomatonOldApi<CodeBlock, IPredicate> nia = (new ComplementDD<CodeBlock, IPredicate>(
 				m_Services, m_PredicateFactoryInterpolantAutomata, dia)).getResult();
-		assert (!accepts(nia, m_Counterexample.getWord())) : "Complementation broken!";
+		assert (!accepts(m_Services, nia, m_Counterexample.getWord())) : "Complementation broken!";
 		mLogger.info("Complemented interpolant automaton has " + nia.getStates().size() + " states");
 
 		if (m_Iteration <= m_Pref.watchIteration() && m_Pref.artifact() == Artifact.NEG_INTERPOLANT_AUTOMATON) {
@@ -171,7 +171,7 @@ public class CegarLoopJulian extends BasicCegarLoop {
 		NestedWord<CodeBlock> nw = NestedWord.nestedWord(word);
 		INestedWordAutomatonOldApi<CodeBlock, IPredicate> petriNetAsFA = (new PetriNet2FiniteAutomaton<CodeBlock, IPredicate>(
 				services, (IPetriNet<CodeBlock, IPredicate>) automaton)).getResult();
-		return BasicCegarLoop.accepts(petriNetAsFA, nw);
+		return BasicCegarLoop.accepts(services, petriNetAsFA, nw);
 
 	}
 

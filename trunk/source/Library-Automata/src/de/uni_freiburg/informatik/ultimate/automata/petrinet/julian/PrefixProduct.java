@@ -36,7 +36,7 @@ import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
+import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
@@ -50,8 +50,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvide
 public class PrefixProduct<S,C> implements IOperation<S,C> {
 	
 	private final IUltimateServiceProvider m_Services;
-	private static Logger s_Logger = 
-			NestedWordAutomata.getLogger();
+	private final Logger s_Logger;
 	
 	private final PetriNetJulian<S,C> m_Net;
 	private final NestedWordAutomaton<S,C> m_Nwa;
@@ -122,6 +121,7 @@ public class PrefixProduct<S,C> implements IOperation<S,C> {
 	public PrefixProduct(IUltimateServiceProvider services,
 			PetriNetJulian<S, C> net, NestedWordAutomaton<S, C> nwa) {
 		m_Services = services;
+		s_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 		this.m_Net = net;
 		this.m_Nwa = nwa;
 		if (nwa.getInitialStates().size() != 1) {

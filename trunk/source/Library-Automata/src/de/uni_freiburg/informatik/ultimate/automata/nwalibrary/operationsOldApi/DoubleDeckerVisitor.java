@@ -39,8 +39,7 @@ import java.util.Set;
 
 import org.apache.log4j.Logger;
 
-import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
-import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
+import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.DoubleDecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
@@ -66,8 +65,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvide
 public abstract class DoubleDeckerVisitor<LETTER, STATE> implements IOpWithDelayedDeadEndRemoval<LETTER, STATE> {
 
 	protected final IUltimateServiceProvider m_Services;
-	protected static Logger s_Logger = NestedWordAutomata.getLogger();
-
+	protected final Logger s_Logger;
 	public enum ReachFinal {
 		UNKNOWN, AT_LEAST_ONCE
 	}
@@ -163,6 +161,7 @@ public abstract class DoubleDeckerVisitor<LETTER, STATE> implements IOpWithDelay
 	
 	public DoubleDeckerVisitor(IUltimateServiceProvider services) {
 		m_Services = services;
+		s_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 	}
 
 	public INestedWordAutomatonOldApi<LETTER, STATE> getResult() throws OperationCanceledException {

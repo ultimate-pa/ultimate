@@ -31,12 +31,13 @@ import java.util.Stack;
 
 import org.apache.log4j.Logger;
 
-import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
+import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingReturnTransition;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 
 
 /**
@@ -44,10 +45,19 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingReturnTra
  * @author heizmann@informatik.uni-freiburg.de
  */
 public abstract class AbstractAcceptance<LETTER,STATE> {
+
+	protected final IUltimateServiceProvider m_Services;
+	protected final Logger s_Logger;
 	
-	private static Logger s_Logger = NestedWordAutomata.getLogger();
 	
 	
+	
+	public AbstractAcceptance(IUltimateServiceProvider services) {
+		super();
+		m_Services = services;
+		s_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
+	}
+
 	/**
 	 * Result contains a configuration for each state which contains only this
 	 * state.

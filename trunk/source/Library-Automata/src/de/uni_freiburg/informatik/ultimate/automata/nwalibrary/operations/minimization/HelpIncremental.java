@@ -1,10 +1,8 @@
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization;
 
 import java.util.HashSet;
-import java.util.Set;
 import java.util.Iterator;
-
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.Tuple;
+import java.util.Set;
 
 /**
  * Helper Task for processing information from the Hopcroft algorithm for the

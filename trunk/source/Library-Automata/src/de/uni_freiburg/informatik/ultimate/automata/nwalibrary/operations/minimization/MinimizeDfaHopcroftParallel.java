@@ -12,11 +12,8 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.LinkedBlockingQueue;
 
-import org.apache.log4j.Logger;
-
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
@@ -38,14 +35,6 @@ import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvide
 public class MinimizeDfaHopcroftParallel<LETTER, STATE> extends
 		AMinimizeNwa<LETTER, STATE> implements IMinimize,
 		IOperation<LETTER, STATE> {
-	/**
-	 * Logger for debug - information.
-	 */
-	private static final Logger s_logger = NestedWordAutomata.getLogger();
-	/**
-	 * Service Provider.
-	 */
-	private final IUltimateServiceProvider m_services;
 	/**
 	 * Result automaton.
 	 */
@@ -204,7 +193,6 @@ public class MinimizeDfaHopcroftParallel<LETTER, STATE> extends
 			final Interrupt interrupt) {
 		super(services, operand.getStateFactory(),
 				"MinimizeDfaHopcroftParallel", operand);
-		m_services = services;
 		m_interrupt = interrupt;
 		this.m_operand = operand;
 		// Initialize final partition
@@ -237,7 +225,6 @@ public class MinimizeDfaHopcroftParallel<LETTER, STATE> extends
 			throws OperationCanceledException, AutomataLibraryException {
 		super(services, operand.getStateFactory(),
 				"MinimizeDfaHopcroftParallel", operand);
-		m_services = services;
 		m_interrupt = interrupt;
 		this.m_operand = operand;
 		m_int2state = int2state;
@@ -466,7 +453,7 @@ public class MinimizeDfaHopcroftParallel<LETTER, STATE> extends
 		// construct result
 		final StateFactory<STATE> stateFactory = m_operand.getStateFactory();
 		NestedWordAutomaton<LETTER, STATE> result = new NestedWordAutomaton<LETTER, STATE>(
-				m_services, m_operand.getInternalAlphabet(),
+				m_Services, m_operand.getInternalAlphabet(),
 				m_operand.getCallAlphabet(), m_operand.getReturnAlphabet(),
 				stateFactory);
 

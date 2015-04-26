@@ -29,7 +29,7 @@ import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
+import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
@@ -38,7 +38,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvide
 public class Automaton2Net<LETTER, STATE> implements IOperation<LETTER,STATE> {
 
 	private final IUltimateServiceProvider m_Services;
-	private static Logger s_Logger = NestedWordAutomata.getLogger();
+	private final Logger s_Logger;
 
 	INestedWordAutomatonOldApi<LETTER, STATE> m_Operand;
 	IPetriNet<LETTER, STATE> m_Net;
@@ -46,6 +46,7 @@ public class Automaton2Net<LETTER, STATE> implements IOperation<LETTER,STATE> {
 	public Automaton2Net(IUltimateServiceProvider services, 
 			INestedWordAutomatonOldApi<LETTER, STATE> operand) throws AutomataLibraryException {
 		m_Services = services;
+		s_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 		m_Operand = operand;
 		s_Logger.info(startMessage());
 		m_Net = new PetriNetJulian<LETTER, STATE>(m_Services, m_Operand);

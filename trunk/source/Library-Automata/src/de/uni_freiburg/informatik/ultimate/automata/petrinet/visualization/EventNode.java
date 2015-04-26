@@ -27,7 +27,7 @@ package de.uni_freiburg.informatik.ultimate.automata.petrinet.visualization;
 
 import java.util.HashMap;
 
-import de.uni_freiburg.informatik.ultimate.automata.Activator;
+import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.Event;
 import de.uni_freiburg.informatik.ultimate.model.annotation.DefaultAnnotations;
 import de.uni_freiburg.informatik.ultimate.model.annotation.IAnnotations;
@@ -52,7 +52,7 @@ public class EventNode<S,C> extends PetriNetVisualizationNode {
 		annot.put("ByLocalConfigurationRepresentedMarking",event.getMark());
 	
 		HashMap<String,IAnnotations> annotations =  this.getPayload().getAnnotations();
-		annotations.put(Activator.PLUGIN_ID, annot);
+		annotations.put(LibraryIdentifiers.s_LibraryID, annot);
 		
 		S symbol = event.getTransition().getSymbol();
 		if (symbol instanceof IAnnotations) {

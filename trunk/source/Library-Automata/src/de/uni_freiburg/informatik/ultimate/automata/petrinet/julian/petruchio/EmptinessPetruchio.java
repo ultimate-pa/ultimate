@@ -38,7 +38,7 @@ import petruchio.interfaces.petrinet.Place;
 import petruchio.interfaces.petrinet.Transition;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
+import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
@@ -64,8 +64,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvide
 public class EmptinessPetruchio<S,C> implements IOperation<S,C> {
 	
 	private final IUltimateServiceProvider m_Services;
-	private static Logger s_Logger = 
-		NestedWordAutomata.getLogger();
+	private final Logger s_Logger;
 	
 	@Override
 	public String operationName() {
@@ -94,9 +93,10 @@ public class EmptinessPetruchio<S,C> implements IOperation<S,C> {
 	public EmptinessPetruchio(IUltimateServiceProvider services, 
 			PetriNetJulian<S,C> net) {
 		m_Services = services;
+		s_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 		m_NetJulian = net;
 		s_Logger.info(startMessage());
-		m_Petruchio = new PetruchioWrapper<S,C>(net);
+		m_Petruchio = new PetruchioWrapper<S,C>(m_Services, net);
 		m_AcceptedRun = constructAcceptingRun();
 		s_Logger.info(exitMessage());
 	}
@@ -187,7 +187,7 @@ public class EmptinessPetruchio<S,C> implements IOperation<S,C> {
 
 		boolean correct = true;
 		if (m_AcceptedRun == null) {
-			NestedRun automataRun = (new IsEmpty((new PetriNet2FiniteAutomaton(m_Services, m_NetJulian)).getResult())).getNestedRun();
+			NestedRun<S, C> automataRun = (new IsEmpty<S, C>(m_Services, (new PetriNet2FiniteAutomaton<S, C>(m_Services, m_NetJulian)).getResult())).getNestedRun();
 			correct = (automataRun == null);
 		} else {
 			correct =  m_NetJulian.accepts(m_AcceptedRun.getWord());

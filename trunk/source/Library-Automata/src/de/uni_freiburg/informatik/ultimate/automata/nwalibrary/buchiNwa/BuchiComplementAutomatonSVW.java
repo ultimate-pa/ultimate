@@ -39,7 +39,7 @@ import java.util.Set;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
-import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
+import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IncomingCallTransition;
@@ -78,13 +78,14 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 	private Map<STATE, Map<LETTER, Set<STATE>>> m_TransitionsIn = new HashMap<STATE, Map<LETTER, Set<STATE>>>();
 	private Map<STATE, MetaState> m_mapState2MS = new HashMap<STATE, MetaState>();
 
-	private static Logger s_Logger = NestedWordAutomata.getLogger();
+	private final Logger s_Logger;
 	private String UnsupportedOperationMessage = "Transform to NestedWordAutomaton to get full support.";
 
 	public BuchiComplementAutomatonSVW(IUltimateServiceProvider services, 
 			INestedWordAutomatonOldApi<LETTER, STATE> origAutomaton)
 			throws AutomataLibraryException {
 		m_Services = services;
+		s_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 		m_TMA = new TransitionMonoidAutomaton(origAutomaton);
 		m_Alphabet = origAutomaton.getInternalAlphabet();
 		if (!origAutomaton.getCallAlphabet().isEmpty() || !origAutomaton.getReturnAlphabet().isEmpty()) {

@@ -45,7 +45,7 @@ import org.apache.log4j.Logger;
 import de.uni_freiburg.informatik.ultimate.automata.AtsDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.InCaReCounter;
-import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
+import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IDoubleDeckerAutomaton;
@@ -74,7 +74,7 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 		INestedWordAutomaton<LETTER, STATE>, IDoubleDeckerAutomaton<LETTER, STATE> {
 
 	private final IUltimateServiceProvider m_Services;
-	private static Logger s_Logger = NestedWordAutomata.getLogger();
+	private final Logger s_Logger;
 
 	private final INestedWordAutomatonSimple<LETTER, STATE> m_Operand;
 
@@ -151,6 +151,7 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 			INestedWordAutomatonSimple<LETTER, STATE> operand)
 			throws OperationCanceledException {
 		m_Services = services;
+		s_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 		this.m_Operand = operand;
 		m_InternalAlphabet = operand.getInternalAlphabet();
 		m_CallAlphabet = operand.getCallAlphabet();
@@ -704,7 +705,7 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 					NestedRun<LETTER, STATE> run = (new RunConstructor<LETTER, STATE>(
 							m_Services, 
 							NestedWordAutomatonReachableStates.this, m_States.get(fin))).constructRun();
-					assert (new Accepts<LETTER, STATE>(NestedWordAutomatonReachableStates.this, run.getWord()))
+					assert (new Accepts<LETTER, STATE>(m_Services, NestedWordAutomatonReachableStates.this, run.getWord()))
 							.getResult();
 				}
 			}

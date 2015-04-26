@@ -32,7 +32,7 @@ import org.apache.log4j.Logger;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonEpimorphism;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
+import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
@@ -69,7 +69,7 @@ public class SuperDifference<LETTER, STATE> implements IOperation<LETTER, STATE>
 	/* *** *** *** Fields *** *** *** */
 
 	// For status output
-	private static Logger s_Logger = NestedWordAutomata.getLogger();
+	private final Logger s_Logger;
 
 	// Automatons
 	private final INestedWordAutomaton<LETTER, STATE> m_Minuend;
@@ -134,6 +134,7 @@ public class SuperDifference<LETTER, STATE> implements IOperation<LETTER, STATE>
 			throws AutomataLibraryException 
 	{
 		m_Services = services;
+		s_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 		m_Minuend = minuend;
 		m_Subtrahend = subtrahend;
 		m_Epimorphism = automatonEpimorhpism;

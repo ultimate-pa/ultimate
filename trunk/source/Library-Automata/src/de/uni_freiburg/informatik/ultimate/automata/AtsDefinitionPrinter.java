@@ -36,8 +36,6 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
 
 import org.apache.log4j.Logger;
 
@@ -75,8 +73,7 @@ public class AtsDefinitionPrinter<LETTER,STATE> {
 		public enum Labeling { NUMERATE, TOSTRING, QUOTED, BA_FORMAT };
 		
 		private final IUltimateServiceProvider m_Services;
-		private static Logger s_Logger = 
-			NestedWordAutomata.getLogger();
+		private final Logger s_Logger;
 		
 		/**
 		 * Print hash modulo this number to get shorter identifiers.
@@ -101,6 +98,7 @@ public class AtsDefinitionPrinter<LETTER,STATE> {
 		public AtsDefinitionPrinter(IUltimateServiceProvider services,
 				String automatonName, String filename, Labeling labels, String message, Object... automata) {
 			m_Services = services;
+			s_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 			s_Logger.warn("Dumping Testfile");
 			initializePrintWriter(filename);
 			m_printWriter.println("// Testfile dumped by Ultimate at "+getDateTime());
@@ -118,6 +116,7 @@ public class AtsDefinitionPrinter<LETTER,STATE> {
 		
 		public AtsDefinitionPrinter(IUltimateServiceProvider services, String name, Object automaton) {
 			m_Services = services;
+			s_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 			m_StringWriter = new StringWriter();
 			m_printWriter = new PrintWriter(m_StringWriter);
 			printAutomaton(name, automaton, Labeling.TOSTRING);

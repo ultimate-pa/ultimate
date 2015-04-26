@@ -30,11 +30,8 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.apache.log4j.Logger;
-
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.DoubleDecker;
@@ -53,8 +50,6 @@ public class ReachableStatesCopy<LETTER,STATE> extends DoubleDeckerBuilder<LETTE
 
 	private final INestedWordAutomatonOldApi<LETTER,STATE> m_Input;
 	private final boolean m_Complement;
-
-	private static Logger s_Logger = NestedWordAutomata.getLogger();
 
 	/**
 	 * Given an INestedWordAutomaton nwa return a NestedWordAutomaton that has
@@ -255,7 +250,7 @@ public class ReachableStatesCopy<LETTER,STATE> extends DoubleDeckerBuilder<LETTE
 				// intersection of operand and result should be empty
 				INestedWordAutomatonOldApi<LETTER, STATE> intersectionOperandResult = 
 						(new IntersectDD<LETTER, STATE>(m_Services, m_Input, m_TraversedNwa)).getResult();
-				correct &= (new IsEmpty<LETTER, STATE>(intersectionOperandResult)).getResult();
+				correct &= (new IsEmpty<LETTER, STATE>(m_Services, intersectionOperandResult)).getResult();
 				INestedWordAutomatonOldApi<LETTER, STATE> resultSadd = 
 						(new ComplementDD<LETTER, STATE>(m_Services, stateFactory, m_Input)).getResult();
 				// should recognize same language as old computation

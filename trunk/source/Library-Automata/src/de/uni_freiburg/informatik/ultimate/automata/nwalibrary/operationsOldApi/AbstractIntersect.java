@@ -32,11 +32,8 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
-
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.DoubleDecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
@@ -49,9 +46,6 @@ import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvide
 public abstract class AbstractIntersect<LETTER,STATE> extends DoubleDeckerBuilder<LETTER,STATE>
 							implements IOperation<LETTER, STATE> {
 
-	private static Logger s_Logger = 
-		NestedWordAutomata.getLogger();
-	
 	private final INestedWordAutomatonOldApi<LETTER,STATE> m_FstNwa;
 	private final INestedWordAutomatonOldApi<LETTER,STATE> m_SndNwa;
 	private final NestedWordAutomaton<LETTER,STATE> m_ResultNwa;
@@ -139,7 +133,7 @@ public abstract class AbstractIntersect<LETTER,STATE> extends DoubleDeckerBuilde
 		s_Logger.info(exitMessage());
 		
 		if (m_Buchi) {
-			assert (ResultChecker.buchiIntersect(m_FstNwa, m_SndNwa, m_ResultNwa));
+			assert (ResultChecker.buchiIntersect(m_Services, m_FstNwa, m_SndNwa, m_ResultNwa));
 		}
 		else {
 		}

@@ -34,7 +34,7 @@ import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
+import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
@@ -50,7 +50,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvide
  */
 public class BuchiReduce<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	private final IUltimateServiceProvider m_Services;
-    private static Logger s_Logger = NestedWordAutomata.getLogger();
+	private final Logger s_Logger;
     /**
      * The resulting Buchi automaton.
      */
@@ -70,8 +70,9 @@ public class BuchiReduce<LETTER,STATE> implements IOperation<LETTER,STATE> {
     public BuchiReduce(IUltimateServiceProvider services, StateFactory<STATE> stateFactory, INestedWordAutomatonOldApi<LETTER,STATE> operand)
             throws AutomataLibraryException {
     	m_Services = services;
+		s_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
     	m_Operand = operand;
-        BuchiReduce.s_Logger.info(startMessage());
+        s_Logger.info(startMessage());
         
         // Remove dead ends. 
         // Removal of dead ends is no optimization but a requirement for

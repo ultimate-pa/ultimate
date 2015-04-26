@@ -29,7 +29,7 @@ import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
+import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.NestedWordAutomatonReachableStates;
@@ -54,6 +54,7 @@ public class BuchiIsEmpty<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	public BuchiIsEmpty(IUltimateServiceProvider services,
 			INestedWordAutomatonSimple<LETTER, STATE> nwa) throws AutomataLibraryException {
 		m_Services = services;
+		s_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 		m_Nwa = nwa;
 		s_Logger.info(startMessage());
 		if (m_Nwa instanceof NestedWordAutomatonReachableStates) {
@@ -88,8 +89,7 @@ public class BuchiIsEmpty<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	}
 	
 
-	private static Logger s_Logger = 
-		NestedWordAutomata.getLogger();	
+	private final Logger s_Logger;
 	
 	
 	public NestedLassoRun<LETTER,STATE> getAcceptingNestedLassoRun() throws AutomataLibraryException {

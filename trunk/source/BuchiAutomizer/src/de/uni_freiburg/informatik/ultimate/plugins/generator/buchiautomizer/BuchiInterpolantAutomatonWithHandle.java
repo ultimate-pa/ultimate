@@ -39,7 +39,7 @@ public class BuchiInterpolantAutomatonWithHandle extends
 				scroogeNondeterminismLoop, hondaBouncerStem, hondaBouncerLoop,  	predicateFactory ,logger, services);
 		GetHandle<CodeBlock, IPredicate> gh;
 		try {
-			gh = new GetHandle<CodeBlock, IPredicate>(abstraction);
+			gh = new GetHandle<CodeBlock, IPredicate>(services, abstraction);
 			m_Handle = gh.getResult();
 		} catch (OperationCanceledException e) {
 			throw new AssertionError();

@@ -35,7 +35,7 @@ import java.util.Set;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
-import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
+import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
@@ -54,7 +54,7 @@ public class PetriNetJulian<S, C> implements IPetriNet<S, C> {
 	private final IUltimateServiceProvider m_Services;
 
 	@SuppressWarnings("unused")
-	private static Logger s_Logger = NestedWordAutomata.getLogger();
+	private final Logger s_Logger;
 
 	private final Set<S> alphabet;
 	private final StateFactory<C> stateFactory;
@@ -74,6 +74,7 @@ public class PetriNetJulian<S, C> implements IPetriNet<S, C> {
 	public PetriNetJulian(IUltimateServiceProvider services, Set<S> alphabet,
 			StateFactory<C> stateFactory, boolean constantTokenAmount) {
 		m_Services = services;
+		s_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 		this.alphabet = alphabet;
 		this.stateFactory = stateFactory;
 		this.m_ConstantTokenAmount = constantTokenAmount;
@@ -84,6 +85,7 @@ public class PetriNetJulian<S, C> implements IPetriNet<S, C> {
 			INestedWordAutomatonOldApi<S, C> nwa)
 			throws AutomataLibraryException {
 		m_Services = services;
+		s_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 		alphabet = nwa.getInternalAlphabet();
 		stateFactory = nwa.getStateFactory();
 		this.m_ConstantTokenAmount = true;
