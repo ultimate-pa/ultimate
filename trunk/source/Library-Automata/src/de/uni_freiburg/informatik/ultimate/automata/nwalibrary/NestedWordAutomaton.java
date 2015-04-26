@@ -132,7 +132,7 @@ public class NestedWordAutomaton<LETTER, STATE> implements INestedWordAutomatonO
 
 	@Override
 	public Collection<STATE> getStates() {
-		return this.m_InternalOut.keySet();
+		return Collections.unmodifiableSet(this.m_InternalOut.keySet());
 	}
 
 	@Override
@@ -161,7 +161,7 @@ public class NestedWordAutomaton<LETTER, STATE> implements INestedWordAutomatonO
 
 	@Override
 	public Collection<STATE> getInitialStates() {
-		return m_InitialStates;
+		return Collections.unmodifiableSet(m_InitialStates);
 	}
 
 	@Override
@@ -178,7 +178,7 @@ public class NestedWordAutomaton<LETTER, STATE> implements INestedWordAutomatonO
 
 	@Override
 	public Collection<STATE> getFinalStates() {
-		return m_FinalStates;
+		return Collections.unmodifiableSet(m_FinalStates);
 	}
 
 	public void addState(boolean isInitial, boolean isFinal, STATE state) {
