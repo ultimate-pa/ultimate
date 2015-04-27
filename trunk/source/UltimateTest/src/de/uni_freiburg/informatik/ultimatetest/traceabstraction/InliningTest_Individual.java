@@ -29,7 +29,11 @@ public class InliningTest_Individual extends AbstractTraceAbstractionTestSuite {
 //		"examples/programs/quantifier/regression/copyStructThatIsOnHeap.c",
 		
 		// Error in BoogiePreprocessor, regarding quantifiers
-		"examples/BoogiePL/schaetzc/TestMultiQuant.bpl",
+//		"examples/BoogiePL/schaetzc/TestMultiQuant.bpl",
+		
+		// Former problem with requires specifications of main procedures.
+		"examples/programs/recursivePrograms/Katharinenberg.bpl",
+		"examples/programs/recursivePrograms/Katharinenberg.c",
 	};
 	
 	private static final boolean sTraceAbstractionBoogie = true;
