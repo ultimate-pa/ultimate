@@ -16,6 +16,7 @@ import de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences.CorePreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 import de.uni_freiburg.informatik.ultimate.core.services.IResultService;
+import de.uni_freiburg.informatik.ultimate.core.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.result.CounterExampleResult;
 import de.uni_freiburg.informatik.ultimate.result.ExceptionOrErrorResult;
 import de.uni_freiburg.informatik.ultimate.result.GenericResult;
@@ -32,16 +33,20 @@ public class BacktranslationTestResultDecider extends TestResultDecider {
 
 	private final String mInputFile;
 	private final String mFileEnding;
+	private final String mSettingsFile;
 
 	/**
 	 * 
 	 * @param inputFile
+	 * @param settingsFile
 	 * @param fileending
 	 *            use .c or .bpl or something like that. The . is important
 	 * 
+	 * 
 	 */
-	public BacktranslationTestResultDecider(String inputFile, String fileending) {
+	public BacktranslationTestResultDecider(String inputFile, String settingsFile, String fileending) {
 		mInputFile = inputFile;
+		mSettingsFile = settingsFile;
 		mFileEnding = fileending;
 	}
 
@@ -134,81 +139,102 @@ public class BacktranslationTestResultDecider extends TestResultDecider {
 			// error path
 
 			File inputFile = new File(mInputFile);
-			String inputFileNameWithoutEnding = inputFile.getName().replaceAll("\\" + mFileEnding, "");
-			File desiredCounterExampleFile = new File(String.format("%s%s%s%s", inputFile.getParentFile()
-					.getAbsolutePath(), Path.SEPARATOR, inputFileNameWithoutEnding, ".errorpath"));
+			File settingsFile = new File(mSettingsFile);
+			String desiredCounterExample = null;
+			try {
+				desiredCounterExample = getDesiredCounterExample(inputFile, settingsFile);
+			} catch (IOException e) {
+				setResultCategory(e.getMessage());
+				setResultMessage(e.toString());
+				e.printStackTrace();
+				Util.logResults(log, mInputFile, true, customMessages, resultService);
+				return TestResult.FAIL;
+			}
+
 			String actualCounterExample = cex.get(0).getProgramExecutionAsString();
-			if (desiredCounterExampleFile.canRead()) {
-
-				try {
-					String desiredCounterExample = de.uni_freiburg.informatik.ultimate.core.util.CoreUtil
-							.readFile(desiredCounterExampleFile);
-
-					// compare linewise
-					String platformLineSeparator = de.uni_freiburg.informatik.ultimate.core.util.CoreUtil
-							.getPlatformLineSeparator();
-					String[] desiredLines = desiredCounterExample.split(platformLineSeparator);
-					String[] actualLines = actualCounterExample.split(platformLineSeparator);
-
-					if (desiredLines.length != actualLines.length) {
-						fail = true;
-					} else {
-						for (int i = 0; i < desiredLines.length; ++i) {
-							String curDes = desiredLines[i].trim();
-							String curAct = actualLines[i].trim();
-							if (!(curDes.equals(curAct))) {
-								// ok it does not match, but we may make an
-								// exception for value lines
-								if (!isValueLineOk(curDes, curAct)) {
-									// it is either not a value line or the
-									// value lines differ too much
-									fail = true;
-									break;
-								}
-							}
-						}
-					}
-
-					if (fail) {
-						tryWritingActualResultToFile(desiredCounterExampleFile, actualCounterExample);
-						setCategoryAndMessageAndCustomMessage("Desired error trace does not match actual error trace.",
-								customMessages);
-						customMessages.add("Lengths: Desired=" + desiredCounterExample.length() + " Actual="
-								+ actualCounterExample.length());
-						customMessages.add("Desired error trace:");
-						int i = 0;
-						for (String s : desiredCounterExample.split(platformLineSeparator)) {
-							customMessages.add("[L" + i + "] " + s);
-							++i;
-						}
-						i = 0;
-						customMessages.add("Actual error trace:");
-						for (String s : actualCounterExample.split(platformLineSeparator)) {
-							customMessages.add("[L" + i + "] " + s);
-							++i;
-						}
-					} else {
-						setResultCategory("Success");
-					}
-
-				} catch (IOException e) {
-					setResultCategory(e.getMessage());
-					setResultMessage(e.toString());
-					e.printStackTrace();
-					fail = true;
-				}
-			} else {
+			if (desiredCounterExample == null) {
 				setResultCategory("No .errorpath file for comparison");
 				String errorMsg = String.format("There is no .errorpath file for %s!", mInputFile);
-				tryWritingActualResultToFile(desiredCounterExampleFile, actualCounterExample);
+				tryWritingActualResultToFile(actualCounterExample);
 				setResultMessage(errorMsg);
 				customMessages.add(errorMsg);
 				fail = true;
-			}
+			} else {
 
+				// compare linewise
+				String platformLineSeparator = de.uni_freiburg.informatik.ultimate.core.util.CoreUtil
+						.getPlatformLineSeparator();
+				String[] desiredLines = desiredCounterExample.split(platformLineSeparator);
+				String[] actualLines = actualCounterExample.split(platformLineSeparator);
+
+				if (desiredLines.length != actualLines.length) {
+					fail = true;
+				} else {
+					for (int i = 0; i < desiredLines.length; ++i) {
+						String curDes = desiredLines[i].trim();
+						String curAct = actualLines[i].trim();
+						if (!(curDes.equals(curAct))) {
+							// ok it does not match, but we may make an
+							// exception for value lines
+							if (!isValueLineOk(curDes, curAct)) {
+								// it is either not a value line or the
+								// value lines differ too much
+								fail = true;
+								break;
+							}
+						}
+					}
+				}
+
+				if (fail) {
+					tryWritingActualResultToFile(actualCounterExample);
+					setCategoryAndMessageAndCustomMessage("Desired error trace does not match actual error trace.",
+							customMessages);
+					customMessages.add("Lengths: Desired=" + desiredCounterExample.length() + " Actual="
+							+ actualCounterExample.length());
+					customMessages.add("Desired error trace:");
+					int i = 0;
+					for (String s : desiredCounterExample.split(platformLineSeparator)) {
+						customMessages.add("[L" + i + "] " + s);
+						++i;
+					}
+					i = 0;
+					customMessages.add("Actual error trace:");
+					for (String s : actualCounterExample.split(platformLineSeparator)) {
+						customMessages.add("[L" + i + "] " + s);
+						++i;
+					}
+				} else {
+					setResultCategory("Success");
+				}
+			}
 		}
 		Util.logResults(log, mInputFile, fail, customMessages, resultService);
 		return fail ? TestResult.FAIL : TestResult.SUCCESS;
+	}
+
+	private String getDesiredCounterExample(File inputFile, File settingsFile) throws IOException {
+		String inputFileNameWithoutEnding = removeFileEnding(inputFile);
+		String settingsFileNameWithoutEnding = removeFileEnding(settingsFile);
+
+		// order some candidates which we would like, we take the first that
+		// matches
+		ArrayList<File> candidates = new ArrayList<>();
+		candidates.add(new File(String.format("%s%s%s%s", inputFile.getParentFile().getAbsolutePath(), Path.SEPARATOR,
+				inputFileNameWithoutEnding + "_" + settingsFileNameWithoutEnding, ".errorpath")));
+		candidates.add(new File(String.format("%s%s%s%s", inputFile.getParentFile().getAbsolutePath(), Path.SEPARATOR,
+				inputFileNameWithoutEnding, ".errorpath")));
+
+		for (File candidate : candidates) {
+			if (candidate.canRead()) {
+				return CoreUtil.readFile(candidate);
+			}
+		}
+		return null;
+	}
+
+	private String removeFileEnding(File file) {
+		return file.getName().replaceAll("\\..*", "");
 	}
 
 	/**
@@ -266,16 +292,18 @@ public class BacktranslationTestResultDecider extends TestResultDecider {
 		customMessages.add(msg);
 	}
 
-	private boolean tryWritingActualResultToFile(File desiredCounterExampleFile, String actualCounterExample) {
-		String[] actualLines = actualCounterExample.split(de.uni_freiburg.informatik.ultimate.core.util.CoreUtil
-				.getPlatformLineSeparator());
+	private boolean tryWritingActualResultToFile(String actualCounterExample) {
+		String[] actualLines = actualCounterExample.split(CoreUtil.getPlatformLineSeparator());
 		try {
-			de.uni_freiburg.informatik.ultimate.core.util.CoreUtil.writeFile(
-					desiredCounterExampleFile.getAbsolutePath() + "-actual", actualLines);
+			File input = new File(mInputFile);
+			String path = input.getParentFile().getAbsolutePath();
+			String name = removeFileEnding(input) + "_" + (removeFileEnding(new File(mSettingsFile)));
+			String target = new File(String.format("%s%s%s%s", path, Path.SEPARATOR, name, ".errorpath-actual"))
+					.getAbsolutePath();
+			CoreUtil.writeFile(target, actualLines);
 			return true;
 		} catch (IOException e) {
 			return false;
 		}
 	}
-
 }
