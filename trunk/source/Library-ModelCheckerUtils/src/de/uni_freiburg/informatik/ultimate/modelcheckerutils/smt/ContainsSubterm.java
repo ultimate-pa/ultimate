@@ -1,5 +1,8 @@
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import de.uni_freiburg.informatik.ultimate.logic.AnnotatedTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
@@ -15,37 +18,48 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
  *
  */
 public class ContainsSubterm extends NonRecursive {
+	
+	private Set<Term> m_TermsInWhichWeAlreadyDescended;
+	
 	class MyWalker extends TermWalker {
 		MyWalker(Term term) { super(term); }
 		
 		@Override
-		public void walk(NonRecursive walker, ConstantTerm term) {
-			if (!m_FoundInCurrentSeach) {
-				if (m_GivenSubterm.equals(term)) {
-					m_FoundInCurrentSeach = true;
-				} 
+		public void walk(NonRecursive walker) {
+			if (m_FoundInCurrentSeach) {
+				// do nothing
+			} else {
+				if (m_TermsInWhichWeAlreadyDescended.contains(getTerm())) {
+					// do nothing
+					System.out.println("saved unnecessary descend");
+				} else {
+					if (m_GivenSubterm.equals(getTerm())) {
+						m_FoundInCurrentSeach = true;
+						reset();
+					} else {
+						super.walk(walker);
+					}
+				}
 			}
+		}
+
+
+
+
+		@Override
+		public void walk(NonRecursive walker, ConstantTerm term) {
+			// cannot descend
 		}
 		@Override
 		public void walk(NonRecursive walker, AnnotatedTerm term) {
-			if (!m_FoundInCurrentSeach) {
-				if (m_GivenSubterm.equals(term)) {
-					m_FoundInCurrentSeach = true;
-				} else {
-					walker.enqueueWalker(new MyWalker(term.getSubterm()));
-				}
-			}
+			m_TermsInWhichWeAlreadyDescended.add(term);
+			walker.enqueueWalker(new MyWalker(term.getSubterm()));
 		}
 		@Override
 		public void walk(NonRecursive walker, ApplicationTerm term) {
-			if (!m_FoundInCurrentSeach) {
-				if (m_GivenSubterm.equals(term)) {
-					m_FoundInCurrentSeach = true;
-				} else {
-					for (Term t : term.getParameters()) {
-						walker.enqueueWalker(new MyWalker(t));
-					}
-				}
+			m_TermsInWhichWeAlreadyDescended.add(term);
+			for (Term t : term.getParameters()) {
+				walker.enqueueWalker(new MyWalker(t));
 			}
 		}
 		@Override
@@ -58,11 +72,7 @@ public class ContainsSubterm extends NonRecursive {
 		}
 		@Override
 		public void walk(NonRecursive walker, TermVariable term) {
-			if (!m_FoundInCurrentSeach) {
-				if (m_GivenSubterm.equals(term)) {
-					m_FoundInCurrentSeach = true;
-				} 
-			}
+			// cannot descend
 		}
 	}
 	
@@ -80,7 +90,9 @@ public class ContainsSubterm extends NonRecursive {
 	 */
 	public boolean containsSubterm(Term term) {
 		m_FoundInCurrentSeach = false;
+		m_TermsInWhichWeAlreadyDescended = new HashSet<>();
 		run(new MyWalker(term));
+		m_TermsInWhichWeAlreadyDescended = null;
 		return m_FoundInCurrentSeach;
 	}
 }
