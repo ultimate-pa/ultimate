@@ -21,6 +21,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.S
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayLHS;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssignmentStatement;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Body;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BooleanLiteral;
@@ -35,6 +36,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ModifiesSpecification;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Procedure;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.RequiresSpecification;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Specification;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StructConstructor;
@@ -346,7 +348,7 @@ public class PostProcessor {
 
 		functionHandler.beginUltimateInit(main, loc, SFO.START);
 		ArrayList<Declaration> decl = new ArrayList<Declaration>();
-		String checkMethod = main.getCheckedMethod();
+		String checkedMethod = main.getCheckedMethod();
 
 		Procedure startDeclaration = null;
 		Specification[] specsStart = new Specification[0];
@@ -355,48 +357,60 @@ public class PostProcessor {
 			functionHandler.getCallGraph().put(SFO.START, new LinkedHashSet<String>());
 		functionHandler.getCallGraph().get(SFO.START).add(SFO.INIT);
 
-		if (!checkMethod.equals(SFO.EMPTY)
-				&& procedures.containsKey(checkMethod)) {
-			mLogger.info("Settings: Checked method=" + checkMethod);
+		if (!checkedMethod.equals(SFO.EMPTY)
+				&& procedures.containsKey(checkedMethod)) {
+			mLogger.info("Settings: Checked method=" + checkedMethod);
 
-			functionHandler.getCallGraph().get(SFO.START).add(checkMethod);
+			functionHandler.getCallGraph().get(SFO.START).add(checkedMethod);
 
 			ArrayList<Statement> startStmt = new ArrayList<Statement>();
 			ArrayList<VariableDeclaration> startDecl = new ArrayList<VariableDeclaration>();
 			specsStart = new Specification[1];
 			startStmt.add(new CallStatement(loc, false, new VariableLHS[0],
 					SFO.INIT, new Expression[0]));
-			VarList[] out = procedures.get(checkMethod).getOutParams();
-			VarList[] in = procedures.get(checkMethod).getInParams();
+			VarList[] checkedMethodOutParams = procedures.get(checkedMethod).getOutParams();
+			VarList[] checkedMethodInParams = procedures.get(checkedMethod).getInParams();
+			Specification[] checkedMethodSpec = procedures.get(checkedMethod).getSpecification();
+
+			//find out the requires specs of the checked method and assume it before its start
+			ArrayList<Statement> reqSpecsAssumes = new ArrayList<>();
+			for (Specification spec : checkedMethodSpec)
+				if (spec instanceof RequiresSpecification)
+					reqSpecsAssumes.add(
+							new AssumeStatement(loc, 
+									((RequiresSpecification) spec).getFormula()));
+			startStmt.addAll(reqSpecsAssumes);
+			
 			ArrayList<Expression> args = new ArrayList<Expression>();
-			if (in.length > 0) {
+			if (checkedMethodInParams.length > 0) {
 				startDecl
-				.add(new VariableDeclaration(loc, new Attribute[0], in));
-				for (VarList arg : in) {
+				.add(new VariableDeclaration(loc, new Attribute[0], checkedMethodInParams));
+				for (VarList arg : checkedMethodInParams) {
 					assert arg.getIdentifiers().length == 1; // by construction
 					String id = arg.getIdentifiers()[0];
 					args.add(new IdentifierExpression(loc, id));
 				}
 			}
-			if (out.length != 0) {
-				assert out.length == 1;
+			if (checkedMethodOutParams.length != 0) {
+				assert checkedMethodOutParams.length == 1;
 				// there is 1(!) return value
 				String checkMethodRet = main.nameHandler
 						.getTempVarUID(SFO.AUXVAR.RETURNED);
 				main.cHandler.getSymbolTable().addToReverseMap(checkMethodRet,
 						SFO.NO_REAL_C_VAR + checkMethodRet, loc);
 				VarList tempVar = new VarList(loc,
-						new String[] { checkMethodRet }, out[0].getType());
+						new String[] { checkMethodRet }, checkedMethodOutParams[0].getType());
 				VariableDeclaration tmpVar = new VariableDeclaration(loc,
 						new Attribute[0], new VarList[] { tempVar });
 				startDecl.add(tmpVar);
 				startStmt.add(new CallStatement(loc, false,
 						new VariableLHS[] { new VariableLHS(loc, checkMethodRet) }, 
-						checkMethod, args.toArray(new Expression[0])));
+						checkedMethod, args.toArray(new Expression[0])));
 			} else { // void
 				startStmt.add(new CallStatement(loc, false, new VariableLHS[0],
-						checkMethod, args.toArray(new Expression[0])));
+						checkedMethod, args.toArray(new Expression[0])));
 			}
+
 			LinkedHashSet<VariableLHS> startModifiesClause = new LinkedHashSet<VariableLHS>();
 			for (String id: mInitializedGlobals)
 				startModifiesClause.add(new VariableLHS(loc, id));
@@ -406,7 +420,7 @@ public class PostProcessor {
 			//					startModifiesClause.add(new VariableLHS(loc, SFO.MEMORY + "_" + t));
 			//				}		
 			//			}
-			for (String id: modifiedGlobals.get(checkMethod))
+			for (String id: modifiedGlobals.get(checkedMethod))
 				startModifiesClause.add(new VariableLHS(loc, id));
 			specsStart[0] = new ModifiesSpecification(loc, false,
 					startModifiesClause.toArray(new VariableLHS[0]));
