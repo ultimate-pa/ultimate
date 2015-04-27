@@ -118,8 +118,7 @@ public class Nnf {
 						convert(SmtUtils.binaryBooleanEquality(
 								m_Script, params[0], params[1]));
 					}
-				} else if (functionName.equals("distinct") && 
-						SmtUtils.hasBooleanParams(appTerm)) {
+				} else if (isXor(appTerm, functionName)) {
 					Term[] params = appTerm.getParameters();
 					if (params.length > 2) {
 						Term binarized = SmtUtils.binarize(m_Script, appTerm);
@@ -174,6 +173,19 @@ public class Nnf {
 				throw new UnsupportedOperationException("Unsupported " + term.getClass());
 			}
 		}
+
+		/**
+		 * A function is an xor if one of the following applies.
+		 * <ul>
+		 * <li> its functionName is <b>xor</b> 
+		 * <li> its functionName is <b>distinct</b> and its parameters have
+		 * Sort Bool.
+		 * </ul>
+		 */
+		private boolean isXor(ApplicationTerm appTerm, String functionName) {
+			return functionName.equals("xor") || 
+					(functionName.equals("distinct") && SmtUtils.hasBooleanParams(appTerm));
+		}
 		
 		private void convertNot(Term notParam, Term notTerm) {
 			assert notParam.getSort().getName().equals("Bool") : "Input is not Bool";
@@ -224,8 +236,7 @@ public class Nnf {
 						convert(SmtUtils.binaryBooleanNotEquals(
 								m_Script, notParams[0], notParams[1]));
 					}
-				} else if (functionName.equals("distinct") && 
-						SmtUtils.hasBooleanParams(appTerm)) {
+				} else if (isXor(appTerm, functionName)) {
 					Term[] notParams = appTerm.getParameters();
 					if (notParams.length > 2) {
 						Term binarized = SmtUtils.binarize(m_Script, appTerm);
