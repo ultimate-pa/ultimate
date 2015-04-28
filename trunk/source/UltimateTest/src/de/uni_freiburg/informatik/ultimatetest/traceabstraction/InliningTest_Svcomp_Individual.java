@@ -55,17 +55,24 @@ public class InliningTest_Svcomp_Individual extends AbstractTraceAbstractionTest
 
 		// These tests failed only with inlining. But now they pass, although I didn't changed anything
 		// ... fail caused by "out of memory" or "connection to SMT solver broken".
-//		"examples/svcomp/memory-alloca/bubblesort-alloca_true-valid-memsafety.i",
-//		"examples/svcomp/memory-alloca/cstrcat-alloca_true-valid-memsafety.i",
-//		"examples/svcomp/memory-alloca/cstrncat-alloca_true-valid-memsafety.i",
+		// Update 20150428-1134 DD: Worksforme
+		"examples/svcomp/memory-alloca/bubblesort-alloca_true-valid-memsafety.i",
+		"examples/svcomp/memory-alloca/cstrncat-alloca_true-valid-memsafety.i",
+		
 		// ... "ExpectedResult: UNSAFE_MEMTRACK UltimateResult: SAFE", but now passes for mysterious reasons.
+		// Update 20150428-1134 DD: Worksforme
 		"examples/svcomp/list-ext-properties/test-0019_1_false-valid-memtrack.i",
 
 		// These tests fail only with inlining (UNSAFE_MEMTRACK, expected SAFE)
+		// Update 20150428-1134 DD: Worksforme after changing setting in BPL inliner 
 		"examples/svcomp/list-ext-properties/test-0158_1_false-valid-memtrack.i",
+		"examples/svcomp/memsafety/test-0019_false-valid-memtrack.c", 
 		"examples/svcomp/memsafety/test-0019_false-valid-memtrack.i", 
 		"examples/svcomp/memsafety/test-0158_false-valid-memtrack.i",
 		"examples/svcomp/memsafety/20051113-1.c_false-valid-memtrack.i",
+		
+		// This test still fails, but independently from inlining 
+		"examples/svcomp/memory-alloca/cstrcat-alloca_true-valid-memsafety.i",
 	};
 
 	@Override
@@ -76,7 +83,7 @@ public class InliningTest_Svcomp_Individual extends AbstractTraceAbstractionTest
 	private static final boolean sReachPreciseMemoryModel = false;
 	private static final boolean sMemsafety = true;
 
-	private static final boolean sAutomizerWithoutInlining = false;
+	private static final boolean sAutomizerWithoutInlining = true;
 	private static final boolean sAutomizerWithInlining = true;
 	
 	@Override
