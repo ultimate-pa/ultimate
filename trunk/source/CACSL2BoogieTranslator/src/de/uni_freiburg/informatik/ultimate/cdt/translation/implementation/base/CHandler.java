@@ -681,10 +681,11 @@ public class CHandler implements ICHandler {
 							((ResultExpression) result).stmt.add(
 									new HavocStatement(loc, new VariableLHS[] { lhs }));
 						} else {
-							String tmpId = main.nameHandler.getTempVarUID(SFO.AUXVAR.NONDET);
 							LocalLValue llVal = new LocalLValue(lhs, cDec.getType());
-//							((ResultExpression) result).stmt.add(mMemoryHandler.getMallocCall(main, mFunctionHandler, 
-//									mMemoryHandler.calculateSizeOf(cDec.getType(), loc), llVal , loc));
+							//old solution: havoc via an auxvar, new (and even older?) solution (below): 
+							//just malloc at the right place (much shorter for arrays and structs..)
+							/*
+							String tmpId = main.nameHandler.getTempVarUID(SFO.AUXVAR.NONDET);
 							VariableDeclaration tmpVarDec = new VariableDeclaration(loc, new Attribute[0], 
 									new VarList[] { new VarList(loc, new String[] { tmpId }, 
 											main.typeHandler.ctype2asttype(loc, cDec.getType())) });
@@ -693,8 +694,13 @@ public class CHandler implements ICHandler {
 									new HeapLValue(new IdentifierExpression(loc, bId), cDec.getType()), 
 									new RValue(new IdentifierExpression(loc, tmpId), cDec.getType())));
 							((ResultExpression) result).auxVars.put(tmpVarDec, loc);
+							*/
 
-							mMemoryHandler.addVariableToBeMallocedAndFreed(main, 
+							((ResultExpression) result).stmt.add(mMemoryHandler.getMallocCall(main, mFunctionHandler, 
+									mMemoryHandler.calculateSizeOf(cDec.getType(), loc), llVal , loc));
+
+//							mMemoryHandler.addVariableToBeMallocedAndFreed(main,  //belonging to old solution
+							mMemoryHandler.addVariableToBeFreed(main, 
 									new LocalLValueILocationPair(llVal, LocationFactory.createIgnoreLocation(loc)));
 						}
 					} else if (hasRealInitializer && !mFunctionHandler.noCurrentProcedure() && !mTypeHandler.isStructDeclaration()) { 
