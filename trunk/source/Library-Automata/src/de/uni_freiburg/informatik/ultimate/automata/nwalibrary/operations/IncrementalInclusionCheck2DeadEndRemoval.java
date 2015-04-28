@@ -614,7 +614,7 @@ public class IncrementalInclusionCheck2DeadEndRemoval<LETTER,STATE> extends Abst
 	@Override
 	public String exitMessage() {
 		m_Logger.info("total:"+counter_total_nodes+"nodes");
-		m_Logger.info(counter_total_nodes+"nodes in the end");
+		m_Logger.info(allNodes.size()+"nodes in the end");
 		m_Logger.info("total:"+counter_run+"runs");
 		return "Exit " + operationName();
 	}
