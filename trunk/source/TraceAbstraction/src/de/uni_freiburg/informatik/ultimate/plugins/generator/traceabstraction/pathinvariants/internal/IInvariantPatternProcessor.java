@@ -81,7 +81,8 @@ public interface IInvariantPatternProcessor<IPT> {
 	 * pattern map.
 	 * 
 	 * The round parameter will get for each integer between 0 and
-	 * <code>getMaxRounds() - 1</code>.
+	 * <code>getMaxRounds() - 1</code>. The value might change to a smaller
+	 * value.
 	 * 
 	 * @return maximal number of attempts to re-generate the invariant map
 	 */

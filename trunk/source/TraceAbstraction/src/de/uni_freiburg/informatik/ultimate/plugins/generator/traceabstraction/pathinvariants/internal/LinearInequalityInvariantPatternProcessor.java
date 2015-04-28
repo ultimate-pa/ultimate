@@ -86,6 +86,8 @@ public final class LinearInequalityInvariantPatternProcessor
 	private Collection<Collection<LinearPatternBase>> entryInvariantPattern;
 	private Collection<Collection<LinearPatternBase>> exitInvariantPattern;
 	private int prefixCounter;
+	private int currentRound;
+	private int maxRounds;
 
 	/**
 	 * Creates a pattern processor using linear inequalities as patterns.
@@ -131,6 +133,9 @@ public final class LinearInequalityInvariantPatternProcessor
 				boogie2smt));
 		this.postcondition = linearizer.linearize(new TransFormula(
 				postcondition, boogie2smt));
+		
+		currentRound = -1;
+		maxRounds = strategy.getMaxRounds();
 	}
 
 	/**
@@ -144,6 +149,7 @@ public final class LinearInequalityInvariantPatternProcessor
 		entryInvariantPattern = null;
 		exitInvariantPattern = null;
 		prefixCounter = 0;
+		currentRound = round;
 
 		// In the first round, linearize and populate
 		// {@link #patternCoefficients}.
@@ -733,7 +739,12 @@ public final class LinearInequalityInvariantPatternProcessor
 		}
 
 		logger.log(Level.INFO, "[LIIPP] Terms generated, checking SAT.");
-		if (solver.checkSat() != LBool.SAT) {
+		final LBool result = solver.checkSat();
+		if (result == LBool.UNKNOWN) {
+			// Prevent additional rounds
+			maxRounds = currentRound + 1;
+		}
+		if (result != LBool.SAT) {
 			// No configuration found
 			logger.log(Level.INFO, "[LIIPP] No solution found.");
 			return false;
@@ -766,7 +777,7 @@ public final class LinearInequalityInvariantPatternProcessor
 	 */
 	@Override
 	public int getMaxRounds() {
-		return strategy.getMaxRounds();
+		return maxRounds;
 	}
 
 	/**

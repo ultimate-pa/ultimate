@@ -261,6 +261,9 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 	 */
 	@Override
 	public IPredicate[] getInterpolants() {
+		if (m_Interpolants == null){
+			return null;
+		}
 		IPredicate[] interpolantMapWithOutFirstInterpolant = new IPredicate[this.m_Interpolants.length - 2];
 		for (int i = 0; i < this.m_Interpolants.length - 2; i++) {
 			interpolantMapWithOutFirstInterpolant[i] = this.m_Interpolants[i+1];
