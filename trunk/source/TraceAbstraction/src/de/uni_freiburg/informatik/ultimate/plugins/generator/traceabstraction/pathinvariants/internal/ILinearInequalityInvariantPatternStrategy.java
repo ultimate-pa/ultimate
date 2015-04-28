@@ -17,7 +17,7 @@ public interface ILinearInequalityInvariantPatternStrategy {
 	 * 
 	 * @param location
 	 *            the location to generate an invariant pattern for
-	 * @param rount
+	 * @param round
 	 *            the round
 	 * 
 	 * @return Array with exactly two fields, the first one containing the

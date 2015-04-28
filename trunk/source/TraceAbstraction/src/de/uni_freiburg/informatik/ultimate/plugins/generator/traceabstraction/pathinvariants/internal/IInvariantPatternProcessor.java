@@ -28,7 +28,7 @@ public interface IInvariantPatternProcessor<IPT> {
 	/**
 	 * Called when a new round is entered.
 	 * 
-	 * @param round
+	 * @param round the round that is entered
 	 */
 	public void startRound(final int round);
 

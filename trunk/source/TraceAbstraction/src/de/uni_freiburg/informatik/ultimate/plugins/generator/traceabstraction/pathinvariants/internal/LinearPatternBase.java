@@ -82,6 +82,16 @@ public final class LinearPatternBase {
 		return strict;
 	}
 	
+	/**
+	 * Returns the affine function \sum_i a_ix_i corresponding to the
+	 * linear inequality \sum_i a_ix_i < b (for strict linear inequalities)
+	 * or \sum_i a_ix_i \le b (for non-strict linear inequalites).
+	 * In addition variables given in the valuation are valuated with
+	 * given values
+	 * @param valuation the valuation (map for TermVariables to Rational)
+	 * to use to valuate variables
+	 * @return the valuated affine function corresponding to this LinearInequality
+	 */
 	public AffineFunction getAffineFunction(final Map<Term, Rational> valuation){
 		return function.extractAffineFunction(valuation);
 	}

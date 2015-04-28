@@ -1,21 +1,13 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal;
 
-import java.io.BufferedOutputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.PrintStream;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
-import java.util.ArrayList;
 import java.util.Map;
 import java.util.Set;
-
-import javax.management.RuntimeErrorException;
 
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
@@ -32,10 +24,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
-import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
-import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SafeSubstitution;
@@ -94,7 +84,7 @@ public final class LinearInequalityInvariantPatternProcessor
 	 * 
 	 * @param services
 	 *            Service provider to use, for example for logging and timeouts
-	 * @param predUnifier
+	 * @param predicateUnifier
 	 *            the predicate unifier to unify final predicates with
 	 * @param smtManager
 	 *            the smt manager to use with the predicateUnifier
@@ -215,59 +205,6 @@ public final class LinearInequalityInvariantPatternProcessor
 		return disjunction;
 	}
 
-	/**
-	 * Example code provided by Matthias. DO NOT CALL. TODO: Remove once
-	 * everything is used elsewhere.
-	 * 
-	 * @deprecated
-	 */
-	private void matthiasExampleCode() {
-		MotzkinTransformation mt = new MotzkinTransformation(solver,
-				AnalysisType.Nonlinear, false);
-		Collection<LinearInequality> linearInequalities = null;
-		mt.add_inequalities(linearInequalities);
-		mt.transform(new Rational[0]);
-
-		// construct new 0-ary function symbol
-		solver.declareFun("coefficient", new Sort[0], solver.sort("Real"));
-		// statt dessen lieber
-		Term zeroary = SmtUtils.buildNewConstant(solver, "coefficient", "Real");
-		Term t1 = null;
-		Term t2 = null;
-		solver.term("and", t1, t2);
-		Util.and(solver, t1, t2);
-		solver.term("<=", t1, t2);
-		SmtUtils.leq(solver, t1, t2);
-
-		Term contraint = null;
-		solver.assertTerm(contraint);
-		LBool sat = solver.checkSat();
-		switch (sat) {
-		case SAT: {
-			// extract values
-			Collection<Term> coefficientsOfAllInvariants = null;
-			Map<Term, Rational> valuation;
-			boolean simplifiedValuation = false;
-			try {
-				if (simplifiedValuation) {
-					valuation = ModelExtractionUtils.getSimplifiedAssignment(
-							solver, coefficientsOfAllInvariants, logger);
-				} else {
-					valuation = ModelExtractionUtils.getValuation(solver,
-							coefficientsOfAllInvariants);
-				}
-			} catch (TermException e) {
-				e.printStackTrace();
-				throw new AssertionError("model extraction failed");
-			}
-		}
-			break;
-		case UNKNOWN:
-		case UNSAT:
-		default:
-			break;
-		}
-	}
 
 	/**
 	 * Transforms a pattern into a DNF of linear inequalities relative to a
@@ -334,6 +271,15 @@ public final class LinearInequalityInvariantPatternProcessor
 		return mappedAndNegatedPattern;
 	}
 
+	
+	/**
+	 * Performs a single expandation, meaning transforming
+	 * conjunct /\ dnf to an equivalent dnf
+	 * @param dnf the dnf the conjunct is conjuncted to
+	 * @param conjunct the conjunct that is conjuncted to the dnf
+	 * @param <E> : the type of Literals in the cnf/dnf
+	 * @return a new dnf equivalent to conjunct /\ dnf
+	 */
 	private static <E> Collection<Collection<E>> expandCnfToDnfSingle(
 			final Collection<Collection<E>> dnf, final Collection<E> conjunct) {
 		Collection<Collection<E>> result = new ArrayList<>();
@@ -378,26 +324,15 @@ public final class LinearInequalityInvariantPatternProcessor
 			}
 		}
 		return expandedDnf;
-		/*
-		 * Iterator<Collection<LinearInequality>> cnfIterator = cnf.iterator();
-		 * if (!cnfIterator.hasNext()) { throw new IllegalArgumentException(
-		 * "Could not convert cnf into dnf," + " because empty cnf was given");
-		 * } // the first disjunct is the initial dnf
-		 * Collection<LinearInequality> initialDisjunct = cnfIterator.next();
-		 * Collection<Collection<LinearInequality>> initialDnf = new
-		 * ArrayList<>( initialDisjunct.size()); for (LinearInequality li :
-		 * initialDisjunct) { Collection<LinearInequality> unitClause = new
-		 * ArrayList<>(1); unitClause.add(li); initialDnf.add(unitClause); }
-		 * Collection<Collection<LinearInequality>> resultDnf = initialDnf;
-		 * while (cnfIterator.hasNext()) { resultDnf =
-		 * singleExpandationCnfToDnf(cnfIterator.next(), resultDnf); } return
-		 * resultDnf;
-		 */
 	}
 
 	/**
 	 * Given two disjunctions a and b of conjunctions, this method calculates a
 	 * new disjunction of conjunctions equivalent to a /\ b
+	 * @param a the first dnf
+	 * @param b the second dnf
+	 * @param <E> the type of the literals in the dnf
+	 * @return a new dnf equivalent to a /\ b
 	 */
 	private static <E> Collection<Collection<E>> expandConjunctionSingle(
 			Collection<Collection<E>> a, Collection<Collection<E>> b) {
@@ -413,71 +348,10 @@ public final class LinearInequalityInvariantPatternProcessor
 		return result;
 	}
 
-	public static void main(String[] args) {
-		boolean cnfexpansion = true;
-		if (!cnfexpansion) {
-			Collection<Collection<String>> a = new ArrayList<>();
-			Collection<String> aItem1 = new ArrayList<>();
-			aItem1.add("a11");
-			aItem1.add("a12");
-			aItem1.add("a13");
-			Collection<String> aItem2 = new ArrayList<>();
-			aItem2.add("a21");
-			aItem2.add("a22");
-			aItem2.add("a23");
-			a.add(aItem1);
-			a.add(aItem2);
-			Collection<Collection<String>> b = new ArrayList<>();
-			Collection<String> bItem1 = new ArrayList<>();
-			bItem1.add("b11");
-			bItem1.add("b12");
-			bItem1.add("b13");
-			Collection<String> bItem2 = new ArrayList<>();
-			bItem2.add("b21");
-			bItem2.add("b22");
-			bItem2.add("b23");
-			b.add(bItem1);
-			b.add(bItem2);
-			Collection<Collection<String>> c = new ArrayList<>();
-			Collection<String> cItem1 = new ArrayList<>();
-			cItem1.add("c11");
-			cItem1.add("c12");
-			cItem1.add("c13");
-			Collection<String> cItem2 = new ArrayList<>();
-			cItem2.add("c21");
-			cItem2.add("c22");
-			cItem2.add("c23");
-			c.add(cItem1);
-			c.add(cItem2);
-			System.out.println(a);
-			System.out.println(b);
-			System.out.println(expandConjunctionSingle(a, b));
-			System.out.println(expandConjunctionSingle(b, c));
-			System.out.println(expandConjunctionSingle(
-					expandConjunctionSingle(a, b), c));
-			System.out.println(expandConjunction(a, b, c));
-		} else {
-			Collection<Collection<String>> cnf = new ArrayList<>();
-			Collection<String> conjunct1 = new ArrayList<>();
-			conjunct1.add("a");
-			conjunct1.add("b");
-			Collection<String> conjunct2 = new ArrayList<>();
-			conjunct2.add("c");
-			conjunct2.add("d");
-			Collection<String> conjunct3 = new ArrayList<>();
-			conjunct3.add("f");
-			conjunct3.add("g");
-			cnf.add(conjunct1);
-			cnf.add(conjunct2);
-			cnf.add(conjunct3);
-			System.out.println(expandCnfToDnf(cnf));
-		}
-	}
-
 	/**
 	 * Calculates a DNF of the conjunction of an arbitrary set of DNFs.
 	 * 
-	 * @param <E>
+	 * @param <E> the type of the literals in the dnfs
 	 * 
 	 * @param dnfs
 	 *            DNFs to conjunct together
@@ -585,7 +459,6 @@ public final class LinearInequalityInvariantPatternProcessor
 	 */
 	protected void completeMapping(Map<RankVar, Term> mapping,
 			Map<RankVar, Term> source) {
-		int index = 0;
 		for (final RankVar coefficient : patternCoefficients) {
 			if (mapping.containsKey(coefficient)) {
 				continue;
@@ -800,14 +673,19 @@ public final class LinearInequalityInvariantPatternProcessor
 			for (final LinearPatternBase inequality : conjunct) {
 				inequalities.add(inequality.getLinearInequality(definitionMap)
 						.asTerm(solver));
-				// TODO: use the script form the smtmanager here
-
 			}
 			conjunctions.add(SmtUtils.and(solver, inequalities));
 		}
 		return SmtUtils.or(solver, conjunctions);
 	}
 
+	/**
+	 * Takes a pattern and generates a term with the smtManager.getScript()
+	 * script where the variables are valuated with the values in this.valuation
+	 * @param pattern the pattern for which the term is generated
+	 * @return a term correspondending to the cnf of LinearInequalites of
+	 * the pattern, valueted with the values from this.valuation
+	 */
 	protected Term getValuatedTermForPattern(
 			final Collection<Collection<LinearPatternBase>> pattern) {
 		final Script script = smtManager.getScript();
@@ -862,8 +740,6 @@ public final class LinearInequalityInvariantPatternProcessor
 	public IPredicate applyConfiguration(
 			Collection<Collection<LinearPatternBase>> pattern) {
 		Term term = getValuatedTermForPattern(pattern);
-		// @Matthias: Hier ist der Term mit den eingesetzen Werten
-		// wir brauchen nun ein Predicate dafür
 		TermVarsProc tvp = TermVarsProc.computeTermVarsProc(term,
 				smtManager.getBoogie2Smt());
 		return predicateUnifier.getOrConstructPredicate(tvp);
