@@ -55,7 +55,6 @@ public class TraceAbstractionStarter {
 		m_ToolchainStorage = storage;
 		m_Logger = m_Services.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
 		runCegarLoops(rcfgRootNode, witnessAutomaton);
-		rcfgRootNode.getRootAnnot().getBoogie2SMT().getScript().exit();
 	}
 	
 	/**

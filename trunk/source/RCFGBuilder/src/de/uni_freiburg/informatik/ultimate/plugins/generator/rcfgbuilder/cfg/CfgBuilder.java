@@ -20,6 +20,7 @@ import org.apache.log4j.Logger;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
+import de.uni_freiburg.informatik.ultimate.core.services.IStorable;
 import de.uni_freiburg.informatik.ultimate.core.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Identifier;
@@ -135,6 +136,15 @@ public class CfgBuilder {
 		m_RootAnnot = new RootAnnot(mServices, m_BoogieDeclarations, m_Boogie2smt, m_Backtranslator);
 		m_Cbf = m_RootAnnot.getCodeBlockFactory();
 		storage.putStorable(CodeBlockFactory.s_CodeBlockFactoryKeyInToolchainStorage, m_Cbf);
+		storage.putStorable("CfgBuilderScript", new IStorable() {
+
+			final Script theScript = m_Script;
+			
+			@Override
+			public void destroy() {
+				theScript.exit();
+			}
+		});
 
 	}
 
