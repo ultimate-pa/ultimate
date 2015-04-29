@@ -486,7 +486,7 @@ public class SmtUtils {
 	 */
 	public static Term termWithLocalSimplification(Script script, 
 			String funcname, Term[] params) {
-		Term result;
+		final Term result;
 		switch (funcname) {
 		case "and":
 			result = Util.and(script, params);
@@ -514,6 +514,7 @@ public class SmtUtils {
 			} else {
 				result = Util.not(script, binaryEquality(script, params[0], params[1]));
 			}
+			break;
 		case "=>":
 			result = Util.implies(script, params);
 			break;
