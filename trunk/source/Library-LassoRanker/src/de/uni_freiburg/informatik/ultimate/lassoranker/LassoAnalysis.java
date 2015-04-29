@@ -42,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.nontermination.NonTermina
 import de.uni_freiburg.informatik.ultimate.lassoranker.nontermination.NonTerminationArgument;
 import de.uni_freiburg.informatik.ultimate.lassoranker.nontermination.NonTerminationArgumentSynthesizer;
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.AddAxioms;
+import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.CommuHashPreprocessor;
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.DNF;
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.LassoPreProcessor;
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.MatchInVars;
@@ -303,6 +304,7 @@ public class LassoAnalysis {
 		return new LassoPreProcessor[] {
 				new StemAndLoopPreProcessor(new MatchInVars(m_Boogie2SMT.getVariableManager())),
 				new StemAndLoopPreProcessor(new AddAxioms(m_axioms)),
+				new StemAndLoopPreProcessor(new CommuHashPreprocessor(mServices)),
 				new LassoPartitioneer(mServices, m_Boogie2SMT.getVariableManager()),
 //				new RewriteArrays(
 //						m_ArrayIndexSupportingInvariants,
@@ -318,6 +320,7 @@ public class LassoAnalysis {
 				new StemAndLoopPreProcessor(new RewriteBooleans(lassoBuilder.getReplacementVarFactory(), lassoBuilder.getScript())),
 				new StemAndLoopPreProcessor(new RewriteIte()),
 				new StemAndLoopPreProcessor(new RewriteEquality()),
+				new StemAndLoopPreProcessor(new CommuHashPreprocessor(mServices)),
 				new StemAndLoopPreProcessor(new SimplifyPreprocessor(mServices)),
 				new StemAndLoopPreProcessor(new DNF(mServices, m_Boogie2SMT.getVariableManager())),
 				new StemAndLoopPreProcessor(new SimplifyPreprocessor(mServices)),
@@ -592,6 +595,8 @@ public class LassoAnalysis {
 				return "ite";
 			case AddAxioms.s_Description:
 				return "ax";
+			case CommuHashPreprocessor.s_Description:
+				return "hnf";
 			default:
 				return "ukn";
 			}
