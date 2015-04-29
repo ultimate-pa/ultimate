@@ -507,6 +507,7 @@ public class SmtUtils {
 			} else {
 				result = binaryEquality(script, params[0], params[1]);
 			}
+			break;
 		case "distinct":
 			if (params.length != 2) {
 				throw new UnsupportedOperationException("not yet implemented");
@@ -515,13 +516,14 @@ public class SmtUtils {
 			}
 		case "=>":
 			result = Util.implies(script, params);
+			break;
 		case "ite":
 			if (params.length != 3) {
 				throw new IllegalArgumentException("not ite");
 			} else {
 				result = Util.ite(script, params[0], params[1], params[2]);
 			}
-
+			break;
 		default:
 			result = script.term(funcname, params);
 			break;
