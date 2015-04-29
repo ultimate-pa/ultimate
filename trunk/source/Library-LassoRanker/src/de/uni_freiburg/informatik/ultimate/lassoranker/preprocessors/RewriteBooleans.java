@@ -29,8 +29,11 @@ package de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.lassoranker.exceptions.TermException;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.RankVar;
@@ -55,6 +58,7 @@ public class RewriteBooleans extends TransformerPreProcessor {
 	
 	private static final String s_repInPostfix  = "_in_bool";
 	private static final String s_repOutPostfix = "_out_bool";
+	private static final String s_repAuxPostfix = "_aux_bool";
 	private static final String s_repVarSortName = "Int"; // FIXME: this should depend on the logic
 	
 	/**
@@ -105,49 +109,55 @@ public class RewriteBooleans extends TransformerPreProcessor {
 	 * variables.
 	 * @param transFormula the transition formula from which the term originated
 	 */
-	private void generateRepVars(TransFormulaLR tf) {
-		Collection<Map.Entry<RankVar, Term>> entrySet =
-				new ArrayList<Map.Entry<RankVar, Term>>(
-						tf.getInVars().entrySet());
-		for (Map.Entry<RankVar, Term> entry : entrySet) {
-			if (entry.getValue().getSort().getName().equals("Bool")) {
-				ReplacementVar repVar = 
-						getOrConstructReplacementVar(entry.getKey());
-				Term newInVar = 
-						m_SubstitutionMapping.get(entry.getValue());
-				if (newInVar == null) {
-					// Create a new TermVariable
-					newInVar = m_VarFactory.getOrConstructAuxVar(
-							repVar.getGloballyUniqueId() + s_repInPostfix,
-						m_repVarSort
-					);
-					m_SubstitutionMapping.put(entry.getValue(), newInVar);
-				}
+	private void generateRepAndAuxVars(TransFormulaLR tf) {
+		ArrayList<Entry<RankVar, Term>> inVars = new ArrayList<>(tf.getInVars().entrySet());
+		for (Map.Entry<RankVar, Term> entry : inVars) {
+			if (isBool(entry.getValue())) {
+				ReplacementVar repVar = getOrConstructReplacementVar(entry.getKey());
+				TermVariable newInVar = m_VarFactory.getOrConstructAuxVar(
+						repVar.getGloballyUniqueId() + s_repInPostfix, m_repVarSort);
 				tf.removeInVar(entry.getKey());
 				tf.addInVar(repVar, newInVar);
+				Term replacementTerm = constructReplacementTerm(newInVar);
+				m_SubstitutionMapping.put(entry.getValue(), replacementTerm);
 			}
 		}
-		entrySet = new ArrayList<Map.Entry<RankVar, Term>>(
-						tf.getOutVars().entrySet());
-		for (Map.Entry<RankVar, Term> entry : entrySet) {
-			if (entry.getValue().getSort().getName().equals("Bool")) {
-				ReplacementVar repVar = 
-						getOrConstructReplacementVar(entry.getKey());
-				Term newOutVar = 
-						m_SubstitutionMapping.get(entry.getValue());
-				if (newOutVar == null) {
-					// Create a new TermVariable
-					newOutVar = m_VarFactory.getOrConstructAuxVar(
-							repVar.getGloballyUniqueId() + s_repOutPostfix,
-						m_repVarSort
-					);
-					m_SubstitutionMapping.put(entry.getValue(), newOutVar);
-				}
+		ArrayList<Entry<RankVar, Term>> outVars = new ArrayList<>(tf.getOutVars().entrySet());
+		for (Map.Entry<RankVar, Term> entry : outVars) {
+			if (isBool(entry.getValue())) {
+				ReplacementVar repVar =	getOrConstructReplacementVar(entry.getKey());
+				TermVariable newOutVar = m_VarFactory.getOrConstructAuxVar(
+						repVar.getGloballyUniqueId() + s_repOutPostfix,	m_repVarSort);
 				tf.removeOutVar(entry.getKey());
 				tf.addOutVar(repVar, newOutVar);
+				Term replacementTerm = constructReplacementTerm(newOutVar);
+				m_SubstitutionMapping.put(entry.getValue(), replacementTerm);
+			}
+		}
+		Set<TermVariable> auxVars = tf.getAuxVars();
+		for (TermVariable tv : auxVars) {
+			if (isBool(tv)) {
+				TermVariable newAuxVar = m_VarFactory.getOrConstructAuxVar(
+						tv.getName() + s_repAuxPostfix,	m_repVarSort);
+				tf.removeAuxVar(tv);
+				tf.addAuxVars(Collections.singleton(newAuxVar));
 			}
 		}
 	}
+	
+	/**
+	 * return true iff sort of term is Bool.
+	 */
+	private static final boolean isBool(Term term) {
+		return term.getSort().getName().equals("Bool");
+	}
+	
+	private Term constructReplacementTerm(TermVariable tv) {
+		Term one = m_Script.numeral(BigInteger.ONE);
+		Term repTerm = m_Script.term(">=", tv, one);
+		return repTerm;
+	}
+
 	
 	@Override
 	public String getDescription() {
@@ -156,7 +166,7 @@ public class RewriteBooleans extends TransformerPreProcessor {
 	
 	@Override
 	public TransFormulaLR process(Script script, TransFormulaLR tf) throws TermException {
-		this.generateRepVars(tf);
+		this.generateRepAndAuxVars(tf);
 		return super.process(m_Script, tf);
 	}
 	
@@ -190,17 +200,15 @@ public class RewriteBooleans extends TransformerPreProcessor {
 		
 		@Override
 		protected void convert(Term term) {
-			if (term instanceof TermVariable &&
-					term.getSort().getName().equals("Bool")) {
+			if (term instanceof TermVariable && isBool(term)) {
 				TermVariable var = (TermVariable) term;
 				assert m_SubstitutionMapping.containsKey(var);
-				Term translatedVar = m_SubstitutionMapping.get(var);
-				Term one = m_Script.numeral(BigInteger.ONE);
-				Term repTerm = m_Script.term(">=", translatedVar, one);
+				Term repTerm = m_SubstitutionMapping.get(var);
 				setResult(repTerm);
 				return;
 			}
 			super.convert(term);
 		}
+
 	}
 }
