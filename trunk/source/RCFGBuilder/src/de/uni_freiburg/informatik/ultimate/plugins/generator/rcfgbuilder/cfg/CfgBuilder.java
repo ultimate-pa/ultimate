@@ -209,8 +209,16 @@ public class CfgBuilder {
 				commandExternalSolver, timeoutSmtInterpol, externalInterpolator, 
 				dumpSmtScriptToFile, pathOfDumpedScript, filename);
 		Script result = SolverBuilder.buildScript(mServices, storage, solverSettings);
-//		result = new LoggingScriptForUnsatCoreBenchmarks(result, solverSettings.getBaseNameOfDumpedScript(), solverSettings.getPathOfDumpedScript());
-//		result = new LoggingScriptForMainTrackBenchmarks(result, solverSettings.getBaseNameOfDumpedScript(), solverSettings.getPathOfDumpedScript());
+		final boolean dumpUsatCoreTrackBenchmark = (new UltimatePreferenceStore(RCFGBuilder.s_PLUGIN_ID))
+				.getBoolean(RcfgPreferenceInitializer.LABEL_DumpUnsatCoreTrackBenchmark);
+		if (dumpUsatCoreTrackBenchmark) {
+			result = new LoggingScriptForUnsatCoreBenchmarks(result, solverSettings.getBaseNameOfDumpedScript(), solverSettings.getPathOfDumpedScript());
+		}
+		final boolean dumpMainTrackBenchmark = (new UltimatePreferenceStore(RCFGBuilder.s_PLUGIN_ID))
+				.getBoolean(RcfgPreferenceInitializer.LABEL_DumpMainTrackBenchmark);
+		if (dumpMainTrackBenchmark) {
+			result = new LoggingScriptForMainTrackBenchmarks(result, solverSettings.getBaseNameOfDumpedScript(), solverSettings.getPathOfDumpedScript());
+		}
 		
 		String logicForExternalSolver = (new UltimatePreferenceStore(RCFGBuilder.s_PLUGIN_ID))
 				.getString(RcfgPreferenceInitializer.LABEL_ExtSolverLogic);

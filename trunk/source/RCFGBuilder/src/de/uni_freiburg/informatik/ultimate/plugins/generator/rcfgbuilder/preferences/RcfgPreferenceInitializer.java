@@ -28,6 +28,10 @@ public class RcfgPreferenceInitializer extends UltimatePreferenceInitializer {
 						true, PreferenceType.Boolean),
 				new UltimatePreferenceItem<Boolean>(LABEL_DumpToFile,
 						false, PreferenceType.Boolean),
+				new UltimatePreferenceItem<Boolean>(LABEL_DumpUnsatCoreTrackBenchmark,
+						false, PreferenceType.Boolean),
+				new UltimatePreferenceItem<Boolean>(LABEL_DumpMainTrackBenchmark,
+						false, PreferenceType.Boolean),
 				new UltimatePreferenceItem<String>(LABEL_Path,
 						DEF_Path, PreferenceType.Directory),
 		};
@@ -70,6 +74,8 @@ public class RcfgPreferenceInitializer extends UltimatePreferenceInitializer {
 	public static final String LABEL_CNF = "Convert code blocks to CNF";
 	public static final String LABEL_RemoveGotoEdges = "Remove goto edges from RCFG";
 	public static final String LABEL_DumpToFile = "Dump SMT script to file";
+	public static final String LABEL_DumpUnsatCoreTrackBenchmark = "Dump unsat core track benchmark to file";
+	public static final String LABEL_DumpMainTrackBenchmark = "Dump main track benchmark to file";
 	public static final String LABEL_Path = "To the following directory";
 	public static final String DEF_Path = "";
 	
