@@ -113,7 +113,7 @@ public class LoggingScriptForNonIncrementalBenchmarks implements Script {
 		try {
 			fw = new FileWriter(file);
 		} catch (IOException e) {
-			throw new AssertionError("Unable to write file " + file);
+			throw new AssertionError("Unable to write file " + file.getAbsolutePath());
 		}
 		PrintWriter pw = new PrintWriter(fw);
 		printCommandStack(pw, commandStack);
