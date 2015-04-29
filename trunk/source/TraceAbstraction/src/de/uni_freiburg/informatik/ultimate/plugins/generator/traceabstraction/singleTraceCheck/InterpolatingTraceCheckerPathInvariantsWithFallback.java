@@ -58,6 +58,9 @@ public class InterpolatingTraceCheckerPathInvariantsWithFallback extends
 				super.getPostcondition(), m_PredicateUnifier, super.m_SmtManager,
 				m_ModifiedGlobals);
 		IPredicate[] interpolants = pathInvariantsGenerator.getInterpolants();
+		if (interpolants == null) {
+			interpolants = fallbackInterpolantComputation();
+		}
 		if (interpolants.length != m_Trace.length() - 1) {
 			throw new AssertionError("inkorrekt number of interpolants. "
 					+ "There should be one interpolant between each "
@@ -66,9 +69,6 @@ public class InterpolatingTraceCheckerPathInvariantsWithFallback extends
 		assert TraceCheckerUtils.checkInterpolantsInductivityForward(interpolants, 
 				m_Trace, m_Precondition, m_Postcondition, m_PendingContexts, "invariant map", 
 				m_SmtManager, m_ModifiedGlobals, mLogger) : "invalid Hoare triple in invariant map";
-		if (interpolants == null) {
-			interpolants = fallbackInterpolantComputation();
-		}
 		m_Interpolants = interpolants;
 	}
 
