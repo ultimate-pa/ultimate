@@ -52,6 +52,7 @@ import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieDeclarations;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.LoggingScriptForMainTrackBenchmarks;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.LoggingScriptForUnsatCoreBenchmarks;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.Settings;
@@ -201,17 +202,15 @@ public class CfgBuilder {
 		
 		final boolean dumpSmtScriptToFile = (new UltimatePreferenceStore(RCFGBuilder.s_PLUGIN_ID))
 				.getBoolean(RcfgPreferenceInitializer.LABEL_DumpToFile);
-		String pathOfDumpedScript = null;
-		if (dumpSmtScriptToFile) {
-			pathOfDumpedScript = (new UltimatePreferenceStore(RCFGBuilder.s_PLUGIN_ID))
-					.getString(RcfgPreferenceInitializer.LABEL_Path);
-		}
+		String pathOfDumpedScript  = (new UltimatePreferenceStore(RCFGBuilder.s_PLUGIN_ID))
+				.getString(RcfgPreferenceInitializer.LABEL_Path);
 
 		Settings solverSettings = new Settings(useExternalSolver, 
 				commandExternalSolver, timeoutSmtInterpol, externalInterpolator, 
 				dumpSmtScriptToFile, pathOfDumpedScript, filename);
 		Script result = SolverBuilder.buildScript(mServices, storage, solverSettings);
 //		result = new LoggingScriptForUnsatCoreBenchmarks(result, solverSettings.getBaseNameOfDumpedScript(), solverSettings.getPathOfDumpedScript());
+//		result = new LoggingScriptForMainTrackBenchmarks(result, solverSettings.getBaseNameOfDumpedScript(), solverSettings.getPathOfDumpedScript());
 		
 		String logicForExternalSolver = (new UltimatePreferenceStore(RCFGBuilder.s_PLUGIN_ID))
 				.getString(RcfgPreferenceInitializer.LABEL_ExtSolverLogic);
