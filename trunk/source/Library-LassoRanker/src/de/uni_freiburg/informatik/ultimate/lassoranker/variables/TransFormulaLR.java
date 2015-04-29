@@ -217,6 +217,14 @@ public class TransFormulaLR implements Serializable {
 		}
 	}
 	
+	public void removeAuxVar(TermVariable auxVar) {
+		boolean modified = m_AuxVars.remove(auxVar);
+		if (!modified) {
+			throw new AssertionError(
+					"cannot remove variable that is not contained");
+		}
+	}
+	
 	
 	/**
 	 * Add a TermVariables that each neither occur as inVar or outVar to the set
