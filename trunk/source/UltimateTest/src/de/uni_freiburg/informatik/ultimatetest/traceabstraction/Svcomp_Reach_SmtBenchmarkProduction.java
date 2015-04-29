@@ -14,7 +14,7 @@ import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
 public class Svcomp_Reach_SmtBenchmarkProduction extends AbstractTraceAbstractionTestSuite {
 
 	/** Limit the number of files per directory. */
-	private static int m_FilesPerDirectoryLimit = 10; //Integer.MAX_VALUE;
+	private static int m_FilesPerDirectoryLimit = 20; //Integer.MAX_VALUE;
 	
 	private static final DirectoryFileEndingsPair[] m_DirectoryFileEndingsPairs = {
 		/*** Category 1. Arrays ***/
