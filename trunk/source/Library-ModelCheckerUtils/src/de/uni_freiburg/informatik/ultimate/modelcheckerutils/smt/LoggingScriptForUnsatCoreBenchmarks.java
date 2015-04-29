@@ -30,7 +30,7 @@ public class LoggingScriptForUnsatCoreBenchmarks extends
 	public void exit() {
 		super.exit();
 		if (m_CommandStackAtLastGetUnsatCore != null) {
-			writeCommandStackToFile(constructFile(""), m_CommandStackAtLastGetUnsatCore);
+			writeCommandStackToFile(constructFile("UnsatCore"), m_CommandStackAtLastGetUnsatCore);
 		}
 	}
 	

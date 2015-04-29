@@ -18,7 +18,7 @@ public class LoggingScriptForMainTrackBenchmarks extends LoggingScriptForNonIncr
 	public LBool checkSat() throws SMTLIBException {
 		LBool sat = super.checkSat();
 		if (sat == LBool.UNKNOWN) {
-			File file = constructFile(String.valueOf(m_WrittenScriptCounter));
+			File file = constructFile("_" + String.valueOf(m_WrittenScriptCounter));
 			writeCommandStackToFile(file, m_CommandStack);
 			m_WrittenScriptCounter++;
 		}
