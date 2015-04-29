@@ -71,7 +71,7 @@ public class LoggingScriptForNonIncrementalBenchmarks implements Script {
 	private final String m_BaseFilename;
 	private final String m_Directory;
 	
-	private final LinkedList<ArrayList<String>> m_CommandStack;
+	protected final LinkedList<ArrayList<String>> m_CommandStack;
 	
 
 	public LoggingScriptForNonIncrementalBenchmarks(Script script, String baseFilename,
