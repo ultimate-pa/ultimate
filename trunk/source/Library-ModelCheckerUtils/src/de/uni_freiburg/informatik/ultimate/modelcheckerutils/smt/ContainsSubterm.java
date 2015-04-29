@@ -31,7 +31,6 @@ public class ContainsSubterm extends NonRecursive {
 			} else {
 				if (m_TermsInWhichWeAlreadyDescended.contains(getTerm())) {
 					// do nothing
-					System.out.println("saved unnecessary descend");
 				} else {
 					if (m_GivenSubterm.equals(getTerm())) {
 						m_FoundInCurrentSeach = true;
