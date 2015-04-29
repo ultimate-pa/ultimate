@@ -30,7 +30,7 @@ public class Svcomp_Memsafety_SmtBenchmarkProduction extends AbstractTraceAbstra
 	 */
 	@Override
 	public long getTimeout() {
-		return 120 * 1000;
+		return 60 * 1000;
 	}
 	
 	/**
