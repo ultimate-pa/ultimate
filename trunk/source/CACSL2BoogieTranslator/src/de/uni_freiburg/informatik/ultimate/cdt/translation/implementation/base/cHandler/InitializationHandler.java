@@ -2,7 +2,6 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -470,7 +469,7 @@ public class InitializationHandler {
 
 	public static void addOverApprToStatementAnnots(ArrayList<Overapprox> overappr,
 			Statement stm) {
-		HashMap<String, IAnnotations> annots = stm.getPayload().getAnnotations();
+		Map<String, IAnnotations> annots = stm.getPayload().getAnnotations();
 		for (Overapprox overapprItem : overappr) {
 			annots.put(Overapprox.getIdentifier(), overapprItem);
 		}

@@ -1,7 +1,5 @@
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base;
 
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 
@@ -99,7 +97,7 @@ public class PreRunner extends ASTVisitor {
      * @return a set of variables, that have to be translated using the memory
      *         model.
      */
-    public HashSet<IASTNode> getVarsForHeap() {
+    public LinkedHashSet<IASTNode> getVarsForHeap() {
     	return variablesOnHeap;
     }
     
@@ -107,7 +105,7 @@ public class PreRunner extends ASTVisitor {
      * @return a map of functions used as pointers.
      * @author Christian
      */
-    public HashMap<String, IASTDeclaration> getFunctionPointers() {
+    public LinkedHashMap<String, IASTDeclaration> getFunctionPointers() {
         return functionPointers;
     }
 

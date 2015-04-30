@@ -685,7 +685,7 @@ public class CHandler implements ICHandler {
 							//old solution: havoc via an auxvar, new solution (below): 
 							//just malloc at the right place (much shorter for arrays and structs..)
 							((ResultExpression) result).stmt.add(mMemoryHandler.getMallocCall(main, mFunctionHandler, 
-									mMemoryHandler.calculateSizeOf(cDec.getType(), loc), llVal , loc));
+									llVal , loc));
 							mMemoryHandler.addVariableToBeFreed(main, 
 									new LocalLValueILocationPair(llVal, LocationFactory.createIgnoreLocation(loc)));
 						}
@@ -704,7 +704,8 @@ public class CHandler implements ICHandler {
 						if (onHeap) {
 							LocalLValue llVal = new LocalLValue(lhs, cDec.getType());
 							mMemoryHandler.addVariableToBeFreed(main, new LocalLValueILocationPair(llVal, loc));
-							((ResultExpression) result).stmt.add(mMemoryHandler.getMallocCall(main, mFunctionHandler, mMemoryHandler.calculateSizeOf(llVal.cType, loc), llVal, loc));
+							((ResultExpression) result).stmt.add(mMemoryHandler.getMallocCall(main, mFunctionHandler,
+									llVal, loc));
 						}
 
 						((ResultExpression) result).stmt.addAll(initRex.stmt);
@@ -820,7 +821,7 @@ public class CHandler implements ICHandler {
 
 					ArrayList<Statement> initStmts = new ArrayList<>();
 					ArrayList<Declaration> initDecls = new ArrayList<>();
-					HashMap<VariableDeclaration, ILocation> initAuxVars = new HashMap<>();
+					LinkedHashMap<VariableDeclaration, ILocation> initAuxVars = new LinkedHashMap<>();
 					
 					ArrayList<Expression> sizeExpressions = new ArrayList<>();
 
@@ -2594,7 +2595,7 @@ public class CHandler implements ICHandler {
 		//we do not want to edit the stmt and so on we are given --> make copies
 		ArrayList<Statement> stmt = new ArrayList<>(stmtOld);
 		ArrayList<Declaration> decl = new ArrayList<>(declOld);
-		HashMap<VariableDeclaration, ILocation> auxVars = new HashMap<>(auxVarsOld);
+		LinkedHashMap<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<>(auxVarsOld);
 		ArrayList<Overapprox> overappr = new ArrayList<>(overapprOld);
 		
 		RValue rightHandSide = rVal; //we may change the content of the right hand side later

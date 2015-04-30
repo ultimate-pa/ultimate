@@ -5,8 +5,6 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base;
 
 import java.text.ParseException;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -207,17 +205,17 @@ public class MainDispatcher extends Dispatcher {
 	/**
 	 * Variables that need some special memory handling.
 	 */
-	private HashSet<IASTNode> variablesOnHeap;
+	private LinkedHashSet<IASTNode> variablesOnHeap;
 	/**
 	 * Functions used as pointer.
 	 */
-	private HashMap<String, IASTFunctionDefinition> functionsOnHeap;
+	private LinkedHashMap<String, IASTFunctionDefinition> functionsOnHeap;
 
 	/**
 	 * @return a map of functions used as pointers.
 	 * @author Christian
 	 */
-	public HashMap<String, IASTFunctionDefinition> getFunctionPointers() {
+	public LinkedHashMap<String, IASTFunctionDefinition> getFunctionPointers() {
 		return functionsOnHeap;
 	}
 
@@ -230,7 +228,7 @@ public class MainDispatcher extends Dispatcher {
 //		return mFunctionToIndex;
 //	}
 
-	public HashMap<Integer, String> getIndexToFunction() {
+	public LinkedHashMap<Integer, String> getIndexToFunction() {
 		return indexToFunction;
 	}
 
@@ -268,7 +266,7 @@ public class MainDispatcher extends Dispatcher {
 	 * @return a set of variables, that have to be handled using the memory
 	 *         model.
 	 */
-	public HashSet<IASTNode> getVariablesForHeap() {
+	public LinkedHashSet<IASTNode> getVariablesForHeap() {
 		return variablesOnHeap;
 	}
 

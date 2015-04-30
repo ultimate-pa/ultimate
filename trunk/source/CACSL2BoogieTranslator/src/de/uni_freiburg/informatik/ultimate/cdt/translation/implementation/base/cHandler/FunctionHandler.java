@@ -945,7 +945,7 @@ public class FunctionHandler {
 							new RValue(rhsId, cvar), new ArrayList<Declaration>(), new LinkedHashMap<VariableDeclaration, ILocation>(),
 							new ArrayList<Overapprox>());
 					stmt.add(
-							memoryHandler.getMallocCall(main, this, memoryHandler.calculateSizeOf(llv.cType, igLoc), llv, igLoc));						
+							memoryHandler.getMallocCall(main, this, llv, igLoc));						
 					stmt.addAll(assign.stmt);
 				} else {
 					stmt.add(new AssignmentStatement(igLoc, new LeftHandSide[] { tempLHS }, new Expression[] { rhsId }));

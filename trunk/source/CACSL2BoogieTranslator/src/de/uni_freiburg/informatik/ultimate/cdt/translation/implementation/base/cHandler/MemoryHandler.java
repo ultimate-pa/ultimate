@@ -779,9 +779,9 @@ public class MemoryHandler {
         
         ArrayList<Specification> specFree = new ArrayList<Specification>();
         
-        if (m_CheckFreeValid) {
+//        if (m_CheckFreeValid) {
         	Check check = new Check(Spec.MEMORY_FREE);
-        	boolean free = false;
+        	boolean free = !m_CheckFreeValid;
         	RequiresSpecification offsetZero = new RequiresSpecification(
         			tuLoc, free, new BinaryExpression(tuLoc, Operator.COMPEQ, 
         					addrOffset, nr0));
@@ -793,14 +793,14 @@ public class MemoryHandler {
                     new ArrayAccessExpression(tuLoc, valid, idcFree));
             check.addToNodeAnnot(baseValid);
             specFree.add(baseValid);
-            specFree.add(new EnsuresSpecification(tuLoc, false, new BinaryExpression(
+            specFree.add(new EnsuresSpecification(tuLoc, free, new BinaryExpression(
                     tuLoc, Operator.COMPEQ, valid,
                     new ArrayStoreExpression(tuLoc, new UnaryExpression(
                             tuLoc, UnaryExpression.Operator.OLD, valid),
                             idcFree, bLFalse))));
             specFree.add(new ModifiesSpecification(tuLoc, false,
                     new VariableLHS[] { new VariableLHS(tuLoc, SFO.VALID) }));
-        }
+//        }
         decl.add(new Procedure(tuLoc, new Attribute[0], SFO.FREE,
                 new String[0], new VarList[] { new VarList(tuLoc,
                         new String[] { ADDR }, POINTER_TYPE) }, new VarList[0],
@@ -983,18 +983,6 @@ public class MemoryHandler {
         return freeCall;
     }
     
-//    /**
-//     * Returns true iff ctype is
-//     * <ul>
-//     * <li> of type CPointer or
-//     * <li> of type CNamed and the mapped type is CPointer.
-//     * </ul>
-//     */
-//    private boolean isPointer(CType ctype) {
-//    	CType ut = ctype.getUnderlyingType();
-//    	return ut instanceof CPointer || ut instanceof CArray;
-//    }
-
     /**
      * Creates a function call expression for the ~malloc(size) function!
      * 
@@ -1030,7 +1018,8 @@ public class MemoryHandler {
 			LocalLValue resultPointer, ILocation loc) {
     	return getMallocCall(main, fh, calculateSizeOf(resultPointer.cType, loc), resultPointer, loc);
     }
-    public CallStatement getMallocCall(Dispatcher main,	FunctionHandler fh, Expression size,
+
+    private CallStatement getMallocCall(Dispatcher main,	FunctionHandler fh, Expression size,
 			LocalLValue resultPointer, ILocation loc) {
         Expression[] args = new Expression[] { size };
         
@@ -1511,7 +1500,7 @@ public class MemoryHandler {
 		ArrayList<Statement> mallocs = new ArrayList<Statement>();
 		for (LocalLValueILocationPair llvp : this.variablesToBeMalloced.currentScopeKeys()) 
 			mallocs.add(this.getMallocCall(main, m_functionHandler, 
-					this.calculateSizeOf(llvp.llv.cType, llvp.loc), llvp.llv, llvp.loc));
+					llvp.llv, llvp.loc));
 		ArrayList<Statement> frees = new ArrayList<Statement>();
 		for (LocalLValueILocationPair llvp : this.variablesToBeFreed.currentScopeKeys()) {  //frees are inserted in handleReturnStm
 			frees.add(this.getFreeCall(main, m_functionHandler, llvp.llv, llvp.loc));
@@ -1523,11 +1512,6 @@ public class MemoryHandler {
 		newBlockAL.addAll(frees);
 		return newBlockAL;
 	}
-	
-//	public void addVariableToBeMallocedAndFreed(Dispatcher main, LocalLValueILocationPair llvp) {
-//		this.variablesToBeMalloced.put(llvp, variablesToBeMalloced.getActiveScopeNum());
-//		this.variablesToBeFreed.put(llvp, variablesToBeFreed.getActiveScopeNum());
-//	}
 	
 	public void addVariableToBeFreed(Dispatcher main, LocalLValueILocationPair llvp) {
 		this.variablesToBeFreed.put(llvp, variablesToBeFreed.getActiveScopeNum());
