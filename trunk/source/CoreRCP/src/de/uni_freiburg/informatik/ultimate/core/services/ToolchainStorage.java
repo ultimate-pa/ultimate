@@ -1,19 +1,25 @@
 package de.uni_freiburg.informatik.ultimate.core.services;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.log4j.Logger;
+
+import de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.IServiceFactory;
 
 /**
- * Simple implementation of {@link IToolchainStorage} and {@link IUltimateServiceProvider}
+ * Simple implementation of {@link IToolchainStorage} and
+ * {@link IUltimateServiceProvider}
  * 
  * @author dietsch
  * 
  */
-public class ToolchainStorage implements IToolchainStorage, IUltimateServiceProvider {
+public class ToolchainStorage implements IToolchainStorage,
+		IUltimateServiceProvider {
 
 	private final Map<String, IStorable> mToolchainStorage;
 
@@ -38,10 +44,31 @@ public class ToolchainStorage implements IToolchainStorage, IUltimateServiceProv
 
 	@Override
 	public void clear() {
-		//TODO: Somehow unclear why i need this; but if i dont have it, concurrentmod exceptions are flying
+		// TODO: Somehow unclear why i need this; but if i dont have it,
+		// concurrentmod exceptions are flying
 		List<IStorable> current = new ArrayList<>(mToolchainStorage.values());
+
+		// destroy storables in reverse order s.t., e.g., scripts are destroyed
+		// before the solver is destroyed.
+		// this is done because we assume that instances created later may
+		// depend on instances created earlier.
+		Collections.reverse(current);
+
+		Logger coreLogger = getLoggingService()
+				.getLogger(Activator.s_PLUGIN_ID);
 		for (IStorable storable : current) {
-			storable.destroy();
+			try {
+				storable.destroy();
+			} catch (Throwable t) {
+				if (coreLogger == null) {
+					continue;
+				}
+				coreLogger
+						.fatal("There was an exception during clearing of toolchain storage while destroying "
+								+ storable.getClass().getSimpleName()
+								+ ": "
+								+ t.getMessage());
+			}
 		}
 		mToolchainStorage.clear();
 	}
@@ -80,7 +107,8 @@ public class ToolchainStorage implements IToolchainStorage, IUltimateServiceProv
 	}
 
 	@Override
-	public <T extends IService, K extends IServiceFactory<T>> T getServiceInstance(Class<K> serviceType) {
-		return GenericServiceProvider.getServiceInstance(this,serviceType);
+	public <T extends IService, K extends IServiceFactory<T>> T getServiceInstance(
+			Class<K> serviceType) {
+		return GenericServiceProvider.getServiceInstance(this, serviceType);
 	}
 }
