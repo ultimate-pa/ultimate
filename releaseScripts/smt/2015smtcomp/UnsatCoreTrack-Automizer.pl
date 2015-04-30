@@ -26,7 +26,7 @@ which are available at [6].
 This script contains the SMT commands that were used by Ultimate Automizer
 while performing one subtask, namely the computation of an inductive sequence 
 of state assertions along a trace.
-This subtask can be solved using Craig interpolation (if an iterpolating
+This subtask can be solved using Craig interpolation (if an interpolating
 SMT solver is available for the given theory). The implementation that
 produced this SMT script follows a different approach where unsatisfiable cores
 provided by the SMT solver together with the post operator are used to compute 
