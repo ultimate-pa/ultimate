@@ -16,7 +16,7 @@ public class Svcomp_Reach_SmtBenchmarkProduction extends AbstractTraceAbstractio
 	/** Limit the number of files per directory. */
 	private static int m_FilesPerDirectoryLimit = 20; //Integer.MAX_VALUE;
 	
-	private static final DirectoryFileEndingsPair[] m_DirectoryFileEndingsPairs = {
+	private static final DirectoryFileEndingsPair[] m_SVCOMP_Examples = {
 		/*** Category 1. Arrays ***/
 //		new DirectoryFileEndingsPair("examples/svcomp/array-examples/", new String[]{ ".i" }, m_FilesPerDirectoryLimit) ,
 		
@@ -29,7 +29,7 @@ public class Svcomp_Reach_SmtBenchmarkProduction extends AbstractTraceAbstractio
 		new DirectoryFileEndingsPair("examples/svcomp/ssh-simplified/", new String[]{".c" }, m_FilesPerDirectoryLimit) ,
 		new DirectoryFileEndingsPair("examples/svcomp/locks/", new String[]{".c" }, m_FilesPerDirectoryLimit) ,
 		
-		new DirectoryFileEndingsPair("examples/svcomp/loops/", new String[]{".i"}) , // contains "n.c24_false-unreach-call.i", which's test doesn't terminate
+		new DirectoryFileEndingsPair("examples/svcomp/loops/", new String[]{".i"}, m_FilesPerDirectoryLimit),
 		new DirectoryFileEndingsPair("examples/svcomp/loop-acceleration/", new String[]{".c" }, m_FilesPerDirectoryLimit) ,
 		new DirectoryFileEndingsPair("examples/svcomp/loop-invgen/", new String[]{".i"}, m_FilesPerDirectoryLimit) ,
 		new DirectoryFileEndingsPair("examples/svcomp/loop-lit/", new String[]{ ".i", ".c" }, m_FilesPerDirectoryLimit) ,
@@ -74,11 +74,26 @@ public class Svcomp_Reach_SmtBenchmarkProduction extends AbstractTraceAbstractio
 	}
 
 
+	/**
+	 * List of path to setting files. 
+	 * Ultimate will run on each program with each setting that is defined here.
+	 * The path are defined relative to the folder "trunk/examples/settings/",
+	 * because we assume that all settings files are in this folder.
+	 * 
+	 */
+	private static final String[] m_Settings = {
+		"automizer/smtBenchmarkProduction/Z3.epf",
+//		"automizer/smtBenchmarkProduction/CVC4.epf",
+	};
+
+
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
-		addTestCases("AutomizerC.xml", 
-					"automizer/smtBenchmarkProduction/Z3.epf", 
-					m_DirectoryFileEndingsPairs);
+		for (String setting : m_Settings) {
+			addTestCases("AutomizerC.xml", 
+					setting, 
+					m_SVCOMP_Examples);
+		}
 		return super.createTestCases();
 	}
 
