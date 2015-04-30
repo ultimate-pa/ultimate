@@ -433,7 +433,7 @@ public class FunctionHandler {
 				// //assuming that we need no auxvars or overappr, here
 			}
 		}
-		stmt.addAll(CHandler.createHavocsForNonMallocAuxVars(auxVars));
+		stmt.addAll(CHandler.createHavocsForAuxVars(auxVars));
 
 		// we need to insert a free for each malloc of an auxvar before each
 		// return
@@ -934,17 +934,19 @@ public class FunctionHandler {
 				if (isOnHeap && !(cvar instanceof CArray)) {//we treat an array argument as a pointer -- thus no onHeap treatment here
 					LocalLValue llv = new LocalLValue(tempLHS, cvar);
 					// malloc
-					memoryHandler.addVariableToBeMallocedAndFreed(main, 
+					memoryHandler.addVariableToBeFreed(main, 
 							new LocalLValueILocationPair(llv, igLoc));
 					// dereference
 					HeapLValue hlv = new HeapLValue(llv.getValue(), cvar);
-					ArrayList<Declaration> decls = new ArrayList<Declaration>();
+
 					ResultExpression assign = ((CHandler) main.cHandler).makeAssignment(main, igLoc, stmt, hlv,
 							// convention: if a variable is put on heap or not,
 							// its ctype stays the same
-							new RValue(rhsId, cvar), decls, new LinkedHashMap<VariableDeclaration, ILocation>(),
+							new RValue(rhsId, cvar), new ArrayList<Declaration>(), new LinkedHashMap<VariableDeclaration, ILocation>(),
 							new ArrayList<Overapprox>());
-					stmt = assign.stmt;
+					stmt.add(
+							memoryHandler.getMallocCall(main, this, memoryHandler.calculateSizeOf(llv.cType, igLoc), llv, igLoc));						
+					stmt.addAll(assign.stmt);
 				} else {
 					stmt.add(new AssignmentStatement(igLoc, new LeftHandSide[] { tempLHS }, new Expression[] { rhsId }));
 				}

@@ -174,7 +174,7 @@ public class ACSLHandler implements IACSLHandler {
             }
             stmt.add(assertStmt);
             if (formula instanceof ResultExpression) {
-                List<HavocStatement> havocs = CHandler.createHavocsForNonMallocAuxVars(((ResultExpression) formula).auxVars);
+                List<HavocStatement> havocs = CHandler.createHavocsForAuxVars(((ResultExpression) formula).auxVars);
                 stmt.addAll(havocs);
             }
 

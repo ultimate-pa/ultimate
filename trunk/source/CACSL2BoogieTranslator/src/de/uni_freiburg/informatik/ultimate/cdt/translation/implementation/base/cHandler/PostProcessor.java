@@ -284,7 +284,7 @@ public class PostProcessor {
 							main.cHandler.getInitHandler().initVar(currentDeclsLoc, main, 
 									new VariableLHS(currentDeclsLoc, id), en.getValue().getType(), initializer);
 					initStatements.addAll(initRex.stmt);
-					initStatements.addAll(CHandler.createHavocsForNonMallocAuxVars(initRex.auxVars));
+					initStatements.addAll(CHandler.createHavocsForAuxVars(initRex.auxVars));
 					for (Declaration d : initRex.decl)
 						initDecl.add((VariableDeclaration) d);
 					//					} else { //no initializer --> default initialization

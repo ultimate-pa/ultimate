@@ -1026,6 +1026,10 @@ public class MemoryHandler {
 		return mallocRex;
     }
 
+    public CallStatement getMallocCall(Dispatcher main,	FunctionHandler fh, 
+			LocalLValue resultPointer, ILocation loc) {
+    	return getMallocCall(main, fh, calculateSizeOf(resultPointer.cType, loc), resultPointer, loc);
+    }
     public CallStatement getMallocCall(Dispatcher main,	FunctionHandler fh, Expression size,
 			LocalLValue resultPointer, ILocation loc) {
         Expression[] args = new Expression[] { size };
@@ -1520,10 +1524,10 @@ public class MemoryHandler {
 		return newBlockAL;
 	}
 	
-	public void addVariableToBeMallocedAndFreed(Dispatcher main, LocalLValueILocationPair llvp) {
-		this.variablesToBeMalloced.put(llvp, variablesToBeMalloced.getActiveScopeNum());
-		this.variablesToBeFreed.put(llvp, variablesToBeFreed.getActiveScopeNum());
-	}
+//	public void addVariableToBeMallocedAndFreed(Dispatcher main, LocalLValueILocationPair llvp) {
+//		this.variablesToBeMalloced.put(llvp, variablesToBeMalloced.getActiveScopeNum());
+//		this.variablesToBeFreed.put(llvp, variablesToBeFreed.getActiveScopeNum());
+//	}
 	
 	public void addVariableToBeFreed(Dispatcher main, LocalLValueILocationPair llvp) {
 		this.variablesToBeFreed.put(llvp, variablesToBeFreed.getActiveScopeNum());
