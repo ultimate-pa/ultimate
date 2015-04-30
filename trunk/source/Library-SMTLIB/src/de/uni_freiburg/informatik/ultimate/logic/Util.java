@@ -53,10 +53,17 @@ public final class Util {
 			term = script.let(vars, values, term);
 			script.assertTerm(term);
 			LBool result = script.checkSat();
-			return result;
-		} finally {
 			script.pop(1);
+			return result;
+		} catch (Exception e) {
+			// unable to recover because assertion stack is modified
+			// doing the script.pop(1) in finally block does not make sense
+			// since the solver might not be able to respond this will raise
+			// another Exception, and we will not see Exception e any more.
+			throw new AssertionError("Exception during satisfiablity check: " +
+						e.getMessage());
 		}
+		
 	}
 	
 	private static Term termVariable2constant(Script script, TermVariable tv) {
