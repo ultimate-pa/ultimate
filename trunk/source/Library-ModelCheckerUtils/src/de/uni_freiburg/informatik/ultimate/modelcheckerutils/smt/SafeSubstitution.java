@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
@@ -214,6 +215,19 @@ public class SafeSubstitution extends TermTransformer {
 	@Override
 	public String toString() {
 		return "Substitution " + m_ScopedSubstitutionMapping.toString();
+	}
+	
+	/**
+	 * Apply substitution to each Term in a List.
+	 * @return A new List that contains (in the same order) the results of the
+	 * substitutions applied to each input Term. 
+	 */
+	public List<Term> transform(List<Term> terms) {
+		ArrayList<Term> result = new ArrayList<Term>();
+		for (Term term : terms) {
+			result.add(this.transform(term));
+		}
+		return result;
 	}
 
 
