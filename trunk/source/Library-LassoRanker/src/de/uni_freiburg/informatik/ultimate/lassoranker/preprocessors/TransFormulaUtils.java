@@ -64,6 +64,15 @@ public class TransFormulaUtils {
 		}
 		return true;
 	}
+	
+	public static boolean allVariablesAreNonAuxVars(List<Term> terms, TransFormulaLR tf) {
+		for (Term term : terms) {
+			if (!allVariablesAreNonAuxVars(term, tf)) {
+				return false;
+			}
+		}
+		return true;
+	}
 
 	public static boolean allVariablesAreInVars(Term term, TransFormulaLR tf) {
 		for (TermVariable tv : term.getFreeVars()) {
@@ -82,12 +91,29 @@ public class TransFormulaUtils {
 		}
 		return true;
 	}
+	
+	public static boolean allVariablesAreNonAuxVars(Term term, TransFormulaLR tf) {
+		for (TermVariable tv : term.getFreeVars()) {
+			if (tf.getAuxVars().contains(tv)) {
+				return false;
+			} else {
+				assert tf.getOutVarsReverseMapping().keySet().contains(tv) || 
+					tf.getInVarsReverseMapping().keySet().contains(tv) : 
+						"each var has to be in, our or aux";
+			}
+		}
+		return true;
+	}
 
 	public static boolean isInvar(TermVariable tv, TransFormulaLR tf) {
 		return tf.getInVarsReverseMapping().keySet().contains(tv);
 	}
 
 	public static boolean isOutvar(TermVariable tv, TransFormulaLR tf) {
+		return tf.getOutVarsReverseMapping().keySet().contains(tv);
+	}
+	
+	public static boolean isVar(TermVariable tv, TransFormulaLR tf) {
 		return tf.getOutVarsReverseMapping().keySet().contains(tv);
 	}
 	
@@ -135,6 +161,11 @@ public class TransFormulaUtils {
 			result.add(translateTermVariablesToDefinitions(script, tf, term));
 		}
 		return result;
+	}
+	
+	
+	public static boolean inVarAndOutVarCoincide(RankVar rv, TransFormulaLR rf) {
+		return rf.getInVars().get(rv) == rf.getOutVars().get(rv);
 	}
 
 
