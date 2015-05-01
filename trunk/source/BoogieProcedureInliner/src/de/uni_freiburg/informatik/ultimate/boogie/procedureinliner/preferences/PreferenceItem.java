@@ -1,10 +1,12 @@
 package de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.preferences;
 
+import java.util.Arrays;
+import java.util.List;
+
 import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.Activator;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceItem;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceItem.PreferenceType;
-
 import static de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceItem.PreferenceType.Boolean;
 
 /**
@@ -34,6 +36,11 @@ public enum PreferenceItem {
 	USER_LIST_TYPE("user list type", UserListType.BLACKLIST_RESTRICT, PreferenceType.Combo, UserListType.values()),
 	NOTE___TYPE_DESCRIPTION(UserListType.description()),
 	
+	LABEL___ENTRY_PROCEDURE_HANDLING("\nEntry procedure handling"),
+	PROCESS_ONLY_ENTRY_AND_REENTRY_PROCEDURES("Process only entry and re-entry procedures", false, Boolean),
+	ENTRY_PROCEDURES("Entry procedures (ids, separated by whitespace)", "ULTIMATE.start", PreferenceType.String),
+	ELIMINATE_DEAD_CODE("Eliminate dead code after inlining", false, Boolean), // see CallGraphNodeLabel
+
 	LABEL___SPECIFICATION_INLINING("\nSpecification inlining (in the same order as shown here)"),
 	NOTE___ASSERT_REQUIRES("[X] assert requires/precondition"),
 	ASSUME_REQUIRES_AFTER_ASSERT("assume requires/precondition", true, Boolean),
@@ -44,7 +51,7 @@ public enum PreferenceItem {
 	protected final Object mDefaultValue;
 	protected final PreferenceType mType;
 	protected final Object[] mChoices;
-	
+
 	private PreferenceItem(String name) {
 		this(name, null, PreferenceType.Label, null);
 	}
@@ -78,6 +85,11 @@ public enum PreferenceItem {
 	
 	public String getStringValue() {
 		return new UltimatePreferenceStore(Activator.PLUGIN_ID).getString(mName);
+	}
+	
+	/** @return Tokens from {@link #getStringValue()}, which where separated by whitespace. */
+	public List<String> getStringValueTokens() {
+		return Arrays.asList(getStringValue().trim().split("\\s+"));
 	}
 	
 	public UserListType getUserListTypeValue() {

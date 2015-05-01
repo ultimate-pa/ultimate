@@ -1,7 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.preferences;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -45,7 +44,7 @@ public class PreferencesInlineSelector implements IInlineSelector {
 		mInlineUnimplemented = PreferenceItem.INLINE_UNIMPLEMENTED.getBooleanValue();
 		mInlineImplemented = PreferenceItem.INLINE_IMPLEMENTED.getBooleanValue();
 		mIgnoreCallForAll = PreferenceItem.IGNORE_CALL_FORALL.getBooleanValue();
-		mUserList = new HashSet<String>(Arrays.asList(PreferenceItem.USER_LIST.getStringValue().trim().split("\\s+")));
+		mUserList = new HashSet<String>(PreferenceItem.USER_LIST.getStringValueTokens());
 		mUserListType = PreferenceItem.USER_LIST_TYPE.getUserListTypeValue();
 		mIgnoreRecursive = PreferenceItem.IGNORE_RECURSIVE.getBooleanValue();
 		mIgnoreWithFreeRequires = PreferenceItem.IGNORE_WITH_FREE_REQUIRES.getBooleanValue();

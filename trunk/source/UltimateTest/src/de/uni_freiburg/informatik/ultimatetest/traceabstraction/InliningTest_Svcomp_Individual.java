@@ -44,6 +44,9 @@ public class InliningTest_Svcomp_Individual extends AbstractTraceAbstractionTest
 		
 		// Ultimate doesn't terminate!
 //		"examples/svcomp/loops/n.c24_false-unreach-call.i",
+		
+		// Full inlining would create about 7 MLOC
+//		"examples/svcomp/eca-rers2012/Problem08_label15_false-unreach-call.c",
 	};
 
 	/** Files to be tested. */
@@ -72,7 +75,7 @@ public class InliningTest_Svcomp_Individual extends AbstractTraceAbstractionTest
 		"examples/svcomp/memsafety/20051113-1.c_false-valid-memtrack.i",
 		
 		// This test still fails, but independently from inlining 
-		"examples/svcomp/memory-alloca/cstrcat-alloca_true-valid-memsafety.i",
+//		"examples/svcomp/memory-alloca/cstrcat-alloca_true/valid-memsafety.i",
 	};
 
 	@Override
@@ -83,7 +86,7 @@ public class InliningTest_Svcomp_Individual extends AbstractTraceAbstractionTest
 	private static final boolean sReachPreciseMemoryModel = false;
 	private static final boolean sMemsafety = true;
 
-	private static final boolean sAutomizerWithoutInlining = true;
+	private static final boolean sAutomizerWithoutInlining = false;
 	private static final boolean sAutomizerWithInlining = true;
 	
 	@Override

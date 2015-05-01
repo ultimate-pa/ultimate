@@ -11,13 +11,14 @@ import de.uni_freiburg.informatik.ultimate.model.structure.ModifiableLabeledEdge
  * @author schaetzc@informatik.uni-freiburg.de
  */
 public class CallGraphNode extends ModifiableLabeledEdgesMultigraph<CallGraphNode, CallGraphEdgeLabel> {
-
+	
 	private static final long serialVersionUID = -937014582193693103L;
 
 	private final String mId;
 	private Procedure mProcedureWithSpecification;
 	private Procedure mProcedureWithBody;
-
+	private CallGraphNodeLabel mLabel;
+	
 	public CallGraphNode(String id) {
 		mId = id;
 	}
@@ -38,6 +39,10 @@ public class CallGraphNode extends ModifiableLabeledEdgesMultigraph<CallGraphNod
 		mProcedureWithBody = p;
 	}
 
+	public void setLabel(CallGraphNodeLabel label) {
+		mLabel = label;
+	}
+
 	public Procedure getProcedureWithSpecification() {
 		return mProcedureWithSpecification;
 	}
@@ -46,6 +51,10 @@ public class CallGraphNode extends ModifiableLabeledEdgesMultigraph<CallGraphNod
 		return mProcedureWithBody;
 	}
 
+	public CallGraphNodeLabel getLabel() {
+		return mLabel;
+	}
+	
 	public boolean isImplemented() {
 		return mProcedureWithBody != null;
 	}
@@ -80,7 +89,11 @@ public class CallGraphNode extends ModifiableLabeledEdgesMultigraph<CallGraphNod
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
 		sb.append(mId);
-		sb.append(isImplemented() ? "(implemented)" : "(unimplemented)");
+		sb.append('{');
+		sb.append(isImplemented() ? "impl" : "unimpl");
+		sb.append(',');
+		sb.append(mLabel);
+		sb.append('}');
 		sb.append(getOutgoingEdgeLabels());
 		return sb.toString();
 	}

@@ -1,7 +1,8 @@
 package de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.callgraph;
 
 /**
- * 
+ * Information about the type of the call (recursive, call forall, ...).
+ * The flag -- whether to inline a call or not -- is stored here too.
  * 
  * @author schaetzc@informatik.uni-freiburg.de
  */

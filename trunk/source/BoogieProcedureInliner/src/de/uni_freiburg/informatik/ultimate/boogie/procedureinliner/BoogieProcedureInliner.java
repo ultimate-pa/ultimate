@@ -11,11 +11,9 @@ import de.uni_freiburg.informatik.ultimate.ep.interfaces.IAnalysis;
 import de.uni_freiburg.informatik.ultimate.model.GraphType;
 import de.uni_freiburg.informatik.ultimate.boogie.preprocessor.TypeChecker;
 import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.preferences.PreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.preferences.PreferencesInlineSelector;
 
 /**
  * Tool for inlining Boogie procedures.
- * Currently under construction. May contain some bugs.
  * 
  * @author schaetzc@informatik.uni-freiburg.de
  */
@@ -52,8 +50,7 @@ public class BoogieProcedureInliner implements IAnalysis {
 	public List<IObserver> getObservers() {
 		ArrayList<IObserver> observers = new ArrayList<IObserver>();
 		observers.add(new TypeChecker(mServices));
-		observers.add(new Inliner(mServices, new PreferencesInlineSelector()));
-//		observers.add(new TypeChecker(mServices)); // TODO remove (for debugging -- warns on wrong set types)
+		observers.add(new Inliner(mServices));
 		return observers;
 	}
 
