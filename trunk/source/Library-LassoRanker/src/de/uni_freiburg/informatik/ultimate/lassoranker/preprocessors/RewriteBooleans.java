@@ -58,6 +58,7 @@ public class RewriteBooleans extends TransformerPreProcessor {
 	
 	private static final String s_repInPostfix  = "_in_bool";
 	private static final String s_repOutPostfix = "_out_bool";
+	private static final String s_repInOutPostfix = "_inout_bool";
 	private static final String s_repAuxPostfix = "_aux_bool";
 	private static final String s_repVarSortName = "Int"; // FIXME: this should depend on the logic
 	
@@ -110,30 +111,60 @@ public class RewriteBooleans extends TransformerPreProcessor {
 	 * @param transFormula the transition formula from which the term originated
 	 */
 	private void generateRepAndAuxVars(TransFormulaLR tf) {
-		ArrayList<Entry<RankVar, Term>> inVars = new ArrayList<>(tf.getInVars().entrySet());
-		for (Map.Entry<RankVar, Term> entry : inVars) {
+		ArrayList<RankVar> rankVarsWithDistinctInVar = new ArrayList<>();
+		ArrayList<RankVar> rankVarsWithDistinctOutVar = new ArrayList<>();
+		ArrayList<RankVar> rankVarsWithCommonInVarOutVar = new ArrayList<>();
+		for (Map.Entry<RankVar, Term> entry : tf.getInVars().entrySet()) {
 			if (isBool(entry.getValue())) {
-				ReplacementVar repVar = getOrConstructReplacementVar(entry.getKey());
-				TermVariable newInVar = m_VarFactory.getOrConstructAuxVar(
-						repVar.getGloballyUniqueId() + s_repInPostfix, m_repVarSort);
-				tf.removeInVar(entry.getKey());
-				tf.addInVar(repVar, newInVar);
-				Term replacementTerm = constructReplacementTerm(newInVar);
-				m_SubstitutionMapping.put(entry.getValue(), replacementTerm);
+				if (TransFormulaUtils.inVarAndOutVarCoincide(entry.getKey(), tf)) {
+					rankVarsWithCommonInVarOutVar.add(entry.getKey());
+				} else {
+					rankVarsWithDistinctInVar.add(entry.getKey());
+				}
 			}
 		}
-		ArrayList<Entry<RankVar, Term>> outVars = new ArrayList<>(tf.getOutVars().entrySet());
-		for (Map.Entry<RankVar, Term> entry : outVars) {
+		for (Map.Entry<RankVar, Term> entry : tf.getOutVars().entrySet()) {
 			if (isBool(entry.getValue())) {
-				ReplacementVar repVar =	getOrConstructReplacementVar(entry.getKey());
-				TermVariable newOutVar = m_VarFactory.getOrConstructAuxVar(
-						repVar.getGloballyUniqueId() + s_repOutPostfix,	m_repVarSort);
-				tf.removeOutVar(entry.getKey());
-				tf.addOutVar(repVar, newOutVar);
-				Term replacementTerm = constructReplacementTerm(newOutVar);
-				m_SubstitutionMapping.put(entry.getValue(), replacementTerm);
+				if (TransFormulaUtils.inVarAndOutVarCoincide(entry.getKey(), tf)) {
+					// do nothing, was already added
+				} else {
+					rankVarsWithDistinctOutVar.add(entry.getKey());
+				}
 			}
 		}
+
+		for (RankVar rv : rankVarsWithCommonInVarOutVar) {
+			ReplacementVar repVar = getOrConstructReplacementVar(rv);
+			TermVariable newInOutVar = m_VarFactory.getOrConstructAuxVar(
+					repVar.getGloballyUniqueId() + s_repInOutPostfix, m_repVarSort);
+			Term replacementTerm = constructReplacementTerm(newInOutVar);
+			m_SubstitutionMapping.put(tf.getInVars().get(rv), replacementTerm);
+			tf.removeInVar(rv);
+			tf.addInVar(repVar, newInOutVar);
+			tf.removeOutVar(rv);
+			tf.addOutVar(repVar, newInOutVar);
+		}
+
+		for (RankVar rv : rankVarsWithDistinctInVar) {
+			ReplacementVar repVar = getOrConstructReplacementVar(rv);
+			TermVariable newInVar = m_VarFactory.getOrConstructAuxVar(
+					repVar.getGloballyUniqueId() + s_repInPostfix, m_repVarSort);
+			Term replacementTerm = constructReplacementTerm(newInVar);
+			m_SubstitutionMapping.put(tf.getInVars().get(rv), replacementTerm);
+			tf.removeInVar(rv);
+			tf.addInVar(repVar, newInVar);
+		}
+		
+		for (RankVar rv : rankVarsWithDistinctOutVar) {
+			ReplacementVar repVar = getOrConstructReplacementVar(rv);
+			TermVariable newOutVar = m_VarFactory.getOrConstructAuxVar(
+					repVar.getGloballyUniqueId() + s_repOutPostfix, m_repVarSort);
+			Term replacementTerm = constructReplacementTerm(newOutVar);
+			m_SubstitutionMapping.put(tf.getOutVars().get(rv), replacementTerm);
+			tf.removeOutVar(rv);
+			tf.addOutVar(repVar, newOutVar);
+		}
+		
 		Set<TermVariable> auxVars = tf.getAuxVars();
 		for (TermVariable tv : auxVars) {
 			if (isBool(tv)) {
@@ -144,6 +175,7 @@ public class RewriteBooleans extends TransformerPreProcessor {
 			}
 		}
 	}
+	
 	
 	/**
 	 * return true iff sort of term is Bool.
