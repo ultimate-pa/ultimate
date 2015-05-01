@@ -71,7 +71,7 @@ public class LoggingScriptForNonIncrementalBenchmarks implements Script {
 	private final String m_BaseFilename;
 	private final String m_Directory;
 	
-	protected final LinkedList<ArrayList<String>> m_CommandStack;
+	protected final LinkedList<ArrayList<ISmtCommand>> m_CommandStack;
 	
 
 	public LoggingScriptForNonIncrementalBenchmarks(Script script, String baseFilename,
@@ -81,14 +81,14 @@ public class LoggingScriptForNonIncrementalBenchmarks implements Script {
 		m_BaseFilename = baseFilename;
 		m_Directory = directory;
 		m_CommandStack = new LinkedList<>();
-		m_CommandStack.push(new ArrayList<String>());
+		m_CommandStack.push(new ArrayList<ISmtCommand>());
 	}
 	
-	protected LinkedList<ArrayList<String>> deepCopyOfCommandStack() {
-		LinkedList<ArrayList<String>> result = new LinkedList<ArrayList<String>>();
-		for (ArrayList<String> al : m_CommandStack) {
-			result.add(new ArrayList<String>());
-			for (String command : al) {
+	protected LinkedList<ArrayList<ISmtCommand>> deepCopyOfCommandStack() {
+		LinkedList<ArrayList<ISmtCommand>> result = new LinkedList<ArrayList<ISmtCommand>>();
+		for (ArrayList<ISmtCommand> al : m_CommandStack) {
+			result.add(new ArrayList<ISmtCommand>());
+			for (ISmtCommand command : al) {
 				result.getLast().add(command);
 			}
 		}
@@ -97,18 +97,22 @@ public class LoggingScriptForNonIncrementalBenchmarks implements Script {
 
 	
 	private void addToCurrentAssertionStack(String string) {
-		m_CommandStack.getLast().add(string);
+		m_CommandStack.getLast().add(new SmtCommandInStringRepresentation(string));
 	}
 	
-	private void printCommandStack(PrintWriter pw, LinkedList<ArrayList<String>> commandStack) {
-		for (ArrayList<String> al : commandStack) {
-			for (String command : al) {
-				pw.print(command);
+	private void addToCurrentAssertionStack(ISmtCommand smtCommand) {
+		m_CommandStack.getLast().add(smtCommand);
+	}
+	
+	private void printCommandStack(PrintWriter pw, LinkedList<ArrayList<ISmtCommand>> commandStack) {
+		for (ArrayList<ISmtCommand> al : commandStack) {
+			for (ISmtCommand command : al) {
+				pw.print(command.toString());
 			}
 		}
 	}
 	
-	protected void writeCommandStackToFile(File file, LinkedList<ArrayList<String>> commandStack) {
+	protected void writeCommandStackToFile(File file, LinkedList<ArrayList<ISmtCommand>> commandStack) {
 		FileWriter fw = null;
 		try {
 			fw = new FileWriter(file);
@@ -268,7 +272,7 @@ public class LoggingScriptForNonIncrementalBenchmarks implements Script {
 //		mPw.println("(push " + levels + ")");
 //		addToCurrentAssertionStack(sw.toString());
 		for (int i=0; i<levels; i++) {
-			m_CommandStack.add(new ArrayList<String>());
+			m_CommandStack.add(new ArrayList<ISmtCommand>());
 		}
 		mScript.push(levels);
 	}
@@ -287,12 +291,8 @@ public class LoggingScriptForNonIncrementalBenchmarks implements Script {
 
 	@Override
 	public LBool assertTerm(Term term) throws SMTLIBException {
-		StringWriter sw = new StringWriter();
-		PrintWriter mPw = new PrintWriter(sw);
-		mPw.print("(assert ");
-		mTermPrinter.append(mPw, formatTerm(term));
-		mPw.println(")");
-		addToCurrentAssertionStack(sw.toString());
+
+		addToCurrentAssertionStack(new AssertCommand(term));
 		return mScript.assertTerm(term);
 	}
 
@@ -613,4 +613,43 @@ public class LoggingScriptForNonIncrementalBenchmarks implements Script {
 		mPw.println(comment);
 		addToCurrentAssertionStack(sw.toString());
 	}
+	
+	public interface ISmtCommand {
+		@Override
+		public abstract String toString();
+	}
+	
+	public class AssertCommand implements ISmtCommand {
+		private final Term m_Term;
+
+		public AssertCommand(Term term) {
+			super();
+			m_Term = term;
+		}
+		
+		@Override
+		public String toString() {
+			StringWriter sw = new StringWriter();
+			PrintWriter mPw = new PrintWriter(sw);
+			mPw.print("(assert ");
+			mTermPrinter.append(mPw, formatTerm(m_Term));
+			mPw.println(")");
+			return sw.toString();
+		}
+	}
+	
+	public class SmtCommandInStringRepresentation implements ISmtCommand {
+		private final String m_Command;
+
+		public SmtCommandInStringRepresentation(String command) {
+			super();
+			m_Command = command;
+		}
+		
+		@Override
+		public String toString() {
+			return m_Command;
+		}
+	}
+	
 }

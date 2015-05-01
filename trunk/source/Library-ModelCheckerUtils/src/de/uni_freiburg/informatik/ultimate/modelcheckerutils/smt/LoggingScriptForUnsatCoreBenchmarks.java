@@ -11,7 +11,7 @@ public class LoggingScriptForUnsatCoreBenchmarks extends
 		LoggingScriptForNonIncrementalBenchmarks {
 	
 
-	private LinkedList<ArrayList<String>> m_CommandStackAtLastGetUnsatCore;
+	private LinkedList<ArrayList<ISmtCommand>> m_CommandStackAtLastGetUnsatCore;
 
 	public LoggingScriptForUnsatCoreBenchmarks(Script script,
 			String baseFilename, String directory) {
