@@ -225,33 +225,15 @@ public class InlineVersionTransformer extends BoogieCopyTransformer {
 	private IdManager mLabelIdManager = new IdManager();
 	
 	/**
-	 * Assume the inlined "requires" specifications (preconditions) after they were asserted.
-	 * Applies to both, implemented and unimplemented procedures.
-	 */
-	private boolean mAssumeRequiresAfterAssert;
-
-	/**
-	 * Assert the inlined "ensures" specifications (postconditions) before they are assumed.
-	 * Applies only to implemented procedures.
-	 */
-	private boolean mAssertEnsuresBeforeAssume;
-	
-	/**
 	 * Creates a new InlineVersionTransformer.
 	 * @param services Services
 	 * @param globalScopeManager GlobalScopeManager, has to be initialized already
-	 * @param assumeRequiresAfterAssert Assume inlined preconditions after they were asserted.
-	 * @param assertEnsuresBeforeAssume Assert inlined postconditions before they are assumed.
-	 *                                  This setting applies only to implemented procedures.
 	 */
-	public InlineVersionTransformer(IUltimateServiceProvider services, GlobalScopeManager globalScopeManager,
-			boolean assumeRequiresAfterAssert, boolean assertEnsuresBeforeAssume) {
+	public InlineVersionTransformer(IUltimateServiceProvider services, GlobalScopeManager globalScopeManager) {
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mGlobalScopeManager = globalScopeManager;
 		mVarMap = globalScopeManager.initVarMap();
 		globalScopeManager.initVarIdManager(mVarIdManager);
-		mAssumeRequiresAfterAssert = assumeRequiresAfterAssert;
-		mAssertEnsuresBeforeAssume = assertEnsuresBeforeAssume;
 	}
 
 	/**
@@ -774,26 +756,27 @@ public class InlineVersionTransformer extends BoogieCopyTransformer {
 				Expression processedFormula = ((RequiresSpecification) processedSpec).getFormula();
 				if (isFree) {
 					throw new InliningUnsupportedException("Free ensures: " + call, call.getLocation()); 
-				} else {
-					AssertStatement assertStat = new AssertStatement(loc, processedFormula);
-					ModelUtils.mergeAnnotations(processedSpec, assertStat);
-					addBacktranslation(assertStat, spec);
-					assertRequires.add(assertStat);
 				}
-				if (mAssumeRequiresAfterAssert) {
-					AssumeStatement assumeStat = new AssumeStatement(loc, processedFormula);
-					ModelUtils.mergeAnnotations(processedSpec, assumeStat);
-					addBacktranslation(assumeStat, null); // "assert PRE" is always there and translates to the spec
-					assumeRequires.add(assumeStat);
-				}
+				// assert PRE
+				AssertStatement assertStat = new AssertStatement(loc, processedFormula);
+				ModelUtils.mergeAnnotations(processedSpec, assertStat);
+				addBacktranslation(assertStat, spec);
+				assertRequires.add(assertStat);
+				// assume PRE
+				AssumeStatement assumeStat = new AssumeStatement(loc, processedFormula);
+				ModelUtils.mergeAnnotations(processedSpec, assumeStat);
+				addBacktranslation(assumeStat, null); // "assert PRE" is always there and translates to the spec
+				assumeRequires.add(assumeStat);
 			} else if (processedSpec instanceof EnsuresSpecification) {
 				Expression formula = ((EnsuresSpecification) processedSpec).getFormula();
-				if (!isFree && mAssertEnsuresBeforeAssume && calleeNode.isImplemented()) {
+				if (!isFree && calleeNode.isImplemented()) {
+					// assert POST
 					AssertStatement assertStat = new AssertStatement(loc, formula);
 					ModelUtils.mergeAnnotations(processedSpec, assertStat);
 					addBacktranslation(assertStat, null); // "assume POST" is always there and translates to the spec
 					assertEnsures.add(assertStat);
 				}
+				// assume POST
 				AssumeStatement assumeStat = new AssumeStatement(loc, formula);
 				ModelUtils.mergeAnnotations(processedSpec, assumeStat);
 				addBacktranslation(assumeStat, spec);

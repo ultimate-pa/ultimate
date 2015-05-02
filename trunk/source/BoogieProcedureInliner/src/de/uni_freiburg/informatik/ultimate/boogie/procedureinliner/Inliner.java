@@ -101,12 +101,9 @@ public class Inliner implements IUnmanagedObserver {
 		buildCallGraph();
 
 		GlobalScopeManager globalScopeManager = new GlobalScopeManager(mNonProcedureDeclarations);
-		boolean assumeRequiresAfterAssert = PreferenceItem.ASSUME_REQUIRES_AFTER_ASSERT.getBooleanValue();
-		boolean assertEnsuresBeforeAssume = PreferenceItem.ASSERT_ENSURES_BEFORE_ASSUME.getBooleanValue();
 		for (CallGraphNode proc : proceduresToBeProcessed()) {
 			if (proc.hasInlineFlags()) { // implies that the procedure is implemented
-				InlineVersionTransformer transformer = new InlineVersionTransformer(mServices,
-						globalScopeManager, assumeRequiresAfterAssert, assertEnsuresBeforeAssume);
+				InlineVersionTransformer transformer = new InlineVersionTransformer(mServices, globalScopeManager);
 				mNewProceduresWithBody.put(proc.getId(), transformer.inlineCallsInside(proc));
 				mBacktranslator.addBacktranslation(transformer);
 			}

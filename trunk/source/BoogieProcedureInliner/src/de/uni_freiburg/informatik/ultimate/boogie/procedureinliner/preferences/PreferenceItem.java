@@ -41,13 +41,7 @@ public enum PreferenceItem {
 	PROCESS_ONLY_ENTRY_AND_RE_ENTRY_PROCEDURES("Process only entry and re-entry procedures", true, Boolean),
 	ENTRY_PROCEDURES("Entry procedures (ids, separated by whitespace)", "ULTIMATE.start", PreferenceType.String),
 	ENTRY_PROCEDURE_FALLBACK("Fallback: Process everything, if an entry procedure doesn't exist", true, Boolean),
-	ELIMINATE_DEAD_CODE("Eliminate dead code after inlining", true, Boolean), // see CallGraphNodeLabel
-
-	LABEL___SPECIFICATION_INLINING("\nSpecification inlining (in the same order as shown here)"),
-	NOTE___ASSERT_REQUIRES("[X] assert requires/precondition"),
-	ASSUME_REQUIRES_AFTER_ASSERT("assume requires/precondition", true, Boolean),
-	ASSERT_ENSURES_BEFORE_ASSUME("assert ensures/postcondition of implemented procedures", true, Boolean),
-	NOTE___ASSUME_ENSURES("[X] assume ensures/postcondition");
+	ELIMINATE_DEAD_CODE("Eliminate dead code after inlining", true, Boolean); // see CallGraphNodeLabel
 
 	protected final String mName;
 	protected final Object mDefaultValue;
