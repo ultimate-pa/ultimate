@@ -2,7 +2,7 @@ package de.uni_freiburg.informatik.ultimate.core.services;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -24,7 +24,7 @@ public class ToolchainStorage implements IToolchainStorage,
 	private final Map<String, IStorable> mToolchainStorage;
 
 	public ToolchainStorage() {
-		mToolchainStorage = new HashMap<String, IStorable>();
+		mToolchainStorage = new LinkedHashMap<String, IStorable>();
 	}
 
 	@Override
@@ -65,7 +65,7 @@ public class ToolchainStorage implements IToolchainStorage,
 				}
 				coreLogger
 						.fatal("There was an exception during clearing of toolchain storage while destroying "
-								+ storable.getClass().getSimpleName()
+								+ storable.getClass().toString()
 								+ ": "
 								+ t.getMessage());
 			}
