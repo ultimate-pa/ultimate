@@ -58,6 +58,7 @@ public class Inliner implements IUnmanagedObserver {
 		mProgressMonitorService = services.getProgressMonitorService();
 		mInlineSelector = new PreferencesInlineSelector();
 		mBacktranslator = new InlinerBacktranslator(services);
+		mServices.getLoggingService().getLogger(Activator.PLUGIN_ID).info("Created inliner");
 	}
 
 	@Override

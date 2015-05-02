@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.EnumSet;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -113,119 +112,5 @@ public interface IProgramExecution<TE, E> {
 			});
 			return toSort.toString();
 		}
-	}
-
-	/**
-	 * An atomic trace element in the sense of a debugger trace of a program. It
-	 * consists of an {@link AtomicTraceElement#getTraceElement() trace element}
-	 * , which is probably a statement of some program, and the currently
-	 * evaluated {@link AtomicTraceElement#getStep() part of this statement}.
-	 * 
-	 * This class is used to display an error trace for the user.
-	 * 
-	 * @author dietsch@informatik.uni-freiburg.de
-	 * 
-	 * @param <TE>
-	 *            The type of the trace element and the step.
-	 */
-	public class AtomicTraceElement<TE> {
-		private final TE mElement;
-		private final TE mStep;
-		private EnumSet<StepInfo> mStepInfo;
-
-		/**
-		 * Creates an instance where the trace element is evaluated atomically
-		 * (i.e. {@link #getTraceElement()} == {@link #getStep()}).
-		 */
-		public AtomicTraceElement(TE element) {
-			this(element, element, StepInfo.NONE);
-		}
-
-		/**
-		 * Creates an instance where the trace element is not necessarily
-		 * evaluated atomically (i.e. {@link #getTraceElement()} !=
-		 * {@link #getStep()} is allowed)
-		 * 
-		 * @param element
-		 * @param step
-		 * @param info
-		 *            provides additional information about the step, e.g. if
-		 *            its a condition that evaluated to true or false, if it is
-		 *            a call or a return, etc.
-		 */
-		public AtomicTraceElement(TE element, TE step, StepInfo info) {
-			mElement = element;
-			mStep = step;
-			mStepInfo = EnumSet.of(info);
-		}
-
-		public AtomicTraceElement(TE element, TE step, EnumSet<StepInfo> info) {
-			mElement = element;
-			mStep = step;
-			mStepInfo = info;
-			if (info.size() > 1 && info.contains(StepInfo.NONE)) {
-				throw new IllegalArgumentException("You cannot combine NONE with other values");
-			}
-		}
-
-		/**
-		 * @return The statement which is currently executed. Is never null.
-		 */
-		public TE getTraceElement() {
-			return mElement;
-		}
-
-		/**
-		 * @return An expression or statement which is evaluated atomically as
-		 *         part of the evaluation of {@link #getTraceElement()} or a
-		 *         statement that is equal to {@link #getTraceElement()} when
-		 *         {@link #getTraceElement()} itself is evaluated atomically.
-		 * 
-		 *         This is always a reference to some subtree of
-		 *         {@link #getTraceElement()}.
-		 */
-		public TE getStep() {
-			return mStep;
-		}
-
-		public boolean hasStepInfo(StepInfo info) {
-			return mStepInfo.contains(info);
-		}
-
-		public EnumSet<StepInfo> getStepInfo() {
-			return EnumSet.copyOf(mStepInfo);
-		}
-
-		/**
-		 * StepInfo provides additional information for
-		 * {@link AtomicTraceElement#getStep()}.
-		 * 
-		 * This may be replaced by an actual object later, but for now it should
-		 * be sufficient.
-		 * 
-		 * @author dietsch@informatik.uni-freiburg.de
-		 * 
-		 */
-		public enum StepInfo {
-			NONE("NONE"), CONDITION_EVAL_TRUE("COND TRUE"), CONDITION_EVAL_FALSE("COND FALSE"), PROC_CALL("CALL"), PROC_RETURN(
-					"RET"), ARG_EVAL("ARG"), EXPR_EVAL("EXPR"), FUNC_CALL("FCALL");
-
-			private final String mText;
-
-			private StepInfo(final String text) {
-				mText = text;
-			}
-
-			@Override
-			public String toString() {
-				return mText;
-			}
-		}
-
-		@Override
-		public String toString() {
-			return getTraceElement().toString();
-		}
-
 	}
 }

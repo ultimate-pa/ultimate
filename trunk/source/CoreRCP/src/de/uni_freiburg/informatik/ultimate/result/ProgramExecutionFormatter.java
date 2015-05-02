@@ -7,8 +7,7 @@ import java.util.Comparator;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.core.util.CoreUtil;
-import de.uni_freiburg.informatik.ultimate.result.IProgramExecution.AtomicTraceElement;
-import de.uni_freiburg.informatik.ultimate.result.IProgramExecution.AtomicTraceElement.StepInfo;
+import de.uni_freiburg.informatik.ultimate.result.AtomicTraceElement.StepInfo;
 import de.uni_freiburg.informatik.ultimate.result.IProgramExecution.ProgramState;
 
 /**

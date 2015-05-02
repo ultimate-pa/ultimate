@@ -6,12 +6,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import de.uni_freiburg.informatik.ultimate.core.util.IToString;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.model.DefaultTranslator;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieProgramExecution;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BoogieASTNode;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
+import de.uni_freiburg.informatik.ultimate.model.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ParallelComposition;
@@ -21,9 +23,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Ret
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.SequentialComposition;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
+import de.uni_freiburg.informatik.ultimate.result.AtomicTraceElement;
+import de.uni_freiburg.informatik.ultimate.result.AtomicTraceElement.StepInfo;
 import de.uni_freiburg.informatik.ultimate.result.IProgramExecution;
-import de.uni_freiburg.informatik.ultimate.result.IProgramExecution.AtomicTraceElement;
-import de.uni_freiburg.informatik.ultimate.result.IProgramExecution.AtomicTraceElement.StepInfo;
 import de.uni_freiburg.informatik.ultimate.result.IProgramExecution.ProgramState;
 
 public class RCFGBacktranslator extends DefaultTranslator<CodeBlock, BoogieASTNode, Expression, Expression> {
@@ -83,26 +85,27 @@ public class RCFGBacktranslator extends DefaultTranslator<CodeBlock, BoogieASTNo
 	 */
 	private void addCodeBlock(CodeBlock cb, List<AtomicTraceElement<BoogieASTNode>> trace,
 			Map<TermVariable, Boolean> branchEncoders) {
+		final IToString<BoogieASTNode> stringProvider = BoogiePrettyPrinter.getBoogieToStringprovider();
 		if (cb instanceof Call) {
 			Statement st = ((Call) cb).getCallStatement();
-			trace.add(new AtomicTraceElement<BoogieASTNode>(st, st, StepInfo.PROC_CALL));
+			trace.add(new AtomicTraceElement<BoogieASTNode>(st, st, StepInfo.PROC_CALL, stringProvider));
 		} else if (cb instanceof Return) {
 			Statement st = ((Return) cb).getCallStatement();
-			trace.add(new AtomicTraceElement<BoogieASTNode>(st, st, StepInfo.PROC_RETURN));
+			trace.add(new AtomicTraceElement<BoogieASTNode>(st, st, StepInfo.PROC_RETURN, stringProvider));
 		} else if (cb instanceof Summary) {
 			Statement st = ((Summary) cb).getCallStatement();
 			// FIXME: Is summary call, return or something new?
-			trace.add(new AtomicTraceElement<BoogieASTNode>(st, st, StepInfo.NONE));
+			trace.add(new AtomicTraceElement<BoogieASTNode>(st, st, StepInfo.NONE, stringProvider));
 		} else if (cb instanceof StatementSequence) {
 			StatementSequence ss = (StatementSequence) cb;
 			for (Statement statement : ss.getStatements()) {
 				if (m_CodeBlock2Statement.containsKey(statement)) {
 					BoogieASTNode[] sources = m_CodeBlock2Statement.get(statement);
 					for (BoogieASTNode source : sources) {
-						trace.add(new AtomicTraceElement<BoogieASTNode>(source));
+						trace.add(new AtomicTraceElement<BoogieASTNode>(source, stringProvider));
 					}
 				} else {
-					trace.add(new AtomicTraceElement<BoogieASTNode>(statement));
+					trace.add(new AtomicTraceElement<BoogieASTNode>(statement, stringProvider));
 				}
 			}
 		} else if (cb instanceof SequentialComposition) {

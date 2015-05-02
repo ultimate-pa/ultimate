@@ -12,8 +12,8 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.BackTransValue;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BoogieASTNode;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.CallStatement;
-import de.uni_freiburg.informatik.ultimate.result.IProgramExecution.AtomicTraceElement;
-import de.uni_freiburg.informatik.ultimate.result.IProgramExecution.AtomicTraceElement.StepInfo;
+import de.uni_freiburg.informatik.ultimate.result.AtomicTraceElement;
+import de.uni_freiburg.informatik.ultimate.result.AtomicTraceElement.StepInfo;
 
 /**
  * Analyzes a trace from an inlined boogie program and offers calls/returns to be inserted,

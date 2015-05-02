@@ -1,5 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.model.boogie.output;
 
+import de.uni_freiburg.informatik.ultimate.core.util.IToString;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BoogieASTNode;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Procedure;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Specification;
@@ -82,6 +84,28 @@ public class BoogiePrettyPrinter {
 		output.appendProcedure(sb, actual);
 		removeLastLinebreak(sb);
 		return sb.toString();
+	}
+
+	public static IToString<BoogieASTNode> getBoogieToStringprovider() {
+		IToString<BoogieASTNode> stringProvider = new IToString<BoogieASTNode>() {
+			@Override
+			public String toString(BoogieASTNode elem) {
+				if (elem instanceof Expression) {
+					return BoogiePrettyPrinter.print((Expression) elem);
+				} else if (elem instanceof Statement) {
+					return BoogiePrettyPrinter.print((Statement) elem);
+				} else if (elem instanceof VarList) {
+					return BoogiePrettyPrinter.print((VarList) elem);
+				} else if (elem instanceof VariableDeclaration) {
+					return BoogiePrettyPrinter.print((VariableDeclaration) elem);
+				} else if (elem instanceof Specification) {
+					return BoogiePrettyPrinter.print((Specification) elem);
+				} else {
+					return elem.toString();
+				}
+			}
+		};
+		return stringProvider;
 	}
 
 	private static void removeLastLinebreak(StringBuilder sb) {

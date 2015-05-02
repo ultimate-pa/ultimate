@@ -1,4 +1,4 @@
-       IVAL        [\old(a)=3, \old(x)=2, a=3, x=2]
+       IVAL        [\old(a)=2, \old(x)=3, a=2, x=3]
 [L3]               int a = 5;
 [L4]               int x = 0;
        VAL         [\old(a)=5, \old(x)=0, a=5, x=0]

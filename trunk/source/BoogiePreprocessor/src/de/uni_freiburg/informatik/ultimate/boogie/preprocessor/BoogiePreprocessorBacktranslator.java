@@ -14,6 +14,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.type.ConstructedType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.StructType;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.util.IToString;
 import de.uni_freiburg.informatik.ultimate.model.DefaultTranslator;
 import de.uni_freiburg.informatik.ultimate.model.IType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieProgramExecution;
@@ -38,10 +39,10 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.WhileStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
+import de.uni_freiburg.informatik.ultimate.result.AtomicTraceElement;
+import de.uni_freiburg.informatik.ultimate.result.AtomicTraceElement.StepInfo;
 import de.uni_freiburg.informatik.ultimate.result.GenericResult;
 import de.uni_freiburg.informatik.ultimate.result.IProgramExecution;
-import de.uni_freiburg.informatik.ultimate.result.IProgramExecution.AtomicTraceElement;
-import de.uni_freiburg.informatik.ultimate.result.IProgramExecution.AtomicTraceElement.StepInfo;
 import de.uni_freiburg.informatik.ultimate.result.IProgramExecution.ProgramState;
 import de.uni_freiburg.informatik.ultimate.result.IResultWithSeverity.Severity;
 
@@ -167,6 +168,7 @@ public class BoogiePreprocessorBacktranslator extends
 			IProgramExecution<BoogieASTNode, Expression> programExecution) {
 
 		List<AtomicTraceElement<BoogieASTNode>> atomicTrace = new ArrayList<>();
+		IToString<BoogieASTNode> stringProvider = BoogiePrettyPrinter.getBoogieToStringprovider();
 
 		for (int i = 0; i < translatedTrace.size(); ++i) {
 			BoogieASTNode elem = translatedTrace.get(i);
@@ -182,13 +184,13 @@ public class BoogiePreprocessorBacktranslator extends
 				AssumeStatement assumeStmt = (AssumeStatement) programExecution.getTraceElement(i).getTraceElement();
 				WhileStatement stmt = (WhileStatement) elem;
 				StepInfo info = getStepInfoFromCondition(assumeStmt.getFormula(), stmt.getCondition());
-				atomicTrace.add(new AtomicTraceElement<BoogieASTNode>(stmt, stmt.getCondition(), info));
+				atomicTrace.add(new AtomicTraceElement<BoogieASTNode>(stmt, stmt.getCondition(), info, stringProvider));
 
 			} else if (elem instanceof IfStatement) {
 				AssumeStatement assumeStmt = (AssumeStatement) programExecution.getTraceElement(i).getTraceElement();
 				IfStatement stmt = (IfStatement) elem;
 				StepInfo info = getStepInfoFromCondition(assumeStmt.getFormula(), stmt.getCondition());
-				atomicTrace.add(new AtomicTraceElement<BoogieASTNode>(stmt, stmt.getCondition(), info));
+				atomicTrace.add(new AtomicTraceElement<BoogieASTNode>(stmt, stmt.getCondition(), info, stringProvider));
 
 			} else if (elem instanceof CallStatement) {
 				// for call statements, we simply rely on the stepinfo of our
@@ -196,16 +198,17 @@ public class BoogiePreprocessorBacktranslator extends
 				// return), else its a procedure call with corresponding return
 
 				if (programExecution.getTraceElement(i).hasStepInfo(StepInfo.NONE)) {
-					atomicTrace.add(new AtomicTraceElement<BoogieASTNode>(elem, elem, StepInfo.FUNC_CALL));
+					atomicTrace.add(new AtomicTraceElement<BoogieASTNode>(elem, elem, StepInfo.FUNC_CALL,
+							stringProvider));
 				} else {
 					atomicTrace.add(new AtomicTraceElement<BoogieASTNode>(elem, elem, programExecution.getTraceElement(
-							i).getStepInfo()));
+							i).getStepInfo(), stringProvider));
 				}
 
 			} else {
 				// it could be that we missed some cases... revisit this if you
 				// suspect errors in the backtranslation
-				atomicTrace.add(new AtomicTraceElement<BoogieASTNode>(elem));
+				atomicTrace.add(new AtomicTraceElement<BoogieASTNode>(elem, stringProvider));
 			}
 		}
 
@@ -525,5 +528,4 @@ public class BoogiePreprocessorBacktranslator extends
 			return inputExp;
 		}
 	}
-
 }
