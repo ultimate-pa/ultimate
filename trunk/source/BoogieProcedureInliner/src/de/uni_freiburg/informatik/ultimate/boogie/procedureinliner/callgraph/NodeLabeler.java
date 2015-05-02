@@ -1,8 +1,8 @@
 package de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.callgraph;
 
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -18,16 +18,16 @@ import java.util.Set;
  */
 public class NodeLabeler {
 
-	private List<String> mEntryProcedures;
+	private Collection<String> mEntryProcedures;
 	
 	private Map<String, CallGraphNode> mCallGraph;
 	private Set<CallGraphEdgeLabel> mVisitedEdges;
 	private Set<String> mEntryAndReEntryProcedures;
 
-	public NodeLabeler(List<String> entryPorcedures) {
+	public NodeLabeler(Collection<String> entryPorcedures) {
 		mEntryProcedures = entryPorcedures;
 	}
-
+	
 	/**
 	 * Sets the node labels for a call graph.
 	 * <p>
@@ -36,7 +36,7 @@ public class NodeLabeler {
 	 * 
 	 * @param callGraph Boogie call graph, which's inline flags don't change anymore.
 	 * 
-	 * @return Identifiers from all procedures, marked as entry or re-entry procedures.
+	 * @return Identifiers from all existing procedures, marked as entry or re-entry procedures.
 	 * 
 	 * @see CallGraphNodeLabel
 	 */

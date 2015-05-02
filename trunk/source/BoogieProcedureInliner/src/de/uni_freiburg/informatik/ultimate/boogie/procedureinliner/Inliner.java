@@ -3,15 +3,20 @@ package de.uni_freiburg.informatik.ultimate.boogie.procedureinliner;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.log4j.Logger;
+
 import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
+import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.InlineVersionTransformer.GlobalScopeManager;
 import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.backtranslation.InlinerBacktranslator;
 import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.callgraph.CallGraphBuilder;
 import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.callgraph.CallGraphNode;
+import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.callgraph.CallGraphNodeLabel;
 import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.callgraph.NodeLabeler;
 import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.exceptions.CancelToolchainException;
 import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.preferences.PreferenceItem;
@@ -30,16 +35,15 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.*;
 public class Inliner implements IUnmanagedObserver {
 
 	private IUltimateServiceProvider mServices;
+	private Logger mLogger;
 	private IProgressMonitorService mProgressMonitorService;
 
 	private IInlineSelector mInlineSelector;
-	private NodeLabeler mNodeLabeler;
 	
 	private Unit mAstUnit;
 	private Collection<Declaration> mNonProcedureDeclarations;
 	private Map<String, CallGraphNode> mCallGraph;
 
-	private Set<String> mEntryAndReEntryProcedures;
 	private Map<String, Procedure> mNewProceduresWithBody;
 	
 	private InlinerBacktranslator mBacktranslator;
@@ -50,9 +54,9 @@ public class Inliner implements IUnmanagedObserver {
 	 */
 	public Inliner(IUltimateServiceProvider services) {
 		mServices = services;
+		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mProgressMonitorService = services.getProgressMonitorService();
 		mInlineSelector = new PreferencesInlineSelector();
-		mNodeLabeler = new NodeLabeler(PreferenceItem.ENTRY_PROCEDURES.getStringValueTokens());
 		mBacktranslator = new InlinerBacktranslator(services);
 	}
 
@@ -96,15 +100,14 @@ public class Inliner implements IUnmanagedObserver {
 	private void inline() throws CancelToolchainException {
 		buildCallGraph();
 
-		InlineVersionTransformer.GlobalScopeManager globalScopeManager =
-				new InlineVersionTransformer.GlobalScopeManager(mNonProcedureDeclarations);
+		GlobalScopeManager globalScopeManager = new GlobalScopeManager(mNonProcedureDeclarations);
 		boolean assumeRequiresAfterAssert = PreferenceItem.ASSUME_REQUIRES_AFTER_ASSERT.getBooleanValue();
 		boolean assertEnsuresBeforeAssume = PreferenceItem.ASSERT_ENSURES_BEFORE_ASSUME.getBooleanValue();
-		for (CallGraphNode node : proceduresToBeProcessed()) {
-			if (node.isImplemented() && node.hasInlineFlags()) {
+		for (CallGraphNode proc : proceduresToBeProcessed()) {
+			if (proc.hasInlineFlags()) { // implies that the procedure is implemented
 				InlineVersionTransformer transformer = new InlineVersionTransformer(mServices,
 						globalScopeManager, assumeRequiresAfterAssert, assertEnsuresBeforeAssume);
-				mNewProceduresWithBody.put(node.getId(), transformer.inlineCallsInside(node));
+				mNewProceduresWithBody.put(proc.getId(), transformer.inlineCallsInside(proc));
 				mBacktranslator.addBacktranslation(transformer);
 			}
 		}
@@ -116,20 +119,59 @@ public class Inliner implements IUnmanagedObserver {
 		callGraphBuilder.buildCallGraph(mAstUnit);
 		mCallGraph = callGraphBuilder.getCallGraph();
 		mNonProcedureDeclarations = callGraphBuilder.getNonProcedureDeclarations();
-		
+
 		mInlineSelector.setInlineFlags(mCallGraph);
-		mEntryAndReEntryProcedures = mNodeLabeler.label(mCallGraph);
 	}
-	
+
+	/**
+	 * Creates the set of procedures to be processed by the InlinerVersionTransformer.
+	 * <p>
+	 * Note that some of the procedures might be unimplemented or have no inline flags.
+	 * In this case, the don't have to be processed.
+	 * 
+	 * @return Procedures to be processed by the InlineVersionTransformer.
+	 */
 	private Collection<CallGraphNode> proceduresToBeProcessed() {
-		Collection<CallGraphNode> proceduresToBeProcessed;
-		if (PreferenceItem.PROCESS_ONLY_ENTRY_AND_REENTRY_PROCEDURES.getBooleanValue()) {
-			proceduresToBeProcessed = new ArrayList<>(mEntryAndReEntryProcedures.size());
-			for (String procId : mEntryAndReEntryProcedures) {
-				proceduresToBeProcessed.add(mCallGraph.get(procId));
-			}
+		if (!PreferenceItem.PROCESS_ONLY_ENTRY_AND_RE_ENTRY_PROCEDURES.getBooleanValue()) {
+			return mCallGraph.values();
+		}
+		Collection<String> entryProcedures = PreferenceItem.ENTRY_PROCEDURES.getStringValueTokens();
+		Collection<String> missingEntryProcedures = missingEntryProcedures(entryProcedures);
+		if (missingEntryProcedures.size() == entryProcedures.size()) {
+			mLogger.warn("Program contained no entry procedure!");
+		}
+		if (!missingEntryProcedures.isEmpty()) {
+			mLogger.warn("Missing entry procedures: " + missingEntryProcedures);
 		} else {
-			proceduresToBeProcessed = mCallGraph.values();
+			return entryAndReEntryProcedures(entryProcedures);
+		}
+		
+		if (PreferenceItem.ENTRY_PROCEDURE_FALLBACK.getBooleanValue()) {
+			mLogger.warn("Fallback enabled. All procedures will be processed.");
+			return mCallGraph.values();
+		} else {
+			mLogger.warn("Fallback not enabled! The resulting program might be not inlined or even empty.");
+			return entryAndReEntryProcedures(entryProcedures);
+		}
+	}
+
+	private Collection<String> missingEntryProcedures(Collection<String> procedureIds) {
+		Collection<String> missingEntryProcedures = new ArrayList<>();
+		for (String procedureId : procedureIds) {
+			if (!mCallGraph.containsKey(procedureId)) {
+				missingEntryProcedures.add(procedureId);
+			}
+		}
+		return missingEntryProcedures;
+	}
+
+	private Collection<CallGraphNode> entryAndReEntryProcedures(Collection<String> entryProcedures) {
+		NodeLabeler labeler = new NodeLabeler(entryProcedures);
+		entryProcedures = labeler.label(mCallGraph);	
+		Set<CallGraphNode> proceduresToBeProcessed = new HashSet<CallGraphNode>();
+		for (String procId : entryProcedures) {
+			CallGraphNode proc = mCallGraph.get(procId);
+			proceduresToBeProcessed.add(proc);
 		}
 		return proceduresToBeProcessed;
 	}
@@ -138,20 +180,21 @@ public class Inliner implements IUnmanagedObserver {
 		List<Declaration> newDeclarations = new ArrayList<>();
 		newDeclarations.addAll(mNonProcedureDeclarations);
 		boolean eliminateDeadCode = PreferenceItem.ELIMINATE_DEAD_CODE.getBooleanValue();
-		for (CallGraphNode node : mCallGraph.values()) {
-			if (eliminateDeadCode && !mEntryAndReEntryProcedures.contains(node.getId())) {
+		for (CallGraphNode proc : mCallGraph.values()) {
+			// label might be null => NodeLabeler wasn't executed, => everything was processed => there is no dead code
+			if (eliminateDeadCode && proc.getLabel() == CallGraphNodeLabel.DEAD) {
 				continue;
 			}
-			Procedure oldProcWithSpec = node.getProcedureWithSpecification();
-			Procedure oldProcWithBody = node.getProcedureWithBody();
-			Procedure newProcWithBody = mNewProceduresWithBody.get(node.getId());
+			Procedure oldProcWithSpec = proc.getProcedureWithSpecification();
+			Procedure oldProcWithBody = proc.getProcedureWithBody();
+			Procedure newProcWithBody = mNewProceduresWithBody.get(proc.getId());
 			if (newProcWithBody == null) { // the procedure had nothing to inline, nothing changed
 				newDeclarations.add(oldProcWithSpec);
-				if (node.isImplemented() && !node.isCombined()) {
+				if (proc.isImplemented() && !proc.isCombined()) {
 					newDeclarations.add(oldProcWithBody);
 				}
 			} else {
-				if (!node.isCombined()) {
+				if (!proc.isCombined()) {
 					newDeclarations.add(oldProcWithSpec);
 				}
 				newDeclarations.add(newProcWithBody);

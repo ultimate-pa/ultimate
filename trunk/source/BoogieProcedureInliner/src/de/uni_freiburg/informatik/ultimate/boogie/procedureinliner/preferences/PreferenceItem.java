@@ -1,6 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.preferences;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.Activator;
@@ -33,13 +34,14 @@ public enum PreferenceItem {
 
 	LABEL___USER_LIST("\nUser list (procedure ids, separated by whitespace)"),
 	USER_LIST("User list", "", PreferenceType.MultilineString),
-	USER_LIST_TYPE("user list type", UserListType.BLACKLIST_RESTRICT, PreferenceType.Combo, UserListType.values()),
+	USER_LIST_TYPE("User list type", UserListType.BLACKLIST_RESTRICT, PreferenceType.Combo, UserListType.values()),
 	NOTE___TYPE_DESCRIPTION(UserListType.description()),
 	
 	LABEL___ENTRY_PROCEDURE_HANDLING("\nEntry procedure handling"),
-	PROCESS_ONLY_ENTRY_AND_REENTRY_PROCEDURES("Process only entry and re-entry procedures", false, Boolean),
+	PROCESS_ONLY_ENTRY_AND_RE_ENTRY_PROCEDURES("Process only entry and re-entry procedures", true, Boolean),
 	ENTRY_PROCEDURES("Entry procedures (ids, separated by whitespace)", "ULTIMATE.start", PreferenceType.String),
-	ELIMINATE_DEAD_CODE("Eliminate dead code after inlining", false, Boolean), // see CallGraphNodeLabel
+	ENTRY_PROCEDURE_FALLBACK("Fallback: Process everything, if an entry procedure doesn't exist", true, Boolean),
+	ELIMINATE_DEAD_CODE("Eliminate dead code after inlining", true, Boolean), // see CallGraphNodeLabel
 
 	LABEL___SPECIFICATION_INLINING("\nSpecification inlining (in the same order as shown here)"),
 	NOTE___ASSERT_REQUIRES("[X] assert requires/precondition"),
@@ -89,7 +91,12 @@ public enum PreferenceItem {
 	
 	/** @return Tokens from {@link #getStringValue()}, which where separated by whitespace. */
 	public List<String> getStringValueTokens() {
-		return Arrays.asList(getStringValue().trim().split("\\s+"));
+		String trimmedStringValue = getStringValue().trim();
+		if (trimmedStringValue.isEmpty()) {
+			return Collections.emptyList();
+		} else {
+			return Arrays.asList(trimmedStringValue.split("\\s+"));			
+		}
 	}
 	
 	public UserListType getUserListTypeValue() {
