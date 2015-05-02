@@ -8,7 +8,8 @@ package de.uni_freiburg.informatik.ultimate.core.services;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
+import java.util.Enumeration;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.StringTokenizer;
@@ -45,15 +46,27 @@ public final class LoggingService implements IStorable, ILoggingService {
 	private FileAppender logFile;
 	private ConsoleAppender mConsoleAppender;
 
-	private ArrayList<Appender> mAdditionalAppenders;
+	private HashSet<Appender> mAdditionalAppenders;
 
 	private String mCurrentControllerName;
 
 	private LoggingService() {
 
 		mPreferenceStore = new UltimatePreferenceStore(Activator.s_PLUGIN_ID);
-		mAdditionalAppenders = new ArrayList<Appender>();
-		Logger.getRootLogger().removeAllAppenders();
+		mAdditionalAppenders = new HashSet<Appender>();
+
+		//we remove the initial log4j console appender because we want to replace it with our own 
+		Logger.getRootLogger().removeAppender("ConsoleAppender"); 
+		
+		Enumeration<?> forgeinAppenders = Logger.getRootLogger().getAllAppenders();
+		while (forgeinAppenders.hasMoreElements()) {
+			Appender appender = (Appender) forgeinAppenders.nextElement();
+			mAdditionalAppenders.add(appender);
+		}
+		for(Appender app : mAdditionalAppenders){
+			Logger.getRootLogger().removeAppender(app);			
+		}
+		
 		initializeAppenders();
 		refreshPropertiesLoggerHierarchie();
 		refreshPropertiesAppendLogFile();
@@ -118,13 +131,15 @@ public final class LoggingService implements IStorable, ILoggingService {
 	}
 
 	private void initializeAppenders() {
-		//Its somewhat double, but why not...
 		try {
-			if (mConsoleAppender != null) {
-				Logger.getRootLogger().removeAppender(mConsoleAppender);
-			}
-			Logger.getRootLogger().removeAppender("ConsoleAppender");
+			// clear all old appenders
+			Logger.getRootLogger().removeAppender(mConsoleAppender);
 
+			for (Appender appender : mAdditionalAppenders) {
+				Logger.getRootLogger().removeAppender(appender);
+			}
+			
+			// first, handle console appender as we also configure it
 			// defining format of logging output
 			PatternLayout layout = new PatternLayout(
 					mPreferenceStore.getString(CorePreferenceInitializer.LABEL_LOG4J_PATTERN));
@@ -133,6 +148,11 @@ public final class LoggingService implements IStorable, ILoggingService {
 			mConsoleAppender = new ConsoleAppender(layout);
 			mConsoleAppender.setName("ConsoleAppender");
 			Logger.getRootLogger().addAppender(mConsoleAppender);
+
+			for (Appender appender : mAdditionalAppenders) {
+				// then, re-add all the other appenders
+				Logger.getRootLogger().addAppender(appender);
+			}
 
 		} catch (Exception ex) {
 			System.err.println("Error while initializing logger: " + ex);
