@@ -123,7 +123,7 @@ public class TransFormulaLRWithArrayCells {
 			m_FirstGeneration2Indices = new HashRelation<>();
 			m_FirstGeneration2Indices.addAll(tflrwai.getArrayFirstGeneration2Indices());
 			if (acrvc != null) {
-				addForeignReplacementVars(acrvc);
+//				addForeignReplacementVars(acrvc);
 			}
 			m_ArrayCellInVars = new NestedMap2<>();
 			m_ArrayCellInVars.addAll(tflrwai.getArrayCellInVars());
@@ -241,34 +241,33 @@ public class TransFormulaLRWithArrayCells {
 
 
 
-	private void addForeignReplacementVars(ArrayCellRepVarConstructor arrayCellRepVarConstructor) {
-		NestedMap2<TermVariable, ArrayIndex, ArrayCellReplacementVarInformation> array2Index2RepVar = 
-				arrayCellRepVarConstructor.getArrayRepresentative2IndexRepresentative2ReplacementVar();
-		for (TermVariable array : array2Index2RepVar.keySet()) {
-			if (arrayOccursInThisTransFormulaAsInvar(array)) {
-				for (Entry<ArrayIndex, ArrayCellReplacementVarInformation> entry : array2Index2RepVar.get(array).entrySet()) {
-					ArrayIndex index = entry.getKey();
-					ArrayCellReplacementVarInformation acrvi = entry.getValue();
-					if (allVarsOfIndexOccurInThisTransFormulaAsInvar(acrvi)) {
-						if (!arrayCellOccursInThisTransFormula(array, index)) {
-							m_ForeignReplacementVars.put(array, index, entry.getValue());
-						}
-					}
-				}
-			}
-		}
-	}
-	
-	private boolean allVarsOfIndexOccurInThisTransFormulaAsInvar(
-			ArrayCellReplacementVarInformation acrvi) {
-		Collection<RankVar> rankVarsOccurringInIndex = acrvi.termVariableToRankVarMappingForIndex().values();
-		for (RankVar rv : rankVarsOccurringInIndex) {
-			if (!this.tflrwai.getTransFormulaLR().getInVars().containsKey(rv)) {
-				return false;
-			}
-		}
-		return true;
-	}
+//	private void addForeignReplacementVars(ArrayCellRepVarConstructor arrayCellRepVarConstructor) {
+//		NestedMap2<TermVariable, ArrayIndex, ArrayCellReplacementVarInformation> array2Index2RepVar = 
+//				arrayCellRepVarConstructor.getArrayRepresentative2IndexRepresentative2ReplacementVar();
+//		for (TermVariable array : array2Index2RepVar.keySet()) {
+//			if (arrayOccursInThisTransFormulaAsInvar(array)) {
+//				for (Entry<ArrayIndex, ArrayCellReplacementVarInformation> entry : array2Index2RepVar.get(array).entrySet()) {
+//					ArrayIndex index = entry.getKey();
+//					ArrayCellReplacementVarInformation acrvi = entry.getValue();
+//					allVarsOfIndexOccurInThisTransFormulaAsInvar(acrvi);
+//						if (!arrayCellOccursInThisTransFormula(array, index)) {
+//							m_ForeignReplacementVars.put(array, index, entry.getValue());
+//						}
+//				}
+//			}
+//		}
+//	}
+//	
+//	private void allVarsOfIndexOccurInThisTransFormulaAsInvar(
+//			ArrayCellReplacementVarInformation acrvi) {
+//		Collection<RankVar> rankVarsOccurringInIndex = acrvi.termVariableToRankVarMappingForIndex().values();
+//		for (RankVar rv : rankVarsOccurringInIndex) {
+//			if (!this.tflrwai.getTransFormulaLR().getInVars().containsKey(rv)) {
+//				return false;
+//			}
+//		}
+//		return true;
+//	}
 
 	public void doSomething() {
 		for (Triple<TermVariable, ArrayIndex, ArrayCellReplacementVarInformation> triple  : m_ForeignReplacementVars.entrySet()) {
