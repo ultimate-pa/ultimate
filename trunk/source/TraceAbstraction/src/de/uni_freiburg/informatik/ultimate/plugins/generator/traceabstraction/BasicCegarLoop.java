@@ -81,6 +81,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceCheckerSpWp;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceCheckerUtils;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceCheckerWithInterpolantConsolidation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.witnesschecking.WitnessProductAutomaton;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessEdge;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNode;
@@ -108,6 +109,8 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 	protected final boolean m_UseLiveVariables;
 
 	protected final boolean m_ComputeHoareAnnotation;
+	
+	private  boolean m_UseInterpolantConsolidation = true;
 
 	protected final AssertCodeBlockOrder m_AssertCodeBlocksIncrementally;
 
@@ -256,6 +259,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 					NestedWord.nestedWord(m_Counterexample.getWord()), m_SmtManager, m_RootNode.getRootAnnot()
 							.getModGlobVarManager(), m_AssertCodeBlocksIncrementally, m_UnsatCores, m_UseLiveVariables,
 					m_Services, true, predicateUnifier, m_Interpolation);
+			
 			break;
 		case PathInvariants:
 			interpolatingTraceChecker = new InterpolatingTraceCheckerPathInvariantsWithFallback(truePredicate, falsePredicate,
@@ -287,10 +291,15 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 			// s_Logger.info("Trace with values");
 			// s_Logger.info(interpolatingTraceChecker.getRcfgProgramExecution());
 			m_RcfgProgramExecution = interpolatingTraceChecker.getRcfgProgramExecution();
-		}
+		}  
 		m_CegarLoopBenchmark.addTraceCheckerData(interpolatingTraceChecker.getTraceCheckerBenchmark());
 		// m_TraceCheckerBenchmark.aggregateBenchmarkData(interpolatingTraceChecker.getTraceCheckerBenchmark());
 		m_InterpolantGenerator = interpolatingTraceChecker;
+		if (m_UseInterpolantConsolidation) {
+			m_InterpolantGenerator = new TraceCheckerWithInterpolantConsolidation(truePredicate, falsePredicate, new TreeMap<Integer, IPredicate>(),
+					NestedWord.nestedWord(m_Counterexample.getWord()), m_SmtManager, m_RootNode.getRootAnnot()
+					.getModGlobVarManager(), m_Services, mLogger, predicateUnifier, interpolatingTraceChecker, m_Pref);
+		}
 		return feasibility;
 	}
 
