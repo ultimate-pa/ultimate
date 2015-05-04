@@ -148,7 +148,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	}
 
 	public enum Minimization {
-		NONE, MINIMIZE_SEVPA, SHRINK_NWA, DFA_HOPCROFT
+		NONE, MINIMIZE_SEVPA, SHRINK_NWA, DFA_HOPCROFT_ARRAYS
 	}
 
 	public enum AssertCodeBlockOrder {

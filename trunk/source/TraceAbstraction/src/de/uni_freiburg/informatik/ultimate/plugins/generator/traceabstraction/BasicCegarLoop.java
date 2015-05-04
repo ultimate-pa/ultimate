@@ -575,7 +575,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		switch (minimization) {
 		case NONE:
 			break;
-		case DFA_HOPCROFT:
+		case DFA_HOPCROFT_ARRAYS:
 		case MINIMIZE_SEVPA:
 		case SHRINK_NWA:
 			minimizeAbstraction(m_StateFactoryForRefinement, m_PredicateFactoryResultChecking, minimization);
@@ -674,7 +674,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 				}
 				break;
 			}
-			case DFA_HOPCROFT: {
+			case DFA_HOPCROFT_ARRAYS: {
 				MinimizeDfaHopcroftPaper<CodeBlock, IPredicate> minimizeOp =
 						new MinimizeDfaHopcroftPaper<CodeBlock, IPredicate>(
 							m_Services, newAbstraction, predicateFactoryRefinement, partition, m_ComputeHoareAnnotation);
