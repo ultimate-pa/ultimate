@@ -1522,31 +1522,38 @@ public class TestFileInterpreter implements IMessagePrinter {
 	 */
 	private Map<String, Set<Class<?>>> getOperationClasses() {
 		Map<String, Set<Class<?>>> result = new HashMap<String, Set<Class<?>>>();
-		String[] baseDirs = { "/de/uni_freiburg/informatik/ultimate/automata/nwalibrary/operations",
-				"/de/uni_freiburg/informatik/ultimate/automata/nwalibrary/operationsOldApi",
-				"/de/uni_freiburg/informatik/ultimate/automata/nwalibrary/operations/minimization",
-				"/de/uni_freiburg/informatik/ultimate/automata/nwalibrary/alternating",
-				"/de/uni_freiburg/informatik/ultimate/automata/nwalibrary/buchiNwa",
-				"/de/uni_freiburg/informatik/ultimate/automata/petrinet/julian",
-				"/de/uni_freiburg/informatik/ultimate/automata/petrinet" };
+		/*
+		 * NOTE: The following directories are scanned recursively.
+		 * Hence, do not add directories where one directory is a subdirectory
+		 * of another in the list to avoid unnecessary work.
+		 */
+		String[] baseDirs = {
+			"/de/uni_freiburg/informatik/ultimate/automata/nwalibrary/operations",
+			"/de/uni_freiburg/informatik/ultimate/automata/nwalibrary/operationsOldApi",
+			"/de/uni_freiburg/informatik/ultimate/automata/nwalibrary/alternating",
+			"/de/uni_freiburg/informatik/ultimate/automata/nwalibrary/buchiNwa",
+			"/de/uni_freiburg/informatik/ultimate/automata/petrinet" };
 		for (String baseDir : baseDirs) {
 			ArrayDeque<String> dirs = new ArrayDeque<String>();
 			dirs.add("");
+			String baseDirInPackageFormat = baseDir.replaceAll(File.separator, ".");
+			if (baseDirInPackageFormat.charAt(0) == '.') {
+				baseDirInPackageFormat = baseDirInPackageFormat.substring(1);
+			}
 			while (!dirs.isEmpty()) {
 				String dir = dirs.removeFirst();
-				String[] files = filesInDirectory(baseDir + "/" + dir);
+				String[] files = filesInDirectory(baseDir + File.separator + dir);
 				for (String file : files) {
 					if (file.endsWith(".class")) {
 						String fileWithoutSuffix = file.substring(0, file.length() - 6);
-						String baseDirInPackageFormat = baseDir.replaceAll("/", ".");
-						if (baseDirInPackageFormat.charAt(0) == '.') {
-							baseDirInPackageFormat = baseDirInPackageFormat.substring(1);
-						}
-						String path = "";
+						String path;
 						if (dir.isEmpty()) {
-							path = baseDirInPackageFormat + "." + fileWithoutSuffix;
+							path = baseDirInPackageFormat + "." +
+									fileWithoutSuffix;
 						} else {
-							path = baseDirInPackageFormat + "." + dir + "." + fileWithoutSuffix;
+							path = baseDirInPackageFormat + "." +
+									dir.replaceAll(File.separator, ".") + "." +
+									fileWithoutSuffix;
 						}
 						Class<?> clazz = null;
 						try {
@@ -1556,7 +1563,8 @@ public class TestFileInterpreter implements IMessagePrinter {
 							mLogger.error("Couldn't load/find class " + path);
 							break;
 						}
-						if ((clazz != null) && (classImplementsIOperationInterface(clazz))) {
+						if ((clazz != null) &&
+								(classImplementsIOperationInterface(clazz))) {
 							String operationName = fileWithoutSuffix.toLowerCase();
 							if (result.containsKey(operationName)) {
 								Set<Class<?>> s = result.get(operationName);
@@ -1571,12 +1579,21 @@ public class TestFileInterpreter implements IMessagePrinter {
 					}
 					// if the file has no ending, it may be a directory
 					else if (!file.contains(".")) {
-						try {
-							if (isDirectory(baseDir + "/" + file)) {
-								dirs.addLast(file);
-							}
-						} catch (Exception e) {
-
+						String suffix;
+						if (dir.isEmpty()) {
+							// first subfolder
+							suffix = file;
+						}
+						else {
+							// already in a subfolder, append it
+							suffix = dir + File.separator + file;
+						}
+						
+						if (isDirectory(baseDir + File.separator + suffix)) {
+							// add subfolder
+							dirs.addLast(suffix);
+						} else {
+							mLogger.error("Invalid file or directory: " + suffix);
 						}
 					}
 				}
