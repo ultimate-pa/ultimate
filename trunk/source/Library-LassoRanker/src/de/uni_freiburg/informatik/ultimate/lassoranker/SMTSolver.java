@@ -65,7 +65,8 @@ public class SMTSolver {
 	 */
 	public static Script newScript(LassoRankerPreferences preferences, String constraintsName,
 			IUltimateServiceProvider services, IToolchainStorage storage) {
-		Settings settings = preferences.getSolverConstructionSettings(constraintsName);
+		Settings settings = preferences.getSolverConstructionSettings(
+				preferences.baseNameOfDumpedScript + "+" + constraintsName);
 		Script script = SolverBuilder.buildScript(services, storage, settings);
 		
 		// Set options
