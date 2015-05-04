@@ -8,6 +8,6 @@ for f in `find "$1"*.smt2`;
 do
     java -jar /home/matthias/ultimate/releaseScripts/smt/2015smtcomp/smtinterpol-prepare.jar --track app "$f"
     mv "${f%%.smt2}.prep.smt2" "$f"
-    perl /home/matthias/ultimate/releaseScripts/smt/2015smtcomp/ApplicationTrack-BuchiAutomizer.pl "$f"
+    perl /home/matthias/ultimate/releaseScripts/smt/2015smtcomp/MainTrack-Automizer.pl "$f"
     echo "(exit)" >> "$f"
 done;

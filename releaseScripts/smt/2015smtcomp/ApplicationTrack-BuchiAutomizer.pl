@@ -1,6 +1,4 @@
 #!/usr/bin/perl -i
-# Perl script that does minor modifications in the SMT scripts that I want to
-# submit to the unsat core track.
 #
 # In the bash shell you can apply this script to all files in the folder using the
 # for i in *.smt2 ; do perl THIS_SCRIPT.pl $i; done
