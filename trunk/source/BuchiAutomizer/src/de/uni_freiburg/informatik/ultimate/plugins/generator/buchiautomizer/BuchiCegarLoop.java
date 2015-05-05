@@ -701,6 +701,9 @@ public class BuchiCegarLoop {
 			} else {
 				throw new AssertionError();
 			}
+		} catch (ToolchainCanceledException e) {
+				m_BenchmarkGenerator.stop(CegarLoopBenchmarkType.s_AutomataDifference);
+			throw e;
 		}
 		determinized.switchToReadonlyMode();
 		if (m_Pref.dumpAutomata()) {
