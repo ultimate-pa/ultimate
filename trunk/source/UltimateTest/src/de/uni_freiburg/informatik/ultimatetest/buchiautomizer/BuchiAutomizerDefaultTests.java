@@ -6,7 +6,6 @@ package de.uni_freiburg.informatik.ultimatetest.buchiautomizer;
 import java.util.Collection;
 
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
-import de.uni_freiburg.informatik.ultimatetest.AbstractModelCheckerTestSuite.DirectoryFileEndingsPair;
 
 /**
  * @author heizmann@informatik.uni-freiburg.de
@@ -109,28 +108,41 @@ public class BuchiAutomizerDefaultTests extends
 		"buchiAutomizer/stagedCraigNonlinearLbe.epf",
 		"buchiAutomizer/maxrank3CraigNonlinearLbe.epf",
 	};
+	
+	
+	private static final String[] m_BoogieToolchains = {
+		"BuchiAutomizerBplWithBlockEncoding.xml",
+		"BuchiAutomizerBplInlineWithBlockEncoding.xml",
+	};
+	
+	private static final String[] m_CToolchains = {
+		"BuchiAutomizerCWithBlockEncoding.xml",
+		"BuchiAutomizerCInlineWithBlockEncoding.xml",
+	};
+
+	
+	
+	
 
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
 		for (String setting : m_Settings) {
-			addTestCases("BuchiAutomizerCWithBlockEncoding.xml", 
-					setting, 
-					m_SVCOMP_Examples);
+			for (String toolchain : m_CToolchains) {
+				addTestCases(toolchain, setting, m_SVCOMP_Examples);
+			}
 		}
 		
 		for (String setting : m_Settings) {
-			addTestCases(
-					"BuchiAutomizerBplWithBlockEncoding.xml",
-					setting,
-					m_UltimateRepository,
-				    new String[] {".bpl"});
+			for (String toolchain : m_BoogieToolchains) {
+				addTestCases(toolchain, setting, m_UltimateRepository, 
+						new String[] {".bpl"});
+			}
 		}
 		for (String setting : m_Settings) {
-			addTestCases(
-					"BuchiAutomizerCWithBlockEncoding.xml",
-					setting,
-					m_UltimateRepository,
-				    new String[] {".c", ".i"});
+			for (String toolchain : m_CToolchains) {
+				addTestCases(toolchain, setting, m_UltimateRepository, 
+						new String[] {".c", ".i"});
+			}
 		}
 		return super.createTestCases();
 	}
