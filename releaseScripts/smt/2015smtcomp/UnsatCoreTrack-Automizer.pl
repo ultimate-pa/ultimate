@@ -29,7 +29,7 @@ This subtask can be solved using Craig interpolation (if an interpolating
 SMT solver is available for the given theory). The implementation that
 produced this SMT script follows a different approach where unsatisfiable cores
 provided by the SMT solver together with the post operator are used to compute 
-the inductive sequence of state assertions.
+an inductive sequence of state assertions.
 
 2015-04-30, Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
 
