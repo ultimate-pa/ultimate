@@ -180,7 +180,7 @@ public class LassoRankerStarter {
 				TerminationArgument arg = la.tryTemplate(template, termination_settings);
 				if (arg != null) {
 					// try {
-					assert isTerminationArgumentCorrect(arg) : "Incorrect termination argument from"
+					assert isTerminationArgumentCorrect(arg, stemTF, loopTf) : "Incorrect termination argument from"
 							+ template.getClass().getSimpleName();
 					// } catch (NoClassDefFoundError e) {
 					// s_Logger.warn("Could not check validity of " +
@@ -312,11 +312,11 @@ public class LassoRankerStarter {
 		return templates.toArray(new RankingTemplate[0]);
 	}
 
-	private boolean isTerminationArgumentCorrect(TerminationArgument arg) {
+	private boolean isTerminationArgumentCorrect(TerminationArgument arg, TransFormula stemTF, TransFormula loopTf) {
 
 		BinaryStatePredicateManager bspm = new BinaryStatePredicateManager(m_SmtManager, mServices);
 		Set<BoogieVar> modifiableGlobals = m_RootAnnot.getModGlobVarManager().getModifiedBoogieVars(m_Honda.getProcedure());
-		bspm.computePredicates(false, arg, false, null, modifiableGlobals);
+		bspm.computePredicates(false, arg, false, stemTF, loopTf, modifiableGlobals);
 
 		// check supporting invariants
 		boolean siCorrect = true;

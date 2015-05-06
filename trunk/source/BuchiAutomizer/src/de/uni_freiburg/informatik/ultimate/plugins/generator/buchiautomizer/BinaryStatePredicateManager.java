@@ -4,6 +4,7 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -29,6 +30,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.DagSizePrinter;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.AffineSubtermNormalizer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
@@ -38,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceChecker;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
 
 public class BinaryStatePredicateManager {
 
@@ -202,11 +205,16 @@ public class BinaryStatePredicateManager {
 	 * @param removeSuperfluousSupportingInvariants 
 	 * @param loopTf TransFormula for loop, has to be provided if we remove
 	 * superfluous supporting invariants.
+	 * @param loopTf 
 	 * @param modifiableGlobals 
+	 * @param loop 
+	 * @param stem 
+	 * @param loop 
+	 * @param stem 
 	 */
 	public void computePredicates(boolean loopTermination, TerminationArgument termArg, 
-			boolean removeSuperfluousSupportingInvariants, TransFormula loopTf, 
-			Set<BoogieVar> modifiableGlobals) {
+			boolean removeSuperfluousSupportingInvariants, TransFormula stemTf, 
+			TransFormula loopTf, Set<BoogieVar> modifiableGlobals) {
 		assert m_LoopTermination == null;
 		assert m_TerminationArgument == null;
 		assert m_StemPrecondition == null;
@@ -229,7 +237,7 @@ public class BinaryStatePredicateManager {
 		m_RankDecreaseAndBound = computeRankDecreaseAndBound();
 		m_SiConjunction = computeSiConjunction(m_TerminationArgument.getSupportingInvariants(),
 				m_TerminationArgument.getArrayIndexSupportingInvariants(), 
-				removeSuperfluousSupportingInvariants, loopTf, modifiableGlobals);
+				removeSuperfluousSupportingInvariants, stemTf, loopTf, modifiableGlobals);
 		boolean siConjunctionIsTrue = isTrue(m_SiConjunction);
 		if (siConjunctionIsTrue) {
 			m_StemPostcondition = unseededPredicate;
@@ -305,6 +313,32 @@ public class BinaryStatePredicateManager {
 			throw new AssertionError("unknown case");
 		}
 	}
+	
+	private boolean assertSupportingInvariant(Term[] siTermSubset, TransFormula loopTf, Set<BoogieVar> modifiableGlobals) {
+		List<Term> siSubsetAndRankEqualityList = new ArrayList<Term>(Arrays.asList(siTermSubset));
+		siSubsetAndRankEqualityList.add(m_RankEquality.getFormula());
+		IPredicate siSubsetAndRankEquality = m_SmtManager.newPredicate(
+				TermVarsProc.computeTermVarsProc(
+						SmtUtils.and(m_Script, siSubsetAndRankEqualityList), 
+						m_SmtManager.getBoogie2Smt()));
+		
+		List<Term> siSubsetAndRankDecreaseAndBoundList = new ArrayList<Term>(Arrays.asList(siTermSubset));
+		siSubsetAndRankDecreaseAndBoundList.add(m_RankDecreaseAndBound.getFormula());
+		for (Term succTerm : siSubsetAndRankDecreaseAndBoundList) {
+			IPredicate succPred = m_SmtManager.newPredicate(
+					TermVarsProc.computeTermVarsProc(
+							succTerm, 
+							m_SmtManager.getBoogie2Smt()));
+			LBool sat = PredicateUtils.isInductiveHelper(
+					m_SmtManager.getBoogie2Smt(), 
+					siSubsetAndRankEquality, 
+					succPred, loopTf, modifiableGlobals);
+			if (sat != LBool.UNSAT) {
+				throw new AssertionError("Incorrect supporting invariant. Not inductive: " + succTerm);
+			}
+		}
+		return true;
+	}
 
 	/**
 	 * Returns an array that contains all elements of list with index greater
@@ -333,6 +367,7 @@ public class BinaryStatePredicateManager {
 			Collection<SupportingInvariant> siList, 
 			Collection<Term> aisi, 
 			boolean removeSuperfluousSupportingInvariants, 
+			TransFormula stemTf,
 			TransFormula loopTf, Set<BoogieVar> modifiableGlobals) {
 		List<Term> siTerms = new ArrayList<Term>(siList.size() + aisi.size());
 		for (SupportingInvariant si : siList) {
@@ -340,9 +375,14 @@ public class BinaryStatePredicateManager {
 			siTerms.add(formula);
 		}
 		siTerms.addAll(aisi);
+		if (!impliedByStem(stemTf, siTerms, modifiableGlobals)) {
+			String stemSize = new DagSizePrinter(stemTf.getFormula()).toString();
+			throw new AssertionError("Supporting invariant not implied by stem. Stem size: " + stemSize);
+		}
 		if (removeSuperfluousSupportingInvariants) {
-			assert isSupportingInvariant(siTerms.toArray(new Term[siTerms.size()]), loopTf, modifiableGlobals);
+			assert assertSupportingInvariant(siTerms.toArray(new Term[siTerms.size()]), loopTf, modifiableGlobals);
 			siTerms = removeSuperfluousSupportingInvariants(siTerms, loopTf, modifiableGlobals);
+			assert assertSupportingInvariant(siTerms.toArray(new Term[siTerms.size()]), loopTf, modifiableGlobals);
 		}
 		
 		Term conjunction = SmtUtils.and(m_Script, siTerms);
@@ -356,6 +396,46 @@ public class BinaryStatePredicateManager {
 		}
 		TermVarsProc tvp = TermVarsProc.computeTermVarsProc(si, m_SmtManager.getBoogie2Smt());
 		return m_SmtManager.newPredicate(tvp);
+	}
+
+	private boolean impliedByStem(TransFormula stemTf, List<Term> siTerms, Set<BoogieVar> modifiableGlobals) {
+		ArrayList<Term> implied = new ArrayList<>();
+		ArrayList<Term> notImplied = new ArrayList<>();
+		for (Term siTerm : siTerms) {
+			boolean isInductive = isInductive(
+					Collections.singleton(m_SmtManager.getScript().term("true")),
+					modifiableGlobals,
+					stemTf,
+					Collections.singleton(siTerm),
+					modifiableGlobals
+					);
+			if (isInductive) {
+				implied.add(siTerm);
+			} else {
+				notImplied.add(siTerm);
+			}
+		}
+		assert notImplied.isEmpty() : "The following invariants are not implied by stem " + notImplied.toString();
+		return notImplied.isEmpty();
+	}
+
+	private boolean isInductive(Set<Term> precondition,
+			Set<BoogieVar> preconditionModifiableGlobals, TransFormula transFormula,
+			Set<Term> postcondition, Set<BoogieVar> postconditionModifiableGlobals) {
+		
+		IPredicate precondPredicate = m_SmtManager.newPredicate(
+				TermVarsProc.computeTermVarsProc(
+						SmtUtils.and(m_Script, precondition), 
+						m_SmtManager.getBoogie2Smt()));
+		IPredicate postcondPredicate = m_SmtManager.newPredicate(
+				TermVarsProc.computeTermVarsProc(
+						SmtUtils.and(m_Script, postcondition), 
+						m_SmtManager.getBoogie2Smt()));
+		LBool sat = PredicateUtils.isInductiveHelper(
+				m_SmtManager.getBoogie2Smt(), 
+				precondPredicate, 
+				postcondPredicate, transFormula, postconditionModifiableGlobals);
+		return sat == LBool.UNSAT;
 	}
 
 	public IPredicate supportingInvariant2Predicate(SupportingInvariant si) {

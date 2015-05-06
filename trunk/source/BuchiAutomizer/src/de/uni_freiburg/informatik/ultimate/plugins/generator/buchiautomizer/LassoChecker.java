@@ -610,7 +610,7 @@ public class LassoChecker {
 
 		LassoAnalysis la = null;
 		NonTerminationArgument nonTermArgument = null;
-		if (!(s_AvoidNonterminationCheckIfArraysAreContained && containsArrays)) {
+//		if (!(s_AvoidNonterminationCheckIfArraysAreContained && containsArrays)) {
 			try {
 				boolean overapproximateArrayIndexConnection = false;
 				la = new LassoAnalysis(m_SmtManager.getScript(), m_SmtManager.getBoogie2Smt(), stemTF, loopTF,
@@ -639,7 +639,7 @@ public class LassoChecker {
 			if (!s_CheckTerminationEvenIfNonterminating && nonTermArgument != null) {
 				return SynthesisResult.NONTERMINATIG;
 			}
-		}
+//		}
 
 		List<RankingTemplate> rankingFunctionTemplates = new ArrayList<RankingTemplate>();
 		rankingFunctionTemplates.add(new AffineTemplate());
@@ -693,7 +693,7 @@ public class LassoChecker {
 			}
 		}
 
-		TerminationArgument termArg = tryTemplatesAndComputePredicates(withStem, la, rankingFunctionTemplates, loopTF);
+		TerminationArgument termArg = tryTemplatesAndComputePredicates(withStem, la, rankingFunctionTemplates, stemTF, loopTF);
 		assert (nonTermArgument == null || termArg == null) : " terminating and nonterminating";
 		if (termArg != null) {
 			return SynthesisResult.TERMINATING;
@@ -715,7 +715,7 @@ public class LassoChecker {
 	 * @throws IOException 
 	 */
 	private TerminationArgument tryTemplatesAndComputePredicates(final boolean withStem, LassoAnalysis la,
-			List<RankingTemplate> rankingFunctionTemplates, TransFormula loopTF) throws AssertionError, IOException {
+			List<RankingTemplate> rankingFunctionTemplates, TransFormula stemTF, TransFormula loopTF) throws AssertionError, IOException {
 		String hondaProcedure = ((ISLPredicate) m_Counterexample.getLoop().getStateAtPosition(0)).getProgramPoint().getProcedure();
 		Set<BoogieVar> modifiableGlobals = m_ModifiableGlobalVariableManager.getModifiedBoogieVars(hondaProcedure);
 		
@@ -743,10 +743,10 @@ public class LassoChecker {
 			if (termArg != null) {
 				assert termArg.getRankingFunction() != null;
 				assert termArg.getSupportingInvariants() != null;
-				m_Bspm.computePredicates(!withStem, termArg, m_RemoveSuperfluousSupportingInvariants, loopTF, modifiableGlobals);
+				m_Bspm.computePredicates(!withStem, termArg, m_RemoveSuperfluousSupportingInvariants, stemTF, loopTF, modifiableGlobals);
 				assert m_Bspm.providesPredicates();
-				assert areSupportingInvariantsCorrect() : "incorrect supporting invariant with"
-						+ rft.getClass().getSimpleName();
+//				assert areSupportingInvariantsCorrect() : "incorrect supporting invariant with"
+//						+ rft.getClass().getSimpleName();
 				assert isRankingFunctionCorrect() : "incorrect ranking function with" + rft.getClass().getSimpleName();
 				if (!m_TemplateBenchmarkMode) {
 					return termArg;
@@ -761,7 +761,7 @@ public class LassoChecker {
 		if (firstTerminationArgument != null) {
 			assert firstTerminationArgument.getRankingFunction() != null;
 			assert firstTerminationArgument.getSupportingInvariants() != null;
-			m_Bspm.computePredicates(!withStem, firstTerminationArgument, m_RemoveSuperfluousSupportingInvariants, loopTF, modifiableGlobals);
+			m_Bspm.computePredicates(!withStem, firstTerminationArgument, m_RemoveSuperfluousSupportingInvariants, stemTF, loopTF, modifiableGlobals);
 			assert m_Bspm.providesPredicates();
 			return firstTerminationArgument;
 		} else {
