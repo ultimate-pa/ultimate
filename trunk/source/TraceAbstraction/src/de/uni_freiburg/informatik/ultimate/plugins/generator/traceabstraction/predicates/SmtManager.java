@@ -682,7 +682,8 @@ public class SmtManager {
 		assert proc.equals(ta.getSucceedingProcedure()) : "different procedure before and after";
 		Set<BoogieVar> modifiableGlobals = m_ModifiableGlobals.getModifiedBoogieVars(proc);
 
-		LBool result = PredicateUtils.isInductiveHelper(m_Boogie2Smt, ps1, ps2, tf, modifiableGlobals);
+		LBool result = PredicateUtils.isInductiveHelper(m_Boogie2Smt, 
+				ps1, ps2, tf, modifiableGlobals, modifiableGlobals);
 
 		if (expectUnsat) {
 			if (result == LBool.SAT) {

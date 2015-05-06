@@ -35,24 +35,28 @@ public class PredicateUtils {
 		return closedTerm;
 	}
 	
-	public static LBool isInductiveHelper(Boogie2SMT boogie2smt, IPredicate ps1, IPredicate ps2,
-			TransFormula tf, Set<BoogieVar> modifiableGlobals) {
+	public static LBool isInductiveHelper(Boogie2SMT boogie2smt, 
+			IPredicate ps1, IPredicate ps2,	TransFormula tf, 
+			Set<BoogieVar> modifiableGlobalsPs1, Set<BoogieVar> modifiableGlobalsPs2) {
 		boogie2smt.getScript().push(1);
 		Map<String, Term> indexedConstants = new HashMap<String, Term>();
 		//OldVars not renamed if modifiable
 		//All variables get index 0 
 		Term ps1renamed = formulaWithIndexedVars(ps1,new HashSet<BoogieVar>(0),
-				4, 0, Integer.MIN_VALUE,null,-5,0, indexedConstants, boogie2smt.getScript(), modifiableGlobals);
+				4, 0, Integer.MIN_VALUE,null,-5,0, indexedConstants, 
+				boogie2smt.getScript(), modifiableGlobalsPs1);
 		
 		Set<BoogieVar> assignedVars = new HashSet<BoogieVar>();
-		Term fTrans = formulaWithIndexedVars(tf, 0, 1, assignedVars, indexedConstants, boogie2smt.getScript(), boogie2smt.getVariableManager());
+		Term fTrans = formulaWithIndexedVars(tf, 0, 1, assignedVars, indexedConstants, 
+				boogie2smt.getScript(), boogie2smt.getVariableManager());
 
 		//OldVars not renamed if modifiable
 		//All variables get index 0 
 		//assigned vars (locals and globals) get index 1
 		//other vars get index 0
 		Term ps2renamed = formulaWithIndexedVars(ps2, assignedVars,
-				1, 0, Integer.MIN_VALUE,assignedVars,1,0, indexedConstants, boogie2smt.getScript(), modifiableGlobals);
+				1, 0, Integer.MIN_VALUE,assignedVars,1,0, indexedConstants, 
+				boogie2smt.getScript(), modifiableGlobalsPs2);
 		
 		
 		//We want to return true if (fState1 && fTrans)-> fState2 is valid

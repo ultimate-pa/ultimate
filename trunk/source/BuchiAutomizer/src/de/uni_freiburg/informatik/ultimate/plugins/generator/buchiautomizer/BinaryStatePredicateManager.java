@@ -301,7 +301,8 @@ public class BinaryStatePredicateManager {
 		LBool sat = PredicateUtils.isInductiveHelper(
 				m_SmtManager.getBoogie2Smt(), 
 				siSubsetAndRankEquality, 
-				siSubsetAndRankDecreaseAndBound, loopTf, modifiableGlobals);
+				siSubsetAndRankDecreaseAndBound, loopTf, 
+				modifiableGlobals, modifiableGlobals);
 		switch (sat) {
 		case SAT:
 		case UNKNOWN:
@@ -331,7 +332,7 @@ public class BinaryStatePredicateManager {
 			LBool sat = PredicateUtils.isInductiveHelper(
 					m_SmtManager.getBoogie2Smt(), 
 					siSubsetAndRankEquality, 
-					succPred, loopTf, modifiableGlobals);
+					succPred, loopTf, modifiableGlobals, modifiableGlobals);
 			if (sat != LBool.UNSAT) {
 				throw new AssertionError("Incorrect supporting invariant. Not inductive: " + succTerm);
 			}
@@ -433,7 +434,8 @@ public class BinaryStatePredicateManager {
 		LBool sat = PredicateUtils.isInductiveHelper(
 				m_SmtManager.getBoogie2Smt(), 
 				precondPredicate, 
-				postcondPredicate, transFormula, postconditionModifiableGlobals);
+				postcondPredicate, transFormula, 
+				preconditionModifiableGlobals, postconditionModifiableGlobals);
 		return sat == LBool.UNSAT;
 	}
 
