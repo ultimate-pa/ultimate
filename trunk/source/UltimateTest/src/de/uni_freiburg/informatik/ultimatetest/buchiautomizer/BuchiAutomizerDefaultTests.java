@@ -112,12 +112,12 @@ public class BuchiAutomizerDefaultTests extends
 	
 	private static final String[] m_BoogieToolchains = {
 		"BuchiAutomizerBplWithBlockEncoding.xml",
-		"BuchiAutomizerBplInlineWithBlockEncoding.xml",
+//		"BuchiAutomizerBplInlineWithBlockEncoding.xml",
 	};
 	
 	private static final String[] m_CToolchains = {
 		"BuchiAutomizerCWithBlockEncoding.xml",
-		"BuchiAutomizerCInlineWithBlockEncoding.xml",
+//		"BuchiAutomizerCInlineWithBlockEncoding.xml",
 	};
 
 	
