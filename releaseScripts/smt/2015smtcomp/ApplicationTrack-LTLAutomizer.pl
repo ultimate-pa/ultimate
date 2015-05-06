@@ -15,7 +15,7 @@ while (<>) {
      next if $_ =~ /^\(exit\)/;
      next if $_ =~ /^\(assert true\)/;
   if (/^\(set-info :source .*/) {
-     print "(set-info :source |\n";
+     print "(set-info :source |";
   } elsif (/^\)/) {
      print "|)\n";
   } elsif (/^.*SMT script generated on.*/) {
