@@ -720,8 +720,7 @@ public class ACSLHandler implements IACSLHandler {
         
         // TODO: CType
         return new ResultExpression(stmt, new RValue(new StructAccessExpression(LocationFactory.createACSLLocation(node),
-                (Expression) r.lrVal.getValue(), field), ((CStruct) r.lrVal.cType).getFieldType(field)), decl, auxVars, overappr);
-        //return new Result(new StructAccessExpression(LocationFactory.createACSLLocation(node), (Expression) r.node, field));
+                (Expression) r.lrVal.getValue(), field), ((CStruct) r.lrVal.cType.getUnderlyingType()).getFieldType(field)), decl, auxVars, overappr);
     }
 
     @Override
