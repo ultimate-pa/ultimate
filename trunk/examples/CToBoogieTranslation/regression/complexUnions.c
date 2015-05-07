@@ -1,3 +1,4 @@
+//#Safe
 /*
  * author: nutz, 10.02.2014
  */
@@ -24,10 +25,11 @@ int main() {
 	union u ui = { 9 };
 	ui.ux = 4;
 	intPtrPair ipp1, *ippp;
+        ippp = malloc(sizeof(intPtrPair));
 	ipp1.vx = ui.ux;
 	//@assert ipp1.vx == 4;
 
-	int *i;
+	int *i = malloc(sizeof(int));;
 	*i = 83;
 	ipp1.vp = i;
 	int j = *(ipp1.vp);
