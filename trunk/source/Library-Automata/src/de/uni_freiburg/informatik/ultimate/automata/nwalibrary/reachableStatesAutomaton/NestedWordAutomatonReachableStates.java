@@ -130,11 +130,7 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 	 */
 	private final static boolean m_ExtLassoConstructionTesting = false;
 
-	/**
-	 * Use also other methods for lasso construction. This is only useful if you
-	 * want to analyze if the lasso construction can be optimized.
-	 */
-	private final static boolean m_UseAlternativeLassoConstruction = false;
+
 
 	// private void addSummary(StateContainer<LETTER,STATE> callPred,
 	// StateContainer<LETTER,STATE> returnSucc) {
@@ -188,6 +184,14 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 			ResultChecker.writeToFileIfPreferred(m_Services, "FailedremoveUnreachable", message, operand);
 			throw e;
 		}
+	}
+	
+	/**
+	 * Returns the state container for a given state. 
+	 * The visibility of this method is deliberately set package private. 
+	 */
+	StateContainer<LETTER, STATE> getStateContainer(STATE state) {
+		return m_States.get(state);
 	}
 
 	private String stateContainerInformation() {
@@ -594,7 +598,7 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 		}
 		assert m_AcceptingSummaries == null;
 		m_AcceptingSummaries = new AcceptingSummariesComputation();
-		m_StronglyConnectedComponents = new StronglyConnectedComponents(m_AcceptingSummaries);
+		m_StronglyConnectedComponents = new StronglyConnectedComponents(m_AcceptingSummaries, m_Services);
 	}
 
 	public void computeNonLiveStates() {
@@ -1571,6 +1575,14 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 	 * @author heizmann@informatik.uni-freiburg.de
 	 */
 	public class StronglyConnectedComponents {
+		private final IUltimateServiceProvider m_Services;
+		private final Logger m_Logger;
+		/**
+		 * Use also other methods for lasso construction. This is only useful if you
+		 * want to analyze if the lasso construction can be optimized.
+		 */
+		private final static boolean m_UseAlternativeLassoConstruction = false;
+		
 		/**
 		 * Number of vertices that have been processed so far.
 		 */
@@ -1612,10 +1624,12 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 			return m_AcceptingBalls == 0;
 		}
 
-		public StronglyConnectedComponents(AcceptingSummariesComputation asc) {
+		public StronglyConnectedComponents(AcceptingSummariesComputation asc, IUltimateServiceProvider services) {
+			m_Services = services;
+			m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 			m_AcceptingSummaries = asc.getAcceptingSummaries();
-			for (STATE state : m_initialStates) {
-				StateContainer<LETTER, STATE> cont = m_States.get(state);
+			for (STATE state : getInitialStates()) {
+				StateContainer<LETTER, STATE> cont = getStateContainer(state);
 				if (!m_Indices.containsKey(cont)) {
 					strongconnect(cont);
 				}
@@ -1747,15 +1761,15 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 			this.m_NoScc.push(v);
 
 			for (OutgoingInternalTransition<LETTER, STATE> trans : v.internalSuccessors()) {
-				StateContainer<LETTER, STATE> succCont = m_States.get(trans.getSucc());
+				StateContainer<LETTER, STATE> succCont = getStateContainer(trans.getSucc());
 				processSuccessor(v, succCont);
 			}
 			for (SummaryReturnTransition<LETTER, STATE> trans : returnSummarySuccessor(v.getState())) {
-				StateContainer<LETTER, STATE> succCont = m_States.get(trans.getSucc());
+				StateContainer<LETTER, STATE> succCont = getStateContainer(trans.getSucc());
 				processSuccessor(v, succCont);
 			}
 			for (OutgoingCallTransition<LETTER, STATE> trans : v.callSuccessors()) {
-				StateContainer<LETTER, STATE> succCont = m_States.get(trans.getSucc());
+				StateContainer<LETTER, STATE> succCont = getStateContainer(trans.getSucc());
 				processSuccessor(v, succCont);
 			}
 
