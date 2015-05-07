@@ -1578,6 +1578,10 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 		private final IUltimateServiceProvider m_Services;
 		private final Logger m_Logger;
 		/**
+		 * Number of all states to which the SCC computation is applied.
+		 */
+		private final int m_NumberOfAllStates;
+		/**
 		 * Use also other methods for lasso construction. This is only useful if you
 		 * want to analyze if the lasso construction can be optimized.
 		 */
@@ -1627,6 +1631,7 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 		public StronglyConnectedComponents(AcceptingSummariesComputation asc, IUltimateServiceProvider services) {
 			m_Services = services;
 			m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
+			m_NumberOfAllStates = size();
 			m_AcceptingSummaries = asc.getAcceptingSummaries();
 			for (STATE state : getInitialStates()) {
 				StateContainer<LETTER, STATE> cont = getStateContainer(state);
@@ -1836,7 +1841,7 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 				max = Math.max(max, scc.getNumberOfStates());
 			}
 			m_Logger.debug("The biggest SCC has " + max + " vertices.");
-			boolean sameNumberOfVertices = (statesInAllBalls + m_NumberOfNonBallSCCs == m_States.size());
+			boolean sameNumberOfVertices = (statesInAllBalls + m_NumberOfNonBallSCCs == m_NumberOfAllStates);
 			return sameNumberOfVertices;
 		}
 
