@@ -500,7 +500,7 @@ public class ACSLHandler implements IACSLHandler {
     @Override
     public Result visit(Dispatcher main, Requires node) {
         specType = ACSLHandler.SPEC_TYPE.REQUIRES;
-        Expression formula = (Expression) main.dispatch(node.getFormula()).node;
+        Expression formula = ((ResultExpression) main.dispatch(node.getFormula())).lrVal.getValue();
         Check check = new Check(Check.Spec.PRE_CONDITION);
         ILocation reqLoc = LocationFactory.createACSLLocation(node, check);
         RequiresSpecification req = new RequiresSpecification(reqLoc, false,
@@ -522,7 +522,7 @@ public class ACSLHandler implements IACSLHandler {
             throw new UnsupportedSyntaxException(loc, msg);
         }
         specType = ACSLHandler.SPEC_TYPE.ENSURES;
-        Expression formula = (Expression) main.dispatch(e).node;
+        Expression formula = ((ResultExpression) main.dispatch(e)).lrVal.getValue();
         Check check = new Check(Check.Spec.POST_CONDITION);
         ILocation ensLoc = LocationFactory.createACSLLocation(node, check);
         EnsuresSpecification ens = new EnsuresSpecification(ensLoc, false,
