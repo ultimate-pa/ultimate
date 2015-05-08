@@ -39,7 +39,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.Transitionlet;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.NestedLassoRun;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.NestedWordAutomatonReachableStates.StronglyConnectedComponents.SCC;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.SccComputationWithAcceptingLassos.SCC;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 
 class LassoConstructor<LETTER, STATE> {
@@ -60,7 +60,7 @@ class LassoConstructor<LETTER, STATE> {
     
 	public LassoConstructor(IUltimateServiceProvider services, 
 			NestedWordAutomatonReachableStates<LETTER, STATE> nwars, 
-			StateContainer<LETTER, STATE> goal, SCC scc) throws OperationCanceledException {
+			StateContainer<LETTER, STATE> goal, SccComputationWithAcceptingLassos<LETTER, STATE>.SCC scc) throws OperationCanceledException {
 		m_Services = services;
 		m_Nwars = nwars;
 		m_Goal = goal;
@@ -82,7 +82,7 @@ class LassoConstructor<LETTER, STATE> {
 	
 	public LassoConstructor(IUltimateServiceProvider services,
 			NestedWordAutomatonReachableStates<LETTER, STATE> nwars, 
-			Summary<LETTER, STATE> summary, SCC scc) throws OperationCanceledException {
+			Summary<LETTER, STATE> summary, SccComputationWithAcceptingLassos<LETTER, STATE>.SCC scc) throws OperationCanceledException {
 		m_Services = services;
 		m_Nwars = nwars;
 		m_Goal = summary.getSucc();

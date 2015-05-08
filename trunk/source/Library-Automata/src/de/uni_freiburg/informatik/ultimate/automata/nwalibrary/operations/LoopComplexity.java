@@ -39,7 +39,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomat
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.NestedWordAutomatonReachableStates;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.NestedWordAutomatonReachableStates.StronglyConnectedComponents.SCC;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.SccComputationWithAcceptingLassos;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.SccComputationWithAcceptingLassos.SCC;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 
@@ -78,9 +79,9 @@ public class LoopComplexity<LETTER, STATE> implements IOperation<LETTER, STATE> 
 	private Integer compute(INestedWordAutomaton<LETTER, STATE> operand) throws AutomataLibraryException {
 		NestedWordAutomatonReachableStates<LETTER, STATE> nwars = 
 				new NestedWordAutomatonReachableStates<>(m_Services, operand);
-		NestedWordAutomatonReachableStates<LETTER, STATE>.StronglyConnectedComponents sccs = 
+		SccComputationWithAcceptingLassos sccs = 
 				nwars.getOrComputeStronglyConnectedComponents();
-		Collection<NestedWordAutomatonReachableStates<LETTER, STATE>.StronglyConnectedComponents.SCC> balls = sccs.getBalls();
+		Collection<SccComputationWithAcceptingLassos.SCC> balls = sccs.getBalls();
 		for (SCC scc : balls) {
 			scc.getAllStatesContainers();
 		}

@@ -36,6 +36,7 @@ import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.NestedWordAutomatonReachableStates;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.SccComputationWithAcceptingLassos;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 
 public class LassoExtractor<LETTER, STATE> implements IOperation<LETTER,STATE> {
@@ -60,7 +61,7 @@ public class LassoExtractor<LETTER, STATE> implements IOperation<LETTER,STATE> {
 		} else {
 			m_Reach = new NestedWordAutomatonReachableStates<LETTER, STATE>(m_Services, m_Operand);
 		}
-		NestedWordAutomatonReachableStates<LETTER, STATE>.StronglyConnectedComponents sccs = 
+		SccComputationWithAcceptingLassos<LETTER, STATE> sccs = 
 				m_Reach.getOrComputeStronglyConnectedComponents();
 		m_NestedLassoRuns = sccs.getAllNestedLassoRuns();
 		m_NestedLassoWords = new ArrayList<NestedLassoWord<LETTER>>(m_NestedLassoRuns.size());

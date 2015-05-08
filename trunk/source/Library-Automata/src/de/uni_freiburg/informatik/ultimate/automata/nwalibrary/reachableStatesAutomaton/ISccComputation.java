@@ -36,7 +36,7 @@ import java.util.Set;
  *
  * @param <STATE>
  */
-public interface SccComputation<STATE> {
+public interface ISccComputation<STATE> {
 	
 	/**
 	 * Computes the set of all balls that are subsets of stateSet.

@@ -33,6 +33,7 @@ import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.NestedWordAutomatonReachableStates;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.SccComputationWithAcceptingLassos;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 
 
@@ -48,7 +49,7 @@ public class BuchiIsEmpty<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	private final IUltimateServiceProvider m_Services;
 	INestedWordAutomatonSimple<LETTER, STATE> m_Nwa;
 	NestedWordAutomatonReachableStates<LETTER, STATE> m_Reach;
-	NestedWordAutomatonReachableStates<LETTER, STATE>.StronglyConnectedComponents m_Sccs;
+	SccComputationWithAcceptingLassos<LETTER, STATE> m_Sccs;
 	final Boolean m_Result;
 	
 	public BuchiIsEmpty(IUltimateServiceProvider services,
