@@ -7,11 +7,11 @@ import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
-import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieNonOldVar;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieOldVar;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
@@ -65,7 +65,7 @@ public class PredicateUtils {
 		f = Util.and(boogie2smt.getScript(),fTrans,f);
 		f = Util.and(boogie2smt.getScript(),ps1renamed, f);
 		
-		// f = new FormulaUnLet().unlet(f);
+//		 f = new FormulaUnLet().unlet(f);
 		boogie2smt.getScript().assertTerm(f);
 		
 		LBool result = boogie2smt.getScript().checkSat();
@@ -201,7 +201,7 @@ public class PredicateUtils {
 			if (tf.getInVars().get(outVar) != tv) {
 				assignedVars.add(outVar);
 				Term cIndex;
-				if (outVar.isOldvar()) {
+				if (outVar.isOldvar() && !tf.getAssignedVars().contains(outVar)) {
 					cIndex = outVar.getDefaultConstant();
 				}
 				else {
