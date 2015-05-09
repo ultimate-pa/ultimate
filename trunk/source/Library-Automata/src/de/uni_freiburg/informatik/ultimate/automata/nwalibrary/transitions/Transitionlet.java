@@ -23,37 +23,19 @@
  * licensors of the ULTIMATE Automata Library grant you additional permission 
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.automata.nwalibrary;
-
+package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions;
 
 /**
- * Return Transition of a hierarchical predecessor.
+ * Interface for outgoing (resp. incoming) transitions of nested word automata. 
+ * For reasons of efficiency these transitions do not contain the predecessor
+ * (resp. successor) because the automaton already stores this information.
  * 
- * @author heizmann@informatik.uni-freiburg.de
+ * The only common object of all these is the letter.
  *
  * @param <LETTER>
  * @param <STATE>
  */
-public class SummaryReturnTransition<LETTER,STATE> implements Transitionlet<LETTER,STATE> {
+public interface Transitionlet<LETTER,STATE> {
 	
-	private final STATE m_LinPred;
-	private final LETTER m_Letter; 
-	private final STATE m_Succ;
-	
-	public SummaryReturnTransition(STATE linPred, LETTER letter, STATE succ) {
-		m_LinPred = linPred;
-		m_Letter = letter;
-		m_Succ = succ;
-	}
-	
-	public STATE getLinPred() {
-		return m_LinPred;
-	}
-	public LETTER getLetter() {
-		return m_Letter;
-	}
-	public STATE getSucc() {
-		return m_Succ;
-	}
-	
+	public LETTER getLetter();
 }

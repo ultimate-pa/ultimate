@@ -43,8 +43,8 @@ import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 
 /**

@@ -23,46 +23,39 @@
  * licensors of the ULTIMATE Automata Library grant you additional permission 
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.automata.nwalibrary;
+package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions;
 
 import java.text.MessageFormat;
 
 
 /**
- * Return transition outgoing of some state.
+ * Internal Transition of a successor state.
  * 
  * @author heizmann@informatik.uni-freiburg.de
  *
  * @param <LETTER>
  * @param <STATE>
  */
-public class OutgoingReturnTransition<LETTER,STATE> implements Transitionlet<LETTER,STATE> {
+public class IncomingInternalTransition<LETTER,STATE> implements Transitionlet<LETTER,STATE> {
 	
-	private final STATE m_HierPred;
 	private final LETTER m_Letter; 
-	private final STATE m_Succ;
-
+	private final STATE m_Pred;
 	
-	public OutgoingReturnTransition(STATE hierPred, LETTER letter, STATE succ) {
-		m_HierPred = hierPred;
+	public IncomingInternalTransition(STATE pred, LETTER letter) {
+		m_Pred = pred;
 		m_Letter = letter;
-		m_Succ = succ;
-	}
-	
-	public STATE getHierPred() {
-		return m_HierPred;
 	}
 	
 	public LETTER getLetter() {
 		return m_Letter;
 	}
 	
-	public STATE getSucc() {
-		return m_Succ;
-	}
-
-	public String toString() {
-		return MessageFormat.format("( _ , {0} , {1} , {2} )", getHierPred(), getLetter(), getSucc());
+	public STATE getPred() {
+		return m_Pred;
 	}
 	
+	
+	public String toString() {
+		return MessageFormat.format("( {0} , {1} , _ )",getPred(), getLetter());
+	}
 }

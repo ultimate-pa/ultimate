@@ -41,11 +41,11 @@ import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingCallTransition;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingInternalTransition;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.alternating.AlternatingAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.NestedWordAutomatonReachableStates;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingCallTransition;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;

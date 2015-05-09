@@ -32,6 +32,8 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
+
 /**
  * Contains STATES and information of transitions in field/Map implementation
  * of NWAs 

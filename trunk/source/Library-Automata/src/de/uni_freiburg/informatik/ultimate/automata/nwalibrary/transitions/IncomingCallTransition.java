@@ -23,19 +23,39 @@
  * licensors of the ULTIMATE Automata Library grant you additional permission 
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.automata.nwalibrary;
+package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions;
+
+import java.text.MessageFormat;
+
 
 /**
- * Interface for outgoing (resp. incoming) transitions of nested word automata. 
- * For reasons of efficiency these transitions do not contain the predecessor
- * (resp. successor) because the automaton already stores this information.
+ * Call Transition of a successor state.
  * 
- * The only common object of all these is the letter.
+ * @author heizmann@informatik.uni-freiburg.de
  *
  * @param <LETTER>
  * @param <STATE>
  */
-public interface Transitionlet<LETTER,STATE> {
+public class IncomingCallTransition<LETTER,STATE> implements Transitionlet<LETTER,STATE> {
 	
-	public LETTER getLetter();
+	private final LETTER m_Letter; 
+	private final STATE m_Pred;
+	
+	public IncomingCallTransition(STATE pred, LETTER letter) {
+		m_Pred = pred;
+		m_Letter = letter;
+	}
+	
+	public LETTER getLetter() {
+		return m_Letter;
+	}
+	
+	public STATE getPred() {
+		return m_Pred;
+	}
+	
+	public String toString() {
+		return MessageFormat.format("( {0} , {1} , _ )",getPred(), getLetter());
+	}
+	
 }

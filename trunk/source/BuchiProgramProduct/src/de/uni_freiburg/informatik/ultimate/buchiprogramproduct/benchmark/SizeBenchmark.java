@@ -7,10 +7,10 @@ import java.util.HashSet;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingCallTransition;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingInternalTransition;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingReturnTransition;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.SummaryReturnTransition;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingCallTransition;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingReturnTransition;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.SummaryReturnTransition;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;

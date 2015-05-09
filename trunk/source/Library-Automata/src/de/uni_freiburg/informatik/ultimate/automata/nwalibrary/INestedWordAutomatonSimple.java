@@ -28,6 +28,9 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingCallTransition;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingReturnTransition;
 /**
  * Interface for the most basic data structure that represents a nested word 
  * automaton. This data structure neither provides a method for getting all

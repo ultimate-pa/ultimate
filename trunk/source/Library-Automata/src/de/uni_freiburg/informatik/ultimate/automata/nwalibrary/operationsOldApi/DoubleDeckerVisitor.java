@@ -43,10 +43,10 @@ import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.DoubleDecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IncomingCallTransition;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IncomingInternalTransition;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IncomingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.IncomingCallTransition;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.IncomingInternalTransition;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.IncomingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 
 /**

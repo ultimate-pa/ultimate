@@ -36,11 +36,11 @@ import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingCallTransition;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingInternalTransition;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.Transitionlet;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingCallTransition;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingReturnTransition;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.Transitionlet;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 
 /**

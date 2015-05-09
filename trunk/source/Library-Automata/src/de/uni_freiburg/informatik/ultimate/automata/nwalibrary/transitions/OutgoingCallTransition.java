@@ -23,39 +23,39 @@
  * licensors of the ULTIMATE Automata Library grant you additional permission 
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.automata.nwalibrary;
+package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions;
 
 import java.text.MessageFormat;
 
 
 /**
- * Call Transition of a successor state.
+ * Outgoing call transition of a state.
  * 
  * @author heizmann@informatik.uni-freiburg.de
  *
  * @param <LETTER>
  * @param <STATE>
  */
-public class IncomingCallTransition<LETTER,STATE> implements Transitionlet<LETTER,STATE> {
+public class OutgoingCallTransition<LETTER,STATE> implements Transitionlet<LETTER,STATE> {
 	
 	private final LETTER m_Letter; 
-	private final STATE m_Pred;
+	private final STATE m_Succ;
 	
-	public IncomingCallTransition(STATE pred, LETTER letter) {
-		m_Pred = pred;
+	public OutgoingCallTransition(LETTER letter, STATE succ) {
 		m_Letter = letter;
+		m_Succ = succ;
 	}
 	
 	public LETTER getLetter() {
 		return m_Letter;
 	}
 	
-	public STATE getPred() {
-		return m_Pred;
+	public STATE getSucc() {
+		return m_Succ;
 	}
 	
 	public String toString() {
-		return MessageFormat.format("( {0} , {1} , _ )",getPred(), getLetter());
+		return MessageFormat.format("( _ , {0} , {1} )", getLetter(), getSucc());
 	}
 	
 }

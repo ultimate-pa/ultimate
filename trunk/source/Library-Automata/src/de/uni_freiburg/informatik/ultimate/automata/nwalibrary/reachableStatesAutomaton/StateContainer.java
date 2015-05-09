@@ -31,13 +31,13 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IncomingCallTransition;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IncomingInternalTransition;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IncomingReturnTransition;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingCallTransition;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingInternalTransition;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.NestedWordAutomatonReachableStates.ReachProp;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.IncomingCallTransition;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.IncomingInternalTransition;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.IncomingReturnTransition;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingCallTransition;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingReturnTransition;
 
 /**
  * Auxiliary data structure used by {@link NestedWordAutomatonReachableStates}.

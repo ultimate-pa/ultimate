@@ -46,10 +46,10 @@ import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IncomingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.SummaryReturnTransition;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.IncomingReturnTransition;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.SummaryReturnTransition;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 
 /**

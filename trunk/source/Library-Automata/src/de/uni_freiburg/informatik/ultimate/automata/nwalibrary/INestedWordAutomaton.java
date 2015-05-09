@@ -28,6 +28,12 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary;
 import java.util.Collection;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.IncomingCallTransition;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.IncomingInternalTransition;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.IncomingReturnTransition;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingReturnTransition;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.SummaryReturnTransition;
+
 /**
  * Interface for data structures that implement nested word automata.
  * (see INestedWordAutomatonSimple).

@@ -25,7 +25,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton;
 
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IncomingReturnTransition;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.IncomingReturnTransition;
 
 class Summary<LETTER, STATE> {
 	private final StateContainer<LETTER, STATE> m_HierPred;

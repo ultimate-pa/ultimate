@@ -36,13 +36,13 @@ import java.util.Stack;
 import java.util.TreeMap;
 
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IncomingCallTransition;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IncomingInternalTransition;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IncomingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.Transitionlet;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.StateContainer.DownStateProp;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.IncomingCallTransition;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.IncomingInternalTransition;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.IncomingReturnTransition;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.Transitionlet;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 
 /**

@@ -41,8 +41,8 @@ import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.DoubleDecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IncomingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.Senwa;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.IncomingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 
 /**
