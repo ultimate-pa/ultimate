@@ -25,13 +25,6 @@ public final class ExtensionPoints {
 	// /////////////////////////////////////////
 
 	/**
-	 * Prevent initialization of this class
-	 */
-	private ExtensionPoints() {
-
-	}
-
-	/**
 	 * Name of extension point for plugins implementing {@link IController}.
 	 */
 	public static final String EP_CONTROLLER = "de.uni_freiburg.informatik.ultimate.ep.controller";
@@ -72,4 +65,11 @@ public final class ExtensionPoints {
 	 */
 	public static final List<String> PLUGIN_EPS = Collections.unmodifiableList(Arrays.asList(EP_GENERATOR, EP_ANALYSIS,
 			EP_OUTPUT, EP_SOURCE, EP_SERVICE));
+
+	/**
+	 * Prevent initialization of this class.
+	 */
+	private ExtensionPoints() {
+
+	}
 }

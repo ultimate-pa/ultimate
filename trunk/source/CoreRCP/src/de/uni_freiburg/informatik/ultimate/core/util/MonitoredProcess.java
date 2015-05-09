@@ -35,13 +35,13 @@ public final class MonitoredProcess implements IStorable {
 
 	/**
 	 * Time in milliseconds to wait for the termination of a process after
-	 * sending the exit command
+	 * sending the exit command.
 	 */
 	private static final int WAIT_FOR_EXIT_COMMAND_MILLIS = 200;
 
 	/**
 	 * Time in milliseconds to wait between checks if the toolchain is still
-	 * running
+	 * running.
 	 */
 	private static final int WAIT_BETWEEN_CHECKS_MILLIS = 500;
 
@@ -52,7 +52,7 @@ public final class MonitoredProcess implements IStorable {
 
 	/**
 	 * -2 because we wait until all 3 threads (stderr buffer, stdin buffer,
-	 * actual process watcher) are ready
+	 * actual process watcher) are ready.
 	 */
 	private static final int INITIAL_SEMAPHORE_COUNT = -2;
 
@@ -213,11 +213,11 @@ public final class MonitoredProcess implements IStorable {
 	 *             exception is thrown.
 	 */
 	public MonitoredProcessState waitfor(long millis) throws InterruptedException {
-		if (mMonitor.getState().equals(State.TERMINATED)) {
+		if (mMonitor.getState() == State.TERMINATED) {
 			return new MonitoredProcessState(false, false, mReturnCode);
 		}
 		mMonitor.join(millis);
-		if (mMonitor.getState().equals(State.TERMINATED)) {
+		if (mMonitor.getState() == State.TERMINATED) {
 			return new MonitoredProcessState(false, false, mReturnCode);
 		} else {
 			return new MonitoredProcessState(true, false, mReturnCode);
@@ -462,7 +462,7 @@ public final class MonitoredProcess implements IStorable {
 	 * @author dietsch@informatik.uni-freiburg.de
 	 * 
 	 */
-	public static class MonitoredProcessState {
+	public static final class MonitoredProcessState {
 		private final boolean mIsRunning;
 		private final int mReturnCode;
 		private final boolean mIsKilled;
@@ -566,6 +566,7 @@ public final class MonitoredProcess implements IStorable {
 				mEndOfPumps = endOfPumps;
 			}
 
+			@Override
 			public void run() {
 				int chunk = -1;
 				mWaitForSetup.release();
