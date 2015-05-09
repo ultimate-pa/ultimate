@@ -16,6 +16,7 @@ import de.uni_freiburg.informatik.ultimatetest.util.Util;
  * to correct Boogie code. It runs CACSL2BoogieTranslator and BoogiePrinter on C
  * programs and compares the resulting Boogie file with a reference file.
  * 
+ * <p>
  * The result of this test and of the comparison is decided in
  * {@link TranslationTestResultDecider}.
  * 
@@ -25,7 +26,7 @@ import de.uni_freiburg.informatik.ultimatetest.util.Util;
 public class C2BoogieRegressionTestSuite extends AbstractRegressionTestSuite {
 
 	private static String sRootFolder = Util.getPathFromTrunk("examples/CToBoogieTranslation");
-	
+
 	private static final long DEFAULT_TIMEOUT_MILLIS = 5000;
 	private static final String TEMPORARY_BOOGIE_FILENAME_PATTERN = ".*regression.*BoogiePrinter_.*UID.*";
 
@@ -71,7 +72,7 @@ public class C2BoogieRegressionTestSuite extends AbstractRegressionTestSuite {
 					sLogger.info(String.format("Deleteing %s failed", f.getAbsolutePath()));
 				}
 			} catch (SecurityException e) {
-				sLogger.error(e);
+				sLogger.error(String.format("Exception while deleting file %s", f), e);
 			}
 		}
 	}

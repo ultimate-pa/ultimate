@@ -1,11 +1,19 @@
 package de.uni_freiburg.informatik.ultimate.ep;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+
+import de.uni_freiburg.informatik.ultimate.ep.interfaces.IAnalysis;
+import de.uni_freiburg.informatik.ultimate.ep.interfaces.IController;
+import de.uni_freiburg.informatik.ultimate.ep.interfaces.IGenerator;
+import de.uni_freiburg.informatik.ultimate.ep.interfaces.IOutput;
+import de.uni_freiburg.informatik.ultimate.ep.interfaces.ISource;
+
 /**
- * Class for defining the names of the extension points. Note: Coding
- * Conventions do not apply for the Listing of extension points for better
- * reading in plugin.xml(s)
+ * Provides the names of Ultimate's OSGi extension points.
  * 
- * @author dietsch
+ * @author dietsch@informatik.uni-freiburg.de
  * 
  */
 public final class ExtensionPoints {
@@ -17,40 +25,51 @@ public final class ExtensionPoints {
 	// /////////////////////////////////////////
 
 	/**
-	 * Extension Point-Name for AST-Generators.
+	 * Prevent initialization of this class
+	 */
+	private ExtensionPoints() {
+
+	}
+
+	/**
+	 * Name of extension point for plugins implementing {@link IController}.
 	 */
 	public static final String EP_CONTROLLER = "de.uni_freiburg.informatik.ultimate.ep.controller";
 
 	/**
-	 * Extension Point-Name for generative plugins. They generate a new model
-	 * out of a present AST.
+	 * Name of extension point for plugins implementing {@link IGenerator}.
 	 */
 	public static final String EP_GENERATOR = "de.uni_freiburg.informatik.ultimate.ep.generator";
 
 	/**
-	 * Extension Point-Name for transforming plugins.
+	 * Name of extension point for plugins implementing {@link IAnalysis}.
 	 */
 	public static final String EP_ANALYSIS = "de.uni_freiburg.informatik.ultimate.ep.analysis";
 
 	/**
-	 * Extension Point-Name for Output-Plugins.
+	 * Name of extension point for plugins implementing {@link IOutput}.
 	 */
 	public static final String EP_OUTPUT = "de.uni_freiburg.informatik.ultimate.ep.output";
 
 	/**
-	 * Extension Point-Name for Source-Plugins.
+	 * Name of extension point for plugins implementing {@link ISource}.
 	 */
 	public static final String EP_SOURCE = "de.uni_freiburg.informatik.ultimate.ep.source";
 
 	/**
-	 * Extension Point-Name for Serialization-Plugins.
+	 * Name of extension point for serialization plugins (currently unused).
 	 */
 	public static final String EP_SERIALIZATION = "de.uni_freiburg.informatik.ultimate.ep.serialization";
 
 	/**
-	 * Extension Point-Name for Service-Plugins.
+	 * Name of extension point for service plugins.
 	 */
 	public static final String EP_SERVICE = "de.uni_freiburg.informatik.ultimate.ep.service";
 
-	public static final String[] PLUGIN_EPS = { EP_GENERATOR, EP_ANALYSIS, EP_OUTPUT, EP_SOURCE, EP_SERVICE };
+	/**
+	 * All extension point names that correspond to plugins (i.e. without the
+	 * controller plugin).
+	 */
+	public static final List<String> PLUGIN_EPS = Collections.unmodifiableList(Arrays.asList(EP_GENERATOR, EP_ANALYSIS,
+			EP_OUTPUT, EP_SOURCE, EP_SERVICE));
 }
