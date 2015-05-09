@@ -209,7 +209,12 @@ public class Util {
 		ArrayList<File> rtr = new ArrayList<File>();
 
 		if (root.isFile()) {
-			rtr.add(root);
+			for (String s : endings) {
+				if (root.getAbsolutePath().endsWith(s)) {
+					rtr.add(root);
+					break;
+				}
+			}
 			return rtr;
 		}
 
