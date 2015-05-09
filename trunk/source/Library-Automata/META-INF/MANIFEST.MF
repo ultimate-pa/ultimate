@@ -34,6 +34,7 @@ Export-Package: de.uni_freiburg.informatik.ultimate.automata;
  de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization,
  de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi,
  de.uni_freiburg.informatik.ultimate.automata.nwalibrary.senwa,
+ de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions,
  de.uni_freiburg.informatik.ultimate.automata.nwalibrary.visualization;uses:="de.uni_freiburg.informatik.ultimate.model,de.uni_freiburg.informatik.ultimate.automata.nwalibrary",
  de.uni_freiburg.informatik.ultimate.automata.petrinet;uses:="de.uni_freiburg.informatik.ultimate.automata,de.uni_freiburg.informatik.ultimate.automata.nwalibrary",
  de.uni_freiburg.informatik.ultimate.automata.petrinet.julian;uses:="de.uni_freiburg.informatik.ultimate.automata.petrinet,de.uni_freiburg.informatik.ultimate.automata.nwalibrary,de.uni_freiburg.informatik.ultimate.automata",
