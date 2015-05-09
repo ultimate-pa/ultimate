@@ -25,10 +25,9 @@ public abstract class UltimateTestSuite {
 
 	private static List<ITestSummary> sSummaries;
 	private static List<IIncrementalLog> sLogFiles;
-	protected Logger mLogger;
+	protected static Logger sLogger = Logger.getLogger(UltimateTestSuite.class);
 
 	public UltimateTestSuite() {
-		mLogger = Logger.getLogger(UltimateTestSuite.class);
 		if (sSummaries == null) {
 			ITestSummary[] summaries = constructTestSummaries();
 
