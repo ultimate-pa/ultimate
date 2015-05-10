@@ -24,7 +24,8 @@ public class UltimatePreferenceStore {
 
 	private final String mPluginID;
 
-	private static HashMap<String, HashSet<IPreferenceChangeListener>> sActiveListener = new HashMap<String, HashSet<IPreferenceChangeListener>>();
+	private static HashMap<String, HashSet<IPreferenceChangeListener>> sActiveListener 
+		= new HashMap<String, HashSet<IPreferenceChangeListener>>();
 
 	public UltimatePreferenceStore(String pluginID) {
 		mPluginID = pluginID;

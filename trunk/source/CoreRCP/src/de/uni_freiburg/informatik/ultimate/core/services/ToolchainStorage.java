@@ -44,10 +44,12 @@ public class ToolchainStorage implements IToolchainStorage,
 
 	@Override
 	public void clear() {
-		// TODO: Somehow unclear why i need this; but if i dont have it,
-		// concurrentmod exceptions are flying
 		List<IStorable> current = new ArrayList<>(mToolchainStorage.values());
 
+		if(current.isEmpty()){
+			return;
+		}
+		
 		// destroy storables in reverse order s.t., e.g., scripts are destroyed
 		// before the solver is destroyed.
 		// this is done because we assume that instances created later may

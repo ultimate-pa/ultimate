@@ -32,6 +32,7 @@ import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceSt
  * UltimateLoggers
  * 
  * @author Björn Buchhold
+ * @author dietsch@informatik.uni-freiburg.de
  * 
  */
 public final class LoggingService implements IStorable, ILoggingService {
@@ -45,6 +46,7 @@ public final class LoggingService implements IStorable, ILoggingService {
 	private List<String> mLiveLoggerIds;
 	private FileAppender mFileAppender;
 	private ConsoleAppender mConsoleAppender;
+	private IPreferenceChangeListener mRefreshingListener;
 
 	private HashSet<Appender> mAdditionalAppenders;
 
@@ -71,46 +73,9 @@ public final class LoggingService implements IStorable, ILoggingService {
 		refreshPropertiesLoggerHierarchie();
 		refreshPropertiesAppendLogFile();
 
-		// FIXME: Care! Check which properties are relevant for logging and
-		// exactly when we have to reload
-		// we do not care what property changes, we just reload the logging
-		// stuff every time
-		mPreferenceStore.addPreferenceChangeListener(new IPreferenceChangeListener() {
-			@Override
-			public void preferenceChange(PreferenceChangeEvent event) {
-				// do things if it concerns the loggers
-				String ek = event.getKey();
-				if (ek.equals(CorePreferenceInitializer.LABEL_LOG4J_PATTERN)
-						|| ek.equals(CorePreferenceInitializer.LABEL_LOGFILE)
-						|| ek.equals(CorePreferenceInitializer.LABEL_LOGFILE_NAME)
-						|| ek.equals(CorePreferenceInitializer.LABEL_LOGFILE_DIR)
-						|| ek.equals(CorePreferenceInitializer.LABEL_APPEXLOGFILE)
-						|| ek.equals(CorePreferenceInitializer.EXTERNAL_TOOLS_PREFIX)
-						|| ek.equals(CorePreferenceInitializer.PREFID_ROOT)
-						|| ek.equals(CorePreferenceInitializer.PREFID_PLUGINS)
-						|| ek.equals(CorePreferenceInitializer.PREFID_TOOLS)
-						|| ek.equals(CorePreferenceInitializer.PREFID_CONTROLLER)
-						|| ek.equals(CorePreferenceInitializer.PREFID_CORE)
-						|| ek.equals(CorePreferenceInitializer.PREFID_DETAILS)
-						|| ek.equals(CorePreferenceInitializer.LABEL_ROOT_PREF)
-						|| ek.equals(CorePreferenceInitializer.LABEL_TOOLS_PREF)
-						|| ek.equals(CorePreferenceInitializer.LABEL_CORE_PREF)
-						|| ek.equals(CorePreferenceInitializer.LABEL_CONTROLLER_PREF)
-						|| ek.equals(CorePreferenceInitializer.LABEL_PLUGINS_PREF)
-						|| ek.equals(CorePreferenceInitializer.LABEL_PLUGIN_DETAIL_PREF)
-						|| ek.equals(CorePreferenceInitializer.LABEL_COLOR_DEBUG)
-						|| ek.equals(CorePreferenceInitializer.LABEL_COLOR_INFO)
-						|| ek.equals(CorePreferenceInitializer.LABEL_COLOR_WARNING)
-						|| ek.equals(CorePreferenceInitializer.LABEL_COLOR_ERROR)
-						|| ek.equals(CorePreferenceInitializer.LABEL_COLOR_FATAL)) {
-					// its relevant
-				} else {
-					// it does not concern us, just break
-					return;
-				}
-				refreshLoggingService();
-			}
-		});
+		mRefreshingListener = new RefreshingPreferenceChangeListener();
+		mPreferenceStore.removePreferenceChangeListener(mRefreshingListener);
+		mPreferenceStore.addPreferenceChangeListener(mRefreshingListener);
 	}
 
 	public void refreshLoggingService() {
@@ -378,40 +343,77 @@ public final class LoggingService implements IStorable, ILoggingService {
 
 	@Override
 	public void destroy() {
-		// the logger factory does not destroy anything
+		mPreferenceStore.removePreferenceChangeListener(mRefreshingListener);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * de.uni_freiburg.informatik.ultimate.core.services.ILoggingService#getLogger
-	 * (java.lang.String)
-	 */
 	@Override
 	public Logger getLogger(String pluginId) {
 		return getLoggerById(pluginId);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.core.services.ILoggingService#
-	 * getLoggerForExternalTool(java.lang.String)
-	 */
 	@Override
 	public Logger getLoggerForExternalTool(String id) {
 		return getLoggerById(CorePreferenceInitializer.EXTERNAL_TOOLS_PREFIX + id);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.core.services.ILoggingService#
-	 * getControllerLogger()
-	 */
 	@Override
 	public Logger getControllerLogger() {
 		return getLoggerById(LoggingService.LOGGER_NAME_CONTROLLER);
+	}
+	
+	private final class RefreshingPreferenceChangeListener implements IPreferenceChangeListener {
+		// FIXME: Care! Check which properties are relevant for logging and
+		// exactly when we have to reload
+		// we do not care what property changes, we just reload the logging
+		// stuff every time
+		
+		private RefreshingPreferenceChangeListener(){
+			
+		}
+		
+		@Override
+		public void preferenceChange(PreferenceChangeEvent event) {
+			// do things if it concerns the loggers
+			String ek = event.getKey();
+			Object newValue = event.getNewValue();
+			Object oldValue = event.getOldValue();
+			
+			if(newValue == null && oldValue == null){
+				return;
+			}
+			
+			if(newValue != null && newValue.equals(oldValue)){
+				return;
+			}
+			if (ek.equals(CorePreferenceInitializer.LABEL_LOG4J_PATTERN)
+					|| ek.equals(CorePreferenceInitializer.LABEL_LOGFILE)
+					|| ek.equals(CorePreferenceInitializer.LABEL_LOGFILE_NAME)
+					|| ek.equals(CorePreferenceInitializer.LABEL_LOGFILE_DIR)
+					|| ek.equals(CorePreferenceInitializer.LABEL_APPEXLOGFILE)
+					|| ek.equals(CorePreferenceInitializer.EXTERNAL_TOOLS_PREFIX)
+					|| ek.equals(CorePreferenceInitializer.PREFID_ROOT)
+					|| ek.equals(CorePreferenceInitializer.PREFID_PLUGINS)
+					|| ek.equals(CorePreferenceInitializer.PREFID_TOOLS)
+					|| ek.equals(CorePreferenceInitializer.PREFID_CONTROLLER)
+					|| ek.equals(CorePreferenceInitializer.PREFID_CORE)
+					|| ek.equals(CorePreferenceInitializer.PREFID_DETAILS)
+					|| ek.equals(CorePreferenceInitializer.LABEL_ROOT_PREF)
+					|| ek.equals(CorePreferenceInitializer.LABEL_TOOLS_PREF)
+					|| ek.equals(CorePreferenceInitializer.LABEL_CORE_PREF)
+					|| ek.equals(CorePreferenceInitializer.LABEL_CONTROLLER_PREF)
+					|| ek.equals(CorePreferenceInitializer.LABEL_PLUGINS_PREF)
+					|| ek.equals(CorePreferenceInitializer.LABEL_PLUGIN_DETAIL_PREF)
+					|| ek.equals(CorePreferenceInitializer.LABEL_COLOR_DEBUG)
+					|| ek.equals(CorePreferenceInitializer.LABEL_COLOR_INFO)
+					|| ek.equals(CorePreferenceInitializer.LABEL_COLOR_WARNING)
+					|| ek.equals(CorePreferenceInitializer.LABEL_COLOR_ERROR)
+					|| ek.equals(CorePreferenceInitializer.LABEL_COLOR_FATAL)) {
+				// its relevant
+			} else {
+				// it does not concern us, just break
+				return;
+			}
+			refreshLoggingService();
+		}
 	}
 }

@@ -230,6 +230,7 @@ public class UltimateCore implements IApplication, ICore, IUltimatePlugin {
 			// produce memory leaks
 			Job.getJobManager().removeJobChangeListener(mJobChangeAdapter);
 			mJobChangeAdapter = null;
+			mCoreStorage.clear();
 		}
 	}
 
