@@ -35,7 +35,7 @@ import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.NestedLassoRun;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.SccComputationWithAcceptingLassos.SCC;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.SccComputationWithAcceptingLassos.SCComponent;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.IncomingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.IncomingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.IncomingReturnTransition;
@@ -50,7 +50,7 @@ class LassoConstructor<LETTER, STATE> {
                     new HashSet<StateContainer<LETTER,STATE>>();
     private final ArrayList<Map<StateContainer<LETTER,STATE>,SuccessorInfo>> m_SuccInfos = 
     		new ArrayList<Map<StateContainer<LETTER,STATE>,SuccessorInfo>>();
-    private final SCC m_Scc;
+    private final SCComponent m_Scc;
     private final boolean m_FindAcceptingSummary;
     private int m_Iteration;
     private boolean m_GoalFound = false;
@@ -60,7 +60,7 @@ class LassoConstructor<LETTER, STATE> {
     
 	public LassoConstructor(IUltimateServiceProvider services, 
 			NestedWordAutomatonReachableStates<LETTER, STATE> nwars, 
-			StateContainer<LETTER, STATE> goal, SccComputationWithAcceptingLassos<LETTER, STATE>.SCC scc) throws OperationCanceledException {
+			StateContainer<LETTER, STATE> goal, SccComputationWithAcceptingLassos<LETTER, STATE>.SCComponent scc) throws OperationCanceledException {
 		m_Services = services;
 		m_Nwars = nwars;
 		m_Goal = goal;
@@ -82,7 +82,7 @@ class LassoConstructor<LETTER, STATE> {
 	
 	public LassoConstructor(IUltimateServiceProvider services,
 			NestedWordAutomatonReachableStates<LETTER, STATE> nwars, 
-			Summary<LETTER, STATE> summary, SccComputationWithAcceptingLassos<LETTER, STATE>.SCC scc) throws OperationCanceledException {
+			Summary<LETTER, STATE> summary, SccComputationWithAcceptingLassos<LETTER, STATE>.SCComponent scc) throws OperationCanceledException {
 		m_Services = services;
 		m_Nwars = nwars;
 		m_Goal = summary.getSucc();

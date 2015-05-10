@@ -49,7 +49,7 @@ public interface INestedWordAutomaton<LETTER, STATE> extends INestedWordAutomato
 	 * Some implementations (e.g., automaton which represents result of
 	 * a complementation) construct their set of states on the fly.
 	 */
-	public Collection<STATE> getStates();
+	public Set<STATE> getStates();
 
 	/**
 	 * Returns the set of initial states. 

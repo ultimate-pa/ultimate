@@ -37,9 +37,9 @@ import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.IAutomatonWithSccComputation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.NestedWordAutomatonReachableStates;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.SccComputationWithAcceptingLassos;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.SccComputationWithAcceptingLassos.SCC;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
@@ -59,7 +59,7 @@ public class LoopComplexity<LETTER, STATE> implements IOperation<LETTER, STATE> 
 	private final IUltimateServiceProvider m_Services;
 	private final Logger m_Logger;
 	
-	private final INestedWordAutomaton<LETTER, STATE> m_Operand;
+	private final NestedWordAutomatonReachableStates<LETTER, STATE> m_Operand;
 	private final Integer m_Result;
 	
 	
@@ -69,7 +69,12 @@ public class LoopComplexity<LETTER, STATE> implements IOperation<LETTER, STATE> 
 		super();
 		m_Services = services;
 		m_Logger = m_Services.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
-		m_Operand = operand;
+		if (operand instanceof NestedWordAutomatonReachableStates) {
+			m_Operand = (NestedWordAutomatonReachableStates<LETTER, STATE>) operand;
+		} else {
+			m_Operand = (new RemoveUnreachable<LETTER, STATE>(m_Services, operand)).getResult();
+		}
+		
 		m_Logger.info(this.startMessage());
 		
 		m_Result = compute(operand);
@@ -77,12 +82,19 @@ public class LoopComplexity<LETTER, STATE> implements IOperation<LETTER, STATE> 
 	}
 
 	private Integer compute(INestedWordAutomaton<LETTER, STATE> operand) throws AutomataLibraryException {
+//		/////////////
+//		// Matthias: You can now compute the balls as follows.
+//		Set<STATE> allStates = operand.getStates();
+//		Set<STATE> initialStates = operand.getStates();
+//		Collection<SccComputationWithAcceptingLassos<LETTER, STATE>.SCComponent> ballsForAllStates = m_Operand.computeBalls(allStates, initialStates);
+//		/////////////
+
 		NestedWordAutomatonReachableStates<LETTER, STATE> nwars = 
 				new NestedWordAutomatonReachableStates<>(m_Services, operand);
-		SccComputationWithAcceptingLassos sccs = 
+		SccComputationWithAcceptingLassos<LETTER, STATE> sccs = 
 				nwars.getOrComputeStronglyConnectedComponents();
-		Collection<SccComputationWithAcceptingLassos.SCC> balls = sccs.getBalls();
-		for (SCC scc : balls) {
+		Collection<SccComputationWithAcceptingLassos<LETTER, STATE>.SCComponent> balls = sccs.getBalls();
+		for (SccComputationWithAcceptingLassos<LETTER, STATE>.SCComponent scc : balls) {
 			scc.getAllStatesContainers();
 		}
 		// Graph contains no balls.
@@ -102,7 +114,7 @@ public class LoopComplexity<LETTER, STATE> implements IOperation<LETTER, STATE> 
 		} else { // Graph itself is not a ball.
 			Collection<Integer> ballLoopComplexities = new ArrayList<Integer>();
 			// Build NestedWordAutomaton for each ball and compute Loop Complexity.
-			for (SCC scc : balls) {
+			for (SccComputationWithAcceptingLassos<LETTER, STATE>.SCComponent scc : balls) {
 				NestedWordAutomaton<LETTER, STATE> nwa = sccToAutomaton(
 						operand, scc);
 				ballLoopComplexities.add(this.compute(nwa));
@@ -138,16 +150,15 @@ public class LoopComplexity<LETTER, STATE> implements IOperation<LETTER, STATE> 
 	}
 
 	private NestedWordAutomaton<LETTER, STATE> sccToAutomaton(
-			INestedWordAutomaton<LETTER, STATE> operand, SCC scc) {
+			INestedWordAutomaton<LETTER, STATE> operand, SccComputationWithAcceptingLassos<LETTER, STATE>.SCComponent scc) {
 		NestedWordAutomaton<LETTER, STATE> nwa = new NestedWordAutomaton<LETTER, STATE>(m_Services, operand.getInternalAlphabet(), operand.getCallAlphabet(), operand.getReturnAlphabet(), operand.getStateFactory());
-		Set<STATE> allstates = scc.getAllStates();
-		for (STATE state : allstates) {					
+		for (STATE state : scc) {					
 			nwa.addState(true, true, state);
 		}
-		for (STATE state : allstates) {
+		for (STATE state : scc) {
 			Iterable<OutgoingInternalTransition<LETTER, STATE>> succs = operand.internalSuccessors(state);
 		    for (OutgoingInternalTransition<LETTER, STATE> outtrans : succs) {
-		    	if (allstates.contains(outtrans.getSucc())) {
+		    	if (scc.contains(outtrans.getSucc())) {
 		    		nwa.addInternalTransition(state, outtrans.getLetter(), outtrans.getSucc());
 		    	}
 		    }

@@ -128,7 +128,7 @@ public class NestedWordAutomatonFilteredStates<LETTER, STATE> implements
 	}
 
 	@Override
-	public Collection<STATE> getStates() {
+	public Set<STATE> getStates() {
 		return m_RemainingStates;
 	}
 

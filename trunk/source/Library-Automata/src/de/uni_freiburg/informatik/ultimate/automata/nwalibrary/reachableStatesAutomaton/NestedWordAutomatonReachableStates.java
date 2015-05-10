@@ -55,6 +55,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.BuchiAcc
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.NestedLassoRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Accepts;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.IOpWithDelayedDeadEndRemoval.UpDownEntry;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.SccComputationWithAcceptingLassos.SCComponent;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.StateContainer.DownStateProp;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.IncomingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.IncomingInternalTransition;
@@ -68,7 +69,8 @@ import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 import de.uni_freiburg.informatik.ultimate.util.HashRelation;
 
 public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INestedWordAutomatonOldApi<LETTER, STATE>,
-		INestedWordAutomaton<LETTER, STATE>, IDoubleDeckerAutomaton<LETTER, STATE> {
+		INestedWordAutomaton<LETTER, STATE>, IDoubleDeckerAutomaton<LETTER, STATE>,
+		IAutomatonWithSccComputation<LETTER, STATE> {
 
 	private final IUltimateServiceProvider m_Services;
 	private final Logger m_Logger;
@@ -279,7 +281,7 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 	}
 
 	@Override
-	public Collection<STATE> getStates() {
+	public Set<STATE> getStates() {
 		return m_States.keySet();
 	}
 
@@ -595,7 +597,8 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 		}
 		assert m_AcceptingSummaries == null;
 		m_AcceptingSummaries = new AcceptingSummariesComputation();
-		m_StronglyConnectedComponents = new SccComputationWithAcceptingLassos<LETTER, STATE>(this, m_AcceptingSummaries, m_Services);
+		m_StronglyConnectedComponents = new SccComputationWithAcceptingLassos<LETTER, STATE>(
+				this, m_AcceptingSummaries, m_Services, m_States.keySet(), m_initialStates);
 	}
 
 	public void computeNonLiveStates() {
@@ -1911,6 +1914,14 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 	@Override
 	public String toString() {
 		return (new AtsDefinitionPrinter<String, String>(m_Services, "nwa", this)).getDefinitionAsString();
+	}
+
+	@Override
+	public Collection<SccComputationWithAcceptingLassos<LETTER, STATE>.SCComponent> computeBalls(Set<STATE> stateSubset,
+			Set<STATE> startStates) {
+		SccComputationWithAcceptingLassos<LETTER, STATE> sccComputation = 
+				new SccComputationWithAcceptingLassos<>(this, m_AcceptingSummaries, m_Services, stateSubset, startStates);
+		return sccComputation.getBalls();
 	}
 
 }

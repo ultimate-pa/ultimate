@@ -25,6 +25,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton;
 
+import java.util.Collection;
 import java.util.Set;
 
 /**
@@ -36,11 +37,14 @@ import java.util.Set;
  *
  * @param <STATE>
  */
-public interface ISccComputation<STATE> {
-	
+public interface IAutomatonWithSccComputation<LETTER, STATE> {
+
 	/**
-	 * Computes the set of all balls that are subsets of stateSet.
+	 * Computes all balls of given subset of states.
+	 * @param stateSubset subset of the automata's states
+	 * @param startStates states at which the computation of SSCs starts
+	 * @return
 	 */
-	public Set<Set<STATE>> computeBalls(Set<STATE> stateSet);
+	public Collection<SccComputationWithAcceptingLassos<LETTER, STATE>.SCComponent> computeBalls(Set<STATE> stateSubset, Set<STATE> startStates);
 
 }

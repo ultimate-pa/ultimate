@@ -194,7 +194,7 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 	}
 
 	@Override
-	public Collection<STATE> getStates() {
+	public Set<STATE> getStates() {
 		if (!m_BuildCompleted) {
 			int size = getSizeInfo().totalSize;
 			// Breadth-first traversal of the state space.
