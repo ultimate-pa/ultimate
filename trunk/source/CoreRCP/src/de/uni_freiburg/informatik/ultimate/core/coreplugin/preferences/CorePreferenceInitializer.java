@@ -14,10 +14,10 @@ import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceSt
 /**
  * CorePreferenceInitializer implements UltimatePreferenceStore for
  * UltimateCore. It initializes the default values for preferences and provides
- * access to the preferences for the plugin
+ * access to the preferences for the plugin.
  * 
  * It has to contribute to the extension point
- * org.eclipse.core.runtime.preferences.initializer (see the plugin.xml)
+ * org.eclipse.core.runtime.preferences.initializer (see the plugin.xml).
  * 
  * @author dietsch@informatik.uni-freiburg.de
  * 

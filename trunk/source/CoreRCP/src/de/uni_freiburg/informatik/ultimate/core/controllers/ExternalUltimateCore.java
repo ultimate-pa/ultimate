@@ -4,7 +4,7 @@ import java.io.File;
 import java.util.concurrent.Semaphore;
 
 import org.apache.log4j.Logger;
-import org.eclipse.equinox.app.IApplication;
+import org.eclipse.core.runtime.IStatus;
 
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.UltimateCore;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.DefaultToolchainJob;
@@ -43,6 +43,8 @@ public class ExternalUltimateCore {
 
 	protected ManualReleaseToolchainJob mJob;
 
+	private volatile int mReturnStatus;
+
 	public ExternalUltimateCore(IController controller) {
 		mUltimateExit = new Semaphore(0);
 		mStarterContinue = new Semaphore(0);
@@ -50,37 +52,25 @@ public class ExternalUltimateCore {
 		mReachedInit = false;
 	}
 
-	public void runUltimate() throws Throwable {
+	public Object runUltimate() throws Throwable {
 		if (mCurrentUltimateInstance != null) {
 			throw new Exception("You must call complete() before re-using this instance ");
 		}
 		mCurrentUltimateInstance = new UltimateCore();
 		mUltimateThrowable = null;
 
-		Thread t = new Thread(new Runnable() {
-			@Override
-			public void run() {
-				try {
-					mCurrentUltimateInstance.start(mController, false);
-				} catch (Throwable e) {
-					mUltimateThrowable = e;
-				}
+		final ActualUltimateRunnable runnable = new ActualUltimateRunnable();
 
-				if (!mReachedInit) {
-					if (mUltimateThrowable == null) {
-						mUltimateThrowable = new LivecycleException(
-								"Ultimate terminated before calling init(...) on ExternalUltimateCore");
-					}
-					mStarterContinue.release();
-				}
-			}
-		}, "ActualUltimateInstance");
+		Thread thread = new Thread(runnable, "ActualUltimateInstance");
 
-		t.start();
+		thread.start();
 		mStarterContinue.acquireUninterruptibly();
 		if (mUltimateThrowable != null) {
 			throw mUltimateThrowable;
 		}
+		Object rtr = runnable.getReturnStatus();
+		mReturnStatus = (int) rtr;
+		return rtr;
 	}
 
 	public int init(ICore core, ILoggingService loggingService) {
@@ -97,7 +87,7 @@ public class ExternalUltimateCore {
 		try {
 			mReachedInit = true;
 			if (core == null || loggingService == null) {
-				return -1;
+				return IStatus.ERROR;
 			}
 
 			logger = getLogger(loggingService);
@@ -114,13 +104,12 @@ public class ExternalUltimateCore {
 
 		} catch (Throwable e) {
 			logger.error("Exception during toolchain execution.", e);
-			return -1;
+			return IStatus.ERROR;
 		} finally {
 			mStarterContinue.release();
 			mUltimateExit.acquireUninterruptibly();
 		}
-		return IApplication.EXIT_OK;
-
+		return mReturnStatus;
 	}
 
 	protected Logger getLogger(ILoggingService loggingService) {
@@ -134,10 +123,39 @@ public class ExternalUltimateCore {
 
 	public void complete() {
 		if (mJob != null) {
-			//mJob may be null if Ultimate did not complete its init phase
+			// mJob may be null if Ultimate did not complete its init phase
 			mJob.releaseToolchainManually();
 		}
 		mUltimateExit.release();
+	}
+
+	private final class ActualUltimateRunnable implements Runnable {
+		private Object mReturnStatus;
+
+		private ActualUltimateRunnable() {
+			mReturnStatus = null;
+		}
+
+		@Override
+		public void run() {
+			try {
+				mReturnStatus = mCurrentUltimateInstance.start(mController, false);
+			} catch (Throwable e) {
+				mUltimateThrowable = e;
+			}
+
+			if (!mReachedInit) {
+				if (mUltimateThrowable == null) {
+					mUltimateThrowable = new LivecycleException(
+							"Ultimate terminated before calling init(...) on ExternalUltimateCore");
+				}
+				mStarterContinue.release();
+			}
+		}
+
+		private Object getReturnStatus() {
+			return mReturnStatus == null ? IStatus.ERROR : mReturnStatus;
+		}
 	}
 
 	protected class ManualReleaseToolchainJob extends DefaultToolchainJob {

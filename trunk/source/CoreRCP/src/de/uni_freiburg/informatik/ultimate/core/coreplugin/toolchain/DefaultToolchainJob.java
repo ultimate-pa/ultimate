@@ -194,7 +194,7 @@ public class DefaultToolchainJob extends BasicToolchainJob {
 				mChain = mToolchain.setToolSelection(monitor, mChain);
 			}
 			if (mChain == null) {
-				mLogger.warn("Toolchain selection failed, aborting...");
+				mLogger.fatal("Toolchain selection failed, aborting...");
 				return new Status(Status.CANCEL, Activator.s_PLUGIN_ID, "Toolchain selection canceled");
 			}
 			setServices(mChain.getServices());

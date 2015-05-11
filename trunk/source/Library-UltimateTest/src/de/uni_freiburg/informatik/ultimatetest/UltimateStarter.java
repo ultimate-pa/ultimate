@@ -58,8 +58,8 @@ public class UltimateStarter implements IController {
 		detachLogger();
 	}
 
-	public void runUltimate() throws Throwable {
-		mExternalUltimateCore.runUltimate();
+	public Object runUltimate() throws Throwable {
+		return mExternalUltimateCore.runUltimate();
 	}
 
 	@Override

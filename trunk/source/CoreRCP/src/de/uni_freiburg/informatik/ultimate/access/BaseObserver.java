@@ -2,14 +2,12 @@ package de.uni_freiburg.informatik.ultimate.access;
 
 import de.uni_freiburg.informatik.ultimate.model.GraphType;
 
-
-/***
- * 
+/**
  * Simple construct to implement {@link IUnmanagedObserver}s and ignore extended
  * options. Assumes that the observer does not change the model (i.e.
  * {@link IUnmanagedObserver#performedChanges() returns false}.
  * 
- * @author dietsch
+ * @author dietsch@informatik.uni-freiburg.de
  * 
  */
 public abstract class BaseObserver implements IUnmanagedObserver {

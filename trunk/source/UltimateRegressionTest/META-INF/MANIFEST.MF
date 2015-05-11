@@ -17,6 +17,7 @@ Require-Bundle: UltimateCore,
  de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding,
  de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction,
  de.uni_freiburg.informatik.ultimate.boogie.procedureinliner,
+ de.uni_freiburg.informatik.ultimate.ltl2aut,
  org.junit
 Import-Package: org.junit,
  org.junit.experimental.categories,

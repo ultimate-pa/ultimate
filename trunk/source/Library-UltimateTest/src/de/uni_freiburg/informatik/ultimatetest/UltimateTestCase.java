@@ -5,6 +5,7 @@ import static org.junit.Assert.fail;
 import java.util.List;
 
 import org.apache.log4j.Logger;
+import org.eclipse.core.runtime.IStatus;
 
 import de.uni_freiburg.informatik.junit_helper.testfactory.FactoryTestMethod;
 import de.uni_freiburg.informatik.ultimate.core.controllers.LivecycleException;
@@ -50,11 +51,11 @@ public class UltimateTestCase {
 		Runtime.getRuntime().gc();
 
 		// start debug code: use this only in controlled situations!
-//		try {
-//			Thread.sleep(500);
-//		} catch (InterruptedException e1) {
-//		}
-//		HeapDumper.dumpHeap("F:\\tmp\\ultimate benchmarks\\heapdump", false);
+		// try {
+		// Thread.sleep(500);
+		// } catch (InterruptedException e1) {
+		// }
+		// HeapDumper.dumpHeap("F:\\tmp\\ultimate benchmarks\\heapdump", false);
 		// end debug ode
 
 		Throwable th = null;
@@ -62,8 +63,13 @@ public class UltimateTestCase {
 		boolean livecycleFailure = false;
 		try {
 			updateLogsPreStart();
-			mStarter.runUltimate();
-			result = mDecider.getTestResult(mStarter.getServices().getResultService());
+			Object returnCode = mStarter.runUltimate();
+			if (!returnCode.equals(IStatus.OK)) {
+				mLogger.fatal("Ultimate returned an unexpected returncode: " + returnCode);
+			} else {
+				result = mDecider.getTestResult(mStarter.getServices().getResultService());
+			}
+
 		} catch (LivecycleException lex) {
 			// if this happens, mStarter, mLogger, etc. are not initialized
 			th = lex;
