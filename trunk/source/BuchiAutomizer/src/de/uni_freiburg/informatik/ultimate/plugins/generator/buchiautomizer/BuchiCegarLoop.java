@@ -285,7 +285,7 @@ public class BuchiCegarLoop {
 			break;
 		case MAXRANK3:
 			m_BuchiRefinementSettingSequence.add(m_RefineBuchi.new RefinementSetting(
-					BInterpolantAutomaton.ScroogeNondeterminism, true, false, true, false, true, 3));
+					BInterpolantAutomaton.ScroogeNondeterminism, false, false, true, false, true, 3));
 			break;
 		default:
 			throw new UnsupportedOperationException("unknown automaton");
