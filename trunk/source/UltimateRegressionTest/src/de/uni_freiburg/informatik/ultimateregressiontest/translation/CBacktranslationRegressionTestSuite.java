@@ -4,11 +4,11 @@ import de.uni_freiburg.informatik.ultimateregressiontest.AbstractRegressionTestS
 import de.uni_freiburg.informatik.ultimatetest.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimatetest.decider.BacktranslationTestResultDecider;
 import de.uni_freiburg.informatik.ultimatetest.decider.ITestResultDecider;
-import de.uni_freiburg.informatik.ultimatetest.util.Util;
+import de.uni_freiburg.informatik.ultimatetest.util.TestUtil;
 
 public class CBacktranslationRegressionTestSuite extends AbstractRegressionTestSuite {
 
-	private static String sRootFolder = Util.getPathFromTrunk("examples/Backtranslation");
+	private static String sRootFolder = TestUtil.getPathFromTrunk("examples/Backtranslation");
 	private static String sFileending = ".c";
 
 	public CBacktranslationRegressionTestSuite() {

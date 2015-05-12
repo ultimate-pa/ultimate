@@ -5,14 +5,14 @@ import java.util.Map;
 
 import org.junit.Ignore;
 
-import de.uni_freiburg.informatik.ultimatetest.util.Util;
+import de.uni_freiburg.informatik.ultimatetest.util.TestUtil;
 
 @Ignore
 public class CodeCheckTestSuite extends AbstractSVCOMP14TestSuite {
 
 	@Override
 	protected String getToolchainPath() {
-		return Util.getPathFromTrunk("examples/toolchains/KojakC.xml");
+		return TestUtil.getPathFromTrunk("examples/toolchains/KojakC.xml");
 	}
 
 	@Override
@@ -23,7 +23,7 @@ public class CodeCheckTestSuite extends AbstractSVCOMP14TestSuite {
 	@Override
 	protected Map<String, String> getCategoryToSettingsPathMap() {
 		HashMap<String, String> map = new HashMap<String, String>();
-		map.put("ControlFlowInteger", Util.getPathFromTrunk("examples/settings/AlexSVCOMPmemsafety"));
+		map.put("ControlFlowInteger", TestUtil.getPathFromTrunk("examples/settings/AlexSVCOMPmemsafety"));
 		return map;
 	}
 
@@ -34,6 +34,6 @@ public class CodeCheckTestSuite extends AbstractSVCOMP14TestSuite {
 
 	@Override
 	protected String getSVCOMP14RootDirectory() {
-		return Util.getPathFromTrunk("../../svcomp");
+		return TestUtil.getPathFromTrunk("../../svcomp");
 	}
 }

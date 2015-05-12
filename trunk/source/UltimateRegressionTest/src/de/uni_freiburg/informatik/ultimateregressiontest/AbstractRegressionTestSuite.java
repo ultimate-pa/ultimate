@@ -12,7 +12,7 @@ import de.uni_freiburg.informatik.ultimatetest.UltimateTestSuite;
 import de.uni_freiburg.informatik.ultimatetest.decider.ITestResultDecider;
 import de.uni_freiburg.informatik.ultimatetest.summary.IIncrementalLog;
 import de.uni_freiburg.informatik.ultimatetest.summary.ITestSummary;
-import de.uni_freiburg.informatik.ultimatetest.util.Util;
+import de.uni_freiburg.informatik.ultimatetest.util.TestUtil;
 
 public abstract class AbstractRegressionTestSuite extends UltimateTestSuite {
 
@@ -61,20 +61,20 @@ public abstract class AbstractRegressionTestSuite extends UltimateTestSuite {
 			return rtr;
 		}
 
-		Collection<File> toolchainFiles = Util.getFiles(root, new String[] { ".xml" });
-		Collection<File> settingsFiles = Util.getFiles(root, new String[] { ".epf" });
+		Collection<File> toolchainFiles = TestUtil.getFiles(root, new String[] { ".xml" });
+		Collection<File> settingsFiles = TestUtil.getFiles(root, new String[] { ".epf" });
 
-		toolchainFiles = Util.filterFiles(toolchainFiles, ".*regression.*");
-		toolchainFiles = Util.filterFiles(toolchainFiles, mFilterRegex);
-		settingsFiles = Util.filterFiles(settingsFiles, ".*regression.*");
-		settingsFiles = Util.filterFiles(settingsFiles, mFilterRegex);
+		toolchainFiles = TestUtil.filterFiles(toolchainFiles, ".*regression.*");
+		toolchainFiles = TestUtil.filterFiles(toolchainFiles, mFilterRegex);
+		settingsFiles = TestUtil.filterFiles(settingsFiles, ".*regression.*");
+		settingsFiles = TestUtil.filterFiles(settingsFiles, mFilterRegex);
 
 		for (File toolchain : toolchainFiles) {
 			String toolchainName = toolchain.getName().replaceAll("\\..*", "");
 			String localRegex = Matcher.quoteReplacement(toolchain.getParent())
 					+ ".*";
 			
-			Collection<File> relevantSettings = Util.filterFiles(settingsFiles, localRegex);
+			Collection<File> relevantSettings = TestUtil.filterFiles(settingsFiles, localRegex);
 
 			for (File settings : relevantSettings) {
 				String settingsName = settings.getName().replaceAll("\\..*", "");
@@ -125,7 +125,7 @@ public abstract class AbstractRegressionTestSuite extends UltimateTestSuite {
 	 *         mFileTypesToConsider.
 	 */
 	protected Collection<File> getInputFiles(Pair runConfiguration) {
-		return Util.getFiles(runConfiguration.getToolchainFile().getParentFile(), mFiletypesToConsider);
+		return TestUtil.getFiles(runConfiguration.getToolchainFile().getParentFile(), mFiletypesToConsider);
 	}
 
 	protected abstract ITestResultDecider getTestResultDecider(UltimateRunDefinition runDefinition);

@@ -5,7 +5,9 @@ import java.util.concurrent.Semaphore;
 
 import org.apache.log4j.Logger;
 import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Status;
 
+import de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.UltimateCore;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.DefaultToolchainJob;
 import de.uni_freiburg.informatik.ultimate.core.services.ILoggingService;
@@ -43,7 +45,7 @@ public class ExternalUltimateCore {
 
 	protected ManualReleaseToolchainJob mJob;
 
-	private volatile int mReturnStatus;
+	private volatile IStatus mReturnStatus;
 
 	public ExternalUltimateCore(IController controller) {
 		mUltimateExit = new Semaphore(0);
@@ -52,7 +54,7 @@ public class ExternalUltimateCore {
 		mReachedInit = false;
 	}
 
-	public Object runUltimate() throws Throwable {
+	public IStatus runUltimate() throws Throwable {
 		if (mCurrentUltimateInstance != null) {
 			throw new Exception("You must call complete() before re-using this instance ");
 		}
@@ -68,26 +70,24 @@ public class ExternalUltimateCore {
 		if (mUltimateThrowable != null) {
 			throw mUltimateThrowable;
 		}
-		Object rtr = runnable.getReturnStatus();
-		mReturnStatus = (int) rtr;
-		return rtr;
+		return mReturnStatus;
 	}
 
-	public int init(ICore core, ILoggingService loggingService) {
+	public IStatus init(ICore core, ILoggingService loggingService) {
 		return init(core, loggingService, null, 0, null, null);
 	}
 
-	public int init(ICore core, ILoggingService loggingService, File[] inputFiles) {
+	public IStatus init(ICore core, ILoggingService loggingService, File[] inputFiles) {
 		return init(core, loggingService, null, 0, inputFiles, null);
 	}
 
-	public int init(ICore core, ILoggingService loggingService, File settingsFile, long deadline, File[] inputFiles,
-			PreludeProvider prelude) {
+	public IStatus init(ICore core, ILoggingService loggingService, File settingsFile, long deadline,
+			File[] inputFiles, PreludeProvider prelude) {
 		Logger logger = null;
 		try {
 			mReachedInit = true;
 			if (core == null || loggingService == null) {
-				return IStatus.ERROR;
+				return new Status(Status.ERROR, Activator.s_PLUGIN_ID, Status.ERROR, "Initialization failed", null);
 			}
 
 			logger = getLogger(loggingService);
@@ -101,10 +101,9 @@ public class ExternalUltimateCore {
 			}
 			mJob.schedule();
 			mJob.join();
-
+			mReturnStatus = mJob.getResult();
 		} catch (Throwable e) {
 			logger.error("Exception during toolchain execution.", e);
-			return IStatus.ERROR;
 		} finally {
 			mStarterContinue.release();
 			mUltimateExit.acquireUninterruptibly();
@@ -130,16 +129,11 @@ public class ExternalUltimateCore {
 	}
 
 	private final class ActualUltimateRunnable implements Runnable {
-		private Object mReturnStatus;
-
-		private ActualUltimateRunnable() {
-			mReturnStatus = null;
-		}
 
 		@Override
 		public void run() {
 			try {
-				mReturnStatus = mCurrentUltimateInstance.start(mController, false);
+				mCurrentUltimateInstance.start(mController, false);
 			} catch (Throwable e) {
 				mUltimateThrowable = e;
 			}
@@ -151,10 +145,6 @@ public class ExternalUltimateCore {
 				}
 				mStarterContinue.release();
 			}
-		}
-
-		private Object getReturnStatus() {
-			return mReturnStatus == null ? IStatus.ERROR : mReturnStatus;
 		}
 	}
 

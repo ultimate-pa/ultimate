@@ -63,11 +63,22 @@ public class UltimateTestCase {
 		boolean livecycleFailure = false;
 		try {
 			updateLogsPreStart();
-			Object returnCode = mStarter.runUltimate();
-			if (!returnCode.equals(IStatus.OK)) {
-				mLogger.fatal("Ultimate returned an unexpected returncode: " + returnCode);
-			} else {
-				result = mDecider.getTestResult(mStarter.getServices().getResultService());
+			String deciderName = mDecider.getClass().getSimpleName();
+			IStatus returnCode = mStarter.runUltimate();
+			mLogger.info("Deciding this test: "+deciderName);
+			result = mDecider.getTestResult(mStarter.getServices().getResultService());
+			if (!returnCode.isOK() && result != TestResult.FAIL) {
+				mLogger.fatal("#################### Overwriting decision of " + deciderName
+						+ " and setting test status to FAIL ####################");
+				mLogger.fatal("Ultimate returned an unexpected status:");
+				mLogger.fatal("Code      " + returnCode.getCode());
+				mLogger.fatal("Severity  " + returnCode.getSeverity());
+				mLogger.fatal("Message   " + returnCode.getMessage());
+				mLogger.fatal("Plugin ID " + returnCode.getPlugin());
+				if (returnCode.getException() != null) {
+					mLogger.fatal("Exception:", returnCode.getException());
+				}
+				result = TestResult.FAIL;
 			}
 
 		} catch (LivecycleException lex) {

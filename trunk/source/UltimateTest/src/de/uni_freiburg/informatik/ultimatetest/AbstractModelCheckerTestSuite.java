@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.Random;
 
 import de.uni_freiburg.informatik.ultimatetest.decider.ITestResultDecider;
-import de.uni_freiburg.informatik.ultimatetest.util.Util;
+import de.uni_freiburg.informatik.ultimatetest.util.TestUtil;
 
 public abstract class AbstractModelCheckerTestSuite extends UltimateTestSuite {
 	protected List<UltimateTestCase> mTestCases = new ArrayList<UltimateTestCase>();
@@ -68,22 +68,22 @@ public abstract class AbstractModelCheckerTestSuite extends UltimateTestSuite {
 	 *            The test result decider that should be used in this test
 	 */
 	protected void addTestCase(String toolchain, String settings, String input, ITestResultDecider testResultDecider) {
-		File toolchainFile = new File(Util.getPathFromTrunk(mPathToToolchains + toolchain));
-		File settingsFile = new File(Util.getPathFromTrunk(mPathToSettings + settings));
-		File inputFile = new File(Util.getPathFromTrunk(input));
+		File toolchainFile = new File(TestUtil.getPathFromTrunk(mPathToToolchains + toolchain));
+		File settingsFile = new File(TestUtil.getPathFromTrunk(mPathToSettings + settings));
+		File inputFile = new File(TestUtil.getPathFromTrunk(input));
 		addTestCase(toolchainFile, settingsFile, inputFile, testResultDecider);
 	}
 
 	protected void addTestCase(String toolchain, String settings, String input) {
-		File toolchainFile = new File(Util.getPathFromTrunk(mPathToToolchains + toolchain));
-		File settingsFile = new File(Util.getPathFromTrunk(mPathToSettings + settings));
-		File inputFile = new File(Util.getPathFromTrunk(input));
+		File toolchainFile = new File(TestUtil.getPathFromTrunk(mPathToToolchains + toolchain));
+		File settingsFile = new File(TestUtil.getPathFromTrunk(mPathToSettings + settings));
+		File inputFile = new File(TestUtil.getPathFromTrunk(input));
 		addTestCases(toolchainFile, settingsFile, Collections.singleton(inputFile));
 	}
 
 	protected void addTestCases(String toolchain, String settings, String[] directories, String[] fileEndings) {
-		File toolchainFile = new File(Util.getPathFromTrunk(mPathToToolchains + toolchain));
-		File settingsFile = new File(Util.getPathFromTrunk(mPathToSettings + settings));
+		File toolchainFile = new File(TestUtil.getPathFromTrunk(mPathToToolchains + toolchain));
+		File settingsFile = new File(TestUtil.getPathFromTrunk(mPathToSettings + settings));
 		Collection<File> testFiles = new ArrayList<File>();
 		for (String directory : directories) {
 			testFiles.addAll(getInputFiles(directory, fileEndings, Integer.MAX_VALUE));
@@ -93,18 +93,18 @@ public abstract class AbstractModelCheckerTestSuite extends UltimateTestSuite {
 	
 	protected void addTestCasesRegExp(String toolchain, String settings, String[] regExp) {
 
-		File toolchainFile = new File(Util.getPathFromTrunk(mPathToToolchains + toolchain));
-		File settingsFile = new File(Util.getPathFromTrunk(mPathToSettings + settings));
-		File trunk = new File(Util.getPathFromTrunk("/"));
-		Collection<File> testFiles = Util.getFilesRegex(trunk, regExp);
+		File toolchainFile = new File(TestUtil.getPathFromTrunk(mPathToToolchains + toolchain));
+		File settingsFile = new File(TestUtil.getPathFromTrunk(mPathToSettings + settings));
+		File trunk = new File(TestUtil.getPathFromTrunk("/"));
+		Collection<File> testFiles = TestUtil.getFilesRegex(trunk, regExp);
 		addTestCases(toolchainFile, settingsFile, testFiles);
 	}
 
 	protected void addTestCases(String toolchain, String settings,
 			DirectoryFileEndingsPair[] directoryFileEndingsPairs) {
 
-		File toolchainFile = new File(Util.getPathFromTrunk(mPathToToolchains + toolchain));
-		File settingsFile = new File(Util.getPathFromTrunk(mPathToSettings + settings));
+		File toolchainFile = new File(TestUtil.getPathFromTrunk(mPathToToolchains + toolchain));
+		File settingsFile = new File(TestUtil.getPathFromTrunk(mPathToSettings + settings));
 		Collection<File> testFiles = new ArrayList<File>();
 		for (DirectoryFileEndingsPair directoryFileEndingsPair : directoryFileEndingsPairs) {
 			testFiles.addAll(getInputFiles(directoryFileEndingsPair.getDirectory(),
@@ -119,7 +119,7 @@ public abstract class AbstractModelCheckerTestSuite extends UltimateTestSuite {
 	 * pseudorandomly selected files.
 	 */
 	private Collection<File> getInputFiles(String directory, String[] fileEndings, int n) {
-		List<File> files = Util.getFiles(new File(Util.getPathFromTrunk(directory)), fileEndings);
+		List<File> files = TestUtil.getFiles(new File(TestUtil.getPathFromTrunk(directory)), fileEndings);
 		if (n >= files.size()) {
 			return files;
 		} else {

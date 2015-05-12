@@ -22,7 +22,7 @@ import de.uni_freiburg.informatik.ultimatetest.UltimateTestSuite;
 import de.uni_freiburg.informatik.ultimatetest.decider.SafetyCheckTestResultDecider;
 import de.uni_freiburg.informatik.ultimatetest.summary.IIncrementalLog;
 import de.uni_freiburg.informatik.ultimatetest.summary.ITestSummary;
-import de.uni_freiburg.informatik.ultimatetest.util.Util;
+import de.uni_freiburg.informatik.ultimatetest.util.TestUtil;
 
 public abstract class AbstractSVCOMP14TestSuite extends UltimateTestSuite {
 
@@ -83,7 +83,7 @@ public abstract class AbstractSVCOMP14TestSuite extends UltimateTestSuite {
 
 	@Override
 	protected ITestSummary[] constructTestSummaries() {
-		String svcompRootDir = Util.getFromMavenVariableSVCOMPRoot(getSVCOMP14RootDirectory());
+		String svcompRootDir = TestUtil.getFromMavenVariableSVCOMPRoot(getSVCOMP14RootDirectory());
 		Collection<File> setFiles = getAllSetFiles(svcompRootDir);
 
 		ITestSummary[] testSummaries = new ITestSummary[setFiles.size()];
@@ -105,7 +105,7 @@ public abstract class AbstractSVCOMP14TestSuite extends UltimateTestSuite {
 	public Collection<UltimateTestCase> createTestCases() {
 		Collection<UltimateTestCase> rtr = new ArrayList<UltimateTestCase>();
 
-		String svcompRootDir = Util.getFromMavenVariableSVCOMPRoot(getSVCOMP14RootDirectory());
+		String svcompRootDir = TestUtil.getFromMavenVariableSVCOMPRoot(getSVCOMP14RootDirectory());
 
 		String toolchainPath = getToolchainPath();
 		long deadline = getDeadline();
@@ -150,7 +150,7 @@ public abstract class AbstractSVCOMP14TestSuite extends UltimateTestSuite {
 	private Collection<File> getAllInputFiles(String svcomproot) {
 		File root = new File(svcomproot);
 		ArrayList<File> singleFiles = new ArrayList<File>();
-		singleFiles.addAll(Util.getFilesRegex(root, new String[] { ".*\\.c", ".*\\.i" }));
+		singleFiles.addAll(TestUtil.getFilesRegex(root, new String[] { ".*\\.c", ".*\\.i" }));
 		return singleFiles;
 	}
 
@@ -198,7 +198,7 @@ public abstract class AbstractSVCOMP14TestSuite extends UltimateTestSuite {
 				String logPattern = new UltimatePreferenceStore(Activator.s_PLUGIN_ID)
 						.getString(CorePreferenceInitializer.LABEL_LOG4J_PATTERN);
 				starter = new UltimateStarter(urd, deadline,
-						new File(Util.generateLogFilename(singleFile, description)), logPattern);
+						new File(TestUtil.generateLogFilename(singleFile, description)), logPattern);
 			}
 
 			UltimateTestCase testCase = new UltimateTestCase(name, new SafetyCheckTestResultDecider(urd, false),
@@ -221,7 +221,7 @@ public abstract class AbstractSVCOMP14TestSuite extends UltimateTestSuite {
 					continue;
 				}
 				String regex = ".*" + line.replace(".", "\\.").replace("*", ".*");
-				currentFiles.addAll(Util.filterFiles(allFiles, regex));
+				currentFiles.addAll(TestUtil.filterFiles(allFiles, regex));
 			}
 			in.close();
 		} catch (Exception e) {

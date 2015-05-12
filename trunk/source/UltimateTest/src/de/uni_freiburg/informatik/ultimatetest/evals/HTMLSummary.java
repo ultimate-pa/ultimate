@@ -14,7 +14,7 @@ import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProvider;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
 import de.uni_freiburg.informatik.ultimatetest.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestSuite;
-import de.uni_freiburg.informatik.ultimatetest.util.Util;
+import de.uni_freiburg.informatik.ultimatetest.util.TestUtil;
 
 /**
  * 
@@ -36,7 +36,7 @@ public class HTMLSummary extends BaseCsvProviderSummary {
 		String linebreak = CoreUtil.getPlatformLineSeparator();
 
 		sb.append("<html><head><style>td { vertical-align:top;}</style></head><body>").append(linebreak);
-		sb.append("<h1>").append(Util.generateLogfilename(this)).append("</h1>").append(linebreak);
+		sb.append("<h1>").append(TestUtil.generateLogfilename(this)).append("</h1>").append(linebreak);
 
 		List<Entry<String, Collection<Entry<UltimateRunDefinition, ExtendedResult>>>> partitions = new ArrayList<>();
 		partitions.add(new AbstractMap.SimpleEntry<String, Collection<Entry<UltimateRunDefinition, ExtendedResult>>>(

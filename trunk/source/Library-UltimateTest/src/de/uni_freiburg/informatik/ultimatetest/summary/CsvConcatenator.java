@@ -12,7 +12,7 @@ import de.uni_freiburg.informatik.ultimate.util.csv.SimpleCsvProvider;
 import de.uni_freiburg.informatik.ultimatetest.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestSuite;
 import de.uni_freiburg.informatik.ultimatetest.decider.ITestResultDecider.TestResult;
-import de.uni_freiburg.informatik.ultimatetest.util.Util;
+import de.uni_freiburg.informatik.ultimatetest.util.TestUtil;
 
 /**
  * Summarizes all benchmarks of a certain class to a CSV. Searches through all
@@ -71,7 +71,7 @@ public class CsvConcatenator implements ITestSummary {
 		if (resultService == null) {
 			return;
 		}
-		for (ICsvProviderProvider<?> benchmarkResultWildcard : Util.getCsvProviderProviderFromUltimateResults(resultService.getResults(),
+		for (ICsvProviderProvider<?> benchmarkResultWildcard : TestUtil.getCsvProviderProviderFromUltimateResults(resultService.getResults(),
 				m_Benchmark)) {
 			ICsvProviderProvider<Object> benchmarkResult = (ICsvProviderProvider<Object>) benchmarkResultWildcard;
 			ICsvProvider<Object> benchmarkCsv = benchmarkResult.createCvsProvider();

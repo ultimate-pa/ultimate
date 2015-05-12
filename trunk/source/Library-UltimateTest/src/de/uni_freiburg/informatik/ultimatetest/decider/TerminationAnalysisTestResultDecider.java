@@ -6,7 +6,7 @@ import de.uni_freiburg.informatik.ultimatetest.decider.expectedResult.KeywordBas
 import de.uni_freiburg.informatik.ultimatetest.decider.overallResult.IOverallResultEvaluator;
 import de.uni_freiburg.informatik.ultimatetest.decider.overallResult.TerminationAnalysisOverallResult;
 import de.uni_freiburg.informatik.ultimatetest.decider.overallResult.TerminationAnalysisOverallResultEvaluator;
-import de.uni_freiburg.informatik.ultimatetest.util.Util;
+import de.uni_freiburg.informatik.ultimatetest.util.TestUtil;
 
 /**
  * Use keywords in filename and first line to decide correctness of termination
@@ -27,9 +27,9 @@ public class TerminationAnalysisTestResultDecider extends
 	@Override
 	public IExpectedResultFinder<TerminationAnalysisOverallResult> constructExpectedResultFinder() {
 		return new KeywordBasedExpectedResultFinder<TerminationAnalysisOverallResult>(
-				Util.constructFilenameKeywordMap_TerminationAnalysis(), 
-				Util.constructPathKeywordMap_TerminationAnalysis(), 
-				Util.constructFirstlineKeywordMap_TerminationAnalysis());
+				TestUtil.constructFilenameKeywordMap_TerminationAnalysis(), 
+				TestUtil.constructPathKeywordMap_TerminationAnalysis(), 
+				TestUtil.constructFirstlineKeywordMap_TerminationAnalysis());
 	}
 
 	@Override

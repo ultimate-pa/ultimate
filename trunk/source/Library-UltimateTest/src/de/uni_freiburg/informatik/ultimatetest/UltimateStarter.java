@@ -5,11 +5,15 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
+
 import javax.xml.bind.JAXBException;
+
 import org.apache.log4j.FileAppender;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PatternLayout;
+import org.eclipse.core.runtime.IStatus;
 import org.xml.sax.SAXException;
+
 import de.uni_freiburg.informatik.ultimate.core.controllers.ExternalUltimateCore;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.ToolchainData;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
@@ -58,7 +62,7 @@ public class UltimateStarter implements IController {
 		detachLogger();
 	}
 
-	public Object runUltimate() throws Throwable {
+	public IStatus runUltimate() throws Throwable {
 		return mExternalUltimateCore.runUltimate();
 	}
 
@@ -66,7 +70,7 @@ public class UltimateStarter implements IController {
 	public int init(ICore core, ILoggingService loggingService) {
 		core.resetPreferences();
 		return mExternalUltimateCore.init(core, loggingService, m_UltimateRunDefinition.getSettings(), mDeadline,
-				new File[] { m_UltimateRunDefinition.getInput() }, null);
+				new File[] { m_UltimateRunDefinition.getInput() }, null).getCode();
 	}
 
 	public void complete() {

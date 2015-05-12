@@ -16,7 +16,7 @@ import de.uni_freiburg.informatik.ultimate.result.ExceptionOrErrorResult;
 import de.uni_freiburg.informatik.ultimate.result.IResult;
 import de.uni_freiburg.informatik.ultimate.result.SyntaxErrorResult;
 import de.uni_freiburg.informatik.ultimate.result.TypeErrorResult;
-import de.uni_freiburg.informatik.ultimatetest.util.Util;
+import de.uni_freiburg.informatik.ultimatetest.util.TestUtil;
 
 /**
  * 
@@ -30,7 +30,7 @@ public class TranslationTestResultDecider extends TestResultDecider {
 	public TranslationTestResultDecider(String inputFile) {
 		mInputFile = inputFile;
 	}
-	
+
 	public TranslationTestResultDecider(File inputFile) {
 		mInputFile = inputFile.getAbsolutePath();
 	}
@@ -56,6 +56,7 @@ public class TranslationTestResultDecider extends TestResultDecider {
 					if (result instanceof TypeErrorResult || result instanceof SyntaxErrorResult
 							|| result instanceof ExceptionOrErrorResult) {
 						setResultCategory(result.getShortDescription());
+						setResultMessage(result.getShortDescription());
 						fail = true;
 						break;
 					}
@@ -74,13 +75,15 @@ public class TranslationTestResultDecider extends TestResultDecider {
 			String inputFileNameWithoutEnding = inputFile.getName().replaceAll("\\.c", "");
 			File desiredBplFile = new File(String.format("%s%s%s%s", inputFile.getParentFile().getAbsolutePath(),
 					Path.SEPARATOR, inputFileNameWithoutEnding, ".bpl"));
-			File actualBplFile = Util.getFilesRegex(inputFile.getParentFile(),
+			File actualBplFile = TestUtil.getFilesRegex(inputFile.getParentFile(),
 					new String[] { String.format(".*%s\\.bpl", inputFileNameWithoutEnding) }).toArray(new File[1])[0];
 			if (actualBplFile != null) {
 
 				try {
-					String desiredContent = de.uni_freiburg.informatik.ultimate.core.util.CoreUtil.readFile(desiredBplFile);
-					String actualContent = de.uni_freiburg.informatik.ultimate.core.util.CoreUtil.readFile(actualBplFile);
+					String desiredContent = de.uni_freiburg.informatik.ultimate.core.util.CoreUtil
+							.readFile(desiredBplFile);
+					String actualContent = de.uni_freiburg.informatik.ultimate.core.util.CoreUtil
+							.readFile(actualBplFile);
 
 					if (!desiredContent.equals(actualContent)) {
 						String message = "Desired content does not match actual content.";
@@ -115,7 +118,7 @@ public class TranslationTestResultDecider extends TestResultDecider {
 
 		}
 
-		Util.logResults(log, mInputFile, fail, customMessages, resultService);
+		TestUtil.logResults(log, mInputFile, fail, customMessages, resultService);
 		return fail ? TestResult.FAIL : TestResult.SUCCESS;
 	}
 

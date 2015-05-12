@@ -14,7 +14,7 @@ import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestSuite;
 import de.uni_freiburg.informatik.ultimatetest.summary.IIncrementalLog;
 import de.uni_freiburg.informatik.ultimatetest.summary.ITestSummary;
-import de.uni_freiburg.informatik.ultimatetest.util.Util;
+import de.uni_freiburg.informatik.ultimatetest.util.TestUtil;
 
 /**
  * Stolen from AbstractTraceAbstractionTestSuite ;-)
@@ -69,8 +69,8 @@ public abstract class AbstractAbstractInterpretationTestSuite extends UltimateTe
 	protected void addTestCases(String toolchain, String settings, String[] directories, String[] fileEndings,
 			String description, String uniqueString, long deadline) {
 
-		File toolchainFile = new File(Util.getPathFromTrunk(m_PathToToolchains + toolchain));
-		File settingsFile = new File(Util.getPathFromTrunk(m_PathToSettings + settings));
+		File toolchainFile = new File(TestUtil.getPathFromTrunk(m_PathToToolchains + toolchain));
+		File settingsFile = new File(TestUtil.getPathFromTrunk(m_PathToSettings + settings));
 		Collection<File> testFiles = new ArrayList<File>();
 		for (String directory : directories) {
 			testFiles.addAll(getInputFiles(directory, fileEndings));
@@ -79,7 +79,7 @@ public abstract class AbstractAbstractInterpretationTestSuite extends UltimateTe
 	}
 
 	private Collection<File> getInputFiles(String directory, String[] fileEndings) {
-		return Util.getFiles(new File(Util.getPathFromTrunk(directory)), fileEndings);
+		return TestUtil.getFiles(new File(TestUtil.getPathFromTrunk(directory)), fileEndings);
 	}
 
 

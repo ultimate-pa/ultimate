@@ -32,7 +32,7 @@ import de.uni_freiburg.informatik.ultimatetest.summary.ITestSummary;
  * @author dietsch@informatik.uni-freiburg.de
  * 
  */
-public class Util {
+public class TestUtil {
 
 	/**
 	 * Generates a name based on the current time, the original name of the
@@ -105,7 +105,7 @@ public class Util {
 	}
 
 	public static String removeTrunkExamplesPrefix(String path) {
-		String trunk = Util.getPathFromTrunk("");
+		String trunk = TestUtil.getPathFromTrunk("");
 		String examples = trunk + File.separator + "examples" + File.separator;
 		int lastIndexOf = path.lastIndexOf(examples);
 		if (lastIndexOf != -1) {
@@ -117,7 +117,7 @@ public class Util {
 	}
 
 	public static String removeTrunkSettingsPrefix(String path) {
-		String trunk = Util.getPathFromTrunk("");
+		String trunk = TestUtil.getPathFromTrunk("");
 		String examples = trunk + File.separator + "examples" + File.separator + "settings" + File.separator;
 		int lastIndexOf = path.lastIndexOf(examples);
 		if (lastIndexOf != -1) {
@@ -129,7 +129,7 @@ public class Util {
 	}
 
 	public static String removeTrunkToolchainPrefix(String path) {
-		String trunk = Util.getPathFromTrunk("");
+		String trunk = TestUtil.getPathFromTrunk("");
 		String examples = trunk + File.separator + "examples" + File.separator + "toolchains" + File.separator;
 		int lastIndexOf = path.lastIndexOf(examples);
 		if (lastIndexOf != -1) {
@@ -166,7 +166,7 @@ public class Util {
 	 * This includes also the filename.
 	 */
 	public static String generateAbsolutePathForLogfile(ITestLogfile testSummary) {
-		String absolutPath = Util.getPathFromSurefire(generateLogfilename(testSummary), testSummary
+		String absolutPath = TestUtil.getPathFromSurefire(generateLogfilename(testSummary), testSummary
 				.getUltimateTestSuiteClass().getCanonicalName());
 		return absolutPath;
 	}
@@ -592,7 +592,7 @@ public class Util {
 		}
 		File path = new File(somepath);
 		if (!path.isAbsolute()) {
-			path = new File(Util.getPathFromTrunk(path.getPath()));
+			path = new File(TestUtil.getPathFromTrunk(path.getPath()));
 		}
 		if (path.exists()) {
 			return path.getAbsolutePath();
@@ -602,7 +602,7 @@ public class Util {
 	}
 
 	public static void writeSummary(ITestSummary testSummary) {
-		File logFile = new File(Util.generateAbsolutePathForLogfile(testSummary));
+		File logFile = new File(TestUtil.generateAbsolutePathForLogfile(testSummary));
 
 		if (!logFile.isDirectory()) {
 			logFile.getParentFile().mkdirs();

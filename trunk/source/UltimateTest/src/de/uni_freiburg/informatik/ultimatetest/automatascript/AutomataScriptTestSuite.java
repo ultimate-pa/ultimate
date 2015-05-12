@@ -11,12 +11,12 @@ import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestSuite;
 import de.uni_freiburg.informatik.ultimatetest.summary.IIncrementalLog;
 import de.uni_freiburg.informatik.ultimatetest.summary.ITestSummary;
-import de.uni_freiburg.informatik.ultimatetest.util.Util;
+import de.uni_freiburg.informatik.ultimatetest.util.TestUtil;
 
 public class AutomataScriptTestSuite extends UltimateTestSuite {
 
 	private static final String m_Toolchain = "examples/toolchains/AutomataScriptInterpreter.xml";
-	private static final File m_ToolchainFile = new File(Util.getPathFromTrunk(m_Toolchain));
+	private static final File m_ToolchainFile = new File(TestUtil.getPathFromTrunk(m_Toolchain));
 	private static int m_Timeout = 10000;
 	private static final String[] m_Directories = { 
 		"examples/Automata/atsTestFiles",
@@ -67,7 +67,7 @@ public class AutomataScriptTestSuite extends UltimateTestSuite {
 	}
 
 	private Collection<File> getInputFiles(String directory, String[] fileEndings) {
-		return Util.getFiles(new File(Util.getPathFromTrunk(directory)), fileEndings);
+		return TestUtil.getFiles(new File(TestUtil.getPathFromTrunk(directory)), fileEndings);
 	}
 
 }

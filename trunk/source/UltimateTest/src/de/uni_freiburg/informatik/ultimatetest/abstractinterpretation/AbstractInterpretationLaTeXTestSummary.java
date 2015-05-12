@@ -16,7 +16,7 @@ import de.uni_freiburg.informatik.ultimatetest.abstractinterpretation.AbstractIn
 import de.uni_freiburg.informatik.ultimatetest.abstractinterpretation.AbstractInterpretationTestResultDecider.ExpectedResultType;
 import de.uni_freiburg.informatik.ultimatetest.decider.ITestResultDecider.TestResult;
 import de.uni_freiburg.informatik.ultimatetest.summary.OldTestSummary;
-import de.uni_freiburg.informatik.ultimatetest.util.Util;
+import de.uni_freiburg.informatik.ultimatetest.util.TestUtil;
 
 /**
  * @author Christopher Dillo
@@ -99,7 +99,7 @@ public class AbstractInterpretationLaTeXTestSummary extends OldTestSummary {
 	public AbstractInterpretationLaTeXTestSummary(Class<? extends UltimateTestSuite> ultimateTestSuite) {
 		super(ultimateTestSuite);
 		
-		m_pathOfTrunk = Util.getPathFromTrunk("");
+		m_pathOfTrunk = TestUtil.getPathFromTrunk("");
 	}
 
 	@Override

@@ -9,7 +9,7 @@ import de.uni_freiburg.informatik.ultimateregressiontest.AbstractRegressionTestS
 import de.uni_freiburg.informatik.ultimatetest.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimatetest.decider.ITestResultDecider;
 import de.uni_freiburg.informatik.ultimatetest.decider.TranslationTestResultDecider;
-import de.uni_freiburg.informatik.ultimatetest.util.Util;
+import de.uni_freiburg.informatik.ultimatetest.util.TestUtil;
 
 /**
  * This testsuite tests whether the CACSL2BoogieTranslator translates C programs
@@ -25,7 +25,7 @@ import de.uni_freiburg.informatik.ultimatetest.util.Util;
  */
 public class C2BoogieRegressionTestSuite extends AbstractRegressionTestSuite {
 
-	private static String sRootFolder = Util.getPathFromTrunk("examples/CToBoogieTranslation");
+	private static String sRootFolder = TestUtil.getPathFromTrunk("examples/CToBoogieTranslation");
 
 	private static final long DEFAULT_TIMEOUT_MILLIS = 5000;
 	private static final String TEMPORARY_BOOGIE_FILENAME_PATTERN = ".*regression.*BoogiePrinter_.*UID.*";
@@ -54,8 +54,8 @@ public class C2BoogieRegressionTestSuite extends AbstractRegressionTestSuite {
 
 		final File root = getRootFolder(sRootFolder);
 
-		Collection<File> files = Util.getFiles(root, new String[] { ".bpl" });
-		files = Util.filterFiles(files, TEMPORARY_BOOGIE_FILENAME_PATTERN);
+		Collection<File> files = TestUtil.getFiles(root, new String[] { ".bpl" });
+		files = TestUtil.filterFiles(files, TEMPORARY_BOOGIE_FILENAME_PATTERN);
 
 		if (files.isEmpty()) {
 			sLogger.info(String.format("No cleanup of %s necessary, no files matching the pattern %s have been found",

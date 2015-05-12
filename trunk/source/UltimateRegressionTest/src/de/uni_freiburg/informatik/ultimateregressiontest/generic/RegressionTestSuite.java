@@ -4,7 +4,7 @@ import de.uni_freiburg.informatik.ultimateregressiontest.AbstractRegressionTestS
 import de.uni_freiburg.informatik.ultimatetest.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimatetest.decider.ITestResultDecider;
 import de.uni_freiburg.informatik.ultimatetest.decider.SafetyCheckTestResultDecider;
-import de.uni_freiburg.informatik.ultimatetest.util.Util;
+import de.uni_freiburg.informatik.ultimatetest.util.TestUtil;
 
 /**
  * 
@@ -16,7 +16,7 @@ public class RegressionTestSuite extends AbstractRegressionTestSuite {
 	public RegressionTestSuite() {
 		super();
 		mTimeout = 20 * 1000;
-		mRootFolder = Util.getPathFromTrunk("examples/");
+		mRootFolder = TestUtil.getPathFromTrunk("examples/");
 
 		// match every path not containing CToBoogieTranslation or Backtranslation
 		mFilterRegex = "((?!CToBoogieTranslation|Backtranslation)[\\s\\S])*";

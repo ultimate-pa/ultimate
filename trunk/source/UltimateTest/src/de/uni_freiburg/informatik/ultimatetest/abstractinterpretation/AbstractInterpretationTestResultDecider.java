@@ -30,7 +30,7 @@ import de.uni_freiburg.informatik.ultimate.result.UnsupportedSyntaxResult;
 import de.uni_freiburg.informatik.ultimate.util.Benchmark;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
 import de.uni_freiburg.informatik.ultimatetest.decider.TestResultDecider;
-import de.uni_freiburg.informatik.ultimatetest.util.Util;
+import de.uni_freiburg.informatik.ultimatetest.util.TestUtil;
 
 /**
  * Took stuff from the old SafetyCheckTestResultDecider_OldVersion
@@ -193,7 +193,7 @@ public class AbstractInterpretationTestResultDecider extends TestResultDecider {
 		}
 
 		generateResultMessageAndCategory(scResult);
-		Util.logResults(log, m_inputFile, !getJUnitSuccess(testoutcome), customMessages, resultService);
+		TestUtil.logResults(log, m_inputFile, !getJUnitSuccess(testoutcome), customMessages, resultService);
 		return testoutcome;
 	}
 
@@ -202,7 +202,7 @@ public class AbstractInterpretationTestResultDecider extends TestResultDecider {
 		generateResultMessageAndCategory(new ActualResult(ActualResultType.EXCEPTION_OR_ERROR,
 				new ExceptionOrErrorResult("Ultimate", e)));
 		Logger log = Logger.getLogger(AbstractInterpretationTestResultDecider.class);
-		Util.logResults(log, m_inputFile, true, new LinkedList<String>(), resultService);
+		TestUtil.logResults(log, m_inputFile, true, new LinkedList<String>(), resultService);
 		return TestResult.FAIL;
 	}
 
@@ -213,7 +213,7 @@ public class AbstractInterpretationTestResultDecider extends TestResultDecider {
 	}
 	
 	public static ExpectedResultType getExpectedResult(File inputFile) {
-		String line = Util.extractFirstLine(inputFile);
+		String line = TestUtil.extractFirstLine(inputFile);
 		if (line != null) {
 			if (line.contains("#Safe") || line.contains("iSafe")) {
 				return ExpectedResultType.SAFE;

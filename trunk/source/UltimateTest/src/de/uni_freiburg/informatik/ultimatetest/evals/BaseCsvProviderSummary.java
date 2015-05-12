@@ -16,7 +16,7 @@ import de.uni_freiburg.informatik.ultimatetest.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestSuite;
 import de.uni_freiburg.informatik.ultimatetest.decider.ITestResultDecider.TestResult;
 import de.uni_freiburg.informatik.ultimatetest.summary.NewTestSummary;
-import de.uni_freiburg.informatik.ultimatetest.util.Util;
+import de.uni_freiburg.informatik.ultimatetest.util.TestUtil;
 
 /**
  * 
@@ -49,7 +49,7 @@ public abstract class BaseCsvProviderSummary extends NewTestSummary {
 		ICsvProvider<Object> aggregate = new SimpleCsvProvider<Object>(new ArrayList<String>());
 		ICsvProvider<Object> current = null;
 		for (Class<? extends ICsvProviderProvider<? extends Object>> benchmark : mBenchmarks) {
-			for (ICsvProviderProvider<?> benchmarkResultWildcard : Util.getCsvProviderProviderFromUltimateResults(
+			for (ICsvProviderProvider<?> benchmarkResultWildcard : TestUtil.getCsvProviderProviderFromUltimateResults(
 					resultService.getResults(), benchmark)) {
 				current = (ICsvProvider<Object>) benchmarkResultWildcard.createCvsProvider();
 				aggregate = CsvUtils.concatenateRows(aggregate, current);

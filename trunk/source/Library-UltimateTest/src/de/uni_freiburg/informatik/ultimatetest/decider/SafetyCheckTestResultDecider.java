@@ -7,7 +7,7 @@ import de.uni_freiburg.informatik.ultimatetest.decider.expectedResult.KeywordBas
 import de.uni_freiburg.informatik.ultimatetest.decider.overallResult.IOverallResultEvaluator;
 import de.uni_freiburg.informatik.ultimatetest.decider.overallResult.SafetyCheckerOverallResult;
 import de.uni_freiburg.informatik.ultimatetest.decider.overallResult.SafetyCheckerOverallResultEvaluator;
-import de.uni_freiburg.informatik.ultimatetest.util.Util;
+import de.uni_freiburg.informatik.ultimatetest.util.TestUtil;
 
 /**
  * Use keywords in filename and first line to decide correctness of safety
@@ -33,8 +33,8 @@ public class SafetyCheckTestResultDecider extends ThreeTierTestResultDecider<Saf
 	@Override
 	public IExpectedResultFinder<SafetyCheckerOverallResult> constructExpectedResultFinder() {
 		return new KeywordBasedExpectedResultFinder<SafetyCheckerOverallResult>(
-				Util.constructFilenameKeywordMap_SafetyChecker(), null,
-				Util.constructFirstlineKeywordMap_SafetyChecker());
+				TestUtil.constructFilenameKeywordMap_SafetyChecker(), null,
+				TestUtil.constructFirstlineKeywordMap_SafetyChecker());
 	}
 
 	@Override

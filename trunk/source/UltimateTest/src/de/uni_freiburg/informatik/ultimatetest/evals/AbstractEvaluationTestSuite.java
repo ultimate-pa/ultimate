@@ -25,7 +25,7 @@ import de.uni_freiburg.informatik.ultimatetest.summary.IIncrementalLog;
 import de.uni_freiburg.informatik.ultimatetest.summary.ITestSummary;
 import de.uni_freiburg.informatik.ultimatetest.summary.IncrementalLogWithVMParameters;
 import de.uni_freiburg.informatik.ultimatetest.traceabstraction.IncrementalLogWithBenchmarkResults;
-import de.uni_freiburg.informatik.ultimatetest.util.Util;
+import de.uni_freiburg.informatik.ultimatetest.util.TestUtil;
 
 /**
  * @author dietsch@informatik.uni-freiburg.de
@@ -156,7 +156,7 @@ public abstract class AbstractEvaluationTestSuite extends AbstractModelCheckerTe
 		} else {
 			categories = new HashSet<>();
 			for (String dir : getDirectories()) {
-				categories.add(new File(Util.getPathFromTrunk(dir)).getAbsolutePath());
+				categories.add(new File(TestUtil.getPathFromTrunk(dir)).getAbsolutePath());
 			}
 		}
 

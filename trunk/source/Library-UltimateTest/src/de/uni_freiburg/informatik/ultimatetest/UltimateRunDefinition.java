@@ -1,7 +1,7 @@
 package de.uni_freiburg.informatik.ultimatetest;
 
 import java.io.File;
-import de.uni_freiburg.informatik.ultimatetest.util.Util;
+import de.uni_freiburg.informatik.ultimatetest.util.TestUtil;
 
 /**
  * A run of ultimate is defined by three files:
@@ -66,7 +66,7 @@ public class UltimateRunDefinition {
 	}
 
 	public String removeTrunkExamplesPrefix(String path) {
-		String trunk = Util.getPathFromTrunk("");
+		String trunk = TestUtil.getPathFromTrunk("");
 		String examples = trunk + File.separator + "examples" + File.separator;
 		int lastIndexOf = path.lastIndexOf(examples);
 		if (lastIndexOf != -1) {

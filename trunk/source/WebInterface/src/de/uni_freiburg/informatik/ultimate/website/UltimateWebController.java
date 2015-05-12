@@ -59,10 +59,11 @@ public class UltimateWebController implements IController {
 	public int init(ICore core, ILoggingService loggingService) {
 		// TODO Use own logging service to prefix each ultimate log line with
 		// the session id
-		//TODO: check what the whole settings thing means in parallel contexts 
-		//clear old preferences
+		// TODO: check what the whole settings thing means in parallel contexts
+		// clear old preferences
 		core.resetPreferences();
-		return mExternalUltimateCore.init(core, loggingService, mSettingsFile, mDeadline, new File[] { mInputFile }, null);
+		return mExternalUltimateCore.init(core, loggingService, mSettingsFile, mDeadline, new File[] { mInputFile },
+				null).getCode();
 	}
 
 	@Override

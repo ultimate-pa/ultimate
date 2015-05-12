@@ -11,7 +11,7 @@ import de.uni_freiburg.informatik.ultimatetest.UltimateTestSuite;
 import de.uni_freiburg.informatik.ultimatetest.decider.TranslationTestResultDecider;
 import de.uni_freiburg.informatik.ultimatetest.summary.IIncrementalLog;
 import de.uni_freiburg.informatik.ultimatetest.summary.ITestSummary;
-import de.uni_freiburg.informatik.ultimatetest.util.Util;
+import de.uni_freiburg.informatik.ultimatetest.util.TestUtil;
 
 public abstract class AbstractCTranslationTestSuite extends UltimateTestSuite {
 
@@ -24,7 +24,7 @@ public abstract class AbstractCTranslationTestSuite extends UltimateTestSuite {
 		Collection<File> inputFiles = getInputFiles();
 		File settingsFile = getSettings();
 
-		File toolchainFile = new File(Util.getPathFromTrunk("examples/toolchains/CTranslationTest.xml"));
+		File toolchainFile = new File(TestUtil.getPathFromTrunk("examples/toolchains/CTranslationTest.xml"));
 		long deadline = 10000;
 
 		for (File inputFile : inputFiles) {

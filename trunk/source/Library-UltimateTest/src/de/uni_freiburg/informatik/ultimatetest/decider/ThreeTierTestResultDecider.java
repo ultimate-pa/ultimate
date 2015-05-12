@@ -7,7 +7,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.IResultService;
 import de.uni_freiburg.informatik.ultimatetest.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimatetest.decider.expectedResult.IExpectedResultFinder;
 import de.uni_freiburg.informatik.ultimatetest.decider.overallResult.IOverallResultEvaluator;
-import de.uni_freiburg.informatik.ultimatetest.util.Util;
+import de.uni_freiburg.informatik.ultimatetest.util.TestUtil;
 
 /**
  * Abstract class for deciding a test result in three steps:
@@ -76,7 +76,7 @@ public abstract class ThreeTierTestResultDecider<OVERALL_RESULT> implements ITes
 		messages.add("Actual: " + m_UltimateResultEvaluation.generateOverallResultMessage());
 		messages.add("Test result: "+m_TestResultEvaluation.getTestResult().toString());
 
-		Util.logResults(log, m_UltimateRunDefinition.generateShortStringRepresentation(),
+		TestUtil.logResults(log, m_UltimateRunDefinition.generateShortStringRepresentation(),
 				!getJUnitSuccess(m_TestResultEvaluation.getTestResult()), messages, resultService);
 	}
 

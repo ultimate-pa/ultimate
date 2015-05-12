@@ -9,7 +9,7 @@ import de.uni_freiburg.informatik.ultimateregressiontest.AbstractRegressionTestS
 import de.uni_freiburg.informatik.ultimatetest.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimatetest.decider.ITestResultDecider;
 import de.uni_freiburg.informatik.ultimatetest.decider.TranslationTestResultDecider;
-import de.uni_freiburg.informatik.ultimatetest.util.Util;
+import de.uni_freiburg.informatik.ultimatetest.util.TestUtil;
 
 public class LTLTranslationRegressionTestSuite extends AbstractRegressionTestSuite {
 
@@ -34,7 +34,7 @@ public class LTLTranslationRegressionTestSuite extends AbstractRegressionTestSui
 
 	@Override
 	protected Collection<File> getInputFiles(Pair runConfiguration) {
-		return Util.getFiles(getPathFromTrunk("examples/LTL/rers2012/"), mFiletypesToConsider);
+		return TestUtil.getFiles(getPathFromTrunk("examples/LTL/rers2012/"), mFiletypesToConsider);
 	}
 
 	private Pair getPair(String toolchain, String setting) {
@@ -42,7 +42,7 @@ public class LTLTranslationRegressionTestSuite extends AbstractRegressionTestSui
 	}
 
 	private File getPathFromTrunk(String path) {
-		return new File(Util.getPathFromTrunk(path));
+		return new File(TestUtil.getPathFromTrunk(path));
 	}
 
 }

@@ -18,7 +18,7 @@ import de.uni_freiburg.informatik.ultimatetest.summary.CsvConcatenator;
 import de.uni_freiburg.informatik.ultimatetest.summary.IIncrementalLog;
 import de.uni_freiburg.informatik.ultimatetest.summary.ITestSummary;
 import de.uni_freiburg.informatik.ultimatetest.traceabstraction.IncrementalLogWithBenchmarkResults;
-import de.uni_freiburg.informatik.ultimatetest.util.Util;
+import de.uni_freiburg.informatik.ultimatetest.util.TestUtil;
 
 /**
  * Test Suite for the LassoRanker plugin
@@ -82,14 +82,14 @@ public class LassoRankerTestSuite extends UltimateTestSuite {
 		ArrayList<File> inputFiles = new ArrayList<File>(getInputFiles());
 		Collections.sort(inputFiles);
 
-		File toolchainFile = new File(Util.getPathFromTrunk(s_toolchain));
-		File settingsFile = new File(Util.getPathFromTrunk(s_settings_file));
+		File toolchainFile = new File(TestUtil.getPathFromTrunk(s_toolchain));
+		File settingsFile = new File(TestUtil.getPathFromTrunk(s_settings_file));
 		String logPattern = new UltimatePreferenceStore(Activator.s_PLUGIN_ID)
 				.getString(CorePreferenceInitializer.LABEL_LOG4J_PATTERN);
 		for (File inputFile : inputFiles) {
 			UltimateRunDefinition urd = new UltimateRunDefinition(inputFile, settingsFile, toolchainFile);
 			UltimateStarter starter = new UltimateStarter(urd, s_deadline, s_produceLogFiles ? new File(
-					Util.generateLogFilename(inputFile, "LassoRanker")) : null, s_produceLogFiles ? logPattern : null);
+					TestUtil.generateLogFilename(inputFile, "LassoRanker")) : null, s_produceLogFiles ? logPattern : null);
 			LassoRankerTestResultDecider decider = new LassoRankerTestResultDecider(inputFile);
 			if (decider.getExpectedResult() == ExpectedResult.IGNORE) {
 				continue;
@@ -101,7 +101,7 @@ public class LassoRankerTestSuite extends UltimateTestSuite {
 	}
 
 	public Collection<File> getInputFiles() {
-		return Util.getFiles(new File(Util.getPathFromTrunk(s_test_files_dir)), new String[] { ".bpl" });
+		return TestUtil.getFiles(new File(TestUtil.getPathFromTrunk(s_test_files_dir)), new String[] { ".bpl" });
 	}
 
 }

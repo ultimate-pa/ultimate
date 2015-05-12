@@ -45,6 +45,6 @@ public class UtilsTest {
 			input.add(String.valueOf(i));
 		}
 		
-		Assert.assertEquals(10, Util.uniformN(input, 10).size());
+		Assert.assertEquals(10, TestUtil.uniformN(input, 10).size());
 	}
 }

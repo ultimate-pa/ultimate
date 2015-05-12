@@ -8,7 +8,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimatetest.UltimateRunDefinition;
-import de.uni_freiburg.informatik.ultimatetest.util.Util;
+import de.uni_freiburg.informatik.ultimatetest.util.TestUtil;
 
 /**
  * Find the expected result for a file using keywords that occur in
@@ -75,7 +75,7 @@ public class KeywordBasedExpectedResultFinder<OVERALL_RESULT> implements
 				expectedResult.add(entry.getValue());
 			}
 		}
-		String firstline = Util.extractFirstLine(file);
+		String firstline = TestUtil.extractFirstLine(file);
 		for (Entry<String, OVERALL_RESULT> entry  : m_FirstlineKeywords.entrySet()) {
 			if (firstline.contains(entry.getKey())) {
 				expectedResult.add(entry.getValue());

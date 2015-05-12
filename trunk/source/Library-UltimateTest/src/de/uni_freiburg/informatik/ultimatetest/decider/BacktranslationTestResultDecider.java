@@ -22,7 +22,7 @@ import de.uni_freiburg.informatik.ultimate.result.ExceptionOrErrorResult;
 import de.uni_freiburg.informatik.ultimate.result.GenericResult;
 import de.uni_freiburg.informatik.ultimate.result.IResult;
 import de.uni_freiburg.informatik.ultimate.result.WitnessResult;
-import de.uni_freiburg.informatik.ultimatetest.util.Util;
+import de.uni_freiburg.informatik.ultimatetest.util.TestUtil;
 
 /**
  * 
@@ -147,7 +147,7 @@ public class BacktranslationTestResultDecider extends TestResultDecider {
 				setResultCategory(e.getMessage());
 				setResultMessage(e.toString());
 				e.printStackTrace();
-				Util.logResults(log, mInputFile, true, customMessages, resultService);
+				TestUtil.logResults(log, mInputFile, true, customMessages, resultService);
 				return TestResult.FAIL;
 			}
 
@@ -209,7 +209,7 @@ public class BacktranslationTestResultDecider extends TestResultDecider {
 				}
 			}
 		}
-		Util.logResults(log, mInputFile, fail, customMessages, resultService);
+		TestUtil.logResults(log, mInputFile, fail, customMessages, resultService);
 		return fail ? TestResult.FAIL : TestResult.SUCCESS;
 	}
 
@@ -281,7 +281,7 @@ public class BacktranslationTestResultDecider extends TestResultDecider {
 	public TestResult getTestResult(IResultService resultService, Throwable e) {
 		setResultCategory("Unexpected exception");
 		setResultMessage("Unexpected exception: " + e.getMessage());
-		Util.logResults(Logger.getLogger(BacktranslationTestResultDecider.class), mInputFile, true,
+		TestUtil.logResults(Logger.getLogger(BacktranslationTestResultDecider.class), mInputFile, true,
 				new ArrayList<String>(), resultService);
 		return TestResult.FAIL;
 	}

@@ -33,7 +33,7 @@ import de.uni_freiburg.informatik.ultimatetest.evals.KingOfTheHillSummary;
 import de.uni_freiburg.informatik.ultimatetest.summary.IIncrementalLog;
 import de.uni_freiburg.informatik.ultimatetest.summary.ITestSummary;
 import de.uni_freiburg.informatik.ultimatetest.summary.IncrementalLogWithVMParameters;
-import de.uni_freiburg.informatik.ultimatetest.util.Util;
+import de.uni_freiburg.informatik.ultimatetest.util.TestUtil;
 
 /**
  * Test suite for SVCOMP15.
@@ -197,7 +197,7 @@ public abstract class AbstractSVCOMP15TestSuite extends UltimateTestSuite {
 	 * repository. We default to trunk/examples/svcomp .
 	 */
 	protected File getSVCOMP15RootDirectory() {
-		String svcompRootDir = Util.getFromMavenVariableSVCOMPRoot(Util.getPathFromTrunk("examples/svcomp"));
+		String svcompRootDir = TestUtil.getFromMavenVariableSVCOMPRoot(TestUtil.getPathFromTrunk("examples/svcomp"));
 		return new File(svcompRootDir);
 	}
 
@@ -247,14 +247,14 @@ public abstract class AbstractSVCOMP15TestSuite extends UltimateTestSuite {
 		int filesPerCategory = getFilesPerCategory();
 		if (filesPerCategory == -1) {
 			for (String regex : regexes) {
-				currentFiles.addAll(Util.filterFiles(allFiles, regex));
+				currentFiles.addAll(TestUtil.filterFiles(allFiles, regex));
 			}
 		} else if (filesPerCategory > 0) {
 			int filesPerSetLine = filesPerCategory / regexes.size();
 			filesPerSetLine = filesPerSetLine <= 0 ? 1 : filesPerSetLine;
 			for (String regex : regexes) {
 				currentFiles.addAll(de.uni_freiburg.informatik.ultimate.core.util.CoreUtil.firstN(
-						Util.filterFiles(allFiles, regex), filesPerSetLine));
+						TestUtil.filterFiles(allFiles, regex), filesPerSetLine));
 			}
 		}
 
@@ -271,7 +271,7 @@ public abstract class AbstractSVCOMP15TestSuite extends UltimateTestSuite {
 
 	private Collection<File> getFilesRecursively(File rootdir, String[] regex) {
 		ArrayList<File> singleFiles = new ArrayList<File>();
-		singleFiles.addAll(Util.getFilesRegex(rootdir, regex));
+		singleFiles.addAll(TestUtil.getFilesRegex(rootdir, regex));
 		return singleFiles;
 	}
 
@@ -294,8 +294,8 @@ public abstract class AbstractSVCOMP15TestSuite extends UltimateTestSuite {
 	 */
 	protected TestDefinition getTestDefinitionFromExamples(String setname, String toolchain, String settings,
 			long timeout) {
-		return new TestDefinition(setname, new File(Util.getPathFromTrunk("examples/toolchains/" + toolchain)),
-				new File(Util.getPathFromTrunk("examples/settings/" + settings)), timeout);
+		return new TestDefinition(setname, new File(TestUtil.getPathFromTrunk("examples/toolchains/" + toolchain)),
+				new File(TestUtil.getPathFromTrunk("examples/settings/" + settings)), timeout);
 	}
 
 	public class TestDefinition {

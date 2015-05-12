@@ -10,7 +10,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvide
 import de.uni_freiburg.informatik.ultimatetest.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestSuite;
 import de.uni_freiburg.informatik.ultimatetest.decider.ITestResultDecider.TestResult;
-import de.uni_freiburg.informatik.ultimatetest.util.Util;
+import de.uni_freiburg.informatik.ultimatetest.util.TestUtil;
 
 public class DefaultIncrementalLogfile implements IIncrementalLog {
 
@@ -68,7 +68,7 @@ public class DefaultIncrementalLogfile implements IIncrementalLog {
 			return;
 		}
 		if (mLogFile == null) {
-			mLogFile = new File(Util.generateAbsolutePathForLogfile(this));
+			mLogFile = new File(TestUtil.generateAbsolutePathForLogfile(this));
 			if (!mLogFile.isDirectory()) {
 				mLogFile.getParentFile().mkdirs();
 			}

@@ -96,9 +96,9 @@ public class DefaultToolchainJob extends BasicToolchainJob {
 		assert toolchain != null;
 		mToolchain = toolchain;
 	}
-	
-	private void setInputFiles(File[] inputFiles){
-		if(inputFiles == null || inputFiles.length==0){
+
+	private void setInputFiles(File[] inputFiles) {
+		if (inputFiles == null || inputFiles.length == 0) {
 			throw new IllegalArgumentException("No input files given");
 		}
 		mInputFiles = inputFiles;
@@ -134,7 +134,7 @@ public class DefaultToolchainJob extends BasicToolchainJob {
 			monitor.worked(1);
 
 			ToolchainData data = mToolchain.getCurrentToolchainData();
-			if(data == null){
+			if (data == null) {
 				return Status.CANCEL_STATUS;
 			}
 			setServices(data.getServices());
@@ -195,7 +195,8 @@ public class DefaultToolchainJob extends BasicToolchainJob {
 			}
 			if (mChain == null) {
 				mLogger.fatal("Toolchain selection failed, aborting...");
-				return new Status(Status.CANCEL, Activator.s_PLUGIN_ID, "Toolchain selection canceled");
+				return new Status(Status.CANCEL, Activator.s_PLUGIN_ID, Status.CANCEL, "Toolchain selection canceled",
+						null);
 			}
 			setServices(mChain.getServices());
 			monitor.worked(1);
@@ -209,7 +210,8 @@ public class DefaultToolchainJob extends BasicToolchainJob {
 			mLogger.fatal(String.format("The toolchain threw an exception: %s", e.getMessage()));
 			mLogger.fatal(e);
 			mController.displayException("The toolchain threw an exception", e);
-			returnstatus = Status.CANCEL_STATUS;
+			returnstatus = new Status(Status.CANCEL, Activator.s_PLUGIN_ID, Status.ERROR,
+					"Toolchain threw an exception", null);
 			String idOfCore = Activator.s_PLUGIN_ID;
 			if (mServices != null) {
 				mServices.getResultService().reportResult(idOfCore, new ExceptionOrErrorResult(idOfCore, e));

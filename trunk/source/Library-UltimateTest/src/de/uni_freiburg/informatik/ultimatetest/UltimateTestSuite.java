@@ -13,7 +13,7 @@ import de.uni_freiburg.informatik.junit_helper.testfactory.FactoryTestRunner;
 import de.uni_freiburg.informatik.junit_helper.testfactory.TestFactory;
 import de.uni_freiburg.informatik.ultimatetest.summary.IIncrementalLog;
 import de.uni_freiburg.informatik.ultimatetest.summary.ITestSummary;
-import de.uni_freiburg.informatik.ultimatetest.util.Util;
+import de.uni_freiburg.informatik.ultimatetest.util.TestUtil;
 
 /**
  * 
@@ -90,7 +90,7 @@ public abstract class UltimateTestSuite {
 
 		for (ITestSummary summary : sSummaries) {
 			try {
-				Util.writeSummary(summary);
+				TestUtil.writeSummary(summary);
 			} catch (Exception ex) {
 				ex.printStackTrace();
 			}

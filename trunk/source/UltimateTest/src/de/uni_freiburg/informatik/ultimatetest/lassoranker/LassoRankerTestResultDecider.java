@@ -19,7 +19,7 @@ import de.uni_freiburg.informatik.ultimate.result.NonTerminationArgumentResult;
 import de.uni_freiburg.informatik.ultimate.result.SyntaxErrorResult;
 import de.uni_freiburg.informatik.ultimate.result.TerminationArgumentResult;
 import de.uni_freiburg.informatik.ultimatetest.decider.TestResultDecider;
-import de.uni_freiburg.informatik.ultimatetest.util.Util;
+import de.uni_freiburg.informatik.ultimatetest.util.TestUtil;
 
 /**
  * Read the predefined expected result from the input file and compare it to
@@ -146,7 +146,7 @@ public class LassoRankerTestResultDecider extends TestResultDecider {
 
 		setResultCategory(result + " (Expected: " + m_expected_result + ")");
 		setResultMessage(customMessages.toString());
-		Util.logResults(logger, m_input_file_name, fail, customMessages, resultService);
+		TestUtil.logResults(logger, m_input_file_name, fail, customMessages, resultService);
 		return fail ? TestResult.FAIL : TestResult.SUCCESS;
 	}
 

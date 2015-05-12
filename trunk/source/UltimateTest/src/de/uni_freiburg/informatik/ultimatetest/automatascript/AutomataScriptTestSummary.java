@@ -12,7 +12,7 @@ import de.uni_freiburg.informatik.ultimatetest.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestSuite;
 import de.uni_freiburg.informatik.ultimatetest.decider.ITestResultDecider.TestResult;
 import de.uni_freiburg.informatik.ultimatetest.summary.ITestSummary;
-import de.uni_freiburg.informatik.ultimatetest.util.Util;
+import de.uni_freiburg.informatik.ultimatetest.util.TestUtil;
 
 public class AutomataScriptTestSummary implements ITestSummary {
 	
@@ -63,7 +63,7 @@ public class AutomataScriptTestSummary implements ITestSummary {
 	@Override
 	public void addResult(UltimateRunDefinition ultimateRunDefinition, TestResult threeValuedResult,
 			String category, String message, String testname, IResultService resultService) {
-		Collection<Benchmark> benchmarkSingleton = Util.getCsvProviderProviderFromUltimateResults(resultService.getResults(), Benchmark.class);
+		Collection<Benchmark> benchmarkSingleton = TestUtil.getCsvProviderProviderFromUltimateResults(resultService.getResults(), Benchmark.class);
 		if (benchmarkSingleton.size() != 1) {
 			throw new AssertionError("expected single benchmark result");
 		} else {

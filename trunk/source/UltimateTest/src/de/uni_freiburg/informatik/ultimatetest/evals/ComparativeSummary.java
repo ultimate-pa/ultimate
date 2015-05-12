@@ -9,7 +9,7 @@ import de.uni_freiburg.informatik.ultimate.core.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimatetest.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestSuite;
 import de.uni_freiburg.informatik.ultimatetest.summary.NewTestSummary;
-import de.uni_freiburg.informatik.ultimatetest.util.Util;
+import de.uni_freiburg.informatik.ultimatetest.util.TestUtil;
 
 public class ComparativeSummary extends NewTestSummary {
 
@@ -76,11 +76,11 @@ public class ComparativeSummary extends NewTestSummary {
 		String indent = "    ";
 		for (Entry<UltimateRunDefinition, ExtendedResult> mismatch : mismatches) {
 			String filename = mismatch.getKey().getInput().getAbsolutePath();
-			sb.append(Util.removeTrunkExamplesPrefix(filename));
+			sb.append(TestUtil.removeTrunkExamplesPrefix(filename));
 			sb.append(CoreUtil.getPlatformLineSeparator());
 			for (Entry<UltimateRunDefinition, ExtendedResult> differentEntry : file2entries.get(filename)) {
-				String tool = Util.removeTrunkToolchainPrefix(differentEntry.getKey().getToolchain().getAbsolutePath())
-						+ "+" + Util.removeTrunkSettingsPrefix(differentEntry.getKey().getSettings().getAbsolutePath());
+				String tool = TestUtil.removeTrunkToolchainPrefix(differentEntry.getKey().getToolchain().getAbsolutePath())
+						+ "+" + TestUtil.removeTrunkSettingsPrefix(differentEntry.getKey().getSettings().getAbsolutePath());
 				sb.append(indent);
 				sb.append(tool);
 				sb.append(CoreUtil.getPlatformLineSeparator());
