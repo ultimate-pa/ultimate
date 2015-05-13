@@ -444,8 +444,9 @@ public class CHandler implements ICHandler {
 			Map<String, LTLPropertyCheck.CheckableExpression> checkableAtomicPropositions = new LinkedHashMap<String, LTLPropertyCheck.CheckableExpression>();
 
 			for (Entry<String, de.uni_freiburg.informatik.ultimate.model.acsl.ast.Expression> en : ex.getAP2SubExpressionMap().entrySet()) {
-				Result r = main.dispatch(en.getValue());
-				checkableAtomicPropositions.put(en.getKey(), new CheckableExpression((Expression) r.node, null));
+				ResultExpression r = (ResultExpression) main.dispatch(en.getValue());
+				//TODO: some switchToRValue and handling of sideeffects?
+				checkableAtomicPropositions.put(en.getKey(), new CheckableExpression(r.lrVal.getValue(), null));
 			}
 			LTLPropertyCheck propCheck = new LTLPropertyCheck(ex.getLTLFormatString(), checkableAtomicPropositions, null);
 			propCheck.annotate(boogieUnit);
