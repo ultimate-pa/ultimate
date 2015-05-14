@@ -153,7 +153,7 @@ public class BuchiClosureNwa<LETTER, STATE> implements INestedWordAutomatonOldAp
 	
 	
 	@Override
-	public Collection<STATE> getInitialStates() {
+	public Set<STATE> getInitialStates() {
 		return m_Operand.getInitialStates();
 	}
 

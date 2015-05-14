@@ -133,7 +133,7 @@ public class NestedWordAutomatonFilteredStates<LETTER, STATE> implements
 	}
 
 	@Override
-	public Collection<STATE> getInitialStates() {
+	public Set<STATE> getInitialStates() {
 		return m_newInitials;
 	}
 

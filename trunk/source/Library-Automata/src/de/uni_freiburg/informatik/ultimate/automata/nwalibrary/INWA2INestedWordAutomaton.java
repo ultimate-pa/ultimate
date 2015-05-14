@@ -78,7 +78,7 @@ public class INWA2INestedWordAutomaton<LETTER, STATE> implements
 		return m_Nwa.getAlphabet();
 	}
 
-	public Collection<STATE> getInitialStates() {
+	public Set<STATE> getInitialStates() {
 		return m_Nwa.getInitialStates();
 	}
 

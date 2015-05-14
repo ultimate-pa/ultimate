@@ -227,7 +227,7 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 	}
 
 	@Override
-	public Collection<STATE> getInitialStates() {
+	public Set<STATE> getInitialStates() {
 		return m_InitialStateSet;
 	}
 

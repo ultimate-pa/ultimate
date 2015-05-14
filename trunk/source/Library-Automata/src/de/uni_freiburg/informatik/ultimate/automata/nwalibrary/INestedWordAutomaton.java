@@ -54,7 +54,7 @@ public interface INestedWordAutomaton<LETTER, STATE> extends INestedWordAutomato
 	/**
 	 * Returns the set of initial states. 
 	 */
-	public Collection<STATE> getInitialStates();
+	public Set<STATE> getInitialStates();
 	
 	/**
 	 * Returns the set of states of this automaton. <b>Use with caution!</b>

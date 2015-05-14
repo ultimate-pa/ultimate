@@ -286,7 +286,7 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 	}
 
 	@Override
-	public Collection<STATE> getInitialStates() {
+	public Set<STATE> getInitialStates() {
 		return Collections.unmodifiableSet(m_initialStates);
 	}
 

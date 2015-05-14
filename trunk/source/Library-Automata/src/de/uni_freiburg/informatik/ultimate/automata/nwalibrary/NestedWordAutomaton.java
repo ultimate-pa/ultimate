@@ -167,7 +167,7 @@ public class NestedWordAutomaton<LETTER, STATE> implements INestedWordAutomatonO
 	}
 
 	@Override
-	public Collection<STATE> getInitialStates() {
+	public Set<STATE> getInitialStates() {
 		return Collections.unmodifiableSet(m_InitialStates);
 	}
 
