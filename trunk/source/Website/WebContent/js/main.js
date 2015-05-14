@@ -122,11 +122,7 @@ function getResults()
 // change language highlighting of editor
 function changeMode(mode)
 {
-    var SetToMode = require('ace/mode/c_cpp').Mode;
-    try { SetToMode = require('ace/mode/' + mode).Mode; }
-    catch (e) { console.log('language \'' + mode + '\' not yet highlighted correctly (using \'c_cpp\' instead)'); } 
-    
-    _EDITOR.getSession().setMode(new SetToMode());
+	_EDITOR.getSession().setMode('ace/mode/' + mode.replace(' ', '_'));  
 }
 
 // change font Size of editor
@@ -158,7 +154,7 @@ function initEditor()
     _EDITOR = ace.edit("editor");
     _EDITOR.renderer.setHScrollBarAlwaysVisible(false);
     _EDITOR.setTheme("ace/theme/eclipse");
-    changeMode();
+	_EDITOR.getSession().setMode('ace/mode/c_cpp'); //equv to: changeMode('c_cpp');
     _EDITOR.renderer.setShowGutter(true);
     _EDITOR.setShowPrintMargin(true);
     _EDITOR.setDisplayIndentGuides(true);

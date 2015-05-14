@@ -214,14 +214,6 @@ Params:
   if(ui.equals("tool") && multipleTools && showAll){
 	  response.sendRedirect(request.getContextPath() + "/");
   }
-  // redirect old-page requests
-  try
-  {
-	  Tasks.TaskNames.valueOf(task);
-	  if(noUI){
-		  response.sendRedirect(request.getContextPath() + "/old.jsp?" + request.getQueryString());
-	  }
-	} catch(Exception e){ /* no desired behaviour */ }
   
   // handling invalid worker names
   if(worker.containsKey(tool)){
@@ -303,12 +295,6 @@ Params:
 	window.define = ace.define;
 	window.require = ace.require;
 </script>
-<script type="text/javascript" charset="utf-8"
-	src="./js/ace/themes/theme-eclipse.js"></script>
-<script type="text/javascript" charset="utf-8"
-	src="./js/ace/modes/mode-c.js"></script>
-<script type="text/javascript" charset="utf-8"
-	src="./js/ace/modes/mode-boogie.js"></script>
 <script type="text/javascript" charset="utf-8" src="./js/tools.js"></script>
 <script type="text/javascript" charset="utf-8" src="./js/main.js"></script>
 <script type="text/javascript" charset="utf-8" src="./js/control.js"></script>
