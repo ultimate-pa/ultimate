@@ -105,8 +105,10 @@ public class BuchiAutomizerMaxrank3Tests extends
 //		"buchiAutomizer/staged300Forward-Z3-Tasimp.epf",
 		"buchiAutomizer/stagedForwardPredicatesNonlinear.epf",
 		"buchiAutomizer/maxrank3ForwardPredicatesNonlinear.epf",
+		"buchiAutomizer/blastForwardPredicatesNonlinear.epf",
 		"buchiAutomizer/stagedForwardPredicatesNonlinearLbe.epf",
 		"buchiAutomizer/maxrank3ForwardPredicatesNonlinearLbe.epf",
+		"buchiAutomizer/blastForwardPredicatesNonlinearLbe.epf",
 	};
 	
 	
