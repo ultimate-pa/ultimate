@@ -59,9 +59,16 @@ public class PostProcessor {
 	 * for filling the modifies clause of Ultimate.start and Ultimate.init.
 	 */
 	private final LinkedHashSet<String> mInitializedGlobals;
+
 	private final Dispatcher mDispatcher;
 	private final Logger mLogger;
-	private static final boolean s_DeclareToIntFunction = false;
+
+	/*
+	 * Decides if the PostProcessor declares the special function that we use for
+	 * converting Boogie-Real to a Boogie-Int.
+	 * This is needed when we do a cast from float to int in C.
+	 */
+	public boolean m_DeclareToIntFunction = false;
 
 	/**
 	 * Constructor.
@@ -153,7 +160,7 @@ public class PostProcessor {
 //		Specification toIntSpec = new EnsuresSpecification(ignoreLoc, false, new IfThenElseExpression(ignoreLoc, inRealGeq0, roundDown, roundUp));
 //		decls.add(new Procedure(ignoreLoc, new Attribute[0], SFO.TO_INT, new String[0], oneRealParam, oneIntParam, new Specification[] { toIntSpec }, null));
 
-		if (s_DeclareToIntFunction ) {
+		if (m_DeclareToIntFunction ) {
 			decls.add(new FunctionDeclaration(ignoreLoc, new Attribute[0], SFO.TO_INT, new String[0], oneRealParam, intParam));
 		}
 

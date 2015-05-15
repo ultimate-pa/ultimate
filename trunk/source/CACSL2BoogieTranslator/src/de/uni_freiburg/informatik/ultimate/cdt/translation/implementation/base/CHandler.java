@@ -3644,10 +3644,11 @@ public class CHandler implements ICHandler {
 					rVal = new RValue(e, expectedType);
 				}
 			} else if (cprim.getGeneralType() == GENERALPRIMITIVE.FLOATTYPE) { 
-				if (expectedType instanceof CPrimitive) {
-					if (((CPrimitive) expectedType).getGeneralType() == GENERALPRIMITIVE.INTTYPE) {
+				if (expectedType instanceof CPrimitive) { //cast float -> int (or respective long types)
+	 				if (((CPrimitive) expectedType).getGeneralType() == GENERALPRIMITIVE.INTTYPE) {
 						rVal = new RValue(new FunctionApplication(loc, SFO.TO_INT, new Expression[] { rVal.getValue() }), 
 								expectedType);
+						mPostProcessor.m_DeclareToIntFunction = true;
 					}
 				}
 		
