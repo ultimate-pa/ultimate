@@ -2178,7 +2178,8 @@ public class CHandler implements ICHandler {
 
 		Expression cond = null;
 		boolean isFirst = true;
-		String breakLabelName = "SWITCH~BREAK~" + node.hashCode();
+		String breakLabelName =
+				main.nameHandler.getGloballyUniqueIdentifier("SWITCH~BREAK~");
 
 		ArrayList<Statement> ifBlock = new ArrayList<Statement>();
 		this.beginScope();
