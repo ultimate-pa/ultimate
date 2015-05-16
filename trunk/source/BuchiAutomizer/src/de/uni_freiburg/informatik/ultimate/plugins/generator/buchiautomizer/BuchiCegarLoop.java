@@ -283,13 +283,25 @@ public class BuchiCegarLoop {
 					m_BouncerStem, m_BouncerLoop, m_ScroogeNondeterminismStem, m_ScroogeNondeterminismLoop,
 					m_CannibalizeLoop, Integer.MAX_VALUE));
 			break;
-		case MAXRANK3:
+		case TabaRankBased:
 			m_BuchiRefinementSettingSequence.add(m_RefineBuchi.new RefinementSetting(
-					BInterpolantAutomaton.ScroogeNondeterminism, false, false, true, false, true, 3));
+					BInterpolantAutomaton.ScroogeNondeterminism, false, false, true, false, true, Integer.MAX_VALUE));
 			break;
-		case BLAST:
+		case TabaBlast:
 			m_BuchiRefinementSettingSequence.add(m_RefineBuchi.new RefinementSetting(
 					BInterpolantAutomaton.ScroogeNondeterminism, false, false, true, false, true, -3));
+			break;
+		case StagedBlast:
+			m_BuchiRefinementSettingSequence.add(m_RefineBuchi.new RefinementSetting(
+					BInterpolantAutomaton.Deterministic, true, false, false, false, true, -3));
+			m_BuchiRefinementSettingSequence.add(m_RefineBuchi.new RefinementSetting(
+					BInterpolantAutomaton.Deterministic, true, true, false, false, true, -3));
+			m_BuchiRefinementSettingSequence.add(m_RefineBuchi.new RefinementSetting(
+					BInterpolantAutomaton.ScroogeNondeterminism, true, false, true, false, false, -3));
+			m_BuchiRefinementSettingSequence.add(m_RefineBuchi.new RefinementSetting(
+					BInterpolantAutomaton.ScroogeNondeterminism, true, true, true, false, false, -3));
+			m_BuchiRefinementSettingSequence.add(m_RefineBuchi.new RefinementSetting(
+					BInterpolantAutomaton.ScroogeNondeterminism, false, false, true, true, false, -3));
 			break;
 		default:
 			throw new UnsupportedOperationException("unknown automaton");

@@ -98,6 +98,6 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 	 */
 	public static final String LABEL_TryTwofoldRefinement = "Try twofold refinement";
 	
-	public enum BInterpolantAutomaton { LassoAutomaton, EagerNondeterminism, ScroogeNondeterminism, Deterministic, Staged, MAXRANK3, BLAST };
+	public enum BInterpolantAutomaton { LassoAutomaton, EagerNondeterminism, ScroogeNondeterminism, Deterministic, Staged, TabaRankBased, TabaBlast, StagedBlast };
 	
 }
