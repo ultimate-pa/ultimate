@@ -25,11 +25,13 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -46,6 +48,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.util.PowersetIterator;
 
 	
 
@@ -91,6 +94,7 @@ public class BuchiComplementBSNwa<LETTER,STATE> implements INestedWordAutomatonS
 				m_Services,
 				operand.getInternalAlphabet(), operand.getCallAlphabet(), 
 				operand.getReturnAlphabet(), m_StateFactory);
+		constructInitialState();
 	}
 	
 	
@@ -98,9 +102,10 @@ public class BuchiComplementBSNwa<LETTER,STATE> implements INestedWordAutomatonS
 		LevelRankingState<LETTER,STATE> lvlrk = new LevelRankingState<LETTER,STATE>(m_Operand);
 		for (STATE state : m_Operand.getInitialStates()) {
 			if (m_Operand.isFinal(state)) {
-				throw new UnsupportedOperationException("states that are initial and final are not supported");
+				lvlrk.addRank(getEmptyStackState(), state, 2, false);
+			} else {
+				lvlrk.addRank(getEmptyStackState(), state, 3, false);
 			}
-			lvlrk.addRank(getEmptyStackState(), state, 3, false);
 		}
 		getOrAdd(true, lvlrk);
 	}
@@ -151,7 +156,6 @@ public class BuchiComplementBSNwa<LETTER,STATE> implements INestedWordAutomatonS
 	
 	@Override
 	public Iterable<STATE> getInitialStates() {
-		constructInitialState();
 		return m_Cache.getInitialStates();
 	}
 
@@ -226,35 +230,14 @@ public class BuchiComplementBSNwa<LETTER,STATE> implements INestedWordAutomatonS
 					}
 				}
 			}
-			List<DoubleDecker<STATE>> doubleDeckersWithVoluntaryDecrease = new ArrayList<DoubleDecker<STATE>>();
-			for (DoubleDecker<STATE> predWasAccepting : lrcwh.getPredecessorWasAccepting()) {
-				int rank = lrcwh.getRank(predWasAccepting.getDown(), predWasAccepting.getUp());
-				if (BuchiComplementFKVNwa.isEven(rank)) {
-					doubleDeckersWithVoluntaryDecrease.add(predWasAccepting);
-				}
-			}
+			Set<DoubleDecker<STATE>> allDoubleDeckersWithVoluntaryDecrease = 
+					computeDoubleDeckersWithVoluntaryDecrease(lrcwh);
 			List<LevelRankingState<LETTER, STATE>> succLvls = new ArrayList<LevelRankingState<LETTER,STATE>>();
-			if (doubleDeckersWithVoluntaryDecrease.size() > 1) {
-				throw new UnsupportedOperationException();
-			} else if (doubleDeckersWithVoluntaryDecrease.size() == 1) {
-				{
-					Set<DoubleDecker<STATE>> singleton = Collections.singleton(doubleDeckersWithVoluntaryDecrease.iterator().next());
-					LevelRankingState<LETTER, STATE> succCandidate = computeLevelRanking(lrcwh, singleton);
-					if (succCandidate != null) {
-						succLvls.add(succCandidate);
-					}
-				}
-				{
-					Set<DoubleDecker<STATE>> emtpy = Collections.emptySet();
-					LevelRankingState<LETTER, STATE> succCandidate = computeLevelRanking(lrcwh, emtpy);
-					if (succCandidate != null) {
-						succLvls.add(succCandidate);
-					}
-				}
-			} else {
-				assert doubleDeckersWithVoluntaryDecrease.size() == 0;
-				Set<DoubleDecker<STATE>> emtpy = Collections.emptySet();
-				LevelRankingState<LETTER, STATE> succCandidate = computeLevelRanking(lrcwh, emtpy);
+			Iterator<Set<DoubleDecker<STATE>>> it = 
+					new PowersetIterator<DoubleDecker<STATE>>(allDoubleDeckersWithVoluntaryDecrease);
+			while(it.hasNext()) {
+				Set<DoubleDecker<STATE>> subset = it.next();
+				LevelRankingState<LETTER, STATE> succCandidate = computeLevelRanking(lrcwh, subset);
 				if (succCandidate != null) {
 					succLvls.add(succCandidate);
 				}
@@ -267,6 +250,19 @@ public class BuchiComplementBSNwa<LETTER,STATE> implements INestedWordAutomatonS
 			}
 		}
 		return m_Cache.internalSuccessors(state, letter);
+	}
+
+
+	private Set<DoubleDecker<STATE>> computeDoubleDeckersWithVoluntaryDecrease(
+			LevelRankingConstraintWithHistory lrcwh) {
+		Set<DoubleDecker<STATE>> doubleDeckersWithVoluntaryDecrease = new HashSet<DoubleDecker<STATE>>();
+		for (DoubleDecker<STATE> predWasAccepting : lrcwh.getPredecessorWasAccepting()) {
+			int rank = lrcwh.getRank(predWasAccepting.getDown(), predWasAccepting.getUp());
+			if (BuchiComplementFKVNwa.isEven(rank) && !m_Operand.isFinal(predWasAccepting.getUp())) {
+				doubleDeckersWithVoluntaryDecrease.add(predWasAccepting);
+			}
+		}
+		return doubleDeckersWithVoluntaryDecrease;
 	}
 
 
@@ -323,7 +319,7 @@ public class BuchiComplementBSNwa<LETTER,STATE> implements INestedWordAutomatonS
 	@Override
 	public Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors(
 			STATE state, LETTER letter) {
-		throw new UnsupportedOperationException();
+		throw new UnsupportedOperationException("calls are not supported yet");
 	}
 
 	@Override
@@ -340,7 +336,7 @@ public class BuchiComplementBSNwa<LETTER,STATE> implements INestedWordAutomatonS
 	@Override
 	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSucccessors(
 			STATE state, STATE hier, LETTER letter) {
-		throw new UnsupportedOperationException();
+		throw new UnsupportedOperationException("returns are not supported yet");
 	}
 
 	@Override

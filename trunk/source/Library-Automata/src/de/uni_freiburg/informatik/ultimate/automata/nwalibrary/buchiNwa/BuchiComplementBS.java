@@ -57,7 +57,6 @@ public class BuchiComplementBS<LETTER,STATE> implements IOperation<LETTER,STATE>
 	
 	private final INestedWordAutomatonSimple<LETTER,STATE> m_Operand;
 	private final NestedWordAutomatonReachableStates<LETTER, STATE> m_Result;
-	private final StateFactory<STATE> m_StateFactory;
 	private final BuchiComplementBSNwa<LETTER, STATE> m_Complemented;	
 	
 	
@@ -87,7 +86,6 @@ public class BuchiComplementBS<LETTER,STATE> implements IOperation<LETTER,STATE>
 			INestedWordAutomatonSimple<LETTER,STATE> input) throws AutomataLibraryException {
 		m_Services = services;
 		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
-		this.m_StateFactory = input.getStateFactory();
 		this.m_Operand = input;
 		m_Logger.info(startMessage());
 		m_Complemented = new BuchiComplementBSNwa<LETTER, STATE>(m_Services, input, stateFactory);
