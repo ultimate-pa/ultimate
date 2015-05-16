@@ -60,7 +60,7 @@ public class BuchiComplementFKV<LETTER,STATE> implements IOperation<LETTER,STATE
 	 * this is sound. E.g. if the automaton is reverse deterministic a maximal
 	 * rank of 2 is suffient, see paper of Seth Forgaty.
 	 */
-	final int m_UserDefinedMaxRank = Integer.MAX_VALUE;
+	private final int m_UserDefinedMaxRank;
 	
 	private final INestedWordAutomatonSimple<LETTER,STATE> m_Operand;
 	private final NestedWordAutomatonReachableStates<LETTER, STATE> m_Result;
@@ -99,16 +99,25 @@ public class BuchiComplementFKV<LETTER,STATE> implements IOperation<LETTER,STATE
 
 	public BuchiComplementFKV(IUltimateServiceProvider services,
 			StateFactory<STATE> stateFactory, 
-			INestedWordAutomatonSimple<LETTER,STATE> input) throws AutomataLibraryException {
+			INestedWordAutomatonSimple<LETTER,STATE> input,
+			int userDefinedMaxRank) throws AutomataLibraryException {
 		m_Services = services;
 		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 		this.m_StateDeterminizer = new PowersetDeterminizer<LETTER, STATE>(input, true, stateFactory);
 		this.m_StateFactory = input.getStateFactory();
 		this.m_Operand = input;
+		this.m_UserDefinedMaxRank = userDefinedMaxRank;
 		m_Logger.info(startMessage());
 		m_Complemented = new BuchiComplementFKVNwa<LETTER, STATE>(m_Services, input,m_StateDeterminizer,m_StateFactory, m_UserDefinedMaxRank);
 		m_Result = new NestedWordAutomatonReachableStates<LETTER, STATE>(m_Services, m_Complemented);
 		m_Logger.info(exitMessage());
+	}
+	
+	public BuchiComplementFKV(IUltimateServiceProvider services,
+			StateFactory<STATE> stateFactory, 
+			INestedWordAutomatonSimple<LETTER,STATE> input) throws AutomataLibraryException {
+		this(services, stateFactory, input, Integer.MAX_VALUE);
+		
 	}
 	
 	public BuchiComplementFKV(IUltimateServiceProvider services,
@@ -118,6 +127,7 @@ public class BuchiComplementFKV<LETTER,STATE> implements IOperation<LETTER,STATE
 		this.m_StateDeterminizer = stateDeterminizier;
 		this.m_StateFactory = input.getStateFactory();
 		this.m_Operand = input;
+		this.m_UserDefinedMaxRank = Integer.MAX_VALUE;
 		m_Logger.info(startMessage());
 		m_Complemented = new BuchiComplementFKVNwa<LETTER, STATE>(m_Services, input,m_StateDeterminizer,m_StateFactory, m_UserDefinedMaxRank);
 		m_Result = new NestedWordAutomatonReachableStates<LETTER, STATE>(m_Services, m_Complemented);
@@ -225,20 +235,5 @@ public class BuchiComplementFKV<LETTER,STATE> implements IOperation<LETTER,STATE
 	public NestedWordAutomatonReachableStates<LETTER, STATE> getResult() throws AutomataLibraryException {
 		return m_Result;
 	}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 }
