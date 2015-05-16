@@ -17,6 +17,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.BuchiAccepts;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.BuchiComplementFKV;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.BuchiDifferenceBS;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.BuchiDifferenceFKV;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.BuchiIntersect;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.NestedLassoRun;
@@ -279,11 +280,21 @@ public class RefineBuchi {
 				m_InterpolAutomatonUsedInRefinement, m_UseDoubleDeckers, m_StateFactoryInterpolAutom);
 		INestedWordAutomatonOldApi<CodeBlock, IPredicate> newAbstraction;
 		if (m_Difference) {
-			BuchiDifferenceFKV<CodeBlock, IPredicate> diff = new BuchiDifferenceFKV<CodeBlock, IPredicate>(m_Services, 
-					m_Abstraction, m_InterpolAutomatonUsedInRefinement, stateDeterminizer, m_StateFactoryForRefinement, setting.getUsedDefinedMaxRank());
-			finishComputation(m_InterpolAutomatonUsedInRefinement, setting);
-			benchmarkGenerator.reportHighestRank(diff.getHighestRank());
-			assert diff.checkResult(m_StateFactoryInterpolAutom);
+			if (setting.getUsedDefinedMaxRank() == -3) {
+				BuchiDifferenceBS<CodeBlock, IPredicate> diff = new BuchiDifferenceBS<CodeBlock, IPredicate>(m_Services, 
+						m_StateFactoryForRefinement, m_Abstraction, m_InterpolAutomatonUsedInRefinement);
+				finishComputation(m_InterpolAutomatonUsedInRefinement, setting);
+				benchmarkGenerator.reportHighestRank(3);
+				assert diff.checkResult(m_StateFactoryInterpolAutom);
+				newAbstraction = diff.getResult();
+			} else { 
+				BuchiDifferenceFKV<CodeBlock, IPredicate> diff = new BuchiDifferenceFKV<CodeBlock, IPredicate>(m_Services, 
+						m_Abstraction, m_InterpolAutomatonUsedInRefinement, stateDeterminizer, m_StateFactoryForRefinement, setting.getUsedDefinedMaxRank());
+				finishComputation(m_InterpolAutomatonUsedInRefinement, setting);
+				benchmarkGenerator.reportHighestRank(diff.getHighestRank());
+				assert diff.checkResult(m_StateFactoryInterpolAutom);
+				newAbstraction = diff.getResult();
+			}
 
 			// s_Logger.warn("START: minimization test");
 			// BuchiComplementFKVNwa<CodeBlock, IPredicate> compl1 =
@@ -307,7 +318,7 @@ public class RefineBuchi {
 			// s_Logger.warn("newDiff size" +
 			// (newDiff.getResult()).sizeInformation());
 
-			newAbstraction = diff.getResult();
+			
 		} else {
 			BuchiComplementFKV<CodeBlock, IPredicate> complNwa = new BuchiComplementFKV<CodeBlock, IPredicate>(
 					m_Services, 
