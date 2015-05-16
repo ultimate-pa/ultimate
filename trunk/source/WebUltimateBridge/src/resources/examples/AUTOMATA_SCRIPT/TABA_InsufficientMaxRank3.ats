@@ -1,0 +1,70 @@
+// heizmann@informatik.uni-freiburg.de 2015-05-16
+// Effect of different complementations for Buchi automata applied to a 
+// simplified version of an automaton that occurred in our termination analysis.
+
+NestedWordAutomaton buchiInterpolantAutomaton = (
+	callAlphabet = {},
+	internalAlphabet = {"b" "a" },
+	returnAlphabet = {},
+	states = {"q0" "s0" "s1" "r0" "r1" },
+	initialStates = {"q0" },
+	finalStates = {"s0" "r0" },
+	callTransitions = {
+	},
+	internalTransitions = {
+		 ("q0" "a" "q0")
+		 ("q0" "a" "r0")
+
+		 ("q0" "b" "s0")
+		 ("q0" "b" "q0")
+		 
+		 ("r0" "b" "r1")
+		 ("r1" "b" "r1")
+
+		 ("s0" "b" "s1")
+		 ("s1" "b" "s1")
+	},
+	returnTransitions = {
+	}
+);
+
+// language of automaton is empty
+assert(buchiIsEmpty(buchiInterpolantAutomaton));
+
+// complementation for TABAs proposed by Fanda and Jan
+// produces the smallest result (as expected)
+NestedWordAutomaton bs = buchiComplementBS(buchiInterpolantAutomaton);
+// print(bs);
+print(numberOfStates(bs));
+
+// Matthias' implementation of rank-based complementation with maxrank restricted to 3.
+NestedWordAutomaton fkvMaxrank3 = buchiComplementFKV(buchiInterpolantAutomaton,3);
+// print(fkvMaxrank3);
+print(numberOfStates(fkvMaxrank3));
+// produces a wrong result, does not accept a.b^\omega
+assert(buchiAccepts(fkvMaxrank3, ["a", "b"]));
+
+// Matthias' implementation of rank-based complementation with maxrank restricted to 5.
+NestedWordAutomaton fkvMaxrank5 = buchiComplementFKV(buchiInterpolantAutomaton,5);
+// print(fkvMaxrank5);
+print(numberOfStates(fkvMaxrank5));
+
+
+// all three complement automata have only live states, no non-live states can be removed
+print(numberOfStates(removeNonLiveStates(bs)));
+print(numberOfStates(removeNonLiveStates(fkvMaxrank3)));
+print(numberOfStates(removeNonLiveStates(fkvMaxrank5)));
+
+
+// surprisingly, after a Hopcroft-based size reduction the maxrank5 algorithm has
+// the smallest number of states
+print(numberOfStates(minimizeSevpa(removeNonLiveStates(bs))));
+print(numberOfStates(minimizeSevpa(removeNonLiveStates(fkvMaxrank3))));
+print(numberOfStates(minimizeSevpa(removeNonLiveStates(fkvMaxrank5))));
+
+
+// after a Buchi size reduction based on delayed simulation the result of
+// the bs algorithm has the smallest number of states
+print(numberOfStates(buchiReduce(removeNonLiveStates(bs))));
+print(numberOfStates(buchiReduce(removeNonLiveStates(fkvMaxrank3))));
+print(numberOfStates(buchiReduce(removeNonLiveStates(fkvMaxrank5))));
