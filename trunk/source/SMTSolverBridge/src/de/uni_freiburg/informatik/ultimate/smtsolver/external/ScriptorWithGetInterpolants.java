@@ -113,13 +113,12 @@ public class ScriptorWithGetInterpolants extends Scriptor {
 		Term[] interpolants;
     	switch (m_ExternalInterpolator) {
 		case IZ3:
-		case PRINCESS:
 	    	interpolants = new Term[numberOfInterpolants];
 	    	for (int i=0; i<interpolants.length; i++) {
 	    		interpolants[i] = super.m_Executor.parseTerm();
 	    	}
-
 			break;
+		case PRINCESS:
 		case SMTINTERPOL:
 			interpolants = super.m_Executor.parseGetAssertionsResult();
 			break;
