@@ -301,7 +301,7 @@ public class BuchiCegarLoop {
 			m_BuchiRefinementSettingSequence.add(m_RefineBuchi.new RefinementSetting(
 					BInterpolantAutomaton.ScroogeNondeterminism, true, true, true, false, false, -3));
 			m_BuchiRefinementSettingSequence.add(m_RefineBuchi.new RefinementSetting(
-					BInterpolantAutomaton.ScroogeNondeterminism, false, false, true, true, false, -3));
+					BInterpolantAutomaton.ScroogeNondeterminism, false, false, true, true, false, Integer.MAX_VALUE));
 			break;
 		default:
 			throw new UnsupportedOperationException("unknown automaton");
