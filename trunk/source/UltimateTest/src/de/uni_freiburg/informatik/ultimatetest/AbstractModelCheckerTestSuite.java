@@ -130,36 +130,34 @@ public abstract class AbstractModelCheckerTestSuite extends UltimateTestSuite {
 	}
 
 	public static class DirectoryFileEndingsPair {
-		private final String m_Directory;
-		private final String[] m_FileEndings;
-		private final int m_Limit;
+		private final String mDirectory;
+		private final String[] mFileEndings;
+		private final int mLimit;
 
 		public DirectoryFileEndingsPair(String directory, String[] fileEndings) {
 			super();
-			m_Directory = directory;
-			m_FileEndings = fileEndings;
-			m_Limit = Integer.MAX_VALUE;
+			mDirectory = directory;
+			mFileEndings = fileEndings;
+			mLimit = Integer.MAX_VALUE;
 		}
 		
 		public DirectoryFileEndingsPair(String directory, String[] fileEndings, int limit) {
 			super();
-			m_Directory = directory;
-			m_FileEndings = fileEndings;
-			m_Limit = limit;
+			mDirectory = directory;
+			mFileEndings = fileEndings;
+			mLimit = limit;
 		}
 
 		public String getDirectory() {
-			return m_Directory;
+			return mDirectory;
 		}
 
 		public String[] getFileEndings() {
-			return m_FileEndings;
+			return mFileEndings;
 		}
 		
 		public int getLimit() {
-			return m_Limit;
+			return mLimit;
 		}
-
 	}
-
 }

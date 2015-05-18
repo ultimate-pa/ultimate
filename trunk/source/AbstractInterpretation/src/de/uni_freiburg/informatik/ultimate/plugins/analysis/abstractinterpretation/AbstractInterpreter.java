@@ -1,6 +1,3 @@
-/**
- * 
- */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation;
 
 import java.io.File;
