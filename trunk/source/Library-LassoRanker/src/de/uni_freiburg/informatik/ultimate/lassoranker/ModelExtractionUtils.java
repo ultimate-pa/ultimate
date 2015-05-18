@@ -105,10 +105,12 @@ public class ModelExtractionUtils {
 	 */
 	public static Map<Term, Rational> getValuation(Script script, Collection<Term> vars) throws TermException {
 		// assert m_script.checkSat() == LBool.SAT;
-		Map<Term, Term> val = script.getValue(vars.toArray(new Term[vars.size()]));
 		Map<Term, Rational> result = new LinkedHashMap<Term, Rational>();
-		for (Map.Entry<Term, Term> entry : val.entrySet()) {
-			result.put(entry.getKey(), const2Rational(entry.getValue()));
+		if (!vars.isEmpty()) {
+			Map<Term, Term> val = script.getValue(vars.toArray(new Term[vars.size()]));
+			for (Map.Entry<Term, Term> entry : val.entrySet()) {
+				result.put(entry.getKey(), const2Rational(entry.getValue()));
+			}
 		}
 		return result;
 	}
