@@ -30,6 +30,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Tr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.Concurrency;
+import de.uni_freiburg.informatik.ultimate.result.AllSpecificationsHoldResult;
 import de.uni_freiburg.informatik.ultimate.result.BenchmarkResult;
 import de.uni_freiburg.informatik.ultimate.result.Check;
 import de.uni_freiburg.informatik.ultimate.result.CounterExampleResult;
@@ -101,7 +102,7 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 
 		switch (result) {
 		case SAFE:
-			reportPositiveResult(errNodesOfAllProc);
+			reportPositiveResults(errNodesOfAllProc);
 			break;
 		case UNSAFE: {
 			RcfgProgramExecution pe = abstractCegarLoop.getRcfgProgramExecution();
@@ -185,12 +186,22 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 		return false;
 	}
 
-	private void reportPositiveResult(Collection<ProgramPoint> errorPPs) {
-		for (ProgramPoint errorPP : errorPPs) {
-			PositiveResult<RcfgElement> pResult = new PositiveResult<RcfgElement>(Activator.s_PLUGIN_NAME, errorPP,
-					m_Services.getBacktranslationService());
-			reportResult(pResult);
+	private void reportPositiveResults(Collection<ProgramPoint> errorLocs) {
+		final String longDescription;
+		if (errorLocs.isEmpty()) {
+			longDescription = "We were not able to verify any"
+					+ " specifiation because the program does not contain any specification.";
+		} else {
+			longDescription = errorLocs.size() + " specifications checked. All of them hold";
+			for (ProgramPoint errorLoc : errorLocs) {
+				PositiveResult<RcfgElement> pResult = new PositiveResult<RcfgElement>(Activator.s_PLUGIN_NAME,
+						errorLoc, m_Services.getBacktranslationService());
+				reportResult(pResult);
+			}
 		}
+		AllSpecificationsHoldResult result = new AllSpecificationsHoldResult(Activator.s_PLUGIN_NAME, longDescription);
+		reportResult(result);
+		mLogger.info(result.getShortDescription() + " " + result.getLongDescription());
 	}
 
 	private void reportCounterexampleResult(RcfgProgramExecution pe) {
