@@ -153,6 +153,7 @@ public class CegarLoopConcurrentAutomata extends BasicCegarLoop {
 			diff = new Difference<CodeBlock, IPredicate>(m_Services, oldAbstraction, determinized, psd2,
 					m_StateFactoryForRefinement, explointSigmaStarConcatOfIA);
 		}
+		determinized.switchToReadonlyMode();
 		assert !m_SmtManager.isLocked();
 		assert (new InductivityCheck(m_Services, m_InterpolAutomaton, false, true,
 				new IncrementalHoareTripleChecker(m_SmtManager, m_ModGlobVarManager))).getResult();
