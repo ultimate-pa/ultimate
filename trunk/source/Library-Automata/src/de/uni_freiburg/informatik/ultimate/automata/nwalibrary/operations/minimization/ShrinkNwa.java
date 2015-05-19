@@ -3943,67 +3943,101 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 				
 				final STATE representative = ec.m_states.iterator().next();
 				
+				HashMap<LETTER, Set<STATE>> letter2succs =
+						new HashMap<LETTER, Set<STATE>>();
+				
 				// internal transitions
 				HashSet<OutgoingInternalTransition<LETTER, STATE>> outInt =
 						new HashSet<OutgoingInternalTransition<LETTER,STATE>>();
-				m_outInt.put(newState, outInt);
 				
-				HashMap<LETTER, HashSet<STATE>> internals =
-						new HashMap<LETTER, HashSet<STATE>>();
 				for (final OutgoingInternalTransition<LETTER, STATE> edge :
 						m_oldNwa.internalSuccessors(representative)) {
 					final LETTER letter = edge.getLetter();
-					HashSet<STATE> succs = internals.get(letter);
+					final STATE succ = ec2state.get(m_partition.
+							m_state2EquivalenceClass.get(edge.getSucc()));
+					Set<STATE> succs = letter2succs.get(letter);
+					boolean isNew;
 					if (succs == null) {
-						succs = new HashSet<STATE>();
-						internals.put(letter, succs);
+						/*
+						 * efficiency assumption: there is only one transition
+						 * with the same letter (determinism)
+						 */
+						succs = Collections.singleton(succ);
+						letter2succs.put(letter, succs);
+						isNew = true;
+					} else {
+						/*
+						 * If there is nondeterminism, replace the (immutable)
+						 * singleton set by a usual HashSet.
+						 */
+						if (succs.size() == 1) {
+							final STATE oldSucc = succs.iterator().next();
+							succs = new HashSet<STATE>();
+							succs.add(oldSucc);
+						}
+						isNew = succs.add(succ);
 					}
-					succs.add(ec2state.get(m_partition.
-							m_state2EquivalenceClass.get(edge.getSucc())));
-				}
-				for (final Entry<LETTER, HashSet<STATE>> entry :
-						internals.entrySet()) {
-					for (final STATE succ : entry.getValue()) {
+					if (isNew) {
 						final OutgoingInternalTransition<LETTER, STATE>
-								newEdge = new OutgoingInternalTransition
-								<LETTER, STATE> (entry.getKey(), succ);
+							newEdge = new OutgoingInternalTransition
+								<LETTER, STATE> (letter, succ);
 						if (DEBUG)
 							System.out.println("   internal " + newEdge);
 						outInt.add(newEdge);
 					}
 				}
-				internals = null;
+				if (! outInt.isEmpty()) {
+					m_outInt.put(newState, outInt);
+				}
+				
+				letter2succs = new HashMap<LETTER, Set<STATE>>();
 				
 				// call transitions
 				HashSet<OutgoingCallTransition<LETTER, STATE>> outCall =
 						new HashSet<OutgoingCallTransition<LETTER,STATE>>();
-				m_outCall.put(newState, outCall);
 				
-				HashMap<LETTER, HashSet<STATE>> calls =
-						new HashMap<LETTER, HashSet<STATE>>();
 				for (final OutgoingCallTransition<LETTER, STATE> edge :
 						m_oldNwa.callSuccessors(representative)) {
 					final LETTER letter = edge.getLetter();
-					HashSet<STATE> succs = calls.get(letter);
+					final STATE succ = ec2state.get(m_partition.
+							m_state2EquivalenceClass.get(edge.getSucc()));
+					Set<STATE> succs = letter2succs.get(letter);
+					boolean isNew;
 					if (succs == null) {
-						succs = new HashSet<STATE>();
-						calls.put(letter, succs);
+						/*
+						 * efficiency assumption: there is only one transition
+						 * with the same letter (determinism)
+						 */
+						succs = Collections.singleton(succ);
+						letter2succs.put(letter, succs);
+						isNew = true;
+					} else {
+						/*
+						 * If there is nondeterminism, replace the (immutable)
+						 * singleton set by a usual HashSet.
+						 */
+						if (succs.size() == 1) {
+							final STATE oldSucc = succs.iterator().next();
+							succs = new HashSet<STATE>();
+							succs.add(oldSucc);
+						}
+						isNew = succs.add(succ);
+						isNew = succs.add(succ);
 					}
-					succs.add(ec2state.get(m_partition.
-							m_state2EquivalenceClass.get(edge.getSucc())));
-				}
-				for (final Entry<LETTER, HashSet<STATE>> entry :
-					calls.entrySet()) {
-					for (final STATE succ : entry.getValue()) {
+					if (isNew) {
 						final OutgoingCallTransition<LETTER, STATE>
-								newEdge = new OutgoingCallTransition
-								<LETTER, STATE> (entry.getKey(), succ);
+							newEdge = new OutgoingCallTransition
+								<LETTER, STATE> (letter, succ);
 						if (DEBUG)
 							System.out.println("   call " + newEdge);
 						outCall.add(newEdge);
 					}
 				}
-				calls = null;
+				if (! outCall.isEmpty()) {
+					m_outCall.put(newState, outCall);
+				}
+				
+				letter2succs = null;
 				
 				/*
 				 * return transitions
@@ -4012,7 +4046,6 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 				 */
 				HashSet<OutgoingReturnTransition<LETTER, STATE>> outRet =
 						new HashSet<OutgoingReturnTransition<LETTER,STATE>>();
-				m_outRet.put(newState, outRet);
 				
 				HashMap<LETTER, HashMap<STATE, HashSet<STATE>>> returns =
 						new HashMap<LETTER,
@@ -4054,6 +4087,11 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 						}
 					}
 				}
+				
+				if (! outRet.isEmpty()) {
+					m_outRet.put(newState, outRet);
+				}
+				
 				returns = null;
 				
 				if (DEBUG) {
@@ -4117,27 +4155,42 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 		
 		@Override
 		public Set<LETTER> lettersInternal(STATE state) {
+			final HashSet<OutgoingInternalTransition<LETTER, STATE>> set =
+					m_outInt.get(state);
+			if (set == null) {
+				return Collections.emptySet();
+			}
+
 			final HashSet<LETTER> result = new HashSet<LETTER>();
-			for (final OutgoingInternalTransition<LETTER, STATE> edge :
-					m_outInt.get(state)) {
+			for (final OutgoingInternalTransition<LETTER, STATE> edge : set) {
 				result.add(edge.getLetter());
 			}
 			return result;
 		}
 		@Override
 		public Set<LETTER> lettersCall(STATE state) {
+			final HashSet<OutgoingCallTransition<LETTER, STATE>> set =
+					m_outCall.get(state);
+			if (set == null) {
+				return Collections.emptySet();
+			}
+			
 			final HashSet<LETTER> result = new HashSet<LETTER>();
-			for (final OutgoingCallTransition<LETTER, STATE> edge :
-					m_outCall.get(state)) {
+			for (final OutgoingCallTransition<LETTER, STATE> edge : set) {
 				result.add(edge.getLetter());
 			}
 			return result;
 		}
 		@Override
 		public Set<LETTER> lettersReturn(STATE state) {
+			final HashSet<OutgoingReturnTransition<LETTER, STATE>> set =
+					m_outRet.get(state);
+			if (set == null) {
+				return Collections.emptySet();
+			}
+			
 			final HashSet<LETTER> result = new HashSet<LETTER>();
-			for (final OutgoingReturnTransition<LETTER, STATE> edge :
-					m_outRet.get(state)) {
+			for (final OutgoingReturnTransition<LETTER, STATE> edge : set) {
 				result.add(edge.getLetter());
 			}
 			return result;
@@ -4145,10 +4198,15 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 		@Override
 		public Iterable<OutgoingInternalTransition<LETTER, STATE>>
 				internalSuccessors(STATE state, LETTER letter) {
+			final HashSet<OutgoingInternalTransition<LETTER, STATE>> set =
+					m_outInt.get(state);
+			if (set == null) {
+				return Collections.emptySet();
+			}
+
 			final HashSet<OutgoingInternalTransition<LETTER, STATE>> result =
 					new HashSet<OutgoingInternalTransition<LETTER,STATE>>();
-			for (final OutgoingInternalTransition<LETTER, STATE> edge :
-					m_outInt.get(state)) {
+			for (final OutgoingInternalTransition<LETTER, STATE> edge : set) {
 				if (edge.getLetter().equals(letter)) {
 					result.add(edge);
 				}
@@ -4158,15 +4216,25 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 		@Override
 		public Iterable<OutgoingInternalTransition<LETTER, STATE>>
 				internalSuccessors(STATE state) {
-			return m_outInt.get(state);
+			final HashSet<OutgoingInternalTransition<LETTER,STATE>> set =
+					m_outInt.get(state);
+			if (set == null) {
+				return Collections.emptySet();
+			}
+			return set;
 		}
 		@Override
 		public Iterable<OutgoingCallTransition<LETTER, STATE>>
 				callSuccessors(STATE state, LETTER letter) {
+			final HashSet<OutgoingCallTransition<LETTER, STATE>> set =
+					m_outCall.get(state);
+			if (set == null) {
+				return Collections.emptySet();
+			}
+			
 			final HashSet<OutgoingCallTransition<LETTER, STATE>> result =
-			new HashSet<OutgoingCallTransition<LETTER,STATE>>();
-			for (final OutgoingCallTransition<LETTER, STATE> edge :
-					m_outCall.get(state)) {
+					new HashSet<OutgoingCallTransition<LETTER,STATE>>();
+			for (final OutgoingCallTransition<LETTER, STATE> edge : set) {
 				if (edge.getLetter().equals(letter)) {
 					result.add(edge);
 				}
@@ -4176,15 +4244,25 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 		@Override
 		public Iterable<OutgoingCallTransition<LETTER, STATE>>
 				callSuccessors(STATE state) {
-			return m_outCall.get(state);
+			final HashSet<OutgoingCallTransition<LETTER,STATE>> set =
+					m_outCall.get(state);
+			if (set == null) {
+				return Collections.emptySet();
+			}
+			return set;
 		}
 		@Override
 		public Iterable<OutgoingReturnTransition<LETTER, STATE>>
 				returnSucccessors(STATE state, STATE hier, LETTER letter) {
+			final HashSet<OutgoingReturnTransition<LETTER,STATE>> set =
+					m_outRet.get(state);
+			if (set == null) {
+				return Collections.emptySet();
+			}
+			
 			final HashSet<OutgoingReturnTransition<LETTER, STATE>> result =
 					new HashSet<OutgoingReturnTransition<LETTER,STATE>>();
-			for (final OutgoingReturnTransition<LETTER, STATE> edge :
-					m_outRet.get(state)) {
+			for (final OutgoingReturnTransition<LETTER, STATE> edge : set) {
 				if (edge.getLetter().equals(letter) &&
 						edge.getHierPred().equals(hier)) {
 					result.add(edge);
@@ -4195,10 +4273,15 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 		@Override
 		public Iterable<OutgoingReturnTransition<LETTER, STATE>>
 				returnSuccessorsGivenHier(STATE state, STATE hier) {
+			final HashSet<OutgoingReturnTransition<LETTER,STATE>> set =
+					m_outRet.get(state);
+			if (set == null) {
+				return Collections.emptySet();
+			}
+			
 			final HashSet<OutgoingReturnTransition<LETTER, STATE>> result =
 					new HashSet<OutgoingReturnTransition<LETTER,STATE>>();
-			for (final OutgoingReturnTransition<LETTER, STATE> edge :
-					m_outRet.get(state)) {
+			for (final OutgoingReturnTransition<LETTER, STATE> edge : set) {
 				if (edge.getHierPred().equals(hier)) {
 					result.add(edge);
 				}

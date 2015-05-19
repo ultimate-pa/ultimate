@@ -953,33 +953,38 @@ public class MinimizeSevpa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		// for all states add all outgoing transitions,
 		// but now from representative to representative
 		for (EquivalenceClass ec : m_Partition.getEquivalenceClasses()) {
-			for (STATE state : ec.getCollection()) {
-				STATE representative = m_Partition.getRepresentative(state);
-				
-				// internal successors
-				for (LETTER l : m_operand.lettersInternal(state)) {
-					for (STATE next : m_Partition.succInternal(state, l)) {
-						result.addInternalTransition(
-							representative,
-							l,
-							m_Partition.getRepresentative(next));
-					}
+			final STATE stateFirst = ec.getCollection().iterator().next();
+			STATE representative = m_Partition.getRepresentative(stateFirst);
+			
+			// internal successors
+			for (LETTER l : m_operand.lettersInternal(stateFirst)) {
+				for (STATE next : m_Partition.succInternal(stateFirst, l)) {
+					result.addInternalTransition(
+						representative,
+						l,
+						m_Partition.getRepresentative(next));
 				}
-				
-				// call successors
-				for (LETTER l : m_operand.lettersCall(state)) {
-					for (STATE next : m_Partition.succCall(state, l)) {
-						result.addCallTransition(
-							representative,
-							l,
-							m_Partition.getRepresentative(next));
-					}
+			}
+			
+			// call successors
+			for (LETTER l : m_operand.lettersCall(stateFirst)) {
+				for (STATE next : m_Partition.succCall(stateFirst, l)) {
+					result.addCallTransition(
+						representative,
+						l,
+						m_Partition.getRepresentative(next));
 				}
-				
-				// return successors
-				for (LETTER l : m_operand.lettersReturn(state)) {
-					for (STATE hier : m_Partition.hierPred(state, l)) {
-						for (STATE next : m_Partition.succReturn(state,
+			}
+			
+			/*
+			 * return successors
+			 * NOTE: Here we need to iterate over all states as return
+			 * transitions need not be possible from all states.
+			 */
+			for (STATE stateRet : ec.getCollection()) {
+				for (LETTER l : m_operand.lettersReturn(stateRet)) {
+					for (STATE hier : m_Partition.hierPred(stateRet, l)) {
+						for (STATE next : m_Partition.succReturn(stateRet,
 																hier, l)) {
 							result.addReturnTransition(
 								representative,
