@@ -363,6 +363,7 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover<LETTER,STATE> 
 								break;
 							}
 						}
+						nodeToBeDelete.parentNode.outgoingTransition.remove(removeTran);
 					}
 				}else{
 					if(nodeToBeDelete.parentNode!=null){
@@ -372,9 +373,9 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover<LETTER,STATE> 
 								break;
 							}
 						}
+						nodeToBeDelete.parentNode.outgoingTransition.remove(removeTran);
 					}
 				}
-				nodeToBeDelete.parentNode.outgoingTransition.remove(removeTran);
 				if(completeTree.contains(nodeToBeDelete)){
 					completeTree.remove(nodeToBeDelete);
 				}else{
