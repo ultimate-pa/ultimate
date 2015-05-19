@@ -3896,12 +3896,6 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 							computeHashSetCapacity(
 									m_partition.m_equivalenceClasses.size()));
 			
-			final HashSet<EquivalenceClass> initials =
-					new HashSet<EquivalenceClass>();
-			for (final STATE init : m_oldNwa.getInitialStates()) {
-				initials.add(m_partition.m_state2EquivalenceClass.get(init));
-			}
-			
 			m_outInt = new HashMap<STATE,
 					HashSet<OutgoingInternalTransition<LETTER, STATE>>>();
 			m_outCall = new HashMap<STATE,
@@ -3909,6 +3903,7 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 			m_outRet = new HashMap<STATE,
 					HashSet<OutgoingReturnTransition<LETTER, STATE>>>();
 			
+			// states
 			for (final EquivalenceClass ec : m_partition.m_equivalenceClasses)
 					{
 				final Set<STATE> ecStates = ec.m_states;
@@ -3929,10 +3924,13 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 				else {
 					m_nonfinals.add(newState);
 				}
-				
-				if (initials.contains(ec)) {
-					m_initialStates.add(newState);
-				}
+			}
+			
+			// initial states (efficiency assumption: there are only a few)
+			for (final STATE init : m_oldNwa.getInitialStates()) {
+				m_initialStates.add(
+					ec2state.get(
+						m_partition.m_state2EquivalenceClass.get(init)));
 			}
 			
 			// transitions
@@ -3947,12 +3945,8 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 				
 				// internal transitions
 				HashSet<OutgoingInternalTransition<LETTER, STATE>> outInt =
-						m_outInt.get(newState);
-				if (outInt == null) {
-					outInt = new HashSet<
-							OutgoingInternalTransition<LETTER,STATE>>();
-					m_outInt.put(newState, outInt);
-				}
+						new HashSet<OutgoingInternalTransition<LETTER,STATE>>();
+				m_outInt.put(newState, outInt);
 				
 				HashMap<LETTER, HashSet<STATE>> internals =
 						new HashMap<LETTER, HashSet<STATE>>();
@@ -3982,12 +3976,8 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 				
 				// call transitions
 				HashSet<OutgoingCallTransition<LETTER, STATE>> outCall =
-						m_outCall.get(newState);
-				if (outCall == null) {
-					outCall = new HashSet<
-							OutgoingCallTransition<LETTER,STATE>>();
-					m_outCall.put(newState, outCall);
-				}
+						new HashSet<OutgoingCallTransition<LETTER,STATE>>();
+				m_outCall.put(newState, outCall);
 				
 				HashMap<LETTER, HashSet<STATE>> calls =
 						new HashMap<LETTER, HashSet<STATE>>();
@@ -4021,12 +4011,8 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 				 *       so each state must be visited.
 				 */
 				HashSet<OutgoingReturnTransition<LETTER, STATE>> outRet =
-						m_outRet.get(newState);
-				if (outRet == null) {
-					outRet = new HashSet<
-							OutgoingReturnTransition<LETTER,STATE>>();
-					m_outRet.put(newState, outRet);
-				}
+						new HashSet<OutgoingReturnTransition<LETTER,STATE>>();
+				m_outRet.put(newState, outRet);
 				
 				HashMap<LETTER, HashMap<STATE, HashSet<STATE>>> returns =
 						new HashMap<LETTER,
