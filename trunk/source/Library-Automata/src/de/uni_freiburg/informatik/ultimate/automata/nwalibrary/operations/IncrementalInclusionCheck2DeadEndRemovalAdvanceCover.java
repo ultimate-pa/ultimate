@@ -356,17 +356,21 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover<LETTER,STATE> 
 			for(NodeData nodeToBeDelete : toBeDeletedNodes){
 				Transition removeTran = null;
 				if(nodeToBeDelete.identicalCover){
-					for(Transition tran: nodeToBeDelete.parentNode.outgoingTransition){
-						if(tran.getSucc() == nodeToBeDelete.coveredBy){
-							removeTran  = tran;
-							break;
+					if(nodeToBeDelete.parentNode!=null){
+						for(Transition tran: nodeToBeDelete.parentNode.outgoingTransition){
+							if(tran.getSucc() == nodeToBeDelete.coveredBy){
+								removeTran  = tran;
+								break;
+							}
 						}
 					}
 				}else{
-					for(Transition tran: nodeToBeDelete.parentNode.outgoingTransition){
-						if(tran.getSucc() == nodeToBeDelete){
-							removeTran  = tran;
-							break;
+					if(nodeToBeDelete.parentNode!=null){
+						for(Transition tran: nodeToBeDelete.parentNode.outgoingTransition){
+							if(tran.getSucc() == nodeToBeDelete){
+								removeTran  = tran;
+								break;
+							}
 						}
 					}
 				}
