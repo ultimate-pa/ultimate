@@ -96,7 +96,7 @@ public class IncrementalInclusionCegarLoop extends BasicCegarLoop {
 					(INestedWordAutomatonSimple) m_Abstraction, empty);
 		}
 		break;
-		case INCREMENTAL_INCLUSION_2_DEADEND_REMOVE_AntiChain: {
+		case INCREMENTAL_INCLUSION_2_DEADEND_REMOVE_ANTICHAIN: {
 			List<INestedWordAutomatonSimple<CodeBlock, IPredicate>> empty = Collections.emptyList();
 			m_InclusionCheck = new IncrementalInclusionCheck2DeadEndRemovalAdvanceCover<CodeBlock, IPredicate>(
 					m_Services, m_StateFactoryForRefinement, 
