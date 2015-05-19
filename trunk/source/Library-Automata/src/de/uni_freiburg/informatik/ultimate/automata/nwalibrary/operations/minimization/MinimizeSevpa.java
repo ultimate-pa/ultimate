@@ -166,29 +166,13 @@ public class MinimizeSevpa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	}
 	
 	/**
-	 * invokes the minimization
-	 * 
-	 * @param equivalenceClasses initial partition of the states
-	 * @return minimized nested word automaton
-	 * @throws OperationCanceledException iff cancel signal is received
-	 */
-	private NestedWordAutomaton<LETTER,STATE> minimize(
-			Collection<Set<STATE>> equivalenceClasses)
-					throws OperationCanceledException {
-		if (m_operand != null) {
-			hopcroftDfaMinimization(equivalenceClasses);
-		}
-		return m_nwa;
-	}
-	
-	/**
 	 * minimization technique for deterministic finite automata by Hopcroft
 	 * (http://en.wikipedia.org/wiki/DFA_minimization)
 	 * 
 	 * @param equivalenceClasses initial partition of the states
 	 * @throws OperationCanceledException iff cancel signal is received
 	 */
-	private void hopcroftDfaMinimization(
+	private void minimize(
 			Collection<Set<STATE>> equivalenceClasses)
 					throws OperationCanceledException {
 		
