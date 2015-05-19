@@ -1,4 +1,4 @@
-//#cUnsafe
+//#cSafe
 /*
  * test
  *
