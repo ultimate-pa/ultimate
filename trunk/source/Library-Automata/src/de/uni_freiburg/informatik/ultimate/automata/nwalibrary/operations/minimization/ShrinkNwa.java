@@ -3894,8 +3894,7 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 			final HashMap<EquivalenceClass, STATE> ec2state =
 					new HashMap<EquivalenceClass, STATE>(
 							computeHashSetCapacity(
-									m_partition.m_state2EquivalenceClass.
-									size()));
+									m_partition.m_equivalenceClasses.size()));
 			
 			final HashSet<EquivalenceClass> initials =
 					new HashSet<EquivalenceClass>();
