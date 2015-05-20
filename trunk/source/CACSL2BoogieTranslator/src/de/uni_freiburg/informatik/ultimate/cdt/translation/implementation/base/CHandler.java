@@ -2219,7 +2219,7 @@ public class CHandler implements ICHandler {
 					if (child instanceof IASTCaseStatement)
 						thisCase = new BinaryExpression(locC, Operator.COMPEQ, switchArg, res.lrVal.getValue());
 					else
-						/* default statement */
+						//default statement
 						thisCase = res.lrVal.getValue();
 
 					if (cond == null) {
@@ -2242,7 +2242,12 @@ public class CHandler implements ICHandler {
 				// we already have a unique naming for variables! -> unfold
 				Body b = ((Body) r.node);
 				decl.addAll(Arrays.asList(b.getLocalVars()));
-				stmt.addAll(Arrays.asList(b.getBlock()));
+				for (Statement s : Arrays.asList(b.getBlock())) {
+						if (s instanceof BreakStatement)
+							ifBlock.add(new GotoStatement(locC, new String[] { breakLabelName }));
+						else
+							ifBlock.add(s);
+				}
 			}
 		}
 		assert cond != null;
@@ -2261,7 +2266,7 @@ public class CHandler implements ICHandler {
 
 		this.endScope();
 		return new ResultExpression(stmt, null, decl, emptyAuxVars, overappr);
-	}
+	}	
 
 	@Override
 	public Result visit(Dispatcher main, IASTCaseStatement node) {
