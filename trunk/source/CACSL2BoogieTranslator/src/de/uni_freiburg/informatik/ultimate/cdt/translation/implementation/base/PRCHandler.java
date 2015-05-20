@@ -228,8 +228,8 @@ public class PRCHandler extends CHandler {
 			 * visited one after another.
 			 */
 			for (IASTDeclarator d : node.getDeclarators()) {
-				if (d instanceof IASTFieldDeclarator)
-					throw new UnsupportedSyntaxException(loc, "bitfields are not supported at the moment");
+//				if (d instanceof IASTFieldDeclarator)
+//					throw new UnsupportedSyntaxException(loc, "bitfields are not supported at the moment");
 				
 				
 				ResultDeclaration declResult = (ResultDeclaration) main.dispatch(d);

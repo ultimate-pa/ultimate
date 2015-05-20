@@ -2138,7 +2138,18 @@ public class CHandler implements ICHandler {
 
 	@Override
 	public Result visit(Dispatcher main, IASTFunctionCallExpression node) {
-		return mFunctionHandler.handleFunctionCallExpression(main, mMemoryHandler, mStructHandler, node);
+		Check check = new Check(Check.Spec.PRE_CONDITION);
+		ILocation loc = LocationFactory.createCLocation(node, check);
+		IASTExpression functionName = node.getFunctionNameExpression();
+		if (functionName instanceof IASTIdExpression) {
+			Result standardFunction =  mFunctionHandler.handleStandardFunctions(main, 
+					mMemoryHandler, mStructHandler, loc,
+					((IASTIdExpression) functionName).getName().toString(), node.getArguments());
+			if (standardFunction != null)
+				return standardFunction;
+		}
+		return mFunctionHandler.handleFunctionCallExpression(main, 
+				mMemoryHandler, mStructHandler, loc, functionName, node.getArguments());
 	}
 
 	@Override

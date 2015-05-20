@@ -349,27 +349,20 @@ public class FunctionHandler {
 	 * @return the translation result.
 	 */
 	public Result handleFunctionCallExpression(Dispatcher main, MemoryHandler memoryHandler,
-			StructHandler structHandler, IASTFunctionCallExpression node) {
-		Check check = new Check(Check.Spec.PRE_CONDITION);
-		ILocation loc = LocationFactory.createCLocation(node, check);
-		IASTExpression functionName = node.getFunctionNameExpression();
+			StructHandler structHandler, ILocation loc, IASTExpression functionName, IASTInitializerClause[] arguments) {
 		if (!(functionName instanceof IASTIdExpression)) {
 			return handleFunctionPointerCall(loc, main, memoryHandler, 
-					structHandler, functionName, node.getArguments());
+					structHandler, functionName, arguments);
 		}
-		// don't use getRawSignature because it refers to the code before
-		// preprocessing
-		// f.i. we get a wrong methodname here in defineFunction.c, because of a
-		// #define in the original code
 		String methodName = ((IASTIdExpression) functionName).getName().toString();
 
 		if (main.cHandler.getSymbolTable().containsCSymbol(methodName)) {
 			return handleFunctionPointerCall(loc, main, memoryHandler, 
-					structHandler, functionName, node.getArguments());
+					structHandler, functionName, arguments);
 		}
 
 		return handleFunctionCallGivenNameAndArguments(main, memoryHandler, structHandler, 
-				loc, methodName, node.getArguments());
+				loc, methodName, arguments);
 	}
 
 	/**
@@ -606,37 +599,6 @@ public class FunctionHandler {
 
 	private Result handleFunctionCallGivenNameAndArguments(Dispatcher main, MemoryHandler memoryHandler,
 			StructHandler structHandler, ILocation loc, String methodName, IASTInitializerClause[] arguments) {
-		if (methodName.equals("malloc") || methodName.equals("alloca") || methodName.equals("__builtin_alloca")) {//TODO: add calloc
-			assert arguments.length == 1;
-			Result sizeRes = main.dispatch(arguments[0]);
-			assert sizeRes instanceof ResultExpression;
-			ResultExpression rex = ((ResultExpression) sizeRes).switchToRValueIfNecessary(main, memoryHandler,
-					structHandler, loc);
-
-			ResultExpression mallocRex = memoryHandler.getMallocCall(main, this, rex.lrVal.getValue(), loc);
-
-			rex.addAll(mallocRex);
-			rex.lrVal = mallocRex.lrVal;
-
-			// for alloc a we have to free the variable ourselves when the
-			// stackframe is closed, i.e. at a return
-			if (methodName.equals("alloca") || methodName.equals("__builtin_alloca")) {
-				memoryHandler.addVariableToBeFreed(main, 
-						new LocalLValueILocationPair((LocalLValue) mallocRex.lrVal, 
-								LocationFactory.createIgnoreLocation(loc)));
-			}
-			return rex;
-		}
-
-		if (methodName.equals("free")) {
-			assert arguments.length == 1;
-			Result pRes = main.dispatch(arguments[0]);
-			assert pRes instanceof ResultExpression;
-			ResultExpression pRex = ((ResultExpression) pRes).switchToRValueIfNecessary(main, memoryHandler,
-					structHandler, loc);
-			pRex.stmt.add(memoryHandler.getFreeCall(main, this, pRex.lrVal, loc));
-			return pRex;
-		}
 
 		ArrayList<Statement> stmt = new ArrayList<Statement>();
 		ArrayList<Declaration> decl = new ArrayList<Declaration>();
@@ -749,6 +711,60 @@ public class FunctionHandler {
 		}
 
 		return makeTheFunctionCallItself(main, loc, methodName, stmt, decl, auxVars, overappr, args);
+	}
+
+	/**
+	 * Checks if the methodname is a function where we have our own specification or implementation and returns
+	 * that in case.
+	 * (This is typically the case for functions defined in the C standard.)
+	 * @param main
+	 * @param memoryHandler
+	 * @param structHandler
+	 * @param loc
+	 * @param methodName
+	 * @param arguments
+	 * @return
+	 */
+	public Result handleStandardFunctions(Dispatcher main,
+			MemoryHandler memoryHandler, StructHandler structHandler,
+			ILocation loc, String methodName, IASTInitializerClause[] arguments) {
+		if (methodName.equals("malloc") || methodName.equals("alloca") || methodName.equals("__builtin_alloca")) {//TODO: add calloc
+			assert arguments.length == 1;
+			Result sizeRes = main.dispatch(arguments[0]);
+			assert sizeRes instanceof ResultExpression;
+			ResultExpression rex = ((ResultExpression) sizeRes).switchToRValueIfNecessary(main, memoryHandler,
+					structHandler, loc);
+
+			ResultExpression mallocRex = memoryHandler.getMallocCall(main, this, rex.lrVal.getValue(), loc);
+
+			rex.addAll(mallocRex);
+			rex.lrVal = mallocRex.lrVal;
+
+			// for alloc a we have to free the variable ourselves when the
+			// stackframe is closed, i.e. at a return
+			if (methodName.equals("alloca") || methodName.equals("__builtin_alloca")) {
+				memoryHandler.addVariableToBeFreed(main, 
+						new LocalLValueILocationPair((LocalLValue) mallocRex.lrVal, 
+								LocationFactory.createIgnoreLocation(loc)));
+				//we need to clear auxVars because otherwise the malloc auxvar is havocced after 
+				//this, and free (triggered by the statement before) would fail.
+				rex.auxVars.clear();
+			}
+			return rex;
+		} else if (methodName.equals("free")) {
+			assert arguments.length == 1;
+			Result pRes = main.dispatch(arguments[0]);
+			assert pRes instanceof ResultExpression;
+			ResultExpression pRex = ((ResultExpression) pRes).switchToRValueIfNecessary(main, memoryHandler,
+					structHandler, loc);
+			pRex.stmt.add(memoryHandler.getFreeCall(main, this, pRex.lrVal, loc));
+			return pRex;
+		} else if (methodName.equals("memset")) {
+			//TODO: this is a workaround, replace with a complete call to memset and provide implementation/specification
+			return main.dispatch(arguments[0]);
+		} else {
+			return null;
+		}
 	}
 
 	private Result handleFunctionPointerCall(ILocation loc, Dispatcher main, MemoryHandler memoryHandler,
@@ -915,7 +931,9 @@ public class FunctionHandler {
 
 				// onHeap case for a function parameter means the parameter is
 				// addressoffed in the function body
-				final boolean isOnHeap = ((MainDispatcher) main).getVariablesForHeap().contains(paramDec);
+				boolean isOnHeap = false;
+				if (main instanceof MainDispatcher) //otherwise we are in PreRun mode
+						isOnHeap = ((MainDispatcher) main).getVariablesForHeap().contains(paramDec);
 
 				// Copy of inparam that is writeable
 				String auxInvar = main.nameHandler.getUniqueIdentifier(parent, cId, 0, isOnHeap);
