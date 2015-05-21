@@ -2,12 +2,14 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.model.ModelUtils;
+import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
@@ -204,8 +206,15 @@ public class SequentialComposition extends CodeBlock {
 			if (ret == null) {
 				String proc = call.getCallStatement().getMethodName();
 				TransFormula oldVarsAssignment = modGlobVarManager.getOldVarsAssignment(proc);
+				String nameEndProcedure;
+				if (codeBlocks.isEmpty()) {
+					nameEndProcedure = proc;
+				} else {				
+					nameEndProcedure = ((ProgramPoint) codeBlocks.get(codeBlocks.size()-1).getTarget()).getProcedure();
+				}
+				Set<BoogieVar> modifiableGlobalsOfEndProcedure = modGlobVarManager.getModifiedBoogieVars(nameEndProcedure);
 				result = TransFormula.sequentialCompositionWithPendingCall(boogie2smt, simplify, extPqe, tranformToCNF,
-						beforeCall, call.getTransitionFormula(), oldVarsAssignment, tfForCodeBlocks, logger, services);
+						beforeCall, call.getTransitionFormula(), oldVarsAssignment, tfForCodeBlocks, logger, services, modifiableGlobalsOfEndProcedure);
 			} else {
 				assert (beforeCall == null);
 				String proc = call.getCallStatement().getMethodName();

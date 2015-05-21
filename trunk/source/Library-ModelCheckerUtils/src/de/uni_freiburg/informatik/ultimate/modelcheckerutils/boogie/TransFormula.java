@@ -23,6 +23,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
+import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieNonOldVar;
+import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieOldVar;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.ModelCheckerUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ConstantFinder;
@@ -1275,15 +1277,19 @@ public class TransFormula implements Serializable {
 	 * @param oldVarsAssignment
 	 *            TransFormula that assigns to oldVars of modifiable globals the
 	 *            value of the global var.
-	 * @param bfterCall
+	 * @param afterCall
 	 *            TransFormula that describes the transition relation after the
 	 *            call.
 	 * @param logger
 	 * @param services
+	 * @param modifiableGlobalsOfEndProcedure
+	 * 			  Set of variables that are modifiable globals in the procedure
+	 * 	          in which the afterCall TransFormula ends. 
 	 */
 	public static TransFormula sequentialCompositionWithPendingCall(Boogie2SMT boogie2smt, boolean simplify,
 			boolean extPqe, boolean transformToCNF, TransFormula[] beforeCall, TransFormula callTf,
-			TransFormula oldVarsAssignment, TransFormula bfterCall, Logger logger, IUltimateServiceProvider services) {
+			TransFormula oldVarsAssignment, TransFormula afterCall, Logger logger, IUltimateServiceProvider services, 
+			Set<BoogieVar> modifiableGlobalsOfEndProcedure) {
 		logger.debug("sequential composition (pending call) with" + (simplify ? "" : "out") + " formula simplification");
 		TransFormula callAndBeforeTF;
 		{
@@ -1316,7 +1322,7 @@ public class TransFormula implements Serializable {
 
 		TransFormula oldAssignAndAfterTF;
 		{
-			List<TransFormula> oldAssignAndAfterList = new ArrayList<TransFormula>(Arrays.asList(bfterCall));
+			List<TransFormula> oldAssignAndAfterList = new ArrayList<TransFormula>(Arrays.asList(afterCall));
 			oldAssignAndAfterList.add(0, oldVarsAssignment);
 			TransFormula[] oldAssignAndAfterArray = oldAssignAndAfterList.toArray(new TransFormula[0]);
 			oldAssignAndAfterTF = sequentialComposition(logger, services, boogie2smt, simplify, extPqe, transformToCNF,
@@ -1325,21 +1331,36 @@ public class TransFormula implements Serializable {
 			// remove inVars that relate to scope of callee
 			// - local vars that are no inParams of callee
 			// - oldVars of variables that can be modified by callee
-			List<BoogieVar> varsToRemove = new ArrayList<BoogieVar>();
+			List<BoogieVar> inVarsToRemove = new ArrayList<BoogieVar>();
 			for (BoogieVar bv : oldAssignAndAfterTF.getInVars().keySet()) {
 				if (bv.isGlobal()) {
 					if (bv.isOldvar() && oldVarsAssignment.getOutVars().containsKey(bv)) {
-						varsToRemove.add(bv);
+						inVarsToRemove.add(bv);
 					}
 				} else {
 					if (!callTf.getOutVars().containsKey(bv)) {
 						// bv is local but not inParam of called procedure
-						varsToRemove.add(bv);
+						inVarsToRemove.add(bv);
 					}
 				}
 			}
-			for (BoogieVar bv : varsToRemove) {
+			for (BoogieVar bv : inVarsToRemove) {
 				oldAssignAndAfterTF.removeInVar(bv);
+			}
+			
+			List<BoogieVar> outVarsToRemove = new ArrayList<BoogieVar>();
+			for (BoogieVar bv : oldAssignAndAfterTF.getOutVars().keySet()) {
+				if (bv instanceof BoogieOldVar) {
+					BoogieNonOldVar nonOld = ((BoogieOldVar) bv).getNonOldVar();
+					if (modifiableGlobalsOfEndProcedure.contains(nonOld)) {
+						// do nothing - bv should be outVar
+					} else {
+						outVarsToRemove.add(bv);
+					}
+				}
+			}
+			for (BoogieVar bv : outVarsToRemove) {
+				oldAssignAndAfterTF.removeOutVar(bv);
 			}
 		}
 

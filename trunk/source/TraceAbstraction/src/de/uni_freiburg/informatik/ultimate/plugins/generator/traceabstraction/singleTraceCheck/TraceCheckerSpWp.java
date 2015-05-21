@@ -22,6 +22,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.IBenchmarkDataProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.IBenchmarkType;
@@ -249,17 +250,21 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 						// then we handle this case as a pending-call
 						TransFormula summaryAfterPendingCall = computeSummaryForInterproceduralTrace(trace, rv, i + 1,
 								end);
+						String nameEndProcedure = ((ProgramPoint) trace.getSymbol(end).getTarget()).getProcedure();
+						Set<BoogieVar> modifiableGlobalsOfEndProcedure = m_ModifiedGlobals.getModifiedBoogieVars(nameEndProcedure);
 						return TransFormula.sequentialCompositionWithPendingCall(m_SmtManager.getBoogie2Smt(), true,
 								false, s_TransformToCNF, transformulasToComputeSummaryFor.toArray(new TransFormula[0]),
 								rv.getLocalVarAssignment(i), rv.getOldVarAssignment(i), summaryAfterPendingCall,
-								mLogger, mServices);
+								mLogger, mServices, modifiableGlobalsOfEndProcedure);
 					}
 				} else {
 					TransFormula summaryAfterPendingCall = computeSummaryForInterproceduralTrace(trace, rv, i + 1, end);
+					String nameEndProcedure = ((ProgramPoint) trace.getSymbol(end).getTarget()).getProcedure();
+					Set<BoogieVar> modifiableGlobalsOfEndProcedure = m_ModifiedGlobals.getModifiedBoogieVars(nameEndProcedure);
 					return TransFormula.sequentialCompositionWithPendingCall(m_SmtManager.getBoogie2Smt(), true, false,
 							s_TransformToCNF, transformulasToComputeSummaryFor.toArray(new TransFormula[0]),
 							rv.getLocalVarAssignment(i), rv.getOldVarAssignment(i), summaryAfterPendingCall, mLogger,
-							mServices);
+							mServices, modifiableGlobalsOfEndProcedure);
 				}
 			} else if (trace.getSymbol(i) instanceof Return) {
 				// Nothing to do
