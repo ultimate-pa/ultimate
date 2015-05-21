@@ -3904,8 +3904,7 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 					HashSet<OutgoingReturnTransition<LETTER, STATE>>>();
 			
 			// states
-			for (final EquivalenceClass ec : m_partition.m_equivalenceClasses)
-					{
+			for (final EquivalenceClass ec : m_partition.m_equivalenceClasses) {
 				final Set<STATE> ecStates = ec.m_states;
 				
 				// new state
@@ -3932,6 +3931,9 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 					ec2state.get(
 						m_partition.m_state2EquivalenceClass.get(init)));
 			}
+			
+			// preprocessing: ignore call and return loops for finite automata
+			final boolean isNwa = (m_operand.getCallAlphabet().size() > 0);
 			
 			// transitions
 			for (final EquivalenceClass ec : m_partition.m_equivalenceClasses)
@@ -3990,109 +3992,111 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 					m_outInt.put(newState, outInt);
 				}
 				
-				letter2succs = new HashMap<LETTER, Set<STATE>>();
-				
-				// call transitions
-				HashSet<OutgoingCallTransition<LETTER, STATE>> outCall =
-						new HashSet<OutgoingCallTransition<LETTER,STATE>>();
-				
-				for (final OutgoingCallTransition<LETTER, STATE> edge :
-						m_oldNwa.callSuccessors(representative)) {
-					final LETTER letter = edge.getLetter();
-					final STATE succ = ec2state.get(m_partition.
-							m_state2EquivalenceClass.get(edge.getSucc()));
-					Set<STATE> succs = letter2succs.get(letter);
-					boolean isNew;
-					if (succs == null) {
-						/*
-						 * efficiency assumption: there is only one transition
-						 * with the same letter (determinism)
-						 */
-						succs = Collections.singleton(succ);
-						letter2succs.put(letter, succs);
-						isNew = true;
-					} else {
-						/*
-						 * If there is nondeterminism, replace the (immutable)
-						 * singleton set by a usual HashSet.
-						 */
-						if (succs.size() == 1) {
-							final STATE oldSucc = succs.iterator().next();
-							succs = new HashSet<STATE>();
-							succs.add(oldSucc);
-						}
-						isNew = succs.add(succ);
-						isNew = succs.add(succ);
-					}
-					if (isNew) {
-						final OutgoingCallTransition<LETTER, STATE>
-							newEdge = new OutgoingCallTransition
-								<LETTER, STATE> (letter, succ);
-						if (DEBUG)
-							System.out.println("   call " + newEdge);
-						outCall.add(newEdge);
-					}
-				}
-				if (! outCall.isEmpty()) {
-					m_outCall.put(newState, outCall);
-				}
-				
-				letter2succs = null;
-				
-				/*
-				 * return transitions
-				 * NOTE: Return transitions need not be present everywhere,
-				 *       so each state must be visited.
-				 */
-				HashSet<OutgoingReturnTransition<LETTER, STATE>> outRet =
-						new HashSet<OutgoingReturnTransition<LETTER,STATE>>();
-				
-				HashMap<LETTER, HashMap<STATE, HashSet<STATE>>> returns =
-						new HashMap<LETTER,
-						HashMap<STATE, HashSet<STATE>>>();
-				for (final STATE state : ec.m_states) {
-					for (final OutgoingReturnTransition<LETTER, STATE> edge :
-							m_oldNwa.returnSuccessors(state)) {
+				if (isNwa) {
+					letter2succs = new HashMap<LETTER, Set<STATE>>();
+					
+					// call transitions
+					HashSet<OutgoingCallTransition<LETTER, STATE>> outCall =
+							new HashSet<OutgoingCallTransition<LETTER,STATE>>();
+					
+					for (final OutgoingCallTransition<LETTER, STATE> edge :
+							m_oldNwa.callSuccessors(representative)) {
 						final LETTER letter = edge.getLetter();
-						HashMap<STATE, HashSet<STATE>> hier2succs =
-								returns.get(letter);
-						if (hier2succs == null) {
-							hier2succs = new HashMap<STATE, HashSet<STATE>>();
-							returns.put(letter, hier2succs);
-						}
-						final STATE hier = ec2state.get(
-								m_partition.m_state2EquivalenceClass.get(
-										edge.getHierPred()));
-						HashSet<STATE> succs = hier2succs.get(hier);
+						final STATE succ = ec2state.get(m_partition.
+								m_state2EquivalenceClass.get(edge.getSucc()));
+						Set<STATE> succs = letter2succs.get(letter);
+						boolean isNew;
 						if (succs == null) {
-							succs = new HashSet<STATE>();
-							hier2succs.put(hier, succs);
+							/*
+							 * efficiency assumption: there is only one
+							 * transition with the same letter (determinism)
+							 */
+							succs = Collections.singleton(succ);
+							letter2succs.put(letter, succs);
+							isNew = true;
+						} else {
+							/*
+							 * If there is nondeterminism, replace the
+							 * (immutable) singleton set by a usual HashSet.
+							 */
+							if (succs.size() == 1) {
+								final STATE oldSucc = succs.iterator().next();
+								succs = new HashSet<STATE>();
+								succs.add(oldSucc);
+							}
+							isNew = succs.add(succ);
+							isNew = succs.add(succ);
 						}
-						succs.add(ec2state.get(m_partition.
-								m_state2EquivalenceClass.get(edge.getSucc())));
-					}
-				}
-				for (final Entry<LETTER, HashMap<STATE, HashSet<STATE>>>
-						entry : returns.entrySet()) {
-					for (final Entry<STATE, HashSet<STATE>>
-							entry2 : entry.getValue().entrySet()) {
-						for (final STATE succ : entry2.getValue()) {
-							final OutgoingReturnTransition<LETTER, STATE>
-									newEdge = new OutgoingReturnTransition
-									<LETTER, STATE> (entry2.getKey(),
-									entry.getKey(), succ);
+						if (isNew) {
+							final OutgoingCallTransition<LETTER, STATE>
+								newEdge = new OutgoingCallTransition
+									<LETTER, STATE> (letter, succ);
 							if (DEBUG)
-								System.out.println("   return " + newEdge);
-							outRet.add(newEdge);
+								System.out.println("   call " + newEdge);
+							outCall.add(newEdge);
 						}
 					}
+					if (! outCall.isEmpty()) {
+						m_outCall.put(newState, outCall);
+					}
+					
+					letter2succs = null;
+					
+					/*
+					 * return transitions
+					 * NOTE: Return transitions need not be present everywhere,
+					 *       so each state must be visited.
+					 */
+					HashSet<OutgoingReturnTransition<LETTER, STATE>> outRet =
+						new HashSet<OutgoingReturnTransition<LETTER,STATE>>();
+					
+					HashMap<LETTER, HashMap<STATE, HashSet<STATE>>> returns =
+							new HashMap<LETTER,
+							HashMap<STATE, HashSet<STATE>>>();
+					for (final STATE state : ec.m_states) {
+						for (final OutgoingReturnTransition<LETTER, STATE> edge :
+								m_oldNwa.returnSuccessors(state)) {
+							final LETTER letter = edge.getLetter();
+							HashMap<STATE, HashSet<STATE>> hier2succs =
+									returns.get(letter);
+							if (hier2succs == null) {
+								hier2succs =
+										new HashMap<STATE, HashSet<STATE>>();
+								returns.put(letter, hier2succs);
+							}
+							final STATE hier = ec2state.get(
+									m_partition.m_state2EquivalenceClass.get(
+											edge.getHierPred()));
+							HashSet<STATE> succs = hier2succs.get(hier);
+							if (succs == null) {
+								succs = new HashSet<STATE>();
+								hier2succs.put(hier, succs);
+							}
+							succs.add(ec2state.get(m_partition.
+									m_state2EquivalenceClass.get(
+											edge.getSucc())));
+						}
+					}
+					for (final Entry<LETTER, HashMap<STATE, HashSet<STATE>>>
+							entry : returns.entrySet()) {
+						for (final Entry<STATE, HashSet<STATE>>
+								entry2 : entry.getValue().entrySet()) {
+							for (final STATE succ : entry2.getValue()) {
+								final OutgoingReturnTransition<LETTER, STATE>
+										newEdge = new OutgoingReturnTransition
+										<LETTER, STATE> (entry2.getKey(),
+										entry.getKey(), succ);
+								if (DEBUG)
+									System.out.println("   return " + newEdge);
+								outRet.add(newEdge);
+							}
+						}
+					}
+					
+					if (! outRet.isEmpty()) {
+						m_outRet.put(newState, outRet);
+					}
 				}
-				
-				if (! outRet.isEmpty()) {
-					m_outRet.put(newState, outRet);
-				}
-				
-				returns = null;
 				
 				if (DEBUG) {
 					System.out.println("---------------\n resulting in: " +
