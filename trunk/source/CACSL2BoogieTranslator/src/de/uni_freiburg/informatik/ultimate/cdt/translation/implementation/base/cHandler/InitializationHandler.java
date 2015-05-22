@@ -250,7 +250,7 @@ public class InitializationHandler {
 			String msg = "Unknown type - don't know how to initialize!";
 			throw new UnsupportedSyntaxException(loc, msg);
 		}
-		assert (main.isAuxVarMapcomplete(decl, auxVars));
+		assert (CHandler.isAuxVarMapcomplete(main, decl, auxVars));
 
 		// lrVal is null in case we got a lhs to assign to, the initializing value otherwise
 		return new ResultExpression(stmt, lrVal, decl, auxVars, overappr);
@@ -461,7 +461,7 @@ public class InitializationHandler {
 			String msg = "Unknown type - don't know how to initialize!";
 			throw new UnsupportedSyntaxException(loc, msg);
 		}
-		assert (main.isAuxVarMapcomplete(decl, auxVars));
+		assert (CHandler.isAuxVarMapcomplete(main, decl, auxVars));
 
 		return new ResultExpression(stmt, null, decl, auxVars, overappr);
 	}

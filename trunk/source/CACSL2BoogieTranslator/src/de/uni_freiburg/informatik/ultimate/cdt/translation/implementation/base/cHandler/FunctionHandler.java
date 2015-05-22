@@ -1231,7 +1231,7 @@ public class FunctionHandler {
 				stmt.add(new AssignmentStatement(loc, new LeftHandSide[] { new VariableLHS(loc, outParam[0]
 						.getIdentifiers()[0]) }, new Expression[] { funcCallResult }));
 			}
-			stmt.addAll(Dispatcher.createHavocsForAuxVars(rex.auxVars));
+			stmt.addAll(CHandler.createHavocsForAuxVars(rex.auxVars));
 			stmt.add(new ReturnStatement(loc));
 			return new Body(loc, decl.toArray(new VariableDeclaration[decl.size()]), stmt.toArray(new Statement[stmt
 					.size()]));
@@ -1300,7 +1300,7 @@ public class FunctionHandler {
 				stmt.add(new AssignmentStatement(loc, new LeftHandSide[] { new VariableLHS(loc, outParam[0]
 						.getIdentifiers()[0]) }, new Expression[] { funcCallResult }));
 			}
-			stmt.addAll(Dispatcher.createHavocsForAuxVars(auxVars));
+			stmt.addAll(CHandler.createHavocsForAuxVars(auxVars));
 			stmt.add(new ReturnStatement(loc));
 			return new Body(loc, decl.toArray(new VariableDeclaration[decl.size()]), stmt.toArray(new Statement[stmt
 					.size()]));
@@ -1349,7 +1349,7 @@ public class FunctionHandler {
 		stmt.add(call);
 		CType returnCType = methodsCalledBeforeDeclared.contains(methodName) ? new CPrimitive(PRIMITIVE.INT)
 				: procedureToCFunctionType.get(methodName).getResultType();
-		assert (main.isAuxVarMapcomplete(decl, auxVars));
+		assert (CHandler.isAuxVarMapcomplete(main, decl, auxVars));
 		return new ResultExpression(stmt, new RValue(expr, returnCType), decl, auxVars, overappr);
 	}
 

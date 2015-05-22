@@ -738,7 +738,7 @@ public class CHandler implements ICHandler {
 			
 			if (result instanceof ResultExpression)
 				((ResultExpression) result).stmt.addAll(
-						Dispatcher.createHavocsForAuxVars(((ResultExpression) result).auxVars));
+						createHavocsForAuxVars(((ResultExpression) result).auxVars));
 			return result;
 		}
 		String msg = "Unknown result type: " + r.getClass();
@@ -1716,7 +1716,7 @@ public class CHandler implements ICHandler {
 						rrToInt.lrVal.getValue(), loc), rlToInt.lrVal.cType);
 				
 				
-				assert (main.isAuxVarMapcomplete(decl, auxVars)) : "unhavoced auxvars";
+				assert (isAuxVarMapcomplete(main, decl, auxVars)) : "unhavoced auxvars";
 				ResultExpression rex = new ResultExpression(stmt, rval, decl, auxVars, overappr);
 				if (node.getOperator() != IASTBinaryExpression.op_divide
 						&& node.getOperator() != IASTBinaryExpression.op_modulo)
@@ -1941,7 +1941,7 @@ public class CHandler implements ICHandler {
 				ArrayList<Statement> stmt = new ArrayList<Statement>(rExp.stmt);
 				ArrayList<Declaration> decl = new ArrayList<Declaration>(rExp.decl);
 				List<Overapprox> overappr = new ArrayList<Overapprox>();
-				assert (main.isAuxVarMapcomplete(rExp.decl, rExp.auxVars));
+				assert (isAuxVarMapcomplete(main, rExp.decl, rExp.auxVars));
 				stmt.addAll(createHavocsForAuxVars(rExp.auxVars));
 				overappr.addAll(rExp.overappr);
 				Map<VariableDeclaration, ILocation> emptyAuxVars = new LinkedHashMap<VariableDeclaration, ILocation>(0);
@@ -1960,7 +1960,7 @@ public class CHandler implements ICHandler {
 				if (!res.stmt.isEmpty()) {
 					stmt.addAll(res.stmt);
 					decl.addAll(res.decl);
-					assert (main.isAuxVarMapcomplete(res.decl, res.auxVars));
+					assert (isAuxVarMapcomplete(main, res.decl, res.auxVars));
 					stmt.addAll(createHavocsForAuxVars(res.auxVars));
 					overappr.addAll(res.overappr);
 				}
@@ -2056,7 +2056,52 @@ public class CHandler implements ICHandler {
 			assert e.getKey().getVariables()[0].getIdentifiers().length == 1 : "we always define only one auxvar at once, right?";
 			allAuxVars.put(e.getKey(), e.getValue());
 		}
-		return Dispatcher.createHavocsForAuxVars(allAuxVars);
+		return CHandler.createHavocsForAuxVars1(allAuxVars);
+	}
+	
+		/**
+	 * Create a havoc statement for each variable in auxVars. (Does not modify
+	 * this auxVars map). We insert havocs for auxvars after the translation of
+	 * a _statement_. This means that the Expressions carry the auxVarMap
+	 * outside (via the ResultExpression they return), and that map is used for
+	 * calling this procedure once we reach a (basic) statement.
+	 */
+	public static List<HavocStatement> createHavocsForAuxVars1(Map<VariableDeclaration, ILocation> auxVars) {
+		ArrayList<HavocStatement> result = new ArrayList<HavocStatement>();
+		for (VariableDeclaration varDecl : auxVars.keySet()) {
+			VarList[] varLists = varDecl.getVariables();
+			for (VarList varList : varLists) {
+				for (String varId : varList.getIdentifiers()) {
+					ILocation originloc = auxVars.get(varDecl);
+					result.add(new HavocStatement(originloc, new VariableLHS[] { new VariableLHS(originloc, varId) }));
+				}
+			}
+		}
+		return result;
+	}
+
+	/**
+	 * Returns true iff all auxvars in decls are contained in auxVars
+	 */
+	public static boolean isAuxVarMapcomplete(Dispatcher main, List<Declaration> decls, Map<VariableDeclaration, ILocation> auxVars) {
+		boolean result = true;
+		for (Declaration rExprdecl : decls) {
+			assert (rExprdecl instanceof VariableDeclaration);
+			VariableDeclaration varDecl = (VariableDeclaration) rExprdecl;
+			
+			assert varDecl.getVariables().length == 1 
+					: "there are never two auxvars declared in one declaration, right??";
+			VarList vl = varDecl.getVariables()[0];
+			assert vl.getIdentifiers().length == 1
+					: "there are never two auxvars declared in one declaration, right??";
+			String id = vl.getIdentifiers()[0];
+
+			if (main.nameHandler.isTempVar(id)) {
+				//malloc auxvars do not need to be havocced in some cases (alloca)
+				result &= auxVars.containsKey(varDecl) || id.contains(SFO.MALLOC);
+			}
+		}
+		return result;
 	}
 
 	@Override
@@ -3272,7 +3317,7 @@ public class CHandler implements ICHandler {
 			bodyResult = main.dispatch(forStmt.getBody());
 			mInnerMostLoopLabel.pop();
 		}
-		assert (main.isAuxVarMapcomplete(condResult.decl, condResult.auxVars));
+		assert (isAuxVarMapcomplete(main, condResult.decl, condResult.auxVars));
 
 		ArrayList<Statement> bodyBlock = new ArrayList<Statement>();
 		if (bodyResult instanceof ResultExpression) {
@@ -3301,7 +3346,7 @@ public class CHandler implements ICHandler {
 				for (ResultExpression el : ((ResultExpressionList) iterator).list) {
 					bodyBlock.addAll(el.stmt);
 					decl.addAll(el.decl);
-					assert (main.isAuxVarMapcomplete(el.decl, el.auxVars));
+					assert (isAuxVarMapcomplete(main, el.decl, el.auxVars));
 					bodyBlock.addAll(createHavocsForAuxVars(el.auxVars));
 				}
 			} else if (iterator instanceof ResultExpression) {
@@ -3309,7 +3354,7 @@ public class CHandler implements ICHandler {
 				bodyBlock.addAll(iteratorRE.stmt);
 				decl.addAll(iteratorRE.decl);
 				overappr.addAll(iteratorRE.overappr);
-				assert (main.isAuxVarMapcomplete(iteratorRE.decl, iteratorRE.auxVars));
+				assert (isAuxVarMapcomplete(main, iteratorRE.decl, iteratorRE.auxVars));
 				bodyBlock.addAll(createHavocsForAuxVars(iteratorRE.auxVars));
 			} else {
 				String msg = "Uninplemented type of loop iterator: " + iterator.getClass();

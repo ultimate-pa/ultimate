@@ -320,7 +320,7 @@ public class PRCHandler extends CHandler {
 			
 			if (result instanceof ResultExpression)
 				((ResultExpression) result).stmt.addAll(
-						Dispatcher.createHavocsForAuxVars(((ResultExpression) result).auxVars));
+						createHavocsForAuxVars(((ResultExpression) result).auxVars));
 			return result;
 		}
 		String msg = "Unknown result type: " + r.getClass();

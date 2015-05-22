@@ -1010,7 +1010,7 @@ public class MemoryHandler {
         mallocRex.auxVars.put(tVarDecl, loc);
         mallocRex.decl.add(tVarDecl);
         
-		assert (main.isAuxVarMapcomplete(mallocRex.decl, mallocRex.auxVars));
+		assert (CHandler.isAuxVarMapcomplete(main, mallocRex.decl, mallocRex.auxVars));
 		return mallocRex;
     }
 
@@ -1267,7 +1267,7 @@ public class MemoryHandler {
                     overapprItem);
         }
         stmt.add(call);
-		assert (main.isAuxVarMapcomplete(decl, auxVars));
+		assert (CHandler.isAuxVarMapcomplete(main, decl, auxVars));
         return new ResultExpression(stmt, 
         		new RValue(new IdentifierExpression(loc, tmpId), address.cType),
         		decl, auxVars, overappr);

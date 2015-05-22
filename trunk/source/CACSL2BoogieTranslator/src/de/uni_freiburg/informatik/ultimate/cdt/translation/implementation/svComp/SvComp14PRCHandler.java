@@ -130,7 +130,7 @@ public class SvComp14PRCHandler extends PRCHandler {
 //			could just take the first as there is only one, but it's so easy to make it more general..
 				stmt.add(new AssumeStatement(loc, a));
 			}
-			assert (main.isAuxVarMapcomplete(decl, auxVars));
+			assert (isAuxVarMapcomplete(main, decl, auxVars));
 			return new ResultExpression(stmt, returnValue, decl, auxVars, overappr);
 		}
 		for (String t : NONDET_TYPE_STRINGS)
@@ -155,7 +155,7 @@ public class SvComp14PRCHandler extends PRCHandler {
 				auxVars.put(tVarDecl, loc);
 
 				returnValue = new RValue(new IdentifierExpression(loc, tmpName), cType);
-				assert (main.isAuxVarMapcomplete(decl, auxVars));
+				assert (isAuxVarMapcomplete(main, decl, auxVars));
 				return new ResultExpression(stmt, returnValue, decl, auxVars, overappr);
 			}
 		if (methodName.equals("printf")) {
@@ -172,7 +172,7 @@ public class SvComp14PRCHandler extends PRCHandler {
 			decl.add(tVarDecl);
 			stmt.add(new HavocStatement(loc, new VariableLHS[] { new VariableLHS(loc, tId) }));
 			returnValue = new RValue(new IdentifierExpression(loc, tId), null);
-			assert (main.isAuxVarMapcomplete(decl, auxVars));
+			assert (isAuxVarMapcomplete(main, decl, auxVars));
 			return new ResultExpression(stmt, returnValue, decl, auxVars, overappr);
 		}
 //		this is a gcc-builtin function that helps with branch predication, it always returns the first argument.
