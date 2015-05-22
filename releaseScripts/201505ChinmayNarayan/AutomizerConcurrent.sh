@@ -1,2 +1,2 @@
 #!/bin/bash
-./Ultimate --console BuchiAutomizerCWithBlockEncoding.xml "$1" --settings AutomizerConcurrentDefaultSettings.epf
+./Ultimate --console TraceAbstractionConcurrent.xml "$1" --settings AutomizerConcurrentDefaultSettings.epf
