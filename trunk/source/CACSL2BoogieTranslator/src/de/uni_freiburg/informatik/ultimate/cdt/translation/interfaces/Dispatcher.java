@@ -324,37 +324,46 @@ public abstract class Dispatcher {
 		for (Declaration rExprdecl : decls) {
 			assert (rExprdecl instanceof VariableDeclaration);
 			VariableDeclaration varDecl = (VariableDeclaration) rExprdecl;
-			if (onlyAuxVars((VariableDeclaration) rExprdecl)) {
-				result &= auxVars.containsKey(varDecl);
+			
+			assert varDecl.getVariables().length == 1 
+					: "there are never two auxvars declared in one declaration, right??";
+			VarList vl = varDecl.getVariables()[0];
+			assert vl.getIdentifiers().length == 1
+					: "there are never two auxvars declared in one declaration, right??";
+			String id = vl.getIdentifiers()[0];
+
+			if (nameHandler.isTempVar(id)) {
+				//malloc auxvars do not need to be havocced in some cases (alloca)
+				result &= auxVars.containsKey(varDecl) || id.contains(SFO.MALLOC);
 			}
 		}
 		return result;
 	}
 
-	/**
-	 * Returns true if varDecl contains only auxiliary variables, returns false
-	 * if varDecl contains only non-auxiliary variables, throws Exception
-	 * otherwise
-	 */
-	private boolean onlyAuxVars(VariableDeclaration varDecl) {
-		int aux = 0;
-		int nonAux = 0;
-		for (VarList varLists : varDecl.getVariables()) {
-			for (String id : varLists.getIdentifiers()) {
-				if (nameHandler.isTempVar(id)) {
-					aux++;
-				} else {
-					nonAux++;
-				}
-			}
-		}
-		if (aux > 0 && nonAux > 0) {
-			throw new AssertionError();
-		} else {
-			assert (aux > 0 || nonAux > 0);
-			return aux > 0;
-		}
-	}
+//	/**
+//	 * Returns true if varDecl contains only auxiliary variables, returns false
+//	 * if varDecl contains only non-auxiliary variables, throws Exception
+//	 * otherwise
+//	 */
+//	private boolean onlyAuxVars(VariableDeclaration varDecl) {
+//		int aux = 0;
+//		int nonAux = 0;
+//		for (VarList varLists : varDecl.getVariables()) {
+//			for (String id : varLists.getIdentifiers()) {
+//				if (nameHandler.isTempVar(id)) {
+//					aux++;
+//				} else {
+//					nonAux++;
+//				}
+//			}
+//		}
+//		if (aux > 0 && nonAux > 0) {
+//			throw new AssertionError();
+//		} else {
+//			assert (aux > 0 || nonAux > 0);
+//			return aux > 0;
+//		}
+//	}
 	
 	public LinkedHashMap<String,Integer> getFunctionToIndex() {
 		return mFunctionToIndex;
