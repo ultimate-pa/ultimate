@@ -1155,10 +1155,8 @@ public class CHandler implements ICHandler {
 			RValue rhs = null;
 			if (oType instanceof CPointer)
 				rhs = doPointerArithPointerAndInteger(main, op,
-						// loc, (RValue) o.lrVal,
 						loc, (RValue) rop.lrVal, new RValue(nr1, new CPrimitive(PRIMITIVE.INT)),
 						((CPointer) o.lrVal.cType).pointsToType);
-			// .lrVal.getValue();
 			else
 				rhs = new RValue(createArithmeticExpression(op, rop.lrVal.getValue(), nr1, loc), o.lrVal.cType);
 
@@ -3515,31 +3513,26 @@ public class CHandler implements ICHandler {
 	 * @param cvar
 	 * @param incompleteStruct
 	 */
-//	public void completeTypeDeclaration(CStruct incompleteStruct, CStruct cvar) {
 	public void completeTypeDeclaration(CType incompleteStruct, CType cvar) {
-//		if (incompleteStruct instanceof CStruct && cvar instanceof CStruct) {
-			assert incompleteStruct.isIncomplete();
-			TypeDeclaration oldDec = null;
-			CDeclaration oldCDec = null;
-			TypeDeclaration newDec = null;
-			for (Entry<Declaration, CDeclaration> en : mDeclarationsGlobalInBoogie.entrySet()) {
-				if (en.getValue().getType().toString().equals(incompleteStruct.toString())) {
-					oldDec = (TypeDeclaration) en.getKey();
-					oldCDec = en.getValue();
-					newDec = new TypeDeclaration(oldDec.getLocation(), oldDec.getAttributes(), oldDec.isFinite(),
-							oldDec.getIdentifier(), oldDec.getTypeParams(), mTypeHandler.ctype2asttype(oldDec.getLocation(),
-									cvar));
-					break; // the if should be entered only once, anyway
-				}
+		assert incompleteStruct.getClass().equals(cvar.getClass());
+		assert incompleteStruct.isIncomplete();
+		TypeDeclaration oldDec = null;
+		CDeclaration oldCDec = null;
+		TypeDeclaration newDec = null;
+		for (Entry<Declaration, CDeclaration> en : mDeclarationsGlobalInBoogie.entrySet()) {
+			if (en.getValue().getType().toString().equals(incompleteStruct.toString())) {
+				oldDec = (TypeDeclaration) en.getKey();
+				oldCDec = en.getValue();
+				newDec = new TypeDeclaration(oldDec.getLocation(), oldDec.getAttributes(), oldDec.isFinite(),
+						oldDec.getIdentifier(), oldDec.getTypeParams(), mTypeHandler.ctype2asttype(oldDec.getLocation(),
+								cvar));
+				break; // the if should be entered only once, anyway
 			}
-			if (oldDec != null) {
-				mDeclarationsGlobalInBoogie.remove(oldDec);
-				mDeclarationsGlobalInBoogie.put(newDec, oldCDec);
-			}
-//		} else if (incompleteStruct instanceof CEnum && cvar instanceof CEnum) {
-//		} else {
-//			assert false : "should not be called like this";
-//		}
+		}
+		if (oldDec != null) {
+			mDeclarationsGlobalInBoogie.remove(oldDec);
+			mDeclarationsGlobalInBoogie.put(newDec, oldCDec);
+		}
 	}
 
 	/**

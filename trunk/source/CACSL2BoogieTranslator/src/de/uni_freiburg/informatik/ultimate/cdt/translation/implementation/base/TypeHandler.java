@@ -174,21 +174,6 @@ public class TypeHandler implements ITypeHandler {
         if (node instanceof CASTTypedefNameSpecifier) {
             node = (CASTTypedefNameSpecifier) node;
             String cId = node.getName().toString();
-            
-//            // quick solution --> TODO: maybe make this dependent on includes,  
-//            // maybe be more elegant (make an entry to symboltable, make a typedef in boogie file??)
-//            if (cId.equals("size_t") || cId.equals("ssize_t")) {
-//                return (new ResultTypes(new PrimitiveType(loc, SFO.REAL), node.isConst(),
-//                		false, new CPrimitive(PRIMITIVE.UINT)));
-//            } else if (cId.equals("__builtin_va_list")) {
-//                return (new ResultTypes(MemoryHandler.POINTER_TYPE, node.isConst(),
-//                		false, new CPointer(new CPrimitive(PRIMITIVE.CHAR))));
-//            } else if (cId.equals("__pthread_list_t")) {
-//            	    return (new ResultTypes(MemoryHandler.POINTER_TYPE, node.isConst(),
-//                		false, new CPointer(new CPrimitive(PRIMITIVE.VOID))));
-//            }
-             // --> moved this to SVCompTypeHandler
-
             String bId = main.cHandler.getSymbolTable().get(cId, loc).getBoogieName();
             return new ResultTypes(new NamedType(loc, bId, null), false, false, //TODO: replace constants
             		new CNamed(bId, m_DefinedTypes.get(bId).cType));
@@ -349,18 +334,7 @@ public class TypeHandler implements ITypeHandler {
             //search for any typedefs that were made for the incomplete type
             //typedefs are made globally, so the CHandler has to do this
             ((CHandler) main.cHandler).completeTypeDeclaration(incompleteStruct, cvar);
-//            for (Entry<String, SymbolTableValue> ste : main.cHandler.getSymbolTable().currentScopeEntries()) {
-////            	if (ste.getValue().getCDecl().getType().equals(incompleteType)) {
-//            	if (((CStruct) ste.getValue().getCDecl().getType()).getIncompleteName().equals(cId)) {
-//            		String bId = ste.getValue().getBoogieName();
-//            		ASTType translatedType = this.ctype2asttype(loc, cvar);
-//            		TypeDeclaration newTypeDec = new TypeDeclaration(loc, new Attribute[0], false, 
-//								bId, new String[0] , translatedType);
-//            		main.cHandler.getSymbolTable().put(ste.getKey(), new SymbolTableValue(ste.getValue().getBoogieName(), 
-//            				newTypeDec,
-//            				ste.getValue().getCDecl(), ste.getValue().isGlobalVar(), StorageClass.TYPEDEF));
-//            	}
-//            }
+
             incompleteStruct.complete(cvar);
         }
         
