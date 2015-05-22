@@ -19,11 +19,11 @@ public class CEnum extends CType {
     /**
      * Field names.
      */
-    private final String[] fNames;
+    private String[] fNames;
     /**
      * Field values.
      */
-    private final IntegerLiteral[] fValues;
+    private IntegerLiteral[] fValues;
     /**
      * The _boogie_ identifier of this enum set.
      */
@@ -50,7 +50,18 @@ public class CEnum extends CType {
         this.fValues = fValues;
     }
 
-    /**
+    public CEnum(String id) {
+    	super(false, false, false, false); //FIXME: integrate those flags
+
+    	identifier = id;
+//    	fNames = new String[0];
+//    	fValues = new IntegerLiteral[0];
+//        this.fNames = new String[0];
+//        this.fTypes = new CType[0];
+//        this.incompleteName = name
+	}
+
+	/**
      * Get the number of fields in this enum.
      * 
      * @return the number of fields.
@@ -129,6 +140,17 @@ public class CEnum extends CType {
         }
         return true;
     }
+
+    //@Override
+    public boolean isIncomplete() {
+    	return fNames == null;
+	}
+
+	public void complete(CEnum cEnum) {
+		fNames = cEnum.fNames;
+		fValues = cEnum.fValues;
+		
+	}
 
 	@Override
 	public boolean isCompatibleWith(CType o) {

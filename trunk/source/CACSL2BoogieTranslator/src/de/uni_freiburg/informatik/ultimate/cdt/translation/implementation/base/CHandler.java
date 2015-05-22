@@ -1202,7 +1202,12 @@ public class CHandler implements ICHandler {
 			} else {
 				assert rop.lrVal.cType.getUnderlyingType() instanceof CPointer : "type error: expected pointer , got "
 						+ rop.lrVal.cType.toString();
-				return new ResultExpression(rop.stmt, new HeapLValue(addr, ((CPointer) rop.lrVal.cType.getUnderlyingType()).pointsToType),
+
+				CType pointedType = ((CPointer) rop.lrVal.cType.getUnderlyingType()).pointsToType;
+				if (pointedType.isIncomplete())
+					throw new IncorrectSyntaxException(loc, "Pointer dereference of incomplete type");
+
+				return new ResultExpression(rop.stmt, new HeapLValue(addr, pointedType),
 						rop.decl, rop.auxVars, rop.overappr);
 			}
 		}
@@ -3510,25 +3515,31 @@ public class CHandler implements ICHandler {
 	 * @param cvar
 	 * @param incompleteStruct
 	 */
-	public void completeTypeDeclaration(CStruct incompleteStruct, CStruct cvar) {
-		assert incompleteStruct.isIncomplete();
-		TypeDeclaration oldDec = null;
-		CDeclaration oldCDec = null;
-		TypeDeclaration newDec = null;
-		for (Entry<Declaration, CDeclaration> en : mDeclarationsGlobalInBoogie.entrySet()) {
-			if (en.getValue().getType().toString().equals(incompleteStruct.toString())) {
-				oldDec = (TypeDeclaration) en.getKey();
-				oldCDec = en.getValue();
-				newDec = new TypeDeclaration(oldDec.getLocation(), oldDec.getAttributes(), oldDec.isFinite(),
-						oldDec.getIdentifier(), oldDec.getTypeParams(), mTypeHandler.ctype2asttype(oldDec.getLocation(),
-								cvar));
-				break; // the if should be entered only once, anyway
+//	public void completeTypeDeclaration(CStruct incompleteStruct, CStruct cvar) {
+	public void completeTypeDeclaration(CType incompleteStruct, CType cvar) {
+//		if (incompleteStruct instanceof CStruct && cvar instanceof CStruct) {
+			assert incompleteStruct.isIncomplete();
+			TypeDeclaration oldDec = null;
+			CDeclaration oldCDec = null;
+			TypeDeclaration newDec = null;
+			for (Entry<Declaration, CDeclaration> en : mDeclarationsGlobalInBoogie.entrySet()) {
+				if (en.getValue().getType().toString().equals(incompleteStruct.toString())) {
+					oldDec = (TypeDeclaration) en.getKey();
+					oldCDec = en.getValue();
+					newDec = new TypeDeclaration(oldDec.getLocation(), oldDec.getAttributes(), oldDec.isFinite(),
+							oldDec.getIdentifier(), oldDec.getTypeParams(), mTypeHandler.ctype2asttype(oldDec.getLocation(),
+									cvar));
+					break; // the if should be entered only once, anyway
+				}
 			}
-		}
-		if (oldDec != null) {
-			mDeclarationsGlobalInBoogie.remove(oldDec);
-			mDeclarationsGlobalInBoogie.put(newDec, oldCDec);
-		}
+			if (oldDec != null) {
+				mDeclarationsGlobalInBoogie.remove(oldDec);
+				mDeclarationsGlobalInBoogie.put(newDec, oldCDec);
+			}
+//		} else if (incompleteStruct instanceof CEnum && cvar instanceof CEnum) {
+//		} else {
+//			assert false : "should not be called like this";
+//		}
 	}
 
 	/**

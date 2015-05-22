@@ -29,6 +29,10 @@ public abstract class CType {
 	public boolean isVolatile() {
 		return isVolatile;
 	}
+	
+	public boolean isIncomplete() {
+		return false;
+	}
 
 	/**
 	 * Constructor.

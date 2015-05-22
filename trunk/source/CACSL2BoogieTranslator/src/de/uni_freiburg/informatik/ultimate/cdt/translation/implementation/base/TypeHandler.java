@@ -219,9 +219,23 @@ public class TypeHandler implements ITypeHandler {
         CEnum cEnum = new CEnum(enumId, fNames, fValues);
         ASTType at = new PrimitiveType(loc, SFO.INT);
         ResultTypes result = new ResultTypes(at, false, false, cEnum);
+       
+        String incompleteTypeName = "ENUM~" + cId;
+        if (m_IncompleteType.contains(incompleteTypeName)) {
+            m_IncompleteType.remove(incompleteTypeName);
+            ResultTypes incompleteType = m_DefinedTypes.get(cId);
+            CEnum incompleteEnum = (CEnum) incompleteType.cType;
+            //search for any typedefs that were made for the incomplete type
+            //typedefs are made globally, so the CHandler has to do this
+            ((CHandler) main.cHandler).completeTypeDeclaration(incompleteEnum, cEnum);
+
+            incompleteEnum.complete(cEnum);
+        }
+
         if (!enumId.equals(SFO.EMPTY)) {
             m_DefinedTypes.put(cId, result);
         }
+        
         return result;
     }
     
@@ -232,35 +246,32 @@ public class TypeHandler implements ITypeHandler {
     			|| node.getKind() == IASTElaboratedTypeSpecifier.k_enum
     			|| node.getKind() == IASTElaboratedTypeSpecifier.k_union) {
     		String type = node.getName().toString();
-    		String name;
-    		if (node.getKind() == IASTElaboratedTypeSpecifier.k_struct) {
-    			name = "STRUCT~" + type;
-    		} else if (node.getKind() == IASTElaboratedTypeSpecifier.k_union) {
-    			name = "UNION~" + type;
-    		} else {
-    			//            	throw new UnsupportedOperationException("TODO: enums");
-    			//          	name is only for incomplete types what is an incomplete enum type? 
-    			// -- probably we don't have to treat it as its contents are only relevant for
-    			// const declarations, not the cType
-    			name = "ENUM~" + type; 
-    		}
+    		
 
     		//            if (m_DefinedTypes.containsKey(type)) {
     		ResultTypes originalType = m_DefinedTypes.get(type);
-    		if (originalType == null && node.getKind() == IASTElaboratedTypeSpecifier.k_enum)
-    			// --> we have an incomplete enum --> do nothing 
-    			//(i cannot think of an effect of an incomplete enum declaration right now..)
-    			return new ResultSkip();
-    		else if (originalType != null) {
+//    		if (originalType == null && node.getKind() == IASTElaboratedTypeSpecifier.k_enum)
+//    			// --> we have an incomplete enum --> do nothing 
+//    			//(i cannot think of an effect of an incomplete enum declaration right now..)
+//    			return new ResultSkip();
+    		if (originalType != null) {
     			// --> we have a normal struct, union or enum declaration
     			ResultTypes withoutBoogieTypedef = new ResultTypes(
     					originalType.getType(), originalType.isConst, 
     					originalType.isVoid, originalType.cType);
     			return withoutBoogieTypedef;
     		} else {
-    			// --> This is a definition of an incomplete struct or union.
+    			// --> This is a definition of an incomplete struct, enum or union.
+    			String incompleteTypeName;
+    			if (node.getKind() == IASTElaboratedTypeSpecifier.k_struct) {
+    				incompleteTypeName = "STRUCT~" + type;
+    			} else if (node.getKind() == IASTElaboratedTypeSpecifier.k_union) {
+    				incompleteTypeName = "UNION~" + type;
+    			} else {
+    				incompleteTypeName = "ENUM~" + type; 
+    			}
 
-    			m_IncompleteType.add(name);
+    			m_IncompleteType.add(incompleteTypeName);
     			// 			FIXME : not sure, if null is a good idea!
     			//            ResultTypes r = new ResultTypes(new NamedType(loc, name,
     			//                    new ASTType[0]), false, false, null);
@@ -270,10 +281,9 @@ public class TypeHandler implements ITypeHandler {
     			} else if (node.getKind() == IASTElaboratedTypeSpecifier.k_union) {
     				ctype = new CUnion(type);
     			} else {
-    				ctype = null;
-    				assert false : "incomplete enums should be treated above, right?..";
+    				ctype = new CEnum(type);
     			}
-    			ResultTypes r = new ResultTypes(new NamedType(loc, name,
+    			ResultTypes r = new ResultTypes(new NamedType(loc, incompleteTypeName,
     					new ASTType[0]), false, false, ctype);
 
 

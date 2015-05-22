@@ -30,6 +30,7 @@ public class CStruct extends CType {
 //    private boolean isIncomplete;
     private String incompleteName = "";
 
+    //@Override
     public boolean isIncomplete() {
 //		return isIncomplete;
     	return !incompleteName.isEmpty();
