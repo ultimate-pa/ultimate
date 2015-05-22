@@ -2042,19 +2042,15 @@ public class CHandler implements ICHandler {
 	}
 
 	/**
-	 * Takes all auxvars, partitions them into ones of malloc-type and the rest.
-	 * Returns havoc statements for the rest.
-	 * 
+	 * Returns havoc statements for all auxVars given in the argument.
 	 * @param auxVars
 	 * @return
 	 */
 	public static List<HavocStatement> createHavocsForAuxVars(Map<VariableDeclaration, ILocation> auxVars) {
 		LinkedHashMap<VariableDeclaration, ILocation> allAuxVars = new LinkedHashMap<>();
-		for (Entry<VariableDeclaration, ILocation> e : auxVars.entrySet()) {
+		for (Entry<VariableDeclaration, ILocation> e : auxVars.entrySet()) {//TODO: are these asserts necessary?
 			assert e.getKey().getVariables().length == 1 : "we always define only one auxvar at once, right?";
 			assert e.getKey().getVariables()[0].getIdentifiers().length == 1 : "we always define only one auxvar at once, right?";
-//			if (!e.getKey().getVariables()[0].getIdentifiers()[0].contains(AUXVAR.MALLOC.getId()))
-//				nonMallocAuxVars.put(e.getKey(), e.getValue());
 			allAuxVars.put(e.getKey(), e.getValue());
 		}
 		return Dispatcher.createHavocsForAuxVars(allAuxVars);
@@ -2242,7 +2238,7 @@ public class CHandler implements ICHandler {
 				// we already have a unique naming for variables! -> unfold
 				Body b = ((Body) r.node);
 				decl.addAll(Arrays.asList(b.getLocalVars()));
-				for (Statement s : Arrays.asList(b.getBlock())) {
+				for (Statement s : b.getBlock()) {
 						if (s instanceof BreakStatement)
 							ifBlock.add(new GotoStatement(locC, new String[] { breakLabelName }));
 						else
@@ -2262,7 +2258,6 @@ public class CHandler implements ICHandler {
 		checkForACSL(main, stmt, decl, null, node);
 		stmt.add(new Label(loc, breakLabelName));
 		stmt.addAll(createHavocsForAuxVars(auxVars));
-		// mallocAuxVars.putAll(getOnlyMallocAuxVars(auxVars));
 
 		this.endScope();
 		return new ResultExpression(stmt, null, decl, emptyAuxVars, overappr);
@@ -2332,7 +2327,6 @@ public class CHandler implements ICHandler {
 		ArrayList<Statement> stmt = new ArrayList<Statement>();
 		String[] name = new String[] { node.getName().toString() };
 		stmt.add(new GotoStatement(LocationFactory.createCLocation(node), name));
-//		Map<VariableDeclaration, ILocation> emptyAuxVars = new LinkedHashMap<VariableDeclaration, ILocation>(0);
 		return new ResultExpression(stmt, null);
 	}
 
@@ -2428,25 +2422,6 @@ public class CHandler implements ICHandler {
 		
 		CastAndConversionHandler.usualArithmeticConversions(main, loc, mMemoryHandler, rePositive, reNegative, false);
 		CastAndConversionHandler.doPrimitiveVsPointerConversions(main, loc, mMemoryHandler, rePositive, reNegative);
-
-//		// implicit casting -- not very general
-//		if (!rePositive.lrVal.cType.equals(reNegative.lrVal.cType)) {
-//			if (rePositive.lrVal.getValue() instanceof IntegerLiteral
-//					&& ((IntegerLiteral) rePositive.lrVal.getValue()).getValue().equals("0")
-//					&& reNegative.lrVal.cType instanceof CPointer) {
-//				rePositive.lrVal = new RValue(new IdentifierExpression(loc, SFO.NULL), reNegative.lrVal.cType);
-//			} else if (reNegative.lrVal.getValue() instanceof IntegerLiteral
-//					&& ((IntegerLiteral) reNegative.lrVal.getValue()).getValue().equals("0")
-//					&& rePositive.lrVal.cType instanceof CPointer) {
-//				reNegative.lrVal = new RValue(new IdentifierExpression(loc, SFO.NULL), rePositive.lrVal.cType);
-//			} else if (reNegative.lrVal.getValue() == null
-//					|| rePositive.lrVal.getValue() == null) {
-//				// one of the values is void --> can only come from the call of a void function, i think..
-//				//do nothing here.. (should crash later if the value is assigned..)
-//			} else {
-//				assert false : "types do not match";
-//			}
-//		}
 
 		ArrayList<Statement> stmt = new ArrayList<Statement>();
 		ArrayList<Declaration> decl = new ArrayList<Declaration>();
@@ -3450,7 +3425,7 @@ public class CHandler implements ICHandler {
 	 *            the node holding the enum declaration.
 	 * @return the translation of this declaration.
 	 */
-	private Result handleEnumDeclaration(Dispatcher main, IASTSimpleDeclaration node) {
+	protected Result handleEnumDeclaration(Dispatcher main, IASTSimpleDeclaration node) {
 		Result r = main.dispatch(node.getDeclSpecifier());
 		assert r instanceof ResultTypes;
 		ResultTypes rt = (ResultTypes) r;
