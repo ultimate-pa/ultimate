@@ -328,16 +328,16 @@ public class PRCHandler extends CHandler {
 	}
 	
 	
-	private Result handleEnumDeclaration(Dispatcher main, IASTSimpleDeclaration node) {
-		Result r = main.dispatch(node.getDeclSpecifier());
-		assert r instanceof ResultTypes;
-		ResultTypes rt = (ResultTypes) r;
-		assert rt.cType instanceof CEnum;
-		
-		ResultDeclaration result = new ResultDeclaration();
-
-		return result;
-	}
+//	private Result handleEnumDeclaration(Dispatcher main, IASTSimpleDeclaration node) {
+//		Result r = main.dispatch(node.getDeclSpecifier());
+//		assert r instanceof ResultTypes;
+//		ResultTypes rt = (ResultTypes) r;
+//		assert rt.cType instanceof CEnum;
+//		
+//		ResultDeclaration result = new ResultDeclaration();
+//
+//		return result;
+//	}
 	
 	@Override
 	public Result visit(Dispatcher main, IASTBinaryExpression node) {

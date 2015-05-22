@@ -227,82 +227,64 @@ public class TypeHandler implements ITypeHandler {
     
     @Override
     public Result visit(Dispatcher main, IASTElaboratedTypeSpecifier node) {
-        ILocation loc = LocationFactory.createCLocation(node);
-        if (node.getKind() == IASTElaboratedTypeSpecifier.k_struct
-                || node.getKind() == IASTElaboratedTypeSpecifier.k_enum
-                || node.getKind() == IASTElaboratedTypeSpecifier.k_union) {
-            String type = node.getName().toString();
-            String name;
-            if (node.getKind() == IASTElaboratedTypeSpecifier.k_struct) {
-            	name = "STRUCT~" + type;
-            } else if (node.getKind() == IASTElaboratedTypeSpecifier.k_union) {
-            	name = "UNION~" + type;
-            } else {
-//            	throw new UnsupportedOperationException("TODO: enums");
-//          	name is only for incomplete types what is an incomplete enum type? 
-            	// -- probably we don't have to treat it as its contents are only relevant for
-            	// const declarations, not the cType
-            	name = null;//"~" + type; 
-            }
-            
-            if (m_DefinedTypes.containsKey(type) || node.getKind() == IASTElaboratedTypeSpecifier.k_enum) {
-                ResultTypes originalType = m_DefinedTypes.get(type);
-                ResultTypes withoutBoogieTypedef = new ResultTypes(
-                		originalType.getType(), originalType.isConst, 
-                		originalType.isVoid, originalType.cType);
-                return withoutBoogieTypedef;
-            }
+    	ILocation loc = LocationFactory.createCLocation(node);
+    	if (node.getKind() == IASTElaboratedTypeSpecifier.k_struct
+    			|| node.getKind() == IASTElaboratedTypeSpecifier.k_enum
+    			|| node.getKind() == IASTElaboratedTypeSpecifier.k_union) {
+    		String type = node.getName().toString();
+    		String name;
+    		if (node.getKind() == IASTElaboratedTypeSpecifier.k_struct) {
+    			name = "STRUCT~" + type;
+    		} else if (node.getKind() == IASTElaboratedTypeSpecifier.k_union) {
+    			name = "UNION~" + type;
+    		} else {
+    			//            	throw new UnsupportedOperationException("TODO: enums");
+    			//          	name is only for incomplete types what is an incomplete enum type? 
+    			// -- probably we don't have to treat it as its contents are only relevant for
+    			// const declarations, not the cType
+    			name = "ENUM~" + type; 
+    		}
+
+    		//            if (m_DefinedTypes.containsKey(type)) {
+    		ResultTypes originalType = m_DefinedTypes.get(type);
+    		if (originalType == null && node.getKind() == IASTElaboratedTypeSpecifier.k_enum)
+    			// --> we have an incomplete enum --> do nothing 
+    			//(i cannot think of an effect of an incomplete enum declaration right now..)
+    			return new ResultSkip();
+    		else if (originalType != null) {
+    			// --> we have a normal struct, union or enum declaration
+    			ResultTypes withoutBoogieTypedef = new ResultTypes(
+    					originalType.getType(), originalType.isConst, 
+    					originalType.isVoid, originalType.cType);
+    			return withoutBoogieTypedef;
+    		} else {
+    			// --> This is a definition of an incomplete struct or union.
+
+    			m_IncompleteType.add(name);
+    			// 			FIXME : not sure, if null is a good idea!
+    			//            ResultTypes r = new ResultTypes(new NamedType(loc, name,
+    			//                    new ASTType[0]), false, false, null);
+    			CType ctype;
+    			if (node.getKind() == IASTElaboratedTypeSpecifier.k_struct) {
+    				ctype = new CStruct(type);
+    			} else if (node.getKind() == IASTElaboratedTypeSpecifier.k_union) {
+    				ctype = new CUnion(type);
+    			} else {
+    				ctype = null;
+    				assert false : "incomplete enums should be treated above, right?..";
+    			}
+    			ResultTypes r = new ResultTypes(new NamedType(loc, name,
+    					new ASTType[0]), false, false, ctype);
 
 
-            // This is a definition of an incomplete struct or enum.
-            m_IncompleteType.add(name);
-// 			FIXME : not sure, if null is a good idea!
-//            ResultTypes r = new ResultTypes(new NamedType(loc, name,
-//                    new ASTType[0]), false, false, null);
-//            if (node.getKind() == IASTElaboratedTypeSpecifier.k_enum) {
-//            	throw new UnsupportedOperationException("TODO: support incomplete enums");
-//            }
-            CType ctype;
-            if (node.getKind() == IASTElaboratedTypeSpecifier.k_struct) {
-//            	ctype = new CStruct(true);
-            	ctype = new CStruct(type);
-            } else if (node.getKind() == IASTElaboratedTypeSpecifier.k_union) {
-//            	ctype = new CUnion(true);
-            	ctype = new CUnion(type);
-            } else {
-            	ctype = null;
-//            	throw new UnsupportedOperationException("TODO: enums");
-            }
-            ResultTypes r = new ResultTypes(new NamedType(loc, name,
-                  new ASTType[0]), false, false, ctype);
-            
+    			m_DefinedTypes.put(type, r);
 
-            m_DefinedTypes.put(type, r);
-// 	I think the following is obsolete, we always want to add the defined type.
-//  Maybe the following was relevant for enums.             
-//            IASTDeclarator[] decls;
-//            if (node.getParent() instanceof IASTSimpleDeclaration) {
-//                decls = ((IASTSimpleDeclaration) node.getParent())
-//                        .getDeclarators();
-//            } else if (node.getParent() instanceof IASTParameterDeclaration) {
-//                decls = new IASTDeclarator[] { ((IASTParameterDeclaration) node
-//                        .getParent()).getDeclarator() };
-//            } else {
-//                String msg = "Unepected parent for IASTElaboratedTypeSpecifier";
-//                Dispatcher.error(loc, SyntaxErrorType.UnsupportedSyntax, msg);
-//                throw new UnsupportedSyntaxException(msg);
-//            }
-//            for (IASTDeclarator decl : decls) {
-//                String key = decl.getName().getRawSignature();
-//                if (!key.equals(SFO.EMPTY))
-//                    m_DefinedTypes.put(key, r);
-//            }
-            
-            return r;
-        }
-        String msg = "Not yet implemented: Spec [" + node.getKind() + "] of "
-                + node.getClass();
-        throw new UnsupportedSyntaxException(loc, msg);
+    			return r;
+    		}
+    	}
+    	String msg = "Not yet implemented: Spec [" + node.getKind() + "] of "
+    			+ node.getClass();
+    	throw new UnsupportedSyntaxException(loc, msg);
     }
     
   

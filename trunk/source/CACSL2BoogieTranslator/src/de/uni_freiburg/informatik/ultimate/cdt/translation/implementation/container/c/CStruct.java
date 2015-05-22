@@ -36,9 +36,9 @@ public class CStruct extends CType {
 //    	return incompleteName.equals("");
 	}
     
-    public String getIncompleteName() {
-    	return incompleteName;
-    }
+//    public String getIncompleteName() {
+//    	return incompleteName;
+//    }
 
 	/**
      * Constructor.
