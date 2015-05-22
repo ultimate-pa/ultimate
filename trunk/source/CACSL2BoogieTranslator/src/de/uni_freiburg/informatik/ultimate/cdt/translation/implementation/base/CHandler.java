@@ -2215,6 +2215,7 @@ public class CHandler implements ICHandler {
 		// switch ([COND])
 		// { [DECL]* [[CASE|DEFAULT]+ [STMT]+ [DECL|STMT]* [BREAK]?] }
 		// we allow DECLS after case|default atm but no decls at the beginning!
+		// TODO: Fix Locations
 		ILocation loc = LocationFactory.createCLocation(node);
 		ArrayList<Statement> stmt = new ArrayList<Statement>();
 		ArrayList<Declaration> decl = new ArrayList<Declaration>();
@@ -2236,25 +2237,44 @@ public class CHandler implements ICHandler {
 		String breakLabelName =
 				main.nameHandler.getGloballyUniqueIdentifier("SWITCH~BREAK~");
 
+		String tmpName = main.nameHandler.getTempVarUID(SFO.AUXVAR.ITE);
+		boolean firstCond = true;
+		// TODO: Enum for switch
+	    ASTType tmpType = new PrimitiveType(loc, SFO.BOOL);
+	    VariableDeclaration tmpVar = SFO.getTempVarVariableDeclaration(tmpName, tmpType, loc);
+	    decl.add(tmpVar);
+
 		ArrayList<Statement> ifBlock = new ArrayList<Statement>();
 		this.beginScope();
 		for (IASTNode child : node.getBody().getChildren()) {
-			ILocation locC = LocationFactory.createCLocation(child);
 			if (isFirst && !(child instanceof IASTCaseStatement || child instanceof IASTDefaultStatement)) {
+				continue;
+				/*
 				String msg = "A case/default statement is expected at the beginning of a switch block!";
 				throw new IncorrectSyntaxException(locC, msg);
+				*/
 			}
+			ILocation locC = LocationFactory.createCLocation(child);
 			checkForACSL(main, ifBlock, decl, child, null);
 			Result r = main.dispatch(child);
 			if (r instanceof ResultExpression) {
 				ResultExpression res = (ResultExpression) r;
 				if (child instanceof IASTCaseStatement || child instanceof IASTDefaultStatement) {
 					if (!isFirst && ifBlock.size() > 0) {
-						IfStatement ifStmt = new IfStatement(locC, cond, ifBlock.toArray(new Statement[0]),
+						IfStatement ifStmt = new IfStatement(locC, new IdentifierExpression(locC, tmpName), ifBlock.toArray(new Statement[0]),
 								new Statement[0]);
 						Map<String, IAnnotations> annots = ifStmt.getPayload().getAnnotations();
 						for (Overapprox overapprItem : res.overappr) {
 							annots.put(Overapprox.getIdentifier(), overapprItem);
+						}
+
+						if (firstCond) {
+						stmt.add(new AssignmentStatement(locC, new LeftHandSide[] {new VariableLHS(locC, tmpName)}, 
+											new Expression[] { cond }));
+						firstCond = false;
+						} else {
+						stmt.add(new AssignmentStatement(locC, new LeftHandSide[] {new VariableLHS(locC, tmpName)}, 
+											new Expression[] { new BinaryExpression(locC, Operator.LOGICOR, new IdentifierExpression(locC, tmpName), cond)}));
 						}
 						stmt.add(ifStmt);
 					}
@@ -2266,11 +2286,14 @@ public class CHandler implements ICHandler {
 						//default statement
 						thisCase = res.lrVal.getValue();
 
+					cond = thisCase;
+					/*
 					if (cond == null) {
 						cond = thisCase;
 					} else {
 						cond = new BinaryExpression(locC, Operator.LOGICOR, cond, thisCase);
 					}
+					*/
 					ifBlock = new ArrayList<Statement>();
 				}
 				decl.addAll(res.decl);
@@ -2296,11 +2319,20 @@ public class CHandler implements ICHandler {
 		}
 		assert cond != null;
 		if (ifBlock.size() > 0) {
-			IfStatement ifStmt = new IfStatement(loc, cond, ifBlock.toArray(new Statement[0]), new Statement[0]);
+			IfStatement ifStmt = new IfStatement(loc, new IdentifierExpression(loc, tmpName), ifBlock.toArray(new Statement[0]), new Statement[0]);
 			Map<String, IAnnotations> annots = ifStmt.getPayload().getAnnotations();
 			for (Overapprox overapprItem : overappr) {
 				annots.put(Overapprox.getIdentifier(), overapprItem);
 			}
+
+						if (firstCond) {
+						stmt.add(new AssignmentStatement(loc, new LeftHandSide[] {new VariableLHS(loc, tmpName)}, 
+											new Expression[] { cond }));
+						firstCond = false;
+						} else {
+						stmt.add(new AssignmentStatement(loc, new LeftHandSide[] {new VariableLHS(loc, tmpName)}, 
+											new Expression[] { new BinaryExpression(loc, Operator.LOGICOR, new IdentifierExpression(loc, tmpName), cond)}));
+						}
 			stmt.add(ifStmt);
 		}
 		checkForACSL(main, stmt, decl, null, node);
