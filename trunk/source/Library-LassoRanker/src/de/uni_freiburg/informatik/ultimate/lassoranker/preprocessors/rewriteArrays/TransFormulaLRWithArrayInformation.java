@@ -186,6 +186,9 @@ public class TransFormulaLRWithArrayInformation {
 					// of this ArrayCellReplacement
 					ArrayIndex foreignIndex = computeForeignIndex(arrayRv, acrvi.getIndex(), acrvi.termVariableToRankVarMappingForIndex());
 					assert (TransFormulaUtils.allVariablesAreInVars(foreignIndex, m_TransFormulaLR));
+					if (mLogger.isDebugEnabled()) {
+						mLogger.debug("Adding foreign index " + foreignIndex + " for array " + arrayInVar);
+					}
 					arrayInVar2ForeignIndices.addPair(arrayInVar, foreignIndex);
 				}
 			}
@@ -524,7 +527,7 @@ public class TransFormulaLRWithArrayInformation {
 					}
 					Set<ArrayIndex> foreignIndicesForInVar = foreignIndices.getImage(arrayInVar);
 					for (ArrayIndex foreignIndex : foreignIndicesForInVar) {
-						m_ArrayFirstGeneration2Indices.addPair(arrayInVar, foreignIndex);
+						addFirstGenerationIndexPair(arrayInVar, foreignIndex);
 					}
 				}
 			}
@@ -535,17 +538,13 @@ public class TransFormulaLRWithArrayInformation {
 			if (m_TransFormulaLR.getInVarsReverseMapping().containsKey(firstGeneration)) {
 				if (TransFormulaUtils.allVariablesAreInVars(index, getTransFormulaLR())) {
 					ArrayIndex inReplacedByOut = new ArrayIndex(SmtUtils.substitutionElementwise(index, m_InVars2OutVars));
-					if (allVariablesOccurInFormula(inReplacedByOut, getTransFormulaLR())) {
-						m_ArrayFirstGeneration2Indices.addPair(firstGeneration, inReplacedByOut);
-						m_AdditionalArrayReads.addAll(extractArrayReads(inReplacedByOut));
-					}
+					m_ArrayFirstGeneration2Indices.addPair(firstGeneration, inReplacedByOut);
+					m_AdditionalArrayReads.addAll(extractArrayReads(inReplacedByOut));
 				}
 				if (TransFormulaUtils.allVariablesAreOutVars(index, getTransFormulaLR())) {
 					ArrayIndex outReplacedByIn = new ArrayIndex(SmtUtils.substitutionElementwise(index, m_OutVars2InVars));
-					if (allVariablesOccurInFormula(outReplacedByIn, getTransFormulaLR())) {
-						m_ArrayFirstGeneration2Indices.addPair(firstGeneration, outReplacedByIn);
-						m_AdditionalArrayReads.addAll(extractArrayReads(outReplacedByIn));
-					}
+					m_ArrayFirstGeneration2Indices.addPair(firstGeneration, outReplacedByIn);
+					m_AdditionalArrayReads.addAll(extractArrayReads(outReplacedByIn));
 				}
 
 				
