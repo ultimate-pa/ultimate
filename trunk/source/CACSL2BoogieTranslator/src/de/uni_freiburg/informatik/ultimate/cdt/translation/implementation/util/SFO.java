@@ -237,6 +237,11 @@ public final class SFO {
 		 * Auxiliary variable used for union initialisation.
 		 */
 		UNION("union"),
+		
+		/**
+		 * 
+		 */
+		SWITCH("switch"),
 
 		/**
 		 * Auxiliary variable used for the result of a call to the 'builtin'

@@ -2215,7 +2215,6 @@ public class CHandler implements ICHandler {
 		// switch ([COND])
 		// { [DECL]* [[CASE|DEFAULT]+ [STMT]+ [DECL|STMT]* [BREAK]?] }
 		// we allow DECLS after case|default atm but no decls at the beginning!
-		// TODO: Fix Locations
 		ILocation loc = LocationFactory.createCLocation(node);
 		ArrayList<Statement> stmt = new ArrayList<Statement>();
 		ArrayList<Declaration> decl = new ArrayList<Declaration>();
@@ -2232,70 +2231,55 @@ public class CHandler implements ICHandler {
 		overappr.addAll(l.overappr);
 		Expression switchArg = l.lrVal.getValue();
 
+
+		String breakLabelName = main.nameHandler.getGloballyUniqueIdentifier("SWITCH~BREAK~");
+        String switchFlag = main.nameHandler.getTempVarUID(SFO.AUXVAR.SWITCH);
+        ASTType flagType = new PrimitiveType(loc, SFO.BOOL);
+        decl.add(SFO.getTempVarVariableDeclaration(switchFlag, flagType, loc));
+
+        boolean isFirst = true;
+        boolean firstCond = true;
 		Expression cond = null;
-		boolean isFirst = true;
-		String breakLabelName =
-				main.nameHandler.getGloballyUniqueIdentifier("SWITCH~BREAK~");
-
-		String tmpName = main.nameHandler.getTempVarUID(SFO.AUXVAR.ITE);
-		boolean firstCond = true;
-		// TODO: Enum for switch
-	    ASTType tmpType = new PrimitiveType(loc, SFO.BOOL);
-	    VariableDeclaration tmpVar = SFO.getTempVarVariableDeclaration(tmpName, tmpType, loc);
-	    decl.add(tmpVar);
-
+		ILocation locC = null;
+		
 		ArrayList<Statement> ifBlock = new ArrayList<Statement>();
 		this.beginScope();
 		for (IASTNode child : node.getBody().getChildren()) {
-			if (isFirst && !(child instanceof IASTCaseStatement || child instanceof IASTDefaultStatement)) {
+			if (isFirst && !(child instanceof IASTCaseStatement || child instanceof IASTDefaultStatement))
 				continue;
-				/*
-				String msg = "A case/default statement is expected at the beginning of a switch block!";
-				throw new IncorrectSyntaxException(locC, msg);
-				*/
-			}
-			ILocation locC = LocationFactory.createCLocation(child);
+			isFirst = false;
+			//ILocation locC = LocationFactory.createCLocation(child);
 			checkForACSL(main, ifBlock, decl, child, null);
-			Result r = main.dispatch(child);
-			if (r instanceof ResultExpression) {
-				ResultExpression res = (ResultExpression) r;
-				if (child instanceof IASTCaseStatement || child instanceof IASTDefaultStatement) {
-					if (!isFirst && ifBlock.size() > 0) {
-						IfStatement ifStmt = new IfStatement(locC, new IdentifierExpression(locC, tmpName), ifBlock.toArray(new Statement[0]),
-								new Statement[0]);
-						Map<String, IAnnotations> annots = ifStmt.getPayload().getAnnotations();
-						for (Overapprox overapprItem : res.overappr) {
-							annots.put(Overapprox.getIdentifier(), overapprItem);
-						}
-
-						if (firstCond) {
-						stmt.add(new AssignmentStatement(locC, new LeftHandSide[] {new VariableLHS(locC, tmpName)}, 
-											new Expression[] { cond }));
+			if (child instanceof IASTCaseStatement || child instanceof IASTDefaultStatement) {
+				ResultExpression res = (ResultExpression) main.dispatch(child);
+				if (locC != null) {
+					IfStatement ifStmt = new IfStatement(locC, new IdentifierExpression(locC, switchFlag), ifBlock.toArray(new Statement[0]),
+									new Statement[0]);
+					Map<String, IAnnotations> annots = ifStmt.getPayload().getAnnotations();
+					for (Overapprox overapprItem : res.overappr) {
+						annots.put(Overapprox.getIdentifier(), overapprItem);
+					}
+	
+					if (firstCond) {
+						stmt.add(new AssignmentStatement(locC, new LeftHandSide[] {new VariableLHS(locC, switchFlag)}, new Expression[] { cond }));
 						firstCond = false;
-						} else {
-						stmt.add(new AssignmentStatement(locC, new LeftHandSide[] {new VariableLHS(locC, tmpName)}, 
-											new Expression[] { new BinaryExpression(locC, Operator.LOGICOR, new IdentifierExpression(locC, tmpName), cond)}));
-						}
-						stmt.add(ifStmt);
-					}
-					isFirst = false;
-					Expression thisCase;
-					if (child instanceof IASTCaseStatement)
-						thisCase = new BinaryExpression(locC, Operator.COMPEQ, switchArg, res.lrVal.getValue());
-					else
-						//default statement
-						thisCase = res.lrVal.getValue();
-
-					cond = thisCase;
-					/*
-					if (cond == null) {
-						cond = thisCase;
 					} else {
-						cond = new BinaryExpression(locC, Operator.LOGICOR, cond, thisCase);
+						stmt.add(new AssignmentStatement(locC, new LeftHandSide[] {new VariableLHS(locC, switchFlag)}, 
+												new Expression[] { new BinaryExpression(locC, Operator.LOGICOR, new IdentifierExpression(locC, switchFlag), cond)}));
 					}
-					*/
-					ifBlock = new ArrayList<Statement>();
+					stmt.add(ifStmt);
 				}
+
+				ifBlock = new ArrayList<Statement>();
+				locC = LocationFactory.createCLocation(child);
+
+				if (child instanceof IASTCaseStatement)
+					cond = new BinaryExpression(locC, Operator.COMPEQ, switchArg, res.lrVal.getValue());
+				else
+					//default statement
+					cond = res.lrVal.getValue();
+
+				/*
 				decl.addAll(res.decl);
 				auxVars.putAll(res.auxVars);
 				overappr.addAll(res.overappr);
@@ -2304,40 +2288,56 @@ public class CHandler implements ICHandler {
 						ifBlock.add(new GotoStatement(locC, new String[] { breakLabelName }));
 					else
 						ifBlock.add(s);
-			}
-			if (r.node != null && r.node instanceof Body) {
-				// we already have a unique naming for variables! -> unfold
-				Body b = ((Body) r.node);
-				decl.addAll(Arrays.asList(b.getLocalVars()));
-				for (Statement s : b.getBlock()) {
+				*/
+			} else {
+				Result r = main.dispatch(child);
+
+				if (r instanceof ResultExpression) {
+					ResultExpression res = (ResultExpression) r;
+					decl.addAll(res.decl);
+					auxVars.putAll(res.auxVars);
+					overappr.addAll(res.overappr);
+					for (Statement s : res.stmt)
 						if (s instanceof BreakStatement)
 							ifBlock.add(new GotoStatement(locC, new String[] { breakLabelName }));
 						else
 							ifBlock.add(s);
 				}
+				if (r.node != null && r.node instanceof Body) {
+					// we already have a unique naming for variables! -> unfold
+					Body b = ((Body) r.node);
+					decl.addAll(Arrays.asList(b.getLocalVars()));
+					for (Statement s : b.getBlock()) {
+							if (s instanceof BreakStatement)
+								ifBlock.add(new GotoStatement(locC, new String[] { breakLabelName }));
+							else
+								ifBlock.add(s);
+					}
+				}
 			}
 		}
 		assert cond != null;
-		if (ifBlock.size() > 0) {
-			IfStatement ifStmt = new IfStatement(loc, new IdentifierExpression(loc, tmpName), ifBlock.toArray(new Statement[0]), new Statement[0]);
+		if (locC != null) {
+			IfStatement ifStmt = new IfStatement(locC, new IdentifierExpression(locC, switchFlag), ifBlock.toArray(new Statement[0]),
+							new Statement[0]);
 			Map<String, IAnnotations> annots = ifStmt.getPayload().getAnnotations();
 			for (Overapprox overapprItem : overappr) {
 				annots.put(Overapprox.getIdentifier(), overapprItem);
 			}
 
-						if (firstCond) {
-						stmt.add(new AssignmentStatement(loc, new LeftHandSide[] {new VariableLHS(loc, tmpName)}, 
-											new Expression[] { cond }));
-						firstCond = false;
-						} else {
-						stmt.add(new AssignmentStatement(loc, new LeftHandSide[] {new VariableLHS(loc, tmpName)}, 
-											new Expression[] { new BinaryExpression(loc, Operator.LOGICOR, new IdentifierExpression(loc, tmpName), cond)}));
-						}
+			if (firstCond) {
+				stmt.add(new AssignmentStatement(locC, new LeftHandSide[] {new VariableLHS(locC, switchFlag)}, new Expression[] { cond }));
+				firstCond = false;
+			} else {
+				stmt.add(new AssignmentStatement(locC, new LeftHandSide[] {new VariableLHS(locC, switchFlag)}, 
+										new Expression[] { new BinaryExpression(locC, Operator.LOGICOR, new IdentifierExpression(locC, switchFlag), cond)}));
+			}
 			stmt.add(ifStmt);
 		}
 		checkForACSL(main, stmt, decl, null, node);
 		stmt.add(new Label(loc, breakLabelName));
 		stmt.addAll(createHavocsForAuxVars(auxVars));
+		// TODO: Havoc the switchFlag
 
 		this.endScope();
 		return new ResultExpression(stmt, null, decl, emptyAuxVars, overappr);
