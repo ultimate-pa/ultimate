@@ -5,6 +5,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -215,6 +216,19 @@ public class ModifiableGlobalVariableManager {
 			}
 		}
 		return false;
+	}
+
+	/**
+	 * Return equality (= g oldg) where g is the default constant of the 
+	 * BoogieNonOldVar bv and oldg is the default constant of the corresponding
+	 * oldVar. If primed is true, we return the primed constant instead of
+	 * the default constant.
+	 */
+	public static Term constructConstantOldVarEquality(BoogieNonOldVar bv, boolean primed, Script script) {
+		BoogieOldVar oldVar = bv.getOldVar();
+		Term nonOldConstant = (primed ? bv.getPrimedConstant() : bv.getDefaultConstant());
+		Term oldConstant = (primed ? oldVar.getPrimedConstant() : oldVar.getDefaultConstant());
+		return script.term("=", oldConstant, nonOldConstant);
 	}
 
 }
