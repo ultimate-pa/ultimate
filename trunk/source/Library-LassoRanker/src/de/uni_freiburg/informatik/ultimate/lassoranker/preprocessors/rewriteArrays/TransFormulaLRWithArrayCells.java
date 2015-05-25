@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.rewriteArrays;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -102,6 +103,18 @@ public class TransFormulaLRWithArrayCells {
 	private NestedMap2<TermVariable, ArrayIndex, ArrayCellReplacementVarInformation> m_ArrayCellOutVars;
 	
 	private final Map<List<Term>, ArrayIndex> m_IndexInstance2IndexRepresentative = new HashMap<>();
+	private final boolean m_ConsiderOnlyIndicesThatOccurInFormula = true;
+	private final Set<TermVariable> m_VariablesThatOccurInFormula;
+	
+	private Set<TermVariable> computeVarsThatOccurInFormula() {
+		Set<TermVariable> varsInFormula = new HashSet<>();
+		varsInFormula.addAll(Arrays.asList(tflrwai.getTransFormulaLR().getFormula().getFreeVars()));
+		varsInFormula.addAll(Arrays.asList(indexAnalyzer.getAdditionalConjunctsEqualities().getFreeVars()));
+		if (!m_OverapproximateByOmmitingDisjointIndices) {
+			varsInFormula.addAll(Arrays.asList(indexAnalyzer.getAdditionalConjunctsNotEquals().getFreeVars()));
+		}
+		return varsInFormula;
+	}
 
 	public TransFormulaLRWithArrayCells(
 			IUltimateServiceProvider services, 
@@ -117,6 +130,7 @@ public class TransFormulaLRWithArrayCells {
 			m_ReplacementVarFactory = replacementVarFactory;
 			if (!this.tflrwai.containsArrays()) {
 				m_Result = this.tflrwai.getTransFormulaLR();
+				m_VariablesThatOccurInFormula = null;
 				return;
 			}
 			m_Result = new TransFormulaLR(tflrwai.getTransFormulaLR());
@@ -125,6 +139,7 @@ public class TransFormulaLRWithArrayCells {
 			if (acrvc != null) {
 //				addForeignReplacementVars(acrvc);
 			}
+
 			m_ArrayCellInVars = new NestedMap2<>();
 			m_ArrayCellInVars.addAll(tflrwai.getArrayCellInVars());
 			m_ArrayCellInVars.addAll(m_ForeignReplacementVars);
@@ -138,6 +153,7 @@ public class TransFormulaLRWithArrayCells {
 			
 			indexAnalyzer = new IndexAnalyzer2(m_Result.getFormula(), m_FirstGeneration2Indices, boogie2smt, m_Result, indexSupportingInvariantAnalysis, isStem);
 			CellVariableBuilder cvb = new CellVariableBuilder(m_Result, this, replacementVarFactory, mLogger, m_FirstGeneration2Indices, m_ArrayCellInVars, m_ArrayCellOutVars);
+			m_VariablesThatOccurInFormula = computeVarsThatOccurInFormula();			
 			m_ArrayInstance2Index2CellVariable = cvb.getArrayInstance2Index2CellVariable();
 			m_EquivalentCells = new EquivalentCells[tflrwai.numberOfDisjuncts()];
 			for (int i = 0; i < tflrwai.numberOfDisjuncts(); i++) {
@@ -387,6 +403,11 @@ public class TransFormulaLRWithArrayCells {
 		data = select2CellVariable.transform(data);
 		Map<ArrayIndex, TermVariable> newInstance2Index2CellVariable = m_ArrayInstance2Index2CellVariable.get(newArray);
 		Map<ArrayIndex, TermVariable> oldInstance2Index2CellVariable = m_ArrayInstance2Index2CellVariable.get(oldArray);
+		if (m_ConsiderOnlyIndicesThatOccurInFormula ) {
+			newInstance2Index2CellVariable = filterNonOccurring(newInstance2Index2CellVariable);
+			oldInstance2Index2CellVariable = filterNonOccurring(oldInstance2Index2CellVariable);
+		}
+		
 		Term[] conjuncts = new Term[newInstance2Index2CellVariable.keySet().size()];
 		int offset = 0;
 		for (ArrayIndex index : newInstance2Index2CellVariable.keySet()) {
@@ -408,11 +429,24 @@ public class TransFormulaLRWithArrayCells {
 		return Util.and(m_Script, conjuncts);
 	}
 
+	private Map<ArrayIndex, TermVariable> filterNonOccurring(Map<ArrayIndex, TermVariable> newInstance2Index2CellVariable) {
+		Map<ArrayIndex, TermVariable> result = new HashMap<>();
+		for ( Entry<ArrayIndex, TermVariable> entry : newInstance2Index2CellVariable.entrySet()) {
+			if (entry.getKey().freeVarsAreSubset(m_VariablesThatOccurInFormula)) {
+				result.put(entry.getKey(), entry.getValue());
+			}
+		}
+		return result;
+	}
+
 	private Term buildIndexValueConstraints(SafeSubstitution select2CellVariable, EquivalentCells equivalentCells) {
 		Term[] conjuncts = new Term[m_ArrayInstance2Index2CellVariable.size()];
 		int offset = 0;
 		for (Entry<TermVariable, Map<ArrayIndex, TermVariable>> entry : m_ArrayInstance2Index2CellVariable.entrySet()) {
 			Map<ArrayIndex, TermVariable> indices2values = entry.getValue();
+			if (m_ConsiderOnlyIndicesThatOccurInFormula) {
+				indices2values = filterNonOccurring(indices2values);
+			}
 			conjuncts[offset] = buildIndexValueConstraints(indices2values, select2CellVariable, equivalentCells);
 			offset++;
 		}
