@@ -87,8 +87,10 @@ public class MatchInVars extends TransitionPreProcessor {
 	 */
 	private boolean eachInVarHasOutVar(TransFormulaLR tf) {
 		for (Map.Entry<RankVar, Term> entry : tf.getInVars().entrySet()) {
-			assert tf.getOutVars().containsKey(entry.getKey()) : "no outVar for inVar " + entry.getKey();
-			return false;
+			if (!tf.getOutVars().containsKey(entry.getKey())) {
+				assert false : "no outVar for inVar " + entry.getKey();
+				return false;
+			}
 		}
 		return true;
 	}
