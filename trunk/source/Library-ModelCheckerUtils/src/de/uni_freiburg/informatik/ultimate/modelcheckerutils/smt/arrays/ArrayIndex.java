@@ -1,7 +1,9 @@
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
@@ -188,6 +190,21 @@ public class ArrayIndex implements List<Term> {
 	public Set<TermVariable> getFreeVars() {
 		return SmtUtils.getFreeVars(m_IndexEntries);
 	}
+	
+	/**
+	 * Returns true iff the free variables of all index terms are a subset
+	 * of tvSet.
+	 */
+	public boolean freeVarsAreSubset(Set<TermVariable> tvSet) {
+	for (Term term : m_IndexEntries) {
+		for (TermVariable tv : term.getFreeVars()) {
+			if (!tvSet.contains(tv)) {
+				return false;
+			} 
+		}
+	}
+	return true;
+}
 	
 	
 

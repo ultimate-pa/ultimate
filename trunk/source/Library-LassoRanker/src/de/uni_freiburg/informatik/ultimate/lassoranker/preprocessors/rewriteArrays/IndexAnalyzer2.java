@@ -62,6 +62,10 @@ public class IndexAnalyzer2 {
 	private final SetOfDoubletons<Term> distinctDoubletons = new SetOfDoubletons<>();
 	private final SetOfDoubletons<Term> equalDoubletons = new SetOfDoubletons<>();
 	private final SetOfDoubletons<Term> unknownDoubletons = new SetOfDoubletons<>();
+	/**
+	 * Doubletons that we do not check because they do not occur in the formula.
+	 */
+	private final SetOfDoubletons<Term> ignoredDoubletons = new SetOfDoubletons<>();
 	
 	private final IndexSupportingInvariantAnalysis m_IndexSupportingInvariantAnalysis;
 	
@@ -98,7 +102,15 @@ public class IndexAnalyzer2 {
 		unknownDoubletons.addDoubleton(doubleton);
 	}
 	
-	void analyze(HashRelation<TermVariable, ArrayIndex> array2Indices) { 
+	void analyze(HashRelation<TermVariable, ArrayIndex> array2Indices) {
+		Term termWithAdditionalInvariants;
+		if (m_UseArrayIndexSupportingInvariants) { 
+			termWithAdditionalInvariants = Util.and(m_Script, m_Term, getAdditionalConjunctsEqualities(), getAdditionalConjunctsNotEquals());
+		} else {
+			termWithAdditionalInvariants = m_Term;
+		}
+		Set<TermVariable> varsInTerm = new HashSet<>(Arrays.asList(termWithAdditionalInvariants.getFreeVars()));
+		
 		for (TermVariable tv : array2Indices.getDomain()) {
 			Set<ArrayIndex> test = array2Indices.getImage(tv);
 			ArrayIndex[] testArr = test.toArray(new ArrayIndex[test.size()]);
@@ -107,10 +119,17 @@ public class IndexAnalyzer2 {
 					ArrayIndex fstIndex = testArr[i];
 					ArrayIndex sndIndex = testArr[j];
 					assert fstIndex.size() == sndIndex.size();
-					boolean isInvarPair = isInvarPair(fstIndex, sndIndex);
-					boolean isOutvarPair = isOutvarPair(fstIndex, sndIndex);
-					for (int k=0; k<fstIndex.size(); k++) {
-						markForComparison(fstIndex.get(k), sndIndex.get(k), isInvarPair, isOutvarPair);
+					if (fstIndex.freeVarsAreSubset(varsInTerm) && sndIndex.freeVarsAreSubset(varsInTerm)) {
+						boolean isInvarPair = isInvarPair(fstIndex, sndIndex);
+						boolean isOutvarPair = isOutvarPair(fstIndex, sndIndex);
+						for (int k=0; k<fstIndex.size(); k++) {
+							markForComparison(fstIndex.get(k), sndIndex.get(k), isInvarPair, isOutvarPair);
+						}
+					} else {
+						for (int k=0; k<fstIndex.size(); k++) {
+							ignoredDoubletons.addDoubleton(new Doubleton<Term>(fstIndex.get(k), sndIndex.get(k)));
+						}
+						
 					}
 				}
 			}
@@ -120,18 +139,18 @@ public class IndexAnalyzer2 {
 		}
 		processDoubletonsWithArrayIndexInvariants(outVarDoubletons);
 		
-		Term termWithAdditionalInvariants;
-		
-		if (m_UseArrayIndexSupportingInvariants) { 
-			termWithAdditionalInvariants = Util.and(m_Script, m_Term, getAdditionalConjunctsEqualities(), getAdditionalConjunctsNotEquals());
-		} else {
-			termWithAdditionalInvariants = m_Term;
-		}
+
 		if (m_IsStem) {
 			processDoubletonsWithOwnAnalysis(inVarDoubletons, termWithAdditionalInvariants);
+		} else {
+			// there are equal outVar doubletons that are not loop invariants
+			// because they are not established by the stem.
+			// e.g., while (*) { x:=1, y:=1 }
+			processDoubletonsWithOwnAnalysis(outVarDoubletons, termWithAdditionalInvariants);
 		}
 		processDoubletonsWithOwnAnalysis(neitherInvarNorOutvarDoubletons, termWithAdditionalInvariants);
 	}
+
 
 
 	private boolean isInvarPair(ArrayIndex fstIndex, ArrayIndex sndIndex) {
@@ -272,6 +291,8 @@ public class IndexAnalyzer2 {
 			}
 			if (isUnknownDoubleton(index1.get(i), index2.get(i))) {
 				oneEntryWasUnknown = true;
+			} else if (isIgnoredDoubleton(index1.get(i), index2.get(i))) {
+				oneEntryWasUnknown = true;
 			} else {
 				assert (isEqualDoubleton(index1.get(i), index2.get(i)));
 			}
@@ -293,6 +314,10 @@ public class IndexAnalyzer2 {
 	
 	public boolean isUnknownDoubleton(Term t1, Term t2) {
 		return unknownDoubletons.containsDoubleton(t1, t2);
+	}
+	
+	public boolean isIgnoredDoubleton(Term t1, Term t2) {
+		return ignoredDoubletons.containsDoubleton(t1, t2);
 	}
 
 	public Term getAdditionalConjunctsEqualities() {
