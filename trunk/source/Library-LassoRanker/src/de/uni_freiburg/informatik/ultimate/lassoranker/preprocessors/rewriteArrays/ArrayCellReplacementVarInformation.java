@@ -141,7 +141,14 @@ public class ArrayCellReplacementVarInformation {
 	}
 	
 	public RankVar getArrayRankVar() {
-		return m_TransFormulaLR.getInVarsReverseMapping().get(m_ArrayInstance);
+		RankVar result = m_TransFormulaLR.getInVarsReverseMapping().get(m_ArrayInstance);
+		if (result == null) {
+			result = m_TransFormulaLR.getOutVarsReverseMapping().get(m_ArrayInstance);
+		}
+		if (result == null) {
+			throw new AssertionError("unknown array cell");
+		}
+		return result;
 	}
 	
 }
