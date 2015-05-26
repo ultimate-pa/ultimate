@@ -2044,10 +2044,13 @@ public class CHandler implements ICHandler {
 		return new ResultExpression(stmt, null, decl, emptyAuxVars, overappr);
 	}
 
+
 	/**
-	 * Returns havoc statements for all auxVars given in the argument.
-	 * @param auxVars
-	 * @return
+	 * Create a havoc statement for each variable in auxVars. (Does not modify
+	 * this auxVars map). We insert havocs for auxvars after the translation of
+	 * a _statement_. This means that the Expressions carry the auxVarMap
+	 * outside (via the ResultExpression they return), and that map is used for
+	 * calling this procedure once we reach a (basic) statement.
 	 */
 	public static List<HavocStatement> createHavocsForAuxVars(Map<VariableDeclaration, ILocation> auxVars) {
 		LinkedHashMap<VariableDeclaration, ILocation> allAuxVars = new LinkedHashMap<>();
@@ -2056,23 +2059,13 @@ public class CHandler implements ICHandler {
 			assert e.getKey().getVariables()[0].getIdentifiers().length == 1 : "we always define only one auxvar at once, right?";
 			allAuxVars.put(e.getKey(), e.getValue());
 		}
-		return CHandler.createHavocsForAuxVars1(allAuxVars);
-	}
-	
-		/**
-	 * Create a havoc statement for each variable in auxVars. (Does not modify
-	 * this auxVars map). We insert havocs for auxvars after the translation of
-	 * a _statement_. This means that the Expressions carry the auxVarMap
-	 * outside (via the ResultExpression they return), and that map is used for
-	 * calling this procedure once we reach a (basic) statement.
-	 */
-	public static List<HavocStatement> createHavocsForAuxVars1(Map<VariableDeclaration, ILocation> auxVars) {
+
 		ArrayList<HavocStatement> result = new ArrayList<HavocStatement>();
-		for (VariableDeclaration varDecl : auxVars.keySet()) {
+		for (VariableDeclaration varDecl : allAuxVars.keySet()) {
 			VarList[] varLists = varDecl.getVariables();
 			for (VarList varList : varLists) {
 				for (String varId : varList.getIdentifiers()) {
-					ILocation originloc = auxVars.get(varDecl);
+					ILocation originloc = allAuxVars.get(varDecl);
 					result.add(new HavocStatement(originloc, new VariableLHS[] { new VariableLHS(originloc, varId) }));
 				}
 			}
