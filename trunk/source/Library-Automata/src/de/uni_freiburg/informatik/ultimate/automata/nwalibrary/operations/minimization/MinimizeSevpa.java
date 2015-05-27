@@ -139,7 +139,8 @@ public class MinimizeSevpa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 			StateFactory<STATE> stateFactoryConstruction)
 					throws OperationCanceledException {
 		m_Services = services;
-		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
+		m_Logger = m_Services.getLoggingService().getLogger(
+				LibraryIdentifiers.s_LibraryID);
 		m_operand = operand;
 		if (operand instanceof IDoubleDeckerAutomaton<?, ?>) {
 			m_doubleDecker = (IDoubleDeckerAutomaton<LETTER, STATE>)operand;
@@ -516,15 +517,16 @@ public class MinimizeSevpa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 					STATE state = iterator.next();
 					for (IncomingReturnTransition<LETTER, STATE> inTrans : 
 								partition.hierPredIncoming(state, letter)) {
-						EquivalenceClass ec =
-								partition.getEquivalenceClass(inTrans.getHierPred());
+						EquivalenceClass ec = partition.getEquivalenceClass(
+								inTrans.getHierPred());
 						HashSet<STATE> linSet = ec2linSet.get(ec);
 						if (linSet == null) {
 							linSet = new HashSet<STATE>();
 							ec2linSet.put(ec, linSet);
 						}
-						for (IncomingReturnTransition<LETTER, STATE> inTransInner : 
-									partition.linPredIncoming(state, inTrans.getHierPred(), letter)) {
+						for (IncomingReturnTransition<LETTER, STATE> inTransInner :
+								partition.linPredIncoming(state,
+									inTrans.getHierPred(), letter)) {
 							linSet.add(inTransInner.getLinPred());							
 						}
 					}
@@ -586,7 +588,8 @@ public class MinimizeSevpa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 				Iterator<STATE> iterator = a.iterator();
 				while (iterator.hasNext()) {
 					STATE state = iterator.next();
-					for (IncomingReturnTransition<LETTER, STATE> inTrans : partition.hierPredIncoming(state, letter)) {
+					for (IncomingReturnTransition<LETTER, STATE> inTrans :
+							partition.hierPredIncoming(state, letter)) {
 						STATE hier = inTrans.getHierPred();
 						STATE lin = inTrans.getLinPred();
 						EquivalenceClass ec =
@@ -641,7 +644,8 @@ public class MinimizeSevpa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 				STATE state = iterator.next();
 				
 				// for each hierarchical predecessor 'hier' of 'state':
-				for (IncomingReturnTransition<LETTER, STATE> inTrans : partition.hierPredIncoming(state, letter)) {
+				for (IncomingReturnTransition<LETTER, STATE> inTrans :
+						partition.hierPredIncoming(state, letter)) {
 					STATE hier = inTrans.getHierPred();
 					EquivalenceClass ecHier =
 							partition.getEquivalenceClass(hier);
@@ -655,7 +659,8 @@ public class MinimizeSevpa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 					}
 					
 					// for each linear predecessor 'lin' of 'state' and 'hier':
-					for (IncomingReturnTransition<LETTER, STATE> inTransInner : partition.linPredIncoming(state, hier, letter)) {
+					for (IncomingReturnTransition<LETTER, STATE> inTransInner :
+							partition.linPredIncoming(state, hier, letter)) {
 						STATE lin = inTransInner.getLinPred();
 						EquivalenceClass ecLin =
 								partition.getEquivalenceClass(lin);
@@ -1246,8 +1251,7 @@ public class MinimizeSevpa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		 * @param partition partition of the states
 		 * @param a target set
 		 */
-		public ReturnPredecessorLinSetFinder(Partition partition,
-											TargetSet a) {
+		public ReturnPredecessorLinSetFinder(Partition partition, TargetSet a) {
 			super(partition, a);
 		}
 		
@@ -1259,10 +1263,11 @@ public class MinimizeSevpa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		 * @param x predecessor set
 		 */
 		@Override
-		protected void addPred(STATE state,
-								LETTER letter, PredecessorSet x) {
-			for (IncomingReturnTransition<LETTER, STATE> inTrans : m_partition.hierPredIncoming(state, letter)) {
-				m_partition.addPredReturnLin(state, letter, inTrans.getHierPred(), x);
+		protected void addPred(STATE state, LETTER letter, PredecessorSet x) {
+			for (IncomingReturnTransition<LETTER, STATE> inTrans :
+					m_partition.hierPredIncoming(state, letter)) {
+				m_partition.addPredReturnLin(state, letter,
+						inTrans.getHierPred(), x);
 			}
 		}
 	}
@@ -1271,8 +1276,7 @@ public class MinimizeSevpa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	 * finds the linear predecessor set of a target set given a return letter
 	 * and the hierarchical predecessor
 	 */
-	class ReturnPredecessorLinSetGivenHierFinder
-			extends APredecessorSetFinder {
+	class ReturnPredecessorLinSetGivenHierFinder extends APredecessorSetFinder {
 		// hierarchical predecessor
 		STATE m_hier;
 		
@@ -1295,8 +1299,7 @@ public class MinimizeSevpa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		 * @param x predecessor set
 		 */
 		@Override
-		protected void addPred(STATE state,
-								LETTER letter, PredecessorSet x) {
+		protected void addPred(STATE state, LETTER letter, PredecessorSet x) {
 			m_partition.addPredReturnLin(state, letter, m_hier, x);
 		}
 	}
@@ -1309,8 +1312,7 @@ public class MinimizeSevpa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		 * @param partition partition of the states
 		 * @param a target set
 		 */
-		public ReturnSuccessorSetFinder(Partition partition,
-											TargetSet a) {
+		public ReturnSuccessorSetFinder(Partition partition, TargetSet a) {
 			super(partition, a);
 		}
 		
@@ -1322,8 +1324,7 @@ public class MinimizeSevpa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		 * @param x successor set
 		 */
 		@Override
-		protected void addPred(STATE state,
-								LETTER letter, PredecessorSet x) {
+		protected void addPred(STATE state, LETTER letter, PredecessorSet x) {
 			m_partition.addSuccReturnHier(state, letter, x);
 		}
 	}
@@ -1863,11 +1864,12 @@ public class MinimizeSevpa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 				return m_parentOperand.hierPred(state,
 				letter);
 		}
-		Iterable<IncomingReturnTransition<LETTER, STATE>> linPredIncoming(STATE state, STATE hier,
-											LETTER letter) {
+		Iterable<IncomingReturnTransition<LETTER, STATE>> linPredIncoming(
+				STATE state, STATE hier, LETTER letter) {
 			return m_parentOperand.returnPredecessors(hier, letter, state);
 		}
-		Iterable<IncomingReturnTransition<LETTER, STATE>> hierPredIncoming(STATE state, LETTER letter) {
+		Iterable<IncomingReturnTransition<LETTER, STATE>> hierPredIncoming(
+				STATE state, LETTER letter) {
 			return m_parentOperand.returnPredecessors(letter, state);
 		}
 		
@@ -1899,15 +1901,17 @@ public class MinimizeSevpa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 			}
 		}
 		
-		private void addNeighborsEfficientLin(Iterable<IncomingReturnTransition<LETTER, STATE>> transitions,
-				PredecessorSet x) {
+		private void addNeighborsEfficientLin(
+				Iterable<IncomingReturnTransition<LETTER, STATE>> transitions,
+					PredecessorSet x) {
 			for (IncomingReturnTransition<LETTER, STATE> inTrans : transitions) {
 				x.add(inTrans.getLinPred());
 			}
 		}
 		
-		private void addNeighborsEfficientHier(Iterable<IncomingReturnTransition<LETTER, STATE>> transitions,
-				PredecessorSet x) {
+		private void addNeighborsEfficientHier(
+				Iterable<IncomingReturnTransition<LETTER, STATE>> transitions,
+					PredecessorSet x) {
 			for (IncomingReturnTransition<LETTER, STATE> inTrans : transitions) {
 				x.add(inTrans.getHierPred());
 			}
@@ -1925,8 +1929,8 @@ public class MinimizeSevpa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		}
 		void addPredReturnLin(STATE state, LETTER letter,
 				STATE hier, PredecessorSet x) {
-				addNeighborsEfficientLin(
-						m_parentOperand.returnPredecessors(hier, letter, state), x);
+				addNeighborsEfficientLin(m_parentOperand.returnPredecessors(
+						hier, letter, state), x);
 		}
 		void addPredReturnHier(STATE state, LETTER letter, PredecessorSet x) {
 				addNeighborsEfficientHier(
@@ -2677,7 +2681,8 @@ public class MinimizeSevpa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 
 			@Override
 			public STATE get(Object key) {
-				EquivalenceClass eqClass = m_Partition.m_mapState2EquivalenceClass.get(key);
+				EquivalenceClass eqClass =
+						m_Partition.m_mapState2EquivalenceClass.get(key);
 				if (eqClass == null) {
 					return null;
 				} else {
@@ -2751,12 +2756,15 @@ public class MinimizeSevpa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 			throws AutomataLibraryException {
 		m_Logger.info("Start testing correctness of " + operationName());
 		boolean correct = true;
-		correct &= (ResultChecker.nwaLanguageInclusion(m_Services, m_operand, m_nwa, stateFactory) == null);
+		correct &= (ResultChecker.nwaLanguageInclusion(
+				m_Services, m_operand, m_nwa, stateFactory) == null);
 		assert correct;
-		correct &= (ResultChecker.nwaLanguageInclusion(m_Services, m_nwa, m_operand, stateFactory) == null);
+		correct &= (ResultChecker.nwaLanguageInclusion(
+				m_Services, m_nwa, m_operand, stateFactory) == null);
 		assert correct;
 		if (!correct) {
-			ResultChecker.writeToFileIfPreferred(m_Services, operationName() + "Failed", "", m_operand);
+			ResultChecker.writeToFileIfPreferred(
+					m_Services, operationName() + "Failed", "", m_operand);
 		}
 		m_Logger.info("Finished testing correctness of " + operationName());
 		return correct;
