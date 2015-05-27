@@ -642,11 +642,18 @@ public class MinimizeSevpa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 			// for each successor state 'state' in A:
 			while (iterator.hasNext()) {
 				STATE state = iterator.next();
+				HashSet<STATE> hierVisited = new HashSet<STATE>();
 				
 				// for each hierarchical predecessor 'hier' of 'state':
 				for (IncomingReturnTransition<LETTER, STATE> inTrans :
 						partition.hierPredIncoming(state, letter)) {
 					STATE hier = inTrans.getHierPred();
+					
+					// new change: ignore duplicate work
+					if (! hierVisited.add(hier)) {
+						continue;
+					}
+					
 					EquivalenceClass ecHier =
 							partition.getEquivalenceClass(hier);
 					
