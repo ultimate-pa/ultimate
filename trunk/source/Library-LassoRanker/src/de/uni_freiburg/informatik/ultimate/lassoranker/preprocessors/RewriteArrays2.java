@@ -45,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.variables.ReplacementVarF
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaLR;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
 
 /**
@@ -76,18 +77,20 @@ public class RewriteArrays2 extends LassoPreProcessor {
 	private final TransFormula m_OriginalStem;
 	private final TransFormula m_OriginalLoop;
 	private final Set<Term> m_ArrayIndexSupportingInvariants;
+	private final Set<BoogieVar> m_ModifiableGlobalsAtHonda;
 
 
 	private final boolean m_OverapproximateByOmmitingDisjointIndices;
 	private TransFormulaLRWithArrayInformation tflrwai;
 
 	public RewriteArrays2(boolean overapproximateByOmmitingDisjointIndices,
-			TransFormula originalStem, TransFormula originalLoop,
+			TransFormula originalStem, TransFormula originalLoop, Set<BoogieVar> modifiableGlobalsAtHonda,
 			IUltimateServiceProvider services, Set<Term> arrayIndexSupportingInvariants) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
 		m_OriginalStem = originalStem;
 		m_OriginalLoop = originalLoop;
+		m_ModifiableGlobalsAtHonda = modifiableGlobalsAtHonda;
 		m_ArrayIndexSupportingInvariants = arrayIndexSupportingInvariants;
 		m_OverapproximateByOmmitingDisjointIndices = overapproximateByOmmitingDisjointIndices;
 	}
@@ -121,7 +124,7 @@ public class RewriteArrays2 extends LassoPreProcessor {
 			loopComponents1.add(test);
 		}
 		ArrayCellRepVarConstructor acrvc = new ArrayCellRepVarConstructor(replacementVarFactory, m_Script, stemComponents1, loopComponents1);
-		IndexSupportingInvariantAnalysis isia = new IndexSupportingInvariantAnalysis(acrvc, true, lasso_builder.getBoogie2SMT(), m_OriginalStem, m_OriginalLoop);
+		IndexSupportingInvariantAnalysis isia = new IndexSupportingInvariantAnalysis(acrvc, true, lasso_builder.getBoogie2SMT(), m_OriginalStem, m_OriginalLoop, m_ModifiableGlobalsAtHonda);
 		m_ArrayIndexSupportingInvariants.addAll(isia.getAdditionalConjunctsEqualities());
 		m_ArrayIndexSupportingInvariants.addAll(isia.getAdditionalConjunctsNotEquals());
 		

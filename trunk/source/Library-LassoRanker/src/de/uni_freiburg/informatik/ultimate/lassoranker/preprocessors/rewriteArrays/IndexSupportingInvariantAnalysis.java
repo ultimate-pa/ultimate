@@ -60,18 +60,23 @@ public class IndexSupportingInvariantAnalysis {
 	
 	private final TransFormula m_OriginalStem;
 	private final TransFormula m_OriginalLoop;
+	private final Set<BoogieVar> m_ModifiableGlobalsAtStart;
+	private final Set<BoogieVar> m_ModifiableGlobalsAtHonda;
 	private final ArrayCellRepVarConstructor m_ArrayCellRepVarConstructor;
 	
 	public IndexSupportingInvariantAnalysis(ArrayCellRepVarConstructor arrayCellRepVarConstructor,
 			boolean searchAdditionalSupportingInvariants, 
 			Boogie2SMT boogie2smt, 
-			TransFormula originalStem, TransFormula originalLoop) {
+			TransFormula originalStem, TransFormula originalLoop, 
+			Set<BoogieVar> modifiableGlobalsAtHonda) {
 		super();
 		m_ArrayCellRepVarConstructor = arrayCellRepVarConstructor;
 		m_boogie2smt = boogie2smt;
 		m_Script = boogie2smt.getScript();
 		m_OriginalStem = originalStem;
 		m_OriginalLoop = originalLoop;
+		m_ModifiableGlobalsAtStart = Collections.emptySet();
+		m_ModifiableGlobalsAtHonda = modifiableGlobalsAtHonda;
 		m_AllDoubletons = computeDoubletons();
 		
 		for (Doubleton<Term> doubleton : m_AllDoubletons.elements()) {
@@ -149,9 +154,11 @@ public class IndexSupportingInvariantAnalysis {
 		IPredicate invariantCandidate = new BasicPredicate(0, tvp.getProcedures(), tvp.getFormula(), tvp.getVars(), tvp.getClosedFormula());
 		Set<BoogieVar> emptyVarSet = Collections.emptySet();
 		IPredicate truePredicate = new BasicPredicate(0, new String[0], m_Script.term("true"), emptyVarSet, m_Script.term("true"));
-		LBool impliedByStem = PredicateUtils.isInductiveHelper(m_boogie2smt, truePredicate, invariantCandidate, m_OriginalStem, null, null);
+		LBool impliedByStem = PredicateUtils.isInductiveHelper(m_boogie2smt, 
+				truePredicate, invariantCandidate, m_OriginalStem, m_ModifiableGlobalsAtStart, m_ModifiableGlobalsAtHonda);
 		if (impliedByStem == LBool.UNSAT) {
-			LBool invariantOfLoop = PredicateUtils.isInductiveHelper(m_boogie2smt, invariantCandidate, invariantCandidate, m_OriginalLoop, null, null);
+			LBool invariantOfLoop = PredicateUtils.isInductiveHelper(m_boogie2smt, 
+					invariantCandidate, invariantCandidate, m_OriginalLoop, m_ModifiableGlobalsAtHonda, m_ModifiableGlobalsAtHonda);
 			if (invariantOfLoop == LBool.UNSAT) {
 				return true;
 			} else {

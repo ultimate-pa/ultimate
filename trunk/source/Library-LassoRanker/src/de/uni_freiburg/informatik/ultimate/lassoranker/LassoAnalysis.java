@@ -68,6 +68,7 @@ import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
 import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
@@ -103,6 +104,12 @@ public class LassoAnalysis {
 	 * The lasso program that we are analyzing (underapproximation)
 	 */
 	private Lasso m_lasso_nt;
+	
+	/**
+	 * Global BoogieVars that are modifiable in the procedure where the honda 
+	 * of the lasso lies.
+	 */
+	private Set<BoogieVar> m_ModifiableGlobalsAtHonda;
 
 	/**
 	 * SMT script that created the transition formulae
@@ -141,6 +148,8 @@ public class LassoAnalysis {
 	 */
 	private PreprocessingBenchmark m_PreprocessingBenchmark;
 
+
+
 	/**
 	 * Constructor for the LassoRanker interface. Calling this invokes the
 	 * preprocessor on the stem and loop formula.
@@ -156,6 +165,9 @@ public class LassoAnalysis {
 	 *            a transition formula corresponding to the lasso's stem
 	 * @param loop
 	 *            a transition formula corresponding to the lasso's loop
+	 * @param modifiableGlobalsAtHonda
+	 * 			  global BoogieVars that are modifiable in the procedure
+	 *            where the honda of the lasso lies.
 	 * @param axioms
 	 *            a collection of axioms regarding the transitions' constants
 	 * @param preferences
@@ -169,7 +181,7 @@ public class LassoAnalysis {
 	 *             if the file for dumping the script cannot be opened
 	 */
 	public LassoAnalysis(Script script, Boogie2SMT boogie2smt, TransFormula stem_transition,
-			TransFormula loop_transition, Term[] axioms, LassoRankerPreferences preferences,
+			TransFormula loop_transition, Set<BoogieVar> modifiableGlobalsAtHonda, Term[] axioms, LassoRankerPreferences preferences,
 			IUltimateServiceProvider services, IToolchainStorage storage) throws TermException {
 		
 		mServices = services;
@@ -187,6 +199,7 @@ public class LassoAnalysis {
 		
 		m_stem_transition = stem_transition;
 		m_loop_transition = loop_transition;
+		m_ModifiableGlobalsAtHonda = modifiableGlobalsAtHonda;
 		assert (m_loop_transition != null);
 		
 		// Preprocessing creates the Lasso object
@@ -219,10 +232,10 @@ public class LassoAnalysis {
 	 * @throws FileNotFoundException
 	 *             if the file for dumping the script cannot be opened
 	 */
-	public LassoAnalysis(Script script, Boogie2SMT boogie2smt, TransFormula loop, Term[] axioms,
+	public LassoAnalysis(Script script, Boogie2SMT boogie2smt, TransFormula loop, Set<BoogieVar> modifiableGlobalsAtHonda, Term[] axioms,
 			LassoRankerPreferences preferences, IUltimateServiceProvider services, IToolchainStorage storage)
 			throws TermException, FileNotFoundException {
-		this(script, boogie2smt, null, loop, axioms, preferences, services, storage);
+		this(script, boogie2smt, null, loop, modifiableGlobalsAtHonda, axioms, preferences, services, storage);
 	}
 	
 	/**
@@ -313,7 +326,7 @@ public class LassoAnalysis {
 //						m_loop_transition,
 //						mServices
 //				),
-				new RewriteArrays2(true, m_stem_transition, m_loop_transition, mServices, m_ArrayIndexSupportingInvariants),
+				new RewriteArrays2(true, m_stem_transition, m_loop_transition, m_ModifiableGlobalsAtHonda, mServices, m_ArrayIndexSupportingInvariants),
 				new StemAndLoopPreProcessor(new MatchInVars(m_Boogie2SMT.getVariableManager())),
 				new LassoPartitioneer(mServices, m_Boogie2SMT.getVariableManager()),
 				new StemAndLoopPreProcessor(new RewriteDivision(lassoBuilder.getReplacementVarFactory())),
