@@ -4,7 +4,7 @@ cp -a ../../trunk/source/BA_SiteRepository/target/products/CLI-E4/linux/gtk/x86_
 cp LICENSE* BuchiAutomizer/
 cp ../../trunk/examples/toolchains/AutomizerAndBuchiAutomizerCWithBlockEncoding.xml BuchiAutomizer/
 cp BuchiAutomizer.epf BuchiAutomizer/
-cp BuchiAutomizer.sh BuchiAutomizer/
+cp buchiAutomizer.sh BuchiAutomizer/
 cp Ultimate.ini BuchiAutomizer/
 cp README BuchiAutomizer/
 zip BuchiAutomizer.zip -r BuchiAutomizer/*

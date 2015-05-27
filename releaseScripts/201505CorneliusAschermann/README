@@ -1,0 +1,27 @@
+This is Ultimate Büchi Automizer a tool for analyzing termination of C programs.
+    
+
+
+Requirements:
+64bit Linux system with Java
+
+
+
+Usage:
+If you want to analyze termination of the program foo.c then execute the
+shellscript
+./buchiAutomizer.sh foo.c
+The first line of stdout will be either MEMORYSAFE or NOT_MEMORYSAFE
+the second line of stdout will be either TERMINATING, NONTERMINATING, or UNKNOWN,
+afterwards a lot of debuggig output is written to stderr (if you don't want to
+see this execute ./buchiAutomizer.sh foo.c 2> /dev/null).
+
+
+
+Website:
+http://ultimate.informatik.uni-freiburg.de/BuchiAutomizer/
+
+
+
+Maintainer:
+heizmann@informatik.uni-freiburg.de

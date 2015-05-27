@@ -1,0 +1,27 @@
+#Wed May 27 04:29:45 CEST 2015
+\!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder=
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Simplify\ code\ blocks=true
+file_export_version=3.0
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Command\ for\ external\ solver=z3 SMTLIB2_COMPLIANT\=true -memory\:4024 -smt2 -in -t\:12000
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Add\ additional\ assume\ for\ each\ assert=true
+@de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder=0.0.1
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Remove\ goto\ edges\ from\ RCFG=false
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Size\ of\ a\ code\ block=SequenceOfStatements
+#Wed May 27 04:29:45 CEST 2015
+\!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding=
+file_export_version=3.0
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding/Rating-Boundary\ (empty\ for\ LBE)=0
+@de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding=0.0.1
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding/Minimize\ Call\ and\ Return\ Edges=true
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding/Strategy\ for\ the\ edge\ rating=DISJUNCTIVE_RATING
+#Wed May 27 04:29:45 CEST 2015
+\!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator=
+file_export_version=3.0
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Check\ unreachability\ of\ error\ function\ in\ SV-COMP\ mode=false
+@de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator=0.0.1
+#Wed May 27 04:29:45 CEST 2015
+file_export_version=3.0
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer/Allow\ nonlinear\ constraints=false
+@de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer=0.0.1
+\!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer=
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer/Use\ external\ solver\ (rank\ synthesis)=false
