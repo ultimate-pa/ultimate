@@ -4,6 +4,8 @@ This is Ultimate Büchi Automizer a tool for analyzing termination of C programs
 
 Requirements:
 64bit Linux system with Java
+The SMT solver Z3 has to be installed https://github.com/Z3Prover/z3 and the
+path to the z3 binary has to be in your PATH environment variable.
 
 
 
