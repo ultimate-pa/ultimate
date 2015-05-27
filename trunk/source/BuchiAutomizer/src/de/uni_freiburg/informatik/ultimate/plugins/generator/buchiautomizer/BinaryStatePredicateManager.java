@@ -63,9 +63,11 @@ public class BinaryStatePredicateManager {
 	private IPredicate m_StemPostcondition;
 	private IPredicate m_SiConjunction;
 	private IPredicate m_Honda;
+	private Set<BoogieVar> m_ModifiableGlobalsAtHonda;
 	private IPredicate m_RankEqualityAndSi;
 	private IPredicate m_RankEquality;
 	private IPredicate m_RankDecreaseAndBound;
+	
 
 	private TerminationArgument m_TerminationArgument;
 
@@ -79,6 +81,7 @@ public class BinaryStatePredicateManager {
 	private Boolean m_LoopTermination;
 	private final Logger mLogger;
 	private final IUltimateServiceProvider mServices;
+	
 
 	public BinaryStatePredicateManager(SmtManager smtManager, 
 			IUltimateServiceProvider services) {
@@ -195,6 +198,7 @@ public class BinaryStatePredicateManager {
 		m_LexDecrease = null;
 		m_LexEquality = null;
 		m_LexTerms = null;
+		m_ModifiableGlobalsAtHonda = null;
 	}
 
 	/**
@@ -205,7 +209,7 @@ public class BinaryStatePredicateManager {
 	 * @param loopTf TransFormula for loop, has to be provided if we remove
 	 * superfluous supporting invariants.
 	 * @param loopTf 
-	 * @param modifiableGlobals 
+	 * @param modifiableGlobalsAtHonda 
 	 * @param loop 
 	 * @param stem 
 	 * @param loop 
@@ -213,7 +217,7 @@ public class BinaryStatePredicateManager {
 	 */
 	public void computePredicates(boolean loopTermination, TerminationArgument termArg, 
 			boolean removeSuperfluousSupportingInvariants, TransFormula stemTf, 
-			TransFormula loopTf, Set<BoogieVar> modifiableGlobals) {
+			TransFormula loopTf, Set<BoogieVar> modifiableGlobalsAtHonda) {
 		assert m_LoopTermination == null;
 		assert m_TerminationArgument == null;
 		assert m_StemPrecondition == null;
@@ -225,10 +229,13 @@ public class BinaryStatePredicateManager {
 		assert m_LexDecrease == null;
 		assert m_LexEquality == null;
 		assert m_LexTerms == null;
+		assert m_ModifiableGlobalsAtHonda == null;
+//		assert modifiableGlobalsAtHonda.contains(m_UnseededVariable) : "unseeded var may be modified by each procedure";
 		m_LoopTermination = loopTermination;
 		m_TerminationArgument = termArg;
 		IPredicate unseededPredicate = unseededPredicate();
 		m_StemPrecondition = unseededPredicate;
+		m_ModifiableGlobalsAtHonda = modifiableGlobalsAtHonda;
 
 		RankingFunction rf = m_TerminationArgument.getRankingFunction();
 		decodeLex(rf);
@@ -236,7 +243,7 @@ public class BinaryStatePredicateManager {
 		m_RankDecreaseAndBound = computeRankDecreaseAndBound();
 		m_SiConjunction = computeSiConjunction(m_TerminationArgument.getSupportingInvariants(),
 				m_TerminationArgument.getArrayIndexSupportingInvariants(), 
-				removeSuperfluousSupportingInvariants, stemTf, loopTf, modifiableGlobals);
+				removeSuperfluousSupportingInvariants, stemTf, loopTf, modifiableGlobalsAtHonda);
 		boolean siConjunctionIsTrue = isTrue(m_SiConjunction);
 		if (siConjunctionIsTrue) {
 			m_StemPostcondition = unseededPredicate;
@@ -324,7 +331,11 @@ public class BinaryStatePredicateManager {
 		
 		List<Term> siSubsetAndRankDecreaseAndBoundList = new ArrayList<Term>(Arrays.asList(siTermSubset));
 		siSubsetAndRankDecreaseAndBoundList.add(m_RankDecreaseAndBound.getFormula());
+		List<Term> siSubsetAndRankDecreaseAndBoundConjunctsList = new ArrayList<Term>();
 		for (Term succTerm : siSubsetAndRankDecreaseAndBoundList) {
+			siSubsetAndRankDecreaseAndBoundConjunctsList.addAll(Arrays.asList(SmtUtils.getConjuncts(succTerm)));
+		}
+		for (Term succTerm : siSubsetAndRankDecreaseAndBoundConjunctsList) {
 			IPredicate succPred = m_SmtManager.newPredicate(
 					TermVarsProc.computeTermVarsProc(
 							succTerm, 
@@ -507,7 +518,7 @@ public class BinaryStatePredicateManager {
 		assert symbol.equals(">=") || symbol.equals(">");
 		TermVarsProc termVarsProc = TermVarsProc.computeTermVarsProc(rfTerm, m_SmtManager.getBoogie2Smt());
 
-		Term equality = m_Script.term(symbol, oldRankVariable.getTermVariable(), rfTerm);
+		Term equality = m_Script.term(symbol, oldRankVariable.getTermVariable(), termVarsProc.getFormula());
 		if (addGeq0) {
 			equality = Util.and(m_Script, equality, getRankGeq0(oldRankVariable));
 		}
