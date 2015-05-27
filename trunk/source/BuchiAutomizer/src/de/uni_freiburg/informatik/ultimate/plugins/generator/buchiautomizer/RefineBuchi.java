@@ -189,7 +189,7 @@ public class RefineBuchi {
 			stemInterpolants = null;
 		} else {
 
-			traceChecker = constructTraceChecker(bspm.getStemPrecondition(), bspm.getStemPostcondition(), null, stem,
+			traceChecker = constructTraceChecker(bspm.getStemPrecondition(), bspm.getStemPostcondition(), stem,
 					m_SmtManager, buchiModGlobalVarManager, pu, m_Interpolation);
 			LBool stemCheck = traceChecker.isCorrect();
 			if (stemCheck == LBool.UNSAT) {
@@ -199,7 +199,7 @@ public class RefineBuchi {
 			}
 		}
 
-		traceChecker = constructTraceChecker(bspm.getRankEqAndSi(), bspm.getHondaPredicate(), null, loop, m_SmtManager,
+		traceChecker = constructTraceChecker(bspm.getRankEqAndSi(), bspm.getHondaPredicate(), loop, m_SmtManager,
 				buchiModGlobalVarManager, pu, m_Interpolation);
 		LBool loopCheck = traceChecker.isCorrect();
 		IPredicate[] loopInterpolants;
@@ -358,7 +358,7 @@ public class RefineBuchi {
 		return newAbstraction;
 	}
 
-	private InterpolatingTraceChecker constructTraceChecker(IPredicate precond, IPredicate postcond, Object object,
+	private InterpolatingTraceChecker constructTraceChecker(IPredicate precond, IPredicate postcond,
 			NestedWord<CodeBlock> word, SmtManager smtManager, BuchiModGlobalVarManager buchiModGlobalVarManager, 
 			PredicateUnifier pu, INTERPOLATION interpolation) {
 		switch (m_Interpolation) {

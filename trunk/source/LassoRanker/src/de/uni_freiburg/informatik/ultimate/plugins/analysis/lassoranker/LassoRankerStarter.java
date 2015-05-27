@@ -128,11 +128,14 @@ public class LassoRankerStarter {
 		loopTf = tvr.renameVars(loopTf, "Loop");
 
 		Term[] axioms = m_RootAnnot.getBoogie2SMT().getAxioms().toArray(new Term[0]);
+		Set<BoogieVar> modifiableGlobalsAtHonda = 
+				m_RootAnnot.getModGlobVarManager().getModifiedBoogieVars(m_Honda.getProcedure());
 
 		// Do the termination analysis
 		LassoAnalysis la = null;
 		try {
-			la = new LassoAnalysis(script, m_RootAnnot.getBoogie2SMT(), stemTF, loopTf, axioms, preferences, mServices,
+			la = new LassoAnalysis(script, m_RootAnnot.getBoogie2SMT(), stemTF, loopTf, 
+					modifiableGlobalsAtHonda, axioms, preferences, mServices,
 					storage);
 		} catch (TermException e) {
 			reportUnuspportedSyntax(m_Honda, e.getMessage());

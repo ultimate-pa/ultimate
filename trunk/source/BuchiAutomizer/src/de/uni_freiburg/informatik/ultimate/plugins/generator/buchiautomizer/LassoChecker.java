@@ -94,7 +94,7 @@ public class LassoChecker {
 	private static final boolean s_CheckTerminationEvenIfNonterminating = false;
 	
 	
-	private static final boolean s_AvoidNonterminationCheckIfArraysAreContained = false;
+	private static final boolean s_AvoidNonterminationCheckIfArraysAreContained = true;
 
 	private final INTERPOLATION m_Interpolation;
 
@@ -463,7 +463,7 @@ public class LassoChecker {
 		private SynthesisResult checkLassoTermination(TransFormula stemTF, TransFormula loopTF) throws IOException {
 			assert !m_Bspm.providesPredicates() : "termination already checked";
 			assert loopTF != null;
-			boolean containsArrays = SmtUtils.containsArrayVariables(loopTF.getFormula())
+			boolean containsArrays = SmtUtils.containsArrayVariables(stemTF.getFormula())
 					|| SmtUtils.containsArrayVariables(loopTF.getFormula());
 			return synthesize(true, stemTF, loopTF, containsArrays);
 		}
@@ -518,10 +518,10 @@ public class LassoChecker {
 	private TransFormula computeTF(NestedWord<CodeBlock> word, boolean simplify,
 			boolean extendedPartialQuantifierElimination, boolean withBranchEncoders) {
 		boolean toCNF = false;
-		TransFormula loopTF = SequentialComposition.getInterproceduralTransFormula(m_SmtManager.getBoogie2Smt(),
+		TransFormula tf = SequentialComposition.getInterproceduralTransFormula(m_SmtManager.getBoogie2Smt(),
 				m_ModifiableGlobalVariableManager, simplify, extendedPartialQuantifierElimination, toCNF,
 				withBranchEncoders, mLogger, mServices, word.asList());
-		return loopTF;
+		return tf;
 	}
 
 	private boolean areSupportingInvariantsCorrect() {
@@ -594,6 +594,9 @@ public class LassoChecker {
 		if (m_SmtManager.isLocked()) {
 			throw new AssertionError("SMTManager must not be locked at the beginning of synthesis");
 		}
+		
+		Set<BoogieVar> modifiableGlobalsAtHonda = m_ModifiableGlobalVariableManager.getModifiedBoogieVars(
+				((ISLPredicate) m_Counterexample.getLoop().getStateAtPosition(0)).getProgramPoint().getProcedure());
 
 		if (!withStem) {
 			stemTF = getDummyTF();
@@ -610,11 +613,11 @@ public class LassoChecker {
 
 		LassoAnalysis la = null;
 		NonTerminationArgument nonTermArgument = null;
-//		if (!(s_AvoidNonterminationCheckIfArraysAreContained && containsArrays)) {
+		if (!(s_AvoidNonterminationCheckIfArraysAreContained && containsArrays)) {
 			try {
 				boolean overapproximateArrayIndexConnection = false;
 				la = new LassoAnalysis(m_SmtManager.getScript(), m_SmtManager.getBoogie2Smt(), stemTF, loopTF,
-						m_Axioms.toArray(new Term[m_Axioms.size()]), constructLassoRankerPreferences(withStem, overapproximateArrayIndexConnection ), mServices, mStorage);
+						modifiableGlobalsAtHonda, m_Axioms.toArray(new Term[m_Axioms.size()]), constructLassoRankerPreferences(withStem, overapproximateArrayIndexConnection ), mServices, mStorage);
 				m_preprocessingBenchmarks.add(la.getPreprocessingBenchmark());
 			} catch (TermException e) {
 				// TODO Auto-generated catch block
@@ -639,7 +642,7 @@ public class LassoChecker {
 			if (!s_CheckTerminationEvenIfNonterminating && nonTermArgument != null) {
 				return SynthesisResult.NONTERMINATIG;
 			}
-//		}
+		}
 
 		List<RankingTemplate> rankingFunctionTemplates = new ArrayList<RankingTemplate>();
 		rankingFunctionTemplates.add(new AffineTemplate());
@@ -685,7 +688,8 @@ public class LassoChecker {
 			try {
 				boolean overapproximateArrayIndexConnection = !true; // not now
 				la = new LassoAnalysis(m_SmtManager.getScript(), m_SmtManager.getBoogie2Smt(), stemTF, loopTF,
-						m_Axioms.toArray(new Term[m_Axioms.size()]), constructLassoRankerPreferences(withStem, overapproximateArrayIndexConnection ), mServices, mStorage);
+						modifiableGlobalsAtHonda, m_Axioms.toArray(new Term[m_Axioms.size()]), constructLassoRankerPreferences(withStem, overapproximateArrayIndexConnection ), mServices, mStorage);
+				m_preprocessingBenchmarks.add(la.getPreprocessingBenchmark());
 			} catch (TermException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
