@@ -82,7 +82,7 @@ public class TermVarsProc {
 	 * Don't use it unless you know what you do.
 	 */
 	@Deprecated
-	public static TermVarsProc computeTermVarsProc(Term term, Boogie2SMT boogie2smt, 
+	private static TermVarsProc computeTermVarsProc(Term term, Boogie2SMT boogie2smt, 
 			boolean replaceNonModifiableOldVars, Set<BoogieVar> modifiableGlobals) {
 		HashSet<BoogieVar> vars = new HashSet<BoogieVar>();
 		List<BoogieOldVar> oldVarsThatHaveToBeReplaced = new ArrayList<>();
