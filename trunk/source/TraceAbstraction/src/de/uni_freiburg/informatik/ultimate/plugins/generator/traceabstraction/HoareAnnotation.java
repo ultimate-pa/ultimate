@@ -16,6 +16,8 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.AffineSubtermNormalizer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.TermVarsProc;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
@@ -48,6 +50,7 @@ public class HoareAnnotation extends SPredicate {
 	private boolean m_IsUnknown = false;
 
 	private boolean m_FormulaHasBeenComputed = false;
+	private Term m_ClosedFormula;
 
 	public HoareAnnotation(ProgramPoint programPoint, int serialNumber, SmtManager smtManager, IUltimateServiceProvider services) {
 		super(programPoint, serialNumber, new String[] { programPoint.getProcedure() }, smtManager.getScript().term(
@@ -117,6 +120,15 @@ public class HoareAnnotation extends SPredicate {
 		}
 		return m_Formula;
 	}
+	
+	@Override
+	public Term getClosedFormula() {
+		if (!m_FormulaHasBeenComputed) {
+			computeFormula();
+			m_FormulaHasBeenComputed = true;
+		}
+		return m_ClosedFormula;
+	}
 
 	private void computeFormula() {
 		for (Term precond : getPrecondition2Invariant().keySet()) {
@@ -130,6 +142,8 @@ public class HoareAnnotation extends SPredicate {
 				m_Formula);
 		m_Formula = SmtUtils.simplify(m_SmtManager.getScript(), m_Formula, m_Services); 
 		m_Formula = getPositiveNormalForm(m_Formula);
+		TermVarsProc tvp = TermVarsProc.computeTermVarsProc(m_Formula, m_SmtManager.getBoogie2Smt());
+		m_ClosedFormula = PredicateUtils.computeClosedFormula(tvp.getFormula(), tvp.getVars(), m_SmtManager.getScript());
 	}
 
 	private Term getPositiveNormalForm(Term term) {
