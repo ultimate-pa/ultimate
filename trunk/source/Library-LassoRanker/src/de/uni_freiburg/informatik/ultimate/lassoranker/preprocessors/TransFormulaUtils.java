@@ -65,9 +65,9 @@ public class TransFormulaUtils {
 		return true;
 	}
 	
-	public static boolean allVariablesAreNonAuxVars(List<Term> terms, TransFormulaLR tf) {
+	public static boolean allVariablesAreVisible(List<Term> terms, TransFormulaLR tf) {
 		for (Term term : terms) {
-			if (!allVariablesAreNonAuxVars(term, tf)) {
+			if (!allVariablesAreVisible(term, tf)) {
 				return false;
 			}
 		}
@@ -92,17 +92,20 @@ public class TransFormulaUtils {
 		return true;
 	}
 	
-	public static boolean allVariablesAreNonAuxVars(Term term, TransFormulaLR tf) {
+	public static boolean allVariablesAreVisible(Term term, TransFormulaLR tf) {
 		for (TermVariable tv : term.getFreeVars()) {
-			if (tf.getAuxVars().contains(tv)) {
-				return false;
+			if (isVisible(tv, tf)) {
+				// do nothing
 			} else {
-				assert tf.getOutVarsReverseMapping().keySet().contains(tv) || 
-					tf.getInVarsReverseMapping().keySet().contains(tv) : 
-						"each var has to be in, our or aux";
+				return false;
 			}
 		}
 		return true;
+	}
+
+	private static boolean isVisible(TermVariable tv, TransFormulaLR tf) {
+		return tf.getOutVarsReverseMapping().keySet().contains(tv) || 
+				tf.getInVarsReverseMapping().keySet().contains(tv);
 	}
 
 	public static boolean isInvar(TermVariable tv, TransFormulaLR tf) {

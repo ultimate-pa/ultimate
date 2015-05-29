@@ -691,7 +691,7 @@ public class TransFormulaLRWithArrayInformation {
 		// check if arrayInstance is inVar or outVar and if all indices are inVars or outVars
 		if (getTransFormulaLR().getOutVarsReverseMapping().keySet().contains(arrayInstance) || 
 				getTransFormulaLR().getInVarsReverseMapping().keySet().contains(arrayInstance)) {
-			return TransFormulaUtils.allVariablesAreNonAuxVars(index, getTransFormulaLR());
+			return TransFormulaUtils.allVariablesAreVisible(index, getTransFormulaLR());
 		} else {
 			return false;
 		}
