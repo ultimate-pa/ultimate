@@ -67,6 +67,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.Summa
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 import de.uni_freiburg.informatik.ultimate.util.HashRelation;
+import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
 
 public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INestedWordAutomatonOldApi<LETTER, STATE>,
 		INestedWordAutomaton<LETTER, STATE>, IDoubleDeckerAutomaton<LETTER, STATE>,
@@ -173,7 +174,10 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 			// STATE>(this)).consistentForAll();
 
 			assert (checkTransitionsReturnedConsistent());
-
+		} catch (ToolchainCanceledException tce) {
+			throw tce;
+		} catch (OperationCanceledException oce) {
+			throw oce;
 		} catch (Error e) {
 			String message = "// Problem with  removeUnreachable";
 			ResultChecker.writeToFileIfPreferred(m_Services, "FailedremoveUnreachable", message, operand);
