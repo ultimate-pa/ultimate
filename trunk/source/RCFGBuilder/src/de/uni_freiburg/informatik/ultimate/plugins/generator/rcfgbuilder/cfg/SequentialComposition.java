@@ -206,11 +206,11 @@ public class SequentialComposition extends CodeBlock {
 			if (ret == null) {
 				String proc = call.getCallStatement().getMethodName();
 				TransFormula oldVarsAssignment = modGlobVarManager.getOldVarsAssignment(proc);
-				String nameEndProcedure;
-				if (codeBlocks.isEmpty()) {
+				final String nameEndProcedure;
+				if (lastUnmatchedCall == null) {
 					nameEndProcedure = proc;
 				} else {				
-					nameEndProcedure = ((ProgramPoint) codeBlocks.get(codeBlocks.size()-1).getTarget()).getProcedure();
+					nameEndProcedure = lastUnmatchedCall.getCallStatement().getMethodName();
 				}
 				Set<BoogieVar> modifiableGlobalsOfEndProcedure = modGlobVarManager.getModifiedBoogieVars(nameEndProcedure);
 				result = TransFormula.sequentialCompositionWithPendingCall(boogie2smt, simplify, extPqe, tranformToCNF,
