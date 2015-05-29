@@ -195,7 +195,7 @@ public class RefineBuchi {
 			if (stemCheck == LBool.UNSAT) {
 				stemInterpolants = traceChecker.getInterpolants();
 			} else {
-				throw new AssertionError("wrong predicates");
+				throw new AssertionError("incorrect predicates - stem");
 			}
 		}
 
@@ -206,7 +206,7 @@ public class RefineBuchi {
 		if (loopCheck == LBool.UNSAT) {
 			loopInterpolants = traceChecker.getInterpolants();
 		} else {
-			throw new AssertionError();
+			throw new AssertionError("incorrect predicates - loop");
 		}
 		m_Bci = TraceCheckerUtils.computeCoverageCapability(m_Services, traceChecker, mLogger);
 
