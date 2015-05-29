@@ -54,6 +54,7 @@ public final class LinearInequalityInvariantPatternProcessor
 	private static final String PREFIX = "liipp_";
 	private static final String PREFIX_SEPARATOR = "_";
 
+	private final IUltimateServiceProvider services;
 	private final Logger logger;
 	private final Script solver;
 	private final ILinearInequalityInvariantPatternStrategy strategy;
@@ -108,6 +109,7 @@ public final class LinearInequalityInvariantPatternProcessor
 			final IPredicate postcondition,
 			final ILinearInequalityInvariantPatternStrategy strategy) {
 		super(predicateUnifier, smtManager);
+		this.services = services;
 		this.logger = services.getLoggingService().getLogger(
 				Activator.s_PLUGIN_ID);
 		this.solver = solver;
@@ -629,7 +631,7 @@ public final class LinearInequalityInvariantPatternProcessor
 		try {
 			if (simplifiedValuation) {
 				valuation = ModelExtractionUtils.getSimplifiedAssignment(
-						solver, coefficientsOfAllInvariants, logger);
+						solver, coefficientsOfAllInvariants, logger, services);
 			} else {
 				valuation = ModelExtractionUtils.getValuation(solver,
 						coefficientsOfAllInvariants);
