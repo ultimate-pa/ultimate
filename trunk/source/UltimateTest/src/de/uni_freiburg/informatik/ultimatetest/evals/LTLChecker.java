@@ -14,6 +14,11 @@ public class LTLChecker extends AbstractEvaluationTestSuite {
 	public ITestResultDecider constructITestResultDecider(UltimateRunDefinition urd) {
 		return new LTLCheckerTestResultDecider(urd, false);
 	}
+	
+	@Override
+	protected boolean useParentDirectoryAsCategory() {
+		return false;
+	}
 
 	@Override
 	protected void createTestCasesForReal(List<UltimateTestCase> testcases) {
@@ -21,23 +26,44 @@ public class LTLChecker extends AbstractEvaluationTestSuite {
 //		addTestCasesFixed("LTLAutomizerC.xml", "ltlAutomizer/Default+SBE.epf", testcases);
 //		addTestCasesFixed("LTLAutomizerC.xml", "ltlAutomizer/Default-LBE-Multi+IB.epf", testcases);
 //		addTestCasesFixed("LTLAutomizerC.xml", "ltlAutomizer/Default-LBE-Multi+NondetBuchi.epf", testcases);
-//		addTestCasesFixed("LTLAutomizerC.xml", "ltlAutomizer/Default-LBE-Multi+SBE+SASBE+IB.ep", testcases);
+//		addTestCasesFixed("LTLAutomizerC.xml", "ltlAutomizer/Default-LBE-Multi+SBE+SASBE+IB.epf", testcases);
 //		addTestCasesFixed("LTLAutomizerC.xml", "ltlAutomizer/Default-LBE-Multi+SBE+SASBE.epf", testcases);
 //		addTestCasesFixed("LTLAutomizerC.xml", "ltlAutomizer/Default-LBE-Multi+SBE+SASBE+NondetBuchi.epf", testcases);
 //		addTestCasesFixed("LTLAutomizerC.xml", "ltlAutomizer/Default-LBE-Multi+SBE.epf", testcases);
 //		addTestCasesFixed("LTLAutomizerC.xml", "ltlAutomizer/Default-LBE-Multi+SBE+IB.epf", testcases);
-		addTestCasesFixed("LTLAutomizerC.xml", "ltlAutomizer/Default-LBE-Multi.epf", testcases);
-		addTestCasesFixed("LTLAutomizerCInline.xml", "ltlAutomizer/Default-LBE-Multi.epf", testcases);
-		addTestCasesFixed("LTLAutomizerC.xml", "ltlAutomizer/Default-LBE-Multi-z3.epf", testcases);
-		addTestCasesFixed("LTLAutomizerC.xml", "ltlAutomizer/Default-LBE-Multi-StagedBlast.epf", testcases);
-
-		//		addTestCasesFixed("LTLAutomizerC.xml", "ltlAutomizer/Default-LBE-Single.epf", testcases);
+//		addTestCasesFixed("LTLAutomizerC.xml", "ltlAutomizer/Default-LBE-Multi.epf", testcases);
+//		addTestCasesFixed("LTLAutomizerC.xml", "ltlAutomizer/Default-LBE-Multi-z3.epf", testcases);
+//		addTestCasesFixed("LTLAutomizerC.xml", "ltlAutomizer/Default-LBE-Multi-z3interpol.epf", testcases);
+//		addTestCasesFixed("LTLAutomizerC.xml", "ltlAutomizer/Default-LBE-Multi-SMTInterpol.epf", testcases);
+//		addTestCasesFixed("LTLAutomizerC.xml", "ltlAutomizer/Default-LBE-Multi-StagedBlast.epf", testcases);
+//		addTestCasesFixed("LTLAutomizerC.xml", "ltlAutomizer/Default-LBE-Single.epf", testcases);
 //		addTestCasesFixed("LTLAutomizerC.xml", "ltlAutomizer/Default-LBE-SNME.epf", testcases);
 //		addTestCasesFixed("LTLAutomizerC.xml", "ltlAutomizer/Default.epf", testcases);
 //		addTestCasesFixed("LTLAutomizerC.xml", "ltlAutomizer/None+LBE-Multi.epf", testcases);
 //		addTestCasesFixed("LTLAutomizerC.xml", "ltlAutomizer/None+SBE+SASBE.epf", testcases);
 //		addTestCasesFixed("LTLAutomizerC.xml", "ltlAutomizer/None+SBE.epf", testcases);
-//		addTestCasesFixed("LTLAutomizerC.xml", "ltlAutomizer/None.epf", testcases);
+		addTestCasesFixed("LTLAutomizerC.xml", "ltlAutomizer/None.epf", testcases);
+		
+//		addTestCasesFixed("LTLAutomizerCInline.xml", "ltlAutomizer/Default+SBE+SASBE.epf", testcases);
+//		addTestCasesFixed("LTLAutomizerCInline.xml", "ltlAutomizer/Default+SBE.epf", testcases);
+//		addTestCasesFixed("LTLAutomizerCInline.xml", "ltlAutomizer/Default-LBE-Multi+IB.epf", testcases);
+//		addTestCasesFixed("LTLAutomizerCInline.xml", "ltlAutomizer/Default-LBE-Multi+NondetBuchi.epf", testcases);
+//		addTestCasesFixed("LTLAutomizerCInline.xml", "ltlAutomizer/Default-LBE-Multi+SBE+SASBE+IB.epf", testcases);
+//		addTestCasesFixed("LTLAutomizerCInline.xml", "ltlAutomizer/Default-LBE-Multi+SBE+SASBE.epf", testcases);
+//		addTestCasesFixed("LTLAutomizerCInline.xml", "ltlAutomizer/Default-LBE-Multi+SBE+SASBE+NondetBuchi.epf", testcases);
+//		addTestCasesFixed("LTLAutomizerCInline.xml", "ltlAutomizer/Default-LBE-Multi+SBE.epf", testcases);
+//		addTestCasesFixed("LTLAutomizerCInline.xml", "ltlAutomizer/Default-LBE-Multi+SBE+IB.epf", testcases);
+//		addTestCasesFixed("LTLAutomizerCInline.xml", "ltlAutomizer/Default-LBE-Multi.epf", testcases);
+//		addTestCasesFixed("LTLAutomizerCInline.xml", "ltlAutomizer/Default-LBE-Multi-z3.epf", testcases);
+//		addTestCasesFixed("LTLAutomizerCInline.xml", "ltlAutomizer/Default-LBE-Multi-SMTInterpol.epf", testcases);
+//		addTestCasesFixed("LTLAutomizerCInline.xml", "ltlAutomizer/Default-LBE-Multi-StagedBlast.epf", testcases);
+//		addTestCasesFixed("LTLAutomizerCInline.xml", "ltlAutomizer/Default-LBE-Single.epf", testcases);
+//		addTestCasesFixed("LTLAutomizerCInline.xml", "ltlAutomizer/Default-LBE-SNME.epf", testcases);
+//		addTestCasesFixed("LTLAutomizerCInline.xml", "ltlAutomizer/Default.epf", testcases);
+//		addTestCasesFixed("LTLAutomizerCInline.xml", "ltlAutomizer/None+LBE-Multi.epf", testcases);
+//		addTestCasesFixed("LTLAutomizerCInline.xml", "ltlAutomizer/None+SBE+SASBE.epf", testcases);
+//		addTestCasesFixed("LTLAutomizerCInline.xml", "ltlAutomizer/None+SBE.epf", testcases);
+		addTestCasesFixed("LTLAutomizerCInline.xml", "ltlAutomizer/None.epf", testcases);
 	}
 
 	@Override
@@ -49,15 +75,19 @@ public class LTLChecker extends AbstractEvaluationTestSuite {
 	protected String[] getDirectories() {
 		// @formatter:off
 		return new String[] { 
-				"examples/LTL/rers2012/P14/",
-				"examples/LTL/rers2012correctencoding/P14/",
+				"examples/LTL/simple/cav2015.c",
+				"examples/LTL/simple/cav2015-inverted.c",
+				"examples/LTL/simple/someNonterminating.c",
+				"examples/LTL/simple/trivial-3.c",
+				//				"examples/LTL/rers2012/P14/",
+//				"examples/LTL/rers2012correctencoding/P14/",
 //				"examples/LTL/rers2012/P15/",
 //				"examples/LTL/rers2012/P16/",
 //				"examples/LTL/rers2012/P17/",
 //				"examples/LTL/rers2012/P18/",
 //				"examples/LTL/rers2012/P19/",
-				"examples/LTL/coolant/",
-				"examples/LTL/koskinen/ltlcmodelchecker-benchmarks/",
+//				"examples/LTL/coolant/",
+//				"examples/LTL/koskinen/ltlcmodelchecker-benchmarks/",
 				"examples/LTL/bugs/",
 //				"examples/LTL/bugs/Bug_AssumeFalse.c",
 				

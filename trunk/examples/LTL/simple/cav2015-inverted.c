@@ -1,6 +1,6 @@
-//#Safe
+//#Unsafe
 
-//@ ltl invariant positive: [](AP(x > 0) ==> <>AP(y == 0));
+//@ ltl invariant positive: !([](AP(x > 0) ==> <>AP(y == 0)));
 
 extern int __VERIFIER_nondet_int();
 

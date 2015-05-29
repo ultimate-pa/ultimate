@@ -54,7 +54,7 @@ public class ProgramPoint extends RCFGNode {
 			loc = boogieASTNode.getLocation();
 		}
 		mPayload = new Payload(loc, position);
-		String name = "Procedure: " + m_Procedure + "Position: " + m_Position;
+		String name = "Procedure: " + m_Procedure + " Position: " + m_Position;
 		mPayload.setName(name);
 
 	}

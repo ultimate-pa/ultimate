@@ -16,6 +16,7 @@ import de.uni_freiburg.informatik.ultimate.buchiprogramproduct.optimizeproduct.R
 import de.uni_freiburg.informatik.ultimate.buchiprogramproduct.optimizeproduct.RemoveSinkStates;
 import de.uni_freiburg.informatik.ultimate.buchiprogramproduct.preferences.PreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.buchiprogramproduct.preferences.PreferenceInitializer.MinimizeStates;
+import de.uni_freiburg.informatik.ultimate.buchiprogramproduct.productgenerator.ProductGenerator;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 import de.uni_freiburg.informatik.ultimate.core.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
@@ -68,7 +69,7 @@ public class BuchiProductObserver implements IUnmanagedObserver {
 		try {
 			LTLPropertyCheck ltlAnnot = LTLPropertyCheck.getAnnotation(mNeverClaimNWAContainer);
 			mProduct = new ProductGenerator(mNeverClaimNWAContainer.getNWA(), mRcfg, ltlAnnot, mServices,
-					mBacktranslator).getProductRCFG();
+					mBacktranslator).getProductRcfg();
 			mLogger.info("Finished generation of product automaton successfully");
 			reportSizeBenchmark("Initial product", mProduct);
 

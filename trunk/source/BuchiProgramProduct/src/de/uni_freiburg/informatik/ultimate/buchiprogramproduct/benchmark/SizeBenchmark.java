@@ -62,6 +62,11 @@ public class SizeBenchmark implements ICsvProviderProvider<Integer> {
 				continue;
 			}
 			closedE.add(current);
+			
+			if(current.getTarget() == null){
+				throw new AssertionError("Target may not be null");
+			}
+			
 			closedV.add(current.getTarget());
 			for (RCFGEdge next : current.getTarget().getOutgoingEdges()) {
 				edges.add(next);

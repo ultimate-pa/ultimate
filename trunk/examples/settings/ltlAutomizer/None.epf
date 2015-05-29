@@ -1,3 +1,9 @@
+#Tue May 19 14:41:21 CEST 2015
+file_export_version=3.0
+@de.uni_freiburg.informatik.ultimate.boogie.procedureinliner=0.0.1
+\!/instance/de.uni_freiburg.informatik.ultimate.boogie.procedureinliner=
+/instance/de.uni_freiburg.informatik.ultimate.boogie.procedureinliner/User\ list=ULTIMATE.init ULTIMATE.start main
+/instance/de.uni_freiburg.informatik.ultimate.boogie.procedureinliner/Fallback\:\ Process\ everything,\ if\ an\ entry\ procedure\ doesn't\ exist=false
 #Sun Feb 15 11:34:07 CET 2015
 /instance/de.uni_freiburg.informatik.ultimate.buchiprogramproduct/Minimize\ states\ even\ if\ more\ edges\ are\ added\ than\ removed.=false
 @de.uni_freiburg.informatik.ultimate.buchiprogramproduct=0.0.1
