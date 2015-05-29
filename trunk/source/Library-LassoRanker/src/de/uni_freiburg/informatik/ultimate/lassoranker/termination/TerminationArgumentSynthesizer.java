@@ -384,7 +384,7 @@ public class TerminationArgumentSynthesizer extends ArgumentSynthesizer {
 			Map<Term, Rational> val;
 			if (m_settings.simplify_termination_argument) {
 				mLogger.info("Found a termination argument, trying to simplify.");
-				val = ModelExtractionUtils.getSimplifiedAssignment(m_script, variables, mLogger);
+				val = ModelExtractionUtils.getSimplifiedAssignment(m_script, variables, mLogger, m_services);
 			} else {
 				val = ModelExtractionUtils.getValuation(m_script, variables);
 			}

@@ -14,6 +14,7 @@ import java.util.Set;
 
 import org.apache.log4j.Logger;
 
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lassoranker.exceptions.TermException;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
@@ -22,6 +23,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
+import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
 
 /**
  * Class that provides static methods for the extraction of a satisfying 
@@ -181,12 +183,13 @@ public class ModelExtractionUtils {
 	 *            the list of variables that can be set to 0
 	 * @param logger
 	 * 			Logger to which we write information about the simplification.
+	 * @param services 
 	 * @return an assignment with (hopefully) many zeros
 	 * @throws TermException
 	 *             if model extraction fails
 	 */
 	public static Map<Term, Rational> getSimplifiedAssignment(Script script, 
-			Collection<Term> variables, Logger logger) throws TermException {
+			Collection<Term> variables, Logger logger, IUltimateServiceProvider services) throws TermException {
 		Random rnd = new Random(s_randomSeed);
 		Term zero = script.numeral("0");
 		Map<Term, Rational> val = getValuation(script, variables);
@@ -207,6 +210,9 @@ public class ModelExtractionUtils {
 			}
 			if (not_zero_vars.size() <= s_num_of_simultaneous_simplification_tests) {
 				break;
+			}
+			if (!services.getProgressMonitorService().continueProcessing()) {
+				throw new ToolchainCanceledException(ModelExtractionUtils.class);
 			}
 			script.push(1);
 			for (Term var : zero_vars) {
