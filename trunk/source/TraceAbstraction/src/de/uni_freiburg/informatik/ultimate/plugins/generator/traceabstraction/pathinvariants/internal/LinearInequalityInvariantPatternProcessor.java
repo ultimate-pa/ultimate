@@ -3,6 +3,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.p
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -72,7 +73,6 @@ public final class LinearInequalityInvariantPatternProcessor
 	 * The pattern coefficients, that is the program- and helper variables.
 	 */
 	private final Set<RankVar> patternCoefficients;
-	private Map<Term, Term> validConfiguration;
 	private Map<Term, Rational> valuation;
 	private Collection<Collection<LinearPatternBase>> entryInvariantPattern;
 	private Collection<Collection<LinearPatternBase>> exitInvariantPattern;
@@ -137,7 +137,6 @@ public final class LinearInequalityInvariantPatternProcessor
 	public void startRound(int round) {
 		reinitializeSolver();
 		patternVariables.clear();
-		validConfiguration = null;
 		entryInvariantPattern = null;
 		exitInvariantPattern = null;
 		prefixCounter = 0;
@@ -180,21 +179,31 @@ public final class LinearInequalityInvariantPatternProcessor
 	public Collection<Collection<LinearPatternBase>> getInvariantPatternForLocation(
 			final Location location, final int round) {
 		// Build invariant pattern
-		final int[] dimensions = strategy.getDimensions(location, round);
-		final Collection<Collection<LinearPatternBase>> disjunction = new ArrayList<>(
-				dimensions[0]);
-		for (int i = 0; i < dimensions[0]; i++) {
-			final Collection<LinearPatternBase> conjunction = new ArrayList<>(
-					dimensions[1]);
-			for (int j = 0; j < dimensions[1]; j++) {
-				for (final boolean strict : new boolean[] { true, false }) {
-					final LinearPatternBase inequality = new LinearPatternBase(
-							solver, patternCoefficients, newPrefix(), strict);
-					patternVariables.addAll(inequality.getVariables());
-					conjunction.add(inequality);
+		
+		final Collection<Collection<LinearPatternBase>> disjunction;
+		if (cfg.getEntry().equals(location)) {
+			// entry pattern is equivalent to true
+			Collection<LinearPatternBase> emptyConjunction = Collections.emptyList();
+			disjunction = Collections.singleton(emptyConjunction);
+		} else if (cfg.getExit().equals(location)) {
+			// exit pattern is equivalent to false
+			disjunction = Collections.emptyList();
+		} else {
+			final int[] dimensions = strategy.getDimensions(location, round);
+			disjunction = new ArrayList<>(dimensions[0]);
+			for (int i = 0; i < dimensions[0]; i++) {
+				final Collection<LinearPatternBase> conjunction = new ArrayList<>(
+						dimensions[1]);
+				for (int j = 0; j < dimensions[1]; j++) {
+					for (final boolean strict : new boolean[] { true, false }) {
+						final LinearPatternBase inequality = new LinearPatternBase(
+								solver, patternCoefficients, newPrefix(), strict);
+						patternVariables.addAll(inequality.getVariables());
+						conjunction.add(inequality);
+					}
 				}
+				disjunction.add(conjunction);
 			}
-			disjunction.add(conjunction);
 		}
 
 		// Keep track of entry and exit patterns, as we need them separately
@@ -269,6 +278,7 @@ public final class LinearInequalityInvariantPatternProcessor
 		}
 		// 3. expand the cnf to get a dnf
 		final Collection<Collection<LinearInequality>> mappedAndNegatedPattern = expandCnfToDnf(cnfAfterNegation);
+		assert mappedAndNegatedPattern != null;
 		// 4. return the resulting dnf as the solution
 		return mappedAndNegatedPattern;
 	}
@@ -310,6 +320,10 @@ public final class LinearInequalityInvariantPatternProcessor
 	 */
 	private static <E> Collection<Collection<E>> expandCnfToDnf(
 			final Collection<Collection<E>> cnf) {
+		if (cnf.isEmpty()) {
+			Collection<E> empty = Collections.emptyList();
+			return Collections.singleton(empty);
+		}
 		boolean firstElement = true;
 		Collection<Collection<E>> expandedDnf = null;
 		for (Collection<E> conjunct : cnf) {
@@ -325,6 +339,7 @@ public final class LinearInequalityInvariantPatternProcessor
 				expandedDnf = expandCnfToDnfSingle(expandedDnf, conjunct);
 			}
 		}
+		assert expandedDnf != null;
 		return expandedDnf;
 	}
 
@@ -641,8 +656,6 @@ public final class LinearInequalityInvariantPatternProcessor
 			throw new AssertionError("model extraction failed");
 		}
 		logger.log(Level.INFO, "[LIIPP] Valuation: " + valuation);
-		validConfiguration = solver.getValue(patternVariables
-				.toArray(new Term[patternVariables.size()]));
 
 		return true;
 	}
@@ -719,7 +732,8 @@ public final class LinearInequalityInvariantPatternProcessor
 	 */
 	@Override
 	protected TermTransformer getConfigurationTransformer() {
-		return new SafeSubstitution(solver, validConfiguration);
+		throw new UnsupportedOperationException(
+				"not needed, we directly extract Term, Rational mappings");
 	}
 
 	/**
