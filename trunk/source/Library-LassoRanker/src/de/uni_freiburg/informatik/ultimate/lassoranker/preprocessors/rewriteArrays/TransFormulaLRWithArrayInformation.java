@@ -522,15 +522,43 @@ public class TransFormulaLRWithArrayInformation {
 			}
 			if (foreignIndices != null) {
 				for (TermVariable arrayInVar : foreignIndices.getDomain()) {
-					if (!m_ArrayFirstGeneration2Indices.getDomain().contains(arrayInVar)) {
-						throw new AssertionError("arrayInVar of foreign index has to be first generation of array");
+					TermVariable firstGenerationArray = null;
+					for (ArrayGenealogy ag : m_ArrayGenealogy) {
+						firstGenerationArray = ag.getProgenitor(arrayInVar);
+						if (firstGenerationArray != null) {
+							break;
+						}
+					}
+					assert firstGenerationArray != null : arrayInVar + " has no progenitor";
+					if (firstGenerationArray != arrayInVar) {
+						assert occursInArrayEqualities(arrayInVar) : 
+							"if arrayInVar of foreign index is not first generation it has to occur in array equality";
+						assert occursInArrayEqualities(firstGenerationArray) : 
+							"if arrayInVar of foreign index is not first generation the first generation has to occur in array equality";
 					}
 					Set<ArrayIndex> foreignIndicesForInVar = foreignIndices.getImage(arrayInVar);
 					for (ArrayIndex foreignIndex : foreignIndicesForInVar) {
-						addFirstGenerationIndexPair(arrayInVar, foreignIndex);
+						addFirstGenerationIndexPair(firstGenerationArray, foreignIndex);
 					}
 				}
 			}
+		}
+
+		/**
+		 * Returns true iff arrayInstance occurs in some array equality.
+		 */
+		private boolean occursInArrayEqualities(TermVariable arrayInstance) {
+			for (List<ArrayEquality> equalitiesOfDisjunct : m_ArrayEqualities) {
+				for (ArrayEquality ae : equalitiesOfDisjunct) {
+					if (ae.getLhs() == arrayInstance) {
+						return true;
+					}
+					if (ae.getRhs() == arrayInstance) {
+						return true;
+					}
+				}
+			}
+			return false;
 		}
 
 		private void addFirstGenerationIndexPair(TermVariable firstGeneration, ArrayIndex index) {
