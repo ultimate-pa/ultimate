@@ -21,6 +21,7 @@ import de.uni_freiburg.informatik.ultimatetest.evals.KingOfTheHillSummary;
 import de.uni_freiburg.informatik.ultimatetest.summary.CsvConcatenator;
 import de.uni_freiburg.informatik.ultimatetest.summary.IIncrementalLog;
 import de.uni_freiburg.informatik.ultimatetest.summary.ITestSummary;
+import de.uni_freiburg.informatik.ultimatetest.summary.IncrementalLogWithVMParameters;
 import de.uni_freiburg.informatik.ultimatetest.traceabstraction.IncrementalLogWithBenchmarkResults;
 
 public abstract class AbstractBuchiAutomizerTestSuite extends AbstractModelCheckerTestSuite {
@@ -57,7 +58,8 @@ public abstract class AbstractBuchiAutomizerTestSuite extends AbstractModelCheck
 	@Override
 	protected IIncrementalLog[] constructIncrementalLog() {
 		return new IIncrementalLog[] { 
-				new IncrementalLogWithBenchmarkResults(this.getClass()) 
+				new IncrementalLogWithBenchmarkResults(this.getClass()),
+				new IncrementalLogWithVMParameters(this.getClass(), getTimeout()),
 		};
 	}
 

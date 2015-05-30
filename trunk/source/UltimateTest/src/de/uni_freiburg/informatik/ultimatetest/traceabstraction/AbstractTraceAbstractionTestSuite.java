@@ -22,6 +22,7 @@ import de.uni_freiburg.informatik.ultimatetest.evals.ColumnDefinition.Aggregate;
 import de.uni_freiburg.informatik.ultimatetest.summary.CsvConcatenator;
 import de.uni_freiburg.informatik.ultimatetest.summary.IIncrementalLog;
 import de.uni_freiburg.informatik.ultimatetest.summary.ITestSummary;
+import de.uni_freiburg.informatik.ultimatetest.summary.IncrementalLogWithVMParameters;
 
 public abstract class AbstractTraceAbstractionTestSuite extends AbstractModelCheckerTestSuite {
 
@@ -86,8 +87,8 @@ public abstract class AbstractTraceAbstractionTestSuite extends AbstractModelChe
 	@Override
 	protected IIncrementalLog[] constructIncrementalLog() {
 		return new IIncrementalLog[] { 
-			new IncrementalLogWithBenchmarkResults(this.getClass()) 
-				
+			new IncrementalLogWithBenchmarkResults(this.getClass()),
+			new IncrementalLogWithVMParameters(this.getClass(), getTimeout()),
 		};
 	}
 }
