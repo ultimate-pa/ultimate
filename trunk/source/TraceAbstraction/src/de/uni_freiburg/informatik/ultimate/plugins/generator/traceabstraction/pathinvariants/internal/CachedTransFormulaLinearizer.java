@@ -139,16 +139,17 @@ public class CachedTransFormulaLinearizer {
 	 */
 	private TransitionPreProcessor[] getPreprocessors() {
 		return new TransitionPreProcessor[] {
-				new MatchInVars(m_SmtManager.getBoogie2Smt()
-						.getVariableManager()),
+				new MatchInVars(m_SmtManager.getBoogie2Smt().getVariableManager()),
 				new AddAxioms(m_Axioms),
 				new RewriteDivision(m_ReplacementVarFactory),
-				new RewriteBooleans(m_ReplacementVarFactory,
-						m_SmtManager.getScript()), new RewriteIte(),
-				new RewriteEquality(), new SimplifyPreprocessor(m_Services),
+				new RewriteBooleans(m_ReplacementVarFactory, m_SmtManager.getScript()), 
+				new RewriteIte(),
+				new RewriteEquality(), 
+				new SimplifyPreprocessor(m_Services),
 				new DNF(m_Services, m_SmtManager.getVariableManager()), 
 				new SimplifyPreprocessor(m_Services),
-				new RewriteTrueFalse(), new RemoveNegation(),
+				new RewriteTrueFalse(), 
+				new RemoveNegation(),
 				new RewriteStrictInequalities(), };
 	}
 
