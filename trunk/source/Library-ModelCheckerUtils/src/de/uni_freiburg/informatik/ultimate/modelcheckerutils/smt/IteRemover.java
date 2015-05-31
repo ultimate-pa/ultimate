@@ -1,7 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt;
 
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
@@ -32,10 +31,16 @@ public class IteRemover extends NonCoreBooleanSubTermTransformer {
 	}
 
 	@Override
-	protected Term transformNonCoreBooleanSubterm(Term term) {
+	protected Term transformNonCoreBooleanSubterm(final Term term) {
 		assert term.getSort().getName().equals("Bool");
-		Set<ApplicationTerm> iteSubterms = (new ApplicationTermFinder("ite", true)).findMatchingSubterms(term);
-		Term result = rec(term, iteSubterms.iterator());
+		Term result = term;
+		Set<ApplicationTerm> iteSubterms = (new ApplicationTermFinder("ite", false)).findMatchingSubterms(result);
+		while (!iteSubterms.isEmpty()) {
+			// remove one ite after another. Cannot naively remove all since
+			// one might be subterm of other.
+			result = removeIteTerm(result, iteSubterms.iterator().next());
+			iteSubterms = (new ApplicationTermFinder("ite", false)).findMatchingSubterms(result);
+		}
 		assert doesNotContainIteTerm(result) : "not all ite terms were removed";
 		assert (Util.checkSat(m_Script, m_Script.term("distinct", 
 				term, result)) != LBool.SAT);
@@ -46,38 +51,31 @@ public class IteRemover extends NonCoreBooleanSubTermTransformer {
 		return (new ApplicationTermFinder("ite", true)).findMatchingSubterms(term).isEmpty();
 	}
 
-	private Term rec(Term term, Iterator<ApplicationTerm> it) {
-		Term result;
-		if (it.hasNext()) {
-			ApplicationTerm ite = it.next();
-			assert ite.getFunction().getName().equals("ite");
-			assert ite.getParameters().length == 3;
-			Term condition = ite.getParameters()[0];
-			Term ifTerm = ite.getParameters()[1];
-			Term elseTerm = ite.getParameters()[2];
-			Term replacedWithIf;
-			{
-				Map<Term, Term> substitutionMapping = 
-						Collections.singletonMap((Term) ite, ifTerm);
-				replacedWithIf = (new SafeSubstitution(
-						m_Script, substitutionMapping)).transform(term);
-			}
-			Term replacedWithElse;
-			{
-				Map<Term, Term> substitutionMapping = 
-						Collections.singletonMap((Term) ite, elseTerm);
-				replacedWithElse = (new SafeSubstitution(
-						m_Script, substitutionMapping)).transform(term);
-			}
-			Term withoutThisIte = Util.or(m_Script, 
-					Util.and(m_Script, condition, replacedWithIf), 
-					Util.and(m_Script, Util.not(m_Script, condition), replacedWithElse)
-					);
-			result = rec(withoutThisIte, it); 
-		} else {
-			result = term;
+	private Term removeIteTerm(Term term, ApplicationTerm iteTerm) {
+		assert iteTerm.getFunction().getName().equals("ite");
+		assert iteTerm.getParameters().length == 3;
+		Term condition = iteTerm.getParameters()[0];
+		Term ifTerm = iteTerm.getParameters()[1];
+		Term elseTerm = iteTerm.getParameters()[2];
+		Term replacedWithIf;
+		{
+			Map<Term, Term> substitutionMapping = 
+					Collections.singletonMap((Term) iteTerm, ifTerm);
+			replacedWithIf = (new SafeSubstitution(
+					m_Script, substitutionMapping)).transform(term);
 		}
-		return result;
+		Term replacedWithElse;
+		{
+			Map<Term, Term> substitutionMapping = 
+					Collections.singletonMap((Term) iteTerm, elseTerm);
+			replacedWithElse = (new SafeSubstitution(
+					m_Script, substitutionMapping)).transform(term);
+		}
+		Term withoutThisIte = Util.or(m_Script, 
+				Util.and(m_Script, condition, replacedWithIf), 
+				Util.and(m_Script, Util.not(m_Script, condition), replacedWithElse)
+				);
+		return withoutThisIte;
 	}
 
 }
