@@ -37,3 +37,17 @@ These files were generated according to the following procedure:
 * If it has terminated by then,
   translate it to Boogie code and dump it to a file.
 
+
+## Filenames (modification done by Matthias)
+
+In order to avoid special characters in filenames the following symbols are 
+used.
+
+R (Right)  represents ">"
+L (Left)   represents "<"
+U (Up)     represents "+"
+D (Down)   represents "-"
+O (Output) represents ","
+I (Input)  represents "."
+J (Jump)   represents "["
+T (Target) represents "]"
