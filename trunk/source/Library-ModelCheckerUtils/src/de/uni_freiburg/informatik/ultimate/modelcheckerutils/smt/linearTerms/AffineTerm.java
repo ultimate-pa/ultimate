@@ -143,7 +143,8 @@ public class AffineTerm extends Term {
 		for (AffineTerm affineTerm : affineTerms) {
 			for (Map.Entry<Term, Rational> summand :
 					affineTerm.m_Variable2Coefficient.entrySet()) {
-				assert summand.getKey().getSort() == m_Sort;
+				assert summand.getKey().getSort() == m_Sort : 
+					"Sort mismatch: " + summand.getKey().getSort() + " vs. " + m_Sort;
 				Rational coeff = m_Variable2Coefficient.get(summand.getKey());
 				if (coeff == null) {
 					m_Variable2Coefficient.put(summand.getKey(), summand.getValue());
