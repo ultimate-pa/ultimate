@@ -594,6 +594,7 @@ public class TransFormula implements Serializable {
 		if (tranformToCNF) {
 			Term cnf = (new Cnf(script, services, boogie2smt.getVariableManager())).transform(formula);
 			formula = cnf;
+			removesuperfluousVariables(inVars, outVars, auxVars, formula);
 		}
 
 		Term closedFormula = computeClosedFormula(formula, inVars, outVars, auxVars, false, boogie2smt);
@@ -1001,10 +1002,9 @@ public class TransFormula implements Serializable {
 		} else {
 			inFeasibility = Infeasibility.UNPROVEABLE;
 		}
-		TransFormula.removeSuperfluousVars(resultFormula, newInVars, newOutVars, auxVars);
-
 		if (tranformToCNF) {
 			resultFormula = (new Cnf(script, services, boogie2smt.getVariableManager())).transform(resultFormula);
+			TransFormula.removeSuperfluousVars(resultFormula, newInVars, newOutVars, auxVars);
 		}
 		Term closedFormula = computeClosedFormula(resultFormula, newInVars, newOutVars, auxVars, true, boogie2smt);
 		return new TransFormula(resultFormula, newInVars, newOutVars, auxVars, branchEncoders, inFeasibility,
