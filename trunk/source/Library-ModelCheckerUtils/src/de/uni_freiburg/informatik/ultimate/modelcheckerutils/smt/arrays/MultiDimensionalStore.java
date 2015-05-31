@@ -127,7 +127,7 @@ public class MultiDimensionalStore {
 	public static List<MultiDimensionalStore> extractArrayStoresShallow(Term term) {
 		List<MultiDimensionalStore> arrayStoreDefs = new ArrayList<MultiDimensionalStore>();
 		Set<ApplicationTerm> storeTerms = 
-				(new ApplicationTermFinder("store", false)).findMatchingSubterms(term);
+				(new ApplicationTermFinder("store", true)).findMatchingSubterms(term);
 		for (Term storeTerm : storeTerms) {
 			MultiDimensionalStore mdStore = new MultiDimensionalStore(storeTerm);
 			if (mdStore.getIndex().size() == 0) {

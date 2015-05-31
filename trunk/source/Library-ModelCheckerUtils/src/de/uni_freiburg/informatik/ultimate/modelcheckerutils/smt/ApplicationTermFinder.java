@@ -14,8 +14,10 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 /**
  * Find all subterms that are application terms with FunctionSymbol m_Name.
- * The boolean flag m_ResultContainsSubtermsOfResult defines if the result
- * contains also terms that are subterms of another result.
+ * The boolean flag m_OnlyOutermost defines if only the outermost occurrence is 
+ * returned (m_OnlyOutermost == true) of if each occurrence is returned 
+ * (m_OnlyOutermost == false) and hence the result may also contain terms that 
+ * are subterms of other result .
  * @author Matthias Heizmann
  *
  */
@@ -35,7 +37,7 @@ public class ApplicationTermFinder extends NonRecursive {
 		public void walk(NonRecursive walker, ApplicationTerm term) {
 			if (term.getFunction().getName().equals(m_FunctionSymbolName)) {
 				m_Result.add(term);
-				if (!m_ResultContainsSubtermsOfResult) {
+				if (m_OnlyOutermost) {
 					return;
 				}
 			}
@@ -62,12 +64,12 @@ public class ApplicationTermFinder extends NonRecursive {
 	public ApplicationTermFinder(String functionSymbolName, boolean onlyOutermost) {
 		super();
 		m_FunctionSymbolName = functionSymbolName;
-		m_ResultContainsSubtermsOfResult = onlyOutermost;
+		m_OnlyOutermost = onlyOutermost;
 	}
 
 	private final String m_FunctionSymbolName;
 	private Set<ApplicationTerm> m_Result;
-	private final boolean m_ResultContainsSubtermsOfResult;
+	private final boolean m_OnlyOutermost;
 	
 	public Set<ApplicationTerm> findMatchingSubterms(Term term) {
 		if (term == null) {

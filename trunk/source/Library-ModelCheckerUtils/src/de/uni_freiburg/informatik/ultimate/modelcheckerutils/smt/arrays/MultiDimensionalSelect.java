@@ -115,7 +115,7 @@ public class MultiDimensionalSelect {
 			Term term, boolean allowArrayValues) {
 		List<MultiDimensionalSelect> result = new ArrayList<MultiDimensionalSelect>();
 		Set<ApplicationTerm> selectTerms = 
-				(new ApplicationTermFinder("select", false)).findMatchingSubterms(term);
+				(new ApplicationTermFinder("select", true)).findMatchingSubterms(term);
 		for (Term storeTerm : selectTerms) {
 			if (allowArrayValues || !storeTerm.getSort().isArraySort()) {
 				MultiDimensionalSelect mdSelect = new MultiDimensionalSelect(storeTerm);
