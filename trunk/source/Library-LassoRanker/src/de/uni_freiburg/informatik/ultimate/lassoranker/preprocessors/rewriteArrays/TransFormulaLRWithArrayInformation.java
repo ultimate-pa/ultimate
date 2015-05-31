@@ -363,7 +363,11 @@ public class TransFormulaLRWithArrayInformation {
 			for (ArrayUpdate au : arrayUpdates) {
 				ArrayGeneration oldGeneration = getOrConstructArrayGeneration((TermVariable) au.getOldArray());
 				ArrayGeneration newGeneration = getOrConstructArrayGeneration(au.getNewArray());
-				putParentGeneration(newGeneration, oldGeneration);
+				if (oldGeneration == newGeneration) {
+					mLogger.warn("self update, this is not tested very well ");
+				} else {
+					putParentGeneration(newGeneration, oldGeneration);
+				}
 			}
 			for (ArrayGeneration ag : m_ArrayGenerations) {
 				ArrayGeneration fg = getFirstGeneration(ag);
