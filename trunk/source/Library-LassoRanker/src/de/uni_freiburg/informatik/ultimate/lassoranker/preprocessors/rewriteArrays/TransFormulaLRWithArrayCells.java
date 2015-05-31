@@ -394,7 +394,7 @@ public class TransFormulaLRWithArrayCells {
 			offset++;
 		}
 		Term result = Util.and(m_Script, conjuncts);
-		assert (new ApplicationTermFinder("select", false)).findMatchingSubterms(result).isEmpty() : "contains select terms";
+		assert (new ApplicationTermFinder("select", true)).findMatchingSubterms(result).isEmpty() : "contains select terms";
 		return result;
 	}
 
