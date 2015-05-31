@@ -464,11 +464,15 @@ public class SmtUtils {
 	 * @throws IllegalArgumentException if ct does not represent a Rational.
 	 */
 	public static Rational convertCT(ConstantTerm ct) throws IllegalArgumentException {
-		if (ct.getSort().getName().equals("Rational")) {
-			return (Rational) ct.getValue();
-		} else if (ct.getSort().getName().equals("Real")) {
-			BigDecimal d = (BigDecimal) ct.getValue();
-			return decimalToRational(d);
+		if (ct.getSort().getName().equals("Real")) {
+			if (ct.getValue() instanceof Rational) {
+				return (Rational) ct.getValue();
+			} else if (ct.getValue() instanceof BigDecimal) {
+				return decimalToRational((BigDecimal) ct.getValue());
+			} else {
+				throw new UnsupportedOperationException(
+						"ConstantTerm's value has to be either Rational or BigDecimal");
+			}
 		} else if (ct.getSort().getName().equals("Int")) {
 			if (ct.getValue() instanceof Rational) {
 				return (Rational) ct.getValue();
@@ -476,8 +480,10 @@ public class SmtUtils {
 				Rational r = Rational.valueOf((BigInteger) ct.getValue(), BigInteger.ONE);
 				return r;
 			}
-		} else
-			throw new IllegalArgumentException("Trying to convert a ConstantTerm of unknown sort." + ct);
+		} else {
+			throw new IllegalArgumentException(
+					"Trying to convert a ConstantTerm of unknown sort." + ct);
+		}
 	}
 
 	/**
