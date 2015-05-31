@@ -36,7 +36,7 @@ public class IteRemover extends NonCoreBooleanSubTermTransformer {
 		assert term.getSort().getName().equals("Bool");
 		Set<ApplicationTerm> iteSubterms = (new ApplicationTermFinder("ite", true)).findMatchingSubterms(term);
 		Term result = rec(term, iteSubterms.iterator());
-		assert doesNotContainIteTerm(term) : "not all ite terms were removed";
+		assert doesNotContainIteTerm(result) : "not all ite terms were removed";
 		assert (Util.checkSat(m_Script, m_Script.term("distinct", 
 				term, result)) != LBool.SAT);
 		return result;
