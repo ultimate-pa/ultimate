@@ -1923,6 +1923,17 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 	@Override
 	public Collection<SccComputationWithAcceptingLassos<LETTER, STATE>.SCComponent> computeBalls(Set<STATE> stateSubset,
 			Set<STATE> startStates) {
+		if (!getStates().containsAll(stateSubset)) {
+			throw new IllegalArgumentException("not a subset of the automaton's states: " + stateSubset);
+		}
+		if (!stateSubset.containsAll(startStates)) {
+			throw new IllegalArgumentException("start states must be restricted to your subset");
+		}
+
+		
+		if (m_AcceptingSummaries == null) {
+			m_AcceptingSummaries = new AcceptingSummariesComputation();
+		}
 		SccComputationWithAcceptingLassos<LETTER, STATE> sccComputation = 
 				new SccComputationWithAcceptingLassos<>(this, m_AcceptingSummaries, m_Services, stateSubset, startStates);
 		return sccComputation.getBalls();
