@@ -38,7 +38,6 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.InstanceCounting;
 import de.uni_freiburg.informatik.ultimate.lassoranker.LinearInequality;
 import de.uni_freiburg.informatik.ultimate.lassoranker.LinearInequality.PossibleMotzkinCoefficients;
 import de.uni_freiburg.informatik.ultimate.lassoranker.SMTPrettyPrinter;
-import de.uni_freiburg.informatik.ultimate.lassoranker.SMTSolver;
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
@@ -50,14 +49,14 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 
 /**
  * This class applies the equivalence transformation given by
- * Motzkin's Transposition Theorem [1].
+ * Motzkin's Transposition Theorem [1, Cor. 7.1k].
  * 
  * Motzkin's Theorem states that a system of linear inequalities is
  * unsatisfiable if and only if a contradiction can be derived from it by the
  * means of non-negative combinations of the equations:
  * 
  * <pre>
- * ∀x. ¬(A*x ≤ b /\ B*x < d)
+ * ∀x. ¬(A*x + b ≥ 0 /\ B*x + d > 0)
  * 
  * if and only if
  * 
@@ -71,8 +70,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
  * Note that the quantifiers are not part of this class and are for
  * illustration purposes only.
  * 
- * [1] A. Schrijver. Theory of linear and integer programming.
- * Wiley-Interscience series in discrete mathematics and optimization. 1999.
+ * [1] A. Schrijver. Theory of Linear and Integer Programming.
+ *     Wiley-Interscience Series in Discrete Mathematics and Optimization. 1999.
  * 
  * @author Jan Leike
  */
@@ -102,7 +101,7 @@ public class MotzkinTransformation extends InstanceCounting {
 	
 	/**
 	 * List of linear inequalities
-	 * <pre>Ax ≥ b /\ Bx > d</pre>
+	 * <pre>Ax + b ≥ 0 /\ Bx + d > 0</pre>
 	 */
 	private List<LinearInequality> m_inequalities;
 	
