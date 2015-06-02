@@ -72,7 +72,7 @@ class LassoExtractor<LETTER, STATE> {
 	public LassoExtractor(IUltimateServiceProvider services, 
 			NestedWordAutomatonReachableStates<LETTER, STATE> nwars,
 			StateContainer<LETTER, STATE> honda, 
-			SCComponent scc, 
+			SccComputationWithAcceptingLassos<LETTER, STATE>.SCComponent scc, 
 			HashRelation<StateContainer<LETTER, STATE>, Summary<LETTER, STATE>> acceptingSummaries) throws OperationCanceledException {
 		m_Services = services;
 		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
