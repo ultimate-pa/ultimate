@@ -14,6 +14,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Accept
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IncrementalInclusionCheck2;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IncrementalInclusionCheck2DeadEndRemoval;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IncrementalInclusionCheck2DeadEndRemovalAdvanceCover;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IncrementalInclusionCheck2DeadEndRemovalAdvanceCover_2Stacks;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IncrementalInclusionCheck3;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IncrementalInclusionCheck3_2;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IncrementalInclusionCheck4;
@@ -99,6 +100,13 @@ public class IncrementalInclusionCegarLoop extends BasicCegarLoop {
 		case INCREMENTAL_INCLUSION_2_DEADEND_REMOVE_ANTICHAIN: {
 			List<INestedWordAutomatonSimple<CodeBlock, IPredicate>> empty = Collections.emptyList();
 			m_InclusionCheck = new IncrementalInclusionCheck2DeadEndRemovalAdvanceCover<CodeBlock, IPredicate>(
+					m_Services, m_StateFactoryForRefinement, 
+					(INestedWordAutomatonSimple) m_Abstraction, empty);
+		}
+		break;
+		case INCREMENTAL_INCLUSION_2_DEADEND_REMOVE_ANTICHAIN_2STACKS: {
+			List<INestedWordAutomatonSimple<CodeBlock, IPredicate>> empty = Collections.emptyList();
+			m_InclusionCheck = new IncrementalInclusionCheck2DeadEndRemovalAdvanceCover_2Stacks<CodeBlock, IPredicate>(
 					m_Services, m_StateFactoryForRefinement, 
 					(INestedWordAutomatonSimple) m_Abstraction, empty);
 		}
