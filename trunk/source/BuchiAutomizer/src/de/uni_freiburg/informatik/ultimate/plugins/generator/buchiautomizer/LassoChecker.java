@@ -59,6 +59,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceCheckerSpWp;
 import de.uni_freiburg.informatik.ultimate.result.BenchmarkResult;
 import de.uni_freiburg.informatik.ultimate.result.IResult;
+import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
 
 public class LassoChecker {
 
@@ -725,6 +726,9 @@ public class LassoChecker {
 		
 		TerminationArgument firstTerminationArgument = null;
 		for (RankingTemplate rft : rankingFunctionTemplates) {
+			if (!mServices.getProgressMonitorService().continueProcessing()) {
+				throw new ToolchainCanceledException(this.getClass());
+			}
 			TerminationArgument termArg;
 			try {
 				TerminationAnalysisSettings settings = constructTASettings();
