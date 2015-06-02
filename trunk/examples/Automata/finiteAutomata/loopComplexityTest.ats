@@ -127,10 +127,10 @@ print(loopComplexity(LCTEST1));
 	// Fourth argument: transition density of call transitions in per mille -- use 0 here
 	// Fifth argument: transition density of return transitions in per mille -- use 0 here
 	// Sixth argument: amount of accepting states in per mille
-/*	int i = 0;
+	int i = 0;
 	while(i<2){
-		NestedWordAutomaton A = getRandomNwa(1, 10, 100, 0, 0, 10);
+		NestedWordAutomaton A = getRandomNwa(1, 10, 1000, 0, 0, 8);
 		print(A);
 		print(loopComplexity(A));
 		i++;
-	}*/
+	}

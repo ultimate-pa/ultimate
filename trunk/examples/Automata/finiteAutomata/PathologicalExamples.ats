@@ -22,6 +22,7 @@ NestedWordAutomaton noInitialStates = (
 	}
 );
 
+print(loopComplexity(noInitialStates));
 
 assert(isEmpty(noFinalStates));
 
@@ -42,6 +43,7 @@ NestedWordAutomaton noFinalStates = (
 	}
 );
 
+print(loopComplexity(noFinalStates));
 
 assert(isEmpty(noStates));
 
@@ -60,6 +62,8 @@ NestedWordAutomaton noStates = (
 	}
 );
 
+print(loopComplexity(noStates));
+
 assert(isEmpty(unreachableStates));
 
 NestedWordAutomaton unreachableStates = (
@@ -76,6 +80,8 @@ NestedWordAutomaton unreachableStates = (
 	returnTransitions = {
 	}
 );
+
+print(loopComplexity(unreachableStates));
 
 assert(!isEmpty(totalOneStateAutomaton));
 
@@ -96,6 +102,7 @@ NestedWordAutomaton totalOneStateAutomaton = (
 	}
 );
 
+print(loopComplexity(totalOneStateAutomaton));
 
 NestedWordAutomaton emptyAutomaton = (
   callAlphabet = { },
@@ -111,7 +118,7 @@ NestedWordAutomaton emptyAutomaton = (
 
 assert(isEmpty(emptyAutomaton));
 
-
+print(loopComplexity(emptyAutomaton));
 
 NestedWordAutomaton noTransitionAutomaton = (
 	callAlphabet = {},
@@ -127,6 +134,8 @@ NestedWordAutomaton noTransitionAutomaton = (
 	returnTransitions = {
 	}
 );
+
+print(loopComplexity(noTransitionAutomaton));
 
 
 NestedWord emptyString = [];

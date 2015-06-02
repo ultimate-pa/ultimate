@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Set;
 
 import org.apache.log4j.Logger;
@@ -61,6 +62,8 @@ public class LoopComplexity<LETTER, STATE> implements IOperation<LETTER, STATE> 
 	
 	private final NestedWordAutomatonReachableStates<LETTER, STATE> m_Operand;
 	private final Integer m_Result;
+	
+	private HashMap<Set<STATE>, Integer> statesToLC = new HashMap<Set<STATE>, Integer>();
 	
 	
 
@@ -108,7 +111,14 @@ public class LoopComplexity<LETTER, STATE> implements IOperation<LETTER, STATE> 
 				NestedWordAutomaton<LETTER, STATE> nwa = buildSubgraph(operand,
 						stateOut);
 				
-				subGraphLoopComplexities.add(this.compute(nwa));
+				if (statesToLC.containsKey(nwa.getStates())) {
+					subGraphLoopComplexities.add(statesToLC.get(nwa.getStates()));
+				} else {
+					Integer i = this.compute(nwa);
+					statesToLC.put(nwa.getStates(), i);
+					subGraphLoopComplexities.add(i);
+				}
+				
 			}
 			return 1 + Collections.min(subGraphLoopComplexities);
 		} else { // Graph itself is not a ball.
@@ -117,7 +127,15 @@ public class LoopComplexity<LETTER, STATE> implements IOperation<LETTER, STATE> 
 			for (SccComputationWithAcceptingLassos<LETTER, STATE>.SCComponent scc : balls) {
 				NestedWordAutomaton<LETTER, STATE> nwa = sccToAutomaton(
 						operand, scc);
-				ballLoopComplexities.add(this.compute(nwa));
+				
+				if (statesToLC.containsKey(nwa.getStates())) {
+					ballLoopComplexities.add(statesToLC.get(nwa.getStates()));
+				} else {
+					Integer i = this.compute(nwa);
+					statesToLC.put(nwa.getStates(), i);
+					ballLoopComplexities.add(i);
+				}
+				
 			}
 			return Collections.max(ballLoopComplexities);
 		}
