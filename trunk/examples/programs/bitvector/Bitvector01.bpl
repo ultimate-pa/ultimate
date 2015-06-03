@@ -1,19 +1,19 @@
 //#Safe
 /* 
- *
+ * One of the simplest programs with bitvectors that I can imagine.
+ * Author: heizmann@informatik.uni-freiburg.de
+ * Date: 3.6.2015
  */
 
-var myVariable:bv20;
+
+var x:bv20;
 
 procedure proc(n: int) returns ();
 
 implementation proc(n: int) returns ()
 {
-  var myVariable2:bv20;
-  myVariable2 := myVariable;
-  if (n >= 0) {
-//       call proc(n-1);
-//       call proc(n+1-2);
-  }
+  var y:bv20;
+  x := y
+  assert x == y;
 }
 
