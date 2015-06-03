@@ -99,7 +99,7 @@ public class LoopComplexity<LETTER, STATE> implements IOperation<LETTER, STATE> 
 		SccComputationWithAcceptingLassos<LETTER, STATE> sccs = 
 				nwars.getOrComputeStronglyConnectedComponents();
 		Collection<SCComponentForNWARS<LETTER, STATE>> balls = sccs.getBalls();
-		for (SCComponentForNWARS<LETTER, STATE> scc : balls) {
+		for (SCComponent<LETTER, STATE> scc : balls) {
 			scc.getAllStatesContainers();
 		}
 		// Graph contains no balls.
@@ -126,7 +126,7 @@ public class LoopComplexity<LETTER, STATE> implements IOperation<LETTER, STATE> 
 		} else { // Graph itself is not a ball.
 			Collection<Integer> ballLoopComplexities = new ArrayList<Integer>();
 			// Build NestedWordAutomaton for each ball and compute Loop Complexity.
-			for (SCComponent<LETTER, STATE> scc : balls) {
+			for (SCComponentForNWARS<LETTER, STATE> scc : balls) {
 				NestedWordAutomaton<LETTER, STATE> nwa = sccToAutomaton(
 						operand, scc);
 				
@@ -170,9 +170,9 @@ public class LoopComplexity<LETTER, STATE> implements IOperation<LETTER, STATE> 
 	}
 
 	private NestedWordAutomaton<LETTER, STATE> sccToAutomaton(
-			INestedWordAutomaton<LETTER, STATE> operand, SCComponent<LETTER, STATE> scc) {
+			INestedWordAutomaton<LETTER, STATE> operand, SCComponentForNWARS<LETTER, STATE> scc) {
 		NestedWordAutomaton<LETTER, STATE> nwa = new NestedWordAutomaton<LETTER, STATE>(m_Services, operand.getInternalAlphabet(), operand.getCallAlphabet(), operand.getReturnAlphabet(), operand.getStateFactory());
-		Set<STATE> allStates = scc.getNodes();
+		Set<STATE> allStates = scc.getAllStates();
 		for (STATE state : allStates) {					
 			nwa.addState(true, true, state);
 		}

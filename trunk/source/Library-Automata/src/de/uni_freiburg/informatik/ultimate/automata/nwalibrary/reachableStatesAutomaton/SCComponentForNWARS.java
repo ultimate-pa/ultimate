@@ -68,18 +68,6 @@ public class SCComponentForNWARS<LETTER, STATE> extends SCComponent<LETTER, STAT
 		m_HasOutgoingAcceptingSum = null;
 	}
 
-	public StateContainer<LETTER, STATE> getRootNode() {
-		return m_RootNode;
-	}
-
-	/**
-	 * @return The {@link StateContainer}s of all states that are 
-	 * contained in this SCC.
-	 */
-	public Set<StateContainer<LETTER, STATE>> getAllStatesContainers() {
-		return m_AllStates;
-	}
-
 	public Set<StateContainer<LETTER, STATE>> getAcceptingStatesContainers() {
 		return m_AcceptingStates;
 	}
@@ -105,6 +93,20 @@ public class SCComponentForNWARS<LETTER, STATE> extends SCComponent<LETTER, STAT
 	 */
 	public StateContainer<LETTER, STATE> getAcceptingWithLowestSerialNumber() {
 		return m_AcceptingWithLowestSerialNumber;
+	}
+
+	/**
+	 * @return all states (not state containers) of this SCC.
+	 * This methods is not efficient because a new Set is constructed.
+	 * At the moment this is a workaround for Thomas' loop complexity
+	 * project.
+	 */
+	public Set<STATE> getAllStates() {
+		Set<STATE> result = new HashSet<>();
+		for (StateContainer<LETTER, STATE> sc : m_AllStates) {
+			result.add(sc.getState());
+		}
+		return result;
 	}
 
 }

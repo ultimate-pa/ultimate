@@ -181,7 +181,7 @@ public class SccComputationWithAcceptingLassos<LETTER, STATE> {
 
 	boolean isBall(SCComponent<LETTER, STATE> scc) {
 		if (scc.getNumberOfStates() == 1) {
-			StateContainer<LETTER, STATE> cont = ((SCComponentForNWARS<LETTER, STATE>) scc).getRootNode();
+			StateContainer<LETTER, STATE> cont = ((SCComponent<LETTER, STATE>) scc).getRootNode();
 			for (OutgoingInternalTransition<LETTER, STATE> trans : new FilteredIterable<OutgoingInternalTransition<LETTER, STATE>>(
 					cont.internalSuccessors(), m_TransitionFilter.getInternalSuccessorPredicate())) {
 				if (trans.getSucc().equals(cont.getState())) {

@@ -71,7 +71,7 @@ class LassoExtractor<LETTER, STATE> {
 	public LassoExtractor(IUltimateServiceProvider services, 
 			NestedWordAutomatonReachableStates<LETTER, STATE> nwars,
 			StateContainer<LETTER, STATE> honda, 
-			SCComponentForNWARS<LETTER, STATE> scc, 
+			SCComponent<LETTER, STATE> scc, 
 			HashRelation<StateContainer<LETTER, STATE>, Summary<LETTER, STATE>> acceptingSummaries) throws OperationCanceledException {
 		m_Services = services;
 		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
@@ -95,9 +95,9 @@ class LassoExtractor<LETTER, STATE> {
 	}
 
 	class LoopFinder extends RunFinder {
-		private final SCComponentForNWARS<LETTER, STATE> m_Scc;
+		private final SCComponent<LETTER, STATE> m_Scc;
 
-		public LoopFinder(StateContainer<LETTER, STATE> goal, SCComponentForNWARS<LETTER, STATE> scc, 
+		public LoopFinder(StateContainer<LETTER, STATE> goal, SCComponent<LETTER, STATE> scc, 
 				boolean visitAccepting, 
 				HashRelation<StateContainer<LETTER, STATE>, Summary<LETTER, STATE>> acceptingSummaries, 
 				Set<SuccInfo> forbiddenSummaries) {

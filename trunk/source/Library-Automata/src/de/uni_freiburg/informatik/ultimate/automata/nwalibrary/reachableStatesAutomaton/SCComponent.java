@@ -16,18 +16,16 @@ public class SCComponent<LETTER, STATE> {
 		return m_AllStates.size();
 	}
 
+	public StateContainer<LETTER, STATE> getRootNode() {
+		return m_RootNode;
+	}
+
 	/**
-	 * @return all states (not state containers) of this SCC.
-	 * This methods is not efficient because a new Set is constructed.
-	 * At the moment this is a workaround for Thomas' loop complexity
-	 * project.
+	 * @return The {@link StateContainer}s of all states that are 
+	 * contained in this SCC.
 	 */
-	public Set<STATE> getNodes() {
-		Set<STATE> result = new HashSet<>();
-		for (StateContainer<LETTER, STATE> sc : m_AllStates) {
-			result.add(sc.getState());
-		}
-		return result;
+	public Set<StateContainer<LETTER, STATE>> getAllStatesContainers() {
+		return m_AllStates;
 	}
 
 }
