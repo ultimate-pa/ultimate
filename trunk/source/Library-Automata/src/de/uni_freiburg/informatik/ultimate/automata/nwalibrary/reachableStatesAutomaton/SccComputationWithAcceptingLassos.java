@@ -143,7 +143,7 @@ public class SccComputationWithAcceptingLassos<LETTER, STATE> {
 		assert (automatonPartitionedBySCCs());
 		for (SCComponentForNWARS<LETTER, STATE> scc : m_Balls) {
 			if (scc.isAccepting()) {
-				m_AllStatesOfSccsWithoutCallAndReturn.addAll(scc.getAllStatesContainers());
+				m_AllStatesOfSccsWithoutCallAndReturn.addAll(scc.getNodes());
 				m_AcceptingBalls++;
 			}
 		}
@@ -204,9 +204,9 @@ public class SccComputationWithAcceptingLassos<LETTER, STATE> {
 		}
 	}
 
-	boolean isBall(SCComponent<LETTER, STATE> scc) {
+	boolean isBall(SCComponent<StateContainer<LETTER, STATE>> scc) {
 		if (scc.getNumberOfStates() == 1) {
-			StateContainer<LETTER, STATE> cont = ((SCComponent<LETTER, STATE>) scc).getRootNode();
+			StateContainer<LETTER, STATE> cont = ((SCComponent<StateContainer<LETTER, STATE>>) scc).getRootNode();
 			for (OutgoingInternalTransition<LETTER, STATE> trans : new FilteredIterable<OutgoingInternalTransition<LETTER, STATE>>(
 					cont.internalSuccessors(), m_TransitionFilter.getInternalSuccessorPredicate())) {
 				if (trans.getSucc().equals(cont.getState())) {
@@ -239,7 +239,7 @@ public class SccComputationWithAcceptingLassos<LETTER, STATE> {
 	private boolean automatonPartitionedBySCCs() {
 		int statesInAllBalls = 0;
 		int max = 0;
-		for (SCComponent<LETTER, STATE> scc : m_Balls) {
+		for (SCComponent<StateContainer<LETTER, STATE>> scc : m_Balls) {
 			statesInAllBalls += scc.getNumberOfStates();
 			max = Math.max(max, scc.getNumberOfStates());
 		}

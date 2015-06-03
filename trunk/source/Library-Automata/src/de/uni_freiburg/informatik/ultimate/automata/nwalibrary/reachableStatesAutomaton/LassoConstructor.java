@@ -49,7 +49,7 @@ class LassoConstructor<LETTER, STATE> {
                     new HashSet<StateContainer<LETTER,STATE>>();
     private final ArrayList<Map<StateContainer<LETTER,STATE>,SuccessorInfo>> m_SuccInfos = 
     		new ArrayList<Map<StateContainer<LETTER,STATE>,SuccessorInfo>>();
-    private final SCComponent<LETTER, STATE> m_Scc;
+    private final SCComponent<StateContainer<LETTER, STATE>> m_Scc;
     private final boolean m_FindAcceptingSummary;
     private int m_Iteration;
     private boolean m_GoalFound = false;
@@ -59,7 +59,7 @@ class LassoConstructor<LETTER, STATE> {
     
 	public LassoConstructor(IUltimateServiceProvider services, 
 			NestedWordAutomatonReachableStates<LETTER, STATE> nwars, 
-			StateContainer<LETTER, STATE> goal, SCComponent<LETTER, STATE> scc) throws OperationCanceledException {
+			StateContainer<LETTER, STATE> goal, SCComponent<StateContainer<LETTER, STATE>> scc) throws OperationCanceledException {
 		m_Services = services;
 		m_Nwars = nwars;
 		m_Goal = goal;
@@ -81,7 +81,7 @@ class LassoConstructor<LETTER, STATE> {
 	
 	public LassoConstructor(IUltimateServiceProvider services,
 			NestedWordAutomatonReachableStates<LETTER, STATE> nwars, 
-			Summary<LETTER, STATE> summary, SCComponent<LETTER, STATE> scc) throws OperationCanceledException {
+			Summary<LETTER, STATE> summary, SCComponent<StateContainer<LETTER, STATE>> scc) throws OperationCanceledException {
 		m_Services = services;
 		m_Nwars = nwars;
 		m_Goal = summary.getSucc();
@@ -192,7 +192,7 @@ class LassoConstructor<LETTER, STATE> {
 			Map<StateContainer<LETTER, STATE>, SuccessorInfo> succInfo,
 			Transitionlet<LETTER, STATE> inTrans,
 			StateContainer<LETTER, STATE> predSc) {
-		if (m_Scc.getAllStatesContainers().contains(predSc) && !m_Visited.contains(predSc)) {
+		if (m_Scc.getNodes().contains(predSc) && !m_Visited.contains(predSc)) {
 			m_Visited.add(predSc);
 			SuccessorInfo info = new SuccessorInfo(inTrans, sc);
 			succInfo.put(predSc, info);

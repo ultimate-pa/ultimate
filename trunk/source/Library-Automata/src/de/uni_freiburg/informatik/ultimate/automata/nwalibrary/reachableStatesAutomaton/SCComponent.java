@@ -28,20 +28,20 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesA
 import java.util.HashSet;
 import java.util.Set;
 
-public class SCComponent<LETTER, STATE> {
+public class SCComponent<NODE> {
 
-	protected StateContainer<LETTER, STATE> m_RootNode;
-	protected final Set<StateContainer<LETTER, STATE>> m_AllStates = new HashSet<StateContainer<LETTER, STATE>>();
+	protected NODE m_RootNode;
+	protected final Set<NODE> m_Nodes = new HashSet<NODE>();
 
 	public SCComponent() {
 		super();
 	}
 
 	public int getNumberOfStates() {
-		return m_AllStates.size();
+		return m_Nodes.size();
 	}
 
-	public StateContainer<LETTER, STATE> getRootNode() {
+	public NODE getRootNode() {
 		return m_RootNode;
 	}
 
@@ -49,8 +49,8 @@ public class SCComponent<LETTER, STATE> {
 	 * @return The {@link StateContainer}s of all states that are 
 	 * contained in this SCC.
 	 */
-	public Set<StateContainer<LETTER, STATE>> getAllStatesContainers() {
-		return m_AllStates;
+	public Set<NODE> getNodes() {
+		return m_Nodes;
 	}
 
 }

@@ -32,7 +32,7 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.util.HashRelation;
 
-public class SCComponentForNWARS<LETTER, STATE> extends SCComponent<LETTER, STATE> {
+public class SCComponentForNWARS<LETTER, STATE> extends SCComponent<StateContainer<LETTER, STATE>> {
 	final Set<StateContainer<LETTER, STATE>> m_AcceptingStates = new HashSet<StateContainer<LETTER, STATE>>();
 	final NestedWordAutomatonReachableStates<LETTER, STATE> nestedWordAutomatonReachableStates;
 	/**
@@ -60,7 +60,7 @@ public class SCComponentForNWARS<LETTER, STATE> extends SCComponent<LETTER, STAT
 		if (m_RootNode != null) {
 			throw new UnsupportedOperationException("If root node is set SCC may not be modified");
 		}
-		m_AllStates.add(cont);
+		m_Nodes.add(cont);
 		m_StateWithLowestSerialNumber = StateContainer.returnLower(m_StateWithLowestSerialNumber, cont);
 
 		if (nestedWordAutomatonReachableStates.isFinal(cont.getState())) {
@@ -83,7 +83,7 @@ public class SCComponentForNWARS<LETTER, STATE> extends SCComponent<LETTER, STAT
 		// accepting state in SCC
 		for (StateContainer<LETTER, STATE> pred : m_HasOutgoingAcceptingSum) {
 			for (Summary<LETTER, STATE> summary : nestedWordAutomatonReachableStates.getAcceptingSummariesComputation().getAcceptingSummaries().getImage(pred)) {
-				if (m_AllStates.contains(summary.getSucc())) {
+				if (m_Nodes.contains(summary.getSucc())) {
 					m_AcceptingWithLowestSerialNumber = StateContainer.returnLower(
 							m_AcceptingWithLowestSerialNumber, pred);
 					m_AcceptingSummariesOfSCC.addPair(pred, summary);
@@ -128,7 +128,7 @@ public class SCComponentForNWARS<LETTER, STATE> extends SCComponent<LETTER, STAT
 	 */
 	public Set<STATE> getAllStates() {
 		Set<STATE> result = new HashSet<>();
-		for (StateContainer<LETTER, STATE> sc : m_AllStates) {
+		for (StateContainer<LETTER, STATE> sc : m_Nodes) {
 			result.add(sc.getState());
 		}
 		return result;
