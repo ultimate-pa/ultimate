@@ -99,7 +99,7 @@ public class BuchiIsEmpty<LETTER,STATE> implements IOperation<LETTER,STATE> {
 			return null;
 		} else {
 			m_Logger.info("Starting construction of run");
-			return m_Sccs.getNestedLassoRun();
+			return m_Reach.getAcceptingLassoProvider().getNestedLassoRun();
 		}
 	}
 

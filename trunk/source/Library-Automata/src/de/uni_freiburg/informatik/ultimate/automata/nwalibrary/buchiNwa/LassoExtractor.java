@@ -61,11 +61,10 @@ public class LassoExtractor<LETTER, STATE> implements IOperation<LETTER,STATE> {
 		} else {
 			m_Reach = new NestedWordAutomatonReachableStates<LETTER, STATE>(m_Services, m_Operand);
 		}
-		SccComputationWithAcceptingLassos<LETTER, STATE> sccs = 
-				m_Reach.getOrComputeStronglyConnectedComponents();
-		m_NestedLassoRuns = sccs.getAllNestedLassoRuns();
+		m_Reach.getOrComputeStronglyConnectedComponents();
+		m_NestedLassoRuns = m_Reach.getAcceptingLassoProvider().getAllNestedLassoRuns();
 		m_NestedLassoWords = new ArrayList<NestedLassoWord<LETTER>>(m_NestedLassoRuns.size());
-		if (m_NestedLassoRuns.isEmpty() && sccs.getNestedLassoRun() == null) {
+		if (m_NestedLassoRuns.isEmpty() && m_Reach.getAcceptingLassoProvider().getNestedLassoRun() == null) {
 			assert (new BuchiIsEmpty<LETTER, STATE>(m_Services, m_Reach)).getResult();
 		} else {
 			for (NestedLassoRun<LETTER, STATE> nlr  : m_NestedLassoRuns) {

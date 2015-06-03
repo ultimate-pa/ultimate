@@ -26,6 +26,7 @@
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton;
 
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -117,6 +118,7 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 	private AncestorComputation m_OnlyLiveStates;
 	private AcceptingSummariesComputation m_AcceptingSummaries;
 	private SccComputationWithAcceptingLassos<LETTER, STATE> m_StronglyConnectedComponents;
+	private AcceptingLassoProvider<LETTER, STATE> m_AcceptingLassoProvider;
 
 	/**
 	 * Construct a run for each accepting state. Use this only while
@@ -158,8 +160,8 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 			// computeDeadEnds();
 			// new NonLiveStateComputation();
 			if (m_ExtLassoConstructionTesting) {
-				getOrComputeStronglyConnectedComponents().computeNestedLassoRuns(false);
-				List<NestedLassoRun<LETTER, STATE>> runs = getOrComputeStronglyConnectedComponents()
+				getOrComputeStronglyConnectedComponents();
+				List<NestedLassoRun<LETTER, STATE>> runs = getAcceptingLassoProvider()
 						.getAllNestedLassoRuns();
 				for (NestedLassoRun<LETTER, STATE> nlr : runs) {
 					STATE honda = nlr.getLoop().getStateAtPosition(0);
@@ -230,8 +232,18 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 	public SccComputationWithAcceptingLassos<LETTER, STATE> getOrComputeStronglyConnectedComponents() {
 		if (m_StronglyConnectedComponents == null) {
 			computeStronglyConnectedComponents();
+			m_AcceptingLassoProvider = new AcceptingLassoProvider<>(this, m_AcceptingSummaries, m_Services, m_StronglyConnectedComponents);
 		}
 		return m_StronglyConnectedComponents;
+	}
+	
+	
+
+	public AcceptingLassoProvider<LETTER, STATE> getAcceptingLassoProvider() {
+		if (m_StronglyConnectedComponents == null) {
+			throw new IllegalStateException("compute SCCs first");
+		}
+		return m_AcceptingLassoProvider;
 	}
 
 	StateContainer<LETTER, STATE> obtainSC(STATE state) {
@@ -1938,5 +1950,8 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 				new SccComputationWithAcceptingLassos<>(this, m_AcceptingSummaries, m_Services, stateSubset, startStates);
 		return sccComputation.getBalls();
 	}
+	
+	
+
 
 }
