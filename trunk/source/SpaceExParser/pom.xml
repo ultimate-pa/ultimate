@@ -1,0 +1,67 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<parent>
+		<artifactId>MavenParentUltimate</artifactId>
+		<groupId>Ultimate</groupId>
+		<version>0.0.1</version>
+		<relativePath>../BA_MavenParentUltimate/pom.xml</relativePath>
+	</parent>
+
+	<groupId>SpaceExParser</groupId>
+	<artifactId>de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser</artifactId>
+	<version>0.0.1</version>
+	<packaging>eclipse-plugin</packaging>
+
+	<build>
+		<plugins>
+			<plugin>
+				<artifactId>maven-antrun-plugin</artifactId>
+				<version>1.7</version>
+				<executions>
+					<execution>
+						<id>generate parser sources</id>
+						<phase>generate-sources</phase>
+						<configuration>
+							<tasks>
+								<echo>SpaceEx Parser: workspaceDir is ${workspaceDir}</echo>
+
+								<exec executable="xjc">
+									<arg
+										line="-d '${workspaceDir}/SpaceExParser/src' -p de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.generated '${workspaceDir}/SpaceExParser/src/de/uni_freiburg/informatik/ultimate/plugins/spaceex/parser/sspaceex.xsd'" />
+								</exec>
+
+							</tasks>
+						</configuration>
+						<goals>
+							<goal>run</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<artifactId>maven-clean-plugin</artifactId>
+				<version>2.4.1</version>
+				<configuration>
+					<filesets>
+						<fileset>
+							<directory>${workspaceDir}/SpaceExParser/src/de/uni_freiburg/informatik/ultimate/plugins/spaceex/parser/generated</directory>
+							<includes>
+								<include>BindType.java</include>
+								<include>ComponentType.java</include>
+								<include>LocationType.java</include>
+								<include>ObjectFactory.java</include>
+								<include>package-info.java</include>
+								<include>ParamType.java</include>
+								<include>Sspaceex.java</include>
+								<include>TransitionType.java</include>
+							</includes>
+						</fileset>
+					</filesets>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+
+</project>

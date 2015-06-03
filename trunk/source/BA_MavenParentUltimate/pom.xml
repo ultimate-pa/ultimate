@@ -240,6 +240,7 @@
 		<module>../Library-ApacheCommonsLang</module>
 		<module>../WitnessParser</module>
 		<module>../BoogieProcedureInliner</module>
+		<module>../SpaceExParser</module>
 	</modules>
 
 	<profiles>
