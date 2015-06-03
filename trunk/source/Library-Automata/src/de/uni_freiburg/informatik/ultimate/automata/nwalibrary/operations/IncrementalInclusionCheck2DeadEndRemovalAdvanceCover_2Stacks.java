@@ -42,7 +42,7 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover_2Stacks<LETTER
 	private StateFactory<STATE> localStateFactory;
 	private IUltimateServiceProvider localServiceProvider;
 	public PseudoAutomata workingAutomata;
-	public int nodeNumberBeforeDelete = 0;
+	private int totalNodes = 0, totalAACNodes = 0, totalCoveredNodes = 0,totalUniqueNodes = 0;
 	class PseudoAutomata{
 		public INestedWordAutomatonSimple<LETTER,STATE> associatedAutomata;
 		public PseudoAutomata prvPAutomata;
@@ -138,6 +138,7 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover_2Stacks<LETTER
 				if(init){
 					for(STATE initStateA : associatedAutomata.getInitialStates()){
 						tempNodeData = new NodeData();
+						totalNodes++;
 						if(associatedAutomata.isFinal(initStateA)){
 							tempNodeData.accepting = true;
 							errorNodes.add(tempNodeData);
@@ -160,6 +161,7 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover_2Stacks<LETTER
 							for(STATE s : preNode.bStates){
 								for(OutgoingInternalTransition<LETTER, STATE> ATransition : associatedAutomata.internalSuccessors(s)){
 									tempNodeData = new NodeData();
+									totalNodes++;
 									if(associatedAutomata.isFinal(ATransition.getSucc())){
 										tempNodeData.accepting = true;
 										errorNodes.add(tempNodeData);
@@ -192,6 +194,7 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover_2Stacks<LETTER
 					for(NodeData initNode : prvPAutomata.initialNodes){
 						if(initNode.keep == true){
 							tempNodeData = new NodeData();
+							totalNodes++;
 							tempNodeData.parentNode = null;
 							tempNodeData.aState = initNode;
 							tempNodeData.correspondingAState = initNode.correspondingAState;
@@ -208,6 +211,7 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover_2Stacks<LETTER
 							for(Transition tran : prvPAutomata.internalSuccessors(preNode.aState)){
 								if(tran.getSucc().keep == true){
 									tempNodeData = new NodeData();
+									totalNodes++;
 									tempNodeData.parentNode = preNode;
 									tempNodeData.aState = tran.getSucc();
 									tempNodeData.correspondingAState = tran.getSucc().correspondingAState;
@@ -395,6 +399,7 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover_2Stacks<LETTER
 									ACCNodes.put(currentNodeSet1.aState,new LinkedList<NodeData>());
 								}
 								ACCNodes.get(currentNodeSet1.aState).add(currentNodeSet1);
+								totalAACNodes++;
 								//toBeDeleteed.add(currentNodeSet1);
 							}
 						}
@@ -508,6 +513,7 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover_2Stacks<LETTER
 								ACCNodes.put(currentNodeSet1.aState,new LinkedList<NodeData>());
 							}
 							ACCNodes.get(currentNodeSet1.aState).add(currentNodeSet1);
+							totalAACNodes++;
 							//toBeDeleteed.add(currentNodeSet1);
 						}
 					}
@@ -516,7 +522,7 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover_2Stacks<LETTER
 			currentTree.removeAll(toBeDeleteed);
 			return !newNodeInCompleteTree;
 		}
-		
+/*		
 		@SuppressWarnings("unchecked")
 		public void finishACCover() throws OperationCanceledException{
 			if (!m_Services.getProgressMonitorService().continueProcessing()) {
@@ -547,7 +553,7 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover_2Stacks<LETTER
 				}
 			}while(true);
 		}
-		
+*/		
 		public void finishACCover(HashSet<NodeData> nodes) throws OperationCanceledException{
 			if (!m_Services.getProgressMonitorService().continueProcessing()) {
                 throw new OperationCanceledException(this.getClass());
@@ -556,6 +562,7 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover_2Stacks<LETTER
 			currentTree.clear();
 			for(NodeData key : nodes){
 				ACCNodes.get(key.aState).remove(key);
+				totalAACNodes--;
 				key.coveredBy.covering.remove(key);
 				key.coveredBy = null;
 				if(key.aState!=null&&key.aState.coveredBy!=null){
@@ -585,8 +592,6 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover_2Stacks<LETTER
 		//private HashSet<NodeData> toBeKeepedNodes;
 		
 		public void deadendRemove(){
-			assert ACCNodes.isEmpty();
-			assert currentTree.isEmpty();
 			//toBeKeepedNodes = new HashSet<NodeData>();
 			//HashSet<NodeData> toBeDeletedNodes = new HashSet<NodeData>(allNodes);
 			int i=0;
@@ -846,9 +851,11 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover_2Stacks<LETTER
 	
 	@Override
 	public String exitMessage() {
-		if(!getResult()){
-			m_Logger.info("counterExample: "+getCounterexample().getWord().toString());
-		}
+		//if(!getResult()){
+		//	m_Logger.info("counterExample: "+getCounterexample().getWord().toString());
+		//}
+		m_Logger.info("Total: "+ totalNodes+" node(s)");
+		
 		return "Exit " + operationName();
 	}
 	
