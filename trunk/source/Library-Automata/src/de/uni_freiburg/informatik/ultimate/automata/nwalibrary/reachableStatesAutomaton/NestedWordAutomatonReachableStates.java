@@ -56,7 +56,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.BuchiAcc
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.NestedLassoRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Accepts;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.IOpWithDelayedDeadEndRemoval.UpDownEntry;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.SccComputationWithAcceptingLassos.SCComponent;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.StateContainer.DownStateProp;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.IncomingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.IncomingInternalTransition;
@@ -244,6 +243,10 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 			throw new IllegalStateException("compute SCCs first");
 		}
 		return m_AcceptingLassoProvider;
+	}
+	
+	public AcceptingSummariesComputation getAcceptingSummariesComputation() {
+		return m_AcceptingSummaries;
 	}
 
 	StateContainer<LETTER, STATE> obtainSC(STATE state) {
@@ -1933,7 +1936,7 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 	}
 
 	@Override
-	public Collection<SccComputationWithAcceptingLassos<LETTER, STATE>.SCComponent> computeBalls(Set<STATE> stateSubset,
+	public Collection<SCComponent<LETTER, STATE>> computeBalls(Set<STATE> stateSubset,
 			Set<STATE> startStates) {
 		if (!getStates().containsAll(stateSubset)) {
 			throw new IllegalArgumentException("not a subset of the automaton's states: " + stateSubset);

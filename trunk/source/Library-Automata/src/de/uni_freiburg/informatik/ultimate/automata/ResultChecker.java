@@ -25,6 +25,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata;
 
+import java.io.File;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Collection;
@@ -34,6 +35,7 @@ import org.apache.log4j.Logger;
 import org.eclipse.core.runtime.preferences.IScopeContext;
 import org.eclipse.core.runtime.preferences.InstanceScope;
 
+import de.uni_freiburg.informatik.ultimate.automata.AtsDefinitionPrinter.Labeling;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
@@ -323,13 +325,14 @@ public class ResultChecker<LETTER,STATE> {
     }
     
     public static void writeToFileIfPreferred(IUltimateServiceProvider services, String filenamePrefix, String message, IAutomaton... automata) {
+    	String workingDirectory = System.getProperty("user.dir");
+    	
 		IScopeContext scope = InstanceScope.INSTANCE;
 		UltimatePreferenceStore prefs = new UltimatePreferenceStore(LibraryIdentifiers.s_LibraryID);
 //		boolean writeToFile = prefs.getBoolean(PreferenceInitializer.Name_Write);
 //		if (writeToFile) {
-//			String directory = prefs.getString(PreferenceInitializer.Name_Path); 
-//			String filename = directory + File.separator+filenamePrefix + getDateTime() + ".fat";
-//			new AtsDefinitionPrinter(services, filenamePrefix, filename, Labeling.QUOTED, message, automata);
+			String filename = workingDirectory + File.separator+filenamePrefix + getDateTime() + ".ats";
+			new AtsDefinitionPrinter(services, filenamePrefix, filename, Labeling.NUMERATE, message, automata);
 //		}
     }
     

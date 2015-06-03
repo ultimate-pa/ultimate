@@ -5,7 +5,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -69,7 +68,7 @@ public class SccComputationWithAcceptingLassos<LETTER, STATE> {
 
 	Map<StateContainer<LETTER, STATE>, Integer> m_LowLinks = new HashMap<StateContainer<LETTER, STATE>, Integer>();
 
-	final Collection<SCComponent> m_Balls = new ArrayList<SCComponent>();
+	final Collection<SCComponent<LETTER, STATE>> m_Balls = new ArrayList<SCComponent<LETTER, STATE>>();
 	int m_NumberOfNonBallSCCs = 0;
 
 	private final HashRelation<StateContainer<LETTER, STATE>, Summary<LETTER, STATE>> m_AcceptingSummaries;
@@ -80,7 +79,7 @@ public class SccComputationWithAcceptingLassos<LETTER, STATE> {
 	private NestedLassoRun<LETTER, STATE> m_NestedLassoRun;
 	private int m_AcceptingBalls = 0;
 
-	public Collection<SCComponent> getBalls() {
+	public Collection<SCComponent<LETTER, STATE>> getBalls() {
 		return m_Balls;
 	}
 
@@ -117,7 +116,7 @@ public class SccComputationWithAcceptingLassos<LETTER, STATE> {
 		}
 
 		assert (automatonPartitionedBySCCs());
-		for (SCComponent scc : m_Balls) {
+		for (SCComponent<LETTER, STATE> scc : m_Balls) {
 			if (scc.isAccepting()) {
 				m_AllStatesOfSccsWithoutCallAndReturn.addAll(scc.getAllStatesContainers());
 				m_AcceptingBalls++;
@@ -155,7 +154,7 @@ public class SccComputationWithAcceptingLassos<LETTER, STATE> {
 
 		if (m_LowLinks.get(v).equals(m_Indices.get(v))) {
 			StateContainer<LETTER, STATE> w;
-			SCComponent scc = new SCComponent();
+			SCComponent<LETTER, STATE> scc = new SCComponent<LETTER, STATE>(this.nestedWordAutomatonReachableStates);
 			do {
 				w = m_NoScc.pop();
 				scc.addState(w);
@@ -180,7 +179,7 @@ public class SccComputationWithAcceptingLassos<LETTER, STATE> {
 		}
 	}
 
-	boolean isBall(SCComponent scc) {
+	boolean isBall(SCComponent<LETTER, STATE> scc) {
 		if (scc.getNumberOfStates() == 1) {
 			StateContainer<LETTER, STATE> cont = scc.getRootNode();
 			for (OutgoingInternalTransition<LETTER, STATE> trans : new FilteredIterable<OutgoingInternalTransition<LETTER, STATE>>(
@@ -215,193 +214,12 @@ public class SccComputationWithAcceptingLassos<LETTER, STATE> {
 	private boolean automatonPartitionedBySCCs() {
 		int statesInAllBalls = 0;
 		int max = 0;
-		for (SCComponent scc : m_Balls) {
+		for (SCComponent<LETTER, STATE> scc : m_Balls) {
 			statesInAllBalls += scc.getNumberOfStates();
 			max = Math.max(max, scc.getNumberOfStates());
 		}
 		m_Logger.debug("The biggest SCC has " + max + " vertices.");
 		boolean sameNumberOfVertices = (statesInAllBalls + m_NumberOfNonBallSCCs == m_NumberOfAllStates);
 		return sameNumberOfVertices;
-	}
-
-	public class SCComponent implements Set<STATE> {
-		StateContainer<LETTER, STATE> m_RootNode;
-		final Set<StateContainer<LETTER, STATE>> m_AcceptingStates = new HashSet<StateContainer<LETTER, STATE>>();
-		/**
-		 * States that have an outgoing summary. The summary successor may
-		 * could be outside of this SCC. We determine the needed set only if
-		 * construction of this SCC is finished.
-		 */
-		Set<StateContainer<LETTER, STATE>> m_HasOutgoingAcceptingSum = new HashSet<StateContainer<LETTER, STATE>>();
-		final HashRelation<StateContainer<LETTER, STATE>, Summary<LETTER, STATE>> m_AcceptingSummariesOfSCC = new HashRelation<StateContainer<LETTER, STATE>, Summary<LETTER, STATE>>();
-		final Set<StateContainer<LETTER, STATE>> m_AllStates = new HashSet<StateContainer<LETTER, STATE>>();
-		/**
-		 * State of SCC with lowest serial number.
-		 */
-		private StateContainer<LETTER, STATE> m_StateWithLowestSerialNumber;
-		/**
-		 * State of SCC with lowest serial number that is accepting or
-		 * successor
-		 */
-		private StateContainer<LETTER, STATE> m_AcceptingWithLowestSerialNumber;
-
-		public void addState(StateContainer<LETTER, STATE> cont) {
-			if (m_RootNode != null) {
-				throw new UnsupportedOperationException("If root node is set SCC may not be modified");
-			}
-			m_AllStates.add(cont);
-			m_StateWithLowestSerialNumber = StateContainer.returnLower(m_StateWithLowestSerialNumber, cont);
-
-			if (SccComputationWithAcceptingLassos.this.nestedWordAutomatonReachableStates.isFinal(cont.getState())) {
-				m_AcceptingStates.add(cont);
-				m_AcceptingWithLowestSerialNumber = StateContainer.returnLower(m_AcceptingWithLowestSerialNumber,
-						cont);
-			}
-			if (m_AcceptingSummaries.getDomain().contains(cont)) {
-				m_HasOutgoingAcceptingSum.add(cont);
-				// if we have to update lowest is determined later
-			}
-		}
-
-		public void setRootNode(StateContainer<LETTER, STATE> rootNode) {
-			if (m_RootNode != null) {
-				throw new UnsupportedOperationException("If root node is set SCC may not be modified");
-			}
-			this.m_RootNode = rootNode;
-			// TODO: Optimization: compute this only if there is no
-			// accepting state in SCC
-			for (StateContainer<LETTER, STATE> pred : m_HasOutgoingAcceptingSum) {
-				for (Summary<LETTER, STATE> summary : m_AcceptingSummaries.getImage(pred)) {
-					if (m_AllStates.contains(summary.getSucc())) {
-						m_AcceptingWithLowestSerialNumber = StateContainer.returnLower(
-								m_AcceptingWithLowestSerialNumber, pred);
-						m_AcceptingSummariesOfSCC.addPair(pred, summary);
-					}
-				}
-			}
-			m_HasOutgoingAcceptingSum = null;
-		}
-
-		public int getNumberOfStates() {
-			return m_AllStates.size();
-		}
-
-		public StateContainer<LETTER, STATE> getRootNode() {
-			return m_RootNode;
-		}
-
-		/**
-		 * @return The {@link StateContainer}s of all states that are 
-		 * contained in this SCC.
-		 */
-		public Set<StateContainer<LETTER, STATE>> getAllStatesContainers() {
-			return m_AllStates;
-		}
-
-		public Set<StateContainer<LETTER, STATE>> getAcceptingStatesContainers() {
-			return m_AcceptingStates;
-		}
-		
-		/**
-		 * @return all states (not state containers) of this SCC.
-		 * This methods is not efficient because a new Set is constructed.
-		 * At the moment this is a workaround for Thomas' loop complexity
-		 * project.
-		 */
-		private Set<STATE> getAllStates() {
-			Set<STATE> result = new HashSet<>();
-			for (StateContainer<LETTER, STATE> sc : m_AllStates) {
-				result.add(sc.getState());
-			}
-			return result;
-		}
-
-		public HashRelation<StateContainer<LETTER, STATE>, Summary<LETTER, STATE>> getAcceptingSummariesOfSCC() {
-			return m_AcceptingSummariesOfSCC;
-		}
-
-		public StateContainer<LETTER, STATE> getStateWithLowestSerialNumber() {
-			return m_StateWithLowestSerialNumber;
-		}
-
-		public boolean isAccepting() {
-			return m_AcceptingWithLowestSerialNumber != null;
-		}
-
-		/**
-		 * Returns the state with the lowest serial number that is accepting
-		 * or call predecessor of an accepting summary. Returns null if no
-		 * such state exists.
-		 * 
-		 * @return
-		 */
-		public StateContainer<LETTER, STATE> getAcceptingWithLowestSerialNumber() {
-			return m_AcceptingWithLowestSerialNumber;
-		}
-
-		@Override
-		public boolean add(STATE arg0) {
-			throw new UnsupportedOperationException("SCComponent does not support this operation");
-		}
-
-		@Override
-		public boolean addAll(Collection<? extends STATE> arg0) {
-			throw new UnsupportedOperationException("SCComponent does not support this operation");
-		}
-
-		@Override
-		public void clear() {
-			throw new UnsupportedOperationException("SCComponent does not support this operation");
-		}
-
-		@Override
-		public boolean contains(Object arg0) {
-			return nestedWordAutomatonReachableStates.getStateContainer((STATE) arg0) != null;
-		}
-
-		@Override
-		public boolean containsAll(Collection<?> arg0) {
-			throw new UnsupportedOperationException("SCComponent does not support this operation");
-		}
-
-		@Override
-		public boolean isEmpty() {
-			throw new UnsupportedOperationException("SCComponent does not support this operation");
-		}
-
-		@Override
-		public Iterator<STATE> iterator() {
-			return getAllStates().iterator();
-		}
-
-		@Override
-		public boolean remove(Object arg0) {
-			throw new UnsupportedOperationException("SCComponent does not support this operation");
-		}
-
-		@Override
-		public boolean removeAll(Collection<?> arg0) {
-			throw new UnsupportedOperationException("SCComponent does not support this operation");
-		}
-
-		@Override
-		public boolean retainAll(Collection<?> arg0) {
-			throw new UnsupportedOperationException("SCComponent does not support this operation");
-		}
-
-		@Override
-		public int size() {
-			return getNumberOfStates();
-		}
-
-		@Override
-		public Object[] toArray() {
-			throw new UnsupportedOperationException("SCComponent does not support this operation");
-		}
-
-		@Override
-		public <T> T[] toArray(T[] arg0) {
-			throw new UnsupportedOperationException("SCComponent does not support this operation");
-		}
 	}
 }

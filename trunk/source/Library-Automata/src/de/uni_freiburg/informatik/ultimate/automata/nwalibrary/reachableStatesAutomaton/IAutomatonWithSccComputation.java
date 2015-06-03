@@ -45,6 +45,6 @@ public interface IAutomatonWithSccComputation<LETTER, STATE> {
 	 * @param startStates states at which the computation of SSCs starts
 	 * @return
 	 */
-	public Collection<SccComputationWithAcceptingLassos<LETTER, STATE>.SCComponent> computeBalls(Set<STATE> stateSubset, Set<STATE> startStates);
+	public Collection<SCComponent<LETTER, STATE>> computeBalls(Set<STATE> stateSubset, Set<STATE> startStates);
 
 }

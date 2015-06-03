@@ -40,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomat
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.IAutomatonWithSccComputation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.NestedWordAutomatonReachableStates;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.SCComponent;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.SccComputationWithAcceptingLassos;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator;
@@ -89,15 +90,15 @@ public class LoopComplexity<LETTER, STATE> implements IOperation<LETTER, STATE> 
 //		// Matthias: You can now compute the balls as follows.
 //		Set<STATE> allStates = operand.getStates();
 //		Set<STATE> initialStates = operand.getStates();
-//		Collection<SccComputationWithAcceptingLassos<LETTER, STATE>.SCComponent> ballsForAllStates = m_Operand.computeBalls(allStates, initialStates);
+//		Collection<SCComponent<LETTER, STATE>> ballsForAllStates = m_Operand.computeBalls(allStates, initialStates);
 //		/////////////
 
 		NestedWordAutomatonReachableStates<LETTER, STATE> nwars = 
 				new NestedWordAutomatonReachableStates<>(m_Services, operand);
 		SccComputationWithAcceptingLassos<LETTER, STATE> sccs = 
 				nwars.getOrComputeStronglyConnectedComponents();
-		Collection<SccComputationWithAcceptingLassos<LETTER, STATE>.SCComponent> balls = sccs.getBalls();
-		for (SccComputationWithAcceptingLassos<LETTER, STATE>.SCComponent scc : balls) {
+		Collection<SCComponent<LETTER, STATE>> balls = sccs.getBalls();
+		for (SCComponent<LETTER, STATE> scc : balls) {
 			scc.getAllStatesContainers();
 		}
 		// Graph contains no balls.
@@ -124,7 +125,7 @@ public class LoopComplexity<LETTER, STATE> implements IOperation<LETTER, STATE> 
 		} else { // Graph itself is not a ball.
 			Collection<Integer> ballLoopComplexities = new ArrayList<Integer>();
 			// Build NestedWordAutomaton for each ball and compute Loop Complexity.
-			for (SccComputationWithAcceptingLassos<LETTER, STATE>.SCComponent scc : balls) {
+			for (SCComponent<LETTER, STATE> scc : balls) {
 				NestedWordAutomaton<LETTER, STATE> nwa = sccToAutomaton(
 						operand, scc);
 				
@@ -168,7 +169,7 @@ public class LoopComplexity<LETTER, STATE> implements IOperation<LETTER, STATE> 
 	}
 
 	private NestedWordAutomaton<LETTER, STATE> sccToAutomaton(
-			INestedWordAutomaton<LETTER, STATE> operand, SccComputationWithAcceptingLassos<LETTER, STATE>.SCComponent scc) {
+			INestedWordAutomaton<LETTER, STATE> operand, SCComponent<LETTER, STATE> scc) {
 		NestedWordAutomaton<LETTER, STATE> nwa = new NestedWordAutomaton<LETTER, STATE>(m_Services, operand.getInternalAlphabet(), operand.getCallAlphabet(), operand.getReturnAlphabet(), operand.getStateFactory());
 		for (STATE state : scc) {					
 			nwa.addState(true, true, state);

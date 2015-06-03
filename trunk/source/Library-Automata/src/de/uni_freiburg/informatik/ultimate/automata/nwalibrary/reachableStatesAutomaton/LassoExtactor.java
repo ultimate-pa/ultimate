@@ -43,7 +43,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.BuchiAcc
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.NestedLassoRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.NestedWordAutomatonReachableStates.InCaRe;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.StateContainer.DownStateProp;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.SccComputationWithAcceptingLassos.SCComponent;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.IncomingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.IncomingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.IncomingReturnTransition;
@@ -72,7 +71,7 @@ class LassoExtractor<LETTER, STATE> {
 	public LassoExtractor(IUltimateServiceProvider services, 
 			NestedWordAutomatonReachableStates<LETTER, STATE> nwars,
 			StateContainer<LETTER, STATE> honda, 
-			SccComputationWithAcceptingLassos<LETTER, STATE>.SCComponent scc, 
+			SCComponent<LETTER, STATE> scc, 
 			HashRelation<StateContainer<LETTER, STATE>, Summary<LETTER, STATE>> acceptingSummaries) throws OperationCanceledException {
 		m_Services = services;
 		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
@@ -96,9 +95,9 @@ class LassoExtractor<LETTER, STATE> {
 	}
 
 	class LoopFinder extends RunFinder {
-		private final SccComputationWithAcceptingLassos.SCComponent m_Scc;
+		private final SCComponent<LETTER, STATE> m_Scc;
 
-		public LoopFinder(StateContainer<LETTER, STATE> goal, SccComputationWithAcceptingLassos.SCComponent scc, 
+		public LoopFinder(StateContainer<LETTER, STATE> goal, SCComponent<LETTER, STATE> scc, 
 				boolean visitAccepting, 
 				HashRelation<StateContainer<LETTER, STATE>, Summary<LETTER, STATE>> acceptingSummaries, 
 				Set<SuccInfo> forbiddenSummaries) {
