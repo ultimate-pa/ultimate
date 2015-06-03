@@ -103,6 +103,7 @@ public class SccComputationWithAcceptingLassos<LETTER, STATE> {
 	private List<NestedLassoRun<LETTER, STATE>> m_NestedLassoRuns;
 	private NestedLassoRun<LETTER, STATE> m_NestedLassoRun;
 	private int m_AcceptingBalls = 0;
+	private SCComponentForNWARSFactory<LETTER, STATE> m_ScComponentFactory;
 
 	public Collection<SCComponentForNWARS<LETTER, STATE>> getBalls() {
 		return m_Balls;
@@ -130,6 +131,7 @@ public class SccComputationWithAcceptingLassos<LETTER, STATE> {
 		m_Services = services;
 		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 		this.nestedWordAutomatonReachableStates = nestedWordAutomatonReachableStates;
+		m_ScComponentFactory = new SCComponentForNWARSFactory<LETTER, STATE>(this.nestedWordAutomatonReachableStates);
 		m_TransitionFilter = new StateBasedTransitionFilterPredicateProvider<>(allStates);
 		m_NumberOfAllStates = allStates.size();
 		m_AcceptingSummaries = asc.getAcceptingSummaries();
@@ -179,7 +181,7 @@ public class SccComputationWithAcceptingLassos<LETTER, STATE> {
 
 		if (m_LowLinks.get(v).equals(m_Indices.get(v))) {
 			StateContainer<LETTER, STATE> w;
-			SCComponentForNWARS<LETTER, STATE> scc = new SCComponentForNWARS<LETTER, STATE>(this.nestedWordAutomatonReachableStates);
+			SCComponentForNWARS<LETTER, STATE> scc = m_ScComponentFactory.constructNewSCComponent();
 			do {
 				w = m_NoScc.pop();
 				scc.addState(w);
@@ -246,5 +248,9 @@ public class SccComputationWithAcceptingLassos<LETTER, STATE> {
 		m_Logger.debug("The biggest SCC has " + max + " vertices.");
 		boolean sameNumberOfVertices = (statesInAllBalls + m_NumberOfNonBallSCCs == m_NumberOfAllStates);
 		return sameNumberOfVertices;
+	}
+	
+	public interface SCComponentFactory<NODE, C extends SCComponent<NODE>> {
+		public C constructNewSCComponent();
 	}
 }
