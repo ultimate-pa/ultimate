@@ -7,7 +7,7 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.util.HashRelation;
 
-public class SCComponent<LETTER, STATE> implements Set<STATE> {
+public class SCComponent<LETTER, STATE> {
 	StateContainer<LETTER, STATE> m_RootNode;
 	final Set<StateContainer<LETTER, STATE>> m_AcceptingStates = new HashSet<StateContainer<LETTER, STATE>>();
 	final NestedWordAutomatonReachableStates<LETTER, STATE> nestedWordAutomatonReachableStates;
@@ -96,7 +96,7 @@ public class SCComponent<LETTER, STATE> implements Set<STATE> {
 	 * At the moment this is a workaround for Thomas' loop complexity
 	 * project.
 	 */
-	private Set<STATE> getAllStates() {
+	public Set<STATE> getNodes() {
 		Set<STATE> result = new HashSet<>();
 		for (StateContainer<LETTER, STATE> sc : m_AllStates) {
 			result.add(sc.getState());
@@ -127,68 +127,4 @@ public class SCComponent<LETTER, STATE> implements Set<STATE> {
 		return m_AcceptingWithLowestSerialNumber;
 	}
 
-	@Override
-	public boolean add(STATE arg0) {
-		throw new UnsupportedOperationException("SCComponent does not support this operation");
-	}
-
-	@Override
-	public boolean addAll(Collection<? extends STATE> arg0) {
-		throw new UnsupportedOperationException("SCComponent does not support this operation");
-	}
-
-	@Override
-	public void clear() {
-		throw new UnsupportedOperationException("SCComponent does not support this operation");
-	}
-
-	@Override
-	public boolean contains(Object arg0) {
-		return nestedWordAutomatonReachableStates.getStateContainer((STATE) arg0) != null;
-	}
-
-	@Override
-	public boolean containsAll(Collection<?> arg0) {
-		throw new UnsupportedOperationException("SCComponent does not support this operation");
-	}
-
-	@Override
-	public boolean isEmpty() {
-		throw new UnsupportedOperationException("SCComponent does not support this operation");
-	}
-
-	@Override
-	public Iterator<STATE> iterator() {
-		return getAllStates().iterator();
-	}
-
-	@Override
-	public boolean remove(Object arg0) {
-		throw new UnsupportedOperationException("SCComponent does not support this operation");
-	}
-
-	@Override
-	public boolean removeAll(Collection<?> arg0) {
-		throw new UnsupportedOperationException("SCComponent does not support this operation");
-	}
-
-	@Override
-	public boolean retainAll(Collection<?> arg0) {
-		throw new UnsupportedOperationException("SCComponent does not support this operation");
-	}
-
-	@Override
-	public int size() {
-		return getNumberOfStates();
-	}
-
-	@Override
-	public Object[] toArray() {
-		throw new UnsupportedOperationException("SCComponent does not support this operation");
-	}
-
-	@Override
-	public <T> T[] toArray(T[] arg0) {
-		throw new UnsupportedOperationException("SCComponent does not support this operation");
-	}
 }

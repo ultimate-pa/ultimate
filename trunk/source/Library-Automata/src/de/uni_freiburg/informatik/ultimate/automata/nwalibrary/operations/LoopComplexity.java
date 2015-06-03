@@ -171,13 +171,14 @@ public class LoopComplexity<LETTER, STATE> implements IOperation<LETTER, STATE> 
 	private NestedWordAutomaton<LETTER, STATE> sccToAutomaton(
 			INestedWordAutomaton<LETTER, STATE> operand, SCComponent<LETTER, STATE> scc) {
 		NestedWordAutomaton<LETTER, STATE> nwa = new NestedWordAutomaton<LETTER, STATE>(m_Services, operand.getInternalAlphabet(), operand.getCallAlphabet(), operand.getReturnAlphabet(), operand.getStateFactory());
-		for (STATE state : scc) {					
+		Set<STATE> allStates = scc.getNodes();
+		for (STATE state : allStates) {					
 			nwa.addState(true, true, state);
 		}
-		for (STATE state : scc) {
+		for (STATE state : allStates) {
 			Iterable<OutgoingInternalTransition<LETTER, STATE>> succs = operand.internalSuccessors(state);
 		    for (OutgoingInternalTransition<LETTER, STATE> outtrans : succs) {
-		    	if (scc.contains(outtrans.getSucc())) {
+		    	if (allStates.contains(outtrans.getSucc())) {
 		    		nwa.addInternalTransition(state, outtrans.getLetter(), outtrans.getSucc());
 		    	}
 		    }
