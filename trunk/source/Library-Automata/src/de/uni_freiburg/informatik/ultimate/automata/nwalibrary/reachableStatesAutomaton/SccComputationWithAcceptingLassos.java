@@ -68,7 +68,7 @@ public class SccComputationWithAcceptingLassos<LETTER, STATE> {
 
 	Map<StateContainer<LETTER, STATE>, Integer> m_LowLinks = new HashMap<StateContainer<LETTER, STATE>, Integer>();
 
-	final Collection<SCComponent<LETTER, STATE>> m_Balls = new ArrayList<SCComponent<LETTER, STATE>>();
+	final Collection<SCComponentForNWARS<LETTER, STATE>> m_Balls = new ArrayList<SCComponentForNWARS<LETTER, STATE>>();
 	int m_NumberOfNonBallSCCs = 0;
 
 	private final HashRelation<StateContainer<LETTER, STATE>, Summary<LETTER, STATE>> m_AcceptingSummaries;
@@ -79,7 +79,7 @@ public class SccComputationWithAcceptingLassos<LETTER, STATE> {
 	private NestedLassoRun<LETTER, STATE> m_NestedLassoRun;
 	private int m_AcceptingBalls = 0;
 
-	public Collection<SCComponent<LETTER, STATE>> getBalls() {
+	public Collection<SCComponentForNWARS<LETTER, STATE>> getBalls() {
 		return m_Balls;
 	}
 
@@ -116,7 +116,7 @@ public class SccComputationWithAcceptingLassos<LETTER, STATE> {
 		}
 
 		assert (automatonPartitionedBySCCs());
-		for (SCComponent<LETTER, STATE> scc : m_Balls) {
+		for (SCComponentForNWARS<LETTER, STATE> scc : m_Balls) {
 			if (scc.isAccepting()) {
 				m_AllStatesOfSccsWithoutCallAndReturn.addAll(scc.getAllStatesContainers());
 				m_AcceptingBalls++;
@@ -154,7 +154,7 @@ public class SccComputationWithAcceptingLassos<LETTER, STATE> {
 
 		if (m_LowLinks.get(v).equals(m_Indices.get(v))) {
 			StateContainer<LETTER, STATE> w;
-			SCComponent<LETTER, STATE> scc = new SCComponent<LETTER, STATE>(this.nestedWordAutomatonReachableStates);
+			SCComponentForNWARS<LETTER, STATE> scc = new SCComponentForNWARS<LETTER, STATE>(this.nestedWordAutomatonReachableStates);
 			do {
 				w = m_NoScc.pop();
 				scc.addState(w);
@@ -181,7 +181,7 @@ public class SccComputationWithAcceptingLassos<LETTER, STATE> {
 
 	boolean isBall(SCComponent<LETTER, STATE> scc) {
 		if (scc.getNumberOfStates() == 1) {
-			StateContainer<LETTER, STATE> cont = scc.getRootNode();
+			StateContainer<LETTER, STATE> cont = ((SCComponentForNWARS<LETTER, STATE>) scc).getRootNode();
 			for (OutgoingInternalTransition<LETTER, STATE> trans : new FilteredIterable<OutgoingInternalTransition<LETTER, STATE>>(
 					cont.internalSuccessors(), m_TransitionFilter.getInternalSuccessorPredicate())) {
 				if (trans.getSucc().equals(cont.getState())) {

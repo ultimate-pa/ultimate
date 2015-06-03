@@ -41,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.IAutomatonWithSccComputation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.NestedWordAutomatonReachableStates;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.SCComponent;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.SCComponentForNWARS;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.SccComputationWithAcceptingLassos;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator;
@@ -97,8 +98,8 @@ public class LoopComplexity<LETTER, STATE> implements IOperation<LETTER, STATE> 
 				new NestedWordAutomatonReachableStates<>(m_Services, operand);
 		SccComputationWithAcceptingLassos<LETTER, STATE> sccs = 
 				nwars.getOrComputeStronglyConnectedComponents();
-		Collection<SCComponent<LETTER, STATE>> balls = sccs.getBalls();
-		for (SCComponent<LETTER, STATE> scc : balls) {
+		Collection<SCComponentForNWARS<LETTER, STATE>> balls = sccs.getBalls();
+		for (SCComponentForNWARS<LETTER, STATE> scc : balls) {
 			scc.getAllStatesContainers();
 		}
 		// Graph contains no balls.

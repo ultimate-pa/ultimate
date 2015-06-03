@@ -1936,7 +1936,7 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 	}
 
 	@Override
-	public Collection<SCComponent<LETTER, STATE>> computeBalls(Set<STATE> stateSubset,
+	public Collection<SCComponentForNWARS<LETTER, STATE>> computeBalls(Set<STATE> stateSubset,
 			Set<STATE> startStates) {
 		if (!getStates().containsAll(stateSubset)) {
 			throw new IllegalArgumentException("not a subset of the automaton's states: " + stateSubset);

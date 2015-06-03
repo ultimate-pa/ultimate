@@ -74,7 +74,7 @@ public class AcceptingLassoProvider<LETTER, STATE> {
 			throw new UnsupportedOperationException("not yet implemented");
 		}
 		List<NestedLassoRun<LETTER, STATE>> nestedLassoRuns = new ArrayList<NestedLassoRun<LETTER, STATE>>();
-		for (SCComponent<LETTER, STATE> scc : m_SccComputation.getBalls()) {
+		for (SCComponentForNWARS<LETTER, STATE> scc : m_SccComputation.getBalls()) {
 			if (scc.isAccepting()) {
 				for (StateContainer<LETTER, STATE> fin : scc.getAcceptingStatesContainers()) {
 					NestedLassoRun<LETTER, STATE> nlr2 = (new LassoConstructor<LETTER, STATE>(m_Services, 
@@ -113,8 +113,8 @@ public class AcceptingLassoProvider<LETTER, STATE> {
 	public void computeShortNestedLassoRun() throws AutomataLibraryException {
 		StateContainer<LETTER, STATE> lowestSerialNumber = null;
 		StateContainer<LETTER, STATE> newlowestSerialNumber = null;
-		SCComponent<LETTER, STATE> sccOfLowest = null;
-		for (SCComponent<LETTER, STATE> scc : m_SccComputation.getBalls()) {
+		SCComponentForNWARS<LETTER, STATE> sccOfLowest = null;
+		for (SCComponentForNWARS<LETTER, STATE> scc : m_SccComputation.getBalls()) {
 			if (scc.isAccepting()) {
 				StateContainer<LETTER, STATE> lowestOfScc = scc.getAcceptingWithLowestSerialNumber();
 				newlowestSerialNumber = StateContainer.returnLower(lowestSerialNumber, lowestOfScc);
