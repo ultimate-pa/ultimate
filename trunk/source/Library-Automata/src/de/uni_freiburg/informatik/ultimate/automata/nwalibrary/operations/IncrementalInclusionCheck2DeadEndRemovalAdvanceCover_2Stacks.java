@@ -78,7 +78,6 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover_2Stacks<LETTER
 							if(cover(true)){
 								break;
 							}
-							break;
 						}while(true);
 					}
 					break;
@@ -118,7 +117,6 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover_2Stacks<LETTER
 							if(cover(true)){
 								break;
 							}
-							break;
 						}while(true);
 					}
 					break;
@@ -292,6 +290,7 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover_2Stacks<LETTER
 											currentNodeSet1.parentNode.outgoingTransition.add(new Transition(currentNodeSet1.word.getSymbol(currentNodeSet1.word.getLength()-2),completeNodeSet));	
 										}
 										coveredNodes.add(currentNodeSet1);
+										totalCoveredNodes++;
 										//toBeDeleteed.add(currentNodeSet1);
 										break;
 									}else{
@@ -325,6 +324,7 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover_2Stacks<LETTER
 												currentNodeSet1.parentNode.outgoingTransition.add(new Transition(currentNodeSet1.word.getSymbol(currentNodeSet1.word.getLength()-2),completeNodeSet));	
 											}
 											coveredNodes.add(currentNodeSet1);
+											totalCoveredNodes++;
 											//toBeDeleteed.add(currentNodeSet1);
 											break;
 										}
@@ -382,6 +382,7 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover_2Stacks<LETTER
 									completeTree.put(currentNodeSet1.aState, new LinkedList<NodeData>());
 								}
 								completeTree.get(currentNodeSet1.aState).addFirst(currentNodeSet1);
+								totalUniqueNodes++;
 								if(currentNodeSet1.parentNode!=null){
 									currentNodeSet1.parentNode.outgoingTransition.add(new Transition(currentNodeSet1.word.getSymbol(currentNodeSet1.word.getLength()-2),currentNodeSet1));
 								}
@@ -420,6 +421,7 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover_2Stacks<LETTER
 											currentNodeSet1.parentNode.outgoingTransition.add(new Transition(currentNodeSet1.word.getSymbol(currentNodeSet1.word.getLength()-2),completeNodeSet));	
 										}
 										coveredNodes.add(currentNodeSet1);
+										totalCoveredNodes++;
 										//toBeDeleteed.add(currentNodeSet1);
 										break;
 									}else{
@@ -453,6 +455,7 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover_2Stacks<LETTER
 												currentNodeSet1.parentNode.outgoingTransition.add(new Transition(currentNodeSet1.word.getSymbol(currentNodeSet1.word.getLength()-2),completeNodeSet));	
 											}
 											coveredNodes.add(currentNodeSet1);
+											totalCoveredNodes++;
 											//toBeDeleteed.add(currentNodeSet1);
 											break;
 										}
@@ -499,6 +502,7 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover_2Stacks<LETTER
 								completeTree.put(currentNodeSet1.aState, new LinkedList<NodeData>());
 							}
 							completeTree.get(currentNodeSet1.aState).addFirst(currentNodeSet1);
+							totalUniqueNodes++;
 							if(currentNodeSet1.parentNode!=null){
 								currentNodeSet1.parentNode.outgoingTransition.add(new Transition(currentNodeSet1.word.getSymbol(currentNodeSet1.word.getLength()-2),currentNodeSet1));
 							}
@@ -594,7 +598,7 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover_2Stacks<LETTER
 		public void deadendRemove(){
 			//toBeKeepedNodes = new HashSet<NodeData>();
 			//HashSet<NodeData> toBeDeletedNodes = new HashSet<NodeData>(allNodes);
-			int i=0;
+			/*int i=0;
 			for(NodeData node :completeTree.keySet()){
 				for(NodeData node2 : completeTree.get(node)){
 						i++;
@@ -605,20 +609,14 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover_2Stacks<LETTER
 						i++;
 				}
 			}
-			m_Logger.info("Nodes before: "+(i));
+			m_Logger.info("Nodes before: "+(i));*/
 			for(NodeData nodes : allNodes){
 				nodes.keep = false;
 			}
 			for(NodeData errorNode : errorNodes){
 				deadEndRemoveWalker(errorNode);
 			}
-			for(NodeData node :completeTree.keySet()){
-				for(NodeData node2 : completeTree.get(node)){
-					if(node2.keep==true){
-						i++;
-					}
-				}
-			}
+			/*
 			i=0;
 			for(NodeData node :completeTree.keySet()){
 				for(NodeData node2 : completeTree.get(node)){
@@ -634,7 +632,7 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover_2Stacks<LETTER
 					}
 				}
 			}
-			m_Logger.info("Nodes After: "+i);
+			m_Logger.info("Nodes After: "+i);*/
 /*			toBeDeletedNodes.removeAll(toBeKeepedNodes);
 			for(NodeData nodeToBeDelete : toBeDeletedNodes){
 				Transition removeTran = null;
@@ -855,7 +853,9 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover_2Stacks<LETTER
 		//	m_Logger.info("counterExample: "+getCounterexample().getWord().toString());
 		//}
 		m_Logger.info("Total: "+ totalNodes+" node(s)");
-		
+		m_Logger.info("Total ACC: "+ totalAACNodes+" node(s)");
+		m_Logger.info("Total IC: "+ totalCoveredNodes+" node(s)");
+		m_Logger.info("Total Unique: "+ totalUniqueNodes+" node(s)");
 		return "Exit " + operationName();
 	}
 	
