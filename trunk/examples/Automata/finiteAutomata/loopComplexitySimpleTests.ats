@@ -1,0 +1,18 @@
+// Author: Thomas Lang, heizmann@informatik.uni-freiburg.de
+// Date: 2015-06-03
+
+parseAutomata("PathologicalExamples.ats");
+
+assert(loopComplexity(noInitialStates) == 0);
+assert(loopComplexity(noFinalStates) == 0);
+assert(loopComplexity(noStates) == 0);
+assert(loopComplexity(unreachableStates) == 0);
+assert(loopComplexity(totalOneStateAutomaton) == 1);
+assert(loopComplexity(emptyAutomaton) == 0);
+assert(loopComplexity(noTransitionAutomaton) == 0);
+
+
+parseAutomata("divisibility.ats");
+
+assert(loopComplexity(Amod2) == 2);
+assert(loopComplexity(Amod3) == 2);
