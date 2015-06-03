@@ -13,7 +13,7 @@ procedure proc(n: int) returns ();
 implementation proc(n: int) returns ()
 {
   var y:bv20;
-  x := y
+  y := x;
   assert x == y;
 }
 
