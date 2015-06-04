@@ -30,6 +30,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -103,7 +104,8 @@ public class SccComputationWithAcceptingLassos<LETTER, STATE> {
 	private List<NestedLassoRun<LETTER, STATE>> m_NestedLassoRuns;
 	private NestedLassoRun<LETTER, STATE> m_NestedLassoRun;
 	private int m_AcceptingBalls = 0;
-	private SCComponentForNWARSFactory<LETTER, STATE> m_ScComponentFactory;
+	private final SCComponentForNWARSFactory<LETTER, STATE> m_ScComponentFactory;
+	private final NWARSSuccessorProvider<LETTER, STATE> m_NWARSSuccessorProvider;
 
 	public Collection<SCComponentForNWARS<LETTER, STATE>> getBalls() {
 		return m_Balls;
@@ -132,6 +134,7 @@ public class SccComputationWithAcceptingLassos<LETTER, STATE> {
 		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 		this.nestedWordAutomatonReachableStates = nestedWordAutomatonReachableStates;
 		m_ScComponentFactory = new SCComponentForNWARSFactory<LETTER, STATE>(this.nestedWordAutomatonReachableStates);
+		m_NWARSSuccessorProvider = new NWARSSuccessorProvider<>(nestedWordAutomatonReachableStates, allStates);
 		m_TransitionFilter = new StateBasedTransitionFilterPredicateProvider<>(allStates);
 		m_NumberOfAllStates = allStates.size();
 		m_AcceptingSummaries = asc.getAcceptingSummaries();
@@ -162,20 +165,10 @@ public class SccComputationWithAcceptingLassos<LETTER, STATE> {
 		m_LowLinks.put(v, m_Index);
 		m_Index++;
 		this.m_NoScc.push(v);
-
-		for (OutgoingInternalTransition<LETTER, STATE> trans : new FilteredIterable<OutgoingInternalTransition<LETTER, STATE>>(
-				v.internalSuccessors(), m_TransitionFilter.getInternalSuccessorPredicate())) {
-			StateContainer<LETTER, STATE> succCont = this.nestedWordAutomatonReachableStates.getStateContainer(trans.getSucc());
-			processSuccessor(v, succCont);
-		}
-		for (SummaryReturnTransition<LETTER, STATE> trans : new FilteredIterable<SummaryReturnTransition<LETTER, STATE>>(
-				this.nestedWordAutomatonReachableStates.returnSummarySuccessor(v.getState()), m_TransitionFilter.getReturnSummaryPredicate())) {
-			StateContainer<LETTER, STATE> succCont = this.nestedWordAutomatonReachableStates.getStateContainer(trans.getSucc());
-			processSuccessor(v, succCont);
-		}
-		for (OutgoingCallTransition<LETTER, STATE> trans : new FilteredIterable<OutgoingCallTransition<LETTER, STATE>>(
-				v.callSuccessors(), m_TransitionFilter.getCallSuccessorPredicate())) {
-			StateContainer<LETTER, STATE> succCont = this.nestedWordAutomatonReachableStates.getStateContainer(trans.getSucc());
+		
+		Iterator<StateContainer<LETTER, STATE>> it = m_NWARSSuccessorProvider.getSuccessors(v);
+		while(it.hasNext()) {
+			StateContainer<LETTER, STATE> succCont = it.next();
 			processSuccessor(v, succCont);
 		}
 
@@ -208,23 +201,11 @@ public class SccComputationWithAcceptingLassos<LETTER, STATE> {
 
 	boolean isBall(SCComponent<StateContainer<LETTER, STATE>> scc) {
 		if (scc.getNumberOfStates() == 1) {
-			StateContainer<LETTER, STATE> cont = ((SCComponent<StateContainer<LETTER, STATE>>) scc).getRootNode();
-			for (OutgoingInternalTransition<LETTER, STATE> trans : new FilteredIterable<OutgoingInternalTransition<LETTER, STATE>>(
-					cont.internalSuccessors(), m_TransitionFilter.getInternalSuccessorPredicate())) {
-				if (trans.getSucc().equals(cont.getState())) {
-					return true;
-				}
-			}
-			for (SummaryReturnTransition<LETTER, STATE> trans : new FilteredIterable<SummaryReturnTransition<LETTER, STATE>>(
-					this.nestedWordAutomatonReachableStates.returnSummarySuccessor(cont.getState()), m_TransitionFilter.getReturnSummaryPredicate())) {
-				if (trans.getSucc().equals(cont.getState())) {
-					return true;
-				}
-			}
-			for (OutgoingCallTransition<LETTER, STATE> trans : new FilteredIterable<OutgoingCallTransition<LETTER, STATE>>(
-					cont.callSuccessors(), m_TransitionFilter.getCallSuccessorPredicate())) {
-				StateContainer<LETTER, STATE> succCont = this.nestedWordAutomatonReachableStates.getStateContainer(trans.getSucc());
-				if (trans.getSucc().equals(cont.getState())) {
+			StateContainer<LETTER, STATE> cont = scc.getRootNode();
+			Iterator<StateContainer<LETTER, STATE>> it = m_NWARSSuccessorProvider.getSuccessors(cont);
+			while(it.hasNext()) {
+				StateContainer<LETTER, STATE> succCont = it.next();
+				if (cont.equals(succCont)) {
 					return true;
 				}
 			}
@@ -252,5 +233,9 @@ public class SccComputationWithAcceptingLassos<LETTER, STATE> {
 	
 	public interface SCComponentFactory<NODE, C extends SCComponent<NODE>> {
 		public C constructNewSCComponent();
+	}
+	
+	public interface ISuccessorProvider<NODE> {
+		public Iterator<NODE> getSuccessors(NODE node);
 	}
 }
