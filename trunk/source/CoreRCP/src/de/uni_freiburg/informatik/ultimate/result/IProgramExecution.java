@@ -25,56 +25,59 @@ import java.util.Set;
 public interface IProgramExecution<TE, E> {
 
 	/**
-	 * Returns the length of this program execution. The Length of a program
+	 * Returns the length of this program execution. The length of a program
 	 * execution is the length of the sequence of trace elements.
 	 */
-	public int getLength();
+	int getLength();
 
 	/**
-	 * Returns the trace element at position i of this program execution.
+	 * Returns the trace element at position
+	 * <code>index<code> of this program execution.
 	 */
-	public AtomicTraceElement<TE> getTraceElement(int i);
+	AtomicTraceElement<TE> getTraceElement(int index);
 
 	/**
-	 * Returns the partial program state at position i of this program
-	 * execution. The partial program state at position i is the partial state
+	 * Returns the partial program state at position
+	 * <code>index<code> of this program
+	 * execution. The partial program state at position <code>index<code> is the partial state
 	 * of the program directly <b>after</b> executing the trace element at
-	 * position i. Returns null if this object does not have any information
-	 * about the program state at position i.
+	 * position <code>index<code>. Returns null if this object does not have any information
+	 * about the program state at position <code>index<code>.
 	 */
-	public ProgramState<E> getProgramState(int i);
+	ProgramState<E> getProgramState(int index);
 
 	/**
 	 * Returns the partial program state at the beginning of this program
 	 * execution. This is the partial program state before the first trace
 	 * element was executed.
 	 */
-	public ProgramState<E> getInitialProgramState();
+	ProgramState<E> getInitialProgramState();
 
 	/**
 	 * @return The instance of {@link Class} describing the type of the type
 	 *         parameter E.
 	 */
-	public Class<E> getExpressionClass();
+	Class<E> getExpressionClass();
 
 	/**
 	 * @return The instance of {@link Class} describing the type of the type
 	 *         parameter TE.
 	 */
-	public Class<TE> getTraceElementClass();
+	Class<TE> getTraceElementClass();
 
 	/**
 	 * Should return a human-readable representation of this program execution.
 	 * Use {@link ProgramExecutionFormatter} to obtain it.
 	 */
-	public String toString();
+	@Override
+	String toString();
 
 	/**
 	 * @return null iff you do not support SVCOMP witnesses, a String
 	 *         representing the described program execution as SVCOMP GraphML
 	 *         otherwise.
 	 */
-	public String getSVCOMPWitnessString();
+	String getSVCOMPWitnessString();
 
 	/**
 	 * Program state that is can be defined only partially. This class defines

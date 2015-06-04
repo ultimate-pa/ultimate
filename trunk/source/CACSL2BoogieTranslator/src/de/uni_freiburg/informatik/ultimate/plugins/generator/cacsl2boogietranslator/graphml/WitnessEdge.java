@@ -162,7 +162,7 @@ public class WitnessEdge {
 		}
 
 		sb.append(varStr);
-		sb.append("=");
+		sb.append("==");
 		sb.append(valStr);
 		sb.append(";");
 	}

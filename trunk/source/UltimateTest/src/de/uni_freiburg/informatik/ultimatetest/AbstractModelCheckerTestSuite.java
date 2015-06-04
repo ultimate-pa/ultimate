@@ -68,22 +68,34 @@ public abstract class AbstractModelCheckerTestSuite extends UltimateTestSuite {
 	 *            The test result decider that should be used in this test
 	 */
 	protected void addTestCase(String toolchain, String settings, String input, ITestResultDecider testResultDecider) {
-		File toolchainFile = new File(TestUtil.getPathFromTrunk(mPathToToolchains + toolchain));
-		File settingsFile = new File(TestUtil.getPathFromTrunk(mPathToSettings + settings));
-		File inputFile = new File(TestUtil.getPathFromTrunk(input));
+		File toolchainFile = getToolchainFile(toolchain);
+		File settingsFile = getSettingsFile(settings);
+		File inputFile = getInputFile(input);
 		addTestCase(toolchainFile, settingsFile, inputFile, testResultDecider);
 	}
 
 	protected void addTestCase(String toolchain, String settings, String input) {
-		File toolchainFile = new File(TestUtil.getPathFromTrunk(mPathToToolchains + toolchain));
-		File settingsFile = new File(TestUtil.getPathFromTrunk(mPathToSettings + settings));
-		File inputFile = new File(TestUtil.getPathFromTrunk(input));
+		File toolchainFile = getToolchainFile(toolchain);
+		File settingsFile = getSettingsFile(settings);
+		File inputFile = getInputFile(input);
 		addTestCases(toolchainFile, settingsFile, Collections.singleton(inputFile));
 	}
 
+	protected File getInputFile(String input) {
+		return new File(TestUtil.getPathFromTrunk(input));
+	}
+
+	protected File getSettingsFile(String settings) {
+		return new File(TestUtil.getPathFromTrunk(mPathToSettings + settings));
+	}
+
+	protected File getToolchainFile(String toolchain) {
+		return new File(TestUtil.getPathFromTrunk(mPathToToolchains + toolchain));
+	}
+
 	protected void addTestCases(String toolchain, String settings, String[] directories, String[] fileEndings) {
-		File toolchainFile = new File(TestUtil.getPathFromTrunk(mPathToToolchains + toolchain));
-		File settingsFile = new File(TestUtil.getPathFromTrunk(mPathToSettings + settings));
+		File toolchainFile = getToolchainFile(toolchain);
+		File settingsFile = getSettingsFile(settings);
 		Collection<File> testFiles = new ArrayList<File>();
 		for (String directory : directories) {
 			testFiles.addAll(getInputFiles(directory, fileEndings, Integer.MAX_VALUE));
@@ -93,8 +105,8 @@ public abstract class AbstractModelCheckerTestSuite extends UltimateTestSuite {
 	
 	protected void addTestCasesRegExp(String toolchain, String settings, String[] regExp) {
 
-		File toolchainFile = new File(TestUtil.getPathFromTrunk(mPathToToolchains + toolchain));
-		File settingsFile = new File(TestUtil.getPathFromTrunk(mPathToSettings + settings));
+		File toolchainFile = getToolchainFile(toolchain);
+		File settingsFile = getSettingsFile(settings);
 		File trunk = new File(TestUtil.getPathFromTrunk("/"));
 		Collection<File> testFiles = TestUtil.getFilesRegex(trunk, regExp);
 		addTestCases(toolchainFile, settingsFile, testFiles);
@@ -103,8 +115,8 @@ public abstract class AbstractModelCheckerTestSuite extends UltimateTestSuite {
 	protected void addTestCases(String toolchain, String settings,
 			DirectoryFileEndingsPair[] directoryFileEndingsPairs) {
 
-		File toolchainFile = new File(TestUtil.getPathFromTrunk(mPathToToolchains + toolchain));
-		File settingsFile = new File(TestUtil.getPathFromTrunk(mPathToSettings + settings));
+		File toolchainFile = getToolchainFile(toolchain);
+		File settingsFile = getSettingsFile(settings);
 		Collection<File> testFiles = new ArrayList<File>();
 		for (DirectoryFileEndingsPair directoryFileEndingsPair : directoryFileEndingsPairs) {
 			testFiles.addAll(getInputFiles(directoryFileEndingsPair.getDirectory(),

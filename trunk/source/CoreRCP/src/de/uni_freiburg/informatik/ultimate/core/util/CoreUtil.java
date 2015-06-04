@@ -56,7 +56,6 @@ public class CoreUtil {
 		} finally {
 			out.close();
 		}
-
 	}
 
 	public static void writeFile(String filename, String[] content) throws IOException {

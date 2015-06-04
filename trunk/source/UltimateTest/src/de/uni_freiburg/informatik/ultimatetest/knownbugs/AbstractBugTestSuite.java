@@ -36,10 +36,6 @@ public abstract class AbstractBugTestSuite extends AbstractModelCheckerTestSuite
 
 	protected abstract void fillTestCases();
 
-	protected void addTestCase(String toolchain, String settings, String input) {
-		addTestCase(toolchain, settings, input);
-	}
-
 	@Override
 	public ITestResultDecider constructITestResultDecider(UltimateRunDefinition urd) {
 		return new SafetyCheckTestResultDecider(urd, false);

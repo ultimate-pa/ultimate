@@ -1,125 +1,24 @@
 package de.uni_freiburg.informatik.ultimatetest.knownbugs;
 
+import java.io.File;
+import java.util.List;
+
+import de.uni_freiburg.informatik.ultimatetest.util.TestUtil;
+
 public class WitnessBugs extends AbstractBugTestSuite {
 
 	@Override
 	protected void fillTestCases() {
-		// communicated to cpachecker, awaiting response
-		// addAutomizer32bitPrecise("examples/svcomp/ldv-regression/test_while_int.c_false-unreach-call.i");
 
-		// addAutomizer32bitPrecise("examples/svcomp/ldv-regression/test_while_int.c_false-unreach-call.i");
-		// addAutomizer32bitPrecise("examples/svcomp/loops/eureka_01_false-unreach-call.i");
-		// addAutomizer32bitPrecise("examples/svcomp/loops/verisec_OpenSER__cases1_stripFullBoth_arr_false-unreach-call.i");
-		// addAutomizer32bitPrecise("examples/svcomp/loops/verisec_sendmail__tTflag_arr_one_loop_false-unreach-call.i");
+		// addAutomizer32bitPrecise("examples/svcomp/product-lines/email_spec6_product35_false-unreach-call.cil.c");
+
 		//
-		// addAutomizer32bitPrecise("examples/svcomp/seq-mthreaded/pals_STARTPALS_Triplicated_false-unreach-call.1.ufo.BOUNDED-10.pals.c");
-		// addAutomizer32bitPrecise("examples/svcomp/ssh/s3_srvr.blast.01_false-unreach-call.i.cil.c");
+		final List<File> files = TestUtil.getFiles(
+				new File(TestUtil.getPathFromTrunk("examples/Backtranslation/regression/c/standard/")),
+				new String[] { ".c" });
+		addTestCases(getToolchainFile("AutomizerC.xml"),
+				getSettingsFile("witness/svComp-32bit-precise-Automizer-ValidateCPA.epf"), files);
 
-		// addAutomizer32bitPrecise("examples/svcomp/loops/vogal_false-unreach-call.i");
-		// addImpulse32bitPrecise("examples/svcomp/loops/vogal_false-unreach-call.i");
-
-		// addAutomizer32bitPrecise("examples/svcomp/loops/sum03_false-unreach-call_true-termination.i");
-		// addAutomizer32bitPrecise("examples/svcomp/loops/verisec_OpenSER__cases1_stripFullBoth_arr_false-unreach-call.i");
-		// addAutomizer32bitPrecise("examples/svcomp/loops/eureka_01_false-unreach-call.i");
-		// addAutomizer32bitPrecise("examples/svcomp/loops/sum_array_false-unreach-call.i");
-		// addAutomizer32bitPrecise("examples/svcomp/loops/verisec_sendmail__tTflag_arr_one_loop_false-unreach-call.i");
-		// addAutomizer32bitPrecise("examples/svcomp/loops/vogal_false-unreach-call.i");
-		// addAutomizer32bitPrecise("examples/svcomp/seq-mthreaded/pals_floodmax.3_false-unreach-call.1.ufo.BOUNDED-6.pals.c");
-		// addAutomizer32bitPrecise("examples/svcomp/seq-mthreaded/pals_floodmax.3_false-unreach-call.2.ufo.BOUNDED-6.pals.c");
-		// addAutomizer32bitPrecise("examples/svcomp/seq-mthreaded/pals_floodmax.3_false-unreach-call.3.ufo.BOUNDED-6.pals.c");
-		// addAutomizer32bitPrecise("examples/svcomp/seq-mthreaded/pals_floodmax.3_false-unreach-call.4.ufo.BOUNDED-6.pals.c");
-		// addAutomizer32bitPrecise("examples/svcomp/seq-mthreaded/pals_lcr-var-start-time.3_false-unreach-call.1.ufo.BOUNDED-6.pals.c");
-		// addAutomizer32bitPrecise("examples/svcomp/seq-mthreaded/pals_lcr-var-start-time.3_false-unreach-call.2.ufo.BOUNDED-6.pals.c");
-		// addAutomizer32bitPrecise("examples/svcomp/seq-mthreaded/pals_lcr.3_false-unreach-call.1.ufo.BOUNDED-6.pals.c");
-		// addAutomizer32bitPrecise("examples/svcomp/seq-mthreaded/pals_opt-floodmax.3_false-unreach-call.1.ufo.BOUNDED-6.pals.c");
-		// addAutomizer32bitPrecise("examples/svcomp/seq-mthreaded/pals_opt-floodmax.3_false-unreach-call.2.ufo.BOUNDED-6.pals.c");
-		// addAutomizer32bitPrecise("examples/svcomp/seq-mthreaded/pals_opt-floodmax.3_false-unreach-call.3.ufo.BOUNDED-6.pals.c");
-		// addAutomizer32bitPrecise("examples/svcomp/seq-mthreaded/pals_opt-floodmax.3_false-unreach-call.4.ufo.BOUNDED-6.pals.c");
-		// addAutomizer32bitPrecise("examples/svcomp/seq-mthreaded/pals_STARTPALS_Triplicated_false-unreach-call.1.ufo.BOUNDED-10.pals.c");
-		// addAutomizer32bitPrecise("examples/svcomp/seq-mthreaded/pals_STARTPALS_Triplicated_false-unreach-call.2.ufo.BOUNDED-10.pals.c");
-		// addAutomizer32bitPrecise("examples/svcomp/seq-mthreaded/pals_lcr-var-start-time.3_false-unreach-call.2.ufo.BOUNDED-6.pals.c");
-		// addAutomizer32bitPrecise("examples/svcomp/seq-mthreaded/pals_lcr.3_false-unreach-call.1.ufo.BOUNDED-6.pals.c");
-		// addAutomizer32bitPrecise("examples/svcomp/ssh/s3_srvr.blast.01_false-unreach-call.i.cil.c");
-		// addAutomizer32bitPrecise("examples/svcomp/ssh/s3_srvr.blast.07_false-unreach-call.i.cil.c");
-		// addAutomizer32bitPrecise("examples/svcomp/ssh/s3_srvr.blast.09_false-unreach-call.i.cil.c");
-		// addAutomizer32bitPrecise("examples/svcomp/eca-rers2012/Problem10_label42_false-unreach-call.c");
-		// addAutomizer32bitPrecise("examples/svcomp/eca-rers2012/Problem11_label39_false-unreach-call.c");
-		// addAutomizer32bitPrecise("examples/svcomp/eca-rers2012/Problem14_label22_false-unreach-call.c");
-		// addAutomizer32bitPrecise("examples/svcomp/eca-rers2012/Problem14_label29_false-unreach-call.c");
-		// addAutomizer32bitPrecise("examples/svcomp/eca-rers2012/Problem14_label31_false-unreach-call.c");
-		// addAutomizer32bitPrecise("examples/svcomp/eca-rers2012/Problem14_label37_false-unreach-call.c");
-		// addAutomizer32bitPrecise("examples/svcomp/eca-rers2012/Problem14_label52_false-unreach-call.c");
-		// addAutomizer32bitPrecise("examples/svcomp/eca-rers2012/Problem14_label54_false-unreach-call.c");
-		// addAutomizer32bitPrecise("examples/svcomp/eca-rers2012/Problem14_label58_false-unreach-call.c");
-		// addAutomizer32bitPrecise("examples/svcomp/eca-rers2012/Problem18_label27_false-unreach-call.c");
-		//
-		// addImpulse32bitPrecise("examples/svcomp/ldv-regression/test_while_int.c_false-unreach-call.i");
-		// addImpulse32bitPrecise("examples/svcomp/loops/sum03_false-unreach-call_true-termination.i");
-		// addImpulse32bitPrecise("examples/svcomp/loops/verisec_OpenSER__cases1_stripFullBoth_arr_false-unreach-call.i");
-		// addImpulse32bitPrecise("examples/svcomp/loops/eureka_01_false-unreach-call.i");
-		// addImpulse32bitPrecise("examples/svcomp/loops/sum_array_false-unreach-call.i");
-		// addImpulse32bitPrecise("examples/svcomp/loops/verisec_sendmail__tTflag_arr_one_loop_false-unreach-call.i");
-		// addImpulse32bitPrecise("examples/svcomp/loops/vogal_false-unreach-call.i");
-		// addImpulse32bitPrecise("examples/svcomp/seq-mthreaded/pals_floodmax.3_false-unreach-call.1.ufo.BOUNDED-6.pals.c");
-		// addImpulse32bitPrecise("examples/svcomp/seq-mthreaded/pals_floodmax.3_false-unreach-call.2.ufo.BOUNDED-6.pals.c");
-		// addImpulse32bitPrecise("examples/svcomp/seq-mthreaded/pals_floodmax.3_false-unreach-call.3.ufo.BOUNDED-6.pals.c");
-		// addImpulse32bitPrecise("examples/svcomp/seq-mthreaded/pals_floodmax.3_false-unreach-call.4.ufo.BOUNDED-6.pals.c");
-		// addImpulse32bitPrecise("examples/svcomp/seq-mthreaded/pals_lcr-var-start-time.3_false-unreach-call.1.ufo.BOUNDED-6.pals.c");
-		// addImpulse32bitPrecise("examples/svcomp/seq-mthreaded/pals_lcr-var-start-time.3_false-unreach-call.2.ufo.BOUNDED-6.pals.c");
-		// addImpulse32bitPrecise("examples/svcomp/seq-mthreaded/pals_lcr.3_false-unreach-call.1.ufo.BOUNDED-6.pals.c");
-		// addImpulse32bitPrecise("examples/svcomp/seq-mthreaded/pals_opt-floodmax.3_false-unreach-call.1.ufo.BOUNDED-6.pals.c");
-		// addImpulse32bitPrecise("examples/svcomp/seq-mthreaded/pals_opt-floodmax.3_false-unreach-call.2.ufo.BOUNDED-6.pals.c");
-		// addImpulse32bitPrecise("examples/svcomp/seq-mthreaded/pals_opt-floodmax.3_false-unreach-call.3.ufo.BOUNDED-6.pals.c");
-		// addImpulse32bitPrecise("examples/svcomp/seq-mthreaded/pals_opt-floodmax.3_false-unreach-call.4.ufo.BOUNDED-6.pals.c");
-		// addImpulse32bitPrecise("examples/svcomp/seq-mthreaded/pals_STARTPALS_Triplicated_false-unreach-call.1.ufo.BOUNDED-10.pals.c");
-		// addImpulse32bitPrecise("examples/svcomp/seq-mthreaded/pals_STARTPALS_Triplicated_false-unreach-call.2.ufo.BOUNDED-10.pals.c");
-		// addImpulse32bitPrecise("examples/svcomp/seq-mthreaded/pals_lcr-var-start-time.3_false-unreach-call.2.ufo.BOUNDED-6.pals.c");
-		// addImpulse32bitPrecise("examples/svcomp/seq-mthreaded/pals_lcr.3_false-unreach-call.1.ufo.BOUNDED-6.pals.c");
-		// addImpulse32bitPrecise("examples/svcomp/ssh/s3_srvr.blast.01_false-unreach-call.i.cil.c");
-		// addImpulse32bitPrecise("examples/svcomp/ssh/s3_srvr.blast.07_false-unreach-call.i.cil.c");
-		// addImpulse32bitPrecise("examples/svcomp/ssh/s3_srvr.blast.09_false-unreach-call.i.cil.c");
-		//
-		// addImpulse32bitPrecise("examples/svcomp/eca-rers2012/Problem11_label39_false-unreach-call.c");
-		// addImpulse32bitPrecise("examples/svcomp/eca-rers2012/Problem14_label22_false-unreach-call.c");
-		// addImpulse32bitPrecise("examples/svcomp/eca-rers2012/Problem14_label29_false-unreach-call.c");
-		// addImpulse32bitPrecise("examples/svcomp/eca-rers2012/Problem14_label31_false-unreach-call.c");
-		// addImpulse32bitPrecise("examples/svcomp/eca-rers2012/Problem14_label37_false-unreach-call.c");
-		// addImpulse32bitPrecise("examples/svcomp/eca-rers2012/Problem14_label52_false-unreach-call.c");
-		// addImpulse32bitPrecise("examples/svcomp/eca-rers2012/Problem14_label54_false-unreach-call.c");
-		// addImpulse32bitPrecise("examples/svcomp/eca-rers2012/Problem14_label58_false-unreach-call.c");
-		// addImpulse32bitPrecise("examples/svcomp/eca-rers2012/Problem18_label27_false-unreach-call.c");
-		// addImpulse32bitPrecise("examples/svcomp/eca-rers2012/Problem10_label42_false-unreach-call.c");
-
-		// all contested Automizer examples
-//		addAutomizer32bitPrecise("examples/svcomp/eca-rers2012/Problem14_label52_false-unreach-call.c");
-//		addAutomizer32bitPrecise("examples/svcomp/eca-rers2012/Problem11_label39_false-unreach-call.c");
-//		addAutomizer32bitPrecise("examples/svcomp/eca-rers2012/Problem14_label29_false-unreach-call.c");
-//		addAutomizer32bitPrecise("examples/svcomp/eca-rers2012/Problem14_label37_false-unreach-call.c");
-//		addAutomizer32bitPrecise("examples/svcomp/eca-rers2012/Problem14_label31_false-unreach-call.c");
-//		addAutomizer32bitPrecise("examples/svcomp/eca-rers2012/Problem14_label58_false-unreach-call.c");
-//		addAutomizer32bitPrecise("examples/svcomp/seq-mthreaded/pals_lcr.3_false-unreach-call.1.ufo.BOUNDED-6.pals.c");
-//		addAutomizer32bitPrecise("examples/svcomp/seq-mthreaded/pals_lcr-var-start-time.3_false-unreach-call.2.ufo.BOUNDED-6.pals.c");
-//		addAutomizer32bitPrecise("examples/svcomp/loops/vogal_false-unreach-call.i");
-//		addAutomizer32bitPrecise("examples/svcomp/loops/sum_array_false-unreach-call.i");
-//		addAutomizer32bitPrecise("examples/svcomp/eca-rers2012/Problem10_label42_false-unreach-call.c");
-		// end contested
-
-		// all contested Impulse examples
-		addImpulse32bitPrecise("examples/svcomp/seq-mthreaded/pals_floodmax.3_false-unreach-call.2.ufo.BOUNDED-6.pals.c");
-//		addImpulse32bitPrecise("examples/svcomp/seq-mthreaded/pals_floodmax.3_false-unreach-call.3.ufo.BOUNDED-6.pals.c");
-//		addImpulse32bitPrecise("examples/svcomp/seq-mthreaded/pals_floodmax.3_false-unreach-call.4.ufo.BOUNDED-6.pals.c");
-//		addImpulse32bitPrecise("examples/svcomp/seq-mthreaded/pals_opt-floodmax.3_false-unreach-call.4.ufo.BOUNDED-6.pals.c");
-//		addImpulse32bitPrecise("examples/svcomp/seq-mthreaded/pals_opt-floodmax.3_false-unreach-call.1.ufo.BOUNDED-6.pals.c");
-//		addImpulse32bitPrecise("examples/svcomp/seq-mthreaded/pals_lcr.3_false-unreach-call.1.ufo.BOUNDED-6.pals.c");
-//		addImpulse32bitPrecise("examples/svcomp/seq-mthreaded/pals_lcr-var-start-time.3_false-unreach-call.2.ufo.BOUNDED-6.pals.c");
-//		addImpulse32bitPrecise("examples/svcomp/seq-mthreaded/pals_floodmax.3_false-unreach-call.1.ufo.BOUNDED-6.pals.c");
-//		addImpulse32bitPrecise("examples/svcomp/seq-mthreaded/pals_opt-floodmax.3_false-unreach-call.3.ufo.BOUNDED-6.pals.c");
-//		addImpulse32bitPrecise("examples/svcomp/seq-mthreaded/pals_opt-floodmax.3_false-unreach-call.2.ufo.BOUNDED-6.pals.c");
-//		addImpulse32bitPrecise("examples/svcomp/seq-mthreaded/pals_lcr-var-start-time.3_false-unreach-call.1.ufo.BOUNDED-6.pals.c");
-//		addImpulse32bitPrecise("examples/svcomp/loops/verisec_OpenSER__cases1_stripFullBoth_arr_false-unreach-call.i");
-//		addImpulse32bitPrecise("examples/svcomp/ssh/s3_srvr.blast.07_false-unreach-call.i.cil.c");
-//		addImpulse32bitPrecise("examples/svcomp/ssh/s3_srvr.blast.01_false-unreach-call.i.cil.c");
-		// end conttested
 	}
 
 	/**
