@@ -8,7 +8,7 @@
 
 #quote oldstring
 OLDSTRING=$(sed 's/\\/\\\\/g' <<< "$1")
-NEWSTRING="$2"
+NEWSTRING=$(sed 's/\\/\\\\/g' <<< "$2")
 echo "Replacing the OLDSTRING with NEWSTRING in each .epf file"
 echo "OLDSTRING: $1"
 echo "NEWSTRING: $2"
