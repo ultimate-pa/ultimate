@@ -25,6 +25,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -50,7 +51,23 @@ public class SCComponent<NODE> {
 	 * contained in this SCC.
 	 */
 	public Set<NODE> getNodes() {
-		return m_Nodes;
+		return Collections.unmodifiableSet(m_Nodes);
 	}
+	
+	public void addNode(NODE node) {
+		if (m_RootNode != null) {
+			throw new UnsupportedOperationException("If root node is set SCC may not be modified");
+		}
+		boolean notAlreadyContained = m_Nodes.add(node);
+		assert notAlreadyContained : "nodes must not be added twice";
+	}
+	
+	public void setRootNode(NODE rootNode) {
+		if (m_RootNode != null) {
+			throw new UnsupportedOperationException("If root node is set SCC may not be modified");
+		}
+		m_RootNode = rootNode;
+	}
+	
 
 }

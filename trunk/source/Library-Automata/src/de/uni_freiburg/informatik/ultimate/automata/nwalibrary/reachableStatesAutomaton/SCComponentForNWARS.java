@@ -56,11 +56,9 @@ public class SCComponentForNWARS<LETTER, STATE> extends SCComponent<StateContain
 		nestedWordAutomatonReachableStates = nwars;
 	}
 
-	public void addState(StateContainer<LETTER, STATE> cont) {
-		if (m_RootNode != null) {
-			throw new UnsupportedOperationException("If root node is set SCC may not be modified");
-		}
-		m_Nodes.add(cont);
+	@Override
+	public void addNode(StateContainer<LETTER, STATE> cont) {
+		super.addNode(cont);
 		m_StateWithLowestSerialNumber = StateContainer.returnLower(m_StateWithLowestSerialNumber, cont);
 
 		if (nestedWordAutomatonReachableStates.isFinal(cont.getState())) {

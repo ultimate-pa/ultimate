@@ -1951,7 +1951,7 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 		}
 		SccComputationWithAcceptingLassos<LETTER, STATE> sccComputation = 
 				new SccComputationWithAcceptingLassos<>(this, m_AcceptingSummaries, m_Services, stateSubset, startStates);
-		return sccComputation.getBalls();
+		return sccComputation.getSccComputation().getBalls();
 	}
 	
 	
