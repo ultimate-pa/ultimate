@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie;
 
+import java.math.BigInteger;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -40,15 +41,16 @@ public class TypeSortTranslator {
 		mServices = services;
 		m_BlackHoleArrays = blackHoleArrays;
 		m_Script = script;
-
-		Sort boolSort = m_Script.sort("Bool");
-		IType boolType = BoogieType.boolType;
-		m_type2sort.put(boolType, boolSort);
-		m_sort2type.put(boolSort, boolType);
-		Sort intSort = m_Script.sort("Int");
-		IType intType = BoogieType.intType;
-		m_type2sort.put(intType, intSort);
-		m_sort2type.put(intSort, intType);
+		{
+			// Add type/sort bool to mapping. We need this in our
+			// backtranslation in the case where there was no Boolean 
+			// variable in the Boogie program but we translate a boolean
+			// term e.g., "true".
+			Sort boolSort = m_Script.sort("Bool");
+			IType boolType = BoogieType.boolType;
+			m_type2sort.put(boolType, boolSort);
+			m_sort2type.put(boolSort, boolType);
+		}
 		for (TypeDeclaration typeDecl : declarations) {
 			declareType(typeDecl);
 		}
