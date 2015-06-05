@@ -116,8 +116,7 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 	private AncestorComputation m_WithOutDeadEnds;
 	private AncestorComputation m_OnlyLiveStates;
 	private AcceptingSummariesComputation m_AcceptingSummaries;
-	private SccComputationWithAcceptingLassos<LETTER, STATE> m_StronglyConnectedComponents;
-	private AcceptingLassoProvider<LETTER, STATE> m_AcceptingLassoProvider;
+	private AcceptingComponentsAnalysis<LETTER, STATE> m_AcceptingComponentsAnalysis;
 
 	/**
 	 * Construct a run for each accepting state. Use this only while
@@ -159,8 +158,7 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 			// computeDeadEnds();
 			// new NonLiveStateComputation();
 			if (m_ExtLassoConstructionTesting) {
-				getOrComputeStronglyConnectedComponents();
-				List<NestedLassoRun<LETTER, STATE>> runs = getAcceptingLassoProvider()
+				List<NestedLassoRun<LETTER, STATE>> runs = getOrComputeAcceptingComponents()
 						.getAllNestedLassoRuns();
 				for (NestedLassoRun<LETTER, STATE> nlr : runs) {
 					STATE honda = nlr.getLoop().getStateAtPosition(0);
@@ -228,21 +226,11 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 		return m_OnlyLiveStates;
 	}
 
-	public SccComputationWithAcceptingLassos<LETTER, STATE> getOrComputeStronglyConnectedComponents() {
-		if (m_StronglyConnectedComponents == null) {
-			computeStronglyConnectedComponents();
-			m_AcceptingLassoProvider = new AcceptingLassoProvider<>(this, m_AcceptingSummaries, m_Services, m_StronglyConnectedComponents);
+	public AcceptingComponentsAnalysis<LETTER, STATE> getOrComputeAcceptingComponents() {
+		if (m_AcceptingComponentsAnalysis == null) {
+			computeAcceptingComponents();
 		}
-		return m_StronglyConnectedComponents;
-	}
-	
-	
-
-	public AcceptingLassoProvider<LETTER, STATE> getAcceptingLassoProvider() {
-		if (m_StronglyConnectedComponents == null) {
-			throw new IllegalStateException("compute SCCs first");
-		}
-		return m_AcceptingLassoProvider;
+		return m_AcceptingComponentsAnalysis;
 	}
 	
 	public AcceptingSummariesComputation getAcceptingSummariesComputation() {
@@ -610,13 +598,13 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 				DownStateProp.REACH_FINAL_ONCE, DownStateProp.REACHABLE_AFTER_DEADEND_REMOVAL);
 	}
 
-	public void computeStronglyConnectedComponents() {
-		if (m_StronglyConnectedComponents != null) {
+	public void computeAcceptingComponents() {
+		if (m_AcceptingComponentsAnalysis != null) {
 			throw new AssertionError("SCCs are already computed");
 		}
 		assert m_AcceptingSummaries == null;
 		m_AcceptingSummaries = new AcceptingSummariesComputation();
-		m_StronglyConnectedComponents = new SccComputationWithAcceptingLassos<LETTER, STATE>(
+		m_AcceptingComponentsAnalysis = new AcceptingComponentsAnalysis<LETTER, STATE>(
 				this, m_AcceptingSummaries, m_Services, m_States.keySet(), m_initialStates);
 	}
 
@@ -625,12 +613,12 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 			return;
 			// throw new AssertionError("non-live states are already computed");
 		}
-		if (getOrComputeStronglyConnectedComponents() == null) {
-			computeStronglyConnectedComponents();
+		if (getOrComputeAcceptingComponents() == null) {
+			computeAcceptingComponents();
 		}
 
 		HashSet<StateContainer<LETTER, STATE>> nonLiveStartingSet = new HashSet<StateContainer<LETTER, STATE>>(
-				m_StronglyConnectedComponents.getStatesOfAllSCCs());
+				m_AcceptingComponentsAnalysis.getStatesOfAllSCCs());
 		m_OnlyLiveStates = new AncestorComputation(nonLiveStartingSet, ReachProp.LIVE_AD, ReachProp.LIVE_SD,
 				DownStateProp.REACH_FINAL_INFTY, DownStateProp.REACHABLE_AFTER_NONLIVE_REMOVAL);
 	}
@@ -1949,8 +1937,8 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 		if (m_AcceptingSummaries == null) {
 			m_AcceptingSummaries = new AcceptingSummariesComputation();
 		}
-		SccComputationWithAcceptingLassos<LETTER, STATE> sccComputation = 
-				new SccComputationWithAcceptingLassos<>(this, m_AcceptingSummaries, m_Services, stateSubset, startStates);
+		AcceptingComponentsAnalysis<LETTER, STATE> sccComputation = 
+				new AcceptingComponentsAnalysis<>(this, m_AcceptingSummaries, m_Services, stateSubset, startStates);
 		return sccComputation.getSccComputation().getBalls();
 	}
 	

@@ -29,12 +29,12 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
-public class SCComponent<NODE> {
+public class StronglyConnectedComponent<NODE> {
 
 	protected NODE m_RootNode;
 	protected final Set<NODE> m_Nodes = new HashSet<NODE>();
 
-	public SCComponent() {
+	public StronglyConnectedComponent() {
 		super();
 	}
 

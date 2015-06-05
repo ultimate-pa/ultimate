@@ -30,8 +30,6 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions;
  * For reasons of efficiency these transitions do not contain the predecessor
  * (resp. successor) because the automaton already stores this information.
  * 
- * The only common object of all these is the letter.
- *
  * @param <LETTER>
  * @param <STATE>
  */

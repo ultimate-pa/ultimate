@@ -34,7 +34,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions;
  * @param <LETTER>
  * @param <STATE>
  */
-public class SummaryReturnTransition<LETTER,STATE> implements Transitionlet<LETTER,STATE> {
+public class SummaryReturnTransition<LETTER,STATE> implements OutgoingTransitionlet<LETTER,STATE> {
 	
 	private final STATE m_LinPred;
 	private final LETTER m_Letter; 

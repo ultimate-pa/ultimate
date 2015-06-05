@@ -36,7 +36,7 @@ import java.text.MessageFormat;
  * @param <LETTER>
  * @param <STATE>
  */
-public class OutgoingCallTransition<LETTER,STATE> implements Transitionlet<LETTER,STATE> {
+public class OutgoingCallTransition<LETTER,STATE> implements OutgoingTransitionlet<LETTER,STATE> {
 	
 	private final LETTER m_Letter; 
 	private final STATE m_Succ;

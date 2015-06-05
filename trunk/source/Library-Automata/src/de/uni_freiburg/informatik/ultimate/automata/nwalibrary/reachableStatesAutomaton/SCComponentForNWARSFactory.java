@@ -1,9 +1,9 @@
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton;
 
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.SccComputation.SCComponentFactory;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.SccComputation.IStronglyConnectedComponentFactory;
 
 
-public class SCComponentForNWARSFactory<LETTER, STATE> implements SCComponentFactory<StateContainer<LETTER, STATE>, SCComponentForNWARS<LETTER, STATE>> {
+public class SCComponentForNWARSFactory<LETTER, STATE> implements IStronglyConnectedComponentFactory<StateContainer<LETTER, STATE>, SCComponentForNWARS<LETTER, STATE>> {
 	
 	private final NestedWordAutomatonReachableStates<LETTER, STATE> m_NestedWordAutomatonReachableStates;
 	

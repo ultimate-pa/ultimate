@@ -32,7 +32,7 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.util.HashRelation;
 
-public class SCComponentForNWARS<LETTER, STATE> extends SCComponent<StateContainer<LETTER, STATE>> {
+public class SCComponentForNWARS<LETTER, STATE> extends StronglyConnectedComponent<StateContainer<LETTER, STATE>> {
 	final Set<StateContainer<LETTER, STATE>> m_AcceptingStates = new HashSet<StateContainer<LETTER, STATE>>();
 	final NestedWordAutomatonReachableStates<LETTER, STATE> nestedWordAutomatonReachableStates;
 	/**

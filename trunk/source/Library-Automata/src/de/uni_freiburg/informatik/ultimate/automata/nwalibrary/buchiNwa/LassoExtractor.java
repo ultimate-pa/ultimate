@@ -36,7 +36,7 @@ import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.NestedWordAutomatonReachableStates;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.SccComputationWithAcceptingLassos;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.AcceptingComponentsAnalysis;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 
 public class LassoExtractor<LETTER, STATE> implements IOperation<LETTER,STATE> {
@@ -61,10 +61,10 @@ public class LassoExtractor<LETTER, STATE> implements IOperation<LETTER,STATE> {
 		} else {
 			m_Reach = new NestedWordAutomatonReachableStates<LETTER, STATE>(m_Services, m_Operand);
 		}
-		m_Reach.getOrComputeStronglyConnectedComponents();
-		m_NestedLassoRuns = m_Reach.getAcceptingLassoProvider().getAllNestedLassoRuns();
+		m_Reach.getOrComputeAcceptingComponents();
+		m_NestedLassoRuns = m_Reach.getOrComputeAcceptingComponents().getAllNestedLassoRuns();
 		m_NestedLassoWords = new ArrayList<NestedLassoWord<LETTER>>(m_NestedLassoRuns.size());
-		if (m_NestedLassoRuns.isEmpty() && m_Reach.getAcceptingLassoProvider().getNestedLassoRun() == null) {
+		if (m_NestedLassoRuns.isEmpty() && m_Reach.getOrComputeAcceptingComponents().getNestedLassoRun() == null) {
 			assert (new BuchiIsEmpty<LETTER, STATE>(m_Services, m_Reach)).getResult();
 		} else {
 			for (NestedLassoRun<LETTER, STATE> nlr  : m_NestedLassoRuns) {

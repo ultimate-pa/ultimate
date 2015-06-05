@@ -40,10 +40,10 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomat
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.IAutomatonWithSccComputation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.NestedWordAutomatonReachableStates;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.SCComponent;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.StronglyConnectedComponent;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.SCComponentForNWARS;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.SccComputation;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.SccComputationWithAcceptingLassos;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.AcceptingComponentsAnalysis;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.StateContainer;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator;
@@ -98,10 +98,10 @@ public class LoopComplexity<LETTER, STATE> implements IOperation<LETTER, STATE> 
 
 		NestedWordAutomatonReachableStates<LETTER, STATE> nwars = 
 				new NestedWordAutomatonReachableStates<>(m_Services, operand);
-		SccComputationWithAcceptingLassos<LETTER, STATE> sccs = 
-				nwars.getOrComputeStronglyConnectedComponents();
+		AcceptingComponentsAnalysis<LETTER, STATE> sccs = 
+				nwars.getOrComputeAcceptingComponents();
 		Collection<SCComponentForNWARS<LETTER, STATE>> balls = sccs.getSccComputation().getBalls();
-		for (SCComponent<StateContainer<LETTER, STATE>> scc : balls) {
+		for (StronglyConnectedComponent<StateContainer<LETTER, STATE>> scc : balls) {
 			scc.getNodes();
 		}
 		// Graph contains no balls.

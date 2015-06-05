@@ -33,7 +33,7 @@ import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.NestedWordAutomatonReachableStates;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.SccComputationWithAcceptingLassos;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.AcceptingComponentsAnalysis;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 
 
@@ -49,7 +49,7 @@ public class BuchiIsEmpty<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	private final IUltimateServiceProvider m_Services;
 	INestedWordAutomatonSimple<LETTER, STATE> m_Nwa;
 	NestedWordAutomatonReachableStates<LETTER, STATE> m_Reach;
-	SccComputationWithAcceptingLassos<LETTER, STATE> m_Sccs;
+	AcceptingComponentsAnalysis<LETTER, STATE> m_Sccs;
 	final Boolean m_Result;
 	
 	public BuchiIsEmpty(IUltimateServiceProvider services,
@@ -63,7 +63,7 @@ public class BuchiIsEmpty<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		} else {
 			m_Reach = new NestedWordAutomatonReachableStates<LETTER, STATE>(m_Services, m_Nwa);
 		}
-		m_Sccs = m_Reach.getOrComputeStronglyConnectedComponents();
+		m_Sccs = m_Reach.getOrComputeAcceptingComponents();
 		m_Result = m_Sccs.buchiIsEmpty();
 		m_Logger.info(exitMessage());
 	}
@@ -99,7 +99,7 @@ public class BuchiIsEmpty<LETTER,STATE> implements IOperation<LETTER,STATE> {
 			return null;
 		} else {
 			m_Logger.info("Starting construction of run");
-			return m_Reach.getAcceptingLassoProvider().getNestedLassoRun();
+			return m_Reach.getOrComputeAcceptingComponents().getNestedLassoRun();
 		}
 	}
 
