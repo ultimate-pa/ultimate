@@ -4,6 +4,7 @@ import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceIn
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceItem;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceItem.IUltimatePreferenceItemValidator;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceItem.PreferenceType;
+import de.uni_freiburg.informatik.ultimate.lassoranker.AnalysisType;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.INTERPOLATION;
@@ -44,8 +45,12 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 						true, PreferenceType.Boolean),
 				new UltimatePreferenceItem<String>(LABEL_ExtSolverCommandRank,
 						DEF_ExtSolverCommandRank, PreferenceType.String),
-				new UltimatePreferenceItem<Boolean>(LABEL_NonLinearConstraints,
-						true, PreferenceType.Boolean),
+				new UltimatePreferenceItem<AnalysisType>(LABEL_AnalysisType,
+						AnalysisType.Nonlinear,
+						PreferenceType.Combo,
+						AnalysisType.values()),
+				new UltimatePreferenceItem<Boolean>(LABEL_ColoringBlue,
+						true, PreferenceType.Boolean),	
 				new UltimatePreferenceItem<Boolean>(LABEL_TemplateBenchmarkMode,
 						false, PreferenceType.Boolean),	
 				new UltimatePreferenceItem<Boolean>(LABEL_DumpToFile,
@@ -83,7 +88,8 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 	public static final String LABEL_ExtSolverRank = "Use external solver (rank synthesis)";
 	public static final String LABEL_ExtSolverCommandRank = "Command for external solver (rank synthesis)";
 	public static final String DEF_ExtSolverCommandRank = "z3 SMTLIB2_COMPLIANT=true -memory:1024 -smt2 -in -t:12000";
-	public static final String LABEL_NonLinearConstraints = "Allow nonlinear constraints";
+	public static final String LABEL_AnalysisType = "Lasso Analysis";
+	public static final String LABEL_ColoringBlue = "ColoringBlue";
 	public static final String LABEL_TemplateBenchmarkMode = "Template benchmark mode";
 	public static final String LABEL_DumpToFile = "Dump SMT script to file";
 	public static final String LABEL_DumpPath = "To the following directory";

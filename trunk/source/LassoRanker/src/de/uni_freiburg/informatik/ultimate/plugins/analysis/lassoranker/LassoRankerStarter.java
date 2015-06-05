@@ -11,6 +11,7 @@ import java.util.Set;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
+import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 import de.uni_freiburg.informatik.ultimate.core.services.IBacktranslationService;
@@ -97,6 +98,9 @@ public class LassoRankerStarter {
 		if (useNewExtraction) {
 			try {
 				lassoExtractor = new LassoExtractorBuchi(mServices, rootNode, m_SmtManager, mLogger);
+			} catch (OperationCanceledException oce) {
+				throw new AssertionError("timeout while searching lasso");
+//				throw new ToolchainCanceledException(this.getClass());
 			} catch (AutomataLibraryException e) {
 				throw new AssertionError(e.toString());
 			}

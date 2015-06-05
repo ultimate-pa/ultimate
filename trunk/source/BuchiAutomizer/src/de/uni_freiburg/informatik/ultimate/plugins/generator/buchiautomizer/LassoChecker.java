@@ -220,8 +220,7 @@ public class LassoChecker {
 		UltimatePreferenceStore baPref = new UltimatePreferenceStore(Activator.s_PLUGIN_ID);
 		m_ExternalSolver_RankSynthesis = baPref.getBoolean(PreferenceInitializer.LABEL_ExtSolverRank);
 		m_ExternalSolverCommand_RankSynthesis = baPref.getString(PreferenceInitializer.LABEL_ExtSolverCommandRank);
-		m_LassoRankerAnalysisType = baPref.getBoolean(PreferenceInitializer.LABEL_NonLinearConstraints) ? AnalysisType.Nonlinear
-				: AnalysisType.Linear_with_guesses;
+		m_LassoRankerAnalysisType = baPref.getEnum(PreferenceInitializer.LABEL_AnalysisType, AnalysisType.class);
 		m_TemplateBenchmarkMode = baPref.getBoolean(PreferenceInitializer.LABEL_TemplateBenchmarkMode);
 		m_TrySimplificationTerminationArgument = baPref.getBoolean(PreferenceInitializer.LABEL_Simplify);
 		m_TryTwofoldRefinement = baPref.getBoolean(PreferenceInitializer.LABEL_TryTwofoldRefinement);
