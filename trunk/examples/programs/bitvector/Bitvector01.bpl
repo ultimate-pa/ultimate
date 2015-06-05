@@ -8,9 +8,9 @@
 
 var x:bv20;
 
-procedure proc(n: int) returns ();
+procedure proc() returns ();
 
-implementation proc(n: int) returns ()
+implementation proc() returns ()
 {
   var y:bv20;
   y := x;
