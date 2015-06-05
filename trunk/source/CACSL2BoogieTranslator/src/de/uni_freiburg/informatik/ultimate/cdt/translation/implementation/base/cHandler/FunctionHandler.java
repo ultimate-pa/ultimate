@@ -23,6 +23,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLL
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.MainDispatcher;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.PRDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TypeHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.SymbolTableValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.SymbolTableValue.StorageClass;
@@ -770,15 +771,15 @@ public class FunctionHandler {
 	private Result handleFunctionPointerCall(ILocation loc, Dispatcher main, MemoryHandler memoryHandler,
 			StructHandler structHandler, IASTExpression functionName, IASTInitializerClause[] arguments) {
 
-		assert ((MainDispatcher) main).getFunctionToIndex().size() > 0;
+		assert (main instanceof PRDispatcher) || ((MainDispatcher) main).getFunctionToIndex().size() > 0;
 		ResultExpression funcNameRex = (ResultExpression) main.dispatch(functionName);
 		RValue calledFuncRVal = (RValue) funcNameRex.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc).lrVal;
-		CType calledFuncType = calledFuncRVal.cType;
+		CType calledFuncType = calledFuncRVal.cType.getUnderlyingType();
 		if (!(calledFuncType instanceof CFunction)) {
 			// .. because function pointers don't need to be dereferenced in
 			// order to be called
 			if (calledFuncType instanceof CPointer) {
-				calledFuncType = ((CPointer) calledFuncType).pointsToType;
+				calledFuncType = ((CPointer) calledFuncType).pointsToType.getUnderlyingType();
 			}
 		}
 		assert calledFuncType instanceof CFunction : "We need to unpack it further, right?";

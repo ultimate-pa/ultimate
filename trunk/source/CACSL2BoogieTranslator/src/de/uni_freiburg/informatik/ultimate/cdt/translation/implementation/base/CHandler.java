@@ -1222,10 +1222,11 @@ public class CHandler implements ICHandler {
 			}
 		case IASTUnaryExpression.op_tilde:
 			ResultExpression rop = o.switchToRValueIfNecessary(main, mMemoryHandler, mStructHandler, loc);
+			ResultExpression ropToInt = ConvExpr.rexBoolToIntIfNecessary(loc, rop);
 			List<Overapprox> overappr = new ArrayList<Overapprox>();
 			overappr.addAll(rop.overappr);
 			overappr.add(new Overapprox(Overapprox.BITVEC, loc));
-			Expression bwexpr = createBitwiseExpression(node.getOperator(), null, rop.lrVal.getValue(), loc);
+			Expression bwexpr = createBitwiseExpression(node.getOperator(), null, ropToInt.lrVal.getValue(), loc);
 			return new ResultExpression(rop.stmt, new RValue(bwexpr, rop.lrVal.cType), rop.decl, rop.auxVars, overappr);
 		case IASTUnaryExpression.op_alignOf:
 		default:
@@ -1673,10 +1674,7 @@ public class CHandler implements ICHandler {
 				overappr.addAll(rrToInt.overappr);
 
 				return new ResultExpression(stmt, rval, decl, auxVars, overappr);
-
 			} else {
-
-
 				ResultExpression rlToInt = ConvExpr.rexBoolToIntIfNecessary(loc, rl);
 				ResultExpression rrToInt = ConvExpr.rexBoolToIntIfNecessary(loc, rr);
 
@@ -1790,7 +1788,9 @@ public class CHandler implements ICHandler {
 			overappr.addAll(rl.overappr);
 			overappr.addAll(rr.overappr);
 			overappr.add(new Overapprox(Overapprox.BITVEC, loc));
-			Expression bwexpr = createBitwiseExpression(node.getOperator(), rl.lrVal.getValue(), rr.lrVal.getValue(),
+			ResultExpression rlToInt = ConvExpr.rexBoolToIntIfNecessary(loc, rl);
+			ResultExpression rrToInt = ConvExpr.rexBoolToIntIfNecessary(loc, rr);
+			Expression bwexpr = createBitwiseExpression(node.getOperator(), rlToInt.lrVal.getValue(), rrToInt.lrVal.getValue(),
 					loc);
 			return new ResultExpression(stmt, new RValue(bwexpr, rl.lrVal.cType), decl, auxVars, overappr);
 		}
@@ -1810,7 +1810,9 @@ public class CHandler implements ICHandler {
 			overappr.addAll(rl.overappr);
 			overappr.addAll(rr.overappr);
 			overappr.add(new Overapprox(Overapprox.BITVEC, loc));
-			Expression bwexpr = createBitwiseExpression(node.getOperator(), rl.lrVal.getValue(), rr.lrVal.getValue(),
+			ResultExpression rlToInt = ConvExpr.rexBoolToIntIfNecessary(loc, rl);
+			ResultExpression rrToInt = ConvExpr.rexBoolToIntIfNecessary(loc, rr);
+			Expression bwexpr = createBitwiseExpression(node.getOperator(), rlToInt.lrVal.getValue(), rrToInt.lrVal.getValue(),
 					loc);
 			return makeAssignment(main, loc, stmt, l.lrVal, new RValue(bwexpr, rr.lrVal.cType), decl, auxVars, overappr);// ,
 																															// l.lrVal.cType);
@@ -2044,58 +2046,6 @@ public class CHandler implements ICHandler {
 		return new ResultExpression(stmt, null, decl, emptyAuxVars, overappr);
 	}
 
-
-	/**
-	 * Create a havoc statement for each variable in auxVars. (Does not modify
-	 * this auxVars map). We insert havocs for auxvars after the translation of
-	 * a _statement_. This means that the Expressions carry the auxVarMap
-	 * outside (via the ResultExpression they return), and that map is used for
-	 * calling this procedure once we reach a (basic) statement.
-	 */
-	public static List<HavocStatement> createHavocsForAuxVars(Map<VariableDeclaration, ILocation> auxVars) {
-		LinkedHashMap<VariableDeclaration, ILocation> allAuxVars = new LinkedHashMap<>();
-		for (Entry<VariableDeclaration, ILocation> e : auxVars.entrySet()) {//TODO: are these asserts necessary?
-			assert e.getKey().getVariables().length == 1 : "we always define only one auxvar at once, right?";
-			assert e.getKey().getVariables()[0].getIdentifiers().length == 1 : "we always define only one auxvar at once, right?";
-			allAuxVars.put(e.getKey(), e.getValue());
-		}
-
-		ArrayList<HavocStatement> result = new ArrayList<HavocStatement>();
-		for (VariableDeclaration varDecl : allAuxVars.keySet()) {
-			VarList[] varLists = varDecl.getVariables();
-			for (VarList varList : varLists) {
-				for (String varId : varList.getIdentifiers()) {
-					ILocation originloc = allAuxVars.get(varDecl);
-					result.add(new HavocStatement(originloc, new VariableLHS[] { new VariableLHS(originloc, varId) }));
-				}
-			}
-		}
-		return result;
-	}
-
-	/**
-	 * Returns true iff all auxvars in decls are contained in auxVars
-	 */
-	public static boolean isAuxVarMapcomplete(Dispatcher main, List<Declaration> decls, Map<VariableDeclaration, ILocation> auxVars) {
-		boolean result = true;
-		for (Declaration rExprdecl : decls) {
-			assert (rExprdecl instanceof VariableDeclaration);
-			VariableDeclaration varDecl = (VariableDeclaration) rExprdecl;
-			
-			assert varDecl.getVariables().length == 1 
-					: "there are never two auxvars declared in one declaration, right??";
-			VarList vl = varDecl.getVariables()[0];
-			assert vl.getIdentifiers().length == 1
-					: "there are never two auxvars declared in one declaration, right??";
-			String id = vl.getIdentifiers()[0];
-
-			if (main.nameHandler.isTempVar(id)) {
-				//malloc auxvars do not need to be havocced in some cases (alloca)
-				result &= auxVars.containsKey(varDecl) || id.contains(SFO.MALLOC);
-			}
-		}
-		return result;
-	}
 
 	@Override
 	public Result visit(Dispatcher main, IASTWhileStatement node) {
@@ -2648,6 +2598,60 @@ public class CHandler implements ICHandler {
 		return null;
 	}
 
+
+	/**
+		 * Create a havoc statement for each variable in auxVars. (Does not modify
+		 * this auxVars map). We insert havocs for auxvars after the translation of
+		 * a _statement_. This means that the Expressions carry the auxVarMap
+		 * outside (via the ResultExpression they return), and that map is used for
+		 * calling this procedure once we reach a (basic) statement.
+		 */
+		public static List<HavocStatement> createHavocsForAuxVars(Map<VariableDeclaration, ILocation> allAuxVars) {
+	//		LinkedHashMap<VariableDeclaration, ILocation> allAuxVars = new LinkedHashMap<>();
+	//		//TODO: is this for-loop/are these asserts necessary? -> probably no..
+	//		for (Entry<VariableDeclaration, ILocation> e : auxVars.entrySet()) {
+	//			assert e.getKey().getVariables().length == 1 
+	//					&& e.getKey().getVariables()[0].getIdentifiers().length == 1 
+	//					: "we always define only one auxvar at once, right?";
+	//			allAuxVars.put(e.getKey(), e.getValue());
+	//		}
+	
+			ArrayList<HavocStatement> result = new ArrayList<HavocStatement>();
+			for (VariableDeclaration varDecl : allAuxVars.keySet()) {
+				VarList[] varLists = varDecl.getVariables();
+				for (VarList varList : varLists) {
+					for (String varId : varList.getIdentifiers()) {
+						ILocation originloc = allAuxVars.get(varDecl);
+						result.add(new HavocStatement(originloc, new VariableLHS[] { new VariableLHS(originloc, varId) }));
+					}
+				}
+			}
+			return result;
+		}
+
+	/**
+	 * Returns true iff all auxvars in decls are contained in auxVars
+	 */
+	public static boolean isAuxVarMapcomplete(Dispatcher main, List<Declaration> decls, Map<VariableDeclaration, ILocation> auxVars) {
+		boolean result = true;
+		for (Declaration rExprdecl : decls) {
+			assert (rExprdecl instanceof VariableDeclaration);
+			VariableDeclaration varDecl = (VariableDeclaration) rExprdecl;
+			
+			assert varDecl.getVariables().length == 1 
+					: "there are never two auxvars declared in one declaration, right??";
+			VarList vl = varDecl.getVariables()[0];
+			assert vl.getIdentifiers().length == 1
+					: "there are never two auxvars declared in one declaration, right??";
+			String id = vl.getIdentifiers()[0];
+	
+			if (main.nameHandler.isTempVar(id)) {
+				//malloc auxvars do not need to be havocced in some cases (alloca)
+				result &= auxVars.containsKey(varDecl) || id.contains(SFO.MALLOC);
+			}
+		}
+		return result;
+	}
 
 	public ResultExpression makeAssignment(Dispatcher main, ILocation loc, ArrayList<Statement> stmt, LRValue lrVal,
 			RValue rVal, ArrayList<Declaration> decl, Map<VariableDeclaration, ILocation> auxVars,
@@ -3718,6 +3722,13 @@ public class CHandler implements ICHandler {
 					}
 				}
 		
+			}
+		} else if (rValUlType instanceof CEnum) {
+			if (expectedType instanceof CPrimitive) {
+				CPrimitive expPrim = (CPrimitive) expectedType;
+				if (expPrim.getGeneralType() == GENERALPRIMITIVE.INTTYPE) {
+					rVal = new RValue(rVal.getValue(), expectedType, rVal.isBoogieBool, rVal.isIntFromPointer);
+				}
 			}
 		}
 		return rVal;

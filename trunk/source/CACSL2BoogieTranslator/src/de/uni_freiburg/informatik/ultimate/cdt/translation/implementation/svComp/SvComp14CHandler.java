@@ -243,6 +243,16 @@ public class SvComp14CHandler extends CHandler {
 					new CPrimitive(PRIMITIVE.INT)));
 		}
 
+		/*
+		 * builtin_prefetch according to https://gcc.gnu.org/onlinedocs/gcc-3.4.5/gcc/Other-Builtins.html (state: 5.6.2015)
+		 * triggers the processor to load something into cache, does nothing else
+		 * is void thus has no return value
+		 */
+		if (methodName.equals("__builtin_prefetch")) {
+			main.warn(loc, "ignored call to __builtin_prefetch");
+			return new ResultSkip();
+		}
+
 		if (methodName.equals("abort")) {
 			stmt.add(new AssumeStatement(loc, new BooleanLiteral(loc, false)));
 			return new ResultExpression(stmt, null, decl, auxVars, overappr);
