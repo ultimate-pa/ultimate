@@ -130,6 +130,10 @@ public class TypeSortTranslator {
 			} else if (boogieType.equals(PrimitiveType.errorType)) {
 				throw new IllegalArgumentException("BoogieAST contains type " +
 						"errors. This plugin supports only BoogieASTs without type errors");
+			} else if (((PrimitiveType) boogieType).getTypeCode() > 0) {
+				int bitvectorSize = ((PrimitiveType) boogieType).getTypeCode();
+				BigInteger[] sortIndices = { BigInteger.valueOf(bitvectorSize) };
+				result = m_Script.sort("BitVec", sortIndices);
 			} else {
 				throw new IllegalArgumentException("Unsupported PrimitiveType " + boogieType);
 			}
