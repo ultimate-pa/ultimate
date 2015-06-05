@@ -48,7 +48,6 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.LinearInequality;
 import de.uni_freiburg.informatik.ultimate.lassoranker.LinearTransition;
 import de.uni_freiburg.informatik.ultimate.lassoranker.ModelExtractionUtils;
 import de.uni_freiburg.informatik.ultimate.lassoranker.SMTPrettyPrinter;
-import de.uni_freiburg.informatik.ultimate.lassoranker.SMTSolver;
 import de.uni_freiburg.informatik.ultimate.lassoranker.exceptions.TermException;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.RankVar;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
@@ -290,12 +289,28 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 		}
 		Term t2 = Util.or(m_script, disjunction.toArray(new Term[0]));
 
-		// lambda >= 0
-		Term t3;
+		Term zero; // = 0
+		Term one; // = 1
 		if (!m_integer_mode) {
-			t3 = m_script.term(">=", lambda, m_script.decimal("0"));
+			zero = m_script.decimal("0");
+			one = m_script.decimal("1");
 		} else {
-			t3 = m_script.term(">=", lambda, m_script.numeral("0"));
+			zero = m_script.numeral("0");
+			one = m_script.numeral("1");
+		}
+		
+		Term t3;
+		if (this.m_settings.allowBounded) {
+			// lambda >= 0
+			t3 = m_script.term(">=", lambda, zero);
+		} else {
+			// lambda >= 1 and any vars_ray != 0
+			List<Term> vars_ray_neq_0 = new ArrayList<Term>(vars_ray.size());
+			for (Term t : vars_ray.values()) {
+				vars_ray_neq_0.add(m_script.term("<>", t, zero));
+			}
+			t3 = m_script.term("and", m_script.term(">=", lambda, one),
+					SmtUtils.or(m_script, vars_ray_neq_0));
 		}
 
 		mLogger.debug(new DebugMessage("{0}", new SMTPrettyPrinter(t1)));

@@ -52,12 +52,17 @@ public class NonTerminationAnalysisSettings implements Serializable {
 	public AnalysisType analysis = AnalysisType.Linear_with_guesses;
 		// Default: AnalysisType.LINEAR_PLUS_GUESSES
 	
+	/**
+	 * Allow finding nontermination arguments that are bounded executions?
+	 */
+	public boolean allowBounded = true;
+	
 	/*
 	 * As this point there is not much here, but there might be in the future.
 	 */
 	
 	/**
-	 * Default construction intializes default values
+	 * Default construction initializes default values
 	 */
 	public NonTerminationAnalysisSettings() {
 	}
@@ -84,6 +89,8 @@ public class NonTerminationAnalysisSettings implements Serializable {
 		StringBuilder sb = new StringBuilder();
 		sb.append("Nontermination analysis: ");
 		sb.append(this.analysis);
+		sb.append("\nAllow bounded executions: ");
+		sb.append(this.allowBounded);
 		return sb.toString();
 	}
 }
