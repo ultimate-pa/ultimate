@@ -65,16 +65,20 @@ public class SccComputation<NODE, COMP extends StronglyConnectedComponent<NODE>>
 		m_SuccessorProvider = successorProvider;
 		m_NumberOfAllStates = numberOfAllNodes;
 		
-		for (NODE node : startNodes) {
-			if (!m_Indices.containsKey(node)) {
-				strongconnect(node);
-			}
-		}
+		doSccComputation(startNodes);
 		assert (automatonPartitionedBySCCs());
 		m_Logger.info("Graph consists of " + getBalls().size() + 
 				" InCaSumBalls and " + m_NumberOfNonBallSCCs
 				+ " non ball SCCs. Number of states in SCCs "
 				+ m_NumberOfAllStates + ".");
+	}
+
+	protected void doSccComputation(Set<NODE> startNodes) {
+		for (NODE node : startNodes) {
+			if (!m_Indices.containsKey(node)) {
+				strongconnect(node);
+			}
+		}
 	}
 
 	public interface IStronglyConnectedComponentFactory<NODE, C extends StronglyConnectedComponent<NODE>> {
@@ -104,18 +108,22 @@ public class SccComputation<NODE, COMP extends StronglyConnectedComponent<NODE>>
 		}
 	
 		if (m_LowLinks.get(v).equals(m_Indices.get(v))) {
-			NODE w;
-			COMP scc = m_SccFactory.constructNewSCComponent();
-			do {
-				w = m_NoScc.pop();
-				scc.addNode(w);
-			} while (v != w);
-			scc.setRootNode(w);
-			if (isBall(scc)) {
-				m_Balls.add(scc);
-			} else {
-				m_NumberOfNonBallSCCs++;
-			}
+			establishNewComponent(v);
+		}
+	}
+
+	protected void establishNewComponent(NODE v) {
+		NODE w;
+		COMP scc = m_SccFactory.constructNewSCComponent();
+		do {
+			w = m_NoScc.pop();
+			scc.addNode(w);
+		} while (v != w);
+		scc.setRootNode(w);
+		if (isBall(scc)) {
+			m_Balls.add(scc);
+		} else {
+			m_NumberOfNonBallSCCs++;
 		}
 	}
 
