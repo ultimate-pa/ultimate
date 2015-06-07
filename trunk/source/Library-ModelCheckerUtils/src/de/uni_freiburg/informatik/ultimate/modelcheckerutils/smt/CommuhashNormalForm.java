@@ -108,7 +108,7 @@ public class CommuhashNormalForm {
 			Comparator<Term> hashBasedComperator = new Comparator<Term>() {
 				@Override
 				public int compare(Term arg0, Term arg1) {
-					return arg0.hashCode() - arg1.hashCode();
+					return Integer.compare(arg0.hashCode(), arg1.hashCode());
 				}
 			};
 			Arrays.sort(sortedParams, hashBasedComperator);
