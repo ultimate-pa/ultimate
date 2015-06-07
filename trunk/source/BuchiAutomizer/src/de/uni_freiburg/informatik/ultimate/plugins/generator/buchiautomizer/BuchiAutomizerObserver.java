@@ -2,6 +2,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -43,6 +44,9 @@ import de.uni_freiburg.informatik.ultimate.result.NonterminatingLassoResult;
 import de.uni_freiburg.informatik.ultimate.result.TerminationAnalysisResult;
 import de.uni_freiburg.informatik.ultimate.result.TerminationAnalysisResult.TERMINATION;
 import de.uni_freiburg.informatik.ultimate.result.TimeoutResultAtElement;
+import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProvider;
+import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
+import de.uni_freiburg.informatik.ultimate.util.csv.SimpleCsvProvider;
 
 /**
  * Auto-Generated Stub for the plug-in's Observer
@@ -163,9 +167,12 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 			Term2Expression term2expression = mRootAnnot.getBoogie2SMT().getTerm2Expression();
 			List<Map<Expression, Rational>> initHondaRay = NonTerminationArgument.rank2Boogie(term2expression,
 					nta.getStateInit(), nta.getStateHonda(), nta.getRay());
-			reportResult(new NonTerminationArgumentResult<RcfgElement>(honda, Activator.s_PLUGIN_NAME,
+			NonTerminationArgumentResult<RcfgElement> ntar = 
+					new NonTerminationArgumentResult<RcfgElement>(honda, Activator.s_PLUGIN_NAME,
 					initHondaRay.get(0), initHondaRay.get(1), initHondaRay.get(2), nta.getLambda(),
-					getBacktranslationService()));
+					getBacktranslationService());
+			reportResult(ntar);
+			reportResult(new BenchmarkResult<String>(Activator.s_PLUGIN_NAME, "NonterminationBenchmark", new NonterminationBenchmark(nta)));
 
 			Map<Integer, ProgramState<Expression>> partialProgramStateMapping = Collections.emptyMap();
 			@SuppressWarnings("unchecked")
@@ -293,5 +300,24 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 	// }
 	// return result;
 	// }
+	
+	private class NonterminationBenchmark implements ICsvProviderProvider<String> {
+		private final String m_Ntar;
+		
+		public NonterminationBenchmark(NonTerminationArgument nta) {
+			m_Ntar = "Lambda: " + nta.getLambda() + " Ray: " + nta.getRay();
+		}
+
+		@Override
+		public ICsvProvider<String> createCvsProvider() {
+			return new SimpleCsvProvider<>(Arrays.asList(new String[] {"nta"}));
+		}
+
+		@Override
+		public String toString() {
+			return m_Ntar;
+		}
+		
+	}
 
 }
