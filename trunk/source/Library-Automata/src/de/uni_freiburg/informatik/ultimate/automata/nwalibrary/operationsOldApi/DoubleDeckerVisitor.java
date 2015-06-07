@@ -926,8 +926,7 @@ public abstract class DoubleDeckerVisitor<LETTER, STATE> implements IOpWithDelay
 
 		public Map<STATE, Set<STATE>> removeUpAndItsDowns() {
 			STATE up = m_up2down.keySet().iterator().next();
-			Map<STATE, Set<STATE>> result = new HashMap<STATE, Set<STATE>>(1);
-			result.put(up, m_up2down.get(up));
+			Map<STATE, Set<STATE>> result = Collections.singletonMap(up, m_up2down.get(up));
 			m_up2down.remove(up);
 			return result;
 		}
