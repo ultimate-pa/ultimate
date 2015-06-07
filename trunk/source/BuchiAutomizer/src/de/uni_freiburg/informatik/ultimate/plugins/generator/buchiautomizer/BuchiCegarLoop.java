@@ -26,6 +26,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.BuchiClo
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.BuchiIsEmpty;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.NestedLassoRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Accepts;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Difference;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.PowersetDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.RemoveDeadEnds;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.RemoveNonLiveStates;
@@ -706,10 +707,10 @@ public class BuchiCegarLoop {
 				m_Abstraction, m_InterpolAutomaton, traceChecker.getPredicateUnifier(), mLogger, false);
 		PowersetDeterminizer<CodeBlock, IPredicate> psd = new PowersetDeterminizer<CodeBlock, IPredicate>(determinized,
 				true, m_DefaultStateFactory);
-		DifferenceDD<CodeBlock, IPredicate> diff = null;
+		Difference<CodeBlock, IPredicate> diff = null;
 		try {
-			diff = new DifferenceDD<CodeBlock, IPredicate>(m_Services, m_Abstraction, m_InterpolAutomaton, psd,
-					m_StateFactoryForRefinement, false, true);
+			diff = new Difference<CodeBlock, IPredicate>(m_Services, m_Abstraction, m_InterpolAutomaton, psd,
+					m_StateFactoryForRefinement, true);
 		} catch (AutomataLibraryException e) {
 			if (e instanceof OperationCanceledException) {
 				m_BenchmarkGenerator.stop(CegarLoopBenchmarkType.s_AutomataDifference);
