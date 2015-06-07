@@ -709,7 +709,7 @@ public class BuchiCegarLoop {
 				true, m_DefaultStateFactory);
 		Difference<CodeBlock, IPredicate> diff = null;
 		try {
-			diff = new Difference<CodeBlock, IPredicate>(m_Services, m_Abstraction, m_InterpolAutomaton, psd,
+			diff = new Difference<CodeBlock, IPredicate>(m_Services, m_Abstraction, determinized, psd,
 					m_StateFactoryForRefinement, true);
 		} catch (AutomataLibraryException e) {
 			if (e instanceof OperationCanceledException) {
