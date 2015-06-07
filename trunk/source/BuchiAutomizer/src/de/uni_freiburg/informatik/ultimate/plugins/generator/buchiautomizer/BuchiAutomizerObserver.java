@@ -1,11 +1,13 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer;
 
 import java.io.IOException;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
@@ -15,6 +17,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.IBacktranslationService
 import de.uni_freiburg.informatik.ultimate.core.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lassoranker.nontermination.NonTerminationArgument;
+import de.uni_freiburg.informatik.ultimate.lassoranker.variables.RankVar;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.model.GraphType;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
@@ -303,9 +306,31 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 	
 	private class NonterminationBenchmark implements ICsvProviderProvider<String> {
 		private final String m_Ntar;
+		private final boolean m_LambdaZero;
+		private final boolean m_RayZero;
 		
 		public NonterminationBenchmark(NonTerminationArgument nta) {
-			m_Ntar = "Lambda: " + nta.getLambda() + " Ray: " + nta.getRay();
+			m_LambdaZero = (nta.getLambda().numerator().equals(BigInteger.ZERO));
+			m_RayZero = isZero(nta.getRay());
+			m_Ntar = (isFixpoint() ? "Fixpoint " : "Unbounded Execution ") +
+					"Lambda: " + nta.getLambda() + 
+					" Ray: " + (m_RayZero ? "is zero" : "is not zero") + " " + nta.getRay();
+		}
+		
+		private boolean isFixpoint() {
+			return m_LambdaZero || m_RayZero;
+		}
+
+		/**
+		 * Return true iff all coefficients of ray are zero.
+		 */
+		private boolean isZero(Map<RankVar, Rational> ray) {
+			for (Entry<RankVar, Rational> entry : ray.entrySet()) {
+				if (!entry.getValue().numerator().equals(BigInteger.ZERO)) {
+					return false;
+				}
+			}
+			return true;
 		}
 
 		@Override
