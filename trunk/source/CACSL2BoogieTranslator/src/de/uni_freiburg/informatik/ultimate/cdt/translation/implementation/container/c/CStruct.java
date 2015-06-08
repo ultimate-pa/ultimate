@@ -140,7 +140,7 @@ public class CStruct extends CType {
     
     @Override
     public boolean equals(Object o) {
-    	if (((Object) this).equals(o)) //to break a mutual recursion with CPointer -- TODO: is that a general solution??
+    	if (super.equals(o)) //to break a mutual recursion with CPointer -- TODO: is that a general solution??
     		return true;
         if (!(o instanceof CType)) {
             return false;

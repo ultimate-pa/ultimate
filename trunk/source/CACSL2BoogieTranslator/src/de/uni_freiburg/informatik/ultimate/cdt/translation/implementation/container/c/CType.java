@@ -70,8 +70,9 @@ public abstract class CType {
 
 	/*
 	 * All subtypes shall implement equals and hashCode..
+	 * .. but we can't ensure it via abstract methods because we need Object.equals sometimes
 	 */
-	public abstract boolean equals(Object o);
-	public abstract int hashCode();
+//	public boolean equals(Object o);
+//	public abstract int hashCode();
 		
 }
