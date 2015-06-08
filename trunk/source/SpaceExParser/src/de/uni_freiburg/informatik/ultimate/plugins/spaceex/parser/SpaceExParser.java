@@ -3,6 +3,9 @@ package de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.StringWriter;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.Marshaller;
@@ -16,7 +19,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvide
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.ISource;
 import de.uni_freiburg.informatik.ultimate.model.GraphType;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
-import de.uni_freiburg.informatik.ultimate.plugins.spaceex.ast.SpaceExRoot;
+import de.uni_freiburg.informatik.ultimate.plugins.spaceex.ast.SpaceExModel;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.generated.ObjectFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.generated.Sspaceex;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.preferences.SpaceExParserPreferenceInitializer;
@@ -28,7 +31,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.preferences.Sp
 public class SpaceExParser implements ISource {
 
     private final String[] mFileTypes;
-    private String[] mFileNames;
+    private List<String> mFileNames;
     private IUltimateServiceProvider mServices;
     private Logger mLogger;
 
@@ -37,6 +40,7 @@ public class SpaceExParser implements ISource {
      */
     public SpaceExParser() {
         mFileTypes = new String[] { "xml", };
+        mFileNames = new ArrayList<String>();
     }
 
     @Override
@@ -114,6 +118,8 @@ public class SpaceExParser implements ISource {
 
     @Override
     public IElement parseAST(File file) throws Exception {
+    	mFileNames.add(file.getName());
+    	
         final FileInputStream fis = new FileInputStream(file);
 
         final JAXBContext jaxContext = JAXBContext.newInstance(ObjectFactory.class);
@@ -134,7 +140,7 @@ public class SpaceExParser implements ISource {
 
         fis.close();
 
-        return new SpaceExRoot();
+        return new SpaceExModel();
     }
 
     @Override
@@ -144,8 +150,13 @@ public class SpaceExParser implements ISource {
 
     @Override
     public GraphType getOutputDefinition() {
-        // TODO Auto-generated method stub
-        return null;
+    	try {
+	        return new GraphType(Activator.PLUGIN_ID, "SpaceExParser", mFileNames);
+        } catch (Exception e) {
+	        // TODO Auto-generated catch block
+	        e.printStackTrace();
+        }
+    	return null;
     }
 
     @Override
