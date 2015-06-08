@@ -24,6 +24,16 @@ public class ConstantFinder extends NonRecursive {
 		ConstantFindWalker(Term term) { super(term); }
 		
 		@Override
+		public void walk(NonRecursive walker) {
+			if (m_Visited.contains(getTerm())) {
+				// do nothing
+			} else {
+				m_Visited.add(getTerm());
+				super.walk(walker);
+			}
+		}
+		
+		@Override
 		public void walk(NonRecursive walker, ConstantTerm term) {
 			// do nothing
 		}
@@ -61,13 +71,16 @@ public class ConstantFinder extends NonRecursive {
 	}
 
 	private Set<ApplicationTerm> m_Result;
+	private Set<Term> m_Visited;
 	
 	public Set<ApplicationTerm> findConstants(Term term) {
 		if (term == null) {
 			throw new NullPointerException();
 		}
+		m_Visited = new HashSet<>();
 		m_Result = new HashSet<ApplicationTerm>();
 		run(new ConstantFindWalker(term));
+		m_Visited = null;
 		return m_Result;
 	}
 	
