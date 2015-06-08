@@ -460,3 +460,5 @@ NestedWordAutomaton Abstraction1 = (
 	returnTransitions = {
 	}
 );
+
+print(loopComplexity(Abstraction1));

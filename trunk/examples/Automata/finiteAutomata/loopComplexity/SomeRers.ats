@@ -16785,3 +16785,6 @@ NestedWordAutomaton AllErrorsAtOnceAbstraction0 = (
 	returnTransitions = {
 	}
 );
+
+print(loopComplexity(AllErrorsAtOnceAbstraction0));
+print(BuchiIsEmpty(AllErrorsAtOnceAbstraction0));

@@ -109,7 +109,7 @@ print(loopComplexity(LCTEST1));
 	// Sixth argument: amount of accepting states in per mille
 	int i = 0;
 	while(i<2){
-		NestedWordAutomaton A = getRandomNwa(1, 10, 1000, 0, 0, 8);
+		NestedWordAutomaton A = getRandomNwa(1, 10, 100, 0, 0, 8);
 		print(A);
 		print(loopComplexity(A));
 		i++;

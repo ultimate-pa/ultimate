@@ -29,6 +29,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Set;
 
 import org.apache.log4j.Logger;
@@ -84,24 +85,16 @@ public class LoopComplexity<LETTER, STATE> implements IOperation<LETTER, STATE> 
 		
 		m_Logger.info(this.startMessage());
 		
-		m_Result = compute(operand);
+		m_Result = compute(m_Operand.getStates());
 		m_Logger.info(this.exitMessage());
 	}
 
-	private Integer compute(INestedWordAutomaton<LETTER, STATE> operand) throws AutomataLibraryException {
-//		/////////////
-//		// Matthias: You can now compute the balls as follows.
-//		Set<STATE> allStates = operand.getStates();
-//		Set<STATE> initialStates = operand.getStates();
-//		Collection<SCComponent<LETTER, STATE>> ballsForAllStates = m_Operand.computeBalls(allStates, initialStates);
-//		/////////////
+	private Integer compute(Set<STATE> states) throws AutomataLibraryException {
 
-		NestedWordAutomatonReachableStates<LETTER, STATE> nwars = 
-				new NestedWordAutomatonReachableStates<>(m_Services, operand);
-		AcceptingComponentsAnalysis<LETTER, STATE> sccs = 
-				nwars.getOrComputeAcceptingComponents();
-		Collection<SCComponentForNWARS<LETTER, STATE>> balls = sccs.getSccComputation().getBalls();
-		for (StronglyConnectedComponent<StateContainer<LETTER, STATE>> scc : balls) {
+		Set<STATE> allStates = states;
+		Set<STATE> initialStates = states;
+     	Collection<SCComponentForNWARS<LETTER, STATE>> balls = m_Operand.computeBalls(allStates, initialStates);
+		for (SCComponentForNWARS<LETTER, STATE> scc : balls) {
 			scc.getNodes();
 		}
 		// Graph contains no balls.
@@ -110,33 +103,33 @@ public class LoopComplexity<LETTER, STATE> implements IOperation<LETTER, STATE> 
 		} else if (balls.size() == 1) { // Graph itself is a ball.
 			// Build all subgraphs differing from original graph by one vertex.
 			Collection<Integer> subGraphLoopComplexities = new ArrayList<Integer>();
-			Collection<STATE> allstates = operand.getStates();
+			Collection<STATE> allstates = states;
+			Set<STATE> copyStates = new HashSet<STATE>(states);
+
 			for (STATE stateOut : allstates) {
-				NestedWordAutomaton<LETTER, STATE> nwa = buildSubgraph(operand,
-						stateOut);
+				copyStates.remove(stateOut);
 				
-				if (statesToLC.containsKey(nwa.getStates())) {
-					subGraphLoopComplexities.add(statesToLC.get(nwa.getStates()));
+				if (statesToLC.containsKey(copyStates)) {
+					subGraphLoopComplexities.add(statesToLC.get(copyStates));
 				} else {
-					Integer i = this.compute(nwa);
-					statesToLC.put(nwa.getStates(), i);
+					Integer i = this.compute(copyStates);
+					statesToLC.put(copyStates, i);
 					subGraphLoopComplexities.add(i);
 				}
-				
+				copyStates.add(stateOut);
 			}
 			return 1 + Collections.min(subGraphLoopComplexities);
 		} else { // Graph itself is not a ball.
 			Collection<Integer> ballLoopComplexities = new ArrayList<Integer>();
 			// Build NestedWordAutomaton for each ball and compute Loop Complexity.
 			for (SCComponentForNWARS<LETTER, STATE> scc : balls) {
-				NestedWordAutomaton<LETTER, STATE> nwa = sccToAutomaton(
-						operand, scc);
 				
-				if (statesToLC.containsKey(nwa.getStates())) {
-					ballLoopComplexities.add(statesToLC.get(nwa.getStates()));
+				
+				if (statesToLC.containsKey(scc.getAllStates())) {
+					ballLoopComplexities.add(statesToLC.get(scc.getAllStates()));
 				} else {
-					Integer i = this.compute(nwa);
-					statesToLC.put(nwa.getStates(), i);
+					Integer i = this.compute(scc.getAllStates());
+					statesToLC.put(scc.getAllStates(), i);
 					ballLoopComplexities.add(i);
 				}
 				

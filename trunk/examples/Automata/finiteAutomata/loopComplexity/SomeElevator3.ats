@@ -415,3 +415,6 @@ NestedWordAutomaton Abstraction3 = (
 	returnTransitions = {
 	}
 );
+
+print(loopComplexity(Abstraction3));
+print(BuchiIsEmpty(Abstraction3));
