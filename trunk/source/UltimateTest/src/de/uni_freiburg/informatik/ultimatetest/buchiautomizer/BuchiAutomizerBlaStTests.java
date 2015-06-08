@@ -60,7 +60,7 @@ public class BuchiAutomizerBlaStTests extends
 //		new DirectoryFileEndingsPair("examples/svcomp/systemc/", new String[]{ ".c" }, m_FilesPerDirectoryLimit) ,
 //		new DirectoryFileEndingsPair("examples/svcomp/seq-mthreaded/", new String[]{ ".c" }, m_FilesPerDirectoryLimit) ,
 //		new DirectoryFileEndingsPair("examples/svcomp/seq-pthread/", new String[]{ ".i" }, m_FilesPerDirectoryLimit) ,
-		
+//		
 		/*** Category 12. Termination ***/
 		new DirectoryFileEndingsPair("examples/svcomp/termination-crafted/", new String[]{ ".c" }, m_FilesPerDirectoryLimit) ,
 		new DirectoryFileEndingsPair("examples/svcomp/termination-crafted-lit/", new String[]{ ".c" }, m_FilesPerDirectoryLimit) ,
@@ -88,7 +88,7 @@ public class BuchiAutomizerBlaStTests extends
 	 */
 	@Override
 	public long getTimeout() {
-		return 120 * 1000;
+		return 300 * 1000;
 	}
 	
 	
@@ -103,22 +103,23 @@ public class BuchiAutomizerBlaStTests extends
 //		"buchiAutomizer/staged300Forward-Z3.epf",
 //		"buchiAutomizer/staged300Forward-Z3-LBE.epf",
 //		"buchiAutomizer/staged300Forward-Z3-Tasimp.epf",
-		"buchiAutomizer/stagedForwardPredicatesNonlinear.epf",
-		"buchiAutomizer/stagedblastForwardPredicatesNonlinear.epf",
-		"buchiAutomizer/tabablastForwardPredicatesNonlinear.epf",
-		"buchiAutomizer/tabarankbasedForwardPredicatesNonlinear.epf",
-//		"buchiAutomizer/stagedForwardPredicatesNonlinearLbe.epf",
+//		"buchiAutomizer/stagedForwardPredicatesNonlinear.epf",
+//		"buchiAutomizer/stagedblastForwardPredicatesNonlinear.epf",
+//		"buchiAutomizer/tabablastForwardPredicatesNonlinear.epf",
+//		"buchiAutomizer/tabarankbasedForwardPredicatesNonlinear.epf",
+		"buchiAutomizer/stagedblastCraigLinear.epf",
+		"buchiAutomizer/stagedCraigLinear.epf",
 	};
 	
 	
 	private static final String[] m_BoogieToolchains = {
-//		"BuchiAutomizerBplWithBlockEncoding.xml",
-		"BuchiAutomizerBplInlineWithBlockEncoding.xml",
+		"BuchiAutomizerBplWithBlockEncoding.xml",
+//		"BuchiAutomizerBplInlineWithBlockEncoding.xml",
 	};
 	
 	private static final String[] m_CToolchains = {
-//		"BuchiAutomizerCWithBlockEncoding.xml",
-		"BuchiAutomizerCInlineWithBlockEncoding.xml",
+		"BuchiAutomizerCWithBlockEncoding.xml",
+//		"BuchiAutomizerCInlineWithBlockEncoding.xml",
 	};
 
 	
