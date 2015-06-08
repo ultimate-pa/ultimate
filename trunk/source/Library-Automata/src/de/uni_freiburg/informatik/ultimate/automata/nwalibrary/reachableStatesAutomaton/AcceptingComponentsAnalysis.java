@@ -100,7 +100,7 @@ public class AcceptingComponentsAnalysis<LETTER, STATE> {
 			StateContainer<LETTER, STATE> sc = nestedWordAutomatonReachableStates.getStateContainer(state);
 			startNodes.add(sc);
 		}
-		m_SccComputation = new SccComputation(m_Services, m_Logger, m_NWARSSuccessorProvider, m_ScComponentFactory, allStates.size(), startNodes);
+		m_SccComputation = new SccComputationNonRecursive<>(m_Services, m_Logger, m_NWARSSuccessorProvider, m_ScComponentFactory, allStates.size(), startNodes);
 		m_TransitionFilter = new StateBasedTransitionFilterPredicateProvider<>(allStates);
 		m_AcceptingSummaries = asc.getAcceptingSummaries();
 

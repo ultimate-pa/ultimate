@@ -3,6 +3,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesA
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
@@ -10,6 +11,7 @@ import java.util.Stack;
 
 import org.apache.log4j.Logger;
 
+import petruchio.interfaces.algorithms.StructuralCongruence;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 
 /**
@@ -26,7 +28,7 @@ public class SccComputation<NODE, COMP extends StronglyConnectedComponent<NODE>>
 	private final Logger m_Logger;
 	
 	private final IStronglyConnectedComponentFactory<NODE, COMP> m_SccFactory;
-	private final ISuccessorProvider<NODE> m_SuccessorProvider;
+	protected final ISuccessorProvider<NODE> m_SuccessorProvider;
 	
 	/**
 	 * Number of all states to which the SCC computation is applied.
@@ -39,15 +41,15 @@ public class SccComputation<NODE, COMP extends StronglyConnectedComponent<NODE>>
 	/**
 	 * Vertices that have not yet been assigned to any SCC.
 	 */
-	private final Stack<NODE> m_NoScc = new Stack<NODE>();
+	protected final StackHashSet<NODE> m_NoScc = new StackHashSet<NODE>();
 	/**
 	 * Assigns to each vertex v the number of vertices that have been
 	 * processed before in this algorithm. This number is called the index
 	 * of v.
 	 */
-	private final Map<NODE, Integer> m_Indices = new HashMap<NODE, Integer>();
-	private final Map<NODE, Integer> m_LowLinks = new HashMap<NODE, Integer>();
-	private final Collection<COMP> m_Balls = new ArrayList<COMP>();
+	protected final Map<NODE, Integer> m_Indices = new HashMap<NODE, Integer>();
+	protected final Map<NODE, Integer> m_LowLinks = new HashMap<NODE, Integer>();
+	protected final Collection<COMP> m_Balls = new ArrayList<COMP>();
 	private int m_NumberOfNonBallSCCs = 0;
 
 	
@@ -65,7 +67,11 @@ public class SccComputation<NODE, COMP extends StronglyConnectedComponent<NODE>>
 		m_SuccessorProvider = successorProvider;
 		m_NumberOfAllStates = numberOfAllNodes;
 		
-		doSccComputation(startNodes);
+		for (NODE node : startNodes) {
+			if (!m_Indices.containsKey(node)) {
+				strongconnect(node);
+			}
+		}
 		assert (automatonPartitionedBySCCs());
 		m_Logger.info("Graph consists of " + getBalls().size() + 
 				" InCaSumBalls and " + m_NumberOfNonBallSCCs
@@ -73,13 +79,6 @@ public class SccComputation<NODE, COMP extends StronglyConnectedComponent<NODE>>
 				+ m_NumberOfAllStates + ".");
 	}
 
-	protected void doSccComputation(Set<NODE> startNodes) {
-		for (NODE node : startNodes) {
-			if (!m_Indices.containsKey(node)) {
-				strongconnect(node);
-			}
-		}
-	}
 
 	public interface IStronglyConnectedComponentFactory<NODE, C extends StronglyConnectedComponent<NODE>> {
 			public C constructNewSCComponent();
@@ -130,12 +129,15 @@ public class SccComputation<NODE, COMP extends StronglyConnectedComponent<NODE>>
 	private void processSuccessor(NODE v, NODE w) {
 		if (!m_Indices.containsKey(w)) {
 			strongconnect(w);
-			int minLowLink = Math.min(m_LowLinks.get(v), m_LowLinks.get(w));
-			m_LowLinks.put(v, minLowLink);
+			updateLowlink(v, m_LowLinks.get(w));
 		} else if (m_NoScc.contains(w)) {
-			int min = Math.min(m_LowLinks.get(v), m_Indices.get(w));
-			m_LowLinks.put(v, min);
+			updateLowlink(v, m_Indices.get(w));
 		}
+	}
+
+	protected void updateLowlink(NODE node, int newValueCandidate) {
+		int min = Math.min(m_LowLinks.get(node), newValueCandidate);
+		m_LowLinks.put(node, min);
 	}
 
 	boolean isBall(StronglyConnectedComponent<NODE> scc) {
@@ -171,7 +173,34 @@ public class SccComputation<NODE, COMP extends StronglyConnectedComponent<NODE>>
 	}
 
 
-
+	/**
+	 * Stack and Set in one object. Elements that are already contained 
+	 * must not be added.
+	 * @author Matthias Heizmann
+	 *
+	 */
+	class StackHashSet<NODE> {
+		private final Stack<NODE> m_Stack = new Stack<>();
+		private final Set<NODE> m_Set = new HashSet<>();
+		
+		public NODE pop() {
+			NODE node = m_Stack.pop();
+			m_Set.remove(node);
+			return node;
+		}
+		
+		public void push(NODE node) {
+			m_Stack.push(node);
+			boolean modified = m_Set.add(node);
+			if (!modified) {
+				throw new IllegalArgumentException("Illegal to add element twice " + node);
+			}
+		}
+		
+		public boolean contains(NODE node) {
+			return m_Set.contains(node);
+		}
+	}
 
 
 }
