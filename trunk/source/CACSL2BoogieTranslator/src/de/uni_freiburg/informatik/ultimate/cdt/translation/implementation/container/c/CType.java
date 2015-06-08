@@ -67,4 +67,15 @@ public abstract class CType {
 	 * @return
 	 */
 	public abstract boolean isCompatibleWith(CType cT);
+	
+	
+
+	/**
+	 * Equals is implemented in the child-classes of CType. 
+	 * (Sometimes this makes use of the Object.equals, this here is only for completeness.)
+	 */
+	@Override
+	public boolean equals(Object o) {
+		return super.equals(o);
+	}
 }

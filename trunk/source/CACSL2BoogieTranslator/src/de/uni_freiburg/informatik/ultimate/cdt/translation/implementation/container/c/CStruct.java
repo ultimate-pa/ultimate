@@ -29,6 +29,8 @@ public class CStruct extends CType {
      */
 //    private boolean isIncomplete;
     private String incompleteName = "";
+    
+    private String toStringCached = null;
 
     //@Override
     public boolean isIncomplete() {
@@ -120,7 +122,9 @@ public class CStruct extends CType {
 //    	if (isIncomplete) {
     	if (this.isIncomplete()) {
     		return "STRUCT#~incomplete~" + incompleteName;
-    	} else {
+    	} else if (toStringCached != null) { 
+    		return toStringCached;
+    	}else {
     		StringBuilder id = new StringBuilder("STRUCT#");
     		for (int i = 0; i < getFieldCount(); i++) {
     			id.append("?");
@@ -129,7 +133,8 @@ public class CStruct extends CType {
     			id.append(fTypes[i].toString());
     		}
     		id.append("#");
-    		return id.toString();
+    		toStringCached = id.toString();
+    		return toStringCached;
     	}
     }
     

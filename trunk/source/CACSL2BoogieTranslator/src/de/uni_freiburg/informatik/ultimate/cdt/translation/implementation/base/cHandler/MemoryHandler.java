@@ -159,6 +159,15 @@ public class MemoryHandler {
 	//constants for the sizes of the base types
 	public boolean useConstantTypeSizes = true; //using this in CHandler, too (for pointer/int cast)
 	public TypeSizeConstants typeSizeConstants;
+	
+	/**
+     * Cache for speeding up calculateSizeOfWithGivenTypeSizes, which is a bottleneck otherwise.
+     * (linked would not be necessary, but should not hurt, and detecting nondterminism in the translation through
+     * searching for HashMaps stays easy..)
+     */
+    LinkedHashMap<CType, Integer> sizeOfCTypeCache;
+
+	
 	/**
      * Constructor.
      * @param checkPointerValidity 
@@ -192,6 +201,8 @@ public class MemoryHandler {
 		isIntArrayRequiredInMM = false;
 		isFloatArrayRequiredInMM = false;
 		isPointerArrayRequiredInMM = false;
+		
+		sizeOfCTypeCache = new LinkedHashMap<>();
     }
 
     /**
@@ -1061,8 +1072,13 @@ public class MemoryHandler {
     	}
 		return size;
 	}
+    
 
 	public int calculateSizeOfWithGivenTypeSizes(ILocation loc, CType cType) {
+		Integer cacheEntry = sizeOfCTypeCache.get(cType);
+		if (cacheEntry != null)
+			return cacheEntry;
+		
 		int size = 0;
 		if (cType instanceof CPrimitive) {
 			Integer sizeI = typeSizeConstants.CPrimitiveToTypeSizeConstant.get(((CPrimitive) cType).getType());
@@ -1111,14 +1127,14 @@ public class MemoryHandler {
  				}
  			}
  		} else if (cType instanceof CNamed) {
- 			return calculateSizeOfWithGivenTypeSizes(loc, ((CNamed) cType).getUnderlyingType());
+ 			size = calculateSizeOfWithGivenTypeSizes(loc, ((CNamed) cType).getUnderlyingType());
  		} else if (cType instanceof CEnum) {
- 			return typeSizeConstants.sizeOfEnumType;
+ 			size = typeSizeConstants.sizeOfEnumType;
  		} else {
  			throw new UnsupportedSyntaxException(loc, "failed trying to calculate size of " + cType + " (with constant sizes)");
  		}
 
-//		return new IntegerLiteral(loc, new Integer(size).toString());
+		sizeOfCTypeCache.put(cType, size);
 		return size;
     }
 
