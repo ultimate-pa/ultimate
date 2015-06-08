@@ -39,7 +39,7 @@ public class AbstractInterpretationEvalTestSuite extends
 		// Abstract Interpretation
 		addTestCases(
 				"AbstractInterpretation.xml",
-				"AbstractInterpretation.epf",
+				"ai/AI.epf",
 				m_directories,
 			    new String[] {".bpl"},
 			    "AI .bpl",
@@ -47,7 +47,7 @@ public class AbstractInterpretationEvalTestSuite extends
 			    m_Timeout);
 		addTestCases(
 				"AbstractInterpretationC.xml",
-				"AbstractInterpretation.epf",
+				"ai/AI.epf",
 				m_directories,
 			    new String[] {".c"},
 			    "AI .c",
@@ -57,7 +57,7 @@ public class AbstractInterpretationEvalTestSuite extends
 		if (m_compareToAutomizer) {
 			addTestCases(
 					"AutomizerBpl.xml",
-					"AbstractInterpretation.epf",
+					"ai/AI.epf",
 					m_directories,
 				    new String[] {".bpl"},
 				    "AI .bpl",
@@ -65,7 +65,7 @@ public class AbstractInterpretationEvalTestSuite extends
 				    m_Timeout);
 			addTestCases(
 					"AutomizerC.xml",
-					"AbstractInterpretation.epf",
+					"ai/AI.epf",
 					m_directories,
 				    new String[] {".c"},
 				    "AI .c",

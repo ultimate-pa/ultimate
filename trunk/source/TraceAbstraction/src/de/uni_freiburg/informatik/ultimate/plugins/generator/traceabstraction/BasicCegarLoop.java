@@ -45,7 +45,6 @@ import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.TermVarsProc;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.ta.IsEmptyWithAI;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
@@ -177,18 +176,6 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 					programPointMap.put(ip, pp);
 					predicateMap.put(pp, ip);
 				}
-				IsEmptyWithAI<CodeBlock, IPredicate> emptyWithAI = new IsEmptyWithAI<CodeBlock, IPredicate>(
-						(INestedWordAutomatonOldApi<CodeBlock, IPredicate>) m_Abstraction, m_Services,
-						super.m_RootNode, programPointMap, predicateMap);
-				m_Counterexample = emptyWithAI.getNestedRun();
-				if (m_Counterexample != null) {
-					// TODO: So den neuen AI automaten in TA integrieren
-					// m_Abstraction = (IAutomaton<CodeBlock, IPredicate>) new
-					// Difference(m_Services, m_StateFactory, m_Abstraction,
-					// emptyWithAI.getAbstraction());
-					m_AITermMap = emptyWithAI.getTerms();
-				}
-
 			} else {
 				m_Counterexample = (new IsEmpty<CodeBlock, IPredicate>(m_Services, 
 						(INestedWordAutomatonOldApi<CodeBlock, IPredicate>) m_Abstraction)).getNestedRun();
