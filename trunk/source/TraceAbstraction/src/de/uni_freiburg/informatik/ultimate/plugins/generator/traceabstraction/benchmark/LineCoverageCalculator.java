@@ -1,5 +1,8 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -37,6 +40,9 @@ public class LineCoverageCalculator {
 	private final LineCoverageCalculator mRelative;
 	private final Logger mLogger;
 	private final Set<Integer> mLinenumbers;
+	private final Set<Integer> mForbiddenLines;
+
+	private int mActualFileLength;
 
 	public LineCoverageCalculator(IUltimateServiceProvider services, IAutomaton<CodeBlock, IPredicate> automaton) {
 		this(services, automaton, null);
@@ -47,6 +53,9 @@ public class LineCoverageCalculator {
 		mServices = services;
 		mRelative = relative;
 		mLogger = services.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
+		mForbiddenLines = new HashSet<>();
+		mActualFileLength = -1;
+
 		mLinenumbers = calculateLineNumbers(automaton);
 	}
 
@@ -94,11 +103,45 @@ public class LineCoverageCalculator {
 					mLogger.warn("Skipping empty location for program point " + point);
 					continue;
 				}
+
 				addLines(rtr, location);
 			}
 		}
-
 		return rtr;
+	}
+
+	private boolean isValid(ILocation location) {
+		final int start = location.getStartLine();
+		final int end = location.getEndLine();
+		final int max = getActualFileLength(location) + 1;
+		if (end - start >= max) {
+			// all locations that range over the whole file are invalid
+			return false;
+		}
+		return true;
+	}
+
+	private int getActualFileLength(ILocation location) {
+		if (mActualFileLength == -1) {
+			try {
+				List<String> content = Files.readAllLines(Paths.get(location.getFileName()));
+				mActualFileLength = content.size();
+				determineForbiddenLines(content);
+			} catch (IOException e) {
+				mActualFileLength = 0;
+			}
+		}
+		return mActualFileLength;
+	}
+
+	private void determineForbiddenLines(List<String> content) {
+		int currentLine = 1;
+		for (String line : content) {
+			if (line.trim().isEmpty()) {
+				mForbiddenLines.add(currentLine);
+			}
+			++currentLine;
+		}
 	}
 
 	private void addLines(Set<Integer> rtr, ILocation location) {
@@ -108,8 +151,14 @@ public class LineCoverageCalculator {
 		if (start == end) {
 			rtr.add(start);
 		} else {
+			if (!isValid(location)) {
+				return;
+			}
+
 			for (int i = start; i <= end; i++) {
-				rtr.add(i);
+				if (!mForbiddenLines.contains(i)) {
+					rtr.add(i);
+				}
 			}
 		}
 	}
