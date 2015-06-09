@@ -3,6 +3,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
@@ -622,7 +623,7 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover<LETTER,STATE> 
 	}
 	@Override
 	public String operationName() {
-		return "IncrementalInclusionCheck2DeadEndRemovalAdvanceCover";
+		return "IncrementalInclusionCheck2DeadEndRemovalAdvanceCoverDeadEndRemoval";
 	}
 	@Override
 	public String startMessage() {
