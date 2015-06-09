@@ -212,10 +212,7 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover<LETTER,STATE> 
 			if (!m_Services.getProgressMonitorService().continueProcessing()) {
                 throw new OperationCanceledException(this.getClass());
 			}
-			NodeData currentNodeSet1 = null;
-			int i;
-			for(i=0;i<currentTree.size();i++){
-				currentNodeSet1 = currentTree.get(i);
+			for(NodeData currentNodeSet1:currentTree){
 				if(currentNodeSet1.aState.accepting){
 					currentNodeSet1.accepting = true;
 					for(STATE state : currentNodeSet1.bStates){
@@ -279,7 +276,7 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover<LETTER,STATE> 
 				}else{
 					containsAllbnState = false;
 				}
-				if(!containsAllbnState){
+				if(acc && !containsAllbnState){
 						for(NodeData completeNodeSet:ACCNodes){
 							if(completeNodeSet.aState== currentNodeSet1.aState&&completeNodeSet.hash==(currentNodeSet1.hash&completeNodeSet.hash)&&(currentNodeSet1.bStates.size() == completeNodeSet.bStates.size())){
 								if(!currentNodeSet1.bStates.containsAll(completeNodeSet.bStates)){
