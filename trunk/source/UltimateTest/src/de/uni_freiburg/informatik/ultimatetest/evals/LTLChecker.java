@@ -10,6 +10,54 @@ import de.uni_freiburg.informatik.ultimatetest.evals.ColumnDefinition.Aggregate;
 
 public class LTLChecker extends AbstractEvaluationTestSuite {
 
+	// @formatter:off
+	private static final String[] SETTINGS = new String[] { 
+//		//little optimizations 
+//		"None.epf", 
+//		"None+SBE.epf",
+//		"None+SBE+SASBE.epf",
+//		"None+LBE-Multi.epf", 
+//		
+//		//small block encoding 
+//		"Default.epf", 
+//		"Default+SBE.epf", 
+//		"Default+SBE+SASBE.epf",
+//		
+//		//large block encoding 
+//		"Default-LBE-Multi.epf",
+//		"Default-LBE-Multi+IB.epf",
+//		"Default-LBE-Single.epf", 
+//		"Default-LBE-SNME.epf",
+//		
+//		//different solvers
+//		"Default-LBE-Multi-SMTInterpol.epf",
+//		"Default-LBE-Multi-z3.epf", 
+//		"Default-LBE-Multi-z3interpol.epf",
+//		
+//		//different buchi automata constructions 
+//		"Default-LBE-Multi-StagedBlast.epf",
+//		"Default-LBE-Multi+NondetBuchi.epf", 
+		 
+		//nearly all optimizations 
+		"Default-LBE-Multi+SBE.epf",
+		"Default-LBE-Multi+SBE+IB.epf", 
+		"Default-LBE-Multi+SBE+SASBE.epf", 
+		"Default-LBE-Multi+SBE+SASBE+IB.epf",
+		
+		"Default-LBE-Multi+SBE-StagedBlast.epf",
+		"Default-LBE-Multi+SBE+IB-StagedBlast.epf", 
+		"Default-LBE-Multi+SBE+SASBE-StagedBlast.epf", 
+		"Default-LBE-Multi+SBE+SASBE+IB-StagedBlast.epf",
+		
+		 
+	};
+	
+	private static final String[] TOOLCHAINS = new String[] { 
+		"LTLAutomizerC.xml", 
+		"LTLAutomizerCInline.xml",
+	};
+	// @formatter:on
+
 	@Override
 	public ITestResultDecider constructITestResultDecider(UltimateRunDefinition urd) {
 		return new LTLCheckerTestResultDecider(urd, false);
@@ -22,53 +70,11 @@ public class LTLChecker extends AbstractEvaluationTestSuite {
 
 	@Override
 	protected void createTestCasesForReal(List<UltimateTestCase> testcases) {
-//		addTestCasesFixed("LTLAutomizerC.xml", "ltlAutomizer/Default+SBE+SASBE.epf", testcases);
-//		addTestCasesFixed("LTLAutomizerC.xml", "ltlAutomizer/Default+SBE.epf", testcases);
-//		addTestCasesFixed("LTLAutomizerC.xml", "ltlAutomizer/Default-LBE-Multi+IB.epf", testcases);
-//		addTestCasesFixed("LTLAutomizerC.xml", "ltlAutomizer/Default-LBE-Multi+NondetBuchi.epf", testcases);
-//
-//		addTestCasesFixed("LTLAutomizerC.xml", "ltlAutomizer/Default-LBE-Multi+SBE+SASBE.epf", testcases);
-//		addTestCasesFixed("LTLAutomizerC.xml", "ltlAutomizer/Default-LBE-Multi+SBE+SASBE+NondetBuchi.epf", testcases);
-//		addTestCasesFixed("LTLAutomizerC.xml", "ltlAutomizer/Default-LBE-Multi+SBE.epf", testcases);
-//		addTestCasesFixed("LTLAutomizerC.xml", "ltlAutomizer/Default-LBE-Multi.epf", testcases);
-//		addTestCasesFixed("LTLAutomizerC.xml", "ltlAutomizer/Default-LBE-Multi-z3.epf", testcases);
-//		addTestCasesFixed("LTLAutomizerC.xml", "ltlAutomizer/Default-LBE-Multi-z3interpol.epf", testcases);
-//		addTestCasesFixed("LTLAutomizerC.xml", "ltlAutomizer/Default-LBE-Multi-SMTInterpol.epf", testcases);
-//		addTestCasesFixed("LTLAutomizerC.xml", "ltlAutomizer/Default-LBE-Multi-StagedBlast.epf", testcases);
-//		addTestCasesFixed("LTLAutomizerC.xml", "ltlAutomizer/Default-LBE-Single.epf", testcases);
-//		addTestCasesFixed("LTLAutomizerC.xml", "ltlAutomizer/Default-LBE-SNME.epf", testcases);
-//		addTestCasesFixed("LTLAutomizerC.xml", "ltlAutomizer/Default.epf", testcases);
-//		addTestCasesFixed("LTLAutomizerC.xml", "ltlAutomizer/None+LBE-Multi.epf", testcases);
-//		addTestCasesFixed("LTLAutomizerC.xml", "ltlAutomizer/None+SBE+SASBE.epf", testcases);
-//		addTestCasesFixed("LTLAutomizerC.xml", "ltlAutomizer/None+SBE.epf", testcases);
-//		addTestCasesFixed("LTLAutomizerC.xml", "ltlAutomizer/None.epf", testcases);
-//
-//		addTestCasesFixed("LTLAutomizerCInline.xml", "ltlAutomizer/Default+SBE+SASBE.epf", testcases);
-//		addTestCasesFixed("LTLAutomizerCInline.xml", "ltlAutomizer/Default+SBE.epf", testcases);
-//		addTestCasesFixed("LTLAutomizerCInline.xml", "ltlAutomizer/Default-LBE-Multi+IB.epf", testcases);
-//		addTestCasesFixed("LTLAutomizerCInline.xml", "ltlAutomizer/Default-LBE-Multi+NondetBuchi.epf", testcases);
-//
-//		addTestCasesFixed("LTLAutomizerCInline.xml", "ltlAutomizer/Default-LBE-Multi+SBE+SASBE.epf", testcases);
-//		addTestCasesFixed("LTLAutomizerCInline.xml", "ltlAutomizer/Default-LBE-Multi+SBE+SASBE+NondetBuchi.epf",
-//				testcases);
-//		addTestCasesFixed("LTLAutomizerCInline.xml", "ltlAutomizer/Default-LBE-Multi+SBE.epf", testcases);
-//		addTestCasesFixed("LTLAutomizerCInline.xml", "ltlAutomizer/Default-LBE-Multi.epf", testcases);
-//		addTestCasesFixed("LTLAutomizerCInline.xml", "ltlAutomizer/Default-LBE-Multi-z3.epf", testcases);
-//		addTestCasesFixed("LTLAutomizerCInline.xml", "ltlAutomizer/Default-LBE-Multi-SMTInterpol.epf", testcases);
-//		addTestCasesFixed("LTLAutomizerCInline.xml", "ltlAutomizer/Default-LBE-Multi-StagedBlast.epf", testcases);
-//		addTestCasesFixed("LTLAutomizerCInline.xml", "ltlAutomizer/Default-LBE-Single.epf", testcases);
-//		addTestCasesFixed("LTLAutomizerCInline.xml", "ltlAutomizer/Default-LBE-SNME.epf", testcases);
-//		addTestCasesFixed("LTLAutomizerCInline.xml", "ltlAutomizer/Default.epf", testcases);
-//		addTestCasesFixed("LTLAutomizerCInline.xml", "ltlAutomizer/None+LBE-Multi.epf", testcases);
-//		addTestCasesFixed("LTLAutomizerCInline.xml", "ltlAutomizer/None+SBE+SASBE.epf", testcases);
-//		addTestCasesFixed("LTLAutomizerCInline.xml", "ltlAutomizer/None+SBE.epf", testcases);
-//		addTestCasesFixed("LTLAutomizerCInline.xml", "ltlAutomizer/None.epf", testcases);
-
-		// does not terminate on rers2012/P14/Problem14_prop_003.c
-		addTestCasesFixed("LTLAutomizerC.xml", "ltlAutomizer/Default-LBE-Multi+SBE+IB.epf", testcases);
-//		addTestCasesFixed("LTLAutomizerCInline.xml", "ltlAutomizer/Default-LBE-Multi+SBE+IB.epf", testcases);
-//		addTestCasesFixed("LTLAutomizerC.xml", "ltlAutomizer/Default-LBE-Multi+SBE+SASBE+IB.epf", testcases);
-//		addTestCasesFixed("LTLAutomizerCInline.xml", "ltlAutomizer/Default-LBE-Multi+SBE+SASBE+IB.epf", testcases);
+		for (String toolchain : TOOLCHAINS) {
+			for (String setting : SETTINGS) {
+				addTestCasesFixed(toolchain, "ltlAutomizer/" + setting, testcases);
+			}
+		}
 	}
 
 	@Override
@@ -91,9 +97,9 @@ public class LTLChecker extends AbstractEvaluationTestSuite {
 
 //				"examples/LTL/coolant/",
 //				"examples/LTL/koskinen/ltlcmodelchecker-benchmarks/",
-//				"examples/LTL/bugs/",
-//				"examples/LTL/simple/",
-				"examples/LTL/rers2012/P14/Problem14_prop_003.c",
+				"examples/LTL/bugs/",
+				"examples/LTL/simple/",
+//				"examples/LTL/rers2012/P14/Problem14_prop_003.c",
 				
  
 		};

@@ -62,4 +62,4 @@ file_export_version=3.0
 \!/instance/UltimateCore=
 /instance/UltimateCore/Log\ witness=false
 /instance/UltimateCore/Write\ witness\ as\ "witness.graphml"\ to\ working\ directory=false
-/instance/UltimateCore/ultimate.logging.details=de.uni_freiburg.informatik.ultimate.buchiprogramproduct\=DEBUG;
+/instance/UltimateCore/ultimate.logging.details=de.uni_freiburg.informatik.ultimate.buchiprogramproduct\=INFO;

@@ -9,8 +9,8 @@ file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.buchiprogramproduct/Minimize\ states\ even\ if\ more\ edges\ are\ added\ than\ removed.=false
 /instance/de.uni_freiburg.informatik.ultimate.buchiprogramproduct/Rewrite\ not\ equals\ when\ simplifying\ assume\ statements\ with\ SBE=false
 /instance/de.uni_freiburg.informatik.ultimate.buchiprogramproduct/Rewrite\ not\ equals\ during\ SBE=false
-/instance/de.uni_freiburg.informatik.ultimate.buchiprogramproduct/Simplify\ assume\ statements=true
-/instance/de.uni_freiburg.informatik.ultimate.buchiprogramproduct/Use\ SBE\ during\ assume\ simplification=true
+/instance/de.uni_freiburg.informatik.ultimate.buchiprogramproduct/Simplify\ assume\ statements=false
+/instance/de.uni_freiburg.informatik.ultimate.buchiprogramproduct/Use\ SBE\ during\ assume\ simplification=false
 /instance/de.uni_freiburg.informatik.ultimate.buchiprogramproduct/Optimize\ not\ more\ than\ (<\=0\ means\ until\ nothing\ changes)=0
 /instance/de.uni_freiburg.informatik.ultimate.buchiprogramproduct/Remove\ sink\ states=true
 /instance/de.uni_freiburg.informatik.ultimate.buchiprogramproduct/Use\ SBE\ for\ initial\ RCFG=true
@@ -35,10 +35,10 @@ file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer/Compute\ Interpolants\ along\ a\ Counterexample=Craig_TreeInterpolation
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer/Use\ external\ solver\ (rank\ synthesis)=true
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer/Lasso\ Analysis=Nonlinear
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer/ScroogeNondeterminism\ stem=true
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer/ScroogeNondeterminism\ loop=true
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer/Bouncer\ loop=true
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer/Buchi\ interpolant\ automaton=ScroogeNondeterminism
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer/ScroogeNondeterminism\ stem=false
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer/ScroogeNondeterminism\ loop=false
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer/Bouncer\ loop=false
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer/Buchi\ interpolant\ automaton=StagedBlast
 @de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator=0.0.1
 \!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator=
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Check\ if\ freed\ pointer\ was\ valid=false
@@ -62,4 +62,4 @@ file_export_version=3.0
 \!/instance/UltimateCore=
 /instance/UltimateCore/Log\ witness=false
 /instance/UltimateCore/Write\ witness\ as\ "witness.graphml"\ to\ working\ directory=false
-/instance/UltimateCore/ultimate.logging.details=de.uni_freiburg.informatik.ultimate.buchiprogramproduct\=DEBUG;
+/instance/UltimateCore/ultimate.logging.details=de.uni_freiburg.informatik.ultimate.buchiprogramproduct\=INFO;
