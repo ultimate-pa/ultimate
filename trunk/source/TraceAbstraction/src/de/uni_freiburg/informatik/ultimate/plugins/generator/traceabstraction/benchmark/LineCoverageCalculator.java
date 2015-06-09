@@ -1,6 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark;
 
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -124,7 +125,7 @@ public class LineCoverageCalculator {
 	private int getActualFileLength(ILocation location) {
 		if (mActualFileLength == -1) {
 			try {
-				List<String> content = Files.readAllLines(Paths.get(location.getFileName()));
+				List<String> content = Files.readAllLines(Paths.get(location.getFileName()), Charset.defaultCharset());
 				mActualFileLength = content.size();
 				determineForbiddenLines(content);
 			} catch (IOException e) {
