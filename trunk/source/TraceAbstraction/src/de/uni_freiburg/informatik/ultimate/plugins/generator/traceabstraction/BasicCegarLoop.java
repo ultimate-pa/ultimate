@@ -53,6 +53,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.In
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataTransitionAppender.DeterministicInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataTransitionAppender.NondeterministicInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataTransitionAppender.SelfloopDeterminizer;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.LineCoverageCalculator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantAutomataBuilders.CanonicalInterpolantAutomatonBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantAutomataBuilders.StraightLineInterpolantAutomatonBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantAutomataBuilders.TotalInterpolationAutomatonBuilder;
@@ -158,8 +159,9 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 //			INestedWordAutomatonSimple<CodeBlock, IPredicate> test = (new RemoveUnreachable<CodeBlock, IPredicate>(m_Services, wpa)).getResult();
 //			mLogger.info("Full witness product has " + test.sizeInformation());
 //			mLogger.info(wpa.generateBadWitnessInformation());
+			LineCoverageCalculator origCoverage = new LineCoverageCalculator(m_Services, m_Abstraction);
 			m_Abstraction = (new RemoveDeadEnds<CodeBlock, IPredicate>(m_Services, wpa)).getResult();
-			
+			new LineCoverageCalculator(m_Services, m_Abstraction, origCoverage).reportCoverage("Witness product");
 		}
 	}
 
