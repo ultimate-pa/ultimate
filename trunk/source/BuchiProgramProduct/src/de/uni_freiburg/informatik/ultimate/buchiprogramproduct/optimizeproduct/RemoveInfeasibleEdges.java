@@ -71,7 +71,7 @@ public class RemoveInfeasibleEdges extends BaseProductOptimizer {
 		}
 	}
 
-	public boolean IsGraphChanged() {
+	public boolean isGraphChanged() {
 		return mRemovedEdges > 0 || mRemovedLocations > 0;
 	}
 

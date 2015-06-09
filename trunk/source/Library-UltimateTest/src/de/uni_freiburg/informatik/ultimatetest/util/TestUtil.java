@@ -91,7 +91,9 @@ public class TestUtil {
 	}
 
 	/**
-	 * Prefix the parameter "path" with the path to the trunk folder of the Ultimate repository on the current machine. 
+	 * Prefix the parameter "path" with the path to the trunk folder of the
+	 * Ultimate repository on the current machine.
+	 * 
 	 * @param path
 	 * @return
 	 */
@@ -246,13 +248,12 @@ public class TestUtil {
 	}
 
 	/**
-	 * Returns recursively all files in a directory that have a path whose 
-	 * suffix beyond root is matched by regex. If root is a file, a collection 
-	 * containing root is returned (ignoring the regex)
-	 * E.g., your file root has the absolute path
-	 *   /home/horst/ultimate/
-	 * and your regex is *horst* you obtain the files that contain the String
-	 * "horst" if the prefix "/home/horst/ultimate/" was removed.
+	 * Returns recursively all files in a directory that have a path whose
+	 * suffix beyond root is matched by regex. If root is a file, a collection
+	 * containing root is returned (ignoring the regex) E.g., your file root has
+	 * the absolute path /home/horst/ultimate/ and your regex is *horst* you
+	 * obtain the files that contain the String "horst" if the prefix
+	 * "/home/horst/ultimate/" was removed.
 	 * 
 	 * @param root
 	 * @param regex
@@ -261,12 +262,11 @@ public class TestUtil {
 	public static Collection<File> getFilesRegex(File root, String[] regex) {
 		return getFilesRegex(root.getAbsolutePath(), root, regex);
 	}
-	
-	
+
 	/**
-	 * Returns recursively all files in a directory that have a path whose 
-	 * suffix beyond the String prefix is matched by regex. If root is a file, 
-	 * a collection containing root is returned (ignoring the regex).
+	 * Returns recursively all files in a directory that have a path whose
+	 * suffix beyond the String prefix is matched by regex. If root is a file, a
+	 * collection containing root is returned (ignoring the regex).
 	 * 
 	 * @param root
 	 * @param regex
@@ -314,7 +314,6 @@ public class TestUtil {
 		}
 		return rtr;
 	}
-	
 
 	public static <E> Collection<E> uniformN(Collection<E> collection, int n) {
 		ArrayList<E> rtr = new ArrayList<E>(n);
@@ -413,10 +412,6 @@ public class TestUtil {
 		logger.write("#################### END TEST RESULT ####################");
 	}
 
-	private interface ILogWriter {
-		public void write(String message);
-	}
-
 	/**
 	 * Returns a map from keywords to verification results. We use keywords in
 	 * filenames to specify expected verification results. If a key of this map
@@ -482,12 +477,12 @@ public class TestUtil {
 		map.put(".*_false-termination.*", TerminationAnalysisOverallResult.NONTERMINATING);
 		return map;
 	}
-	
+
 	/**
 	 * Returns a map from keywords to verification results. We use keywords in
-	 * paths to specify expected verification results. If a key of this map
-	 * is a substring of the path, the value of this map is the expected
-	 * verification result of a termination analysis.
+	 * paths to specify expected verification results. If a key of this map is a
+	 * substring of the path, the value of this map is the expected verification
+	 * result of a termination analysis.
 	 */
 	public static Map<String, TerminationAnalysisOverallResult> constructPathKeywordMap_TerminationAnalysis() {
 		Map<String, TerminationAnalysisOverallResult> map = new HashMap<String, TerminationAnalysisOverallResult>();
@@ -605,28 +600,33 @@ public class TestUtil {
 	}
 
 	public static void writeSummary(ITestSummary testSummary) {
-		File logFile = new File(TestUtil.generateAbsolutePathForLogfile(testSummary));
-
+		final File logFile = new File(TestUtil.generateAbsolutePathForLogfile(testSummary));
+		final Logger logger = Logger.getLogger(testSummary.getUltimateTestSuiteClass());
 		if (!logFile.isDirectory()) {
-			logFile.getParentFile().mkdirs();
+			if (!logFile.getParentFile().mkdirs()) {
+				if (!logFile.getParentFile().isDirectory()) {
+					logger.warn("Did not create parent directory: " + logFile.getParentFile());
+				}
+			}
 		}
 
-		String summaryLog = testSummary.getSummaryLog().trim();
+		final String summaryLog = testSummary.getSummaryLog().trim();
 		if (summaryLog == null || summaryLog.isEmpty()) {
 			return;
 		}
 
 		try {
-			FileWriter fw = new FileWriter(logFile);
-			Logger.getLogger(testSummary.getUltimateTestSuiteClass()).info(
-					"Writing " + testSummary.getDescriptiveLogName() + " for "
-							+ testSummary.getUltimateTestSuiteClass().getCanonicalName() + " to "
-							+ logFile.getAbsolutePath());
-			fw.write(summaryLog);
-			fw.close();
+			final FileWriter writer = new FileWriter(logFile);
+			logger.info("Writing " + testSummary.getDescriptiveLogName() + " for "
+					+ testSummary.getUltimateTestSuiteClass().getCanonicalName() + " to " + logFile.getAbsolutePath());
+			writer.write(summaryLog);
+			writer.close();
 		} catch (IOException e) {
-			e.printStackTrace();
+			logger.fatal("Exception while writing to " + logFile.getAbsolutePath(), e);
 		}
 	}
 
+	private interface ILogWriter {
+		public void write(String message);
+	}
 }

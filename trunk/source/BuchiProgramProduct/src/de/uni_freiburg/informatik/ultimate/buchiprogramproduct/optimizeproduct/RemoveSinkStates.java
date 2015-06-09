@@ -74,7 +74,7 @@ public class RemoveSinkStates extends BaseProductOptimizer {
 	}
 
 	@Override
-	public boolean IsGraphChanged() {
+	public boolean isGraphChanged() {
 		return mRemovedEdges > 0 || mRemovedLocations > 0;
 	}
 }

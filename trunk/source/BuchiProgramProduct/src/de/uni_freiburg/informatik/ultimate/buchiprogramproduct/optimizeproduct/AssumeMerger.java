@@ -201,7 +201,7 @@ public class AssumeMerger extends BaseProductOptimizer {
 	}
 
 	@Override
-	public boolean IsGraphChanged() {
+	public boolean isGraphChanged() {
 		return mAssumesMerged > 0;
 	}
 }

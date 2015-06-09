@@ -5,6 +5,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
@@ -31,7 +32,7 @@ public class MinimizeStatesMultiEdgeSingleNode extends BaseMinimizeStates {
 
 	@Override
 	protected Collection<? extends RCFGNode> processCandidate(RootNode root, ProgramPoint target,
-			HashSet<RCFGNode> closed) {
+			Set<RCFGNode> closed) {
 
 		if (new HashSet<>(target.getIncomingNodes()).size() != 1
 				|| new HashSet<>(target.getOutgoingNodes()).size() != 1) {

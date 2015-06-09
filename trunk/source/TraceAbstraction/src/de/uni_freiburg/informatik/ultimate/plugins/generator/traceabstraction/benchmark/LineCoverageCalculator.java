@@ -97,7 +97,6 @@ public class LineCoverageCalculator {
 
 		for (final IPredicate state : states) {
 			final ProgramPoint[] points = getPoints(state);
-
 			for (final ProgramPoint point : points) {
 				final ILocation location = point.getBoogieASTNode().getLocation();
 				if (location == null) {

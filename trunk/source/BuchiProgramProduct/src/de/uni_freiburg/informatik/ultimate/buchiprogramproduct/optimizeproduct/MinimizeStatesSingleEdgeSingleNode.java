@@ -2,7 +2,7 @@ package de.uni_freiburg.informatik.ultimate.buchiprogramproduct.optimizeproduct;
 
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashSet;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
@@ -27,7 +27,7 @@ public class MinimizeStatesSingleEdgeSingleNode extends BaseMinimizeStates {
 
 	@Override
 	protected Collection<? extends RCFGNode> processCandidate(RootNode root, ProgramPoint target,
-			HashSet<RCFGNode> closed) {
+			Set<RCFGNode> closed) {
 
 		if (target.getIncomingEdges().size() != 1 || target.getOutgoingEdges().size() != 1) {
 			return target.getOutgoingNodes();

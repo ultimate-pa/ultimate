@@ -5,10 +5,12 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
+import de.uni_freiburg.informatik.ultimate.model.structure.BaseMultigraphEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
@@ -26,21 +28,21 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Sta
  */
 public class MinimizeStatesMultiEdgeMultiNode extends BaseMinimizeStates {
 
-	public MinimizeStatesMultiEdgeMultiNode(RootNode product, IUltimateServiceProvider services, IToolchainStorage storage) {
+	public MinimizeStatesMultiEdgeMultiNode(RootNode product, IUltimateServiceProvider services,
+			IToolchainStorage storage) {
 		super(product, services, storage);
 	}
 
 	@Override
-	protected Collection<? extends RCFGNode> processCandidate(RootNode root, ProgramPoint target,
-			HashSet<RCFGNode> closed) {
+	protected Collection<? extends RCFGNode> processCandidate(RootNode root, ProgramPoint target, Set<RCFGNode> closed) {
 		// we have the incoming edges
 		// ei = (qi,sti,q) in EI
 		// and the outgoing edges
 		// ej = (q,stj,qj) in EO
 		// and we will try to replace them by |EI| * |EO| edges
 
-		List<RCFGNode> incomingNodes = target.getIncomingNodes();
-		List<RCFGNode> outgoingNodes = target.getOutgoingNodes();
+		final List<RCFGNode> incomingNodes = target.getIncomingNodes();
+		final List<RCFGNode> outgoingNodes = target.getOutgoingNodes();
 
 		if (!incomingNodes.isEmpty() && !outgoingNodes.isEmpty() && !checkTargetNode(target)
 				&& !checkAllNodes(incomingNodes, outgoingNodes)) {
@@ -62,29 +64,29 @@ public class MinimizeStatesMultiEdgeMultiNode extends BaseMinimizeStates {
 			mLogger.debug("    will try to remove " + target.getLocationName());
 		}
 
-		List<RCFGEdge> predEdges = new ArrayList<RCFGEdge>(target.getIncomingEdges());
-		List<RCFGEdge> succEdges = new ArrayList<RCFGEdge>(target.getOutgoingEdges());
+		final List<RCFGEdge> predEdges = new ArrayList<RCFGEdge>(target.getIncomingEdges());
+		final List<RCFGEdge> succEdges = new ArrayList<RCFGEdge>(target.getOutgoingEdges());
 
 		// collect information for new edges beforehand (because
 		// SequentialComposition disconnects the edges and we wont get their
 		// source/target information afterwards)
-		ArrayList<EdgeConstructionInfo> infos = new ArrayList<>();
-		StatementExtractor extractor = new StatementExtractor(mLogger);
+		final List<EdgeConstructionInfo> infos = new ArrayList<>();
+		final StatementExtractor extractor = new StatementExtractor(mLogger);
 
-		Iterator<RCFGEdge> predIter = predEdges.iterator();
-		boolean canRemovePredEdges = true;
+		final Iterator<RCFGEdge> predIter = predEdges.iterator();
 		boolean canRemoveSuccEdges = true;
+		boolean canRemovePredEdges = true;
 		while (predIter.hasNext()) {
-			RCFGEdge predEdge = predIter.next();
+			final RCFGEdge predEdge = predIter.next();
 
-			CodeBlock predCB = (CodeBlock) predEdge;
+			final CodeBlock predCB = (CodeBlock) predEdge;
 			if (predCB.getTransitionFormula().isInfeasible() == Infeasibility.INFEASIBLE) {
 				if (mLogger.isDebugEnabled()) {
 					mLogger.debug("    already infeasible: " + predCB);
 				}
 				continue;
 			}
-			List<Statement> first = extractor.process(predCB);
+			final List<Statement> first = extractor.process(predCB);
 			if (extractor.hasSummary()) {
 				// we cannot remove or use this edge, it is a summary
 				predIter.remove();
@@ -95,59 +97,29 @@ public class MinimizeStatesMultiEdgeMultiNode extends BaseMinimizeStates {
 				continue;
 			}
 
-			Iterator<RCFGEdge> succIter = succEdges.iterator();
-
-			while (succIter.hasNext()) {
-				RCFGEdge succEdge = succIter.next();
-				CodeBlock succCB = (CodeBlock) succEdge;
-
-				if (succCB.getTransitionFormula().isInfeasible() == Infeasibility.INFEASIBLE) {
-					if (mLogger.isDebugEnabled()) {
-						mLogger.debug("    already infeasible: " + succCB);
-					}
-					continue;
-				}
-
-				List<Statement> second = extractor.process(succCB);
-				if (extractor.hasSummary()) {
-					// we cannot remove or use this edge, it is a summary
-					succIter.remove();
-					canRemovePredEdges = false;
-					if (mLogger.isDebugEnabled()) {
-						mLogger.debug("    skipping because it contains summaries: " + succCB);
-					}
-					continue;
-				}
-
-				infos.add(new EdgeConstructionInfo((ProgramPoint) predEdge.getSource(), (ProgramPoint) succEdge
-						.getTarget(), first, second));
-
-			}
+			// during processing of successor edges, we decide if we are allowed
+			// to remove the predecessor edges
+			canRemovePredEdges = processSuccessorEdges(succEdges, extractor, infos, predEdge, first);
 		}
+
 		int removedEdges = 0;
-		if (canRemovePredEdges) {
+		if (canRemoveSuccEdges) {
 			// if one of the successor edges is a summary edge, we are not
 			// allowed to remove the predecessor edges
-			for (RCFGEdge predEdge : predEdges) {
-				predEdge.disconnectSource();
-				predEdge.disconnectTarget();
-				removedEdges++;
-			}
+			removedEdges += disconnectEdges(predEdges);
 		}
-		if (canRemoveSuccEdges) {
+		if (canRemovePredEdges) {
 			// if one of the predecessor edges is a summary edge, we are not
 			// allowed to remove the successor edges
-			for (RCFGEdge succEdge : succEdges) {
-				succEdge.disconnectSource();
-				succEdge.disconnectTarget();
-				removedEdges++;
-			}
+			removedEdges += disconnectEdges(succEdges);
 		}
 
-		ArrayList<RCFGNode> rtr = new ArrayList<>();
-		for (EdgeConstructionInfo info : infos) {
-			StatementSequence ss = mCbf.constructStatementSequence(info.getSource(), info.getTarget(), info.getStatements(),
-					Origin.IMPLEMENTATION);
+		final Set<RCFGNode> rtr = new HashSet<>();
+		
+		//add new edges 
+		for (final EdgeConstructionInfo info : infos) {
+			final StatementSequence ss = mCbf.constructStatementSequence(info.getSource(), info.getTarget(),
+					info.getStatements(), Origin.IMPLEMENTATION);
 			generateTransFormula(root, ss);
 			// we changed the edges of the predecessor, we have to re-check
 			// them. We therefore need to remove them from the closed set.
@@ -155,7 +127,7 @@ public class MinimizeStatesMultiEdgeMultiNode extends BaseMinimizeStates {
 			closed.remove(ss.getSource());
 		}
 
-		if (!canRemovePredEdges) {
+		if (!canRemoveSuccEdges) {
 			// if we did not remove all pred edges, we have to add all possible
 			// successors of the node we wanted to remove
 			rtr.addAll(target.getOutgoingNodes());
@@ -173,34 +145,83 @@ public class MinimizeStatesMultiEdgeMultiNode extends BaseMinimizeStates {
 		return rtr;
 	}
 
-	private class EdgeConstructionInfo {
-		ProgramPoint getSource() {
+	private boolean processSuccessorEdges(Collection<RCFGEdge> succEdges, StatementExtractor extractor,
+			Collection<EdgeConstructionInfo> infos, BaseMultigraphEdge<RCFGNode, RCFGEdge> predEdge,
+			List<Statement> first) {
+		final Iterator<RCFGEdge> succIter = succEdges.iterator();
+		boolean canRemovePredEdges = true;
+		while (succIter.hasNext()) {
+			final RCFGEdge succEdge = succIter.next();
+			final CodeBlock succCB = (CodeBlock) succEdge;
+
+			if (succCB.getTransitionFormula().isInfeasible() == Infeasibility.INFEASIBLE) {
+				if (mLogger.isDebugEnabled()) {
+					mLogger.debug("    already infeasible: " + succCB);
+				}
+				continue;
+			}
+
+			final List<Statement> second = extractor.process(succCB);
+			if (extractor.hasSummary()) {
+				// we cannot remove or use this edge, it is a summary
+				succIter.remove();
+				// if the successor edges contain a summary, we cannot remove
+				// any predecessor edge
+				canRemovePredEdges = false;
+				if (mLogger.isDebugEnabled()) {
+					mLogger.debug("    skipping because it contains summaries: " + succCB);
+				}
+				continue;
+			}
+
+			// we will construct a new edge going from the source of the
+			// predecessor edge to the target of the successor edge and being
+			// labeled with the statements of the first edge followed by the
+			// statements of the second edge.
+			infos.add(new EdgeConstructionInfo((ProgramPoint) predEdge.getSource(),
+					(ProgramPoint) succEdge.getTarget(), first, second));
+
+		}
+		return canRemovePredEdges;
+	}
+
+	private int disconnectEdges(Collection<RCFGEdge> edges) {
+		int removedEdges = 0;
+		for (final RCFGEdge succEdge : edges) {
+			succEdge.disconnectSource();
+			succEdge.disconnectTarget();
+			removedEdges++;
+		}
+		return removedEdges;
+	}
+
+	private static final class EdgeConstructionInfo {
+		private final ProgramPoint mSource;
+		private final ProgramPoint mTarget;
+		private final List<Statement> mFirst;
+		private final List<Statement> mSecond;
+
+		private EdgeConstructionInfo(ProgramPoint source, ProgramPoint target, List<Statement> first,
+				List<Statement> second) {
+			mSource = source;
+			mTarget = target;
+			mFirst = first;
+			mSecond = second;
+		}
+
+		private ProgramPoint getSource() {
 			return mSource;
 		}
 
-		ProgramPoint getTarget() {
+		private ProgramPoint getTarget() {
 			return mTarget;
 		}
 
-		List<Statement> getStatements() {
-			ArrayList<Statement> rtr = new ArrayList<>();
+		private List<Statement> getStatements() {
+			final List<Statement> rtr = new ArrayList<>();
 			rtr.addAll(mFirst);
 			rtr.addAll(mSecond);
 			return rtr;
 		}
-
-		public EdgeConstructionInfo(ProgramPoint source, ProgramPoint target, List<Statement> first,
-				List<Statement> second) {
-			this.mSource = source;
-			this.mTarget = target;
-			this.mFirst = first;
-			this.mSecond = second;
-		}
-
-		ProgramPoint mSource;
-		ProgramPoint mTarget;
-		List<Statement> mFirst;
-		List<Statement> mSecond;
 	}
-
 }

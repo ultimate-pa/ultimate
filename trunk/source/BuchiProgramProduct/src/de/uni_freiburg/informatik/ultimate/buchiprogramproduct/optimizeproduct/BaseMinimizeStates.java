@@ -2,8 +2,10 @@ package de.uni_freiburg.informatik.ultimate.buchiprogramproduct.optimizeproduct;
 
 import java.util.ArrayDeque;
 import java.util.Collection;
+import java.util.Deque;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.buchiprogramproduct.Activator;
 import de.uni_freiburg.informatik.ultimate.buchiprogramproduct.preferences.PreferenceInitializer;
@@ -13,13 +15,13 @@ import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvide
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.annot.BuchiProgramAcceptingStateAnnotation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlockFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
+import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
 
 public abstract class BaseMinimizeStates extends BaseProductOptimizer {
 
@@ -40,13 +42,15 @@ public abstract class BaseMinimizeStates extends BaseProductOptimizer {
 
 	@Override
 	protected RootNode process(RootNode root) {
-		ArrayDeque<RCFGNode> nodes = new ArrayDeque<>();
-		HashSet<RCFGNode> closed = new HashSet<>();
+		final Deque<RCFGNode> nodes = new ArrayDeque<>();
+		final Set<RCFGNode> closed = new HashSet<>();
 
 		nodes.addAll(root.getOutgoingNodes());
 
 		while (!nodes.isEmpty()) {
-			RCFGNode current = nodes.removeFirst();
+			checkForTimeoutOrCancellation();
+			
+			final RCFGNode current = nodes.removeFirst();
 			if (closed.contains(current)) {
 				continue;
 			}
@@ -67,7 +71,24 @@ public abstract class BaseMinimizeStates extends BaseProductOptimizer {
 		return root;
 	}
 
-	protected abstract Collection<? extends RCFGNode> processCandidate(RootNode root, ProgramPoint target, HashSet<RCFGNode> closed);
+	/**
+	 * Process the state "target" and return a set of nodes that should be
+	 * processed next. Processing means adding and removing edges. The caller
+	 * will take care that this method is called only once per target node.
+	 * 
+	 * @param root
+	 *            The root node of the current RCFG.
+	 * @param target
+	 *            The node that should be processed.
+	 * @param closed
+	 *            A set of already processed nodes. You may add additional nodes
+	 *            here if you know that you do not need to process them. You may
+	 *            also remove some nodes if you want to re-process them.
+	 * @return A set of nodes that should be processed. May not be null. Nodes
+	 *         already in the closed set will not be processed again.
+	 */
+	protected abstract Collection<? extends RCFGNode> processCandidate(RootNode root, ProgramPoint target,
+			Set<RCFGNode> closed);
 
 	protected boolean checkEdgePairs(List<RCFGEdge> predEdges, List<RCFGEdge> succEdges) {
 		if (!mIgnoreBlowup) {
@@ -78,8 +99,8 @@ public abstract class BaseMinimizeStates extends BaseProductOptimizer {
 			}
 		}
 
-		for (RCFGEdge predEdge : predEdges) {
-			for (RCFGEdge succEdge : succEdges) {
+		for (final RCFGEdge predEdge : predEdges) {
+			for (final RCFGEdge succEdge : succEdges) {
 				if (!checkEdgePair(predEdge, succEdge)) {
 					return false;
 				}
@@ -114,13 +135,13 @@ public abstract class BaseMinimizeStates extends BaseProductOptimizer {
 	}
 
 	protected boolean checkAllNodes(List<RCFGNode> predNodes, List<RCFGNode> succNodes) {
-		for (RCFGNode predNode : predNodes) {
+		for (final RCFGNode predNode : predNodes) {
 			if (BuchiProgramAcceptingStateAnnotation.getAnnotation(predNode) == null) {
 				return false;
 			}
 		}
 
-		for (RCFGNode succNode : succNodes) {
+		for (final RCFGNode succNode : succNodes) {
 			if (BuchiProgramAcceptingStateAnnotation.getAnnotation(succNode) == null) {
 				return false;
 			}
@@ -137,8 +158,14 @@ public abstract class BaseMinimizeStates extends BaseProductOptimizer {
 				|| BuchiProgramAcceptingStateAnnotation.getAnnotation(succ) != null;
 	}
 
+	private void checkForTimeoutOrCancellation() {
+		if (!mServices.getProgressMonitorService().continueProcessing()) {
+			throw new ToolchainCanceledException(getClass());
+		}
+	}
+
 	@Override
-	public boolean IsGraphChanged() {
+	public boolean isGraphChanged() {
 		return mRemovedLocations > 0 || mRemovedEdges > 0;
 	}
 

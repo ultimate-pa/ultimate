@@ -118,7 +118,7 @@ public class BuchiProductObserver implements IUnmanagedObserver {
 		if (ups.getBoolean(PreferenceInitializer.OPTIMIZE_REMOVE_SINK_STATES)) {
 			RemoveSinkStates rss = new RemoveSinkStates(mProduct, mServices, mStorage);
 			mProduct = rss.getResult();
-			continueOptimization = continueOptimization || rss.IsGraphChanged();
+			continueOptimization = continueOptimization || rss.isGraphChanged();
 		}
 		return continueOptimization;
 	}
@@ -127,7 +127,7 @@ public class BuchiProductObserver implements IUnmanagedObserver {
 		if (ups.getBoolean(PreferenceInitializer.OPTIMIZE_REMOVE_INFEASIBLE_EDGES)) {
 			RemoveInfeasibleEdges opt1 = new RemoveInfeasibleEdges(mProduct, mServices, mStorage);
 			mProduct = opt1.getResult();
-			continueOptimization = continueOptimization || opt1.IsGraphChanged();
+			continueOptimization = continueOptimization || opt1.isGraphChanged();
 		}
 		return continueOptimization;
 	}
@@ -136,7 +136,7 @@ public class BuchiProductObserver implements IUnmanagedObserver {
 		if (ups.getBoolean(PreferenceInitializer.OPTIMIZE_MAXIMIZE_FINAL_STATES)) {
 			MaximizeFinalStates opt2 = new MaximizeFinalStates(mProduct, mServices, mStorage);
 			mProduct = opt2.getResult();
-			continueOptimization = continueOptimization || opt2.IsGraphChanged();
+			continueOptimization = continueOptimization || opt2.isGraphChanged();
 		}
 		return continueOptimization;
 	}
@@ -162,7 +162,7 @@ public class BuchiProductObserver implements IUnmanagedObserver {
 
 			}
 			mProduct = opt3.getResult();
-			continueOptimization = continueOptimization || opt3.IsGraphChanged();
+			continueOptimization = continueOptimization || opt3.isGraphChanged();
 		}
 		return continueOptimization;
 	}
@@ -171,7 +171,7 @@ public class BuchiProductObserver implements IUnmanagedObserver {
 		if (ups.getBoolean(PreferenceInitializer.OPTIMIZE_SIMPLIFY_ASSUMES)) {
 			BaseProductOptimizer opt4 = new AssumeMerger(mProduct, mServices, mStorage);
 			mProduct = opt4.getResult();
-			continueOptimization = continueOptimization || opt4.IsGraphChanged();
+			continueOptimization = continueOptimization || opt4.isGraphChanged();
 		}
 		return continueOptimization;
 	}

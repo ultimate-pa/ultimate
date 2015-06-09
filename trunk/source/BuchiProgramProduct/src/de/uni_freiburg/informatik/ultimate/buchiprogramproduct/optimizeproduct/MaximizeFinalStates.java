@@ -1,8 +1,10 @@
 package de.uni_freiburg.informatik.ultimate.buchiprogramproduct.optimizeproduct;
 
 import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
@@ -37,16 +39,16 @@ public class MaximizeFinalStates extends BaseProductOptimizer {
 	}
 
 	private int processInternal(RootNode root) {
-		ArrayDeque<ProgramPoint> nodes = new ArrayDeque<>();
-		HashSet<ProgramPoint> closed = new HashSet<>();
+		final Deque<ProgramPoint> nodes = new ArrayDeque<>();
+		final Set<ProgramPoint> closed = new HashSet<>();
 		BuchiProgramAcceptingStateAnnotation annot = null;
 		int newAcceptingStates = 0;
-		for (RCFGEdge edge : root.getOutgoingEdges()) {
+		for (final RCFGEdge edge : root.getOutgoingEdges()) {
 			nodes.add((ProgramPoint) edge.getTarget());
 		}
 
 		while (!nodes.isEmpty()) {
-			ProgramPoint current = nodes.removeFirst();
+			final ProgramPoint current = nodes.removeFirst();
 			if (closed.contains(current)) {
 				continue;
 			}
@@ -58,14 +60,14 @@ public class MaximizeFinalStates extends BaseProductOptimizer {
 				continue;
 			}
 
-			List<ProgramPoint> succs = getSuccessors(current);
+			final List<ProgramPoint> succs = getSuccessors(current);
 			if (succs.isEmpty()) {
 				// there are no successors
 				continue;
 			}
 
 			boolean allSuccessorsAreAccepting = true;
-			for (ProgramPoint succ : succs) {
+			for (final ProgramPoint succ : succs) {
 				annot = BuchiProgramAcceptingStateAnnotation.getAnnotation(succ);
 				allSuccessorsAreAccepting = allSuccessorsAreAccepting && annot != null;
 				nodes.add(succ);
@@ -86,7 +88,7 @@ public class MaximizeFinalStates extends BaseProductOptimizer {
 	}
 
 	@Override
-	public boolean IsGraphChanged() {
+	public boolean isGraphChanged() {
 		return mNewAcceptingStates > 0;
 	}
 }

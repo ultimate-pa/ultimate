@@ -159,7 +159,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 //			INestedWordAutomatonSimple<CodeBlock, IPredicate> test = (new RemoveUnreachable<CodeBlock, IPredicate>(m_Services, wpa)).getResult();
 //			mLogger.info("Full witness product has " + test.sizeInformation());
 //			mLogger.info(wpa.generateBadWitnessInformation());
-			LineCoverageCalculator origCoverage = new LineCoverageCalculator(m_Services, m_Abstraction);
+			final LineCoverageCalculator origCoverage = new LineCoverageCalculator(m_Services, m_Abstraction);
 			m_Abstraction = (new RemoveDeadEnds<CodeBlock, IPredicate>(m_Services, wpa)).getResult();
 			new LineCoverageCalculator(m_Services, m_Abstraction, origCoverage).reportCoverage("Witness product");
 		}

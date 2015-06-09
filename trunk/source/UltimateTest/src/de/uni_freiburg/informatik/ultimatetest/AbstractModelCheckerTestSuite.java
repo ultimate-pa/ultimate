@@ -11,16 +11,18 @@ import de.uni_freiburg.informatik.ultimatetest.decider.ITestResultDecider;
 import de.uni_freiburg.informatik.ultimatetest.util.TestUtil;
 
 public abstract class AbstractModelCheckerTestSuite extends UltimateTestSuite {
+	private static final long PSEUDO_RANDOM_FILE_SELECTION_SEED = 19120623;
+	private static final String SETTINGS_PATH = "examples/settings/";
+	private static final String TOOLCHAIN_PATH = "examples/toolchains/";
+
 	protected List<UltimateTestCase> mTestCases = new ArrayList<UltimateTestCase>();
-	private long s_PseudorandomFileselectionSeed = 19120623;
-	private static final String mPathToSettings = "examples/settings/";
-	private static final String mPathToToolchains = "examples/toolchains/";
-	
+
 	/**
 	 * Timeout of each test case.
+	 * 
 	 * @return A timeout for each test case in ms. The value 0 means that there
-	 * is no timeout. Negative values are forbidden.
-	 * This will override the timeout that is specified in the settings files.
+	 *         is no timeout. Negative values are forbidden. This will override
+	 *         the timeout that is specified in the settings files.
 	 */
 	protected abstract long getTimeout();
 
@@ -31,7 +33,8 @@ public abstract class AbstractModelCheckerTestSuite extends UltimateTestSuite {
 
 	public abstract ITestResultDecider constructITestResultDecider(UltimateRunDefinition ultimateRunDefinition);
 
-	protected void addTestCase(File toolchainFile, File settingsFile, File inputFile, ITestResultDecider testResultDecider) {
+	protected void addTestCase(File toolchainFile, File settingsFile, File inputFile,
+			ITestResultDecider testResultDecider) {
 		long deadline = getTimeout();
 		assert deadline >= 0;
 		UltimateRunDefinition urd = new UltimateRunDefinition(inputFile, settingsFile, toolchainFile);
@@ -86,11 +89,11 @@ public abstract class AbstractModelCheckerTestSuite extends UltimateTestSuite {
 	}
 
 	protected File getSettingsFile(String settings) {
-		return new File(TestUtil.getPathFromTrunk(mPathToSettings + settings));
+		return new File(TestUtil.getPathFromTrunk(SETTINGS_PATH + settings));
 	}
 
 	protected File getToolchainFile(String toolchain) {
-		return new File(TestUtil.getPathFromTrunk(mPathToToolchains + toolchain));
+		return new File(TestUtil.getPathFromTrunk(TOOLCHAIN_PATH + toolchain));
 	}
 
 	protected void addTestCases(String toolchain, String settings, String[] directories, String[] fileEndings) {
@@ -102,7 +105,7 @@ public abstract class AbstractModelCheckerTestSuite extends UltimateTestSuite {
 		}
 		addTestCases(toolchainFile, settingsFile, testFiles);
 	}
-	
+
 	protected void addTestCasesRegExp(String toolchain, String settings, String[] regExp) {
 
 		File toolchainFile = getToolchainFile(toolchain);
@@ -112,22 +115,20 @@ public abstract class AbstractModelCheckerTestSuite extends UltimateTestSuite {
 		addTestCases(toolchainFile, settingsFile, testFiles);
 	}
 
-	protected void addTestCases(String toolchain, String settings,
-			DirectoryFileEndingsPair[] directoryFileEndingsPairs) {
+	protected void addTestCases(String toolchain, String settings, DirectoryFileEndingsPair[] directoryFileEndingsPairs) {
 
 		File toolchainFile = getToolchainFile(toolchain);
 		File settingsFile = getSettingsFile(settings);
 		Collection<File> testFiles = new ArrayList<File>();
 		for (DirectoryFileEndingsPair directoryFileEndingsPair : directoryFileEndingsPairs) {
 			testFiles.addAll(getInputFiles(directoryFileEndingsPair.getDirectory(),
-					directoryFileEndingsPair.getFileEndings(), 
-					directoryFileEndingsPair.getLimit()));
+					directoryFileEndingsPair.getFileEndings(), directoryFileEndingsPair.getLimit()));
 		}
 		addTestCases(toolchainFile, settingsFile, testFiles);
 	}
 
 	/**
-	 * Get input files from directory. Do not take all files but only up to n 
+	 * Get input files from directory. Do not take all files but only up to n
 	 * pseudorandomly selected files.
 	 */
 	private Collection<File> getInputFiles(String directory, String[] fileEndings, int n) {
@@ -135,7 +136,7 @@ public abstract class AbstractModelCheckerTestSuite extends UltimateTestSuite {
 		if (n >= files.size()) {
 			return files;
 		} else {
-			Collections.shuffle(files, new Random(s_PseudorandomFileselectionSeed));
+			Collections.shuffle(files, new Random(PSEUDO_RANDOM_FILE_SELECTION_SEED));
 			ArrayList<File> result = new ArrayList<>(files.subList(0, n));
 			return result;
 		}
@@ -152,7 +153,7 @@ public abstract class AbstractModelCheckerTestSuite extends UltimateTestSuite {
 			mFileEndings = fileEndings;
 			mLimit = Integer.MAX_VALUE;
 		}
-		
+
 		public DirectoryFileEndingsPair(String directory, String[] fileEndings, int limit) {
 			super();
 			mDirectory = directory;
@@ -167,7 +168,7 @@ public abstract class AbstractModelCheckerTestSuite extends UltimateTestSuite {
 		public String[] getFileEndings() {
 			return mFileEndings;
 		}
-		
+
 		public int getLimit() {
 			return mLimit;
 		}

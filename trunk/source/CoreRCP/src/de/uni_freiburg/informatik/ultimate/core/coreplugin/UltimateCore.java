@@ -114,6 +114,7 @@ public class UltimateCore implements IApplication, ICore, IUltimatePlugin {
 	@Override
 	public void loadPreferences(String absolutePath) {
 		mSettingsManager.loadPreferencesFromFile(this, absolutePath);
+		mLoggingService.refreshLoggingService();
 	}
 
 	@Override
@@ -213,6 +214,7 @@ public class UltimateCore implements IApplication, ICore, IUltimatePlugin {
 		String settingsfile = mCmdLineArgs.getSettings();
 		if (settingsfile != null) {
 			mSettingsManager.loadPreferencesFromFile(this, settingsfile);
+			mLoggingService.refreshLoggingService();
 		}
 
 		try {

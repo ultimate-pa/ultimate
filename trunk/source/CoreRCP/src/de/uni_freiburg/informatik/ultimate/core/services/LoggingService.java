@@ -57,18 +57,19 @@ public final class LoggingService implements IStorable, ILoggingService {
 		mPreferenceStore = new UltimatePreferenceStore(Activator.s_PLUGIN_ID);
 		mAdditionalAppenders = new HashSet<Appender>();
 
-		//we remove the initial log4j console appender because we want to replace it with our own 
-		Logger.getRootLogger().removeAppender("ConsoleAppender"); 
-		
+		// we remove the initial log4j console appender because we want to
+		// replace it with our own
+		Logger.getRootLogger().removeAppender("ConsoleAppender");
+
 		Enumeration<?> forgeinAppenders = Logger.getRootLogger().getAllAppenders();
 		while (forgeinAppenders.hasMoreElements()) {
 			Appender appender = (Appender) forgeinAppenders.nextElement();
 			mAdditionalAppenders.add(appender);
 		}
-		for(Appender app : mAdditionalAppenders){
-			Logger.getRootLogger().removeAppender(app);			
+		for (Appender app : mAdditionalAppenders) {
+			Logger.getRootLogger().removeAppender(app);
 		}
-		
+
 		initializeAppenders();
 		refreshPropertiesLoggerHierarchie();
 		refreshPropertiesAppendLogFile();
@@ -99,13 +100,14 @@ public final class LoggingService implements IStorable, ILoggingService {
 		try {
 			// clear all old appenders
 			Logger.getRootLogger().removeAppender(mConsoleAppender);
-			//we remove the initial log4j console appender because we want to replace it with our own 
-			Logger.getRootLogger().removeAppender("ConsoleAppender"); 
+			// we remove the initial log4j console appender because we want to
+			// replace it with our own
+			Logger.getRootLogger().removeAppender("ConsoleAppender");
 
 			for (Appender appender : mAdditionalAppenders) {
 				Logger.getRootLogger().removeAppender(appender);
 			}
-			
+
 			// first, handle console appender as we also configure it
 			// defining format of logging output
 			PatternLayout layout = new PatternLayout(
@@ -251,28 +253,32 @@ public final class LoggingService implements IStorable, ILoggingService {
 		Logger pluginsLogger = rootRepos.getLogger(LOGGER_NAME_PLUGINS);
 		mLiveLoggerIds.add(LOGGER_NAME_PLUGINS);
 		String pluginslevel = mPreferenceStore.getString(CorePreferenceInitializer.LABEL_PLUGINS_PREF);
-		if (!pluginslevel.isEmpty())
+		if (!pluginslevel.isEmpty()) {
 			pluginsLogger.setLevel(Level.toLevel(pluginslevel));
+		}
 
 		// external tools
 		Logger toolslog = rootRepos.getLogger(LOGGER_NAME_TOOLS);
 		mLiveLoggerIds.add(LOGGER_NAME_TOOLS);
 		String toolslevel = mPreferenceStore.getString(CorePreferenceInitializer.LABEL_TOOLS_PREF);
-		if (!toolslevel.isEmpty())
+		if (!toolslevel.isEmpty()) {
 			toolslog.setLevel(Level.toLevel(toolslevel));
+		}
 
 		// controller
 		Logger controllogger = rootRepos.getLogger(LOGGER_NAME_CONTROLLER);
 		String controllevel = mPreferenceStore.getString(CorePreferenceInitializer.LABEL_CONTROLLER_PREF);
-		if (!controllevel.isEmpty())
+		if (!controllevel.isEmpty()) {
 			controllogger.setLevel(Level.toLevel(controllevel));
+		}
 		mLiveLoggerIds.add(LOGGER_NAME_CONTROLLER);
 
 		// core
 		Logger corelogger = rootRepos.getLogger(Activator.s_PLUGIN_ID);
 		String corelevel = mPreferenceStore.getString(CorePreferenceInitializer.LABEL_CORE_PREF);
-		if (!corelevel.isEmpty())
+		if (!corelevel.isEmpty()) {
 			corelogger.setLevel(Level.toLevel(corelevel));
+		}
 		mLiveLoggerIds.add(Activator.s_PLUGIN_ID);
 
 		// create children for plug-ins
@@ -317,8 +323,8 @@ public final class LoggingService implements IStorable, ILoggingService {
 	}
 
 	private String[] getDefinedLogLevels() {
-		String[] pref = convert(mPreferenceStore.getString(CorePreferenceInitializer.PREFID_DETAILS));
-		String[] retVal = new String[pref.length];
+		final String[] pref = convert(mPreferenceStore.getString(CorePreferenceInitializer.PREFID_DETAILS));
+		final String[] retVal = new String[pref.length];
 		for (int i = 0; i < retVal.length; i++) {
 			retVal[i] = pref[i].substring(0, pref[i].lastIndexOf("="));
 		}
@@ -326,10 +332,10 @@ public final class LoggingService implements IStorable, ILoggingService {
 	}
 
 	private String[] convert(String preferenceValue) {
-		StringTokenizer tokenizer = new StringTokenizer(preferenceValue,
+		final StringTokenizer tokenizer = new StringTokenizer(preferenceValue,
 				CorePreferenceInitializer.VALUE_DELIMITER_LOGGING_PREF);
-		int tokenCount = tokenizer.countTokens();
-		String[] elements = new String[tokenCount];
+		final int tokenCount = tokenizer.countTokens();
+		final String[] elements = new String[tokenCount];
 		for (int i = 0; i < tokenCount; i++) {
 			elements[i] = tokenizer.nextToken();
 		}
@@ -360,29 +366,29 @@ public final class LoggingService implements IStorable, ILoggingService {
 	public Logger getControllerLogger() {
 		return getLoggerById(LoggingService.LOGGER_NAME_CONTROLLER);
 	}
-	
+
 	private final class RefreshingPreferenceChangeListener implements IPreferenceChangeListener {
 		// FIXME: Care! Check which properties are relevant for logging and
 		// exactly when we have to reload
 		// we do not care what property changes, we just reload the logging
 		// stuff every time
-		
-		private RefreshingPreferenceChangeListener(){
-			
+
+		private RefreshingPreferenceChangeListener() {
+
 		}
-		
+
 		@Override
 		public void preferenceChange(PreferenceChangeEvent event) {
 			// do things if it concerns the loggers
 			String ek = event.getKey();
 			Object newValue = event.getNewValue();
 			Object oldValue = event.getOldValue();
-			
-			if(newValue == null && oldValue == null){
+
+			if (newValue == null && oldValue == null) {
 				return;
 			}
-			
-			if(newValue != null && newValue.equals(oldValue)){
+
+			if (newValue != null && newValue.equals(oldValue)) {
 				return;
 			}
 			if (ek.equals(CorePreferenceInitializer.LABEL_LOG4J_PATTERN)

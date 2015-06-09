@@ -14,7 +14,7 @@ public class LTLChecker extends AbstractEvaluationTestSuite {
 	public ITestResultDecider constructITestResultDecider(UltimateRunDefinition urd) {
 		return new LTLCheckerTestResultDecider(urd, false);
 	}
-	
+
 	@Override
 	protected boolean useParentDirectoryAsCategory() {
 		return false;
@@ -26,11 +26,10 @@ public class LTLChecker extends AbstractEvaluationTestSuite {
 //		addTestCasesFixed("LTLAutomizerC.xml", "ltlAutomizer/Default+SBE.epf", testcases);
 //		addTestCasesFixed("LTLAutomizerC.xml", "ltlAutomizer/Default-LBE-Multi+IB.epf", testcases);
 //		addTestCasesFixed("LTLAutomizerC.xml", "ltlAutomizer/Default-LBE-Multi+NondetBuchi.epf", testcases);
-//		addTestCasesFixed("LTLAutomizerC.xml", "ltlAutomizer/Default-LBE-Multi+SBE+SASBE+IB.epf", testcases);
+//
 //		addTestCasesFixed("LTLAutomizerC.xml", "ltlAutomizer/Default-LBE-Multi+SBE+SASBE.epf", testcases);
 //		addTestCasesFixed("LTLAutomizerC.xml", "ltlAutomizer/Default-LBE-Multi+SBE+SASBE+NondetBuchi.epf", testcases);
 //		addTestCasesFixed("LTLAutomizerC.xml", "ltlAutomizer/Default-LBE-Multi+SBE.epf", testcases);
-//		addTestCasesFixed("LTLAutomizerC.xml", "ltlAutomizer/Default-LBE-Multi+SBE+IB.epf", testcases);
 //		addTestCasesFixed("LTLAutomizerC.xml", "ltlAutomizer/Default-LBE-Multi.epf", testcases);
 //		addTestCasesFixed("LTLAutomizerC.xml", "ltlAutomizer/Default-LBE-Multi-z3.epf", testcases);
 //		addTestCasesFixed("LTLAutomizerC.xml", "ltlAutomizer/Default-LBE-Multi-z3interpol.epf", testcases);
@@ -42,17 +41,17 @@ public class LTLChecker extends AbstractEvaluationTestSuite {
 //		addTestCasesFixed("LTLAutomizerC.xml", "ltlAutomizer/None+LBE-Multi.epf", testcases);
 //		addTestCasesFixed("LTLAutomizerC.xml", "ltlAutomizer/None+SBE+SASBE.epf", testcases);
 //		addTestCasesFixed("LTLAutomizerC.xml", "ltlAutomizer/None+SBE.epf", testcases);
-		addTestCasesFixed("LTLAutomizerC.xml", "ltlAutomizer/None.epf", testcases);
-		
+//		addTestCasesFixed("LTLAutomizerC.xml", "ltlAutomizer/None.epf", testcases);
+//
 //		addTestCasesFixed("LTLAutomizerCInline.xml", "ltlAutomizer/Default+SBE+SASBE.epf", testcases);
 //		addTestCasesFixed("LTLAutomizerCInline.xml", "ltlAutomizer/Default+SBE.epf", testcases);
 //		addTestCasesFixed("LTLAutomizerCInline.xml", "ltlAutomizer/Default-LBE-Multi+IB.epf", testcases);
 //		addTestCasesFixed("LTLAutomizerCInline.xml", "ltlAutomizer/Default-LBE-Multi+NondetBuchi.epf", testcases);
-//		addTestCasesFixed("LTLAutomizerCInline.xml", "ltlAutomizer/Default-LBE-Multi+SBE+SASBE+IB.epf", testcases);
+//
 //		addTestCasesFixed("LTLAutomizerCInline.xml", "ltlAutomizer/Default-LBE-Multi+SBE+SASBE.epf", testcases);
-//		addTestCasesFixed("LTLAutomizerCInline.xml", "ltlAutomizer/Default-LBE-Multi+SBE+SASBE+NondetBuchi.epf", testcases);
+//		addTestCasesFixed("LTLAutomizerCInline.xml", "ltlAutomizer/Default-LBE-Multi+SBE+SASBE+NondetBuchi.epf",
+//				testcases);
 //		addTestCasesFixed("LTLAutomizerCInline.xml", "ltlAutomizer/Default-LBE-Multi+SBE.epf", testcases);
-//		addTestCasesFixed("LTLAutomizerCInline.xml", "ltlAutomizer/Default-LBE-Multi+SBE+IB.epf", testcases);
 //		addTestCasesFixed("LTLAutomizerCInline.xml", "ltlAutomizer/Default-LBE-Multi.epf", testcases);
 //		addTestCasesFixed("LTLAutomizerCInline.xml", "ltlAutomizer/Default-LBE-Multi-z3.epf", testcases);
 //		addTestCasesFixed("LTLAutomizerCInline.xml", "ltlAutomizer/Default-LBE-Multi-SMTInterpol.epf", testcases);
@@ -63,52 +62,40 @@ public class LTLChecker extends AbstractEvaluationTestSuite {
 //		addTestCasesFixed("LTLAutomizerCInline.xml", "ltlAutomizer/None+LBE-Multi.epf", testcases);
 //		addTestCasesFixed("LTLAutomizerCInline.xml", "ltlAutomizer/None+SBE+SASBE.epf", testcases);
 //		addTestCasesFixed("LTLAutomizerCInline.xml", "ltlAutomizer/None+SBE.epf", testcases);
-		addTestCasesFixed("LTLAutomizerCInline.xml", "ltlAutomizer/None.epf", testcases);
+//		addTestCasesFixed("LTLAutomizerCInline.xml", "ltlAutomizer/None.epf", testcases);
+
+		// does not terminate on rers2012/P14/Problem14_prop_003.c
+		addTestCasesFixed("LTLAutomizerC.xml", "ltlAutomizer/Default-LBE-Multi+SBE+IB.epf", testcases);
+//		addTestCasesFixed("LTLAutomizerCInline.xml", "ltlAutomizer/Default-LBE-Multi+SBE+IB.epf", testcases);
+//		addTestCasesFixed("LTLAutomizerC.xml", "ltlAutomizer/Default-LBE-Multi+SBE+SASBE+IB.epf", testcases);
+//		addTestCasesFixed("LTLAutomizerCInline.xml", "ltlAutomizer/Default-LBE-Multi+SBE+SASBE+IB.epf", testcases);
 	}
 
 	@Override
 	protected int getFilesPerCategory() {
-		return 20;
+		return -1;
 	}
 
 	@Override
 	protected String[] getDirectories() {
 		// @formatter:off
 		return new String[] { 
-				"examples/LTL/simple/cav2015.c",
-				"examples/LTL/simple/cav2015-inverted.c",
-				"examples/LTL/simple/someNonterminating.c",
-				"examples/LTL/simple/trivial-3.c",
-				//				"examples/LTL/rers2012/P14/",
 //				"examples/LTL/rers2012correctencoding/P14/",
+//				"examples/LTL/rers2012/P14/",
+
 //				"examples/LTL/rers2012/P15/",
 //				"examples/LTL/rers2012/P16/",
 //				"examples/LTL/rers2012/P17/",
 //				"examples/LTL/rers2012/P18/",
 //				"examples/LTL/rers2012/P19/",
+
 //				"examples/LTL/coolant/",
 //				"examples/LTL/koskinen/ltlcmodelchecker-benchmarks/",
-				"examples/LTL/bugs/",
-//				"examples/LTL/bugs/Bug_AssumeFalse.c",
+//				"examples/LTL/bugs/",
+//				"examples/LTL/simple/",
+				"examples/LTL/rers2012/P14/Problem14_prop_003.c",
 				
-				//RERS examples with NO_RESULT
-//				"examples/LTL/bugs/Bug_ProcedureAssumeFalse.c",
-//				"examples/LTL/rers2012/P14/Problem14_prop_014.c",
-//				"examples/LTL/rers2012correctencoding/P14/Problem14_prop_014.c",
-				
-				//candidates
-//				"examples/LTL/koskinen/ltlcmodelchecker-benchmarks/09-postgreSQL_dropbuf_prop1.c",
-//				"examples/LTL/koskinen/ltlcmodelchecker-benchmarks/03-toyacquirerelease.c",
-//				"examples/LTL/koskinen/ltlcmodelchecker-benchmarks/04-toylinarith1.c",
-//				"examples/LTL/koskinen/ltlcmodelchecker-benchmarks/05-toylinarith2.c",
-//				"examples/LTL/koskinen/ltlcmodelchecker-benchmarks/11-apache_accept_liveness.c"
-//				"examples/LTL/koskinen/ltlcmodelchecker-benchmarks/19-windows_os_frag5.c",
-//				"examples/LTL/koskinen/ltlcmodelchecker-benchmarks/13-windows_os_frag1.c",
-//				"examples/LTL/koskinen/ltlcmodelchecker-benchmarks/23-windows_os_frag8.c",
-//				"examples/LTL/bugs/Bug_ProcedureDNF.c",
-//				"examples/LTL/rers2012/P14/Problem14_prop_025.c",
-//				"examples/LTL/rers2012/P14/Problem14_prop_035.c",
-//				"examples/LTL/rers2012/P14/Problem14_prop_049.c", 
+ 
 		};
 		// @formatter:on
 		// return super.getDirectories();
@@ -119,7 +106,7 @@ public class LTLChecker extends AbstractEvaluationTestSuite {
 	 */
 	@Override
 	protected long getTimeout() {
-//		return 180 * 1000;
+		// return 180 * 1000;
 		return 3 * 60 * 1000;
 	}
 
@@ -201,5 +188,4 @@ public class LTLChecker extends AbstractEvaluationTestSuite {
 	protected String[] getFileEndings() {
 		return new String[] { ".c" };
 	}
-
 }
