@@ -278,7 +278,7 @@ public class LassoAnalysis {
 						lassoBuilder.computeMaxDagSizeStem(), 
 						lassoBuilder.computeMaxDagSizeLoop());
 			}
-			assert lassoBuilder.isSane();
+			assert lassoBuilder.isSane() : "lasso failed sanity check";
 		}
 		
 		m_lassos_t = lassoBuilder.getLassosTermination();
