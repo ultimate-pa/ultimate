@@ -27,7 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors;
 
 import java.util.ArrayList;
-import java.util.Collection;
+import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.lassoranker.exceptions.TermException;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.LassoBuilder;
@@ -51,10 +51,10 @@ public class StemAndLoopPreProcessor extends LassoPreProcessor {
 		m_TransitionPreProcessor = transitionPreProcessor;
 	}
 	
-	private Collection<TransFormulaLR> processStemOrLoop(
-			Collection<TransFormulaLR> old_components) throws TermException {
+	private List<TransFormulaLR> processStemOrLoop(
+			List<TransFormulaLR> old_components) throws TermException {
 		Script script = m_lassoBuilder.getScript();
-		Collection<TransFormulaLR> new_components =
+		List<TransFormulaLR> new_components =
 				new ArrayList<TransFormulaLR>(old_components.size());
 		for (TransFormulaLR tf : old_components) {
 			TransFormulaLR new_tf =
@@ -84,7 +84,7 @@ public class StemAndLoopPreProcessor extends LassoPreProcessor {
 			lasso_builder.setStemComponentsNonTermination(
 					processStemOrLoop(lasso_builder.getStemComponentsNonTermination()));
 		} else {
-			Collection<TransFormulaLR> components =
+			List<TransFormulaLR> components =
 					processStemOrLoop(lasso_builder.getStemComponentsTermination());
 			lasso_builder.setStemComponentsTermination(components);
 			lasso_builder.setStemComponentsNonTermination(components);
@@ -97,7 +97,7 @@ public class StemAndLoopPreProcessor extends LassoPreProcessor {
 			lasso_builder.setLoopComponentsNonTermination(
 					processStemOrLoop(lasso_builder.getLoopComponentsNonTermination()));
 		} else {
-			Collection<TransFormulaLR> components =
+			List<TransFormulaLR> components =
 					processStemOrLoop(lasso_builder.getLoopComponentsTermination());
 			lasso_builder.setLoopComponentsTermination(components);
 			lasso_builder.setLoopComponentsNonTermination(components);

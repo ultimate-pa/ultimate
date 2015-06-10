@@ -1,6 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.result;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -37,7 +38,7 @@ public class NonTerminationArgumentResult<P extends IElement> extends AbstractRe
 	private final Map<Expression, Rational> m_StateInit;
 	private final Map<Expression, Rational> m_StateHonda;
 	private final Map<Expression, Rational> m_Ray;
-	private final Rational m_Lambda;
+	private final Map<Expression, Rational> m_Lambdas;
 
 	private final boolean m_AlternativeLongDescription = !false;
 
@@ -60,14 +61,17 @@ public class NonTerminationArgumentResult<P extends IElement> extends AbstractRe
 	 * @param location
 	 *            program location
 	 */
-	public NonTerminationArgumentResult(P position, String plugin, Map<Expression, Rational> state_init,
-			Map<Expression, Rational> state_honda, Map<Expression, Rational> ray, Rational lambda,
+	public NonTerminationArgumentResult(P position, String plugin,
+			Map<Expression, Rational> state_init,
+			Map<Expression, Rational> state_honda,
+			Map<Expression, Rational> ray,
+			Map<Expression, Rational> lambdas,
 			IBacktranslationService translatorSequence) {
 		super(position, plugin, translatorSequence);
 		this.m_StateInit = state_init;
 		this.m_StateHonda = state_honda;
 		this.m_Ray = ray;
-		this.m_Lambda = lambda;
+		this.m_Lambdas = lambdas;
 	}
 
 	@Override
@@ -115,18 +119,22 @@ public class NonTerminationArgumentResult<P extends IElement> extends AbstractRe
 		sb.append("Nontermination argument in form of an infinite execution\n");
 		sb.append(m_StateInit);
 		assert (s_schematic_execution_length > 0);
-		Rational geometric_sum = Rational.ZERO; // 1 + lambda + lambda^2 + ...
+		Map<Expression, Rational> geometric_sum =
+				new HashMap<Expression, Rational>(); // 1 + lambda + lambda^2 + ...
+		for (Expression var : m_StateHonda.keySet()) {
+			geometric_sum.put(var, Rational.ZERO);
+		}
 		for (int i = 0; i < s_schematic_execution_length; ++i) {
 			Map<Expression, String> state = new HashMap<Expression, String>();
-			for (Entry<Expression, Rational> entry : m_StateHonda.entrySet()) {
-				Expression var = entry.getKey();
+			for (Expression var : m_StateHonda.keySet()) {
 				Rational x = m_StateHonda.get(var);
 				Rational y = m_Ray.get(var);
-				state.put(var, (x.add(y.mul(geometric_sum))).toString());
+				state.put(var, x.add(y.mul(geometric_sum.get(var))).toString());
+				geometric_sum.put(var,
+						geometric_sum.get(var).mul(m_Lambdas.get(var)).add(Rational.ONE));
 			}
 			sb.append("\n");
 			sb.append(printState(state));
-			geometric_sum = geometric_sum.mul(m_Lambda).add(Rational.ONE);
 		}
 		return sb.toString();
 	}
@@ -152,18 +160,17 @@ public class NonTerminationArgumentResult<P extends IElement> extends AbstractRe
 		sb.append(printState(statePos1));
 		sb.append("\nFor i>1, the state at position i is\n");
 		Map<Expression, String> statePosI = new HashMap<Expression, String>();
-		for (Entry<Expression, Rational> entry : m_StateHonda.entrySet()) {
-			Expression var = entry.getKey();
+		for (Expression var : m_StateHonda.keySet()) {
 			Rational x = m_StateHonda.get(var);
 			Rational y = m_Ray.get(var);
 			String value;
 			if (y.equals(Rational.ZERO)) {
 				value = x.toString();
 			} else {
-				if (m_Lambda.equals(Rational.ONE)) {
+				if (m_Lambdas.get(var).equals(Rational.ONE)) {
 					value = x + " + " + "i * " + y;
 				} else {
-					value = x + " + " + geometric() + " * " + y;
+					value = x + " + " + geometric(var) + " * " + y;
 				}
 			}
 			statePosI.put(var, value);
@@ -172,12 +179,12 @@ public class NonTerminationArgumentResult<P extends IElement> extends AbstractRe
 		return sb.toString();
 	}
 
-	private String geometric() {
+	private String geometric(Expression var) {
 		StringBuilder sb = new StringBuilder();
 		sb.append("(");
-		sb.append(m_Lambda);
+		sb.append(m_Lambdas.get(var));
 		sb.append("^(i+1)-1)/(");
-		sb.append(m_Lambda);
+		sb.append(m_Lambdas.get(var));
 		sb.append("-1)");
 		return sb.toString();
 	}

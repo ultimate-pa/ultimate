@@ -89,8 +89,7 @@ public class LassoPartitioneer extends LassoPreProcessor {
 	private Logger m_Logger;
 	
 	/**
-	 * Do not modify the lasso builder. Set this to true until support for lasso
-	 * builder with more than one stem (resp. loop) is implemented.
+	 * Do not modify the lasso builder?
 	 */
 	private final boolean m_DryRun = true;
 	

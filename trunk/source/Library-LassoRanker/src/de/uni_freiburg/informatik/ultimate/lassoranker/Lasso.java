@@ -314,4 +314,13 @@ public class Lasso implements Serializable {
 		}
 		return loop;
 	}
+	
+	public String toString() {
+		StringBuilder sb = new StringBuilder();
+		sb.append("Stem: ");
+		sb.append(m_stem);
+		sb.append("\nLoop: ");
+		sb.append(m_loop);
+		return sb.toString();
+	}
 }

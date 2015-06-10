@@ -131,7 +131,7 @@ public class RewriteArrays2 extends LassoPreProcessor {
 		// for termination, we overapproximate by ommiting disjoint indices
 		{
 			List<TransFormulaLRWithArrayCells> stemComponents2 = new ArrayList<TransFormulaLRWithArrayCells>();
-			Collection<TransFormulaLR> new_stem_components = new ArrayList<TransFormulaLR>(old_stem_components.size());
+			List<TransFormulaLR> new_stem_components = new ArrayList<TransFormulaLR>(old_stem_components.size());
 			for (TransFormulaLRWithArrayInformation stemComponent : stemComponents1) {
 				TransFormulaLRWithArrayCells test = new TransFormulaLRWithArrayCells(mServices, replacementVarFactory, m_Script, stemComponent, isia, lasso_builder.getBoogie2SMT(), null, true, true);
 				stemComponents2.add(test);
@@ -143,7 +143,7 @@ public class RewriteArrays2 extends LassoPreProcessor {
 		// for nontermination, we do not overapproximate
 		{
 			List<TransFormulaLRWithArrayCells> stemComponents2 = new ArrayList<TransFormulaLRWithArrayCells>();
-			Collection<TransFormulaLR> new_stem_components = new ArrayList<TransFormulaLR>(old_stem_components.size());
+			List<TransFormulaLR> new_stem_components = new ArrayList<TransFormulaLR>(old_stem_components.size());
 			for (TransFormulaLRWithArrayInformation stemComponent : stemComponents1) {
 				TransFormulaLRWithArrayCells test = new TransFormulaLRWithArrayCells(mServices, replacementVarFactory, m_Script, stemComponent, isia, lasso_builder.getBoogie2SMT(), null, false, true);
 				stemComponents2.add(test);
@@ -155,7 +155,7 @@ public class RewriteArrays2 extends LassoPreProcessor {
 		// for termination, we overapproximate by ommiting disjoint indices
 		{
 			List<TransFormulaLRWithArrayCells> loopComponents2 = new ArrayList<TransFormulaLRWithArrayCells>();
-			Collection<TransFormulaLR> new_loop_components = new ArrayList<TransFormulaLR>(old_loop_components.size());
+			List<TransFormulaLR> new_loop_components = new ArrayList<TransFormulaLR>(old_loop_components.size());
 			for (TransFormulaLRWithArrayInformation loopComponent : loopComponents1) {
 				TransFormulaLRWithArrayCells test = new TransFormulaLRWithArrayCells(mServices, replacementVarFactory, m_Script, loopComponent, isia, lasso_builder.getBoogie2SMT(), acrvc, true, false);
 				loopComponents2.add(test);
@@ -168,7 +168,7 @@ public class RewriteArrays2 extends LassoPreProcessor {
 		// for nontermination, we do not overapproximate
 		{
 			List<TransFormulaLRWithArrayCells> loopComponents2 = new ArrayList<TransFormulaLRWithArrayCells>();
-			Collection<TransFormulaLR> new_loop_components = new ArrayList<TransFormulaLR>(old_loop_components.size());
+			List<TransFormulaLR> new_loop_components = new ArrayList<TransFormulaLR>(old_loop_components.size());
 			for (TransFormulaLRWithArrayInformation loopComponent : loopComponents1) {
 				TransFormulaLRWithArrayCells test = new TransFormulaLRWithArrayCells(mServices, replacementVarFactory, m_Script, loopComponent, isia, lasso_builder.getBoogie2SMT(), acrvc, false, false);
 				loopComponents2.add(test);

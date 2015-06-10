@@ -157,7 +157,7 @@ public class LassoChecker {
 
 
 
-	private NonTerminationArgument m_NonterminationArgument;
+	private List<NonTerminationArgument> m_NonterminationArguments;
 
 	Collection<Term> m_Axioms;
 	private final IUltimateServiceProvider mServices;
@@ -197,8 +197,8 @@ public class LassoChecker {
 		return m_Bspm;
 	}
 
-	public NonTerminationArgument getNonTerminationArgument() {
-		return m_NonterminationArgument;
+	public List<NonTerminationArgument> getNonTerminationArguments() {
+		return m_NonterminationArguments;
 	}
 	
 	public List<PreprocessingBenchmark> getPreprocessingBenchmarks() {
@@ -612,7 +612,7 @@ public class LassoChecker {
 		// }
 
 		LassoAnalysis la = null;
-		NonTerminationArgument nonTermArgument = null;
+		List<NonTerminationArgument> nonTermArguments = null;
 		if (!(s_AvoidNonterminationCheckIfArraysAreContained && containsArrays)) {
 			try {
 				boolean overapproximateArrayIndexConnection = false;
@@ -626,7 +626,7 @@ public class LassoChecker {
 			}
 			try {
 				NonTerminationAnalysisSettings settings = constructNTASettings();
-				nonTermArgument = la.checkNonTermination(settings);
+				nonTermArguments = la.checkNonTermination(settings);
 			} catch (SMTLIBException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -637,9 +637,9 @@ public class LassoChecker {
 				throw new AssertionError("TermException " + e);
 			}
 			if (withStem) {
-				m_NonterminationArgument = nonTermArgument;
+				m_NonterminationArguments = nonTermArguments;
 			}
-			if (!s_CheckTerminationEvenIfNonterminating && nonTermArgument != null) {
+			if (!s_CheckTerminationEvenIfNonterminating && nonTermArguments != null) {
 				return SynthesisResult.NONTERMINATIG;
 			}
 		}
@@ -698,10 +698,10 @@ public class LassoChecker {
 		}
 
 		TerminationArgument termArg = tryTemplatesAndComputePredicates(withStem, la, rankingFunctionTemplates, stemTF, loopTF);
-		assert (nonTermArgument == null || termArg == null) : " terminating and nonterminating";
+		assert (nonTermArguments == null || termArg == null) : " terminating and nonterminating";
 		if (termArg != null) {
 			return SynthesisResult.TERMINATING;
-		} else if (nonTermArgument != null) {
+		} else if (nonTermArguments != null) {
 			return SynthesisResult.NONTERMINATIG;
 		} else {
 			return SynthesisResult.UNKNOWN;
@@ -732,11 +732,13 @@ public class LassoChecker {
 			try {
 				TerminationAnalysisSettings settings = constructTASettings();
 				termArg = la.tryTemplate(rft, settings);
-				TerminationAnalysisBenchmark bench = la.getTerminationAnalysisBenchmark();
-				m_TerminationAnalysisBenchmarks.add(bench);
+				List<TerminationAnalysisBenchmark> benchs = la.getTerminationAnalysisBenchmarks();
+				m_TerminationAnalysisBenchmarks.addAll(benchs);
 				if (m_TemplateBenchmarkMode) {
-					IResult benchmarkResult = new BenchmarkResult<>(Activator.s_PLUGIN_ID, "LassoTerminationAnalysisBenchmarks", bench);
-					mServices.getResultService().reportResult(Activator.s_PLUGIN_ID, benchmarkResult);
+					for (TerminationAnalysisBenchmark bench : benchs) {
+						IResult benchmarkResult = new BenchmarkResult<>(Activator.s_PLUGIN_ID, "LassoTerminationAnalysisBenchmarks", bench);
+						mServices.getResultService().reportResult(Activator.s_PLUGIN_ID, benchmarkResult);
+					}
 				}
 			} catch (SMTLIBException e) {
 				// TODO Auto-generated catch block

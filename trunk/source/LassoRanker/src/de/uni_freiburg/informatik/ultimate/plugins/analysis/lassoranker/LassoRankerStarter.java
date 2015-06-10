@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -151,13 +152,14 @@ public class LassoRankerStarter {
 				.getNonTerminationAnalysisSettings();
 		if (nontermination_settings.analysis != AnalysisType.Disabled) {
 			try {
-				NonTerminationArgument arg = la.checkNonTermination(nontermination_settings);
-				if (arg != null) {
+				List<NonTerminationArgument> nta =
+						la.checkNonTermination(nontermination_settings);
+				if (nta != null) {
 					if (lassoWasOverapproximated()) {
 						reportFailBecauseOfOverapproximationResult();
 						return;
 					}
-					reportNonTerminationResult(arg);
+					reportNonTerminationResult(nta);
 					return;
 				}
 			} catch (SMTLIBException e) {
@@ -384,17 +386,37 @@ public class LassoRankerStarter {
 	 * 
 	 * @param arg
 	 */
-	private void reportNonTerminationResult(NonTerminationArgument arg) {
+	private void reportNonTerminationResult(List<NonTerminationArgument> ntas) {
 		// TODO: translate also the rational coefficients to Expressions?
 		// m_RootAnnot.getBoogie2Smt().translate(term)
 		Term2Expression term2expression = m_RootAnnot.getBoogie2SMT().getTerm2Expression();
-
-		List<Map<Expression, Rational>> initHondaRay = NonTerminationArgument.rank2Boogie(term2expression,
-				arg.getStateInit(), arg.getStateHonda(), arg.getRay());
-
-		NonTerminationArgumentResult<RcfgElement> result = new NonTerminationArgumentResult<RcfgElement>(m_Honda,
-				Activator.s_PLUGIN_NAME, initHondaRay.get(0), initHondaRay.get(1), initHondaRay.get(2),
-				arg.getLambda(), getTranslatorSequence());
+		
+		assert ntas.size() > 0;
+		List<Map<Expression, Rational>> initHondaRay =
+				NonTerminationArgument.rank2Boogie(term2expression,
+				ntas.get(0).getStateInit(), ntas.get(0).getStateHonda(),
+				ntas.get(0).getRay());
+		Map<Expression, Rational> lambdas = new HashMap<Expression, Rational>();
+		for (Expression expr : initHondaRay.get(1).keySet()) {
+			lambdas.put(expr, ntas.get(0).getLambda());
+		}
+		for (NonTerminationArgument nta : ntas) {
+			List<Map<Expression, Rational>> initHondaRay2 =
+					NonTerminationArgument.rank2Boogie(term2expression,
+					nta.getStateInit(), nta.getStateHonda(), nta.getRay());
+			assert initHondaRay.size() == initHondaRay2.size();
+			for (int i = 0; i < initHondaRay.size(); ++i) {
+				initHondaRay.get(i).putAll(initHondaRay2.get(i));
+			}
+			for (Expression expr : initHondaRay2.get(1).keySet()) {
+				lambdas.put(expr, nta.getLambda());
+			}
+		}
+		NonTerminationArgumentResult<RcfgElement> result =
+				new NonTerminationArgumentResult<RcfgElement>(m_Honda,
+				Activator.s_PLUGIN_NAME, initHondaRay.get(0),
+				initHondaRay.get(1), initHondaRay.get(2), lambdas,
+				getTranslatorSequence());
 		reportResult(result);
 	}
 

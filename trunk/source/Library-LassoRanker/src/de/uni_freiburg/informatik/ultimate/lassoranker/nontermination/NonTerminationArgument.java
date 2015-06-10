@@ -134,7 +134,7 @@ public class NonTerminationArgument implements Serializable {
 			Map<RankVar, Rational>... states) {
 		List<Map<Expression, Rational>> result =
 				new ArrayList<Map<Expression, Rational>>(states.length);
-		Map<Term, Expression> rankVar2Expression = 
+		Map<Term, Expression> rankVar2Expression =
 				new HashMap<Term, Expression>();
 		for (int i=0; i<states.length; i++) {
 			Map<Expression, Rational> expression2rational =

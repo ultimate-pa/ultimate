@@ -5,6 +5,7 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -107,6 +108,45 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 		return false;
 	}
 
+	/**
+	 * Report a nontermination argument back to Ultimate's toolchain
+	 * 
+	 * @param arg
+	 */
+	private void reportNonTerminationResult(ProgramPoint honda, List<NonTerminationArgument> ntas) {
+		// TODO: translate also the rational coefficients to Expressions?
+		// m_RootAnnot.getBoogie2Smt().translate(term)
+		Term2Expression term2expression = mRootAnnot.getBoogie2SMT().getTerm2Expression();
+		
+		assert ntas.size() > 0;
+		List<Map<Expression, Rational>> initHondaRay =
+				NonTerminationArgument.rank2Boogie(term2expression,
+				ntas.get(0).getStateInit(), ntas.get(0).getStateHonda(),
+				ntas.get(0).getRay());
+		Map<Expression, Rational> lambdas = new HashMap<Expression, Rational>();
+		for (Expression expr : initHondaRay.get(1).keySet()) {
+			lambdas.put(expr, ntas.get(0).getLambda());
+		}
+		for (NonTerminationArgument nta : ntas) {
+			List<Map<Expression, Rational>> initHondaRay2 =
+					NonTerminationArgument.rank2Boogie(term2expression,
+					nta.getStateInit(), nta.getStateHonda(), nta.getRay());
+			assert initHondaRay.size() == initHondaRay2.size();
+			for (int i = 0; i < initHondaRay.size(); ++i) {
+				initHondaRay.get(i).putAll(initHondaRay2.get(i));
+			}
+			for (Expression expr : initHondaRay2.get(1).keySet()) {
+				lambdas.put(expr, nta.getLambda());
+			}
+		}
+		NonTerminationArgumentResult<RcfgElement> result =
+				new NonTerminationArgumentResult<RcfgElement>(honda,
+				Activator.s_PLUGIN_NAME, initHondaRay.get(0),
+				initHondaRay.get(1), initHondaRay.get(2), lambdas,
+				getBacktranslationService());
+		reportResult(result);
+	}
+	
 	private void interpretAndReportResult(BuchiCegarLoop bcl, Result result) throws AssertionError {
 		String whatToProve = "termination";
 
@@ -164,18 +204,9 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 			NestedLassoRun<CodeBlock, IPredicate> counterexample = bcl.getCounterexample();
 			IPredicate hondaPredicate = counterexample.getLoop().getStateAtPosition(0);
 			ProgramPoint honda = ((ISLPredicate) hondaPredicate).getProgramPoint();
-			NonTerminationArgument nta = bcl.getNonTerminationArgument();
-			// TODO: translate also the rational coefficients to Expressions?
-			// m_RootAnnot.getBoogie2Smt().translate(term)
-			Term2Expression term2expression = mRootAnnot.getBoogie2SMT().getTerm2Expression();
-			List<Map<Expression, Rational>> initHondaRay = NonTerminationArgument.rank2Boogie(term2expression,
-					nta.getStateInit(), nta.getStateHonda(), nta.getRay());
-			NonTerminationArgumentResult<RcfgElement> ntar = 
-					new NonTerminationArgumentResult<RcfgElement>(honda, Activator.s_PLUGIN_NAME,
-					initHondaRay.get(0), initHondaRay.get(1), initHondaRay.get(2), nta.getLambda(),
-					getBacktranslationService());
-			reportResult(ntar);
-			reportResult(new BenchmarkResult<String>(Activator.s_PLUGIN_NAME, "NonterminationBenchmark", new NonterminationBenchmark(nta)));
+			List<NonTerminationArgument> ntas = bcl.getNonTerminationArguments();
+			reportNonTerminationResult(honda, ntas);
+			reportResult(new BenchmarkResult<String>(Activator.s_PLUGIN_NAME, "NonterminationBenchmark", new NonterminationBenchmark(ntas)));
 
 			Map<Integer, ProgramState<Expression>> partialProgramStateMapping = Collections.emptyMap();
 			@SuppressWarnings("unchecked")
@@ -309,12 +340,20 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 		private final boolean m_LambdaZero;
 		private final boolean m_RayZero;
 		
-		public NonterminationBenchmark(NonTerminationArgument nta) {
-			m_LambdaZero = (nta.getLambda().numerator().equals(BigInteger.ZERO));
-			m_RayZero = isZero(nta.getRay());
+		public NonterminationBenchmark(List<NonTerminationArgument> ntas) {
+			boolean lambdaZero = true;
+			boolean rayZero = true;
+			List<Rational> lambdas = new ArrayList<Rational>(ntas.size());
+			for (NonTerminationArgument nta : ntas) {
+				lambdaZero &= (nta.getLambda().numerator().equals(BigInteger.ZERO));
+				rayZero &= isZero(nta.getRay());
+				lambdas.add(nta.getLambda());
+			}
+			m_LambdaZero = lambdaZero;
+			m_RayZero = rayZero;
 			m_Ntar = (isFixpoint() ? "Fixpoint " : "Unbounded Execution ") +
-					"Lambda: " + nta.getLambda() + 
-					" Ray: " + (m_RayZero ? "is zero" : "is not zero") + " " + nta.getRay();
+					"Lambdas: " + lambdas + 
+					" Ray: " + (m_RayZero ? "is zero" : "is not zero");
 		}
 		
 		private boolean isFixpoint() {

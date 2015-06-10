@@ -31,7 +31,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Powers
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.RemoveDeadEnds;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.RemoveNonLiveStates;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.MinimizeSevpa;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.DifferenceDD;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 import de.uni_freiburg.informatik.ultimate.core.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
@@ -188,7 +187,7 @@ public class BuchiCegarLoop {
 	private final RefineBuchi m_RefineBuchi;
 	private final List<RefineBuchi.RefinementSetting> m_BuchiRefinementSettingSequence;
 
-	private NonTerminationArgument m_NonterminationArgument;
+	private List<NonTerminationArgument> m_NonterminationArguments;
 
 	private final IUltimateServiceProvider m_Services;
 
@@ -200,8 +199,8 @@ public class BuchiCegarLoop {
 		return m_ClassInWhichTimeoutOccurred;
 	}
 
-	public NonTerminationArgument getNonTerminationArgument() {
-		return m_NonterminationArgument;
+	public List<NonTerminationArgument> getNonTerminationArguments() {
+		return m_NonterminationArguments;
 	}
 
 	public BuchiCegarLoop(RootNode rootNode, SmtManager smtManager, TAPreferences taPrefs,
@@ -483,7 +482,7 @@ public class BuchiCegarLoop {
 						m_BenchmarkGenerator.setResult(Result.UNKNOWN);
 						return Result.UNKNOWN;
 					}
-					m_NonterminationArgument = lassoChecker.getNonTerminationArgument();
+					m_NonterminationArguments = lassoChecker.getNonTerminationArguments();
 					m_MDBenchmark.reportRemainderModule(m_Abstraction.size(), true);
 					if (m_ConstructTermcompProof) {
 						m_TermcompProofBenchmark.reportRemainderModule(true);
