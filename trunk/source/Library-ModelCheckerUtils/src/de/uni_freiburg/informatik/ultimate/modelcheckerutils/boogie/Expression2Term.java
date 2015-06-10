@@ -1,5 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie;
 
+import java.math.BigInteger;
+
 import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
@@ -203,8 +205,7 @@ public class Expression2Term {
 			} else if (op == BinaryExpression.Operator.ARITHPLUS) {
 				return m_Script.term("+", translate(binexp.getLeft()), translate(binexp.getRight()));
 			} else if (op == BinaryExpression.Operator.BITVECCONCAT) {
-				/* TODO */
-				throw new UnsupportedOperationException("BITVECCONCAT not implemented");
+				return m_Script.term("concat", translate(binexp.getLeft()), translate(binexp.getRight()));
 			} else {
 				throw new AssertionError("Unsupported binary expression " + exp);
 			}
@@ -235,8 +236,13 @@ public class Expression2Term {
 			throw new UnsupportedOperationException("BitvecLiteral not implemented");
 
 		} else if (exp instanceof BitVectorAccessExpression) {
-			// TODO
-			throw new UnsupportedOperationException("BitVectorAccess not implemented");
+			BigInteger[] indices = new BigInteger[2];
+			indices[0] = new BigInteger(new Integer(((BitVectorAccessExpression) exp).getStart()).toString());
+			indices[1] = new BigInteger(new Integer(((BitVectorAccessExpression) exp).getEnd()).toString());
+
+			Term result = m_Script.term("extract", indices, null, translate(((BitVectorAccessExpression) exp).getBitvec()));
+			assert result != null;
+			return result;
 
 		} else if (exp instanceof BooleanLiteral) {
 			Term result = ((BooleanLiteral) exp).getValue() ? m_Script.term("true") : m_Script.term("false");
