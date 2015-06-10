@@ -262,11 +262,11 @@ public class Expression2Term {
 			for (int i = 0; i < func.getArguments().length; i++) {
 				params[i] = m_TypeSortTranslator.getSort(func.getArguments()[i].getType(), exp);
 			}
-			String funcSymb = func.getIdentifier();
 			Term[] parameters = new Term[func.getArguments().length];
 			for (int i = 0; i < func.getArguments().length; i++) {
 				parameters[i] = translate(func.getArguments()[i]);
 			}
+			String funcSymb = func.getIdentifier();
 			Term result = m_Script.term(funcSymb, parameters);
 			assert (result.toString() instanceof Object);
 			return result;
