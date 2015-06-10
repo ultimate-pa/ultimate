@@ -246,12 +246,10 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover<LETTER,STATE> 
 			for(NodeData currentNodeSet1 : currentTree){
 				containsAllbnState = false;
 				potenialACCCandidate = null;
-				if(completeTree.containsKey(currentNodeSet1.aState) && !completeTree.get(currentNodeSet1.aState).isEmpty()){
+				if(completeTree.containsKey(currentNodeSet1.aState)){
 					for(NodeData completeNodeSet:completeTree.get(currentNodeSet1.aState)){
 						if(completeNodeSet.hash==(currentNodeSet1.hash&completeNodeSet.hash)&&(currentNodeSet1.bStates.size() >= completeNodeSet.bStates.size())){
-							if(!currentNodeSet1.bStates.containsAll(completeNodeSet.bStates)){
-								containsAllbnState = false;
-							}else{
+							if(currentNodeSet1.bStates.containsAll(completeNodeSet.bStates)){
 								if(currentNodeSet1.bStates.size() == completeNodeSet.bStates.size()){
 									containsAllbnState = true;
 									totalCoveredNodes++;
@@ -265,23 +263,18 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover<LETTER,STATE> 
 									//toBeDeleteed.add(currentNodeSet1);
 									break;
 								}else{
-									containsAllbnState = false;
-									if(acc == true &&( potenialACCCandidate == null || potenialACCCandidate.bStates.size()>completeNodeSet.bStates.size())){
+										if(acc == true &&( potenialACCCandidate == null || potenialACCCandidate.bStates.size()>completeNodeSet.bStates.size())){
 										potenialACCCandidate = completeNodeSet;
 									}
 								}
 							}
 						}
 					}
-				}else{
-					containsAllbnState = false;
 				}
 				if(acc && !containsAllbnState){
 						for(NodeData completeNodeSet:ACCNodes){
 							if(completeNodeSet.aState== currentNodeSet1.aState&&completeNodeSet.hash==(currentNodeSet1.hash&completeNodeSet.hash)&&(currentNodeSet1.bStates.size() == completeNodeSet.bStates.size())){
-								if(!currentNodeSet1.bStates.containsAll(completeNodeSet.bStates)){
-									containsAllbnState = false;
-								}else{
+								if(currentNodeSet1.bStates.containsAll(completeNodeSet.bStates)){
 									containsAllbnState = true;
 									currentNodeSet1.coveredBy = completeNodeSet;
 									currentNodeSet1.identicalCover = true;
