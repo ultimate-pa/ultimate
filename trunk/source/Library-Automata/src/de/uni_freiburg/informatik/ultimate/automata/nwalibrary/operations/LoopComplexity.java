@@ -42,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAu
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.SCComponentForNWARS;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
 
 /**
  * TODO: comment
@@ -106,6 +107,16 @@ public class LoopComplexity<LETTER, STATE> implements IOperation<LETTER, STATE> 
 			Set<STATE> copyStates = new HashSet<STATE>(states);
 
 			for (STATE stateOut : allstates) {
+				// Check for cancel button.
+				if (!m_Services.getProgressMonitorService().continueProcessing()) {
+					throw new ToolchainCanceledException(this.getClass());
+				}
+				
+				// Ignore states with only one predecessor and one successor.
+				/*if () {
+					continue;
+				} */
+				
 				copyStates.remove(stateOut);
 				
 				if (statesToLC.containsKey(copyStates)) {
