@@ -13,6 +13,8 @@
  * disjuctive well-founded transition invariant where each disjunct is
  * defined by a linear term.
  * 
+ * A ranking function for this program is to the quotient a/b.
+ * 
  */
 
 int main() {
