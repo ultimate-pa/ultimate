@@ -39,14 +39,14 @@ public class LTLChecker extends AbstractEvaluationTestSuite {
 //		"Default-LBE-Multi+NondetBuchi.epf", 
 		 
 		//nearly all optimizations 
-		"Default-LBE-Multi+SBE.epf",
+//		"Default-LBE-Multi+SBE.epf",
 		"Default-LBE-Multi+SBE+IB.epf", 
-		"Default-LBE-Multi+SBE+SASBE.epf", 
+//		"Default-LBE-Multi+SBE+SASBE.epf", 
 		"Default-LBE-Multi+SBE+SASBE+IB.epf",
 		
-		"Default-LBE-Multi+SBE-StagedBlast.epf",
+//		"Default-LBE-Multi+SBE-StagedBlast.epf",
 		"Default-LBE-Multi+SBE+IB-StagedBlast.epf", 
-		"Default-LBE-Multi+SBE+SASBE-StagedBlast.epf", 
+//		"Default-LBE-Multi+SBE+SASBE-StagedBlast.epf", 
 		"Default-LBE-Multi+SBE+SASBE+IB-StagedBlast.epf",
 		
 		 
@@ -95,8 +95,8 @@ public class LTLChecker extends AbstractEvaluationTestSuite {
 //				"examples/LTL/rers2012/P18/",
 //				"examples/LTL/rers2012/P19/",
 
-//				"examples/LTL/coolant/",
-//				"examples/LTL/koskinen/ltlcmodelchecker-benchmarks/",
+				"examples/LTL/coolant/",
+				"examples/LTL/koskinen/ltlcmodelchecker-benchmarks/",
 				"examples/LTL/bugs/",
 				"examples/LTL/simple/",
 //				"examples/LTL/rers2012/P14/Problem14_prop_003.c",
