@@ -22,46 +22,44 @@ public class LTLChecker extends AbstractEvalTestSuite {
 		//no optimizations 
 		"None.epf", 
 		
-//		//only small and large block encoding 
-//		"None+SBE.epf",
-//		"None+SBE+SASBE.epf",
-//		"None+LBE-Multi.epf", 
-//		
-//		// only local optimizations (sink states, final states, locally infeasible edges) 
-//		"Default.epf", 
-//
-//		//small block encoding + local optimizations 
-//		"Default+SBE.epf", 
-//		"Default+SBE+SASBE.epf",
-//		
-//		//large block encoding + local optimizations 
-//		"Default-LBE-Multi.epf",
-//		"Default-LBE-Multi+IB.epf",
-//		"Default-LBE-Single.epf", 
-//		"Default-LBE-SNME.epf",
-//		
-//		//different solvers
-//		"Default-LBE-Multi-SMTInterpol.epf",
-//		"Default-LBE-Multi-z3.epf", 
-//		"Default-LBE-Multi-z3interpol.epf",
-//		
-//		//different buchi automata constructions 
-//		"Default-LBE-Multi-StagedBlast.epf",
-//		"Default-LBE-Multi+NondetBuchi.epf", 
-//		 
-//		//nearly all optimizations 
-//		"Default-LBE-Multi+SBE.epf",
-//		"Default-LBE-Multi+SBE+IB.epf", 
-//		"Default-LBE-Multi+SBE+SASBE.epf", 
-//		"Default-LBE-Multi+SBE+SASBE+IB.epf",
-//		
-//		// nearly all optimizations and staged blast 
-//		"Default-LBE-Multi+SBE-StagedBlast.epf",
-//		"Default-LBE-Multi+SBE+IB-StagedBlast.epf", 
-//		"Default-LBE-Multi+SBE+SASBE-StagedBlast.epf", 
-//		"Default-LBE-Multi+SBE+SASBE+IB-StagedBlast.epf",
+		//only small and large block encoding 
+		"None+SBE.epf",
+		"None+SBE+SASBE.epf",
+		"None+LBE-Multi.epf", 
 		
+		// only local optimizations (sink states, final states, locally infeasible edges) 
+		"Default.epf", 
+
+		//small block encoding + local optimizations 
+		"Default+SBE.epf", 
+		"Default+SBE+SASBE.epf",
+		
+		//large block encoding + local optimizations 
+		"Default-LBE-Multi.epf",
+		"Default-LBE-Multi+IB.epf",
+		"Default-LBE-Single.epf", 
+		"Default-LBE-SNME.epf",
+		
+		//different solvers
+		"Default-LBE-Multi-SMTInterpol.epf",
+		"Default-LBE-Multi-z3.epf", 
+		"Default-LBE-Multi-z3interpol.epf",
+		
+		//different buchi automata constructions 
+		"Default-LBE-Multi-StagedBlast.epf",
+		"Default-LBE-Multi+NondetBuchi.epf", 
 		 
+		//nearly all optimizations 
+		"Default-LBE-Multi+SBE.epf",
+		"Default-LBE-Multi+SBE+IB.epf", 
+		"Default-LBE-Multi+SBE+SASBE.epf", 
+		"Default-LBE-Multi+SBE+SASBE+IB.epf",
+		
+		// nearly all optimizations and staged blast 
+		"Default-LBE-Multi+SBE-StagedBlast.epf",
+		"Default-LBE-Multi+SBE+IB-StagedBlast.epf", 
+		"Default-LBE-Multi+SBE+SASBE-StagedBlast.epf", 
+		"Default-LBE-Multi+SBE+SASBE+IB-StagedBlast.epf",
 	};
 
 	private static final DirectoryFileEndingsPair[] INPUT = new DirectoryFileEndingsPair[] {
@@ -85,7 +83,7 @@ public class LTLChecker extends AbstractEvalTestSuite {
 			getPair("examples/LTL/simple/"),
 
 	// Possible soundness bug
-	// getPair("examples/LTL/rers2012/P14/Problem14_prop_003.c"),
+	 getPair("examples/LTL/rers2012/P14/Problem14_prop_003.c"),
 
 	};
 	// @formatter:on
