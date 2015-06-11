@@ -15,6 +15,8 @@ public class LTLChecker extends AbstractEvalTestSuite {
 
 	private static final String[] FILEENDINGS = new String[] { ".c" };
 
+	private static final String[] TOOLCHAINS = new String[] { "LTLAutomizerC.xml", "LTLAutomizerCInline.xml", };
+
 	// @formatter:off
 	private static final String[] SETTINGS = new String[] { 
 		//no optimizations 
@@ -61,32 +63,31 @@ public class LTLChecker extends AbstractEvalTestSuite {
 		
 		 
 	};
-	
-	private static final String[] TOOLCHAINS = new String[] { 
-		"LTLAutomizerC.xml", 
-		"LTLAutomizerCInline.xml",
+
+	private static final DirectoryFileEndingsPair[] INPUT = new DirectoryFileEndingsPair[] {
+			getPair("examples/LTL/rers2012/P14/", 1), 
+			getPair("examples/LTL/rers2012/P15/", 1),
+			getPair("examples/LTL/rers2012/P16/", 1), 
+			getPair("examples/LTL/rers2012/P17/", 1),
+			getPair("examples/LTL/rers2012/P18/", 1), 
+			getPair("examples/LTL/rers2012/P19/", 1),
+
+			getPair("examples/LTL/rers2012correctencoding/P15/", 1),
+			getPair("examples/LTL/rers2012correctencoding/P16/", 1),
+			getPair("examples/LTL/rers2012correctencoding/P17/", 1),
+			getPair("examples/LTL/rers2012correctencoding/P18/", 1),
+			getPair("examples/LTL/rers2012correctencoding/P19/", 1),
+			getPair("examples/LTL/rers2012correctencoding/P14/", 1),
+
+			getPair("examples/LTL/coolant/"), 
+			getPair("examples/LTL/koskinen/ltlcmodelchecker-benchmarks/"),
+			getPair("examples/LTL/bugs/"), 
+			getPair("examples/LTL/simple/"),
+
+	// Possible soundness bug
+	// getPair("examples/LTL/rers2012/P14/Problem14_prop_003.c"),
+
 	};
-	
-	private static final DirectoryFileEndingsPair[] INPUT = new DirectoryFileEndingsPair[] { 
-		getPair("examples/LTL/rers2012correctencoding/P14/", 1),
-		getPair("examples/LTL/rers2012/P14/", 1),
-
-//		getPair("examples/LTL/rers2012/P15/"),
-//		getPair("examples/LTL/rers2012/P16/"),
-//		getPair("examples/LTL/rers2012/P17/"),
-//		getPair("examples/LTL/rers2012/P18/"),
-//		getPair("examples/LTL/rers2012/P19/"),
-//
-//		getPair("examples/LTL/coolant/"),
-//		getPair("examples/LTL/koskinen/ltlcmodelchecker-benchmarks/"),
-//		getPair("examples/LTL/bugs/"),
-//		getPair("examples/LTL/simple/"),
-		
-		// Possible soundness bug
-//		getPair("examples/LTL/rers2012/P14/Problem14_prop_003.c"),
-
-	};
-
 	// @formatter:on
 
 	@Override
