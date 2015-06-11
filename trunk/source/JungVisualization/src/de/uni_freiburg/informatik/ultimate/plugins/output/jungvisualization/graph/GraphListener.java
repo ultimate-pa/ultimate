@@ -170,25 +170,26 @@ public class GraphListener implements MouseListener, GraphMousePlugin, MouseMoti
 	/**
 	 * Pans the view when the middle mouse button is pressed.
 	 */
-	public void mouseDragged(MouseEvent e) {
+	public void mouseDragged(MouseEvent event) {
 		if (mDragpoint != null) {
-			MultiLayerTransformer transformer = mEditorInput.getViewer().getRenderContext().getMultiLayerTransformer();
+			final MultiLayerTransformer transformer = mEditorInput.getViewer().getRenderContext()
+			        .getMultiLayerTransformer();
 
-			Point2D beginDragPoint = transformer.inverseTransform(Layer.LAYOUT, mDragpoint);
-			Point2D currentDragPoint = transformer.inverseTransform(Layer.LAYOUT, e.getPoint());
+			final Point2D beginDragPoint = transformer.inverseTransform(Layer.LAYOUT, mDragpoint);
+			final Point2D currentDragPoint = transformer.inverseTransform(Layer.LAYOUT, event.getPoint());
 
-			double delta_x = currentDragPoint.getX() - beginDragPoint.getX();
-			double delta_y = currentDragPoint.getY() - beginDragPoint.getY();
+			final double delta_x = currentDragPoint.getX() - beginDragPoint.getX();
+			final double delta_y = currentDragPoint.getY() - beginDragPoint.getY();
 
-			double scale = transformer.getTransformer(Layer.VIEW).getScale();
+			final double scale = transformer.getTransformer(Layer.VIEW).getScale();
 
 			transformer.getTransformer(Layer.LAYOUT).translate(delta_x * (1 / scale), delta_y * (1 / scale));
 
-			mDragpoint = e.getPoint();
+			mDragpoint = event.getPoint();
 		}
 	}
 
 	@Override
-	public void mouseMoved(MouseEvent e) {
+	public void mouseMoved(MouseEvent event) {
 	}
 }
