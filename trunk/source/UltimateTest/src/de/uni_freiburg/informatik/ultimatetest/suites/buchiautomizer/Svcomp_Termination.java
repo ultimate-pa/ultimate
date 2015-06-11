@@ -1,6 +1,3 @@
-/**
- * 
- */
 package de.uni_freiburg.informatik.ultimatetest.suites.buchiautomizer;
 
 import java.util.Collection;
@@ -12,37 +9,55 @@ import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
  * 
  */
 public class Svcomp_Termination extends AbstractBuchiAutomizerTestSuite {
-	private static final DirectoryFileEndingsPair[] m_DirectoryFileEndingsPairs = {
+	
+	private static int m_FilesPerDirectoryLimit = Integer.MAX_VALUE;
+	
+	
+	private static final DirectoryFileEndingsPair[] m_SVCOMP_Examples = {
 
-//		/*** Category 12. Termination ***/
-		new DirectoryFileEndingsPair("examples/svcomp/termination-crafted/", new String[]{ ".c" }) ,
-		new DirectoryFileEndingsPair("examples/svcomp/termination-crafted-lit/", new String[]{ ".c" }) ,
-		new DirectoryFileEndingsPair("examples/svcomp/termination-memory-alloca/", new String[]{ ".i" }) ,
-		new DirectoryFileEndingsPair("examples/svcomp/termination-numeric/", new String[]{ ".c" }) ,
+		/*** Category 12. Termination ***/
+		new DirectoryFileEndingsPair("examples/svcomp/termination-crafted/", new String[]{ ".c" }, m_FilesPerDirectoryLimit) ,
+		new DirectoryFileEndingsPair("examples/svcomp/termination-crafted-lit/", new String[]{ ".c" }, m_FilesPerDirectoryLimit) ,
+		new DirectoryFileEndingsPair("examples/svcomp/termination-memory-alloca/", new String[]{ ".i" }, m_FilesPerDirectoryLimit) ,
+		new DirectoryFileEndingsPair("examples/svcomp/termination-numeric/", new String[]{ ".c" }, m_FilesPerDirectoryLimit) ,
 	};
 
+	
 	/**
 	 * {@inheritDoc}
 	 */
 	@Override
 	public long getTimeout() {
-		return 60 * 1000;
+		return 300 * 1000;
 	}
+	
+	
+	
+	/**
+	 * List of path to setting files. 
+	 * Ultimate will run on each program with each setting that is defined here.
+	 * The path are defined relative to the folder "trunk/examples/settings/",
+	 * because we assume that all settings files are in this folder.
+	 * 
+	 */
+	private static final String[] m_Settings = {
+		"svcomp2015/svComp-64bit-termination-Automizer.epf",
+	};
+	
+	private static final String[] m_CToolchains = {
+		"BuchiAutomizerCWithBlockEncoding.xml",
+//		"BuchiAutomizerCInlineWithBlockEncoding.xml",
+	};
 
-
-	private static final boolean s_UseTasimp = true;
-	private static final String s_TasimpSetting = "buchiAutomizer/staged300Forward-Z3-Tasimp.epf";
 	
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
-		if (s_UseTasimp) {
-			addTestCases("BuchiAutomizerCWithBlockEncoding.xml", 
-					s_TasimpSetting, 
-					m_DirectoryFileEndingsPairs);
+		for (String setting : m_Settings) {
+			for (String toolchain : m_CToolchains) {
+				addTestCases(toolchain, setting, m_SVCOMP_Examples);
+			}
 		}
-		// return Util.firstN(super.createTestCases(), 3);
 		return super.createTestCases();
 	}
-
 	
 }
