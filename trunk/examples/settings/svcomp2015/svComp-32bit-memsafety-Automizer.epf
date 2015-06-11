@@ -19,7 +19,7 @@ file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Size\ of\ a\ code\ block=SequenceOfStatements
 #Fri Jun 05 02:20:55 CEST 2015
 file_export_version=3.0
-/instance/UltimateCore/Log\ level\ for\ plugins=debug
+/instance/UltimateCore/Log\ level\ for\ plugins=info
 /instance/UltimateCore/Write\ witness\ as\ "witness.graphml"\ to\ working\ directory=true
 \!/instance/UltimateCore=
 @UltimateCore=0.0.1
