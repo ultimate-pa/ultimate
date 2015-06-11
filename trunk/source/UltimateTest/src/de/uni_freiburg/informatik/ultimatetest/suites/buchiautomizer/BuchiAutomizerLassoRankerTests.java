@@ -11,7 +11,7 @@ import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
  * @author heizmann@informatik.uni-freiburg.de
  *
  */
-public class BuchiAutomizerColoring extends
+public class BuchiAutomizerLassoRankerTests extends
 		AbstractBuchiAutomizerTestSuite {
 	
 	
@@ -60,28 +60,29 @@ public class BuchiAutomizerColoring extends
 //		new DirectoryFileEndingsPair("examples/svcomp/systemc/", new String[]{ ".c" }, m_FilesPerDirectoryLimit) ,
 //		new DirectoryFileEndingsPair("examples/svcomp/seq-mthreaded/", new String[]{ ".c" }, m_FilesPerDirectoryLimit) ,
 //		new DirectoryFileEndingsPair("examples/svcomp/seq-pthread/", new String[]{ ".i" }, m_FilesPerDirectoryLimit) ,
-//		
-//		/*** Category 12. Termination ***/
-		new DirectoryFileEndingsPair("examples/svcomp/termination-crafted/", new String[]{ ".c" }, m_FilesPerDirectoryLimit) ,
-		new DirectoryFileEndingsPair("examples/svcomp/termination-crafted-lit/", new String[]{ ".c" }, m_FilesPerDirectoryLimit) ,
-		new DirectoryFileEndingsPair("examples/svcomp/termination-memory-alloca/", new String[]{ ".i" }, m_FilesPerDirectoryLimit) ,
-		new DirectoryFileEndingsPair("examples/svcomp/termination-numeric/", new String[]{ ".c" }, m_FilesPerDirectoryLimit) ,
+		
+		/*** Category 12. Termination ***/
+//		new DirectoryFileEndingsPair("examples/svcomp/termination-crafted/", new String[]{ ".c" }, m_FilesPerDirectoryLimit) ,
+//		new DirectoryFileEndingsPair("examples/svcomp/termination-crafted-lit/", new String[]{ ".c" }, m_FilesPerDirectoryLimit) ,
+//		new DirectoryFileEndingsPair("examples/svcomp/termination-memory-alloca/", new String[]{ ".i" }, m_FilesPerDirectoryLimit) ,
+//		new DirectoryFileEndingsPair("examples/svcomp/termination-numeric/", new String[]{ ".c" }, m_FilesPerDirectoryLimit) ,
 	};
 	
 	
 	
 	private static final String[] m_UltimateRepository = {
-		"examples/lassos/",
+//		"examples/lassos/",
 //		"examples/lassos/arrays",
 //		"examples/termination/svcomp-sorted/success/",
-//		"examples/termination/Brainfuck-terminating/",
 //		"examples/programs/quantifier",
 //		"examples/programs/recursivePrograms",
 //		"examples/programs/toy"
 //		"examples/programs/termination/toPLDI",
-		"examples/programs/termination/",
+//		"examples/programs/termination/",
 //		"examples/termination/cooperatingT2/difficult/solved",
-//		"examples/termination/cooperatingT2",
+		"examples/termination/cooperatingT2",
+//		"examples/termination/Brainfuck/nonterminating",
+		"examples/termination/Brainfuck-terminating",
 	};
 	
 	/**
@@ -89,7 +90,7 @@ public class BuchiAutomizerColoring extends
 	 */
 	@Override
 	public long getTimeout() {
-		return 60  * 1000;
+		return 120 * 1000;
 	}
 	
 	
@@ -101,8 +102,7 @@ public class BuchiAutomizerColoring extends
 	 * 
 	 */
 	private static final String[] m_Settings = {
-		"buchiAutomizer/stagedForwardPredicatesNonlinearLbe.epf",
-		"buchiAutomizer/stagedForwardPredicatesLinearLbe.epf",
+		"buchiAutomizer/ForwardPredicatesNonlinearLbeNotasimp.epf",
 	};
 	
 	
