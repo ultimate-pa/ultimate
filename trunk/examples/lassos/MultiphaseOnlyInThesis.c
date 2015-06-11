@@ -24,9 +24,9 @@ int main() {
 	int z = __VERIFIER_nondet_int();
 	while (z >= 0) {
 		if (x < 0 && y < 0) {
-		z := z - 1;
+			z = z - 1;
 		}
-	y := y - x;
-	x := x - 1;
+		y = y - x;
+		x = x - 1;
 	}
 }
