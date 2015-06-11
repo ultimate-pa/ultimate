@@ -204,16 +204,15 @@ public class LassoPartitioneer extends LassoPreProcessor {
 		}
 		assert !m_NewStem.isEmpty() : "empty stem";
 		assert !m_NewLoop.isEmpty() : "empty loop";
+		assert m_NewStem.size() == m_NewLoop.size() : "inconsistent component size";
 
-		String messageC = "Stem components before: " + stem_components.size()
-				+ " Loop components before: " + loop_components.size()
-				+ " Stem components after: " + m_NewStem.size()
-				+ " Loop components after: " + m_NewLoop.size();
+		String messageC = "Components before/after: " 
+				+ loop_components.size() + "/" + m_NewLoop.size();
 		m_Logger.info(messageC);
-		String messageS = "Stem maxDagSize before: " + LassoBuilder.computeMaxDagSize(stem_components)
-				+ " Loop maxDagSize before: " + LassoBuilder.computeMaxDagSize(loop_components)
-				+ " Stem maxDagSize after: " + LassoBuilder.computeMaxDagSize(m_NewStem)
-				+ " Loop maxDagSize after: " + LassoBuilder.computeMaxDagSize(m_NewLoop);
+		String messageS = "Stem maxDagSize before/after: " 
+				+ LassoBuilder.computeMaxDagSize(stem_components) + "/" + LassoBuilder.computeMaxDagSize(m_NewStem)
+				+ " Loop maxDagSize before/after: " 
+				+ LassoBuilder.computeMaxDagSize(loop_components) + "/" + LassoBuilder.computeMaxDagSize(m_NewLoop);
 		m_Logger.info(messageS);
 
 		if (!m_DryRun) {
