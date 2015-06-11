@@ -1,6 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2;
 
-import java.util.LinkedList;
+import java.util.Collections;
 import java.util.List;
 
 import org.apache.log4j.Logger;
@@ -16,11 +16,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 public class AbstractInterpretation implements IAnalysis {
 
 	protected Logger mLogger;
-	protected final List<IObserver> mObservers;
 	private IUltimateServiceProvider mServices;
 
 	public AbstractInterpretation() {
-		mObservers = new LinkedList<IObserver>();
 	}
 
 	@Override
@@ -45,12 +43,12 @@ public class AbstractInterpretation implements IAnalysis {
 
 	@Override
 	public void setInputDefinition(GraphType graphType) {
-		// TODO Auto-generated method stub
+		//not used
 	}
 
 	@Override
 	public List<IObserver> getObservers() {
-		return mObservers;
+		return Collections.singletonList((IObserver) new AbstractInterpretationObserver(mServices));
 	}
 
 	@Override
@@ -59,7 +57,7 @@ public class AbstractInterpretation implements IAnalysis {
 
 	@Override
 	public String getPluginName() {
-		return "Abstract Interpretation";
+		return Activator.PLUGIN_NAME;
 	}
 
 	@Override
@@ -86,8 +84,7 @@ public class AbstractInterpretation implements IAnalysis {
 
 	@Override
 	public void finish() {
-		// TODO Auto-generated method stub
-		
+		//not used
 	}
 
 }
