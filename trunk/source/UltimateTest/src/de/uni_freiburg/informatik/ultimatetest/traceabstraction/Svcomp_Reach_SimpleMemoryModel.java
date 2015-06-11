@@ -6,6 +6,7 @@ package de.uni_freiburg.informatik.ultimatetest.traceabstraction;
 import java.util.Collection;
 
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
+import de.uni_freiburg.informatik.ultimatetest.AbstractModelCheckerTestSuite.DirectoryFileEndingsPair;
 
 /**
  * @author heizmann@informatik.uni-freiburg.de
@@ -13,15 +14,28 @@ import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
  */
 public class Svcomp_Reach_SimpleMemoryModel extends
 		AbstractTraceAbstractionTestSuite {
-	private static final String[] m_Directories = { 
-		"examples/svcomp/ldv-linux-3.0/",
-		"examples/svcomp/ldv-linux-3.4-simple/",
-		"examples/svcomp/ldv-linux-3.7.3/",
-		"examples/svcomp/ldv-commit-tester/",
-		"examples/svcomp/ldv-consumption/",
-		"examples/svcomp/ntdrivers/",
-		"examples/svcomp/ssh/"
-		};
+	
+	
+	private static int m_FilesPerDirectoryLimit = 5;
+
+
+	private static final DirectoryFileEndingsPair[] m_SVCOMP_Examples = {
+		
+		/*** Category 5. Device Drivers Linux 64-bit ***/
+		new DirectoryFileEndingsPair("examples/svcomp/ldv-linux-3.0/", new String[]{ ".i" }, m_FilesPerDirectoryLimit) ,
+		new DirectoryFileEndingsPair("examples/svcomp/ldv-linux-3.4-simple/", new String[]{ ".c" }, m_FilesPerDirectoryLimit) ,
+		new DirectoryFileEndingsPair("examples/svcomp/ldv-linux-3.7.3/", new String[]{ ".c" }, m_FilesPerDirectoryLimit) ,
+		new DirectoryFileEndingsPair("examples/svcomp/ldv-commit-tester/", new String[]{ ".c" }, m_FilesPerDirectoryLimit) ,
+		new DirectoryFileEndingsPair("examples/svcomp/ldv-consumption/", new String[]{ ".c" }, m_FilesPerDirectoryLimit) ,
+		new DirectoryFileEndingsPair("examples/svcomp/ldv-linux-3.12-rc1/", new String[]{ ".c" }, m_FilesPerDirectoryLimit) ,
+		new DirectoryFileEndingsPair("examples/svcomp/ldv-linux-3.16-rc1/", new String[]{ ".c" }, m_FilesPerDirectoryLimit) ,
+		new DirectoryFileEndingsPair("examples/svcomp/ldv-validator-v0.6/", new String[]{ ".c" }, m_FilesPerDirectoryLimit) ,
+		
+		/*** Category 10. Simple  ***/
+		/* This category uses in fact the simple memory model, but it is sound to verify it using the precise memory model */
+		new DirectoryFileEndingsPair("examples/svcomp/ntdrivers/", new String[]{ ".c" }, m_FilesPerDirectoryLimit) ,
+		new DirectoryFileEndingsPair("examples/svcomp/ssh/", new String[]{ ".c" }, m_FilesPerDirectoryLimit) ,
+	};
 	
 	/**
 	 * {@inheritDoc}
@@ -30,25 +44,35 @@ public class Svcomp_Reach_SimpleMemoryModel extends
 	public long getTimeout() {
 		return 60 * 1000;
 	}
-
-	private static final boolean m_AutomizerWithForwardPredicates = true;
-	private static final boolean m_AutomizerWithBackwardPredicates = false;
 	
+	
+	/**
+	 * List of path to setting files. 
+	 * Ultimate will run on each program with each setting that is defined here.
+	 * The path are defined relative to the folder "trunk/examples/settings/",
+	 * because we assume that all settings files are in this folder.
+	 * 
+	 */
+	private static final String[] m_Settings = {
+		"svcomp2015/svComp-64bit-simple-Automizer.epf",
+	};
+	
+	
+	private static final String[] m_CToolchains = {
+		"AutomizerC.xml",
+//		"AutomizerCInline.xml",
+	};
+
+	
+	
+	
+
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
-		if (m_AutomizerWithForwardPredicates) {
-			addTestCases(
-					"AutomizerC.xml",
-					"automizer/ForwardPredicates_SvcompReachSimpleMM.epf",
-				    m_Directories,
-				    new String[] {".c", ".i"});
-		}
-		if (m_AutomizerWithBackwardPredicates) {
-			addTestCases(
-					"AutomizerC.xml",
-					"automizer/BackwardPredicates_SvcompReachSimpleMM.epf",
-				    m_Directories,
-				    new String[] {".c", ".i"});
+		for (String setting : m_Settings) {
+			for (String toolchain : m_CToolchains) {
+				addTestCases(toolchain, setting, m_SVCOMP_Examples);
+			}
 		}
 		return super.createTestCases();
 	}
