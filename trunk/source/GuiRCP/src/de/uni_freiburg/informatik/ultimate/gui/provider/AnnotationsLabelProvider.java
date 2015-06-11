@@ -1,6 +1,3 @@
-/**
- * 
- */
 package de.uni_freiburg.informatik.ultimate.gui.provider;
 
 import de.uni_freiburg.informatik.ultimate.model.IElement;
@@ -15,10 +12,14 @@ import org.eclipse.jface.viewers.LabelProvider;
  * 
  */
 public class AnnotationsLabelProvider extends LabelProvider {
+
+	private static final int MAX_LENGTH = 500;
+
+	@Override
 	public String getText(Object element) {
-		if(element instanceof IElement){
-			IElement elem = (IElement)element;
-			if(elem.hasPayload()){
+		if (element instanceof IElement) {
+			final IElement elem = (IElement) element;
+			if (elem.hasPayload()) {
 				return getText(elem.getPayload());
 			}
 		}
@@ -30,8 +31,8 @@ public class AnnotationsLabelProvider extends LabelProvider {
 		}
 		if (element instanceof Entry) {
 
-			String name = ((Entry) element).getName();
-			String value = ((Entry) element).getValue();
+			final String name = ((Entry) element).getName();
+			final String value = ((Entry) element).getValue();
 
 			String str;
 
@@ -44,7 +45,7 @@ public class AnnotationsLabelProvider extends LabelProvider {
 			} else {
 				str = name + " - " + value;
 			}
-			return str.length() > 500 ? str.substring(0, 500) : str;
+			return str.length() > MAX_LENGTH ? str.substring(0, MAX_LENGTH) : str;
 		}
 
 		return "UNKNOWN ELEMENT";

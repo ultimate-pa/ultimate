@@ -1,9 +1,10 @@
-/**
- * 
- */
 package de.uni_freiburg.informatik.ultimate.gui.provider;
 
+import java.io.Console;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -22,17 +23,22 @@ import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.IPayload;
+import de.uni_freiburg.informatik.ultimate.model.annotation.Visualizable;
 import de.uni_freiburg.informatik.ultimate.model.annotation.IAnnotations;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.model.structure.ITree;
 import de.uni_freiburg.informatik.ultimate.model.structure.IWalkable;
+import de.uni_freiburg.informatik.ultimate.model.structure.VisualizationEdge;
+import de.uni_freiburg.informatik.ultimate.model.structure.VisualizationNode;
 
 /**
  * @author dietsch
- * 
  */
 public class AnnotationTreeProvider implements ITreeContentProvider {
 
+	private Map<IElement, Object[]> mBuffer;
+
+	@Override
 	public Object[] getChildren(Object parentElement) {
 		if (parentElement instanceof IElement) {
 			return generateChildren((IElement) parentElement);
@@ -46,6 +52,7 @@ public class AnnotationTreeProvider implements ITreeContentProvider {
 		return null;
 	}
 
+	@Override
 	public Object getParent(Object element) {
 		if (element instanceof IPayload) {
 			return null;
@@ -59,6 +66,7 @@ public class AnnotationTreeProvider implements ITreeContentProvider {
 		return null;
 	}
 
+	@Override
 	public boolean hasChildren(Object element) {
 		if (element instanceof IElement) {
 			return generateChildren((IElement) element).length != 0;
@@ -72,77 +80,119 @@ public class AnnotationTreeProvider implements ITreeContentProvider {
 		return false;
 	}
 
+	@Override
 	public Object[] getElements(Object inputElement) {
 		return getChildren(inputElement);
 	}
 
+	@Override
 	public void dispose() {
-
+		// nothing to dispose
 	}
 
+	@Override
 	public void inputChanged(Viewer viewer, Object oldInput, Object newInput) {
-
+		// nothing to do when input changes
 	}
-
-	private Map<IPayload, Object[]> mBuffer;
 
 	private Object[] generateChildren(IElement elem) {
 		if (mBuffer == null) {
-			mBuffer = new HashMap<IPayload, Object[]>();
+			mBuffer = new HashMap<IElement, Object[]>();
 		}
+		Object[] currentBuffer = mBuffer.get(elem);
 
-		if (!elem.hasPayload()) {
-			return new Object[] {};
+		if (currentBuffer == null) {
+			currentBuffer = generateTree(elem);
+			mBuffer.put(elem, currentBuffer);
 		}
-		IPayload node = (IPayload) elem.getPayload();
-
-		Object[] currentBuffer = mBuffer.get(node);
-
-		if (currentBuffer != null) {
-			return currentBuffer;
-		}
-
-		ArrayList<Object> returnObj = new ArrayList<Object>();
-		GroupEntry general = new GroupEntry("IElement", null);
-		returnObj.add(general);
-		general.addEntry(new Entry("HashCode", String.valueOf(elem.hashCode()), general));
-
-		GroupEntry payload = new GroupEntry("IPayload", null);
-		returnObj.add(payload);
-		payload.addEntry(new Entry("Name", node.getName(), general));
-		payload.addEntry(new Entry("UID", node.getID().toString(), general));
-
-		ILocation loc = node.getLocation();
-		if (loc != null) {
-			GroupEntry location = new GroupEntry("IPayload.Location", general);
-			returnObj.add(location);
-			location.addEntry(new Entry("Source Info", node.getLocation().toString(), location));
-			location.addEntry(new Entry("Filename", node.getLocation().getFileName(), location));
-			location.addEntry(new Entry("Start Line Number", Integer.toString(node.getLocation().getStartLine()),
-					location));
-			location.addEntry(new Entry("Start Column Number", Integer.toString(node.getLocation().getStartColumn()),
-					location));
-			location.addEntry(new Entry("End Line Number", Integer.toString(node.getLocation().getEndLine()), location));
-			location.addEntry(new Entry("End Column Number", Integer.toString(node.getLocation().getEndColumn()),
-					location));
-		}
-		GroupEntry annotation = new GroupEntry("IPayload.Annotation", null);
-		returnObj.add(annotation);
-		for (String outer : node.getAnnotations().keySet()) {
-			GroupEntry group = new GroupEntry(outer, annotation);
-			IAnnotations subhash = node.getAnnotations().get(outer);
-
-			for (String inner : subhash.getAnnotationsAsMap().keySet()) {
-				group.addEntry(convertEntry(inner, subhash.getAnnotationsAsMap().get(inner), group));
-			}
-			annotation.addEntry(group);
-
-		}
-
-		currentBuffer = returnObj.toArray();
-		mBuffer.put(node, currentBuffer);
-
 		return currentBuffer;
+	}
+
+	private Object[] generateTree(IElement elem) {
+
+		final List<Object> rtr = new ArrayList<Object>();
+
+		final GroupEntry elementGroup = createIElementGroup(elem);
+		rtr.add(elementGroup);
+
+		if (elem.hasPayload()) {
+			IPayload payload = elem.getPayload();
+
+			final GroupEntry payloadGroup = new GroupEntry("IPayload", null);
+			rtr.add(payloadGroup);
+			payloadGroup.addEntry(new Entry("Name", payload.getName(), elementGroup));
+			payloadGroup.addEntry(new Entry("UID", payload.getID().toString(), elementGroup));
+
+			final ILocation loc = payload.getLocation();
+			if (loc != null) {
+				GroupEntry location = new GroupEntry("IPayload.Location", elementGroup);
+				rtr.add(location);
+				location.addEntry(new Entry("Source Info", payload.getLocation().toString(), location));
+				location.addEntry(new Entry("Filename", payload.getLocation().getFileName(), location));
+				location.addEntry(new Entry("Start Line Number",
+						Integer.toString(payload.getLocation().getStartLine()), location));
+				location.addEntry(new Entry("Start Column Number", Integer.toString(payload.getLocation()
+						.getStartColumn()), location));
+				location.addEntry(new Entry("End Line Number", Integer.toString(payload.getLocation().getEndLine()),
+						location));
+				location.addEntry(new Entry("End Column Number",
+						Integer.toString(payload.getLocation().getEndColumn()), location));
+			}
+			final GroupEntry annotation = new GroupEntry("IPayload.Annotation", null);
+			rtr.add(annotation);
+			for (final String outer : payload.getAnnotations().keySet()) {
+				final GroupEntry group = new GroupEntry(outer, annotation);
+				final IAnnotations subhash = payload.getAnnotations().get(outer);
+
+				for (final String inner : subhash.getAnnotationsAsMap().keySet()) {
+					group.addEntry(convertEntry(inner, subhash.getAnnotationsAsMap().get(inner), group));
+				}
+				annotation.addEntry(group);
+			}
+		}
+		return rtr.toArray();
+	}
+
+	private GroupEntry createIElementGroup(IElement elem) {
+		final GroupEntry elementGroup = new GroupEntry("IElement", null);
+		elementGroup.addEntry(new Entry("HashCode", String.valueOf(elem.hashCode()), elementGroup));
+
+		final Object inspectionTarget;
+		if (elem instanceof VisualizationNode) {
+			inspectionTarget = ((VisualizationNode) elem).getBacking();
+		} else if (elem instanceof VisualizationEdge) {
+			inspectionTarget = ((VisualizationEdge) elem).getBacking();
+		} else {
+			inspectionTarget = elem;
+		}
+
+		final Field[] fields = getFields(inspectionTarget);
+		for (final Field field : fields) {
+			if (!field.isAnnotationPresent(Visualizable.class)) {
+				continue;
+			}
+			try {
+				field.setAccessible(true);
+				Object value = field.get(inspectionTarget);
+				elementGroup.addEntry(new Entry(field.getName(), String.valueOf(value), elementGroup));
+			} catch (Exception ex) {
+				ex.printStackTrace();
+				// we ignore all exceptions during retrieval
+			}
+		}
+		return elementGroup;
+	}
+
+	private Field[] getFields(final Object inspectionTarget) {
+		List<Field> rtr = new ArrayList<>();
+
+		Class<?> clazz = inspectionTarget.getClass();
+		while (clazz != null) {
+			rtr.addAll(Arrays.asList(clazz.getDeclaredFields()));
+			clazz = clazz.getSuperclass();
+		}
+
+		return rtr.toArray(new Field[rtr.size()]);
 	}
 
 	@SuppressWarnings("unchecked")
@@ -167,7 +217,7 @@ public class AnnotationTreeProvider implements ITreeContentProvider {
 		if (value instanceof LetTerm) {
 			LetTerm form = (LetTerm) value;
 			GroupEntry group = new GroupEntry(name + " - let", parent);
-			group.addEntry(convertEntry(form.getVariables().toString(), form.getValues(), group));
+			group.addEntry(convertEntry(Arrays.toString(form.getVariables()), form.getValues(), group));
 			group.addEntry(convertEntry("subform", form.getSubTerm(), group));
 			return group;
 		}
@@ -175,8 +225,9 @@ public class AnnotationTreeProvider implements ITreeContentProvider {
 			QuantifiedFormula form = (QuantifiedFormula) value;
 			String quant = form.getQuantifier() == QuantifiedFormula.FORALL ? "forall" : "exists";
 			GroupEntry group = new GroupEntry(name + " - " + quant, parent);
-			for (TermVariable v : form.getVariables())
+			for (TermVariable v : form.getVariables()) {
 				group.addEntry(convertEntry("var", v, group));
+			}
 			group.addEntry(convertEntry("subform", form.getSubformula(), group));
 			return group;
 		}
@@ -186,8 +237,8 @@ public class AnnotationTreeProvider implements ITreeContentProvider {
 		if (value instanceof IAnnotations) {
 			Map<String, Object> mapping = ((IAnnotations) value).getAnnotationsAsMap();
 			GroupEntry group = new GroupEntry(name, parent);
-			for (String attrib : mapping.keySet()) {
-				group.addEntry(convertEntry(attrib, mapping.get(attrib), group));
+			for (final java.util.Map.Entry<String, Object> attrib : mapping.entrySet()) {
+				group.addEntry(convertEntry(attrib.getKey(), mapping.get(attrib.getKey()), group));
 			}
 			return group;
 		}
@@ -203,7 +254,8 @@ public class AnnotationTreeProvider implements ITreeContentProvider {
 			GroupEntry group = new GroupEntry(name, parent);
 			int cnt = 0;
 			for (Object o : (Collection<?>) value) {
-				group.addEntry(convertEntry(String.valueOf(cnt++), o, group));
+				cnt++;
+				group.addEntry(convertEntry(String.valueOf(cnt), o, group));
 			}
 			return group;
 		}
@@ -221,7 +273,7 @@ public class AnnotationTreeProvider implements ITreeContentProvider {
 
 	private TreeViewEntry convertITreeEntry(String name, ITree value, GroupEntry parent) {
 		List<IWalkable> children = value.getSuccessors();
-		if (children != null && children.size() > 0) {
+		if (children != null && !children.isEmpty()) {
 			GroupEntry group = new GroupEntry(name, parent);
 			for (IWalkable child : children) {
 				if (child instanceof ITree) {

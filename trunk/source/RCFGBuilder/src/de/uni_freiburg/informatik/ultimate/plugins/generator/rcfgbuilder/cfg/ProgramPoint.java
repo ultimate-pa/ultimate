@@ -1,6 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg;
 
 import de.uni_freiburg.informatik.ultimate.model.Payload;
+import de.uni_freiburg.informatik.ultimate.model.annotation.Visualizable;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BoogieASTNode;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.CallStatement;
@@ -31,8 +32,11 @@ public class ProgramPoint extends RCFGNode {
 
 	private final BoogieASTNode m_BoogieASTNode;
 
+	@Visualizable
 	final private String m_Procedure;
+	@Visualizable
 	final private String m_Position;
+	@Visualizable
 	final private boolean m_IsErrorLocation;
 
 	public ProgramPoint(String position, String procedure, boolean isErrorLoc,

@@ -34,8 +34,7 @@ import de.uni_freiburg.informatik.ultimate.model.IPayload;
  * @see VisualizationEdge
  * @see IExplicitEdgesMultigraph
  */
-public final class VisualizationNode implements
-		IExplicitEdgesMultigraph<VisualizationNode, VisualizationEdge> {
+public final class VisualizationNode implements IExplicitEdgesMultigraph<VisualizationNode, VisualizationEdge> {
 
 	private static final long serialVersionUID = 1L;
 
@@ -51,13 +50,10 @@ public final class VisualizationNode implements
 					if (e.getSource() != null) {
 						VisualizationEdge ve;
 						if (e.hasPayload()) {
-							ve = new VisualizationEdge(e.getSource()
-									.getVisualizationGraph(),
-									VisualizationNode.this, e.getPayload(), e);
+							ve = new VisualizationEdge(e.getSource().getVisualizationGraph(), VisualizationNode.this,
+									e.getPayload(), e);
 						} else {
-							ve = new VisualizationEdge(e.getSource()
-									.getVisualizationGraph(),
-									VisualizationNode.this, e);
+							ve = new VisualizationEdge(e.getSource().getVisualizationGraph(), VisualizationNode.this, e);
 						}
 						mIncoming.add(ve);
 					}
@@ -70,12 +66,10 @@ public final class VisualizationNode implements
 					if (e.getTarget() != null) {
 						VisualizationEdge ve;
 						if (e.hasPayload()) {
-							ve = new VisualizationEdge(VisualizationNode.this,
-									e.getTarget().getVisualizationGraph(),
+							ve = new VisualizationEdge(VisualizationNode.this, e.getTarget().getVisualizationGraph(),
 									e.getPayload(), e);
 						} else {
-							ve = new VisualizationEdge(VisualizationNode.this,
-									e.getTarget().getVisualizationGraph(), e);
+							ve = new VisualizationEdge(VisualizationNode.this, e.getTarget().getVisualizationGraph(), e);
 						}
 						mOutgoing.add(ve);
 					}
@@ -92,8 +86,7 @@ public final class VisualizationNode implements
 
 	}
 
-	public <T extends ILabeledEdgesMultigraph<T, L>, L> VisualizationNode(
-			final ILabeledEdgesMultigraph<T, L> node) {
+	public <T extends ILabeledEdgesMultigraph<T, L>, L> VisualizationNode(final ILabeledEdgesMultigraph<T, L> node) {
 		// TODO: We need to handle the case where L is an instance of an
 		// collection (i.e. multigraph)
 		mBacking = new VisualizationWrapperNode(node) {
@@ -114,20 +107,14 @@ public final class VisualizationNode implements
 			@SuppressWarnings("unchecked")
 			@Override
 			protected void createIncoming() {
-				for (ILabeledEdgesMultigraph<T, L> pred : node
-						.getIncomingNodes()) {
+				for (ILabeledEdgesMultigraph<T, L> pred : node.getIncomingNodes()) {
 					VisualizationEdge ve;
-					IPayload pay = extractPayload(node
-							.getIncomingEdgeLabel((T) pred));
+					IPayload pay = extractPayload(node.getIncomingEdgeLabel((T) pred));
 
 					if (pay != null) {
-						ve = new VisualizationEdge(
-								pred.getVisualizationGraph(),
-								VisualizationNode.this, pay, null);
+						ve = new VisualizationEdge(pred.getVisualizationGraph(), VisualizationNode.this, pay, null);
 					} else {
-						ve = new VisualizationEdge(
-								pred.getVisualizationGraph(),
-								VisualizationNode.this, null);
+						ve = new VisualizationEdge(pred.getVisualizationGraph(), VisualizationNode.this, null);
 					}
 					mIncoming.add(ve);
 				}
@@ -137,20 +124,16 @@ public final class VisualizationNode implements
 			@SuppressWarnings("unchecked")
 			@Override
 			protected void createOutgoing() {
-				for (ILabeledEdgesMultigraph<T, L> succ : node
-						.getOutgoingNodes()) {
+				for (ILabeledEdgesMultigraph<T, L> succ : node.getOutgoingNodes()) {
 					VisualizationEdge ve;
-					IPayload pay = extractPayload(node
-							.getOutgoingEdgeLabel((T) succ));
+					IPayload pay = extractPayload(node.getOutgoingEdgeLabel((T) succ));
 
 					if (pay != null) {
-						ve = new VisualizationEdge(VisualizationNode.this,
-								succ.getVisualizationGraph(), pay, null);
+						ve = new VisualizationEdge(VisualizationNode.this, succ.getVisualizationGraph(), pay, null);
 					} else {
 						ve = new VisualizationEdge(
 
-						VisualizationNode.this, succ.getVisualizationGraph(),
-								null);
+						VisualizationNode.this, succ.getVisualizationGraph(), null);
 					}
 					mOutgoing.add(ve);
 				}
@@ -160,8 +143,7 @@ public final class VisualizationNode implements
 			@Override
 			protected List<IWalkable> getSuccessors() {
 				ArrayList<IWalkable> rtr = new ArrayList<IWalkable>();
-				for (ILabeledEdgesMultigraph<T, L> succ : node
-						.getOutgoingNodes()) {
+				for (ILabeledEdgesMultigraph<T, L> succ : node.getOutgoingNodes()) {
 					final ILabeledEdgesMultigraph<T, L> child = succ;
 					rtr.add(new IWalkable() {
 
@@ -170,15 +152,13 @@ public final class VisualizationNode implements
 						@SuppressWarnings("unchecked")
 						@Override
 						public boolean hasPayload() {
-							return extractPayload(node
-									.getOutgoingEdgeLabel((T) child)) != null;
+							return extractPayload(node.getOutgoingEdgeLabel((T) child)) != null;
 						}
 
 						@SuppressWarnings("unchecked")
 						@Override
 						public IPayload getPayload() {
-							return extractPayload(node
-									.getOutgoingEdgeLabel((T) child));
+							return extractPayload(node.getOutgoingEdgeLabel((T) child));
 						}
 
 						@Override
@@ -213,12 +193,10 @@ public final class VisualizationNode implements
 					}
 					VisualizationEdge ve;
 					if (succ.hasPayload()) {
-						ve = new VisualizationEdge(VisualizationNode.this,
-								succ.getVisualizationGraph(),
+						ve = new VisualizationEdge(VisualizationNode.this, succ.getVisualizationGraph(),
 								succ.getPayload(), succ);
 					} else {
-						ve = new VisualizationEdge(VisualizationNode.this,
-								succ.getVisualizationGraph(), succ);
+						ve = new VisualizationEdge(VisualizationNode.this, succ.getVisualizationGraph(), succ);
 					}
 					mOutgoing.add(ve);
 					// succ.getVisualizationGraph().getIncomingEdges().add(ve);
@@ -255,17 +233,15 @@ public final class VisualizationNode implements
 				@Override
 				protected void createOutgoing() {
 					for (IDirectedGraph<?> succ : node.getOutgoingNodes()) {
-						mOutgoing.add(new VisualizationEdge(
-								VisualizationNode.this, new VisualizationNode(
-										succ, backingDirectory), null));
+						mOutgoing.add(new VisualizationEdge(VisualizationNode.this, new VisualizationNode(succ,
+								backingDirectory), null));
 					}
 				}
 
 				@Override
 				protected void createIncoming() {
 					for (IDirectedGraph<?> pred : node.getOutgoingNodes()) {
-						mIncoming.add(new VisualizationEdge(
-								new VisualizationNode(pred, backingDirectory),
+						mIncoming.add(new VisualizationEdge(new VisualizationNode(pred, backingDirectory),
 								VisualizationNode.this, null));
 					}
 				}
@@ -287,6 +263,13 @@ public final class VisualizationNode implements
 			}
 		}
 		return mOutgoing;
+	}
+
+	public Object getBacking() {
+		if (mBacking == null) {
+			return null;
+		}
+		return mBacking.mBackingNode;
 	}
 
 	/* --------- IExplicitEdgesMultigraph implementation --------- */
@@ -393,8 +376,7 @@ public final class VisualizationNode implements
 		@Override
 		public boolean equals(Object obj) {
 			if (obj instanceof VisualizationWrapperNode) {
-				return mBackingNode
-						.equals(((VisualizationWrapperNode) obj).mBackingNode);
+				return mBackingNode.equals(((VisualizationWrapperNode) obj).mBackingNode);
 			}
 			return super.equals(obj);
 		}
