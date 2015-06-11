@@ -2,6 +2,8 @@ package de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization.gra
 
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.awt.event.MouseMotionListener;
+import java.awt.geom.Point2D;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
@@ -16,6 +18,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization.sele
 
 import org.eclipse.jface.viewers.ISelection;
 
+import edu.uci.ics.jung.visualization.Layer;
+import edu.uci.ics.jung.visualization.MultiLayerTransformer;
 import edu.uci.ics.jung.visualization.control.GraphMousePlugin;
 
 /**
@@ -26,10 +30,11 @@ import edu.uci.ics.jung.visualization.control.GraphMousePlugin;
  * @author lena
  * 
  */
-public class GraphListener implements MouseListener, GraphMousePlugin {
+public class GraphListener implements MouseListener, GraphMousePlugin, MouseMotionListener {
 
 	private Set<VisualizationNode> selectedNodes = null;
 	private Set<VisualizationEdge> selectedEdges = null;
+	private java.awt.Point mDragpoint;
 	private final Set<IElement> mSelectedElements;
 	private final JungSelectionProvider mSelectionProvider;
 	private final JungEditorInput mEditorInput;
@@ -46,7 +51,6 @@ public class GraphListener implements MouseListener, GraphMousePlugin {
 			JVContextMenu menu = new JVContextMenu(mEditorInput);
 			menu.show(e.getComponent(), e.getX(), e.getY());
 		}
-
 	}
 
 	@Override
@@ -60,6 +64,12 @@ public class GraphListener implements MouseListener, GraphMousePlugin {
 
 	@Override
 	public void mousePressed(MouseEvent e) {
+		// If the middle mouse button is pressed, remember the current position of the mouse as a point of reference for
+		// panning.
+		if (e.getButton() == MouseEvent.BUTTON2) {
+			mDragpoint = e.getPoint();
+		}
+
 		// deselect elements
 		Iterator<IElement> elementIt = mSelectedElements.iterator();
 
@@ -77,6 +87,11 @@ public class GraphListener implements MouseListener, GraphMousePlugin {
 
 	@Override
 	public void mouseReleased(MouseEvent e) {
+		// Delete the point of reference for panning when the middle mouse button is released.
+		if (e.getButton() == MouseEvent.BUTTON2) {
+			mDragpoint = null;
+		}
+
 		// deselect elements
 		Iterator<IElement> elementIt = mSelectedElements.iterator();
 
@@ -149,5 +164,31 @@ public class GraphListener implements MouseListener, GraphMousePlugin {
 	 */
 	public Set<VisualizationNode> getSelectedNodes() {
 		return this.selectedNodes;
+	}
+
+	@Override
+	/**
+	 * Pans the view when the middle mouse button is pressed.
+	 */
+	public void mouseDragged(MouseEvent e) {
+		if (mDragpoint != null) {
+			MultiLayerTransformer transformer = mEditorInput.getViewer().getRenderContext().getMultiLayerTransformer();
+
+			Point2D beginDragPoint = transformer.inverseTransform(Layer.LAYOUT, mDragpoint);
+			Point2D currentDragPoint = transformer.inverseTransform(Layer.LAYOUT, e.getPoint());
+
+			double delta_x = currentDragPoint.getX() - beginDragPoint.getX();
+			double delta_y = currentDragPoint.getY() - beginDragPoint.getY();
+
+			double scale = transformer.getTransformer(Layer.VIEW).getScale();
+
+			transformer.getTransformer(Layer.LAYOUT).translate(delta_x * (1 / scale), delta_y * (1 / scale));
+
+			mDragpoint = e.getPoint();
+		}
+	}
+
+	@Override
+	public void mouseMoved(MouseEvent e) {
 	}
 }
