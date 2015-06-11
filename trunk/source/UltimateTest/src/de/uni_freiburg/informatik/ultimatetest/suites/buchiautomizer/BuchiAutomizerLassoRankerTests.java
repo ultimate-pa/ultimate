@@ -62,27 +62,26 @@ public class BuchiAutomizerLassoRankerTests extends
 //		new DirectoryFileEndingsPair("examples/svcomp/seq-pthread/", new String[]{ ".i" }, m_FilesPerDirectoryLimit) ,
 		
 		/*** Category 12. Termination ***/
-//		new DirectoryFileEndingsPair("examples/svcomp/termination-crafted/", new String[]{ ".c" }, m_FilesPerDirectoryLimit) ,
-//		new DirectoryFileEndingsPair("examples/svcomp/termination-crafted-lit/", new String[]{ ".c" }, m_FilesPerDirectoryLimit) ,
-//		new DirectoryFileEndingsPair("examples/svcomp/termination-memory-alloca/", new String[]{ ".i" }, m_FilesPerDirectoryLimit) ,
-//		new DirectoryFileEndingsPair("examples/svcomp/termination-numeric/", new String[]{ ".c" }, m_FilesPerDirectoryLimit) ,
+		new DirectoryFileEndingsPair("examples/svcomp/termination-crafted/", new String[]{ ".c" }, m_FilesPerDirectoryLimit) ,
+		new DirectoryFileEndingsPair("examples/svcomp/termination-crafted-lit/", new String[]{ ".c" }, m_FilesPerDirectoryLimit) ,
+		new DirectoryFileEndingsPair("examples/svcomp/termination-memory-alloca/", new String[]{ ".i" }, m_FilesPerDirectoryLimit) ,
+		new DirectoryFileEndingsPair("examples/svcomp/termination-numeric/", new String[]{ ".c" }, m_FilesPerDirectoryLimit) ,
 	};
 	
 	
 	
 	private static final String[] m_UltimateRepository = {
-//		"examples/lassos/",
+		"examples/lassos/",
 //		"examples/lassos/arrays",
 //		"examples/termination/svcomp-sorted/success/",
 //		"examples/programs/quantifier",
 //		"examples/programs/recursivePrograms",
 //		"examples/programs/toy"
-//		"examples/programs/termination/toPLDI",
-//		"examples/programs/termination/",
+		"examples/programs/termination/",
 //		"examples/termination/cooperatingT2/difficult/solved",
-		"examples/termination/cooperatingT2",
+//		"examples/termination/cooperatingT2",
 //		"examples/termination/Brainfuck/nonterminating",
-		"examples/termination/Brainfuck-terminating",
+//		"examples/termination/Brainfuck-terminating",
 	};
 	
 	/**
