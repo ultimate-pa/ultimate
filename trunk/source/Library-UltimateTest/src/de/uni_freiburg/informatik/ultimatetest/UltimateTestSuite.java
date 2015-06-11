@@ -11,8 +11,8 @@ import org.junit.runner.RunWith;
 
 import de.uni_freiburg.informatik.junit_helper.testfactory.FactoryTestRunner;
 import de.uni_freiburg.informatik.junit_helper.testfactory.TestFactory;
-import de.uni_freiburg.informatik.ultimatetest.summary.IIncrementalLog;
-import de.uni_freiburg.informatik.ultimatetest.summary.ITestSummary;
+import de.uni_freiburg.informatik.ultimatetest.reporting.IIncrementalLog;
+import de.uni_freiburg.informatik.ultimatetest.reporting.ITestSummary;
 import de.uni_freiburg.informatik.ultimatetest.util.TestUtil;
 
 /**

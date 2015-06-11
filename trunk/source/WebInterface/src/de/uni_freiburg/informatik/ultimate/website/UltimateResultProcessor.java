@@ -1,8 +1,8 @@
 package de.uni_freiburg.informatik.ultimate.website;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -35,7 +35,7 @@ public class UltimateResultProcessor {
 
 	public static void processUltimateResults(IUltimateServiceProvider services, JSONObject json) throws JSONException {
 		// get Result from Ultimate
-		HashMap<String, List<IResult>> results = services.getResultService().getResults();
+		Map<String, List<IResult>> results = services.getResultService().getResults();
 		// add result to the json object
 		ArrayList<JSONObject> resultList = new ArrayList<JSONObject>();
 		for (List<IResult> rList : results.values()) {

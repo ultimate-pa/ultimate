@@ -24,8 +24,8 @@ import de.uni_freiburg.informatik.ultimate.util.Utils;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
 import de.uni_freiburg.informatik.ultimatetest.decider.overallResult.SafetyCheckerOverallResult;
 import de.uni_freiburg.informatik.ultimatetest.decider.overallResult.TerminationAnalysisOverallResult;
-import de.uni_freiburg.informatik.ultimatetest.summary.ITestLogfile;
-import de.uni_freiburg.informatik.ultimatetest.summary.ITestSummary;
+import de.uni_freiburg.informatik.ultimatetest.reporting.ITestLogfile;
+import de.uni_freiburg.informatik.ultimatetest.reporting.ITestSummary;
 
 /**
  * 

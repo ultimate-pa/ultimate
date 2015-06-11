@@ -15,5 +15,5 @@ Import-Package: org.junit,
  org.junit.runners
 Export-Package: de.uni_freiburg.informatik.ultimatetest,
  de.uni_freiburg.informatik.ultimatetest.decider,
- de.uni_freiburg.informatik.ultimatetest.summary,
+ de.uni_freiburg.informatik.ultimatetest.reporting,
  de.uni_freiburg.informatik.ultimatetest.util

@@ -3,7 +3,7 @@ package de.uni_freiburg.informatik.ultimatetest.decider;
 import de.uni_freiburg.informatik.ultimate.core.services.IResultService;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
-import de.uni_freiburg.informatik.ultimatetest.summary.ITestSummary;
+import de.uni_freiburg.informatik.ultimatetest.reporting.ITestSummary;
 
 /**
  * A TestResultDecider is responsible for translating from the expected result

@@ -10,8 +10,8 @@ import de.uni_freiburg.informatik.ultimatetest.UltimateStarter;
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestSuite;
 import de.uni_freiburg.informatik.ultimatetest.decider.ITestResultDecider;
-import de.uni_freiburg.informatik.ultimatetest.summary.IIncrementalLog;
-import de.uni_freiburg.informatik.ultimatetest.summary.ITestSummary;
+import de.uni_freiburg.informatik.ultimatetest.reporting.IIncrementalLog;
+import de.uni_freiburg.informatik.ultimatetest.reporting.ITestSummary;
 import de.uni_freiburg.informatik.ultimatetest.util.TestUtil;
 
 public abstract class AbstractRegressionTestSuite extends UltimateTestSuite {

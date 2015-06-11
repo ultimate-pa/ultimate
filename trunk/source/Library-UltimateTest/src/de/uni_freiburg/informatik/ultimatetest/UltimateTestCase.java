@@ -13,8 +13,8 @@ import de.uni_freiburg.informatik.ultimate.core.services.IResultService;
 import de.uni_freiburg.informatik.ultimate.util.ExceptionUtils;
 import de.uni_freiburg.informatik.ultimatetest.decider.ITestResultDecider;
 import de.uni_freiburg.informatik.ultimatetest.decider.ITestResultDecider.TestResult;
-import de.uni_freiburg.informatik.ultimatetest.summary.IIncrementalLog;
-import de.uni_freiburg.informatik.ultimatetest.summary.ITestSummary;
+import de.uni_freiburg.informatik.ultimatetest.reporting.IIncrementalLog;
+import de.uni_freiburg.informatik.ultimatetest.reporting.ITestSummary;
 
 /**
  * @author dietsch@informatik.uni-freiburg.de

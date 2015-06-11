@@ -3,13 +3,19 @@ package de.uni_freiburg.informatik.ultimate.core.services;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.result.IResult;
 import de.uni_freiburg.informatik.ultimate.result.IResultWithLocation;
 
+/**
+ * 
+ * @author dietsch@informatik.uni-freiburg.de
+ *
+ */
 public class ResultService implements IStorable, IResultService {
 
-	private HashMap<String, List<IResult>> mResults;
+	private final HashMap<String, List<IResult>> mResults;
 	private static final String sKey = "ResultService";
 
 	private ResultService() {
@@ -21,17 +27,11 @@ public class ResultService implements IStorable, IResultService {
 		mResults.clear();
 	}
 
-	/* (non-Javadoc)
-	 * @see de.uni_freiburg.informatik.ultimate.core.services.IResultService#getResults()
-	 */
 	@Override
-	public HashMap<String, List<IResult>> getResults() {
+	public Map<String, List<IResult>> getResults() {
 		return mResults;
 	}
 
-	/* (non-Javadoc)
-	 * @see de.uni_freiburg.informatik.ultimate.core.services.IResultService#reportResult(java.lang.String, de.uni_freiburg.informatik.ultimate.result.IResult)
-	 */
 	@Override
 	public void reportResult(String id, IResult result) {
 		if (result instanceof IResultWithLocation) {
