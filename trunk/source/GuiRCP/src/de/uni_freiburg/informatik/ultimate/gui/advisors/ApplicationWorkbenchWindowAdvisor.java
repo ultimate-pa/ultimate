@@ -74,17 +74,19 @@ public class ApplicationWorkbenchWindowAdvisor extends WorkbenchWindowAdvisor {
 
 	public void postWindowOpen() {
 		super.postWindowOpen();
-		final IWorkbenchWindow window = getWindowConfigurer().getWindow();
-		if (initTaskItem(window)) {
-			hookMinimized(window);
-		}
+		// Deactivate the tray icon for now since it does not work correctly on
+		// linux and nobody seems to have a good idea how to fix it and nobody
+		// really wants to have a tray icon.
+//		final IWorkbenchWindow window = getWindowConfigurer().getWindow();
+//		if (initTaskItem(window)) {
+//			hookMinimized(window);
+//		}
 
 	}
 
 	public void dispose() {
 		if (mTrayImage != null) {
 			mTrayImage.dispose();
-
 		}
 		if (mTrayItem != null) {
 			mTrayItem.dispose();
@@ -92,25 +94,32 @@ public class ApplicationWorkbenchWindowAdvisor extends WorkbenchWindowAdvisor {
 	}
 
 	private void hookMinimized(final IWorkbenchWindow window) {
-		window.getShell().addShellListener(new ShellAdapter() {
-			public void shellIconified(ShellEvent e) {
-				if (!mTrayIconNotifier.isResultDisplayActive()) {
-					window.getShell().setVisible(false);
-				}
-			}
-		});
+		// This listener leads to a bug on linux where the window never
+		// reappears after it has been minimized into the tray.  The bug stems
+		// from the fact that the listener is called while processing
+		// shell.setVisible(true)
+//		window.getShell().addShellListener(new ShellAdapter() {
+//			public void shellIconified(ShellEvent e) {
+//				if (!mTrayIconNotifier.isResultDisplayActive()) {
+//					window.getShell().setVisible(false);
+//				}
+//			}
+//		});
 		mTrayItem.addListener(SWT.DefaultSelection, new Listener() {
 			public void handleEvent(Event e) {
 				Shell shell = window.getShell();
-				if (!shell.isVisible()) {
-					shell.setMinimized(false);
+				// Modified this event handler for the case where we never hide
+				// the shell (by a call to setVisible(false)).
+//				if (!shell.isVisible()) {
 					shell.setVisible(true);
+					shell.setMinimized(false);
 					shell.setActive();
-					shell.setFocus();
-				} else {
+//					shell.setFocus();
+//				} else {
+//					shell.setMinimized(false);
 					shell.forceActive();
 					shell.setFocus();
-				}
+//				}
 			}
 		});
 	}

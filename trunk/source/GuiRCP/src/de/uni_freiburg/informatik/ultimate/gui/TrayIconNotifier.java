@@ -46,6 +46,9 @@ public class TrayIconNotifier {
 		}
 		final Display display = PlatformUI.getWorkbench().getDisplay();
 		final TrayItem trayItem = mWorkbenchAdvisor.getTrayItem();
+		// No tray icon => cannot display result in tray icon.
+		if (trayItem == null)
+			return;
 		display.asyncExec(new Runnable() {
 			@Override
 			public void run() {
