@@ -8,6 +8,7 @@ Require-Bundle: UltimateCore,
  Library-log4j,
  Library-ModelCheckerUtils,
  Library-UltimateUtil,
- BoogieParser
+ BoogieParser,
+ de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder
 Bundle-RequiredExecutionEnvironment: JavaSE-1.7
 Bundle-ActivationPolicy: lazy

@@ -2,16 +2,16 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import java.util.Collection;
 
-import de.uni_freiburg.informatik.ultimate.model.IElement;
-
 /**
  * 
  * @author dietsch@informatik.uni-freiburg.de
  * @author greitsch@informatik.uni-freiburg.de
  *
  */
-public interface IPost<T extends IElement> {
+public interface ITransitionProvider<T> {
 
-	Collection<T> post(T elem);
+	Collection<T> getSuccessors(T elem);
+	
+	boolean isPostErrorLocation(T elem);
 	
 }

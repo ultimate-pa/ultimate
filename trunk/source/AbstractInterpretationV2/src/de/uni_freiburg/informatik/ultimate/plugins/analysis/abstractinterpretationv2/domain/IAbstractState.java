@@ -19,6 +19,12 @@ public interface IAbstractState<ACTION, VARDECL> {
 	void removeVariables(VARDECL[] variables);
 
 	ComparisonResult compareTo(IAbstractState<ACTION, VARDECL> other);
+	
+	boolean isBottom();
+	
+	boolean isFixpoint();
+	
+	void setFixpoint(boolean value);
 
 	public enum ComparisonResult {
 		SUPER, SUB, EQUAL, NOTEQUAL
