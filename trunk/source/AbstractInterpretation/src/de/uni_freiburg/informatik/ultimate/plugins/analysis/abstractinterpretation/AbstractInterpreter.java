@@ -116,6 +116,7 @@ public class AbstractInterpreter extends RCFGEdgeVisitor {
 	private boolean mStateChangeLogFile;
 	private boolean mStateChangeLogUseSourcePath;
 	private String mStateChangeLogPath;
+	private boolean mContractAnnotations;
 
 	private boolean mStopAfterAnyError;
 	private boolean mStopAfterAllErrors;
@@ -306,6 +307,30 @@ public class AbstractInterpreter extends RCFGEdgeVisitor {
 							+ File.separatorChar + fileName);
 			this.registerStateChangeListener(scl);
 		}
+		
+		// Function contract/Loop invariant annotator
+		if(mContractAnnotations) {
+			String fileDir = "";
+			String fileName = "";
+			if (mStateChangeLogFile) {
+				File sourceFile = new File(root.getFilename());
+				DateFormat dfm = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss");
+				fileName = sourceFile.getName() + "_CONTRACT-ANNOTATIONS_"
+						+ dfm.format(new Date()) + ".txt";
+				if (mStateChangeLogUseSourcePath) {
+					fileDir = sourceFile.getParent();
+				} else {
+					fileDir = null;
+				}
+				if (fileDir == null) {
+					fileDir = new File(mStateChangeLogPath).getAbsolutePath();
+				}
+			}
+			CodeAnnotator ca = new CodeAnnotator(mLogger,
+					mStateChangeLogConsole, mStateChangeLogFile, fileDir
+							+ File.separatorChar + fileName);
+			this.registerStateChangeListener(ca);
+		}
 
 		// numbers for widening
 		mNumbersForWidening.clear();
@@ -441,6 +466,7 @@ public class AbstractInterpreter extends RCFGEdgeVisitor {
 				List<AbstractState> statesAtNode = mStates.get(node);
 				mLogger.debug(String.format("---- PROCESSING NODE %S ----",
 						(ProgramPoint) node));
+				
 				// process all unprocessed states at the node
 				boolean hasUnprocessed = true;
 				while (hasUnprocessed && mContinueProcessing) {
@@ -833,7 +859,9 @@ public class AbstractInterpreter extends RCFGEdgeVisitor {
 				.getBoolean(AbstractInterpretationPreferenceInitializer.LABEL_LOGSTATES_USESOURCEPATH);
 		mStateChangeLogPath = prefs
 				.getString(AbstractInterpretationPreferenceInitializer.LABEL_LOGSTATES_PATH);
-
+		mContractAnnotations = prefs
+				.getBoolean(AbstractInterpretationPreferenceInitializer.LABEL_CODE_ANNOTATION);
+		
 		String stopAfter = prefs
 				.getString(AbstractInterpretationPreferenceInitializer.LABEL_STOPAFTER);
 		mStopAfterAnyError = (stopAfter

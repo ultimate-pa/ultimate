@@ -23,6 +23,7 @@ public class AbstractInterpretationPreferenceInitializer extends
 	public static final String LABEL_STATES_UNTIL_MERGE = "Parallel states before merging";
 	public static final String LABEL_WIDENING_FIXEDNUMBERS = "Set of numbers for widening (comma-separated list)";
 	public static final String LABEL_WIDENING_AUTONUMBERS = "Collect literals from the RCFG's expressions";
+	public static final String LABEL_CODE_ANNOTATION = "Generate contract annotations";
 
 	public static final String LABEL_STATE_ANNOTATIONS = "Save abstract states as node annotations";
 	public static final String LABEL_LOGSTATES_CONSOLE = "Log state changes to console";
@@ -56,6 +57,7 @@ public class AbstractInterpretationPreferenceInitializer extends
 	public static final int DEF_STATES_UNTIL_MERGE = 1;
 	public static final String DEF_WIDENING_FIXEDNUMBERS = "0, 1, 3.14, -128, 127";
 	public static final boolean DEF_WIDENING_AUTONUMBERS = false;
+	public static final boolean DEF_CODE_ANNOTATION = false;
 
 	public static final boolean DEF_STATE_ANNOTATIONS = false;
 	public static final boolean DEF_LOGSTATES_CONSOLE = false;
@@ -86,6 +88,8 @@ public class AbstractInterpretationPreferenceInitializer extends
 				DEF_WIDENING_FIXEDNUMBERS, PreferenceType.String));
 		preferenceItems.add(new UltimatePreferenceItem<Boolean>(LABEL_WIDENING_AUTONUMBERS,
 				DEF_WIDENING_AUTONUMBERS, PreferenceType.Boolean));
+		preferenceItems.add(new UltimatePreferenceItem<Boolean>(LABEL_CODE_ANNOTATION,
+				DEF_CODE_ANNOTATION, PreferenceType.Boolean));
 		
 		preferenceItems.add(new UltimatePreferenceItem<Boolean>(LABEL_STATE_ANNOTATIONS,
 								DEF_STATE_ANNOTATIONS, PreferenceType.Boolean));

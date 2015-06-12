@@ -142,6 +142,7 @@ public class AbstractInterpreterTA extends RCFGEdgeVisitor {
 	private String m_widening_fixedNumbers;
 	private boolean m_widening_autoNumbers;
 
+	private boolean m_contractAnnotations;
 	private boolean m_generateStateAnnotations;
 	private boolean m_stateChangeLogConsole;
 	private boolean m_stateChangeLogFile;
@@ -909,6 +910,8 @@ public class AbstractInterpreterTA extends RCFGEdgeVisitor {
 		m_widening_autoNumbers = prefs
 				.getBoolean(AbstractInterpretationPreferenceInitializer.LABEL_WIDENING_AUTONUMBERS);
 
+		m_contractAnnotations = prefs
+				.getBoolean(AbstractInterpretationPreferenceInitializer.LABEL_CODE_ANNOTATION);
 		m_generateStateAnnotations = prefs
 				.getBoolean(AbstractInterpretationPreferenceInitializer.LABEL_STATE_ANNOTATIONS);
 		m_stateChangeLogConsole = prefs.getBoolean(AbstractInterpretationPreferenceInitializer.LABEL_LOGSTATES_CONSOLE);
