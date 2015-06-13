@@ -40,6 +40,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.NestedWordAutomatonReachableStates;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.SCComponentForNWARS;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.IncomingInternalTransition;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
@@ -111,11 +113,6 @@ public class LoopComplexity<LETTER, STATE> implements IOperation<LETTER, STATE> 
 				if (!m_Services.getProgressMonitorService().continueProcessing()) {
 					throw new ToolchainCanceledException(this.getClass());
 				}
-				
-				// Ignore states with only one predecessor and one successor.
-				/*if () {
-					continue;
-				} */
 				
 				copyStates.remove(stateOut);
 				

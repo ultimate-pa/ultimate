@@ -232,13 +232,16 @@ public class Expression2Term {
 			return result;
 
 		} else if (exp instanceof BitvecLiteral) {
-			// TODO
-			throw new UnsupportedOperationException("BitvecLiteral not implemented");
+			BigInteger[] indices = { BigInteger.valueOf(((BitvecLiteral) exp).getLength()) };
+			
+			Term result = m_Script.term("bv" + ((BitvecLiteral) exp).getValue(), indices, null);
+			assert result != null;
+			return result;
 
 		} else if (exp instanceof BitVectorAccessExpression) {
 			BigInteger[] indices = new BigInteger[2];
-			indices[0] = new BigInteger(new Integer(((BitVectorAccessExpression) exp).getStart()).toString());
-			indices[1] = new BigInteger(new Integer(((BitVectorAccessExpression) exp).getEnd()).toString());
+			indices[0] = new BigInteger(new Integer(((BitVectorAccessExpression) exp).getEnd() - 1).toString());
+			indices[1] = new BigInteger(new Integer(((BitVectorAccessExpression) exp).getStart()).toString());
 
 			Term result = m_Script.term("extract", indices, null, translate(((BitVectorAccessExpression) exp).getBitvec()));
 			assert result != null;
