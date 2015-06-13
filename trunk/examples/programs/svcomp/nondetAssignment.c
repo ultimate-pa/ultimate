@@ -3,7 +3,7 @@
 // Date: 22.10.2012
 // Test if __VERIFIER_nondet_int() is able to assign different values
 
-
+extern void __VERIFIER_error() __attribute__ ((__noreturn__));
 extern int __VERIFIER_nondet_int();
 
 int main(void) { 
@@ -17,8 +17,7 @@ int main(void) {
       countOldAndNewValueDifferent++;
     }
     if (countOldAndNewValueDifferent >= 5) {
-      ERROR:
-      goto ERROR;
+      ERROR: __VERIFIER_error();
     }
   }
 }
