@@ -250,7 +250,7 @@ public class HornSolver extends NoopScript {
 	private void addHornClause(ArrayList<TermVariable> tvList, ApplicationTerm head,
 			ArrayList<ApplicationTerm> body, ArrayList<Term> phi) {
 		Term phiAsTerm;
-		if (phi.size() <= 1) {
+		if (phi.size() <= 1) { // NOPMD
 			if (phi.isEmpty())
 				phiAsTerm = term("true");
 			else

@@ -115,14 +115,14 @@ public class ArrayAnnotation extends CCAnnotation {
 			Term[] subs = new Term[path.length];
 			for (int j = 0; j < path.length; ++j)
 				subs[j] = path[j].toSMTTerm(theory);
-			if (idx != null) {
+			if (idx == null) {
+				subannots[i++] = ":subpath";
+				subannots[i++] = subs;
+			} else {
 				subannots[i++] = ":weakpath";
 				subannots[i++] = new Object[] {
 					mWeakIndices[p].toSMTTerm(theory), subs
 				};
-			} else {
-				subannots[i++] = ":subpath";
-				subannots[i++] = subs;
 			}
 		}
 		Annotation[] annots = new Annotation[] {

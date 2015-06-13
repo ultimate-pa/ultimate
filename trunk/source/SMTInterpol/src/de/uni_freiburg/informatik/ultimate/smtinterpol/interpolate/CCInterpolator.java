@@ -91,8 +91,9 @@ public class CCInterpolator {
 		/**
 		 * The first partition for which the path from start to end is 
 		 * A-local.  This is m_numInterpolants, if there is no such 
-		 * partition.  If m_hasABPath is not empty, this gives the
-		 * first partition in this set.
+		 * partition.  If m_hasABPath is not empty, this value is undefined;
+		 * we set it to the root of the m_hasABPath tree, which equals the
+		 * two mColor of the head and tail node.
 		 */
 		int mMaxColor;
 		PathEnd mHead, mTail;
@@ -109,10 +110,10 @@ public class CCInterpolator {
 
 		class PathEnd {
 			/**
-			 * The first partition for which there is a A-local prefix of
+			 * The first partition for which there is an A-local prefix of
 			 * the path.  If m_hasABPath is non-empty, this is the first
 			 * partition that is not in m_hasABPath, i.e. the first for which
-			 * only a continuous A-path but not a continous B-path exists.  
+			 * only a continuous A-path but not a continuous B-path exists.  
 			 */
 			int         mColor;
 			/**
@@ -134,8 +135,22 @@ public class CCInterpolator {
 				mPre = new Set[mNumInterpolants];
 			}
 			
-			public void closeSingleAPath(
-			        PathEnd other, Term boundaryTerm, int color) {
+			/**
+			 * Close the A path for partition color.  This is called when we
+			 * add a term to the chain that is B-local for the current 
+			 * mColor.  We set mColor to the parent node.  We also close the
+			 * open path on mColor or open a new one and increment mMaxColor
+			 * if such a path was not yet open.
+			 * @param other the other PathEnd
+			 * @param boundaryTerm the boundary term for opening/closing the 
+			 *                     path.
+			 */
+			public void closeSingleAPath(PathEnd other, Term boundaryTerm) {
+				// this should be empty now, since we anded it with
+				// occur.mInA and the occurrence is not in A for color.
+				assert mHasABPath.isEmpty();
+				int color = mColor;
+				mColor = getParent(color);
 				if (color < mMaxColor) {
 					addPre(color, Coercion.buildEq(boundaryTerm, mTerm[color]));
 					addInterpolantClause(color, mPre[color]);
@@ -153,20 +168,41 @@ public class CCInterpolator {
 			}
 
 			/**
+			 * Open a new A path.  This is called when a term is added that
+			 * is A local in child, where child is a child of mColor.  We
+			 * start a new A path on child.  If we have still slack, since 
+			 * mHasABPath contains child, we don't have to open the path and
+			 * just set mMaxColor to child.  
+			 * @param other  the other path end.
+			 * @param boundaryTerm the term that starts the new A path.
+			 * @param child the child of mColor for which the added term is
+			 * A local.
+			 */
+			public void openSingleAPath(
+			        PathEnd other, Term boundaryTerm, int child) {
+				if (mHasABPath.get(child)) {
+					mMaxColor = other.mColor = mColor = child;
+					// compute all nodes below child excluding child itself
+					BitSet subtree = new BitSet();
+					subtree.set(mInterpolator.mStartOfSubtrees[child], 
+							child);
+					// keep only those below the current child.
+					mHasABPath.and(subtree);
+				} else {
+					/* open a new A-path. */
+					mTerm[child] = boundaryTerm;
+					mColor = child;
+				}
+			}
+			/**
 			 * 
 			 */
 			public void closeAPath(
 			        PathEnd other, Term boundaryTerm, Occurrence occur) {
-				assert(mHasABPath.isEmpty() || mMaxColor == other.mColor);
 				assert(other.mColor <= mMaxColor);
-				while (mColor < mNumInterpolants && occur.isBLocal(mColor)) {
-					if (!mHasABPath.get(mColor))
-						closeSingleAPath(other, boundaryTerm, mColor);
-					mColor = getParent(mColor);
-				}
 				mHasABPath.and(occur.mInA);
-				if (!mHasABPath.isEmpty()) {
-					return;
+				while (mColor < mNumInterpolants && occur.isBLocal(mColor)) {
+					closeSingleAPath(other, boundaryTerm);
 				}
 			}
 			
@@ -178,15 +214,8 @@ public class CCInterpolator {
 					if (child < 0)
 						break;
 					assert occur.isALocal(child);
-					if (mHasABPath.get(child)) {
-						mMaxColor = other.mColor = mColor = child;
-					} else {
-						/* open a new A-path. */
-						mTerm[child] = boundaryTerm;
-						mColor = child;
-					}
+					openSingleAPath(other, boundaryTerm, child);
 				}
-				mHasABPath.and(occur.mInB);
 			}
 
 			public Term getBoundTerm(int color) {
@@ -259,6 +288,7 @@ public class CCInterpolator {
 					end = (CCAppTerm) end.getFunc();
 				}
 				
+				mHasABPath.and(rightOccur.mInA);
 				while (rightOccur.isBLocal(mColor)) {
 					Term[] boundaryParams = new Term[numArgs];
 					for (int i = 0; i < numArgs; i++) {
@@ -266,8 +296,7 @@ public class CCInterpolator {
 						addAllPre(mColor, tail[i]);
 					}
 					Term boundaryTerm = Coercion.buildApp(func, boundaryParams);
-					closeSingleAPath(other, boundaryTerm, mColor);
-					mColor = getParent(mColor);
+					closeSingleAPath(other, boundaryTerm);
 				}
 				int highColor = mColor;
 				while (true) {
@@ -275,14 +304,13 @@ public class CCInterpolator {
 					int child = getChild(mColor, rightOccur);
 					if (child < 0)
 						break;
-					mColor = child;
 					Term[] boundaryParams = new Term[numArgs];
 					for (int i = 0; i < numArgs; i++) {
-						boundaryParams[i] = tail[i].getBoundTerm(mColor);
-						addAllPre(mColor, tail[i]);
+						boundaryParams[i] = tail[i].getBoundTerm(child);
+						addAllPre(child, tail[i]);
 					}
 					Term boundaryTerm = Coercion.buildApp(func, boundaryParams);
-					mTerm[mColor] = boundaryTerm;
+					openSingleAPath(other, boundaryTerm, child);
 				}
 				assert (mColor == rightColor);
 				for (int color = highColor; 

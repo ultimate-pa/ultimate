@@ -32,7 +32,7 @@ import de.uni_freiburg.informatik.ultimate.util.ScopedHashSet;
  * @author Jochen Hoenicke
  */
 public class CheckClosedTerm extends NonRecursive {
-	private ScopedHashSet<Term> mCheckedTerms;
+	private final ScopedHashSet<Term> mCheckedTerms;
 	private boolean mIsClosed;
 	
 	static class TermWalker implements NonRecursive.Walker {
@@ -49,9 +49,6 @@ public class CheckClosedTerm extends NonRecursive {
 	}
 	
 	static class EndScopeWalker implements NonRecursive.Walker {
-		public EndScopeWalker() {
-		}
-		
 		@Override
 		public void walk(NonRecursive engine) {
 			((CheckClosedTerm) engine).mCheckedTerms.endScope();
@@ -107,6 +104,5 @@ public class CheckClosedTerm extends NonRecursive {
 		} else if (!(t instanceof ConstantTerm)) {
 			throw new AssertionError("Unknown term: " + t.getClass());
 		}
-		return;
 	}
 }

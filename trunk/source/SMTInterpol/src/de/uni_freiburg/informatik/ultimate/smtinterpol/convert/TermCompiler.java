@@ -183,7 +183,9 @@ public class TermCompiler extends TermTransformer {
 		Theory theory = appTerm.getTheory();
 		
  		if (fsym.getDefinition() != null) {
-			Term definition = theory.let(
+			Term definition = 
+					fsym.getDefinitionVars().length == 0
+						? fsym.getDefinition() : theory.let(
 					fsym.getDefinitionVars(), appTerm.getParameters(), 
 					fsym.getDefinition());
 			Term expanded = mUnletter.unlet(definition);

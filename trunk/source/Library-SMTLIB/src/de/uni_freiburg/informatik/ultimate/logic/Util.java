@@ -129,7 +129,7 @@ public final class Util {
 			} else
 				formulas.add(f);
 		}
-		if (formulas.size() <= 1) {
+		if (formulas.size() <= 1) { //NOPMD
 			if (formulas.isEmpty())
 				return neutral;
 			else

@@ -51,7 +51,7 @@ public class ParseEnvironment {
 	private ExitHook mExitHook;
 	// Initialize this lazily.
 	private Deque<Long> mTiming;
-	private boolean mContinueOnError = true;
+	private boolean mContinueOnError = !Config.COMPETITION;
 	
 	public ParseEnvironment(Script script) {
 		this(script, null);

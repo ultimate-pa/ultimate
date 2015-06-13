@@ -913,11 +913,11 @@ public class DPLLEngine {
 		if (lit != null)
 			return lit;
 		DPLLAtom atom;
-		int ran = mRandom.nextInt(Config.RANDOM_SPLIT_BASE);
-		if (!mAtoms.isEmpty() && ran <= Config.RANDOM_SPLIT_FREQ) {
-			atom = mAtoms.mAtoms[mRandom.nextInt(mAtoms.size())];
-			++mNumRandomSplits;
-		} else
+//		int ran = mRandom.nextInt(Config.RANDOM_SPLIT_BASE);
+//		if (!mAtoms.isEmpty() && ran <= Config.RANDOM_SPLIT_FREQ) {
+//			atom = mAtoms.mAtoms[mRandom.nextInt(mAtoms.size())];
+//			++mNumRandomSplits;
+//		} else
 			atom = mAtoms.peek();
 		if (atom == null)
 			return null;

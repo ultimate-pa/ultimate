@@ -27,20 +27,9 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.IParser;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.MySymbolFactory;
 
 public class DIMACSParser implements IParser {
-	Script mSolver;
 
 	@Override
-	public void setSolver(Script solver) {
-		this.mSolver = solver;
-	}
-
-	@Override
-	public void setOption(String option, Object value) {
-		mSolver.setOption(option, value);
-	}
-
-	@Override
-	public int parseFile(String filename) {
+	public int run(Script solver, String filename) {
 		try {
 			MySymbolFactory symfactory = new MySymbolFactory();
 			Reader reader;
@@ -53,7 +42,7 @@ public class DIMACSParser implements IParser {
 			lexer.setSymbolFactory(symfactory);
 			Parser parser = new Parser(lexer, symfactory);
 			parser.init(filename);
-			parser.setSolver(mSolver);
+			parser.setSolver(solver);
 			parser.parse();
 		} catch (Exception e) {
 			System.err.println(e.getMessage());

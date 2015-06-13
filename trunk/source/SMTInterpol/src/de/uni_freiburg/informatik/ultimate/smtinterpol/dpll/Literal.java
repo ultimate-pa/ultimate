@@ -41,11 +41,11 @@ public abstract class Literal {
 	 * Returns the underlying atom.  If this literal is an atom, it returns
 	 * itself.
 	 */
-	public final DPLLAtom getAtom() { return mAtom; }
+	public final DPLLAtom getAtom() { return mAtom; } // NOCHECKSTYLE
 	/**
 	 * Returns the negated literal.
 	 */
-	public final Literal  negate()  { return mNegated; }
+	public final Literal  negate()  { return mNegated; } // NOCHECKSTYLE
 	/**
 	 * Returns the sign of the literal (1 for atom, -1 for negated atom).
 	 */

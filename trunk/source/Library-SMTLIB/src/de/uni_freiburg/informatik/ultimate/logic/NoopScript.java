@@ -35,8 +35,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Theory.SolverSetup;
  */
 public class NoopScript implements Script {
 	
-	private final static TermVariable[] EMPTY_TVAR_ARRAY = new TermVariable[0];
-	
 	private Theory mTheory;
 	protected int mStackLevel = 0;
 	
@@ -269,7 +267,8 @@ public class NoopScript implements Script {
 			Sort returnSort, Term... params) throws SMTLIBException {
 		if (mTheory == null)
 			throw new SMTLIBException("No logic set!");
-		Sort[] sorts = new Sort[params.length];
+		Sort[] sorts =
+				params.length == 0 ? Theory.EMPTY_SORT_ARRAY : new Sort[params.length];
 		for (int i = 0; i < sorts.length; i++) {
 			sorts[i] = params[i].getSort();
 		}
@@ -345,7 +344,7 @@ public class NoopScript implements Script {
   			    		throw new SMTLIBException("Cannot name open terms");
   			    	else
   			    	    defineFunInternal((String) a.getValue(), 
-  			    	    	EMPTY_TVAR_ARRAY, t.getSort(), t);
+  			    	    	Theory.EMPTY_TERM_VARIABLE_ARRAY, t.getSort(), t);
   			    }
   			}
   			return mTheory.annotatedTerm(annotations, t);

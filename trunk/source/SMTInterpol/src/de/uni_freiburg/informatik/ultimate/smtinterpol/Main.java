@@ -20,10 +20,11 @@ package de.uni_freiburg.informatik.ultimate.smtinterpol;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.Properties;
 
 import de.uni_freiburg.informatik.ultimate.logic.LoggingScript;
+import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.aiger.AIGERFrontEnd;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dimacs.DIMACSParser;
@@ -68,6 +69,7 @@ public final class Main {
 		System.err.println("  -transform <output>  Transform the input to SMTLIB 2 and write into output.");// NOCHECKSTYLE
 		System.err.println("  -script <class>      Send the input to another Java class implementing Script.");// NOCHECKSTYLE
 		System.err.println("  -no-success          Don't print success messages.");// NOCHECKSTYLE
+		System.err.println("  -o <opt>=<value>     Set option :opt to value. The default value is true.");// NOCHECKSTYLE
 		System.err.println("  -q                   Only print error messages.");// NOCHECKSTYLE
 		System.err.println("  -w                   Don't print statistics and models.");// NOCHECKSTYLE
 		System.err.println("  -v                   Print debugging messages.");
@@ -90,12 +92,9 @@ public final class Main {
 	 * @param param Command line arguments.
 	 */
 	public static void main(String[] param) throws Exception {
-		BigInteger verbosity = null;
-		BigInteger timeout = null;
-		BigInteger seed = null;
 		IParser parser = new SMTLIB2Parser();
 		Script solver = null;
-		boolean printSuccess = true;
+		ArrayList<String> options = new ArrayList<String>();
 		int paramctr = 0;
 		while (paramctr < param.length
 				&& param[paramctr].startsWith("-")) {
@@ -112,36 +111,25 @@ public final class Main {
 				Class<?> scriptClass = Class.forName(param[paramctr]);
 				solver = (Script) scriptClass.newInstance();
 			} else if (param[paramctr].equals("-no-success")) {
-				printSuccess = false;
+				options.add("print-success=false");
+			} else if (param[paramctr].equals("-o")
+					&& paramctr + 1 < param.length) {
+				paramctr++;
+				options.add(param[paramctr]);
 			} else if (param[paramctr].equals("-v")) {
-				verbosity = BigInteger.valueOf(5);// NOCHECKSTYLE
+				options.add("verbosity=5");
 			} else if (param[paramctr].equals("-w")) {
-				verbosity = BigInteger.valueOf(3);// NOCHECKSTYLE
+				options.add("verbosity=3");
 			} else if (param[paramctr].equals("-q")) {
-				verbosity = BigInteger.valueOf(2);// NOCHECKSTYLE
+				options.add("verbosity=2");
 			} else if (param[paramctr].equals("-t")
-					&& ++paramctr < param.length) {
-				try {
-					timeout = new BigInteger(param[paramctr]);
-					if (timeout.signum() <= 0) {
-						timeout = null;
-						System.err.println(
-								"Cannot parse timeout argument: Non-positive number");// NOCHECKSTYLE
-					}
-				} catch (NumberFormatException enfe) {
-					System.err.println("Cannot parse timeout argument: Not a number");// NOCHECKSTYLE
-				}
+					&& paramctr + 1 < param.length) {
+				paramctr++;
+				options.add("timeout=" + param[paramctr]);
 			} else if (param[paramctr].equals("-r")
-					&& ++paramctr < param.length) {
-				try {
-					seed = new BigInteger(param[paramctr]);
-					if (seed.signum() < 0) {
-						System.err.println("Cannot parse random seed argument: Negative number");// NOCHECKSTYLE
-						seed = null;
-					}
-				} catch (NumberFormatException enfe) {
-					System.err.println("Cannot parse random seed argument: Not a number");// NOCHECKSTYLE
-				}
+					&& paramctr + 1 < param.length) {
+				paramctr++;
+				options.add("random-seed=" + param[paramctr]);
 			} else if (param[paramctr].equals("-smt2")) {
 				parser = new SMTLIB2Parser();
 			} else if (param[paramctr].equals("-smt")) {
@@ -151,7 +139,7 @@ public final class Main {
 			} else if (param[paramctr].equals("-a")) {
 				parser = new AIGERFrontEnd();
 			} else if (param[paramctr].equals("-trace")) {
-				verbosity = BigInteger.ONE.negate();
+				options.add("verbosity=-1");
 			} else if (param[paramctr].equals("-version")) {
 				version();
 				return;
@@ -170,15 +158,28 @@ public final class Main {
 		}
 		if (solver == null)
 			solver = new SMTInterpol();
-		parser.setSolver(solver);
-		parser.setOption(":print-success", printSuccess);
-		if (verbosity != null)
-			solver.setOption(":verbosity", verbosity);
-		if (timeout != null)
-			solver.setOption(":timeout", timeout);
-		if (seed != null)
-			solver.setOption(":random-seed", seed);
-		int exitCode = parser.parseFile(filename);
+		for (String opt : options) {
+			int eq = opt.indexOf('=');
+			String name;
+			Object value;
+			if (eq == -1) {
+				name = opt;
+				value = Boolean.TRUE;
+			} else {
+				name = opt.substring(0, eq);
+				value = opt.substring(eq + 1);
+			}
+			try {
+				solver.setOption(":" + name, value);
+			} catch (UnsupportedOperationException ex) {
+				System.err.println("Unknown option :" + name + ".");
+				return;
+			} catch (SMTLIBException ex) {
+				System.err.println(ex.getMessage());
+				return;
+			}
+		}
+		int exitCode = parser.run(solver, filename);
 		System.exit(exitCode);
 	}
 

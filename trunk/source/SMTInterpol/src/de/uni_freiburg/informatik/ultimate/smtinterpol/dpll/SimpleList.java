@@ -291,14 +291,14 @@ public class SimpleList<E extends SimpleListable<E>> extends SimpleListable<E>
 			return "[]";
 		StringBuilder sb = new StringBuilder();
 		if (mNext.mPrev != this)
-			sb.append("~");
-		sb.append("[");
+			sb.append('~');
+		sb.append('[');
 		SimpleListable<E> entry;
 		for (entry = mNext; entry != mPrev; entry = entry.mNext) {
 			sb.append(entry).append(",");
 		}
 		sb.append(entry);
-		sb.append("]");
+		sb.append(']');
 		return sb.toString();
 	}
 

@@ -143,6 +143,12 @@ public class MutableInfinitNumber implements Comparable<MutableInfinitNumber> {
 			return mEps - arg0.mEps;
 		return ac;
 	}
+	public int compareTo(InfinitNumber other) {
+		int ac = mA.compareTo(other.mA);
+		if (ac == 0)
+			return mEps - other.mEps;
+		return ac;
+	}
 	public boolean equals(Object o) {
 		if (o instanceof InfinitNumber) {
 			InfinitNumber n = (InfinitNumber)o;

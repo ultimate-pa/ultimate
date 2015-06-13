@@ -53,7 +53,7 @@ public class SimplifyDDAWithTimeout extends NonRecursive {
 		int    mSeen;
 		int    mPrepared;
 		Term[] mContext;
-		Term   mSimplified;
+		Term   mSimplified; 
 		
 		public String toString() {
 			return "TermInfo[" + mNumPredecessors + "," + mSeen + ","

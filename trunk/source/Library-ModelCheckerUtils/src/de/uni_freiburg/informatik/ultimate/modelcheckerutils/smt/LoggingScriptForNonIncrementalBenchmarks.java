@@ -38,7 +38,6 @@ import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
 import de.uni_freiburg.informatik.ultimate.logic.Assignments;
-import de.uni_freiburg.informatik.ultimate.logic.Identifier;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Model;
 import de.uni_freiburg.informatik.ultimate.logic.PrintTerm;
@@ -165,7 +164,7 @@ public class LoggingScriptForNonIncrementalBenchmarks implements Script {
 		mPw.print("(set-option ");
 		mPw.print(opt);
 		mPw.print(' ');
-		new PrintTerm().append(mPw, value);
+		mPw.print(value);
 		mPw.println(")");
 		addToCurrentAssertionStack(sw.toString());
 		mScript.setOption(opt, value);
@@ -178,7 +177,7 @@ public class LoggingScriptForNonIncrementalBenchmarks implements Script {
 		mPw.print("(set-info ");
 		mPw.print(info);
 		mPw.print(' ');
-		new PrintTerm().append(mPw, value);
+		mPw.print(value);
 		mPw.println(")");
 		addToCurrentAssertionStack(sw.toString());
 		mScript.setInfo(info, value);
@@ -189,7 +188,7 @@ public class LoggingScriptForNonIncrementalBenchmarks implements Script {
 		StringWriter sw = new StringWriter();
 		PrintWriter mPw = new PrintWriter(sw);
 		mPw.print("(declare-sort ");
-		mPw.print(Identifier.quoteIdentifier(sort));
+		mPw.print(PrintTerm.quoteIdentifier(sort));
 		mPw.print(' ');
 		mPw.print(arity);
 		mPw.println(")");
@@ -203,7 +202,7 @@ public class LoggingScriptForNonIncrementalBenchmarks implements Script {
 		StringWriter sw = new StringWriter();
 		PrintWriter mPw = new PrintWriter(sw);
 		mPw.print("(define-sort ");
-		mPw.print(Identifier.quoteIdentifier(sort));
+		mPw.print(PrintTerm.quoteIdentifier(sort));
 		mPw.print(" (");
 		String sep = "";
 		for (Sort p : sortParams) {
@@ -224,7 +223,7 @@ public class LoggingScriptForNonIncrementalBenchmarks implements Script {
 		StringWriter sw = new StringWriter();
 		PrintWriter mPw = new PrintWriter(sw);
 		mPw.print("(declare-fun ");
-		mPw.print(Identifier.quoteIdentifier(fun));
+		mPw.print(PrintTerm.quoteIdentifier(fun));
 		mPw.print(" (");
 		String sep = "";
 		for (Sort p : paramSorts) {
@@ -245,7 +244,7 @@ public class LoggingScriptForNonIncrementalBenchmarks implements Script {
 		StringWriter sw = new StringWriter();
 		PrintWriter mPw = new PrintWriter(sw);
 		mPw.print("(define-fun ");
-		mPw.print(Identifier.quoteIdentifier(fun));
+		mPw.print(PrintTerm.quoteIdentifier(fun));
 		mPw.print(" (");
 		String sep = "(";
 		for (TermVariable t : params) {

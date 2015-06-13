@@ -43,6 +43,9 @@ class FunctionValue {
 		public int[] getArray() {
 			return mIdx;
 		}
+		public String toString() {
+			return Arrays.toString(mIdx);
+		}
 	}
 
 	private Map<Index, Integer> mValues;

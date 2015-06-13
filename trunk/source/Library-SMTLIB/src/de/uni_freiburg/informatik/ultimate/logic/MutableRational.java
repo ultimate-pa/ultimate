@@ -20,6 +20,8 @@ package de.uni_freiburg.informatik.ultimate.logic;
 
 import java.math.BigInteger;
 
+import de.uni_freiburg.informatik.ultimate.logic.Rational.BigRational;
+
 /**
  * Mutable version of the {@link Rational} class. All arithmetic
  * operations change the value of this object.
@@ -291,7 +293,21 @@ public class MutableRational implements Comparable<MutableRational> {
 		BigInteger valo = o.numerator().multiply(denominator());
 		return valthis.compareTo(valo);
 	}
-		
+	public int compareTo(Rational o) {
+		/* fast path */
+		if (mBignum == null && !(o instanceof BigRational)) {
+			/* handle infinities and nan */
+			if (o.mDenom == mDenom)
+				return mNum < o.mNum ? -1 : mNum == o.mNum ? 0 : 1;
+			long valt = (long)mNum * o.mDenom;
+			long valo = (long)o.mNum * mDenom;
+			return valt < valo ? -1 : valt == valo ? 0 : 1; 
+		}
+		BigInteger valthis = numerator().multiply(o.denominator());
+		BigInteger valo = o.numerator().multiply(denominator());
+		return valthis.compareTo(valo);
+	}
+
 	public boolean equals(Object o) {
 		if (o instanceof Rational) {
 			Rational r = (Rational) o;

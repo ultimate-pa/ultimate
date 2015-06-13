@@ -88,6 +88,11 @@ public class InfinitNumber implements Comparable<InfinitNumber> {
 		return new InfinitNumber(mA.sub(other.mA),
 				normEpsilon(mEps - other.mEps));
 	}
+
+	public ExactInfinitNumber sub(ExactInfinitNumber other) {
+		return new ExactInfinitNumber(mA.sub(other.getRealValue()), 
+				Rational.valueOf(mEps, 1).sub(other.getEpsilon()));
+	}
 	/**
 	 * Returns c*this.
 	 */

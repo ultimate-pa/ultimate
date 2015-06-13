@@ -170,7 +170,7 @@ class Executor {
 		} catch (UnsupportedOperationException ex) {
 			throw ex;
 		} catch (Exception ex) {
-			throw new SMTLIBException("Unexpected Exception while parsing", ex);
+			throw new SMTLIBException("Unexpected Exception while parsing. stderr output of " + mSolverCmd + ": " + stderr, ex);
 		}
 	}
 

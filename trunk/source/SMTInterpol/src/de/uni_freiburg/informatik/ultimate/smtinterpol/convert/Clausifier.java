@@ -127,7 +127,6 @@ public class Clausifier {
 
 		@Override
 		public void perform() {
-			IProofTracker sub = mTracker.getDescendent();
 			// Create a = b \/ select(a, diff(a,b)) != select(b, diff(a,b))
 			Term a = mDiff.getParameters()[0];
 			Term b = mDiff.getParameters()[1];
@@ -137,6 +136,7 @@ public class Clausifier {
 			if (eparray == EqualityProxy.getTrueProxy())
 				// Someone wrote (@diff a a)...
 				return;
+			IProofTracker sub = mTracker.getDescendent();
 			Theory t = mDiff.getTheory();
 			Term selecta = t.term("select", a, mDiff);
 			Term selectb = t.term("select", b, mDiff);

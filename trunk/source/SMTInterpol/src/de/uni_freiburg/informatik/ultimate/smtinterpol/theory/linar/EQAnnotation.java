@@ -32,13 +32,13 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.IAnnotation;
  * @author Jochen Hoenicke
  *
  */
-public class EQAnnotation implements IAnnotation {
+public final class EQAnnotation implements IAnnotation {
 	/**
 	 * The singleton EQAnnotation instance.
 	 */
 	public static final EQAnnotation EQ = new EQAnnotation();
 
-	private Annotation[] mAnnots = new Annotation[] {
+	private final Annotation[] mAnnots = new Annotation[] {
 		new Annotation(":EQ", null)
 	};
 	

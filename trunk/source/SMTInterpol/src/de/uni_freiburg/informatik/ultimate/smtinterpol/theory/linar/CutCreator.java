@@ -303,7 +303,7 @@ public class CutCreator {
 		 * @return the literal representing variable <= rounded current value.
 		 */
 		public Literal createConstraint() {
-			assert(mIsInt);
+			assert mIsInt;
 			MutableAffinTerm mat = new MutableAffinTerm();
 			int maxlevel = 0;
 			for (int i = 0; i < mIndices.length; i++) {
@@ -321,7 +321,7 @@ public class CutCreator {
 			for (int i = 0; i < mIndices.length; i++) {
 				LinVar var = mIndices[i];
 				Rational coeff = Rational.valueOf(mCoeffs[i], BigInteger.ONE);
-				mCurval = mCurval.addmul(coeff, var.mCurval.mA);
+				mCurval = mCurval.addmul(coeff, var.getValue().mA);
 				mEpsilons = mEpsilons.addmul(coeff, var.computeEpsilon());
 			}
 		}
@@ -391,7 +391,7 @@ public class CutCreator {
 			if (lv.mBasic)
 				continue;
 			boolean negated = false;
-			if (lv.mCurval.lesseq(lv.getLowerBound()))
+			if (lv.getValue().lesseq(lv.getLowerBound()))
 				negated = true;
 			if (lv.isInitiallyBasic()) {
 				for (Map.Entry<LinVar, BigInteger> entry
@@ -610,7 +610,7 @@ public class CutCreator {
 					}
 					if (adjust != 0)
 						quo = quo.add(BigInteger.valueOf(adjust));
-					if (!mURows[i].mTight)
+					if (!mURows[i].mTight) //NOPMD
 						isTight = false;
 					else if (rem.signum() > 0)
 						isTight &= mURows[i].mFixed;
@@ -639,8 +639,8 @@ public class CutCreator {
 	}
 
 	private boolean isTight(LinVar linVar) {
-		return linVar.mCurval.lesseq(linVar.getLowerBound())
-			|| linVar.getUpperBound().lesseq(linVar.mCurval);
+		return linVar.getValue().lesseq(linVar.getLowerBound())
+			|| linVar.getUpperBound().lesseq(linVar.getValue());
 	}
 
 	private boolean isFixed(LinVar linVar) {
