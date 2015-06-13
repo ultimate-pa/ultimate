@@ -266,11 +266,11 @@ public class CfgBuilder {
 			throw new AssertionError("unknown solver");
 		}
 
-		String advertising = System.lineSeparator() + "    SMT script generated on " + 
+		String advertising = "|" + System.lineSeparator() + "    SMT script generated on " + 
 				(new SimpleDateFormat("yyyy/MM/dd")).format(new Date()) + 
 				" by Ultimate. http://ultimate.informatik.uni-freiburg.de/" + 
-				System.lineSeparator();
-		result.setInfo(":source",	advertising);
+				System.lineSeparator() + "|";
+		result.setInfo(":source", advertising);
 		result.setInfo(":smt-lib-version", "2.0");
 		result.setInfo(":category", new QuotedObject("industrial"));
 		return result;
