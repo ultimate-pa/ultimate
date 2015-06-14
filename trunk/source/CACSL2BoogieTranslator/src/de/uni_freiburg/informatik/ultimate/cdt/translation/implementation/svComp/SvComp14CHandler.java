@@ -18,6 +18,7 @@ import org.eclipse.cdt.core.dom.ast.IASTInitializerClause;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.CastAndConversionHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.MemoryHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType.Type;
@@ -42,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Attribute;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Declaration;
@@ -62,10 +64,16 @@ import de.uni_freiburg.informatik.ultimate.result.Check;
 import de.uni_freiburg.informatik.ultimate.result.Check.Spec;
 
 /**
- * @author Markus Lindenmann
+ * @author Markus Lindenmann, Matthias Heizmann
  * @date 12.6.2012
  */
 public class SvComp14CHandler extends CHandler {
+	
+	/**
+	 * Add assume statements that state that the nondeterministic values are
+	 * in the range of the values of the data type.
+	 */
+	private static final boolean mAssumeThatNondeterministicValuesAreInRange = true;
 	/**
 	 * The string representing SV-Comp's error method.
 	 */
@@ -153,19 +161,38 @@ public class SvComp14CHandler extends CHandler {
 		}
 		for (String t : NONDET_TYPE_STRINGS)
 			if (methodName.equals(NONDET_STRING + t)) {
+				
 				final ASTType type;
-				CType cType;
-				if (t.equals("float")) {
-					type = new PrimitiveType(loc, SFO.REAL);
+				final CType cType;
+				switch (t) {
+				case "int":
+					cType = new CPrimitive(PRIMITIVE.INT);
+					type = mTypeHandler.ctype2asttype(loc, cType);
+					break;
+				case "long":
+					cType = new CPrimitive(PRIMITIVE.LONG);
+					type = mTypeHandler.ctype2asttype(loc, cType);
+					break;
+				case "float":
 					cType = new CPrimitive(PRIMITIVE.FLOAT);
-				} else if (t.equals("pointer")) {
+					type = mTypeHandler.ctype2asttype(loc, cType);
+					break;
+				case "char":
+					cType = new CPrimitive(PRIMITIVE.CHAR);
+					type = mTypeHandler.ctype2asttype(loc, cType);
+					break;
+				case "short":
+					cType = new CPrimitive(PRIMITIVE.SHORT);
+					type = mTypeHandler.ctype2asttype(loc, cType);
+					break;
+				case "pointer":
 					NamedType boogiePointerType = new NamedType(null, new InferredType(Type.Struct), SFO.POINTER,
 							new ASTType[0]);
 					type = boogiePointerType;
 					cType = new CPointer(new CPrimitive(PRIMITIVE.VOID));
-				} else {
-					type = new PrimitiveType(loc, SFO.INT);
-					cType = new CPrimitive(PRIMITIVE.INT);
+					break;
+				default:
+					throw new AssertionError("unknown type " + t);
 				}
 				String tmpName = main.nameHandler.getTempVarUID(SFO.AUXVAR.NONDET);
 				VariableDeclaration tVarDecl = SFO.getTempVarVariableDeclaration(tmpName, type, loc);
@@ -173,6 +200,17 @@ public class SvComp14CHandler extends CHandler {
 				auxVars.put(tVarDecl, loc);
 
 				returnValue = new RValue(new IdentifierExpression(loc, tmpName), cType);
+				
+				if (mAssumeThatNondeterministicValuesAreInRange) {
+					switch (t) {
+					case "int":
+					case "long":
+					case "char":
+					case "short":
+						AssumeStatement inRange = constructAssumeInRangeStatement(loc, returnValue);
+						stmt.add(inRange);
+					}
+				}
 				assert (isAuxVarMapcomplete(main, decl, auxVars));
 				return new ResultExpression(stmt, returnValue, decl, auxVars, overappr);
 			}
@@ -259,6 +297,24 @@ public class SvComp14CHandler extends CHandler {
 		}
 
 		return super.visit(main, node);
+	}
+
+	/**
+	 * Returns "assume (minValue <= lrValue && lrValue <= maxValue)"
+	 */
+	private AssumeStatement constructAssumeInRangeStatement(ILocation loc,
+			LRValue lrValue) {
+		IntegerLiteral minValue = new IntegerLiteral(loc, CastAndConversionHandler.getMinValueOfPrimitiveType(
+				mMemoryHandler, lrValue.cType.getUnderlyingType()).toString());
+		IntegerLiteral maxValue = new IntegerLiteral(loc, CastAndConversionHandler.getMaxValueOfPrimitiveType(
+				mMemoryHandler, lrValue.cType.getUnderlyingType()).toString());
+		BinaryExpression biggerMinInt = new BinaryExpression(loc, 
+				BinaryExpression.Operator.COMPLEQ, minValue, lrValue.getValue());
+		BinaryExpression smallerMaxValue = new BinaryExpression(loc, 
+				BinaryExpression.Operator.COMPLEQ, lrValue.getValue(), maxValue);
+		AssumeStatement inRange = new AssumeStatement(loc, new BinaryExpression(loc, 
+				BinaryExpression.Operator.LOGICAND, biggerMinInt, smallerMaxValue));
+		return inRange;
 	}
 	
 	@Override

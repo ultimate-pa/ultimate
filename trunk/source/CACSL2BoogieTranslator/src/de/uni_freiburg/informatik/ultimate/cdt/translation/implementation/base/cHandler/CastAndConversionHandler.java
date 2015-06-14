@@ -166,7 +166,7 @@ public class CastAndConversionHandler {
 	
 	public static void doIntOverflowTreatment(Dispatcher main, MemoryHandler memoryHandler, ILocation loc,
 			ResultExpression rex, CType targetType) {
-		BigInteger maxValue = getMaxValueOfPrimitiveType(memoryHandler, targetType);
+		BigInteger maxValuePlusOne = getMaxValueOfPrimitiveType(memoryHandler, targetType).add(BigInteger.ONE);
 
 		if (main.cHandler.getUnsignedTreatment() == UNSIGNED_TREATMENT.ASSUME_ALL) {
 			AssumeStatement assumeGeq0 = new AssumeStatement(loc, new BinaryExpression(loc, BinaryExpression.Operator.COMPGEQ,
@@ -174,12 +174,12 @@ public class CastAndConversionHandler {
 			rex.stmt.add(assumeGeq0);
 
 			AssumeStatement assumeLtMax = new AssumeStatement(loc, new BinaryExpression(loc, BinaryExpression.Operator.COMPLT,
-					rex.lrVal.getValue(), new IntegerLiteral(loc, maxValue.toString())));
+					rex.lrVal.getValue(), new IntegerLiteral(loc, maxValuePlusOne.toString())));
 			rex.stmt.add(assumeLtMax);
 		} else if (main.cHandler.getUnsignedTreatment() == UNSIGNED_TREATMENT.WRAPAROUND) {
 			rex.lrVal = new RValue(new BinaryExpression(loc, BinaryExpression.Operator.ARITHMOD, 
 					rex.lrVal.getValue(), 
-					new IntegerLiteral(loc, maxValue.toString())), 
+					new IntegerLiteral(loc, maxValuePlusOne.toString())), 
 					rex.lrVal.cType, 
 					rex.lrVal.isBoogieBool,
 					false);
@@ -188,7 +188,31 @@ public class CastAndConversionHandler {
 
 	public static BigInteger getMaxValueOfPrimitiveType(
 			MemoryHandler memoryHandler, CType ulType) {
-		int byteSize = -1; 
+		int byteSize = determineByteSize(memoryHandler, ulType);
+		BigInteger maxValue;
+		if (((CPrimitive) ulType).isUnsigned()) {
+			maxValue = new BigInteger("2").pow(byteSize * 8);
+		} else {
+			maxValue = new BigInteger("2").pow(byteSize * 8 - 1);
+		}
+		maxValue = maxValue.subtract(BigInteger.ONE);
+		return maxValue;
+	}
+	public static BigInteger getMinValueOfPrimitiveType(
+			MemoryHandler memoryHandler, CType ulType) {
+		int byteSize = determineByteSize(memoryHandler, ulType);
+		BigInteger minValue;
+		if (((CPrimitive) ulType).isUnsigned()) {
+			minValue = BigInteger.ZERO;
+		} else {
+			minValue = (new BigInteger("2").pow(byteSize * 8 - 1)).negate();
+		}
+		return minValue;
+	}
+
+	private static int determineByteSize(MemoryHandler memoryHandler,
+			CType ulType) {
+		int byteSize; 
 		if (ulType instanceof CEnum) {
 			byteSize = memoryHandler.typeSizeConstants.sizeOfEnumType;
 		} else {
@@ -196,15 +220,7 @@ public class CastAndConversionHandler {
 			byteSize = memoryHandler.typeSizeConstants
 				.CPrimitiveToTypeSizeConstant.get(((CPrimitive) ulType).getType());
 		}
-		BigInteger maxValue = null;
-		if (((CPrimitive) ulType).isUnsigned()) {
-			maxValue = new BigInteger("2")
-				.pow(byteSize * 8);
-		} else {
-			maxValue = new BigInteger("2")
-				.pow(byteSize * 8 - 1);
-		}
-		return maxValue;
+		return byteSize;
 	}
 
 	public static void doIntOverflowTreatmentInComparisonIfApplicable(Dispatcher main, MemoryHandler memoryHandler,
