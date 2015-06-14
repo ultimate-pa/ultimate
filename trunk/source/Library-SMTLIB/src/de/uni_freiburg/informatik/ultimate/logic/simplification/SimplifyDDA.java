@@ -74,10 +74,10 @@ public class SimplifyDDA extends NonRecursive {
 	
 	HashMap<Term, TermInfo> mTermInfos; 
 	Term mResult;
-	final Script mScript;
+	protected final Script mScript;
 	final Term mTrue;
 	final Term mFalse;
-	final boolean mSimplifyRepeatedly;
+	protected final boolean mSimplifyRepeatedly;
 
 	/**
 	 * This class counts the predecessors of every term to enable the
@@ -640,7 +640,7 @@ public class SimplifyDDA extends NonRecursive {
 		return Redundancy.NOT_REDUNDANT;
 	}
 	
-	private static Term termVariable2constant(Script script, TermVariable tv) { 
+	protected static Term termVariable2constant(Script script, TermVariable tv) { 
 		String name = tv.getName() + "_const_" + tv.hashCode();
 		Sort[] paramSorts = {};
 		Sort resultSort = tv.getSort();
