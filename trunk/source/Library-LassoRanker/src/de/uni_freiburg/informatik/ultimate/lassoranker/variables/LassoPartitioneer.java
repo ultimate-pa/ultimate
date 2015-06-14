@@ -27,7 +27,6 @@
 package de.uni_freiburg.informatik.ultimate.lassoranker.variables;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -38,8 +37,6 @@ import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.lassoranker.exceptions.TermException;
-import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.LassoPreProcessor;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -59,11 +56,13 @@ import de.uni_freiburg.informatik.ultimate.util.relation.NestedMap2;
  * @author Matthias Heizmann
  *
  */
-public class LassoPartitioneer extends LassoPreProcessor {
-	public static final String s_Description = "LassoPartitioneer";
+public class LassoPartitioneer {
 	
 	private final IUltimateServiceProvider m_Services;
 	private final IFreshTermVariableConstructor m_FreshTermVariableConstructor;
+	
+	private final TransFormulaLR m_Stem;
+	private final TransFormulaLR m_Loop;
 	
 	private enum Part { STEM, LOOP };
 	
@@ -90,74 +89,47 @@ public class LassoPartitioneer extends LassoPreProcessor {
 	private final List<TransFormulaLR> m_NewLoop = new ArrayList<>();
 	private Logger m_Logger;
 	
-	/**
-	 * Do not modify the lasso builder?
-	 */
-	private final boolean m_DryRun = false;
-	
-	
 	
 	
 	
 	public LassoPartitioneer(IUltimateServiceProvider services, 
-			IFreshTermVariableConstructor freshTermVariableConstructor) {
+			IFreshTermVariableConstructor freshTermVariableConstructor, 
+			Script script, TransFormulaLR stem, TransFormulaLR loop) {
 		m_Services = services;
 		m_FreshTermVariableConstructor = freshTermVariableConstructor;
 		m_Logger = m_Services.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
+		m_Script = script;
+		m_Stem = stem;
+		m_Loop = loop;
+		doPartition();
+	}
+	
+	public List<TransFormulaLR> getNewStem() {
+		return m_NewStem;
+	}
+
+	public List<TransFormulaLR> getNewLoop() {
+		return m_NewLoop;
 	}
 
 
-	@Override
-	public void process(LassoBuilder lasso_builder) throws TermException {
-		m_lassoBuilder = lasso_builder;
-		m_Script = lasso_builder.getScript();
-		partitioneer();
-	}
-
-
-	public void partitioneer() {
+	private void doPartition() {
 		m_Symbol2StemConjuncts = new HashRelation<>();
 		m_Symbol2LoopConjuncts = new HashRelation<>();
 		m_StemSymbolsWithoutConjuncts = new HashSet<>();
 		m_LoopSymbolsWithoutConjuncts = new HashSet<>();
 		m_StemConjunctsWithoutSymbols = new ArrayList<>();
 		m_LoopConjunctsWithoutSymbols = new ArrayList<>();
-		Collection<TransFormulaLR> stem_components =
-				m_lassoBuilder.getStemComponentsTermination();
-//		assert stem_components == m_lassoBuilder.getStemComponentsNonTermination();
-		Collection<TransFormulaLR> loop_components =
-				m_lassoBuilder.getLoopComponentsTermination();
-//		assert loop_components == m_lassoBuilder.getLoopComponentsNonTermination();
 		
-		extractSymbols(Part.STEM, stem_components, m_Symbol2StemConjuncts, 
+		extractSymbols(Part.STEM, m_Stem, m_Symbol2StemConjuncts, 
 				m_StemSymbolsWithoutConjuncts, m_StemConjunctsWithoutSymbols);
-		extractSymbols(Part.LOOP, loop_components, m_Symbol2LoopConjuncts, 
+		extractSymbols(Part.LOOP, m_Loop, m_Symbol2LoopConjuncts, 
 				m_LoopSymbolsWithoutConjuncts, m_LoopConjunctsWithoutSymbols);
 		
 		for (RankVar rv : m_AllRankVars) {
 			Set<NonTheorySymbol<?>> symbols = new HashSet<NonTheorySymbol<?>>();
-			for (TransFormulaLR transFormulaLR : stem_components) {
-				Term inVar = transFormulaLR.getInVars().get(rv);
-				if (inVar != null) {
-					symbols.add(constructSymbol(inVar));
-				}
-				Term outVar = transFormulaLR.getOutVars().get(rv);
-				if (outVar != null) {
-					symbols.add(constructSymbol(outVar));
-				}
-				assert (inVar == null) == (outVar == null) : "both or none";
-			}
-			for (TransFormulaLR transFormulaLR : loop_components) {
-				Term inVar = transFormulaLR.getInVars().get(rv);
-				if (inVar != null) {
-					symbols.add(constructSymbol(inVar));
-				}
-				Term outVar = transFormulaLR.getOutVars().get(rv);
-				if (outVar != null) {
-					symbols.add(constructSymbol(outVar));
-				}
-				assert (inVar == null) == (outVar == null) : "both or none"; 
-			}
+			extractInVarAndOutVarSymbols(rv, symbols, m_Stem);
+			extractInVarAndOutVarSymbols(rv, symbols, m_Loop); 
 			announceEquivalence(symbols);
 		}
 
@@ -205,22 +177,20 @@ public class LassoPartitioneer extends LassoPreProcessor {
 		assert !m_NewStem.isEmpty() : "empty stem";
 		assert !m_NewLoop.isEmpty() : "empty loop";
 		assert m_NewStem.size() == m_NewLoop.size() : "inconsistent component size";
+	}
 
-		String messageC = "Components before/after: " 
-				+ loop_components.size() + "/" + m_NewLoop.size();
-		m_Logger.info(messageC);
-		String messageS = "Stem maxDagSize before/after: " 
-				+ LassoBuilder.computeMaxDagSize(stem_components) + "/" + LassoBuilder.computeMaxDagSize(m_NewStem)
-				+ " Loop maxDagSize before/after: " 
-				+ LassoBuilder.computeMaxDagSize(loop_components) + "/" + LassoBuilder.computeMaxDagSize(m_NewLoop);
-		m_Logger.info(messageS);
 
-		if (!m_DryRun) {
-			m_lassoBuilder.setStemComponentsTermination(m_NewStem);
-			m_lassoBuilder.setStemComponentsNonTermination(m_NewStem);
-			m_lassoBuilder.setLoopComponentsTermination(m_NewLoop);
-			m_lassoBuilder.setLoopComponentsNonTermination(m_NewLoop);
+	private void extractInVarAndOutVarSymbols(RankVar rv,
+			Set<NonTheorySymbol<?>> symbols, TransFormulaLR transFormulaLR) {
+		Term inVar = transFormulaLR.getInVars().get(rv);
+		if (inVar != null) {
+			symbols.add(constructSymbol(inVar));
 		}
+		Term outVar = transFormulaLR.getOutVars().get(rv);
+		if (outVar != null) {
+			symbols.add(constructSymbol(outVar));
+		}
+		assert (inVar == null) == (outVar == null) : "both or none";
 	}
 	
 	private TransFormulaLR constructTransFormulaLR(
@@ -277,39 +247,37 @@ public class LassoPartitioneer extends LassoPreProcessor {
 
 
 	private HashRelation<NonTheorySymbol<?>, Term> extractSymbols(
-			Part part, Collection<TransFormulaLR> components, 
+			Part part, TransFormulaLR tf, 
 			HashRelation<NonTheorySymbol<?>, Term> symbol2Conjuncts, 
 			HashSet<NonTheorySymbol<?>> symbolsWithoutConjuncts,
 			List<Term> conjunctsWithoutSymbols) {
-		for (TransFormulaLR tf : components) {
-			m_AllRankVars.addAll(tf.getInVars().keySet());
-			m_AllRankVars.addAll(tf.getOutVars().keySet());
-			//FIXME CNF conversion should be done in advance if desired
-			Term cnf = (new Cnf(m_Script, m_Services, m_FreshTermVariableConstructor)).transform(tf.getFormula());
-			Term[] conjuncts = SmtUtils.getConjuncts(cnf);
-			for (Term conjunct : conjuncts) {
-				Set<NonTheorySymbol<?>> allSymbolsOfConjunct = NonTheorySymbol.extractNonTheorySymbols(conjunct);
-				if (allSymbolsOfConjunct.isEmpty()) {
-					conjunctsWithoutSymbols.add(conjunct);
-				} else {
-					for (NonTheorySymbol<?> symbol : allSymbolsOfConjunct) {
-						TransFormulaLR oldValue = m_Symbol2OriginalTF.put(part, symbol, tf);
-						assert oldValue == null || oldValue == tf : "may not be modified";
-						allSymbolsOfConjunct.add(symbol);
-						if (m_EquivalentSymbols.find(symbol) == null) {
-							m_EquivalentSymbols.makeEquivalenceClass(symbol);
-						}
-						symbol2Conjuncts.addPair(symbol, conjunct);
+		m_AllRankVars.addAll(tf.getInVars().keySet());
+		m_AllRankVars.addAll(tf.getOutVars().keySet());
+		//FIXME CNF conversion should be done in advance if desired
+		Term cnf = (new Cnf(m_Script, m_Services, m_FreshTermVariableConstructor)).transform(tf.getFormula());
+		Term[] conjuncts = SmtUtils.getConjuncts(cnf);
+		for (Term conjunct : conjuncts) {
+			Set<NonTheorySymbol<?>> allSymbolsOfConjunct = NonTheorySymbol.extractNonTheorySymbols(conjunct);
+			if (allSymbolsOfConjunct.isEmpty()) {
+				conjunctsWithoutSymbols.add(conjunct);
+			} else {
+				for (NonTheorySymbol<?> symbol : allSymbolsOfConjunct) {
+					TransFormulaLR oldValue = m_Symbol2OriginalTF.put(part, symbol, tf);
+					assert oldValue == null || oldValue == tf : "may not be modified";
+					allSymbolsOfConjunct.add(symbol);
+					if (m_EquivalentSymbols.find(symbol) == null) {
+						m_EquivalentSymbols.makeEquivalenceClass(symbol);
 					}
-					announceEquivalence(allSymbolsOfConjunct);
+					symbol2Conjuncts.addPair(symbol, conjunct);
 				}
+				announceEquivalence(allSymbolsOfConjunct);
 			}
-			for (Entry<RankVar, Term> entry : tf.getInVars().entrySet()) {
-				addIfNotAlreadyAdded(part, symbolsWithoutConjuncts, tf, entry.getValue(), symbol2Conjuncts);
-			}
-			for (Entry<RankVar, Term> entry : tf.getOutVars().entrySet()) {
-				addIfNotAlreadyAdded(part, symbolsWithoutConjuncts, tf, entry.getValue(), symbol2Conjuncts);
-			}
+		}
+		for (Entry<RankVar, Term> entry : tf.getInVars().entrySet()) {
+			addIfNotAlreadyAdded(part, symbolsWithoutConjuncts, tf, entry.getValue(), symbol2Conjuncts);
+		}
+		for (Entry<RankVar, Term> entry : tf.getOutVars().entrySet()) {
+			addIfNotAlreadyAdded(part, symbolsWithoutConjuncts, tf, entry.getValue(), symbol2Conjuncts);
 		}
 		return symbol2Conjuncts;
 	}
@@ -351,20 +319,5 @@ public class LassoPartitioneer extends LassoPreProcessor {
 			last = symbol;
 		}
 	}
-
-
-	@Override
-	public String getDescription() {
-		return s_Description;
-	}
-	
-	public int maxDagSizeNewStem() {
-		return LassoBuilder.computeMaxDagSize(m_NewStem);
-	}
-	
-	public int maxDagSizeNewLoop() {
-		return LassoBuilder.computeMaxDagSize(m_NewLoop);
-	}
-
 
 }

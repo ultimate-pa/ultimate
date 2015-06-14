@@ -45,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.nontermination.NonTermina
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.AddAxioms;
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.CommuHashPreprocessor;
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.DNF;
+import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.LassoPartitioneerPreProcessor;
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.LassoPreProcessor;
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.MatchInVars;
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.RemoveNegation;
@@ -266,8 +267,8 @@ public class LassoAnalysis {
 				m_preferences.overapproximateArrayIndexConnection)) {
 			mLogger.debug(preprocessor.getDescription());
 			preprocessor.process(lassoBuilder);
-			if (preprocessor instanceof LassoPartitioneer) {
-				LassoPartitioneer lp = (LassoPartitioneer) preprocessor;
+			if (preprocessor instanceof LassoPartitioneerPreProcessor) {
+				LassoPartitioneerPreProcessor lp = (LassoPartitioneerPreProcessor) preprocessor;
 				m_PreprocessingBenchmark.addPreprocessingData(
 						preprocessor.getDescription(), 
 						lp.maxDagSizeNewStem(), 
@@ -307,7 +308,7 @@ public class LassoAnalysis {
 				new StemAndLoopPreProcessor(new MatchInVars(m_Boogie2SMT.getVariableManager())),
 				new StemAndLoopPreProcessor(new AddAxioms(m_axioms)),
 				new StemAndLoopPreProcessor(new CommuHashPreprocessor(mServices)),
-				new LassoPartitioneer(mServices, m_Boogie2SMT.getVariableManager()),
+				new LassoPartitioneerPreProcessor(mServices, m_Boogie2SMT.getVariableManager()),
 //				new RewriteArrays(
 //						m_ArrayIndexSupportingInvariants,
 //						overapproximateArrayIndexConnection,
@@ -317,7 +318,7 @@ public class LassoAnalysis {
 //				),
 				new RewriteArrays2(true, m_stem_transition, m_loop_transition, m_ModifiableGlobalsAtHonda, mServices, m_ArrayIndexSupportingInvariants),
 				new StemAndLoopPreProcessor(new MatchInVars(m_Boogie2SMT.getVariableManager())),
-				new LassoPartitioneer(mServices, m_Boogie2SMT.getVariableManager()),
+				new LassoPartitioneerPreProcessor(mServices, m_Boogie2SMT.getVariableManager()),
 				new StemAndLoopPreProcessor(new RewriteDivision(lassoBuilder.getReplacementVarFactory())),
 				new StemAndLoopPreProcessor(new RewriteBooleans(lassoBuilder.getReplacementVarFactory(), lassoBuilder.getScript())),
 				new StemAndLoopPreProcessor(new RewriteIte()),
@@ -524,7 +525,7 @@ public class LassoAnalysis {
 					// use third last entry if second last preprocessor was
 					// the Lasso Partitioneer (because right now the lasso 
 					// LassoPartitioneer does not do any modifications
-					if (m_Preprocessors.get(list.size() - 2).equals(LassoPartitioneer.s_Description)) {
+					if (m_Preprocessors.get(list.size() - 2).equals(LassoPartitioneerPreProcessor.s_Description)) {
 						secondLastEntry = list.get(list.size() - 3);
 					} else {
 						secondLastEntry = list.get(list.size() - 2);
@@ -605,7 +606,7 @@ public class LassoAnalysis {
 				return "eq";
 			case RewriteStrictInequalities.s_Description:
 				return "sie";
-			case LassoPartitioneer.s_Description:
+			case LassoPartitioneerPreProcessor.s_Description:
 				return "lsp";
 			case RemoveNegation.s_Description:
 				return "neg";

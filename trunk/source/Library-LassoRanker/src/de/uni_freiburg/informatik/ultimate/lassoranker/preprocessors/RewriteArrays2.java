@@ -108,9 +108,9 @@ public class RewriteArrays2 extends LassoPreProcessor {
 		ReplacementVarFactory replacementVarFactory = lasso_builder.getReplacementVarFactory();
 		
 		Collection<TransFormulaLR> old_stem_components = lasso_builder.getStemComponentsTermination();
-		assert old_stem_components == lasso_builder.getStemComponentsNonTermination();
+//		assert old_stem_components == lasso_builder.getStemComponentsNonTermination();
 		Collection<TransFormulaLR> old_loop_components = lasso_builder.getLoopComponentsTermination();
-		assert old_loop_components == lasso_builder.getLoopComponentsNonTermination();
+//		assert old_loop_components == lasso_builder.getLoopComponentsNonTermination();
 		List<TransFormulaLRWithArrayInformation> stemComponents1 = new ArrayList<TransFormulaLRWithArrayInformation>();
 		for (TransFormulaLR stemComponent : old_stem_components) {
 			TransFormulaLRWithArrayInformation test = new TransFormulaLRWithArrayInformation(
