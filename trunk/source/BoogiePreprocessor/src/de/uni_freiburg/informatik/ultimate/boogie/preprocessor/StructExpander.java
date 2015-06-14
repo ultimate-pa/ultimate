@@ -37,6 +37,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IdentifierExpression
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IfThenElseExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StringLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StructAccessExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StructConstructor;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StructLHS;
@@ -458,6 +459,11 @@ public class StructExpander extends BoogieTransformer implements IUnmanagedObser
 	 *         flattened type of the original expression.
 	 */
 	private Expression[] expandExpression(Expression e) {
+		if (e instanceof StringLiteral) {
+			// StringLiteral cannot be expanded. StringLiteral do not have an
+			// IType. Code below would crash, we return here.
+			return new Expression[] { e };
+		}
 		if (e.getType() == null) {
 			mLogger.error("The expression " + BoogiePrettyPrinter.print(e) + " has a null type!");
 		}
