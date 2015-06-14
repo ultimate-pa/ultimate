@@ -1,4 +1,4 @@
-//#rNontermination
+//#rNonTermination
 /*
  * Date: 2012-03-19
  *

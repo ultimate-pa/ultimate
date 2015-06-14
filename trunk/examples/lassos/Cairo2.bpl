@@ -1,4 +1,4 @@
-//#rNontermination
+//#rNonTermination
 /*
  * Does not terminate for x = 1.
  *

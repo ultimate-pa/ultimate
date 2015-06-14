@@ -1,4 +1,4 @@
-//#rNontermination
+//#rNonTermination
 /* Simple example with Zeno behavior (example does not use division).
  * (See Wellington.bpl for a modification of this lasso
  * that uses int instead of real).

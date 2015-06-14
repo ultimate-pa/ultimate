@@ -1,4 +1,4 @@
-//#rNontermination
+//#rNonTermination
 /*
  * Date: 16.06.2013
  * Author: heizmann@informatik.uni-freiburg.de

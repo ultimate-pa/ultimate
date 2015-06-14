@@ -2,8 +2,8 @@
 /*
  * In revision 11466 there is probly a bug, because I get the following result
  * which hints that a and b were reassigned before the loop.
- *  Nontermination argument in form of an infinite program execution.
- *  Nontermination argument in form of an infinite execution
+ *  NonTermination argument in form of an infinite program execution.
+ *  NonTermination argument in form of an infinite execution
  *  {proc_a=0, proc_b=0}
  *  {proc_a=7, proc_b=8}
  *  {proc_a=8, proc_b=9}
