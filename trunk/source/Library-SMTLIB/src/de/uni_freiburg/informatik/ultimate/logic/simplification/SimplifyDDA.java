@@ -455,9 +455,10 @@ public class SimplifyDDA extends NonRecursive {
 					mParamCtr++;
 					/* fall through */
 				case 2:
+					if (mSimplifiedParams[0] != simplifier.mFalse)
+						simplifier.popContext();
 					if (mSimplifiedParams[0] != simplifier.mTrue) {
 						simplifier.enqueueWalker(this);
-						simplifier.popContext();
 						simplifier.pushContext(
 								Util.not(simplifier.mScript, mSimplifiedParams[0]));
 						simplifier.enqueueWalker(
@@ -468,7 +469,8 @@ public class SimplifyDDA extends NonRecursive {
 					mParamCtr++;
 					/* fall through */
 				case 3: // NOCHECKSTYLE
-					simplifier.popContext();
+					if (mSimplifiedParams[0] != simplifier.mTrue)
+						simplifier.popContext();
 					Term result = Util.ite(simplifier.mScript, 
 							mSimplifiedParams[0], mSimplifiedParams[1],
 							mSimplifiedParams[2]);

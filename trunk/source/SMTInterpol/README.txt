@@ -13,7 +13,7 @@ necessary steps.
    cat SMTInterpol/src/de/uni_freiburg/informatik/ultimate/smtinterpol/Version.properties
 
 3. Create a patch for the changes from SMTInterpol/src and Library-SMTLIB/src.
-   cd .../sminterpol.git
+   cd .../smtinterpol.git
    git diff <version-number> SMTInterpol/src Library-SMTLIB/src >smtinterpol.diff
    cd ultimate/source
    patch -p1 < .../smtinterpol.diff

@@ -718,7 +718,13 @@ public class SMTInterpol extends NoopScript {
 	
 	@Override
 	public void pop(int n) throws SMTLIBException {
-		super.pop(n);
+		try {
+			super.pop(n);
+		} catch (SMTLIBException eBug) {
+			if (mDDFriendly)
+				System.exit(123);
+			throw eBug;
+		}
 		modifyAssertionStack();
 		int i = n;
 		while (i-- > 0) {

@@ -35,7 +35,7 @@ public final class PushPopChecker {
 	 */
 	public static int currentLevel(Script script) {
 		try {
-			Object lvl = script.getInfo(":assertionstack-levels");
+			Object lvl = script.getInfo(":assertion-stack-levels");
 			if (lvl instanceof Number)
 				return ((Number) lvl).intValue();
 		} catch (UnsupportedOperationException eNotSupp) {
