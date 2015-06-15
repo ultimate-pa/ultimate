@@ -38,10 +38,8 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.AcceptingComponentsAnalysis.StronglyConnectedComponentWithAcceptanceInformation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.NestedWordAutomatonReachableStates;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.SCComponentForNWARS;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.IncomingInternalTransition;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
@@ -91,9 +89,9 @@ public class LoopComplexity<LETTER, STATE> implements IOperation<LETTER, STATE> 
 
 		Set<STATE> allStates = states;
 		Set<STATE> initialStates = states;
-     	Collection<SCComponentForNWARS<LETTER, STATE>> balls = m_Operand.computeBalls(allStates, initialStates);
+     	Collection<StronglyConnectedComponentWithAcceptanceInformation<LETTER, STATE>> balls = m_Operand.computeBalls(allStates, initialStates);
 		
-     	for (SCComponentForNWARS<LETTER, STATE> scc : balls) {
+     	for (StronglyConnectedComponentWithAcceptanceInformation<LETTER, STATE> scc : balls) {
 			scc.getNodes();
 		}
      	
@@ -137,7 +135,7 @@ public class LoopComplexity<LETTER, STATE> implements IOperation<LETTER, STATE> 
 			Collection<Integer> ballLoopComplexities = new ArrayList<Integer>();
 			
 			// Compute Loop Complexity for each ball.
-			for (SCComponentForNWARS<LETTER, STATE> scc : balls) {			
+			for (StronglyConnectedComponentWithAcceptanceInformation<LETTER, STATE> scc : balls) {			
 				if (statesToLC.containsKey(scc.getAllStates())) {
 					ballLoopComplexities.add(statesToLC.get(scc.getAllStates()));
 				} else {

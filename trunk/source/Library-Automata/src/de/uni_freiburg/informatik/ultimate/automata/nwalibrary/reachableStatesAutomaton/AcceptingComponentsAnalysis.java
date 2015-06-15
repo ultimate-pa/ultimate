@@ -26,8 +26,10 @@
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
@@ -39,13 +41,18 @@ import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.NestedLassoRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingTransitionlet;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.StateBasedTransitionFilterPredicateProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.SummaryReturnTransition;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.util.FilteredIterable;
 import de.uni_freiburg.informatik.ultimate.util.HashRelation;
+import de.uni_freiburg.informatik.ultimate.util.IteratorConcatenation;
 import de.uni_freiburg.informatik.ultimate.util.scc.SccComputation;
 import de.uni_freiburg.informatik.ultimate.util.scc.SccComputationNonRecursive;
+import de.uni_freiburg.informatik.ultimate.util.scc.StronglyConnectedComponent;
+import de.uni_freiburg.informatik.ultimate.util.scc.SccComputation.IStronglyConnectedComponentFactory;
+import de.uni_freiburg.informatik.ultimate.util.scc.SccComputation.ISuccessorProvider;
 
 
 public class AcceptingComponentsAnalysis<LETTER, STATE> {
@@ -66,13 +73,13 @@ public class AcceptingComponentsAnalysis<LETTER, STATE> {
 
 	private List<NestedLassoRun<LETTER, STATE>> m_NestedLassoRuns;
 	private NestedLassoRun<LETTER, STATE> m_NestedLassoRun;
-	private SccComputation<StateContainer<LETTER, STATE>, SCComponentForNWARS<LETTER, STATE>> m_SccComputation;
+	private SccComputation<StateContainer<LETTER, STATE>, StronglyConnectedComponentWithAcceptanceInformation<LETTER, STATE>> m_SccComputation;
 	
 	private int m_AcceptingBalls = 0;
-	private IUltimateServiceProvider m_Services;
-	private Logger m_Logger;
-	private SCComponentForNWARSFactory<LETTER, STATE> m_ScComponentFactory;
-	private NWARSSuccessorProvider<LETTER, STATE> m_NWARSSuccessorProvider;
+	private final IUltimateServiceProvider m_Services;
+	private final Logger m_Logger;
+	private StronglyConnectedComponentWithAcceptanceInformation_Factory m_ScComponentFactory;
+	private InSumCaSuccessorProvider m_NWARSSuccessorProvider;
 	Set<StateContainer<LETTER, STATE>> getStatesOfAllSCCs() {
 		return m_AllStatesOfSccsWithoutCallAndReturn;
 	}
@@ -95,8 +102,8 @@ public class AcceptingComponentsAnalysis<LETTER, STATE> {
 		m_Services = services;
 		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 		this.nestedWordAutomatonReachableStates = nestedWordAutomatonReachableStates;
-		m_ScComponentFactory = new SCComponentForNWARSFactory<LETTER, STATE>(this.nestedWordAutomatonReachableStates);
-		m_NWARSSuccessorProvider = new NWARSSuccessorProvider<>(nestedWordAutomatonReachableStates, allStates);
+		m_ScComponentFactory = new StronglyConnectedComponentWithAcceptanceInformation_Factory(this.nestedWordAutomatonReachableStates);
+		m_NWARSSuccessorProvider = new InSumCaSuccessorProvider(nestedWordAutomatonReachableStates, allStates);
 		Set<StateContainer<LETTER, STATE>> startNodes = new HashSet<StateContainer<LETTER, STATE>>();
 		for (STATE state : startStates) {
 			StateContainer<LETTER, STATE> sc = nestedWordAutomatonReachableStates.getStateContainer(state);
@@ -108,7 +115,7 @@ public class AcceptingComponentsAnalysis<LETTER, STATE> {
 
 
 		
-		for (SCComponentForNWARS<LETTER, STATE> scc : m_SccComputation.getBalls()) {
+		for (StronglyConnectedComponentWithAcceptanceInformation<LETTER, STATE> scc : m_SccComputation.getBalls()) {
 			if (scc.isAccepting()) {
 				m_AllStatesOfSccsWithoutCallAndReturn.addAll(scc.getNodes());
 				m_AcceptingBalls++;
@@ -119,7 +126,7 @@ public class AcceptingComponentsAnalysis<LETTER, STATE> {
 				+ m_AllStatesOfSccsWithoutCallAndReturn.size());
 	}
 
-	public SccComputation<StateContainer<LETTER, STATE>, SCComponentForNWARS<LETTER, STATE>> getSccComputation() {
+	public SccComputation<StateContainer<LETTER, STATE>, StronglyConnectedComponentWithAcceptanceInformation<LETTER, STATE>> getSccComputation() {
 		return m_SccComputation;
 	}
 	
@@ -128,7 +135,7 @@ public class AcceptingComponentsAnalysis<LETTER, STATE> {
 			throw new UnsupportedOperationException("not yet implemented");
 		}
 		List<NestedLassoRun<LETTER, STATE>> nestedLassoRuns = new ArrayList<NestedLassoRun<LETTER, STATE>>();
-		for (SCComponentForNWARS<LETTER, STATE> scc : getSccComputation().getBalls()) {
+		for (StronglyConnectedComponentWithAcceptanceInformation<LETTER, STATE> scc : getSccComputation().getBalls()) {
 			if (scc.isAccepting()) {
 				for (StateContainer<LETTER, STATE> fin : scc.getAcceptingStatesContainers()) {
 					NestedLassoRun<LETTER, STATE> nlr2 = (new LassoConstructor<LETTER, STATE>(m_Services, 
@@ -167,8 +174,8 @@ public class AcceptingComponentsAnalysis<LETTER, STATE> {
 	public void computeShortNestedLassoRun() throws AutomataLibraryException {
 		StateContainer<LETTER, STATE> lowestSerialNumber = null;
 		StateContainer<LETTER, STATE> newlowestSerialNumber = null;
-		SCComponentForNWARS<LETTER, STATE> sccOfLowest = null;
-		for (SCComponentForNWARS<LETTER, STATE> scc : getSccComputation().getBalls()) {
+		StronglyConnectedComponentWithAcceptanceInformation<LETTER, STATE> sccOfLowest = null;
+		for (StronglyConnectedComponentWithAcceptanceInformation<LETTER, STATE> scc : getSccComputation().getBalls()) {
 			if (scc.isAccepting()) {
 				StateContainer<LETTER, STATE> lowestOfScc = scc.getAcceptingWithLowestSerialNumber();
 				newlowestSerialNumber = StateContainer.returnLower(lowestSerialNumber, lowestOfScc);
@@ -226,5 +233,221 @@ public class AcceptingComponentsAnalysis<LETTER, STATE> {
 			return m_NestedLassoRun;
 		}
 	}
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	/**
+	 * Extension of {@link StronglyConnectedcomponent} that stores an maintains
+	 * information which is needed by {@link NestedWordAutomatonReachableStates}
+	 * to efficiently computed accepting runs.
+	 * @author Matthias Heizmann
+	 *
+	 * @param <LETTER>
+	 * @param <STATE>
+	 */
+	public static class StronglyConnectedComponentWithAcceptanceInformation<LETTER, STATE> extends StronglyConnectedComponent<StateContainer<LETTER, STATE>> {
+		final Set<StateContainer<LETTER, STATE>> m_AcceptingStates = new HashSet<StateContainer<LETTER, STATE>>();
+		final NestedWordAutomatonReachableStates<LETTER, STATE> nestedWordAutomatonReachableStates;
+		/**
+		 * States that have an outgoing summary. The summary successor may
+		 * could be outside of this SCC. We determine the needed set only if
+		 * construction of this SCC is finished.
+		 */
+		Set<StateContainer<LETTER, STATE>> m_HasOutgoingAcceptingSum = new HashSet<StateContainer<LETTER, STATE>>();
+		final HashRelation<StateContainer<LETTER, STATE>, Summary<LETTER, STATE>> m_AcceptingSummariesOfSCC = new HashRelation<StateContainer<LETTER, STATE>, Summary<LETTER, STATE>>();
+		/**
+		 * State of SCC with lowest serial number.
+		 */
+		private StateContainer<LETTER, STATE> m_StateWithLowestSerialNumber;
+		/**
+		 * State of SCC with lowest serial number that is accepting or
+		 * successor
+		 */
+		private StateContainer<LETTER, STATE> m_AcceptingWithLowestSerialNumber;
+		
+		public StronglyConnectedComponentWithAcceptanceInformation(NestedWordAutomatonReachableStates<LETTER, STATE> nwars) {
+			nestedWordAutomatonReachableStates = nwars;
+		}
+
+		@Override
+		public void addNode(StateContainer<LETTER, STATE> cont) {
+			super.addNode(cont);
+			m_StateWithLowestSerialNumber = StateContainer.returnLower(m_StateWithLowestSerialNumber, cont);
+
+			if (nestedWordAutomatonReachableStates.isFinal(cont.getState())) {
+				m_AcceptingStates.add(cont);
+				m_AcceptingWithLowestSerialNumber = StateContainer.returnLower(m_AcceptingWithLowestSerialNumber,
+						cont);
+			}
+			if (nestedWordAutomatonReachableStates.getAcceptingSummariesComputation().getAcceptingSummaries().getDomain().contains(cont)) {
+				m_HasOutgoingAcceptingSum.add(cont);
+				// if we have to update lowest is determined later
+			}
+		}
+
+		public void setRootNode(StateContainer<LETTER, STATE> rootNode) {
+			if (m_RootNode != null) {
+				throw new UnsupportedOperationException("If root node is set SCC may not be modified");
+			}
+			this.m_RootNode = rootNode;
+			// TODO: Optimization: compute this only if there is no
+			// accepting state in SCC
+			for (StateContainer<LETTER, STATE> pred : m_HasOutgoingAcceptingSum) {
+				for (Summary<LETTER, STATE> summary : nestedWordAutomatonReachableStates.getAcceptingSummariesComputation().getAcceptingSummaries().getImage(pred)) {
+					if (m_Nodes.contains(summary.getSucc())) {
+						m_AcceptingWithLowestSerialNumber = StateContainer.returnLower(
+								m_AcceptingWithLowestSerialNumber, pred);
+						m_AcceptingSummariesOfSCC.addPair(pred, summary);
+					}
+				}
+			}
+			m_HasOutgoingAcceptingSum = null;
+		}
+
+		public Set<StateContainer<LETTER, STATE>> getAcceptingStatesContainers() {
+			return m_AcceptingStates;
+		}
+		
+		public HashRelation<StateContainer<LETTER, STATE>, Summary<LETTER, STATE>> getAcceptingSummariesOfSCC() {
+			return m_AcceptingSummariesOfSCC;
+		}
+
+		public StateContainer<LETTER, STATE> getStateWithLowestSerialNumber() {
+			return m_StateWithLowestSerialNumber;
+		}
+
+		public boolean isAccepting() {
+			return m_AcceptingWithLowestSerialNumber != null;
+		}
+
+		/**
+		 * Returns the state with the lowest serial number that is accepting
+		 * or call predecessor of an accepting summary. Returns null if no
+		 * such state exists.
+		 * 
+		 * @return
+		 */
+		public StateContainer<LETTER, STATE> getAcceptingWithLowestSerialNumber() {
+			return m_AcceptingWithLowestSerialNumber;
+		}
+
+		/**
+		 * @return all states (not state containers) of this SCC.
+		 * This methods is not efficient because a new Set is constructed.
+		 * At the moment this is a workaround for Thomas' loop complexity
+		 * project.
+		 */
+		public Set<STATE> getAllStates() {
+			Set<STATE> result = new HashSet<>();
+			for (StateContainer<LETTER, STATE> sc : m_Nodes) {
+				result.add(sc.getState());
+			}
+			return result;
+		}
+	
+	
+	}
+	
+		
+		
+	/**
+	 * Factory that constructs new {@link StronglyConnectedComponentWithAcceptanceInformation}.
+	 * @author Matthias Heizmann
+	 */
+	private class StronglyConnectedComponentWithAcceptanceInformation_Factory implements IStronglyConnectedComponentFactory<StateContainer<LETTER, STATE>, StronglyConnectedComponentWithAcceptanceInformation<LETTER, STATE>> {
+
+		private final NestedWordAutomatonReachableStates<LETTER, STATE> m_NestedWordAutomatonReachableStates;
+
+		public StronglyConnectedComponentWithAcceptanceInformation_Factory(
+				NestedWordAutomatonReachableStates<LETTER, STATE> nestedWordAutomatonReachableStates) {
+			super();
+			m_NestedWordAutomatonReachableStates = nestedWordAutomatonReachableStates;
+		}
+
+		@Override
+		public StronglyConnectedComponentWithAcceptanceInformation<LETTER, STATE> constructNewSCComponent() {
+			return new StronglyConnectedComponentWithAcceptanceInformation<LETTER, STATE>(m_NestedWordAutomatonReachableStates);
+		}
+
+	}
+		
+		
+		
+		
+	/**
+	 * Provides for a given StateContiner all StateContainers that are
+	 * successors of internal transitions, summaries and call transitions.
+	 * @author Matthias Heizmann
+	 *
+	 */
+	private class InSumCaSuccessorProvider implements ISuccessorProvider<StateContainer<LETTER, STATE>> {
+
+		private final NestedWordAutomatonReachableStates<LETTER, STATE> m_NestedWordAutomatonReachableStates;
+		private final StateBasedTransitionFilterPredicateProvider<LETTER, STATE> m_TransitionFilter;
+
+
+
+		public InSumCaSuccessorProvider(
+				NestedWordAutomatonReachableStates<LETTER, STATE> nestedWordAutomatonReachableStates,
+				Set<STATE> allStates) {
+			super();
+			m_NestedWordAutomatonReachableStates = nestedWordAutomatonReachableStates;
+			m_TransitionFilter = new StateBasedTransitionFilterPredicateProvider<>(allStates);
+		}
+
+
+		private <E extends OutgoingTransitionlet<LETTER, STATE>> Iterator<StateContainer<LETTER, STATE>> getStateContainerIterator(final Iterator<E> it) {
+			return new Iterator<StateContainer<LETTER,STATE>>() {
+
+				@Override
+				public boolean hasNext() {
+					return it.hasNext();
+				}
+
+				@Override
+				public StateContainer<LETTER, STATE> next() {
+					return m_NestedWordAutomatonReachableStates.getStateContainer(it.next().getSucc());
+				}
+
+				@Override
+				public void remove() {
+					throw new UnsupportedOperationException("not modifiable");
+				}
+
+			};
+
+		}
+
+		@Override
+		public Iterator<StateContainer<LETTER, STATE>> getSuccessors(final StateContainer<LETTER, STATE> sc) {
+
+			Iterator<StateContainer<LETTER,STATE>> internalTransitionsIterator = 
+					getStateContainerIterator(new FilteredIterable<OutgoingInternalTransition<LETTER, STATE>>(
+							sc.internalSuccessors(), m_TransitionFilter.getInternalSuccessorPredicate()).iterator());
+
+			Iterator<StateContainer<LETTER,STATE>> returnSummaryTransitionsIterator = 
+					getStateContainerIterator(new FilteredIterable<SummaryReturnTransition<LETTER, STATE>>(
+							m_NestedWordAutomatonReachableStates.returnSummarySuccessor(sc.getState()), m_TransitionFilter.getReturnSummaryPredicate()).iterator());
+
+
+			Iterator<StateContainer<LETTER,STATE>> callTransitionsIterator = 
+					getStateContainerIterator(new FilteredIterable<OutgoingCallTransition<LETTER, STATE>>(
+							sc.callSuccessors(), m_TransitionFilter.getCallSuccessorPredicate()).iterator());
+
+
+			Iterator<StateContainer<LETTER,STATE>>[] iterators = (Iterator<StateContainer<LETTER, STATE>>[]) 
+					new Iterator<?>[] { internalTransitionsIterator, returnSummaryTransitionsIterator, callTransitionsIterator };
+			return new IteratorConcatenation<StateContainer<LETTER,STATE>>(Arrays.asList(iterators));
+		}
+
+	}
+	
 	
 }
