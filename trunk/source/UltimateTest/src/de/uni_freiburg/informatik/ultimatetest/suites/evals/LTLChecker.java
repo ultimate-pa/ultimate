@@ -15,7 +15,9 @@ public class LTLChecker extends AbstractEvalTestSuite {
 
 	private static final String[] FILEENDINGS = new String[] { ".c" };
 
-	private static final String[] TOOLCHAINS = new String[] { "LTLAutomizerC.xml", "LTLAutomizerCInline.xml", };
+	private static final String[] TOOLCHAINS = new String[] { 
+//		"LTLAutomizerC.xml", 
+		"LTLAutomizerCInline.xml", };
 
 	// @formatter:off
 	private static final String[] SETTINGS = new String[] { 
@@ -92,7 +94,7 @@ public class LTLChecker extends AbstractEvalTestSuite {
 	@Override
 	protected long getTimeout() {
 		// return 180 * 1000;
-		return 6 * 60 * 1000;
+		return 12 * 60 * 1000;
 	}
 
 	@Override
