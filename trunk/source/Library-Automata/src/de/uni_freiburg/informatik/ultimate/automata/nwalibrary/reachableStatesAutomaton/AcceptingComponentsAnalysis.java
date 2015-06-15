@@ -44,6 +44,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.Summa
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.util.FilteredIterable;
 import de.uni_freiburg.informatik.ultimate.util.HashRelation;
+import de.uni_freiburg.informatik.ultimate.util.scc.SccComputation;
+import de.uni_freiburg.informatik.ultimate.util.scc.SccComputationNonRecursive;
 
 
 public class AcceptingComponentsAnalysis<LETTER, STATE> {
@@ -100,7 +102,7 @@ public class AcceptingComponentsAnalysis<LETTER, STATE> {
 			StateContainer<LETTER, STATE> sc = nestedWordAutomatonReachableStates.getStateContainer(state);
 			startNodes.add(sc);
 		}
-		m_SccComputation = new SccComputationNonRecursive<>(m_Services, m_Logger, m_NWARSSuccessorProvider, m_ScComponentFactory, allStates.size(), startNodes);
+		m_SccComputation = new SccComputationNonRecursive<>(m_Logger, m_NWARSSuccessorProvider, m_ScComponentFactory, allStates.size(), startNodes);
 		m_TransitionFilter = new StateBasedTransitionFilterPredicateProvider<>(allStates);
 		m_AcceptingSummaries = asc.getAcceptingSummaries();
 

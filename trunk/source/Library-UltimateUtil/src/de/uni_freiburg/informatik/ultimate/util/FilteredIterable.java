@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009-2014 University of Freiburg
+ * Copyright (C) 2009-2015 University of Freiburg
  *
  * This file is part of the ULTIMATE Utils Library.
  *

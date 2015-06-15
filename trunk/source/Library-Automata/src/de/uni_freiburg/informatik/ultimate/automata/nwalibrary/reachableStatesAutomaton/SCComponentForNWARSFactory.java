@@ -1,6 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton;
 
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.SccComputation.IStronglyConnectedComponentFactory;
+import de.uni_freiburg.informatik.ultimate.util.scc.SccComputation.IStronglyConnectedComponentFactory;
 
 
 public class SCComponentForNWARSFactory<LETTER, STATE> implements IStronglyConnectedComponentFactory<StateContainer<LETTER, STATE>, SCComponentForNWARS<LETTER, STATE>> {
