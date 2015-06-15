@@ -448,6 +448,7 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 		return result;
 	}
 
+	@Override
 	public Iterable<SummaryReturnTransition<LETTER, STATE>> returnSummarySuccessor(final STATE hier) {
 		return new Iterable<SummaryReturnTransition<LETTER, STATE>>() {
 			/**
