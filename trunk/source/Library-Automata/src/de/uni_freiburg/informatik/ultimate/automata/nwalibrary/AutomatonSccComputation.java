@@ -49,6 +49,11 @@ import de.uni_freiburg.informatik.ultimate.util.scc.StronglyConnectedComponent;
 /**
  * Compute SCCs of an automaton. Allows to restrict computation to a subgraph
  * (subset of states with corresponding edges) of the automaton.
+ * This computation should work for each INestedWordAutomaton, however it is
+ * only sound if each return transition is reachable (i.e., each summary
+ * transition can actually be taken). To enforce soundness we restricted the
+ * input to NestedWordAutomatonReachableStates, we might relax this in the
+ * future.
  * 
  * @author Matthias Heizmann
  *
@@ -58,7 +63,7 @@ import de.uni_freiburg.informatik.ultimate.util.scc.StronglyConnectedComponent;
 public class AutomatonSccComputation<LETTER, STATE> {
 	
 	
-	private final NestedWordAutomatonReachableStates<LETTER, STATE> m_NestedWordAutomatonReachableStates;
+	private final INestedWordAutomaton<LETTER, STATE> m_NestedWordAutomaton;
 	private final IUltimateServiceProvider m_Services;
 	private final Logger m_Logger;
 	private final DefaultSccComputation<STATE> m_SccComputation;
@@ -74,11 +79,11 @@ public class AutomatonSccComputation<LETTER, STATE> {
 			NestedWordAutomatonReachableStates<LETTER, STATE> nestedWordAutomatonReachableStates,
 			IUltimateServiceProvider services, Set<STATE> stateSubset, Set<STATE> startNodes) {
 		super();
-		m_NestedWordAutomatonReachableStates = nestedWordAutomatonReachableStates;
+		m_NestedWordAutomaton = nestedWordAutomatonReachableStates;
 		m_Services = services;
 		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 		m_SccComputation = new DefaultSccComputation<STATE>(m_Logger, 
-				new InSumCaSuccessorProvider(m_NestedWordAutomatonReachableStates, stateSubset), 
+				new InSumCaSuccessorProvider(m_NestedWordAutomaton, stateSubset), 
 				stateSubset.size(), startNodes);
 	}
 
@@ -108,7 +113,7 @@ public class AutomatonSccComputation<LETTER, STATE> {
 		private final StateBasedTransitionFilterPredicateProvider<LETTER, STATE> m_TransitionFilter;
 
 		public InSumCaSuccessorProvider(
-				NestedWordAutomatonReachableStates<LETTER, STATE> nestedWordAutomatonReachableStates,
+				INestedWordAutomaton<LETTER, STATE> nestedWordAutomatonReachableStates,
 				Set<STATE> stateSubset) {
 			super();
 			m_TransitionFilter = new StateBasedTransitionFilterPredicateProvider<>(stateSubset);
@@ -140,16 +145,16 @@ public class AutomatonSccComputation<LETTER, STATE> {
 			
 			Iterator<STATE> internalTransitionsIterator = 
 					getStateContainerIterator(new FilteredIterable<OutgoingInternalTransition<LETTER, STATE>>(
-							m_NestedWordAutomatonReachableStates.internalSuccessors(state), m_TransitionFilter.getInternalSuccessorPredicate()).iterator());
+							m_NestedWordAutomaton.internalSuccessors(state), m_TransitionFilter.getInternalSuccessorPredicate()).iterator());
 			
 			Iterator<STATE> returnSummaryTransitionsIterator = 
 					getStateContainerIterator(new FilteredIterable<SummaryReturnTransition<LETTER, STATE>>(
-							m_NestedWordAutomatonReachableStates.returnSummarySuccessor(state), m_TransitionFilter.getReturnSummaryPredicate()).iterator());
+							m_NestedWordAutomaton.returnSummarySuccessor(state), m_TransitionFilter.getReturnSummaryPredicate()).iterator());
 			
 			
 			Iterator<STATE> callTransitionsIterator = 
 					getStateContainerIterator(new FilteredIterable<OutgoingCallTransition<LETTER, STATE>>(
-							m_NestedWordAutomatonReachableStates.callSuccessors(state), m_TransitionFilter.getCallSuccessorPredicate()).iterator());
+							m_NestedWordAutomaton.callSuccessors(state), m_TransitionFilter.getCallSuccessorPredicate()).iterator());
 
 			
 			Iterator<STATE>[] iterators = (Iterator<STATE>[]) 
