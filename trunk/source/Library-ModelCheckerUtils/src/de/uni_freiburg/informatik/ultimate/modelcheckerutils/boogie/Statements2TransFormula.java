@@ -217,7 +217,7 @@ public class Statements2TransFormula {
 
 		for (TermVariable tv : addedEqualities.keySet()) {
 
-			Term rhsTerm = (new Expression2Term(mServices, its, m_Script, m_TypeSortTranslator, addedEqualities.get(tv)))
+			Term rhsTerm = (new Expression2Term(mServices, its, m_Script, m_TypeSortTranslator, m_Boogie2SmtSymbolTable, addedEqualities.get(tv)))
 					.getTerm();
 			Term eq = m_Script.term("=", tv, rhsTerm);
 
@@ -245,7 +245,7 @@ public class Statements2TransFormula {
 	private void addAssume(AssumeStatement assume) {
 		IdentifierTranslator[] its = getIdentifierTranslatorsIntraprocedural();
 
-		Term f = (new Expression2Term(mServices, its, m_Script, m_TypeSortTranslator, assume.getFormula())).getTerm();
+		Term f = (new Expression2Term(mServices, its, m_Script, m_TypeSortTranslator, m_Boogie2SmtSymbolTable, assume.getFormula())).getTerm();
 
 		m_Assumes = Util.and(m_Script, f, m_Assumes);
 		if (s_ComputeAsserts) {
@@ -256,7 +256,7 @@ public class Statements2TransFormula {
 	private void addAssert(AssertStatement assertstmt) {
 		if (s_ComputeAsserts) {
 			IdentifierTranslator[] its = getIdentifierTranslatorsIntraprocedural();
-			Term f = (new Expression2Term(mServices, its, m_Script, m_TypeSortTranslator, assertstmt.getFormula()))
+			Term f = (new Expression2Term(mServices, its, m_Script, m_TypeSortTranslator, m_Boogie2SmtSymbolTable, assertstmt.getFormula()))
 					.getTerm();
 			m_Assumes = Util.and(m_Script, f, m_Assumes);
 			m_Asserts = Util.and(m_Script, f, m_Asserts);
@@ -323,7 +323,7 @@ public class Statements2TransFormula {
 		Term[] argumentTerms;
 		{
 			IdentifierTranslator[] its = getIdentifierTranslatorsIntraprocedural();
-			argumentTerms = (new Expression2Term(mServices, its, m_Script, m_TypeSortTranslator, arguments)).getTerms();
+			argumentTerms = (new Expression2Term(mServices, its, m_Script, m_TypeSortTranslator, m_Boogie2SmtSymbolTable, arguments)).getTerms();
 		}
 
 		offset = 0;
@@ -343,7 +343,7 @@ public class Statements2TransFormula {
 		for (Specification spec : procedure.getSpecification()) {
 			if (spec instanceof EnsuresSpecification) {
 				Expression post = ((EnsuresSpecification) spec).getFormula();
-				Term f = (new Expression2Term(mServices, ensIts, m_Script, m_TypeSortTranslator, post)).getTerm();
+				Term f = (new Expression2Term(mServices, ensIts, m_Script, m_TypeSortTranslator, m_Boogie2SmtSymbolTable, post)).getTerm();
 				m_Assumes = Util.and(m_Script, f, m_Assumes);
 				if (s_ComputeAsserts) {
 					if (spec.isFree()) {
@@ -363,7 +363,7 @@ public class Statements2TransFormula {
 		for (Specification spec : procedure.getSpecification()) {
 			if (spec instanceof RequiresSpecification) {
 				Expression pre = ((RequiresSpecification) spec).getFormula();
-				Term f = (new Expression2Term(mServices, reqIts, m_Script, m_TypeSortTranslator, pre)).getTerm();
+				Term f = (new Expression2Term(mServices, reqIts, m_Script, m_TypeSortTranslator, m_Boogie2SmtSymbolTable, pre)).getTerm();
 				m_Assumes = Util.and(m_Script, f, m_Assumes);
 				if (s_ComputeAsserts) {
 					if (spec.isFree()) {
@@ -604,7 +604,7 @@ public class Statements2TransFormula {
 		Procedure calleeImpl = m_BoogieDeclarations.getProcImplementation().get(callee);
 
 		IdentifierTranslator[] its = getIdentifierTranslatorsIntraprocedural();
-		Term[] argTerms = (new Expression2Term(mServices, its, m_Script, m_TypeSortTranslator, st.getArguments()))
+		Term[] argTerms = (new Expression2Term(mServices, its, m_Script, m_TypeSortTranslator, m_Boogie2SmtSymbolTable, st.getArguments()))
 				.getTerms();
 		m_OutVars.clear();
 

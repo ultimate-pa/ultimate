@@ -16,10 +16,13 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.model.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.model.boogie.DeclarationInformation.StorageClass;
 import de.uni_freiburg.informatik.ultimate.model.boogie.LocalBoogieVar;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BoogieASTNode;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ConstDeclaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.FunctionDeclaration;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.NamedAttribute;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Procedure;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StringLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableDeclaration;
 
@@ -30,6 +33,17 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableDeclaration;
  *
  */
 public class Boogie2SmtSymbolTable {
+	/**
+	 * Identifier of attribute that we use to state that
+	 * <ul>
+	 * <li> no function has to be declared, function is already defined in the 
+	 * logic
+	 * <li> given value has to be used in the translation.
+	 * </ul>
+	 * 
+	 */
+	private static final String s_BUILTINIDENTIFIER = "builtin";
+	
 	private final BoogieDeclarations m_BoogieDeclarations;
 	private final Script m_Script; 
 	private final TypeSortTranslator m_TypeSortTranslator;
@@ -63,6 +77,7 @@ public class Boogie2SmtSymbolTable {
 			new HashMap<String,String>();
 	final Map<String,String> m_SmtFunction2BoogieFunction = 
 			new HashMap<String,String>();
+
 	
 	
 	public Boogie2SmtSymbolTable(BoogieDeclarations boogieDeclarations,
@@ -212,22 +227,14 @@ public class Boogie2SmtSymbolTable {
 	}
 	
 	private void declareFunction(FunctionDeclaration funcdecl) {
-		// for (Attribute attr : funcdecl.getAttributes()) {
-		// if (attr instanceof NamedAttribute) {
-		// NamedAttribute nattr = (NamedAttribute) attr;
-		// if (nattr.getName().equals("bvint")
-		// && nattr.getValues().length == 1
-		// && nattr.getValues()[0] instanceof StringLiteral
-		// && ((StringLiteral)nattr.getValues()[0]).getValue().equals("ITE")) {
-		// /* TODO: make sanity check of parameter types ?? */
-		// itefunctions.add(funcdecl.getIdentifier());
-		// return;
-		// }
-		// }
-		// }
 		String id = funcdecl.getIdentifier();
-		// String smtID = "f_"+quoteId(id);
-		String smtID = Boogie2SMT.quoteId(id);
+		String attributeDefinedIdentifier = checkForAttributeDefinedIdentifier(funcdecl);
+		String smtID;
+		if (attributeDefinedIdentifier == null) {
+			 smtID = Boogie2SMT.quoteId(id);
+		} else {
+			smtID = attributeDefinedIdentifier;
+		}
 		int numParams = 0;
 		for (VarList vl : funcdecl.getInParams()) {
 			int ids = vl.getIdentifiers().length;
@@ -249,13 +256,50 @@ public class Boogie2SmtSymbolTable {
 		}
 		IType resultType = funcdecl.getOutParam().getType().getBoogieType();
 		Sort resultSort = m_TypeSortTranslator.getSort(resultType, funcdecl);
-		m_Script.declareFun(smtID, paramSorts, resultSort);
+		if (attributeDefinedIdentifier == null) {
+			// no builtin function, we have to declare it
+			m_Script.declareFun(smtID, paramSorts, resultSort);
+		}
 		m_BoogieFunction2SmtFunction.put(id, smtID);
 		m_SmtFunction2BoogieFunction.put(smtID, id);
 	}
+
+	
+	/**
+	 * Check if function declaration has an attribute with the identifier that
+	 * equals s_BUILTINIDENTIFIER. If yes, return the corresponding value.
+	 */
+	private String checkForAttributeDefinedIdentifier(FunctionDeclaration funcdecl) {
+		String attributeDefinedIdentifier = null;
+		for (Attribute attr : funcdecl.getAttributes()) {
+			if (attr instanceof NamedAttribute) {
+				NamedAttribute nattr = (NamedAttribute) attr;
+				if (nattr.getName().equals(s_BUILTINIDENTIFIER)) {
+					if (nattr.getValues().length == 1 && 
+							nattr.getValues()[0] instanceof StringLiteral) {
+						StringLiteral sl = (StringLiteral) nattr.getValues()[0];
+						if (attributeDefinedIdentifier == null) {
+							attributeDefinedIdentifier = sl.getValue();
+						} else {
+							throw new IllegalArgumentException("multiple " + 
+									s_BUILTINIDENTIFIER + "not supported");
+						}
+					} else {
+						throw new IllegalArgumentException(s_BUILTINIDENTIFIER + 
+								"has to be used to define SMT identifier");
+					}
+				}
+			}
+		}
+		return attributeDefinedIdentifier;
+	}
 	
 	public Map<String, String> getSmtFunction2BoogieFunction() {
-		return m_SmtFunction2BoogieFunction;
+		return Collections.unmodifiableMap(m_SmtFunction2BoogieFunction);
+	}
+	
+	public Map<String, String> getBoogieFunction2SmtFunction() {
+		return Collections.unmodifiableMap(m_BoogieFunction2SmtFunction);
 	}
 	
 	

@@ -52,6 +52,7 @@ public class Expression2Term {
 	private final TypeSortTranslator m_TypeSortTranslator;
 	private final IdentifierTranslator[] m_SmtIdentifierProviders;
 	private final Term[] m_Result;
+	private final Boogie2SmtSymbolTable m_Boogie2SmtSymbolTable;
 
 	/**
 	 * Count the height of current old(.) expressions. As long as this is
@@ -62,12 +63,15 @@ public class Expression2Term {
 
 	private final IUltimateServiceProvider mServices;
 
-	public Expression2Term(IUltimateServiceProvider services, IdentifierTranslator[] identifierTranslators,
-			Script script, TypeSortTranslator typeSortTranslator, Expression... expressions) {
+	public Expression2Term(IUltimateServiceProvider services, 
+			IdentifierTranslator[] identifierTranslators, Script script, 
+			TypeSortTranslator typeSortTranslator, 
+			Boogie2SmtSymbolTable boogie2SmtSymbolTable, Expression... expressions) {
 		super();
 		mServices = services;
 		m_Script = script;
 		m_TypeSortTranslator = typeSortTranslator;
+		m_Boogie2SmtSymbolTable = boogie2SmtSymbolTable;
 		m_SmtIdentifierProviders = identifierTranslators;
 		m_Result = new Term[expressions.length];
 		for (int i = 0; i < expressions.length; i++) {
@@ -269,7 +273,11 @@ public class Expression2Term {
 			for (int i = 0; i < func.getArguments().length; i++) {
 				parameters[i] = translate(func.getArguments()[i]);
 			}
-			String funcSymb = func.getIdentifier();
+			String funcSymb = m_Boogie2SmtSymbolTable.getBoogieFunction2SmtFunction().
+					get(func.getIdentifier());
+			if (funcSymb == null) {
+				throw new IllegalArgumentException("unknown function" + func.getIdentifier());
+			}
 			Term result = m_Script.term(funcSymb, parameters);
 			assert (result.toString() instanceof Object);
 			return result;

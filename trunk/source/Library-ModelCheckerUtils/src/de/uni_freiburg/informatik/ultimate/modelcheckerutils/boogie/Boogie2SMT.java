@@ -115,7 +115,7 @@ public class Boogie2SMT {
 
 	private Term declareAxiom(Axiom ax) {
 		IdentifierTranslator[] its = new IdentifierTranslator[] { getConstOnlyIdentifierTranslator() };
-		Term term = (new Expression2Term(mServices, its, m_Script, m_TypeSortTranslator, ax.getFormula())).getTerm();
+		Term term = (new Expression2Term(mServices, its, m_Script, m_TypeSortTranslator, m_Boogie2SmtSymbolTable, ax.getFormula())).getTerm();
 		m_Script.assertTerm(term);
 		return term;
 	}
