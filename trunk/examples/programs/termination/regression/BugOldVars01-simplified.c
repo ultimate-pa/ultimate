@@ -7,7 +7,6 @@
 
 int x = 300;
 int y = 2;
-int z = 5;
 
 void proc() {
 	y--;
@@ -17,7 +16,6 @@ void proc() {
 }
 
 int main() {
-	z--;
 	proc();
 	return 0;
 }
