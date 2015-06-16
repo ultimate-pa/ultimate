@@ -1,13 +1,8 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark;
 
-//import java.io.IOException;
-//import java.nio.charset.Charset;
-//import java.nio.file.Files;
-//import java.nio.file.Paths;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
-//import java.util.Collections;
 import java.util.Deque;
 import java.util.HashSet;
 import java.util.List;
@@ -28,14 +23,11 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPre
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ParallelComposition;
-//import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.RCFGEdgeVisitor;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
-//import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IMLPredicate;
-//import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.result.BenchmarkResult;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProvider;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
@@ -54,9 +46,6 @@ public class LineCoverageCalculator {
 	private final LineCoverageCalculator mRelative;
 	private final Logger mLogger;
 	private final Set<Integer> mLinenumbers;
-//	private final Set<Integer> mForbiddenLines;
-
-//	private int mActualFileLength;
 
 	public LineCoverageCalculator(IUltimateServiceProvider services, IAutomaton<CodeBlock, IPredicate> automaton) {
 		this(services, automaton, null);
@@ -67,10 +56,8 @@ public class LineCoverageCalculator {
 		mServices = services;
 		mRelative = relative;
 		mLogger = services.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
-//		mForbiddenLines = new HashSet<>();
-//		mActualFileLength = -1;
 
-		mLinenumbers = calculateLineNumbers2(automaton);
+		mLinenumbers = calculateLineNumbers(automaton);
 	}
 
 	public void reportCoverage(String description) {
@@ -99,31 +86,7 @@ public class LineCoverageCalculator {
 		return mLinenumbers.size();
 	}
 
-//	private Set<Integer> calculateLineNumbers(IAutomaton<CodeBlock, IPredicate> automaton) {
-//		final Set<Integer> rtr = new HashSet<>();
-//		if (automaton == null) {
-//			mLogger.warn("NULL automaton has no lines");
-//			return rtr;
-//		}
-//
-//		final Set<IPredicate> states = getStates(automaton);
-//
-//		for (final IPredicate state : states) {
-//			final ProgramPoint[] points = getPoints(state);
-//			for (final ProgramPoint point : points) {
-//				final ILocation location = point.getBoogieASTNode().getLocation();
-//				if (location == null) {
-//					mLogger.warn("Skipping empty location for program point " + point);
-//					continue;
-//				}
-//
-//				addLines(rtr, location);
-//			}
-//		}
-//		return rtr;
-//	}
-
-	private Set<Integer> calculateLineNumbers2(IAutomaton<CodeBlock, IPredicate> automaton) {
+	private Set<Integer> calculateLineNumbers(IAutomaton<CodeBlock, IPredicate> automaton) {
 		final Set<Integer> rtr = new HashSet<>();
 		if (automaton == null) {
 			mLogger.warn("NULL automaton has no lines");
@@ -166,103 +129,14 @@ public class LineCoverageCalculator {
 		return new StatementExtractor().process(edge);
 	}
 
-//	private boolean isValid(ILocation location) {
-//		final int start = location.getStartLine();
-//		final int end = location.getEndLine();
-//		final int max = getActualFileLength(location);
-//		if (start == 1 && end == max) {
-//			// all locations that range over the whole file are invalid
-//			return false;
-//		}
-//		return true;
-//	}
-
-//	private int getActualFileLength(ILocation location) {
-//		if (mActualFileLength == -1) {
-//			try {
-//				List<String> content = Files.readAllLines(Paths.get(location.getFileName()), Charset.defaultCharset());
-//				determineForbiddenLines(content);
-//				mActualFileLength = determineActualFileLength(content.size());
-//			} catch (IOException e) {
-//				mActualFileLength = 0;
-//			}
-//		}
-//		return mActualFileLength;
-//	}
-
-//	private int determineActualFileLength(int max) {
-//		int largestBlankLine = Integer.MIN_VALUE;
-//		for (final int line : mForbiddenLines) {
-//			if (line > largestBlankLine) {
-//				largestBlankLine = line;
-//			}
-//		}
-//
-//		if (largestBlankLine < max) {
-//			largestBlankLine = max;
-//		}
-//
-//		for (; largestBlankLine >= 0; largestBlankLine--) {
-//			if (!mForbiddenLines.contains(largestBlankLine)) {
-//				return largestBlankLine;
-//			}
-//		}
-//
-//		throw new UnsupportedOperationException();
-//	}
-
-//	private void determineForbiddenLines(List<String> content) {
-//		int currentLine = 1;
-//		for (String line : content) {
-//			if (line.trim().isEmpty()) {
-//				mForbiddenLines.add(currentLine);
-//			}
-//			++currentLine;
-//		}
-//	}
-
 	private void addLines(Set<Integer> rtr, ILocation location) {
 		final int start = location.getStartLine();
 		final int end = location.getEndLine();
 
 		if (start == end) {
 			rtr.add(start);
-		} else {
-//			if (!isValid(location)) {
-//				return;
-//			}
-//
-//			for (int i = start; i <= end; i++) {
-//				if (!mForbiddenLines.contains(i)) {
-//					rtr.add(i);
-//				}
-//			}
 		}
 	}
-
-//	private ProgramPoint[] getPoints(IPredicate state) {
-//		if (state instanceof IMLPredicate) {
-//			return ((IMLPredicate) state).getProgramPoints();
-//		}
-//
-//		if (state instanceof ISLPredicate) {
-//			return new ProgramPoint[] { ((ISLPredicate) state).getProgramPoint() };
-//		}
-//
-//		mLogger.warn("Cannot calculate coverage for automaton containing predicates of type "
-//				+ state.getClass().getSimpleName());
-//
-//		return new ProgramPoint[0];
-//	}
-
-//	private Set<IPredicate> getStates(IAutomaton<CodeBlock, IPredicate> automaton) {
-//		if (automaton instanceof INestedWordAutomaton<?, ?>) {
-//			return ((INestedWordAutomaton<CodeBlock, IPredicate>) automaton).getStates();
-//		}
-//
-//		mLogger.warn("Cannot calculate coverage for unknown automaton of type " + automaton.getClass().getSimpleName());
-//		return Collections.emptySet();
-//	}
 
 	private Set<CodeBlock> getCodeblocks(IAutomaton<CodeBlock, IPredicate> automaton) {
 		Set<CodeBlock> rtr = new HashSet<>();
@@ -352,7 +226,7 @@ public class LineCoverageCalculator {
 		}
 
 		private double getCoverage() {
-			return ((double) mCurrent) / ((double) mMax);
+			return ((double) mCurrent) / ((double) mMax) * 1000;
 		}
 
 		@Override
