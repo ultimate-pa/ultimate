@@ -2,10 +2,11 @@ import sys
 import subprocess
 import os
 import fnmatch
+import re
 
 # current z3 version z3-4.3.3.f50a8b0a59ff-x64-debian-7.7.zip
 
-svnRevNumber = '13732'
+svnRevNumber = '14551'
 ultimateBin = './Ultimate'
 writeUltimateOutputToFile = True
 outputFileName = 'Ultimate.log'
@@ -134,6 +135,7 @@ readingErrorPath = False
 #poll the output
 ultimateOutput = ''
 errorPath = ''
+coverageRegexp = re.compile(".*Covered (\d+) Total (\d+) Coverage (\d*\.\d*).*")
 while True:
     line = ultimateProcess.stdout.readline().decode('utf-8')
     if readingErrorPath:
@@ -167,6 +169,10 @@ while True:
             readingErrorPath = True
         if (readingErrorPath and line.strip() == ''):
             readingErrorPath = False
+	coverage = coverageRegexp.match(line);
+	if(coverage):
+		coverageResult = coverage;
+		print(coverageResult.group())
 
     if (not readingErrorPath and line == ''):
         print('Wrong executable or arguments?')
@@ -192,3 +198,6 @@ else:
     result = safetyResult
 print('Result:') 
 print(result)
+
+if(coverageResult):
+	print('LineCoverage:{}'.format(coverageResult.group(3)))
