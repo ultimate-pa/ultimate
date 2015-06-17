@@ -17,6 +17,7 @@ public class AbstractInterpretation implements IAnalysis {
 
 	protected Logger mLogger;
 	private IUltimateServiceProvider mServices;
+	private IObserver mObserver;
 
 	public AbstractInterpretation() {
 	}
@@ -33,7 +34,7 @@ public class AbstractInterpretation implements IAnalysis {
 
 	@Override
 	public QueryKeyword getQueryKeyword() {
-		return QueryKeyword.ALL;
+		return QueryKeyword.LAST;
 	}
 
 	@Override
@@ -43,16 +44,28 @@ public class AbstractInterpretation implements IAnalysis {
 
 	@Override
 	public void setInputDefinition(GraphType graphType) {
-		//not used
+		final String creator = graphType.getCreator();
+		switch(creator){
+		case "de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder":
+			mObserver = new AbstractInterpretationRcfgObserver(mServices);
+			break;
+		default:
+			mObserver = null;
+			break;
+		}
 	}
 
 	@Override
 	public List<IObserver> getObservers() {
-		return Collections.singletonList((IObserver) new AbstractInterpretationObserver(mServices));
+		if(mObserver == null){
+			return Collections.emptyList();
+		}
+		return Collections.singletonList(mObserver);
 	}
 
 	@Override
 	public void init() {
+		// not used
 	}
 
 	@Override
@@ -72,8 +85,7 @@ public class AbstractInterpretation implements IAnalysis {
 
 	@Override
 	public void setToolchainStorage(IToolchainStorage services) {
-		// TODO Auto-generated method stub
-
+		// not used
 	}
 
 	@Override

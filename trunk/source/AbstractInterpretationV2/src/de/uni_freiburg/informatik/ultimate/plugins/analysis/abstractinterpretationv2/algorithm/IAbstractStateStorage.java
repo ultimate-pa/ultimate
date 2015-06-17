@@ -19,5 +19,7 @@ public interface IAbstractStateStorage<ACTION, VARDECL> {
 	void addAbstractPostState(ACTION transition, IAbstractState<ACTION, VARDECL> state);
 
 	void setPostStateIsFixpoint(ACTION transition, IAbstractState<ACTION, VARDECL> state, boolean value);
+	
+	IAbstractState<ACTION, VARDECL> mergePostStates(ACTION transition);
 
 }

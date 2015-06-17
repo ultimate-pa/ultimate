@@ -14,4 +14,8 @@ public interface ITransitionProvider<T> {
 	
 	boolean isPostErrorLocation(T elem);
 	
+	String toLogString(T elem); 
+	
+	Collection<T> getSiblings(T elem);
+	
 }

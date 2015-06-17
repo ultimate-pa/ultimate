@@ -25,6 +25,8 @@ public interface IAbstractState<ACTION, VARDECL> {
 	boolean isFixpoint();
 	
 	void setFixpoint(boolean value);
+	
+	String toLogString();
 
 	public enum ComparisonResult {
 		SUPER, SUB, EQUAL, NOTEQUAL
