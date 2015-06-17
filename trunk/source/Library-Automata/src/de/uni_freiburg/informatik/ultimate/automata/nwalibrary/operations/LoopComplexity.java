@@ -25,6 +25,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations;
 
+import java.awt.List;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -40,6 +41,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.AcceptingComponentsAnalysis.StronglyConnectedComponentWithAcceptanceInformation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.NestedWordAutomatonReachableStates;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.IncomingInternalTransition;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
@@ -91,14 +94,61 @@ public class LoopComplexity<LETTER, STATE> implements IOperation<LETTER, STATE> 
 		Set<STATE> initialStates = states;
      	Collection<StronglyConnectedComponentWithAcceptanceInformation<LETTER, STATE>> balls = m_Operand.computeBalls(allStates, initialStates);
 		
+        Collection<StronglyConnectedComponentWithAcceptanceInformation<LETTER, STATE>> ballsTwo = new ArrayList<StronglyConnectedComponentWithAcceptanceInformation<LETTER, STATE>>();
+        Collection<StronglyConnectedComponentWithAcceptanceInformation<LETTER, STATE>> ballsThree = new ArrayList<StronglyConnectedComponentWithAcceptanceInformation<LETTER, STATE>>();
+
+		Collection<Integer> ballLoopComplexities = new ArrayList<Integer>();
+
      	for (StronglyConnectedComponentWithAcceptanceInformation<LETTER, STATE> scc : balls) {
 			scc.getNodes();
+			
+			states = scc.getAllStates();
+            boolean onePredOneSucc = true;
+			
+			for (STATE q : states) {
+				Iterable<IncomingInternalTransition<LETTER, STATE>> preds = m_Operand.internalPredecessors(q);
+				Iterable<OutgoingInternalTransition<LETTER, STATE>> succs = m_Operand.internalSuccessors(q);
+				
+				int pCount = 0;
+				int sCount = 0;
+				
+				for (IncomingInternalTransition<LETTER, STATE> p : preds) {
+					++pCount;
+					
+					if (pCount > 1) {
+						break;
+					}
+				}
+				
+				for (OutgoingInternalTransition<LETTER, STATE> s : succs) {
+					++sCount;
+					
+					if (sCount > 1) {
+						break;
+					}
+				}
+				
+				if (pCount != 1 || sCount != 1) {
+					onePredOneSucc = false;
+					break;
+				}				
+			}
+			
+			if (onePredOneSucc) {
+				ballsTwo.add(scc);
+			} else {
+				ballsThree.add(scc);
+			}
 		}
+     	
+     	if (!ballsTwo.isEmpty()) {
+     		ballLoopComplexities.add(1);
+     	}
      	
 		// Graph contains no balls.
 		if (balls.isEmpty()) {
 			return 0;
-		} else if (balls.size() == 1) { // Graph itself is a ball.
+		} else if (ballsThree.size() == 1 && ballsTwo.isEmpty()) { // Graph itself is a ball.
 			// Consider all subgraphs differing from original graph by one vertex.
 			
 			Collection<Integer> subGraphLoopComplexities = new ArrayList<Integer>();
@@ -131,22 +181,21 @@ public class LoopComplexity<LETTER, STATE> implements IOperation<LETTER, STATE> 
 			}
 			
 			return 1 + Collections.min(subGraphLoopComplexities);
-		} else { // Graph itself is not a ball.
-			Collection<Integer> ballLoopComplexities = new ArrayList<Integer>();
-			
+		} else { // Graph itself is not a ball.			
 			// Compute Loop Complexity for each ball.
-			for (StronglyConnectedComponentWithAcceptanceInformation<LETTER, STATE> scc : balls) {			
-				if (statesToLC.containsKey(scc.getAllStates())) {
-					ballLoopComplexities.add(statesToLC.get(scc.getAllStates()));
-				} else {
-					Integer i = this.compute(scc.getAllStates());
+			if (!ballsThree.isEmpty()) {
+			  for (StronglyConnectedComponentWithAcceptanceInformation<LETTER, STATE> scc : ballsThree) {			
+				  if (statesToLC.containsKey(scc.getAllStates())) {
+					  ballLoopComplexities.add(statesToLC.get(scc.getAllStates()));
+				  } else {
+					  Integer i = this.compute(scc.getAllStates());
 					
-					Set<STATE> keyStates = new HashSet<STATE>(scc.getAllStates());
-					statesToLC.put(keyStates, i);
+					  Set<STATE> keyStates = new HashSet<STATE>(scc.getAllStates());
+					  statesToLC.put(keyStates, i);
 					
-					ballLoopComplexities.add(i);
-				}
-				
+					  ballLoopComplexities.add(i);
+				  }
+			  }
 			}
 			
 			return Collections.max(ballLoopComplexities);

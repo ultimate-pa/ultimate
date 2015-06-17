@@ -25,3 +25,4 @@ assert(loopComplexity(LC1) == 1);
 assert(loopComplexity(LC2) == 2);
 assert(loopComplexity(LC3) == 3);
 assert(loopComplexity(LCTEST1) == 1);
+assert(loopComplexity(Cycle) == 1);
