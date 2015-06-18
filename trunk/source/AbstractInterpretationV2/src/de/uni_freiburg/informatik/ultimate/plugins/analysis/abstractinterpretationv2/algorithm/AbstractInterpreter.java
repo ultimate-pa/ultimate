@@ -32,6 +32,7 @@ public class AbstractInterpreter<ACTION, VARDECL> {
 	// = new UltimatePreferenceStore(Activator.PLUGIN_ID);
 	private static final int MAX_UNWINDINGS = 10;
 	private static final int MAX_STATES = 2;
+	private static final String INDENT = "   ";
 
 	private final ITransitionProvider<ACTION> mTransitionProvider;
 	private final Logger mLogger;
@@ -84,9 +85,8 @@ public class AbstractInterpreter<ACTION, VARDECL> {
 
 			if (mLogger.isDebugEnabled()) {
 				final String preStateString = preState == null ? "NULL" : preState.toLogString();
-				final StringBuilder logMessage = new StringBuilder().append("Processing element ")
-						.append(mTransitionProvider.toLogString(current)).append(" for pre state ")
-						.append(preStateString);
+				final StringBuilder logMessage = addElement(new StringBuilder(), current).append(
+						" : processing for pre state ").append(preStateString);
 				mLogger.debug(logMessage);
 			}
 
@@ -116,7 +116,18 @@ public class AbstractInterpreter<ACTION, VARDECL> {
 					loopCounterValue++;
 					loopCounters.put(lastPair, loopCounterValue);
 
+					if (mLogger.isDebugEnabled()) {
+						final StringBuilder logMessage = addElement(new StringBuilder().append(INDENT), current)
+								.append(" : Leaving loop");
+						mLogger.debug(logMessage);
+					}
+					
 					if (loopCounterValue > MAX_UNWINDINGS) {
+						if (mLogger.isDebugEnabled()) {
+							final StringBuilder logMessage = addElement(new StringBuilder().append(INDENT), current)
+									.append(" : Widening state at target location");
+							mLogger.debug(logMessage);
+						}
 						newPostState = widening.apply(oldPostState, newPostState);
 					}
 				}
@@ -149,6 +160,11 @@ public class AbstractInterpreter<ACTION, VARDECL> {
 				activeLoops.push(pair);
 				final Integer loopCounterValue = loopCounters.put(pair, 0);
 				assert loopCounterValue == null;
+				if (mLogger.isDebugEnabled()) {
+					final StringBuilder logMessage = addElement(new StringBuilder().append(INDENT), current)
+							.append(" : Entering loop");
+					mLogger.debug(logMessage);
+				}
 			}
 
 			mStateStorage.addAbstractPostState(current, newPostState);
@@ -166,7 +182,19 @@ public class AbstractInterpreter<ACTION, VARDECL> {
 						.getAbstractPostStates(current);
 				final int availablePostStatesCount = availablePostStates.size();
 				final Collection<ACTION> successors = mTransitionProvider.getSuccessors(current);
+
+				if (mLogger.isDebugEnabled()) {
+					final StringBuilder logMessage = addElement(new StringBuilder().append(INDENT), current).append(
+							" : Adding successor transitions");
+					mLogger.debug(logMessage);
+				}
+
 				if (availablePostStatesCount > MAX_STATES) {
+					if (mLogger.isDebugEnabled()) {
+						final StringBuilder logMessage = addElement(new StringBuilder().append(INDENT), current)
+								.append(" : Merging state at target location");
+						mLogger.debug(logMessage);
+					}
 					newPostState = mStateStorage.mergePostStates(current);
 					for (final ACTION successor : successors) {
 						final Pair<IAbstractState<ACTION, VARDECL>, ACTION> succPair = createPair(newPostState,
@@ -182,9 +210,15 @@ public class AbstractInterpreter<ACTION, VARDECL> {
 						}
 					}
 				}
+			} else {
+				if (mLogger.isDebugEnabled()) {
+					final StringBuilder logMessage = addElement(new StringBuilder().append(INDENT), current).append(
+							" : Unprocessed siblings left");
+					mLogger.debug(logMessage);
+				}
 			}
 
-			// TODO: debug log the updates
+			closedSet.add(current);
 		}
 
 		if (!errorReached) {
@@ -205,5 +239,10 @@ public class AbstractInterpreter<ACTION, VARDECL> {
 			mStateStorage.addAbstractPreState(current, preState);
 		}
 		return preState;
+	}
+
+	private StringBuilder addElement(StringBuilder builder, final ACTION current) {
+		return builder.append("[").append(current.hashCode()).append("] ")
+				.append(mTransitionProvider.toLogString(current));
 	}
 }
