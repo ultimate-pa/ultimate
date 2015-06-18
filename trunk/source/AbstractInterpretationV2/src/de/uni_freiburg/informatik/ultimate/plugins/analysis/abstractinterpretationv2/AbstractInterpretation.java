@@ -15,6 +15,12 @@ import de.uni_freiburg.informatik.ultimate.model.GraphType;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.preferences.AbstractInterpretationPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.loopdetector.RCFGLoopDetector;
 
+/**
+ * 
+ * @author dietsch@informatik.uni-freiburg.de
+ * @author greitsch@informatik.uni-freiburg.de
+ *
+ */
 public class AbstractInterpretation implements IAnalysis {
 
 	protected Logger mLogger;
