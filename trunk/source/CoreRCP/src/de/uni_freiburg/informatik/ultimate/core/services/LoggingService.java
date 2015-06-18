@@ -380,9 +380,9 @@ public final class LoggingService implements IStorable, ILoggingService {
 		@Override
 		public void preferenceChange(PreferenceChangeEvent event) {
 			// do things if it concerns the loggers
-			String ek = event.getKey();
-			Object newValue = event.getNewValue();
-			Object oldValue = event.getOldValue();
+			final String ek = event.getKey();
+			final Object newValue = event.getNewValue();
+			final Object oldValue = event.getOldValue();
 
 			if (newValue == null && oldValue == null) {
 				return;

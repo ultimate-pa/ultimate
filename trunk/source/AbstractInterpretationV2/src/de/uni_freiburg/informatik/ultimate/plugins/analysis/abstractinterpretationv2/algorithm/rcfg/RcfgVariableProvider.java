@@ -42,12 +42,7 @@ public class RcfgVariableProvider implements IVariableProvider<CodeBlock, Boogie
 		if (source instanceof ProgramPoint) {
 			final ProgramPoint programPoint = (ProgramPoint) source;
 			final String procedure = programPoint.getProcedure();
-			if (procedure != null) {
-				final Map<String, Declaration> locals = mSymbolTable.getLocalVariables(procedure);
-				for (final Entry<String, Declaration> local : locals.entrySet()) {
-					newState = newState.addVariable(local.getKey(), getLocalVariable(local.getKey(), procedure));
-				}
-			}
+			newState = addLocals(newState, procedure);
 		}
 
 		// add global variables
@@ -69,15 +64,45 @@ public class RcfgVariableProvider implements IVariableProvider<CodeBlock, Boogie
 		// so, only call or return can do this
 
 		if (current instanceof Call) {
-			Call call = (Call) current;
-
+			return updateLocals(state, current.getSource(), current.getTarget());
 		} else if (current instanceof Return) {
-
+			return updateLocals(state, current.getTarget(), current.getSource());
 		} else {
 			// nothing changes
 			return state;
 		}
-		throw new UnsupportedOperationException("Implementation unfinished");
+	}
+
+	private IAbstractState<CodeBlock, BoogieVar> updateLocals(IAbstractState<CodeBlock, BoogieVar> state,
+			RCFGNode removeNode, RCFGNode addNode) {
+		final ProgramPoint remove = (ProgramPoint) removeNode;
+		final ProgramPoint add = (ProgramPoint) addNode;
+		IAbstractState<CodeBlock, BoogieVar> rtr = state;
+		rtr = removeLocals(rtr, remove.getProcedure());
+		rtr = addLocals(rtr, add.getProcedure());
+		return rtr;
+	}
+
+	private IAbstractState<CodeBlock, BoogieVar> removeLocals(IAbstractState<CodeBlock, BoogieVar> state,
+			final String procedure) {
+		if (procedure != null) {
+			final Map<String, Declaration> locals = mSymbolTable.getLocalVariables(procedure);
+			for (final Entry<String, Declaration> local : locals.entrySet()) {
+				state = state.removeVariable(local.getKey(), getLocalVariable(local.getKey(), procedure));
+			}
+		}
+		return state;
+	}
+
+	private IAbstractState<CodeBlock, BoogieVar> addLocals(IAbstractState<CodeBlock, BoogieVar> newState,
+			final String procedure) {
+		if (procedure != null) {
+			final Map<String, Declaration> locals = mSymbolTable.getLocalVariables(procedure);
+			for (final Entry<String, Declaration> local : locals.entrySet()) {
+				newState = newState.addVariable(local.getKey(), getLocalVariable(local.getKey(), procedure));
+			}
+		}
+		return newState;
 	}
 
 	private BoogieVar getLocalVariable(String key, String procedure) {

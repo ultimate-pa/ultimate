@@ -55,14 +55,16 @@ public class RcfgTransitionProvider implements ITransitionProvider<CodeBlock> {
 		}
 		return rtr;
 	}
-	
+
 	private List<CodeBlock> convertToCodeBlock(final List<RCFGEdge> successors) {
 		if (successors == null) {
 			return Collections.emptyList();
 		}
 		final List<CodeBlock> rtr = new ArrayList<>(successors.size());
 		for (final RCFGEdge successor : successors) {
-			rtr.add((CodeBlock) successor);
+			if (successor instanceof CodeBlock) {
+				rtr.add((CodeBlock) successor);
+			}
 		}
 		return rtr;
 	}

@@ -5,7 +5,10 @@ import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.UnknownFormatConversionException;
 
 import org.eclipse.core.runtime.CoreException;
@@ -24,8 +27,7 @@ public class UltimatePreferenceStore {
 
 	private final String mPluginID;
 
-	private static HashMap<String, HashSet<IPreferenceChangeListener>> sActiveListener 
-		= new HashMap<String, HashSet<IPreferenceChangeListener>>();
+	private static Map<String, Set<IPreferenceChangeListener>> sActiveListener = new HashMap<String, Set<IPreferenceChangeListener>>();
 
 	public UltimatePreferenceStore(String pluginID) {
 		mPluginID = pluginID;
@@ -75,7 +77,7 @@ public class UltimatePreferenceStore {
 	 * @throws UnknownFormatConversionException
 	 */
 	public <T extends Enum<T>> T getEnum(String key, Class<T> enumType) throws UnknownFormatConversionException {
-		String strValue = getString(key);
+		final String strValue = getString(key);
 		if (strValue.isEmpty()) {
 			throw new UnknownFormatConversionException("String " + strValue + " cannot be converted to type "
 					+ enumType);
@@ -95,7 +97,7 @@ public class UltimatePreferenceStore {
 	 * @return
 	 */
 	public <T extends Enum<T>> T getEnum(String key, T defaultValue, Class<T> enumType) {
-		String strValue = getString(key);
+		final String strValue = getString(key);
 		if (strValue.isEmpty()) {
 			return defaultValue;
 		} else {
@@ -202,13 +204,12 @@ public class UltimatePreferenceStore {
 	private static void addPreferenceChangeListener(String id, IPreferenceChangeListener iPreferenceChangeListener) {
 		InstanceScope.INSTANCE.getNode(id).addPreferenceChangeListener(iPreferenceChangeListener);
 
-		if (sActiveListener.containsKey(id)) {
-			sActiveListener.get(id).add(iPreferenceChangeListener);
-		} else {
-			HashSet<IPreferenceChangeListener> list = new HashSet<IPreferenceChangeListener>();
-			list.add(iPreferenceChangeListener);
-			sActiveListener.put(id, list);
+		Set<IPreferenceChangeListener> set = sActiveListener.get(id);
+		if (set == null) {
+			set = new HashSet<>();
+			sActiveListener.put(id, set);
 		}
+		set.add(iPreferenceChangeListener);
 	}
 
 	public void removePreferenceChangeListener(IPreferenceChangeListener iPreferenceChangeListener) {
@@ -235,10 +236,9 @@ public class UltimatePreferenceStore {
 	}
 
 	public static IStatus importPreferences(InputStream inputStream) throws CoreException {
-
-		IStatus status = Platform.getPreferencesService().importPreferences(inputStream);
+		final IStatus status = Platform.getPreferencesService().importPreferences(inputStream);
 		if (status.isOK()) {
-			for (Entry<String, HashSet<IPreferenceChangeListener>> entry : sActiveListener.entrySet()) {
+			for (Entry<String, Set<IPreferenceChangeListener>> entry : sActiveListener.entrySet()) {
 				for (IPreferenceChangeListener listener : entry.getValue()) {
 					InstanceScope.INSTANCE.getNode(entry.getKey()).removePreferenceChangeListener(listener);
 					addPreferenceChangeListener(entry.getKey(), listener);
@@ -250,10 +250,10 @@ public class UltimatePreferenceStore {
 	}
 
 	public String getDefaultPreferencesString() {
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		try {
-			String br = CoreUtil.getPlatformLineSeparator();
-			for (String key : getDefault().keys()) {
+			final String br = CoreUtil.getPlatformLineSeparator();
+			for (final String key : getDefault().keys()) {
 				sb.append(key).append("=").append(getDefault().get(key, "NO DEFAULT SET")).append(br);
 			}
 		} catch (BackingStoreException e) {
@@ -264,10 +264,10 @@ public class UltimatePreferenceStore {
 	}
 
 	public String getCurrentPreferencesString() {
-		StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder();
 		try {
-			String br = CoreUtil.getPlatformLineSeparator();
-			for (String key : getDefault().keys()) {
+			final String br = CoreUtil.getPlatformLineSeparator();
+			for (final String key : getDefault().keys()) {
 				sb.append(key).append("=").append(getString(key, "NO DEFAULT SET")).append(br);
 			}
 		} catch (BackingStoreException e) {
@@ -283,14 +283,14 @@ public class UltimatePreferenceStore {
 	 * 
 	 */
 	public String[] getDeltaPreferencesStrings() {
-		ArrayList<String> rtr = new ArrayList<>();
-		String fallback = "NO DEFAULT SET";
+		final List<String> rtr = new ArrayList<>();
+		final String fallback = "NO DEFAULT SET";
 		try {
-			IEclipsePreferences defaults = getDefault();
-			IEclipsePreferences instance = getInstance();
-			for (String defaultKey : defaults.keys()) {
-				String defaultValue = defaults.get(defaultKey, fallback);
-				String currentValue = instance.get(defaultKey, defaultValue);
+			final IEclipsePreferences defaults = getDefault();
+			final IEclipsePreferences instance = getInstance();
+			for (final String defaultKey : defaults.keys()) {
+				final String defaultValue = defaults.get(defaultKey, fallback);
+				final String currentValue = instance.get(defaultKey, defaultValue);
 				if (!currentValue.equals(defaultValue)) {
 					rtr.add(defaultKey + "=" + currentValue);
 				}

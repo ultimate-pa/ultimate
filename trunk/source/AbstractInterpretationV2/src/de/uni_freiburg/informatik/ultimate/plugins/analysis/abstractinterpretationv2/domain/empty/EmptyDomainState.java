@@ -130,6 +130,11 @@ public final class EmptyDomainState<ACTION, VARDECL> implements IAbstractState<A
 		}
 		return ComparisonResult.EQUAL;
 	}
+	
+	@Override
+	public String toString() {
+		return toLogString();
+	}
 
 	/**
 	 * This method compares if this state contains the same variable
