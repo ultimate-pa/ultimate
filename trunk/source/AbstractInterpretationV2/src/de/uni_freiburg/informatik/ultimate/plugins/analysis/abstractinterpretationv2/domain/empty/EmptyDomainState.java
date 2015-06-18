@@ -48,7 +48,8 @@ public final class EmptyDomainState<ACTION, VARDECL> implements IAbstractState<A
 		assert variable != null;
 
 		final Map<String, VARDECL> newMap = new HashMap<>(mVarDecls);
-		newMap.remove(name);
+		final VARDECL oldVar = newMap.remove(name);
+		assert variable.equals(oldVar);
 		return new EmptyDomainState<ACTION, VARDECL>(newMap);
 	}
 
