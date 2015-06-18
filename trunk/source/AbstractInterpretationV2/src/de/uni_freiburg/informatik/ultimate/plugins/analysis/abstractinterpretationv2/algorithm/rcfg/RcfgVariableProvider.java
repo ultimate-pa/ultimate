@@ -94,15 +94,15 @@ public class RcfgVariableProvider implements IVariableProvider<CodeBlock, Boogie
 		return state;
 	}
 
-	private IAbstractState<CodeBlock, BoogieVar> addLocals(IAbstractState<CodeBlock, BoogieVar> newState,
+	private IAbstractState<CodeBlock, BoogieVar> addLocals(IAbstractState<CodeBlock, BoogieVar> state,
 			final String procedure) {
 		if (procedure != null) {
 			final Map<String, Declaration> locals = mSymbolTable.getLocalVariables(procedure);
 			for (final Entry<String, Declaration> local : locals.entrySet()) {
-				newState = newState.addVariable(local.getKey(), getLocalVariable(local.getKey(), procedure));
+				state = state.addVariable(local.getKey(), getLocalVariable(local.getKey(), procedure));
 			}
 		}
-		return newState;
+		return state;
 	}
 
 	private BoogieVar getLocalVariable(String key, String procedure) {

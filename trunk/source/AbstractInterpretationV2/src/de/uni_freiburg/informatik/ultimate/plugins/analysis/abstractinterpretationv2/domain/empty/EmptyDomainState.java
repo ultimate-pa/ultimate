@@ -130,10 +130,15 @@ public final class EmptyDomainState<ACTION, VARDECL> implements IAbstractState<A
 		}
 		return ComparisonResult.EQUAL;
 	}
-	
+
 	@Override
 	public String toString() {
 		return toLogString();
+	}
+
+	@Override
+	public IAbstractState<ACTION, VARDECL> copy() {
+		return new EmptyDomainState<>(new HashMap<String, VARDECL>(mVarDecls));
 	}
 
 	/**
@@ -151,4 +156,5 @@ public final class EmptyDomainState<ACTION, VARDECL> implements IAbstractState<A
 	protected Map<String, VARDECL> getVariables() {
 		return new HashMap<>(mVarDecls);
 	}
+
 }

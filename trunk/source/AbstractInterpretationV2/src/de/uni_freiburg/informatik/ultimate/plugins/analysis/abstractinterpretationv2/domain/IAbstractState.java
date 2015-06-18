@@ -37,6 +37,8 @@ public interface IAbstractState<ACTION, VARDECL> {
 
 	ComparisonResult compareTo(IAbstractState<ACTION, VARDECL> other);
 	
+	IAbstractState<ACTION, VARDECL> copy();
+	
 	public enum ComparisonResult {
 		SUPER, SUB, EQUAL, NOTEQUAL
 	}

@@ -10,6 +10,8 @@ import java.util.Collection;
  */
 public interface ITransitionProvider<T> {
 
+	Collection<T> filterInitialElements(Collection<T> elems);
+	
 	Collection<T> getSuccessors(T elem);
 	
 	boolean isPostErrorLocation(T elem);
