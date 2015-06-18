@@ -21,7 +21,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
 public class TwoTrackInterpolantAutomatonBuilder {
 	private final IUltimateServiceProvider m_Services;
 	
-	private final TraceCheckerSpWp m_TraceCheckerSpWp;
+	private final TraceCheckerSpWp m_TraceChecker;
 	
 	private final NestedWord<CodeBlock> m_NestedWord;
 //	private ArrayList<IPredicate> m_StateSequence;
@@ -43,7 +43,7 @@ public class TwoTrackInterpolantAutomatonBuilder {
 			TraceCheckerSpWp traceChecker,
 			IAutomaton<CodeBlock, IPredicate> abstraction) {
 		m_Services = services;
-		m_TraceCheckerSpWp = traceChecker;
+		m_TraceChecker = traceChecker;
 		m_NestedWord = NestedWord.nestedWord(nestedRun.getWord());
 		m_SmtManager = smtManager;
 		m_TTIA = buildTwoTrackInterpolantAutomaton(abstraction, abstraction.getStateFactory());
@@ -61,17 +61,15 @@ public class TwoTrackInterpolantAutomatonBuilder {
 			callAlphabet = abstractionAsNwa.getCallAlphabet();
 			returnAlphabet = abstractionAsNwa.getReturnAlphabet();
 		}
-		
+
 		NestedWordAutomaton<CodeBlock, IPredicate> nwa = new NestedWordAutomaton<CodeBlock, IPredicate>(
 				m_Services, internalAlphabet, callAlphabet, returnAlphabet, tAContentFactory);
-		
 		// 1. Ensure that forward predicates has been computed.
-		assert m_TraceCheckerSpWp.forwardsPredicatesComputed() : "Forward predicates has not been computed!" ;
+		assert ((TraceCheckerSpWp) m_TraceChecker).forwardsPredicatesComputed() : "Forward predicates has not been computed!" ;
 		// 2. Ensure that backward predicates has been computed.
-		assert m_TraceCheckerSpWp.backwardsPredicatesComputed() : "Backward predicates has not been computed" ;
-		
-		nwa.addState(true, false, m_TraceCheckerSpWp.getPrecondition());
-		nwa.addState(false, true, m_TraceCheckerSpWp.getPostcondition());
+		assert ((TraceCheckerSpWp) m_TraceChecker).backwardsPredicatesComputed() : "Backward predicates has not been computed" ;
+		nwa.addState(true, false, m_TraceChecker.getPrecondition());
+		nwa.addState(false, true, m_TraceChecker.getPostcondition());
 		
 		// Add states, which contains the predicates computed via SP, WP.
 		addStatesAccordingToPredicates(nwa);
@@ -80,8 +78,6 @@ public class TwoTrackInterpolantAutomatonBuilder {
 		if (m_TotalTransitions) {
 			addTotalTransitionsNaively(nwa);
 		}
-		
-			
 		return nwa;
 	}
 	
@@ -91,15 +87,17 @@ public class TwoTrackInterpolantAutomatonBuilder {
 	 */
 	private void addStatesAccordingToPredicates(NestedWordAutomaton<CodeBlock, IPredicate> nwa) {
 		for (int i=0; i < m_NestedWord.length() - 1; i++) {
+			IPredicate pred = m_TraceChecker.getForwardPredicateAtPosition(i);
 			// 1. Add a state which contains the predicate computed via SP
-			boolean isFinal = isFalsePredicate(m_TraceCheckerSpWp.getForwardPredicateAtPosition(i));
-			if (!nwa.getStates().contains(m_TraceCheckerSpWp.getForwardPredicateAtPosition(i))) {
-				nwa.addState(false, isFinal, m_TraceCheckerSpWp.getForwardPredicateAtPosition(i));
+			boolean isFinal = isFalsePredicate(pred);
+			if (!nwa.getStates().contains(pred)) {
+				nwa.addState(false, isFinal, pred);
 			}
+			pred = m_TraceChecker.getBackwardPredicateAtPosition(i);
 			// 2. Add a state which contains the predicate computed via WP
-			isFinal = isFalsePredicate(m_TraceCheckerSpWp.getBackwardPredicateAtPosition(i));
-			if (!nwa.getStates().contains(m_TraceCheckerSpWp.getBackwardPredicateAtPosition(i))) {
-				nwa.addState(false, isFinal, m_TraceCheckerSpWp.getBackwardPredicateAtPosition(i));
+			isFinal = isFalsePredicate(pred);
+			if (!nwa.getStates().contains(pred)) {
+				nwa.addState(false, isFinal, pred);
 			}
 		}
 	}
@@ -116,23 +114,23 @@ public class TwoTrackInterpolantAutomatonBuilder {
 	 */
 	private void addBasicTransitions(NestedWordAutomaton<CodeBlock, IPredicate> nwa) {
 		// 1. For each predicate type add a transition from the precondition to the first predicate.
-		addTransition(nwa, m_TraceCheckerSpWp.getPrecondition(), 0,
-				m_TraceCheckerSpWp.getForwardPredicateAtPosition(0), true);
+		addTransition(nwa, m_TraceChecker.getPrecondition(), 0,
+				m_TraceChecker.getForwardPredicateAtPosition(0), true);
 
-		addTransition(nwa, m_TraceCheckerSpWp.getPrecondition(), 0,
-				m_TraceCheckerSpWp.getBackwardPredicateAtPosition(0), false);
+		addTransition(nwa, m_TraceChecker.getPrecondition(), 0,
+				m_TraceChecker.getBackwardPredicateAtPosition(0), false);
 		// 2. For each predicate type add a transition from the previous predicate to the current predicate.
 		for (int i = 1; i < m_NestedWord.length() - 1; i++) {
-			addTransition(nwa, m_TraceCheckerSpWp.getForwardPredicateAtPosition(i-1), i,
-					m_TraceCheckerSpWp.getForwardPredicateAtPosition(i), true);
-			addTransition(nwa, m_TraceCheckerSpWp.getBackwardPredicateAtPosition(i-1), i,
-					m_TraceCheckerSpWp.getBackwardPredicateAtPosition(i), false);
+			addTransition(nwa, m_TraceChecker.getForwardPredicateAtPosition(i-1), i,
+					m_TraceChecker.getForwardPredicateAtPosition(i), true);
+			addTransition(nwa, m_TraceChecker.getBackwardPredicateAtPosition(i-1), i,
+					m_TraceChecker.getBackwardPredicateAtPosition(i), false);
 		}
 		// 3. For each predicate type add a transition from the last predicate to the post-condition.
-		addTransition(nwa, m_TraceCheckerSpWp.getForwardPredicateAtPosition(m_NestedWord.length()-2), m_NestedWord.length()-1,
-				m_TraceCheckerSpWp.getPostcondition(), true);
-		addTransition(nwa, m_TraceCheckerSpWp.getBackwardPredicateAtPosition(m_NestedWord.length()-2), m_NestedWord.length()-1,
-				m_TraceCheckerSpWp.getPostcondition(), false);
+		addTransition(nwa, m_TraceChecker.getForwardPredicateAtPosition(m_NestedWord.length()-2), m_NestedWord.length()-1,
+				m_TraceChecker.getPostcondition(), true);
+		addTransition(nwa, m_TraceChecker.getBackwardPredicateAtPosition(m_NestedWord.length()-2), m_NestedWord.length()-1,
+				m_TraceChecker.getPostcondition(), false);
 		
 		
 	}
@@ -149,18 +147,18 @@ public class TwoTrackInterpolantAutomatonBuilder {
 	 */
 	private void addTotalTransitionsNaively(NestedWordAutomaton<CodeBlock, IPredicate> nwa) {
 		for (int i = 0; i < m_NestedWord.length(); i++) {
-			IPredicate fp_i = m_TraceCheckerSpWp.getForwardPredicateAtPosition(i);
+			IPredicate fp_i = m_TraceChecker.getForwardPredicateAtPosition(i);
 			for (int j = 0; j < m_NestedWord.length(); j++) {
-				IPredicate bp_j = m_TraceCheckerSpWp.getBackwardPredicateAtPosition(j);
+				IPredicate bp_j = m_TraceChecker.getBackwardPredicateAtPosition(j);
 				if (m_NestedWord.isReturnPosition(j)) {
 					int callPos = m_NestedWord.getCallPosition(j);
 					
 					if (transitionFromOneStateToTheOppositeStateAllowed(fp_i, j, bp_j, 
-							m_TraceCheckerSpWp.getForwardPredicateAtPosition(callPos-1))) {
+							m_TraceChecker.getForwardPredicateAtPosition(callPos-1))) {
 						addTransition(nwa, fp_i, j, bp_j, true);
 					}
 					if (transitionFromOneStateToTheOppositeStateAllowed(bp_j, j, fp_i,
-							m_TraceCheckerSpWp.getBackwardPredicateAtPosition(callPos-1))) {
+							m_TraceChecker.getBackwardPredicateAtPosition(callPos-1))) {
 						addTransition(nwa, bp_j, j, fp_i, false);
 					}
 				} else {
@@ -202,7 +200,7 @@ public class TwoTrackInterpolantAutomatonBuilder {
 	 * @return
 	 */
 	private boolean isFalsePredicate(IPredicate p) {
-		if (p == m_TraceCheckerSpWp.getPostcondition()) {
+		if (p == m_TraceChecker.getPostcondition()) {
 			return true;
 		} else {
 			assert m_SmtManager.isDontCare(p) || p.getFormula() != m_SmtManager.getScript().term("false");
@@ -221,9 +219,9 @@ public class TwoTrackInterpolantAutomatonBuilder {
 			int callPos= m_NestedWord.getCallPosition(symbolPos);
 			IPredicate hier = null;
 			if (forwardsPredicate) {
-				hier = m_TraceCheckerSpWp.getForwardPredicateAtPosition(callPos-1);
+				hier = m_TraceChecker.getForwardPredicateAtPosition(callPos-1);
 			} else {
-				hier = m_TraceCheckerSpWp.getBackwardPredicateAtPosition(callPos-1);
+				hier = m_TraceChecker.getBackwardPredicateAtPosition(callPos-1);
 			}
 			nwa.addReturnTransition(pred, hier, symbol, succ);
 		}

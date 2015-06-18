@@ -81,7 +81,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceCheckerSpWp;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceCheckerUtils;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceCheckerWithInterpolantConsolidation;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.InterpolantConsolidation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.witnesschecking.WitnessProductAutomaton;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessEdge;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNode;
@@ -288,9 +288,14 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		// m_TraceCheckerBenchmark.aggregateBenchmarkData(interpolatingTraceChecker.getTraceCheckerBenchmark());
 		m_InterpolantGenerator = interpolatingTraceChecker;
 		if (m_UseInterpolantConsolidation) {
-			m_InterpolantGenerator = new TraceCheckerWithInterpolantConsolidation(truePredicate, falsePredicate, new TreeMap<Integer, IPredicate>(),
-					NestedWord.nestedWord(m_Counterexample.getWord()), m_SmtManager, m_RootNode.getRootAnnot()
-					.getModGlobVarManager(), m_Services, mLogger, predicateUnifier, interpolatingTraceChecker, m_Pref);
+			try {
+				m_InterpolantGenerator = new InterpolantConsolidation(truePredicate, falsePredicate, new TreeMap<Integer, IPredicate>(),
+						NestedWord.nestedWord(m_Counterexample.getWord()), m_SmtManager, m_RootNode.getRootAnnot()
+						.getModGlobVarManager(), m_Services, mLogger, predicateUnifier, interpolatingTraceChecker, m_Pref);
+			} catch (AutomataLibraryException e) {
+				// Timeout has been reached!
+				e.printStackTrace();
+			}
 		}
 		return feasibility;
 	}

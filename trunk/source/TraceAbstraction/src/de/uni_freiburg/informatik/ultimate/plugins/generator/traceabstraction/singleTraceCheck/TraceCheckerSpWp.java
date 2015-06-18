@@ -135,27 +135,33 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 	}
 
 	public IPredicate getForwardPredicateAtPosition(int i) {
-		assert i >= -1 && i <= m_InterpolantsFp.length : ("The given position " + i
-				+ " is not a correct position. #Interpolants = " + m_InterpolantsFp.length);
+		return getPredicateOfType_jAtPos_i(1, i);
+	}
+	
+	public IPredicate getPredicateOfType_jAtPos_i(int j, int i) {
+		IPredicate[] requestedPredicates = null;
+		if (j == 1) {
+			assert m_InterpolantsFp != null : "The requested predicates (ForwardPredicates) "
+		        + "has not been computed!" ;
+			requestedPredicates = m_InterpolantsFp;
+		} else if (j == 2) {
+			assert m_InterpolantsBp != null : "The requested predicates (BackwardPredicates) "
+			        + "has not been computed!" ;
+				requestedPredicates = m_InterpolantsBp;
+		}
+		
+		assert i >= -1 && i <= requestedPredicates.length : ("The given position " + i
+				+ " is not a correct position. #Interpolants = " + requestedPredicates.length);
 		if (i == -1) {
 			return super.getPrecondition();
-		} else if (i == m_InterpolantsFp.length) {
+		} else if (i == requestedPredicates.length) {
 			return super.getPostcondition();
 		} else {
-			return m_InterpolantsFp[i];
+			return requestedPredicates[i];
 		}
 	}
-
 	public IPredicate getBackwardPredicateAtPosition(int i) {
-		assert i >= -1 && i <= m_InterpolantsBp.length : ("The given position " + i
-				+ " is not a correct position! #Interpolants = " + m_InterpolantsBp.length);
-		if (i == -1) {
-			return super.getPrecondition();
-		} else if (i == m_InterpolantsBp.length) {
-			return super.getPostcondition();
-		} else {
-			return m_InterpolantsBp[i];
-		}
+		return getPredicateOfType_jAtPos_i(2, i);
 	}
 
 	private IPredicate getBackwardPredicateAtPosition(int i, IPredicate tracePostcondition, boolean backwardPredicate) {
