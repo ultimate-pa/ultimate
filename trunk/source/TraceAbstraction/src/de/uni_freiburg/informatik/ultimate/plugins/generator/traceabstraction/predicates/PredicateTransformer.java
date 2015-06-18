@@ -1,9 +1,11 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -19,18 +21,22 @@ import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieNonOldVar;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieOldVar;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
+import de.uni_freiburg.informatik.ultimate.model.boogie.LocalBoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.VariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.PartialQuantifierElimination;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SafeSubstitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.LiveVariables;
+import de.uni_freiburg.informatik.ultimate.util.ConstructionCache;
+import de.uni_freiburg.informatik.ultimate.util.ConstructionCache.IValueConstruction;
 
 /**
- * @author musab@informatik.uni-freiburg.de
+ * @author musab@informatik.uni-freiburg.de, heizmann@informatik.uni-freiburg.de
  * 
  */
 public class PredicateTransformer {
@@ -166,6 +172,140 @@ public class PredicateTransformer {
 				m_ModifiableGlobalVariableManager.getOldVarsAssignment(call.getCallStatement().getMethodName()),
 				isPendingCall);
 	}
+	
+	
+	public IPredicate weakLocalPostconditionCall(IPredicate p, TransFormula globalVarAssignments, final Set<BoogieVar> modifiableGlobals) {
+		final Set<TermVariable> varsToQuantify = new HashSet<>();
+		
+		final Term renamedOldVarsAssignment;
+		{
+			Map<Term, Term> substitutionMapping = new HashMap<Term, Term>();
+			for (BoogieVar bv : globalVarAssignments.getAssignedVars()) {
+				assert (bv instanceof BoogieNonOldVar);
+				substitutionMapping.put(globalVarAssignments.getOutVars().get(bv), bv.getTermVariable());
+			}
+			for (Entry<BoogieVar, TermVariable> entry : globalVarAssignments.getInVars().entrySet()) {
+				assert (entry.getKey() instanceof BoogieOldVar);
+				substitutionMapping.put(entry.getValue(), entry.getKey().getTermVariable());
+			}
+			renamedOldVarsAssignment = new SafeSubstitution(m_Script, m_VariableManager, substitutionMapping).transform(globalVarAssignments.getFormula());
+		}
+
+		final Term renamedPredicate;
+		{
+			Map<Term, Term> substitutionMapping = new HashMap<Term, Term>();
+			TermVariable substituent;
+			for (BoogieVar bv : p.getVars()) {
+				if (bv instanceof BoogieNonOldVar) {
+					if (modifiableGlobals.contains(bv)) {
+						substituent = m_VariableManager.constructFreshTermVariable(bv);
+						varsToQuantify.add(substituent);
+						substitutionMapping.put(bv.getTermVariable(), substituent);
+					} else {
+						// do nothing
+					}
+				} else if (bv instanceof BoogieOldVar) {
+					substituent = m_VariableManager.constructFreshTermVariable(bv);
+					varsToQuantify.add(substituent);
+					substitutionMapping.put(bv.getTermVariable(), substituent);
+				} else if (bv instanceof LocalBoogieVar) {
+					substituent = m_VariableManager.constructFreshTermVariable(bv);
+					varsToQuantify.add(substituent);
+					substitutionMapping.put(bv.getTermVariable(), substituent);
+				} else {
+					throw new AssertionError();
+				}
+			}
+			renamedPredicate = new SafeSubstitution(m_Script, m_VariableManager, substitutionMapping).transform(p.getFormula());
+		}
+		Term sucessorTerm = Util.and(m_Script, renamedPredicate, renamedOldVarsAssignment);
+		return m_SmtManager.constructPredicate(sucessorTerm, Script.EXISTS, varsToQuantify);
+	}
+	
+	
+	public IPredicate strongestPostconditionCall(IPredicate p, TransFormula localVarAssignments,
+			TransFormula globalVarAssignments, TransFormula oldVarAssignments, final Set<BoogieVar> modifiableGlobals) {
+		final Set<TermVariable> varsToQuantify = new HashSet<>();
+		IValueConstruction<BoogieVar, TermVariable> substituentConstruction = new IValueConstruction<BoogieVar, TermVariable>() {
+
+			@Override
+			public TermVariable constructValue(BoogieVar bv) {
+				final TermVariable result;
+				if (bv instanceof BoogieNonOldVar) {
+					if (modifiableGlobals.contains(bv)) {
+						result = m_VariableManager.constructFreshTermVariable(bv);
+						varsToQuantify.add(result);
+					} else {
+						result = bv.getTermVariable();
+					}
+				} else if (bv instanceof BoogieOldVar) {
+					result = m_VariableManager.constructFreshTermVariable(bv);
+					varsToQuantify.add(result);
+				} else if (bv instanceof LocalBoogieVar) {
+					result = m_VariableManager.constructFreshTermVariable(bv);
+					varsToQuantify.add(result);
+				} else {
+					throw new AssertionError();
+				}
+				return result;
+			}
+			
+		};
+		ConstructionCache<BoogieVar, TermVariable> m_TermVariablesForPredecessor = new ConstructionCache<>(substituentConstruction);
+		
+		final Term renamedGlobalVarAssignment;
+		{
+			Map<Term, Term> substitutionMapping = new HashMap<Term, Term>();
+			for (BoogieVar bv : globalVarAssignments.getAssignedVars()) {
+				assert (bv instanceof BoogieNonOldVar);
+				substitutionMapping.put(globalVarAssignments.getOutVars().get(bv), bv.getTermVariable());
+			}
+			for (Entry<BoogieVar, TermVariable> entry : globalVarAssignments.getInVars().entrySet()) {
+				assert (entry.getKey() instanceof BoogieOldVar);
+				substitutionMapping.put(entry.getValue(), entry.getKey().getTermVariable());
+			}
+			renamedGlobalVarAssignment = new SafeSubstitution(m_Script, m_VariableManager, substitutionMapping).transform(globalVarAssignments.getFormula());
+		}
+		
+		final Term renamedOldVarsAssignment;
+		{
+			Map<Term, Term> substitutionMapping = new HashMap<Term, Term>();
+			for (BoogieVar bv : oldVarAssignments.getAssignedVars()) {
+				assert (bv instanceof BoogieOldVar);
+				substitutionMapping.put(oldVarAssignments.getOutVars().get(bv), bv.getTermVariable());
+			}
+			for (Entry<BoogieVar, TermVariable> entry : oldVarAssignments.getInVars().entrySet()) {
+				assert (entry.getKey() instanceof BoogieNonOldVar);
+				substitutionMapping.put(entry.getValue(), m_TermVariablesForPredecessor.getOrConstuct(entry.getKey()));
+			}
+			renamedOldVarsAssignment = new SafeSubstitution(m_Script, m_VariableManager, substitutionMapping).transform(oldVarAssignments.getFormula());
+		}
+		
+		final Term renamedLocalVarsAssignment;
+		{
+			Map<Term, Term> substitutionMapping = new HashMap<Term, Term>();
+			for (BoogieVar bv : localVarAssignments.getAssignedVars()) {
+				assert (bv instanceof LocalBoogieVar);
+				substitutionMapping.put(localVarAssignments.getOutVars().get(bv), bv.getTermVariable());
+			}
+			for (Entry<BoogieVar, TermVariable> entry : localVarAssignments.getInVars().entrySet()) {
+				substitutionMapping.put(entry.getValue(), m_TermVariablesForPredecessor.getOrConstuct(entry.getKey()));
+			}
+			renamedLocalVarsAssignment = new SafeSubstitution(m_Script, m_VariableManager, substitutionMapping).transform(localVarAssignments.getFormula());
+		}
+		
+		final Term renamedPredicate;
+		{
+			Map<Term, Term> substitutionMapping = new HashMap<Term, Term>();
+			for (BoogieVar bv : p.getVars()) {
+				substitutionMapping.put(bv.getTermVariable(), m_TermVariablesForPredecessor.getOrConstuct(bv));
+			}
+			renamedPredicate = new SafeSubstitution(m_Script, m_VariableManager, substitutionMapping).transform(p.getFormula());
+		}
+		Term sucessorTerm = Util.and(m_Script, renamedPredicate, renamedLocalVarsAssignment, renamedOldVarsAssignment,
+				renamedGlobalVarAssignment);
+		return m_SmtManager.constructPredicate(sucessorTerm, Script.EXISTS, varsToQuantify);
+	}
 
 	/**
 	 * Compute the strongest postcondition for a predicate and a call statement.
@@ -251,14 +391,19 @@ public class PredicateTransformer {
 				varsToQuantifyPendingCall.add(freshVar);
 				varsToQuantifyNonPendingCall.add(bv.getTermVariable());
 				// }
-			}
-
-			if (bv.isGlobal() && !globalVarAssignments.getInVars().containsKey(bv)
-					&& !globalVarAssignments.getOutVars().containsKey(bv)) {
-				if (bv.isOldvar()) {
-					TermVariable freshVar = m_VariableManager.constructFreshTermVariable(bv);
-					varsToRenameInPredInBoth.put(bv.getTermVariable(), freshVar);
-					varsToQuantifyNonModOldVars.add(freshVar);
+			} else {
+				// if is global var of modifiable oldvar we rename var to oldvar
+				if (!bv.isOldvar() && oldVarAssignments.getInVars().containsKey(bv)) {
+					varsToRenameInPredInBoth.put(bv.getTermVariable(), ((BoogieNonOldVar) bv).getOldVar().getTermVariable());
+				}
+				
+				if (!globalVarAssignments.getInVars().containsKey(bv)
+						&& !globalVarAssignments.getOutVars().containsKey(bv)) {
+					if (bv.isOldvar()) {
+						TermVariable freshVar = m_VariableManager.constructFreshTermVariable(bv);
+						varsToRenameInPredInBoth.put(bv.getTermVariable(), freshVar);
+						varsToQuantifyNonModOldVars.add(freshVar);
+					}
 				}
 			}
 		}

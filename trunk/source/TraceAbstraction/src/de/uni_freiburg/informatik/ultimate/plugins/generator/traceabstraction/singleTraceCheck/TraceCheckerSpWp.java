@@ -546,10 +546,22 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 			for (int i = 0; i < m_InterpolantsSp.length; i++) {
 				IPredicate sp = null;
 				if (trace.getSymbol(i) instanceof Call) {
-					sp = m_PredicateTransformer.strongestPostcondition(
-							getForwardPredicateAtPosition(i - 1, tracePrecondition, true), rv.getLocalVarAssignment(i),
-							rv.getGlobalVarAssignment(i), rv.getOldVarAssignment(i),
-							((NestedWord<CodeBlock>) trace).isPendingCall(i));
+					if (((NestedWord<CodeBlock>) trace).isPendingCall(i)) {
+						sp = m_PredicateTransformer.strongestPostconditionCall(
+								getForwardPredicateAtPosition(i - 1, tracePrecondition, true), rv.getLocalVarAssignment(i),
+								rv.getGlobalVarAssignment(i), rv.getOldVarAssignment(i),
+								m_ModifiedGlobals.getModifiedBoogieVars(((Call) trace.getSymbol(i)).getCallStatement().getMethodName()));
+					} else {
+						sp = m_PredicateTransformer.weakLocalPostconditionCall(
+								getForwardPredicateAtPosition(i - 1, tracePrecondition, true),
+								rv.getGlobalVarAssignment(i),
+								m_ModifiedGlobals.getModifiedBoogieVars(((Call) trace.getSymbol(i)).getCallStatement().getMethodName()));
+//						IPredicate spOld = m_PredicateTransformer.strongestPostcondition(
+//								getForwardPredicateAtPosition(i - 1, tracePrecondition, true), rv.getLocalVarAssignment(i),
+//								rv.getGlobalVarAssignment(i), rv.getOldVarAssignment(i),
+//								((NestedWord<CodeBlock>) trace).isPendingCall(i));
+//						spOld.toString();
+					}
 					m_InterpolantsSp[i] = m_PredicateUnifier.getOrConstructPredicate(sp.getFormula(), sp.getVars(),
 							sp.getProcedures());
 				} else if (trace.getSymbol(i) instanceof Return) {
