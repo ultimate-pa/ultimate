@@ -7,5 +7,4 @@ public interface IResultReporter {
 	void reportPossibleError();
 
 	void reportSafe();
-
 }

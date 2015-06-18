@@ -3,5 +3,4 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 public interface ILoopDetector<ACTION> {
 
 	ACTION getLoopExit(ACTION transition);
-	
 }

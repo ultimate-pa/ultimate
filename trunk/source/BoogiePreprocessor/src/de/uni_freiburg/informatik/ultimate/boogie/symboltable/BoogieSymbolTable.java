@@ -2,6 +2,7 @@ package de.uni_freiburg.informatik.ultimate.boogie.symboltable;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -24,7 +25,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableDeclaration;
  * 
  * It is still work in progress, so there are no final comments.
  * 
- * @author dietsch
+ * @author dietsch@informatik.uni-freiburg.de
  * 
  */
 public class BoogieSymbolTable {
@@ -165,7 +166,7 @@ public class BoogieSymbolTable {
 		case IMPLEMENTATION:
 		case GLOBAL:
 		case PROC_FUNC:
-//		case QUANTIFIED:
+			// case QUANTIFIED:
 			return scope.toString();
 		default:
 			break;
@@ -198,6 +199,19 @@ public class BoogieSymbolTable {
 				rtr.add(decl);
 			}
 		}
+		return rtr;
+	}
+
+	public Map<String, Declaration> getGlobalVariables() {
+		return new HashMap<>(getMap(StorageClass.GLOBAL, null));
+	}
+
+	public Map<String, Declaration> getLocalVariables(String procedureName) {
+		assert procedureName != null;
+		Map<String, Declaration> rtr = new HashMap<String, Declaration>();
+		rtr.putAll(getMap(StorageClass.LOCAL, procedureName));
+		rtr.putAll(getMap(StorageClass.IMPLEMENTATION_INPARAM, procedureName));
+		rtr.putAll(getMap(StorageClass.IMPLEMENTATION_OUTPARAM, procedureName));
 		return rtr;
 	}
 

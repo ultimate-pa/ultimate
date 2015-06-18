@@ -17,13 +17,13 @@ public class DeclarationInformation {
 		 */
 		GLOBAL,
 		/**
-		 * "In" parameter of a function declaration or
-		 * procedure declaration (with or without body/implementation)
+		 * "In" parameter of a function declaration or procedure declaration
+		 * (with or without body/implementation)
 		 */
 		PROC_FUNC_INPARAM,
 		/**
-		 * "Out" parameter of function declaration or 
-		 * procedure declaration (with or without body/implementation)
+		 * "Out" parameter of function declaration or procedure declaration
+		 * (with or without body/implementation)
 		 */
 		PROC_FUNC_OUTPARAM,
 		/**
@@ -46,22 +46,21 @@ public class DeclarationInformation {
 		PROC_FUNC
 	}
 
-	private final StorageClass m_StorageClass;
-	private final String m_Procedure;
+	private final StorageClass mStorageClass;
+	private final String mProcedure;
 
 	public DeclarationInformation(StorageClass storageClass, String procedure) {
-		super();
 		assert (isValid(storageClass, procedure));
-		this.m_StorageClass = storageClass;
-		this.m_Procedure = procedure;
+		mStorageClass = storageClass;
+		mProcedure = procedure;
 	}
 
 	public StorageClass getStorageClass() {
-		return m_StorageClass;
+		return mStorageClass;
 	}
 
 	public String getProcedure() {
-		return m_Procedure;
+		return mProcedure;
 	}
 
 	/**
@@ -92,10 +91,10 @@ public class DeclarationInformation {
 
 	@Override
 	public String toString() {
-		if (m_Procedure == null) {
-			return m_StorageClass.toString();
+		if (mProcedure == null) {
+			return mStorageClass.toString();
 		} else {
-			return "<" + m_StorageClass.toString() + "," + m_Procedure + ">";
+			return "<" + mStorageClass.toString() + "," + mProcedure + ">";
 		}
 	}
 
@@ -103,10 +102,8 @@ public class DeclarationInformation {
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result
-				+ ((m_Procedure == null) ? 0 : m_Procedure.hashCode());
-		result = prime * result
-				+ ((m_StorageClass == null) ? 0 : m_StorageClass.hashCode());
+		result = prime * result + ((mProcedure == null) ? 0 : mProcedure.hashCode());
+		result = prime * result + ((mStorageClass == null) ? 0 : mStorageClass.hashCode());
 		return result;
 	}
 
@@ -118,16 +115,17 @@ public class DeclarationInformation {
 			return false;
 		if (getClass() != obj.getClass())
 			return false;
-		DeclarationInformation other = (DeclarationInformation) obj;
-		if (m_Procedure == null) {
-			if (other.m_Procedure != null)
+		final DeclarationInformation other = (DeclarationInformation) obj;
+		if (mProcedure == null) {
+			if (other.mProcedure != null) {
 				return false;
-		} else if (!m_Procedure.equals(other.m_Procedure))
+			}
+		} else if (!mProcedure.equals(other.mProcedure)) {
 			return false;
-		if (m_StorageClass != other.m_StorageClass)
+		}
+		if (mStorageClass != other.mStorageClass) {
 			return false;
+		}
 		return true;
 	}
-	
-	
 }

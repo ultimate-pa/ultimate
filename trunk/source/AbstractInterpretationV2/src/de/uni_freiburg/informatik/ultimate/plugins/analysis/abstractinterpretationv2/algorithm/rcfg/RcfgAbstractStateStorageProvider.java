@@ -69,21 +69,26 @@ public class RcfgAbstractStateStorageProvider implements IAbstractStateStorage<C
 
 	@Override
 	public void setPostStateIsFixpoint(CodeBlock transition, IAbstractState<CodeBlock, BoogieVar> state, boolean value) {
-		state.setFixpoint(value);
+		assert transition != null;
+		assert state != null;
+		final Deque<IAbstractState<CodeBlock, BoogieVar>> states = getStates(transition.getTarget());
+		assert state.equals(states.getFirst());
+		states.removeFirst();
+		states.addFirst(state.setFixpoint(value));
 	}
 
 	@Override
 	public IAbstractState<CodeBlock, BoogieVar> mergePostStates(CodeBlock transition) {
 		assert transition != null;
 		Deque<IAbstractState<CodeBlock, BoogieVar>> states = getStates(transition.getTarget());
-		if(states.isEmpty()){
+		if (states.isEmpty()) {
 			return null;
 		}
 		final Iterator<IAbstractState<CodeBlock, BoogieVar>> iterator = states.iterator();
 		IAbstractState<CodeBlock, BoogieVar> last;
 		IAbstractState<CodeBlock, BoogieVar> current = iterator.next();
 		iterator.remove();
-		while(iterator.hasNext()){
+		while (iterator.hasNext()) {
 			last = iterator.next();
 			iterator.remove();
 			current = mMergeOperator.apply(current, last);

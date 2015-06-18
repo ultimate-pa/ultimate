@@ -34,7 +34,6 @@ public class AbstractInterpreter<ACTION, VARDECL> {
 	private static final int MAX_STATES = 2;
 
 	private final ITransitionProvider<ACTION> mTransitionProvider;
-	private final IUltimateServiceProvider mServices;
 	private final Logger mLogger;
 	private final IAbstractStateStorage<ACTION, VARDECL> mStateStorage;
 	private final IAbstractDomain<ACTION, VARDECL> mDomain;
@@ -52,8 +51,7 @@ public class AbstractInterpreter<ACTION, VARDECL> {
 		assert varProvider != null;
 		assert loopDetector != null;
 		assert reporter != null;
-		
-		mServices = services;
+
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mTransitionProvider = post;
 		mStateStorage = storage;
@@ -74,17 +72,23 @@ public class AbstractInterpreter<ACTION, VARDECL> {
 		boolean errorReached = false;
 
 		// add the initial state
-		for(ACTION elem : initialElements){
+		for (ACTION elem : initialElements) {
 			worklist.add(createPair(getCurrentAbstractPreState(elem), elem));
 		}
-		
 
 		while (!worklist.isEmpty()) {
 			final Pair<IAbstractState<ACTION, VARDECL>, ACTION> currentPair = worklist.removeFirst();
 			final IAbstractState<ACTION, VARDECL> preState = currentPair.getFirst();
 			final ACTION current = currentPair.getSecond();
-
 			final IAbstractState<ACTION, VARDECL> oldPostState = mStateStorage.getCurrentAbstractPostState(current);
+
+			if (mLogger.isDebugEnabled()) {
+				final String preStateString = preState == null ? "NULL" : preState.toLogString();
+				final StringBuilder logMessage = new StringBuilder().append("Processing element ")
+						.append(mTransitionProvider.toLogString(current)).append(" for pre state ")
+						.append(preStateString);
+				mLogger.debug(logMessage);
+			}
 
 			if (oldPostState != null && oldPostState.isBottom()) {
 				// unreachable, just continue (do not add successors to
@@ -93,8 +97,12 @@ public class AbstractInterpreter<ACTION, VARDECL> {
 				continue;
 			}
 
-			// calculate the (abstract) effect of the current action
-			IAbstractState<ACTION, VARDECL> newPostState = post.apply(preState, current);
+			// calculate the (abstract) effect of the current action by first
+			// declaring variables in the prestate, and then calculating their
+			// values
+			final IAbstractState<ACTION, VARDECL> preStateWithFreshVariables = mVarProvider.defineVariablesPost(
+					current, preState);
+			IAbstractState<ACTION, VARDECL> newPostState = post.apply(preStateWithFreshVariables, current);
 
 			// check if this action leaves a loop
 			if (!activeLoops.isEmpty()) {
@@ -146,7 +154,8 @@ public class AbstractInterpreter<ACTION, VARDECL> {
 			mStateStorage.addAbstractPostState(current, newPostState);
 
 			if (mTransitionProvider.isPostErrorLocation(current)) {
-				//TODO: How do we create a counter example, i.e. a program execution? 
+				// TODO: How do we create a counter example, i.e. a program
+				// execution?
 				errorReached = true;
 				mReporter.reportPossibleError();
 			}

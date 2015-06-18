@@ -17,5 +17,4 @@ public interface ITransitionProvider<T> {
 	String toLogString(T elem); 
 	
 	Collection<T> getSiblings(T elem);
-	
 }

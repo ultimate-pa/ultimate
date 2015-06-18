@@ -7,5 +7,4 @@ public interface IVariableProvider<ACTION, VARDECL> {
 	IAbstractState<ACTION, VARDECL> defineVariablesPre(ACTION current, IAbstractState<ACTION, VARDECL> state);
 	
 	IAbstractState<ACTION, VARDECL> defineVariablesPost(ACTION current, IAbstractState<ACTION, VARDECL> state);
-	
 }

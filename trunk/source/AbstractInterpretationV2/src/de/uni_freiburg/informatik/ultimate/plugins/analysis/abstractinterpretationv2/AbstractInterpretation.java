@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -12,12 +13,13 @@ import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvide
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.IAnalysis;
 import de.uni_freiburg.informatik.ultimate.model.GraphType;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.preferences.AbstractInterpretationPreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.loopdetector.RCFGLoopDetector;
 
 public class AbstractInterpretation implements IAnalysis {
 
 	protected Logger mLogger;
 	private IUltimateServiceProvider mServices;
-	private IObserver mObserver;
+	private List<IObserver> mObserver;
 
 	public AbstractInterpretation() {
 	}
@@ -45,9 +47,12 @@ public class AbstractInterpretation implements IAnalysis {
 	@Override
 	public void setInputDefinition(GraphType graphType) {
 		final String creator = graphType.getCreator();
-		switch(creator){
+		switch (creator) {
 		case "de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder":
-			mObserver = new AbstractInterpretationRcfgObserver(mServices);
+			mObserver = new ArrayList<IObserver>();
+			RCFGLoopDetector externalLoopDetector = new RCFGLoopDetector(mServices);
+			mObserver.add(externalLoopDetector);
+			mObserver.add(new AbstractInterpretationRcfgObserver(mServices, externalLoopDetector));
 			break;
 		default:
 			mObserver = null;
@@ -57,10 +62,10 @@ public class AbstractInterpretation implements IAnalysis {
 
 	@Override
 	public List<IObserver> getObservers() {
-		if(mObserver == null){
+		if (mObserver == null) {
 			return Collections.emptyList();
 		}
-		return Collections.singletonList(mObserver);
+		return mObserver;
 	}
 
 	@Override
@@ -96,7 +101,7 @@ public class AbstractInterpretation implements IAnalysis {
 
 	@Override
 	public void finish() {
-		//not used
+		// not used
 	}
 
 }
