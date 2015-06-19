@@ -38,9 +38,8 @@ import de.uni_freiburg.informatik.ultimate.util.HashRelation;
 /**
  * TODO: Desc
  * @author musab@informatik.uni-freiburg.de
- * TODO: Change the name of the class!? 'TraceChecker' shouldn't occur in the name any more.
  */
-public class TraceCheckerWithInterpolantConsolidation implements IInterpolantGenerator {
+public class InterpolantConsolidation implements IInterpolantGenerator {
 	
 	private InterpolatingTraceChecker m_InterpolatingTraceChecker;
 	private final IPredicate m_Precondition;
@@ -55,7 +54,7 @@ public class TraceCheckerWithInterpolantConsolidation implements IInterpolantGen
 	private final PredicateUnifier m_PredicateUnifier;
 	private final Logger m_Logger;
 	
-	public TraceCheckerWithInterpolantConsolidation(IPredicate precondition,
+	public InterpolantConsolidation(IPredicate precondition,
 			IPredicate postcondition,
 			SortedMap<Integer, IPredicate> pendingContexts,
 			NestedWord<CodeBlock> trace, SmtManager smtManager,
