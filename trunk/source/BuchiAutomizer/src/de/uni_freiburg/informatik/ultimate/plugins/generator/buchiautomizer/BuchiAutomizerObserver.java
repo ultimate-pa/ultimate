@@ -191,7 +191,9 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 		} else if (result == Result.TIMEOUT) {
 			ProgramPoint position = mRootAnnot.getEntryNodes().values().iterator().next();
 			String longDescr = "Timeout while trying to prove " + whatToProve 
-					+ ". (Timeout occurred in class " + bcl.getClassInWhichTimeoutOccurred().getSimpleName() +")";
+					+ ". (Timeout occurred in class " + bcl.getToolchainCancelledException().getClassOfThrower().getSimpleName() +
+					(bcl.getToolchainCancelledException().getWhatWasGoingOnMessage() != null ? " during the following task: " + bcl.getToolchainCancelledException().getWhatWasGoingOnMessage() : "")
+					+ ")";
 			IResult reportRes = new TimeoutResultAtElement<RcfgElement>(position, Activator.s_PLUGIN_ID,
 					mServices.getBacktranslationService(), longDescr);
 			reportResult(reportRes);
