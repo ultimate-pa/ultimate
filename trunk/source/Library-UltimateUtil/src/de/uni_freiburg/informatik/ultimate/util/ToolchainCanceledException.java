@@ -13,18 +13,18 @@ public class ToolchainCanceledException extends RuntimeException {
 	
 	public final static String s_Message = "Timeout or Toolchain cancelled by user";
 	private final Class<?> m_ClassOfThrower; 
-	private final String m_WhatWasGoingOnMessage;
+	private final String m_RunningTaskInfo;
 
 	public ToolchainCanceledException(Class<?> thrower) {
 		super(s_Message);
 		m_ClassOfThrower = thrower;
-		m_WhatWasGoingOnMessage = null;
+		m_RunningTaskInfo = null;
 	}
 	
-	public ToolchainCanceledException(Class<?> thrower, String whatWasGoingOnMessage) {
+	public ToolchainCanceledException(Class<?> thrower, String runningTaskInfo) {
 		super(s_Message);
 		m_ClassOfThrower = thrower;
-		m_WhatWasGoingOnMessage = whatWasGoingOnMessage;
+		m_RunningTaskInfo = runningTaskInfo;
 	}
 
 	@Override
@@ -41,11 +41,14 @@ public class ToolchainCanceledException extends RuntimeException {
 	}
 
 	/**
-	 * Return optional message that was added by the algorithm that has
-	 * thrown this Exception. Null if no optional Message was provided.
+	 * Return optional message that was added by the algorithm/task that has
+	 * thrown this Exception. Null if no optional message was provided.
+	 * The message should provide some information that can be helpful for 
+	 * finding the reason for the timeout (e.g., algorithm with
+	 * exponential space complexity was applied to problem of input size 23).
 	 */
-	public String getWhatWasGoingOnMessage() {
-		return m_WhatWasGoingOnMessage;
+	public String getRunningTaskInfo() {
+		return m_RunningTaskInfo;
 	}
 	
 	
