@@ -15,7 +15,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.IAbstractDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.IAbstractPostOperator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.IAbstractState;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.IAbstractState.ComparisonResult;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.IAbstractStateBinaryOperator;
 import de.uni_freiburg.informatik.ultimate.util.relation.Pair;
 
@@ -181,8 +180,7 @@ public class AbstractInterpreter<ACTION, VARDECL> {
 				}
 			}
 
-			final ComparisonResult comparisonResult = newPostState.compareTo(oldPostState);
-			if (comparisonResult == ComparisonResult.EQUAL) {
+			if (newPostState.isEqualTo(oldPostState)) {
 				// found fixpoint, mark old post state as fixpoint, do not add
 				// new post state
 				mStateStorage.setPostStateIsFixpoint(current, oldPostState, true);

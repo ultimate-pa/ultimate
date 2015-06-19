@@ -35,11 +35,7 @@ public interface IAbstractState<ACTION, VARDECL> {
 
 	String toLogString();
 
-	ComparisonResult compareTo(IAbstractState<ACTION, VARDECL> other);
+	boolean isEqualTo(IAbstractState<ACTION, VARDECL> other);
 	
 	IAbstractState<ACTION, VARDECL> copy();
-	
-	public enum ComparisonResult {
-		SUPER, SUB, EQUAL, NOTEQUAL
-	}
 }

@@ -110,26 +110,26 @@ public final class EmptyDomainState<ACTION, VARDECL> implements IAbstractState<A
 	}
 
 	@Override
-	public ComparisonResult compareTo(IAbstractState<ACTION, VARDECL> other) {
+	public boolean isEqualTo(IAbstractState<ACTION, VARDECL> other) {
 		if (other == null) {
-			return ComparisonResult.NOTEQUAL;
+			return false;
 		}
 		if (!getClass().isInstance(other)) {
-			return ComparisonResult.NOTEQUAL;
+			return false;
 		}
 
 		final EmptyDomainState<ACTION, VARDECL> comparableOther = (EmptyDomainState<ACTION, VARDECL>) other;
 		if (comparableOther.mVarDecls.size() != mVarDecls.size()) {
-			return ComparisonResult.NOTEQUAL;
+			return false;
 		}
 
 		for (Entry<String, VARDECL> entry : mVarDecls.entrySet()) {
 			final VARDECL otherValue = comparableOther.mVarDecls.get(entry.getKey());
 			if (!entry.getValue().equals(otherValue)) {
-				return ComparisonResult.NOTEQUAL;
+				return false;
 			}
 		}
-		return ComparisonResult.EQUAL;
+		return true;
 	}
 
 	@Override
@@ -151,7 +151,7 @@ public final class EmptyDomainState<ACTION, VARDECL> implements IAbstractState<A
 	 * @return true iff this state has the same variables than other
 	 */
 	protected boolean hasSameVariables(IAbstractState<ACTION, VARDECL> other) {
-		return compareTo(other) == ComparisonResult.EQUAL;
+		return isEqualTo(other);
 	}
 
 	protected Map<String, VARDECL> getVariables() {
