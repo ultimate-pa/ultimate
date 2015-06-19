@@ -295,6 +295,13 @@ public class IncrementalInclusionCegarLoop extends BasicCegarLoop {
 			m_CegarLoopBenchmark.addEdgeCheckerData(htc.getEdgeCheckerBenchmark());
 		}
 		
+		if (m_Pref.dumpAutomata()) {
+			for (int i=0; i<m_InterpolantAutomata.size(); i++) {
+				String filename = "EnhancedInterpolantAutomaton_WhoseConstructionWasStartedIn_Iteration" + m_Iteration;
+				super.writeAutomatonToFile(m_InterpolantAutomata.get(i), filename);
+				m_InterpolantAutomata.get(i);
+			}
+		}
 	}
 
 	
