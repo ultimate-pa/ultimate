@@ -678,12 +678,14 @@ public class SmtManager {
 		// }
 
 		TransFormula tf = ta.getTransitionFormula();
-		String proc = ta.getPreceedingProcedure();
-		assert proc.equals(ta.getSucceedingProcedure()) : "different procedure before and after";
-		Set<BoogieVar> modifiableGlobals = m_ModifiableGlobals.getModifiedBoogieVars(proc);
+		String procPred = ta.getPreceedingProcedure();
+		String procSucc = ta.getSucceedingProcedure();
+//		assert proc.equals(ta.getSucceedingProcedure()) : "different procedure before and after";
+		Set<BoogieVar> modifiableGlobalsPred = m_ModifiableGlobals.getModifiedBoogieVars(procPred);
+		Set<BoogieVar> modifiableGlobalsSucc = m_ModifiableGlobals.getModifiedBoogieVars(procSucc);
 
 		LBool result = PredicateUtils.isInductiveHelper(m_Boogie2Smt, 
-				ps1, ps2, tf, modifiableGlobals, modifiableGlobals);
+				ps1, ps2, tf, modifiableGlobalsPred, modifiableGlobalsSucc);
 
 		if (expectUnsat) {
 			if (result == LBool.SAT) {
