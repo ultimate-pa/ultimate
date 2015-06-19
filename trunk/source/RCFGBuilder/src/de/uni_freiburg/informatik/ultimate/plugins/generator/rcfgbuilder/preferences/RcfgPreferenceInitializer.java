@@ -18,6 +18,8 @@ public class RcfgPreferenceInitializer extends UltimatePreferenceInitializer {
 						DEF_ExtSolverCommand_Z3, PreferenceType.String),
 				new UltimatePreferenceItem<String>(LABEL_ExtSolverLogic,
 						DEF_ExtSolverLogic, PreferenceType.String),
+				new UltimatePreferenceItem<Boolean>(LABEL_BitvectorWorkaround,
+						false, PreferenceType.Boolean),	
 				new UltimatePreferenceItem<CodeBlockSize>(LABEL_CodeBlockSize,
 						DEF_CodeBlockSize, PreferenceType.Combo, CodeBlockSize.values()),
 				new UltimatePreferenceItem<Boolean>(LABEL_RemoveGotoEdges,
@@ -78,5 +80,6 @@ public class RcfgPreferenceInitializer extends UltimatePreferenceInitializer {
 	public static final String LABEL_DumpMainTrackBenchmark = "Dump main track benchmark to file";
 	public static final String LABEL_Path = "To the following directory";
 	public static final String DEF_Path = "";
+	public static final String LABEL_BitvectorWorkaround = "Translate Boogie integers to SMT bitvectors";
 	
 }
