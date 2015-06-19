@@ -16,7 +16,7 @@ public final class EmptyPostOperator<ACTION, VARDECL> implements IAbstractPostOp
 	@Override
 	public IAbstractState<ACTION, VARDECL> apply(IAbstractState<ACTION, VARDECL> oldstate, ACTION concrete) {
 		final EmptyDomainState<ACTION, VARDECL> concreteOldState = mStateConverter.getCheckedState(oldstate);
-		return new EmptyDomainState<>(new HashMap<>(concreteOldState.getVariables()));
+		return new EmptyDomainState<>(new HashMap<>(concreteOldState.getVariables()), false);
 	}
 
 }

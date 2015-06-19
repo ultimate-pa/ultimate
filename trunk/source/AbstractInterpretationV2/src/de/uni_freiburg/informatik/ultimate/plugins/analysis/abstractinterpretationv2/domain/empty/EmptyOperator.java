@@ -23,6 +23,6 @@ public final class EmptyOperator<ACTION, VARDECL> implements IAbstractStateBinar
 			throw new UnsupportedOperationException("Cannot widen or merge two states with different variables");
 		}
 
-		return new EmptyDomainState<>(firstState.getVariables());
+		return new EmptyDomainState<>(firstState.getVariables(), firstState.isFixpoint() || secondState.isFixpoint());
 	}
 }

@@ -69,14 +69,35 @@ public class RcfgAbstractStateStorageProvider implements IAbstractStateStorage<C
 	}
 
 	@Override
-	public void setPostStateIsFixpoint(CodeBlock transition, IAbstractState<CodeBlock, BoogieVar> state, boolean value) {
+	public void replaceAbstractPostState(CodeBlock transition, IAbstractState<CodeBlock, BoogieVar> state) {
+		assert state != null;
+		assert transition != null;
+		final Deque<Pair<CodeBlock, IAbstractState<CodeBlock, BoogieVar>>> states = getStates(transition.getTarget());
+		final Iterator<Pair<CodeBlock, IAbstractState<CodeBlock, BoogieVar>>> iterator = states.iterator();
+		int i = 0;
+		while (iterator.hasNext()) {
+			final Pair<CodeBlock, IAbstractState<CodeBlock, BoogieVar>> current = iterator.next();
+			if (current.getFirst().equals(transition)) {
+				iterator.remove();
+				++i;
+			}
+		}
+		assert i <= 1;
+		addAbstractPostState(transition, state);
+	}
+
+	@Override
+	public IAbstractState<CodeBlock, BoogieVar> setPostStateIsFixpoint(CodeBlock transition,
+			IAbstractState<CodeBlock, BoogieVar> state, boolean value) {
 		assert transition != null;
 		assert state != null;
 		final Deque<Pair<CodeBlock, IAbstractState<CodeBlock, BoogieVar>>> states = getStates(transition.getTarget());
 		assert !states.isEmpty();
 		assert state.equals(states.getFirst().getSecond());
 		states.removeFirst();
-		states.addFirst(new Pair<CodeBlock, IAbstractState<CodeBlock, BoogieVar>>(transition, state.setFixpoint(value)));
+		final IAbstractState<CodeBlock, BoogieVar> rtr = state.setFixpoint(value);
+		states.addFirst(new Pair<CodeBlock, IAbstractState<CodeBlock, BoogieVar>>(transition, rtr));
+		return rtr;
 	}
 
 	@Override
@@ -123,6 +144,7 @@ public class RcfgAbstractStateStorageProvider implements IAbstractStateStorage<C
 	private void addState(CodeBlock transition, IAbstractState<CodeBlock, BoogieVar> state, RCFGNode node) {
 		assert node != null;
 		final Deque<Pair<CodeBlock, IAbstractState<CodeBlock, BoogieVar>>> states = getStates(node);
+		// TODO: Optimize by removing lower states if they are equal to this one
 		states.addFirst(new Pair<CodeBlock, IAbstractState<CodeBlock, BoogieVar>>(transition, state));
 	}
 

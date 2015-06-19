@@ -20,13 +20,16 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 public final class EmptyDomainState<ACTION, VARDECL> implements IAbstractState<ACTION, VARDECL> {
 
 	private final Map<String, VARDECL> mVarDecls;
+	private boolean mIsFixpoint;
 
 	protected EmptyDomainState() {
 		mVarDecls = new HashMap<String, VARDECL>();
+		mIsFixpoint = false;
 	}
 
-	protected EmptyDomainState(Map<String, VARDECL> varDecls) {
+	protected EmptyDomainState(Map<String, VARDECL> varDecls, boolean isFixpoint) {
 		mVarDecls = varDecls;
+		mIsFixpoint = isFixpoint;
 	}
 
 	@Override
@@ -39,7 +42,7 @@ public final class EmptyDomainState<ACTION, VARDECL> implements IAbstractState<A
 		if (old != null) {
 			throw new UnsupportedOperationException("Variable names have to be disjoint");
 		}
-		return new EmptyDomainState<ACTION, VARDECL>(newMap);
+		return new EmptyDomainState<ACTION, VARDECL>(newMap, mIsFixpoint);
 	}
 
 	@Override
@@ -50,7 +53,7 @@ public final class EmptyDomainState<ACTION, VARDECL> implements IAbstractState<A
 		final Map<String, VARDECL> newMap = new HashMap<>(mVarDecls);
 		final VARDECL oldVar = newMap.remove(name);
 		assert variable.equals(oldVar);
-		return new EmptyDomainState<ACTION, VARDECL>(newMap);
+		return new EmptyDomainState<ACTION, VARDECL>(newMap, mIsFixpoint);
 	}
 
 	@Override
@@ -65,7 +68,7 @@ public final class EmptyDomainState<ACTION, VARDECL> implements IAbstractState<A
 				throw new UnsupportedOperationException("Variable names have to be disjoint");
 			}
 		}
-		return new EmptyDomainState<ACTION, VARDECL>(newMap);
+		return new EmptyDomainState<ACTION, VARDECL>(newMap, mIsFixpoint);
 	}
 
 	@Override
@@ -77,7 +80,7 @@ public final class EmptyDomainState<ACTION, VARDECL> implements IAbstractState<A
 		for (Entry<String, VARDECL> entry : variables.entrySet()) {
 			newMap.remove(entry.getKey());
 		}
-		return new EmptyDomainState<ACTION, VARDECL>(newMap);
+		return new EmptyDomainState<ACTION, VARDECL>(newMap, mIsFixpoint);
 	}
 
 	@Override
@@ -92,19 +95,19 @@ public final class EmptyDomainState<ACTION, VARDECL> implements IAbstractState<A
 
 	@Override
 	public boolean isFixpoint() {
-		return true;
+		return mIsFixpoint;
 	}
 
 	@Override
 	public IAbstractState<ACTION, VARDECL> setFixpoint(boolean value) {
-		return new EmptyDomainState<ACTION, VARDECL>(mVarDecls);
+		return new EmptyDomainState<ACTION, VARDECL>(mVarDecls, value);
 	}
 
 	@Override
 	public String toLogString() {
-		final StringBuilder sb = new StringBuilder();
+		final StringBuilder sb = new StringBuilder().append(mIsFixpoint).append(" ");
 		for (Entry<String, VARDECL> entry : mVarDecls.entrySet()) {
-			sb.append(entry.getKey()).append(":").append(entry.getValue()).append("; ");
+			sb.append(entry.getKey()).append("; ");
 		}
 		return sb.toString();
 	}
@@ -139,7 +142,7 @@ public final class EmptyDomainState<ACTION, VARDECL> implements IAbstractState<A
 
 	@Override
 	public IAbstractState<ACTION, VARDECL> copy() {
-		return new EmptyDomainState<>(new HashMap<String, VARDECL>(mVarDecls));
+		return new EmptyDomainState<>(new HashMap<String, VARDECL>(mVarDecls), mIsFixpoint);
 	}
 
 	/**
