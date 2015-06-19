@@ -16,7 +16,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  * @param <VARDECL>
  *            Any variable declaration.
  */
-public class EmptyDomain<ACTION, VARDECL> implements IAbstractDomain<ACTION, VARDECL> {
+public class EmptyDomain<ACTION, VARDECL> implements
+		IAbstractDomain<EmptyDomainState<ACTION, VARDECL>, ACTION, VARDECL> {
 
 	private EmptyStateConverter<ACTION, VARDECL> mStateConverter;
 
@@ -42,6 +43,11 @@ public class EmptyDomain<ACTION, VARDECL> implements IAbstractDomain<ACTION, VAR
 	@Override
 	public IAbstractPostOperator<ACTION, VARDECL> getPostOperator() {
 		return new EmptyPostOperator<>(mStateConverter);
+	}
+
+	@Override
+	public Class<EmptyDomainState<ACTION, VARDECL>> getAbstractStateClass() {
+		return mStateConverter.getAbstractStateClass();
 	}
 
 }

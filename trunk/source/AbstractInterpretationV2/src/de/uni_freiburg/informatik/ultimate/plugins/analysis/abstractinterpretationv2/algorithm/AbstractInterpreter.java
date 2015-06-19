@@ -37,13 +37,13 @@ public class AbstractInterpreter<ACTION, VARDECL> {
 	private final ITransitionProvider<ACTION> mTransitionProvider;
 	private final Logger mLogger;
 	private final IAbstractStateStorage<ACTION, VARDECL> mStateStorage;
-	private final IAbstractDomain<ACTION, VARDECL> mDomain;
+	private final IAbstractDomain<?, ACTION, VARDECL> mDomain;
 	private final IVariableProvider<ACTION, VARDECL> mVarProvider;
 	private final ILoopDetector<ACTION> mLoopDetector;
 	private final IResultReporter mReporter;
 
 	public AbstractInterpreter(IUltimateServiceProvider services, ITransitionProvider<ACTION> post,
-			IAbstractStateStorage<ACTION, VARDECL> storage, IAbstractDomain<ACTION, VARDECL> domain,
+			IAbstractStateStorage<ACTION, VARDECL> storage, IAbstractDomain<?, ACTION, VARDECL> domain,
 			IVariableProvider<ACTION, VARDECL> varProvider, ILoopDetector<ACTION> loopDetector, IResultReporter reporter) {
 		assert services != null;
 		assert post != null;
@@ -213,7 +213,8 @@ public class AbstractInterpreter<ACTION, VARDECL> {
 				if (availablePostStatesCount > MAX_STATES) {
 					if (mLogger.isDebugEnabled()) {
 						final StringBuilder logMessage = addActionHashCode(new StringBuilder().append(INDENT), current)
-								.append("Merging ").append(availablePostStatesCount).append(" states at target location");
+								.append("Merging ").append(availablePostStatesCount)
+								.append(" states at target location");
 						mLogger.debug(logMessage);
 					}
 					newPostState = mStateStorage.mergePostStates(current);

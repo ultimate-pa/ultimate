@@ -6,7 +6,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
  * @author greitsch@informatik.uni-freiburg.de
  *
  */
-public interface IAbstractDomain<ACTION, VARDECL> {
+public interface IAbstractDomain<STATE extends IAbstractState<ACTION, VARDECL>, ACTION, VARDECL> {
 	IAbstractState<ACTION, VARDECL> createFreshState();
 
 	IAbstractStateBinaryOperator<ACTION, VARDECL> getWideningOperator();
@@ -14,4 +14,6 @@ public interface IAbstractDomain<ACTION, VARDECL> {
 	IAbstractStateBinaryOperator<ACTION, VARDECL> getMergeOperator();
 
 	IAbstractPostOperator<ACTION, VARDECL> getPostOperator();
+
+	Class<STATE> getAbstractStateClass();
 }

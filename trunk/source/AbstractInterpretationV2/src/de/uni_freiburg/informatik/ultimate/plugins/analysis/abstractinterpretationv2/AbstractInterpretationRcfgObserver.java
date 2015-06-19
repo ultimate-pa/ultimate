@@ -23,6 +23,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.RcfgVariableProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.IAbstractDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.empty.EmptyDomain;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.empty.EmptyDomainState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.loopdetector.RCFGLoopDetector;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
@@ -61,7 +62,7 @@ public class AbstractInterpretationRcfgObserver extends BaseObserver {
 
 		final Boogie2SmtSymbolTable boogieVarTable = root.getRootAnnot().getBoogie2SMT().getBoogie2SmtSymbolTable();
 
-		final IAbstractDomain<CodeBlock, BoogieVar> domain = selectDomain();
+		final IAbstractDomain<EmptyDomainState<CodeBlock, BoogieVar>, CodeBlock, BoogieVar> domain = selectDomain();
 		final AbstractInterpreter<CodeBlock, BoogieVar> interpreter = createAbstractInterpreter(domain, symbolTable,
 				boogieVarTable);
 		interpreter.process(initial);
@@ -76,7 +77,7 @@ public class AbstractInterpretationRcfgObserver extends BaseObserver {
 		return pa.getSymbolTable();
 	}
 
-	private IAbstractDomain<CodeBlock, BoogieVar> selectDomain() {
+	private IAbstractDomain<EmptyDomainState<CodeBlock, BoogieVar>, CodeBlock, BoogieVar> selectDomain() {
 		return new EmptyDomain<>();
 	}
 
@@ -96,7 +97,8 @@ public class AbstractInterpretationRcfgObserver extends BaseObserver {
 	}
 
 	private AbstractInterpreter<CodeBlock, BoogieVar> createAbstractInterpreter(
-			IAbstractDomain<CodeBlock, BoogieVar> domain, BoogieSymbolTable table, Boogie2SmtSymbolTable boogieVarTable) {
+			IAbstractDomain<?, CodeBlock, BoogieVar> domain, BoogieSymbolTable table,
+			Boogie2SmtSymbolTable boogieVarTable) {
 		assert domain != null;
 		assert table != null;
 		assert boogieVarTable != null;
