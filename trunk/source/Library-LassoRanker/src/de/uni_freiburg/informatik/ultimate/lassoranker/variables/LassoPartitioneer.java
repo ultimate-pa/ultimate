@@ -289,7 +289,10 @@ public class LassoPartitioneer {
 			HashRelation<NonTheorySymbol<?>, Term> symbol2Conjuncts) {
 		NonTheorySymbol<?> symbol = constructSymbol(tvOrConstant);
 		if (!symbol2Conjuncts.getDomain().contains(symbol) && !symbolsWithoutConjuncts.contains(symbol)) {
-			m_EquivalentSymbols.makeEquivalenceClass(symbol);
+			if (m_EquivalentSymbols.find(symbol) == null) {
+				// check needed because constants may occur in stem and loop.
+				m_EquivalentSymbols.makeEquivalenceClass(symbol);
+			}
 			symbolsWithoutConjuncts.add(symbol);
 			TransFormulaLR oldValue = m_Symbol2OriginalTF.put(part, symbol, tf);
 			assert oldValue == null || oldValue == tf : "may not be modified";
