@@ -16,8 +16,8 @@ public class EmptyStateConverter<ACTION, VARDECL> {
 		}
 		return (EmptyDomainState<ACTION, VARDECL>) state;
 	}
-	
-	public Class<EmptyDomainState<ACTION, VARDECL>> getAbstractStateClass(){
+
+	public Class<EmptyDomainState<ACTION, VARDECL>> getAbstractStateClass() {
 		return mStateType;
 	}
 }
