@@ -118,14 +118,16 @@ public class ElimStore3 {
 
 		while (true) {
 			assert eliminatee.getSort().isArraySort();
-			if (!m_Services.getProgressMonitorService().continueProcessing()) {
-				throw new ToolchainCanceledException(this.getClass());
-			}
+
 			if (quantifier == QuantifiedFormula.EXISTS) {
 				conjuncts = SmtUtils.getConjuncts(term);
 			} else {
 				assert quantifier == QuantifiedFormula.FORALL;
 				conjuncts = SmtUtils.getDisjuncts(term);
+			}
+			if (!m_Services.getProgressMonitorService().continueProcessing()) {
+				throw new ToolchainCanceledException(this.getClass(),
+						"eliminating quantified array variable from " + conjuncts.length + " xjuncts");
 			}
 
 			MultiDimensionalStore store = getArrayStore(eliminatee, term);

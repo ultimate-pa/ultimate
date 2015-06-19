@@ -46,7 +46,8 @@ public class XnfDer extends XjunctPartialQuantifierElimination {
 		Term[] resultAtoms = inputAtoms;
 		while (it.hasNext()) {
 			if (!m_Services.getProgressMonitorService().continueProcessing()) {
-				throw new ToolchainCanceledException(this.getClass());
+				throw new ToolchainCanceledException(this.getClass(),
+						"eliminating " + eliminatees + " quantified variables from " + inputAtoms + " xjuncts");
 			}
 			TermVariable tv = it.next();
 			if (!SmtUtils.getFreeVars(Arrays.asList(resultAtoms)).contains(tv)) {

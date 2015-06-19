@@ -212,7 +212,8 @@ public class ModelExtractionUtils {
 				break;
 			}
 			if (!services.getProgressMonitorService().continueProcessing()) {
-				throw new ToolchainCanceledException(ModelExtractionUtils.class);
+				throw new ToolchainCanceledException(ModelExtractionUtils.class,
+						"simplifying assignment for " + variables.size() + "variables");
 			}
 			script.push(1);
 			for (Term var : zero_vars) {

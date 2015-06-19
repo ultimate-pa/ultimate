@@ -237,7 +237,8 @@ public class InterpolatingTraceCheckerCraig extends InterpolatingTraceChecker {
 				if(mServices.getProgressMonitorService().continueProcessing()) {
 					throw new AssertionError("UNKNOWN during nested interpolation. I don't know how to continue");
 				} else {
-					throw new ToolchainCanceledException(this.getClass());
+					throw new ToolchainCanceledException(this.getClass(),
+							"construction of nested interpolants");
 				}
 			}
 			// tc.computeInterpolants_Recursive(interpolatedPositions, m_PredicateUnifier);

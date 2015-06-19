@@ -100,8 +100,9 @@ public abstract class Xnf extends Nnf {
 				}
 			}
 			
-			if (first.numberOfUnprocessedOuterJunctions() > 5) {
-				m_Logger.warn("expecting exponential blowup for input size " + first.numberOfUnprocessedOuterJunctions());
+			int inputSize = first.numberOfUnprocessedOuterJunctions();
+			if ( inputSize > 5) {
+				m_Logger.warn("expecting exponential blowup for input size " + inputSize);
 			}
 			
 			// iteratively apply distributivity until we have a set of innerJunctions.
@@ -116,7 +117,8 @@ public abstract class Xnf extends Nnf {
 					todoStack.addAll(top.processOneOuterJunction());
 				}
 				if (!mServices.getProgressMonitorService().continueProcessing()) {
-					throw new ToolchainCanceledException(this.getClass());
+					throw new ToolchainCanceledException(this.getClass(),
+							"XNF transformer was applied to  " + inputSize + " " + innerJunctionName());
 				}
 			}
 			
@@ -132,7 +134,9 @@ public abstract class Xnf extends Nnf {
 			XJunctionPosetMinimalElements pme = new XJunctionPosetMinimalElements();
 			for (XJunction resInnerSet : resOuterJunction) {
 				if (!mServices.getProgressMonitorService().continueProcessing()) {
-					throw new ToolchainCanceledException(this.getClass());
+					throw new ToolchainCanceledException(this.getClass(),
+							"XNF transformer was simplifying " + resOuterJunction.size() 
+							+ " " + innerJunctionName() + "s. ");
 				}
 				pme.add(resInnerSet);
 			}

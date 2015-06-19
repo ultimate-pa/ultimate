@@ -522,7 +522,8 @@ public class CfgBuilder {
 
 				if (!mServices.getProgressMonitorService().continueProcessing()) {
 					mLogger.warn("Timeout while constructing control flow graph");
-					throw new ToolchainCanceledException(this.getClass());
+					throw new ToolchainCanceledException(this.getClass(),
+							"constructing CFG for procedure with " + statements.length + "statements");
 				}
 
 				ILocation loc = st.getLocation();
