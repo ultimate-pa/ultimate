@@ -179,11 +179,11 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 			throw oce;
 		} catch (Error e) {
 			String message = "// Problem with  removeUnreachable";
-			ResultChecker.writeToFileIfPreferred(m_Services, "FailedremoveUnreachable", message, operand);
+//			ResultChecker.writeToFileIfPreferred(m_Services, "FailedremoveUnreachable", message, operand);
 			throw e;
 		} catch (RuntimeException e) {
 			String message = "// Problem with  removeUnreachable";
-			ResultChecker.writeToFileIfPreferred(m_Services, "FailedremoveUnreachable", message, operand);
+//			ResultChecker.writeToFileIfPreferred(m_Services, "FailedremoveUnreachable", message, operand);
 			throw e;
 		}
 	}
