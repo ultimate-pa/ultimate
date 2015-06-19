@@ -193,10 +193,10 @@ public class BuchiCegarLoop {
 
 	private final IToolchainStorage mStorage;
 
-	private Class<?> m_ClassInWhichTimeoutOccurred;
+	private ToolchainCanceledException m_ToolchainCancelledException;
 	
-	public Class<?> getClassInWhichTimeoutOccurred() {
-		return m_ClassInWhichTimeoutOccurred;
+	public ToolchainCanceledException getToolchainCancelledException() {
+		return m_ToolchainCancelledException;
 	}
 
 	public List<NonTerminationArgument> getNonTerminationArguments() {
@@ -352,7 +352,7 @@ public class BuchiCegarLoop {
 			mLogger.warn("Verification cancelled");
 			m_MDBenchmark.reportRemainderModule(m_Abstraction.size(), false);
 			m_BenchmarkGenerator.setResult(Result.TIMEOUT);
-			m_ClassInWhichTimeoutOccurred = e1.getClassOfThrower();
+			m_ToolchainCancelledException = new ToolchainCanceledException(e1.getClassOfThrower());
 			return Result.TIMEOUT;
 		}
 		if (initalAbstractionCorrect) {
@@ -376,7 +376,7 @@ public class BuchiCegarLoop {
 					m_TermcompProofBenchmark.reportRemainderModule(false);
 				}
 				m_BenchmarkGenerator.setResult(Result.TIMEOUT);
-				m_ClassInWhichTimeoutOccurred = e1.getClassOfThrower();
+				m_ToolchainCancelledException = new ToolchainCanceledException(e1.getClassOfThrower());
 				return Result.TIMEOUT;
 			}
 			if (abstractionCorrect) {
@@ -408,7 +408,7 @@ public class BuchiCegarLoop {
 							mStorage);
 				}
 			} catch (ToolchainCanceledException e) {
-				m_ClassInWhichTimeoutOccurred = e.getClassOfThrower();
+				m_ToolchainCancelledException = e;
 				m_BenchmarkGenerator.setResult(Result.TIMEOUT);
 				return Result.TIMEOUT;
 			} finally {
@@ -511,11 +511,11 @@ public class BuchiCegarLoop {
 				m_BenchmarkGenerator.reportAbstractionSize(m_Abstraction.size(), m_Iteration);
 
 			} catch (OperationCanceledException e) {
-				m_ClassInWhichTimeoutOccurred = e.getClassOfThrower();
+				m_ToolchainCancelledException = new ToolchainCanceledException(e.getClassOfThrower());
 				m_BenchmarkGenerator.setResult(Result.TIMEOUT);
 				return Result.TIMEOUT;
 			} catch (ToolchainCanceledException e) {
-				m_ClassInWhichTimeoutOccurred = e.getClassOfThrower();
+				m_ToolchainCancelledException = e;
 				m_BenchmarkGenerator.setResult(Result.TIMEOUT);
 				return Result.TIMEOUT;
 			}
