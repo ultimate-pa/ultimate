@@ -101,27 +101,35 @@ public class Svcomp_Reach_PreciseMemoryModel_2TrackAutomatonEvaluation extends
 	}
 	
 
+	private static final String[] m_BoogieToolchains = {
+//		"AutomizerBpl.xml",
+		"AutomizerBplInline.xml",
+	};
+	
+	private static final String[] m_CToolchains = {
+//		"AutomizerC.xml",
+		"AutomizerCInline.xml",
+	};
+
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
 		for (String setting : m_Settings) {
-			addTestCases("AutomizerC.xml", 
-					setting, 
-					m_SVCOMP_Examples);
+			for (String toolchain : m_CToolchains) {
+				addTestCases(toolchain, setting, m_SVCOMP_Examples);
+			}
 		}
 		
 		for (String setting : m_Settings) {
-			addTestCases(
-					"AutomizerBpl.xml",
-					setting,
-					m_UltimateRepository,
-				    new String[] {".bpl"});
+			for (String toolchain : m_BoogieToolchains) {
+				addTestCases(toolchain, setting, m_UltimateRepository, 
+						new String[] {".bpl"});
+			}
 		}
 		for (String setting : m_Settings) {
-			addTestCases(
-					"AutomizerC.xml",
-					setting,
-					m_UltimateRepository,
-				    new String[] {".c", ".i"});
+			for (String toolchain : m_CToolchains) {
+				addTestCases(toolchain, setting, m_UltimateRepository, 
+						new String[] {".c", ".i"});
+			}
 		}
 		return super.createTestCases();
 	}
