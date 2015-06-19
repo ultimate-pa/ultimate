@@ -500,7 +500,7 @@ public class TransFormulaLRWithArrayCells {
 				conjuncts[i] = m_Script.term("true");
 			} else if (indexAnalyzer.isDistinctDoubleton(fst, snd)) {
 				conjuncts[i] = m_Script.term("false");
-			} else if (indexAnalyzer.isUnknownDoubleton(fst, snd)) {
+			} else if (indexAnalyzer.isUnknownDoubleton(fst, snd) || indexAnalyzer.isIgnoredDoubleton(fst, snd)) {
 				Term fstSubst = select2CellVariable.transform(fst);
 				Term sndSubst = select2CellVariable.transform(snd);
 				conjuncts[i] = SmtUtils.binaryEquality(m_Script, fstSubst, sndSubst);
