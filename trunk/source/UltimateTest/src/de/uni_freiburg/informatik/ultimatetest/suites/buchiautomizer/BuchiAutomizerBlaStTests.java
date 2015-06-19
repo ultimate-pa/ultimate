@@ -109,6 +109,7 @@ public class BuchiAutomizerBlaStTests extends
 //		"buchiAutomizer/tabarankbasedForwardPredicatesNonlinear.epf",
 		"buchiAutomizer/stagedblastCraigLinear.epf",
 		"buchiAutomizer/stagedCraigLinear.epf",
+//		"buchiAutomizer/stagedForwardPredicatesLinear.epf",
 	};
 	
 	
