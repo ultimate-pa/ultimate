@@ -23,6 +23,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.BuchiClosureNwa;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.BuchiDifferenceFKV;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.BuchiIsEmpty;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.NestedLassoRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Accepts;
@@ -547,7 +548,7 @@ public class BuchiCegarLoop {
 		m_BenchmarkGenerator.start(BuchiCegarLoopBenchmark.s_BuchiClosure);
 		try {
 			m_Abstraction = (INestedWordAutomatonOldApi<CodeBlock, IPredicate>) (new BuchiClosureNwa<>(m_Services, m_Abstraction));
-			m_Abstraction = (new RemoveDeadEnds<CodeBlock, IPredicate>(m_Services, m_Abstraction)).getResult();
+//			m_Abstraction = (new RemoveDeadEnds<CodeBlock, IPredicate>(m_Services, m_Abstraction)).getResult();
 		} finally {
 			m_BenchmarkGenerator.stop(BuchiCegarLoopBenchmark.s_BuchiClosure);
 		}
@@ -562,7 +563,7 @@ public class BuchiCegarLoop {
 			INestedWordAutomatonOldApi<CodeBlock, IPredicate> minimized = minimizeOp.getResult();
 			m_Abstraction = minimized;
 		} catch (OperationCanceledException e) {
-			throw e;
+			throw new ToolchainCanceledException(getClass(), "minimizing automaton with " + m_Abstraction.size() + " states");
 		} catch (AutomataLibraryException e) {
 			throw new AssertionError(e.getMessage());
 		} finally {
@@ -590,7 +591,12 @@ public class BuchiCegarLoop {
 						lassoChecker.getBinaryStatePredicateManager(), bmgvm, m_Interpolation, m_BenchmarkGenerator);
 			} catch (OperationCanceledException e) {
 				m_BenchmarkGenerator.stop(CegarLoopBenchmarkType.s_AutomataDifference);
-				throw e;
+				if (e.getClassOfThrower() == BuchiDifferenceFKV.class) {
+					String runningTaskInfo = "applying " + BuchiDifferenceFKV.class.getSimpleName() + " in stage " + stage;
+					throw new ToolchainCanceledException(getClass(), runningTaskInfo );
+				} else {
+					throw e;
+				}
 			} catch (ToolchainCanceledException e) {
 				m_BenchmarkGenerator.stop(CegarLoopBenchmarkType.s_AutomataDifference);
 				throw e;

@@ -113,7 +113,11 @@ public class Difference<LETTER,STATE> implements IOperation<LETTER,STATE>, IOpWi
 		m_StateFactory = sf;
 		m_StateDeterminizer = stateDeterminizer;
 		m_Logger.info(startMessage());
-		computateDifference(finalIsTrap);
+		try {
+			computateDifference(finalIsTrap);
+		} catch (OperationCanceledException oce) {
+			throw new OperationCanceledException(getClass());
+		}
 		m_Logger.info(exitMessage());
 	}
 	

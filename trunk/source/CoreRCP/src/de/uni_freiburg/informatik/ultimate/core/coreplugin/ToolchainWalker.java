@@ -157,7 +157,7 @@ final class ToolchainWalker implements IToolchainCancel {
 			String longDescription = ToolchainCanceledException.s_Message + 
 					" while executing " + e.getClassOfThrower().getSimpleName();
 				if (e.getRunningTaskInfo() != null) {
-					longDescription += "during the following task " + e.getRunningTaskInfo();
+					longDescription += " during the following task: " + e.getRunningTaskInfo();
 				}
 				TimeoutResult timeoutResult = new TimeoutResult(plugin.getId(), longDescription);
 				data.getToolchain().getServices().getResultService().reportResult(plugin.getId(), timeoutResult);

@@ -74,9 +74,13 @@ public class RemoveDeadEnds<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 		m_Input = nwa;
 		m_Logger.info(startMessage());
-		m_Reach = new NestedWordAutomatonReachableStates<LETTER, STATE>(m_Services, m_Input);
-		m_Reach.computeDeadEnds();
-		m_Result = new NestedWordAutomatonFilteredStates<LETTER, STATE>(m_Services, m_Reach, m_Reach.getWithOutDeadEnds());
+		try {
+			m_Reach = new NestedWordAutomatonReachableStates<LETTER, STATE>(m_Services, m_Input);
+			m_Reach.computeDeadEnds();
+			m_Result = new NestedWordAutomatonFilteredStates<LETTER, STATE>(m_Services, m_Reach, m_Reach.getWithOutDeadEnds());
+		} catch (OperationCanceledException oce) {
+			throw new OperationCanceledException(getClass());
+		}
 		m_Logger.info(exitMessage());
 		assert (new TransitionConsitenceCheck<LETTER, STATE>(m_Result)).consistentForAll();
 	}

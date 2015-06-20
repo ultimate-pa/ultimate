@@ -30,6 +30,7 @@ import org.apache.log4j.Logger;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
+import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.NestedWordAutomatonReachableStates;
@@ -58,13 +59,17 @@ public class BuchiIsEmpty<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 		m_Nwa = nwa;
 		m_Logger.info(startMessage());
-		if (m_Nwa instanceof NestedWordAutomatonReachableStates) {
-			m_Reach = (NestedWordAutomatonReachableStates<LETTER, STATE>) m_Nwa;
-		} else {
-			m_Reach = new NestedWordAutomatonReachableStates<LETTER, STATE>(m_Services, m_Nwa);
+		try {
+			if (m_Nwa instanceof NestedWordAutomatonReachableStates) {
+				m_Reach = (NestedWordAutomatonReachableStates<LETTER, STATE>) m_Nwa;
+			} else {
+				m_Reach = new NestedWordAutomatonReachableStates<LETTER, STATE>(m_Services, m_Nwa);
+			}
+			m_Sccs = m_Reach.getOrComputeAcceptingComponents();
+			m_Result = m_Sccs.buchiIsEmpty();
+		} catch (OperationCanceledException oce) {
+			throw new OperationCanceledException(getClass());
 		}
-		m_Sccs = m_Reach.getOrComputeAcceptingComponents();
-		m_Result = m_Sccs.buchiIsEmpty();
 		m_Logger.info(exitMessage());
 	}
 	

@@ -33,6 +33,7 @@ import org.apache.log4j.Logger;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
+import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
@@ -118,7 +119,11 @@ public class BuchiDifferenceFKV<LETTER,STATE> implements IOperation<LETTER,STATE
 		m_StateFactory = sf;
 		m_StateDeterminizer = stateDeterminizer;
 		m_Logger.info(startMessage());
-		constructDifference(userDefinedMaxRank);
+		try {
+			constructDifference(userDefinedMaxRank);
+		} catch (OperationCanceledException oce) {
+			throw new OperationCanceledException(getClass());
+		}
 		m_Logger.info(exitMessage());
 	}
 	
