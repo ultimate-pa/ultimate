@@ -11,17 +11,11 @@ var x,y : int;
 procedure main() returns ()
 modifies x,y;
 {
-  assume(x>=5 || y>=5);
+  assume(x>=9 || x<=-8);
   while (*) {
-    if (x >= 5) {
-      x := x + 1;
-      havoc y;
-    } else {
-      havoc x;
-      y := y + 1;
-    }
+    x := 2*x;
   }
-  assert(x >= 0 || y >= 0);
+  assert(x>=6 || x<=-5);
 }
 
 
