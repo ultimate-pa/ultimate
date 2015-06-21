@@ -27,7 +27,7 @@ public class TwoTrackInterpolantAutomatonBuilder {
 //	private ArrayList<IPredicate> m_StateSequence;
 	NestedWordAutomaton<CodeBlock, IPredicate> m_TTIA;
 	private final SmtManager m_SmtManager;
-	private static boolean m_TotalTransitions = true;
+	private static boolean m_TotalTransitions = false;
 	
 	/**
 	 * 
