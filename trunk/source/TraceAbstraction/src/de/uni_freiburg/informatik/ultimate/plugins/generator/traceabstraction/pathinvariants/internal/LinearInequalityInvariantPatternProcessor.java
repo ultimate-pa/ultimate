@@ -54,7 +54,7 @@ public final class LinearInequalityInvariantPatternProcessor
 
 	private static final String PREFIX = "liipp_";
 	private static final String PREFIX_SEPARATOR = "_";
-
+	
 	private final IUltimateServiceProvider services;
 	private final Logger logger;
 	private final Script solver;
@@ -79,6 +79,8 @@ public final class LinearInequalityInvariantPatternProcessor
 	private int prefixCounter;
 	private int currentRound;
 	private int maxRounds;
+	private final boolean m_UseNonlinearConstraints; 
+	private final boolean m_SimplifySatisfyingAssignment = true;
 
 	/**
 	 * Creates a pattern processor using linear inequalities as patterns.
@@ -100,6 +102,8 @@ public final class LinearInequalityInvariantPatternProcessor
 	 *            the invariant on the {@link ControlFlowGraph#getExit()} of cfg
 	 * @param strategy
 	 *            The strategy to generate invariant patterns with
+	 * @param useNonlinearConstraints
+	 * 			  Kind of constraints that are used to specify invariant.
 	 */
 	public LinearInequalityInvariantPatternProcessor(
 			final IUltimateServiceProvider services,
@@ -107,7 +111,8 @@ public final class LinearInequalityInvariantPatternProcessor
 			final SmtManager smtManager, final Script solver,
 			final ControlFlowGraph cfg, final IPredicate precondition,
 			final IPredicate postcondition,
-			final ILinearInequalityInvariantPatternStrategy strategy) {
+			final ILinearInequalityInvariantPatternStrategy strategy,
+			final boolean useNonlinearConstraints) {
 		super(predicateUnifier, smtManager);
 		this.services = services;
 		this.logger = services.getLoggingService().getLogger(
@@ -128,6 +133,7 @@ public final class LinearInequalityInvariantPatternProcessor
 		
 		currentRound = -1;
 		maxRounds = strategy.getMaxRounds();
+		m_UseNonlinearConstraints = useNonlinearConstraints;
 	}
 
 	/**
@@ -425,11 +431,13 @@ public final class LinearInequalityInvariantPatternProcessor
 		// Apply Motzkin and generate the conjunction of the resulting Terms
 		final Collection<Term> resultTerms = new ArrayList<Term>(
 				conjunctionDNF.size());
+		final AnalysisType analysisType = m_UseNonlinearConstraints ? 
+				AnalysisType.Nonlinear : AnalysisType.Linear;
 		for (final Collection<LinearInequality> conjunct : conjunctionDNF) {
 			this.logger.log(Level.INFO, "[LIIPP] Transforming conjunct "
 					+ conjunct);
 			final MotzkinTransformation transformation = new MotzkinTransformation(
-					solver, AnalysisType.Nonlinear, false);
+					solver, analysisType, false);
 			transformation.add_inequalities(conjunct);
 			resultTerms.add(transformation.transform(new Rational[0]));
 		}
@@ -642,9 +650,8 @@ public final class LinearInequalityInvariantPatternProcessor
 
 		logger.log(Level.INFO, "[LIIPP] Solution found!");
 		Collection<Term> coefficientsOfAllInvariants = patternVariables;
-		boolean simplifiedValuation = false;
 		try {
-			if (simplifiedValuation) {
+			if (m_SimplifySatisfyingAssignment) {
 				valuation = ModelExtractionUtils.getSimplifiedAssignment(
 						solver, coefficientsOfAllInvariants, logger, services);
 			} else {
@@ -749,7 +756,13 @@ public final class LinearInequalityInvariantPatternProcessor
 		if (someExtendedDebugging) {
 			solver.setOption(":produce-unsat-cores", true);
 		}
-		solver.setLogic(Logics.QF_NRA);
+		final Logics logic;
+		if (m_UseNonlinearConstraints) {
+			logic = Logics.QF_NRA;
+		} else {
+			logic = Logics.QF_LRA;
+		}
+		solver.setLogic(logic);
 	}
 
 	@Override

@@ -24,6 +24,7 @@ public class LinearInequalityInvariantPatternProcessorFactory
 	protected final PredicateUnifier predUnifier;
 	protected final SmtManager smtManager;
 	protected final ILinearInequalityInvariantPatternStrategy strategy;
+	private final boolean m_UseNonlinearConstraints = false;
 
 	/**
 	 * Constructs a new factory for
@@ -61,7 +62,7 @@ public class LinearInequalityInvariantPatternProcessorFactory
 			IPredicate postcondition) {
 		return new LinearInequalityInvariantPatternProcessor(services,
 				predUnifier, smtManager, produceSmtSolver(), cfg, precondition,
-				postcondition, strategy);
+				postcondition, strategy, m_UseNonlinearConstraints);
 	}
 
 	/**
@@ -86,8 +87,14 @@ public class LinearInequalityInvariantPatternProcessorFactory
 		boolean dumpSmtScriptToFile = !true;
 		String pathOfDumpedScript = "~";
 		String baseNameOfDumpedScript = "contraintSolving";
+		final String solverCommand;
+		if (m_UseNonlinearConstraints) {
+			solverCommand = "z3 -smt2 -in SMTLIB2_COMPLIANT=true -t:42000";
+		} else {
+			solverCommand = "yices-smt2 --incremental";
+		}
 		return new Settings(true,
-				"z3 -smt2 -in SMTLIB2_COMPLIANT=true -t:42000", -1, null,
+				solverCommand, -1, null,
 				dumpSmtScriptToFile, pathOfDumpedScript, baseNameOfDumpedScript);
 	}
 
