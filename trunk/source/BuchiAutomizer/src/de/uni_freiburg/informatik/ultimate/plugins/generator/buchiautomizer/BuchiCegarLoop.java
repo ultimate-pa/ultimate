@@ -591,12 +591,8 @@ public class BuchiCegarLoop {
 						lassoChecker.getBinaryStatePredicateManager(), bmgvm, m_Interpolation, m_BenchmarkGenerator);
 			} catch (OperationCanceledException e) {
 				m_BenchmarkGenerator.stop(CegarLoopBenchmarkType.s_AutomataDifference);
-				if (e.getClassOfThrower() == BuchiDifferenceFKV.class) {
-					String runningTaskInfo = "applying " + BuchiDifferenceFKV.class.getSimpleName() + " in stage " + stage;
-					throw new ToolchainCanceledException(getClass(), runningTaskInfo );
-				} else {
-					throw e;
-				}
+				String runningTaskInfo = "applying " + e.getClassOfThrower().getSimpleName() + " in stage " + stage;
+				throw new ToolchainCanceledException(getClass(), runningTaskInfo );
 			} catch (ToolchainCanceledException e) {
 				m_BenchmarkGenerator.stop(CegarLoopBenchmarkType.s_AutomataDifference);
 				throw e;

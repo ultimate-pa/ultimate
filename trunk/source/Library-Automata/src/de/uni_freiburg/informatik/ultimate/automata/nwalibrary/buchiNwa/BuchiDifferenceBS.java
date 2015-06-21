@@ -33,6 +33,7 @@ import org.apache.log4j.Logger;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
+import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
@@ -90,12 +91,16 @@ public class BuchiDifferenceBS<LETTER,STATE> implements IOperation<LETTER,STATE>
 		m_SndOperand = sndOperand;
 		m_StateFactory = stateFactory;
 		m_Logger.info(startMessage());
-		constructDifference(Integer.MAX_VALUE);
+		try {
+			constructDifference();
+		} catch (OperationCanceledException oce) {
+			throw new OperationCanceledException(getClass());
+		}
 		m_Logger.info(exitMessage());
 	}
 	
 	
-	private void constructDifference(int userDefinedMaxRank) throws AutomataLibraryException {
+	private void constructDifference() throws AutomataLibraryException {
 		m_SndComplemented = new BuchiComplementBSNwa<LETTER, STATE>(m_Services, m_SndOperand, m_StateFactory);
 		m_Intersect = new BuchiIntersectNwa<LETTER, STATE>(m_FstOperand, m_SndComplemented, m_StateFactory);
 		m_Result = new NestedWordAutomatonReachableStates<LETTER, STATE>(m_Services, m_Intersect);
