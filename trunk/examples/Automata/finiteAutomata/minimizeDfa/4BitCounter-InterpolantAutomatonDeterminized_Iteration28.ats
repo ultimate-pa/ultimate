@@ -1,7 +1,11 @@
 // Testfile dumped by Ultimate at 2011/12/14 15:24:37
 
-//print(nwa);
-print(minimizeDFA(nwa));
+print(numberOfStates(removeDeadEnds(nwa)));
+int minimizeDFASize = numberOfStates(minimizeDFA(removeDeadEnds(nwa)));
+print(minimizeDFASize);
+int minimizeDfaSimulationSize = numberOfStates(minimizeDFASimulation(removeDeadEnds(nwa)));
+print(minimizeDfaSimulationSize);
+assert(minimizeDFASize == minimizeDfaSimulationSize);
 
 NestedWordAutomaton nwa = (
 	callAlphabet = {},

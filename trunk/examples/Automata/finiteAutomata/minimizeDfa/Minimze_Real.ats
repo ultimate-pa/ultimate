@@ -3,10 +3,15 @@
 // Date: 7.11.2011
 
 
-assert(!isEmpty(a));
-print(minimizeDFA(a));
+assert(!isEmpty(nwa));
+print(numberOfStates(removeDeadEnds(nwa)));
+int minimizeDFASize = numberOfStates(minimizeDFA(removeDeadEnds(nwa)));
+print(minimizeDFASize);
+int minimizeDfaSimulationSize = numberOfStates(minimizeDFASimulation(removeDeadEnds(nwa)));
+print(minimizeDfaSimulationSize);
+assert(minimizeDFASize == minimizeDfaSimulationSize);
 
-NestedWordAutomaton a = (
+NestedWordAutomaton nwa = (
   callAlphabet = { },
   internalAlphabet = {a b c},
   returnAlphabet = { },

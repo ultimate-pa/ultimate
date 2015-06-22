@@ -1,6 +1,9 @@
 // Testfile dumped by Ultimate at 2011/12/21 17:11:17
 
-print(minimizeDFA(nwa));
+NestedWordAutomaton minimizeDfa1 = minimizeDFA(nwa);
+NestedWordAutomaton minimizeDfaSimulation = minimizeDFASimulation(nwa);
+print(numberOfStates(minimizeDfa1));
+print(numberOfStates(minimizeDfaSimulation));
 
 NestedWordAutomaton nwa = (
 	callAlphabet = {},
