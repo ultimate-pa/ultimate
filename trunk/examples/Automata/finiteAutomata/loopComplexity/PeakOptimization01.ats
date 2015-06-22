@@ -1,0 +1,37 @@
+// Date: 2015-06-22
+// Author: Thomas Lang
+//
+// Automaton was obtained from 
+// AliasDarteFeautrierGonnord_SAS2010_Fig1_true_termination
+// in SmallProgramsWithLC2.ats.
+
+assert(loopComplexity(lc2Automaton) == 2);
+
+NestedWordAutomaton lc2Automaton = (
+	callAlphabet = {},
+	internalAlphabet = {"a" "b" "c" "d" "e" "f" "g" "h" "i" "j" "k" "l" },
+	returnAlphabet = {},
+	states = {"q0" "q1" "q2" "q3" "q4" "q5" "q6" "q7" "q8" "q9" },
+	initialStates = {"q1" },
+	finalStates = {},
+	callTransitions = {
+	},
+	internalTransitions = {
+		 ("q0" "l" "q6")
+		 ("q1" "b" "q6")
+		 ("q2" "d" "q5")
+		 ("q2" "e" "q4")
+		 ("q4" "a" "q2")
+		 ("q4" "c" "q5")
+		 ("q5" "g" "q0")
+		 ("q6" "c" "q8")
+		 ("q6" "a" "q9")
+		 ("q7" "j" "q0")
+		 ("q7" "k" "q4")
+		 ("q8" "h" "q3")
+		 ("q9" "f" "q8")
+		 ("q9" "i" "q7")
+	},
+	returnTransitions = {
+	}
+);
