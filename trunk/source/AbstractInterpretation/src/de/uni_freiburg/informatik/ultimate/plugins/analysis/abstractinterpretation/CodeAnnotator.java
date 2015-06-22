@@ -224,18 +224,17 @@ public class CodeAnnotator implements IAbstractStateChangeListener {
 		RCFGNode source = viaEdge.getSource();		
 		
 		// Write a function contract if viaEdge is a return edge
-		try{
-			Return ret = (Return) viaEdge;		
+		if (viaEdge instanceof Return) {
+			Return ret = (Return) viaEdge;
 			// Get call edge and function name
 			m_logger.debug("Writing function contract for return edge: " + ret);
 			Call call = ret.getCorrespondingCall();
 			RCFGNode callTarget = call.getTarget();
 			CallStatement cst = call.getCallStatement();
-			String functionName = cst.getMethodName();			
+			String functionName = cst.getMethodName();
 			writeContractAnnotation(functionName, callTarget, source);
 			return;
 		}
-		catch(ClassCastException e){}; // Current state change is no return edge
 		
 		// Write loop invariant if viaEdge terminates a loop
 		RCFGNode target = viaEdge.getTarget();
