@@ -36,6 +36,7 @@ import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
+import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.AcceptingComponentsAnalysis.StronglyConnectedComponentWithAcceptanceInformation;
@@ -157,7 +158,7 @@ public class LoopComplexity<LETTER, STATE> implements IOperation<LETTER, STATE> 
 			for (STATE stateOut : peakStates) {
 				// Check for cancel button.
 				if (!m_Services.getProgressMonitorService().continueProcessing()) {
-					throw new ToolchainCanceledException(this.getClass());
+					throw new OperationCanceledException(this.getClass());
 				}
 				
 				copyStates.remove(stateOut);
