@@ -68,6 +68,8 @@ public class GraphListener implements MouseListener, GraphMousePlugin, MouseMoti
 		// panning.
 		if (e.getButton() == MouseEvent.BUTTON2) {
 			mDragpoint = e.getPoint();
+			// Do nothing more when middle mouse button is pressed.
+			return;
 		}
 
 		// deselect elements
@@ -90,6 +92,8 @@ public class GraphListener implements MouseListener, GraphMousePlugin, MouseMoti
 		// Delete the point of reference for panning when the middle mouse button is released.
 		if (e.getButton() == MouseEvent.BUTTON2) {
 			mDragpoint = null;
+			// Do nothing more when middle mouse button is pressed.
+			return;
 		}
 
 		// deselect elements
