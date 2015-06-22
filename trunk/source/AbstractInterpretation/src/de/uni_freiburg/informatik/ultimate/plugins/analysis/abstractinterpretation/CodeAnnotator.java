@@ -30,7 +30,7 @@ public class CodeAnnotator implements IAbstractStateChangeListener {
 	private boolean m_logToFile;
 	private PrintWriter m_writer;	
 	private Logger m_logger;
-	private ArrayList<Pair<RCFGEdge, RCFGNode> > m_openLoops;
+	private ArrayList<Pair<HashMap<AbstractState.Pair, Object>, RCFGNode> > m_openLoops;
 	
 	public class Pair<f,s> {
 		public Pair(f fi, s se){
@@ -51,10 +51,10 @@ public class CodeAnnotator implements IAbstractStateChangeListener {
 			m_postconditions = new HashMap<AbstractState.Pair, Object>();
 		}
 		public void setPrecondition(HashMap<AbstractState.Pair, Object> values) {
-			m_preconditions = values;
+			m_preconditions = new HashMap<AbstractState.Pair, Object>(values);
 		}
 		public void setPostcondition(HashMap<AbstractState.Pair, Object> values) {
-			m_postconditions = values;
+			m_postconditions = new HashMap<AbstractState.Pair, Object>(values);
 		}
 		public HashMap<AbstractState.Pair, Object> getPrecondition() {
 			return m_preconditions;
@@ -70,10 +70,10 @@ public class CodeAnnotator implements IAbstractStateChangeListener {
 		}
 		public String toString(){
 			String str = new String();
-			str += "Contract for function " + m_functionName + ": ";
+			str += "Contract for function " + m_functionName + ": \n";
 			str += "Precondition = ";
 			str += m_preconditions.toString();
-			str += ", Postcondition = ";
+			str += ", \nPostcondition = ";
 			str += m_postconditions.toString();
 			return str;
 		}	
@@ -96,22 +96,31 @@ public class CodeAnnotator implements IAbstractStateChangeListener {
 				LinkedHashMap<String, Object> HM = (LinkedHashMap<String, Object>) it.next();
 				LinkedHashMap<String, Object> CS = (LinkedHashMap<String, Object>) HM.get("Call stack");
 	
-				// Get variable values pointer
+				// Variable values of current function
 				if (CS.get(functionName)!=null) {
 					LinkedHashMap<String, Object> values = (LinkedHashMap<String, Object>) CS.get(functionName);
 					if (values.get("Values")!=null) {
 						 VALS = (HashMap<AbstractState.Pair, Object>) values.get("Values");
 					}
 				}
+				
+				// Global variable values
+				if (CS.get("GLOBAL")!=null) {
+					LinkedHashMap<String, Object> global = (LinkedHashMap<String, Object>) CS.get("GLOBAL");
+					if (global.get("Values")!=null) {
+						HashMap<AbstractState.Pair, Object> globalValues = (HashMap<AbstractState.Pair, Object>) global.get("Values");
+						VALS.putAll(globalValues);
+					}
+				}			
 			}
 		}
 		return VALS;
 	}
-	
+		
 	public CodeAnnotator(Logger logger, boolean logToConsole, boolean logToFile, String fileName) {
 		m_logger = logger;
 		m_logToFile = logToFile && (fileName != null);
-		m_openLoops = new ArrayList<Pair<RCFGEdge, RCFGNode> >();
+		m_openLoops = new ArrayList<Pair<HashMap<AbstractState.Pair, Object>, RCFGNode> >();
 
 		m_writer = null;
 		if (m_logToFile) {
@@ -140,15 +149,16 @@ public class CodeAnnotator implements IAbstractStateChangeListener {
 	}
 	
 	private void writeContractAnnotation(String functionName, RCFGNode preconditionNode, RCFGNode postconditionNode){
+		m_logger.debug("Writing contract annotation for function " + functionName);
 		// Create contract
 		prePostContract contract = new prePostContract();
 		contract.setFunctionName(functionName);
 
 		// set precondition in contract
-		contract.setPrecondition(getValuesInFunction(functionName, postconditionNode));
+		contract.setPrecondition(getValuesInFunction(functionName, preconditionNode));
 		
 		// set postcondition in contract
-		contract.setPostcondition(getValuesInFunction(functionName, preconditionNode));
+		contract.setPostcondition(getValuesInFunction(functionName, postconditionNode));
 		
 		// Add contract annotation to node payload
 		if (contract.isValid()) {
@@ -171,9 +181,45 @@ public class CodeAnnotator implements IAbstractStateChangeListener {
 		}
 	}
 	
+	private void writeLoopAnnotation(HashMap<AbstractState.Pair, Object> precondition, RCFGNode postconditionNode, String scope){
+		m_logger.debug("Writing loop annotation for scope " + scope);
+		
+		// Create contract
+		prePostContract contract = new prePostContract();
+		contract.setFunctionName("loop");
+
+		// set precondition in contract
+		contract.setPrecondition(precondition);
+		
+		// set postcondition in contract
+		contract.setPostcondition(getValuesInFunction(scope, postconditionNode));
+		
+		// Add contract annotation to node payload
+		if (contract.isValid()) {
+			// Get or create "Contract Annotations" payload for function call node
+			HashMap<String, IAnnotations> annotMap = postconditionNode.getPayload().getAnnotations();
+			DefaultAnnotations contractAnnot = (DefaultAnnotations) annotMap.get("Contract Annotations");
+			if (annotMap.get("Contract Annotations") == null) {
+				contractAnnot = new DefaultAnnotations();
+				annotMap.put("Contract Annotations", contractAnnot);
+			}
+			// Write contract to the first unused slot in "Contract Annotations" payload of function call node
+			Integer entryNum = new Integer(0);
+			while(true) {
+				if (contractAnnot.get(entryNum.toString()) == null) {
+					contractAnnot.put(entryNum.toString(), contract);
+					m_logger.warn( contract.toString());
+					break;
+				}
+				entryNum++;
+			}		
+		}
+	}
+	
 	@Override
 	public void onStateChange(RCFGEdge viaEdge, List<AbstractState> oldStates,
 			AbstractState newState, AbstractState mergedState) {
+		
 		// Get source and target node of current state change
 		RCFGNode source = viaEdge.getSource();		
 		
@@ -181,27 +227,36 @@ public class CodeAnnotator implements IAbstractStateChangeListener {
 		try{
 			Return ret = (Return) viaEdge;		
 			// Get call edge and function name
+			m_logger.debug("Writing function contract for return edge: " + ret);
 			Call call = ret.getCorrespondingCall();
 			RCFGNode callTarget = call.getTarget();
 			CallStatement cst = call.getCallStatement();
 			String functionName = cst.getMethodName();			
-			writeContractAnnotation(functionName, source, callTarget);
+			writeContractAnnotation(functionName, callTarget, source);
 			return;
 		}
 		catch(ClassCastException e){}; // Current state change is no return edge
 		
-		// Write loop invariant if viaEdge terminates a loop TODO
-		RCFGNode entryNode = (RCFGNode) newState.peekLoopEntry().getLoopNode();
-		RCFGEdge exitEdge = newState.peekLoopEntry().getExitEdge();		
-		if (entryNode == source) {
-			m_openLoops.add(new Pair<RCFGEdge, RCFGNode>(exitEdge, entryNode));
-			m_logger.error("Loop entry found: " + source + " (will be exited through " + exitEdge + ")");
+		// Write loop invariant if viaEdge terminates a loop
+		RCFGNode target = viaEdge.getTarget();
+		String scope = newState.getCurrentScopeName();
+		m_logger.debug("Current scope : " + scope);
+		
+		// Check for the start of a loop
+		if (source == newState.peekLoopEntry().getLoopNode()) {
+			m_logger.debug("Contract Annotator: loop started at node: " + source);
+			HashMap<AbstractState.Pair, Object> sourceValues = getValuesInFunction(scope, source);
+			Pair<HashMap<AbstractState.Pair, Object>, RCFGNode> pair 
+					= new Pair<HashMap<AbstractState.Pair,Object>, RCFGNode>(sourceValues, source);
+			m_openLoops.add(pair);
+			m_logger.debug("Open loops after adding: " + m_openLoops);
 		}
-		else if (m_openLoops.size() > 0) {
-			m_logger.warn("Open loops: " + m_openLoops);
-			if(viaEdge == m_openLoops.get(m_openLoops.size() - 1).first) {
-				m_openLoops.remove(m_openLoops.size() - 1);
-				m_logger.error("Loop terminated with edge " + viaEdge);
+		// Check for the end of a loop
+		else if (m_openLoops.size() > 0){
+			if (target == m_openLoops.get(m_openLoops.size()-1).second) {
+				m_logger.debug("Contract Annotator: loop closed at node: " + target);
+				writeLoopAnnotation(m_openLoops.get(m_openLoops.size()-1).first, target, scope);
+				m_openLoops.remove(m_openLoops.size()-1);
 			}
 		}
 	}
