@@ -15,20 +15,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Sum
 public class RcfgTransitionProvider implements ITransitionProvider<CodeBlock> {
 
 	@Override
-	public Collection<CodeBlock> filterInitialElements(Collection<CodeBlock> elems) {
-		if (elems == null) {
-			return Collections.emptyList();
-		}
-		final List<CodeBlock> rtr = new ArrayList<>(elems.size());
-		for (final CodeBlock elem : elems) {
-			if (!(elem instanceof Summary)) {
-				rtr.add(elem);
-			}
-		}
-		return rtr;
-	}
-	
-	@Override
 	public Collection<CodeBlock> getSuccessors(CodeBlock elem) {
 		final RCFGNode target = elem.getTarget();
 		if (target == null) {
@@ -71,16 +57,38 @@ public class RcfgTransitionProvider implements ITransitionProvider<CodeBlock> {
 		return rtr;
 	}
 
+	@Override
+	public Collection<CodeBlock> filterInitialElements(Collection<CodeBlock> elems) {
+		if (elems == null) {
+			return Collections.emptyList();
+		}
+		final List<CodeBlock> rtr = new ArrayList<>(elems.size());
+		for (final CodeBlock elem : elems) {
+			if (!isUnnecessarySummary(elem)) {
+				rtr.add(elem);
+			}
+		}
+		return rtr;
+	}
+
 	private Collection<CodeBlock> convertToCodeBlock(final Collection<RCFGEdge> successors) {
 		if (successors == null) {
 			return Collections.emptyList();
 		}
 		final List<CodeBlock> rtr = new ArrayList<>(successors.size());
 		for (final RCFGEdge successor : successors) {
-			if (successor instanceof CodeBlock && !(successor instanceof Summary)) {
+			if (successor instanceof CodeBlock && !isUnnecessarySummary(successor)) {
 				rtr.add((CodeBlock) successor);
 			}
 		}
 		return rtr;
+	}
+
+	private boolean isUnnecessarySummary(RCFGEdge edge) {
+		if (edge instanceof Summary) {
+			Summary sum = (Summary) edge;
+			return sum.calledProcedureHasImplementation();
+		}
+		return false;
 	}
 }

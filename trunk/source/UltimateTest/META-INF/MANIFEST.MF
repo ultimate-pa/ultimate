@@ -24,7 +24,8 @@ Require-Bundle: Library-log4j,
  de.uni_freiburg.informatik.ultimate.buchiprogramproduct,
  de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck,
  de.uni_freiburg.informatik.ultimate.plugins.generator.automatascriptinterpreter,
- de.uni_freiburg.informatik.ultimate.boogie.procedureinliner
+ de.uni_freiburg.informatik.ultimate.boogie.procedureinliner,
+ de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2
 Import-Package: org.junit,
  org.junit.experimental.categories,
  org.junit.runner,

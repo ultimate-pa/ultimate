@@ -10,12 +10,15 @@ import java.util.Set;
 
 import org.apache.log4j.Logger;
 
+import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.IAbstractDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.IAbstractPostOperator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.IAbstractStateBinaryOperator;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.preferences.AbstractInterpretationPreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.util.relation.Pair;
 
 /**
@@ -26,12 +29,10 @@ import de.uni_freiburg.informatik.ultimate.util.relation.Pair;
  */
 public class AbstractInterpreter<ACTION, VARDECL> {
 
-	// TODO: Replace with setting by replacing all reads with accesses to
-	// ultimatepreferencestorage, i.e. final UltimatePreferenceStore preferences
-	// = new UltimatePreferenceStore(Activator.PLUGIN_ID);
-	private static final int MAX_UNWINDINGS = 10;
-	private static final int MAX_STATES = 2;
 	private static final String INDENT = "   ";
+
+	private final int mMaxUnwindings;
+	private final int mMaxParallelStates;
 
 	private final ITransitionProvider<ACTION> mTransitionProvider;
 	private final Logger mLogger;
@@ -40,6 +41,7 @@ public class AbstractInterpreter<ACTION, VARDECL> {
 	private final IVariableProvider<ACTION, VARDECL> mVarProvider;
 	private final ILoopDetector<ACTION> mLoopDetector;
 	private final IResultReporter mReporter;
+	private final IUltimateServiceProvider mServices;
 
 	public AbstractInterpreter(IUltimateServiceProvider services, ITransitionProvider<ACTION> post,
 			IAbstractStateStorage<ACTION, VARDECL> storage, IAbstractDomain<?, ACTION, VARDECL> domain,
@@ -52,6 +54,7 @@ public class AbstractInterpreter<ACTION, VARDECL> {
 		assert loopDetector != null;
 		assert reporter != null;
 
+		mServices = services;
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mTransitionProvider = post;
 		mStateStorage = storage;
@@ -59,7 +62,15 @@ public class AbstractInterpreter<ACTION, VARDECL> {
 		mVarProvider = varProvider;
 		mLoopDetector = loopDetector;
 		mReporter = reporter;
+
+		final UltimatePreferenceStore ups = new UltimatePreferenceStore(Activator.PLUGIN_ID);
+		mMaxUnwindings = ups.getInt(AbstractInterpretationPreferenceInitializer.LABEL_ITERATIONS_UNTIL_WIDENING);
+		mMaxParallelStates = ups.getInt(AbstractInterpretationPreferenceInitializer.LABEL_STATES_UNTIL_MERGE);
 	}
+
+	// TODO: Recursion
+	// TODO: Correct call/return order
+	// TODO: Refactoring (not one process method)
 
 	public void process(Collection<ACTION> initialElements) {
 		final Deque<Pair<IAbstractState<ACTION, VARDECL>, ACTION>> worklist = new ArrayDeque<Pair<IAbstractState<ACTION, VARDECL>, ACTION>>();
@@ -78,6 +89,8 @@ public class AbstractInterpreter<ACTION, VARDECL> {
 		}
 
 		while (!worklist.isEmpty()) {
+			CheckTimeout();
+			
 			final Pair<IAbstractState<ACTION, VARDECL>, ACTION> currentPair = worklist.removeLast();
 			final IAbstractState<ACTION, VARDECL> preState = currentPair.getFirst();
 			final ACTION current = currentPair.getSecond();
@@ -129,7 +142,7 @@ public class AbstractInterpreter<ACTION, VARDECL> {
 						mLogger.debug(logMessage);
 					}
 
-					if (loopCounterValue > MAX_UNWINDINGS) {
+					if (loopCounterValue > mMaxUnwindings) {
 						if (mLogger.isDebugEnabled()) {
 							final StringBuilder logMessage = new StringBuilder().append(INDENT)
 									.append(" Widening with old post state [").append(oldPostState.hashCode())
@@ -216,6 +229,16 @@ public class AbstractInterpreter<ACTION, VARDECL> {
 			final Collection<ACTION> successors = mTransitionProvider.getSuccessors(current);
 			final Collection<ACTION> siblings = mTransitionProvider.getSiblings(current);
 
+			if(successors.isEmpty()){
+				if (mLogger.isDebugEnabled()) {
+					final StringBuilder logMessage = new StringBuilder().append(INDENT).append(
+							" No successors");
+					mLogger.debug(logMessage);
+				}
+				closedSet.add(current);
+				continue;
+			}
+			
 			if (!closedSet.containsAll(siblings)) {
 				if (mLogger.isDebugEnabled()) {
 					final StringBuilder logMessage = new StringBuilder().append(INDENT).append(
@@ -250,7 +273,7 @@ public class AbstractInterpreter<ACTION, VARDECL> {
 					.getAbstractPostStates(current);
 			final int availablePostStatesCount = availablePostStates.size();
 
-			if (availablePostStatesCount > MAX_STATES || leavingLoop) {
+			if (availablePostStatesCount > mMaxParallelStates || leavingLoop) {
 				if (mLogger.isDebugEnabled()) {
 					final StringBuilder logMessage = new StringBuilder().append(INDENT).append(" Merging ")
 							.append(availablePostStatesCount).append(" states at target location");
@@ -315,5 +338,11 @@ public class AbstractInterpreter<ACTION, VARDECL> {
 			return builder.append("[?]");
 		}
 		return builder.append("[").append(current.hashCode()).append("]");
+	}
+
+	private void CheckTimeout() {
+		if (!mServices.getProgressMonitorService().continueProcessing()) {
+			throw new ToolchainCanceledException(getClass(), "Got cancel request during abstract interpretation");
+		}
 	}
 }
