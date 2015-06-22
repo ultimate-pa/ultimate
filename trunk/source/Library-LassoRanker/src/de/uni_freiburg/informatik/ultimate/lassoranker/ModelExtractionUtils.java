@@ -5,7 +5,9 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -261,6 +263,180 @@ public class ModelExtractionUtils {
 		logger.info("Setting " + num_zero_vars + " variables to zero.");
 
 		return val;
+	}
+	
+	
+	/**
+	 * Tries to simplify a satisfying assignment by assigning zeros to
+	 * variables. Gets stuck in local optima.
+	 * 
+	 * This is a more efficient version
+	 * @param script
+	 * 			SMT script whose corresponding solver is in a state where
+	 * 			checkSat() was called and the result was SAT.
+	 * 			This method will not modify the assertion stack of the solver.
+	 * @param variables
+	 *            the list of variables that can be set to 0
+	 * @param logger
+	 * 			Logger to which we write information about the simplification.
+	 * @param services 
+	 * @return an assignment with (hopefully) many zeros
+	 * @throws TermException
+	 *             if model extraction fails
+	 */
+	public static Map<Term, Rational> getSimplifiedAssignment_TwoMode(Script script, 
+			Collection<Term> variables, Logger logger, IUltimateServiceProvider services) throws TermException {
+		Term zero = script.numeral("0");
+
+		Set<Term> alreadyZero = new HashSet<Term>(); // variables fixed to 0
+		Set<Term> zeroCandidates = new HashSet<Term>(variables); // variables that might be fixed to 0
+		Set<Term> neverZero = new HashSet<Term>(); // variables that will never become 0
+		Map<Term, Rational> finalValuation = new HashMap<Term, Rational>(getValuation(script, variables));
+		
+		{
+			List<Term> notYetAssertedZeros = findNewZeros(finalValuation, alreadyZero, zeroCandidates);
+			for (Term var : notYetAssertedZeros) {
+				script.assertTerm(script.term("=", var, zero));
+			}
+		}
+		int variablesInitiallySetToZero = alreadyZero.size();
+		
+		boolean conjunctiveMode = false;
+		int subsetSize = (int) Math.ceil(zeroCandidates.size() / 4.0);
+		int pushWithoutPop = 0;
+		int checkSatCalls = 0;
+		Map<Term, Rational> newPartialValuation = null;
+		while (!zeroCandidates.isEmpty()) {
+			if (!services.getProgressMonitorService().continueProcessing()) {
+				throw new ToolchainCanceledException(ModelExtractionUtils.class,
+						"simplifying assignment for " + variables.size() + "variables");
+			}
+			
+			if (newPartialValuation != null) {
+				List<Term> notYetAssertedZeros = findNewZeros(finalValuation, alreadyZero, zeroCandidates);
+				for (Term var : notYetAssertedZeros) {
+					script.assertTerm(script.term("=", var, zero));
+				}
+			}
+			
+			List<Term> subset = getSubset(subsetSize, zeroCandidates);
+			Term[] equalsZeroTerms = constructEqualsZeroTerms(script, subset);
+			script.push(1);
+			pushWithoutPop++;
+			if (conjunctiveMode) {
+				Term conjunction = Util.and(script, equalsZeroTerms);
+				script.assertTerm(conjunction);
+				LBool sat = script.checkSat();
+				checkSatCalls++;
+				if (sat == LBool.SAT) {
+					newPartialValuation = getValuation(script, zeroCandidates);
+					finalValuation.putAll(newPartialValuation);
+					for (Term var : subset) {
+						zeroCandidates.remove(var);
+						alreadyZero.add(var);
+					}
+					subsetSize = subsetSize * 2;
+				} else if (sat == LBool.UNSAT) {
+					script.pop(1);
+					pushWithoutPop--;
+					newPartialValuation = null;
+					conjunctiveMode = false;
+					subsetSize = (int) Math.ceil(zeroCandidates.size() / 4.0);
+				} else if (sat == LBool.UNKNOWN) {
+					throw new AssertionError("not yet implemented");
+				} else {
+					throw new AssertionError("unknown LBool");
+				}
+			} else {
+				// disjunctive mode
+				Term disjunction = Util.or(script, equalsZeroTerms);
+				script.assertTerm(disjunction);
+				LBool sat = script.checkSat();
+				checkSatCalls++;
+				if (sat == LBool.SAT) {
+					newPartialValuation = getValuation(script, zeroCandidates);
+					finalValuation.putAll(newPartialValuation);
+					script.pop(1);
+					pushWithoutPop--;
+					conjunctiveMode = true;
+					subsetSize = (int) Math.ceil(zeroCandidates.size() / 4.0);
+				} else if (sat == LBool.UNSAT) {
+					for (Term var : subset) {
+						zeroCandidates.remove(var);
+						neverZero.add(var);
+					}
+					script.pop(1);
+					pushWithoutPop--;
+					newPartialValuation = null;
+					subsetSize = subsetSize * 2;
+				} else if (sat == LBool.UNKNOWN) {
+					throw new AssertionError("not yet implemented");
+				} else {
+					throw new AssertionError("unknown LBool");
+				}
+			}
+		}
+		//clear assertion stack
+		for (int i=0; i<pushWithoutPop; i++) {
+			script.push(1);
+		}
+
+		// Send stats to the logger
+		logger.info("Simplification made " + checkSatCalls + " calls to the SMT solver.");
+		logger.info(variablesInitiallySetToZero + " out of " + finalValuation.size()  + 
+				" variables were initially zero. Simplification set additionally " + 
+				(alreadyZero.size() - variablesInitiallySetToZero) + " variables to zero.");
+		assert alreadyZero.size() + neverZero.size() == finalValuation.size() : "wrong number of variables";
+		return finalValuation;
+	}
+	
+	/**
+	 * Return subset with n elements. If n is greater then set.size() the
+	 * return only set.size() elements.
+	 */
+	private static <E> List<E> getSubset(int n, Set<E> set) {
+		ArrayList<E> result = new ArrayList<E>();
+		int subsetSize = Math.min(n, set.size());
+		Iterator<E> it = set.iterator();
+		for (int i=0; i<subsetSize; i++) {
+			result.add(it.next());
+		}
+		return result;
+	}
+
+	
+	/**
+	 * Rreturn the equality (= t 0) for each t in set.
+	 */
+	private static Term[] constructEqualsZeroTerms(Script script, List<Term> set) {
+		Term[] result = new Term[set.size()];
+		Iterator<Term> it = set.iterator();
+		for (int i=0; i<set.size(); i++) {
+			Term term = it.next();
+			result[i] = script.term("=",term, script.numeral("0"));
+		}
+		return result;
+	}
+
+	/**
+	 * Check for all zeroCandidates if they are mapped to Rational.ZERO in val.
+	 * If yes, move the variable from the Set zeroCandidates to the set
+	 * alreadyZero. Return all variables that were moved.
+	 */
+	private static List<Term> findNewZeros(Map<Term, Rational> val,
+			Set<Term> alreadyZero, Set<Term> zeroCandidates) {
+		List<Term> newlyBecomeZero = new ArrayList<Term>();
+		Iterator<Term> it = zeroCandidates.iterator();
+		while (it.hasNext()) {
+			Term var = it.next();
+			assert (val.containsKey(var));
+			if (val.get(var).equals(Rational.ZERO)) {
+				newlyBecomeZero.add(var);
+				alreadyZero.add(var);
+				it.remove();
+			}
+		}
+		return newlyBecomeZero;
 	}
 	
 
