@@ -85,10 +85,9 @@ public class AbstractInterpreter<ACTION, VARDECL> {
 
 			if (mLogger.isDebugEnabled()) {
 				final String preStateString = preState == null ? "NULL" : preState.toLogString();
-				final StringBuilder logMessage = addHashCodeString(
-						addHashCodeString(new StringBuilder(), current).append(" ")
-								.append(mTransitionProvider.toLogString(current)).append(" processing for pre state "),
-						preState).append(" ").append(preStateString);
+				final StringBuilder logMessage = addHashCodeString(new StringBuilder(), current).append(" ")
+						.append(mTransitionProvider.toLogString(current)).append(" processing for pre state ")
+						.append(preStateString);
 				mLogger.debug(logMessage);
 			}
 
@@ -96,8 +95,8 @@ public class AbstractInterpreter<ACTION, VARDECL> {
 				// unreachable, just continue (do not add successors to
 				// worklist)
 				if (mLogger.isDebugEnabled()) {
-					final StringBuilder logMessage = addHashCodeString(new StringBuilder().append(INDENT), current)
-							.append(" Skipping all successors because post is bottom");
+					final StringBuilder logMessage = new StringBuilder().append(INDENT).append(
+							" Skipping all successors because post is bottom");
 					mLogger.debug(logMessage);
 				}
 				closedSet.add(current);
@@ -111,12 +110,14 @@ public class AbstractInterpreter<ACTION, VARDECL> {
 					current, preState);
 			IAbstractState<ACTION, VARDECL> newPostState = post.apply(preStateWithFreshVariables, current);
 
+			boolean leavingLoop = false;
 			// check if this action leaves a loop
 			if (!activeLoops.isEmpty()) {
 				// are we leaving a loop?
 				final Pair<ACTION, ACTION> lastPair = activeLoops.peek();
 				if (lastPair.getSecond().equals(current)) {
 					// yes, we are leaving a loop
+					leavingLoop = true;
 					activeLoops.pop();
 					Integer loopCounterValue = loopCounters.get(lastPair);
 					assert loopCounterValue != null;
@@ -124,18 +125,24 @@ public class AbstractInterpreter<ACTION, VARDECL> {
 					loopCounters.put(lastPair, loopCounterValue);
 
 					if (mLogger.isDebugEnabled()) {
-						final StringBuilder logMessage = addHashCodeString(new StringBuilder().append(INDENT), current)
-								.append(" Leaving loop");
+						final StringBuilder logMessage = new StringBuilder().append(INDENT).append(" Leaving loop");
 						mLogger.debug(logMessage);
 					}
 
 					if (loopCounterValue > MAX_UNWINDINGS) {
 						if (mLogger.isDebugEnabled()) {
-							final StringBuilder logMessage = addHashCodeString(new StringBuilder().append(INDENT),
-									current).append(" Widening state at target location");
+							final StringBuilder logMessage = new StringBuilder().append(INDENT)
+									.append(" Widening with old post state [").append(oldPostState.hashCode())
+									.append("] and new post state [").append(newPostState.hashCode()).append("]");
 							mLogger.debug(logMessage);
 						}
 						newPostState = widening.apply(oldPostState, newPostState);
+						if (mLogger.isDebugEnabled()) {
+							final StringBuilder logMessage = new StringBuilder().append(INDENT)
+									.append(" Widening resulted in post state [").append(newPostState.hashCode())
+									.append("]");
+							mLogger.debug(logMessage);
+						}
 					}
 				}
 			}
@@ -145,8 +152,8 @@ public class AbstractInterpreter<ACTION, VARDECL> {
 				// execute the action (i.e., we do not enter loops, do not add
 				// new actions to the worklist, etc.)
 				if (mLogger.isDebugEnabled()) {
-					final StringBuilder logMessage = addHashCodeString(new StringBuilder().append(INDENT), current)
-							.append(" Skipping all successors because post is bottom");
+					final StringBuilder logMessage = new StringBuilder().append(INDENT).append(
+							" Skipping all successors because post is bottom");
 					mLogger.debug(logMessage);
 				}
 				closedSet.add(current);
@@ -161,8 +168,8 @@ public class AbstractInterpreter<ACTION, VARDECL> {
 					// if our pre-state is a fixpoint, we do not actually
 					// execute the action and do not actually enter the loop
 					if (mLogger.isDebugEnabled()) {
-						final StringBuilder logMessage = addHashCodeString(new StringBuilder().append(INDENT), current)
-								.append(" Skipping loop entry because pre is already fixpoint");
+						final StringBuilder logMessage = new StringBuilder().append(INDENT).append(
+								" Skipping loop entry because pre is already fixpoint");
 						mLogger.debug(logMessage);
 					}
 					closedSet.add(current);
@@ -174,8 +181,8 @@ public class AbstractInterpreter<ACTION, VARDECL> {
 					loopCounters.put(pair, 0);
 				}
 				if (mLogger.isDebugEnabled()) {
-					final StringBuilder logMessage = addHashCodeString(new StringBuilder().append(INDENT), current)
-							.append(" Entering loop (").append(loopCounters.get(pair)).append(")");
+					final StringBuilder logMessage = new StringBuilder().append(INDENT).append(" Entering loop (")
+							.append(loopCounters.get(pair)).append(")");
 					mLogger.debug(logMessage);
 				}
 			}
@@ -184,7 +191,18 @@ public class AbstractInterpreter<ACTION, VARDECL> {
 				// found fixpoint, mark old post state as fixpoint, do not add
 				// new post state
 				newPostState = mStateStorage.setPostStateIsFixpoint(current, oldPostState, true);
+				if (mLogger.isDebugEnabled()) {
+					final StringBuilder logMessage = new StringBuilder().append(INDENT).append(" post state ")
+							.append(oldPostState.hashCode()).append(" is fixpoint, replacing with ")
+							.append(newPostState.hashCode());
+					mLogger.debug(logMessage);
+				}
 			} else {
+				if (mLogger.isDebugEnabled()) {
+					final StringBuilder logMessage = new StringBuilder().append(INDENT).append(" adding post state ")
+							.append(newPostState.toLogString());
+					mLogger.debug(logMessage);
+				}
 				mStateStorage.addAbstractPostState(current, newPostState);
 			}
 
@@ -200,8 +218,8 @@ public class AbstractInterpreter<ACTION, VARDECL> {
 
 			if (!closedSet.containsAll(siblings)) {
 				if (mLogger.isDebugEnabled()) {
-					final StringBuilder logMessage = addHashCodeString(new StringBuilder().append(INDENT), current)
-							.append(" Unprocessed incoming siblings left");
+					final StringBuilder logMessage = new StringBuilder().append(INDENT).append(
+							" Unprocessed incoming siblings left");
 					mLogger.debug(logMessage);
 				}
 				boolean hasLoopEntry = false;
@@ -220,8 +238,8 @@ public class AbstractInterpreter<ACTION, VARDECL> {
 				}
 
 				if (mLogger.isDebugEnabled()) {
-					final StringBuilder logMessage = addHashCodeString(new StringBuilder().append(INDENT), current)
-							.append(" Adding anyways because its a loop entry");
+					final StringBuilder logMessage = new StringBuilder().append(INDENT).append(
+							" Adding anyways because its a loop entry");
 					mLogger.debug(logMessage);
 				}
 			}
@@ -232,28 +250,34 @@ public class AbstractInterpreter<ACTION, VARDECL> {
 					.getAbstractPostStates(current);
 			final int availablePostStatesCount = availablePostStates.size();
 
-			if (mLogger.isDebugEnabled()) {
-				final StringBuilder logMessage = addHashCodeString(new StringBuilder().append(INDENT), current).append(
-						" Adding successor transitions");
-				mLogger.debug(logMessage);
-			}
-
-			if (availablePostStatesCount > MAX_STATES) {
+			if (availablePostStatesCount > MAX_STATES || leavingLoop) {
 				if (mLogger.isDebugEnabled()) {
-					final StringBuilder logMessage = addHashCodeString(new StringBuilder().append(INDENT), current)
-							.append(" Merging ").append(availablePostStatesCount).append(" states at target location");
+					final StringBuilder logMessage = new StringBuilder().append(INDENT).append(" Merging ")
+							.append(availablePostStatesCount).append(" states at target location");
 					mLogger.debug(logMessage);
 				}
 				newPostState = mStateStorage.mergePostStates(current);
+				if (mLogger.isDebugEnabled()) {
+					final StringBuilder logMessage = new StringBuilder().append(INDENT)
+							.append(" Merging resulted in [").append(newPostState.hashCode()).append("]");
+					mLogger.debug(logMessage);
+				}
 				for (final ACTION successor : successors) {
 					final Pair<IAbstractState<ACTION, VARDECL>, ACTION> succPair = createPair(newPostState, successor);
 					worklist.add(succPair);
+					if (mLogger.isDebugEnabled()) {
+						mLogger.debug(getTransitionLogMessage(succPair));
+					}
 				}
 			} else {
 				for (final IAbstractState<ACTION, VARDECL> postState : availablePostStates) {
 					for (final ACTION successor : successors) {
 						final Pair<IAbstractState<ACTION, VARDECL>, ACTION> succPair = createPair(postState, successor);
 						worklist.add(succPair);
+						if (mLogger.isDebugEnabled()) {
+							mLogger.debug(getTransitionLogMessage(succPair));
+						}
+
 					}
 				}
 			}
@@ -264,6 +288,11 @@ public class AbstractInterpreter<ACTION, VARDECL> {
 		if (!errorReached) {
 			mReporter.reportSafe();
 		}
+	}
+
+	private StringBuilder getTransitionLogMessage(final Pair<IAbstractState<ACTION, VARDECL>, ACTION> succPair) {
+		return new StringBuilder().append(INDENT).append(" Adding [").append(succPair.getFirst().hashCode())
+				.append("]").append(" --[").append(succPair.getSecond().hashCode()).append("]->");
 	}
 
 	private Pair<IAbstractState<ACTION, VARDECL>, ACTION> createPair(IAbstractState<ACTION, VARDECL> newPostState,

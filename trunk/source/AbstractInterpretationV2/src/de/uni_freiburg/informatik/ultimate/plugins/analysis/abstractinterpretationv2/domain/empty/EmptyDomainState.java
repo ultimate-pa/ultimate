@@ -19,17 +19,21 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  */
 public final class EmptyDomainState<ACTION, VARDECL> implements IAbstractState<ACTION, VARDECL> {
 
+	private static int sId;
 	private final Map<String, VARDECL> mVarDecls;
+	private final int mId;
 	private boolean mIsFixpoint;
 
 	protected EmptyDomainState() {
 		mVarDecls = new HashMap<String, VARDECL>();
 		mIsFixpoint = false;
+		mId = sId++;
 	}
 
 	protected EmptyDomainState(Map<String, VARDECL> varDecls, boolean isFixpoint) {
 		mVarDecls = varDecls;
 		mIsFixpoint = isFixpoint;
+		mId = sId++;
 	}
 
 	@Override
@@ -105,7 +109,8 @@ public final class EmptyDomainState<ACTION, VARDECL> implements IAbstractState<A
 
 	@Override
 	public String toLogString() {
-		final StringBuilder sb = new StringBuilder().append(mIsFixpoint).append(" ");
+		final StringBuilder sb = new StringBuilder().append("[").append(mId).append("] ").append(mIsFixpoint)
+				.append(" ");
 		for (Entry<String, VARDECL> entry : mVarDecls.entrySet()) {
 			sb.append(entry.getKey()).append("; ");
 		}
@@ -138,6 +143,11 @@ public final class EmptyDomainState<ACTION, VARDECL> implements IAbstractState<A
 	@Override
 	public String toString() {
 		return toLogString();
+	}
+
+	@Override
+	public int hashCode() {
+		return mId;
 	}
 
 	@Override
