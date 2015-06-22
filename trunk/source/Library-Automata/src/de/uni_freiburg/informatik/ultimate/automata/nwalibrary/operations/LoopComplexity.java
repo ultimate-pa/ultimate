@@ -104,7 +104,7 @@ public class LoopComplexity<LETTER, STATE> implements IOperation<LETTER, STATE> 
 			// Consider all subgraphs differing from original graph by one vertex.
 			
 			int maxEdges = 0;	
-			Collection<STATE> allstates = new ArrayList<STATE>();
+			Collection<STATE> peakStates = new ArrayList<STATE>();
 			
 			// Determine number of predecessors and successors for each state.
 			for (STATE q : states) {
@@ -130,31 +130,31 @@ public class LoopComplexity<LETTER, STATE> implements IOperation<LETTER, STATE> 
 					}*/
 				}
 				
-				// Add all those states with the maximum number of edges to allstates.
+				// Add all those states with the maximum number of edges to peakStates.
 				if (pCount != 1 || sCount != 1) {
 				  if (pCount + sCount == maxEdges) {
-					  allstates.add(q);
+					  peakStates.add(q);
 				  }
 				  
 				  if (pCount + sCount > maxEdges) {
 					  maxEdges = pCount + sCount;
-					  allstates.clear();
-					  allstates.add(q);
+					  peakStates.clear();
+					  peakStates.add(q);
 				  }
 				}
 			}
 			
 			// If every state has one predecessor and one successor, the ball is a cycle.
-			if (allstates.isEmpty()) {
+			if (peakStates.isEmpty()) {
 				return 1;
 			}
 			
 			Collection<Integer> subGraphLoopComplexities = new ArrayList<Integer>();
 
-			// Create a copy since 'allstates' itself should not be modified.
-			Set<STATE> copyStates = new HashSet<STATE>(allstates);
+			// Create a copy since 'peakStates' itself should not be modified.
+			Set<STATE> copyStates = new HashSet<STATE>(states);
 
-			for (STATE stateOut : allstates) {
+			for (STATE stateOut : peakStates) {
 				// Check for cancel button.
 				if (!m_Services.getProgressMonitorService().continueProcessing()) {
 					throw new ToolchainCanceledException(this.getClass());
