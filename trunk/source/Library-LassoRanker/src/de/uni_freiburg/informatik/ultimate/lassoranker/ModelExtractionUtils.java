@@ -302,7 +302,7 @@ public class ModelExtractionUtils {
 		int variablesInitiallySetToZero = alreadyZero.size();
 		
 		boolean conjunctiveMode = false;
-		int subsetSize = (int) Math.ceil(zeroCandidates.size() / 4.0);
+		double subsetSizeBonusFactor = 1.0;
 		int pushWithoutPop = 0;
 		int checkSatCalls = 0;
 		Map<Term, Rational> newPartialValuation = null;
@@ -312,54 +312,26 @@ public class ModelExtractionUtils {
 						"simplifying assignment for " + variables.size() + "variables");
 			}
 			
-			if (newPartialValuation != null) {
-				List<Term> notYetAssertedZeros = findNewZeros(finalValuation, alreadyZero, zeroCandidates);
-				for (Term var : notYetAssertedZeros) {
-					script.assertTerm(script.term("=", var, zero));
-				}
-			}
-			
+			int subsetSize = computeSubsetSize(zeroCandidates.size(), subsetSizeBonusFactor);
 			List<Term> subset = getSubset(subsetSize, zeroCandidates);
 			Term[] equalsZeroTerms = constructEqualsZeroTerms(script, subset);
 			script.push(1);
 			pushWithoutPop++;
-			if (conjunctiveMode) {
-				Term conjunction = Util.and(script, equalsZeroTerms);
-				script.assertTerm(conjunction);
+			assert !subset.isEmpty() : "subset too small";
+			if (subset.size() == 1) {
+				assert equalsZeroTerms.length == 1;
+				script.assertTerm(equalsZeroTerms[0]);
 				LBool sat = script.checkSat();
 				checkSatCalls++;
 				if (sat == LBool.SAT) {
-					newPartialValuation = getValuation(script, zeroCandidates);
+					newPartialValuation = getValuation2(script, zeroCandidates, neverZero);
 					finalValuation.putAll(newPartialValuation);
 					for (Term var : subset) {
 						zeroCandidates.remove(var);
 						alreadyZero.add(var);
 					}
-					subsetSize = subsetSize * 2;
-				} else if (sat == LBool.UNSAT) {
-					script.pop(1);
-					pushWithoutPop--;
-					newPartialValuation = null;
-					conjunctiveMode = false;
-					subsetSize = (int) Math.ceil(zeroCandidates.size() / 4.0);
-				} else if (sat == LBool.UNKNOWN) {
-					throw new AssertionError("not yet implemented");
-				} else {
-					throw new AssertionError("unknown LBool");
-				}
-			} else {
-				// disjunctive mode
-				Term disjunction = Util.or(script, equalsZeroTerms);
-				script.assertTerm(disjunction);
-				LBool sat = script.checkSat();
-				checkSatCalls++;
-				if (sat == LBool.SAT) {
-					newPartialValuation = getValuation(script, zeroCandidates);
-					finalValuation.putAll(newPartialValuation);
-					script.pop(1);
-					pushWithoutPop--;
 					conjunctiveMode = true;
-					subsetSize = (int) Math.ceil(zeroCandidates.size() / 4.0);
+					subsetSizeBonusFactor = 2.0;
 				} else if (sat == LBool.UNSAT) {
 					for (Term var : subset) {
 						zeroCandidates.remove(var);
@@ -368,11 +340,71 @@ public class ModelExtractionUtils {
 					script.pop(1);
 					pushWithoutPop--;
 					newPartialValuation = null;
-					subsetSize = subsetSize * 2;
+					conjunctiveMode = false;
+					subsetSizeBonusFactor = 2.0;
 				} else if (sat == LBool.UNKNOWN) {
 					throw new AssertionError("not yet implemented");
 				} else {
 					throw new AssertionError("unknown LBool");
+				}
+			} else {
+				// size > 1
+				if (conjunctiveMode) {
+					Term conjunction = Util.and(script, equalsZeroTerms);
+					script.assertTerm(conjunction);
+					LBool sat = script.checkSat();
+					checkSatCalls++;
+					if (sat == LBool.SAT) {
+						newPartialValuation = getValuation2(script, zeroCandidates, neverZero);
+						finalValuation.putAll(newPartialValuation);
+						for (Term var : subset) {
+							zeroCandidates.remove(var);
+							alreadyZero.add(var);
+						}
+						subsetSizeBonusFactor = 2.0;
+					} else if (sat == LBool.UNSAT) {
+						script.pop(1);
+						pushWithoutPop--;
+						newPartialValuation = null;
+						conjunctiveMode = false;
+					} else if (sat == LBool.UNKNOWN) {
+						throw new AssertionError("not yet implemented");
+					} else {
+						throw new AssertionError("unknown LBool");
+					}
+				} else {
+					// disjunctive mode
+					Term disjunction = Util.or(script, equalsZeroTerms);
+					script.assertTerm(disjunction);
+					LBool sat = script.checkSat();
+					checkSatCalls++;
+					if (sat == LBool.SAT) {
+						newPartialValuation = getValuation2(script, zeroCandidates, neverZero);
+						finalValuation.putAll(newPartialValuation);
+						script.pop(1);
+						pushWithoutPop--;
+						conjunctiveMode = true;
+					} else if (sat == LBool.UNSAT) {
+						for (Term var : subset) {
+							zeroCandidates.remove(var);
+							neverZero.add(var);
+						}
+						script.pop(1);
+						pushWithoutPop--;
+						newPartialValuation = null;
+						subsetSizeBonusFactor = 2.0;
+					} else if (sat == LBool.UNKNOWN) {
+						throw new AssertionError("not yet implemented");
+					} else {
+						throw new AssertionError("unknown LBool");
+					}
+				}
+			}
+			
+			if (newPartialValuation != null) {
+				List<Term> notYetAssertedZeros = findNewZeros(finalValuation, alreadyZero, zeroCandidates);
+				for (Term var : notYetAssertedZeros) {
+					script.assertTerm(script.term("=", var, zero));
 				}
 			}
 		}
@@ -388,6 +420,18 @@ public class ModelExtractionUtils {
 				(alreadyZero.size() - variablesInitiallySetToZero) + " variables to zero.");
 		assert alreadyZero.size() + neverZero.size() == finalValuation.size() : "wrong number of variables";
 		return finalValuation;
+	}
+	
+	private static Map<Term, Rational> getValuation2(Script script,
+			Set<Term> zeroCandidates, Set<Term> neverZero) throws TermException {
+		List<Term> vars = new ArrayList<>(zeroCandidates.size() + neverZero.size());
+		vars.addAll(zeroCandidates);
+		vars.addAll(neverZero);
+		return getValuation(script, vars);
+	}
+
+	private static int computeSubsetSize(int zeroCandidates, double subsetSizeBonusFactor) {
+		return (int) Math.ceil(zeroCandidates * subsetSizeBonusFactor / 4.0);
 	}
 	
 	/**
