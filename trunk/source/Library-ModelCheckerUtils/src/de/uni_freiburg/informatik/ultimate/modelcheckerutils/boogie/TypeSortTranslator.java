@@ -118,7 +118,7 @@ public class TypeSortTranslator {
 	 * in m_sort2type.
 	 * @param BoogieASTNode BoogieASTNode for which Sort is computed 
 	 */
-	private Sort constructSort(IType boogieType, BoogieASTNode BoogieASTNode) {
+	protected Sort constructSort(IType boogieType, BoogieASTNode BoogieASTNode) {
 		Sort result;
 		if (boogieType instanceof PrimitiveType) {
 			if (boogieType.equals(PrimitiveType.boolType)) {
