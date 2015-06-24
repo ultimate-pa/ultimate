@@ -22,7 +22,7 @@ public class LTLChecker extends AbstractEvalTestSuite {
 	// @formatter:off
 	private static final String[] SETTINGS = new String[] { 
 //		//no optimizations 
-		"None.epf", 
+//		"None.epf", 
 //		
 //		//only small and large block encoding 
 //		"None+SBE.epf",
@@ -50,7 +50,7 @@ public class LTLChecker extends AbstractEvalTestSuite {
 //		//different buchi automata constructions 
 //		"Default-LBE-Multi-StagedBlast.epf",
 //		"Default-LBE-Multi+NondetBuchi.epf", 
-		"None-StagedBlast.epf",
+//		"None-StagedBlast.epf",
 //		 
 //		//nearly all optimizations 
 //		"Default-LBE-Multi+SBE.epf",
@@ -61,7 +61,7 @@ public class LTLChecker extends AbstractEvalTestSuite {
 //		// nearly all optimizations and staged blast 
 //		"Default-LBE-Multi+SBE-StagedBlast.epf",
 //		"Default-LBE-Multi+SBE+IB-StagedBlast.epf", 
-//		"Default-LBE-Multi+SBE+SASBE-StagedBlast.epf", 
+		"Default-LBE-Multi+SBE+SASBE-StagedBlast.epf", 
 //		"Default-LBE-Multi+SBE+SASBE+IB-StagedBlast.epf",
 	};
 
@@ -73,17 +73,18 @@ public class LTLChecker extends AbstractEvalTestSuite {
 //			getPair("examples/LTL/rers2012/P18/", 1), 
 //			getPair("examples/LTL/rers2012/P19/", 1),
 
-			getPair("examples/LTL/rers2012correctencoding/P15/"),
-			getPair("examples/LTL/rers2012correctencoding/P16/"),
-			getPair("examples/LTL/rers2012correctencoding/P17/"),
-			getPair("examples/LTL/rers2012correctencoding/P18/"),
-			getPair("examples/LTL/rers2012correctencoding/P19/"),
-			getPair("examples/LTL/rers2012correctencoding/P14/"),
-
-			getPair("examples/LTL/coolant/"), 
-			getPair("examples/LTL/koskinen/ltlcmodelchecker-benchmarks/"),
-			getPair("examples/LTL/bugs/"), 
-			getPair("examples/LTL/simple/"),
+//			getPair("examples/LTL/rers2012correctencoding/P15/"),
+//			getPair("examples/LTL/rers2012correctencoding/P16/"),
+//			getPair("examples/LTL/rers2012correctencoding/P17/"),
+//			getPair("examples/LTL/rers2012correctencoding/P18/"),
+//			getPair("examples/LTL/rers2012correctencoding/P19/"),
+//			getPair("examples/LTL/rers2012correctencoding/P14/"),
+//
+//			getPair("examples/LTL/coolant/"), 
+//			getPair("examples/LTL/koskinen/ltlcmodelchecker-benchmarks/"),
+//			getPair("examples/LTL/bugs/"), 
+//			getPair("examples/LTL/simple/"),
+		getPair("examples/LTL/rers2012correctencoding/P14/Problem14_prop_017.c")
 
 	// Possible soundness bug
 //	 getPair("examples/LTL/rers2012/P14/Problem14_prop_003.c"),
@@ -96,7 +97,7 @@ public class LTLChecker extends AbstractEvalTestSuite {
 		// return 180 * 1000;
 		return 12 * 60 * 1000;
 	}
-
+	
 	@Override
 	protected ColumnDefinition[] getColumnDefinitions() {
 		// @formatter:off

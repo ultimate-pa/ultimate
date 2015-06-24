@@ -6,6 +6,7 @@ import java.util.List;
 import de.uni_freiburg.informatik.ultimate.access.BaseObserver;
 import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
 import de.uni_freiburg.informatik.ultimate.boogie.type.PreprocessorAnnotation;
+import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
@@ -23,9 +24,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.RcfgVariableProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.IAbstractDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.empty.EmptyDomain;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.empty.EmptyDomainState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.sign.SignDomain;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.sign.SignDomainState;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.preferences.AbstractInterpretationPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.loopdetector.RCFGLoopDetector;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
@@ -64,7 +64,7 @@ public class AbstractInterpretationRcfgObserver extends BaseObserver {
 
 		final Boogie2SmtSymbolTable boogieVarTable = root.getRootAnnot().getBoogie2SMT().getBoogie2SmtSymbolTable();
 
-		final IAbstractDomain<SignDomainState<CodeBlock, BoogieVar>, CodeBlock, BoogieVar> domain = selectDomain();
+		final IAbstractDomain<?, CodeBlock, BoogieVar> domain = selectDomain();
 		final AbstractInterpreter<CodeBlock, BoogieVar> interpreter = createAbstractInterpreter(domain, symbolTable,
 				boogieVarTable);
 		interpreter.process(initial);
@@ -79,9 +79,17 @@ public class AbstractInterpretationRcfgObserver extends BaseObserver {
 		return pa.getSymbolTable();
 	}
 
-	private IAbstractDomain<SignDomainState<CodeBlock, BoogieVar>, CodeBlock, BoogieVar> selectDomain() {
-		//return new EmptyDomain<>();
-		return new SignDomain();
+	private IAbstractDomain<?, CodeBlock, BoogieVar> selectDomain() {
+		final UltimatePreferenceStore ups = new UltimatePreferenceStore(Activator.PLUGIN_ID);
+		final String selectedDomain = ups.getString(AbstractInterpretationPreferenceInitializer.LABEL_ABSTRACT_DOMAIN);
+
+		if (EmptyDomain.class.getSimpleName().equals(selectedDomain)) {
+			return new EmptyDomain<>();
+		} else if (SignDomain.class.getSimpleName().equals(selectedDomain)) {
+			return new SignDomain();
+		}
+		throw new UnsupportedOperationException("The value \"" + selectedDomain + "\" of preference \""
+				+ AbstractInterpretationPreferenceInitializer.LABEL_ABSTRACT_DOMAIN + "\" was not considered before! ");
 	}
 
 	private List<CodeBlock> getInitialEdges(RootNode root) {
