@@ -87,7 +87,7 @@ public class AbstractInterpreter<ACTION, VARDECL> {
 		}
 
 		while (!worklist.isEmpty()) {
-			CheckTimeout();
+			checkTimeout();
 
 			final Pair<IAbstractState<ACTION, VARDECL>, ACTION> currentPair = worklist.removeFirst();
 			final IAbstractState<ACTION, VARDECL> preState = currentPair.getFirst();
@@ -95,24 +95,8 @@ public class AbstractInterpreter<ACTION, VARDECL> {
 			final IAbstractState<ACTION, VARDECL> oldPostState = mStateStorage.getCurrentAbstractPostState(current);
 
 			if (mLogger.isDebugEnabled()) {
-				final String preStateString = preState == null ? "NULL" : preState.toLogString();
-				final StringBuilder logMessage = addHashCodeString(new StringBuilder(), current).append(" ")
-						.append(mTransitionProvider.toLogString(current)).append(" processing for pre state ")
-						.append(preStateString);
-				mLogger.debug(logMessage);
+				mLogger.debug(getCurrentTransitionLogMessage(preState, current));
 			}
-
-			// if (oldPostState != null && oldPostState.isBottom()) {
-			// // unreachable, just continue (do not add successors to
-			// // worklist)
-			// if (mLogger.isDebugEnabled()) {
-			// final StringBuilder logMessage = new
-			// StringBuilder().append(INDENT).append(
-			// " Skipping all successors because post is bottom");
-			// mLogger.debug(logMessage);
-			// }
-			// continue;
-			// }
 
 			// calculate the (abstract) effect of the current action by first
 			// declaring variables in the prestate, and then calculating their
@@ -134,23 +118,16 @@ public class AbstractInterpreter<ACTION, VARDECL> {
 					loopCounters.put(lastPair, loopCounterValue);
 
 					if (mLogger.isDebugEnabled()) {
-						final StringBuilder logMessage = new StringBuilder().append(INDENT).append(" Leaving loop");
-						mLogger.debug(logMessage);
+						mLogger.debug(new StringBuilder().append(INDENT).append(" Leaving loop"));
 					}
 
 					if (loopCounterValue > mMaxUnwindings) {
 						if (mLogger.isDebugEnabled()) {
-							final StringBuilder logMessage = new StringBuilder().append(INDENT)
-									.append(" Widening with old post state [").append(oldPostState.hashCode())
-									.append("] and new post state [").append(newPostState.hashCode()).append("]");
-							mLogger.debug(logMessage);
+							mLogger.debug(getUnwindingLogMessage(oldPostState, newPostState));
 						}
 						newPostState = widening.apply(oldPostState, newPostState);
 						if (mLogger.isDebugEnabled()) {
-							final StringBuilder logMessage = new StringBuilder().append(INDENT)
-									.append(" Widening resulted in post state [").append(newPostState.hashCode())
-									.append("]");
-							mLogger.debug(logMessage);
+							mLogger.debug(getUnwindingResultLogMessage(newPostState));
 						}
 					}
 				}
@@ -161,9 +138,8 @@ public class AbstractInterpreter<ACTION, VARDECL> {
 				// execute the action (i.e., we do not enter loops, do not add
 				// new actions to the worklist, etc.)
 				if (mLogger.isDebugEnabled()) {
-					final StringBuilder logMessage = new StringBuilder().append(INDENT).append(
-							" Skipping all successors because post is bottom");
-					mLogger.debug(logMessage);
+					mLogger.debug(new StringBuilder().append(INDENT).append(
+							" Skipping all successors because post is bottom"));
 				}
 				continue;
 			}
@@ -192,8 +168,8 @@ public class AbstractInterpreter<ACTION, VARDECL> {
 
 			} else {
 				if (mLogger.isDebugEnabled()) {
-					final StringBuilder logMessage = new StringBuilder().append(INDENT).append(" adding post state ")
-							.append(newPostState.toLogString());
+					final StringBuilder logMessage = new StringBuilder().append(INDENT).append(" adding post state [")
+							.append(newPostState.hashCode()).append("] ").append(newPostState.toLogString());
 					mLogger.debug(logMessage);
 				}
 				mStateStorage.addAbstractPostState(current, newPostState);
@@ -223,6 +199,20 @@ public class AbstractInterpreter<ACTION, VARDECL> {
 		if (!errorReached) {
 			mReporter.reportSafe();
 		}
+	}
+
+	private StringBuilder getUnwindingResultLogMessage(IAbstractState<ACTION, VARDECL> newPostState) {
+		final StringBuilder logMessage = new StringBuilder().append(INDENT)
+				.append(" Widening resulted in post state [").append(newPostState.hashCode()).append("]");
+		return logMessage;
+	}
+
+	private StringBuilder getUnwindingLogMessage(final IAbstractState<ACTION, VARDECL> oldPostState,
+			IAbstractState<ACTION, VARDECL> newPostState) {
+		final StringBuilder logMessage = new StringBuilder().append(INDENT).append(" Widening with old post state [")
+				.append(oldPostState.hashCode()).append("] and new post state [").append(newPostState.hashCode())
+				.append("]");
+		return logMessage;
 	}
 
 	private void addSuccessors(final Deque<ModifiablePair<IAbstractState<ACTION, VARDECL>, ACTION>> worklist,
@@ -296,11 +286,6 @@ public class AbstractInterpreter<ACTION, VARDECL> {
 		return newPostState;
 	}
 
-	private StringBuilder getAddTransitionLogMessage(final Pair<IAbstractState<ACTION, VARDECL>, ACTION> succPair) {
-		return new StringBuilder().append(INDENT).append(" Adding [").append(succPair.getFirst().hashCode())
-				.append("]").append(" --[").append(succPair.getSecond().hashCode()).append("]->");
-	}
-
 	private ModifiablePair<IAbstractState<ACTION, VARDECL>, ACTION> createPair(
 			IAbstractState<ACTION, VARDECL> newPostState, final ACTION successor) {
 		return new ModifiablePair<IAbstractState<ACTION, VARDECL>, ACTION>(newPostState, successor);
@@ -316,16 +301,31 @@ public class AbstractInterpreter<ACTION, VARDECL> {
 		return preState;
 	}
 
+	private void checkTimeout() {
+		if (!mServices.getProgressMonitorService().continueProcessing()) {
+			throw new ToolchainCanceledException(getClass(), "Got cancel request during abstract interpretation");
+		}
+	}
+
+	private StringBuilder getCurrentTransitionLogMessage(final IAbstractState<ACTION, VARDECL> preState,
+			final ACTION current) {
+		final String preStateString = preState == null ? "NULL" : addHashCodeString(new StringBuilder(), preState)
+				.append(" ").append(preState.toLogString()).toString();
+		final StringBuilder logMessage = addHashCodeString(new StringBuilder(), current).append(" ")
+				.append(mTransitionProvider.toLogString(current)).append(" processing for pre state ")
+				.append(preStateString);
+		return logMessage;
+	}
+
+	private StringBuilder getAddTransitionLogMessage(final Pair<IAbstractState<ACTION, VARDECL>, ACTION> succPair) {
+		return new StringBuilder().append(INDENT).append(" Adding [").append(succPair.getFirst().hashCode())
+				.append("]").append(" --[").append(succPair.getSecond().hashCode()).append("]->");
+	}
+
 	private StringBuilder addHashCodeString(StringBuilder builder, final Object current) {
 		if (current == null) {
 			return builder.append("[?]");
 		}
 		return builder.append("[").append(current.hashCode()).append("]");
-	}
-
-	private void CheckTimeout() {
-		if (!mServices.getProgressMonitorService().continueProcessing()) {
-			throw new ToolchainCanceledException(getClass(), "Got cancel request during abstract interpretation");
-		}
 	}
 }

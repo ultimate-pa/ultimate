@@ -10,7 +10,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 /**
  * Implementation of an abstract state of the {@link SignDomain}.
  * 
- * Such a state stores the sign values for each variable, including \bot and \top.
+ * Such a state stores the sign values for each variable, including \bot and
+ * \top.
  * 
  * @author greitsch@informatik.uni-freiburg.de
  *
@@ -21,9 +22,10 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  */
 public class SignDomainState<ACTION, VARDECL> implements IAbstractState<ACTION, VARDECL> {
 
-
-	private Map<String, VARDECL> mVariablesMap;
-	private Map<String, SignDomainValue> mValuesMap;
+	private static int sId;
+	private final Map<String, VARDECL> mVariablesMap;
+	private final Map<String, SignDomainValue> mValuesMap;
+	private final int mId;
 
 	private boolean mIsFixpoint;
 
@@ -31,12 +33,14 @@ public class SignDomainState<ACTION, VARDECL> implements IAbstractState<ACTION, 
 		mVariablesMap = new HashMap<String, VARDECL>();
 		mValuesMap = new HashMap<String, SignDomainValue>();
 		mIsFixpoint = false;
+		mId = sId++;
 	}
 
 	public SignDomainState(Map<String, VARDECL> variablesMap, Map<String, SignDomainValue> valuesMap, boolean isFixpoint) {
 		mVariablesMap = variablesMap;
 		mValuesMap = valuesMap;
 		mIsFixpoint = isFixpoint;
+		mId = sId++;
 	}
 
 	@Override
@@ -128,7 +132,8 @@ public class SignDomainState<ACTION, VARDECL> implements IAbstractState<ACTION, 
 	}
 
 	/**
-	 * Build a string of the form "var1 : type1 = value1; var2 : type2 = value2; ...".
+	 * Build a string of the form
+	 * "var1 : type1 = value1; var2 : type2 = value2; ...".
 	 * 
 	 * @return A string of all variables with their values.
 	 */
@@ -137,7 +142,7 @@ public class SignDomainState<ACTION, VARDECL> implements IAbstractState<ACTION, 
 		final StringBuilder sb = new StringBuilder();
 		for (Entry<String, VARDECL> entry : mVariablesMap.entrySet()) {
 			sb.append(entry.getKey()).append(":").append(entry.getValue()).append(" = ")
-			        .append(mValuesMap.get(entry.getKey().toString()).getResult()).append("; ");
+					.append(mValuesMap.get(entry.getKey().toString()).getResult()).append("; ");
 		}
 		return sb.toString();
 	}
@@ -146,16 +151,20 @@ public class SignDomainState<ACTION, VARDECL> implements IAbstractState<ACTION, 
 	public String toString() {
 		return toLogString();
 	}
+	
+	@Override
+	public int hashCode() {
+		return mId;
+	}
 
 	@Override
 	public boolean isEqualTo(IAbstractState<ACTION, VARDECL> other) {
-
 		if (!hasSameVariables(other)) {
 			return false;
 		}
 
 		final SignDomainState<ACTION, VARDECL> comparableOther = (SignDomainState<ACTION, VARDECL>) other;
-		for (Entry<String, SignDomainValue> entry : mValuesMap.entrySet()) {
+		for (final Entry<String, SignDomainValue> entry : mValuesMap.entrySet()) {
 			final SignDomainValue otherValue = comparableOther.mValuesMap.get(entry.getKey());
 			if (!mValuesMap.get(entry.getKey()).getResult().equals(otherValue.getResult())) {
 				return false;
@@ -179,7 +188,7 @@ public class SignDomainState<ACTION, VARDECL> implements IAbstractState<ACTION, 
 			return false;
 		}
 
-		for (Entry<String, VARDECL> entry : mVariablesMap.entrySet()) {
+		for (final Entry<String, VARDECL> entry : mVariablesMap.entrySet()) {
 			final VARDECL otherType = comparableOther.mVariablesMap.get(entry.getKey());
 			if (!entry.getValue().equals(otherType)) {
 				return false;
@@ -192,7 +201,7 @@ public class SignDomainState<ACTION, VARDECL> implements IAbstractState<ACTION, 
 	@Override
 	public IAbstractState<ACTION, VARDECL> copy() {
 		return new SignDomainState<ACTION, VARDECL>(new HashMap<String, VARDECL>(mVariablesMap),
-		        new HashMap<String, SignDomainValue>(mValuesMap), mIsFixpoint);
+				new HashMap<String, SignDomainValue>(mValuesMap), mIsFixpoint);
 	}
 
 	protected Map<String, VARDECL> getVariables() {

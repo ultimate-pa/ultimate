@@ -109,7 +109,7 @@ public final class EmptyDomainState<ACTION, VARDECL> implements IAbstractState<A
 
 	@Override
 	public String toLogString() {
-		final StringBuilder sb = new StringBuilder().append("[").append(mId).append("] ").append(mIsFixpoint)
+		final StringBuilder sb = new StringBuilder().append(mIsFixpoint)
 				.append(" ");
 		for (Entry<String, VARDECL> entry : mVarDecls.entrySet()) {
 			sb.append(entry.getKey()).append("; ");
