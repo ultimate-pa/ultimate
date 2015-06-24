@@ -157,7 +157,7 @@ public class SignDomainState<ACTION, VARDECL> implements IAbstractState<ACTION, 
 		final SignDomainState<ACTION, VARDECL> comparableOther = (SignDomainState<ACTION, VARDECL>) other;
 		for (Entry<String, SignDomainValue> entry : mValuesMap.entrySet()) {
 			final SignDomainValue otherValue = comparableOther.mValuesMap.get(entry.getKey());
-			if (!mValuesMap.get(entry.getKey()).equals(otherValue)) {
+			if (!mValuesMap.get(entry.getKey()).getResult().equals(otherValue.getResult())) {
 				return false;
 			}
 		}
