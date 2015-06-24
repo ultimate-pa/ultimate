@@ -137,7 +137,7 @@ public class SignDomainState<ACTION, VARDECL> implements IAbstractState<ACTION, 
 		final StringBuilder sb = new StringBuilder();
 		for (Entry<String, VARDECL> entry : mVariablesMap.entrySet()) {
 			sb.append(entry.getKey()).append(":").append(entry.getValue()).append(" = ")
-			        .append(mValuesMap.get(entry.getKey().toString())).append("; ");
+			        .append(mValuesMap.get(entry.getKey().toString()).getResult()).append("; ");
 		}
 		return sb.toString();
 	}
