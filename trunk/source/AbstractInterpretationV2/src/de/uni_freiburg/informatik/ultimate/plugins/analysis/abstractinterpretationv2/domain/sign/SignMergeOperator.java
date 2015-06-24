@@ -8,8 +8,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.sign.SignDomainValue.Values;
 
 /**
- * The implementation of a simple merge operator on the sign domain. This operator can also be used as widening
- * operator.
+ * The implementation of a simple merge operator on the sign domain. This
+ * operator can also be used as widening operator.
  * 
  * @author greitsch@informatik.uni-freiburg.de
  *
@@ -25,12 +25,14 @@ public class SignMergeOperator<ACTION, VARDECL> implements IAbstractStateBinaryO
 	}
 
 	/**
-	 * Merges two abstract states, first and second, into one new abstract state. All variables that occur in first must
-	 * also occur in second.<br />
+	 * Merges two abstract states, first and second, into one new abstract
+	 * state. All variables that occur in first must also occur in second.<br />
 	 * 
-	 * Assume, there is a variable with name "v". The value of "v" in first is v1 and the value of "v" in second is v2.<br />
+	 * Assume, there is a variable with name "v". The value of "v" in first is
+	 * v1 and the value of "v" in second is v2.<br />
 	 * 
-	 * It is distinguished between four cases for the resulting merged value of "v":<br />
+	 * It is distinguished between four cases for the resulting merged value of
+	 * "v":<br />
 	 * <ol>
 	 * <li>v1 is equal to v2:<br />
 	 * The resulting value will be v1.</li>
@@ -77,32 +79,33 @@ public class SignMergeOperator<ACTION, VARDECL> implements IAbstractStateBinaryO
 	}
 
 	/**
-	 * Computes the merging of two {@link SignDomainState} {@link SignDomainValue}s.
+	 * Computes the merging of two {@link SignDomainState}
+	 * {@link SignDomainValue}s.
 	 * 
 	 * @param value1
 	 * @param value2
 	 * @return
 	 */
 	public static SignDomainValue computeMergedValue(SignDomainValue value1, SignDomainValue value2) {
-		if (value1.equals(value2)) {
+		if (value1.getResult().equals(value2.getResult())) {
 			return value1;
 		}
 
-		if (value1.equals(Values.BOTTOM) || value2.equals(Values.BOTTOM)) {
+		if (value1.getResult().equals(Values.BOTTOM) || value2.getResult().equals(Values.BOTTOM)) {
 			return new SignDomainValue(Values.BOTTOM);
 		}
 
-		if ((value1.equals(Values.POSITIVE) && value2.equals(Values.NEGATIVE))
-		        || (value1.equals(Values.NEGATIVE) && value2.equals(Values.POSITIVE))) {
+		if ((value1.getResult().equals(Values.POSITIVE) && value2.getResult().equals(Values.NEGATIVE))
+		        || (value1.getResult().equals(Values.NEGATIVE) && value2.getResult().equals(Values.POSITIVE))) {
 			return new SignDomainValue(Values.TOP);
 		}
 
-		if (value1.equals(Values.ZERO) || value2.equals(Values.ZERO)) {
+		if (value1.getResult().equals(Values.ZERO) || value2.getResult().equals(Values.ZERO)) {
 			return new SignDomainValue(Values.TOP);
 		}
 
-		throw new UnsupportedOperationException("Unable to handle value1 = " + value1.toString() + " and value2 = "
-		        + value2.toString() + ".");
+		throw new UnsupportedOperationException("Unable to handle value1 = " + value1.getResult().toString()
+		        + " and value2 = " + value2.getResult().toString() + ".");
 	}
 
 }
