@@ -43,8 +43,7 @@ public class SignDomain implements IAbstractDomain<SignDomainState<CodeBlock, Bo
 
 	@Override
 	public IAbstractPostOperator<CodeBlock, BoogieVar> getPostOperator() {
-		// TODO Auto-generated method stub
-		return null;
+		return new SignPostOperator(mStateConverter);
 	}
 
 	@Override

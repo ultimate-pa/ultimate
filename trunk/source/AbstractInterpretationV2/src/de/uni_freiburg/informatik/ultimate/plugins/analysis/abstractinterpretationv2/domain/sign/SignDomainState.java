@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.IAbstractState;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.sign.SignDomainValue.Values;
 
 /**
  * Implementation of an abstract state of the {@link SignDomain}.
@@ -20,9 +21,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  */
 public class SignDomainState<ACTION, VARDECL> implements IAbstractState<ACTION, VARDECL> {
 
-	public enum SignDomainValue {
-		POSITIVE, NEGATIVE, ZERO, BOTTOM, TOP,
-	}
 
 	private Map<String, VARDECL> mVariablesMap;
 	private Map<String, SignDomainValue> mValuesMap;
@@ -53,7 +51,7 @@ public class SignDomainState<ACTION, VARDECL> implements IAbstractState<ACTION, 
 		}
 
 		final Map<String, SignDomainValue> newValMap = new HashMap<String, SignDomainValue>(mValuesMap);
-		newValMap.put(name, SignDomainValue.TOP);
+		newValMap.put(name, new SignDomainValue(Values.TOP));
 
 		return new SignDomainState<ACTION, VARDECL>(newVarMap, newValMap, mIsFixpoint);
 	}
@@ -83,7 +81,7 @@ public class SignDomainState<ACTION, VARDECL> implements IAbstractState<ACTION, 
 			if (old != null) {
 				throw new UnsupportedOperationException("Variable names must be disjoint.");
 			}
-			newValMap.put(entry.getKey(), SignDomainValue.TOP);
+			newValMap.put(entry.getKey(), new SignDomainValue(Values.TOP));
 		}
 
 		return new SignDomainState<ACTION, VARDECL>(newVarMap, newValMap, mIsFixpoint);
@@ -112,7 +110,7 @@ public class SignDomainState<ACTION, VARDECL> implements IAbstractState<ACTION, 
 	@Override
 	public boolean isBottom() {
 		for (Entry<String, SignDomainValue> entry : mValuesMap.entrySet()) {
-			if (entry.getValue().equals(SignDomainValue.BOTTOM)) {
+			if (entry.getValue().getResult().equals(Values.BOTTOM)) {
 				return true;
 			}
 		}
@@ -212,6 +210,11 @@ public class SignDomainState<ACTION, VARDECL> implements IAbstractState<ACTION, 
 		assert mValuesMap.containsKey(name);
 
 		mValuesMap.put(name, value);
+	}
+
+	@Override
+	public boolean containsVariable(String name) {
+		return mVariablesMap.containsKey(name);
 	}
 
 }

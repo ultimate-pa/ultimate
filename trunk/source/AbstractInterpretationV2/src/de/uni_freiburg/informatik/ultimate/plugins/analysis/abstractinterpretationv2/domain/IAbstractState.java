@@ -20,6 +20,8 @@ public interface IAbstractState<ACTION, VARDECL> {
 
 	IAbstractState<ACTION, VARDECL> removeVariables(Map<String,VARDECL> variables);
 
+	boolean containsVariable(String name);
+	
 	/**
 	 * An abstract state is empty when it does not contain any variable.
 	 * 

@@ -5,7 +5,7 @@ import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.IAbstractStateBinaryOperator;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.sign.SignDomainState.SignDomainValue;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.sign.SignDomainValue.Values;
 
 /**
  * The implementation of a simple merge operator on the sign domain. This operator can also be used as widening
@@ -70,32 +70,39 @@ public class SignMergeOperator<ACTION, VARDECL> implements IAbstractStateBinaryO
 			SignDomainValue value1 = firstValues.get(entry.getKey());
 			SignDomainValue value2 = secondValues.get(entry.getKey());
 
-			// If both values are equal, the resulting value will stay the same.
-			if (value1.equals(value2)) {
-				newState.setValue(entry.getKey(), value1);
-				continue;
-			}
-
-			// If v1 is positive (negative) and v2 is negative (positive), the resulting value will be \top.
-			if ((value1.equals(SignDomainValue.POSITIVE) && value2.equals(SignDomainValue.NEGATIVE))
-			        || (value1.equals(SignDomainValue.NEGATIVE) && value2.equals(SignDomainValue.POSITIVE))) {
-				newState.setValue(entry.getKey(), SignDomainValue.TOP);
-				continue;
-			}
-
-			// If one of the values is bottom, the resulting value is bottom.
-			if (value1.equals(SignDomainValue.BOTTOM) || value2.equals(SignDomainValue.BOTTOM)) {
-				newState.setValue(entry.getKey(), SignDomainValue.BOTTOM);
-				continue;
-			}
-
-			if (value1.equals(SignDomainValue.ZERO) || value2.equals(SignDomainValue.ZERO)) {
-				newState.setValue(entry.getKey(), SignDomainValue.TOP);
-				continue;
-			}
+			newState.setValue(entry.getKey(), computeMergedValue(value1, value2));
 		}
 
 		return newState;
+	}
+
+	/**
+	 * Computes the merging of two {@link SignDomainState} {@link SignDomainValue}s.
+	 * 
+	 * @param value1
+	 * @param value2
+	 * @return
+	 */
+	public static SignDomainValue computeMergedValue(SignDomainValue value1, SignDomainValue value2) {
+		if (value1.equals(value2)) {
+			return value1;
+		}
+
+		if (value1.equals(Values.BOTTOM) || value2.equals(Values.BOTTOM)) {
+			return new SignDomainValue(Values.BOTTOM);
+		}
+
+		if ((value1.equals(Values.POSITIVE) && value2.equals(Values.NEGATIVE))
+		        || (value1.equals(Values.NEGATIVE) && value2.equals(Values.POSITIVE))) {
+			return new SignDomainValue(Values.TOP);
+		}
+
+		if (value1.equals(Values.ZERO) || value2.equals(Values.ZERO)) {
+			return new SignDomainValue(Values.TOP);
+		}
+
+		throw new UnsupportedOperationException("Unable to handle value1 = " + value1.toString() + " and value2 = "
+		        + value2.toString() + ".");
 	}
 
 }

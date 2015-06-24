@@ -171,4 +171,9 @@ public final class EmptyDomainState<ACTION, VARDECL> implements IAbstractState<A
 		return new HashMap<>(mVarDecls);
 	}
 
+	@Override
+    public boolean containsVariable(String name) {
+		return mVarDecls.containsKey(name);
+    }
+
 }
