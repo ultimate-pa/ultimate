@@ -131,7 +131,9 @@ public class CfgBuilder {
 		
 		m_BoogieDeclarations = new BoogieDeclarations(unit, mLogger);
 		boolean blackHolesArrays = false;
-		m_Boogie2smt = new Boogie2SMT(m_Script, m_BoogieDeclarations, blackHolesArrays, mServices);
+		boolean bitvectorInsteadInt = (new UltimatePreferenceStore(RCFGBuilder.s_PLUGIN_ID))
+				.getBoolean(RcfgPreferenceInitializer.LABEL_BitvectorWorkaround);
+		m_Boogie2smt = new Boogie2SMT(m_Script, m_BoogieDeclarations, blackHolesArrays, bitvectorInsteadInt, mServices);
 		m_RootAnnot = new RootAnnot(mServices, m_BoogieDeclarations, m_Boogie2smt, m_Backtranslator);
 		m_Cbf = m_RootAnnot.getCodeBlockFactory();
 		storage.putStorable(CodeBlockFactory.s_CodeBlockFactoryKeyInToolchainStorage, m_Cbf);

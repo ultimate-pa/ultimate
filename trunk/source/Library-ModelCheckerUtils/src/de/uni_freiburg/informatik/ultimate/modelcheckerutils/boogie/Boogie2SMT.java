@@ -38,6 +38,7 @@ public class Boogie2SMT {
 	private final TypeSortTranslator m_TypeSortTranslator;
 	private final Boogie2SmtSymbolTable m_Boogie2SmtSymbolTable;
 	private final VariableManager m_VariableManager;
+	private final Expression2Term m_Expression2Term;
 	private final Term2Expression m_Term2Expression;
 
 	private final Statements2TransFormula m_Statements2TransFormula;
@@ -48,7 +49,8 @@ public class Boogie2SMT {
 
 	private IUltimateServiceProvider mServices;
 
-	public Boogie2SMT(Script script, BoogieDeclarations boogieDeclarations, boolean blackHoleArrays,
+	public Boogie2SMT(Script script, BoogieDeclarations boogieDeclarations, 
+			boolean blackHoleArrays, boolean bitvectorInsteadOfInt,
 			IUltimateServiceProvider services) {
 		mServices = services;
 		m_BlackHoleArrays = blackHoleArrays;
@@ -56,18 +58,23 @@ public class Boogie2SMT {
 		m_Script = script;
 		m_VariableManager = new VariableManager(m_Script, mServices);
 
-		m_TypeSortTranslator = new TypeSortTranslator(boogieDeclarations.getTypeDeclarations(), m_Script,
-				m_BlackHoleArrays, mServices);
-		m_Boogie2SmtSymbolTable = new Boogie2SmtSymbolTable(boogieDeclarations, m_Script, m_TypeSortTranslator);
+		if (bitvectorInsteadOfInt) {
+			throw new UnsupportedOperationException("bitvectorInsteadOfInt not yet implemented");
+		} else {
+			m_TypeSortTranslator = new TypeSortTranslator(boogieDeclarations.getTypeDeclarations(), m_Script,
+					m_BlackHoleArrays, mServices);
+			m_Boogie2SmtSymbolTable = new Boogie2SmtSymbolTable(boogieDeclarations, m_Script, m_TypeSortTranslator);
 
-		m_ConstOnlyIdentifierTranslator = new ConstOnlyIdentifierTranslator();
+			m_ConstOnlyIdentifierTranslator = new ConstOnlyIdentifierTranslator();
+			m_Expression2Term = new Expression2Term(mServices, m_Script, m_TypeSortTranslator, m_Boogie2SmtSymbolTable);
+		}
 
 		m_Axioms = new ArrayList<Term>(boogieDeclarations.getAxioms().size());
 		for (Axiom decl : boogieDeclarations.getAxioms()) {
-			Term term = this.declareAxiom(decl);
+			Term term = this.declareAxiom(decl, m_Expression2Term);
 			m_Axioms.add(term);
 		}
-		m_Statements2TransFormula = new Statements2TransFormula(this, mServices);
+		m_Statements2TransFormula = new Statements2TransFormula(this, mServices, m_Expression2Term);
 		m_Term2Expression = new Term2Expression(m_TypeSortTranslator, m_Boogie2SmtSymbolTable);
 
 	}
@@ -113,9 +120,9 @@ public class Boogie2SMT {
 		return m_Axioms;
 	}
 
-	private Term declareAxiom(Axiom ax) {
+	private Term declareAxiom(Axiom ax, Expression2Term expression2term) {
 		IdentifierTranslator[] its = new IdentifierTranslator[] { getConstOnlyIdentifierTranslator() };
-		Term term = (new Expression2Term(mServices, its, m_Script, m_TypeSortTranslator, m_Boogie2SmtSymbolTable, ax.getFormula())).getTerm();
+		Term term = expression2term.translateToTerm(its, ax.getFormula()); 
 		m_Script.assertTerm(term);
 		return term;
 	}

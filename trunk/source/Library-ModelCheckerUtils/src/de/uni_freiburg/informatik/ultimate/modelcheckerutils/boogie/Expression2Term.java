@@ -46,13 +46,12 @@ public class Expression2Term {
 				BoogieASTNode boogieASTNode);
 	}
 
-	private final ScopedHashMap<String, TermVariable> m_QuantifiedVariables = new ScopedHashMap<String, TermVariable>();
-
 	private final Script m_Script;
 	private final TypeSortTranslator m_TypeSortTranslator;
-	private final IdentifierTranslator[] m_SmtIdentifierProviders;
-	private final Term[] m_Result;
 	private final Boogie2SmtSymbolTable m_Boogie2SmtSymbolTable;
+	
+	private final ScopedHashMap<String, TermVariable> m_QuantifiedVariables = new ScopedHashMap<>();
+	private IdentifierTranslator[] m_SmtIdentifierProviders;
 
 	/**
 	 * Count the height of current old(.) expressions. As long as this is
@@ -63,31 +62,35 @@ public class Expression2Term {
 
 	private final IUltimateServiceProvider mServices;
 
-	public Expression2Term(IUltimateServiceProvider services, 
-			IdentifierTranslator[] identifierTranslators, Script script, 
+	public Expression2Term(IUltimateServiceProvider services, Script script, 
 			TypeSortTranslator typeSortTranslator, 
-			Boogie2SmtSymbolTable boogie2SmtSymbolTable, Expression... expressions) {
+			Boogie2SmtSymbolTable boogie2SmtSymbolTable) {
 		super();
 		mServices = services;
 		m_Script = script;
 		m_TypeSortTranslator = typeSortTranslator;
 		m_Boogie2SmtSymbolTable = boogie2SmtSymbolTable;
+	}
+
+	public Term translateToTerm(IdentifierTranslator[] identifierTranslators, Expression expression) {
+		assert m_SmtIdentifierProviders == null : getClass().getSimpleName() + " in use";
+		assert m_QuantifiedVariables.isEmpty() : getClass().getSimpleName() + " in use";
 		m_SmtIdentifierProviders = identifierTranslators;
-		m_Result = new Term[expressions.length];
+		Term result =  translate(expression);
+		m_SmtIdentifierProviders = null;
+		return result; 
+	}
+
+	public Term[] translateToTerms(IdentifierTranslator[] identifierTranslators, Expression[] expressions) {
+		assert m_SmtIdentifierProviders == null : getClass().getSimpleName() + " in use";
+		assert m_QuantifiedVariables.isEmpty() : getClass().getSimpleName() + " in use";
+		m_SmtIdentifierProviders = identifierTranslators;
+		Term[] result = new Term[expressions.length];
 		for (int i = 0; i < expressions.length; i++) {
-			m_Result[i] = translate(expressions[i]);
+			result[i] = translate(expressions[i]);
 		}
-	}
-
-	public Term getTerm() {
-		if (m_Result.length != 1) {
-			throw new AssertionError("you translated not exactly one expression");
-		}
-		return m_Result[0];
-	}
-
-	public Term[] getTerms() {
-		return m_Result;
+		m_SmtIdentifierProviders = null;
+		return result; 
 	}
 
 	Term getSmtIdentifier(String id, DeclarationInformation declInfo, boolean isOldContext, BoogieASTNode boogieASTNode) {
