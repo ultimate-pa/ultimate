@@ -77,6 +77,7 @@ BvType = "bv" {DecIntegerLiteral}
   "assume"        { return symbol(LexerSymbols.ASSUME); }
   "assert"        { return symbol(LexerSymbols.ASSERT); }
   "havoc"         { return symbol(LexerSymbols.HAVOC); }
+  "async"         { return symbol(LexerSymbols.ASYNC); }
   "call"          { return symbol(LexerSymbols.CALL); }
   "if"            { return symbol(LexerSymbols.IF); }
   "then"          { return symbol(LexerSymbols.THEN); }
