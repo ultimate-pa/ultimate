@@ -27,15 +27,15 @@ public class IncrementalInclusionTest extends
 	
 	
 	/** Limit the number of files per directory that are used. */
-	private static int m_FilesPerDirectoryLimit = 10;
+	private static int m_FilesPerDirectoryLimit = 1000;
 	
 	private static final DirectoryFileEndingsPair[] s_SVCOMP_Programs = {
 //		/*** Category 1. Arrays ***/
-		new DirectoryFileEndingsPair("examples/svcomp/array-examples/", new String[]{ ".i" }, m_FilesPerDirectoryLimit) ,
+//		new DirectoryFileEndingsPair("examples/svcomp/array-examples/", new String[]{ ".i" }, m_FilesPerDirectoryLimit) ,
 //		
 //		/*** Category 2. Bit Vectors ***/
-		new DirectoryFileEndingsPair("examples/svcomp/bitvector/", new String[]{ ".i", ".c" }, m_FilesPerDirectoryLimit) ,
-		new DirectoryFileEndingsPair("examples/svcomp/bitvector-regression/", new String[]{ ".i", ".c" }, m_FilesPerDirectoryLimit) ,
+//		new DirectoryFileEndingsPair("examples/svcomp/bitvector/", new String[]{ ".i", ".c" }, m_FilesPerDirectoryLimit) ,
+//		new DirectoryFileEndingsPair("examples/svcomp/bitvector-regression/", new String[]{ ".i", ".c" }, m_FilesPerDirectoryLimit) ,
 //		
 //		/*** Category 4. Control Flow and Integer Variables ***/
 		new DirectoryFileEndingsPair("examples/svcomp/ntdrivers-simplified/", new String[]{".c" }, m_FilesPerDirectoryLimit) ,
@@ -52,10 +52,10 @@ public class IncrementalInclusionTest extends
 		new DirectoryFileEndingsPair("examples/svcomp/product-lines/", new String[]{".c" }, m_FilesPerDirectoryLimit) ,
 //		
 //		/*** Category 6. Heap Manipulation / Dynamic Data Structures ***/
-		new DirectoryFileEndingsPair("examples/svcomp/heap-manipulation/", new String[]{ ".i" }, m_FilesPerDirectoryLimit) ,
-		new DirectoryFileEndingsPair("examples/svcomp/list-properties/", new String[]{ ".i" }, m_FilesPerDirectoryLimit) ,
-		new DirectoryFileEndingsPair("examples/svcomp/ldv-regression/", new String[]{ ".i" }, m_FilesPerDirectoryLimit) ,
-		new DirectoryFileEndingsPair("examples/svcomp/ddv-machzwd/", new String[]{ ".i" }, m_FilesPerDirectoryLimit) ,
+//		new DirectoryFileEndingsPair("examples/svcomp/heap-manipulation/", new String[]{ ".i" }, m_FilesPerDirectoryLimit) ,
+//		new DirectoryFileEndingsPair("examples/svcomp/list-properties/", new String[]{ ".i" }, m_FilesPerDirectoryLimit) ,
+//		new DirectoryFileEndingsPair("examples/svcomp/ldv-regression/", new String[]{ ".i" }, m_FilesPerDirectoryLimit) ,
+//		new DirectoryFileEndingsPair("examples/svcomp/ddv-machzwd/", new String[]{ ".i" }, m_FilesPerDirectoryLimit) ,
 //		
 //
 //		/*** Category 8. Recursive ***/
@@ -65,6 +65,9 @@ public class IncrementalInclusionTest extends
 //		new DirectoryFileEndingsPair("examples/svcomp/systemc/", new String[]{ ".c" }, m_FilesPerDirectoryLimit) ,
 //		new DirectoryFileEndingsPair("examples/svcomp/seq-mthreaded/", new String[]{ ".c" }, m_FilesPerDirectoryLimit) ,
 //		new DirectoryFileEndingsPair("examples/svcomp/seq-pthread/", new String[]{ ".i" }, m_FilesPerDirectoryLimit) ,
+//		/*** Category 10. incremental inclusion test examples ***/
+//		new DirectoryFileEndingsPair("examples/svcomp/Incremental-Inclusion test examples/", new String[]{ ".i" }, m_FilesPerDirectoryLimit) ,
+//		new DirectoryFileEndingsPair("examples/svcomp/Incremental-Inclusion test examples/", new String[]{ ".c" }, m_FilesPerDirectoryLimit) ,
 	};
 	/**
 	 * List of path. Ultimate will be run for each program that you find in
@@ -105,7 +108,7 @@ public class IncrementalInclusionTest extends
 		"automizer/incrementalInclusion/nonDeterministic/IncrementalInclusionViaDifference.epf",
 //		"automizer/incrementalInclusion/nonDeterministic/IncrementalInclusion2.epf",
 //		"automizer/incrementalInclusion/nonDeterministic/IncrementalInclusion2_DeadEnd_Remove.epf",
-//		"automizer/incrementalInclusion/nonDeterministic/IncrementalInclusion2_DeadEnd_Remove_AntiChain.epf",
+		"automizer/incrementalInclusion/nonDeterministic/IncrementalInclusion2_DeadEnd_Remove_AntiChain.epf",
 		"automizer/incrementalInclusion/nonDeterministic/IncrementalInclusion2_DeadEnd_Remove_AntiChain_2Stacks.epf",
 //		"automizer/incrementalInclusion/nonDeterministic/IncrementalInclusion2_DeadEnd_Remove_AntiChain_2Stacks_MultipleCE.epf",
 //		"automizer/incrementalInclusion/nonDeterministic/IncrementalInclusion3.epf",
