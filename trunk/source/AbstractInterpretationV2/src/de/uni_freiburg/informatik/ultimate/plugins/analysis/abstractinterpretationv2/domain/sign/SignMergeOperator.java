@@ -86,7 +86,7 @@ public class SignMergeOperator<ACTION, VARDECL> implements IAbstractStateBinaryO
 	 * @param value2
 	 * @return
 	 */
-	public static SignDomainValue computeMergedValue(SignDomainValue value1, SignDomainValue value2) {
+	public SignDomainValue computeMergedValue(SignDomainValue value1, SignDomainValue value2) {
 		if (value1.getResult().equals(value2.getResult())) {
 			return value1;
 		}

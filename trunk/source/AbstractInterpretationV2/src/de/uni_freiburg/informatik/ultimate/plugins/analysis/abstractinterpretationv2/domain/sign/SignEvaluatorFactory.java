@@ -1,5 +1,8 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.sign;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
+
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.IEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.IEvaluatorFactory;
@@ -8,9 +11,15 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
 
 public class SignEvaluatorFactory implements IEvaluatorFactory<Values, CodeBlock, BoogieVar> {
 
+	SignStateConverter<CodeBlock, BoogieVar> mStateConverter;
+
+	public SignEvaluatorFactory(SignStateConverter<CodeBlock, BoogieVar> stateConverter) {
+		mStateConverter = stateConverter;
+	}
+
 	@Override
 	public IEvaluator<Values, CodeBlock, BoogieVar> createNAryExpressionEvaluator(int arity) {
-		assert arity >= 0 && arity <= 2;
+		assert arity >= 1 && arity <= 2;
 
 		switch (arity) {
 		case 1:
@@ -23,15 +32,23 @@ public class SignEvaluatorFactory implements IEvaluatorFactory<Values, CodeBlock
 	}
 
 	@Override
-    public IEvaluator<Values, CodeBlock, BoogieVar> createSingletonValueExpressionEvaluator() {
-		// TODO Auto-generated method stub
-		return null;
-    }
+	public IEvaluator<Values, CodeBlock, BoogieVar> createSingletonVariableExpressionEvaluator(String variableName) {
+		return new SignSingletonVariableExpressionEvaluator(variableName, mStateConverter);
+	}
 
 	@Override
-    public IEvaluator<Values, CodeBlock, BoogieVar> createSingletonVariableExpressionEvaluator() {
-	    // TODO Auto-generated method stub
-	    return null;
-    }
+	public IEvaluator<Values, CodeBlock, BoogieVar> createSingletonValueExpressionEvaluator(String value,
+	        Class<?> valueType) {
+
+		if (valueType.equals(BigInteger.class)) {
+			return new SignSingletonIntegerExpressionEvaluator(value);
+		}
+
+		if (valueType.equals(BigDecimal.class)) {
+			return new SignSingletonDecimalExpressionEvaluator(value);
+		}
+
+		throw new UnsupportedOperationException("The type " + valueType.toString() + " is not supported.");
+	}
 
 }

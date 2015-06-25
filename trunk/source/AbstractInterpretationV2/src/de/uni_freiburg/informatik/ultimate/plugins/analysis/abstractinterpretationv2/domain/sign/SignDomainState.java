@@ -10,8 +10,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 /**
  * Implementation of an abstract state of the {@link SignDomain}.
  * 
- * Such a state stores the sign values for each variable, including \bot and
- * \top.
+ * Such a state stores {@link SignDomainValue}s.
  * 
  * @author greitsch@informatik.uni-freiburg.de
  *
@@ -132,8 +131,7 @@ public class SignDomainState<ACTION, VARDECL> implements IAbstractState<ACTION, 
 	}
 
 	/**
-	 * Build a string of the form
-	 * "var1 : type1 = value1; var2 : type2 = value2; ...".
+	 * Build a string of the form "var1 : type1 = value1; var2 : type2 = value2; ...".
 	 * 
 	 * @return A string of all variables with their values.
 	 */
@@ -142,7 +140,7 @@ public class SignDomainState<ACTION, VARDECL> implements IAbstractState<ACTION, 
 		final StringBuilder sb = new StringBuilder();
 		for (Entry<String, VARDECL> entry : mVariablesMap.entrySet()) {
 			sb.append(entry.getKey()).append(":").append(entry.getValue()).append(" = ")
-					.append(mValuesMap.get(entry.getKey().toString()).getResult()).append("; ");
+			        .append(mValuesMap.get(entry.getKey().toString()).getResult()).append("; ");
 		}
 		return sb.toString();
 	}
@@ -151,7 +149,7 @@ public class SignDomainState<ACTION, VARDECL> implements IAbstractState<ACTION, 
 	public String toString() {
 		return toLogString();
 	}
-	
+
 	@Override
 	public int hashCode() {
 		return mId;
@@ -201,7 +199,7 @@ public class SignDomainState<ACTION, VARDECL> implements IAbstractState<ACTION, 
 	@Override
 	public IAbstractState<ACTION, VARDECL> copy() {
 		return new SignDomainState<ACTION, VARDECL>(new HashMap<String, VARDECL>(mVariablesMap),
-				new HashMap<String, SignDomainValue>(mValuesMap), mIsFixpoint);
+		        new HashMap<String, SignDomainValue>(mValuesMap), mIsFixpoint);
 	}
 
 	protected Map<String, VARDECL> getVariables() {
@@ -224,6 +222,26 @@ public class SignDomainState<ACTION, VARDECL> implements IAbstractState<ACTION, 
 	@Override
 	public boolean containsVariable(String name) {
 		return mVariablesMap.containsKey(name);
+	}
+
+	/**
+	 * Intersects {@link this} with another {@link SignDomainState} by intersecting each value of each variable.
+	 * 
+	 * @param other
+	 * @return
+	 */
+	protected SignDomainState<ACTION, VARDECL> intersect(SignDomainState<ACTION, VARDECL> other) {
+		assert hasSameVariables(other);
+
+		SignDomainState<ACTION, VARDECL> newState = new SignDomainState<ACTION, VARDECL>();
+
+		for (final Entry<String, SignDomainValue> val : mValuesMap.entrySet()) {
+			final VARDECL var = mVariablesMap.get(val.getKey());
+			newState.addVariable(val.getKey(), var);
+			newState.setValue(val.getKey(), mValuesMap.get(val.getKey()).intersect(other.mValuesMap.get(val.getKey())));
+		}
+
+		return newState;
 	}
 
 }

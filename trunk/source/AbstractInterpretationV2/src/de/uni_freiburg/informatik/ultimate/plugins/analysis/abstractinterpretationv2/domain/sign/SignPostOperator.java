@@ -10,40 +10,46 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
 /**
- * Applies an ACTION to an abstract state of the {@link SignDomain}.
+ * Applies a post operation to an abstract state of the {@link SignDomain}.
  * 
  * @author greitsch@informatik.uni-freiburg.de
- *
- * @param <ACTION>
- *            Any action type.
- * @param <VARDECL>
- *            Any variable declaration type.
  */
 public class SignPostOperator implements IAbstractPostOperator<CodeBlock, BoogieVar> {
 
 	private SignStateConverter<CodeBlock, BoogieVar> mStateConverter;
 	private RcfgStatementExtractor mStatementExtractor;
-	private SignDomainStatementProcessor<CodeBlock, BoogieVar> mStatementProcessor;
+	private SignDomainStatementProcessor mStatementProcessor;
 
+	/**
+	 * Default constructor.
+	 * 
+	 * @param stateConverter
+	 *            The state converter used to identify {@link SignDomainState}s.
+	 */
 	protected SignPostOperator(SignStateConverter<CodeBlock, BoogieVar> stateConverter) {
 		mStateConverter = stateConverter;
 		mStatementExtractor = new RcfgStatementExtractor();
-		mStatementProcessor = new SignDomainStatementProcessor<CodeBlock, BoogieVar>();
+		mStatementProcessor = new SignDomainStatementProcessor(mStateConverter);
 	}
 
+	/**
+	 * Applys the post operator to a given {@link IAbstractState}, according to some Boogie {@link CodeBlock}.
+	 * 
+	 * @param oldstate
+	 *            The current abstract state, the post operator is applied on.
+	 * @param codeBlock
+	 *            The Boogie code block that is used to apply the post operator.
+	 * @return A new abstract state which is the result of applying the post operator to a given abstract state.
+	 */
 	@Override
-	public IAbstractState<CodeBlock, BoogieVar> apply(IAbstractState<CodeBlock, BoogieVar> oldstate, CodeBlock concrete) {
+	public IAbstractState<CodeBlock, BoogieVar> apply(IAbstractState<CodeBlock, BoogieVar> oldstate, CodeBlock codeBlock) {
 		final SignDomainState<CodeBlock, BoogieVar> concreteOldState = mStateConverter.getCheckedState(oldstate);
-		SignDomainState<CodeBlock, BoogieVar> interimState = concreteOldState;
-		List<Statement> statements = mStatementExtractor.process(concrete);
+		SignDomainState<CodeBlock, BoogieVar> currentState = concreteOldState;
+		List<Statement> statements = mStatementExtractor.process(codeBlock);
 		for (Statement stmt : statements) {
-			final SignDomainState<CodeBlock, BoogieVar> currentState = mStatementProcessor.process(interimState, stmt);
-
-//			if (interimState != null) {
-//				SignMergeOperator.computeMergedValue(interimState, currentState);
-//			}
+			currentState = mStatementProcessor.process(currentState, stmt);
 		}
 
-		return interimState;
+		return currentState;
 	}
 }

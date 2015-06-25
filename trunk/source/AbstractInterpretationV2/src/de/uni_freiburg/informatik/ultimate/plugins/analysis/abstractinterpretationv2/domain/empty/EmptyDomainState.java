@@ -175,5 +175,4 @@ public final class EmptyDomainState<ACTION, VARDECL> implements IAbstractState<A
     public boolean containsVariable(String name) {
 		return mVarDecls.containsKey(name);
     }
-
 }

@@ -8,6 +8,6 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
  */
 public interface IEvaluatorFactory<T, ACTION, VARDECL> {
 	public IEvaluator<T, ACTION, VARDECL> createNAryExpressionEvaluator(int arity);
-	public IEvaluator<T, ACTION, VARDECL> createSingletonValueExpressionEvaluator();
-	public IEvaluator<T, ACTION, VARDECL> createSingletonVariableExpressionEvaluator();
+	public IEvaluator<T, ACTION, VARDECL> createSingletonValueExpressionEvaluator(String value, Class<?> valueType);
+	public IEvaluator<T, ACTION, VARDECL> createSingletonVariableExpressionEvaluator(String variableName);
 }

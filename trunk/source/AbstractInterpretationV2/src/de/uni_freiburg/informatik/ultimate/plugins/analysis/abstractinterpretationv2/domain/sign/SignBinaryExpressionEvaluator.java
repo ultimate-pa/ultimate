@@ -14,6 +14,16 @@ public class SignBinaryExpressionEvaluator implements IEvaluator<Values, CodeBlo
 	private IEvaluator<Values, CodeBlock, BoogieVar> mRightSubEvaluator;
 	private BinaryExpression.Operator mOperator;
 
+	/**
+	 * Sets the operator of the binary expression.
+	 * 
+	 * @param operator
+	 *            The operator to be set. Must be of {@link BinaryExpression#Operator}.
+	 */
+	public void setOperator(BinaryExpression.Operator operator) {
+		mOperator = operator;
+	}
+
 	@Override
 	public IEvaluationResult<Values> evaluate(IAbstractState<CodeBlock, BoogieVar> currentState) {
 
@@ -23,8 +33,8 @@ public class SignBinaryExpressionEvaluator implements IEvaluator<Values, CodeBlo
 		switch (mOperator) {
 		case ARITHPLUS:
 			return performAddition(firstResult, secondResult);
-			// case ARITHMINUS:
-			// break;
+		case ARITHMINUS:
+			return performSubtraction(firstResult, secondResult);
 			// case ARITHMUL:
 			// break;
 			// case ARITHDIV:
@@ -119,9 +129,94 @@ public class SignBinaryExpressionEvaluator implements IEvaluator<Values, CodeBlo
 		                + first.getResult().toString() + ", second: " + second.getResult().toString());
 	}
 
+	/**
+	 * Subtracts two {@link SignDomainState}s. {@link SignDomainState}s can be (+), (-), (0), T, &perp;.<br />
+	 * 
+	 * Addition is done in the following way:<br />
+	 * 
+	 * <ol>
+	 * <li>Same values:<br />
+	 * <ul>
+	 * <li>(+) - (+) = T</li>
+	 * <li>(-) - (-) = T</li>
+	 * <li>(0) - (0) = (0)</li>
+	 * <li>T - T = T</li>
+	 * <li>&perp; - &perp; = &perp;</li>
+	 * </ul>
+	 * </li>
+	 * <li>Different values:<br />
+	 * <ul>
+	 * <li>(0) - (+) = (-)</li>
+	 * <li>(0) - (-) = (+)</li>
+	 * <li>(+) - (0) = (+)</li>
+	 * <li>(-) - (0) = (-)</li>
+	 * <li>(+) - (-) = (+)</li>
+	 * <li>(-) - (+) = (-)</li>
+	 * </ul>
+	 * </li>
+	 * <li>Special cases:<br />
+	 * <ul>
+	 * <li>&perp; - ... = &perp;</li>
+	 * <li>... - &perp; = &perp;</li>
+	 * <li>T - ... = T (if ... != &perp;)</li>
+	 * <li>... - T = T (if ... != &perp;)</li>
+	 * </ul>
+	 * </li>
+	 * </ol>
+	 * 
+	 * @param first
+	 *            The first evaluation result to be subtracted.
+	 * @param second
+	 *            The second evaluation result to be subtracted.
+	 * @return A new evaluation result corresponding to the result of the subtract operation.
+	 */
+	private IEvaluationResult<Values> performSubtraction(IEvaluationResult<Values> first,
+	        IEvaluationResult<Values> second) {
+
+		assert first != null;
+		assert second != null;
+
+		// ====== Same Values ======
+		if (first.getResult().equals(Values.ZERO) && second.getResult().equals(Values.ZERO)) {
+			return new SignDomainValue(Values.ZERO);
+		}
+		if (first.getResult().equals(Values.BOTTOM) || second.getResult().equals(Values.BOTTOM)) {
+			return new SignDomainValue(Values.BOTTOM);
+		}
+		if (first.getResult().equals(second.getResult())) {
+			return new SignDomainValue(Values.TOP);
+		}
+		// ====== End Same Values ======
+
+		// ====== Different Values ======
+		if (first.getResult().equals(Values.ZERO)) {
+			return negateValue(first.getResult());
+		}
+		if (second.getResult().equals(Values.ZERO)) {
+			return new SignDomainValue(first.getResult());
+		}
+		if (first.getResult().equals(Values.POSITIVE) && second.getResult().equals(Values.NEGATIVE)) {
+			return new SignDomainValue(Values.POSITIVE);
+		}
+		if (first.getResult().equals(Values.NEGATIVE) && second.getResult().equals(Values.POSITIVE)) {
+			return new SignDomainValue(Values.NEGATIVE);
+		}
+		// ====== End Different Values ======
+
+		// We should have covered all cases. If not, throw exception.
+		throw new UnsupportedOperationException(
+		        "There is one case which has not been covered in the subtraction of SignedDomain values. first: "
+		                + first.getResult().toString() + ", second: " + second.getResult().toString());
+	}
+
+	/**
+	 * Adds a subevaluator to {@link this} if possible.
+	 */
 	@Override
 	public void addSubEvaluator(IEvaluator<Values, CodeBlock, BoogieVar> evaluator) {
-		assert mLeftSubEvaluator == null || mRightSubEvaluator == null;
+		if (mLeftSubEvaluator != null && mRightSubEvaluator != null) {
+			throw new UnsupportedOperationException("There are no free sub evaluators left to be assigned.");
+		}
 
 		if (mLeftSubEvaluator == null) {
 			mLeftSubEvaluator = evaluator;
@@ -132,9 +227,39 @@ public class SignBinaryExpressionEvaluator implements IEvaluator<Values, CodeBlo
 		return;
 	}
 
+	/**
+	 * Returns true if {@link this} still has subevaluators that are not empty.
+	 */
 	@Override
 	public boolean hasFreeOperands() {
 		return (mLeftSubEvaluator == null || mRightSubEvaluator == null);
+	}
+
+	/**
+	 * Negates the given value.
+	 * 
+	 * @param value
+	 *            The value to negate.
+	 * @return The negated value as new object.
+	 */
+	private SignDomainValue negateValue(Values value) {
+		assert value != null;
+
+		switch (value) {
+		case POSITIVE:
+			return new SignDomainValue(Values.NEGATIVE);
+		case NEGATIVE:
+			return new SignDomainValue(Values.POSITIVE);
+		case TOP:
+			return new SignDomainValue(Values.TOP);
+		case BOTTOM:
+			return new SignDomainValue(Values.BOTTOM);
+		case ZERO:
+			return new SignDomainValue(Values.ZERO);
+		default:
+			throw new UnsupportedOperationException("The sign domain value " + value.toString()
+			        + " is not implemented.");
+		}
 	}
 
 }
