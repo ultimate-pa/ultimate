@@ -43,6 +43,7 @@ NestedWordAutomaton c1FKV = buchiComplementFKV(interpolBuchiAutomatonUsedInRefin
 assert (numberOfStates(c1FKV) == 6);
 NestedWordAutomaton c1FKVl = removeNonLiveStates(c1FKV);
 assert (numberOfStates(c1FKVl) == 6);
+assert (isDeterministic(interpolBuchiAutomatonUsedInRefinement1after));
 NestedWordAutomaton c1Det = buchiComplementDeterministic(interpolBuchiAutomatonUsedInRefinement1after);
 assert (numberOfStates(c1Det) == 7);
 NestedWordAutomaton c1Detl = removeNonLiveStates(c1Det);
@@ -105,6 +106,7 @@ NestedWordAutomaton c4FKV = buchiComplementFKV(interpolBuchiAutomatonUsedInRefin
 assert (numberOfStates(c4FKV) == 12);
 NestedWordAutomaton c4FKVl = removeNonLiveStates(c4FKV);
 assert (numberOfStates(c4FKVl) == 12);
+assert (isDeterministic(interpolBuchiAutomatonUsedInRefinement4after));
 NestedWordAutomaton c4Det = buchiComplementDeterministic(interpolBuchiAutomatonUsedInRefinement4after);
 assert (numberOfStates(c4Det) == 13);
 NestedWordAutomaton c4Detl = removeNonLiveStates(c4Det);
@@ -158,6 +160,7 @@ NestedWordAutomaton c6FKV = buchiComplementFKV(interpolBuchiAutomatonUsedInRefin
 assert (numberOfStates(c6FKV) == 18);
 NestedWordAutomaton c6FKVl = removeNonLiveStates(c6FKV);
 assert (numberOfStates(c6FKVl) == 18);
+assert (!isDeterministic(interpolBuchiAutomatonUsedInRefinement6after));
 NestedWordAutomaton c6Det = buchiComplementDeterministic(interpolBuchiAutomatonUsedInRefinement6after);
 assert (numberOfStates(c6Det) == 7);
 NestedWordAutomaton c6Detl = removeNonLiveStates(c6Det);
@@ -217,6 +220,7 @@ NestedWordAutomaton c7FKV = buchiComplementFKV(interpolBuchiAutomatonUsedInRefin
 assert (numberOfStates(c7FKV) == 15);
 NestedWordAutomaton c7FKVl = removeNonLiveStates(c7FKV);
 assert (numberOfStates(c7FKVl) == 15);
+assert (!isDeterministic(interpolBuchiAutomatonUsedInRefinement7after));
 NestedWordAutomaton c7Det = buchiComplementDeterministic(interpolBuchiAutomatonUsedInRefinement7after);
 assert (numberOfStates(c7Det) == 11);
 NestedWordAutomaton c7Detl = removeNonLiveStates(c7Det);
@@ -285,6 +289,7 @@ NestedWordAutomaton c8FKV = buchiComplementFKV(interpolBuchiAutomatonUsedInRefin
 assert (numberOfStates(c8FKV) == 81);
 NestedWordAutomaton c8FKVl = removeNonLiveStates(c8FKV);
 assert (numberOfStates(c8FKVl) == 81);
+assert (!isDeterministic(interpolBuchiAutomatonUsedInRefinement8after));
 NestedWordAutomaton c8Det = buchiComplementDeterministic(interpolBuchiAutomatonUsedInRefinement8after);
 assert (numberOfStates(c8Det) == 11);
 NestedWordAutomaton c8Detl = removeNonLiveStates(c8Det);
@@ -354,6 +359,7 @@ print(numberOfStates(c9FKV));
 assert (numberOfStates(c9FKV) == 39);
 NestedWordAutomaton c9FKVl = removeNonLiveStates(c9FKV);
 assert (numberOfStates(c9FKVl) == 39);
+assert (!isDeterministic(interpolBuchiAutomatonUsedInRefinement9after));
 NestedWordAutomaton c9Det = buchiComplementDeterministic(interpolBuchiAutomatonUsedInRefinement9after);
 assert (numberOfStates(c9Det) == 11);
 NestedWordAutomaton c9Detl = removeNonLiveStates(c9Det);
