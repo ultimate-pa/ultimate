@@ -33,6 +33,7 @@
 
 								<java classname="java_cup.Main" classpath="${cupDir}" fork="true"
 									dir="${boogieparserDir}">
+									<arg line="-expect 1" /> <!-- FIXME: Necessary for attributes of assert and assume -->
 									<arg value="Boogie.cup" />
 								</java>
 								<java jar="${flexBinary}" fork="true" dir="${boogieparserDir}">
