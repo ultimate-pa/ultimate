@@ -6,11 +6,11 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
  * @author greitsch@informatik.uni-freiburg.de
  * 
  */
-public interface IResultReporter {
+public interface IResultReporter<ACTION> {
 
 	//TODO: Define this interface -- how do we create counter example?
 	
-	void reportPossibleError();
+	void reportPossibleError(ACTION start, ACTION end);
 
-	void reportSafe();
+	void reportSafe(ACTION start);
 }

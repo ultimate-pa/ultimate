@@ -8,28 +8,39 @@ import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 public class WitnessResult<ELEM extends IElement, TE extends IElement, E> extends AbstractResultAtElement<ELEM>
 		implements IResultWithFiniteTrace<TE, E> {
 
+	public static enum WitnessVerificationStatus {
+		VERIFIED, UNVERIFIED, VERIFICATION_FAILED, INTERNAL_ERROR
+	}
+
 	private final CounterExampleResult<ELEM, TE, E> mCEXResult;
 	private final String mWitness;
-	private final boolean mIsVerified;
+	private final WitnessVerificationStatus mVerificationStatus;
 
-	public WitnessResult(CounterExampleResult<ELEM, TE, E> cexRes, String witness, boolean isVerified) {
+	public WitnessResult(CounterExampleResult<ELEM, TE, E> cexRes, String witness,
+			WitnessVerificationStatus verificationStatus) {
 		super(cexRes.getElement(), cexRes.getPlugin(), cexRes.mTranslatorSequence);
 		mCEXResult = cexRes;
 		mWitness = witness;
-		mIsVerified = isVerified;
+		mVerificationStatus = verificationStatus;
 	}
 
 	@Override
 	public String getShortDescription() {
-		if (!isEmpty()) {
-			if (isVerified()) {
-				return "Verified witness for: " + mCEXResult.getShortDescription();
-			} else {
-				return "Witness verification failed for: " + mCEXResult.getShortDescription();
-			}
-
-		} else {
+		if (isEmpty()) {
 			return "No witness for: " + mCEXResult.getShortDescription();
+		}
+
+		switch (getVerificationStatus()) {
+		case INTERNAL_ERROR:
+			return "An error occured during witness verification for: " + mCEXResult.getShortDescription();
+		case UNVERIFIED:
+			return "Unverified witness for: " + mCEXResult.getShortDescription();
+		case VERIFICATION_FAILED:
+			return "Witness verification failed for: " + mCEXResult.getShortDescription();
+		case VERIFIED:
+			return "Verified witness for: " + mCEXResult.getShortDescription();
+		default:
+			throw new UnsupportedOperationException("Enum value " + getVerificationStatus() + " is unhandled");
 		}
 	}
 
@@ -43,8 +54,8 @@ public class WitnessResult<ELEM extends IElement, TE extends IElement, E> extend
 		return mCEXResult.getFailurePath();
 	}
 
-	public boolean isVerified() {
-		return mIsVerified;
+	public WitnessVerificationStatus getVerificationStatus() {
+		return mVerificationStatus;
 	}
 
 	public boolean isEmpty() {

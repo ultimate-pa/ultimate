@@ -122,7 +122,7 @@ public class BacktranslationTestResultDecider extends TestResultDecider {
 						customMessages.add(errorMsg);
 						fail = true;
 						break;
-					} else if (!witness.isVerified()) {
+					} else if (!witness.getVerificationStatus()) {
 						setResultCategory("Witness failed to verify");
 						String errorMsg = "The witness failed to verify: " + witness.getLongDescription();
 						setResultMessage(errorMsg);

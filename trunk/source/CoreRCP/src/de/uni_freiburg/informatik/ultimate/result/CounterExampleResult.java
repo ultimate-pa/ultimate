@@ -3,6 +3,7 @@ package de.uni_freiburg.informatik.ultimate.result;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.core.services.IBacktranslationService;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
@@ -32,6 +33,19 @@ public class CounterExampleResult<ELEM extends IElement, TE extends IElement, E>
 	private final List<ILocation> mFailurePath;
 	private final IProgramExecution<TE, E> mProgramExecution;
 
+	/**
+	 * Constructs a {@link CounterExampleResult}.
+	 * 
+	 * @param position
+	 *            At which location did the error occur?
+	 * @param plugin
+	 *            Which plugin (PluginId) found the error location=
+	 * @param translatorSequence
+	 *            The current backtranslator service (obtained from
+	 *            {@link IUltimateServiceProvider}).
+	 * @param pe
+	 *            A program execution leading to this error.
+	 */
 	public CounterExampleResult(ELEM position, String plugin, IBacktranslationService translatorSequence,
 			IProgramExecution<TE, E> pe) {
 		super(position, plugin, translatorSequence);

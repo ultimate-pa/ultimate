@@ -4,7 +4,9 @@ import java.util.ArrayDeque;
 import java.util.Collection;
 import java.util.Deque;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.log4j.Logger;
 
@@ -39,12 +41,13 @@ public class AbstractInterpreter<ACTION, VARDECL> {
 	private final IAbstractDomain<?, ACTION, VARDECL> mDomain;
 	private final IVariableProvider<ACTION, VARDECL> mVarProvider;
 	private final ILoopDetector<ACTION> mLoopDetector;
-	private final IResultReporter mReporter;
+	private final IResultReporter<ACTION> mReporter;
 	private final IUltimateServiceProvider mServices;
 
 	public AbstractInterpreter(IUltimateServiceProvider services, ITransitionProvider<ACTION> post,
 			IAbstractStateStorage<ACTION, VARDECL> storage, IAbstractDomain<?, ACTION, VARDECL> domain,
-			IVariableProvider<ACTION, VARDECL> varProvider, ILoopDetector<ACTION> loopDetector, IResultReporter reporter) {
+			IVariableProvider<ACTION, VARDECL> varProvider, ILoopDetector<ACTION> loopDetector,
+			IResultReporter<ACTION> reporter) {
 		assert services != null;
 		assert post != null;
 		assert storage != null;
@@ -77,6 +80,7 @@ public class AbstractInterpreter<ACTION, VARDECL> {
 		final Map<Pair<ACTION, ACTION>, Integer> loopCounters = new HashMap<>();
 		final IAbstractPostOperator<ACTION, VARDECL> post = mDomain.getPostOperator();
 		final IAbstractStateBinaryOperator<ACTION, VARDECL> widening = mDomain.getWideningOperator();
+		final Set<ACTION> reachedErrors = new HashSet<>();
 
 		boolean errorReached = false;
 
@@ -85,6 +89,9 @@ public class AbstractInterpreter<ACTION, VARDECL> {
 		for (ACTION elem : filteredInitialElements) {
 			worklist.add(createPair(getCurrentAbstractPreState(elem), elem));
 		}
+		// TODO: We should think about reducing this to really distinct start
+		// elements; for now, we just pick one
+		final ACTION arbitraryStartElement = filteredInitialElements.iterator().next();
 
 		while (!worklist.isEmpty()) {
 			checkTimeout();
@@ -174,12 +181,12 @@ public class AbstractInterpreter<ACTION, VARDECL> {
 				}
 				mStateStorage.addAbstractPostState(current, newPostState);
 			}
-
-			if (mTransitionProvider.isPostErrorLocation(current) && !newPostState.isBottom()) {
+			if (mTransitionProvider.isPostErrorLocation(current) && !newPostState.isBottom()
+					&& reachedErrors.add(current)) {
 				// TODO: How do we create a counter example, i.e. a program
 				// execution?
 				errorReached = true;
-				mReporter.reportPossibleError();
+				mReporter.reportPossibleError(arbitraryStartElement, current);
 			}
 
 			if (newPostState.isFixpoint() && preState.isFixpoint()) {
@@ -197,7 +204,7 @@ public class AbstractInterpreter<ACTION, VARDECL> {
 		}
 
 		if (!errorReached) {
-			mReporter.reportSafe();
+			mReporter.reportSafe(arbitraryStartElement);
 		}
 	}
 

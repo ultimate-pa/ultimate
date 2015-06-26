@@ -4,6 +4,7 @@
  * File:	DefaultAnnotations.java created on Mar 7, 2010 by Björn Buchhold
  *
  */
+
 package de.uni_freiburg.informatik.ultimate.model.annotation;
 
 import java.util.AbstractMap;
@@ -27,7 +28,7 @@ public abstract class AbstractAnnotations implements IAnnotations {
 	/**
 	 * The backing map. Cached on first call.
 	 */
-	private transient Map<String, Object> backingMap;
+	private transient Map<String, Object> mBackingMap;
 
 	/**
 	 * Returns the array of keys of this annotation. Subclasses must override
@@ -43,8 +44,8 @@ public abstract class AbstractAnnotations implements IAnnotations {
 
 	@Override
 	public Map<String, Object> getAnnotationsAsMap() {
-		if (backingMap == null) {
-			backingMap = new AbstractMap<String, Object>() {
+		if (mBackingMap == null) {
+			mBackingMap = new AbstractMap<String, Object>() {
 				private Set<Entry<String, Object>> m_EntrySet = new AbstractSet<Entry<String, Object>>() {
 
 					private String[] m_AttribFields = getFieldNames();
@@ -84,7 +85,7 @@ public abstract class AbstractAnnotations implements IAnnotations {
 				}
 			};
 		}
-		return backingMap;
+		return mBackingMap;
 	}
 
 	/**
