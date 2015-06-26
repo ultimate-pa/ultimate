@@ -122,7 +122,7 @@ public class TransFormulaLRWithArrayInformation {
 			TransFormulaLR transFormulaLR, 
 			ReplacementVarFactory replacementVarFactory, Script script, 
 			IFreshTermVariableConstructor freshTermVariableConstructor, 
-			List<TransFormulaLRWithArrayInformation> stemComponents1) {
+			TransFormulaLRWithArrayInformation stem) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
  		m_TransFormulaLR = transFormulaLR;
@@ -161,10 +161,10 @@ public class TransFormulaLRWithArrayInformation {
 			}
 			constructSubstitutions();
 			final HashRelation<TermVariable, ArrayIndex> foreignIndices;
-			if (stemComponents1 == null) {
+			if (stem == null) {
 				foreignIndices = null;
 			} else {
-				foreignIndices = computeForeignIndices(stemComponents1);
+				foreignIndices = computeForeignIndices(stem);
 			}
 			new IndexCollector(m_TransFormulaLR, foreignIndices);
 			m_ArrayFirstGeneration2Instances = computeArrayFirstGeneration2Instances();
@@ -174,23 +174,21 @@ public class TransFormulaLRWithArrayInformation {
 	
 	
 	
-	private HashRelation<TermVariable, ArrayIndex> computeForeignIndices(List<TransFormulaLRWithArrayInformation> stemComponents1) {
+	private HashRelation<TermVariable, ArrayIndex> computeForeignIndices(TransFormulaLRWithArrayInformation stem) {
 		HashRelation<TermVariable, ArrayIndex> arrayInVar2ForeignIndices = new HashRelation<>();
-		for (TransFormulaLRWithArrayInformation tfwai : stemComponents1) {
-			for (Triple<TermVariable, ArrayIndex, ArrayCellReplacementVarInformation> triple : tfwai.getArrayCellOutVars().entrySet()) {
-				ArrayCellReplacementVarInformation acrvi = triple.getThird();
-				RankVar arrayRv = acrvi.getArrayRankVar();
-				TermVariable arrayInVar = (TermVariable) m_TransFormulaLR.getInVars().get(arrayRv);
-				if (arrayInVar != null) {
-					// array also occurs in loop, we have to add the index
-					// of this ArrayCellReplacement
-					ArrayIndex foreignIndex = computeForeignIndex(arrayRv, acrvi.getIndex(), acrvi.termVariableToRankVarMappingForIndex());
-					assert (TransFormulaUtils.allVariablesAreInVars(foreignIndex, m_TransFormulaLR));
-					if (mLogger.isDebugEnabled()) {
-						mLogger.debug("Adding foreign index " + foreignIndex + " for array " + arrayInVar);
-					}
-					arrayInVar2ForeignIndices.addPair(arrayInVar, foreignIndex);
+		for (Triple<TermVariable, ArrayIndex, ArrayCellReplacementVarInformation> triple : stem.getArrayCellOutVars().entrySet()) {
+			ArrayCellReplacementVarInformation acrvi = triple.getThird();
+			RankVar arrayRv = acrvi.getArrayRankVar();
+			TermVariable arrayInVar = (TermVariable) m_TransFormulaLR.getInVars().get(arrayRv);
+			if (arrayInVar != null) {
+				// array also occurs in loop, we have to add the index
+				// of this ArrayCellReplacement
+				ArrayIndex foreignIndex = computeForeignIndex(arrayRv, acrvi.getIndex(), acrvi.termVariableToRankVarMappingForIndex());
+				assert (TransFormulaUtils.allVariablesAreInVars(foreignIndex, m_TransFormulaLR));
+				if (mLogger.isDebugEnabled()) {
+					mLogger.debug("Adding foreign index " + foreignIndex + " for array " + arrayInVar);
 				}
+				arrayInVar2ForeignIndices.addPair(arrayInVar, foreignIndex);
 			}
 		}
 		return arrayInVar2ForeignIndices;

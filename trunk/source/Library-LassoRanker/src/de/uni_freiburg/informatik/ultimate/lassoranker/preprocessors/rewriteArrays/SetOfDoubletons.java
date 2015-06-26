@@ -79,6 +79,10 @@ public class SetOfDoubletons<E> {
 		return m_Elements;
 	}
 	
+	public int size() {
+		return m_Elements.size();
+	}
+	
 	@Override
 	public String toString() {
 		return m_Elements.toString();

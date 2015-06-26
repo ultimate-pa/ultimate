@@ -33,6 +33,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.log4j.Logger;
+
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaLR;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -48,6 +50,7 @@ import de.uni_freiburg.informatik.ultimate.util.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.Utils;
 
 public class IndexAnalyzer2 {
+	private final Logger m_Logger;
 	private final boolean m_IsStem;
 	private final SetOfDoubletons<Term> neitherInvarNorOutvarDoubletons = new SetOfDoubletons<>();
 	private final SetOfDoubletons<Term> inVarDoubletons = new SetOfDoubletons<>();
@@ -74,8 +77,9 @@ public class IndexAnalyzer2 {
 	public IndexAnalyzer2(Term term, HashRelation<TermVariable, 
 			ArrayIndex> array2Indices, 
 			Boogie2SMT boogie2smt, TransFormulaLR tf, 
-			IndexSupportingInvariantAnalysis indexSupportingInvariantAnalysis, boolean isStem) {
+			IndexSupportingInvariantAnalysis indexSupportingInvariantAnalysis, boolean isStem, Logger logger) {
 		super();
+		m_Logger = logger;
 		m_IsStem = isStem;
 		m_Term = term;
 		m_boogie2smt = boogie2smt;
@@ -85,6 +89,10 @@ public class IndexAnalyzer2 {
 		m_AdditionalEqualities = new ArrayList<>();
 		m_AdditionalNotequals = new ArrayList<>();
 		analyze(array2Indices);
+		m_Logger.info(equalDoubletons.size() + " equalDoubletons");
+		m_Logger.info(distinctDoubletons.size() + " distinctDoubletons");
+		m_Logger.info(unknownDoubletons.size() + " unknownDoubletons");
+		m_Logger.info(ignoredDoubletons.size() + " ignoredDoubletons");
 	}
 	
 	

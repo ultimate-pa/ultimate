@@ -26,11 +26,11 @@
  */
 package de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Collection;
+import java.util.Collections;
 
 import de.uni_freiburg.informatik.ultimate.lassoranker.exceptions.TermException;
-import de.uni_freiburg.informatik.ultimate.lassoranker.variables.LassoBuilder;
+import de.uni_freiburg.informatik.ultimate.lassoranker.variables.LassoUnderConstruction;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaLR;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 
@@ -43,70 +43,43 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
  */
 public class StemAndLoopPreProcessor extends LassoPreProcessor {
 	
+	private final Script m_Script;
 	private final TransitionPreProcessor m_TransitionPreProcessor;
 	
 	
-	public StemAndLoopPreProcessor(TransitionPreProcessor transitionPreProcessor) {
+	public StemAndLoopPreProcessor(Script script, TransitionPreProcessor transitionPreProcessor) {
 		super();
+		m_Script = script;
 		m_TransitionPreProcessor = transitionPreProcessor;
 	}
 	
-	private List<TransFormulaLR> processStemOrLoop(
-			List<TransFormulaLR> old_components) throws TermException {
-		Script script = m_lassoBuilder.getScript();
-		List<TransFormulaLR> new_components =
-				new ArrayList<TransFormulaLR>(old_components.size());
-		for (TransFormulaLR tf : old_components) {
-			TransFormulaLR new_tf =
-					m_TransitionPreProcessor.process(script, tf);
-			assert checkSoundness(script, tf, new_tf)
-				: "Soundness check failed for preprocessor "
-				+ this.getClass().getSimpleName();
-			new_components.add(new_tf);
-		}
-		return new_components;
-	}
-	
-	/**
-	 * Apply the preprocessing step
-	 * @param script the SMT script to use 
-	 * @param lasso_builder the lasso builder object to perform the processing on
-	 * @return the processed formula
-	 * @throws TermException if an error occurred while traversing the term
-	 */
-	public void process(LassoBuilder lasso_builder) throws TermException {
-		m_lassoBuilder = lasso_builder;
-		
-		// Process stem
-		if (lasso_builder.isStemApproximated()) {
-			lasso_builder.setStemComponentsTermination(
-					processStemOrLoop(lasso_builder.getStemComponentsTermination()));
-			lasso_builder.setStemComponentsNonTermination(
-					processStemOrLoop(lasso_builder.getStemComponentsNonTermination()));
-		} else {
-			List<TransFormulaLR> components =
-					processStemOrLoop(lasso_builder.getStemComponentsTermination());
-			lasso_builder.setStemComponentsTermination(components);
-			lasso_builder.setStemComponentsNonTermination(components);
-		}
-		
-		// Process loop
-		if (lasso_builder.isLoopApproximated()) {
-			lasso_builder.setLoopComponentsTermination(
-					processStemOrLoop(lasso_builder.getLoopComponentsTermination()));
-			lasso_builder.setLoopComponentsNonTermination(
-					processStemOrLoop(lasso_builder.getLoopComponentsNonTermination()));
-		} else {
-			List<TransFormulaLR> components =
-					processStemOrLoop(lasso_builder.getLoopComponentsTermination());
-			lasso_builder.setLoopComponentsTermination(components);
-			lasso_builder.setLoopComponentsNonTermination(components);
-		}
-	}
-
 	@Override
 	public String getDescription() {
 		return m_TransitionPreProcessor.getDescription();
 	}
+	
+	@Override
+	public String getName() {
+		return m_TransitionPreProcessor.getClass().getSimpleName();
+	}
+
+
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public Collection<LassoUnderConstruction> process(
+			LassoUnderConstruction lasso) throws TermException {
+		TransFormulaLR newStem = m_TransitionPreProcessor.process(m_Script, lasso.getStem());
+		assert m_TransitionPreProcessor.checkSoundness(m_Script, lasso.getStem(), newStem) : 
+			"Soundness check failed for preprocessor " + this.getClass().getSimpleName();;
+		TransFormulaLR newLoop = m_TransitionPreProcessor.process(m_Script, lasso.getLoop());
+		LassoUnderConstruction newLasso = new LassoUnderConstruction(newStem, newLoop);
+		assert m_TransitionPreProcessor.checkSoundness(m_Script, lasso.getLoop(), newLoop) : 
+			"Soundness check failed for preprocessor " + this.getClass().getSimpleName();;
+		return Collections.singleton(newLasso);
+	}
+	
+	
 	
 }

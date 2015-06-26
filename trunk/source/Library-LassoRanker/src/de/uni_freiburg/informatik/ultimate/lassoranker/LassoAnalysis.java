@@ -64,7 +64,6 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.termination.TerminationAr
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.TerminationArgumentSynthesizer;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.templates.RankingTemplate;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.LassoBuilder;
-import de.uni_freiburg.informatik.ultimate.lassoranker.variables.LassoPartitioneer;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -85,7 +84,7 @@ import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
  * @author Jan Leike
  */
 public class LassoAnalysis {
-	private final Logger mLogger;
+	private final Logger m_Logger;
 
 	/**
 	 * Stem formula of the linear lasso program
@@ -190,11 +189,11 @@ public class LassoAnalysis {
 		
 		mServices = services;
 		mStorage = storage;
-		mLogger = mServices.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
+		m_Logger = mServices.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
 		m_preferences = new LassoRankerPreferences(preferences); // defensive
 																	// copy
 		m_preferences.checkSanity();
-		mLogger.info("Preferences:\n" + m_preferences.toString());
+		m_Logger.info("Preferences:\n" + m_preferences.toString());
 		
 		m_old_script = script;
 		m_axioms = axioms;
@@ -255,46 +254,28 @@ public class LassoAnalysis {
 	 * @throws TermException if preprocessing fails
 	 */
 	protected void preprocess() throws TermException {
-		mLogger.info("Starting lasso preprocessing...");
-		LassoBuilder lassoBuilder = new LassoBuilder(m_old_script, m_Boogie2SMT,
+		m_Logger.info("Starting lasso preprocessing...");
+		LassoBuilder lassoBuilder = new LassoBuilder(m_Logger, m_old_script, m_Boogie2SMT,
 				m_stem_transition, m_loop_transition);
 		assert lassoBuilder.isSane();
-		m_PreprocessingBenchmark = new PreprocessingBenchmark(
-				lassoBuilder.computeMaxDagSizeStem(), 
-				lassoBuilder.computeMaxDagSizeLoop());
-		// Apply preprocessors
-		for (LassoPreProcessor preprocessor : this.getPreProcessors(lassoBuilder,
-				m_preferences.overapproximateArrayIndexConnection)) {
-			mLogger.debug(preprocessor.getDescription());
-			preprocessor.process(lassoBuilder);
-			if (preprocessor instanceof LassoPartitioneerPreProcessor) {
-				LassoPartitioneerPreProcessor lp = (LassoPartitioneerPreProcessor) preprocessor;
-				m_PreprocessingBenchmark.addPreprocessingData(
-						preprocessor.getDescription(), 
-						lp.maxDagSizeNewStem(), 
-						lp.maxDagSizeNewLoop());
-			} else {
-				m_PreprocessingBenchmark.addPreprocessingData(
-						preprocessor.getDescription(), 
-						lassoBuilder.computeMaxDagSizeStem(), 
-						lassoBuilder.computeMaxDagSizeLoop());
-			}
-			assert lassoBuilder.isSane() : "lasso failed sanity check";
-		}
+		lassoBuilder.preprocess(this.getPreProcessors(lassoBuilder, m_preferences.overapproximateArrayIndexConnection), 
+				this.getPreProcessors(lassoBuilder, false));
 		
+		m_PreprocessingBenchmark = lassoBuilder.getPreprocessingBenchmark(); 
+				
 		m_lassos_t = lassoBuilder.getLassosTermination();
 		m_lassos_nt = lassoBuilder.getLassosNonTermination();
 		
 		// Some debug messages
-		mLogger.debug(new DebugMessage("Original stem:\n{0}",
+		m_Logger.debug(new DebugMessage("Original stem:\n{0}",
 				m_stem_transition));
-		mLogger.debug(new DebugMessage("Original loop:\n{0}",
+		m_Logger.debug(new DebugMessage("Original loop:\n{0}",
 				m_loop_transition));
-		mLogger.debug(new DebugMessage("After preprocessing:\n{0}",
+		m_Logger.debug(new DebugMessage("After preprocessing:\n{0}",
 				lassoBuilder));
-		mLogger.debug("Guesses for Motzkin coefficients: "
+		m_Logger.debug("Guesses for Motzkin coefficients: "
 				+ eigenvalueGuesses(m_lassos_t));
-		mLogger.info("Preprocessing complete.");
+		m_Logger.info("Preprocessing complete.");
 	}
 	
 	/**
@@ -305,31 +286,25 @@ public class LassoAnalysis {
 	protected LassoPreProcessor[] getPreProcessors(
 			LassoBuilder lassoBuilder, boolean overapproximateArrayIndexConnection) {
 		return new LassoPreProcessor[] {
-				new StemAndLoopPreProcessor(new MatchInVars(m_Boogie2SMT.getVariableManager())),
-				new StemAndLoopPreProcessor(new AddAxioms(m_axioms)),
-				new StemAndLoopPreProcessor(new CommuHashPreprocessor(mServices)),
-				new LassoPartitioneerPreProcessor(mServices, m_Boogie2SMT.getVariableManager()),
-//				new RewriteArrays(
-//						m_ArrayIndexSupportingInvariants,
-//						overapproximateArrayIndexConnection,
-//						m_stem_transition,
-//						m_loop_transition,
-//						mServices
-//				),
-				new RewriteArrays2(true, m_stem_transition, m_loop_transition, m_ModifiableGlobalsAtHonda, mServices, m_ArrayIndexSupportingInvariants),
-				new StemAndLoopPreProcessor(new MatchInVars(m_Boogie2SMT.getVariableManager())),
-				new LassoPartitioneerPreProcessor(mServices, m_Boogie2SMT.getVariableManager()),
-				new StemAndLoopPreProcessor(new RewriteDivision(lassoBuilder.getReplacementVarFactory())),
-				new StemAndLoopPreProcessor(new RewriteBooleans(lassoBuilder.getReplacementVarFactory(), lassoBuilder.getScript())),
-				new StemAndLoopPreProcessor(new RewriteIte()),
-				new StemAndLoopPreProcessor(new RewriteEquality()),
-				new StemAndLoopPreProcessor(new CommuHashPreprocessor(mServices)),
-				new StemAndLoopPreProcessor(new SimplifyPreprocessor(mServices)),
-				new StemAndLoopPreProcessor(new DNF(mServices, m_Boogie2SMT.getVariableManager())),
-				new StemAndLoopPreProcessor(new SimplifyPreprocessor(mServices)),
-				new StemAndLoopPreProcessor(new RewriteTrueFalse()),
-				new StemAndLoopPreProcessor(new RemoveNegation()),
-				new StemAndLoopPreProcessor(new RewriteStrictInequalities()),
+				new StemAndLoopPreProcessor(m_old_script, new MatchInVars(m_Boogie2SMT.getVariableManager())),
+				new StemAndLoopPreProcessor(m_old_script, new AddAxioms(m_axioms)),
+				new StemAndLoopPreProcessor(m_old_script, new CommuHashPreprocessor(mServices)),
+				new LassoPartitioneerPreProcessor(m_old_script, mServices, m_Boogie2SMT.getVariableManager()),
+				new RewriteArrays2(true, m_stem_transition, m_loop_transition, m_ModifiableGlobalsAtHonda, 
+						mServices, m_ArrayIndexSupportingInvariants, m_Boogie2SMT, lassoBuilder.getReplacementVarFactory()),
+				new StemAndLoopPreProcessor(m_old_script, new MatchInVars(m_Boogie2SMT.getVariableManager())),
+				new LassoPartitioneerPreProcessor(m_old_script, mServices, m_Boogie2SMT.getVariableManager()),
+				new StemAndLoopPreProcessor(m_old_script, new RewriteDivision(lassoBuilder.getReplacementVarFactory())),
+				new StemAndLoopPreProcessor(m_old_script, new RewriteBooleans(lassoBuilder.getReplacementVarFactory(), lassoBuilder.getScript())),
+				new StemAndLoopPreProcessor(m_old_script, new RewriteIte()),
+				new StemAndLoopPreProcessor(m_old_script, new RewriteEquality()),
+				new StemAndLoopPreProcessor(m_old_script, new CommuHashPreprocessor(mServices)),
+				new StemAndLoopPreProcessor(m_old_script, new SimplifyPreprocessor(mServices)),
+				new StemAndLoopPreProcessor(m_old_script, new DNF(mServices, m_Boogie2SMT.getVariableManager())),
+				new StemAndLoopPreProcessor(m_old_script, new SimplifyPreprocessor(mServices)),
+				new StemAndLoopPreProcessor(m_old_script, new RewriteTrueFalse()),
+				new StemAndLoopPreProcessor(m_old_script, new RemoveNegation()),
+				new StemAndLoopPreProcessor(m_old_script, new RewriteStrictInequalities()),
 		};
 	}
 	
@@ -401,7 +376,7 @@ public class LassoAnalysis {
 	public List<NonTerminationArgument> checkNonTermination(
 			NonTerminationAnalysisSettings settings) throws SMTLIBException,
 			TermException, IOException {
-		mLogger.info("Checking for nontermination...");
+		m_Logger.info("Checking for nontermination...");
 		
 		List<NonTerminationArgument> ntas
 			= new ArrayList<NonTerminationArgument>(m_lassos_nt.size());
@@ -411,10 +386,10 @@ public class LassoAnalysis {
 							settings, mServices, mStorage);
 			final LBool constraintSat = nas.synthesize();
 			if (constraintSat == LBool.SAT) {
-				mLogger.info("Proved nontermination for one component.");
+				m_Logger.info("Proved nontermination for one component.");
 				NonTerminationArgument nta = nas.getArgument();
 				ntas.add(nta);
-				mLogger.info(nta);
+				m_Logger.info(nta);
 			}
 			nas.close();
 			if (constraintSat != LBool.SAT) {
@@ -440,8 +415,8 @@ public class LassoAnalysis {
 	public TerminationArgument tryTemplate(RankingTemplate template, TerminationAnalysisSettings settings)
 			throws SMTLIBException, TermException, IOException {
 		// ignore stem
-		mLogger.info("Using template '" + template.getName() + "'.");
-		mLogger.debug(template);
+		m_Logger.info("Using template '" + template.getName() + "'.");
+		m_Logger.debug(template);
 		
 		for (Lasso lasso : m_lassos_t) {
 			// It suffices to prove termination for one component
@@ -462,15 +437,15 @@ public class LassoAnalysis {
 					template.getDegree(), tas.getNumSIs(), tas.getNumMotzkin(),
 					endTime - startTime);
 			m_LassoTerminationAnalysisBenchmarks.add(tab);
-			mLogger.debug(benchmarkScriptMessage(constraintSat, template));
+			m_Logger.debug(benchmarkScriptMessage(constraintSat, template));
 			
 			if (constraintSat == LBool.SAT) {
-				mLogger.info("Proved termination.");
+				m_Logger.info("Proved termination.");
 				TerminationArgument ta = tas.getArgument();
-				mLogger.info(ta);
+				m_Logger.info(ta);
 				Term[] lexTerm = ta.getRankingFunction().asLexTerm(m_old_script);
 				for (Term t : lexTerm) {
-					mLogger.debug(new DebugMessage("{0}", new SMTPrettyPrinter(t)));
+					m_Logger.debug(new DebugMessage("{0}", new SMTPrettyPrinter(t)));
 				}
 				tas.close();
 				return ta;
@@ -488,29 +463,47 @@ public class LassoAnalysis {
 	 *
 	 */
 	public static class PreprocessingBenchmark {
-		private final int m_IntialMaxDagSizeStem;
-		private final int m_IntialMaxDagSizeLoop;
-		private final List<String> m_Preprocessors = new ArrayList<>();
-		private final List<Integer> m_MaxDagSizeStemAbsolut = new ArrayList<Integer>();
-		private final List<Integer> m_MaxDagSizeLoopAbsolut = new ArrayList<Integer>();;
-		private final List<Float> m_MaxDagSizeStemRelative = new ArrayList<Float>();
-		private final List<Float> m_MaxDagSizeLoopRelative = new ArrayList<Float>();
-		public PreprocessingBenchmark(int intialMaxDagSizeStem, int intialMaxDagSizeLoop) {
+		private final int m_IntialMaxDagSizeNontermination;
+		private final int m_IntialMaxDagSizeTermination;
+		private final List<String> m_PreprocessorsTermination = new ArrayList<>();
+		private final List<String> m_PreprocessorsNonTermination = new ArrayList<>();
+		private final List<Integer> m_MaxDagSizeNonterminationAbsolut = new ArrayList<Integer>();
+		private final List<Integer> m_MaxDagSizeTerminationAbsolut = new ArrayList<Integer>();;
+		private final List<Float> m_MaxDagSizeNonterminationRelative = new ArrayList<Float>();
+		private final List<Float> m_MaxDagSizeTerminationRelative = new ArrayList<Float>();
+		public PreprocessingBenchmark(int intialMaxDagSizeNontermination, int intialMaxDagSizeTermination) {
 			super();
-			m_IntialMaxDagSizeStem = intialMaxDagSizeStem;
-			m_IntialMaxDagSizeLoop = intialMaxDagSizeLoop;
+			m_IntialMaxDagSizeNontermination = intialMaxDagSizeNontermination;
+			m_IntialMaxDagSizeTermination = intialMaxDagSizeTermination;
 		}
 		public void addPreprocessingData(String description,
-				int computeMaxDagSizeStem, int computeMaxDagSizeLoop) {
-			m_Preprocessors.add(description);
-			m_MaxDagSizeStemAbsolut.add(computeMaxDagSizeStem);
-			m_MaxDagSizeLoopAbsolut.add(computeMaxDagSizeLoop);
-			m_MaxDagSizeStemRelative.add(computeQuotiontOfLastTwoEntries(
-					m_MaxDagSizeStemAbsolut, m_IntialMaxDagSizeStem));
-			m_MaxDagSizeLoopRelative.add(computeQuotiontOfLastTwoEntries(
-					m_MaxDagSizeLoopAbsolut, m_IntialMaxDagSizeLoop));
-			
+				int maxDagSizeNontermination, int maxDagSizeTermination) {
+			m_PreprocessorsTermination.add(description);
+			m_MaxDagSizeNonterminationAbsolut.add(maxDagSizeNontermination);
+			m_MaxDagSizeTerminationAbsolut.add(maxDagSizeTermination);
+			m_MaxDagSizeNonterminationRelative.add(computeQuotiontOfLastTwoEntries(
+					m_MaxDagSizeNonterminationAbsolut, m_IntialMaxDagSizeNontermination));
+			m_MaxDagSizeTerminationRelative.add(computeQuotiontOfLastTwoEntries(
+					m_MaxDagSizeTerminationAbsolut, m_IntialMaxDagSizeTermination));
 		}
+		
+		public void addPreprocessingDataTermination(String description,
+				int maxDagSizeTermination) {
+			m_PreprocessorsTermination.add(description);
+			m_MaxDagSizeTerminationAbsolut.add(maxDagSizeTermination);
+			m_MaxDagSizeTerminationRelative.add(computeQuotiontOfLastTwoEntries(
+					m_MaxDagSizeTerminationAbsolut, m_IntialMaxDagSizeTermination));
+		}
+		
+		public void addPreprocessingDataNonTermination(String description,
+				int maxDagSizeNontermination) {
+			m_PreprocessorsNonTermination.add(description);
+			m_MaxDagSizeNonterminationAbsolut.add(maxDagSizeNontermination);
+			m_MaxDagSizeNonterminationRelative.add(computeQuotiontOfLastTwoEntries(
+					m_MaxDagSizeNonterminationAbsolut, m_IntialMaxDagSizeNontermination));
+		}
+		
+		
 		
 		public float computeQuotiontOfLastTwoEntries(List<Integer> list, int initialValue) {
 			int lastEntry;
@@ -527,55 +520,76 @@ public class LassoAnalysis {
 			}
 			return ((float) lastEntry) / ((float) secondLastEntry);
 		}
-		public int getIntialMaxDagSizeStem() {
-			return m_IntialMaxDagSizeStem;
+		public int getIntialMaxDagSizeNontermination() {
+			return m_IntialMaxDagSizeNontermination;
 		}
-		public int getIntialMaxDagSizeLoop() {
-			return m_IntialMaxDagSizeLoop;
+		public int getIntialMaxDagSizeTermination() {
+			return m_IntialMaxDagSizeTermination;
 		}
-		public List<String> getPreprocessors() {
-			return m_Preprocessors;
+		public List<String> getPreprocessorsTermination() {
+			return m_PreprocessorsTermination;
 		}
-		public List<Float> getMaxDagSizeStemRelative() {
-			return m_MaxDagSizeStemRelative;
+		public List<String> getPreprocessorsNonTermination() {
+			return m_PreprocessorsTermination;
 		}
-		public List<Float> getMaxDagSizeLoopRelative() {
-			return m_MaxDagSizeLoopRelative;
+		public List<Float> getMaxDagSizeNonterminationRelative() {
+			return m_MaxDagSizeNonterminationRelative;
+		}
+		public List<Float> getMaxDagSizeTerminationRelative() {
+			return m_MaxDagSizeTerminationRelative;
 		}
 		
 		
 		public static String prettyprint(List<PreprocessingBenchmark> benchmarks) {
+			return prettyprintTermination(benchmarks) + " " + prettyprintNontermination(benchmarks);
+		}
+		
+		
+		public static String prettyprintTermination(List<PreprocessingBenchmark> benchmarks) {
 			if (benchmarks.isEmpty()) {
 				return "";
 			}
-			List<String> preprocessors = benchmarks.get(0).getPreprocessors();
+			List<String> preprocessors = benchmarks.get(0).getPreprocessorsTermination();
 			List<String> preprocessorAbbreviations = computeAbbrev(preprocessors);
-			float[] stemData = new float[preprocessors.size()];
-			float[] loopData = new float[preprocessors.size()];
-			int stemAverageInitial = 0;
-			int loopAverageInitial = 0;
+			float[] TerminationData = new float[preprocessors.size()];
+			int TerminationAverageInitial = 0;
 			for (PreprocessingBenchmark pb : benchmarks) {
-				addListElements(stemData, pb.getMaxDagSizeStemRelative());
-				addListElements(loopData, pb.getMaxDagSizeLoopRelative());
-				stemAverageInitial += pb.getIntialMaxDagSizeStem();
-				loopAverageInitial += pb.getIntialMaxDagSizeLoop();
+				addListElements(TerminationData, pb.getMaxDagSizeTerminationRelative());
+				TerminationAverageInitial += pb.getIntialMaxDagSizeTermination();
 			}
-			divideAllEntries(stemData, benchmarks.size());
-			divideAllEntries(loopData, benchmarks.size());
-			stemAverageInitial /= benchmarks.size();
-			loopAverageInitial /= benchmarks.size();
+			divideAllEntries(TerminationData, benchmarks.size());
+			TerminationAverageInitial /= benchmarks.size();
 			StringBuilder sb = new StringBuilder();
-			sb.append("Stem: ");
-			sb.append("inital");
-			sb.append(stemAverageInitial);
-			sb.append(" ");
-			sb.append(ppOne(stemData, preprocessorAbbreviations));
 			sb.append("  ");
-			sb.append("Loop: ");
+			sb.append("Termination: ");
 			sb.append("inital");
-			sb.append(loopAverageInitial);
+			sb.append(TerminationAverageInitial);
 			sb.append(" ");
-			sb.append(ppOne(loopData, preprocessorAbbreviations));
+			sb.append(ppOne(TerminationData, preprocessorAbbreviations));
+			return sb.toString();
+		}
+		
+		public static String prettyprintNontermination(List<PreprocessingBenchmark> benchmarks) {
+			if (benchmarks.isEmpty()) {
+				return "";
+			}
+			List<String> preprocessors = benchmarks.get(0).getPreprocessorsNonTermination();
+			List<String> preprocessorAbbreviations = computeAbbrev(preprocessors);
+			float[] NonterminationData = new float[preprocessors.size()];
+			int NonterminationAverageInitial = 0;
+			for (PreprocessingBenchmark pb : benchmarks) {
+				addListElements(NonterminationData, pb.getMaxDagSizeNonterminationRelative());
+				NonterminationAverageInitial += pb.getIntialMaxDagSizeNontermination();
+			}
+			divideAllEntries(NonterminationData, benchmarks.size());
+			NonterminationAverageInitial /= benchmarks.size();
+			StringBuilder sb = new StringBuilder();
+			sb.append("  ");
+			sb.append("Nontermination: ");
+			sb.append("inital");
+			sb.append(NonterminationAverageInitial);
+			sb.append(" ");
+			sb.append(ppOne(NonterminationData, preprocessorAbbreviations));
 			return sb.toString();
 		}
 		

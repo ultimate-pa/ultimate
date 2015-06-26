@@ -41,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvide
 import de.uni_freiburg.informatik.ultimate.lassoranker.exceptions.TermException;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.LassoBuilder;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.LassoPartitioneer;
+import de.uni_freiburg.informatik.ultimate.lassoranker.variables.LassoUnderConstruction;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaLR;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -67,79 +68,23 @@ public class LassoPartitioneerPreProcessor extends LassoPreProcessor {
 	private final IUltimateServiceProvider m_Services;
 	private final IFreshTermVariableConstructor m_FreshTermVariableConstructor;
 	
-	private Script m_Script;
-	private final List<TransFormulaLR> m_NewStemTermination = new ArrayList<>();
-	private final List<TransFormulaLR> m_NewLoopTermination = new ArrayList<>();
-	private final List<TransFormulaLR> m_NewStemNontermination = new ArrayList<>();
-	private final List<TransFormulaLR> m_NewLoopNontermination = new ArrayList<>();
-
-	private Logger m_Logger;
-	
-	/**
-	 * Do not modify the lasso builder?
-	 */
-	private final boolean m_DryRun = false;
+	private final Script m_Script;
 	
 	
 	
-	
-	
-	public LassoPartitioneerPreProcessor(IUltimateServiceProvider services, 
+	public LassoPartitioneerPreProcessor(Script script, 
+			IUltimateServiceProvider services, 
 			IFreshTermVariableConstructor freshTermVariableConstructor) {
 		m_Services = services;
+		m_Script = script;
 		m_FreshTermVariableConstructor = freshTermVariableConstructor;
-		m_Logger = m_Services.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
 	}
-
 
 	@Override
-	public void process(LassoBuilder lasso_builder) throws TermException {
-		m_lassoBuilder = lasso_builder;
-		m_Script = lasso_builder.getScript();
-		
-		List<TransFormulaLR> stem_components =
-				m_lassoBuilder.getStemComponentsTermination();
-		List<TransFormulaLR> loop_components =
-				m_lassoBuilder.getLoopComponentsTermination();
-		partition(m_lassoBuilder.getStemComponentsTermination(), m_lassoBuilder.getLoopComponentsTermination(), m_NewStemTermination, m_NewLoopTermination);
-		partition(m_lassoBuilder.getStemComponentsNonTermination(), m_lassoBuilder.getLoopComponentsNonTermination(), m_NewStemNontermination, m_NewLoopNontermination);
-		
-		assert !m_NewStemTermination.isEmpty() : "empty stem";
-		assert !m_NewLoopTermination.isEmpty() : "empty loop";
-		assert m_NewStemTermination.size() == m_NewLoopTermination.size() : "inconsistent component size";
-		
-		assert !m_NewStemNontermination.isEmpty() : "empty stem";
-		assert !m_NewLoopNontermination.isEmpty() : "empty loop";
-		assert m_NewStemNontermination.size() == m_NewLoopNontermination.size() : "inconsistent component size";
-
-		String messageC = "Components before/after: " 
-				+ loop_components.size() + "/" + m_NewLoopNontermination.size();
-		m_Logger.info(messageC);
-		String messageS = "Stem maxDagSize before/after: " 
-				+ LassoBuilder.computeMaxDagSize(stem_components) + "/" + LassoBuilder.computeMaxDagSize(m_NewStemNontermination)
-				+ " Loop maxDagSize before/after: " 
-				+ LassoBuilder.computeMaxDagSize(loop_components) + "/" + LassoBuilder.computeMaxDagSize(m_NewLoopNontermination);
-		m_Logger.info(messageS);
-
-		if (!m_DryRun) {
-			m_lassoBuilder.setStemComponentsTermination(m_NewStemTermination);
-			m_lassoBuilder.setStemComponentsNonTermination(m_NewStemNontermination);
-			m_lassoBuilder.setLoopComponentsTermination(m_NewLoopTermination);
-			m_lassoBuilder.setLoopComponentsNonTermination(m_NewLoopNontermination);
-		}
-	}
-
-
-	private void partition(List<TransFormulaLR> stemComponents,
-			List<TransFormulaLR> loopComponents,
-			List<TransFormulaLR> newStem,
-			List<TransFormulaLR> newLoop) {
-		assert(stemComponents.size() == loopComponents.size());
-		for (int i=0; i<stemComponents.size(); i++) {
-			LassoPartitioneer lp = new LassoPartitioneer(m_Services, m_FreshTermVariableConstructor, m_Script, stemComponents.get(i), loopComponents.get(i));
-			newStem.addAll(lp.getNewStem());
-			newLoop.addAll(lp.getNewLoop());
-		}
+	public Collection<LassoUnderConstruction> process(
+			LassoUnderConstruction lasso) throws TermException {
+		LassoPartitioneer lp = new LassoPartitioneer(m_Services, m_FreshTermVariableConstructor, m_Script, lasso.getStem(), lasso.getLoop());
+		return lp.getNewLassos();
 	}
 
 
@@ -148,12 +93,9 @@ public class LassoPartitioneerPreProcessor extends LassoPreProcessor {
 		return s_Description;
 	}
 	
-	public int maxDagSizeNewStem() {
-		return LassoBuilder.computeMaxDagSize(m_NewStemNontermination);
-	}
-	
-	public int maxDagSizeNewLoop() {
-		return LassoBuilder.computeMaxDagSize(m_NewLoopNontermination);
+	@Override
+	public String getName() {
+		return LassoPartitioneer.class.getSimpleName();
 	}
 
 

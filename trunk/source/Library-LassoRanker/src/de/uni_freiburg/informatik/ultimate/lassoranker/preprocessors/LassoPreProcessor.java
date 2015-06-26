@@ -26,33 +26,39 @@
  */
 package de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors;
 
+import java.util.Collection;
+
 import de.uni_freiburg.informatik.ultimate.lassoranker.exceptions.TermException;
-import de.uni_freiburg.informatik.ultimate.lassoranker.variables.LassoBuilder;
+import de.uni_freiburg.informatik.ultimate.lassoranker.variables.LassoPartitioneer;
+import de.uni_freiburg.informatik.ultimate.lassoranker.variables.LassoUnderConstruction;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaLR;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 
 
 /**
- * A preprocessor that modifies a given LassoBuilder
+ * A preprocessor that transforms a {@link LassoUnderConstruction} into a
+ * collection of {@link LassoUnderConstruction}s.
+ * In most cases the result of the preprocessing is a singleton. The 
+ * {@link LassoPartitioneer} returns a collection
+ * 
  * 
  * @author Jan Leike, Matthias
  */
 public abstract class LassoPreProcessor {
-	/**
-	 * The LassoBuilder that we are processing.
-	 * Is null before process() has been called.
-	 */
-	protected LassoBuilder m_lassoBuilder = null;
-	
 	
 	/**
 	 * Apply the preprocessing step
-	 * @param script the SMT script to use 
 	 * @param lasso_builder the lasso builder object to perform the processing on
 	 * @return the processed formula
 	 * @throws TermException if an error occurred while traversing the term
 	 */
-	public abstract void process(LassoBuilder lasso_builder) throws TermException;
+	public abstract Collection<LassoUnderConstruction> process(LassoUnderConstruction lasso) throws TermException;
+	
+	/**
+	 * @return name of the preprocessor, typically this is the name of the
+	 * class that does the transformation
+	 */
+	public abstract String getName();
 	
 	/**
 	 * @return a description of the preprocessing

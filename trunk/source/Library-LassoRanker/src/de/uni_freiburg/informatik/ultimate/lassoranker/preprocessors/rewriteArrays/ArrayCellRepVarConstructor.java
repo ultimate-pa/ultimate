@@ -55,24 +55,20 @@ public class ArrayCellRepVarConstructor {
 	private final ReplacementVarFactory m_ReplacementVarFactory;
 	private final Script m_Script;
 	private final NestedMap2<TermVariable, ArrayIndex, ArrayCellReplacementVarInformation> m_ArrayRepresentative2IndexRepresentative2ReplacementVar = new NestedMap2<>();
-	private final List<TransFormulaLRWithArrayInformation> m_Stem;
-	private final List<TransFormulaLRWithArrayInformation> m_Loop;
+	private final TransFormulaLRWithArrayInformation m_Stem;
+	private final TransFormulaLRWithArrayInformation m_Loop;
 	
 	public ArrayCellRepVarConstructor(
 			ReplacementVarFactory replacementVarFactory, Script script,
-			List<TransFormulaLRWithArrayInformation> stem,
-			List<TransFormulaLRWithArrayInformation> loop) {
+			TransFormulaLRWithArrayInformation stemTfwai,
+			TransFormulaLRWithArrayInformation loopTfwai) {
 		super();
 		m_ReplacementVarFactory = replacementVarFactory;
 		m_Script = script;
-		m_Stem = stem;
-		m_Loop = loop;
-		for (TransFormulaLRWithArrayInformation tfwac : m_Stem) {
-			constructRepVars(tfwac);
-		}
-		for (TransFormulaLRWithArrayInformation tfwac : m_Loop) {
-			constructRepVars(tfwac);
-		}
+		m_Stem = stemTfwai;
+		m_Loop = loopTfwai;
+		constructRepVars(m_Stem);
+		constructRepVars(m_Loop);
 	}
 
 

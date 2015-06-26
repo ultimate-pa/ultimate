@@ -85,8 +85,7 @@ public class LassoPartitioneer {
 	private final UnionFind<NonTheorySymbol<?>> m_EquivalentSymbols = new UnionFind<>();
 	private Set<RankVar> m_AllRankVars = new HashSet<RankVar>();
 	private Script m_Script;
-	private final List<TransFormulaLR> m_NewStem = new ArrayList<>();
-	private final List<TransFormulaLR> m_NewLoop = new ArrayList<>();
+	private final List<LassoUnderConstruction> m_NewLassos = new ArrayList<>();
 	private Logger m_Logger;
 	
 	
@@ -104,14 +103,9 @@ public class LassoPartitioneer {
 		doPartition();
 	}
 	
-	public List<TransFormulaLR> getNewStem() {
-		return m_NewStem;
+	public List<LassoUnderConstruction> getNewLassos() {
+		return m_NewLassos;
 	}
-
-	public List<TransFormulaLR> getNewLoop() {
-		return m_NewLoop;
-	}
-
 
 	private void doPartition() {
 		m_Symbol2StemConjuncts = new HashRelation<>();
@@ -160,25 +154,30 @@ public class LassoPartitioneer {
 				// do nothing
 			} else {
 				TransFormulaLR stemTransformulaLR = constructTransFormulaLR(Part.STEM, equivalentStemConjuncts, equivalentStemSymbolsWithoutConjunct);
-				m_NewStem.add(stemTransformulaLR);
 				TransFormulaLR loopTransformulaLR = constructTransFormulaLR(Part.LOOP, equivalentLoopConjuncts, equivalentLoopSymbolsWithoutConjunct);
-				m_NewLoop.add(loopTransformulaLR);
+				m_NewLassos.add(new LassoUnderConstruction(stemTransformulaLR, loopTransformulaLR));
 			}
 		}
 		
-		if (m_StemConjunctsWithoutSymbols.isEmpty()	&& m_LoopConjunctsWithoutSymbols.isEmpty()) {
+		if (emptyOrTrue(m_StemConjunctsWithoutSymbols) && emptyOrTrue(m_LoopConjunctsWithoutSymbols)) {
 			// do nothing
 		} else {
 			TransFormulaLR stemTransformulaLR = constructTransFormulaLR(Part.STEM, m_StemConjunctsWithoutSymbols);
-			m_NewStem.add(stemTransformulaLR);
 			TransFormulaLR loopTransformulaLR = constructTransFormulaLR(Part.LOOP, m_LoopConjunctsWithoutSymbols);
-			m_NewLoop.add(loopTransformulaLR);
+			m_NewLassos.add(new LassoUnderConstruction(stemTransformulaLR, loopTransformulaLR));
 		}
-		assert !m_NewStem.isEmpty() : "empty stem";
-		assert !m_NewLoop.isEmpty() : "empty loop";
-		assert m_NewStem.size() == m_NewLoop.size() : "inconsistent component size";
 	}
 
+
+
+	private boolean emptyOrTrue(List<Term> terms) {
+		if (terms.isEmpty()) {
+			return true;
+		} else {
+			Term conjunction = SmtUtils.and(m_Script, terms);
+			return (conjunction.toString().equals("true"));
+		}
+	}
 
 	private void extractInVarAndOutVarSymbols(RankVar rv,
 			Set<NonTheorySymbol<?>> symbols, TransFormulaLR transFormulaLR) {
