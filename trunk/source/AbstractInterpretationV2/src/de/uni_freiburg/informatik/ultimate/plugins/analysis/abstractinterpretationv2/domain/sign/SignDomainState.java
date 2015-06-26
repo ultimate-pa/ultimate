@@ -244,4 +244,13 @@ public class SignDomainState<ACTION, VARDECL> implements IAbstractState<ACTION, 
 		return newState;
 	}
 
+	/**
+	 * Sets all variables to &perp;.
+	 */
+	public void setToBottom() {
+		for (Entry<String, SignDomainValue> entry : mValuesMap.entrySet()) {
+			entry.setValue(new SignDomainValue(Values.BOTTOM));
+		}
+	}
+
 }

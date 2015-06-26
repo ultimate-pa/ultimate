@@ -5,9 +5,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 /**
  * A value in the signed domain. Such a value can be one of the following:<br />
  * <ul>
- * <li>+</li>
- * <li>-</li>
- * <li>0</li>
+ * <li>(+)</li>
+ * <li>(-)</li>
+ * <li>(0)</li>
  * <li>T</li>
  * <li>&perp;</li>
  * </ul>

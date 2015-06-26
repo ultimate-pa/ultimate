@@ -31,14 +31,43 @@ public class SignBinaryExpressionEvaluator implements IEvaluator<Values, CodeBlo
 		final IEvaluationResult<Values> secondResult = mRightSubEvaluator.evaluate(currentState);
 
 		switch (mOperator) {
+//		case LOGICIFF:
+//			break;
+//		case LOGICIMPLIES:
+//			break;
+//		case LOGICAND:
+//			break;
+//		case LOGICOR:
+//			break;
+//		case COMPLT:
+//			break;
+//		case COMPGT:
+//			break;
+//		case COMPLEQ:
+//			break;
+//		case COMPGEQ:
+//			break;
+//		case COMPEQ:
+//			if (firstResult.getResult().equals(secondResult.getResult())) {
+//				
+//			}
+//			break;
+//		case COMPNEQ:
+//			break;
+//		case COMPPO:
+//			break;
+//		case BITVECCONCAT:
+//			break;
+//		case ARITHMUL:
+//			break;
+//		case ARITHDIV:
+//			break;
+//		case ARITHMOD:
+//			break;
 		case ARITHPLUS:
 			return performAddition(firstResult, secondResult);
 		case ARITHMINUS:
 			return performSubtraction(firstResult, secondResult);
-			// case ARITHMUL:
-			// break;
-			// case ARITHDIV:
-			// break;
 		default:
 			throw new UnsupportedOperationException("The operator " + mOperator.toString() + " is not implemented.");
 		}

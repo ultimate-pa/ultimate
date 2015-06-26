@@ -47,5 +47,4 @@ public final class SignSingletonVariableExpressionEvaluator implements IEvaluato
 
 		return val;
 	}
-
 }

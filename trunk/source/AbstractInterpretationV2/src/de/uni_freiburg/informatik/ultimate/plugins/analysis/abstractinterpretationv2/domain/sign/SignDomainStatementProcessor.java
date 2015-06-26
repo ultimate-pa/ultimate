@@ -9,8 +9,10 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.HavocStatement;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.RealLiteral;
@@ -37,7 +39,8 @@ public class SignDomainStatementProcessor extends BoogieVisitor {
 
 	IEvaluatorFactory<Values, CodeBlock, BoogieVar> mEvaluatorFactory;
 	ExpressionEvaluator<Values, CodeBlock, BoogieVar> mExpressionEvaluator;
-	private String mCurrentLhs;
+
+	private String mLhsVariable;
 
 	protected SignDomainStatementProcessor(SignStateConverter<CodeBlock, BoogieVar> stateConverter) {
 		mEvaluatorFactory = new SignEvaluatorFactory(stateConverter);
@@ -47,6 +50,8 @@ public class SignDomainStatementProcessor extends BoogieVisitor {
 	        Statement statement) {
 		mOldState = oldState;
 		mNewState = (SignDomainState<CodeBlock, BoogieVar>) oldState.copy();
+
+		mLhsVariable = null;
 
 		// Process the current statement and alter mNewState
 		processStatement(statement);
@@ -73,14 +78,13 @@ public class SignDomainStatementProcessor extends BoogieVisitor {
 
 		final LeftHandSide[] lhs = statement.getLhs();
 		final Expression[] rhs = statement.getRhs();
-		mCurrentLhs = null;
 
 		for (int i = 0; i < lhs.length; i++) {
-			assert mCurrentLhs == null;
+			assert mLhsVariable == null;
 			processLeftHandSide(lhs[i]);
-			assert mCurrentLhs != null;
-			final String varname = mCurrentLhs;
-			mCurrentLhs = null;
+			assert mLhsVariable != null;
+			final String varname = mLhsVariable;
+			mLhsVariable = null;
 
 			processExpression(rhs[i]);
 			assert mExpressionEvaluator.isFinished();
@@ -91,29 +95,31 @@ public class SignDomainStatementProcessor extends BoogieVisitor {
 	}
 
 	@Override
-    protected void visit(AssumeStatement statement) {
-		
+	protected void visit(AssumeStatement statement) {
+
 		mExpressionEvaluator = new ExpressionEvaluator<Values, CodeBlock, BoogieVar>();
-		
+
 		Expression formula = statement.getFormula();
-		
+
+		if (formula instanceof BooleanLiteral) {
+			BooleanLiteral binform = (BooleanLiteral) formula;
+			if (!binform.getValue()) {
+				mNewState.setToBottom();
+			}
+			return;
+		}
+
 		processExpression(formula);
-		
-		System.out.println("asdasd");
-		
-	    // TODO Auto-generated method stub
-	    //super.visit(statement);
-    }
+
+		System.out.println(mExpressionEvaluator.isFinished() ? "FINISHED" : "UNFINISHED");
+		IEvaluationResult<Values> result = mExpressionEvaluator.getRootEvaluator().evaluate(mOldState);
+
+	}
 
 	@Override
-    protected void visit(AssertStatement statement) {
-	    // TODO Auto-generated method stub
-	    super.visit(statement);
-    }
-
-	@Override
-	protected void visit(VariableLHS lhs) {
-		mCurrentLhs = lhs.getIdentifier();
+	protected void visit(AssertStatement statement) {
+		// TODO Auto-generated method stub
+		super.visit(statement);
 	}
 
 	@Override
@@ -157,6 +163,22 @@ public class SignDomainStatementProcessor extends BoogieVisitor {
 		mExpressionEvaluator.addEvaluator(unaryExpressionEvaluator);
 
 		super.visit(expr);
+	}
+
+	@Override
+	protected void visit(IdentifierExpression expr) {
+
+		final IEvaluator<Values, CodeBlock, BoogieVar> variableExpressionEvaluator = mEvaluatorFactory
+		        .createSingletonVariableExpressionEvaluator(expr.getIdentifier());
+
+		mExpressionEvaluator.addEvaluator(variableExpressionEvaluator);
+
+		super.visit(expr);
+	}
+
+	@Override
+	protected void visit(VariableLHS lhs) {
+		mLhsVariable = lhs.getIdentifier();
 	}
 
 }
