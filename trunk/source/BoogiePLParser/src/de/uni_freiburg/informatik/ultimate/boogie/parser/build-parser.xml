@@ -8,7 +8,8 @@
 
     <target name="generate_parser">
         <java classname="java_cup.Main" classpath="${cupDir}" fork="true">
-            <arg value="Boogie.cup" />
+        	<arg line="-expect 1" /> <!-- FIXME: Necessary for attributes of assert and assume -->
+        	<arg value="Boogie.cup" />
         </java>
         <java jar="${flexJar}" fork="true">
         	<arg value="Boogie.flex" />

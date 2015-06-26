@@ -286,7 +286,7 @@ public final class DSITransformerObserver extends BoogieTransformer implements
 		 mLogger = logger;
 	}
 	
-	// @Override
+	@Override
 	public void finish() {
 	}
 
@@ -298,12 +298,12 @@ public final class DSITransformerObserver extends BoogieTransformer implements
 		return root;
 	}
 
-	// @Override
+	@Override
 	public WalkerOptions getWalkerOptions() {
 		return null;
 	}
 
-	// @Override
+	@Override
 	public void init(GraphType modelType, int currentModelIndex, int numberOfModels) {
 		mLogger.info("Initializing DSITransformer...");
 		procedures = new HashMap<String, ProcedureContainer>();
@@ -354,7 +354,7 @@ public final class DSITransformerObserver extends BoogieTransformer implements
 	/**
 	 * Called by the Ultimate Framework. Receives the AST
 	 */
-	// @Override
+	@Override
 	public boolean process(IElement root) {
 		mLogger.info("Scanning AST...");
 		if (root instanceof Unit) {

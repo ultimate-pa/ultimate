@@ -393,12 +393,14 @@ Statement ::=
 	     * with an error if it does not.
 	     */
 	    AssertStatement }
+	    attributes : ?NamedAttribute[]
 		formula : Expression
 	| { /**
 	     * Assume that a boolean formula holds.  Program will terminate
 	     * successfully if it does not.
 	     */
 	    AssumeStatement }
+	    attributes : ?NamedAttribute[]
 		formula : Expression
 	| { /**
 	     * Destroy the contents of variables by over-writing them

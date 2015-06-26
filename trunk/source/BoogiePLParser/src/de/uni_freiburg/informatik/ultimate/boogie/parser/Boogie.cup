@@ -693,10 +693,10 @@ stmtList ::=
 stmt ::=
 	  ID:i COLON
 	  {: RESULT = new Label(getLocation(i$,i$,false), i); :}
-	| ASSERT:x attributeStar:attr expr:e SEMI
-	  {: RESULT = new AssertStatement(getLocation(x$,e$,false), e); Check check = new Check(Spec.ASSERT); check.addToNodeAnnot(RESULT); :}
-	| ASSUME:x attributeStar:attr expr:e SEMI
-	  {: RESULT = new AssumeStatement(getLocation(x$,e$,false), e); :}
+	| ASSERT:x attributes:attr expr:e SEMI
+	  {: RESULT = new AssertStatement(getLocation(x$,e$,false), attr, e); Check check = new Check(Spec.ASSERT); check.addToNodeAnnot(RESULT); :}
+	| ASSUME:x attributes:attr expr:e SEMI
+	  {: RESULT = new AssumeStatement(getLocation(x$,e$,false), attr, e); :}
 	| HAVOC:x varCommaPlus:i SEMI
 	  {: RESULT = new HavocStatement(getLocation(x$,i$,false), i.toArray(new VariableLHS[i.size()])); :}
 	| lhsCommaPlus:lhs COLONEQUALS exprCommaPlus:rhs SEMI
