@@ -46,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceCheckerSpWp;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceCheckerUtils;
+import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
 
 public class RefineBuchi {
 
@@ -254,12 +255,20 @@ public class RefineBuchi {
 			}
 			Set<IPredicate> loopInterpolantsForRefinement;
 			if (setting.cannibalizeLoop()) {
-				loopInterpolantsForRefinement = pu.cannibalizeAll(false, loopInterpolants);
-				loopInterpolantsForRefinement.addAll(pu.cannibalize(false, bspm.getRankEqAndSi().getFormula()));
+				try {
+					loopInterpolantsForRefinement = pu.cannibalizeAll(false, loopInterpolants);
+					loopInterpolantsForRefinement.addAll(pu.cannibalize(false, bspm.getRankEqAndSi().getFormula()));
 
-				LoopCannibalizer lc = new LoopCannibalizer(m_Counterexample, loopInterpolantsForRefinement, bspm, pu,
-						m_SmtManager, buchiModGlobalVarManager, interpolation, m_Services);
-				loopInterpolantsForRefinement = lc.getResult();
+					LoopCannibalizer lc = new LoopCannibalizer(m_Counterexample, loopInterpolantsForRefinement, bspm, pu,
+							m_SmtManager, buchiModGlobalVarManager, interpolation, m_Services);
+					loopInterpolantsForRefinement = lc.getResult();
+				} catch (ToolchainCanceledException tce) {
+					String taskMessage = "loop cannibalization: ";
+					if (tce.getRunningTaskInfo() != null) {
+						taskMessage += tce.getRunningTaskInfo();
+					}
+					throw new ToolchainCanceledException(getClass(), taskMessage);
+				}
 			} else {
 				loopInterpolantsForRefinement = new HashSet<IPredicate>(Arrays.asList(loopInterpolants));
 				loopInterpolantsForRefinement.add(bspm.getRankEqAndSi());
