@@ -29,6 +29,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Powers
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.RemoveDeadEnds;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.RemoveUnreachable;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.MinimizeDfaHopcroftPaper;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.MinimizeIncompleteDfa;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.MinimizeSevpa;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.ShrinkNwa;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.ComplementDD;
@@ -567,6 +568,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		switch (minimization) {
 		case NONE:
 			break;
+		case DFA_HOPCROFT_LISTS:
 		case DFA_HOPCROFT_ARRAYS:
 		case MINIMIZE_SEVPA:
 		case SHRINK_NWA:
@@ -675,6 +677,21 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 						.getResult();
 				if (m_ComputeHoareAnnotation) {
 					Map<IPredicate, IPredicate> oldState2newState = minimizeOp.getOldState2newState();
+					m_Haf.updateOnMinimization(oldState2newState, minimized);
+				}
+				break;
+			}
+			case DFA_HOPCROFT_LISTS: {
+				MinimizeIncompleteDfa<CodeBlock, IPredicate> minimizeOp =
+						new MinimizeIncompleteDfa<CodeBlock, IPredicate>(
+							m_Services, newAbstraction, predicateFactoryRefinement,
+							partition, m_ComputeHoareAnnotation);
+				assert minimizeOp.checkResult(resultCheckPredFac);
+				minimized = (new RemoveUnreachable<CodeBlock, IPredicate>(
+						m_Services, minimizeOp.getResult())).getResult();
+				if (m_ComputeHoareAnnotation) {
+					Map<IPredicate, IPredicate> oldState2newState =
+							minimizeOp.getOldState2newState();
 					m_Haf.updateOnMinimization(oldState2newState, minimized);
 				}
 				break;
