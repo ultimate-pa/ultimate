@@ -16,6 +16,7 @@ import de.uni_freiburg.informatik.ultimate.result.TypeErrorResult;
 import de.uni_freiburg.informatik.ultimate.result.UnprovableResult;
 import de.uni_freiburg.informatik.ultimate.result.UnsupportedSyntaxResult;
 import de.uni_freiburg.informatik.ultimate.result.WitnessResult;
+import de.uni_freiburg.informatik.ultimate.result.WitnessResult.WitnessVerificationStatus;
 import de.uni_freiburg.informatik.ultimate.util.HashRelation;
 
 /**
@@ -103,8 +104,8 @@ public class SafetyCheckerOverallResultEvaluator implements IOverallResultEvalua
 		} else if (result instanceof WitnessResult) {
 			// if there is a witness result it has to be verified, else it is an
 			// error
-			WitnessResult<?, ?, ?> wit = (WitnessResult<?, ?, ?>) result;
-			if (!wit.getVerificationStatus()) {
+			final WitnessResult<?, ?, ?> wit = (WitnessResult<?, ?, ?>) result;
+			if (wit.getVerificationStatus() != WitnessVerificationStatus.VERIFIED) {
 				return SafetyCheckerOverallResult.EXCEPTION_OR_ERROR;
 			} else {
 				return null;

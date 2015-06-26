@@ -129,18 +129,18 @@ public abstract class BaseRcfgAbstractStateStorageProvider implements IAbstractS
 		trace.add(end);
 		Deque<Pair<CodeBlock, IAbstractState<CodeBlock, BoogieVar>>> possiblePreStates = getStates(end.getSource());
 		Pair<CodeBlock, IAbstractState<CodeBlock, BoogieVar>> searchResult = search(start, possiblePreStates);
-		while (searchResult == null) {
-			for(final Pair<CodeBlock, IAbstractState<CodeBlock, BoogieVar>> current: possiblePreStates){
-				final CodeBlock traceElement = current.getFirst();
-				if(!closed.add(traceElement)){
-					continue;
-				}
-				trace.add(traceElement);
-				possiblePreStates = getStates(traceElement.getSource());
-				searchResult = search(start, possiblePreStates);
-				break;
-			}
-		}
+//		while (searchResult == null) {
+//			for(final Pair<CodeBlock, IAbstractState<CodeBlock, BoogieVar>> current: possiblePreStates){
+//				final CodeBlock traceElement = current.getFirst();
+//				if(!closed.add(traceElement)){
+//					continue;
+//				}
+//				trace.add(traceElement);
+//				possiblePreStates = getStates(traceElement.getSource());
+//				searchResult = search(start, possiblePreStates);
+//				break;
+//			}
+//		}
 
 		Collections.reverse(trace);
 		return trace;

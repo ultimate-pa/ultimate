@@ -22,6 +22,7 @@ import de.uni_freiburg.informatik.ultimate.result.ExceptionOrErrorResult;
 import de.uni_freiburg.informatik.ultimate.result.GenericResult;
 import de.uni_freiburg.informatik.ultimate.result.IResult;
 import de.uni_freiburg.informatik.ultimate.result.WitnessResult;
+import de.uni_freiburg.informatik.ultimate.result.WitnessResult.WitnessVerificationStatus;
 import de.uni_freiburg.informatik.ultimatetest.util.TestUtil;
 
 /**
@@ -122,7 +123,7 @@ public class BacktranslationTestResultDecider extends TestResultDecider {
 						customMessages.add(errorMsg);
 						fail = true;
 						break;
-					} else if (!witness.getVerificationStatus()) {
+					} else if (witness.getVerificationStatus() != WitnessVerificationStatus.VERIFIED) {
 						setResultCategory("Witness failed to verify");
 						String errorMsg = "The witness failed to verify: " + witness.getLongDescription();
 						setResultMessage(errorMsg);
