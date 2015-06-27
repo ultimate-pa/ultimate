@@ -125,7 +125,7 @@ public class AffineFunctionGenerator implements Serializable {
 	 * @return the greatest common denominator
 	 */
 	public Rational getGcd(Map<Term, Rational> assignment) {
-		Rational gcd = Rational.ONE.gcd(assignment.get(m_constant));
+		Rational gcd = assignment.get(m_constant);
 		for (Map.Entry<RankVar, Term> entry : m_coefficients.entrySet()) {
 			gcd = gcd.gcd(assignment.get(entry.getValue()));
 		}
@@ -162,17 +162,27 @@ public class AffineFunctionGenerator implements Serializable {
 	public AffineFunction extractAffineFunction(Map<Term, Rational> assignment,
 			Rational gcd) {
 		AffineFunction f = new AffineFunction();
-		
-		// Divide all coefficients by the gcd
-		Rational c = assignment.get(m_constant).div(gcd);
-		assert(c.denominator().equals(BigInteger.ONE));
-		f.setConstant(c.numerator());
-		for (Map.Entry<RankVar, Term> entry : m_coefficients.entrySet()) {
-			c = assignment.get(entry.getValue()).div(gcd);
+		if (gcd.equals(Rational.ZERO)) {
+			// special case: gcd is zero, this happens only if all
+			// coefficients are zero.
+			Rational c = assignment.get(m_constant);
+			assert (c.equals(Rational.ZERO));
+			for (Map.Entry<RankVar, Term> entry : m_coefficients.entrySet()) {
+				c = assignment.get(entry.getValue());
+				assert (c.equals(Rational.ZERO));
+				f.put(entry.getKey(), c.numerator());
+			}
+		} else {
+			// Divide all coefficients by the gcd
+			Rational c = assignment.get(m_constant).div(gcd);
 			assert(c.denominator().equals(BigInteger.ONE));
-			f.put(entry.getKey(), c.numerator());
+			f.setConstant(c.numerator());
+			for (Map.Entry<RankVar, Term> entry : m_coefficients.entrySet()) {
+				c = assignment.get(entry.getValue()).div(gcd);
+				assert(c.denominator().equals(BigInteger.ONE));
+				f.put(entry.getKey(), c.numerator());
+			}
 		}
-		
 		return f;
 	}
 }
