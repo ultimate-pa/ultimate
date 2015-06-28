@@ -129,7 +129,9 @@ public class AffineFunctionGenerator implements Serializable {
 		for (Map.Entry<RankVar, Term> entry : m_coefficients.entrySet()) {
 			gcd = gcd.gcd(assignment.get(entry.getValue()));
 		}
-		return gcd;
+		// use the absolute value of the GCD obtained from Rational.gcd
+		// TODO: check with Jochen and Jürgen if negative GCD is a bug
+		return gcd.abs();
 	}
 	
 	/**
