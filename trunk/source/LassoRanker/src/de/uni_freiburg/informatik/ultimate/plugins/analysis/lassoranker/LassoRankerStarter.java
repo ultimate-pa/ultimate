@@ -400,7 +400,13 @@ public class LassoRankerStarter {
 		for (Expression expr : initHondaRay.get(1).keySet()) {
 			lambdas.put(expr, ntas.get(0).getLambda());
 		}
+		boolean first = true;
 		for (NonTerminationArgument nta : ntas) {
+			if (first) {
+				assert nta == ntas.get(0);
+				first = false;
+				continue; // already done above
+			}
 			List<Map<Expression, Rational>> initHondaRay2 =
 					NonTerminationArgument.rank2Boogie(term2expression,
 					nta.getStateInit(), nta.getStateHonda(), nta.getRay());
