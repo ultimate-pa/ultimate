@@ -127,9 +127,15 @@ public class NestedTemplate extends ComposableTemplate {
 	@Override
 	public RankingFunction extractRankingFunction(Map<Term, Rational> val)
 			throws SMTLIBException {
+		// The affine-linear functions need a common gcd
+		Rational gcd = m_fgens[0].getGcd(val);
+		for (int i = 1; i < m_Size; ++i) {
+			gcd = gcd.gcd(m_fgens[i].getGcd(val));
+		}
+		
 		AffineFunction[] fs = new AffineFunction[m_Size];
 		for (int i = 0; i < m_Size; ++i) {
-			fs[i] = m_fgens[i].extractAffineFunction(val);
+			fs[i] = m_fgens[i].extractAffineFunction(val, gcd);
 		}
 		return new NestedRankingFunction(fs);
 	}
