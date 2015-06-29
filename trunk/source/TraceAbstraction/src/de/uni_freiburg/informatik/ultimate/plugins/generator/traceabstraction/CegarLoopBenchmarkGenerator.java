@@ -15,6 +15,7 @@ public class CegarLoopBenchmarkGenerator extends BenchmarkGeneratorWithStopwatch
 	private final BenchmarkData m_EcData = new BenchmarkData();
 	private final BenchmarkData m_TcData = new BenchmarkData();
 	private final BenchmarkData m_TiData = new BenchmarkData();
+	private final BenchmarkData m_InterpolantConsolidationBenchmarks = new BenchmarkData();
 	private int m_StatesRemovedByMinimization = 0;
 	private int m_Iterations = 0;
 	private SizeIterationPair m_BiggestAbstraction = CegarLoopBenchmarkType.getInstance().new SizeIterationPair(-1, -1);
@@ -35,6 +36,10 @@ public class CegarLoopBenchmarkGenerator extends BenchmarkGeneratorWithStopwatch
 	
 	public void addTraceCheckerData(IBenchmarkDataProvider tcbd) {
 		m_TcData.aggregateBenchmarkData(tcbd);
+	}
+	
+	public void addInterpolationConsolidationData(IBenchmarkDataProvider tcbd) {
+		m_InterpolantConsolidationBenchmarks.aggregateBenchmarkData(tcbd);
 	}
 	
 	public void addTotalInterpolationData(IBenchmarkDataProvider tibd) {
@@ -79,6 +84,8 @@ public class CegarLoopBenchmarkGenerator extends BenchmarkGeneratorWithStopwatch
 			return m_EcData;
 		case CegarLoopBenchmarkType.s_TraceCheckerBenchmark:
 			return m_TcData;
+		case CegarLoopBenchmarkType.s_InterpolantConsolidationBenchmark:
+			return m_InterpolantConsolidationBenchmarks;
 		case CegarLoopBenchmarkType.s_TotalInterpolationBenchmark:
 			return m_TiData;
 		case CegarLoopBenchmarkType.s_StatesRemovedByMinimization:

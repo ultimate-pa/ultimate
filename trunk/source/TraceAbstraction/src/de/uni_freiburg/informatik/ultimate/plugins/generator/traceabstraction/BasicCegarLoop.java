@@ -111,7 +111,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 
 	protected final boolean m_ComputeHoareAnnotation;
 	
-	private  boolean m_UseInterpolantConsolidation = !true;
+	private  boolean m_UseInterpolantConsolidation = !false;
 
 	protected final AssertCodeBlockOrder m_AssertCodeBlocksIncrementally;
 
@@ -289,9 +289,17 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		// m_TraceCheckerBenchmark.aggregateBenchmarkData(interpolatingTraceChecker.getTraceCheckerBenchmark());
 		m_InterpolantGenerator = interpolatingTraceChecker;
 		if (m_UseInterpolantConsolidation) {
-			m_InterpolantGenerator = new InterpolantConsolidation(truePredicate, falsePredicate, new TreeMap<Integer, IPredicate>(),
-					NestedWord.nestedWord(m_Counterexample.getWord()), m_SmtManager, m_RootNode.getRootAnnot()
-					.getModGlobVarManager(), m_Services, mLogger, predicateUnifier, interpolatingTraceChecker, m_Pref);
+			try {
+				InterpolantConsolidation interpConsoli = new InterpolantConsolidation(truePredicate, falsePredicate, new TreeMap<Integer, IPredicate>(),
+						NestedWord.nestedWord(m_Counterexample.getWord()), m_SmtManager, m_RootNode.getRootAnnot()
+						.getModGlobVarManager(), m_Services, mLogger, predicateUnifier, interpolatingTraceChecker, m_Pref);
+				// Add benchmark data of interpolant consolidation
+				m_CegarLoopBenchmark.addInterpolationConsolidationData(interpConsoli.getInterpolantConsolidationBenchmarks());
+				m_InterpolantGenerator = interpConsoli;
+			} catch (OperationCanceledException e) {
+				// Timeout
+				e.printStackTrace();
+			}
 		}
 		return feasibility;
 	}

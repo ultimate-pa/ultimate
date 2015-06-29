@@ -1,5 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -9,6 +11,7 @@ import java.util.SortedMap;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
+import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
@@ -16,6 +19,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Difference;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsEmpty;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.PowersetDeterminizer;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
@@ -27,6 +31,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Ba
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryForInterpolantConsolidation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataTransitionAppender.DeterministicInterpolantAutomaton;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.IBenchmarkDataProvider;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.IBenchmarkType;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
@@ -36,7 +42,19 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
 import de.uni_freiburg.informatik.ultimate.util.HashRelation;
 
 /**
- * TODO: Desc
+ * Interpolant Consolidation works as follows:
+ * Requirements: 
+ * 		(1) A path automaton for the given trace m_Trace.
+ * 		(2) An interpolant automaton (finite automaton) for the given predicate annotation of the given trace m_Trace.
+ * Procedure:
+ * 		1. Compute the difference between the path automaton and the interpolant automaton.
+ * 		2. If the difference is empty, then consolidate the interpolants as follows:
+ * 		2.1 Compute a homomorphism for the states of the difference automaton.
+ * 		2.2 Compute the annotation for a state p = {q_1, ..., q_k} where q_1 ... q_k are homomorphous to each other as follows:
+ * 				Annot(p) = Annot(q_1) OR Annot(q_2) OR ... OR Annot(q_k)
+ * 		3. If the difference is not empty, then... (TODO). This case is not yet implemented!
+ * 
+ * 
  * @author musab@informatik.uni-freiburg.de
  */
 public class InterpolantConsolidation implements IInterpolantGenerator {
@@ -53,6 +71,8 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 	private final ModifiableGlobalVariableManager m_ModifiedGlobals;
 	private final PredicateUnifier m_PredicateUnifier;
 	private final Logger m_Logger;
+
+	protected final InterpolantConsolidationBenchmarkGenerator m_InterpolantConsolidationBenchmarkGenerator;
 	
 	public InterpolantConsolidation(IPredicate precondition,
 			IPredicate postcondition,
@@ -63,7 +83,7 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 			Logger logger, 
 			PredicateUnifier predicateUnifier,
 			InterpolatingTraceChecker tc,
-			TAPreferences taPrefs) {
+			TAPreferences taPrefs) throws OperationCanceledException {
 		m_Precondition = precondition;
 		m_Postcondition = postcondition;
 		m_PendingContexts = pendingContexts;
@@ -76,12 +96,17 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 		m_InterpolatingTraceChecker = tc;
 		m_ConsolidatedInterpolants = new IPredicate[m_Trace.length() - 1];
 		m_TaPrefs = taPrefs;
+		m_InterpolantConsolidationBenchmarkGenerator = new InterpolantConsolidationBenchmarkGenerator();
+
 		if (m_InterpolatingTraceChecker.isCorrect() == LBool.UNSAT) {
 			computeInterpolants(new AllIntegers());
 		}
 	}
 
-	protected void computeInterpolants(Set<Integer> interpolatedPositions) {
+	protected void computeInterpolants(Set<Integer> interpolatedPositions) throws OperationCanceledException {
+		int[] numOfPredicatesConsolidatedPerLocation = new int[m_Trace.length()];
+		int interpolantConsolidationCounter = 0;
+		
 		// 1. Build the path automaton for the given trace m_Trace
 		PathProgramAutomatonConstructor ppc = new PathProgramAutomatonConstructor();
 		INestedWordAutomaton<CodeBlock, IPredicate> pathprogramautomaton = ppc.constructAutomatonFromGivenPath(m_Trace, m_Services, m_SmtManager, m_TaPrefs);
@@ -107,7 +132,6 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 				interpolantAutomatonDeterminized, true, predicateFactoryInterpolantAutomata);
 		
 
-		// TODO: Timeout exception!, weiterwerfen!
 		try {
 			// 4. Compute the difference between the path automaton and the determinized
 			//    finite automaton (from step 3)
@@ -116,14 +140,22 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 					interpolantAutomatonDeterminized, psd2,
 					pfconsol /* PredicateFactory for Refinement */, false /*explointSigmaStarConcatOfIA*/ );
 			htc.releaseLock();
+			// 5. Check if difference is empty
+			IsEmpty<CodeBlock, IPredicate> empty = new IsEmpty<CodeBlock, IPredicate>(m_Services, diff.getResult());
+			if (!empty.getResult()) {
+				// If the difference is not empty, we are not allowed to consolidate interpolants (at least at current time) 
+				m_ConsolidatedInterpolants = m_InterpolatingTraceChecker.getInterpolants();
+				return;
+			}
 			
 		} catch (AutomataLibraryException e) {
-//			if ()
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			if (e instanceof OperationCanceledException) {
+				m_Logger.info("Timeout while computing interpolants");
+			}
+			throw ((OperationCanceledException)e);
 		}
-		
-		// 5. Interpolant Consolidation step
+
+		// 6. Interpolant Consolidation step
 		List<IPredicate> pathPositionsToLocations = ppc.getPositionsToStates();
 		HashRelation<IPredicate, IPredicate> locationsToSetOfPredicates = pfconsol.getLocationsToSetOfPredicates();
 		m_ConsolidatedInterpolants = new IPredicate[m_Trace.length() - 1];
@@ -131,6 +163,9 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 			IPredicate loc = pathPositionsToLocations.get(i+1);
 			// Compute the disjunction of the predicates for location i
 			Set<IPredicate> predicatesForThisLocation = locationsToSetOfPredicates.getImage(loc);
+			// Update benchmarks
+			numOfPredicatesConsolidatedPerLocation[i] += predicatesForThisLocation.size();
+			
 			IPredicate[] predicatesForThisLocationAsArray = predicatesForThisLocation.toArray(new IPredicate[predicatesForThisLocation.size()]);
 			TermVarsProc predicatesForThisLocationConsolidated = m_SmtManager.or(predicatesForThisLocationAsArray);
 			// Store the consolidated (the disjunction of the predicates for the current location)
@@ -139,6 +174,11 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 		assert TraceCheckerUtils.checkInterpolantsInductivityForward(m_ConsolidatedInterpolants, 
 				m_Trace, m_Precondition, m_Postcondition, m_PendingContexts, "CP", 
 				m_SmtManager, m_ModifiedGlobals, m_Logger) : "invalid Hoare triple in consolidated interpolants";
+		
+		interpolantConsolidationCounter = 1;
+		// Set benchmark data
+		m_InterpolantConsolidationBenchmarkGenerator.setInterpolantConsolidationData(numOfPredicatesConsolidatedPerLocation, interpolantConsolidationCounter);
+		
 	}
 	
 	
@@ -233,6 +273,104 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 		return m_PredicateUnifier;
 	}
 
-
+	public InterpolantConsolidationBenchmarkGenerator getInterpolantConsolidationBenchmarks() {
+		return m_InterpolantConsolidationBenchmarkGenerator;
+	}
 	
+	// Benchmarks Section
+	public static class InterpolantConsolidationBenchmarkType implements IBenchmarkType {
+		private static InterpolantConsolidationBenchmarkType s_Instance = new InterpolantConsolidationBenchmarkType();
+		/* Keys */
+		// Counts how often we were allowed to consolidate interpolants
+		protected final static String s_InterpolantConsolidationCounter = "InterpolantConsolidationCounter";
+		// Counts the num of interpolants consolidated per location
+		protected final static String s_SumOfPredicatesConsolidated = "SumOfPredicatesConsolidated";
+		
+		public static InterpolantConsolidationBenchmarkType getInstance() {
+			return s_Instance;
+		}
+		
+		@Override
+		public Collection<String> getKeys() {
+			ArrayList<String> result = new ArrayList<String>();
+			result.add(s_InterpolantConsolidationCounter);
+			result.add(s_SumOfPredicatesConsolidated);
+			return result;
+		}
+
+		@Override
+		public Object aggregate(String key, Object value1, Object value2) {
+			switch(key) {
+			case s_InterpolantConsolidationCounter: {
+				int result = ((int) value1) + ((int) value2);
+				return result;
+			}
+			case s_SumOfPredicatesConsolidated: {
+				long result = ((long) value1) + ((long) value2);
+				return result;
+			}
+			default:
+				throw new AssertionError("unknown key");
+			}
+		}
+
+		@Override
+		public String prettyprintBenchmarkData(
+				IBenchmarkDataProvider benchmarkData) {
+			StringBuilder sb = new StringBuilder();
+			sb.append(s_InterpolantConsolidationCounter).append(": ");
+			sb.append((int) benchmarkData.getValue(s_InterpolantConsolidationCounter));
+			sb.append("\t").append(s_SumOfPredicatesConsolidated).append(": ");
+			sb.append((long) benchmarkData.getValue(s_SumOfPredicatesConsolidated));
+			return sb.toString();
+		}
+		
+	}
+	
+	public class InterpolantConsolidationBenchmarkGenerator implements 	IBenchmarkDataProvider {
+		private int m_InterpolantConsolidationCounter = 0;
+		private long m_SumOfPredicatesConsolidated = 0;
+
+		
+		
+		public void incrementInterpolantConsolidationCounter() {
+			m_InterpolantConsolidationCounter++;
+		}
+		
+		public void setInterpolantConsolidationData(int[] numOfPredicatesConsolidatedPerLocation, int interpolantConsolidationCounter) {
+			assert numOfPredicatesConsolidatedPerLocation != null;
+			m_InterpolantConsolidationCounter = interpolantConsolidationCounter;
+			m_SumOfPredicatesConsolidated = getSumOfIntArray(numOfPredicatesConsolidatedPerLocation);
+		}
+		
+		@Override
+		public Collection<String> getKeys() {
+			return InterpolantConsolidationBenchmarkType.getInstance().getKeys();
+		}
+
+		@Override
+		public Object getValue(String key) {
+			switch (key) {
+			case InterpolantConsolidationBenchmarkType.s_InterpolantConsolidationCounter:
+				return m_InterpolantConsolidationCounter;
+			case InterpolantConsolidationBenchmarkType.s_SumOfPredicatesConsolidated:
+				return m_SumOfPredicatesConsolidated;
+			default:
+				throw new AssertionError("unknown data");
+			}
+		}
+
+		@Override
+		public IBenchmarkType getBenchmarkType() {
+			return InterpolantConsolidationBenchmarkType.getInstance();
+		}
+		
+		private long getSumOfIntArray(int[] arr) {
+			long sum = 0;
+			for (int i = 0; i < arr.length; i++) {
+				sum += arr[i];
+			}
+			return sum;
+		}
+	}
 }
