@@ -74,7 +74,7 @@ public class LassoChecker {
 	}
 
 	enum SynthesisResult {
-		TERMINATING, NONTERMINATIG, UNKNOWN, UNCHECKED
+		TERMINATING, NONTERMINATING, UNKNOWN, UNCHECKED
 	}
 
 	// ////////////////////////////// settings /////////////////////////////////
@@ -360,7 +360,7 @@ public class LassoChecker {
 							if (m_LassoTermination == SynthesisResult.TERMINATING) {
 								m_ContinueDirective = ContinueDirective.REFINE_BUCHI;
 								return;
-							} else if (m_LassoTermination == SynthesisResult.NONTERMINATIG) {
+							} else if (m_LassoTermination == SynthesisResult.NONTERMINATING) {
 								m_ContinueDirective = ContinueDirective.REPORT_NONTERMINATION;
 								return;
 							} else {
@@ -640,7 +640,7 @@ public class LassoChecker {
 				m_NonterminationArguments = nonTermArguments;
 			}
 			if (!s_CheckTerminationEvenIfNonterminating && nonTermArguments != null) {
-				return SynthesisResult.NONTERMINATIG;
+				return SynthesisResult.NONTERMINATING;
 			}
 		}
 
@@ -702,7 +702,7 @@ public class LassoChecker {
 		if (termArg != null) {
 			return SynthesisResult.TERMINATING;
 		} else if (nonTermArguments != null) {
-			return SynthesisResult.NONTERMINATIG;
+			return SynthesisResult.NONTERMINATING;
 		} else {
 			return SynthesisResult.UNKNOWN;
 		}

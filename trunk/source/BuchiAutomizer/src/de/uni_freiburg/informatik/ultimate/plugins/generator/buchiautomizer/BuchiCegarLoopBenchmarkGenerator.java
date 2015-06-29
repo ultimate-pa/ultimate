@@ -117,7 +117,7 @@ public class BuchiCegarLoopBenchmarkGenerator extends CegarLoopBenchmarkGenerato
 				if (lcr.getLoopFeasibility() == TraceCheckResult.INFEASIBLE) {
 					m_LassoAnalysisResults.increment(LassoAnalysisResults.s_StemInfeasibleLoopInfeasible);
 				} else {
-					if (lcr.getLoopTermination() == SynthesisResult.NONTERMINATIG) {
+					if (lcr.getLoopTermination() == SynthesisResult.NONTERMINATING) {
 						m_LassoAnalysisResults.increment(LassoAnalysisResults.s_StemInfeasibleLoopNonterminating);
 					} else {
 						assert lcr.getLoopFeasibility() == TraceCheckResult.UNCHECKED
