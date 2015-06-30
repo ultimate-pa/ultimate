@@ -70,6 +70,11 @@ public final class CompositEdgeDenier<E> implements IEdgeDenier<E> {
 			}
 			return rtr;
 		}
+		
+		@Override
+		public void remove() {
+			throw new UnsupportedOperationException("remove");
+		}
 
 		public void reset() {
 			if (!mUsed) {

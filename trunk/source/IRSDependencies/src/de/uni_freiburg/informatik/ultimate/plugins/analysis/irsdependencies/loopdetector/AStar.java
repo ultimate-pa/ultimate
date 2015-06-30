@@ -230,7 +230,10 @@ public class AStar<V, E> {
 			mAnnotation = getAnnotation(mGraph.getSource(current));
 			return current;
 		}
-
+		
+		@Override
+		public void remove() {
+			throw new UnsupportedOperationException("remove");
+		}
 	}
-
 }
