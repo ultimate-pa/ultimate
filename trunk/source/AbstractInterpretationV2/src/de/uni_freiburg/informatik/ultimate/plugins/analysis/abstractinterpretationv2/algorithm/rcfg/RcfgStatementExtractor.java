@@ -9,7 +9,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Sta
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.RCFGEdgeVisitor;
 
 /**
- * Extracts a sequence of statements for Abstract Interpretation.
+ * Extracts a List of {@link Statement}s from a {@link RCFGEdge}.
  * 
  * @author greitsch@informatik.uni-freiburg.de
  *

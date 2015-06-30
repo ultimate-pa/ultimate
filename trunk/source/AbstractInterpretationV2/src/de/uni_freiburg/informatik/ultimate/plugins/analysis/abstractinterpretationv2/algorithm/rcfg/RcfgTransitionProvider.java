@@ -14,6 +14,11 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCF
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 
+/**
+ * 
+ * @author dietsch@informatik.uni-freiburg.de
+ *
+ */
 public class RcfgTransitionProvider implements ITransitionProvider<CodeBlock> {
 
 	@Override

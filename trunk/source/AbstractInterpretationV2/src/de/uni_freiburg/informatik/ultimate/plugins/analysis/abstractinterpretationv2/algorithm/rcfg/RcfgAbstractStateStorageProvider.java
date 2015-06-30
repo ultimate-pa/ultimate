@@ -14,6 +14,11 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGNode;
 import de.uni_freiburg.informatik.ultimate.util.relation.Pair;
 
+/**
+ * 
+ * @author dietsch@informatik.uni-freiburg.de
+ *
+ */
 public class RcfgAbstractStateStorageProvider extends BaseRcfgAbstractStateStorageProvider {
 
 	private final Map<RCFGNode, Deque<Pair<CodeBlock, IAbstractState<CodeBlock, BoogieVar>>>> mStorage;

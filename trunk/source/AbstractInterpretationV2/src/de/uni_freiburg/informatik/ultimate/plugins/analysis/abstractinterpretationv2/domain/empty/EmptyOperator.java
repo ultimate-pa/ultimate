@@ -3,6 +3,13 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.IAbstractStateBinaryOperator;
 
+/**
+ * 
+ * @author dietsch@informatik.uni-freiburg.de
+ *
+ * @param <ACTION>
+ * @param <VARDECL>
+ */
 public final class EmptyOperator<ACTION, VARDECL> implements IAbstractStateBinaryOperator<ACTION, VARDECL> {
 
 	private EmptyStateConverter<ACTION, VARDECL> mStateConverter;

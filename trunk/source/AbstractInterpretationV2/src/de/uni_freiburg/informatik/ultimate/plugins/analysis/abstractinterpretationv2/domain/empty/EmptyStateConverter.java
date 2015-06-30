@@ -2,6 +2,13 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.IAbstractState;
 
+/**
+ * 
+ * @author dietsch@informatik.uni-freiburg.de
+ *
+ * @param <ACTION>
+ * @param <VARDECL>
+ */
 public class EmptyStateConverter<ACTION, VARDECL> {
 	private Class<EmptyDomainState<ACTION, VARDECL>> mStateType;
 

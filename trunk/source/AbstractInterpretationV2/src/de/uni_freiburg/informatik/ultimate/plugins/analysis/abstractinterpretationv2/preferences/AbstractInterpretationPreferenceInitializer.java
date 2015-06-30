@@ -12,6 +12,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 
 /**
  * 
+ * @author dietsch@informatik.uni-freiburg.de
  * @author greitsch@informatik.uni-freiburg.de
  *
  */

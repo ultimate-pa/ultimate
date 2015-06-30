@@ -9,6 +9,11 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Pro
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGNode;
 
+/**
+ * 
+ * @author dietsch@informatik.uni-freiburg.de
+ *
+ */
 public class RcfgLoopDetector implements ILoopDetector<CodeBlock> {
 
 	private HashMap<ProgramPoint, HashMap<RCFGEdge, RCFGEdge>> mLoops;

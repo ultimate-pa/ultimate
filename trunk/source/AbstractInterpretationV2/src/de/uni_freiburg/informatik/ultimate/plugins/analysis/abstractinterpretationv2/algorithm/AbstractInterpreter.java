@@ -83,22 +83,7 @@ public class AbstractInterpreter<ACTION, VARDECL> {
 		boolean errorReached = false;
 
 		// add the initial state
-		final Collection<ACTION> filteredInitialElements = mTransitionProvider.filterInitialElements(initialElements);
-		for (ACTION elem : filteredInitialElements) {
-			final ACTION successor = elem;
-			final WorklistItem<ACTION, VARDECL> startItem = new WorklistItem<ACTION, VARDECL>(
-					getCurrentAbstractPreState(elem, mStateStorage), successor, mStateStorage);
-			if (mTransitionProvider.isEnteringScope(elem)) {
-				startItem.addScope(elem);
-				if (mLogger.isDebugEnabled()) {
-					mLogger.debug(new StringBuilder().append(INDENT).append(" Entering (initial) scope"));
-				}
-			}
-			worklist.add(startItem);
-		}
-		// TODO: We should think about reducing this to really distinct start
-		// elements; for now, we just pick one
-		final ACTION arbitraryStartElement = filteredInitialElements.iterator().next();
+		final ACTION arbitraryStartElement = addInitialWorklistItems(initialElements, worklist);
 
 		while (!worklist.isEmpty()) {
 			checkTimeout();
@@ -111,7 +96,7 @@ public class AbstractInterpreter<ACTION, VARDECL> {
 					.getCurrentAbstractPostState(current);
 
 			if (mLogger.isDebugEnabled()) {
-				mLogger.debug(getCurrentTransitionLogMessage(preState, current));
+				mLogger.debug(getLogMessageCurrentTransition(preState, current));
 			}
 
 			// calculate the (abstract) effect of the current action by first
@@ -126,26 +111,7 @@ public class AbstractInterpreter<ACTION, VARDECL> {
 				// are we leaving a loop?
 				final Pair<ACTION, ACTION> lastPair = activeLoops.peek();
 				if (lastPair.getSecond().equals(current)) {
-					// yes, we are leaving a loop
-					activeLoops.pop();
-					Integer loopCounterValue = loopCounters.get(lastPair);
-					assert loopCounterValue != null;
-					loopCounterValue++;
-					loopCounters.put(lastPair, loopCounterValue);
-
-					if (mLogger.isDebugEnabled()) {
-						mLogger.debug(new StringBuilder().append(INDENT).append(" Leaving loop"));
-					}
-
-					if (loopCounterValue > mMaxUnwindings) {
-						if (mLogger.isDebugEnabled()) {
-							mLogger.debug(getUnwindingLogMessage(oldPostState, newPostState));
-						}
-						newPostState = widening.apply(oldPostState, newPostState);
-						if (mLogger.isDebugEnabled()) {
-							mLogger.debug(getUnwindingResultLogMessage(newPostState));
-						}
-					}
+					newPostState = loopLeave(activeLoops, loopCounters, widening, oldPostState, newPostState, lastPair);
 				}
 			}
 
@@ -163,17 +129,7 @@ public class AbstractInterpreter<ACTION, VARDECL> {
 			// check if we are about to enter a loop
 			final ACTION loopExit = mLoopDetector.getLoopExit(current);
 			if (loopExit != null) {
-				// we are entering a loop
-				final Pair<ACTION, ACTION> pair = new Pair<ACTION, ACTION>(current, loopExit);
-				activeLoops.push(pair);
-				if (!loopCounters.containsKey(pair)) {
-					loopCounters.put(pair, 0);
-				}
-				if (mLogger.isDebugEnabled()) {
-					final StringBuilder logMessage = new StringBuilder().append(INDENT).append(" Entering loop (")
-							.append(loopCounters.get(pair)).append(")");
-					mLogger.debug(logMessage);
-				}
+				loopEnter(activeLoops, loopCounters, current, loopExit);
 			}
 
 			if (newPostState.isEqualTo(oldPostState)) {
@@ -184,9 +140,7 @@ public class AbstractInterpreter<ACTION, VARDECL> {
 
 			} else {
 				if (mLogger.isDebugEnabled()) {
-					final StringBuilder logMessage = new StringBuilder().append(INDENT).append(" adding post state [")
-							.append(newPostState.hashCode()).append("] ").append(newPostState.toLogString());
-					mLogger.debug(logMessage);
+					mLogger.debug(getLogMessageNewPostState(newPostState));
 				}
 				currentStateStorage.addAbstractPostState(current, newPostState);
 			}
@@ -202,15 +156,14 @@ public class AbstractInterpreter<ACTION, VARDECL> {
 			if (newPostState.isFixpoint() && preState.isFixpoint()) {
 				// if our post state is a fixpoint, we do not add successors
 				if (mLogger.isDebugEnabled()) {
-					final StringBuilder logMessage = new StringBuilder().append(INDENT).append(
-							" Skipping successors because pre and post states are fixpoints");
-					mLogger.debug(logMessage);
+					mLogger.debug(new StringBuilder().append(INDENT).append(
+							" Skipping successors because pre and post states are fixpoints"));
 				}
 				continue;
 			}
 
 			// now add successors
-			addSuccessors(worklist, currentItem, newPostState);
+			addSuccessors(worklist, currentItem);
 		}
 
 		if (!errorReached) {
@@ -218,48 +171,98 @@ public class AbstractInterpreter<ACTION, VARDECL> {
 		}
 	}
 
-	private StringBuilder getUnwindingResultLogMessage(IAbstractState<ACTION, VARDECL> newPostState) {
-		final StringBuilder logMessage = new StringBuilder().append(INDENT)
-				.append(" Widening resulted in post state [").append(newPostState.hashCode()).append("]");
-		return logMessage;
+	private void loopEnter(final Deque<Pair<ACTION, ACTION>> activeLoops,
+			final Map<Pair<ACTION, ACTION>, Integer> loopCounters, final ACTION current, final ACTION loopExit) {
+		// we are entering a loop
+		final Pair<ACTION, ACTION> pair = new Pair<ACTION, ACTION>(current, loopExit);
+		activeLoops.push(pair);
+		if (!loopCounters.containsKey(pair)) {
+			loopCounters.put(pair, 0);
+		}
+		if (mLogger.isDebugEnabled()) {
+			mLogger.debug(getLogMessageEnterLoop(loopCounters, pair));
+		}
 	}
 
-	private StringBuilder getUnwindingLogMessage(final IAbstractState<ACTION, VARDECL> oldPostState,
-			IAbstractState<ACTION, VARDECL> newPostState) {
-		final StringBuilder logMessage = new StringBuilder().append(INDENT).append(" Widening with old post state [")
-				.append(oldPostState.hashCode()).append("] and new post state [").append(newPostState.hashCode())
-				.append("]");
-		return logMessage;
+	private IAbstractState<ACTION, VARDECL> loopLeave(final Deque<Pair<ACTION, ACTION>> activeLoops,
+			final Map<Pair<ACTION, ACTION>, Integer> loopCounters,
+			final IAbstractStateBinaryOperator<ACTION, VARDECL> widening,
+			final IAbstractState<ACTION, VARDECL> oldPostState, final IAbstractState<ACTION, VARDECL> pendingPostState,
+			final Pair<ACTION, ACTION> lastPair) {
+		// yes, we are leaving a loop
+		activeLoops.pop();
+		Integer loopCounterValue = loopCounters.get(lastPair);
+		assert loopCounterValue != null;
+		loopCounterValue++;
+		loopCounters.put(lastPair, loopCounterValue);
+
+		if (mLogger.isDebugEnabled()) {
+			mLogger.debug(new StringBuilder().append(INDENT).append(" Leaving loop"));
+		}
+
+		if (loopCounterValue > mMaxUnwindings) {
+			return applyWidening(widening, oldPostState, pendingPostState);
+		}
+		return pendingPostState;
+	}
+
+	private ACTION addInitialWorklistItems(Collection<ACTION> initialElements,
+			final Deque<WorklistItem<ACTION, VARDECL>> worklist) {
+		final Collection<ACTION> filteredInitialElements = mTransitionProvider.filterInitialElements(initialElements);
+		for (final ACTION elem : filteredInitialElements) {
+			final ACTION successor = elem;
+			final WorklistItem<ACTION, VARDECL> startItem = new WorklistItem<ACTION, VARDECL>(
+					getCurrentAbstractPreState(elem, mStateStorage), successor, mStateStorage);
+			if (mTransitionProvider.isEnteringScope(elem)) {
+				startItem.addScope(elem);
+				if (mLogger.isDebugEnabled()) {
+					mLogger.debug(new StringBuilder().append(INDENT).append(" Entering (initial) scope"));
+				}
+			}
+			worklist.add(startItem);
+		}
+
+		// TODO: We should think about reducing this to really distinct start
+		// elements; for now, we just pick one
+		return filteredInitialElements.iterator().next();
+	}
+
+	private IAbstractState<ACTION, VARDECL> applyWidening(final IAbstractStateBinaryOperator<ACTION, VARDECL> widening,
+			final IAbstractState<ACTION, VARDECL> oldPostState, IAbstractState<ACTION, VARDECL> pendingPostState) {
+		if (mLogger.isDebugEnabled()) {
+			mLogger.debug(getLogMessageUnwinding(oldPostState, pendingPostState));
+		}
+		final IAbstractState<ACTION, VARDECL> newPostState = widening.apply(oldPostState, pendingPostState);
+		if (mLogger.isDebugEnabled()) {
+			mLogger.debug(getLogMessageUnwindingResult(newPostState));
+		}
+		return newPostState;
 	}
 
 	private void addSuccessors(final Deque<WorklistItem<ACTION, VARDECL>> worklist,
-			final WorklistItem<ACTION, VARDECL> currentItem, IAbstractState<ACTION, VARDECL> newPostState) {
+			final WorklistItem<ACTION, VARDECL> currentItem) {
 		final ACTION current = currentItem.getAction();
 		final Collection<ACTION> successors = mTransitionProvider.getSuccessors(current, currentItem.getCurrentScope());
-		final IAbstractStateStorage<ACTION, VARDECL> currentStateStorage = currentItem.getCurrentStorage();
+
 		if (successors.isEmpty()) {
 			if (mLogger.isDebugEnabled()) {
-				final StringBuilder logMessage = new StringBuilder().append(INDENT).append(" No successors");
-				mLogger.debug(logMessage);
+				mLogger.debug(new StringBuilder().append(INDENT).append(" No successors"));
 			}
 			return;
 		}
 
+		final IAbstractStateStorage<ACTION, VARDECL> currentStateStorage = currentItem.getCurrentStorage();
 		final Collection<IAbstractState<ACTION, VARDECL>> availablePostStates = currentStateStorage
 				.getAbstractPostStates(current);
 		final int availablePostStatesCount = availablePostStates.size();
 
 		if (availablePostStatesCount > mMaxParallelStates) {
 			if (mLogger.isDebugEnabled()) {
-				final StringBuilder logMessage = new StringBuilder().append(INDENT).append(" Merging ")
-						.append(availablePostStatesCount).append(" states at target location");
-				mLogger.debug(logMessage);
+				mLogger.debug(getLogMessageMergeStates(availablePostStatesCount));
 			}
-			newPostState = currentStateStorage.mergePostStates(current);
+			final IAbstractState<ACTION, VARDECL> newPostState = currentStateStorage.mergePostStates(current);
 			if (mLogger.isDebugEnabled()) {
-				final StringBuilder logMessage = new StringBuilder().append(INDENT).append(" Merging resulted in [")
-						.append(newPostState.hashCode()).append("]");
-				mLogger.debug(logMessage);
+				mLogger.debug(getLogMessageMergeResult(newPostState));
 			}
 			addSuccessorsForPostState(worklist, currentItem, successors, newPostState);
 		} else {
@@ -277,7 +280,7 @@ public class AbstractInterpreter<ACTION, VARDECL> {
 					currentItem);
 
 			if (mLogger.isDebugEnabled()) {
-				mLogger.debug(getAddTransitionLogMessage(successorItem));
+				mLogger.debug(getLogMessageAddTransition(successorItem));
 			}
 
 			if (mTransitionProvider.isEnteringScope(successor)) {
@@ -301,15 +304,12 @@ public class AbstractInterpreter<ACTION, VARDECL> {
 		final IAbstractState<ACTION, VARDECL> newPostState = currentItem.getCurrentStorage().setPostStateIsFixpoint(
 				currentItem.getAction(), oldPostState, true);
 		if (mLogger.isDebugEnabled()) {
-			final StringBuilder logMessage = new StringBuilder().append(INDENT).append(" post state ")
-					.append(oldPostState.hashCode()).append(" is fixpoint, replacing with ")
-					.append(newPostState.hashCode());
-			mLogger.debug(logMessage);
+			mLogger.debug(getLogMessageFixpointFound(oldPostState, newPostState));
 		}
 
 		// now, replace all occurences of oldPostState as prestate in worklist
 		// with newPostState
-		for (WorklistItem<ACTION, VARDECL> entry : worklist) {
+		for (final WorklistItem<ACTION, VARDECL> entry : worklist) {
 			if (oldPostState.equals(entry.getPreState())) {
 				entry.setPreState(newPostState);
 			}
@@ -335,17 +335,56 @@ public class AbstractInterpreter<ACTION, VARDECL> {
 		}
 	}
 
-	private StringBuilder getCurrentTransitionLogMessage(final IAbstractState<ACTION, VARDECL> preState,
+	private StringBuilder getLogMessageFixpointFound(IAbstractState<ACTION, VARDECL> oldPostState,
+			final IAbstractState<ACTION, VARDECL> newPostState) {
+		return new StringBuilder().append(INDENT).append(" post state ")
+				.append(oldPostState.hashCode()).append(" is fixpoint, replacing with ")
+				.append(newPostState.hashCode());
+	}
+
+	private StringBuilder getLogMessageMergeResult(IAbstractState<ACTION, VARDECL> newPostState) {
+		return new StringBuilder().append(INDENT).append(" Merging resulted in [")
+				.append(newPostState.hashCode()).append("]");
+	}
+
+	private StringBuilder getLogMessageMergeStates(final int availablePostStatesCount) {
+		return new StringBuilder().append(INDENT).append(" Merging ")
+				.append(availablePostStatesCount).append(" states at target location");
+	}
+
+	private StringBuilder getLogMessageNewPostState(IAbstractState<ACTION, VARDECL> newPostState) {
+		return new StringBuilder().append(INDENT).append(" adding post state [")
+				.append(newPostState.hashCode()).append("] ").append(newPostState.toLogString());
+	}
+
+	private StringBuilder getLogMessageEnterLoop(final Map<Pair<ACTION, ACTION>, Integer> loopCounters,
+			final Pair<ACTION, ACTION> pair) {
+		return new StringBuilder().append(INDENT).append(" Entering loop (")
+				.append(loopCounters.get(pair)).append(")");
+	}
+
+	private StringBuilder getLogMessageUnwindingResult(IAbstractState<ACTION, VARDECL> newPostState) {
+		return new StringBuilder().append(INDENT).append(" Widening resulted in post state [")
+				.append(newPostState.hashCode()).append("]");
+	}
+
+	private StringBuilder getLogMessageUnwinding(final IAbstractState<ACTION, VARDECL> oldPostState,
+			IAbstractState<ACTION, VARDECL> newPostState) {
+		return new StringBuilder().append(INDENT).append(" Widening with old post state [")
+				.append(oldPostState.hashCode()).append("] and new post state [").append(newPostState.hashCode())
+				.append("]");
+	}
+
+	private StringBuilder getLogMessageCurrentTransition(final IAbstractState<ACTION, VARDECL> preState,
 			final ACTION current) {
 		final String preStateString = preState == null ? "NULL" : addHashCodeString(new StringBuilder(), preState)
 				.append(" ").append(preState.toLogString()).toString();
-		final StringBuilder logMessage = addHashCodeString(new StringBuilder(), current).append(" ")
+		return addHashCodeString(new StringBuilder(), current).append(" ")
 				.append(mTransitionProvider.toLogString(current)).append(" processing for pre state ")
 				.append(preStateString);
-		return logMessage;
 	}
 
-	private StringBuilder getAddTransitionLogMessage(final WorklistItem<ACTION, VARDECL> newTransition) {
+	private StringBuilder getLogMessageAddTransition(final WorklistItem<ACTION, VARDECL> newTransition) {
 		return new StringBuilder().append(INDENT).append(" Adding [").append(newTransition.getPreState().hashCode())
 				.append("]").append(" --[").append(newTransition.getAction().hashCode()).append("]->");
 	}

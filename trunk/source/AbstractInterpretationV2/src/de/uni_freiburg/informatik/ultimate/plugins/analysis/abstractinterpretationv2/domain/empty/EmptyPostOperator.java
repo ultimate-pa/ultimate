@@ -5,6 +5,13 @@ import java.util.HashMap;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.IAbstractPostOperator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.IAbstractState;
 
+/**
+ * 
+ * @author dietsch@informatik.uni-freiburg.de
+ *
+ * @param <ACTION>
+ * @param <VARDECL>
+ */
 public final class EmptyPostOperator<ACTION, VARDECL> implements IAbstractPostOperator<ACTION, VARDECL> {
 
 	private EmptyStateConverter<ACTION, VARDECL> mStateConverter;

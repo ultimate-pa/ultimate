@@ -4,6 +4,13 @@ import java.util.Collection;
 
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.IAbstractState;
 
+/**
+ * 
+ * @author dietsch@informatik.uni-freiburg.de
+ *
+ * @param <ACTION>
+ * @param <VARDECL>
+ */
 public interface IAbstractStateStorage<ACTION, VARDECL> {
 
 	Collection<IAbstractState<ACTION, VARDECL>> getAbstractPreStates(ACTION transition);
