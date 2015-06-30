@@ -3,12 +3,14 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.loo
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.PriorityQueue;
+import java.util.Queue;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.util.Utils;
 
 class FasterPriorityQueue<EDGE> {
-	private PriorityQueue<EDGE> mOpen;
-	private HashSet<EDGE> mOpenSupport;
+	private final Queue<EDGE> mOpen;
+	private final Set<EDGE> mOpenSupport;
 
 	FasterPriorityQueue(Comparator<EDGE> comp) {
 		mOpen = new PriorityQueue<>(10, comp);
@@ -22,7 +24,7 @@ class FasterPriorityQueue<EDGE> {
 	}
 
 	public EDGE poll() {
-		EDGE rtr = mOpen.poll();
+		final EDGE rtr = mOpen.poll();
 		mOpenSupport.remove(rtr);
 		return rtr;
 	}

@@ -56,7 +56,6 @@ public class ExpressionEvaluator<T, ACTION, VARDECL> {
 				break;
 			}
 		}
-
 	}
 
 	/**

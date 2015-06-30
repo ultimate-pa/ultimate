@@ -4,9 +4,11 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
 
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.annotation.AbstractAnnotations;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.IAbstractStateStorage;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.IAbstractStateBinaryOperator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -15,16 +17,21 @@ import de.uni_freiburg.informatik.ultimate.util.relation.Pair;
 
 public class AnnotatingRcfgAbstractStateStorageProvider extends BaseRcfgAbstractStateStorageProvider {
 
-	public AnnotatingRcfgAbstractStateStorageProvider(IAbstractStateBinaryOperator<CodeBlock, BoogieVar> mergeOperator) {
-		super(mergeOperator);
+	private static int sSuffix;
+	private final String mSuffix;
+
+	public AnnotatingRcfgAbstractStateStorageProvider(IAbstractStateBinaryOperator<CodeBlock, BoogieVar> mergeOperator,
+			IUltimateServiceProvider services) {
+		super(mergeOperator, services);
+		mSuffix = String.valueOf(sSuffix++);
 	}
 
 	protected Deque<Pair<CodeBlock, IAbstractState<CodeBlock, BoogieVar>>> getStates(RCFGNode node) {
 		assert node != null;
-		AbsIntAnnotation rtr = AbsIntAnnotation.getAnnotation(node);
+		AbsIntAnnotation rtr = AbsIntAnnotation.getAnnotation(node, mSuffix);
 		if (rtr == null) {
 			rtr = new AbsIntAnnotation();
-			rtr.annotate(node);
+			rtr.annotate(node, mSuffix);
 		}
 		return rtr.mStates;
 	}
@@ -60,18 +67,23 @@ public class AnnotatingRcfgAbstractStateStorageProvider extends BaseRcfgAbstract
 			return null;
 		}
 
-		public void annotate(IElement elem) {
-			elem.getPayload().getAnnotations().put(KEY, this);
+		public void annotate(IElement elem, String suffix) {
+			elem.getPayload().getAnnotations().put(KEY + suffix, this);
 		}
 
-		public static AbsIntAnnotation getAnnotation(IElement elem) {
+		public static AbsIntAnnotation getAnnotation(IElement elem, String suffix) {
 			if (!elem.hasPayload()) {
 				return null;
 			}
 			if (!elem.getPayload().hasAnnotation()) {
 				return null;
 			}
-			return (AbsIntAnnotation) elem.getPayload().getAnnotations().get(KEY);
+			return (AbsIntAnnotation) elem.getPayload().getAnnotations().get(KEY + suffix);
 		}
+	}
+
+	@Override
+	public IAbstractStateStorage<CodeBlock, BoogieVar> createStorage() {
+		return new AnnotatingRcfgAbstractStateStorageProvider(getMergeOperator(), getServices());
 	}
 }

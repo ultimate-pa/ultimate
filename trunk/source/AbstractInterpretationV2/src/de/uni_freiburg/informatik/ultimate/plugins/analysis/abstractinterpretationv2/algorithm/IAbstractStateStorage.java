@@ -22,5 +22,7 @@ public interface IAbstractStateStorage<ACTION, VARDECL> {
 			boolean value);
 
 	IAbstractState<ACTION, VARDECL> mergePostStates(ACTION transition);
+	
+	IAbstractStateStorage<ACTION, VARDECL> createStorage();
 
 }

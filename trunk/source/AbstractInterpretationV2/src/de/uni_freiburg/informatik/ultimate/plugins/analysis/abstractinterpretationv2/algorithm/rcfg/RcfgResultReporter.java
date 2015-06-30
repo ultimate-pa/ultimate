@@ -36,7 +36,7 @@ public class RcfgResultReporter implements IResultReporter<CodeBlock> {
 	}
 
 	private IProgramExecution<CodeBlock, Expression> getProgramExecution(CodeBlock start, CodeBlock end) {
-		List<CodeBlock> trace = mStorageProvider.getTrace(start, end);
+		List<CodeBlock> trace = mStorageProvider.getErrorTrace(start, end);
 		Map<Integer, ProgramState<Expression>> map = Collections.emptyMap();
 		RcfgProgramExecution pe = new RcfgProgramExecution(trace, map);
 		return pe;

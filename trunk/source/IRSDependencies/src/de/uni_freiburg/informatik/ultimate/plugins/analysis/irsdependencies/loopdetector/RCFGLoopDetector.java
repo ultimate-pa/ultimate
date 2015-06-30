@@ -1,9 +1,9 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.loopdetector;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Stack;
@@ -14,17 +14,19 @@ import de.uni_freiburg.informatik.ultimate.access.BaseObserver;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.Activator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGNode;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootAnnot;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 
 /**
  * 
- * {@link RCFGLoopDetector} computes for each Loophead of an RCFG the edge which is
- * used to enter the loop body and the corresponding edge that leads back to the
- * loop head.
+ * {@link RCFGLoopDetector} computes for each Loophead of an RCFG the edge which
+ * is used to enter the loop body and the corresponding edge that leads back to
+ * the loop head.
  * 
  * If your graph looks like this and L1 and L2 are loop heads,
  * 
@@ -118,8 +120,8 @@ public class RCFGLoopDetector extends BaseObserver {
 	}
 
 	private void process(ProgramPoint loopHead, HashMap<RCFGEdge, RCFGEdge> map, List<RCFGEdge> forbiddenEdges) {
-		AStar<RCFGNode, RCFGEdge> walker = new AStar<>(mLogger, loopHead, loopHead, getZeroHeuristic(),
-				getRCFGWrapper(), forbiddenEdges);
+		AStar<RCFGNode, RCFGEdge> walker = new AStar<>(mLogger, loopHead, loopHead, new ZeroHeuristic(),
+				new RcfgWrapper(), forbiddenEdges);
 
 		List<RCFGEdge> path = walker.findPath();
 		if (path == null || path.isEmpty()) {
@@ -131,11 +133,18 @@ public class RCFGLoopDetector extends BaseObserver {
 		while (path != null) {
 			RCFGEdge forbiddenEdge = addToResult(path, map);
 			forbiddenEdges.add(forbiddenEdge);
-			walker = new AStar<RCFGNode, RCFGEdge>(mLogger, loopHead, loopHead, getZeroHeuristic(),
-					getRCFGWrapper(), forbiddenEdges);
-			path = walker.findPath();
 
+			walker = new AStar<RCFGNode, RCFGEdge>(mLogger, loopHead, loopHead, new ZeroHeuristic(), new RcfgWrapper(),
+					createDenier(forbiddenEdges));
+			path = walker.findPath();
 		}
+	}
+
+	private IEdgeDenier<RCFGEdge> createDenier(List<RCFGEdge> forbiddenEdges) {
+		List<IEdgeDenier<RCFGEdge>> rtr = new ArrayList<>();
+		rtr.add(new CollectionEdgeDenier<RCFGEdge>(forbiddenEdges));
+		rtr.add(new RcfgCallReturnDenier());
+		return new CompositEdgeDenier<>(rtr);
 	}
 
 	private RCFGEdge addToResult(List<RCFGEdge> path, HashMap<RCFGEdge, RCFGEdge> map) {
@@ -144,41 +153,6 @@ public class RCFGLoopDetector extends BaseObserver {
 		assert first.getSource().equals(last.getTarget());
 		map.put(first, last);
 		return first;
-	}
-
-	private IHeuristic<RCFGNode, RCFGEdge> getZeroHeuristic() {
-		return new IHeuristic<RCFGNode, RCFGEdge>() {
-
-			@Override
-			public int getHeuristicValue(RCFGNode from, RCFGNode to) {
-				return 0;
-			}
-
-			@Override
-			public int getConcreteCost(RCFGEdge e) {
-				return 1;
-			}
-		};
-	}
-
-	private IGraph<RCFGNode, RCFGEdge> getRCFGWrapper() {
-		return new IGraph<RCFGNode, RCFGEdge>() {
-
-			@Override
-			public RCFGNode getTarget(RCFGEdge edge) {
-				return edge.getTarget();
-			}
-
-			@Override
-			public RCFGNode getSource(RCFGEdge edge) {
-				return edge.getSource();
-			}
-
-			@Override
-			public Collection<RCFGEdge> getOutgoingEdges(RCFGNode vertice) {
-				return vertice.getOutgoingEdges();
-			}
-		};
 	}
 
 	private void printResult(HashMap<ProgramPoint, HashMap<RCFGEdge, RCFGEdge>> result) {
@@ -196,4 +170,20 @@ public class RCFGLoopDetector extends BaseObserver {
 		mLogger.debug("---------------");
 	}
 
+	private static final class RcfgCallReturnDenier implements IEdgeDenier<RCFGEdge> {
+		@Override
+		public boolean isForbidden(final RCFGEdge edge, final Iterator<RCFGEdge> backpointers) {
+			if (edge instanceof Return) {
+				// check if the first call on the path spanned by the
+				// backpointers is the call matching this return
+				final Call call = ((Return) edge).getCorrespondingCall();
+				while (backpointers.hasNext()) {
+					if (call.equals(backpointers.next())) {
+						return true;
+					}
+				}
+			}
+			return false;
+		}
+	}
 }

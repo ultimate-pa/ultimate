@@ -9,20 +9,35 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.IAbstractStateStorage;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.IAbstractStateBinaryOperator;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.loopdetector.AStar;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.loopdetector.IEdgeDenier;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.loopdetector.IHeuristic;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.loopdetector.RcfgWrapper;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGNode;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 import de.uni_freiburg.informatik.ultimate.util.relation.Pair;
 
 public abstract class BaseRcfgAbstractStateStorageProvider implements IAbstractStateStorage<CodeBlock, BoogieVar> {
-	private final IAbstractStateBinaryOperator<CodeBlock, BoogieVar> mMergeOperator;
 
-	public BaseRcfgAbstractStateStorageProvider(IAbstractStateBinaryOperator<CodeBlock, BoogieVar> mergeOperator) {
+	private final IAbstractStateBinaryOperator<CodeBlock, BoogieVar> mMergeOperator;
+	private final IUltimateServiceProvider mServices;
+
+	public BaseRcfgAbstractStateStorageProvider(IAbstractStateBinaryOperator<CodeBlock, BoogieVar> mergeOperator,
+			IUltimateServiceProvider services) {
 		assert mergeOperator != null;
+		assert services != null;
 		mMergeOperator = mergeOperator;
+		mServices = services;
 	}
 
 	@Override
@@ -118,48 +133,30 @@ public abstract class BaseRcfgAbstractStateStorageProvider implements IAbstractS
 		return current;
 	}
 
-	protected List<CodeBlock> getTrace(CodeBlock start, CodeBlock end) {
+	protected List<CodeBlock> getErrorTrace(CodeBlock start, CodeBlock end) {
 		// get the trace from the entry codeblock to this codeblock via all the
 		// states in between
 		assert start != null;
 		assert end != null;
 
 		final List<CodeBlock> trace = new ArrayList<>();
-		final HashSet<CodeBlock> closed = new HashSet<>();
-		trace.add(end);
-		Deque<Pair<CodeBlock, IAbstractState<CodeBlock, BoogieVar>>> possiblePreStates = getStates(end.getSource());
-		Pair<CodeBlock, IAbstractState<CodeBlock, BoogieVar>> searchResult = search(start, possiblePreStates);
-//		while (searchResult == null) {
-//			for(final Pair<CodeBlock, IAbstractState<CodeBlock, BoogieVar>> current: possiblePreStates){
-//				final CodeBlock traceElement = current.getFirst();
-//				if(!closed.add(traceElement)){
-//					continue;
-//				}
-//				trace.add(traceElement);
-//				possiblePreStates = getStates(traceElement.getSource());
-//				searchResult = search(start, possiblePreStates);
-//				break;
-//			}
-//		}
+		final IHeuristic<RCFGNode, RCFGEdge> heuristic = new ErrorPathHeuristic();
+		final IEdgeDenier<RCFGEdge> denier = new RcfgEdgeDenier();
+		final AStar<RCFGNode, RCFGEdge> search = new AStar<RCFGNode, RCFGEdge>(mServices.getLoggingService().getLogger(
+				Activator.PLUGIN_ID), start.getSource(), end.getTarget(), heuristic, new RcfgWrapper(), denier);
+		final List<RCFGEdge> path = search.findPath();
 
-		Collections.reverse(trace);
-		return trace;
-
-	}
-
-	private Pair<CodeBlock, IAbstractState<CodeBlock, BoogieVar>> search(CodeBlock target,
-			Deque<Pair<CodeBlock, IAbstractState<CodeBlock, BoogieVar>>> states) {
-
-		if (states == null) {
-			return null;
+		if (path == null) {
+			return Collections.emptyList();
 		}
-		for (Pair<CodeBlock, IAbstractState<CodeBlock, BoogieVar>> pair : states) {
-			if (pair.getFirst().equals(target)) {
-				return pair;
+
+		for (final RCFGEdge elem : path) {
+			if (elem instanceof CodeBlock) {
+				trace.add((CodeBlock) elem);
 			}
 		}
-		return null;
 
+		return trace;
 	}
 
 	private Collection<IAbstractState<CodeBlock, BoogieVar>> getAbstractStates(CodeBlock transition, RCFGNode node) {
@@ -194,4 +191,57 @@ public abstract class BaseRcfgAbstractStateStorageProvider implements IAbstractS
 	}
 
 	protected abstract Deque<Pair<CodeBlock, IAbstractState<CodeBlock, BoogieVar>>> getStates(RCFGNode node);
+
+	protected IAbstractStateBinaryOperator<CodeBlock, BoogieVar> getMergeOperator() {
+		return mMergeOperator;
+	}
+
+	protected IUltimateServiceProvider getServices() {
+		return mServices;
+	}
+
+	private final class ErrorPathHeuristic implements IHeuristic<RCFGNode, RCFGEdge> {
+		@Override
+		public int getHeuristicValue(RCFGNode from, RCFGEdge over, RCFGNode to) {
+			for (Pair<CodeBlock, IAbstractState<CodeBlock, BoogieVar>> pair : getStates(over.getTarget())) {
+				if (pair.getFirst().equals(over)) {
+					return 0;
+				}
+			}
+			return 1000;
+		}
+
+		@Override
+		public int getConcreteCost(RCFGEdge edge) {
+			for (Pair<CodeBlock, IAbstractState<CodeBlock, BoogieVar>> pair : getStates(edge.getTarget())) {
+				if (pair.getFirst().equals(edge)) {
+					return 1;
+				}
+			}
+			return 1000;
+		}
+	}
+
+	private static final class RcfgEdgeDenier implements IEdgeDenier<RCFGEdge> {
+		@Override
+		public boolean isForbidden(final RCFGEdge edge, final Iterator<RCFGEdge> backpointers) {
+			if (edge instanceof Summary) {
+				return ((Summary) edge).calledProcedureHasImplementation();
+			}
+
+			if (edge instanceof Return) {
+				// check if the first call on the path spanned by the
+				// backpointers is the call matching this return
+				final Call call = ((Return) edge).getCorrespondingCall();
+				while (backpointers.hasNext()) {
+					final RCFGEdge backpointer = backpointers.next();
+					if (call.equals(backpointer)) {
+						return false;
+					}
+				}
+				return true;
+			}
+			return false;
+		}
+	}
 }

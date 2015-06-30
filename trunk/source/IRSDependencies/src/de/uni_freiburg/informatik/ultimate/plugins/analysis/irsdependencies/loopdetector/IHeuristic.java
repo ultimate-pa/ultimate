@@ -10,7 +10,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.loo
  *            Type of edges
  */
 public interface IHeuristic<V, E> {
-	int getHeuristicValue(V from, V to);
+	int getHeuristicValue(V from, E over, V to);
 
-	int getConcreteCost(E e);
+	int getConcreteCost(E edge);
 }

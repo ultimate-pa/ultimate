@@ -116,7 +116,7 @@ public class AbstractInterpretationRcfgObserver extends BaseObserver {
 
 		ITransitionProvider<CodeBlock> transitionProvider = new RcfgTransitionProvider();
 		BaseRcfgAbstractStateStorageProvider storage = new AnnotatingRcfgAbstractStateStorageProvider(
-				domain.getMergeOperator());
+				domain.getMergeOperator(), mServices);
 		IVariableProvider<CodeBlock, BoogieVar> varProvider = new RcfgVariableProvider(table, boogieVarTable);
 		ILoopDetector<CodeBlock> loopDetector = new RcfgLoopDetector(mLoopDetector);
 		IResultReporter<CodeBlock> reporter = new RcfgResultReporter(mServices, storage);

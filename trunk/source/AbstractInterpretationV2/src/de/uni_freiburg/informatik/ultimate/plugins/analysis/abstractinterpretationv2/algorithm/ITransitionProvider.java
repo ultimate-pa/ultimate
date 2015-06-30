@@ -8,15 +8,17 @@ import java.util.Collection;
  * @author greitsch@informatik.uni-freiburg.de
  *
  */
-public interface ITransitionProvider<T> {
+public interface ITransitionProvider<ACTION> {
 
-	Collection<T> filterInitialElements(Collection<T> elems);
-	
-	Collection<T> getSuccessors(T elem);
-	
-	boolean isPostErrorLocation(T elem);
-	
-	String toLogString(T elem); 
-	
-	Collection<T> getSiblings(T elem);
+	Collection<ACTION> filterInitialElements(Collection<ACTION> actions);
+
+	Collection<ACTION> getSuccessors(ACTION current, ACTION scope);
+
+	boolean isPostErrorLocation(ACTION current, ACTION scope);
+
+	String toLogString(ACTION elem);
+
+	boolean isEnteringScope(ACTION current);
+
+	boolean isLeavingScope(ACTION current, ACTION scope);
 }
