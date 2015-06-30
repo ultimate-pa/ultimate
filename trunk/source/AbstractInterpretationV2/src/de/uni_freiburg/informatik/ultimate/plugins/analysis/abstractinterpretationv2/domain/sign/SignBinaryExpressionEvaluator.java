@@ -1,5 +1,8 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.sign;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.IAbstractState;
@@ -13,6 +16,11 @@ public class SignBinaryExpressionEvaluator implements IEvaluator<Values, CodeBlo
 	private IEvaluator<Values, CodeBlock, BoogieVar> mLeftSubEvaluator;
 	private IEvaluator<Values, CodeBlock, BoogieVar> mRightSubEvaluator;
 	private BinaryExpression.Operator mOperator;
+	private Set<String> mVariableSet;
+
+	public SignBinaryExpressionEvaluator() {
+		mVariableSet = new HashSet<String>();
+	}
 
 	/**
 	 * Sets the operator of the binary expression.
@@ -20,50 +28,54 @@ public class SignBinaryExpressionEvaluator implements IEvaluator<Values, CodeBlo
 	 * @param operator
 	 *            The operator to be set. Must be of {@link BinaryExpression#Operator}.
 	 */
-	public void setOperator(BinaryExpression.Operator operator) {
+	protected void setOperator(BinaryExpression.Operator operator) {
 		mOperator = operator;
 	}
 
 	@Override
 	public IEvaluationResult<Values> evaluate(IAbstractState<CodeBlock, BoogieVar> currentState) {
 
+		for (String var : mLeftSubEvaluator.getVarIdentifiers()) {
+			mVariableSet.add(var);
+		}
+		for (String var : mRightSubEvaluator.getVarIdentifiers()) {
+			mVariableSet.add(var);
+		}
+		
 		final IEvaluationResult<Values> firstResult = mLeftSubEvaluator.evaluate(currentState);
 		final IEvaluationResult<Values> secondResult = mRightSubEvaluator.evaluate(currentState);
 
 		switch (mOperator) {
-//		case LOGICIFF:
-//			break;
-//		case LOGICIMPLIES:
-//			break;
-//		case LOGICAND:
-//			break;
-//		case LOGICOR:
-//			break;
-//		case COMPLT:
-//			break;
-//		case COMPGT:
-//			break;
-//		case COMPLEQ:
-//			break;
-//		case COMPGEQ:
-//			break;
-//		case COMPEQ:
-//			if (firstResult.getResult().equals(secondResult.getResult())) {
-//				
-//			}
-//			break;
-//		case COMPNEQ:
-//			break;
-//		case COMPPO:
-//			break;
-//		case BITVECCONCAT:
-//			break;
-//		case ARITHMUL:
-//			break;
-//		case ARITHDIV:
-//			break;
-//		case ARITHMOD:
-//			break;
+		// case LOGICIFF:
+		// break;
+		// case LOGICIMPLIES:
+		// break;
+		// case LOGICAND:
+		// break;
+		// case LOGICOR:
+		// break;
+		// case COMPLT:
+		// break;
+		// case COMPGT:
+		// break;
+		// case COMPLEQ:
+		// break;
+		// case COMPGEQ:
+		// break;
+		// case COMPEQ:
+		// break;
+		// case COMPNEQ:
+		// break;
+		// case COMPPO:
+		// break;
+		// case BITVECCONCAT:
+		// break;
+		// case ARITHMUL:
+		// break;
+		// case ARITHDIV:
+		// break;
+		// case ARITHMOD:
+		// break;
 		case ARITHPLUS:
 			return performAddition(firstResult, secondResult);
 		case ARITHMINUS:
@@ -253,7 +265,6 @@ public class SignBinaryExpressionEvaluator implements IEvaluator<Values, CodeBlo
 		}
 
 		mRightSubEvaluator = evaluator;
-		return;
 	}
 
 	/**
@@ -291,4 +302,8 @@ public class SignBinaryExpressionEvaluator implements IEvaluator<Values, CodeBlo
 		}
 	}
 
+	@Override
+	public Set<String> getVarIdentifiers() {
+		return mVariableSet;
+	}
 }

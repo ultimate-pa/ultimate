@@ -1,6 +1,8 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.sign;
 
 import java.math.BigDecimal;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Represents a single decimal expression in the {@link SignDomain}.
@@ -28,8 +30,13 @@ public class SignSingletonDecimalExpressionEvaluator extends SignSingletonValueE
 	}
 
 	@Override
-    protected int getSignum() {
+	protected int getSignum() {
 		return mValue.signum();
-    }
+	}
+
+	@Override
+	public Set<String> getVarIdentifiers() {
+		return new HashSet<String>();
+	}
 
 }

@@ -1,5 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.sign;
 
+import java.util.Set;
+
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.IAbstractState;
@@ -8,13 +10,13 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.sign.SignDomainValue.Values;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
-public class SignUnaryExpressionEvaluator implements IEvaluator<SignDomainValue.Values, CodeBlock, BoogieVar> {
+public class SignUnaryExpressionEvaluator implements IEvaluator<Values, CodeBlock, BoogieVar> {
 
-	private IEvaluator<SignDomainValue.Values, CodeBlock, BoogieVar> mSubEvaluator;
+	private IEvaluator<Values, CodeBlock, BoogieVar> mSubEvaluator;
 	private UnaryExpression.Operator mOperator;
 
 	@Override
-	public void addSubEvaluator(IEvaluator<SignDomainValue.Values, CodeBlock, BoogieVar> evaluator) {
+	public void addSubEvaluator(IEvaluator<Values, CodeBlock, BoogieVar> evaluator) {
 
 		assert mSubEvaluator == null;
 		assert evaluator != null;
@@ -28,13 +30,15 @@ public class SignUnaryExpressionEvaluator implements IEvaluator<SignDomainValue.
 
 	@Override
 	public IEvaluationResult<SignDomainValue.Values> evaluate(IAbstractState<CodeBlock, BoogieVar> oldState) {
-		final IEvaluationResult<SignDomainValue.Values> subEvalResult = mSubEvaluator.evaluate(oldState);
+		final IEvaluationResult<Values> subEvalResult = mSubEvaluator.evaluate(oldState);
 
-		IEvaluationResult<SignDomainValue.Values> endResult;
+		final IEvaluationResult<Values> valuesResult = (IEvaluationResult<Values>) subEvalResult;
+
+		IEvaluationResult<Values> endResult;
 
 		switch (mOperator) {
 		case ARITHNEGATIVE:
-			endResult = negateValue(subEvalResult.getResult());
+			endResult = negateValue(valuesResult.getResult());
 			break;
 		default:
 			throw new UnsupportedOperationException("The operator " + mOperator.toString() + " is not implemented.");
@@ -68,4 +72,8 @@ public class SignUnaryExpressionEvaluator implements IEvaluator<SignDomainValue.
 		return (mSubEvaluator == null);
 	}
 
+	@Override
+	public Set<String> getVarIdentifiers() {
+		return mSubEvaluator.getVarIdentifiers();
+	}
 }

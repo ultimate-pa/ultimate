@@ -1,5 +1,8 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.sign;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.IEvaluationResult;
@@ -17,11 +20,13 @@ public final class SignSingletonVariableExpressionEvaluator implements IEvaluato
 
 	private String mVariableName;
 	private SignStateConverter<CodeBlock, BoogieVar> mStateConverter;
+	private Set<String> mVariableSet;
 
 	public SignSingletonVariableExpressionEvaluator(String variableName,
 	        SignStateConverter<CodeBlock, BoogieVar> stateConverter) {
 		mVariableName = variableName;
 		mStateConverter = stateConverter;
+		mVariableSet = new HashSet<String>();
 	}
 
 	@Override
@@ -47,4 +52,9 @@ public final class SignSingletonVariableExpressionEvaluator implements IEvaluato
 
 		return val;
 	}
+
+	@Override
+    public Set<String> getVarIdentifiers() {
+		return mVariableSet;
+    }
 }
