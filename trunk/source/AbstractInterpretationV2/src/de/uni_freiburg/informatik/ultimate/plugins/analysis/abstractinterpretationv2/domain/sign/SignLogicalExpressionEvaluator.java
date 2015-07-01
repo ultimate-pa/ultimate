@@ -8,13 +8,14 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.IEvaluationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.IEvaluator;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.INAryEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
 public class SignLogicalExpressionEvaluator implements
-        IEvaluator<SignDomainState<CodeBlock, BoogieVar>, CodeBlock, BoogieVar> {
+        INAryEvaluator<SignDomainState<CodeBlock, BoogieVar>, CodeBlock, BoogieVar> {
 
-	private IEvaluator<?, CodeBlock, BoogieVar> mLeftSubEvaluator;
-	private IEvaluator<?, CodeBlock, BoogieVar> mRightSubEvaluator;
+	private IEvaluator<?, ?, ?> mLeftSubEvaluator;
+	private IEvaluator<?, ?, ?> mRightSubEvaluator;
 	private BinaryExpression.Operator mOperator;
 	private Set<String> mVariableSet;
 
@@ -22,13 +23,14 @@ public class SignLogicalExpressionEvaluator implements
 		mVariableSet = new HashSet<String>();
 	}
 
-	protected void setOperator(BinaryExpression.Operator operator) {
+	@Override
+	public void setOperator(BinaryExpression.Operator operator) {
 		mOperator = operator;
 	}
 
 	@Override
-	public IEvaluationResult<SignDomainState<CodeBlock, BoogieVar>> evaluate(
-	        IAbstractState<CodeBlock, BoogieVar> currentState) {
+	public IEvaluationResult<?> evaluate(
+	        IAbstractState<?, ?> currentState) {
 
 		for (String var : mLeftSubEvaluator.getVarIdentifiers()) {
 			mVariableSet.add(var);
@@ -37,8 +39,8 @@ public class SignLogicalExpressionEvaluator implements
 			mVariableSet.add(var);
 		}
 
-		final IEvaluationResult<?> firstResult = mLeftSubEvaluator.evaluate(currentState);
-		final IEvaluationResult<?> secondResult = mRightSubEvaluator.evaluate(currentState);
+//		final IEvaluationResult<?> firstResult = mLeftSubEvaluator.evaluate(currentState);
+//		final IEvaluationResult<?> secondResult = mRightSubEvaluator.evaluate(currentState);
 
 		switch (mOperator) {
 		// case LOGICIFF:
@@ -81,7 +83,7 @@ public class SignLogicalExpressionEvaluator implements
 	}
 
 	@Override
-	public void addSubEvaluator(IEvaluator<SignDomainState<CodeBlock, BoogieVar>, CodeBlock, BoogieVar> evaluator) {
+	public void addSubEvaluator(IEvaluator<?, ?, ?> evaluator) {
 		if (mLeftSubEvaluator != null && mRightSubEvaluator != null) {
 			throw new UnsupportedOperationException("There are no free sub evaluators left to be assigned.");
 		}
@@ -103,5 +105,11 @@ public class SignLogicalExpressionEvaluator implements
 	public boolean hasFreeOperands() {
 		return (mLeftSubEvaluator == null || mRightSubEvaluator == null);
 	}
+
+	@Override
+    public Class<SignDomainState<CodeBlock, BoogieVar>> getType() {
+	    // TODO Auto-generated method stub
+	    return null;
+    }
 
 }

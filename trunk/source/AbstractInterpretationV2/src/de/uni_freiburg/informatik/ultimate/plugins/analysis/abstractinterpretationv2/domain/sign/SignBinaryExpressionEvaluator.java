@@ -8,13 +8,14 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.IEvaluationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.IEvaluator;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.INAryEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.sign.SignDomainValue.Values;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
-public class SignBinaryExpressionEvaluator implements IEvaluator<Values, CodeBlock, BoogieVar> {
+public class SignBinaryExpressionEvaluator implements INAryEvaluator<Values, CodeBlock, BoogieVar> {
 
-	private IEvaluator<Values, CodeBlock, BoogieVar> mLeftSubEvaluator;
-	private IEvaluator<Values, CodeBlock, BoogieVar> mRightSubEvaluator;
+	private IEvaluator<?, ?, ?> mLeftSubEvaluator;
+	private IEvaluator<?, ?, ?> mRightSubEvaluator;
 	private BinaryExpression.Operator mOperator;
 	private Set<String> mVariableSet;
 
@@ -26,14 +27,16 @@ public class SignBinaryExpressionEvaluator implements IEvaluator<Values, CodeBlo
 	 * Sets the operator of the binary expression.
 	 * 
 	 * @param operator
-	 *            The operator to be set. Must be of {@link BinaryExpression#Operator}.
+	 *            The operator to be set. Must be of
+	 *            {@link BinaryExpression#Operator}.
 	 */
-	protected void setOperator(BinaryExpression.Operator operator) {
+	@Override
+	public void setOperator(BinaryExpression.Operator operator) {
 		mOperator = operator;
 	}
 
 	@Override
-	public IEvaluationResult<Values> evaluate(IAbstractState<CodeBlock, BoogieVar> currentState) {
+	public IEvaluationResult<Values> evaluate(IAbstractState<?, ?> currentState) {
 
 		for (String var : mLeftSubEvaluator.getVarIdentifiers()) {
 			mVariableSet.add(var);
@@ -41,9 +44,9 @@ public class SignBinaryExpressionEvaluator implements IEvaluator<Values, CodeBlo
 		for (String var : mRightSubEvaluator.getVarIdentifiers()) {
 			mVariableSet.add(var);
 		}
-		
-		final IEvaluationResult<Values> firstResult = mLeftSubEvaluator.evaluate(currentState);
-		final IEvaluationResult<Values> secondResult = mRightSubEvaluator.evaluate(currentState);
+
+		final IEvaluationResult<?> firstResult = mLeftSubEvaluator.evaluate(currentState);
+		final IEvaluationResult<?> secondResult = mRightSubEvaluator.evaluate(currentState);
 
 		switch (mOperator) {
 		// case LOGICIFF:
@@ -77,16 +80,17 @@ public class SignBinaryExpressionEvaluator implements IEvaluator<Values, CodeBlo
 		// case ARITHMOD:
 		// break;
 		case ARITHPLUS:
-			return performAddition(firstResult, secondResult);
+			return performAddition((IEvaluationResult<Values>) firstResult, (IEvaluationResult<Values>) secondResult);
 		case ARITHMINUS:
-			return performSubtraction(firstResult, secondResult);
+			return performSubtraction((IEvaluationResult<Values>) firstResult, (IEvaluationResult<Values>) secondResult);
 		default:
 			throw new UnsupportedOperationException("The operator " + mOperator.toString() + " is not implemented.");
 		}
 	}
 
 	/**
-	 * Adds two {@link SignDomainState}s. {@link SignDomainState}s can be (+), (-), (0), T, &perp;.<br />
+	 * Adds two {@link SignDomainState}s. {@link SignDomainState}s can be (+),
+	 * (-), (0), T, &perp;.<br />
 	 * 
 	 * Addition is done in the following way:<br />
 	 * 
@@ -124,7 +128,8 @@ public class SignBinaryExpressionEvaluator implements IEvaluator<Values, CodeBlo
 	 *            The first evaluation result to be added.
 	 * @param second
 	 *            The second evaluation result to be added.
-	 * @return A new evaluation result corresponding to the result of the addition operation.
+	 * @return A new evaluation result corresponding to the result of the
+	 *         addition operation.
 	 */
 	private IEvaluationResult<Values> performAddition(IEvaluationResult<Values> first, IEvaluationResult<Values> second) {
 
@@ -171,7 +176,8 @@ public class SignBinaryExpressionEvaluator implements IEvaluator<Values, CodeBlo
 	}
 
 	/**
-	 * Subtracts two {@link SignDomainState}s. {@link SignDomainState}s can be (+), (-), (0), T, &perp;.<br />
+	 * Subtracts two {@link SignDomainState}s. {@link SignDomainState}s can be
+	 * (+), (-), (0), T, &perp;.<br />
 	 * 
 	 * Addition is done in the following way:<br />
 	 * 
@@ -209,7 +215,8 @@ public class SignBinaryExpressionEvaluator implements IEvaluator<Values, CodeBlo
 	 *            The first evaluation result to be subtracted.
 	 * @param second
 	 *            The second evaluation result to be subtracted.
-	 * @return A new evaluation result corresponding to the result of the subtract operation.
+	 * @return A new evaluation result corresponding to the result of the
+	 *         subtract operation.
 	 */
 	private IEvaluationResult<Values> performSubtraction(IEvaluationResult<Values> first,
 	        IEvaluationResult<Values> second) {
@@ -254,7 +261,7 @@ public class SignBinaryExpressionEvaluator implements IEvaluator<Values, CodeBlo
 	 * Adds a subevaluator to {@link this} if possible.
 	 */
 	@Override
-	public void addSubEvaluator(IEvaluator<Values, CodeBlock, BoogieVar> evaluator) {
+	public void addSubEvaluator(IEvaluator<?, ?, ?> evaluator) {
 		if (mLeftSubEvaluator != null && mRightSubEvaluator != null) {
 			throw new UnsupportedOperationException("There are no free sub evaluators left to be assigned.");
 		}
@@ -305,5 +312,10 @@ public class SignBinaryExpressionEvaluator implements IEvaluator<Values, CodeBlo
 	@Override
 	public Set<String> getVarIdentifiers() {
 		return mVariableSet;
+	}
+
+	@Override
+	public Class<Values> getType() {
+		return Values.class;
 	}
 }

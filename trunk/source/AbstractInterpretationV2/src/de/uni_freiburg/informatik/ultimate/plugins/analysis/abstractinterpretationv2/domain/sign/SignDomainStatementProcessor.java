@@ -23,21 +23,23 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.IEvaluationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.IEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.IEvaluatorFactory;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.INAryEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.sign.SignDomainValue.Values;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
 /**
- * Processes Boogie {@link Statement}s and returns a new {@link SignDomainState} for the given Statement.
+ * Processes Boogie {@link Statement}s and returns a new {@link SignDomainState}
+ * for the given Statement.
  * 
  * @author greitsch@informatik.uni-freiburg.de
  *
  */
 public class SignDomainStatementProcessor extends BoogieVisitor {
 
-	private SignDomainState<CodeBlock, BoogieVar> mOldState;
+	private SignDomainState<?, ?> mOldState;
 	private SignDomainState<CodeBlock, BoogieVar> mNewState;
 
-	IEvaluatorFactory<Values, CodeBlock, BoogieVar> mEvaluatorFactory;
+	SignEvaluatorFactory mEvaluatorFactory;
 	ExpressionEvaluator<Values, CodeBlock, BoogieVar> mExpressionEvaluator;
 
 	private String mLhsVariable;
@@ -88,8 +90,14 @@ public class SignDomainStatementProcessor extends BoogieVisitor {
 
 			processExpression(rhs[i]);
 			assert mExpressionEvaluator.isFinished();
-			final IEvaluationResult<Values> result = mExpressionEvaluator.getRootEvaluator().evaluate(mOldState);
-			final SignDomainValue newValue = new SignDomainValue(result.getResult());
+			final IEvaluationResult<?> result = mExpressionEvaluator.getRootEvaluator().evaluate(mOldState);
+
+			if (!result.getType().equals(Values.class)) {
+				throw new UnsupportedOperationException(
+				        "The type of the assignment left hand side evaluation result is not allowed.");
+			}
+
+			final SignDomainValue newValue = new SignDomainValue((Values) result.getResult());
 			mNewState.setValue(varname, newValue);
 		}
 	}
@@ -112,7 +120,7 @@ public class SignDomainStatementProcessor extends BoogieVisitor {
 		processExpression(formula);
 
 		System.out.println(mExpressionEvaluator.isFinished() ? "FINISHED" : "UNFINISHED");
-		IEvaluationResult<Values> result = mExpressionEvaluator.getRootEvaluator().evaluate(mOldState);
+		IEvaluationResult<?> result = mExpressionEvaluator.getRootEvaluator().evaluate(mOldState);
 
 	}
 
@@ -124,13 +132,31 @@ public class SignDomainStatementProcessor extends BoogieVisitor {
 
 	@Override
 	protected void visit(BinaryExpression expr) {
+		SignBinaryExpressionEvaluator binaryEvaluator = null;
+		SignLogicalExpressionEvaluator logicalEvaluator = null;
+		INAryEvaluator<?, ?, ?> evaluator;
 
-		SignBinaryExpressionEvaluator binaryExpressionEvaluator = (SignBinaryExpressionEvaluator) mEvaluatorFactory
-		        .createNAryExpressionEvaluator(2);
+		switch (expr.getOperator()) {
+		case COMPEQ:
+			evaluator = (SignLogicalExpressionEvaluator) mEvaluatorFactory.createLogicalBinaryExpressionEvaluator();
+			break;
+		case ARITHPLUS:
+			evaluator = (SignBinaryExpressionEvaluator) mEvaluatorFactory.createNAryExpressionEvaluator(2);
+			break;
+		default:
+			throw new UnsupportedOperationException("The operator " + expr.getOperator().toString()
+			        + " is not implemented.");
+		}
 
-		binaryExpressionEvaluator.setOperator(expr.getOperator());
+		// SignBinaryExpressionEvaluator binaryExpressionEvaluator =
+		// (SignBinaryExpressionEvaluator) mEvaluatorFactory
+		// .createNAryExpressionEvaluator(2);
 
-		mExpressionEvaluator.addEvaluator(binaryExpressionEvaluator);
+		// binaryExpressionEvaluator.setOperator(expr.getOperator());
+
+		evaluator.setOperator(expr.getOperator());
+
+		mExpressionEvaluator.addEvaluator(evaluator);
 
 		super.visit(expr);
 	}

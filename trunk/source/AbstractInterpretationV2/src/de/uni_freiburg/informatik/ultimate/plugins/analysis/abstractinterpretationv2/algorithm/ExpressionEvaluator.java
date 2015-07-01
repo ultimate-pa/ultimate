@@ -3,6 +3,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import java.util.Stack;
 
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.IEvaluator;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.INAryEvaluator;
 
 /**
  * Enables the construction and evaluation of multiple {@link IEvaluator}s. It is assumed that the order, in which an
@@ -14,14 +15,14 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  */
 public class ExpressionEvaluator<T, ACTION, VARDECL> {
 
-	private Stack<IEvaluator<T, ACTION, VARDECL>> mEvaluators;
-	private IEvaluator<T, ACTION, VARDECL> mRootEvaluator;
+	private Stack<IEvaluator<?, ?, ?>> mEvaluators;
+	private IEvaluator<?, ?, ?> mRootEvaluator;
 
 	/**
 	 * The default constructor.
 	 */
 	public ExpressionEvaluator() {
-		mEvaluators = new Stack<IEvaluator<T, ACTION, VARDECL>>();
+		mEvaluators = new Stack<IEvaluator<?, ?, ?>>();
 		mRootEvaluator = null;
 	}
 
@@ -32,13 +33,13 @@ public class ExpressionEvaluator<T, ACTION, VARDECL> {
 	 * 
 	 * @param evaluator
 	 */
-	public void addEvaluator(IEvaluator<T, ACTION, VARDECL> evaluator) {
+	public void addEvaluator(IEvaluator<?, ?, ?> evaluator) {
 
 		// TODO Insert sanity checks to be on the safe side.
 
 		if (mEvaluators.isEmpty()) {
-			mEvaluators.push(evaluator);
-			mRootEvaluator = evaluator;
+			mEvaluators.push((IEvaluator<T, ACTION, VARDECL>) evaluator);
+			mRootEvaluator = (IEvaluator<T, ACTION, VARDECL>) evaluator;
 		} else {
 			if (mEvaluators.peek().hasFreeOperands()) {
 				mEvaluators.peek().addSubEvaluator(evaluator);
@@ -63,7 +64,7 @@ public class ExpressionEvaluator<T, ACTION, VARDECL> {
 	 * 
 	 * @return
 	 */
-	public IEvaluator<T, ACTION, VARDECL> getRootEvaluator() {
+	public IEvaluator<?, ?, ?> getRootEvaluator() {
 		return mRootEvaluator;
 	}
 

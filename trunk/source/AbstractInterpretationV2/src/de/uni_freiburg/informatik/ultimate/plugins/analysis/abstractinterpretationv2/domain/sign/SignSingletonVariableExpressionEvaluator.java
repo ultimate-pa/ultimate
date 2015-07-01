@@ -11,7 +11,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
 /**
- * Represents an expression that consists of a single variable in the {@link SignDomain}.
+ * Represents an expression that consists of a single variable in the
+ * {@link SignDomain}.
  * 
  * @author greitsch@informatik.uni-freiburg.de
  *
@@ -30,7 +31,7 @@ public final class SignSingletonVariableExpressionEvaluator implements IEvaluato
 	}
 
 	@Override
-	public final void addSubEvaluator(IEvaluator<Values, CodeBlock, BoogieVar> evaluator) {
+	public final void addSubEvaluator(IEvaluator<?, ?, ?> evaluator) {
 		throw new UnsupportedOperationException("A sub evaluator cannot be added to a singleton expression type.");
 	}
 
@@ -40,8 +41,9 @@ public final class SignSingletonVariableExpressionEvaluator implements IEvaluato
 	}
 
 	@Override
-	public final IEvaluationResult<Values> evaluate(IAbstractState<CodeBlock, BoogieVar> currentState) {
-		SignDomainState<CodeBlock, BoogieVar> concreteState = mStateConverter.getCheckedState(currentState);
+	public final IEvaluationResult<Values> evaluate(IAbstractState<?, ?> currentState) {
+		SignDomainState<CodeBlock, BoogieVar> concreteState = mStateConverter
+		        .getCheckedState((IAbstractState<CodeBlock, BoogieVar>) currentState);
 
 		SignDomainValue val = concreteState.getValues().get(mVariableName);
 
@@ -54,7 +56,12 @@ public final class SignSingletonVariableExpressionEvaluator implements IEvaluato
 	}
 
 	@Override
-    public Set<String> getVarIdentifiers() {
+	public Set<String> getVarIdentifiers() {
 		return mVariableSet;
+	}
+
+	@Override
+    public Class<Values> getType() {
+	    return Values.class;
     }
 }

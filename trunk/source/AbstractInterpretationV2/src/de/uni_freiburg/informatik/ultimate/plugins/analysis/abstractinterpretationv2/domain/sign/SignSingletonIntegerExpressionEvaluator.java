@@ -4,6 +4,8 @@ import java.math.BigInteger;
 import java.util.HashSet;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.sign.SignDomainValue.Values;
+
 /**
  * Represents a single integer expression in the {@link SignDomain}.
  * 
@@ -28,13 +30,18 @@ public final class SignSingletonIntegerExpressionEvaluator extends SignSingleton
 	}
 
 	@Override
-    protected int getSignum() {
+	protected int getSignum() {
 		return mValue.signum();
-    }
+	}
 
 	@Override
-    public Set<String> getVarIdentifiers() {
+	public Set<String> getVarIdentifiers() {
 		return new HashSet<String>();
-    }
+	}
+
+	@Override
+	public Class<Values> getType() {
+		return Values.class;
+	}
 
 }
