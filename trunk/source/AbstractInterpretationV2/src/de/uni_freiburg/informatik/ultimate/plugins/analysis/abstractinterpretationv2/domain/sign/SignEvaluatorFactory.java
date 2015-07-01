@@ -51,4 +51,8 @@ public class SignEvaluatorFactory implements IEvaluatorFactory<Values, CodeBlock
 		throw new UnsupportedOperationException("The type " + valueType.toString() + " is not supported.");
 	}
 
+	protected IEvaluator<SignDomainState<CodeBlock, BoogieVar>, CodeBlock, BoogieVar> createLogicalBinaryExpressionEvaluator() {
+		return new SignLogicalExpressionEvaluator();
+	}
+
 }

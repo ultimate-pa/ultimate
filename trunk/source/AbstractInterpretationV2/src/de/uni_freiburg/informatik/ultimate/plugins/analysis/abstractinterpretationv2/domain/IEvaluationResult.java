@@ -4,5 +4,5 @@ public interface IEvaluationResult<T> {
 
 	public T getResult();
 	
-	public void setResult(T value);
+	public Class<T> getType();
 }

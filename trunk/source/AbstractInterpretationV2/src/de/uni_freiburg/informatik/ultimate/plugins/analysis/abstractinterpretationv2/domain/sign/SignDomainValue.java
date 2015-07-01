@@ -57,17 +57,6 @@ public class SignDomainValue implements IEvaluationResult<SignDomainValue.Values
 	}
 
 	/**
-	 * Sets the value of the {@link SignDomainValue} to the given value.
-	 * 
-	 * @param value
-	 *            The value to be set.
-	 */
-	@Override
-	public void setResult(SignDomainValue.Values value) {
-		mValue = value;
-	}
-
-	/**
 	 * Intersects {@link this} with a given other value according to the following scheme:
 	 * 
 	 * <ul>
@@ -100,4 +89,9 @@ public class SignDomainValue implements IEvaluationResult<SignDomainValue.Values
 		// In all other cases, return \bot
 		return new SignDomainValue(Values.BOTTOM);
 	}
+
+	@Override
+    public Class<Values> getType() {
+		return Values.class;
+    }
 }

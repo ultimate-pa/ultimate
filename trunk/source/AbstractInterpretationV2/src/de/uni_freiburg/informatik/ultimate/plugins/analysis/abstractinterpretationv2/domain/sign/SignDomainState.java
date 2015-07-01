@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.IAbstractState;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.IEvaluationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.sign.SignDomainValue.Values;
 
 /**
@@ -19,7 +20,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  * @param <VARDECL>
  *            Any variable declaration.
  */
-public class SignDomainState<ACTION, VARDECL> implements IAbstractState<ACTION, VARDECL> {
+public class SignDomainState<ACTION, VARDECL> implements IAbstractState<ACTION, VARDECL>,
+        IEvaluationResult<SignDomainState<ACTION, VARDECL>> {
 
 	private static int sId;
 	private final Map<String, VARDECL> mVariablesMap;
@@ -252,5 +254,15 @@ public class SignDomainState<ACTION, VARDECL> implements IAbstractState<ACTION, 
 			entry.setValue(new SignDomainValue(Values.BOTTOM));
 		}
 	}
+
+	@Override
+	public SignDomainState<ACTION, VARDECL> getResult() {
+		return this;
+	}
+
+	@Override
+    public Class<SignDomainState<ACTION, VARDECL>> getType() {
+		return (Class<SignDomainState<ACTION, VARDECL>>) this.getClass();
+    }
 
 }
