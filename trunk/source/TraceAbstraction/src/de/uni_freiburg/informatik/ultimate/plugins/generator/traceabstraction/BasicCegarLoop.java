@@ -111,7 +111,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 
 	protected final boolean m_ComputeHoareAnnotation;
 	
-	private  boolean m_UseInterpolantConsolidation = !false;
+	private  boolean m_UseInterpolantConsolidation = false;
 
 	protected final AssertCodeBlockOrder m_AssertCodeBlocksIncrementally;
 
