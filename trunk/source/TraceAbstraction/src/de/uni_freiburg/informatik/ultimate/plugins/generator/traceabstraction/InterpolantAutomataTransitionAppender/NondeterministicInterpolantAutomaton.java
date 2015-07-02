@@ -13,6 +13,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvide
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IHoareTripleChecker.Validity;
@@ -43,8 +44,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  * Hoare triple (ψ, cb, φ) is valid. Whenever the Hoare triple is valid, we
  * add φ to the set S.
  * </ul>
- * Finally, we check if S is empty. If this is the case, we add "true" to
- * S. Hence this automaton is total because S is never empty.
+ * Finally, we check if S is empty. If this is the case and m_SecondChance is 
+ * set we add "true" to S. Hence if m_SecondChance is set this automaton is 
+ * total because S is never empty.
  * 
  * @author Matthias Heizmann
  */
@@ -52,6 +54,14 @@ public class NondeterministicInterpolantAutomaton extends BasicAbstractInterpola
 	
 	protected final Set<IPredicate> m_NonTrivialPredicates;
 	protected final boolean m_ConservativeSuccessorCandidateSelection;
+	/**
+	 * If true, than states that do not have a successor, get m_IaTrueState
+	 * as successor (they get a second chance to reach false).
+	 * If false, m_IaTrueState will have a selfloop labeled with all states
+	 * hence there this flag does not change the language it only determines
+	 * the amount of nondeterminism.
+	 */
+	protected final boolean m_SecondChance;
 	
 
 	public NondeterministicInterpolantAutomaton(IUltimateServiceProvider services, 
@@ -59,11 +69,12 @@ public class NondeterministicInterpolantAutomaton extends BasicAbstractInterpola
 			INestedWordAutomaton<CodeBlock, IPredicate> abstraction, 
 			NestedWordAutomaton<CodeBlock, IPredicate> interpolantAutomaton, 
 			PredicateUnifier predicateUnifier, Logger  logger, 
-			boolean conservativeSuccessorCandidateSelection) {
+			boolean conservativeSuccessorCandidateSelection, boolean secondChance) {
 		super(services, smtManager, hoareTripleChecker, true, abstraction, 
 				predicateUnifier, 
 				interpolantAutomaton, logger);
 		m_ConservativeSuccessorCandidateSelection = conservativeSuccessorCandidateSelection;
+		m_SecondChance = secondChance;
 		Collection<IPredicate> allPredicates = interpolantAutomaton.getStates(); 
 		
 		assert SmtUtils.isTrue(m_IaTrueState.getFormula());
@@ -143,8 +154,24 @@ public class NondeterministicInterpolantAutomaton extends BasicAbstractInterpola
 				}
 			}
 		}
-		if (inputSuccs.isEmpty()) {
-			inputSuccs.add(m_IaTrueState);
+		
+		if (m_SecondChance) {
+			if (inputSuccs.isEmpty()) {
+				inputSuccs.add(m_IaTrueState);
+			}
+		} else {
+			if (inputSuccs.isEmpty() && (letter instanceof Call)) {
+				// special case, call may have m_IaTrueState as successor
+				inputSuccs.add(m_IaTrueState);
+			}
+			if (resPred == m_IaTrueState) {
+				// m_IaTrueState will get a selfloop labeled with all statements
+				inputSuccs.add(m_IaTrueState);
+			}
+			
+			if (inputSuccs.isEmpty() && (resPred != m_IaTrueState)) {
+				System.out.println("hi");
+			}
 		}
 	}
 
