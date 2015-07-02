@@ -36,7 +36,7 @@ import de.uni_freiburg.informatik.ultimate.util.HashRelation;
  * @author Matthias Heizmann
  *
  */
-public class DeterministicInterpolantAutomaton extends TotalInterpolantAutomaton {
+public class DeterministicInterpolantAutomaton extends BasicAbstractInterpolantAutomaton {
 	
 	private final Map<Set<IPredicate>, IPredicate> m_InputPreds2ResultPreds = 
 			new HashMap<Set<IPredicate>, IPredicate>();
@@ -65,7 +65,7 @@ public class DeterministicInterpolantAutomaton extends TotalInterpolantAutomaton
 			NestedWordAutomaton<CodeBlock, IPredicate> interpolantAutomaton, 
 			PredicateUnifier predicateUnifier, Logger logger, 
 			boolean conservativeSuccessorCandidateSelection) {
-		super(services, smtManager, hoareTripleChecker, abstraction, 
+		super(services, smtManager, hoareTripleChecker, true, abstraction, 
 				predicateUnifier, 
 				interpolantAutomaton, logger);
 		m_ConservativeSuccessorCandidateSelection = conservativeSuccessorCandidateSelection;

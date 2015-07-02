@@ -90,7 +90,7 @@ public class BuchiInterpolantAutomatonBouncer extends AbstractInterpolantAutomat
 			boolean scroogeNondeterminismLoop, boolean hondaBouncerStem, boolean hondaBouncerLoop,
 			PredicateFactory predicateFactory, PredicateUnifier stemPU, PredicateUnifier loopPU,
 			IPredicate falsePredicate, IUltimateServiceProvider services) {
-		super(services, smtManager, bhtc, abstraction, falsePredicate, null, services.getLoggingService().getLogger(
+		super(services, smtManager, bhtc, false, abstraction, falsePredicate, null, services.getLoggingService().getLogger(
 				Activator.s_PLUGIN_ID));
 		mServices = services;
 		m_Bspm = bspm;
@@ -221,7 +221,6 @@ public class BuchiInterpolantAutomatonBouncer extends AbstractInterpolantAutomat
 		} else {
 			throw new AssertionError("unknown state");
 		}
-		sch.reportCacheEntry(resPred, resHier, letter, m_ResultBookkeeping);
 	}
 
 	private boolean isPredHierLetterFalse(IPredicate resPred, IPredicate resHier, CodeBlock letter,
@@ -412,19 +411,6 @@ public class BuchiInterpolantAutomatonBouncer extends AbstractInterpolantAutomat
 		return !m_HondaBouncerStem || letter.equals(m_HondaEntererStem);
 	}
 
-	@Override
-	protected boolean areInternalSuccsComputed(IPredicate state, CodeBlock letter) {
-		return m_ResultBookkeeping.isCachedInternal(state, letter);
-	}
 
-	@Override
-	protected boolean areCallSuccsComputed(IPredicate state, Call call) {
-		return m_ResultBookkeeping.isCachedCall(state, call);
-	}
-
-	@Override
-	protected boolean areReturnSuccsComputed(IPredicate state, IPredicate hier, Return ret) {
-		return m_ResultBookkeeping.isCachedReturn(state, hier, ret);
-	}
 
 }

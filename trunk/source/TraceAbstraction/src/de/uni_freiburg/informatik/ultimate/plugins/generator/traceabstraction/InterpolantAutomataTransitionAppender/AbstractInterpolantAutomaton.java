@@ -72,15 +72,23 @@ public abstract class AbstractInterpolantAutomaton implements INestedWordAutomat
 	protected final IPredicate m_IaFalseState;
 	protected final NestedWordAutomatonCache<CodeBlock, IPredicate> m_AlreadyConstrucedAutomaton;
 	protected final NestedWordAutomaton<CodeBlock, IPredicate> m_InputInterpolantAutomaton;
-
+	
 	private Mode m_Mode = Mode.ON_DEMAND_CONSTRUCTION;
 
 	private final InternalSuccessorComputationHelper m_InSucComp;
 	private final CallSuccessorComputationHelper m_CaSucComp;
 	private final ReturnSuccessorComputationHelper m_ReSucComp;
+	private final ISuccessorComputationBookkeeping m_SuccessorComputationBookkeeping;
+	
 
+	/**
+	 * @param useEfficientTotalAutomatonBookkeeping If the constructed automaton
+	 * is guaranteed to be we use a more efficient bookkeeping for
+	 * already computed successors. 
+	 */
 	public AbstractInterpolantAutomaton(IUltimateServiceProvider services, 
 			SmtManager smtManager, IHoareTripleChecker hoareTripleChecker,
+			boolean useEfficientTotalAutomatonBookkeeping,
 			INestedWordAutomaton<CodeBlock, IPredicate> abstraction, IPredicate falseState,
 			NestedWordAutomaton<CodeBlock, IPredicate> interpolantAutomaton, Logger logger) {
 		super();
@@ -95,6 +103,11 @@ public abstract class AbstractInterpolantAutomaton implements INestedWordAutomat
 		m_ReSucComp = new ReturnSuccessorComputationHelper();
 		m_AlreadyConstrucedAutomaton = new NestedWordAutomatonCache<CodeBlock, IPredicate>(m_Services, abstraction.getInternalAlphabet(),
 				abstraction.getCallAlphabet(), abstraction.getReturnAlphabet(), abstraction.getStateFactory());
+		if (useEfficientTotalAutomatonBookkeeping) {
+			m_SuccessorComputationBookkeeping = new SuccessorComputationBookkeepingForTotalAutomata();
+		} else {
+			m_SuccessorComputationBookkeeping = new DefaultSuccessorComputationBookkeeping();
+		}
 	}
 
 	/**
@@ -209,7 +222,7 @@ public abstract class AbstractInterpolantAutomaton implements INestedWordAutomat
 	public final Iterable<OutgoingInternalTransition<CodeBlock, IPredicate>> internalSuccessors(IPredicate state,
 			CodeBlock letter) {
 		if (m_Mode == Mode.ON_DEMAND_CONSTRUCTION) {
-			if (!areInternalSuccsComputed(state, letter)) {
+			if (!m_SuccessorComputationBookkeeping.areInternalSuccsComputed(state, letter)) {
 				computeSuccs(state, null, letter, m_InSucComp);
 			}
 		}
@@ -219,16 +232,12 @@ public abstract class AbstractInterpolantAutomaton implements INestedWordAutomat
 	protected abstract void computeSuccs(IPredicate state, IPredicate hier, CodeBlock ret,
 			SuccessorComputationHelper sch);
 
-	/**
-	 * Have the internal successors of state and letter already been computed.
-	 */
-	protected abstract boolean areInternalSuccsComputed(IPredicate state, CodeBlock letter);
 
 	@Override
 	public final Iterable<OutgoingInternalTransition<CodeBlock, IPredicate>> internalSuccessors(IPredicate state) {
 		if (m_Mode == Mode.ON_DEMAND_CONSTRUCTION) {
 			for (CodeBlock letter : lettersInternal(state)) {
-				if (!areInternalSuccsComputed(state, letter)) {
+				if (!m_SuccessorComputationBookkeeping.areInternalSuccsComputed(state, letter)) {
 					computeSuccs(state, null, letter, m_InSucComp);
 				}
 			}
@@ -241,17 +250,14 @@ public abstract class AbstractInterpolantAutomaton implements INestedWordAutomat
 			CodeBlock letter) {
 		Call call = (Call) letter;
 		if (m_Mode == Mode.ON_DEMAND_CONSTRUCTION) {
-			if (!areCallSuccsComputed(state, call)) {
+			if (!m_SuccessorComputationBookkeeping.areCallSuccsComputed(state, call)) {
 				computeSuccs(state, null, letter, m_CaSucComp);
 			}
 		}
 		return m_AlreadyConstrucedAutomaton.callSuccessors(state, call);
 	}
 
-	/**
-	 * Have the call successors of state and call already been computed.
-	 */
-	protected abstract boolean areCallSuccsComputed(IPredicate state, Call call);
+
 
 	@Override
 	public final Iterable<OutgoingCallTransition<CodeBlock, IPredicate>> callSuccessors(IPredicate state) {
@@ -271,17 +277,14 @@ public abstract class AbstractInterpolantAutomaton implements INestedWordAutomat
 			IPredicate hier, CodeBlock letter) {
 		Return ret = (Return) letter;
 		if (m_Mode == Mode.ON_DEMAND_CONSTRUCTION) {
-			if (!areReturnSuccsComputed(state, hier, ret)) {
+			if (!m_SuccessorComputationBookkeeping.areReturnSuccsComputed(state, hier, ret)) {
 				computeSuccs(state, hier, letter, m_ReSucComp);
 			}
 		}
 		return m_AlreadyConstrucedAutomaton.returnSucccessors(state, hier, ret);
 	}
 
-	/**
-	 * Have the return successors of state, hier and ret already been computed.
-	 */
-	protected abstract boolean areReturnSuccsComputed(IPredicate state, IPredicate hier, Return ret);
+
 
 	@Override
 	public final Iterable<OutgoingReturnTransition<CodeBlock, IPredicate>> returnSuccessorsGivenHier(IPredicate state,
@@ -328,8 +331,6 @@ public abstract class AbstractInterpolantAutomaton implements INestedWordAutomat
 		public abstract Collection<IPredicate> getSuccsInterpolantAutomaton(IPredicate resPred, IPredicate resHier,
 				CodeBlock letter);
 
-		public abstract void reportCacheEntry(IPredicate resPred, IPredicate resHier, CodeBlock letter,
-				NwaCacheBookkeeping<CodeBlock, IPredicate> cacheBookkeeping);
 	}
 
 	protected class InternalSuccessorComputationHelper extends SuccessorComputationHelper {
@@ -349,6 +350,7 @@ public abstract class AbstractInterpolantAutomaton implements INestedWordAutomat
 		public void addTransition(IPredicate resPred, IPredicate resHier, CodeBlock letter, IPredicate inputSucc) {
 			assert resHier == null;
 			m_AlreadyConstrucedAutomaton.addInternalTransition(resPred, letter, inputSucc);
+			m_SuccessorComputationBookkeeping.reportInternalSuccsComputed(resPred, letter);
 		}
 
 		@Override
@@ -370,13 +372,6 @@ public abstract class AbstractInterpolantAutomaton implements INestedWordAutomat
 			}
 		}
 
-		@Override
-		public void reportCacheEntry(IPredicate resPred, IPredicate resHier, CodeBlock letter,
-				NwaCacheBookkeeping<CodeBlock, IPredicate> cacheBookkeeping) {
-			assert resHier == null;
-			cacheBookkeeping.reportCachedInternal(resPred, letter);
-		}
-
 	}
 
 	protected class CallSuccessorComputationHelper extends SuccessorComputationHelper {
@@ -396,6 +391,7 @@ public abstract class AbstractInterpolantAutomaton implements INestedWordAutomat
 		public void addTransition(IPredicate resPred, IPredicate resHier, CodeBlock letter, IPredicate inputSucc) {
 			assert resHier == null;
 			m_AlreadyConstrucedAutomaton.addCallTransition(resPred, letter, inputSucc);
+			m_SuccessorComputationBookkeeping.reportCallSuccsComputed(resPred, (Call) letter);
 		}
 
 		@Override
@@ -417,12 +413,6 @@ public abstract class AbstractInterpolantAutomaton implements INestedWordAutomat
 			}
 		}
 
-		@Override
-		public void reportCacheEntry(IPredicate resPred, IPredicate resHier, CodeBlock letter,
-				NwaCacheBookkeeping<CodeBlock, IPredicate> cacheBookkeeping) {
-			assert resHier == null;
-			cacheBookkeeping.reportCachedCall(resPred, letter);
-		}
 	}
 
 	public class ReturnSuccessorComputationHelper extends SuccessorComputationHelper {
@@ -440,6 +430,7 @@ public abstract class AbstractInterpolantAutomaton implements INestedWordAutomat
 		@Override
 		public void addTransition(IPredicate resPred, IPredicate resHier, CodeBlock letter, IPredicate inputSucc) {
 			m_AlreadyConstrucedAutomaton.addReturnTransition(resPred, resHier, letter, inputSucc);
+			m_SuccessorComputationBookkeeping.reportReturnSuccsComputed(resPred, resHier, (Return) letter);
 		}
 
 		@Override
@@ -459,12 +450,153 @@ public abstract class AbstractInterpolantAutomaton implements INestedWordAutomat
 			}
 		}
 
+	}
+	
+	
+	
+	
+	/**
+	 * Objects that implement this interface provide information if successors
+	 * have already been computed.
+	 * 
+	 * @author Matthias Heizmann
+	 */
+	public interface ISuccessorComputationBookkeeping {
+
+		/**
+		 * Have the internal successors of state and letter already been computed.
+		 */
+		abstract boolean areInternalSuccsComputed(IPredicate state, CodeBlock letter);
+		
+		/**
+		 * Announce that the internal successors of state and letter have been computed.
+		 */
+		abstract void reportInternalSuccsComputed(IPredicate state, CodeBlock letter);
+		
+		/**
+		 * Have the call successors of state and call already been computed.
+		 */
+		abstract boolean areCallSuccsComputed(IPredicate state, Call call);
+		
+		/**
+		 * Announce that the call successors of state and call have been computed.
+		 */
+		abstract void reportCallSuccsComputed(IPredicate state, Call call);
+		
+		/**
+		 * Have the return successors of state, hier and ret already been computed.
+		 */
+		abstract boolean areReturnSuccsComputed(IPredicate state, IPredicate hier, Return ret);
+
+		/**
+		 * Announce that the return successors of state, hier and have been computed.
+		 */
+		abstract void reportReturnSuccsComputed(IPredicate state, IPredicate hier,
+				Return ret);
+	}
+	
+	/**
+	 * Default implementation of {@link ISuccessorComputationBookkeeping} uses
+	 * a NwaCacheBookkeeping to store which successors have already been computed.
+	 */
+	private class DefaultSuccessorComputationBookkeeping implements	ISuccessorComputationBookkeeping {
+
+		private final NwaCacheBookkeeping<CodeBlock, IPredicate> m_ResultBookkeeping = 
+				new NwaCacheBookkeeping<CodeBlock, IPredicate>();
+
 		@Override
-		public void reportCacheEntry(IPredicate resPred, IPredicate resHier, CodeBlock letter,
-				NwaCacheBookkeeping<CodeBlock, IPredicate> cacheBookkeeping) {
-			cacheBookkeeping.reportCachedReturn(resPred, resHier, letter);
+		public boolean areInternalSuccsComputed(IPredicate state, CodeBlock letter) {
+			return m_ResultBookkeeping.isCachedInternal(state, letter);
+		}
+		
+		@Override
+		public void reportInternalSuccsComputed(IPredicate state, CodeBlock letter) {
+			m_ResultBookkeeping.reportCachedInternal(state, letter);
+		}
+
+
+		@Override
+		public boolean areCallSuccsComputed(IPredicate state, Call call) {
+			return m_ResultBookkeeping.isCachedCall(state, call);
+		}
+		
+		@Override
+		public void reportCallSuccsComputed(IPredicate state, Call call) {
+			m_ResultBookkeeping.reportCachedCall(state, call);
+		}
+
+
+		@Override
+		public boolean areReturnSuccsComputed(IPredicate state, IPredicate hier, Return ret) {
+			return m_ResultBookkeeping.isCachedReturn(state, hier, ret);
+		}
+		
+		@Override
+		public void reportReturnSuccsComputed(IPredicate state, IPredicate hier, Return ret) {
+			m_ResultBookkeeping.reportCachedReturn(state, hier, ret);
 		}
 
 	}
+	
+	
+	
+	/**
+	 * Implementation of {@link ISuccessorComputationBookkeeping} that avoids
+	 * an additional bookkeeping but works only if we construct a total automata.
+	 * Idea: If there is no successor, we have not yet computed the successors,
+	 * because there would be at least one since the automaton is total.
+	 * (An automaton is total if for each state and each letter, there is at least
+	 * one outgoing transition)
+	 */
+	private class SuccessorComputationBookkeepingForTotalAutomata implements ISuccessorComputationBookkeeping {
+
+		@Override
+		public boolean areInternalSuccsComputed(IPredicate state, CodeBlock letter) {
+			Collection<IPredicate> succs = m_AlreadyConstrucedAutomaton.succInternal(state, letter);
+			if (succs == null) {
+				return false;
+			} else {
+				return succs.iterator().hasNext();
+			}
+		}
+
+		@Override
+		public boolean areCallSuccsComputed(IPredicate state, Call call) {
+			Collection<IPredicate> succs = m_AlreadyConstrucedAutomaton.succCall(state, call);
+			if (succs == null) {
+				return false;
+			} else {
+				return succs.iterator().hasNext();
+			}
+		}
+
+		@Override
+		public boolean areReturnSuccsComputed(IPredicate state, IPredicate hier,
+				Return ret) {
+			Collection<IPredicate> succs = m_AlreadyConstrucedAutomaton.succReturn(state, hier, ret);
+			if (succs == null) {
+				return false;
+			} else {
+				return succs.iterator().hasNext();
+			}
+		}
+
+		@Override
+		public void reportInternalSuccsComputed(IPredicate state, CodeBlock letter) {
+			// do nothing, information is implicitly stored in total automaton
+		}
+
+		@Override
+		public void reportCallSuccsComputed(IPredicate state, Call call) {
+			// do nothing, information is implicitly stored in total automaton
+		}
+
+		@Override
+		public void reportReturnSuccsComputed(IPredicate state,	IPredicate hier, Return ret) {
+			// do nothing, information is implicitly stored in total automaton
+		}
+
+	}
+	
 
 }

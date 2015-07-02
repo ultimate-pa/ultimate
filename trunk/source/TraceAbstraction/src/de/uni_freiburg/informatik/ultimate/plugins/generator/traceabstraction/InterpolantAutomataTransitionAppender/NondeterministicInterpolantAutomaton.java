@@ -48,7 +48,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  * 
  * @author Matthias Heizmann
  */
-public class NondeterministicInterpolantAutomaton extends TotalInterpolantAutomaton {
+public class NondeterministicInterpolantAutomaton extends BasicAbstractInterpolantAutomaton {
 	
 	protected final Set<IPredicate> m_NonTrivialPredicates;
 	protected final boolean m_ConservativeSuccessorCandidateSelection;
@@ -60,7 +60,7 @@ public class NondeterministicInterpolantAutomaton extends TotalInterpolantAutoma
 			NestedWordAutomaton<CodeBlock, IPredicate> interpolantAutomaton, 
 			PredicateUnifier predicateUnifier, Logger  logger, 
 			boolean conservativeSuccessorCandidateSelection) {
-		super(services, smtManager, hoareTripleChecker, abstraction, 
+		super(services, smtManager, hoareTripleChecker, true, abstraction, 
 				predicateUnifier, 
 				interpolantAutomaton, logger);
 		m_ConservativeSuccessorCandidateSelection = conservativeSuccessorCandidateSelection;
