@@ -8,14 +8,13 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 /**
  * 
  * @author dietsch@informatik.uni-freiburg.de
- *
  */
 final class WorklistItem<ACTION, VARDECL> {
 
 	private IAbstractState<ACTION, VARDECL> mPreState;
 	private ACTION mAction;
-	private Deque<ACTION> mScope;
-	private Deque<IAbstractStateStorage<ACTION, VARDECL>> mStorages;
+	private Deque<ACTION> mScopes;
+	private Deque<IAbstractStateStorage<ACTION, VARDECL>> mScopedStorages;
 
 	protected WorklistItem(final IAbstractState<ACTION, VARDECL> pre, final ACTION action,
 			IAbstractStateStorage<ACTION, VARDECL> globalStorage) {
@@ -25,8 +24,8 @@ final class WorklistItem<ACTION, VARDECL> {
 
 		mPreState = pre;
 		mAction = action;
-		mStorages = new ArrayDeque<IAbstractStateStorage<ACTION, VARDECL>>();
-		mStorages.addFirst(globalStorage);
+		mScopedStorages = new ArrayDeque<IAbstractStateStorage<ACTION, VARDECL>>();
+		mScopedStorages.addFirst(globalStorage);
 	}
 
 	protected WorklistItem(final IAbstractState<ACTION, VARDECL> pre, final ACTION action,
@@ -37,8 +36,8 @@ final class WorklistItem<ACTION, VARDECL> {
 
 		mPreState = pre;
 		mAction = action;
-		mScope = oldItem.getScopes();
-		mStorages = oldItem.getStorages();
+		mScopes = oldItem.getScopes();
+		mScopedStorages = oldItem.getStorages();
 	}
 
 	public ACTION getAction() {
@@ -61,43 +60,61 @@ final class WorklistItem<ACTION, VARDECL> {
 
 	public void addScope(ACTION scope) {
 		assert scope != null;
-		if (mScope == null) {
-			mScope = new ArrayDeque<ACTION>();
+		if (mScopes == null) {
+			mScopes = new ArrayDeque<ACTION>();
 		}
-		mScope.addFirst(scope);
-		mStorages.addFirst(getCurrentStorage().createStorage());
+		mScopes.addFirst(scope);
+		mScopedStorages.addFirst(getCurrentStorage().createStorage());
 	}
 
 	public ACTION getCurrentScope() {
-		if (mScope == null || mScope.isEmpty()) {
+		if (mScopes == null || mScopes.isEmpty()) {
 			return null;
 		}
-		return mScope.peek();
+		return mScopes.peek();
 	}
 
 	public ACTION removeCurrentScope() {
-		if (mScope == null || mScope.isEmpty()) {
+		if (mScopes == null || mScopes.isEmpty()) {
 			return null;
 		}
-		mStorages.removeFirst();
-		return mScope.removeFirst();
-	}
-
-	private Deque<ACTION> getScopes() {
-		if (mScope == null || mScope.isEmpty()) {
-			return null;
-		}
-		return new ArrayDeque<>(mScope);
+		mScopedStorages.removeFirst();
+		return mScopes.removeFirst();
 	}
 
 	public IAbstractStateStorage<ACTION, VARDECL> getCurrentStorage() {
-		assert !mStorages.isEmpty();
-		return mStorages.peek();
+		assert !mScopedStorages.isEmpty();
+		return mScopedStorages.peek();
+	}
+
+	public int getCallStackDepth() {
+		if (mScopes == null || mScopes.isEmpty()) {
+			return 0;
+		}
+		return mScopes.size();
+	}
+
+	private Deque<ACTION> getScopes() {
+		if (mScopes == null || mScopes.isEmpty()) {
+			return null;
+		}
+		return new ArrayDeque<>(mScopes);
 	}
 
 	private Deque<IAbstractStateStorage<ACTION, VARDECL>> getStorages() {
-		assert !mStorages.isEmpty();
-		return new ArrayDeque<>(mStorages);
+		assert !mScopedStorages.isEmpty();
+		return new ArrayDeque<>(mScopedStorages);
+	}
+
+	@Override
+	public String toString() {
+		final StringBuilder builder = new StringBuilder().append("[").append(mPreState.hashCode()).append("]--[")
+				.append(mAction.hashCode()).append("]--> ? (Scope={");
+		for (final ACTION scope : mScopes) {
+			builder.append("[").append(scope.hashCode()).append("]");
+		}
+		builder.append("}");
+		return builder.toString();
 	}
 
 }

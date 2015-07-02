@@ -282,20 +282,27 @@ public class AbstractInterpreter<ACTION, VARDECL> {
 			if (mLogger.isDebugEnabled()) {
 				mLogger.debug(getLogMessageAddTransition(successorItem));
 			}
-
-			if (mTransitionProvider.isEnteringScope(successor)) {
-				if (mLogger.isDebugEnabled()) {
-					mLogger.debug(new StringBuilder().append(INDENT).append(" Entering scope"));
-				}
-				successorItem.addScope(successor);
-			} else if (mTransitionProvider.isLeavingScope(successor, currentItem.getCurrentScope())) {
-				if (mLogger.isDebugEnabled()) {
-					mLogger.debug(new StringBuilder().append(INDENT).append(" Leaving scope"));
-				}
-				successorItem.removeCurrentScope();
-			}
-
+			scopeEnterOrLeave(currentItem, successor, successorItem);
 			worklist.add(successorItem);
+		}
+	}
+
+	private void scopeEnterOrLeave(final WorklistItem<ACTION, VARDECL> currentItem, final ACTION successor,
+			final WorklistItem<ACTION, VARDECL> successorItem) {
+		if (mTransitionProvider.isEnteringScope(successor)) {
+			successorItem.addScope(successor);
+			if (mLogger.isDebugEnabled()) {
+				mLogger.debug(new StringBuilder().append(INDENT).append(INDENT)
+						.append(" Successor enters scope (new depth=").append(successorItem.getCallStackDepth())
+						.append(")"));
+			}
+		} else if (mTransitionProvider.isLeavingScope(successor, currentItem.getCurrentScope())) {
+			successorItem.removeCurrentScope();
+			if (mLogger.isDebugEnabled()) {
+				mLogger.debug(new StringBuilder().append(INDENT).append(INDENT)
+						.append(" Successor leaves scope (new depth=").append(successorItem.getCallStackDepth())
+						.append(")"));
+			}
 		}
 	}
 
@@ -337,30 +344,28 @@ public class AbstractInterpreter<ACTION, VARDECL> {
 
 	private StringBuilder getLogMessageFixpointFound(IAbstractState<ACTION, VARDECL> oldPostState,
 			final IAbstractState<ACTION, VARDECL> newPostState) {
-		return new StringBuilder().append(INDENT).append(" post state ")
-				.append(oldPostState.hashCode()).append(" is fixpoint, replacing with ")
-				.append(newPostState.hashCode());
+		return new StringBuilder().append(INDENT).append(" post state ").append(oldPostState.hashCode())
+				.append(" is fixpoint, replacing with ").append(newPostState.hashCode());
 	}
 
 	private StringBuilder getLogMessageMergeResult(IAbstractState<ACTION, VARDECL> newPostState) {
-		return new StringBuilder().append(INDENT).append(" Merging resulted in [")
-				.append(newPostState.hashCode()).append("]");
+		return new StringBuilder().append(INDENT).append(" Merging resulted in [").append(newPostState.hashCode())
+				.append("]");
 	}
 
 	private StringBuilder getLogMessageMergeStates(final int availablePostStatesCount) {
-		return new StringBuilder().append(INDENT).append(" Merging ")
-				.append(availablePostStatesCount).append(" states at target location");
+		return new StringBuilder().append(INDENT).append(" Merging ").append(availablePostStatesCount)
+				.append(" states at target location");
 	}
 
 	private StringBuilder getLogMessageNewPostState(IAbstractState<ACTION, VARDECL> newPostState) {
-		return new StringBuilder().append(INDENT).append(" adding post state [")
-				.append(newPostState.hashCode()).append("] ").append(newPostState.toLogString());
+		return new StringBuilder().append(INDENT).append(" adding post state [").append(newPostState.hashCode())
+				.append("] ").append(newPostState.toLogString());
 	}
 
 	private StringBuilder getLogMessageEnterLoop(final Map<Pair<ACTION, ACTION>, Integer> loopCounters,
 			final Pair<ACTION, ACTION> pair) {
-		return new StringBuilder().append(INDENT).append(" Entering loop (")
-				.append(loopCounters.get(pair)).append(")");
+		return new StringBuilder().append(INDENT).append(" Entering loop (").append(loopCounters.get(pair)).append(")");
 	}
 
 	private StringBuilder getLogMessageUnwindingResult(IAbstractState<ACTION, VARDECL> newPostState) {

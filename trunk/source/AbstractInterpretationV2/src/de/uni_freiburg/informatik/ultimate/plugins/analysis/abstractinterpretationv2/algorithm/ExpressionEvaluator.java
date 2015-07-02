@@ -3,7 +3,6 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import java.util.Stack;
 
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.IEvaluator;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.INAryEvaluator;
 
 /**
  * Enables the construction and evaluation of multiple {@link IEvaluator}s. It is assumed that the order, in which an

@@ -10,7 +10,7 @@ class AstarAnnotation<EDGE> extends AbstractAnnotations implements Comparable<As
 	private EDGE mBackPointer;
 	private int mCostSoFar; // g-value
 	private int mExpectedCostToTarget; // f-value
-	private int mLowestExpectedCost;
+	private int mLowestExpectedCost; //h-value
 
 	AstarAnnotation() {
 		setExpectedCostToTarget(Integer.MAX_VALUE);
