@@ -105,7 +105,8 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 
 	protected void computeInterpolants(Set<Integer> interpolatedPositions) throws OperationCanceledException {
 		int[] numOfPredicatesConsolidatedPerLocation = new int[m_Trace.length()];
-		int interpolantConsolidationCounter = 0;
+		int differenceAutomatonEmptyCounter = 0;
+		int disjunctionsGreaterOneCounter = 0;
 		
 		// 1. Build the path automaton for the given trace m_Trace
 		PathProgramAutomatonConstructor ppc = new PathProgramAutomatonConstructor();
@@ -165,6 +166,10 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 			Set<IPredicate> predicatesForThisLocation = locationsToSetOfPredicates.getImage(loc);
 			// Update benchmarks
 			numOfPredicatesConsolidatedPerLocation[i] += predicatesForThisLocation.size();
+			numOfPredicatesConsolidatedPerLocation[i] -= 1;
+			if (predicatesForThisLocation.size() > 1) {
+				disjunctionsGreaterOneCounter++;
+			}
 			
 			IPredicate[] predicatesForThisLocationAsArray = predicatesForThisLocation.toArray(new IPredicate[predicatesForThisLocation.size()]);
 			TermVarsProc predicatesForThisLocationConsolidated = m_SmtManager.or(predicatesForThisLocationAsArray);
@@ -175,10 +180,10 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 				m_Trace, m_Precondition, m_Postcondition, m_PendingContexts, "CP", 
 				m_SmtManager, m_ModifiedGlobals, m_Logger) : "invalid Hoare triple in consolidated interpolants";
 		
-		interpolantConsolidationCounter = 1;
+		differenceAutomatonEmptyCounter = 1;
 		// Set benchmark data
-		m_InterpolantConsolidationBenchmarkGenerator.setInterpolantConsolidationData(numOfPredicatesConsolidatedPerLocation, interpolantConsolidationCounter);
-		
+		m_InterpolantConsolidationBenchmarkGenerator.setInterpolantConsolidationData(numOfPredicatesConsolidatedPerLocation, differenceAutomatonEmptyCounter,
+													 disjunctionsGreaterOneCounter);
 	}
 	
 	
@@ -280,11 +285,14 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 	// Benchmarks Section
 	public static class InterpolantConsolidationBenchmarkType implements IBenchmarkType {
 		private static InterpolantConsolidationBenchmarkType s_Instance = new InterpolantConsolidationBenchmarkType();
+		
 		/* Keys */
 		// Counts how often we were allowed to consolidate interpolants
-		protected final static String s_InterpolantConsolidationCounter = "InterpolantConsolidationCounter";
+		protected final static String s_DifferenceAutomatonEmptyCounter = "DifferenceAutomatonEmptyCounter";
 		// Counts the num of interpolants consolidated per location
 		protected final static String s_SumOfPredicatesConsolidated = "SumOfPredicatesConsolidated";
+		
+		protected final static String s_DisjunctionsGreaterOneCounter = "DisjunctionsGreaterOneCounter";
 		
 		public static InterpolantConsolidationBenchmarkType getInstance() {
 			return s_Instance;
@@ -293,15 +301,20 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 		@Override
 		public Collection<String> getKeys() {
 			ArrayList<String> result = new ArrayList<String>();
-			result.add(s_InterpolantConsolidationCounter);
+			result.add(s_DifferenceAutomatonEmptyCounter);
 			result.add(s_SumOfPredicatesConsolidated);
+			result.add(s_DisjunctionsGreaterOneCounter);
 			return result;
 		}
 
 		@Override
 		public Object aggregate(String key, Object value1, Object value2) {
 			switch(key) {
-			case s_InterpolantConsolidationCounter: {
+			case s_DifferenceAutomatonEmptyCounter: {
+				int result = ((int) value1) + ((int) value2);
+				return result;
+			}
+			case s_DisjunctionsGreaterOneCounter: {
 				int result = ((int) value1) + ((int) value2);
 				return result;
 			}
@@ -318,8 +331,12 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 		public String prettyprintBenchmarkData(
 				IBenchmarkDataProvider benchmarkData) {
 			StringBuilder sb = new StringBuilder();
-			sb.append(s_InterpolantConsolidationCounter).append(": ");
-			sb.append((int) benchmarkData.getValue(s_InterpolantConsolidationCounter));
+			sb.append(s_DifferenceAutomatonEmptyCounter).append(": ");
+			sb.append((int) benchmarkData.getValue(s_DifferenceAutomatonEmptyCounter));
+			sb.append("\t");
+			sb.append(s_DisjunctionsGreaterOneCounter).append(": ");
+			sb.append((int) benchmarkData.getValue(s_DisjunctionsGreaterOneCounter));
+			
 			sb.append("\t").append(s_SumOfPredicatesConsolidated).append(": ");
 			sb.append((long) benchmarkData.getValue(s_SumOfPredicatesConsolidated));
 			return sb.toString();
@@ -328,18 +345,21 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 	}
 	
 	public class InterpolantConsolidationBenchmarkGenerator implements 	IBenchmarkDataProvider {
-		private int m_InterpolantConsolidationCounter = 0;
+		private int m_DifferenceAutomatonEmptyCounter = 0;
 		private long m_SumOfPredicatesConsolidated = 0;
+		private int m_DisjunctionsGreaterOneCounter = 0;
 
 		
 		
 		public void incrementInterpolantConsolidationCounter() {
-			m_InterpolantConsolidationCounter++;
+			m_DifferenceAutomatonEmptyCounter++;
 		}
 		
-		public void setInterpolantConsolidationData(int[] numOfPredicatesConsolidatedPerLocation, int interpolantConsolidationCounter) {
+		public void setInterpolantConsolidationData(int[] numOfPredicatesConsolidatedPerLocation, int differenceAutomatonEmptyCounter,
+				int disjunctionsGreaterOneCounter) {
 			assert numOfPredicatesConsolidatedPerLocation != null;
-			m_InterpolantConsolidationCounter = interpolantConsolidationCounter;
+			m_DifferenceAutomatonEmptyCounter = differenceAutomatonEmptyCounter;
+			m_DisjunctionsGreaterOneCounter  = disjunctionsGreaterOneCounter;
 			m_SumOfPredicatesConsolidated = getSumOfIntArray(numOfPredicatesConsolidatedPerLocation);
 		}
 		
@@ -351,10 +371,12 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 		@Override
 		public Object getValue(String key) {
 			switch (key) {
-			case InterpolantConsolidationBenchmarkType.s_InterpolantConsolidationCounter:
-				return m_InterpolantConsolidationCounter;
+			case InterpolantConsolidationBenchmarkType.s_DifferenceAutomatonEmptyCounter:
+				return m_DifferenceAutomatonEmptyCounter;
 			case InterpolantConsolidationBenchmarkType.s_SumOfPredicatesConsolidated:
 				return m_SumOfPredicatesConsolidated;
+			case InterpolantConsolidationBenchmarkType.s_DisjunctionsGreaterOneCounter:
+				return m_DisjunctionsGreaterOneCounter;
 			default:
 				throw new AssertionError("unknown data");
 			}
