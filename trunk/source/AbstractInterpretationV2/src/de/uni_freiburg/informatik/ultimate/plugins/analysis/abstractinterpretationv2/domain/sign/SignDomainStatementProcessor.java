@@ -28,24 +28,24 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
 /**
- * Processes Boogie {@link Statement}s and returns a new {@link SignDomainState}
- * for the given Statement.
+ * Processes Boogie {@link Statement}s and returns a new {@link SignDomainState} for the given Statement.
  * 
  * @author greitsch@informatik.uni-freiburg.de
  *
  */
 public class SignDomainStatementProcessor extends BoogieVisitor {
 
-	private SignDomainState<?, ?> mOldState;
+	private SignDomainState<CodeBlock, BoogieVar> mOldState;
 	private SignDomainState<CodeBlock, BoogieVar> mNewState;
 
-	SignEvaluatorFactory mEvaluatorFactory;
+	IEvaluatorFactory<Values, CodeBlock, BoogieVar> mEvaluatorFactory;
 	ExpressionEvaluator<Values, CodeBlock, BoogieVar> mExpressionEvaluator;
+	SignStateConverter<CodeBlock, BoogieVar> mStateConverter;
 
 	private String mLhsVariable;
 
 	protected SignDomainStatementProcessor(SignStateConverter<CodeBlock, BoogieVar> stateConverter) {
-		mEvaluatorFactory = new SignEvaluatorFactory(stateConverter);
+		mStateConverter = stateConverter;
 	}
 
 	protected SignDomainState<CodeBlock, BoogieVar> process(SignDomainState<CodeBlock, BoogieVar> oldState,
@@ -64,6 +64,8 @@ public class SignDomainStatementProcessor extends BoogieVisitor {
 	@Override
 	protected void visit(HavocStatement statement) {
 
+		mEvaluatorFactory = new SignEvaluatorFactory(mStateConverter);
+
 		final VariableLHS[] vars = statement.getIdentifiers();
 		for (final VariableLHS var : vars) {
 			mNewState.setValue(var.getIdentifier(), new SignDomainValue(Values.TOP));
@@ -74,6 +76,8 @@ public class SignDomainStatementProcessor extends BoogieVisitor {
 
 	@Override
 	protected void visit(AssignmentStatement statement) {
+		mEvaluatorFactory = new SignEvaluatorFactory(mStateConverter);
+
 		mExpressionEvaluator = new ExpressionEvaluator<Values, CodeBlock, BoogieVar>();
 
 		// super.visit(statement);
@@ -105,6 +109,8 @@ public class SignDomainStatementProcessor extends BoogieVisitor {
 	@Override
 	protected void visit(AssumeStatement statement) {
 
+		mEvaluatorFactory = new SignLogicalEvaluatorFactory(mStateConverter);
+
 		mExpressionEvaluator = new ExpressionEvaluator<Values, CodeBlock, BoogieVar>();
 
 		Expression formula = statement.getFormula();
@@ -119,40 +125,36 @@ public class SignDomainStatementProcessor extends BoogieVisitor {
 
 		processExpression(formula);
 
-		System.out.println(mExpressionEvaluator.isFinished() ? "FINISHED" : "UNFINISHED");
 		IEvaluationResult<?> result = mExpressionEvaluator.getRootEvaluator().evaluate(mOldState);
+
+		if (result instanceof SignDomainValue) {
+			IEvaluationResult<Values> castedResult = (IEvaluationResult<Values>) result;
+			if (castedResult.getResult().equals(Values.NEGATIVE)
+			        && mExpressionEvaluator.getRootEvaluator().getVarIdentifiers().size() == 0) {
+				mNewState.setToBottom();
+			} else {
+				for (String var : mExpressionEvaluator.getRootEvaluator().getVarIdentifiers()) {
+
+				}
+				// mNewState.intersect(other)
+				throw new UnsupportedOperationException("Hurz");
+			}
+		}
 
 	}
 
 	@Override
 	protected void visit(AssertStatement statement) {
+		mEvaluatorFactory = new SignLogicalEvaluatorFactory(mStateConverter);
 		// TODO Auto-generated method stub
 		super.visit(statement);
 	}
 
 	@Override
 	protected void visit(BinaryExpression expr) {
-		SignBinaryExpressionEvaluator binaryEvaluator = null;
-		SignLogicalExpressionEvaluator logicalEvaluator = null;
-		INAryEvaluator<?, ?, ?> evaluator;
+		INAryEvaluator<?, CodeBlock, BoogieVar> evaluator;
 
-		switch (expr.getOperator()) {
-		case COMPEQ:
-			evaluator = (SignLogicalExpressionEvaluator) mEvaluatorFactory.createLogicalBinaryExpressionEvaluator();
-			break;
-		case ARITHPLUS:
-			evaluator = (SignBinaryExpressionEvaluator) mEvaluatorFactory.createNAryExpressionEvaluator(2);
-			break;
-		default:
-			throw new UnsupportedOperationException("The operator " + expr.getOperator().toString()
-			        + " is not implemented.");
-		}
-
-		// SignBinaryExpressionEvaluator binaryExpressionEvaluator =
-		// (SignBinaryExpressionEvaluator) mEvaluatorFactory
-		// .createNAryExpressionEvaluator(2);
-
-		// binaryExpressionEvaluator.setOperator(expr.getOperator());
+		evaluator = mEvaluatorFactory.createNAryExpressionEvaluator(2);
 
 		evaluator.setOperator(expr.getOperator());
 

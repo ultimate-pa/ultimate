@@ -10,9 +10,9 @@ import java.util.Set;
  */
 public interface IEvaluator<T, ACTION, VARDECL> {
 
-	public IEvaluationResult<?> evaluate(IAbstractState<?, ?> currentState);
+	public IEvaluationResult<?> evaluate(IAbstractState<ACTION, VARDECL> currentState);
 
-	public void addSubEvaluator(IEvaluator<?, ?, ?> evaluator);
+	public void addSubEvaluator(IEvaluator<?, ACTION, VARDECL> evaluator);
 
 	public Set<String> getVarIdentifiers();
 	

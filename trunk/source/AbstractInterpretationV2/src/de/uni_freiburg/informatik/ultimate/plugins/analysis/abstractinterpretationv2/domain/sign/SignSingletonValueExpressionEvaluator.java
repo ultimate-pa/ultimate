@@ -24,7 +24,7 @@ public abstract class SignSingletonValueExpressionEvaluator<T> implements IEvalu
 	}
 
 	@Override
-	public final IEvaluationResult<Values> evaluate(IAbstractState<?, ?> currentState) {
+	public final IEvaluationResult<Values> evaluate(IAbstractState<CodeBlock, BoogieVar> currentState) {
 		int num = getSignum();
 
 		if (num > 0) {
@@ -39,7 +39,7 @@ public abstract class SignSingletonValueExpressionEvaluator<T> implements IEvalu
 	}
 
 	@Override
-	public final void addSubEvaluator(IEvaluator<?, ?, ?> evaluator) {
+	public final void addSubEvaluator(IEvaluator<?, CodeBlock, BoogieVar> evaluator) {
 		throw new UnsupportedOperationException("A sub evaluator cannot be added to a singleton expression type.");
 	}
 

@@ -4,19 +4,21 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.IEvaluationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.IEvaluator;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.INAryEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.sign.SignDomainValue.Values;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
-public class SignUnaryExpressionEvaluator implements IEvaluator<Values, CodeBlock, BoogieVar> {
+public class SignUnaryExpressionEvaluator implements INAryEvaluator<Values, CodeBlock, BoogieVar> {
 
 	private IEvaluator<?, ?, ?> mSubEvaluator;
 	private UnaryExpression.Operator mOperator;
 
 	@Override
-	public void addSubEvaluator(IEvaluator<?, ?, ?> evaluator) {
+	public void addSubEvaluator(IEvaluator<?, CodeBlock, BoogieVar> evaluator) {
 
 		assert mSubEvaluator == null;
 		assert evaluator != null;
@@ -24,15 +26,14 @@ public class SignUnaryExpressionEvaluator implements IEvaluator<Values, CodeBloc
 		mSubEvaluator = evaluator;
 	}
 
-	protected void setOperator(UnaryExpression.Operator operator) {
-		mOperator = operator;
+	@Override
+	public void setOperator(Object operator) {
+		assert operator instanceof Operator;
+		mOperator = (Operator) operator;
 	}
 
 	@Override
-	public IEvaluationResult<?> evaluate(IAbstractState<?, ?> oldState) {
-		if (!mSubEvaluator.getType().equals(Values.class)) {
-			throw new UnsupportedOperationException("Unsupported Type of the sub evaluator.");
-		}
+	public IEvaluationResult<?> evaluate(IAbstractState<CodeBlock, BoogieVar> oldState) {
 
 		IEvaluator<Values, CodeBlock, BoogieVar> castedSubEvaluator = (IEvaluator<Values, CodeBlock, BoogieVar>) mSubEvaluator;
 		final IEvaluationResult<Values> subEvalResult = (IEvaluationResult<Values>) castedSubEvaluator
@@ -41,7 +42,14 @@ public class SignUnaryExpressionEvaluator implements IEvaluator<Values, CodeBloc
 		IEvaluationResult<Values> endResult;
 
 		switch (mOperator) {
+		case LOGICNEG:
+			return negateValue(subEvalResult.getResult());
 		case ARITHNEGATIVE:
+			if (!(mSubEvaluator.getType().equals(Values.class))) {
+				throw new UnsupportedOperationException("Unsupported Type of the sub evaluator: "
+				        + mSubEvaluator.getType().toString());
+			}
+
 			endResult = negateValue(subEvalResult.getResult());
 			break;
 		default:

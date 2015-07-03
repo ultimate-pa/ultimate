@@ -14,14 +14,14 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  */
 public class ExpressionEvaluator<T, ACTION, VARDECL> {
 
-	private Stack<IEvaluator<?, ?, ?>> mEvaluators;
-	private IEvaluator<?, ?, ?> mRootEvaluator;
+	private Stack<IEvaluator<?, ACTION, VARDECL>> mEvaluators;
+	private IEvaluator<?, ACTION, VARDECL> mRootEvaluator;
 
 	/**
 	 * The default constructor.
 	 */
 	public ExpressionEvaluator() {
-		mEvaluators = new Stack<IEvaluator<?, ?, ?>>();
+		mEvaluators = new Stack<IEvaluator<?, ACTION, VARDECL>>();
 		mRootEvaluator = null;
 	}
 
@@ -32,7 +32,7 @@ public class ExpressionEvaluator<T, ACTION, VARDECL> {
 	 * 
 	 * @param evaluator
 	 */
-	public void addEvaluator(IEvaluator<?, ?, ?> evaluator) {
+	public void addEvaluator(IEvaluator<?, ACTION, VARDECL> evaluator) {
 
 		// TODO Insert sanity checks to be on the safe side.
 
@@ -63,7 +63,7 @@ public class ExpressionEvaluator<T, ACTION, VARDECL> {
 	 * 
 	 * @return
 	 */
-	public IEvaluator<?, ?, ?> getRootEvaluator() {
+	public IEvaluator<?, ACTION, VARDECL> getRootEvaluator() {
 		return mRootEvaluator;
 	}
 

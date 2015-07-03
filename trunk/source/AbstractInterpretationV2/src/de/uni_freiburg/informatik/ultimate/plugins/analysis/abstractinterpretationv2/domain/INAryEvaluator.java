@@ -9,5 +9,5 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression.Ope
  */
 public interface INAryEvaluator<T, ACTION, VARDECL> extends IEvaluator<T, ACTION, VARDECL>{
 	
-	public void setOperator(Operator operator);
+	public void setOperator(Object operator);
 }

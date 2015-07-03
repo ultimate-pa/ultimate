@@ -6,6 +6,7 @@ import java.math.BigInteger;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.IEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.IEvaluatorFactory;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.INAryEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.sign.SignDomainValue.Values;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
@@ -18,7 +19,7 @@ public class SignEvaluatorFactory implements IEvaluatorFactory<Values, CodeBlock
 	}
 
 	@Override
-	public IEvaluator<Values, CodeBlock, BoogieVar> createNAryExpressionEvaluator(int arity) {
+	public INAryEvaluator<Values, CodeBlock, BoogieVar> createNAryExpressionEvaluator(int arity) {
 		assert arity >= 1 && arity <= 2;
 
 		switch (arity) {
@@ -50,9 +51,4 @@ public class SignEvaluatorFactory implements IEvaluatorFactory<Values, CodeBlock
 
 		throw new UnsupportedOperationException("The type " + valueType.toString() + " is not supported.");
 	}
-
-	protected IEvaluator<SignDomainState<CodeBlock, BoogieVar>, CodeBlock, BoogieVar> createLogicalBinaryExpressionEvaluator() {
-		return new SignLogicalExpressionEvaluator();
-	}
-
 }

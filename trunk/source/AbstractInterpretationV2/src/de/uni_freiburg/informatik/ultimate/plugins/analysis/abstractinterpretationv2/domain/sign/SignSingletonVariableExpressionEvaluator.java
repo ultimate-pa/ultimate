@@ -31,7 +31,7 @@ public final class SignSingletonVariableExpressionEvaluator implements IEvaluato
 	}
 
 	@Override
-	public final void addSubEvaluator(IEvaluator<?, ?, ?> evaluator) {
+	public final void addSubEvaluator(IEvaluator<?, CodeBlock, BoogieVar> evaluator) {
 		throw new UnsupportedOperationException("A sub evaluator cannot be added to a singleton expression type.");
 	}
 
@@ -41,7 +41,7 @@ public final class SignSingletonVariableExpressionEvaluator implements IEvaluato
 	}
 
 	@Override
-	public final IEvaluationResult<Values> evaluate(IAbstractState<?, ?> currentState) {
+	public final IEvaluationResult<Values> evaluate(IAbstractState<CodeBlock, BoogieVar> currentState) {
 		SignDomainState<CodeBlock, BoogieVar> concreteState = mStateConverter
 		        .getCheckedState((IAbstractState<CodeBlock, BoogieVar>) currentState);
 
