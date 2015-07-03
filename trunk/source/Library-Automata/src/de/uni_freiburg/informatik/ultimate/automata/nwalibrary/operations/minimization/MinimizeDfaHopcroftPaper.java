@@ -82,8 +82,8 @@ public class MinimizeDfaHopcroftPaper<LETTER, STATE> implements IOperation<LETTE
 			Collection<Set<STATE>> initialPartition, boolean addMapping) {
 		
 		// added by Christian
-		if ((operand.getCallAlphabet().size() == 0) &&
-				(operand.getReturnAlphabet().size() == 0)) {
+		if ((operand.getCallAlphabet().size() > 0) ||
+				(operand.getReturnAlphabet().size() > 0)) {
 			throw new UnsupportedOperationException(
 				"This class only supports minimization of finite automata.");
 		}

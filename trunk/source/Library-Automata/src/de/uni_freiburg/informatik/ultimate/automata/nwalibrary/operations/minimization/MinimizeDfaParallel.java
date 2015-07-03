@@ -154,6 +154,14 @@ public class MinimizeDfaParallel<LETTER, STATE> extends
 			final INestedWordAutomaton<LETTER, STATE> operand) {
 		super(services, operand.getStateFactory(), "MinimizeDfaParallel",
 				operand);
+		
+		// added by Christian
+		if ((operand.getCallAlphabet().size() > 0) ||
+				(operand.getReturnAlphabet().size() > 0)) {
+			throw new UnsupportedOperationException(
+				"This class only supports minimization of finite automata.");
+		}
+		
 		this.m_operand = operand;
 		this.m_interrupt = new Interrupt();
 

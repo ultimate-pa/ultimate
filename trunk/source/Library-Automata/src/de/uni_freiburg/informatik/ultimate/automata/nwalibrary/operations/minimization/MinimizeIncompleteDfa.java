@@ -122,8 +122,8 @@ public final class MinimizeIncompleteDfa<LETTER, STATE> extends
 				operand);
 		
 		// added by Christian
-		if ((operand.getCallAlphabet().size() == 0) ||
-				(operand.getReturnAlphabet().size() == 0)) {
+		if ((operand.getCallAlphabet().size() > 0) ||
+				(operand.getReturnAlphabet().size() > 0)) {
 			throw new UnsupportedOperationException(
 				"This class only supports minimization of finite automata.");
 		}
