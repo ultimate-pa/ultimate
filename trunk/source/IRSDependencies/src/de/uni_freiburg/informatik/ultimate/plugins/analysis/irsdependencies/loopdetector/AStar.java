@@ -27,6 +27,8 @@ import de.uni_freiburg.informatik.ultimate.util.Utils;
  */
 public class AStar<V, E> {
 
+	private static final String INDENT = "   ";
+
 	private final Logger mLogger;
 	private final IHeuristic<V, E> mHeuristic;
 	private final V mStart;
@@ -57,18 +59,20 @@ public class AStar<V, E> {
 
 	public List<E> findPath() {
 		// check for trivial paths
-		for (E outgoing : mGraph.getOutgoingEdges(mStart)) {
-			final AstarAnnotation<E> currentAnnotation = getAnnotation(mStart);
-			if (mEdgeDenier.isForbidden(outgoing, new BackpointerIterator(currentAnnotation))) {
+		final AstarAnnotation<E> currentAnnotation = getAnnotation(mStart);
+		for (E edge : mGraph.getOutgoingEdges(mStart)) {
+			if (mEdgeDenier.isForbidden(edge, new BackpointerIterator(currentAnnotation))) {
+				if (mLogger.isDebugEnabled()) {
+					mLogger.debug("Forbidden [" + edge.hashCode() + "] " + edge);
+				}
 				continue;
 			}
 
-			if (mGraph.getTarget(outgoing).equals(mTarget)) {
+			if (mGraph.getTarget(edge).equals(mTarget)) {
 				if (mLogger.isDebugEnabled()) {
-					mLogger.debug("Found trivial path from source " + mStart + " to target " + mTarget + ": "
-							+ outgoing);
+					mLogger.debug("Found trivial path from source " + mStart + " to target " + mTarget + ": " + edge);
 				}
-				return Collections.singletonList(outgoing);
+				return Collections.singletonList(edge);
 			}
 		}
 
@@ -83,20 +87,17 @@ public class AStar<V, E> {
 						.getExpectedCostToTarget());
 			}
 		});
-		final Set<E> closed = new HashSet<E>();
 
-		initialize(mStart, open);
-
-		// paths of length 1 are already found in findPath, so we make one run
-		// without checking for the target node
-		V currentNode = open.poll();
-		expandNode(currentNode, open, closed);
+		open.add(mStart);
 
 		List<E> path = null;
 		while (!open.isEmpty()) {
-			currentNode = open.poll();
+			final V currentNode = open.poll();
 
 			if (currentNode.equals(mTarget)) {
+				if (mLogger.isDebugEnabled()) {
+					mLogger.debug("Founbd target");
+				}
 				// path found
 				path = createPath(currentNode);
 				if (mLogger.isDebugEnabled()) {
@@ -105,7 +106,7 @@ public class AStar<V, E> {
 				}
 				break;
 			}
-			expandNode(currentNode, open, closed);
+			expandNode(currentNode, open);
 		}
 		if (path == null) {
 			mLogger.warn(String.format("Did not find a path from source %s to target %s!", mStart, mTarget));
@@ -113,19 +114,17 @@ public class AStar<V, E> {
 		return path;
 	}
 
-	private void initialize(V node, FasterPriorityQueue<V> open) {
-		open.add(node);
-		final AstarAnnotation<E> annot = new AstarAnnotation<E>();
-		addAnntotation(node, annot);
-	}
+	private void expandNode(final V currentNode, final FasterPriorityQueue<V> open) {
+		if (mLogger.isDebugEnabled()) {
+			mLogger.debug("Expanding " + currentNode);
+		}
+		final Collection<E> outgoingEdges = mGraph.getOutgoingEdges(currentNode);
+		final AstarAnnotation<E> currentAnnotation = getAnnotation(currentNode);
 
-	private void expandNode(final V currentNode, final FasterPriorityQueue<V> open, final Set<E> closed) {
-		for (final E edge : mGraph.getOutgoingEdges(currentNode)) {
-
-			final AstarAnnotation<E> currentAnnotation = getAnnotation(currentNode);
+		for (final E edge : outgoingEdges) {
 			if (mEdgeDenier.isForbidden(edge, new BackpointerIterator(currentAnnotation))) {
 				if (mLogger.isDebugEnabled()) {
-					mLogger.debug("forbidden: " + edge);
+					mLogger.debug(INDENT + "Forbidden [" + edge.hashCode() + "] " + edge);
 				}
 				continue;
 			}
@@ -137,66 +136,74 @@ public class AStar<V, E> {
 			if (open.contains(successor) && costSoFar >= successorAnnotation.getCostSoFar()) {
 				// we already know the successor and our current way is not
 				// better than the new one
+				if (mLogger.isDebugEnabled()) {
+					mLogger.debug(INDENT + "Not worthy [" + edge.hashCode() + "][" + successorAnnotation.hashCode()
+							+ "] " + edge);
+				}
 				continue;
 			}
 
 			final int expectedCost = costSoFar + mHeuristic.getHeuristicValue(successor, edge, mTarget);
-
+			if (mLogger.isDebugEnabled()) {
+				mLogger.debug(INDENT + "CostSoFar=" + costSoFar + " ExpectedCost " + expectedCost);
+			}
 			open.remove(successor);
 			successorAnnotation.setExpectedCostToTarget(expectedCost);
 			if (successorAnnotation.isLowest()) {
-				successorAnnotation.setBackPointer(edge);
+				successorAnnotation.setBackPointers(edge);
 				successorAnnotation.setCostSoFar(costSoFar);
 				open.add(successor);
 				if (mLogger.isDebugEnabled()) {
-					mLogger.debug("Considering [" + edge.hashCode() + "] " + edge + " --> " + successor);
+					mLogger.debug(INDENT + "Considering [" + edge.hashCode() + "][" + successorAnnotation.hashCode()
+							+ "] " + edge + " --> " + successor);
+				}
+				continue;
+			} else {
+				if (mLogger.isDebugEnabled()) {
+					mLogger.debug(INDENT + "Already closed  [" + edge.hashCode() + "]["
+							+ successorAnnotation.hashCode() + "] " + edge + " --> " + successor);
 				}
 			}
 		}
-
 	}
 
-	private List<E> createPath(V target) {
+	private List<E> createPath(V targetNode) {
 		final List<E> rtr = new ArrayList<E>();
 		final Set<AstarAnnotation<E>> closed = new HashSet<>();
 
-		AstarAnnotation<E> currentAnnotation = getAnnotation(target);
-		E current = currentAnnotation.getBackPointer();
+		AstarAnnotation<E> currentAnnotation = getAnnotation(targetNode);
+		E backedge = currentAnnotation.getPreEdge();
 
 		// special case: self loop
-		if (mGraph.getSource(current) == mGraph.getTarget(current) && mGraph.getSource(current) == mTarget) {
-			rtr.add(current);
+		if (mGraph.getSource(backedge) == mGraph.getTarget(backedge) && mGraph.getSource(backedge) == mTarget) {
+			rtr.add(backedge);
 			closed.add(currentAnnotation);
 			return rtr;
 		}
 
-		while (current != null) {
-			currentAnnotation = getAnnotation(mGraph.getSource(current));
-			rtr.add(current);
+		while (backedge != null) {
+			currentAnnotation = getAnnotation(mGraph.getSource(backedge));
+			rtr.add(backedge);
 			if (!closed.add(currentAnnotation)) {
 				assert false : "Found cycle in path. This should not happen and is a bug.";
 				Collections.reverse(rtr);
 				return rtr;
 			}
-			if (mGraph.getSource(current) == mTarget) {
+			if (mGraph.getSource(backedge) == mTarget) {
 				break;
 			}
-			current = currentAnnotation.getBackPointer();
+			backedge = currentAnnotation.getPreEdge();
 		}
 
 		Collections.reverse(rtr);
 		return rtr;
 	}
 
-	private void addAnntotation(V node, AstarAnnotation<E> annon) {
-		mAnnotation.put(node, annon);
-	}
-
 	private AstarAnnotation<E> getAnnotation(V node) {
 		AstarAnnotation<E> annot = mAnnotation.get(node);
 		if (annot == null) {
 			annot = new AstarAnnotation<E>();
-			addAnntotation(node, annot);
+			mAnnotation.put(node, annot);
 		}
 		return annot;
 	}
@@ -218,19 +225,19 @@ public class AStar<V, E> {
 
 		@Override
 		public boolean hasNext() {
-			return mAnnotation != null && mAnnotation.getBackPointer() != null;
+			return mAnnotation != null && mAnnotation.getPreEdge() != null;
 		}
 
 		@Override
 		public E next() {
-			final E current = mAnnotation.getBackPointer();
+			final E current = mAnnotation.getPreEdge();
 			if (current == null) {
 				throw new NoSuchElementException();
 			}
 			mAnnotation = getAnnotation(mGraph.getSource(current));
 			return current;
 		}
-		
+
 		@Override
 		public void remove() {
 			throw new UnsupportedOperationException("remove");

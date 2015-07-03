@@ -2,6 +2,13 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.loo
 
 import java.util.Collection;
 
+/**
+ * 
+ * @author dietsch@informatik.uni-freiburg.de
+ *
+ * @param <V>
+ * @param <E>
+ */
 public interface IGraph<V, E> {
 
 	Collection<E> getOutgoingEdges(V vertice);

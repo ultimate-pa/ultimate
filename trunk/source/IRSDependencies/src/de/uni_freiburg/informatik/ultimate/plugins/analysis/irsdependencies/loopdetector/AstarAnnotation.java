@@ -4,17 +4,27 @@ import java.lang.reflect.Field;
 
 import de.uni_freiburg.informatik.ultimate.model.annotation.AbstractAnnotations;
 
-class AstarAnnotation<EDGE> extends AbstractAnnotations implements Comparable<AstarAnnotation<EDGE>> {
+/**
+ * 
+ * @author dietsch@informatik.uni-freiburg.de
+ *
+ * @param <E>
+ */
+class AstarAnnotation<E> extends AbstractAnnotations implements Comparable<AstarAnnotation<E>> {
 
 	private static final long serialVersionUID = 1L;
-	private EDGE mBackPointer;
+	private static int sId;
+	private final int mId;
+
+	private E mPreEdge;
 	private int mCostSoFar; // g-value
 	private int mExpectedCostToTarget; // f-value
-	private int mLowestExpectedCost; //h-value
+	private int mLowestExpectedCost; // h-value
 
 	AstarAnnotation() {
 		setExpectedCostToTarget(Integer.MAX_VALUE);
 		setLowestExpectedCost(Integer.MAX_VALUE);
+		mId = sId++;
 	}
 
 	void setExpectedCostToTarget(int value) {
@@ -29,8 +39,8 @@ class AstarAnnotation<EDGE> extends AbstractAnnotations implements Comparable<As
 	}
 
 	@Override
-	public int compareTo(AstarAnnotation<EDGE> o) {
-		return 0;
+	public int compareTo(AstarAnnotation<E> o) {
+		return Integer.compare(mExpectedCostToTarget, o.mExpectedCostToTarget);
 	}
 
 	@Override
@@ -49,12 +59,12 @@ class AstarAnnotation<EDGE> extends AbstractAnnotations implements Comparable<As
 		}
 	}
 
-	EDGE getBackPointer() {
-		return mBackPointer;
+	E getPreEdge() {
+		return mPreEdge;
 	}
 
-	void setBackPointer(EDGE backPointer) {
-		mBackPointer = backPointer;
+	void setBackPointers(E backEdge) {
+		mPreEdge = backEdge;
 	}
 
 	int getCostSoFar() {
@@ -75,5 +85,10 @@ class AstarAnnotation<EDGE> extends AbstractAnnotations implements Comparable<As
 
 	private void setLowestExpectedCost(int lowestExpectedCost) {
 		mLowestExpectedCost = lowestExpectedCost;
+	}
+
+	@Override
+	public int hashCode() {
+		return mId;
 	}
 }
