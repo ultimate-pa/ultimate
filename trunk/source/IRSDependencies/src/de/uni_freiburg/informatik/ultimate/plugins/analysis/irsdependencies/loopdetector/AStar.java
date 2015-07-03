@@ -96,7 +96,7 @@ public class AStar<V, E> {
 
 			if (currentNode.equals(mTarget)) {
 				if (mLogger.isDebugEnabled()) {
-					mLogger.debug("Founbd target");
+					mLogger.debug("Found target");
 				}
 				// path found
 				path = createPath(currentNode);
@@ -149,52 +149,33 @@ public class AStar<V, E> {
 			}
 			open.remove(successor);
 			successorAnnotation.setExpectedCostToTarget(expectedCost);
-			if (successorAnnotation.isLowest()) {
-				successorAnnotation.setBackPointers(edge);
-				successorAnnotation.setCostSoFar(costSoFar);
-				open.add(successor);
-				if (mLogger.isDebugEnabled()) {
-					mLogger.debug(INDENT + "Considering [" + edge.hashCode() + "][" + successorAnnotation.hashCode()
-							+ "] " + edge + " --> " + successor);
-				}
-				continue;
-			} else {
-				if (mLogger.isDebugEnabled()) {
-					mLogger.debug(INDENT + "Already closed  [" + edge.hashCode() + "]["
-							+ successorAnnotation.hashCode() + "] " + edge + " --> " + successor);
-				}
+			// if (successorAnnotation.isLowest()) {
+			successorAnnotation.setBackPointers(edge);
+			successorAnnotation.setCostSoFar(costSoFar);
+			open.add(successor);
+			if (mLogger.isDebugEnabled()) {
+				mLogger.debug(INDENT + "Considering [" + edge.hashCode() + "][" + successorAnnotation.hashCode() + "] "
+						+ edge + " --> " + successor);
 			}
+			continue;
+			// } else {
+			// if (mLogger.isDebugEnabled()) {
+			// mLogger.debug(INDENT + "Already closed  [" + edge.hashCode() +
+			// "]["
+			// + successorAnnotation.hashCode() + "] " + edge + " --> " +
+			// successor);
+			// }
+			// }
 		}
 	}
 
 	private List<E> createPath(V targetNode) {
+		assert targetNode == mTarget;
+		final AStar<V, E>.BackpointerIterator iter = new BackpointerIterator(getAnnotation(targetNode));
 		final List<E> rtr = new ArrayList<E>();
-		final Set<AstarAnnotation<E>> closed = new HashSet<>();
-
-		AstarAnnotation<E> currentAnnotation = getAnnotation(targetNode);
-		E backedge = currentAnnotation.getPreEdge();
-
-		// special case: self loop
-		if (mGraph.getSource(backedge) == mGraph.getTarget(backedge) && mGraph.getSource(backedge) == mTarget) {
-			rtr.add(backedge);
-			closed.add(currentAnnotation);
-			return rtr;
+		while (iter.hasNext()) {
+			rtr.add(iter.next());
 		}
-
-		while (backedge != null) {
-			currentAnnotation = getAnnotation(mGraph.getSource(backedge));
-			rtr.add(backedge);
-			if (!closed.add(currentAnnotation)) {
-				assert false : "Found cycle in path. This should not happen and is a bug.";
-				Collections.reverse(rtr);
-				return rtr;
-			}
-			if (mGraph.getSource(backedge) == mTarget) {
-				break;
-			}
-			backedge = currentAnnotation.getPreEdge();
-		}
-
 		Collections.reverse(rtr);
 		return rtr;
 	}
@@ -218,20 +199,26 @@ public class AStar<V, E> {
 	private final class BackpointerIterator implements Iterator<E> {
 
 		private AstarAnnotation<E> mAnnotation;
+		private Set<E> mClosed;
 
 		private BackpointerIterator(AstarAnnotation<E> currentAnnotation) {
 			mAnnotation = currentAnnotation;
+			mClosed = new HashSet<E>();
 		}
 
 		@Override
 		public boolean hasNext() {
-			return mAnnotation != null && mAnnotation.getPreEdge() != null;
+			return mAnnotation != null && mAnnotation.getPreEdge() != null
+					&& !mClosed.contains(mAnnotation.getPreEdge());
 		}
 
 		@Override
 		public E next() {
 			final E current = mAnnotation.getPreEdge();
 			if (current == null) {
+				throw new NoSuchElementException();
+			}
+			if (!mClosed.add(current)) {
 				throw new NoSuchElementException();
 			}
 			mAnnotation = getAnnotation(mGraph.getSource(current));
