@@ -16,4 +16,8 @@ public interface IGraph<V, E> {
 	V getSource(E edge);
 
 	V getTarget(E edge);
+	
+	boolean beginScope(E edge);
+	
+	boolean endScope(E edge);
 }

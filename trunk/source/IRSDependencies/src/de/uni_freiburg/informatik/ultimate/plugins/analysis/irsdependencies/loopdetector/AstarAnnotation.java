@@ -16,11 +16,14 @@ class AstarAnnotation<E> extends AbstractAnnotations implements Comparable<Astar
 	private static int sId;
 	private final int mId;
 
-	private E mPreEdge;
-	private int mCostSoFar; // g-value, how much have we already payed? 
+	private E mEdge;
+	private AstarAnnotation<E> mPreAnnotation;
+	private int mCostSoFar; // g-value, how much have we already payed?
 	private int mLowestExpectedCost; // h-value
-	private int mExpectedCostToTarget; // f-value, i.e. how expensive from start to target if we use this node, i.e. g+h
-	
+	private int mExpectedCostToTarget; // f-value, i.e. how expensive from start
+										// to target if we use this node, i.e.
+										// g+h
+
 	AstarAnnotation() {
 		setExpectedCostToTarget(Integer.MAX_VALUE);
 		setLowestExpectedCost(Integer.MAX_VALUE);
@@ -59,12 +62,17 @@ class AstarAnnotation<E> extends AbstractAnnotations implements Comparable<Astar
 		}
 	}
 
-	E getPreEdge() {
-		return mPreEdge;
+	E getEdge() {
+		return mEdge;
+	}
+	
+	 AstarAnnotation<E> getBackpointer() {
+		return mPreAnnotation;
 	}
 
-	void setBackPointers(E backEdge) {
-		mPreEdge = backEdge;
+	void setBackPointers(E currentEdge, AstarAnnotation<E> pre) {
+		mEdge = currentEdge;
+		mPreAnnotation = pre;
 	}
 
 	int getCostSoFar() {

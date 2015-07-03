@@ -179,9 +179,10 @@ public class RCFGLoopDetector extends BaseObserver {
 				final Call call = ((Return) edge).getCorrespondingCall();
 				while (backpointers.hasNext()) {
 					if (call.equals(backpointers.next())) {
-						return true;
+						return false;
 					}
 				}
+				return true;
 			}
 			return false;
 		}

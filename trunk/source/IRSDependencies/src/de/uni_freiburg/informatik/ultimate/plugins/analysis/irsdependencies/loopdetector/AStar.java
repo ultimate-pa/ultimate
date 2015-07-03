@@ -34,7 +34,6 @@ public class AStar<V, E> {
 	private final V mStart;
 	private final V mTarget;
 	private final IEdgeDenier<E> mEdgeDenier;
-	private final Map<V, AstarAnnotation<E>> mAnnotation;
 	private final IGraph<V, E> mGraph;
 
 	public AStar(Logger logger, V start, V target, IHeuristic<V, E> heuristic, IGraph<V, E> graph) {
@@ -54,14 +53,15 @@ public class AStar<V, E> {
 		mTarget = target;
 		mEdgeDenier = edgeDenier;
 		mGraph = graph;
-		mAnnotation = new HashMap<>();
 	}
 
 	public List<E> findPath() {
+		// create initial item
+		final OpenItem<V, E> initialOpenItem = createInitialSuccessorItem(mStart);
+
 		// check for trivial paths
-		final AstarAnnotation<E> currentAnnotation = getAnnotation(mStart);
 		for (E edge : mGraph.getOutgoingEdges(mStart)) {
-			if (mEdgeDenier.isForbidden(edge, new BackpointerIterator(currentAnnotation))) {
+			if (mEdgeDenier.isForbidden(edge, new BackpointerIterator(initialOpenItem.getAnnotation()))) {
 				if (mLogger.isDebugEnabled()) {
 					mLogger.debug("Forbidden [" + edge.hashCode() + "] " + edge);
 				}
@@ -76,37 +76,43 @@ public class AStar<V, E> {
 			}
 		}
 
-		return astar();
+		return astar(initialOpenItem);
 	}
 
-	private List<E> astar() {
-		final FasterPriorityQueue<V> open = new FasterPriorityQueue<V>(new Comparator<V>() {
-			@Override
-			public int compare(V o1, V o2) {
-				return Integer.compare(getAnnotation(o1).getExpectedCostToTarget(), getAnnotation(o2)
-						.getExpectedCostToTarget());
-			}
-		});
+	private List<E> astar(OpenItem<V, E> initialOpenItem) {
+		final FasterPriorityQueue<OpenItem<V, E>> open = new FasterPriorityQueue<OpenItem<V, E>>(
+				new Comparator<OpenItem<V, E>>() {
+					@Override
+					public int compare(OpenItem<V, E> o1, OpenItem<V, E> o2) {
+						return Integer.compare(o1.getAnnotation().getExpectedCostToTarget(), o2.getAnnotation()
+								.getExpectedCostToTarget());
+					}
+				});
 
-		open.add(mStart);
+		// we want to allow that we find paths from start to target when start
+		// == target
+		// for this, we run the algorithm one time without the check if we
+		// reached the target
+		open.add(initialOpenItem);
+		expandNode(open.poll(), open);
 
 		List<E> path = null;
 		while (!open.isEmpty()) {
-			final V currentNode = open.poll();
+			final OpenItem<V, E> currentItem = open.poll();
 
-			if (currentNode.equals(mTarget)) {
+			if (currentItem.getNode().equals(mTarget)) {
 				if (mLogger.isDebugEnabled()) {
 					mLogger.debug("Found target");
 				}
 				// path found
-				path = createPath(currentNode);
+				path = createPath(currentItem);
 				if (mLogger.isDebugEnabled()) {
 					mLogger.debug(String.format("Found path of length %s from source %s to target %s: %s", path.size(),
 							mStart, mTarget, Utils.join(path, ", ")));
 				}
 				break;
 			}
-			expandNode(currentNode, open);
+			expandNode(currentItem, open);
 		}
 		if (path == null) {
 			mLogger.warn(String.format("Did not find a path from source %s to target %s!", mStart, mTarget));
@@ -114,64 +120,64 @@ public class AStar<V, E> {
 		return path;
 	}
 
-	private void expandNode(final V currentNode, final FasterPriorityQueue<V> open) {
+	private void expandNode(final OpenItem<V, E> currentItem, final FasterPriorityQueue<OpenItem<V, E>> open) {
+		final V currentNode = currentItem.getNode();
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug("Expanding " + currentNode);
 		}
 		final Collection<E> outgoingEdges = mGraph.getOutgoingEdges(currentNode);
-		final AstarAnnotation<E> currentAnnotation = getAnnotation(currentNode);
+		final AstarAnnotation<E> currentAnnotation = currentItem.getAnnotation();
 
-		for (final E edge : outgoingEdges) {
-			if (mEdgeDenier.isForbidden(edge, new BackpointerIterator(currentAnnotation))) {
+		for (final E nextEdge : outgoingEdges) {
+			if (mEdgeDenier.isForbidden(nextEdge, new BackpointerIterator(currentAnnotation))) {
 				if (mLogger.isDebugEnabled()) {
-					mLogger.debug(INDENT + "Forbidden [" + edge.hashCode() + "] " + edge);
+					mLogger.debug(INDENT + "Forbidden [" + nextEdge.hashCode() + "] " + nextEdge);
 				}
 				continue;
 			}
 
-			final V successor = mGraph.getTarget(edge);
-			final AstarAnnotation<E> successorAnnotation = getAnnotation(successor);
+			final V successor = mGraph.getTarget(nextEdge);
+			final OpenItem<V, E> successorItem = createSuccessorItem(currentItem, nextEdge);
+			final AstarAnnotation<E> successorAnnotation = successorItem.getAnnotation();
 
-			final int costSoFar = currentAnnotation.getCostSoFar() + mHeuristic.getConcreteCost(edge);
-			if (open.contains(successor) && costSoFar >= successorAnnotation.getCostSoFar()) {
+			final int costSoFar = currentAnnotation.getCostSoFar() + mHeuristic.getConcreteCost(nextEdge);
+			if (open.contains(successorItem) && costSoFar >= successorAnnotation.getCostSoFar()) {
 				// we already know the successor and our current way is not
 				// better than the new one
 				if (mLogger.isDebugEnabled()) {
-					mLogger.debug(INDENT + "Not worthy [" + edge.hashCode() + "][" + successorAnnotation.hashCode()
-							+ "] " + edge);
+					mLogger.debug(INDENT + "Not worthy [" + nextEdge.hashCode() + "][" + successorAnnotation.hashCode()
+							+ "] " + nextEdge);
 				}
 				continue;
 			}
 
-			final int expectedCost = costSoFar + mHeuristic.getHeuristicValue(successor, edge, mTarget);
+			final int expectedCost = costSoFar + mHeuristic.getHeuristicValue(successor, nextEdge, mTarget);
 			if (mLogger.isDebugEnabled()) {
 				mLogger.debug(INDENT + "CostSoFar=" + costSoFar + " ExpectedCost " + expectedCost);
 			}
-			open.remove(successor);
+			open.remove(successorItem);
 			successorAnnotation.setExpectedCostToTarget(expectedCost);
-			// if (successorAnnotation.isLowest()) {
-			successorAnnotation.setBackPointers(edge);
-			successorAnnotation.setCostSoFar(costSoFar);
-			open.add(successor);
-			if (mLogger.isDebugEnabled()) {
-				mLogger.debug(INDENT + "Considering [" + edge.hashCode() + "][" + successorAnnotation.hashCode() + "] "
-						+ edge + " --> " + successor);
+			if (successorAnnotation.isLowest()) {
+				successorAnnotation.setBackPointers(nextEdge, currentAnnotation);
+				successorAnnotation.setCostSoFar(costSoFar);
+				open.add(successorItem);
+				if (mLogger.isDebugEnabled()) {
+					mLogger.debug(INDENT + "Considering [" + nextEdge.hashCode() + "]["
+							+ successorAnnotation.hashCode() + "] " + nextEdge + " --> " + successor);
+				}
+				continue;
+			} else {
+				if (mLogger.isDebugEnabled()) {
+					mLogger.debug(INDENT + "Already closed  [" + nextEdge.hashCode() + "]["
+							+ successorAnnotation.hashCode() + "] " + nextEdge + " --> " + successor);
+				}
 			}
-			continue;
-			// } else {
-			// if (mLogger.isDebugEnabled()) {
-			// mLogger.debug(INDENT + "Already closed  [" + edge.hashCode() +
-			// "]["
-			// + successorAnnotation.hashCode() + "] " + edge + " --> " +
-			// successor);
-			// }
-			// }
 		}
 	}
 
-	private List<E> createPath(V targetNode) {
-		assert targetNode == mTarget;
-		final AStar<V, E>.BackpointerIterator iter = new BackpointerIterator(getAnnotation(targetNode));
+	private List<E> createPath(OpenItem<V, E> currentItem) {
+		assert currentItem.getNode() == mTarget;
+		final AStar<V, E>.BackpointerIterator iter = new BackpointerIterator(currentItem.getAnnotation());
 		final List<E> rtr = new ArrayList<E>();
 		while (iter.hasNext()) {
 			rtr.add(iter.next());
@@ -180,13 +186,35 @@ public class AStar<V, E> {
 		return rtr;
 	}
 
-	private AstarAnnotation<E> getAnnotation(V node) {
-		AstarAnnotation<E> annot = mAnnotation.get(node);
+	private OpenItem<V, E> createSuccessorItem(final OpenItem<V, E> current, final E successor) {
+		final V target = mGraph.getTarget(successor);
+		if (current == null) {
+			final Map<V, AstarAnnotation<E>> map = new HashMap<>();
+			final V source = mGraph.getSource(successor);
+			map.put(source, new AstarAnnotation<E>());
+			map.put(target, new AstarAnnotation<E>());
+			return new OpenItem<V, E>(target, map);
+		}
+
+		final OpenItem<V, E> rtr = new OpenItem<>(target, current);
+		if (mGraph.beginScope(successor)) {
+			rtr.getAnnotations().beginScope();
+		} else if (mGraph.endScope(successor)) {
+			assert rtr.getAnnotations().getScopesCount() > 0 : "If this happens, your edge denier does not handle call/return correctly";
+			rtr.getAnnotations().endScope();
+		}
+		AstarAnnotation<E> annot = rtr.getAnnotations().get(target);
 		if (annot == null) {
 			annot = new AstarAnnotation<E>();
-			mAnnotation.put(node, annot);
+			rtr.getAnnotations().put(target, annot);
 		}
-		return annot;
+		return rtr;
+	}
+
+	private OpenItem<V, E> createInitialSuccessorItem(V initialNode) {
+		final Map<V, AstarAnnotation<E>> map = new HashMap<>();
+		map.put(initialNode, new AstarAnnotation<E>());
+		return new OpenItem<V, E>(initialNode, map);
 	}
 
 	private static final class NoEdgeDenier<E> implements IEdgeDenier<E> {
@@ -199,29 +227,28 @@ public class AStar<V, E> {
 	private final class BackpointerIterator implements Iterator<E> {
 
 		private AstarAnnotation<E> mAnnotation;
-		private Set<E> mClosed;
+		private Set<AstarAnnotation<E>> mClosed;
 
 		private BackpointerIterator(AstarAnnotation<E> currentAnnotation) {
 			mAnnotation = currentAnnotation;
-			mClosed = new HashSet<E>();
+			mClosed = new HashSet<AstarAnnotation<E>>();
 		}
 
 		@Override
 		public boolean hasNext() {
-			return mAnnotation != null && mAnnotation.getPreEdge() != null
-					&& !mClosed.contains(mAnnotation.getPreEdge());
+			return mAnnotation != null && mAnnotation.getEdge() != null && !mClosed.contains(mAnnotation);
 		}
 
 		@Override
 		public E next() {
-			final E current = mAnnotation.getPreEdge();
+			final E current = mAnnotation.getEdge();
 			if (current == null) {
 				throw new NoSuchElementException();
 			}
-			if (!mClosed.add(current)) {
+			if (!mClosed.add(mAnnotation)) {
 				throw new NoSuchElementException();
 			}
-			mAnnotation = getAnnotation(mGraph.getSource(current));
+			mAnnotation = mAnnotation.getBackpointer();
 			return current;
 		}
 
