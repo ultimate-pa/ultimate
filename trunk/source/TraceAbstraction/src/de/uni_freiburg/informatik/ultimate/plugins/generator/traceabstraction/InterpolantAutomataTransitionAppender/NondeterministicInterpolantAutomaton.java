@@ -168,10 +168,6 @@ public class NondeterministicInterpolantAutomaton extends BasicAbstractInterpola
 				// m_IaTrueState will get a selfloop labeled with all statements
 				inputSuccs.add(m_IaTrueState);
 			}
-			
-			if (inputSuccs.isEmpty() && (resPred != m_IaTrueState)) {
-				System.out.println("hi");
-			}
 		}
 	}
 
