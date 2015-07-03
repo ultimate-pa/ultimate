@@ -122,13 +122,16 @@ public final class MinimizeIncompleteDfa<LETTER, STATE> extends
 				operand);
 		
 		// added by Christian
-		{
-			m_stateFactory = stateFactoryConstruction;
-			if (addMapping) {
-				this.m_oldState2newState = null;
-			} else {
-				m_oldState2newState = new HashMap<STATE, STATE>();
-			}
+		if ((operand.getCallAlphabet().size() == 0) ||
+				(operand.getReturnAlphabet().size() == 0)) {
+			throw new UnsupportedOperationException(
+				"This class only supports minimization of finite automata.");
+		}
+		m_stateFactory = stateFactoryConstruction;
+		if (addMapping) {
+			this.m_oldState2newState = null;
+		} else {
+			m_oldState2newState = new HashMap<STATE, STATE>();
 		}
 		
 		m_services = services;
