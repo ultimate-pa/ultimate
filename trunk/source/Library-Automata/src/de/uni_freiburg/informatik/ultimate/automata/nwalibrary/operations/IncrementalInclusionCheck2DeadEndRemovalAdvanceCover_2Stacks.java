@@ -492,6 +492,7 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover_2Stacks<LETTER
 			}
 			HashSet<NodeData> nodesToBeFinishedFirst = new HashSet<NodeData>();
 			for(NodeData key : nodes){
+				nodesToBeFinishedFirst.clear();
 				testing_newAcceptingState = false;
 				currentTree.clear();
 				currentTree.add(key);
