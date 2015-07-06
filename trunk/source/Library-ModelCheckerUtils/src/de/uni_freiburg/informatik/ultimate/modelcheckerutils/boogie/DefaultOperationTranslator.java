@@ -7,7 +7,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.model.IType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression.Operator;
 
 /**
  * @author Thomas Lang
@@ -78,7 +77,7 @@ public class DefaultOperationTranslator implements IOperationTranslator {
 	}
 
 	@Override
-	public String opTranslation(Operator op, IType type) {
+	public String opTranslation(UnaryExpression.Operator op, IType type) {
 		if (op == UnaryExpression.Operator.LOGICNEG) {
 			return "not";
 		} else if (op == UnaryExpression.Operator.ARITHNEGATIVE) {
