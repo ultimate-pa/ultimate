@@ -491,7 +491,7 @@ public class SmtUtils {
 	 * techniques if applicable.
 	 */
 	public static Term termWithLocalSimplification(Script script, 
-			String funcname, Term[] params) {
+			String funcname, Term... params) {
 		final Term result;
 		switch (funcname) {
 		case "and":
