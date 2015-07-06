@@ -1,6 +1,3 @@
-/**
- * 
- */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie;
 
 import de.uni_freiburg.informatik.ultimate.model.IType;
