@@ -30,13 +30,14 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.RealLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Trigger;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VarList;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.util.ScopedHashMap;
 
 /**
  * Translate a Boogie Expression into an SMT Term. Use the here defined
  * interface IndentifierResolver to translate identifier expressions.
  * 
- * @author Matthias Heizmann
+ * @author Matthias Heizmann, Thomas Lang
  * 
  */
 public class Expression2Term {
@@ -48,6 +49,7 @@ public class Expression2Term {
 
 	private final Script m_Script;
 	private final TypeSortTranslator m_TypeSortTranslator;
+	private final IOperationTranslator m_OperationTranslator;
 	private final Boogie2SmtSymbolTable m_Boogie2SmtSymbolTable;
 	
 	private final ScopedHashMap<String, TermVariable> m_QuantifiedVariables = new ScopedHashMap<>();
@@ -64,12 +66,13 @@ public class Expression2Term {
 
 	public Expression2Term(IUltimateServiceProvider services, Script script, 
 			TypeSortTranslator typeSortTranslator, 
-			Boogie2SmtSymbolTable boogie2SmtSymbolTable) {
+			Boogie2SmtSymbolTable boogie2SmtSymbolTable, IOperationTranslator operationTranslator) {
 		super();
 		mServices = services;
 		m_Script = script;
 		m_TypeSortTranslator = typeSortTranslator;
 		m_Boogie2SmtSymbolTable = boogie2SmtSymbolTable;
+		m_OperationTranslator = operationTranslator;
 	}
 
 	public Term translateToTerm(IdentifierTranslator[] identifierTranslators, Expression expression) {
@@ -154,84 +157,28 @@ public class Expression2Term {
 			BinaryExpression binexp = (BinaryExpression) exp;
 			BinaryExpression.Operator op = binexp.getOperator();
 			// Sort sort = m_Smt2Boogie.getSort(binexp.getLeft().getType());
-
-			if (op == BinaryExpression.Operator.COMPEQ) {
-				// if
-				// (binexp.getLeft().getType().equals(PrimitiveType.boolType))
-				return m_Script.term("=", translate(binexp.getLeft()), translate(binexp.getRight()));
-				// else
-				// return script.equals(translateTerm(binexp.getLeft()),
-				// translateTerm(binexp.getRight()));
-			} else if (op == BinaryExpression.Operator.COMPGEQ) {
-				return m_Script.term(">=", translate(binexp.getLeft()), translate(binexp.getRight()));
-			} else if (op == BinaryExpression.Operator.COMPGT) {
-				return m_Script.term(">", translate(binexp.getLeft()), translate(binexp.getRight()));
-			} else if (op == BinaryExpression.Operator.COMPLEQ) {
-				return m_Script.term("<=", translate(binexp.getLeft()), translate(binexp.getRight()));
-			} else if (op == BinaryExpression.Operator.COMPLT) {
-				return m_Script.term("<", translate(binexp.getLeft()), translate(binexp.getRight()));
-			} else if (op == BinaryExpression.Operator.COMPNEQ) {
-				if (binexp.getLeft().getType().equals(PrimitiveType.boolType)) {
-					return m_Script.term("xor", translate(binexp.getLeft()), translate(binexp.getRight()));
-				} else {
-					return Util.not(m_Script,
-							m_Script.term("=", translate(binexp.getLeft()), translate(binexp.getRight())));
-				}
-				// } else if (op == BinaryExpression.Operator.COMPPO ){
-				// return script.atom(partOrder,
-				// translateTerm(binexp.getLeft()),
-				// translateTerm(binexp.getRight()));
-			} else if (op == BinaryExpression.Operator.LOGICAND) {
-				return Util.and(m_Script, translate(binexp.getLeft()), translate(binexp.getRight()));
-			} else if (op == BinaryExpression.Operator.LOGICOR) {
-				return Util.or(m_Script, translate(binexp.getLeft()), translate(binexp.getRight()));
-			} else if (op == BinaryExpression.Operator.LOGICIMPLIES) {
-				return Util.implies(m_Script, translate(binexp.getLeft()), translate(binexp.getRight()));
-			} else if (op == BinaryExpression.Operator.LOGICIFF) {
-				return m_Script.term("=", translate(binexp.getLeft()), translate(binexp.getRight()));
-			} else if (op == BinaryExpression.Operator.ARITHDIV) {
-				IType lhsType = binexp.getLeft().getType();
-				if (lhsType instanceof PrimitiveType) {
-					PrimitiveType primType = (PrimitiveType) lhsType;
-					if (primType.getTypeCode() == PrimitiveType.INT) {
-						return m_Script.term("div", translate(binexp.getLeft()), translate(binexp.getRight()));
-					} else if (primType.getTypeCode() == PrimitiveType.REAL) {
-						return m_Script.term("/", translate(binexp.getLeft()), translate(binexp.getRight()));
-					} else {
-						throw new AssertionError("ARITHDIV of this type not allowed");
-					}
-				} else {
-					throw new AssertionError("ARITHDIV of this type not allowed");
-				}
-			} else if (op == BinaryExpression.Operator.ARITHMINUS) {
-				return m_Script.term("-", translate(binexp.getLeft()), translate(binexp.getRight()));
-			} else if (op == BinaryExpression.Operator.ARITHMOD) {
-				return m_Script.term("mod", translate(binexp.getLeft()), translate(binexp.getRight()));
-			} else if (op == BinaryExpression.Operator.ARITHMUL) {
-				return m_Script.term("*", translate(binexp.getLeft()), translate(binexp.getRight()));
-			} else if (op == BinaryExpression.Operator.ARITHPLUS) {
-				return m_Script.term("+", translate(binexp.getLeft()), translate(binexp.getRight()));
-			} else if (op == BinaryExpression.Operator.BITVECCONCAT) {
-				return m_Script.term("concat", translate(binexp.getLeft()), translate(binexp.getRight()));
-			} else {
-				throw new AssertionError("Unsupported binary expression " + exp);
-			}
+            if (op == BinaryExpression.Operator.COMPNEQ) {
+            	return SmtUtils.termWithLocalSimplification(m_Script, 
+            			m_OperationTranslator.opTranslation(UnaryExpression.Operator.LOGICNEG, PrimitiveType.boolType), 
+            			SmtUtils.termWithLocalSimplification(m_Script, 
+				    	 m_OperationTranslator.opTranslation(BinaryExpression.Operator.COMPEQ, binexp.getLeft().getType(), binexp.getRight().getType()), 
+					     translate(binexp.getLeft()), translate(binexp.getRight())));
+            } else
+			    return SmtUtils.termWithLocalSimplification(m_Script, 
+				    	m_OperationTranslator.opTranslation(op, binexp.getLeft().getType(), binexp.getRight().getType()), 
+					    translate(binexp.getLeft()), translate(binexp.getRight()));
 
 		} else if (exp instanceof UnaryExpression) {
 			UnaryExpression unexp = (UnaryExpression) exp;
 			UnaryExpression.Operator op = unexp.getOperator();
-			if (op == UnaryExpression.Operator.LOGICNEG) {
-				return Util.not(m_Script, translate(unexp.getExpr()));
-			} else if (op == UnaryExpression.Operator.ARITHNEGATIVE) {
-				// FunctionSymbol fun_symb = script.getFunction("-", intSort);
-				return m_Script.term("-", translate(unexp.getExpr()));
-			} else if (op == UnaryExpression.Operator.OLD) {
+			if (op == UnaryExpression.Operator.OLD) {
 				m_OldContextScopeDepth++;
 				Term term = translate(unexp.getExpr());
 				m_OldContextScopeDepth--;
 				return term;
 			} else
-				throw new AssertionError("Unsupported unary expression " + exp);
+				return SmtUtils.termWithLocalSimplification(m_Script, m_OperationTranslator.opTranslation(op, unexp.getExpr().getType()), translate(unexp.getExpr()));
+
 
 		} else if (exp instanceof RealLiteral) {
 			Term result = m_Script.decimal(((RealLiteral) exp).getValue());
