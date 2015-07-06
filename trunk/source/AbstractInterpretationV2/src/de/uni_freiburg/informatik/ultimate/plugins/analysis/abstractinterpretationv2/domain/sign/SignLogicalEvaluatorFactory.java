@@ -1,5 +1,8 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.sign;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
+
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.IEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.IEvaluatorFactory;
@@ -12,8 +15,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  * @author greitsch@informatik.uni-freiburg.de
  *
  */
-public class SignLogicalEvaluatorFactory implements
-        IEvaluatorFactory<Values, CodeBlock, BoogieVar> {
+public class SignLogicalEvaluatorFactory implements IEvaluatorFactory<Values, CodeBlock, BoogieVar> {
 
 	SignStateConverter<CodeBlock, BoogieVar> mStateConverter;
 
@@ -22,8 +24,7 @@ public class SignLogicalEvaluatorFactory implements
 	}
 
 	@Override
-	public INAryEvaluator<Values, CodeBlock, BoogieVar> createNAryExpressionEvaluator(
-	        int arity) {
+	public INAryEvaluator<Values, CodeBlock, BoogieVar> createNAryExpressionEvaluator(int arity) {
 
 		assert arity >= 1 && arity <= 2;
 
@@ -38,17 +39,27 @@ public class SignLogicalEvaluatorFactory implements
 	}
 
 	@Override
-	public IEvaluator<Values, CodeBlock, BoogieVar> createSingletonValueExpressionEvaluator(
-	        String value, Class<?> valueType) {
-		// TODO Auto-generated method stub
-		return null;
+	public IEvaluator<Values, CodeBlock, BoogieVar> createSingletonValueExpressionEvaluator(String value,
+	        Class<?> valueType) {
+
+		if (valueType.equals(BigInteger.class)) {
+			return new SignSingletonIntegerExpressionEvaluator(value);
+		}
+
+		if (valueType.equals(BigDecimal.class)) {
+			return new SignSingletonDecimalExpressionEvaluator(value);
+		}
+
+		if (valueType.equals(Boolean.class)) {
+			return new SignLogicalSingletonValueExpressionEvaluator(value);
+		}
+
+		throw new UnsupportedOperationException("The type " + valueType.toString() + " is not supported.");
 	}
 
 	@Override
-	public IEvaluator<Values, CodeBlock, BoogieVar> createSingletonVariableExpressionEvaluator(
-	        String variableName) {
-		// TODO Auto-generated method stub
-		return null;
+	public IEvaluator<Values, CodeBlock, BoogieVar> createSingletonVariableExpressionEvaluator(String variableName) {
+		return new SignLogicalSingletonVariableExpressionEvaluator(variableName, mStateConverter);
 	}
 
 }

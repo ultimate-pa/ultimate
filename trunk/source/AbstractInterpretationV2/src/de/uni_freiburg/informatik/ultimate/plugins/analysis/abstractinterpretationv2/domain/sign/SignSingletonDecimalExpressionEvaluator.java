@@ -1,8 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.sign;
 
 import java.math.BigDecimal;
-import java.util.HashSet;
-import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.sign.SignDomainValue.Values;
 
@@ -37,13 +35,8 @@ public class SignSingletonDecimalExpressionEvaluator extends SignSingletonValueE
 	}
 
 	@Override
-	public Set<String> getVarIdentifiers() {
-		return new HashSet<String>();
+	public Class<Values> getType() {
+		return Values.class;
 	}
-
-	@Override
-    public Class<Values> getType() {
-	    return Values.class;
-    }
 
 }

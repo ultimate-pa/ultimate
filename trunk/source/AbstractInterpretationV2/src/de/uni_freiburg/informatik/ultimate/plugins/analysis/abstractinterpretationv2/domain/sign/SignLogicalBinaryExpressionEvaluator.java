@@ -30,8 +30,8 @@ public class SignLogicalBinaryExpressionEvaluator extends SignBinaryExpressionEv
 		        .logicallyInterpret(currentState);
 
 		switch (mOperator) {
-		case LOGICIFF:
-		case LOGICIMPLIES:
+		// case LOGICIFF:
+		// case LOGICIMPLIES:
 		case LOGICAND:
 		case LOGICOR:
 		case COMPLT:
@@ -63,13 +63,24 @@ public class SignLogicalBinaryExpressionEvaluator extends SignBinaryExpressionEv
 	        IEvaluationResult<?> firstResult, IEvaluationResult<?> secondResult) {
 
 		if (firstResult instanceof SignDomainValue && secondResult instanceof SignDomainValue) {
-			IEvaluationResult<Values> castedFirst = (IEvaluationResult<Values>) firstResult;
-			IEvaluationResult<Values> castedSecond = (IEvaluationResult<Values>) secondResult;
+			final IEvaluationResult<Values> castedFirst = (IEvaluationResult<Values>) firstResult;
+			final IEvaluationResult<Values> castedSecond = (IEvaluationResult<Values>) secondResult;
 
 			return evaluateComparisonOperators(castedFirst.getResult(), castedSecond.getResult());
-		} else {
-			throw new UnsupportedOperationException("Not implemented.");
 		}
+
+		if (firstResult instanceof SignLogicalSingletonVariableExpressionEvaluator
+		        && secondResult instanceof SignDomainValue) {
+
+			final SignLogicalSingletonVariableExpressionEvaluator firstVariable = (SignLogicalSingletonVariableExpressionEvaluator) firstResult;
+
+			final IEvaluationResult<Values> first = firstVariable.getBooleanValue(currentState);
+			final IEvaluationResult<Values> second = (IEvaluationResult<Values>) secondResult;
+
+			return evaluateComparisonOperators(first.getResult(), second.getResult());
+		}
+
+		throw new UnsupportedOperationException("Not implemented.");
 	}
 
 	private IEvaluationResult<?> evaluateComparisonOperators(Values firstResult, Values secondResult) {

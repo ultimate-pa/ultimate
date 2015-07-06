@@ -20,6 +20,7 @@ public class SignEvaluatorFactory implements IEvaluatorFactory<Values, CodeBlock
 
 	@Override
 	public INAryEvaluator<Values, CodeBlock, BoogieVar> createNAryExpressionEvaluator(int arity) {
+
 		assert arity >= 1 && arity <= 2;
 
 		switch (arity) {
@@ -30,11 +31,6 @@ public class SignEvaluatorFactory implements IEvaluatorFactory<Values, CodeBlock
 		default:
 			throw new UnsupportedOperationException("Arity of " + arity + " is not implemented.");
 		}
-	}
-
-	@Override
-	public IEvaluator<Values, CodeBlock, BoogieVar> createSingletonVariableExpressionEvaluator(String variableName) {
-		return new SignSingletonVariableExpressionEvaluator(variableName, mStateConverter);
 	}
 
 	@Override
@@ -50,5 +46,10 @@ public class SignEvaluatorFactory implements IEvaluatorFactory<Values, CodeBlock
 		}
 
 		throw new UnsupportedOperationException("The type " + valueType.toString() + " is not supported.");
+	}
+
+	@Override
+	public IEvaluator<Values, CodeBlock, BoogieVar> createSingletonVariableExpressionEvaluator(String variableName) {
+		return new SignSingletonVariableExpressionEvaluator(variableName, mStateConverter);
 	}
 }

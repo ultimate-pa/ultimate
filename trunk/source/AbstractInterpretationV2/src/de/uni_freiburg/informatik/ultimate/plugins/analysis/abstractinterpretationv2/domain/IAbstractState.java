@@ -16,12 +16,12 @@ public interface IAbstractState<ACTION, VARDECL> {
 
 	IAbstractState<ACTION, VARDECL> removeVariable(String name, VARDECL variables);
 
-	IAbstractState<ACTION, VARDECL> addVariables(Map<String,VARDECL> variables);
+	IAbstractState<ACTION, VARDECL> addVariables(Map<String, VARDECL> variables);
 
-	IAbstractState<ACTION, VARDECL> removeVariables(Map<String,VARDECL> variables);
+	IAbstractState<ACTION, VARDECL> removeVariables(Map<String, VARDECL> variables);
 
 	boolean containsVariable(String name);
-	
+
 	/**
 	 * An abstract state is empty when it does not contain any variable.
 	 * 
@@ -38,6 +38,6 @@ public interface IAbstractState<ACTION, VARDECL> {
 	String toLogString();
 
 	boolean isEqualTo(IAbstractState<ACTION, VARDECL> other);
-	
+
 	IAbstractState<ACTION, VARDECL> copy();
 }

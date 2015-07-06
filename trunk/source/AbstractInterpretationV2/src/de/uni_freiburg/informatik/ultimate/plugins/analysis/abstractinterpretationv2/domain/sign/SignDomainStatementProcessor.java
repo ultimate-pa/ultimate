@@ -109,6 +109,10 @@ public class SignDomainStatementProcessor extends BoogieVisitor {
 	@Override
 	protected void visit(AssumeStatement statement) {
 
+		// We are in a situation where we need to evaluate a logical formula (and update the abstract state
+		// accordingly). Therefore, we use the SignLogicalEvaluatorFactory to allow for all evaluators to also be able
+		// to interpret the result logically and return a new abstract state which will then be intersected with the
+		// current abstract state.
 		mEvaluatorFactory = new SignLogicalEvaluatorFactory(mStateConverter);
 
 		mExpressionEvaluator = new ExpressionEvaluator<Values, CodeBlock, BoogieVar>();
@@ -129,12 +133,15 @@ public class SignDomainStatementProcessor extends BoogieVisitor {
 
 		if (result instanceof SignDomainValue) {
 			IEvaluationResult<Values> castedResult = (IEvaluationResult<Values>) result;
+
+			// If the result is false (i.e. NEGATIVE) and we don't have any variable updates, we set the new abstract
+			// state to \bot, as we have found an infeasible statement.
 			if (castedResult.getResult().equals(Values.NEGATIVE)
 			        && mExpressionEvaluator.getRootEvaluator().getVarIdentifiers().size() == 0) {
 				mNewState.setToBottom();
 			} else {
 				for (String var : mExpressionEvaluator.getRootEvaluator().getVarIdentifiers()) {
-
+					// TODO: Update abstract state
 				}
 				// mNewState.intersect(other)
 				throw new UnsupportedOperationException("Hurz");
@@ -161,6 +168,23 @@ public class SignDomainStatementProcessor extends BoogieVisitor {
 		mExpressionEvaluator.addEvaluator(evaluator);
 
 		super.visit(expr);
+	}
+
+	@Override
+	protected void visit(BooleanLiteral expr) {
+		if (!(mEvaluatorFactory instanceof SignLogicalEvaluatorFactory)) {
+			throw new UnsupportedOperationException(
+			        "Boolean literas are only allowed in a boolean context, i.e. when visiting logic formulas.");
+		}
+
+		final SignLogicalEvaluatorFactory logicalEvaluatorFactory = (SignLogicalEvaluatorFactory) mEvaluatorFactory;
+
+		final String booleanValue = expr.getValue() ? "True" : "False";
+
+		IEvaluator<Values, CodeBlock, BoogieVar> booleanExpressionEvaluator = logicalEvaluatorFactory
+		        .createSingletonValueExpressionEvaluator(booleanValue, Boolean.class);
+
+		mExpressionEvaluator.addEvaluator(booleanExpressionEvaluator);
 	}
 
 	@Override

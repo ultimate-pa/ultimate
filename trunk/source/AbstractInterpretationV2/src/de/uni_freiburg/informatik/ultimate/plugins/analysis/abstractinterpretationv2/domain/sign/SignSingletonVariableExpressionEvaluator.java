@@ -17,10 +17,10 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  * @author greitsch@informatik.uni-freiburg.de
  *
  */
-public final class SignSingletonVariableExpressionEvaluator implements IEvaluator<Values, CodeBlock, BoogieVar> {
+public class SignSingletonVariableExpressionEvaluator implements IEvaluator<Values, CodeBlock, BoogieVar> {
 
-	private String mVariableName;
-	private SignStateConverter<CodeBlock, BoogieVar> mStateConverter;
+	protected String mVariableName;
+	protected SignStateConverter<CodeBlock, BoogieVar> mStateConverter;
 	private Set<String> mVariableSet;
 
 	public SignSingletonVariableExpressionEvaluator(String variableName,

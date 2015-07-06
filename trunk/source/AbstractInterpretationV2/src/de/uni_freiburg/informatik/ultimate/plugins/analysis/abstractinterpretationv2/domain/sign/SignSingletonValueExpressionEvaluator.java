@@ -1,5 +1,8 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.sign;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.IEvaluationResult;
@@ -24,7 +27,7 @@ public abstract class SignSingletonValueExpressionEvaluator<T> implements IEvalu
 	}
 
 	@Override
-	public final IEvaluationResult<Values> evaluate(IAbstractState<CodeBlock, BoogieVar> currentState) {
+	public IEvaluationResult<Values> evaluate(IAbstractState<CodeBlock, BoogieVar> currentState) {
 		int num = getSignum();
 
 		if (num > 0) {
@@ -50,4 +53,9 @@ public abstract class SignSingletonValueExpressionEvaluator<T> implements IEvalu
 
 	protected abstract T instantiate(String value);
 	protected abstract int getSignum();
+	
+	@Override
+	public final Set<String> getVarIdentifiers() {
+		return new HashSet<String>();
+	}
 }
