@@ -1,5 +1,8 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
@@ -17,15 +20,15 @@ import de.uni_freiburg.informatik.ultimate.util.HashRelation;
  */
 public class PredicateFactoryForInterpolantConsolidation extends PredicateFactory {
 	
-	private HashRelation<IPredicate, IPredicate> m_locationsToSetOfPredicates;
+	private Map<IPredicate, Set<IPredicate>> m_locationsToSetOfPredicates;
 	
 	public PredicateFactoryForInterpolantConsolidation(SmtManager smtManager,
 			TAPreferences taPrefs) {
 		super(smtManager, taPrefs);
-		m_locationsToSetOfPredicates = new HashRelation<IPredicate, IPredicate>();
+		m_locationsToSetOfPredicates = new HashMap<IPredicate, Set<IPredicate>>();
 	}
 
-	public HashRelation<IPredicate, IPredicate> getLocationsToSetOfPredicates() {
+	public Map<IPredicate, Set<IPredicate>> getLocationsToSetOfPredicates() {
 		return m_locationsToSetOfPredicates;
 	}
 
@@ -40,13 +43,14 @@ public class PredicateFactoryForInterpolantConsolidation extends PredicateFactor
 		IPredicate result = super.m_SmtManager.newSPredicate(pp, tvp);
 		
 		// 2. Store the predicates in the map
-		if (m_locationsToSetOfPredicates.getDomain().contains(p1)) {
-			Set<IPredicate> predicates = m_locationsToSetOfPredicates.getImage(p1);
+		if (m_locationsToSetOfPredicates.containsKey(p1)) {
+			Set<IPredicate> predicates = m_locationsToSetOfPredicates.get(p1);
 			predicates.add(p2);
 		} else {
-			m_locationsToSetOfPredicates.addPair(p1, p2);
+			Set<IPredicate> predicatesForThisLocation = new HashSet<IPredicate>();
+			predicatesForThisLocation.add(p2);
+			m_locationsToSetOfPredicates.put(p1, predicatesForThisLocation);
 		}
-		// TODO: Do we have to store the result of the intersection also in the map!
 		return result;
 	}
 }

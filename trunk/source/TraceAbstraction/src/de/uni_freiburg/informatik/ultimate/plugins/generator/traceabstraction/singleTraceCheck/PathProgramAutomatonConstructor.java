@@ -1,8 +1,10 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
@@ -10,6 +12,11 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieNonOldVar;
+import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieOldVar;
+import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
+import de.uni_freiburg.informatik.ultimate.model.boogie.LocalBoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
@@ -17,6 +24,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
+import de.uni_freiburg.informatik.ultimate.util.ConstructionCache.IValueConstruction;
 
 
 /**
@@ -60,21 +68,38 @@ public class PathProgramAutomatonConstructor {
 		// Create the automaton
 		NestedWordAutomaton<CodeBlock, IPredicate> pathPA = new NestedWordAutomaton<CodeBlock, IPredicate>(services, internalAlphabet, callAlphabet, returnAlphabet, predicateFactory);
 		
+		// We need this list to create the transitions of the automaton.
 		m_PositionsToStates = new ArrayList<IPredicate>(path.length() + 1);
+		
+		ProgramPoint[] arrOfProgPoints = new ProgramPoint[path.length()];
+		// We use this map to keep track of the predicates we've created so far. We don't want to create a new predicate
+		// for the same program point, therefore we use the map to get the predicate we've constructed before.
+		Map<ProgramPoint, SPredicate> programPointToState = new HashMap<>();
+		
+		ProgramPoint tempProgramPoint = null;
+		tempProgramPoint = (ProgramPoint) path.getSymbol(0).getSource();
+		
 		// Add the initial state
-		SPredicate sourceNode = smtManager.newTrueSLPredicate((ProgramPoint) path.getSymbol(0).getSource());
-		pathPA.addState(true, false, sourceNode);
-		m_PositionsToStates.add(0, sourceNode);
-		// Add other states
+		SPredicate initialState = smtManager.newTrueSLPredicate(tempProgramPoint);
+		pathPA.addState(true, false, initialState);
+		programPointToState.put(tempProgramPoint, initialState);
+		m_PositionsToStates.add(0, initialState);
+		
+		// Add the other states
 		for (int i = 0; i < path.length(); i++) {
-			SPredicate targetNode = smtManager.newTrueSLPredicate((ProgramPoint) path.getSymbol(i).getTarget());
-			if (i + 1 == path.length()) {
-				// this is the last (accepting) state (the error location)
-				pathPA.addState(false, true, targetNode);
-			} else {
-				pathPA.addState(false, false, targetNode);
+			tempProgramPoint = (ProgramPoint) path.getSymbol(i).getTarget();
+			if (!programPointToState.containsKey(tempProgramPoint)) {
+				SPredicate newState = smtManager.newTrueSLPredicate(tempProgramPoint);
+				programPointToState.put(tempProgramPoint, newState);
+				arrOfProgPoints[i] = (ProgramPoint) path.getSymbol(i).getTarget();
+				if (i + 1 == path.length()) {
+					// this is the last (accepting) state (the error location)
+					pathPA.addState(false, true, newState);
+				} else {
+					pathPA.addState(false, false, newState);
+				}
 			}
-			m_PositionsToStates.add(i+1, targetNode);
+			m_PositionsToStates.add(i+1, programPointToState.get(tempProgramPoint));
 		}
 		
 		// Add the transitions

@@ -21,6 +21,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Difference;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsEmpty;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.PowersetDeterminizer;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.RemoveUnreachable;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
@@ -118,14 +119,13 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 		
 		// 2. Build the finite automaton (former interpolant path automaton) for the given Floyd-Hoare annotation
 		NestedWordAutomaton<CodeBlock, IPredicate> interpolantAutomaton = constructInterpolantAutomaton(m_Trace, m_SmtManager, m_TaPrefs, m_Services, m_InterpolatingTraceChecker); // siehe BasicCegarLoop
-//		boolean conservativeSuccessorCandidateSelection = (mPref.interpolantAutomatonEnhancement() == InterpolantAutomatonEnhancement.PREDICATE_ABSTRACTION_CONSERVATIVE);
 		// 3. Determinize the finite automaton from step 2. 
 		DeterministicInterpolantAutomaton interpolantAutomatonDeterminized = new DeterministicInterpolantAutomaton(
 				m_Services, m_SmtManager, m_ModifiedGlobals, htc, pathprogramautomaton, interpolantAutomaton,
 				m_PredicateUnifier, m_Logger, false); // PREDICATE_ABSTRACTION_CONSERVATIVE = false (default)
 		
 		 
-		PredicateFactoryForInterpolantConsolidation pfconsol = new PredicateFactoryForInterpolantConsolidation(m_SmtManager, m_TaPrefs); // TODO: Dummy params, to be refined
+		PredicateFactoryForInterpolantConsolidation pfconsol = new PredicateFactoryForInterpolantConsolidation(m_SmtManager, m_TaPrefs);
 		
 		PredicateFactory predicateFactoryInterpolantAutomata = new PredicateFactory(m_SmtManager, m_TaPrefs);
 		
@@ -140,11 +140,13 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 					(INestedWordAutomatonOldApi<CodeBlock, IPredicate>) pathprogramautomaton,
 					interpolantAutomatonDeterminized, psd2,
 					pfconsol /* PredicateFactory for Refinement */, false /*explointSigmaStarConcatOfIA*/ );
+			
+//			INestedWordAutomatonOldApi<CodeBlock, IPredicate> testAutomaton = diff.getResult();
 			htc.releaseLock();
 			// 5. Check if difference is empty
 			IsEmpty<CodeBlock, IPredicate> empty = new IsEmpty<CodeBlock, IPredicate>(m_Services, diff.getResult());
 			if (!empty.getResult()) {
-				// If the difference is not empty, we are not allowed to consolidate interpolants (at least at current time) 
+				// If the difference is not empty, we are not allowed to consolidate interpolants (at least by now) 
 				m_ConsolidatedInterpolants = m_InterpolatingTraceChecker.getInterpolants();
 				return;
 			}
@@ -158,12 +160,13 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 
 		// 6. Interpolant Consolidation step
 		List<IPredicate> pathPositionsToLocations = ppc.getPositionsToStates();
-		HashRelation<IPredicate, IPredicate> locationsToSetOfPredicates = pfconsol.getLocationsToSetOfPredicates();
+		Map<IPredicate, Set<IPredicate>> locationsToSetOfPredicates = pfconsol.getLocationsToSetOfPredicates();
 		m_ConsolidatedInterpolants = new IPredicate[m_Trace.length() - 1];
 		for (int i = 0; i < m_ConsolidatedInterpolants.length; i++) {
 			IPredicate loc = pathPositionsToLocations.get(i+1);
 			// Compute the disjunction of the predicates for location i
-			Set<IPredicate> predicatesForThisLocation = locationsToSetOfPredicates.getImage(loc);
+			Set<IPredicate> predicatesForThisLocation = locationsToSetOfPredicates.get(loc);
+			assert (predicatesForThisLocation != null) : "The set of predicates for the current location is null!";
 			// Update benchmarks
 			numOfPredicatesConsolidatedPerLocation[i] += predicatesForThisLocation.size();
 			numOfPredicatesConsolidatedPerLocation[i] -= 1;
@@ -212,6 +215,7 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 		}
 		
 		
+		
 		InterpolantsPreconditionPostcondition ipp = 
 				new InterpolantsPreconditionPostcondition(traceChecker);
 		StateFactory<IPredicate> predicateFactory = new PredicateFactory(smtManager, taPrefs);
@@ -221,6 +225,7 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 																											callAlphabet,
 																											returnAlphabet,
 																											predicateFactory);
+		// TODO: Implement the creation of states if both interpolant types (FP, BP) has been computed
 		// Set the initial and the final state of the automaton
 		nwa.addState(true, false, traceChecker.getPrecondition());
 		nwa.addState(false, true, traceChecker.getPostcondition());
@@ -272,7 +277,11 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 	public Map<Integer, IPredicate> getPendingContexts() {
 		return m_PendingContexts;
 	}
-
+	
+	public InterpolatingTraceChecker getInterpolatingTraceChecker() {
+		return m_InterpolatingTraceChecker;
+	}
+	
 	@Override
 	public PredicateUnifier getPredicateUnifier() {
 		return m_PredicateUnifier;
