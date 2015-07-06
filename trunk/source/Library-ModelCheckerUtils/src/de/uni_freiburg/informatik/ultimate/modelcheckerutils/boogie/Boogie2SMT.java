@@ -36,6 +36,7 @@ public class Boogie2SMT {
 	private Script m_Script;
 
 	private final TypeSortTranslator m_TypeSortTranslator;
+	private final IOperationTranslator m_OperationTranslator;
 	private final Boogie2SmtSymbolTable m_Boogie2SmtSymbolTable;
 	private final VariableManager m_VariableManager;
 	private final Expression2Term m_Expression2Term;
@@ -59,6 +60,13 @@ public class Boogie2SMT {
 		m_VariableManager = new VariableManager(m_Script, mServices);
 
 		if (bitvectorInsteadOfInt) {
+			m_TypeSortTranslator = new TypeSortTranslator(boogieDeclarations.getTypeDeclarations(), m_Script,
+					m_BlackHoleArrays, mServices);
+			m_Boogie2SmtSymbolTable = new Boogie2SmtSymbolTable(boogieDeclarations, m_Script, m_TypeSortTranslator);
+			m_ConstOnlyIdentifierTranslator = new ConstOnlyIdentifierTranslator();
+			m_OperationTranslator = new BitvectorWorkaroundOperationTranslator();
+			m_Expression2Term = new Expression2Term(mServices, m_Script, m_TypeSortTranslator, m_Boogie2SmtSymbolTable, m_OperationTranslator);
+
 			throw new UnsupportedOperationException("bitvectorInsteadOfInt not yet implemented");
 		} else {
 			m_TypeSortTranslator = new TypeSortTranslator(boogieDeclarations.getTypeDeclarations(), m_Script,
@@ -66,7 +74,8 @@ public class Boogie2SMT {
 			m_Boogie2SmtSymbolTable = new Boogie2SmtSymbolTable(boogieDeclarations, m_Script, m_TypeSortTranslator);
 
 			m_ConstOnlyIdentifierTranslator = new ConstOnlyIdentifierTranslator();
-			m_Expression2Term = new Expression2Term(mServices, m_Script, m_TypeSortTranslator, m_Boogie2SmtSymbolTable);
+			m_OperationTranslator = new DefaultOperationTranslator();
+			m_Expression2Term = new Expression2Term(mServices, m_Script, m_TypeSortTranslator, m_Boogie2SmtSymbolTable, m_OperationTranslator);
 		}
 
 		m_Axioms = new ArrayList<Term>(boogieDeclarations.getAxioms().size());
