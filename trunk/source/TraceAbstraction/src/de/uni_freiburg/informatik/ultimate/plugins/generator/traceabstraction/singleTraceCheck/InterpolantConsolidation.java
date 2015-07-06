@@ -2,6 +2,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.s
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -108,6 +109,10 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 		int[] numOfPredicatesConsolidatedPerLocation = new int[m_Trace.length()];
 		int differenceAutomatonEmptyCounter = 0;
 		int disjunctionsGreaterOneCounter = 0;
+		int numOfInterpolantsBefore = m_InterpolatingTraceChecker.getInterpolants().length;
+		// "numOfInterpolantsAfterConsoli" represents the number of interpolants after the consolidation step.
+		// We initialize it with number of interpolants before the consolidation step.
+		int numOfInterpolantsAfterConsoli = numOfInterpolantsBefore;
 		
 		// 1. Build the path automaton for the given trace m_Trace
 		PathProgramAutomatonConstructor ppc = new PathProgramAutomatonConstructor();
@@ -161,23 +166,35 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 		// 6. Interpolant Consolidation step
 		List<IPredicate> pathPositionsToLocations = ppc.getPositionsToStates();
 		Map<IPredicate, Set<IPredicate>> locationsToSetOfPredicates = pfconsol.getLocationsToSetOfPredicates();
+		Map<IPredicate, IPredicate> locationsToConsolidatedInterpolants = new HashMap<>();
+		
 		m_ConsolidatedInterpolants = new IPredicate[m_Trace.length() - 1];
 		for (int i = 0; i < m_ConsolidatedInterpolants.length; i++) {
 			IPredicate loc = pathPositionsToLocations.get(i+1);
-			// Compute the disjunction of the predicates for location i
-			Set<IPredicate> predicatesForThisLocation = locationsToSetOfPredicates.get(loc);
-			assert (predicatesForThisLocation != null) : "The set of predicates for the current location is null!";
-			// Update benchmarks
-			numOfPredicatesConsolidatedPerLocation[i] += predicatesForThisLocation.size();
-			numOfPredicatesConsolidatedPerLocation[i] -= 1;
-			if (predicatesForThisLocation.size() > 1) {
-				disjunctionsGreaterOneCounter++;
+			if (!locationsToConsolidatedInterpolants.containsKey(loc)) {
+				// Compute the disjunction of the predicates for location i
+				Set<IPredicate> predicatesForThisLocation = locationsToSetOfPredicates.get(loc);
+
+				assert (predicatesForThisLocation != null) : "The set of predicates for the current location is null!";
+				// Update benchmarks
+				numOfPredicatesConsolidatedPerLocation[i] += predicatesForThisLocation.size() - 1;
+				
+				
+				if (predicatesForThisLocation.size() > 1) {
+					disjunctionsGreaterOneCounter++;
+					// Reduce the number of interpolants after consolidation by the amount of the predicates for the current
+					// location minus 1.
+					numOfInterpolantsAfterConsoli -= numOfPredicatesConsolidatedPerLocation[i] - 1;
+				}
+
+				IPredicate[] predicatesForThisLocationAsArray = predicatesForThisLocation.toArray(new IPredicate[predicatesForThisLocation.size()]);
+				TermVarsProc predicatesForThisLocationConsolidated = m_SmtManager.or(predicatesForThisLocationAsArray);
+				// Store the consolidated (the disjunction of the predicates for the current location)
+				m_ConsolidatedInterpolants[i] = m_PredicateUnifier.getOrConstructPredicate(predicatesForThisLocationConsolidated);
+				locationsToConsolidatedInterpolants.put(loc, m_ConsolidatedInterpolants[i]);
+			} else {
+				m_ConsolidatedInterpolants[i] = locationsToConsolidatedInterpolants.get(loc);
 			}
-			
-			IPredicate[] predicatesForThisLocationAsArray = predicatesForThisLocation.toArray(new IPredicate[predicatesForThisLocation.size()]);
-			TermVarsProc predicatesForThisLocationConsolidated = m_SmtManager.or(predicatesForThisLocationAsArray);
-			// Store the consolidated (the disjunction of the predicates for the current location)
-			m_ConsolidatedInterpolants[i] = m_PredicateUnifier.getOrConstructPredicate(predicatesForThisLocationConsolidated); 
 		}
 		assert TraceCheckerUtils.checkInterpolantsInductivityForward(m_ConsolidatedInterpolants, 
 				m_Trace, m_Precondition, m_Postcondition, m_PendingContexts, "CP", 
@@ -186,7 +203,7 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 		differenceAutomatonEmptyCounter = 1;
 		// Set benchmark data
 		m_InterpolantConsolidationBenchmarkGenerator.setInterpolantConsolidationData(numOfPredicatesConsolidatedPerLocation, differenceAutomatonEmptyCounter,
-													 disjunctionsGreaterOneCounter);
+													 disjunctionsGreaterOneCounter, numOfInterpolantsBefore, numOfInterpolantsAfterConsoli);
 	}
 	
 	
@@ -303,6 +320,9 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 		
 		protected final static String s_DisjunctionsGreaterOneCounter = "DisjunctionsGreaterOneCounter";
 		
+		protected final static String s_SumOfInterpolantsBefore = "SumOfInterpolantsBefore";
+		protected final static String s_SumOfInterpolantsAfterConsoli = "SumOfInterpolantsAfterConsoli";
+		
 		public static InterpolantConsolidationBenchmarkType getInstance() {
 			return s_Instance;
 		}
@@ -313,16 +333,17 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 			result.add(s_DifferenceAutomatonEmptyCounter);
 			result.add(s_SumOfPredicatesConsolidated);
 			result.add(s_DisjunctionsGreaterOneCounter);
+			result.add(s_SumOfInterpolantsAfterConsoli);
+			result.add(s_SumOfInterpolantsBefore);
 			return result;
 		}
 
 		@Override
 		public Object aggregate(String key, Object value1, Object value2) {
 			switch(key) {
-			case s_DifferenceAutomatonEmptyCounter: {
-				int result = ((int) value1) + ((int) value2);
-				return result;
-			}
+			case s_DifferenceAutomatonEmptyCounter:
+			case s_SumOfInterpolantsAfterConsoli:
+			case s_SumOfInterpolantsBefore:
 			case s_DisjunctionsGreaterOneCounter: {
 				int result = ((int) value1) + ((int) value2);
 				return result;
@@ -348,6 +369,10 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 			
 			sb.append("\t").append(s_SumOfPredicatesConsolidated).append(": ");
 			sb.append((long) benchmarkData.getValue(s_SumOfPredicatesConsolidated));
+			
+			sb.append("\t").append("SumOfInterpolants_Before_AfterConsoli").append(": ");
+			sb.append("(").append((int) benchmarkData.getValue(s_SumOfInterpolantsBefore));
+			sb.append(", ").append((int) benchmarkData.getValue(s_SumOfInterpolantsAfterConsoli)).append(")");
 			return sb.toString();
 		}
 		
@@ -357,6 +382,8 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 		private int m_DifferenceAutomatonEmptyCounter = 0;
 		private long m_SumOfPredicatesConsolidated = 0;
 		private int m_DisjunctionsGreaterOneCounter = 0;
+		private int m_SumOfInterpolantsBefore = 0;
+		private int m_SumOfInterpolantsAfterConsoli = 0;
 
 		
 		
@@ -365,10 +392,12 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 		}
 		
 		public void setInterpolantConsolidationData(int[] numOfPredicatesConsolidatedPerLocation, int differenceAutomatonEmptyCounter,
-				int disjunctionsGreaterOneCounter) {
+				int disjunctionsGreaterOneCounter, int numOfInterpolantsBefore, int numOfInterpolantsAfterConsoli) {
 			assert numOfPredicatesConsolidatedPerLocation != null;
 			m_DifferenceAutomatonEmptyCounter = differenceAutomatonEmptyCounter;
 			m_DisjunctionsGreaterOneCounter  = disjunctionsGreaterOneCounter;
+			m_SumOfInterpolantsBefore = numOfInterpolantsBefore;
+			m_SumOfInterpolantsAfterConsoli = numOfInterpolantsAfterConsoli;
 			m_SumOfPredicatesConsolidated = getSumOfIntArray(numOfPredicatesConsolidatedPerLocation);
 		}
 		
@@ -386,6 +415,10 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 				return m_SumOfPredicatesConsolidated;
 			case InterpolantConsolidationBenchmarkType.s_DisjunctionsGreaterOneCounter:
 				return m_DisjunctionsGreaterOneCounter;
+			case InterpolantConsolidationBenchmarkType.s_SumOfInterpolantsBefore:
+				return m_SumOfInterpolantsBefore;
+			case InterpolantConsolidationBenchmarkType.s_SumOfInterpolantsAfterConsoli:
+				return m_SumOfInterpolantsAfterConsoli;
 			default:
 				throw new AssertionError("unknown data");
 			}

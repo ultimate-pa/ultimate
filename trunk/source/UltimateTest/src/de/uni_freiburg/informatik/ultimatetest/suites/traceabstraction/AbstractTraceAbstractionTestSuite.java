@@ -70,7 +70,15 @@ public abstract class AbstractTraceAbstractionTestSuite extends AbstractModelChe
 //								ConversionContext.BestFitNumber(), Aggregate.Ignore, Aggregate.Average),
 //						new ColumnDefinition(
 //								"ICC %", "ICC",
-//								ConversionContext.Percent(true,2), Aggregate.Ignore, Aggregate.Average),					
+//								ConversionContext.Percent(true,2), Aggregate.Ignore, Aggregate.Average),
+//						new ColumnDefinition("InterpolantConsolidationBenchmark_DifferenceAutomatonEmptyCounter", "Diff.{-}Automaton{-}Empty{-}Counter",
+//								ConversionContext.BestFitNumber(), Aggregate.Ignore, Aggregate.Sum),
+//						new ColumnDefinition("InterpolantConsolidationBenchmark_DisjunctionsGreaterOneCounter", "Disjunction{-}Greater{-}OneCounter",
+//										ConversionContext.BestFitNumber(), Aggregate.Ignore, Aggregate.Sum),
+//						new ColumnDefinition("InterpolantConsolidationBenchmark_SumOfInterpolantsBefore", "Interpols{-}Before",
+//												ConversionContext.BestFitNumber(), Aggregate.Ignore, Aggregate.Sum),										
+//						new ColumnDefinition("InterpolantConsolidationBenchmark_SumOfInterpolantsAfterConsoli", "Interpols{-}After",
+//												ConversionContext.BestFitNumber(), Aggregate.Ignore, Aggregate.Sum)
 					};
 				// @formatter:on
 
