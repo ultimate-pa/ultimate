@@ -78,7 +78,9 @@ public abstract class AbstractTraceAbstractionTestSuite extends AbstractModelChe
 //						new ColumnDefinition("InterpolantConsolidationBenchmark_SumOfInterpolantsBefore", "Interpols{-}Before",
 //												ConversionContext.BestFitNumber(), Aggregate.Ignore, Aggregate.Sum),										
 //						new ColumnDefinition("InterpolantConsolidationBenchmark_SumOfInterpolantsAfterConsoli", "Interpols{-}After",
-//												ConversionContext.BestFitNumber(), Aggregate.Ignore, Aggregate.Sum)
+//												ConversionContext.BestFitNumber(), Aggregate.Ignore, Aggregate.Sum),
+//						new ColumnDefinition("InterpolantConsolidationBenchmark_MaximalDifferenceBeforeAfter", "Max.{-}Diff.{-}Before{-}After",
+//								ConversionContext.BestFitNumber(), Aggregate.Ignore, Aggregate.Max)								
 					};
 				// @formatter:on
 

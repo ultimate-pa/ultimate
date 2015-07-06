@@ -1,6 +1,9 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck;
 
+import java.util.AbstractMap;
+import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -201,12 +204,24 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 				m_SmtManager, m_ModifiedGlobals, m_Logger) : "invalid Hoare triple in consolidated interpolants";
 		
 		differenceAutomatonEmptyCounter = 1;
-		// Set benchmark data
+		int differenceBeforeAfter = numOfInterpolantsBefore - numOfInterpolantsAfterConsoli;
 		m_InterpolantConsolidationBenchmarkGenerator.setInterpolantConsolidationData(numOfPredicatesConsolidatedPerLocation, differenceAutomatonEmptyCounter,
-													 disjunctionsGreaterOneCounter, numOfInterpolantsBefore, numOfInterpolantsAfterConsoli);
+													 disjunctionsGreaterOneCounter, numOfInterpolantsBefore, numOfInterpolantsAfterConsoli,
+													 differenceBeforeAfter);
+		m_Logger.debug("Interpolants before consolidation:");
+		printArray(m_InterpolatingTraceChecker.getInterpolants());
+		m_Logger.debug("Interpolants after consolidation:");
+		printArray(m_ConsolidatedInterpolants);
 	}
 	
 	
+	private void printArray(IPredicate[] interpolants) {
+		for (int i = 0; i < interpolants.length; i++) {
+			m_Logger.debug(Integer.toString(i) + ". " + interpolants[i].toString());
+		}
+		
+	}
+
 	/**
 	 * Construct a finite automaton for the given Floyd-Hoare annotation.
 	 * @param trace - the trace from which the automaton is constructed.
@@ -313,15 +328,15 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 		private static InterpolantConsolidationBenchmarkType s_Instance = new InterpolantConsolidationBenchmarkType();
 		
 		/* Keys */
-		// Counts how often we were allowed to consolidate interpolants
+		// Counts how often the difference automaton has been empty
 		protected final static String s_DifferenceAutomatonEmptyCounter = "DifferenceAutomatonEmptyCounter";
-		// Counts the num of interpolants consolidated per location
 		protected final static String s_SumOfPredicatesConsolidated = "SumOfPredicatesConsolidated";
 		
 		protected final static String s_DisjunctionsGreaterOneCounter = "DisjunctionsGreaterOneCounter";
 		
 		protected final static String s_SumOfInterpolantsBefore = "SumOfInterpolantsBefore";
 		protected final static String s_SumOfInterpolantsAfterConsoli = "SumOfInterpolantsAfterConsoli";
+		protected final static String s_MaximalDifferenceBeforeAfter = "MaximalDifferenceBeforeAfter";
 		
 		public static InterpolantConsolidationBenchmarkType getInstance() {
 			return s_Instance;
@@ -335,6 +350,7 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 			result.add(s_DisjunctionsGreaterOneCounter);
 			result.add(s_SumOfInterpolantsAfterConsoli);
 			result.add(s_SumOfInterpolantsBefore);
+			result.add(s_MaximalDifferenceBeforeAfter);
 			return result;
 		}
 
@@ -347,6 +363,11 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 			case s_DisjunctionsGreaterOneCounter: {
 				int result = ((int) value1) + ((int) value2);
 				return result;
+			}
+			case s_MaximalDifferenceBeforeAfter: {
+				int v1 = ((int) value1); 
+				int v2 = ((int) value2);
+				return v1 > v2 ? v1 : v2 ;
 			}
 			case s_SumOfPredicatesConsolidated: {
 				long result = ((long) value1) + ((long) value2);
@@ -373,6 +394,9 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 			sb.append("\t").append("SumOfInterpolants_Before_AfterConsoli").append(": ");
 			sb.append("(").append((int) benchmarkData.getValue(s_SumOfInterpolantsBefore));
 			sb.append(", ").append((int) benchmarkData.getValue(s_SumOfInterpolantsAfterConsoli)).append(")");
+			
+			sb.append("\t").append(s_MaximalDifferenceBeforeAfter).append(": ");
+			sb.append((int) benchmarkData.getValue(s_MaximalDifferenceBeforeAfter));
 			return sb.toString();
 		}
 		
@@ -384,7 +408,7 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 		private int m_DisjunctionsGreaterOneCounter = 0;
 		private int m_SumOfInterpolantsBefore = 0;
 		private int m_SumOfInterpolantsAfterConsoli = 0;
-
+		private int m_MaximalDifferenceBeforeAfter = 0;
 		
 		
 		public void incrementInterpolantConsolidationCounter() {
@@ -392,12 +416,14 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 		}
 		
 		public void setInterpolantConsolidationData(int[] numOfPredicatesConsolidatedPerLocation, int differenceAutomatonEmptyCounter,
-				int disjunctionsGreaterOneCounter, int numOfInterpolantsBefore, int numOfInterpolantsAfterConsoli) {
+				int disjunctionsGreaterOneCounter, int numOfInterpolantsBefore, int numOfInterpolantsAfterConsoli,
+				int differenceOfNumOfInterpolantsBeforeAfter) {
 			assert numOfPredicatesConsolidatedPerLocation != null;
 			m_DifferenceAutomatonEmptyCounter = differenceAutomatonEmptyCounter;
 			m_DisjunctionsGreaterOneCounter  = disjunctionsGreaterOneCounter;
 			m_SumOfInterpolantsBefore = numOfInterpolantsBefore;
 			m_SumOfInterpolantsAfterConsoli = numOfInterpolantsAfterConsoli;
+			m_MaximalDifferenceBeforeAfter = differenceOfNumOfInterpolantsBeforeAfter;
 			m_SumOfPredicatesConsolidated = getSumOfIntArray(numOfPredicatesConsolidatedPerLocation);
 		}
 		
@@ -419,6 +445,8 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 				return m_SumOfInterpolantsBefore;
 			case InterpolantConsolidationBenchmarkType.s_SumOfInterpolantsAfterConsoli:
 				return m_SumOfInterpolantsAfterConsoli;
+			case InterpolantConsolidationBenchmarkType.s_MaximalDifferenceBeforeAfter:
+				return m_MaximalDifferenceBeforeAfter;
 			default:
 				throw new AssertionError("unknown data");
 			}
