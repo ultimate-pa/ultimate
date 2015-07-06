@@ -25,6 +25,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt;
 
+import java.util.Timer;
 
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
@@ -37,19 +38,20 @@ import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.logic.simplification.SimplifyDDA;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.debug.InputTermDumper;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
 import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
 
 /**
  * SimplifyDDA extended by support for timeouts.
+ * 
  * @author Matthias Heizmann
  *
  */
 public class SimplifyDDAWithTimeout extends SimplifyDDA {
-	
+
 	private final IUltimateServiceProvider mServices;
 	private Term m_InputTerm;
-	
 
 	/**
 	 * {@inheritDoc}
@@ -57,12 +59,11 @@ public class SimplifyDDAWithTimeout extends SimplifyDDA {
 	public SimplifyDDAWithTimeout(Script script, IUltimateServiceProvider services) {
 		this(script, true, services);
 	}
-	
+
 	/**
 	 * {@inheritDoc}
 	 */
-	public SimplifyDDAWithTimeout(final Script script, 
-			boolean simplifyRepeatedly, IUltimateServiceProvider services) {
+	public SimplifyDDAWithTimeout(final Script script, boolean simplifyRepeatedly, IUltimateServiceProvider services) {
 		super(script, simplifyRepeatedly);
 		mServices = services;
 	}
@@ -70,39 +71,46 @@ public class SimplifyDDAWithTimeout extends SimplifyDDA {
 	@Override
 	protected Redundancy getRedundancy(Term term) {
 		if (!mServices.getProgressMonitorService().continueProcessing()) {
-			throw new ToolchainCanceledException(this.getClass(),
-					"simplifying term of DAG size " + (new DAGSize().size(m_InputTerm)));
+			throw new ToolchainCanceledException(this.getClass(), "simplifying term of DAG size "
+					+ (new DAGSize().size(m_InputTerm)));
 		}
 		return super.getRedundancy(term);
 	}
 
 	/**
-	 * Copy&paste from original method where I removed the checktype 
+	 * Copy&paste from original method where I removed the checktype
 	 * modification which is only supported by SMTInterpol.
 	 */
 	@Override
 	public LBool checkEquivalence(Term termA, Term termB) {
 		Term equivalentTestTerm = mScript.term("=", termA, termB);
-		LBool areTermsEquivalent = 
-				Util.checkSat(mScript, Util.not(mScript, equivalentTestTerm));
+		LBool areTermsEquivalent = Util.checkSat(mScript, Util.not(mScript, equivalentTestTerm));
 		return areTermsEquivalent;
 	}
 
 	/**
 	 * Copy&paste from original methods where I commented the assertions about
-	 * the push-pop stack which are only supported by SMTInterpol.
-	 * Furthermore, the assertion that checks the equivalence of the result
-	 * was weakened. It now passes also if the result is UNKNOWN.
+	 * the push-pop stack which are only supported by SMTInterpol. Furthermore,
+	 * the assertion that checks the equivalence of the result was weakened. It
+	 * now passes also if the result is UNKNOWN.
 	 */
 	@Override
-	public Term getSimplifiedTerm(Term inputTerm) throws SMTLIBException {
+	public Term getSimplifiedTerm(final Term inputTerm) throws SMTLIBException {
 		m_InputTerm = inputTerm;
-//		m_Logger.debug("Simplifying " + term);
+
+		final Term[] assertions = mScript.getAssertions();
+
+		Timer timer = new Timer();
+		timer.schedule(new InputTermDumper(inputTerm, assertions), 1 * 1000);
+
+		// m_Logger.debug("Simplifying " + term);
 		/* We can only simplify boolean terms. */
-		if (!inputTerm.getSort().getName().equals("Bool"))
+		if (!inputTerm.getSort().getName().equals("Bool")) {
+			timer.cancel();
 			return inputTerm;
-//		int lvl = 0;// Java requires initialization
-//		assert (lvl = PushPopChecker.currentLevel(mScript)) >= -1;
+		}
+		// int lvl = 0;// Java requires initialization
+		// assert (lvl = PushPopChecker.currentLevel(mScript)) >= -1;
 		Term term = inputTerm;
 		mScript.echo(new QuotedObject("Begin Simplifier"));
 		mScript.push(1);
@@ -123,7 +131,7 @@ public class SimplifyDDAWithTimeout extends SimplifyDDA {
 		} else {
 			term = output;
 		}
-		
+
 		term = new TermTransformer() {
 			@Override
 			public void convert(Term term) {
@@ -134,15 +142,11 @@ public class SimplifyDDAWithTimeout extends SimplifyDDA {
 			}
 		}.transform(term);// NOCHECKSTYLE
 		mScript.pop(1);
-		assert (checkEquivalence(inputTerm, term) != LBool.SAT)
-			: "Simplification unsound?";
+		assert (checkEquivalence(inputTerm, term) != LBool.SAT) : "Simplification unsound?";
 		mScript.echo(new QuotedObject("End Simplifier"));
-//		assert PushPopChecker.atLevel(mScript, lvl);
+		// assert PushPopChecker.atLevel(mScript, lvl);
 		m_InputTerm = null;
+		timer.cancel();
 		return term;
 	}
-	
-	
-	
-	
 }
