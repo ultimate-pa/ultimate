@@ -52,6 +52,7 @@ public class NameHandler implements INameHandler {
 
 	@Override
 	public String getUniqueIdentifier(IASTNode scope, String cId, int compCnt, boolean isOnHeap) {
+		if (cId.isEmpty()) cId = getGloballyUniqueIdentifier("unnamed");
 		final String boogieId;
 		{
 			// special case struct field identifier

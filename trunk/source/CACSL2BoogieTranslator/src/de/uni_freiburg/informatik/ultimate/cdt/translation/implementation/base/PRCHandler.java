@@ -204,7 +204,7 @@ public class PRCHandler extends CHandler {
 
 		// enum case
 		if (node.getDeclSpecifier() instanceof IASTEnumerationSpecifier) {
-			return handleEnumDeclaration(main, node);
+			handleEnumDeclaration(main, node);
 		}
 
 		Result r = main.dispatch(node.getDeclSpecifier());

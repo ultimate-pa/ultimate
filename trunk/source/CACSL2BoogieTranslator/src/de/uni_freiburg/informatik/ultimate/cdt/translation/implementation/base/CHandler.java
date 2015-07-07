@@ -84,6 +84,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.c
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.MemoryHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.PostProcessor;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.StructHandler;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.PRSymbolTableValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.SymbolTableValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.SymbolTableValue.StorageClass;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
@@ -563,7 +564,7 @@ public class CHandler implements ICHandler {
 
 		// enum case
 		if (node.getDeclSpecifier() instanceof IASTEnumerationSpecifier) {
-			return handleEnumDeclaration(main, node);
+			handleEnumDeclaration(main, node);
 		}
 
 		Result r = main.dispatch(node.getDeclSpecifier());
@@ -3502,7 +3503,7 @@ public class CHandler implements ICHandler {
 	 *            the node holding the enum declaration.
 	 * @return the translation of this declaration.
 	 */
-	protected Result handleEnumDeclaration(Dispatcher main, IASTSimpleDeclaration node) {
+	protected void handleEnumDeclaration(Dispatcher main, IASTSimpleDeclaration node) {
 		Result r = main.dispatch(node.getDeclSpecifier());
 		assert r instanceof ResultTypes;
 		ResultTypes rt = (ResultTypes) r;
@@ -3513,9 +3514,8 @@ public class CHandler implements ICHandler {
 		String enumId = cEnum.getIdentifier();
 		Expression oldValue = null;
 		Expression[] enumDomain = new Expression[cEnum.getFieldCount()];
-		
-		ResultDeclaration result = new ResultDeclaration();
-		
+
+		//ResultDeclaration result = new ResultDeclaration();
 		for (int i = 0; i < cEnum.getFieldCount(); i++) {
 			String fId = cEnum.getFieldIds()[i];
 			String bId = enumId + "~" + fId;
@@ -3538,7 +3538,7 @@ public class CHandler implements ICHandler {
 					scConstant2StorageClass(node.getDeclSpecifier().getStorageClass()))); // FIXME
 																							// ??
 		}
-		return result;
+		//return result;
 	}
 
 	public Result handleLabelCommonCode(Dispatcher main, IASTLabelStatement node, ILocation loc) {
