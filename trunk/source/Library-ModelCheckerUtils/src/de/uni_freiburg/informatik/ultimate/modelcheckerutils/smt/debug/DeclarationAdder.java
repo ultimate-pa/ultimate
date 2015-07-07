@@ -34,15 +34,33 @@ import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
+/**
+ * {@link DeclarationAdder} is a {@link TermTransformer} that adds the
+ * declarations of a term as <code>(declare-fun ...)</code> to a
+ * {@link PrintWriter}. Each declaration gets its own line.
+ * 
+ * @author dietsch@informatik.uni-freiburg.de
+ *
+ */
 public final class DeclarationAdder extends TermTransformer {
 	private final Set<FunctionSymbol> mFuncSymbols;
+	private final Set<TermVariable> mTermSymbols;
 	private final PrintWriter mWriter;
 
+	/**
+	 * Construct a {@link DeclarationAdder}.
+	 * 
+	 * @param pw
+	 *            The print writer to which the declarations are appended. The
+	 *            writer has to be initialized. We do not close the writer.
+	 */
 	public DeclarationAdder(final PrintWriter pw) {
 		super();
 		mWriter = pw;
 		mFuncSymbols = new HashSet<>();
+		mTermSymbols = new HashSet<>();
 	}
 
 	@Override
@@ -53,6 +71,12 @@ public final class DeclarationAdder extends TermTransformer {
 			if (!symbol.isIntern() && mFuncSymbols.add(symbol)) {
 				mWriter.append("(declare-fun ").append(symbol.getName()).append(" () ")
 						.append(symbol.getReturnSort().toString()).append(")").println();
+			}
+		} else if (term instanceof TermVariable) {
+			final TermVariable termVar = (TermVariable) term;
+			if (mTermSymbols.add(termVar)) {
+				mWriter.append("(declare-fun ").append(termVar.getName()).append(" () ")
+						.append(termVar.getSort().toString()).append(")").println();
 			}
 		}
 		super.convert(term);

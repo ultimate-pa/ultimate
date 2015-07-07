@@ -27,35 +27,73 @@
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.debug;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.TimerTask;
+import java.util.zip.GZIPOutputStream;
 
+import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
+/**
+ * {@link InputTermDumper} is a {@link TimerTask} that can be used to dump a
+ * term together with its assertion stack, theory and definitions.
+ * 
+ * For each dump, this class will create a file in the temp directory of your
+ * system named <prefix><somerandomsymbols>.smt2.gz which can be decompressed by
+ * using gunzip -d <filename>.
+ * 
+ * Use it together with {@link java.util.Timer} like this: <code>
+ * 	Timer t = new Timer();
+	t.schedule(new InputTermDumper(inputTerm, assertions, tempFilePrefix), timeInMilliSeconds);
+ * </code>
+ * 
+ * Do not forget to call <code>t.cancel()</code> if you finish the original task
+ * and no file should be dumped.
+ * 
+ * @author dietsch@informatik.uni-freiburg.de
+ *
+ */
 public class InputTermDumper extends TimerTask {
 	private final Term mInputTerm;
 	private final Term[] mAssertions;
+	private final String mPrefix;
 
-	public InputTermDumper(final Term inputTerm, final Term[] assertions) {
+	/**
+	 * Create an {@link InputTermDumper}.
+	 * 
+	 * @param inputTerm
+	 *            is the term you want to write to a file.
+	 * @param assertions
+	 *            is the current assertion stack. This may be null if you do not
+	 *            want to print the assertion stack. Get it from
+	 *            {@link Script#getAssertions()}.
+	 * @param tempFilePrefix
+	 *            is the prefix of the temporary file.
+	 */
+	public InputTermDumper(final Term inputTerm, final Term[] assertions, final String tempFilePrefix) {
 		mInputTerm = inputTerm;
 		mAssertions = assertions;
+		mPrefix = tempFilePrefix;
 	}
 
 	@Override
 	public void run() {
 
 		try {
-			final File file = File.createTempFile("simplifiedTerm", "smt2");
-			final PrintWriter printWriter = new PrintWriter(file);
+			final File file = File.createTempFile(mPrefix, ".smt2.gz");
+			final PrintWriter printWriter = new PrintWriter(new GZIPOutputStream(new FileOutputStream(file)));
 			final DeclarationAdder declAdder = new DeclarationAdder(printWriter);
 
 			printWriter.append("(set-logic ").append(mInputTerm.getTheory().getLogic().toString()).append(")")
 					.println();
 
-			for (final Term assertion : mAssertions) {
-				declAdder.transform(assertion);
-				printWriter.append("(assert ").append(assertion.toString()).append(")").println();
+			if (mAssertions != null && mAssertions.length > 0) {
+				for (final Term assertion : mAssertions) {
+					declAdder.transform(assertion);
+					printWriter.append("(assert ").append(assertion.toString()).append(")").println();
+				}
 			}
 			declAdder.transform(mInputTerm);
 			printWriter.append("(simplify ").append(mInputTerm.toString()).append(")").println();
@@ -66,6 +104,5 @@ public class InputTermDumper extends TimerTask {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-
 	}
 }
