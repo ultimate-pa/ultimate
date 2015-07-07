@@ -248,8 +248,6 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 		
 		
 		
-		InterpolantsPreconditionPostcondition ipp = 
-				new InterpolantsPreconditionPostcondition(traceChecker);
 		StateFactory<IPredicate> predicateFactory = new PredicateFactory(smtManager, taPrefs);
 		
 		NestedWordAutomaton<CodeBlock, IPredicate> nwa  = new NestedWordAutomaton<CodeBlock, IPredicate>(   services, 
@@ -261,10 +259,50 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 		// Set the initial and the final state of the automaton
 		nwa.addState(true, false, traceChecker.getPrecondition());
 		nwa.addState(false, true, traceChecker.getPostcondition());
-		// Add other states and corresponding transitions
+		boolean nwaStatesAndTransitionsAdded = false;
+		
+		if (traceChecker instanceof TraceCheckerSpWp) {
+			TraceCheckerSpWp tcSpWp = (TraceCheckerSpWp) traceChecker;
+			if (tcSpWp.forwardsPredicatesComputed() && tcSpWp.backwardsPredicatesComputed()) {
+				nwaStatesAndTransitionsAdded = true;
+				// Add states and transitions corresponding to forwards predicates
+				addStatesAndCorrespondingTransitionsFromGivenInterpolants(nwa, traceChecker.getPrecondition(), 
+						traceChecker.getPostcondition(), tcSpWp.getForwardPredicates(), trace);
+				// Add states and transitions corresponding to backwards predicates
+				addStatesAndCorrespondingTransitionsFromGivenInterpolants(nwa, traceChecker.getPrecondition(), 
+						traceChecker.getPostcondition(), tcSpWp.getBackwardPredicates(), trace);
+			}
+		}
+		
+		if (!nwaStatesAndTransitionsAdded) {
+			addStatesAndCorrespondingTransitionsFromGivenInterpolants(nwa, traceChecker.getPrecondition(), 
+					traceChecker.getPostcondition(), traceChecker.getInterpolants(), trace);
+		}
+		return nwa;
+	}
+	
+	public IPredicate getInterpolantAtPosition(int i, IPredicate precondition, IPredicate postcondition, IPredicate[] interpolants) {
+		if (i < 0) {
+			throw new AssertionError("index beyond precondition");
+		} else if (i == 0) {
+			return precondition;
+		} else if (i <= interpolants.length) {
+			return interpolants[i-1];
+		} else if (i == interpolants.length+1) {
+			return postcondition;
+		} else {
+			throw new AssertionError("index beyond postcondition");
+		}
+	}
+
+	private void addStatesAndCorrespondingTransitionsFromGivenInterpolants(
+			NestedWordAutomaton<CodeBlock, IPredicate> nwa,
+			IPredicate precondition, IPredicate postcondition,
+			IPredicate[] interpolants, NestedWord<CodeBlock> trace) {
 		for (int i=0; i<trace.length(); i++) {
-			IPredicate pred = ipp.getInterpolant(i);
-			IPredicate succ = ipp.getInterpolant(i+1);
+			IPredicate pred = getInterpolantAtPosition(i, precondition, postcondition, interpolants);
+			IPredicate succ = getInterpolantAtPosition(i+1, precondition, postcondition, interpolants);
+			
 			assert nwa.getStates().contains(pred);
 			if (!nwa.getStates().contains(succ)) {
 				nwa.addState(false, false, succ);
@@ -274,15 +312,13 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 			} else if (trace.isReturnPosition(i)) {
 				assert !trace.isPendingReturn(i);
 				int callPos = trace.getCallPosition(i);
-				IPredicate hierPred = ipp.getInterpolant(callPos);
+				IPredicate hierPred = getInterpolantAtPosition(callPos, precondition, postcondition, interpolants);
 				nwa.addReturnTransition(pred, hierPred, trace.getSymbol(i), succ);
 			} else {
 				assert trace.isInternalPosition(i);
 				nwa.addInternalTransition(pred, trace.getSymbol(i), succ);
 			}
 		}
-		
-		return nwa;
 	}
 
 	@Override

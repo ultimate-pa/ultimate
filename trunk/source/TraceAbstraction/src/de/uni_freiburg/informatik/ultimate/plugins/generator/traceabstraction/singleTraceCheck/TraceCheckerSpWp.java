@@ -157,6 +157,17 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 			return m_InterpolantsBp[i];
 		}
 	}
+	
+	public IPredicate[] getForwardPredicates() {
+		assert m_InterpolantsFp != null : "Forwards predicates has not been computed!";
+		return m_InterpolantsFp;
+	}
+
+	
+	public IPredicate[] getBackwardPredicates() {
+		assert m_InterpolantsBp != null : "Backwards predicates has not been computed!";
+		return m_InterpolantsBp;
+	}
 
 	private IPredicate getBackwardPredicateAtPosition(int i, IPredicate tracePostcondition, boolean backwardPredicate) {
 		if (i >= m_InterpolantsWp.length) {
