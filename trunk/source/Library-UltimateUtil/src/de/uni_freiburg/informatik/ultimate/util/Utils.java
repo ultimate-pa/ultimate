@@ -2,8 +2,10 @@ package de.uni_freiburg.informatik.ultimate.util;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 public class Utils {
@@ -158,6 +160,21 @@ public class Utils {
 		HashSet<E> result = new HashSet<E>();
 		for (E element : iterable) {
 			result.add(element);
+		}
+		return result;
+	}
+	
+	/**
+	 * @return a new HashMap that contains all key-value pairs of map whose
+	 * key is contained in filter.
+	 */
+	public static <K,V> HashMap<K,V> constructFilteredMap(Map<K,V> map, Collection<K> filter) {
+		HashMap<K,V> result = new HashMap<>();
+		for (K key : filter) {
+			V value = map.get(key);
+			if (value != null) {
+				result.put(key, value);
+			}
 		}
 		return result;
 	}
