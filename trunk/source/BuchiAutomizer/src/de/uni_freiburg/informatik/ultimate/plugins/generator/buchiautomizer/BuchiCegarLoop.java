@@ -266,9 +266,9 @@ public class BuchiCegarLoop {
 		switch (m_InterpolantAutomaton) {
 		case Staged:
 			m_BuchiRefinementSettingSequence.add(m_RefineBuchi.new RefinementSetting(
-					BInterpolantAutomaton.Deterministic, true, false, false, false, true, Integer.MAX_VALUE));
+					BInterpolantAutomaton.Deterministic, true, false, false, false, false, Integer.MAX_VALUE));
 			m_BuchiRefinementSettingSequence.add(m_RefineBuchi.new RefinementSetting(
-					BInterpolantAutomaton.Deterministic, true, true, false, false, true, Integer.MAX_VALUE));
+					BInterpolantAutomaton.Deterministic, true, true, false, false, false, Integer.MAX_VALUE));
 			m_BuchiRefinementSettingSequence.add(m_RefineBuchi.new RefinementSetting(
 					BInterpolantAutomaton.ScroogeNondeterminism, true, false, true, false, false, Integer.MAX_VALUE));
 			m_BuchiRefinementSettingSequence.add(m_RefineBuchi.new RefinementSetting(
@@ -294,9 +294,9 @@ public class BuchiCegarLoop {
 			break;
 		case StagedBlast:
 			m_BuchiRefinementSettingSequence.add(m_RefineBuchi.new RefinementSetting(
-					BInterpolantAutomaton.Deterministic, true, false, false, false, true, -3));
+					BInterpolantAutomaton.Deterministic, true, false, false, false, false, -3));
 			m_BuchiRefinementSettingSequence.add(m_RefineBuchi.new RefinementSetting(
-					BInterpolantAutomaton.Deterministic, true, true, false, false, true, -3));
+					BInterpolantAutomaton.Deterministic, true, true, false, false, false, -3));
 			m_BuchiRefinementSettingSequence.add(m_RefineBuchi.new RefinementSetting(
 					BInterpolantAutomaton.ScroogeNondeterminism, true, false, true, false, false, -3));
 			m_BuchiRefinementSettingSequence.add(m_RefineBuchi.new RefinementSetting(
