@@ -94,17 +94,17 @@ public class ArrayHandler {
 					pointedType);
 			result.lrVal  = new HeapLValue(address.getValue(), pointedType);
 		} else {
-			assert result.lrVal.cType instanceof CArray : "cType not instanceof CArray";
+			assert result.lrVal.cType.getUnderlyingType() instanceof CArray : "cType not instanceof CArray";
 			ArrayList<Expression> newDimensions = 
-					new ArrayList<Expression>(Arrays.asList(((CArray) result.lrVal.cType)
+					new ArrayList<Expression>(Arrays.asList(((CArray) result.lrVal.cType.getUnderlyingType())
 							.getDimensions()));
 			CType newCType = null;
 			if (newDimensions.size() == 1) {
-				newCType = ((CArray) result.lrVal.cType).getValueType();
+				newCType = ((CArray) result.lrVal.cType.getUnderlyingType()).getValueType();
 			} else {
 				newDimensions.remove(0);
 				newCType = new CArray(newDimensions.toArray(new Expression[0]), 
-						((CArray) result.lrVal.cType).getValueType()
+						((CArray) result.lrVal.cType.getUnderlyingType()).getValueType()
 						);
 			}
 
