@@ -89,9 +89,4 @@ public class SignDomainValue implements IEvaluationResult<SignDomainValue.Values
 		// In all other cases, return \bot
 		return new SignDomainValue(Values.BOTTOM);
 	}
-
-	@Override
-    public Class<Values> getType() {
-		return Values.class;
-    }
 }

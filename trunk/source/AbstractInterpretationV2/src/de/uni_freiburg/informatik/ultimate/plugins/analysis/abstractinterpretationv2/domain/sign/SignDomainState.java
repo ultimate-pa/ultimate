@@ -235,12 +235,11 @@ public class SignDomainState<ACTION, VARDECL> implements IAbstractState<ACTION, 
 	protected SignDomainState<ACTION, VARDECL> intersect(SignDomainState<ACTION, VARDECL> other) {
 		assert hasSameVariables(other);
 
-		SignDomainState<ACTION, VARDECL> newState = new SignDomainState<ACTION, VARDECL>();
+		SignDomainState<ACTION, VARDECL> newState = (SignDomainState<ACTION, VARDECL>) this.copy();
 
-		for (final Entry<String, SignDomainValue> val : mValuesMap.entrySet()) {
-			final VARDECL var = mVariablesMap.get(val.getKey());
-			newState.addVariable(val.getKey(), var);
-			newState.setValue(val.getKey(), mValuesMap.get(val.getKey()).intersect(other.mValuesMap.get(val.getKey())));
+		for (final Entry<String, VARDECL> variable : mVariablesMap.entrySet()) {
+			final String key = variable.getKey();
+			newState.setValue(key, mValuesMap.get(key).intersect(other.mValuesMap.get(key)));
 		}
 
 		return newState;
@@ -259,10 +258,4 @@ public class SignDomainState<ACTION, VARDECL> implements IAbstractState<ACTION, 
 	public SignDomainState<ACTION, VARDECL> getResult() {
 		return this;
 	}
-
-	@Override
-    public Class<SignDomainState<ACTION, VARDECL>> getType() {
-		return (Class<SignDomainState<ACTION, VARDECL>>) this.getClass();
-    }
-
 }

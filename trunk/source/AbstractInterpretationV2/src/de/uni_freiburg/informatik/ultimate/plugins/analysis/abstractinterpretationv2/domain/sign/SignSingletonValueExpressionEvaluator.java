@@ -42,7 +42,7 @@ public abstract class SignSingletonValueExpressionEvaluator<T> implements IEvalu
 	}
 
 	@Override
-	public final void addSubEvaluator(IEvaluator<?, CodeBlock, BoogieVar> evaluator) {
+	public final void addSubEvaluator(IEvaluator<Values, CodeBlock, BoogieVar> evaluator) {
 		throw new UnsupportedOperationException("A sub evaluator cannot be added to a singleton expression type.");
 	}
 

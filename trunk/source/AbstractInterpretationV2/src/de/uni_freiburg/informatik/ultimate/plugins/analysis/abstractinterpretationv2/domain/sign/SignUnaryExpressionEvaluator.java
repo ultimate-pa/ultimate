@@ -14,11 +14,11 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
 
 public class SignUnaryExpressionEvaluator implements INAryEvaluator<Values, CodeBlock, BoogieVar> {
 
-	private IEvaluator<?, ?, ?> mSubEvaluator;
+	protected IEvaluator<Values, CodeBlock, BoogieVar> mSubEvaluator;
 	private UnaryExpression.Operator mOperator;
 
 	@Override
-	public void addSubEvaluator(IEvaluator<?, CodeBlock, BoogieVar> evaluator) {
+	public void addSubEvaluator(IEvaluator<Values, CodeBlock, BoogieVar> evaluator) {
 
 		assert mSubEvaluator == null;
 		assert evaluator != null;
@@ -33,7 +33,7 @@ public class SignUnaryExpressionEvaluator implements INAryEvaluator<Values, Code
 	}
 
 	@Override
-	public IEvaluationResult<?> evaluate(IAbstractState<CodeBlock, BoogieVar> oldState) {
+	public IEvaluationResult<Values> evaluate(IAbstractState<CodeBlock, BoogieVar> oldState) {
 
 		IEvaluator<Values, CodeBlock, BoogieVar> castedSubEvaluator = (IEvaluator<Values, CodeBlock, BoogieVar>) mSubEvaluator;
 		final IEvaluationResult<Values> subEvalResult = (IEvaluationResult<Values>) castedSubEvaluator
@@ -45,11 +45,6 @@ public class SignUnaryExpressionEvaluator implements INAryEvaluator<Values, Code
 		case LOGICNEG:
 			return negateValue(subEvalResult.getResult());
 		case ARITHNEGATIVE:
-			if (!(mSubEvaluator.getType().equals(Values.class))) {
-				throw new UnsupportedOperationException("Unsupported Type of the sub evaluator: "
-				        + mSubEvaluator.getType().toString());
-			}
-
 			endResult = negateValue(subEvalResult.getResult());
 			break;
 		default:
@@ -87,10 +82,5 @@ public class SignUnaryExpressionEvaluator implements INAryEvaluator<Values, Code
 	@Override
 	public Set<String> getVarIdentifiers() {
 		return mSubEvaluator.getVarIdentifiers();
-	}
-
-	@Override
-	public Class<Values> getType() {
-		return Values.class;
 	}
 }

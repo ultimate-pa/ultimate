@@ -20,9 +20,11 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.ExpressionEvaluator;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.IEvaluationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.IEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.IEvaluatorFactory;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.ILogicalEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.INAryEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.sign.SignDomainValue.Values;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -96,11 +98,6 @@ public class SignDomainStatementProcessor extends BoogieVisitor {
 			assert mExpressionEvaluator.isFinished();
 			final IEvaluationResult<?> result = mExpressionEvaluator.getRootEvaluator().evaluate(mOldState);
 
-			if (!result.getType().equals(Values.class)) {
-				throw new UnsupportedOperationException(
-				        "The type of the assignment left hand side evaluation result is not allowed.");
-			}
-
 			final SignDomainValue newValue = new SignDomainValue((Values) result.getResult());
 			mNewState.setValue(varname, newValue);
 		}
@@ -129,25 +126,10 @@ public class SignDomainStatementProcessor extends BoogieVisitor {
 
 		processExpression(formula);
 
-		IEvaluationResult<?> result = mExpressionEvaluator.getRootEvaluator().evaluate(mOldState);
+		final IAbstractState<CodeBlock, BoogieVar> newState = ((ILogicalEvaluator<Values, CodeBlock, BoogieVar>) mExpressionEvaluator
+		        .getRootEvaluator()).logicallyInterpret(mOldState);
 
-		if (result instanceof SignDomainValue) {
-			IEvaluationResult<Values> castedResult = (IEvaluationResult<Values>) result;
-
-			// If the result is false (i.e. NEGATIVE) and we don't have any variable updates, we set the new abstract
-			// state to \bot, as we have found an infeasible statement.
-			if (castedResult.getResult().equals(Values.NEGATIVE)
-			        && mExpressionEvaluator.getRootEvaluator().getVarIdentifiers().size() == 0) {
-				mNewState.setToBottom();
-			} else {
-				for (String var : mExpressionEvaluator.getRootEvaluator().getVarIdentifiers()) {
-					// TODO: Update abstract state
-				}
-				// mNewState.intersect(other)
-				throw new UnsupportedOperationException("Hurz");
-			}
-		}
-
+		mNewState = (SignDomainState<CodeBlock, BoogieVar>) newState;
 	}
 
 	@Override
@@ -159,7 +141,7 @@ public class SignDomainStatementProcessor extends BoogieVisitor {
 
 	@Override
 	protected void visit(BinaryExpression expr) {
-		INAryEvaluator<?, CodeBlock, BoogieVar> evaluator;
+		INAryEvaluator<Values, CodeBlock, BoogieVar> evaluator;
 
 		evaluator = mEvaluatorFactory.createNAryExpressionEvaluator(2);
 

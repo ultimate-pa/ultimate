@@ -10,13 +10,11 @@ import java.util.Set;
  */
 public interface IEvaluator<T, ACTION, VARDECL> {
 
-	public IEvaluationResult<?> evaluate(IAbstractState<ACTION, VARDECL> currentState);
+	public IEvaluationResult<T> evaluate(IAbstractState<ACTION, VARDECL> currentState);
 
-	public void addSubEvaluator(IEvaluator<?, ACTION, VARDECL> evaluator);
+	public void addSubEvaluator(IEvaluator<T, ACTION, VARDECL> evaluator);
 
 	public Set<String> getVarIdentifiers();
-	
+
 	public boolean hasFreeOperands();
-	
-	public Class<T> getType();
 }

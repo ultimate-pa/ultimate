@@ -28,11 +28,6 @@ public class SignLogicalSingletonValueExpressionEvaluator extends SignSingletonV
 	}
 
 	@Override
-	public Class<Values> getType() {
-		return Values.class;
-	}
-
-	@Override
 	public IEvaluationResult<Values> evaluate(IAbstractState<CodeBlock, BoogieVar> currentState) {
 		if (mValue) {
 			return new SignDomainValue(Values.POSITIVE);

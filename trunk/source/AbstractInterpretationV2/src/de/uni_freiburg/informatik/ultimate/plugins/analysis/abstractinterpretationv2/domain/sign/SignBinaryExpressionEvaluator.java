@@ -14,9 +14,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
 
 public class SignBinaryExpressionEvaluator implements INAryEvaluator<Values, CodeBlock, BoogieVar> {
 
-	private IEvaluator<?, CodeBlock, BoogieVar> mLeftSubEvaluator;
-	private IEvaluator<?, CodeBlock, BoogieVar> mRightSubEvaluator;
-	private BinaryExpression.Operator mOperator;
+	protected IEvaluator<Values, CodeBlock, BoogieVar> mLeftSubEvaluator;
+	protected IEvaluator<Values, CodeBlock, BoogieVar> mRightSubEvaluator;
+	protected BinaryExpression.Operator mOperator;
 	protected Set<String> mVariableSet;
 
 	public SignBinaryExpressionEvaluator() {
@@ -257,7 +257,7 @@ public class SignBinaryExpressionEvaluator implements INAryEvaluator<Values, Cod
 	 * Adds a subevaluator to {@link this} if possible.
 	 */
 	@Override
-	public void addSubEvaluator(IEvaluator<?, CodeBlock, BoogieVar> evaluator) {
+	public void addSubEvaluator(IEvaluator<Values, CodeBlock, BoogieVar> evaluator) {
 		if (mLeftSubEvaluator != null && mRightSubEvaluator != null) {
 			throw new UnsupportedOperationException("There are no free sub evaluators left to be assigned.");
 		}
@@ -308,10 +308,5 @@ public class SignBinaryExpressionEvaluator implements INAryEvaluator<Values, Cod
 	@Override
 	public Set<String> getVarIdentifiers() {
 		return mVariableSet;
-	}
-
-	@Override
-	public Class<Values> getType() {
-		return Values.class;
 	}
 }

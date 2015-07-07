@@ -43,11 +43,11 @@ public class SignLogicalEvaluatorFactory implements IEvaluatorFactory<Values, Co
 	        Class<?> valueType) {
 
 		if (valueType.equals(BigInteger.class)) {
-			return new SignSingletonIntegerExpressionEvaluator(value);
+			return new SignLogicalSingletonIntegerExpressionEvaluator(value);
 		}
 
 		if (valueType.equals(BigDecimal.class)) {
-			return new SignSingletonDecimalExpressionEvaluator(value);
+			return new SignLogicalSingletonDecimalExpressionEvaluator(value);
 		}
 
 		if (valueType.equals(Boolean.class)) {

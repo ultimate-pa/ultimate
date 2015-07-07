@@ -7,19 +7,27 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
 /**
- * Represents a logical unary expression evaluator in the {@link SignDomain} that exposes the method
- * {@link #logicallyInterpret(IAbstractState)} to return an abstract state when dealing with {@link ILogicalEvaluator}s.
+ * Representation of a logical singleton expression evaluator for decimal values of the {@link SignDomain}.
  * 
  * @author greitsch@informatik.uni-freiburg.de
  *
  */
-public class SignLogicalUnaryExpressionEvaluator extends SignUnaryExpressionEvaluator implements
+public class SignLogicalSingletonDecimalExpressionEvaluator extends SignSingletonDecimalExpressionEvaluator implements
         ILogicalEvaluator<Values, CodeBlock, BoogieVar> {
+
+	public SignLogicalSingletonDecimalExpressionEvaluator(String value) {
+		super(value);
+	}
+
+	@Override
+	public void setOperator(Object operator) {
+		throw new UnsupportedOperationException(
+		        "Setting an operator fo a singleton decimal expression evaluator is not permitted.");
+	}
 
 	@Override
 	public IAbstractState<CodeBlock, BoogieVar> logicallyInterpret(IAbstractState<CodeBlock, BoogieVar> currentState) {
-		final ILogicalEvaluator<Values, CodeBlock, BoogieVar> castedEvaluator = (ILogicalEvaluator<Values, CodeBlock, BoogieVar>) mSubEvaluator;
-		return castedEvaluator.logicallyInterpret(currentState);
+		return currentState.copy();
 	}
 
 }

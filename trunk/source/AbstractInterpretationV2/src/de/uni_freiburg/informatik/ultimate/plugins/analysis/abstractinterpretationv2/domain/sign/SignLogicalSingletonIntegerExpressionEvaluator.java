@@ -7,19 +7,27 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
 /**
- * Represents a logical unary expression evaluator in the {@link SignDomain} that exposes the method
- * {@link #logicallyInterpret(IAbstractState)} to return an abstract state when dealing with {@link ILogicalEvaluator}s.
+ * Representation of a logical singleton expression evaluator for integer values of the {@link SignDomain}.
  * 
  * @author greitsch@informatik.uni-freiburg.de
  *
  */
-public class SignLogicalUnaryExpressionEvaluator extends SignUnaryExpressionEvaluator implements
+public class SignLogicalSingletonIntegerExpressionEvaluator extends SignSingletonIntegerExpressionEvaluator implements
         ILogicalEvaluator<Values, CodeBlock, BoogieVar> {
+
+	protected SignLogicalSingletonIntegerExpressionEvaluator(String value) {
+		super(value);
+	}
+
+	@Override
+	public void setOperator(Object operator) {
+		throw new UnsupportedOperationException(
+		        "Setting the operator on an integer expression evaluator is not permitted.");
+	}
 
 	@Override
 	public IAbstractState<CodeBlock, BoogieVar> logicallyInterpret(IAbstractState<CodeBlock, BoogieVar> currentState) {
-		final ILogicalEvaluator<Values, CodeBlock, BoogieVar> castedEvaluator = (ILogicalEvaluator<Values, CodeBlock, BoogieVar>) mSubEvaluator;
-		return castedEvaluator.logicallyInterpret(currentState);
+		return currentState.copy();
 	}
 
 }

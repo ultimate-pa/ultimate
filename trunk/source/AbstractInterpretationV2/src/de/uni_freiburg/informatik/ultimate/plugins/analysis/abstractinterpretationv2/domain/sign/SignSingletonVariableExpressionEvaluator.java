@@ -11,8 +11,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
 /**
- * Represents an expression that consists of a single variable in the
- * {@link SignDomain}.
+ * Represents an expression that consists of a single variable in the {@link SignDomain}.
  * 
  * @author greitsch@informatik.uni-freiburg.de
  *
@@ -31,7 +30,7 @@ public class SignSingletonVariableExpressionEvaluator implements IEvaluator<Valu
 	}
 
 	@Override
-	public final void addSubEvaluator(IEvaluator<?, CodeBlock, BoogieVar> evaluator) {
+	public final void addSubEvaluator(IEvaluator<Values, CodeBlock, BoogieVar> evaluator) {
 		throw new UnsupportedOperationException("A sub evaluator cannot be added to a singleton expression type.");
 	}
 
@@ -59,9 +58,4 @@ public class SignSingletonVariableExpressionEvaluator implements IEvaluator<Valu
 	public Set<String> getVarIdentifiers() {
 		return mVariableSet;
 	}
-
-	@Override
-    public Class<Values> getType() {
-	    return Values.class;
-    }
 }

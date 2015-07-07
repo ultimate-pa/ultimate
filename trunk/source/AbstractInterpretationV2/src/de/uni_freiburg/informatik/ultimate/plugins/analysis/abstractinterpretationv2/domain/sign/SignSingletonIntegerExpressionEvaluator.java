@@ -1,7 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.sign;
 
 import java.math.BigInteger;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.sign.SignDomainValue.Values;
 
 /**
  * Represents a single integer expression in the {@link SignDomain}.
@@ -9,9 +8,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  * @author greitsch@informatik.uni-freiburg.de
  *
  */
-public final class SignSingletonIntegerExpressionEvaluator extends SignSingletonValueExpressionEvaluator<BigInteger> {
+public class SignSingletonIntegerExpressionEvaluator extends SignSingletonValueExpressionEvaluator<BigInteger> {
 
-	public SignSingletonIntegerExpressionEvaluator(String value) {
+	protected SignSingletonIntegerExpressionEvaluator(String value) {
 		super(value);
 	}
 
@@ -27,13 +26,7 @@ public final class SignSingletonIntegerExpressionEvaluator extends SignSingleton
 	}
 
 	@Override
-	protected int getSignum() {
+	protected final int getSignum() {
 		return mValue.signum();
 	}
-
-	@Override
-	public Class<Values> getType() {
-		return Values.class;
-	}
-
 }
