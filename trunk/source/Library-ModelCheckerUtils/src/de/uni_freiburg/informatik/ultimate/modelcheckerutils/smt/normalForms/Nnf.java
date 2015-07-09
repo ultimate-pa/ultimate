@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -35,6 +36,7 @@ import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.boogie.preprocessor.Activator;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.logic.AnnotatedTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
@@ -195,8 +197,10 @@ public class Nnf {
 				// to a term whose function symbol is neither "and" nor "or"
 				convert(newBody);
 				return;
-			} else {
-				throw new UnsupportedOperationException("Unsupported " + term.getClass());
+			} else if (term instanceof AnnotatedTerm) {
+				m_Logger.warn("thrown away annotations " + 
+						Arrays.toString(((AnnotatedTerm) term).getAnnotations()));
+				convert(((AnnotatedTerm) term).getSubterm());
 			}
 		}
 
