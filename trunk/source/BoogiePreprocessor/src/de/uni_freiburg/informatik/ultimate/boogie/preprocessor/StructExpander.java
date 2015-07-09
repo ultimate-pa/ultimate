@@ -15,6 +15,7 @@ import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
 import de.uni_freiburg.informatik.ultimate.boogie.type.ArrayType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.ConstructedType;
+import de.uni_freiburg.informatik.ultimate.boogie.type.PlaceholderType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.StructType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.TypeConstructor;
@@ -278,6 +279,8 @@ public class StructExpander extends BoogieTransformer implements IUnmanagedObser
 			String[] names = allNames.toArray(new String[allNames.size()]);
 			BoogieType[] types = allTypes.toArray(new BoogieType[allTypes.size()]);
 			result = BoogieType.createStructType(names, types);
+		} else if (type instanceof PlaceholderType) {
+			result = type;
 		} else {
 			throw new AssertionError("Unknown ASTType " + type);
 		}
