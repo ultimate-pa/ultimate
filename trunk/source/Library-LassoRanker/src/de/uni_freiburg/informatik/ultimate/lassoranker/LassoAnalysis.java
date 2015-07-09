@@ -373,13 +373,14 @@ public class LassoAnalysis {
 	 *         or null if at least one component does not have one
 	 * @throws IOException 
 	 */
-	public List<NonTerminationArgument> checkNonTermination(
+	public NonTerminationArgument checkNonTermination(
 			NonTerminationAnalysisSettings settings) throws SMTLIBException,
 			TermException, IOException {
 		m_Logger.info("Checking for nontermination...");
 		
 		List<NonTerminationArgument> ntas
 			= new ArrayList<NonTerminationArgument>(m_lassos_nt.size());
+		assert m_lassos_nt.size() > 0;
 		for (Lasso lasso : m_lassos_nt) {
 			NonTerminationArgumentSynthesizer nas =
 					new NonTerminationArgumentSynthesizer(lasso, m_preferences,
@@ -398,7 +399,14 @@ public class LassoAnalysis {
 				return null;
 			}
 		}
-		return ntas;
+		
+		// Join nontermination arguments
+		assert ntas.size() > 0;
+		NonTerminationArgument nta = ntas.get(0);
+		for (int i = 1; i < ntas.size(); ++i) {
+			nta.join(ntas.get(i));
+		}
+		return nta;
 	}
 
 	/**

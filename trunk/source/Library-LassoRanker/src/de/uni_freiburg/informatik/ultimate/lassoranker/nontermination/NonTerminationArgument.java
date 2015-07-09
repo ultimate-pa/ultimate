@@ -49,15 +49,20 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Term2Express
  * <ul>
  * <li> an initial state at the begin of the lasso,
  * <li> a state at first visit of the honda,
- * <li> a ray of the loop's transition polyhedron, and
- * <li> a discount factor lambda.
+ * <li> a list of rays of the loop's transition polyhedron, and
+ * <li> a list of discount factors.
  * </ul>
  * 
  * The infinite execution described by this nontermination argument is
  * 
- * state_init, state_honda,
- * state_honda + ray, state_honda + (1 + lambda) ray,
- * state_honda + (1 + lambda + lambda^2) ray, ...
+ * <pre>
+ * state_init,
+ * state_honda,
+ * state_honda + ray_1 + ... + ray_n,
+ * state_honda + (1 + lambda_1) ray_1 + ... + (1 + lambda_n) ray_n,
+ * state_honda + (1 + lambda_1 + lambda_1^2) ray_1 + ... + (1 + lambda_n + lambda_n^2) ray_n,
+ * ...
+ * </pre>
  * 
  * @author Jan Leike
  */
@@ -66,35 +71,70 @@ public class NonTerminationArgument implements Serializable {
 	
 	private final Map<RankVar, Rational> m_StateInit;
 	private final Map<RankVar, Rational> m_StateHonda;
-	private final Map<RankVar, Rational> m_Ray;
-	private final Rational m_Lambda;
+	private final List<Map<RankVar, Rational>> m_Rays;
+	private final List<Rational> m_Lambdas;
 	
 	/**
 	 * Construct a non-termination argument
 	 * 
 	 * The infinite execution described by this nontermination argument is
 	 * 
-	 * state_init, state_honda,
-	 * state_honda + ray, state_honda + (1 + lambda) ray,
-	 * state_honda + (1 + lambda + lambda^2) ray, ...
+	 * <pre>
+	 * state_init,
+	 * state_honda,
+	 * state_honda + ray_1 + ... + ray_n,
+	 * state_honda + (1 + lambda_1) ray_1 + ... + (1 + lambda_n) ray_n,
+	 * state_honda + (1 + lambda_1 + lambda_1^2) ray_1 + ... + (1 + lambda_n + lambda_n^2) ray_n,
+	 * ...
+	 * </pre>
 	 * 
 	 * @param state_init initial state
 	 * @param state_honda state at the lasso's honda
-	 * @param ray ray of the lasso's polyhedron
-	 * @param lambda discount factor
+	 * @param rays rays of the lasso's polyhedron
+	 * @param lambdas discount factors
 	 */
 	public NonTerminationArgument(Map<RankVar, Rational> state_init,
 			Map<RankVar, Rational> state_honda,
-			Map<RankVar, Rational> ray,
-			Rational lambda) {
+			List<Map<RankVar, Rational>> rays,
+			List<Rational> lambdas) {
 		assert(state_init != null);
 		m_StateInit = state_init;
 		assert(state_honda != null);
 		m_StateHonda = state_honda;
-		assert(lambda != null);
-		m_Lambda = lambda;
-		assert(ray != null);
-		m_Ray = ray;
+		assert(lambdas != null);
+		m_Lambdas = lambdas;
+		assert(rays != null);
+		m_Rays = rays;
+		assert rays.size() == lambdas.size();
+	}
+	
+	/**
+	 * Join the infinite execution of this nontermination argument with
+	 * another nontermination argument.
+	 * Variables that occur in both nontermination arguments but be assigned
+	 * to the same values.
+	 * 
+	 * This method is used to combine separate arguments that are found
+	 * after lasso partitioning.
+	 */
+	public void join(NonTerminationArgument other) {
+		// Check for compatibility
+		for (RankVar rankVar : m_StateInit.keySet()) {
+			if (other.m_StateInit.containsKey(rankVar)) {
+				assert m_StateInit.get(rankVar).equals(
+						other.m_StateInit.get(rankVar));
+			}
+		}
+		for (RankVar rankVar : m_StateHonda.keySet()) {
+			if (other.m_StateHonda.containsKey(rankVar)) {
+				assert m_StateHonda.get(rankVar).equals(
+						other.m_StateHonda.get(rankVar));
+			}
+		}
+		m_StateInit.putAll(other.m_StateInit);
+		m_StateHonda.putAll(other.m_StateHonda);
+		m_Rays.addAll(other.m_Rays);
+		m_Lambdas.addAll(other.m_Lambdas);
 	}
 	
 	/**
@@ -112,10 +152,30 @@ public class NonTerminationArgument implements Serializable {
 	}
 	
 	/**
-	 * @return the ray of the loop's transition polyhedron 
+	 * @return the number of rays
 	 */
-	public Map<RankVar, Rational> getRay() {
-		return Collections.unmodifiableMap(m_Ray);
+	public int getNumberOfRays() {
+		return m_Rays.size();
+	}
+	
+	/**
+	 * @return the rays of the loop's transition polyhedron 
+	 */
+	public List<Map<RankVar, Rational>> getRays() {
+		// Make unmodifiable view
+		List<Map<RankVar, Rational>> rays =
+				new ArrayList<Map<RankVar, Rational>>();
+		for (Map<RankVar, Rational> ray : m_Rays) {
+			rays.add(Collections.unmodifiableMap(ray));
+		}
+		return Collections.unmodifiableList(rays);
+	}
+	
+	/**
+	 * @return the multiplicative factor lambda
+	 */
+	public List<Rational> getLambdas() {
+		return Collections.unmodifiableList(m_Lambdas);
 	}
 	
 	/**
@@ -128,18 +188,17 @@ public class NonTerminationArgument implements Serializable {
 	 * Ensures that RankVars that are defined by equivalent terms translated 
 	 * to the same Expression object. 
 	 */
-	@SafeVarargs
 	public static List<Map<Expression, Rational>> rank2Boogie(
 			Term2Expression term2expression,
-			Map<RankVar, Rational>... states) {
+			List<Map<RankVar, Rational>> states) {
 		List<Map<Expression, Rational>> result =
-				new ArrayList<Map<Expression, Rational>>(states.length);
+				new ArrayList<Map<Expression, Rational>>(states.size());
 		Map<Term, Expression> rankVar2Expression =
 				new HashMap<Term, Expression>();
-		for (int i=0; i<states.length; i++) {
+		for (Map<RankVar, Rational> state : states) {
 			Map<Expression, Rational> expression2rational =
 					new LinkedHashMap<Expression, Rational>();
-			for (Map.Entry<RankVar, Rational> entry : states[i].entrySet()) {
+			for (Map.Entry<RankVar, Rational> entry : state.entrySet()) {
 				RankVar rv = entry.getKey();
 				Expression e;
 				if (rankVar2Expression.containsKey(rv.getDefinition())) {
@@ -168,16 +227,9 @@ public class NonTerminationArgument implements Serializable {
 	 * Translate a RankVar into a (Boogie) Expression. The Expression is the
 	 * (unique) Expression that represents the definition of the RankVar.
 	 */
-	public static Expression rankVar2Expression(RankVar rv, 
+	private static Expression rankVar2Expression(RankVar rv, 
 			Term2Expression term2expression) {
 		return term2expression.translate(rv.getDefinition());
-	}
-	
-	/**
-	 * @return the multiplicative factor lambda
-	 */
-	public Rational getLambda() {
-		return m_Lambda;
 	}
 	
 	public String toString() {
@@ -187,15 +239,10 @@ public class NonTerminationArgument implements Serializable {
 		sb.append(m_StateInit);
 		sb.append("\nHonda state: ");
 		sb.append(m_StateHonda);
-		sb.append("\nRay: ");
-		sb.append(m_Ray);
-		sb.append("\nLambda: ");
-		sb.append(m_Lambda);
+		sb.append("\nRays: ");
+		sb.append(m_Rays);
+		sb.append("\nLambdas: ");
+		sb.append(m_Lambdas);
 		return sb.toString();
 	}
-	
-//	public Expression asRecurrentSet() {
-//		// TODO: { state1, state1 + ray, state1 + (1 + lambda)*ray, ... }
-//		return null;
-//	}
 }

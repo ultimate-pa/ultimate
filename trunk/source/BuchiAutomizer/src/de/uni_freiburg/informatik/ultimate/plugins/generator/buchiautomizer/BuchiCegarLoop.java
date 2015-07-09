@@ -23,13 +23,11 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.BuchiClosureNwa;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.BuchiDifferenceFKV;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.BuchiIsEmpty;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.NestedLassoRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Accepts;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Difference;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.PowersetDeterminizer;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.RemoveDeadEnds;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.RemoveNonLiveStates;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.MinimizeSevpa;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
@@ -188,7 +186,7 @@ public class BuchiCegarLoop {
 	private final RefineBuchi m_RefineBuchi;
 	private final List<RefineBuchi.RefinementSetting> m_BuchiRefinementSettingSequence;
 
-	private List<NonTerminationArgument> m_NonterminationArguments;
+	private NonTerminationArgument m_NonterminationArgument;
 
 	private final IUltimateServiceProvider m_Services;
 
@@ -200,8 +198,8 @@ public class BuchiCegarLoop {
 		return m_ToolchainCancelledException;
 	}
 
-	public List<NonTerminationArgument> getNonTerminationArguments() {
-		return m_NonterminationArguments;
+	public NonTerminationArgument getNonTerminationArgument() {
+		return m_NonterminationArgument;
 	}
 
 	public BuchiCegarLoop(RootNode rootNode, SmtManager smtManager, TAPreferences taPrefs,
@@ -483,7 +481,7 @@ public class BuchiCegarLoop {
 						m_BenchmarkGenerator.setResult(Result.UNKNOWN);
 						return Result.UNKNOWN;
 					}
-					m_NonterminationArguments = lassoChecker.getNonTerminationArguments();
+					m_NonterminationArgument = lassoChecker.getNonTerminationArgument();
 					m_MDBenchmark.reportRemainderModule(m_Abstraction.size(), true);
 					if (m_ConstructTermcompProof) {
 						m_TermcompProofBenchmark.reportRemainderModule(true);

@@ -38,10 +38,12 @@ public class PreferencesInitializer extends UltimatePreferenceInitializer {
 	/*
 	 * Preferences Labels
 	 */
-	public static final String LABEL_termination_analysis =
-			"Termination analysis";
 	public static final String LABEL_nontermination_analysis =
 			"Nontermination analysis";
+	public static final String LABEL_nontermination_number_rays =
+			"Number of rays";
+	public static final String LABEL_termination_analysis =
+			"Termination analysis";
 	public static final String LABEL_num_strict_invariants =
 			"Number of strict supporting invariants";
 	public static final String LABEL_num_non_strict_invariants =
@@ -99,13 +101,17 @@ public class PreferencesInitializer extends UltimatePreferenceInitializer {
 				new NonTerminationAnalysisSettings();
 		return new UltimatePreferenceItem<?>[] {
 				new UltimatePreferenceItem<AnalysisType>(
-						LABEL_termination_analysis,
-						termination_settings.analysis,
-						PreferenceType.Combo,
-						AnalysisType.allChoices()),
-				new UltimatePreferenceItem<AnalysisType>(
 						LABEL_nontermination_analysis,
 						nontermination_settings.analysis,
+						PreferenceType.Combo,
+						AnalysisType.allChoices()),
+				new UltimatePreferenceItem<Integer>(
+						LABEL_nontermination_number_rays,
+						nontermination_settings.number_of_rays,
+						PreferenceType.Integer),
+				new UltimatePreferenceItem<AnalysisType>(
+						LABEL_termination_analysis,
+						termination_settings.analysis,
 						PreferenceType.Combo,
 						AnalysisType.allChoices()),
 				new UltimatePreferenceItem<Integer>(
@@ -277,6 +283,8 @@ public class PreferencesInitializer extends UltimatePreferenceInitializer {
 		settings.analysis =
 				store.getEnum(LABEL_nontermination_analysis,
 						AnalysisType.class);
+		settings.number_of_rays =
+				store.getInt(LABEL_nontermination_number_rays);
 		return settings;
 	}
 	

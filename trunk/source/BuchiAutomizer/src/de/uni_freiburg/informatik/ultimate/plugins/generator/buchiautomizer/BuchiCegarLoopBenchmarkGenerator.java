@@ -141,7 +141,7 @@ public class BuchiCegarLoopBenchmarkGenerator extends CegarLoopBenchmarkGenerato
 			assert lcr.getStemFeasibility() != TraceCheckResult.INFEASIBLE;
 			assert lcr.getLoopFeasibility() != TraceCheckResult.INFEASIBLE;
 			assert lcr.getConcatFeasibility() != TraceCheckResult.INFEASIBLE;
-			assert lassoChecker.getNonTerminationArguments() != null;
+			assert lassoChecker.getNonTerminationArgument() != null;
 			assert !lassoChecker.getBinaryStatePredicateManager().providesPredicates();
 			m_LassoAnalysisResults.increment(LassoAnalysisResults.s_LassoNonterminating);
 			break;
@@ -149,7 +149,7 @@ public class BuchiCegarLoopBenchmarkGenerator extends CegarLoopBenchmarkGenerato
 			assert lcr.getStemFeasibility() != TraceCheckResult.INFEASIBLE;
 			assert lcr.getLoopFeasibility() != TraceCheckResult.INFEASIBLE;
 			assert lcr.getConcatFeasibility() != TraceCheckResult.INFEASIBLE;
-			assert lassoChecker.getNonTerminationArguments() == null;
+			assert lassoChecker.getNonTerminationArgument() == null;
 			assert !lassoChecker.getBinaryStatePredicateManager().providesPredicates();
 			m_LassoAnalysisResults.increment(LassoAnalysisResults.s_TerminationUnknown);
 			break;

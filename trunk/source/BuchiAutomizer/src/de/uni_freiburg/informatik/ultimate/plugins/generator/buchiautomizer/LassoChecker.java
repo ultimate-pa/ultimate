@@ -157,7 +157,7 @@ public class LassoChecker {
 
 
 
-	private List<NonTerminationArgument> m_NonterminationArguments;
+	private NonTerminationArgument m_NonterminationArgument;
 
 	Collection<Term> m_Axioms;
 	private final IUltimateServiceProvider mServices;
@@ -197,8 +197,8 @@ public class LassoChecker {
 		return m_Bspm;
 	}
 
-	public List<NonTerminationArgument> getNonTerminationArguments() {
-		return m_NonterminationArguments;
+	public NonTerminationArgument getNonTerminationArgument() {
+		return m_NonterminationArgument;
 	}
 	
 	public List<PreprocessingBenchmark> getPreprocessingBenchmarks() {
@@ -612,7 +612,7 @@ public class LassoChecker {
 		// }
 
 		LassoAnalysis la = null;
-		List<NonTerminationArgument> nonTermArguments = null;
+		NonTerminationArgument nonTermArgument = null;
 		if (!(s_AvoidNonterminationCheckIfArraysAreContained && containsArrays)) {
 			try {
 				boolean overapproximateArrayIndexConnection = false;
@@ -626,7 +626,7 @@ public class LassoChecker {
 			}
 			try {
 				NonTerminationAnalysisSettings settings = constructNTASettings();
-				nonTermArguments = la.checkNonTermination(settings);
+				nonTermArgument = la.checkNonTermination(settings);
 			} catch (SMTLIBException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -637,9 +637,9 @@ public class LassoChecker {
 				throw new AssertionError("TermException " + e);
 			}
 			if (withStem) {
-				m_NonterminationArguments = nonTermArguments;
+				m_NonterminationArgument = nonTermArgument;
 			}
-			if (!s_CheckTerminationEvenIfNonterminating && nonTermArguments != null) {
+			if (!s_CheckTerminationEvenIfNonterminating && nonTermArgument != null) {
 				return SynthesisResult.NONTERMINATING;
 			}
 		}
@@ -698,10 +698,10 @@ public class LassoChecker {
 		}
 
 		TerminationArgument termArg = tryTemplatesAndComputePredicates(withStem, la, rankingFunctionTemplates, stemTF, loopTF);
-		assert (nonTermArguments == null || termArg == null) : " terminating and nonterminating";
+		assert (nonTermArgument == null || termArg == null) : " terminating and nonterminating";
 		if (termArg != null) {
 			return SynthesisResult.TERMINATING;
-		} else if (nonTermArguments != null) {
+		} else if (nonTermArgument != null) {
 			return SynthesisResult.NONTERMINATING;
 		} else {
 			return SynthesisResult.UNKNOWN;

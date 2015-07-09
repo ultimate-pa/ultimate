@@ -15,8 +15,14 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
  * 
  * The infinite execution described by this nontermination argument is
  * 
- * state_init, state_honda, state_honda + ray, state_honda + (1 + lambda) ray,
- * state_honda + (1 + lambda + lambda^2) ray, ...
+ * <pre>
+ * state_init,
+ * state_honda,
+ * state_honda + ray_1 + ... + ray_n,
+ * state_honda + (1 + lambda_1) ray_1 + ... + (1 + lambda_n) ray_n,
+ * state_honda + (1 + lambda_1 + lambda_1^2) ray_1 + ... + (1 + lambda_n + lambda_n^2) ray_n,
+ * ...
+ * </pre>
  * 
  * This implementation nontermination argument is highly tailored to the
  * nontermination arguments that the LassoRanker plugin discovers and is
@@ -26,8 +32,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
  * of a nontermination argument.
  * 
  * @author Jan Leike
- * @param <P>
- *            program position class
+ * @param <P> program position class
  */
 public class NonTerminationArgumentResult<P extends IElement> extends AbstractResultAtElement<P> implements IResult {
 	/**
@@ -37,8 +42,8 @@ public class NonTerminationArgumentResult<P extends IElement> extends AbstractRe
 
 	private final Map<Expression, Rational> m_StateInit;
 	private final Map<Expression, Rational> m_StateHonda;
-	private final Map<Expression, Rational> m_Ray;
-	private final Map<Expression, Rational> m_Lambdas;
+	private final List<Map<Expression, Rational>> m_Rays;
+	private final List<Rational> m_Lambdas;
 
 	private final boolean m_AlternativeLongDescription = !false;
 
@@ -64,14 +69,15 @@ public class NonTerminationArgumentResult<P extends IElement> extends AbstractRe
 	public NonTerminationArgumentResult(P position, String plugin,
 			Map<Expression, Rational> state_init,
 			Map<Expression, Rational> state_honda,
-			Map<Expression, Rational> ray,
-			Map<Expression, Rational> lambdas,
+			List<Map<Expression, Rational>> rays,
+			List<Rational> lambdas,
 			IBacktranslationService translatorSequence) {
 		super(position, plugin, translatorSequence);
 		this.m_StateInit = state_init;
 		this.m_StateHonda = state_honda;
-		this.m_Ray = ray;
+		this.m_Rays = rays;
 		this.m_Lambdas = lambdas;
+		assert m_Rays.size() == m_Lambdas.size();
 	}
 
 	@Override
@@ -119,19 +125,26 @@ public class NonTerminationArgumentResult<P extends IElement> extends AbstractRe
 		sb.append("Nontermination argument in form of an infinite execution\n");
 		sb.append(m_StateInit);
 		assert (s_schematic_execution_length > 0);
-		Map<Expression, Rational> geometric_sum =
-				new HashMap<Expression, Rational>(); // 1 + lambda + lambda^2 + ...
-		for (Expression var : m_StateHonda.keySet()) {
-			geometric_sum.put(var, Rational.ZERO);
+		Rational[] geometric_sum =
+				new Rational[m_Lambdas.size()]; // 1 + lambda + lambda^2 + ...
+		for (int i = 0; i < m_Lambdas.size(); ++i) {
+			geometric_sum[i] = Rational.ZERO;
 		}
-		for (int i = 0; i < s_schematic_execution_length; ++i) {
+		for (int j = 0; j < s_schematic_execution_length; ++j) {
 			Map<Expression, String> state = new HashMap<Expression, String>();
 			for (Expression var : m_StateHonda.keySet()) {
 				Rational x = m_StateHonda.get(var);
-				Rational y = m_Ray.get(var);
-				state.put(var, x.add(y.mul(geometric_sum.get(var))).toString());
-				geometric_sum.put(var,
-						geometric_sum.get(var).mul(m_Lambdas.get(var)).add(Rational.ONE));
+				for (int i = 0; i < m_Rays.size(); ++i) {
+					Rational y = m_Rays.get(i).get(var);
+					Rational lambda = m_Lambdas.get(i);
+					if (y != null) {
+						x = x.add(y.mul(geometric_sum[i]));
+					}
+				}
+				state.put(var, x.toString());
+			}
+			for (int i = 0; i < m_Rays.size(); ++i) {
+				geometric_sum[i] = geometric_sum[i].mul(m_Lambdas.get(i)).add(Rational.ONE);
 			}
 			sb.append("\n");
 			sb.append(printState(state));
@@ -162,15 +175,15 @@ public class NonTerminationArgumentResult<P extends IElement> extends AbstractRe
 		Map<Expression, String> statePosI = new HashMap<Expression, String>();
 		for (Expression var : m_StateHonda.keySet()) {
 			Rational x = m_StateHonda.get(var);
-			Rational y = m_Ray.get(var);
-			String value;
-			if (y.equals(Rational.ZERO)) {
-				value = x.toString();
-			} else {
-				if (m_Lambdas.get(var).equals(Rational.ONE)) {
-					value = x + " + " + "i * " + y;
-				} else {
-					value = x + " + " + geometric(var) + " * " + y;
+			String value = x.toString();
+			for (int i = 0; i < m_Lambdas.size(); ++i) {
+				Rational y = m_Rays.get(i).get(var);
+				if (y != null && !y.equals(Rational.ZERO)) {
+					if (m_Lambdas.get(i).equals(Rational.ONE)) {
+						value += " + " + "i * " + y;
+					} else {
+						value += " + " + geometric(i) + " * " + y;
+					}
 				}
 			}
 			statePosI.put(var, value);
@@ -179,12 +192,12 @@ public class NonTerminationArgumentResult<P extends IElement> extends AbstractRe
 		return sb.toString();
 	}
 
-	private String geometric(Expression var) {
+	private String geometric(int i) {
 		StringBuilder sb = new StringBuilder();
 		sb.append("(");
-		sb.append(m_Lambdas.get(var));
+		sb.append(m_Lambdas.get(i));
 		sb.append("^(i+1)-1)/(");
-		sb.append(m_Lambdas.get(var));
+		sb.append(m_Lambdas.get(i));
 		sb.append("-1)");
 		return sb.toString();
 	}

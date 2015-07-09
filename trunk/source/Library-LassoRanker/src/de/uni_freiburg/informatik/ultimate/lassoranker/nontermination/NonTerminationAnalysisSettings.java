@@ -57,6 +57,8 @@ public class NonTerminationAnalysisSettings implements Serializable {
 	 */
 	public boolean allowBounded = true;
 	
+	public int number_of_rays = 1;
+	
 	/*
 	 * As this point there is not much here, but there might be in the future.
 	 */
@@ -72,6 +74,8 @@ public class NonTerminationAnalysisSettings implements Serializable {
 	 */
 	public NonTerminationAnalysisSettings(NonTerminationAnalysisSettings other) {
 		this.analysis = other.analysis;
+		this.allowBounded = other.allowBounded;
+		this.number_of_rays = other.number_of_rays;
 	}
 	
 	/**
@@ -79,7 +83,7 @@ public class NonTerminationAnalysisSettings implements Serializable {
 	 * Only makes assertion calls.
 	 */
 	public void checkSanity() {
-		// nothing to do
+		assert this.number_of_rays >= 0;
 	}
 	
 	/**
@@ -91,6 +95,8 @@ public class NonTerminationAnalysisSettings implements Serializable {
 		sb.append(this.analysis);
 		sb.append("\nAllow bounded executions: ");
 		sb.append(this.allowBounded);
+		sb.append("\nNumber of rays: ");
+		sb.append(this.number_of_rays);
 		return sb.toString();
 	}
 }

@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -37,6 +36,7 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.termination.templates.Nes
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.templates.ParallelTemplate;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.templates.PiecewiseTemplate;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.templates.RankingTemplate;
+import de.uni_freiburg.informatik.ultimate.lassoranker.variables.RankVar;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -152,7 +152,7 @@ public class LassoRankerStarter {
 				.getNonTerminationAnalysisSettings();
 		if (nontermination_settings.analysis != AnalysisType.Disabled) {
 			try {
-				List<NonTerminationArgument> nta =
+				NonTerminationArgument nta =
 						la.checkNonTermination(nontermination_settings);
 				if (nta != null) {
 					if (lassoWasOverapproximated()) {
@@ -386,42 +386,25 @@ public class LassoRankerStarter {
 	 * 
 	 * @param arg
 	 */
-	private void reportNonTerminationResult(List<NonTerminationArgument> ntas) {
+	private void reportNonTerminationResult(NonTerminationArgument nta) {
 		// TODO: translate also the rational coefficients to Expressions?
 		// m_RootAnnot.getBoogie2Smt().translate(term)
 		Term2Expression term2expression = m_RootAnnot.getBoogie2SMT().getTerm2Expression();
 		
-		assert ntas.size() > 0;
-		List<Map<Expression, Rational>> initHondaRay =
-				NonTerminationArgument.rank2Boogie(term2expression,
-				ntas.get(0).getStateInit(), ntas.get(0).getStateHonda(),
-				ntas.get(0).getRay());
-		Map<Expression, Rational> lambdas = new HashMap<Expression, Rational>();
-		for (Expression expr : initHondaRay.get(1).keySet()) {
-			lambdas.put(expr, ntas.get(0).getLambda());
-		}
-		boolean first = true;
-		for (NonTerminationArgument nta : ntas) {
-			if (first) {
-				assert nta == ntas.get(0);
-				first = false;
-				continue; // already done above
-			}
-			List<Map<Expression, Rational>> initHondaRay2 =
-					NonTerminationArgument.rank2Boogie(term2expression,
-					nta.getStateInit(), nta.getStateHonda(), nta.getRay());
-			assert initHondaRay.size() == initHondaRay2.size();
-			for (int i = 0; i < initHondaRay.size(); ++i) {
-				initHondaRay.get(i).putAll(initHondaRay2.get(i));
-			}
-			for (Expression expr : initHondaRay2.get(1).keySet()) {
-				lambdas.put(expr, nta.getLambda());
-			}
-		}
+		List<Map<RankVar, Rational>> states =
+				new ArrayList<Map<RankVar, Rational>>();
+		states.add(nta.getStateInit());
+		states.add(nta.getStateHonda());
+		states.addAll(nta.getRays());
+		List<Map<Expression, Rational>> initHondaRays =
+				NonTerminationArgument.rank2Boogie(term2expression, states);
+		
 		NonTerminationArgumentResult<RcfgElement> result =
 				new NonTerminationArgumentResult<RcfgElement>(m_Honda,
-				Activator.s_PLUGIN_NAME, initHondaRay.get(0),
-				initHondaRay.get(1), initHondaRay.get(2), lambdas,
+				Activator.s_PLUGIN_NAME, initHondaRays.get(0),
+				initHondaRays.get(1),
+				initHondaRays.subList(2, initHondaRays.size()),
+				nta.getLambdas(),
 				getTranslatorSequence());
 		reportResult(result);
 	}
