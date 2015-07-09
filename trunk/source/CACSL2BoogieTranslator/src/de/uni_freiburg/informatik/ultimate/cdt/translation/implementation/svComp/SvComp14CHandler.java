@@ -73,7 +73,7 @@ public class SvComp14CHandler extends CHandler {
 	 * Add assume statements that state that the nondeterministic values are
 	 * in the range of the values of the data type.
 	 */
-	private static final boolean mAssumeThatNondeterministicValuesAreInRange = true;
+	private static final boolean mAssumeThatNondeterministicValuesAreInRange = false;
 	/**
 	 * The string representing SV-Comp's error method.
 	 */
