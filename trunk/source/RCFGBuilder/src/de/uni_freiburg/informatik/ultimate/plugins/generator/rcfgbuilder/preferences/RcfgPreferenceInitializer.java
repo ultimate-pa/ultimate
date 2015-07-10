@@ -61,6 +61,7 @@ public class RcfgPreferenceInitializer extends UltimatePreferenceInitializer {
 	public static final String LABEL_ExtSolverCommand = "Command for external solver";
 //	public static final String DEF_ExtSolverCommand_Z3 = "z3 SMTLIB2_COMPLIANT=true -memory:1024 -smt2 -in -t:12000 auto_config=false smt.array.extensional=false";
 	public static final String DEF_ExtSolverCommand_Z3 = "z3 SMTLIB2_COMPLIANT=true -memory:1024 -smt2 -in -t:12000 auto_config=false smt.mbqi=false";
+//	public static final String DEF_ExtSolverCommand_Z3 = "z3 SMTLIB2_COMPLIANT=true -memory:1024 -smt2 -in -t:12000";
 //	public static final String DEF_ExtSolverCommand_CVC4 = "cvc4-2014-07-03-x86_64-linux-opt --incremental --print-success";
 	public static final String DEF_ExtSolverCommand_CVC4 = "cvc4-2015-03-15-x86_64-linux-opt-proofs --tear-down-incremental --print-success --lang smt --tlimit-per=12000";
 	public static final String DEF_ExtSolverCommand_Princess = "princess +incremental +stdin -timeout=12000";
