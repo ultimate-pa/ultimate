@@ -16,7 +16,8 @@ public class TermcompTests extends
 	
 	
 	private static final String[] m_UltimateRepository = {
-		"examples/termination/termcomp2015/",
+//		"examples/termination/termcomp2015/C/",
+		"examples/termination/termcomp2015/C_Integer",
 	};
 	
 	/**
@@ -24,7 +25,7 @@ public class TermcompTests extends
 	 */
 	@Override
 	public long getTimeout() {
-		return 300 * 1000;
+		return 60 * 1000;
 	}
 	
 	
@@ -36,7 +37,7 @@ public class TermcompTests extends
 	 * 
 	 */
 	private static final String[] m_Settings = {
-		"buchiAutomizer/termcomp2015.epf",
+		"buchiAutomizer/termcomp2015_Tests.epf",
 	};
 	
 	
