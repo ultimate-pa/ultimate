@@ -213,6 +213,7 @@ public class NondeterministicInterpolantAutomaton extends BasicAbstractInterpola
 		for (IPredicate succ : inputSuccs) {
 			sch.addTransition(resPred, resHier, letter, succ);
 		}
+		sch.reportSuccsComputed(resPred, resHier, letter);
 	}
 	
 	

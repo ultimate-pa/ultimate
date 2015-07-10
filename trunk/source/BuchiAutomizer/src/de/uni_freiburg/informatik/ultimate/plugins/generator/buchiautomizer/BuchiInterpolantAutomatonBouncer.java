@@ -33,8 +33,6 @@ import de.uni_freiburg.informatik.ultimate.util.HashRelation;
  */
 public class BuchiInterpolantAutomatonBouncer extends AbstractInterpolantAutomaton {
 
-	private final NwaCacheBookkeeping<CodeBlock, IPredicate> m_ResultBookkeeping = new NwaCacheBookkeeping<CodeBlock, IPredicate>();
-
 	@Deprecated
 	private final Set<IPredicate> m_InputStemPredicates = new HashSet<IPredicate>();
 	@Deprecated
@@ -221,6 +219,7 @@ public class BuchiInterpolantAutomatonBouncer extends AbstractInterpolantAutomat
 		} else {
 			throw new AssertionError("unknown state");
 		}
+		sch.reportSuccsComputed(resPred, resHier, letter);
 	}
 
 	private boolean isPredHierLetterFalse(IPredicate resPred, IPredicate resHier, CodeBlock letter,

@@ -46,16 +46,19 @@ public abstract class BasicAbstractInterpolantAutomaton extends
 		// if (linear) predecessor is false, the successor is false
 		if (sch.isLinearPredecessorFalse(resPred)) {
 			sch.addTransition(resPred, resHier, letter, m_IaFalseState);
+			sch.reportSuccsComputed(resPred, resHier, letter);
 			return;
 		}
 		// if (hierarchical) predecessor is false, the successor is false
 		if (sch.isHierarchicalPredecessorFalse(resHier)) {
 			sch.addTransition(resPred, resHier, letter, m_IaFalseState);
+			sch.reportSuccsComputed(resPred, resHier, letter);
 			return;
 		} 
 		// if the letter is already infeasible, the successor is false
 		if (letter.getTransitionFormula().isInfeasible() == Infeasibility.INFEASIBLE) {
 			sch.addTransition(resPred, resHier, letter, m_IaFalseState);
+			sch.reportSuccsComputed(resPred, resHier, letter);
 			return;
 		}
 		final Set<IPredicate> inputSuccs = new HashSet<IPredicate>();
@@ -65,11 +68,13 @@ public abstract class BasicAbstractInterpolantAutomaton extends
 		// check if false is implied
 		if (inputSuccs.contains(m_IaFalseState)){
 			sch.addTransition(resPred, resHier, letter, m_IaFalseState);
+			sch.reportSuccsComputed(resPred, resHier, letter);
 			return;
 		} else {
 			Validity sat = sch.computeSuccWithSolver(resPred, resHier, letter, m_IaFalseState);
 			if (sat == Validity.VALID) {
 				sch.addTransition(resPred, resHier, letter, m_IaFalseState);
+				sch.reportSuccsComputed(resPred, resHier, letter);
 				return;
 			}
 		}

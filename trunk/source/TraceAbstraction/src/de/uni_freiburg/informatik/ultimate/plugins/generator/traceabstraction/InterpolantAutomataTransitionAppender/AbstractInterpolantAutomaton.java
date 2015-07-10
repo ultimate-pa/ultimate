@@ -323,13 +323,15 @@ public abstract class AbstractInterpolantAutomaton implements INestedWordAutomat
 		public abstract boolean isHierarchicalPredecessorFalse(IPredicate resPred);
 
 		public abstract void addTransition(IPredicate resPred, IPredicate resHier, CodeBlock letter,
-				IPredicate iaFalseState);
+				IPredicate resSucc);
 
 		public abstract Validity computeSuccWithSolver(IPredicate resPred, IPredicate resHier, CodeBlock letter,
-				IPredicate iaFalseState);
+				IPredicate resSucc);
 
 		public abstract Collection<IPredicate> getSuccsInterpolantAutomaton(IPredicate resPred, IPredicate resHier,
 				CodeBlock letter);
+		
+		public abstract void reportSuccsComputed(IPredicate resPred, IPredicate resHier, CodeBlock letter);
 
 	}
 
@@ -350,7 +352,6 @@ public abstract class AbstractInterpolantAutomaton implements INestedWordAutomat
 		public void addTransition(IPredicate resPred, IPredicate resHier, CodeBlock letter, IPredicate inputSucc) {
 			assert resHier == null;
 			m_AlreadyConstrucedAutomaton.addInternalTransition(resPred, letter, inputSucc);
-			m_SuccessorComputationBookkeeping.reportInternalSuccsComputed(resPred, letter);
 		}
 
 		@Override
@@ -372,6 +373,12 @@ public abstract class AbstractInterpolantAutomaton implements INestedWordAutomat
 			}
 		}
 
+		@Override
+		public void reportSuccsComputed(IPredicate resPred, IPredicate resHier,	CodeBlock letter) {
+			assert resHier == null;
+			m_SuccessorComputationBookkeeping.reportInternalSuccsComputed(resPred, letter);
+		}
+
 	}
 
 	protected class CallSuccessorComputationHelper extends SuccessorComputationHelper {
@@ -391,7 +398,6 @@ public abstract class AbstractInterpolantAutomaton implements INestedWordAutomat
 		public void addTransition(IPredicate resPred, IPredicate resHier, CodeBlock letter, IPredicate inputSucc) {
 			assert resHier == null;
 			m_AlreadyConstrucedAutomaton.addCallTransition(resPred, letter, inputSucc);
-			m_SuccessorComputationBookkeeping.reportCallSuccsComputed(resPred, (Call) letter);
 		}
 
 		@Override
@@ -413,6 +419,12 @@ public abstract class AbstractInterpolantAutomaton implements INestedWordAutomat
 			}
 		}
 
+		@Override
+		public void reportSuccsComputed(IPredicate resPred, IPredicate resHier,	CodeBlock letter) {
+			assert resHier == null;
+			m_SuccessorComputationBookkeeping.reportCallSuccsComputed(resPred, (Call) letter);
+		}
+
 	}
 
 	public class ReturnSuccessorComputationHelper extends SuccessorComputationHelper {
@@ -430,7 +442,6 @@ public abstract class AbstractInterpolantAutomaton implements INestedWordAutomat
 		@Override
 		public void addTransition(IPredicate resPred, IPredicate resHier, CodeBlock letter, IPredicate inputSucc) {
 			m_AlreadyConstrucedAutomaton.addReturnTransition(resPred, resHier, letter, inputSucc);
-			m_SuccessorComputationBookkeeping.reportReturnSuccsComputed(resPred, resHier, (Return) letter);
 		}
 
 		@Override
@@ -448,6 +459,11 @@ public abstract class AbstractInterpolantAutomaton implements INestedWordAutomat
 			} else {
 				return succs;
 			}
+		}
+
+		@Override
+		public void reportSuccsComputed(IPredicate resPred, IPredicate resHier,	CodeBlock letter) {
+			m_SuccessorComputationBookkeeping.reportReturnSuccsComputed(resPred, resHier, (Return) letter);
 		}
 
 	}

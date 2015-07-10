@@ -270,6 +270,7 @@ public class DeterministicInterpolantAutomaton extends BasicAbstractInterpolantA
 			SuccessorComputationHelper sch, Set<IPredicate> inputSuccs) {
 		IPredicate resSucc = getOrConstructPredicate(inputSuccs);
 		sch.addTransition(resPred, resHier, letter, resSucc);
+		sch.reportSuccsComputed(resPred, resHier, letter);
 	}
 	
 	
