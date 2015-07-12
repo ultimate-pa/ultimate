@@ -380,7 +380,10 @@ public class LassoAnalysis {
 		
 		List<NonTerminationArgument> ntas
 			= new ArrayList<NonTerminationArgument>(m_lassos_nt.size());
-		assert m_lassos_nt.size() > 0;
+		if (m_lassos_nt.size() == 0) {
+			m_lassos_nt.add(new Lasso(LinearTransition.getTranstionTrue(),
+					LinearTransition.getTranstionTrue()));
+		}
 		for (Lasso lasso : m_lassos_nt) {
 			NonTerminationArgumentSynthesizer nas =
 					new NonTerminationArgumentSynthesizer(lasso, m_preferences,

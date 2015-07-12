@@ -129,7 +129,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 				new NonTerminationArgumentResult<RcfgElement>(honda,
 				Activator.s_PLUGIN_NAME, initHondaRays.get(0),
 				initHondaRays.get(1),
-				initHondaRays.subList(2, initHondaRays.size() - 2),
+				initHondaRays.subList(2, initHondaRays.size()),
 				nta.getLambdas(),
 				getBacktranslationService());
 		reportResult(result);
