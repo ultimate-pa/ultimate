@@ -213,7 +213,7 @@ public class RewriteBooleans extends TransformerPreProcessor {
 	
 	@Override
 	protected TermTransformer getTransformer(Script script) {
-		return new RewriteBooleanTransformer(script);
+		return new RewriteBooleanTransformer();
 	}
 	
 	/**
@@ -221,13 +221,6 @@ public class RewriteBooleans extends TransformerPreProcessor {
 	 *
 	 */
 	private class RewriteBooleanTransformer extends TermTransformer {
-		private final Script m_Script;
-		
-		RewriteBooleanTransformer(Script script) {
-			assert script != null;
-			m_Script = script;
-		}
-		
 		@Override
 		protected void convert(Term term) {
 			if (term instanceof TermVariable && isBool(term)) {
