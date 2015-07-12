@@ -28,11 +28,9 @@ package de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.lassoranker.exceptions.TermException;

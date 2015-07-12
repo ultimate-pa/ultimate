@@ -35,7 +35,6 @@ import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.lassoranker.AffineTerm;
 import de.uni_freiburg.informatik.ultimate.lassoranker.LinearInequality;
-import de.uni_freiburg.informatik.ultimate.lassoranker.SMTSolver;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.RankVar;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;

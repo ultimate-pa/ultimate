@@ -26,8 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.rewriteArrays;
 
-import java.util.List;
-
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.ReplacementVar;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.ReplacementVarFactory;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
