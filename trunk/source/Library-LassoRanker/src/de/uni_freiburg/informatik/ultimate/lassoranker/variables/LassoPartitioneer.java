@@ -33,9 +33,6 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
-
-import de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -86,9 +83,6 @@ public class LassoPartitioneer {
 	private Set<RankVar> m_AllRankVars = new HashSet<RankVar>();
 	private Script m_Script;
 	private final List<LassoUnderConstruction> m_NewLassos = new ArrayList<>();
-	private Logger m_Logger;
-	
-	
 	
 	
 	public LassoPartitioneer(IUltimateServiceProvider services, 
@@ -96,7 +90,6 @@ public class LassoPartitioneer {
 			Script script, TransFormulaLR stem, TransFormulaLR loop) {
 		m_Services = services;
 		m_FreshTermVariableConstructor = freshTermVariableConstructor;
-		m_Logger = m_Services.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
 		m_Script = script;
 		m_Stem = stem;
 		m_Loop = loop;
