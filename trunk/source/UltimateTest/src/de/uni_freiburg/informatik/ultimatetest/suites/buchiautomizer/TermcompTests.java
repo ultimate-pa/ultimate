@@ -17,7 +17,8 @@ public class TermcompTests extends
 	
 	private static final String[] m_UltimateRepository = {
 //		"examples/termination/termcomp2015/C/",
-		"examples/termination/termcomp2015/C_Integer",
+//		"examples/termination/termcomp2015/C_Integer/Stroeder_15",
+		"examples/termination/termcomp2015/C_Integer/Ton_Chanh_15",
 	};
 	
 	/**
