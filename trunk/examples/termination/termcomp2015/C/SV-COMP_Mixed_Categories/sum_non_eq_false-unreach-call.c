@@ -8,7 +8,7 @@ int sum(int n, int m) {
     }
 }
 
-void main() {
+int main(void) {
   int a;
   int b;
   int result = sum(a, b);

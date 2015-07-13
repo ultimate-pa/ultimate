@@ -1,6 +1,8 @@
 extern int __VERIFIER_nondet_int();
 extern void __VERIFIER_error();
 
+int fibo1(int n);
+int fibo2(int n);
 
 int fibo1(int n) {
     if (n < 1) {
@@ -30,7 +32,7 @@ int fibo2(int n) {
 // 10946, 17711, 28657, 46368, 75025,
 // 121393, 196418, 317811, 514229, 832040
 
-int main() {
+int main(void) {
     int x = 2;
     int result = fibo1(x);
     if (result == 1) {

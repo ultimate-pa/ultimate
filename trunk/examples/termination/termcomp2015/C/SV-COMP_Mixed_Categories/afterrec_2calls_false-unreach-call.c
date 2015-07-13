@@ -17,6 +17,6 @@ void f2(int n) {
   ERROR: __VERIFIER_error();
 }
 
-void main() {
+int main(void) {
   f(4);
 }

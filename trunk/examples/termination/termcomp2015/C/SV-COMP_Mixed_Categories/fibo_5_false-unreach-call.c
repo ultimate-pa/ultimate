@@ -20,7 +20,7 @@ int fibo(int n) {
 // 10946, 17711, 28657, 46368, 75025,
 // 121393, 196418, 317811, 514229, 832040
 
-int main() {
+int main(void) {
     int x = 5;
     int result = fibo(x);
     if (result == 5) {
