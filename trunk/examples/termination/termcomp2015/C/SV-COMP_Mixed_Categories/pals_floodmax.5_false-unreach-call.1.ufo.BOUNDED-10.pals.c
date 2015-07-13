@@ -2632,7 +2632,7 @@ int check(void)
   return (tmp);
 }
 }
-void main(void) 
+int main(void) 
 { 
   int c1 ;
   int i2 ;

@@ -580,7 +580,7 @@ int check(void)
   return (1);
 }
 }
-void main(void) 
+int main(void) 
 { 
   int c1 ;
   int i2 ;

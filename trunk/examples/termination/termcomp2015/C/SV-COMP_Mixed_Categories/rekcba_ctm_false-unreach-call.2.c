@@ -10194,7 +10194,7 @@ void __main(void)
 }
 }
 #line 1 "<compiler builtins>"
-void main(void) 
+int main(void) 
 { 
 
 
