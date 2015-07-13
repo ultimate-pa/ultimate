@@ -50,10 +50,10 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover_2Stacks<LETTER
 		public PseudoAutomata prvPAutomata;
 		public Set<LETTER> letter;
 		public HashSet<NodeData> allNodes;
-		public LinkedList<NodeData>errorNodes,currentTree,stack2;
+		public LinkedList<NodeData> errorNodes,stack2;
 		//public LinkedList<NodeData> completeTree,coveredNodes,ACCNodes;
 		public LinkedList<NodeData> coveredNodes;
-		public HashMap<NodeData, LinkedList<NodeData>> completeTree,ACCNodes;
+		public HashMap<NodeData, LinkedList<NodeData>> completeTree,ACCNodes,currentTree;
 		public HashSet<NodeData> initialNodes;
 		public boolean testing_newAcceptingState = false;
 		public PseudoAutomata(INestedWordAutomatonSimple<LETTER,STATE> a) throws OperationCanceledException{
@@ -67,7 +67,10 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover_2Stacks<LETTER
 			coveredNodes = new LinkedList<NodeData>();
 			ACCNodes = new HashMap<NodeData, LinkedList<NodeData>>();
 			currentTree = expand(true,true);
-			initialNodes = new HashSet<NodeData>(currentTree);
+			initialNodes = new HashSet<NodeData>();
+			for(NodeData key : currentTree.keySet()){
+				initialNodes.addAll(currentTree.get(key));
+			}
 			do{
 				if(cover(m_acc)){
 					break;
@@ -111,7 +114,10 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover_2Stacks<LETTER
 				prvPAutomata.deadendRemove();
 			}
 			currentTree = expand(false,true);
-			initialNodes = new HashSet<NodeData>(currentTree);
+			initialNodes = new HashSet<NodeData>();
+			for(NodeData key : currentTree.keySet()){
+				initialNodes.addAll(currentTree.get(key));
+			}
 			do{
 				calculateAcceptingStates();
 				if(cover(m_acc)){
@@ -122,7 +128,12 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover_2Stacks<LETTER
 						}
 						preAutomata.finishACCover(prvNodesToBeFinish);
 						currentTree.clear();
-						currentTree.addAll(stack2);
+						for(NodeData node :stack2){
+							if(!currentTree.containsKey(node.aState)){
+								currentTree.put(node.aState, new LinkedList<NodeData>());
+							}
+							currentTree.get(node.aState).add(node);
+						}
 						do{
 							currentTree = expand(false,false);
 							calculateAcceptingStates();
@@ -158,11 +169,11 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover_2Stacks<LETTER
 		}
 				
 		@SuppressWarnings("unchecked")
-		public  LinkedList<NodeData> expand(boolean iteration1, boolean init) throws OperationCanceledException{
+		public  HashMap<NodeData, LinkedList<NodeData>> expand(boolean iteration1, boolean init) throws OperationCanceledException{
 			if (!m_Services.getProgressMonitorService().continueProcessing()) {
                 throw new OperationCanceledException(this.getClass());
 			}
-			LinkedList<NodeData> newNodes = new LinkedList<NodeData>();
+			HashMap<NodeData, LinkedList<NodeData>> newNodes = new HashMap<NodeData, LinkedList<NodeData>>();
 			NodeData tempNodeData;
 			if(iteration1){
 				if(init){
@@ -182,34 +193,42 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover_2Stacks<LETTER
 						tempNodeData.correspondingAState = initStateA;
 						tempNodeData.hash = initStateA.hashCode();
 						tempNodeData.word = new NestedRun<LETTER,STATE>(initStateA);
-						newNodes.add(tempNodeData);		
+						if(!newNodes.containsKey(tempNodeData.aState)){
+							newNodes.put(tempNodeData.aState,new LinkedList<NodeData>());
+						}
+						newNodes.get(tempNodeData.aState).add(tempNodeData);		
 						allNodes.add(tempNodeData);
 					}
 				}else{
-					for(NodeData preNode : currentTree){
-						if(preNode.coveredBy == null){
-							assert preNode.bStates.size()==1;
-							for(STATE s : preNode.bStates){
-								for(OutgoingInternalTransition<LETTER, STATE> ATransition : associatedAutomata.internalSuccessors(s)){
-									tempNodeData = new NodeData();
-									totalNodes ++;
-									if(associatedAutomata.isFinal(ATransition.getSucc())){
-										tempNodeData.accepting = true;
-										errorNodes.add(tempNodeData);
-										testing_newAcceptingState = true;
-									}else{
-										tempNodeData.accepting = false;
+					for(NodeData key:currentTree.keySet()){
+						for(NodeData preNode : currentTree.get(key)){
+							if(preNode.coveredBy == null){
+								assert preNode.bStates.size()==1;
+								for(STATE s : preNode.bStates){
+									for(OutgoingInternalTransition<LETTER, STATE> ATransition : associatedAutomata.internalSuccessors(s)){
+										tempNodeData = new NodeData();
+										totalNodes ++;
+										if(associatedAutomata.isFinal(ATransition.getSucc())){
+											tempNodeData.accepting = true;
+											errorNodes.add(tempNodeData);
+											testing_newAcceptingState = true;
+										}else{
+											tempNodeData.accepting = false;
+										}
+										tempNodeData.parentNode = preNode;
+										tempNodeData.aState = null;
+										tempNodeData.correspondingAState = ATransition.getSucc();
+										tempNodeData.bStates.add(ATransition.getSucc());
+										tempNodeData.hash = ATransition.getSucc().hashCode();
+										ArrayList<STATE> newStateSequence = (ArrayList<STATE>) preNode.word.getStateSequence().clone();
+										newStateSequence.add(ATransition.getSucc());
+										tempNodeData.word = new NestedRun<LETTER,STATE>(preNode.word.getWord().concatenate(new NestedWord<LETTER>(ATransition.getLetter(),-2)),newStateSequence);
+										if(!newNodes.containsKey(tempNodeData.aState)){
+											newNodes.put(tempNodeData.aState,new LinkedList<NodeData>());
+										}
+										newNodes.get(tempNodeData.aState).add(tempNodeData);		
+										allNodes.add(tempNodeData);
 									}
-									tempNodeData.parentNode = preNode;
-									tempNodeData.aState = null;
-									tempNodeData.correspondingAState = ATransition.getSucc();
-									tempNodeData.bStates.add(ATransition.getSucc());
-									tempNodeData.hash = ATransition.getSucc().hashCode();
-									ArrayList<STATE> newStateSequence = (ArrayList<STATE>) preNode.word.getStateSequence().clone();
-									newStateSequence.add(ATransition.getSucc());
-									tempNodeData.word = new NestedRun<LETTER,STATE>(preNode.word.getWord().concatenate(new NestedWord<LETTER>(ATransition.getLetter(),-2)),newStateSequence);
-									newNodes.add(tempNodeData);		
-									allNodes.add(tempNodeData);
 								}
 							}
 						}
@@ -233,31 +252,39 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover_2Stacks<LETTER
 							tempNodeData.bStates = (HashSet<STATE>) bStates.clone();
 							tempNodeData.hash = BHash;
 							tempNodeData.word = new NestedRun<LETTER,STATE>(tempNodeData.correspondingAState);
-							newNodes.add(tempNodeData);		
+							if(!newNodes.containsKey(tempNodeData.aState)){
+								newNodes.put(tempNodeData.aState,new LinkedList<NodeData>());
+							}
+							newNodes.get(tempNodeData.aState).add(tempNodeData);	
 							allNodes.add(tempNodeData);
 						}
 					}
 				}else{
-					for(NodeData preNode : currentTree){
-						if(preNode.coveredBy == null){
-							for(Transition tran : prvPAutomata.internalSuccessors(preNode.aState)){
-								if(tran.getSucc().keep == true){
-									tempNodeData = new NodeData();
-									totalNodes ++;
-									tempNodeData.parentNode = preNode;
-									tempNodeData.aState = tran.getSucc();
-									tempNodeData.correspondingAState = tran.getSucc().correspondingAState;
-									for(STATE preBState : preNode.bStates){
-										for(OutgoingInternalTransition<LETTER, STATE> BTransition :associatedAutomata.internalSuccessors(preBState,tran.getLetter())){
-											tempNodeData.bStates.add(BTransition.getSucc());
-											tempNodeData.hash = tempNodeData.hash | BTransition.getSucc().hashCode();
+					for(NodeData key:currentTree.keySet()){
+						for(NodeData preNode : currentTree.get(key)){
+							if(preNode.coveredBy == null){
+								for(Transition tran : prvPAutomata.internalSuccessors(preNode.aState)){
+									if(tran.getSucc().keep == true){
+										tempNodeData = new NodeData();
+										totalNodes ++;
+										tempNodeData.parentNode = preNode;
+										tempNodeData.aState = tran.getSucc();
+										tempNodeData.correspondingAState = tran.getSucc().correspondingAState;
+										for(STATE preBState : preNode.bStates){
+											for(OutgoingInternalTransition<LETTER, STATE> BTransition :associatedAutomata.internalSuccessors(preBState,tran.getLetter())){
+												tempNodeData.bStates.add(BTransition.getSucc());
+												tempNodeData.hash = tempNodeData.hash | BTransition.getSucc().hashCode();
+											}
 										}
+										ArrayList<STATE> newStateSequence = (ArrayList<STATE>) preNode.word.getStateSequence().clone();
+										newStateSequence.add(tempNodeData.correspondingAState);
+										tempNodeData.word = new NestedRun<LETTER,STATE>(preNode.word.getWord().concatenate(new NestedWord<LETTER>(tran.getLetter(),-2)),newStateSequence);
+										if(!newNodes.containsKey(tempNodeData.aState)){
+											newNodes.put(tempNodeData.aState,new LinkedList<NodeData>());
+										}
+										newNodes.get(tempNodeData.aState).add(tempNodeData);
+										allNodes.add(tempNodeData);
 									}
-									ArrayList<STATE> newStateSequence = (ArrayList<STATE>) preNode.word.getStateSequence().clone();
-									newStateSequence.add(tempNodeData.correspondingAState);
-									tempNodeData.word = new NestedRun<LETTER,STATE>(preNode.word.getWord().concatenate(new NestedWord<LETTER>(tran.getLetter(),-2)),newStateSequence);
-									newNodes.add(tempNodeData);		
-									allNodes.add(tempNodeData);
 								}
 							}
 						}
@@ -271,21 +298,23 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover_2Stacks<LETTER
 			if (!m_Services.getProgressMonitorService().continueProcessing()) {
                 throw new OperationCanceledException(this.getClass());
 			}
-			for(NodeData currentNodeSet1:currentTree){
-				if(currentNodeSet1.aState.accepting){
-					currentNodeSet1.accepting = true;
-					for(STATE state : currentNodeSet1.bStates){
-						if(associatedAutomata.isFinal(state)){
-							currentNodeSet1.accepting = false;
-							break;
+			for(NodeData key : currentTree.keySet()){
+				for(NodeData currentNodeSet1:currentTree.get(key)){
+					if(currentNodeSet1.aState.accepting){
+						currentNodeSet1.accepting = true;
+						for(STATE state : currentNodeSet1.bStates){
+							if(associatedAutomata.isFinal(state)){
+								currentNodeSet1.accepting = false;
+								break;
+							}
 						}
+						if(currentNodeSet1.accepting == true){
+							errorNodes.add(currentNodeSet1);
+							testing_newAcceptingState = true;
+						}
+					}else{
+						currentNodeSet1.accepting = false;
 					}
-					if(currentNodeSet1.accepting == true){
-						errorNodes.add(currentNodeSet1);
-						testing_newAcceptingState = true;
-					}
-				}else{
-					currentNodeSet1.accepting = false;
 				}
 			}
 		}
@@ -303,15 +332,38 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover_2Stacks<LETTER
 			//int i,j;
 			//for(i=0;i<currentTree.size();i++){
 				//currentNodeSet1 = currentTree.get(i);
-			for(NodeData currentNodeSet1 : currentTree){
-				containsAllbnState = false;
-				potenialACCCandidate = null;
-				if(completeTree.containsKey(currentNodeSet1.aState)){
-					for(NodeData completeNodeSet:completeTree.get(currentNodeSet1.aState)){
-						if(acc){
-							if(completeNodeSet.hash==(currentNodeSet1.hash&completeNodeSet.hash)&&(currentNodeSet1.bStates.size() >= completeNodeSet.bStates.size())){
-								if(currentNodeSet1.bStates.containsAll(completeNodeSet.bStates)){
-									if(currentNodeSet1.bStates.size() == completeNodeSet.bStates.size()){
+			for(NodeData key : currentTree.keySet()){
+				for(NodeData currentNodeSet1 : currentTree.get(key)){
+					containsAllbnState = false;
+					potenialACCCandidate = null;
+					if(completeTree.containsKey(currentNodeSet1.aState)){
+						for(NodeData completeNodeSet:completeTree.get(currentNodeSet1.aState)){
+							if(acc){
+								if(completeNodeSet.hash==(currentNodeSet1.hash&completeNodeSet.hash)&&(currentNodeSet1.bStates.size() >= completeNodeSet.bStates.size())){
+									if(currentNodeSet1.bStates.containsAll(completeNodeSet.bStates)){
+										if(currentNodeSet1.bStates.size() == completeNodeSet.bStates.size()){
+											containsAllbnState = true;
+											totalCoveredNodes++;
+											currentNodeSet1.coveredBy = completeNodeSet;
+											currentNodeSet1.identicalCover = true;
+											completeNodeSet.covering.add(currentNodeSet1);
+											if(currentNodeSet1.parentNode!=null){
+												currentNodeSet1.parentNode.outgoingTransition.add(new Transition(currentNodeSet1.word.getSymbol(currentNodeSet1.word.getLength()-2),completeNodeSet));	
+											}
+											coveredNodes.add(currentNodeSet1);
+											//toBeDeleteed.add(currentNodeSet1);
+											break;
+										}else{
+											currentNodeSet1.ACCPotentialCoverBy.add(completeNodeSet);
+											if(potenialACCCandidate == null || potenialACCCandidate.bStates.size()>completeNodeSet.bStates.size()){
+												potenialACCCandidate = completeNodeSet;
+											}
+										}
+									}
+								}
+							}else{
+								if(completeNodeSet.hash==(currentNodeSet1.hash&completeNodeSet.hash)&&(currentNodeSet1.bStates.size() == completeNodeSet.bStates.size())){
+									if(currentNodeSet1.bStates.containsAll(completeNodeSet.bStates)){
 										containsAllbnState = true;
 										totalCoveredNodes++;
 										currentNodeSet1.coveredBy = completeNodeSet;
@@ -323,124 +375,107 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover_2Stacks<LETTER
 										coveredNodes.add(currentNodeSet1);
 										//toBeDeleteed.add(currentNodeSet1);
 										break;
-									}else{
-										currentNodeSet1.ACCPotentialCoverBy.add(completeNodeSet);
-										if(potenialACCCandidate == null || potenialACCCandidate.bStates.size()>completeNodeSet.bStates.size()){
-											potenialACCCandidate = completeNodeSet;
+									}
+								}
+							}
+						}
+					}
+					if(acc &&!containsAllbnState){
+						if(ACCNodes.containsKey(currentNodeSet1.aState)){
+							for(NodeData completeNodeSet:ACCNodes.get(currentNodeSet1.aState)){
+								if(completeNodeSet.hash==(currentNodeSet1.hash&completeNodeSet.hash)&&(currentNodeSet1.bStates.size() == completeNodeSet.bStates.size())){
+									if(currentNodeSet1.bStates.containsAll(completeNodeSet.bStates)){
+										containsAllbnState = true;
+										totalCoveredNodes++;
+										currentNodeSet1.coveredBy = completeNodeSet;
+										currentNodeSet1.identicalCover = true;
+										completeNodeSet.covering.add(currentNodeSet1);
+										if(currentNodeSet1.parentNode!=null){
+											currentNodeSet1.parentNode.outgoingTransition.add(new Transition(currentNodeSet1.word.getSymbol(currentNodeSet1.word.getLength()-2),completeNodeSet));	
 										}
+										coveredNodes.add(currentNodeSet1);
+										//toBeDeleteed.add(currentNodeSet1);
+										break;
 									}
-								}
-							}
-						}else{
-							if(completeNodeSet.hash==(currentNodeSet1.hash&completeNodeSet.hash)&&(currentNodeSet1.bStates.size() == completeNodeSet.bStates.size())){
-								if(currentNodeSet1.bStates.containsAll(completeNodeSet.bStates)){
-									containsAllbnState = true;
-									totalCoveredNodes++;
-									currentNodeSet1.coveredBy = completeNodeSet;
-									currentNodeSet1.identicalCover = true;
-									completeNodeSet.covering.add(currentNodeSet1);
-									if(currentNodeSet1.parentNode!=null){
-										currentNodeSet1.parentNode.outgoingTransition.add(new Transition(currentNodeSet1.word.getSymbol(currentNodeSet1.word.getLength()-2),completeNodeSet));	
-									}
-									coveredNodes.add(currentNodeSet1);
-									//toBeDeleteed.add(currentNodeSet1);
-									break;
 								}
 							}
 						}
 					}
-				}
-				if(acc &&!containsAllbnState){
-					if(ACCNodes.containsKey(currentNodeSet1.aState)){
-						for(NodeData completeNodeSet:ACCNodes.get(currentNodeSet1.aState)){
-							if(completeNodeSet.hash==(currentNodeSet1.hash&completeNodeSet.hash)&&(currentNodeSet1.bStates.size() == completeNodeSet.bStates.size())){
-								if(currentNodeSet1.bStates.containsAll(completeNodeSet.bStates)){
-									containsAllbnState = true;
-									totalCoveredNodes++;
-									currentNodeSet1.coveredBy = completeNodeSet;
-									currentNodeSet1.identicalCover = true;
-									completeNodeSet.covering.add(currentNodeSet1);
-									if(currentNodeSet1.parentNode!=null){
-										currentNodeSet1.parentNode.outgoingTransition.add(new Transition(currentNodeSet1.word.getSymbol(currentNodeSet1.word.getLength()-2),completeNodeSet));	
+					if(acc && !containsAllbnState){
+						for(NodeData currentNodeSet2 : currentTree.get(key)){	
+							if(currentNodeSet1!=currentNodeSet2&&(currentNodeSet2.coveredBy == null)&&(currentNodeSet2.hash==(currentNodeSet1.hash&currentNodeSet2.hash)&&(currentNodeSet1.bStates.size() > currentNodeSet2.bStates.size()))){
+								if(currentNodeSet1.bStates.containsAll(currentNodeSet2.bStates)){
+									currentNodeSet1.ACCPotentialCoverBy.add(currentNodeSet2);
+									if( potenialACCCandidate == null || potenialACCCandidate.bStates.size()>currentNodeSet2.bStates.size()){
+										potenialACCCandidate = currentNodeSet2;
 									}
-									coveredNodes.add(currentNodeSet1);
-									//toBeDeleteed.add(currentNodeSet1);
-									break;
 								}
 							}
 						}
-					}
-				}
-				if(acc && !containsAllbnState){
-					for(NodeData currentNodeSet2 : currentTree){	
-						if(currentNodeSet1!=currentNodeSet2&&(currentNodeSet2.coveredBy == null)&&(currentNodeSet1.aState == currentNodeSet2.aState)&&(currentNodeSet2.hash==(currentNodeSet1.hash&currentNodeSet2.hash)&&(currentNodeSet1.bStates.size() > currentNodeSet2.bStates.size()))){
-							if(currentNodeSet1.bStates.containsAll(currentNodeSet2.bStates)){
-								currentNodeSet1.ACCPotentialCoverBy.add(currentNodeSet2);
-								if( potenialACCCandidate == null || potenialACCCandidate.bStates.size()>currentNodeSet2.bStates.size()){
-									potenialACCCandidate = currentNodeSet2;
-								}
-							}
-						}
-					}
-					if(currentNodeSet1.aState!=null&&currentNodeSet1.aState.coveredBy!=null){
-						for(NodeData ACCANodes : currentNodeSet1.aState.ACCPotentialCoverBy){
-							if(completeTree.containsKey(ACCANodes)){
-								for(NodeData completeNodeSet:completeTree.get(ACCANodes)){
-									if(completeNodeSet.hash==(currentNodeSet1.hash&completeNodeSet.hash)&&(currentNodeSet1.bStates.size() >= completeNodeSet.bStates.size())){
-										if(currentNodeSet1.bStates.containsAll(completeNodeSet.bStates)){
-											currentNodeSet1.ACCPotentialCoverBy.add(completeNodeSet);
-											if(acc == true &&( potenialACCCandidate == null || potenialACCCandidate.bStates.size()>completeNodeSet.bStates.size())){
-												potenialACCCandidate = completeNodeSet;
+						if(currentNodeSet1.aState!=null&&currentNodeSet1.aState.coveredBy!=null){
+							for(NodeData ACCANodes : currentNodeSet1.aState.ACCPotentialCoverBy){
+								if(completeTree.containsKey(ACCANodes)){
+									for(NodeData completeNodeSet:completeTree.get(ACCANodes)){
+										if(completeNodeSet.hash==(currentNodeSet1.hash&completeNodeSet.hash)&&(currentNodeSet1.bStates.size() >= completeNodeSet.bStates.size())){
+											if(currentNodeSet1.bStates.containsAll(completeNodeSet.bStates)){
+												currentNodeSet1.ACCPotentialCoverBy.add(completeNodeSet);
+												if(acc == true &&( potenialACCCandidate == null || potenialACCCandidate.bStates.size()>completeNodeSet.bStates.size())){
+													potenialACCCandidate = completeNodeSet;
+												}
 											}
 										}
 									}
 								}
-							}
-							for(NodeData currentNodeSet2 : currentTree){	
-								if(currentNodeSet1!=currentNodeSet2&&(currentNodeSet2.coveredBy == null)&&(ACCANodes == currentNodeSet2.aState)&&(currentNodeSet2.hash==(currentNodeSet1.hash&currentNodeSet2.hash)&&(currentNodeSet1.bStates.size() >= currentNodeSet2.bStates.size()))){
-									if(currentNodeSet1.bStates.containsAll(currentNodeSet2.bStates)){
-										currentNodeSet1.ACCPotentialCoverBy.add(currentNodeSet2);
-										if( potenialACCCandidate == null || potenialACCCandidate.bStates.size()>currentNodeSet2.bStates.size()){
-											potenialACCCandidate = currentNodeSet2;
+								if(currentTree.containsKey(ACCANodes)){
+									for(NodeData currentNodeSet2 : currentTree.get(ACCANodes)){	
+										if(currentNodeSet1!=currentNodeSet2&&(currentNodeSet2.coveredBy == null)&&(currentNodeSet2.hash==(currentNodeSet1.hash&currentNodeSet2.hash)&&(currentNodeSet1.bStates.size() >= currentNodeSet2.bStates.size()))){
+											if(currentNodeSet1.bStates.containsAll(currentNodeSet2.bStates)){
+												currentNodeSet1.ACCPotentialCoverBy.add(currentNodeSet2);
+												if( potenialACCCandidate == null || potenialACCCandidate.bStates.size()>currentNodeSet2.bStates.size()){
+													potenialACCCandidate = currentNodeSet2;
+												}
+											}
 										}
-									}
-								}
-							}							
+									}	
+								}						
+							}
 						}
 					}
-				}
-				if(!containsAllbnState){
-					if(potenialACCCandidate == null || acc == false){
-						newNodeInCompleteTree = true;
-						if(!completeTree.containsKey(currentNodeSet1.aState)){
-							completeTree.put(currentNodeSet1.aState, new LinkedList<NodeData>());
+					if(!containsAllbnState){
+						if(potenialACCCandidate == null || acc == false){
+							newNodeInCompleteTree = true;
+							if(!completeTree.containsKey(currentNodeSet1.aState)){
+								completeTree.put(currentNodeSet1.aState, new LinkedList<NodeData>());
+							}
+							completeTree.get(currentNodeSet1.aState).addFirst(currentNodeSet1);
+							totalUniqueNodes++;
+							if(currentNodeSet1.parentNode!=null){
+								currentNodeSet1.parentNode.outgoingTransition.add(new Transition(currentNodeSet1.word.getSymbol(currentNodeSet1.word.getLength()-2),currentNodeSet1));
+							}
+							if(currentNodeSet1.aState!=null&&currentNodeSet1.aState.coveredBy!=null){
+								stack2.add(currentNodeSet1);
+								toBeDeleteed.add(currentNodeSet1);
+							}
+						}else{
+							totalAACNodes++;
+							currentNodeSet1.coveredBy = potenialACCCandidate;
+							currentNodeSet1.identicalCover = false;
+							potenialACCCandidate.covering.add(currentNodeSet1);
+							if(currentNodeSet1.parentNode!=null){
+								currentNodeSet1.parentNode.outgoingTransition.add(new Transition(currentNodeSet1.word.getSymbol(currentNodeSet1.word.getLength()-2),currentNodeSet1));
+							}
+							if(!ACCNodes.containsKey(currentNodeSet1.aState)){
+								ACCNodes.put(currentNodeSet1.aState, new LinkedList<NodeData>());
+							}
+							ACCNodes.get(currentNodeSet1.aState).addFirst(currentNodeSet1);
+							//toBeDeleteed.add(currentNodeSet1);
 						}
-						completeTree.get(currentNodeSet1.aState).addFirst(currentNodeSet1);
-						totalUniqueNodes++;
-						if(currentNodeSet1.parentNode!=null){
-							currentNodeSet1.parentNode.outgoingTransition.add(new Transition(currentNodeSet1.word.getSymbol(currentNodeSet1.word.getLength()-2),currentNodeSet1));
-						}
-						if(currentNodeSet1.aState!=null&&currentNodeSet1.aState.coveredBy!=null){
-							stack2.add(currentNodeSet1);
-							toBeDeleteed.add(currentNodeSet1);
-						}
-					}else{
-						totalAACNodes++;
-						currentNodeSet1.coveredBy = potenialACCCandidate;
-						currentNodeSet1.identicalCover = false;
-						potenialACCCandidate.covering.add(currentNodeSet1);
-						if(currentNodeSet1.parentNode!=null){
-							currentNodeSet1.parentNode.outgoingTransition.add(new Transition(currentNodeSet1.word.getSymbol(currentNodeSet1.word.getLength()-2),currentNodeSet1));
-						}
-						if(!ACCNodes.containsKey(currentNodeSet1.aState)){
-							ACCNodes.put(currentNodeSet1.aState, new LinkedList<NodeData>());
-						}
-						ACCNodes.get(currentNodeSet1.aState).addFirst(currentNodeSet1);
-						//toBeDeleteed.add(currentNodeSet1);
 					}
 				}
 			}
-			currentTree.removeAll(toBeDeleteed);
+			for(NodeData node : toBeDeleteed){
+				currentTree.get(node.aState).remove(node);
+			}
 			return !newNodeInCompleteTree;
 		}
 		
@@ -463,8 +498,11 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover_2Stacks<LETTER
 				if(key.aState!=null&&key.aState.coveredBy!=null){
 					nodesToBeFinishedFirst.add(key.aState);
 				}
+				if(!currentTree.containsKey(key.aState)){
+					currentTree.put(key.aState, new LinkedList<NodeData>());
+				}
+				currentTree.get(key.aState).add(key);
 			}
-			currentTree.addAll(nodes);
 			if(!nodesToBeFinishedFirst.isEmpty()&&prvPAutomata !=null){
 				prvPAutomata.finishACCover(nodesToBeFinishedFirst);
 			}
@@ -495,7 +533,10 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover_2Stacks<LETTER
 				nodesToBeFinishedFirst.clear();
 				testing_newAcceptingState = false;
 				currentTree.clear();
-				currentTree.add(key);
+				if(!currentTree.containsKey(key.aState)){
+					currentTree.put(key.aState, new LinkedList<NodeData>());
+				}
+				currentTree.get(key.aState).add(key);
 				ACCNodes.get(key.aState).remove(key);
 				if(!completeTree.containsKey(key.aState)){
 					completeTree.put(key.aState, new LinkedList<NodeData>());
