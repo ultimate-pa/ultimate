@@ -17,6 +17,12 @@ extern void exit(int);
 	 int a21 = -189;
 	 int a8 = 7;
 
+	int calculate_output2(int input);
+	int calculate_output3(int input);
+	int calculate_output4(int input);
+	int calculate_output5(int input);
+	int calculate_output6(int input);
+
 	int calculate_output(int input) {
 		if((((( a14 <=  -148  &&  a27 <=  -78 ) && (a8==6)) && (a9==4)) &&  a21 <=  -178 )){
 		error_41: exit(0);

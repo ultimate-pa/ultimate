@@ -50,6 +50,11 @@ extern void exit(int);
 	int a10 = 1;
 	int a26 = 1;
 
+	int calculate_output2(int input);
+	int calculate_output3(int input);
+	int calculate_output4(int input);
+	int calculate_output5(int input);
+
 	int calculate_output(int input) {
 	    if((((((a2==1)&&((a1==1)&&((a3==14)&&(((a10==1)&&(a7==1))&&!(a12==1)))))&&(a21==1))&&(a26==1))&&(!(a5==1)&&((((a14==4)&&((a11==1)&&((input==1)&&(a27==21))))&&(a25==1))&&!(a6==1))))){
 	    	a20 = 0;

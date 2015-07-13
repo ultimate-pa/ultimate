@@ -16,6 +16,8 @@ extern void exit(int);
 	 int a16 = 11;
 	 int a12 = 5;
 
+	int calculate_output2(int input);
+
 	int calculate_output(int input) {
 		if(((((a16==8) && (a15==3)) &&  a18 <=  -156 ) && (a12==6))){
 		error_3: exit(0);

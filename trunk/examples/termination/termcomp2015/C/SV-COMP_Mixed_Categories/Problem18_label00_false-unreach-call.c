@@ -16,6 +16,9 @@ extern void exit(int);
 	 int a3 = 99;
 	 int a15 = 4;
 
+	int calculate_output2(int input);
+	int calculate_output3(int input);
+
 	int calculate_output(int input) {
 		if(((((a24==1) && (a18==9)) && (a15==4)) &&  a3 <=  115 )){
 		error_20: exit(0);

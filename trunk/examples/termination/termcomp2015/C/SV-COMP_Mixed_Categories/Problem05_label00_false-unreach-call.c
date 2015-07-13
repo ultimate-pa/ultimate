@@ -19,6 +19,14 @@ extern void exit(int);
 	int a25 = 1;
 	int a20 = 5;
 
+	int calculate_output2(int input);
+	int calculate_output3(int input);
+	int calculate_output4(int input);
+	int calculate_output5(int input);
+	int calculate_output6(int input);
+	int calculate_output7(int input);
+	int calculate_output8(int input);
+
 	int calculate_output(int input) {
 	    if(((((((((a12==2)&&(!(a15==1)&&(input==1)))&&(a27==1))&&(a9==17))&&(a20==5))&&!(a25==1))&&(a16==1))&&(a2==12))){
 	    	a15 = 1;

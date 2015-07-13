@@ -16,6 +16,8 @@ extern void exit(int);
 	 int a2 = 1;
 	 int a0 = -44;
 
+	int calculate_output2(int input);
+
 	int calculate_output(int input) {
 		if(((((a2==1) &&  a4 <=  -86 ) &&  a0 <=  -147 ) &&   ((-144 < a29) && (-16 >= a29)) )){
 		error_0: __VERIFIER_error();

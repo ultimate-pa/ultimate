@@ -28,6 +28,10 @@ extern void exit(int);
 	int a7 = 1;
 	int a14 = 19;
 
+	int calculate_output2(int input);
+	int calculate_output3(int input);
+	int calculate_output4(int input);
+
 	int calculate_output(int input) {
 	    if((((a25==1)&&((a1==1)&&((input==5)&&((((((a4==17)&&(a26==19))&&(a28==17))&&!(a7==1))&&(a14==20))||(((a7==1)&&(((a26==17)&&(a4==18))&&(a28==15)))&&(a14==18))))))&&(a3==1))){
 	    	a28 = 15;
