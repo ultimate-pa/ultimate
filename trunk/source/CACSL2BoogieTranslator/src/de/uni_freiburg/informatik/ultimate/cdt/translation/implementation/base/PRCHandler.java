@@ -40,6 +40,8 @@ import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
 import org.eclipse.cdt.core.dom.ast.IASTTypeIdExpression;
 import org.eclipse.cdt.core.dom.ast.IASTUnaryExpression;
 import org.eclipse.cdt.core.dom.ast.IASTWhileStatement;
+import org.eclipse.cdt.internal.core.dom.parser.c.CASTEnumerationSpecifier;
+
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.SymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.ArrayHandler;
@@ -188,6 +190,12 @@ public class PRCHandler extends CHandler {
 							skip = false;
 					if (reachableDecs.contains(node.getDeclSpecifier()))
 						skip = false;
+					if (node.getDeclSpecifier() instanceof CASTEnumerationSpecifier) {
+						// we do not skip enums because it is hard to check if
+						// an enum is actually used or not
+						// (an enum is used if one of its enumerators is used)
+						skip = false;
+					}
 					if (skip)
 						return new ResultSkip();
 				}
