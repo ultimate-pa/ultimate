@@ -1,7 +1,5 @@
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util;
 
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType.Type;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CEnum;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
@@ -51,23 +49,19 @@ public class ConvExpr {
 		Expression e = rVal.getValue();
 		if (e instanceof IntegerLiteral) {
 			if (Integer.parseInt(((IntegerLiteral) e).getValue()) == 0)
-				resultEx = new BooleanLiteral(loc, new InferredType(
-						Type.Boolean), false);
+				resultEx = new BooleanLiteral(loc,  false);
 			else
-				resultEx = new BooleanLiteral(loc, new InferredType(
-						Type.Boolean), true);
+				resultEx = new BooleanLiteral(loc, true);
 		} else {
 			if (underlyingType instanceof CPrimitive) {
 				switch (((CPrimitive) underlyingType).getGeneralType()) {
 				case FLOATTYPE:
-					resultEx = new BinaryExpression(loc, new InferredType(
-							InferredType.Type.Boolean),
+					resultEx = new BinaryExpression(loc, 
 							BinaryExpression.Operator.COMPNEQ, e,
 							new RealLiteral(loc, SFO.NR0F));
 					break;
 				case INTTYPE:
-					resultEx = new BinaryExpression(loc, new InferredType(
-							InferredType.Type.Boolean),
+					resultEx = new BinaryExpression(loc, 
 							BinaryExpression.Operator.COMPNEQ, e,
 							new IntegerLiteral(loc, SFO.NR0));
 					break;
@@ -79,8 +73,7 @@ public class ConvExpr {
 						BinaryExpression.Operator.COMPNEQ, e,
 						new IdentifierExpression(loc, SFO.NULL));
 			} else if (underlyingType instanceof CEnum) {
-				resultEx = new BinaryExpression(loc, new InferredType(
-						InferredType.Type.Boolean),
+				resultEx = new BinaryExpression(loc,
 						BinaryExpression.Operator.COMPNEQ, e,
 						new IntegerLiteral(loc, SFO.NR0));
 			} else {
