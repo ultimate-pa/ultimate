@@ -14,6 +14,7 @@ import org.eclipse.cdt.core.dom.ast.IASTDeclaration;
 import org.eclipse.cdt.core.dom.ast.IASTDeclarator;
 import org.eclipse.cdt.core.dom.ast.IASTElaboratedTypeSpecifier;
 import org.eclipse.cdt.core.dom.ast.IASTEnumerationSpecifier;
+import org.eclipse.cdt.core.dom.ast.IASTEnumerationSpecifier.IASTEnumerator;
 import org.eclipse.cdt.core.dom.ast.IASTEqualsInitializer;
 import org.eclipse.cdt.core.dom.ast.IASTExpression;
 import org.eclipse.cdt.core.dom.ast.IASTForStatement;
@@ -78,6 +79,7 @@ public class DetermineNecessaryDeclarations extends ASTVisitor {
         this.shouldVisitTypeIds = true;
         this.shouldVisitInitializers = true;
         this.shouldVisitStatements = true;
+        this.shouldVisitEnumerators = true;
         this.sT = new LinkedScopedHashMap<String, IASTDeclaration>();
 //        this.functionTable = new LinkedHashMap<>();
         this.functionTable = fT;
@@ -96,6 +98,9 @@ public class DetermineNecessaryDeclarations extends ASTVisitor {
       	if (declSpec instanceof IASTCompositeTypeSpecifier) {
       		sT.beginScope();
       	}
+//      	if (declSpec instanceof IASTEnumerationSpecifier) {
+//      		sT.beginScope();
+//      	}
   		return super.visit(declSpec);
   	}
 
@@ -104,7 +109,16 @@ public class DetermineNecessaryDeclarations extends ASTVisitor {
       	if (declSpec instanceof IASTCompositeTypeSpecifier) {
       		sT.endScope();
       	}
+//      	if (declSpec instanceof IASTEnumerationSpecifier) {
+//      		sT.endScope();
+//      	}
   		return super.leave(declSpec);
+  	}
+  	
+  	@Override
+  	public int visit(IASTEnumerator enumerator) {
+  		sT.put(enumerator.getName().toString(), currentFunOrStructDefOrInitializer.peek());
+  		return super.visit(enumerator);
   	}
 
 
@@ -352,6 +366,8 @@ public class DetermineNecessaryDeclarations extends ASTVisitor {
 			}
 			if (declSpec instanceof IASTCompositeTypeSpecifier) {
 				currentFunOrStructDefOrInitializer.push(declaration);
+			} else if (declSpec instanceof IASTEnumerationSpecifier) {
+				currentFunOrStructDefOrInitializer.push(declaration);
 			}
 			return super.visit(declaration);
 		} else if (declaration instanceof IASTFunctionDefinition) {
@@ -460,6 +476,9 @@ public class DetermineNecessaryDeclarations extends ASTVisitor {
         } else if (declaration instanceof IASTSimpleDeclaration) {
         	if (((IASTSimpleDeclaration) declaration).getDeclSpecifier() 
         			instanceof IASTCompositeTypeSpecifier) {
+        		currentFunOrStructDefOrInitializer.pop();
+        	} else if (((IASTSimpleDeclaration) declaration).getDeclSpecifier() 
+        			instanceof IASTEnumerationSpecifier) {
         		currentFunOrStructDefOrInitializer.pop();
         	}
         }
