@@ -1,4 +1,3 @@
-////#Safe
 /*
  * Test if the cast from double to int is translated correctly. We need to round down. 
  * Currently (15.5.2015), the translation works, but with a function without specification.
