@@ -4,7 +4,7 @@ enum e_tag {
 
 int main() {
 //	enum e_tag sdf = a;
-	if (a == 0) {
+	if (a != 0) {
 		//@ assert \false;
 	}
 
