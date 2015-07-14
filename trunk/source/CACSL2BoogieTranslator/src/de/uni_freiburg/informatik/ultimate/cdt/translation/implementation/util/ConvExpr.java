@@ -2,6 +2,7 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType.Type;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CEnum;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.PRIMITIVE;
@@ -77,6 +78,11 @@ public class ConvExpr {
 				resultEx = new BinaryExpression(loc, 
 						BinaryExpression.Operator.COMPNEQ, e,
 						new IdentifierExpression(loc, SFO.NULL));
+			} else if (underlyingType instanceof CEnum) {
+				resultEx = new BinaryExpression(loc, new InferredType(
+						InferredType.Type.Boolean),
+						BinaryExpression.Operator.COMPNEQ, e,
+						new IntegerLiteral(loc, SFO.NR0));
 			} else {
 				String msg = "Don't know the type of this expression. Line: "
 						+ e.getLocation().getStartLine();
