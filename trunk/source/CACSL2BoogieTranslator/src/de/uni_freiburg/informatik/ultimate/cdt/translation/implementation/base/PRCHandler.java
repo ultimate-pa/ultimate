@@ -190,7 +190,7 @@ public class PRCHandler extends CHandler {
 							skip = false;
 					if (reachableDecs.contains(node.getDeclSpecifier()))
 						skip = false;
-					if (node.getDeclSpecifier() instanceof CASTEnumerationSpecifier) {
+					if (node.getDeclSpecifier() instanceof IASTEnumerationSpecifier) {
 						// we do not skip enums because it is hard to check if
 						// an enum is actually used or not
 						// (an enum is used if one of its enumerators is used)
