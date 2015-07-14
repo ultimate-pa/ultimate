@@ -51,7 +51,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.TypeDeclaration;
 public class TypeSortTranslator {
 
 
-	private final Script m_Script;
+	protected final Script m_Script;
 
 	private final Map<IType, Sort> m_type2sort = new HashMap<IType, Sort>();
 	private final Map<Sort, IType> m_sort2type = new HashMap<Sort, IType>();

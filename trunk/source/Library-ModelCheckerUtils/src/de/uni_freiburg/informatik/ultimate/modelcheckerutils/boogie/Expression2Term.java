@@ -206,14 +206,12 @@ public class Expression2Term {
 
 
 		} else if (exp instanceof RealLiteral) {
-			Term result = m_Script.decimal(((RealLiteral) exp).getValue());
+			Term result = m_OperationTranslator.realTranslation((RealLiteral) exp);
 			assert result != null;
 			return result;
 
 		} else if (exp instanceof BitvecLiteral) {
-			BigInteger[] indices = { BigInteger.valueOf(((BitvecLiteral) exp).getLength()) };
-			
-			Term result = m_Script.term("bv" + ((BitvecLiteral) exp).getValue(), indices, null);
+			Term result = m_OperationTranslator.bitvecTranslation((BitvecLiteral) exp);
 			assert result != null;
 			return result;
 
@@ -227,32 +225,33 @@ public class Expression2Term {
 			return result;
 
 		} else if (exp instanceof BooleanLiteral) {
-			Term result = ((BooleanLiteral) exp).getValue() ? m_Script.term("true") : m_Script.term("false");
+			Term result = m_OperationTranslator.booleanTranslation((BooleanLiteral) exp);
 			assert result != null;
 			return result;
 
 		} else if (exp instanceof FunctionApplication) {
 			FunctionApplication func = ((FunctionApplication) exp);
-			// if (itefunctions.contains(func.getIdentifier())) {
-			// Formula cond = translateFormula(func.getArguments()[0]);
-			// Term t = translateTerm(func.getArguments()[1]);
-			// Term e = translateTerm(func.getArguments()[2]);
-			// /* Special case: If-then-else */
-			// return script.ite(cond, t, e);
-			// }
+			
+			IType[] argumentTypes = new IType[func.getArguments().length];
+			for (int i = 0; i < func.getArguments().length; i++) {
+				argumentTypes[i] = func.getArguments()[i].getType();
+			}
+			
 			Sort[] params = new Sort[func.getArguments().length];
 			for (int i = 0; i < func.getArguments().length; i++) {
 				params[i] = m_TypeSortTranslator.getSort(func.getArguments()[i].getType(), exp);
 			}
+			
 			Term[] parameters = new Term[func.getArguments().length];
 			for (int i = 0; i < func.getArguments().length; i++) {
 				parameters[i] = translate(func.getArguments()[i]);
 			}
-			String funcSymb = m_Boogie2SmtSymbolTable.getBoogieFunction2SmtFunction().
-					get(func.getIdentifier());
+			
+			String funcSymb = m_OperationTranslator.funcApplication(func.getIdentifier(), argumentTypes);
 			if (funcSymb == null) {
 				throw new IllegalArgumentException("unknown function" + func.getIdentifier());
 			}
+			
 			Term result = m_Script.term(funcSymb, parameters);
 			assert (result.toString() instanceof Object);
 			return result;
@@ -265,7 +264,7 @@ public class Expression2Term {
 			return result;
 
 		} else if (exp instanceof IntegerLiteral) {
-			Term result = m_Script.numeral(((IntegerLiteral) exp).getValue());
+			Term result = m_OperationTranslator.integerTranslation((IntegerLiteral) exp);
 			assert result != null;
 			return result;
 

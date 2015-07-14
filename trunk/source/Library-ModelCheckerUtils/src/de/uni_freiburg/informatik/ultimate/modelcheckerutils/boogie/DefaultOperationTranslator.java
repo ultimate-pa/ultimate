@@ -29,29 +29,40 @@
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie;
 
+import java.math.BigInteger;
+
 import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
+import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.model.IType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BitvecLiteral;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BooleanLiteral;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IntegerLiteral;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.RealLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression;
 
 /**
+ * Assists in the translation process in Expression2Term by covering the cases 
+ * of operators, functions and literals.
+ * 
  * @author Thomas Lang
  *
  */
 public class DefaultOperationTranslator implements IOperationTranslator {
 	
-	/* (non-Javadoc)
-	 * @see de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IOperationTranslator#opTranslation(de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression)
-	 */
+	protected final Boogie2SmtSymbolTable m_Boogie2SmtSymbolTable;
+	protected final Script m_Script;
+	
+	public DefaultOperationTranslator(Boogie2SmtSymbolTable symbolTable, Script script) {
+		m_Boogie2SmtSymbolTable = symbolTable;
+		m_Script = script;
+	}
+
 	@Override
 	public String opTranslation(BinaryExpression.Operator op, IType type1, IType type2) {
 			if (op == BinaryExpression.Operator.COMPEQ) {
-				// if
-				// (binexp.getLeft().getType().equals(PrimitiveType.boolType))
 				return "=";
-				// else
-				// return script.equals(translateTerm(binexp.getLeft()),
-				// translateTerm(binexp.getRight()));
 			} else if (op == BinaryExpression.Operator.COMPGEQ) {
 				return ">=";
 			} else if (op == BinaryExpression.Operator.COMPGT) {
@@ -62,10 +73,6 @@ public class DefaultOperationTranslator implements IOperationTranslator {
 				return "<";
 			} else if (op == BinaryExpression.Operator.COMPNEQ) {
 			    throw new UnsupportedOperationException();
-				// } else if (op == BinaryExpression.Operator.COMPPO ){
-				// return script.atom(partOrder,
-				// translateTerm(binexp.getLeft()),
-				// translateTerm(binexp.getRight()));
 			} else if (op == BinaryExpression.Operator.LOGICAND) {
 				return "and";
 			} else if (op == BinaryExpression.Operator.LOGICOR) {
@@ -107,9 +114,35 @@ public class DefaultOperationTranslator implements IOperationTranslator {
 		if (op == UnaryExpression.Operator.LOGICNEG) {
 			return "not";
 		} else if (op == UnaryExpression.Operator.ARITHNEGATIVE) {
-			// FunctionSymbol fun_symb = script.getFunction("-", intSort);
 			return "-";
 		} else
 			throw new AssertionError("Unsupported unary expression " + op);
+	}
+
+	@Override
+	public String funcApplication(String funcIdentifier, IType[] argumentTypes) {
+		return m_Boogie2SmtSymbolTable.getBoogieFunction2SmtFunction().get(funcIdentifier);
+	}
+
+	@Override
+	public Term booleanTranslation(BooleanLiteral exp) {
+		return ((BooleanLiteral) exp).getValue() ? m_Script.term("true") : m_Script.term("false");
+	}
+
+	@Override
+	public Term bitvecTranslation(BitvecLiteral exp) {
+		BigInteger[] indices = { BigInteger.valueOf(((BitvecLiteral) exp).getLength()) };
+		
+		return m_Script.term("bv" + ((BitvecLiteral) exp).getValue(), indices, null);
+	}
+
+	@Override
+	public Term integerTranslation(IntegerLiteral exp) {
+		return m_Script.numeral(((IntegerLiteral) exp).getValue());
+	}
+
+	@Override
+	public Term realTranslation(RealLiteral exp) {
+		return m_Script.decimal(((RealLiteral) exp).getValue());
 	}
 }
