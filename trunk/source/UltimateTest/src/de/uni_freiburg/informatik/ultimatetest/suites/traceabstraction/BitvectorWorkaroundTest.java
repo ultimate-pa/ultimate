@@ -18,6 +18,7 @@ import de.uni_freiburg.informatik.ultimatetest.suites.AbstractModelCheckerTestSu
 public class BitvectorWorkaroundTest extends AbstractTraceAbstractionTestSuite {
 	
 	private static int m_FilesPerDirectoryLimit = Integer.MAX_VALUE;
+//	private static int m_FilesPerDirectoryLimit = 20;
 	
 	private static final DirectoryFileEndingsPair[] m_SVCOMP_Examples = {
 //		/*** Category 1. Arrays ***/
@@ -100,6 +101,7 @@ public class BitvectorWorkaroundTest extends AbstractTraceAbstractionTestSuite {
 	 */
 	private static final String[] m_Settings = {
 		"automizer/BitvectorWorkaround.epf",
+		"svcomp2015/svComp-64bit-precise-Automizer.epf",
 	};
 	
 	/**
