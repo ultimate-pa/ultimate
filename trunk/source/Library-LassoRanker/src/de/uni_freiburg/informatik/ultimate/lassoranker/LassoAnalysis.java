@@ -56,6 +56,7 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.RewriteEqua
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.RewriteIte;
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.RewriteStrictInequalities;
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.RewriteTrueFalse;
+import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.RewriteUserDefinedTypes;
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.SimplifyPreprocessor;
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.StemAndLoopPreProcessor;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.TerminationAnalysisBenchmark;
@@ -297,6 +298,7 @@ public class LassoAnalysis {
 				new StemAndLoopPreProcessor(m_old_script, new RewriteDivision(lassoBuilder.getReplacementVarFactory())),
 				new StemAndLoopPreProcessor(m_old_script, new RewriteBooleans(lassoBuilder.getReplacementVarFactory(), lassoBuilder.getScript())),
 				new StemAndLoopPreProcessor(m_old_script, new RewriteIte()),
+				new StemAndLoopPreProcessor(m_old_script, new RewriteUserDefinedTypes(lassoBuilder.getReplacementVarFactory(), lassoBuilder.getScript())),
 				new StemAndLoopPreProcessor(m_old_script, new RewriteEquality()),
 				new StemAndLoopPreProcessor(m_old_script, new CommuHashPreprocessor(mServices)),
 				new StemAndLoopPreProcessor(m_old_script, new SimplifyPreprocessor(mServices)),

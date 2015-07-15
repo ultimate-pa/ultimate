@@ -17,6 +17,7 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.RewriteEqua
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.RewriteIte;
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.RewriteStrictInequalities;
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.RewriteTrueFalse;
+import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.RewriteUserDefinedTypes;
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.SimplifyPreprocessor;
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.TransitionPreProcessor;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.ReplacementVar;
@@ -144,6 +145,7 @@ public class CachedTransFormulaLinearizer {
 				new RewriteDivision(m_ReplacementVarFactory),
 				new RewriteBooleans(m_ReplacementVarFactory, m_SmtManager.getScript()), 
 				new RewriteIte(),
+				new RewriteUserDefinedTypes(m_ReplacementVarFactory, m_SmtManager.getScript()),
 				new RewriteEquality(), 
 				new SimplifyPreprocessor(m_Services),
 				new DNF(m_Services, m_SmtManager.getVariableManager()), 
