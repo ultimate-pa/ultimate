@@ -36,12 +36,14 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.LetTerm;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.util.ScopedHashMap;
 
 /**
@@ -58,7 +60,7 @@ import de.uni_freiburg.informatik.ultimate.util.ScopedHashMap;
  */
 public class SafeSubstitution extends TermTransformer {
 	
-	private final Script m_Script;
+	protected final Script m_Script;
 	private final IFreshTermVariableConstructor m_FreshTermVariableConstructor;
 	private final ScopedHashMap<Term,Term> m_ScopedSubstitutionMapping;
 	
@@ -204,40 +206,6 @@ public class SafeSubstitution extends TermTransformer {
 		setResult(result);
 	}
 	
-	
-
-//	@Override
-//	public void convertApplicationTerm(ApplicationTerm appTerm, Term[] newArgs) {
-//		if (false) {
-//			super.convertApplicationTerm(appTerm, newArgs);
-//		} else {
-//			String functionSymbolname = appTerm.getFunction().getApplicationString();
-//			final Term result;
-//			switch (functionSymbolname) {
-//			case "and":
-//				result = Util.and(m_Script, newArgs);
-//				break;
-//			case "or":
-//				result = Util.or(m_Script, newArgs);
-//				break;
-//			case "not":
-//				assert newArgs.length == 1;
-//				result = Util.not(m_Script, newArgs[0]);
-//				break;
-//			case "=":
-//				if (newArgs.length !=2) {
-//					throw new AssertionError("expected binary equality");
-//				}
-//				result = SmtUtils.binaryEquality(m_Script, newArgs[0],  newArgs[1]);
-//				break;
-//			default:
-//				super.convertApplicationTerm(appTerm, newArgs);
-//				return;
-//			}
-//			setResult(result);
-//		}
-//	}
-
 	@Override
 	public String toString() {
 		return "Substitution " + m_ScopedSubstitutionMapping.toString();
