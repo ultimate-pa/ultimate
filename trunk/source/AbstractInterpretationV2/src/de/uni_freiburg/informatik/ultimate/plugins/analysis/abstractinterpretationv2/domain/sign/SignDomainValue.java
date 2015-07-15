@@ -17,7 +17,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  * @author greitsch@informatik.uni-freiburg.de
  *
  */
-public class SignDomainValue implements IEvaluationResult<SignDomainValue.Values> {
+public class SignDomainValue implements IEvaluationResult<SignDomainValue.Values>, Comparable<SignDomainValue> {
 
 	private Values mValue;
 
@@ -88,5 +88,73 @@ public class SignDomainValue implements IEvaluationResult<SignDomainValue.Values
 
 		// In all other cases, return \bot
 		return new SignDomainValue(Values.BOTTOM);
+	}
+
+	@Override
+	/**
+	 * Implements the following relations and their inverse according to the lattice of the sign domain:
+	 * 
+	 * \bot == \bot
+	 * (-) == (-)
+	 * (+) == (+)
+	 * \top == \top
+	 * \bot < ..., where ... is not \bot
+	 * (-) < 0
+	 * (-) < (+)
+	 * (0) < (+)
+	 * ... < \top, where ... is not \top
+	 * 
+	 *       top
+	 *    /   |   \
+	 * (-) - (0) - (+)
+	 *    \   |   /
+	 *       bot
+	 */
+	public int compareTo(SignDomainValue other) {
+
+		// ... == ...
+		if (getResult().equals(other.getResult())) {
+			return 0;
+		}
+		// ... == ...
+
+		// \bot < ...
+		if (getResult().equals(Values.BOTTOM) && !other.getResult().equals(Values.BOTTOM)) {
+			return -1;
+		}
+		if (!getResult().equals(Values.BOTTOM) && other.getResult().equals(Values.BOTTOM)) {
+			return 1;
+		}
+		// \bot < ...
+
+		// (-) < ...
+		if (getResult().equals(Values.NEGATIVE) && !other.getResult().equals(Values.NEGATIVE)) {
+			return -1;
+		}
+		if (!getResult().equals(Values.NEGATIVE) && other.getResult().equals(Values.NEGATIVE)) {
+			return 1;
+		}
+		// (-) < ...
+
+		// (0) < ...
+		if (getResult().equals(Values.ZERO) && !other.getResult().equals(Values.ZERO)) {
+			return -1;
+		}
+		if (!getResult().equals(Values.ZERO) && other.getResult().equals(Values.ZERO)) {
+			return 1;
+		}
+		// (0) < ...
+
+		// \top > ...
+		if (!getResult().equals(Values.TOP) && other.getResult().equals(Values.TOP)) {
+			return -1;
+		}
+		if (getResult().equals(Values.TOP) && !other.getResult().equals(Values.TOP)) {
+			return 1;
+		}
+		// \top > ...
+
+		throw new UnsupportedOperationException("The case for this = " + getResult().toString() + " and other = "
+		        + other.getResult().toString() + " is not implemented.");
 	}
 }

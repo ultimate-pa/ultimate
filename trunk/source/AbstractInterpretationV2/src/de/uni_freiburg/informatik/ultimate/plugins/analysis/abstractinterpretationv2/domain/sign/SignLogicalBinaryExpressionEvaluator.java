@@ -23,8 +23,8 @@ public class SignLogicalBinaryExpressionEvaluator extends SignBinaryExpressionEv
 			mVariableSet.add(var);
 		}
 
-		final IEvaluationResult<Values> firstResult = mLeftSubEvaluator.evaluate(currentState);
-		final IEvaluationResult<Values> secondResult = mRightSubEvaluator.evaluate(currentState);
+		final SignDomainValue firstResult = (SignDomainValue) mLeftSubEvaluator.evaluate(currentState);
+		final SignDomainValue secondResult = (SignDomainValue) mRightSubEvaluator.evaluate(currentState);
 
 		switch (mOperator) {
 		// case LOGICIFF:
@@ -45,7 +45,7 @@ public class SignLogicalBinaryExpressionEvaluator extends SignBinaryExpressionEv
 		// break;
 		case COMPEQ:
 		case COMPNEQ:
-			return evaluateComparisonOperators(firstResult.getResult(), secondResult.getResult());
+			return evaluateComparisonOperators(firstResult, secondResult);
 			// case COMPPO:
 			// break;
 			// case BITVECCONCAT:
@@ -68,8 +68,8 @@ public class SignLogicalBinaryExpressionEvaluator extends SignBinaryExpressionEv
 	@Override
 	public IAbstractState<CodeBlock, BoogieVar> logicallyInterpret(IAbstractState<CodeBlock, BoogieVar> currentState) {
 
-		final IEvaluationResult<Values> firstResult = mLeftSubEvaluator.evaluate(currentState);
-		final IEvaluationResult<Values> secondResult = mRightSubEvaluator.evaluate(currentState);
+		final SignDomainValue firstResult = (SignDomainValue) mLeftSubEvaluator.evaluate(currentState);
+		final SignDomainValue secondResult = (SignDomainValue) mRightSubEvaluator.evaluate(currentState);
 		final IAbstractState<CodeBlock, BoogieVar> firstLogicalInterpretation = ((ILogicalEvaluator<Values, CodeBlock, BoogieVar>) mLeftSubEvaluator)
 		        .logicallyInterpret(currentState);
 		final IAbstractState<CodeBlock, BoogieVar> secondLogicalInterpretation = ((ILogicalEvaluator<Values, CodeBlock, BoogieVar>) mRightSubEvaluator)
@@ -87,8 +87,7 @@ public class SignLogicalBinaryExpressionEvaluator extends SignBinaryExpressionEv
 		case COMPLEQ:
 		case COMPGEQ:
 		case COMPNEQ:
-			IEvaluationResult<Values> compResult = evaluateComparisonOperators(firstResult.getResult(),
-			        secondResult.getResult());
+			IEvaluationResult<Values> compResult = evaluateComparisonOperators(firstResult, secondResult);
 
 			if (compResult.getResult().equals(Values.POSITIVE)) {
 				// Compute new state
@@ -97,7 +96,7 @@ public class SignLogicalBinaryExpressionEvaluator extends SignBinaryExpressionEv
 					SignDomainState<CodeBlock, BoogieVar> intersecterino = (SignDomainState<CodeBlock, BoogieVar>) currentState
 					        .copy();
 					intersecterino.setValue(leftie.mVariableName, (SignDomainValue) secondResult);
-					
+
 					newState = newState.intersect(intersecterino);
 				}
 
@@ -130,10 +129,10 @@ public class SignLogicalBinaryExpressionEvaluator extends SignBinaryExpressionEv
 	        IEvaluationResult<?> firstResult, IEvaluationResult<?> secondResult) {
 
 		if (firstResult instanceof SignDomainValue && secondResult instanceof SignDomainValue) {
-			final IEvaluationResult<Values> castedFirst = (IEvaluationResult<Values>) firstResult;
-			final IEvaluationResult<Values> castedSecond = (IEvaluationResult<Values>) secondResult;
+			final SignDomainValue castedFirst = (SignDomainValue) firstResult;
+			final SignDomainValue castedSecond = (SignDomainValue) secondResult;
 
-			return evaluateComparisonOperators(castedFirst.getResult(), castedSecond.getResult());
+			return evaluateComparisonOperators(castedFirst, castedSecond);
 		}
 
 		if (firstResult instanceof SignLogicalSingletonVariableExpressionEvaluator
@@ -141,16 +140,17 @@ public class SignLogicalBinaryExpressionEvaluator extends SignBinaryExpressionEv
 
 			final SignLogicalSingletonVariableExpressionEvaluator firstVariable = (SignLogicalSingletonVariableExpressionEvaluator) firstResult;
 
-			final IEvaluationResult<Values> first = firstVariable.getBooleanValue(currentState);
-			final IEvaluationResult<Values> second = (IEvaluationResult<Values>) secondResult;
+			final SignDomainValue first = firstVariable.getBooleanValue(currentState);
+			final SignDomainValue second = (SignDomainValue) secondResult;
 
-			return evaluateComparisonOperators(first.getResult(), second.getResult());
+			return evaluateComparisonOperators(first, second);
 		}
 
 		throw new UnsupportedOperationException("Not implemented.");
 	}
 
-	private IEvaluationResult<Values> evaluateComparisonOperators(Values firstResult, Values secondResult) {
+	private IEvaluationResult<Values> evaluateComparisonOperators(SignDomainValue firstResult,
+	        SignDomainValue secondResult) {
 
 		switch (mOperator) {
 		case COMPLT:
@@ -172,7 +172,7 @@ public class SignLogicalBinaryExpressionEvaluator extends SignBinaryExpressionEv
 		}
 	}
 
-	private IEvaluationResult<Values> evaluateNEComparison(Values firstResult, Values secondResult) {
+	private IEvaluationResult<Values> evaluateNEComparison(SignDomainValue firstResult, SignDomainValue secondResult) {
 		if (firstResult.equals(Values.BOTTOM) || secondResult.equals(Values.BOTTOM)) {
 			return new SignDomainValue(Values.BOTTOM);
 		}
@@ -184,7 +184,7 @@ public class SignLogicalBinaryExpressionEvaluator extends SignBinaryExpressionEv
 		return new SignDomainValue(Values.POSITIVE);
 	}
 
-	private IEvaluationResult<Values> evaluateGTComparison(Values firstResult, Values secondResult) {
+	private IEvaluationResult<Values> evaluateGTComparison(SignDomainValue firstResult, SignDomainValue secondResult) {
 		if (firstResult.equals(secondResult) || firstResult.equals(Values.BOTTOM) || secondResult.equals(Values.BOTTOM)
 		        || firstResult.equals(Values.TOP) || secondResult.equals(Values.TOP)) {
 			return new SignDomainValue(Values.NEGATIVE);
@@ -201,7 +201,7 @@ public class SignLogicalBinaryExpressionEvaluator extends SignBinaryExpressionEv
 		return new SignDomainValue(Values.NEGATIVE);
 	}
 
-	private IEvaluationResult<Values> evaluateLTComparison(Values firstResult, Values secondResult) {
+	private IEvaluationResult<Values> evaluateLTComparison(SignDomainValue firstResult, SignDomainValue secondResult) {
 		if (firstResult.equals(Values.BOTTOM) || secondResult.equals(Values.BOTTOM)) {
 			return new SignDomainValue(Values.BOTTOM);
 		}
