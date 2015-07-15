@@ -27,21 +27,11 @@
 package de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors;
 
 import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.lassoranker.exceptions.TermException;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.RankVar;
-import de.uni_freiburg.informatik.ultimate.lassoranker.variables.ReplacementVar;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.ReplacementVarFactory;
-import de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaLR;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
-import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 
@@ -51,33 +41,20 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
  * 
  * @author Jan Leike, Matthias Heizmann
  */
-public class RewriteBooleans extends TransformerPreProcessor {
+public class RewriteBooleans extends RewriteTermVariables {
 	public static final String s_Description = "Replace boolean variables by integer variables";
 	
-	private static final String s_repInPostfix  = "_in_bool";
-	private static final String s_repOutPostfix = "_out_bool";
-	private static final String s_repInOutPostfix = "_inout_bool";
-	private static final String s_repAuxPostfix = "_aux_bool";
+	private static final String s_TermVariableSuffix = "bool";
 	private static final String s_repVarSortName = "Int"; // FIXME: this should depend on the logic
 	
-	/**
-	 * The sort to be used for new replacement TermVariable's
-	 */
-	private Sort m_repVarSort;
-	
-	/**
-	 * Maps boolean-valued TermVariable's to their translated counterpart,
-	 * which are int- or real-valued variables
-	 */
-	private final Map<Term, Term> m_SubstitutionMapping;
-	
-	/**
-	 * Factory for construction of auxVars.
-	 */
-	private final ReplacementVarFactory m_VarFactory;
-	
-	private final Script m_Script;
-	
+	@Override
+	protected String getTermVariableSuffix() {
+		return s_TermVariableSuffix;
+	}
+	@Override
+	protected String getRepVarSortName() {
+		return s_repVarSortName;
+	}
 	
 	/**
 	 * Create a new RewriteBooleans preprocessor
@@ -85,96 +62,14 @@ public class RewriteBooleans extends TransformerPreProcessor {
 	 * @param script the Script for creating new variables
 	 */
 	public RewriteBooleans(ReplacementVarFactory varFactory, Script script) {
-		m_VarFactory = varFactory;
-		m_Script = script;
-		m_repVarSort = m_Script.sort(s_repVarSortName);
-		m_SubstitutionMapping = new LinkedHashMap<Term, Term>();
+		super(varFactory, script);
 	}
 	
-	/**
-	 * Get the replacement variable corresponding to a (boolean) BoogieVar.
-	 * Creates a new replacement variable, if needed.
-	 */
-	private ReplacementVar getOrConstructReplacementVar(RankVar rankVar) {
-		Term definition = getDefinition(
-				m_Script, rankVar.getDefinition());
-		ReplacementVar repVar = m_VarFactory.
-				getOrConstuctReplacementVar(definition);
-		return repVar;
+	@Override
+	protected boolean hasToBeReplaced(Term term) {
+		return isBool(term);
 	}
-	
-	/**
-	 * Create new integer- or real-valued replacement variables for all boolean
-	 * variables.
-	 * @param transFormula the transition formula from which the term originated
-	 */
-	private void generateRepAndAuxVars(TransFormulaLR tf) {
-		ArrayList<RankVar> rankVarsWithDistinctInVar = new ArrayList<>();
-		ArrayList<RankVar> rankVarsWithDistinctOutVar = new ArrayList<>();
-		ArrayList<RankVar> rankVarsWithCommonInVarOutVar = new ArrayList<>();
-		for (Map.Entry<RankVar, Term> entry : tf.getInVars().entrySet()) {
-			if (isBool(entry.getValue())) {
-				if (TransFormulaUtils.inVarAndOutVarCoincide(entry.getKey(), tf)) {
-					rankVarsWithCommonInVarOutVar.add(entry.getKey());
-				} else {
-					rankVarsWithDistinctInVar.add(entry.getKey());
-				}
-			}
-		}
-		for (Map.Entry<RankVar, Term> entry : tf.getOutVars().entrySet()) {
-			if (isBool(entry.getValue())) {
-				if (TransFormulaUtils.inVarAndOutVarCoincide(entry.getKey(), tf)) {
-					// do nothing, was already added
-				} else {
-					rankVarsWithDistinctOutVar.add(entry.getKey());
-				}
-			}
-		}
 
-		for (RankVar rv : rankVarsWithCommonInVarOutVar) {
-			ReplacementVar repVar = getOrConstructReplacementVar(rv);
-			TermVariable newInOutVar = m_VarFactory.getOrConstructAuxVar(
-					repVar.getGloballyUniqueId() + s_repInOutPostfix, m_repVarSort);
-			Term replacementTerm = constructReplacementTerm(newInOutVar);
-			m_SubstitutionMapping.put(tf.getInVars().get(rv), replacementTerm);
-			tf.removeInVar(rv);
-			tf.addInVar(repVar, newInOutVar);
-			tf.removeOutVar(rv);
-			tf.addOutVar(repVar, newInOutVar);
-		}
-
-		for (RankVar rv : rankVarsWithDistinctInVar) {
-			ReplacementVar repVar = getOrConstructReplacementVar(rv);
-			TermVariable newInVar = m_VarFactory.getOrConstructAuxVar(
-					repVar.getGloballyUniqueId() + s_repInPostfix, m_repVarSort);
-			Term replacementTerm = constructReplacementTerm(newInVar);
-			m_SubstitutionMapping.put(tf.getInVars().get(rv), replacementTerm);
-			tf.removeInVar(rv);
-			tf.addInVar(repVar, newInVar);
-		}
-		
-		for (RankVar rv : rankVarsWithDistinctOutVar) {
-			ReplacementVar repVar = getOrConstructReplacementVar(rv);
-			TermVariable newOutVar = m_VarFactory.getOrConstructAuxVar(
-					repVar.getGloballyUniqueId() + s_repOutPostfix, m_repVarSort);
-			Term replacementTerm = constructReplacementTerm(newOutVar);
-			m_SubstitutionMapping.put(tf.getOutVars().get(rv), replacementTerm);
-			tf.removeOutVar(rv);
-			tf.addOutVar(repVar, newOutVar);
-		}
-		
-		Set<TermVariable> auxVars = tf.getAuxVars();
-		for (TermVariable tv : auxVars) {
-			if (isBool(tv)) {
-				TermVariable newAuxVar = m_VarFactory.getOrConstructAuxVar(
-						tv.getName() + s_repAuxPostfix,	m_repVarSort);
-				tf.removeAuxVar(tv);
-				tf.addAuxVars(Collections.singleton(newAuxVar));
-			}
-		}
-	}
-	
-	
 	/**
 	 * return true iff sort of term is Bool.
 	 */
@@ -182,7 +77,8 @@ public class RewriteBooleans extends TransformerPreProcessor {
 		return term.getSort().getName().equals("Bool");
 	}
 	
-	private Term constructReplacementTerm(TermVariable tv) {
+	@Override
+	protected Term constructReplacementTerm(TermVariable tv) {
 		Term one = m_Script.numeral(BigInteger.ONE);
 		Term repTerm = m_Script.term(">=", tv, one);
 		return repTerm;
@@ -194,44 +90,18 @@ public class RewriteBooleans extends TransformerPreProcessor {
 		return s_Description;
 	}
 	
-	@Override
-	public TransFormulaLR process(Script script, TransFormulaLR tf) throws TermException {
-		this.generateRepAndAuxVars(tf);
-		return super.process(m_Script, tf);
-	}
-	
 	/**
 	 * Given the Term booleanTerm whose Sort is "Bool" return the term
 	 * (ite booleanTerm one zero)
 	 */
-	private Term getDefinition(Script script, Term booleanTerm) {
-		assert booleanTerm.getSort().getName().equals("Bool");
-		Term one = script.numeral(BigInteger.ONE);
-		Term zero = script.numeral(BigInteger.ZERO);
-		return script.term("ite", booleanTerm, one, zero);
-	}
-	
 	@Override
-	protected TermTransformer getTransformer(Script script) {
-		return new RewriteBooleanTransformer();
+	protected Term constructNewDefinitionForRankVar(RankVar oldRankVar) {
+		Term booleanTerm = oldRankVar.getDefinition();
+		assert booleanTerm.getSort().getName().equals("Bool");
+		Term one = m_Script.numeral(BigInteger.ONE);
+		Term zero = m_Script.numeral(BigInteger.ZERO);
+		return m_Script.term("ite", booleanTerm, one, zero);
 	}
 	
-	/**
-	 * TermTransformer that replaces Boolean TermVariables.  
-	 *
-	 */
-	private class RewriteBooleanTransformer extends TermTransformer {
-		@Override
-		protected void convert(Term term) {
-			if (term instanceof TermVariable && isBool(term)) {
-				TermVariable var = (TermVariable) term;
-				assert m_SubstitutionMapping.containsKey(var);
-				Term repTerm = m_SubstitutionMapping.get(var);
-				setResult(repTerm);
-				return;
-			}
-			super.convert(term);
-		}
 
-	}
 }
