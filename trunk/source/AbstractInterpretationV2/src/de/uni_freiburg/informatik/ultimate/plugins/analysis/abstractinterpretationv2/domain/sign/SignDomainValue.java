@@ -19,7 +19,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  */
 public class SignDomainValue implements IEvaluationResult<SignDomainValue.Values>, Comparable<SignDomainValue> {
 
-	private Values mValue;
+	private final Values mValue;
 
 	/**
 	 * The possible values of one {@link SignDomainValue}.
@@ -32,7 +32,8 @@ public class SignDomainValue implements IEvaluationResult<SignDomainValue.Values
 	}
 
 	/**
-	 * Default constructor. The default value of the {@link SignDomainValue} is T.
+	 * Default constructor. The default value of the {@link SignDomainValue} is
+	 * T.
 	 */
 	protected SignDomainValue() {
 		mValue = Values.TOP;
@@ -42,7 +43,8 @@ public class SignDomainValue implements IEvaluationResult<SignDomainValue.Values
 	 * Constructor that sets the value of the created {@link SignDomainValue}.
 	 * 
 	 * @param value
-	 *            The value the SignDomainValue should be set to. Must be one of {@link Values}.
+	 *            The value the SignDomainValue should be set to. Must be one of
+	 *            {@link Values}.
 	 */
 	protected SignDomainValue(Values value) {
 		mValue = value;
@@ -57,7 +59,8 @@ public class SignDomainValue implements IEvaluationResult<SignDomainValue.Values
 	}
 
 	/**
-	 * Intersects {@link this} with a given other value according to the following scheme:
+	 * Intersects {@link this} with a given other value according to the
+	 * following scheme:
 	 * 
 	 * <ul>
 	 * <li>(+) &cap; (+) = (+)</li>
@@ -72,7 +75,8 @@ public class SignDomainValue implements IEvaluationResult<SignDomainValue.Values
 	 * 
 	 * @param other
 	 *            The other value to intersect the current value with.
-	 * @return A new value after the intersection of the current value with the other value.
+	 * @return A new value after the intersection of the current value with the
+	 *         other value.
 	 */
 	public SignDomainValue intersect(SignDomainValue other) {
 
@@ -88,6 +92,20 @@ public class SignDomainValue implements IEvaluationResult<SignDomainValue.Values
 
 		// In all other cases, return \bot
 		return new SignDomainValue(Values.BOTTOM);
+	}
+
+	@Override
+	public int hashCode() {
+		return getResult().hashCode();
+	}
+
+	@Override
+	public boolean equals(Object other) {
+		if (other.getClass().equals(this.getClass())) {
+			SignDomainValue castedOther = (SignDomainValue) other;
+			return getResult().equals(castedOther.getResult());
+		}
+		return false;
 	}
 
 	@Override
