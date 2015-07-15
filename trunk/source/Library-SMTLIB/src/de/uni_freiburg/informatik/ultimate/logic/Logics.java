@@ -54,6 +54,7 @@ public enum Logics {
 	NRA       (Features.QU + Features.NA + Features.RA),
 	UF        (Features.QU + Features.UF),
 	UFBV      (Features.QU + Features.UF + Features.BV),
+	AUFBV     (Features.QU + Features.AX + Features.UF + Features.BV),
 	UFIDL     (Features.QU + Features.UF + Features.DL + Features.IA),
 	UFLIA     (Features.QU + Features.UF + Features.LA + Features.IA),
 	UFLRA     (Features.QU + Features.LA + Features.RA),
