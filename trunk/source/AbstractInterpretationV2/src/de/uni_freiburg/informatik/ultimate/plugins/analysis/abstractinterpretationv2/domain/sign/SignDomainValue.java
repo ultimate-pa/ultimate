@@ -101,6 +101,10 @@ public class SignDomainValue implements IEvaluationResult<SignDomainValue.Values
 
 	@Override
 	public boolean equals(Object other) {
+		if (other == null) {
+			return false;
+		}
+
 		if (other.getClass().equals(this.getClass())) {
 			SignDomainValue castedOther = (SignDomainValue) other;
 			return getResult().equals(castedOther.getResult());
