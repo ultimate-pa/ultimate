@@ -42,6 +42,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SafeSubstitution;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SafeSubstitutionWithLocalSimplification;
 
 /**
  * Abstract superclass for preprocessors that replace TermVariables.
@@ -51,7 +53,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
  * @author Matthias Heizmann
  *
  */
-public abstract class RewriteTermVariables extends TransformerPreProcessor {
+public abstract class RewriteTermVariables extends TransitionPreProcessor {
 
 	/**
 	 * The sort to be used for new replacement TermVariable's
@@ -216,41 +218,11 @@ public abstract class RewriteTermVariables extends TransformerPreProcessor {
 	@Override
 	public final TransFormulaLR process(Script script, TransFormulaLR tf) throws TermException {
 		this.generateRepAndAuxVars(tf);
-		return super.process(m_Script, tf);
-	}
-	
-//	@Override
-//	public final TransFormulaLR process(Script script, TransFormulaLR tf) throws TermException {
-//		this.generateRepAndAuxVars(tf);
-//		TransFormulaLR newTf = new TransFormulaLR(tf);
-//		Term newFormula = (new SafeSubstitution(m_Script, m_SubstitutionMapping)).transform(tf.getFormula());
-//		newTf.setFormula(newFormula);
-//		return newTf;
-//	}
-	
-
-	@Override
-	protected final TermTransformer getTransformer(Script script) {
-		return new TermVariableSubstitutionTransformer();
-	}
-	
-	/**
-	 * TermTransformer that replaces TermVariables according to the already
-	 * computed substitution mapping.  
-	 *
-	 */
-	class TermVariableSubstitutionTransformer extends TermTransformer {
-		@Override
-		protected void convert(Term term) {
-			if (term instanceof TermVariable && hasToBeReplaced(term)) {
-				TermVariable var = (TermVariable) term;
-				assert m_SubstitutionMapping.containsKey(var);
-				Term repTerm = m_SubstitutionMapping.get(var);
-				setResult(repTerm);
-				return;
-			}
-			super.convert(term);
-		}
+		TransFormulaLR newTf = new TransFormulaLR(tf);
+		Term newFormula = (new SafeSubstitutionWithLocalSimplification(
+				m_Script, m_SubstitutionMapping)).transform(tf.getFormula());
+		newTf.setFormula(newFormula);
+		return newTf;
 	}
 
 }
