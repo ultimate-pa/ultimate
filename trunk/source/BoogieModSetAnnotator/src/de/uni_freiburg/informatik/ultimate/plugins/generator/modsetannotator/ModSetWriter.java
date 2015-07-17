@@ -117,7 +117,7 @@ public class ModSetWriter implements IUnmanagedObserver {
 				}
 
 				ModifiesSpecification newModifies = new ModifiesSpecification(
-						null, false,
+						proc.getLocation(), false,
 						newModifiesSet.toArray(new VariableLHS[newModifiesSet
 								.size()]));
 

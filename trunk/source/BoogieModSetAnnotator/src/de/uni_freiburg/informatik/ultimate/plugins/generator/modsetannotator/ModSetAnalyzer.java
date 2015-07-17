@@ -36,8 +36,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableLHS;
  * This class is an AST-Visitor that extends the Boogie Type Checker, it
  * computes the modifies sets of all procedures
  */
-public class ModSetAnalyzer extends BoogieTransformer implements
-		IUnmanagedObserver {
+public class ModSetAnalyzer extends BoogieTransformer implements IUnmanagedObserver {
 
 	private Map<String, Set<String>> m_ModifiedGlobals;
 	private Set<String> m_Globals;
@@ -86,9 +85,8 @@ public class ModSetAnalyzer extends BoogieTransformer implements
 			for (String callee : proc.getValue()) {
 				HashSet<String> visited = new HashSet<String>();
 				visited.add(proc.getKey());
-				Set<String> modifiedGlobals = m_ModifiedGlobals.get(proc
-						.getKey());
-				assert (modifiedGlobals != null);
+				Set<String> modifiedGlobals = m_ModifiedGlobals.get(proc.getKey());
+				assert(modifiedGlobals != null);
 				modifiedGlobals.addAll(getModifiesRecursive(visited, callee));
 			}
 		}
@@ -112,8 +110,7 @@ public class ModSetAnalyzer extends BoogieTransformer implements
 	}
 
 	@Override
-	public void init(GraphType modelType, int currentModelIndex,
-			int numberOfModels) throws Throwable {
+	public void init(GraphType modelType, int currentModelIndex, int numberOfModels) throws Throwable {
 		// TODO Auto-generated method stub
 
 	}
@@ -137,8 +134,7 @@ public class ModSetAnalyzer extends BoogieTransformer implements
 	}
 
 	private void processGlobalVariableDeclaration(VariableDeclaration varDecl) {
-		DeclarationInformation declInfo = new DeclarationInformation(
-				StorageClass.GLOBAL, null);
+		DeclarationInformation declInfo = new DeclarationInformation(StorageClass.GLOBAL, null);
 		for (VarList varlist : varDecl.getVariables()) {
 			for (String id : varlist.getIdentifiers()) {
 				m_Globals.add(id);
@@ -152,9 +148,10 @@ public class ModSetAnalyzer extends BoogieTransformer implements
 		if (decl instanceof Procedure) {
 			Procedure proc = ((Procedure) decl);
 			if (proc.getBody() != null) { // We are processing an implementation
+				if (logger.isDebugEnabled())
+					logger.debug("Processing procedure " + proc.getIdentifier());
 				m_CurrentProcedure = proc.getIdentifier();
-				m_ModifiedGlobals
-						.put(m_CurrentProcedure, new HashSet<String>());
+				m_ModifiedGlobals.put(m_CurrentProcedure, new HashSet<String>());
 				m_CallGraph.put(m_CurrentProcedure, new HashSet<String>());
 			}
 		}
