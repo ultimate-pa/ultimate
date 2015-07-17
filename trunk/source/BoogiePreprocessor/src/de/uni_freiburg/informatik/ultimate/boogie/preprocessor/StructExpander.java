@@ -468,7 +468,7 @@ public class StructExpander extends BoogieTransformer implements IUnmanagedObser
 			return new Expression[] { e };
 		}
 		if (e.getType() == null) {
-			mLogger.error("The expression " + BoogiePrettyPrinter.print(e) + " has a null type!");
+			throw new NullPointerException("The expression " + BoogiePrettyPrinter.print(e) + " has a null type!");
 		}
 		BoogieType bt = flattenType(e.getType());
 		if (!(bt instanceof StructType)) {
@@ -625,6 +625,9 @@ public class StructExpander extends BoogieTransformer implements IUnmanagedObser
 	 * @return The expanded lhs.
 	 */
 	private LeftHandSide[] expandLeftHandSide(LeftHandSide lhs) {
+		if (lhs.getType() == null) {
+			throw new NullPointerException("type of " + lhs.toString() + " is null");
+		}
 		BoogieType bt = flattenType(lhs.getType());
 		if (!(bt instanceof StructType)) {
 			// quick check, if process expression can be used.

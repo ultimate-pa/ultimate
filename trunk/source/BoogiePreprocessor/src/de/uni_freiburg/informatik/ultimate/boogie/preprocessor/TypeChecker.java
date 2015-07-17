@@ -725,11 +725,12 @@ public class TypeChecker extends BaseObserver {
 						checkExistingDeclarationInformation(var.getIdentifier(), var.getDeclarationInformation(), declInfo);
 					}
 					String id = var.getIdentifier();
-					if (!m_Globals.contains(id)) {
+					if (m_Globals.contains(id)) {
+						modifiedGlobals.add(id);
+						var.setType(findVariable(id).getType());
+					} else {
 						typeError(s, "Modifies clause contains " + id + " which is not a global variable");
 					}
-					modifiedGlobals.add(id);
-					var.setType(findVariable(id).getType());
 				}
 			} else {
 				internalError("Unknown Procedure specification: " + s);
