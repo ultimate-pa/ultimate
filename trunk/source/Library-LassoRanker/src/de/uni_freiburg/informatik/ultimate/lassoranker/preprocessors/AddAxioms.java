@@ -26,11 +26,18 @@
  */
 package de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import de.uni_freiburg.informatik.ultimate.lassoranker.exceptions.TermException;
+import de.uni_freiburg.informatik.ultimate.lassoranker.variables.ReplacementVar;
+import de.uni_freiburg.informatik.ultimate.lassoranker.variables.ReplacementVarFactory;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaLR;
+import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ConstantFinder;
 
 
 /**
@@ -43,20 +50,37 @@ public class AddAxioms extends TransitionPreProcessor {
 
 	
 	private final Term[] m_axioms;
+
+
+	private final Set<ApplicationTerm> m_Constants = new HashSet<>();
+
+
+	private final ReplacementVarFactory m_ReplacementVarFactory;
 	
 	/**
 	 * @param axioms the axioms that should be added to stem and loop
 	 */
-	public AddAxioms(Term[] axioms) {
+	public AddAxioms(ReplacementVarFactory replacementVarFactory, Term[] axioms) {
+		m_ReplacementVarFactory = replacementVarFactory;
 		if (axioms == null) {
 			m_axioms = new Term[0];
 		} else {
 			m_axioms = axioms;
 		}
+		for (Term axiom : m_axioms) {
+			m_Constants.addAll((new ConstantFinder()).findConstants(axiom));
+		}
 	}
 	
 	@Override
 	public TransFormulaLR process(Script script, TransFormulaLR tf) throws TermException {
+		// Add constant variables as in- and outVars
+		for (ApplicationTerm constVar : m_Constants) {
+			ReplacementVar repVar = 
+					m_ReplacementVarFactory.getOrConstuctReplacementVar(constVar); 
+			tf.addInVar(repVar, constVar);
+			tf.addOutVar(repVar, constVar);
+		}
 		Term formula = tf.getFormula();
 		Term axioms = Util.and(script, m_axioms);
 		formula = Util.and(script, formula, axioms);

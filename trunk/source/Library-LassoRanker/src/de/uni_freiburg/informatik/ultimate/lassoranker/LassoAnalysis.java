@@ -288,7 +288,7 @@ public class LassoAnalysis {
 			LassoBuilder lassoBuilder, boolean overapproximateArrayIndexConnection) {
 		return new LassoPreProcessor[] {
 				new StemAndLoopPreProcessor(m_old_script, new MatchInVars(m_Boogie2SMT.getVariableManager())),
-				new StemAndLoopPreProcessor(m_old_script, new AddAxioms(m_axioms)),
+				new StemAndLoopPreProcessor(m_old_script, new AddAxioms(lassoBuilder.getReplacementVarFactory(), m_axioms)),
 				new StemAndLoopPreProcessor(m_old_script, new CommuHashPreprocessor(mServices)),
 				new LassoPartitioneerPreProcessor(m_old_script, mServices, m_Boogie2SMT.getVariableManager()),
 				new RewriteArrays2(true, m_stem_transition, m_loop_transition, m_ModifiableGlobalsAtHonda, 

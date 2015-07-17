@@ -141,7 +141,7 @@ public class CachedTransFormulaLinearizer {
 	private TransitionPreProcessor[] getPreprocessors() {
 		return new TransitionPreProcessor[] {
 				new MatchInVars(m_SmtManager.getBoogie2Smt().getVariableManager()),
-				new AddAxioms(m_Axioms),
+				new AddAxioms(m_ReplacementVarFactory, m_Axioms),
 				new RewriteDivision(m_ReplacementVarFactory),
 				new RewriteBooleans(m_ReplacementVarFactory, m_SmtManager.getScript()), 
 				new RewriteIte(),
