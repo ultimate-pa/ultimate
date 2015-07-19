@@ -108,25 +108,27 @@ public class CommuhashNormalForm {
 			String funcname = appTerm.getFunction().getApplicationString();
 			if (isKnownToBeCommutative(funcname)) {
 				Term simplified = constructTermWithSortedParams(funcname, newArgs);
-				try {
-					simplified = tryToTransformToPositiveNormalForm(simplified);
-				} catch (NotAffineException e) {
-					// do nothing, input is no AffineRelation
-				} 
 				setResult(simplified);
 			} else {
 				super.convertApplicationTerm(appTerm, newArgs);
 			}
 		}
 
+		@Override
+		protected void convert(Term term) {
+			try {
+				Term result = tryToTransformToPositiveNormalForm(term);
+				setResult(result);
+			} catch (NotAffineException e) {
+				// descent, input is no AffineRelation
+				super.convert(term);
+			} 
+		}
+
 		private Term tryToTransformToPositiveNormalForm(Term simplified) throws NotAffineException {
 			AffineRelation affRel = new AffineRelation(simplified);
 			Term pnf = affRel.positiveNormalForm(m_Script);
-			ApplicationTerm appTerm = (ApplicationTerm) pnf;
-			String funcname = appTerm.getFunction().getApplicationString();
-			Term[] params = appTerm.getParameters();
-			Term result = constructTermWithSortedParams(funcname, params);
-			return result;
+			return pnf;
 		}
 
 		private Term[] sortByHashCode(final Term[] params) {
