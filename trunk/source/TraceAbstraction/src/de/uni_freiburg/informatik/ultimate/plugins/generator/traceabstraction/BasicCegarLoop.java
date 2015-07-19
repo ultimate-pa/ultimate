@@ -575,6 +575,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		// (new RemoveDeadEnds<CodeBlock,
 		// IPredicate>((INestedWordAutomatonOldApi<CodeBlock, IPredicate>)
 		// m_Abstraction)).getResult();
+		mLogger.info(predicateUnifier.collectPredicateUnifierStatistics());
 
 		Minimization minimization = m_Pref.minimize();
 		switch (minimization) {
