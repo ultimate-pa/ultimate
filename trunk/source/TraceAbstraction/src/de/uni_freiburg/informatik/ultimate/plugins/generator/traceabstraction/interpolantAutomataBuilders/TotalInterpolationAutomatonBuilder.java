@@ -99,7 +99,7 @@ public class TotalInterpolationAutomatonBuilder {
 			m_Annotated.add(lastAutomatonState);
 			m_Worklist.add(lastAutomatonState);
 		}
-		m_Htc = BasicCegarLoop.getEfficientHoareTripleChecker(hoareTripleChecks, 
+		m_Htc = BasicCegarLoop.getEfficientHoareTripleChecker(HoareTripleChecks.MONOLITHIC, 
 				m_SmtManager, m_ModifiedGlobals, m_PredicateUnifier);
 		for (IPredicate state : stateSequence) {
 			m_Worklist.add(state);
