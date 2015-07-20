@@ -2,6 +2,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.s
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -134,7 +135,7 @@ public class PredicateUnifier {
 	 * predicate.
 	 */
 	void declarePredicate(IPredicate predicate) {
-		PredicateComparison pc = new PredicateComparison(predicate.getFormula(), predicate.getVars());
+		PredicateComparison pc = new PredicateComparison(predicate.getFormula(), predicate.getVars(), null, null);
 		if (pc.isEquivalentToExistingPredicate()) {
 			if (pc.getEquivalantPredicate() != predicate) {
 				throw new AssertionError("There is already an" + " equivalent predicate");
@@ -148,6 +149,75 @@ public class PredicateUnifier {
 
 	public IPredicate getOrConstructPredicate(TermVarsProc tvp) {
 		return getOrConstructPredicate(tvp.getFormula(), tvp.getVars(), tvp.getProcedures());
+	}
+	
+	/**
+	 * GetOrConstruct a predicate that is a conjunction of IPredicates that were
+	 * construction by (resp. declared in) this PredicateUnifier. 
+	 */
+	public IPredicate getOrConstructPredicateForConjunction(Collection<IPredicate> conjunction) {
+		Set<IPredicate> minimalSubset = computeMinimalEquivalentSubset(conjunction);
+		if (minimalSubset.size() == 1) {
+			return minimalSubset.iterator().next();
+		} else {
+			HashMap<IPredicate, Validity> impliedPredicates = new HashMap<IPredicate, Validity>();
+			HashMap<IPredicate, Validity> expliedPredicates = new HashMap<IPredicate, Validity>();
+			for (IPredicate conjunct : minimalSubset) {
+				for (IPredicate knownPredicate : m_KnownPredicates) {
+					{
+						// if (conjunct ==> knownPredicate) then the conjunction
+						// will also imply the knownPredicate
+						Validity validity = getCoverageRelation().isCovered(conjunct, knownPredicate);
+						if (validity == Validity.VALID) {
+							impliedPredicates.put(knownPredicate, Validity.VALID);
+						}
+					}
+					{
+						// if !(knownPredicate == conjunct) then knownPredicate
+						// will also not imply the conjunction
+						Validity validity = getCoverageRelation().isCovered(knownPredicate, conjunct);
+						if (validity == Validity.INVALID) {
+							expliedPredicates.put(knownPredicate, Validity.INVALID);
+						}
+					}
+				}
+			}
+			TermVarsProc tvp = m_SmtManager.and(minimalSubset.toArray(new IPredicate[minimalSubset.size()]));
+//			return getOrConstructPredicate(tvp.getFormula(), tvp.getVars(), tvp.getProcedures(), 
+//					impliedPredicates, expliedPredicates);
+			return null;
+		}
+
+	}
+
+	
+	/**
+	 * Compute a minimal subset of IPredicates for a given conjunction in the
+	 * following sense. The conjunction of the subset is equivalent to the
+	 * input conjunction and no two elements in the subset imply each other.
+	 * I.e., if a predicate of in input conjunction is implied by another 
+	 * predicate it is removed.
+	 * @param conjunction of predicates that was constructed by this predicate unifier. 
+	 * @return
+	 */
+	private Set<IPredicate> computeMinimalEquivalentSubset(Collection<IPredicate> conjunction) {
+		List<IPredicate> list = new ArrayList<IPredicate>(conjunction);
+		Set<IPredicate> minimalSubset = new HashSet<IPredicate>(conjunction);
+		for (int i=0; i<list.size(); i++) {
+			IPredicate predi = list.get(i);
+			if (!m_KnownPredicates.contains(predi)) {
+				throw new IllegalArgumentException(predi + " not constructed by this predicate unifier");
+			}
+			Set<IPredicate> coveredByPredi = getCoverageRelation().getCoveredPredicates(predi);
+			for (int j=i+1; j<list.size(); j++) {
+				IPredicate predj= list.get(j);
+				if (coveredByPredi.contains(predj)) {
+					minimalSubset.remove(predi);
+					continue;
+				}
+			}
+		}
+		return minimalSubset;
 	}
 
 	/**
@@ -180,6 +250,17 @@ public class PredicateUnifier {
 	 *            All procedures of which vars contains local variables.
 	 */
 	public IPredicate getOrConstructPredicate(Term term, Set<BoogieVar> vars, String[] procs) {
+		return getOrConstructPredicate(term, vars, procs, null, null);
+	}
+	
+	/**
+	 * Variant of getOrConstruct methods where we can provide information
+	 * about implied/explied predicates.
+	 */
+	private IPredicate getOrConstructPredicate(Term term, Set<BoogieVar> vars, String[] procs,
+			HashMap<IPredicate, Validity> impliedPredicates, 
+			HashMap<IPredicate, Validity> expliedPredicates) {
+
 		m_GetRequests++;
 		assert varsIsSupersetOfFreeTermVariables(term, vars);
 		if (term instanceof AnnotatedTerm) {
@@ -212,7 +293,8 @@ public class PredicateUnifier {
 			}
 		}
 		
-		PredicateComparison pc = new PredicateComparison(term, vars);
+		PredicateComparison pc = new PredicateComparison(term, vars, 
+				impliedPredicates, expliedPredicates);
 		if (pc.isEquivalentToExistingPredicate()) {
 			m_SemanticMatches++;
 			return pc.getEquivalantPredicate();
@@ -316,8 +398,8 @@ public class PredicateUnifier {
 	 */
 	private class PredicateComparison {
 		private final Term m_closedTerm;
-		private final HashMap<IPredicate, Validity> impliedPredicates = new HashMap<IPredicate, Validity>();
-		private final HashMap<IPredicate, Validity> expliedPredicates = new HashMap<IPredicate, Validity>();
+		private final HashMap<IPredicate, Validity> m_ImpliedPredicates;
+		private final HashMap<IPredicate, Validity> m_ExpliedPredicates;
 		private final IPredicate m_EquivalantPredicate;
 		private boolean m_IsIntricatePredicate;
 		
@@ -333,7 +415,7 @@ public class PredicateUnifier {
 				throw new IllegalAccessError("not accessible, we found an equivalent predicate");
 			}
 
-			return impliedPredicates;
+			return m_ImpliedPredicates;
 		}
 
 		public HashMap<IPredicate, Validity> getExpliedPredicates() {
@@ -341,7 +423,7 @@ public class PredicateUnifier {
 				throw new IllegalAccessError("not accessible, we found an equivalent predicate");
 			}
 
-			return expliedPredicates;
+			return m_ExpliedPredicates;
 		}
 
 		public IPredicate getEquivalantPredicate() {
@@ -364,7 +446,27 @@ public class PredicateUnifier {
 		}
 
 
-		PredicateComparison(Term term, Set<BoogieVar> vars) {
+		/**
+		 * Compare a new term/vars with all known predicates of this 
+		 * PredicateUnifier.
+		 * Information about predicates that are implied/explied by term can
+		 * be provided as an input by the Maps impliedPredicates/expliedPredicates
+		 * both maps will be modified by (new predicates added) by this method. 
+		 */
+		private PredicateComparison(Term term, Set<BoogieVar> vars, 
+				HashMap<IPredicate, Validity> impliedPredicates, 
+				HashMap<IPredicate, Validity> expliedPredicates) {
+			if (impliedPredicates == null) {
+				if (expliedPredicates != null) {
+					throw new IllegalArgumentException("both or none null");
+				}
+				m_ImpliedPredicates = new HashMap<IPredicate, Validity>();
+				m_ExpliedPredicates = new HashMap<IPredicate, Validity>();
+			} else {
+				m_ImpliedPredicates = impliedPredicates;
+				m_ExpliedPredicates = expliedPredicates;
+			}
+			
 			m_closedTerm = PredicateUtils.computeClosedFormula(term, vars, m_SmtManager.getScript());
 			if (m_SmtManager.isLocked()) {
 				m_SmtManager.requestLockRelease();
@@ -386,11 +488,11 @@ public class PredicateUnifier {
 			case VALID:
 				return m_FalsePredicate;
 			case INVALID:
-				impliedPredicates.put(m_FalsePredicate, Validity.INVALID);
+				m_ImpliedPredicates.put(m_FalsePredicate, Validity.INVALID);
 				break;
 			case UNKNOWN:
 				mLogger.warn(new DebugMessage("unable to proof that {0} is different from false", m_closedTerm));
-				impliedPredicates.put(m_FalsePredicate, Validity.UNKNOWN);
+				m_ImpliedPredicates.put(m_FalsePredicate, Validity.UNKNOWN);
 				m_IsIntricatePredicate = true;
 				break;
 			case NOT_CHECKED:
@@ -399,7 +501,7 @@ public class PredicateUnifier {
 				throw new AssertionError("unknown case");
 			}
 			// every predicate is implied by false
-			expliedPredicates.put(m_FalsePredicate, Validity.VALID);
+			m_ExpliedPredicates.put(m_FalsePredicate, Validity.VALID);
 			
 			// check if true
 			Validity impliedByTrue = m_SmtManager.isCovered(this, m_TruePredicate.getClosedFormula(), m_closedTerm);
@@ -407,11 +509,11 @@ public class PredicateUnifier {
 			case VALID:
 				return m_TruePredicate;
 			case INVALID:
-				expliedPredicates.put(m_TruePredicate, Validity.INVALID);
+				m_ExpliedPredicates.put(m_TruePredicate, Validity.INVALID);
 				break;
 			case UNKNOWN:
 				mLogger.warn(new DebugMessage("unable to proof that {0} is different from true", m_closedTerm));
-				expliedPredicates.put(m_TruePredicate, Validity.UNKNOWN);
+				m_ExpliedPredicates.put(m_TruePredicate, Validity.UNKNOWN);
 				m_IsIntricatePredicate = true;
 				break;
 			case NOT_CHECKED:
@@ -420,7 +522,7 @@ public class PredicateUnifier {
 				throw new AssertionError("unknown case");
 			}
 			// every predicate implies true
-			impliedPredicates.put(m_TruePredicate, Validity.VALID);
+			m_ImpliedPredicates.put(m_TruePredicate, Validity.VALID);
 			
 			// if predicate is intricate we do not compare against others
 			if (m_IsIntricatePredicate) {
@@ -428,8 +530,8 @@ public class PredicateUnifier {
 					if (other == m_TruePredicate || other == m_FalsePredicate) {
 						continue;
 					}
-					impliedPredicates.put(other, Validity.NOT_CHECKED);
-					expliedPredicates.put(other, Validity.NOT_CHECKED);
+					m_ImpliedPredicates.put(other, Validity.NOT_CHECKED);
+					m_ExpliedPredicates.put(other, Validity.NOT_CHECKED);
 					continue;
 				}
 				return null;
@@ -441,12 +543,12 @@ public class PredicateUnifier {
 				}
 				// we do not compare against intricate predicates
 				if (PredicateUnifier.this.isIntricatePredicate(other)) {
-					impliedPredicates.put(other, Validity.NOT_CHECKED);
-					expliedPredicates.put(other, Validity.NOT_CHECKED);
+					m_ImpliedPredicates.put(other, Validity.NOT_CHECKED);
+					m_ExpliedPredicates.put(other, Validity.NOT_CHECKED);
 					continue;
 				}
 				Term otherClosedTerm = other.getClosedFormula();
-				Validity implies = impliedPredicates.get(other);
+				Validity implies = m_ImpliedPredicates.get(other);
 				if (implies == null) {
 					implies = m_SmtManager.isCovered(this, m_closedTerm, otherClosedTerm);
 					if (implies == Validity.VALID) {
@@ -454,7 +556,7 @@ public class PredicateUnifier {
 						// we conclude (this ==> impliedByOther)
 						for (IPredicate impliedByOther : getCoverageRelation().getCoveringPredicates(other)) {
 							if (impliedByOther != other) {
-								Validity oldValue = impliedPredicates.put(impliedByOther, Validity.VALID);
+								Validity oldValue = m_ImpliedPredicates.put(impliedByOther, Validity.VALID);
 								if (oldValue == null) {
 									m_ImplicationChecksByTransitivity++;
 								} else {
@@ -467,7 +569,7 @@ public class PredicateUnifier {
 						// we conclude !(this ==> expliedbyOther)
 						for (IPredicate expliedByOther : getCoverageRelation().getCoveredPredicates(other)) {
 							if (expliedByOther != other) {
-								Validity oldValue = impliedPredicates.put(expliedByOther, Validity.INVALID);
+								Validity oldValue = m_ImpliedPredicates.put(expliedByOther, Validity.INVALID);
 								if (oldValue == null) {
 									m_ImplicationChecksByTransitivity++;
 								} else {
@@ -476,9 +578,9 @@ public class PredicateUnifier {
 							}
 						}
 					}
-					impliedPredicates.put(other, implies);
+					m_ImpliedPredicates.put(other, implies);
 				}
-				Validity explies = expliedPredicates.get(other);
+				Validity explies = m_ExpliedPredicates.get(other);
 				if (explies == null) {
 					explies = m_SmtManager.isCovered(this, otherClosedTerm, m_closedTerm);
 					if (explies == Validity.VALID) {
@@ -486,7 +588,7 @@ public class PredicateUnifier {
 						// we conclude (expliedByOther ==> this)
 						for (IPredicate expliedByOther : getCoverageRelation().getCoveredPredicates(other)) {
 							if (expliedByOther != other) {
-								Validity oldValue = expliedPredicates.put(expliedByOther, Validity.VALID);
+								Validity oldValue = m_ExpliedPredicates.put(expliedByOther, Validity.VALID);
 								if (oldValue == null) {
 									m_ImplicationChecksByTransitivity++;
 								} else {
@@ -499,7 +601,7 @@ public class PredicateUnifier {
 						// we conclude !(impliedByOther ==> this)
 						for (IPredicate impliedByOther : getCoverageRelation().getCoveringPredicates(other)) {
 							if (impliedByOther != other) {
-								Validity oldValue = expliedPredicates.put(impliedByOther, Validity.INVALID);
+								Validity oldValue = m_ExpliedPredicates.put(impliedByOther, Validity.INVALID);
 								if (oldValue == null) {
 									m_ImplicationChecksByTransitivity++;
 								} else {
@@ -508,7 +610,7 @@ public class PredicateUnifier {
 							}
 						}
 					}
-					expliedPredicates.put(other, explies);
+					m_ExpliedPredicates.put(other, explies);
 				}
 				if (implies == Validity.VALID && explies == Validity.VALID) {
 					return other;
