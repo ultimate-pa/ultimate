@@ -12,13 +12,17 @@ import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TypeHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CFunction;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.GENERALPRIMITIVE;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.CDeclaration;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LocalLValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultExpression;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.BoogieASTUtil;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayLHS;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssumeStatement;
@@ -34,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IdentifierExpression
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ModifiesSpecification;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.NamedAttribute;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Procedure;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.RequiresSpecification;
@@ -91,6 +96,7 @@ public class PostProcessor {
 	 * @param arrayHandler
 	 *            a reference to the arrayHandler.
 	 * @param structHandler 
+	 * @param typeHandler 
 	 * @param initStatements
 	 *            a list of all global init statements.
 	 * @param procedures
@@ -108,7 +114,7 @@ public class PostProcessor {
 	 */
 	public ArrayList<Declaration> postProcess(Dispatcher main, ILocation loc, MemoryHandler memoryHandler, 
 			ArrayHandler arrayHandler, FunctionHandler functionHandler, StructHandler structHandler,
-			Set<String> undefinedTypes,	Collection<? extends FunctionDeclaration> functions, 
+			TypeHandler typeHandler, Set<String> undefinedTypes,	Collection<? extends FunctionDeclaration> functions, 
 			LinkedHashMap<Declaration,CDeclaration> mDeclarationsGlobalInBoogie) {
 		ArrayList<Declaration> decl = new ArrayList<Declaration>();
 		decl.addAll(declareUndefinedTypes(loc, undefinedTypes));
@@ -118,6 +124,9 @@ public class PostProcessor {
 		decl.addAll(functions);
 		decl.addAll(declareFunctionPointerProcedures(main, functionHandler, memoryHandler, structHandler));
 		decl.addAll(declareConversionFunctions(main, functionHandler, memoryHandler, structHandler));
+		if (typeHandler.usePreciseIntegerTypes()) {
+			decl.addAll(declarePrimitiveDataTypeSynonyms(loc, memoryHandler, typeHandler));
+		}
 		return decl;
 	}
 	
@@ -458,4 +467,29 @@ public class PostProcessor {
 		functionHandler.endUltimateInit(main, startDeclaration, SFO.START);
 		return decl;
 	}
+	
+	private ArrayList<Declaration> declarePrimitiveDataTypeSynonyms(ILocation loc, 
+			MemoryHandler memoryHandler, TypeHandler typeHandler) {
+		ArrayList<Declaration> decls = new ArrayList<Declaration>();
+		for (CPrimitive.PRIMITIVE cPrimitive: CPrimitive.PRIMITIVE.values()) {
+			CPrimitive cPrimitiveO = new CPrimitive(cPrimitive);
+			if (cPrimitiveO.getGeneralType() == GENERALPRIMITIVE.INTTYPE) {
+				Attribute[] attributes = new Attribute[2];
+				attributes[0] = new NamedAttribute(loc, "isUnsigned", 
+						new Expression[]{ new BooleanLiteral(loc, cPrimitiveO.isUnsigned())});
+				int bytesize = memoryHandler.typeSizeConstants.CPrimitiveToTypeSizeConstant.get(cPrimitive);
+				int bitsize = bytesize * 8;
+				attributes[1] = new NamedAttribute(loc, "bitsize", 
+						new Expression[]{ new IntegerLiteral(loc, String.valueOf(bitsize))});
+				String identifier = "C_" + cPrimitive.name();
+				String[] typeParams = new String[0];
+				ASTType intType = new PrimitiveType(loc, SFO.INT);
+				decls.add(new TypeDeclaration(loc, attributes, false, identifier, typeParams , intType));
+			}
+		}
+		return decls;
+		
+		
+	}
+			
 }

@@ -4,9 +4,11 @@
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
+import org.eclipse.cdt.core.dom.ast.ASTTypeMatcher;
 import org.eclipse.cdt.core.dom.ast.IASTCompositeTypeSpecifier;
 import org.eclipse.cdt.core.dom.ast.IASTDeclaration;
 import org.eclipse.cdt.core.dom.ast.IASTElaboratedTypeSpecifier;
@@ -80,8 +82,30 @@ public class TypeHandler implements ITypeHandler {
      * counting levels of struct declaration.
      */
     private int structCounter;
-
+    
     /**
+     * Contains all primitive types that occurred in program.
+     */
+    private final Set<CPrimitive.PRIMITIVE> m_OccurredPrimitiveTypes = new HashSet<>();
+    
+    /**
+     * If true we translate CPrimitives whose general type is INT to 
+     * identically named types,
+     * if false we translate CPrimitives whose general type is INT to int.
+     */
+    private final boolean m_PreciseIntegerTypes = false;
+    
+    
+
+    public Set<CPrimitive.PRIMITIVE> getOccurredPrimitiveTypes() {
+		return m_OccurredPrimitiveTypes;
+	}
+
+	public boolean usePreciseIntegerTypes() {
+		return m_PreciseIntegerTypes;
+	}
+
+	/**
      * Constructor.
      */
     public TypeHandler() {
@@ -461,16 +485,7 @@ public class TypeHandler implements ITypeHandler {
     @Override
 	public ASTType ctype2asttype(ILocation loc, CType cType, boolean isBool, boolean isPointer) {
 		if (cType instanceof CPrimitive) {
-			switch (((CPrimitive) cType).getGeneralType()) {
-			case VOID:
-				return null; //(alex:) seems to be lindemm's convention, see FunctionHandler.isInParamVoid(..)
-			case INTTYPE:
-				return new PrimitiveType(loc, SFO.INT);
-			case FLOATTYPE:
-				return new PrimitiveType(loc, SFO.REAL);
-			default:
-				throw new UnsupportedSyntaxException(loc, "unknown primitive type");
-			}
+			return cPrimitive2asttype(loc, (CPrimitive) cType);
 		} else if (cType instanceof CPointer) {
 			return MemoryHandler.POINTER_TYPE;
 		} else if (cType instanceof CArray) {
@@ -505,6 +520,23 @@ public class TypeHandler implements ITypeHandler {
 		}
 		throw new UnsupportedSyntaxException(loc, "unknown type");
 	}
+    
+    private ASTType cPrimitive2asttype(ILocation loc, CPrimitive cPrimitive) {
+		switch (cPrimitive.getGeneralType()) {
+		case VOID:
+			return null; //(alex:) seems to be lindemm's convention, see FunctionHandler.isInParamVoid(..)
+		case INTTYPE:
+			if (m_PreciseIntegerTypes) {
+				return new NamedType(loc, "C_" + cPrimitive.getType().toString(), new ASTType[0]);
+			} else {
+				return new PrimitiveType(loc, SFO.INT);
+			}
+		case FLOATTYPE:
+			return new PrimitiveType(loc, SFO.REAL);
+		default:
+			throw new UnsupportedSyntaxException(loc, "unknown primitive type");
+		}
+    }
     
     public void beginScope() {
     	m_DefinedTypes.beginScope();

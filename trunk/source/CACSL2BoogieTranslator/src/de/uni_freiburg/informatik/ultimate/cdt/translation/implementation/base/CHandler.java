@@ -421,7 +421,7 @@ public class CHandler implements ICHandler {
 			throw new IncorrectSyntaxException(loc, msg);
 		}
 
-		decl.addAll(mPostProcessor.postProcess(main, loc, mMemoryHandler, mArrayHandler, mFunctionHandler, mStructHandler,
+		decl.addAll(mPostProcessor.postProcess(main, loc, mMemoryHandler, mArrayHandler, mFunctionHandler, mStructHandler, (TypeHandler) mTypeHandler,
 				main.typeHandler.getUndefinedTypes(), this.mFunctions.values(), mDeclarationsGlobalInBoogie));
 
 		// this has to happen after postprocessing as pping may add sizeof
