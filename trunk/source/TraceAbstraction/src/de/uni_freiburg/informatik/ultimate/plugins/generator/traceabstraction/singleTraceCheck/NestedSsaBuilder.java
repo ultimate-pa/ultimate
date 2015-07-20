@@ -234,9 +234,9 @@ public class NestedSsaBuilder {
 		int numberOfPendingCalls = 0;
 		for (int i = 0; i < m_Formulas.getTrace().length(); i++) {
 			CodeBlock symbol = m_Formulas.getTrace().getSymbolAt(i);
-			if (symbol instanceof GotoEdge) {
-				throw new IllegalArgumentException(s_GotosUnsupportedMessage);
-			}
+//			if (symbol instanceof GotoEdge) {
+//				throw new IllegalArgumentException(s_GotosUnsupportedMessage);
+//			}
 
 			TransFormula tf;
 			if (m_Formulas.getTrace().isCallPosition(i)) {
