@@ -56,7 +56,7 @@ public class TransFormulaBuilder {
 		} else if (cb instanceof Summary) {
 			statements = new Statement[] { ((Summary) cb).getCallStatement() };
 		} else if (cb instanceof GotoEdge) {
-			throw new IllegalArgumentException("Auxiliary Gotos should have" + "been removed.");
+			statements = new Statement[0];
 		} else {
 			throw new AssertionError();
 		}

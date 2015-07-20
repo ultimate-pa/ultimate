@@ -634,6 +634,7 @@ public class CfgBuilder {
 					removeAuxiliaryGoto(gotoEdge);
 				}
 			}
+			m_Edges.addAll(m_GotoEdges);
 
 			for (CodeBlock transEdge : m_Edges) {
 				tfb.addTransitionFormulas(transEdge, procName);
