@@ -23,7 +23,7 @@ public class RcfgPreferenceInitializer extends UltimatePreferenceInitializer {
 				new UltimatePreferenceItem<CodeBlockSize>(LABEL_CodeBlockSize,
 						DEF_CodeBlockSize, PreferenceType.Combo, CodeBlockSize.values()),
 				new UltimatePreferenceItem<Boolean>(LABEL_RemoveGotoEdges,
-						true, PreferenceType.Boolean),
+						false, PreferenceType.Boolean),
 				new UltimatePreferenceItem<Boolean>(LABEL_Simplify,
 						false, PreferenceType.Boolean),
 				new UltimatePreferenceItem<Boolean>(LABEL_CNF,
