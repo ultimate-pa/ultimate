@@ -737,22 +737,30 @@ public class CfgBuilder {
 				}
 			}
 
-			mother.removeOutgoing(gotoEdge);
-			gotoEdge.setSource(null);
-			gotoEdge.setTarget(null);
-			child.removeIncoming(gotoEdge);
 			mLogger.debug("Removed GotoEdge from" + mother + " to " + child);
 			if (mother == child) {
+				mother.removeOutgoing(gotoEdge);
+				gotoEdge.setSource(null);
+				gotoEdge.setTarget(null);
+				child.removeIncoming(gotoEdge);
 				mLogger.debug("GotoEdge was selfloop");
 				return true;
 			} else {
 				if (child.getIncomingEdges().isEmpty() || mother.getOutgoingEdges().isEmpty()) {
+					mother.removeOutgoing(gotoEdge);
+					gotoEdge.setSource(null);
+					gotoEdge.setTarget(null);
+					child.removeIncoming(gotoEdge);
 					mLogger.debug(mother + " has no sucessors any more or " + child + "has no predecessors any more.");
 					mLogger.debug(child + " gets absorbed by " + mother);
 					mergeLocNodes(child, mother);
 					return true;
 				} else {
 					if (allowMultiplicationOfEdges) {
+						mother.removeOutgoing(gotoEdge);
+						gotoEdge.setSource(null);
+						gotoEdge.setTarget(null);
+						child.removeIncoming(gotoEdge);
 						// Not allowed to merge mother and child in this case
 						mLogger.debug(child + " has " + child.getIncomingEdges().size() + " predecessors," + " namely "
 								+ child.getIncomingNodes());
