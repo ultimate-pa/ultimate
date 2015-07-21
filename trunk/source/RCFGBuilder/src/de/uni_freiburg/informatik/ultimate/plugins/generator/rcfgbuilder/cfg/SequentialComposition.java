@@ -73,7 +73,8 @@ public class SequentialComposition extends CodeBlock {
 			} else if (codeBlocks.get(i) instanceof Return) {
 				numberReturns++;
 			} else if (codeBlocks.get(i) instanceof StatementSequence || codeBlocks.get(i) instanceof SequentialComposition
-					|| codeBlocks.get(i) instanceof ParallelComposition || codeBlocks.get(i) instanceof Summary) {
+					|| codeBlocks.get(i) instanceof ParallelComposition || codeBlocks.get(i) instanceof Summary
+					|| codeBlocks.get(i) instanceof GotoEdge) {
 				// do nothing
 			} else {
 				throw new IllegalArgumentException("unknown CodeBlock");
