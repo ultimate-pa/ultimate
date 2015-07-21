@@ -13,6 +13,7 @@ import java.util.Set;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
+import de.uni_freiburg.informatik.ultimate.core.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lassoranker.AnalysisType;
 import de.uni_freiburg.informatik.ultimate.lassoranker.LinearInequality;
@@ -104,9 +105,11 @@ public final class LinearInequalityInvariantPatternProcessor
 	 *            The strategy to generate invariant patterns with
 	 * @param useNonlinearConstraints
 	 * 			  Kind of constraints that are used to specify invariant.
+	 * @param storage 
 	 */
 	public LinearInequalityInvariantPatternProcessor(
 			final IUltimateServiceProvider services,
+			final IToolchainStorage storage,
 			final PredicateUnifier predicateUnifier,
 			final SmtManager smtManager, final Script solver,
 			final ControlFlowGraph cfg, final IPredicate precondition,
@@ -124,7 +127,7 @@ public final class LinearInequalityInvariantPatternProcessor
 		this.patternVariables = new ArrayList<>();
 		this.patternCoefficients = new HashSet<>();
 
-		this.linearizer = new CachedTransFormulaLinearizer(services, smtManager);
+		this.linearizer = new CachedTransFormulaLinearizer(services, smtManager, storage);
 		final Boogie2SMT boogie2smt = smtManager.getBoogie2Smt();
 		this.precondition = linearizer.linearize(new TransFormula(precondition,
 				boogie2smt));

@@ -61,7 +61,7 @@ public class LinearInequalityInvariantPatternProcessorFactory
 			ControlFlowGraph cfg, IPredicate precondition,
 			IPredicate postcondition) {
 		return new LinearInequalityInvariantPatternProcessor(services,
-				predUnifier, smtManager, produceSmtSolver(), cfg, precondition,
+				storage, predUnifier, smtManager, produceSmtSolver(), cfg, precondition,
 				postcondition, strategy, m_UseNonlinearConstraints);
 	}
 

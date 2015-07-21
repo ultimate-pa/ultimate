@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
+import de.uni_freiburg.informatik.ultimate.core.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lassoranker.LinearTransition;
 import de.uni_freiburg.informatik.ultimate.lassoranker.exceptions.TermException;
@@ -38,24 +39,29 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 public class CachedTransFormulaLinearizer {
 
 	private final IUltimateServiceProvider m_Services;
+	private final IToolchainStorage m_Storage;
 	private final Term[] m_Axioms;
 	private final ReplacementVarFactory m_ReplacementVarFactory;
 	private final SmtManager m_SmtManager;
 	private final Map<TransFormula, LinearTransition> m_Cache;
+
 
 	/**
 	 * Constructs a cached TransFormula linearizer.
 	 * 
 	 * @param services
 	 *            Service provider to use
+	 * @param storage
+	 *            Toolchain storage, e.g., needed for construction of new solver. 
 	 * @param smtManager
 	 *            SMT manager
 	 * @author Matthias Heizmann
 	 */
 	public CachedTransFormulaLinearizer(IUltimateServiceProvider services,
-			SmtManager smtManager) {
+			SmtManager smtManager, IToolchainStorage storage) {
 		super();
 		m_Services = services;
+		m_Storage = storage;
 		m_SmtManager = smtManager;
 		m_ReplacementVarFactory = new ReplacementVarFactory(m_SmtManager
 				.getBoogie2Smt().getVariableManager());
@@ -147,9 +153,9 @@ public class CachedTransFormulaLinearizer {
 				new RewriteIte(),
 				new RewriteUserDefinedTypes(m_ReplacementVarFactory, m_SmtManager.getScript()),
 				new RewriteEquality(), 
-				new SimplifyPreprocessor(m_Services),
+				new SimplifyPreprocessor(m_Services, m_Storage),
 				new DNF(m_Services, m_SmtManager.getVariableManager()), 
-				new SimplifyPreprocessor(m_Services),
+				new SimplifyPreprocessor(m_Services, m_Storage),
 				new RewriteTrueFalse(), 
 				new RemoveNegation(),
 				new RewriteStrictInequalities(), };
