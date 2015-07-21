@@ -36,6 +36,7 @@ import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.LetTerm;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
+import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -55,30 +56,38 @@ public class TermTransferrer extends TermTransformer {
 
 	@Override
 	protected void convert(Term term) {
-		declareSortIfNeeded(term);
+		Sort sort = declareSortIfNeeded(term.getSort());
 		if (term instanceof TermVariable) {
 			TermVariable tv = (TermVariable) term;
-			Term result = m_Script.variable(tv.getName(), tv.getSort());
+			Term result = m_Script.variable(tv.getName(), sort);
 			setResult(result);
 		} else if (term instanceof ConstantTerm) {
 			ConstantTerm ct = (ConstantTerm) term;
+			final Term result;
 			if (ct.getValue() instanceof BigInteger) {
-				Term result = m_Script.numeral((BigInteger) ct.getValue());
-				setResult(result);
+				result = m_Script.numeral((BigInteger) ct.getValue());
+			} else if (ct.getValue() instanceof Rational) {
+				result = ((Rational) ct.getValue()).toTerm(sort);
 			} else {
-				throw new AssertionError("unexpected lkjebs");
+				throw new AssertionError("unexpected ConstantTerm (maybe not yet implemented)");
 			}
+			setResult(result);
 		} else {
 			super.convert(term);
 		}
 	}
 
-	private void declareSortIfNeeded(Term term) {
-		if (!term.getSort().isInternal()) {
-			if (m_DeclaredSorts .contains(term.getSort())) {
-				m_Script.declareSort(term.getSort().getName(), term.getSort().getIndices().length);
+	private Sort declareSortIfNeeded(Sort sort) {
+		if (!sort.isInternal()) {
+			if (!m_DeclaredSorts.contains(sort)) {
+				m_Script.declareSort(sort.getName(), sort.getIndices().length);
+				m_DeclaredSorts.add(sort);
 			}
 		}
+		if (sort.getArguments().length > 0) {
+			throw new UnsupportedOperationException("not yet implemented");
+		}
+		return m_Script.sort(sort.getName());
 	}
 
 	@Override
