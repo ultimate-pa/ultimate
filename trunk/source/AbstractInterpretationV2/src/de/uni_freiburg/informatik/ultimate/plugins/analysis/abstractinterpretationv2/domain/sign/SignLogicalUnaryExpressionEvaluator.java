@@ -22,4 +22,16 @@ public class SignLogicalUnaryExpressionEvaluator extends SignUnaryExpressionEval
 		return castedEvaluator.logicallyInterpret(currentState);
 	}
 
+	@Override
+    public boolean logicalEvaluation(IAbstractState<CodeBlock, BoogieVar> currentState) {
+		final ILogicalEvaluator<Values, CodeBlock, BoogieVar> castedEvaluator = (ILogicalEvaluator<Values, CodeBlock, BoogieVar>) mSubEvaluator;
+		
+		switch (mOperator) {
+		case LOGICNEG:
+			return !castedEvaluator.logicalEvaluation(currentState);
+		default:
+			return castedEvaluator.logicalEvaluation(currentState);
+		}
+    }
+
 }

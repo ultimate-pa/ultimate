@@ -15,7 +15,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
 public class SignUnaryExpressionEvaluator implements INAryEvaluator<Values, CodeBlock, BoogieVar> {
 
 	protected IEvaluator<Values, CodeBlock, BoogieVar> mSubEvaluator;
-	private UnaryExpression.Operator mOperator;
+	protected UnaryExpression.Operator mOperator;
 
 	@Override
 	public void addSubEvaluator(IEvaluator<Values, CodeBlock, BoogieVar> evaluator) {

@@ -30,4 +30,10 @@ public class SignLogicalSingletonIntegerExpressionEvaluator extends SignSingleto
 		return currentState.copy();
 	}
 
+	@Override
+    public boolean logicalEvaluation(IAbstractState<CodeBlock, BoogieVar> currentState) {
+		// TODO Think about this if this is right.
+		return false;
+    }
+
 }

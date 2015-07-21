@@ -3,6 +3,10 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import java.util.HashSet;
 import java.util.Set;
 
+import org.apache.log4j.Logger;
+
+import de.uni_freiburg.informatik.ultimate.boogie.preprocessor.Activator;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.IAbstractState;
@@ -18,9 +22,11 @@ public class SignBinaryExpressionEvaluator implements INAryEvaluator<Values, Cod
 	protected IEvaluator<Values, CodeBlock, BoogieVar> mRightSubEvaluator;
 	protected BinaryExpression.Operator mOperator;
 	protected Set<String> mVariableSet;
+	protected Logger mLogger;
 
-	public SignBinaryExpressionEvaluator() {
+	public SignBinaryExpressionEvaluator(IUltimateServiceProvider services) {
 		mVariableSet = new HashSet<String>();
+		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 	}
 
 	/**

@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.sign;
 
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.IAbstractDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.IAbstractPostOperator;
@@ -21,8 +22,10 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
 public class SignDomain implements IAbstractDomain<SignDomainState<CodeBlock, BoogieVar>, CodeBlock, BoogieVar> {
 
 	private SignStateConverter<CodeBlock, BoogieVar> mStateConverter;
+	private final IUltimateServiceProvider mServices;
 
-	public SignDomain() {
+	public SignDomain(IUltimateServiceProvider services) {
+		mServices = services;
 		mStateConverter = new SignStateConverter<CodeBlock, BoogieVar>(new SignDomainState<CodeBlock, BoogieVar>());
 	}
 
@@ -43,7 +46,7 @@ public class SignDomain implements IAbstractDomain<SignDomainState<CodeBlock, Bo
 
 	@Override
 	public IAbstractPostOperator<CodeBlock, BoogieVar> getPostOperator() {
-		return new SignPostOperator(mStateConverter);
+		return new SignPostOperator(mServices, mStateConverter);
 	}
 
 	@Override

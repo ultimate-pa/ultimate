@@ -91,7 +91,7 @@ public class AbstractInterpretationRcfgObserver extends BaseObserver {
 		if (EmptyDomain.class.getSimpleName().equals(selectedDomain)) {
 			return new EmptyDomain<>();
 		} else if (SignDomain.class.getSimpleName().equals(selectedDomain)) {
-			return new SignDomain();
+			return new SignDomain(mServices);
 		}
 		throw new UnsupportedOperationException("The value \"" + selectedDomain + "\" of preference \""
 				+ AbstractInterpretationPreferenceInitializer.LABEL_ABSTRACT_DOMAIN + "\" was not considered before! ");

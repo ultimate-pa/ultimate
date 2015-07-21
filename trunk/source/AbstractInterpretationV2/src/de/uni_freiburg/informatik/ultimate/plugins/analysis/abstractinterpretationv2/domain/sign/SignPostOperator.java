@@ -2,6 +2,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import java.util.List;
 
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.RcfgStatementExtractor;
@@ -26,10 +27,10 @@ public class SignPostOperator implements IAbstractPostOperator<CodeBlock, Boogie
 	 * @param stateConverter
 	 *            The state converter used to identify {@link SignDomainState}s.
 	 */
-	protected SignPostOperator(SignStateConverter<CodeBlock, BoogieVar> stateConverter) {
+	protected SignPostOperator(IUltimateServiceProvider services, SignStateConverter<CodeBlock, BoogieVar> stateConverter) {
 		mStateConverter = stateConverter;
 		mStatementExtractor = new RcfgStatementExtractor();
-		mStatementProcessor = new SignDomainStatementProcessor(mStateConverter);
+		mStatementProcessor = new SignDomainStatementProcessor(services, mStateConverter);
 	}
 
 	/**

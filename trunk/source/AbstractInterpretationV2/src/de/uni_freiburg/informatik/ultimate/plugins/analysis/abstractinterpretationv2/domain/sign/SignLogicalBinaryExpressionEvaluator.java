@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.sign;
 
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.IEvaluationResult;
@@ -10,8 +11,10 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
 public class SignLogicalBinaryExpressionEvaluator extends SignBinaryExpressionEvaluator implements
         ILogicalEvaluator<Values, CodeBlock, BoogieVar> {
 
-	public SignLogicalBinaryExpressionEvaluator() {
-		super();
+	
+	
+	public SignLogicalBinaryExpressionEvaluator(IUltimateServiceProvider services) {
+		super(services);
 	}
 
 	@Override
@@ -121,32 +124,10 @@ public class SignLogicalBinaryExpressionEvaluator extends SignBinaryExpressionEv
 			// case ARITHMINUS:
 			// break;
 		default:
-			throw new UnsupportedOperationException("The operator " + mOperator.toString() + " is not implemented.");
+			mLogger.warn("Loss of precision while interpreting the logical expression " + this.toString());
+			return currentState.copy();
+			//throw new UnsupportedOperationException("The operator " + mOperator.toString() + " is not implemented.");
 		}
-	}
-
-	private IEvaluationResult<?> evaluateLogicalOperator(IAbstractState<CodeBlock, BoogieVar> currentState,
-	        IEvaluationResult<?> firstResult, IEvaluationResult<?> secondResult) {
-
-		if (firstResult instanceof SignDomainValue && secondResult instanceof SignDomainValue) {
-			final SignDomainValue castedFirst = (SignDomainValue) firstResult;
-			final SignDomainValue castedSecond = (SignDomainValue) secondResult;
-
-			return evaluateComparisonOperators(castedFirst, castedSecond);
-		}
-
-		if (firstResult instanceof SignLogicalSingletonVariableExpressionEvaluator
-		        && secondResult instanceof SignDomainValue) {
-
-			final SignLogicalSingletonVariableExpressionEvaluator firstVariable = (SignLogicalSingletonVariableExpressionEvaluator) firstResult;
-
-			final SignDomainValue first = firstVariable.getBooleanValue(currentState);
-			final SignDomainValue second = (SignDomainValue) secondResult;
-
-			return evaluateComparisonOperators(first, second);
-		}
-
-		throw new UnsupportedOperationException("Not implemented.");
 	}
 
 	private IEvaluationResult<Values> evaluateComparisonOperators(SignDomainValue firstResult,
@@ -222,5 +203,31 @@ public class SignLogicalBinaryExpressionEvaluator extends SignBinaryExpressionEv
 			return new SignDomainValue(Values.POSITIVE);
 		}
 		return new SignDomainValue(Values.NEGATIVE);
+	}
+
+	@Override
+	public boolean logicalEvaluation(IAbstractState<CodeBlock, BoogieVar> currentState) {
+
+		final ILogicalEvaluator<Values, CodeBlock, BoogieVar> left = (ILogicalEvaluator<SignDomainValue.Values, CodeBlock, BoogieVar>) mLeftSubEvaluator;
+		final ILogicalEvaluator<Values, CodeBlock, BoogieVar> right = (ILogicalEvaluator<SignDomainValue.Values, CodeBlock, BoogieVar>) mRightSubEvaluator;
+
+		switch (mOperator) {
+		case COMPEQ:
+			return left.logicalEvaluation(currentState) == right.logicalEvaluation(currentState);
+		case COMPNEQ:
+			return left.logicalEvaluation(currentState) != right.logicalEvaluation(currentState);
+		case LOGICIMPLIES:
+			return !left.logicalEvaluation(currentState) || right.logicalEvaluation(currentState);
+		case LOGICIFF:
+			return (left.logicalEvaluation(currentState) && right.logicalEvaluation(currentState))
+			        || (!left.logicalEvaluation(currentState) && !right.logicalEvaluation(currentState));
+		case LOGICOR:
+			return left.logicalEvaluation(currentState) || right.logicalEvaluation(currentState);
+		default:
+			// TODO: implement other cases
+		}
+
+		// TODO Auto-generated method stub
+		return false;
 	}
 }

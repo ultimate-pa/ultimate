@@ -3,6 +3,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import java.math.BigDecimal;
 import java.math.BigInteger;
 
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.IEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.IEvaluatorFactory;
@@ -13,9 +14,12 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
 public class SignEvaluatorFactory implements IEvaluatorFactory<Values, CodeBlock, BoogieVar> {
 
 	SignStateConverter<CodeBlock, BoogieVar> mStateConverter;
+	
+	private final IUltimateServiceProvider mServices;
 
-	public SignEvaluatorFactory(SignStateConverter<CodeBlock, BoogieVar> stateConverter) {
+	public SignEvaluatorFactory(IUltimateServiceProvider services, SignStateConverter<CodeBlock, BoogieVar> stateConverter) {
 		mStateConverter = stateConverter;
+		mServices = services;
 	}
 
 	@Override
@@ -27,7 +31,7 @@ public class SignEvaluatorFactory implements IEvaluatorFactory<Values, CodeBlock
 		case 1:
 			return new SignUnaryExpressionEvaluator();
 		case 2:
-			return new SignBinaryExpressionEvaluator();
+			return new SignBinaryExpressionEvaluator(mServices);
 		default:
 			throw new UnsupportedOperationException("Arity of " + arity + " is not implemented.");
 		}

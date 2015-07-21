@@ -30,4 +30,15 @@ public class SignLogicalSingletonDecimalExpressionEvaluator extends SignSingleto
 		return currentState.copy();
 	}
 
+	@Override
+    public boolean logicalEvaluation(IAbstractState<CodeBlock, BoogieVar> currentState) {
+		// TODO think about this. Is this right in this case?
+		
+		if (mValue.equals(Values.BOTTOM)) {
+			return false;
+		}
+		
+	    return true;
+    }
+
 }

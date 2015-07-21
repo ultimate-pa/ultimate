@@ -53,4 +53,10 @@ public class SignLogicalSingletonValueExpressionEvaluator extends SignSingletonV
 		return 0;
 	}
 
+	@Override
+    public boolean logicalEvaluation(IAbstractState<CodeBlock, BoogieVar> currentState) {
+	    // TODO Think about if this is right here.
+	    return false;
+    }
+
 }

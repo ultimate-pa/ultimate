@@ -62,4 +62,28 @@ public class SignLogicalSingletonVariableExpressionEvaluator extends SignSinglet
 		}
 	}
 
+	@Override
+    public boolean logicalEvaluation(IAbstractState<CodeBlock, BoogieVar> currentState) {
+		
+		assert currentState.containsVariable(mVariableName);
+		
+		final SignDomainState<CodeBlock, BoogieVar> convertedState = mStateConverter.getCheckedState(currentState);
+
+		final SignDomainValue value = convertedState.getValues().get(mVariableName);
+
+		SignDomainValue newValue;
+
+		switch (value.getResult()) {
+		case NEGATIVE:
+			return false;
+		case POSITIVE:
+			return true;
+		case BOTTOM:
+			return false;
+		default:
+			throw new UnsupportedOperationException("The value " + value.getResult().toString()
+			        + " is no valid boolean sign domain value.");
+		}
+    }
+
 }

@@ -16,4 +16,6 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 public interface ILogicalEvaluator<T, ACTION, VARDECL> extends INAryEvaluator<T, ACTION, VARDECL> {
 
 	public IAbstractState<ACTION, VARDECL> logicallyInterpret(IAbstractState<ACTION, VARDECL> currentState);
+	
+	public boolean logicalEvaluation(IAbstractState<ACTION, VARDECL> currentState);
 }
