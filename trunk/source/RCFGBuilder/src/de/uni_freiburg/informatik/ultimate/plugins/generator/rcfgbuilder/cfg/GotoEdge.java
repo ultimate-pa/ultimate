@@ -26,7 +26,11 @@ public class GotoEdge extends CodeBlock {
 
 	@Override
 	public String getPrettyPrintedStatements() {
-		return "goto " + mTarget.toString();
+		if (mTarget == null) {
+			return "disconnected goto";
+		} else {
+			return "goto " + mTarget.toString();
+		}
 	}
 
 	@Override
