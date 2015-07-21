@@ -16,6 +16,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.GotoEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ParallelComposition;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RcfgElement;
@@ -129,6 +130,8 @@ public class RCFGBacktranslator extends DefaultTranslator<CodeBlock, BoogieASTNo
 				}
 			}
 			throw new AssertionError("no branch was taken");
+		} else if (cb instanceof GotoEdge) {
+			return;
 		} else {
 			throw new UnsupportedOperationException("Unsupported CodeBlock" + cb.getClass().getCanonicalName());
 		}

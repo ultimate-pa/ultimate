@@ -13,6 +13,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGl
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.GotoEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ParallelComposition;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
@@ -211,7 +212,7 @@ public class TraceCheckerUtils {
 					i, predecessor, cb, successor, result, hierarchicalPredecessor));
 		} else if (trace.isInternalPosition(i)) {
 			assert (cb instanceof SequentialComposition) || (cb instanceof ParallelComposition)
-			|| (cb instanceof StatementSequence) || (cb instanceof Summary);
+			|| (cb instanceof StatementSequence) || (cb instanceof Summary) || (cb instanceof GotoEdge);
 			result = htc.checkInternal(predecessor, cb, successor);
 			logger.info(new DebugMessage("{0}: Hoare triple '{'{1}'}' {2} '{'{3}'}' is {4}", 
 					i, predecessor, cb, successor, result));
