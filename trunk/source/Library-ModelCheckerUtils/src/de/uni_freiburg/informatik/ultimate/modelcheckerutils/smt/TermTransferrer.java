@@ -27,7 +27,9 @@
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt;
 
 import java.math.BigInteger;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.AnnotatedTerm;
@@ -49,8 +51,17 @@ public class TermTransferrer extends TermTransformer {
 	
 	public enum TransferMode { ASSUME_DECLARED, DECLARE, UNSUPPORTED_LOGIC }
 	
-	private final Script m_Script;
+	protected final Script m_Script;
 	private Set<Sort> m_DeclaredSorts = new HashSet<>();
+
+	protected final Map<Term, Term> m_BacktransferMapping = new HashMap<Term,Term>();
+	
+	
+	public Map<Term, Term> getBacktranferMapping() {
+		return m_BacktransferMapping;
+	}
+
+
 	
 	public TermTransferrer(Script script) {
 		m_Script = script;
@@ -58,7 +69,7 @@ public class TermTransferrer extends TermTransformer {
 
 	@Override
 	protected void convert(Term term) {
-		Sort sort = declareSortIfNeeded(term.getSort());
+		Sort sort = transferSort(term.getSort());
 		if (term instanceof TermVariable) {
 			TermVariable tv = (TermVariable) term;
 			Term result = m_Script.variable(tv.getName(), sort);
@@ -94,7 +105,17 @@ public class TermTransferrer extends TermTransformer {
 	
 	private Sort transferSort(Sort sort) {
 		Sort[] arguments = transferSorts(sort.getArguments());
-		Sort result = m_Script.sort(sort.getName(), arguments);
+		Sort result;
+		try {
+			result = m_Script.sort(sort.getName(), arguments);
+		} catch (SMTLIBException e) {
+			if (e.getMessage().equals("Sort " + sort.getName() + " not declared")) {
+				m_Script.declareSort(sort.getName(), sort.getArguments().length);
+				result = m_Script.sort(sort.getName(), arguments);
+			} else {
+				throw e;
+			}
+		}
 		return result;
 	}
 	
