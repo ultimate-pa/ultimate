@@ -28,8 +28,8 @@ public class BitvectorTranslation extends AbstractExpressionTranslation {
 		{
 			String val = ISOIEC9899TC3.handleCharConstant(new String(node.getValue()), loc, main);
 			CPrimitive cprimitive = new CPrimitive(PRIMITIVE.CHAR);
-			int length = m_TypeSizeConstants.getCPrimitiveToTypeSizeConstant().get(cprimitive);
-			return new ResultExpression(new RValue(new BitvecLiteral(loc, val, length), cprimitive));
+			int bitlength = 8 * m_TypeSizeConstants.getCPrimitiveToTypeSizeConstant().get(cprimitive);
+			return new ResultExpression(new RValue(new BitvecLiteral(loc, val, bitlength), cprimitive));
 		}
 		case IASTLiteralExpression.lk_integer_constant:
 		{

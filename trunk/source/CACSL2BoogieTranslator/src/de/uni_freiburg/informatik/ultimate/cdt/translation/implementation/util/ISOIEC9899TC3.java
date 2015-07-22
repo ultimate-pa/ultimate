@@ -251,8 +251,8 @@ public final class ISOIEC9899TC3 {
 		}
 		final Expression resultLiteral;
 		if (bitvectorTranslation) {
-			resultLiteral = new BitvecLiteral(loc, valAsString, typeSizeConstants.
-					getCPrimitiveToTypeSizeConstant().get(cType.getType()));
+			int bitlength = 8 * typeSizeConstants. getCPrimitiveToTypeSizeConstant().get(cType.getType());
+			resultLiteral = new BitvecLiteral(loc, valAsString, bitlength);
 		} else {
 			resultLiteral = new IntegerLiteral(loc, valAsString);
 		}
