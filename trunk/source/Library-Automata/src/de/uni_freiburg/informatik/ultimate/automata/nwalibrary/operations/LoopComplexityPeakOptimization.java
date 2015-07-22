@@ -58,7 +58,7 @@ import de.uni_freiburg.informatik.ultimate.util.scc.StronglyConnectedComponent;
  * @param <LETTER>
  * @param <STATE>
  */
-public class LoopComplexity<LETTER, STATE> implements IOperation<LETTER, STATE> {	
+public class LoopComplexityPeakOptimization<LETTER, STATE> implements IOperation<LETTER, STATE> {	
 	
 	private final IUltimateServiceProvider m_Services;
 	private final Logger m_Logger;
@@ -70,7 +70,7 @@ public class LoopComplexity<LETTER, STATE> implements IOperation<LETTER, STATE> 
 	private HashMap<Set<STATE>, Integer> statesToLC = new HashMap<Set<STATE>, Integer>();
 	
 	
-	public LoopComplexity(IUltimateServiceProvider services,
+	public LoopComplexityPeakOptimization(IUltimateServiceProvider services,
 			INestedWordAutomaton<LETTER, STATE> operand) throws AutomataLibraryException {
 		super();
 		
@@ -131,6 +131,7 @@ public class LoopComplexity<LETTER, STATE> implements IOperation<LETTER, STATE> 
 		} else if (balls.size() == 1) { // Graph itself is a ball.
 			// Consider all subgraphs differing from original graph by one vertex.
 			
+			int maxEdges = 0;	
 			Collection<STATE> peakStates = new ArrayList<STATE>();
 			
 			// Determine number of predecessors and successors for each state.
@@ -151,7 +152,15 @@ public class LoopComplexity<LETTER, STATE> implements IOperation<LETTER, STATE> 
 				
 				// Add all those states with the maximum number of edges to peakStates.
 				if (pCount != 1 || sCount != 1) {
-				  peakStates.add(q);
+				  if (pCount + sCount == maxEdges) {
+					  peakStates.add(q);
+				  }
+				  
+				  if (pCount + sCount > maxEdges) {
+					  maxEdges = pCount + sCount;
+					  peakStates.clear();
+					  peakStates.add(q);
+				  }
 				}
 			}
 			
