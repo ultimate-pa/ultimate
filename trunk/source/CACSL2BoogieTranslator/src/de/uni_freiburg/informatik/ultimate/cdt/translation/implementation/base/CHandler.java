@@ -337,7 +337,8 @@ public class CHandler implements ICHandler {
 		
 		this.mGlobAcslExtractors = new ArrayList<>();
 		
-		if (false) {
+		boolean useBitvectors = main.mPreferences.getBoolean(CACSLPreferenceInitializer.LABEL_BITVECTOR_TRANSLATION);
+		if (useBitvectors) {
 			m_ExpressionTranslation = new BitvectorTranslation(mMemoryHandler.typeSizeConstants);
 		} else {
 			m_ExpressionTranslation = new IntegerTranslation(mMemoryHandler.typeSizeConstants);

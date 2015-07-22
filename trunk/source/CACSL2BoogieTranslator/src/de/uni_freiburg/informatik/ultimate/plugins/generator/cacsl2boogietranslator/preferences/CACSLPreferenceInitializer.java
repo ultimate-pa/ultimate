@@ -10,6 +10,7 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 
 	@Override
 	protected UltimatePreferenceItem<?>[] initDefaultPreferences() {
+
 		return new UltimatePreferenceItem<?>[] {
 				new UltimatePreferenceItem<TranslationMode>(LABEL_MODE,
 						TranslationMode.SV_COMP14, PreferenceType.Radio,
@@ -51,6 +52,10 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 						PreferenceType.Combo, UNSIGNED_TREATMENT.values()),
 				new UltimatePreferenceItem<Boolean>(
 						LABEL_CHECK_SIGNED_INTEGER_BOUNDS,
+						false,
+						PreferenceType.Boolean),
+				new UltimatePreferenceItem<Boolean>(
+						LABEL_BITVECTOR_TRANSLATION,
 						false,
 						PreferenceType.Boolean),
 
@@ -161,6 +166,7 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 	public static final String LABEL_CHECK_POINTER_SUBTRACTION_AND_COMPARISON_VALIDITY = "If two pointers are subtracted or compared they have the same base address";
 	public static final String LABEL_UNSIGNED_TREATMENT = "How to treat unsigned ints differently from normal ones";
 	public static final String LABEL_CHECK_SIGNED_INTEGER_BOUNDS = "Check absence of signed integer overflows";
+	public static final String LABEL_BITVECTOR_TRANSLATION = "Use bitvectors instead of ints";
 						
 
 	// typesize stuff
