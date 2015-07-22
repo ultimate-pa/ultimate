@@ -10,34 +10,38 @@ import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceSt
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer;
 
 public class TypeSizeConstants {
-	public int sizeOfIntType;
-	public int sizeOfPointerType;
-	public int sizeOfFloatType;
-	public int sizeOfCharType;
+	public final int sizeOfIntType;
+	public final int sizeOfPointerType;
+	public final int sizeOfFloatType;
+	public final int sizeOfCharType;
 
 //	for pointer arithmetic on a void pointer -- c standard disallows that, but gcc does not..
-	public int sizeOfVoidType; 
+	private final int sizeOfVoidType; 
 
-	public int sizeOfBoolType;
-	public int sizeOfShortType;
-	public int sizeOfLongType;
-	public int sizeOfDoubleType;
-	public int sizeOfSCharType;
-	public int sizeOfUCharType;
-	public int sizeOfWCharType;
-	public int sizeOfChar16Type;
-	public int sizeOfChar32Type;
-	public int sizeOfUShortType;
-	public int sizeOfUIntType;
-	public int sizeOfULongType;
-	public int sizeOfLongLongType;
-	public int sizeOfULongLongType;
-	public int sizeOfComplexFloatType;
-	public int sizeOfComplexDoubleType;
-	public int sizeOfLongDoubleType;
-	public int sizeOfComplexLongDoubleType;
-	public int sizeOfEnumType; //something like sizeof(enum s)
-	public int defaultTypeSize;
+	private final int sizeOfBoolType;
+	private final int sizeOfShortType;
+	private final int sizeOfLongType;
+	public final int sizeOfDoubleType;
+	private final int sizeOfSCharType;
+	private final int sizeOfUCharType;
+	private final int sizeOfWCharType;
+	private final int sizeOfChar16Type;
+	private final int sizeOfChar32Type;
+	private final int sizeOfUShortType;
+	private final int sizeOfUIntType;
+	private final int sizeOfULongType;
+	private final int sizeOfLongLongType;
+	private final int sizeOfULongLongType;
+	private final int sizeOfComplexFloatType;
+	private final int sizeOfComplexDoubleType;
+	private final int sizeOfLongDoubleType;
+	private final int sizeOfComplexLongDoubleType;
+	final int sizeOfEnumType; //something like sizeof(enum s)
+	/**
+	 * Fixme: 2015-07-22 Matthias: I cannot find the default type size in the
+	 * C standard. Before I set it to 23042 it was 0.
+	 */
+	public final int defaultTypeSize = 23042;
 	
 	private final LinkedHashMap<CPrimitive.PRIMITIVE, Integer> CPrimitiveToTypeSizeConstant = 
 			new LinkedHashMap<>();
@@ -66,8 +70,8 @@ public class TypeSizeConstants {
 				ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_DOUBLE);
 		this.sizeOfPointerType = 
 				ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_POINTER);
-		this.sizeOfBoolType = 
-				ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_BOOL);
+		this.sizeOfSCharType = 
+				ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_SCHAR);
 		this.sizeOfUCharType = 
 				ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_UCHAR);
 		this.sizeOfWCharType = 
@@ -96,9 +100,7 @@ public class TypeSizeConstants {
 				ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_COMPLEXLONGDOUBLE);
 		this.sizeOfEnumType = 
 				ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_ENUM);
-		this.sizeOfEnumType = 
-				ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_DEFAULT);
-
+	
 		CPrimitiveToTypeSizeConstant.put(PRIMITIVE.VOID, this.sizeOfVoidType);
 		CPrimitiveToTypeSizeConstant.put(PRIMITIVE.BOOL, this.sizeOfBoolType);
 		CPrimitiveToTypeSizeConstant.put(PRIMITIVE.CHAR, this.sizeOfCharType);
