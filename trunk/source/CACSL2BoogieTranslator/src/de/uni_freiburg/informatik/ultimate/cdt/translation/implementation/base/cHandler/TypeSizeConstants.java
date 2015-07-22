@@ -1,6 +1,8 @@
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler;
 
+import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.PRIMITIVE;
@@ -37,7 +39,13 @@ public class TypeSizeConstants {
 	public int sizeOfEnumType; //something like sizeof(enum s)
 	public int defaultTypeSize;
 	
-	public LinkedHashMap<CPrimitive.PRIMITIVE, Integer> CPrimitiveToTypeSizeConstant = new LinkedHashMap<>();
+	private final LinkedHashMap<CPrimitive.PRIMITIVE, Integer> CPrimitiveToTypeSizeConstant = 
+			new LinkedHashMap<>();
+	
+
+	public Map<CPrimitive.PRIMITIVE, Integer> getCPrimitiveToTypeSizeConstant() {
+		return Collections.unmodifiableMap(CPrimitiveToTypeSizeConstant);
+	}
 
 	public TypeSizeConstants(UltimatePreferenceStore ups) {
 		this.sizeOfVoidType = 

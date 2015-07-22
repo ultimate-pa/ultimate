@@ -921,7 +921,7 @@ public class CHandler implements ICHandler {
 			return new ResultExpression(new RValue(new IntegerLiteral(loc, val), new CPrimitive(PRIMITIVE.CHAR)));
 		case IASTLiteralExpression.lk_integer_constant:
 			val = new String(node.getValue());
-			RValue rVal = ISOIEC9899TC3.handleIntegerConstant(val, loc, main);
+			RValue rVal = ISOIEC9899TC3.handleIntegerConstant(val, loc, main, false, mMemoryHandler.typeSizeConstants);
 			return new ResultExpression(rVal);
 		case IASTLiteralExpression.lk_string_literal:
 			// Translate string to uninitialized char pointer

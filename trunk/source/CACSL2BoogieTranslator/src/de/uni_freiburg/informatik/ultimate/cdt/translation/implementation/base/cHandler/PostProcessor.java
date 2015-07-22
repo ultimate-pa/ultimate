@@ -477,7 +477,7 @@ public class PostProcessor {
 				Attribute[] attributes = new Attribute[2];
 				attributes[0] = new NamedAttribute(loc, "isUnsigned", 
 						new Expression[]{ new BooleanLiteral(loc, cPrimitiveO.isUnsigned())});
-				int bytesize = memoryHandler.typeSizeConstants.CPrimitiveToTypeSizeConstant.get(cPrimitive);
+				int bytesize = memoryHandler.typeSizeConstants.getCPrimitiveToTypeSizeConstant().get(cPrimitive);
 				int bitsize = bytesize * 8;
 				attributes[1] = new NamedAttribute(loc, "bitsize", 
 						new Expression[]{ new IntegerLiteral(loc, String.valueOf(bitsize))});

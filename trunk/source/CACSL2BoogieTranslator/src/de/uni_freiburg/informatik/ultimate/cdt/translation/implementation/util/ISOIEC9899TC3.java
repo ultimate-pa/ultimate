@@ -5,12 +5,15 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util;
 
 import java.math.BigInteger;
 
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.TypeSizeConstants;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.PRIMITIVE;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BitvecLiteral;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 
@@ -168,13 +171,21 @@ public final class ISOIEC9899TC3 {
 	 *            the value to parse
 	 * @param loc
 	 *            the location
+	 * @param bitvectorTranslation
+	 *            if true the Expression of the resulting RValue is a bitvecor
+	 *            if false the Expression is an int.
+	 * @param typeSizeConstants
+	 * 			  object that contains information about the size of
+	 *  		  primitive types.
 	 * @return the parsed value
 	 */
-	public static final RValue handleIntegerConstant(String val, ILocation loc, Dispatcher dispatch) {
+	public static final RValue handleIntegerConstant(String val, ILocation loc, 
+			Dispatcher dispatch, boolean bitvectorTranslation, 
+			TypeSizeConstants typeSizeConstants) {
 		String value = val;
 		String suffix = "";
-		CType cType = null;
-		String valAsString = null;
+		final CPrimitive cType;
+		String valAsString;
 		// if there is a integer-suffix: throw it away
 		for (String s : SUFFIXES_INT) {
 			if (val.endsWith(s)) {
@@ -238,6 +249,13 @@ public final class ISOIEC9899TC3 {
 			String msg = "Unable to translate int!";
 			throw new IncorrectSyntaxException(loc, msg);
 		}
-		return new RValue(new IntegerLiteral(loc, valAsString), cType);
+		final Expression resultLiteral;
+		if (bitvectorTranslation) {
+			resultLiteral = new BitvecLiteral(loc, valAsString, typeSizeConstants.
+					getCPrimitiveToTypeSizeConstant().get(cType.getType()));
+		} else {
+			resultLiteral = new IntegerLiteral(loc, valAsString);
+		}
+		return new RValue(resultLiteral, cType);
 	}
 }
