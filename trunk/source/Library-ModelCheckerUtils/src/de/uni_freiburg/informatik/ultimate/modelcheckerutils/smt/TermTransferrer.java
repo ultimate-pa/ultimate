@@ -34,9 +34,11 @@ import de.uni_freiburg.informatik.ultimate.logic.AnnotatedTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
+import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.LetTerm;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
+import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -89,10 +91,37 @@ public class TermTransferrer extends TermTransformer {
 		}
 		return m_Script.sort(sort.getName());
 	}
+	
+	private Sort transferSort(Sort sort) {
+		Sort[] arguments = transferSorts(sort.getArguments());
+		Sort result = m_Script.sort(sort.getName(), arguments);
+		return result;
+	}
+	
+	private Sort[] transferSorts(Sort[] sorts) {
+		Sort[] result = new Sort[sorts.length];
+		for (int i=0; i<sorts.length; i++) {
+			result[i] = transferSort(sorts[i]);
+		}
+		return result;
+	}
 
 	@Override
 	public void convertApplicationTerm(ApplicationTerm appTerm, Term[] newArgs) {
-		Term result = m_Script.term(appTerm.getFunction().getName(), newArgs);
+		Term result;
+		try {
+			result = m_Script.term(appTerm.getFunction().getName(), newArgs);
+		} catch (SMTLIBException e) {
+			if (e.getMessage().startsWith("Undeclared function symbol")) {
+				FunctionSymbol fsymb = appTerm.getFunction();
+				Sort[] paramSorts = transferSorts(fsymb.getParameterSorts());
+				Sort resultSort = transferSort(fsymb.getReturnSort());
+				m_Script.declareFun(fsymb.getName(), paramSorts, resultSort);
+				result = m_Script.term(appTerm.getFunction().getName(), newArgs);
+			} else {
+				throw e;
+			}
+		}
 		setResult(result);
 	}
 
