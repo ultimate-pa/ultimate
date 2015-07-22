@@ -1380,13 +1380,13 @@ public class CfgBuilder {
 				return false;
 			}
 			assert (incoming instanceof StatementSequence || incoming instanceof SequentialComposition
-					|| incoming instanceof ParallelComposition || incoming instanceof Summary);
+					|| incoming instanceof ParallelComposition || incoming instanceof Summary || incoming instanceof GotoEdge);
 			RCFGEdge outgoing = pp.getOutgoingEdges().get(0);
 			if (outgoing instanceof Return) {
 				return false;
 			}
 			assert (outgoing instanceof StatementSequence || outgoing instanceof SequentialComposition
-					|| outgoing instanceof ParallelComposition || outgoing instanceof Summary);
+					|| outgoing instanceof ParallelComposition || outgoing instanceof Summary || outgoing instanceof GotoEdge);
 			return true;
 		}
 
