@@ -76,6 +76,9 @@ import org.eclipse.cdt.internal.core.dom.parser.c.CASTFunctionDeclarator;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.SymbolTable;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.ExpressionTranslation.AbstractExpressionTranslation;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.ExpressionTranslation.BitvectorTranslation;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.ExpressionTranslation.IntegerTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.ArrayHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.CastAndConversionHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.FunctionHandler;
@@ -291,6 +294,8 @@ public class CHandler implements ICHandler {
 
 	private ArrayList<LTLExpressionExtractor> mGlobAcslExtractors;
 
+	private AbstractExpressionTranslation m_ExpressionTranslation;
+
 
 	/**
 	 * Constructor.
@@ -331,6 +336,12 @@ public class CHandler implements ICHandler {
 		this.mCurrentDeclaredTypes = new ArrayDeque<ResultTypes>();
 		
 		this.mGlobAcslExtractors = new ArrayList<>();
+		
+		if (false) {
+			m_ExpressionTranslation = new BitvectorTranslation(mMemoryHandler.typeSizeConstants);
+		} else {
+			m_ExpressionTranslation = new IntegerTranslation(mMemoryHandler.typeSizeConstants);
+		}
 	}
 
 	@Override
@@ -908,40 +919,7 @@ public class CHandler implements ICHandler {
 
 	@Override
 	public Result visit(Dispatcher main, IASTLiteralExpression node) {
-		ILocation loc = LocationFactory.createCLocation(node);
-
-		switch (node.getKind()) {
-		case IASTLiteralExpression.lk_float_constant:
-			String val = new String(node.getValue());
-			val = ISOIEC9899TC3.handleFloatConstant(val, loc, main);
-			return new ResultExpression(new RValue(new RealLiteral(loc, val), new CPrimitive(PRIMITIVE.FLOAT)));
-		case IASTLiteralExpression.lk_char_constant:
-			val = new String(node.getValue());
-			val = ISOIEC9899TC3.handleCharConstant(val, loc, main);
-			return new ResultExpression(new RValue(new IntegerLiteral(loc, val), new CPrimitive(PRIMITIVE.CHAR)));
-		case IASTLiteralExpression.lk_integer_constant:
-			val = new String(node.getValue());
-			RValue rVal = ISOIEC9899TC3.handleIntegerConstant(val, loc, main, false, mMemoryHandler.typeSizeConstants);
-			return new ResultExpression(rVal);
-		case IASTLiteralExpression.lk_string_literal:
-			// Translate string to uninitialized char pointer
-			String tId = main.nameHandler.getTempVarUID(SFO.AUXVAR.NONDET);
-			VariableDeclaration tVarDecl = new VariableDeclaration(loc, new Attribute[0], new VarList[] { new VarList(
-					loc, new String[] { tId }, MemoryHandler.POINTER_TYPE) });
-			RValue rvalue = new RValue(new IdentifierExpression(loc, tId), new CPointer(new CPrimitive(PRIMITIVE.CHAR)));
-			ArrayList<Declaration> decls = new ArrayList<Declaration>();
-			decls.add(tVarDecl);
-			Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<VariableDeclaration, ILocation>();
-			auxVars.put(tVarDecl, loc);
-			return new ResultExpression(new ArrayList<Statement>(), rvalue, decls, auxVars);
-		case IASTLiteralExpression.lk_false:
-			return new ResultExpression(new RValue(new BooleanLiteral(loc, false), new CPrimitive(PRIMITIVE.INT)));
-		case IASTLiteralExpression.lk_true:
-			return new ResultExpression(new RValue(new BooleanLiteral(loc, true), new CPrimitive(PRIMITIVE.INT)));
-		default:
-			String msg = "Unknown or unsupported kind of IASTLiteralExpression";
-			throw new UnsupportedSyntaxException(loc, msg);
-		}
+		return m_ExpressionTranslation.literalTranslation(main, node);
 	}
 
 	@Override
