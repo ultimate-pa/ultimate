@@ -69,9 +69,10 @@ public class ParallelComposition extends CodeBlock {
 		TransFormula[] transFormulasWithBranchEncoders = new TransFormula[codeBlocks.size()];
 		TermVariable[] branchIndicator = new TermVariable[codeBlocks.size()];
 		for (int i = 0; i < codeBlocks.size(); i++) {
-			if (!(codeBlocks.get(i) instanceof StatementSequence || codeBlocks.get(i) instanceof SequentialComposition || codeBlocks.get(i) instanceof ParallelComposition)) {
+			if (!(codeBlocks.get(i) instanceof StatementSequence || codeBlocks.get(i) instanceof SequentialComposition || 
+					codeBlocks.get(i) instanceof ParallelComposition || codeBlocks.get(i) instanceof GotoEdge)) {
 				throw new IllegalArgumentException("Only StatementSequence,"
-						+ " SequentialComposition, and ParallelComposition supported");
+						+ " SequentialComposition, ParallelComposition, and GotoEdge supported");
 			}
 			codeBlocks.get(i).disconnectSource();
 			codeBlocks.get(i).disconnectTarget();
