@@ -306,7 +306,7 @@ public class CHandler implements ICHandler {
 	 *            a reference to the Backtranslator object.
 	 */
 	public CHandler(Dispatcher main, CACSL2BoogieBacktranslator backtranslator, boolean errorLabelWarning,
-			Logger logger, ITypeHandler typeHandler) {
+			Logger logger, ITypeHandler typeHandler, boolean bitvectorTranslation) {
 
 		mLogger = logger;
 		this.mTypeHandler = typeHandler;
@@ -337,8 +337,7 @@ public class CHandler implements ICHandler {
 		
 		this.mGlobAcslExtractors = new ArrayList<>();
 		
-		boolean useBitvectors = main.mPreferences.getBoolean(CACSLPreferenceInitializer.LABEL_BITVECTOR_TRANSLATION);
-		if (useBitvectors) {
+		if (bitvectorTranslation) {
 			m_ExpressionTranslation = new BitvectorTranslation(mMemoryHandler.typeSizeConstants);
 		} else {
 			m_ExpressionTranslation = new IntegerTranslation(mMemoryHandler.typeSizeConstants);

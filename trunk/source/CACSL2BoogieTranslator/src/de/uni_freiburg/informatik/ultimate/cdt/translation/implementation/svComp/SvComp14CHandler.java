@@ -96,10 +96,11 @@ public class SvComp14CHandler extends CHandler {
 	 * 
 	 * @param main
 	 *            a reference to the main dispatcher.
+	 * @param bitvectorTranslation 
 	 */
 	public SvComp14CHandler(Dispatcher main, CACSL2BoogieBacktranslator backtranslator, 
-			Logger logger, ITypeHandler typeHandler) {
-		super(main, backtranslator, false, logger, typeHandler);
+			Logger logger, ITypeHandler typeHandler, boolean bitvectorTranslation) {
+		super(main, backtranslator, false, logger, typeHandler, bitvectorTranslation);
 		super.mArrayHandler = new SVCompArrayHandler();
 	}
 

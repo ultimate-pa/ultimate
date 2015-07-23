@@ -60,8 +60,8 @@ public class SvComp14PRCHandler extends PRCHandler {
 
 	public SvComp14PRCHandler(Dispatcher main,
 			CACSL2BoogieBacktranslator backtranslator,
-			boolean errorLabelWarning, Logger logger, ITypeHandler typeHandler) {
-		super(main, backtranslator, errorLabelWarning, logger, typeHandler);
+			boolean errorLabelWarning, Logger logger, ITypeHandler typeHandler, boolean bitvectorTranslation) {
+		super(main, backtranslator, errorLabelWarning, logger, typeHandler, bitvectorTranslation);
 	}
 
 	/**

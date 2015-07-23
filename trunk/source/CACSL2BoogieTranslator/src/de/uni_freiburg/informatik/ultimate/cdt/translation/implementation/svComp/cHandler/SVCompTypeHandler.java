@@ -23,7 +23,12 @@ import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
  *
  */
 public class SVCompTypeHandler extends TypeHandler {
-    @Override
+	
+    public SVCompTypeHandler(boolean useIntForAllIntegerTypes) {
+		super(useIntForAllIntegerTypes);
+	}
+
+	@Override
     public Result visit(Dispatcher main, IASTNamedTypeSpecifier node) {
         ILocation loc = LocationFactory.createCLocation(node);
         if (node instanceof CASTTypedefNameSpecifier) {

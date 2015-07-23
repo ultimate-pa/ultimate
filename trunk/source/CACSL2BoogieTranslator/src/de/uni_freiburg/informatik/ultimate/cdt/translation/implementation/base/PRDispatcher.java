@@ -96,6 +96,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvide
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.CACSL2BoogieBacktranslator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer;
 
 public class PRDispatcher extends Dispatcher {
 	
@@ -110,10 +111,10 @@ public class PRDispatcher extends Dispatcher {
 
 	@Override
 	protected void init() {
-
+		boolean bitvectorTranslation = mPreferences.getBoolean(CACSLPreferenceInitializer.LABEL_BITVECTOR_TRANSLATION);
 		nameHandler = new NameHandler(backtranslator);
-		typeHandler = new SVCompTypeHandler();
-		cHandler = new SvComp14PRCHandler(this, backtranslator, false, mLogger, typeHandler);
+		typeHandler = new SVCompTypeHandler(bitvectorTranslation);
+		cHandler = new SvComp14PRCHandler(this, backtranslator, false, mLogger, typeHandler, bitvectorTranslation);
 	}
 
 	@Override

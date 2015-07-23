@@ -89,11 +89,11 @@ public class TypeHandler implements ITypeHandler {
     private final Set<CPrimitive.PRIMITIVE> m_OccurredPrimitiveTypes = new HashSet<>();
     
     /**
-     * If true we translate CPrimitives whose general type is INT to 
+     * if true we translate CPrimitives whose general type is INT to int.
+     * If false we translate CPrimitives whose general type is INT to 
      * identically named types,
-     * if false we translate CPrimitives whose general type is INT to int.
      */
-    private final boolean m_PreciseIntegerTypes = false;
+    private final boolean m_UseIntForAllIntegerTypes;
     
     
 
@@ -101,14 +101,16 @@ public class TypeHandler implements ITypeHandler {
 		return m_OccurredPrimitiveTypes;
 	}
 
-	public boolean usePreciseIntegerTypes() {
-		return m_PreciseIntegerTypes;
+	public boolean useIntForAllIntegerTypes() {
+		return m_UseIntForAllIntegerTypes;
 	}
 
 	/**
      * Constructor.
+	 * @param useIntForAllIntegerTypes 
      */
-    public TypeHandler() {
+    public TypeHandler(boolean useIntForAllIntegerTypes) {
+    	this.m_UseIntForAllIntegerTypes = useIntForAllIntegerTypes;
         this.m_DefinedTypes = new LinkedScopedHashMap<String, ResultTypes>();
         this.m_IncompleteType = new LinkedHashSet<String>();
     }
@@ -526,10 +528,10 @@ public class TypeHandler implements ITypeHandler {
 		case VOID:
 			return null; //(alex:) seems to be lindemm's convention, see FunctionHandler.isInParamVoid(..)
 		case INTTYPE:
-			if (m_PreciseIntegerTypes) {
-				return new NamedType(loc, "C_" + cPrimitive.getType().toString(), new ASTType[0]);
-			} else {
+			if (m_UseIntForAllIntegerTypes) {
 				return new PrimitiveType(loc, SFO.INT);
+			} else {
+				return new NamedType(loc, "C_" + cPrimitive.getType().toString(), new ASTType[0]);
 			}
 		case FLOATTYPE:
 			return new PrimitiveType(loc, SFO.REAL);

@@ -176,6 +176,7 @@ import de.uni_freiburg.informatik.ultimate.model.acsl.ast.WildcardExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.CACSL2BoogieBacktranslator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer;
 
 /**
  * @author Markus Lindenmann
@@ -223,6 +224,7 @@ public class MainDispatcher extends Dispatcher {
 	private LinkedHashSet<VariableDeclaration> _boogieDeclarationsOfVariablesOnHeap;
 //	private LinkedHashMap<String, Integer> functionToIndex;
 	private LinkedHashMap<Integer, String> indexToFunction;
+	protected boolean m_BitvectorTranslation;
 
 //	public HashMap<String, Integer> getFunctionToIndex() {
 //		return mFunctionToIndex;
@@ -248,6 +250,7 @@ public class MainDispatcher extends Dispatcher {
 
 	public MainDispatcher(CACSL2BoogieBacktranslator backtranslator, IUltimateServiceProvider services, Logger logger) {
 		super(backtranslator, services, logger);
+		m_BitvectorTranslation = mPreferences.getBoolean(CACSLPreferenceInitializer.LABEL_BITVECTOR_TRANSLATION);
 	}
 
 	@Override
@@ -324,11 +327,12 @@ public class MainDispatcher extends Dispatcher {
 
 	@Override
 	protected void init() {
+		
 		sideEffectHandler = new SideEffectHandler();
-		typeHandler = new TypeHandler();
+		typeHandler = new TypeHandler(!m_BitvectorTranslation);
 		acslHandler = new ACSLHandler();
 		nameHandler = new NameHandler(backtranslator);
-		cHandler = new CHandler(this, backtranslator, true, mLogger, typeHandler);
+		cHandler = new CHandler(this, backtranslator, true, mLogger, typeHandler, m_BitvectorTranslation);
 		preprocessorHandler = new PreprocessorHandler();
 		REPORT_WARNINGS = true;
 	}

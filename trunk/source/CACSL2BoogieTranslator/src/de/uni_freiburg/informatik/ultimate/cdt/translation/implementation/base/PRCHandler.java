@@ -107,8 +107,8 @@ public class PRCHandler extends CHandler {
 	
 	
 	public PRCHandler(Dispatcher main, CACSL2BoogieBacktranslator backtranslator, boolean errorLabelWarning,
-			Logger logger, ITypeHandler typeHandler) {
-		super(main, backtranslator, errorLabelWarning, logger, typeHandler);
+			Logger logger, ITypeHandler typeHandler, boolean bitvectorTranslation) {
+		super(main, backtranslator, errorLabelWarning, logger, typeHandler, bitvectorTranslation);
 		
 		variablesOnHeap = new LinkedHashSet<>();
 

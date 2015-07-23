@@ -28,10 +28,10 @@ public class SvComp14MainDispatcher extends MainDispatcher {
 	@Override
 	protected void init() {
 		sideEffectHandler = new SideEffectHandler();
-		typeHandler = new SVCompTypeHandler();
+		typeHandler = new SVCompTypeHandler(m_BitvectorTranslation);
 		acslHandler = new ACSLHandler();
 		nameHandler = new NameHandler(backtranslator);
-		cHandler = new SvComp14CHandler(this, backtranslator, mLogger, typeHandler);
+		cHandler = new SvComp14CHandler(this, backtranslator, mLogger, typeHandler, m_BitvectorTranslation);
 		preprocessorHandler = new SvComp14PreprocessorHandler();
 		REPORT_WARNINGS = false;
 	}
