@@ -124,7 +124,7 @@ public class PostProcessor {
 		decl.addAll(functions);
 		decl.addAll(declareFunctionPointerProcedures(main, functionHandler, memoryHandler, structHandler));
 		decl.addAll(declareConversionFunctions(main, functionHandler, memoryHandler, structHandler));
-		if (typeHandler.useIntForAllIntegerTypes()) {
+		if (!typeHandler.useIntForAllIntegerTypes()) {
 			decl.addAll(declarePrimitiveDataTypeSynonyms(loc, memoryHandler, typeHandler));
 		}
 		return decl;

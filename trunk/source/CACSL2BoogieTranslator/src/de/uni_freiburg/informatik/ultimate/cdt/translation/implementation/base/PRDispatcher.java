@@ -113,7 +113,7 @@ public class PRDispatcher extends Dispatcher {
 	protected void init() {
 		boolean bitvectorTranslation = mPreferences.getBoolean(CACSLPreferenceInitializer.LABEL_BITVECTOR_TRANSLATION);
 		nameHandler = new NameHandler(backtranslator);
-		typeHandler = new SVCompTypeHandler(bitvectorTranslation);
+		typeHandler = new SVCompTypeHandler(!bitvectorTranslation);
 		cHandler = new SvComp14PRCHandler(this, backtranslator, false, mLogger, typeHandler, bitvectorTranslation);
 	}
 
