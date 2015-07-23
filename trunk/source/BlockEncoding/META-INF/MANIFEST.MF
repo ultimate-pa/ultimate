@@ -6,6 +6,7 @@ Bundle-Version: 0.0.1
 Bundle-Activator: de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding.Activator
 Require-Bundle: UltimateCore,
  Library-log4j,
+ Library-UltimateUtil,
  Library-ModelCheckerUtils,
  de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder
 Bundle-ActivationPolicy: lazy

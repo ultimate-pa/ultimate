@@ -45,7 +45,7 @@ public class BlockEncoding implements IGenerator {
 	public void init() {
 		Logger logger = mServices.getLoggingService().getLogger(s_PLUGIN_ID);
 		mConversionObserver = new MinModelConversionObserver(mServices);
-		mBlockEncodingObserver = new BlockEncodingObserver(logger);
+		mBlockEncodingObserver = new BlockEncodingObserver(logger, mServices);
 	}
 
 	@Override

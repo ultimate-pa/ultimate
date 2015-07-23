@@ -15,11 +15,13 @@ import de.uni_freiburg.informatik.ultimate.blockencoding.model.MinimizedNode;
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.ShortcutErrEdge;
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.interfaces.IBasicEdge;
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.interfaces.IMinimizedEdge;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
+import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
 
 /**
  * This class is responsible for minimizing nodes with one incoming and more
@@ -31,11 +33,15 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Sum
 public class MinimizeLoopVisitor extends MinimizeBranchVisitor {
 
 
+	private final IUltimateServiceProvider m_Services;
+
 	/**
 	 * @param logger
+	 * @param services 
 	 */
-	public MinimizeLoopVisitor(Logger logger) {
+	public MinimizeLoopVisitor(Logger logger, IUltimateServiceProvider services) {
 		super(logger);
+		m_Services = services;
 	}
 
 	@Override
@@ -61,6 +67,9 @@ public class MinimizeLoopVisitor extends MinimizeBranchVisitor {
 	 * @return
 	 */
 	private List<MinimizedNode> recursiveLoopMerge(MinimizedNode node) {
+		if (!m_Services.getProgressMonitorService().continueProcessing()) {
+			throw new ToolchainCanceledException(this.getClass());
+		}
 		if (checkForSequentialMerge(node)) {
 			IMinimizedEdge incoming = (IMinimizedEdge) node.getIncomingEdges()
 					.get(0);

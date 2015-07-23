@@ -14,6 +14,7 @@ import de.uni_freiburg.informatik.ultimate.blockencoding.rating.metrics.RatingFa
 import de.uni_freiburg.informatik.ultimate.blockencoding.rating.metrics.RatingFactory.RatingStrategy;
 import de.uni_freiburg.informatik.ultimate.blockencoding.rating.util.EncodingStatistics;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding.preferences.PreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
@@ -46,8 +47,11 @@ public class BlockEncoder {
 
 	private ArrayList<MinimizedNode> nonCallingFunctions;
 
-	public BlockEncoder(Logger logger) {
+	private IUltimateServiceProvider m_Services;
+
+	public BlockEncoder(Logger logger, IUltimateServiceProvider services) {
 		mLogger = logger;
+		m_Services = services;
 	}
 
 	/**
@@ -69,7 +73,7 @@ public class BlockEncoder {
 
 		// Initialize the Visitors, which apply the minimization rules
 		mbVisitor = new MinimizeBranchVisitor(mLogger);
-		mlVisitor = new MinimizeLoopVisitor(mLogger);
+		mlVisitor = new MinimizeLoopVisitor(mLogger, m_Services);
 		mcrVisitor = new MinimizeCallReturnVisitor(mLogger, mbVisitor);
 		tmVisitor = new TestMinimizationVisitor(mLogger);
 
