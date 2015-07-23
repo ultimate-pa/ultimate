@@ -8,7 +8,6 @@ import java.text.ParseException;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -39,7 +38,6 @@ import org.eclipse.cdt.core.dom.ast.IASTEqualsInitializer;
 import org.eclipse.cdt.core.dom.ast.IASTExpression;
 import org.eclipse.cdt.core.dom.ast.IASTExpressionList;
 import org.eclipse.cdt.core.dom.ast.IASTExpressionStatement;
-import org.eclipse.cdt.core.dom.ast.IASTFieldDeclarator;
 import org.eclipse.cdt.core.dom.ast.IASTFieldReference;
 import org.eclipse.cdt.core.dom.ast.IASTForStatement;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionCallExpression;
@@ -87,7 +85,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.c
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.MemoryHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.PostProcessor;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.StructHandler;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.PRSymbolTableValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.SymbolTableValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.SymbolTableValue.StorageClass;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
@@ -98,7 +95,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.GENERALPRIMITIVE;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.PRIMITIVE;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStruct;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
@@ -117,9 +113,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultTypes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.BoogieASTUtil;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.ConvExpr;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.ISOIEC9899TC3;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO.AUXVAR;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ICHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
@@ -157,11 +151,13 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Label;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.LoopInvariantSpecification;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.NamedAttribute;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.NamedType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.RealLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Specification;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StringLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StructAccessExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StructConstructor;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StructLHS;
@@ -3257,6 +3253,44 @@ public class CHandler implements ICHandler {
 			arguments[1] = right;
 		}
 		return new FunctionApplication(loc, "~" + operatorName, arguments);
+	}
+	
+	
+	private void declareBitvectorFunction(ILocation loc, String functionBaseName, CType resultCType, CType... paramCTypes) {
+		CType firstParam = paramCTypes[0];
+		Integer bytesize = mMemoryHandler.typeSizeConstants.getCPrimitiveToTypeSizeConstant().get(firstParam);
+		int bitsize = bytesize * 8;
+		String functionName = functionBaseName + bitsize;
+		Attribute attribute = new NamedAttribute(loc, "bvbuiltin", new Expression[] { new StringLiteral(loc, functionBaseName) });
+		Attribute[] attributes = new Attribute[] { attribute };
+		declareFunction(loc, functionName, attributes , resultCType, paramCTypes);
+	}
+	
+	private void declareFunction(ILocation loc, String functionName, Attribute[] attributes, CType resultCType, CType... paramCTypes) {
+		ASTType resultASTType = mTypeHandler.ctype2asttype(loc, resultCType);
+		ASTType[] paramASTTypes = new ASTType[paramCTypes.length];
+		for (int i=0; i<paramCTypes.length; i++) {
+			paramASTTypes[i] = mTypeHandler.ctype2asttype(loc, paramCTypes[i]);
+		}
+		declareFunction(loc, functionName, attributes, resultASTType, paramASTTypes);
+	}
+	
+	private void declareFunction(ILocation loc, String functionName, Attribute[] attributes, ASTType resultASTType, ASTType... paramASTTypes) {
+		if (this.mFunctions.containsKey(functionName)) {
+			return;
+			//throw new IllegalArgumentException("Function " + functionName + " already declared");
+		}
+		if (!functionName.startsWith("~")) {
+			throw new IllegalArgumentException("Our convention says that user defined functions start with tilde");
+		}
+
+		VarList[] inParams = new VarList[paramASTTypes.length];
+		for (int i=0; i<paramASTTypes.length; i++) {
+			inParams[i] = new VarList(loc, new String[] { "in" + i }, paramASTTypes[i]);
+		}
+		VarList outParam = new VarList(loc, new String[] { "out" }, resultASTType);
+		FunctionDeclaration d = new FunctionDeclaration(loc, attributes, functionName, new String[0], inParams, outParam);
+		this.mFunctions.put(functionName, d);
 	}
 
 	/**
