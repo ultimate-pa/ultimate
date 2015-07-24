@@ -18,6 +18,8 @@ import de.uni_freiburg.informatik.ultimatetest.decider.ITestResultDecider.TestRe
 import de.uni_freiburg.informatik.ultimatetest.reporting.NewTestSummary;
 
 public class TraceAbstractionTestSummary extends NewTestSummary {
+	
+	private final boolean mShowBenchmarkResults = false; 
 
 	private int mCount;
 
@@ -131,15 +133,19 @@ public class TraceAbstractionTestSummary extends NewTestSummary {
 			String indent = "\t\t\t";
 			for (Entry<UltimateRunDefinition, ExtendedResult> currentResult : entry.getValue()) {
 				sb.append("\t\t").append(currentResult.getKey()).append(CoreUtil.getPlatformLineSeparator());
-				// Add TraceAbstraction benchmarks
-				Collection<ICsvProvider<?>> benchmarkProviders = m_TraceAbstractionBenchmarks.get(currentResult
-						.getKey());
-				if (benchmarkProviders == null) {
-					sb.append(indent).append("No benchmark results available.")
-							.append(CoreUtil.getPlatformLineSeparator());
-				} else {
-					for (ICsvProvider<?> benchmarkProvider : benchmarkProviders) {
-						appendProvider(sb, indent, benchmarkProvider);
+				// Add Result Message
+				sb.append(indent).append(currentResult.getValue().Message).append(CoreUtil.getPlatformLineSeparator());
+				if (mShowBenchmarkResults) {
+					// Add TraceAbstraction benchmarks
+					Collection<ICsvProvider<?>> benchmarkProviders = m_TraceAbstractionBenchmarks.get(currentResult
+							.getKey());
+					if (benchmarkProviders == null) {
+						sb.append(indent).append("No benchmark results available.")
+						.append(CoreUtil.getPlatformLineSeparator());
+					} else {
+						for (ICsvProvider<?> benchmarkProvider : benchmarkProviders) {
+							appendProvider(sb, indent, benchmarkProvider);
+						}
 					}
 				}
 			}
