@@ -183,9 +183,9 @@ public class PredicateUnifier {
 				}
 			}
 			TermVarsProc tvp = m_SmtManager.and(minimalSubset.toArray(new IPredicate[minimalSubset.size()]));
-//			return getOrConstructPredicate(tvp.getFormula(), tvp.getVars(), tvp.getProcedures(), 
-//					impliedPredicates, expliedPredicates);
-			return null;
+			return getOrConstructPredicate(tvp.getFormula(), tvp.getVars(), tvp.getProcedures(), 
+					impliedPredicates, expliedPredicates);
+//			return null;
 		}
 
 	}
