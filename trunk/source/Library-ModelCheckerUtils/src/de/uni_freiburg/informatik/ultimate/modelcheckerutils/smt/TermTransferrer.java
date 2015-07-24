@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt;
 
 import java.math.BigInteger;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -55,6 +56,7 @@ public class TermTransferrer extends TermTransformer {
 	private Set<Sort> m_DeclaredSorts = new HashSet<>();
 
 	protected final Map<Term, Term> m_BacktransferMapping = new HashMap<Term,Term>();
+	protected final Map<Term, Term> m_TransferMapping;
 	
 	
 	public Map<Term, Term> getBacktranferMapping() {
@@ -62,13 +64,23 @@ public class TermTransferrer extends TermTransformer {
 	}
 
 
-	
 	public TermTransferrer(Script script) {
 		m_Script = script;
+		m_TransferMapping = Collections.emptyMap();
+	}
+	
+	public TermTransferrer(Script script, Map<Term, Term> transferMapping) {
+		m_Script = script;
+		m_TransferMapping = transferMapping;
 	}
 
 	@Override
 	protected void convert(Term term) {
+		Term mappingResult = m_TransferMapping.get(term);
+		if (mappingResult != null) {
+			setResult(mappingResult);
+			return;
+		}
 		Sort sort = transferSort(term.getSort());
 		if (term instanceof TermVariable) {
 			TermVariable tv = (TermVariable) term;
