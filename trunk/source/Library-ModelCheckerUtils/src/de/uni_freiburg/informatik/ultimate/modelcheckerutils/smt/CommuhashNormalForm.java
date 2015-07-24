@@ -40,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.ModelCheckerUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.AffineRelation;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.AffineRelation.TransformInequality;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.NotAffineException;
 import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 
@@ -126,7 +127,7 @@ public class CommuhashNormalForm {
 		}
 
 		private Term tryToTransformToPositiveNormalForm(Term simplified) throws NotAffineException {
-			AffineRelation affRel = new AffineRelation(simplified);
+			AffineRelation affRel = new AffineRelation(simplified, TransformInequality.STRICT2NONSTRICT);
 			Term pnf = affRel.positiveNormalForm(m_Script);
 			return pnf;
 		}
