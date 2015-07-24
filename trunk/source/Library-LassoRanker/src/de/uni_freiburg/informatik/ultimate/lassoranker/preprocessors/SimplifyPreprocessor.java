@@ -78,6 +78,7 @@ public class SimplifyPreprocessor extends TransitionPreProcessor {
 			TermTransferrer towards = new TermTransferrer(simplificationScript);
 			Term foreign = towards.transform(tf.getFormula());
 			Term foreignsimplified = SmtUtils.simplify(simplificationScript, foreign, mServices);
+			simplificationScript.exit();
 			TermTransferrer back = new TermTransferrer(script);
 			simplified = back.transform(foreignsimplified);
 		} else {
