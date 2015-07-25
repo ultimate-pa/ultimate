@@ -249,7 +249,7 @@ public class AffineRelation {
 				// do nothing
 			} else {
 				Rational newCoeff = entry.getValue().div(termsCoeff);
-				if (newCoeff.isIntegral()) {
+				if (newCoeff.isIntegral() || m_AffineTerm.getSort().getName().equals("Real")) {
 					Rational negated = newCoeff.negate();
 					rhsSummands.add(product(script, negated, entry.getKey()));
 				} else {
@@ -260,7 +260,7 @@ public class AffineRelation {
 		}
 		{
 			Rational newConstant = m_AffineTerm.getConstant().div(termsCoeff);
-			if (newConstant.isIntegral()) {
+			if (newConstant.isIntegral() || m_AffineTerm.getSort().getName().equals("Real")) {
 				Rational negated = newConstant.negate();
 				rhsSummands.add(negated.toTerm(m_AffineTerm.getSort()));
 			} else {
