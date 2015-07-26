@@ -409,7 +409,7 @@ public class LassoAnalysis {
 		assert ntas.size() > 0;
 		NonTerminationArgument nta = ntas.get(0);
 		for (int i = 1; i < ntas.size(); ++i) {
-			nta.join(ntas.get(i));
+			nta = nta.join(ntas.get(i));
 		}
 		return nta;
 	}

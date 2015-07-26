@@ -117,7 +117,7 @@ public class NonTerminationArgument implements Serializable {
 	 * This method is used to combine separate arguments that are found
 	 * after lasso partitioning.
 	 */
-	public void join(NonTerminationArgument other) {
+	public NonTerminationArgument join(NonTerminationArgument other) {
 		// Check for compatibility
 		for (RankVar rankVar : m_StateInit.keySet()) {
 			if (other.m_StateInit.containsKey(rankVar)) {
@@ -131,10 +131,22 @@ public class NonTerminationArgument implements Serializable {
 						other.m_StateHonda.get(rankVar));
 			}
 		}
-		m_StateInit.putAll(other.m_StateInit);
-		m_StateHonda.putAll(other.m_StateHonda);
-		m_Rays.addAll(other.m_Rays);
-		m_Lambdas.addAll(other.m_Lambdas);
+		
+		Map<RankVar, Rational> stateInit = new HashMap<RankVar, Rational>();
+		Map<RankVar, Rational> stateHonda = new HashMap<RankVar, Rational>();
+		List<Map<RankVar, Rational>> rays =
+				new ArrayList<Map<RankVar, Rational>>();
+		List<Rational> lambdas = new ArrayList<Rational>();
+		stateInit.putAll(this.m_StateInit);
+		stateInit.putAll(other.m_StateInit);
+		stateHonda.putAll(this.m_StateHonda);
+		stateHonda.putAll(other.m_StateHonda);
+		rays.addAll(this.m_Rays);
+		rays.addAll(other.m_Rays);
+		lambdas.addAll(this.m_Lambdas);
+		lambdas.addAll(other.m_Lambdas);
+		
+		return new NonTerminationArgument(stateInit, stateHonda, rays, lambdas);
 	}
 	
 	/**
