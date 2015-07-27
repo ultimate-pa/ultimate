@@ -174,9 +174,15 @@ public class TransFormulaLR implements Serializable {
 	 *            (unprimed version)
 	 */
 	public void addInVar(RankVar rkVar, Term var) {
-		assert !m_inVars.containsKey(rkVar);
-		m_inVars.put(rkVar, var);
-		m_inVarsReverseMapping.put(var, rkVar);
+		Term oldValue = m_inVars.put(rkVar, var);
+		if (oldValue == null) {
+			m_inVarsReverseMapping.put(var, rkVar);
+		} else {
+			if (oldValue != var) {
+				throw new IllegalArgumentException(
+						oldValue + " is already the inVar of " + rkVar);
+			}
+		}
 	}
 	
 	/**
@@ -199,9 +205,15 @@ public class TransFormulaLR implements Serializable {
 	 *            (primed version)
 	 */
 	public void addOutVar(RankVar rkVar, Term var) {
-		assert !m_outVars.containsKey(rkVar);
-		m_outVars.put(rkVar, var);
-		m_outVarsReverseMapping.put(var, rkVar);
+		Term oldValue = m_outVars.put(rkVar, var);
+		if (oldValue == null) {
+			m_outVarsReverseMapping.put(var, rkVar);
+		} else {
+			if (oldValue != var) {
+				throw new IllegalArgumentException(
+						oldValue + " is already the outVar of " + rkVar);
+			}
+		}
 	}
 	
 	/**
