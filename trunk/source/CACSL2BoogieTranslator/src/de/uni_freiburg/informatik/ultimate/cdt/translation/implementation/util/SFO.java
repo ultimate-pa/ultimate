@@ -135,6 +135,11 @@ public final class SFO {
 	 * Loop (entry/exit) labels are built with this.
 	 */
 	public static final String LOOPLABEL = "Loop~";
+	/**
+	 * Prefix for all auxiliary functions that we add to the Boogie program,
+	 * e.g., bitwise and will be ~bvand.
+	 */
+	public static final String AUXILIARY_FUNCTION_PREFIX = "~";
 
 	/**
 	 * combined SFOs for memory arrays:
