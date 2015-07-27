@@ -233,7 +233,7 @@ public class TraceAbstractionStarter {
 			break;
 		}
 		}
-		if (taPrefs.computeHoareAnnotation()) {
+		if (taPrefs.computeHoareAnnotation() && m_OverallResult == Result.SAFE) {
 			m_Logger.debug("Computing Hoare annotation of CFG");
 			basicCegarLoop.computeCFGHoareAnnotation();
 			writeHoareAnnotationToLogger(root);
