@@ -3256,31 +3256,35 @@ public class CHandler implements ICHandler {
 	}
 	
 	
-	private void declareBitvectorFunction(ILocation loc, String functionBaseName, CType resultCType, CType... paramCTypes) {
+	private void declareBitvectorFunction(ILocation loc, String prefixedFunctionName, CType resultCType, CType... paramCTypes) {
+		if (!prefixedFunctionName.startsWith(SFO.AUXILIARY_FUNCTION_PREFIX)) {
+			throw new IllegalArgumentException("Our convention says that user defined functions start with tilde");
+		}
 		CType firstParam = paramCTypes[0];
 		Integer bytesize = mMemoryHandler.typeSizeConstants.getCPrimitiveToTypeSizeConstant().get(firstParam);
 		int bitsize = bytesize * 8;
-		String functionName = functionBaseName + bitsize;
-		Attribute attribute = new NamedAttribute(loc, "bvbuiltin", new Expression[] { new StringLiteral(loc, functionBaseName) });
+		String functionName = prefixedFunctionName.substring(1, prefixedFunctionName.length());
+		String prefixedfunctionNameWithSuffix = prefixedFunctionName + bitsize;
+		Attribute attribute = new NamedAttribute(loc, "bvbuiltin", new Expression[] { new StringLiteral(loc, functionName) });
 		Attribute[] attributes = new Attribute[] { attribute };
-		declareFunction(loc, functionName, attributes , resultCType, paramCTypes);
+		declareFunction(loc, prefixedfunctionNameWithSuffix, attributes , resultCType, paramCTypes);
 	}
 	
-	private void declareFunction(ILocation loc, String functionName, Attribute[] attributes, CType resultCType, CType... paramCTypes) {
+	private void declareFunction(ILocation loc, String prefixedFunctionName, Attribute[] attributes, CType resultCType, CType... paramCTypes) {
 		ASTType resultASTType = mTypeHandler.ctype2asttype(loc, resultCType);
 		ASTType[] paramASTTypes = new ASTType[paramCTypes.length];
 		for (int i=0; i<paramCTypes.length; i++) {
 			paramASTTypes[i] = mTypeHandler.ctype2asttype(loc, paramCTypes[i]);
 		}
-		declareFunction(loc, functionName, attributes, resultASTType, paramASTTypes);
+		declareFunction(loc, prefixedFunctionName, attributes, resultASTType, paramASTTypes);
 	}
 	
-	private void declareFunction(ILocation loc, String functionName, Attribute[] attributes, ASTType resultASTType, ASTType... paramASTTypes) {
-		if (this.mFunctions.containsKey(functionName)) {
+	private void declareFunction(ILocation loc, String prefixedFunctionName, Attribute[] attributes, ASTType resultASTType, ASTType... paramASTTypes) {
+		if (this.mFunctions.containsKey(prefixedFunctionName)) {
 			return;
 			//throw new IllegalArgumentException("Function " + functionName + " already declared");
 		}
-		if (!functionName.startsWith("~")) {
+		if (!prefixedFunctionName.startsWith(SFO.AUXILIARY_FUNCTION_PREFIX)) {
 			throw new IllegalArgumentException("Our convention says that user defined functions start with tilde");
 		}
 
@@ -3289,8 +3293,8 @@ public class CHandler implements ICHandler {
 			inParams[i] = new VarList(loc, new String[] { "in" + i }, paramASTTypes[i]);
 		}
 		VarList outParam = new VarList(loc, new String[] { "out" }, resultASTType);
-		FunctionDeclaration d = new FunctionDeclaration(loc, attributes, functionName, new String[0], inParams, outParam);
-		this.mFunctions.put(functionName, d);
+		FunctionDeclaration d = new FunctionDeclaration(loc, attributes, prefixedFunctionName, new String[0], inParams, outParam);
+		this.mFunctions.put(prefixedFunctionName, d);
 	}
 
 	/**
