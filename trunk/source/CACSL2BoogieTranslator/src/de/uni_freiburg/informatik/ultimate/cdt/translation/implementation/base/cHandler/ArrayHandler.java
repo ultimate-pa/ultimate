@@ -30,6 +30,8 @@ import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.POINTER_CHECKMODE;
+import de.uni_freiburg.informatik.ultimate.result.Check;
+import de.uni_freiburg.informatik.ultimate.result.Check.Spec;
 
 /**
  * Class that handles translation of arrays.
@@ -130,21 +132,24 @@ public class ArrayHandler {
 				
 				if (m_checkArrayAccessOffHeap == POINTER_CHECKMODE.ASSERTandASSUME
 						|| m_checkArrayAccessOffHeap == POINTER_CHECKMODE.ASSUME) {
-					Expression checkNotTooBig = new BinaryExpression(loc, Operator.COMPLEQ, 
+					Expression notTooBig = new BinaryExpression(loc, Operator.COMPLEQ, 
 							new BinaryExpression(loc, Operator.ARITHMUL,
 									currentSubscriptRex.lrVal.getValue(), 
 									memoryHandler.calculateSizeOf(newCType, loc)),
 									new BinaryExpression(loc, Operator.ARITHMINUS,
 											memoryHandler.calculateSizeOf(innerResult.lrVal.cType, loc),
 											memoryHandler.calculateSizeOf(newCType, loc)));
-					Expression checkNotNegative = new BinaryExpression(loc, Operator.COMPGEQ,
+					Expression nonNegative = new BinaryExpression(loc, Operator.COMPGEQ,
 							currentSubscriptRex.lrVal.getValue(),
 							new IntegerLiteral(loc, "0"));
-					Expression check = new BinaryExpression(loc, Operator.LOGICAND, 
-							checkNotNegative, checkNotTooBig);
-					if (m_checkArrayAccessOffHeap == POINTER_CHECKMODE.ASSERTandASSUME)
-						result.stmt.add(new AssertStatement(loc, check));
-					result.stmt.add(new AssumeStatement(loc, check));
+					Expression inRange = new BinaryExpression(loc, Operator.LOGICAND, 
+							nonNegative, notTooBig);
+					if (m_checkArrayAccessOffHeap == POINTER_CHECKMODE.ASSERTandASSUME) {
+						Check check = new Check(Spec.ARRAY_INDEX);
+						ILocation locationWithCheck = LocationFactory.createCLocation(node, check);
+						result.stmt.add(new AssertStatement(locationWithCheck, inRange));
+					}
+					result.stmt.add(new AssumeStatement(loc, inRange));
 				}
 				
 				newLLVal.cType = newCType;
