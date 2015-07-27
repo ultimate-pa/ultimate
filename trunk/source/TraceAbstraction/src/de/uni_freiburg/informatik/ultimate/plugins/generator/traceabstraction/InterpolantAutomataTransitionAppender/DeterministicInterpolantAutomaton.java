@@ -248,7 +248,7 @@ public class DeterministicInterpolantAutomaton extends BasicAbstractInterpolantA
 				resSucc = m_PredicateUnifier.getOrConstructPredicateForConjunction(succs);
 				m_InputPreds2ResultPreds.put(succs, resSucc);
 				for (IPredicate succ : succs) {
-//					assert m_InterpolantAutomaton.getStates().contains(succ);
+					assert m_AlreadyConstrucedAutomaton.contains(succ) : "unknown state " + succ; 
 					if (m_NonTrivialPredicates.contains(succ)) {
 						m_ResPred2InputPreds.addPair(resSucc, succ);
 					}
