@@ -915,7 +915,7 @@ public class CHandler implements ICHandler {
 
 	@Override
 	public Result visit(Dispatcher main, IASTLiteralExpression node) {
-		return m_ExpressionTranslation.literalTranslation(main, node);
+		return m_ExpressionTranslation.translateLiteral(main, node);
 	}
 
 	@Override
@@ -1264,6 +1264,22 @@ public class CHandler implements ICHandler {
 		case IASTBinaryExpression.op_lessEqual:
 		case IASTBinaryExpression.op_lessThan:
 		case IASTBinaryExpression.op_notequals: {
+			
+			ResultExpression rrToInt = ConvExpr.rexBoolToIntIfNecessary(loc, rr);
+			ResultExpression rlToInt = ConvExpr.rexBoolToIntIfNecessary(loc, rl);
+			
+			CastAndConversionHandler.usualArithmeticConversions(main, loc, mMemoryHandler, rlToInt, rrToInt, true);
+			
+			
+			stmt.addAll(rlToInt.stmt);
+			stmt.addAll(rrToInt.stmt);
+			decl.addAll(rlToInt.decl);
+			decl.addAll(rrToInt.decl);
+			auxVars.putAll(rlToInt.auxVars);
+			auxVars.putAll(rrToInt.auxVars);
+			overappr.addAll(rlToInt.overappr);
+			overappr.addAll(rrToInt.overappr);
+
 			BinaryExpression.Operator op;
 			switch (node.getOperator()) {
 			case IASTBinaryExpression.op_equals:
@@ -1287,21 +1303,7 @@ public class CHandler implements ICHandler {
 			default:
 				throw new AssertionError("???");
 			}
-			ResultExpression rrToInt = ConvExpr.rexBoolToIntIfNecessary(loc, rr);
-			ResultExpression rlToInt = ConvExpr.rexBoolToIntIfNecessary(loc, rl);
 			
-			CastAndConversionHandler.usualArithmeticConversions(main, loc, mMemoryHandler, rlToInt, rrToInt, true);
-			
-			
-			stmt.addAll(rlToInt.stmt);
-			stmt.addAll(rrToInt.stmt);
-			decl.addAll(rlToInt.decl);
-			decl.addAll(rrToInt.decl);
-			auxVars.putAll(rlToInt.auxVars);
-			auxVars.putAll(rrToInt.auxVars);
-			overappr.addAll(rlToInt.overappr);
-			overappr.addAll(rrToInt.overappr);
-
 			RValue rval = null;
 			if (node.getOperator() == IASTBinaryExpression.op_equals 
 					|| node.getOperator() == IASTBinaryExpression.op_notequals) {
@@ -1364,7 +1366,7 @@ public class CHandler implements ICHandler {
 							new StructAccessExpression(loc, rrToInt.lrVal.getValue(), SFO.POINTER_OFFSET)), 
 							new CPrimitive(PRIMITIVE.INT));
 				} else {
-					rval = new RValue(new BinaryExpression(loc, op, rlToInt.lrVal.getValue(), rrToInt.lrVal.getValue()),
+					rval = new RValue(m_ExpressionTranslation.constructBinaryComparisonExpression(loc, node.getOperator(), rlToInt.lrVal.getValue(), (CPrimitive) rlToInt.lrVal.cType, rrToInt.lrVal.getValue(), (CPrimitive) rrToInt.lrVal.cType),
 							new CPrimitive(PRIMITIVE.INT));
 				}
 			}
@@ -1685,8 +1687,8 @@ public class CHandler implements ICHandler {
 				overappr.addAll(rrToInt.overappr);
 
 
-				RValue rval = new RValue(createArithmeticExpression(node.getOperator(), rlToInt.lrVal.getValue(),
-						rrToInt.lrVal.getValue(), loc), rlToInt.lrVal.cType);
+				RValue rval = new RValue(m_ExpressionTranslation.createArithmeticExpression(node.getOperator(), rlToInt.lrVal.getValue(), (CPrimitive) rlToInt.lrVal.cType,
+						rrToInt.lrVal.getValue(), (CPrimitive) rrToInt.lrVal.cType, loc), rlToInt.lrVal.cType);
 				
 				
 				assert (isAuxVarMapcomplete(main, decl, auxVars)) : "unhavoced auxvars";
@@ -2956,6 +2958,7 @@ public class CHandler implements ICHandler {
 		return newPointer;
 	}
 
+	@Deprecated
 	/**
 	 * Translates arithmetic binary expressions.
 	 * 
