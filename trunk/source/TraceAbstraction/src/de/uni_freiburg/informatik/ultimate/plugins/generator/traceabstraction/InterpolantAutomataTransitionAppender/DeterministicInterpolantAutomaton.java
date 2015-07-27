@@ -245,8 +245,7 @@ public class DeterministicInterpolantAutomaton extends BasicAbstractInterpolantA
 		} else {
 			IPredicate resSucc = m_InputPreds2ResultPreds.get(succs);
 			if (resSucc == null) {
-				TermVarsProc conjunction = m_SmtManager.and(succs.toArray(new IPredicate[0]));
-				resSucc = m_PredicateUnifier.getOrConstructPredicate(conjunction);
+				resSucc = m_PredicateUnifier.getOrConstructPredicateForConjunction(succs);
 				m_InputPreds2ResultPreds.put(succs, resSucc);
 				for (IPredicate succ : succs) {
 //					assert m_InterpolantAutomaton.getStates().contains(succ);
