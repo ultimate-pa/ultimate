@@ -7,12 +7,12 @@ import java.util.Map;
 import org.eclipse.cdt.core.dom.ast.IASTLiteralExpression;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FunctionDeclarations;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.MemoryHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.TypeSizeConstants;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.PRIMITIVE;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultExpression;
@@ -32,11 +32,13 @@ import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 
 public abstract class AbstractExpressionTranslation {
 	
+	protected final FunctionDeclarations m_FunctionDeclarations;
 	protected final TypeSizeConstants m_TypeSizeConstants;
 
-	public AbstractExpressionTranslation(TypeSizeConstants m_TypeSizeConstants) {
+	public AbstractExpressionTranslation(TypeSizeConstants typeSizeConstants, FunctionDeclarations functionDeclarations) {
 		super();
-		this.m_TypeSizeConstants = m_TypeSizeConstants;
+		this.m_TypeSizeConstants = typeSizeConstants;
+		this.m_FunctionDeclarations = functionDeclarations;
 	}
 
 	public ResultExpression translateLiteral(Dispatcher main, IASTLiteralExpression node) {

@@ -229,6 +229,7 @@ public class CHandler implements ICHandler {
 	 * Names of all bitwise operation that occurred in the program.
 	 */
 	protected LinkedHashMap<String, FunctionDeclaration> mFunctions;
+	protected final FunctionDeclarations mFunctionDeclarations;
 	/**
 	 * A set holding declarations of global variables required for variables,
 	 * declared locally in C but required to be global in Boogie. e.g. constants
@@ -321,6 +322,8 @@ public class CHandler implements ICHandler {
 		
 		this.mSymbolTable = new SymbolTable(main);
 		this.mFunctions = new LinkedHashMap<String, FunctionDeclaration>();
+		this.mFunctionDeclarations = new FunctionDeclarations(typeHandler, mMemoryHandler.typeSizeConstants);
+		
 		this.mDeclarationsGlobalInBoogie = new LinkedHashMap<Declaration, CDeclaration>();
 		this.mAxioms = new LinkedHashSet<Axiom>();
 		this.mBacktranslator = backtranslator;
@@ -334,9 +337,9 @@ public class CHandler implements ICHandler {
 		this.mGlobAcslExtractors = new ArrayList<>();
 		
 		if (bitvectorTranslation) {
-			m_ExpressionTranslation = new BitvectorTranslation(mMemoryHandler.typeSizeConstants);
+			m_ExpressionTranslation = new BitvectorTranslation(mMemoryHandler.typeSizeConstants, mFunctionDeclarations);
 		} else {
-			m_ExpressionTranslation = new IntegerTranslation(mMemoryHandler.typeSizeConstants);
+			m_ExpressionTranslation = new IntegerTranslation(mMemoryHandler.typeSizeConstants, mFunctionDeclarations);
 		}
 	}
 
@@ -428,6 +431,7 @@ public class CHandler implements ICHandler {
 			throw new IncorrectSyntaxException(loc, msg);
 		}
 
+		mFunctions.putAll(mFunctionDeclarations.getDeclaredFunctions());
 		decl.addAll(mPostProcessor.postProcess(main, loc, mMemoryHandler, mArrayHandler, mFunctionHandler, mStructHandler, (TypeHandler) mTypeHandler,
 				main.typeHandler.getUndefinedTypes(), this.mFunctions.values(), mDeclarationsGlobalInBoogie));
 
@@ -3259,46 +3263,7 @@ public class CHandler implements ICHandler {
 	}
 	
 	
-	private void declareBitvectorFunction(ILocation loc, String prefixedFunctionName, CType resultCType, CType... paramCTypes) {
-		if (!prefixedFunctionName.startsWith(SFO.AUXILIARY_FUNCTION_PREFIX)) {
-			throw new IllegalArgumentException("Our convention says that user defined functions start with tilde");
-		}
-		CType firstParam = paramCTypes[0];
-		Integer bytesize = mMemoryHandler.typeSizeConstants.getCPrimitiveToTypeSizeConstant().get(firstParam);
-		int bitsize = bytesize * 8;
-		String functionName = prefixedFunctionName.substring(1, prefixedFunctionName.length());
-		String prefixedfunctionNameWithSuffix = prefixedFunctionName + bitsize;
-		Attribute attribute = new NamedAttribute(loc, "bvbuiltin", new Expression[] { new StringLiteral(loc, functionName) });
-		Attribute[] attributes = new Attribute[] { attribute };
-		declareFunction(loc, prefixedfunctionNameWithSuffix, attributes , resultCType, paramCTypes);
-	}
-	
-	private void declareFunction(ILocation loc, String prefixedFunctionName, Attribute[] attributes, CType resultCType, CType... paramCTypes) {
-		ASTType resultASTType = mTypeHandler.ctype2asttype(loc, resultCType);
-		ASTType[] paramASTTypes = new ASTType[paramCTypes.length];
-		for (int i=0; i<paramCTypes.length; i++) {
-			paramASTTypes[i] = mTypeHandler.ctype2asttype(loc, paramCTypes[i]);
-		}
-		declareFunction(loc, prefixedFunctionName, attributes, resultASTType, paramASTTypes);
-	}
-	
-	private void declareFunction(ILocation loc, String prefixedFunctionName, Attribute[] attributes, ASTType resultASTType, ASTType... paramASTTypes) {
-		if (this.mFunctions.containsKey(prefixedFunctionName)) {
-			return;
-			//throw new IllegalArgumentException("Function " + functionName + " already declared");
-		}
-		if (!prefixedFunctionName.startsWith(SFO.AUXILIARY_FUNCTION_PREFIX)) {
-			throw new IllegalArgumentException("Our convention says that user defined functions start with tilde");
-		}
 
-		VarList[] inParams = new VarList[paramASTTypes.length];
-		for (int i=0; i<paramASTTypes.length; i++) {
-			inParams[i] = new VarList(loc, new String[] { "in" + i }, paramASTTypes[i]);
-		}
-		VarList outParam = new VarList(loc, new String[] { "out" }, resultASTType);
-		FunctionDeclaration d = new FunctionDeclaration(loc, attributes, prefixedFunctionName, new String[0], inParams, outParam);
-		this.mFunctions.put(prefixedFunctionName, d);
-	}
 
 	/**
 	 * Method that handles loops (for, while, do/while). Each of corresponding
