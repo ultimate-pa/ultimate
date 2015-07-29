@@ -483,7 +483,12 @@ public class PostProcessor {
 						new Expression[]{ new IntegerLiteral(loc, String.valueOf(bitsize))});
 				String identifier = "C_" + cPrimitive.name();
 				String[] typeParams = new String[0];
-				String name = "bv" + bitsize;
+				String name;
+				if (cPrimitive == CPrimitive.PRIMITIVE.BOOL) {
+					name = "bool";
+				} else {
+					name = "bv" + bitsize;
+				}
 				ASTType astType = new PrimitiveType(loc, name);
 				decls.add(new TypeDeclaration(loc, attributes, false, identifier, typeParams , astType));
 			}
