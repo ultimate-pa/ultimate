@@ -10,7 +10,7 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.LinearTransition;
 import de.uni_freiburg.informatik.ultimate.lassoranker.exceptions.TermException;
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.AddAxioms;
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.DNF;
-import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.MatchInVars;
+import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.MatchInOutVars;
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.RemoveNegation;
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.RewriteBooleans;
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.RewriteDivision;
@@ -146,7 +146,7 @@ public class CachedTransFormulaLinearizer {
 	 */
 	private TransitionPreProcessor[] getPreprocessors() {
 		return new TransitionPreProcessor[] {
-				new MatchInVars(m_SmtManager.getBoogie2Smt().getVariableManager()),
+				new MatchInOutVars(m_SmtManager.getBoogie2Smt().getVariableManager()),
 				new AddAxioms(m_ReplacementVarFactory, m_Axioms),
 				new RewriteDivision(m_ReplacementVarFactory),
 				new RewriteBooleans(m_ReplacementVarFactory, m_SmtManager.getScript()), 

@@ -47,7 +47,7 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.CommuHashPr
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.DNF;
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.LassoPartitioneerPreProcessor;
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.LassoPreProcessor;
-import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.MatchInVars;
+import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.MatchInOutVars;
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.RemoveNegation;
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.RewriteArrays2;
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.RewriteBooleans;
@@ -287,13 +287,13 @@ public class LassoAnalysis {
 	protected LassoPreProcessor[] getPreProcessors(
 			LassoBuilder lassoBuilder, boolean overapproximateArrayIndexConnection) {
 		return new LassoPreProcessor[] {
-				new StemAndLoopPreProcessor(m_old_script, new MatchInVars(m_Boogie2SMT.getVariableManager())),
+				new StemAndLoopPreProcessor(m_old_script, new MatchInOutVars(m_Boogie2SMT.getVariableManager())),
 				new StemAndLoopPreProcessor(m_old_script, new AddAxioms(lassoBuilder.getReplacementVarFactory(), m_axioms)),
 				new StemAndLoopPreProcessor(m_old_script, new CommuHashPreprocessor(mServices)),
 				new LassoPartitioneerPreProcessor(m_old_script, mServices, m_Boogie2SMT.getVariableManager()),
 				new RewriteArrays2(true, m_stem_transition, m_loop_transition, m_ModifiableGlobalsAtHonda, 
 						mServices, m_ArrayIndexSupportingInvariants, m_Boogie2SMT, lassoBuilder.getReplacementVarFactory()),
-				new StemAndLoopPreProcessor(m_old_script, new MatchInVars(m_Boogie2SMT.getVariableManager())),
+				new StemAndLoopPreProcessor(m_old_script, new MatchInOutVars(m_Boogie2SMT.getVariableManager())),
 				new LassoPartitioneerPreProcessor(m_old_script, mServices, m_Boogie2SMT.getVariableManager()),
 				new StemAndLoopPreProcessor(m_old_script, new RewriteDivision(lassoBuilder.getReplacementVarFactory())),
 				new StemAndLoopPreProcessor(m_old_script, new RewriteBooleans(lassoBuilder.getReplacementVarFactory(), lassoBuilder.getScript())),
@@ -634,8 +634,8 @@ public class LassoAnalysis {
 				return "div";
 			case RewriteBooleans.s_Description:
 				return "bol";
-			case MatchInVars.s_Description:
-				return "miv";
+			case MatchInOutVars.s_Description:
+				return "mio";
 			case RewriteTrueFalse.s_Description:
 				return "tf";
 			case RewriteIte.s_Description:

@@ -38,23 +38,24 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.IFreshTermVaria
 
 
 /**
- * Add a corresponding inVar for all outVars.
+ * Add a corresponding inVar for all outVars and a corresponding outVar for all
+ * inVars.
  * 
- * This is required to prevent a problem that was reported by Matthias
- * in Madrid.bpl. This problem occurs when there are outVars that do not
- * have a corresponding inVar. Supporting invariant generation then becomes
- * unsound for the inductiveness property.
+ * This is done to ease the implementation of the LassoRanker.
+ * Furthermore, if the loop has an outVar without a corresponding inVar we can
+ * obtain an unsound supporting invariant (which is demonstrated by Madrid.bpl)
+ * There might be also other soundness problems if we omit this preprocessor.
  */
-public class MatchInVars extends TransitionPreProcessor {
+public class MatchInOutVars extends TransitionPreProcessor {
 	public static final String s_Description = 
-			"Add a corresponding inVar for all outVars";
+			"Add a corresponding inVars and outVars";
 
 	/**
 	 * Factory for construction of auxVars.
 	 */
 	private final IFreshTermVariableConstructor m_VariableManager;
 	
-	public MatchInVars(IFreshTermVariableConstructor variableManager) {
+	public MatchInOutVars(IFreshTermVariableConstructor variableManager) {
 		super();
 		m_VariableManager = variableManager;
 	}
@@ -66,6 +67,13 @@ public class MatchInVars extends TransitionPreProcessor {
 	
 	@Override
 	public TransFormulaLR process(Script script, TransFormulaLR tf) throws TermException {
+		addMissingInVars(tf);
+		addMissingOutVars(tf);
+//		assert eachInVarHasOutVar(tf) : "some inVars do not have outVars";
+		return tf;
+	}
+
+	private void addMissingInVars(TransFormulaLR tf) {
 		for (Map.Entry<RankVar, Term> entry : tf.getOutVars().entrySet()) {
 			if (!tf.getInVars().containsKey(entry.getKey())) {
 				TermVariable inVar = m_VariableManager.constructFreshTermVariable(
@@ -75,8 +83,18 @@ public class MatchInVars extends TransitionPreProcessor {
 				tf.addInVar(entry.getKey(), inVar);
 			}
 		}
-		assert eachInVarHasOutVar(tf) : "some inVars do not have outVars";
-		return tf;
+	}
+	
+	private void addMissingOutVars(TransFormulaLR tf) {
+		for (Map.Entry<RankVar, Term> entry : tf.getInVars().entrySet()) {
+			if (!tf.getOutVars().containsKey(entry.getKey())) {
+				TermVariable inVar = m_VariableManager.constructFreshTermVariable(
+						entry.getKey().getGloballyUniqueId(),
+						entry.getValue().getSort()
+				);
+				tf.addOutVar(entry.getKey(), inVar);
+			}
+		}
 	}
 	
 	/**
@@ -84,6 +102,8 @@ public class MatchInVars extends TransitionPreProcessor {
 	 * At the moment this holds by convention. 
 	 * We might drop this convention in the future.
 	 * Then this class also has to introduce new outVars.
+	 * TODO: Maybe we want to use this method as a check after all 
+	 * preprocessing steps.
 	 */
 	private boolean eachInVarHasOutVar(TransFormulaLR tf) {
 		for (Map.Entry<RankVar, Term> entry : tf.getInVars().entrySet()) {
