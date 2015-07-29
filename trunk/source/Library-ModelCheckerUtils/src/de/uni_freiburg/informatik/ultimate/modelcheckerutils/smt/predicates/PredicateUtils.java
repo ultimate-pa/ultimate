@@ -287,7 +287,7 @@ public class PredicateUtils {
 					unprimedOldVarEqualities, primedOldVarEqualities);
 			findNonModifiablesGlobals(tf.getInVars().keySet(), modifiableGlobalsBefore, empty,
 					unprimedOldVarEqualities, primedOldVarEqualities);
-			findNonModifiablesGlobals(tf.getOutVars().keySet(), modifiableGlobalsAfter, empty,
+			findNonModifiablesGlobals(tf.getOutVars().keySet(), modifiableGlobalsAfter, tf.getAssignedVars(),
 					unprimedOldVarEqualities, primedOldVarEqualities);
 
 			List<Term> positiveConjuncts = new ArrayList<Term>();
@@ -312,7 +312,7 @@ public class PredicateUtils {
 			Set<BoogieNonOldVar> unprimedOldVarEqualities = new HashSet<>();
 			Set<BoogieNonOldVar> primedOldVarEqualities = new HashSet<>();
 			List<Term> negativeConjuncts = new ArrayList<Term>();
-			findNonModifiablesGlobals(postcond.getVars(), modifiableGlobalsAfter, empty,
+			findNonModifiablesGlobals(postcond.getVars(), modifiableGlobalsAfter, tf.getAssignedVars(),
 					unprimedOldVarEqualities, primedOldVarEqualities);
 			for (BoogieNonOldVar bv : unprimedOldVarEqualities) {
 				negativeConjuncts.add(ModifiableGlobalVariableManager.constructConstantOldVarEquality(
