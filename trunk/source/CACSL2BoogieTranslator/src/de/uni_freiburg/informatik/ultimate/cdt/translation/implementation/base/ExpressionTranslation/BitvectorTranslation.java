@@ -40,7 +40,7 @@ public class BitvectorTranslation extends AbstractExpressionTranslation {
 		case IASTLiteralExpression.lk_integer_constant:
 		{
 			String val = new String(node.getValue());
-			RValue rVal = ISOIEC9899TC3.handleIntegerConstant(val, loc, main, true, m_TypeSizeConstants);
+			RValue rVal = ISOIEC9899TC3.handleIntegerConstant(val, loc, true, m_TypeSizeConstants);
 			return new ResultExpression(rVal);
 		}
 		default:

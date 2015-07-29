@@ -42,7 +42,7 @@ public class IntegerTranslation extends AbstractExpressionTranslation {
 		case IASTLiteralExpression.lk_integer_constant:
 		{
 			String val = new String(node.getValue());
-			RValue rVal = ISOIEC9899TC3.handleIntegerConstant(val, loc, main, false, m_TypeSizeConstants);
+			RValue rVal = ISOIEC9899TC3.handleIntegerConstant(val, loc, false, m_TypeSizeConstants);
 			return new ResultExpression(rVal);
 		}
 		default:

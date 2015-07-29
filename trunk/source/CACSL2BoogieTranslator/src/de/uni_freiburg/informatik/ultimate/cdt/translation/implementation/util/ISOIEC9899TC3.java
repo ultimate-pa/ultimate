@@ -180,7 +180,7 @@ public final class ISOIEC9899TC3 {
 	 * @return the parsed value
 	 */
 	public static final RValue handleIntegerConstant(String val, ILocation loc, 
-			Dispatcher dispatch, boolean bitvectorTranslation, 
+			boolean bitvectorTranslation, 
 			TypeSizeConstants typeSizeConstants) {
 		String value = val;
 		String suffix = "";
