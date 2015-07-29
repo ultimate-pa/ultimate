@@ -483,8 +483,9 @@ public class PostProcessor {
 						new Expression[]{ new IntegerLiteral(loc, String.valueOf(bitsize))});
 				String identifier = "C_" + cPrimitive.name();
 				String[] typeParams = new String[0];
-				ASTType intType = new PrimitiveType(loc, SFO.INT);
-				decls.add(new TypeDeclaration(loc, attributes, false, identifier, typeParams , intType));
+				String name = "bv" + bitsize;
+				ASTType astType = new PrimitiveType(loc, name);
+				decls.add(new TypeDeclaration(loc, attributes, false, identifier, typeParams , astType));
 			}
 		}
 		return decls;
