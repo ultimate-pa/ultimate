@@ -3,6 +3,7 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base;
 import java.util.LinkedHashMap;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.TypeSizeConstants;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
@@ -42,12 +43,12 @@ public class FunctionDeclarations {
 		m_TypeSizeConstants = typeSizeConstants;
 	}
 
-	public void declareBitvectorFunction(ILocation loc, String prefixedFunctionName, CType resultCType, CType... paramCTypes) {
+	public void declareBitvectorFunction(ILocation loc, String prefixedFunctionName, CPrimitive resultCType, CPrimitive... paramCTypes) {
 		if (!prefixedFunctionName.startsWith(SFO.AUXILIARY_FUNCTION_PREFIX)) {
 			throw new IllegalArgumentException("Our convention says that user defined functions start with tilde");
 		}
-		CType firstParam = paramCTypes[0];
-		Integer bytesize = m_TypeSizeConstants.getCPrimitiveToTypeSizeConstant().get(firstParam);
+		CPrimitive firstParam = paramCTypes[0];
+		Integer bytesize = m_TypeSizeConstants.getCPrimitiveToTypeSizeConstant().get(firstParam.getType());
 		int bitsize = bytesize * 8;
 		String functionName = prefixedFunctionName.substring(1, prefixedFunctionName.length());
 		String prefixedfunctionNameWithSuffix = prefixedFunctionName + bitsize;
