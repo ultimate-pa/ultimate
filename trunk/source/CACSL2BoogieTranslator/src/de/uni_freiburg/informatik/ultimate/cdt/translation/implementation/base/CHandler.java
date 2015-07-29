@@ -291,8 +291,11 @@ public class CHandler implements ICHandler {
 
 	private ArrayList<LTLExpressionExtractor> mGlobAcslExtractors;
 
-	private AbstractExpressionTranslation m_ExpressionTranslation;
+	private final AbstractExpressionTranslation m_ExpressionTranslation;
 
+	public AbstractExpressionTranslation getExpressionTranslation() {
+		return m_ExpressionTranslation;
+	}
 
 	/**
 	 * Constructor.

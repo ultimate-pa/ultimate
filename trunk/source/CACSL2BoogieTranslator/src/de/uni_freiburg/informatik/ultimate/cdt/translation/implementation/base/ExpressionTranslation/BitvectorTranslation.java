@@ -37,15 +37,15 @@ public class BitvectorTranslation extends AbstractExpressionTranslation {
 			int bitlength = 8 * m_TypeSizeConstants.getCPrimitiveToTypeSizeConstant().get(cprimitive);
 			return new ResultExpression(new RValue(new BitvecLiteral(loc, val, bitlength), cprimitive));
 		}
-		case IASTLiteralExpression.lk_integer_constant:
-		{
-			String val = new String(node.getValue());
-			RValue rVal = ISOIEC9899TC3.handleIntegerConstant(val, loc, true, m_TypeSizeConstants);
-			return new ResultExpression(rVal);
-		}
 		default:
 			return super.translateLiteral(main, node);
 		}
+	}
+	
+	@Override
+	public RValue translateIntegerLiteral(ILocation loc, String val) {
+		RValue rVal = ISOIEC9899TC3.handleIntegerConstant(val, loc, true, m_TypeSizeConstants);
+		return rVal;
 	}
 
 	@Override

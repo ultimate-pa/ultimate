@@ -16,6 +16,7 @@ import org.eclipse.cdt.core.dom.ast.IASTNode;
 import org.eclipse.cdt.internal.core.dom.parser.c.CArrayType;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.ExpressionTranslation.AbstractExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.SymbolTableValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
@@ -357,8 +358,12 @@ public class ACSLHandler implements IACSLHandler {
                 new de.uni_freiburg.informatik.ultimate.model.boogie.ast.IntegerLiteral(
                         LocationFactory.createACSLLocation(node), node.getValue()));
         */
-     	return new ResultExpression(new RValue(new de.uni_freiburg.informatik.ultimate.model.boogie.ast.IntegerLiteral(
-                LocationFactory.createACSLLocation(node), node.getValue()), new CPrimitive(PRIMITIVE.INT)));
+    	AbstractExpressionTranslation expressionTranslation = 
+    			((CHandler) main.cHandler).getExpressionTranslation();
+    	ILocation loc = LocationFactory.createACSLLocation(node);
+    	String val = node.getValue();
+    	RValue rValue = expressionTranslation.translateIntegerLiteral(loc, val);
+     	return new ResultExpression(rValue);
 
     }
 

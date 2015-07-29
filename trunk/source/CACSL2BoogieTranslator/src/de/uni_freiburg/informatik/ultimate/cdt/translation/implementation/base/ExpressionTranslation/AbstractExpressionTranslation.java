@@ -46,13 +46,19 @@ public abstract class AbstractExpressionTranslation {
 
 		switch (node.getKind()) {
 		case IASTLiteralExpression.lk_float_constant:
+		{
 			String val = new String(node.getValue());
 			val = ISOIEC9899TC3.handleFloatConstant(val, loc, main);
 			return new ResultExpression(new RValue(new RealLiteral(loc, val), new CPrimitive(PRIMITIVE.FLOAT)));
+		}
 		case IASTLiteralExpression.lk_char_constant:
 			throw new AssertionError("To be handled by subclass");
 		case IASTLiteralExpression.lk_integer_constant:
-			throw new AssertionError("To be handled by subclass");
+		{
+			String val = new String(node.getValue());
+			RValue rVal = translateIntegerLiteral(loc, val);
+			return new ResultExpression(rVal);
+		}
 		case IASTLiteralExpression.lk_string_literal:
 			// Translate string to uninitialized char pointer
 			String tId = main.nameHandler.getTempVarUID(SFO.AUXVAR.NONDET);
@@ -77,4 +83,6 @@ public abstract class AbstractExpressionTranslation {
 	public abstract Expression constructBinaryComparisonExpression(ILocation loc, int nodeOperator, Expression exp1, CPrimitive type1, Expression exp2, CPrimitive type2);
 	public abstract Expression constructBinaryBitwiseShiftExpression(ILocation loc, int nodeOperator, Expression exp1, CPrimitive type1, Expression exp2, CPrimitive type2);
 	public abstract Expression createArithmeticExpression(int op, Expression left, CPrimitive typeLeft, Expression right, CPrimitive typeRight, ILocation loc);
+	
+	public abstract RValue translateIntegerLiteral(ILocation loc, String val);
 }
