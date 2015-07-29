@@ -143,7 +143,7 @@ public class IntegerTranslation extends AbstractExpressionTranslation {
 			/* In C the semantics of integer division is "rounding towards zero".
 			 * In Boogie euclidian division is used.
 			 * We translate a / b into
-			 *  (a < 0) ? ( (b < 0) ? (a/b)+1 : (a/b)-1) : a/b
+			 *  (a < 0 && a%b != 0) ? ( (b < 0) ? (a/b)+1 : (a/b)-1) : a/b
 			 */
 			if (bothAreIntegerLiterals) {
 				constantResult = 
@@ -151,10 +151,18 @@ public class IntegerTranslation extends AbstractExpressionTranslation {
 							.divide(rightValue).toString();
 				return new IntegerLiteral(loc, constantResult);
 			} else {
-				BinaryExpression leftSmallerZero = new BinaryExpression(loc, 
-						BinaryExpression.Operator.COMPLT, 
-						left,
-						new IntegerLiteral(loc, SFO.NR0));
+				BinaryExpression leftSmallerZeroAndThereIsRemainder;
+				{
+					BinaryExpression leftModRight = new BinaryExpression(loc, Operator.ARITHMOD, left, right);
+					BinaryExpression thereIsRemainder = new BinaryExpression(loc, 
+							Operator.COMPNEQ, leftModRight, new IntegerLiteral(loc, SFO.NR0));
+					BinaryExpression leftSmallerZero = new BinaryExpression(loc, 
+							BinaryExpression.Operator.COMPLT, 
+							left,
+							new IntegerLiteral(loc, SFO.NR0));
+					leftSmallerZeroAndThereIsRemainder = 
+							new BinaryExpression(loc, Operator.LOGICAND, leftSmallerZero, thereIsRemainder);
+				}
 				BinaryExpression rightSmallerZero = new BinaryExpression(loc, 
 						BinaryExpression.Operator.COMPLT, 
 						right,
@@ -178,14 +186,14 @@ public class IntegerTranslation extends AbstractExpressionTranslation {
 					}
 				} else if (right instanceof IntegerLiteral) {
 					if (rightValue.signum() == 1 || rightValue.signum() == 0) {
-						return new IfThenElseExpression(loc, leftSmallerZero, 
+						return new IfThenElseExpression(loc, leftSmallerZeroAndThereIsRemainder, 
 								new BinaryExpression(loc, 
 										BinaryExpression.Operator.ARITHPLUS, 
 										normalDivision, 
 										new IntegerLiteral(loc, SFO.NR1)), 
 								normalDivision);
 					} else if (rightValue.signum() == -1) {
-						return new IfThenElseExpression(loc, leftSmallerZero, 
+						return new IfThenElseExpression(loc, leftSmallerZeroAndThereIsRemainder, 
 									new BinaryExpression(loc, 
 											BinaryExpression.Operator.ARITHMINUS, 
 											normalDivision, 
@@ -193,7 +201,7 @@ public class IntegerTranslation extends AbstractExpressionTranslation {
 									normalDivision);
 					} 
 				} else {
-					return new IfThenElseExpression(loc, leftSmallerZero, 
+					return new IfThenElseExpression(loc, leftSmallerZeroAndThereIsRemainder, 
 							new IfThenElseExpression(loc, rightSmallerZero, 
 									new BinaryExpression(loc, 
 											BinaryExpression.Operator.ARITHMINUS, 
@@ -212,7 +220,7 @@ public class IntegerTranslation extends AbstractExpressionTranslation {
 			/* In C the semantics of integer division is "rounding towards zero".
 			 * In Boogie euclidian division is used.
 			 * We translate a % b into
-			 *  (a < 0) ? ( (b < 0) ? (a%b)-b : (a%b)+b) : a%b
+			 *  (a < 0 && a%b != 0) ? ( (b < 0) ? (a%b)-b : (a%b)+b) : a%b
 			 */
 			//modulo on bigInteger does not seem to follow the "multiply, add, and get the result back"-rule, together with its division..
 			if (bothAreIntegerLiterals) {
@@ -239,10 +247,18 @@ public class IntegerTranslation extends AbstractExpressionTranslation {
 				} 
 				return new IntegerLiteral(loc, constantResult);
 			} else {
-				BinaryExpression leftSmallerZero = new BinaryExpression(loc, 
-						BinaryExpression.Operator.COMPLT, 
-						left,
-						new IntegerLiteral(loc, SFO.NR0));
+				BinaryExpression leftSmallerZeroAndThereIsRemainder;
+				{
+					BinaryExpression leftModRight = new BinaryExpression(loc, Operator.ARITHMOD, left, right);
+					BinaryExpression thereIsRemainder = new BinaryExpression(loc, 
+							Operator.COMPNEQ, leftModRight, new IntegerLiteral(loc, SFO.NR0));
+					BinaryExpression leftSmallerZero = new BinaryExpression(loc, 
+							BinaryExpression.Operator.COMPLT, 
+							left,
+							new IntegerLiteral(loc, SFO.NR0));
+					leftSmallerZeroAndThereIsRemainder = 
+							new BinaryExpression(loc, Operator.LOGICAND, leftSmallerZero, thereIsRemainder);
+				}
 				BinaryExpression rightSmallerZero = new BinaryExpression(loc, 
 						BinaryExpression.Operator.COMPLT, 
 						right,
@@ -266,14 +282,14 @@ public class IntegerTranslation extends AbstractExpressionTranslation {
 					}
 				} else if (right instanceof IntegerLiteral) {
 					if (rightValue.signum() == 1 || rightValue.signum() == 0) {
-						return new IfThenElseExpression(loc, leftSmallerZero, 
+						return new IfThenElseExpression(loc, leftSmallerZeroAndThereIsRemainder, 
 								new BinaryExpression(loc, 
 										BinaryExpression.Operator.ARITHMINUS, 
 										normalModulo, 
 										right), 
 										normalModulo);
 					} else if (rightValue.signum() == -1) {
-						return new IfThenElseExpression(loc, leftSmallerZero, 
+						return new IfThenElseExpression(loc, leftSmallerZeroAndThereIsRemainder, 
 								new BinaryExpression(loc, 
 										BinaryExpression.Operator.ARITHPLUS, 
 										normalModulo, 
@@ -281,7 +297,7 @@ public class IntegerTranslation extends AbstractExpressionTranslation {
 										normalModulo);
 					}
 				} else {
-					return new IfThenElseExpression(loc, leftSmallerZero, 
+					return new IfThenElseExpression(loc, leftSmallerZeroAndThereIsRemainder, 
 							new IfThenElseExpression(loc, rightSmallerZero, 
 									new BinaryExpression(loc, 
 											BinaryExpression.Operator.ARITHPLUS, 
