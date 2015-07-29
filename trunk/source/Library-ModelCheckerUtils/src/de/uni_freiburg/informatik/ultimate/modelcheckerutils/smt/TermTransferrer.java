@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt;
 
+import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Collections;
 import java.util.HashMap;
@@ -91,6 +92,8 @@ public class TermTransferrer extends TermTransformer {
 			final Term result;
 			if (ct.getValue() instanceof BigInteger) {
 				result = m_Script.numeral((BigInteger) ct.getValue());
+			} else if (ct.getValue() instanceof BigDecimal) {
+				result = m_Script.decimal((BigDecimal) ct.getValue());
 			} else if (ct.getValue() instanceof Rational) {
 				result = ((Rational) ct.getValue()).toTerm(sort);
 			} else {
