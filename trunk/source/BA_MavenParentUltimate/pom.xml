@@ -191,6 +191,7 @@
 
 		<module>../CoreRCP</module>
 		<module>../GuiRCP</module>
+		<module>../BoogieModSetAnnotator</module>
 		<module>../BoogiePLParser</module>
 		<module>../BoogiePreprocessor</module>
 		<module>../BoogiePrinter</module>
