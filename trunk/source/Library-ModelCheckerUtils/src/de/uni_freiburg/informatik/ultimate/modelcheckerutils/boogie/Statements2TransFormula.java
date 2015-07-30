@@ -59,6 +59,8 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Expression2Term.IdentifierTranslator;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Expression2Term.MultiTermResult;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Expression2Term.SingleTermResult;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.partialQuantifierElimination.XnfDer;
@@ -106,6 +108,7 @@ public class Statements2TransFormula {
 	private Term m_Assumes;
 	private Term m_Asserts;
 	private final IUltimateServiceProvider mServices;
+	private boolean m_Overapproximated = false;
 
 	public Statements2TransFormula(Boogie2SMT boogie2smt, IUltimateServiceProvider services, Expression2Term expression2Term) {
 		super();
@@ -130,6 +133,7 @@ public class Statements2TransFormula {
 		assert m_AuxVars == null;
 		assert m_Assumes == null;
 
+		m_Overapproximated = false;
 		m_CurrentProcedure = procId;
 		m_OutVars = new HashMap<BoogieVar, TermVariable>();
 		m_InVars = new HashMap<BoogieVar, TermVariable>();
@@ -140,7 +144,7 @@ public class Statements2TransFormula {
 		}
 	}
 
-	private TransFormula getTransFormula(boolean simplify, boolean feasibilityKnown) {
+	private TranslationResult getTransFormula(boolean simplify, boolean feasibilityKnown) {
 		Set<TermVariable> auxVars = m_AuxVars;
 		Term formula = m_Assumes;
 		formula = eliminateAuxVars(m_Assumes, auxVars);
@@ -182,7 +186,7 @@ public class Statements2TransFormula {
 		m_InVars = null;
 		m_AuxVars = null;
 		m_Assumes = null;
-		return tf;
+		return new TranslationResult(tf, m_Overapproximated);
 	}
 
 	private BoogieVar getModifiableBoogieVar(String id, DeclarationInformation declInfo) {
@@ -243,7 +247,10 @@ public class Statements2TransFormula {
 
 		for (TermVariable tv : addedEqualities.keySet()) {
 
-			Term rhsTerm = m_Expression2Term.translateToTerm(its, addedEqualities.get(tv));
+			SingleTermResult tlres = m_Expression2Term.translateToTerm(its, addedEqualities.get(tv));
+			m_AuxVars.addAll(tlres.getAuxiliaryVars());
+			m_Overapproximated |= tlres.isOverappoximated(); 
+			Term rhsTerm = tlres.getTerm();
 			Term eq = m_Script.term("=", tv, rhsTerm);
 
 			m_Assumes = Util.and(m_Script, eq, m_Assumes);
@@ -270,8 +277,11 @@ public class Statements2TransFormula {
 	private void addAssume(AssumeStatement assume) {
 		IdentifierTranslator[] its = getIdentifierTranslatorsIntraprocedural();
 
-		Term f = m_Expression2Term.translateToTerm(its, assume.getFormula());
-
+		SingleTermResult tlres = m_Expression2Term.translateToTerm(its, assume.getFormula());
+		m_AuxVars.addAll(tlres.getAuxiliaryVars());
+		m_Overapproximated |= tlres.isOverappoximated(); 
+		Term f = tlres.getTerm();
+		
 		m_Assumes = Util.and(m_Script, f, m_Assumes);
 		if (s_ComputeAsserts) {
 			m_Asserts = Util.implies(m_Script, f, m_Asserts);
@@ -281,7 +291,11 @@ public class Statements2TransFormula {
 	private void addAssert(AssertStatement assertstmt) {
 		if (s_ComputeAsserts) {
 			IdentifierTranslator[] its = getIdentifierTranslatorsIntraprocedural();
-			Term f = m_Expression2Term.translateToTerm(its, assertstmt.getFormula());
+			SingleTermResult tlres = m_Expression2Term.translateToTerm(its, assertstmt.getFormula());
+			m_AuxVars.addAll(tlres.getAuxiliaryVars());
+			m_Overapproximated |= tlres.isOverappoximated(); 
+			Term f = tlres.getTerm();
+			
 			m_Assumes = Util.and(m_Script, f, m_Assumes);
 			m_Asserts = Util.and(m_Script, f, m_Asserts);
 			assert (m_Assumes.toString() instanceof Object);
@@ -347,7 +361,10 @@ public class Statements2TransFormula {
 		Term[] argumentTerms;
 		{
 			IdentifierTranslator[] its = getIdentifierTranslatorsIntraprocedural();
-			argumentTerms = m_Expression2Term.translateToTerms(its, arguments); 
+			MultiTermResult tlres = m_Expression2Term.translateToTerms(its, arguments); 
+			m_AuxVars.addAll(tlres.getAuxiliaryVars());
+			m_Overapproximated |= tlres.isOverappoximated(); 
+			argumentTerms = tlres.getTerms();
 		}
 
 		offset = 0;
@@ -367,7 +384,10 @@ public class Statements2TransFormula {
 		for (Specification spec : procedure.getSpecification()) {
 			if (spec instanceof EnsuresSpecification) {
 				Expression post = ((EnsuresSpecification) spec).getFormula();
-				Term f = m_Expression2Term.translateToTerm(ensIts, post);  
+				SingleTermResult tlres = m_Expression2Term.translateToTerm(ensIts, post);
+				m_AuxVars.addAll(tlres.getAuxiliaryVars());
+				m_Overapproximated |= tlres.isOverappoximated(); 
+				Term f = tlres.getTerm();
 				m_Assumes = Util.and(m_Script, f, m_Assumes);
 				if (s_ComputeAsserts) {
 					if (spec.isFree()) {
@@ -387,7 +407,10 @@ public class Statements2TransFormula {
 		for (Specification spec : procedure.getSpecification()) {
 			if (spec instanceof RequiresSpecification) {
 				Expression pre = ((RequiresSpecification) spec).getFormula();
-				Term f = m_Expression2Term.translateToTerm(reqIts, pre);  
+				SingleTermResult tlres = m_Expression2Term.translateToTerm(reqIts, pre);
+				m_AuxVars.addAll(tlres.getAuxiliaryVars());
+				m_Overapproximated |= tlres.isOverappoximated(); 
+				Term f = tlres.getTerm();
 				m_Assumes = Util.and(m_Script, f, m_Assumes);
 				if (s_ComputeAsserts) {
 					if (spec.isFree()) {
@@ -594,7 +617,7 @@ public class Statements2TransFormula {
 		return result;
 	}
 
-	public TransFormula statementSequence(boolean simplify, String procId, Statement... statements) {
+	public TranslationResult statementSequence(boolean simplify, String procId, Statement... statements) {
 		initialize(procId);
 		for (int i = statements.length - 1; i >= 0; i--) {
 			Statement st = statements[i];
@@ -622,13 +645,17 @@ public class Statements2TransFormula {
 	 * BoogieVar which is equivalent to the BoogieVars which were constructed
 	 * while processing the callee.
 	 */
-	public TransFormula inParamAssignment(CallStatement st) {
+	public TranslationResult inParamAssignment(CallStatement st) {
 		String callee = st.getMethodName();
 		initialize(callee);
 		Procedure calleeImpl = m_BoogieDeclarations.getProcImplementation().get(callee);
 
 		IdentifierTranslator[] its = getIdentifierTranslatorsIntraprocedural();
-		Term[] argTerms = m_Expression2Term.translateToTerms(its, st.getArguments()); 
+		MultiTermResult tlres = m_Expression2Term.translateToTerms(its, st.getArguments()); 
+		m_AuxVars.addAll(tlres.getAuxiliaryVars());
+		m_Overapproximated |= tlres.isOverappoximated(); 
+		Term[] argTerms = tlres.getTerms();
+		
 		m_OutVars.clear();
 
 		DeclarationInformation declInfo = new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM, callee);
@@ -658,7 +685,7 @@ public class Statements2TransFormula {
 	 * BoogieVar which is equivalent to the BoogieVars of the corresponding
 	 * procedures.
 	 */
-	public TransFormula resultAssignment(CallStatement st, String caller) {
+	public TranslationResult resultAssignment(CallStatement st, String caller) {
 		initialize(caller);
 		String callee = st.getMethodName();
 		Procedure impl = m_BoogieDeclarations.getProcImplementation().get(callee);
@@ -684,6 +711,25 @@ public class Statements2TransFormula {
 		assert (st.getLhs().length == offset);
 		m_Assumes = Util.and(m_Script, assignments);
 		return getTransFormula(false, true);
+	}
+	
+	
+	public class TranslationResult {
+		private final TransFormula m_TransFormula;
+		private final boolean m_Overapproximated;
+		public TranslationResult(TransFormula transFormula,
+				boolean overapproximated) {
+			super();
+			m_TransFormula = transFormula;
+			m_Overapproximated = overapproximated;
+		}
+		public TransFormula getTransFormula() {
+			return m_TransFormula;
+		}
+		public boolean isOverapproximated() {
+			return m_Overapproximated;
+		}
+		
 	}
 
 }

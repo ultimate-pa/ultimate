@@ -27,6 +27,8 @@
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie;
 
 import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.Collection;
 
 import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
@@ -79,6 +81,8 @@ public class Expression2Term {
 	
 	private final ScopedHashMap<String, TermVariable> m_QuantifiedVariables = new ScopedHashMap<>();
 	private IdentifierTranslator[] m_SmtIdentifierProviders;
+	private boolean m_Overapproximation = false;
+	private Collection<TermVariable> m_AuxVars = null;
 
 	/**
 	 * Count the height of current old(.) expressions. As long as this is
@@ -100,24 +104,38 @@ public class Expression2Term {
 		m_OperationTranslator = operationTranslator;
 	}
 
-	public Term translateToTerm(IdentifierTranslator[] identifierTranslators, Expression expression) {
+	public SingleTermResult translateToTerm(IdentifierTranslator[] identifierTranslators, Expression expression) {
 		assert m_SmtIdentifierProviders == null : getClass().getSimpleName() + " in use";
 		assert m_QuantifiedVariables.isEmpty() : getClass().getSimpleName() + " in use";
+		assert m_Overapproximation == false : getClass().getSimpleName() + " in use";
+		assert m_AuxVars == null : getClass().getSimpleName() + " in use";
 		m_SmtIdentifierProviders = identifierTranslators;
-		Term result =  translate(expression);
+		m_AuxVars = new ArrayList<>();
+		m_Overapproximation = false;
+		Term term = translate(expression);
+		SingleTermResult result = new SingleTermResult(m_Overapproximation, m_AuxVars, term);
 		m_SmtIdentifierProviders = null;
+		m_AuxVars = null;
+		m_Overapproximation = false;
 		return result; 
 	}
 
-	public Term[] translateToTerms(IdentifierTranslator[] identifierTranslators, Expression[] expressions) {
+	public MultiTermResult translateToTerms(IdentifierTranslator[] identifierTranslators, Expression[] expressions) {
 		assert m_SmtIdentifierProviders == null : getClass().getSimpleName() + " in use";
 		assert m_QuantifiedVariables.isEmpty() : getClass().getSimpleName() + " in use";
+		assert m_Overapproximation == false : getClass().getSimpleName() + " in use";
+		assert m_AuxVars == null : getClass().getSimpleName() + " in use";
 		m_SmtIdentifierProviders = identifierTranslators;
-		Term[] result = new Term[expressions.length];
+		m_AuxVars = new ArrayList<>();
+		m_Overapproximation = false;
+		Term[] terms = new Term[expressions.length];
 		for (int i = 0; i < expressions.length; i++) {
-			result[i] = translate(expressions[i]);
+			terms[i] = translate(expressions[i]);
 		}
+		MultiTermResult result = new MultiTermResult(m_Overapproximation, m_AuxVars, terms);
 		m_SmtIdentifierProviders = null;
+		m_AuxVars = null;
+		m_Overapproximation = false;
 		return result; 
 	}
 
@@ -358,6 +376,48 @@ public class Expression2Term {
 			return result;
 		} else {
 			throw new AssertionError("Unsupported expression " + exp);
+		}
+	}
+	
+	abstract class TranslationResult {
+		private final boolean m_Overappoximated;
+		private final Collection<TermVariable> m_AuxiliaryVars;
+		public TranslationResult(boolean overappoximated,
+				Collection<TermVariable> auxiliaryVars) {
+			super();
+			assert auxiliaryVars != null;
+			m_Overappoximated = overappoximated;
+			m_AuxiliaryVars = auxiliaryVars;
+		}
+		public boolean isOverappoximated() {
+			return m_Overappoximated;
+		}
+		public Collection<TermVariable> getAuxiliaryVars() {
+			return m_AuxiliaryVars;
+		}
+	}
+	
+	public class SingleTermResult extends TranslationResult {
+		private final Term m_Term;
+		public SingleTermResult(boolean overappoximated,
+				Collection<TermVariable> auxiliaryVars, Term term) {
+			super(overappoximated, auxiliaryVars);
+			m_Term = term;
+		}
+		public Term getTerm() {
+			return m_Term;
+		}
+	}
+	
+	public class MultiTermResult extends TranslationResult {
+		private final Term[] m_Terms;
+		public MultiTermResult(boolean overappoximated,
+				Collection<TermVariable> auxiliaryVars, Term[] terms) {
+			super(overappoximated, auxiliaryVars);
+			m_Terms = terms;
+		}
+		public Term[] getTerms() {
+			return m_Terms;
 		}
 	}
 }

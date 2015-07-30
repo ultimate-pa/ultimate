@@ -1,11 +1,16 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder;
 
+import java.util.Map;
+
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
+import de.uni_freiburg.informatik.ultimate.model.annotation.IAnnotations;
+import de.uni_freiburg.informatik.ultimate.model.annotation.Overapprox;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Statements2TransFormula.TranslationResult;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.GotoEdge;
@@ -61,16 +66,20 @@ public class TransFormulaBuilder {
 			throw new AssertionError();
 		}
 
-		TransFormula tf = null;
+		TranslationResult tlres = null;
 		try {
-			tf = m_Boogie2smt.getStatements2TransFormula().statementSequence(m_SimplifyCodeBlocks, procId, statements);
+			tlres = m_Boogie2smt.getStatements2TransFormula().statementSequence(m_SimplifyCodeBlocks, procId, statements);
 		} catch (SMTLIBException e) {
 			if (e.getMessage().equals("Unsupported non-linear arithmetic")) {
 				reportUnsupportedSyntax(cb, e.getMessage());
 			}
 			throw e;
 		}
-		cb.setTransitionFormula(tf);
+		if (tlres.isOverapproximated()) {
+			Map<String, IAnnotations> annots = cb.getPayload().getAnnotations();
+			annots.put(Overapprox.getIdentifier(), new Overapprox("TODO: find text", cb.getPayload().getLocation()));
+		}
+		cb.setTransitionFormula(tlres.getTransFormula());
 	}
 
 	void reportUnsupportedSyntax(CodeBlock cb, String longDescription) {

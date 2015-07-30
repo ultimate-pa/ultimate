@@ -28,6 +28,7 @@ import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.annotation.IAnnotations;
+import de.uni_freiburg.informatik.ultimate.model.annotation.Overapprox;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssignmentStatement;
@@ -52,6 +53,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieDeclarations;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Statements2TransFormula.TranslationResult;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.LoggingScriptForMainTrackBenchmarks;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.LoggingScriptForUnsatCoreBenchmarks;
@@ -398,18 +400,22 @@ public class CfgBuilder {
 
 		String caller = callerNode.getProcedure();
 
-		TransFormula arguments2InParams = m_RootAnnot.getBoogie2SMT().getStatements2TransFormula()
+		TranslationResult arguments2InParams = m_RootAnnot.getBoogie2SMT().getStatements2TransFormula()
 				.inParamAssignment(st);
-		TransFormula outParams2CallerVars = m_RootAnnot.getBoogie2SMT().getStatements2TransFormula()
+		TranslationResult outParams2CallerVars = m_RootAnnot.getBoogie2SMT().getStatements2TransFormula()
 				.resultAssignment(st, caller);
+		if (arguments2InParams.isOverapproximated() || outParams2CallerVars.isOverapproximated()) {
+			Map<String, IAnnotations> annots = edge.getPayload().getAnnotations();
+			annots.put(Overapprox.getIdentifier(), new Overapprox("TODO: find text", edge.getPayload().getLocation()));
+		}
 
 		Call call = m_Cbf.constructCall(callerNode, calleeEntryLoc, st);
-		call.setTransitionFormula(arguments2InParams);
+		call.setTransitionFormula(arguments2InParams.getTransFormula());
 
 		ProgramPoint returnNode = (ProgramPoint) edge.getTarget();
 		ProgramPoint calleeExitLoc = m_RootAnnot.m_exitNode.get(callee);
 		Return returnAnnot = m_Cbf.constructReturn(calleeExitLoc, returnNode, call);
-		returnAnnot.setTransitionFormula(outParams2CallerVars);
+		returnAnnot.setTransitionFormula(outParams2CallerVars.getTransFormula());
 	}
 
 	/**
