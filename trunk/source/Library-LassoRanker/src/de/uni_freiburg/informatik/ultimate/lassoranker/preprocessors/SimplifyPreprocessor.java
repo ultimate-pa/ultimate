@@ -47,7 +47,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.TermTransferrer
 public class SimplifyPreprocessor extends TransitionPreProcessor {
 	private final IUltimateServiceProvider mServices;
 	private final IToolchainStorage m_Storage;
-	private final boolean m_UseSMTInterpolForSimplification = true;
+	private final boolean m_UseSMTInterpolForSimplification = !true;
 	
 	public static final String s_Description = "Simplify formula using SimplifyDDA";
 	
