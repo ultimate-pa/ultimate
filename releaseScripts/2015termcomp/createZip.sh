@@ -12,6 +12,12 @@ cp ../../trunk/examples/settings/buchiAutomizer/termcomp2015.epf StarExecArchive
 mkdir StarExecArchive/z3
 cp -LR ./z3 StarExecArchive/z3/
 cp starexec_run_z3test StarExecArchive/bin/
+
+mkdir StarExecArchive/joogie
+cp joogie/joogie.jar StarExecArchive/joogie/
+cp starexec_run_java StarExecArchive/bin/
+cp ../../trunk/examples/toolchains/BuchiAutomizerJoogieWithBlockEncoding.xml StarExecArchive/
+
 cd StarExecArchive
 zip ../UltimateCommandline.zip -r *
 
