@@ -78,6 +78,8 @@ public class Expression2Term {
 	private final TypeSortTranslator m_TypeSortTranslator;
 	private final IOperationTranslator m_OperationTranslator;
 	private final Boogie2SmtSymbolTable m_Boogie2SmtSymbolTable;
+	private final VariableManager m_VariableManager;
+	private final boolean m_OverapproximateFunctions = true;
 	
 	private final ScopedHashMap<String, TermVariable> m_QuantifiedVariables = new ScopedHashMap<>();
 	private IdentifierTranslator[] m_SmtIdentifierProviders;
@@ -95,13 +97,14 @@ public class Expression2Term {
 
 	public Expression2Term(IUltimateServiceProvider services, Script script, 
 			TypeSortTranslator typeSortTranslator, 
-			Boogie2SmtSymbolTable boogie2SmtSymbolTable, IOperationTranslator operationTranslator) {
+			Boogie2SmtSymbolTable boogie2SmtSymbolTable, IOperationTranslator operationTranslator, VariableManager variableManager) {
 		super();
 		mServices = services;
 		m_Script = script;
 		m_TypeSortTranslator = typeSortTranslator;
 		m_Boogie2SmtSymbolTable = boogie2SmtSymbolTable;
 		m_OperationTranslator = operationTranslator;
+		m_VariableManager = variableManager;
 	}
 
 	public SingleTermResult translateToTerm(IdentifierTranslator[] identifierTranslators, Expression expression) {
@@ -249,31 +252,36 @@ public class Expression2Term {
 
 		} else if (exp instanceof FunctionApplication) {
 			FunctionApplication func = ((FunctionApplication) exp);
-			
-			IType[] argumentTypes = new IType[func.getArguments().length];
-			for (int i = 0; i < func.getArguments().length; i++) {
-				argumentTypes[i] = func.getArguments()[i].getType();
-			}
-			
-			Sort[] params = new Sort[func.getArguments().length];
-			for (int i = 0; i < func.getArguments().length; i++) {
-				params[i] = m_TypeSortTranslator.getSort(func.getArguments()[i].getType(), exp);
-			}
-			
-			Term[] parameters = new Term[func.getArguments().length];
-			for (int i = 0; i < func.getArguments().length; i++) {
-				parameters[i] = translate(func.getArguments()[i]);
-			}
-			
-			String funcSymb = m_OperationTranslator.funcApplication(func.getIdentifier(), argumentTypes);
-			if (funcSymb == null) {
-				throw new IllegalArgumentException("unknown function" + func.getIdentifier());
-			}
-			
-			Term result = m_Script.term(funcSymb, parameters);
-			assert (result.toString() instanceof Object);
-			return result;
+			final Term result;
+			if (m_OverapproximateFunctions) {
+				Sort resultSort = m_TypeSortTranslator.getSort(exp.getType(), exp);
+				TermVariable auxVar = m_VariableManager.constructFreshTermVariable(func.getIdentifier(), resultSort);
+				m_AuxVars.add(auxVar);
+				m_Overapproximation = true;
+				result = auxVar;
+			} else {
+				IType[] argumentTypes = new IType[func.getArguments().length];
+				for (int i = 0; i < func.getArguments().length; i++) {
+					argumentTypes[i] = func.getArguments()[i].getType();
+				}
 
+				Sort[] params = new Sort[func.getArguments().length];
+				for (int i = 0; i < func.getArguments().length; i++) {
+					params[i] = m_TypeSortTranslator.getSort(func.getArguments()[i].getType(), exp);
+				}
+
+				Term[] parameters = new Term[func.getArguments().length];
+				for (int i = 0; i < func.getArguments().length; i++) {
+					parameters[i] = translate(func.getArguments()[i]);
+				}
+
+				String funcSymb = m_OperationTranslator.funcApplication(func.getIdentifier(), argumentTypes);
+				if (funcSymb == null) {
+					throw new IllegalArgumentException("unknown function" + func.getIdentifier());
+				}
+				result = m_Script.term(funcSymb, parameters);
+			}
+			return result;
 		} else if (exp instanceof IdentifierExpression) {
 			IdentifierExpression var = (IdentifierExpression) exp;
 			assert var.getDeclarationInformation() != null : " no declaration information";
