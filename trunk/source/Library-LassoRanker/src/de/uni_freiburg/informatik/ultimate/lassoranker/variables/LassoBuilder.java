@@ -254,8 +254,8 @@ public class LassoBuilder {
 		for (int i = 0; i < n; ++i) {
 			TransFormulaLR stemTF = m_Lassos_t.get(i).getStem();
 			TransFormulaLR loopTF = m_Lassos_t.get(i).getLoop();
-			LinearTransition stem = LinearTransition.fromTransFormulaLR(stemTF);
-			LinearTransition loop = LinearTransition.fromTransFormulaLR(loopTF);
+			LinearTransition stem = LinearTransition.fromTransFormulaLR(stemTF, true, false);
+			LinearTransition loop = LinearTransition.fromTransFormulaLR(loopTF, true, false);
 			lassos.add(new Lasso(stem, loop));
 		}
 		return lassos;
@@ -277,8 +277,8 @@ public class LassoBuilder {
 		for (int i = 0; i < n; ++i) {
 			TransFormulaLR stemTF = m_Lassos_nt.get(i).getStem();
 			TransFormulaLR loopTF = m_Lassos_nt.get(i).getLoop();
-			LinearTransition stem = LinearTransition.fromTransFormulaLR(stemTF);
-			LinearTransition loop = LinearTransition.fromTransFormulaLR(loopTF);
+			LinearTransition stem = LinearTransition.fromTransFormulaLR(stemTF, false, true);
+			LinearTransition loop = LinearTransition.fromTransFormulaLR(loopTF, false, true);
 			lassos.add(new Lasso(stem, loop));
 		}
 		return lassos;

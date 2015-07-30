@@ -132,7 +132,7 @@ public class CachedTransFormulaLinearizer {
 		}
 		LinearTransition lt;
 		try {
-			lt = LinearTransition.fromTransFormulaLR(tflr);
+			lt = LinearTransition.fromTransFormulaLR(tflr, false, false);
 		} catch (TermException e) {
 			throw new RuntimeException(e);
 		}

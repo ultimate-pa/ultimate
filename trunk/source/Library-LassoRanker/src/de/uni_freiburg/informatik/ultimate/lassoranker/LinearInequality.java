@@ -119,6 +119,12 @@ public class LinearInequality implements Serializable {
 		m_constant = new AffineTerm();
 	}
 	
+	public static LinearInequality constructFalse() {
+		LinearInequality result = new LinearInequality();
+		result.setStrict(true);
+		return result;
+	}
+	
 	/**
 	 * Copy constructor
 	 */

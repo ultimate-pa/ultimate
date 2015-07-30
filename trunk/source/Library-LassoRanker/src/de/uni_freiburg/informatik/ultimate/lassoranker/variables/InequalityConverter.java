@@ -63,10 +63,15 @@ public class InequalityConverter {
 					"Unsupported number of parameters", term);
 		}
 		String fname = term.getFunction().getName();
-		LinearInequality li1 =
-				LinearInequality.fromTerm(term.getParameters()[0]);
-		LinearInequality li2 =
-				LinearInequality.fromTerm(term.getParameters()[1]);
+		LinearInequality li1;
+		LinearInequality li2;
+		try {
+			li1 = LinearInequality.fromTerm(term.getParameters()[0]);
+			li2 = LinearInequality.fromTerm(term.getParameters()[1]);
+		} catch (TermIsNotAffineException tinae) {
+			throw tinae;
+		}
+		
 		LinearInequality res;
 		if (fname.equals(">=")) {
 			li2.mult(Rational.MONE);
@@ -97,10 +102,13 @@ public class InequalityConverter {
 	/**
 	 * Convert a term into a polyhedron
 	 * @param term the input term
+	 * @param overapproxNonlinArithmetic 
+	 * @param underapproxNonlinArithmetic 
 	 * @return the polyhedron described by term
 	 * @throws TermException if term is not a conjunction of linear inequalities
 	 */
-	public static List<LinearInequality> convert(Term term)
+	public static List<LinearInequality> convert(Term term, 
+			boolean overapproxNonlinArithmetic, boolean underapproxNonlinArithmetic)
 			throws TermException {
 		List<LinearInequality> terms = new ArrayList<LinearInequality>();
 		if (term instanceof ApplicationTerm) {
@@ -108,7 +116,7 @@ public class InequalityConverter {
 			String fname = appt.getFunction().getName();
 			if (fname.equals("and")) {
 				for (Term t : appt.getParameters()) {
-					terms.addAll(convert(t));
+					terms.addAll(convert(t, overapproxNonlinArithmetic, underapproxNonlinArithmetic));
 				}
 			} else if (fname.equals("true")) {
 				// Add trivial linear inequality 0 ≤ 0.
@@ -118,7 +126,10 @@ public class InequalityConverter {
 				Term param0 = appt.getParameters()[0];
 				Sort param0sort = param0.getSort();
 				if (param0sort.isNumericSort()) {
-					terms.add(convertAtom(appt));
+					LinearInequality converted = tryToConvertAtom(
+							overapproxNonlinArithmetic,
+							underapproxNonlinArithmetic, appt);
+					terms.add(converted);
 				} else if (param0sort.getName().equals("Bool")) {
 					throw new TermException("Term is not in DNF", term);
 				} else {
@@ -126,7 +137,10 @@ public class InequalityConverter {
 				}
 			} else if (fname.equals("<") || fname.equals(">")
 					|| fname.equals("<=") || fname.equals(">=")) {
-				terms.add(convertAtom(appt));
+				LinearInequality converted = tryToConvertAtom(
+						overapproxNonlinArithmetic,
+						underapproxNonlinArithmetic, appt);
+				terms.add(converted);
 			} else {
 				throw new UnknownFunctionException(appt);
 			}
@@ -136,5 +150,24 @@ public class InequalityConverter {
 			throw new TermException("Expected application term.", term);
 		}
 		return terms;
+	}
+
+	private static LinearInequality tryToConvertAtom(
+			boolean overapproxNonlinArithmetic,
+			boolean underapproxNonlinArithmetic, ApplicationTerm appt)
+			throws TermException, TermIsNotAffineException {
+		LinearInequality converted;
+		try {
+			converted = convertAtom(appt);
+		} catch (TermIsNotAffineException tinae) {
+			if (overapproxNonlinArithmetic) {
+				converted = new LinearInequality();
+			} else if (underapproxNonlinArithmetic) {
+				converted = LinearInequality.constructFalse();
+			} else {
+				throw tinae;
+			}
+		}
+		return converted;
 	}
 }

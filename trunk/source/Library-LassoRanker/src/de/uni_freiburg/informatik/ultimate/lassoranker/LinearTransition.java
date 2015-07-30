@@ -177,14 +177,18 @@ public class LinearTransition implements Serializable {
 	 * linear expressions, otherwise this method fails.
 	 * 
 	 * @param tf the transition formula
+	 * @param overapproxNonlinArithmetic 
+	 * @param underapproxNonlinArithmetic 
 	 * @throws TermException if the supplied term does not have the correct form
 	 */
-	public static LinearTransition fromTransFormulaLR(TransFormulaLR tf)
+	public static LinearTransition fromTransFormulaLR(TransFormulaLR tf, 
+			boolean overapproxNonlinArithmetic, boolean underapproxNonlinArithmetic)
 			throws TermException {
 		List<List<LinearInequality>> polyhedra =
 				new ArrayList<List<LinearInequality>>();
 		for (Term disjunct : toClauses(tf.getFormula())) {
-			polyhedra.add(InequalityConverter.convert(disjunct));
+			polyhedra.add(InequalityConverter.convert(disjunct, 
+					overapproxNonlinArithmetic, underapproxNonlinArithmetic));
 		}
 		return new LinearTransition(polyhedra, tf.getInVars(), tf.getOutVars());
 	}
