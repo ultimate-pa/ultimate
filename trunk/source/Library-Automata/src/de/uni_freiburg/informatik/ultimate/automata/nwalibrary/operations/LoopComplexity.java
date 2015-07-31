@@ -96,6 +96,10 @@ public class LoopComplexity<LETTER, STATE> implements IOperation<LETTER, STATE> 
 				
 		for (LETTER l : m_Operand.getInternalAlphabet()) {
 			for (STATE q1 : states) {
+				// Check for cancel button.
+				if (!m_Services.getProgressMonitorService().continueProcessing()) {
+					throw new OperationCanceledException(this.getClass());
+				}
 				for (STATE q2 : states) {
 					if (m_Operand.containsInternalTransition(q1, l, q2)) {
 						if (!graph.containsInternalTransition(q1, internalLetter, q2)) {
