@@ -27,7 +27,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary;
 
 import java.util.Set;
 
-public interface IDoubleDeckerAutomaton<LETTER, STATE> extends INestedWordAutomatonSimple<LETTER,STATE> {
+public interface IDoubleDeckerAutomaton<LETTER, STATE> extends INestedWordAutomaton<LETTER,STATE> {
 
 	public boolean isDoubleDecker(STATE up, STATE down);
 	
