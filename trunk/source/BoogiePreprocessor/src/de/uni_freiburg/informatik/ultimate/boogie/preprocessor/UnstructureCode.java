@@ -8,6 +8,7 @@ import java.util.Stack;
 import de.uni_freiburg.informatik.ultimate.access.BaseObserver;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
+import de.uni_freiburg.informatik.ultimate.model.ModelUtils;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayAccessExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayLHS;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayStoreExpression;
@@ -348,7 +349,7 @@ public class UnstructureCode extends BaseObserver {
 	 */
 	private void addStmtAndAnnots(BoogieASTNode source, Statement newStmt) {
 		// adds annotations from old statement to new statement (if any)
-		BoogiePreprocessor.passAnnotations(source, newStmt);
+		ModelUtils.mergeAnnotations(source, newStmt);
 
 		// adds new statement to list
 		mFlatStatements.add(newStmt);

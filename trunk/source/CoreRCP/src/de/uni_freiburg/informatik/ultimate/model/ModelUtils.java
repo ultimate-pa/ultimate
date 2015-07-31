@@ -8,8 +8,6 @@ public final class ModelUtils {
 	 * Takes annotations from one IElement (if any) and adds them to another
 	 * IElement.
 	 * 
-	 * NOTE: duplicate method for BoogieASTNode
-	 * 
 	 * @param oldE
 	 *            old IElement to take annotations from
 	 * @param newE

@@ -86,21 +86,6 @@ public class BoogiePreprocessor implements IAnalysis {
 		return false;
 	}
 
-	/**
-	 * Add all annotation from annot to node. annot should not be null.
-	 * 
-	 * @param from
-	 *            node to take annotations from
-	 * @param to
-	 *            node to add annotations to
-	 * @author Christian & Matthias
-	 */
-	public static void passAnnotations(BoogieASTNode from, BoogieASTNode to) {
-		if (from.hasPayload() && from.getPayload().hasAnnotation()) {
-			to.getPayload().getAnnotations().putAll(from.getPayload().getAnnotations());
-		}
-	}
-
 	@Override
 	public UltimatePreferenceInitializer getPreferences() {
 		return new PreferenceInitializer();
