@@ -29,6 +29,7 @@ import de.uni_freiburg.informatik.ultimate.blockencoding.rating.metrics.Disjunct
 import de.uni_freiburg.informatik.ultimate.blockencoding.rating.metrics.DisjunctVariablesRating;
 import de.uni_freiburg.informatik.ultimate.blockencoding.rating.util.EncodingStatistics;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.model.ModelUtils;
 import de.uni_freiburg.informatik.ultimate.model.annotation.IAnnotations;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BoogieASTNode;
@@ -524,6 +525,7 @@ public class ConversionVisitor implements IMinimizationVisitor {
 					+ "which should be added");
 		} 
 		copyOfCodeBlock.setTransitionFormula(cb.getTransitionFormula());
+		ModelUtils.mergeAnnotations(cb, copyOfCodeBlock);
 		return copyOfCodeBlock;
 	}
 
@@ -542,9 +544,12 @@ public class ConversionVisitor implements IMinimizationVisitor {
 		if (secondGotoEdge == null) {
 			replacement = mCbf.constructStatementSequence(null, null, new AssumeStatement(gotoEdge.getPayload().getLocation(),
 					new BooleanLiteral(gotoEdge.getPayload().getLocation(), true)));
+			ModelUtils.mergeAnnotations(gotoEdge, replacement);
 		} else {
 			replacement = mCbf.constructStatementSequence(null, null, new AssumeStatement(gotoEdge.getPayload().getLocation(),
 					new BooleanLiteral(gotoEdge.getPayload().getLocation(), true)));
+			ModelUtils.mergeAnnotations(gotoEdge, replacement);
+			ModelUtils.mergeAnnotations(secondGotoEdge, replacement);
 		}
 		String procId = gotoEdge.getPreceedingProcedure();
 		mTransFormBuilder.addTransitionFormulas(replacement, procId);
