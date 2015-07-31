@@ -1,5 +1,5 @@
 // 2015-07-30, Matthias Heizmann
-// reveales bug in automata library. 
+// reveals bug in automata library. 
 // symptom: wrong result in buchi difference operations
 //
 // Simplified version of the Double.jar java program contained in a benchmark 
