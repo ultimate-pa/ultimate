@@ -557,10 +557,12 @@ public class PredicateUnifier {
 						for (IPredicate impliedByOther : getCoverageRelation().getCoveringPredicates(other)) {
 							if (impliedByOther != other) {
 								Validity oldValue = m_ImpliedPredicates.put(impliedByOther, Validity.VALID);
-								if (oldValue == null) {
+								if (oldValue == null || oldValue == Validity.UNKNOWN) {
 									m_ImplicationChecksByTransitivity++;
 								} else {
-									assert oldValue == Validity.VALID;
+									assert oldValue == Validity.VALID : 
+										"implication result by transitivity: " + Validity.VALID +
+										" old implication result: " + oldValue;
 								}
 							}
 						}
@@ -570,10 +572,12 @@ public class PredicateUnifier {
 						for (IPredicate expliedByOther : getCoverageRelation().getCoveredPredicates(other)) {
 							if (expliedByOther != other) {
 								Validity oldValue = m_ImpliedPredicates.put(expliedByOther, Validity.INVALID);
-								if (oldValue == null) {
+								if (oldValue == null || oldValue == Validity.UNKNOWN) {
 									m_ImplicationChecksByTransitivity++;
 								} else {
-									assert oldValue == Validity.INVALID;
+									assert oldValue == Validity.INVALID : 
+										"implication result by transitivity: " + Validity.INVALID +
+										" old implication result: " + oldValue;
 								}
 							}
 						}
@@ -589,10 +593,12 @@ public class PredicateUnifier {
 						for (IPredicate expliedByOther : getCoverageRelation().getCoveredPredicates(other)) {
 							if (expliedByOther != other) {
 								Validity oldValue = m_ExpliedPredicates.put(expliedByOther, Validity.VALID);
-								if (oldValue == null) {
+								if (oldValue == null || oldValue == Validity.UNKNOWN) {
 									m_ImplicationChecksByTransitivity++;
 								} else {
-									assert oldValue == Validity.VALID;
+									assert oldValue == Validity.VALID : 
+										"explication result by transitivity: " + Validity.VALID +
+										" old explication result: " + oldValue;
 								}
 							}
 						}						
@@ -602,10 +608,12 @@ public class PredicateUnifier {
 						for (IPredicate impliedByOther : getCoverageRelation().getCoveringPredicates(other)) {
 							if (impliedByOther != other) {
 								Validity oldValue = m_ExpliedPredicates.put(impliedByOther, Validity.INVALID);
-								if (oldValue == null) {
+								if (oldValue == null || oldValue == Validity.UNKNOWN) {
 									m_ImplicationChecksByTransitivity++;
 								} else {
-									assert oldValue == Validity.INVALID;
+									assert oldValue == Validity.INVALID : 
+										"explication result by transitivity: " + Validity.INVALID +
+										" old explication result: " + oldValue;
 								}
 							}
 						}
