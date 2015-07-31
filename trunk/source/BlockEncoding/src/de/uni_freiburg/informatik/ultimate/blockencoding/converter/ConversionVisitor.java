@@ -502,35 +502,29 @@ public class ConversionVisitor implements IMinimizationVisitor {
 	 */
 	private CodeBlock convertBasicEdge(IMinimizedEdge edge) {
 		CodeBlock cb = ((IBasicEdge) edge).getOriginalEdge();
-		CodeBlock copyOfCodeBlock = null;
+		final CodeBlock copyOfCodeBlock;
 		// We need to convert the basic edges, into new ones
 		// -> so basically we create a new instance of the CodeBlock,
 		// this is necessary to avoid mixing of the models
 		if (cb instanceof StatementSequence) {
 			copyOfCodeBlock = mCbf.constructStatementSequence(null, null, ((StatementSequence) cb).getStatements(),
 					((StatementSequence) cb).getOrigin());
-		}
-		if (cb instanceof Call) {
+		} else if (cb instanceof Call) {
 			copyOfCodeBlock = mCbf.constructCall(null, null, ((Call) cb).getCallStatement());
-		}
-		if (cb instanceof Return) {
+		} else if (cb instanceof Return) {
 			copyOfCodeBlock = mCbf.constructReturn(null, null, ((Return) cb).getCorrespondingCall());
-		}
-		if (cb instanceof Summary) {
+		} else if (cb instanceof Summary) {
 			// This situation can happen, if a Call/Return/Summary-Edges are
 			// involved, they are not part of the formula and are ignored
 			copyOfCodeBlock = cb;
-		}
-		if (cb instanceof GotoEdge) {
+		} else if (cb instanceof GotoEdge) {
 			copyOfCodeBlock = cb;
-		}
-		if (copyOfCodeBlock == null) {
+		} else {
 			throw new IllegalArgumentException("Failure while converting a" + "CodeBlock, maybe there is a new type,"
 					+ "which should be added");
-		} else {
-			copyOfCodeBlock.setTransitionFormula(cb.getTransitionFormula());
-			return copyOfCodeBlock;
-		}
+		} 
+		copyOfCodeBlock.setTransitionFormula(cb.getTransitionFormula());
+		return copyOfCodeBlock;
 	}
 
 	/**
