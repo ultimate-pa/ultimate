@@ -41,6 +41,7 @@ import java.util.Set;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.logic.Annotation;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
@@ -51,6 +52,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
+import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.ModelCheckerUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.VariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayIndex;
@@ -286,13 +288,34 @@ public class SmtUtils {
 			return script.term("true");
 		} else if (twoConstantTermsWithDifferentValue(lhs, rhs)) {
 			return script.term("false");
+		} else if (lhs.getSort().getName().equals("Bool")) {
+			return booleanEquality(script, lhs, rhs);
 		} else {
 			return script.term("=", lhs, rhs);
 		}
 	}
 	
 	
-	
+	/**
+	 * Returns the equality ("=" lhs rhs), but checks if one of the arguments
+	 * is true/false and simplifies accordingly.
+	 */
+	private static Term booleanEquality(Script script, Term lhs, Term rhs) {
+		Term trueTerm = script.term("true");
+		Term falseTerm = script.term("false");
+		if (lhs.equals(trueTerm)) {
+			return rhs;
+		} else if (lhs.equals(falseTerm)) {
+			return Util.not(script, rhs);
+		} else if (rhs.equals(trueTerm)) {
+			return lhs;
+		} else if (rhs.equals(falseTerm)) {
+			return Util.not(script, lhs);
+		} else {
+			return script.term("=", lhs, rhs);
+		}
+	}
+
 	/**
 	 * Returns true iff. fst and snd are different literals of the same numeric
 	 * sort ("Int" or "Real").
@@ -562,6 +585,63 @@ public class SmtUtils {
 			break;
 		}
 		return result;
+	}
+	
+	
+	/**
+	 * Check if {@link Term} which may contain free {@link TermVariable}s is
+	 * satisfiable with respect to the current assertion stack of 
+	 * {@link Script}.
+	 * Compute unsat core if unsatisfiable. Use {@link LoggingScript} to see
+	 * the input.
+	 * TODO: Show values of satisfying assignment (including array access)
+	 * if satisfiable.
+	 * @param term may contain free variables
+	 */
+	public static LBool checkSat_DebuggingVersion(Script script, Term term) {
+		script.push(1);
+		try {
+			TermVariable[] vars = term.getFreeVars();
+			Map<Term,Term> substitutionMapping = new HashMap<>();
+			for (int i = 0; i < vars.length; i++) {
+				Term substituent = termVariable2PseudofreshConstant(script, vars[i]);
+				substitutionMapping.put(vars[i], substituent);
+			}
+			Map<Term,Term> ucMapping = new HashMap<>();
+			Term[] conjuncts = getConjuncts(term);
+			for (int i = 0; i < conjuncts.length; i++) {
+				Term conjunct = (new SafeSubstitution(script, substitutionMapping)).transform(conjuncts[i]);
+				String name = "conjunct" + i;
+				Annotation annot = new Annotation(":named", name);
+				Term annotTerm = script.annotate(conjunct, annot);
+				ucMapping.put(script.term(name), conjuncts[i]);
+				script.assertTerm(annotTerm);
+			}
+			LBool result = script.checkSat();
+			if (result == LBool.UNSAT) {
+				Term[] ucTerms = script.getUnsatCore();
+				for (Term ucTerm : ucTerms) {
+					Term conjunct = ucMapping.get(ucTerm);
+					System.out.println("in uc: " + conjunct);
+				}
+			}
+			script.pop(1);
+			return result;
+		} catch (Exception e) {
+			// unable to recover because assertion stack is modified
+			// doing the script.pop(1) in finally block does not make sense
+			// since the solver might not be able to respond this will raise
+			// another Exception, and we will not see Exception e any more.
+			throw new AssertionError("Exception during satisfiablity check: " +
+						e.getMessage());
+		}
+	}
+	
+	private static Term termVariable2PseudofreshConstant(Script script, TermVariable tv) {
+		String name = tv.getName() + "_const_" + tv.hashCode();
+		Sort resultSort = tv.getSort();
+		script.declareFun(name, new Sort[0], resultSort);
+		return script.term(name);
 	}
 
 }
