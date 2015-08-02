@@ -188,7 +188,7 @@ public class Difference<LETTER,STATE> implements IOperation<LETTER,STATE>, IOpWi
 
 
 	@Override
-	public boolean removeDeadEnds() {
+	public boolean removeDeadEnds() throws OperationCanceledException {
 		m_Result.computeDeadEnds();
 		m_ResultWOdeadEnds = new NestedWordAutomatonFilteredStates<LETTER, STATE>(m_Services, m_Result, m_Result.getWithOutDeadEnds());
 		m_Logger.info("With dead ends: " + m_Result.getStates().size());

@@ -34,7 +34,7 @@ public interface IOpWithDelayedDeadEndRemoval<LETTER, STATE> {
 	
 	public Iterable<UpDownEntry<STATE>> getRemovedUpDownEntry();
 	
-	public boolean removeDeadEnds();
+	public boolean removeDeadEnds() throws OperationCanceledException;
 	
 	public INestedWordAutomatonOldApi<LETTER,STATE> getResult() throws OperationCanceledException;
 	

@@ -36,9 +36,11 @@ import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.DoubleDecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.DoubleDeckerAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.DownStateConsistencyCheck;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsEmpty;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 
@@ -84,6 +86,8 @@ public class ReachableStatesCopy<LETTER,STATE> extends DoubleDeckerBuilder<LETTE
 			makeAutomatonTotal();
 		}
 		m_Logger.info(exitMessage());
+//		assert (new DownStateConsistencyCheck<LETTER, STATE>(m_Services, 
+//				(IDoubleDeckerAutomaton) m_TraversedNwa)).getResult() : "down states inconsistent";
 	}
 	
 	
@@ -103,6 +107,8 @@ public class ReachableStatesCopy<LETTER,STATE> extends DoubleDeckerBuilder<LETTE
 		traverseDoubleDeckerGraph();
 		((DoubleDeckerAutomaton<LETTER,STATE>) super.m_TraversedNwa).setUp2Down(getUp2DownMapping());
 		m_Logger.info(exitMessage());
+//		assert (new DownStateConsistencyCheck<LETTER, STATE>(m_Services, 
+//				(IDoubleDeckerAutomaton) m_TraversedNwa)).getResult() : "down states inconsistent";
 	}
 	
 	private void makeAutomatonTotal() {

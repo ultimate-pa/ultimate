@@ -86,7 +86,7 @@ public class DownStateConsistencyCheck<LETTER, STATE> implements IOperation<LETT
 	}
 
 	@Override
-	public Boolean getResult() throws AutomataLibraryException {
+	public Boolean getResult() {
 		return m_Result;
 	}
 	

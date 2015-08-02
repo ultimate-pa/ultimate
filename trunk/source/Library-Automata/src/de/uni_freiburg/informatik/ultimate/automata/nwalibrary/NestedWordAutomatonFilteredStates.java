@@ -27,13 +27,15 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary;
 
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Set;
 
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.AtsDefinitionPrinter;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
+import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.DownStateConsistencyCheck;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.NestedWordAutomatonReachableStates;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.IncomingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.IncomingInternalTransition;
@@ -60,7 +62,8 @@ public class NestedWordAutomatonFilteredStates<LETTER, STATE> implements
 	
 	NestedWordAutomatonFilteredStates(IUltimateServiceProvider services,
 			INestedWordAutomatonOldApi<LETTER, STATE> automaton, 
-			Set<STATE> remainingStates, Set<STATE> newInitials, Set<STATE> newFinals) {
+			Set<STATE> remainingStates, Set<STATE> newInitials, Set<STATE> newFinals) 
+					throws OperationCanceledException {
 		m_Services = services;
 		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 		m_Nwa = automaton;
@@ -69,12 +72,14 @@ public class NestedWordAutomatonFilteredStates<LETTER, STATE> implements
 		m_newFinals = newFinals;
 		m_AncestorComputation = null;
 		m_TransitionFilter = new StateBasedTransitionFilterPredicateProvider<>(m_RemainingStates);
+		assert (new DownStateConsistencyCheck<LETTER, STATE>(m_Services, this)).getResult() : "down states inconsistent";
 	}
 	
 	public NestedWordAutomatonFilteredStates(
 			IUltimateServiceProvider services,
 			NestedWordAutomatonReachableStates<LETTER, STATE> automaton, 
-			NestedWordAutomatonReachableStates<LETTER, STATE>.AncestorComputation ancestorComputation) {
+			NestedWordAutomatonReachableStates<LETTER, STATE>.AncestorComputation ancestorComputation) 
+					throws OperationCanceledException {
 		m_Services = services;
 		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 		m_Nwa = automaton;
@@ -83,6 +88,7 @@ public class NestedWordAutomatonFilteredStates<LETTER, STATE> implements
 		m_newFinals = ancestorComputation.getFinals();
 		m_AncestorComputation = ancestorComputation;
 		m_TransitionFilter = new StateBasedTransitionFilterPredicateProvider<>(m_RemainingStates);
+		assert (new DownStateConsistencyCheck<LETTER, STATE>(m_Services, this)).getResult() : "down states inconsistent";
 	}
 	
 	public Set<STATE> getDownStates(STATE up) {
