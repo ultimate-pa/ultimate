@@ -32,11 +32,18 @@ import java.util.List;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.RankVar;
+import de.uni_freiburg.informatik.ultimate.lassoranker.variables.ReplacementVarFactory;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaLR;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.logic.Util;
+import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SafeSubstitution;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 
 /**
  * Some static methods for TransFormulaLR 
@@ -121,6 +128,30 @@ public class TransFormulaUtils {
 	}
 	
 	
+	public static Term renameToInVars(Script script, ReplacementVarFactory rvf, Boogie2SmtSymbolTable symbTab, TransFormulaLR tf, Term term) {
+		return renameToVars(script, rvf, symbTab, term, tf.getInVars());
+	}
+	public static Term renameToOutVars(Script script, ReplacementVarFactory rvf, Boogie2SmtSymbolTable symbTab, TransFormulaLR tf, Term term) {
+		return renameToVars(script, rvf, symbTab, term, tf.getInVars());
+	}
+
+	private static Term renameToVars(Script script, ReplacementVarFactory rvf,
+			Boogie2SmtSymbolTable symbTab, Term term,
+			Map<RankVar, Term> varMapping) {
+		Map<Term, Term> substitutionMapping = new HashMap<>();
+		for (TermVariable tv : term.getFreeVars()) {
+			BoogieVar bv = symbTab.getBoogieVar(tv);
+			if (bv == null) {
+				throw new IllegalArgumentException("term contains unknown variable");
+			}
+			RankVar rv = rvf.getOrConstuctBoogieVarWrapper(bv);
+			Term substituent = varMapping.get(rv);
+			substitutionMapping.put(tv, substituent);
+		}
+		Term result = (new SafeSubstitution(script, substitutionMapping)).transform(term);
+		return result;
+	}
+	
 	/**
 	 * Compute the RankVar of a given TermVariable and return its definition. 
 	 */
@@ -172,6 +203,20 @@ public class TransFormulaUtils {
 	}
 
 
+	public static LBool transFormulaImplication(Script script, TransFormulaLR antecedent, TransFormulaLR consequent) {
+		throw new UnsupportedOperationException("not yet implemented");
+//		Term ant1 = translateTermVariablesToDefinitions(script, antecedent, antecedent.getFormula());
+//		Term con1 = translateTermVariablesToDefinitions(script, consequent, consequent.getFormula());
+//		Term negatedCon = Util.not(script, con1);
+//		Term conjunction = Util.and(script, ant1, negatedCon);
+//		LBool result = Util.checkSat(script, conjunction);
+////		script.push(1);
+////		script.assertTerm(ant1);
+////		script.assertTerm(negatedCon);
+////		LBool result = script.checkSat();
+////		script.pop(1);
+//		return result;
+	}
 
 
 }
