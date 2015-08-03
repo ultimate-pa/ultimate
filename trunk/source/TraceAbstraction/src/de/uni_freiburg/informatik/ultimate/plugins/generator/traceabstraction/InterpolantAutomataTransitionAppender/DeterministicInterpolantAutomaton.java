@@ -205,7 +205,7 @@ public class DeterministicInterpolantAutomaton extends BasicAbstractInterpolantA
 			IPredicate resPred, IPredicate resHier, CodeBlock letter,
 			SuccessorComputationHelper sch, Set<IPredicate> inputSuccs) {
 		final Set<IPredicate> resPredConjuncts = m_ResPred2InputPreds.getImage(resPred);
-		assert resPredConjuncts != null;
+		assert m_Cannibalize || resPredConjuncts != null;
 		final IterableWithAdditionalElement<IPredicate> resPredConjunctsWithTrue = 
 				new IterableWithAdditionalElement<IPredicate>(resPredConjuncts, m_IaTrueState);
 		final IterableWithAdditionalElement<IPredicate> resHierConjunctsWithTrue;
