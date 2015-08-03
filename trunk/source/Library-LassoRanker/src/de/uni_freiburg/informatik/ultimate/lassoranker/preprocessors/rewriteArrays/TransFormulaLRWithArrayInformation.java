@@ -41,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvide
 import de.uni_freiburg.informatik.ultimate.lassoranker.Activator;
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.rewriteArrays.ArrayCellReplacementVarInformation.VarType;
+import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.rewriteArrays.SingleUpdateNormalFormTransformer.FreshAuxVarGenerator;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.RankVar;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.ReplacementVarFactory;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaLR;
@@ -148,12 +149,13 @@ public class TransFormulaLRWithArrayInformation {
 			m_ArrayReads = new ArrayList<List<MultiDimensionalSelect>>(disjuncts.length);
 			m_ArrayEqualities = new ArrayList<List<ArrayEquality>>(disjuncts.length);
 			m_ArrayGenealogy = new ArrayGenealogy[disjuncts.length];
+			FreshAuxVarGenerator favg = new FreshAuxVarGenerator(m_ReplacementVarFactory);
 			for (int i = 0; i < disjuncts.length; i++) {
 				Term[] conjuncts = SmtUtils.getConjuncts(disjuncts[i]);
 				ArrayEqualityExtractor aee = new ArrayEqualityExtractor(conjuncts);
 				m_ArrayEqualities.add(aee.getArrayEqualities());
 				SingleUpdateNormalFormTransformer sunft = new SingleUpdateNormalFormTransformer(Util.and(m_Script, aee
-						.getRemainingTerms().toArray(new Term[0])), m_Script, m_ReplacementVarFactory);
+						.getRemainingTerms().toArray(new Term[0])), m_Script, m_ReplacementVarFactory, favg);
 				m_ArrayUpdates.add(sunft.getArrayUpdates());
 				sunnf[i] = sunft.getRemainderTerm();
 				m_ArrayReads.add(extractArrayReads(sunft.getArrayUpdates(), sunft.getRemainderTerm()));

@@ -37,6 +37,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.MultiElementCounter;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SafeSubstitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayUpdate;
@@ -61,11 +62,14 @@ public class SingleUpdateNormalFormTransformer {
 	private Map<Term, Term> m_Store2TermVariable;
 	private final Script m_Script;
 	private final ReplacementVarFactory m_ReplacementVarFactory;
+	private final FreshAuxVarGenerator m_FreshAuxVarGenerator;
 	
 	public SingleUpdateNormalFormTransformer(final Term input, Script script,
-			ReplacementVarFactory replacementVarFactory) {
+			ReplacementVarFactory replacementVarFactory, 
+			FreshAuxVarGenerator freshAuxVarGenerator) {
 		m_Script = script;
 		m_ReplacementVarFactory = replacementVarFactory;
+		m_FreshAuxVarGenerator = freshAuxVarGenerator;
 		m_ArrayUpdates = new ArrayList<ArrayUpdate>();
 		Term[] conjuncts = SmtUtils.getConjuncts(input);
 		ArrayUpdateExtractor aue = new ArrayUpdateExtractor(false, true, conjuncts);
@@ -99,7 +103,8 @@ public class SingleUpdateNormalFormTransformer {
 			MultiDimensionalStore mdStore) {
 		Term oldArray = mdStore.getArray();
 		TermVariable auxArray;
-		auxArray = constructAuxiliaryVariable(oldArray);
+//		auxArray = constructAuxiliaryVariable(oldArray);
+		auxArray = m_FreshAuxVarGenerator.constructFreshCopy(oldArray); 
 		assert m_Store2TermVariable.isEmpty();
 		m_Store2TermVariable = 
 				Collections.singletonMap((Term) mdStore.getStoreTerm(), (Term) auxArray);
@@ -186,15 +191,15 @@ public class SingleUpdateNormalFormTransformer {
 		}
 	}
 	
-	private Term addUpdate(MultiDimensionalStore arraryStore, Term term) {
-		Term oldArray = arraryStore.getArray();
-		TermVariable auxArray;
-		auxArray = constructAuxiliaryVariable(oldArray);
-		Map<Term, Term> substitutionMapping = 
-				Collections.singletonMap((Term) arraryStore.getStoreTerm(), (Term) auxArray);
-		Term newTerm = (new SafeSubstitution(m_Script, substitutionMapping)).transform(term);
-		return Util.and(m_Script, newTerm, m_Script.term("=", auxArray, arraryStore.getStoreTerm()));
-	}
+//	private Term addUpdate(MultiDimensionalStore arraryStore, Term term) {
+//		Term oldArray = arraryStore.getArray();
+//		TermVariable auxArray;
+//		auxArray = constructAuxiliaryVariable(oldArray);
+//		Map<Term, Term> substitutionMapping = 
+//				Collections.singletonMap((Term) arraryStore.getStoreTerm(), (Term) auxArray);
+//		Term newTerm = (new SafeSubstitution(m_Script, substitutionMapping)).transform(term);
+//		return Util.and(m_Script, newTerm, m_Script.term("=", auxArray, arraryStore.getStoreTerm()));
+//	}
 
 	private TermVariable constructAuxiliaryVariable(Term oldArray) {
 		String name = SmtUtils.removeSmtQuoteCharacters(oldArray.toString() + s_AuxArray); 
@@ -209,5 +214,30 @@ public class SingleUpdateNormalFormTransformer {
 
 	public Term getRemainderTerm() {
 		return Util.and(m_Script, m_RemainderTerms.toArray(new Term[m_RemainderTerms.size()]));
+	}
+	
+	public static class FreshAuxVarGenerator {
+		private final Map<Term, Term> m_FreshCopyToOriginal = new HashMap<Term, Term>();
+		private final MultiElementCounter<Term> m_FreshCopyCounter = new MultiElementCounter<>();
+		private final ReplacementVarFactory m_ReplacementVarFactory;
+		
+		public FreshAuxVarGenerator(ReplacementVarFactory replacementVarFactory) {
+			super();
+			m_ReplacementVarFactory = replacementVarFactory;
+		}
+
+		TermVariable constructFreshCopy(Term term) {
+			Term original = m_FreshCopyToOriginal.get(term);
+			if (original == null) {
+				// no original Term known use term itself as original
+				original = term;
+			}
+			Integer numberOfFreshCopy = m_FreshCopyCounter.increase(original);
+			String nameOfFreshCopy = SmtUtils.removeSmtQuoteCharacters(original.toString()) + s_AuxArray + numberOfFreshCopy;
+			TermVariable freshCopy = m_ReplacementVarFactory.getOrConstructAuxVar(nameOfFreshCopy, term.getSort());
+			m_FreshCopyToOriginal.put(freshCopy, original);
+			return freshCopy;
+			
+		}
 	}
 }
