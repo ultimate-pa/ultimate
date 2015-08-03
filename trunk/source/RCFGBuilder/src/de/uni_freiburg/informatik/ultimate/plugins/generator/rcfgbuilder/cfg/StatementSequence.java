@@ -10,6 +10,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.HavocStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.output.BoogiePrettyPrinter;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.IRCFGVisitor;
 
 /**
  * Edge in a recursive control flow graph that represents a sequence of
@@ -126,4 +127,19 @@ public class StatementSequence extends CodeBlock {
 		return sb.toString();
 	}
 
+	/**
+     * Implementing the visitor pattern
+     */
+	@Override
+	public void accept(IRCFGVisitor visitor) {		
+		visitor.visitEdge(this);
+		visitor.visitCodeBlock(this);
+		visitor.visit(this);
+		for (Statement s : m_Statements) {
+			visitor.getStatementWalker().walk(s, visitor.getStatementVisitor());
+		}
+		visitor.visited(this);
+		visitor.visitedCodeBlock(this);
+		visitor.visitedEdge(this);
+	}
 }

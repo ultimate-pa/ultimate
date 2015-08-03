@@ -1,6 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg;
 
 import de.uni_freiburg.informatik.ultimate.model.Payload;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.IRCFGVisitor;
 
 /**
  * Auxiliary edge from the Root node to the initial LocNodes of a program.
@@ -32,4 +33,12 @@ public class RootEdge extends RCFGEdge {
 		return "RootEdge";
 	}
 
+
+	/**
+     * Implementing the visitor pattern
+     */
+	@Override
+	public void accept(IRCFGVisitor visitor) {		
+		visitor.visit(this);
+	}
 }

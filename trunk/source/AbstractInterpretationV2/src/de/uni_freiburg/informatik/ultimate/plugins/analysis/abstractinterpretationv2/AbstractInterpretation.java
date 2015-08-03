@@ -1,10 +1,7 @@
-package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2;
+package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationV2;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-
-import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.access.IObserver;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
@@ -12,27 +9,25 @@ import de.uni_freiburg.informatik.ultimate.core.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.IAnalysis;
 import de.uni_freiburg.informatik.ultimate.model.GraphType;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.preferences.AbstractInterpretationPreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.loopdetector.RCFGLoopDetector;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationV2.AIActivator;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationV2.AbstractInterpretationObserver;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationV2.preferences.AbstractInterpretationPreferenceInitializer;
 
 /**
+ * Main class of Plug-In AbstractInterpretation
  * 
- * @author dietsch@informatik.uni-freiburg.de
- * @author greitsch@informatik.uni-freiburg.de
- *
+ * @author Christopher Dillo
  */
 public class AbstractInterpretation implements IAnalysis {
 
-	protected Logger mLogger;
-	private IUltimateServiceProvider mServices;
-	private List<IObserver> mObserver;
+	private AbstractInterpretationObserver m_Observer;
+	private GraphType m_InputDefinition;
 
-	public AbstractInterpretation() {
-	}
+	private IUltimateServiceProvider mServices;
 
 	@Override
 	public GraphType getOutputDefinition() {
-		return null;
+		return new GraphType(AIActivator.s_PLUGIN_ID, m_InputDefinition.getType(), m_InputDefinition.getFileNames());
 	}
 
 	@Override
@@ -47,46 +42,33 @@ public class AbstractInterpretation implements IAnalysis {
 
 	@Override
 	public List<String> getDesiredToolID() {
+		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
 	public void setInputDefinition(GraphType graphType) {
-		final String creator = graphType.getCreator();
-		switch (creator) {
-		case "de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder":
-			mObserver = new ArrayList<IObserver>();
-			RCFGLoopDetector externalLoopDetector = new RCFGLoopDetector(mServices);
-			mObserver.add(externalLoopDetector);
-			mObserver.add(new AbstractInterpretationRcfgObserver(mServices, externalLoopDetector));
-			break;
-		default:
-			mObserver = null;
-			break;
-		}
+		this.m_InputDefinition = graphType;
 	}
 
 	@Override
 	public List<IObserver> getObservers() {
-		if (mObserver == null) {
-			return Collections.emptyList();
-		}
-		return mObserver;
+		return Collections.singletonList((IObserver) m_Observer);
 	}
 
 	@Override
 	public void init() {
-		// not used
+		m_Observer = new AbstractInterpretationObserver(mServices);
 	}
 
 	@Override
 	public String getPluginName() {
-		return Activator.PLUGIN_NAME;
+		return AIActivator.s_PLUGIN_NAME;
 	}
 
 	@Override
 	public String getPluginID() {
-		return Activator.PLUGIN_ID;
+		return AIActivator.s_PLUGIN_ID;
 	}
 
 	@Override
@@ -95,19 +77,20 @@ public class AbstractInterpretation implements IAnalysis {
 	}
 
 	@Override
-	public void setToolchainStorage(IToolchainStorage services) {
-		// not used
+	public void setToolchainStorage(IToolchainStorage storage) {
+		// TODO Auto-generated method stub
+
 	}
 
 	@Override
 	public void setServices(IUltimateServiceProvider services) {
 		mServices = services;
-		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 	}
 
 	@Override
 	public void finish() {
-		// not used
+		// TODO Auto-generated method stub
+		
 	}
 
 }

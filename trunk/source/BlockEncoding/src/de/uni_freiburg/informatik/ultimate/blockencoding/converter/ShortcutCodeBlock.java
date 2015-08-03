@@ -4,6 +4,7 @@ import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.IRCFGVisitor;
 
 /**
  * This is basically a dummy code block, which we need while converting a
@@ -70,6 +71,17 @@ public class ShortcutCodeBlock extends CodeBlock {
 	@Override
 	public String toString() {
 		return "SHORTCUTCODEBLOCK";
+	}
+
+	@Override
+	public void accept(IRCFGVisitor visitor)
+	{
+		visitor.visitCodeBlock(this);
+		for(CodeBlock block : codeBlocks)
+		{
+			block.accept(visitor);
+		}
+		visitor.visitedCodeBlock(this);
 	}
 
 }

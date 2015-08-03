@@ -4,6 +4,7 @@ import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.output.BoogiePrettyPrinter;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.IRCFGVisitor;
 
 /**
  * Edge in a recursive control flow graph that represents a procedure call.
@@ -71,6 +72,19 @@ public class Call extends CodeBlock {
 	@Override
 	public String toString() {
 		return BoogiePrettyPrinter.print(m_CallStatement);
+	}
+
+
+	/**
+     * Implementing the visitor pattern
+     */
+	@Override
+	public void accept(IRCFGVisitor visitor) {
+		visitor.visitEdge(this);
+		visitor.visitCodeBlock(this);
+		visitor.visit(this);
+		visitor.visitedCodeBlock(this);
+		visitor.visitedEdge(this);
 	}
 
 }
