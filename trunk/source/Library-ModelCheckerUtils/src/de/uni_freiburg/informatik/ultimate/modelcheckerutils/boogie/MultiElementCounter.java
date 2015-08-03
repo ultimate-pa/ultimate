@@ -45,7 +45,7 @@ public class MultiElementCounter<E> {
 	 * Increase the counter for element by one and return the 
 	 * increased number.
 	 */
-	Integer increase(E element) {
+	public Integer increase(E element) {
 		final Integer lastIndex = m_Counter.get(element);
 		final Integer newIndex;
 		if (lastIndex == null) {
