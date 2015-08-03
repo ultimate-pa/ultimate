@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
+import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.IFreshTermVariableConstructor;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.NonTheorySymbol;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
@@ -58,8 +59,7 @@ public class LassoPartitioneer {
 	private final IUltimateServiceProvider m_Services;
 	private final IFreshTermVariableConstructor m_FreshTermVariableConstructor;
 	
-	private final TransFormulaLR m_Stem;
-	private final TransFormulaLR m_Loop;
+	private final LassoUnderConstruction m_Lasso;
 	
 	private enum Part { STEM, LOOP };
 	
@@ -87,15 +87,23 @@ public class LassoPartitioneer {
 	
 	public LassoPartitioneer(IUltimateServiceProvider services, 
 			IFreshTermVariableConstructor freshTermVariableConstructor, 
-			Script script, TransFormulaLR stem, TransFormulaLR loop) {
+			Script script, LassoUnderConstruction lasso) {
 		m_Services = services;
 		m_FreshTermVariableConstructor = freshTermVariableConstructor;
 		m_Script = script;
-		m_Stem = stem;
-		m_Loop = loop;
+		m_Lasso = lasso;
 		doPartition();
 	}
-	
+
+	private boolean checkStemImplications() {
+		boolean result = true;
+		for (LassoUnderConstruction newLasso : m_NewLassos) {
+			result &= (LassoUnderConstruction.checkStemImplication(m_Script, m_Lasso, newLasso) != LBool.SAT);
+			assert result;
+		}
+		return result;
+	}
+
 	public List<LassoUnderConstruction> getNewLassos() {
 		return m_NewLassos;
 	}
@@ -108,15 +116,15 @@ public class LassoPartitioneer {
 		m_StemConjunctsWithoutSymbols = new ArrayList<>();
 		m_LoopConjunctsWithoutSymbols = new ArrayList<>();
 		
-		extractSymbols(Part.STEM, m_Stem, m_Symbol2StemConjuncts, 
+		extractSymbols(Part.STEM, m_Lasso.getStem(), m_Symbol2StemConjuncts, 
 				m_StemSymbolsWithoutConjuncts, m_StemConjunctsWithoutSymbols);
-		extractSymbols(Part.LOOP, m_Loop, m_Symbol2LoopConjuncts, 
+		extractSymbols(Part.LOOP, m_Lasso.getLoop(), m_Symbol2LoopConjuncts, 
 				m_LoopSymbolsWithoutConjuncts, m_LoopConjunctsWithoutSymbols);
 		
 		for (RankVar rv : m_AllRankVars) {
 			Set<NonTheorySymbol<?>> symbols = new HashSet<NonTheorySymbol<?>>();
-			extractInVarAndOutVarSymbols(rv, symbols, m_Stem);
-			extractInVarAndOutVarSymbols(rv, symbols, m_Loop); 
+			extractInVarAndOutVarSymbols(rv, symbols, m_Lasso.getStem());
+			extractInVarAndOutVarSymbols(rv, symbols, m_Lasso.getLoop()); 
 			announceEquivalence(symbols);
 		}
 
