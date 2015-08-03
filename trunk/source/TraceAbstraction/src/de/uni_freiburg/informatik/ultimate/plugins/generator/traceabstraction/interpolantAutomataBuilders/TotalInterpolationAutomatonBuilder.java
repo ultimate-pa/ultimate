@@ -39,10 +39,13 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.HoareTripleChecks;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.INTERPOLATION;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.UnsatCores;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.IInterpolantGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.InterpolatingTraceChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.InterpolatingTraceCheckerCraig;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.InterpolatingTraceCheckerPathInvariantsWithFallback;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceCheckerSpWp;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceCheckerUtils.InterpolantsPreconditionPostcondition;
 
 public class TotalInterpolationAutomatonBuilder {
@@ -248,12 +251,29 @@ public class TotalInterpolationAutomatonBuilder {
 		IPredicate postcondition = m_Epimorphism.getMapping(last);
 		SortedMap<Integer, IPredicate> pendingContexts = computePendingContexts(run);
 		// SortedMap<Integer, IPredicate> pendingContexts = new TreeMap<>();
-		InterpolatingTraceChecker tc = new InterpolatingTraceCheckerCraig(precondition, postcondition, pendingContexts, run.getWord(), m_SmtManager,
-				m_ModifiedGlobals, /*
-									 * TODO: When Matthias introduced this
-									 * parameter he set the argument to AssertCodeBlockOrder.NOT_INCREMENTALLY.
-									 * Check if you want to set this to true.
-									 */AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices, false, m_PredicateUnifier, m_Interpolation);
+		
+		InterpolatingTraceChecker tc;
+		switch (m_Interpolation) {
+		case Craig_NestedInterpolation:
+		case Craig_TreeInterpolation:
+			tc = new InterpolatingTraceCheckerCraig(precondition, postcondition,
+					pendingContexts, run.getWord(),
+					m_SmtManager, m_ModifiedGlobals, AssertCodeBlockOrder.NOT_INCREMENTALLY,
+					mServices, true, m_PredicateUnifier, m_Interpolation);
+			break;
+		case ForwardPredicates:
+		case BackwardPredicates:
+		case FPandBP:
+			tc = new TraceCheckerSpWp(precondition, postcondition, pendingContexts,
+					run.getWord(), m_SmtManager, m_ModifiedGlobals, 
+					AssertCodeBlockOrder.NOT_INCREMENTALLY, UnsatCores.CONJUNCT_LEVEL, true,
+					mServices, true, m_PredicateUnifier, m_Interpolation);
+			
+			break;
+		case PathInvariants:
+		default:
+			throw new UnsupportedOperationException("unsupported interpolation");
+		}
 		if (tc.isCorrect() == LBool.UNSAT) {
 			m_BenchmarkGenerator.incrementUsefullRunGeq2();
 			int additionalInterpolants = addInterpolants(run.getStateSequence(), tc.getInterpolants());
