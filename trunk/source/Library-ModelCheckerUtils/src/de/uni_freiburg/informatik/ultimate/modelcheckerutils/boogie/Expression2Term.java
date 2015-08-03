@@ -79,7 +79,7 @@ public class Expression2Term {
 	private final IOperationTranslator m_OperationTranslator;
 	private final Boogie2SmtSymbolTable m_Boogie2SmtSymbolTable;
 	private final VariableManager m_VariableManager;
-	private final boolean m_OverapproximateFunctions = true;
+	private final boolean m_OverapproximateFunctions = false;
 	
 	private final ScopedHashMap<String, TermVariable> m_QuantifiedVariables = new ScopedHashMap<>();
 	private IdentifierTranslator[] m_SmtIdentifierProviders;
