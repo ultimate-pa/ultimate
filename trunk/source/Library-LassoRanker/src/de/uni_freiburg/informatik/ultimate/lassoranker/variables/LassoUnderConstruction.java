@@ -26,6 +26,11 @@
  */
 package de.uni_freiburg.informatik.ultimate.lassoranker.variables;
 
+import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.TransFormulaUtils;
+import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
 
 /**
@@ -77,6 +82,27 @@ public class LassoUnderConstruction {
 		sb.append(getLoop());
 		return sb.toString();
 	}
-	
 
+	
+	
+	/**
+	 * Check whether the stem of this lasso is feasible.
+	 */
+	public LBool checkStemFeasiblity(Script script) {
+		Term term = m_Stem.getFormula();
+		LBool lbool = Util.checkSat(script, term);
+		return lbool;
+	}
+	
+	/**
+	 * Check whether the stem of lasso antecedent implies the setm of lasso 
+	 * consequent.
+	 */
+	public static LBool checkStemImplication(Script script, 
+			LassoUnderConstruction antecedent, LassoUnderConstruction consequent) {
+		TransFormulaLR oldStem = antecedent.getStem();
+		TransFormulaLR newStem = consequent.getStem();
+		LBool lbool = TransFormulaUtils.transFormulaImplication(script, oldStem, newStem);
+		return lbool;
+	}
 }
