@@ -534,13 +534,24 @@ public class NestedWord<LETTER> extends Word<LETTER> {
 		StringBuilder sb = new StringBuilder();
 		for (int i = 0; i<m_Word.length; i++) {
 			if (isInternalPosition(i)) {
-				sb.append(getSymbolAt(i)+" ");
+				sb.append("\"");
+				sb.append(getSymbolAt(i));
+				sb.append("\"");
+				sb.append(" ");
 			}
 			else if (isCallPosition(i)) {
-				sb.append(getSymbolAt(i)+"< ");
+				sb.append("\"");
+				sb.append(getSymbolAt(i));
+				sb.append("\"");
+				sb.append("<");
+				sb.append(" ");
 			}
 			else if (isReturnPosition(i)) {
-				sb.append(">" + getSymbolAt(i) + " ");
+				sb.append(">");
+				sb.append("\"");
+				sb.append(getSymbolAt(i));
+				sb.append("\"");
+				sb.append(" ");
 			}
 		}
 		return sb.toString();
