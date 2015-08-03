@@ -7,6 +7,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.Locati
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FunctionDeclarations;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.TypeSizeConstants;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.PRIMITIVE;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
@@ -17,6 +18,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BitvecLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.FunctionApplication;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 
 public class BitvectorTranslation extends AbstractExpressionTranslation {
@@ -51,7 +53,6 @@ public class BitvectorTranslation extends AbstractExpressionTranslation {
 	@Override
 	public Expression constructBinaryComparisonExpression(ILocation loc, int nodeOperator, Expression exp1, CPrimitive type1, Expression exp2, CPrimitive type2) {
 		FunctionApplication func;
-		String identifier;
 
 		switch (nodeOperator) {
 		case IASTBinaryExpression.op_equals:
@@ -63,47 +64,63 @@ public class BitvectorTranslation extends AbstractExpressionTranslation {
 			break;
 		case IASTBinaryExpression.op_greaterEqual:
 			if (type1.isUnsigned() && type2.isUnsigned()) {
-				identifier = "bvuge";
+				assert(m_FunctionDeclarations.checkParameters(type1, type2)):"bvuge";
+				m_FunctionDeclarations.declareBitvectorFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + "bvuge", new CPrimitive(PRIMITIVE.BOOL), (CPrimitive) type1, (CPrimitive) type2);
+
+				func = new FunctionApplication(loc, SFO.AUXILIARY_FUNCTION_PREFIX + "bvuge" + m_FunctionDeclarations.computeBitvectorSuffix(loc, type1, type2), new Expression[]{exp1, exp2});
 			} else if (!type1.isUnsigned() && !type2.isUnsigned()) {
-				identifier = "bvsge";
+				assert(m_FunctionDeclarations.checkParameters(type1, type2)):"bvsge";
+				m_FunctionDeclarations.declareBitvectorFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + "bvsge", new CPrimitive(PRIMITIVE.BOOL), (CPrimitive) type1, (CPrimitive) type2);
+
+				func = new FunctionApplication(loc, SFO.AUXILIARY_FUNCTION_PREFIX + "bvsge" + m_FunctionDeclarations.computeBitvectorSuffix(loc, type1, type2), new Expression[]{exp1, exp2});
 			} else {
 				throw new IllegalArgumentException("Mixed signed and unsigned arguments");
 			}
-			
-			func = new FunctionApplication(loc, identifier, new Expression[]{exp1, exp2});
 			break;
 		case IASTBinaryExpression.op_greaterThan:
 			if (type1.isUnsigned() && type2.isUnsigned()) {
-				identifier = "~bvugt";
+				assert(m_FunctionDeclarations.checkParameters(type1, type2)):"bvugt";
+				m_FunctionDeclarations.declareBitvectorFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + "bvugt", new CPrimitive(PRIMITIVE.BOOL), (CPrimitive) type1, (CPrimitive) type2);
+
+				func = new FunctionApplication(loc, SFO.AUXILIARY_FUNCTION_PREFIX + "bvugt" + m_FunctionDeclarations.computeBitvectorSuffix(loc, type1, type2), new Expression[]{exp1, exp2});
 			} else if (!type1.isUnsigned() && !type2.isUnsigned()) {
-				identifier = "~bvsgt";
+				assert(m_FunctionDeclarations.checkParameters(type1, type2)):"bvsgt";
+				m_FunctionDeclarations.declareBitvectorFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + "bvsgt", new CPrimitive(PRIMITIVE.BOOL), (CPrimitive) type1, (CPrimitive) type2);
+
+				func = new FunctionApplication(loc, SFO.AUXILIARY_FUNCTION_PREFIX + "bvsgt" + m_FunctionDeclarations.computeBitvectorSuffix(loc, type1, type2), new Expression[]{exp1, exp2});
 			} else {
 				throw new IllegalArgumentException("Mixed signed and unsigned arguments");
 			}
-			
-			func = new FunctionApplication(loc, identifier, new Expression[]{exp1, exp2});
 			break;
 		case IASTBinaryExpression.op_lessEqual:
 			if (type1.isUnsigned() && type2.isUnsigned()) {
-				identifier = "~bvule";
+				assert(m_FunctionDeclarations.checkParameters(type1, type2)):"bvule";
+				m_FunctionDeclarations.declareBitvectorFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + "bvule", new CPrimitive(PRIMITIVE.BOOL), (CPrimitive) type1, (CPrimitive) type2);
+
+				func = new FunctionApplication(loc, SFO.AUXILIARY_FUNCTION_PREFIX + "bvule" + m_FunctionDeclarations.computeBitvectorSuffix(loc, type1, type2), new Expression[]{exp1, exp2});
 			} else if (!type1.isUnsigned() && !type2.isUnsigned()) {
-				identifier = "~bvsle";
+				assert(m_FunctionDeclarations.checkParameters(type1, type2)):"bvsle";
+				m_FunctionDeclarations.declareBitvectorFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + "bvsle", new CPrimitive(PRIMITIVE.BOOL), (CPrimitive) type1, (CPrimitive) type2);
+
+				func = new FunctionApplication(loc, SFO.AUXILIARY_FUNCTION_PREFIX + "bvsle" + m_FunctionDeclarations.computeBitvectorSuffix(loc, type1, type2), new Expression[]{exp1, exp2});
 			} else {
 				throw new IllegalArgumentException("Mixed signed and unsigned arguments");
 			}
-			
-			func = new FunctionApplication(loc, identifier, new Expression[]{exp1, exp2});
 			break;
 		case IASTBinaryExpression.op_lessThan:
 			if (type1.isUnsigned() && type2.isUnsigned()) {
-				identifier = "~bvult";
+				assert(m_FunctionDeclarations.checkParameters(type1, type2)):"bvult";
+				m_FunctionDeclarations.declareBitvectorFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + "bvult", new CPrimitive(PRIMITIVE.BOOL), (CPrimitive) type1, (CPrimitive) type2);
+
+				func = new FunctionApplication(loc, SFO.AUXILIARY_FUNCTION_PREFIX + "bvult" + m_FunctionDeclarations.computeBitvectorSuffix(loc, type1, type2), new Expression[]{exp1, exp2});
 			} else if (!type1.isUnsigned() && !type2.isUnsigned()) {
-				identifier = "~bvslt";
+				assert(m_FunctionDeclarations.checkParameters(type1, type2)):"bvslt";
+				m_FunctionDeclarations.declareBitvectorFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + "bvslt", new CPrimitive(PRIMITIVE.BOOL), (CPrimitive) type1, (CPrimitive) type2);
+
+				func = new FunctionApplication(loc, SFO.AUXILIARY_FUNCTION_PREFIX + "bvslt" + m_FunctionDeclarations.computeBitvectorSuffix(loc, type1, type2), new Expression[]{exp1, exp2});
 			} else {
 				throw new IllegalArgumentException("Mixed signed and unsigned arguments");
 			}
-			
-			func = new FunctionApplication(loc, identifier, new Expression[]{exp1, exp2});
 			break;
 		case IASTBinaryExpression.op_notequals:
 			if (type1.isUnsigned() != type2.isUnsigned()) {
@@ -135,20 +152,29 @@ public class BitvectorTranslation extends AbstractExpressionTranslation {
 		switch (op) {
 		case IASTBinaryExpression.op_minusAssign:
 		case IASTBinaryExpression.op_minus:
-			func = new FunctionApplication(loc, SFO.AUXILIARY_FUNCTION_PREFIX + "bvsub", new Expression[]{left, right});
+			assert(m_FunctionDeclarations.checkParameters(typeLeft, typeRight)):"bvsub";
+			m_FunctionDeclarations.declareBitvectorFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + "bvsub", (CPrimitive) typeLeft, (CPrimitive) typeLeft, (CPrimitive) typeRight);
+			func = new FunctionApplication(loc, SFO.AUXILIARY_FUNCTION_PREFIX + "bvsub" + m_FunctionDeclarations.computeBitvectorSuffix(loc, typeLeft, typeRight), new Expression[]{left, right});
 
 			return func;
 		case IASTBinaryExpression.op_multiplyAssign:
 		case IASTBinaryExpression.op_multiply:
-			func = new FunctionApplication(loc, SFO.AUXILIARY_FUNCTION_PREFIX + "bvmul", new Expression[]{left, right});
+			assert(m_FunctionDeclarations.checkParameters(typeLeft, typeRight)):"bvmul";
+			m_FunctionDeclarations.declareBitvectorFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + "bvmul", (CPrimitive) typeLeft, (CPrimitive) typeLeft, (CPrimitive) typeRight);
+			func = new FunctionApplication(loc, SFO.AUXILIARY_FUNCTION_PREFIX + "bvmul" + m_FunctionDeclarations.computeBitvectorSuffix(loc, typeLeft, typeRight), new Expression[]{left, right});
 
 			return func;
 		case IASTBinaryExpression.op_divideAssign:
 		case IASTBinaryExpression.op_divide:
 			if (typeLeft.isUnsigned() && typeRight.isUnsigned()) {
-				func = new FunctionApplication(loc, SFO.AUXILIARY_FUNCTION_PREFIX + "bvudiv", new Expression[]{left, right});
+				assert(m_FunctionDeclarations.checkParameters(typeLeft, typeRight)):"budiv";
+				m_FunctionDeclarations.declareBitvectorFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + "bvudiv", (CPrimitive) typeLeft, (CPrimitive) typeLeft, (CPrimitive) typeRight);
+				func = new FunctionApplication(loc, SFO.AUXILIARY_FUNCTION_PREFIX + "bvudiv" + m_FunctionDeclarations.computeBitvectorSuffix(loc, typeLeft, typeRight), new Expression[]{left, right});
 			} else if (!typeLeft.isUnsigned() && !typeRight.isUnsigned()) {
-				func = new FunctionApplication(loc, SFO.AUXILIARY_FUNCTION_PREFIX + "bvsdiv", new Expression[]{left, right});
+				assert(m_FunctionDeclarations.checkParameters(typeLeft, typeRight)):"bvsdiv";
+				m_FunctionDeclarations.declareBitvectorFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + "bvsdiv", (CPrimitive) typeLeft, (CPrimitive) typeLeft, (CPrimitive) typeRight);
+
+				func = new FunctionApplication(loc, SFO.AUXILIARY_FUNCTION_PREFIX + "bvsdiv" + m_FunctionDeclarations.computeBitvectorSuffix(loc, typeLeft, typeRight), new Expression[]{left, right});
 			} else {
 				throw new IllegalArgumentException("Mixed signed and unsigned");
 			}
@@ -156,6 +182,7 @@ public class BitvectorTranslation extends AbstractExpressionTranslation {
 			return func;
 		case IASTBinaryExpression.op_moduloAssign:
 		case IASTBinaryExpression.op_modulo:
+			throw new IllegalArgumentException("mod not yet implemented");
 //			if (typeLeft.isUnsigned() && typeRight.isUnsigned()) {
 //				func = new FunctionApplication(loc, "~bvudiv", new Expression[]{left, right});
 //			} else if (!typeLeft.isUnsigned() && !typeRight.isUnsigned()) {
@@ -167,12 +194,25 @@ public class BitvectorTranslation extends AbstractExpressionTranslation {
 //			return func;
 		case IASTBinaryExpression.op_plusAssign:
 		case IASTBinaryExpression.op_plus:
-			func = new FunctionApplication(loc, SFO.AUXILIARY_FUNCTION_PREFIX + "bvadd", new Expression[]{left, right});
+			assert(m_FunctionDeclarations.checkParameters(typeLeft, typeRight)):"bvadd";
+			m_FunctionDeclarations.declareBitvectorFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + "bvadd", (CPrimitive) typeLeft, (CPrimitive) typeLeft, (CPrimitive) typeRight);
+			func = new FunctionApplication(loc, SFO.AUXILIARY_FUNCTION_PREFIX + "bvadd" + m_FunctionDeclarations.computeBitvectorSuffix(loc, typeLeft, typeRight), new Expression[]{left, right});
 
 			return func;
 		default:
 			String msg = "Unknown or unsupported arithmetic expression";
 			throw new UnsupportedSyntaxException(loc, msg);
 		}
+	}
+
+	@Override
+	public Expression unaryMinusForInts(ILocation loc, Expression operand, CType type) {
+		m_FunctionDeclarations.declareBitvectorFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + "bvneg", (CPrimitive) type, (CPrimitive) type);
+		m_FunctionDeclarations.declareBitvectorFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + "bvadd", (CPrimitive) type, (CPrimitive) type, (CPrimitive) type);
+
+		FunctionApplication negation = new FunctionApplication(loc, SFO.AUXILIARY_FUNCTION_PREFIX + "bvneg" + m_FunctionDeclarations.computeBitvectorSuffix(loc, (CPrimitive) type), new Expression[]{operand});
+		
+		return new FunctionApplication(loc, SFO.AUXILIARY_FUNCTION_PREFIX + "bvadd" + m_FunctionDeclarations.computeBitvectorSuffix(loc, (CPrimitive) type, (CPrimitive) type), 
+				new Expression[]{negation, ISOIEC9899TC3.constructLiteralForCIntegerLiteral(loc, true, m_TypeSizeConstants, (CPrimitive) type, "1")});
 	}
 }

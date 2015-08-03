@@ -4,6 +4,7 @@ import java.util.LinkedHashMap;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.TypeSizeConstants;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.PRIMITIVE;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
@@ -47,11 +48,8 @@ public class FunctionDeclarations {
 		if (!prefixedFunctionName.startsWith(SFO.AUXILIARY_FUNCTION_PREFIX)) {
 			throw new IllegalArgumentException("Our convention says that user defined functions start with tilde");
 		}
-		CPrimitive firstParam = paramCTypes[0];
-		Integer bytesize = m_TypeSizeConstants.getCPrimitiveToTypeSizeConstant().get(firstParam.getType());
-		int bitsize = bytesize * 8;
 		String functionName = prefixedFunctionName.substring(1, prefixedFunctionName.length());
-		String prefixedfunctionNameWithSuffix = prefixedFunctionName + bitsize;
+		String prefixedfunctionNameWithSuffix = prefixedFunctionName + computeBitvectorSuffix(loc, paramCTypes);
 		Attribute attribute = new NamedAttribute(loc, "bvbuiltin", new Expression[] { new StringLiteral(loc, functionName) });
 		Attribute[] attributes = new Attribute[] { attribute };
 		declareFunction(loc, prefixedfunctionNameWithSuffix, attributes , resultCType, paramCTypes);
@@ -88,6 +86,24 @@ public class FunctionDeclarations {
 		return m_DeclaredFunctions;
 	}
 	
+	public String computeBitvectorSuffix(ILocation loc, CPrimitive... paramCTypes) {
+		CPrimitive firstParam = paramCTypes[0];
+		Integer bytesize = m_TypeSizeConstants.getCPrimitiveToTypeSizeConstant().get(firstParam.getType());
+		int bitsize = bytesize * 8;
+		
+		return String.valueOf(bitsize);
+	}
 	
+	public boolean checkParameters(CPrimitive... paramCTypes) {
+		PRIMITIVE type = paramCTypes[0].getType();
+		
+		for (CPrimitive t : paramCTypes) {
+			if (!t.getType().equals(type)) {
+				return false;
+			}
+		}
+		
+		return true;
+	}
 
 }

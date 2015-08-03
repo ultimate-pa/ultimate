@@ -249,13 +249,28 @@ public final class ISOIEC9899TC3 {
 			String msg = "Unable to translate int!";
 			throw new IncorrectSyntaxException(loc, msg);
 		}
+		final Expression resultLiteral = constructLiteralForCIntegerLiteral(
+				loc, bitvectorTranslation, typeSizeConstants, cType,
+				valAsString);
+		return new RValue(resultLiteral, cType);
+	}
+
+	public static Expression constructLiteralForCIntegerLiteral(
+			ILocation loc, boolean bitvectorTranslation,
+			TypeSizeConstants typeSizeConstants, final CPrimitive cType,
+			String valAsString) {
 		final Expression resultLiteral;
 		if (bitvectorTranslation) {
 			int bitlength = 8 * typeSizeConstants. getCPrimitiveToTypeSizeConstant().get(cType.getType());
-			resultLiteral = new BitvecLiteral(loc, valAsString, bitlength);
+			BigInteger value = new BigInteger(valAsString);
+			if (value.signum() == -1) {
+				long maxValue = (long) Math.pow(2, bitlength);
+				value.add(BigInteger.valueOf(maxValue));
+			}
+			resultLiteral = new BitvecLiteral(loc, value.toString(), bitlength);
 		} else {
 			resultLiteral = new IntegerLiteral(loc, valAsString);
 		}
-		return new RValue(resultLiteral, cType);
+		return resultLiteral;
 	}
 }

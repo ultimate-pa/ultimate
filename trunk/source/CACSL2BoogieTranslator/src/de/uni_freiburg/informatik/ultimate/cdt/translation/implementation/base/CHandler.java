@@ -999,8 +999,7 @@ public class CHandler implements ICHandler {
 			ResultExpression ropToInt = ConvExpr.rexBoolToIntIfNecessary(loc, rop);
 			if (ropToInt.lrVal.cType instanceof CPrimitive) {
 				if (((CPrimitive) ropToInt.lrVal.cType).getGeneralType() == GENERALPRIMITIVE.INTTYPE) {
-					Expression newEx = new UnaryExpression(loc, 
-							UnaryExpression.Operator.ARITHNEGATIVE, ropToInt.lrVal.getValue());				
+					Expression newEx = m_ExpressionTranslation.unaryMinusForInts(loc, ropToInt.lrVal.getValue(), o.lrVal.cType);				
 					ResultExpression rex = new ResultExpression(ropToInt.stmt, new RValue(newEx, ropToInt.lrVal.cType), 
 							ropToInt.decl, ropToInt.auxVars, ropToInt.overappr);
 					checkIntegerBounds(main, loc, rex);
@@ -1140,7 +1139,7 @@ public class CHandler implements ICHandler {
 						loc, (RValue) rop.lrVal, new RValue(nr1, new CPrimitive(PRIMITIVE.INT)),
 						((CPointer) o.lrVal.cType).pointsToType);
 			else
-				rhs = new RValue(createArithmeticExpression(op, rop.lrVal.getValue(), nr1, loc), o.lrVal.cType);
+				rhs = new RValue(m_ExpressionTranslation.createArithmeticExpression(op, rop.lrVal.getValue(), (CPrimitive) rop.lrVal.cType, nr1, (CPrimitive) rop.lrVal.cType, loc), o.lrVal.cType);
 
 			AssignmentStatement assignStmt = new AssignmentStatement(loc, new LeftHandSide[] { new VariableLHS(loc, // tmpIType,
 					tmpName) }, new Expression[] { rhs.getValue() });
