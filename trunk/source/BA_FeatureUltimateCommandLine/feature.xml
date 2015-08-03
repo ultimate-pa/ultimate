@@ -229,7 +229,7 @@
          unpack="false"/>
          
     <plugin
-         id="package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationV2"
+         id="package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2"
          download-size="0"
          install-size="0"
          version="0.0.0"
