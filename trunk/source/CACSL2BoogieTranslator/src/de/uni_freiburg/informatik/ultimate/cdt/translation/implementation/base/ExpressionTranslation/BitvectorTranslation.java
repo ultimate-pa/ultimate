@@ -148,61 +148,52 @@ public class BitvectorTranslation extends AbstractExpressionTranslation {
 	public Expression createArithmeticExpression(int op, Expression left, CPrimitive typeLeft,
 			Expression right, CPrimitive typeRight, ILocation loc) {
 		FunctionApplication func;
-		
+		if(!m_FunctionDeclarations.checkParameters(typeLeft, typeRight)) {
+			throw new IllegalArgumentException("incompatible types " + typeLeft + " " + typeRight);
+		}
+		final String funcname;
 		switch (op) {
 		case IASTBinaryExpression.op_minusAssign:
 		case IASTBinaryExpression.op_minus:
-			assert(m_FunctionDeclarations.checkParameters(typeLeft, typeRight)):"bvsub";
-			m_FunctionDeclarations.declareBitvectorFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + "bvsub", (CPrimitive) typeLeft, (CPrimitive) typeLeft, (CPrimitive) typeRight);
-			func = new FunctionApplication(loc, SFO.AUXILIARY_FUNCTION_PREFIX + "bvsub" + m_FunctionDeclarations.computeBitvectorSuffix(loc, typeLeft, typeRight), new Expression[]{left, right});
-
-			return func;
+			funcname = "bvsub";
+			break;
 		case IASTBinaryExpression.op_multiplyAssign:
 		case IASTBinaryExpression.op_multiply:
-			assert(m_FunctionDeclarations.checkParameters(typeLeft, typeRight)):"bvmul";
-			m_FunctionDeclarations.declareBitvectorFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + "bvmul", (CPrimitive) typeLeft, (CPrimitive) typeLeft, (CPrimitive) typeRight);
-			func = new FunctionApplication(loc, SFO.AUXILIARY_FUNCTION_PREFIX + "bvmul" + m_FunctionDeclarations.computeBitvectorSuffix(loc, typeLeft, typeRight), new Expression[]{left, right});
-
-			return func;
+			funcname = "bvmul";
+			break;
 		case IASTBinaryExpression.op_divideAssign:
 		case IASTBinaryExpression.op_divide:
 			if (typeLeft.isUnsigned() && typeRight.isUnsigned()) {
-				assert(m_FunctionDeclarations.checkParameters(typeLeft, typeRight)):"budiv";
-				m_FunctionDeclarations.declareBitvectorFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + "bvudiv", (CPrimitive) typeLeft, (CPrimitive) typeLeft, (CPrimitive) typeRight);
-				func = new FunctionApplication(loc, SFO.AUXILIARY_FUNCTION_PREFIX + "bvudiv" + m_FunctionDeclarations.computeBitvectorSuffix(loc, typeLeft, typeRight), new Expression[]{left, right});
+				funcname = "bvudiv";
 			} else if (!typeLeft.isUnsigned() && !typeRight.isUnsigned()) {
-				assert(m_FunctionDeclarations.checkParameters(typeLeft, typeRight)):"bvsdiv";
-				m_FunctionDeclarations.declareBitvectorFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + "bvsdiv", (CPrimitive) typeLeft, (CPrimitive) typeLeft, (CPrimitive) typeRight);
-
-				func = new FunctionApplication(loc, SFO.AUXILIARY_FUNCTION_PREFIX + "bvsdiv" + m_FunctionDeclarations.computeBitvectorSuffix(loc, typeLeft, typeRight), new Expression[]{left, right});
+				funcname = "bvsdiv";
 			} else {
 				throw new IllegalArgumentException("Mixed signed and unsigned");
 			}
-			
-			return func;
+			break;
 		case IASTBinaryExpression.op_moduloAssign:
 		case IASTBinaryExpression.op_modulo:
-			throw new IllegalArgumentException("mod not yet implemented");
-//			if (typeLeft.isUnsigned() && typeRight.isUnsigned()) {
-//				func = new FunctionApplication(loc, "~bvudiv", new Expression[]{left, right});
-//			} else if (!typeLeft.isUnsigned() && !typeRight.isUnsigned()) {
-//				func = new FunctionApplication(loc, "~bvsdiv", new Expression[]{left, right});
-//			} else {
-//				throw new IllegalArgumentException("Mixed signed and unsigned");
-//			}
-//			
-//			return func;
+			if (typeLeft.isUnsigned() && typeRight.isUnsigned()) {
+				funcname = "bvurem";
+			} else if (!typeLeft.isUnsigned() && !typeRight.isUnsigned()) {
+				funcname = "bvsrem";
+			} else {
+				throw new IllegalArgumentException("Mixed signed and unsigned");
+			}
+			break;
 		case IASTBinaryExpression.op_plusAssign:
 		case IASTBinaryExpression.op_plus:
-			assert(m_FunctionDeclarations.checkParameters(typeLeft, typeRight)):"bvadd";
-			m_FunctionDeclarations.declareBitvectorFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + "bvadd", (CPrimitive) typeLeft, (CPrimitive) typeLeft, (CPrimitive) typeRight);
-			func = new FunctionApplication(loc, SFO.AUXILIARY_FUNCTION_PREFIX + "bvadd" + m_FunctionDeclarations.computeBitvectorSuffix(loc, typeLeft, typeRight), new Expression[]{left, right});
-
-			return func;
+			funcname = "bvadd";
+			break;
 		default:
 			String msg = "Unknown or unsupported arithmetic expression";
 			throw new UnsupportedSyntaxException(loc, msg);
 		}
+		
+		m_FunctionDeclarations.declareBitvectorFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + funcname, (CPrimitive) typeLeft, (CPrimitive) typeLeft, (CPrimitive) typeRight);
+		func = new FunctionApplication(loc, SFO.AUXILIARY_FUNCTION_PREFIX + funcname + m_FunctionDeclarations.computeBitvectorSuffix(loc, typeLeft, typeRight), new Expression[]{left, right});
+
+		return func;
 	}
 
 	@Override
