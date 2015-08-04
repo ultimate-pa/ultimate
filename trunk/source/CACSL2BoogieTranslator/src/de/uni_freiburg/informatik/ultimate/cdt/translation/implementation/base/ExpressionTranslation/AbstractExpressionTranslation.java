@@ -87,5 +87,5 @@ public abstract class AbstractExpressionTranslation {
 	
 	public abstract RValue translateIntegerLiteral(ILocation loc, String val);
 	
-	public abstract Expression unaryMinusForInts(ILocation loc, Expression ropToInt, CType type);
+	public abstract Expression unaryMinusForInts(ILocation loc, Expression operand, CType type);
 }
