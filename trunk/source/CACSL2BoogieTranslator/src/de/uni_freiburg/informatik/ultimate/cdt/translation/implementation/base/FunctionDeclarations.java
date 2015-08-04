@@ -35,6 +35,7 @@ public class FunctionDeclarations {
 	private final LinkedHashMap<String, FunctionDeclaration> m_DeclaredFunctions = new LinkedHashMap<String, FunctionDeclaration>();
 	private final ITypeHandler m_TypeHandler;
 	private final TypeSizeConstants m_TypeSizeConstants;
+	private static final String s_BUILTIN_IDENTIFIER = "builtin";
 	
 	
 	public FunctionDeclarations(ITypeHandler typeHandler,
@@ -50,7 +51,7 @@ public class FunctionDeclarations {
 		}
 		String functionName = prefixedFunctionName.substring(1, prefixedFunctionName.length());
 		String prefixedfunctionNameWithSuffix = prefixedFunctionName + computeBitvectorSuffix(loc, paramCTypes);
-		Attribute attribute = new NamedAttribute(loc, "bvbuiltin", new Expression[] { new StringLiteral(loc, functionName) });
+		Attribute attribute = new NamedAttribute(loc, s_BUILTIN_IDENTIFIER, new Expression[] { new StringLiteral(loc, functionName) });
 		Attribute[] attributes = new Attribute[] { attribute };
 		declareFunction(loc, prefixedfunctionNameWithSuffix, attributes , resultCType, paramCTypes);
 	}
