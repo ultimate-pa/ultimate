@@ -16,7 +16,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.RCFGBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.IRCFGVisitor;
 
 /**
  * Edge in a recursive control flow graph that represents a sequence of
@@ -74,7 +73,8 @@ public class SequentialComposition extends CodeBlock {
 			} else if (codeBlocks.get(i) instanceof Return) {
 				numberReturns++;
 			} else if (codeBlocks.get(i) instanceof StatementSequence || codeBlocks.get(i) instanceof SequentialComposition
-					|| codeBlocks.get(i) instanceof ParallelComposition || codeBlocks.get(i) instanceof Summary) {
+					|| codeBlocks.get(i) instanceof ParallelComposition || codeBlocks.get(i) instanceof Summary
+					|| codeBlocks.get(i) instanceof GotoEdge) {
 				// do nothing
 			} else {
 				throw new IllegalArgumentException("unknown CodeBlock");
@@ -238,20 +238,4 @@ public class SequentialComposition extends CodeBlock {
 		return sb.toString();
 	}
 
-
-	/**
-     * Implementing the visitor pattern
-     */
-	@Override
-	public void accept(IRCFGVisitor visitor) {		
-		visitor.visitEdge(this);
-		visitor.visitCodeBlock(this);
-		visitor.visit(this);
-		for (CodeBlock b : getCodeBlocks()) {
-			b.accept(visitor);
-		}
-		visitor.visited(this);
-		visitor.visitedCodeBlock(this);
-		visitor.visitedEdge(this);	
-	}
 }

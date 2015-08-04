@@ -74,7 +74,7 @@ public class RCFGEdgeVisitor {
 	}
 
 	protected void visit(StatementSequence c) {
-		
+
 	}
 
 }

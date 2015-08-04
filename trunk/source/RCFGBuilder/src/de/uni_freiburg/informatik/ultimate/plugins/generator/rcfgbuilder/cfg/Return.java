@@ -4,7 +4,6 @@ import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.output.BoogiePrettyPrinter;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.IRCFGVisitor;
 
 /**
  * Edge in a recursive control flow graph that represents the return from a
@@ -78,15 +77,4 @@ public class Return extends CodeBlock {
 		return "return;";
 	}
 
-	/**
-     * Implementing the visitor pattern
-     */
-	@Override
-	public void accept(IRCFGVisitor visitor) {			
-		visitor.visitEdge(this);
-		visitor.visitCodeBlock(this);
-		visitor.visit(this);
-		visitor.visitedCodeBlock(this);
-		visitor.visitedEdge(this);
-	}
 }

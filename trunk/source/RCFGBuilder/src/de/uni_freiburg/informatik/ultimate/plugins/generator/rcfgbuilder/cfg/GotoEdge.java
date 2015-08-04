@@ -2,8 +2,6 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg;
 
 import org.apache.log4j.Logger;
 
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.IRCFGVisitor;
-
 /**
  * Represents an edge without any effect to the programs variables. While
  * constructing the CFG of a Boogie program these edges are used temporarily
@@ -28,7 +26,11 @@ public class GotoEdge extends CodeBlock {
 
 	@Override
 	public String getPrettyPrintedStatements() {
-		return "goto " + mTarget.toString();
+		if (mTarget == null) {
+			return "disconnected goto";
+		} else {
+			return "goto " + mTarget.toString();
+		}
 	}
 
 	@Override
@@ -41,16 +43,4 @@ public class GotoEdge extends CodeBlock {
 		return "goto;";
 	}
 
-
-	/**
-     * Implementing the visitor pattern
-     */
-	@Override
-	public void accept(IRCFGVisitor visitor) {
-		visitor.visitEdge(this);
-		visitor.visitCodeBlock(this);
-		visitor.visit(this);
-		visitor.visitedCodeBlock(this);
-		visitor.visitedEdge(this);
-	}
 }

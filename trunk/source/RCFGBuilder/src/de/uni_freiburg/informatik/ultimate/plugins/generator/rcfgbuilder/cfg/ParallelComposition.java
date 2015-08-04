@@ -16,7 +16,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.RCFGBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.IRCFGVisitor;
 
 /**
  * Edge in a recursive control flow graph that represents a set of CodeBlocks of
@@ -70,9 +69,10 @@ public class ParallelComposition extends CodeBlock {
 		TransFormula[] transFormulasWithBranchEncoders = new TransFormula[codeBlocks.size()];
 		TermVariable[] branchIndicator = new TermVariable[codeBlocks.size()];
 		for (int i = 0; i < codeBlocks.size(); i++) {
-			if (!(codeBlocks.get(i) instanceof StatementSequence || codeBlocks.get(i) instanceof SequentialComposition || codeBlocks.get(i) instanceof ParallelComposition)) {
+			if (!(codeBlocks.get(i) instanceof StatementSequence || codeBlocks.get(i) instanceof SequentialComposition || 
+					codeBlocks.get(i) instanceof ParallelComposition || codeBlocks.get(i) instanceof GotoEdge)) {
 				throw new IllegalArgumentException("Only StatementSequence,"
-						+ " SequentialComposition, and ParallelComposition supported");
+						+ " SequentialComposition, ParallelComposition, and GotoEdge supported");
 			}
 			codeBlocks.get(i).disconnectSource();
 			codeBlocks.get(i).disconnectTarget();
@@ -131,19 +131,4 @@ public class ParallelComposition extends CodeBlock {
 		return Collections.unmodifiableList(m_CodeBlocks);
 	}
 
-	/**
-     * Implementing the visitor pattern
-     */
-	@Override
-	public void accept(IRCFGVisitor visitor) {		
-		visitor.visitEdge(this);
-		visitor.visitCodeBlock(this);
-		visitor.visit(this);
-		for (CodeBlock b : getCodeBlocks()) {
-			b.accept(visitor);
-		}
-		visitor.visited(this);
-		visitor.visitedCodeBlock(this);
-		visitor.visitedEdge(this);
-	}
 }
