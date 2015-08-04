@@ -336,7 +336,10 @@ public class ACSLHandler implements IACSLHandler {
             	return new ResultExpression(stmt, new RValue(new UnaryExpression(loc, UnaryExpression.Operator.LOGICNEG, res.lrVal.getValue()), res.lrVal.cType), decl, auxVars, overappr);
                 //return new Result(new UnaryExpression(loc, UnaryExpression.Operator.LOGICNEG, expr));
             case MINUS:
-                return new ResultExpression(stmt, new RValue(new UnaryExpression(loc, UnaryExpression.Operator.ARITHNEGATIVE, res.lrVal.getValue()), res.lrVal.cType), decl, auxVars, overappr);
+            	AbstractExpressionTranslation expressionTranslation = 
+    				((CHandler) main.cHandler).getExpressionTranslation();
+            	Expression expr = expressionTranslation.unaryMinusForInts(loc, res.lrVal.getValue(), res.lrVal.cType);
+                return new ResultExpression(stmt, new RValue(expr, res.lrVal.cType), decl, auxVars, overappr);
                 //return new Result(new UnaryExpression(loc, UnaryExpression.Operator.ARITHNEGATIVE, expr));
             case PLUS:
                 return new ResultExpression(stmt, new RValue(res.lrVal.getValue(), res.lrVal.cType), decl, auxVars, overappr);
