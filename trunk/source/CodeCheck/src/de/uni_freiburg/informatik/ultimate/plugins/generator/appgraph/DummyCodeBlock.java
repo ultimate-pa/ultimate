@@ -3,7 +3,6 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.appgraph;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.IRCFGVisitor;
 
 public class DummyCodeBlock extends CodeBlock {
 
@@ -28,12 +27,6 @@ public class DummyCodeBlock extends CodeBlock {
 	@Override
 	public String toString() {
 		return "DUMMYCODEBLOCK";
-	}
-
-	@Override
-	public void accept(IRCFGVisitor visitor) {
-		visitor.visitCodeBlock(this);
-		visitor.visitedCodeBlock(this);
 	}
 
 }
