@@ -487,7 +487,8 @@ public class TraceChecker {
 		}
 		for (BoogieVar bv : nsb.getIndexedVarRepresentative().keySet()) {
 			if (bv.getTermVariable().getSort().isNumericSort()
-					|| bv.getTermVariable().getSort().getName().equals("Bool")) {
+					|| bv.getTermVariable().getSort().getRealSort().getName().equals("Bool")
+					|| bv.getTermVariable().getSort().getRealSort().getName().equals("BitVec")) {
 				for (Integer index : nsb.getIndexedVarRepresentative().get(bv).keySet()) {
 					Term indexedVar = nsb.getIndexedVarRepresentative().get(bv).get(index);
 					Term valueT = getValue(indexedVar);
