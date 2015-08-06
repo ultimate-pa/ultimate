@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.EnumSet;
@@ -31,6 +32,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvide
 import de.uni_freiburg.informatik.ultimate.model.DefaultTranslator;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieTransformer;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssertStatement;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BitvecLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BoogieASTNode;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.CallStatement;
@@ -576,6 +578,20 @@ public class CACSL2BoogieBacktranslator extends
 		} else if (expression instanceof RealLiteral) {
 			RealLiteral lit = (RealLiteral) expression;
 			FakeExpression clit = new FakeExpression(lit.getValue());
+			return clit;
+		} else if (expression instanceof BitvecLiteral) {
+			BitvecLiteral lit = (BitvecLiteral) expression;
+			String value = lit.getValue();
+			BigInteger decimalValue = new BigInteger(value);
+			boolean isSigned = true;
+			if (isSigned ) {
+				BigInteger maxRepresentablePositiveValuePlusOne = (new BigInteger("2")).pow(lit.getLength() - 1);
+				if (decimalValue.compareTo(maxRepresentablePositiveValuePlusOne) >= 0) {
+					BigInteger numberOfValues = (new BigInteger("2")).pow(lit.getLength());
+					decimalValue = decimalValue.subtract(numberOfValues);
+				}
+			}
+			FakeExpression clit = new FakeExpression(String.valueOf(decimalValue));
 			return clit;
 		} else {
 			// things that land here are typically synthesized contracts or
