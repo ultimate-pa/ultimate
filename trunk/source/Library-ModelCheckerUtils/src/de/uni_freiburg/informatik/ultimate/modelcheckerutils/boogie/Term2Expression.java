@@ -55,6 +55,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayStoreExpression
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression.Operator;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BitvecLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.FunctionApplication;
@@ -272,6 +273,23 @@ public class Term2Expression implements Serializable {
 	private Expression translate(ConstantTerm term) {
 		Object value = term.getValue();
 		IType type = m_TypeSortTranslator.getType(term.getSort());
+		if (term.getSort().getRealSort().getName().equals("BitVec")) {
+			BigInteger[] indices = term.getSort().getIndices();
+			if (indices.length !=1) {
+				throw new AssertionError("BitVec has exactly one index");
+			}
+			int length = indices[0].intValue();
+			long decimalValue;
+			if (value.toString().startsWith("#x")) {
+				decimalValue = Long.parseLong(value.toString().substring(2), 16);
+			} else 			if (value.toString().startsWith("#b")) {
+				decimalValue = Long.parseLong(value.toString().substring(2), 2);
+			} else {
+				throw new UnsupportedOperationException(
+						"only hexadecimal values and boolean values supported yet");			
+			}
+			return new BitvecLiteral(null, type, String.valueOf(decimalValue), length);
+		}
 		if (value instanceof String) {
 			return new StringLiteral(null, type, value.toString());
 		} else if (value instanceof BigInteger) {
