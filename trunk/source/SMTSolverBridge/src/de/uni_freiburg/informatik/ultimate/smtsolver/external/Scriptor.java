@@ -218,7 +218,9 @@ public class Scriptor extends NoopScript {
 	@Override
 	public Map<Term, Term> getValue(Term[] terms) throws SMTLIBException, UnsupportedOperationException {
 		for (Term t : terms) {
-			if (!t.getSort().isNumericSort() && t.getSort() != getTheory().getBooleanSort())
+			if (!t.getSort().isNumericSort() 
+					&& t.getSort() != getTheory().getBooleanSort()
+				    && !t.getSort().getRealSort().getName().equals("BitVec"))
 				throw new UnsupportedOperationException();
 		}
 		StringBuilder command = new StringBuilder();
