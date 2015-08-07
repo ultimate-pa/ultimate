@@ -27,6 +27,15 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa;
 
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
 
+/**
+ * Infinite run of a Büchi nested word automaton for a nested word of the
+ * form u.v^ω
+ * 
+ * @author Matthias Heizmann
+ *
+ * @param <LETTER>
+ * @param <STATE>
+ */
 public class NestedLassoRun<LETTER,STATE> {
 	private NestedRun<LETTER,STATE> stem;
 	private NestedRun<LETTER,STATE> loop;
