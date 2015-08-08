@@ -48,7 +48,7 @@ public class PowersetIterator<E> implements Iterator<Set<E>> {
 		
 	@Override
 	public boolean hasNext() {
-		return currentElement <= powersetSize;
+		return currentElement < powersetSize;
 	}
 
 	@Override
