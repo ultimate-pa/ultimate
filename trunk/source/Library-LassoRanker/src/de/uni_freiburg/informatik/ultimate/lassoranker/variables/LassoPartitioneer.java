@@ -34,12 +34,14 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.IFreshTermVariableConstructor;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.NonTheorySymbol;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
@@ -80,27 +82,37 @@ public class LassoPartitioneer {
 	private List<Term> m_StemConjunctsWithoutSymbols;
 	private List<Term> m_LoopConjunctsWithoutSymbols;
 	private final UnionFind<NonTheorySymbol<?>> m_EquivalentSymbols = new UnionFind<>();
-	private Set<RankVar> m_AllRankVars = new HashSet<RankVar>();
-	private Script m_Script;
+	private final Set<RankVar> m_AllRankVars = new HashSet<RankVar>();
+	private final Script m_Script;
 	private final List<LassoUnderConstruction> m_NewLassos = new ArrayList<>();
+	private final Boogie2SMT m_Boogie2Smt;
 	
 	
 	public LassoPartitioneer(IUltimateServiceProvider services, 
-			IFreshTermVariableConstructor freshTermVariableConstructor, 
+			Boogie2SMT boogie2smt, 
 			Script script, LassoUnderConstruction lasso) {
 		m_Services = services;
-		m_FreshTermVariableConstructor = freshTermVariableConstructor;
+		m_Boogie2Smt = boogie2smt;
+		m_FreshTermVariableConstructor = boogie2smt.getVariableManager();
 		m_Script = script;
 		m_Lasso = lasso;
 		doPartition();
+//		assert checkStemImplications() : "stem problem";
 	}
 
 	private boolean checkStemImplications() {
 		boolean result = true;
 		for (LassoUnderConstruction newLasso : m_NewLassos) {
-			result &= (LassoUnderConstruction.checkStemImplication(m_Script, m_Lasso, newLasso) != LBool.SAT);
+			result &= checkStemImplication(newLasso);
 			assert result;
 		}
+		return result;
+	}
+	
+	private boolean checkStemImplication(LassoUnderConstruction newLasso) {
+		boolean result = TransFormulaUtils.implies(m_Lasso.getStem(), newLasso.getStem(), m_Script, 
+				m_Boogie2Smt.getBoogie2SmtSymbolTable(), 
+				m_Boogie2Smt.getVariableManager()) != LBool.SAT;
 		return result;
 	}
 

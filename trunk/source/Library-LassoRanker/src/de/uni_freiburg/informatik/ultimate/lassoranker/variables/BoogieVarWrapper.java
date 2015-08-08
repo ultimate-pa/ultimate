@@ -62,4 +62,8 @@ public class BoogieVarWrapper extends RankVar {
 	public int hashCode() {
 		return mBoogieVar.hashCode();
 	}
+	
+	public BoogieVar getBoogieVar() {
+		return mBoogieVar;
+	}
 }

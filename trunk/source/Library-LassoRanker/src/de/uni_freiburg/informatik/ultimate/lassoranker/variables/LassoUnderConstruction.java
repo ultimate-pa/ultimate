@@ -94,15 +94,4 @@ public class LassoUnderConstruction {
 		return lbool;
 	}
 	
-	/**
-	 * Check whether the stem of lasso antecedent implies the setm of lasso 
-	 * consequent.
-	 */
-	public static LBool checkStemImplication(Script script, 
-			LassoUnderConstruction antecedent, LassoUnderConstruction consequent) {
-		TransFormulaLR oldStem = antecedent.getStem();
-		TransFormulaLR newStem = consequent.getStem();
-		LBool lbool = TransFormulaUtils.transFormulaImplication(script, oldStem, newStem);
-		return lbool;
-	}
 }
