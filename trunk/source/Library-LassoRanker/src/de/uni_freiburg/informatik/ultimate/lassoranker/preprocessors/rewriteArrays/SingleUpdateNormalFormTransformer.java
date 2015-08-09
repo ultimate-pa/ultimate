@@ -29,13 +29,11 @@ package de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.rewriteArr
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.ReplacementVarFactory;
-import de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaLR;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -64,15 +62,11 @@ public class SingleUpdateNormalFormTransformer {
 	private List<Term> m_RemainderTerms;
 	private Map<Term, Term> m_Store2TermVariable;
 	private final Script m_Script;
-	private final ReplacementVarFactory m_ReplacementVarFactory;
 	private final FreshAuxVarGenerator m_FreshAuxVarGenerator;
-	private final Set<TermVariable> m_AuxVarsOldMethod = new HashSet<>();
 	
 	public SingleUpdateNormalFormTransformer(final Term input, Script script,
-			ReplacementVarFactory replacementVarFactory, 
 			FreshAuxVarGenerator freshAuxVarGenerator) {
 		m_Script = script;
-		m_ReplacementVarFactory = replacementVarFactory;
 		m_FreshAuxVarGenerator = freshAuxVarGenerator;
 		m_ArrayUpdates = new ArrayList<ArrayUpdate>();
 		Term[] conjuncts = SmtUtils.getConjuncts(input);
@@ -107,8 +101,7 @@ public class SingleUpdateNormalFormTransformer {
 			MultiDimensionalStore mdStore) {
 		Term oldArray = mdStore.getArray();
 		TermVariable auxArray;
-		auxArray = constructAuxiliaryVariable(oldArray);
-//		auxArray = m_FreshAuxVarGenerator.constructFreshCopy(oldArray); 
+		auxArray = m_FreshAuxVarGenerator.constructFreshCopy(oldArray); 
 		assert m_Store2TermVariable.isEmpty();
 		m_Store2TermVariable = 
 				Collections.singletonMap((Term) mdStore.getStoreTerm(), (Term) auxArray);
@@ -205,14 +198,6 @@ public class SingleUpdateNormalFormTransformer {
 //		return Util.and(m_Script, newTerm, m_Script.term("=", auxArray, arraryStore.getStoreTerm()));
 //	}
 
-	private TermVariable constructAuxiliaryVariable(Term oldArray) {
-		String name = SmtUtils.removeSmtQuoteCharacters(oldArray.toString() + s_AuxArray); 
-		TermVariable auxArray = 
-				m_ReplacementVarFactory.getOrConstructAuxVar(name, oldArray.getSort());
-		m_AuxVarsOldMethod.add(auxArray);
-		return auxArray;
-	}
-
 	public List<ArrayUpdate> getArrayUpdates() {
 		return Collections.unmodifiableList(m_ArrayUpdates);
 	}
@@ -222,8 +207,7 @@ public class SingleUpdateNormalFormTransformer {
 	}
 	
 	public Set<TermVariable> getAuxVars() {
-		return m_AuxVarsOldMethod;
-//		return m_FreshAuxVarGenerator.getAuxVars();
+		return m_FreshAuxVarGenerator.getAuxVars();
 	}
 	
 	public static class FreshAuxVarGenerator {

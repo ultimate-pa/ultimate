@@ -67,7 +67,7 @@ public class RewriteArrays2 extends LassoPreProcessor {
 	private final Logger mLogger;
 	private final IUltimateServiceProvider mServices;
 	
-	public static final boolean s_AdditionalChecksIfAssertionsEnabled = false;
+	public static final boolean s_AdditionalChecksIfAssertionsEnabled = !false;
 	
 	public static final String s_Description = 
 			"Removes arrays by introducing new variables for each relevant array cell";

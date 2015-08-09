@@ -162,7 +162,7 @@ public class TransFormulaLRWithArrayInformation {
 				ArrayEqualityExtractor aee = new ArrayEqualityExtractor(conjuncts);
 				m_ArrayEqualities.add(aee.getArrayEqualities());
 				sunfts[i] = new SingleUpdateNormalFormTransformer(Util.and(m_Script, aee
-						.getRemainingTerms().toArray(new Term[0])), m_Script, m_ReplacementVarFactory, favg);
+						.getRemainingTerms().toArray(new Term[0])), m_Script, favg);
 				m_ArrayUpdates.add(sunfts[i].getArrayUpdates());
 				sunnf[i] = sunfts[i].getRemainderTerm();
 				m_ArrayReads.add(extractArrayReads(sunfts[i].getArrayUpdates(), sunfts[i].getRemainderTerm()));
