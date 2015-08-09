@@ -1,5 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.ExpressionTranslation;
 
+import java.math.BigInteger;
+
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 import org.eclipse.cdt.core.dom.ast.IASTLiteralExpression;
 
@@ -49,6 +51,12 @@ public class BitvectorTranslation extends AbstractExpressionTranslation {
 		RValue rVal = ISOIEC9899TC3.handleIntegerConstant(val, loc, true, m_TypeSizeConstants);
 		return rVal;
 	}
+	
+	@Override
+	public Expression constructLiteralForIntegerType(ILocation loc, CPrimitive type, BigInteger value) {
+		return ISOIEC9899TC3.constructLiteralForCIntegerLiteral(loc, true, m_TypeSizeConstants, type, value);
+	}
+
 
 	@Override
 	public Expression constructBinaryComparisonExpression(ILocation loc, int nodeOperator, Expression exp1, CPrimitive type1, Expression exp2, CPrimitive type2) {
@@ -204,6 +212,7 @@ public class BitvectorTranslation extends AbstractExpressionTranslation {
 		FunctionApplication negation = new FunctionApplication(loc, SFO.AUXILIARY_FUNCTION_PREFIX + "bvneg" + m_FunctionDeclarations.computeBitvectorSuffix(loc, (CPrimitive) type), new Expression[]{operand});
 		
 		return new FunctionApplication(loc, SFO.AUXILIARY_FUNCTION_PREFIX + "bvadd" + m_FunctionDeclarations.computeBitvectorSuffix(loc, (CPrimitive) type, (CPrimitive) type), 
-				new Expression[]{negation, ISOIEC9899TC3.constructLiteralForCIntegerLiteral(loc, true, m_TypeSizeConstants, (CPrimitive) type, "1")});
+				new Expression[]{negation, constructLiteralForIntegerType(loc, (CPrimitive) type, BigInteger.ONE)});
 	}
+
 }

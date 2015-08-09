@@ -118,7 +118,7 @@ public class SvComp14PRCHandler extends PRCHandler {
 					String msg = "Incorrect or invalid in-parameter! " + loc.toString();
 					throw new IncorrectSyntaxException(loc, msg);
 				}
-				in = ConvExpr.rexIntToBoolIfNecessary(loc, in);
+				in = ConvExpr.rexIntToBoolIfNecessary(loc, in, m_ExpressionTranslation);
 				args.add(in.lrVal.getValue());
 				stmt.addAll(in.stmt);
 				decl.addAll(in.decl);

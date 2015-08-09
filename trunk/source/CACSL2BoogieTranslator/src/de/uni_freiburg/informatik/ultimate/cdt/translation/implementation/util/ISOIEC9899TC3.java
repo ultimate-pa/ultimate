@@ -167,7 +167,7 @@ public final class ISOIEC9899TC3 {
 	 * href="www.open-std.org/jtc1/sc22/WG14/www/docs/n1256.pdf">ISO/IEC
 	 * 9899:TC3</a>, chapter 6.4.4.1.
 	 * 
-	 * @param val
+	 * @param valueWithSuffixes
 	 *            the value to parse
 	 * @param loc
 	 *            the location
@@ -179,17 +179,16 @@ public final class ISOIEC9899TC3 {
 	 *  		  primitive types.
 	 * @return the parsed value
 	 */
-	public static final RValue handleIntegerConstant(String val, ILocation loc, 
+	public static final RValue handleIntegerConstant(String valueWithSuffixes, ILocation loc, 
 			boolean bitvectorTranslation, 
 			TypeSizeConstants typeSizeConstants) {
-		String value = val;
+		String valueAsString = valueWithSuffixes;
 		String suffix = "";
 		final CPrimitive cType;
-		String valAsString;
 		// if there is a integer-suffix: throw it away
 		for (String s : SUFFIXES_INT) {
-			if (val.endsWith(s)) {
-				value = val.substring(0, val.length() - s.length());
+			if (valueWithSuffixes.endsWith(s)) {
+				valueAsString = valueWithSuffixes.substring(0, valueWithSuffixes.length() - s.length());
 				suffix = s;
 				break;
 			}
@@ -231,19 +230,20 @@ public final class ISOIEC9899TC3 {
 			cType = new CPrimitive(PRIMITIVE.INT);
 			break;
 		}
+		final BigInteger value;
 		try {
 			// check for integer-prefix.
-			if (value.startsWith(HEX_L0X) || value.startsWith(HEX_U0X)) {
+			if (valueAsString.startsWith(HEX_L0X) || valueAsString.startsWith(HEX_U0X)) {
 				// val is a hexadecimal-constant
 //				return new BigInteger(value.substring(2), 16).toString();
-				valAsString = new BigInteger(value.substring(2), 16).toString();
-			} else if (value.startsWith(OCT_0)) {
+				value = new BigInteger(valueAsString.substring(2), 16);
+			} else if (valueAsString.startsWith(OCT_0)) {
 				// val is a octal-constant.
 //				return new BigInteger(value, 8).toString();
-				valAsString =new BigInteger(value, 8).toString();
+				value = new BigInteger(valueAsString, 8);
 			} else {
 //				return new BigInteger(value).toString(); // check if correct!
-				valAsString = new BigInteger(value).toString(); // check if correct!
+				value = new BigInteger(valueAsString); // check if correct!
 			}
 		} catch (NumberFormatException nfe) {
 			String msg = "Unable to translate int!";
@@ -251,25 +251,24 @@ public final class ISOIEC9899TC3 {
 		}
 		final Expression resultLiteral = constructLiteralForCIntegerLiteral(
 				loc, bitvectorTranslation, typeSizeConstants, cType,
-				valAsString);
+				value);
 		return new RValue(resultLiteral, cType);
 	}
 
 	public static Expression constructLiteralForCIntegerLiteral(
 			ILocation loc, boolean bitvectorTranslation,
 			TypeSizeConstants typeSizeConstants, final CPrimitive cType,
-			String valAsString) {
+			BigInteger value) {
 		final Expression resultLiteral;
 		if (bitvectorTranslation) {
 			int bitlength = 8 * typeSizeConstants. getCPrimitiveToTypeSizeConstant().get(cType.getType());
-			BigInteger value = new BigInteger(valAsString);
 			if (value.signum() == -1) {
 				long maxValue = (long) Math.pow(2, bitlength);
 				value.add(BigInteger.valueOf(maxValue));
 			}
 			resultLiteral = new BitvecLiteral(loc, value.toString(), bitlength);
 		} else {
-			resultLiteral = new IntegerLiteral(loc, valAsString);
+			resultLiteral = new IntegerLiteral(loc, value.toString());
 		}
 		return resultLiteral;
 	}

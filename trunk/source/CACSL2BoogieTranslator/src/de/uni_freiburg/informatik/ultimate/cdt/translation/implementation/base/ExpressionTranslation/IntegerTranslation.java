@@ -57,6 +57,11 @@ public class IntegerTranslation extends AbstractExpressionTranslation {
 		RValue rVal = ISOIEC9899TC3.handleIntegerConstant(val, loc, false, m_TypeSizeConstants);
 		return rVal;
 	}
+	
+	@Override
+	public Expression constructLiteralForIntegerType(ILocation loc, CPrimitive type, BigInteger value) {
+		return ISOIEC9899TC3.constructLiteralForCIntegerLiteral(loc, false, m_TypeSizeConstants, type, value);
+	}
 
 	@Override
 	public Expression constructBinaryComparisonExpression(ILocation loc, int nodeOperator, Expression exp1, CPrimitive type1, Expression exp2, CPrimitive type2) {

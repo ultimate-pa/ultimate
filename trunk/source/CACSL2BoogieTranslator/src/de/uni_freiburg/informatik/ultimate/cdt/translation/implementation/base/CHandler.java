@@ -291,7 +291,7 @@ public class CHandler implements ICHandler {
 
 	private ArrayList<LTLExpressionExtractor> mGlobAcslExtractors;
 
-	private final AbstractExpressionTranslation m_ExpressionTranslation;
+	protected final AbstractExpressionTranslation m_ExpressionTranslation;
 
 	public AbstractExpressionTranslation getExpressionTranslation() {
 		return m_ExpressionTranslation;
@@ -320,7 +320,6 @@ public class CHandler implements ICHandler {
 		this.mStructHandler = new StructHandler();
 		boolean checkPointerValidity = main.mPreferences.getBoolean(CACSLPreferenceInitializer.LABEL_CHECK_POINTER_VALIDITY);
 		this.mMemoryHandler = new MemoryHandler(mFunctionHandler, checkPointerValidity);
-		this.mInitHandler = new InitializationHandler(mFunctionHandler, mStructHandler, mMemoryHandler);
 		this.mPostProcessor = new PostProcessor(main, mLogger);
 		
 		this.mSymbolTable = new SymbolTable(main);
@@ -344,6 +343,7 @@ public class CHandler implements ICHandler {
 		} else {
 			m_ExpressionTranslation = new IntegerTranslation(mMemoryHandler.typeSizeConstants, mFunctionDeclarations);
 		}
+		this.mInitHandler = new InitializationHandler(mFunctionHandler, mStructHandler, mMemoryHandler, m_ExpressionTranslation);
 	}
 
 	@Override
@@ -1043,7 +1043,7 @@ public class CHandler implements ICHandler {
 							new CPrimitive(PRIMITIVE.INT));
 				}
 			}
-			ResultExpression ropToBool = ConvExpr.rexIntToBoolIfNecessary(loc, rop);
+			ResultExpression ropToBool = ConvExpr.rexIntToBoolIfNecessary(loc, rop, m_ExpressionTranslation);
 			Expression negated = new UnaryExpression(loc, UnaryExpression.Operator.LOGICNEG, ropToBool.lrVal.getValue());
 			ResultExpression re = new ResultExpression(new RValue(negated, new CPrimitive(PRIMITIVE.INT), true),
 					new LinkedHashMap<VariableDeclaration, ILocation>(), ropToBool.overappr);
@@ -1380,8 +1380,8 @@ public class CHandler implements ICHandler {
 			return new ResultExpression(stmt, rval, decl, auxVars, overappr);
 		}
 		case IASTBinaryExpression.op_logicalAnd: {
-			ResultExpression rlToBool = ConvExpr.rexIntToBoolIfNecessary(loc, rl);
-			ResultExpression rrToBool = ConvExpr.rexIntToBoolIfNecessary(loc, rr);
+			ResultExpression rlToBool = ConvExpr.rexIntToBoolIfNecessary(loc, rl, m_ExpressionTranslation);
+			ResultExpression rrToBool = ConvExpr.rexIntToBoolIfNecessary(loc, rr, m_ExpressionTranslation);
 			
 
 			stmt.addAll(rlToBool.stmt);
@@ -1437,8 +1437,8 @@ public class CHandler implements ICHandler {
 			return new ResultExpression(stmt, resRval, decl, auxVars, overappr);
 		}
 		case IASTBinaryExpression.op_logicalOr: {
-			ResultExpression rlToBool = ConvExpr.rexIntToBoolIfNecessary(loc, rl);
-			ResultExpression rrToBool = ConvExpr.rexIntToBoolIfNecessary(loc, rr);
+			ResultExpression rlToBool = ConvExpr.rexIntToBoolIfNecessary(loc, rl, m_ExpressionTranslation);
+			ResultExpression rrToBool = ConvExpr.rexIntToBoolIfNecessary(loc, rr, m_ExpressionTranslation);
 
 			stmt.addAll(rlToBool.stmt);
 			// NOTE: no rr.stmt
@@ -1747,8 +1747,8 @@ public class CHandler implements ICHandler {
 				rightHandside = doPointerArithPointerAndInteger(main, node.getOperator(), loc, (RValue) rl.lrVal,
 						(RValue) rr.lrVal, ((CPointer) rl.lrVal.cType.getUnderlyingType()).pointsToType);
 			} else {
-				rightHandside = new RValue(createArithmeticExpression(node.getOperator(), rl.lrVal.getValue(),
-						rr.lrVal.getValue(), loc), rr.lrVal.cType);
+				rightHandside = new RValue(m_ExpressionTranslation.createArithmeticExpression(node.getOperator(), rl.lrVal.getValue(),
+						(CPrimitive) rl.lrVal.cType, rr.lrVal.getValue(), (CPrimitive) rr.lrVal.cType, loc), rr.lrVal.cType);
 			} 
 			if (node.getOperator() != IASTBinaryExpression.op_divideAssign
 						&& node.getOperator() != IASTBinaryExpression.op_moduloAssign)
@@ -1970,7 +1970,7 @@ public class CHandler implements ICHandler {
 
 		ResultExpression condResult = (ResultExpression) main.dispatch(node.getConditionExpression());
 		condResult = condResult.switchToRValueIfNecessary(main, mMemoryHandler, mStructHandler, loc);
-		condResult = ConvExpr.rexIntToBoolIfNecessary(loc, condResult);
+		condResult = ConvExpr.rexIntToBoolIfNecessary(loc, condResult, m_ExpressionTranslation);
 		RValue cond = (RValue) condResult.lrVal;
 		decl.addAll(condResult.decl);
 		stmt.addAll(condResult.stmt);
@@ -2412,7 +2412,7 @@ public class CHandler implements ICHandler {
 		assert resLocCond instanceof ResultExpression;
 		ResultExpression reLocCond = (ResultExpression) resLocCond;
 		reLocCond = reLocCond.switchToRValueIfNecessary(main, mMemoryHandler, mStructHandler, loc);
-		reLocCond = ConvExpr.rexIntToBoolIfNecessary(loc, reLocCond);
+		reLocCond = ConvExpr.rexIntToBoolIfNecessary(loc, reLocCond, m_ExpressionTranslation);
 
 		Result rPositive = main.dispatch(node.getPositiveResultExpression());
 		assert rPositive instanceof ResultExpression;
@@ -3379,7 +3379,7 @@ public class CHandler implements ICHandler {
 		}
 
 		condResult = condResult.switchToRValueIfNecessary(main, mMemoryHandler, mStructHandler, loc);
-		condResult = ConvExpr.rexIntToBoolIfNecessary(loc, condResult);
+		condResult = ConvExpr.rexIntToBoolIfNecessary(loc, condResult, m_ExpressionTranslation);
 		decl.addAll(condResult.decl);
 		RValue condRVal = (RValue) condResult.lrVal;
 		IfStatement ifStmt;

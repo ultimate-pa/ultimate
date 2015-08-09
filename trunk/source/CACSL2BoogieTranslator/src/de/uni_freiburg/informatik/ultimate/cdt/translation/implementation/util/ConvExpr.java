@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util;
 
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.ExpressionTranslation.AbstractExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CEnum;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
@@ -42,7 +43,8 @@ public class ConvExpr {
 	 * If the expression was obtained by a conversion from bool to int, we try
 	 * to get rid of the former conversion instead of applying a new one.
 	 */
-	public static RValue toBoolean(final ILocation loc, final RValue rVal) {
+	public static RValue toBoolean(final ILocation loc, final RValue rVal, 
+			AbstractExpressionTranslation expressionTranslation) {
 		assert !rVal.isBoogieBool;
 		CType underlyingType = rVal.cType.getUnderlyingType();
 		Expression resultEx = null;
@@ -95,12 +97,13 @@ public class ConvExpr {
 	}
 	
 	
-	public static ResultExpression rexIntToBoolIfNecessary(ILocation loc, ResultExpression rl) {
+	public static ResultExpression rexIntToBoolIfNecessary(ILocation loc, ResultExpression rl, 
+			AbstractExpressionTranslation expressionTranslation) {
 		ResultExpression rlToBool = null;
 		if (rl.lrVal.isBoogieBool) {
 			rlToBool = rl;
 		} else {
-			rlToBool = new ResultExpression(ConvExpr.toBoolean(loc, (RValue) rl.lrVal));
+			rlToBool = new ResultExpression(ConvExpr.toBoolean(loc, (RValue) rl.lrVal, expressionTranslation));
 			rlToBool.addAll(rl);
 		}
 		return rlToBool;

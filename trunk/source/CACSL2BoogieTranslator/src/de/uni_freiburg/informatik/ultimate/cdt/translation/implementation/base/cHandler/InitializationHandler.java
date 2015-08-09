@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
@@ -9,6 +10,7 @@ import java.util.Map;
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.ExpressionTranslation.AbstractExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType.Type;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
@@ -50,19 +52,22 @@ import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 
 public class InitializationHandler {
 
-	FunctionHandler mFunctionHandler;
+	private final FunctionHandler mFunctionHandler;
 
-	StructHandler mStructHandler;
+	private final StructHandler mStructHandler;
 
-	MemoryHandler mMemoryHandler;	
+	private final MemoryHandler mMemoryHandler;
+
+	private final AbstractExpressionTranslation mExpressionTranslation;	
 
 	public InitializationHandler(
 			FunctionHandler functionHandler, StructHandler structHandler,
-			MemoryHandler memoryHandler) {
+			MemoryHandler memoryHandler, AbstractExpressionTranslation expressionTranslation) {
 		super();
 		this.mFunctionHandler = functionHandler;
 		this.mStructHandler = structHandler;
 		this.mMemoryHandler = memoryHandler;
+		this.mExpressionTranslation = expressionTranslation;
 	}
 
 
@@ -159,7 +164,7 @@ public class InitializationHandler {
 			switch (((CPrimitive) lCType).getGeneralType()) {
 			case INTTYPE:
 				if (initializer == null) {
-					rhs = new IntegerLiteral(loc, SFO.NR0);
+					rhs = mExpressionTranslation.constructLiteralForIntegerType(loc, (CPrimitive) lCType, BigInteger.ZERO);
 				} else {
 					initializer = ConvExpr.rexBoolToIntIfNecessary(loc, initializer);
 					rhs = initializer.lrVal.getValue();
@@ -294,7 +299,7 @@ public class InitializationHandler {
 			switch (((CPrimitive) lCType).getGeneralType()) {
 			case INTTYPE:
 				if (initializer == null) {
-					rhs = new IntegerLiteral(loc, SFO.NR0);
+					rhs = mExpressionTranslation.constructLiteralForIntegerType(loc, (CPrimitive) lCType, BigInteger.ZERO);
 				} else {
 					initializer = ConvExpr.rexBoolToIntIfNecessary(loc, initializer);
 					rhs = initializer.lrVal.getValue();

@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.ExpressionTranslation;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -88,4 +89,6 @@ public abstract class AbstractExpressionTranslation {
 	public abstract RValue translateIntegerLiteral(ILocation loc, String val);
 	
 	public abstract Expression unaryMinusForInts(ILocation loc, Expression operand, CType type);
+
+	public abstract Expression constructLiteralForIntegerType(ILocation loc, CPrimitive type, BigInteger value);
 }
