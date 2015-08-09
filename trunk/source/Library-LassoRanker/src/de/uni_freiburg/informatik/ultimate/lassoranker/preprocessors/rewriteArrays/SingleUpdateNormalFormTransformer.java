@@ -29,10 +29,13 @@ package de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.rewriteArr
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.ReplacementVarFactory;
+import de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaLR;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -63,6 +66,7 @@ public class SingleUpdateNormalFormTransformer {
 	private final Script m_Script;
 	private final ReplacementVarFactory m_ReplacementVarFactory;
 	private final FreshAuxVarGenerator m_FreshAuxVarGenerator;
+	private final Set<TermVariable> m_AuxVarsOldMethod = new HashSet<>();
 	
 	public SingleUpdateNormalFormTransformer(final Term input, Script script,
 			ReplacementVarFactory replacementVarFactory, 
@@ -103,8 +107,8 @@ public class SingleUpdateNormalFormTransformer {
 			MultiDimensionalStore mdStore) {
 		Term oldArray = mdStore.getArray();
 		TermVariable auxArray;
-//		auxArray = constructAuxiliaryVariable(oldArray);
-		auxArray = m_FreshAuxVarGenerator.constructFreshCopy(oldArray); 
+		auxArray = constructAuxiliaryVariable(oldArray);
+//		auxArray = m_FreshAuxVarGenerator.constructFreshCopy(oldArray); 
 		assert m_Store2TermVariable.isEmpty();
 		m_Store2TermVariable = 
 				Collections.singletonMap((Term) mdStore.getStoreTerm(), (Term) auxArray);
@@ -205,6 +209,7 @@ public class SingleUpdateNormalFormTransformer {
 		String name = SmtUtils.removeSmtQuoteCharacters(oldArray.toString() + s_AuxArray); 
 		TermVariable auxArray = 
 				m_ReplacementVarFactory.getOrConstructAuxVar(name, oldArray.getSort());
+		m_AuxVarsOldMethod.add(auxArray);
 		return auxArray;
 	}
 
@@ -216,8 +221,13 @@ public class SingleUpdateNormalFormTransformer {
 		return Util.and(m_Script, m_RemainderTerms.toArray(new Term[m_RemainderTerms.size()]));
 	}
 	
+	public Set<TermVariable> getAuxVars() {
+		return m_AuxVarsOldMethod;
+//		return m_FreshAuxVarGenerator.getAuxVars();
+	}
+	
 	public static class FreshAuxVarGenerator {
-		private final Map<Term, Term> m_FreshCopyToOriginal = new HashMap<Term, Term>();
+		private final Map<TermVariable, Term> m_FreshCopyToOriginal = new HashMap<TermVariable, Term>();
 		private final MultiElementCounter<Term> m_FreshCopyCounter = new MultiElementCounter<>();
 		private final ReplacementVarFactory m_ReplacementVarFactory;
 		
@@ -238,6 +248,10 @@ public class SingleUpdateNormalFormTransformer {
 			m_FreshCopyToOriginal.put(freshCopy, original);
 			return freshCopy;
 			
+		}
+		
+		public Set<TermVariable> getAuxVars() {
+			return m_FreshCopyToOriginal.keySet();
 		}
 	}
 }

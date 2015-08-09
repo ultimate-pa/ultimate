@@ -100,21 +100,21 @@ public class LassoPartitioneer {
 //		assert checkStemImplications() : "stem problem";
 	}
 
-	private boolean checkStemImplications() {
-		boolean result = true;
-		for (LassoUnderConstruction newLasso : m_NewLassos) {
-			result &= checkStemImplication(newLasso);
-			assert result;
-		}
-		return result;
-	}
-	
-	private boolean checkStemImplication(LassoUnderConstruction newLasso) {
-		boolean result = TransFormulaUtils.implies(m_Lasso.getStem(), newLasso.getStem(), m_Script, 
-				m_Boogie2Smt.getBoogie2SmtSymbolTable(), 
-				m_Boogie2Smt.getVariableManager()) != LBool.SAT;
-		return result;
-	}
+//	private boolean checkStemImplications() {
+//		boolean result = true;
+//		for (LassoUnderConstruction newLasso : m_NewLassos) {
+//			result &= checkStemImplication(newLasso);
+//			assert result;
+//		}
+//		return result;
+//	}
+//	
+//	private boolean checkStemImplication(LassoUnderConstruction newLasso) {
+//		boolean result = TransFormulaUtils.implies(m_Lasso.getStem(), newLasso.getStem(), m_Script, 
+//				m_Boogie2Smt.getBoogie2SmtSymbolTable(), 
+//				m_Boogie2Smt.getVariableManager()) != LBool.SAT;
+//		return result;
+//	}
 
 	public List<LassoUnderConstruction> getNewLassos() {
 		return m_NewLassos;

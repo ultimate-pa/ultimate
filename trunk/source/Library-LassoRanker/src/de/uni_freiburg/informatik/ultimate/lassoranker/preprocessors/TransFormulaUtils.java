@@ -33,6 +33,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import org.apache.log4j.Logger;
+
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.BoogieVarWrapper;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.RankVar;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.ReplacementVar;
@@ -48,6 +51,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.VariableManager;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SafeSubstitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 
@@ -171,11 +175,11 @@ public class TransFormulaUtils {
 		return result;
 	}
 
-	public static LBool implies(TransFormulaLR antecedent, TransFormulaLR consequent, 
-			Script script, Boogie2SmtSymbolTable symbTab, 
-			VariableManager vm) {
-		Term antecentTerm = renameToConstants(script, symbTab, antecedent, vm);
-		Term consequentTerm = renameToConstants(script, symbTab, antecedent, vm);
+	public static LBool implies(IUltimateServiceProvider services, Logger logger, 
+			TransFormulaLR antecedent, TransFormulaLR consequent, 
+			Script script, Boogie2SmtSymbolTable symbTab) {
+		Term antecentTerm = renameToConstants(services, logger, script, symbTab, antecedent);
+		Term consequentTerm = renameToConstants(services, logger, script, symbTab, consequent);
 		script.push(1);
 		script.assertTerm(antecentTerm);
 		script.assertTerm(Util.not(script, consequentTerm));
@@ -188,10 +192,12 @@ public class TransFormulaUtils {
 	 * Rename all to inVars/outVars by default/primed constants (including
 	 * the definitions of {@link ReplacementVar}s. Quantify auxVars 
 	 * existentially.
+	 * @param services 
+	 * @param logger 
 	 */
-	private static Term renameToConstants(Script script,
+	private static Term renameToConstants(IUltimateServiceProvider services, Logger logger, Script script,
 			Boogie2SmtSymbolTable symbTab, 
-			TransFormulaLR tf, VariableManager vm) {
+			TransFormulaLR tf) {
 		Map<Term, Term> substitutionMapping = new HashMap<>();
 		for (Entry<RankVar, Term> entry : tf.getInVars().entrySet()) {
 			if (entry.getKey() instanceof ReplacementVar) {
@@ -219,8 +225,9 @@ public class TransFormulaUtils {
 		}
 		Term result = (new SafeSubstitution(script, substitutionMapping)).transform(tf.getFormula());
 		if (!tf.getAuxVars().isEmpty()) {
-			TermVariable[] auxVars = tf.getAuxVars().toArray(new TermVariable[tf.getAuxVars().size()]);
-			result = script.quantifier(QuantifiedFormula.EXISTS, auxVars, result);
+			logger.warn(tf.getAuxVars().size() + " quantified variables");
+			TermVariable[] auxVarsArray = tf.getAuxVars().toArray(new TermVariable[tf.getAuxVars().size()]);
+			result = script.quantifier(QuantifiedFormula.EXISTS, auxVarsArray, result);
 		}
 		assert (Arrays.asList(result.getFreeVars()).isEmpty()) : "there must not be a TermVariable left";
 		return result;
