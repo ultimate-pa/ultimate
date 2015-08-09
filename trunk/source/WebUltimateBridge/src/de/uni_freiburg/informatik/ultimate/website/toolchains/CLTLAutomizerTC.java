@@ -36,7 +36,7 @@ public class CLTLAutomizerTC extends WebToolchain {
 
 	@Override
 	protected String defineLanguage() {
-		return "c";
+		return "c_cpp";
 	}
 
 	@Override

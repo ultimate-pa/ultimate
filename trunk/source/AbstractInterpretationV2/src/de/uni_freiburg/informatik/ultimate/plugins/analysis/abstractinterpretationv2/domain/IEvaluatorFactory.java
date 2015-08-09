@@ -1,0 +1,16 @@
+package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain;
+
+/**
+ * Interface to create IEvaluators for different abstract domains.
+ * 
+ * @author greitsch@informatik.uni-freiburg.de
+ *
+ */
+public interface IEvaluatorFactory<T, ACTION, VARDECL> {
+
+	public INAryEvaluator<T, ACTION, VARDECL> createNAryExpressionEvaluator(int arity);
+
+	public IEvaluator<T, ACTION, VARDECL> createSingletonValueExpressionEvaluator(String value, Class<?> valueType);
+
+	public IEvaluator<T, ACTION, VARDECL> createSingletonVariableExpressionEvaluator(String variableName);
+}

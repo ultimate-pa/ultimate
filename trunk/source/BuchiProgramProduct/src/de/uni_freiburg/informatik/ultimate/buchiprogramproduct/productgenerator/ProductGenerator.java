@@ -30,6 +30,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.TransFo
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlockFactory;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.GotoEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGNode;
@@ -330,6 +331,10 @@ public class ProductGenerator {
 				handleEdgeCall(productSourceLoc, nwaLoc, (Call) rcfgEdge, origRcfgSourceLoc);
 			} else if (rcfgEdge instanceof Summary) {
 				handleEdgeSummary(productSourceLoc, nwaLoc, (Summary) rcfgEdge);
+			} else if (rcfgEdge instanceof GotoEdge) {
+				// TODO: Prepare Büchiprogram for GotoEdges
+				throw new UnsupportedOperationException("BuchiProgramProduct does not support RCFGEdges of type "
+						+ rcfgEdge.getClass().getSimpleName());
 			} else {
 				// we encounted an unhandled edge type and have
 				// to abort
@@ -671,7 +676,7 @@ public class ProductGenerator {
 
 		final Boogie2SMT b2smt = mProductRoot.getRootAnnot().getBoogie2SMT();
 		final TransFormulaBuilder tfb = new TransFormulaBuilder(b2smt, mServices);
-		
+
 		ProgramPoint targetpp;
 		for (final OutgoingInternalTransition<CodeBlock, String> autTrans : mNWA.internalSuccessors(nwaLoc)) {
 			targetpp = mProductLocations.get(mNameGenerator.generateStateName((ProgramPoint) summary.getTarget(),
@@ -681,7 +686,7 @@ public class ProductGenerator {
 					checkLetter(autTrans.getLetter()), Origin.IMPLEMENTATION);
 
 			tfb.addTransitionFormulas((CodeBlock) seq, ((ProgramPoint) summary.getSource()).getProcedure());
-			
+
 			sumAndSs.add(createNewSummaryEdge(productSourceLoc, summary, targetpp));
 			sumAndSs.add(seq);
 
