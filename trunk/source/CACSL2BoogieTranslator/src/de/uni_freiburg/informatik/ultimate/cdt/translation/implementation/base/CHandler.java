@@ -983,7 +983,7 @@ public class CHandler implements ICHandler {
 	public Result visit(Dispatcher main, IASTUnaryExpression node) {
 		ResultExpression o = (ResultExpression) main.dispatch(node.getOperand());
 		ILocation loc = LocationFactory.createCLocation(node);
-		Expression nr1 = new IntegerLiteral(loc, SFO.NR1);
+//		Expression nr1 = new IntegerLiteral(loc, SFO.NR1);
 
 		// for the cases we know that it's an RValue..
 		// ResultExpression rop = o.switchToRValueIfNecessary(main,
@@ -1095,12 +1095,21 @@ public class CHandler implements ICHandler {
 			else
 				op = IASTBinaryExpression.op_minus;
 
-			RValue rhs = null;
-			if (oType instanceof CPointer)
-				rhs = doPointerArithPointerAndInteger(main, op, loc, tmpRValue, new RValue(nr1, new CPrimitive(
+			final RValue rhs;
+			if (oType instanceof CPointer) {
+				CPrimitive type = new CPrimitive(PRIMITIVE.INT); 
+				Expression one = m_ExpressionTranslation.constructLiteralForIntegerType(
+						loc, type, BigInteger.ONE);
+				rhs = doPointerArithPointerAndInteger(main, op, loc, tmpRValue, new RValue(one, new CPrimitive(
 						PRIMITIVE.INT)), ((CPointer) tmpRValue.cType).pointsToType);
-			else
-				rhs = new RValue(createArithmeticExpression(op, tmpRValue.getValue(), nr1, loc), o.lrVal.cType);
+			}
+			else {
+				CPrimitive type = (CPrimitive) tmpRValue.cType;
+				Expression one = m_ExpressionTranslation.constructLiteralForIntegerType(
+						loc, type, BigInteger.ONE);
+				rhs = new RValue(m_ExpressionTranslation.createArithmeticExpression(
+						op, tmpRValue.getValue(), type, one, type, loc), o.lrVal.cType);
+			}
 
 			assert !(o.lrVal instanceof RValue);
 			ResultExpression assign = makeAssignment(main, loc, stmt, o.lrVal, rhs, decl, auxVars, overappr);// ,
@@ -1133,13 +1142,22 @@ public class CHandler implements ICHandler {
 			else
 				op = IASTBinaryExpression.op_minus;
 
-			RValue rhs = null;
-			if (oType instanceof CPointer)
+			final RValue rhs;
+			if (oType instanceof CPointer) {
+				CPrimitive type = new CPrimitive(PRIMITIVE.INT); 
+				Expression one = m_ExpressionTranslation.constructLiteralForIntegerType(
+						loc, type, BigInteger.ONE);
 				rhs = doPointerArithPointerAndInteger(main, op,
-						loc, (RValue) rop.lrVal, new RValue(nr1, new CPrimitive(PRIMITIVE.INT)),
+						loc, (RValue) rop.lrVal, new RValue(one, type),
 						((CPointer) o.lrVal.cType).pointsToType);
-			else
-				rhs = new RValue(m_ExpressionTranslation.createArithmeticExpression(op, rop.lrVal.getValue(), (CPrimitive) rop.lrVal.cType, nr1, (CPrimitive) rop.lrVal.cType, loc), o.lrVal.cType);
+			}
+			else {
+				CPrimitive type = (CPrimitive) rop.lrVal.cType;
+				Expression one = m_ExpressionTranslation.constructLiteralForIntegerType(
+						loc, type, BigInteger.ONE);
+				rhs = new RValue(m_ExpressionTranslation.createArithmeticExpression(
+						op, rop.lrVal.getValue(), type, one, type, loc), o.lrVal.cType);
+			}
 
 			AssignmentStatement assignStmt = new AssignmentStatement(loc, new LeftHandSide[] { new VariableLHS(loc, // tmpIType,
 					tmpName) }, new Expression[] { rhs.getValue() });
