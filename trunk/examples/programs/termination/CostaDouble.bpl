@@ -1,9 +1,12 @@
-// 2015-07-30, Matthias Heizmann
-// reveals bug in automata library. 
-// symptom: wrong result in buchi difference operations
-//
-// Simplified version of the Double.jar java program contained in a benchmark 
-// suite of the COSTA tool. Translated to Boogie by Joogie.
+//#terminating
+/*
+ * 2015-07-30, Matthias Heizmann
+ * reveals bug in automata library. 
+ * symptom: wrong result in buchi difference operations
+ *
+ * Simplified version of the Double.jar java program contained in a benchmark 
+ * suite of the COSTA tool. Translated to Boogie by Joogie.
+ */
 
 procedure rec(k : int) {
 var y : int;
