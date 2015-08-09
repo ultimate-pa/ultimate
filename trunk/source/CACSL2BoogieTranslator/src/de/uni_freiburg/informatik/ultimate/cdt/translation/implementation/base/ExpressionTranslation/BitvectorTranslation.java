@@ -23,7 +23,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.FunctionApplication;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 
-public class BitvectorTranslation extends AbstractExpressionTranslation {
+public class BitvectorTranslation extends AExpressionTranslation {
 
 	public BitvectorTranslation(TypeSizeConstants m_TypeSizeConstants, FunctionDeclarations functionDeclarations) {
 		super(m_TypeSizeConstants, functionDeclarations);

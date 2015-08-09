@@ -115,7 +115,7 @@ public class PRCHandler extends CHandler {
 		this.mTypeHandler = typeHandler;
 
 		this.mArrayHandler = new ArrayHandler();
-		this.mFunctionHandler = new PRFunctionHandler();
+		this.mFunctionHandler = new PRFunctionHandler(m_ExpressionTranslation);
 		this.mStructHandler = new StructHandler();
 		this.mMemoryHandler = new MemoryHandler(mFunctionHandler, false);
 		this.mSymbolTable = new SymbolTable(main);

@@ -1,6 +1,8 @@
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util;
 
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.ExpressionTranslation.AbstractExpressionTranslation;
+import java.math.BigInteger;
+
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.ExpressionTranslation.AExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CEnum;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
@@ -44,7 +46,7 @@ public class ConvExpr {
 	 * to get rid of the former conversion instead of applying a new one.
 	 */
 	public static RValue toBoolean(final ILocation loc, final RValue rVal, 
-			AbstractExpressionTranslation expressionTranslation) {
+			AExpressionTranslation expressionTranslation) {
 		assert !rVal.isBoogieBool;
 		CType underlyingType = rVal.cType.getUnderlyingType();
 		Expression resultEx = null;
@@ -63,9 +65,10 @@ public class ConvExpr {
 							new RealLiteral(loc, SFO.NR0F));
 					break;
 				case INTTYPE:
+					Expression zero = expressionTranslation.constructLiteralForIntegerType(loc, 
+							(CPrimitive) underlyingType, BigInteger.ZERO);
 					resultEx = new BinaryExpression(loc, 
-							BinaryExpression.Operator.COMPNEQ, e,
-							new IntegerLiteral(loc, SFO.NR0));
+							BinaryExpression.Operator.COMPNEQ, e, zero);
 					break;
 				case VOID:
 					default:
@@ -87,18 +90,21 @@ public class ConvExpr {
 		return new RValue(resultEx, new CPrimitive(PRIMITIVE.INT), true);
 	}
 
-	public static RValue boolToInt(ILocation loc, RValue rVal) {
+	public static RValue boolToInt(ILocation loc, RValue rVal, 
+			AExpressionTranslation expressionTranslation) {
 		assert rVal.isBoogieBool;
+		Expression one = expressionTranslation.constructLiteralForIntegerType(loc, 
+				new CPrimitive(PRIMITIVE.INT), BigInteger.ONE);
+		Expression zero = expressionTranslation.constructLiteralForIntegerType(loc, 
+				new CPrimitive(PRIMITIVE.INT), BigInteger.ZERO);
 		return new RValue(
-				new IfThenElseExpression(
-						loc, rVal.getValue(), new IntegerLiteral(loc, "1"), new IntegerLiteral(loc, "0")),
-					rVal.cType,
-					false);
+				new IfThenElseExpression(loc, rVal.getValue(), one, zero), 
+				rVal.cType, false);
 	}
 	
 	
 	public static ResultExpression rexIntToBoolIfNecessary(ILocation loc, ResultExpression rl, 
-			AbstractExpressionTranslation expressionTranslation) {
+			AExpressionTranslation expressionTranslation) {
 		ResultExpression rlToBool = null;
 		if (rl.lrVal.isBoogieBool) {
 			rlToBool = rl;
@@ -109,10 +115,11 @@ public class ConvExpr {
 		return rlToBool;
 	}
 
-	public static ResultExpression rexBoolToIntIfNecessary(ILocation loc, ResultExpression rl) {
+	public static ResultExpression rexBoolToIntIfNecessary(ILocation loc, ResultExpression rl, 
+			AExpressionTranslation expressionTranslation) {
 		ResultExpression rlToInt = null;
 		if (rl.lrVal.isBoogieBool) {
-			rlToInt = new ResultExpression(ConvExpr.boolToInt(loc, (RValue) rl.lrVal));
+			rlToInt = new ResultExpression(ConvExpr.boolToInt(loc, (RValue) rl.lrVal, expressionTranslation));
 			rlToInt.addAll(rl);
 		} else {
 			rlToInt = rl;

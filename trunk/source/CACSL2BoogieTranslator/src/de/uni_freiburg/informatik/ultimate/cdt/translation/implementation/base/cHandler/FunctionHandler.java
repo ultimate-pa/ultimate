@@ -25,6 +25,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.C
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.MainDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.PRDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TypeHandler;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.ExpressionTranslation.AExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.SymbolTableValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.SymbolTableValue.StorageClass;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
@@ -130,11 +131,15 @@ public class FunctionHandler {
 	 * the function pointer calls that can happen.
 	 */
 	LinkedHashSet<CFunction> functionSignaturesThatHaveAFunctionPointer;
+	
+	private final AExpressionTranslation m_ExpressionTranslation;
 
 	/**
 	 * Constructor.
+	 * @param expressionTranslation 
 	 */
-	public FunctionHandler() {
+	public FunctionHandler(AExpressionTranslation expressionTranslation) {
+		this.m_ExpressionTranslation = expressionTranslation;
 		this.callGraph = new LinkedHashMap<String, LinkedHashSet<String>>();
 		this.currentProcedureIsVoid = false;
 		this.modifiedGlobals = new LinkedHashMap<String, LinkedHashSet<String>>();
@@ -393,7 +398,7 @@ public class FunctionHandler {
 		} else if (node.getReturnValue() != null) {
 			ResultExpression exprResult = ((ResultExpression) main.dispatch(node.getReturnValue()))
 					.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
-			exprResult = ConvExpr.rexBoolToIntIfNecessary(loc, exprResult);
+			exprResult = ConvExpr.rexBoolToIntIfNecessary(loc, exprResult, m_ExpressionTranslation);
 
 			// do some implicit casts
 			CType functionResultType = this.procedureToCFunctionType.get(currentProcedure.getIdentifier())
@@ -685,7 +690,7 @@ public class FunctionHandler {
 				// bool/int conversion
 				if (expectedParamType instanceof CPrimitive
 						&& ((CPrimitive) expectedParamType).getGeneralType() == GENERALPRIMITIVE.INTTYPE) {
-					in = ConvExpr.rexBoolToIntIfNecessary(loc, in);
+					in = ConvExpr.rexBoolToIntIfNecessary(loc, in, m_ExpressionTranslation);
 				}
 				// implicit casts
 				in.lrVal = main.cHandler.castToType(loc, (RValue) in.lrVal, expectedParamType);

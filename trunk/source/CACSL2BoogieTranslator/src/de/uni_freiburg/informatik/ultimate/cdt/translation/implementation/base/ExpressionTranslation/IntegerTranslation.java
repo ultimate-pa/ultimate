@@ -25,7 +25,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 
-public class IntegerTranslation extends AbstractExpressionTranslation {
+public class IntegerTranslation extends AExpressionTranslation {
 
 	public IntegerTranslation(TypeSizeConstants m_TypeSizeConstants, FunctionDeclarations functionDeclarations) {
 		super(m_TypeSizeConstants, functionDeclarations);

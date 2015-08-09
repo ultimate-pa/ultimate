@@ -10,7 +10,7 @@ import java.util.Map;
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.ExpressionTranslation.AbstractExpressionTranslation;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.ExpressionTranslation.AExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType.Type;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
@@ -58,11 +58,11 @@ public class InitializationHandler {
 
 	private final MemoryHandler mMemoryHandler;
 
-	private final AbstractExpressionTranslation mExpressionTranslation;	
+	private final AExpressionTranslation mExpressionTranslation;	
 
 	public InitializationHandler(
 			FunctionHandler functionHandler, StructHandler structHandler,
-			MemoryHandler memoryHandler, AbstractExpressionTranslation expressionTranslation) {
+			MemoryHandler memoryHandler, AExpressionTranslation expressionTranslation) {
 		super();
 		this.mFunctionHandler = functionHandler;
 		this.mStructHandler = structHandler;
@@ -166,7 +166,7 @@ public class InitializationHandler {
 				if (initializer == null) {
 					rhs = mExpressionTranslation.constructLiteralForIntegerType(loc, (CPrimitive) lCType, BigInteger.ZERO);
 				} else {
-					initializer = ConvExpr.rexBoolToIntIfNecessary(loc, initializer);
+					initializer = ConvExpr.rexBoolToIntIfNecessary(loc, initializer, mExpressionTranslation);
 					rhs = initializer.lrVal.getValue();
 				}
 				break;
@@ -247,7 +247,7 @@ public class InitializationHandler {
 			if (initializer == null) {
 				rhs = new IntegerLiteral(loc, SFO.NR0);
 			} else {
-				initializer = ConvExpr.rexBoolToIntIfNecessary(loc, initializer);
+				initializer = ConvExpr.rexBoolToIntIfNecessary(loc, initializer, mExpressionTranslation);
 				rhs = initializer.lrVal.getValue();
 			}		
 			lrVal = new RValue(rhs, lCType);
@@ -301,7 +301,7 @@ public class InitializationHandler {
 				if (initializer == null) {
 					rhs = mExpressionTranslation.constructLiteralForIntegerType(loc, (CPrimitive) lCType, BigInteger.ZERO);
 				} else {
-					initializer = ConvExpr.rexBoolToIntIfNecessary(loc, initializer);
+					initializer = ConvExpr.rexBoolToIntIfNecessary(loc, initializer, mExpressionTranslation);
 					rhs = initializer.lrVal.getValue();
 				}
 				break;
@@ -447,7 +447,7 @@ public class InitializationHandler {
 			if (initializer == null) {
 				rhs = new IntegerLiteral(loc, SFO.NR0);
 			} else {
-				initializer = ConvExpr.rexBoolToIntIfNecessary(loc, initializer);
+				initializer = ConvExpr.rexBoolToIntIfNecessary(loc, initializer, mExpressionTranslation);
 				rhs = initializer.lrVal.getValue();
 			}		
 			if (onHeap) {

@@ -32,12 +32,12 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 
-public abstract class AbstractExpressionTranslation {
+public abstract class AExpressionTranslation {
 	
 	protected final FunctionDeclarations m_FunctionDeclarations;
 	protected final TypeSizeConstants m_TypeSizeConstants;
 
-	public AbstractExpressionTranslation(TypeSizeConstants typeSizeConstants, FunctionDeclarations functionDeclarations) {
+	public AExpressionTranslation(TypeSizeConstants typeSizeConstants, FunctionDeclarations functionDeclarations) {
 		super();
 		this.m_TypeSizeConstants = typeSizeConstants;
 		this.m_FunctionDeclarations = functionDeclarations;

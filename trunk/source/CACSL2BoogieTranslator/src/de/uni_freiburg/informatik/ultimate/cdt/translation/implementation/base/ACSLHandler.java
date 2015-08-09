@@ -16,7 +16,7 @@ import org.eclipse.cdt.core.dom.ast.IASTNode;
 import org.eclipse.cdt.internal.core.dom.parser.c.CArrayType;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.ExpressionTranslation.AbstractExpressionTranslation;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.ExpressionTranslation.AExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.SymbolTableValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
@@ -336,7 +336,7 @@ public class ACSLHandler implements IACSLHandler {
             	return new ResultExpression(stmt, new RValue(new UnaryExpression(loc, UnaryExpression.Operator.LOGICNEG, res.lrVal.getValue()), res.lrVal.cType), decl, auxVars, overappr);
                 //return new Result(new UnaryExpression(loc, UnaryExpression.Operator.LOGICNEG, expr));
             case MINUS:
-            	AbstractExpressionTranslation expressionTranslation = 
+            	AExpressionTranslation expressionTranslation = 
     				((CHandler) main.cHandler).getExpressionTranslation();
             	Expression expr = expressionTranslation.unaryMinusForInts(loc, res.lrVal.getValue(), res.lrVal.cType);
                 return new ResultExpression(stmt, new RValue(expr, res.lrVal.cType), decl, auxVars, overappr);
@@ -361,7 +361,7 @@ public class ACSLHandler implements IACSLHandler {
                 new de.uni_freiburg.informatik.ultimate.model.boogie.ast.IntegerLiteral(
                         LocationFactory.createACSLLocation(node), node.getValue()));
         */
-    	AbstractExpressionTranslation expressionTranslation = 
+    	AExpressionTranslation expressionTranslation = 
     			((CHandler) main.cHandler).getExpressionTranslation();
     	ILocation loc = LocationFactory.createACSLLocation(node);
     	String val = node.getValue();
