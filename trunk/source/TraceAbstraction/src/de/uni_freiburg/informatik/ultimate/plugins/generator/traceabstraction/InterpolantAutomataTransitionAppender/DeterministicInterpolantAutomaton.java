@@ -69,6 +69,9 @@ public class DeterministicInterpolantAutomaton extends BasicAbstractInterpolantA
 				predicateUnifier, 
 				interpolantAutomaton, logger);
 		m_ConservativeSuccessorCandidateSelection = conservativeSuccessorCandidateSelection;
+		if (m_ConservativeSuccessorCandidateSelection && m_Cannibalize) {
+			throw new IllegalArgumentException("ConservativeSuccessorCandidateSelection and Cannibalize are incompatible");
+		}
 		Collection<IPredicate> allPredicates;
 		if (m_Cannibalize ) {
 			allPredicates = m_PredicateUnifier.cannibalizeAll(m_SplitNumericEqualities, interpolantAutomaton.getStates().toArray(new IPredicate[0]));
