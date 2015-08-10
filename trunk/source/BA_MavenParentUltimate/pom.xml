@@ -242,7 +242,7 @@
 		<module>../WitnessParser</module>
 		<module>../BoogieProcedureInliner</module>
 		<module>../SpaceExParser</module>
-		
+		<module>../AbstractInterpretationV2</module>
 	</modules>
 
 	<profiles>
