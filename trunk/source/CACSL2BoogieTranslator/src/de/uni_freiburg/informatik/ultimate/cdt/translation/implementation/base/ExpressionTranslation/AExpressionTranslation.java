@@ -10,7 +10,7 @@ import org.eclipse.cdt.core.dom.ast.IASTLiteralExpression;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FunctionDeclarations;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.MemoryHandler;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.TypeSizeConstants;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.TypeSizes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.PRIMITIVE;
@@ -35,9 +35,9 @@ import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 public abstract class AExpressionTranslation {
 	
 	protected final FunctionDeclarations m_FunctionDeclarations;
-	protected final TypeSizeConstants m_TypeSizeConstants;
+	protected final TypeSizes m_TypeSizeConstants;
 
-	public AExpressionTranslation(TypeSizeConstants typeSizeConstants, FunctionDeclarations functionDeclarations) {
+	public AExpressionTranslation(TypeSizes typeSizeConstants, FunctionDeclarations functionDeclarations) {
 		super();
 		this.m_TypeSizeConstants = typeSizeConstants;
 		this.m_FunctionDeclarations = functionDeclarations;

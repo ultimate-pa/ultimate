@@ -16,6 +16,7 @@ import org.eclipse.cdt.core.dom.ast.IType;
 
 import de.uni_freiburg.informatik.ultimate.cdt.decorator.DecoratorNode;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.NextACSL;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.TypeSizes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
@@ -94,12 +95,17 @@ public abstract class Dispatcher {
 	 */
 	protected final CACSL2BoogieBacktranslator backtranslator;
 	protected final IUltimateServiceProvider mServices;
+	
+
+	private final TypeSizes m_TypeSizes;
 
 	public Dispatcher(CACSL2BoogieBacktranslator backtranslator, IUltimateServiceProvider services, Logger logger) {
 		this.backtranslator = backtranslator;
 		mLogger = logger;
 		mServices = services;
-		mPreferences= new UltimatePreferenceStore(Activator.s_PLUGIN_ID);
+		mPreferences = new UltimatePreferenceStore(Activator.s_PLUGIN_ID);
+
+		m_TypeSizes = new TypeSizes(mPreferences);
 	}
 
 	/**
@@ -298,4 +304,10 @@ public abstract class Dispatcher {
 	public LinkedHashMap<String,Integer> getFunctionToIndex() {
 		return mFunctionToIndex;
 	}
+
+	public TypeSizes getTypeSizes() {
+		return m_TypeSizes;
+	}
+	
+	
 }

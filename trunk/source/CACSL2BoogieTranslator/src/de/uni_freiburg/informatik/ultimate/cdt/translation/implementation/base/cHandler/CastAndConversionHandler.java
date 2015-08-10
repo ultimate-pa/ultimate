@@ -166,7 +166,7 @@ public class CastAndConversionHandler {
 	
 	public static void doIntOverflowTreatment(Dispatcher main, MemoryHandler memoryHandler, ILocation loc,
 			ResultExpression rex, CType targetType) {
-		BigInteger maxValuePlusOne = getMaxValueOfPrimitiveType(memoryHandler, targetType).add(BigInteger.ONE);
+		BigInteger maxValuePlusOne = getMaxValueOfPrimitiveType(main.getTypeSizes(), targetType).add(BigInteger.ONE);
 
 		if (main.cHandler.getUnsignedTreatment() == UNSIGNED_TREATMENT.ASSUME_ALL) {
 			AssumeStatement assumeGeq0 = new AssumeStatement(loc, new BinaryExpression(loc, BinaryExpression.Operator.COMPGEQ,
@@ -187,8 +187,8 @@ public class CastAndConversionHandler {
 	}
 
 	public static BigInteger getMaxValueOfPrimitiveType(
-			MemoryHandler memoryHandler, CType ulType) {
-		int byteSize = determineByteSize(memoryHandler, ulType);
+			TypeSizes typeSizes, CType ulType) {
+		int byteSize = determineByteSize(typeSizes, ulType);
 		BigInteger maxValue;
 		if (((CPrimitive) ulType).isUnsigned()) {
 			maxValue = new BigInteger("2").pow(byteSize * 8);
@@ -199,8 +199,8 @@ public class CastAndConversionHandler {
 		return maxValue;
 	}
 	public static BigInteger getMinValueOfPrimitiveType(
-			MemoryHandler memoryHandler, CType ulType) {
-		int byteSize = determineByteSize(memoryHandler, ulType);
+			TypeSizes typeSizes, CType ulType) {
+		int byteSize = determineByteSize(typeSizes, ulType);
 		BigInteger minValue;
 		if (((CPrimitive) ulType).isUnsigned()) {
 			minValue = BigInteger.ZERO;
@@ -210,14 +210,14 @@ public class CastAndConversionHandler {
 		return minValue;
 	}
 
-	private static int determineByteSize(MemoryHandler memoryHandler,
+	private static int determineByteSize(TypeSizes typeSizes,
 			CType ulType) {
 		int byteSize; 
 		if (ulType instanceof CEnum) {
-			byteSize = memoryHandler.typeSizeConstants.sizeOfEnumType;
+			byteSize = typeSizes.sizeOfEnumType;
 		} else {
 			//should be primitive
-			byteSize = memoryHandler.typeSizeConstants.getCPrimitiveToTypeSizeConstant()
+			byteSize = typeSizes.getCPrimitiveToTypeSizeConstant()
 				.get(((CPrimitive) ulType).getType());
 		}
 		return byteSize;

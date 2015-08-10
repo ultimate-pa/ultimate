@@ -9,7 +9,14 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer;
 
-public class TypeSizeConstants {
+/**
+ * Provides the information if we want to use fixed sizes for types.
+ * If yes an object of this class also provides the bytesize for each type.
+ * @author Matthias Heizmann
+ */
+public class TypeSizes {
+	private final boolean m_UseFixedTypeSizes;
+	
 	public final int sizeOfIntType;
 	public final int sizeOfPointerType;
 	public final int sizeOfFloatType;
@@ -51,7 +58,9 @@ public class TypeSizeConstants {
 		return Collections.unmodifiableMap(CPrimitiveToTypeSizeConstant);
 	}
 
-	public TypeSizeConstants(UltimatePreferenceStore ups) {
+	public TypeSizes(UltimatePreferenceStore ups) {
+		this. m_UseFixedTypeSizes = 
+				ups.getBoolean(CACSLPreferenceInitializer.LABEL_USE_EXPLICIT_TYPESIZES);
 		this.sizeOfVoidType = 
 				ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_VOID);
 		this.sizeOfBoolType = 
@@ -123,5 +132,10 @@ public class TypeSizeConstants {
 		CPrimitiveToTypeSizeConstant.put(PRIMITIVE.ULONGLONG, this.sizeOfULongLongType);
 		CPrimitiveToTypeSizeConstant.put(PRIMITIVE.USHORT, this.sizeOfUShortType);
 		CPrimitiveToTypeSizeConstant.put(PRIMITIVE.WCHAR, this.sizeOfWCharType);
+	}
+	
+
+	public boolean useFixedTypeSizes() {
+		return m_UseFixedTypeSizes;
 	}
 }

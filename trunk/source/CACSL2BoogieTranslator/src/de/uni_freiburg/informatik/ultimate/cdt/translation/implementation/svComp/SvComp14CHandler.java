@@ -20,6 +20,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.Locati
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.CastAndConversionHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.MemoryHandler;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.TypeSizes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType.Type;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
@@ -208,7 +209,7 @@ public class SvComp14CHandler extends CHandler {
 					case "long":
 					case "char":
 					case "short":
-						AssumeStatement inRange = constructAssumeInRangeStatement(loc, returnValue);
+						AssumeStatement inRange = constructAssumeInRangeStatement(main.getTypeSizes(), loc, returnValue);
 						stmt.add(inRange);
 					}
 				}
@@ -303,12 +304,13 @@ public class SvComp14CHandler extends CHandler {
 	/**
 	 * Returns "assume (minValue <= lrValue && lrValue <= maxValue)"
 	 */
-	private AssumeStatement constructAssumeInRangeStatement(ILocation loc,
+	private AssumeStatement constructAssumeInRangeStatement(TypeSizes typeSizes, 
+			ILocation loc,
 			LRValue lrValue) {
 		IntegerLiteral minValue = new IntegerLiteral(loc, CastAndConversionHandler.getMinValueOfPrimitiveType(
-				mMemoryHandler, lrValue.cType.getUnderlyingType()).toString());
+				typeSizes, lrValue.cType.getUnderlyingType()).toString());
 		IntegerLiteral maxValue = new IntegerLiteral(loc, CastAndConversionHandler.getMaxValueOfPrimitiveType(
-				mMemoryHandler, lrValue.cType.getUnderlyingType()).toString());
+				typeSizes, lrValue.cType.getUnderlyingType()).toString());
 		BinaryExpression biggerMinInt = new BinaryExpression(loc, 
 				BinaryExpression.Operator.COMPLEQ, minValue, lrValue.getValue());
 		BinaryExpression smallerMaxValue = new BinaryExpression(loc, 

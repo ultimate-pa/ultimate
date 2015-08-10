@@ -427,7 +427,7 @@ public class FunctionHandler {
 				String id = outParams[0].getIdentifiers()[0];
 				VariableLHS[] lhs = new VariableLHS[] { new VariableLHS(loc, id) };
 				RValue castExprResultRVal = main.cHandler
-						.castToType(loc, (RValue) exprResult.lrVal, functionResultType);
+						.castToType(loc, main.getTypeSizes(), (RValue) exprResult.lrVal, functionResultType);
 				stmt.add(new AssignmentStatement(loc, lhs, new Expression[] { castExprResultRVal.getValue() }));
 				// //assuming that we need no auxvars or overappr, here
 			}
@@ -693,7 +693,7 @@ public class FunctionHandler {
 					in = ConvExpr.rexBoolToIntIfNecessary(loc, in, m_ExpressionTranslation);
 				}
 				// implicit casts
-				in.lrVal = main.cHandler.castToType(loc, (RValue) in.lrVal, expectedParamType);
+				in.lrVal = main.cHandler.castToType(loc, main.getTypeSizes(), (RValue) in.lrVal, expectedParamType);
 			}
 			args.add(in.lrVal.getValue());
 			stmt.addAll(in.stmt);

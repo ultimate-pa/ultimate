@@ -54,6 +54,7 @@ import org.eclipse.cdt.internal.core.dom.parser.c.CASTDesignatedInitializer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.SymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.FunctionHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.InitializationHandler;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.TypeSizes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
@@ -594,7 +595,7 @@ public interface ICHandler extends IHandler {
 	 * Takes an RValue and a target type and returns the result of a cast of the RValue to the target
 	 * type as an RValue.
 	 */
-	public RValue castToType(ILocation loc, RValue lrVal,
+	public RValue castToType(ILocation loc, TypeSizes typeSizes, RValue lrVal,
 			CType functionResultType);
 
 	public InitializationHandler getInitHandler();

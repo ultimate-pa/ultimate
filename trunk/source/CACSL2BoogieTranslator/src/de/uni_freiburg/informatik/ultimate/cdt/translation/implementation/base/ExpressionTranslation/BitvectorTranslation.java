@@ -7,7 +7,7 @@ import org.eclipse.cdt.core.dom.ast.IASTLiteralExpression;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FunctionDeclarations;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.TypeSizeConstants;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.TypeSizes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.PRIMITIVE;
@@ -25,7 +25,7 @@ import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 
 public class BitvectorTranslation extends AExpressionTranslation {
 
-	public BitvectorTranslation(TypeSizeConstants m_TypeSizeConstants, FunctionDeclarations functionDeclarations) {
+	public BitvectorTranslation(TypeSizes m_TypeSizeConstants, FunctionDeclarations functionDeclarations) {
 		super(m_TypeSizeConstants, functionDeclarations);
 	}
 

@@ -5,7 +5,7 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util;
 
 import java.math.BigInteger;
 
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.TypeSizeConstants;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.TypeSizes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.PRIMITIVE;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
@@ -181,7 +181,7 @@ public final class ISOIEC9899TC3 {
 	 */
 	public static final RValue handleIntegerConstant(String valueWithSuffixes, ILocation loc, 
 			boolean bitvectorTranslation, 
-			TypeSizeConstants typeSizeConstants) {
+			TypeSizes typeSizeConstants) {
 		String valueAsString = valueWithSuffixes;
 		String suffix = "";
 		final CPrimitive cType;
@@ -257,7 +257,7 @@ public final class ISOIEC9899TC3 {
 
 	public static Expression constructLiteralForCIntegerLiteral(
 			ILocation loc, boolean bitvectorTranslation,
-			TypeSizeConstants typeSizeConstants, final CPrimitive cType,
+			TypeSizes typeSizeConstants, final CPrimitive cType,
 			BigInteger value) {
 		final Expression resultLiteral;
 		if (bitvectorTranslation) {

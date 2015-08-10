@@ -2,7 +2,7 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base;
 
 import java.util.LinkedHashMap;
 
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.TypeSizeConstants;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.TypeSizes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.PRIMITIVE;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
@@ -34,12 +34,12 @@ public class FunctionDeclarations {
 	 */
 	private final LinkedHashMap<String, FunctionDeclaration> m_DeclaredFunctions = new LinkedHashMap<String, FunctionDeclaration>();
 	private final ITypeHandler m_TypeHandler;
-	private final TypeSizeConstants m_TypeSizeConstants;
+	private final TypeSizes m_TypeSizeConstants;
 	private static final String s_BUILTIN_IDENTIFIER = "builtin";
 	
 	
 	public FunctionDeclarations(ITypeHandler typeHandler,
-			TypeSizeConstants typeSizeConstants) {
+			TypeSizes typeSizeConstants) {
 		super();
 		m_TypeHandler = typeHandler;
 		m_TypeSizeConstants = typeSizeConstants;

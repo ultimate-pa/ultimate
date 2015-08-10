@@ -157,8 +157,7 @@ public class MemoryHandler {
 	}
 	
 	//constants for the sizes of the base types
-	public boolean useConstantTypeSizes = true; //using this in CHandler, too (for pointer/int cast)
-	public TypeSizeConstants typeSizeConstants;
+	private final TypeSizes typeSizeConstants;
 	
 	/**
      * Cache for speeding up calculateSizeOfWithGivenTypeSizes, which is a bottleneck otherwise.
@@ -172,7 +171,8 @@ public class MemoryHandler {
      * Constructor.
      * @param checkPointerValidity 
      */
-    public MemoryHandler(FunctionHandler functionHandler, boolean checkPointerValidity) {
+    public MemoryHandler(FunctionHandler functionHandler, boolean checkPointerValidity, 
+    		TypeSizes typeSizes) {
     	m_functionHandler = functionHandler;
         this.sizeofConsts = new LinkedHashSet<String>();
         this.structOffSetConstants = new LinkedHashSet<String>();
@@ -183,7 +183,7 @@ public class MemoryHandler {
 		//read preferences from settings
 		UltimatePreferenceStore ups = new UltimatePreferenceStore(Activator.s_PLUGIN_ID);
 		
-		typeSizeConstants = new TypeSizeConstants(ups);
+		typeSizeConstants = typeSizes;
 
 		m_PointerBaseValidity = 
 				ups.getEnum(CACSLPreferenceInitializer.LABEL_CHECK_POINTER_VALIDITY, POINTER_CHECKMODE.class);
@@ -195,8 +195,6 @@ public class MemoryHandler {
 				ups.getBoolean(CACSLPreferenceInitializer.LABEL_CHECK_MallocNonNegative);
     	m_checkPointerSubtractionAndComparisonValidity = 
 				ups.getEnum(CACSLPreferenceInitializer.LABEL_CHECK_POINTER_SUBTRACTION_AND_COMPARISON_VALIDITY, POINTER_CHECKMODE.class);
-		useConstantTypeSizes =
-				ups.getBoolean(CACSLPreferenceInitializer.LABEL_USE_EXPLICIT_TYPESIZES);
 		
 		isIntArrayRequiredInMM = false;
 		isFloatArrayRequiredInMM = false;
@@ -468,8 +466,9 @@ public class MemoryHandler {
      * 
      * @param l the location.
      * @param t the type string.
+	 * @param useFixedTypeSizes 
      */
-    private void declareSizeOf(ILocation l, String t) {
+    private void declareSizeOf(ILocation l, String t, boolean useFixedTypeSizes) {
         String id = SFO.SIZEOF + t;
         if (sizeofConsts.contains(id)) {
             return;
@@ -479,7 +478,7 @@ public class MemoryHandler {
         constants.add(new ConstDeclaration(l, new Attribute[0], false,
                 new VarList(l, new String[] { id }, intType), null, false));
         Expression idex = new IdentifierExpression(l, id);
-        if (this.useConstantTypeSizes) {
+        if (useFixedTypeSizes) {
         //axiom #sizeof~t = 8	 (or another constant, dependent on the settings)
         	//TODO: add the missing cases to the switch
         	int value = 0;
@@ -541,7 +540,7 @@ public class MemoryHandler {
         	} else {
         		CtypeCompatibleId = typeName.toUpperCase();
         	}
-            declareSizeOf(loc, CtypeCompatibleId);
+            declareSizeOf(loc, CtypeCompatibleId, typeSizeConstants.useFixedTypeSizes());
             ASTType memoryType = new ArrayType(loc, new String[0],
                     new ASTType[] { POINTER_TYPE }, astType);
             VarList vlM = new VarList(loc, new String[] { SFO.MEMORY + "_"
@@ -1052,7 +1051,7 @@ public class MemoryHandler {
     }
     
     public Expression calculateSizeOf(CType cType, ILocation loc) {
-    	if (useConstantTypeSizes) {
+    	if (typeSizeConstants.useFixedTypeSizes()) {
     		if((cType instanceof CArray) && ((CArray) cType).isVariableLength()) {
     			return calculateSizeOfVarLengthArrayTypeWithGivenTypeSizes(loc, ((CArray) cType));
     		} else {

@@ -85,6 +85,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.c
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.MemoryHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.PostProcessor;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.StructHandler;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.TypeSizes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.SymbolTableValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.SymbolTableValue.StorageClass;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
@@ -318,12 +319,12 @@ public class CHandler implements ICHandler {
 		this.mArrayHandler = new ArrayHandler();
 		this.mStructHandler = new StructHandler();
 		boolean checkPointerValidity = main.mPreferences.getBoolean(CACSLPreferenceInitializer.LABEL_CHECK_POINTER_VALIDITY);
-		this.mMemoryHandler = new MemoryHandler(mFunctionHandler, checkPointerValidity);
+		this.mMemoryHandler = new MemoryHandler(mFunctionHandler, checkPointerValidity, main.getTypeSizes());
 		this.mPostProcessor = new PostProcessor(main, mLogger);
 		
 		this.mSymbolTable = new SymbolTable(main);
 		this.mFunctions = new LinkedHashMap<String, FunctionDeclaration>();
-		this.mFunctionDeclarations = new FunctionDeclarations(typeHandler, mMemoryHandler.typeSizeConstants);
+		this.mFunctionDeclarations = new FunctionDeclarations(typeHandler, main.getTypeSizes());
 		
 		this.mDeclarationsGlobalInBoogie = new LinkedHashMap<Declaration, CDeclaration>();
 		this.mAxioms = new LinkedHashSet<Axiom>();
@@ -338,9 +339,9 @@ public class CHandler implements ICHandler {
 		this.mGlobAcslExtractors = new ArrayList<>();
 		
 		if (bitvectorTranslation) {
-			m_ExpressionTranslation = new BitvectorTranslation(mMemoryHandler.typeSizeConstants, mFunctionDeclarations);
+			m_ExpressionTranslation = new BitvectorTranslation(main.getTypeSizes(), mFunctionDeclarations);
 		} else {
-			m_ExpressionTranslation = new IntegerTranslation(mMemoryHandler.typeSizeConstants, mFunctionDeclarations);
+			m_ExpressionTranslation = new IntegerTranslation(main.getTypeSizes(), mFunctionDeclarations);
 		}
 		this.mFunctionHandler = new FunctionHandler(m_ExpressionTranslation);
 		this.mInitHandler = new InitializationHandler(mFunctionHandler, mStructHandler, mMemoryHandler, m_ExpressionTranslation);
@@ -1337,10 +1338,10 @@ public class CHandler implements ICHandler {
 				// implicit casts
 				if (lType instanceof CPointer || rType instanceof CPointer) {
 					if (!(lType instanceof CPointer)) {
-						rlToInt.lrVal = castToType(loc, (RValue) rlToInt.lrVal, new CPointer(new CPrimitive(PRIMITIVE.VOID)));
+						rlToInt.lrVal = castToType(loc, main.getTypeSizes(), (RValue) rlToInt.lrVal, new CPointer(new CPrimitive(PRIMITIVE.VOID)));
 					}
 					if (!(rType instanceof CPointer)) {
-						rrToInt.lrVal = castToType(loc, (RValue) rrToInt.lrVal, new CPointer(new CPrimitive(PRIMITIVE.VOID)));
+						rrToInt.lrVal = castToType(loc, main.getTypeSizes(), (RValue) rrToInt.lrVal, new CPointer(new CPrimitive(PRIMITIVE.VOID)));
 					}
 				}
 				rval = new RValue(new BinaryExpression(loc, op, rlToInt.lrVal.getValue(), rrToInt.lrVal.getValue()),
@@ -1910,11 +1911,11 @@ public class CHandler implements ICHandler {
 				&& !((CPrimitive) rVal.cType).isUnsigned()) {
 			Check check = new Check(Spec.INTEGER_OVERFLOW);
 			AssertStatement smallerMaxInt = new AssertStatement(loc, new BinaryExpression(loc, BinaryExpression.Operator.COMPLT, rVal.getValue(), 
-					new IntegerLiteral(loc, CastAndConversionHandler.getMaxValueOfPrimitiveType(mMemoryHandler, rVal.cType.getUnderlyingType()).toString())));
+					new IntegerLiteral(loc, CastAndConversionHandler.getMaxValueOfPrimitiveType(main.getTypeSizes(), rVal.cType.getUnderlyingType()).toString())));
 			check.addToNodeAnnot(smallerMaxInt);
 			stmt.add(smallerMaxInt);
 			AssertStatement biggerMinInt = new AssertStatement(loc, new BinaryExpression(loc, BinaryExpression.Operator.COMPGEQ, rVal.getValue(), 
-					new IntegerLiteral(loc, CastAndConversionHandler.getMinValueOfPrimitiveType(mMemoryHandler, rVal.cType.getUnderlyingType()).negate().toString())));
+					new IntegerLiteral(loc, CastAndConversionHandler.getMinValueOfPrimitiveType(main.getTypeSizes(), rVal.cType.getUnderlyingType()).negate().toString())));
 			check.addToNodeAnnot(biggerMinInt);
 			stmt.add(biggerMinInt);
 		}
@@ -2413,7 +2414,7 @@ public class CHandler implements ICHandler {
 			}
 		}
 
-		expr.lrVal = castToType(loc, (RValue) expr.lrVal, newCType);
+		expr.lrVal = castToType(loc, main.getTypeSizes(), (RValue) expr.lrVal, newCType);
 
 		// String msg = "Ignored cast! At line: "
 		// + node.getFileLocation().getStartingLineNumber();
@@ -2672,7 +2673,7 @@ public class CHandler implements ICHandler {
 		RValue rightHandSide = rVal; //we may change the content of the right hand side later
 
 		//do implicit cast -- assume the types are compatible
-		rightHandSide = castToType(loc, rightHandSide, lrVal.cType);
+		rightHandSide = castToType(loc, main.getTypeSizes(), rightHandSide, lrVal.cType);
 		
 		//for wraparound --> and avoiding it for ints that store pointers
 		if (rightHandSide.isIntFromPointer) {
@@ -3662,12 +3663,12 @@ public class CHandler implements ICHandler {
 	}
 
 	@Override
-	public RValue castToType(ILocation loc, RValue rValIn, CType expectedTypeRaw) {
+	public RValue castToType(ILocation loc, TypeSizes typeSizes, RValue rValIn, CType expectedTypeRaw) {
 		CType expectedType = expectedTypeRaw.getUnderlyingType();
 		
 		RValue rVal = new RValue(rValIn); //better make a new one, right??
 
-		BigInteger maxPtrValue = new BigInteger("2").pow(mMemoryHandler.typeSizeConstants.sizeOfPointerType * 8);
+		BigInteger maxPtrValue = new BigInteger("2").pow(typeSizes.sizeOfPointerType * 8);
 		IntegerLiteral max_Pointer = new IntegerLiteral(loc, maxPtrValue.toString());
 		// cast pointer -> integer/other pointer
 		CType rValUlType = rVal.cType.getUnderlyingType();
@@ -3676,7 +3677,7 @@ public class CHandler implements ICHandler {
 			if (expectedType instanceof CPrimitive &&
 					((CPrimitive) expectedType).getGeneralType() == GENERALPRIMITIVE.INTTYPE) {
 				Expression e = null;
-				if (mMemoryHandler.useConstantTypeSizes) {
+				if (typeSizes.useFixedTypeSizes()) {
 					e = createArithmeticExpression(IASTBinaryExpression.op_plus,
 							createArithmeticExpression(IASTBinaryExpression.op_multiply, 
 									MemoryHandler.getPointerBaseAddress(rVal.getValue(),  loc), 
@@ -3700,7 +3701,7 @@ public class CHandler implements ICHandler {
 			if (cprim.getGeneralType() == GENERALPRIMITIVE.INTTYPE) {
 				if (expectedType instanceof CPointer) {// cast integer -> pointer
 					Expression e = null;
-					if (mMemoryHandler.useConstantTypeSizes) {
+					if (typeSizes.useFixedTypeSizes()) {
 						e = MemoryHandler.constructPointerFromBaseAndOffset(
 								createArithmeticExpression(IASTBinaryExpression.op_divide,
 										rVal.getValue(),

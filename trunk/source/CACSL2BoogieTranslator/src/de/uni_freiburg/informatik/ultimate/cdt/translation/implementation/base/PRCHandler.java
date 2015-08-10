@@ -117,7 +117,7 @@ public class PRCHandler extends CHandler {
 		this.mArrayHandler = new ArrayHandler();
 		this.mFunctionHandler = new PRFunctionHandler(m_ExpressionTranslation);
 		this.mStructHandler = new StructHandler();
-		this.mMemoryHandler = new MemoryHandler(mFunctionHandler, false);
+		this.mMemoryHandler = new MemoryHandler(mFunctionHandler, false, main.getTypeSizes());
 		this.mSymbolTable = new SymbolTable(main);
 		this.mFunctions = new LinkedHashMap<String, FunctionDeclaration>();
 		this.mContract = new ArrayList<ACSLNode>();
@@ -535,7 +535,7 @@ public class PRCHandler extends CHandler {
 		CType newCType = declResult.getDeclarations().get(0).getType();
 		mCurrentDeclaredTypes.pop();
 		
-		expr.lrVal = castToType(loc, (RValue) expr.lrVal, newCType);
+		expr.lrVal = castToType(loc, main.getTypeSizes(), (RValue) expr.lrVal, newCType);
 
 		// String msg = "Ignored cast! At line: "
 		// + node.getFileLocation().getStartingLineNumber();

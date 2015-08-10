@@ -125,7 +125,7 @@ public class PostProcessor {
 		decl.addAll(declareFunctionPointerProcedures(main, functionHandler, memoryHandler, structHandler));
 		decl.addAll(declareConversionFunctions(main, functionHandler, memoryHandler, structHandler));
 		if (!typeHandler.useIntForAllIntegerTypes()) {
-			decl.addAll(declarePrimitiveDataTypeSynonyms(loc, memoryHandler, typeHandler));
+			decl.addAll(declarePrimitiveDataTypeSynonyms(loc, main.getTypeSizes(), typeHandler));
 		}
 		return decl;
 	}
@@ -469,7 +469,7 @@ public class PostProcessor {
 	}
 	
 	private ArrayList<Declaration> declarePrimitiveDataTypeSynonyms(ILocation loc, 
-			MemoryHandler memoryHandler, TypeHandler typeHandler) {
+			TypeSizes typeSizes, TypeHandler typeHandler) {
 		ArrayList<Declaration> decls = new ArrayList<Declaration>();
 		for (CPrimitive.PRIMITIVE cPrimitive: CPrimitive.PRIMITIVE.values()) {
 			CPrimitive cPrimitiveO = new CPrimitive(cPrimitive);
@@ -477,7 +477,7 @@ public class PostProcessor {
 				Attribute[] attributes = new Attribute[2];
 				attributes[0] = new NamedAttribute(loc, "isUnsigned", 
 						new Expression[]{ new BooleanLiteral(loc, cPrimitiveO.isUnsigned())});
-				int bytesize = memoryHandler.typeSizeConstants.getCPrimitiveToTypeSizeConstant().get(cPrimitive);
+				int bytesize = typeSizes.getCPrimitiveToTypeSizeConstant().get(cPrimitive);
 				int bitsize = bytesize * 8;
 				attributes[1] = new NamedAttribute(loc, "bitsize", 
 						new Expression[]{ new IntegerLiteral(loc, String.valueOf(bitsize))});
