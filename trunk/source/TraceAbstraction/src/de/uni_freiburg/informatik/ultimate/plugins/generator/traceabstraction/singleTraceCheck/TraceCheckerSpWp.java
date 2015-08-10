@@ -357,8 +357,8 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 			LiveVariables lvar = new LiveVariables(m_Nsb.getVariable2Constant(), m_Nsb.getConstants2BoogieVar(),
 					m_Nsb.getIndexedVarRepresentative(), m_SmtManager, m_ModifiedGlobals);
 			relevantVarsToUseForFPBP = lvar.getLiveVariables();
-			RelevantVariables rvar = new RelevantVariables(rtf, m_ModifiedGlobals);
-			rvar.toString();
+//			RelevantVariables rvar = new RelevantVariables(rtf, m_ModifiedGlobals);
+//			rvar.toString();
 		} else {
 			RelevantVariables rvar = new RelevantVariables(rtf, m_ModifiedGlobals);
 			relevantVarsToUseForFPBP = rvar.getRelevantVariables();
@@ -368,7 +368,7 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 
 		if (m_ComputeInterpolantsFp) {
 			mLogger.debug("Computing forward relevant predicates...");
-			computeForwardRelevantPredicates(relevantVarsToUseForFPBP, rtf, trace, tracePrecondition, m_LiveVariables,
+			computeForwardRelevantPredicates(relevantVarsToUseForFPBP, rtf, trace, tracePrecondition, true,
 					numberOfQuantifiedPredicates);
 			mLogger.debug("Checking inductivity of forward relevant predicates...");
 //			if (!TraceCheckerUtils.checkInterpolantsInductivityForward(m_InterpolantsFp, 
@@ -400,7 +400,7 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 		if (m_ComputeInterpolantsBp) {
 			mLogger.debug("Computing backward relevant predicates...");
 			computeBackwardRelevantPredicates(relevantVarsToUseForFPBP, rtf, trace, tracePostcondition,
-					m_LiveVariables, numberOfQuantifiedPredicates);
+					true, numberOfQuantifiedPredicates);
 			mLogger.debug("Checking inductivity of backward relevant predicates...");
 			assert TraceCheckerUtils.checkInterpolantsInductivityBackward(m_InterpolantsBp, 
 					trace, tracePrecondition, tracePostcondition, m_PendingContexts, "BP", 
