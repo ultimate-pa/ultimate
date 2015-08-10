@@ -186,23 +186,18 @@ public abstract class AMinimizeNwa<LETTER, STATE>
 	
 	/**
 	 * This method checks whether the automaton is a finite automaton.
-	 * That means, it must not contain any call and return transitions.
+	 * That means it must not contain any call and return letter.
 	 * 
 	 * NOTE: Return transitions would not do any harm when no call transitions
 	 *       exist, but they are considered bad nevertheless.
+	 * NOTE: The method checks something stronger, namely that the respective
+	 *       alphabets are empty.
 	 * 
-	 * @return true iff automaton contains no call and return transitions
+	 * @return true iff automaton contains no call and return letters
 	 */
 	protected final boolean checkForFiniteAutomaton() {
-		for (final STATE state : m_operand.getStates()) {
-			if (m_operand.callSuccessors(state).iterator().hasNext()) {
-				return false;
-			}
-			if (m_operand.returnSuccessors(state).iterator().hasNext()) {
-				return false;
-			}
-		}
-		return true;
+		return ((m_operand.getCallAlphabet().size() == 0) &&
+				(m_operand.getReturnAlphabet().size() == 0));
 	}
 	
 	/**
