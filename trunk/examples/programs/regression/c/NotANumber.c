@@ -6,7 +6,7 @@
 //Date: 30. July 2012
 //Author: Markus Lindenmann
 //
-// heavily modified my Matthias at 06.03.2014, because orifinal example violated
+// heavily modified my Matthias at 06.03.2014, because original example violated
 // C99 standard
 //
 

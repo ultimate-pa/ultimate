@@ -3,6 +3,8 @@
 // Date: 15.12.2014
 // Integer division in C.
 
+#include <stdio.h>
+
 int main() {
    int divident;
    int divRes;
