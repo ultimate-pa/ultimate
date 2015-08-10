@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 import org.eclipse.cdt.core.dom.ast.IASTLiteralExpression;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
@@ -22,6 +23,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.I
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Attribute;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
@@ -85,6 +87,17 @@ public abstract class AExpressionTranslation {
 	public abstract Expression constructBinaryComparisonExpression(ILocation loc, int nodeOperator, Expression exp1, CPrimitive type1, Expression exp2, CPrimitive type2);
 	public abstract Expression constructBinaryBitwiseShiftExpression(ILocation loc, int nodeOperator, Expression exp1, CPrimitive type1, Expression exp2, CPrimitive type2);
 	public abstract Expression createArithmeticExpression(int op, Expression left, CPrimitive typeLeft, Expression right, CPrimitive typeRight, ILocation loc);
+	
+	
+	protected Expression constructBinaryEqualsExpression(ILocation loc, int nodeOperator, Expression exp1, CPrimitive type1, Expression exp2, CPrimitive type2) {
+		if (nodeOperator == IASTBinaryExpression.op_equals) {
+			return new BinaryExpression(loc, BinaryExpression.Operator.COMPEQ, exp1, exp2);
+		} else 	if (nodeOperator == IASTBinaryExpression.op_notequals) {
+			return new BinaryExpression(loc, BinaryExpression.Operator.COMPNEQ, exp1, exp2);
+		} else {
+			throw new IllegalArgumentException("operator is neither equals nor not equals");
+		}
+	}
 	
 	public abstract RValue translateIntegerLiteral(ILocation loc, String val);
 	

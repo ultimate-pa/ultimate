@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Stack;
 
+import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionDefinition;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 import org.eclipse.cdt.internal.core.dom.parser.c.CArrayType;
@@ -94,7 +95,7 @@ import de.uni_freiburg.informatik.ultimate.result.Check;
  * @date 28.02.2012
  */
 public class ACSLHandler implements IACSLHandler {
-
+	
     /**
      * To determine the right names, we need to know where we are in the
      * specification.
@@ -123,8 +124,10 @@ public class ACSLHandler implements IACSLHandler {
      * Holds the spec type, which we need later in the code.
      */
     private ACSLHandler.SPEC_TYPE specType = ACSLHandler.SPEC_TYPE.NOT;
+    
+    
 
-    /**
+	/**
      * @deprecated is not supported in this handler! Do not use!
      */
     @Override
@@ -245,6 +248,72 @@ public class ACSLHandler implements IACSLHandler {
                 return null;
         }
     }
+    
+    /**
+     * Translates operator of ACSL binary expression to operator of binary
+     * expression in the C AST.
+     */
+    private int getCASTBinaryExprOperator(
+            de.uni_freiburg.informatik.ultimate.model.acsl.ast.BinaryExpression.Operator op) {
+    	final int result;
+        switch (op) {
+		case ARITHDIV:
+			return IASTBinaryExpression.op_divide;
+		case ARITHMINUS:
+			return IASTBinaryExpression.op_minus;
+		case ARITHMOD:
+			return IASTBinaryExpression.op_modulo;
+		case ARITHMUL:
+			return IASTBinaryExpression.op_multiply;
+		case ARITHPLUS:
+			return IASTBinaryExpression.op_plus;
+		case BITAND:
+			break;
+		case BITIFF:
+			break;
+		case BITIMPLIES:
+			break;
+		case BITOR:
+			break;
+		case BITVECCONCAT:
+			break;
+		case BITXOR:
+			break;
+		case COMPEQ:
+			return IASTBinaryExpression.op_equals;
+		case COMPGEQ:
+			return IASTBinaryExpression.op_greaterEqual;
+		case COMPGT:
+			return IASTBinaryExpression.op_greaterThan;
+		case COMPLEQ:
+			return IASTBinaryExpression.op_lessEqual;
+		case COMPLT:
+			return IASTBinaryExpression.op_lessThan;
+		case COMPNEQ:
+			return IASTBinaryExpression.op_notequals;
+		case COMPPO:
+			break;
+		case LOGICAND:
+			return IASTBinaryExpression.op_logicalAnd;
+		case LOGICIFF:
+			break;
+		case LOGICIMPLIES:
+			break;
+		case LOGICOR:
+			return IASTBinaryExpression.op_logicalOr;
+		case LOGICXOR:
+			break;
+		case LTLRELEASE:
+			break;
+		case LTLUNTIL:
+			break;
+		case LTLWEAKUNTIL:
+			break;
+		default:
+			break;
+        }
+        throw new IllegalArgumentException("don't know equivalent C operator");
+    }
 
     @Override
     public Result visit(
@@ -278,33 +347,81 @@ public class ACSLHandler implements IACSLHandler {
 //        	//convert to boolean if neccessary
 //            right = ConvExpr.toBoolean(loc, right);
 //        }
-        Operator op = getBoogieBinaryExprOperator(node.getOperator());
-        if (op != null) {
-        	BinaryExpression be = new BinaryExpression(loc, op, left.lrVal.getValue(), right.lrVal.getValue());
-        	// TODO: Handle Ctype
-            return new ResultExpression(stmt, new RValue(be, new CPrimitive(PRIMITIVE.INT)), decl, auxVars, overappr);
-            //return new Result(new BinaryExpression(loc, op, left, right));
-        }
+
+       AExpressionTranslation expressionTranslation = 
+    		   ((CHandler) main.cHandler).getExpressionTranslation();
+
         switch (node.getOperator()) {
-            case LOGICXOR:
-                // translate into (l | r)
-                // where l = left & !right
-                UnaryExpression notRight = new UnaryExpression(loc,
-                        UnaryExpression.Operator.LOGICNEG, right.lrVal.getValue());
-                BinaryExpression l = new BinaryExpression(loc,
-                        Operator.LOGICAND, left.lrVal.getValue(), notRight);
-                // and r = !left & right
-                UnaryExpression notLeft = new UnaryExpression(loc,
-                        UnaryExpression.Operator.LOGICNEG, left.lrVal.getValue());
-                BinaryExpression r = new BinaryExpression(loc,
-                        Operator.LOGICAND, notLeft, right.lrVal.getValue());
-                return new ResultExpression(stmt, new RValue(new BinaryExpression(loc, Operator.LOGICOR, l, r), new CPrimitive(PRIMITIVE.INT)), decl, auxVars, overappr);
-                //return new Result(new BinaryExpression(loc, Operator.LOGICOR, l, r));
-            case BITAND:
-            case BITIFF:
-            case BITIMPLIES:
-            case BITOR:
-            case BITXOR:
+		case ARITHDIV:
+		case ARITHMINUS:
+		case ARITHMOD:
+		case ARITHMUL:
+		case ARITHPLUS:
+		{
+			Expression expr = expressionTranslation.createArithmeticExpression(
+					getCASTBinaryExprOperator(node.getOperator()), 
+					left.lrVal.getValue(), (CPrimitive) left.lrVal.cType, 
+					right.lrVal.getValue(), (CPrimitive) right.lrVal.cType, loc);
+			CType type = new CPrimitive(PRIMITIVE.INT);
+			return new ResultExpression(stmt, new RValue(expr, type), decl, auxVars, overappr);
+			
+		}
+		case COMPEQ:
+		case COMPGEQ:
+		case COMPGT:
+		case COMPLEQ:
+		case COMPLT:
+		case COMPNEQ:
+		{
+			Expression expr = expressionTranslation.constructBinaryComparisonExpression(loc,
+					getCASTBinaryExprOperator(node.getOperator()), 
+					left.lrVal.getValue(), (CPrimitive) left.lrVal.cType, 
+					right.lrVal.getValue(), (CPrimitive) right.lrVal.cType);
+			CType type = new CPrimitive(PRIMITIVE.INT);
+			return new ResultExpression(stmt, new RValue(expr, type), decl, auxVars, overappr);
+			
+		}
+		case LOGICAND:
+		case LOGICIFF:
+		case LOGICIMPLIES:
+		case LOGICOR:
+		{
+	        Operator op = getBoogieBinaryExprOperator(node.getOperator());
+	        if (op != null) {
+	        	BinaryExpression be = new BinaryExpression(loc, op, left.lrVal.getValue(), right.lrVal.getValue());
+	        	// TODO: Handle Ctype
+	            return new ResultExpression(stmt, new RValue(be, new CPrimitive(PRIMITIVE.INT)), decl, auxVars, overappr);
+	            //return new Result(new BinaryExpression(loc, op, left, right));
+	        }
+		}
+        
+        case LOGICXOR:
+        	// translate into (l | r)
+        	// where l = left & !right
+        	UnaryExpression notRight = new UnaryExpression(loc,
+        			UnaryExpression.Operator.LOGICNEG, right.lrVal.getValue());
+        	BinaryExpression l = new BinaryExpression(loc,
+        			Operator.LOGICAND, left.lrVal.getValue(), notRight);
+        	// and r = !left & right
+        	UnaryExpression notLeft = new UnaryExpression(loc,
+        			UnaryExpression.Operator.LOGICNEG, left.lrVal.getValue());
+        	BinaryExpression r = new BinaryExpression(loc,
+        			Operator.LOGICAND, notLeft, right.lrVal.getValue());
+        	return new ResultExpression(stmt, new RValue(new BinaryExpression(loc, Operator.LOGICOR, l, r), new CPrimitive(PRIMITIVE.INT)), decl, auxVars, overappr);
+        	//return new Result(new BinaryExpression(loc, Operator.LOGICOR, l, r));
+        case BITAND:
+        case BITIFF:
+        case BITIMPLIES:
+        case BITOR:
+        case BITXOR:
+        	
+		case BITVECCONCAT:
+		case COMPPO:
+		
+			
+		case LTLRELEASE:
+		case LTLUNTIL:
+		case LTLWEAKUNTIL:
             default:
                 String msg = "Unknown or unsupported binary operation: "
                         + node.getOperator();
