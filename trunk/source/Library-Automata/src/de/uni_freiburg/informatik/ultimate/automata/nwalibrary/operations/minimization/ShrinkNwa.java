@@ -4025,7 +4025,6 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 								succs.add(oldSucc);
 							}
 							isNew = succs.add(succ);
-							isNew = succs.add(succ);
 						}
 						if (isNew) {
 							final OutgoingCallTransition<LETTER, STATE>
