@@ -107,7 +107,7 @@ public class BitvectorTranslationTest extends AbstractTraceAbstractionTestSuite 
 	 */
 	@Override
 	public long getTimeout() {
-		return 30 * 1000;
+		return 10 * 1000;
 	}
 	
 	private static final String[] m_BoogieToolchains = {
