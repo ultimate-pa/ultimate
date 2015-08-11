@@ -3519,6 +3519,10 @@ public class CHandler implements ICHandler {
 		String enumId = cEnum.getIdentifier();
 		Expression oldValue = null;
 		Expression[] enumDomain = new Expression[cEnum.getFieldCount()];
+		
+		// C standard says: "The identifiers in an enumerator list are declared 
+		// as constants that have type int ..."
+		CPrimitive typeOfEnumIdentifiers = new CPrimitive(CPrimitive.PRIMITIVE.INT);
 
 		//ResultDeclaration result = new ResultDeclaration();
 		for (int i = 0; i < cEnum.getFieldCount(); i++) {
@@ -3530,9 +3534,16 @@ public class CHandler implements ICHandler {
 			Expression l = new IdentifierExpression(loc, bId);
 			Expression newValue = oldValue;
 			if (oldValue == null && cEnum.getFieldValue(fId) == null) {
-				newValue = new IntegerLiteral(loc, SFO.NR0);
+				Expression zero = m_ExpressionTranslation.constructLiteralForIntegerType(
+						loc, typeOfEnumIdentifiers, BigInteger.ZERO);
+				newValue = zero;  
+						
+						new IntegerLiteral(loc, SFO.NR0);
 			} else if (cEnum.getFieldValue(fId) == null) {
-				newValue = createArithmeticExpression(IASTBinaryExpression.op_plus, oldValue, new IntegerLiteral(loc, SFO.NR1), loc);
+				Expression one = m_ExpressionTranslation.constructLiteralForIntegerType(
+						loc, typeOfEnumIdentifiers, BigInteger.ONE);
+				newValue = m_ExpressionTranslation.createArithmeticExpression(
+						IASTBinaryExpression.op_plus, oldValue, typeOfEnumIdentifiers, one, typeOfEnumIdentifiers, loc); 
 			} else {
 				newValue = cEnum.getFieldValue(fId);
 			}
