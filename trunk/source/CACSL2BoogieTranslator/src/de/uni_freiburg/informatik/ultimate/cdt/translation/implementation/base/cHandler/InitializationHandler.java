@@ -445,7 +445,8 @@ public class InitializationHandler {
 			}
 		} else if (lCType instanceof CEnum) {
 			if (initializer == null) {
-				rhs = new IntegerLiteral(loc, SFO.NR0);
+				rhs = mExpressionTranslation.constructLiteralForIntegerType(loc, 
+						new CPrimitive(CPrimitive.PRIMITIVE.INT), BigInteger.ZERO);
 			} else {
 				initializer = ConvExpr.rexBoolToIntIfNecessary(loc, initializer, mExpressionTranslation);
 				rhs = initializer.lrVal.getValue();

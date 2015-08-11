@@ -34,6 +34,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CNamed;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.PRIMITIVE;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStruct;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CUnion;
@@ -52,6 +53,8 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.IT
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayType;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BitvecLiteral;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.NamedType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.PrimitiveType;
@@ -147,7 +150,7 @@ public class TypeHandler implements ITypeHandler {
     @Override
     public Result visit(Dispatcher main, IASTSimpleDeclSpecifier node) {
         ResultTypes result;
-        CType cvar = new CPrimitive(node);
+        CPrimitive cvar = new CPrimitive(node);
         // we have model.boogie.ast.PrimitiveType, which should
         // only contain BOOL, INT, REAL ...
         ILocation loc = LocationFactory.createCLocation(node);
@@ -168,7 +171,7 @@ public class TypeHandler implements ITypeHandler {
                 // so int is also a primitive type
                 // NOTE: in a extended implementation we should
                 // handle here different types of int (short, long,...)
-                result = (new ResultTypes(new PrimitiveType(loc, SFO.INT), node.isConst(), false, cvar));
+                result = (new ResultTypes(cPrimitive2asttype(loc, cvar), node.isConst(), false, cvar));
                 break;
             case IASTSimpleDeclSpecifier.t_double:
             case IASTSimpleDeclSpecifier.t_float:
@@ -216,19 +219,23 @@ public class TypeHandler implements ITypeHandler {
         		main.cHandler.getSymbolTable().getCompoundCounter(), false);
         int nrFields = node.getEnumerators().length;
         String[] fNames = new String[nrFields];
-        IntegerLiteral[] fValues = new IntegerLiteral[nrFields];
+        Expression[] fValues = new Expression[nrFields];
         for (int i = 0; i < nrFields; i++) {
             IASTEnumerator e = node.getEnumerators()[i];
             fNames[i] = e.getName().toString();
-//          FIXME: assuming there may only be integerliterals in c at this place -> or is something else allowed here??
-            if (e.getValue() != null)
-            	fValues[i] = (IntegerLiteral) new IntegerLiteral(loc, main.cHandler.computeConstantValue(
-            			((ResultExpression) main.dispatch(e.getValue())).lrVal.getValue()).toString()); 
-            else
+            if (e.getValue() != null) {
+            	ResultExpression rex = (ResultExpression) main.dispatch(e.getValue());
+            	fValues[i] = (Expression) rex.lrVal.getValue();
+            	assert (fValues[i] instanceof IntegerLiteral) || 
+            		(fValues[i] instanceof BitvecLiteral) : 
+            			"assuming that only IntegerLiterals or BitvecLiterals can occur while translating an enum constant";
+            } else {
             	fValues[i] = null;
+            }
         }
         CEnum cEnum = new CEnum(enumId, fNames, fValues);
-        ASTType at = new PrimitiveType(loc, SFO.INT);
+        CPrimitive intType = new CPrimitive(PRIMITIVE.INT);
+        ASTType at = cPrimitive2asttype(loc, intType); 
         ResultTypes result = new ResultTypes(at, false, false, cEnum);
        
         String incompleteTypeName = "ENUM~" + cId;
@@ -518,7 +525,7 @@ public class TypeHandler implements ITypeHandler {
 			return MemoryHandler.POINTER_TYPE;
 		} else if (cType instanceof CEnum) {
 //			return new NamedType(loc, ((CEnum) cType).getIdentifier(), new ASTType[0]);
-			return new PrimitiveType(loc, SFO.INT);
+			return cPrimitive2asttype(loc, new CPrimitive(PRIMITIVE.INT));
 		}
 		throw new UnsupportedSyntaxException(loc, "unknown type");
 	}

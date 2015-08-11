@@ -7,6 +7,7 @@ import java.util.Arrays;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.GENERALPRIMITIVE;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.PRIMITIVE;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.util.HashUtils;
 
@@ -23,7 +24,7 @@ public class CEnum extends CType {
     /**
      * Field values.
      */
-    private IntegerLiteral[] fValues;
+    private Expression[] fValues;
     /**
      * The _boogie_ identifier of this enum set.
      */
@@ -42,7 +43,7 @@ public class CEnum extends CType {
      *            this enums identifier.
      */
     public CEnum(String id, String[] fNames,
-            IntegerLiteral[] fValues) {
+    		Expression[] fValues) {
         super(false, false, false, false); //FIXME: integrate those flags
         assert fNames.length == fValues.length;
         this.identifier = id;
@@ -77,7 +78,7 @@ public class CEnum extends CType {
      *            the fields id.
      * @return the fields value.
      */
-    public IntegerLiteral getFieldValue(String id) {
+    public Expression getFieldValue(String id) {
         int idx = Arrays.asList(fNames).indexOf(id);
         if (idx < 0) {
             throw new IllegalArgumentException("Field '" + id

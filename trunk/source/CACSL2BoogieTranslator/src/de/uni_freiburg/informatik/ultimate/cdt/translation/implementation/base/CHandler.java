@@ -3515,7 +3515,8 @@ public class CHandler implements ICHandler {
 		assert rt.cType instanceof CEnum;
 		CEnum cEnum = (CEnum) rt.cType;
 		ILocation loc = LocationFactory.createCLocation(node);
-		ASTType at = new PrimitiveType(loc, SFO.INT);
+        CPrimitive intType = new CPrimitive(PRIMITIVE.INT);
+        ASTType at = mTypeHandler.ctype2asttype(loc, intType); 
 		String enumId = cEnum.getIdentifier();
 		Expression oldValue = null;
 		Expression[] enumDomain = new Expression[cEnum.getFieldCount()];
@@ -3537,8 +3538,6 @@ public class CHandler implements ICHandler {
 				Expression zero = m_ExpressionTranslation.constructLiteralForIntegerType(
 						loc, typeOfEnumIdentifiers, BigInteger.ZERO);
 				newValue = zero;  
-						
-						new IntegerLiteral(loc, SFO.NR0);
 			} else if (cEnum.getFieldValue(fId) == null) {
 				Expression one = m_ExpressionTranslation.constructLiteralForIntegerType(
 						loc, typeOfEnumIdentifiers, BigInteger.ONE);
