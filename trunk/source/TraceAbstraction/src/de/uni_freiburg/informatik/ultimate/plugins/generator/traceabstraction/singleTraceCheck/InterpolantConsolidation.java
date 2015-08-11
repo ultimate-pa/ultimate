@@ -77,6 +77,7 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 	private final Logger m_Logger;
 
 	protected final InterpolantConsolidationBenchmarkGenerator m_InterpolantConsolidationBenchmarkGenerator;
+	private boolean m_printDebugInformation = false;
 	
 	public InterpolantConsolidation(IPredicate precondition,
 			IPredicate postcondition,
@@ -153,7 +154,8 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 			if (!empty.getResult()) {
 				// If the difference is not empty, we are not allowed to consolidate interpolants (at least by now) 
 				m_ConsolidatedInterpolants = m_InterpolatingTraceChecker.getInterpolants();
-				// TODO: Benchmarks hier erzeugen!
+				// Stop the time for interpolant consolidation
+				m_InterpolantConsolidationBenchmarkGenerator.stop(InterpolantConsolidationBenchmarkType.s_TimeOfConsolidation);
 				return;
 			}
 			
@@ -173,6 +175,7 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 		
 		int newlyCreatedInterpolants = 0;
 		int interpolantsDropped = interpolantsBeforeConsolidation.size();
+		m_InterpolantConsolidationBenchmarkGenerator.incrementDiffAutomatonEmpty_Counter();
 		
 		m_ConsolidatedInterpolants = new IPredicate[m_Trace.length() - 1];
 		for (int i = 0; i < m_ConsolidatedInterpolants.length; i++) {
@@ -222,11 +225,12 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 				m_Trace, m_Precondition, m_Postcondition, m_PendingContexts, "CP", 
 				m_SmtManager, m_ModifiedGlobals, m_Logger) : "invalid Hoare triple in consolidated interpolants";
 		
-		
-		m_Logger.debug("Interpolants before consolidation:");
-		printArray(interpolantAutomaton.getStates().toArray(new IPredicate[interpolantAutomaton.getStates().size()]));
-		m_Logger.debug("Interpolants after consolidation:");
-		printArray(interpolantsAfterConsolidation.toArray(new IPredicate[interpolantsAfterConsolidation.size()]));
+		if (m_printDebugInformation ) {
+			m_Logger.debug("Interpolants before consolidation:");
+			printArray(interpolantAutomaton.getStates().toArray(new IPredicate[interpolantAutomaton.getStates().size()]));
+			m_Logger.debug("Interpolants after consolidation:");
+			printArray(interpolantsAfterConsolidation.toArray(new IPredicate[interpolantsAfterConsolidation.size()]));
+		}
 		int differenceOfInterpolantsBeforeAfter = interpolantsBeforeConsolidation.size() - interpolantsAfterConsolidation.size();
 		
 	
@@ -389,7 +393,7 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 		
 		/* Keys */
 		// Counts how often the difference automaton has been empty
-//		protected final static String s_DifferenceAutomatonEmptyCounter = "DifferenceAutomatonEmptyCounter";
+		protected final static String s_DifferenceAutomatonEmptyCounter = "DifferenceAutomatonEmptyCounter";
 //		protected final static String s_SumOfPredicatesConsolidated = "SumOfPredicatesConsolidated";
 		
 		protected final static String s_DisjunctionsGreaterOneCounter = "DisjunctionsGreaterOneCounter";
@@ -420,6 +424,7 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 			result.add(s_TimeOfConsolidation);
 			result.add(s_NewlyCreatedInterpolants);
 			result.add(s_InterpolantsDropped);
+			result.add(s_DifferenceAutomatonEmptyCounter);
 			return result;
 		}
 
@@ -429,6 +434,7 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 			case s_NewlyCreatedInterpolants:
 			case s_InterpolantsDropped:
 			case s_DifferenceBeforeAfter:
+			case s_DifferenceAutomatonEmptyCounter:
 			case s_DisjunctionsGreaterOneCounter: {
 				int result = ((int) value1) + ((int) value2);
 				return result;
@@ -452,8 +458,10 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 				IBenchmarkDataProvider benchmarkData) {
 			StringBuilder sb = new StringBuilder();
 			
-			sb.append("\t");
-			sb.append(s_DisjunctionsGreaterOneCounter).append(": ");
+			sb.append("\t").append(s_DifferenceAutomatonEmptyCounter).append(": ");
+			sb.append((int)benchmarkData.getValue(s_DifferenceAutomatonEmptyCounter));
+			
+			sb.append("\t").append(s_DisjunctionsGreaterOneCounter).append(": ");
 			sb.append((int) benchmarkData.getValue(s_DisjunctionsGreaterOneCounter));
 			
 			sb.append("\t").append(s_NumberOfHoareTripleChecks).append(": ");
@@ -484,6 +492,7 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 		// Contains the number of hoare triple checks (i.e. num of sats + num of unsats + num of unknowns)
 		// that are made by the interpolant consolidation
 		private InCaReCounter m_NumOfHoareTripleChecks = new InCaReCounter();
+		private int m_DiffAutomatonEmpty_Counter = 0;
 		
 		
 		
@@ -499,6 +508,10 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 			m_InterpolantsDropped = interpolantsDropped;
 		}
 		
+		public void incrementDiffAutomatonEmpty_Counter() {
+			m_DiffAutomatonEmpty_Counter ++;
+		}
+
 		@Override
 		public Collection<String> getKeys() {
 			return InterpolantConsolidationBenchmarkType.getInstance().getKeys();
@@ -523,6 +536,8 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 				} catch (StopwatchStillRunningException e) {
 					throw new AssertionError("clock still running: " + key);
 				}
+			case InterpolantConsolidationBenchmarkType.s_DifferenceAutomatonEmptyCounter:
+				return m_DiffAutomatonEmpty_Counter;
 			default:
 				throw new AssertionError("unknown data");
 			}
