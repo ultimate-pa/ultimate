@@ -378,7 +378,7 @@ public class ACSLHandler implements IACSLHandler {
 					left.lrVal.getValue(), (CPrimitive) left.lrVal.cType, 
 					right.lrVal.getValue(), (CPrimitive) right.lrVal.cType);
 			CType type = new CPrimitive(PRIMITIVE.INT);
-			return new ResultExpression(stmt, new RValue(expr, type), decl, auxVars, overappr);
+			return new ResultExpression(stmt, new RValue(expr, type, true), decl, auxVars, overappr);
 			
 		}
 		case LOGICAND:
@@ -390,7 +390,7 @@ public class ACSLHandler implements IACSLHandler {
 	        if (op != null) {
 	        	BinaryExpression be = new BinaryExpression(loc, op, left.lrVal.getValue(), right.lrVal.getValue());
 	        	// TODO: Handle Ctype
-	            return new ResultExpression(stmt, new RValue(be, new CPrimitive(PRIMITIVE.INT)), decl, auxVars, overappr);
+	            return new ResultExpression(stmt, new RValue(be, new CPrimitive(PRIMITIVE.INT), true), decl, auxVars, overappr);
 	            //return new Result(new BinaryExpression(loc, op, left, right));
 	        }
 		}
@@ -407,7 +407,7 @@ public class ACSLHandler implements IACSLHandler {
         			UnaryExpression.Operator.LOGICNEG, left.lrVal.getValue());
         	BinaryExpression r = new BinaryExpression(loc,
         			Operator.LOGICAND, notLeft, right.lrVal.getValue());
-        	return new ResultExpression(stmt, new RValue(new BinaryExpression(loc, Operator.LOGICOR, l, r), new CPrimitive(PRIMITIVE.INT)), decl, auxVars, overappr);
+        	return new ResultExpression(stmt, new RValue(new BinaryExpression(loc, Operator.LOGICOR, l, r), new CPrimitive(PRIMITIVE.INT), true), decl, auxVars, overappr);
         	//return new Result(new BinaryExpression(loc, Operator.LOGICOR, l, r));
         case BITAND:
         case BITIFF:

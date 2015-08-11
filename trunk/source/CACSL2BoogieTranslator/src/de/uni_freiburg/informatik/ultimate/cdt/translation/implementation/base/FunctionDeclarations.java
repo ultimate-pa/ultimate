@@ -13,6 +13,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.FunctionDeclaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.NamedAttribute;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StringLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
@@ -45,7 +46,7 @@ public class FunctionDeclarations {
 		m_TypeSizeConstants = typeSizeConstants;
 	}
 
-	public void declareBitvectorFunction(ILocation loc, String prefixedFunctionName, CPrimitive resultCType, CPrimitive... paramCTypes) {
+	public void declareBitvectorFunction(ILocation loc, String prefixedFunctionName, boolean boogieResultTypeBool, CPrimitive resultCType, CPrimitive... paramCTypes) {
 		if (!prefixedFunctionName.startsWith(SFO.AUXILIARY_FUNCTION_PREFIX)) {
 			throw new IllegalArgumentException("Our convention says that user defined functions start with tilde");
 		}
@@ -53,16 +54,17 @@ public class FunctionDeclarations {
 		String prefixedfunctionNameWithSuffix = prefixedFunctionName + computeBitvectorSuffix(loc, paramCTypes);
 		Attribute attribute = new NamedAttribute(loc, s_BUILTIN_IDENTIFIER, new Expression[] { new StringLiteral(loc, functionName) });
 		Attribute[] attributes = new Attribute[] { attribute };
-		declareFunction(loc, prefixedfunctionNameWithSuffix, attributes , resultCType, paramCTypes);
-	}
-	
-	public void declareFunction(ILocation loc, String prefixedFunctionName, Attribute[] attributes, CType resultCType, CType... paramCTypes) {
-		ASTType resultASTType = m_TypeHandler.ctype2asttype(loc, resultCType);
+		final ASTType resultASTType;
+		if (boogieResultTypeBool) {
+			resultASTType = new PrimitiveType(loc, "bool");
+		} else {
+			resultASTType = m_TypeHandler.ctype2asttype(loc, resultCType);
+		}
 		ASTType[] paramASTTypes = new ASTType[paramCTypes.length];
 		for (int i=0; i<paramCTypes.length; i++) {
 			paramASTTypes[i] = m_TypeHandler.ctype2asttype(loc, paramCTypes[i]);
 		}
-		declareFunction(loc, prefixedFunctionName, attributes, resultASTType, paramASTTypes);
+		declareFunction(loc, prefixedfunctionNameWithSuffix, attributes, resultASTType, paramASTTypes);
 	}
 	
 	public void declareFunction(ILocation loc, String prefixedFunctionName, Attribute[] attributes, ASTType resultASTType, ASTType... paramASTTypes) {
