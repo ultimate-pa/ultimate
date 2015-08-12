@@ -5,8 +5,9 @@
  * Date: 19.10.2012
  * Author: heizmann@informatik.uni-freiburg.de
  * 
- *
  */
+#include <stdio.h>
+
 
 int main(void) {
 	int x, y, z;
@@ -22,6 +23,7 @@ int main(void) {
 	x ^= y;
 	x <<= y;
 	x >>= y;
+	printf("%d\n",x);
 	if (x == 1) {
 		//@ assert \false;
 	}
