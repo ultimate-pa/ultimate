@@ -319,7 +319,6 @@ public class CHandler implements ICHandler {
 		this.mArrayHandler = new ArrayHandler();
 		this.mStructHandler = new StructHandler();
 		boolean checkPointerValidity = main.mPreferences.getBoolean(CACSLPreferenceInitializer.LABEL_CHECK_POINTER_VALIDITY);
-		this.mMemoryHandler = new MemoryHandler(mFunctionHandler, checkPointerValidity, main.getTypeSizes());
 		this.mPostProcessor = new PostProcessor(main, mLogger);
 		
 		this.mSymbolTable = new SymbolTable(main);
@@ -344,6 +343,7 @@ public class CHandler implements ICHandler {
 			m_ExpressionTranslation = new IntegerTranslation(main.getTypeSizes(), mFunctionDeclarations);
 		}
 		this.mFunctionHandler = new FunctionHandler(m_ExpressionTranslation);
+		this.mMemoryHandler = new MemoryHandler(mFunctionHandler, checkPointerValidity, main.getTypeSizes());
 		this.mInitHandler = new InitializationHandler(mFunctionHandler, mStructHandler, mMemoryHandler, m_ExpressionTranslation);
 	}
 
@@ -1792,8 +1792,9 @@ public class CHandler implements ICHandler {
 			overappr.add(new Overapprox(Overapprox.BITVEC, loc));
 			ResultExpression rlToInt = ConvExpr.rexBoolToIntIfNecessary(loc, rl, m_ExpressionTranslation);
 			ResultExpression rrToInt = ConvExpr.rexBoolToIntIfNecessary(loc, rr, m_ExpressionTranslation);
-			Expression bwexpr = createBitwiseExpression(node.getOperator(), rlToInt.lrVal.getValue(), rrToInt.lrVal.getValue(),
-					loc);
+			Expression bwexpr = m_ExpressionTranslation.constructBinaryBitwiseExpression(
+					loc, node.getOperator(), rlToInt.lrVal.getValue(), (CPrimitive) rlToInt.lrVal.cType, 
+					rrToInt.lrVal.getValue(), (CPrimitive) rrToInt.lrVal.cType); 
 			return new ResultExpression(stmt, new RValue(bwexpr, rl.lrVal.cType), decl, auxVars, overappr);
 		}
 		case IASTBinaryExpression.op_shiftLeftAssign:
@@ -1814,14 +1815,38 @@ public class CHandler implements ICHandler {
 			overappr.add(new Overapprox(Overapprox.BITVEC, loc));
 			ResultExpression rlToInt = ConvExpr.rexBoolToIntIfNecessary(loc, rl, m_ExpressionTranslation);
 			ResultExpression rrToInt = ConvExpr.rexBoolToIntIfNecessary(loc, rr, m_ExpressionTranslation);
-			Expression bwexpr = createBitwiseExpression(node.getOperator(), rlToInt.lrVal.getValue(), rrToInt.lrVal.getValue(),
-					loc);
+			Expression bwexpr = m_ExpressionTranslation.constructBinaryBitwiseExpression(
+					loc, getNonAssignmentOperator(node.getOperator()), rlToInt.lrVal.getValue(), (CPrimitive) rlToInt.lrVal.cType, 
+					rrToInt.lrVal.getValue(), (CPrimitive) rrToInt.lrVal.cType); 
 			return makeAssignment(main, loc, stmt, l.lrVal, new RValue(bwexpr, rr.lrVal.cType), decl, auxVars, overappr);// ,
 																															// l.lrVal.cType);
 		}
 		default:
 			String msg = "Unknown or unsupported unary operation";
 			throw new UnsupportedSyntaxException(loc, msg);
+		}
+	}
+	
+	public int getNonAssignmentOperator(int op) {
+		switch (op) {
+		case IASTBinaryExpression.op_shiftLeftAssign:
+			return IASTBinaryExpression.op_shiftLeft;
+		case IASTBinaryExpression.op_shiftRightAssign:
+			return IASTBinaryExpression.op_shiftRight;
+		case IASTBinaryExpression.op_binaryAndAssign:
+			return IASTBinaryExpression.op_binaryAnd;
+		case IASTBinaryExpression.op_binaryOrAssign:
+			return IASTBinaryExpression.op_binaryOr;
+		case IASTBinaryExpression.op_binaryXorAssign:
+			return IASTBinaryExpression.op_binaryXor;
+		case IASTBinaryExpression.op_binaryAnd:
+		case IASTBinaryExpression.op_binaryOr:
+		case IASTBinaryExpression.op_binaryXor:
+		case IASTBinaryExpression.op_shiftLeft:
+		case IASTBinaryExpression.op_shiftRight:
+			throw new IllegalArgumentException("already nonAssignment operator " + op);
+		default:
+			throw new UnsupportedOperationException("unknown operator " + op);
 		}
 	}
 	

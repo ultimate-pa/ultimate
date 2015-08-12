@@ -19,9 +19,13 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.S
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression.Operator;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.FunctionApplication;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IfThenElseExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IntegerLiteral;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.NamedAttribute;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StringLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 
@@ -94,16 +98,41 @@ public class IntegerTranslation extends AExpressionTranslation {
 	}
 
 	@Override
-	public Expression constructBinaryBitwiseShiftExpression(ILocation loc, int nodeOperator, Expression exp1, CPrimitive type1, Expression exp2, CPrimitive type2) {
-		switch (nodeOperator) {
+	public Expression constructBinaryBitwiseExpression(ILocation loc,
+			int op, Expression left, CPrimitive typeLeft,
+			Expression right, CPrimitive typeRight) {
+		final String funcname;
+		switch (op) {
 		case IASTBinaryExpression.op_binaryAnd:
+			funcname = "bitwiseAnd";
+			break;
 		case IASTBinaryExpression.op_binaryOr:
+			funcname = "bitwiseOr";
+			break;
 		case IASTBinaryExpression.op_binaryXor:
+			funcname = "bitwiseXor";
+			break;
 		case IASTBinaryExpression.op_shiftLeft:
+			funcname = "shiftLeft";
+			break;
 		case IASTBinaryExpression.op_shiftRight:
+			funcname = "shiftRight";
+			break;
+		default:
+			String msg = "Unknown or unsupported bitwise expression";
+			throw new UnsupportedSyntaxException(loc, msg);
 		}
-		
-		return null;
+		declareBitvectorFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + funcname, false, (CPrimitive) typeLeft, (CPrimitive) typeLeft, (CPrimitive) typeRight);
+		Expression func = new FunctionApplication(loc, SFO.AUXILIARY_FUNCTION_PREFIX + funcname, new Expression[]{left, right});
+		return func;
+	}
+	
+	private void declareBitvectorFunction(ILocation loc, String prefixedFunctionName,
+			boolean boogieResultTypeBool, CPrimitive resultCType, CPrimitive... paramCType) {
+		String functionName = prefixedFunctionName.substring(1, prefixedFunctionName.length());
+		Attribute attribute = new NamedAttribute(loc, FunctionDeclarations.s_OVERAPPROX_IDENTIFIER, new Expression[] { new StringLiteral(loc, functionName) });
+		Attribute[] attributes = new Attribute[] { attribute };
+		m_FunctionDeclarations.declareFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + functionName, false, attributes, boogieResultTypeBool, resultCType, paramCType);
 	}
 
 	@Override

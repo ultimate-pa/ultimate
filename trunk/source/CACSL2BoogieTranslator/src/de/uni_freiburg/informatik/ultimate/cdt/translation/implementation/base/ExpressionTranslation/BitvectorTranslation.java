@@ -9,18 +9,20 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.Locati
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FunctionDeclarations;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.TypeSizes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.PRIMITIVE;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultExpression;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.ISOIEC9899TC3;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BitvecLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.FunctionApplication;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IntegerLiteral;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.NamedAttribute;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StringLiteral;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 
 public class BitvectorTranslation extends AExpressionTranslation {
@@ -129,17 +131,42 @@ public class BitvectorTranslation extends AExpressionTranslation {
 		default:
 			throw new AssertionError("unknown operation " + nodeOperator);
 		}
-		m_FunctionDeclarations.declareBitvectorFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + functionName, true, new CPrimitive(PRIMITIVE.BOOL), (CPrimitive) type1, (CPrimitive) type2);
+		declareBitvectorFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + functionName, true, new CPrimitive(PRIMITIVE.BOOL), (CPrimitive) type1, (CPrimitive) type2);
 		Expression result = new FunctionApplication(loc, SFO.AUXILIARY_FUNCTION_PREFIX + functionName + m_FunctionDeclarations.computeBitvectorSuffix(loc, type1, type2), new Expression[]{exp1, exp2});
 		return result;
 	}
-
+	
 	@Override
-	public Expression constructBinaryBitwiseShiftExpression(ILocation loc,
-			int nodeOperator, Expression exp1, CPrimitive type1,
-			Expression exp2, CPrimitive type2) {
-		// TODO Auto-generated method stub
-		return null;
+	public Expression constructBinaryBitwiseExpression(ILocation loc,
+			int op, Expression left, CPrimitive typeLeft,
+			Expression right, CPrimitive typeRight) {
+		if(!m_FunctionDeclarations.checkParameters(typeLeft, typeRight)) {
+			throw new IllegalArgumentException("incompatible types " + typeLeft + " " + typeRight);
+		}
+		final String funcname;
+		switch (op) {
+		case IASTBinaryExpression.op_binaryAnd:
+			funcname = "bvand";
+			break;
+		case IASTBinaryExpression.op_binaryOr:
+			funcname = "bvor";
+			break;
+		case IASTBinaryExpression.op_binaryXor:
+			funcname = "bvxor";
+			break;
+		case IASTBinaryExpression.op_shiftLeft:
+			funcname = "bvshl";
+			break;
+		case IASTBinaryExpression.op_shiftRight:
+			funcname = "bvashr";
+			break;
+		default:
+			String msg = "Unknown or unsupported bitwise expression";
+			throw new UnsupportedSyntaxException(loc, msg);
+		}
+		declareBitvectorFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + funcname, false, typeLeft, typeLeft, typeRight);
+		Expression func = new FunctionApplication(loc, SFO.AUXILIARY_FUNCTION_PREFIX + funcname + m_FunctionDeclarations.computeBitvectorSuffix(loc, typeLeft, typeRight), new Expression[]{left, right});
+		return func;
 	}
 
 	@Override
@@ -188,21 +215,30 @@ public class BitvectorTranslation extends AExpressionTranslation {
 			throw new UnsupportedSyntaxException(loc, msg);
 		}
 		
-		m_FunctionDeclarations.declareBitvectorFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + funcname, false, (CPrimitive) typeLeft, (CPrimitive) typeLeft, (CPrimitive) typeRight);
+		declareBitvectorFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + funcname, false, typeLeft, typeLeft, typeRight);
 		func = new FunctionApplication(loc, SFO.AUXILIARY_FUNCTION_PREFIX + funcname + m_FunctionDeclarations.computeBitvectorSuffix(loc, typeLeft, typeRight), new Expression[]{left, right});
 
 		return func;
 	}
 
+	private void declareBitvectorFunction(ILocation loc, String prefixedFunctionName,
+			boolean boogieResultTypeBool, CPrimitive resultCType, CPrimitive... paramCType) {
+		String functionName = prefixedFunctionName.substring(1, prefixedFunctionName.length());
+		Attribute attribute = new NamedAttribute(loc, FunctionDeclarations.s_BUILTIN_IDENTIFIER, new Expression[] { new StringLiteral(loc, functionName) });
+		Attribute[] attributes = new Attribute[] { attribute };
+		m_FunctionDeclarations.declareFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + functionName, true, attributes, boogieResultTypeBool, resultCType, paramCType);
+	}
+
 	@Override
 	public Expression unaryMinusForInts(ILocation loc, Expression operand, CType type) {
-		m_FunctionDeclarations.declareBitvectorFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + "bvneg", false, (CPrimitive) type, (CPrimitive) type);
-		m_FunctionDeclarations.declareBitvectorFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + "bvadd", false, (CPrimitive) type, (CPrimitive) type, (CPrimitive) type);
+		declareBitvectorFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + "bvneg", false, (CPrimitive) type, (CPrimitive) type);
+		declareBitvectorFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + "bvadd", false, (CPrimitive) type, (CPrimitive) type, (CPrimitive) type);
 
 		FunctionApplication negation = new FunctionApplication(loc, SFO.AUXILIARY_FUNCTION_PREFIX + "bvneg" + m_FunctionDeclarations.computeBitvectorSuffix(loc, (CPrimitive) type), new Expression[]{operand});
 		
 		return new FunctionApplication(loc, SFO.AUXILIARY_FUNCTION_PREFIX + "bvadd" + m_FunctionDeclarations.computeBitvectorSuffix(loc, (CPrimitive) type, (CPrimitive) type), 
 				new Expression[]{negation, constructLiteralForIntegerType(loc, (CPrimitive) type, BigInteger.ONE)});
 	}
+	
 
 }

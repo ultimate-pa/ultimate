@@ -36,7 +36,8 @@ public class FunctionDeclarations {
 	private final LinkedHashMap<String, FunctionDeclaration> m_DeclaredFunctions = new LinkedHashMap<String, FunctionDeclaration>();
 	private final ITypeHandler m_TypeHandler;
 	private final TypeSizes m_TypeSizeConstants;
-	private static final String s_BUILTIN_IDENTIFIER = "builtin";
+	public static final String s_BUILTIN_IDENTIFIER = "builtin";
+	public static final String s_OVERAPPROX_IDENTIFIER = "overapproximation";
 	
 	
 	public FunctionDeclarations(ITypeHandler typeHandler,
@@ -46,14 +47,17 @@ public class FunctionDeclarations {
 		m_TypeSizeConstants = typeSizeConstants;
 	}
 
-	public void declareBitvectorFunction(ILocation loc, String prefixedFunctionName, boolean boogieResultTypeBool, CPrimitive resultCType, CPrimitive... paramCTypes) {
+	public void declareFunction(ILocation loc, String prefixedFunctionName, boolean addSuffix, Attribute[] attributes, boolean boogieResultTypeBool, CPrimitive resultCType, CPrimitive... paramCTypes) {
 		if (!prefixedFunctionName.startsWith(SFO.AUXILIARY_FUNCTION_PREFIX)) {
 			throw new IllegalArgumentException("Our convention says that user defined functions start with tilde");
 		}
-		String functionName = prefixedFunctionName.substring(1, prefixedFunctionName.length());
-		String prefixedfunctionNameWithSuffix = prefixedFunctionName + computeBitvectorSuffix(loc, paramCTypes);
-		Attribute attribute = new NamedAttribute(loc, s_BUILTIN_IDENTIFIER, new Expression[] { new StringLiteral(loc, functionName) });
-		Attribute[] attributes = new Attribute[] { attribute };
+		final String resultName;
+		if (addSuffix) {
+			resultName = prefixedFunctionName + computeBitvectorSuffix(loc, paramCTypes);
+		} else {
+			resultName = prefixedFunctionName;
+		}
+
 		final ASTType resultASTType;
 		if (boogieResultTypeBool) {
 			resultASTType = new PrimitiveType(loc, "bool");
@@ -64,7 +68,7 @@ public class FunctionDeclarations {
 		for (int i=0; i<paramCTypes.length; i++) {
 			paramASTTypes[i] = m_TypeHandler.ctype2asttype(loc, paramCTypes[i]);
 		}
-		declareFunction(loc, prefixedfunctionNameWithSuffix, attributes, resultASTType, paramASTTypes);
+		declareFunction(loc, resultName, attributes, resultASTType, paramASTTypes);
 	}
 	
 	public void declareFunction(ILocation loc, String prefixedFunctionName, Attribute[] attributes, ASTType resultASTType, ASTType... paramASTTypes) {
@@ -108,5 +112,7 @@ public class FunctionDeclarations {
 		
 		return true;
 	}
+
+
 
 }
