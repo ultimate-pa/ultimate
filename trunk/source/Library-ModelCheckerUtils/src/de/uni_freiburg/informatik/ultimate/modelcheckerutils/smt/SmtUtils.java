@@ -187,7 +187,6 @@ public class SmtUtils {
 	 * this method returns the term ("select" ("select" a 23) 42).  
 	 */
 	public static Term multiDimensionalSelect(Script script, Term a, ArrayIndex index) {
-		assert index.size() >= 0;
 		assert a.getSort().isArraySort();
 		Term result = a;
 		for (int i=0; i<index.size(); i++) {
