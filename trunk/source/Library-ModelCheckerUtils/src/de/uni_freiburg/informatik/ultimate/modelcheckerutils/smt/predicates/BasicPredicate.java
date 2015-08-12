@@ -71,11 +71,11 @@ public class BasicPredicate extends AbstractAnnotations implements IPredicate {
 
 	@Override
 	protected Object getFieldValue(String field) {
-		if (field == "Procedures")
+		if (field.equals("Procedures"))
 			return m_Procedures;
-		else if (field == "Formula")
+		else if (field.equals("Formula"))
 			return m_Formula;
-		else if (field == "Vars")
+		else if (field.equals("Vars"))
 			return m_Vars;
 		else
 			throw new UnsupportedOperationException("Unknown field "+field);
