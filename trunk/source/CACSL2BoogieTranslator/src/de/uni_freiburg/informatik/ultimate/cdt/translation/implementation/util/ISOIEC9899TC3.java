@@ -264,7 +264,7 @@ public final class ISOIEC9899TC3 {
 			int bitlength = 8 * typeSizeConstants. getCPrimitiveToTypeSizeConstant().get(cType.getType());
 			if (value.signum() == -1) {
 				long maxValue = (long) Math.pow(2, bitlength);
-				value.add(BigInteger.valueOf(maxValue));
+				value = value.add(BigInteger.valueOf(maxValue));
 			}
 			resultLiteral = new BitvecLiteral(loc, value.toString(), bitlength);
 		} else {
