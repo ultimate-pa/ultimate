@@ -24,7 +24,7 @@ int main(void) {
 	x <<= y;
 	x >>= y;
 	printf("%d\n",x);
-	if (x == 1) {
+	if (x == 0) {
 		//@ assert \false;
 	}
 }
