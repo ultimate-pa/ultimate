@@ -86,6 +86,7 @@ public abstract class AExpressionTranslation {
 	
 	public abstract Expression constructBinaryComparisonExpression(ILocation loc, int nodeOperator, Expression exp1, CPrimitive type1, Expression exp2, CPrimitive type2);
 	public abstract Expression constructBinaryBitwiseExpression(ILocation loc, int nodeOperator, Expression exp1, CPrimitive type1, Expression exp2, CPrimitive type2);
+	public abstract Expression constructUnaryExpression(ILocation loc, int nodeOperator, Expression exp, CPrimitive type);
 	public abstract Expression createArithmeticExpression(int op, Expression left, CPrimitive typeLeft, Expression right, CPrimitive typeRight, ILocation loc);
 	
 	
@@ -101,7 +102,5 @@ public abstract class AExpressionTranslation {
 	
 	public abstract RValue translateIntegerLiteral(ILocation loc, String val);
 	
-	public abstract Expression unaryMinusForInts(ILocation loc, Expression operand, CType type);
-
 	public abstract Expression constructLiteralForIntegerType(ILocation loc, CPrimitive type, BigInteger value);
 }

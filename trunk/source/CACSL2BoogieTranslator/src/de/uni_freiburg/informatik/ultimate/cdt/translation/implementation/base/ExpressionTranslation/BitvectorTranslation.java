@@ -4,6 +4,7 @@ import java.math.BigInteger;
 
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 import org.eclipse.cdt.core.dom.ast.IASTLiteralExpression;
+import org.eclipse.cdt.core.dom.ast.IASTUnaryExpression;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FunctionDeclarations;
@@ -168,7 +169,27 @@ public class BitvectorTranslation extends AExpressionTranslation {
 		Expression func = new FunctionApplication(loc, SFO.AUXILIARY_FUNCTION_PREFIX + funcname + m_FunctionDeclarations.computeBitvectorSuffix(loc, typeLeft, typeRight), new Expression[]{left, right});
 		return func;
 	}
-
+	
+	@Override
+	public Expression constructUnaryExpression(ILocation loc,
+			int op, Expression expr, CPrimitive type) {
+		final String funcname;
+		switch (op) {
+		case IASTUnaryExpression.op_tilde:
+			funcname = "bvnot";
+			break;
+		case IASTUnaryExpression.op_minus:
+			funcname = "bvneg";
+			break;
+		default:
+			String msg = "Unknown or unsupported unary expression";
+			throw new UnsupportedSyntaxException(loc, msg);
+		}
+		declareBitvectorFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + funcname, false, type, type);
+		Expression func = new FunctionApplication(loc, SFO.AUXILIARY_FUNCTION_PREFIX + funcname + m_FunctionDeclarations.computeBitvectorSuffix(loc, type), new Expression[]{expr});
+		return func;
+	}
+	
 	@Override
 	public Expression createArithmeticExpression(int op, Expression left, CPrimitive typeLeft,
 			Expression right, CPrimitive typeRight, ILocation loc) {
@@ -229,16 +250,7 @@ public class BitvectorTranslation extends AExpressionTranslation {
 		m_FunctionDeclarations.declareFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + functionName, true, attributes, boogieResultTypeBool, resultCType, paramCType);
 	}
 
-	@Override
-	public Expression unaryMinusForInts(ILocation loc, Expression operand, CType type) {
-		declareBitvectorFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + "bvneg", false, (CPrimitive) type, (CPrimitive) type);
-		declareBitvectorFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + "bvadd", false, (CPrimitive) type, (CPrimitive) type, (CPrimitive) type);
 
-		FunctionApplication negation = new FunctionApplication(loc, SFO.AUXILIARY_FUNCTION_PREFIX + "bvneg" + m_FunctionDeclarations.computeBitvectorSuffix(loc, (CPrimitive) type), new Expression[]{operand});
-		
-		return new FunctionApplication(loc, SFO.AUXILIARY_FUNCTION_PREFIX + "bvadd" + m_FunctionDeclarations.computeBitvectorSuffix(loc, (CPrimitive) type, (CPrimitive) type), 
-				new Expression[]{negation, constructLiteralForIntegerType(loc, (CPrimitive) type, BigInteger.ONE)});
-	}
 	
 
 }

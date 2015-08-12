@@ -4,6 +4,7 @@ import java.math.BigInteger;
 
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 import org.eclipse.cdt.core.dom.ast.IASTLiteralExpression;
+import org.eclipse.cdt.core.dom.ast.IASTUnaryExpression;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FunctionDeclarations;
@@ -125,6 +126,26 @@ public class IntegerTranslation extends AExpressionTranslation {
 		declareBitvectorFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + funcname, false, (CPrimitive) typeLeft, (CPrimitive) typeLeft, (CPrimitive) typeRight);
 		Expression func = new FunctionApplication(loc, SFO.AUXILIARY_FUNCTION_PREFIX + funcname, new Expression[]{left, right});
 		return func;
+	}
+	
+	@Override
+	public Expression constructUnaryExpression(ILocation loc,
+			int op, Expression expr, CPrimitive type) {
+		final Expression result;
+		switch (op) {
+		case IASTUnaryExpression.op_tilde:
+			final String funcname = "bitwiseComplement";
+			declareBitvectorFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + funcname, false, type, type);
+			result = new FunctionApplication(loc, SFO.AUXILIARY_FUNCTION_PREFIX + funcname, new Expression[]{expr});
+			break;
+		case IASTUnaryExpression.op_minus:
+			result = new UnaryExpression(loc, UnaryExpression.Operator.ARITHNEGATIVE, expr);
+			break;
+		default:
+			String msg = "Unknown or unsupported bitwise expression";
+			throw new UnsupportedSyntaxException(loc, msg);
+		}
+		return result;
 	}
 	
 	private void declareBitvectorFunction(ILocation loc, String prefixedFunctionName,
@@ -363,8 +384,4 @@ public class IntegerTranslation extends AExpressionTranslation {
 		}
 	}
 
-	@Override
-	public Expression unaryMinusForInts(ILocation loc, Expression operand, CType type) {
-		return new UnaryExpression(loc, UnaryExpression.Operator.ARITHNEGATIVE, operand);
-	}
 }

@@ -14,6 +14,7 @@ import java.util.Stack;
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionDefinition;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
+import org.eclipse.cdt.core.dom.ast.IASTUnaryExpression;
 import org.eclipse.cdt.internal.core.dom.parser.c.CArrayType;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
@@ -166,7 +167,8 @@ public class ACSLHandler implements IACSLHandler {
             ResultExpression formula = (ResultExpression) main.dispatch(((Assertion) ((CodeAnnotStmt) node).getCodeStmt()).getFormula());
 
            formula = formula.switchToRValueIfNecessary(main, ((CHandler) main.cHandler).mMemoryHandler, ((CHandler) main.cHandler).mStructHandler, loc);
-                //formula = ConvExpr.rexBoolToIntIfNecessary(loc, re);
+           
+         //  formula = ConvExpr.rexIntToBoolIfNecessary(loc, formula, ((CHandler) main.cHandler).getExpressionTranslation());
 
            decl.addAll(formula.decl);
            stmt.addAll(formula.stmt);
@@ -255,7 +257,6 @@ public class ACSLHandler implements IACSLHandler {
      */
     private int getCASTBinaryExprOperator(
             de.uni_freiburg.informatik.ultimate.model.acsl.ast.BinaryExpression.Operator op) {
-    	final int result;
         switch (op) {
 		case ARITHDIV:
 			return IASTBinaryExpression.op_divide;
@@ -388,7 +389,9 @@ public class ACSLHandler implements IACSLHandler {
 		{
 	        Operator op = getBoogieBinaryExprOperator(node.getOperator());
 	        if (op != null) {
-	        	BinaryExpression be = new BinaryExpression(loc, op, left.lrVal.getValue(), right.lrVal.getValue());
+	        	ResultExpression leftOp = ConvExpr.rexIntToBoolIfNecessary(loc, left, ((CHandler) main.cHandler).getExpressionTranslation());
+	        	ResultExpression rightOp = ConvExpr.rexIntToBoolIfNecessary(loc, right, ((CHandler) main.cHandler).getExpressionTranslation());
+	        	BinaryExpression be = new BinaryExpression(loc, op, leftOp.lrVal.getValue(), rightOp.lrVal.getValue());
 	        	// TODO: Handle Ctype
 	            return new ResultExpression(stmt, new RValue(be, new CPrimitive(PRIMITIVE.INT), true), decl, auxVars, overappr);
 	            //return new Result(new BinaryExpression(loc, op, left, right));
@@ -455,7 +458,8 @@ public class ACSLHandler implements IACSLHandler {
             case MINUS:
             	AExpressionTranslation expressionTranslation = 
     				((CHandler) main.cHandler).getExpressionTranslation();
-            	Expression expr = expressionTranslation.unaryMinusForInts(loc, res.lrVal.getValue(), res.lrVal.cType);
+            	Expression expr = expressionTranslation.constructUnaryExpression(loc, 
+            			IASTUnaryExpression.op_minus, res.lrVal.getValue(), (CPrimitive) res.lrVal.cType);
                 return new ResultExpression(stmt, new RValue(expr, res.lrVal.cType), decl, auxVars, overappr);
                 //return new Result(new UnaryExpression(loc, UnaryExpression.Operator.ARITHNEGATIVE, expr));
             case PLUS:
@@ -495,7 +499,7 @@ public class ACSLHandler implements IACSLHandler {
                         LocationFactory.createACSLLocation(node), node.getValue()));
         */
      	return new ResultExpression(new RValue(new de.uni_freiburg.informatik.ultimate.model.boogie.ast.BooleanLiteral(
-                LocationFactory.createACSLLocation(node), node.getValue()), new CPrimitive(PRIMITIVE.BOOL)));
+                LocationFactory.createACSLLocation(node), node.getValue()), new CPrimitive(PRIMITIVE.BOOL), true));
     }
 
     @Override

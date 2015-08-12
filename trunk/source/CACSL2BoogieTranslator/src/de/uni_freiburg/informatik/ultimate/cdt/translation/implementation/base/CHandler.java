@@ -984,7 +984,6 @@ public class CHandler implements ICHandler {
 	public Result visit(Dispatcher main, IASTUnaryExpression node) {
 		ResultExpression o = (ResultExpression) main.dispatch(node.getOperand());
 		ILocation loc = LocationFactory.createCLocation(node);
-//		Expression nr1 = new IntegerLiteral(loc, SFO.NR1);
 
 		// for the cases we know that it's an RValue..
 		// ResultExpression rop = o.switchToRValueIfNecessary(main,
@@ -1000,7 +999,8 @@ public class CHandler implements ICHandler {
 			ResultExpression ropToInt = ConvExpr.rexBoolToIntIfNecessary(loc, rop, m_ExpressionTranslation);
 			if (ropToInt.lrVal.cType instanceof CPrimitive) {
 				if (((CPrimitive) ropToInt.lrVal.cType).getGeneralType() == GENERALPRIMITIVE.INTTYPE) {
-					Expression newEx = m_ExpressionTranslation.unaryMinusForInts(loc, ropToInt.lrVal.getValue(), o.lrVal.cType);				
+					Expression newEx = m_ExpressionTranslation.constructUnaryExpression(loc, 
+							IASTUnaryExpression.op_minus, ropToInt.lrVal.getValue(), (CPrimitive) o.lrVal.cType);				
 					ResultExpression rex = new ResultExpression(ropToInt.stmt, new RValue(newEx, ropToInt.lrVal.cType), 
 							ropToInt.decl, ropToInt.auxVars, ropToInt.overappr);
 					checkIntegerBounds(main, loc, rex);
@@ -1226,7 +1226,8 @@ public class CHandler implements ICHandler {
 			List<Overapprox> overappr = new ArrayList<Overapprox>();
 			overappr.addAll(rop.overappr);
 			overappr.add(new Overapprox(Overapprox.BITVEC, loc));
-			Expression bwexpr = createBitwiseExpression(node.getOperator(), null, ropToInt.lrVal.getValue(), loc);
+			Expression bwexpr = m_ExpressionTranslation.constructUnaryExpression(loc, 
+					node.getOperator(), ropToInt.lrVal.getValue(), (CPrimitive) ropToInt.lrVal.cType);
 			return new ResultExpression(rop.stmt, new RValue(bwexpr, rop.lrVal.cType), rop.decl, rop.auxVars, overappr);
 		case IASTUnaryExpression.op_alignOf:
 		default:
@@ -3236,80 +3237,6 @@ public class CHandler implements ICHandler {
 //			return new BinaryExpression(loc, operator, left, right);
 //		}
 	}
-
-	/**
-	 * Translates bitwise binary expressions.
-	 * 
-	 * @param op
-	 *            the IASTBinaryExpression.Operator
-	 * @param left
-	 *            the left part of the expression
-	 * @param right
-	 *            the right part of the expression
-	 * @param loc
-	 *            the location of the translated node
-	 * @return the resulting binary expression
-	 */
-	private Expression createBitwiseExpression(int op, Expression left, Expression right, ILocation loc) {
-		String operatorName;
-		boolean isUnary = (left == null && op == IASTUnaryExpression.op_tilde);
-		if (isUnary) {
-			operatorName = "bitwiseComplement";
-		} else {
-			switch (op) {
-			case IASTBinaryExpression.op_binaryAnd:
-			case IASTBinaryExpression.op_binaryAndAssign:
-				operatorName = "bitwiseAnd";
-				break;
-			case IASTBinaryExpression.op_binaryOr:
-			case IASTBinaryExpression.op_binaryOrAssign:
-				operatorName = "bitwiseOr";
-				break;
-			case IASTBinaryExpression.op_binaryXor:
-			case IASTBinaryExpression.op_binaryXorAssign:
-				operatorName = "bitwiseXor";
-				break;
-			case IASTBinaryExpression.op_shiftLeft:
-			case IASTBinaryExpression.op_shiftLeftAssign:
-				operatorName = "shiftLeft";
-				break;
-			case IASTBinaryExpression.op_shiftRight:
-			case IASTBinaryExpression.op_shiftRightAssign:
-				operatorName = "shiftRight";
-				break;
-			default:
-				String msg = "Unknown or unsupported arithmetic expression";
-				throw new UnsupportedSyntaxException(loc, msg);
-			}
-		}
-
-		if (!this.mFunctions.containsKey(operatorName)) {
-			FunctionDeclaration d;
-			ASTType intType = new PrimitiveType(loc, SFO.INT);
-			VarList b = new VarList(loc, new String[] { "b" }, intType);
-			VarList out = new VarList(loc, new String[] { "out" }, intType);
-			if (isUnary) {
-				d = new FunctionDeclaration(loc, new Attribute[0], "~" + operatorName, new String[0],
-						new VarList[] { b }, out);
-			} else {
-				VarList a = new VarList(loc, new String[] { "a" }, intType);
-				d = new FunctionDeclaration(loc, new Attribute[0], "~" + operatorName, new String[0], new VarList[] {
-						a, b }, out);
-			}
-			this.mFunctions.put(operatorName, d);
-		}
-		Expression[] arguments = new Expression[isUnary ? 1 : 2];
-		if (isUnary) {
-			arguments[0] = right;
-		} else {
-			arguments[0] = left;
-			arguments[1] = right;
-		}
-		return new FunctionApplication(loc, "~" + operatorName, arguments);
-	}
-	
-	
-
 
 	/**
 	 * Method that handles loops (for, while, do/while). Each of corresponding
