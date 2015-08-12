@@ -3574,7 +3574,7 @@ public class CHandler implements ICHandler {
 			oldValue = newValue;
 			enumDomain[i] = newValue;
 			mAxioms.add(new Axiom(loc, new Attribute[0], new BinaryExpression(loc, Operator.COMPEQ, l, newValue)));
-			mSymbolTable.put(fId, new SymbolTableValue(bId, cd, new CDeclaration(cEnum, fId), true,
+			mSymbolTable.put(fId, new SymbolTableValue(bId, cd, new CDeclaration(typeOfEnumIdentifiers, fId), true,
 					scConstant2StorageClass(node.getDeclSpecifier().getStorageClass()))); // FIXME
 																							// ??
 		}
