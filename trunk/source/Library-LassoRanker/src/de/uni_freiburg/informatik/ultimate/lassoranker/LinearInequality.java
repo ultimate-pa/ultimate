@@ -194,7 +194,7 @@ public class LinearInequality implements Serializable {
 				if (!divisor.isConstant() || !divisor.m_constant.isConstant()) {
 					throw new TermIsNotAffineException("Non-constant divisor.",
 							appt);
-				} else if (divisor.m_constant.equals(Rational.ZERO)) {
+				} else if (divisor.m_constant.getConstant().equals(Rational.ZERO)) {
 					throw new TermIsNotAffineException("Division by zero.",
 							appt);
 				} else {

@@ -116,10 +116,10 @@ public class AffineFunction implements Serializable {
 //	}
 	
 	/**
-	 * @param var a Boogie variable
+	 * @param var a RankVar variable
 	 * @return the coefficient of to this variable
 	 */
-	public BigInteger get(BoogieVar var) {
+	public BigInteger get(RankVar var) {
 		return m_coefficients.get(var);
 	}
 	
