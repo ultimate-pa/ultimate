@@ -6,6 +6,7 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base;
 import java.util.ArrayList;
 
 import org.eclipse.cdt.core.dom.ast.IASTNode;
+
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
 
 /**

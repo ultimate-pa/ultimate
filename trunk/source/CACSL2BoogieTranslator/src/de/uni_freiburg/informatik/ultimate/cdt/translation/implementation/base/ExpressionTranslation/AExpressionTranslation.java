@@ -15,13 +15,13 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.c
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.PRIMITIVE;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultExpression;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.ISOIEC9899TC3;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BooleanLiteral;
@@ -39,10 +39,10 @@ public abstract class AExpressionTranslation {
 	protected final FunctionDeclarations m_FunctionDeclarations;
 	protected final TypeSizes m_TypeSizeConstants;
 
-	public AExpressionTranslation(TypeSizes typeSizeConstants, FunctionDeclarations functionDeclarations) {
+	public AExpressionTranslation(TypeSizes typeSizeConstants, ITypeHandler typeHandler) {
 		super();
 		this.m_TypeSizeConstants = typeSizeConstants;
-		this.m_FunctionDeclarations = functionDeclarations;
+		this.m_FunctionDeclarations = new FunctionDeclarations(typeHandler, m_TypeSizeConstants);
 	}
 
 	public ResultExpression translateLiteral(Dispatcher main, IASTLiteralExpression node) {
@@ -103,4 +103,10 @@ public abstract class AExpressionTranslation {
 	public abstract RValue translateIntegerLiteral(ILocation loc, String val);
 	
 	public abstract Expression constructLiteralForIntegerType(ILocation loc, CPrimitive type, BigInteger value);
+
+	public FunctionDeclarations getFunctionDeclarations() {
+		return m_FunctionDeclarations;
+	}
+	
+	
 }

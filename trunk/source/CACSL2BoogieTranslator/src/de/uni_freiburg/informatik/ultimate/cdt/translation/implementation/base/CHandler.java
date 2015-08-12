@@ -8,6 +8,7 @@ import java.text.ParseException;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -152,13 +153,11 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Label;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.LoopInvariantSpecification;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.NamedAttribute;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.NamedType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.RealLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Specification;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StringLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StructAccessExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StructConstructor;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StructLHS;
@@ -226,11 +225,6 @@ public class CHandler implements ICHandler {
 	 */
 	protected SymbolTable mSymbolTable;
 
-	/**
-	 * Names of all bitwise operation that occurred in the program.
-	 */
-	protected LinkedHashMap<String, FunctionDeclaration> mFunctions;
-	protected final FunctionDeclarations mFunctionDeclarations;
 	/**
 	 * A set holding declarations of global variables required for variables,
 	 * declared locally in C but required to be global in Boogie. e.g. constants
@@ -322,8 +316,6 @@ public class CHandler implements ICHandler {
 		this.mPostProcessor = new PostProcessor(main, mLogger);
 		
 		this.mSymbolTable = new SymbolTable(main);
-		this.mFunctions = new LinkedHashMap<String, FunctionDeclaration>();
-		this.mFunctionDeclarations = new FunctionDeclarations(typeHandler, main.getTypeSizes());
 		
 		this.mDeclarationsGlobalInBoogie = new LinkedHashMap<Declaration, CDeclaration>();
 		this.mAxioms = new LinkedHashSet<Axiom>();
@@ -338,9 +330,9 @@ public class CHandler implements ICHandler {
 		this.mGlobAcslExtractors = new ArrayList<>();
 		
 		if (bitvectorTranslation) {
-			m_ExpressionTranslation = new BitvectorTranslation(main.getTypeSizes(), mFunctionDeclarations);
+			m_ExpressionTranslation = new BitvectorTranslation(main.getTypeSizes(), typeHandler);
 		} else {
-			m_ExpressionTranslation = new IntegerTranslation(main.getTypeSizes(), mFunctionDeclarations);
+			m_ExpressionTranslation = new IntegerTranslation(main.getTypeSizes(), typeHandler);
 		}
 		this.mFunctionHandler = new FunctionHandler(m_ExpressionTranslation);
 		this.mMemoryHandler = new MemoryHandler(mFunctionHandler, checkPointerValidity, main.getTypeSizes());
@@ -435,9 +427,9 @@ public class CHandler implements ICHandler {
 			throw new IncorrectSyntaxException(loc, msg);
 		}
 
-		mFunctions.putAll(mFunctionDeclarations.getDeclaredFunctions());
+		Collection<FunctionDeclaration> declaredFunctions = m_ExpressionTranslation.getFunctionDeclarations().getDeclaredFunctions().values();
 		decl.addAll(mPostProcessor.postProcess(main, loc, mMemoryHandler, mArrayHandler, mFunctionHandler, mStructHandler, (TypeHandler) mTypeHandler,
-				main.typeHandler.getUndefinedTypes(), this.mFunctions.values(), mDeclarationsGlobalInBoogie));
+				main.typeHandler.getUndefinedTypes(), declaredFunctions, mDeclarationsGlobalInBoogie));
 
 		// this has to happen after postprocessing as pping may add sizeof
 		// constants for initializations
