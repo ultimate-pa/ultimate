@@ -108,5 +108,47 @@ public abstract class AExpressionTranslation {
 		return m_FunctionDeclarations;
 	}
 	
+	public CPrimitive determineResultType(CPrimitive typeLeft, CPrimitive typeRight) {
+		Map<PRIMITIVE, Integer> sizeMap = m_TypeSizeConstants.getCPrimitiveToTypeSizeConstant();
+		
+		if (typeLeft.equals(typeRight)) {
+			return typeLeft;
+		} else if ((typeLeft.isUnsigned() && typeRight.isUnsigned()) || (!typeLeft.isUnsigned() && !typeRight.isUnsigned())) {
+			Integer sizeLeft = sizeMap.get(typeLeft);
+			Integer sizeRight = sizeMap.get(typeRight);
+			
+			if (sizeLeft.compareTo(sizeRight) >= 0) {
+				return typeLeft;
+			} else {
+				return typeRight;
+			}			
+		} else {
+			CPrimitive unsignedType;
+			CPrimitive signedType;
+			
+			if (typeLeft.isUnsigned()) {
+				unsignedType = typeLeft;
+				signedType = typeRight;
+			} else {
+				unsignedType = typeRight;
+				signedType = typeLeft;
+			}
+			
+			if (sizeMap.get(unsignedType).compareTo(sizeMap.get(signedType)) >= 0) {
+				return unsignedType;
+			} else {
+				return signedType;
+			}
+		}
+	}
 	
+	public void usualArithmeticConversions(Dispatcher main, ILocation loc, MemoryHandler memoryHandler, 
+			ResultExpression leftRex, ResultExpression rightRex, boolean wraparoundOverflows) {
+		CPrimitive resultType = determineResultType((CPrimitive) leftRex.lrVal.cType, (CPrimitive) rightRex.lrVal.cType);
+		
+		leftRex.lrVal.cType = resultType;
+		rightRex.lrVal.cType = resultType;
+	}
+	
+	protected abstract void convert(ILocation loc, ResultExpression operand, CPrimitive resultType, TypeSizes typeSizeConstants);
 }
