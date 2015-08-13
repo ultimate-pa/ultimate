@@ -243,12 +243,24 @@ public class BitvectorTranslation extends AExpressionTranslation {
 	}
 
 	private void declareBitvectorFunction(ILocation loc, String prefixedFunctionName,
-			boolean boogieResultTypeBool, CPrimitive resultCType, CPrimitive... paramCType) {
+			boolean boogieResultTypeBool, CPrimitive resultCType, boolean indices, CPrimitive... paramCType) {
 		String functionName = prefixedFunctionName.substring(1, prefixedFunctionName.length());
-		Attribute attribute = new NamedAttribute(loc, FunctionDeclarations.s_BUILTIN_IDENTIFIER, new Expression[] { new StringLiteral(loc, functionName) });
+		if (indices) {
+			Attribute attribute = new NamedAttribute(loc, FunctionDeclarations.s_INDEX_IDENTIFIER, new Expression[] { new StringLiteral(loc, functionName) });
+		} else {
+			Attribute attribute = new NamedAttribute(loc, FunctionDeclarations.s_BUILTIN_IDENTIFIER, new Expression[] { new StringLiteral(loc, functionName) });
+		}
 		Attribute[] attributes = new Attribute[] { attribute };
 		m_FunctionDeclarations.declareFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + functionName, true, attributes, boogieResultTypeBool, resultCType, paramCType);
 	}
+
+	@Override
+	protected void convert(ILocation loc, ResultExpression operand, CPrimitive resultType, TypeSizes typeSizeConstants) {
+		declareBitvectorFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + "sign_extend", false, resultType, (CPrimitive) operand.lrVal.cType);
+		FunctionApplication func = new FunctionApplication(loc, SFO.AUXILIARY_FUNCTION_PREFIX + "sign_extend" + m_FunctionDeclarations.computeBitvectorSuffix(loc, (CPrimitive) operand.lrVal.cType) , new Expression);
+	}
+
+
 
 
 	
