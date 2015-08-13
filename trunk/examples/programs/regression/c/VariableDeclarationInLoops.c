@@ -10,7 +10,7 @@ int main(void)
 	while(x>0) {
 		int z;
 		y = z;
-		// wrong assert:
+		// assert that does not hold
 		//@assert y != 0;
 	}
 	x = test();
@@ -22,6 +22,6 @@ int test() {
 	if (x != 0) {
 		goto MY_LABEL;
 	}
-	// correct assert:
+	// assert that holds
 	//@assert x == 0;
 }
