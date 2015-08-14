@@ -43,6 +43,8 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa;
  * @author Matthias Heizmann
  */
 public class StateWithRankInfo<STATE> {
+	
+	public static final int s_NoRank = Integer.MIN_VALUE;
 	private final STATE m_State;
 	private final int m_Rank;
 	private final boolean m_InO;
@@ -56,9 +58,9 @@ public class StateWithRankInfo<STATE> {
 			throw new IllegalArgumentException("rank has to be nonnegative");
 		}
 		m_Rank = rank;
-		if (inO && BuchiComplementFKVNwa.isOdd(rank)) {
-			throw new IllegalArgumentException("state can be only in O if rank is even");
-		}
+//		if (inO && BuchiComplementFKVNwa.isOdd(rank)) {
+//			throw new IllegalArgumentException("state can be only in O if rank is even");
+//		}
 		m_InO = inO;
 	}
 
@@ -68,7 +70,7 @@ public class StateWithRankInfo<STATE> {
 	public StateWithRankInfo(STATE state) {
 		super();
 		m_State = state;
-		m_Rank = Integer.MIN_VALUE;
+		m_Rank = s_NoRank;
 		m_InO = false;
 	}
 	
@@ -119,7 +121,7 @@ public class StateWithRankInfo<STATE> {
 		sb.append("(");
 		sb.append(m_State);
 		sb.append(",");
-		if (m_Rank == Integer.MIN_VALUE) {
+		if (m_Rank == s_NoRank) {
 			sb.append("∞");
 		} else {
 			sb.append(m_Rank);

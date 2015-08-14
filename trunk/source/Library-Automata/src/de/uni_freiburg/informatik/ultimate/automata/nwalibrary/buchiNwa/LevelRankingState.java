@@ -25,6 +25,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -32,7 +33,6 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.IDeterminizedState;
 
 /**
  * Represents a state (S,O,g) in the complement automaton.
@@ -45,10 +45,11 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.
  * </ul> 
  * TODO Encode O in m_LevelRanking. E.g. map DoubleDecker in O instead of
  * its rank to rank-1000.
+ * @author Matthias Heizmann
  */
-public class LevelRankingState<LETTER, STATE> implements IDeterminizedState<LETTER, STATE> {
-	protected final Map<STATE,HashMap<STATE,Integer>> m_LevelRanking;
-	protected final Map<STATE,Set<STATE>> m_O;
+public class LevelRankingState<LETTER, STATE> implements IFkvState<LETTER, STATE> { 
+	protected final Map<StateWithRankInfo<STATE>,HashMap<STATE,Integer>> m_LevelRanking;
+	protected final Map<StateWithRankInfo<STATE>,Set<STATE>> m_O;
 	
 	protected final INestedWordAutomatonSimple<LETTER, STATE> m_Operand;
 	
@@ -58,8 +59,8 @@ public class LevelRankingState<LETTER, STATE> implements IDeterminizedState<LETT
 	int m_HighestRank;
 	
 	LevelRankingState(INestedWordAutomatonSimple<LETTER, STATE> operand) {
-		m_LevelRanking = new HashMap<STATE,HashMap<STATE,Integer>>();
-		m_O = new HashMap<STATE,Set<STATE>>();
+		m_LevelRanking = new HashMap<StateWithRankInfo<STATE>,HashMap<STATE,Integer>>();
+		m_O = new HashMap<StateWithRankInfo<STATE>,Set<STATE>>();
 		m_Operand = operand;
 		m_HighestRank = -1;
 	}
@@ -71,17 +72,17 @@ public class LevelRankingState<LETTER, STATE> implements IDeterminizedState<LETT
 		m_Operand = lrs.getOperand();
 	}
 	
-	Map<STATE,HashMap<STATE,Integer>> copyLevelRanking(Map<STATE,HashMap<STATE,Integer>> lr) {
-		Map<STATE,HashMap<STATE,Integer>> result = new HashMap<STATE,HashMap<STATE,Integer>>();
-		for (Entry<STATE, HashMap<STATE, Integer>> entry  : lr.entrySet()) {
+	Map<StateWithRankInfo<STATE>,HashMap<STATE,Integer>> copyLevelRanking(Map<StateWithRankInfo<STATE>,HashMap<STATE,Integer>> lr) {
+		Map<StateWithRankInfo<STATE>,HashMap<STATE,Integer>> result = new HashMap<StateWithRankInfo<STATE>,HashMap<STATE,Integer>>();
+		for (Entry<StateWithRankInfo<STATE>, HashMap<STATE, Integer>> entry  : lr.entrySet()) {
 			result.put(entry.getKey(), new HashMap<STATE, Integer>(entry.getValue()));
 		}
 		return result;
 	}
 	
-	Map<STATE,Set<STATE>> copyO(Map<STATE,Set<STATE>> lr) {
-		Map<STATE,Set<STATE>> result = new HashMap<STATE,Set<STATE>>();
-		for (Entry<STATE, Set<STATE>> entry  : lr.entrySet()) {
+	Map<StateWithRankInfo<STATE>,Set<STATE>> copyO(Map<StateWithRankInfo<STATE>,Set<STATE>> lr) {
+		Map<StateWithRankInfo<STATE>,Set<STATE>> result = new HashMap<StateWithRankInfo<STATE>,Set<STATE>>();
+		for (Entry<StateWithRankInfo<STATE>, Set<STATE>> entry  : lr.entrySet()) {
 			result.put(entry.getKey(), new HashSet<STATE>(entry.getValue()));
 		}
 		return result;
@@ -92,15 +93,21 @@ public class LevelRankingState<LETTER, STATE> implements IDeterminizedState<LETT
 	}
 	
 	
-	public Set<STATE> getDownStates() {
+	public Set<StateWithRankInfo<STATE>> getDownStates() {
 		return m_LevelRanking.keySet();
 	}
 	
-	public Set<STATE> getUpStates(STATE downState) {
-		return m_LevelRanking.get(downState).keySet();
+	public Iterable<StateWithRankInfo<STATE>> getUpStates(StateWithRankInfo<STATE> downState) {
+		ArrayList<StateWithRankInfo<STATE>> result = new ArrayList<StateWithRankInfo<STATE>>();
+		for (STATE state : m_LevelRanking.get(downState).keySet()) {
+			int rank = getRank(downState, state);
+			boolean inO = inO(downState, state);
+			result.add(new StateWithRankInfo<STATE>(state, rank, inO));
+		}
+		return result;
 	}
 	
-	protected void addRank(STATE down, STATE up, Integer rank, boolean addToO) {
+	protected void addRank(StateWithRankInfo<STATE> down, STATE up, Integer rank, boolean addToO) {
 		assert rank != null;
 		assert BuchiComplementFKVNwa.isEven(rank) || !m_Operand.isFinal(up) : "final states must have even ranks";
 		HashMap<STATE, Integer> up2rank = m_LevelRanking.get(down);
@@ -119,7 +126,7 @@ public class LevelRankingState<LETTER, STATE> implements IDeterminizedState<LETT
 		}
 	}
 	
-	protected void addToO(STATE down, STATE up) {
+	protected void addToO(StateWithRankInfo<STATE> down, STATE up) {
 		Set<STATE> upStates = m_O.get(down);
 		if (upStates == null) {
 			upStates = new HashSet<STATE>();
@@ -128,7 +135,7 @@ public class LevelRankingState<LETTER, STATE> implements IDeterminizedState<LETT
 		upStates.add(up);
 	}
 	
-	public Integer getRank(STATE down, STATE up) {
+	public Integer getRank(StateWithRankInfo<STATE> down, STATE up) {
 		HashMap<STATE, Integer> up2rank = m_LevelRanking.get(down);
 		if (up2rank == null) {
 			return null;
@@ -138,7 +145,7 @@ public class LevelRankingState<LETTER, STATE> implements IDeterminizedState<LETT
 		}
 	}
 	
-	public boolean inO(STATE down, STATE up) {
+	public boolean inO(StateWithRankInfo<STATE> down, STATE up) {
 		Set<STATE> upStates = m_O.get(down);
 		if (upStates == null) {
 			return false;
@@ -201,9 +208,9 @@ public class LevelRankingState<LETTER, STATE> implements IDeterminizedState<LETT
 			return false;
 		} else {
 			int[] ranks = new int[m_HighestRank+1];
-			for (STATE down  : getDownStates()) {
-				for (STATE up : getUpStates(down)) {
-					ranks[getRank(down, up)]++;
+			for (StateWithRankInfo<STATE> down  : getDownStates()) {
+				for (StateWithRankInfo<STATE> up : getUpStates(down)) {
+					ranks[up.getRank()]++;
 				}
 			}
 			for (int i=1; i<=m_HighestRank; i+=2) {
@@ -214,4 +221,14 @@ public class LevelRankingState<LETTER, STATE> implements IDeterminizedState<LETT
 			return true;
 		}
 	}
+
+//	@Override
+//	public Set<STATE> getDownStates() {
+//		throw new UnsupportedOperationException("need rank info");
+//	}
+//
+//	@Override
+//	public Set<STATE> getUpStates(STATE caller) {
+//		throw new UnsupportedOperationException("need rank info");
+//	}
 }

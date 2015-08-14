@@ -32,6 +32,7 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.BuchiComplementFKVNwa;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.LevelRankingState;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.StateWithRankInfo;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Place;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.Condition;
@@ -136,15 +137,15 @@ public class StringFactory extends StateFactory<String> {
 		
 		StringBuilder sb = new StringBuilder();
 		sb.append("{");
-		for (String down : compl.getDownStates()) {
-			for (String up : compl.getUpStates(down)) {
+		for (StateWithRankInfo<String> down : compl.getDownStates()) {
+			for (StateWithRankInfo<String> up : compl.getUpStates(down)) {
 				sb.append("(");
 				sb.append(down);
 				sb.append(",");
 				sb.append(up);
 				sb.append(",");
-				sb.append(compl.getRank(down, up));
-				if (compl.inO(down, up)) {
+				sb.append(up.getRank());
+				if (up.isInO()) {
 					sb.append("X");
 				}
 				sb.append(")");					

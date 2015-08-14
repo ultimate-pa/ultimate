@@ -25,10 +25,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa;
 
-import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -67,7 +65,9 @@ public class BuchiComplementBSNwa<LETTER,STATE> implements INestedWordAutomatonS
 	
 	private final NestedWordAutomatonCache<LETTER, STATE> m_Cache;
 	
-	StateFactory<STATE> m_StateFactory;
+	private final StateFactory<STATE> m_StateFactory;
+	
+	private final StateWithRankInfo<STATE> m_EmptyStackStateWRI;
 	
 	/**
 	 * Maps BlaStState to its representative in the resulting automaton.
@@ -94,6 +94,7 @@ public class BuchiComplementBSNwa<LETTER,STATE> implements INestedWordAutomatonS
 				m_Services,
 				operand.getInternalAlphabet(), operand.getCallAlphabet(), 
 				operand.getReturnAlphabet(), m_StateFactory);
+		m_EmptyStackStateWRI = new StateWithRankInfo<STATE>(getEmptyStackState());
 		constructInitialState();
 	}
 	
@@ -102,9 +103,9 @@ public class BuchiComplementBSNwa<LETTER,STATE> implements INestedWordAutomatonS
 		LevelRankingState<LETTER,STATE> lvlrk = new LevelRankingState<LETTER,STATE>(m_Operand);
 		for (STATE state : m_Operand.getInitialStates()) {
 			if (m_Operand.isFinal(state)) {
-				lvlrk.addRank(getEmptyStackState(), state, 2, false);
+				lvlrk.addRank(m_EmptyStackStateWRI, state, 2, false);
 			} else {
-				lvlrk.addRank(getEmptyStackState(), state, 3, false);
+				lvlrk.addRank(m_EmptyStackStateWRI, state, 3, false);
 			}
 		}
 		getOrAdd(true, lvlrk);
@@ -116,17 +117,17 @@ public class BuchiComplementBSNwa<LETTER,STATE> implements INestedWordAutomatonS
 			super(operand, 9783, true);
 		}
 
-		private final Set<DoubleDecker<STATE>> m_PredecessorWasAccepting = new HashSet<DoubleDecker<STATE>>();
+		private final Set<DoubleDeckerWithRankInfo<STATE>> m_PredecessorWasAccepting = new HashSet<DoubleDeckerWithRankInfo<STATE>>();
 
-		protected void addConstaint(STATE down, STATE up, Integer rank,
+		protected void addConstaint(StateWithRankInfo<STATE> down, STATE up, Integer rank,
 				boolean oCandidate, boolean predecessorWasAccepting) {
 			if (predecessorWasAccepting) {
-				m_PredecessorWasAccepting.add(new DoubleDecker<STATE>(down, up));
+				m_PredecessorWasAccepting.add(new DoubleDeckerWithRankInfo<STATE>(down, up));
 			}
 			super.addConstaint(down, up, rank, oCandidate);
 		}
 
-		public Set<DoubleDecker<STATE>> getPredecessorWasAccepting() {
+		public Set<DoubleDeckerWithRankInfo<STATE>> getPredecessorWasAccepting() {
 			return m_PredecessorWasAccepting;
 		}
 		
@@ -214,13 +215,12 @@ public class BuchiComplementBSNwa<LETTER,STATE> implements INestedWordAutomatonS
 			STATE state, LETTER letter) {
 		LevelRankingConstraintWithHistory lrcwh = new LevelRankingConstraintWithHistory(m_Operand);
 		LevelRankingState<LETTER,STATE> lvlrkState = m_res2det.get(state);
-		for (STATE down : lvlrkState.getDownStates()) {
-			for (STATE up : lvlrkState.getUpStates(down)) {
-				boolean oCandidate = lvlrkState.isOempty() || lvlrkState.inO(down,up);
-				Integer upRank = lvlrkState.getRank(down, up);
+		for (StateWithRankInfo<STATE> down : lvlrkState.getDownStates()) {
+			for (StateWithRankInfo<STATE> up : lvlrkState.getUpStates(down)) {
+				boolean oCandidate = lvlrkState.isOempty() || up.isInO();
 				for (OutgoingInternalTransition<LETTER, STATE> trans : 
-								m_Operand.internalSuccessors(up, letter)) {
-					lrcwh.addConstaint(down, trans.getSucc(), upRank, oCandidate, m_Operand.isFinal(up));
+								m_Operand.internalSuccessors(up.getState(), letter)) {
+					lrcwh.addConstaint(down, trans.getSucc(), up.getRank(), oCandidate, m_Operand.isFinal(up.getState()));
 				}
 			}
 		}
@@ -231,13 +231,12 @@ public class BuchiComplementBSNwa<LETTER,STATE> implements INestedWordAutomatonS
 			STATE state, LETTER letter) {
 		LevelRankingConstraintWithHistory lrcwh = new LevelRankingConstraintWithHistory(m_Operand);
 		LevelRankingState<LETTER,STATE> lvlrkState = m_res2det.get(state);
-		for (STATE down : lvlrkState.getDownStates()) {
-			for (STATE up : lvlrkState.getUpStates(down)) {
-				boolean oCandidate = lvlrkState.isOempty() || lvlrkState.inO(down,up);
-				Integer upRank = lvlrkState.getRank(down, up);
+		for (StateWithRankInfo<STATE> down : lvlrkState.getDownStates()) {
+			for (StateWithRankInfo<STATE> up : lvlrkState.getUpStates(down)) {
+				boolean oCandidate = lvlrkState.isOempty() || up.isInO();
 				for (OutgoingCallTransition<LETTER, STATE> trans : 
-								m_Operand.callSuccessors(up, letter)) {
-					lrcwh.addConstaint(up, trans.getSucc(), upRank, oCandidate, m_Operand.isFinal(up));
+								m_Operand.callSuccessors(up.getState(), letter)) {
+					lrcwh.addConstaint(up, trans.getSucc(), up.getRank(), oCandidate, m_Operand.isFinal(up.getState()));
 				}
 			}
 		}
@@ -249,17 +248,16 @@ public class BuchiComplementBSNwa<LETTER,STATE> implements INestedWordAutomatonS
 		LevelRankingConstraintWithHistory lrcwh = new LevelRankingConstraintWithHistory(m_Operand);
 		LevelRankingState<LETTER,STATE> lvlrkState = m_res2det.get(state);
 		LevelRankingState<LETTER,STATE> lvlrkHier = m_res2det.get(hier);
-		for (STATE downHier : lvlrkHier.getDownStates()) {
-			for (STATE upHier : lvlrkHier.getUpStates(downHier)) {
+		for (StateWithRankInfo<STATE> downHier : lvlrkHier.getDownStates()) {
+			for (StateWithRankInfo<STATE> upHier : lvlrkHier.getUpStates(downHier)) {
 				if (!lvlrkState.getDownStates().contains(upHier)) {
 					continue;
 				}
-				for (STATE up : lvlrkState.getUpStates(upHier)) {
-					boolean oCandidate = lvlrkState.isOempty() || lvlrkState.inO(upHier, up);
-					Integer upRank = lvlrkState.getRank(upHier, up);
+				for (StateWithRankInfo<STATE> up : lvlrkState.getUpStates(upHier)) {
+					boolean oCandidate = lvlrkState.isOempty() || up.isInO();
 					for (OutgoingReturnTransition<LETTER, STATE> trans : 
-						m_Operand.returnSucccessors(up, upHier, letter)) {
-						lrcwh.addConstaint(downHier, trans.getSucc(), upRank, oCandidate, m_Operand.isFinal(up));
+						m_Operand.returnSucccessors(up.getState(), upHier.getState(), letter)) {
+						lrcwh.addConstaint(downHier, trans.getSucc(), up.getRank(), oCandidate, m_Operand.isFinal(up.getState()));
 					}
 				}
 			}
@@ -271,12 +269,12 @@ public class BuchiComplementBSNwa<LETTER,STATE> implements INestedWordAutomatonS
 	private List<LevelRankingState<LETTER, STATE>> computeSuccLevelRankingStates(
 			LevelRankingConstraintWithHistory lrcwh) {
 		List<LevelRankingState<LETTER, STATE>> succLvls = new ArrayList<LevelRankingState<LETTER,STATE>>();
-		Set<DoubleDecker<STATE>> allDoubleDeckersWithVoluntaryDecrease = 
+		Set<DoubleDeckerWithRankInfo<STATE>> allDoubleDeckersWithVoluntaryDecrease = 
 				computeDoubleDeckersWithVoluntaryDecrease(lrcwh);
-		Iterator<Set<DoubleDecker<STATE>>> it = 
-				new PowersetIterator<DoubleDecker<STATE>>(allDoubleDeckersWithVoluntaryDecrease);
+		Iterator<Set<DoubleDeckerWithRankInfo<STATE>>> it = 
+				new PowersetIterator<DoubleDeckerWithRankInfo<STATE>>(allDoubleDeckersWithVoluntaryDecrease);
 		while(it.hasNext()) {
-			Set<DoubleDecker<STATE>> subset = it.next();
+			Set<DoubleDeckerWithRankInfo<STATE>> subset = it.next();
 			LevelRankingState<LETTER, STATE> succCandidate = computeLevelRanking(lrcwh, subset);
 			if (succCandidate != null) {
 				succLvls.add(succCandidate);
@@ -286,10 +284,10 @@ public class BuchiComplementBSNwa<LETTER,STATE> implements INestedWordAutomatonS
 	}
 
 
-	private Set<DoubleDecker<STATE>> computeDoubleDeckersWithVoluntaryDecrease(
+	private Set<DoubleDeckerWithRankInfo<STATE>> computeDoubleDeckersWithVoluntaryDecrease(
 			LevelRankingConstraintWithHistory lrcwh) {
-		Set<DoubleDecker<STATE>> doubleDeckersWithVoluntaryDecrease = new HashSet<DoubleDecker<STATE>>();
-		for (DoubleDecker<STATE> predWasAccepting : lrcwh.getPredecessorWasAccepting()) {
+		Set<DoubleDeckerWithRankInfo<STATE>> doubleDeckersWithVoluntaryDecrease = new HashSet<DoubleDeckerWithRankInfo<STATE>>();
+		for (DoubleDeckerWithRankInfo<STATE> predWasAccepting : lrcwh.getPredecessorWasAccepting()) {
 			int rank = lrcwh.getRank(predWasAccepting.getDown(), predWasAccepting.getUp());
 			if (BuchiComplementFKVNwa.isEven(rank) && !m_Operand.isFinal(predWasAccepting.getUp())) {
 				doubleDeckersWithVoluntaryDecrease.add(predWasAccepting);
@@ -300,16 +298,16 @@ public class BuchiComplementBSNwa<LETTER,STATE> implements INestedWordAutomatonS
 
 
 	private LevelRankingState<LETTER, STATE> computeLevelRanking(LevelRankingConstraintWithHistory lrcwh,
-			Set<DoubleDecker<STATE>> doubleDeckersWithVoluntaryDecrease) {
+			Set<DoubleDeckerWithRankInfo<STATE>> doubleDeckersWithVoluntaryDecrease) {
 		LevelRankingState<LETTER, STATE> result = new LevelRankingState<LETTER, STATE>(m_Operand);
-		for (STATE down : lrcwh.getDownStates()) {
-			for (STATE up : lrcwh.getUpStates(down)) {
-				final boolean oCandidate = lrcwh.inO(down, up);
+		for (StateWithRankInfo<STATE> down : lrcwh.getDownStates()) {
+			for (StateWithRankInfo<STATE> up : lrcwh.getUpStates(down)) {
+				final boolean oCandidate = up.isInO();
 				final boolean inO;
-				int rank = lrcwh.getRank(down, up);
+				int rank = up.getRank();
 				switch (rank) {
 				case 3:
-					if (m_Operand.isFinal(up)) {
+					if (m_Operand.isFinal(up.getState())) {
 						rank = 2;
 						inO = oCandidate;
 					} else {
@@ -317,7 +315,7 @@ public class BuchiComplementBSNwa<LETTER,STATE> implements INestedWordAutomatonS
 					}
 					break;
 				case 2:
-					if (doubleDeckersWithVoluntaryDecrease.contains(new DoubleDecker<STATE>(down, up))) {
+					if (doubleDeckersWithVoluntaryDecrease.contains(new DoubleDecker<StateWithRankInfo<STATE>>(down, up))) {
 						rank = 1;
 						inO = false;
 					} else {
@@ -325,7 +323,7 @@ public class BuchiComplementBSNwa<LETTER,STATE> implements INestedWordAutomatonS
 					}
 					break;
 				case 1:
-					if (m_Operand.isFinal(up)) {
+					if (m_Operand.isFinal(up.getState())) {
 						return null;
 					} else {
 						inO = false;
@@ -334,7 +332,7 @@ public class BuchiComplementBSNwa<LETTER,STATE> implements INestedWordAutomatonS
 				default:
 					throw new AssertionError("no other ranks allowed");
 				}
-				result.addRank(down, up, rank, inO);
+				result.addRank(down, up.getState(), rank, inO);
 			}
 		}
 		return result;
