@@ -45,12 +45,14 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.LocalBoogieVar;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BoogieASTNode;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ConstDeclaration;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.FunctionDeclaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.NamedAttribute;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Procedure;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StringLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableDeclaration;
+import de.uni_freiburg.informatik.ultimate.util.relation.NestedMap2;
 
 /**
  * Stores a mapping from Boogie identifiers to BoogieVars and a mapping from
@@ -103,6 +105,8 @@ public class Boogie2SmtSymbolTable {
 			new HashMap<String,String>();
 	final Map<String,String> m_SmtFunction2BoogieFunction = 
 			new HashMap<String,String>();
+	final Map<String, Map<String, Expression[]>> m_BoogieFunction2Attributes =
+			new HashMap<String, Map<String,Expression[]>>();
 
 	
 	
@@ -252,9 +256,15 @@ public class Boogie2SmtSymbolTable {
 		return m_SmtConst2BoogieConst.get(smtConstant);
 	}
 	
+	public Map<String, Expression[]> getAttributes(String boogieFunctionId) {
+		return Collections.unmodifiableMap(m_BoogieFunction2Attributes.get(boogieFunctionId));
+	}
+	
 	private void declareFunction(FunctionDeclaration funcdecl) {
+		Map<String, Expression[]> attributes = extractAttributes(funcdecl);
 		String id = funcdecl.getIdentifier();
-		String attributeDefinedIdentifier = checkForAttributeDefinedIdentifier(funcdecl);
+		m_BoogieFunction2Attributes.put(id, attributes);
+		String attributeDefinedIdentifier = checkForAttributeDefinedIdentifier(attributes, s_BUILTINIDENTIFIER);
 		String smtID;
 		if (attributeDefinedIdentifier == null) {
 			 smtID = Boogie2SMT.quoteId(id);
@@ -292,32 +302,36 @@ public class Boogie2SmtSymbolTable {
 
 	
 	/**
-	 * Check if function declaration has an attribute with the identifier that
-	 * equals s_BUILTINIDENTIFIER. If yes, return the corresponding value.
+	 * Returns the single StringLiteral value of the NamedAttribute with name n.
+	 * Throws an IllegalArgumentException if there is a NamedAttribute with
+	 * name whose value is not a single StringLiteral.
+	 * Returns null if there is no NamedAttribute with name n.
 	 */
-	private String checkForAttributeDefinedIdentifier(FunctionDeclaration funcdecl) {
-		String attributeDefinedIdentifier = null;
+	public static String checkForAttributeDefinedIdentifier(
+			Map<String, Expression[]> attributes, String n) {
+		Expression[] values = attributes.get(n);
+		if (values == null) {
+			// no such name
+			return null;
+		} else {
+			if (values.length == 1 && values[0] instanceof StringLiteral) {
+				StringLiteral sl = (StringLiteral) values[0];
+				return sl.getValue();
+			} else {
+				throw new IllegalArgumentException("no single value attribute");
+			}
+		}
+	}
+	
+	private Map<String, Expression[]> extractAttributes(FunctionDeclaration funcdecl) {
+		Map<String, Expression[]> result = new HashMap<String, Expression[]>();
 		for (Attribute attr : funcdecl.getAttributes()) {
 			if (attr instanceof NamedAttribute) {
 				NamedAttribute nattr = (NamedAttribute) attr;
-				if (nattr.getName().equals(s_BUILTINIDENTIFIER)) {
-					if (nattr.getValues().length == 1 && 
-							nattr.getValues()[0] instanceof StringLiteral) {
-						StringLiteral sl = (StringLiteral) nattr.getValues()[0];
-						if (attributeDefinedIdentifier == null) {
-							attributeDefinedIdentifier = sl.getValue();
-						} else {
-							throw new IllegalArgumentException("multiple " + 
-									s_BUILTINIDENTIFIER + "not supported");
-						}
-					} else {
-						throw new IllegalArgumentException(s_BUILTINIDENTIFIER + 
-								"has to be used to define SMT identifier");
-					}
-				}
+				result.put(nattr.getName(), ((NamedAttribute) attr).getValues());
 			}
 		}
-		return attributeDefinedIdentifier;
+		return result;
 	}
 	
 	public Map<String, String> getSmtFunction2BoogieFunction() {

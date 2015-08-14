@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
@@ -94,6 +95,7 @@ public class Expression2Term {
 	private int m_OldContextScopeDepth = 0;
 
 	private final IUltimateServiceProvider mServices;
+	private static final String s_Overapproximation = "overapproximation";
 
 	public Expression2Term(IUltimateServiceProvider services, Script script, 
 			TypeSortTranslator typeSortTranslator, 
@@ -253,7 +255,9 @@ public class Expression2Term {
 		} else if (exp instanceof FunctionApplication) {
 			FunctionApplication func = ((FunctionApplication) exp);
 			final Term result;
-			if (m_OverapproximateFunctions) {
+			Map<String, Expression[]> attributes = m_Boogie2SmtSymbolTable.getAttributes(func.getIdentifier());
+			String overapproximation = Boogie2SmtSymbolTable.checkForAttributeDefinedIdentifier(attributes, s_Overapproximation );
+			if (m_OverapproximateFunctions || overapproximation != null) {
 				Sort resultSort = m_TypeSortTranslator.getSort(exp.getType(), exp);
 				TermVariable auxVar = m_VariableManager.constructFreshTermVariable(func.getIdentifier(), resultSort);
 				m_AuxVars.add(auxVar);
