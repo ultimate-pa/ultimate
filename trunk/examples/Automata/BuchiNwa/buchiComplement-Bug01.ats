@@ -8,9 +8,9 @@ NestedWordAutomaton complementBS = buchiComplementBS(ia);
 boolean acceptedComplementBS = buchiAccepts(complementBS, nlw);
 NestedWordAutomaton complementFKV = buchiComplementFKV(ia);
 boolean acceptedComplementFKV = buchiAccepts(complementFKV, nlw);
-print(accepted);
-print(acceptedComplementBS);
-print(acceptedComplementFKV);
+assert(!accepted);
+assert(acceptedComplementBS);
+assert(acceptedComplementFKV);
 
 
 
