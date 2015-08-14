@@ -260,7 +260,7 @@ public final class ISOIEC9899TC3 {
 			BigInteger value) {
 		final Expression resultLiteral;
 		if (bitvectorTranslation) {
-			int bitlength = 8 * typeSizeConstants. getCPrimitiveToTypeSizeConstant().get(cType.getType());
+			int bitlength = 8 * typeSizeConstants.getSize(cType.getType());
 			if (value.signum() == -1) {
 				long maxValue = (long) Math.pow(2, bitlength);
 				value = value.add(BigInteger.valueOf(maxValue));

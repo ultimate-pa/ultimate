@@ -217,8 +217,7 @@ public class CastAndConversionHandler {
 			byteSize = typeSizes.sizeOfEnumType;
 		} else {
 			//should be primitive
-			byteSize = typeSizes.getCPrimitiveToTypeSizeConstant()
-				.get(((CPrimitive) ulType).getType());
+			byteSize = typeSizes.getSize(((CPrimitive) ulType).getType());
 		}
 		return byteSize;
 	}

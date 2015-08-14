@@ -34,6 +34,7 @@ public class FunctionDeclarations {
 	private final TypeSizes m_TypeSizeConstants;
 	public static final String s_BUILTIN_IDENTIFIER = "builtin";
 	public static final String s_OVERAPPROX_IDENTIFIER = "overapproximation";
+	public static final String s_INDEX_IDENTIFIER = "indices";
 	
 	
 	public FunctionDeclarations(ITypeHandler typeHandler,
@@ -91,7 +92,7 @@ public class FunctionDeclarations {
 	
 	public String computeBitvectorSuffix(ILocation loc, CPrimitive... paramCTypes) {
 		CPrimitive firstParam = paramCTypes[0];
-		Integer bytesize = m_TypeSizeConstants.getCPrimitiveToTypeSizeConstant().get(firstParam.getType());
+		Integer bytesize = m_TypeSizeConstants.getSize(firstParam.getType());
 		int bitsize = bytesize * 8;
 		
 		return String.valueOf(bitsize);

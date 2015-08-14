@@ -41,7 +41,7 @@ public class BitvectorTranslation extends AExpressionTranslation {
 		{
 			String val = ISOIEC9899TC3.handleCharConstant(new String(node.getValue()), loc, main);
 			CPrimitive cprimitive = new CPrimitive(PRIMITIVE.CHAR);
-			int bitlength = 8 * m_TypeSizeConstants.getCPrimitiveToTypeSizeConstant().get(PRIMITIVE.CHAR);
+			int bitlength = 8 * m_TypeSizes.getSize(PRIMITIVE.CHAR);
 			return new ResultExpression(new RValue(new BitvecLiteral(loc, val, bitlength), cprimitive));
 		}
 		default:
@@ -51,13 +51,13 @@ public class BitvectorTranslation extends AExpressionTranslation {
 	
 	@Override
 	public RValue translateIntegerLiteral(ILocation loc, String val) {
-		RValue rVal = ISOIEC9899TC3.handleIntegerConstant(val, loc, true, m_TypeSizeConstants);
+		RValue rVal = ISOIEC9899TC3.handleIntegerConstant(val, loc, true, m_TypeSizes);
 		return rVal;
 	}
 	
 	@Override
 	public Expression constructLiteralForIntegerType(ILocation loc, CPrimitive type, BigInteger value) {
-		return ISOIEC9899TC3.constructLiteralForCIntegerLiteral(loc, true, m_TypeSizeConstants, type, value);
+		return ISOIEC9899TC3.constructLiteralForCIntegerLiteral(loc, true, m_TypeSizes, type, value);
 	}
 
 
@@ -254,7 +254,7 @@ public class BitvectorTranslation extends AExpressionTranslation {
 		m_FunctionDeclarations.declareFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + functionName, true, attributes, boogieResultTypeBool, resultCType, paramCType);
 	}
 
-	@Override
+//	@Override
 	protected void convert(ILocation loc, ResultExpression operand, CPrimitive resultType, TypeSizes typeSizeConstants) {
 		declareBitvectorFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + "sign_extend", false, resultType, (CPrimitive) operand.lrVal.cType);
 //		FunctionApplication func = new FunctionApplication(loc, SFO.AUXILIARY_FUNCTION_PREFIX + "sign_extend" + m_FunctionDeclarations.computeBitvectorSuffix(loc, (CPrimitive) operand.lrVal.cType) , new Expression);

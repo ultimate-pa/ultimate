@@ -1080,7 +1080,7 @@ public class MemoryHandler {
 		
 		int size = 0;
 		if (cType instanceof CPrimitive) {
-			Integer sizeI = typeSizeConstants.getCPrimitiveToTypeSizeConstant().get(((CPrimitive) cType).getType());
+			Integer sizeI = typeSizeConstants.getSize(((CPrimitive) cType).getType());
 			if (sizeI != null)
 				size = sizeI;
 			else

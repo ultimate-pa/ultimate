@@ -59,13 +59,13 @@ public class IntegerTranslation extends AExpressionTranslation {
 
 	@Override
 	public RValue translateIntegerLiteral(ILocation loc, String val) {
-		RValue rVal = ISOIEC9899TC3.handleIntegerConstant(val, loc, false, m_TypeSizeConstants);
+		RValue rVal = ISOIEC9899TC3.handleIntegerConstant(val, loc, false, m_TypeSizes);
 		return rVal;
 	}
 	
 	@Override
 	public Expression constructLiteralForIntegerType(ILocation loc, CPrimitive type, BigInteger value) {
-		return ISOIEC9899TC3.constructLiteralForCIntegerLiteral(loc, false, m_TypeSizeConstants, type, value);
+		return ISOIEC9899TC3.constructLiteralForCIntegerLiteral(loc, false, m_TypeSizes, type, value);
 	}
 
 	@Override

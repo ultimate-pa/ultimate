@@ -37,12 +37,12 @@ import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 public abstract class AExpressionTranslation {
 	
 	protected final FunctionDeclarations m_FunctionDeclarations;
-	protected final TypeSizes m_TypeSizeConstants;
+	protected final TypeSizes m_TypeSizes;
 
 	public AExpressionTranslation(TypeSizes typeSizeConstants, ITypeHandler typeHandler) {
 		super();
-		this.m_TypeSizeConstants = typeSizeConstants;
-		this.m_FunctionDeclarations = new FunctionDeclarations(typeHandler, m_TypeSizeConstants);
+		this.m_TypeSizes = typeSizeConstants;
+		this.m_FunctionDeclarations = new FunctionDeclarations(typeHandler, m_TypeSizes);
 	}
 
 	public ResultExpression translateLiteral(Dispatcher main, IASTLiteralExpression node) {
@@ -109,13 +109,12 @@ public abstract class AExpressionTranslation {
 	}
 	
 	public CPrimitive determineResultType(CPrimitive typeLeft, CPrimitive typeRight) {
-		Map<PRIMITIVE, Integer> sizeMap = m_TypeSizeConstants.getCPrimitiveToTypeSizeConstant();
 		
 		if (typeLeft.equals(typeRight)) {
 			return typeLeft;
 		} else if ((typeLeft.isUnsigned() && typeRight.isUnsigned()) || (!typeLeft.isUnsigned() && !typeRight.isUnsigned())) {
-			Integer sizeLeft = sizeMap.get(typeLeft);
-			Integer sizeRight = sizeMap.get(typeRight);
+			Integer sizeLeft = m_TypeSizes.getSize(typeLeft.getType());
+			Integer sizeRight = m_TypeSizes.getSize(typeRight.getType());
 			
 			if (sizeLeft.compareTo(sizeRight) >= 0) {
 				return typeLeft;
@@ -134,7 +133,7 @@ public abstract class AExpressionTranslation {
 				signedType = typeLeft;
 			}
 			
-			if (sizeMap.get(unsignedType).compareTo(sizeMap.get(signedType)) >= 0) {
+			if (m_TypeSizes.getSize(unsignedType.getType()).compareTo(m_TypeSizes.getSize(signedType.getType())) >= 0) {
 				return unsignedType;
 			} else {
 				return signedType;
@@ -150,5 +149,5 @@ public abstract class AExpressionTranslation {
 		rightRex.lrVal.cType = resultType;
 	}
 	
-	protected abstract void convert(ILocation loc, ResultExpression operand, CPrimitive resultType, TypeSizes typeSizeConstants);
+//	protected abstract void convert(ILocation loc, ResultExpression operand, CPrimitive resultType, TypeSizes typeSizeConstants);
 }

@@ -54,8 +54,13 @@ public class TypeSizes {
 			new LinkedHashMap<>();
 	
 
-	public Map<CPrimitive.PRIMITIVE, Integer> getCPrimitiveToTypeSizeConstant() {
-		return Collections.unmodifiableMap(CPrimitiveToTypeSizeConstant);
+	public Integer getSize(PRIMITIVE cPrimitive) {
+		Integer result = CPrimitiveToTypeSizeConstant.get(cPrimitive);
+		if (result == null) {
+			throw new IllegalArgumentException("unknown type " + cPrimitive);
+		} else {
+			return result;
+		}
 	}
 
 	public TypeSizes(UltimatePreferenceStore ups) {
