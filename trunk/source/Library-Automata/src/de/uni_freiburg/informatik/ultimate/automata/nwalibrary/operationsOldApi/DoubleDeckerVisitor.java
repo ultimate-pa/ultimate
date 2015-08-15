@@ -44,6 +44,7 @@ import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.DoubleDecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.IOpWithDelayedDeadEndRemoval.UpDownEntry;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.IncomingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.IncomingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.IncomingReturnTransition;
@@ -62,7 +63,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvide
  * @param <LETTER>
  * @param <STATE>
  */
-public abstract class DoubleDeckerVisitor<LETTER, STATE> implements IOpWithDelayedDeadEndRemoval<LETTER, STATE> {
+public abstract class DoubleDeckerVisitor<LETTER, STATE>  {
 
 	protected final IUltimateServiceProvider m_Services;
 	protected final Logger m_Logger;
@@ -164,7 +165,7 @@ public abstract class DoubleDeckerVisitor<LETTER, STATE> implements IOpWithDelay
 		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 	}
 
-	public INestedWordAutomatonOldApi<LETTER, STATE> getResult() throws OperationCanceledException {
+	public Object getResult() throws OperationCanceledException {
 		return m_TraversedNwa;
 	}
 
@@ -939,7 +940,6 @@ public abstract class DoubleDeckerVisitor<LETTER, STATE> implements IOpWithDelay
 	// return false;
 	// }
 
-	@Override
 	public Iterable<UpDownEntry<STATE>> getRemovedUpDownEntry() {
 
 		return new Iterable<UpDownEntry<STATE>>() {

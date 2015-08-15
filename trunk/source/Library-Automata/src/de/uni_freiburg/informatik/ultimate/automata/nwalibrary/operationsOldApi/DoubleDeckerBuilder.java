@@ -29,10 +29,13 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.DoubleDecker;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 
-public abstract class DoubleDeckerBuilder<LETTER,STATE> extends DoubleDeckerVisitor<LETTER,STATE>{
+public abstract class DoubleDeckerBuilder<LETTER,STATE> extends DoubleDeckerVisitor<LETTER,STATE> 
+														implements IOpWithDelayedDeadEndRemoval<LETTER, STATE> {
 
 	Set<STATE> m_SuccessorsConstructedIn = new HashSet<STATE>();
 	Set<STATE> m_SuccessorsConstructedCa = new HashSet<STATE>();
@@ -104,5 +107,9 @@ public abstract class DoubleDeckerBuilder<LETTER,STATE> extends DoubleDeckerVisi
 
 	protected abstract Collection<STATE> buildReturnSuccessors(
 			DoubleDecker<STATE> doubleDecker);
+	
+	public INestedWordAutomatonOldApi<LETTER, STATE> getResult() throws OperationCanceledException {
+		return m_TraversedNwa;
+	}
 
 }
