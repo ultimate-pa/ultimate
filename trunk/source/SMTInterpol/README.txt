@@ -4,30 +4,31 @@ SMTInterpol in Ultimate
 SMTInterpol is merged manually into Ultimate.  Here are the
 necessary steps.
 
+0. Switch to the directory in which your source subdirectory is, e.g., trunk/
+
 1. Checkout clean smtinterpol git repository.
-   cd ...
    git clone https://github.com/juergenchrist/smtinterpol smtinterpol.git
 
 2. Find out the last merged version by looking into Version.properties
-   cd ultimate/source
-   cat SMTInterpol/src/de/uni_freiburg/informatik/ultimate/smtinterpol/Version.properties
+   cat source/SMTInterpol/src/de/uni_freiburg/informatik/ultimate/smtinterpol/Version.properties
 
 3. Create a patch for the changes from SMTInterpol/src and Library-SMTLIB/src.
-   cd .../smtinterpol.git
+   cd smtinterpol.git
    git diff <version-number> SMTInterpol/src Library-SMTLIB/src >smtinterpol.diff
-   cd ultimate/source
-   patch -p1 < .../smtinterpol.diff
+   cd ../source
+   patch -p1 < ../smtinterpol.git/smtinterpol.diff
 
 4. Update Version.properties.  The easiest way to do this is:
    cd .../smtinterpol.git
    ant
-   cd ultimate/source/SMTInterpol/src
+   cd ../source/SMTInterpol/src
    unzip ../../smtinterpol.git/smtinterpol.jar \*Version.properties
+   cd ../../..
 
 5. Make sure you added all new files and deleted all old files.  Run
 
-   diff -x.svn -r SMTInterpol/src smtinterpol.git/SMTInterpol/src
-   diff -x.svn -r Library-SMTLIB/src smtinterpol.git/Library-SMTLIB/src
+   diff -x.svn -r source/SMTInterpol/src smtinterpol.git/SMTInterpol/src
+   diff -x.svn -r source/Library-SMTLIB/src smtinterpol.git/Library-SMTLIB/src
 
    it should list some files from ultimate/util, Versions.properties, 
    and the automatically build parser/lexer files and the parser build
@@ -40,3 +41,7 @@ necessary steps.
 
    Updated SMTInterpol to version 2.1-102-g04e1b50
    from https://github.com/juergenchrist/smtinterpol
+
+
+
+Written by Jochen Hoenicke, minor changes done by Matthias Heizmann.
