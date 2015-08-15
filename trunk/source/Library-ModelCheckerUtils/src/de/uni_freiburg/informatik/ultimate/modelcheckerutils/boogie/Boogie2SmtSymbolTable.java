@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie;
 
+import java.math.BigInteger;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -47,6 +48,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BoogieASTNode;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ConstDeclaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.FunctionDeclaration;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.NamedAttribute;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Procedure;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StringLiteral;
@@ -71,6 +73,8 @@ public class Boogie2SmtSymbolTable {
 	 * 
 	 */
 	private static final String s_BUILTINIDENTIFIER = "builtin";
+	
+	private static final String s_INDICESIDENTIFIER = "indices";
 	
 	private final BoogieDeclarations m_BoogieDeclarations;
 	private final Script m_Script; 
@@ -320,6 +324,30 @@ public class Boogie2SmtSymbolTable {
 			} else {
 				throw new IllegalArgumentException("no single value attribute");
 			}
+		}
+	}
+	
+	/**
+	 * Checks if there is an annotation with the name {@link #s_INDICESIDENTIFIER}
+	 * According to our convention this attribute defines the indices for the 
+	 * corresponding SMT function. Returns the array of indices if there is an
+	 * attribute with this name and null otherwise.
+	 */
+	public static BigInteger[] checkForIndices(Map<String, Expression[]> attributes) {
+		Expression[] values = attributes.get(s_INDICESIDENTIFIER);
+		if (values == null) {
+			// no such name
+			return null;
+		} else {
+			BigInteger[] result = new BigInteger[values.length];
+			for (int i=0; i<values.length; i++) {
+				if (values[i] instanceof IntegerLiteral) {
+					result[i] = new BigInteger(((IntegerLiteral) values[i]).getValue());
+				} else {
+					throw new IllegalArgumentException("no single value attribute");
+				}
+			}
+			return result;
 		}
 	}
 	

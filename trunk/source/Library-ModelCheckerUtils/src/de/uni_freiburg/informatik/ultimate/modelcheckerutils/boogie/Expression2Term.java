@@ -264,6 +264,7 @@ public class Expression2Term {
 				m_Overapproximation = true;
 				result = auxVar;
 			} else {
+				BigInteger[] indices = Boogie2SmtSymbolTable.checkForIndices(attributes);
 				IType[] argumentTypes = new IType[func.getArguments().length];
 				for (int i = 0; i < func.getArguments().length; i++) {
 					argumentTypes[i] = func.getArguments()[i].getType();
@@ -273,7 +274,7 @@ public class Expression2Term {
 				for (int i = 0; i < func.getArguments().length; i++) {
 					params[i] = m_TypeSortTranslator.getSort(func.getArguments()[i].getType(), exp);
 				}
-
+				
 				Term[] parameters = new Term[func.getArguments().length];
 				for (int i = 0; i < func.getArguments().length; i++) {
 					parameters[i] = translate(func.getArguments()[i]);
@@ -283,7 +284,7 @@ public class Expression2Term {
 				if (funcSymb == null) {
 					throw new IllegalArgumentException("unknown function" + func.getIdentifier());
 				}
-				result = m_Script.term(funcSymb, parameters);
+				result = m_Script.term(funcSymb, indices, null, parameters);
 			}
 			return result;
 		} else if (exp instanceof IdentifierExpression) {
