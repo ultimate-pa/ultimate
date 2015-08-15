@@ -117,17 +117,17 @@ public class BuchiComplementBSNwa<LETTER,STATE> implements INestedWordAutomatonS
 			super(operand, 9783, true);
 		}
 
-		private final Set<DoubleDeckerWithRankInfo<STATE>> m_PredecessorWasAccepting = new HashSet<DoubleDeckerWithRankInfo<STATE>>();
+		private final Set<DoubleDecker<StateWithRankInfo<STATE>>> m_PredecessorWasAccepting = new HashSet<DoubleDecker<StateWithRankInfo<STATE>>>();
 
 		protected void addConstaint(StateWithRankInfo<STATE> down, STATE up, Integer rank,
 				boolean oCandidate, boolean predecessorWasAccepting) {
 			if (predecessorWasAccepting) {
-				m_PredecessorWasAccepting.add(new DoubleDeckerWithRankInfo<STATE>(down, up));
+				m_PredecessorWasAccepting.add(new DoubleDecker<StateWithRankInfo<STATE>>(down, new StateWithRankInfo<STATE>(up, rank, oCandidate)));
 			}
 			super.addConstaint(down, up, rank, oCandidate);
 		}
 
-		public Set<DoubleDeckerWithRankInfo<STATE>> getPredecessorWasAccepting() {
+		public Set<DoubleDecker<StateWithRankInfo<STATE>>> getPredecessorWasAccepting() {
 			return m_PredecessorWasAccepting;
 		}
 		
@@ -269,12 +269,12 @@ public class BuchiComplementBSNwa<LETTER,STATE> implements INestedWordAutomatonS
 	private List<LevelRankingState<LETTER, STATE>> computeSuccLevelRankingStates(
 			LevelRankingConstraintWithHistory lrcwh) {
 		List<LevelRankingState<LETTER, STATE>> succLvls = new ArrayList<LevelRankingState<LETTER,STATE>>();
-		Set<DoubleDeckerWithRankInfo<STATE>> allDoubleDeckersWithVoluntaryDecrease = 
+		Set<DoubleDecker<StateWithRankInfo<STATE>>> allDoubleDeckersWithVoluntaryDecrease = 
 				computeDoubleDeckersWithVoluntaryDecrease(lrcwh);
-		Iterator<Set<DoubleDeckerWithRankInfo<STATE>>> it = 
-				new PowersetIterator<DoubleDeckerWithRankInfo<STATE>>(allDoubleDeckersWithVoluntaryDecrease);
+		Iterator<Set<DoubleDecker<StateWithRankInfo<STATE>>>> it = 
+				new PowersetIterator<DoubleDecker<StateWithRankInfo<STATE>>>(allDoubleDeckersWithVoluntaryDecrease);
 		while(it.hasNext()) {
-			Set<DoubleDeckerWithRankInfo<STATE>> subset = it.next();
+			Set<DoubleDecker<StateWithRankInfo<STATE>>> subset = it.next();
 			LevelRankingState<LETTER, STATE> succCandidate = computeLevelRanking(lrcwh, subset);
 			if (succCandidate != null) {
 				succLvls.add(succCandidate);
@@ -284,12 +284,12 @@ public class BuchiComplementBSNwa<LETTER,STATE> implements INestedWordAutomatonS
 	}
 
 
-	private Set<DoubleDeckerWithRankInfo<STATE>> computeDoubleDeckersWithVoluntaryDecrease(
+	private Set<DoubleDecker<StateWithRankInfo<STATE>>> computeDoubleDeckersWithVoluntaryDecrease(
 			LevelRankingConstraintWithHistory lrcwh) {
-		Set<DoubleDeckerWithRankInfo<STATE>> doubleDeckersWithVoluntaryDecrease = new HashSet<DoubleDeckerWithRankInfo<STATE>>();
-		for (DoubleDeckerWithRankInfo<STATE> predWasAccepting : lrcwh.getPredecessorWasAccepting()) {
-			int rank = lrcwh.getRank(predWasAccepting.getDown(), predWasAccepting.getUp());
-			if (BuchiComplementFKVNwa.isEven(rank) && !m_Operand.isFinal(predWasAccepting.getUp())) {
+		Set<DoubleDecker<StateWithRankInfo<STATE>>> doubleDeckersWithVoluntaryDecrease = new HashSet<DoubleDecker<StateWithRankInfo<STATE>>>();
+		for (DoubleDecker<StateWithRankInfo<STATE>> predWasAccepting : lrcwh.getPredecessorWasAccepting()) {
+			int rank = lrcwh.getRank(predWasAccepting.getDown(), predWasAccepting.getUp().getState());
+			if (BuchiComplementFKVNwa.isEven(rank) && !m_Operand.isFinal(predWasAccepting.getUp().getState())) {
 				doubleDeckersWithVoluntaryDecrease.add(predWasAccepting);
 			}
 		}
@@ -298,7 +298,7 @@ public class BuchiComplementBSNwa<LETTER,STATE> implements INestedWordAutomatonS
 
 
 	private LevelRankingState<LETTER, STATE> computeLevelRanking(LevelRankingConstraintWithHistory lrcwh,
-			Set<DoubleDeckerWithRankInfo<STATE>> doubleDeckersWithVoluntaryDecrease) {
+			Set<DoubleDecker<StateWithRankInfo<STATE>>> doubleDeckersWithVoluntaryDecrease) {
 		LevelRankingState<LETTER, STATE> result = new LevelRankingState<LETTER, STATE>(m_Operand);
 		for (StateWithRankInfo<STATE> down : lrcwh.getDownStates()) {
 			for (StateWithRankInfo<STATE> up : lrcwh.getUpStates(down)) {

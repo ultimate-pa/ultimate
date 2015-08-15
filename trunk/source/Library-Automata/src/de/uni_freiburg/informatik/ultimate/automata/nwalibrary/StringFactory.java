@@ -140,13 +140,26 @@ public class StringFactory extends StateFactory<String> {
 		for (StateWithRankInfo<String> down : compl.getDownStates()) {
 			for (StateWithRankInfo<String> up : compl.getUpStates(down)) {
 				sb.append("(");
-				sb.append(down);
+				sb.append(down.getState());
 				sb.append(",");
-				sb.append(up);
+				if (down.hasRank()) {
+					sb.append(down.getRank());
+					if (down.isInO()) {
+						sb.append("X");
+					}
+				} else {
+					sb.append("∞");
+				}
 				sb.append(",");
-				sb.append(up.getRank());
-				if (up.isInO()) {
-					sb.append("X");
+				sb.append(up.getState());
+				sb.append(",");
+				if (up.hasRank()) {
+					sb.append(up.getRank());
+					if (up.isInO()) {
+						sb.append("X");
+					}
+				} else {
+					sb.append("∞");
 				}
 				sb.append(")");					
 			}

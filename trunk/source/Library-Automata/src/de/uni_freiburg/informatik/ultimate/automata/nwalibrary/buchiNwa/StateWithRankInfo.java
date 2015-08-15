@@ -74,6 +74,10 @@ public class StateWithRankInfo<STATE> {
 		m_InO = false;
 	}
 	
+	public boolean hasRank() {
+		return m_Rank != s_NoRank;
+	}
+	
 	public STATE getState() {
 		return m_State;
 	}
@@ -119,15 +123,15 @@ public class StateWithRankInfo<STATE> {
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
 		sb.append("(");
-		sb.append(m_State);
+		sb.append(getState());
 		sb.append(",");
-		if (m_Rank == s_NoRank) {
-			sb.append("∞");
+		if (hasRank()) {
+			sb.append(getRank());
+			if (isInO()) {
+				sb.append("X");
+			}
 		} else {
-			sb.append(m_Rank);
-		}
-		if (isInO()) {
-			sb.append("X");
+			sb.append("∞");
 		}
 		sb.append(")");
 		return sb.toString();
