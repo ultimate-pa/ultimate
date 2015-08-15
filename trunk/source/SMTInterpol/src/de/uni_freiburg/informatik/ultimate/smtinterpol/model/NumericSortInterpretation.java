@@ -26,6 +26,9 @@ import de.uni_freiburg.informatik.ultimate.logic.Theory;
 public class NumericSortInterpretation implements SortInterpretation {
 	
 	private final BidiMap<Rational> mValues = new BidiMap<Rational>();
+	// Desired invariants:
+	// mBiggest.isIntegral()
+	// (\forall int i; 0<=i<mValues.size; mValues.get(i).compareTo(mBiggest) < 0)
 	private Rational mBiggest = Rational.TWO;
 
 	public NumericSortInterpretation() {
@@ -43,7 +46,7 @@ public class NumericSortInterpretation implements SortInterpretation {
 			return mValues.get(rat);
 		int idx = mValues.size();
 		mValues.add(idx, rat);
-		if (rat.compareTo(mBiggest) > 0)
+		if (rat.compareTo(mBiggest) >= 0)
 			mBiggest = rat.ceil().add(Rational.ONE);
 		return idx;
 	}

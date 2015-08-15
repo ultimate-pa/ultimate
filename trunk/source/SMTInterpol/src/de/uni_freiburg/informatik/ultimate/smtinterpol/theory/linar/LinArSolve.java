@@ -2082,7 +2082,13 @@ public class LinArSolve implements ITheory {
 			 * incrementing and decrementing currentValue by lcm. 
 			 */
 			InfinitNumber lower = mLower.toInfinitNumber();
+			if (lower == null)
+				lower = mLower.toInfinitNumberCeil();
 			InfinitNumber upper = mUpper.toInfinitNumber();
+			if (upper == null)
+				upper = mUpper.toInfinitNumberFloor();
+			if (lower.equals(upper))
+				return lower;
 			MutableInfinitNumber up = new MutableInfinitNumber(currentValue);
 			MutableInfinitNumber down = new MutableInfinitNumber(currentValue);
 			InfinitNumber ilcm = new InfinitNumber(lcm, 0);

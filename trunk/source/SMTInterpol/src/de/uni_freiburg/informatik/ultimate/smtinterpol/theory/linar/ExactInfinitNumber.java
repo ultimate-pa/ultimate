@@ -122,8 +122,6 @@ public class ExactInfinitNumber implements Comparable<ExactInfinitNumber> {
 	 * @return Possibly floored InfinitNumber representation of this number.
 	 */
 	public InfinitNumber toInfinitNumberFloor() {
-		if (mEps.compareTo(Rational.MONE) < 0)
-			return null;// FIXME
 		return new InfinitNumber(mReal, mEps.floor().signum());
 	}
 	/**

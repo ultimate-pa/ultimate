@@ -186,15 +186,15 @@ public class DPLLEngine {
 	
 	public void insertPropagatedLiteralBefore(
 	        ITheory t, Literal lit, Literal beforeLit) {
-		assert (mDecideStack.get(beforeLit.getAtom().getStackPosition()) == beforeLit);
-		assert (beforeLit.getAtom().mDecideStatus == beforeLit);
-		assert (beforeLit.getAtom().getStackPosition() >= 0);
+		DPLLAtom beforeAtom = beforeLit.getAtom(); 
+		assert (mDecideStack.get(beforeAtom.getStackPosition()).getAtom() == beforeAtom);
+		assert (beforeAtom.mDecideStatus != null);
+		assert (beforeAtom.getStackPosition() >= 0);
 		assert (lit.getAtom().mDecideStatus == null);
 		assert (!mDecideStack.contains(lit));
 		assert (!mDecideStack.contains(lit.negate()));
 		assert t != null : "Decision in propagation!!!";
 		assert checkDecideLevel();
-		DPLLAtom beforeAtom = beforeLit.getAtom(); 
 		int stackptr = beforeAtom.getStackPosition();
 		int level = beforeAtom.getDecideLevel();
 		if (beforeAtom.mExplanation == null)

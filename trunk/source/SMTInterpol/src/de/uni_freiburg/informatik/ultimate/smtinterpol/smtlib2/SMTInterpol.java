@@ -489,7 +489,10 @@ public class SMTInterpol extends NoopScript {
 	private boolean mSimplifyRepeatedly = true;
 	
 	// Timeout handling
-	private Timer mTimer;
+//	private Timer mTimer;
+	private final static class TimerHolder {
+		public static Timer timer = new Timer("SMTInterpol timeout thread", true); // NOCHECKSTYLE
+	}
 	
 	// The option numbers
 	private final static int OPT_PRINT_SUCCESS = 0;
@@ -746,7 +749,7 @@ public class SMTInterpol extends NoopScript {
 		TimeoutTask timer = null;
 		if (mTimeout > 0) {
 			timer = new TimeoutTask(mEngine);
-			getTimer().schedule(timer, mTimeout);
+			TimerHolder.timer.schedule(timer, mTimeout);
 		}
 		
 		LBool result = LBool.UNKNOWN;
@@ -1882,20 +1885,20 @@ public class SMTInterpol extends NoopScript {
 		super.declareFun(fun, paramSorts, resultSort);
 	}
 	
-	private Timer getTimer() {
-		if (mTimer == null) {
-			mTimer = new Timer("SMTInterpol Timeout Handler", true);
-		}
-		return mTimer;
-	}
+//	private Timer getTimer() {
+//		if (mTimer == null) {
+//			mTimer = new Timer("SMTInterpol Timeout Handler", true);
+//		}
+//		return mTimer;
+//	}
 
-	@Override
-	public void exit() {
-		if (mTimer != null) {
-			mTimer.cancel();
-			mTimer = null;
-		}
-		super.exit();
-	}
+//	@Override
+//	public void exit() {
+//		if (mTimer != null) {
+//			mTimer.cancel();
+//			mTimer = null;
+//		}
+//		super.exit();
+//	}
 
 }
