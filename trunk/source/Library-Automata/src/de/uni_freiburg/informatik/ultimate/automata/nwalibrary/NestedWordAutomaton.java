@@ -1870,6 +1870,9 @@ public class NestedWordAutomaton<LETTER, STATE> implements INestedWordAutomatonO
 	}
 
 	public void addInternalTransition(STATE pred, LETTER letter, STATE succ) {
+		if (!m_InternalAlphabet.contains(letter)) {
+			throw new IllegalArgumentException("Letter " + letter + " not in internal alphabet");
+		}
 		if (!contains(pred)) {
 			throw new IllegalArgumentException("State " + pred + " not in automaton");
 		}
@@ -1902,6 +1905,10 @@ public class NestedWordAutomaton<LETTER, STATE> implements INestedWordAutomatonO
 	}
 
 	public void addCallTransition(STATE pred, LETTER letter, STATE succ) {
+		if (!m_CallAlphabet.contains(letter)) {
+			throw new IllegalArgumentException("Letter " + letter + " not in call alphabet");
+		}
+
 		assert contains(pred) : "State " + pred + " not in automaton";
 		assert contains(succ) : "State " + succ + " not in automaton";
 		Map<LETTER, Set<STATE>> letter2succs = m_CallOut.get(pred);
@@ -1931,6 +1938,9 @@ public class NestedWordAutomaton<LETTER, STATE> implements INestedWordAutomatonO
 	}
 
 	public void addReturnTransition(STATE pred, STATE hier, LETTER letter, STATE succ) {
+		if (!m_ReturnAlphabet.contains(letter)) {
+			throw new IllegalArgumentException("Letter " + letter + " not in return alphabet");
+		}
 		assert contains(pred) : "State " + pred + " not in automaton";
 		assert contains(succ) : "State " + succ + " not in automaton";
 		assert contains(hier) : "State " + hier + " not in automaton";
