@@ -34,6 +34,7 @@ import org.apache.log4j.Logger;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.DoubleDecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
@@ -41,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAu
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingReturnTransition;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.SummaryReturnTransition;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 
 /**
@@ -56,7 +58,7 @@ public class IsSemiDeterministic<LETTER,STATE> implements IOperation<LETTER,STAT
 	private final Set<STATE> m_NondeterministicSuccessorOfAccepting = new HashSet<>();
 
 	private boolean m_Result;
-	private final NestedWordAutomatonReachableStates<LETTER, STATE> m_TraversedNwa;
+	private final NestedWordAutomatonReachableStates<LETTER, STATE> m_Nwa;
 	
 	
 	@Override
@@ -68,7 +70,7 @@ public class IsSemiDeterministic<LETTER,STATE> implements IOperation<LETTER,STAT
 	@Override
 	public String startMessage() {
 		return "Start " + operationName() + " Operand " + 
-			m_TraversedNwa.sizeInformation();
+			m_Nwa.sizeInformation();
 	}
 	
 	
@@ -86,9 +88,9 @@ public class IsSemiDeterministic<LETTER,STATE> implements IOperation<LETTER,STAT
 		m_Services = services;
 		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 		if (input instanceof NestedWordAutomatonReachableStates) {
-			m_TraversedNwa = (NestedWordAutomatonReachableStates<LETTER, STATE>) input;
+			m_Nwa = (NestedWordAutomatonReachableStates<LETTER, STATE>) input;
 		} else {
-			m_TraversedNwa = new NestedWordAutomatonReachableStates<LETTER, STATE>(m_Services, input);
+			m_Nwa = new NestedWordAutomatonReachableStates<LETTER, STATE>(m_Services, input);
 		}
 		m_Logger.info(startMessage());
 		iterate();
@@ -97,20 +99,42 @@ public class IsSemiDeterministic<LETTER,STATE> implements IOperation<LETTER,STAT
 	}
 	
 	public void iterate() {
-		Set<STATE> visited = new HashSet<STATE>();
-		ArrayDeque<STATE> worklist = new ArrayDeque<>();
+		Set<DoubleDecker<STATE>> visited = new HashSet<>();
+		ArrayDeque<DoubleDecker<STATE>> worklist = new ArrayDeque<>();
 		
+		// step one: start with finals,
+		//           add all non-call successors
 		{
-			visited.addAll(m_TraversedNwa.getFinalStates());
-			worklist.addAll(m_TraversedNwa.getFinalStates());
+			Set<DoubleDecker<STATE>> finalDoubleDeckers = getFinalDoubleDeckers();
+			visited.addAll(finalDoubleDeckers);
+			worklist.addAll(finalDoubleDeckers);
 		}
 		while (!worklist.isEmpty()) {
-			STATE state = worklist.remove();
-			if (isNondeterministic(state, m_TraversedNwa)) {
-				m_NondeterministicSuccessorOfAccepting.add(state);
+			DoubleDecker<STATE> dd = worklist.remove();
+			if (isNondeterministic(dd, m_Nwa)) {
+				m_NondeterministicSuccessorOfAccepting.add(dd.getUp());
 			}
-			Set<STATE> succs = getSuccessors(state, m_TraversedNwa);
-			for (STATE succ : succs) {
+			Set<DoubleDecker<STATE>> succs = getNonCallSuccessors(dd, m_Nwa);
+			for (DoubleDecker<STATE> succ : succs) {
+				if (!visited.contains(succ)) {
+					worklist.add(succ);
+					visited.add(succ);
+				}
+			}
+		}
+
+		// step two: start with yet visited DoubleDeckers, 
+		//           add all non-return successors
+		{
+			worklist.addAll(visited);
+		}
+		while (!worklist.isEmpty()) {
+			DoubleDecker<STATE> dd = worklist.remove();
+			if (isNondeterministic(dd, m_Nwa)) {
+				m_NondeterministicSuccessorOfAccepting.add(dd.getUp());
+			}
+			Set<DoubleDecker<STATE>> succs = getNonReturnSuccessors(dd, m_Nwa);
+			for (DoubleDecker<STATE> succ : succs) {
 				if (!visited.contains(succ)) {
 					worklist.add(succ);
 					visited.add(succ);
@@ -120,24 +144,54 @@ public class IsSemiDeterministic<LETTER,STATE> implements IOperation<LETTER,STAT
 		
 	}
 	
-	private Set<STATE> getSuccessors(STATE state, NestedWordAutomatonReachableStates<LETTER, STATE> nwa) {
-		Set<STATE> succs = new HashSet<STATE>();
-		for (OutgoingInternalTransition<LETTER, STATE> out : nwa.internalSuccessors(state)) {
-			succs.add(out.getSucc());
+	private Set<DoubleDecker<STATE>> getFinalDoubleDeckers() {
+		Set<DoubleDecker<STATE>> result = new HashSet<>();
+		for (STATE fin : m_Nwa.getFinalStates()) {
+			for (STATE down : m_Nwa.getDownStates(fin)) {
+				result.add(new DoubleDecker<STATE>(down, fin));
+			}
 		}
-		for (OutgoingCallTransition<LETTER, STATE> out : nwa.callSuccessors(state)) {
-			succs.add(out.getSucc());
+		return result;
+	}
+
+
+	private static <LETTER, STATE> Set<DoubleDecker<STATE>> getNonCallSuccessors(DoubleDecker<STATE> dd, NestedWordAutomatonReachableStates<LETTER, STATE> nwa) {
+		Set<DoubleDecker<STATE>> succs = new HashSet<DoubleDecker<STATE>>();
+		for (OutgoingInternalTransition<LETTER, STATE> out : nwa.internalSuccessors(dd.getUp())) {
+			succs.add(new DoubleDecker<STATE>(dd.getDown(), out.getSucc()));
 		}
-		for (OutgoingReturnTransition<LETTER, STATE> out : nwa.returnSuccessors(state)) {
-			succs.add(out.getSucc());
+		for (SummaryReturnTransition<LETTER, STATE> out : nwa.returnSummarySuccessor(dd.getUp())) {
+			succs.add(new DoubleDecker<STATE>(dd.getDown(), out.getSucc()));
+		}
+		for (OutgoingReturnTransition<LETTER, STATE> out : nwa.returnSuccessorsGivenHier(dd.getUp(), dd.getDown())) {
+			for (STATE downOfHier : nwa.getDownStates(dd.getDown())) {
+				succs.add(new DoubleDecker<STATE>(downOfHier, out.getSucc()));
+			}
+		}
+		return succs;
+	}
+	
+	
+	private static <LETTER, STATE> Set<DoubleDecker<STATE>> getNonReturnSuccessors(DoubleDecker<STATE> dd, NestedWordAutomatonReachableStates<LETTER, STATE> nwa) {
+		Set<DoubleDecker<STATE>> succs = new HashSet<DoubleDecker<STATE>>();
+		for (OutgoingInternalTransition<LETTER, STATE> out : nwa.internalSuccessors(dd.getUp())) {
+			succs.add(new DoubleDecker<STATE>(dd.getDown(), out.getSucc()));
+		}
+		for (SummaryReturnTransition<LETTER, STATE> out : nwa.returnSummarySuccessor(dd.getUp())) {
+			succs.add(new DoubleDecker<STATE>(dd.getDown(), out.getSucc()));
+		}
+		for (OutgoingCallTransition<LETTER, STATE> out : nwa.callSuccessors(dd.getUp())) {
+			succs.add(new DoubleDecker<STATE>(dd.getUp(), out.getSucc()));
 		}
 		return succs;
 	}
 
-	public static <LETTER, STATE> boolean isNondeterministic(STATE state, INestedWordAutomaton<LETTER, STATE> nwa) {
-		boolean isNondeterministicInternal = isNondeterministicInternal(state, nwa);
-		boolean isNondeterministicCall = isNondeterministicCall(state, nwa);
-		boolean isNondeterministicReturn = isNondeterministicReturn(state, nwa);
+	
+
+	public static <LETTER, STATE> boolean isNondeterministic(DoubleDecker<STATE> dd, NestedWordAutomatonReachableStates<LETTER, STATE> traversedNwa) {
+		boolean isNondeterministicInternal = isNondeterministicInternal(dd.getUp(), traversedNwa);
+		boolean isNondeterministicCall = isNondeterministicCall(dd.getUp(), traversedNwa);
+		boolean isNondeterministicReturn = isNondeterministicReturnGivenHier(dd.getUp(), dd.getDown(), traversedNwa);
 		return isNondeterministicInternal || isNondeterministicCall || isNondeterministicReturn;
 	}
 	
@@ -159,6 +213,19 @@ public class IsSemiDeterministic<LETTER,STATE> implements IOperation<LETTER,STAT
 		for (LETTER letter : nwa.lettersCall(state)) {
 			int numberOfSuccs = 0;
 			for (@SuppressWarnings("unused") OutgoingCallTransition<LETTER, STATE> out : nwa.callSuccessors(state, letter)) {
+				numberOfSuccs++;
+			}
+			if (numberOfSuccs > 1) {
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	public static <LETTER, STATE> boolean isNondeterministicReturnGivenHier(STATE state, STATE hier, INestedWordAutomaton<LETTER, STATE> nwa) {
+		for (LETTER letter : nwa.lettersReturn(state)) {
+			int numberOfSuccs = 0;
+			for (@SuppressWarnings("unused") OutgoingReturnTransition<LETTER, STATE> out : nwa.returnSucccessors(state, hier, letter)) {
 				numberOfSuccs++;
 			}
 			if (numberOfSuccs > 1) {
