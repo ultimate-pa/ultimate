@@ -35,6 +35,7 @@ import java.util.Set;
 
 import org.apache.log4j.Logger;
 
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
@@ -88,7 +89,11 @@ class LassoExtractor<LETTER, STATE> {
 		m_nlr = new NestedLassoRun<LETTER, STATE>(stem, loop);
 		m_Logger.debug("Stem " + stem);
 		m_Logger.debug("Loop " + loop);
-		assert (new BuchiAccepts<LETTER, STATE>(m_Services, m_Nwars, m_nlr.getNestedLassoWord())).getResult();
+		try {
+			assert (new BuchiAccepts<LETTER, STATE>(m_Services, m_Nwars, m_nlr.getNestedLassoWord())).getResult();
+		} catch (AutomataLibraryException e) {
+			throw new AssertionError(e);
+		}
 	}
 
 	NestedLassoRun<LETTER, STATE> getNestedLassoRun() {

@@ -41,6 +41,7 @@ import java.util.Set;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.AtsDefinitionPrinter;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.InCaReCounter;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
@@ -162,8 +163,12 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 				for (NestedLassoRun<LETTER, STATE> nlr : runs) {
 					STATE honda = nlr.getLoop().getStateAtPosition(0);
 					m_Logger.debug(new DebugMessage("Test lasso construction for honda state {0}", honda));
-					assert (new BuchiAccepts<LETTER, STATE>(m_Services, NestedWordAutomatonReachableStates.this,
-							nlr.getNestedLassoWord())).getResult();
+					try {
+						assert (new BuchiAccepts<LETTER, STATE>(m_Services, NestedWordAutomatonReachableStates.this,
+								nlr.getNestedLassoWord())).getResult();
+					} catch (AutomataLibraryException e) {
+						throw new AssertionError(e);
+					}
 				}
 
 			}
@@ -717,8 +722,12 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 					NestedRun<LETTER, STATE> run = (new RunConstructor<LETTER, STATE>(
 							m_Services, 
 							NestedWordAutomatonReachableStates.this, m_States.get(fin))).constructRun();
-					assert (new Accepts<LETTER, STATE>(m_Services, NestedWordAutomatonReachableStates.this, run.getWord()))
-							.getResult();
+					try {
+						assert (new Accepts<LETTER, STATE>(m_Services, NestedWordAutomatonReachableStates.this, run.getWord()))
+								.getResult();
+					} catch (AutomataLibraryException e) {
+						throw new AssertionError(e);
+					}
 				}
 			}
 		}

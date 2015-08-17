@@ -104,9 +104,9 @@ public class BuchiAccepts<LETTER,STATE> extends AbstractAcceptance<LETTER,STATE>
 	 * automaton here
 	 * @return true iff nlw is accepted by nwa. Note that here a nested lasso word is
 	 *  always rejected its loop contains pending returns.  
-	 * @throws OperationCanceledException 
+	 * @throws AutomataLibraryException 
 	 */
-	public BuchiAccepts(IUltimateServiceProvider services, INestedWordAutomatonOldApi<LETTER,STATE> nwa, NestedLassoWord<LETTER> nlw) throws OperationCanceledException{
+	public BuchiAccepts(IUltimateServiceProvider services, INestedWordAutomatonOldApi<LETTER,STATE> nwa, NestedLassoWord<LETTER> nlw) throws AutomataLibraryException{
 		super(services);
 		m_Nwa = nwa;
 		m_Stem = nlw.getStem();
@@ -141,7 +141,7 @@ public class BuchiAccepts<LETTER,STATE> extends AbstractAcceptance<LETTER,STATE>
 		m_Logger.info(exitMessage());
 	}
 
-	private boolean buchiAccepts() throws OperationCanceledException {
+	private boolean buchiAccepts() throws AutomataLibraryException {
 		// First compute all states in which the automaton can be after 
 		// processing the stem and lasso^*
 		// Honda denotes the part of the lasso where stem and loop are connected.
@@ -185,9 +185,9 @@ public class BuchiAccepts<LETTER,STATE> extends AbstractAcceptance<LETTER,STATE>
 	 * Compute for each hondaState if processing m_Loop repeatedly can lead to
 	 * a run that contains an accepting state and brings the automaton back to
 	 * the honda state.
-	 * @throws OperationCanceledException 
+	 * @throws AutomataLibraryException 
 	 */
-	private boolean repeatedLoopLeadsAgainToHondaState(STATE hondaState) throws OperationCanceledException {
+	private boolean repeatedLoopLeadsAgainToHondaState(STATE hondaState) throws AutomataLibraryException {
 		// Store in currentConfigsVisitedAccepting / currentConfigsNotVisitedAccepting
 		// which configurations belong to a run which has already visited an
 		// accepting state.

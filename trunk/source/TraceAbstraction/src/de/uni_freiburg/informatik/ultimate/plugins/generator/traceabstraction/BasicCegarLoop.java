@@ -896,7 +896,11 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 
 	protected static boolean accepts(IUltimateServiceProvider services, INestedWordAutomaton<CodeBlock, IPredicate> nia, Word<CodeBlock> word)
 			throws OperationCanceledException {
-		return (new Accepts<CodeBlock, IPredicate>(services, nia, NestedWord.nestedWord(word), false, false)).getResult();
+		try {
+			return (new Accepts<CodeBlock, IPredicate>(services, nia, NestedWord.nestedWord(word), false, false)).getResult();
+		} catch (AutomataLibraryException e) {
+			throw new AssertionError(e);
+		}
 	}
 
 	public CegarLoopBenchmarkGenerator getCegarLoopBenchmark() {

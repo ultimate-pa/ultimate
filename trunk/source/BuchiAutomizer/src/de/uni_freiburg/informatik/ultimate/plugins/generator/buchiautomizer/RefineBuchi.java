@@ -403,7 +403,7 @@ public class RefineBuchi {
 
 	private boolean isUsefulInterpolantAutomaton(
 			INestedWordAutomatonSimple<CodeBlock, IPredicate> interpolAutomatonUsedInRefinement,
-			NestedLassoRun<CodeBlock, IPredicate> counterexample) throws OperationCanceledException {
+			NestedLassoRun<CodeBlock, IPredicate> counterexample) throws AutomataLibraryException {
 		INestedWordAutomatonOldApi<CodeBlock, IPredicate> oldApi;
 		oldApi = (new RemoveUnreachable<CodeBlock, IPredicate>(m_Services, interpolAutomatonUsedInRefinement)).getResult();
 		NestedWord<CodeBlock> stem = counterexample.getStem().getWord();

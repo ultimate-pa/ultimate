@@ -147,7 +147,11 @@ public class LassoExtractorBuchi extends AbstractLassoExtractor {
 			m_Result.addTransitions(stem, stemStates);
 			addSequenceOfStatesButFirstAndLast(loopStates);
 			m_Result.addTransitions(loop, loopStates);
-			assert (new BuchiAccepts<>(m_Services, m_Result, new NestedLassoWord<>(stem, loop)).getResult());
+			try {
+				assert (new BuchiAccepts<>(m_Services, m_Result, new NestedLassoWord<>(stem, loop)).getResult());
+			} catch (AutomataLibraryException e) {
+				throw new AssertionError(e);
+			}
 		}
 		
 		private List<IPredicate> constructListOfDontCarePredicates(int length) {
