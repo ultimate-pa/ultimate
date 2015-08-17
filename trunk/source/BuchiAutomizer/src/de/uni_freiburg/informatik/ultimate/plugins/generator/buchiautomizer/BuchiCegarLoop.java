@@ -745,7 +745,11 @@ public class BuchiCegarLoop {
 		iab.analyze();
 		m_InterpolAutomaton = iab.getInterpolantAutomaton();
 
-		assert ((new Accepts<CodeBlock, IPredicate>(m_Services, m_InterpolAutomaton, run.getWord())).getResult()) : "Interpolant automaton broken!";
+		try {
+			assert ((new Accepts<CodeBlock, IPredicate>(m_Services, m_InterpolAutomaton, run.getWord())).getResult()) : "Interpolant automaton broken!";
+		} catch (AutomataLibraryException e) {
+			throw new AssertionError(e);
+		}
 		// assert((new BuchiAccepts<CodeBlock, IPredicate>(m_InterpolAutomaton,
 		// m_Counterexample.getNestedLassoWord())).getResult()) :
 		// "Interpolant automaton broken!";

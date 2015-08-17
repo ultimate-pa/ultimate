@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations;
 import java.util.Set;
 import java.util.Stack;
 
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
@@ -60,7 +61,7 @@ public class Accepts<LETTER,STATE> extends AbstractAcceptance<LETTER,STATE>
 	public Accepts(IUltimateServiceProvider services,
 			INestedWordAutomatonSimple<LETTER,STATE> automaton, NestedWord<LETTER> word,
 			boolean prefixOfIntputIsAccepted,
-			boolean inputIsSuffixOfAcceptedWord) {
+			boolean inputIsSuffixOfAcceptedWord) throws AutomataLibraryException {
 		super(services);
 		this.m_Automaton = automaton;
 		this.m_Word = word;
@@ -71,7 +72,7 @@ public class Accepts<LETTER,STATE> extends AbstractAcceptance<LETTER,STATE>
 		m_Logger.info(exitMessage());
 	}
 	public Accepts(IUltimateServiceProvider services,
-			INestedWordAutomatonSimple<LETTER,STATE> automaton, NestedWord<LETTER> word) {
+			INestedWordAutomatonSimple<LETTER,STATE> automaton, NestedWord<LETTER> word) throws AutomataLibraryException {
 		this(services, automaton, word, false, false);
 	}
 
@@ -117,7 +118,7 @@ public class Accepts<LETTER,STATE> extends AbstractAcceptance<LETTER,STATE>
 		return m_IsAccepted;
 	}
 
-	private boolean isAccepted() {
+	private boolean isAccepted() throws AutomataLibraryException {
 		Set<Stack<STATE>> currentConfigs = emptyStackConfiguration(m_Automaton.getInitialStates());
 		for (int i = 0; i < m_Word.length(); i++) {
 			currentConfigs = successorConfigurations(currentConfigs, m_Word, i,

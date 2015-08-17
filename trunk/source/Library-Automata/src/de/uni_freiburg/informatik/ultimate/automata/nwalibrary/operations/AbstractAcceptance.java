@@ -31,6 +31,7 @@ import java.util.Stack;
 
 import org.apache.log4j.Logger;
 
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
@@ -102,11 +103,12 @@ public abstract class AbstractAcceptance<LETTER,STATE> {
 	 *            if true we add for each initial state an stack that contains
 	 *            only this initial state. Useful to check if suffix of word is
 	 *            accepted. If set the input configurations is modified.
+	 * @throws AutomataLibraryException 
 	 * 
 	 */
 	public Set<Stack<STATE>> successorConfigurations(Set<Stack<STATE>> configurations,
 			NestedWord<LETTER> nw, int position, INestedWordAutomatonSimple<LETTER,STATE> nwa,
-			boolean addInitial) {
+			boolean addInitial) throws AutomataLibraryException {
 		Set<Stack<STATE>> succConfigs = new HashSet<Stack<STATE>>();
 		if (addInitial) {
 			configurations.addAll(configurations);
@@ -115,6 +117,10 @@ public abstract class AbstractAcceptance<LETTER,STATE> {
 			STATE state = config.pop();
 			LETTER symbol = nw.getSymbol(position);
 			if (nw.isInternalPosition(position)) {
+				if (!nwa.getInternalAlphabet().contains(symbol)) {
+					throw new AutomataLibraryException(this.getClass(), "Unable to check acceptance. Letter " + 
+							symbol + " at position " + position + " not in internal alphabet of automaton.");
+				}
 				Iterable<OutgoingInternalTransition<LETTER, STATE>> outTransitions = 
 						nwa.internalSuccessors(state, symbol);
 				for (OutgoingInternalTransition<LETTER, STATE> outRans :outTransitions) {
@@ -124,6 +130,10 @@ public abstract class AbstractAcceptance<LETTER,STATE> {
 					succConfigs.add(succConfig);
 				}
 			} else if (nw.isCallPosition(position)) {
+				if (!nwa.getCallAlphabet().contains(symbol)) {
+					throw new AutomataLibraryException(this.getClass(), "Unable to check acceptance. Letter " + 
+							symbol + " at position " + position + " not in call alphabet of automaton.");
+				}
 				Iterable<OutgoingCallTransition<LETTER, STATE>> outTransitions = 
 						nwa.callSuccessors(state, symbol);
 				for (OutgoingCallTransition<LETTER, STATE> outRans :outTransitions) {
@@ -134,6 +144,10 @@ public abstract class AbstractAcceptance<LETTER,STATE> {
 					succConfigs.add(succConfig);
 				}
 			} else if (nw.isReturnPosition(position)) {
+				if (!nwa.getReturnAlphabet().contains(symbol)) {
+					throw new AutomataLibraryException(this.getClass(), "Unable to check acceptance. Letter " + 
+							symbol + " at position " + position + " not in return alphabet of automaton.");
+				}
 				if (config.isEmpty()) {
 					m_Logger.warn("Input has pending returns, we reject such words");
 				}

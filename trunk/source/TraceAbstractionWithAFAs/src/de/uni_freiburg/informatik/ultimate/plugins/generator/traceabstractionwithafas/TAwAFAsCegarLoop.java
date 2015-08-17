@@ -191,8 +191,12 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 
 		RAFA_Determination<CodeBlock> determination = new RAFA_Determination<CodeBlock>(m_Services, alternatingAutomatonUnion, m_SmtManager, m_PredicateUnifier);
 		m_InterpolAutomaton = determination.getResult();
-		assert new Accepts<CodeBlock,IPredicate>(m_Services, m_InterpolAutomaton, (NestedWord<CodeBlock>) trace).getResult() 
-			: "interpolant automaton does not accept the trace!";
+		try {
+			assert new Accepts<CodeBlock,IPredicate>(m_Services, m_InterpolAutomaton, (NestedWord<CodeBlock>) trace).getResult() 
+				: "interpolant automaton does not accept the trace!";
+		} catch (AutomataLibraryException e) {
+			throw new AssertionError(e);
+		}
 
 	}
 	

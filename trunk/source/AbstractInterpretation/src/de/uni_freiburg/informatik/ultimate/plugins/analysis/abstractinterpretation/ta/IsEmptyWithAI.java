@@ -17,6 +17,7 @@ import java.util.Stack;
 
 import org.apache.log4j.Logger;
 
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
@@ -724,7 +725,7 @@ public class IsEmptyWithAI<LETTER, STATE> implements IOperation<LETTER, STATE> {
 
 	@Override
 	public boolean checkResult(StateFactory<STATE> stateFactory)
-			throws OperationCanceledException {
+			throws AutomataLibraryException {
 		boolean correct = true;
 		if (m_acceptingRun == null) {
 			m_Logger.warn("Emptiness not double checked ");
