@@ -19,9 +19,6 @@ NestedWordAutomaton nwa2 = complement(nwa1);
 // Define new testcases
 assert(Accepts(nwa1, nw2));
 assert(!Accepts(nwa2, nw2));
-assert(!Accepts(nwa2, nw1));
-assert(!buchiAccepts(accepts2Bs, nlw2));
-assert(!BuchiAccepts(nwa2, nlw2));
 
 NestedWordAutomaton nwa3 = (
   callAlphabet = {c a l l},

@@ -17,9 +17,9 @@ print(eNoether);
 
 
 NestedWordAutomaton eNoether = (
-  callAlphabet = {c},
-  internalAlphabet = {a b},
-  returnAlphabet = {r},
+  callAlphabet = {a b c r},
+  internalAlphabet = {a b c r},
+  returnAlphabet = {a b c r},
   states = {s0 s1 p1 p2},
   initialStates = {s0},
   finalStates = {s0},

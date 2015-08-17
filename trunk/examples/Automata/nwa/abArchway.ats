@@ -30,11 +30,8 @@ NestedWordAutomaton a1 = (
 
 // A nested word automaton, that represents a finite automaton. It accepts
 // nested words that have only internal positions. The call alphabet and the 
-// return alphabet are empty. Therefore the complement of this automaton (in 
-// our nwa implementation) accepts also only nested words that consist only of
-// internal positions.
+// return alphabet are empty. 
 assert(accepts(a2, [a a b b]));
-assert(!accepts(complement(a2), [a< a< >b >b]));
 
 
 NestedWordAutomaton a2 = (

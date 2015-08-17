@@ -12,7 +12,7 @@ NestedWordAutomaton nwa = (
     initialStates = {"q0" },
     finalStates = {"q2"  },
     callTransitions = {
-         ("q2" "a1" "q4")
+         ("q2" "c" "q4")
          ("q4" "c" "q3")
          ("q3" "c" "q4")
     },

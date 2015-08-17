@@ -23,7 +23,7 @@ NestedWordAutomaton acceptsWithC = (
 // A finite automaton which accepts nothing.
 NestedWordAutomaton acceptsNothing = (
   callAlphabet = {},
-  internalAlphabet = {a  b c},
+  internalAlphabet = {a b c d},
   returnAlphabet = {},
   states = {q0 q1 q2},
   initialStates = {q0},
