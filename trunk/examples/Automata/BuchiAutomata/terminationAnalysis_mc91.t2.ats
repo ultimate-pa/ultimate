@@ -48,6 +48,7 @@ NestedWordAutomaton c1Det = buchiComplementDeterministic(interpolBuchiAutomatonU
 assert (numberOfStates(c1Det) == 7);
 NestedWordAutomaton c1Detl = removeNonLiveStates(c1Det);
 assert (numberOfStates(c1Detl) == 7);
+assert(isSemiDeterministic(interpolBuchiAutomatonUsedInRefinement1after));
 NestedWordAutomaton c1BS = buchiComplementBS(interpolBuchiAutomatonUsedInRefinement1after);
 assert (numberOfStates(c1BS) == 5);
 NestedWordAutomaton c1BStl = removeNonLiveStates(c1BS);
