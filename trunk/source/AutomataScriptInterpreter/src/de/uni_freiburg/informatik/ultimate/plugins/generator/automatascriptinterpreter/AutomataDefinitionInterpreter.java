@@ -182,6 +182,20 @@ public class AutomataDefinitionInterpreter {
 		 */
 		List<String> initStates = nwa.getInitialStates();
 		List<String> finalStates = nwa.getFinalStates();
+		
+		Set<String> allStates = new HashSet<>(nwa.getStates());
+		for (String init : initStates) {
+			if (!allStates.contains(init)) {
+				throw new IllegalArgumentException("Initial state " + init + " not in set of states");
+			}
+		}
+		for (String fin : finalStates) {
+			if (!allStates.contains(fin)) {
+				throw new IllegalArgumentException("Final state " + fin + " not in set of states");
+			}
+		}
+
+		
 		for (String state : nwa.getStates()) {
 			if (initStates.contains(state)) {
 				if (finalStates.contains(state)) {
