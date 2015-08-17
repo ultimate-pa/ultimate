@@ -19,6 +19,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.S
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Attribute;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BitVectorAccessExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BitvecLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.FunctionApplication;
@@ -264,8 +265,8 @@ public class BitvectorTranslation extends AExpressionTranslation {
 
 //	@Override
 	public void convert(ILocation loc, ResultExpression operand, CPrimitive resultType, TypeSizes typeSizeConstants) {
-		int resultLength = m_TypeSizes.getSize(resultType.getType());
-		int operandLength = m_TypeSizes.getSize(((CPrimitive) operand.lrVal.cType).getType());
+		int resultLength = m_TypeSizes.getSize(resultType.getType()) * 8;
+		int operandLength = m_TypeSizes.getSize(((CPrimitive) operand.lrVal.cType).getType()) * 8;
 		
 		operand.lrVal.cType = resultType;
 		
@@ -278,13 +279,9 @@ public class BitvectorTranslation extends AExpressionTranslation {
 		    RValue rVal = new RValue(func, resultType);
 			operand.lrVal = rVal;
 		} else {
-			
+			Expression bv = new BitVectorAccessExpression(loc, operand.lrVal.getValue(), resultLength, 0);
+			RValue rVal = new RValue(bv, resultType);
+			operand.lrVal = rVal;
 		}
 	}
-
-
-
-
-	
-
 }
