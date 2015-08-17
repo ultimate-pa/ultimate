@@ -22,6 +22,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BitvecLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.FunctionApplication;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.NamedAttribute;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StringLiteral;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
@@ -132,7 +133,7 @@ public class BitvectorTranslation extends AExpressionTranslation {
 		default:
 			throw new AssertionError("unknown operation " + nodeOperator);
 		}
-		declareBitvectorFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + functionName, true, new CPrimitive(PRIMITIVE.BOOL), (CPrimitive) type1, (CPrimitive) type2);
+		declareBitvectorFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + functionName, true, new CPrimitive(PRIMITIVE.BOOL), null, (CPrimitive) type1, (CPrimitive) type2);
 		Expression result = new FunctionApplication(loc, SFO.AUXILIARY_FUNCTION_PREFIX + functionName + m_FunctionDeclarations.computeBitvectorSuffix(loc, type1, type2), new Expression[]{exp1, exp2});
 		return result;
 	}
@@ -165,7 +166,7 @@ public class BitvectorTranslation extends AExpressionTranslation {
 			String msg = "Unknown or unsupported bitwise expression";
 			throw new UnsupportedSyntaxException(loc, msg);
 		}
-		declareBitvectorFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + funcname, false, typeLeft, typeLeft, typeRight);
+		declareBitvectorFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + funcname, false, typeLeft, null, typeLeft, typeRight);
 		Expression func = new FunctionApplication(loc, SFO.AUXILIARY_FUNCTION_PREFIX + funcname + m_FunctionDeclarations.computeBitvectorSuffix(loc, typeLeft, typeRight), new Expression[]{left, right});
 		return func;
 	}
@@ -185,7 +186,7 @@ public class BitvectorTranslation extends AExpressionTranslation {
 			String msg = "Unknown or unsupported unary expression";
 			throw new UnsupportedSyntaxException(loc, msg);
 		}
-		declareBitvectorFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + funcname, false, type, type);
+		declareBitvectorFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + funcname, false, type, null, type);
 		Expression func = new FunctionApplication(loc, SFO.AUXILIARY_FUNCTION_PREFIX + funcname + m_FunctionDeclarations.computeBitvectorSuffix(loc, type), new Expression[]{expr});
 		return func;
 	}
@@ -236,28 +237,49 @@ public class BitvectorTranslation extends AExpressionTranslation {
 			throw new UnsupportedSyntaxException(loc, msg);
 		}
 		
-		declareBitvectorFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + funcname, false, typeLeft, typeLeft, typeRight);
+		declareBitvectorFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + funcname, false, typeLeft, null, typeLeft, typeRight);
 		func = new FunctionApplication(loc, SFO.AUXILIARY_FUNCTION_PREFIX + funcname + m_FunctionDeclarations.computeBitvectorSuffix(loc, typeLeft, typeRight), new Expression[]{left, right});
 
 		return func;
 	}
 
 	private void declareBitvectorFunction(ILocation loc, String prefixedFunctionName,
-			boolean boogieResultTypeBool, CPrimitive resultCType, CPrimitive... paramCType) {
+			boolean boogieResultTypeBool, CPrimitive resultCType, int[] indices, CPrimitive... paramCType) {
 		String functionName = prefixedFunctionName.substring(1, prefixedFunctionName.length());
-//		if (indices) {
-//			Attribute attribute = new NamedAttribute(loc, FunctionDeclarations.s_INDEX_IDENTIFIER, new Expression[] { new StringLiteral(loc, functionName) });
-//		} else {
+		Attribute[] attributes;
+		if (indices == null) {
 			Attribute attribute = new NamedAttribute(loc, FunctionDeclarations.s_BUILTIN_IDENTIFIER, new Expression[] { new StringLiteral(loc, functionName) });
-//		}
-		Attribute[] attributes = new Attribute[] { attribute };
+		    attributes = new Attribute[] { attribute };
+		} else {
+		    Expression[] literalIndices = new IntegerLiteral[indices.length];
+		    for (int i = 0; i < indices.length; ++i) {
+		    	literalIndices[i] = new IntegerLiteral(loc, String.valueOf(indices[i]));
+		    }
+		    Attribute attribute1 = new NamedAttribute(loc, FunctionDeclarations.s_INDEX_IDENTIFIER, new Expression[] { new StringLiteral(loc, functionName) });
+		    Attribute attribute2 = new NamedAttribute(loc, FunctionDeclarations.s_INDEX_IDENTIFIER, literalIndices);
+		    attributes = new Attribute[] { attribute1, attribute2 };
+		}
 		m_FunctionDeclarations.declareFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + functionName, true, attributes, boogieResultTypeBool, resultCType, paramCType);
 	}
 
 //	@Override
-	protected void convert(ILocation loc, ResultExpression operand, CPrimitive resultType, TypeSizes typeSizeConstants) {
-		declareBitvectorFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + "sign_extend", false, resultType, (CPrimitive) operand.lrVal.cType);
-//		FunctionApplication func = new FunctionApplication(loc, SFO.AUXILIARY_FUNCTION_PREFIX + "sign_extend" + m_FunctionDeclarations.computeBitvectorSuffix(loc, (CPrimitive) operand.lrVal.cType) , new Expression);
+	public void convert(ILocation loc, ResultExpression operand, CPrimitive resultType, TypeSizes typeSizeConstants) {
+		int resultLength = m_TypeSizes.getSize(resultType.getType());
+		int operandLength = m_TypeSizes.getSize(((CPrimitive) operand.lrVal.cType).getType());
+		
+		operand.lrVal.cType = resultType;
+		
+		if (resultLength == operandLength) {
+		} else if (resultLength > operandLength) {
+			int[] indices = new int[]{resultLength - operandLength};
+			declareBitvectorFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + "sign_extend", false, resultType, indices, (CPrimitive) operand.lrVal.cType);
+			FunctionApplication func = new FunctionApplication(loc, SFO.AUXILIARY_FUNCTION_PREFIX + "sign_extendFrom" + m_FunctionDeclarations.computeBitvectorSuffix(loc, (CPrimitive) operand.lrVal.cType)
+					                                                                                           + "To" + m_FunctionDeclarations.computeBitvectorSuffix(loc, resultType), new Expression[]{operand.lrVal.getValue()});
+		    RValue rVal = new RValue(func, resultType);
+			operand.lrVal = rVal;
+		} else {
+			
+		}
 	}
 
 
