@@ -11,8 +11,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
 public class SignLogicalBinaryExpressionEvaluator extends SignBinaryExpressionEvaluator implements
         ILogicalEvaluator<Values, CodeBlock, BoogieVar> {
 
-	
-	
 	public SignLogicalBinaryExpressionEvaluator(IUltimateServiceProvider services) {
 		super(services);
 	}
@@ -48,7 +46,7 @@ public class SignLogicalBinaryExpressionEvaluator extends SignBinaryExpressionEv
 		// break;
 		case COMPEQ:
 		case COMPNEQ:
-			return evaluateComparisonOperators(firstResult, secondResult);
+			// return evaluateComparisonOperators(firstResult, secondResult);
 			// case COMPPO:
 			// break;
 			// case BITVECCONCAT:
@@ -73,6 +71,14 @@ public class SignLogicalBinaryExpressionEvaluator extends SignBinaryExpressionEv
 
 		final SignDomainValue firstResult = (SignDomainValue) mLeftSubEvaluator.evaluate(currentState);
 		final SignDomainValue secondResult = (SignDomainValue) mRightSubEvaluator.evaluate(currentState);
+
+		if (firstResult.getResult().equals(Values.BOTTOM) || secondResult.getResult().equals(Values.BOTTOM)) {
+			SignDomainState<CodeBlock, BoogieVar> newState = (SignDomainState<CodeBlock, BoogieVar>) currentState
+			        .copy();
+			newState.setToBottom();
+			return newState;
+		}
+
 		final IAbstractState<CodeBlock, BoogieVar> firstLogicalInterpretation = ((ILogicalEvaluator<Values, CodeBlock, BoogieVar>) mLeftSubEvaluator)
 		        .logicallyInterpret(currentState);
 		final IAbstractState<CodeBlock, BoogieVar> secondLogicalInterpretation = ((ILogicalEvaluator<Values, CodeBlock, BoogieVar>) mRightSubEvaluator)
@@ -80,58 +86,73 @@ public class SignLogicalBinaryExpressionEvaluator extends SignBinaryExpressionEv
 
 		SignDomainState<CodeBlock, BoogieVar> newState = (SignDomainState<CodeBlock, BoogieVar>) currentState.copy();
 
+		boolean compResult = evaluateComparisonOperators(firstResult, secondResult);
+
 		switch (mOperator) {
-		// case LOGICIFF:
-		// case LOGICIMPLIES:
+		case LOGICIFF:
+		case LOGICIMPLIES:
 		case LOGICAND:
 		case LOGICOR:
 		case COMPLT:
 		case COMPGT:
 		case COMPLEQ:
 		case COMPGEQ:
+			throw new UnsupportedOperationException("The operator " + mOperator.toString() + " is not implemented.");
 		case COMPNEQ:
-			IEvaluationResult<Values> compResult = evaluateComparisonOperators(firstResult, secondResult);
+			if (firstResult.getResult().equals(Values.TOP) || secondResult.getResult().equals(Values.TOP)) {
+				return newState;
+			}
 
-			if (compResult.getResult().equals(Values.POSITIVE)) {
-				// Compute new state
-				if (mLeftSubEvaluator instanceof SignLogicalSingletonVariableExpressionEvaluator) {
-					SignLogicalSingletonVariableExpressionEvaluator leftie = (SignLogicalSingletonVariableExpressionEvaluator) mLeftSubEvaluator;
-					SignDomainState<CodeBlock, BoogieVar> intersecterino = (SignDomainState<CodeBlock, BoogieVar>) currentState
-					        .copy();
-					intersecterino.setValue(leftie.mVariableName, (SignDomainValue) secondResult);
-
-					newState = newState.intersect(intersecterino);
-				}
-
-			} else {
+			// TODO How to deal with inequalities in the sign domain?
+			if (!compResult) {
 				newState.setToBottom();
 			}
 
 			return newState;
 		case COMPEQ:
+			if (firstResult.getResult().equals(Values.TOP) || secondResult.getResult().equals(Values.TOP)) {
+				return newState;
+			}
+
+			if (compResult) {
+				// Compute new state, only of the form x == 3 or 3 == x for now.
+				if (mLeftSubEvaluator instanceof SignLogicalSingletonVariableExpressionEvaluator
+				        && !(mRightSubEvaluator instanceof SignLogicalSingletonVariableExpressionEvaluator)) {
+					SignLogicalSingletonVariableExpressionEvaluator leftie = (SignLogicalSingletonVariableExpressionEvaluator) mLeftSubEvaluator;
+					SignDomainState<CodeBlock, BoogieVar> intersecterino = (SignDomainState<CodeBlock, BoogieVar>) currentState
+					        .copy();
+					SignDomainState<CodeBlock, BoogieVar> rightState = (SignDomainState<CodeBlock, BoogieVar>) secondLogicalInterpretation;
+					intersecterino.setValue(leftie.mVariableName, rightState.getValues().get(leftie.mVariableName));
+
+					newState = newState.intersect(intersecterino);
+				} else if (!(mLeftSubEvaluator instanceof SignLogicalSingletonVariableExpressionEvaluator)
+				        && mRightSubEvaluator instanceof SignLogicalSingletonVariableExpressionEvaluator) {
+					SignLogicalSingletonVariableExpressionEvaluator rightie = (SignLogicalSingletonVariableExpressionEvaluator) mRightSubEvaluator;
+					SignDomainState<CodeBlock, BoogieVar> intersecterino = (SignDomainState<CodeBlock, BoogieVar>) currentState
+					        .copy();
+					SignDomainState<CodeBlock, BoogieVar> leftState = (SignDomainState<CodeBlock, BoogieVar>) firstLogicalInterpretation;
+					intersecterino.setValue(rightie.mVariableName, leftState.getValues().get(rightie.mVariableName));
+
+					newState = newState.intersect(intersecterino);
+				}
+			}
 		case COMPPO:
 			// return evaluateLogicalOperator(currentState, firstResult, secondResult);
-			// case BITVECCONCAT:
-			// break;
-			// case ARITHMUL:
-			// break;
-			// case ARITHDIV:
-			// break;
-			// case ARITHMOD:
-			// break;
-			// case ARITHPLUS:
-			// break;
-			// case ARITHMINUS:
-			// break;
+		case BITVECCONCAT:
+		case ARITHMUL:
+		case ARITHDIV:
+		case ARITHMOD:
+		case ARITHPLUS:
+		case ARITHMINUS:
+			throw new UnsupportedOperationException("The operator " + mOperator.toString() + " is not implemented.");
 		default:
 			mLogger.warn("Loss of precision while interpreting the logical expression " + this.toString());
 			return currentState.copy();
-			//throw new UnsupportedOperationException("The operator " + mOperator.toString() + " is not implemented.");
+			// throw new UnsupportedOperationException("The operator " + mOperator.toString() + " is not implemented.");
 		}
 	}
 
-	private IEvaluationResult<Values> evaluateComparisonOperators(SignDomainValue firstResult,
-	        SignDomainValue secondResult) {
+	private boolean evaluateComparisonOperators(SignDomainValue firstResult, SignDomainValue secondResult) {
 
 		switch (mOperator) {
 		case COMPLT:
@@ -143,66 +164,58 @@ public class SignLogicalBinaryExpressionEvaluator extends SignBinaryExpressionEv
 		case COMPNEQ:
 			return evaluateNEComparison(firstResult, secondResult);
 		case COMPEQ:
-			if (firstResult.equals(secondResult)) {
-				return new SignDomainValue(Values.POSITIVE);
-			} else {
-				return new SignDomainValue(Values.NEGATIVE);
-			}
+			return evaluateEQComparison(firstResult, secondResult);
 		default:
 			throw new UnsupportedOperationException("The operator " + mOperator.toString() + " is not implemented.");
 		}
 	}
 
-	private IEvaluationResult<Values> evaluateNEComparison(SignDomainValue firstResult, SignDomainValue secondResult) {
-		if (firstResult.equals(Values.BOTTOM) || secondResult.equals(Values.BOTTOM)) {
-			return new SignDomainValue(Values.BOTTOM);
+	private boolean evaluateEQComparison(SignDomainValue firstResult, SignDomainValue secondResult) {
+		if (firstResult.equals(secondResult)) {
+			return true;
+		} else {
+			return false;
 		}
-
-		if (firstResult.equals(Values.ZERO) && secondResult.equals(Values.ZERO)) {
-			return new SignDomainValue(Values.NEGATIVE);
-		}
-
-		return new SignDomainValue(Values.POSITIVE);
 	}
 
-	private IEvaluationResult<Values> evaluateGTComparison(SignDomainValue firstResult, SignDomainValue secondResult) {
+	private boolean evaluateNEComparison(SignDomainValue firstResult, SignDomainValue secondResult) {
+		if (firstResult.equals(Values.ZERO) && secondResult.equals(Values.ZERO)) {
+			return false;
+		}
+
+		return true;
+	}
+
+	private boolean evaluateGTComparison(SignDomainValue firstResult, SignDomainValue secondResult) {
 		if (firstResult.equals(secondResult) || firstResult.equals(Values.BOTTOM) || secondResult.equals(Values.BOTTOM)
 		        || firstResult.equals(Values.TOP) || secondResult.equals(Values.TOP)) {
-			return new SignDomainValue(Values.NEGATIVE);
+			return false;
 		}
 
 		if (firstResult.equals(Values.POSITIVE) && !secondResult.equals(Values.POSITIVE)) {
-			return new SignDomainValue(Values.POSITIVE);
+			return true;
 		}
 
 		if (firstResult.equals(Values.ZERO) && secondResult.equals(Values.NEGATIVE)) {
-			return new SignDomainValue(Values.POSITIVE);
+			return true;
 		}
 
-		return new SignDomainValue(Values.NEGATIVE);
+		return false;
 	}
 
-	private IEvaluationResult<Values> evaluateLTComparison(SignDomainValue firstResult, SignDomainValue secondResult) {
-		if (firstResult.equals(Values.BOTTOM) || secondResult.equals(Values.BOTTOM)) {
-			return new SignDomainValue(Values.BOTTOM);
-		}
-
-		if (firstResult.equals(Values.TOP) || secondResult.equals(Values.TOP)) {
-			return new SignDomainValue(Values.TOP);
-		}
-
+	private boolean evaluateLTComparison(SignDomainValue firstResult, SignDomainValue secondResult) {
 		if (firstResult.equals(secondResult)) {
-			return new SignDomainValue(Values.NEGATIVE);
+			return false;
 		}
 
 		if (firstResult.equals(Values.NEGATIVE) && !secondResult.equals(Values.NEGATIVE)) {
-			return new SignDomainValue(Values.POSITIVE);
+			return true;
 		}
 
 		if (firstResult.equals(Values.ZERO) && secondResult.equals(Values.POSITIVE)) {
-			return new SignDomainValue(Values.POSITIVE);
+			return true;
 		}
-		return new SignDomainValue(Values.NEGATIVE);
+		return false;
 	}
 
 	@Override
