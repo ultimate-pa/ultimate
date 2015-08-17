@@ -38,6 +38,9 @@ NestedWordAutomaton buchiInterpolantAutomaton = (
 // language of automaton is empty
 assert(buchiIsEmpty(buchiInterpolantAutomaton));
 
+// automaton is semi-deterministic
+assert(isSemiDeterministic(buchiInterpolantAutomaton));
+
 // complementation for TABAs proposed by Fanda and Jan
 // produces the smallest result (as expected)
 NestedWordAutomaton bs = buchiComplementBS(buchiInterpolantAutomaton);
