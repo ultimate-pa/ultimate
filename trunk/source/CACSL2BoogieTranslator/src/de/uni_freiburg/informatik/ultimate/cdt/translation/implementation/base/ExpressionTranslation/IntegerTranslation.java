@@ -384,4 +384,11 @@ public class IntegerTranslation extends AExpressionTranslation {
 		}
 	}
 
+	@Override
+	public void convert(ILocation loc, ResultExpression operand,
+			CPrimitive resultType, TypeSizes typeSizeConstants) {
+		// TODO Auto-generated method stub
+		
+	}
+
 }

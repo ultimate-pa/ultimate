@@ -149,5 +149,5 @@ public abstract class AExpressionTranslation {
 		rightRex.lrVal.cType = resultType;
 	}
 	
-//	protected abstract void convert(ILocation loc, ResultExpression operand, CPrimitive resultType, TypeSizes typeSizeConstants);
+	public abstract void convert(ILocation loc, ResultExpression operand, CPrimitive resultType, TypeSizes typeSizeConstants);
 }
