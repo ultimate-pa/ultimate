@@ -302,6 +302,7 @@ public class InitializationHandler {
 					rhs = mExpressionTranslation.constructLiteralForIntegerType(loc, (CPrimitive) lCType, BigInteger.ZERO);
 				} else {
 					initializer = ConvExpr.rexBoolToIntIfNecessary(loc, initializer, mExpressionTranslation);
+					mExpressionTranslation.convert(loc, initializer, (CPrimitive) lCType, main.getTypeSizes());
 					rhs = initializer.lrVal.getValue();
 				}
 				break;
