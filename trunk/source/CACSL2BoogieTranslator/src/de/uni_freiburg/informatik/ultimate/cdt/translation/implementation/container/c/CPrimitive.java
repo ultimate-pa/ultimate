@@ -179,6 +179,8 @@ public class CPrimitive extends CType {
                 			this.type = PRIMITIVE.ULONG;
                 		else if (sds.isLongLong())
                 			this.type = PRIMITIVE.ULONGLONG;
+                		else if (sds.isShort())
+                			this.type = PRIMITIVE.USHORT;
                 		else
                 			this.type = PRIMITIVE.UINT;
                 	else                 		
@@ -186,6 +188,8 @@ public class CPrimitive extends CType {
                 			this.type = PRIMITIVE.LONG;
                 		else if (sds.isLongLong())
                 			this.type = PRIMITIVE.LONGLONG;
+                		else if (sds.isShort())
+                			this.type = PRIMITIVE.SHORT;
                 		else
                 			this.type = PRIMITIVE.INT;
                     break;
@@ -195,6 +199,8 @@ public class CPrimitive extends CType {
                 			this.type = PRIMITIVE.ULONG;
                 		else if (sds.isLongLong())
                 			this.type = PRIMITIVE.ULONGLONG;
+                		else if (sds.isShort())
+                			this.type = PRIMITIVE.USHORT;
                 		else
                 			this.type = PRIMITIVE.UINT;
                 	else                 		
@@ -202,6 +208,8 @@ public class CPrimitive extends CType {
                 			this.type = PRIMITIVE.LONG;
                 		else if (sds.isLongLong())
                 			this.type = PRIMITIVE.LONGLONG;
+                		else if (sds.isShort())
+                			this.type = PRIMITIVE.SHORT;
                 		else
                 			this.type = PRIMITIVE.INT;
                     break;
