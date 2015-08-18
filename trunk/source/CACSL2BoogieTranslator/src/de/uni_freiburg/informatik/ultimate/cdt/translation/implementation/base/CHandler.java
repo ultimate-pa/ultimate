@@ -1286,7 +1286,9 @@ public class CHandler implements ICHandler {
 			ResultExpression rrToInt = ConvExpr.rexBoolToIntIfNecessary(loc, rr, m_ExpressionTranslation);
 			ResultExpression rlToInt = ConvExpr.rexBoolToIntIfNecessary(loc, rl, m_ExpressionTranslation);
 			
-			CastAndConversionHandler.usualArithmeticConversions(main, loc, mMemoryHandler, rlToInt, rrToInt, true);
+			if (m_ExpressionTranslation instanceof IntegerTranslation) {
+				CastAndConversionHandler.usualArithmeticConversions(main, loc, mMemoryHandler, rlToInt, rrToInt, true);
+			}
 			
 			
 			stmt.addAll(rlToInt.stmt);
@@ -3671,6 +3673,8 @@ public class CHandler implements ICHandler {
 								rVal.getValue(), loc);
 					}
 					rVal = new RValue(e, expectedType);
+//				} else if (expectedType instanceof CPrimitive) {
+//					m_ExpressionTranslation.convert(loc, null, expectedType, typeSizes);
 				}
 			} else if (cprim.getGeneralType() == GENERALPRIMITIVE.FLOATTYPE) { 
 				if (expectedType instanceof CPrimitive) { //cast float -> int (or respective long types)
