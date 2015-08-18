@@ -19,8 +19,8 @@ NestedWordAutomaton ia = (
 	internalAlphabet = {"a" },
 	returnAlphabet = {"r" },
 	states = {"q" "f" "s" "t" },
-	initialStates = {"q0" },
-	finalStates = {"s0" },
+	initialStates = {"q" },
+	finalStates = {"s" },
 	callTransitions = {
 		 ("q" "c" "t")
 		 ("t" "c" "t")
@@ -34,7 +34,7 @@ NestedWordAutomaton ia = (
 		 ("t" "a" "t")
 	},
 	returnTransitions = {
-		 ("t" "q" "t" "q")
+		 ("t" "q" "r" "q")
 		 ("t" "t" "r" "t")
 		 ("t" "s" "r" "s")
 	}
