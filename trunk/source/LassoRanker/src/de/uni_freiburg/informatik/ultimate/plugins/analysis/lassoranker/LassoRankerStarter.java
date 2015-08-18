@@ -395,7 +395,7 @@ public class LassoRankerStarter {
 				new ArrayList<Map<RankVar, Rational>>();
 		states.add(nta.getStateInit());
 		states.add(nta.getStateHonda());
-		states.addAll(nta.getRays());
+		states.addAll(nta.getGEVs());
 		List<Map<Expression, Rational>> initHondaRays =
 				NonTerminationArgument.rank2Boogie(term2expression, states);
 		

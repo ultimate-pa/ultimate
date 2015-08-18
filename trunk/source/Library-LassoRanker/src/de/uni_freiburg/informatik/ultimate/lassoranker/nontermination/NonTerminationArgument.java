@@ -49,8 +49,9 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Term2Express
  * <ul>
  * <li> an initial state at the begin of the lasso,
  * <li> a state at first visit of the honda,
- * <li> a list of rays of the loop's transition polyhedron, and
- * <li> a list of discount factors lambda and mu.
+ * <li> a list of generalized eigenvectors of the loop's transition polyhedron,
+ * <li> a list of eigenvalues lambda, and
+ * <li< a list of nilpotent components mu.
  * </ul>
  * 
  * The infinite execution described by this nontermination argument is
@@ -58,16 +59,17 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Term2Express
  * <pre>
  * state_init,
  * state_honda,
- * state_honda + ray_1 + ... + ray_n,
- * state_honda + (1 + lambda_1) ray_1 + (1 + lambda_2 + mu_1) ray_2 + ... + (1 + lambda_n + nu_(n-1)) ray_n,
+ * state_honda + gev_1 + ... + gev_n,
+ * state_honda + (1 + lambda_1) gev_1 + (1 + lambda_2 + mu_1) gev_2 + ... + (1 + lambda_n + nu_(n-1)) gev_n,
  * ...
  * </pre>
  * 
  * The general form is x + Y*(sum_i J^i)*1 where
  * <ul>
  * <li> x is the initial state
- * <li> Y is a matrix with the rays as columns
- * <li> J is a matrix with lamnbda_i on the diagonal and mu_i on the upper subdiagonal
+ * <li> Y is a matrix with the generalized eigenvectors as columns
+ * <li> J is a matrix with the eigenvalues lambda_i on the diagonal and
+ *      the nilpotent components mu_i on the upper subdiagonal
  * <li> 1 is a column vector of ones
  * </ul>
  * 
@@ -78,7 +80,7 @@ public class NonTerminationArgument implements Serializable {
 	
 	private final Map<RankVar, Rational> m_StateInit;
 	private final Map<RankVar, Rational> m_StateHonda;
-	private final List<Map<RankVar, Rational>> m_Rays;
+	private final List<Map<RankVar, Rational>> m_GEVs;
 	private final List<Rational> m_Lambdas;
 	private final List<Rational> m_Nus;
 	
@@ -87,27 +89,27 @@ public class NonTerminationArgument implements Serializable {
 	 * 
 	 * @param state_init initial state
 	 * @param state_honda state at the lasso's honda
-	 * @param rays rays of the lasso's polyhedron
-	 * @param lambdas discount factors
+	 * @param gevs generalized eigenvalues
+	 * @param lambdas eigenvectors
 	 * @param nus nilpotent components
 	 */
 	public NonTerminationArgument(Map<RankVar, Rational> state_init,
 			Map<RankVar, Rational> state_honda,
-			List<Map<RankVar, Rational>> rays,
+			List<Map<RankVar, Rational>> gevs,
 			List<Rational> lambdas,
 			List<Rational> nus) {
 		assert(state_init != null);
 		m_StateInit = state_init;
 		assert(state_honda != null);
 		m_StateHonda = state_honda;
-		assert(rays != null);
-		m_Rays = rays;
+		assert(gevs != null);
+		m_GEVs = gevs;
 		assert(lambdas != null);
 		m_Lambdas = lambdas;
 		assert(nus != null);
 		m_Nus = nus;
-		assert rays.size() == lambdas.size();
-		assert rays.size() == nus.size() + 1;
+		assert m_GEVs.size() == lambdas.size();
+		assert m_GEVs.size() == nus.size() + 1;
 	}
 	
 	/**
@@ -136,7 +138,7 @@ public class NonTerminationArgument implements Serializable {
 		
 		Map<RankVar, Rational> stateInit = new HashMap<RankVar, Rational>();
 		Map<RankVar, Rational> stateHonda = new HashMap<RankVar, Rational>();
-		List<Map<RankVar, Rational>> rays =
+		List<Map<RankVar, Rational>> gevs =
 				new ArrayList<Map<RankVar, Rational>>();
 		List<Rational> lambdas = new ArrayList<Rational>();
 		List<Rational> nus = new ArrayList<Rational>();
@@ -144,14 +146,14 @@ public class NonTerminationArgument implements Serializable {
 		stateInit.putAll(other.m_StateInit);
 		stateHonda.putAll(this.m_StateHonda);
 		stateHonda.putAll(other.m_StateHonda);
-		rays.addAll(this.m_Rays);
-		rays.addAll(other.m_Rays);
+		gevs.addAll(this.m_GEVs);
+		gevs.addAll(other.m_GEVs);
 		lambdas.addAll(this.m_Lambdas);
 		lambdas.addAll(other.m_Lambdas);
 		nus.addAll(this.m_Nus);
-		nus.add(Rational.ZERO); // add 0 because the length of nus has to be #rays-1
+		nus.add(Rational.ZERO); // add 0 because the length of nus has to be #gevs-1
 		nus.addAll(other.m_Nus);
-		return new NonTerminationArgument(stateInit, stateHonda, rays, lambdas, nus);
+		return new NonTerminationArgument(stateInit, stateHonda, gevs, lambdas, nus);
 	}
 	
 	/**
@@ -169,27 +171,27 @@ public class NonTerminationArgument implements Serializable {
 	}
 	
 	/**
-	 * @return the number of rays
+	 * @return the number of generalized eigenvectors
 	 */
-	public int getNumberOfRays() {
-		return m_Rays.size();
+	public int getNumberOfGEVs() {
+		return m_GEVs.size();
 	}
 	
 	/**
-	 * @return the rays of the loop's transition polyhedron 
+	 * @return the generalized eigenvectors
 	 */
-	public List<Map<RankVar, Rational>> getRays() {
+	public List<Map<RankVar, Rational>> getGEVs() {
 		// Make unmodifiable view
-		List<Map<RankVar, Rational>> rays =
+		List<Map<RankVar, Rational>> gevs =
 				new ArrayList<Map<RankVar, Rational>>();
-		for (Map<RankVar, Rational> ray : m_Rays) {
-			rays.add(Collections.unmodifiableMap(ray));
+		for (Map<RankVar, Rational> gev : m_GEVs) {
+			gevs.add(Collections.unmodifiableMap(gev));
 		}
-		return Collections.unmodifiableList(rays);
+		return Collections.unmodifiableList(gevs);
 	}
 	
 	/**
-	 * @return the multiplicative factor lambda
+	 * @return the eigenvalue lambda
 	 */
 	public List<Rational> getLambdas() {
 		return Collections.unmodifiableList(m_Lambdas);
@@ -263,8 +265,8 @@ public class NonTerminationArgument implements Serializable {
 		sb.append(m_StateInit);
 		sb.append("\nHonda state: ");
 		sb.append(m_StateHonda);
-		sb.append("\nRays: ");
-		sb.append(m_Rays);
+		sb.append("\nGeneralized eigenvectors: ");
+		sb.append(m_GEVs);
 		sb.append("\nLambdas: ");
 		sb.append(m_Lambdas);
 		sb.append("\nNus: ");

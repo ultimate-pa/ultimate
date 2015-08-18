@@ -121,7 +121,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 				new ArrayList<Map<RankVar, Rational>>();
 		states.add(nta.getStateInit());
 		states.add(nta.getStateHonda());
-		states.addAll(nta.getRays());
+		states.addAll(nta.getGEVs());
 		List<Map<Expression, Rational>> initHondaRays =
 				NonTerminationArgument.rank2Boogie(term2expression, states);
 		
@@ -329,33 +329,33 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 	private class NonterminationBenchmark implements ICsvProviderProvider<String> {
 		private final String m_Ntar;
 		private final boolean m_LambdaZero;
-		private final boolean m_RayZero;
+		private final boolean m_GEVZero;
 		
 		public NonterminationBenchmark(NonTerminationArgument nta) {
 			boolean lambdaZero = true;
-			boolean rayZero = true;
+			boolean gevZero = true;
 			List<Rational> lambdas = nta.getLambdas();
-			for (int i = 0; i < nta.getNumberOfRays(); ++i) {
+			for (int i = 0; i < nta.getNumberOfGEVs(); ++i) {
 				lambdaZero &= (nta.getLambdas().get(i).numerator().equals(BigInteger.ZERO));
-				rayZero &= isZero(nta.getRays().get(i));
+				gevZero &= isZero(nta.getGEVs().get(i));
 			}
 			
 			m_LambdaZero = lambdaZero;
-			m_RayZero = rayZero;
+			m_GEVZero = gevZero;
 			m_Ntar = (isFixpoint() ? "Fixpoint " : "Unbounded Execution ") +
 					"Lambdas: " + lambdas + 
-					" Ray: " + (m_RayZero ? "is zero" : "is not zero");
+					" GEVs: " + (m_GEVZero ? "is zero" : "is not zero");
 		}
 		
 		private boolean isFixpoint() {
-			return m_LambdaZero || m_RayZero;
+			return m_LambdaZero || m_GEVZero;
 		}
 
 		/**
-		 * Return true iff all coefficients of ray are zero.
+		 * Return true iff all coefficients of generalized eigenvector are zero.
 		 */
-		private boolean isZero(Map<RankVar, Rational> ray) {
-			for (Entry<RankVar, Rational> entry : ray.entrySet()) {
+		private boolean isZero(Map<RankVar, Rational> gev) {
+			for (Entry<RankVar, Rational> entry : gev.entrySet()) {
 				if (!entry.getValue().numerator().equals(BigInteger.ZERO)) {
 					return false;
 				}

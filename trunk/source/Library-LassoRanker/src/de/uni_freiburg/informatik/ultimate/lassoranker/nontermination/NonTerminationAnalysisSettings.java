@@ -57,9 +57,15 @@ public class NonTerminationAnalysisSettings implements Serializable {
 	 */
 	public boolean allowBounded = true;
 	
-	public int number_of_rays = 1;
+	/**
+	 * Number of generalized eigenvectors in the geometric nontermination argument
+	 */
+	public int number_of_gevs = 3;
 	
-	public boolean nilpotent_rays = true;
+	/**
+	 * Allow nilpotent components in the geometric nontermination argument?
+	 */
+	public boolean nilpotent_components = true;
 	
 	/*
 	 * As this point there is not much here, but there might be in the future.
@@ -77,8 +83,8 @@ public class NonTerminationAnalysisSettings implements Serializable {
 	public NonTerminationAnalysisSettings(NonTerminationAnalysisSettings other) {
 		this.analysis = other.analysis;
 		this.allowBounded = other.allowBounded;
-		this.number_of_rays = other.number_of_rays;
-		this.nilpotent_rays = other.nilpotent_rays;
+		this.number_of_gevs = other.number_of_gevs;
+		this.nilpotent_components = other.nilpotent_components;
 	}
 	
 	/**
@@ -86,7 +92,7 @@ public class NonTerminationAnalysisSettings implements Serializable {
 	 * Only makes assertion calls.
 	 */
 	public void checkSanity() {
-		assert this.number_of_rays >= 0;
+		assert this.number_of_gevs >= 0;
 	}
 	
 	/**
@@ -98,10 +104,10 @@ public class NonTerminationAnalysisSettings implements Serializable {
 		sb.append(this.analysis);
 		sb.append("\nAllow bounded executions: ");
 		sb.append(this.allowBounded);
-		sb.append("\nNumber of rays: ");
-		sb.append(this.number_of_rays);
-		sb.append("\nNilpotent rays: ");
-		sb.append(this.nilpotent_rays);
+		sb.append("\nNumber of generalized eigenvectors: ");
+		sb.append(this.number_of_gevs);
+		sb.append("\nNilpotent components: ");
+		sb.append(this.nilpotent_components);
 		return sb.toString();
 	}
 }

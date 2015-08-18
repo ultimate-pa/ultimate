@@ -40,10 +40,10 @@ public class PreferencesInitializer extends UltimatePreferenceInitializer {
 	 */
 	public static final String LABEL_nontermination_analysis =
 			"Nontermination analysis";
-	public static final String LABEL_nontermination_number_rays =
-			"Number of rays";
-	public static final String LABEL_nontermination_nilpotent_rays =
-			"Allow nilpotent components among rays";
+	public static final String LABEL_nontermination_number_gevs =
+			"Number of generalized eigenvectors";
+	public static final String LABEL_nontermination_nilpotent_components =
+			"Allow nilpotent components";
 	public static final String LABEL_nontermination_bounded_executions =
 			"Allow bounded nonterminating executions";
 	public static final String LABEL_termination_analysis =
@@ -110,12 +110,12 @@ public class PreferencesInitializer extends UltimatePreferenceInitializer {
 						PreferenceType.Combo,
 						AnalysisType.allChoices()),
 				new UltimatePreferenceItem<Integer>(
-						LABEL_nontermination_number_rays,
-						nontermination_settings.number_of_rays,
+						LABEL_nontermination_number_gevs,
+						nontermination_settings.number_of_gevs,
 						PreferenceType.Integer),
 				new UltimatePreferenceItem<Boolean>(
-						LABEL_nontermination_nilpotent_rays,
-						nontermination_settings.nilpotent_rays,
+						LABEL_nontermination_nilpotent_components,
+						nontermination_settings.nilpotent_components,
 						PreferenceType.Boolean),
 				new UltimatePreferenceItem<Boolean>(
 						LABEL_nontermination_bounded_executions,
@@ -295,8 +295,8 @@ public class PreferencesInitializer extends UltimatePreferenceInitializer {
 		settings.analysis =
 				store.getEnum(LABEL_nontermination_analysis,
 						AnalysisType.class);
-		settings.number_of_rays = store.getInt(LABEL_nontermination_number_rays);
-		settings.nilpotent_rays = store.getBoolean(LABEL_nontermination_nilpotent_rays);
+		settings.number_of_gevs = store.getInt(LABEL_nontermination_number_gevs);
+		settings.nilpotent_components = store.getBoolean(LABEL_nontermination_nilpotent_components);
 		settings.allowBounded = store.getBoolean(LABEL_nontermination_bounded_executions);
 		return settings;
 	}

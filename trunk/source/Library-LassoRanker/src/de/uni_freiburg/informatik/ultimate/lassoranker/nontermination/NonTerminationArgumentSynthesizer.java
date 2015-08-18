@@ -72,8 +72,8 @@ import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
  * /\ A_loop * (x, x + y_1 + ... + y_n) <= b_loop
  * /\ A_loop * (y_i, lambda_i * y_i + nu_i * y_{i+1}) <= 0   for each i
  * </pre>
- * where n is the number of rays and y_{n+1} := 0.
- * We assume 0 <= n <= number of variables
+ * where n is the number of generalized eigenvectors and y_{n+1} := 0.
+ * We assume 0 <= n <= number of variables.
  * 
  * This class can't be a RankingFunctionsTemplate because that class
  * makes a bunch of assumptions regarding how the constraints are generated,
@@ -82,12 +82,12 @@ import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
  * @author Jan Leike
  */
 public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
-	private static final String s_prefix_init = "init_";   // z
-	private static final String s_prefix_honda = "honda_"; // x
-	private static final String s_prefix_ray = "ray_";     // y_i
+	private static final String s_prefix_init = "init_";    // z
+	private static final String s_prefix_honda = "honda_";  // x
+	private static final String s_prefix_gevector = "gev_"; // y_i
 	private static final String s_prefix_aux = "aux_";
-	private static final String s_lambda_name = "lambda";  // lambda_i
-	private static final String s_nu_name = "nu";  // nu_i
+	private static final String s_prefix_evalue = "lambda";   // lambda_i
+	private static final String s_prefix_nilpotent = "nu";  // nu_i
 	
 	/**
 	 * Counter for auxiliary variables
@@ -164,35 +164,35 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 	
 	@Override
 	protected LBool do_synthesis() {
-		assert m_settings.number_of_rays >= 0;
+		assert m_settings.number_of_gevs >= 0;
 		String sort = m_integer_mode ? "Int" : "Real";
 		
 		// Create new variables
 		Map<RankVar, Term> vars_init = new LinkedHashMap<RankVar, Term>();
 		Map<RankVar, Term> vars_honda = new LinkedHashMap<RankVar, Term>();
-		List<Map<RankVar, Term>> vars_rays =
-				new ArrayList<Map<RankVar, Term>>(m_settings.number_of_rays);
-		List<Term> lambdas = new ArrayList<Term>(m_settings.number_of_rays);
+		List<Map<RankVar, Term>> vars_gevs =
+				new ArrayList<Map<RankVar, Term>>(m_settings.number_of_gevs);
+		List<Term> lambdas = new ArrayList<Term>(m_settings.number_of_gevs);
 		for (RankVar var : m_lasso.getAllRankVars()) {
 			String name = SmtUtils.removeSmtQuoteCharacters(var.toString());
 			vars_init.put(var, newConstant(s_prefix_init + name, sort));
 			vars_honda.put(var, newConstant(s_prefix_honda + name, sort));
 		}
-		for (int i = 0; i < m_settings.number_of_rays; ++i) {
-			Map<RankVar, Term> vars_ray = new LinkedHashMap<RankVar, Term>();
+		for (int i = 0; i < m_settings.number_of_gevs; ++i) {
+			Map<RankVar, Term> vars_gev = new LinkedHashMap<RankVar, Term>();
 			for (RankVar var : m_lasso.getAllRankVars()) {
 				String name = SmtUtils.removeSmtQuoteCharacters(var.toString());
-				vars_ray.put(var, newConstant(s_prefix_ray + name + i, sort));
+				vars_gev.put(var, newConstant(s_prefix_gevector + name + i, sort));
 			}
-			vars_rays.add(vars_ray);
-			lambdas.add(newConstant(s_lambda_name + i, sort));
+			vars_gevs.add(vars_gev);
+			lambdas.add(newConstant(s_prefix_evalue + i, sort));
 		}
-		List<Term> nus = new ArrayList<Term>(m_settings.number_of_rays - 1);
-		for (int i = 0; i < m_settings.number_of_rays - 1; ++i) {
-			nus.add(newConstant(s_nu_name + i, sort));
+		List<Term> nus = new ArrayList<Term>(m_settings.number_of_gevs - 1);
+		for (int i = 0; i < m_settings.number_of_gevs - 1; ++i) {
+			nus.add(newConstant(s_prefix_nilpotent + i, sort));
 		}
 		
-		Term constraints = generateConstraints(vars_init, vars_honda, vars_rays,
+		Term constraints = generateConstraints(vars_init, vars_honda, vars_gevs,
 				lambdas, nus);
 		mLogger.debug(new DebugMessage("{0}", new SMTPrettyPrinter(constraints)));
 		m_script.assertTerm(constraints);
@@ -200,7 +200,7 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 		// Check for satisfiability
 		LBool isSat = m_script.checkSat();
 		if (isSat == LBool.SAT) {
-			m_argument = extractArgument(vars_init, vars_honda, vars_rays,
+			m_argument = extractArgument(vars_init, vars_honda, vars_gevs,
 					lambdas, nus);
 		} else if (isSat == LBool.UNKNOWN) {
 			m_script.echo(new QuotedObject(ArgumentSynthesizer.s_SolverUnknownMessage));
@@ -213,19 +213,19 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 	 * 
 	 * @param vars_init assignment before the stem (z)
 	 * @param vars_honda assignment after the stem (x)
-	 * @param vars_rays variables for the ray (y_i)
-	 * @param lambdas variables for the lambdas
-	 * @param nus variables for the nus
+	 * @param vars_gevs variables for the generalized eigenvectors (y_i)
+	 * @param lambdas variables for the eigenvalues
+	 * @param nus variables for the nilpotent components
 	 * @return the constraints
 	 */
 	public Term generateConstraints(Map<RankVar, Term> vars_init,
-			Map<RankVar, Term> vars_honda, List<Map<RankVar, Term>> vars_rays,
+			Map<RankVar, Term> vars_honda, List<Map<RankVar, Term>> vars_gevs,
 			List<Term> lambdas, List<Term> nus) {
 		m_settings.checkSanity();
-		assert m_settings.number_of_rays >= 0;
-		assert vars_rays.size() == m_settings.number_of_rays;
-		assert lambdas.size() == m_settings.number_of_rays;
-		int num_vars = vars_rays.get(0).size();
+		assert m_settings.number_of_gevs >= 0;
+		assert vars_gevs.size() == m_settings.number_of_gevs;
+		assert lambdas.size() == m_settings.number_of_gevs;
+		int num_vars = vars_gevs.get(0).size();
 		assert num_vars >= 0;
 		
 		Collection<RankVar> rankVars = m_lasso.getAllRankVars();
@@ -291,26 +291,26 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 			t1 = Util.or(m_script, disjunction.toArray(new Term[0]));
 		}
 		
-		// vars_end + vars_rays
-		Map<RankVar, Term> vars_end_plus_rays =
+		// vars_end + vars_gevs
+		Map<RankVar, Term> vars_end_plus_gevs =
 				new LinkedHashMap<RankVar, Term>();
-		vars_end_plus_rays.putAll(vars_honda);
+		vars_end_plus_gevs.putAll(vars_honda);
 		for (RankVar rkVar : rankVars) {
-			Term[] summands = new Term[m_settings.number_of_rays + 1];
+			Term[] summands = new Term[m_settings.number_of_gevs + 1];
 			summands[0] = vars_honda.get(rkVar);
-			for (int i = 0; i < m_settings.number_of_rays; ++i) {
-				summands[i + 1] = vars_rays.get(i).get(rkVar);
+			for (int i = 0; i < m_settings.number_of_gevs; ++i) {
+				summands[i + 1] = vars_gevs.get(i).get(rkVar);
 			}
-			vars_end_plus_rays.put(rkVar, m_script.term("+", summands));
+			vars_end_plus_gevs.put(rkVar, m_script.term("+", summands));
 		}
 		
-		// vars_ray[i] * lambda_guesses + nu_i * vars_ray[i+1] for each i
-		List<List<Map<RankVar, Term>>> vars_rays_next =
-				new ArrayList<List<Map<RankVar, Term>>>(m_settings.number_of_rays);
-		for (int i = 0; i < m_settings.number_of_rays; ++i) {
-			List<Map<RankVar, Term>> vars_rays_next_i =
+		// vars_gev[i] * lambda_guesses + nu_i * vars_gev[i+1] for each i
+		List<List<Map<RankVar, Term>>> vars_gevs_next =
+				new ArrayList<List<Map<RankVar, Term>>>(m_settings.number_of_gevs);
+		for (int i = 0; i < m_settings.number_of_gevs; ++i) {
+			List<Map<RankVar, Term>> vars_gevs_next_i =
 					new ArrayList<Map<RankVar, Term>>(lambda_guesses.size());
-			vars_rays_next.add(vars_rays_next_i);
+			vars_gevs_next.add(vars_gevs_next_i);
 			for (int j = 0; j < lambda_guesses.size(); ++j) {
 				for (int k = 0; k < nu_guesses.size(); ++k) {
 					Term lambda_guess = lambda_guesses.get(j);
@@ -318,20 +318,20 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 						lambda_guess = lambdas.get(i);
 					}
 					Term nu_guess = nu_guesses.get(k);
-					if (nu_guess == null && i < m_settings.number_of_rays - 1) {
+					if (nu_guess == null && i < m_settings.number_of_gevs - 1) {
 						nu_guess = nus.get(i);
 					}
 					
-					Map<RankVar, Term> ray_next = new LinkedHashMap<RankVar, Term>();
-					vars_rays_next_i.add(ray_next);
+					Map<RankVar, Term> gev_next = new LinkedHashMap<RankVar, Term>();
+					vars_gevs_next_i.add(gev_next);
 					for (RankVar rkVar : rankVars) {
-						if (m_settings.nilpotent_rays && i < m_settings.number_of_rays - 1) {
-							ray_next.put(rkVar, m_script.term("+",
-								m_script.term("*", vars_rays.get(i).get(rkVar), lambda_guess),
-								m_script.term("*", vars_rays.get(i + 1).get(rkVar), nu_guess)));
+						if (m_settings.nilpotent_components && i < m_settings.number_of_gevs - 1) {
+							gev_next.put(rkVar, m_script.term("+",
+								m_script.term("*", vars_gevs.get(i).get(rkVar), lambda_guess),
+								m_script.term("*", vars_gevs.get(i + 1).get(rkVar), nu_guess)));
 						} else {
-							ray_next.put(rkVar, m_script.term("*",
-									vars_rays.get(i).get(rkVar), lambda_guess));
+							gev_next.put(rkVar, m_script.term("*",
+									vars_gevs.get(i).get(rkVar), lambda_guess));
 						}
 					}
 				}
@@ -345,19 +345,19 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 			for (List<LinearInequality> polyhedron : loop.getPolyhedra()) {
 				// A_loop * (x, x + y) <= b_loop
 				Term t_honda = this.generateConstraint(loop, polyhedron,
-						vars_honda, vars_end_plus_rays, false);
+						vars_honda, vars_end_plus_gevs, false);
 				
 				// A_loop * (y, lambda * y) <= 0
-				Term[] conjuction = new Term[m_settings.number_of_rays + 1];
-				for (int i = 0; i < m_settings.number_of_rays; ++i) {
+				Term[] conjuction = new Term[m_settings.number_of_gevs + 1];
+				for (int i = 0; i < m_settings.number_of_gevs; ++i) {
 					Term[] inner_disjunction = new Term[lambda_guesses.size()];
 					for (int j = 0; j < lambda_guesses.size(); ++j) {
 						Term lambda_guess = lambda_guesses.get(j);
-						Term t_ray = this.generateConstraint(
+						Term t_gev = this.generateConstraint(
 								loop,
 								polyhedron,
-								vars_rays.get(i),
-								vars_rays_next.get(i).get(j),
+								vars_gevs.get(i),
+								vars_gevs_next.get(i).get(j),
 								true
 						);
 						Term fix_lambda;
@@ -366,11 +366,11 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 						} else {
 							fix_lambda = m_script.term("=", lambdas.get(i), lambda_guess);
 						}
-						inner_disjunction[j] = Util.and(m_script, t_ray, fix_lambda);
+						inner_disjunction[j] = Util.and(m_script, t_gev, fix_lambda);
 					}
 					conjuction[i] = Util.or(m_script, inner_disjunction);
 				}
-				conjuction[m_settings.number_of_rays] = t_honda;
+				conjuction[m_settings.number_of_gevs] = t_honda;
 				disjunction.add(Util.and(m_script, conjuction));
 			}
 			t2 = Util.or(m_script, disjunction.toArray(new Term[0]));
@@ -378,10 +378,10 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 		
 		// t3: constraints on the lambdas and the nus
 		{
-			List<Term> conjunction = new ArrayList<Term>(2*m_settings.number_of_rays);
+			List<Term> conjunction = new ArrayList<Term>(2*m_settings.number_of_gevs);
 			
 			// nu_i = 0 or nu_i = 1
-			for (int i = 0; i < m_settings.number_of_rays - 1; ++i) {
+			for (int i = 0; i < m_settings.number_of_gevs - 1; ++i) {
 				Term nu = nus.get(i);
 				conjunction.add(Util.or(m_script,
 						m_script.term("=", nu, zero),
@@ -389,15 +389,15 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 			}
 			if (this.m_settings.allowBounded) {
 				// lambda_i >= 0
-				for (int i = 0; i < m_settings.number_of_rays; ++i) {
+				for (int i = 0; i < m_settings.number_of_gevs; ++i) {
 					conjunction.add(m_script.term(">=", lambdas.get(i), zero));
 				}
 			} else {
-				// lambda >= 1 and any vars_ray != 0;
+				// lambda >= 1 and any vars_gev != 0;
 				List<Term> disjunction =
-						new ArrayList<Term>(m_settings.number_of_rays*num_vars);
-				for (int i = 0; i < m_settings.number_of_rays; ++i) {
-					for (Term t : vars_rays.get(i).values()) {
+						new ArrayList<Term>(m_settings.number_of_gevs*num_vars);
+				for (int i = 0; i < m_settings.number_of_gevs; ++i) {
+					for (Term t : vars_gevs.get(i).values()) {
 						disjunction.add(m_script.term("<>", t, zero));
 					}
 					conjunction.add(m_script.term(">=", lambdas.get(i), one));
@@ -521,7 +521,7 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 	private NonTerminationArgument extractArgument(
 			Map<RankVar, Term> vars_init,
 			Map<RankVar, Term> vars_honda,
-			List<Map<RankVar, Term>> vars_rays,
+			List<Map<RankVar, Term>> vars_gevs,
 			List<Term> var_lambdas,
 			List<Term> var_nus) {
 //		assert m_script.checkSat() == LBool.SAT;
@@ -529,24 +529,24 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 		try {
 			Map<RankVar, Rational> state0 = extractState(vars_init);
 			Map<RankVar, Rational> state1 = extractState(vars_honda);
-			List<Map<RankVar, Rational>> rays =
-					new ArrayList<Map<RankVar, Rational>>(m_settings.number_of_rays);
+			List<Map<RankVar, Rational>> gevs =
+					new ArrayList<Map<RankVar, Rational>>(m_settings.number_of_gevs);
 			Map<Term, Term> lambda_val = m_script.getValue(var_lambdas.toArray(new Term[0]));
 			Map<Term, Term> nu_val = m_script.getValue(var_nus.toArray(new Term[0]));
-			List<Rational> lambdas = new ArrayList<Rational>(m_settings.number_of_rays);
-			List<Rational> nus = new ArrayList<Rational>(m_settings.number_of_rays - 1);
-			for (int i = 0; i < m_settings.number_of_rays; ++i) {
-				rays.add(extractState(vars_rays.get(i)));
+			List<Rational> lambdas = new ArrayList<Rational>(m_settings.number_of_gevs);
+			List<Rational> nus = new ArrayList<Rational>(m_settings.number_of_gevs - 1);
+			for (int i = 0; i < m_settings.number_of_gevs; ++i) {
+				gevs.add(extractState(vars_gevs.get(i)));
 				lambdas.add(ModelExtractionUtils.const2Rational(
 						lambda_val.get(var_lambdas.get(i))));
-				if (i < m_settings.number_of_rays - 1) {
+				if (i < m_settings.number_of_gevs - 1) {
 					nus.add(ModelExtractionUtils.const2Rational(
 						nu_val.get(var_nus.get(i))));
 				}
 			}
 			boolean has_stem = !m_lasso.getStem().isTrue();
 			return new NonTerminationArgument(has_stem ? state0 : state1,
-					state1, rays, lambdas, nus);
+					state1, gevs, lambdas, nus);
 		} catch (UnsupportedOperationException e) {
 			// do nothing
 		} catch (TermException e) {
