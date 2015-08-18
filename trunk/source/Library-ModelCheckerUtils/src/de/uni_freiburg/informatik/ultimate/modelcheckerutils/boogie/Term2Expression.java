@@ -279,11 +279,11 @@ public class Term2Expression implements Serializable {
 				throw new AssertionError("BitVec has exactly one index");
 			}
 			int length = indices[0].intValue();
-			long decimalValue;
+			BigInteger decimalValue;
 			if (value.toString().startsWith("#x")) {
-				decimalValue = Long.parseLong(value.toString().substring(2), 16);
-			} else 			if (value.toString().startsWith("#b")) {
-				decimalValue = Long.parseLong(value.toString().substring(2), 2);
+				decimalValue = new BigInteger(value.toString().substring(2), 16);
+			} else if (value.toString().startsWith("#b")) {
+				decimalValue = new BigInteger(value.toString().substring(2), 2);
 			} else {
 				throw new UnsupportedOperationException(
 						"only hexadecimal values and boolean values supported yet");			
