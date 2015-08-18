@@ -131,6 +131,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 				initHondaRays.get(1),
 				initHondaRays.subList(2, initHondaRays.size()),
 				nta.getLambdas(),
+				nta.getNus(),
 				getBacktranslationService());
 		reportResult(result);
 	}

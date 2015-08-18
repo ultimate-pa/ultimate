@@ -405,6 +405,7 @@ public class LassoRankerStarter {
 				initHondaRays.get(1),
 				initHondaRays.subList(2, initHondaRays.size()),
 				nta.getLambdas(),
+				nta.getNus(),
 				getTranslatorSequence());
 		reportResult(result);
 	}

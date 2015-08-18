@@ -50,7 +50,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Term2Express
  * <li> an initial state at the begin of the lasso,
  * <li> a state at first visit of the honda,
  * <li> a list of rays of the loop's transition polyhedron, and
- * <li> a list of discount factors.
+ * <li> a list of discount factors lambda and mu.
  * </ul>
  * 
  * The infinite execution described by this nontermination argument is
@@ -59,10 +59,17 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Term2Express
  * state_init,
  * state_honda,
  * state_honda + ray_1 + ... + ray_n,
- * state_honda + (1 + lambda_1) ray_1 + ... + (1 + lambda_n) ray_n,
- * state_honda + (1 + lambda_1 + lambda_1^2) ray_1 + ... + (1 + lambda_n + lambda_n^2) ray_n,
+ * state_honda + (1 + lambda_1) ray_1 + (1 + lambda_2 + mu_1) ray_2 + ... + (1 + lambda_n + nu_(n-1)) ray_n,
  * ...
  * </pre>
+ * 
+ * The general form is x + Y*(sum_i J^i)*1 where
+ * <ul>
+ * <li> x is the initial state
+ * <li> Y is a matrix with the rays as columns
+ * <li> J is a matrix with lamnbda_i on the diagonal and mu_i on the upper subdiagonal
+ * <li> 1 is a column vector of ones
+ * </ul>
  * 
  * @author Jan Leike
  */
@@ -73,39 +80,34 @@ public class NonTerminationArgument implements Serializable {
 	private final Map<RankVar, Rational> m_StateHonda;
 	private final List<Map<RankVar, Rational>> m_Rays;
 	private final List<Rational> m_Lambdas;
+	private final List<Rational> m_Nus;
 	
 	/**
 	 * Construct a non-termination argument
-	 * 
-	 * The infinite execution described by this nontermination argument is
-	 * 
-	 * <pre>
-	 * state_init,
-	 * state_honda,
-	 * state_honda + ray_1 + ... + ray_n,
-	 * state_honda + (1 + lambda_1) ray_1 + ... + (1 + lambda_n) ray_n,
-	 * state_honda + (1 + lambda_1 + lambda_1^2) ray_1 + ... + (1 + lambda_n + lambda_n^2) ray_n,
-	 * ...
-	 * </pre>
 	 * 
 	 * @param state_init initial state
 	 * @param state_honda state at the lasso's honda
 	 * @param rays rays of the lasso's polyhedron
 	 * @param lambdas discount factors
+	 * @param nus nilpotent components
 	 */
 	public NonTerminationArgument(Map<RankVar, Rational> state_init,
 			Map<RankVar, Rational> state_honda,
 			List<Map<RankVar, Rational>> rays,
-			List<Rational> lambdas) {
+			List<Rational> lambdas,
+			List<Rational> nus) {
 		assert(state_init != null);
 		m_StateInit = state_init;
 		assert(state_honda != null);
 		m_StateHonda = state_honda;
-		assert(lambdas != null);
-		m_Lambdas = lambdas;
 		assert(rays != null);
 		m_Rays = rays;
+		assert(lambdas != null);
+		m_Lambdas = lambdas;
+		assert(nus != null);
+		m_Nus = nus;
 		assert rays.size() == lambdas.size();
+		assert rays.size() == nus.size() + 1;
 	}
 	
 	/**
@@ -137,6 +139,7 @@ public class NonTerminationArgument implements Serializable {
 		List<Map<RankVar, Rational>> rays =
 				new ArrayList<Map<RankVar, Rational>>();
 		List<Rational> lambdas = new ArrayList<Rational>();
+		List<Rational> nus = new ArrayList<Rational>();
 		stateInit.putAll(this.m_StateInit);
 		stateInit.putAll(other.m_StateInit);
 		stateHonda.putAll(this.m_StateHonda);
@@ -145,8 +148,10 @@ public class NonTerminationArgument implements Serializable {
 		rays.addAll(other.m_Rays);
 		lambdas.addAll(this.m_Lambdas);
 		lambdas.addAll(other.m_Lambdas);
-		
-		return new NonTerminationArgument(stateInit, stateHonda, rays, lambdas);
+		nus.addAll(this.m_Nus);
+		nus.add(Rational.ZERO); // add 0 because the length of nus has to be #rays-1
+		nus.addAll(other.m_Nus);
+		return new NonTerminationArgument(stateInit, stateHonda, rays, lambdas, nus);
 	}
 	
 	/**
@@ -188,6 +193,13 @@ public class NonTerminationArgument implements Serializable {
 	 */
 	public List<Rational> getLambdas() {
 		return Collections.unmodifiableList(m_Lambdas);
+	}
+	
+	/**
+	 * @return the nilpotent factors nu
+	 */
+	public List<Rational> getNus() {
+		return Collections.unmodifiableList(m_Nus);
 	}
 	
 	/**
@@ -255,6 +267,8 @@ public class NonTerminationArgument implements Serializable {
 		sb.append(m_Rays);
 		sb.append("\nLambdas: ");
 		sb.append(m_Lambdas);
+		sb.append("\nNus: ");
+		sb.append(m_Nus);
 		return sb.toString();
 	}
 }

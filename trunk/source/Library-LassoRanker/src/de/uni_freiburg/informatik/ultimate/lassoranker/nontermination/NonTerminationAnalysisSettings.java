@@ -59,6 +59,8 @@ public class NonTerminationAnalysisSettings implements Serializable {
 	
 	public int number_of_rays = 1;
 	
+	public boolean nilpotent_rays = true;
+	
 	/*
 	 * As this point there is not much here, but there might be in the future.
 	 */
@@ -76,6 +78,7 @@ public class NonTerminationAnalysisSettings implements Serializable {
 		this.analysis = other.analysis;
 		this.allowBounded = other.allowBounded;
 		this.number_of_rays = other.number_of_rays;
+		this.nilpotent_rays = other.nilpotent_rays;
 	}
 	
 	/**
@@ -97,6 +100,8 @@ public class NonTerminationAnalysisSettings implements Serializable {
 		sb.append(this.allowBounded);
 		sb.append("\nNumber of rays: ");
 		sb.append(this.number_of_rays);
+		sb.append("\nNilpotent rays: ");
+		sb.append(this.nilpotent_rays);
 		return sb.toString();
 	}
 }
