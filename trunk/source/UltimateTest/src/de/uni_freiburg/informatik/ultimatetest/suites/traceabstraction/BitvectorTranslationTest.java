@@ -15,8 +15,8 @@ import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
 
 public class BitvectorTranslationTest extends AbstractTraceAbstractionTestSuite {
 	
-//	private static int m_FilesPerDirectoryLimit = Integer.MAX_VALUE;
-	private static int m_FilesPerDirectoryLimit = 4;
+	private static int m_FilesPerDirectoryLimit = Integer.MAX_VALUE;
+//	private static int m_FilesPerDirectoryLimit = 20;
 	
 	private static final DirectoryFileEndingsPair[] m_SVCOMP_Examples = {
 //		/*** Category 1. Arrays ***/

@@ -50,14 +50,12 @@ public class AutomizerRegressionTest extends AbstractTraceAbstractionTestSuite {
 	}
 	
 	private static final String[] m_BoogieToolchains = {
-//		"AutomizerBpl.xml",
-//		"AutomizerBplWithBlockEncoding.xml",
+		"AutomizerBpl.xml",
 //		"AutomizerBplInline.xml",
 	};
 	
 	private static final String[] m_CToolchains = {
 		"AutomizerC.xml",
-//		"AutomizerCWithBlockEncoding.xml",
 //		"AutomizerCInline.xml",
 	};
 

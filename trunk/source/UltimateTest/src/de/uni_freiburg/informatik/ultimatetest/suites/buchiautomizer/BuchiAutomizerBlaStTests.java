@@ -16,7 +16,7 @@ public class BuchiAutomizerBlaStTests extends
 	
 	
 	
-	private static int m_FilesPerDirectoryLimit = 20;
+	private static int m_FilesPerDirectoryLimit = Integer.MAX_VALUE;
 
 
 	private static final DirectoryFileEndingsPair[] m_SVCOMP_Examples = {
@@ -61,11 +61,11 @@ public class BuchiAutomizerBlaStTests extends
 //		new DirectoryFileEndingsPair("examples/svcomp/seq-mthreaded/", new String[]{ ".c" }, m_FilesPerDirectoryLimit) ,
 //		new DirectoryFileEndingsPair("examples/svcomp/seq-pthread/", new String[]{ ".i" }, m_FilesPerDirectoryLimit) ,
 //		
-//		/*** Category 12. Termination ***/
-//		new DirectoryFileEndingsPair("examples/svcomp/termination-crafted/", new String[]{ ".c" }, m_FilesPerDirectoryLimit) ,
-//		new DirectoryFileEndingsPair("examples/svcomp/termination-crafted-lit/", new String[]{ ".c" }, m_FilesPerDirectoryLimit) ,
-//		new DirectoryFileEndingsPair("examples/svcomp/termination-memory-alloca/", new String[]{ ".i" }, m_FilesPerDirectoryLimit) ,
-//		new DirectoryFileEndingsPair("examples/svcomp/termination-numeric/", new String[]{ ".c" }, m_FilesPerDirectoryLimit) ,
+		/*** Category 12. Termination ***/
+		new DirectoryFileEndingsPair("examples/svcomp/termination-crafted/", new String[]{ ".c" }, m_FilesPerDirectoryLimit) ,
+		new DirectoryFileEndingsPair("examples/svcomp/termination-crafted-lit/", new String[]{ ".c" }, m_FilesPerDirectoryLimit) ,
+		new DirectoryFileEndingsPair("examples/svcomp/termination-memory-alloca/", new String[]{ ".i" }, m_FilesPerDirectoryLimit) ,
+		new DirectoryFileEndingsPair("examples/svcomp/termination-numeric/", new String[]{ ".c" }, m_FilesPerDirectoryLimit) ,
 	};
 	
 	
@@ -75,7 +75,7 @@ public class BuchiAutomizerBlaStTests extends
 //		"examples/lassos/arrays",
 //		"examples/termination/svcomp-sorted/success/",
 //		"examples/programs/quantifier",
-		"examples/programs/recursivePrograms",
+//		"examples/programs/recursivePrograms",
 //		"examples/programs/toy"
 //		"examples/programs/termination/toPLDI",
 //		"examples/programs/termination/",
@@ -88,7 +88,7 @@ public class BuchiAutomizerBlaStTests extends
 	 */
 	@Override
 	public long getTimeout() {
-		return 20 * 1000;
+		return 300 * 1000;
 	}
 	
 	
@@ -107,12 +107,9 @@ public class BuchiAutomizerBlaStTests extends
 //		"buchiAutomizer/stagedblastForwardPredicatesNonlinear.epf",
 //		"buchiAutomizer/tabablastForwardPredicatesNonlinear.epf",
 //		"buchiAutomizer/tabarankbasedForwardPredicatesNonlinear.epf",
-//		"buchiAutomizer/stagedblastCraigLinear.epf",
-//		"buchiAutomizer/stagedCraigLinear.epf",
+		"buchiAutomizer/stagedblastCraigLinear.epf",
+		"buchiAutomizer/stagedCraigLinear.epf",
 //		"buchiAutomizer/stagedForwardPredicatesLinear.epf",
-		"buchiAutomizer/stagedblastForwardPredicatesLinear.epf",
-//		"buchiAutomizer/stagedblastPrincessLinear.epf",
-//		"buchiAutomizer/stagedblastiZ3Linear.epf",
 	};
 	
 	
