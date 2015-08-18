@@ -11,6 +11,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.F
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.TypeSizes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.PRIMITIVE;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultExpression;
@@ -264,9 +265,13 @@ public class BitvectorTranslation extends AExpressionTranslation {
 		}
 	}
 
-//	@Override
-	public void convert(ILocation loc, ResultExpression operand, CPrimitive resultType, TypeSizes typeSizeConstants) {
-		int resultLength = m_TypeSizes.getSize(resultType.getType()) * 8;
+	@Override
+	public void convert(ILocation loc, ResultExpression operand, CType resultType, TypeSizes typeSizeConstants) {
+		if (!(resultType instanceof CPrimitive)) {
+			throw new UnsupportedOperationException("non-primitive types not supported yet");
+		}
+		CPrimitive resultPrimitive = (CPrimitive) resultType;
+		int resultLength = m_TypeSizes.getSize(resultPrimitive.getType()) * 8;
 		int operandLength = m_TypeSizes.getSize(((CPrimitive) operand.lrVal.cType).getType()) * 8;
 		
 		if (resultLength == operandLength) {
@@ -274,8 +279,8 @@ public class BitvectorTranslation extends AExpressionTranslation {
 		} else if (resultLength > operandLength) {
 			int[] indices = new int[]{resultLength - operandLength};
 			String funcName = "sign_extendFrom" + m_FunctionDeclarations.computeBitvectorSuffix(loc, (CPrimitive) operand.lrVal.cType)
-                                         + "To" + m_FunctionDeclarations.computeBitvectorSuffix(loc, resultType);
-			declareBitvectorFunction(loc, funcName.substring(0, 11), funcName, false, resultType, indices, (CPrimitive) operand.lrVal.cType);
+                                         + "To" + m_FunctionDeclarations.computeBitvectorSuffix(loc, resultPrimitive);
+			declareBitvectorFunction(loc, funcName.substring(0, 11), funcName, false, resultPrimitive, indices, (CPrimitive) operand.lrVal.cType);
 			FunctionApplication func = new FunctionApplication(loc, SFO.AUXILIARY_FUNCTION_PREFIX + funcName, new Expression[]{operand.lrVal.getValue()});
 		    RValue rVal = new RValue(func, resultType);
 			operand.lrVal = rVal;

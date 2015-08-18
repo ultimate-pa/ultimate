@@ -11,6 +11,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.F
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.TypeSizes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.PRIMITIVE;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultExpression;
@@ -153,7 +154,7 @@ public class IntegerTranslation extends AExpressionTranslation {
 		String functionName = prefixedFunctionName.substring(1, prefixedFunctionName.length());
 		Attribute attribute = new NamedAttribute(loc, FunctionDeclarations.s_OVERAPPROX_IDENTIFIER, new Expression[] { new StringLiteral(loc, functionName) });
 		Attribute[] attributes = new Attribute[] { attribute };
-		m_FunctionDeclarations.declareFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + functionName, false, attributes, boogieResultTypeBool, resultCType, paramCType);
+		m_FunctionDeclarations.declareFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + functionName, attributes, boogieResultTypeBool, resultCType, paramCType);
 	}
 
 	@Override
@@ -386,7 +387,7 @@ public class IntegerTranslation extends AExpressionTranslation {
 
 	@Override
 	public void convert(ILocation loc, ResultExpression operand,
-			CPrimitive resultType, TypeSizes typeSizeConstants) {
+			CType resultType, TypeSizes typeSizeConstants) {
 		// TODO Auto-generated method stub
 		
 	}

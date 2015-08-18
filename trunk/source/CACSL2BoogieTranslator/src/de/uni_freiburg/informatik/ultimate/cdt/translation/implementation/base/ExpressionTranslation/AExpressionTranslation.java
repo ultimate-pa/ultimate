@@ -15,6 +15,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.c
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.PRIMITIVE;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultExpression;
@@ -149,5 +150,5 @@ public abstract class AExpressionTranslation {
 		rightRex.lrVal.cType = resultType;
 	}
 	
-	public abstract void convert(ILocation loc, ResultExpression operand, CPrimitive resultType, TypeSizes typeSizeConstants);
+	public abstract void convert(ILocation loc, ResultExpression operand, CType resultType, TypeSizes typeSizeConstants);
 }
