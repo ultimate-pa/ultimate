@@ -38,18 +38,18 @@ public class IncrementalInclusionTest extends
 //		new DirectoryFileEndingsPair("examples/svcomp/bitvector-regression/", new String[]{ ".i", ".c" }, m_FilesPerDirectoryLimit) ,
 //		
 //		/*** Category 4. Control Flow and Integer Variables ***/
-		new DirectoryFileEndingsPair("examples/svcomp/ntdrivers-simplified/", new String[]{".c" }, m_FilesPerDirectoryLimit) ,
-		new DirectoryFileEndingsPair("examples/svcomp/ssh-simplified/", new String[]{".c" }, m_FilesPerDirectoryLimit) ,
-		new DirectoryFileEndingsPair("examples/svcomp/locks/", new String[]{".c" }, m_FilesPerDirectoryLimit) ,
-		
-		new DirectoryFileEndingsPair("examples/svcomp/loops/", new String[]{".i"}, m_FilesPerDirectoryLimit) ,
-		new DirectoryFileEndingsPair("examples/svcomp/loop-acceleration/", new String[]{".c" }, m_FilesPerDirectoryLimit) ,
-		new DirectoryFileEndingsPair("examples/svcomp/loop-invgen/", new String[]{".i"}, m_FilesPerDirectoryLimit) ,
-		new DirectoryFileEndingsPair("examples/svcomp/loop-lit/", new String[]{ ".i", ".c" }, m_FilesPerDirectoryLimit) ,
-		new DirectoryFileEndingsPair("examples/svcomp/loop-new/", new String[]{".i"}, m_FilesPerDirectoryLimit) ,
+//		new DirectoryFileEndingsPair("examples/svcomp/ntdrivers-simplified/", new String[]{".c" }, m_FilesPerDirectoryLimit) ,
+//		new DirectoryFileEndingsPair("examples/svcomp/ssh-simplified/", new String[]{".c" }, m_FilesPerDirectoryLimit) ,
+//		new DirectoryFileEndingsPair("examples/svcomp/locks/", new String[]{".c" }, m_FilesPerDirectoryLimit) ,
 //		
-		new DirectoryFileEndingsPair("examples/svcomp/eca-rers2012/", new String[]{".c" }, m_FilesPerDirectoryLimit) ,
-		new DirectoryFileEndingsPair("examples/svcomp/product-lines/", new String[]{".c" }, m_FilesPerDirectoryLimit) ,
+//		new DirectoryFileEndingsPair("examples/svcomp/loops/", new String[]{".i"}, m_FilesPerDirectoryLimit) ,
+//		new DirectoryFileEndingsPair("examples/svcomp/loop-acceleration/", new String[]{".c" }, m_FilesPerDirectoryLimit) ,
+//		new DirectoryFileEndingsPair("examples/svcomp/loop-invgen/", new String[]{".i"}, m_FilesPerDirectoryLimit) ,
+//		new DirectoryFileEndingsPair("examples/svcomp/loop-lit/", new String[]{ ".i", ".c" }, m_FilesPerDirectoryLimit) ,
+//		new DirectoryFileEndingsPair("examples/svcomp/loop-new/", new String[]{".i"}, m_FilesPerDirectoryLimit) ,
+////		
+//		new DirectoryFileEndingsPair("examples/svcomp/eca-rers2012/", new String[]{".c" }, m_FilesPerDirectoryLimit) ,
+//		new DirectoryFileEndingsPair("examples/svcomp/product-lines/", new String[]{".c" }, m_FilesPerDirectoryLimit) ,
 //		
 //		/*** Category 6. Heap Manipulation / Dynamic Data Structures ***/
 //		new DirectoryFileEndingsPair("examples/svcomp/heap-manipulation/", new String[]{ ".i" }, m_FilesPerDirectoryLimit) ,
@@ -74,6 +74,7 @@ public class IncrementalInclusionTest extends
 	 * one of there paths.
 	 */
 	private static final String[] s_UltimateRepository_Programs = {
+		"examples/programs/linear_search_false-unreach-call.i"
 //		"examples/programs/regression",
 //		"examples/programs/quantifier/",
 //		"examples/programs/quantifier/regression",
@@ -92,7 +93,7 @@ public class IncrementalInclusionTest extends
 	 */
 	private static final String[] s_Settings = {
 //		"automizer/incrementalInclusion/Difference.epf",
-		"automizer/incrementalInclusion/IncrementalInclusionViaDifference.epf",
+//		"automizer/incrementalInclusion/IncrementalInclusionViaDifference.epf",
 //		"automizer/incrementalInclusion/IncrementalInclusion2.epf",
 //		"automizer/incrementalInclusion/IncrementalInclusion2_DeadEnd_Remove.epf",
 //		"automizer/incrementalInclusion/IncrementalInclusion2_DeadEnd_Remove_AntiChain.epf",
@@ -104,7 +105,7 @@ public class IncrementalInclusionTest extends
 //		"automizer/incrementalInclusion/IncrementalInclusion4_2.epf",
 //		"automizer/incrementalInclusion/IncrementalInclusion5.epf",
 //		"automizer/incrementalInclusion/IncrementalInclusion5_2.epf",
-//		"automizer/incrementalInclusion/nonDeterministic/Difference.epf",
+		"automizer/incrementalInclusion/nonDeterministic/Difference.epf",
 		"automizer/incrementalInclusion/nonDeterministic/IncrementalInclusionViaDifference.epf",
 //		"automizer/incrementalInclusion/nonDeterministic/IncrementalInclusion2.epf",
 //		"automizer/incrementalInclusion/nonDeterministic/IncrementalInclusion2_DeadEnd_Remove.epf",
@@ -125,7 +126,7 @@ public class IncrementalInclusionTest extends
 	 */
 	@Override
 	public long getTimeout() {
-		return 30 * 1000;
+		return 300 * 1000;
 	}
 	
 	@Override

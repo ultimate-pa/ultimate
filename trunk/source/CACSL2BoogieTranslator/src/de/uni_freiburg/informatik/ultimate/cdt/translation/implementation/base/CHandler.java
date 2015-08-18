@@ -335,7 +335,7 @@ public class CHandler implements ICHandler {
 			m_ExpressionTranslation = new IntegerTranslation(main.getTypeSizes(), typeHandler);
 		}
 		this.mFunctionHandler = new FunctionHandler(m_ExpressionTranslation);
-		this.mMemoryHandler = new MemoryHandler(mFunctionHandler, checkPointerValidity, main.getTypeSizes());
+		this.mMemoryHandler = new MemoryHandler(mFunctionHandler, checkPointerValidity, main.getTypeSizes(), m_ExpressionTranslation);
 		this.mInitHandler = new InitializationHandler(mFunctionHandler, mStructHandler, mMemoryHandler, m_ExpressionTranslation);
 	}
 

@@ -60,28 +60,29 @@ public class BuchiAutomizerLassoRankerTests extends
 //		new DirectoryFileEndingsPair("examples/svcomp/systemc/", new String[]{ ".c" }, m_FilesPerDirectoryLimit) ,
 //		new DirectoryFileEndingsPair("examples/svcomp/seq-mthreaded/", new String[]{ ".c" }, m_FilesPerDirectoryLimit) ,
 //		new DirectoryFileEndingsPair("examples/svcomp/seq-pthread/", new String[]{ ".i" }, m_FilesPerDirectoryLimit) ,
-		
-		/*** Category 12. Termination ***/
-		new DirectoryFileEndingsPair("examples/svcomp/termination-crafted/", new String[]{ ".c" }, m_FilesPerDirectoryLimit) ,
-		new DirectoryFileEndingsPair("examples/svcomp/termination-crafted-lit/", new String[]{ ".c" }, m_FilesPerDirectoryLimit) ,
-		new DirectoryFileEndingsPair("examples/svcomp/termination-memory-alloca/", new String[]{ ".i" }, m_FilesPerDirectoryLimit) ,
-		new DirectoryFileEndingsPair("examples/svcomp/termination-numeric/", new String[]{ ".c" }, m_FilesPerDirectoryLimit) ,
+//		
+//		/*** Category 12. Termination ***/
+//		new DirectoryFileEndingsPair("examples/svcomp/termination-crafted/", new String[]{ ".c" }, m_FilesPerDirectoryLimit) ,
+//		new DirectoryFileEndingsPair("examples/svcomp/termination-crafted-lit/", new String[]{ ".c" }, m_FilesPerDirectoryLimit) ,
+//		new DirectoryFileEndingsPair("examples/svcomp/termination-memory-alloca/", new String[]{ ".i" }, m_FilesPerDirectoryLimit) ,
+//		new DirectoryFileEndingsPair("examples/svcomp/termination-numeric/", new String[]{ ".c" }, m_FilesPerDirectoryLimit) ,
 	};
 	
 	
 	
 	private static final String[] m_UltimateRepository = {
-		"examples/lassos/",
-//		"examples/lassos/arrays",
+//		"examples/lassos/",
+		"examples/lassos/arrays",
 //		"examples/termination/svcomp-sorted/success/",
 //		"examples/programs/quantifier",
 //		"examples/programs/recursivePrograms",
 //		"examples/programs/toy"
-		"examples/programs/termination/",
+//		"examples/programs/termination/",
 //		"examples/termination/cooperatingT2/difficult/solved",
 //		"examples/termination/cooperatingT2",
 //		"examples/termination/Brainfuck/nonterminating",
 //		"examples/termination/Brainfuck-terminating",
+//		"examples/svcomp/termination-memory-alloca/openbsd_cstrstr-alloca_true-termination.c.i", // incorrect predicates
 	};
 	
 	/**
@@ -89,7 +90,7 @@ public class BuchiAutomizerLassoRankerTests extends
 	 */
 	@Override
 	public long getTimeout() {
-		return 120 * 1000;
+		return 20 * 1000;
 	}
 	
 	

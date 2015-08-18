@@ -113,7 +113,7 @@ public class PRCHandler extends CHandler {
 		this.mArrayHandler = new ArrayHandler();
 		this.mFunctionHandler = new PRFunctionHandler(m_ExpressionTranslation);
 		this.mStructHandler = new StructHandler();
-		this.mMemoryHandler = new MemoryHandler(mFunctionHandler, false, main.getTypeSizes());
+		this.mMemoryHandler = new MemoryHandler(mFunctionHandler, false, main.getTypeSizes(), m_ExpressionTranslation);
 		this.mSymbolTable = new SymbolTable(main);
 		this.mContract = new ArrayList<ACSLNode>();
 		this.mCurrentDeclaredTypes = new ArrayDeque<ResultTypes>();

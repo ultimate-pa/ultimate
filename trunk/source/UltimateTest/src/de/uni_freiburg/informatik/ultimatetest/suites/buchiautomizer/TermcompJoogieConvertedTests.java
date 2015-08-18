@@ -24,7 +24,7 @@ public class TermcompJoogieConvertedTests extends
 	 */
 	@Override
 	public long getTimeout() {
-		return 30 * 1000;
+		return 20 * 1000;
 	}
 	
 	

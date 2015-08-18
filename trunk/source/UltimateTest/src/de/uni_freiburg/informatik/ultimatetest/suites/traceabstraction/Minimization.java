@@ -16,7 +16,7 @@ public class Minimization extends AbstractTraceAbstractionTestSuite {
 	
 	
 	/** Limit the number of files per directory. */
-	private static int m_FilesPerDirectoryLimit = 7;
+	private static int m_FilesPerDirectoryLimit = 10;
 	
 	private static final DirectoryFileEndingsPair[] s_SVCOMP_Programs = {
 		/*** Category 1. Arrays ***/

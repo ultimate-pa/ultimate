@@ -14,10 +14,11 @@ import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
 public class InterpolationTest extends
 		AbstractTraceAbstractionTestSuite {
 	private static final String[] m_Directories = {
-		"examples/programs/regression/",
-		"examples/programs/quantifier/",
-		"examples/programs/recursivePrograms",
-		"examples/programs/toy",
+//		"examples/programs/regression/",
+//		"examples/programs/quantifier/",
+//		"examples/programs/recursivePrograms",
+//		"examples/programs/toy",
+		"examples/programs/toy/nonlinear",
 //		"examples/termination/AProVE"
 //		"examples/svcomp/recursive/",
 //		"examples/svcomp/ssh-simplified/",
@@ -40,9 +41,9 @@ public class InterpolationTest extends
 	}
 
 	private static final boolean s_ForwardPredicates = true;
-	private static final boolean s_SMTInterpol = !true;
-	private static final boolean s_iZ3 = !true;
-	private static final boolean s_Princess = !true;
+	private static final boolean s_SMTInterpol = true;
+	private static final boolean s_iZ3 = true;
+	private static final boolean s_Princess = true;
 	private static final boolean s_CVC4 = true;
 	
 	

@@ -20,7 +20,8 @@ public class AutomataScriptTestSuite extends UltimateTestSuite {
 	private static final String m_Toolchain = "examples/toolchains/AutomataScriptInterpreter.xml";
 	private static final File m_ToolchainFile = new File(TestUtil.getPathFromTrunk(m_Toolchain));
 	private static int m_Timeout = 10000;
-	private static final String[] m_Directories = { 
+	private static final String[] m_Directories = {
+//		"examples/Automata/BuchiAutomata/terminationAnalysis_mc91.t2.ats",
 		"examples/Automata/atsTestFiles",
 		"examples/Automata/AUTOMATA_SCRIPT", 
 		"examples/Automata/BuchiAutomata", 

@@ -3,6 +3,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashMap;
@@ -14,6 +15,7 @@ import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.ExpressionTranslation.AExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CEnum;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CNamed;
@@ -165,6 +167,7 @@ public class MemoryHandler {
      * searching for HashMaps stays easy..)
      */
     LinkedHashMap<CType, Integer> sizeOfCTypeCache;
+	private final AExpressionTranslation m_ExpressionTranslation;
 
 	
 	/**
@@ -172,8 +175,9 @@ public class MemoryHandler {
      * @param checkPointerValidity 
      */
     public MemoryHandler(FunctionHandler functionHandler, boolean checkPointerValidity, 
-    		TypeSizes typeSizes) {
+    		TypeSizes typeSizes, AExpressionTranslation expressionTranslation) {
     	m_functionHandler = functionHandler;
+    	m_ExpressionTranslation = expressionTranslation;
         this.sizeofConsts = new LinkedHashSet<String>();
         this.structOffSetConstants = new LinkedHashSet<String>();
         this.axioms = new LinkedHashSet<Axiom>();
@@ -1050,12 +1054,17 @@ public class MemoryHandler {
         return mallocCall;
     }
     
+    /**
+     * Note: 6.5.3.4.2 of C11 says that the return type is int
+     */
     public Expression calculateSizeOf(CType cType, ILocation loc) {
     	if (typeSizeConstants.useFixedTypeSizes()) {
     		if((cType instanceof CArray) && ((CArray) cType).isVariableLength()) {
     			return calculateSizeOfVarLengthArrayTypeWithGivenTypeSizes(loc, ((CArray) cType));
     		} else {
-    			return new IntegerLiteral(loc, new Integer(calculateSizeOfWithGivenTypeSizes(loc, cType)).toString());
+    			int size = calculateSizeOfWithGivenTypeSizes(loc, cType);
+    			return m_ExpressionTranslation.constructLiteralForIntegerType(
+    					loc, new CPrimitive(PRIMITIVE.INT), BigInteger.valueOf(size));
     		}
     	} else {
     		return calculateSizeOfWithVariableTypeSizes(cType, loc);

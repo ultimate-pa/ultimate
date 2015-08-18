@@ -51,7 +51,7 @@ public class DeterministicInterpolantAutomaton extends BasicAbstractInterpolantA
 	 * First experiments on few examples showed that this is decreasing the
 	 * performance.
 	 */
-	private final boolean m_Cannibalize = false;
+	private final boolean m_Cannibalize = !false;
 	private final boolean m_SplitNumericEqualities = true;
 	private final boolean m_DivisibilityPredicates = false;
 	private final boolean m_ConservativeSuccessorCandidateSelection;

@@ -36,7 +36,9 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGl
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.VariableManager;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.CommuhashNormalForm;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.PartialQuantifierElimination;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SimplifyQuick;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.BasicPredicate;
@@ -529,7 +531,10 @@ public class SmtManager {
 			term = Util.or(m_Script, term, p.getFormula());
 		}
 		if (withSimplifyDDA) {
-			term = SmtUtils.simplify(m_Script, term, mServices);
+			SimplifyQuick sq = new SimplifyQuick(m_Script, mServices);
+			term = sq.getSimplifiedTerm(term);
+//			term = (new CommuhashNormalForm(mServices, m_Script)).transform(term);
+//			term = SmtUtils.simplify(m_Script, term, mServices);
 		}
 		Term closedTerm = PredicateUtils.computeClosedFormula(term, vars, m_Script);
 		return new TermVarsProc(term, vars, procs.toArray(new String[0]), closedTerm);

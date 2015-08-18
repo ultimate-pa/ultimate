@@ -8,17 +8,17 @@ public class TACAS2015AlgoComparisonArray extends TACAS2015 {
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
 
-		addTestCases("AutomizerC.xml", "TACASInterpolation2015/Automizer/Z3_Interpolation.epf", getPairs());
-		addTestCases("AutomizerC.xml", "TACASInterpolation2015/Automizer/Princess_Interpolation.epf", getPairs());
+//		addTestCases("AutomizerC.xml", "TACASInterpolation2015/Automizer/Z3_Interpolation.epf", getPairs());
+//		addTestCases("AutomizerC.xml", "TACASInterpolation2015/Automizer/Princess_Interpolation.epf", getPairs());
 		addTestCases("AutomizerC.xml", "TACASInterpolation2015/Automizer/SMTInterpol_Interpolation.epf", getPairs());
-		addTestCases("AutomizerC.xml", "TACASInterpolation2015/Automizer/SMTInterpol_SP-IC-LV.epf", getPairs());
-		addTestCases("AutomizerC.xml", "TACASInterpolation2015/Automizer/Z3_SP-IC-LV.epf", getPairs());
-		addTestCases("AutomizerC.xml", "TACASInterpolation2015/Automizer/CVC4_SP-IC-LV.epf", getPairs());
-		addTestCases("AutomizerC.xml", "TACASInterpolation2015/Automizer/SMTInterpol_SP-IC.epf", getPairs());
-		addTestCases("AutomizerC.xml", "TACASInterpolation2015/Automizer/Z3_SP-IC.epf", getPairs());
-		addTestCases("AutomizerC.xml", "TACASInterpolation2015/Automizer/CVC4_SP-IC.epf", getPairs());
-		addTestCases("AutomizerC.xml", "TACASInterpolation2015/Automizer/Z3_SP.epf", getPairs());
-		addTestCases("AutomizerC.xml", "TACASInterpolation2015/Automizer/Z3_SP-LV.epf", getPairs());
+//		addTestCases("AutomizerC.xml", "TACASInterpolation2015/Automizer/SMTInterpol_SP-IC-LV.epf", getPairs());
+//		addTestCases("AutomizerC.xml", "TACASInterpolation2015/Automizer/Z3_SP-IC-LV.epf", getPairs());
+//		addTestCases("AutomizerC.xml", "TACASInterpolation2015/Automizer/CVC4_SP-IC-LV.epf", getPairs());
+//		addTestCases("AutomizerC.xml", "TACASInterpolation2015/Automizer/SMTInterpol_SP-IC.epf", getPairs());
+//		addTestCases("AutomizerC.xml", "TACASInterpolation2015/Automizer/Z3_SP-IC.epf", getPairs());
+//		addTestCases("AutomizerC.xml", "TACASInterpolation2015/Automizer/CVC4_SP-IC.epf", getPairs());
+//		addTestCases("AutomizerC.xml", "TACASInterpolation2015/Automizer/Z3_SP.epf", getPairs());
+//		addTestCases("AutomizerC.xml", "TACASInterpolation2015/Automizer/Z3_SP-LV.epf", getPairs());
 
 		// addTestCases("CodeCheckNoBE-C.xml",
 		// "TACASInterpolation2015/Kojak-SP.epf", getPairs());
@@ -37,16 +37,16 @@ public class TACAS2015AlgoComparisonArray extends TACAS2015 {
 
 	@Override
 	protected long getTimeout() {
-		return 60 * 1000;
+		return 10 * 1000;
 	}
 
 	@Override
 	protected String[] getDirectories() {
 		// @formatter:off
 		String[] directories = {
-		    "examples/svcomp/heap-manipulation",
-		    "examples/svcomp/list-properties",
-		    "examples/svcomp/ldv-regression",
+//		    "examples/svcomp/heap-manipulation",
+//		    "examples/svcomp/list-properties",
+//		    "examples/svcomp/ldv-regression",
 		    
 		    "examples/svcomp/loops",
 		    "examples/svcomp/loop-acceleration",

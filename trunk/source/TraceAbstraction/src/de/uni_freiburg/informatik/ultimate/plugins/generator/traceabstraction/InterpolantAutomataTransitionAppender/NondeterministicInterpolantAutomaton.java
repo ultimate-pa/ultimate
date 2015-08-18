@@ -151,6 +151,12 @@ public class NondeterministicInterpolantAutomaton extends BasicAbstractInterpola
 				Validity sat = sch.computeSuccWithSolver(resPred, resHier, letter, succCand);
 				if (sat == Validity.VALID) {
 					inputSuccs.add(succCand);
+					Set<IPredicate> test = m_PredicateUnifier.getCoverageRelation().getCoveringPredicates(succCand);
+					for (IPredicate impliedbySuccCand : test) {
+						if (impliedbySuccCand != m_IaTrueState && !inputSuccs.contains(impliedbySuccCand)) {
+							inputSuccs.add(impliedbySuccCand);
+						}
+					}
 				}
 			}
 		}

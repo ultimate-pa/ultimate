@@ -22,7 +22,7 @@ public class TermcompMemsafetyTests extends AbstractTraceAbstractionTestSuite {
 //		"examples/termination/termcomp2015/C/SV-COMP_Mixed_Categories/rekcba_aso_false-unreach-call.1.M1.c",
 //		"examples/termination/termcomp2015/C/SV-COMP_Mixed_Categories/rekcba_ctm_false-unreach-call.2.c",
 //		
-		"examples/termination/termcomp2015/C/",
+		"examples/termination/termcomp2015/C/AProVE_memory_alloca/",
 //		"examples/termination/termcomp2015/C_Integer/Stroeder_15",
 //		"examples/termination/termcomp2015/C_Integer/Ton_Chanh_15",
 	};
@@ -32,7 +32,7 @@ public class TermcompMemsafetyTests extends AbstractTraceAbstractionTestSuite {
 	 */
 	@Override
 	public long getTimeout() {
-		return 60 * 1000;
+		return 30 * 1000;
 	}
 	
 	
@@ -45,8 +45,8 @@ public class TermcompMemsafetyTests extends AbstractTraceAbstractionTestSuite {
 	 */
 	private static final String[] m_Settings = {
 		"buchiAutomizer/termcomp2015_Tests.epf",
-		"buchiAutomizer/termcomp2015_Tests_NoMinimization.epf",
-//		"buchiAutomizer/termcomp2015_Tests_iZ3.epf",
+//		"buchiAutomizer/termcomp2015_Tests_NoMinimization.epf",
+		"buchiAutomizer/termcomp2015_Tests_iZ3.epf",
 	};
 	
 	
