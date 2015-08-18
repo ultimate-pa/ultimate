@@ -44,17 +44,8 @@ public class FunctionDeclarations {
 		m_TypeSizeConstants = typeSizeConstants;
 	}
 
-	public void declareFunction(ILocation loc, String prefixedFunctionName, boolean addSuffix, Attribute[] attributes, boolean boogieResultTypeBool, CPrimitive resultCType, CPrimitive... paramCTypes) {
-		if (!prefixedFunctionName.startsWith(SFO.AUXILIARY_FUNCTION_PREFIX)) {
-			throw new IllegalArgumentException("Our convention says that user defined functions start with tilde");
-		}
-		final String resultName;
-		if (addSuffix) {
-			resultName = prefixedFunctionName + computeBitvectorSuffix(loc, paramCTypes);
-		} else {
-			resultName = prefixedFunctionName;
-		}
-
+	public void declareFunction(ILocation loc, String resultName, Attribute[] attributes, 
+			boolean boogieResultTypeBool, CPrimitive resultCType, CPrimitive... paramCTypes) {
 		final ASTType resultASTType;
 		if (boogieResultTypeBool) {
 			resultASTType = new PrimitiveType(loc, "bool");
