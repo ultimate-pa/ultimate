@@ -268,14 +268,14 @@ public class BitvectorTranslation extends AExpressionTranslation {
 		int resultLength = m_TypeSizes.getSize(resultType.getType()) * 8;
 		int operandLength = m_TypeSizes.getSize(((CPrimitive) operand.lrVal.cType).getType()) * 8;
 		
-		operand.lrVal.cType = resultType;
-		
 		if (resultLength == operandLength) {
+			// Do nothing.
 		} else if (resultLength > operandLength) {
 			int[] indices = new int[]{resultLength - operandLength};
-			declareBitvectorFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + "sign_extend", false, resultType, indices, (CPrimitive) operand.lrVal.cType);
-			FunctionApplication func = new FunctionApplication(loc, SFO.AUXILIARY_FUNCTION_PREFIX + "sign_extendFrom" + m_FunctionDeclarations.computeBitvectorSuffix(loc, (CPrimitive) operand.lrVal.cType)
-					                                                                                           + "To" + m_FunctionDeclarations.computeBitvectorSuffix(loc, resultType), new Expression[]{operand.lrVal.getValue()});
+			String funcName = "sign_extendFrom" + m_FunctionDeclarations.computeBitvectorSuffix(loc, (CPrimitive) operand.lrVal.cType)
+                                         + "To" + m_FunctionDeclarations.computeBitvectorSuffix(loc, resultType);
+			declareBitvectorFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + funcName, false, resultType, indices, (CPrimitive) operand.lrVal.cType);
+			FunctionApplication func = new FunctionApplication(loc, SFO.AUXILIARY_FUNCTION_PREFIX + funcName, new Expression[]{operand.lrVal.getValue()});
 		    RValue rVal = new RValue(func, resultType);
 			operand.lrVal = rVal;
 		} else {
@@ -283,5 +283,7 @@ public class BitvectorTranslation extends AExpressionTranslation {
 			RValue rVal = new RValue(bv, resultType);
 			operand.lrVal = rVal;
 		}
+		
+		operand.lrVal.cType = resultType;
 	}
 }
