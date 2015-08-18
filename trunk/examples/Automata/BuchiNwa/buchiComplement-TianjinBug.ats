@@ -20,7 +20,7 @@ NestedWordAutomaton ia = (
 	returnAlphabet = {"r" },
 	states = {"q" "f" "s" "t" },
 	initialStates = {"q" },
-	finalStates = {"s" },
+	finalStates = {"f" },
 	callTransitions = {
 		 ("q" "c" "t")
 		 ("t" "c" "t")
