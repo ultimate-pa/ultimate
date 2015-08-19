@@ -530,7 +530,7 @@ public class PRCHandler extends CHandler {
 		CType newCType = declResult.getDeclarations().get(0).getType();
 		mCurrentDeclaredTypes.pop();
 		
-		expr.lrVal = castToType(loc, main.getTypeSizes(), (RValue) expr.lrVal, newCType);
+		castToType(loc, main.getTypeSizes(), expr, newCType);
 
 		// String msg = "Ignored cast! At line: "
 		// + node.getFileLocation().getStartingLineNumber();

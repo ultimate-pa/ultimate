@@ -388,6 +388,7 @@ public class FunctionHandler {
 		// The ReturnValue could be empty!
 		ILocation loc = LocationFactory.createCLocation(node);
 		VarList[] outParams = this.currentProcedure.getOutParams();
+		ResultExpression rExp = new ResultExpression(stmt, null, decl, auxVars, overApp);
 		if (methodsCalledBeforeDeclared.contains(currentProcedure.getIdentifier()) && currentProcedureIsVoid) {
 			// void method that was assumed to be returning int! -> return int
 			String id = outParams[0].getIdentifiers()[0];
@@ -425,8 +426,9 @@ public class FunctionHandler {
 			} else {
 				String id = outParams[0].getIdentifiers()[0];
 				VariableLHS[] lhs = new VariableLHS[] { new VariableLHS(loc, id) };
-				RValue castExprResultRVal = main.cHandler
-						.castToType(loc, main.getTypeSizes(), (RValue) exprResult.lrVal, functionResultType);
+				rExp.lrVal = exprResult.lrVal;
+				main.cHandler.castToType(loc, main.getTypeSizes(), rExp, functionResultType);
+				RValue castExprResultRVal = (RValue) rExp.lrVal;
 				stmt.add(new AssignmentStatement(loc, lhs, new Expression[] { castExprResultRVal.getValue() }));
 				// //assuming that we need no auxvars or overappr, here
 			}
@@ -447,7 +449,7 @@ public class FunctionHandler {
 		}
 
 		stmt.add(new ReturnStatement(loc));
-		return new ResultExpression(stmt, null, decl, auxVars, overApp);
+		return rExp;
 	}
 
 	/**
@@ -692,7 +694,7 @@ public class FunctionHandler {
 					in = ConvExpr.rexBoolToIntIfNecessary(loc, in, m_ExpressionTranslation);
 				}
 				// implicit casts
-				in.lrVal = main.cHandler.castToType(loc, main.getTypeSizes(), (RValue) in.lrVal, expectedParamType);
+				main.cHandler.castToType(loc, main.getTypeSizes(), in, expectedParamType);
 			}
 			args.add(in.lrVal.getValue());
 			stmt.addAll(in.stmt);

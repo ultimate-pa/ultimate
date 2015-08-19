@@ -1333,10 +1333,10 @@ public class CHandler implements ICHandler {
 				// implicit casts
 				if (lType instanceof CPointer || rType instanceof CPointer) {
 					if (!(lType instanceof CPointer)) {
-						rlToInt.lrVal = castToType(loc, main.getTypeSizes(), (RValue) rlToInt.lrVal, new CPointer(new CPrimitive(PRIMITIVE.VOID)));
+						castToType(loc, main.getTypeSizes(), rlToInt, new CPointer(new CPrimitive(PRIMITIVE.VOID)));
 					}
 					if (!(rType instanceof CPointer)) {
-						rrToInt.lrVal = castToType(loc, main.getTypeSizes(), (RValue) rrToInt.lrVal, new CPointer(new CPrimitive(PRIMITIVE.VOID)));
+						castToType(loc, main.getTypeSizes(), rrToInt, new CPointer(new CPrimitive(PRIMITIVE.VOID)));
 					}
 				}
 				rval = new RValue(new BinaryExpression(loc, op, rlToInt.lrVal.getValue(), rrToInt.lrVal.getValue()),
@@ -2434,7 +2434,7 @@ public class CHandler implements ICHandler {
 			}
 		}
 
-		expr.lrVal = castToType(loc, main.getTypeSizes(), (RValue) expr.lrVal, newCType);
+		castToType(loc, main.getTypeSizes(), expr, newCType);
 
 		// String msg = "Ignored cast! At line: "
 		// + node.getFileLocation().getStartingLineNumber();
@@ -2690,10 +2690,11 @@ public class CHandler implements ICHandler {
 		LinkedHashMap<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<>(auxVarsOld);
 		ArrayList<Overapprox> overappr = new ArrayList<>(overapprOld);
 		
-		RValue rightHandSide = rVal; //we may change the content of the right hand side later
-
 		//do implicit cast -- assume the types are compatible
-		rightHandSide = castToType(loc, main.getTypeSizes(), rightHandSide, lrVal.cType);
+		ResultExpression rExp = new ResultExpression(stmt, rVal, decl, auxVars, overappr);
+		rExp.switchToRValueIfNecessary(main, mMemoryHandler, mStructHandler, loc);
+		castToType(loc, main.getTypeSizes(), rExp, lrVal.cType);
+		RValue rightHandSide = (RValue) rExp.lrVal;
 		
 		//for wraparound --> and avoiding it for ints that store pointers
 		if (rightHandSide.isIntFromPointer) {
@@ -3619,15 +3620,16 @@ public class CHandler implements ICHandler {
 	}
 
 	@Override
-	public RValue castToType(ILocation loc, TypeSizes typeSizes, RValue rValIn, CType expectedTypeRaw) {
+	public void castToType(ILocation loc, TypeSizes typeSizes, ResultExpression rexp, CType expectedTypeRaw) {
+		RValue rValIn = (RValue) rexp.lrVal;
 		CType expectedType = expectedTypeRaw.getUnderlyingType();
 		
-		RValue rVal = new RValue(rValIn); //better make a new one, right??
+		final RValue resultRValue; // = new RValue(rValIn); //better make a new one, right??
 
 		BigInteger maxPtrValue = new BigInteger("2").pow(typeSizes.sizeOfPointerType * 8);
 		IntegerLiteral max_Pointer = new IntegerLiteral(loc, maxPtrValue.toString());
 		// cast pointer -> integer/other pointer
-		CType rValUlType = rVal.cType.getUnderlyingType();
+		CType rValUlType = rValIn.cType.getUnderlyingType();
 		if (rValUlType instanceof CPointer) {
 			// cast from pointer to integer
 			if (expectedType instanceof CPrimitive &&
@@ -3636,21 +3638,22 @@ public class CHandler implements ICHandler {
 				if (typeSizes.useFixedTypeSizes()) {
 					e = createArithmeticExpression(IASTBinaryExpression.op_plus,
 							createArithmeticExpression(IASTBinaryExpression.op_multiply, 
-									MemoryHandler.getPointerBaseAddress(rVal.getValue(),  loc), 
+									MemoryHandler.getPointerBaseAddress(rValIn.getValue(),  loc), 
 									max_Pointer, 
 									loc),
-							MemoryHandler.getPointerOffset(rVal.getValue(), loc), 
+							MemoryHandler.getPointerOffset(rValIn.getValue(), loc), 
 							loc);
 				} else {
-					e = MemoryHandler.getPointerOffset(rVal.getValue(), loc);
+					e = MemoryHandler.getPointerOffset(rValIn.getValue(), loc);
 				}
-				rVal = new RValue(e, expectedType);
-				rVal.isIntFromPointer = true;
+				resultRValue = new RValue(e, expectedType);
+				resultRValue.isIntFromPointer = true;
 			}
 			// type is changed
 //			else if (!(expectedType.getUnderlyingType() instanceof CPointer)) { //why did I make this distinction??
 			else {
-				rVal.cType = expectedType;
+				//rValIn.cType = expectedType;
+				resultRValue = new RValue(rValIn.value, expectedType);
 			}
 		} else if (rValUlType instanceof CPrimitive) {
 			CPrimitive cprim = (CPrimitive) rValUlType;
@@ -3660,41 +3663,55 @@ public class CHandler implements ICHandler {
 					if (typeSizes.useFixedTypeSizes()) {
 						e = MemoryHandler.constructPointerFromBaseAndOffset(
 								createArithmeticExpression(IASTBinaryExpression.op_divide,
-										rVal.getValue(),
+										rValIn.getValue(),
 										max_Pointer, 
 										loc),
 										createArithmeticExpression(IASTBinaryExpression.op_modulo,
-												rVal.getValue(),
+												rValIn.getValue(),
 												max_Pointer, 
 												loc),
 												loc);
 					} else {
 						e = MemoryHandler.constructPointerFromBaseAndOffset(new IntegerLiteral(loc, "0"),
-								rVal.getValue(), loc);
+								rValIn.getValue(), loc);
 					}
-					rVal = new RValue(e, expectedType);
-//				} else if (expectedType instanceof CPrimitive) {
-//					m_ExpressionTranslation.convert(loc, null, expectedType, typeSizes);
+					resultRValue = new RValue(e, expectedType);
+				} else if (expectedType instanceof CPrimitive) {
+					m_ExpressionTranslation.convert(loc, rexp, expectedType, typeSizes);
+					return;
+				} else {
+					throw new UnsupportedOperationException("yet unsupported cast from " + rValUlType + " to " + expectedType);
 				}
 			} else if (cprim.getGeneralType() == GENERALPRIMITIVE.FLOATTYPE) { 
 				if (expectedType instanceof CPrimitive) { //cast float -> int (or respective long types)
 	 				if (((CPrimitive) expectedType).getGeneralType() == GENERALPRIMITIVE.INTTYPE) {
-						rVal = new RValue(new FunctionApplication(loc, SFO.TO_INT, new Expression[] { rVal.getValue() }), 
+						resultRValue = new RValue(new FunctionApplication(loc, SFO.TO_INT, new Expression[] { rValIn.getValue() }), 
 								expectedType);
 						mPostProcessor.m_DeclareToIntFunction = true;
+					} else {
+						throw new UnsupportedOperationException("yet unsupported cast from " + rValUlType + " to " + expectedType);
 					}
+				} else {
+					throw new UnsupportedOperationException("yet unsupported cast from " + rValUlType + " to " + expectedType);
 				}
-		
+			} else {
+				throw new UnsupportedOperationException("yet unsupported cast from " + rValUlType + " to " + expectedType);
 			}
 		} else if (rValUlType instanceof CEnum) {
 			if (expectedType instanceof CPrimitive) {
 				CPrimitive expPrim = (CPrimitive) expectedType;
 				if (expPrim.getGeneralType() == GENERALPRIMITIVE.INTTYPE) {
-					rVal = new RValue(rVal.getValue(), expectedType, rVal.isBoogieBool, rVal.isIntFromPointer);
+					resultRValue = new RValue(rValIn.getValue(), expectedType, rValIn.isBoogieBool, rValIn.isIntFromPointer);
+				} else {
+					throw new UnsupportedOperationException("yet unsupported cast from " + rValUlType + " to " + expectedType);
 				}
+			} else {
+				throw new UnsupportedOperationException("yet unsupported cast from " + rValUlType + " to " + expectedType);
 			}
+		} else {
+			throw new UnsupportedOperationException("yet unsupported cast from " + rValUlType + " to " + expectedType);
 		}
-		return rVal;
+		rexp.lrVal = resultRValue;
 	}
 
 	@Override

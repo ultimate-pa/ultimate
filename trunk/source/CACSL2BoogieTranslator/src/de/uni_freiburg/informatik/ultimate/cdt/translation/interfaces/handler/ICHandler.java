@@ -58,6 +58,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.c
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultExpression;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultTypes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.IHandler;
@@ -592,11 +593,14 @@ public interface ICHandler extends IHandler {
 	public BigInteger computeConstantValue(Expression value);
 
 	/**
-	 * Takes an RValue and a target type and returns the result of a cast of the RValue to the target
-	 * type as an RValue.
+	 * Modifies a given {@link ResultExpression} such that the effect of
+	 * a cast from the current {@link CType} of the {@link ResultExpression} 
+	 * to resultType is captured. 
+	 * Method may exchange the {@link RValue} of the  {@link ResultExpression}
+	 * and add additional objects (statements, auxVars, etc.).
 	 */
-	public RValue castToType(ILocation loc, TypeSizes typeSizes, RValue lrVal,
-			CType functionResultType);
+	public void castToType(ILocation loc, TypeSizes typeSizes, ResultExpression rexp,
+			CType resultType);
 
 	public InitializationHandler getInitHandler();
 
