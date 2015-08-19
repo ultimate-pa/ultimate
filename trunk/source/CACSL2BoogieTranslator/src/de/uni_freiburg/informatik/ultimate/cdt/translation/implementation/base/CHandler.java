@@ -2692,7 +2692,6 @@ public class CHandler implements ICHandler {
 		
 		//do implicit cast -- assume the types are compatible
 		ResultExpression rExp = new ResultExpression(stmt, rVal, decl, auxVars, overappr);
-		rExp.switchToRValueIfNecessary(main, mMemoryHandler, mStructHandler, loc);
 		castToType(loc, main.getTypeSizes(), rExp, lrVal.cType);
 		RValue rightHandSide = (RValue) rExp.lrVal;
 		
