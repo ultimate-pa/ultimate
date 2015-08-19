@@ -2,7 +2,7 @@
 /*
  * Check that
  *  - pointer comparison with 0 is supported
- *  - local pointer is initialized with 0
+ *  - global pointer is initialized with 0
  * Date: October 2013
  * Author: Christian Schilling, Matthias Heizmann
  */

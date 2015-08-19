@@ -13,5 +13,6 @@ int main() {
 	if (p == q) {
 		//@ assert \false;
 	}
+	free(q);
     return 0;
 }
