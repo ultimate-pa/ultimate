@@ -572,7 +572,7 @@ public class ACSLHandler implements IACSLHandler {
         IType type = new InferredType(InferredType.Type.Unknown);
         String cId = main.cHandler.getSymbolTable()
                     .getCID4BoogieID(id, loc);
-        CType cType = null;
+        final CType cType;
         if (specType != ACSLHandler.SPEC_TYPE.REQUIRES
                 && specType != ACSLHandler.SPEC_TYPE.ENSURES) {
             // TODO : the translation is sometimes wrong, for requires and
@@ -589,7 +589,13 @@ public class ACSLHandler implements IACSLHandler {
                         .getTypeOfVariable(cId, loc);
                 cType = main.cHandler.getSymbolTable().get(cId, loc).getCVariable();
                 type = new InferredType(astt);
+            } else {
+            	throw new UnsupportedOperationException("not yet implemented: "
+            			+ "unable to determine CType for variable " + id);
             }
+        } else {
+        	throw new UnsupportedOperationException("not yet implemented: "
+        			+ "unable to determine CType for variable " + id);
         }
         
         //FIXME: dereferencing does not work for ACSL yet, because we cannot pass 
