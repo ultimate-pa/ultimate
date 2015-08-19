@@ -212,19 +212,10 @@ public class FunctionHandler {
 
 		if (returnTypeIsVoid) { // void, so there are no out vars
 			out = new VarList[0];
-		} else if (methodsCalledBeforeDeclared.contains(methodName)) { // TODO:
-																		// defaulting
-																		// to
-																		// int
-																		// --
-																		// but
-																		// does
-																		// this
-																		// work
-																		// on
-																		// all
-																		// examples?
-			out[0] = new VarList(loc, new String[] { SFO.RES }, new PrimitiveType(loc, SFO.INT));
+		} else if (methodsCalledBeforeDeclared.contains(methodName)) {
+			// TODO: defaulting to int -- but does this work on all examples?
+			CPrimitive cPrimitive = new CPrimitive(PRIMITIVE.INT);
+			out[0] = new VarList(loc, new String[] { SFO.RES }, main.typeHandler.ctype2asttype(loc, cPrimitive));
 		} else { // "normal case"
 			assert type != null;
 //			out[0] = new VarList(loc, new String[] { methodName }, type); // at
@@ -1346,7 +1337,11 @@ public class FunctionHandler {
 			main.warn(loc, longDescription);
 			String ident = main.nameHandler.getTempVarUID(SFO.AUXVAR.RETURNED);
 			expr = new IdentifierExpression(loc, ident);
-			VarList tempVar = new VarList(loc, new String[] { ident }, new PrimitiveType(loc, SFO.INT));
+			
+			// we don't know the CType of the returned value 
+			// we we INT
+			CPrimitive cPrimitive = new CPrimitive(PRIMITIVE.INT);
+			VarList tempVar = new VarList(loc, new String[] { ident }, main.typeHandler.ctype2asttype(loc, cPrimitive));
 			VariableDeclaration tmpVar = new VariableDeclaration(loc, new Attribute[0], new VarList[] { tempVar });
 			auxVars.put(tmpVar, loc);
 			decl.add(tmpVar);
