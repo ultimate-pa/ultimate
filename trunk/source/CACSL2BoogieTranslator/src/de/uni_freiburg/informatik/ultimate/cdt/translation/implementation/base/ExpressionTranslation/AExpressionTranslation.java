@@ -146,8 +146,8 @@ public abstract class AExpressionTranslation {
 			ResultExpression leftRex, ResultExpression rightRex, boolean wraparoundOverflows) {
 		CPrimitive resultType = determineResultType((CPrimitive) leftRex.lrVal.cType, (CPrimitive) rightRex.lrVal.cType);
 		
-		leftRex.lrVal.cType = resultType;
-		rightRex.lrVal.cType = resultType;
+		convert(loc, leftRex, resultType, m_TypeSizes);
+		convert(loc, rightRex, resultType, m_TypeSizes);
 	}
 	
 	public abstract void convert(ILocation loc, ResultExpression operand, CType resultType, TypeSizes typeSizeConstants);

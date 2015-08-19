@@ -4,6 +4,8 @@ import java.math.BigInteger;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.ExpressionTranslation.AExpressionTranslation;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.ExpressionTranslation.IntegerTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CEnum;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
@@ -31,7 +33,7 @@ public class CastAndConversionHandler {
 	 * @param right
 	 */
 	public static void usualArithmeticConversions(Dispatcher main, ILocation loc, MemoryHandler memoryHandler, 
-			ResultExpression leftRex, ResultExpression rightRex, boolean wraparoundOverflows) {
+			ResultExpression leftRex, ResultExpression rightRex, boolean wraparoundOverflows, AExpressionTranslation expressionTranslation) {
 		
 		RValue left = (RValue) leftRex.lrVal;
 		RValue right = (RValue) rightRex.lrVal;
@@ -87,6 +89,7 @@ public class CastAndConversionHandler {
 				}
 			} else if (lCPrim.getGeneralType() == GENERALPRIMITIVE.INTTYPE
 					&& rCPrim.getGeneralType() == GENERALPRIMITIVE.INTTYPE) {
+				if (expressionTranslation instanceof IntegerTranslation) {
 				if (lCPrim.isUnsigned() || rCPrim.isUnsigned()) {
 					//does the unsigned int fit into the signed one? 
 					if (!lCPrim.isUnsigned() && rCPrim.isUnsigned()) {//l is signed r unsigned
@@ -118,6 +121,9 @@ public class CastAndConversionHandler {
 						}
 					}
 					
+				}
+				} else {
+					expressionTranslation.usualArithmeticConversions(main, loc, memoryHandler, leftRex, rightRex, wraparoundOverflows);
 				}
 				
 			}

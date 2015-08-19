@@ -1286,9 +1286,9 @@ public class CHandler implements ICHandler {
 			ResultExpression rrToInt = ConvExpr.rexBoolToIntIfNecessary(loc, rr, m_ExpressionTranslation);
 			ResultExpression rlToInt = ConvExpr.rexBoolToIntIfNecessary(loc, rl, m_ExpressionTranslation);
 			
-			if (m_ExpressionTranslation instanceof IntegerTranslation) {
-				CastAndConversionHandler.usualArithmeticConversions(main, loc, mMemoryHandler, rlToInt, rrToInt, true);
-			}
+			//if (m_ExpressionTranslation instanceof IntegerTranslation) {
+				CastAndConversionHandler.usualArithmeticConversions(main, loc, mMemoryHandler, rlToInt, rrToInt, true, m_ExpressionTranslation);
+			//}
 			
 			
 			stmt.addAll(rlToInt.stmt);
@@ -1691,11 +1691,11 @@ public class CHandler implements ICHandler {
 
 					//modulo is not compatible with division..
 					CastAndConversionHandler.usualArithmeticConversions(main, loc, mMemoryHandler, 
-							rlToInt, rrToInt, true);
+							rlToInt, rrToInt, true, m_ExpressionTranslation);
 					//FIXME ..or should we do wraparound only on nominator??
 				} else {
 					CastAndConversionHandler.usualArithmeticConversions(main, loc, mMemoryHandler, 
-							rlToInt, rrToInt, false);
+							rlToInt, rrToInt, false, m_ExpressionTranslation);
 				}
 				stmt.addAll(rlToInt.stmt);
 				stmt.addAll(rrToInt.stmt);
@@ -1740,10 +1740,10 @@ public class CHandler implements ICHandler {
 
 				//modulo is not compatible with division..
 				CastAndConversionHandler.usualArithmeticConversions(main, loc, mMemoryHandler, 
-						rl, rr, true);
+						rl, rr, true, m_ExpressionTranslation);
 			} else {
 				CastAndConversionHandler.usualArithmeticConversions(main, loc, mMemoryHandler, 
-						rl, rr, false); 
+						rl, rr, false, m_ExpressionTranslation); 
 			}
 			stmt.addAll(rl.stmt);
 			stmt.addAll(rr.stmt);
@@ -1775,7 +1775,7 @@ public class CHandler implements ICHandler {
 		case IASTBinaryExpression.op_shiftLeft:
 		case IASTBinaryExpression.op_shiftRight: {
 			CastAndConversionHandler.usualArithmeticConversions(main, loc, mMemoryHandler, 
-						rl, rr, false); 
+						rl, rr, false, m_ExpressionTranslation); 
 			stmt.addAll(rl.stmt);
 			stmt.addAll(rr.stmt);
 			decl.addAll(rl.decl);
@@ -1798,7 +1798,7 @@ public class CHandler implements ICHandler {
 		case IASTBinaryExpression.op_binaryOrAssign:
 		case IASTBinaryExpression.op_binaryXorAssign: {
 			CastAndConversionHandler.usualArithmeticConversions(main, loc, mMemoryHandler, 
-						rl, rr, false); 
+						rl, rr, false, m_ExpressionTranslation); 
 			stmt.addAll(rl.stmt);
 			stmt.addAll(rr.stmt);
 			decl.addAll(rl.decl);
@@ -2465,7 +2465,7 @@ public class CHandler implements ICHandler {
 		reNegative = reNegative.switchToRValueIfNecessary(main, mMemoryHandler, mStructHandler, loc);
 		reNegative = ConvExpr.rexBoolToIntIfNecessary(loc, reNegative, m_ExpressionTranslation);
 		
-		CastAndConversionHandler.usualArithmeticConversions(main, loc, mMemoryHandler, rePositive, reNegative, false);
+		CastAndConversionHandler.usualArithmeticConversions(main, loc, mMemoryHandler, rePositive, reNegative, false, m_ExpressionTranslation);
 		CastAndConversionHandler.doPrimitiveVsPointerConversions(main, loc, mMemoryHandler, rePositive, reNegative);
 
 		ArrayList<Statement> stmt = new ArrayList<Statement>();

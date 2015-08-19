@@ -138,8 +138,6 @@ int main() {
    printf("%d",modRes);
    //@ assert divRes == 2;
    //@ assert modRes == 0;
-   
-   
-   
+     
    return 0;
 }

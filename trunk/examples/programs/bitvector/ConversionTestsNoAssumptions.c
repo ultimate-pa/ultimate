@@ -10,7 +10,7 @@ int main() {
   unsigned int b = a;
   unsigned int limit2 = 100U;
 
-  //assert(b > limit2);
+  //@assert(b > limit2);
 
   /* unsigned int to signed int (fitting) */
   unsigned int c = 100U;
@@ -31,7 +31,7 @@ int main() {
   unsigned long long h = g;
   unsigned long long limit3 = 100ULL;
 
-  //assert(h > limit3);
+  //@assert(h > limit3);
 
   /* unsigned int to signed long long */
   unsigned int k = 100U;
@@ -41,12 +41,11 @@ int main() {
     //@assert(\false);
   }
 
-  /* ARITHMOD ERROR */
   /* unsigned int to unsigned long long */
-  //unsigned int m = 100U;
-  //unsigned long long n = m;
+  unsigned int m = 100U;
+  unsigned long long n = m;
 
-  //if (n != 100ULL) {
-    //assert(\false);
-  //}
+  if (n != 100ULL) {
+    //@assert(\false);
+  }
 }
