@@ -18,6 +18,8 @@ import org.eclipse.cdt.core.dom.ast.IASTUnaryExpression;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.ExpressionTranslation.AExpressionTranslation;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.CastAndConversionHandler;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.MemoryHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.SymbolTableValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
@@ -321,20 +323,28 @@ public class ACSLHandler implements IACSLHandler {
     	ILocation loc = LocationFactory.createACSLLocation(node);
         ResultExpression left = (ResultExpression) main.dispatch(node.getLeft());
         ResultExpression right = (ResultExpression) main.dispatch(node.getRight());
+        
+        left = left.switchToRValueIfNecessary(main, ((CHandler) main.cHandler).mMemoryHandler, ((CHandler) main.cHandler).mStructHandler, loc);
+        right = right.switchToRValueIfNecessary(main, ((CHandler) main.cHandler).mMemoryHandler, ((CHandler) main.cHandler).mStructHandler, loc);
+        
+        MemoryHandler memoryHandler = ((CHandler) main.cHandler).mMemoryHandler;
+        AExpressionTranslation expressionTranslation = 
+     		   ((CHandler) main.cHandler).getExpressionTranslation();
+        
+		CastAndConversionHandler.usualArithmeticConversions(main, loc, memoryHandler, left, right, true, expressionTranslation);
 
         ArrayList<Declaration> decl = new ArrayList<Declaration>();
         ArrayList<Statement> stmt = new ArrayList<Statement>();
         List<Overapprox> overappr = new ArrayList<Overapprox>();
         Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<VariableDeclaration, ILocation>();
         
-       left = left.switchToRValueIfNecessary(main, ((CHandler) main.cHandler).mMemoryHandler, ((CHandler) main.cHandler).mStructHandler, loc);
+
        
        decl.addAll(left.decl);
        stmt.addAll(left.stmt);
        auxVars.putAll(left.auxVars);
        overappr.addAll(left.overappr);
        
-       right = right.switchToRValueIfNecessary(main, ((CHandler) main.cHandler).mMemoryHandler, ((CHandler) main.cHandler).mStructHandler, loc);
        
        decl.addAll(right.decl);
        stmt.addAll(right.stmt);
@@ -347,8 +357,7 @@ public class ACSLHandler implements IACSLHandler {
 //            right = ConvExpr.toBoolean(loc, right);
 //        }
 
-       AExpressionTranslation expressionTranslation = 
-    		   ((CHandler) main.cHandler).getExpressionTranslation();
+
 
         switch (node.getOperator()) {
 		case ARITHDIV:
