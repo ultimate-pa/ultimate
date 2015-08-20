@@ -736,10 +736,10 @@ public class BuchiComplementFKVNwa<LETTER,STATE> implements INestedWordAutomaton
 	 * latter property leads to a sound complementation, but it is not mentioned
 	 * in any paper and I do not have a proof for that. 
 	 */
-	private class MatthiasTightLevelRankingStateGenerator extends
+	private class HighEvenTightLevelRankingStateGenerator extends
 											TightLevelRankingStateGenerator {
 
-		public MatthiasTightLevelRankingStateGenerator(
+		public HighEvenTightLevelRankingStateGenerator(
 						LevelRankingConstraint<LETTER,STATE> constraints) {
 			super(constraints);
 		}
