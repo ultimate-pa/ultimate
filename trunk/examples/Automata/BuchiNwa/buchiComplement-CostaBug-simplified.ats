@@ -1,0 +1,41 @@
+// 2015-08-16, Matthias Heizmann
+// reveals conceptual problem in our extension of the FKV Büchi complementation
+// algorithm to nested word automata
+
+NestedLassoWord nlw = [  "a" "a" , "c"< "c"< >"r" >"r" "a" "a" ];
+boolean accepted = buchiAccepts(ia, nlw);
+NestedWordAutomaton complementBS = buchiComplementBS(ia);
+boolean acceptedComplementBS = buchiAccepts(complementBS, nlw);
+NestedWordAutomaton complementFKV = buchiComplementFKV(ia);
+boolean acceptedComplementFKV = buchiAccepts(complementFKV, nlw);
+assert(!accepted);
+assert(acceptedComplementBS);
+assert(acceptedComplementFKV);
+
+
+
+NestedWordAutomaton ia = (
+	callAlphabet = {"c" },
+	internalAlphabet = {"a" },
+	returnAlphabet = {"r" },
+	states = {"q" "f" "s" "t" },
+	initialStates = {"q" },
+	finalStates = {"f" },
+	callTransitions = {
+		 ("q" "c" "t")
+		 ("t" "c" "t")
+		 ("s" "c" "t")
+	},
+	internalTransitions = {
+		 ("q" "a" "q")
+		 ("q" "a" "f")
+		 ("f" "a" "s")
+		 ("s" "a" "s")
+		 ("t" "a" "t")
+	},
+	returnTransitions = {
+		 ("t" "q" "r" "q")
+		 ("t" "t" "r" "t")
+		 ("t" "s" "r" "s")
+	}
+);
