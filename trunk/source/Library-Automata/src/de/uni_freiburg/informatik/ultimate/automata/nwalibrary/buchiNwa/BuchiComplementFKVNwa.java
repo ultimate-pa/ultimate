@@ -811,6 +811,7 @@ public class BuchiComplementFKVNwa<LETTER,STATE> implements INestedWordAutomaton
 		TightLevelRankingStateGenerator {
 		
 		private final TreeRelation<Integer, DoubleDecker<StateWithRankInfo<STATE>>> m_UnrestrictedMaxRank2DoubleDeckerWithRankInfo;
+		private boolean m_SuccessorsOfFinalsWantToLeaveO = true;
 //		private final int numberOfDoubleDeckerWithRankInfos;
 
 		public HeiMatTightLevelRankingStateGenerator(LevelRankingConstraint<LETTER,STATE> constraint) {
@@ -896,12 +897,22 @@ public class BuchiComplementFKVNwa<LETTER,STATE> implements INestedWordAutomaton
 			}
 			
 			List<DoubleDecker<StateWithRankInfo<STATE>>> constraintToRankInO = new ArrayList<DoubleDecker<StateWithRankInfo<STATE>>>();
+			/**
+			 * States for which we definitely construct a copy in which they
+			 * give up their even rank for the lower odd rank.
+			 */
 			List<DoubleDecker<StateWithRankInfo<STATE>>> constraintToRankInO_WantLeave = new ArrayList<DoubleDecker<StateWithRankInfo<STATE>>>();
+			/**
+			 * States for which we only construct a copy in which their rank
+			 * is reduced if this helps another state to obtain a high odd rank
+			 * in a tight level ranking.
+			 */
 			List<DoubleDecker<StateWithRankInfo<STATE>>> constraintToRankInO_WantStay = new ArrayList<DoubleDecker<StateWithRankInfo<STATE>>>();
 			List<DoubleDecker<StateWithRankInfo<STATE>>> constraintToRankNotInO = new ArrayList<DoubleDecker<StateWithRankInfo<STATE>>>();
 			for (DoubleDecker<StateWithRankInfo<STATE>> dd : constraintToRank) {
 				if (super.m_Constraint.inO(dd.getDown(), dd.getUp().getState())) {
-					if (super.m_Constraint.getPredecessorWasAccepting().contains(dd)) {
+					if (m_SuccessorsOfFinalsWantToLeaveO  && 
+							super.m_Constraint.getPredecessorWasAccepting().contains(dd)) {
 						constraintToRankInO_WantLeave.add(dd);
 					} else {
 						constraintToRankInO_WantStay.add(dd);
