@@ -66,7 +66,8 @@ public class BuchiComplementFKV<LETTER,STATE> implements IOperation<LETTER,STATE
 	private final NestedWordAutomatonReachableStates<LETTER, STATE> m_Result;
 	private final StateFactory<STATE> m_StateFactory;
 	private final IStateDeterminizer<LETTER, STATE> m_StateDeterminizer;
-	private final BuchiComplementFKVNwa<LETTER, STATE> m_Complemented;	
+	private final BuchiComplementFKVNwa<LETTER, STATE> m_Complemented;
+	private final String m_Optimization;	
 	
 	
 	
@@ -100,6 +101,7 @@ public class BuchiComplementFKV<LETTER,STATE> implements IOperation<LETTER,STATE
 	public BuchiComplementFKV(IUltimateServiceProvider services,
 			StateFactory<STATE> stateFactory, 
 			INestedWordAutomatonSimple<LETTER,STATE> input,
+			String optimization,
 			int userDefinedMaxRank) throws AutomataLibraryException {
 		m_Services = services;
 		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
@@ -107,8 +109,9 @@ public class BuchiComplementFKV<LETTER,STATE> implements IOperation<LETTER,STATE
 		this.m_StateFactory = input.getStateFactory();
 		this.m_Operand = input;
 		this.m_UserDefinedMaxRank = userDefinedMaxRank;
+		this.m_Optimization = optimization;
 		m_Logger.info(startMessage());
-		m_Complemented = new BuchiComplementFKVNwa<LETTER, STATE>(m_Services, input,m_StateDeterminizer,m_StateFactory, m_UserDefinedMaxRank);
+		m_Complemented = new BuchiComplementFKVNwa<LETTER, STATE>(m_Services, input,m_StateDeterminizer,m_StateFactory, m_Optimization, m_UserDefinedMaxRank);
 		m_Result = new NestedWordAutomatonReachableStates<LETTER, STATE>(m_Services, m_Complemented);
 		m_Logger.info(exitMessage());
 	}
@@ -116,7 +119,7 @@ public class BuchiComplementFKV<LETTER,STATE> implements IOperation<LETTER,STATE
 	public BuchiComplementFKV(IUltimateServiceProvider services,
 			StateFactory<STATE> stateFactory, 
 			INestedWordAutomatonSimple<LETTER,STATE> input) throws AutomataLibraryException {
-		this(services, stateFactory, input, Integer.MAX_VALUE);
+		this(services, stateFactory, input, TightLevelRankingStateGeneratorBuilder.s_HeiMat2, Integer.MAX_VALUE);
 		
 	}
 	
@@ -128,8 +131,9 @@ public class BuchiComplementFKV<LETTER,STATE> implements IOperation<LETTER,STATE
 		this.m_StateFactory = input.getStateFactory();
 		this.m_Operand = input;
 		this.m_UserDefinedMaxRank = Integer.MAX_VALUE;
+		this.m_Optimization = TightLevelRankingStateGeneratorBuilder.s_HeiMat2;
 		m_Logger.info(startMessage());
-		m_Complemented = new BuchiComplementFKVNwa<LETTER, STATE>(m_Services, input,m_StateDeterminizer,m_StateFactory, m_UserDefinedMaxRank);
+		m_Complemented = new BuchiComplementFKVNwa<LETTER, STATE>(m_Services, input,m_StateDeterminizer,m_StateFactory, m_Optimization, m_UserDefinedMaxRank);
 		m_Result = new NestedWordAutomatonReachableStates<LETTER, STATE>(m_Services, m_Complemented);
 		m_Logger.info(exitMessage());
 	}

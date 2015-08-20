@@ -102,7 +102,7 @@ public class BuchiDifferenceFKV<LETTER,STATE> implements IOperation<LETTER,STATE
 		m_StateFactory = m_FstOperand.getStateFactory();
 		m_StateDeterminizer = new PowersetDeterminizer<LETTER,STATE>(sndOperand, true, stateFactory);
 		m_Logger.info(startMessage());
-		constructDifference(Integer.MAX_VALUE);
+		constructDifference(Integer.MAX_VALUE, TightLevelRankingStateGeneratorBuilder.s_HeiMat2);
 		m_Logger.info(exitMessage());
 	}
 	
@@ -111,7 +111,7 @@ public class BuchiDifferenceFKV<LETTER,STATE> implements IOperation<LETTER,STATE
 			INestedWordAutomatonSimple<LETTER,STATE> fstOperand,
 			INestedWordAutomatonSimple<LETTER,STATE> sndOperand,
 			IStateDeterminizer<LETTER, STATE> stateDeterminizer,
-			StateFactory<STATE> sf, int userDefinedMaxRank) throws AutomataLibraryException {
+			StateFactory<STATE> sf, String optimization, int userDefinedMaxRank) throws AutomataLibraryException {
 		m_Services = services;
 		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 		m_FstOperand = fstOperand;
@@ -120,15 +120,15 @@ public class BuchiDifferenceFKV<LETTER,STATE> implements IOperation<LETTER,STATE
 		m_StateDeterminizer = stateDeterminizer;
 		m_Logger.info(startMessage());
 		try {
-			constructDifference(userDefinedMaxRank);
+			constructDifference(userDefinedMaxRank, optimization);
 		} catch (OperationCanceledException oce) {
 			throw new OperationCanceledException(getClass());
 		}
 		m_Logger.info(exitMessage());
 	}
 	
-	private void constructDifference(int userDefinedMaxRank) throws AutomataLibraryException {
-		m_SndComplemented = new BuchiComplementFKVNwa<LETTER, STATE>(m_Services, m_SndOperand, m_StateDeterminizer, m_StateFactory, userDefinedMaxRank);
+	private void constructDifference(int userDefinedMaxRank, String optimization) throws AutomataLibraryException {
+		m_SndComplemented = new BuchiComplementFKVNwa<LETTER, STATE>(m_Services, m_SndOperand, m_StateDeterminizer, m_StateFactory, optimization, userDefinedMaxRank);
 		m_Intersect = new BuchiIntersectNwa<LETTER, STATE>(m_FstOperand, m_SndComplemented, m_StateFactory);
 		m_Result = new NestedWordAutomatonReachableStates<LETTER, STATE>(m_Services, m_Intersect);
 	}

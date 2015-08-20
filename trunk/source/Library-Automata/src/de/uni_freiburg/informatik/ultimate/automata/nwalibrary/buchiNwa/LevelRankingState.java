@@ -109,7 +109,7 @@ public class LevelRankingState<LETTER, STATE> implements IFkvState<LETTER, STATE
 	
 	protected void addRank(StateWithRankInfo<STATE> down, STATE up, Integer rank, boolean addToO) {
 		assert rank != null;
-		assert BuchiComplementFKVNwa.isEven(rank) || !m_Operand.isFinal(up) : "final states must have even ranks";
+		assert isEven(rank) || !m_Operand.isFinal(up) : "final states must have even ranks";
 		HashMap<STATE, Integer> up2rank = m_LevelRanking.get(down);
 		if (up2rank == null) {
 			up2rank = new HashMap<STATE,Integer>();
@@ -118,7 +118,7 @@ public class LevelRankingState<LETTER, STATE> implements IFkvState<LETTER, STATE
 		assert !up2rank.containsKey(up);
 		up2rank.put(up,rank);
 		if (addToO) {
-			assert BuchiComplementFKVNwa.isEven(getRank(down, up)) : "has to be even";
+			assert isEven(getRank(down, up)) : "has to be even";
 			addToO(down,up);
 		}
 		if (m_HighestRank < rank) {
@@ -204,7 +204,7 @@ public class LevelRankingState<LETTER, STATE> implements IFkvState<LETTER, STATE
 	boolean isTight() {
 		assert m_HighestRank >= 0;
 		assert m_HighestRank < Integer.MAX_VALUE : "not applicable";
-		if (BuchiComplementFKVNwa.isEven(m_HighestRank)) {
+		if (isEven(m_HighestRank)) {
 			return false;
 		} else {
 			int[] ranks = new int[m_HighestRank+1];
@@ -231,4 +231,21 @@ public class LevelRankingState<LETTER, STATE> implements IFkvState<LETTER, STATE
 //	public Set<STATE> getUpStates(STATE caller) {
 //		throw new UnsupportedOperationException("need rank info");
 //	}
+	
+	
+	public static boolean isOdd(int i) {
+		if (i >= 0) {
+			return i % 2 == 1;
+		} else {
+			throw new IllegalArgumentException();
+		}
+	}
+	
+	public static boolean isEven(int i) {
+		if (i >= 0) {
+			return i % 2 == 0;
+		} else {
+			throw new IllegalArgumentException();
+		}
+	}
 }

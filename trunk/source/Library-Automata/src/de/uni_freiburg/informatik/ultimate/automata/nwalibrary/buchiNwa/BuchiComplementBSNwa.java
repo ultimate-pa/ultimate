@@ -263,7 +263,7 @@ public class BuchiComplementBSNwa<LETTER,STATE> implements INestedWordAutomatonS
 		Set<DoubleDecker<StateWithRankInfo<STATE>>> doubleDeckersWithVoluntaryDecrease = new HashSet<DoubleDecker<StateWithRankInfo<STATE>>>();
 		for (DoubleDecker<StateWithRankInfo<STATE>> predWasAccepting : lrcwh.getPredecessorWasAccepting()) {
 			int rank = lrcwh.getRank(predWasAccepting.getDown(), predWasAccepting.getUp().getState());
-			if (BuchiComplementFKVNwa.isEven(rank) && !m_Operand.isFinal(predWasAccepting.getUp().getState())) {
+			if (LevelRankingState.isEven(rank) && !m_Operand.isFinal(predWasAccepting.getUp().getState())) {
 				doubleDeckersWithVoluntaryDecrease.add(predWasAccepting);
 			}
 		}
