@@ -857,7 +857,9 @@ public class BuchiComplementFKVNwa<LETTER,STATE> implements INestedWordAutomaton
 		
 		/**
 		 * Construct all stuffed levelRankings that are compatible with the
-		 * partially constructed levelRanking lrwsi
+		 * partially constructed levelRanking lrwsi.
+		 * In this iteration, we assign the (even) rank rk and the (odd)
+		 * rank rk-1.
 		 * @param rk even rank such that all (odd?) ranks <rk-2 have already 
 		 * been assigned
 		 * @param lrwsi

@@ -111,32 +111,6 @@ public class BuchiComplementBSNwa<LETTER,STATE> implements INestedWordAutomatonS
 		getOrAdd(true, lvlrk);
 	}
 	
-	private class LevelRankingConstraintWithHistory extends LevelRankingConstraint<LETTER,STATE> {
-		public LevelRankingConstraintWithHistory(
-				INestedWordAutomatonSimple<LETTER, STATE> operand) {
-			super(operand, 9783, true);
-		}
-
-		private final Set<DoubleDecker<StateWithRankInfo<STATE>>> m_PredecessorWasAccepting = new HashSet<DoubleDecker<StateWithRankInfo<STATE>>>();
-
-		protected void addConstaint(StateWithRankInfo<STATE> down, STATE up, Integer rank,
-				boolean oCandidate, boolean predecessorWasAccepting) {
-			if (predecessorWasAccepting) {
-				m_PredecessorWasAccepting.add(new DoubleDecker<StateWithRankInfo<STATE>>(down, new StateWithRankInfo<STATE>(up, rank, oCandidate)));
-			}
-			super.addConstaint(down, up, rank, oCandidate);
-		}
-
-		public Set<DoubleDecker<StateWithRankInfo<STATE>>> getPredecessorWasAccepting() {
-			return m_PredecessorWasAccepting;
-		}
-		
-		
-		
-	}
-	
-	
-	
 	/**
 	 * Return state of result automaton that represents detState. If no such
 	 * state was constructed yet, construct it.
@@ -211,9 +185,9 @@ public class BuchiComplementBSNwa<LETTER,STATE> implements INestedWordAutomatonS
 		return m_Operand.getReturnAlphabet();
 	}
 	
-	private LevelRankingConstraintWithHistory computeSuccLevelRankingConstraints_Internal(
+	private LevelRankingConstraint<LETTER, STATE> computeSuccLevelRankingConstraints_Internal(
 			STATE state, LETTER letter) {
-		LevelRankingConstraintWithHistory lrcwh = new LevelRankingConstraintWithHistory(m_Operand);
+		LevelRankingConstraint<LETTER, STATE> lrcwh = new LevelRankingConstraint(m_Operand, 7777, true);
 		LevelRankingState<LETTER,STATE> lvlrkState = m_res2det.get(state);
 		for (StateWithRankInfo<STATE> down : lvlrkState.getDownStates()) {
 			for (StateWithRankInfo<STATE> up : lvlrkState.getUpStates(down)) {
@@ -227,9 +201,9 @@ public class BuchiComplementBSNwa<LETTER,STATE> implements INestedWordAutomatonS
 		return lrcwh;
 	}
 	
-	private LevelRankingConstraintWithHistory computeSuccLevelRankingConstraints_Call(
+	private LevelRankingConstraint<LETTER, STATE> computeSuccLevelRankingConstraints_Call(
 			STATE state, LETTER letter) {
-		LevelRankingConstraintWithHistory lrcwh = new LevelRankingConstraintWithHistory(m_Operand);
+		LevelRankingConstraint<LETTER, STATE> lrcwh = new LevelRankingConstraint(m_Operand, 7777, true);
 		LevelRankingState<LETTER,STATE> lvlrkState = m_res2det.get(state);
 		for (StateWithRankInfo<STATE> down : lvlrkState.getDownStates()) {
 			for (StateWithRankInfo<STATE> up : lvlrkState.getUpStates(down)) {
@@ -243,9 +217,9 @@ public class BuchiComplementBSNwa<LETTER,STATE> implements INestedWordAutomatonS
 		return lrcwh;
 	}
 	
-	private LevelRankingConstraintWithHistory computeSuccLevelRankingConstraints_Return(
+	private LevelRankingConstraint<LETTER, STATE> computeSuccLevelRankingConstraints_Return(
 			STATE state, STATE hier, LETTER letter) {
-		LevelRankingConstraintWithHistory lrcwh = new LevelRankingConstraintWithHistory(m_Operand);
+		LevelRankingConstraint<LETTER, STATE> lrcwh = new LevelRankingConstraint(m_Operand, 7777, true);
 		LevelRankingState<LETTER,STATE> lvlrkState = m_res2det.get(state);
 		LevelRankingState<LETTER,STATE> lvlrkHier = m_res2det.get(hier);
 		for (StateWithRankInfo<STATE> downHier : lvlrkHier.getDownStates()) {
@@ -267,7 +241,7 @@ public class BuchiComplementBSNwa<LETTER,STATE> implements INestedWordAutomatonS
 
 
 	private List<LevelRankingState<LETTER, STATE>> computeSuccLevelRankingStates(
-			LevelRankingConstraintWithHistory lrcwh) {
+			LevelRankingConstraint<LETTER, STATE> lrcwh) {
 		List<LevelRankingState<LETTER, STATE>> succLvls = new ArrayList<LevelRankingState<LETTER,STATE>>();
 		Set<DoubleDecker<StateWithRankInfo<STATE>>> allDoubleDeckersWithVoluntaryDecrease = 
 				computeDoubleDeckersWithVoluntaryDecrease(lrcwh);
@@ -285,7 +259,7 @@ public class BuchiComplementBSNwa<LETTER,STATE> implements INestedWordAutomatonS
 
 
 	private Set<DoubleDecker<StateWithRankInfo<STATE>>> computeDoubleDeckersWithVoluntaryDecrease(
-			LevelRankingConstraintWithHistory lrcwh) {
+			LevelRankingConstraint<LETTER, STATE> lrcwh) {
 		Set<DoubleDecker<StateWithRankInfo<STATE>>> doubleDeckersWithVoluntaryDecrease = new HashSet<DoubleDecker<StateWithRankInfo<STATE>>>();
 		for (DoubleDecker<StateWithRankInfo<STATE>> predWasAccepting : lrcwh.getPredecessorWasAccepting()) {
 			int rank = lrcwh.getRank(predWasAccepting.getDown(), predWasAccepting.getUp().getState());
@@ -297,7 +271,7 @@ public class BuchiComplementBSNwa<LETTER,STATE> implements INestedWordAutomatonS
 	}
 
 
-	private LevelRankingState<LETTER, STATE> computeLevelRanking(LevelRankingConstraintWithHistory lrcwh,
+	private LevelRankingState<LETTER, STATE> computeLevelRanking(LevelRankingConstraint<LETTER, STATE> lrcwh,
 			Set<DoubleDecker<StateWithRankInfo<STATE>>> doubleDeckersWithVoluntaryDecrease) {
 		LevelRankingState<LETTER, STATE> result = new LevelRankingState<LETTER, STATE>(m_Operand);
 		for (StateWithRankInfo<STATE> down : lrcwh.getDownStates()) {
@@ -344,7 +318,7 @@ public class BuchiComplementBSNwa<LETTER,STATE> implements INestedWordAutomatonS
 			STATE state, LETTER letter) {
 		Collection<STATE> succs = m_Cache.succInternal(state, letter);
 		if (succs == null) {
-			LevelRankingConstraintWithHistory lrcwh = computeSuccLevelRankingConstraints_Internal(
+			LevelRankingConstraint<LETTER, STATE> lrcwh = computeSuccLevelRankingConstraints_Internal(
 					state, letter);
 			List<LevelRankingState<LETTER, STATE>> succLvls = computeSuccLevelRankingStates(lrcwh);
 			for (LevelRankingState<LETTER, STATE> succLvl : succLvls) {
@@ -369,7 +343,7 @@ public class BuchiComplementBSNwa<LETTER,STATE> implements INestedWordAutomatonS
 			STATE state, LETTER letter) {
 		Collection<STATE> succs = m_Cache.succCall(state, letter);
 		if (succs == null) {
-			LevelRankingConstraintWithHistory lrcwh = computeSuccLevelRankingConstraints_Call(
+			LevelRankingConstraint<LETTER, STATE> lrcwh = computeSuccLevelRankingConstraints_Call(
 					state, letter);
 			List<LevelRankingState<LETTER, STATE>> succLvls = computeSuccLevelRankingStates(lrcwh);
 			for (LevelRankingState<LETTER, STATE> succLvl : succLvls) {
@@ -396,7 +370,7 @@ public class BuchiComplementBSNwa<LETTER,STATE> implements INestedWordAutomatonS
 			STATE state, STATE hier, LETTER letter) {
 		Collection<STATE> succs = m_Cache.succReturn(state, hier, letter);
 		if (succs == null) {
-			LevelRankingConstraintWithHistory lrcwh = computeSuccLevelRankingConstraints_Return(
+			LevelRankingConstraint<LETTER, STATE> lrcwh = computeSuccLevelRankingConstraints_Return(
 					state, hier, letter);
 			List<LevelRankingState<LETTER, STATE>> succLvls = computeSuccLevelRankingStates(lrcwh);
 			for (LevelRankingState<LETTER, STATE> succLvl : succLvls) {

@@ -26,8 +26,10 @@
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.DoubleDecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.IDeterminizedState;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingCallTransition;
@@ -51,6 +53,13 @@ public class LevelRankingConstraint<LETTER, STATE> extends LevelRankingState<LET
 	 * sets of DoubleDeckers.
 	 */
 	private final boolean m_UseDoubleDeckers;
+	
+	/**
+	 * Information if the direct predecessor of a DoubleDecker was accepting.
+	 * If this information is used by the LevelRankingGenerator.
+	 */
+	private final Set<DoubleDecker<StateWithRankInfo<STATE>>> m_PredecessorWasAccepting = 
+			new HashSet<DoubleDecker<StateWithRankInfo<STATE>>>();
 	
 	public LevelRankingConstraint(
 			INestedWordAutomatonSimple<LETTER, STATE> operand,
@@ -80,7 +89,7 @@ public class LevelRankingConstraint<LETTER, STATE> extends LevelRankingState<LET
 				}
 				for (OutgoingInternalTransition<LETTER, STATE> trans : 
 								m_Operand.internalSuccessors(up.getState(),symbol)) {
-					addConstaint(down, trans.getSucc(), upRank, oCandidate);
+					addConstaint(down, trans.getSucc(), upRank, oCandidate, m_Operand.isFinal(up.getState()));
 				}
 			}
 		}
@@ -114,7 +123,7 @@ public class LevelRankingConstraint<LETTER, STATE> extends LevelRankingState<LET
 					} else {
 						succDownState = new StateWithRankInfo<STATE>(m_Operand.getEmptyStackState());
 					}
-					addConstaint(succDownState, trans.getSucc(), upRank, oCandidate);
+					addConstaint(succDownState, trans.getSucc(), upRank, oCandidate, m_Operand.isFinal(up.getState()));
 				}
 			}
 		}
@@ -175,7 +184,7 @@ public class LevelRankingConstraint<LETTER, STATE> extends LevelRankingState<LET
 			for (OutgoingReturnTransition<LETTER, STATE> trans : 
 							m_Operand.returnSucccessors(stateUp.getState(),hierUp.getState(),symbol)) {
 				assert m_UseDoubleDeckers || hierDown == m_Operand.getEmptyStackState();
-				addConstaint(hierDown, trans.getSucc(), upRank, oCandidate);
+				addConstaint(hierDown, trans.getSucc(), upRank, oCandidate, m_Operand.isFinal(stateUp.getState()));
 			}
 		}
 	}
@@ -190,7 +199,7 @@ public class LevelRankingConstraint<LETTER, STATE> extends LevelRankingState<LET
 	 * are added later.
 	 */
 	protected void addConstaint(StateWithRankInfo<STATE> down, STATE up, 
-										Integer rank, boolean oCandidate) {
+			Integer rank, boolean oCandidate, boolean predecessorWasAccepting) {
 		// This method is very similar to addRank(), but it does not 
 		// override a rank that was already set (instead takes the minimum) 
 		// and one assert is missing.
@@ -210,5 +219,14 @@ public class LevelRankingConstraint<LETTER, STATE> extends LevelRankingState<LET
 		if (m_HighestRank < rank) {
 			m_HighestRank = rank;
 		}
+		if (predecessorWasAccepting) {
+			m_PredecessorWasAccepting.add(new DoubleDecker<StateWithRankInfo<STATE>>(
+					down, new StateWithRankInfo<STATE>(up, rank, oCandidate)));
+		}
+	}
+
+
+	public Set<DoubleDecker<StateWithRankInfo<STATE>>> getPredecessorWasAccepting() {
+		return m_PredecessorWasAccepting;
 	}		
 }
