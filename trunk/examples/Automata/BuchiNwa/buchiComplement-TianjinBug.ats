@@ -1,5 +1,12 @@
-// 2015-08-17, Matthias Heizmann
-// reveals bug in automata library BuchiComplementFKV 
+// 2015-08-16, Matthias Heizmann
+// reveals conceptual problem in our (HeiMat) extension of the FKV Büchi 
+// complementation algorithm to nested word automata.
+// It is the same problem that we have with bounding the maximal rank.
+// There is no successor in which a state in O has to leave O and lower its rank.
+// This is not a problem if there is some LevelRankingState that has a high
+// maximal rank but only few states. (We do not always have this if max rank is
+// bounded or we use NWAs).
+// Probably fixed in r15014.
 
 NestedLassoWord nlw = [  "c"< >"r1" "a" "c"<  , "c"< "c"< >"r2" >"r1" "a" "c"< ];
 boolean accepted = buchiAccepts(ia, nlw);

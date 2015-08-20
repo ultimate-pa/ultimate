@@ -1,6 +1,7 @@
-// 2015-08-16, Matthias Heizmann
-// reveals conceptual problem in our extension of the FKV Büchi complementation
-// algorithm to nested word automata
+// 2015-07-30, Matthias Heizmann
+// reveals bug in buchiComplementBS and buchiComplementFKV
+// obtained from termination analysis of CostaDouble.bpl
+
 
 NestedLassoWord nlw = [  "a" "a" , "c"< "c"< >"r" >"r" "a" "a" ];
 boolean accepted = buchiAccepts(ia, nlw);
