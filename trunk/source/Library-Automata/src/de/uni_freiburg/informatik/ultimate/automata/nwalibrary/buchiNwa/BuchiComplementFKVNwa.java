@@ -896,7 +896,7 @@ public class BuchiComplementFKVNwa<LETTER,STATE> implements INestedWordAutomaton
 				throw new AssertionError("unable to assign all ranks");
 			}
 			
-			List<DoubleDecker<StateWithRankInfo<STATE>>> constraintToRankInO = new ArrayList<DoubleDecker<StateWithRankInfo<STATE>>>();
+//			List<DoubleDecker<StateWithRankInfo<STATE>>> constraintToRankInO = new ArrayList<DoubleDecker<StateWithRankInfo<STATE>>>();
 			/**
 			 * States for which we definitely construct a copy in which they
 			 * give up their even rank for the lower odd rank.
@@ -917,7 +917,7 @@ public class BuchiComplementFKVNwa<LETTER,STATE> implements INestedWordAutomaton
 					} else {
 						constraintToRankInO_WantStay.add(dd);
 					}
-					constraintToRankInO.add(dd);
+//					constraintToRankInO.add(dd);
 				} else {
 					constraintToRankNotInO.add(dd);
 				}
@@ -962,65 +962,95 @@ public class BuchiComplementFKVNwa<LETTER,STATE> implements INestedWordAutomaton
 //			assert constraintToRank.length - maxNumberOfEvenRanksWeMayAssign == numberOfOddRanksThatWeHaveToAssignAdditionally;
 			
 			
-			int inOmultiplier = (int) Math.pow(2, constraintToRankInO.size());
+			int inO_leavemultiplier = (int) Math.pow(2, constraintToRankInO_WantLeave.size());
+			int inO_staymultiplier = (int) Math.pow(2, constraintToRankInO_WantStay.size());
+			
+//			int inOmultiplier = (int) Math.pow(2, constraintToRankInO.size());
 			int notInOmultiplier = (int) Math.pow(2, constraintToRankNotInO.size());
-			assert (numberOfCopies == inOmultiplier * notInOmultiplier);
-			for (int i=0; i<inOmultiplier; i++) {
-				int bitcount_i = Integer.bitCount(i);
-				if (bitcount_i + constraintToRankNotInO.size() < numberOfOddRanksThatWeHaveToAssignAdditionally) {
+//			assert (numberOfCopies == inOmultiplier * notInOmultiplier);
+			assert (numberOfCopies ==  inO_leavemultiplier * inO_staymultiplier * notInOmultiplier);
+			
+			for (int iol = 0; iol < inO_leavemultiplier; iol++) {
+				int bitcount_iol = Integer.bitCount(iol);
+				if (bitcount_iol + constraintToRankNotInO.size() < numberOfOddRanksThatWeHaveToAssignAdditionally) {
 					// we give up this branch, we can not achieve that each
 					// odd rank is assigned once.
 					continue;
 				}
-				for (int j=0; j<notInOmultiplier; j++) {
-					int bitcount_j = Integer.bitCount(j);
-					if (bitcount_i + bitcount_j < numberOfOddRanksThatWeHaveToAssignAdditionally) {
+				for (int ios = 0; ios < inO_staymultiplier; ios++) {
+					int bitcount_i = Integer.bitCount(ios);
+					if (bitcount_iol + bitcount_i + constraintToRankNotInO.size() < numberOfOddRanksThatWeHaveToAssignAdditionally) {
 						// we give up this branch, we can not achieve that each
 						// odd rank is assigned once.
 						continue;
 					}
-					if ((bitcount_i + bitcount_j > numberOfOddRankTheWeCouldAssignAdditionally)) {
-						// we give up this branch, sacrificing that many even
-						// ranks wont' bring us a higher maximal rank
-						continue;
-					}
-					LevelRankingWithSacrificeInformation copy = new LevelRankingWithSacrificeInformation(lrwsi);
-					for (int k=0; k<constraintToRankInO.size(); k++) {
-						if (BigInteger.valueOf(i).testBit(k)) {
-							copy.addOddRank(constraintToRankInO.get(k), rk-1, true);
+					for (int j=0; j<notInOmultiplier; j++) {
+						int bitcount_j = Integer.bitCount(j);
+						if (bitcount_iol + bitcount_i + bitcount_j < numberOfOddRanksThatWeHaveToAssignAdditionally) {
+							// we give up this branch, we can not achieve that each
+							// odd rank is assigned once.
+							continue;
 						}
-					}
-					for (int k=0; k<constraintToRankNotInO.size(); k++) {
-						if (BigInteger.valueOf(j).testBit(k)) {
-							copy.addOddRank(constraintToRankNotInO.get(k), rk-1, true);
+						if ((bitcount_i > 0 || bitcount_j > 0) && 
+								// in the special case that both bitcount_ios and
+								// bitcount nio are zero we do not give up this
+								// branch. The rank decrease is not a sacrifice,
+								// the rank decrease is done because the state
+								// wants to leave O in one copy.
+								(bitcount_iol + bitcount_i + bitcount_j > numberOfOddRankTheWeCouldAssignAdditionally)) {
+							// we give up this branch, sacrificing that many even
+							// ranks wont' bring us a higher maximal rank
+							continue;
 						}
-					}
-					copy.increaseCurrentRank();
-					assert copy.m_CurrentRank == rk;
-					int evenRanksAssignedSoFar = 0;
-					for (int k=0; k<constraintToRankInO.size(); k++) {
-						if (!BigInteger.valueOf(i).testBit(k)) {
-							copy.addEvenRank(constraintToRankInO.get(k), rk);
-							evenRanksAssignedSoFar++;
+						LevelRankingWithSacrificeInformation copy = new LevelRankingWithSacrificeInformation(lrwsi);
+						for (int k=0; k<constraintToRankInO_WantLeave.size(); k++) {
+							if (BigInteger.valueOf(iol).testBit(k)) {
+								copy.addOddRank(constraintToRankInO_WantLeave.get(k), rk-1, true);
+							}
 						}
-					}
-					for (int k=0; k<constraintToRankNotInO.size(); k++) {
-						if (!BigInteger.valueOf(j).testBit(k)) {
-							copy.addEvenRank(constraintToRankNotInO.get(k), rk);
-							evenRanksAssignedSoFar++;
+						for (int k=0; k<constraintToRankInO_WantStay.size(); k++) {
+							if (BigInteger.valueOf(ios).testBit(k)) {
+								copy.addOddRank(constraintToRankInO_WantStay.get(k), rk-1, true);
+							}
 						}
-					}
-					assert (evenRanksAssignedSoFar <= maxNumberOfEvenRanksWeMayAssign);
-					copy.increaseCurrentRank();
-					copy.addOddRanks(constraintToRankPlusOne, rk+1);
-					int numberUnassignedLowerRanks = copy.numberUnsatisfiedLowerRanks();
-					if (unassignedUnrestrictedAfterThisTurn == numberUnassignedLowerRanks) {
-						copy.assignRemainingUnrestricted(rk+1, unassignedUnrestrictedAfterThisTurn);
-						addResult(copy.assignRestictedAndgetLevelRankingState());
-						continue;
-					} else {
-						recursivelyComputeResults(rk+2, copy, assignedUnrestrictedAfterThisTurn, unassignedUnrestrictedAfterThisTurn);
-						continue;
+						for (int k=0; k<constraintToRankNotInO.size(); k++) {
+							if (BigInteger.valueOf(j).testBit(k)) {
+								copy.addOddRank(constraintToRankNotInO.get(k), rk-1, true);
+							}
+						}
+						copy.increaseCurrentRank();
+						assert copy.m_CurrentRank == rk;
+						int evenRanksAssignedSoFar = 0;
+						for (int k=0; k<constraintToRankInO_WantLeave.size(); k++) {
+							if (!BigInteger.valueOf(iol).testBit(k)) {
+								copy.addEvenRank(constraintToRankInO_WantLeave.get(k), rk);
+								evenRanksAssignedSoFar++;
+							}
+						}
+						for (int k=0; k<constraintToRankInO_WantStay.size(); k++) {
+							if (!BigInteger.valueOf(ios).testBit(k)) {
+								copy.addEvenRank(constraintToRankInO_WantStay.get(k), rk);
+								evenRanksAssignedSoFar++;
+							}
+						}
+						for (int k=0; k<constraintToRankNotInO.size(); k++) {
+							if (!BigInteger.valueOf(j).testBit(k)) {
+								copy.addEvenRank(constraintToRankNotInO.get(k), rk);
+								evenRanksAssignedSoFar++;
+							}
+						}
+						assert (evenRanksAssignedSoFar <= maxNumberOfEvenRanksWeMayAssign);
+						copy.increaseCurrentRank();
+						copy.addOddRanks(constraintToRankPlusOne, rk+1);
+						int numberUnassignedLowerRanks = copy.numberUnsatisfiedLowerRanks();
+						if (unassignedUnrestrictedAfterThisTurn == numberUnassignedLowerRanks) {
+							copy.assignRemainingUnrestricted(rk+1, unassignedUnrestrictedAfterThisTurn);
+							addResult(copy.assignRestictedAndgetLevelRankingState());
+							continue;
+						} else {
+							recursivelyComputeResults(rk+2, copy, assignedUnrestrictedAfterThisTurn, unassignedUnrestrictedAfterThisTurn);
+							continue;
+						}
 					}
 				}
 			}
