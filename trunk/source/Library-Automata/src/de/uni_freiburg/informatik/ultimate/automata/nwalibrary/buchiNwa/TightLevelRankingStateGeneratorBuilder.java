@@ -83,9 +83,9 @@ public class TightLevelRankingStateGeneratorBuilder<LETTER,STATE> {
 	public TightLevelRankingStateGenerator buildTightLevelRankingStateGenerator(LevelRankingConstraint<LETTER, STATE> constraint, boolean initial) {
 		switch (m_Optimization) {
 		case HeiMat1:
-			return new HeiMatTightLevelRankingStateGenerator(constraint);
+			return new HeiMatTightLevelRankingStateGenerator(constraint, false);
 		case HeiMat2:
-			return new HeiMatTightLevelRankingStateGenerator(constraint);
+			return new HeiMatTightLevelRankingStateGenerator(constraint, true);
 		case HighEven:
 			return new HighEvenTightLevelRankingStateGenerator(constraint);
 		case Schewe:
@@ -374,11 +374,12 @@ public class TightLevelRankingStateGeneratorBuilder<LETTER,STATE> {
 	TightLevelRankingStateGenerator {
 
 		private final TreeRelation<Integer, DoubleDecker<StateWithRankInfo<STATE>>> m_UnrestrictedMaxRank2DoubleDeckerWithRankInfo;
-		private boolean m_SuccessorsOfFinalsWantToLeaveO = true;
+		private final boolean m_SuccessorsOfFinalsWantToLeaveO;
 		//		private final int numberOfDoubleDeckerWithRankInfos;
 
-		public HeiMatTightLevelRankingStateGenerator(LevelRankingConstraint<LETTER,STATE> constraint) {
+		public HeiMatTightLevelRankingStateGenerator(LevelRankingConstraint<LETTER,STATE> constraint, boolean successorsOfFinalsWantToLeaveO) {
 			super(constraint);
+			m_SuccessorsOfFinalsWantToLeaveO = successorsOfFinalsWantToLeaveO;
 			m_UnrestrictedMaxRank2DoubleDeckerWithRankInfo = new TreeRelation<Integer, DoubleDecker<StateWithRankInfo<STATE>>>();
 			//			numberOfDoubleDeckerWithRankInfos = super.m_UnrestrictedDoubleDeckerWithRankInfo.size();
 			for (DoubleDecker<StateWithRankInfo<STATE>> dd : super.m_UnrestrictedDoubleDeckerWithRankInfo) {
