@@ -87,7 +87,24 @@ public class TightLevelRankingStateGeneratorBuilder<LETTER,STATE> {
 	}
 	
 	public TightLevelRankingStateGenerator buildTightLevelRankingStateGenerator(LevelRankingConstraint<LETTER, STATE> constraint, boolean initial) {
-		return new HeiMatTightLevelRankingStateGenerator(constraint);
+		switch (m_Optimization) {
+		case HeiMat1:
+			return new HeiMatTightLevelRankingStateGenerator(constraint);
+		case HeiMat2:
+			return new HeiMatTightLevelRankingStateGenerator(constraint);
+		case HighEven:
+			return new HighEvenTightLevelRankingStateGenerator(constraint);
+		case Schewe:
+			if (initial) {
+				return new MaxTightLevelRankingStateGeneratorInitial(constraint);
+			} else {
+				return new MaxTightLevelRankingStateGeneratorNonInitial(constraint);
+			}
+		case TightLevelRankings:
+			return new TightLevelRankingStateGenerator(constraint);
+		default:
+			throw new UnsupportedOperationException();
+		}
 	}
 
 	/**
