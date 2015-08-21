@@ -57,22 +57,32 @@ public class TightLevelRankingStateGeneratorBuilder<LETTER,STATE> {
 	private final Logger m_Logger;
 	private final INestedWordAutomatonSimple<LETTER, STATE> m_Operand;
 	private final int m_UserDefinedMaxRank;
-	private final String m_TightLevelRankingStateGenerator;
+	private final Optimization m_Optimization;
 
+	public enum Optimization {
+		HeiMat1,
+		HeiMat2,
+		TightLevelRankings,
+		HighEven,
+		Schewe,
+	}
 	public static final String s_HeiMat1 = "HeiMat1";
 	public static final String s_HeiMat2 = "HeiMat2";
+	public static final String s_TightLevelRankings = "TightLevelRankings";
+	public static final String s_HighEven = "HighEven";
+	public static final String s_Schewe = "Schewe";
 	
 
 	public TightLevelRankingStateGeneratorBuilder(
 			IUltimateServiceProvider services,
 			INestedWordAutomatonSimple<LETTER, STATE> operand,
-			String tightLevelRankingStateGenerator,
+			Optimization optimization,
 			int userDefinedMaxRank) {
 		super();
 		m_Services = services;
 		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 		m_Operand = operand;
-		m_TightLevelRankingStateGenerator = tightLevelRankingStateGenerator;
+		m_Optimization = optimization;
 		m_UserDefinedMaxRank = userDefinedMaxRank;
 	}
 	

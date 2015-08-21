@@ -37,6 +37,7 @@ import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.TightLevelRankingStateGeneratorBuilder.Optimization;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IStateDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.PowersetDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.NestedWordAutomatonReachableStates;
@@ -67,7 +68,7 @@ public class BuchiComplementFKV<LETTER,STATE> implements IOperation<LETTER,STATE
 	private final StateFactory<STATE> m_StateFactory;
 	private final IStateDeterminizer<LETTER, STATE> m_StateDeterminizer;
 	private final BuchiComplementFKVNwa<LETTER, STATE> m_Complemented;
-	private final String m_Optimization;	
+	private final Optimization m_Optimization;	
 	
 	
 	
@@ -109,7 +110,7 @@ public class BuchiComplementFKV<LETTER,STATE> implements IOperation<LETTER,STATE
 		this.m_StateFactory = input.getStateFactory();
 		this.m_Operand = input;
 		this.m_UserDefinedMaxRank = userDefinedMaxRank;
-		this.m_Optimization = optimization;
+		this.m_Optimization = Optimization.valueOf(optimization);
 		m_Logger.info(startMessage());
 		m_Complemented = new BuchiComplementFKVNwa<LETTER, STATE>(m_Services, input,m_StateDeterminizer,m_StateFactory, m_Optimization, m_UserDefinedMaxRank);
 		m_Result = new NestedWordAutomatonReachableStates<LETTER, STATE>(m_Services, m_Complemented);
@@ -131,7 +132,7 @@ public class BuchiComplementFKV<LETTER,STATE> implements IOperation<LETTER,STATE
 		this.m_StateFactory = input.getStateFactory();
 		this.m_Operand = input;
 		this.m_UserDefinedMaxRank = Integer.MAX_VALUE;
-		this.m_Optimization = TightLevelRankingStateGeneratorBuilder.s_HeiMat2;
+		this.m_Optimization = Optimization.HeiMat2;
 		m_Logger.info(startMessage());
 		m_Complemented = new BuchiComplementFKVNwa<LETTER, STATE>(m_Services, input,m_StateDeterminizer,m_StateFactory, m_Optimization, m_UserDefinedMaxRank);
 		m_Result = new NestedWordAutomatonReachableStates<LETTER, STATE>(m_Services, m_Complemented);

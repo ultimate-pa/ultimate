@@ -38,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.TightLevelRankingStateGeneratorBuilder.Optimization;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IStateDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.PowersetDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.NestedWordAutomatonReachableStates;
@@ -102,7 +103,7 @@ public class BuchiDifferenceFKV<LETTER,STATE> implements IOperation<LETTER,STATE
 		m_StateFactory = m_FstOperand.getStateFactory();
 		m_StateDeterminizer = new PowersetDeterminizer<LETTER,STATE>(sndOperand, true, stateFactory);
 		m_Logger.info(startMessage());
-		constructDifference(Integer.MAX_VALUE, TightLevelRankingStateGeneratorBuilder.s_HeiMat2);
+		constructDifference(Integer.MAX_VALUE, Optimization.HeiMat2);
 		m_Logger.info(exitMessage());
 	}
 	
@@ -120,14 +121,14 @@ public class BuchiDifferenceFKV<LETTER,STATE> implements IOperation<LETTER,STATE
 		m_StateDeterminizer = stateDeterminizer;
 		m_Logger.info(startMessage());
 		try {
-			constructDifference(userDefinedMaxRank, optimization);
+			constructDifference(userDefinedMaxRank, Optimization.valueOf(optimization));
 		} catch (OperationCanceledException oce) {
 			throw new OperationCanceledException(getClass());
 		}
 		m_Logger.info(exitMessage());
 	}
 	
-	private void constructDifference(int userDefinedMaxRank, String optimization) throws AutomataLibraryException {
+	private void constructDifference(int userDefinedMaxRank, Optimization optimization) throws AutomataLibraryException {
 		m_SndComplemented = new BuchiComplementFKVNwa<LETTER, STATE>(m_Services, m_SndOperand, m_StateDeterminizer, m_StateFactory, optimization, userDefinedMaxRank);
 		m_Intersect = new BuchiIntersectNwa<LETTER, STATE>(m_FstOperand, m_SndComplemented, m_StateFactory);
 		m_Result = new NestedWordAutomatonReachableStates<LETTER, STATE>(m_Services, m_Intersect);
