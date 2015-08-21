@@ -136,19 +136,40 @@ public class SvComp14PRCHandler extends PRCHandler {
 		for (String t : NONDET_TYPE_STRINGS)
 			if (methodName.equals(NONDET_STRING + t)) {
 				final ASTType type;
-				CType cType;
-				if (t.equals("float")) {
-					type = new PrimitiveType(loc, SFO.REAL);
-					cType = new CPrimitive(PRIMITIVE.FLOAT);
-				} else if (t.equals("pointer")) {
+				final CType cType;
+				switch (t) {
+				case "pointer": {
+					cType = new CPointer(new CPrimitive(PRIMITIVE.VOID));
 					NamedType boogiePointerType = new NamedType(null, new InferredType(Type.Struct), SFO.POINTER,
 							new ASTType[0]);
 					type = boogiePointerType;
-					cType = new CPointer(new CPrimitive(PRIMITIVE.VOID));
-				} else {
-					type = new PrimitiveType(loc, SFO.INT);
-					cType = new CPrimitive(PRIMITIVE.INT);
 				}
+				break;
+				case "char": {
+					cType = new CPrimitive(PRIMITIVE.CHAR);
+					type = main.typeHandler.ctype2asttype(loc, cType);
+				}
+				break;
+				case "short": {
+					cType = new CPrimitive(PRIMITIVE.SHORT);
+					type = main.typeHandler.ctype2asttype(loc, cType);
+				}
+				break;
+				case "int": {
+					cType = new CPrimitive(PRIMITIVE.INT);
+					type = main.typeHandler.ctype2asttype(loc, cType);
+				}
+				break;
+				case "long": {
+					cType = new CPrimitive(PRIMITIVE.LONG);
+					type = main.typeHandler.ctype2asttype(loc, cType);
+				}
+				break;
+				default: {
+					throw new UnsupportedOperationException("unknown SV-COMP method " + methodName);
+				}
+				}
+
 				String tmpName = main.nameHandler.getTempVarUID(SFO.AUXVAR.NONDET);
 				VariableDeclaration tVarDecl = SFO.getTempVarVariableDeclaration(tmpName, type, loc);
 				decl.add(tVarDecl);
