@@ -247,6 +247,10 @@ public class BitvectorTranslation extends AExpressionTranslation {
 
 	private void declareBitvectorFunction(ILocation loc, String smtlibFunctionName, String boogieFunctionName,
 			boolean boogieResultTypeBool, CPrimitive resultCType, int[] indices, CPrimitive... paramCType) {
+		if (m_FunctionDeclarations.getDeclaredFunctions().containsKey(SFO.AUXILIARY_FUNCTION_PREFIX + boogieFunctionName)) {
+			// function already declared
+			return;
+		}
 		//String functionName = prefixedFunctionName.substring(1, prefixedFunctionName.length());
 		Attribute[] attributes;
 		if (indices == null) {
