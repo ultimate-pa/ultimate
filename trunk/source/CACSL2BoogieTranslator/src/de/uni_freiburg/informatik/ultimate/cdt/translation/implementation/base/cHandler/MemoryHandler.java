@@ -33,6 +33,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultExpression;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 import de.uni_freiburg.informatik.ultimate.model.annotation.Overapprox;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
@@ -222,14 +223,15 @@ public class MemoryHandler {
         if (!main.isMMRequired()) {
             return decl;
         }
-        ASTType intType = new PrimitiveType(tuLoc, SFO.INT);
-        ASTType boolType = new PrimitiveType(tuLoc, SFO.BOOL);
-        ASTType realType = new PrimitiveType(tuLoc, SFO.REAL);
+        ASTType pointerComponentType = main.typeHandler.ctype2asttype(tuLoc, 
+        		m_ExpressionTranslation.getCTypeOfPointerComponents());
+        ASTType intArrayType = main.typeHandler.ctype2asttype(tuLoc, 
+        		m_ExpressionTranslation.getCTypeOfIntArray());
+        ASTType realArrayType = main.typeHandler.ctype2asttype(tuLoc, 
+        		m_ExpressionTranslation.getCTypeOfFloatingArray());
        
-        VarList fBase = new VarList(tuLoc, new String[] { SFO.POINTER_BASE },
-                intType);
-        VarList fOffset = new VarList(tuLoc,
-                new String[] { SFO.POINTER_OFFSET }, intType);
+        VarList fBase = new VarList(tuLoc, new String[] { SFO.POINTER_BASE }, pointerComponentType);
+        VarList fOffset = new VarList(tuLoc, new String[] { SFO.POINTER_OFFSET }, pointerComponentType);
         VarList[] fields = new VarList[] { fBase, fOffset };
         ASTType pointerType = new StructType(tuLoc, fields);
         // Pointer is non-finite, right? (ZxZ)..
@@ -250,11 +252,11 @@ public class MemoryHandler {
         ArrayList<ASTType> allMMArrayTypes = new ArrayList<>();
         if (isIntArrayRequiredInMM) {
         	allMMArrayNames.add(SFO.INT);
-        	allMMArrayTypes.add(intType);
+        	allMMArrayTypes.add(intArrayType);
         }
         if (isFloatArrayRequiredInMM) {
         	allMMArrayNames.add(SFO.REAL);
-        	allMMArrayTypes.add(realType);
+        	allMMArrayTypes.add(realArrayType);
         }
         if (isPointerArrayRequiredInMM) {
         	allMMArrayNames.add(SFO.POINTER);
@@ -272,19 +274,19 @@ public class MemoryHandler {
        
         // var #valid : [int]bool;
         ASTType validType = new ArrayType(tuLoc, new String[0],
-                new ASTType[] { intType }, boolType);
+                new ASTType[] { pointerComponentType }, new PrimitiveType(tuLoc, "bool"));
         VarList vlV = new VarList(tuLoc, new String[] { SFO.VALID }, validType);
         decl.add(new VariableDeclaration(tuLoc, new Attribute[0],
                 new VarList[] { vlV }));
         // var #length : [int]int;
         ASTType lengthType = new ArrayType(tuLoc, new String[0],
-                new ASTType[] { intType }, intType);
+                new ASTType[] { pointerComponentType }, pointerComponentType);
         VarList vlL = new VarList(tuLoc, new String[] { SFO.LENGTH },
                 lengthType);
         decl.add(new VariableDeclaration(tuLoc, new Attribute[0],
                 new VarList[] { vlL }));
         decl.addAll(declareFree(tuLoc));
-        decl.addAll(declareMalloc(tuLoc));
+        decl.addAll(declareMalloc(main.typeHandler, tuLoc));
         if (declareMemCpy) {
         	decl.addAll(declareMemCpy(main, namesOfAllMemoryArrayTypes, astTypesOfAllMemoryArrayTypes));
         }
@@ -530,7 +532,7 @@ public class MemoryHandler {
 			 String[] namesOfAllMemoryArrayTypes,
 			ASTType[] astTypesOfAllMemoryArrayTypes) {
 		ArrayList<Declaration> decl = new ArrayList<>();
-        ASTType intType = new PrimitiveType(loc, SFO.INT);
+        ASTType intType = main.typeHandler.ctype2asttype(loc, m_ExpressionTranslation.getCTypeOfIntArray());
 		for (int i = 0; i < namesOfAllMemoryArrayTypes.length; i++) {
         	String typeName = namesOfAllMemoryArrayTypes[i];
         	ASTType astType = astTypesOfAllMemoryArrayTypes[i];
@@ -781,7 +783,8 @@ public class MemoryHandler {
         // requires #valid[~addr!base];
         // ensures #valid = old(valid)[~addr!base := false];
         // modifies #valid;
-        Expression nr0 = new IntegerLiteral(tuLoc, SFO.NR0);
+        Expression nr0 = m_ExpressionTranslation.constructLiteralForIntegerType(
+        		tuLoc, m_ExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO);
         Expression bLFalse = new BooleanLiteral(tuLoc, false);
         Expression addr = new IdentifierExpression(tuLoc, ADDR);
         Expression valid = new IdentifierExpression(tuLoc, SFO.VALID);
@@ -844,14 +847,16 @@ public class MemoryHandler {
      * Generate
      * <code>procedure ~malloc(~size:int) returns (#res:$Pointer$);</code>'s
      * declaration and implementation.
+     * @param typeHandler 
      * 
      * @param tuLoc
      *            the location for the new nodes.
      * @return declaration and implementation of procedure <code>~malloc</code>
      */
-    private ArrayList<Declaration> declareMalloc(final ILocation tuLoc) {
-        ASTType intType = new PrimitiveType(tuLoc, SFO.INT);
-        Expression nr0 = new IntegerLiteral(tuLoc, SFO.NR0);
+    private ArrayList<Declaration> declareMalloc(ITypeHandler typeHandler, final ILocation tuLoc) {
+        ASTType intType = typeHandler.ctype2asttype(tuLoc, m_ExpressionTranslation.getCTypeOfPointerComponents());
+        Expression nr0 = m_ExpressionTranslation.constructLiteralForIntegerType(
+        		tuLoc, m_ExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO);
         Expression bLFalse = new BooleanLiteral(tuLoc, false);
         Expression addr = new IdentifierExpression(tuLoc, ADDR);
         Expression valid = new IdentifierExpression(tuLoc, SFO.VALID);

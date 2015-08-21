@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -13,6 +14,7 @@ import org.apache.log4j.Logger;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TypeHandler;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.ExpressionTranslation.AExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CFunction;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.GENERALPRIMITIVE;
@@ -108,6 +110,7 @@ public class PostProcessor {
 	 * @param functions
 	 *            a list of functions to add to the TU.
 	 * @param mDeclarationsGlobalInBoogie 
+	 * @param expressionTranslation 
 	 * @param uninitGlobalVars
 	 *            a set of uninitialized global variables.
 	 * @return a declaration list holding the init() and start() procedure.
@@ -115,11 +118,11 @@ public class PostProcessor {
 	public ArrayList<Declaration> postProcess(Dispatcher main, ILocation loc, MemoryHandler memoryHandler, 
 			ArrayHandler arrayHandler, FunctionHandler functionHandler, StructHandler structHandler,
 			TypeHandler typeHandler, Set<String> undefinedTypes,	Collection<? extends FunctionDeclaration> functions, 
-			LinkedHashMap<Declaration,CDeclaration> mDeclarationsGlobalInBoogie) {
+			LinkedHashMap<Declaration,CDeclaration> mDeclarationsGlobalInBoogie, AExpressionTranslation expressionTranslation) {
 		ArrayList<Declaration> decl = new ArrayList<Declaration>();
 		decl.addAll(declareUndefinedTypes(loc, undefinedTypes));
 		decl.addAll(createUltimateInitProcedure(loc, main, memoryHandler, arrayHandler, functionHandler, structHandler,
-				mDeclarationsGlobalInBoogie));
+				mDeclarationsGlobalInBoogie, expressionTranslation));
 		decl.addAll(createUltimateStartProcedure(main, loc, functionHandler));
 		decl.addAll(functions);
 		decl.addAll(declareFunctionPointerProcedures(main, functionHandler, memoryHandler, structHandler));
@@ -243,7 +246,8 @@ public class PostProcessor {
 	 */
 	private ArrayList<Declaration> createUltimateInitProcedure(ILocation translationUnitLoc,
 			Dispatcher main, MemoryHandler memoryHandler, ArrayHandler arrayHandler, FunctionHandler functionHandler,   
-			StructHandler structHandler, LinkedHashMap<Declaration, CDeclaration> declarationsGlobalInBoogie) {
+			StructHandler structHandler, LinkedHashMap<Declaration, CDeclaration> declarationsGlobalInBoogie, 
+			AExpressionTranslation expressionTranslation) {
 		functionHandler.beginUltimateInit(main, translationUnitLoc, SFO.INIT);
 		ArrayList<Statement> initStatements = new ArrayList<Statement>();
 
@@ -265,7 +269,10 @@ public class PostProcessor {
 			initStatements.add(0, new AssignmentStatement(translationUnitLoc, 
 					new LeftHandSide[] { slhs }, 
 					new Expression[] { new StructConstructor(translationUnitLoc, new String[]{"base", "offset"}, 
-							new Expression[]{new IntegerLiteral(translationUnitLoc, "0"), new IntegerLiteral(translationUnitLoc, "0")})}));
+							new Expression[]{
+							expressionTranslation.constructLiteralForIntegerType(translationUnitLoc, expressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO),
+							expressionTranslation.constructLiteralForIntegerType(translationUnitLoc, expressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO)
+							})}));
 			mInitializedGlobals.add(SFO.NULL);
 		}
 		for (Statement stmt : initStatements) {

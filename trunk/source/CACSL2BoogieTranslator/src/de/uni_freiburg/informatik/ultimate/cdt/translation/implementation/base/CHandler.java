@@ -429,7 +429,7 @@ public class CHandler implements ICHandler {
 
 		Collection<FunctionDeclaration> declaredFunctions = m_ExpressionTranslation.getFunctionDeclarations().getDeclaredFunctions().values();
 		decl.addAll(mPostProcessor.postProcess(main, loc, mMemoryHandler, mArrayHandler, mFunctionHandler, mStructHandler, (TypeHandler) mTypeHandler,
-				main.typeHandler.getUndefinedTypes(), declaredFunctions, mDeclarationsGlobalInBoogie));
+				main.typeHandler.getUndefinedTypes(), declaredFunctions, mDeclarationsGlobalInBoogie, m_ExpressionTranslation));
 
 		// this has to happen after postprocessing as pping may add sizeof
 		// constants for initializations

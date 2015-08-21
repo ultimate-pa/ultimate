@@ -29,6 +29,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IdentifierExpression;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.RealLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VarList;
@@ -151,4 +152,32 @@ public abstract class AExpressionTranslation {
 	}
 	
 	public abstract void convert(ILocation loc, ResultExpression operand, CType resultType, TypeSizes typeSizeConstants);
+	
+
+	/**
+	 * In our Lindenmann-Hoenicke memory model, we use an array for all
+	 * integer data on the heap. This method returns the CType that we use to
+	 * represents this data.
+	 */
+	public CPrimitive getCTypeOfIntArray() {
+		return new CPrimitive(PRIMITIVE.INT);
+	}
+
+	/**
+	 * In our Lindenmann-Hoenicke memory model, we use an array for all
+	 * floating type data on the heap. This method returns the CType that we 
+	 * use to represent this data.
+	 */
+	public CPrimitive getCTypeOfFloatingArray() {
+		return new CPrimitive(PRIMITIVE.FLOAT);
+	}
+	
+	/**
+	 * In our Lindenmann-Hoenicke memory model, a pointer is a struct of two
+	 * integer data types. This method returns the CType of the structs
+	 * components.
+	 */
+	public CPrimitive getCTypeOfPointerComponents() {
+		return new CPrimitive(PRIMITIVE.INT);
+	}
 }
