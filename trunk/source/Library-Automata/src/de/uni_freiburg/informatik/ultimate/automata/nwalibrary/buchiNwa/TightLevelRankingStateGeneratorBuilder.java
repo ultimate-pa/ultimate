@@ -964,7 +964,7 @@ public class TightLevelRankingStateGeneratorBuilder<LETTER,STATE> {
 			super(constraint);
 			for (StateWithRankInfo<STATE> down  : constraint.getDownStates()) {
 				for (StateWithRankInfo<STATE> up : constraint.getUpStates(down)) {
-					assert up.getRank() == Integer.MAX_VALUE;
+					assert up.getRank() == m_UserDefinedMaxRank;
 					DoubleDecker<StateWithRankInfo<STATE>> dd = new DoubleDecker<StateWithRankInfo<STATE>>(down, up);
 					if (m_Operand.isFinal(up.getState())) {
 						m_FinalDoubleDeckerWithRankInfos.add(dd);
