@@ -80,14 +80,15 @@ public class BuchiComplementFKV<LETTER,STATE> implements IOperation<LETTER,STATE
 	
 	@Override
 	public String startMessage() {
-		return "Start " + operationName() + " Operand " + 
-			m_Operand.sizeInformation();
+		return "Start " + operationName() + " with optimization " + m_Optimization 
+				+ ". Operand " +	m_Operand.sizeInformation();
 	}
 	
 	
 	@Override
 	public String exitMessage() {
-		return "Finished " + operationName() + " Operand " + 
+		return "Finished " + operationName() + " with optimization " + m_Optimization 
+				+ ". Operand " + 
 				m_Operand.sizeInformation() + " Result " + 
 				m_Result.sizeInformation() + 
 				m_Complemented.getPowersetStates() + " powerset states" +
