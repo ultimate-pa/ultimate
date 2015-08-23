@@ -22,6 +22,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.IT
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression.Operator;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.FunctionApplication;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IfThenElseExpression;
@@ -30,11 +31,15 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.NamedAttribute;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StringLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.UNSIGNED_TREATMENT;
 
 public class IntegerTranslation extends AExpressionTranslation {
 
-	public IntegerTranslation(TypeSizes m_TypeSizeConstants, ITypeHandler typeHandler) {
+	private UNSIGNED_TREATMENT m_UnsignedTreatment;
+
+	public IntegerTranslation(TypeSizes m_TypeSizeConstants, ITypeHandler typeHandler, UNSIGNED_TREATMENT unsignedTreatment) {
 		super(m_TypeSizeConstants, typeHandler);
+		m_UnsignedTreatment = unsignedTreatment;
 	}
 
 	@Override
@@ -387,8 +392,19 @@ public class IntegerTranslation extends AExpressionTranslation {
 
 	@Override
 	public void convert(ILocation loc, ResultExpression operand,
-			CType resultType, TypeSizes typeSizeConstants) {
-		// TODO Auto-generated method stub
+			CType resultType, TypeSizes typeSizes) {
+		if (m_UnsignedTreatment == UNSIGNED_TREATMENT.ASSUME_ALL) {
+			BigInteger maxValuePlusOne = typeSizes.getMaxValueOfPrimitiveType((CPrimitive) resultType).add(BigInteger.ONE);
+			AssumeStatement assumeGeq0 = new AssumeStatement(loc, new BinaryExpression(loc, BinaryExpression.Operator.COMPGEQ,
+					operand.lrVal.getValue(), new IntegerLiteral(loc, SFO.NR0)));
+			operand.stmt.add(assumeGeq0);
+
+			AssumeStatement assumeLtMax = new AssumeStatement(loc, new BinaryExpression(loc, BinaryExpression.Operator.COMPLT,
+					operand.lrVal.getValue(), new IntegerLiteral(loc, maxValuePlusOne.toString())));
+			operand.stmt.add(assumeLtMax);
+		} else {
+			// do nothing
+		}
 		
 	}
 

@@ -332,7 +332,7 @@ public class CHandler implements ICHandler {
 		if (bitvectorTranslation) {
 			m_ExpressionTranslation = new BitvectorTranslation(main.getTypeSizes(), typeHandler);
 		} else {
-			m_ExpressionTranslation = new IntegerTranslation(main.getTypeSizes(), typeHandler);
+			m_ExpressionTranslation = new IntegerTranslation(main.getTypeSizes(), typeHandler, mUnsignedTreatment);
 		}
 		this.mFunctionHandler = new FunctionHandler(m_ExpressionTranslation);
 		this.mMemoryHandler = new MemoryHandler(mFunctionHandler, checkPointerValidity, main.getTypeSizes(), m_ExpressionTranslation);

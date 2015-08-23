@@ -183,12 +183,25 @@ public class CastAndConversionHandler {
 					rex.lrVal.getValue(), new IntegerLiteral(loc, maxValuePlusOne.toString())));
 			rex.stmt.add(assumeLtMax);
 		} else if (main.cHandler.getUnsignedTreatment() == UNSIGNED_TREATMENT.WRAPAROUND) {
-			rex.lrVal = new RValue(new BinaryExpression(loc, BinaryExpression.Operator.ARITHMOD, 
-					rex.lrVal.getValue(), 
-					new IntegerLiteral(loc, maxValuePlusOne.toString())), 
+			rex.lrVal = new RValue(applyWrapAround(loc, main.getTypeSizes(), (CPrimitive) rex.lrVal.cType, rex.lrVal.getValue()),
 					rex.lrVal.cType, 
 					rex.lrVal.isBoogieBool,
 					false);
+		}
+	}
+	
+	public static Expression applyWrapAround(ILocation loc, TypeSizes typeSizes, CPrimitive cPrimitive, Expression operand) {
+		if (cPrimitive.getGeneralType() == GENERALPRIMITIVE.INTTYPE) {
+			if (cPrimitive.isUnsigned()) {
+				BigInteger maxValuePlusOne = typeSizes.getMaxValueOfPrimitiveType(cPrimitive).add(BigInteger.ONE);
+				return new BinaryExpression(loc, BinaryExpression.Operator.ARITHMOD, 
+						operand, 
+						new IntegerLiteral(loc, maxValuePlusOne.toString()));
+			} else {
+				throw new AssertionError("wraparound only for unsigned types");
+			}
+		} else {
+			throw new AssertionError("wraparound only for integer types");
 		}
 	}
 
