@@ -98,11 +98,12 @@ public class CPrimitive extends CType {
 
 	private void setGeneralType(PRIMITIVE type) throws AssertionError {
 		switch (type) {
-		case COMPLEX_DOUBLE:
 		case COMPLEX_FLOAT:
+		case COMPLEX_DOUBLE:
 		case COMPLEX_LONGDOUBLE:
-		case DOUBLE:
 		case FLOAT:
+		case DOUBLE:
+		case LONGDOUBLE:
 			generalType = GENERALPRIMITIVE.FLOATTYPE;
 			break;
 		case UCHAR:
@@ -118,7 +119,6 @@ public class CPrimitive extends CType {
 		case CHAR32:
 		case INT:
 		case LONG:
-		case LONGDOUBLE:
 		case LONGLONG:
 		case SCHAR:
 		case SHORT:
