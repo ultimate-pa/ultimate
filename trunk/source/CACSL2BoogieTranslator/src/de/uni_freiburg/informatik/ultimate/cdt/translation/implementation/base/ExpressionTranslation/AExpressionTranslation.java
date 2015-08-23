@@ -12,8 +12,10 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.Locati
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FunctionDeclarations;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.MemoryHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.TypeSizes;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CEnum;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.GENERALPRIMITIVE;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.PRIMITIVE;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
@@ -110,7 +112,7 @@ public abstract class AExpressionTranslation {
 		return m_FunctionDeclarations;
 	}
 	
-	public CPrimitive determineResultType(CPrimitive typeLeft, CPrimitive typeRight) {
+	public CPrimitive determineResultTypeOfIntegerPromotion(CPrimitive typeLeft, CPrimitive typeRight) {
 		
 		if (typeLeft.equals(typeRight)) {
 			return typeLeft;
@@ -143,15 +145,99 @@ public abstract class AExpressionTranslation {
 		}
 	}
 	
-	public void usualArithmeticConversions(Dispatcher main, ILocation loc, MemoryHandler memoryHandler, 
-			ResultExpression leftRex, ResultExpression rightRex, boolean wraparoundOverflows) {
-		CPrimitive resultType = determineResultType((CPrimitive) leftRex.lrVal.cType, (CPrimitive) rightRex.lrVal.cType);
+	/**
+	 * Apply usual arithmetic conversion according to 6.3.1.8 of the C11 
+	 * standard.
+	 * Therefore we determine the determine the CType of the result.
+	 * Afterwards we convert both operands to the result CType.
+	 * 
+	 * TODO: This is not correct for complex types. E.g., if double and
+	 * complex float are operands, the complex float is converted to a
+	 * complex double not to a (real double).
+	 * Fixing this will be postponed until we want to support complex types.
+	 */
+	public void usualArithmeticConversions(Dispatcher main, ILocation loc, 
+			ResultExpression leftRex, ResultExpression rightRex) {
+		final CPrimitive leftPrimitive = getCorrespondingPrimitiveType(leftRex.lrVal.cType);
+		final CPrimitive rightPrimitive = getCorrespondingPrimitiveType(rightRex.lrVal.cType);
+		final CPrimitive resultType = determineResultOfUsualArithmeticConversions(leftPrimitive, rightPrimitive);
+
+		convertIfNecessary(loc, leftRex, resultType);
+		convertIfNecessary(loc, rightRex, resultType);
 		
-		convert(loc, leftRex, resultType, m_TypeSizes);
-		convert(loc, rightRex, resultType, m_TypeSizes);
+		if (!leftRex.lrVal.cType.equals(resultType)) {
+			throw new AssertionError("conversion failed"); 
+		}
+		if (!rightRex.lrVal.cType.equals(resultType)) {
+			throw new AssertionError("conversion failed"); 
+		}
 	}
-	
-	public abstract void convert(ILocation loc, ResultExpression operand, CType resultType, TypeSizes typeSizeConstants);
+
+
+	/**
+	 * Convert ResultExpression to resultType if its type is not already
+	 * resultType.
+	 */
+	private void convertIfNecessary(ILocation loc, ResultExpression operand,
+			CPrimitive resultType) {
+		if (operand.lrVal.cType.equals(resultType)) {
+			// do nothing
+		} else {
+			convert(loc, operand, resultType);
+		}
+	}
+
+	private CPrimitive determineResultOfUsualArithmeticConversions(
+			CPrimitive leftPrimitive, CPrimitive rightPrimitive) {
+		if (leftPrimitive.getGeneralType() == GENERALPRIMITIVE.FLOATTYPE
+				|| rightPrimitive.getGeneralType() == GENERALPRIMITIVE.FLOATTYPE) {
+			if (leftPrimitive.getType() == PRIMITIVE.COMPLEX_LONGDOUBLE 
+					|| rightPrimitive.getType() == PRIMITIVE.COMPLEX_LONGDOUBLE) {
+				throw new UnsupportedOperationException("complex types not yet supported");
+			} else if (leftPrimitive.getType() == PRIMITIVE.COMPLEX_DOUBLE 
+					|| rightPrimitive.getType() == PRIMITIVE.COMPLEX_DOUBLE) {
+				throw new UnsupportedOperationException("complex types not yet supported");
+			} else if (leftPrimitive.getType() == PRIMITIVE.COMPLEX_FLOAT 
+					|| rightPrimitive.getType() == PRIMITIVE.COMPLEX_FLOAT) {
+				throw new UnsupportedOperationException("complex types not yet supported");
+			} else if (leftPrimitive.getType() == PRIMITIVE.LONGDOUBLE 
+					|| rightPrimitive.getType() == PRIMITIVE.LONGDOUBLE) {
+				return new CPrimitive(PRIMITIVE.LONGDOUBLE);
+			} else if (leftPrimitive.getType() == PRIMITIVE.DOUBLE 
+					|| rightPrimitive.getType() == PRIMITIVE.DOUBLE) {
+				return new CPrimitive(PRIMITIVE.DOUBLE);
+			} else if (leftPrimitive.getType() == PRIMITIVE.FLOAT 
+					|| rightPrimitive.getType() == PRIMITIVE.FLOAT) {
+				return new CPrimitive(PRIMITIVE.FLOAT);
+			} else {
+				throw new AssertionError("unknown FLOATTYPE " + leftPrimitive +", " + rightPrimitive);
+			}
+		} else if (leftPrimitive.getGeneralType() == GENERALPRIMITIVE.INTTYPE
+				&& rightPrimitive.getGeneralType() == GENERALPRIMITIVE.INTTYPE) {
+			return determineResultTypeOfIntegerPromotion(leftPrimitive, rightPrimitive);
+		} else {
+			throw new AssertionError("unsupported combination of CPrimitives: " 
+					+ leftPrimitive + " and " + rightPrimitive);
+		} 
+	}
+
+	/**
+	 * If CType is CEnum return int (since C standard 6.4.4.3.2 says 
+	 * "An identifier declared as an enumeration constant has type int.")
+	 * If CType is CPrimitive return it.
+	 * Otherwise throw an Exception that conversion will be impossible.  
+	 */
+	private CPrimitive getCorrespondingPrimitiveType(CType cType) {
+		if (cType instanceof CPrimitive) {
+			return (CPrimitive) cType; 
+		} else if (cType instanceof CEnum) {
+			return new CPrimitive(PRIMITIVE.INT);
+		} else {
+			throw new UnsupportedOperationException("unable to apply usual arithmetic conversions to " + cType);
+		}
+	}
+
+	public abstract void convert(ILocation loc, ResultExpression operand, CType resultType);
 	
 
 	/**

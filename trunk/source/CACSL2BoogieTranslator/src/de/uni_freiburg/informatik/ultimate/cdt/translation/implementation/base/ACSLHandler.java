@@ -324,14 +324,15 @@ public class ACSLHandler implements IACSLHandler {
         ResultExpression left = (ResultExpression) main.dispatch(node.getLeft());
         ResultExpression right = (ResultExpression) main.dispatch(node.getRight());
         
-        left = left.switchToRValueIfNecessary(main, ((CHandler) main.cHandler).mMemoryHandler, ((CHandler) main.cHandler).mStructHandler, loc);
-        right = right.switchToRValueIfNecessary(main, ((CHandler) main.cHandler).mMemoryHandler, ((CHandler) main.cHandler).mStructHandler, loc);
-        
         MemoryHandler memoryHandler = ((CHandler) main.cHandler).mMemoryHandler;
+        
+        left = left.switchToRValueIfNecessary(main, memoryHandler, ((CHandler) main.cHandler).mStructHandler, loc);
+        right = right.switchToRValueIfNecessary(main, memoryHandler, ((CHandler) main.cHandler).mStructHandler, loc);
+        
         AExpressionTranslation expressionTranslation = 
      		   ((CHandler) main.cHandler).getExpressionTranslation();
         
-		CastAndConversionHandler.usualArithmeticConversions(main, loc, memoryHandler, left, right, true, expressionTranslation);
+        expressionTranslation.usualArithmeticConversions(main, loc, left, right);
 
         ArrayList<Declaration> decl = new ArrayList<Declaration>();
         ArrayList<Statement> stmt = new ArrayList<Statement>();

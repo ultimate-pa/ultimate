@@ -417,9 +417,9 @@ public class IntegerTranslation extends AExpressionTranslation {
 
 	@Override
 	public void convert(ILocation loc, ResultExpression operand,
-			CType resultType, TypeSizes typeSizes) {
+			CType resultType) {
 		if (m_UnsignedTreatment == UNSIGNED_TREATMENT.ASSUME_ALL) {
-			BigInteger maxValuePlusOne = typeSizes.getMaxValueOfPrimitiveType((CPrimitive) resultType).add(BigInteger.ONE);
+			BigInteger maxValuePlusOne = m_TypeSizes.getMaxValueOfPrimitiveType((CPrimitive) resultType).add(BigInteger.ONE);
 			AssumeStatement assumeGeq0 = new AssumeStatement(loc, new BinaryExpression(loc, BinaryExpression.Operator.COMPGEQ,
 					operand.lrVal.getValue(), new IntegerLiteral(loc, SFO.NR0)));
 			operand.stmt.add(assumeGeq0);

@@ -1286,10 +1286,7 @@ public class CHandler implements ICHandler {
 			ResultExpression rrToInt = ConvExpr.rexBoolToIntIfNecessary(loc, rr, m_ExpressionTranslation);
 			ResultExpression rlToInt = ConvExpr.rexBoolToIntIfNecessary(loc, rl, m_ExpressionTranslation);
 			
-			//if (m_ExpressionTranslation instanceof IntegerTranslation) {
-				CastAndConversionHandler.usualArithmeticConversions(main, loc, mMemoryHandler, rlToInt, rrToInt, true, m_ExpressionTranslation);
-			//}
-			
+			m_ExpressionTranslation.usualArithmeticConversions(main, loc, rlToInt, rrToInt);
 			
 			stmt.addAll(rlToInt.stmt);
 			stmt.addAll(rrToInt.stmt);
@@ -1688,15 +1685,10 @@ public class CHandler implements ICHandler {
 					stmt.add(assertStmt);
 					check.addToNodeAnnot(assertStmt);
 					stmt.add(assertStmt);
-
-					//modulo is not compatible with division..
-					CastAndConversionHandler.usualArithmeticConversions(main, loc, mMemoryHandler, 
-							rlToInt, rrToInt, true, m_ExpressionTranslation);
-					//FIXME ..or should we do wraparound only on nominator??
-				} else {
-					CastAndConversionHandler.usualArithmeticConversions(main, loc, mMemoryHandler, 
-							rlToInt, rrToInt, false, m_ExpressionTranslation);
-				}
+				} 
+				
+				m_ExpressionTranslation.usualArithmeticConversions(main, loc, rlToInt, rrToInt);
+				
 				stmt.addAll(rlToInt.stmt);
 				stmt.addAll(rrToInt.stmt);
 				decl.addAll(rlToInt.decl);
@@ -1737,14 +1729,10 @@ public class CHandler implements ICHandler {
 				}
 				check.addToNodeAnnot(assertStmt);
 				stmt.add(assertStmt);
-
-				//modulo is not compatible with division..
-				CastAndConversionHandler.usualArithmeticConversions(main, loc, mMemoryHandler, 
-						rl, rr, true, m_ExpressionTranslation);
-			} else {
-				CastAndConversionHandler.usualArithmeticConversions(main, loc, mMemoryHandler, 
-						rl, rr, false, m_ExpressionTranslation); 
-			}
+			} 
+			
+			m_ExpressionTranslation.usualArithmeticConversions(main, loc, rl, rr);
+			
 			stmt.addAll(rl.stmt);
 			stmt.addAll(rr.stmt);
 			decl.addAll(rl.decl);
@@ -1774,8 +1762,7 @@ public class CHandler implements ICHandler {
 		case IASTBinaryExpression.op_binaryXor:
 		case IASTBinaryExpression.op_shiftLeft:
 		case IASTBinaryExpression.op_shiftRight: {
-			CastAndConversionHandler.usualArithmeticConversions(main, loc, mMemoryHandler, 
-						rl, rr, false, m_ExpressionTranslation); 
+			m_ExpressionTranslation.usualArithmeticConversions(main, loc, rl, rr);
 			stmt.addAll(rl.stmt);
 			stmt.addAll(rr.stmt);
 			decl.addAll(rl.decl);
@@ -1797,8 +1784,7 @@ public class CHandler implements ICHandler {
 		case IASTBinaryExpression.op_binaryAndAssign:
 		case IASTBinaryExpression.op_binaryOrAssign:
 		case IASTBinaryExpression.op_binaryXorAssign: {
-			CastAndConversionHandler.usualArithmeticConversions(main, loc, mMemoryHandler, 
-						rl, rr, false, m_ExpressionTranslation); 
+			m_ExpressionTranslation.usualArithmeticConversions(main, loc, rl, rr);
 			stmt.addAll(rl.stmt);
 			stmt.addAll(rr.stmt);
 			decl.addAll(rl.decl);
@@ -2465,7 +2451,8 @@ public class CHandler implements ICHandler {
 		reNegative = reNegative.switchToRValueIfNecessary(main, mMemoryHandler, mStructHandler, loc);
 		reNegative = ConvExpr.rexBoolToIntIfNecessary(loc, reNegative, m_ExpressionTranslation);
 		
-		CastAndConversionHandler.usualArithmeticConversions(main, loc, mMemoryHandler, rePositive, reNegative, false, m_ExpressionTranslation);
+		//TODO: 2015-08-23 Matthias do we really need usual arithmetic conversions here?
+		m_ExpressionTranslation.usualArithmeticConversions(main, loc, rePositive, reNegative);
 		CastAndConversionHandler.doPrimitiveVsPointerConversions(main, loc, mMemoryHandler, rePositive, reNegative);
 
 		ArrayList<Statement> stmt = new ArrayList<Statement>();
@@ -3676,13 +3663,13 @@ public class CHandler implements ICHandler {
 					}
 					resultRValue = new RValue(e, newType);
 				} else if (newType instanceof CPrimitive) {
-					m_ExpressionTranslation.convert(loc, rexp, newType, typeSizes);
+					m_ExpressionTranslation.convert(loc, rexp, newType);
 					return;
 				} else if (newType instanceof CEnum) {
 					// C standard 6.4.4.3.2
 					// An identifier declared as an enumeration constant has type int.
 					CType typeInt = new CPrimitive(PRIMITIVE.INT);
-					m_ExpressionTranslation.convert(loc, rexp, typeInt, typeSizes);
+					m_ExpressionTranslation.convert(loc, rexp, typeInt);
 					return;
 				} else {
 					throw new UnsupportedOperationException("yet unsupported cast from " + oldType + " to " + newType);

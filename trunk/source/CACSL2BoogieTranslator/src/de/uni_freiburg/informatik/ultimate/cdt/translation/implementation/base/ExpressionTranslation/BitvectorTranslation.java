@@ -10,6 +10,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.Locati
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FunctionDeclarations;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.TypeSizes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.GENERALPRIMITIVE;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.PRIMITIVE;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
@@ -270,11 +271,14 @@ public class BitvectorTranslation extends AExpressionTranslation {
 	}
 
 	@Override
-	public void convert(ILocation loc, ResultExpression operand, CType resultType, TypeSizes typeSizeConstants) {
+	public void convert(ILocation loc, ResultExpression operand, CType resultType) {
 		if (!(resultType instanceof CPrimitive)) {
 			throw new UnsupportedOperationException("non-primitive types not supported yet");
 		}
 		CPrimitive resultPrimitive = (CPrimitive) resultType;
+		if (!(resultPrimitive.getGeneralType() == GENERALPRIMITIVE.INTTYPE)) {
+			throw new UnsupportedOperationException("non-integer types not supported yet");
+		}
 		int resultLength = m_TypeSizes.getSize(resultPrimitive.getType()) * 8;
 		int operandLength = m_TypeSizes.getSize(((CPrimitive) operand.lrVal.cType).getType()) * 8;
 		
