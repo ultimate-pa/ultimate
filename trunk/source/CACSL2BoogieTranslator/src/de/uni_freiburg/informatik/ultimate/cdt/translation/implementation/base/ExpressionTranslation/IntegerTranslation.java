@@ -10,6 +10,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.Locati
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FunctionDeclarations;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.TypeSizes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.GENERALPRIMITIVE;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.PRIMITIVE;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
@@ -76,8 +77,15 @@ public class IntegerTranslation extends AExpressionTranslation {
 
 	@Override
 	public Expression constructBinaryComparisonExpression(ILocation loc, int nodeOperator, Expression exp1, CPrimitive type1, Expression exp2, CPrimitive type2) {
+		if (!type1.equals(type2)) {
+			throw new IllegalArgumentException("incompatible types " + type1 + " and " + type2);
+		}
+		if (m_UnsignedTreatment == UNSIGNED_TREATMENT.WRAPAROUND && type1.isUnsigned()) {
+			assert type2.isUnsigned();
+			exp1 = applyWraparound(loc, m_TypeSizes, type1, exp1);
+			exp2 = applyWraparound(loc, m_TypeSizes, type2, exp2);
+		}
 		BinaryExpression.Operator op;
-
 		switch (nodeOperator) {
 		case IASTBinaryExpression.op_equals:
 			op = BinaryExpression.Operator.COMPEQ;
@@ -102,6 +110,21 @@ public class IntegerTranslation extends AExpressionTranslation {
 		}
 		
 		return new BinaryExpression(loc, op, exp1, exp2);
+	}
+	
+	public static Expression applyWraparound(ILocation loc, TypeSizes typeSizes, CPrimitive cPrimitive, Expression operand) {
+		if (cPrimitive.getGeneralType() == GENERALPRIMITIVE.INTTYPE) {
+			if (cPrimitive.isUnsigned()) {
+				BigInteger maxValuePlusOne = typeSizes.getMaxValueOfPrimitiveType(cPrimitive).add(BigInteger.ONE);
+				return new BinaryExpression(loc, BinaryExpression.Operator.ARITHMOD, 
+						operand, 
+						new IntegerLiteral(loc, maxValuePlusOne.toString()));
+			} else {
+				throw new AssertionError("wraparound only for unsigned types");
+			}
+		} else {
+			throw new AssertionError("wraparound only for integer types");
+		}
 	}
 
 	@Override
@@ -389,6 +412,8 @@ public class IntegerTranslation extends AExpressionTranslation {
 			throw new UnsupportedSyntaxException(loc, msg);
 		}
 	}
+	
+	
 
 	@Override
 	public void convert(ILocation loc, ResultExpression operand,
@@ -406,6 +431,8 @@ public class IntegerTranslation extends AExpressionTranslation {
 			// do nothing
 		}
 		
+		// set the type of the operand to resultType
+		operand.lrVal.cType = resultType;
 	}
 
 }

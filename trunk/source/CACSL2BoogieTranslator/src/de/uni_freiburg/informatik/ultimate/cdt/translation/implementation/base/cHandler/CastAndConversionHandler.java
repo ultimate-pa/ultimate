@@ -89,43 +89,7 @@ public class CastAndConversionHandler {
 				}
 			} else if (lCPrim.getGeneralType() == GENERALPRIMITIVE.INTTYPE
 					&& rCPrim.getGeneralType() == GENERALPRIMITIVE.INTTYPE) {
-				if (expressionTranslation instanceof IntegerTranslation) {
-				if (lCPrim.isUnsigned() || rCPrim.isUnsigned()) {
-					//does the unsigned int fit into the signed one? 
-					if (!lCPrim.isUnsigned() && rCPrim.isUnsigned()) {//l is signed r unsigned
-						if (!rIsBigger) {
-							//does not fit, need to convert signedInt l
-							if (wraparoundOverflows)
-								doIntOverflowTreatment(main, memoryHandler, iLoc, leftRex, rCPrim);
-						}
-						if (wraparoundOverflows)
-							doIntOverflowTreatment(main, memoryHandler, iLoc, rightRex);
-						//if lIsBigger, it fits, if both are false, we don't know
-						// do nothing either way..
-					} else if (lCPrim.isUnsigned() && !rCPrim.isUnsigned()) {//l is unsigned r signed
-						if (!lIsBigger) {
-							//does not fit, need to convert signedInt r
-							if (wraparoundOverflows)
-								doIntOverflowTreatment(main, memoryHandler, iLoc, rightRex, lCPrim);
-						}
-						if (wraparoundOverflows)
-							doIntOverflowTreatment(main, memoryHandler, iLoc, leftRex);
-						//if lIsBigger, it fits, if both are false, we don't know
-						// do nothing either way..
-					} else {//both are unsigned
-						//convert lesser rank to higher
-						//TODO (not that important?)
-						if (wraparoundOverflows) {
-								doIntOverflowTreatment(main, memoryHandler, iLoc, leftRex);					
-								doIntOverflowTreatment(main, memoryHandler, iLoc, rightRex);
-						}
-					}
-					
-				}
-				} else {
 					expressionTranslation.usualArithmeticConversions(main, loc, memoryHandler, leftRex, rightRex, wraparoundOverflows);
-				}
-				
 			}
 			
 		} 
@@ -165,78 +129,4 @@ public class CastAndConversionHandler {
 		}
 	}
 	
-	public static void doIntOverflowTreatment(Dispatcher main, MemoryHandler memoryHandler, ILocation loc,
-			ResultExpression rex) {
-		doIntOverflowTreatment(main, memoryHandler, loc, rex, rex.lrVal.cType.getUnderlyingType());
-	}
-	
-	public static void doIntOverflowTreatment(Dispatcher main, MemoryHandler memoryHandler, ILocation loc,
-			ResultExpression rex, CType targetType) {
-		BigInteger maxValuePlusOne = main.getTypeSizes().getMaxValueOfPrimitiveType((CPrimitive) targetType).add(BigInteger.ONE);
-
-		if (main.cHandler.getUnsignedTreatment() == UNSIGNED_TREATMENT.ASSUME_ALL) {
-			AssumeStatement assumeGeq0 = new AssumeStatement(loc, new BinaryExpression(loc, BinaryExpression.Operator.COMPGEQ,
-					rex.lrVal.getValue(), new IntegerLiteral(loc, SFO.NR0)));
-			rex.stmt.add(assumeGeq0);
-
-			AssumeStatement assumeLtMax = new AssumeStatement(loc, new BinaryExpression(loc, BinaryExpression.Operator.COMPLT,
-					rex.lrVal.getValue(), new IntegerLiteral(loc, maxValuePlusOne.toString())));
-			rex.stmt.add(assumeLtMax);
-		} else if (main.cHandler.getUnsignedTreatment() == UNSIGNED_TREATMENT.WRAPAROUND) {
-			rex.lrVal = new RValue(applyWrapAround(loc, main.getTypeSizes(), (CPrimitive) rex.lrVal.cType, rex.lrVal.getValue()),
-					rex.lrVal.cType, 
-					rex.lrVal.isBoogieBool,
-					false);
-		}
-	}
-	
-	public static Expression applyWrapAround(ILocation loc, TypeSizes typeSizes, CPrimitive cPrimitive, Expression operand) {
-		if (cPrimitive.getGeneralType() == GENERALPRIMITIVE.INTTYPE) {
-			if (cPrimitive.isUnsigned()) {
-				BigInteger maxValuePlusOne = typeSizes.getMaxValueOfPrimitiveType(cPrimitive).add(BigInteger.ONE);
-				return new BinaryExpression(loc, BinaryExpression.Operator.ARITHMOD, 
-						operand, 
-						new IntegerLiteral(loc, maxValuePlusOne.toString()));
-			} else {
-				throw new AssertionError("wraparound only for unsigned types");
-			}
-		} else {
-			throw new AssertionError("wraparound only for integer types");
-		}
-	}
-
-
-
-//	private static int determineByteSize(TypeSizes typeSizes,
-//			CType ulType) {
-//		int byteSize; 
-//		if (ulType instanceof CEnum) {
-//			byteSize = typeSizes.sizeOfEnumType;
-//		} else {
-//			//should be primitive
-//			byteSize = typeSizes.getSize(((CPrimitive) ulType).getType());
-//		}
-//		return byteSize;
-//	}
-
-	public static void doIntOverflowTreatmentInComparisonIfApplicable(Dispatcher main, MemoryHandler memoryHandler,
-			ILocation loc, ResultExpression left, ResultExpression right) {
-		if (main.cHandler.getUnsignedTreatment() == UNSIGNED_TREATMENT.IGNORE)
-			return;
-		
-		boolean isLeftUnsigned = left.lrVal.cType instanceof CPrimitive
-				&& ((CPrimitive) left.lrVal.cType).isUnsigned()
-				&& !left.lrVal.isIntFromPointer;
-		boolean isRightUnsigned = right.lrVal.cType instanceof CPrimitive
-				&& ((CPrimitive) right.lrVal.cType).isUnsigned()
-				&& !right.lrVal.isIntFromPointer;
-
-		//if one is unsigned, we convert the other to unsigned
-		// --> C99: "usual conversions"
-		if (isLeftUnsigned || isRightUnsigned) {
-			CastAndConversionHandler.doIntOverflowTreatment(main, memoryHandler, loc, left);
-			CastAndConversionHandler.doIntOverflowTreatment(main, memoryHandler, loc, right);
-		}
-		
-	}
 }
