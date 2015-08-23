@@ -1,8 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler;
 
-import java.util.Collections;
+import java.math.BigInteger;
 import java.util.LinkedHashMap;
-import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.PRIMITIVE;
@@ -53,15 +52,6 @@ public class TypeSizes {
 	private final LinkedHashMap<CPrimitive.PRIMITIVE, Integer> CPrimitiveToTypeSizeConstant = 
 			new LinkedHashMap<>();
 	
-
-	public Integer getSize(PRIMITIVE cPrimitive) {
-		Integer result = CPrimitiveToTypeSizeConstant.get(cPrimitive);
-		if (result == null) {
-			throw new IllegalArgumentException("unknown type " + cPrimitive);
-		} else {
-			return result;
-		}
-	}
 
 	public TypeSizes(UltimatePreferenceStore ups) {
 		this. m_UseFixedTypeSizes = 
@@ -142,5 +132,37 @@ public class TypeSizes {
 
 	public boolean useFixedTypeSizes() {
 		return m_UseFixedTypeSizes;
+	}
+	
+	
+	public Integer getSize(PRIMITIVE cPrimitive) {
+		Integer result = CPrimitiveToTypeSizeConstant.get(cPrimitive);
+		if (result == null) {
+			throw new IllegalArgumentException("unknown type " + cPrimitive);
+		} else {
+			return result;
+		}
+	}
+	
+	public BigInteger getMaxValueOfPrimitiveType(CPrimitive cPrimitive) {
+		int byteSize = getSize(cPrimitive.getType());
+		BigInteger maxValue;
+		if (cPrimitive.isUnsigned()) {
+			maxValue = new BigInteger("2").pow(byteSize * 8);
+		} else {
+			maxValue = new BigInteger("2").pow(byteSize * 8 - 1);
+		}
+		maxValue = maxValue.subtract(BigInteger.ONE);
+		return maxValue;
+	}
+	public BigInteger getMinValueOfPrimitiveType(CPrimitive cPrimitive) {
+		int byteSize = getSize(cPrimitive.getType());
+		BigInteger minValue;
+		if (cPrimitive.isUnsigned()) {
+			minValue = BigInteger.ZERO;
+		} else {
+			minValue = (new BigInteger("2").pow(byteSize * 8 - 1)).negate();
+		}
+		return minValue;
 	}
 }

@@ -307,10 +307,10 @@ public class SvComp14CHandler extends CHandler {
 	private AssumeStatement constructAssumeInRangeStatement(TypeSizes typeSizes, 
 			ILocation loc,
 			LRValue lrValue) {
-		IntegerLiteral minValue = new IntegerLiteral(loc, CastAndConversionHandler.getMinValueOfPrimitiveType(
-				typeSizes, lrValue.cType.getUnderlyingType()).toString());
-		IntegerLiteral maxValue = new IntegerLiteral(loc, CastAndConversionHandler.getMaxValueOfPrimitiveType(
-				typeSizes, lrValue.cType.getUnderlyingType()).toString());
+		IntegerLiteral minValue = new IntegerLiteral(loc, typeSizes.getMinValueOfPrimitiveType(
+				(CPrimitive) lrValue.cType.getUnderlyingType()).toString());
+		IntegerLiteral maxValue = new IntegerLiteral(loc, typeSizes.getMaxValueOfPrimitiveType(
+				(CPrimitive) lrValue.cType.getUnderlyingType()).toString());
 		BinaryExpression biggerMinInt = new BinaryExpression(loc, 
 				BinaryExpression.Operator.COMPLEQ, minValue, lrValue.getValue());
 		BinaryExpression smallerMaxValue = new BinaryExpression(loc, 

@@ -1931,11 +1931,11 @@ public class CHandler implements ICHandler {
 				&& !((CPrimitive) rVal.cType).isUnsigned()) {
 			Check check = new Check(Spec.INTEGER_OVERFLOW);
 			AssertStatement smallerMaxInt = new AssertStatement(loc, new BinaryExpression(loc, BinaryExpression.Operator.COMPLT, rVal.getValue(), 
-					new IntegerLiteral(loc, CastAndConversionHandler.getMaxValueOfPrimitiveType(main.getTypeSizes(), rVal.cType.getUnderlyingType()).toString())));
+					new IntegerLiteral(loc, main.getTypeSizes().getMaxValueOfPrimitiveType((CPrimitive) rVal.cType.getUnderlyingType()).toString())));
 			check.addToNodeAnnot(smallerMaxInt);
 			stmt.add(smallerMaxInt);
 			AssertStatement biggerMinInt = new AssertStatement(loc, new BinaryExpression(loc, BinaryExpression.Operator.COMPGEQ, rVal.getValue(), 
-					new IntegerLiteral(loc, CastAndConversionHandler.getMinValueOfPrimitiveType(main.getTypeSizes(), rVal.cType.getUnderlyingType()).negate().toString())));
+					new IntegerLiteral(loc, main.getTypeSizes().getMinValueOfPrimitiveType((CPrimitive) rVal.cType.getUnderlyingType()).negate().toString())));
 			check.addToNodeAnnot(biggerMinInt);
 			stmt.add(biggerMinInt);
 		}
@@ -3679,6 +3679,8 @@ public class CHandler implements ICHandler {
 					m_ExpressionTranslation.convert(loc, rexp, newType, typeSizes);
 					return;
 				} else if (newType instanceof CEnum) {
+					// C standard 6.4.4.3.2
+					// An identifier declared as an enumeration constant has type int.
 					CType typeInt = new CPrimitive(PRIMITIVE.INT);
 					m_ExpressionTranslation.convert(loc, rexp, typeInt, typeSizes);
 					return;

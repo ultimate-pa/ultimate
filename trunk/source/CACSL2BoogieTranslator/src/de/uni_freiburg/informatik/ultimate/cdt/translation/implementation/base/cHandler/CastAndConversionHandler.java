@@ -172,7 +172,7 @@ public class CastAndConversionHandler {
 	
 	public static void doIntOverflowTreatment(Dispatcher main, MemoryHandler memoryHandler, ILocation loc,
 			ResultExpression rex, CType targetType) {
-		BigInteger maxValuePlusOne = getMaxValueOfPrimitiveType(main.getTypeSizes(), targetType).add(BigInteger.ONE);
+		BigInteger maxValuePlusOne = main.getTypeSizes().getMaxValueOfPrimitiveType((CPrimitive) targetType).add(BigInteger.ONE);
 
 		if (main.cHandler.getUnsignedTreatment() == UNSIGNED_TREATMENT.ASSUME_ALL) {
 			AssumeStatement assumeGeq0 = new AssumeStatement(loc, new BinaryExpression(loc, BinaryExpression.Operator.COMPGEQ,
@@ -192,41 +192,19 @@ public class CastAndConversionHandler {
 		}
 	}
 
-	public static BigInteger getMaxValueOfPrimitiveType(
-			TypeSizes typeSizes, CType ulType) {
-		int byteSize = determineByteSize(typeSizes, ulType);
-		BigInteger maxValue;
-		if (((CPrimitive) ulType).isUnsigned()) {
-			maxValue = new BigInteger("2").pow(byteSize * 8);
-		} else {
-			maxValue = new BigInteger("2").pow(byteSize * 8 - 1);
-		}
-		maxValue = maxValue.subtract(BigInteger.ONE);
-		return maxValue;
-	}
-	public static BigInteger getMinValueOfPrimitiveType(
-			TypeSizes typeSizes, CType ulType) {
-		int byteSize = determineByteSize(typeSizes, ulType);
-		BigInteger minValue;
-		if (((CPrimitive) ulType).isUnsigned()) {
-			minValue = BigInteger.ZERO;
-		} else {
-			minValue = (new BigInteger("2").pow(byteSize * 8 - 1)).negate();
-		}
-		return minValue;
-	}
 
-	private static int determineByteSize(TypeSizes typeSizes,
-			CType ulType) {
-		int byteSize; 
-		if (ulType instanceof CEnum) {
-			byteSize = typeSizes.sizeOfEnumType;
-		} else {
-			//should be primitive
-			byteSize = typeSizes.getSize(((CPrimitive) ulType).getType());
-		}
-		return byteSize;
-	}
+
+//	private static int determineByteSize(TypeSizes typeSizes,
+//			CType ulType) {
+//		int byteSize; 
+//		if (ulType instanceof CEnum) {
+//			byteSize = typeSizes.sizeOfEnumType;
+//		} else {
+//			//should be primitive
+//			byteSize = typeSizes.getSize(((CPrimitive) ulType).getType());
+//		}
+//		return byteSize;
+//	}
 
 	public static void doIntOverflowTreatmentInComparisonIfApplicable(Dispatcher main, MemoryHandler memoryHandler,
 			ILocation loc, ResultExpression left, ResultExpression right) {
