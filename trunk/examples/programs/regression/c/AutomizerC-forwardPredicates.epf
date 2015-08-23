@@ -1,9 +1,4 @@
 #Wed Jan 15 21:36:24 CET 2014
-\!/instance/JungVisualization=
-file_export_version=3.0
-/instance/JungVisualization/shapeForNodePreference=RoundRectangle
-@JungVisualization=0.0.1
-#Wed Jan 15 21:36:24 CET 2014
 file_export_version=3.0
 \!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder=
 @de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder=0.0.1
