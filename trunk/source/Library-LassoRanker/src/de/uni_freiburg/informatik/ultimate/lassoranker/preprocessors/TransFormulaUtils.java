@@ -224,6 +224,7 @@ public class TransFormulaUtils {
 			}
 		}
 		Term result = (new SafeSubstitution(script, substitutionMapping)).transform(tf.getFormula());
+		result = Util.and(script, result, constructEqualitiesForCoinciding(script, tf));
 		if (!tf.getAuxVars().isEmpty()) {
 			logger.warn(tf.getAuxVars().size() + " quantified variables");
 			TermVariable[] auxVarsArray = tf.getAuxVars().toArray(new TermVariable[tf.getAuxVars().size()]);
@@ -281,6 +282,19 @@ public class TransFormulaUtils {
 	
 	public static boolean inVarAndOutVarCoincide(RankVar rv, TransFormulaLR rf) {
 		return rf.getInVars().get(rv) == rf.getOutVars().get(rv);
+	}
+	
+	private static Term constructEqualitiesForCoinciding(Script script, TransFormulaLR tf) {
+		ArrayList<Term> conjuncts = new ArrayList<Term>();
+		for (RankVar rv : tf.getInVars().keySet()) {
+			if (rv instanceof BoogieVarWrapper) {
+				if (inVarAndOutVarCoincide(rv, tf)) {
+					BoogieVar bv = ((BoogieVarWrapper) rv).getBoogieVar();
+					conjuncts.add(SmtUtils.binaryEquality(script, bv.getDefaultConstant(), bv.getPrimedConstant()));
+				}
+			}
+		}
+		return SmtUtils.and(script, conjuncts);
 	}
 
 
