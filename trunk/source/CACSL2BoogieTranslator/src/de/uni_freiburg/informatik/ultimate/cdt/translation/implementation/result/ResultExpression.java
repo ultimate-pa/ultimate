@@ -10,6 +10,7 @@ import java.util.Map;
 
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.MemoryHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.StructHandler;
@@ -174,6 +175,7 @@ public class ResultExpression extends Result {
     
     /**
      * copy constructor
+     * Note. Does _not_ construct a deep copy of the object.
      */
     public ResultExpression(ResultExpression rex) {
     	super(null);
@@ -184,6 +186,29 @@ public class ResultExpression extends Result {
     	this.overappr = rex.overappr;
     	this.unionFieldIdToCType = rex.unionFieldIdToCType;
     }
+    
+
+    /**
+     * Construct a new {@link ResultExpression} without an {@link LRValue}
+     * whose statements, declarations, auxVars and overapproximations contain
+     * all respective elements of resExprs.
+     * TODO: This could remove the old copy constructor one it is not used
+     * any more.
+     */
+    public static ResultExpression copyStmtDeclAuxvarOverapprox(ResultExpression... resExprs) {
+		ArrayList<Declaration> decl = new ArrayList<Declaration>();
+		ArrayList<Statement> stmt = new ArrayList<Statement>();
+		Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<VariableDeclaration, ILocation>();
+		List<Overapprox> overappr = new ArrayList<Overapprox>();
+		for (ResultExpression resExpr : resExprs) {
+			stmt.addAll(resExpr.stmt);
+			decl.addAll(resExpr.decl);
+			auxVars.putAll(resExpr.auxVars);
+			overappr.addAll(resExpr.overappr);
+		}
+    	return new ResultExpression(stmt, null, decl, auxVars, overappr, null);
+    }
+    
 
 	public ResultExpression switchToRValueIfNecessary(Dispatcher main, MemoryHandler memoryHandler, 
 			StructHandler structHandler, ILocation loc) {
