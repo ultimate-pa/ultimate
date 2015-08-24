@@ -332,7 +332,10 @@ public class ACSLHandler implements IACSLHandler {
         AExpressionTranslation expressionTranslation = 
      		   ((CHandler) main.cHandler).getExpressionTranslation();
         
-        expressionTranslation.usualArithmeticConversions(main, loc, left, right);
+        if (node.getOperator() != de.uni_freiburg.informatik.ultimate.model.acsl.ast.BinaryExpression.Operator.COMPEQ && 
+        		node.getOperator() != de.uni_freiburg.informatik.ultimate.model.acsl.ast.BinaryExpression.Operator.COMPNEQ) {
+        	expressionTranslation.usualArithmeticConversions(main, loc, left, right);
+        }
 
         ArrayList<Declaration> decl = new ArrayList<Declaration>();
         ArrayList<Statement> stmt = new ArrayList<Statement>();
@@ -376,11 +379,14 @@ public class ACSLHandler implements IACSLHandler {
 			
 		}
 		case COMPEQ:
+		case COMPNEQ: {
+			int op = getCASTBinaryExprOperator(node.getOperator());
+			return ((CHandler) main.cHandler).handleEqualityOperators(main, loc, op, left, right);
+		}
 		case COMPGEQ:
 		case COMPGT:
 		case COMPLEQ:
 		case COMPLT:
-		case COMPNEQ:
 		{
 			Expression expr = expressionTranslation.constructBinaryComparisonExpression(loc,
 					getCASTBinaryExprOperator(node.getOperator()), 

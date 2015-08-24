@@ -74,7 +74,7 @@ public class BitvectorTranslation extends AExpressionTranslation {
 		switch (nodeOperator) {
 		case IASTBinaryExpression.op_equals:
 		case IASTBinaryExpression.op_notequals:
-			result = constructBinaryEqualsExpression(loc, nodeOperator, exp1, type1, exp2, type2);
+			result = constructBinaryEqualityExpression(loc, nodeOperator, exp1, type1, exp2, type2);
 			break;
 		case IASTBinaryExpression.op_greaterEqual:
 		case IASTBinaryExpression.op_greaterThan:

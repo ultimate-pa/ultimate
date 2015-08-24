@@ -88,13 +88,14 @@ public abstract class AExpressionTranslation {
 		}
 	}
 	
+	
 	public abstract Expression constructBinaryComparisonExpression(ILocation loc, int nodeOperator, Expression exp1, CPrimitive type1, Expression exp2, CPrimitive type2);
 	public abstract Expression constructBinaryBitwiseExpression(ILocation loc, int nodeOperator, Expression exp1, CPrimitive type1, Expression exp2, CPrimitive type2);
 	public abstract Expression constructUnaryExpression(ILocation loc, int nodeOperator, Expression exp, CPrimitive type);
 	public abstract Expression createArithmeticExpression(int op, Expression left, CPrimitive typeLeft, Expression right, CPrimitive typeRight, ILocation loc);
 	
 	
-	protected Expression constructBinaryEqualsExpression(ILocation loc, int nodeOperator, Expression exp1, CPrimitive type1, Expression exp2, CPrimitive type2) {
+	public Expression constructBinaryEqualityExpression(ILocation loc, int nodeOperator, Expression exp1, CType type1, Expression exp2, CType type2) {
 		if (nodeOperator == IASTBinaryExpression.op_equals) {
 			return new BinaryExpression(loc, BinaryExpression.Operator.COMPEQ, exp1, exp2);
 		} else 	if (nodeOperator == IASTBinaryExpression.op_notequals) {

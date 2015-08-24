@@ -1323,7 +1323,7 @@ public class CHandler implements ICHandler {
 					|| node.getOperator() == IASTBinaryExpression.op_notequals) {
 				//!= and == are treated differently from the inequality operators
 				// --> behavior is never undefined for instance..
-				return handleEqualityOperators(main, loc, rlToInt, rrToInt, op);
+				return handleEqualityOperators(main, loc, node.getOperator(), rlToInt, rrToInt);
 			} else {
 				// we have a "relational" pointer comparison
 				if (lType instanceof CPointer || rType instanceof CPointer) {
@@ -1808,12 +1808,11 @@ public class CHandler implements ICHandler {
 	 * non-boolean representation of these results 
 	 * (i.e., rexBoolToIntIfNecessary() has already been applied if needed).
 	 */
-	private Result handleEqualityOperators(Dispatcher main, ILocation loc,
-			ResultExpression left, ResultExpression right,
-			BinaryExpression.Operator op) {
+	public ResultExpression handleEqualityOperators(Dispatcher main, ILocation loc,
+			int op,
+			ResultExpression left, ResultExpression right) {
 		assert (left.lrVal instanceof RValue);
 		assert (right.lrVal instanceof RValue);
-		
 		CType lType = left.lrVal.cType.getUnderlyingType();
 		CType rType = right.lrVal.cType.getUnderlyingType();
 		// implicit casts
@@ -1829,8 +1828,11 @@ public class CHandler implements ICHandler {
 		} else {
 			throw new UnsupportedOperationException("unsupported " + rType + ", " + lType);
 		}
-		RValue rval = new RValue(new BinaryExpression(loc, op, left.lrVal.getValue(), right.lrVal.getValue()),
-				new CPrimitive(PRIMITIVE.INT));
+		// The result has type int (C11 6.5.9.1)
+		CPrimitive typeOfResult = new CPrimitive(PRIMITIVE.INT);
+		Expression expr = m_ExpressionTranslation.constructBinaryEqualityExpression(
+				loc, op, left.lrVal.getValue(), lType, right.lrVal.getValue(), rType);
+		RValue rval = new RValue(expr,typeOfResult);
 		rval.isBoogieBool = true;
 		ResultExpression result = ResultExpression.copyStmtDeclAuxvarOverapprox(left, right);
 		result.lrVal = rval;
