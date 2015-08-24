@@ -58,6 +58,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Specification;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableLHS;
+import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Expression2Term.IdentifierTranslator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Expression2Term.MultiTermResult;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Expression2Term.SingleTermResult;
@@ -108,7 +109,7 @@ public class Statements2TransFormula {
 	private Term m_Assumes;
 	private Term m_Asserts;
 	private final IUltimateServiceProvider mServices;
-	private boolean m_Overapproximated = false;
+	private Map<String, ILocation> m_Overapproximations = null;
 
 	public Statements2TransFormula(Boogie2SMT boogie2smt, IUltimateServiceProvider services, Expression2Term expression2Term) {
 		super();
@@ -133,7 +134,7 @@ public class Statements2TransFormula {
 		assert m_AuxVars == null;
 		assert m_Assumes == null;
 
-		m_Overapproximated = false;
+		m_Overapproximations = new HashMap<>();
 		m_CurrentProcedure = procId;
 		m_OutVars = new HashMap<BoogieVar, TermVariable>();
 		m_InVars = new HashMap<BoogieVar, TermVariable>();
@@ -186,7 +187,7 @@ public class Statements2TransFormula {
 		m_InVars = null;
 		m_AuxVars = null;
 		m_Assumes = null;
-		return new TranslationResult(tf, m_Overapproximated);
+		return new TranslationResult(tf, m_Overapproximations);
 	}
 
 	private BoogieVar getModifiableBoogieVar(String id, DeclarationInformation declInfo) {
@@ -249,7 +250,7 @@ public class Statements2TransFormula {
 
 			SingleTermResult tlres = m_Expression2Term.translateToTerm(its, addedEqualities.get(tv));
 			m_AuxVars.addAll(tlres.getAuxiliaryVars());
-			m_Overapproximated |= tlres.isOverappoximated(); 
+			m_Overapproximations.putAll(tlres.getOverappoximations()); 
 			Term rhsTerm = tlres.getTerm();
 			Term eq = m_Script.term("=", tv, rhsTerm);
 
@@ -279,7 +280,7 @@ public class Statements2TransFormula {
 
 		SingleTermResult tlres = m_Expression2Term.translateToTerm(its, assume.getFormula());
 		m_AuxVars.addAll(tlres.getAuxiliaryVars());
-		m_Overapproximated |= tlres.isOverappoximated(); 
+		m_Overapproximations.putAll(tlres.getOverappoximations()); 
 		Term f = tlres.getTerm();
 		
 		m_Assumes = Util.and(m_Script, f, m_Assumes);
@@ -293,7 +294,7 @@ public class Statements2TransFormula {
 			IdentifierTranslator[] its = getIdentifierTranslatorsIntraprocedural();
 			SingleTermResult tlres = m_Expression2Term.translateToTerm(its, assertstmt.getFormula());
 			m_AuxVars.addAll(tlres.getAuxiliaryVars());
-			m_Overapproximated |= tlres.isOverappoximated(); 
+			m_Overapproximations.putAll(tlres.getOverappoximations()); 
 			Term f = tlres.getTerm();
 			
 			m_Assumes = Util.and(m_Script, f, m_Assumes);
@@ -363,7 +364,7 @@ public class Statements2TransFormula {
 			IdentifierTranslator[] its = getIdentifierTranslatorsIntraprocedural();
 			MultiTermResult tlres = m_Expression2Term.translateToTerms(its, arguments); 
 			m_AuxVars.addAll(tlres.getAuxiliaryVars());
-			m_Overapproximated |= tlres.isOverappoximated(); 
+			m_Overapproximations.putAll(tlres.getOverappoximations()); 
 			argumentTerms = tlres.getTerms();
 		}
 
@@ -386,7 +387,7 @@ public class Statements2TransFormula {
 				Expression post = ((EnsuresSpecification) spec).getFormula();
 				SingleTermResult tlres = m_Expression2Term.translateToTerm(ensIts, post);
 				m_AuxVars.addAll(tlres.getAuxiliaryVars());
-				m_Overapproximated |= tlres.isOverappoximated(); 
+				m_Overapproximations.putAll(tlres.getOverappoximations()); 
 				Term f = tlres.getTerm();
 				m_Assumes = Util.and(m_Script, f, m_Assumes);
 				if (s_ComputeAsserts) {
@@ -409,7 +410,7 @@ public class Statements2TransFormula {
 				Expression pre = ((RequiresSpecification) spec).getFormula();
 				SingleTermResult tlres = m_Expression2Term.translateToTerm(reqIts, pre);
 				m_AuxVars.addAll(tlres.getAuxiliaryVars());
-				m_Overapproximated |= tlres.isOverappoximated(); 
+				m_Overapproximations.putAll(tlres.getOverappoximations()); 
 				Term f = tlres.getTerm();
 				m_Assumes = Util.and(m_Script, f, m_Assumes);
 				if (s_ComputeAsserts) {
@@ -653,7 +654,7 @@ public class Statements2TransFormula {
 		IdentifierTranslator[] its = getIdentifierTranslatorsIntraprocedural();
 		MultiTermResult tlres = m_Expression2Term.translateToTerms(its, st.getArguments()); 
 		m_AuxVars.addAll(tlres.getAuxiliaryVars());
-		m_Overapproximated |= tlres.isOverappoximated(); 
+		m_Overapproximations.putAll(tlres.getOverappoximations()); 
 		Term[] argTerms = tlres.getTerms();
 		
 		m_OutVars.clear();
@@ -716,18 +717,18 @@ public class Statements2TransFormula {
 	
 	public class TranslationResult {
 		private final TransFormula m_TransFormula;
-		private final boolean m_Overapproximated;
+		private final Map<String, ILocation> m_Overapproximations;
 		public TranslationResult(TransFormula transFormula,
-				boolean overapproximated) {
+				Map<String, ILocation> overapproximations) {
 			super();
 			m_TransFormula = transFormula;
-			m_Overapproximated = overapproximated;
+			m_Overapproximations = overapproximations;
 		}
 		public TransFormula getTransFormula() {
 			return m_TransFormula;
 		}
-		public boolean isOverapproximated() {
-			return m_Overapproximated;
+		public Map<String, ILocation> getOverapproximations() {
+			return m_Overapproximations;
 		}
 		
 	}

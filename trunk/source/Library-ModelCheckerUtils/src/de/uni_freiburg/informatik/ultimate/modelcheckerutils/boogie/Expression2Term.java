@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
@@ -58,6 +59,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.RealLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Trigger;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VarList;
+import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.util.ScopedHashMap;
 
@@ -84,7 +86,7 @@ public class Expression2Term {
 	
 	private final ScopedHashMap<String, TermVariable> m_QuantifiedVariables = new ScopedHashMap<>();
 	private IdentifierTranslator[] m_SmtIdentifierProviders;
-	private boolean m_Overapproximation = false;
+	private Map<String, ILocation> m_Overapproximations = null;
 	private Collection<TermVariable> m_AuxVars = null;
 
 	/**
@@ -112,35 +114,35 @@ public class Expression2Term {
 	public SingleTermResult translateToTerm(IdentifierTranslator[] identifierTranslators, Expression expression) {
 		assert m_SmtIdentifierProviders == null : getClass().getSimpleName() + " in use";
 		assert m_QuantifiedVariables.isEmpty() : getClass().getSimpleName() + " in use";
-		assert m_Overapproximation == false : getClass().getSimpleName() + " in use";
+		assert m_Overapproximations == null : getClass().getSimpleName() + " in use";
 		assert m_AuxVars == null : getClass().getSimpleName() + " in use";
 		m_SmtIdentifierProviders = identifierTranslators;
 		m_AuxVars = new ArrayList<>();
-		m_Overapproximation = false;
+		m_Overapproximations = new HashMap<String, ILocation>();
 		Term term = translate(expression);
-		SingleTermResult result = new SingleTermResult(m_Overapproximation, m_AuxVars, term);
+		SingleTermResult result = new SingleTermResult(m_Overapproximations, m_AuxVars, term);
 		m_SmtIdentifierProviders = null;
 		m_AuxVars = null;
-		m_Overapproximation = false;
+		m_Overapproximations = null;
 		return result; 
 	}
 
 	public MultiTermResult translateToTerms(IdentifierTranslator[] identifierTranslators, Expression[] expressions) {
 		assert m_SmtIdentifierProviders == null : getClass().getSimpleName() + " in use";
 		assert m_QuantifiedVariables.isEmpty() : getClass().getSimpleName() + " in use";
-		assert m_Overapproximation == false : getClass().getSimpleName() + " in use";
+		assert m_Overapproximations == null : getClass().getSimpleName() + " in use";
 		assert m_AuxVars == null : getClass().getSimpleName() + " in use";
 		m_SmtIdentifierProviders = identifierTranslators;
 		m_AuxVars = new ArrayList<>();
-		m_Overapproximation = false;
+		m_Overapproximations = new HashMap<String, ILocation>();
 		Term[] terms = new Term[expressions.length];
 		for (int i = 0; i < expressions.length; i++) {
 			terms[i] = translate(expressions[i]);
 		}
-		MultiTermResult result = new MultiTermResult(m_Overapproximation, m_AuxVars, terms);
+		MultiTermResult result = new MultiTermResult(m_Overapproximations, m_AuxVars, terms);
 		m_SmtIdentifierProviders = null;
 		m_AuxVars = null;
-		m_Overapproximation = false;
+		m_Overapproximations = null;
 		return result; 
 	}
 
@@ -261,7 +263,7 @@ public class Expression2Term {
 				Sort resultSort = m_TypeSortTranslator.getSort(exp.getType(), exp);
 				TermVariable auxVar = m_VariableManager.constructFreshTermVariable(func.getIdentifier(), resultSort);
 				m_AuxVars.add(auxVar);
-				m_Overapproximation = true;
+				m_Overapproximations.put(overapproximation, exp.getLocation());
 				result = auxVar;
 			} else {
 				BigInteger[] indices = Boogie2SmtSymbolTable.checkForIndices(attributes);
@@ -393,17 +395,17 @@ public class Expression2Term {
 	}
 	
 	abstract class TranslationResult {
-		private final boolean m_Overappoximated;
+		private final Map<String, ILocation> m_Overappoximations;
 		private final Collection<TermVariable> m_AuxiliaryVars;
-		public TranslationResult(boolean overappoximated,
+		public TranslationResult(Map<String, ILocation> overapproximations,
 				Collection<TermVariable> auxiliaryVars) {
 			super();
 			assert auxiliaryVars != null;
-			m_Overappoximated = overappoximated;
+			m_Overappoximations = overapproximations;
 			m_AuxiliaryVars = auxiliaryVars;
 		}
-		public boolean isOverappoximated() {
-			return m_Overappoximated;
+		public Map<String, ILocation> getOverappoximations() {
+			return m_Overappoximations;
 		}
 		public Collection<TermVariable> getAuxiliaryVars() {
 			return m_AuxiliaryVars;
@@ -412,9 +414,9 @@ public class Expression2Term {
 	
 	public class SingleTermResult extends TranslationResult {
 		private final Term m_Term;
-		public SingleTermResult(boolean overappoximated,
+		public SingleTermResult(Map<String, ILocation> overapproximations,
 				Collection<TermVariable> auxiliaryVars, Term term) {
-			super(overappoximated, auxiliaryVars);
+			super(overapproximations, auxiliaryVars);
 			m_Term = term;
 		}
 		public Term getTerm() {
@@ -424,9 +426,9 @@ public class Expression2Term {
 	
 	public class MultiTermResult extends TranslationResult {
 		private final Term[] m_Terms;
-		public MultiTermResult(boolean overappoximated,
+		public MultiTermResult(Map<String, ILocation> overapproximations,
 				Collection<TermVariable> auxiliaryVars, Term[] terms) {
-			super(overappoximated, auxiliaryVars);
+			super(overapproximations, auxiliaryVars);
 			m_Terms = terms;
 		}
 		public Term[] getTerms() {

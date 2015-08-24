@@ -404,9 +404,14 @@ public class CfgBuilder {
 				.inParamAssignment(st);
 		TranslationResult outParams2CallerVars = m_RootAnnot.getBoogie2SMT().getStatements2TransFormula()
 				.resultAssignment(st, caller);
-		if (arguments2InParams.isOverapproximated() || outParams2CallerVars.isOverapproximated()) {
+		Map<String, ILocation> overapproximations = new HashMap<>();
+		overapproximations.putAll(arguments2InParams.getOverapproximations());
+		overapproximations.putAll(outParams2CallerVars.getOverapproximations());
+		if (!overapproximations.isEmpty()) {
 			Map<String, IAnnotations> annots = edge.getPayload().getAnnotations();
-			annots.put(Overapprox.getIdentifier(), new Overapprox("TODO: find text", edge.getPayload().getLocation()));
+			//TODO: it would be better to pass all overapproximations
+			Entry<String, ILocation> firstEntry = overapproximations.entrySet().iterator().next();
+			annots.put(Overapprox.getIdentifier(), new Overapprox(firstEntry.getKey(), firstEntry.getValue()));
 		}
 
 		Call call = m_Cbf.constructCall(callerNode, calleeEntryLoc, st);

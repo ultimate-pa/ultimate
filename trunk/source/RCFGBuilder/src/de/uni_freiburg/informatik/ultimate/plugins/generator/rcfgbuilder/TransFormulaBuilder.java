@@ -1,6 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder;
 
 import java.util.Map;
+import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
@@ -75,9 +76,11 @@ public class TransFormulaBuilder {
 			}
 			throw e;
 		}
-		if (tlres.isOverapproximated()) {
+		if (!tlres.getOverapproximations().isEmpty()) {
 			Map<String, IAnnotations> annots = cb.getPayload().getAnnotations();
-			annots.put(Overapprox.getIdentifier(), new Overapprox("TODO: find text", cb.getPayload().getLocation()));
+			//TODO: it would be better to pass all overapproximations
+			Entry<String, ILocation> firstEntry = tlres.getOverapproximations().entrySet().iterator().next();
+			annots.put(Overapprox.getIdentifier(), new Overapprox(firstEntry.getKey(), firstEntry.getValue()));
 		}
 		cb.setTransitionFormula(tlres.getTransFormula());
 	}
