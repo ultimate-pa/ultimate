@@ -2456,8 +2456,12 @@ public class CHandler implements ICHandler {
 		reNegative = reNegative.switchToRValueIfNecessary(main, mMemoryHandler, mStructHandler, loc);
 		reNegative = ConvExpr.rexBoolToIntIfNecessary(loc, reNegative, m_ExpressionTranslation);
 		
-		//TODO: 2015-08-23 Matthias do we really need usual arithmetic conversions here?
-		m_ExpressionTranslation.usualArithmeticConversions(main, loc, rePositive, reNegative);
+		if (rePositive.lrVal.cType.isArithmeticType() && reNegative.lrVal.cType.isArithmeticType()) {
+			// C11 6.5.15.5: If 2nd and 3rd operand have arithmetic type, 
+			// the result type is determined by the usual arithmetic conversions.
+			m_ExpressionTranslation.usualArithmeticConversions(main, loc, rePositive, reNegative);
+		}
+		
 		CastAndConversionHandler.doPrimitiveVsPointerConversions(main, loc, mMemoryHandler, rePositive, reNegative);
 
 		ArrayList<Statement> stmt = new ArrayList<Statement>();
