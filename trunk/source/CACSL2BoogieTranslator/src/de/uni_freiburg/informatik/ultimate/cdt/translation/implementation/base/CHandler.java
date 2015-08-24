@@ -1217,7 +1217,6 @@ public class CHandler implements ICHandler {
 			ResultExpression ropToInt = ConvExpr.rexBoolToIntIfNecessary(loc, rop, m_ExpressionTranslation);
 			List<Overapprox> overappr = new ArrayList<Overapprox>();
 			overappr.addAll(rop.overappr);
-			overappr.add(new Overapprox(Overapprox.BITVEC, loc));
 			Expression bwexpr = m_ExpressionTranslation.constructUnaryExpression(loc, 
 					node.getOperator(), ropToInt.lrVal.getValue(), (CPrimitive) ropToInt.lrVal.cType);
 			return new ResultExpression(rop.stmt, new RValue(bwexpr, rop.lrVal.cType), rop.decl, rop.auxVars, overappr);
