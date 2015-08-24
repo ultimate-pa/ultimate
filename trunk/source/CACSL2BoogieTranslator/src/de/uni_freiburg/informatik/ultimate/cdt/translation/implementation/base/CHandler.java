@@ -1808,7 +1808,7 @@ public class CHandler implements ICHandler {
 	 * non-boolean representation of these results 
 	 * (i.e., rexBoolToIntIfNecessary() has already been applied if needed).
 	 */
-	public ResultExpression handleEqualityOperators(Dispatcher main, ILocation loc,
+	ResultExpression handleEqualityOperators(Dispatcher main, ILocation loc,
 			int op,
 			ResultExpression left, ResultExpression right) {
 		assert (left.lrVal instanceof RValue);
