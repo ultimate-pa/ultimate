@@ -1432,9 +1432,9 @@ public class CHandler implements ICHandler {
 			IfStatement ifStatement = new IfStatement(loc, tmpRval.getValue(), outerThenPart.toArray(new Statement[0]),
 					new Statement[0]);
 			annots = ifStatement.getPayload().getAnnotations();
-			for (Overapprox overapprItem : overappr) {
-				annots.put(Overapprox.getIdentifier(), overapprItem);
-			}
+//			for (Overapprox overapprItem : overappr) {
+//				annots.put(Overapprox.getIdentifier(), overapprItem);
+//			}
 			stmt.add(ifStatement);
 			return new ResultExpression(stmt, resRval, decl, auxVars, overappr);
 		}
@@ -1762,7 +1762,7 @@ public class CHandler implements ICHandler {
 			auxVars.putAll(rr.auxVars);
 			overappr.addAll(rl.overappr);
 			overappr.addAll(rr.overappr);
-			overappr.add(new Overapprox(Overapprox.BITVEC, loc));
+//			overappr.add(new Overapprox(Overapprox.BITVEC, loc));
 			ResultExpression rlToInt = ConvExpr.rexBoolToIntIfNecessary(loc, rl, m_ExpressionTranslation);
 			ResultExpression rrToInt = ConvExpr.rexBoolToIntIfNecessary(loc, rr, m_ExpressionTranslation);
 			Expression bwexpr = m_ExpressionTranslation.constructBinaryBitwiseExpression(
@@ -1784,7 +1784,7 @@ public class CHandler implements ICHandler {
 			auxVars.putAll(rr.auxVars);
 			overappr.addAll(rl.overappr);
 			overappr.addAll(rr.overappr);
-			overappr.add(new Overapprox(Overapprox.BITVEC, loc));
+//			overappr.add(new Overapprox(Overapprox.BITVEC, loc));
 			ResultExpression rlToInt = ConvExpr.rexBoolToIntIfNecessary(loc, rl, m_ExpressionTranslation);
 			ResultExpression rrToInt = ConvExpr.rexBoolToIntIfNecessary(loc, rr, m_ExpressionTranslation);
 			Expression bwexpr = m_ExpressionTranslation.constructBinaryBitwiseExpression(
