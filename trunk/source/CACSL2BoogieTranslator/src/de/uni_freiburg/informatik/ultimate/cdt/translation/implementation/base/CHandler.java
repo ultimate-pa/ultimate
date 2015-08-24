@@ -1286,8 +1286,6 @@ public class CHandler implements ICHandler {
 			ResultExpression rrToInt = ConvExpr.rexBoolToIntIfNecessary(loc, rr, m_ExpressionTranslation);
 			ResultExpression rlToInt = ConvExpr.rexBoolToIntIfNecessary(loc, rl, m_ExpressionTranslation);
 			
-			m_ExpressionTranslation.usualArithmeticConversions(main, loc, rlToInt, rrToInt);
-			
 			stmt.addAll(rlToInt.stmt);
 			stmt.addAll(rrToInt.stmt);
 			decl.addAll(rlToInt.decl);
@@ -1325,7 +1323,7 @@ public class CHandler implements ICHandler {
 			if (node.getOperator() == IASTBinaryExpression.op_equals 
 					|| node.getOperator() == IASTBinaryExpression.op_notequals) {
 				//!= and == are treated differently from the inequality operators
-				// --> behaviour is never undefined for instance..
+				// --> behavior is never undefined for instance..
 				
 				// implicit casts
 				if (lType instanceof CPointer || rType instanceof CPointer) {
@@ -1335,6 +1333,10 @@ public class CHandler implements ICHandler {
 					if (!(rType instanceof CPointer)) {
 						castToType(loc, main.getTypeSizes(), rrToInt, new CPointer(new CPrimitive(PRIMITIVE.VOID)));
 					}
+				} else if (lType.isArithmeticType() && rType.isArithmeticType()) {
+					m_ExpressionTranslation.usualArithmeticConversions(main, loc, rlToInt, rrToInt);
+				} else {
+					throw new UnsupportedOperationException("unsupported " + rType + ", " + lType);
 				}
 				rval = new RValue(new BinaryExpression(loc, op, rlToInt.lrVal.getValue(), rrToInt.lrVal.getValue()),
 						new CPrimitive(PRIMITIVE.INT));
@@ -1382,10 +1384,13 @@ public class CHandler implements ICHandler {
 							new StructAccessExpression(loc, rlToInt.lrVal.getValue(), SFO.POINTER_OFFSET), 
 							new StructAccessExpression(loc, rrToInt.lrVal.getValue(), SFO.POINTER_OFFSET)), 
 							new CPrimitive(PRIMITIVE.INT));
-				} else {
+				} else if (lType.isArithmeticType() && rType.isArithmeticType()) {
+					m_ExpressionTranslation.usualArithmeticConversions(main, loc, rlToInt, rrToInt);
 					rval = new RValue(m_ExpressionTranslation.constructBinaryComparisonExpression(loc, node.getOperator(), rlToInt.lrVal.getValue(), (CPrimitive) rlToInt.lrVal.cType, rrToInt.lrVal.getValue(), (CPrimitive) rrToInt.lrVal.cType),
 							new CPrimitive(PRIMITIVE.INT));
-				}
+				} else {
+					throw new UnsupportedOperationException("unsupported " + rType + ", " + lType);
+				} 
 			}
 			rval.isBoogieBool = true;
 			return new ResultExpression(stmt, rval, decl, auxVars, overappr);

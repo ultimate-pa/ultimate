@@ -3,6 +3,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c;
 
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.GENERALPRIMITIVE;
+
 
 /**
  * @author Markus Lindenmann
@@ -74,5 +76,26 @@ public abstract class CType {
 	 */
 //	public boolean equals(Object o);
 //	public abstract int hashCode();
+	
+	/**
+	 * Returns true iff this type is an arithmetic type according to the
+	 * definition 6.2.5.18 in the C11 standard.
+	 */
+	public boolean isArithmeticType() {
+		if (this instanceof CPrimitive) {
+			if (((CPrimitive) this).getGeneralType() == GENERALPRIMITIVE.INTTYPE) {
+				return true;
+			} else if (((CPrimitive) this).getGeneralType() == GENERALPRIMITIVE.FLOATTYPE) {
+				return true;
+			} else {
+				return false;
+			}
+		} else if (this instanceof CEnum) {
+			return true;
+		} else {
+			return false;
+		}
+		
+	}
 		
 }
