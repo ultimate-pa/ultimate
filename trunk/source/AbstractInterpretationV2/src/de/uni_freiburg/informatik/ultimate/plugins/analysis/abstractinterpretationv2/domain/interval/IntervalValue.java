@@ -1,22 +1,24 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.interval;
 
+import java.math.BigDecimal;
+
 /**
  * A value in the interval domain for abstract interpretation. This value can be of any numbered type or can be
  * infinity.
  * 
+ * <p>
  * For interpreting values, one must always account for possible infinity. If {@link #isInfinity()} returns
  * <code>true</code>, the value obtained through {@link #getValue()} must be ignored as it is unsound.
+ * </p>
  * 
  * @author greitsch@informatik.uni-freiburg.de
- *
- * @param <T>
+ * 
  */
-public class IntervalValue<T extends Number> implements Comparable<IntervalValue<T>> {
+public class IntervalValue implements Comparable<IntervalValue> {
 
-	private T mValue;
+	private BigDecimal mValue;
+
 	private boolean mIsInfty;
-
-	private final Class<T> mClass;
 
 	/**
 	 * Constructor for a new {@link IntervalValue}. The value is set to infinity initially.
@@ -24,8 +26,7 @@ public class IntervalValue<T extends Number> implements Comparable<IntervalValue
 	 * @param clazz
 	 *            The backing field type.
 	 */
-	public IntervalValue(Class<T> clazz) {
-		mClass = clazz;
+	protected IntervalValue() {
 		mIsInfty = true;
 	}
 
@@ -37,8 +38,7 @@ public class IntervalValue<T extends Number> implements Comparable<IntervalValue
 	 * @param clazz
 	 *            The backing field type.
 	 */
-	public IntervalValue(T val, Class<T> clazz) {
-		mClass = clazz;
+	protected IntervalValue(BigDecimal val) {
 		mValue = val;
 		mIsInfty = false;
 	}
@@ -49,26 +49,29 @@ public class IntervalValue<T extends Number> implements Comparable<IntervalValue
 	 * @param val
 	 *            The value to set.
 	 */
-	public void setValue(T val) {
+	protected void setValue(BigDecimal val) {
 		mValue = val;
 		mIsInfty = false;
 	}
 
 	/**
-	 * Returns the value of this.<br />
+	 * Returns the value of this.
 	 * 
+	 * <p>
 	 * Note that this value is unsound if {@link #isInfinity()} returns <code>true</code>.
+	 * </p>
 	 * 
 	 * @return The value of this.
 	 */
-	public T getValue() {
+	protected BigDecimal getValue() {
 		return mValue;
 	}
 
 	/**
 	 * Sets the value to infinity.
 	 */
-	public void setToInfinity() {
+	protected void setToInfinity() {
+		mValue = null;
 		mIsInfty = true;
 	}
 
@@ -77,66 +80,61 @@ public class IntervalValue<T extends Number> implements Comparable<IntervalValue
 	 * 
 	 * @return <code>true</code> or <code>false</code>
 	 */
-	public boolean isInfinity() {
+	protected boolean isInfinity() {
 		return mIsInfty;
 	}
 
 	@Override
-	public int compareTo(IntervalValue<T> o) {
-
-		if (o == null) {
-			throw new NullPointerException("Empty comparator is not allowed.");
+	public boolean equals(Object other) {
+		if (other == null) {
+			return false;
 		}
 
-		if (!mClass.equals(o.mClass)) {
-			throw new UnsupportedOperationException("The backing types of this and the other value are not equal."
-			        + " Therefore, the values are not comparable.");
+		if (this.getClass() != other.getClass()) {
+			return false;
 		}
 
-		if (mIsInfty && o.isInfinity()) {
+		if (other == this) {
+			return true;
+		}
+
+		final IntervalValue comparableOther = (IntervalValue) other;
+
+		if (mIsInfty && comparableOther.mIsInfty) {
+			return true;
+		}
+
+		if ((mIsInfty && !comparableOther.mIsInfty) || (!mIsInfty && comparableOther.mIsInfty)) {
+			return false;
+		}
+
+		return mValue.compareTo(comparableOther.mValue) == 0 ? true : false;
+	}
+
+	@Override
+	public int hashCode() {
+		return mValue.hashCode();
+	}
+
+	@Override
+	public int compareTo(IntervalValue other) {
+
+		if (other == null) {
+			throw new UnsupportedOperationException("Empty comparator is not allowed.");
+		}
+
+		if (mIsInfty && other.isInfinity()) {
 			return 0;
 		}
 
-		if (mIsInfty && !o.isInfinity()) {
+		if (mIsInfty && !other.isInfinity()) {
 			return 1;
 		}
 
-		if (!mIsInfty && o.isInfinity()) {
+		if (!mIsInfty && other.isInfinity()) {
 			return -1;
 		}
 
-		if (mClass.equals(Byte.class)) {
-			Byte own = (Byte) mValue;
-			Byte other = (Byte) o.mValue;
-
-			return own.compareTo(other);
-		} else if (mClass.equals(Double.class)) {
-			Double own = (Double) mValue;
-			Double other = (Double) o.mValue;
-
-			return own.compareTo(other);
-		} else if (mClass.equals(Float.class)) {
-			Float own = (Float) mValue;
-			Float other = (Float) o.mValue;
-
-			return own.compareTo(other);
-		} else if (mClass.equals(Integer.class)) {
-			Integer own = (Integer) mValue;
-			Integer other = (Integer) o.mValue;
-
-			return own.compareTo(other);
-		} else if (mClass.equals(Long.class)) {
-			Long own = (Long) mValue;
-			Long other = (Long) o.mValue;
-
-			return own.compareTo(other);
-		} else if (mClass.equals(Short.class)) {
-			Short own = (Short) mValue;
-			Short other = (Short) o.mValue;
-
-			return own.compareTo(other);
-		}
-
-		throw new UnsupportedOperationException("The backing type " + mClass.toString() + " cannot be handled.");
+		return mValue.compareTo(other.mValue);
 	}
 }

@@ -13,11 +13,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  * negative, equal to 0, or positive.
  * 
  * @author greitsch@informatik.uni-freiburg.de
- *
- * @param <CodeBlock>
- *            Any action type.
- * @param <BoogieVar>
- *            Any variable declaration.
+ * 
  */
 public class SignDomain implements IAbstractDomain<SignDomainState<CodeBlock, BoogieVar>, CodeBlock, BoogieVar> {
 
@@ -31,7 +27,7 @@ public class SignDomain implements IAbstractDomain<SignDomainState<CodeBlock, Bo
 
 	@Override
 	public IAbstractState<CodeBlock, BoogieVar> createFreshState() {
-		return new SignDomainState<CodeBlock, BoogieVar>();
+		return new SignDomainState<CodeBlock, BoogieVar>(mStateConverter);
 	}
 
 	@Override

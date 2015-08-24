@@ -13,7 +13,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  *            Any variable declaration.
  */
 public class SignStateConverter<ACTION, VARDECL> {
-	private Class<SignDomainState<ACTION, VARDECL>> mStateType;
+	private final Class<SignDomainState<ACTION, VARDECL>> mStateType;
 
 	@SuppressWarnings("unchecked")
 	protected SignStateConverter(SignDomainState<ACTION, VARDECL> sampleState) {
@@ -27,14 +27,14 @@ public class SignStateConverter<ACTION, VARDECL> {
 	 *            The state to be converted into a SignDomainState.
 	 * @return Returns the given IAbstractState converted to a SignDomainState.
 	 */
-	public SignDomainState<ACTION, VARDECL> getCheckedState(IAbstractState<ACTION, VARDECL> state) {
+	protected SignDomainState<ACTION, VARDECL> getCheckedState(IAbstractState<ACTION, VARDECL> state) {
 		if (!(mStateType.isInstance(state))) {
 			throw new IllegalArgumentException("SignDomain can only process SignDomainState types as abstract states.");
 		}
 		return (SignDomainState<ACTION, VARDECL>) state;
 	}
 	
-	public Class<SignDomainState<ACTION, VARDECL>> getAbstractStateClass() {
+	protected Class<SignDomainState<ACTION, VARDECL>> getAbstractStateClass() {
 		return mStateType;
 	}
 }

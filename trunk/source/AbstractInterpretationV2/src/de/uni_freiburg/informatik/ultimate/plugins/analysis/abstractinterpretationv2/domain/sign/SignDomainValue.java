@@ -9,15 +9,19 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  * <li>(-)</li>
  * <li>(0)</li>
  * <li>T</li>
- * <li>&perp;</li>
+ * <li>&bot;</li>
  * </ul>
  * 
+ * <p>
  * The default value is always T.
+ * </p>
  * 
  * @author greitsch@informatik.uni-freiburg.de
  *
  */
 public class SignDomainValue implements IEvaluationResult<SignDomainValue.Values>, Comparable<SignDomainValue> {
+
+	private static final int BUILDER_SIZE = 100;
 
 	private final Values mValue;
 
@@ -32,8 +36,7 @@ public class SignDomainValue implements IEvaluationResult<SignDomainValue.Values
 	}
 
 	/**
-	 * Default constructor. The default value of the {@link SignDomainValue} is
-	 * T.
+	 * Default constructor. The default value of the {@link SignDomainValue} is T.
 	 */
 	protected SignDomainValue() {
 		mValue = Values.TOP;
@@ -43,8 +46,7 @@ public class SignDomainValue implements IEvaluationResult<SignDomainValue.Values
 	 * Constructor that sets the value of the created {@link SignDomainValue}.
 	 * 
 	 * @param value
-	 *            The value the SignDomainValue should be set to. Must be one of
-	 *            {@link Values}.
+	 *            The value the SignDomainValue should be set to. Must be one of {@link Values}.
 	 */
 	protected SignDomainValue(Values value) {
 		mValue = value;
@@ -59,34 +61,32 @@ public class SignDomainValue implements IEvaluationResult<SignDomainValue.Values
 	}
 
 	/**
-	 * Intersects {@link this} with a given other value according to the
-	 * following scheme:
+	 * Intersects {@link this} with a given other value according to the following scheme:
 	 * 
 	 * <ul>
 	 * <li>(+) &cap; (+) = (+)</li>
-	 * <li>(-) &cap; (+) = &perp;</li>
+	 * <li>(-) &cap; (+) = &bot;</li>
 	 * <li>(0) &cap; (0) = (0)</li>
-	 * <li>(0) &cap; (+) = &perp;</li>
-	 * <li>(0) &cap; (-) = &perp;</li>
+	 * <li>(0) &cap; (+) = &bot;</li>
+	 * <li>(0) &cap; (-) = &bot;</li>
 	 * <li>T &cap; T = T</li>
-	 * <li>T &cap; ... = &perp; (if ... != T)</li>
-	 * <li>&perp; &cap; ... = &perp;</li>
+	 * <li>T &cap; ... = &bot; (if ... != T)</li>
+	 * <li>&bot; &cap; ... = &bot;</li>
 	 * </ul>
 	 * 
 	 * @param other
 	 *            The other value to intersect the current value with.
-	 * @return A new value after the intersection of the current value with the
-	 *         other value.
+	 * @return A new value after the intersection of the current value with the other value.
 	 */
-	public SignDomainValue intersect(SignDomainValue other) {
+	protected SignDomainValue intersect(SignDomainValue other) {
 
-		if (mValue.equals(other.getResult()) && mValue.equals(Values.POSITIVE)) {
+		if (mValue == other.getResult() && mValue == Values.POSITIVE) {
 			return new SignDomainValue(Values.POSITIVE);
 		}
-		if (mValue.equals(other.getResult()) && mValue.equals(Values.ZERO)) {
+		if (mValue == other.getResult() && mValue == Values.ZERO) {
 			return new SignDomainValue(Values.ZERO);
 		}
-		if (mValue.equals(other.getResult()) && mValue.equals(Values.TOP)) {
+		if (mValue == other.getResult() && mValue == Values.TOP) {
 			return new SignDomainValue(Values.TOP);
 		}
 
@@ -105,9 +105,13 @@ public class SignDomainValue implements IEvaluationResult<SignDomainValue.Values
 			return false;
 		}
 
-		if (other.getClass().equals(this.getClass())) {
-			SignDomainValue castedOther = (SignDomainValue) other;
-			return getResult().equals(castedOther.getResult());
+		if (other == this) {
+			return true;
+		}
+
+		if (this.getClass() == other.getClass()) {
+			final SignDomainValue castedOther = (SignDomainValue) other;
+			return getResult() == castedOther.getResult();
 		}
 		return false;
 	}
@@ -116,67 +120,73 @@ public class SignDomainValue implements IEvaluationResult<SignDomainValue.Values
 	/**
 	 * Implements the following relations and their inverse according to the lattice of the sign domain:
 	 * 
-	 * \bot == \bot
+	 * <p>
+	 * &bot; == &bot;
 	 * (-) == (-)
 	 * (+) == (+)
-	 * \top == \top
-	 * \bot < ..., where ... is not \bot
+	 * T == T
+	 * &bot; < ..., where ... is not &bot;
 	 * (-) < 0
 	 * (-) < (+)
 	 * (0) < (+)
-	 * ... < \top, where ... is not \top
+	 * ... < T, where ... is not T
+	 * </p>
 	 * 
-	 *       top
+	 * <p>
+	 *        T
 	 *    /   |   \
 	 * (-) - (0) - (+)
 	 *    \   |   /
-	 *       bot
+	 *      &bot;
+	 * </p>
 	 */
 	public int compareTo(SignDomainValue other) {
 
 		// ... == ...
-		if (getResult().equals(other.getResult())) {
+		if (getResult() == other.getResult()) {
 			return 0;
 		}
 		// ... == ...
 
 		// \bot < ...
-		if (getResult().equals(Values.BOTTOM) && !other.getResult().equals(Values.BOTTOM)) {
+		if (getResult() == Values.BOTTOM && other.getResult() != Values.BOTTOM) {
 			return -1;
 		}
-		if (!getResult().equals(Values.BOTTOM) && other.getResult().equals(Values.BOTTOM)) {
+		if (getResult() != Values.BOTTOM && other.getResult() == Values.BOTTOM) {
 			return 1;
 		}
 		// \bot < ...
 
 		// (-) < ...
-		if (getResult().equals(Values.NEGATIVE) && !other.getResult().equals(Values.NEGATIVE)) {
+		if (getResult() == Values.NEGATIVE && other.getResult() != Values.NEGATIVE) {
 			return -1;
 		}
-		if (!getResult().equals(Values.NEGATIVE) && other.getResult().equals(Values.NEGATIVE)) {
+		if (getResult() != Values.NEGATIVE && other.getResult() == Values.NEGATIVE) {
 			return 1;
 		}
 		// (-) < ...
 
 		// (0) < ...
-		if (getResult().equals(Values.ZERO) && !other.getResult().equals(Values.ZERO)) {
+		if (getResult() == Values.ZERO && other.getResult() != Values.ZERO) {
 			return -1;
 		}
-		if (!getResult().equals(Values.ZERO) && other.getResult().equals(Values.ZERO)) {
+		if (getResult() != Values.ZERO && other.getResult() == Values.ZERO) {
 			return 1;
 		}
 		// (0) < ...
 
 		// \top > ...
-		if (!getResult().equals(Values.TOP) && other.getResult().equals(Values.TOP)) {
+		if (getResult() != Values.TOP && other.getResult() == Values.TOP) {
 			return -1;
 		}
-		if (getResult().equals(Values.TOP) && !other.getResult().equals(Values.TOP)) {
+		if (getResult() == Values.TOP && other.getResult() != Values.TOP) {
 			return 1;
 		}
 		// \top > ...
 
-		throw new UnsupportedOperationException("The case for this = " + getResult().toString() + " and other = "
-		        + other.getResult().toString() + " is not implemented.");
+		final StringBuilder stringBuilder = new StringBuilder(BUILDER_SIZE);
+		stringBuilder.append("The case for this = ").append(getResult()).append(" and other = ")
+		        .append(other.getResult()).append(" is not implemented.");
+		throw new UnsupportedOperationException(stringBuilder.toString());
 	}
 }

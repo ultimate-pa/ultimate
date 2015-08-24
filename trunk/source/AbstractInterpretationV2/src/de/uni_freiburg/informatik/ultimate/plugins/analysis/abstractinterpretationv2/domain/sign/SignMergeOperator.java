@@ -8,31 +8,37 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.sign.SignDomainValue.Values;
 
 /**
- * The implementation of a simple merge operator on the sign domain. This
- * operator can also be used as widening operator.
+ * The implementation of a simple merge operator on the sign domain. This operator can also be used as widening
+ * operator.
  * 
  * @author greitsch@informatik.uni-freiburg.de
  *
  * @param <ACTION>
+ *            Any action.
  * @param <VARDECL>
+ *            Any variable declaration.
  */
 public class SignMergeOperator<ACTION, VARDECL> implements IAbstractStateBinaryOperator<ACTION, VARDECL> {
 
-	private SignStateConverter<ACTION, VARDECL> mStateConverter;
+	private static final int BUFFER_SIZE = 100;
+
+	private final SignStateConverter<ACTION, VARDECL> mStateConverter;
 
 	protected SignMergeOperator(SignStateConverter<ACTION, VARDECL> stateConverter) {
 		mStateConverter = stateConverter;
 	}
 
 	/**
-	 * Merges two abstract states, first and second, into one new abstract
-	 * state. All variables that occur in first must also occur in second.<br />
+	 * Merges two abstract states, first and second, into one new abstract state. All variables that occur in first must
+	 * also occur in second.<br />
 	 * 
-	 * Assume, there is a variable with name "v". The value of "v" in first is
-	 * v1 and the value of "v" in second is v2.<br />
+	 * <p>
+	 * Assume, there is a variable with name "v". The value of "v" in first is v1 and the value of "v" in second is v2.
+	 * <br />
+	 * </p>
 	 * 
-	 * It is distinguished between four cases for the resulting merged value of
-	 * "v":<br />
+	 * <p>
+	 * It is distinguished between four cases for the resulting merged value of "v":<br />
 	 * <ol>
 	 * <li>v1 is equal to v2:<br />
 	 * The resulting value will be v1.</li>
@@ -43,6 +49,7 @@ public class SignMergeOperator<ACTION, VARDECL> implements IAbstractStateBinaryO
 	 * <li>v1 is \bot or v2 is \bot:<br />
 	 * The resulting value will be \bot.</li>
 	 * </ol>
+	 * </p>
 	 * 
 	 * @param first
 	 *            The first state to merge.
@@ -62,15 +69,15 @@ public class SignMergeOperator<ACTION, VARDECL> implements IAbstractStateBinaryO
 			throw new UnsupportedOperationException("Cannot merge two states with a disjoint set of variables.");
 		}
 
-		SignDomainState<ACTION, VARDECL> newState = (SignDomainState<ACTION, VARDECL>) first.copy();
+		final SignDomainState<ACTION, VARDECL> newState = (SignDomainState<ACTION, VARDECL>) first.copy();
 
 		final Map<String, VARDECL> variables = firstState.getVariables();
 		final Map<String, SignDomainValue> firstValues = firstState.getValues();
 		final Map<String, SignDomainValue> secondValues = secondState.getValues();
 
-		for (Entry<String, VARDECL> entry : variables.entrySet()) {
-			SignDomainValue value1 = firstValues.get(entry.getKey());
-			SignDomainValue value2 = secondValues.get(entry.getKey());
+		for (final Entry<String, VARDECL> entry : variables.entrySet()) {
+			final SignDomainValue value1 = firstValues.get(entry.getKey());
+			final SignDomainValue value2 = secondValues.get(entry.getKey());
 
 			newState.setValue(entry.getKey(), computeMergedValue(value1, value2));
 		}
@@ -79,33 +86,38 @@ public class SignMergeOperator<ACTION, VARDECL> implements IAbstractStateBinaryO
 	}
 
 	/**
-	 * Computes the merging of two {@link SignDomainState}
-	 * {@link SignDomainValue}s.
+	 * Computes the merging of two {@link SignDomainValue}s. {@link SignDomainValue}s.
 	 * 
 	 * @param value1
+	 *            The first value.
 	 * @param value2
-	 * @return
+	 *            The second value.
+	 * @return Returns a new {@link SignDomainValue}.
 	 */
-	public SignDomainValue computeMergedValue(SignDomainValue value1, SignDomainValue value2) {
-		if (value1.getResult().equals(value2.getResult())) {
-			return value1;
+	private SignDomainValue computeMergedValue(SignDomainValue value1, SignDomainValue value2) {
+		if (value1.getResult() == value2.getResult()) {
+			return new SignDomainValue(value1.getResult());
 		}
 
-		if (value1.getResult().equals(Values.BOTTOM) || value2.getResult().equals(Values.BOTTOM)) {
+		if (value1.getResult() == Values.BOTTOM || value2.getResult() == Values.BOTTOM) {
 			return new SignDomainValue(Values.BOTTOM);
 		}
 
-		if ((value1.getResult().equals(Values.POSITIVE) && value2.getResult().equals(Values.NEGATIVE))
-		        || (value1.getResult().equals(Values.NEGATIVE) && value2.getResult().equals(Values.POSITIVE))) {
+		if ((value1.getResult() == Values.POSITIVE && value2.getResult() == Values.NEGATIVE)
+		        || (value1.getResult() == Values.NEGATIVE && value2.getResult() == Values.POSITIVE)) {
 			return new SignDomainValue(Values.TOP);
 		}
 
-		if (value1.getResult().equals(Values.ZERO) || value2.getResult().equals(Values.ZERO)) {
+		if (value1.getResult() == Values.ZERO || value2.getResult() == Values.ZERO) {
 			return new SignDomainValue(Values.TOP);
 		}
 
-		throw new UnsupportedOperationException("Unable to handle value1 = " + value1.getResult().toString()
-		        + " and value2 = " + value2.getResult().toString() + ".");
+		final StringBuilder stringBuilder = new StringBuilder(BUFFER_SIZE);
+
+		stringBuilder.append("Unable to handle value1 = ").append(value1.getResult()).append(" and value2 = ")
+		        .append(value2.getResult()).append('.');
+
+		throw new UnsupportedOperationException(stringBuilder.toString());
 	}
 
 }
