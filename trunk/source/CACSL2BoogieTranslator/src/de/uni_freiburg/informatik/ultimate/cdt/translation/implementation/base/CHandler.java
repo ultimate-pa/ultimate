@@ -1367,6 +1367,7 @@ public class CHandler implements ICHandler {
 							new StructAccessExpression(loc, rlToInt.lrVal.getValue(), SFO.POINTER_OFFSET), 
 							new StructAccessExpression(loc, rrToInt.lrVal.getValue(), SFO.POINTER_OFFSET)), 
 							new CPrimitive(PRIMITIVE.INT));
+					return new ResultExpression(stmt, rval, decl, auxVars, overappr);
 				} else if (lType.isArithmeticType() && rType.isArithmeticType()) {
 					m_ExpressionTranslation.usualArithmeticConversions(main, loc, rlToInt, rrToInt);
 					RValue rval = new RValue(m_ExpressionTranslation.constructBinaryComparisonExpression(loc, node.getOperator(), rlToInt.lrVal.getValue(), (CPrimitive) rlToInt.lrVal.cType, rrToInt.lrVal.getValue(), (CPrimitive) rrToInt.lrVal.cType),
