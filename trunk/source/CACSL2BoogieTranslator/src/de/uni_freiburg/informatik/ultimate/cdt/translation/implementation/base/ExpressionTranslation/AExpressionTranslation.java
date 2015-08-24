@@ -113,7 +113,7 @@ public abstract class AExpressionTranslation {
 		return m_FunctionDeclarations;
 	}
 	
-	public CPrimitive determineResultTypeOfIntegerPromotion(CPrimitive typeLeft, CPrimitive typeRight) {
+	public CPrimitive determineResultOfUsualArithmeticConversions_Integer(CPrimitive typeLeft, CPrimitive typeRight) {
 		
 		if (typeLeft.equals(typeRight)) {
 			return typeLeft;
@@ -215,7 +215,7 @@ public abstract class AExpressionTranslation {
 			}
 		} else if (leftPrimitive.getGeneralType() == GENERALPRIMITIVE.INTTYPE
 				&& rightPrimitive.getGeneralType() == GENERALPRIMITIVE.INTTYPE) {
-			return determineResultTypeOfIntegerPromotion(leftPrimitive, rightPrimitive);
+			return determineResultOfUsualArithmeticConversions_Integer(leftPrimitive, rightPrimitive);
 		} else {
 			throw new AssertionError("unsupported combination of CPrimitives: " 
 					+ leftPrimitive + " and " + rightPrimitive);
@@ -239,6 +239,20 @@ public abstract class AExpressionTranslation {
 	}
 
 	public abstract void convert(ILocation loc, ResultExpression operand, CType resultType);
+	
+	/**
+	 * Perform the integer promotions a specified in C11 6.3.1.1.2 on the
+	 * operand.
+	 */
+	public abstract void doIntegerPromotion(ILocation loc, ResultExpression operand);
+	
+	public boolean integerPromotionNeeded(CPrimitive cPrimitive) {
+		return false;
+	}
+	
+	public CPrimitive determineResultOfIntegerPromotion(CPrimitive cPrimitve) {
+		return null;
+	}
 	
 
 	/**
@@ -267,4 +281,5 @@ public abstract class AExpressionTranslation {
 	public CPrimitive getCTypeOfPointerComponents() {
 		return new CPrimitive(PRIMITIVE.INT);
 	}
+	
 }

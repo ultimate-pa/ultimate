@@ -435,4 +435,10 @@ public class IntegerTranslation extends AExpressionTranslation {
 		operand.lrVal.cType = resultType;
 	}
 
+	@Override
+	public void doIntegerPromotion(ILocation loc, ResultExpression operand) {
+		// TODO Auto-generated method stub
+		
+	}
+
 }
