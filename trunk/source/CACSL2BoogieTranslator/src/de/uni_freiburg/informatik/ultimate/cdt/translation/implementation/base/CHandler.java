@@ -1319,27 +1319,13 @@ public class CHandler implements ICHandler {
 				throw new AssertionError("???");
 			}
 			
-			RValue rval = null;
 			if (node.getOperator() == IASTBinaryExpression.op_equals 
 					|| node.getOperator() == IASTBinaryExpression.op_notequals) {
 				//!= and == are treated differently from the inequality operators
 				// --> behavior is never undefined for instance..
 				
-				// implicit casts
-				if (lType instanceof CPointer || rType instanceof CPointer) {
-					if (!(lType instanceof CPointer)) {
-						castToType(loc, main.getTypeSizes(), rlToInt, new CPointer(new CPrimitive(PRIMITIVE.VOID)));
-					}
-					if (!(rType instanceof CPointer)) {
-						castToType(loc, main.getTypeSizes(), rrToInt, new CPointer(new CPrimitive(PRIMITIVE.VOID)));
-					}
-				} else if (lType.isArithmeticType() && rType.isArithmeticType()) {
-					m_ExpressionTranslation.usualArithmeticConversions(main, loc, rlToInt, rrToInt);
-				} else {
-					throw new UnsupportedOperationException("unsupported " + rType + ", " + lType);
-				}
-				rval = new RValue(new BinaryExpression(loc, op, rlToInt.lrVal.getValue(), rrToInt.lrVal.getValue()),
-						new CPrimitive(PRIMITIVE.INT));
+				return handleEqualityOperators(main, decl, stmt, auxVars, loc,
+						overappr, lType, rType, rrToInt, rlToInt, op);
 			} else {
 				// we have a "relational" pointer comparison
 				if (lType instanceof CPointer || rType instanceof CPointer) {
@@ -1380,20 +1366,22 @@ public class CHandler implements ICHandler {
 						stmt.add(assumeStm);
 					}
 
-					rval = new RValue(new BinaryExpression(loc, op, 
+					RValue rval = new RValue(new BinaryExpression(loc, op, 
 							new StructAccessExpression(loc, rlToInt.lrVal.getValue(), SFO.POINTER_OFFSET), 
 							new StructAccessExpression(loc, rrToInt.lrVal.getValue(), SFO.POINTER_OFFSET)), 
 							new CPrimitive(PRIMITIVE.INT));
 				} else if (lType.isArithmeticType() && rType.isArithmeticType()) {
 					m_ExpressionTranslation.usualArithmeticConversions(main, loc, rlToInt, rrToInt);
-					rval = new RValue(m_ExpressionTranslation.constructBinaryComparisonExpression(loc, node.getOperator(), rlToInt.lrVal.getValue(), (CPrimitive) rlToInt.lrVal.cType, rrToInt.lrVal.getValue(), (CPrimitive) rrToInt.lrVal.cType),
+					RValue rval = new RValue(m_ExpressionTranslation.constructBinaryComparisonExpression(loc, node.getOperator(), rlToInt.lrVal.getValue(), (CPrimitive) rlToInt.lrVal.cType, rrToInt.lrVal.getValue(), (CPrimitive) rrToInt.lrVal.cType),
 							new CPrimitive(PRIMITIVE.INT));
+					rval.isBoogieBool = true;
+					return new ResultExpression(stmt, rval, decl, auxVars, overappr);
 				} else {
 					throw new UnsupportedOperationException("unsupported " + rType + ", " + lType);
-				} 
+				}
+
 			}
-			rval.isBoogieBool = true;
-			return new ResultExpression(stmt, rval, decl, auxVars, overappr);
+
 		}
 		case IASTBinaryExpression.op_logicalAnd: {
 			ResultExpression rlToBool = ConvExpr.rexIntToBoolIfNecessary(loc, rl, m_ExpressionTranslation);
@@ -1811,6 +1799,31 @@ public class CHandler implements ICHandler {
 			String msg = "Unknown or unsupported unary operation";
 			throw new UnsupportedSyntaxException(loc, msg);
 		}
+	}
+
+	private Result handleEqualityOperators(Dispatcher main,
+			ArrayList<Declaration> decl, ArrayList<Statement> stmt,
+			Map<VariableDeclaration, ILocation> auxVars, ILocation loc,
+			List<Overapprox> overappr, CType lType, CType rType,
+			ResultExpression rrToInt, ResultExpression rlToInt,
+			BinaryExpression.Operator op) {
+		// implicit casts
+		if (lType instanceof CPointer || rType instanceof CPointer) {
+			if (!(lType instanceof CPointer)) {
+				castToType(loc, main.getTypeSizes(), rlToInt, new CPointer(new CPrimitive(PRIMITIVE.VOID)));
+			}
+			if (!(rType instanceof CPointer)) {
+				castToType(loc, main.getTypeSizes(), rrToInt, new CPointer(new CPrimitive(PRIMITIVE.VOID)));
+			}
+		} else if (lType.isArithmeticType() && rType.isArithmeticType()) {
+			m_ExpressionTranslation.usualArithmeticConversions(main, loc, rlToInt, rrToInt);
+		} else {
+			throw new UnsupportedOperationException("unsupported " + rType + ", " + lType);
+		}
+		RValue rval = new RValue(new BinaryExpression(loc, op, rlToInt.lrVal.getValue(), rrToInt.lrVal.getValue()),
+				new CPrimitive(PRIMITIVE.INT));
+		rval.isBoogieBool = true;
+		return new ResultExpression(stmt, rval, decl, auxVars, overappr);
 	}
 	
 	public int getNonAssignmentOperator(int op) {
