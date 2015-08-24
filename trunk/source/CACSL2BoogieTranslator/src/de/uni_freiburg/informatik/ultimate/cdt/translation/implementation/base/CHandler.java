@@ -1323,9 +1323,7 @@ public class CHandler implements ICHandler {
 					|| node.getOperator() == IASTBinaryExpression.op_notequals) {
 				//!= and == are treated differently from the inequality operators
 				// --> behavior is never undefined for instance..
-				
-				return handleEqualityOperators(main, decl, stmt, auxVars, loc,
-						overappr, lType, rType, rrToInt, rlToInt, op);
+				return handleEqualityOperators(main, loc, rlToInt, rrToInt, op);
 			} else {
 				// we have a "relational" pointer comparison
 				if (lType instanceof CPointer || rType instanceof CPointer) {
@@ -1801,29 +1799,42 @@ public class CHandler implements ICHandler {
 		}
 	}
 
-	private Result handleEqualityOperators(Dispatcher main,
-			ArrayList<Declaration> decl, ArrayList<Statement> stmt,
-			Map<VariableDeclaration, ILocation> auxVars, ILocation loc,
-			List<Overapprox> overappr, CType lType, CType rType,
-			ResultExpression rrToInt, ResultExpression rlToInt,
+	/**
+	 * Handle equality operators according to Section 6.5.9 of C11.
+	 * Assumes that left (resp. right) are the results from handling the operands.
+	 * Requires that the {@link LRValue} of operands is an {@link RValue}
+	 * (i.e., switchToRValueIfNecessary was applied if needed).
+	 * requires that the Boogie expressions in left (resp. right) are a 
+	 * non-boolean representation of these results 
+	 * (i.e., rexBoolToIntIfNecessary() has already been applied if needed).
+	 */
+	private Result handleEqualityOperators(Dispatcher main, ILocation loc,
+			ResultExpression left, ResultExpression right,
 			BinaryExpression.Operator op) {
+		assert (left.lrVal instanceof RValue);
+		assert (right.lrVal instanceof RValue);
+		
+		CType lType = left.lrVal.cType.getUnderlyingType();
+		CType rType = right.lrVal.cType.getUnderlyingType();
 		// implicit casts
 		if (lType instanceof CPointer || rType instanceof CPointer) {
 			if (!(lType instanceof CPointer)) {
-				castToType(loc, main.getTypeSizes(), rlToInt, new CPointer(new CPrimitive(PRIMITIVE.VOID)));
+				castToType(loc, main.getTypeSizes(), left, new CPointer(new CPrimitive(PRIMITIVE.VOID)));
 			}
 			if (!(rType instanceof CPointer)) {
-				castToType(loc, main.getTypeSizes(), rrToInt, new CPointer(new CPrimitive(PRIMITIVE.VOID)));
+				castToType(loc, main.getTypeSizes(), right, new CPointer(new CPrimitive(PRIMITIVE.VOID)));
 			}
 		} else if (lType.isArithmeticType() && rType.isArithmeticType()) {
-			m_ExpressionTranslation.usualArithmeticConversions(main, loc, rlToInt, rrToInt);
+			m_ExpressionTranslation.usualArithmeticConversions(main, loc, left, right);
 		} else {
 			throw new UnsupportedOperationException("unsupported " + rType + ", " + lType);
 		}
-		RValue rval = new RValue(new BinaryExpression(loc, op, rlToInt.lrVal.getValue(), rrToInt.lrVal.getValue()),
+		RValue rval = new RValue(new BinaryExpression(loc, op, left.lrVal.getValue(), right.lrVal.getValue()),
 				new CPrimitive(PRIMITIVE.INT));
 		rval.isBoogieBool = true;
-		return new ResultExpression(stmt, rval, decl, auxVars, overappr);
+		ResultExpression result = ResultExpression.copyStmtDeclAuxvarOverapprox(left, right);
+		result.lrVal = rval;
+		return result;
 	}
 	
 	public int getNonAssignmentOperator(int op) {
