@@ -31,7 +31,6 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IdentifierExpression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.RealLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VarList;
@@ -247,11 +246,25 @@ public abstract class AExpressionTranslation {
 	public abstract void doIntegerPromotion(ILocation loc, ResultExpression operand);
 	
 	public boolean integerPromotionNeeded(CPrimitive cPrimitive) {
-		return false;
+		if (cPrimitive.equals(CPrimitive.PRIMITIVE.CHAR) || cPrimitive.equals(CPrimitive.PRIMITIVE.CHAR16) ||
+			cPrimitive.equals(CPrimitive.PRIMITIVE.CHAR32) || cPrimitive.equals(CPrimitive.PRIMITIVE.SCHAR) ||
+			cPrimitive.equals(CPrimitive.PRIMITIVE.SHORT) || cPrimitive.equals(CPrimitive.PRIMITIVE.UCHAR) ||
+			cPrimitive.equals(CPrimitive.PRIMITIVE.USHORT) || cPrimitive.equals(CPrimitive.PRIMITIVE.WCHAR)) {
+			return true;
+		} else {
+			return false;
+		}
 	}
 	
-	public CPrimitive determineResultOfIntegerPromotion(CPrimitive cPrimitve) {
-		return null;
+	public CPrimitive determineResultOfIntegerPromotion(CPrimitive cPrimitive) {
+		int argBitLength = m_TypeSizes.getSize(cPrimitive.getType()) * 8;
+		int intLength = m_TypeSizes.getSize(CPrimitive.PRIMITIVE.INT);
+		
+		if (argBitLength < intLength || !cPrimitive.isUnsigned()) {
+			return new CPrimitive(PRIMITIVE.INT);
+		} else {
+			return new CPrimitive(PRIMITIVE.UINT);
+		}
 	}
 	
 

@@ -284,19 +284,19 @@ public class BitvectorTranslation extends AExpressionTranslation {
 		if (!(resultPrimitive.getGeneralType() == GENERALPRIMITIVE.INTTYPE)) {
 			throw new UnsupportedOperationException("non-integer types not supported yet");
 		}
+		
+		if (integerPromotionNeeded((CPrimitive) operand.lrVal.cType)) {
+			doIntegerPromotion(loc, operand);
+		}
+		
 		int resultLength = m_TypeSizes.getSize(resultPrimitive.getType()) * 8;
 		int operandLength = m_TypeSizes.getSize(((CPrimitive) operand.lrVal.cType).getType()) * 8;
 		
 		if (resultLength == operandLength) {
 			// Do nothing.
 		} else if (resultLength > operandLength) {
-			int[] indices = new int[]{resultLength - operandLength};
-			String funcName = "sign_extendFrom" + m_FunctionDeclarations.computeBitvectorSuffix(loc, (CPrimitive) operand.lrVal.cType)
-                                         + "To" + m_FunctionDeclarations.computeBitvectorSuffix(loc, resultPrimitive);
-			declareBitvectorFunction(loc, funcName.substring(0, 11), funcName, false, resultPrimitive, indices, (CPrimitive) operand.lrVal.cType);
-			FunctionApplication func = new FunctionApplication(loc, SFO.AUXILIARY_FUNCTION_PREFIX + funcName, new Expression[]{operand.lrVal.getValue()});
-		    RValue rVal = new RValue(func, resultType);
-			operand.lrVal = rVal;
+			extend(loc, operand, resultType, resultPrimitive, resultLength,
+					operandLength);
 		} else {
 			Expression bv = new BitVectorAccessExpression(loc, operand.lrVal.getValue(), resultLength, 0);
 			RValue rVal = new RValue(bv, resultType);
@@ -306,9 +306,33 @@ public class BitvectorTranslation extends AExpressionTranslation {
 		operand.lrVal.cType = resultType;
 	}
 
+	private void extend(ILocation loc, ResultExpression operand, CType resultType, CPrimitive resultPrimitive, int resultLength, int operandLength) {
+		int[] indices = new int[]{resultLength - operandLength};
+		String smtlibFunctionName;
+		if (((CPrimitive) operand.lrVal.cType).isUnsigned()) {
+			smtlibFunctionName = "zero_extend";
+		} else {
+			smtlibFunctionName = "sign_extend";
+		}
+		String funcName = smtlibFunctionName + "From" + m_FunctionDeclarations.computeBitvectorSuffix(loc, (CPrimitive) operand.lrVal.cType)
+		                             + "To" + m_FunctionDeclarations.computeBitvectorSuffix(loc, resultPrimitive);
+		declareBitvectorFunction(loc, smtlibFunctionName, funcName, false, resultPrimitive, indices, (CPrimitive) operand.lrVal.cType);
+		FunctionApplication func = new FunctionApplication(loc, SFO.AUXILIARY_FUNCTION_PREFIX + funcName, new Expression[]{operand.lrVal.getValue()});
+		RValue rVal = new RValue(func, resultType);
+		operand.lrVal = rVal;
+	}
+
 	@Override
 	public void doIntegerPromotion(ILocation loc, ResultExpression operand) {
-		// TODO Auto-generated method stub
+		CPrimitive promotedType = determineResultOfIntegerPromotion((CPrimitive) operand.lrVal.cType);
 		
+		int promotedTypeLength = m_TypeSizes.getSize(promotedType.getType()) * 8;
+		int operandLength = m_TypeSizes.getSize(((CPrimitive) operand.lrVal.cType).getType()) * 8;
+		
+		if (promotedTypeLength > operandLength) {
+			extend(loc, operand, promotedType, promotedType, promotedTypeLength, operandLength);
+		}
+		
+		operand.lrVal.cType = promotedType;
 	}
 }
