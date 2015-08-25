@@ -3644,13 +3644,17 @@ public class CHandler implements ICHandler {
 	public void castToType(ILocation loc, TypeSizes typeSizes, ResultExpression rexp, CType newTypeRaw) {
 		RValue rValIn = (RValue) rexp.lrVal;
 		CType newType = newTypeRaw.getUnderlyingType();
+		CType oldType = rValIn.cType.getUnderlyingType();
+		if (oldType.equals(newType)) {
+			return;
+		}
 		
 		final RValue resultRValue; // = new RValue(rValIn); //better make a new one, right??
 
 		BigInteger maxPtrValue = new BigInteger("2").pow(typeSizes.sizeOfPointerType * 8);
 		IntegerLiteral max_Pointer = new IntegerLiteral(loc, maxPtrValue.toString());
 		// cast pointer -> integer/other pointer
-		CType oldType = rValIn.cType.getUnderlyingType();
+		
 		if (oldType instanceof CPointer) {
 			// cast from pointer to integer
 			if (newType instanceof CPrimitive &&
