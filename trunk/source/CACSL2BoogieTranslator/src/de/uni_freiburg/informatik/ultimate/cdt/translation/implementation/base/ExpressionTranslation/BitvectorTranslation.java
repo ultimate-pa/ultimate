@@ -151,18 +151,23 @@ public class BitvectorTranslation extends AExpressionTranslation {
 		final String funcname;
 		switch (op) {
 		case IASTBinaryExpression.op_binaryAnd:
+		case IASTBinaryExpression.op_binaryAndAssign:
 			funcname = "bvand";
 			break;
 		case IASTBinaryExpression.op_binaryOr:
+		case IASTBinaryExpression.op_binaryOrAssign:
 			funcname = "bvor";
 			break;
 		case IASTBinaryExpression.op_binaryXor:
+		case IASTBinaryExpression.op_binaryXorAssign:
 			funcname = "bvxor";
 			break;
 		case IASTBinaryExpression.op_shiftLeft:
+		case IASTBinaryExpression.op_shiftLeftAssign:
 			funcname = "bvshl";
 			break;
 		case IASTBinaryExpression.op_shiftRight:
+		case IASTBinaryExpression.op_shiftRightAssign:
 			funcname = "bvashr";
 			break;
 		default:

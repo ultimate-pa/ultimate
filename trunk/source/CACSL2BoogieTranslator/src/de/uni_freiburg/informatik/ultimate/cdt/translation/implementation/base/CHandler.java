@@ -1756,9 +1756,7 @@ public class CHandler implements ICHandler {
 		}
 		case IASTBinaryExpression.op_binaryAnd:
 		case IASTBinaryExpression.op_binaryOr:
-		case IASTBinaryExpression.op_binaryXor:
-		case IASTBinaryExpression.op_shiftLeft:
-		case IASTBinaryExpression.op_shiftRight: {
+		case IASTBinaryExpression.op_binaryXor: {
 			m_ExpressionTranslation.usualArithmeticConversions(main, loc, rl, rr);
 			stmt.addAll(rl.stmt);
 			stmt.addAll(rr.stmt);
@@ -1776,8 +1774,6 @@ public class CHandler implements ICHandler {
 					rrToInt.lrVal.getValue(), (CPrimitive) rrToInt.lrVal.cType); 
 			return new ResultExpression(stmt, new RValue(bwexpr, rl.lrVal.cType), decl, auxVars, overappr);
 		}
-		case IASTBinaryExpression.op_shiftLeftAssign:
-		case IASTBinaryExpression.op_shiftRightAssign:
 		case IASTBinaryExpression.op_binaryAndAssign:
 		case IASTBinaryExpression.op_binaryOrAssign:
 		case IASTBinaryExpression.op_binaryXorAssign: {
@@ -1797,13 +1793,28 @@ public class CHandler implements ICHandler {
 					loc, getNonAssignmentOperator(node.getOperator()), rlToInt.lrVal.getValue(), (CPrimitive) rlToInt.lrVal.cType, 
 					rrToInt.lrVal.getValue(), (CPrimitive) rrToInt.lrVal.cType); 
 			return makeAssignment(main, loc, stmt, l.lrVal, new RValue(bwexpr, rr.lrVal.cType), decl, auxVars, overappr);// ,
-																															// l.lrVal.cType);
 		}
+		case IASTBinaryExpression.op_shiftLeft:
+		case IASTBinaryExpression.op_shiftRight: {
+			ResultExpression rlToInt = ConvExpr.rexBoolToIntIfNecessary(loc, rl, m_ExpressionTranslation);
+			ResultExpression rrToInt = ConvExpr.rexBoolToIntIfNecessary(loc, rr, m_ExpressionTranslation);
+			return handleBitshiftOperation(main, loc, null, node.getOperator(), rlToInt, rrToInt);
+
+		}
+		case IASTBinaryExpression.op_shiftLeftAssign:
+		case IASTBinaryExpression.op_shiftRightAssign: {
+			ResultExpression rlToInt = ConvExpr.rexBoolToIntIfNecessary(loc, rl, m_ExpressionTranslation);
+			ResultExpression rrToInt = ConvExpr.rexBoolToIntIfNecessary(loc, rr, m_ExpressionTranslation);
+			return handleBitshiftOperation(main, loc, l.lrVal, node.getOperator(), rlToInt, rrToInt);
+		}
+		
 		default:
 			String msg = "Unknown or unsupported unary operation";
 			throw new UnsupportedSyntaxException(loc, msg);
 		}
 	}
+
+
 
 	/**
 	 * Handle equality operators according to Section 6.5.9 of C11.
@@ -1843,6 +1854,50 @@ public class CHandler implements ICHandler {
 		ResultExpression result = ResultExpression.copyStmtDeclAuxvarOverapprox(left, right);
 		result.lrVal = rval;
 		return result;
+	}
+	
+	/**
+	 * Handle equality operators according to Section 6.5.7 of C11.
+	 * Assumes that left (resp. right) are the results from handling the operands.
+	 * Requires that the {@link LRValue} of operands is an {@link RValue}
+	 * (i.e., switchToRValueIfNecessary was applied if needed).
+	 * requires that the Boogie expressions in left (resp. right) are a 
+	 * non-boolean representation of these results 
+	 * (i.e., rexBoolToIntIfNecessary() has already been applied if needed).
+	 */
+	ResultExpression handleBitshiftOperation(Dispatcher main, ILocation loc, 
+			LRValue lhs, int op, ResultExpression left, ResultExpression right) {
+		assert (left.lrVal instanceof RValue);
+		assert (right.lrVal instanceof RValue);
+		final CType lType = left.lrVal.cType.getUnderlyingType();
+		final CType rType = right.lrVal.cType.getUnderlyingType();
+		if (!rType.isIntegerType() || lType.isIntegerType()) {
+			throw new UnsupportedOperationException("operands have to have integer types");
+		}
+		m_ExpressionTranslation.doIntegerPromotion(loc, left);
+		final CPrimitive typeOfResult = (CPrimitive) left.lrVal.cType;
+		castToType(loc, main.getTypeSizes(), right, typeOfResult);
+		final Expression expr = m_ExpressionTranslation.constructBinaryBitwiseExpression(
+				loc, op, left.lrVal.getValue(), typeOfResult, right.lrVal.getValue(), typeOfResult);
+		final RValue rval = new RValue(expr,typeOfResult);
+		rval.isBoogieBool = false;
+		switch (op) {
+		case IASTBinaryExpression.op_shiftLeft:
+		case IASTBinaryExpression.op_shiftRight: {
+			assert lhs == null : "no assignment";
+			ResultExpression result = ResultExpression.copyStmtDeclAuxvarOverapprox(left, right);
+			result.lrVal = rval;
+			return result;
+		}
+		case IASTBinaryExpression.op_shiftLeftAssign:
+		case IASTBinaryExpression.op_shiftRightAssign: {
+			ResultExpression copy = ResultExpression.copyStmtDeclAuxvarOverapprox(left, right);
+			ResultExpression result = makeAssignment(main, loc, copy.stmt, lhs, rval, copy.decl, copy.auxVars, copy.overappr);
+			return result;
+		}
+		default:
+			throw new AssertionError("no bitshift " + op);
+		}
 	}
 	
 	public int getNonAssignmentOperator(int op) {
