@@ -6,9 +6,19 @@ import java.util.Map.Entry;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.IAbstractStateBinaryOperator;
 
+/**
+ * The merge operator for the interval domain.
+ * 
+ * @author greitsch@informatik.uni-freiburg.de
+ *
+ * @param <ACTION>
+ *            Any action type.
+ * @param <VARDECL>
+ *            Any variable declaration type.
+ */
 public class IntervalMergeOperator<ACTION, VARDECL> implements IAbstractStateBinaryOperator<ACTION, VARDECL> {
 
-	private IntervalStateConverter<ACTION, VARDECL> mStateConverter;
+	private final IntervalStateConverter<ACTION, VARDECL> mStateConverter;
 
 	protected IntervalMergeOperator(IntervalStateConverter<ACTION, VARDECL> stateConverter) {
 		mStateConverter = stateConverter;
@@ -32,15 +42,15 @@ public class IntervalMergeOperator<ACTION, VARDECL> implements IAbstractStateBin
 			        "Cannot merge the two states as their sets of variables in the states are disjoint.");
 		}
 
-		IntervalDomainState<ACTION, VARDECL> newState = (IntervalDomainState<ACTION, VARDECL>) first.copy();
+		final IntervalDomainState<ACTION, VARDECL> newState = (IntervalDomainState<ACTION, VARDECL>) first.copy();
 
 		final Map<String, VARDECL> variables = firstState.getVariables();
 		final Map<String, IntervalDomainValue> firstValues = firstState.getValues();
 		final Map<String, IntervalDomainValue> secondValues = secondState.getValues();
 
-		for (Entry<String, VARDECL> entry : variables.entrySet()) {
-			IntervalDomainValue value1 = firstValues.get(entry.getKey());
-			IntervalDomainValue value2 = secondValues.get(entry.getKey());
+		for (final Entry<String, VARDECL> entry : variables.entrySet()) {
+			final IntervalDomainValue value1 = firstValues.get(entry.getKey());
+			final IntervalDomainValue value2 = secondValues.get(entry.getKey());
 
 			newState.setValue(entry.getKey(), computeMergedValue(value1, value2));
 		}
@@ -52,8 +62,10 @@ public class IntervalMergeOperator<ACTION, VARDECL> implements IAbstractStateBin
 	 * Computes the merger of two {@link IntervalDomainValue}s.
 	 * 
 	 * @param value1
+	 *            The first Interval.
 	 * @param value2
-	 * @return
+	 *            The second interval.
+	 * @return A new interval which is the result of merging the first and the second interval.
 	 */
 	private IntervalDomainValue computeMergedValue(IntervalDomainValue value1, IntervalDomainValue value2) {
 		if (value1.equals(value2.getResult())) {
@@ -64,13 +76,27 @@ public class IntervalMergeOperator<ACTION, VARDECL> implements IAbstractStateBin
 			return new IntervalDomainValue(true);
 		}
 
-		IntervalValue lower = new IntervalValue();
-		IntervalValue upper = new IntervalValue();
+		IntervalValue lower;
+		IntervalValue upper;
 
-		if (value1.getLower().compareTo(value2.getLower()) < 0) {
-			lower = new IntervalValue(value1.getLower().getValue());
+		if (value1.getLower().isInfinity() || value2.getLower().isInfinity()) {
+			lower = new IntervalValue();
 		} else {
-			lower = new IntervalValue(value2.getLower().getValue());
+			if (value1.getLower().compareTo(value2.getLower()) < 0) {
+				lower = new IntervalValue(value1.getLower().getValue());
+			} else {
+				lower = new IntervalValue(value2.getLower().getValue());
+			}
+		}
+
+		if (value1.getUpper().isInfinity() || value2.getUpper().isInfinity()) {
+			upper = new IntervalValue();
+		} else {
+			if (value1.getUpper().compareTo(value2.getUpper()) < 0) {
+				upper = new IntervalValue(value1.getUpper().getValue());
+			} else {
+				upper = new IntervalValue(value2.getUpper().getValue());
+			}
 		}
 
 		return new IntervalDomainValue(lower, upper);

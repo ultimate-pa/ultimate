@@ -40,7 +40,7 @@ public class SignDomainStatementProcessor extends BoogieVisitor {
 
 	private SignDomainState<CodeBlock, BoogieVar> mOldState;
 	private SignDomainState<CodeBlock, BoogieVar> mNewState;
-	
+
 	private final IUltimateServiceProvider mServices;
 
 	IEvaluatorFactory<Values, CodeBlock, BoogieVar> mEvaluatorFactory;
@@ -49,13 +49,18 @@ public class SignDomainStatementProcessor extends BoogieVisitor {
 
 	private String mLhsVariable;
 
-	protected SignDomainStatementProcessor(IUltimateServiceProvider services, SignStateConverter<CodeBlock, BoogieVar> stateConverter) {
+	protected SignDomainStatementProcessor(IUltimateServiceProvider services,
+	        SignStateConverter<CodeBlock, BoogieVar> stateConverter) {
 		mStateConverter = stateConverter;
 		mServices = services;
 	}
 
 	protected SignDomainState<CodeBlock, BoogieVar> process(SignDomainState<CodeBlock, BoogieVar> oldState,
 	        Statement statement) {
+
+		assert oldState != null;
+		assert statement != null;
+
 		mOldState = oldState;
 		mNewState = (SignDomainState<CodeBlock, BoogieVar>) oldState.copy();
 

@@ -17,7 +17,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  */
 public class SignDomain implements IAbstractDomain<SignDomainState<CodeBlock, BoogieVar>, CodeBlock, BoogieVar> {
 
-	private SignStateConverter<CodeBlock, BoogieVar> mStateConverter;
+	private final SignStateConverter<CodeBlock, BoogieVar> mStateConverter;
 	private final IUltimateServiceProvider mServices;
 
 	public SignDomain(IUltimateServiceProvider services) {

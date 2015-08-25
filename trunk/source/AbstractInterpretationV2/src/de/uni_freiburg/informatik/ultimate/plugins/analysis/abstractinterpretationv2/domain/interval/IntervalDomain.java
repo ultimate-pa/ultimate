@@ -20,7 +20,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  */
 public class IntervalDomain implements IAbstractDomain<IntervalDomainState<CodeBlock, BoogieVar>, CodeBlock, BoogieVar> {
 
-	private IntervalStateConverter<CodeBlock, BoogieVar> mStateConverter;
+	private final IntervalStateConverter<CodeBlock, BoogieVar> mStateConverter;
 	private final IUltimateServiceProvider mServices;
 
 	public IntervalDomain(IUltimateServiceProvider services) {
@@ -36,26 +36,24 @@ public class IntervalDomain implements IAbstractDomain<IntervalDomainState<CodeB
 
 	@Override
 	public IAbstractStateBinaryOperator<CodeBlock, BoogieVar> getWideningOperator() {
-		// TODO Auto-generated method stub
-		return null;
+		
+		// TODO Implement better widening and add appropriate options
+		return new IntervalSimpleWideningOperator();
 	}
 
 	@Override
 	public IAbstractStateBinaryOperator<CodeBlock, BoogieVar> getMergeOperator() {
-		// TODO Auto-generated method stub
-		return null;
+		return new IntervalMergeOperator<CodeBlock, BoogieVar>(mStateConverter);
 	}
 
 	@Override
 	public IAbstractPostOperator<CodeBlock, BoogieVar> getPostOperator() {
-		// TODO Auto-generated method stub
-		return null;
+		return new IntervalPostOperator(mServices, mStateConverter);
 	}
 
 	@Override
 	public Class<IntervalDomainState<CodeBlock, BoogieVar>> getAbstractStateClass() {
-		// TODO Auto-generated method stub
-		return null;
+		return mStateConverter.getAbstractStateClass();
 	}
 
 }

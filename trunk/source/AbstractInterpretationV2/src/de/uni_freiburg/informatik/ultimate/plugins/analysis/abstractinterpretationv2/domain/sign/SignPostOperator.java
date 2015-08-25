@@ -17,9 +17,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  */
 public class SignPostOperator implements IAbstractPostOperator<CodeBlock, BoogieVar> {
 
-	private SignStateConverter<CodeBlock, BoogieVar> mStateConverter;
-	private RcfgStatementExtractor mStatementExtractor;
-	private SignDomainStatementProcessor mStatementProcessor;
+	private final SignStateConverter<CodeBlock, BoogieVar> mStateConverter;
+	private final RcfgStatementExtractor mStatementExtractor;
+	private final SignDomainStatementProcessor mStatementProcessor;
 
 	/**
 	 * Default constructor.
@@ -27,7 +27,8 @@ public class SignPostOperator implements IAbstractPostOperator<CodeBlock, Boogie
 	 * @param stateConverter
 	 *            The state converter used to identify {@link SignDomainState}s.
 	 */
-	protected SignPostOperator(IUltimateServiceProvider services, SignStateConverter<CodeBlock, BoogieVar> stateConverter) {
+	protected SignPostOperator(IUltimateServiceProvider services,
+	        SignStateConverter<CodeBlock, BoogieVar> stateConverter) {
 		mStateConverter = stateConverter;
 		mStatementExtractor = new RcfgStatementExtractor();
 		mStatementProcessor = new SignDomainStatementProcessor(services, mStateConverter);
@@ -45,9 +46,10 @@ public class SignPostOperator implements IAbstractPostOperator<CodeBlock, Boogie
 	@Override
 	public IAbstractState<CodeBlock, BoogieVar> apply(IAbstractState<CodeBlock, BoogieVar> oldstate, CodeBlock codeBlock) {
 		final SignDomainState<CodeBlock, BoogieVar> concreteOldState = mStateConverter.getCheckedState(oldstate);
-		SignDomainState<CodeBlock, BoogieVar> currentState = concreteOldState;
-		List<Statement> statements = mStatementExtractor.process(codeBlock);
-		for (Statement stmt : statements) {
+		SignDomainState<CodeBlock, BoogieVar> currentState = (SignDomainState<CodeBlock, BoogieVar>) concreteOldState
+		        .copy();
+		final List<Statement> statements = mStatementExtractor.process(codeBlock);
+		for (final Statement stmt : statements) {
 			currentState = mStatementProcessor.process(currentState, stmt);
 		}
 
