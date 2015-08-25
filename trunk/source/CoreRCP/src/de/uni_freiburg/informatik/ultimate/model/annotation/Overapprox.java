@@ -13,6 +13,9 @@ import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
  */
 public class Overapprox extends AbstractAnnotations {
 	
+	public static final String s_REASON_FOR_OVERAPPROXIMATION = "Reason for overapproximation";
+	public static final String s_LOCATION_MAPPING = "Location mapping";
+	
 	public static final String BITVEC = "bitvector operation";
 	public static final String FUNC_POINTER = "call of function pointer";
 	
@@ -38,7 +41,7 @@ public class Overapprox extends AbstractAnnotations {
 	 * if you add new attributes.
 	 */
 	private final static String[] s_AttribFields = {
-		"Reason for overapproximation"
+		s_REASON_FOR_OVERAPPROXIMATION, s_LOCATION_MAPPING
 	};
 	
 	@Override
@@ -48,8 +51,10 @@ public class Overapprox extends AbstractAnnotations {
 
 	@Override
 	protected Object getFieldValue(String field) {
-		if (field.equals("Reason for overapproximation"))
+		if (field.equals(s_REASON_FOR_OVERAPPROXIMATION))
 			return m_Reason2Loc.keySet();
+		else if (field.equals(s_LOCATION_MAPPING))
+			return m_Reason2Loc;
 		else
 			throw new UnsupportedOperationException("Unknown field "+field);
 	}

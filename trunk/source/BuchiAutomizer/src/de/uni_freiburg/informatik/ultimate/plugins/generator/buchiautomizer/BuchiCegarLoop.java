@@ -38,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.termination.SupportingInv
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.TerminationArgument;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.rankingfunctions.RankingFunction;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.LassoChecker.ContinueDirective;
@@ -473,7 +474,7 @@ public class BuchiCegarLoop {
 					m_BenchmarkGenerator.setResult(Result.UNKNOWN);
 					return Result.UNKNOWN;
 				case REPORT_NONTERMINATION:
-					if (lassoWasOverapproximated()) {
+					if (!lassoWasOverapproximated().isEmpty()) {
 						m_MDBenchmark.reportRemainderModule(m_Abstraction.size(), false);
 						if (m_ConstructTermcompProof) {
 							m_TermcompProofBenchmark.reportRemainderModule(false);
@@ -524,11 +525,13 @@ public class BuchiCegarLoop {
 		return Result.TIMEOUT;
 	}
 	
-	private boolean lassoWasOverapproximated() {
+	private Map<String, ILocation> lassoWasOverapproximated() {
 		NestedWord<CodeBlock> stem = m_Counterexample.getStem().getWord();
 		NestedWord<CodeBlock> loop = m_Counterexample.getLoop().getWord();
-		return (RcfgProgramExecution.containsOverapproximationFlag(stem.asList()) || 
-				RcfgProgramExecution.containsOverapproximationFlag(loop.asList()));
+		Map<String, ILocation> overapproximations = new HashMap<>();
+		overapproximations.putAll(RcfgProgramExecution.getOverapproximations(stem.asList()));
+		overapproximations.putAll(RcfgProgramExecution.getOverapproximations(loop.asList()));
+		return overapproximations;
 	}
 
 	/**

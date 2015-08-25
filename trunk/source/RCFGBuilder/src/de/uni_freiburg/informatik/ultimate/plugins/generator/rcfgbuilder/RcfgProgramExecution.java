@@ -4,12 +4,15 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.model.annotation.IAnnotations;
 import de.uni_freiburg.informatik.ultimate.model.annotation.Overapprox;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.RequiresSpecification;
 import de.uni_freiburg.informatik.ultimate.model.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -24,7 +27,7 @@ public class RcfgProgramExecution implements IProgramExecution<CodeBlock, Expres
 	private final List<AtomicTraceElement<CodeBlock>> m_Trace;
 	private final Map<Integer, ProgramState<Expression>> m_PartialProgramStateMapping;
 	private final Map<TermVariable, Boolean>[] m_BranchEncoders;
-	private final boolean m_Overapproximation;
+	private final Map<String, ILocation> m_Overapproximations;
 
 	@SuppressWarnings("unchecked")
 	public RcfgProgramExecution(List<CodeBlock> trace, Map<Integer, ProgramState<Expression>> partialProgramStateMapping) {
@@ -55,14 +58,14 @@ public class RcfgProgramExecution implements IProgramExecution<CodeBlock, Expres
 
 		m_PartialProgramStateMapping = partialProgramStateMapping;
 		m_BranchEncoders = branchEncoders;
-		m_Overapproximation = containsOverapproximationFlag(trace);
+		m_Overapproximations = getOverapproximations(trace);
 	}
 
 	/**
-	 * Returns true if this trace is an overapproximation of the original trace.
+	 * Returns all overapproximations that were done on this trace.
 	 */
-	public boolean isOverapproximation() {
-		return m_Overapproximation;
+	public Map<String, ILocation> getOverapproximations() {
+		return m_Overapproximations;
 	}
 
 	public Map<TermVariable, Boolean>[] getBranchEncoders() {
@@ -92,16 +95,22 @@ public class RcfgProgramExecution implements IProgramExecution<CodeBlock, Expres
 		return m_PartialProgramStateMapping.get(-1);
 	}
 
-	public static boolean containsOverapproximationFlag(List<CodeBlock> trace) {
+	public static Map<String, ILocation> getOverapproximations(List<CodeBlock> trace) {
+		Map<String, ILocation> result = new HashMap<>();
 		for (CodeBlock cb : trace) {
 			if (cb.getPayload().hasAnnotation()) {
 				HashMap<String, IAnnotations> annotations = cb.getPayload().getAnnotations();
 				if (annotations.containsKey(Overapprox.getIdentifier())) {
-					return true;
+					Overapprox overapprox = (Overapprox) annotations.get(Overapprox.getIdentifier());
+					Map<String, ILocation> reason2Location = (Map<String, ILocation>) 
+							overapprox.getAnnotationsAsMap().get(Overapprox.s_LOCATION_MAPPING);
+					for (Entry<String, ILocation> entry : reason2Location.entrySet()) {
+						result.put(entry.getKey(), entry.getValue());
+					}
 				}
 			}
 		}
-		return false;
+		return result;
 	}
 
 	private String ppstoString(ProgramState<Expression> pps) {

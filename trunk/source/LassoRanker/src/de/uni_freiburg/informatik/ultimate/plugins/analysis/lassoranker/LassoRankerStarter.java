@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -43,6 +44,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Term2Expression;
@@ -155,7 +157,7 @@ public class LassoRankerStarter {
 				NonTerminationArgument nta =
 						la.checkNonTermination(nontermination_settings);
 				if (nta != null) {
-					if (lassoWasOverapproximated()) {
+					if (!lassoWasOverapproximated().isEmpty()) {
 						reportFailBecauseOfOverapproximationResult();
 						return;
 					}
@@ -212,9 +214,11 @@ public class LassoRankerStarter {
 		reportNoResult(templates);
 	}
 	
-	private boolean lassoWasOverapproximated() {
-		return (RcfgProgramExecution.containsOverapproximationFlag(m_Stem.asList()) || 
-				RcfgProgramExecution.containsOverapproximationFlag(m_Loop.asList()));
+	private Map<String, ILocation> lassoWasOverapproximated() {
+		Map<String, ILocation> overapproximations = new HashMap<>();
+		overapproximations.putAll(RcfgProgramExecution.getOverapproximations(m_Stem.asList()));
+		overapproximations.putAll(RcfgProgramExecution.getOverapproximations(m_Loop.asList()));
+		return overapproximations;
 	}
 
 	public TransFormula constructTransformula(NestedWord<CodeBlock> nw) {

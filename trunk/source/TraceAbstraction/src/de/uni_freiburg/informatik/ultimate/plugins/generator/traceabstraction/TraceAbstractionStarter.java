@@ -226,7 +226,7 @@ public class TraceAbstractionStarter {
 			break;
 		case UNKNOWN: {
 			RcfgProgramExecution pe = basicCegarLoop.getRcfgProgramExecution();
-			reportUnproveableResult(pe);
+			reportUnproveableResult(pe, pe.getOverapproximations());
 			if (m_OverallResult != Result.UNSAFE) {
 				m_OverallResult = result;
 			}
@@ -282,8 +282,8 @@ public class TraceAbstractionStarter {
 	}
 
 	private void reportCounterexampleResult(RcfgProgramExecution pe) {
-		if (pe.isOverapproximation()) {
-			reportUnproveableResult(pe);
+		if (!pe.getOverapproximations().isEmpty()) {
+			reportUnproveableResult(pe, pe.getOverapproximations());
 			return;
 		}
 		reportResult(new CounterExampleResult<RcfgElement,CodeBlock, Expression>(getErrorPP(pe), Activator.s_PLUGIN_NAME,
@@ -304,10 +304,10 @@ public class TraceAbstractionStarter {
 		}
 	}
 
-	private void reportUnproveableResult(RcfgProgramExecution pe) {
+	private void reportUnproveableResult(RcfgProgramExecution pe, Map<String, ILocation> overapproximations) {
 		ProgramPoint errorPP = getErrorPP(pe);
 		UnprovableResult<RcfgElement, CodeBlock, Expression> uknRes = new UnprovableResult<RcfgElement, CodeBlock, Expression>(
-				Activator.s_PLUGIN_NAME, errorPP, m_Services.getBacktranslationService(), pe);
+				Activator.s_PLUGIN_NAME, errorPP, m_Services.getBacktranslationService(), pe, overapproximations);
 		reportResult(uknRes);
 	}
 

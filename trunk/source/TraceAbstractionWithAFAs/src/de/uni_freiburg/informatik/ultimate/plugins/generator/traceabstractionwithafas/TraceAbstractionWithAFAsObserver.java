@@ -129,8 +129,8 @@ public class TraceAbstractionWithAFAsObserver extends BaseObserver {
 	}
 
 	private void reportCounterexampleResult(RcfgProgramExecution pe) {
-		if (pe.isOverapproximation()) {
-			reportUnproveableResult(pe);
+		if (!pe.getOverapproximations().isEmpty()) {
+			reportUnproveableResult(pe, pe.getOverapproximations());
 			return;
 		}
 
@@ -138,10 +138,10 @@ public class TraceAbstractionWithAFAsObserver extends BaseObserver {
 				mServices.getBacktranslationService(), pe));
 	}
 
-	private void reportUnproveableResult(RcfgProgramExecution pe) {
+	private void reportUnproveableResult(RcfgProgramExecution pe, Map<String, ILocation> overapproximations) {
 		ProgramPoint errorPP = getErrorPP(pe);
 		UnprovableResult<RcfgElement, CodeBlock, Expression> uknRes = new UnprovableResult<RcfgElement, CodeBlock, Expression>(
-				Activator.s_PLUGIN_NAME, errorPP, mServices.getBacktranslationService(), pe);
+				Activator.s_PLUGIN_NAME, errorPP, mServices.getBacktranslationService(), pe, overapproximations);
 		reportResult(uknRes);
 	}
 

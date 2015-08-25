@@ -853,7 +853,7 @@ public class AbstractInterpreterTA extends RCFGEdgeVisitor {
 				new HashMap<Integer, ProgramState<Expression>>());
 
 		UnprovableResult<RcfgElement, CodeBlock, Expression> result = new UnprovableResult<RcfgElement, CodeBlock, Expression>(
-				Activator.s_PLUGIN_NAME, location, m_services.getBacktranslationService(), programExecution);
+				Activator.s_PLUGIN_NAME, location, m_services.getBacktranslationService(), programExecution, null);
 
 		if (m_stopAfterAnyError) {
 			m_continueProcessing = false;

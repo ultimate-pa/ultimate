@@ -779,7 +779,7 @@ public class AbstractInterpreter extends RCFGEdgeVisitor {
 
 		UnprovableResult<RcfgElement, CodeBlock, Expression> result = new UnprovableResult<RcfgElement, CodeBlock, Expression>(
 				Activator.s_PLUGIN_NAME, location,
-				mServices.getBacktranslationService(), programExecution);
+				mServices.getBacktranslationService(), programExecution, null);
 
 		mServices.getResultService()
 				.reportResult(Activator.s_PLUGIN_ID, result);
