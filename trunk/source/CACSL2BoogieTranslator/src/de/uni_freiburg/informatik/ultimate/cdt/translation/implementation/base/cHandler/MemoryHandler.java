@@ -352,8 +352,8 @@ public class MemoryHandler {
 		//increment counter
 		VariableLHS ctrLHS = new VariableLHS(ignoreLoc, loopCtr);
 		bodyStmt.add(new AssignmentStatement(ignoreLoc, new LeftHandSide[] { ctrLHS }, 
-				new Expression[] { new BinaryExpression(ignoreLoc, 
-						BinaryExpression.Operator.ARITHPLUS, ctrIdex, new IntegerLiteral(ignoreLoc, SFO.NR1)) }));
+				new Expression[] { constructPointerComponentAddition(ignoreLoc,
+						ctrIdex, new IntegerLiteral(ignoreLoc, SFO.NR1)) }));
 
 		
 		Statement[] whileBody = bodyStmt.toArray(new Statement[bodyStmt.size()]);
@@ -425,25 +425,25 @@ public class MemoryHandler {
         	RequiresSpecification specLengthDest = null;
 			if (m_PointerAllocated == POINTER_CHECKMODE.ASSERTandASSUME) {
 				specLengthSrc = new RequiresSpecification(ignoreLoc, false,
-						new BinaryExpression(ignoreLoc, Operator.COMPLEQ, //TODO LT or LEQ?? (also below..)
-								new BinaryExpression(ignoreLoc, Operator.ARITHPLUS,
+						constructPointerComponentLessEqual(ignoreLoc, //TODO LT or LEQ?? (also below..)
+								constructPointerComponentAddition(ignoreLoc,
 										new IdentifierExpression(ignoreLoc, SFO.MEMCPY_SIZE),
 										srcOffset), lengthSrc));
 				specLengthDest = new RequiresSpecification(ignoreLoc, false,
-						new BinaryExpression(ignoreLoc, Operator.COMPLEQ,
-								new BinaryExpression(ignoreLoc, Operator.ARITHPLUS,
+						constructPointerComponentLessEqual(ignoreLoc,
+								constructPointerComponentAddition(ignoreLoc,
 										new IdentifierExpression(ignoreLoc, SFO.MEMCPY_SIZE),
 										destOffset), lengthDest));
 			} else {
 				assert m_PointerAllocated == POINTER_CHECKMODE.ASSUME;
 				specLengthSrc = new RequiresSpecification(ignoreLoc, true,
-						new BinaryExpression(ignoreLoc, Operator.COMPLEQ,
-								new BinaryExpression(ignoreLoc, Operator.ARITHPLUS,
+						constructPointerComponentLessEqual(ignoreLoc,
+								constructPointerComponentAddition(ignoreLoc,
 										new IdentifierExpression(ignoreLoc, SFO.MEMCPY_SIZE),
 										srcOffset), lengthSrc));
 				specLengthDest = new RequiresSpecification(ignoreLoc, true,
-						new BinaryExpression(ignoreLoc, Operator.COMPLEQ,
-								new BinaryExpression(ignoreLoc, Operator.ARITHPLUS,
+						constructPointerComponentLessEqual(ignoreLoc,
+								constructPointerComponentAddition(ignoreLoc,
 										new IdentifierExpression(ignoreLoc, SFO.MEMCPY_SIZE),
 										destOffset), lengthDest));
 			}
@@ -613,16 +613,16 @@ public class MemoryHandler {
             	RequiresSpecification specValid;
             	if (m_PointerAllocated == POINTER_CHECKMODE.ASSERTandASSUME) {
             		specValid = new RequiresSpecification(loc, false,
-                			new BinaryExpression(loc, Operator.COMPLEQ,
-                					new BinaryExpression(loc, Operator.ARITHPLUS,
+            				constructPointerComponentLessEqual(loc,
+                					constructPointerComponentAddition(loc,
                 							new IdentifierExpression(loc, writtenTypeSize),
 //                							new IdentifierExpression(loc, SFO.SIZEOF + CtypeCompatibleId),
                 					  ptrOff), length));
             	} else {
             		assert m_PointerAllocated == POINTER_CHECKMODE.ASSUME;
             		specValid = new RequiresSpecification(loc, true,
-                			new BinaryExpression(loc, Operator.COMPLEQ,
-                					new BinaryExpression(loc, Operator.ARITHPLUS,
+            				constructPointerComponentLessEqual(loc,
+                					constructPointerComponentAddition(loc,
                 							new IdentifierExpression(loc, writtenTypeSize),
 //                							new IdentifierExpression(loc, SFO.SIZEOF + CtypeCompatibleId),
                 							ptrOff), length));
@@ -729,17 +729,17 @@ public class MemoryHandler {
             	// #length[#ptr!base];
             	RequiresSpecification specValid;
             	if (m_PointerAllocated == POINTER_CHECKMODE.ASSERTandASSUME) {
-            		specValid = new RequiresSpecification(loc, false, new BinaryExpression(loc,
-                			Operator.COMPLEQ, new BinaryExpression(loc,
-                					Operator.ARITHPLUS,
+            		specValid = new RequiresSpecification(loc, false, 
+            				constructPointerComponentLessEqual(loc,
+            						constructPointerComponentAddition(loc, 
                 					new IdentifierExpression(loc, readTypeSize),
 //                					new IdentifierExpression(loc, SFO.SIZEOF + CtypeCompatibleId),
                 					ptrOff), length));
             	} else {
             		assert m_PointerAllocated == POINTER_CHECKMODE.ASSUME;
-            		specValid = new RequiresSpecification(loc, true, new BinaryExpression(loc,
-            				Operator.COMPLEQ, new BinaryExpression(loc,
-            						Operator.ARITHPLUS,
+            		specValid = new RequiresSpecification(loc, true, 
+            				constructPointerComponentLessEqual(loc,
+            						constructPointerComponentAddition(loc, 
             						new IdentifierExpression(loc, readTypeSize),
 //                					new IdentifierExpression(loc, SFO.SIZEOF + CtypeCompatibleId),
             						ptrOff), length));
@@ -768,6 +768,25 @@ public class MemoryHandler {
         }
 		return decl;
 	}
+	
+	
+	private Expression constructPointerComponentAddition(
+			ILocation loc, Expression left, Expression right) {
+		return m_ExpressionTranslation.createArithmeticExpression(
+				IASTBinaryExpression.op_plus, 
+				left, m_ExpressionTranslation.getCTypeOfPointerComponents(), 
+				right, m_ExpressionTranslation.getCTypeOfPointerComponents(), loc);
+	}
+	
+	private Expression constructPointerComponentLessEqual(
+			ILocation loc, Expression left, Expression right) {
+		return m_ExpressionTranslation.constructBinaryComparisonExpression(loc,
+				IASTBinaryExpression.op_lessEqual, 
+				left, m_ExpressionTranslation.getCTypeOfPointerComponents(), 
+				right, m_ExpressionTranslation.getCTypeOfPointerComponents());
+	}
+	
+	
 
     /**
      * Generate <code>procedure ~free(~addr:$Pointer$) returns()</code>'s
@@ -1214,7 +1233,7 @@ public class MemoryHandler {
     						this.axioms.add(new Axiom(loc, attr, 
     								new BinaryExpression(loc, Operator.COMPGEQ, idex, fieldSize)));
     					} else {//only in the struct case, the offsets grow, in the union case they stay at 0
-    						nextOffset = new BinaryExpression(loc, Operator.ARITHPLUS,
+    						nextOffset = constructPointerComponentAddition(loc,
     								nextOffset, fieldSize);
     					}
     				}
