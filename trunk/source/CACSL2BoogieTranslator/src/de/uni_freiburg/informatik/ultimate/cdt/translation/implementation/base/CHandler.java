@@ -1220,6 +1220,7 @@ public class CHandler implements ICHandler {
 		case IASTUnaryExpression.op_tilde:
 			ResultExpression rop = o.switchToRValueIfNecessary(main, mMemoryHandler, mStructHandler, loc);
 			ResultExpression ropToInt = ConvExpr.rexBoolToIntIfNecessary(loc, rop, m_ExpressionTranslation);
+			m_ExpressionTranslation.doIntegerPromotion(loc, ropToInt);
 			List<Overapprox> overappr = new ArrayList<Overapprox>();
 			overappr.addAll(rop.overappr);
 			Expression bwexpr = m_ExpressionTranslation.constructUnaryExpression(loc, 
