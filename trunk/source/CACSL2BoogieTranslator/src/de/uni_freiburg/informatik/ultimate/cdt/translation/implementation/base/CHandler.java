@@ -1232,6 +1232,9 @@ public class CHandler implements ICHandler {
 			throw new UnsupportedSyntaxException(loc, msg);
 		}
 	}
+	
+	
+	
 
 	@Override
 	public Result visit(Dispatcher main, IASTBinaryExpression node) {
@@ -1826,8 +1829,7 @@ public class CHandler implements ICHandler {
 	 * (i.e., rexBoolToIntIfNecessary() has already been applied if needed).
 	 */
 	ResultExpression handleEqualityOperators(Dispatcher main, ILocation loc,
-			int op,
-			ResultExpression left, ResultExpression right) {
+			int op, ResultExpression left, ResultExpression right) {
 		assert (left.lrVal instanceof RValue);
 		assert (right.lrVal instanceof RValue);
 		CType lType = left.lrVal.cType.getUnderlyingType();

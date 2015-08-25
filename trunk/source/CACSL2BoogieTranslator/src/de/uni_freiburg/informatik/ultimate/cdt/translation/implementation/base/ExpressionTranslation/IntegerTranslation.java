@@ -134,18 +134,23 @@ public class IntegerTranslation extends AExpressionTranslation {
 		final String funcname;
 		switch (op) {
 		case IASTBinaryExpression.op_binaryAnd:
+		case IASTBinaryExpression.op_binaryAndAssign:
 			funcname = "bitwiseAnd";
 			break;
 		case IASTBinaryExpression.op_binaryOr:
+		case IASTBinaryExpression.op_binaryOrAssign:
 			funcname = "bitwiseOr";
 			break;
 		case IASTBinaryExpression.op_binaryXor:
+		case IASTBinaryExpression.op_binaryXorAssign:
 			funcname = "bitwiseXor";
 			break;
 		case IASTBinaryExpression.op_shiftLeft:
+		case IASTBinaryExpression.op_shiftLeftAssign:
 			funcname = "shiftLeft";
 			break;
 		case IASTBinaryExpression.op_shiftRight:
+		case IASTBinaryExpression.op_shiftRightAssign:
 			funcname = "shiftRight";
 			break;
 		default:
