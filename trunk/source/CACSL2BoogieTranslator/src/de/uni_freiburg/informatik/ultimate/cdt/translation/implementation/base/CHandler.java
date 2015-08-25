@@ -439,7 +439,8 @@ public class CHandler implements ICHandler {
 		// handle proc. declaration & resolve their transitive modified globals
 		decl.addAll(mFunctionHandler.calculateTransitiveModifiesClause(main, mMemoryHandler));
 
-		Collection<FunctionDeclaration> declaredFunctions = Collections.emptySet();
+		Collection<FunctionDeclaration> declaredFunctions = 
+				m_ExpressionTranslation.getFunctionDeclarations().getDeclaredFunctions().values();
 		decl.addAll(declaredFunctions);
 		
 		//handle global ACSL stuff
