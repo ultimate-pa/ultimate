@@ -508,7 +508,9 @@ public class MemoryHandler {
         		value = typeSizeConstants.defaultTypeSize;
         	}
         	axioms.add(new Axiom(l, new Attribute[0], new BinaryExpression(l,
-        			Operator.COMPEQ, idex, new IntegerLiteral(l, new Integer(value).toString()))));
+        			Operator.COMPEQ, idex, 
+        			m_ExpressionTranslation.constructLiteralForIntegerType(l, 
+        					new CPrimitive(PRIMITIVE.INT), BigInteger.valueOf(value)))));
         } else {
         // axiom #sizeof~t > 0;
         	axioms.add(new Axiom(l, new Attribute[0], new BinaryExpression(l,
