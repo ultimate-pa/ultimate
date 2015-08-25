@@ -95,7 +95,24 @@ public abstract class CType {
 		} else {
 			return false;
 		}
-		
+	}
+	
+	/**
+	 * Returns true iff this type is an integer type according to the
+	 * definition 6.2.5.7 in the C11 standard.
+	 */
+	public boolean isIntegerType() {
+		if (this instanceof CPrimitive) {
+			if (((CPrimitive) this).getGeneralType() == GENERALPRIMITIVE.INTTYPE) {
+				return true;
+			} else {
+				return false;
+			}
+		} else if (this instanceof CEnum) {
+			return true;
+		} else {
+			return false;
+		}
 	}
 		
 }
