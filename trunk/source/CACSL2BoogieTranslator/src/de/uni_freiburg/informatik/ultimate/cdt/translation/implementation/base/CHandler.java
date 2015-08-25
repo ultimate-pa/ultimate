@@ -1871,7 +1871,7 @@ public class CHandler implements ICHandler {
 		assert (right.lrVal instanceof RValue);
 		final CType lType = left.lrVal.cType.getUnderlyingType();
 		final CType rType = right.lrVal.cType.getUnderlyingType();
-		if (!rType.isIntegerType() || lType.isIntegerType()) {
+		if (!rType.isIntegerType() || !lType.isIntegerType()) {
 			throw new UnsupportedOperationException("operands have to have integer types");
 		}
 		m_ExpressionTranslation.doIntegerPromotion(loc, left);
