@@ -69,6 +69,8 @@ public class PostProcessor {
 
 	private final Dispatcher mDispatcher;
 	private final Logger mLogger;
+	
+	private final AExpressionTranslation m_ExpressionTranslation;
 
 	/*
 	 * Decides if the PostProcessor declares the special function that we use for
@@ -80,10 +82,11 @@ public class PostProcessor {
 	/**
 	 * Constructor.
 	 */
-	public PostProcessor(Dispatcher dispatcher, Logger logger) {
+	public PostProcessor(Dispatcher dispatcher, Logger logger, AExpressionTranslation expressionTranslation) {
 		mInitializedGlobals = new LinkedHashSet<String>();
 		mDispatcher = dispatcher;
 		mLogger = logger;
+		m_ExpressionTranslation = expressionTranslation;
 	}
 
 
@@ -256,9 +259,11 @@ public class PostProcessor {
 			if (memoryHandler.isFloatArrayRequiredInMM ||
 					memoryHandler.isIntArrayRequiredInMM ||
 					memoryHandler.isPointerArrayRequiredInMM) {
+				Expression zero = m_ExpressionTranslation.constructLiteralForIntegerType(
+						translationUnitLoc, m_ExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO);
 				LeftHandSide[] lhs = new LeftHandSide[] { new ArrayLHS(translationUnitLoc,
 						new VariableLHS(translationUnitLoc, SFO.VALID),
-						new Expression[] { new IntegerLiteral(translationUnitLoc, SFO.NR0) }) };
+						new Expression[] { zero }) };
 				Expression[] rhs = new Expression[] { new BooleanLiteral(translationUnitLoc, false) };
 				initStatements.add(0, new AssignmentStatement(translationUnitLoc, lhs, rhs));
 				mInitializedGlobals.add(SFO.VALID);

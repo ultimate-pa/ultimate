@@ -314,7 +314,6 @@ public class CHandler implements ICHandler {
 		this.mArrayHandler = new ArrayHandler();
 		this.mStructHandler = new StructHandler();
 		boolean checkPointerValidity = main.mPreferences.getBoolean(CACSLPreferenceInitializer.LABEL_CHECK_POINTER_VALIDITY);
-		this.mPostProcessor = new PostProcessor(main, mLogger);
 		
 		this.mSymbolTable = new SymbolTable(main);
 		
@@ -335,6 +334,7 @@ public class CHandler implements ICHandler {
 		} else {
 			m_ExpressionTranslation = new IntegerTranslation(main.getTypeSizes(), typeHandler, mUnsignedTreatment);
 		}
+		this.mPostProcessor = new PostProcessor(main, mLogger, m_ExpressionTranslation);
 		this.mFunctionHandler = new FunctionHandler(m_ExpressionTranslation);
 		this.mMemoryHandler = new MemoryHandler(mFunctionHandler, checkPointerValidity, main.getTypeSizes(), m_ExpressionTranslation);
 		this.mInitHandler = new InitializationHandler(mFunctionHandler, mStructHandler, mMemoryHandler, m_ExpressionTranslation);
