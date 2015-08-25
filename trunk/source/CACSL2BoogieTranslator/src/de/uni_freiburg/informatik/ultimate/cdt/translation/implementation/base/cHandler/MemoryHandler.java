@@ -469,17 +469,18 @@ public class MemoryHandler {
 
 	/**
      * Declare sizeof constants and add to the sizeOfConst set.
+	 * @param main 
      * 
      * @param l the location.
      * @param t the type string.
 	 * @param useFixedTypeSizes 
      */
-    private void declareSizeOf(ILocation l, String t, boolean useFixedTypeSizes) {
+    private void declareSizeOf(Dispatcher main, ILocation l, String t, boolean useFixedTypeSizes) {
         String id = SFO.SIZEOF + t;
         if (sizeofConsts.contains(id)) {
             return;
         }
-        ASTType intType = new PrimitiveType(l, SFO.INT);
+        ASTType intType = main.typeHandler.ctype2asttype(l, new CPrimitive(PRIMITIVE.INT));
         // const #sizeof~t : int;
         constants.add(new ConstDeclaration(l, new Attribute[0], false,
                 new VarList(l, new String[] { id }, intType), null, false));
@@ -548,7 +549,7 @@ public class MemoryHandler {
         	} else {
         		CtypeCompatibleId = typeName.toUpperCase();
         	}
-            declareSizeOf(loc, CtypeCompatibleId, typeSizeConstants.useFixedTypeSizes());
+            declareSizeOf(main, loc, CtypeCompatibleId, typeSizeConstants.useFixedTypeSizes());
             ASTType memoryType = new ArrayType(loc, new String[0],
                     new ASTType[] { POINTER_TYPE }, astType);
             VarList vlM = new VarList(loc, new String[] { SFO.MEMORY + "_"
