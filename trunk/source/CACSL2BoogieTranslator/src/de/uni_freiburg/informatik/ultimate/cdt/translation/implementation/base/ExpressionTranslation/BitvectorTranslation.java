@@ -324,15 +324,20 @@ public class BitvectorTranslation extends AExpressionTranslation {
 
 	@Override
 	public void doIntegerPromotion(ILocation loc, ResultExpression operand) {
-		CPrimitive promotedType = determineResultOfIntegerPromotion((CPrimitive) operand.lrVal.cType);
-		
-		int promotedTypeLength = m_TypeSizes.getSize(promotedType.getType()) * 8;
-		int operandLength = m_TypeSizes.getSize(((CPrimitive) operand.lrVal.cType).getType()) * 8;
-		
-		if (promotedTypeLength > operandLength) {
-			extend(loc, operand, promotedType, promotedType, promotedTypeLength, operandLength);
+		CType inputType = operand.lrVal.cType;
+		if (inputType instanceof CPrimitive) {
+			CPrimitive cPrimitive = (CPrimitive) operand.lrVal.cType;
+			if (cPrimitive.getGeneralType() == GENERALPRIMITIVE.INTTYPE) {
+				CPrimitive promotedType = determineResultOfIntegerPromotion(cPrimitive);
+
+				int promotedTypeLength = m_TypeSizes.getSize(promotedType.getType()) * 8;
+				int operandLength = m_TypeSizes.getSize(((CPrimitive) operand.lrVal.cType).getType()) * 8;
+				if (promotedTypeLength > operandLength) {
+					extend(loc, operand, promotedType, promotedType, promotedTypeLength, operandLength);
+				}
+				operand.lrVal.cType = promotedType;
+			}
 		}
-		
-		operand.lrVal.cType = promotedType;
+		throw new IllegalArgumentException("integer promotions not applicable to " + inputType);
 	}
 }
