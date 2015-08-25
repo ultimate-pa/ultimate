@@ -336,6 +336,8 @@ public class BitvectorTranslation extends AExpressionTranslation {
 					extend(loc, operand, promotedType, promotedType, promotedTypeLength, operandLength);
 				}
 				operand.lrVal.cType = promotedType;
+			} else {
+				throw new IllegalArgumentException("integer promotions not applicable to " + inputType);
 			}
 		} else {
 			throw new IllegalArgumentException("integer promotions not applicable to " + inputType);
