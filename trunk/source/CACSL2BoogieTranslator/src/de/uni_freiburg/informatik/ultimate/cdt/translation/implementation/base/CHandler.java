@@ -9,6 +9,7 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -427,9 +428,9 @@ public class CHandler implements ICHandler {
 			throw new IncorrectSyntaxException(loc, msg);
 		}
 
-		Collection<FunctionDeclaration> declaredFunctions = m_ExpressionTranslation.getFunctionDeclarations().getDeclaredFunctions().values();
+
 		decl.addAll(mPostProcessor.postProcess(main, loc, mMemoryHandler, mArrayHandler, mFunctionHandler, mStructHandler, (TypeHandler) mTypeHandler,
-				main.typeHandler.getUndefinedTypes(), declaredFunctions, mDeclarationsGlobalInBoogie, m_ExpressionTranslation));
+				main.typeHandler.getUndefinedTypes(), mDeclarationsGlobalInBoogie, m_ExpressionTranslation));
 
 		// this has to happen after postprocessing as pping may add sizeof
 		// constants for initializations
@@ -437,6 +438,9 @@ public class CHandler implements ICHandler {
 
 		// handle proc. declaration & resolve their transitive modified globals
 		decl.addAll(mFunctionHandler.calculateTransitiveModifiesClause(main, mMemoryHandler));
+
+		Collection<FunctionDeclaration> declaredFunctions = Collections.emptySet();
+		decl.addAll(declaredFunctions);
 		
 		//handle global ACSL stuff
 		//TODO: do it!

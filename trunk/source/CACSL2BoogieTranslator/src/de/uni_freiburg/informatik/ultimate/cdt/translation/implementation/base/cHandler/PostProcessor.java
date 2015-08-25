@@ -117,14 +117,13 @@ public class PostProcessor {
 	 */
 	public ArrayList<Declaration> postProcess(Dispatcher main, ILocation loc, MemoryHandler memoryHandler, 
 			ArrayHandler arrayHandler, FunctionHandler functionHandler, StructHandler structHandler,
-			TypeHandler typeHandler, Set<String> undefinedTypes,	Collection<? extends FunctionDeclaration> functions, 
+			TypeHandler typeHandler, Set<String> undefinedTypes, 
 			LinkedHashMap<Declaration,CDeclaration> mDeclarationsGlobalInBoogie, AExpressionTranslation expressionTranslation) {
 		ArrayList<Declaration> decl = new ArrayList<Declaration>();
 		decl.addAll(declareUndefinedTypes(loc, undefinedTypes));
 		decl.addAll(createUltimateInitProcedure(loc, main, memoryHandler, arrayHandler, functionHandler, structHandler,
 				mDeclarationsGlobalInBoogie, expressionTranslation));
 		decl.addAll(createUltimateStartProcedure(main, loc, functionHandler));
-		decl.addAll(functions);
 		decl.addAll(declareFunctionPointerProcedures(main, functionHandler, memoryHandler, structHandler));
 		decl.addAll(declareConversionFunctions(main, functionHandler, memoryHandler, structHandler));
 		if (!typeHandler.useIntForAllIntegerTypes()) {
