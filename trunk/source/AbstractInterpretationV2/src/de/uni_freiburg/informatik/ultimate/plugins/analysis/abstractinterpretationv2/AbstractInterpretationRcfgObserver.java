@@ -24,6 +24,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.RcfgVariableProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.IAbstractDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.empty.EmptyDomain;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.interval.IntervalDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.sign.SignDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.preferences.AbstractInterpretationPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.loopdetector.RCFGLoopDetector;
@@ -71,7 +72,7 @@ public class AbstractInterpretationRcfgObserver extends BaseObserver {
 
 		final IAbstractDomain<?, CodeBlock, BoogieVar> domain = selectDomain();
 		final AbstractInterpreter<CodeBlock, BoogieVar> interpreter = createAbstractInterpreter(domain, symbolTable,
-				boogieVarTable);
+		        boogieVarTable);
 		interpreter.process(initial);
 		return false;
 	}
@@ -92,9 +93,11 @@ public class AbstractInterpretationRcfgObserver extends BaseObserver {
 			return new EmptyDomain<>();
 		} else if (SignDomain.class.getSimpleName().equals(selectedDomain)) {
 			return new SignDomain(mServices);
+		} else if (IntervalDomain.class.getSimpleName().equals(selectedDomain)) {
+			return new IntervalDomain(mServices);
 		}
 		throw new UnsupportedOperationException("The value \"" + selectedDomain + "\" of preference \""
-				+ AbstractInterpretationPreferenceInitializer.LABEL_ABSTRACT_DOMAIN + "\" was not considered before! ");
+		        + AbstractInterpretationPreferenceInitializer.LABEL_ABSTRACT_DOMAIN + "\" was not considered before! ");
 	}
 
 	private List<CodeBlock> getInitialEdges(RootNode root) {
@@ -113,20 +116,20 @@ public class AbstractInterpretationRcfgObserver extends BaseObserver {
 	}
 
 	private AbstractInterpreter<CodeBlock, BoogieVar> createAbstractInterpreter(
-			IAbstractDomain<?, CodeBlock, BoogieVar> domain, BoogieSymbolTable table,
-			Boogie2SmtSymbolTable boogieVarTable) {
+	        IAbstractDomain<?, CodeBlock, BoogieVar> domain, BoogieSymbolTable table,
+	        Boogie2SmtSymbolTable boogieVarTable) {
 		assert domain != null;
 		assert table != null;
 		assert boogieVarTable != null;
 
 		ITransitionProvider<CodeBlock> transitionProvider = new RcfgTransitionProvider();
 		BaseRcfgAbstractStateStorageProvider storage = new AnnotatingRcfgAbstractStateStorageProvider(
-				domain.getMergeOperator(), mServices);
+		        domain.getMergeOperator(), mServices);
 		IVariableProvider<CodeBlock, BoogieVar> varProvider = new RcfgVariableProvider(table, boogieVarTable);
 		ILoopDetector<CodeBlock> loopDetector = new RcfgLoopDetector(mLoopDetector);
 		IResultReporter<CodeBlock> reporter = new RcfgResultReporter(mServices, storage);
 		return new AbstractInterpreter<CodeBlock, BoogieVar>(mServices, transitionProvider, storage, domain,
-				varProvider, loopDetector, reporter);
+		        varProvider, loopDetector, reporter);
 	}
 
 }

@@ -42,6 +42,6 @@ public class IntervalPostOperator implements IAbstractPostOperator<CodeBlock, Bo
 			currentState = mStatementProcessor.process(currentState, stmt);
 		}
 		
-		return null;
+		return currentState;
 	}
 }

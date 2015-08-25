@@ -55,7 +55,7 @@ public class IntervalMergeOperator<ACTION, VARDECL> implements IAbstractStateBin
 			newState.setValue(entry.getKey(), computeMergedValue(value1, value2));
 		}
 
-		return null;
+		return newState;
 	}
 
 	/**
