@@ -78,9 +78,7 @@ public class TransFormulaBuilder {
 		}
 		if (!tlres.getOverapproximations().isEmpty()) {
 			Map<String, IAnnotations> annots = cb.getPayload().getAnnotations();
-			//TODO: it would be better to pass all overapproximations
-			Entry<String, ILocation> firstEntry = tlres.getOverapproximations().entrySet().iterator().next();
-			annots.put(Overapprox.getIdentifier(), new Overapprox(firstEntry.getKey(), firstEntry.getValue()));
+			annots.put(Overapprox.getIdentifier(), new Overapprox(tlres.getOverapproximations()));
 		}
 		cb.setTransitionFormula(tlres.getTransFormula());
 	}

@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.result;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -8,6 +9,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.IBacktranslationService
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.result.Check.Spec;
+import de.uni_freiburg.informatik.ultimate.util.relation.Pair;
 
 /**
  * Result to store that we are not able to determine if a specification given at
@@ -68,13 +70,21 @@ public class UnprovableResult<ELEM extends IElement, TE extends IElement, E> ext
 	}
 	
 	private static String generateOverapproximationMessage(Map<String, ILocation> overapproximations) {
+		List<Pair<String, ILocation>> pairs = new ArrayList<>();
+		for (Entry<String, ILocation> entry : overapproximations.entrySet()) {
+			pairs.add(new Pair<String, ILocation>(entry.getKey(), entry.getValue()));
+		}
 		StringBuilder sb = new StringBuilder();
 		sb.append(" because the following operations were overapproximated: ");
-		for (Entry<String, ILocation> entry : overapproximations.entrySet()) {
-			sb.append(entry.getKey());
+		for (int i=0; i<pairs.size(); i++) {
+			sb.append(pairs.get(i).getFirst());
 			sb.append(" in line ");
-			sb.append(entry.getValue().getStartLine());
-			sb.append(" ");
+			sb.append(pairs.get(i).getSecond().getStartLine());
+			if (i==pairs.size()-1) {
+				sb.append(". ");
+			} else {
+				sb.append(", ");
+			}
 		}
 		return sb.toString();
 	}

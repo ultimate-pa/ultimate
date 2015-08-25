@@ -409,9 +409,7 @@ public class CfgBuilder {
 		overapproximations.putAll(outParams2CallerVars.getOverapproximations());
 		if (!overapproximations.isEmpty()) {
 			Map<String, IAnnotations> annots = edge.getPayload().getAnnotations();
-			//TODO: it would be better to pass all overapproximations
-			Entry<String, ILocation> firstEntry = overapproximations.entrySet().iterator().next();
-			annots.put(Overapprox.getIdentifier(), new Overapprox(firstEntry.getKey(), firstEntry.getValue()));
+			annots.put(Overapprox.getIdentifier(), new Overapprox(overapproximations));
 		}
 
 		Call call = m_Cbf.constructCall(callerNode, calleeEntryLoc, st);
