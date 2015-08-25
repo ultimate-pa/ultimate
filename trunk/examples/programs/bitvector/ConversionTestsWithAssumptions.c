@@ -24,4 +24,14 @@ int main() {
       //@assert(\false);
     }
   }
+
+  /* unsigned int to signed long long */
+  if (sizeof(long long) > 4 && sizeof(int) == 4) {
+    unsigned int e = 2147483648U;
+    signed long long f = e;
+
+    if (f < 0) {
+      //@ assert \false;
+    }
+  }
 }

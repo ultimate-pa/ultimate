@@ -1,0 +1,13 @@
+//#Safe
+/* 
+ * Author: langt@informatik.uni-freiburg.de, heizmann@informatik.uni-freiburg.de
+ * Date: 24.08.2015
+ */
+
+int main() {
+  {
+    unsigned char c = 1U;
+    signed int i = ~c;
+    //@ assert i < 0;
+  }  
+}
