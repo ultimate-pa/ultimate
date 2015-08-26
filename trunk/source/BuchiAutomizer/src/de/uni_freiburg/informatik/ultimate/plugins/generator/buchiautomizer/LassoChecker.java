@@ -610,29 +610,28 @@ public class LassoChecker {
 		// s_Logger.info("Statistics: stemVars: " + stemVars + "loopVars: " +
 		// loopVars);
 		// }
-
-		LassoAnalysis la = null;
+		
+		boolean doNonterminationAnalysis = !(s_AvoidNonterminationCheckIfArraysAreContained && containsArrays);
+		
 		NonTerminationArgument nonTermArgument = null;
-		if (!(s_AvoidNonterminationCheckIfArraysAreContained && containsArrays)) {
+		if (doNonterminationAnalysis) {
+			LassoAnalysis laNT = null;
 			try {
 				boolean overapproximateArrayIndexConnection = false;
-				la = new LassoAnalysis(m_SmtManager.getScript(), m_SmtManager.getBoogie2Smt(), stemTF, loopTF,
+				laNT = new LassoAnalysis(m_SmtManager.getScript(), m_SmtManager.getBoogie2Smt(), stemTF, loopTF,
 						modifiableGlobalsAtHonda, m_Axioms.toArray(new Term[m_Axioms.size()]), constructLassoRankerPreferences(withStem, overapproximateArrayIndexConnection ), mServices, mStorage);
-				m_preprocessingBenchmarks.add(la.getPreprocessingBenchmark());
+				m_preprocessingBenchmarks.add(laNT.getPreprocessingBenchmark());
 			} catch (TermException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 				throw new AssertionError("TermException " + e);
 			}
 			try {
 				NonTerminationAnalysisSettings settings = constructNTASettings();
-				nonTermArgument = la.checkNonTermination(settings);
+				nonTermArgument = laNT.checkNonTermination(settings);
 			} catch (SMTLIBException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 				throw new AssertionError("SMTLIBException " + e);
 			} catch (TermException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 				throw new AssertionError("TermException " + e);
 			}
@@ -642,6 +641,17 @@ public class LassoChecker {
 			if (!s_CheckTerminationEvenIfNonterminating && nonTermArgument != null) {
 				return SynthesisResult.NONTERMINATING;
 			}
+		}
+		
+		LassoAnalysis laT = null;
+		try {
+			boolean overapproximateArrayIndexConnection = true;
+			laT = new LassoAnalysis(m_SmtManager.getScript(), m_SmtManager.getBoogie2Smt(), stemTF, loopTF,
+					modifiableGlobalsAtHonda, m_Axioms.toArray(new Term[m_Axioms.size()]), constructLassoRankerPreferences(withStem, overapproximateArrayIndexConnection ), mServices, mStorage);
+			m_preprocessingBenchmarks.add(laT.getPreprocessingBenchmark());
+		} catch (TermException e) {
+			e.printStackTrace();
+			throw new AssertionError("TermException " + e);
 		}
 
 		List<RankingTemplate> rankingFunctionTemplates = new ArrayList<RankingTemplate>();
@@ -682,22 +692,7 @@ public class LassoChecker {
 		}
 		// }
 
-		if (s_AvoidNonterminationCheckIfArraysAreContained && containsArrays) {
-			// if stem or loop contain arrays, overapproximate the
-			// index connection of RewriteArrays
-			try {
-				boolean overapproximateArrayIndexConnection = !true; // not now
-				la = new LassoAnalysis(m_SmtManager.getScript(), m_SmtManager.getBoogie2Smt(), stemTF, loopTF,
-						modifiableGlobalsAtHonda, m_Axioms.toArray(new Term[m_Axioms.size()]), constructLassoRankerPreferences(withStem, overapproximateArrayIndexConnection ), mServices, mStorage);
-				m_preprocessingBenchmarks.add(la.getPreprocessingBenchmark());
-			} catch (TermException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-				throw new AssertionError("TermException " + e);
-			}
-		}
-
-		TerminationArgument termArg = tryTemplatesAndComputePredicates(withStem, la, rankingFunctionTemplates, stemTF, loopTF);
+		TerminationArgument termArg = tryTemplatesAndComputePredicates(withStem, laT, rankingFunctionTemplates, stemTF, loopTF);
 		assert (nonTermArgument == null || termArg == null) : " terminating and nonterminating";
 		if (termArg != null) {
 			return SynthesisResult.TERMINATING;

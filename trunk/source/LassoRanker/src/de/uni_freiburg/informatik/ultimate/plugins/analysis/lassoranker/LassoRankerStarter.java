@@ -138,10 +138,10 @@ public class LassoRankerStarter {
 		Set<BoogieVar> modifiableGlobalsAtHonda = 
 				m_RootAnnot.getModGlobVarManager().getModifiedBoogieVars(m_Honda.getProcedure());
 
-		// Do the termination analysis
-		LassoAnalysis la = null;
+		// Construct LassoAnalysis for nontermination
+		LassoAnalysis laNT = null;
 		try {
-			la = new LassoAnalysis(script, m_RootAnnot.getBoogie2SMT(), stemTF, loopTf, 
+			laNT = new LassoAnalysis(script, m_RootAnnot.getBoogie2SMT(), stemTF, loopTf, 
 					modifiableGlobalsAtHonda, axioms, preferences, mServices,
 					storage);
 		} catch (TermException e) {
@@ -155,7 +155,7 @@ public class LassoRankerStarter {
 		if (nontermination_settings.analysis != AnalysisType.Disabled) {
 			try {
 				NonTerminationArgument nta =
-						la.checkNonTermination(nontermination_settings);
+						laNT.checkNonTermination(nontermination_settings);
 				if (nta != null) {
 					if (!lassoWasOverapproximated().isEmpty()) {
 						reportFailBecauseOfOverapproximationResult();
@@ -173,6 +173,17 @@ public class LassoRankerStarter {
 
 		TerminationAnalysisSettings termination_settings = PreferencesInitializer.getTerminationAnalysisSettings();
 
+		// Construct LassoAnalysis for nontermination
+		LassoAnalysis laT = null;
+		try {
+			laT = new LassoAnalysis(script, m_RootAnnot.getBoogie2SMT(), stemTF, loopTf, 
+					modifiableGlobalsAtHonda, axioms, preferences, mServices,
+					storage);
+		} catch (TermException e) {
+			reportUnuspportedSyntax(m_Honda, e.getMessage());
+			return;
+		}
+		
 		// Get all templates
 		RankingTemplate[] templates;
 		if (termination_settings.analysis == AnalysisType.Disabled) {
@@ -188,7 +199,7 @@ public class LassoRankerStarter {
 				return;
 			}
 			try {
-				TerminationArgument arg = la.tryTemplate(template, termination_settings);
+				TerminationArgument arg = laT.tryTemplate(template, termination_settings);
 				if (arg != null) {
 					// try {
 					assert isTerminationArgumentCorrect(arg, stemTF, loopTf) : "Incorrect termination argument from"
