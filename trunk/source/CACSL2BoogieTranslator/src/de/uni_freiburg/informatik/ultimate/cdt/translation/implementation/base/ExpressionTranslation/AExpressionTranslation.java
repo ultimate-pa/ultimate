@@ -270,7 +270,7 @@ public abstract class AExpressionTranslation {
 	
 	public CPrimitive determineResultOfIntegerPromotion(CPrimitive cPrimitive) {
 		int argBitLength = m_TypeSizes.getSize(cPrimitive.getType()) * 8;
-		int intLength = m_TypeSizes.getSize(CPrimitive.PRIMITIVE.INT);
+		int intLength = m_TypeSizes.getSize(CPrimitive.PRIMITIVE.INT) * 8;
 		
 		if (argBitLength < intLength || !cPrimitive.isUnsigned()) {
 			return new CPrimitive(PRIMITIVE.INT);
