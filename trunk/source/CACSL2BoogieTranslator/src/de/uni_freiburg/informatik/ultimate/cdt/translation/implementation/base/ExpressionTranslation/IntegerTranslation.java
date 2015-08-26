@@ -451,8 +451,20 @@ public class IntegerTranslation extends AExpressionTranslation {
 
 	@Override
 	public void doIntegerPromotion(ILocation loc, ResultExpression operand) {
-		// TODO Auto-generated method stub
-		
+		CType inputType = operand.lrVal.cType;
+		if (inputType instanceof CPrimitive) {
+			CPrimitive cPrimitive = (CPrimitive) operand.lrVal.cType;
+			if (cPrimitive.getGeneralType() == GENERALPRIMITIVE.INTTYPE) {
+				CPrimitive promotedType = determineResultOfIntegerPromotion(cPrimitive);
+				if (!promotedType.equals(inputType)) {
+					operand.lrVal.cType = promotedType;
+				}
+			} else {
+				throw new IllegalArgumentException("integer promotions not applicable to " + inputType);
+			}
+		} else {
+			throw new IllegalArgumentException("integer promotions not applicable to " + inputType);
+		}
 	}
 
 }

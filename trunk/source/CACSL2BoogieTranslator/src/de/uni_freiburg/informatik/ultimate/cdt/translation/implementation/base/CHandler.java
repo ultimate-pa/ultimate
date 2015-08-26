@@ -1180,6 +1180,9 @@ public class CHandler implements ICHandler {
 
 		switch (op) {
 		case IASTUnaryExpression.op_not: {
+			if (!inputType.isScalarType()) {
+				throw new IllegalArgumentException("scalar type required");
+			}
 			final Expression negated;
 			if (operand.lrVal.isBoogieBool) {
 				// in Boogie already represented by bool, we only negate
@@ -1221,6 +1224,10 @@ public class CHandler implements ICHandler {
 		case IASTUnaryExpression.op_plus: {
 			if (!inputType.isArithmeticType()) {
 				throw new UnsupportedOperationException("arithmetic type required");
+			}
+			if (inputType.isArithmeticType()) {
+				operand = ConvExpr.rexBoolToIntIfNecessary(loc, operand, m_ExpressionTranslation);
+				m_ExpressionTranslation.doIntegerPromotion(loc, operand);
 			}
 			return operand;
 		}

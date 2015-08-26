@@ -163,7 +163,16 @@ public abstract class AExpressionTranslation {
 			ResultExpression leftRex, ResultExpression rightRex) {
 		final CPrimitive leftPrimitive = getCorrespondingPrimitiveType(leftRex.lrVal.cType);
 		final CPrimitive rightPrimitive = getCorrespondingPrimitiveType(rightRex.lrVal.cType);
-		final CPrimitive resultType = determineResultOfUsualArithmeticConversions(leftPrimitive, rightPrimitive);
+		if (leftPrimitive.isIntegerType()) {
+			doIntegerPromotion(loc, leftRex);
+		}
+		if (rightPrimitive.isIntegerType()) {
+			doIntegerPromotion(loc, rightRex);
+		}
+
+		final CPrimitive resultType = determineResultOfUsualArithmeticConversions(
+				(CPrimitive) leftRex.lrVal.cType, 
+				(CPrimitive) rightRex.lrVal.cType);
 
 		convertIfNecessary(loc, leftRex, resultType);
 		convertIfNecessary(loc, rightRex, resultType);
