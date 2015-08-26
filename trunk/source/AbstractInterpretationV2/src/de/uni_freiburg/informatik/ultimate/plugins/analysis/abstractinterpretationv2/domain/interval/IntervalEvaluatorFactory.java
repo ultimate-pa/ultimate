@@ -1,4 +1,4 @@
-package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.sign;
+package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.interval;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -8,48 +8,45 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.IEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.IEvaluatorFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.INAryEvaluator;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.sign.SignDomainValue.Values;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
 /**
- * Factory for evaluators of the sign domain.
+ * Factory for evaluators of the interval domain.
  * 
  * @author greitsch@informatik.uni-freiburg.de
  *
  */
-public class SignEvaluatorFactory implements IEvaluatorFactory<Values, CodeBlock, BoogieVar> {
+public class IntervalEvaluatorFactory implements IEvaluatorFactory<IntervalDomainValue, CodeBlock, BoogieVar> {
 
 	private static final int ARITY_MIN = 1;
 	private static final int ARITY_MAX = 2;
 	private static final int BUFFER_MAX = 100;
 
-	private final SignStateConverter<CodeBlock, BoogieVar> mStateConverter;
+	private final IntervalStateConverter<CodeBlock, BoogieVar> mStateConverter;
 	private final IUltimateServiceProvider mServices;
 
 	/**
-	 * Creates a new evaluator factory for the sign domain.
+	 * Creates a new evaluator factory for the interval domain.
 	 * 
 	 * @param services
 	 *            The Ultimate services.
 	 * @param stateConverter
-	 *            The state converter in the sign domain.
+	 *            The state converter in the interval domain.
 	 */
-	public SignEvaluatorFactory(IUltimateServiceProvider services,
-	        SignStateConverter<CodeBlock, BoogieVar> stateConverter) {
-		mStateConverter = stateConverter;
+	public IntervalEvaluatorFactory(IUltimateServiceProvider services,
+	        IntervalStateConverter<CodeBlock, BoogieVar> stateConverter) {
 		mServices = services;
+		mStateConverter = stateConverter;
 	}
 
 	@Override
-	public INAryEvaluator<Values, CodeBlock, BoogieVar> createNAryExpressionEvaluator(int arity) {
+	public INAryEvaluator<IntervalDomainValue, CodeBlock, BoogieVar> createNAryExpressionEvaluator(int arity) {
 
 		assert arity >= ARITY_MIN && arity <= ARITY_MAX;
 
 		switch (arity) {
 		case ARITY_MIN:
-			return new SignUnaryExpressionEvaluator();
 		case ARITY_MAX:
-			return new SignBinaryExpressionEvaluator(mServices);
 		default:
 			final StringBuilder stringBuilder = new StringBuilder(BUFFER_MAX);
 			stringBuilder.append("Arity of ").append(arity).append(" is not implemented.");
@@ -58,22 +55,23 @@ public class SignEvaluatorFactory implements IEvaluatorFactory<Values, CodeBlock
 	}
 
 	@Override
-	public IEvaluator<Values, CodeBlock, BoogieVar> createSingletonValueExpressionEvaluator(String value,
+	public IEvaluator<IntervalDomainValue, CodeBlock, BoogieVar> createSingletonValueExpressionEvaluator(String value,
 	        Class<?> valueType) {
 
 		if (valueType.equals(BigInteger.class)) {
-			return new SignSingletonIntegerExpressionEvaluator(value);
+			return new IntervalUnaryExpressionEvaluator();
 		}
 
 		if (valueType.equals(BigDecimal.class)) {
-			return new SignSingletonDecimalExpressionEvaluator(value);
+			return new IntervalBinaryExpressionEvaluator(mServices);
 		}
 
-		throw new UnsupportedOperationException("The type " + valueType.toString() + " is not supported.");
+		throw new UnsupportedOperationException("The type " + valueType.toString() + " is not implemented.");
 	}
 
 	@Override
-	public IEvaluator<Values, CodeBlock, BoogieVar> createSingletonVariableExpressionEvaluator(String variableName) {
-		return new SignSingletonVariableExpressionEvaluator(variableName, mStateConverter);
+	public IEvaluator<IntervalDomainValue, CodeBlock, BoogieVar> createSingletonVariableExpressionEvaluator(
+	        String variableName) {
+		return new IntervalSingletonVariableExpressionEvaluator(variableName, mStateConverter);
 	}
 }

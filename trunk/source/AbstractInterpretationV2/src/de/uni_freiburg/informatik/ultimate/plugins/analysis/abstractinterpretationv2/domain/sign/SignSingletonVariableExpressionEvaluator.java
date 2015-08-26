@@ -19,9 +19,17 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
 public class SignSingletonVariableExpressionEvaluator implements IEvaluator<Values, CodeBlock, BoogieVar> {
 
 	protected String mVariableName;
-	protected SignStateConverter<CodeBlock, BoogieVar> mStateConverter;
-	private Set<String> mVariableSet;
+	protected final SignStateConverter<CodeBlock, BoogieVar> mStateConverter;
+	private final Set<String> mVariableSet;
 
+	/**
+	 * Constructor that creates a singleton variable expression evaluator in the sign domain.
+	 * 
+	 * @param variableName
+	 *            The name of the variable.
+	 * @param stateConverter
+	 *            The interval domain state converter.
+	 */
 	public SignSingletonVariableExpressionEvaluator(String variableName,
 	        SignStateConverter<CodeBlock, BoogieVar> stateConverter) {
 		mVariableName = variableName;
@@ -41,17 +49,16 @@ public class SignSingletonVariableExpressionEvaluator implements IEvaluator<Valu
 
 	@Override
 	public final IEvaluationResult<Values> evaluate(IAbstractState<CodeBlock, BoogieVar> currentState) {
-		SignDomainState<CodeBlock, BoogieVar> concreteState = mStateConverter
-		        .getCheckedState((IAbstractState<CodeBlock, BoogieVar>) currentState);
+		final SignDomainState<CodeBlock, BoogieVar> concreteState = mStateConverter.getCheckedState(currentState);
 
-		SignDomainValue val = concreteState.getValues().get(mVariableName);
+		final SignDomainValue val = concreteState.getValues().get(mVariableName);
 
 		if (val == null) {
 			throw new UnsupportedOperationException("The variable with name " + mVariableName
 			        + " has not been found in the current abstract state.");
 		}
 
-		return val;
+		return new SignDomainValue(val.getResult());
 	}
 
 	@Override

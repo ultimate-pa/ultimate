@@ -16,14 +16,26 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.sign.SignDomainValue.Values;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
+/**
+ * The binary expression evaluator of the sign domain.
+ * 
+ * @author greitsch@informatik.uni-freiburg.de
+ *
+ */
 public class SignBinaryExpressionEvaluator implements INAryEvaluator<Values, CodeBlock, BoogieVar> {
 
 	protected IEvaluator<Values, CodeBlock, BoogieVar> mLeftSubEvaluator;
 	protected IEvaluator<Values, CodeBlock, BoogieVar> mRightSubEvaluator;
 	protected BinaryExpression.Operator mOperator;
-	protected Set<String> mVariableSet;
-	protected Logger mLogger;
+	protected final Set<String> mVariableSet;
+	protected final Logger mLogger;
 
+	/**
+	 * Creates an instance of the binary expression evaluator of the sign domain.
+	 * 
+	 * @param services
+	 *            Ultimate service provider.
+	 */
 	public SignBinaryExpressionEvaluator(IUltimateServiceProvider services) {
 		mVariableSet = new HashSet<String>();
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
@@ -37,6 +49,7 @@ public class SignBinaryExpressionEvaluator implements INAryEvaluator<Values, Cod
 	 */
 	@Override
 	public void setOperator(Object operator) {
+		assert operator != null;
 		assert operator instanceof BinaryExpression.Operator;
 		mOperator = (BinaryExpression.Operator) operator;
 	}

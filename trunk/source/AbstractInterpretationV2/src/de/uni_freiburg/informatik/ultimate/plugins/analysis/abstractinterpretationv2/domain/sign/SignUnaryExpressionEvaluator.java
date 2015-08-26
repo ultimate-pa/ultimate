@@ -12,6 +12,12 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.sign.SignDomainValue.Values;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
+/**
+ * Expression evaluator for unary expressions in the interval domain.
+ * 
+ * @author greitsch@informatik.uni-freiburg.de
+ *
+ */
 public class SignUnaryExpressionEvaluator implements INAryEvaluator<Values, CodeBlock, BoogieVar> {
 
 	protected IEvaluator<Values, CodeBlock, BoogieVar> mSubEvaluator;
@@ -28,6 +34,7 @@ public class SignUnaryExpressionEvaluator implements INAryEvaluator<Values, Code
 
 	@Override
 	public void setOperator(Object operator) {
+		assert operator != null;
 		assert operator instanceof Operator;
 		mOperator = (Operator) operator;
 	}
@@ -39,19 +46,14 @@ public class SignUnaryExpressionEvaluator implements INAryEvaluator<Values, Code
 		final IEvaluationResult<Values> subEvalResult = (IEvaluationResult<Values>) castedSubEvaluator
 		        .evaluate(oldState);
 
-		IEvaluationResult<Values> endResult;
-
 		switch (mOperator) {
 		case LOGICNEG:
 			return negateValue(subEvalResult.getResult());
 		case ARITHNEGATIVE:
-			endResult = negateValue(subEvalResult.getResult());
-			break;
+			return negateValue(subEvalResult.getResult());
 		default:
 			throw new UnsupportedOperationException("The operator " + mOperator.toString() + " is not implemented.");
 		}
-
-		return endResult;
 	}
 
 	private IEvaluationResult<SignDomainValue.Values> negateValue(SignDomainValue.Values value) {
