@@ -77,25 +77,6 @@ public abstract class CType {
 //	public boolean equals(Object o);
 //	public abstract int hashCode();
 	
-	/**
-	 * Returns true iff this type is an arithmetic type according to the
-	 * definition 6.2.5.18 in the C11 standard.
-	 */
-	public boolean isArithmeticType() {
-		if (this instanceof CPrimitive) {
-			if (((CPrimitive) this).getGeneralType() == GENERALPRIMITIVE.INTTYPE) {
-				return true;
-			} else if (((CPrimitive) this).getGeneralType() == GENERALPRIMITIVE.FLOATTYPE) {
-				return true;
-			} else {
-				return false;
-			}
-		} else if (this instanceof CEnum) {
-			return true;
-		} else {
-			return false;
-		}
-	}
 	
 	/**
 	 * Returns true iff this type is an integer type according to the
@@ -113,6 +94,38 @@ public abstract class CType {
 		} else {
 			return false;
 		}
+	}
+	
+	/**
+	 * Returns true iff this type is an floting type according to the
+	 * definition 6.2.5.11 in the C11 standard.
+	 */
+	public boolean isFloatingType() {
+		if (this instanceof CPrimitive) {
+			if (((CPrimitive) this).getGeneralType() == GENERALPRIMITIVE.FLOATTYPE) {
+				return true;
+			} else {
+				return false;
+			}
+		} else {
+			return false;
+		}
+	}
+	
+	/**
+	 * Returns true iff this type is an arithmetic type according to the
+	 * definition 6.2.5.18 in the C11 standard.
+	 */
+	public boolean isArithmeticType() {
+		return this.isIntegerType() || this.isFloatingType();
+	}
+	
+	/**
+	 * Returns true iff this type is a scalar type according to the
+	 * definition 6.2.5.21 in the C11 standard.
+	 */
+	public boolean isScalarType() {
+		return (this instanceof CPointer) || isArithmeticType();
 	}
 		
 }
