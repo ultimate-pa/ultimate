@@ -12,11 +12,11 @@
 #include <stdio.h>
 
 int main() {
-	void* p = 0;
+	char* p = 0;
 	p++;
-	printf("p: %lu\n", (long) p);
+	printf("p: %p\n", p);
 	int logicalNegation = !p;
 	printf("logicalNegation: %d\n", logicalNegation);
 	//@ assert logicalNegation == 0;
-    return 0;
+	return 0;
 }
