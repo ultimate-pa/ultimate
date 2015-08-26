@@ -991,69 +991,12 @@ public class CHandler implements ICHandler {
 			oType = ((CNamed) oType).getUnderlyingType();
 
 		switch (node.getOperator()) {
-		case IASTUnaryExpression.op_minus: {
-			ResultExpression rop = o.switchToRValueIfNecessary(main, mMemoryHandler, mStructHandler, loc);
-			ResultExpression ropToInt = ConvExpr.rexBoolToIntIfNecessary(loc, rop, m_ExpressionTranslation);
-			if (ropToInt.lrVal.cType instanceof CPrimitive) {
-				if (((CPrimitive) ropToInt.lrVal.cType).getGeneralType() == GENERALPRIMITIVE.INTTYPE) {
-					Expression newEx = m_ExpressionTranslation.constructUnaryExpression(loc, 
-							IASTUnaryExpression.op_minus, ropToInt.lrVal.getValue(), (CPrimitive) o.lrVal.cType);				
-					ResultExpression rex = new ResultExpression(ropToInt.stmt, new RValue(newEx, ropToInt.lrVal.cType), 
-							ropToInt.decl, ropToInt.auxVars, ropToInt.overappr);
-					checkIntegerBounds(main, loc, rex);
-					return rex;
-				} else if (((CPrimitive) ropToInt.lrVal.cType).getGeneralType() == GENERALPRIMITIVE.FLOATTYPE) {
-					//TODO: having boogie deal with negative real literals would be the nice solution..
-					Expression newEx = new BinaryExpression(loc, BinaryExpression.Operator.ARITHMINUS, 
-							new RealLiteral(loc, "0.0"), ropToInt.lrVal.getValue());				
-					return new ResultExpression(ropToInt.stmt, new RValue(newEx, ropToInt.lrVal.cType), 
-							ropToInt.decl, ropToInt.auxVars, ropToInt.overappr);
-				} else {
-					main.warn(loc, "-ex where ex is not a Primitive number type");
-					Expression newEx = new UnaryExpression(loc, 
-							UnaryExpression.Operator.ARITHNEGATIVE, ropToInt.lrVal.getValue());				
-					return new ResultExpression(ropToInt.stmt, new RValue(newEx, ropToInt.lrVal.cType), 
-							ropToInt.decl, ropToInt.auxVars, ropToInt.overappr);				
-				}
-				
-			}
-
-//			Expression newEx = new UnaryExpression(loc, ropToInt.lrVal.getValue().getType(), 
-//							UnaryExpression.Operator.ARITHNEGATIVE, ropToInt.lrVal.getValue());
-
-		}
+		case IASTUnaryExpression.op_minus:
 		case IASTUnaryExpression.op_not:
-		/** boolean <code>p</code> becomes <code>!p ? 1 : 0</code> */
-		/**
-		 * int <code>x</code> of form <code>y ? 1 : 0</code> becomes
-		 * <code>!y ? 1 : 0</code>
-		 */
-		/** int <code>x</code> becomes <code>x == 0 ? 1 : 0</code> */
-		{
+		case IASTUnaryExpression.op_plus:
+		case IASTUnaryExpression.op_tilde: {
 			ResultExpression rop = o.switchToRValueIfNecessary(main, mMemoryHandler, mStructHandler, loc);
-			// implicit cast
-			if (!rop.lrVal.isBoogieBool
-					&& (!(rop.lrVal.cType instanceof CPrimitive) || ((CPrimitive) rop.lrVal.cType).getGeneralType() == GENERALPRIMITIVE.INTTYPE)) {
-				if (rop.lrVal.cType instanceof CPointer) {// TODO: how general
-															// is this
-															// solution??
-					rop.lrVal = new RValue(new StructAccessExpression(loc, rop.lrVal.getValue(), SFO.POINTER_BASE),
-							new CPrimitive(PRIMITIVE.INT));
-				}
-			}
-			ResultExpression ropToBool = ConvExpr.rexIntToBoolIfNecessary(loc, rop, m_ExpressionTranslation);
-			Expression negated = new UnaryExpression(loc, UnaryExpression.Operator.LOGICNEG, ropToBool.lrVal.getValue());
-			ResultExpression re = new ResultExpression(new RValue(negated, new CPrimitive(PRIMITIVE.INT), true),
-					new LinkedHashMap<VariableDeclaration, ILocation>(), ropToBool.overappr);
-			re.addAll(ropToBool);
-			return re;
-		}
-		case IASTUnaryExpression.op_plus: {
-			ResultExpression rop = o.switchToRValueIfNecessary(main, mMemoryHandler, mStructHandler, loc);
-			ResultExpression ropToInt = ConvExpr.rexBoolToIntIfNecessary(loc, rop, m_ExpressionTranslation);
-			ropToInt = ConvExpr.rexBoolToIntIfNecessary(loc, rop, m_ExpressionTranslation);
-			return new ResultExpression(ropToInt.stmt, ropToInt.lrVal, ropToInt.decl, ropToInt.auxVars,
-					ropToInt.overappr);
+			return handleUnaryArithmeticOperators(main, loc, node.getOperator(), rop);
 		}
 		case IASTUnaryExpression.op_postFixIncr:
 		case IASTUnaryExpression.op_postFixDecr: {
@@ -1217,19 +1160,89 @@ public class CHandler implements ICHandler {
 			} else {
 				throw new AssertionError("Address of something that is not on the heap.");
 			}
-		case IASTUnaryExpression.op_tilde:
-			ResultExpression rop = o.switchToRValueIfNecessary(main, mMemoryHandler, mStructHandler, loc);
-			ResultExpression ropToInt = ConvExpr.rexBoolToIntIfNecessary(loc, rop, m_ExpressionTranslation);
-			m_ExpressionTranslation.doIntegerPromotion(loc, ropToInt);
-			List<Overapprox> overappr = new ArrayList<Overapprox>();
-			overappr.addAll(rop.overappr);
-			Expression bwexpr = m_ExpressionTranslation.constructUnaryExpression(loc, 
-					node.getOperator(), ropToInt.lrVal.getValue(), (CPrimitive) ropToInt.lrVal.cType);
-			return new ResultExpression(rop.stmt, new RValue(bwexpr, rop.lrVal.cType), rop.decl, rop.auxVars, overappr);
 		case IASTUnaryExpression.op_alignOf:
 		default:
 			String msg = "Unknown or unsupported unary operation: " + node.getOperator();
 			throw new UnsupportedSyntaxException(loc, msg);
+		}
+	}
+	
+	/**
+	 * Handle unary arithmetic operators according to Section 6.5.3.3 of C11.
+	 * Assumes that left (resp. right) are the results from handling the operands.
+	 * Requires that the {@link LRValue} of operands is an {@link RValue}
+	 * (i.e., switchToRValueIfNecessary was applied if needed).
+	 */
+	ResultExpression handleUnaryArithmeticOperators(Dispatcher main, ILocation loc,
+			int op, ResultExpression operand) {
+		assert (operand.lrVal instanceof RValue) : "no RValue";
+		CType inputType = operand.lrVal.cType.getUnderlyingType();
+
+		switch (op) {
+		case IASTUnaryExpression.op_not: {
+			final Expression negated;
+			if (operand.lrVal.isBoogieBool) {
+				// in Boogie already represented by bool, we only negate
+				negated = new UnaryExpression(loc, UnaryExpression.Operator.LOGICNEG, operand.lrVal.getValue());
+			} else {
+				final Expression rhsOfComparison; 
+						if (inputType instanceof CPointer) {
+							rhsOfComparison = mMemoryHandler.constructNullPointer(loc);
+						} else if (inputType instanceof CEnum) {
+							CPrimitive intType = new CPrimitive(PRIMITIVE.INT);
+							rhsOfComparison = m_ExpressionTranslation.constructLiteralForIntegerType(
+									loc, intType, BigInteger.ZERO);
+						} else if (inputType instanceof CPrimitive) {
+							CPrimitive inputPrimitive = (CPrimitive) inputType; 
+							if (inputPrimitive.getGeneralType() == GENERALPRIMITIVE.INTTYPE) {
+								rhsOfComparison = m_ExpressionTranslation.constructLiteralForIntegerType(
+										loc, inputPrimitive, BigInteger.ZERO);
+							} else if (inputPrimitive.getGeneralType() == GENERALPRIMITIVE.FLOATTYPE) {
+								rhsOfComparison = m_ExpressionTranslation.constructLiteralForFloatingType(
+										loc, inputPrimitive, BigInteger.ZERO);
+							} else {
+								throw new AssertionError("illegal case");
+							}
+						} else {
+							throw new AssertionError("illegal case");
+						}
+				 negated = new BinaryExpression(loc, Operator.COMPEQ, 
+						 operand.lrVal.getValue(), rhsOfComparison);
+			}
+			ResultExpression result = ResultExpression.copyStmtDeclAuxvarOverapprox(operand);
+			// C11 6.5.3.3.5 The result has type int.
+			CPrimitive resultType = new CPrimitive(PRIMITIVE.INT);
+			// type of Operator.COMPEQ expression is bool
+			boolean isBoogieBool = true;
+			RValue rval = new RValue(negated, resultType, isBoogieBool);
+			result.lrVal = rval;
+			return result;
+		}
+		case IASTUnaryExpression.op_plus: {
+			if (!inputType.isArithmeticType()) {
+				throw new UnsupportedOperationException("arithmetic type required");
+			}
+			return operand;
+		}
+		case IASTUnaryExpression.op_minus:
+		case IASTUnaryExpression.op_tilde:
+			if (!inputType.isArithmeticType()) {
+				throw new UnsupportedOperationException("arithmetic type required");
+			}
+			ResultExpression operandToInt = ConvExpr.rexBoolToIntIfNecessary(loc, operand, m_ExpressionTranslation);
+			m_ExpressionTranslation.doIntegerPromotion(loc, operand);
+			CPrimitive resultType = (CPrimitive) operandToInt.lrVal.cType;
+			Expression bwexpr = m_ExpressionTranslation.constructUnaryExpression(loc, 
+					op, operandToInt.lrVal.getValue(), resultType) ;
+			ResultExpression result = ResultExpression.copyStmtDeclAuxvarOverapprox(operand);
+			RValue rval = new RValue(bwexpr, resultType, false);
+			result.lrVal = rval;
+			if (op == IASTUnaryExpression.op_minus && resultType.isIntegerType()) {
+				checkIntegerBounds(main, loc, result);
+			}
+			return result;
+		default:
+			throw new IllegalArgumentException("not a unary arithmetic operator " + op);
 		}
 	}
 	
@@ -1830,8 +1843,8 @@ public class CHandler implements ICHandler {
 	 */
 	ResultExpression handleEqualityOperators(Dispatcher main, ILocation loc,
 			int op, ResultExpression left, ResultExpression right) {
-		assert (left.lrVal instanceof RValue);
-		assert (right.lrVal instanceof RValue);
+		assert (left.lrVal instanceof RValue) : "no RValue";
+		assert (right.lrVal instanceof RValue) : "no RValue";
 		CType lType = left.lrVal.cType.getUnderlyingType();
 		CType rType = right.lrVal.cType.getUnderlyingType();
 		// implicit casts
@@ -1869,8 +1882,8 @@ public class CHandler implements ICHandler {
 	 */
 	ResultExpression handleBitshiftOperation(Dispatcher main, ILocation loc, 
 			LRValue lhs, int op, ResultExpression left, ResultExpression right) {
-		assert (left.lrVal instanceof RValue);
-		assert (right.lrVal instanceof RValue);
+		assert (left.lrVal instanceof RValue) : "no RValue";
+		assert (right.lrVal instanceof RValue) : "no RValue";
 		final CType lType = left.lrVal.cType.getUnderlyingType();
 		final CType rType = right.lrVal.cType.getUnderlyingType();
 		if (!rType.isIntegerType() || !lType.isIntegerType()) {

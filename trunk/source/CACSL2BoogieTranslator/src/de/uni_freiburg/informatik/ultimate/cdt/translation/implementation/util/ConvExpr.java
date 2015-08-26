@@ -102,7 +102,10 @@ public class ConvExpr {
 				rVal.cType, false);
 	}
 	
-	
+	/**
+	 * int <code>x</code> of form <code>y ? 1 : 0</code> becomes
+	 * <code>!y ? 1 : 0</code>
+	/** int <code>x</code> becomes <code>x == 0 ? 1 : 0</code> */	
 	public static ResultExpression rexIntToBoolIfNecessary(ILocation loc, ResultExpression rl, 
 			AExpressionTranslation expressionTranslation) {
 		ResultExpression rlToBool = null;
@@ -115,6 +118,7 @@ public class ConvExpr {
 		return rlToBool;
 	}
 
+	/** boolean <code>p</code> becomes <code>!p ? 1 : 0</code> */
 	public static ResultExpression rexBoolToIntIfNecessary(ILocation loc, ResultExpression rl, 
 			AExpressionTranslation expressionTranslation) {
 		ResultExpression rlToInt = null;

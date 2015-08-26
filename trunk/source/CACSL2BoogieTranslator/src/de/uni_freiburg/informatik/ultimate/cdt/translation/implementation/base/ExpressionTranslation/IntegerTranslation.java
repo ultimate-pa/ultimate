@@ -29,6 +29,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.FunctionApplication;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IfThenElseExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.NamedAttribute;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.RealLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StringLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
@@ -172,8 +173,16 @@ public class IntegerTranslation extends AExpressionTranslation {
 			declareBitvectorFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + funcname, false, type, type);
 			result = new FunctionApplication(loc, SFO.AUXILIARY_FUNCTION_PREFIX + funcname, new Expression[]{expr});
 			break;
-		case IASTUnaryExpression.op_minus:
-			result = new UnaryExpression(loc, UnaryExpression.Operator.ARITHNEGATIVE, expr);
+		case IASTUnaryExpression.op_minus: {
+			if (type.getGeneralType() == GENERALPRIMITIVE.INTTYPE) {
+				result = new UnaryExpression(loc, UnaryExpression.Operator.ARITHNEGATIVE, expr);
+			} else if (type.getGeneralType() == GENERALPRIMITIVE.FLOATTYPE) {
+				//TODO: having boogie deal with negative real literals would be the nice solution..
+				result = new BinaryExpression(loc, Operator.ARITHMINUS, new RealLiteral(loc, "0.0"), expr);		
+			} else {
+				throw new IllegalArgumentException("unsupported " + type);
+			}
+		}
 			break;
 		default:
 			String msg = "Unknown or unsupported bitwise expression";

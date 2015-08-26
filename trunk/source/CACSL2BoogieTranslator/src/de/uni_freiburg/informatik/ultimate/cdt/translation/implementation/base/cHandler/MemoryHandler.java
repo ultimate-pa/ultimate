@@ -1578,4 +1578,8 @@ public class MemoryHandler {
 	public POINTER_CHECKMODE getPointerSubtractionAndComparisonValidityCheckMode() {
 		return m_checkPointerSubtractionAndComparisonValidity;
 	}
+	
+	public Expression constructNullPointer(ILocation loc) {
+		return new IdentifierExpression(loc, SFO.NULL);
+	}
 }

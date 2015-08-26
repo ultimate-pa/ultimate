@@ -107,6 +107,9 @@ public abstract class AExpressionTranslation {
 	public abstract RValue translateIntegerLiteral(ILocation loc, String val);
 	
 	public abstract Expression constructLiteralForIntegerType(ILocation loc, CPrimitive type, BigInteger value);
+	public Expression constructLiteralForFloatingType(ILocation loc, CPrimitive inputPrimitive, BigInteger zero) {
+		throw new UnsupportedOperationException("not yet implemented");
+	}
 
 	public FunctionDeclarations getFunctionDeclarations() {
 		return m_FunctionDeclarations;
@@ -294,5 +297,7 @@ public abstract class AExpressionTranslation {
 	public CPrimitive getCTypeOfPointerComponents() {
 		return new CPrimitive(PRIMITIVE.INT);
 	}
+
+
 	
 }
