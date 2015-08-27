@@ -1,6 +1,6 @@
 //#rTerminationDerivable
 /*
- * Example that reveales minor bug in our nontermination analysis. We have to
+ * Example that reveals minor bug in our nontermination analysis. We have to
  * transform each constraint into homogenized form.
  * 
  * Discussion with Jan showed that this is no bug. Out method will not find a
