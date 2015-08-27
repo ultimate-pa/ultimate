@@ -1,4 +1,4 @@
-//#rIgnore
+//#rTermination
 /*
  * Date: 21.09.2013
  * Author: leike@informatik.uni-freiburg.de
