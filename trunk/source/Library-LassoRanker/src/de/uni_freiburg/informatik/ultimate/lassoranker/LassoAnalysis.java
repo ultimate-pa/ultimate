@@ -384,6 +384,12 @@ public class LassoAnalysis {
 				NonTerminationArgument nta = nas.getArgument();
 				ntas.add(nta);
 				m_Logger.info(nta);
+			} else if (constraintSat == LBool.UNKNOWN) {
+				m_Logger.info("Proving nontermination failed: SMT Solver returned 'unknown'.");
+			} else if (constraintSat == LBool.UNSAT) {
+				m_Logger.info("Proving nontermination failed: No geometric nontermination argument exists.");
+			} else {
+				assert false;
 			}
 			nas.close();
 			if (constraintSat != LBool.SAT) {
@@ -450,6 +456,12 @@ public class LassoAnalysis {
 				}
 				tas.close();
 				return ta;
+			} else if (constraintSat == LBool.UNKNOWN) {
+				m_Logger.info("Proving termination failed: SMT Solver returned 'unknown'.");
+			} else if (constraintSat == LBool.UNSAT) {
+				m_Logger.info("Proving termination failed for this template and these settings.");
+			} else {
+				assert false;
 			}
 			tas.close();
 		}
