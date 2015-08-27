@@ -183,8 +183,7 @@ public class LinearInequality implements Serializable {
 						li.mult(liu.m_constant.getConstant());
 					} else {
 						throw new TermIsNotAffineException(
-								"Product with more than one non-constant " +
-								"factors found.", appt);
+								TermIsNotAffineException.s_MultipleNonConstantFactors, appt);
 					}
 				}
 			} else if (appt.getFunction().getName().equals("/")) {
@@ -192,11 +191,11 @@ public class LinearInequality implements Serializable {
 				LinearInequality divident = fromTerm(appt.getParameters()[0]);
 				LinearInequality divisor  = fromTerm(appt.getParameters()[1]);
 				if (!divisor.isConstant() || !divisor.m_constant.isConstant()) {
-					throw new TermIsNotAffineException("Non-constant divisor.",
-							appt);
+					throw new TermIsNotAffineException(
+							TermIsNotAffineException.s_NonConstantDivisor, appt);
 				} else if (divisor.m_constant.getConstant().equals(Rational.ZERO)) {
-					throw new TermIsNotAffineException("Division by zero.",
-							appt);
+					throw new TermIsNotAffineException(
+							TermIsNotAffineException.s_DivisionByZero, appt);
 				} else {
 					li = divident;
 					li.mult(divisor.m_constant.getConstant().inverse());
@@ -208,8 +207,7 @@ public class LinearInequality implements Serializable {
 				throw new UnknownFunctionException(appt);
 			}
 		} else {
-			throw new TermException("Stumbled upon a Term of unknown subclass.",
-					term);
+			throw new TermException(TermException.s_UnknownSubclassOfTerm, term);
 		}
 		return li;
 	}

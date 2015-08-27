@@ -87,10 +87,10 @@ public class ModelExtractionUtils {
 			} else if (o instanceof Rational) {
 				return (Rational) o;
 			} else {
-				throw new TermException("Unknown value class", t);
+				throw new TermException(TermException.s_UnkownValueClass, t);
 			}
 		}
-		throw new TermException("Unknown term structure", t);
+		throw new TermException(TermException.s_UnkownTermStructure, t);
 	}
 
 	/**

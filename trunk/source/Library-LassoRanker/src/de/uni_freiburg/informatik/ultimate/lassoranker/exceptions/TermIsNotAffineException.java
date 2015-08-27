@@ -38,9 +38,9 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 public class TermIsNotAffineException extends TermException {
 	private static final long serialVersionUID = 173432306044797947L;
 	
-	public TermIsNotAffineException(String message) {
-		super(message);
-	}
+	public static final String s_MultipleNonConstantFactors = "Product with more than one non-constant factors found";
+	public static final String s_NonConstantDivisor = "Non-constant divisor";
+	public static final String s_DivisionByZero = "Division by zero";
 	
 	public TermIsNotAffineException(String message, Term term) {
 		super(message, term);

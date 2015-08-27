@@ -131,9 +131,9 @@ public class InequalityConverter {
 							underapproxNonlinArithmetic, appt);
 					terms.add(converted);
 				} else if (param0sort.getName().equals("Bool")) {
-					throw new TermException("Term is not in DNF", term);
+					throw new TermException(TermException.s_IsNotInDnf, term);
 				} else {
-					throw new TermException("Unknown sort in equality", term);
+					throw new TermException(TermException.s_UnknownSortInEquality, term);
 				}
 			} else if (fname.equals("<") || fname.equals(">")
 					|| fname.equals("<=") || fname.equals(">=")) {
@@ -145,9 +145,9 @@ public class InequalityConverter {
 				throw new UnknownFunctionException(appt);
 			}
 		} else if (term instanceof TermVariable)
-			throw new TermException("Term is not in DNF", term);
+			throw new TermException(TermException.s_IsNotInDnf, term);
 		else {
-			throw new TermException("Expected application term.", term);
+			throw new TermException(TermException.s_ExpectedApplicationTerm, term);
 		}
 		return terms;
 	}
@@ -160,10 +160,14 @@ public class InequalityConverter {
 		try {
 			converted = convertAtom(appt);
 		} catch (TermIsNotAffineException tinae) {
-			if (overapproxNonlinArithmetic) {
-				converted = new LinearInequality();
-			} else if (underapproxNonlinArithmetic) {
-				converted = LinearInequality.constructFalse();
+			if (tinae.getMessage().equals(TermIsNotAffineException.s_MultipleNonConstantFactors)) {
+				if (overapproxNonlinArithmetic) {
+					converted = new LinearInequality();
+				} else if (underapproxNonlinArithmetic) {
+					converted = LinearInequality.constructFalse();
+				} else {
+					throw tinae;
+				}
 			} else {
 				throw tinae;
 			}

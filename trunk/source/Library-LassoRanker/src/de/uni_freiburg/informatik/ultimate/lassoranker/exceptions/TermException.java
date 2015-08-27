@@ -30,20 +30,22 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 
 /**
- * This is an abstract superclass of exceptions that occur when handling terms.
+ * This is an superclass of exceptions that occur when handling terms.
  * It carries an error message as well as a term instance.
  * 
- * @author Jan Leike
+ * @author Jan Leike, Matthias Heizmann
  */
 public class TermException extends Exception {
 	private static final long serialVersionUID = 628015504018345983L;
 	
-	protected final Term m_term;
+	public static final String s_UnkownValueClass = "Unknown value class";
+	public static final String s_UnkownTermStructure = "Unknown term structure";
+	public static final String s_IsNotInDnf = "Term is not in DNF";
+	public static final String s_UnknownSortInEquality = "Unknown sort in equality";
+	public static final String s_ExpectedApplicationTerm = "Expected application term";
+	public static final String s_UnknownSubclassOfTerm = "Stumbled upon a Term of unknown subclass";
 	
-	public TermException(String message) {
-		super(message);
-		m_term = null;
-	}
+	protected final Term m_term;
 	
 	public TermException(String message, Term term) {
 		super(message);
