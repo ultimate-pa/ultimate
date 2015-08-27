@@ -7,7 +7,7 @@
  * The easter bunny is iterativaly stealing eggs (one at a time) according to 
  * the strategy 
  *     a[a[k]] := a[a[k]] - 1
- * until he visits a farm that run out of eggs.
+ * until he visits a farm that ran out of eggs.
  * Is this a bad strategy because the easter bunny will eventually visit always
  * the same farm? Or is there some street and some choice of k in which the 
  * easter bunny can continue forever?
