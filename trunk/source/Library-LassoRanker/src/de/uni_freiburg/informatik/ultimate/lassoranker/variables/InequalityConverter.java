@@ -44,9 +44,27 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
  * Generate a list of LinearInequality instances from a formula in disjunctive
  * normal form
  * 
- * @author Jan Leike
+ * @author Jan Leike, Matthias Heizmann
  */
 public class InequalityConverter {
+	
+	/**
+	 * Defines what the {@link InequalityConverter} does while processing
+	 * a (Sub-) Term that is nonlinear.
+	 */
+	public enum NlaHandling {
+		/**
+		 * Replace nonlinear (sub)term by true.
+		 */
+		OVERAPPROXIMATE,
+		/**
+		 * Replace nonlinear (sub)term by false.
+		 */
+		UNDERAPPROXIMATE,
+		/**
+		 * Throw exception if (sub)term is nonlinear.
+		 */
+		EXCEPTION }
 	
 	/**
 	 * Convert an atomary term that is an (in-)equality into an instance of
@@ -102,13 +120,10 @@ public class InequalityConverter {
 	/**
 	 * Convert a term into a polyhedron
 	 * @param term the input term
-	 * @param overapproxNonlinArithmetic 
-	 * @param underapproxNonlinArithmetic 
 	 * @return the polyhedron described by term
 	 * @throws TermException if term is not a conjunction of linear inequalities
 	 */
-	public static List<LinearInequality> convert(Term term, 
-			boolean overapproxNonlinArithmetic, boolean underapproxNonlinArithmetic)
+	public static List<LinearInequality> convert(Term term, NlaHandling nlaHandling)
 			throws TermException {
 		List<LinearInequality> terms = new ArrayList<LinearInequality>();
 		if (term instanceof ApplicationTerm) {
@@ -116,7 +131,7 @@ public class InequalityConverter {
 			String fname = appt.getFunction().getName();
 			if (fname.equals("and")) {
 				for (Term t : appt.getParameters()) {
-					terms.addAll(convert(t, overapproxNonlinArithmetic, underapproxNonlinArithmetic));
+					terms.addAll(convert(t, nlaHandling));
 				}
 			} else if (fname.equals("true")) {
 				// Add trivial linear inequality 0 ≤ 0.
@@ -127,8 +142,7 @@ public class InequalityConverter {
 				Sort param0sort = param0.getSort();
 				if (param0sort.isNumericSort()) {
 					LinearInequality converted = tryToConvertAtom(
-							overapproxNonlinArithmetic,
-							underapproxNonlinArithmetic, appt);
+							nlaHandling, appt);
 					terms.add(converted);
 				} else if (param0sort.getName().equals("Bool")) {
 					throw new TermException(TermException.s_IsNotInDnf, term);
@@ -138,8 +152,7 @@ public class InequalityConverter {
 			} else if (fname.equals("<") || fname.equals(">")
 					|| fname.equals("<=") || fname.equals(">=")) {
 				LinearInequality converted = tryToConvertAtom(
-						overapproxNonlinArithmetic,
-						underapproxNonlinArithmetic, appt);
+						nlaHandling, appt);
 				terms.add(converted);
 			} else {
 				throw new UnknownFunctionException(appt);
@@ -153,21 +166,29 @@ public class InequalityConverter {
 	}
 
 	private static LinearInequality tryToConvertAtom(
-			boolean overapproxNonlinArithmetic,
-			boolean underapproxNonlinArithmetic, ApplicationTerm appt)
+			NlaHandling nlaHandling, ApplicationTerm appt)
 			throws TermException, TermIsNotAffineException {
 		LinearInequality converted;
 		try {
 			converted = convertAtom(appt);
 		} catch (TermIsNotAffineException tinae) {
 			if (tinae.getMessage().equals(TermIsNotAffineException.s_MultipleNonConstantFactors)) {
-				if (overapproxNonlinArithmetic) {
-					converted = new LinearInequality();
-				} else if (underapproxNonlinArithmetic) {
-					converted = LinearInequality.constructFalse();
-				} else {
+				switch (nlaHandling) {
+				case EXCEPTION: {
 					throw tinae;
 				}
+				case OVERAPPROXIMATE: {
+					converted = new LinearInequality();
+					break;
+				}
+				case UNDERAPPROXIMATE: {
+					converted = LinearInequality.constructFalse();
+					break;
+				}
+				default:
+					throw new AssertionError("unknown case");
+				}
+				
 			} else {
 				throw tinae;
 			}

@@ -37,6 +37,7 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.lassoranker.exceptions.TermException;
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.IntegralHull;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.InequalityConverter;
+import de.uni_freiburg.informatik.ultimate.lassoranker.variables.InequalityConverter.NlaHandling;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.RankVar;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaLR;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
@@ -179,16 +180,16 @@ public class LinearTransition implements Serializable {
 	 * @param tf the transition formula
 	 * @param overapproxNonlinArithmetic 
 	 * @param underapproxNonlinArithmetic 
+	 * @param nlaHandling 
 	 * @throws TermException if the supplied term does not have the correct form
 	 */
 	public static LinearTransition fromTransFormulaLR(TransFormulaLR tf, 
-			boolean overapproxNonlinArithmetic, boolean underapproxNonlinArithmetic)
+			NlaHandling nlaHandling)
 			throws TermException {
 		List<List<LinearInequality>> polyhedra =
 				new ArrayList<List<LinearInequality>>();
 		for (Term disjunct : toClauses(tf.getFormula())) {
-			polyhedra.add(InequalityConverter.convert(disjunct, 
-					overapproxNonlinArithmetic, underapproxNonlinArithmetic));
+			polyhedra.add(InequalityConverter.convert(disjunct, nlaHandling));
 		}
 		return new LinearTransition(polyhedra, tf.getInVars(), tf.getOutVars());
 	}

@@ -35,6 +35,7 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.termination.templates.Mul
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.templates.NestedTemplate;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.templates.PiecewiseTemplate;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.templates.RankingTemplate;
+import de.uni_freiburg.informatik.ultimate.lassoranker.variables.InequalityConverter.NlaHandling;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -559,7 +560,7 @@ public class LassoChecker {
 	}
 
 	private LassoRankerPreferences constructLassoRankerPreferences(boolean withStem,
-			boolean overapproximateArrayIndexConnection) {
+			boolean overapproximateArrayIndexConnection, NlaHandling nlaHandling) {
 		LassoRankerPreferences pref = new LassoRankerPreferences();
 
 		pref.externalSolver = m_ExternalSolver_RankSynthesis;
@@ -569,6 +570,7 @@ public class LassoChecker {
 		pref.path_of_dumped_script = baPref.getString(PreferenceInitializer.LABEL_DumpPath);
 		pref.baseNameOfDumpedScript = generateFileBasenamePrefix(withStem);
 		pref.overapproximateArrayIndexConnection = overapproximateArrayIndexConnection;
+		pref.nlaHandling = nlaHandling;
 		return pref;
 	}
 
@@ -619,7 +621,8 @@ public class LassoChecker {
 			try {
 				boolean overapproximateArrayIndexConnection = false;
 				laNT = new LassoAnalysis(m_SmtManager.getScript(), m_SmtManager.getBoogie2Smt(), stemTF, loopTF,
-						modifiableGlobalsAtHonda, m_Axioms.toArray(new Term[m_Axioms.size()]), constructLassoRankerPreferences(withStem, overapproximateArrayIndexConnection ), mServices, mStorage);
+						modifiableGlobalsAtHonda, m_Axioms.toArray(new Term[m_Axioms.size()]), 
+						constructLassoRankerPreferences(withStem, overapproximateArrayIndexConnection, NlaHandling.UNDERAPPROXIMATE), mServices, mStorage);
 				m_preprocessingBenchmarks.add(laNT.getPreprocessingBenchmark());
 			} catch (TermException e) {
 				e.printStackTrace();
@@ -647,7 +650,8 @@ public class LassoChecker {
 		try {
 			boolean overapproximateArrayIndexConnection = true;
 			laT = new LassoAnalysis(m_SmtManager.getScript(), m_SmtManager.getBoogie2Smt(), stemTF, loopTF,
-					modifiableGlobalsAtHonda, m_Axioms.toArray(new Term[m_Axioms.size()]), constructLassoRankerPreferences(withStem, overapproximateArrayIndexConnection ), mServices, mStorage);
+					modifiableGlobalsAtHonda, m_Axioms.toArray(new Term[m_Axioms.size()]), 
+					constructLassoRankerPreferences(withStem, overapproximateArrayIndexConnection, NlaHandling.OVERAPPROXIMATE), mServices, mStorage);
 			m_preprocessingBenchmarks.add(laT.getPreprocessingBenchmark());
 		} catch (TermException e) {
 			e.printStackTrace();

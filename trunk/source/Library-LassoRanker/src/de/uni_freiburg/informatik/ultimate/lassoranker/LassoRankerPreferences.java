@@ -29,6 +29,8 @@ package de.uni_freiburg.informatik.ultimate.lassoranker;
 import java.io.File;
 import java.io.Serializable;
 
+import de.uni_freiburg.informatik.ultimate.lassoranker.variables.InequalityConverter;
+import de.uni_freiburg.informatik.ultimate.lassoranker.variables.InequalityConverter.NlaHandling;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.Settings;
 
 
@@ -91,6 +93,12 @@ public class LassoRankerPreferences implements Serializable {
 	public boolean overapproximateArrayIndexConnection = false;
 	
 	/**
+	 * Defines what the {@link InequalityConverter} does while processing
+	 * a (Sub-) Term that is nonlinear.
+	 */
+	public NlaHandling nlaHandling = NlaHandling.EXCEPTION;
+	
+	/**
 	 * Default construction intializes default values
 	 */
 	public LassoRankerPreferences() {
@@ -109,6 +117,7 @@ public class LassoRankerPreferences implements Serializable {
 		this.baseNameOfDumpedScript = other.baseNameOfDumpedScript;
 		this.overapproximateArrayIndexConnection =
 				other.overapproximateArrayIndexConnection;
+		this.nlaHandling = other.nlaHandling;
 	}
 	
 	/**

@@ -82,7 +82,7 @@ import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
  * interface for invoking LassoRanker. This class can also be derived for a more
  * fine-grained control over the synthesis process.
  * 
- * @author Jan Leike
+ * @author Jan Leike, Matthias Heizmann
  */
 public class LassoAnalysis {
 	private final Logger m_Logger;
@@ -98,16 +98,10 @@ public class LassoAnalysis {
 	private final TransFormula m_loop_transition;
 
 	/**
-	 * The components of the program that we are analyzing (overapproximation)
-	 * Each component is one Lasso object
+	 * Representation of the lasso that we are analyzing which is split
+	 * into a conjunction of lassos.
 	 */
-	private Collection<Lasso> m_lassos_t;
-	
-	/**
-	 * The components of the program that we are analyzing (underapproximation)
-	 * Each component is one Lasso object
-	 */
-	private Collection<Lasso> m_lassos_nt;
+	private Collection<Lasso> m_lassos;
 	
 	/**
 	 * Global BoogieVars that are modifiable in the procedure where the honda 
@@ -257,15 +251,17 @@ public class LassoAnalysis {
 	protected void preprocess() throws TermException {
 		m_Logger.info("Starting lasso preprocessing...");
 		LassoBuilder lassoBuilder = new LassoBuilder(m_Logger, m_old_script, m_Boogie2SMT,
-				m_stem_transition, m_loop_transition);
+				m_stem_transition, m_loop_transition, m_preferences.nlaHandling);
+		lassoBuilder.toString();
 		assert lassoBuilder.isSane();
 		lassoBuilder.preprocess(this.getPreProcessors(lassoBuilder, m_preferences.overapproximateArrayIndexConnection), 
 				this.getPreProcessors(lassoBuilder, false));
 		
-		m_PreprocessingBenchmark = lassoBuilder.getPreprocessingBenchmark(); 
+		m_PreprocessingBenchmark = lassoBuilder.getPreprocessingBenchmark();
+		
+		lassoBuilder.constructPolyhedra();
 				
-		m_lassos_t = lassoBuilder.getLassosTermination();
-		m_lassos_nt = lassoBuilder.getLassosNonTermination();
+		m_lassos = lassoBuilder.getLassos();
 		
 		// Some debug messages
 		m_Logger.debug(new DebugMessage("Original stem:\n{0}",
@@ -275,7 +271,7 @@ public class LassoAnalysis {
 		m_Logger.debug(new DebugMessage("After preprocessing:\n{0}",
 				lassoBuilder));
 		m_Logger.debug("Guesses for Motzkin coefficients: "
-				+ eigenvalueGuesses(m_lassos_t));
+				+ eigenvalueGuesses(m_lassos));
 		m_Logger.info("Preprocessing complete.");
 	}
 	
@@ -311,17 +307,10 @@ public class LassoAnalysis {
 	}
 	
 	/**
-	 * @return the preprocessed overapproximated lasso
+	 * @return the preprocessed lassos
 	 */
-	public Collection<Lasso> getLassosTermination() {
-		return m_lassos_t;
-	}
-	
-	/**
-	 * @return the preprocessed underapproximated lasso
-	 */
-	public Collection<Lasso> getLassosNonTermination() {
-		return m_lassos_nt;
+	public Collection<Lasso> getLassos() {
+		return m_lassos;
 	}
 	
 	public List<TerminationAnalysisBenchmark> getTerminationAnalysisBenchmarks() {
@@ -381,12 +370,12 @@ public class LassoAnalysis {
 		m_Logger.info("Checking for nontermination...");
 		
 		List<NonTerminationArgument> ntas
-			= new ArrayList<NonTerminationArgument>(m_lassos_nt.size());
-		if (m_lassos_nt.size() == 0) {
-			m_lassos_nt.add(new Lasso(LinearTransition.getTranstionTrue(),
+			= new ArrayList<NonTerminationArgument>(m_lassos.size());
+		if (m_lassos.size() == 0) {
+			m_lassos.add(new Lasso(LinearTransition.getTranstionTrue(),
 					LinearTransition.getTranstionTrue()));
 		}
-		for (Lasso lasso : m_lassos_nt) {
+		for (Lasso lasso : m_lassos) {
 			NonTerminationArgumentSynthesizer nas =
 					new NonTerminationArgumentSynthesizer(lasso, m_preferences,
 							settings, mServices, mStorage);
@@ -431,7 +420,7 @@ public class LassoAnalysis {
 		m_Logger.info("Using template '" + template.getName() + "'.");
 		m_Logger.debug(template);
 		
-		for (Lasso lasso : m_lassos_t) {
+		for (Lasso lasso : m_lassos) {
 			// It suffices to prove termination for one component
 			long startTime = System.nanoTime();
 			
@@ -476,47 +465,29 @@ public class LassoAnalysis {
 	 *
 	 */
 	public static class PreprocessingBenchmark {
-		private final int m_IntialMaxDagSizeNontermination;
-		private final int m_IntialMaxDagSizeTermination;
-		private final List<String> m_PreprocessorsTermination = new ArrayList<>();
-		private final List<String> m_PreprocessorsNonTermination = new ArrayList<>();
-		private final List<Integer> m_MaxDagSizeNonterminationAbsolut = new ArrayList<Integer>();
-		private final List<Integer> m_MaxDagSizeTerminationAbsolut = new ArrayList<Integer>();;
-		private final List<Float> m_MaxDagSizeNonterminationRelative = new ArrayList<Float>();
-		private final List<Float> m_MaxDagSizeTerminationRelative = new ArrayList<Float>();
-		public PreprocessingBenchmark(int intialMaxDagSizeNontermination, int intialMaxDagSizeTermination) {
+		private final int m_IntialMaxDagSizeLassos;
+		private final List<String> m_Preprocessors = new ArrayList<>();
+		private final List<Integer> m_MaxDagSizeLassosAbsolut = new ArrayList<Integer>();;
+		private final List<Float> m_MaxDagSizeLassosRelative = new ArrayList<Float>();
+		public PreprocessingBenchmark(int intialMaxDagSizeLassos) {
 			super();
-			m_IntialMaxDagSizeNontermination = intialMaxDagSizeNontermination;
-			m_IntialMaxDagSizeTermination = intialMaxDagSizeTermination;
+			m_IntialMaxDagSizeLassos = intialMaxDagSizeLassos;
 		}
 		public void addPreprocessingData(String description,
-				int maxDagSizeNontermination, int maxDagSizeTermination) {
-			m_PreprocessorsTermination.add(description);
-			m_MaxDagSizeNonterminationAbsolut.add(maxDagSizeNontermination);
-			m_MaxDagSizeTerminationAbsolut.add(maxDagSizeTermination);
-			m_MaxDagSizeNonterminationRelative.add(computeQuotiontOfLastTwoEntries(
-					m_MaxDagSizeNonterminationAbsolut, m_IntialMaxDagSizeNontermination));
-			m_MaxDagSizeTerminationRelative.add(computeQuotiontOfLastTwoEntries(
-					m_MaxDagSizeTerminationAbsolut, m_IntialMaxDagSizeTermination));
+				int maxDagSizeNontermination, int maxDagSizeLassos) {
+			m_Preprocessors.add(description);
+			m_MaxDagSizeLassosAbsolut.add(maxDagSizeLassos);
+			m_MaxDagSizeLassosRelative.add(computeQuotiontOfLastTwoEntries(
+					m_MaxDagSizeLassosAbsolut, m_IntialMaxDagSizeLassos));
 		}
 		
-		public void addPreprocessingDataTermination(String description,
-				int maxDagSizeTermination) {
-			m_PreprocessorsTermination.add(description);
-			m_MaxDagSizeTerminationAbsolut.add(maxDagSizeTermination);
-			m_MaxDagSizeTerminationRelative.add(computeQuotiontOfLastTwoEntries(
-					m_MaxDagSizeTerminationAbsolut, m_IntialMaxDagSizeTermination));
+		public void addPreprocessingData(String description,
+				int maxDagSizeLassos) {
+			m_Preprocessors.add(description);
+			m_MaxDagSizeLassosAbsolut.add(maxDagSizeLassos);
+			m_MaxDagSizeLassosRelative.add(computeQuotiontOfLastTwoEntries(
+					m_MaxDagSizeLassosAbsolut, m_IntialMaxDagSizeLassos));
 		}
-		
-		public void addPreprocessingDataNonTermination(String description,
-				int maxDagSizeNontermination) {
-			m_PreprocessorsNonTermination.add(description);
-			m_MaxDagSizeNonterminationAbsolut.add(maxDagSizeNontermination);
-			m_MaxDagSizeNonterminationRelative.add(computeQuotiontOfLastTwoEntries(
-					m_MaxDagSizeNonterminationAbsolut, m_IntialMaxDagSizeNontermination));
-		}
-		
-		
 		
 		public float computeQuotiontOfLastTwoEntries(List<Integer> list, int initialValue) {
 			int lastEntry;
@@ -533,76 +504,41 @@ public class LassoAnalysis {
 			}
 			return ((float) lastEntry) / ((float) secondLastEntry);
 		}
-		public int getIntialMaxDagSizeNontermination() {
-			return m_IntialMaxDagSizeNontermination;
+		public int getIntialMaxDagSizeLassos() {
+			return m_IntialMaxDagSizeLassos;
 		}
-		public int getIntialMaxDagSizeTermination() {
-			return m_IntialMaxDagSizeTermination;
+		public List<String> getPreprocessors() {
+			return m_Preprocessors;
 		}
-		public List<String> getPreprocessorsTermination() {
-			return m_PreprocessorsTermination;
+		public List<String> getPreprocessorsNon() {
+			return m_Preprocessors;
 		}
-		public List<String> getPreprocessorsNonTermination() {
-			return m_PreprocessorsTermination;
-		}
-		public List<Float> getMaxDagSizeNonterminationRelative() {
-			return m_MaxDagSizeNonterminationRelative;
-		}
-		public List<Float> getMaxDagSizeTerminationRelative() {
-			return m_MaxDagSizeTerminationRelative;
+		public List<Float> getMaxDagSizeLassosRelative() {
+			return m_MaxDagSizeLassosRelative;
 		}
 		
 		
 		public static String prettyprint(List<PreprocessingBenchmark> benchmarks) {
-			return prettyprintTermination(benchmarks) + " " + prettyprintNontermination(benchmarks);
-		}
-		
-		
-		public static String prettyprintTermination(List<PreprocessingBenchmark> benchmarks) {
 			if (benchmarks.isEmpty()) {
 				return "";
 			}
-			List<String> preprocessors = benchmarks.get(0).getPreprocessorsTermination();
+			List<String> preprocessors = benchmarks.get(0).getPreprocessors();
 			List<String> preprocessorAbbreviations = computeAbbrev(preprocessors);
-			float[] TerminationData = new float[preprocessors.size()];
-			int TerminationAverageInitial = 0;
+			float[] LassosData = new float[preprocessors.size()];
+			int LassosAverageInitial = 0;
 			for (PreprocessingBenchmark pb : benchmarks) {
-				addListElements(TerminationData, pb.getMaxDagSizeTerminationRelative());
-				TerminationAverageInitial += pb.getIntialMaxDagSizeTermination();
+				addListElements(LassosData, pb.getMaxDagSizeLassosRelative());
+				LassosAverageInitial += pb.getIntialMaxDagSizeLassos();
 			}
-			divideAllEntries(TerminationData, benchmarks.size());
-			TerminationAverageInitial /= benchmarks.size();
+			divideAllEntries(LassosData, benchmarks.size());
+			LassosAverageInitial /= benchmarks.size();
 			StringBuilder sb = new StringBuilder();
 			sb.append("  ");
-			sb.append("Termination: ");
+			sb.append("Lassos: ");
 			sb.append("inital");
-			sb.append(TerminationAverageInitial);
+			sb.append(LassosAverageInitial);
 			sb.append(" ");
-			sb.append(ppOne(TerminationData, preprocessorAbbreviations));
-			return sb.toString();
-		}
-		
-		public static String prettyprintNontermination(List<PreprocessingBenchmark> benchmarks) {
-			if (benchmarks.isEmpty()) {
-				return "";
-			}
-			List<String> preprocessors = benchmarks.get(0).getPreprocessorsNonTermination();
-			List<String> preprocessorAbbreviations = computeAbbrev(preprocessors);
-			float[] NonterminationData = new float[preprocessors.size()];
-			int NonterminationAverageInitial = 0;
-			for (PreprocessingBenchmark pb : benchmarks) {
-				addListElements(NonterminationData, pb.getMaxDagSizeNonterminationRelative());
-				NonterminationAverageInitial += pb.getIntialMaxDagSizeNontermination();
-			}
-			divideAllEntries(NonterminationData, benchmarks.size());
-			NonterminationAverageInitial /= benchmarks.size();
-			StringBuilder sb = new StringBuilder();
-			sb.append("  ");
-			sb.append("Nontermination: ");
-			sb.append("inital");
-			sb.append(NonterminationAverageInitial);
-			sb.append(" ");
-			sb.append(ppOne(NonterminationData, preprocessorAbbreviations));
+			sb.append(ppOne(LassosData, preprocessorAbbreviations));
 			return sb.toString();
 		}
 		

@@ -21,6 +21,7 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.RewriteTrue
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.RewriteUserDefinedTypes;
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.SimplifyPreprocessor;
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.TransitionPreProcessor;
+import de.uni_freiburg.informatik.ultimate.lassoranker.variables.InequalityConverter.NlaHandling;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.ReplacementVar;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.ReplacementVarFactory;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaLR;
@@ -132,7 +133,7 @@ public class CachedTransFormulaLinearizer {
 		}
 		LinearTransition lt;
 		try {
-			lt = LinearTransition.fromTransFormulaLR(tflr, false, false);
+			lt = LinearTransition.fromTransFormulaLR(tflr, NlaHandling.EXCEPTION);
 		} catch (TermException e) {
 			throw new RuntimeException(e);
 		}

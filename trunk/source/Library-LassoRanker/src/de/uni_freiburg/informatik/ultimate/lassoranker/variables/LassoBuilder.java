@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.LassoAnalysis.Preprocessi
 import de.uni_freiburg.informatik.ultimate.lassoranker.LinearTransition;
 import de.uni_freiburg.informatik.ultimate.lassoranker.exceptions.TermException;
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.LassoPreProcessor;
+import de.uni_freiburg.informatik.ultimate.lassoranker.variables.InequalityConverter.NlaHandling;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
@@ -49,13 +50,10 @@ import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
 /**
  * 
  * The LassoBuilder class holds the lasso components during preprocessing.
- * With the LassoBuilder we are building two lassos at the same time:
- * an overapproximated lasso (for termination analysis) and
- * an underapproximated lasso (fer nontermination analysis).`
  * 
  * This object is *not* immutable.
  * 
- * @author Jan Leike
+ * @author Jan Leike, Matthias Heizmann
  */
 public class LassoBuilder {
 	/**
@@ -69,17 +67,12 @@ public class LassoBuilder {
 	private final Collection<TermVariable> m_termVariables;
 
 	/**
-	 * Independent lassos
-	 * (possibly an overapproximation)
+	 * Conjunctive representation of the lassos during the preprocessing.
 	 */
-	private List<LassoUnderConstruction> m_Lassos_t;
+	private List<LassoUnderConstruction> m_LassosUC;
 	
-	/**
-	 * Independent lassos
-	 * (possibly an underapproximation)
-	 */
-	private List<LassoUnderConstruction> m_Lassos_nt;
-
+	private Collection<Lasso> m_Lassos;
+	
 	
 	/**
 	 * The script used to create terms in the transition formulas
@@ -95,6 +88,8 @@ public class LassoBuilder {
 	private PreprocessingBenchmark m_PreprocessingBenchmark;
 
 	private final Logger m_Logger;
+
+	private final NlaHandling m_NlaHandling;
 	
 	/**
 	 * Create a new LassoBuilder object from components
@@ -105,28 +100,23 @@ public class LassoBuilder {
 	 * @param loop the loop transition
 	 */
 	public LassoBuilder(Logger logger, Script script, Boogie2SMT boogie2smt, TransFormula stem,
-			TransFormula loop) {
+			TransFormula loop, NlaHandling nlaHandling) {
 		assert script != null;
 		assert boogie2smt != null;
 		m_Logger = logger;
 		m_Script = script;
 		m_boogie2smt = boogie2smt;
+		m_NlaHandling = nlaHandling;
 		m_termVariables = new ArrayList<TermVariable>();
 		
 		m_ReplacementVarFactory =
 				new ReplacementVarFactory(m_boogie2smt.getVariableManager());
 		
-		m_Lassos_t = new ArrayList<>();
-		m_Lassos_t.add(new LassoUnderConstruction(
+		m_LassosUC = new ArrayList<>();
+		m_LassosUC.add(new LassoUnderConstruction(
 				TransFormulaLR.buildTransFormula(stem, m_ReplacementVarFactory),
 				TransFormulaLR.buildTransFormula(loop, m_ReplacementVarFactory)
 			));
-		m_Lassos_nt = new ArrayList<>();
-		m_Lassos_nt.add(new LassoUnderConstruction(
-				TransFormulaLR.buildTransFormula(stem, m_ReplacementVarFactory),
-				TransFormulaLR.buildTransFormula(loop, m_ReplacementVarFactory)
-			));
-		
 	}
 	
 	/**
@@ -171,24 +161,18 @@ public class LassoBuilder {
 //	}
 	
 	/**
-	 * @return the lassos (possibly overapproximation)
+	 * @return the conjunction of lassos
 	 */
-	public List<LassoUnderConstruction> getLassosUCTermination() {
-		return m_Lassos_t;
+	public List<LassoUnderConstruction> getLassosUC() {
+		return m_LassosUC;
 	}
 	
-	/**
-	 * @return the lassos (possibly overapproximation)
-	 */
-	public List<LassoUnderConstruction> getLassosUCNontermination() {
-		return m_Lassos_nt;
-	}
 	
 	public void applyPreprocessor(LassoPreProcessor preprocessor) throws TermException {
-		ArrayList<LassoUnderConstruction> newLassos_t = new ArrayList<LassoUnderConstruction>();
-		for (LassoUnderConstruction lasso : m_Lassos_t) {
+		ArrayList<LassoUnderConstruction> newLassos = new ArrayList<LassoUnderConstruction>();
+		for (LassoUnderConstruction lasso : m_LassosUC) {
 			try {
-				newLassos_t.addAll(preprocessor.process(lasso));
+				newLassos.addAll(preprocessor.process(lasso));
 			} catch (ToolchainCanceledException tce) {
 				String taskMessage = "applying " + preprocessor.getName() + " to lasso for termination ";
 				if (tce.getRunningTaskInfo() != null) {
@@ -197,20 +181,7 @@ public class LassoBuilder {
 				throw new ToolchainCanceledException(getClass(), taskMessage);
 			}
 		}
-		m_Lassos_t = newLassos_t;
-		ArrayList<LassoUnderConstruction> newLassos_nt = new ArrayList<LassoUnderConstruction>();
-		for (LassoUnderConstruction lasso : m_Lassos_nt) {
-			try {
-				newLassos_nt.addAll(preprocessor.process(lasso));
-			} catch (ToolchainCanceledException tce) {
-				String taskMessage = "applying " + preprocessor.getName() + " to lasso for nontermination ";
-				if (tce.getRunningTaskInfo() != null) {
-					taskMessage += tce.getRunningTaskInfo();
-				}
-				throw new ToolchainCanceledException(getClass(), taskMessage);
-			}
-		}
-		m_Lassos_nt = newLassos_nt;
+		m_LassosUC = newLassos;
 	}
 	
 	
@@ -220,15 +191,7 @@ public class LassoBuilder {
 	 */
 	public boolean isSane() {
 		boolean sane = true;
-		for (LassoUnderConstruction luc : m_Lassos_t) {
-			sane &= luc.getStem().auxVarsDisjointFromInOutVars();
-			sane &= luc.getStem().allAreInOutAux(luc.getStem().getFormula().getFreeVars()) == null;
-
-			sane &= luc.getLoop().auxVarsDisjointFromInOutVars();
-			sane &= luc.getLoop().allAreInOutAux(luc.getLoop().getFormula().getFreeVars()) == null;
-		}
-		
-		for (LassoUnderConstruction luc : m_Lassos_nt) {
+		for (LassoUnderConstruction luc : m_LassosUC) {
 			sane &= luc.getStem().auxVarsDisjointFromInOutVars();
 			sane &= luc.getStem().allAreInOutAux(luc.getStem().getFormula().getFreeVars()) == null;
 
@@ -239,79 +202,52 @@ public class LassoBuilder {
 	}
 	
 	/**
-	 * Extract the overapproximated lassos (for termination analysis)
+	 * Construct a polyhedron representation for each component of stem and 
+	 * loop.
 	 * 
 	 * Only succeeds if the transition formulas are of the required form,
 	 * i.e., if preprocessing has been completed.
-	 * 
+	 * @throws TermException if the transition formulas are not of the correct
+	 *                       form
+	 */
+	public void constructPolyhedra() throws TermException {
+		int n = m_LassosUC.size();
+		List<Lasso> lassos = new ArrayList<Lasso>(n);
+		for (int i = 0; i < n; ++i) {
+			TransFormulaLR stemTF = m_LassosUC.get(i).getStem();
+			TransFormulaLR loopTF = m_LassosUC.get(i).getLoop();
+			LinearTransition stem = LinearTransition.fromTransFormulaLR(stemTF, m_NlaHandling);
+			LinearTransition loop = LinearTransition.fromTransFormulaLR(loopTF, m_NlaHandling);
+			lassos.add(new Lasso(stem, loop));
+		}
+		m_Lassos = lassos;
+	}
+	
+	/**
 	 * @return a colletion of lassos, one for each component
 	 * @throws TermException if the transition formulas are not of the correct
 	 *                       form
 	 */
-	public Collection<Lasso> getLassosTermination() throws TermException {
-		int n = m_Lassos_t.size();
-		List<Lasso> lassos = new ArrayList<Lasso>(n);
-		for (int i = 0; i < n; ++i) {
-			TransFormulaLR stemTF = m_Lassos_t.get(i).getStem();
-			TransFormulaLR loopTF = m_Lassos_t.get(i).getLoop();
-			LinearTransition stem = LinearTransition.fromTransFormulaLR(stemTF, true, false);
-			LinearTransition loop = LinearTransition.fromTransFormulaLR(loopTF, true, false);
-			lassos.add(new Lasso(stem, loop));
-		}
-		return lassos;
+	public Collection<Lasso> getLassos() {
+		return m_Lassos;
 	}
 	
-	/**
-	 * Extract the underapproximated lassos (for nontermination analysis)
-	 * 
-	 * Only succeeds if the transition formulas are of the required form,
-	 * i.e., if preprocessing has been completed.
-	 * 
-	 * @return a collection of lassos, one for each component
-	 * @throws TermException if the transition formulas are not of the correct
-	 *                       form
-	 */
-	public Collection<Lasso> getLassosNonTermination() throws TermException {
-		int n = m_Lassos_nt.size();
-		List<Lasso> lassos = new ArrayList<Lasso>(n);
-		for (int i = 0; i < n; ++i) {
-			TransFormulaLR stemTF = m_Lassos_nt.get(i).getStem();
-			TransFormulaLR loopTF = m_Lassos_nt.get(i).getLoop();
-			LinearTransition stem = LinearTransition.fromTransFormulaLR(stemTF, false, true);
-			LinearTransition loop = LinearTransition.fromTransFormulaLR(loopTF, false, true);
-			lassos.add(new Lasso(stem, loop));
-		}
-		return lassos;
-	}
 	
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
-		try {
-			Collection<Lasso> lassosNonTermination = getLassosNonTermination();
-			Collection<Lasso> lassosTermination = getLassosTermination();
-			
-			sb.append("Overapproximated lassos:\n");
-			for (Lasso lasso : lassosTermination) {
-				sb.append(lasso);
-				sb.append("\n");
-			}
-			sb.append("Underapproximated lassos:\n");
-			for (Lasso lasso : lassosNonTermination) {
-				sb.append(lasso);
-				sb.append("\n");
-			}
-		} catch (TermException e) {
+		if (m_Lassos == null) {
 			sb.append("Preprocessing has not been completed.\n");
 			
-			sb.append("Current lassos (overapproximated):\n");
-			for (LassoUnderConstruction luc : m_Lassos_t) {
+			sb.append("Current lassos:\n");
+			for (LassoUnderConstruction luc : m_LassosUC) {
 				sb.append(luc);
 				sb.append(System.lineSeparator());
 			}
-			sb.append("Current lassos (underapproximated):\n");
-			for (LassoUnderConstruction luc : m_Lassos_t) {
-				sb.append(luc);
-				sb.append(System.lineSeparator());
+		} else {
+			sb.append("Lassos:\n");
+			for (Lasso lasso : m_Lassos) {
+				sb.append(lasso);
+				sb.append("\n");
 			}
 		}
 		return sb.toString();
@@ -330,26 +266,20 @@ public class LassoBuilder {
 		}
 	}
 	
-	public int computeMaxDagSizeNT() {
-		return computeMaxDagSize(m_Lassos_nt);
-	}
-	
-	public int computeMaxDagSizeT() {
-		return computeMaxDagSize(m_Lassos_t);
+	public int computeMaxDagSize() {
+		return computeMaxDagSize(m_LassosUC);
 	}
 
 	public void preprocess(LassoPreProcessor[] preProcessorsTermination, LassoPreProcessor[] preProcessorsNontermination) throws TermException {
 		m_PreprocessingBenchmark = new PreprocessingBenchmark(
-				computeMaxDagSizeNT(), 
-				computeMaxDagSizeT());
+				computeMaxDagSize());
 		// Apply preprocessors
 		for (LassoPreProcessor preprocessor : preProcessorsTermination) {
 			m_Logger.debug(preprocessor.getDescription());
 			applyPreprocessor(preprocessor);
 			m_PreprocessingBenchmark.addPreprocessingData(
 						preprocessor.getDescription(), 
-						computeMaxDagSizeNT(), 
-						computeMaxDagSizeT());
+						computeMaxDagSize());
 			assert isSane() : "lasso failed sanity check";
 		}
 		
