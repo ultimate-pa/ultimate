@@ -40,10 +40,8 @@ public class RValue extends LRValue {
 
 	public RValue(Expression value, CType cType,
 			boolean isBoogieBool, boolean isIntFromPointer) {
+		super(cType, isBoogieBool, isIntFromPointer);
 		this.value = value;
-		this.setCType(cType);
-		this.setBoogieBool(isBoogieBool);
-		this.setIntFromPointer(isIntFromPointer);
 	}
 
 	public Expression getValue() {

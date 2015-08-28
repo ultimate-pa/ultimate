@@ -481,9 +481,7 @@ public class ResultExpression extends Result {
 								innerStructOffset),
 								loc);
 				
-				RValue newAddress = new RValue(address);
-				newAddress.value = innerStructAddress;
-				newAddress.setCType(underlyingType);
+				RValue newAddress = new RValue(innerStructAddress, underlyingType, false, false);
 
 				ResultExpression fieldRead = readStructFromHeap(main, structHandler, memoryHandler, 
 						loc, newAddress);

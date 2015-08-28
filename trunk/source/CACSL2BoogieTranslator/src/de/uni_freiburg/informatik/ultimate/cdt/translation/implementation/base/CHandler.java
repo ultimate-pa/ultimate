@@ -1400,8 +1400,8 @@ public class CHandler implements ICHandler {
 				} else if (lType.isArithmeticType() && rType.isArithmeticType()) {
 					m_ExpressionTranslation.usualArithmeticConversions(main, loc, rlToInt, rrToInt);
 					RValue rval = new RValue(m_ExpressionTranslation.constructBinaryComparisonExpression(loc, node.getOperator(), rlToInt.lrVal.getValue(), (CPrimitive) rlToInt.lrVal.getCType(), rrToInt.lrVal.getValue(), (CPrimitive) rrToInt.lrVal.getCType()),
-							new CPrimitive(PRIMITIVE.INT));
-					rval.setBoogieBool(true);
+							new CPrimitive(PRIMITIVE.INT),
+							true, false);
 					return new ResultExpression(stmt, rval, decl, auxVars, overappr);
 				} else {
 					throw new UnsupportedOperationException("unsupported " + rType + ", " + lType);
@@ -1871,8 +1871,7 @@ public class CHandler implements ICHandler {
 		CPrimitive typeOfResult = new CPrimitive(PRIMITIVE.INT);
 		Expression expr = m_ExpressionTranslation.constructBinaryEqualityExpression(
 				loc, op, left.lrVal.getValue(), lType, right.lrVal.getValue(), rType);
-		RValue rval = new RValue(expr,typeOfResult);
-		rval.setBoogieBool(true);
+		RValue rval = new RValue(expr,typeOfResult, true, false);
 		ResultExpression result = ResultExpression.copyStmtDeclAuxvarOverapprox(left, right);
 		result.lrVal = rval;
 		return result;
@@ -1901,8 +1900,7 @@ public class CHandler implements ICHandler {
 		castToType(loc, main.getTypeSizes(), right, typeOfResult);
 		final Expression expr = m_ExpressionTranslation.constructBinaryBitwiseExpression(
 				loc, op, left.lrVal.getValue(), typeOfResult, right.lrVal.getValue(), typeOfResult);
-		final RValue rval = new RValue(expr,typeOfResult);
-		rval.setBoogieBool(false);
+		final RValue rval = new RValue(expr,typeOfResult, false, false);
 		switch (op) {
 		case IASTBinaryExpression.op_shiftLeft:
 		case IASTBinaryExpression.op_shiftRight: {
@@ -3754,8 +3752,7 @@ public class CHandler implements ICHandler {
 				} else {
 					e = MemoryHandler.getPointerOffset(rValIn.getValue(), loc);
 				}
-				resultRValue = new RValue(e, newType);
-				resultRValue.setIntFromPointer(true);
+				resultRValue = new RValue(e, newType, false, true);
 			}
 			// type is changed
 //			else if (!(expectedType.getUnderlyingType() instanceof CPointer)) { //why did I make this distinction??

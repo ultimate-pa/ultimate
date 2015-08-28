@@ -18,9 +18,8 @@ public class HeapLValue extends LRValue {
 	}
 
 	public HeapLValue(Expression address, CType cType, boolean isIntFromPtr) {
+		super(cType, false, isIntFromPtr);
 		this.address = address;
-		this.setCType(cType);
-		this.setIntFromPointer(isIntFromPtr);
 	}
 	Expression address;
 	

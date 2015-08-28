@@ -20,15 +20,13 @@ public class LocalLValue extends LRValue {
 		this(lhs, cType, false, false);
 	}
 	
-	public LocalLValue(LeftHandSide lhs, CType cType, boolean wrappedBool) {
-		this(lhs, cType, wrappedBool, false);
+	public LocalLValue(LeftHandSide lhs, CType cType, boolean isBoogieBool) {
+		this(lhs, cType, isBoogieBool, false);
 	}
 
-	public LocalLValue(LeftHandSide lhs, CType cType, boolean wrappedBool, boolean isIntFromPtr) {
+	public LocalLValue(LeftHandSide lhs, CType cType, boolean isBoogieBool, boolean isIntFromPtr) {
+		super(cType, isBoogieBool, isIntFromPtr);
 		this.lhs = lhs;
-		this.setCType(cType);
-		this.setBoogieBool(wrappedBool);
-		this.setIntFromPointer(isIntFromPtr);
 	}
 
 	public LocalLValue(LocalLValue llVal) {

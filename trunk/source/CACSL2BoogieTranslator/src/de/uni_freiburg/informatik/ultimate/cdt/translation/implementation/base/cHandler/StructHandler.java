@@ -157,9 +157,7 @@ public class StructHandler {
 
 		CType resultType = structType.getFieldType(field);
 
-		RValue newAddress = new RValue(address);
-		newAddress.value = newPointer;
-		newAddress.setCType(resultType);
+		RValue newAddress = new RValue(newPointer, resultType, false, false);
 		
 		ResultExpression call = 
 				memoryHandler.getReadCall(main, 

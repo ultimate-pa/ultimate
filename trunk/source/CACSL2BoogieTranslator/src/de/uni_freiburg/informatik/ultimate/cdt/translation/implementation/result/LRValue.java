@@ -15,7 +15,10 @@ public abstract class LRValue {
 	 * an expression representing what the containing result evaluates to.
 	 * @param value
 	 */
-	public LRValue () {
+	public LRValue (CType cType, boolean isBoogieBool, boolean isIntFromPointer) {
+		this.cType = cType;
+		this.isBoogieBool = isBoogieBool;
+		this.isIntFromPointer = isIntFromPointer;
 	}
 	
 	private CType cType;
@@ -37,6 +40,7 @@ public abstract class LRValue {
 		return cType;
 	}
 
+	@Deprecated
 	public void setCType(CType cType) {
 		this.cType = cType;
 	}
@@ -45,6 +49,7 @@ public abstract class LRValue {
 		return isBoogieBool;
 	}
 
+	@Deprecated
 	public void setBoogieBool(boolean isBoogieBool) {
 		this.isBoogieBool = isBoogieBool;
 	}
@@ -53,6 +58,7 @@ public abstract class LRValue {
 		return isIntFromPointer;
 	}
 
+	@Deprecated
 	public void setIntFromPointer(boolean isIntFromPointer) {
 		this.isIntFromPointer = isIntFromPointer;
 	}
