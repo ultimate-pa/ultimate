@@ -28,7 +28,6 @@ package de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 import java.util.Set;
 
 import org.apache.log4j.Logger;
@@ -38,20 +37,18 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.Activator;
 import de.uni_freiburg.informatik.ultimate.lassoranker.exceptions.TermException;
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.rewriteArrays.ArrayCellRepVarConstructor;
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.rewriteArrays.IndexSupportingInvariantAnalysis;
-import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.rewriteArrays.SingleUpdateNormalFormTransformer;
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.rewriteArrays.TransFormulaLRWithArrayCells;
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.rewriteArrays.TransFormulaLRWithArrayInformation;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.LassoUnderConstruction;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.ReplacementVarFactory;
-import de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaLR;
+import de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
-import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.IFreshTermVariableConstructor;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayEquality;
 
 /**
  * Replace term with arrays by term without arrays by introducing replacement

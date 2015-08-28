@@ -24,7 +24,7 @@
  * License, the licensors of the ULTIMATE LassoRanker Library grant you
  * additional permission to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors;
+package de.uni_freiburg.informatik.ultimate.lassoranker.variables;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -36,11 +36,6 @@ import java.util.Map.Entry;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.lassoranker.variables.BoogieVarWrapper;
-import de.uni_freiburg.informatik.ultimate.lassoranker.variables.RankVar;
-import de.uni_freiburg.informatik.ultimate.lassoranker.variables.ReplacementVar;
-import de.uni_freiburg.informatik.ultimate.lassoranker.variables.ReplacementVarFactory;
-import de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaLR;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
@@ -48,10 +43,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.VariableManager;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SafeSubstitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 
