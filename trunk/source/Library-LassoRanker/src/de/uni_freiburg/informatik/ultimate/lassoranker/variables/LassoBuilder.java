@@ -38,7 +38,7 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.Lasso;
 import de.uni_freiburg.informatik.ultimate.lassoranker.LassoAnalysis.PreprocessingBenchmark;
 import de.uni_freiburg.informatik.ultimate.lassoranker.LinearTransition;
 import de.uni_freiburg.informatik.ultimate.lassoranker.exceptions.TermException;
-import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.LassoPreProcessor;
+import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.LassoPreprocessor;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.InequalityConverter.NlaHandling;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -168,7 +168,7 @@ public class LassoBuilder {
 	}
 	
 	
-	public void applyPreprocessor(LassoPreProcessor preprocessor) throws TermException {
+	public void applyPreprocessor(LassoPreprocessor preprocessor) throws TermException {
 		ArrayList<LassoUnderConstruction> newLassos = new ArrayList<LassoUnderConstruction>();
 		for (LassoUnderConstruction lasso : m_LassosUC) {
 			try {
@@ -270,11 +270,11 @@ public class LassoBuilder {
 		return computeMaxDagSize(m_LassosUC);
 	}
 
-	public void preprocess(LassoPreProcessor[] preProcessorsTermination, LassoPreProcessor[] preProcessorsNontermination) throws TermException {
+	public void preprocess(LassoPreprocessor[] preProcessorsTermination, LassoPreprocessor[] preProcessorsNontermination) throws TermException {
 		m_PreprocessingBenchmark = new PreprocessingBenchmark(
 				computeMaxDagSize());
 		// Apply preprocessors
-		for (LassoPreProcessor preprocessor : preProcessorsTermination) {
+		for (LassoPreprocessor preprocessor : preProcessorsTermination) {
 			m_Logger.debug(preprocessor.getDescription());
 			applyPreprocessor(preprocessor);
 			m_PreprocessingBenchmark.addPreprocessingData(

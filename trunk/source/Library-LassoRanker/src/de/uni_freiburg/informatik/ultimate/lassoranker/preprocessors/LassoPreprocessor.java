@@ -26,17 +26,39 @@
  */
 package de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors;
 
+import java.util.Collection;
+
 import de.uni_freiburg.informatik.ultimate.lassoranker.exceptions.TermException;
+import de.uni_freiburg.informatik.ultimate.lassoranker.variables.LassoPartitioneer;
+import de.uni_freiburg.informatik.ultimate.lassoranker.variables.LassoUnderConstruction;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaLR;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 
 
 /**
- * A preprocessor takes a TransformulaLR and returns a TransformulaLR.
+ * A preprocessor that transforms a {@link LassoUnderConstruction} into a
+ * collection of {@link LassoUnderConstruction}s.
+ * In most cases the result of the preprocessing is a singleton. The 
+ * {@link LassoPartitioneer} returns a collection
  * 
- * @author Jan Leike, Matthias Heizmann
+ * 
+ * @author Jan Leike, Matthias
  */
-public abstract class TransitionPreProcessor {
+public abstract class LassoPreprocessor {
+	
+	/**
+	 * Apply the preprocessing step
+	 * @param lasso_builder the lasso builder object to perform the processing on
+	 * @return the processed formula
+	 * @throws TermException if an error occurred while traversing the term
+	 */
+	public abstract Collection<LassoUnderConstruction> process(LassoUnderConstruction lasso) throws TermException;
+	
+	/**
+	 * @return name of the preprocessor, typically this is the name of the
+	 * class that does the transformation
+	 */
+	public abstract String getName();
 	
 	/**
 	 * @return a description of the preprocessing
@@ -44,20 +66,10 @@ public abstract class TransitionPreProcessor {
 	public abstract String getDescription();
 	
 	/**
-	 * Process a single transition (stem or loop) independently of the other
-	 * @param script the script
-	 * @param tf the transition formula
-	 * @return a new (processed) transition formula
-	 * @throws TermException if processing fails
-	 */
-	public abstract TransFormulaLR process(
-			Script script, TransFormulaLR tf) throws TermException;
-	
-	/**
 	 * Check if the processing was sound.
 	 * 
 	 * @param script the script
-	 * @param oldTF the old TransFormulaOLR
+	 * @param oldTF the old TransFormulaLR
 	 * @param newTF the new TransFormulaLR (after processing
 	 * @return whether the result is ok
 	 */

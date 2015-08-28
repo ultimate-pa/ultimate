@@ -44,7 +44,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Util;
  * 
  * @author Matthias Heizmann, Jan Leike
  */
-public class RewriteStrictInequalities extends TransformerPreProcessor {
+public class RewriteStrictInequalities extends TransformerPreprocessor {
 	
 	public static final String s_Description = "Replace strict inequalities by non-strict inequalities";
 	

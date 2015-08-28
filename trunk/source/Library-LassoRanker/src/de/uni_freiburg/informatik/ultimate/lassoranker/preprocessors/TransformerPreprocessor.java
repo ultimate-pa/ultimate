@@ -26,56 +26,35 @@
  */
 package de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors;
 
-import java.util.Collection;
-
-import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lassoranker.exceptions.TermException;
-import de.uni_freiburg.informatik.ultimate.lassoranker.variables.LassoPartitioneer;
-import de.uni_freiburg.informatik.ultimate.lassoranker.variables.LassoUnderConstruction;
-import de.uni_freiburg.informatik.ultimate.lassoranker.variables.ReplacementVarFactory;
+import de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaLR;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.IFreshTermVariableConstructor;
+import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
+
 
 /**
- * Split lasso into independent components.
+ * A preprocessor performs some modifications to the input formulae for
+ * stem and loop.
  * 
- * @author Matthias Heizmann
- *
+ * This is the base class for processors that use a TermTransformer on the
+ * transition formula. Creates a new TermTransformer instance for each
+ * TransFormulaLR that is processed.
+ * 
+ * @author Jan Leike
  */
-public class LassoPartitioneerPreProcessor extends LassoPreProcessor {
-	public static final String s_Description = "LassoPartitioneer";
+public abstract class TransformerPreprocessor extends TransitionPreprocessor {
 	
-	private final IUltimateServiceProvider m_Services;
-	private final Boogie2SMT m_Boogie2Smt;
-	
-	private final Script m_Script;
-
-	public LassoPartitioneerPreProcessor(Script script, 
-			IUltimateServiceProvider services, 
-			Boogie2SMT boogie2smt) {
-		m_Services = services;
-		m_Script = script;
-		m_Boogie2Smt = boogie2smt;
-	}
-
-	@Override
-	public Collection<LassoUnderConstruction> process(
-			LassoUnderConstruction lasso) throws TermException {
-		LassoPartitioneer lp = new LassoPartitioneer(m_Services, m_Boogie2Smt, m_Script, lasso);
-		return lp.getNewLassos();
-	}
-
-
-	@Override
-	public String getDescription() {
-		return s_Description;
-	}
+	/**
+	 * Create a TermTransformer instance that will be applied to the stem and
+	 * the loop transition formula.
+	 */
+	protected abstract TermTransformer getTransformer(Script script);
 	
 	@Override
-	public String getName() {
-		return LassoPartitioneer.class.getSimpleName();
+	public TransFormulaLR process(Script script, TransFormulaLR tf) throws TermException {
+		TermTransformer transformer = this.getTransformer(script);
+		TransFormulaLR new_tf = new TransFormulaLR(tf);
+		new_tf.setFormula(transformer.transform(tf.getFormula()));
+		return new_tf;
 	}
-
-
 }

@@ -44,7 +44,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.TermTransferrer
  * 
  * @author Matthias Heizmann.
  */
-public class SimplifyPreprocessor extends TransitionPreProcessor {
+public class SimplifyPreprocessor extends TransitionPreprocessor {
 	private final IUltimateServiceProvider mServices;
 	private final IToolchainStorage m_Storage;
 	private final boolean m_UseSMTInterpolForSimplification = !true;

@@ -45,7 +45,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ConstantFinder;
  * 
  * @author Jan Leike
  */
-public class AddAxioms extends TransitionPreProcessor {
+public class AddAxioms extends TransitionPreprocessor {
 	public static final String s_Description = "Add axioms to the transition";
 
 	

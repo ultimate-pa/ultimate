@@ -27,58 +27,59 @@
 package de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors;
 
 import java.util.Collection;
+import java.util.Collections;
 
 import de.uni_freiburg.informatik.ultimate.lassoranker.exceptions.TermException;
-import de.uni_freiburg.informatik.ultimate.lassoranker.variables.LassoPartitioneer;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.LassoUnderConstruction;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaLR;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 
 
 /**
- * A preprocessor that transforms a {@link LassoUnderConstruction} into a
- * collection of {@link LassoUnderConstruction}s.
- * In most cases the result of the preprocessing is a singleton. The 
- * {@link LassoPartitioneer} returns a collection
+ * Preprocessor for lassos that takes a preprocessor for TransFormulaLR to
+ * translate stem and loop.
  * 
- * 
- * @author Jan Leike, Matthias
+ * @author Jan Leike, Matthias Heizmann
  */
-public abstract class LassoPreProcessor {
+public class StemAndLoopPreprocessor extends LassoPreprocessor {
 	
-	/**
-	 * Apply the preprocessing step
-	 * @param lasso_builder the lasso builder object to perform the processing on
-	 * @return the processed formula
-	 * @throws TermException if an error occurred while traversing the term
-	 */
-	public abstract Collection<LassoUnderConstruction> process(LassoUnderConstruction lasso) throws TermException;
+	private final Script m_Script;
+	private final TransitionPreprocessor m_TransitionPreprocessor;
 	
-	/**
-	 * @return name of the preprocessor, typically this is the name of the
-	 * class that does the transformation
-	 */
-	public abstract String getName();
 	
-	/**
-	 * @return a description of the preprocessing
-	 */
-	public abstract String getDescription();
-	
-	/**
-	 * Check if the processing was sound.
-	 * 
-	 * @param script the script
-	 * @param oldTF the old TransFormulaLR
-	 * @param newTF the new TransFormulaLR (after processing
-	 * @return whether the result is ok
-	 */
-	protected boolean checkSoundness(Script script, TransFormulaLR oldTF,
-			TransFormulaLR newTF) {
-		return true; // check nothing
+	public StemAndLoopPreprocessor(Script script, TransitionPreprocessor transitionPreProcessor) {
+		super();
+		m_Script = script;
+		m_TransitionPreprocessor = transitionPreProcessor;
 	}
 	
-	public String toString() {
-		return this.getDescription();
+	@Override
+	public String getDescription() {
+		return m_TransitionPreprocessor.getDescription();
 	}
+	
+	@Override
+	public String getName() {
+		return m_TransitionPreprocessor.getClass().getSimpleName();
+	}
+
+
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public Collection<LassoUnderConstruction> process(
+			LassoUnderConstruction lasso) throws TermException {
+		TransFormulaLR newStem = m_TransitionPreprocessor.process(m_Script, lasso.getStem());
+		assert m_TransitionPreprocessor.checkSoundness(m_Script, lasso.getStem(), newStem) : 
+			"Soundness check failed for preprocessor " + this.getClass().getSimpleName();;
+		TransFormulaLR newLoop = m_TransitionPreprocessor.process(m_Script, lasso.getLoop());
+		LassoUnderConstruction newLasso = new LassoUnderConstruction(newStem, newLoop);
+		assert m_TransitionPreprocessor.checkSoundness(m_Script, lasso.getLoop(), newLoop) : 
+			"Soundness check failed for preprocessor " + this.getClass().getSimpleName();;
+		return Collections.singleton(newLasso);
+	}
+	
+	
+	
 }

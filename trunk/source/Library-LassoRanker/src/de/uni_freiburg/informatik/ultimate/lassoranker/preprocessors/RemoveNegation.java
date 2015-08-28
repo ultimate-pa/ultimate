@@ -45,7 +45,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
  * 
  * @author Jan Leike
  */
-public class RemoveNegation extends TransformerPreProcessor {
+public class RemoveNegation extends TransformerPreprocessor {
 	
 	public static final String s_Description = "Remove negation before atoms";
 	@Override

@@ -20,7 +20,7 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.RewriteStri
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.RewriteTrueFalse;
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.RewriteUserDefinedTypes;
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.SimplifyPreprocessor;
-import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.TransitionPreProcessor;
+import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.TransitionPreprocessor;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.InequalityConverter.NlaHandling;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.ReplacementVar;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.ReplacementVarFactory;
@@ -124,7 +124,7 @@ public class CachedTransFormulaLinearizer {
 		TransFormulaLR tflr = TransFormulaLR.buildTransFormula(tf,
 				m_ReplacementVarFactory);
 
-		for (TransitionPreProcessor tpp : getPreprocessors()) {
+		for (TransitionPreprocessor tpp : getPreprocessors()) {
 			try {
 				tflr = tpp.process(m_SmtManager.getScript(), tflr);
 			} catch (TermException e) {
@@ -145,8 +145,8 @@ public class CachedTransFormulaLinearizer {
 	 * 
 	 * @author Matthias Heizmann
 	 */
-	private TransitionPreProcessor[] getPreprocessors() {
-		return new TransitionPreProcessor[] {
+	private TransitionPreprocessor[] getPreprocessors() {
+		return new TransitionPreprocessor[] {
 				new MatchInOutVars(m_SmtManager.getBoogie2Smt().getVariableManager()),
 				new AddAxioms(m_ReplacementVarFactory, m_Axioms),
 				new RewriteDivision(m_ReplacementVarFactory),

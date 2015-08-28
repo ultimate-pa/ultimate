@@ -53,7 +53,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SafeSubstitutio
  * @author Matthias Heizmann
  *
  */
-public abstract class RewriteTermVariables extends TransitionPreProcessor {
+public abstract class RewriteTermVariables extends TransitionPreprocessor {
 
 	/**
 	 * The sort to be used for new replacement TermVariable's

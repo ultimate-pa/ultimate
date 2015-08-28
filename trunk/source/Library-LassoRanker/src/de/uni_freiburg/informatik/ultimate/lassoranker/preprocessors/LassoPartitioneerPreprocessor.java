@@ -27,59 +27,55 @@
 package de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors;
 
 import java.util.Collection;
-import java.util.Collections;
 
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lassoranker.exceptions.TermException;
+import de.uni_freiburg.informatik.ultimate.lassoranker.variables.LassoPartitioneer;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.LassoUnderConstruction;
-import de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaLR;
+import de.uni_freiburg.informatik.ultimate.lassoranker.variables.ReplacementVarFactory;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
-
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.IFreshTermVariableConstructor;
 
 /**
- * Preprocessor for lassos that takes a preprocessor for TransFormulaLR to
- * translate stem and loop.
+ * Split lasso into independent components.
  * 
- * @author Jan Leike, Matthias Heizmann
+ * @author Matthias Heizmann
+ *
  */
-public class StemAndLoopPreProcessor extends LassoPreProcessor {
+public class LassoPartitioneerPreprocessor extends LassoPreprocessor {
+	public static final String s_Description = "LassoPartitioneer";
+	
+	private final IUltimateServiceProvider m_Services;
+	private final Boogie2SMT m_Boogie2Smt;
 	
 	private final Script m_Script;
-	private final TransitionPreProcessor m_TransitionPreProcessor;
-	
-	
-	public StemAndLoopPreProcessor(Script script, TransitionPreProcessor transitionPreProcessor) {
-		super();
+
+	public LassoPartitioneerPreprocessor(Script script, 
+			IUltimateServiceProvider services, 
+			Boogie2SMT boogie2smt) {
+		m_Services = services;
 		m_Script = script;
-		m_TransitionPreProcessor = transitionPreProcessor;
+		m_Boogie2Smt = boogie2smt;
 	}
-	
+
+	@Override
+	public Collection<LassoUnderConstruction> process(
+			LassoUnderConstruction lasso) throws TermException {
+		LassoPartitioneer lp = new LassoPartitioneer(m_Services, m_Boogie2Smt, m_Script, lasso);
+		return lp.getNewLassos();
+	}
+
+
 	@Override
 	public String getDescription() {
-		return m_TransitionPreProcessor.getDescription();
+		return s_Description;
 	}
 	
 	@Override
 	public String getName() {
-		return m_TransitionPreProcessor.getClass().getSimpleName();
+		return LassoPartitioneer.class.getSimpleName();
 	}
 
 
-	/**
-	 * {@inheritDoc}
-	 */
-	@Override
-	public Collection<LassoUnderConstruction> process(
-			LassoUnderConstruction lasso) throws TermException {
-		TransFormulaLR newStem = m_TransitionPreProcessor.process(m_Script, lasso.getStem());
-		assert m_TransitionPreProcessor.checkSoundness(m_Script, lasso.getStem(), newStem) : 
-			"Soundness check failed for preprocessor " + this.getClass().getSimpleName();;
-		TransFormulaLR newLoop = m_TransitionPreProcessor.process(m_Script, lasso.getLoop());
-		LassoUnderConstruction newLasso = new LassoUnderConstruction(newStem, newLoop);
-		assert m_TransitionPreProcessor.checkSoundness(m_Script, lasso.getLoop(), newLoop) : 
-			"Soundness check failed for preprocessor " + this.getClass().getSimpleName();;
-		return Collections.singleton(newLasso);
-	}
-	
-	
-	
 }

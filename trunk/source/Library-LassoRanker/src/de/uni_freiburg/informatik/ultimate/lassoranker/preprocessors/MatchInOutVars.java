@@ -46,7 +46,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.IFreshTermVaria
  * obtain an unsound supporting invariant (which is demonstrated by Madrid.bpl)
  * There might be also other soundness problems if we omit this preprocessor.
  */
-public class MatchInOutVars extends TransitionPreProcessor {
+public class MatchInOutVars extends TransitionPreprocessor {
 	public static final String s_Description = 
 			"Add a corresponding inVars and outVars";
 

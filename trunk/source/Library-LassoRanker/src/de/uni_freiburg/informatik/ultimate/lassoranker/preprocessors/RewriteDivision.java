@@ -62,7 +62,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Util;
  * 
  * @author Jan Leike, Matthias Heizmann
  */
-public class RewriteDivision extends TransformerPreProcessor {
+public class RewriteDivision extends TransformerPreprocessor {
 	public static final String s_Description = 
 			"Replace integer division by equivalent linear constraints";
 	

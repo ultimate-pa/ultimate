@@ -47,7 +47,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Dnf
  * 
  * @author Jan Leike
  */
-public class DNF extends TransitionPreProcessor {
+public class DNF extends TransitionPreprocessor {
 	private final IUltimateServiceProvider m_Services;
 	private final IFreshTermVariableConstructor m_FreshTermVariableConstructor;
 	

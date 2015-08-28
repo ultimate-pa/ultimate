@@ -62,7 +62,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayEqu
  * 
  * @author Matthias Heizmann
  */
-public class RewriteArrays2 extends LassoPreProcessor {
+public class RewriteArrays2 extends LassoPreprocessor {
 
 	private final Logger mLogger;
 	private final IUltimateServiceProvider mServices;

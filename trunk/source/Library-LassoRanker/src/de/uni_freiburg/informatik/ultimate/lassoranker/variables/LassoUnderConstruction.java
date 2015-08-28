@@ -26,7 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.lassoranker.variables;
 
-import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;

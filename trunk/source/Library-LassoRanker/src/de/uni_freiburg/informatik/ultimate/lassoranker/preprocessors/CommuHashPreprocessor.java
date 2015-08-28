@@ -45,7 +45,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.CommuhashNormal
  * 
  * @author Matthias Heizmann.
  */
-public class CommuHashPreprocessor extends TransitionPreProcessor {
+public class CommuHashPreprocessor extends TransitionPreprocessor {
 	private final IUltimateServiceProvider mServices;
 	
 	public static final String s_Description = "Simplify formula using CommuhashNormalForm";

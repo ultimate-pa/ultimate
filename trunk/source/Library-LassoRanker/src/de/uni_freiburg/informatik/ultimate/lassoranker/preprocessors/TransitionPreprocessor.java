@@ -29,32 +29,44 @@ package de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors;
 import de.uni_freiburg.informatik.ultimate.lassoranker.exceptions.TermException;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaLR;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
-import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 
 
 /**
- * A preprocessor performs some modifications to the input formulae for
- * stem and loop.
+ * A preprocessor takes a TransformulaLR and returns a TransformulaLR.
  * 
- * This is the base class for processors that use a TermTransformer on the
- * transition formula. Creates a new TermTransformer instance for each
- * TransFormulaLR that is processed.
- * 
- * @author Jan Leike
+ * @author Jan Leike, Matthias Heizmann
  */
-public abstract class TransformerPreProcessor extends TransitionPreProcessor {
+public abstract class TransitionPreprocessor {
 	
 	/**
-	 * Create a TermTransformer instance that will be applied to the stem and
-	 * the loop transition formula.
+	 * @return a description of the preprocessing
 	 */
-	protected abstract TermTransformer getTransformer(Script script);
+	public abstract String getDescription();
 	
-	@Override
-	public TransFormulaLR process(Script script, TransFormulaLR tf) throws TermException {
-		TermTransformer transformer = this.getTransformer(script);
-		TransFormulaLR new_tf = new TransFormulaLR(tf);
-		new_tf.setFormula(transformer.transform(tf.getFormula()));
-		return new_tf;
+	/**
+	 * Process a single transition (stem or loop) independently of the other
+	 * @param script the script
+	 * @param tf the transition formula
+	 * @return a new (processed) transition formula
+	 * @throws TermException if processing fails
+	 */
+	public abstract TransFormulaLR process(
+			Script script, TransFormulaLR tf) throws TermException;
+	
+	/**
+	 * Check if the processing was sound.
+	 * 
+	 * @param script the script
+	 * @param oldTF the old TransFormulaOLR
+	 * @param newTF the new TransFormulaLR (after processing
+	 * @return whether the result is ok
+	 */
+	protected boolean checkSoundness(Script script, TransFormulaLR oldTF,
+			TransFormulaLR newTF) {
+		return true; // check nothing
+	}
+	
+	public String toString() {
+		return this.getDescription();
 	}
 }

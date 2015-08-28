@@ -45,8 +45,8 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.nontermination.NonTermina
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.AddAxioms;
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.CommuHashPreprocessor;
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.DNF;
-import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.LassoPartitioneerPreProcessor;
-import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.LassoPreProcessor;
+import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.LassoPartitioneerPreprocessor;
+import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.LassoPreprocessor;
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.MatchInOutVars;
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.RemoveNegation;
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.RewriteArrays2;
@@ -58,7 +58,7 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.RewriteStri
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.RewriteTrueFalse;
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.RewriteUserDefinedTypes;
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.SimplifyPreprocessor;
-import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.StemAndLoopPreProcessor;
+import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.StemAndLoopPreprocessor;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.TerminationAnalysisBenchmark;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.TerminationAnalysisSettings;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.TerminationArgument;
@@ -279,29 +279,29 @@ public class LassoAnalysis {
 	 * @return an array of all preprocessors that should be called before
 	 *         termination analysis
 	 */
-	protected LassoPreProcessor[] getPreProcessors(
+	protected LassoPreprocessor[] getPreProcessors(
 			LassoBuilder lassoBuilder, boolean overapproximateArrayIndexConnection) {
-		return new LassoPreProcessor[] {
-				new StemAndLoopPreProcessor(m_old_script, new MatchInOutVars(m_Boogie2SMT.getVariableManager())),
-				new StemAndLoopPreProcessor(m_old_script, new AddAxioms(lassoBuilder.getReplacementVarFactory(), m_axioms)),
-				new StemAndLoopPreProcessor(m_old_script, new CommuHashPreprocessor(mServices)),
-				new LassoPartitioneerPreProcessor(m_old_script, mServices, m_Boogie2SMT),
+		return new LassoPreprocessor[] {
+				new StemAndLoopPreprocessor(m_old_script, new MatchInOutVars(m_Boogie2SMT.getVariableManager())),
+				new StemAndLoopPreprocessor(m_old_script, new AddAxioms(lassoBuilder.getReplacementVarFactory(), m_axioms)),
+				new StemAndLoopPreprocessor(m_old_script, new CommuHashPreprocessor(mServices)),
+				new LassoPartitioneerPreprocessor(m_old_script, mServices, m_Boogie2SMT),
 				new RewriteArrays2(true, m_stem_transition, m_loop_transition, m_ModifiableGlobalsAtHonda, 
 						mServices, m_ArrayIndexSupportingInvariants, m_Boogie2SMT, lassoBuilder.getReplacementVarFactory()),
-				new StemAndLoopPreProcessor(m_old_script, new MatchInOutVars(m_Boogie2SMT.getVariableManager())),
-				new LassoPartitioneerPreProcessor(m_old_script, mServices, m_Boogie2SMT),
-				new StemAndLoopPreProcessor(m_old_script, new RewriteDivision(lassoBuilder.getReplacementVarFactory())),
-				new StemAndLoopPreProcessor(m_old_script, new RewriteBooleans(lassoBuilder.getReplacementVarFactory(), lassoBuilder.getScript())),
-				new StemAndLoopPreProcessor(m_old_script, new RewriteIte()),
-				new StemAndLoopPreProcessor(m_old_script, new RewriteUserDefinedTypes(lassoBuilder.getReplacementVarFactory(), lassoBuilder.getScript())),
-				new StemAndLoopPreProcessor(m_old_script, new RewriteEquality()),
-				new StemAndLoopPreProcessor(m_old_script, new CommuHashPreprocessor(mServices)),
-				new StemAndLoopPreProcessor(m_old_script, new SimplifyPreprocessor(mServices, mStorage)),
-				new StemAndLoopPreProcessor(m_old_script, new DNF(mServices, m_Boogie2SMT.getVariableManager())),
-				new StemAndLoopPreProcessor(m_old_script, new SimplifyPreprocessor(mServices, mStorage)),
-				new StemAndLoopPreProcessor(m_old_script, new RewriteTrueFalse()),
-				new StemAndLoopPreProcessor(m_old_script, new RemoveNegation()),
-				new StemAndLoopPreProcessor(m_old_script, new RewriteStrictInequalities()),
+				new StemAndLoopPreprocessor(m_old_script, new MatchInOutVars(m_Boogie2SMT.getVariableManager())),
+				new LassoPartitioneerPreprocessor(m_old_script, mServices, m_Boogie2SMT),
+				new StemAndLoopPreprocessor(m_old_script, new RewriteDivision(lassoBuilder.getReplacementVarFactory())),
+				new StemAndLoopPreprocessor(m_old_script, new RewriteBooleans(lassoBuilder.getReplacementVarFactory(), lassoBuilder.getScript())),
+				new StemAndLoopPreprocessor(m_old_script, new RewriteIte()),
+				new StemAndLoopPreprocessor(m_old_script, new RewriteUserDefinedTypes(lassoBuilder.getReplacementVarFactory(), lassoBuilder.getScript())),
+				new StemAndLoopPreprocessor(m_old_script, new RewriteEquality()),
+				new StemAndLoopPreprocessor(m_old_script, new CommuHashPreprocessor(mServices)),
+				new StemAndLoopPreprocessor(m_old_script, new SimplifyPreprocessor(mServices, mStorage)),
+				new StemAndLoopPreprocessor(m_old_script, new DNF(mServices, m_Boogie2SMT.getVariableManager())),
+				new StemAndLoopPreprocessor(m_old_script, new SimplifyPreprocessor(mServices, mStorage)),
+				new StemAndLoopPreprocessor(m_old_script, new RewriteTrueFalse()),
+				new StemAndLoopPreprocessor(m_old_script, new RemoveNegation()),
+				new StemAndLoopPreprocessor(m_old_script, new RewriteStrictInequalities()),
 		};
 	}
 	
@@ -573,7 +573,7 @@ public class LassoAnalysis {
 				return "eq";
 			case RewriteStrictInequalities.s_Description:
 				return "sie";
-			case LassoPartitioneerPreProcessor.s_Description:
+			case LassoPartitioneerPreprocessor.s_Description:
 				return "lsp";
 			case RemoveNegation.s_Description:
 				return "neg";

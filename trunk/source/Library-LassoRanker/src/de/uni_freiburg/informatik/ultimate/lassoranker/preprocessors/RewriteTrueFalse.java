@@ -40,7 +40,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
  * 
  * @author Jan Leike
  */
-public class RewriteTrueFalse extends TransformerPreProcessor {
+public class RewriteTrueFalse extends TransformerPreprocessor {
 	public static final String s_Description = 
 			"Replace 'true' with '0 >= 0' and 'false' with '0 >= 1'";
 	
