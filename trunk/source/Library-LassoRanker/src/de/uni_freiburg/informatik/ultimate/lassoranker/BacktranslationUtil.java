@@ -46,7 +46,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Term2Express
  * @author Jan Leike
  *
  */
-public class Backtranslator {
+public class BacktranslationUtil {
 	
 	/**
 	 * Translate a RankVar into a (Boogie) Expression. The Expression is the
