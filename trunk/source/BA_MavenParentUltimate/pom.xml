@@ -32,6 +32,7 @@
 		<ltl2autParserDir>${workspaceDir}/LTL2aut/src/de/uni_freiburg/informatik/ultimate/ltl2aut </ltl2autParserDir>
 
 		<srparseparserDir>${workspaceDir}/Library-srParse/src/srParse</srparseparserDir>
+		<jacoco.reportDir>${project.basedir}/../target</jacoco.reportDir>
 
 		<!-- Encoding settings -->
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -41,12 +42,15 @@
 		<sonar.java.source>1.7</sonar.java.source>
 		<sonar.java.coveragePlugin>jacoco</sonar.java.coveragePlugin>
 		<sonar.dynamicAnalysis>reuseReports</sonar.dynamicAnalysis>
-		<sonar.jacoco.reportPath>${project.basedir}/../target/jacoco.exec</sonar.jacoco.reportPath>
-		<sonar.jacoco.itReportPath>${project.basedir}/../target/jacoco-it.exec</sonar.jacoco.itReportPath>
+		<sonar.jacoco.reportPath>${jacoco.reportDir}/jacoco.exec</sonar.jacoco.reportPath>
+		<sonar.jacoco.itReportPath>${jacoco.reportDir}//../target/jacoco-it.exec</sonar.jacoco.itReportPath>
 		<sonar.dynamicAnalysis>reuseReports</sonar.dynamicAnalysis>
 
 		<!-- Jacoco version -->
-		<jacoco.version>0.7.2.201409121644</jacoco.version>
+		<!-- Old: <jacoco.version>0.7.2.201409121644</jacoco.version> -->
+		<jacoco.version>0.7.5.201505241946</jacoco.version>
+		<!-- <jacoco.version>0.7.4.201502262128</jacoco.version> -->
+
 
 		<!-- Global arguments for the VM used during junit tests depending on profile -->
 		<!-- use -XX:+HeapDumpOnOutOfMemoryError if you want to generate dumps 
@@ -115,7 +119,6 @@
 				</configuration>
 			</plugin>
 
-
 			<!-- fix sonar plugin version -->
 			<plugin>
 				<groupId>org.codehaus.mojo</groupId>
@@ -175,6 +178,17 @@
 						</lifecycleMappingMetadata>
 					</configuration>
 				</plugin>
+				<!-- <plugin> -->
+				<!-- <artifactId>maven-clean-plugin</artifactId> -->
+				<!-- <configuration> -->
+				<!-- <filesets> -->
+				<!-- <fileset> -->
+				<!-- <directory>${jacoco.reportDir}</directory> -->
+				<!-- <followSymlinks>false</followSymlinks> -->
+				<!-- </fileset> -->
+				<!-- </filesets> -->
+				<!-- </configuration> -->
+				<!-- </plugin> -->
 			</plugins>
 		</pluginManagement>
 	</build>
@@ -323,6 +337,91 @@
 		</profile>
 
 		<profile>
+			<!-- The profile coverage is used to generate junit test case coverage 
+				through jenkins and sonar. It uses all regression tests, but not UltimateTest, 
+				as those tests are very slow and should be executed manually via profile 
+				manualtest. You should not need to run this profile manually. -->
+			<id>coveragemanual</id>
+
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.eclipse.tycho</groupId>
+						<artifactId>tycho-surefire-plugin</artifactId>
+						<version>${tycho-version}</version>
+						<configuration>
+							<providerHint>junit47</providerHint>
+							<useUIHarness>false</useUIHarness>
+							<useUIThread>false</useUIThread>
+							<reuseForks>false</reuseForks>
+							<showEclipseLog>true</showEclipseLog>
+							<threadCount>1</threadCount>
+							<failIfNoTests>false</failIfNoTests>
+							<trimStackTrace>false</trimStackTrace>
+							<!-- redirectTestOutputToFile=false is the default, but to debug strange 
+								maven/junit bugs, you may want to set it to true to have all the test output 
+								written to file -->
+							<redirectTestOutputToFile>false</redirectTestOutputToFile>
+							<!-- if you want to change the argLine, use the global property -->
+							<argLine>${tycho.testArgLine} ${coverage-argline}</argLine>
+
+							<systemProperties>
+								<svcompdir>../svcomp</svcompdir>
+							</systemProperties>
+
+							<!-- Use this for global timeouts per class -->
+							<!-- <forkedProcessTimeoutInSeconds>28800</forkedProcessTimeoutInSeconds> -->
+
+							<includes>
+								<include>**/*.java</include>
+							</includes>
+						</configuration>
+					</plugin>
+
+					<!-- Code Coverage Analysis -->
+					<plugin>
+						<groupId>org.jacoco</groupId>
+						<artifactId>jacoco-maven-plugin</artifactId>
+						<version>${jacoco.version}</version>
+						<executions>
+							<execution>
+								<goals>
+									<goal>prepare-agent</goal>
+								</goals>
+								<configuration>
+									<destFile>${sonar.jacoco.reportPath}</destFile>
+									<append>true</append>
+								</configuration>
+							</execution>
+							<execution>
+								<id>default-report</id>
+								<goals>
+									<goal>report</goal>
+								</goals>
+								<configuration>
+									<dataFile>${sonar.jacoco.reportPath}</dataFile>
+									<outputDirectory>${jacoco.reportDir}</outputDirectory>
+								</configuration>
+							</execution>
+						</executions>
+					</plugin>
+				</plugins>
+			</build>
+
+			<modules>
+				<!-- modules containing test utilities -->
+				<module>../Library-junit-helper</module>
+				<module>../Library-UltimateTest</module>
+
+				<!-- modules containing actual tests -->
+				<module>../Library-UltimateUtilTest</module>
+				<module>../Library-UltimateTestTest</module>
+				<module>../CoreRCPTest</module>
+				<module>../UltimateRegressionTest</module>
+			</modules>
+		</profile>
+
+		<profile>
 			<!-- The profile manualtest is used to start manual tests from the commandline. 
 				It allows you to run all tests, but you should nevertheless specify which 
 				suite you want to run, as all the suites may require several days to run. 
@@ -357,7 +456,7 @@
 								written to file -->
 							<redirectTestOutputToFile>false</redirectTestOutputToFile>
 							<!-- if you want to change the argLine, use the global property -->
-							<argLine>${manualtest-argline}</argLine>
+							<argLine>${tycho.testArgLine} ${manualtest-argline}</argLine>
 
 							<systemProperties>
 								<svcompdir>../svcomp</svcompdir>
@@ -365,7 +464,6 @@
 
 							<!-- Use this for global timeouts per class -->
 							<!-- <forkedProcessTimeoutInSeconds>28800</forkedProcessTimeoutInSeconds> -->
-
 							<includes>
 								<include>**/*.java</include>
 							</includes>
