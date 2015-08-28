@@ -85,10 +85,10 @@ public class ArrayHandler {
 		result.auxVars.putAll(currentSubscriptRex.auxVars);
 		result.overappr.addAll(currentSubscriptRex.overappr);
 		
-		if (result.lrVal.cType instanceof CPointer) {
+		if (result.lrVal.getCType() instanceof CPointer) {
 			//we have a pointer that is accessed like an array
 			result = result.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
-			CType pointedType = ((CPointer) result.lrVal.cType).pointsToType;
+			CType pointedType = ((CPointer) result.lrVal.getCType()).pointsToType;
 			RValue address = ((CHandler) main.cHandler).doPointerArithPointerAndInteger(
 					main, IASTBinaryExpression.op_plus, loc, 
 					(RValue) result.lrVal, 
@@ -96,17 +96,17 @@ public class ArrayHandler {
 					pointedType);
 			result.lrVal  = new HeapLValue(address.getValue(), pointedType);
 		} else {
-			assert result.lrVal.cType.getUnderlyingType() instanceof CArray : "cType not instanceof CArray";
+			assert result.lrVal.getCType().getUnderlyingType() instanceof CArray : "cType not instanceof CArray";
 			ArrayList<Expression> newDimensions = 
-					new ArrayList<Expression>(Arrays.asList(((CArray) result.lrVal.cType.getUnderlyingType())
+					new ArrayList<Expression>(Arrays.asList(((CArray) result.lrVal.getCType().getUnderlyingType())
 							.getDimensions()));
 			CType newCType = null;
 			if (newDimensions.size() == 1) {
-				newCType = ((CArray) result.lrVal.cType.getUnderlyingType()).getValueType();
+				newCType = ((CArray) result.lrVal.getCType().getUnderlyingType()).getValueType();
 			} else {
 				newDimensions.remove(0);
 				newCType = new CArray(newDimensions.toArray(new Expression[0]), 
-						((CArray) result.lrVal.cType.getUnderlyingType()).getValueType()
+						((CArray) result.lrVal.getCType().getUnderlyingType()).getValueType()
 						);
 			}
 
@@ -137,7 +137,7 @@ public class ArrayHandler {
 									currentSubscriptRex.lrVal.getValue(), 
 									memoryHandler.calculateSizeOf(newCType, loc)),
 									new BinaryExpression(loc, Operator.ARITHMINUS,
-											memoryHandler.calculateSizeOf(innerResult.lrVal.cType, loc),
+											memoryHandler.calculateSizeOf(innerResult.lrVal.getCType(), loc),
 											memoryHandler.calculateSizeOf(newCType, loc)));
 					Expression nonNegative = new BinaryExpression(loc, Operator.COMPGEQ,
 							currentSubscriptRex.lrVal.getValue(),
@@ -152,7 +152,7 @@ public class ArrayHandler {
 					result.stmt.add(new AssumeStatement(loc, inRange));
 				}
 				
-				newLLVal.cType = newCType;
+				newLLVal.setCType(newCType);
 				result.lrVal = newLLVal;
 			} else {
 				throw new AssertionError("should not happen");

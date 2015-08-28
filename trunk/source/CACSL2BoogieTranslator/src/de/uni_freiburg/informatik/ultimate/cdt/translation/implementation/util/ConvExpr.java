@@ -47,8 +47,8 @@ public class ConvExpr {
 	 */
 	public static RValue toBoolean(final ILocation loc, final RValue rVal, 
 			AExpressionTranslation expressionTranslation) {
-		assert !rVal.isBoogieBool;
-		CType underlyingType = rVal.cType.getUnderlyingType();
+		assert !rVal.isBoogieBool();
+		CType underlyingType = rVal.getCType().getUnderlyingType();
 		Expression resultEx = null;
 		Expression e = rVal.getValue();
 		if (e instanceof IntegerLiteral) {
@@ -92,14 +92,14 @@ public class ConvExpr {
 
 	public static RValue boolToInt(ILocation loc, RValue rVal, 
 			AExpressionTranslation expressionTranslation) {
-		assert rVal.isBoogieBool;
+		assert rVal.isBoogieBool();
 		Expression one = expressionTranslation.constructLiteralForIntegerType(loc, 
 				new CPrimitive(PRIMITIVE.INT), BigInteger.ONE);
 		Expression zero = expressionTranslation.constructLiteralForIntegerType(loc, 
 				new CPrimitive(PRIMITIVE.INT), BigInteger.ZERO);
 		return new RValue(
 				new IfThenElseExpression(loc, rVal.getValue(), one, zero), 
-				rVal.cType, false);
+				rVal.getCType(), false);
 	}
 	
 	/**
@@ -109,7 +109,7 @@ public class ConvExpr {
 	public static ResultExpression rexIntToBoolIfNecessary(ILocation loc, ResultExpression rl, 
 			AExpressionTranslation expressionTranslation) {
 		ResultExpression rlToBool = null;
-		if (rl.lrVal.isBoogieBool) {
+		if (rl.lrVal.isBoogieBool()) {
 			rlToBool = rl;
 		} else {
 			rlToBool = new ResultExpression(ConvExpr.toBoolean(loc, (RValue) rl.lrVal, expressionTranslation));
@@ -122,7 +122,7 @@ public class ConvExpr {
 	public static ResultExpression rexBoolToIntIfNecessary(ILocation loc, ResultExpression rl, 
 			AExpressionTranslation expressionTranslation) {
 		ResultExpression rlToInt = null;
-		if (rl.lrVal.isBoogieBool) {
+		if (rl.lrVal.isBoogieBool()) {
 			rlToInt = new ResultExpression(ConvExpr.boolToInt(loc, (RValue) rl.lrVal, expressionTranslation));
 			rlToInt.addAll(rl);
 		} else {

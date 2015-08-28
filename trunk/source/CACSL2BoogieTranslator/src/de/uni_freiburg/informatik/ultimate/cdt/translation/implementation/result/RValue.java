@@ -34,16 +34,16 @@ public class RValue extends LRValue {
 	}
 	
 	public RValue(RValue rval) {
-		this(rval.value, rval.cType, rval.isBoogieBool, rval.isIntFromPointer);
+		this(rval.value, rval.getCType(), rval.isBoogieBool(), rval.isIntFromPointer());
 //		this(rval.value, rval.cType, rval.isWrappedBool, rval.isPointer, rval.isOnHeap);
 	}
 
 	public RValue(Expression value, CType cType,
 			boolean isBoogieBool, boolean isIntFromPointer) {
 		this.value = value;
-		this.cType = cType;
-		this.isBoogieBool = isBoogieBool;
-		this.isIntFromPointer = isIntFromPointer;
+		this.setCType(cType);
+		this.setBoogieBool(isBoogieBool);
+		this.setIntFromPointer(isIntFromPointer);
 	}
 
 	public Expression getValue() {

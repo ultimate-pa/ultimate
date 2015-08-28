@@ -161,8 +161,8 @@ public abstract class AExpressionTranslation {
 	 */
 	public void usualArithmeticConversions(Dispatcher main, ILocation loc, 
 			ResultExpression leftRex, ResultExpression rightRex) {
-		final CPrimitive leftPrimitive = getCorrespondingPrimitiveType(leftRex.lrVal.cType);
-		final CPrimitive rightPrimitive = getCorrespondingPrimitiveType(rightRex.lrVal.cType);
+		final CPrimitive leftPrimitive = getCorrespondingPrimitiveType(leftRex.lrVal.getCType());
+		final CPrimitive rightPrimitive = getCorrespondingPrimitiveType(rightRex.lrVal.getCType());
 		if (leftPrimitive.isIntegerType()) {
 			doIntegerPromotion(loc, leftRex);
 		}
@@ -171,16 +171,16 @@ public abstract class AExpressionTranslation {
 		}
 
 		final CPrimitive resultType = determineResultOfUsualArithmeticConversions(
-				(CPrimitive) leftRex.lrVal.cType, 
-				(CPrimitive) rightRex.lrVal.cType);
+				(CPrimitive) leftRex.lrVal.getCType(), 
+				(CPrimitive) rightRex.lrVal.getCType());
 
 		convertIfNecessary(loc, leftRex, resultType);
 		convertIfNecessary(loc, rightRex, resultType);
 		
-		if (!leftRex.lrVal.cType.equals(resultType)) {
+		if (!leftRex.lrVal.getCType().equals(resultType)) {
 			throw new AssertionError("conversion failed"); 
 		}
-		if (!rightRex.lrVal.cType.equals(resultType)) {
+		if (!rightRex.lrVal.getCType().equals(resultType)) {
 			throw new AssertionError("conversion failed"); 
 		}
 	}
@@ -192,7 +192,7 @@ public abstract class AExpressionTranslation {
 	 */
 	private void convertIfNecessary(ILocation loc, ResultExpression operand,
 			CPrimitive resultType) {
-		if (operand.lrVal.cType.equals(resultType)) {
+		if (operand.lrVal.getCType().equals(resultType)) {
 			// do nothing
 		} else {
 			convert(loc, operand, resultType);

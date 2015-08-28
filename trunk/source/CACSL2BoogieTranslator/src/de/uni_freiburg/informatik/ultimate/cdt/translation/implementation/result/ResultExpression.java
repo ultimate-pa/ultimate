@@ -219,7 +219,7 @@ public class ResultExpression extends Result {
 			toReturn =  this;
 		} else if (lrVal instanceof LocalLValue) {
 			RValue newRVal = new RValue(((LocalLValue) lrVal).getValue(),
-					        lrVal.cType, lrVal.isBoogieBool);
+					        lrVal.getCType(), lrVal.isBoogieBool());
 			toReturn = new ResultExpression(
 					this.stmt, newRVal, this.decl, this.auxVars,
 					        this.overappr, this.unionFieldIdToCType);
@@ -236,7 +236,7 @@ public class ResultExpression extends Result {
 					new LinkedHashMap<VariableDeclaration, ILocation>(this.auxVars); 
 			RValue newValue = null;
 
-			CType underlyingType = this.lrVal.cType.getUnderlyingType();
+			CType underlyingType = this.lrVal.getCType().getUnderlyingType();
 		
 			//a pointer to a function is a special case..
 			if (underlyingType instanceof CPointer 
@@ -245,8 +245,8 @@ public class ResultExpression extends Result {
 			}
 
 			//has the type of what lies at that address
-			RValue addressRVal = new RValue(hlv.getAddress(), hlv.cType,
-					hlv.isBoogieBool, hlv.isIntFromPointer);
+			RValue addressRVal = new RValue(hlv.getAddress(), hlv.getCType(),
+					hlv.isBoogieBool(), hlv.isIntFromPointer());
 
 			if (underlyingType instanceof CPrimitive) {
 				CPrimitive cp = (CPrimitive) underlyingType;
@@ -287,7 +287,7 @@ public class ResultExpression extends Result {
 				//						throw new AssertionError("you can't assign arrays in C");
 				// if it is a HeapLValue, it must be on heap -> treat it as a pointer
 									ResultExpression	rex = readArrayFromHeap(main, structHandler,
-											memoryHandler, loc, addressRVal, (CArray) addressRVal.cType);
+											memoryHandler, loc, addressRVal, (CArray) addressRVal.getCType());
 										newStmt.addAll(rex.stmt);
 										newDecl.addAll(rex.decl);
 										newAuxVars.putAll(rex.auxVars);	
@@ -317,7 +317,7 @@ public class ResultExpression extends Result {
 			} else {
 				throw new UnsupportedSyntaxException(loc, "..");
 			}
-			newValue.isBoogieBool = lrVal.isBoogieBool;
+			newValue.setBoogieBool(lrVal.isBoogieBool());
 			toReturn = new ResultExpression(newStmt, newValue, newDecl,
 					newAuxVars, this.overappr, this.unionFieldIdToCType);
 		} else {
@@ -326,7 +326,7 @@ public class ResultExpression extends Result {
 		
 		if(toReturn != null
 				&& toReturn.lrVal != null)
-			toReturn.lrVal.isIntFromPointer = this.lrVal.isIntFromPointer; //FIXME niceer
+			toReturn.lrVal.setIntFromPointer(this.lrVal.isIntFromPointer()); //FIXME niceer
 		
 //		//special treatment for unsigned integer types
 //		if (main.cHandler.getUnsignedTreatment() != UNSIGNED_TREATMENT.IGNORE
@@ -389,7 +389,7 @@ public class ResultExpression extends Result {
 			RValue address) {
 		
 		Expression structOnHeapAddress = address.getValue();
-		CStruct structType = (CStruct) address.cType.getUnderlyingType();
+		CStruct structType = (CStruct) address.getCType().getUnderlyingType();
 		
 		ResultExpression result = null;
 		
@@ -483,7 +483,7 @@ public class ResultExpression extends Result {
 				
 				RValue newAddress = new RValue(address);
 				newAddress.value = innerStructAddress;
-				newAddress.cType= underlyingType;
+				newAddress.setCType(underlyingType);
 
 				ResultExpression fieldRead = readStructFromHeap(main, structHandler, memoryHandler, 
 						loc, newAddress);

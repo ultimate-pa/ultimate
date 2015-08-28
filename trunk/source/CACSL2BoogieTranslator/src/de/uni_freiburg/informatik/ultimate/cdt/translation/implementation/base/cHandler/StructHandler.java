@@ -69,7 +69,7 @@ public class StructHandler {
 		LRValue newValue = null;
 		Map<StructLHS, CType> unionFieldToCType = fieldOwner.unionFieldIdToCType;
 
-		CType foType = fieldOwner.lrVal.cType.getUnderlyingType();
+		CType foType = fieldOwner.lrVal.getCType().getUnderlyingType();
 		
 		foType = (node.isPointerDereference() ?
 				((CPointer)foType).pointsToType :
@@ -81,7 +81,7 @@ public class StructHandler {
 		if (node.isPointerDereference()) {
 			ResultExpression rFieldOwnerRex = fieldOwner.switchToRValueIfNecessary(main, memoryHandler, this, loc);
 			Expression address = rFieldOwnerRex.lrVal.getValue();
-			fieldOwner = new ResultExpression(rFieldOwnerRex.stmt, new HeapLValue(address, rFieldOwnerRex.lrVal.cType), 
+			fieldOwner = new ResultExpression(rFieldOwnerRex.stmt, new HeapLValue(address, rFieldOwnerRex.lrVal.getCType()), 
 					rFieldOwnerRex.decl, rFieldOwnerRex.auxVars, rFieldOwnerRex.overappr);
 		}
 
@@ -142,7 +142,7 @@ public class StructHandler {
 		Expression addressOffsetOfFieldOwner;
 		
 		Expression structAddress = address.getValue();
-		CStruct structType = (CStruct) address.cType.getUnderlyingType();
+		CStruct structType = (CStruct) address.getCType().getUnderlyingType();
 
 		addressBaseOfFieldOwner = new StructAccessExpression(loc, 
 				structAddress, SFO.POINTER_BASE);
@@ -159,7 +159,7 @@ public class StructHandler {
 
 		RValue newAddress = new RValue(address);
 		newAddress.value = newPointer;
-		newAddress.cType= resultType;
+		newAddress.setCType(resultType);
 		
 		ResultExpression call = 
 				memoryHandler.getReadCall(main, 

@@ -1057,7 +1057,7 @@ public class MemoryHandler {
 
     public CallStatement getMallocCall(Dispatcher main,	FunctionHandler fh, 
 			LocalLValue resultPointer, ILocation loc) {
-    	return getMallocCall(main, fh, calculateSizeOf(resultPointer.cType, loc), resultPointer, loc);
+    	return getMallocCall(main, fh, calculateSizeOf(resultPointer.getCType(), loc), resultPointer, loc);
     }
 
     private CallStatement getMallocCall(Dispatcher main,	FunctionHandler fh, Expression size,
@@ -1312,7 +1312,7 @@ public class MemoryHandler {
         decl.add(tVarDecl);
         VariableLHS[] lhs = new VariableLHS[] { new VariableLHS(loc, tmpId) };
         CallStatement call = new CallStatement(loc, false, lhs, "read~" + heapTypeName,//heapType.toString(),
-                new Expression[] { address.getValue(), this.calculateSizeOf(address.cType, loc) });
+                new Expression[] { address.getValue(), this.calculateSizeOf(address.getCType(), loc) });
         for (Overapprox overapprItem : overappr) {
             call.getPayload().getAnnotations().put(Overapprox.getIdentifier(),
                     overapprItem);
@@ -1320,14 +1320,14 @@ public class MemoryHandler {
         stmt.add(call);
 		assert (CHandler.isAuxVarMapcomplete(main, decl, auxVars));
         return new ResultExpression(stmt, 
-        		new RValue(new IdentifierExpression(loc, tmpId), address.cType),
+        		new RValue(new IdentifierExpression(loc, tmpId), address.getCType()),
         		decl, auxVars, overappr);
     }
     
     ASTType getHeapTypeOfLRVal(Dispatcher main, LRValue lrVal) {
-    	CType ct = lrVal.cType;
+    	CType ct = lrVal.getCType();
     	
-    	if (lrVal.isBoogieBool)
+    	if (lrVal.isBoogieBool())
     		return new PrimitiveType(lrVal.getValue().getLocation(), SFO.BOOL);
     	
     	CType ut = ct;
@@ -1384,7 +1384,7 @@ public class MemoryHandler {
 //        ILocation loc = hlv.getAddress().getLocation();
         ArrayList<Statement> stmt = new ArrayList<Statement>();
         
-        CType rType = rval.cType;
+        CType rType = rval.getCType();
         if (rType instanceof CNamed)
         	rType = ((CNamed) rType).getUnderlyingType();
         
@@ -1395,14 +1395,14 @@ public class MemoryHandler {
         		m_functionHandler.getModifiedGlobals().
         			get(m_functionHandler.getCurrentProcedureID()).add(SFO.MEMORY_INT);
         		stmt.add(new CallStatement(loc, false, new VariableLHS[0], "write~" + SFO.INT,
-        				new Expression[] { rval.getValue(), hlv.getAddress(), this.calculateSizeOf(hlv.cType, loc)}));
+        				new Expression[] { rval.getValue(), hlv.getAddress(), this.calculateSizeOf(hlv.getCType(), loc)}));
         		break;
         	case FLOATTYPE:
         		isFloatArrayRequiredInMM = true;
         		m_functionHandler.getModifiedGlobals().
         			get(m_functionHandler.getCurrentProcedureID()).add(SFO.MEMORY_REAL);
         		stmt.add(new CallStatement(loc, false, new VariableLHS[0], "write~" + SFO.REAL,
-        				new Expression[] { rval.getValue(), hlv.getAddress(), this.calculateSizeOf(hlv.cType, loc) }));
+        				new Expression[] { rval.getValue(), hlv.getAddress(), this.calculateSizeOf(hlv.getCType(), loc) }));
         		break;	
         	default:
         		throw new UnsupportedSyntaxException(loc, "we don't recognize this type");
@@ -1413,13 +1413,13 @@ public class MemoryHandler {
         	m_functionHandler.getModifiedGlobals().
         	get(m_functionHandler.getCurrentProcedureID()).add(SFO.MEMORY_INT);
         	stmt.add(new CallStatement(loc, false, new VariableLHS[0], "write~" + SFO.INT,
-        			new Expression[] { rval.getValue(), hlv.getAddress(), this.calculateSizeOf(hlv.cType, loc)}));
+        			new Expression[] { rval.getValue(), hlv.getAddress(), this.calculateSizeOf(hlv.getCType(), loc)}));
         } else if (rType instanceof CPointer) {
         	isPointerArrayRequiredInMM = true;
         	m_functionHandler.getModifiedGlobals().
         			get(m_functionHandler.getCurrentProcedureID()).add(SFO.MEMORY_POINTER);
         	stmt.add(new CallStatement(loc, false, new VariableLHS[0], "write~" + SFO.POINTER,
-        			new Expression[] { rval.getValue(), hlv.getAddress(), this.calculateSizeOf(hlv.cType, loc) }));
+        			new Expression[] { rval.getValue(), hlv.getAddress(), this.calculateSizeOf(hlv.getCType(), loc) }));
         } else if (rType instanceof CStruct) {
         	CStruct rStructType = (CStruct) rType;
         	for (String fieldId : rStructType.getFieldIds()) {

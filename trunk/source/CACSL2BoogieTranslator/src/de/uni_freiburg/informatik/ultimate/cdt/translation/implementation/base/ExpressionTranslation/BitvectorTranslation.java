@@ -285,12 +285,12 @@ public class BitvectorTranslation extends AExpressionTranslation {
 			throw new UnsupportedOperationException("non-integer types not supported yet");
 		}
 		
-		if (integerPromotionNeeded((CPrimitive) operand.lrVal.cType)) {
+		if (integerPromotionNeeded((CPrimitive) operand.lrVal.getCType())) {
 			doIntegerPromotion(loc, operand);
 		}
 		
 		int resultLength = m_TypeSizes.getSize(resultPrimitive.getType()) * 8;
-		int operandLength = m_TypeSizes.getSize(((CPrimitive) operand.lrVal.cType).getType()) * 8;
+		int operandLength = m_TypeSizes.getSize(((CPrimitive) operand.lrVal.getCType()).getType()) * 8;
 		
 		if (resultLength == operandLength) {
 			// Do nothing.
@@ -303,20 +303,20 @@ public class BitvectorTranslation extends AExpressionTranslation {
 			operand.lrVal = rVal;
 		}
 		
-		operand.lrVal.cType = resultType;
+		operand.lrVal.setCType(resultType);
 	}
 
 	private void extend(ILocation loc, ResultExpression operand, CType resultType, CPrimitive resultPrimitive, int resultLength, int operandLength) {
 		int[] indices = new int[]{resultLength - operandLength};
 		String smtlibFunctionName;
-		if (((CPrimitive) operand.lrVal.cType).isUnsigned()) {
+		if (((CPrimitive) operand.lrVal.getCType()).isUnsigned()) {
 			smtlibFunctionName = "zero_extend";
 		} else {
 			smtlibFunctionName = "sign_extend";
 		}
-		String funcName = smtlibFunctionName + "From" + m_FunctionDeclarations.computeBitvectorSuffix(loc, (CPrimitive) operand.lrVal.cType)
+		String funcName = smtlibFunctionName + "From" + m_FunctionDeclarations.computeBitvectorSuffix(loc, (CPrimitive) operand.lrVal.getCType())
 		                             + "To" + m_FunctionDeclarations.computeBitvectorSuffix(loc, resultPrimitive);
-		declareBitvectorFunction(loc, smtlibFunctionName, funcName, false, resultPrimitive, indices, (CPrimitive) operand.lrVal.cType);
+		declareBitvectorFunction(loc, smtlibFunctionName, funcName, false, resultPrimitive, indices, (CPrimitive) operand.lrVal.getCType());
 		FunctionApplication func = new FunctionApplication(loc, SFO.AUXILIARY_FUNCTION_PREFIX + funcName, new Expression[]{operand.lrVal.getValue()});
 		RValue rVal = new RValue(func, resultType);
 		operand.lrVal = rVal;
@@ -324,18 +324,18 @@ public class BitvectorTranslation extends AExpressionTranslation {
 
 	@Override
 	public void doIntegerPromotion(ILocation loc, ResultExpression operand) {
-		CType inputType = operand.lrVal.cType;
+		CType inputType = operand.lrVal.getCType();
 		if (inputType instanceof CPrimitive) {
-			CPrimitive cPrimitive = (CPrimitive) operand.lrVal.cType;
+			CPrimitive cPrimitive = (CPrimitive) operand.lrVal.getCType();
 			if (cPrimitive.getGeneralType() == GENERALPRIMITIVE.INTTYPE) {
 				CPrimitive promotedType = determineResultOfIntegerPromotion(cPrimitive);
 
 				int promotedTypeLength = m_TypeSizes.getSize(promotedType.getType()) * 8;
-				int operandLength = m_TypeSizes.getSize(((CPrimitive) operand.lrVal.cType).getType()) * 8;
+				int operandLength = m_TypeSizes.getSize(((CPrimitive) operand.lrVal.getCType()).getType()) * 8;
 				if (promotedTypeLength > operandLength) {
 					extend(loc, operand, promotedType, promotedType, promotedTypeLength, operandLength);
 				}
-				operand.lrVal.cType = promotedType;
+				operand.lrVal.setCType(promotedType);
 			} else {
 				throw new IllegalArgumentException("integer promotions not applicable to " + inputType);
 			}

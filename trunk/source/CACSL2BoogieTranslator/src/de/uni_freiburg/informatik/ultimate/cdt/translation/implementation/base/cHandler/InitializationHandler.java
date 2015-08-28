@@ -187,7 +187,7 @@ public class InitializationHandler {
 			if (initializer == null) {
 				rhs = new IdentifierExpression(loc, SFO.NULL);
 			} else {
-				CType initializerUnderlyingType = initializer.lrVal.cType.getUnderlyingType();
+				CType initializerUnderlyingType = initializer.lrVal.getCType().getUnderlyingType();
 				if (initializerUnderlyingType instanceof CPointer
 						|| initializerUnderlyingType instanceof CArray) {
 					rhs = initializer.lrVal.getValue();
@@ -333,7 +333,7 @@ public class InitializationHandler {
 			if (initializer == null) {
 				rhs = new IdentifierExpression(loc, SFO.NULL);
 			} else {
-				CType initializerUnderlyingType = initializer.lrVal.cType.getUnderlyingType();
+				CType initializerUnderlyingType = initializer.lrVal.getCType().getUnderlyingType();
 				if (initializerUnderlyingType instanceof CPointer
 						|| initializerUnderlyingType instanceof CArray) {
 					rhs = initializer.lrVal.getValue();
@@ -737,7 +737,7 @@ public class InitializationHandler {
 		if (rerl.lrVal != null) {//we have an identifier (or sth else too?)
 			ResultExpression writes = new ResultExpression((RValue) null);
 			ArrayList<Statement> writeCalls = mMemoryHandler.getWriteCall(loc,
-					new HeapLValue(startAddress, rerl.lrVal.cType), (RValue) rerl.lrVal);
+					new HeapLValue(startAddress, rerl.lrVal.getCType()), (RValue) rerl.lrVal);
 			writes.stmt.addAll(writeCalls);
 			return writes;
 		}
@@ -788,7 +788,7 @@ public class InitializationHandler {
 						&& (rerl.list.get(0).field == null || rerl.list.get(0).field.equals("")
 						|| fieldIds[i].equals(rerl.list.get(0).field))
 						&& (underlyingFieldType instanceof CStruct
-								|| rerl.list.get(0).lrVal.cType.equals(underlyingFieldType))) {
+								|| rerl.list.get(0).lrVal.getCType().equals(underlyingFieldType))) {
 					//use the value from the rerl to initialize the union
 					fieldWrites = main.cHandler.getInitHandler().initVar(loc, main, 
 							fieldHlv,
@@ -923,7 +923,7 @@ public class InitializationHandler {
 						&& (rerl.list.get(0).field == null || rerl.list.get(0).field.equals("")
 						|| fieldIds[i].equals(rerl.list.get(0).field))
 						&& (underlyingFieldType instanceof CStruct
-								|| rerl.list.get(0).lrVal.cType.equals(underlyingFieldType))) {
+								|| rerl.list.get(0).lrVal.getCType().equals(underlyingFieldType))) {
 					//use the value from the rerl to initialize the union
 					fieldContents = main.cHandler.getInitHandler().initVar(loc, main, 
 							new VariableLHS(loc, tmpId),

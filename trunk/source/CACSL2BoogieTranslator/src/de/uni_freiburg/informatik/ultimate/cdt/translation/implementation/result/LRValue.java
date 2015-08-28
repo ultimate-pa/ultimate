@@ -3,6 +3,11 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.resul
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 
+/**
+ * 
+ * @author Alexander Nutz, Matthias Heizmann
+ *
+ */
 public abstract class LRValue {
 	
 	/**
@@ -13,9 +18,7 @@ public abstract class LRValue {
 	public LRValue () {
 	}
 	
-	public abstract Expression getValue();
-	
-	public CType cType;
+	private CType cType;
 	
 	/** 
 	 * This flag is supposed to be true iff the value-expression of this
@@ -23,12 +26,36 @@ public abstract class LRValue {
 	 * For instance if it is the translation of a comparator expression
 	 * like x == 0.
 	 */
-	public boolean isBoogieBool;
+	private boolean isBoogieBool;
 
-	public boolean isIntFromPointer;
-//	public boolean isPointer;
+	private boolean isIntFromPointer;
+
 	
-//	public boolean isOnHeap;
+	public abstract Expression getValue();
+	
+	public CType getCType() {
+		return cType;
+	}
+
+	public void setCType(CType cType) {
+		this.cType = cType;
+	}
+
+	public boolean isBoogieBool() {
+		return isBoogieBool;
+	}
+
+	public void setBoogieBool(boolean isBoogieBool) {
+		this.isBoogieBool = isBoogieBool;
+	}
+
+	public boolean isIntFromPointer() {
+		return isIntFromPointer;
+	}
+
+	public void setIntFromPointer(boolean isIntFromPointer) {
+		this.isIntFromPointer = isIntFromPointer;
+	}
 	
 	public final String toString() {
 		if (this instanceof HeapLValue)

@@ -233,7 +233,7 @@ public class SvComp14PRCHandler extends PRCHandler {
 					new Expression[] { destRex.lrVal.getValue(), srcRex.lrVal.getValue(), sizeRex.lrVal.getValue() });
 			stmt.add(call);
 			
-			return new ResultExpression(stmt, new RValue(new IdentifierExpression(loc, tId), destRex.lrVal.cType), decl, auxVars);
+			return new ResultExpression(stmt, new RValue(new IdentifierExpression(loc, tId), destRex.lrVal.getCType()), decl, auxVars);
 		}
 		
 		if (methodName.equals("__builtin_object_size")) {

@@ -372,8 +372,8 @@ public class ACSLHandler implements IACSLHandler {
 		{
 			Expression expr = expressionTranslation.createArithmeticExpression(
 					getCASTBinaryExprOperator(node.getOperator()), 
-					left.lrVal.getValue(), (CPrimitive) left.lrVal.cType, 
-					right.lrVal.getValue(), (CPrimitive) right.lrVal.cType, loc);
+					left.lrVal.getValue(), (CPrimitive) left.lrVal.getCType(), 
+					right.lrVal.getValue(), (CPrimitive) right.lrVal.getCType(), loc);
 			CType type = new CPrimitive(PRIMITIVE.INT);
 			return new ResultExpression(stmt, new RValue(expr, type), decl, auxVars, overappr);
 			
@@ -390,8 +390,8 @@ public class ACSLHandler implements IACSLHandler {
 		{
 			Expression expr = expressionTranslation.constructBinaryComparisonExpression(loc,
 					getCASTBinaryExprOperator(node.getOperator()), 
-					left.lrVal.getValue(), (CPrimitive) left.lrVal.cType, 
-					right.lrVal.getValue(), (CPrimitive) right.lrVal.cType);
+					left.lrVal.getValue(), (CPrimitive) left.lrVal.getCType(), 
+					right.lrVal.getValue(), (CPrimitive) right.lrVal.getCType());
 			CType type = new CPrimitive(PRIMITIVE.INT);
 			return new ResultExpression(stmt, new RValue(expr, type, true), decl, auxVars, overappr);
 			
@@ -467,17 +467,17 @@ public class ACSLHandler implements IACSLHandler {
         
         switch (node.getOperator()) {
             case LOGICNEG:
-            	return new ResultExpression(stmt, new RValue(new UnaryExpression(loc, UnaryExpression.Operator.LOGICNEG, res.lrVal.getValue()), res.lrVal.cType), decl, auxVars, overappr);
+            	return new ResultExpression(stmt, new RValue(new UnaryExpression(loc, UnaryExpression.Operator.LOGICNEG, res.lrVal.getValue()), res.lrVal.getCType()), decl, auxVars, overappr);
                 //return new Result(new UnaryExpression(loc, UnaryExpression.Operator.LOGICNEG, expr));
             case MINUS:
             	AExpressionTranslation expressionTranslation = 
     				((CHandler) main.cHandler).getExpressionTranslation();
             	Expression expr = expressionTranslation.constructUnaryExpression(loc, 
-            			IASTUnaryExpression.op_minus, res.lrVal.getValue(), (CPrimitive) res.lrVal.cType);
-                return new ResultExpression(stmt, new RValue(expr, res.lrVal.cType), decl, auxVars, overappr);
+            			IASTUnaryExpression.op_minus, res.lrVal.getValue(), (CPrimitive) res.lrVal.getCType());
+                return new ResultExpression(stmt, new RValue(expr, res.lrVal.getCType()), decl, auxVars, overappr);
                 //return new Result(new UnaryExpression(loc, UnaryExpression.Operator.ARITHNEGATIVE, expr));
             case PLUS:
-                return new ResultExpression(stmt, new RValue(res.lrVal.getValue(), res.lrVal.cType), decl, auxVars, overappr);
+                return new ResultExpression(stmt, new RValue(res.lrVal.getValue(), res.lrVal.getCType()), decl, auxVars, overappr);
                 //return new Result(expr);
             case POINTER:
             case ADDROF:
@@ -869,7 +869,7 @@ public class ACSLHandler implements IACSLHandler {
         
         // TODO: CType
         return new ResultExpression(stmt, new RValue(new StructAccessExpression(LocationFactory.createACSLLocation(node),
-                (Expression) r.lrVal.getValue(), field), ((CStruct) r.lrVal.cType.getUnderlyingType()).getFieldType(field)), decl, auxVars, overappr);
+                (Expression) r.lrVal.getValue(), field), ((CStruct) r.lrVal.getCType().getUnderlyingType()).getFieldType(field)), decl, auxVars, overappr);
     }
 
     @Override

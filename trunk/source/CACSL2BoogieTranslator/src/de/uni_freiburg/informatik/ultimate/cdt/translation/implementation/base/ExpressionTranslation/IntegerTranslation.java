@@ -446,18 +446,18 @@ public class IntegerTranslation extends AExpressionTranslation {
 		}
 		
 		// set the type of the operand to resultType
-		operand.lrVal.cType = resultType;
+		operand.lrVal.setCType(resultType);
 	}
 
 	@Override
 	public void doIntegerPromotion(ILocation loc, ResultExpression operand) {
-		CType inputType = operand.lrVal.cType;
+		CType inputType = operand.lrVal.getCType();
 		if (inputType instanceof CPrimitive) {
-			CPrimitive cPrimitive = (CPrimitive) operand.lrVal.cType;
+			CPrimitive cPrimitive = (CPrimitive) operand.lrVal.getCType();
 			if (cPrimitive.getGeneralType() == GENERALPRIMITIVE.INTTYPE) {
 				CPrimitive promotedType = determineResultOfIntegerPromotion(cPrimitive);
 				if (!promotedType.equals(inputType)) {
-					operand.lrVal.cType = promotedType;
+					operand.lrVal.setCType(promotedType);
 				}
 			} else {
 				throw new IllegalArgumentException("integer promotions not applicable to " + inputType);

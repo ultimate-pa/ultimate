@@ -394,8 +394,8 @@ public class FunctionHandler {
 			// do some implicit casts
 			CType functionResultType = this.procedureToCFunctionType.get(currentProcedure.getIdentifier())
 					.getResultType();
-			if (!exprResult.lrVal.cType.equals(functionResultType)) {
-				if (functionResultType instanceof CPointer && exprResult.lrVal.cType instanceof CPrimitive
+			if (!exprResult.lrVal.getCType().equals(functionResultType)) {
+				if (functionResultType instanceof CPointer && exprResult.lrVal.getCType() instanceof CPrimitive
 						&& exprResult.lrVal.getValue() instanceof IntegerLiteral
 						&& ((IntegerLiteral) exprResult.lrVal.getValue()).getValue().equals("0")) {
 					exprResult.lrVal = new RValue(new IdentifierExpression(loc, SFO.NULL), functionResultType);
@@ -648,9 +648,9 @@ public class FunctionHandler {
 			IASTInitializerClause inParam = inParams[i];
 			ResultExpression in = ((ResultExpression) main.dispatch(inParam));
 					
-			if (in.lrVal.cType.getUnderlyingType() instanceof CArray) {
+			if (in.lrVal.getCType().getUnderlyingType() instanceof CArray) {
 				//arrays are passed as pointers --> switch to RValue would make a boogie array..
-				CType valueType = ((CArray) in.lrVal.cType.getUnderlyingType()).getValueType().getUnderlyingType();
+				CType valueType = ((CArray) in.lrVal.getCType().getUnderlyingType()).getValueType().getUnderlyingType();
 				if (in.lrVal instanceof HeapLValue)
 					in.lrVal = new RValue(((HeapLValue)in.lrVal).getAddress(), new CPointer(valueType));
 				else
@@ -671,7 +671,7 @@ public class FunctionHandler {
 			// --> but from then on we know its parameters
 			if (procedureDeclaredWithOutInparamsButCalledWithInParams) {
 				// add the current parameter to the procedure's signature
-				updateCFunction(methodName, null, null, new CDeclaration(in.lrVal.cType, SFO.IN_PARAM + i), false);
+				updateCFunction(methodName, null, null, new CDeclaration(in.lrVal.getCType(), SFO.IN_PARAM + i), false);
 			} else if (procedureToCFunctionType.containsKey(methodName)) { // we
 																			// already
 																			// know
@@ -771,7 +771,7 @@ public class FunctionHandler {
 		assert (main instanceof PRDispatcher) || ((MainDispatcher) main).getFunctionToIndex().size() > 0;
 		ResultExpression funcNameRex = (ResultExpression) main.dispatch(functionName);
 		RValue calledFuncRVal = (RValue) funcNameRex.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc).lrVal;
-		CType calledFuncType = calledFuncRVal.cType.getUnderlyingType();
+		CType calledFuncType = calledFuncRVal.getCType().getUnderlyingType();
 		if (!(calledFuncType instanceof CFunction)) {
 			// .. because function pointers don't need to be dereferenced in
 			// order to be called
@@ -788,7 +788,7 @@ public class FunctionHandler {
 			CDeclaration[] paramDecsFromCall = new CDeclaration[arguments.length];
 			for (int i = 0; i < arguments.length; i++) {
 				ResultExpression rex = (ResultExpression) main.dispatch(arguments[i]);
-				paramDecsFromCall[i] = new CDeclaration(rex.lrVal.cType, "#param" + i); // TODO:
+				paramDecsFromCall[i] = new CDeclaration(rex.lrVal.getCType(), "#param" + i); // TODO:
 																						// SFO?
 			}
 			calledFuncCFunction = new CFunction(calledFuncCFunction.getResultType(), paramDecsFromCall,

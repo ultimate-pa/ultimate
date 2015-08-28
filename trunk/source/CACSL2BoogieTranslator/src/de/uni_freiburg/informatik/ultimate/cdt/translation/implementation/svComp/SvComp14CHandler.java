@@ -274,7 +274,7 @@ public class SvComp14CHandler extends CHandler {
 			stmt.add(call);
 			
 			return new ResultExpression(stmt, new RValue(new IdentifierExpression(loc, tId), 
-					destRex.lrVal.cType), decl, auxVars, overappr);
+					destRex.lrVal.getCType()), decl, auxVars, overappr);
 		}
 		
 		if (methodName.equals("__builtin_object_size")) {
@@ -308,9 +308,9 @@ public class SvComp14CHandler extends CHandler {
 			ILocation loc,
 			LRValue lrValue) {
 		IntegerLiteral minValue = new IntegerLiteral(loc, typeSizes.getMinValueOfPrimitiveType(
-				(CPrimitive) lrValue.cType.getUnderlyingType()).toString());
+				(CPrimitive) lrValue.getCType().getUnderlyingType()).toString());
 		IntegerLiteral maxValue = new IntegerLiteral(loc, typeSizes.getMaxValueOfPrimitiveType(
-				(CPrimitive) lrValue.cType.getUnderlyingType()).toString());
+				(CPrimitive) lrValue.getCType().getUnderlyingType()).toString());
 		BinaryExpression biggerMinInt = new BinaryExpression(loc, 
 				BinaryExpression.Operator.COMPLEQ, minValue, lrValue.getValue());
 		BinaryExpression smallerMaxValue = new BinaryExpression(loc, 

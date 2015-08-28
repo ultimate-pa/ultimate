@@ -360,9 +360,9 @@ public class PRCHandler extends CHandler {
 //			ResultExpression rop = o.switchToRValueIfNecessary(main, mMemoryHandler, mStructHandler, loc);
 			RValue ad = null;
 			if (o.lrVal instanceof HeapLValue)
-				ad = new RValue(((HeapLValue) o.lrVal).getAddress(), new CPointer(o.lrVal.cType));
+				ad = new RValue(((HeapLValue) o.lrVal).getAddress(), new CPointer(o.lrVal.getCType()));
 			else 
-				ad = new RValue(o.lrVal.getValue(), new CPointer(o.lrVal.cType));
+				ad = new RValue(o.lrVal.getValue(), new CPointer(o.lrVal.getCType()));
 
 			return new ResultExpression(ad);
 			default:
@@ -587,8 +587,8 @@ public class PRCHandler extends CHandler {
 		//do implicit cast -- assume the types are compatible
 //		rightHandSide = castToType(loc, rightHandSide, lrVal.cType);
 		
-		if (lrVal.cType.getUnderlyingType() instanceof CPointer
-				&& rightHandSide.cType.getUnderlyingType() instanceof CArray) {
+		if (lrVal.getCType().getUnderlyingType() instanceof CPointer
+				&& rightHandSide.getCType().getUnderlyingType() instanceof CArray) {
 //			variablesOnHeap.add(node);
 			Expression valOrAddr = rightHandSide instanceof HeapLValue 
 					? ((HeapLValue) rightHandSide).getAddress() 

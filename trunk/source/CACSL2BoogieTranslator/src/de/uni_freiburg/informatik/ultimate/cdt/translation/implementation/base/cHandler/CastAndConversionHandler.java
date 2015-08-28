@@ -20,8 +20,8 @@ public class CastAndConversionHandler {
 		RValue left = (RValue) leftRex.lrVal;
 		RValue right = (RValue) rightRex.lrVal;
 		
-		CType lUlType = left.cType.getUnderlyingType();
-		CType rUlType = right.cType.getUnderlyingType();
+		CType lUlType = left.getCType().getUnderlyingType();
+		CType rUlType = right.getCType().getUnderlyingType();
 
 		//save some time if the types are equal..
 		if (lUlType.equals(rUlType))
