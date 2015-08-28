@@ -19,6 +19,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.IBacktranslationService
 import de.uni_freiburg.informatik.ultimate.core.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lassoranker.AnalysisType;
+import de.uni_freiburg.informatik.ultimate.lassoranker.Backtranslator;
 import de.uni_freiburg.informatik.ultimate.lassoranker.LassoAnalysis;
 import de.uni_freiburg.informatik.ultimate.lassoranker.LassoRankerPreferences;
 import de.uni_freiburg.informatik.ultimate.lassoranker.exceptions.TermException;
@@ -412,7 +413,7 @@ public class LassoRankerStarter {
 		states.add(nta.getStateHonda());
 		states.addAll(nta.getGEVs());
 		List<Map<Expression, Rational>> initHondaRays =
-				NonTerminationArgument.rank2Boogie(term2expression, states);
+				Backtranslator.rank2Boogie(term2expression, states);
 		
 		NonTerminationArgumentResult<RcfgElement> result =
 				new NonTerminationArgumentResult<RcfgElement>(m_Honda,

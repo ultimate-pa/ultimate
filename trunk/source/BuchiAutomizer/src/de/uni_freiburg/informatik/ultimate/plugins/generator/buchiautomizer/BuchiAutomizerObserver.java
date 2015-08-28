@@ -16,6 +16,7 @@ import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceSt
 import de.uni_freiburg.informatik.ultimate.core.services.IBacktranslationService;
 import de.uni_freiburg.informatik.ultimate.core.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lassoranker.Backtranslator;
 import de.uni_freiburg.informatik.ultimate.lassoranker.nontermination.NonTerminationArgument;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.RankVar;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
@@ -109,8 +110,6 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 
 	/**
 	 * Report a nontermination argument back to Ultimate's toolchain
-	 * 
-	 * @param arg
 	 */
 	private void reportNonTerminationResult(ProgramPoint honda, NonTerminationArgument nta) {
 		// TODO: translate also the rational coefficients to Expressions?
@@ -123,7 +122,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 		states.add(nta.getStateHonda());
 		states.addAll(nta.getGEVs());
 		List<Map<Expression, Rational>> initHondaRays =
-				NonTerminationArgument.rank2Boogie(term2expression, states);
+				Backtranslator.rank2Boogie(term2expression, states);
 		
 		NonTerminationArgumentResult<RcfgElement> result =
 				new NonTerminationArgumentResult<RcfgElement>(honda,
