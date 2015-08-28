@@ -30,7 +30,7 @@ public abstract class LRValue {
 	
 //	public boolean isOnHeap;
 	
-	public String toString() {
+	public final String toString() {
 		if (this instanceof HeapLValue)
 			return "address: " + ((HeapLValue) this).getAddress();
 		else if (this instanceof LocalLValue)
