@@ -22,6 +22,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStruct;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.PRIMITIVE;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
@@ -598,5 +599,25 @@ public class ResultExpression extends Result {
 		this.auxVars.putAll(re.auxVars);
 		this.overappr.addAll(overappr);
 		re.lock();
+	}
+	
+	
+	/**
+	 * If the CType of this {@link ResultExpression}'s {@link RValue} has
+	 * CType enum, then replace it by CType int. If an enum variable occurs as
+	 * an RValue we use this method to replace its type by int. 
+	 */
+	public void replaceEnumByInt() {
+		if (this.lrVal instanceof RValue) {
+			RValue old = (RValue) this.lrVal;
+			if (old.getCType() instanceof CEnum) {
+				CPrimitive intType = new CPrimitive(PRIMITIVE.INT);
+				this.lrVal = new RValue(old.getValue(), intType, old.isBoogieBool(), old.isIntFromPointer());
+			} else {
+				// do nothing
+			}
+		} else {
+			throw new UnsupportedOperationException("replaceEnumByInt only applicable for RValues");
+		}
 	}
 }

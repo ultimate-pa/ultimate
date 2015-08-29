@@ -161,6 +161,8 @@ public abstract class AExpressionTranslation {
 	 */
 	public void usualArithmeticConversions(Dispatcher main, ILocation loc, 
 			ResultExpression leftRex, ResultExpression rightRex) {
+		leftRex.replaceEnumByInt();
+		rightRex.replaceEnumByInt();
 		final CPrimitive leftPrimitive = getCorrespondingPrimitiveType(leftRex.lrVal.getCType());
 		final CPrimitive rightPrimitive = getCorrespondingPrimitiveType(rightRex.lrVal.getCType());
 		if (leftPrimitive.isIntegerType()) {
