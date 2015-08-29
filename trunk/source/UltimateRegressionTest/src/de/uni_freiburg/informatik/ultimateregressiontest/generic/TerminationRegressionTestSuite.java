@@ -3,28 +3,27 @@ package de.uni_freiburg.informatik.ultimateregressiontest.generic;
 import de.uni_freiburg.informatik.ultimateregressiontest.AbstractRegressionTestSuite;
 import de.uni_freiburg.informatik.ultimatetest.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimatetest.decider.ITestResultDecider;
-import de.uni_freiburg.informatik.ultimatetest.decider.SafetyCheckTestResultDecider;
+import de.uni_freiburg.informatik.ultimatetest.decider.TerminationAnalysisTestResultDecider;
 import de.uni_freiburg.informatik.ultimatetest.util.TestUtil;
 
 /**
  * 
- * @author dietsch@informatik.uni-freiburg.de
+ * @author heizmann@informatik.uni-freiburg.de
  * 
  */
-public class RegressionTestSuite extends AbstractRegressionTestSuite {
+public class TerminationRegressionTestSuite extends AbstractRegressionTestSuite {
 
-	public RegressionTestSuite() {
+	public TerminationRegressionTestSuite() {
 		super();
 		mTimeout = 20 * 1000;
 		mRootFolder = TestUtil.getPathFromTrunk("examples/");
 
-		// match every path not containing CToBoogieTranslation or Backtranslation or lassos or termination
-		mFilterRegex = "((?!CToBoogieTranslation|Backtranslation|lassos|termination)[\\s\\S])*";
+		mFilterRegex = ".*(lassos|termination).*";
 	}
 
 	@Override
 	protected ITestResultDecider getTestResultDecider(UltimateRunDefinition runDefinition) {
-		return new SafetyCheckTestResultDecider(runDefinition, false);
+		return new TerminationAnalysisTestResultDecider(runDefinition, false);
 	}
 
 
