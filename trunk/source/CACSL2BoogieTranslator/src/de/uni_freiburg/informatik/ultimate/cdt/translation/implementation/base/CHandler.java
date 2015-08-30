@@ -1305,111 +1305,114 @@ public class CHandler implements ICHandler {
 			}
 		}
 		case IASTBinaryExpression.op_equals:
+		case IASTBinaryExpression.op_notequals: {
+			ResultExpression rrToInt = ConvExpr.rexBoolToIntIfNecessary(loc, rr, m_ExpressionTranslation);
+			ResultExpression rlToInt = ConvExpr.rexBoolToIntIfNecessary(loc, rl, m_ExpressionTranslation);
+			return handleEqualityOperators(main, loc, node.getOperator(), rlToInt, rrToInt);
+		}
 		case IASTBinaryExpression.op_greaterEqual:
 		case IASTBinaryExpression.op_greaterThan:
 		case IASTBinaryExpression.op_lessEqual:
-		case IASTBinaryExpression.op_lessThan:
-		case IASTBinaryExpression.op_notequals: {
-			
-			ResultExpression rrToInt = ConvExpr.rexBoolToIntIfNecessary(loc, rr, m_ExpressionTranslation);
-			ResultExpression rlToInt = ConvExpr.rexBoolToIntIfNecessary(loc, rl, m_ExpressionTranslation);
-			
-			stmt.addAll(rlToInt.stmt);
-			stmt.addAll(rrToInt.stmt);
-			decl.addAll(rlToInt.decl);
-			decl.addAll(rrToInt.decl);
-			auxVars.putAll(rlToInt.auxVars);
-			auxVars.putAll(rrToInt.auxVars);
-			overappr.addAll(rlToInt.overappr);
-			overappr.addAll(rrToInt.overappr);
-
-			BinaryExpression.Operator op;
-			switch (node.getOperator()) {
-			case IASTBinaryExpression.op_equals:
-				op = BinaryExpression.Operator.COMPEQ;
-				break;
-			case IASTBinaryExpression.op_greaterEqual:
-				op = BinaryExpression.Operator.COMPGEQ;
-				break;
-			case IASTBinaryExpression.op_greaterThan:
-				op = BinaryExpression.Operator.COMPGT;
-				break;
-			case IASTBinaryExpression.op_lessEqual:
-				op = BinaryExpression.Operator.COMPLEQ;
-				break;
-			case IASTBinaryExpression.op_lessThan:
-				op = BinaryExpression.Operator.COMPLT;
-				break;
-			case IASTBinaryExpression.op_notequals:
-				op = BinaryExpression.Operator.COMPNEQ;
-				break;
-			default:
-				throw new AssertionError("???");
-			}
-			
-			if (node.getOperator() == IASTBinaryExpression.op_equals 
-					|| node.getOperator() == IASTBinaryExpression.op_notequals) {
-				//!= and == are treated differently from the inequality operators
-				// --> behavior is never undefined for instance..
-				return handleEqualityOperators(main, loc, node.getOperator(), rlToInt, rrToInt);
-			} else {
-				// we have a "relational" pointer comparison
-				if (lType instanceof CPointer || rType instanceof CPointer) {
-					// both of the two following ifs will lead to an assertion
-					// violation if the pointer compared to
-					// is something different from NULL (as we construct Pointers
-					// with base 0) --> but this is ok, as
-					// it would be undefined behaviour
-					// except if we converted a pointer into an allocated region to
-					// int, this is not supported yet (TODO)
-					if (!(lType instanceof CPointer)) {
-						rlToInt.lrVal = new RValue(MemoryHandler.constructPointerFromBaseAndOffset(new IntegerLiteral(loc,
-								"0"), rlToInt.lrVal.getValue(), loc), new CPrimitive(PRIMITIVE.VOID));
-					}
-					if (!(rType instanceof CPointer)) {
-						rrToInt.lrVal = new RValue(MemoryHandler.constructPointerFromBaseAndOffset(new IntegerLiteral(loc,
-								"0"), rrToInt.lrVal.getValue(), loc), new CPrimitive(PRIMITIVE.VOID));
-					}
-					// assert ((CPointer)
-					// rlToInt.lrVal.cType).pointsToType.equals(((CPointer)
-					// rrToInt.lrVal.cType).pointsToType); //FIXME macht dieses
-					// assert Sinn?
-					// assert (in Boogie) that the base value of the pointers
-					// matches
-					if (this.mMemoryHandler.getPointerSubtractionAndComparisonValidityCheckMode() == POINTER_CHECKMODE.ASSERTandASSUME) {
-						Statement assertStm = new AssertStatement(loc, new BinaryExpression(loc,
-								BinaryExpression.Operator.COMPEQ, new StructAccessExpression(loc, rlToInt.lrVal.getValue(),
-										SFO.POINTER_BASE), new StructAccessExpression(loc, rrToInt.lrVal.getValue(),
-												SFO.POINTER_BASE)));
-						stmt.add(assertStm);
-						Check chk = new Check(Spec.ILLEGAL_POINTER_ARITHMETIC);
-						chk.addToNodeAnnot(assertStm);
-					} else if (this.mMemoryHandler.getPointerSubtractionAndComparisonValidityCheckMode() == POINTER_CHECKMODE.ASSUME) {
-						Statement assumeStm = new AssumeStatement(loc, new BinaryExpression(loc,
-								BinaryExpression.Operator.COMPEQ, new StructAccessExpression(loc, rlToInt.lrVal.getValue(),
-										SFO.POINTER_BASE), new StructAccessExpression(loc, rrToInt.lrVal.getValue(),
-												SFO.POINTER_BASE)));
-						stmt.add(assumeStm);
-					}
-
-					RValue rval = new RValue(new BinaryExpression(loc, op, 
-							new StructAccessExpression(loc, rlToInt.lrVal.getValue(), SFO.POINTER_OFFSET), 
-							new StructAccessExpression(loc, rrToInt.lrVal.getValue(), SFO.POINTER_OFFSET)), 
-							new CPrimitive(PRIMITIVE.INT));
-					return new ResultExpression(stmt, rval, decl, auxVars, overappr);
-				} else if (lType.isArithmeticType() && rType.isArithmeticType()) {
-					m_ExpressionTranslation.usualArithmeticConversions(main, loc, rlToInt, rrToInt);
-					RValue rval = new RValue(m_ExpressionTranslation.constructBinaryComparisonExpression(loc, node.getOperator(), rlToInt.lrVal.getValue(), (CPrimitive) rlToInt.lrVal.getCType(), rrToInt.lrVal.getValue(), (CPrimitive) rrToInt.lrVal.getCType()),
-							new CPrimitive(PRIMITIVE.INT),
-							true, false);
-					return new ResultExpression(stmt, rval, decl, auxVars, overappr);
-				} else {
-					throw new UnsupportedOperationException("unsupported " + rType + ", " + lType);
-				}
-
-			}
-
+		case IASTBinaryExpression.op_lessThan: {
+			return handleRelationalOperators(main, loc, node.getOperator(), rl, rr);
 		}
+			
+//			stmt.addAll(rlToInt.stmt);
+//			stmt.addAll(rrToInt.stmt);
+//			decl.addAll(rlToInt.decl);
+//			decl.addAll(rrToInt.decl);
+//			auxVars.putAll(rlToInt.auxVars);
+//			auxVars.putAll(rrToInt.auxVars);
+//			overappr.addAll(rlToInt.overappr);
+//			overappr.addAll(rrToInt.overappr);
+//
+//			BinaryExpression.Operator op;
+//			switch (node.getOperator()) {
+//			case IASTBinaryExpression.op_equals:
+//				op = BinaryExpression.Operator.COMPEQ;
+//				break;
+//			case IASTBinaryExpression.op_greaterEqual:
+//				op = BinaryExpression.Operator.COMPGEQ;
+//				break;
+//			case IASTBinaryExpression.op_greaterThan:
+//				op = BinaryExpression.Operator.COMPGT;
+//				break;
+//			case IASTBinaryExpression.op_lessEqual:
+//				op = BinaryExpression.Operator.COMPLEQ;
+//				break;
+//			case IASTBinaryExpression.op_lessThan:
+//				op = BinaryExpression.Operator.COMPLT;
+//				break;
+//			case IASTBinaryExpression.op_notequals:
+//				op = BinaryExpression.Operator.COMPNEQ;
+//				break;
+//			default:
+//				throw new AssertionError("???");
+//			}
+//			
+//			if (node.getOperator() == IASTBinaryExpression.op_equals 
+//					|| node.getOperator() == IASTBinaryExpression.op_notequals) {
+//				//!= and == are treated differently from the inequality operators
+//				// --> behavior is never undefined for instance..
+//				return handleEqualityOperators(main, loc, node.getOperator(), rlToInt, rrToInt);
+//			} else {
+//				// we have a "relational" pointer comparison
+//				if (lType instanceof CPointer || rType instanceof CPointer) {
+//					// both of the two following ifs will lead to an assertion
+//					// violation if the pointer compared to
+//					// is something different from NULL (as we construct Pointers
+//					// with base 0) --> but this is ok, as
+//					// it would be undefined behaviour
+//					// except if we converted a pointer into an allocated region to
+//					// int, this is not supported yet (TODO)
+//					if (!(lType instanceof CPointer)) {
+//						rlToInt.lrVal = new RValue(MemoryHandler.constructPointerFromBaseAndOffset(new IntegerLiteral(loc,
+//								"0"), rlToInt.lrVal.getValue(), loc), new CPrimitive(PRIMITIVE.VOID));
+//					}
+//					if (!(rType instanceof CPointer)) {
+//						rrToInt.lrVal = new RValue(MemoryHandler.constructPointerFromBaseAndOffset(new IntegerLiteral(loc,
+//								"0"), rrToInt.lrVal.getValue(), loc), new CPrimitive(PRIMITIVE.VOID));
+//					}
+//					// assert ((CPointer)
+//					// rlToInt.lrVal.cType).pointsToType.equals(((CPointer)
+//					// rrToInt.lrVal.cType).pointsToType); //FIXME macht dieses
+//					// assert Sinn?
+//					// assert (in Boogie) that the base value of the pointers
+//					// matches
+//					if (this.mMemoryHandler.getPointerSubtractionAndComparisonValidityCheckMode() == POINTER_CHECKMODE.ASSERTandASSUME) {
+//						Statement assertStm = new AssertStatement(loc, new BinaryExpression(loc,
+//								BinaryExpression.Operator.COMPEQ, new StructAccessExpression(loc, rlToInt.lrVal.getValue(),
+//										SFO.POINTER_BASE), new StructAccessExpression(loc, rrToInt.lrVal.getValue(),
+//												SFO.POINTER_BASE)));
+//						stmt.add(assertStm);
+//						Check chk = new Check(Spec.ILLEGAL_POINTER_ARITHMETIC);
+//						chk.addToNodeAnnot(assertStm);
+//					} else if (this.mMemoryHandler.getPointerSubtractionAndComparisonValidityCheckMode() == POINTER_CHECKMODE.ASSUME) {
+//						Statement assumeStm = new AssumeStatement(loc, new BinaryExpression(loc,
+//								BinaryExpression.Operator.COMPEQ, new StructAccessExpression(loc, rlToInt.lrVal.getValue(),
+//										SFO.POINTER_BASE), new StructAccessExpression(loc, rrToInt.lrVal.getValue(),
+//												SFO.POINTER_BASE)));
+//						stmt.add(assumeStm);
+//					}
+//
+//					RValue rval = new RValue(new BinaryExpression(loc, op, 
+//							new StructAccessExpression(loc, rlToInt.lrVal.getValue(), SFO.POINTER_OFFSET), 
+//							new StructAccessExpression(loc, rrToInt.lrVal.getValue(), SFO.POINTER_OFFSET)), 
+//							new CPrimitive(PRIMITIVE.INT));
+//					return new ResultExpression(stmt, rval, decl, auxVars, overappr);
+//				} else if (lType.isArithmeticType() && rType.isArithmeticType()) {
+//					m_ExpressionTranslation.usualArithmeticConversions(main, loc, rlToInt, rrToInt);
+//					RValue rval = new RValue(m_ExpressionTranslation.constructBinaryComparisonExpression(loc, node.getOperator(), rlToInt.lrVal.getValue(), (CPrimitive) rlToInt.lrVal.getCType(), rrToInt.lrVal.getValue(), (CPrimitive) rrToInt.lrVal.getCType()),
+//							new CPrimitive(PRIMITIVE.INT),
+//							true, false);
+//					return new ResultExpression(stmt, rval, decl, auxVars, overappr);
+//				} else {
+//					throw new UnsupportedOperationException("unsupported " + rType + ", " + lType);
+//				}
+//
+//			}
+
+//		}
 		case IASTBinaryExpression.op_logicalAnd: {
 			ResultExpression rlToBool = ConvExpr.rexIntToBoolIfNecessary(loc, rl, m_ExpressionTranslation);
 			ResultExpression rrToBool = ConvExpr.rexIntToBoolIfNecessary(loc, rr, m_ExpressionTranslation);
@@ -1839,6 +1842,106 @@ public class CHandler implements ICHandler {
 
 
 
+	
+	/**
+	 * Handle relational operators according to Section 6.5.8 of C11.
+	 * Assumes that left (resp. right) are the results from handling the operands.
+	 * Requires that the {@link LRValue} of operands is an {@link RValue}
+	 * (i.e., switchToRValueIfNecessary was applied if needed).
+	 */
+	ResultExpression handleRelationalOperators(Dispatcher main, ILocation loc,
+			int op, ResultExpression left, ResultExpression right) {
+		assert (left.lrVal instanceof RValue) : "no RValue";
+		assert (right.lrVal instanceof RValue) : "no RValue";
+		left.replaceEnumByInt();
+		right.replaceEnumByInt();
+		left  = ConvExpr.rexBoolToIntIfNecessary(loc, left, m_ExpressionTranslation);
+		right = ConvExpr.rexBoolToIntIfNecessary(loc, right, m_ExpressionTranslation);
+		final CType lType = left.lrVal.getCType().getUnderlyingType();
+		final CType rType = right.lrVal.getCType().getUnderlyingType();
+
+		final ResultExpression result = ResultExpression.copyStmtDeclAuxvarOverapprox(left, right);
+		final Expression expr;
+		if (lType instanceof CPrimitive && rType instanceof CPrimitive) {
+			assert lType.isRealType() && rType.isRealType() : "no real type";
+			m_ExpressionTranslation.usualArithmeticConversions(main, loc, left, right);
+			expr = m_ExpressionTranslation.constructBinaryComparisonExpression(
+					loc, op, left.lrVal.getValue(), (CPrimitive) left.lrVal.getCType(), 
+					right.lrVal.getValue(), (CPrimitive) right.lrVal.getCType());
+		} else if (lType instanceof CPointer && rType instanceof CPointer) {
+			final Expression baseEquality = constructPointerComponentRelation(loc, 
+					IASTBinaryExpression.op_equals, left.lrVal.getValue(), right.lrVal.getValue(), SFO.POINTER_BASE);
+			final Expression offsetRelation = constructPointerComponentRelation(loc, 
+					op, left.lrVal.getValue(), right.lrVal.getValue(), SFO.POINTER_OFFSET);
+			switch (mMemoryHandler.getPointerSubtractionAndComparisonValidityCheckMode()) {
+			case ASSERTandASSUME:
+				Statement assertStm = new AssertStatement(loc, baseEquality);
+				Check chk = new Check(Spec.ILLEGAL_POINTER_ARITHMETIC);
+				chk.addToNodeAnnot(assertStm);
+				result.stmt.add(assertStm);
+				expr = offsetRelation;
+				break;
+			case ASSUME:
+				Statement assumeStm = new AssumeStatement(loc, baseEquality);
+				result.stmt.add(assumeStm);
+				expr = offsetRelation;
+				break;
+			case IGNORE:
+				// use conjunction
+				expr = new BinaryExpression(loc, Operator.LOGICAND, baseEquality, offsetRelation);
+				// TODO: Do not use conjunction. Use nondeterministic value
+				// if baseEquality does not hold.
+				break;
+			default:
+				throw new AssertionError("unknown value");
+			}
+
+			
+		} else {
+			throw new UnsupportedOperationException("unsupported " + rType + ", " + lType);
+		}
+		// The result has type int (C11 6.5.8.6)
+		final CPrimitive typeOfResult = new CPrimitive(PRIMITIVE.INT);
+		final RValue rval = new RValue(expr, typeOfResult, true, false);
+		result.lrVal = rval;
+		return result;
+	}
+	
+	/**
+	 * Construct {@link Expression} that compares a component of two pointers.
+	 * @param loc
+	 * @param op Comparison operation.
+	 * @param leftPointer Boogie expression that represents pointer.
+	 * @param rightPointer Boogie expression that represents pointer.
+	 * @param component Defines which component is compared. Either "base" or
+	 * "offset"
+	 */
+	private Expression constructPointerComponentRelation(ILocation loc, int op, 
+			Expression leftPointer, Expression rightPointer, String component) {
+		assert component.equals(SFO.POINTER_BASE) || component.equals(SFO.POINTER_OFFSET) : "unknown pointer component";
+		StructAccessExpression leftComponent = new StructAccessExpression(loc, leftPointer, component);
+		StructAccessExpression rightComponent = new StructAccessExpression(loc, rightPointer, component);
+		switch (op) {
+		case IASTBinaryExpression.op_equals:
+		case IASTBinaryExpression.op_notequals: {
+			return m_ExpressionTranslation.constructBinaryEqualityExpression(loc, op, 
+					leftComponent, m_ExpressionTranslation.getCTypeOfPointerComponents(), 
+					rightComponent, m_ExpressionTranslation.getCTypeOfPointerComponents());
+		}
+		case IASTBinaryExpression.op_lessThan:
+		case IASTBinaryExpression.op_lessEqual:
+		case IASTBinaryExpression.op_greaterThan:
+		case IASTBinaryExpression.op_greaterEqual:		
+			return m_ExpressionTranslation.constructBinaryComparisonExpression(loc, op, 
+					leftComponent, m_ExpressionTranslation.getCTypeOfPointerComponents(), 
+					rightComponent, m_ExpressionTranslation.getCTypeOfPointerComponents());
+		default:
+			throw new IllegalArgumentException("op " + op);
+		}
+		
+		
+	}
+	
 	/**
 	 * Handle equality operators according to Section 6.5.9 of C11.
 	 * Assumes that left (resp. right) are the results from handling the operands.
@@ -1852,8 +1955,8 @@ public class CHandler implements ICHandler {
 			int op, ResultExpression left, ResultExpression right) {
 		assert (left.lrVal instanceof RValue) : "no RValue";
 		assert (right.lrVal instanceof RValue) : "no RValue";
-		CType lType = left.lrVal.getCType().getUnderlyingType();
-		CType rType = right.lrVal.getCType().getUnderlyingType();
+		final CType lType = left.lrVal.getCType().getUnderlyingType();
+		final CType rType = right.lrVal.getCType().getUnderlyingType();
 		// implicit casts
 		if (lType instanceof CPointer || rType instanceof CPointer) {
 			if (!(lType instanceof CPointer)) {
@@ -1868,11 +1971,11 @@ public class CHandler implements ICHandler {
 			throw new UnsupportedOperationException("unsupported " + rType + ", " + lType);
 		}
 		// The result has type int (C11 6.5.9.1)
-		CPrimitive typeOfResult = new CPrimitive(PRIMITIVE.INT);
-		Expression expr = m_ExpressionTranslation.constructBinaryEqualityExpression(
+		final CPrimitive typeOfResult = new CPrimitive(PRIMITIVE.INT);
+		final Expression expr = m_ExpressionTranslation.constructBinaryEqualityExpression(
 				loc, op, left.lrVal.getValue(), lType, right.lrVal.getValue(), rType);
-		RValue rval = new RValue(expr,typeOfResult, true, false);
-		ResultExpression result = ResultExpression.copyStmtDeclAuxvarOverapprox(left, right);
+		final RValue rval = new RValue(expr,typeOfResult, true, false);
+		final ResultExpression result = ResultExpression.copyStmtDeclAuxvarOverapprox(left, right);
 		result.lrVal = rval;
 		return result;
 	}
@@ -1905,14 +2008,14 @@ public class CHandler implements ICHandler {
 		case IASTBinaryExpression.op_shiftLeft:
 		case IASTBinaryExpression.op_shiftRight: {
 			assert lhs == null : "no assignment";
-			ResultExpression result = ResultExpression.copyStmtDeclAuxvarOverapprox(left, right);
+			final ResultExpression result = ResultExpression.copyStmtDeclAuxvarOverapprox(left, right);
 			result.lrVal = rval;
 			return result;
 		}
 		case IASTBinaryExpression.op_shiftLeftAssign:
 		case IASTBinaryExpression.op_shiftRightAssign: {
-			ResultExpression copy = ResultExpression.copyStmtDeclAuxvarOverapprox(left, right);
-			ResultExpression result = makeAssignment(main, loc, copy.stmt, lhs, rval, copy.decl, copy.auxVars, copy.overappr);
+			final ResultExpression copy = ResultExpression.copyStmtDeclAuxvarOverapprox(left, right);
+			final ResultExpression result = makeAssignment(main, loc, copy.stmt, lhs, rval, copy.decl, copy.auxVars, copy.overappr);
 			return result;
 		}
 		default:
