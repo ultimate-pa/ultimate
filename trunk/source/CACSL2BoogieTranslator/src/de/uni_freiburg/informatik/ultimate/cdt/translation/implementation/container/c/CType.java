@@ -4,6 +4,7 @@
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.GENERALPRIMITIVE;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.PRIMITIVE;
 
 
 /**
@@ -84,11 +85,7 @@ public abstract class CType {
 	 */
 	public boolean isIntegerType() {
 		if (this instanceof CPrimitive) {
-			if (((CPrimitive) this).getGeneralType() == GENERALPRIMITIVE.INTTYPE) {
-				return true;
-			} else {
-				return false;
-			}
+			return (((CPrimitive) this).getGeneralType() == GENERALPRIMITIVE.INTTYPE);
 		} else if (this instanceof CEnum) {
 			return true;
 		} else {
@@ -97,19 +94,53 @@ public abstract class CType {
 	}
 	
 	/**
-	 * Returns true iff this type is an floting type according to the
+	 * Returns true iff this type is a real floating type according to the
+	 * definition 6.2.5.10 of the C11 standard.
+	 */
+	public boolean isRealFloatingType() {
+		if (this instanceof CPrimitive) {
+			CPrimitive cPrimitive = (CPrimitive) this;
+			return cPrimitive.getType() == PRIMITIVE.FLOAT || 
+					cPrimitive.getType() == PRIMITIVE.DOUBLE || 
+					cPrimitive.getType() == PRIMITIVE.LONGDOUBLE;
+		} else {
+			return false;
+		}
+	}
+	
+	/**
+	 * Returns true iff this type is a complex type according to the
+	 * definition 6.2.5.11 of the C11 standard.
+	 */
+	public boolean isComplexType() {
+		if (this instanceof CPrimitive) {
+			CPrimitive cPrimitive = (CPrimitive) this;
+			return cPrimitive.getType() == PRIMITIVE.COMPLEX_FLOAT|| 
+					cPrimitive.getType() == PRIMITIVE.COMPLEX_DOUBLE || 
+					cPrimitive.getType() == PRIMITIVE.COMPLEX_LONGDOUBLE;
+		} else {
+			return false;
+		}
+	}
+	
+	/**
+	 * Returns true iff this type is an floating type according to the
 	 * definition 6.2.5.11 in the C11 standard.
 	 */
 	public boolean isFloatingType() {
 		if (this instanceof CPrimitive) {
-			if (((CPrimitive) this).getGeneralType() == GENERALPRIMITIVE.FLOATTYPE) {
-				return true;
-			} else {
-				return false;
-			}
+			return (((CPrimitive) this).getGeneralType() == GENERALPRIMITIVE.FLOATTYPE);
 		} else {
 			return false;
 		}
+	}
+	
+	/**
+	 * Returns true iff this type is a real type according to the
+	 * definition 6.2.5.17 in the C11 standard.
+	 */
+	public boolean isRealType() {
+		return this.isIntegerType() || this.isRealFloatingType();
 	}
 	
 	/**
