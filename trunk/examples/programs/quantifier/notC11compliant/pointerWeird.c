@@ -5,7 +5,7 @@
  * Weird pointer casts are not supported.
  */
 int main() {
-    int i;
+    long i;
     int* vp;
-    *((int **)i) = vp;
+    *((long **)i) = vp;
 }

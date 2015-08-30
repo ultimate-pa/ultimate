@@ -9,7 +9,7 @@
  * Author: heizmann@informatik.uni-freiburg.de
  */
 
-main()
+int main()
 {
   char string_A[5];
   string_A[0]='a';

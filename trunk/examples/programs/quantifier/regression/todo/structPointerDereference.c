@@ -13,8 +13,7 @@ int main()
 {
     struct node str;
     if(str.next->value == 0) {
-        return;
+        return 0;
     }
-    
     return 0;
 }

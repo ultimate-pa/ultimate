@@ -7,10 +7,10 @@
  */
 int main(void) {
     int i1;
-    int i2;
+    long i2;
     int *p1;
     p1 = & i1;
-    i2 = (int)p1;
+    i2 = (long) p1;
     
     return 0;
 }

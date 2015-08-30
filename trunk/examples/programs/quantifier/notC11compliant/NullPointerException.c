@@ -14,6 +14,7 @@ void func() {
     return;
 }
 
-void main() {
+int main() {
     ((1 == 1) ? 0 : func());
+    return 0;
 }
