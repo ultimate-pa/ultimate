@@ -34,6 +34,7 @@ int main() {
 		int ge = (r > p);
 		//@ assert ge == 1;
 	}
+	free(p);
 	
 	/* arrays */
 	int a[5];
