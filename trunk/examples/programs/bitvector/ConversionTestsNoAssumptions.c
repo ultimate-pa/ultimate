@@ -10,7 +10,9 @@ int main() {
   unsigned int b = a;
   unsigned int limit2 = 100U;
 
-  //@assert(b > limit2);
+  if (b <= limit2) {
+    //@ assert \false;
+  }
 
   /* unsigned int to signed int (fitting) */
   unsigned int c = 100U;
@@ -31,7 +33,9 @@ int main() {
   unsigned long long h = g;
   unsigned long long limit3 = 100ULL;
 
-  //@assert(h > limit3);
+  if (h <= limit3) {
+    //@ assert \false;
+  }
 
   /* unsigned int to signed long long */
   unsigned int k = 100U;
