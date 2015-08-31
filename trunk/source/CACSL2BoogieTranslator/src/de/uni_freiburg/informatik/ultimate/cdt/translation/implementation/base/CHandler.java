@@ -1833,25 +1833,28 @@ public class CHandler implements ICHandler {
 			int op, ResultExpression left, ResultExpression right) {
 		assert (left.lrVal instanceof RValue) : "no RValue";
 		assert (right.lrVal instanceof RValue) : "no RValue";
-		final CType lType = left.lrVal.getCType().getUnderlyingType();
-		final CType rType = right.lrVal.getCType().getUnderlyingType();
-		// implicit casts
-		if (lType instanceof CPointer || rType instanceof CPointer) {
-			if (!(lType instanceof CPointer)) {
-				castToType(loc, main.getTypeSizes(), left, new CPointer(new CPrimitive(PRIMITIVE.VOID)));
+		{
+			final CType lType = left.lrVal.getCType().getUnderlyingType();
+			final CType rType = right.lrVal.getCType().getUnderlyingType();
+			// implicit casts
+			if (lType instanceof CPointer || rType instanceof CPointer) {
+				if (!(lType instanceof CPointer)) {
+					castToType(loc, main.getTypeSizes(), left, new CPointer(new CPrimitive(PRIMITIVE.VOID)));
+				}
+				if (!(rType instanceof CPointer)) {
+					castToType(loc, main.getTypeSizes(), right, new CPointer(new CPrimitive(PRIMITIVE.VOID)));
+				}
+			} else if (lType.isArithmeticType() && rType.isArithmeticType()) {
+				m_ExpressionTranslation.usualArithmeticConversions(main, loc, left, right);
+			} else {
+				throw new UnsupportedOperationException("unsupported " + rType + ", " + lType);
 			}
-			if (!(rType instanceof CPointer)) {
-				castToType(loc, main.getTypeSizes(), right, new CPointer(new CPrimitive(PRIMITIVE.VOID)));
-			}
-		} else if (lType.isArithmeticType() && rType.isArithmeticType()) {
-			m_ExpressionTranslation.usualArithmeticConversions(main, loc, left, right);
-		} else {
-			throw new UnsupportedOperationException("unsupported " + rType + ", " + lType);
 		}
 		// The result has type int (C11 6.5.9.1)
 		final CPrimitive typeOfResult = new CPrimitive(PRIMITIVE.INT);
 		final Expression expr = m_ExpressionTranslation.constructBinaryEqualityExpression(
-				loc, op, left.lrVal.getValue(), lType, right.lrVal.getValue(), rType);
+				loc, op, left.lrVal.getValue(), left.lrVal.getCType(), 
+				right.lrVal.getValue(), right.lrVal.getCType());
 		final RValue rval = new RValue(expr,typeOfResult, true, false);
 		final ResultExpression result = ResultExpression.copyStmtDeclAuxvarOverapprox(left, right);
 		result.lrVal = rval;
