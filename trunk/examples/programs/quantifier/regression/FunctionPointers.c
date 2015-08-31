@@ -11,6 +11,6 @@ int funcB() {
 }
 
 int main() {
-    int* pA = &funcA;
-    int* pB = &funcB;
+    int (* pA)() = &funcA;
+    int (* pB)() = &funcB;
 }
