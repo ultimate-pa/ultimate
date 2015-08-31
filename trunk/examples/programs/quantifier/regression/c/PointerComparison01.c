@@ -39,13 +39,13 @@ int main() {
 	/* arrays */
 	int a[5];
 	{
-		int leq = (&a[3] <= &a);
+		int leq = (&a[3] <= &a[0]);
 		//@ assert leq == 0;
-		int le = (&a[3] < &a);
+		int le = (&a[3] < &a[0]);
 		//@ assert le == 0;
-		int geq = (&a[3] >= &a);
+		int geq = (&a[3] >= &a[0]);
 		//@ assert geq == 1;
-		int ge = (&a[3] > &a);
+		int ge = (&a[3] > &a[0]);
 		//@ assert ge == 1;
 	}
 	return 0;
