@@ -464,8 +464,8 @@
 								maven/junit bugs, you may want to set it to true to have all the test output 
 								written to file -->
 							<redirectTestOutputToFile>false</redirectTestOutputToFile>
-							<!-- if you want to change the argLine, use the global property -->
-							<argLine>${tycho.testArgLine} ${manualtest-argline}</argLine>
+							<!-- if you want to change the argLine, use the global property; Note: for some reason, in this profile we cannot use ${tycho.testArgLine} -->
+							<argLine>${manualtest-argline}</argLine>
 
 							<systemProperties>
 								<svcompdir>../svcomp</svcompdir>
