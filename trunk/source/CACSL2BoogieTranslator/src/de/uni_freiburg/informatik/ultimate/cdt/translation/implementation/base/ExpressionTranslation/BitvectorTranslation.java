@@ -285,10 +285,6 @@ public class BitvectorTranslation extends AExpressionTranslation {
 			throw new UnsupportedOperationException("non-integer types not supported yet");
 		}
 		
-//		if (integerPromotionNeeded((CPrimitive) operand.lrVal.getCType())) {
-//			doIntegerPromotion(loc, operand);
-//		}
-		
 		int resultLength = m_TypeSizes.getSize(resultPrimitive.getType()) * 8;
 		int operandLength = m_TypeSizes.getSize(((CPrimitive) operand.lrVal.getCType()).getType()) * 8;
 		

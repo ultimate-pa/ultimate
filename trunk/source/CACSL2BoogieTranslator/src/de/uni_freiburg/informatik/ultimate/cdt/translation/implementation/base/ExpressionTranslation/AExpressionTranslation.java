@@ -260,7 +260,6 @@ public abstract class AExpressionTranslation {
 	public abstract void doIntegerPromotion(ILocation loc, ResultExpression operand);
 	
 	public boolean integerPromotionNeeded(CPrimitive cPrimitive) {
-		boolean test = cPrimitive.getType().equals(CPrimitive.PRIMITIVE.UCHAR);
 		if (cPrimitive.getType().equals(CPrimitive.PRIMITIVE.CHAR) || cPrimitive.getType().equals(CPrimitive.PRIMITIVE.CHAR16) ||
 			cPrimitive.getType().equals(CPrimitive.PRIMITIVE.CHAR32) || cPrimitive.getType().equals(CPrimitive.PRIMITIVE.SCHAR) ||
 			cPrimitive.getType().equals(CPrimitive.PRIMITIVE.SHORT) || cPrimitive.getType().equals(CPrimitive.PRIMITIVE.UCHAR) ||
