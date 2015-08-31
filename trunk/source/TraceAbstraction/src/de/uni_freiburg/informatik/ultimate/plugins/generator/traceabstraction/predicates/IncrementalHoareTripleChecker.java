@@ -312,6 +312,8 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 			locVarAssign = renameVarsToHierConstants(callTf.getInVars(), locVarAssign);
 			//rename proc parameter vars to DefaultConstants
 			locVarAssign = renameVarsToDefaultConstants(callTf.getOutVars(), locVarAssign);
+			//rename auxiliary vars to fresh constants
+			locVarAssign = renameAuxVarsToCorrespondingConstants(callTf.getAuxVars(), locVarAssign);
 			if (m_UnletTerms ) {
 				locVarAssign = (new FormulaUnLet()).unlet(locVarAssign);
 			}
@@ -328,6 +330,8 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 	}
 
 	
+
+
 	private void unAssertCodeBlock() {
 		assert m_AssertedCodeBlock != null : "No CodeBlock asserted";
 		m_AssertedCodeBlock = null;
@@ -735,6 +739,21 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 		for (BoogieVar bv : bv2tv.keySet()) {
 			replacees.add(bv2tv.get(bv));
 			replacers.add(getOrConstructHierConstant(bv));
+		}
+		TermVariable[] vars = replacees.toArray(new TermVariable[replacees.size()]);
+		Term[] values = replacers.toArray(new Term[replacers.size()]);
+		return m_Script.let( vars , values, formula);
+	}
+	
+	private Term renameAuxVarsToCorrespondingConstants(Set<TermVariable> auxVars,
+			Term formula) {
+		ArrayList<TermVariable> replacees = new ArrayList<TermVariable>();
+		ArrayList<Term> replacers = new ArrayList<Term>();
+		for (TermVariable tv : auxVars) {
+			replacees.add(tv);
+			Term correspondingConstant = m_SmtManager.getBoogie2Smt().
+					getVariableManager().getCorrespondingConstant(tv); 
+			replacers.add(correspondingConstant);
 		}
 		TermVariable[] vars = replacees.toArray(new TermVariable[replacees.size()]);
 		Term[] values = replacers.toArray(new Term[replacers.size()]);
