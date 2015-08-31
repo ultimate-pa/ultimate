@@ -1,5 +1,9 @@
 //#Safe
-/* 
+/* Tests for conversions of integers.
+ * The tests are only useful if 
+ *     sizeof(int) = 4 and
+ *     sizeof(long long) > 4.
+ * 
  * Author: langt@informatik.uni-freiburg.de
  * Date: 18.08.2015
  */

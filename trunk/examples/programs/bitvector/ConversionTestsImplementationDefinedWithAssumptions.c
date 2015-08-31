@@ -1,5 +1,7 @@
 //#Safe
-/* 
+/* Tests for conversions of integers.
+ * The assert statements hold only on systems... TODO description.
+ * 
  * Author: langt@informatik.uni-freiburg.de
  * Date: 18.08.2015
  */
