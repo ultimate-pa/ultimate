@@ -2060,7 +2060,7 @@ public class CHandler implements ICHandler {
 			check.addToNodeAnnot(smallerMaxInt);
 			stmt.add(smallerMaxInt);
 			AssertStatement biggerMinInt = new AssertStatement(loc, new BinaryExpression(loc, BinaryExpression.Operator.COMPGEQ, rVal.getValue(), 
-					new IntegerLiteral(loc, main.getTypeSizes().getMinValueOfPrimitiveType((CPrimitive) rVal.getCType().getUnderlyingType()).negate().toString())));
+					new IntegerLiteral(loc, main.getTypeSizes().getMinValueOfPrimitiveType((CPrimitive) rVal.getCType().getUnderlyingType()).toString())));
 			check.addToNodeAnnot(biggerMinInt);
 			stmt.add(biggerMinInt);
 		}
