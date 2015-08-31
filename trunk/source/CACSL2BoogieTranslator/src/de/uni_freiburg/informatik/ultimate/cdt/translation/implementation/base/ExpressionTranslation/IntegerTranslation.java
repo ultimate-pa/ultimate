@@ -75,6 +75,25 @@ public class IntegerTranslation extends AExpressionTranslation {
 	public Expression constructLiteralForIntegerType(ILocation loc, CPrimitive type, BigInteger value) {
 		return ISOIEC9899TC3.constructLiteralForCIntegerLiteral(loc, false, m_TypeSizes, type, value);
 	}
+	
+	
+
+	@Override
+	public Expression constructBinaryEqualityExpression(ILocation loc,
+			int nodeOperator, Expression exp1, CType type1, Expression exp2,
+			CType type2) {
+		if ((type1 instanceof CPrimitive) && (type2 instanceof CPrimitive)) {
+			CPrimitive primitive1 = (CPrimitive) type1;
+			CPrimitive primitive2 = (CPrimitive) type2;
+			if (m_UnsignedTreatment == UNSIGNED_TREATMENT.WRAPAROUND && primitive1.isUnsigned()) {
+				assert primitive2.isUnsigned();
+				exp1 = applyWraparound(loc, m_TypeSizes, primitive1, exp1);
+				exp2 = applyWraparound(loc, m_TypeSizes, primitive2, exp2);
+			}
+		}
+		return super.constructBinaryEqualityExpression(loc, nodeOperator, exp1, type1,
+				exp2, type2);
+	}
 
 	@Override
 	public Expression constructBinaryComparisonExpression(ILocation loc, int nodeOperator, Expression exp1, CPrimitive type1, Expression exp2, CPrimitive type2) {
