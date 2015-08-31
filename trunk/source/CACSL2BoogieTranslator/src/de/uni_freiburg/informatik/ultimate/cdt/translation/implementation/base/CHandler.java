@@ -1316,103 +1316,7 @@ public class CHandler implements ICHandler {
 		case IASTBinaryExpression.op_lessThan: {
 			return handleRelationalOperators(main, loc, node.getOperator(), rl, rr);
 		}
-			
-//			stmt.addAll(rlToInt.stmt);
-//			stmt.addAll(rrToInt.stmt);
-//			decl.addAll(rlToInt.decl);
-//			decl.addAll(rrToInt.decl);
-//			auxVars.putAll(rlToInt.auxVars);
-//			auxVars.putAll(rrToInt.auxVars);
-//			overappr.addAll(rlToInt.overappr);
-//			overappr.addAll(rrToInt.overappr);
-//
-//			BinaryExpression.Operator op;
-//			switch (node.getOperator()) {
-//			case IASTBinaryExpression.op_equals:
-//				op = BinaryExpression.Operator.COMPEQ;
-//				break;
-//			case IASTBinaryExpression.op_greaterEqual:
-//				op = BinaryExpression.Operator.COMPGEQ;
-//				break;
-//			case IASTBinaryExpression.op_greaterThan:
-//				op = BinaryExpression.Operator.COMPGT;
-//				break;
-//			case IASTBinaryExpression.op_lessEqual:
-//				op = BinaryExpression.Operator.COMPLEQ;
-//				break;
-//			case IASTBinaryExpression.op_lessThan:
-//				op = BinaryExpression.Operator.COMPLT;
-//				break;
-//			case IASTBinaryExpression.op_notequals:
-//				op = BinaryExpression.Operator.COMPNEQ;
-//				break;
-//			default:
-//				throw new AssertionError("???");
-//			}
-//			
-//			if (node.getOperator() == IASTBinaryExpression.op_equals 
-//					|| node.getOperator() == IASTBinaryExpression.op_notequals) {
-//				//!= and == are treated differently from the inequality operators
-//				// --> behavior is never undefined for instance..
-//				return handleEqualityOperators(main, loc, node.getOperator(), rlToInt, rrToInt);
-//			} else {
-//				// we have a "relational" pointer comparison
-//				if (lType instanceof CPointer || rType instanceof CPointer) {
-//					// both of the two following ifs will lead to an assertion
-//					// violation if the pointer compared to
-//					// is something different from NULL (as we construct Pointers
-//					// with base 0) --> but this is ok, as
-//					// it would be undefined behaviour
-//					// except if we converted a pointer into an allocated region to
-//					// int, this is not supported yet (TODO)
-//					if (!(lType instanceof CPointer)) {
-//						rlToInt.lrVal = new RValue(MemoryHandler.constructPointerFromBaseAndOffset(new IntegerLiteral(loc,
-//								"0"), rlToInt.lrVal.getValue(), loc), new CPrimitive(PRIMITIVE.VOID));
-//					}
-//					if (!(rType instanceof CPointer)) {
-//						rrToInt.lrVal = new RValue(MemoryHandler.constructPointerFromBaseAndOffset(new IntegerLiteral(loc,
-//								"0"), rrToInt.lrVal.getValue(), loc), new CPrimitive(PRIMITIVE.VOID));
-//					}
-//					// assert ((CPointer)
-//					// rlToInt.lrVal.cType).pointsToType.equals(((CPointer)
-//					// rrToInt.lrVal.cType).pointsToType); //FIXME macht dieses
-//					// assert Sinn?
-//					// assert (in Boogie) that the base value of the pointers
-//					// matches
-//					if (this.mMemoryHandler.getPointerSubtractionAndComparisonValidityCheckMode() == POINTER_CHECKMODE.ASSERTandASSUME) {
-//						Statement assertStm = new AssertStatement(loc, new BinaryExpression(loc,
-//								BinaryExpression.Operator.COMPEQ, new StructAccessExpression(loc, rlToInt.lrVal.getValue(),
-//										SFO.POINTER_BASE), new StructAccessExpression(loc, rrToInt.lrVal.getValue(),
-//												SFO.POINTER_BASE)));
-//						stmt.add(assertStm);
-//						Check chk = new Check(Spec.ILLEGAL_POINTER_ARITHMETIC);
-//						chk.addToNodeAnnot(assertStm);
-//					} else if (this.mMemoryHandler.getPointerSubtractionAndComparisonValidityCheckMode() == POINTER_CHECKMODE.ASSUME) {
-//						Statement assumeStm = new AssumeStatement(loc, new BinaryExpression(loc,
-//								BinaryExpression.Operator.COMPEQ, new StructAccessExpression(loc, rlToInt.lrVal.getValue(),
-//										SFO.POINTER_BASE), new StructAccessExpression(loc, rrToInt.lrVal.getValue(),
-//												SFO.POINTER_BASE)));
-//						stmt.add(assumeStm);
-//					}
-//
-//					RValue rval = new RValue(new BinaryExpression(loc, op, 
-//							new StructAccessExpression(loc, rlToInt.lrVal.getValue(), SFO.POINTER_OFFSET), 
-//							new StructAccessExpression(loc, rrToInt.lrVal.getValue(), SFO.POINTER_OFFSET)), 
-//							new CPrimitive(PRIMITIVE.INT));
-//					return new ResultExpression(stmt, rval, decl, auxVars, overappr);
-//				} else if (lType.isArithmeticType() && rType.isArithmeticType()) {
-//					m_ExpressionTranslation.usualArithmeticConversions(main, loc, rlToInt, rrToInt);
-//					RValue rval = new RValue(m_ExpressionTranslation.constructBinaryComparisonExpression(loc, node.getOperator(), rlToInt.lrVal.getValue(), (CPrimitive) rlToInt.lrVal.getCType(), rrToInt.lrVal.getValue(), (CPrimitive) rrToInt.lrVal.getCType()),
-//							new CPrimitive(PRIMITIVE.INT),
-//							true, false);
-//					return new ResultExpression(stmt, rval, decl, auxVars, overappr);
-//				} else {
-//					throw new UnsupportedOperationException("unsupported " + rType + ", " + lType);
-//				}
-//
-//			}
 
-//		}
 		case IASTBinaryExpression.op_logicalAnd: {
 			ResultExpression rlToBool = ConvExpr.rexIntToBoolIfNecessary(loc, rl, m_ExpressionTranslation);
 			ResultExpression rrToBool = ConvExpr.rexIntToBoolIfNecessary(loc, rr, m_ExpressionTranslation);
@@ -1783,42 +1687,16 @@ public class CHandler implements ICHandler {
 		case IASTBinaryExpression.op_binaryAnd:
 		case IASTBinaryExpression.op_binaryOr:
 		case IASTBinaryExpression.op_binaryXor: {
-			m_ExpressionTranslation.usualArithmeticConversions(main, loc, rl, rr);
-			stmt.addAll(rl.stmt);
-			stmt.addAll(rr.stmt);
-			decl.addAll(rl.decl);
-			decl.addAll(rr.decl);
-			auxVars.putAll(rl.auxVars);
-			auxVars.putAll(rr.auxVars);
-			overappr.addAll(rl.overappr);
-			overappr.addAll(rr.overappr);
-//			overappr.add(new Overapprox(Overapprox.BITVEC, loc));
 			ResultExpression rlToInt = ConvExpr.rexBoolToIntIfNecessary(loc, rl, m_ExpressionTranslation);
 			ResultExpression rrToInt = ConvExpr.rexBoolToIntIfNecessary(loc, rr, m_ExpressionTranslation);
-			Expression bwexpr = m_ExpressionTranslation.constructBinaryBitwiseExpression(
-					loc, node.getOperator(), rlToInt.lrVal.getValue(), (CPrimitive) rlToInt.lrVal.getCType(), 
-					rrToInt.lrVal.getValue(), (CPrimitive) rrToInt.lrVal.getCType()); 
-			return new ResultExpression(stmt, new RValue(bwexpr, rl.lrVal.getCType()), decl, auxVars, overappr);
+			return handleBitwiseArithmeticOperation(main, loc, null, node.getOperator(), rlToInt, rrToInt);
 		}
 		case IASTBinaryExpression.op_binaryAndAssign:
 		case IASTBinaryExpression.op_binaryOrAssign:
 		case IASTBinaryExpression.op_binaryXorAssign: {
-			m_ExpressionTranslation.usualArithmeticConversions(main, loc, rl, rr);
-			stmt.addAll(rl.stmt);
-			stmt.addAll(rr.stmt);
-			decl.addAll(rl.decl);
-			decl.addAll(rr.decl);
-			auxVars.putAll(rl.auxVars);
-			auxVars.putAll(rr.auxVars);
-			overappr.addAll(rl.overappr);
-			overappr.addAll(rr.overappr);
-//			overappr.add(new Overapprox(Overapprox.BITVEC, loc));
 			ResultExpression rlToInt = ConvExpr.rexBoolToIntIfNecessary(loc, rl, m_ExpressionTranslation);
 			ResultExpression rrToInt = ConvExpr.rexBoolToIntIfNecessary(loc, rr, m_ExpressionTranslation);
-			Expression bwexpr = m_ExpressionTranslation.constructBinaryBitwiseExpression(
-					loc, getNonAssignmentOperator(node.getOperator()), rlToInt.lrVal.getValue(), (CPrimitive) rlToInt.lrVal.getCType(), 
-					rrToInt.lrVal.getValue(), (CPrimitive) rrToInt.lrVal.getCType()); 
-			return makeAssignment(main, loc, stmt, l.lrVal, new RValue(bwexpr, rr.lrVal.getCType()), decl, auxVars, overappr);// ,
+			return handleBitwiseArithmeticOperation(main, loc, l.lrVal, node.getOperator(), rlToInt, rrToInt);
 		}
 		case IASTBinaryExpression.op_shiftLeft:
 		case IASTBinaryExpression.op_shiftRight: {
@@ -2014,6 +1892,52 @@ public class CHandler implements ICHandler {
 		}
 		case IASTBinaryExpression.op_shiftLeftAssign:
 		case IASTBinaryExpression.op_shiftRightAssign: {
+			final ResultExpression copy = ResultExpression.copyStmtDeclAuxvarOverapprox(left, right);
+			final ResultExpression result = makeAssignment(main, loc, copy.stmt, lhs, rval, copy.decl, copy.auxVars, copy.overappr);
+			return result;
+		}
+		default:
+			throw new AssertionError("no bitshift " + op);
+		}
+	}
+	
+	/**
+	 * Handle bitwise AND, bitwise XOR, and bitwise OR operators according to 
+	 * Sections 6.5.10, 6.5.11, 6.5.12 of C11.
+	 * Assumes that left (resp. right) are the results from handling the operands.
+	 * Requires that the {@link LRValue} of operands is an {@link RValue}
+	 * (i.e., switchToRValueIfNecessary was applied if needed).
+	 * requires that the Boogie expressions in left (resp. right) are a 
+	 * non-boolean representation of these results 
+	 * (i.e., rexBoolToIntIfNecessary() has already been applied if needed).
+	 */
+	ResultExpression handleBitwiseArithmeticOperation(Dispatcher main, ILocation loc, 
+			LRValue lhs, int op, ResultExpression left, ResultExpression right) {
+		assert (left.lrVal instanceof RValue) : "no RValue";
+		assert (right.lrVal instanceof RValue) : "no RValue";
+		final CType lType = left.lrVal.getCType().getUnderlyingType();
+		final CType rType = right.lrVal.getCType().getUnderlyingType();
+		if (!rType.isIntegerType() || !lType.isIntegerType()) {
+			throw new UnsupportedOperationException("operands have to have integer types");
+		}
+		m_ExpressionTranslation.usualArithmeticConversions(main, loc, left, right);
+		final CPrimitive typeOfResult = (CPrimitive) left.lrVal.getCType();
+		assert typeOfResult.equals(left.lrVal.getCType());
+		final Expression expr = m_ExpressionTranslation.constructBinaryBitwiseExpression(
+				loc, op, left.lrVal.getValue(), typeOfResult, right.lrVal.getValue(), typeOfResult);
+		final RValue rval = new RValue(expr,typeOfResult, false, false);
+		switch (op) {
+		case IASTBinaryExpression.op_binaryAnd:
+		case IASTBinaryExpression.op_binaryXor:
+		case IASTBinaryExpression.op_binaryOr: {
+			assert lhs == null : "no assignment";
+			final ResultExpression result = ResultExpression.copyStmtDeclAuxvarOverapprox(left, right);
+			result.lrVal = rval;
+			return result;
+		}
+		case IASTBinaryExpression.op_binaryAndAssign:
+		case IASTBinaryExpression.op_binaryXorAssign:
+		case IASTBinaryExpression.op_binaryOrAssign: {
 			final ResultExpression copy = ResultExpression.copyStmtDeclAuxvarOverapprox(left, right);
 			final ResultExpression result = makeAssignment(main, loc, copy.stmt, lhs, rval, copy.decl, copy.auxVars, copy.overappr);
 			return result;
