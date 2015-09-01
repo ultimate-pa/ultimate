@@ -8,7 +8,9 @@ import org.eclipse.cdt.core.dom.ast.IASTUnaryExpression;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FunctionDeclarations;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.MemoryHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.TypeSizes;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.GENERALPRIMITIVE;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.PRIMITIVE;
@@ -20,6 +22,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.I
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
+import de.uni_freiburg.informatik.ultimate.model.acsl.ast.BaseAddrExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression.Operator;
@@ -38,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietransla
 public class IntegerTranslation extends AExpressionTranslation {
 
 	private UNSIGNED_TREATMENT m_UnsignedTreatment;
+	private boolean m_OverapproximateIntPointerConversion;
 
 	public IntegerTranslation(TypeSizes m_TypeSizeConstants, ITypeHandler typeHandler, UNSIGNED_TREATMENT unsignedTreatment) {
 		super(m_TypeSizeConstants, typeHandler);
@@ -485,5 +489,65 @@ public class IntegerTranslation extends AExpressionTranslation {
 			throw new IllegalArgumentException("integer promotions not applicable to " + inputType);
 		}
 	}
+
+	@Override
+	public void convertPointerToInt(Dispatcher main, ILocation loc,
+			ResultExpression rexp, CPrimitive newType) {
+		assert (newType.isIntegerType());
+		assert (rexp.lrVal.getCType() instanceof CPointer);
+		if (m_OverapproximateIntPointerConversion) {
+			super.convertPointerToInt(main, loc, rexp, newType);
+		} else {
+			final Expression pointerExpression = rexp.lrVal.getValue();
+			final Expression intExpression;
+			if (main.getTypeSizes().useFixedTypeSizes()) {
+				BigInteger maxPtrValuePlusOne = main.getTypeSizes().getMaxValueOfPointer().add(BigInteger.ONE); 
+				IntegerLiteral max_Pointer = new IntegerLiteral(loc, maxPtrValuePlusOne.toString());
+				intExpression = createArithmeticExpression(IASTBinaryExpression.op_plus,
+						createArithmeticExpression(IASTBinaryExpression.op_multiply, 
+								MemoryHandler.getPointerBaseAddress(pointerExpression,  loc), 
+								newType, max_Pointer, 
+								newType, loc),
+						newType, MemoryHandler.getPointerOffset(pointerExpression, loc), 
+						newType, loc);
+			} else {
+				intExpression = MemoryHandler.getPointerOffset(pointerExpression, loc);
+			}
+			RValue rValue = new RValue(intExpression, newType, false, true);
+			rexp.lrVal = rValue;
+		}
+	}
+
+	@Override
+	public void convertIntToPointer(Dispatcher main, ILocation loc,
+			ResultExpression rexp, CPointer newType) {
+		if (m_OverapproximateIntPointerConversion) {
+			super.convertIntToPointer(main, loc, rexp, newType);
+		} else {
+			final Expression intExpression = rexp.lrVal.getValue();
+			final Expression baseAdress;
+			final Expression offsetAdress;
+			if (main.getTypeSizes().useFixedTypeSizes()) {
+				BigInteger maxPtrValuePlusOne = main.getTypeSizes().getMaxValueOfPointer().add(BigInteger.ONE); 
+				IntegerLiteral max_Pointer = new IntegerLiteral(loc, maxPtrValuePlusOne.toString());
+				baseAdress = createArithmeticExpression(IASTBinaryExpression.op_divide,
+								intExpression,
+								getCTypeOfPointerComponents(), max_Pointer, 
+								getCTypeOfPointerComponents(), loc);
+				offsetAdress = createArithmeticExpression(IASTBinaryExpression.op_modulo,
+										intExpression,
+										getCTypeOfPointerComponents(), max_Pointer, 
+										getCTypeOfPointerComponents(), loc);
+			} else {
+				baseAdress = constructLiteralForIntegerType(loc, getCTypeOfPointerComponents(), BigInteger.ZERO);
+				offsetAdress = intExpression;
+			}
+			final Expression pointerExpression = MemoryHandler.constructPointerFromBaseAndOffset(baseAdress, offsetAdress, loc);
+			RValue rValue = new RValue(pointerExpression, newType, false, false);
+			rexp.lrVal = rValue;
+		}
+	}
+	
+	
 
 }

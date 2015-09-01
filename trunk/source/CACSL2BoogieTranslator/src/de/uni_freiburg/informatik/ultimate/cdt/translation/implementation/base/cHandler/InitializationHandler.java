@@ -289,7 +289,7 @@ public class InitializationHandler {
 			decl.addAll(initializer.decl);
 			overappr.addAll(initializer.overappr);
 			auxVars.putAll(initializer.auxVars);
-		}
+		} 
 
 		VariableLHS lhs = null;
 		if (var instanceof LocalLValue)
@@ -302,7 +302,7 @@ public class InitializationHandler {
 					rhs = mExpressionTranslation.constructLiteralForIntegerType(loc, (CPrimitive) lCType, BigInteger.ZERO);
 				} else {
 					initializer = ConvExpr.rexBoolToIntIfNecessary(loc, initializer, mExpressionTranslation);
-					mExpressionTranslation.convert(loc, initializer, (CPrimitive) lCType);
+					main.cHandler.castToType(main, loc, initializer, lCType);
 					rhs = initializer.lrVal.getValue();
 				}
 				break;
@@ -311,6 +311,7 @@ public class InitializationHandler {
 					rhs = new RealLiteral(loc, SFO.NR0F);
 				} else {
 					rhs = initializer.lrVal.getValue();
+					main.cHandler.castToType(main, loc, initializer, lCType);
 				}
 				break;
 			case VOID:

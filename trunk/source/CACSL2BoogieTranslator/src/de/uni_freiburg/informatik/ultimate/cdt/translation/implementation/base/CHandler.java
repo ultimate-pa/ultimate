@@ -87,7 +87,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.c
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.MemoryHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.PostProcessor;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.StructHandler;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.TypeSizes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.SymbolTableValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.SymbolTableValue.StorageClass;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
@@ -1839,10 +1838,10 @@ public class CHandler implements ICHandler {
 			// implicit casts
 			if (lType instanceof CPointer || rType instanceof CPointer) {
 				if (!(lType instanceof CPointer)) {
-					castToType(loc, main.getTypeSizes(), left, new CPointer(new CPrimitive(PRIMITIVE.VOID)));
+					castToType(main, loc, left, new CPointer(new CPrimitive(PRIMITIVE.VOID)));
 				}
 				if (!(rType instanceof CPointer)) {
-					castToType(loc, main.getTypeSizes(), right, new CPointer(new CPrimitive(PRIMITIVE.VOID)));
+					castToType(main, loc, right, new CPointer(new CPrimitive(PRIMITIVE.VOID)));
 				}
 			} else if (lType.isArithmeticType() && rType.isArithmeticType()) {
 				m_ExpressionTranslation.usualArithmeticConversions(main, loc, left, right);
@@ -1881,7 +1880,7 @@ public class CHandler implements ICHandler {
 		}
 		m_ExpressionTranslation.doIntegerPromotion(loc, left);
 		final CPrimitive typeOfResult = (CPrimitive) left.lrVal.getCType();
-		castToType(loc, main.getTypeSizes(), right, typeOfResult);
+		castToType(main, loc, right, typeOfResult);
 		final Expression expr = m_ExpressionTranslation.constructBinaryBitwiseExpression(
 				loc, op, left.lrVal.getValue(), typeOfResult, right.lrVal.getValue(), typeOfResult);
 		final RValue rval = new RValue(expr,typeOfResult, false, false);
@@ -2562,7 +2561,7 @@ public class CHandler implements ICHandler {
 			}
 		}
 
-		castToType(loc, main.getTypeSizes(), expr, newCType);
+		castToType(main, loc, expr, newCType);
 
 		// String msg = "Ignored cast! At line: "
 		// + node.getFileLocation().getStartingLineNumber();
@@ -2825,7 +2824,7 @@ public class CHandler implements ICHandler {
 		
 		//do implicit cast -- assume the types are compatible
 		ResultExpression rExp = new ResultExpression(stmt, rVal, decl, auxVars, overappr);
-		castToType(loc, main.getTypeSizes(), rExp, lrVal.getCType());
+		castToType(main, loc, rExp, lrVal.getCType());
 		RValue rightHandSide = (RValue) rExp.lrVal;
 		
 		//for wraparound --> and avoiding it for ints that store pointers
@@ -3752,7 +3751,7 @@ public class CHandler implements ICHandler {
 	}
 
 	@Override
-	public void castToType(ILocation loc, TypeSizes typeSizes, ResultExpression rexp, CType newTypeRaw) {
+	public void castToType(Dispatcher main, ILocation loc, ResultExpression rexp, CType newTypeRaw) {
 		RValue rValIn = (RValue) rexp.lrVal;
 		CType newType = newTypeRaw.getUnderlyingType();
 		CType oldType = rValIn.getCType().getUnderlyingType();
@@ -3762,27 +3761,13 @@ public class CHandler implements ICHandler {
 		
 		final RValue resultRValue; // = new RValue(rValIn); //better make a new one, right??
 
-		BigInteger maxPtrValue = new BigInteger("2").pow(typeSizes.sizeOfPointerType * 8);
-		IntegerLiteral max_Pointer = new IntegerLiteral(loc, maxPtrValue.toString());
 		// cast pointer -> integer/other pointer
-		
 		if (oldType instanceof CPointer) {
 			// cast from pointer to integer
 			if (newType instanceof CPrimitive &&
 					((CPrimitive) newType).getGeneralType() == GENERALPRIMITIVE.INTTYPE) {
-				Expression e = null;
-				if (typeSizes.useFixedTypeSizes()) {
-					e = createArithmeticExpression(IASTBinaryExpression.op_plus,
-							createArithmeticExpression(IASTBinaryExpression.op_multiply, 
-									MemoryHandler.getPointerBaseAddress(rValIn.getValue(),  loc), 
-									max_Pointer, 
-									loc),
-							MemoryHandler.getPointerOffset(rValIn.getValue(), loc), 
-							loc);
-				} else {
-					e = MemoryHandler.getPointerOffset(rValIn.getValue(), loc);
-				}
-				resultRValue = new RValue(e, newType, false, true);
+				m_ExpressionTranslation.convertPointerToInt(main, loc, rexp, (CPrimitive) newType);
+				return;
 			}
 			// type is changed
 //			else if (!(expectedType.getUnderlyingType() instanceof CPointer)) { //why did I make this distinction??
@@ -3794,23 +3779,8 @@ public class CHandler implements ICHandler {
 			CPrimitive cprim = (CPrimitive) oldType;
 			if (cprim.getGeneralType() == GENERALPRIMITIVE.INTTYPE) {
 				if (newType instanceof CPointer) {// cast integer -> pointer
-					Expression e = null;
-					if (typeSizes.useFixedTypeSizes()) {
-						e = MemoryHandler.constructPointerFromBaseAndOffset(
-								createArithmeticExpression(IASTBinaryExpression.op_divide,
-										rValIn.getValue(),
-										max_Pointer, 
-										loc),
-										createArithmeticExpression(IASTBinaryExpression.op_modulo,
-												rValIn.getValue(),
-												max_Pointer, 
-												loc),
-												loc);
-					} else {
-						e = MemoryHandler.constructPointerFromBaseAndOffset(new IntegerLiteral(loc, "0"),
-								rValIn.getValue(), loc);
-					}
-					resultRValue = new RValue(e, newType);
+					m_ExpressionTranslation.convertIntToPointer(main, loc, rexp, (CPointer) newType);
+					return;
 				} else if (newType instanceof CPrimitive) {
 					m_ExpressionTranslation.convert(loc, rexp, newType);
 					return;

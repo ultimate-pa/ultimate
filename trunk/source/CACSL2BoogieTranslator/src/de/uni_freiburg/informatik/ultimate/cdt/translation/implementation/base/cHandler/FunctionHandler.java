@@ -418,7 +418,7 @@ public class FunctionHandler {
 				String id = outParams[0].getIdentifiers()[0];
 				VariableLHS[] lhs = new VariableLHS[] { new VariableLHS(loc, id) };
 				rExp.lrVal = exprResult.lrVal;
-				main.cHandler.castToType(loc, main.getTypeSizes(), rExp, functionResultType);
+				main.cHandler.castToType(main, loc, rExp, functionResultType);
 				RValue castExprResultRVal = (RValue) rExp.lrVal;
 				stmt.add(new AssignmentStatement(loc, lhs, new Expression[] { castExprResultRVal.getValue() }));
 				// //assuming that we need no auxvars or overappr, here
@@ -685,7 +685,7 @@ public class FunctionHandler {
 					in = ConvExpr.rexBoolToIntIfNecessary(loc, in, m_ExpressionTranslation);
 				}
 				// implicit casts
-				main.cHandler.castToType(loc, main.getTypeSizes(), in, expectedParamType);
+				main.cHandler.castToType(main, loc, in, expectedParamType);
 			}
 			args.add(in.lrVal.getValue());
 			stmt.addAll(in.stmt);

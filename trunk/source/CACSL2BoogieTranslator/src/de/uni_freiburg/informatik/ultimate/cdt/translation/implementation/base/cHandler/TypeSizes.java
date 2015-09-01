@@ -155,6 +155,7 @@ public class TypeSizes {
 		maxValue = maxValue.subtract(BigInteger.ONE);
 		return maxValue;
 	}
+	
 	public BigInteger getMinValueOfPrimitiveType(CPrimitive cPrimitive) {
 		int byteSize = getSize(cPrimitive.getType());
 		BigInteger minValue;
@@ -164,5 +165,12 @@ public class TypeSizes {
 			minValue = (new BigInteger("2").pow(byteSize * 8 - 1)).negate();
 		}
 		return minValue;
+	}
+	
+	public BigInteger getMaxValueOfPointer() {
+		int byteSize = sizeOfPointerType;
+		BigInteger maxValue = new BigInteger("2").pow(byteSize * 8);
+		maxValue = maxValue.subtract(BigInteger.ONE);
+		return maxValue;
 	}
 }

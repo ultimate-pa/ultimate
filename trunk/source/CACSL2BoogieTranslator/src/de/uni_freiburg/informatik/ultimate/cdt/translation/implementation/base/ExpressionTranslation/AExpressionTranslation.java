@@ -25,14 +25,18 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.I
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.FunctionApplication;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IdentifierExpression;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.NamedAttribute;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.RealLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StringLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
@@ -307,6 +311,51 @@ public abstract class AExpressionTranslation {
 	 */
 	public CPrimitive getCTypeOfPointerComponents() {
 		return new CPrimitive(PRIMITIVE.INT);
+	}
+
+	public void convertPointerToInt(Dispatcher main, ILocation loc, ResultExpression rexp,
+			CPrimitive newType) {
+		String prefixedFunctionName = declareConvertPointerToIntFunction(main,
+				loc, newType);
+		Expression pointerExpression = rexp.lrVal.getValue();
+		Expression intExpression = new FunctionApplication(loc, prefixedFunctionName, new Expression[] {pointerExpression});
+		RValue rValue = new RValue(intExpression, newType, false, false);
+		rexp.lrVal = rValue;
+	}
+
+	private String declareConvertPointerToIntFunction(Dispatcher main, ILocation loc, CPrimitive newType) {
+		String functionName = "convertPointerTo" + newType.toString();
+		String prefixedFunctionName = "~" + functionName;
+		if (!m_FunctionDeclarations.getDeclaredFunctions().containsKey(prefixedFunctionName)) {
+			Attribute attribute = new NamedAttribute(loc, FunctionDeclarations.s_OVERAPPROX_IDENTIFIER, new Expression[] { new StringLiteral(loc, functionName ) });
+			Attribute[] attributes = new Attribute[] { attribute };
+			ASTType resultASTType = main.typeHandler.ctype2asttype(loc, newType);
+			ASTType paramASTType = MemoryHandler.POINTER_TYPE;
+			m_FunctionDeclarations.declareFunction(loc, prefixedFunctionName, attributes, resultASTType, paramASTType);
+		}
+		return prefixedFunctionName;
+	}
+	
+	public void convertIntToPointer(Dispatcher main, ILocation loc, ResultExpression rexp,
+			CPointer newType) {
+		String prefixedFunctionName = declareConvertIntToPointerFunction(main, loc, (CPrimitive) rexp.lrVal.getCType());
+		Expression intExpression = rexp.lrVal.getValue();
+		Expression pointerExpression = new FunctionApplication(loc, prefixedFunctionName, new Expression[] {intExpression});
+		RValue rValue = new RValue(pointerExpression, newType, false, false);
+		rexp.lrVal = rValue;
+	}
+	
+	private String declareConvertIntToPointerFunction(Dispatcher main, ILocation loc, CPrimitive newType) {
+		String functionName = "convert" + newType.toString() + "toPointer";
+		String prefixedFunctionName = "~" + functionName;
+		if (!m_FunctionDeclarations.getDeclaredFunctions().containsKey(prefixedFunctionName)) {
+			Attribute attribute = new NamedAttribute(loc, FunctionDeclarations.s_OVERAPPROX_IDENTIFIER, new Expression[] { new StringLiteral(loc, functionName ) });
+			Attribute[] attributes = new Attribute[] { attribute };
+			ASTType resultASTType = MemoryHandler.POINTER_TYPE; 
+			ASTType paramASTType = main.typeHandler.ctype2asttype(loc, newType);
+			m_FunctionDeclarations.declareFunction(loc, prefixedFunctionName, attributes, resultASTType, paramASTType);
+		}
+		return prefixedFunctionName;
 	}
 
 
