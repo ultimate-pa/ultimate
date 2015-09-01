@@ -41,10 +41,10 @@ public class SVCompTypeHandler extends TypeHandler {
                 return (new ResultTypes(new PrimitiveType(loc, SFO.REAL), node.isConst(),
                 		false, new CPrimitive(PRIMITIVE.UINT)));
             } else if (cId.equals("__builtin_va_list")) {
-                return (new ResultTypes(MemoryHandler.POINTER_TYPE, node.isConst(),
+                return (new ResultTypes(super.constructPointerType(loc), node.isConst(),
                 		false, new CPointer(new CPrimitive(PRIMITIVE.CHAR))));
             } else if (cId.equals("__pthread_list_t")) {
-            	    return (new ResultTypes(MemoryHandler.POINTER_TYPE, node.isConst(),
+            	    return (new ResultTypes(super.constructPointerType(loc), node.isConst(),
                 		false, new CPointer(new CPrimitive(PRIMITIVE.VOID))));
             } else {
             	return super.visit(main, node);

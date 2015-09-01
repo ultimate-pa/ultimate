@@ -16,6 +16,7 @@ import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.ExpressionTranslation.AExpressionTranslation;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CEnum;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CNamed;
@@ -105,10 +106,6 @@ public class MemoryHandler {
      */
     private LinkedHashSet<String> structOffSetConstants;
  
-    /**
-     * The type describing a pointer.
-     */
-    public static final ASTType POINTER_TYPE = new NamedType(null, SFO.POINTER, new ASTType[0]);
     /**
      * A set of constants, required for the memory model. E.g. sizeof and offset
      * constants.
@@ -230,17 +227,11 @@ public class MemoryHandler {
         ASTType realArrayType = main.typeHandler.ctype2asttype(tuLoc, 
         		m_ExpressionTranslation.getCTypeOfFloatingArray());
        
-        VarList fBase = new VarList(tuLoc, new String[] { SFO.POINTER_BASE }, pointerComponentType);
-        VarList fOffset = new VarList(tuLoc, new String[] { SFO.POINTER_OFFSET }, pointerComponentType);
-        VarList[] fields = new VarList[] { fBase, fOffset };
-        ASTType pointerType = new StructType(tuLoc, fields);
-        // Pointer is non-finite, right? (ZxZ)..
-        decl.add(new TypeDeclaration(tuLoc, new Attribute[0], false, 
-                SFO.POINTER, new String[0], pointerType));
+
         // NULL Pointer
         decl.add(new VariableDeclaration(tuLoc, new Attribute[0],
                 new VarList[] { new VarList(tuLoc, new String[] { SFO.NULL },
-                        pointerType) }));
+                        main.typeHandler.constructPointerType(tuLoc)) }));
         // to add a type declaration for "real"
         // decl.add(new TypeDeclaration(tuLoc, new Attribute[0], false,
         // SFO.REAL, new String[0]));
@@ -260,7 +251,7 @@ public class MemoryHandler {
         }
         if (isPointerArrayRequiredInMM) {
         	allMMArrayNames.add(SFO.POINTER);
-        	allMMArrayTypes.add(POINTER_TYPE);
+        	allMMArrayTypes.add(main.typeHandler.constructPointerType(tuLoc));
         }
         String[] namesOfAllMemoryArrayTypes = allMMArrayNames.toArray(new String[0]);
         ASTType[] astTypesOfAllMemoryArrayTypes = allMMArrayTypes.toArray(new ASTType[0]);
@@ -285,7 +276,7 @@ public class MemoryHandler {
                 lengthType);
         decl.add(new VariableDeclaration(tuLoc, new Attribute[0],
                 new VarList[] { vlL }));
-        decl.addAll(declareFree(tuLoc));
+        decl.addAll(declareFree(main, tuLoc));
         decl.addAll(declareMalloc(main.typeHandler, tuLoc));
         if (declareMemCpy) {
         	decl.addAll(declareMemCpy(main, namesOfAllMemoryArrayTypes, astTypesOfAllMemoryArrayTypes));
@@ -303,12 +294,12 @@ public class MemoryHandler {
     	ArrayList<Declaration> memCpyDecl = new ArrayList<>();
     	ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
     	
-    	VarList inPDest = new VarList(ignoreLoc, new String[] { SFO.MEMCPY_DEST }, POINTER_TYPE);
-    	VarList inPSrc = new VarList(ignoreLoc, new String[] { SFO.MEMCPY_SRC }, POINTER_TYPE);
+    	VarList inPDest = new VarList(ignoreLoc, new String[] { SFO.MEMCPY_DEST }, main.typeHandler.constructPointerType(ignoreLoc));
+    	VarList inPSrc = new VarList(ignoreLoc, new String[] { SFO.MEMCPY_SRC }, main.typeHandler.constructPointerType(ignoreLoc));
     	VarList	inPSize = new VarList(ignoreLoc, new String[] { SFO.MEMCPY_SIZE }, new PrimitiveType(ignoreLoc, SFO.INT));
     	VarList[] inParams = new VarList[] { inPDest, inPSrc, inPSize };
     	
-    	VarList[] outParams = new VarList[] { new VarList(ignoreLoc, new String[] { SFO.RES }, POINTER_TYPE) };
+    	VarList[] outParams = new VarList[] { new VarList(ignoreLoc, new String[] { SFO.RES }, main.typeHandler.constructPointerType(ignoreLoc)) };
 
    			
     	ArrayList<VariableDeclaration> decl = new ArrayList<>();
@@ -551,7 +542,7 @@ public class MemoryHandler {
         	}
             declareSizeOf(main, loc, CtypeCompatibleId, typeSizeConstants.useFixedTypeSizes());
             ASTType memoryType = new ArrayType(loc, new String[0],
-                    new ASTType[] { POINTER_TYPE }, astType);
+                    new ASTType[] { main.typeHandler.constructPointerType(loc) }, astType);
             VarList vlM = new VarList(loc, new String[] { SFO.MEMORY + "_"
                     + typeName }, memoryType);
             decl.add(new VariableDeclaration(loc, new Attribute[0],
@@ -568,7 +559,7 @@ public class MemoryHandler {
             String nread = "read~" + typeName;
             VarList[] inWrite = new VarList[] {
                     new VarList(loc, new String[] { value }, astType),
-                    new VarList(loc, new String[] { inPtr }, POINTER_TYPE),
+                    new VarList(loc, new String[] { inPtr }, main.typeHandler.constructPointerType(loc)),
                     new VarList(loc, new String[] { writtenTypeSize }, intType) };
             Expression valid = new IdentifierExpression(loc, SFO.VALID);
             Expression addr = new IdentifierExpression(loc, inPtr);
@@ -701,7 +692,7 @@ public class MemoryHandler {
             			inWrite, new VarList[0], null, bwrite));
             }
             VarList[] inRead = new VarList[] { 
-            		new VarList(loc, new String[] { inPtr }, POINTER_TYPE),
+            		new VarList(loc, new String[] { inPtr }, main.typeHandler.constructPointerType(loc)),
             		new VarList(loc, new String[] { readTypeSize }, intType) };
             VarList[] outRead = new VarList[] { new VarList(loc,
                     new String[] { value }, astType) };
@@ -799,7 +790,7 @@ public class MemoryHandler {
      *            the location for the new nodes.
      * @return declaration and implementation of procedure <code>~free</code>
      */
-    private ArrayList<Declaration> declareFree(final ILocation tuLoc) {
+    private ArrayList<Declaration> declareFree(Dispatcher main, final ILocation tuLoc) {
         ArrayList<Declaration> decl = new ArrayList<Declaration>();
         // procedure ~free(~addr:$Pointer$) returns();
         // requires #valid[~addr!base];
@@ -842,7 +833,7 @@ public class MemoryHandler {
 //        }
         decl.add(new Procedure(tuLoc, new Attribute[0], SFO.FREE,
                 new String[0], new VarList[] { new VarList(tuLoc,
-                        new String[] { ADDR }, POINTER_TYPE) }, new VarList[0],
+                        new String[] { ADDR }, main.typeHandler.constructPointerType(tuLoc)) }, new VarList[0],
                 specFree.toArray(new Specification[0]), null));
         
         if (m_AddImplementation) {
@@ -859,7 +850,7 @@ public class MemoryHandler {
         			new Statement[] { new AssignmentStatement(tuLoc, lhs, rhsFree) });
         	decl.add(new Procedure(tuLoc, new Attribute[0], SFO.FREE,
         			new String[0], new VarList[] { new VarList(tuLoc,
-        					new String[] { ADDR }, POINTER_TYPE) }, new VarList[0],
+        					new String[] { ADDR }, main.typeHandler.constructPointerType(tuLoc)) }, new VarList[0],
         					null, bodyFree));
         }
         return decl;
@@ -939,7 +930,7 @@ public class MemoryHandler {
                 new String[0], new VarList[] { new VarList(tuLoc,
                         new String[] { SIZE }, intType) },
                 new VarList[] { new VarList(tuLoc, new String[] { SFO.RES },
-                        POINTER_TYPE) }, specMalloc.toArray(new Specification[0]), null));
+                		typeHandler.constructPointerType(tuLoc)) }, specMalloc.toArray(new Specification[0]), null));
         if (m_AddImplementation) {
         	// procedure ~malloc(~size:int) returns (#res:pointer) {
         	// var ~addr : pointer;
@@ -956,7 +947,7 @@ public class MemoryHandler {
         	Expression[] idcAddrBase = new Expression[] { addrBase };
         	VariableDeclaration[] localVars = new VariableDeclaration[] { new VariableDeclaration(
         			tuLoc, new Attribute[0], new VarList[] { new VarList(tuLoc,
-        					new String[] { ADDR }, POINTER_TYPE) }) };
+        					new String[] { ADDR }, typeHandler.constructPointerType(tuLoc)) }) };
         	Statement[] block = new Statement[6];
         	block[0] = new AssumeStatement(tuLoc, new BinaryExpression(tuLoc,
         			Operator.COMPEQ, addrOffset, nr0));
@@ -982,7 +973,7 @@ public class MemoryHandler {
         			new String[0], new VarList[] { new VarList(tuLoc,
         					new String[] { SIZE }, intType) },
         					new VarList[] { new VarList(tuLoc, new String[] { SFO.RES },
-        							POINTER_TYPE) }, null, bodyMalloc));
+        							typeHandler.constructPointerType(tuLoc)) }, null, bodyMalloc));
         }
         return decl;
     }
@@ -1042,7 +1033,7 @@ public class MemoryHandler {
     public ResultExpression getMallocCall(Dispatcher main, FunctionHandler fh,
             Expression size, ILocation loc) {
     	String tmpId = main.nameHandler.getTempVarUID(SFO.AUXVAR.MALLOC);
-        VariableDeclaration tVarDecl = SFO.getTempVarVariableDeclaration(tmpId, MemoryHandler.POINTER_TYPE, loc);
+        VariableDeclaration tVarDecl = SFO.getTempVarVariableDeclaration(tmpId, main.typeHandler.constructPointerType(loc), loc);
         
         LocalLValue llVal = new LocalLValue(new VariableLHS(loc, tmpId), new CPointer(new CPrimitive(PRIMITIVE.VOID)));
         ResultExpression mallocRex = new ResultExpression(llVal);
@@ -1297,10 +1288,10 @@ public class MemoryHandler {
 		ArrayList<Overapprox> overappr = new ArrayList<Overapprox>();
         ILocation loc = (ILocation) address.getValue().getLocation();
         
-        ASTType heapType = getHeapTypeOfLRVal(main, address);
+        ASTType heapType = getHeapTypeOfLRVal(main, loc, address);
         
-        String heapTypeName = "";
-        if (heapType.equals(MemoryHandler.POINTER_TYPE)) {
+        String heapTypeName;
+        if (InferredType.isPointerType(heapType)) {
         	heapTypeName = SFO.POINTER;
         } else {
         	heapTypeName = ((PrimitiveType) heapType).getName();
@@ -1324,7 +1315,7 @@ public class MemoryHandler {
         		decl, auxVars, overappr);
     }
     
-    ASTType getHeapTypeOfLRVal(Dispatcher main, LRValue lrVal) {
+    ASTType getHeapTypeOfLRVal(Dispatcher main, ILocation loc, LRValue lrVal) {
     	CType ct = lrVal.getCType();
     	
     	if (lrVal.isBoogieBool())
@@ -1348,7 +1339,7 @@ public class MemoryHandler {
 			}
 		} else if (ut instanceof CPointer) {
 			isPointerArrayRequiredInMM = true;
-			return MemoryHandler.POINTER_TYPE;
+			return main.typeHandler.constructPointerType(loc);
 		} else if (ut instanceof CNamed) {
 			assert false : "This should not be the case as we took the underlying type.";
 			throw new UnsupportedSyntaxException(null, "non-heap type?: " + ct);
@@ -1358,7 +1349,7 @@ public class MemoryHandler {
 			//but it may not only be on heap, because it is addressoffed, but also because it is inside
 			// a struct that is addressoffed..
 			isPointerArrayRequiredInMM = true;
-			return MemoryHandler.POINTER_TYPE;
+			return main.typeHandler.constructPointerType(loc);
 		} else if (ut instanceof CEnum) { 
 			//enum is treated like an int
 			isIntArrayRequiredInMM = true;

@@ -225,7 +225,7 @@ public class SvComp14PRCHandler extends PRCHandler {
 			
 			String tId = main.nameHandler.getTempVarUID(SFO.AUXVAR.MEMCPYRES);
 			VariableDeclaration tVarDecl = new VariableDeclaration(loc, new Attribute[0], new VarList[] { new VarList(
-					loc, new String[] { tId }, MemoryHandler.POINTER_TYPE) });
+					loc, new String[] { tId }, main.typeHandler.constructPointerType(loc)) });
 			decl.add(tVarDecl);
 			auxVars.put(tVarDecl, loc);		
 			
@@ -261,7 +261,7 @@ public class SvComp14PRCHandler extends PRCHandler {
 				|| node.getName().toString().equals("__FUNCTION__")){
 			String tId = main.nameHandler.getTempVarUID(SFO.AUXVAR.NONDET);
 			VariableDeclaration tVarDecl = new VariableDeclaration(loc, new Attribute[0], new VarList[] { new VarList(
-					loc, new String[] { tId }, MemoryHandler.POINTER_TYPE) });
+					loc, new String[] { tId }, main.typeHandler.constructPointerType(loc)) });
 			RValue rvalue = new RValue(new IdentifierExpression(loc, tId), new CPointer(new CPrimitive(PRIMITIVE.CHAR)));
 			ArrayList<Declaration> decls = new ArrayList<Declaration>();
 			decls.add(tVarDecl);

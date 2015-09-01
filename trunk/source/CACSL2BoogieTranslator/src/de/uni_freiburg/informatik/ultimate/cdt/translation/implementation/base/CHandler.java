@@ -406,7 +406,7 @@ public class CHandler implements ICHandler {
 		//(alex:) new function pointers
 		for (Entry<String, Integer> en : ((MainDispatcher) main).getFunctionToIndex().entrySet()) {
 			String funcId = SFO.FUNCTION_ADDRESS + en.getKey();
-			VarList varList = new VarList(loc, new String[]{ funcId }, MemoryHandler.POINTER_TYPE);
+			VarList varList = new VarList(loc, new String[]{ funcId }, main.typeHandler.constructPointerType(loc));
 			decl.add(new ConstDeclaration(loc, new Attribute[0], false, varList, null, false));//would unique make sense here?? -- would potentially add lots of axioms
 			decl.add(new Axiom(loc, new Attribute[0], new BinaryExpression(loc, 
 					BinaryExpression.Operator.COMPEQ, 
@@ -434,6 +434,9 @@ public class CHandler implements ICHandler {
 		// this has to happen after postprocessing as pping may add sizeof
 		// constants for initializations
 		decl.addAll(mMemoryHandler.declareMemoryModelInfrastructure(main, loc));
+		
+		// add type declarations introduced by the translation, e.g., $Pointer$
+		decl.addAll(((TypeHandler) main.typeHandler).constructTranslationDefiniedDelarations(loc, m_ExpressionTranslation));
 
 		// handle proc. declaration & resolve their transitive modified globals
 		decl.addAll(mFunctionHandler.calculateTransitiveModifiesClause(main, mMemoryHandler));
@@ -639,7 +642,7 @@ public class CHandler implements ICHandler {
 
 				ASTType translatedType = null;
 				if (onHeap)
-					translatedType = MemoryHandler.POINTER_TYPE;
+					translatedType = main.typeHandler.constructPointerType(loc);
 				else
 					translatedType = main.typeHandler.ctype2asttype(loc, cDec.getType());
 
@@ -934,7 +937,7 @@ public class CHandler implements ICHandler {
 		} else if (node.getName().toString().equals("__func__")){
 			String tId = main.nameHandler.getTempVarUID(SFO.AUXVAR.NONDET);
 			VariableDeclaration tVarDecl = new VariableDeclaration(loc, new Attribute[0], new VarList[] { new VarList(
-					loc, new String[] { tId }, MemoryHandler.POINTER_TYPE) });
+					loc, new String[] { tId }, main.typeHandler.constructPointerType(loc)) });
 			RValue rvalue = new RValue(new IdentifierExpression(loc, tId), new CPointer(new CPrimitive(PRIMITIVE.CHAR)));
 			ArrayList<Declaration> decls = new ArrayList<Declaration>();
 			decls.add(tVarDecl);
@@ -3061,7 +3064,7 @@ public class CHandler implements ICHandler {
 			// There could be multiple PointerOperators (i.e.
 			// IASTPointer) - what does that mean for the translation?
 			// String typeId = resType.cvar.toString();
-			ASTType t = MemoryHandler.POINTER_TYPE;
+			ASTType t = main.typeHandler.constructPointerType(null);
 			CType cvar = new CPointer(resType.cType);
 			return new ResultTypes(t, resType.isConst, resType.isVoid, cvar);
 		}

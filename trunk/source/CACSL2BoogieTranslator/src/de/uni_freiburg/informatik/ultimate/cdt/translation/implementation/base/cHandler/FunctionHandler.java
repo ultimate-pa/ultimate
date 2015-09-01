@@ -874,7 +874,7 @@ public class FunctionHandler {
 														// pointers in C -- so
 														// we pass a Pointer in
 														// Boogie
-				type = MemoryHandler.POINTER_TYPE;
+				type = main.typeHandler.constructPointerType(loc);
 			} else {
 				type = ((TypeHandler) main.typeHandler).ctype2asttype(loc, paramDec.getType());
 			}
@@ -937,7 +937,7 @@ public class FunctionHandler {
 				String auxInvar = main.nameHandler.getUniqueIdentifier(parent, cId, 0, isOnHeap);
 
 				if (isOnHeap || cvar instanceof CArray) {
-					type = MemoryHandler.POINTER_TYPE;
+					type = main.typeHandler.constructPointerType(loc);
 					((CHandler) main.cHandler).addBoogieIdsOfHeapVars(auxInvar);
 				}
 				VarList var = new VarList(loc, new String[] { auxInvar }, type);

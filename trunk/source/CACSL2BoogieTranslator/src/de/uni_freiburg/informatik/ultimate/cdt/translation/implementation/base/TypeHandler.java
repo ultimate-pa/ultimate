@@ -24,6 +24,7 @@ import org.eclipse.cdt.internal.core.dom.parser.c.CPointerType;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.SymbolTable;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.ExpressionTranslation.AExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.MemoryHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType.Type;
@@ -52,13 +53,16 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.IT
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayType;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BitvecLiteral;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.NamedType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StructLHS;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StructType;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.TypeDeclaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.util.LinkedScopedHashMap;
@@ -96,6 +100,12 @@ public class TypeHandler implements ITypeHandler {
      * identically named types,
      */
     private final boolean m_UseIntForAllIntegerTypes;
+    
+    /**
+     * States if an ASTNode for the pointer type was constructed and hence
+     * this type has to be declared.
+     */
+	private boolean m_PointerTypeNeeded = false;
     
     
 
@@ -495,7 +505,7 @@ public class TypeHandler implements ITypeHandler {
 		if (cType instanceof CPrimitive) {
 			return cPrimitive2asttype(loc, (CPrimitive) cType);
 		} else if (cType instanceof CPointer) {
-			return MemoryHandler.POINTER_TYPE;
+			return constructPointerType(loc);
 		} else if (cType instanceof CArray) {
 			CArray cart = (CArray) cType;
 			ASTType[] indexTypes = new ASTType[cart.getDimensions().length];
@@ -521,7 +531,7 @@ public class TypeHandler implements ITypeHandler {
 		} else if (cType instanceof CFunction) {
 //				throw new UnsupportedSyntaxException(loc, "how to translate function type?");
 //			return null; 
-			return MemoryHandler.POINTER_TYPE;
+			return constructPointerType(loc);
 		} else if (cType instanceof CEnum) {
 //			return new NamedType(loc, ((CEnum) cType).getIdentifier(), new ASTType[0]);
 			return cPrimitive2asttype(loc, new CPrimitive(PRIMITIVE.INT));
@@ -563,4 +573,33 @@ public class TypeHandler implements ITypeHandler {
 	public ASTType ctype2asttype(ILocation loc, CType cType) {
 		return this.ctype2asttype(loc, cType, false, false);
 	}
+	
+	@Override
+	public ASTType constructPointerType(ILocation loc) {
+		m_PointerTypeNeeded = true;
+		return new NamedType(null, SFO.POINTER, new ASTType[0]);
+	}
+	
+	/**
+	 * Construct list of type declarations that are needed because the 
+	 * corresponding types are introduced by the translation, e.g., pointers. 
+	 */
+	public ArrayList<Declaration> constructTranslationDefiniedDelarations(ILocation tuLoc, 
+			AExpressionTranslation expressionTranslation) {
+		ArrayList<Declaration> decl = new ArrayList<Declaration>();
+		if (m_PointerTypeNeeded) {
+			VarList fBase = new VarList(tuLoc, new String[] { SFO.POINTER_BASE }, 
+					ctype2asttype(tuLoc, expressionTranslation.getCTypeOfPointerComponents()));
+			VarList fOffset = new VarList(tuLoc, new String[] { SFO.POINTER_OFFSET }, 
+					ctype2asttype(tuLoc, expressionTranslation.getCTypeOfPointerComponents()));
+			VarList[] fields = new VarList[] { fBase, fOffset };
+			ASTType pointerType = new StructType(tuLoc, fields);
+			// Pointer is non-finite, right? (ZxZ)..
+			decl.add(new TypeDeclaration(tuLoc, new Attribute[0], false, 
+					SFO.POINTER, new String[0], pointerType));
+		}
+		return decl;
+	}
+	
+	
 }

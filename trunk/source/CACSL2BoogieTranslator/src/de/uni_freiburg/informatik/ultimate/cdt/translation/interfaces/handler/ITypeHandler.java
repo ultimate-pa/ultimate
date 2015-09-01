@@ -196,4 +196,6 @@ public interface ITypeHandler extends IHandler {
 			boolean isBool);
 
 	void addDefinedType(String id, ResultTypes type);
+
+	ASTType constructPointerType(ILocation loc);
 }

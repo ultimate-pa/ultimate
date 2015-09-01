@@ -10,6 +10,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.S
 import de.uni_freiburg.informatik.ultimate.model.IType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayType;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.NamedType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StructType;
 
 /**
@@ -82,7 +83,7 @@ public class InferredType implements IType {
      *            the primitive type to convert.
      */
     public InferredType(ASTType at) {
-        if (at == MemoryHandler.POINTER_TYPE) {
+        if (isPointerType(at)) {
             this.type = Type.Pointer;
         } else if (at instanceof ArrayType) {
             InferredType it = new InferredType(((ArrayType) at).getValueType());
@@ -108,6 +109,14 @@ public class InferredType implements IType {
                 }
             }
         }
+    }
+    
+    public static boolean isPointerType(ASTType at) {
+    	if (at instanceof NamedType) {
+    		return ((NamedType) at).getName().equals(SFO.POINTER);
+    	} else {
+    		return false;
+    	}
     }
     
 //    public InferredType(CType cType) {

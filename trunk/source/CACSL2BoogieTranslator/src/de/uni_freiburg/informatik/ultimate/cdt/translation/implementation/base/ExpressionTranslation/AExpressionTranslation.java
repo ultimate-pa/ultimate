@@ -74,7 +74,7 @@ public abstract class AExpressionTranslation {
 			// Translate string to uninitialized char pointer
 			String tId = main.nameHandler.getTempVarUID(SFO.AUXVAR.NONDET);
 			VariableDeclaration tVarDecl = new VariableDeclaration(loc, new Attribute[0], new VarList[] { new VarList(
-					loc, new String[] { tId }, MemoryHandler.POINTER_TYPE) });
+					loc, new String[] { tId }, main.typeHandler.constructPointerType(loc)) });
 			RValue rvalue = new RValue(new IdentifierExpression(loc, tId), new CPointer(new CPrimitive(PRIMITIVE.CHAR)));
 			ArrayList<Declaration> decls = new ArrayList<Declaration>();
 			decls.add(tVarDecl);
@@ -330,7 +330,7 @@ public abstract class AExpressionTranslation {
 			Attribute attribute = new NamedAttribute(loc, FunctionDeclarations.s_OVERAPPROX_IDENTIFIER, new Expression[] { new StringLiteral(loc, functionName ) });
 			Attribute[] attributes = new Attribute[] { attribute };
 			ASTType resultASTType = main.typeHandler.ctype2asttype(loc, newType);
-			ASTType paramASTType = MemoryHandler.POINTER_TYPE;
+			ASTType paramASTType = main.typeHandler.constructPointerType(loc);
 			m_FunctionDeclarations.declareFunction(loc, prefixedFunctionName, attributes, resultASTType, paramASTType);
 		}
 		return prefixedFunctionName;
@@ -351,7 +351,7 @@ public abstract class AExpressionTranslation {
 		if (!m_FunctionDeclarations.getDeclaredFunctions().containsKey(prefixedFunctionName)) {
 			Attribute attribute = new NamedAttribute(loc, FunctionDeclarations.s_OVERAPPROX_IDENTIFIER, new Expression[] { new StringLiteral(loc, functionName ) });
 			Attribute[] attributes = new Attribute[] { attribute };
-			ASTType resultASTType = MemoryHandler.POINTER_TYPE; 
+			ASTType resultASTType = main.typeHandler.constructPointerType(loc); 
 			ASTType paramASTType = main.typeHandler.ctype2asttype(loc, newType);
 			m_FunctionDeclarations.declareFunction(loc, prefixedFunctionName, attributes, resultASTType, paramASTType);
 		}
