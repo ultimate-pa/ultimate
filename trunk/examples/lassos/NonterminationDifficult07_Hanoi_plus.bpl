@@ -6,6 +6,8 @@
  * This is a Boogie version of the program Hanoi_plus_false-termination.c
  * which was submitted to the TermComp 2015 by Ton Chanh Le.
  * 
+ * We cannot solve it because Z3 runs into a timeout.
+ * 
  */
 
 procedure main() returns ()

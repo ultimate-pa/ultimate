@@ -1,4 +1,4 @@
-//#rNonTermination
+//#rNonTerminationDerivable
 /*
  * Date: 2013-12-20
  * Author: leike@informatik.uni-freiburg.de
@@ -8,7 +8,7 @@
  * y = x^log_2(3)
  */
 
-procedure NonTerminationDifficult() returns (x: int, y: int)
+procedure main() returns (x: int, y: int)
 {
   x := 1;
   y := 1;
