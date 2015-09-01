@@ -6,7 +6,7 @@
  * Counterexample to some completeness conjecture.
  * Lasso does not have geometric nontermination argument although x and y do
  * not occur in the sum of a guard.
- * Using idempotency coefficients, we can solve it.
+ * Using coefficients for nilpotency, we can solve it.
  * 
  */
 
