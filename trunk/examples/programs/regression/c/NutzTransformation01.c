@@ -1,6 +1,9 @@
 //#Safe
 // Test for Alex's treatment of unsigned ints which does the modulo computation
-// not after operations but before comparisons.
+// not after each operation but 
+//  - before comparisons,
+//  - before casts to signed data types, and
+//  - before division and modulo operations.
 // Author: heizmann@informatik.uni-freiburg.de
 // Date: 2015-08-31
 
