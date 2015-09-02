@@ -1428,11 +1428,22 @@ public class CHandler implements ICHandler {
 			stmt.add(ifStatement);
 			return new ResultExpression(stmt, resRval, decl, auxVars, overappr);
 		}
-		case IASTBinaryExpression.op_minus:
-		case IASTBinaryExpression.op_plus:
 		case IASTBinaryExpression.op_modulo:
 		case IASTBinaryExpression.op_multiply:
 		case IASTBinaryExpression.op_divide: {
+			ResultExpression rlToInt = ConvExpr.rexBoolToIntIfNecessary(loc, rl, m_ExpressionTranslation);
+			ResultExpression rrToInt = ConvExpr.rexBoolToIntIfNecessary(loc, rr, m_ExpressionTranslation);
+			return handleMultiplicativeOperation(main, loc, null, node.getOperator(), rlToInt, rrToInt);
+		}
+		case IASTBinaryExpression.op_moduloAssign:
+		case IASTBinaryExpression.op_multiplyAssign:
+		case IASTBinaryExpression.op_divideAssign: {
+			ResultExpression rlToInt = ConvExpr.rexBoolToIntIfNecessary(loc, rl, m_ExpressionTranslation);
+			ResultExpression rrToInt = ConvExpr.rexBoolToIntIfNecessary(loc, rr, m_ExpressionTranslation);
+			return handleMultiplicativeOperation(main, loc, l.lrVal, node.getOperator(), rlToInt, rrToInt);
+		}
+		case IASTBinaryExpression.op_minus:
+		case IASTBinaryExpression.op_plus: {
 			
 			if (lType instanceof CArray || rType instanceof CArray) {
 				ResultExpression rlToInt = ConvExpr.rexBoolToIntIfNecessary(loc, rl, m_ExpressionTranslation);
@@ -1641,9 +1652,6 @@ public class CHandler implements ICHandler {
 			}
 		}
 		case IASTBinaryExpression.op_minusAssign:
-		case IASTBinaryExpression.op_multiplyAssign:
-		case IASTBinaryExpression.op_divideAssign:
-		case IASTBinaryExpression.op_moduloAssign:
 		case IASTBinaryExpression.op_plusAssign: {
 			assert !rl.lrVal.isBoogieBool() && !rr.lrVal.isBoogieBool();
 
@@ -1895,7 +1903,7 @@ public class CHandler implements ICHandler {
 			final Statement additionalStatement;
 			if (main.getTranslationSettings().getDivisionByZero() == POINTER_CHECKMODE.ASSUME) {
 				additionalStatement = new AssumeStatement(loc, divisorNotZero);
-			} else if (main.getTranslationSettings().getDivisionByZero() == POINTER_CHECKMODE.ASSUME) {
+			} else if (main.getTranslationSettings().getDivisionByZero() == POINTER_CHECKMODE.ASSERTandASSUME) {
 				additionalStatement = new AssertStatement(loc, divisorNotZero);
 				Check check = new Check(Check.Spec.DIVISION_BY_ZERO);
 				check.addToNodeAnnot(additionalStatement);
