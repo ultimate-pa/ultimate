@@ -1818,9 +1818,94 @@ public class CHandler implements ICHandler {
 		default:
 			throw new IllegalArgumentException("op " + op);
 		}
-		
-		
 	}
+	
+	/**
+	 * Handle multiplicative operators according to Sections 6.5.5 of C11.
+	 * Assumes that left (resp. right) are the results from handling the operands.
+	 * Requires that the {@link LRValue} of operands is an {@link RValue}
+	 * (i.e., switchToRValueIfNecessary was applied if needed).
+	 * requires that the Boogie expressions in left (resp. right) are a 
+	 * non-boolean representation of these results 
+	 * (i.e., rexBoolToIntIfNecessary() has already been applied if needed).
+	 */
+	ResultExpression handleMultiplicativeOperation(Dispatcher main, ILocation loc, 
+			LRValue lhs, int op, ResultExpression left, ResultExpression right) {
+		assert (left.lrVal instanceof RValue) : "no RValue";
+		assert (right.lrVal instanceof RValue) : "no RValue";
+		final CType lType = left.lrVal.getCType().getUnderlyingType();
+		final CType rType = right.lrVal.getCType().getUnderlyingType();
+		if (!rType.isArithmeticType() || !lType.isArithmeticType()) {
+			throw new UnsupportedOperationException("operands have to have integer types");
+		}
+		if (op == IASTBinaryExpression.op_divide || op == IASTBinaryExpression.op_modulo) {
+			addDivisionByZeroCheck(main, loc, right);
+		}
+		m_ExpressionTranslation.usualArithmeticConversions(main, loc, left, right);
+		final CPrimitive typeOfResult = (CPrimitive) left.lrVal.getCType();
+		assert typeOfResult.equals(left.lrVal.getCType());
+		final Expression expr = m_ExpressionTranslation.createArithmeticExpression(
+				op, left.lrVal.getValue(), typeOfResult, right.lrVal.getValue(), typeOfResult, loc);
+		final RValue rval = new RValue(expr,typeOfResult, false, false);
+		switch (op) {
+		case IASTBinaryExpression.op_multiply:
+		case IASTBinaryExpression.op_divide:
+		case IASTBinaryExpression.op_modulo: {
+			assert lhs == null : "no assignment";
+			final ResultExpression result = ResultExpression.copyStmtDeclAuxvarOverapprox(left, right);
+			result.lrVal = rval;
+			return result;
+		}
+		case IASTBinaryExpression.op_multiplyAssign:
+		case IASTBinaryExpression.op_divideAssign:
+		case IASTBinaryExpression.op_moduloAssign: {
+			final ResultExpression copy = ResultExpression.copyStmtDeclAuxvarOverapprox(left, right);
+//			if (op == IASTBinaryExpression.op_divide || op == IASTBinaryExpression.op_multiply) {
+				checkIntegerBounds(main, loc, copy);
+//			}
+			final ResultExpression result = makeAssignment(main, loc, copy.stmt, lhs, rval, copy.decl, copy.auxVars, copy.overappr);
+			return result;
+		}
+		default:
+			throw new AssertionError("no multiplicative " + op);
+		}
+	}
+	
+	/**
+	 * Add to rExp a check if divisior is zero.
+	 */
+	private void addDivisionByZeroCheck(Dispatcher main, ILocation loc, 
+			ResultExpression divisorExpRes) {
+		final Expression divisor = divisorExpRes.lrVal.getValue();
+		final CPrimitive divisorType = (CPrimitive) divisorExpRes.lrVal.getCType();
+		if (main.getTranslationSettings().getDivisionByZero() == POINTER_CHECKMODE.IGNORE) {
+			return;
+		} else {
+			final Expression zero;
+			if (divisorType.isIntegerType()) {
+				zero = m_ExpressionTranslation.constructLiteralForIntegerType(loc, divisorType, BigInteger.ZERO);
+			} else if (divisorType.isRealFloatingType()) {
+				zero = m_ExpressionTranslation.constructLiteralForFloatingType(loc, divisorType, BigInteger.ZERO);
+			} else {
+				throw new UnsupportedOperationException("unsupported " + divisorType);
+			}
+			final Expression divisorNotZero = m_ExpressionTranslation.constructBinaryEqualityExpression(
+					loc, IASTBinaryExpression.op_notequals, 
+					divisor, divisorType, zero, divisorType); 
+			final Statement additionalStatement;
+			if (main.getTranslationSettings().getDivisionByZero() == POINTER_CHECKMODE.ASSUME) {
+				additionalStatement = new AssumeStatement(loc, divisorNotZero);
+			} else if (main.getTranslationSettings().getDivisionByZero() == POINTER_CHECKMODE.ASSUME) {
+				additionalStatement = new AssertStatement(loc, divisorNotZero);
+				Check check = new Check(Check.Spec.DIVISION_BY_ZERO);
+				check.addToNodeAnnot(additionalStatement);
+			} else {
+				throw new AssertionError("illegal");
+			}
+			divisorExpRes.stmt.add(additionalStatement);
+		}
+	}
+		
 	
 	/**
 	 * Handle equality operators according to Section 6.5.9 of C11.
@@ -1908,7 +1993,7 @@ public class CHandler implements ICHandler {
 	
 	/**
 	 * Handle bitwise AND, bitwise XOR, and bitwise OR operators according to 
-	 * Sections 6.5.10, 6.5.11, 6.5.12 of C11.
+	 * sections 6.5.10, 6.5.11, 6.5.12 of C11.
 	 * Assumes that left (resp. right) are the results from handling the operands.
 	 * Requires that the {@link LRValue} of operands is an {@link RValue}
 	 * (i.e., switchToRValueIfNecessary was applied if needed).
@@ -1948,7 +2033,7 @@ public class CHandler implements ICHandler {
 			return result;
 		}
 		default:
-			throw new AssertionError("no bitshift " + op);
+			throw new AssertionError("no bitwise arithmetic operation " + op);
 		}
 	}
 	
