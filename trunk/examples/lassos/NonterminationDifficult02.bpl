@@ -9,7 +9,7 @@
  * y grows faster than x
  */
 
-procedure NonTerminationMoreDifficult() returns (x: int, y: int)
+procedure main() returns (x: int, y: int)
 {
   while (x + y >= 1 && x <= -1) {
     x := 2*x;

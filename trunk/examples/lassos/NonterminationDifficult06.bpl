@@ -3,10 +3,12 @@
  * Date: 2013-09-01
  * Author: leike@informatik.uni-freiburg.de
  *
- * TODO: text
+ * A variant of NonTerminationMoreDifficult02.bpl with three variables.
+ * x increases, y decreases and z increases,
+ * z at a higher rate than y and y at a higher rate than x.
  */
 
-procedure NonTerminationMoreDifficult() returns (x, y, z: real)
+procedure main() returns (x, y, z: real)
 {
   while (y + z >= 1.0 && x >= 1.0 && x + y <= 0.0 - 1.0) {
     x := 2.0*x;
