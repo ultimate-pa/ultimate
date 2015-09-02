@@ -172,6 +172,8 @@ public class NonTerminationArgumentResult<P extends IElement> extends AbstractRe
 	private String alternativeLongDesciption() {
 		StringBuilder sb = new StringBuilder();
 		sb.append("Nontermination argument in form of an infinite execution\n");
+		
+		// State 1 (before the honda)
 		sb.append("State at position 0 is\n");
 		Map<Expression, String> statePos0 = new HashMap<Expression, String>();
 		for (Entry<Expression, Rational> entry : m_StateHonda.entrySet()) {
@@ -180,6 +182,8 @@ public class NonTerminationArgumentResult<P extends IElement> extends AbstractRe
 			statePos0.put(var, x0.toString());
 		}
 		sb.append(printState(statePos0));
+		
+		// State 2 (at the honda)
 		sb.append("\nState at position 1 is\n");
 		Map<Expression, String> statePos1 = new HashMap<Expression, String>();
 		for (Entry<Expression, Rational> entry : m_StateHonda.entrySet()) {
@@ -188,39 +192,78 @@ public class NonTerminationArgumentResult<P extends IElement> extends AbstractRe
 			statePos1.put(var, x.toString());
 		}
 		sb.append(printState(statePos1));
-		// The following code is obsolete
-		// because it does not account for the nus.
-		// It needs to be updated but it's not clear to me how to compactly
-		// describe the nontermination argument without using matrices.
-//		sb.append("\nFor i>1, the state at position i is\n");
-//		Map<Expression, String> statePosI = new HashMap<Expression, String>();
-//		for (Expression var : m_StateHonda.keySet()) {
-//			Rational x = m_StateHonda.get(var);
-//			String value = x.toString();
-//			for (int i = 0; i < m_Lambdas.size(); ++i) {
-//				Rational y = m_Rays.get(i).get(var);
-//				if (y != null && !y.equals(Rational.ZERO)) {
-//					if (m_Lambdas.get(i).equals(Rational.ONE)) {
-//						value += " + " + "i * " + y;
-//					} else {
-//						value += " + " + geometric(i) + " * " + y;
-//					}
-//				}
-//			}
-//			statePosI.put(var, value);
-//		}
-//		sb.append(printState(statePosI));
+		
+		// Schematic execution afterwards
+		sb.append("\nFor i>1, the state at position i is\n");
+		Map<Expression, String> statePosI = new HashMap<Expression, String>();
+		for (Expression var : m_StateHonda.keySet()) {
+			Rational x = m_StateHonda.get(var);
+			String value = x.toString();
+			value += " + sum_{k=0}^i ";
+			boolean first = true;
+			for (int i = 0; i < m_Rays.size(); ++i) {
+				Rational y = m_Rays.get(i).get(var);
+				if (y != null && !y.equals(Rational.ZERO)) {
+					if (!first) {
+						value += " + ";
+					}
+					first = false;
+					for (int j = 0; j <= i && j < m_Rays.size(); ++j) {
+						boolean ok = true;
+						for (int s = i-j; s < i; ++s) {
+							if (m_Nus.get(s).equals(Rational.ZERO)) {
+								ok = false;
+							}
+						}
+						if (!ok) {
+							continue; // \prod_{s=i-j}^{i-1} mu_s == 0
+							          // => skip summand
+						}
+						if (j > 0) {
+							value += " + ";
+						}
+						Rational lambda = m_Lambdas.get(i - j);
+						value += y;
+						
+						if (j > 0) {
+							value += "*binomial(k, " + j + ")";
+						}
+						if (!lambda.equals(Rational.ONE)) {
+							if (j == 0) {
+								value += "*" + lambda + "^k";
+							} else {
+								value += "*" + lambda + "^(k-" + j + ")";
+							}
+						}
+					}
+				}
+			}
+			statePosI.put(var, value);
+		}
+		sb.append(printState(statePosI));
 		return sb.toString();
 	}
 
-	private String geometric(int i) {
+	/**
+	 * Return the binomial coefficient k over i symbolically as a string
+	 * with a preceding multiplication
+	 */
+	private String binom(int i) {
+		assert i >= 0;
+		if (i == 0) {
+			return "";
+		}
+		if (i == 1) {
+			return "*k";
+		}
 		StringBuilder sb = new StringBuilder();
-		sb.append("(");
-		sb.append(m_Lambdas.get(i));
-		sb.append("^(i+1)-1)/(");
-		sb.append(m_Lambdas.get(i));
-		sb.append("-1)");
+		sb.append("*k*");
+		for (int j = 1; j < i; ++j) {
+			sb.append("*(k - " + j + ")");
+		}
+		for (int j = 2; j <= i; ++j) {
+			sb.append("/" + j);
+		}
 		return sb.toString();
 	}
-
 }
