@@ -243,27 +243,4 @@ public class NonTerminationArgumentResult<P extends IElement> extends AbstractRe
 		sb.append(printState(statePosI));
 		return sb.toString();
 	}
-
-	/**
-	 * Return the binomial coefficient k over i symbolically as a string
-	 * with a preceding multiplication
-	 */
-	private String binom(int i) {
-		assert i >= 0;
-		if (i == 0) {
-			return "";
-		}
-		if (i == 1) {
-			return "*k";
-		}
-		StringBuilder sb = new StringBuilder();
-		sb.append("*k*");
-		for (int j = 1; j < i; ++j) {
-			sb.append("*(k - " + j + ")");
-		}
-		for (int j = 2; j <= i; ++j) {
-			sb.append("/" + j);
-		}
-		return sb.toString();
-	}
 }
