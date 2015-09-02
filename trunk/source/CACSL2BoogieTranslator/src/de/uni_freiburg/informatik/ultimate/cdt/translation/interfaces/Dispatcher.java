@@ -32,6 +32,7 @@ import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.CACSL2BoogieBacktranslator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.POINTER_CHECKMODE;
 import de.uni_freiburg.informatik.ultimate.result.GenericResultAtLocation;
 import de.uni_freiburg.informatik.ultimate.result.IResultWithSeverity.Severity;
 import de.uni_freiburg.informatik.ultimate.result.SyntaxErrorResult;
@@ -92,12 +93,15 @@ public abstract class Dispatcher {
 
 	private final TypeSizes m_TypeSizes;
 
+	private final TranslationSettings m_TranslationSettings;
+
 	public Dispatcher(CACSL2BoogieBacktranslator backtranslator, IUltimateServiceProvider services, Logger logger) {
 		this.backtranslator = backtranslator;
 		mLogger = logger;
 		mServices = services;
 		mPreferences = new UltimatePreferenceStore(Activator.s_PLUGIN_ID);
 		m_TypeSizes = new TypeSizes(mPreferences);
+		m_TranslationSettings = new TranslationSettings(mPreferences);
 	}
 
 	/**
@@ -299,6 +303,25 @@ public abstract class Dispatcher {
 
 	public TypeSizes getTypeSizes() {
 		return m_TypeSizes;
+	}
+	
+	public TranslationSettings getTranslationSettings() {
+		return m_TranslationSettings;
+	}
+
+	public class TranslationSettings {
+		private final POINTER_CHECKMODE m_DivisionByZero;
+
+		public TranslationSettings(UltimatePreferenceStore preferences) {
+			m_DivisionByZero = 
+					preferences.getEnum(CACSLPreferenceInitializer.LABEL_CHECK_DIVISION_BY_ZERO, POINTER_CHECKMODE.class);
+		}
+
+		public POINTER_CHECKMODE getDivisionByZero() {
+			return m_DivisionByZero;
+		}
+		
+		
 	}
 	
 	

@@ -50,6 +50,10 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 						LABEL_UNSIGNED_TREATMENT,
 						UNSIGNED_TREATMENT.WRAPAROUND,
 						PreferenceType.Combo, UNSIGNED_TREATMENT.values()),
+				new UltimatePreferenceItem<POINTER_CHECKMODE>(
+						LABEL_CHECK_DIVISION_BY_ZERO,
+						POINTER_CHECKMODE.ASSERTandASSUME,
+						PreferenceType.Combo, POINTER_CHECKMODE.values()),
 				new UltimatePreferenceItem<Boolean>(
 						LABEL_CHECK_SIGNED_INTEGER_BOUNDS,
 						false,
@@ -165,6 +169,7 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 	public static final String LABEL_REPORT_UNSOUNDNESS_WARNING = "Report unsoundness warnings";
 	public static final String LABEL_CHECK_POINTER_SUBTRACTION_AND_COMPARISON_VALIDITY = "If two pointers are subtracted or compared they have the same base address";
 	public static final String LABEL_UNSIGNED_TREATMENT = "How to treat unsigned ints differently from normal ones";
+	public static final String LABEL_CHECK_DIVISION_BY_ZERO = "Check division by zero";
 	public static final String LABEL_CHECK_SIGNED_INTEGER_BOUNDS = "Check absence of signed integer overflows";
 	public static final String LABEL_BITVECTOR_TRANSLATION = "Use bitvectors instead of ints";
 						
