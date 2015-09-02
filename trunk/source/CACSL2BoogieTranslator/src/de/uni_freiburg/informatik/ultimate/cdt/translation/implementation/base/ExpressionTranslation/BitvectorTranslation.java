@@ -168,7 +168,11 @@ public class BitvectorTranslation extends AExpressionTranslation {
 			break;
 		case IASTBinaryExpression.op_shiftRight:
 		case IASTBinaryExpression.op_shiftRightAssign:
-			funcname = "bvashr";
+			if (typeLeft.isUnsigned()) {
+				funcname = "bvlshr";
+			} else {
+				funcname = "bvashr";
+			}
 			break;
 		default:
 			String msg = "Unknown or unsupported bitwise expression";
