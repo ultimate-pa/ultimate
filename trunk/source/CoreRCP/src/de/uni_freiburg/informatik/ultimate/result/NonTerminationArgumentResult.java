@@ -217,7 +217,7 @@ public class NonTerminationArgumentResult<P extends IElement> extends AbstractRe
 							          // => skip summand
 						}
 						if (j > 0) {
-							sb.append(" + ");
+							sb2.append(" + ");
 						}
 						Rational lambda = m_Lambdas.get(i - j);
 						sb2.append(y);
@@ -238,7 +238,7 @@ public class NonTerminationArgumentResult<P extends IElement> extends AbstractRe
 				}
 			}
 			if (sb2.length() == 0) {
-				sb2.append("1");
+				sb2.append("0");
 			}
 			statePosI.put(var, x.toString() + " + sum_{k=0}^i " + sb2.toString());
 		}
