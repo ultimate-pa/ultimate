@@ -225,7 +225,9 @@ public class NonTerminationArgumentResult<P extends IElement> extends AbstractRe
 						Rational lambda = m_Lambdas.get(i - j);
 						value += y;
 						
-						if (j > 0) {
+						if (j == 1) {
+							value += "*k";
+						} else if (j > 1) {
 							value += "*binomial(k, " + j + ")";
 						}
 						if (!lambda.equals(Rational.ONE)) {
