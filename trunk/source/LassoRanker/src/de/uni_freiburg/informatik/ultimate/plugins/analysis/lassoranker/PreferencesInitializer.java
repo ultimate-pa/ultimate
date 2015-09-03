@@ -38,6 +38,8 @@ public class PreferencesInitializer extends UltimatePreferenceInitializer {
 	/*
 	 * Preferences Labels
 	 */
+	public static final String LABEL_enable_partitioneer =
+			"Enable LassoPartitioneer";
 	public static final String LABEL_nontermination_analysis =
 			"Nontermination analysis";
 	public static final String LABEL_nontermination_number_gevs =
@@ -104,6 +106,10 @@ public class PreferencesInitializer extends UltimatePreferenceInitializer {
 		NonTerminationAnalysisSettings nontermination_settings =
 				new NonTerminationAnalysisSettings();
 		return new UltimatePreferenceItem<?>[] {
+				new UltimatePreferenceItem<Boolean>(
+					LABEL_enable_partitioneer,
+					preferences.enable_partitioneer,
+					PreferenceType.Boolean),
 				new UltimatePreferenceItem<AnalysisType>(
 						LABEL_nontermination_analysis,
 						nontermination_settings.analysis,
@@ -230,6 +236,9 @@ public class PreferencesInitializer extends UltimatePreferenceInitializer {
 		
 		UltimatePreferenceStore store =
 				new UltimatePreferenceStore(Activator.s_PLUGIN_ID);
+		preferences.enable_partitioneer = store.getBoolean(
+				LABEL_enable_partitioneer
+		);
 		preferences.compute_integral_hull = store.getBoolean(
 				LABEL_compute_integral_hull
 		);

@@ -275,6 +275,9 @@ public class LassoBuilder {
 				computeMaxDagSize());
 		// Apply preprocessors
 		for (LassoPreprocessor preprocessor : preProcessorsTermination) {
+			if (preprocessor == null) {
+				continue;
+			}
 			m_Logger.debug(preprocessor.getDescription());
 			applyPreprocessor(preprocessor);
 			m_PreprocessingBenchmark.addPreprocessingData(

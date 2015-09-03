@@ -53,6 +53,12 @@ public class LassoRankerPreferences implements Serializable {
 	public boolean compute_integral_hull = false; // Default: false
 	
 	/**
+	 * Enable the LassoPartitioneer that splits lassos into multiple
+	 * independent components?
+	 */
+	public boolean enable_partitioneer = true; // Default: true
+	
+	/**
 	 * Add annotations to terms for debugging purposes
 	 */
 	public boolean annotate_terms = false; // Default: false
