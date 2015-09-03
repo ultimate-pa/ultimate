@@ -480,7 +480,7 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 				summands.add(m_integer_mode ? a.asIntTerm(m_script)
 						: a.asRealTerm(m_script));
 			}
-			conjunction.add(m_script.term(ieq.getInequalitySymbol(),
+			conjunction.add(m_script.term(rays ? ">=" : ieq.getInequalitySymbol(),
 					SmtUtils.sum(m_script, m_sort,
 							summands.toArray(new Term[0])),
 					m_integer_mode ? m_script.numeral(BigInteger.ZERO)
