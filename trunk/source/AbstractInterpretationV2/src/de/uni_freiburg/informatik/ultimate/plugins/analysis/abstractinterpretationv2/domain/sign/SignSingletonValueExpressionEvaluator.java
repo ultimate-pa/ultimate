@@ -18,7 +18,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  */
 public abstract class SignSingletonValueExpressionEvaluator<T> implements IEvaluator<Values, CodeBlock, BoogieVar> {
 
-	protected T mValue;
+	protected final T mValue;
 
 	public SignSingletonValueExpressionEvaluator(String value) {
 		T number = instantiate(value);
@@ -43,7 +43,8 @@ public abstract class SignSingletonValueExpressionEvaluator<T> implements IEvalu
 
 	@Override
 	public final void addSubEvaluator(IEvaluator<Values, CodeBlock, BoogieVar> evaluator) {
-		throw new UnsupportedOperationException("A sub evaluator cannot be added to a singleton expression type.");
+		throw new UnsupportedOperationException(
+		        "A sub evaluator cannot be added to a singleton expression value evaluator.");
 	}
 
 	@Override
@@ -52,8 +53,9 @@ public abstract class SignSingletonValueExpressionEvaluator<T> implements IEvalu
 	}
 
 	protected abstract T instantiate(String value);
+
 	protected abstract int getSignum();
-	
+
 	@Override
 	public final Set<String> getVarIdentifiers() {
 		return new HashSet<String>();

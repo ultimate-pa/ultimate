@@ -137,4 +137,13 @@ public class IntervalValue implements Comparable<IntervalValue> {
 
 		return mValue.compareTo(other.mValue);
 	}
+
+	@Override
+	public String toString() {
+		if (mIsInfty) {
+			return "\\infty";
+		}
+
+		return mValue.toString();
+	}
 }

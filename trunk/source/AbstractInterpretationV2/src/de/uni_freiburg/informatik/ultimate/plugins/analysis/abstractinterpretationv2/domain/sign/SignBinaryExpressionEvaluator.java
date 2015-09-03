@@ -64,8 +64,8 @@ public class SignBinaryExpressionEvaluator implements INAryEvaluator<Values, Cod
 			mVariableSet.add(var);
 		}
 
-		final IEvaluationResult<?> firstResult = mLeftSubEvaluator.evaluate(currentState);
-		final IEvaluationResult<?> secondResult = mRightSubEvaluator.evaluate(currentState);
+		final IEvaluationResult<Values> firstResult = mLeftSubEvaluator.evaluate(currentState);
+		final IEvaluationResult<Values> secondResult = mRightSubEvaluator.evaluate(currentState);
 
 		switch (mOperator) {
 		// case LOGICIFF:

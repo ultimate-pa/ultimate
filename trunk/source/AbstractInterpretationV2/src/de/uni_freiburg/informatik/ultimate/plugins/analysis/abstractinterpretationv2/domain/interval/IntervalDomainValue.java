@@ -76,6 +76,25 @@ public class IntervalDomainValue implements IEvaluationResult<IntervalDomainValu
 	}
 
 	/**
+	 * Returns <code>true</code> if the interval is unbounded, i.e. if one bound of the interval is -&infin; or &infin;,
+	 * respectively.
+	 * 
+	 * @return <code>true</code> or <code>false</code>.
+	 */
+	protected boolean isUnbounded() {
+		return mLower.isInfinity() || mUpper.isInfinity();
+	}
+
+	/**
+	 * Returns <code>true</code> if the interval is infinity, i.e. if the interval is (-&infin; ; &infin;).
+	 * 
+	 * @return
+	 */
+	protected boolean isInfinity() {
+		return mLower.isInfinity() && mUpper.isInfinity();
+	}
+
+	/**
 	 * Returns the lower value of the interval.
 	 * 
 	 * @return
