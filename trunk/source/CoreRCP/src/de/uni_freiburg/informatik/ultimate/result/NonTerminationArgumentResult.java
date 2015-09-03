@@ -197,17 +197,14 @@ public class NonTerminationArgumentResult<P extends IElement> extends AbstractRe
 		sb.append("\nFor i>1, the state at position i is\n");
 		Map<Expression, String> statePosI = new HashMap<Expression, String>();
 		for (Expression var : m_StateHonda.keySet()) {
+			StringBuilder sb2 = new StringBuilder();
 			Rational x = m_StateHonda.get(var);
-			String value = x.toString();
-			value += " + sum_{k=0}^i ";
-			boolean first = true;
 			for (int i = 0; i < m_Rays.size(); ++i) {
 				Rational y = m_Rays.get(i).get(var);
 				if (y != null && !y.equals(Rational.ZERO)) {
-					if (!first) {
-						value += " + ";
+					if (sb2.length() > 0) {
+						sb2.append(" + ");
 					}
-					first = false;
 					for (int j = 0; j <= i && j < m_Rays.size(); ++j) {
 						boolean ok = true;
 						for (int s = i-j; s < i; ++s) {
@@ -220,27 +217,30 @@ public class NonTerminationArgumentResult<P extends IElement> extends AbstractRe
 							          // => skip summand
 						}
 						if (j > 0) {
-							value += " + ";
+							sb.append(" + ");
 						}
 						Rational lambda = m_Lambdas.get(i - j);
-						value += y;
+						sb2.append(y);
 						
 						if (j == 1) {
-							value += "*k";
+							sb2.append("*k");
 						} else if (j > 1) {
-							value += "*binomial(k, " + j + ")";
+							sb2.append("*binomial(k, " + j + ")");
 						}
 						if (!lambda.equals(Rational.ONE)) {
 							if (j == 0) {
-								value += "*" + lambda + "^k";
+								sb2.append("*" + lambda + "^k");
 							} else {
-								value += "*" + lambda + "^(k-" + j + ")";
+								sb2.append("*" + lambda + "^(k-" + j + ")");
 							}
 						}
 					}
 				}
 			}
-			statePosI.put(var, value);
+			if (sb2.length() == 0) {
+				sb2.append("1");
+			}
+			statePosI.put(var, x.toString() + " + sum_{k=0}^i " + sb2.toString());
 		}
 		sb.append(printState(statePosI));
 		return sb.toString();
