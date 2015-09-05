@@ -235,9 +235,9 @@ public class TypeHandler implements ITypeHandler {
             if (e.getValue() != null) {
             	ResultExpression rex = (ResultExpression) main.dispatch(e.getValue());
             	fValues[i] = (Expression) rex.lrVal.getValue();
-            	assert (fValues[i] instanceof IntegerLiteral) || 
-            		(fValues[i] instanceof BitvecLiteral) : 
-            			"assuming that only IntegerLiterals or BitvecLiterals can occur while translating an enum constant";
+//            	assert (fValues[i] instanceof IntegerLiteral) || 
+//            		(fValues[i] instanceof BitvecLiteral) : 
+//            			"assuming that only IntegerLiterals or BitvecLiterals can occur while translating an enum constant";
             } else {
             	fValues[i] = null;
             }

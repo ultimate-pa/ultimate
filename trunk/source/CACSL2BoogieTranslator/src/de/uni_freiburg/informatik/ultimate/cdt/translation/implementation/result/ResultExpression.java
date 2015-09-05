@@ -359,6 +359,11 @@ public class ResultExpression extends Result {
 //			}
 //		}
 
+		//FIXME: this is a workaround integrate switch to underlying type 
+		// properly in this method
+		if (toReturn.lrVal != null) {
+			toReturn.lrVal.setCType(lrVal.getCType().getUnderlyingType());
+		}
 		return toReturn;
 	}
 
