@@ -18,7 +18,7 @@ int dec(int x) {
 int main() {
 	int y = 23;
 	int (* func)(int);
-	func = *inc;
+	func = &inc;
 	y = func(y);
 	y = func(y);
 	func = &dec;
