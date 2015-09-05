@@ -1,7 +1,7 @@
 //#Safe
 /* 
  * Author: heizmann@informatik.uni-freiburg.de
- * Date: 2015-08-30
+ * Date: 2015-09-04
  * 
  */
 
@@ -11,17 +11,13 @@ int inc(int x) {
 	return x + 1;
 }
 
-int dec(int x) {
-	return x - 1;
-}
-
 int main() {
+	if (&inc != inc) {
+		//@ assert \false;
+	}
 	int y = 23;
 	int (* func)(int);
-	func = *inc;
-	y = func(y);
-	y = func(y);
-	func = &dec;
+	func = inc;
 	y = func(y);
 	//@ assert y == 24;
 }

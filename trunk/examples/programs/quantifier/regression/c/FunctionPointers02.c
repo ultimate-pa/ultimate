@@ -27,9 +27,7 @@ int main() {
 	int y = 23;
 	int (* func)(int);
 	func = getFun(7);
-	y = func(y);
-	y = func(y);
-	func = getFun(0);
-	y = func(y);
+	func(y);
+	(*func)(y);
 	//@ assert y == 24;
 }
