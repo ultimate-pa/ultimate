@@ -658,6 +658,8 @@ public class FunctionHandler {
 			} else {
 				in = in.switchToRValueIfNecessary(main,
 					memoryHandler, structHandler, loc);
+				in.replaceEnumByInt();
+				in.replaceCFunctionByCPointer();
 			}
 
 			

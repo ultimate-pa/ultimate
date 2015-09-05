@@ -9,7 +9,6 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -155,7 +154,6 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.LoopInvariantSpecification;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.NamedType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.PrimitiveType;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.RealLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Specification;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StructAccessExpression;
@@ -946,10 +944,10 @@ public class CHandler implements ICHandler {
 			return new ResultExpression(new ArrayList<Statement>(), rvalue, decls, auxVars);
 		}
 
-		String bId = null;
-		CType cType = null;
-		boolean useHeap = false;
-		boolean intFromPtr = false;
+		final String bId;
+		final CType cType;
+		final boolean useHeap;
+		final boolean intFromPtr;
 
 		if (mSymbolTable.containsCSymbol(cId)) {
 			// we have a normal variable
@@ -958,10 +956,13 @@ public class CHandler implements ICHandler {
 			useHeap = isHeapVar(bId);
 			intFromPtr = mSymbolTable.get(cId, loc).isIntFromPointer;
 		} else if (mFunctionHandler.getProcedures().keySet().contains(cId)) {
+			// C11 6.3.2.1.4 says: A function designator is an expression that 
+			// has function type.
 			CFunction cFunction = mFunctionHandler.getCFunctionType(cId);
-			cType = new CPointer(cFunction);
+			cType = cFunction;
 			bId = SFO.FUNCTION_ADDRESS + cId;
 			useHeap = true;
+			intFromPtr = false;
 		} else if (main.getFunctionToIndex().containsKey(cId)) {
 			throw new AssertionError("function not known by function handler");
 		} else {
@@ -1128,6 +1129,7 @@ public class CHandler implements ICHandler {
 					PRIMITIVE.INT)), emptyAuxVars);
 		case IASTUnaryExpression.op_star: {
 			ResultExpression rop = o.switchToRValueIfNecessary(main, mMemoryHandler, mStructHandler, loc);
+			rop.replaceCFunctionByCPointer();
 			Expression addr = rop.lrVal.getValue();
 			if (rop.lrVal.getCType() instanceof CArray) {
 				CArray arrayCType = (CArray) rop.lrVal.getCType();
@@ -1299,6 +1301,8 @@ public class CHandler implements ICHandler {
 					address = new RValue(r.lrVal.getValue(), new CPointer(((CArray) rType).getValueType()));
 				return makeAssignment(main, loc, stmt, l.lrVal, address, decl, auxVars, overappr);
 			} else {
+				rr.replaceCFunctionByCPointer();
+				rr.replaceEnumByInt();
 				stmt.addAll(rr.stmt);
 				decl.addAll(rr.decl);
 				auxVars.putAll(rr.auxVars);
@@ -1931,9 +1935,13 @@ public class CHandler implements ICHandler {
 		assert (left.lrVal instanceof RValue) : "no RValue";
 		assert (right.lrVal instanceof RValue) : "no RValue";
 		{
+			left.replaceCFunctionByCPointer();
+			right.replaceCFunctionByCPointer();
 			final CType lType = left.lrVal.getCType().getUnderlyingType();
 			final CType rType = right.lrVal.getCType().getUnderlyingType();
-			// implicit casts
+			//FIXME Matthias 2015-09-05: operation only legal if both have type 
+			// CPointer I guess the following implicit casts are a workaround
+			// for arrays (or structs or union?)
 			if (lType instanceof CPointer || rType instanceof CPointer) {
 				if (!(lType instanceof CPointer)) {
 					castToType(main, loc, left, new CPointer(new CPrimitive(PRIMITIVE.VOID)));

@@ -620,4 +620,28 @@ public class ResultExpression extends Result {
 			throw new UnsupportedOperationException("replaceEnumByInt only applicable for RValues");
 		}
 	}
+	
+	/**
+	 * If the CType of this {@link ResultExpression}'s {@link RValue} has CType
+	 * CFunction, then replace it by CType CPointer. If a function occurs as an
+	 * RValue we use this method to replace its type by CPointer. 6.3.2.1 of C11
+	 * says: A function designator is an expression that has function type.
+	 * Except when it is the operand of the sizeof operator, the _Alignof
+	 * operator,65) or the unary & operator, a function designator with type
+	 * ‘‘function returning type’’ is converted to an expression that has type 
+	 * ‘‘pointer to function returning type’’.
+	 */
+	public void replaceCFunctionByCPointer() {
+		if (this.lrVal instanceof RValue) {
+			RValue old = (RValue) this.lrVal;
+			if (old.getCType() instanceof CFunction) {
+				CPointer pointerType = new CPointer(old.getCType());
+				this.lrVal = new RValue(old.getValue(), pointerType, old.isBoogieBool(), old.isIntFromPointer());
+			} else {
+				// do nothing
+			}
+		} else {
+			throw new UnsupportedOperationException("replaceEnumByInt only applicable for RValues");
+		}
+	}
 }
