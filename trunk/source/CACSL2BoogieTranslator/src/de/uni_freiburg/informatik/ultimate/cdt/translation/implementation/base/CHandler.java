@@ -951,17 +951,19 @@ public class CHandler implements ICHandler {
 		boolean useHeap = false;
 		boolean intFromPtr = false;
 
-		// Christian: function name, handle separately
-		if (!mSymbolTable.containsCSymbol(cId) && main.getFunctionToIndex().containsKey(cId)) {
-				cType = new CPointer(new CFunction(null, null, false));
-				bId = SFO.FUNCTION_ADDRESS + cId;
-				useHeap = true;
-		} else if (mSymbolTable.containsCSymbol(cId)) {
+		if (mSymbolTable.containsCSymbol(cId)) {
 			// we have a normal variable
 			bId = mSymbolTable.get(cId, loc).getBoogieName();
 			cType = mSymbolTable.get(cId, loc).getCVariable();
 			useHeap = isHeapVar(bId);
 			intFromPtr = mSymbolTable.get(cId, loc).isIntFromPointer;
+		} else if (mFunctionHandler.getProcedures().keySet().contains(cId)) {
+			CFunction cFunction = mFunctionHandler.getCFunctionType(cId);
+			cType = new CPointer(cFunction);
+			bId = SFO.FUNCTION_ADDRESS + cId;
+			useHeap = true;
+		} else if (main.getFunctionToIndex().containsKey(cId)) {
+			throw new AssertionError("function not known by function handler");
 		} else {
 			throw new UnsupportedSyntaxException(loc, "identifier is not declared (neither a variable nor a function name)");
 		}

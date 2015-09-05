@@ -1413,5 +1413,9 @@ public class FunctionHandler {
 	public LinkedHashMap<String, LinkedHashSet<String>> getCallGraph() {
 		return this.callGraph;
 	}
+	
+	public CFunction getCFunctionType(String function) {
+		return this.procedureToCFunctionType.get(function);
+	}
 
 }
