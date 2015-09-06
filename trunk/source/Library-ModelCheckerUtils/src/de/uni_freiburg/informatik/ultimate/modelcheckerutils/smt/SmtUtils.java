@@ -45,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Annotation;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
+import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -574,9 +575,23 @@ public class SmtUtils {
 			break;
 		case "ite":
 			if (params.length != 3) {
-				throw new IllegalArgumentException("not ite");
+				throw new IllegalArgumentException("no ite");
 			} else {
 				result = Util.ite(script, params[0], params[1], params[2]);
+			}
+			break;
+		case "div":
+			if (params.length != 2) {
+				throw new IllegalArgumentException("no div");
+			} else {
+				result = div(script, params[0], params[1]);
+			}
+			break;
+		case "mod":
+			if (params.length != 2) {
+				throw new IllegalArgumentException("no div");
+			} else {
+				result = mod(script, params[0], params[1]);
 			}
 			break;
 		default:
@@ -587,6 +602,45 @@ public class SmtUtils {
 	}
 	
 	
+	/**
+	 * Returns a possibly simplified version of the Term (div dividend divisor).
+	 * If dividend and divisor are both literals the returned Term is a literal 
+	 * which is equivalent to the result of the operation
+	 */
+	public static Term div(Script script, Term dividend, Term divisor) {
+		if ((dividend instanceof ConstantTerm) &&
+				dividend.getSort().isNumericSort() &&
+				(divisor instanceof ConstantTerm) &&
+				divisor.getSort().isNumericSort()) {
+			Rational dividentAsRational = convertConstantTermToRational((ConstantTerm) dividend);
+			Rational divisorAsRational = convertConstantTermToRational((ConstantTerm) dividend);
+			Rational quotientAsRational = dividentAsRational.div(divisorAsRational);
+			return quotientAsRational.toTerm(dividend.getSort());
+		} else {
+			return script.term("div", dividend, divisor);
+		}
+	}
+	
+	/**
+	 * Returns a possibly simplified version of the Term (mod dividend divisor).
+	 * If dividend and divisor are both literals the returned Term is a literal 
+	 * which is equivalent to the result of the operation
+	 */
+	public static Term mod(Script script, Term divident, Term divisor) {
+		//FIXME: implement this
+//		if ((divident instanceof ConstantTerm) &&
+//				divident.getSort().isNumericSort() &&
+//				(divisor instanceof ConstantTerm) &&
+//				divisor.getSort().isNumericSort()) {
+//			final Rational dividentAsRational = convertConstantTermToRational((ConstantTerm) divident);
+//			final Rational divisorAsRational = convertConstantTermToRational((ConstantTerm) divident);
+//			Rational modAsRational = 
+//			return quotientAsRational.toTerm(divident.getSort());
+//		} else {
+			return script.term("mod", divident, divisor);
+//		}
+	}
+
 	/**
 	 * Check if {@link Term} which may contain free {@link TermVariable}s is
 	 * satisfiable with respect to the current assertion stack of 
@@ -641,6 +695,39 @@ public class SmtUtils {
 		Sort resultSort = tv.getSort();
 		script.declareFun(name, new Sort[0], resultSort);
 		return script.term(name);
+	}
+	
+	/**
+	 * Convert a {@link ConstantTerm} which has numeric {@link Sort} into a 
+	 * {@literal Rational}.
+	 * @return a Rational which represents the input constTerm
+	 * @throws UnsupportedOperationException if ConstantTerm cannot converted
+	 * to Rational
+	 */
+	public static Rational convertConstantTermToRational(ConstantTerm constTerm) {
+		Rational rational;
+		assert constTerm.getSort().isNumericSort();
+		Object value = constTerm.getValue();
+		if (constTerm.getSort().getName().equals("Int")) {
+			if (value instanceof BigInteger) {
+				rational = Rational.valueOf((BigInteger) value, BigInteger.ONE);
+			} else if (value instanceof Rational) {
+				rational = (Rational) value;
+			} else {
+				throw new UnsupportedOperationException();
+			}
+		} else if (constTerm.getSort().getName().equals("Real")) {
+			if (value instanceof BigDecimal) {
+				rational = decimalToRational((BigDecimal) value);
+			} else if (value instanceof Rational) {
+				rational = (Rational) value;
+			} else {
+				throw new UnsupportedOperationException();
+			}
+		} else {
+			throw new UnsupportedOperationException();
+		}
+		return rational;
 	}
 
 }

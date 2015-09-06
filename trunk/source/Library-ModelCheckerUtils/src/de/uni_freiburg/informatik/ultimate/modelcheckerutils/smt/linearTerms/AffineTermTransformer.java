@@ -36,6 +36,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 
 /**
  * Transform a Term into an AffineTerm. Result is an auxiliary error term if the
@@ -92,28 +93,7 @@ public class AffineTermTransformer extends TermTransformer {
 	 * 
 	 */
 	private AffineTerm convertConstantNumericTerm(ConstantTerm constTerm) {
-		assert constTerm.getSort().isNumericSort();
-		Object value = constTerm.getValue();
-		Rational rational;
-		if (constTerm.getSort().getName().equals("Int")) {
-			if (value instanceof BigInteger) {
-				rational = Rational.valueOf((BigInteger) value, BigInteger.ONE);
-			} else if (value instanceof Rational) {
-				rational = (Rational) value;
-			} else {
-				throw new UnsupportedOperationException();
-			}
-		} else if (constTerm.getSort().getName().equals("Real")) {
-			if (value instanceof BigDecimal) {
-				rational = decimalToRational((BigDecimal) value);
-			} else if (value instanceof Rational) {
-				rational = (Rational) value;
-			} else {
-				throw new UnsupportedOperationException();
-			}
-		} else {
-			throw new UnsupportedOperationException();
-		}
+		Rational rational = SmtUtils.convertConstantTermToRational(constTerm);
 		AffineTerm result = new AffineTerm(constTerm.getSort(), rational);
 		return result;
 	}
