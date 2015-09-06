@@ -3888,12 +3888,12 @@ public class CHandler implements ICHandler {
 					m_ExpressionTranslation.convertIntToPointer(main, loc, rexp, (CPointer) newType);
 					return;
 				} else if (newType instanceof CPrimitive) {
-					m_ExpressionTranslation.convert(loc, rexp, newType);
+					m_ExpressionTranslation.convert(loc, rexp, (CPrimitive) newType);
 					return;
 				} else if (newType instanceof CEnum) {
 					// C standard 6.4.4.3.2
 					// An identifier declared as an enumeration constant has type int.
-					CType typeInt = new CPrimitive(PRIMITIVE.INT);
+					CPrimitive typeInt = new CPrimitive(PRIMITIVE.INT);
 					m_ExpressionTranslation.convert(loc, rexp, typeInt);
 					return;
 				} else {

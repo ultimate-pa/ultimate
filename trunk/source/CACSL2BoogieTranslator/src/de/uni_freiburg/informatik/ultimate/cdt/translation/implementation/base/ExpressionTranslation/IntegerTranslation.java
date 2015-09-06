@@ -226,6 +226,18 @@ public class IntegerTranslation extends AExpressionTranslation {
 	public Expression createArithmeticExpression(int op, Expression left, CPrimitive typeLeft,
 			Expression right, CPrimitive typeRight, ILocation loc) {
 		BinaryExpression.Operator operator;
+		if (typeLeft.isIntegerType() && typeLeft.isUnsigned()) {
+			assert typeRight.isIntegerType() && typeRight.isUnsigned() : "incompatible types";
+			if (op == IASTBinaryExpression.op_divide || 
+					op == IASTBinaryExpression.op_divide || 
+					op == IASTBinaryExpression.op_modulo || 
+					op == IASTBinaryExpression.op_moduloAssign) {
+				// apply wraparound to ensure that Nutz transformation is sound
+				// (see examples/programs/regression/c/NutzTransformation02.c)
+				left = applyWraparound(loc, m_TypeSizes, typeLeft, left);
+				right = applyWraparound(loc, m_TypeSizes, typeRight, right);
+			}
+		}
 		boolean bothAreIntegerLiterals = left instanceof IntegerLiteral && right instanceof IntegerLiteral;
 		BigInteger leftValue = null;
 		BigInteger rightValue = null;
@@ -454,22 +466,47 @@ public class IntegerTranslation extends AExpressionTranslation {
 
 	@Override
 	public void convert(ILocation loc, ResultExpression operand,
-			CType resultType) {
-		if (m_UnsignedTreatment == UNSIGNED_TREATMENT.ASSUME_ALL) {
-			BigInteger maxValuePlusOne = m_TypeSizes.getMaxValueOfPrimitiveType((CPrimitive) resultType).add(BigInteger.ONE);
-			AssumeStatement assumeGeq0 = new AssumeStatement(loc, new BinaryExpression(loc, BinaryExpression.Operator.COMPGEQ,
-					operand.lrVal.getValue(), new IntegerLiteral(loc, SFO.NR0)));
-			operand.stmt.add(assumeGeq0);
-
-			AssumeStatement assumeLtMax = new AssumeStatement(loc, new BinaryExpression(loc, BinaryExpression.Operator.COMPLT,
-					operand.lrVal.getValue(), new IntegerLiteral(loc, maxValuePlusOne.toString())));
-			operand.stmt.add(assumeLtMax);
+			CPrimitive resultType) {
+		if (resultType.isIntegerType()) {
+			convertToIntegerType(loc, operand, resultType);
 		} else {
-			// do nothing
+			throw new UnsupportedOperationException("not yet supported");
 		}
-		
 		// set the type of the operand to resultType
 		operand.lrVal.setCType(resultType);
+	}
+
+	private void convertToIntegerType(ILocation loc, ResultExpression operand,
+			CPrimitive resultType) {
+		assert resultType.isIntegerType();
+		CPrimitive oldType = (CPrimitive) operand.lrVal.getCType();
+		if (oldType.isIntegerType()) {
+			if (resultType.isUnsigned()) {
+				if (m_UnsignedTreatment == UNSIGNED_TREATMENT.ASSUME_ALL) {
+					BigInteger maxValuePlusOne = m_TypeSizes.getMaxValueOfPrimitiveType((CPrimitive) resultType).add(BigInteger.ONE);
+					AssumeStatement assumeGeq0 = new AssumeStatement(loc, new BinaryExpression(loc, BinaryExpression.Operator.COMPGEQ,
+							operand.lrVal.getValue(), new IntegerLiteral(loc, SFO.NR0)));
+					operand.stmt.add(assumeGeq0);
+
+					AssumeStatement assumeLtMax = new AssumeStatement(loc, new BinaryExpression(loc, BinaryExpression.Operator.COMPLT,
+							operand.lrVal.getValue(), new IntegerLiteral(loc, maxValuePlusOne.toString())));
+					operand.stmt.add(assumeLtMax);
+				} else {
+					// do nothing
+				}
+			} else {
+				// required for sound Nutz transformation 
+				// (see examples/programs/regression/c/NutzTransformation01.c)
+				if (oldType.isUnsigned() && !resultType.isUnsigned()) {
+					Expression oldExpr = operand.lrVal.getValue(); 
+					Expression newExpr = applyWraparound(loc, m_TypeSizes, oldType, oldExpr);
+					RValue newRValue = new RValue(newExpr, resultType, false, false);
+					operand.lrVal = newRValue;
+				}
+			}
+		} else {
+			throw new UnsupportedOperationException("not yet supported");
+		}
 	}
 
 	@Override

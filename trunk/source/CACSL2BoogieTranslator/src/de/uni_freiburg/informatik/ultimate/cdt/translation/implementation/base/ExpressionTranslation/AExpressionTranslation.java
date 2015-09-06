@@ -255,7 +255,7 @@ public abstract class AExpressionTranslation {
 		}
 	}
 
-	public abstract void convert(ILocation loc, ResultExpression operand, CType resultType);
+	public abstract void convert(ILocation loc, ResultExpression operand, CPrimitive resultType);
 	
 	/**
 	 * Perform the integer promotions a specified in C11 6.3.1.1.2 on the
