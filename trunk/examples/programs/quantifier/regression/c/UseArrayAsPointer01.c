@@ -1,5 +1,7 @@
 //#Safe
-/*
+/* Bug in r15168. Array a is considered "off heap", although its adress is 
+ * taken in the assignment "int *p = a;"
+ * 
  * Author: heizmann@informatik.uni-freiburg.de
  * Date: 2015-09-06
  * 
