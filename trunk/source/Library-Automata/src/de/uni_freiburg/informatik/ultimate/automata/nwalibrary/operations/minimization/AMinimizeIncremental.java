@@ -40,7 +40,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvide
  * interrupt and if it should terminate it stops its normal execution and only
  * constructs the result from the information it has gathered so far.
  * 
- * @author Christian
+ * @author Christian Schilling
  */
 public abstract class AMinimizeIncremental<LETTER, STATE>
 		extends AMinimizeNwa<LETTER, STATE> {

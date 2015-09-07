@@ -29,7 +29,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minim
  * This class is used to interrupt incremental minimization executions.
  * 
  * @see AMinimizeIncremental
- * @author Christian
+ * @author Christian Schilling
  */
 public final class Interrupt {
 	/**

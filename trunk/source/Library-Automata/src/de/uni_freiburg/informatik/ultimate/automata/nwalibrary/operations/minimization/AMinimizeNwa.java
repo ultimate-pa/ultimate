@@ -48,7 +48,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvide
  * correctness check cannot be inherited automatically. Hence all implementing
  * subclasses must explicitly call the respective method themselves.
  * 
- * @author Christian
+ * @author Christian Schilling
  */
 public abstract class AMinimizeNwa<LETTER, STATE>
 		implements IOperation<LETTER, STATE> {
