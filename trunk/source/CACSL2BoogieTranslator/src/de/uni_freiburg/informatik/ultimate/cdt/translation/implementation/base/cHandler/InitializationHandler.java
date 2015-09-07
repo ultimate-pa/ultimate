@@ -283,13 +283,23 @@ public class InitializationHandler {
 		//carry over
 		ResultExpression initializer = null;
 		if (initializerRaw != null) {
-			initializer = 
-					initializerRaw.switchToRValueIfNecessary(main, mMemoryHandler, mStructHandler, loc);
-			stmt.addAll(initializer.stmt);
-			decl.addAll(initializer.decl);
-			overappr.addAll(initializer.overappr);
-			auxVars.putAll(initializer.auxVars);
-		} 
+			if (initializerRaw.lrVal != null
+					&& initializerRaw.lrVal.getCType().getUnderlyingType() instanceof CArray) {
+				assert cType instanceof CPointer;
+				// case where we assign an array (not an arrayaccessExpression) to a pointer on initialization
+				// --> then we can assume it has been put on heap, and we just take the address for assignment
+				//   analogous to the solution in makeAssignment..
+				initializer = new ResultExpression(initializerRaw);
+				initializer.lrVal = new RValue(((HeapLValue) initializer.lrVal).getAddress(), initializer.lrVal.getCType());
+			} else {
+				initializer = 
+						initializerRaw.switchToRValueIfNecessary(main, mMemoryHandler, mStructHandler, loc);
+				stmt.addAll(initializer.stmt);
+				decl.addAll(initializer.decl);
+				overappr.addAll(initializer.overappr);
+				auxVars.putAll(initializer.auxVars);
+			}
+		}
 
 		VariableLHS lhs = null;
 		if (var instanceof LocalLValue)

@@ -260,6 +260,17 @@ public class PRCHandler extends CHandler {
 				mSymbolTable.put(cDec.getName(),
 						new PRSymbolTableValue(bId, boogieDec, cDec, globalInBoogie, storageClass, d));
 				cDec.translateInitializer(main);
+				
+				
+				//difference from CHandler begin (not the only one)
+				if (cDec.getType() instanceof CPointer
+						&& cDec.hasInitializer()
+						&& cDec.getInitializer().lrVal.getCType() instanceof CArray) {
+					String id = ((IdentifierExpression) cDec.getInitializer().lrVal.getValue()).getIdentifier();
+					variablesOnHeap.add(((PRSymbolTableValue) mSymbolTable.get(mSymbolTable.getCID4BoogieID(id, loc), loc)).decl);
+				}
+				//difference from CHandler end
+				
 
 				ASTType translatedType = null;
 
