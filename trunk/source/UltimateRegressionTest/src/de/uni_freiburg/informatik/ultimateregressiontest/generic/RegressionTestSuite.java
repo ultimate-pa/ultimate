@@ -18,8 +18,8 @@ public class RegressionTestSuite extends AbstractRegressionTestSuite {
 		mTimeout = 20 * 1000;
 		mRootFolder = TestUtil.getPathFromTrunk("examples/");
 
-		// match every path not containing CToBoogieTranslation or Backtranslation or lassos or termination
-		mFilterRegex = "((?!CToBoogieTranslation|Backtranslation|lassos|termination)[\\s\\S])*";
+		// match every path not containing CToBoogieTranslation or Backtranslation or lassos or termination or SignedIntegerOverflow
+		mFilterRegex = "((?!CToBoogieTranslation|Backtranslation|lassos|termination|SignedIntegerOverflow)[\\s\\S])*";
 	}
 
 	@Override
