@@ -428,9 +428,9 @@ public class TestUtil {
 		map.put(".*_unsafe.*?!(.*_false-valid-deref.*)", SafetyCheckerOverallResult.UNSAFE);
 		map.put(".*-Unsafe.*", SafetyCheckerOverallResult.UNSAFE);
 		map.put(".*_Unsafe.*", SafetyCheckerOverallResult.UNSAFE);
-		// true-unreach-call is the SV-COMP annotation for safe
+		// true-unreach-call is the SV-COMP annotation for safe wrt. reachability of error function
 		map.put(".*_true-unreach-call.*", SafetyCheckerOverallResult.SAFE);
-		// false-unreach-call is the SV-COMP annotation for safe
+		// false-unreach-call is the SV-COMP annotation for unsafe wrt. reachability of error function
 		map.put(".*_false-unreach-call.*", SafetyCheckerOverallResult.UNSAFE);
 		// true-valid-memsafety is the SV-COMP annotation for safe wrt. memory
 		// safety
@@ -443,6 +443,11 @@ public class TestUtil {
 		// false-valid-memtrack is the SV-COMP annotation for unsafe wrt. memory
 		// leaks
 		map.put(".*_false-valid-memtrack.*", SafetyCheckerOverallResult.UNSAFE_MEMTRACK);
+		{
+			// no-signed-integer-overflow might become the SV-COMP annotation for integer overflow checks
+			map.put(".*_true-no-signed-integer-overflow.*", SafetyCheckerOverallResult.SAFE);
+			map.put(".*_false-no-signed-integer-overflow.*", SafetyCheckerOverallResult.UNSAFE);
+		}
 		return map;
 	}
 
