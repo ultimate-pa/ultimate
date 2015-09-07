@@ -1,6 +1,6 @@
 Copyright (C) @{daterange} @{author:r}
 
-This file is part of the ULTIMATE ReachingDefinitions.
+This file is part of the ULTIMATE ReachingDefinitions plug-in.
 
 The ULTIMATE ReachingDefinitions plug-in is free software: you can redistribute it and/or modify
 it under the terms of the GNU Lesser General Public License as published
@@ -13,10 +13,10 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 GNU Lesser General Public License for more details.
 
 You should have received a copy of the GNU Lesser General Public License
-along with the ULTIMATE ReachingDefinitions. If not, see <http://www.gnu.org/licenses/>.
+along with the ULTIMATE ReachingDefinitions plug-in. If not, see <http://www.gnu.org/licenses/>.
 
 Additional permission under GNU GPL version 3 section 7:
-If you modify the ULTIMATE ReachingDefinitions, or any covered work, by linking
+If you modify the ULTIMATE ReachingDefinitions plug-in, or any covered work, by linking
 or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
 containing parts covered by the terms of the Eclipse Public License, the 
 licensors of the ULTIMATE ReachingDefinitions plug-in grant you additional permission 
