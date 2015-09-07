@@ -1858,26 +1858,41 @@ public class CHandler implements ICHandler {
 		m_ExpressionTranslation.usualArithmeticConversions(main, loc, left, right);
 		final CPrimitive typeOfResult = (CPrimitive) left.lrVal.getCType();
 		assert typeOfResult.equals(left.lrVal.getCType());
+
+		ResultExpression result = ResultExpression.copyStmtDeclAuxvarOverapprox(left, right);
+		switch (op) {
+		case IASTBinaryExpression.op_multiply:
+		case IASTBinaryExpression.op_divide:
+		case IASTBinaryExpression.op_multiplyAssign:
+		case IASTBinaryExpression.op_divideAssign: {
+			addIntegerBoundsCheck(main, loc, result, typeOfResult, op, left.lrVal.getValue(), right.lrVal.getValue());
+			break;
+		}
+		case IASTBinaryExpression.op_modulo:
+		case IASTBinaryExpression.op_moduloAssign: {
+			// no integer bounds check needed
+			break;
+		}
+		default:
+			throw new AssertionError("no multiplicative " + op);
+		}
+		
 		final Expression expr = m_ExpressionTranslation.createArithmeticExpression(
 				op, left.lrVal.getValue(), typeOfResult, right.lrVal.getValue(), typeOfResult, loc);
 		final RValue rval = new RValue(expr,typeOfResult, false, false);
+		
 		switch (op) {
 		case IASTBinaryExpression.op_multiply:
 		case IASTBinaryExpression.op_divide:
 		case IASTBinaryExpression.op_modulo: {
 			assert lhs == null : "no assignment";
-			final ResultExpression result = ResultExpression.copyStmtDeclAuxvarOverapprox(left, right);
 			result.lrVal = rval;
 			return result;
 		}
 		case IASTBinaryExpression.op_multiplyAssign:
 		case IASTBinaryExpression.op_divideAssign:
 		case IASTBinaryExpression.op_moduloAssign: {
-			final ResultExpression copy = ResultExpression.copyStmtDeclAuxvarOverapprox(left, right);
-//			if (op == IASTBinaryExpression.op_divide || op == IASTBinaryExpression.op_multiply) {
-				checkIntegerBounds(main, loc, copy);
-//			}
-			final ResultExpression result = makeAssignment(main, loc, copy.stmt, lhs, rval, copy.decl, copy.auxVars, copy.overappr);
+			result = makeAssignment(main, loc, result.stmt, lhs, rval, result.decl, result.auxVars, result.overappr);
 			return result;
 		}
 		default:
@@ -2153,10 +2168,12 @@ public class CHandler implements ICHandler {
 	 * is set, adds asserts that check that no integer over-/underflow occurs.
 	 * Does that only if the corresponding preference is set.
 	 */
+	@Deprecated
 	private void checkIntegerBounds(Dispatcher main, ILocation loc, ResultExpression rex) {
 		checkIntegerBounds(main, loc, (RValue) rex.lrVal, rex.stmt);
 	}
 
+	@Deprecated
 	private void checkIntegerBounds(Dispatcher main, ILocation loc, RValue rVal, ArrayList<Statement> stmt) {
 		if (main.mPreferences.getBoolean(CACSLPreferenceInitializer.LABEL_CHECK_SIGNED_INTEGER_BOUNDS)
 				&& rVal.getCType() instanceof CPrimitive
@@ -2171,6 +2188,30 @@ public class CHandler implements ICHandler {
 					new IntegerLiteral(loc, main.getTypeSizes().getMinValueOfPrimitiveType((CPrimitive) rVal.getCType().getUnderlyingType()).toString())));
 			check.addToNodeAnnot(biggerMinInt);
 			stmt.add(biggerMinInt);
+		}
+	}
+	
+	private void addIntegerBoundsCheck(Dispatcher main, ILocation loc, ResultExpression rex, CPrimitive resultType, int operation, Expression... operands) {
+		if (main.mPreferences.getBoolean(CACSLPreferenceInitializer.LABEL_CHECK_SIGNED_INTEGER_BOUNDS)
+				&& resultType.isIntegerType()
+				&& !resultType.isUnsigned()) {
+			Check check = new Check(Spec.INTEGER_OVERFLOW);
+			final Expression operationResult;
+			if (operands.length == 1) {
+				operationResult = m_ExpressionTranslation.constructUnaryExpression(loc, operation, operands[0], resultType);
+			} else if (operands.length == 2) {
+				operationResult = m_ExpressionTranslation.createArithmeticExpression(operation, operands[0], resultType, operands[1], resultType, loc);
+			} else {
+				throw new AssertionError("no such operation");
+			}
+			AssertStatement smallerMaxInt = new AssertStatement(loc, new BinaryExpression(loc, BinaryExpression.Operator.COMPLT, operationResult, 
+					new IntegerLiteral(loc, main.getTypeSizes().getMaxValueOfPrimitiveType((CPrimitive) resultType).toString())));
+			check.addToNodeAnnot(smallerMaxInt);
+			AssertStatement biggerMinInt = new AssertStatement(loc, new BinaryExpression(loc, BinaryExpression.Operator.COMPGEQ, operationResult, 
+					new IntegerLiteral(loc, main.getTypeSizes().getMinValueOfPrimitiveType((CPrimitive) resultType).toString())));
+			check.addToNodeAnnot(biggerMinInt);
+			rex.stmt.add(smallerMaxInt);
+			rex.stmt.add(biggerMinInt);
 		}
 	}
 
