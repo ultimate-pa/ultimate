@@ -61,7 +61,7 @@ public class UnprovableResult<ELEM extends IElement, TE extends IElement, E> ext
 		}
 		mProgramExecution = programExecution;
 		mFailurePath = ResultUtil.getLocationSequence(programExecution);
-		if (overapproximations == null) {
+		if (overapproximations == null || overapproximations.isEmpty()) {
 			mOverapproximationMessage = "";
 		} else {
 			mOverapproximationMessage = generateOverapproximationMessage(overapproximations);
