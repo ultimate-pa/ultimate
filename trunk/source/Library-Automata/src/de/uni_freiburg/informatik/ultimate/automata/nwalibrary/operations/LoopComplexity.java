@@ -46,7 +46,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.NestedWordAutomatonReachableStates;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.IncomingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.util.scc.StronglyConnectedComponent;
@@ -124,48 +123,55 @@ public class LoopComplexity<LETTER, STATE> implements IOperation<LETTER, STATE> 
 	private Integer compute(Set<STATE> states) throws AutomataLibraryException {
 
 		AutomatonSccComputation<LETTER, STATE> sccComputer = new AutomatonSccComputation<LETTER, STATE>(m_Graph, m_Services, states, states);
-		
-     	Collection<StronglyConnectedComponent<STATE>> balls = sccComputer.getBalls();
 
-     	for (StronglyConnectedComponent<STATE> scc : balls) {
+		Collection<StronglyConnectedComponent<STATE>> balls = sccComputer.getBalls();
+
+		for (StronglyConnectedComponent<STATE> scc : balls) {
 			scc.getNodes();
 		}
-     	
+
 		// Graph contains no balls.
 		if (balls.isEmpty()) {
 			return 0;
 		} else if (balls.size() == 1) { // Graph itself is a ball.
 			// Consider all subgraphs differing from original graph by one vertex.
-			
+
 			Collection<STATE> peakStates = new ArrayList<STATE>();
-			
+			Set<STATE> ballStates = balls.iterator().next().getNodes();
+
 			// Determine number of predecessors and successors for each state.
-			for (STATE q : states) {
+			for (STATE q : ballStates) {
 				int pCount = 0;
 				int sCount = 0;
-				
+
 				Iterable<IncomingInternalTransition<LETTER, STATE>> preds = m_Graph.internalPredecessors(q);
 				Iterable<OutgoingInternalTransition<LETTER, STATE>> succs = m_Graph.internalSuccessors(q);
-				
+
 				for (@SuppressWarnings("unused") IncomingInternalTransition<LETTER, STATE> p : preds) {
+					if (!ballStates.contains(p.getPred())) {
+						continue;
+					}
 					++pCount;
 				}
-				
+
 				for (@SuppressWarnings("unused") OutgoingInternalTransition<LETTER, STATE> s : succs) {
+					if (!ballStates.contains(s.getSucc())) {
+						continue;
+					}
 					++sCount;
 				}
-				
+
 				// Add all those states with the maximum number of edges to peakStates.
 				if (pCount != 1 || sCount != 1) {
-				  peakStates.add(q);
+					peakStates.add(q);
 				}
 			}
-			
+
 			// If every state has one predecessor and one successor, the ball is a cycle.
 			if (peakStates.isEmpty()) {
 				return 1;
 			}
-			
+
 			Collection<Integer> subGraphLoopComplexities = new ArrayList<Integer>();
 
 			// Create a copy since 'peakStates' itself should not be modified.
@@ -176,44 +182,44 @@ public class LoopComplexity<LETTER, STATE> implements IOperation<LETTER, STATE> 
 				if (!m_Services.getProgressMonitorService().continueProcessing()) {
 					throw new OperationCanceledException(this.getClass());
 				}
-				
+
 				copyStates.remove(stateOut);
-				
+
 				if (statesToLC.containsKey(copyStates)) {
 					subGraphLoopComplexities.add(statesToLC.get(copyStates));
 				} else {
 					Integer i = this.compute(copyStates);
-					
+
 					// Create another copy to prevent HashMap from not
 					// recognizing sets of states after they have been modified.
 					Set<STATE> keyStates = new HashSet<STATE>(copyStates);
 					statesToLC.put(keyStates, i);
-					
+
 					subGraphLoopComplexities.add(i);
 				}
-				
+
 				copyStates.add(stateOut);
 			}
-			
+
 			return 1 + Collections.min(subGraphLoopComplexities);
 		} else { // Graph itself is not a ball.		
 			Collection<Integer> ballLoopComplexities = new ArrayList<Integer>();
 
 			// Compute Loop Complexity for each ball.
-		    for (StronglyConnectedComponent<STATE> scc : balls) {
-		    	if (statesToLC.containsKey(scc.getNodes())) {
-				  ballLoopComplexities.add(statesToLC.get(scc.getNodes()));
-			    } else {
-			      Integer i = this.compute(scc.getNodes());
-					
-			      Set<STATE> keyStates = new HashSet<STATE>(scc.getNodes());
-			      statesToLC.put(keyStates, i);
-					
-			      ballLoopComplexities.add(i);
-			    }
-		     }
-			
-			 return Collections.max(ballLoopComplexities);
+			for (StronglyConnectedComponent<STATE> scc : balls) {
+				if (statesToLC.containsKey(scc.getNodes())) {
+					ballLoopComplexities.add(statesToLC.get(scc.getNodes()));
+				} else {
+					Integer i = this.compute(scc.getNodes());
+
+					Set<STATE> keyStates = new HashSet<STATE>(scc.getNodes());
+					statesToLC.put(keyStates, i);
+
+					ballLoopComplexities.add(i);
+				}
+			}
+
+			return Collections.max(ballLoopComplexities);
 		}
 	}
 

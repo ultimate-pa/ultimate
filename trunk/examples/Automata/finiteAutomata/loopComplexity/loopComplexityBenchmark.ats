@@ -2,7 +2,7 @@
 // Date: 2015-06-08
 //
 
-NestedWordAutomaton lcbautomaton01 = (
+NestedWordAutomaton lcbautomaton00 = (
 	callAlphabet = {},
 	internalAlphabet = {"a0" },
 	returnAlphabet = {},
@@ -89,10 +89,10 @@ NestedWordAutomaton lcbautomaton01 = (
 	}
 );
 
-assert(loopComplexity(lcbautomaton01) == 7);
+assert(loopComplexity(lcbautomaton00) == 7);
 
 
-NestedWordAutomaton lcbautomaton02 = (
+NestedWordAutomaton lcbautomaton01 = (
 	callAlphabet = {},
 	internalAlphabet = {"a0" },
 	returnAlphabet = {},
@@ -191,6 +191,8 @@ NestedWordAutomaton lcbautomaton02 = (
 	returnTransitions = {
 	}
 );
+
+assert(loopComplexity(lcbautomaton01) == 8);
 
 
 NestedWordAutomaton lcbautomaton02 = (
@@ -294,6 +296,7 @@ NestedWordAutomaton lcbautomaton02 = (
 );
 
 assert(loopComplexity(lcbautomaton02) == 8);
+
 
 NestedWordAutomaton lcbautomaton03 = (
 	callAlphabet = {},
