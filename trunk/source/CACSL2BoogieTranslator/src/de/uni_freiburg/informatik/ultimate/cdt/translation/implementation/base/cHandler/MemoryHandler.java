@@ -359,6 +359,7 @@ public class MemoryHandler {
 					new RValue(ctrIdex, new CPrimitive(PRIMITIVE.INT)), 
 					null);
 
+		// handle modifies
 		ArrayList<VariableLHS> modifiesLHSs = new ArrayList<>();
 		for (String name : namesOfAllMemoryArrayTypes) {
 			String memArrayName = SFO.MEMORY + "_" + name;
@@ -366,6 +367,11 @@ public class MemoryHandler {
 			ArrayLHS destAcc = new ArrayLHS(ignoreLoc, new VariableLHS(ignoreLoc, memArrayName), new Expression[] { currentDest.getValue() });
 			bodyStmt.add(new AssignmentStatement(ignoreLoc, new LeftHandSide[] { destAcc }, new Expression[] { srcAcc }));
 			modifiesLHSs.add(new VariableLHS(ignoreLoc, memArrayName));
+
+			if (!m_functionHandler.getModifiedGlobals().containsKey(SFO.MEMCPY)){
+				m_functionHandler.getModifiedGlobals().put(SFO.MEMCPY, new LinkedHashSet<String>());
+			}
+			m_functionHandler.getModifiedGlobals().get(SFO.MEMCPY).add(memArrayName);
 		}
 		
 		//increment counter
@@ -477,7 +483,7 @@ public class MemoryHandler {
      	Procedure memCpyProcDecl = new Procedure(ignoreLoc, new Attribute[0], SFO.MEMCPY, new String[0], 
     			inParams, outParams, specs.toArray(new Specification[specs.size()]), null);
      	memCpyDecl.add(memCpyProcDecl);
- 
+     	
      	//add the procedure implementation
      	Procedure memCpyProc = new Procedure(ignoreLoc, new Attribute[0], SFO.MEMCPY, new String[0], 
     			inParams, outParams, null, procBody);

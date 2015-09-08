@@ -35,6 +35,7 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.svCom
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
 
 import org.apache.log4j.Logger;
@@ -262,7 +263,7 @@ public class SvComp14CHandler extends CHandler {
 			assert (isAuxVarMapcomplete(main, decl, auxVars));
 			return new ResultExpression(stmt, returnValue, decl, auxVars, overappr);
 		}
-//		this is a gcc-builtin function that helps with branch predication, it always returns the first argument.
+//		this is a gcc-builtin function that helps with branch prediction, it always returns the first argument.
 		if (methodName.equals("__builtin_expect")) { 
 			return main.dispatch(node.getArguments()[0]);
 		}
@@ -301,6 +302,12 @@ public class SvComp14CHandler extends CHandler {
 			Statement call = new CallStatement(loc, false, new VariableLHS[] { new VariableLHS(loc, tId) }, SFO.MEMCPY, 
 					new Expression[] { destRex.lrVal.getValue(), srcRex.lrVal.getValue(), sizeRex.lrVal.getValue() });
 			stmt.add(call);
+
+			// add required information to function handler.
+			if (!mFunctionHandler.getCallGraph().containsKey(SFO.MEMCPY)) {
+				mFunctionHandler.getCallGraph().put(SFO.MEMCPY, new LinkedHashSet<String>());
+			}
+			mFunctionHandler.getCallGraph().get(mFunctionHandler.getCurrentProcedureID()).add(SFO.MEMCPY);
 			
 			return new ResultExpression(stmt, new RValue(new IdentifierExpression(loc, tId), 
 					destRex.lrVal.getCType()), decl, auxVars, overappr);

@@ -408,7 +408,7 @@ public class PostProcessor {
 		Procedure startDeclaration = null;
 		Specification[] specsStart = new Specification[0];
 
-		if (functionHandler.getCallGraph().containsKey(SFO.START))
+		if (!functionHandler.getCallGraph().containsKey(SFO.START))
 			functionHandler.getCallGraph().put(SFO.START, new LinkedHashSet<String>());
 		functionHandler.getCallGraph().get(SFO.START).add(SFO.INIT);
 
