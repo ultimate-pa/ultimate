@@ -8,7 +8,7 @@
  * Nevertheless, there is a geometric nontermination argument.
  */
 
-procedure main() returns (a, b, c: real)
+procedure main() returns (a, b: real)
 {
   while (a >= 1.0 && b + 1.0 <= 0.0 && 0.0 <= a + b && a + b <= 5.0) {
     a := a * 2.0;
