@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2014-2015 Christopher Dillo
+ * Copyright (C) 2014-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
  * 
  * This file is part of the ULTIMATE AbstractInterpretation plug-in.

@@ -1,8 +1,8 @@
 /*
+ * Copyright (C) 2013-2015 Christian Schilling (schillic@informatik.uni-freiburg.de)
  * Copyright (C) 2014-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2013-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * Copyright (C) 2013-2015 schillic
  * 
  * This file is part of the ULTIMATE Core.
  * 

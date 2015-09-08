@@ -1,7 +1,7 @@
 /*
+ * Copyright (C) 2007-2015 Christian Ortolf
  * Copyright (C) 2008-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * Copyright (C) 2007-2015 ortolf
  * 
  * This file is part of the ULTIMATE Core.
  * 

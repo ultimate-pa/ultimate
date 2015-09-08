@@ -1,8 +1,8 @@
 /*
  * Copyright (C) 2008-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2011-2015 Jochen Hoenicke (hoenicke@informatik.uni-freiburg.de)
+ * Copyright (C) 2008-2015 Justus Bisser
  * Copyright (C) 2015 University of Freiburg
- * Copyright (C) 2008-2015 bisser
  * 
  * This file is part of the ULTIMATE Core.
  * 

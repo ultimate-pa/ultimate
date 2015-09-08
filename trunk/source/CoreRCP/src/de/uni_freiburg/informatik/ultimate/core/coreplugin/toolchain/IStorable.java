@@ -1,8 +1,9 @@
 /*
  * Copyright (C) 2010-2015 Björn Buchhold
  * Copyright (C) 2015 Christian Simon
+ * Copyright (C) 2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2011-2015 Jochen Hoenicke (hoenicke@informatik.uni-freiburg.de)
- * Copyright (C) 2010-2015 Jürgen Christ
+ * Copyright (C) 2010-2015 Jürgen Christ (christj@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
  * 
  * This file is part of the ULTIMATE Core.

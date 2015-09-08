@@ -1,8 +1,7 @@
 /*
- * Copyright (C) 2015 Christian Simon
+ * Copyright (C) 2009-2015 Christian Simon
  * Copyright (C) 2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * Copyright (C) 2009-2015 simonc
  * 
  * This file is part of the ULTIMATE Core.
  * 

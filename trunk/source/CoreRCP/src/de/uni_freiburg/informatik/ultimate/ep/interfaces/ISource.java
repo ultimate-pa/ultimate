@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2007-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2015 Justus Bisser
- * Copyright (C) 2010-2015 Jürgen Christ
+ * Copyright (C) 2010-2015 Jürgen Christ (christj@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
  * 
  * This file is part of the ULTIMATE Core.

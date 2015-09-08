@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2015 Markus Lindenmann
- * Copyright (C) 2015 Oleksii Saukh
- * Copyright (C) 2015 Stefan Wissert
+ * Copyright (C) 2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ * Copyright (C) 2012-2015 Markus Lindenmann (lindenmm@informatik.uni-freiburg.de)
+ * Copyright (C) 2015 Oleksii Saukh (saukho@informatik.uni-freiburg.de)
+ * Copyright (C) 2012-2015 Stefan Wissert
  * Copyright (C) 2015 University of Freiburg
- * Copyright (C) 2012-2015 lindenmm
- * Copyright (C) 2012-2015 wisserts
  * 
  * This file is part of the ULTIMATE Core.
  * 
