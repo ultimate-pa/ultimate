@@ -29,7 +29,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser;
 import org.eclipse.core.runtime.Plugin;
 
 /**
- * The activator class controls the plug-in life cycle
+ * The activator class controls the plug-in life cycle.
  */
 public class Activator extends Plugin {
 
