@@ -538,6 +538,9 @@ public class IntegerTranslation extends AExpressionTranslation {
 
 	@Override
 	public void doIntegerPromotion(ILocation loc, ResultExpression operand) {
+		if (!integerPromotionNeeded((CPrimitive) operand.lrVal.getCType())) {
+			return;
+		}
 		CType inputType = operand.lrVal.getCType();
 		if (inputType instanceof CPrimitive) {
 			CPrimitive cPrimitive = (CPrimitive) operand.lrVal.getCType();
