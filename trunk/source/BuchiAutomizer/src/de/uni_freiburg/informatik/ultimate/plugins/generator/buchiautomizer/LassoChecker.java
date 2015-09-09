@@ -47,6 +47,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lassoranker.AnalysisType;
 import de.uni_freiburg.informatik.ultimate.lassoranker.LassoAnalysis;
+import de.uni_freiburg.informatik.ultimate.lassoranker.LassoAnalysis.AnalysisTechnique;
 import de.uni_freiburg.informatik.ultimate.lassoranker.LassoAnalysis.PreprocessingBenchmark;
 import de.uni_freiburg.informatik.ultimate.lassoranker.LassoRankerPreferences;
 import de.uni_freiburg.informatik.ultimate.lassoranker.exceptions.TermException;
@@ -135,6 +136,15 @@ public class LassoChecker {
 	 * Command of external solver.
 	 */
 	private final String m_ExternalSolverCommand_RankSynthesis;
+	/**
+	 * Use an external solver. If false, we use SMTInterpol.
+	 */
+	private boolean m_ExternalSolver_GntaSynthesis;
+	/**
+	 * Command of external solver.
+	 */
+	private final String m_ExternalSolverCommand_GntaSynthesis;
+	
 	private final AnalysisType m_LassoRankerAnalysisType;
 	private final boolean m_TrySimplificationTerminationArgument;
 
@@ -248,6 +258,8 @@ public class LassoChecker {
 		UltimatePreferenceStore baPref = new UltimatePreferenceStore(Activator.s_PLUGIN_ID);
 		m_ExternalSolver_RankSynthesis = baPref.getBoolean(PreferenceInitializer.LABEL_ExtSolverRank);
 		m_ExternalSolverCommand_RankSynthesis = baPref.getString(PreferenceInitializer.LABEL_ExtSolverCommandRank);
+		m_ExternalSolver_GntaSynthesis = baPref.getBoolean(PreferenceInitializer.LABEL_ExtSolverGNTA);
+		m_ExternalSolverCommand_GntaSynthesis = baPref.getString(PreferenceInitializer.LABEL_ExtSolverCommandGNTA);
 		m_LassoRankerAnalysisType = baPref.getEnum(PreferenceInitializer.LABEL_AnalysisType, AnalysisType.class);
 		m_TemplateBenchmarkMode = baPref.getBoolean(PreferenceInitializer.LABEL_TemplateBenchmarkMode);
 		m_TrySimplificationTerminationArgument = baPref.getBoolean(PreferenceInitializer.LABEL_Simplify);
@@ -587,11 +599,23 @@ public class LassoChecker {
 	}
 
 	private LassoRankerPreferences constructLassoRankerPreferences(boolean withStem,
-			boolean overapproximateArrayIndexConnection, NlaHandling nlaHandling) {
+			boolean overapproximateArrayIndexConnection, NlaHandling nlaHandling, 
+			AnalysisTechnique analysis) {
 		LassoRankerPreferences pref = new LassoRankerPreferences();
-
-		pref.externalSolver = m_ExternalSolver_RankSynthesis;
-		pref.smt_solver_command = m_ExternalSolverCommand_RankSynthesis;
+		switch (analysis) {
+		case GEOMETRIC_NONTERMINATION_ARGUMENTS: {
+			pref.externalSolver = m_ExternalSolver_GntaSynthesis;
+			pref.smt_solver_command = m_ExternalSolverCommand_GntaSynthesis;
+			break;
+		}
+		case RANKING_FUNCTIONS_SUPPORTING_INVARIANTS: {
+			pref.externalSolver = m_ExternalSolver_RankSynthesis;
+			pref.smt_solver_command = m_ExternalSolverCommand_RankSynthesis;
+			break;
+		}
+		default:
+			throw new AssertionError();
+		}
 		UltimatePreferenceStore baPref = new UltimatePreferenceStore(Activator.s_PLUGIN_ID);
 		pref.dumpSmtSolverScript = baPref.getBoolean(PreferenceInitializer.LABEL_DumpToFile);
 		pref.path_of_dumped_script = baPref.getString(PreferenceInitializer.LABEL_DumpPath);
@@ -649,7 +673,8 @@ public class LassoChecker {
 				boolean overapproximateArrayIndexConnection = false;
 				laNT = new LassoAnalysis(m_SmtManager.getScript(), m_SmtManager.getBoogie2Smt(), stemTF, loopTF,
 						modifiableGlobalsAtHonda, m_Axioms.toArray(new Term[m_Axioms.size()]), 
-						constructLassoRankerPreferences(withStem, overapproximateArrayIndexConnection, NlaHandling.UNDERAPPROXIMATE), mServices, mStorage);
+						constructLassoRankerPreferences(withStem, overapproximateArrayIndexConnection, 
+						NlaHandling.UNDERAPPROXIMATE, AnalysisTechnique.GEOMETRIC_NONTERMINATION_ARGUMENTS), mServices, mStorage);
 				m_preprocessingBenchmarks.add(laNT.getPreprocessingBenchmark());
 			} catch (TermException e) {
 				e.printStackTrace();
@@ -678,7 +703,8 @@ public class LassoChecker {
 			boolean overapproximateArrayIndexConnection = true;
 			laT = new LassoAnalysis(m_SmtManager.getScript(), m_SmtManager.getBoogie2Smt(), stemTF, loopTF,
 					modifiableGlobalsAtHonda, m_Axioms.toArray(new Term[m_Axioms.size()]), 
-					constructLassoRankerPreferences(withStem, overapproximateArrayIndexConnection, NlaHandling.OVERAPPROXIMATE), mServices, mStorage);
+					constructLassoRankerPreferences(withStem, overapproximateArrayIndexConnection, 
+					NlaHandling.OVERAPPROXIMATE, AnalysisTechnique.RANKING_FUNCTIONS_SUPPORTING_INVARIANTS), mServices, mStorage);
 			m_preprocessingBenchmarks.add(laT.getPreprocessingBenchmark());
 		} catch (TermException e) {
 			e.printStackTrace();

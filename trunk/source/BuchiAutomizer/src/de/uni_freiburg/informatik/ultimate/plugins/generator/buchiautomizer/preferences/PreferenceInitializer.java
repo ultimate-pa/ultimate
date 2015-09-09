@@ -71,6 +71,10 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 						true, PreferenceType.Boolean),
 				new UltimatePreferenceItem<String>(LABEL_ExtSolverCommandRank,
 						DEF_ExtSolverCommandRank, PreferenceType.String),
+				new UltimatePreferenceItem<Boolean>(LABEL_ExtSolverGNTA,
+						true, PreferenceType.Boolean),
+				new UltimatePreferenceItem<String>(LABEL_ExtSolverCommandGNTA,
+						DEF_ExtSolverCommandRank, PreferenceType.String),
 				new UltimatePreferenceItem<AnalysisType>(LABEL_AnalysisType,
 						AnalysisType.Nonlinear,
 						PreferenceType.Combo,
@@ -112,6 +116,9 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 	public static final String LABEL_ExtSolverRank = "Use external solver (rank synthesis)";
 	public static final String LABEL_ExtSolverCommandRank = "Command for external solver (rank synthesis)";
 	public static final String DEF_ExtSolverCommandRank = "z3 SMTLIB2_COMPLIANT=true -memory:1024 -smt2 -in -t:12000";
+	public static final String LABEL_ExtSolverGNTA = "Use external solver (GNTA synthesis)";
+	public static final String LABEL_ExtSolverCommandGNTA = "Command for external solver (GNTA synthesis)";
+	public static final String DEF_ExtSolverCommandGNTA = "z3 SMTLIB2_COMPLIANT=true -memory:1024 -smt2 -in -t:12000";
 	public static final String LABEL_AnalysisType = "Lasso Analysis";
 	public static final String LABEL_TemplateBenchmarkMode = "Template benchmark mode";
 	public static final String LABEL_DumpToFile = "Dump SMT script to file";
