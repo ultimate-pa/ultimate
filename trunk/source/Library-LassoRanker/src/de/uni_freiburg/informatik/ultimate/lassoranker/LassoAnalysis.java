@@ -89,6 +89,23 @@ import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
  */
 public class LassoAnalysis {
 	private final Logger m_Logger;
+	
+	/**
+	 * Analysis techniques supported by this library.
+	 * TODO: Is "analysis techniques" the right term?
+	 */
+	public enum AnalysisTechnique { 
+		/**
+		 * Termination analysis based on the synthesis of ranking functions and 
+		 * supporting invariants.
+		 */
+		RANKING_FUNCTIONS_SUPPORTING_INVARIANTS,
+		/**
+		 * Nontermination analysis based on the synthesis of geometric 
+		 * nontermination arguments.
+		 */
+		GEOMETRIC_NONTERMINATION_ARGUMENTS,
+	}
 
 	/**
 	 * Stem formula of the linear lasso program
