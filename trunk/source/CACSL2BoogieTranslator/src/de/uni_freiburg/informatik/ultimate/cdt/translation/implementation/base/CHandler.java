@@ -214,6 +214,7 @@ import de.uni_freiburg.informatik.ultimate.result.LTLPropertyCheck.CheckableExpr
  * @author Markus Lindenmann
  * @author Oleksii Saukh
  * @author Stefan Wissert
+ * @author Matthias Heizmann
  * @date 01.02.2012
  */
 public class CHandler implements ICHandler {
@@ -1479,257 +1480,17 @@ public class CHandler implements ICHandler {
 			ResultExpression rrToInt = ConvExpr.rexBoolToIntIfNecessary(loc, rr, m_ExpressionTranslation);
 			return handleMultiplicativeOperation(main, loc, l.lrVal, node.getOperator(), rlToInt, rrToInt);
 		}
-		case IASTBinaryExpression.op_minus:
-		case IASTBinaryExpression.op_plus: {
-			
-			if (lType instanceof CArray || rType instanceof CArray) {
-				ResultExpression rlToInt = ConvExpr.rexBoolToIntIfNecessary(loc, rl, m_ExpressionTranslation);
-				ResultExpression rrToInt = ConvExpr.rexBoolToIntIfNecessary(loc, rr, m_ExpressionTranslation);
-	
-				RValue rval = null;
-				if (lType instanceof CArray
-						&& rType instanceof CPrimitive
-						&& ((CPrimitive) rType).getGeneralType() == GENERALPRIMITIVE.INTTYPE) {
-					CType valueType = ((CArray) lType).getValueType().getUnderlyingType();
-
-					RValue arrayAdd = null;
-					if (l.lrVal instanceof HeapLValue)
-						arrayAdd = new RValue(((HeapLValue)l.lrVal).getAddress(), new CPointer(valueType));
-					else
-						arrayAdd = new RValue(l.lrVal.getValue(), new CPointer(valueType));
-						
-
-					rval = doPointerArithPointerAndInteger(main, node.getOperator(), loc, arrayAdd,
-							((RValue) rrToInt.lrVal), new CPointer(valueType));
-
-					stmt.addAll(l.stmt);
-					stmt.addAll(rrToInt.stmt);
-					decl.addAll(l.decl);
-					decl.addAll(rrToInt.decl);
-					auxVars.putAll(l.auxVars);
-					auxVars.putAll(rrToInt.auxVars);
-					overappr.addAll(l.overappr);
-					overappr.addAll(rrToInt.overappr);
-					
-				} else if ((rType instanceof CArray) 
-						&& lType instanceof CPrimitive
-						&& ((CPrimitive) lType).getGeneralType() == GENERALPRIMITIVE.INTTYPE) {
-					CType valueType = ((CArray) rType).getValueType().getUnderlyingType();
-
-					RValue arrayAdd = null;
-					if (r.lrVal instanceof HeapLValue)
-						arrayAdd = new RValue(((HeapLValue)r.lrVal).getAddress(), new CPointer(valueType));
-					else
-						arrayAdd = new RValue(r.lrVal.getValue(), new CPointer(valueType));
-	
-					rval = doPointerArithPointerAndInteger(main, node.getOperator(), loc,
-							(RValue) rlToInt.lrVal, arrayAdd, new CPointer(valueType));
-
-					stmt.addAll(rlToInt.stmt);
-					stmt.addAll(r.stmt);
-					decl.addAll(rlToInt.decl);
-					decl.addAll(r.decl);
-					auxVars.putAll(rlToInt.auxVars);
-					auxVars.putAll(r.auxVars);
-					overappr.addAll(rlToInt.overappr);
-					overappr.addAll(r.overappr);	
-
-				} else if (lType instanceof CArray
-						&& rType instanceof CArray) {
-					CType lValueType = ((CArray) lType).getValueType();
-					CType rValueType = ((CArray) rType).getValueType();
-					
-					Statement assertOrAssume = null;
-
-					RValue arrayAddl = null;
-					if (l.lrVal instanceof HeapLValue)
-						arrayAddl = new RValue(((HeapLValue)l.lrVal).getAddress(), new CPointer(lValueType));
-					else
-						arrayAddl = new RValue(l.lrVal.getValue(), new CPointer(lValueType));
-			
-					RValue arrayAddr = null;
-					if (r.lrVal instanceof HeapLValue)
-						arrayAddr = new RValue(((HeapLValue)r.lrVal).getAddress(), new CPointer(rValueType));
-					else
-						arrayAddr = new RValue(r.lrVal.getValue(), new CPointer(rValueType));
-		
-					assert lValueType.equals(rValueType);
-					if (this.mMemoryHandler.getPointerSubtractionAndComparisonValidityCheckMode() == POINTER_CHECKMODE.ASSERTandASSUME) {
-						Statement assertStm = new AssertStatement(loc, new BinaryExpression(loc,
-								BinaryExpression.Operator.COMPEQ, new StructAccessExpression(loc, arrayAddl.getValue(),
-										SFO.POINTER_BASE), new StructAccessExpression(loc, arrayAddr.getValue(),
-												SFO.POINTER_BASE)));
-						assertOrAssume = assertStm;
-						Check chk = new Check(Spec.ILLEGAL_POINTER_ARITHMETIC);
-						chk.addToNodeAnnot(assertStm);
-					} else if (this.mMemoryHandler.getPointerSubtractionAndComparisonValidityCheckMode() == POINTER_CHECKMODE.ASSUME) {
-						Statement assumeStm = new AssumeStatement(loc, new BinaryExpression(loc,
-								BinaryExpression.Operator.COMPEQ, new StructAccessExpression(loc, arrayAddl.getValue(),
-										SFO.POINTER_BASE), new StructAccessExpression(loc, arrayAddr.getValue(),
-												SFO.POINTER_BASE)));
-						assertOrAssume = assumeStm;
-					}
-
-					rval = doPointerArithPointerAndPointer(main, node.getOperator(), loc, arrayAddl,
-							arrayAddr);
-
-					stmt.addAll(l.stmt);
-					stmt.addAll(r.stmt);
-					if (assertOrAssume != null)
-						stmt.add(assertOrAssume);
-					decl.addAll(l.decl);
-					decl.addAll(r.decl);
-					auxVars.putAll(l.auxVars);
-					auxVars.putAll(r.auxVars);
-					overappr.addAll(l.overappr);
-					overappr.addAll(r.overappr);
-				}
-				
-				return new ResultExpression(stmt, rval, decl, auxVars, overappr);
-			} else if (lType instanceof CPointer || rType instanceof CPointer) {
-				ResultExpression rlToInt = ConvExpr.rexBoolToIntIfNecessary(loc, rl, m_ExpressionTranslation);
-				ResultExpression rrToInt = ConvExpr.rexBoolToIntIfNecessary(loc, rr, m_ExpressionTranslation);
-				RValue rval = null;
-				
-				Statement assertOrAssume = null;
-				
-				if ((lType instanceof CPointer) 
-						&& rType instanceof CPrimitive
-						&& ((CPrimitive) rType).getGeneralType() == GENERALPRIMITIVE.INTTYPE) {
-					CType valueType = ((CPointer) lType).pointsToType.getUnderlyingType();
-									
-					rval = doPointerArithPointerAndInteger(main, node.getOperator(), loc, ((RValue) rlToInt.lrVal),
-									((RValue) rrToInt.lrVal), valueType);
-				} else if ((rType instanceof CPointer) 
-						&& lType instanceof CPrimitive
-						&& ((CPrimitive) lType).getGeneralType() == GENERALPRIMITIVE.INTTYPE) {
-					CType valueType =  ((CPointer) rType).pointsToType.getUnderlyingType();
-					rval = doPointerArithPointerAndInteger(main, node.getOperator(), loc, (RValue) rrToInt.lrVal,
-									(RValue) rlToInt.lrVal, valueType);
-				} else if (lType instanceof CPointer
-						&& rType instanceof CPointer) {
-					assert node.getOperator() == IASTBinaryExpression.op_minus : "only subtraction of two pointers is allowed";
-					CType lValueType = ((CPointer) lType).pointsToType;
-					CType rValueType = ((CPointer) rType).pointsToType;
-					assert lValueType.equals(rValueType);
-					// assert (in Boogie) that the base value of the pointers
-					// matches
-					if (this.mMemoryHandler.getPointerSubtractionAndComparisonValidityCheckMode() == POINTER_CHECKMODE.ASSERTandASSUME) {
-						Statement assertStm = new AssertStatement(loc, new BinaryExpression(loc,
-								BinaryExpression.Operator.COMPEQ, new StructAccessExpression(loc, rlToInt.lrVal.getValue(),
-										SFO.POINTER_BASE), new StructAccessExpression(loc, rrToInt.lrVal.getValue(),
-												SFO.POINTER_BASE)));
-						assertOrAssume = assertStm;
-						Check chk = new Check(Spec.ILLEGAL_POINTER_ARITHMETIC);
-						chk.addToNodeAnnot(assertStm);
-					} else if (this.mMemoryHandler.getPointerSubtractionAndComparisonValidityCheckMode() == POINTER_CHECKMODE.ASSUME) {
-						Statement assumeStm = new AssumeStatement(loc, new BinaryExpression(loc,
-								BinaryExpression.Operator.COMPEQ, new StructAccessExpression(loc, rlToInt.lrVal.getValue(),
-										SFO.POINTER_BASE), new StructAccessExpression(loc, rrToInt.lrVal.getValue(),
-												SFO.POINTER_BASE)));
-						assertOrAssume = assumeStm;
-					}
-
-					rval = doPointerArithPointerAndPointer(main, node.getOperator(), loc, (RValue) rlToInt.lrVal,
-							(RValue) rrToInt.lrVal);
-				}
-				stmt.addAll(rlToInt.stmt);
-				stmt.addAll(rrToInt.stmt);
-				if (assertOrAssume != null)
-					stmt.add(assertOrAssume);
-				decl.addAll(rlToInt.decl);
-				decl.addAll(rrToInt.decl);
-				auxVars.putAll(rlToInt.auxVars);
-				auxVars.putAll(rrToInt.auxVars);
-				overappr.addAll(rlToInt.overappr);
-				overappr.addAll(rrToInt.overappr);
-
-				return new ResultExpression(stmt, rval, decl, auxVars, overappr);
-			} else {
-				ResultExpression rlToInt = ConvExpr.rexBoolToIntIfNecessary(loc, rl, m_ExpressionTranslation);
-				ResultExpression rrToInt = ConvExpr.rexBoolToIntIfNecessary(loc, rr, m_ExpressionTranslation);
-
-				if (node.getOperator() == IASTBinaryExpression.op_divide) {
-					Check check = new Check(Check.Spec.DIVISION_BY_ZERO);
-					ILocation assertLoc = LocationFactory.createCLocation(node, check);
-					AssertStatement assertStmt = new AssertStatement(assertLoc, new BinaryExpression(assertLoc,
-							BinaryExpression.Operator.COMPNEQ, new IntegerLiteral(assertLoc, SFO.NR0),
-							rrToInt.lrVal.getValue()));
-					Map<String, IAnnotations> annots = assertStmt.getPayload().getAnnotations();
-					for (Overapprox overapprItem : overappr) {
-						annots.put(Overapprox.getIdentifier(), overapprItem);
-					}
-					stmt.add(assertStmt);
-					check.addToNodeAnnot(assertStmt);
-					stmt.add(assertStmt);
-				} 
-				
-				m_ExpressionTranslation.usualArithmeticConversions(main, loc, rlToInt, rrToInt);
-				
-				stmt.addAll(rlToInt.stmt);
-				stmt.addAll(rrToInt.stmt);
-				decl.addAll(rlToInt.decl);
-				decl.addAll(rrToInt.decl);
-				auxVars.putAll(rlToInt.auxVars);
-				auxVars.putAll(rrToInt.auxVars);
-				overappr.addAll(rlToInt.overappr);
-				overappr.addAll(rrToInt.overappr);
-
-
-				RValue rval = new RValue(m_ExpressionTranslation.createArithmeticExpression(node.getOperator(), rlToInt.lrVal.getValue(), (CPrimitive) rlToInt.lrVal.getCType(),
-						rrToInt.lrVal.getValue(), (CPrimitive) rrToInt.lrVal.getCType(), loc), rlToInt.lrVal.getCType());
-				
-				
-				assert (isAuxVarMapcomplete(main, decl, auxVars)) : "unhavoced auxvars";
-				ResultExpression rex = new ResultExpression(stmt, rval, decl, auxVars, overappr);
-				if (node.getOperator() != IASTBinaryExpression.op_divide
-						&& node.getOperator() != IASTBinaryExpression.op_modulo)
-					checkIntegerBounds(main, loc, rex);
-				return rex;
-			}
+		case IASTBinaryExpression.op_plus:
+		case IASTBinaryExpression.op_minus: {
+			ResultExpression rlToInt = ConvExpr.rexBoolToIntIfNecessary(loc, rl, m_ExpressionTranslation);
+			ResultExpression rrToInt = ConvExpr.rexBoolToIntIfNecessary(loc, rr, m_ExpressionTranslation);
+			return handleAdditiveOperation(main, loc, null, node.getOperator(), rlToInt, rrToInt);
 		}
-		case IASTBinaryExpression.op_minusAssign:
-		case IASTBinaryExpression.op_plusAssign: {
-			assert !rl.lrVal.isBoogieBool() && !rr.lrVal.isBoogieBool();
-
-			if (node.getOperator() == IASTBinaryExpression.op_divideAssign) {
-				Check check = new Check(Check.Spec.DIVISION_BY_ZERO);
-				ILocation assertLoc = LocationFactory.createCLocation(node, check);
-				AssertStatement assertStmt = new AssertStatement(assertLoc, new BinaryExpression(assertLoc,
-						BinaryExpression.Operator.COMPNEQ, new IntegerLiteral(assertLoc, SFO.NR0), rr.lrVal.getValue()));
-				Map<String, IAnnotations> annots = assertStmt.getPayload().getAnnotations();
-				for (Overapprox overapprItem : overappr) {
-					annots.put(Overapprox.getIdentifier(), overapprItem);
-				}
-				check.addToNodeAnnot(assertStmt);
-				stmt.add(assertStmt);
-			} 
-			
-			m_ExpressionTranslation.usualArithmeticConversions(main, loc, rl, rr);
-			
-			stmt.addAll(rl.stmt);
-			stmt.addAll(rr.stmt);
-			decl.addAll(rl.decl);
-			decl.addAll(rr.decl);
-			auxVars.putAll(rl.auxVars);
-			auxVars.putAll(rr.auxVars);
-			overappr.addAll(rl.overappr);
-			overappr.addAll(rr.overappr);
-			
-			// handle pointer arithmetic.
-			RValue rightHandside = null;
-			if (lType instanceof CPointer && rType instanceof CPrimitive
-					&& ((CPrimitive) rType).getType() == PRIMITIVE.INT) {
-				rightHandside = doPointerArithPointerAndInteger(main, node.getOperator(), loc, (RValue) rl.lrVal,
-						(RValue) rr.lrVal, ((CPointer) rl.lrVal.getCType().getUnderlyingType()).pointsToType);
-			} else {
-				rightHandside = new RValue(m_ExpressionTranslation.createArithmeticExpression(node.getOperator(), rl.lrVal.getValue(),
-						(CPrimitive) rl.lrVal.getCType(), rr.lrVal.getValue(), (CPrimitive) rr.lrVal.getCType(), loc), rr.lrVal.getCType());
-			} 
-			if (node.getOperator() != IASTBinaryExpression.op_divideAssign
-						&& node.getOperator() != IASTBinaryExpression.op_moduloAssign)
-				checkIntegerBounds(main, loc, rightHandside, stmt);
-			return makeAssignment(main, loc, stmt, l.lrVal, rightHandside, decl, auxVars, overappr);
+		case IASTBinaryExpression.op_plusAssign:
+		case IASTBinaryExpression.op_minusAssign: {
+			ResultExpression rlToInt = ConvExpr.rexBoolToIntIfNecessary(loc, rl, m_ExpressionTranslation);
+			ResultExpression rrToInt = ConvExpr.rexBoolToIntIfNecessary(loc, rr, m_ExpressionTranslation);
+			return handleAdditiveOperation(main, loc, l.lrVal, node.getOperator(), rlToInt, rrToInt);
 		}
 		case IASTBinaryExpression.op_binaryAnd:
 		case IASTBinaryExpression.op_binaryOr:
@@ -1888,7 +1649,7 @@ public class CHandler implements ICHandler {
 		}
 		m_ExpressionTranslation.usualArithmeticConversions(main, loc, left, right);
 		final CPrimitive typeOfResult = (CPrimitive) left.lrVal.getCType();
-		assert typeOfResult.equals(left.lrVal.getCType());
+		assert typeOfResult.equals(right.lrVal.getCType());
 
 		ResultExpression result = ResultExpression.copyStmtDeclAuxvarOverapprox(left, right);
 		switch (op) {
@@ -1965,8 +1726,196 @@ public class CHandler implements ICHandler {
 			divisorExpRes.stmt.add(additionalStatement);
 		}
 	}
-		
 	
+	/**
+	 * Handle additive operators according to Sections 6.5.6 of C11.
+	 * Assumes that left (resp. right) are the results from handling the operands.
+	 * Requires that the {@link LRValue} of operands is an {@link RValue}
+	 * (i.e., switchToRValueIfNecessary was applied if needed).
+	 * requires that the Boogie expressions in left (resp. right) are a 
+	 * non-boolean representation of these results 
+	 * (i.e., rexBoolToIntIfNecessary() has already been applied if needed).
+	 */
+	ResultExpression handleAdditiveOperation(Dispatcher main, ILocation loc, 
+			LRValue lhs, int op, ResultExpression left, ResultExpression right) {
+		assert (left.lrVal instanceof RValue) : "no RValue";
+		assert (right.lrVal instanceof RValue) : "no RValue";
+		final CType lType = left.lrVal.getCType().getUnderlyingType();
+		final CType rType = right.lrVal.getCType().getUnderlyingType();
+		ResultExpression result;
+		final Expression expr;
+		final CType typeOfResult;
+		if (lType.isArithmeticType() && rType.isArithmeticType()) {
+			m_ExpressionTranslation.usualArithmeticConversions(main, loc, left, right);
+			typeOfResult = left.lrVal.getCType();
+			assert typeOfResult.equals(right.lrVal.getCType());
+			result = ResultExpression.copyStmtDeclAuxvarOverapprox(left, right);
+			addIntegerBoundsCheck(main, loc, result, (CPrimitive)  typeOfResult, op, left.lrVal.getValue(), right.lrVal.getValue());
+			expr = m_ExpressionTranslation.createArithmeticExpression(
+				op, left.lrVal.getValue(), (CPrimitive)  typeOfResult, right.lrVal.getValue(), (CPrimitive)  typeOfResult, loc);
+		} else if ((lType instanceof CPointer) && rType.isArithmeticType()) {
+			typeOfResult = left.lrVal.getCType();
+			CType pointsToType = ((CPointer) typeOfResult).pointsToType;
+			result = ResultExpression.copyStmtDeclAuxvarOverapprox(left, right);
+			expr = doPointerArith(main, op, loc, left.lrVal.getValue(), right.lrVal.getValue(), pointsToType);
+			checkOffsetInBounds(main, loc, expr, result);
+		} else if (lType.isArithmeticType() && (rType instanceof CPointer)) {
+			if (op != IASTBinaryExpression.op_plus && op != IASTBinaryExpression.op_plusAssign) {
+				throw new AssertionError("lType arithmetic, rType CPointer only legal if op is plus");
+			}
+			typeOfResult = right.lrVal.getCType();
+			CType pointsToType = ((CPointer) typeOfResult).pointsToType;
+			result = ResultExpression.copyStmtDeclAuxvarOverapprox(left, right);
+			expr = doPointerArith(main, op, loc, right.lrVal.getValue(), left.lrVal.getValue(), pointsToType);
+			checkOffsetInBounds(main, loc, expr, result);
+		} else if ((lType instanceof CPointer) && (rType instanceof CPointer)) {
+			if (op != IASTBinaryExpression.op_minus && op != IASTBinaryExpression.op_minusAssign) {
+				throw new AssertionError("lType arithmetic, rType CPointer only legal if op is minus");
+			}
+			// C11 6.5.6.9 says 
+			//     "The size of the result is implementation-defined, 
+			//     and its type (a signed integer type) is ptrdiff_t defined in 
+			//     the <stddef.h> header."
+			// We randomly choose the type whose Boogie translation we use to 
+			// represent pointer components.
+			typeOfResult = m_ExpressionTranslation.getCTypeOfPointerComponents();
+			result = ResultExpression.copyStmtDeclAuxvarOverapprox(left, right);
+			CType pointsToType;
+			{
+				CType leftPointsToType = ((CPointer) lType).pointsToType;
+				CType rightPointsToType = ((CPointer) rType).pointsToType;
+				if (!leftPointsToType.equals(rightPointsToType)) {
+					// TODO: Matthias 2015-09-08: Maybe this is too strict and we
+					// have to check leftPointsToType.isCompatibleWith(rightPointsToType)
+					throw new UnsupportedOperationException("incompatible pointers: pointsto " 
+										+ leftPointsToType + " " + rightPointsToType);
+				}
+				pointsToType = leftPointsToType;
+			}
+			checkBaseEquality(main, loc, left.lrVal.getValue(), right.lrVal.getValue(), result);
+			expr = doPointerSubtraction(main, loc, left.lrVal.getValue(), right.lrVal.getValue(), pointsToType);
+		} else {
+			throw new UnsupportedOperationException("non-standard case of pointer arithmetic");
+		}
+		final RValue rval = new RValue(expr,typeOfResult, false, false);
+		
+		switch (op) {
+		case IASTBinaryExpression.op_plus:
+		case IASTBinaryExpression.op_minus: {
+			assert lhs == null : "no assignment";
+			result.lrVal = rval;
+			return result;
+		}
+		case IASTBinaryExpression.op_plusAssign:
+		case IASTBinaryExpression.op_minusAssign: {
+			result = makeAssignment(main, loc, result.stmt, lhs, rval, result.decl, result.auxVars, result.overappr);
+			return result;
+		}
+		default:
+			throw new AssertionError("no additive operation " + op);
+		}
+	}
+	
+	/**
+	 * Check if two pointers have the same base component (i.e. if both point
+	 * to the same array object).
+	 * Depending on the preferences of this plugin we
+	 * <ul> 
+	 *  <li> assert that both have the same base component,
+	 *  <li> assume that both have the same base component, or
+	 *  <li> add nothing.
+	 * </ul>
+	 * 
+	 * @param leftPtr Boogie {@link Expression} that represents the left pointer.
+	 * @param rightPtr Boogie {@link Expression} that represents the right pointer.
+	 * @param result {@link ResultExpression} to which the additional statements
+	 * are added.
+	 */
+	private void checkBaseEquality(Dispatcher main, ILocation loc,
+			Expression leftPtr, Expression rightPtr, ResultExpression result) {
+		if (mMemoryHandler.getPointerSubtractionAndComparisonValidityCheckMode() == POINTER_CHECKMODE.IGNORE) {
+			// do not check anything
+			return;
+		}
+		final Expression baseEquality = constructPointerComponentRelation(loc, 
+				IASTBinaryExpression.op_equals, leftPtr, rightPtr, SFO.POINTER_BASE);
+		switch (mMemoryHandler.getPointerSubtractionAndComparisonValidityCheckMode()) {
+		case ASSERTandASSUME:
+			Statement assertStm = new AssertStatement(loc, baseEquality);
+			Check chk = new Check(Spec.ILLEGAL_POINTER_ARITHMETIC);
+			chk.addToNodeAnnot(assertStm);
+			result.stmt.add(assertStm);
+			break;
+		case ASSUME:
+			Statement assumeStm = new AssumeStatement(loc, baseEquality);
+			result.stmt.add(assumeStm);
+			break;
+		case IGNORE:
+			throw new AssertionError("case handled before");
+		default:
+			throw new AssertionError("unknown value");
+		}
+	}
+
+	/**
+	 * Subtract two pointers.
+	 * @param leftPtr Boogie {@link Expression} that represents the left pointer.
+	 * @param rightPtr Boogie {@link Expression} that represents the right pointer.
+	 * @param pointsToType {@link CType} of the objects to which the pointers
+	 * point.
+	 * @return An {@link Expression} that represents the difference of two
+	 * Pointers according to C11 6.5.6.9.
+	 */
+	private Expression doPointerSubtraction(Dispatcher main,
+			ILocation loc, Expression ptr1, Expression ptr2,
+			CType pointsToType) {
+		Expression ptr1Offset = new StructAccessExpression(loc, ptr1, SFO.POINTER_OFFSET);
+		Expression ptr2Offset = new StructAccessExpression(loc, ptr2, SFO.POINTER_OFFSET);
+		Expression offsetDifference = m_ExpressionTranslation.createArithmeticExpression(
+				IASTBinaryExpression.op_minus, 
+				ptr1Offset, m_ExpressionTranslation.getCTypeOfPointerComponents(), 
+				ptr2Offset, m_ExpressionTranslation.getCTypeOfPointerComponents(), loc);
+		Expression typesize = mMemoryHandler.calculateSizeOf(pointsToType, loc);
+		CPrimitive typesizeType = new CPrimitive(PRIMITIVE.INT);
+		//TODO: typesizeType and .getCTypeOfPointerComponents() might be 
+		// different then one expression has to be converted into the type of
+		// the other
+		Expression offsetDifferenceDividedByTypesize = m_ExpressionTranslation.createArithmeticExpression(
+				IASTBinaryExpression.op_divide, 
+				offsetDifference, m_ExpressionTranslation.getCTypeOfPointerComponents(),
+				typesize, typesizeType, loc);
+		return offsetDifferenceDividedByTypesize;
+	}
+
+		
+	/**
+	 * Check if pointer offset is in a legal range.
+	 * In case a pointer points to allocated memory, the "base" of a pointer 
+	 * points to some array object (in C). Now we check if the offset of this
+	 * pointer does not violate the bounds of that array.
+	 * This means that the offset 
+	 * <ul> 
+	 *  <li> must be non-negative, and
+	 *  <li> must be small enough that the pointer points to an element of the
+	 *       array or one past the last element of the array.
+	 * </ul>
+	 * Depending on the preferences of this plugin we
+	 * <ul> 
+	 *  <li> assert that the offset is in the bounds of the array,
+	 *  <li> assume that the offset is in the bounds of the array, or
+	 *  <li> add nothing.
+	 * </ul>
+	 * 
+	 * @param ptr Boogie {@link Expression} that represents the pointer.
+	 * @param result {@link ResultExpression} to which the additional statements
+	 * are added.
+	 */
+	private void checkOffsetInBounds(Dispatcher main, ILocation loc,
+			Expression ptr, ResultExpression result) {
+		//TODO: Matthias 2015-09-08 implement this
+		// maybe additional parameters are required.
+	}
+
 	/**
 	 * Handle equality operators according to Section 6.5.9 of C11.
 	 * Assumes that left (resp. right) are the results from handling the operands.
@@ -3299,17 +3248,21 @@ public class CHandler implements ICHandler {
 	 */
 	public Expression doPointerArith(Dispatcher main, int operator, ILocation loc, Expression ptrAddress,
 			Expression integer, CType valueType) {
-		Expression pointerBase = MemoryHandler.getPointerBaseAddress(ptrAddress, loc);
-		Expression pointerOffset = MemoryHandler.getPointerOffset(ptrAddress, loc);
-		Expression timesSizeOf = null;
-		if (valueType != null) {
-			timesSizeOf = createArithmeticExpression(IASTBinaryExpression.op_multiply, integer,
-					mMemoryHandler.calculateSizeOf(valueType, loc), loc);
-		} else {
+		final Expression pointerBase = MemoryHandler.getPointerBaseAddress(ptrAddress, loc);
+		final Expression pointerOffset = MemoryHandler.getPointerOffset(ptrAddress, loc);
+		final Expression timesSizeOf;
+		if (valueType == null) {
 			timesSizeOf = integer;
+		} else {
+			timesSizeOf = m_ExpressionTranslation.createArithmeticExpression(
+					IASTBinaryExpression.op_multiply, integer, m_ExpressionTranslation.getCTypeOfPointerComponents(),
+					mMemoryHandler.calculateSizeOf(valueType, loc), m_ExpressionTranslation.getCTypeOfPointerComponents(), loc);
+
 		}
-		Expression sum = createArithmeticExpression(operator, pointerOffset, timesSizeOf, loc);
-		StructConstructor newPointer = MemoryHandler.constructPointerFromBaseAndOffset(pointerBase, sum, loc);
+		final Expression sum = m_ExpressionTranslation.createArithmeticExpression(operator, 
+				pointerOffset, m_ExpressionTranslation.getCTypeOfPointerComponents(),
+				timesSizeOf, m_ExpressionTranslation.getCTypeOfPointerComponents(), loc);
+		final StructConstructor newPointer = MemoryHandler.constructPointerFromBaseAndOffset(pointerBase, sum, loc);
 		return newPointer;
 	}
 
