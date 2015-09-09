@@ -6,10 +6,10 @@
 #include <stdio.h>
 
 int main() {
-	// The operand 1L has type long. Due to the usual arithmetic conversions, 
-	// 2147483647 is converted to long before the addition, hence there is 
-	// not overflow.
-	int x = (2147483647 + 1L) - 23;
+	// The operand 1LL has type long long. Due to the usual arithmetic conversions, 
+	// 2147483647 is converted to long long before the addition, hence there is 
+	// no overflow.
+	int x = (2147483647 + 1LL) - 23;
 	printf("%d\n", x);
 	return 0;
 }
