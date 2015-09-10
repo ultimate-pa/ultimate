@@ -87,11 +87,11 @@ public class IntervalDomainStatementProcessor extends BoogieVisitor {
 		final Expression[] rhs = statement.getRhs();
 
 		for (int i = 0; i < lhs.length; i++) {
-			assert mLhsVariable == null;
-			processLeftHandSide(lhs[i]);
-			assert mLhsVariable != null;
-
-			processExpression(rhs[i]);
+//			assert mLhsVariable == null;
+//			processLeftHandSide(lhs[i]);
+//			assert mLhsVariable != null;
+//
+//			processExpression(rhs[i]);
 		}
 	}
 
