@@ -3883,6 +3883,8 @@ public class CHandler implements ICHandler {
 
 	@Override
 	public void castToType(Dispatcher main, ILocation loc, ResultExpression rexp, CType newTypeRaw) {
+		//TODO: don't do this by reference but return a new ResultExpression
+
 		RValue rValIn = (RValue) rexp.lrVal;
 		CType newType = newTypeRaw.getUnderlyingType();
 		CType oldType = rValIn.getCType().getUnderlyingType();
@@ -3950,6 +3952,10 @@ public class CHandler implements ICHandler {
 			} else {
 				throw new UnsupportedOperationException("yet unsupported cast from " + oldType + " to " + newType);
 			}
+		} else if (oldType instanceof CArray) {
+//TODO..		
+			throw new UnsupportedOperationException("yet unsupported cast from " + oldType + " to " + newType);
+			
 		} else {
 			throw new UnsupportedOperationException("yet unsupported cast from " + oldType + " to " + newType);
 		}

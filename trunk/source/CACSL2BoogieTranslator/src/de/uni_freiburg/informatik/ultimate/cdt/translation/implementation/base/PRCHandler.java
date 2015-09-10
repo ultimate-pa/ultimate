@@ -34,6 +34,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.lang3.NotImplementedException;
 import org.apache.log4j.Logger;
 import org.eclipse.cdt.core.dom.ast.IASTArraySubscriptExpression;
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
@@ -53,6 +54,7 @@ import org.eclipse.cdt.core.dom.ast.IASTExpressionStatement;
 import org.eclipse.cdt.core.dom.ast.IASTForStatement;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionDefinition;
 import org.eclipse.cdt.core.dom.ast.IASTGotoStatement;
+import org.eclipse.cdt.core.dom.ast.IASTIdExpression;
 import org.eclipse.cdt.core.dom.ast.IASTIfStatement;
 import org.eclipse.cdt.core.dom.ast.IASTInitializerList;
 import org.eclipse.cdt.core.dom.ast.IASTLabelStatement;
@@ -555,7 +557,7 @@ public class PRCHandler extends CHandler {
 	public Result visit(Dispatcher main, IASTCastExpression node) {
 		ResultExpression expr = (ResultExpression) main.dispatch(node.getOperand()); 
 		ILocation loc = LocationFactory.createCLocation(node); 
-		expr = expr.switchToRValueIfNecessary(main, mMemoryHandler, mStructHandler, loc);
+		ResultExpression switchedRexpr = expr.switchToRValueIfNecessary(main, mMemoryHandler, mStructHandler, loc);
 
 		// TODO: check validity of cast?
 
@@ -567,13 +569,36 @@ public class PRCHandler extends CHandler {
 		CType newCType = declResult.getDeclarations().get(0).getType();
 		mCurrentDeclaredTypes.pop();
 		
-		castToType(main, loc, expr, newCType);
+		if (newCType instanceof CPointer && expr.lrVal.getCType() instanceof CArray) {
+			if (node.getOperand() instanceof IASTIdExpression){
+				IASTNode d = ((PRSymbolTableValue) mSymbolTable.get(((IASTIdExpression) node.getOperand()).getName().toString(), loc)).decl;
+				variablesOnHeap.add(d);
+			} else {
+				//TODO: handle f.i. something like "(int *) a[2]" where a is two-dimensional (thus a[2] is an array)
+				throw new NotImplementedException("");
+			}
+			return switchedRexpr;
+		}
+
+//		if (newCType instanceof CPointer && expr.lrVal.getCType() instanceof CArray) {
+//			HeapLValue hlv = (HeapLValue) expr.lrVal;
+//			
+//			if (hlv.getAddress() instanceof IdentifierExpression) {
+//					String id = ((IdentifierExpression) rexp.lrVal.getValue()).getIdentifier();
+//				    IASTNode decl = ((PRSymbolTableValue) this.getSymbolTable().get(this.getSymbolTable().getCID4BoogieID(id, loc), loc)).decl;
+//				    ((PRCHandler) this).getVarsForHeap().add(decl);
+//			} else {
+//				throw new UnsupportedOperationException("yet unsupported cast from " + oldType + " to " + newType);
+//			}
+//		}
+		
+		castToType(main, loc, switchedRexpr, newCType);
 
 		// String msg = "Ignored cast! At line: "
 		// + node.getFileLocation().getStartingLineNumber();
 		// Dispatcher.unsoundnessWarning(loc, msg,
 		// "Ignored cast!");
-		return expr;
+		return switchedRexpr;
 	}
 
 	@Override
