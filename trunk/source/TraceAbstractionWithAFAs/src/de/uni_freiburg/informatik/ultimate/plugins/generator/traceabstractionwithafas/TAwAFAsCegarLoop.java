@@ -99,7 +99,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstractioncon
 public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 
 	private PredicateUnifier m_PredicateUnifier;
-	private TraceCheckerWithAccessibleSSATerms m_traceCheckerWAST = null; 
 	
 	private int ssaIndex = 1000;
 	
@@ -114,32 +113,13 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 				smtManager.newFalsePredicate());
 	}
 
-	private List<DataflowDAG<TraceCodeBlock>> testReachDef() throws AssertionError {
-		try {
-			List<CodeBlock> word = m_Counterexample.getWord().asList();
-			StringBuilder sb = new StringBuilder();
-			for (CodeBlock letter : word) {
-				sb.append("[").append(letter).append("] ");
-			}
-			Level old = mLogger.getLevel();
-			mLogger.setLevel(Level.DEBUG);
-			mLogger.debug("Calculating RD DAGs for " + sb);
-			List<DataflowDAG<TraceCodeBlock>> dags = ReachingDefinitions.computeRDForTrace(word, mLogger, m_RootNode);
-			mLogger.setLevel(old);
-			return dags;
-		} catch (Throwable e) {
-			mLogger.fatal("DataflowDAG generation threw an exception.", e);
-			throw new AssertionError();
-		}
-	}
-
 	@Override
 	protected void constructInterpolantAutomaton() throws OperationCanceledException {
 		Word<CodeBlock> trace = m_InterpolantGenerator.getTrace();
 		mLogger.debug("current trace:");
 		mLogger.debug(trace.toString());
 
-		List<DataflowDAG<TraceCodeBlock>> dags = testReachDef();
+		List<DataflowDAG<TraceCodeBlock>> dags = computeRdDAGsFromCEx();
 
 		AlternatingAutomaton<CodeBlock, IPredicate> alternatingAutomatonUnion = null;
 		for (DataflowDAG<TraceCodeBlock> dag : dags) {
@@ -191,17 +171,21 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 						constantsToBoogieVar);
 				decorateDagWithInterpolants(dag, predicates);
 
+				mLogger.info("The DAG annotated with interpolants: \n" + dag.getDebugString());
+
 				AlternatingAutomaton<CodeBlock, IPredicate> alternatingAutomaton = computeAlternatingAutomaton(dag);
+
 				mLogger.info("compute alternating automaton:\n " + alternatingAutomaton);
+
 				assert alternatingAutomaton.accepts(trace) : "interpolant afa does not accept the trace!";
 				if (alternatingAutomatonUnion == null) {
 					alternatingAutomatonUnion = alternatingAutomaton;
 				} else {
-					mLogger.debug("merging the following two AFAs:\n" 
-							+ "################### 1st AFA: ###################\n"
-							+ alternatingAutomatonUnion + "\n"
-							+ "################### 2nd AFA: ###################\n"
-							+ alternatingAutomaton + "\n");
+//					mLogger.debug("merging the following two AFAs:\n" 
+//							+ "################### 1st AFA: ###################\n"
+//							+ alternatingAutomatonUnion + "\n"
+//							+ "################### 2nd AFA: ###################\n"
+//							+ alternatingAutomaton + "\n");
 					AA_MergedUnion<CodeBlock, IPredicate> mergedUnion = 
 							new AA_MergedUnion<CodeBlock, IPredicate>(alternatingAutomatonUnion, alternatingAutomaton);
 					alternatingAutomatonUnion = mergedUnion.getResult();
@@ -212,7 +196,6 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 				m_SmtManager.getScript().pop(1);
 			}
 		}
-		mLogger.info(alternatingAutomatonUnion);
 		assert alternatingAutomatonUnion.accepts(trace) : "interpolant afa does not accept the trace!";
 
 		RAFA_Determination<CodeBlock> determination = new RAFA_Determination<CodeBlock>(m_Services, alternatingAutomatonUnion, m_SmtManager, m_PredicateUnifier);
@@ -226,14 +209,20 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 
 	}
 	
-	private Word<CodeBlock> reverse(Word<CodeBlock> trace) {
-		CodeBlock[] newWord = new CodeBlock[trace.length()];
-		int[] newNestingRelation = new int[trace.length()];
-		for (int i = 0; i < trace.length(); i++) {
-			newWord[trace.length() - 1 - i] = trace.getSymbol(i);
-			newNestingRelation[i] = -2;
+	private List<DataflowDAG<TraceCodeBlock>> computeRdDAGsFromCEx() throws AssertionError {
+		try {
+			List<CodeBlock> word = m_Counterexample.getWord().asList();
+			StringBuilder sb = new StringBuilder();
+			for (CodeBlock letter : word) {
+				sb.append("[").append(letter).append("] ");
+			}
+			mLogger.debug("Calculating RD DAGs for " + sb);
+			List<DataflowDAG<TraceCodeBlock>> dags = ReachingDefinitions.computeRDForTrace(word, mLogger, m_RootNode);
+			return dags;
+		} catch (Throwable e) {
+			mLogger.fatal("DataflowDAG generation threw an exception.", e);
+			throw new AssertionError();
 		}
-		return new NestedWord<CodeBlock>(newWord, newNestingRelation);
 	}
 
 	/**
@@ -316,8 +305,8 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 			constantsToBoogieVar.put((ApplicationTerm) t, entry.getKey());
 		}
 		/*
-		 *  if more than one variable is assigned to, we need an additional substitution for the ones that are not
-		 * the writtenVar (according to the DAG)
+		 * If more than one variable is assigned to, we need an additional substitution for the ones that are not
+		 * the writtenVar (according to the DAG).
 		 * (otherwise we get a statement formula that is equivalent to false)
 		 */
 		for (BoogieVar av : transFormula.getAssignedVars()) {
@@ -333,6 +322,21 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 		return substitutedTerm;
 	}
 
+	/**
+	 * Build constant bv_index that represents BoogieVar bv that obtains a new
+	 * value at position index.
+	 */
+	private Term buildVersion(BoogieVar bv) {
+		int index = ssaIndex++;
+		Term constant = PredicateUtils.getIndexedConstant(bv, index, m_IndexedConstants, m_SmtManager.getScript());
+		return constant;
+	}
+
+	/**
+	 * Writes an interpolant from interpolants into every node in dag.
+	 * @param dag The DAG to be annotated with interpolants.
+	 * @param interpolants The interpolants as a list. The order is the postorder of the dag (which is a tree, in fact..)
+	 */
 	private void decorateDagWithInterpolants(DataflowDAG<TraceCodeBlock> dag, IPredicate[] interpolants) {
 		Stack<DataflowDAG<TraceCodeBlock>> stack = new Stack<>();
 		stack.push(dag);
@@ -355,6 +359,13 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 		}
 	}
 
+	/**
+	 * Takes interpolants that are computed from the SSA-version of the error trace and transforms them to IPredicates
+	 *  -- basically throwing away the SSA-indices.
+	 * @param interpolants
+	 * @param constants2BoogieVar
+	 * @return
+	 */
 	private IPredicate[] interpolantsToPredicates(Term[] interpolants, Map<Term, BoogieVar> constants2BoogieVar) {
 		IPredicate[] result = new IPredicate[interpolants.length];
 		PredicateConstructionVisitor m_sfmv = new PredicateConstructionVisitor(constants2BoogieVar);
@@ -432,12 +443,16 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 						currentDag.getNodeLabel().getInterpolant()) == Validity.VALID;
 			}
 		}
+		
+		boolean onlySelfLoops = true;
 
 		//Add transitions according to hoare triples
 		IHoareTripleChecker htc = getEfficientHoareTripleChecker();
 		for(CodeBlock letter : alternatingAutomaton.getAlphabet()){
 			for(IPredicate sourceState : alternatingAutomaton.getStates()){
 				for(IPredicate targetState : alternatingAutomaton.getStates()){
+					if (onlySelfLoops && !targetState.equals(sourceState))
+						continue;
 					if (htc.checkInternal(sourceState, letter, targetState) == Validity.VALID) {
 						alternatingAutomaton.addTransition(
 							letter,
@@ -547,6 +562,34 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 	}
 	
 	/**
+	 * return true if the input reversed afa has the properties we wish for
+	 * those properties are:
+	 *  - the corresponding hoare triple of each transition is valid
+	 */
+	private boolean checkRAFA(AlternatingAutomaton<CodeBlock, IPredicate> afa) {
+		MonolithicHoareTripleChecker htc = new MonolithicHoareTripleChecker(m_SmtManager);
+		boolean result = true;
+		for (Entry<CodeBlock, BooleanExpression[]> entry : afa.getTransitionFunction().entrySet()) {
+			for(int i=0;i<afa.getStates().size();i++){
+				if(entry.getValue()[i] != null){
+					IPredicate pre = bexToPredicate(entry.getValue()[i], afa.getStates());
+					IPredicate succ = afa.getStates().get(i);
+					boolean check = htc.checkInternal(pre, entry.getKey(), succ) == Validity.VALID;
+					result &= check;
+					if (!check)
+						mLogger.warn("the following non-inductive transition occurs in the current AFA:\n"
+								+ "pre: " + pre + "\n"
+								+ "stm: " + entry.getKey() + "\n"
+								+ "succ: " + succ
+								);
+	
+				}
+			}
+		}
+		return result;
+	}
+
+	/**
 	 * Computes the DNF belonging to the given BooleanExpression and Statelist as an IPredicate
 	 * Helper method for assertions.
 	 */
@@ -568,46 +611,13 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 		return pred;
 	}
 
-	/**
-	 * return true if the input reversed afa has the properties we wish for
-	 * those properties are:
-	 *  - the corresponding hoare triple of each transition is valid
-	 */
-	private boolean checkRAFA(AlternatingAutomaton<CodeBlock, IPredicate> afa) {
-		MonolithicHoareTripleChecker htc = new MonolithicHoareTripleChecker(m_SmtManager);
-		boolean result = true;
-		for (Entry<CodeBlock, BooleanExpression[]> entry : afa.getTransitionFunction().entrySet()) {
-			for(int i=0;i<afa.getStates().size();i++){
-				if(entry.getValue()[i] != null){
-//					text += "\t\t\t" + states.get(i) + " => " + entry.getValue()[i].toString(states);
-					IPredicate pre = bexToPredicate(entry.getValue()[i], afa.getStates());
-					IPredicate succ = afa.getStates().get(i);
-					boolean check = htc.checkInternal(pre, entry.getKey(), succ) == Validity.VALID;
-					result &= check;
-					if (!check)
-						mLogger.warn("the following non-inductive transition occurs in the current AFA:\n"
-								+ "pre: " + pre + "\n"
-								+ "stm: " + entry.getKey() + "\n"
-								+ "succ: " + succ
-								);
-
-				}
-			}
+	private Word<CodeBlock> reverse(Word<CodeBlock> trace) {
+		CodeBlock[] newWord = new CodeBlock[trace.length()];
+		int[] newNestingRelation = new int[trace.length()];
+		for (int i = 0; i < trace.length(); i++) {
+			newWord[trace.length() - 1 - i] = trace.getSymbol(i);
+			newNestingRelation[i] = -2;
 		}
-		return result;
-	}
-	
-	int getFreshSsaIndex() {
-		return ssaIndex++;
-	}
-	
-	/**
-	 * Build constant bv_index that represents BoogieVar bv that obtains a new
-	 * value at position index.
-	 */
-	private Term buildVersion(BoogieVar bv) {
-		int index = getFreshSsaIndex();
-		Term constant = PredicateUtils.getIndexedConstant(bv, index, m_IndexedConstants, m_SmtManager.getScript());
-		return constant;
+		return new NestedWord<CodeBlock>(newWord, newNestingRelation);
 	}
 }
