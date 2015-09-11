@@ -1041,61 +1041,7 @@ public class CHandler implements ICHandler {
 		}
 		case IASTUnaryExpression.op_prefixDecr:
 		case IASTUnaryExpression.op_prefixIncr: {
-			assert !o.lrVal.isBoogieBool();
-			// ++E -> t = E+1; E = t; t
-			ResultExpression rop = o.switchToRValueIfNecessary(main, mMemoryHandler, mStructHandler, loc);
-			ArrayList<Declaration> decl = new ArrayList<Declaration>();
-			ArrayList<Statement> stmt = new ArrayList<Statement>();
-			Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<VariableDeclaration, ILocation>();
-			List<Overapprox> overappr = new ArrayList<Overapprox>();
-			// In this case we need a temporary variable
-			String tmpName = main.nameHandler.getTempVarUID(SFO.AUXVAR.POST_MOD);
-			ASTType tmpType = mTypeHandler.ctype2asttype(loc, rop.lrVal.getCType());
-			VariableDeclaration tmpVar = SFO.getTempVarVariableDeclaration(tmpName, tmpType, loc);
-			auxVars.put(tmpVar, loc);
-			decl.add(tmpVar);
-			stmt.addAll(rop.stmt);
-			decl.addAll(rop.decl);
-			auxVars.putAll(rop.auxVars);
-			overappr.addAll(rop.overappr);
-			int op;
-			if (node.getOperator() == IASTUnaryExpression.op_prefixIncr)
-				op = IASTBinaryExpression.op_plus;
-			else
-				op = IASTBinaryExpression.op_minus;
-
-			final RValue rhs;
-			if (oType instanceof CPointer) {
-				CPrimitive type = new CPrimitive(PRIMITIVE.INT); 
-				Expression one = m_ExpressionTranslation.constructLiteralForIntegerType(
-						loc, type, BigInteger.ONE);
-				rhs = doPointerArithPointerAndInteger(main, op,
-						loc, (RValue) rop.lrVal, new RValue(one, type),
-						((CPointer) o.lrVal.getCType()).pointsToType);
-			}
-			else {
-				CPrimitive type = (CPrimitive) rop.lrVal.getCType();
-				Expression one = m_ExpressionTranslation.constructLiteralForIntegerType(
-						loc, type, BigInteger.ONE);
-				rhs = new RValue(m_ExpressionTranslation.createArithmeticExpression(
-						op, rop.lrVal.getValue(), type, one, type, loc), o.lrVal.getCType());
-			}
-
-			AssignmentStatement assignStmt = new AssignmentStatement(loc, new LeftHandSide[] { new VariableLHS(loc, // tmpIType,
-					tmpName) }, new Expression[] { rhs.getValue() });
-			Map<String, IAnnotations> annots = assignStmt.getPayload().getAnnotations();
-			for (Overapprox overapprItem : overappr) {
-				annots.put(Overapprox.getIdentifier(), overapprItem);
-			}
-			stmt.add(assignStmt);
-			assert !(o.lrVal instanceof RValue);
-			RValue tmpRValue = new RValue(new IdentifierExpression(loc, /*
-																		 * tmpIType,
-																		 */tmpName), o.lrVal.getCType());
-			ResultExpression assign = makeAssignment(main, loc, stmt, o.lrVal, tmpRValue, decl, auxVars, overappr);// ,
-																													// o.lrVal.cType);
-			checkIntegerBounds(main, loc, tmpRValue, assign.stmt);
-			return new ResultExpression(assign.stmt, tmpRValue, assign.decl, assign.auxVars, assign.overappr);
+			return handlePrefixIncrementAndDecrement(main, node.getOperator(), loc, o);
 		}
 		case IASTUnaryExpression.op_bracketedPrimary:
 			return o;
@@ -1150,15 +1096,78 @@ public class CHandler implements ICHandler {
 	}
 
 	/**
+	 * Handle prefix increment and decrement operators according to 
+	 * Section 6.5.3.1 of C11.
+	 * We translate the expression <code>++LV</code> to an auxiliary variable
+	 * <code>t~pre</code> and add to the resulting {@link ResultExpression}
+	 * the two assignments <code>t~pre := LV+1</code> and 
+	 * <code>LV := t~pre</code>.
+	 * Hence, the auxiliary variable <code>t~pre</code> stores the new value of 
+	 * the object to which the lvalue <code>LV</code> refers.
+	 * 
+	 * Question: Why are we doing this complicated replacement and do not replace
+	 * <code>++LV</code> by <code>LV + 1</code> ?
+	 * Answer: We want to be ready for dealing with cases where there are
+	 * several pre/post increment/decrement operations in one expression.
+	 * We might extend our implementation in a way where the 
+	 * operation is done at a certain sequence point or all evaluation orders
+	 * are considered.
+	 */
+	private Result handlePrefixIncrementAndDecrement(Dispatcher main,
+			int prefixOp, ILocation loc, ResultExpression exprRes) {
+		assert !exprRes.lrVal.isBoogieBool();
+		final LRValue modifiedLValue = exprRes.lrVal;
+		exprRes = exprRes.switchToRValueIfNecessary(main, mMemoryHandler, mStructHandler, loc);
+		final ResultExpression result = ResultExpression.copyStmtDeclAuxvarOverapprox(exprRes);
+		
+		// In this case we need a temporary variable for the new value
+		final String tmpName = main.nameHandler.getTempVarUID(SFO.AUXVAR.PRE_MOD);
+		final ASTType tmpIType = mTypeHandler.ctype2asttype(loc, exprRes.lrVal.getCType());
+		final VariableDeclaration tmpVar = SFO.getTempVarVariableDeclaration(tmpName, tmpIType, loc);
+		result.auxVars.put(tmpVar, loc);                                                                                                                      
+		result.decl.add(tmpVar);
+
+		final int op;
+		if (prefixOp == IASTUnaryExpression.op_prefixIncr) {
+			op = IASTBinaryExpression.op_plus;
+		} else if (prefixOp == IASTUnaryExpression.op_prefixDecr) {
+			op = IASTBinaryExpression.op_minus;
+		} else {
+			throw new AssertionError("no prefix");
+		}
+		
+		final CType oType = exprRes.lrVal.getCType().getUnderlyingType();
+		// in-/decremented value
+		final Expression valueXcremented = constructXcrementedValue(main, loc,
+				result, oType, op, exprRes.lrVal.getValue());
+		
+		// assign the old value to the temporary variable 
+		final AssignmentStatement assignStmt;
+		{
+			LeftHandSide[] tmpAsLhs = new LeftHandSide[] { new VariableLHS(loc, tmpName) };
+			Expression[] newValue = new Expression[] { valueXcremented };
+			assignStmt = new AssignmentStatement(loc, tmpAsLhs , newValue);
+		}
+		result.stmt.add(assignStmt);
+		
+		final RValue rhs = new RValue(valueXcremented, oType, false, false);
+		final ResultExpression assign = makeAssignment(main, loc, result.stmt, 
+				modifiedLValue, rhs, result.decl, result.auxVars, result.overappr);
+		
+		final RValue tmpRValue = new RValue(new IdentifierExpression(loc, tmpName), oType);
+		assign.lrVal = tmpRValue;
+		return assign;
+	}
+
+	/**
 	 * Handle postfix increment and decrement operators according to 
 	 * Section 6.5.2.4 of C11.
 	 * We translate the expression <code>LV++</code> to an auxiliary variable
 	 * <code>t~post</code> and add to the resulting {@link ResultExpression}
 	 * the two assignments <code>t~post := LV</code> and 
 	 * <code>LV := t~post + 1</code>.
-	 * Hence the auxiliary variable <code>t~post</code> stores the value of the
-	 * object to which the lvalue <code>LV</code> refers. 
-	 * 
+	 * Hence the auxiliary variable <code>t~post</code> stores the old value of 
+	 * the object to which the lvalue <code>LV</code> refers. 
 	 */
 	private Result handlePostfixIncrementAndDecrement(Dispatcher main,
 			ILocation loc, int postfixOp, ResultExpression exprRes) {
@@ -1194,30 +1203,53 @@ public class CHandler implements ICHandler {
 			throw new AssertionError("no postfix");
 		}
 
-		final Expression valueIncremented;
-		if (oType instanceof CPointer) {
-			CPointer cPointer = (CPointer) oType; 
-			Expression one = m_ExpressionTranslation.constructLiteralForIntegerType(
-					loc, m_ExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ONE);
-			valueIncremented = doPointerArith(main, op, loc, tmpRValue.getValue(), one, cPointer.pointsToType);
-			checkOffsetInBounds(main, loc, valueIncremented, result);
-		}
-		else if (oType instanceof CPrimitive) {
-			CPrimitive cPrimitive = (CPrimitive) oType;
-			Expression one = m_ExpressionTranslation.constructLiteralForIntegerType(
-					loc, cPrimitive, BigInteger.ONE);
-			addIntegerBoundsCheck(main, loc, result, cPrimitive, op, tmpRValue.getValue(), one);
-			valueIncremented = m_ExpressionTranslation.createArithmeticExpression(
-					op, tmpRValue.getValue(), cPrimitive, one, cPrimitive, loc);
-		} else {
-			throw new IllegalArgumentException("input has to be CPointer or CPrimitive");
-		}
-		final RValue rhs = new RValue(valueIncremented, oType, false, false);
-
+		// in-/decremented value
+		final Expression valueXcremented = constructXcrementedValue(main, loc,
+				result, oType, op, tmpRValue.getValue());
+		
+		final RValue rhs = new RValue(valueXcremented, oType, false, false);
 		final ResultExpression assign = makeAssignment(main, loc, result.stmt, 
 				modifiedLValue, rhs, result.decl, result.auxVars, result.overappr);
 		assign.lrVal = tmpRValue;
 		return assign;
+	}
+
+	/**
+	 * Increment or decrement an expression.
+	 * Construct expression that represents the value of the input expression
+	 * but is incremented or decremented by one.
+	 * If op is IASTBinaryExpression.op_plus we increment, 
+	 * if op is IASTBinaryExpression.op_minus we decrement.
+	 * If ctype is CPrimitive, we increment/decrement by one and also call
+	 * the method that adds (depending on the settings) an overflow check.
+	 * If ctype is CPointer, we increment/decrement by the size of the 
+	 * pointsToType and call the method that adds (depending on the settings)
+	 * an check if the pointer arithmetic was legal.
+	 */
+	private Expression constructXcrementedValue(Dispatcher main, ILocation loc,
+			final ResultExpression result, final CType ctype, final int op,
+			final Expression value) {
+		assert (op == IASTBinaryExpression.op_plus || op == IASTBinaryExpression.op_minus) : 
+			"has to be either minus or plus";
+		final Expression valueIncremented;
+		if (ctype instanceof CPointer) {
+			CPointer cPointer = (CPointer) ctype; 
+			Expression one = m_ExpressionTranslation.constructLiteralForIntegerType(
+					loc, m_ExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ONE);
+			valueIncremented = doPointerArith(main, op, loc, value, one, cPointer.pointsToType);
+			checkOffsetInBounds(main, loc, valueIncremented, result);
+		}
+		else if (ctype instanceof CPrimitive) {
+			CPrimitive cPrimitive = (CPrimitive) ctype;
+			Expression one = m_ExpressionTranslation.constructLiteralForIntegerType(
+					loc, cPrimitive, BigInteger.ONE);
+			addIntegerBoundsCheck(main, loc, result, cPrimitive, op, value, one);
+			valueIncremented = m_ExpressionTranslation.createArithmeticExpression(
+					op, value, cPrimitive, one, cPrimitive, loc);
+		} else {
+			throw new IllegalArgumentException("input has to be CPointer or CPrimitive");
+		}
+		return valueIncremented;
 	}
 	
 	/**
@@ -3259,7 +3291,6 @@ public class CHandler implements ICHandler {
 			timesSizeOf = m_ExpressionTranslation.createArithmeticExpression(
 					IASTBinaryExpression.op_multiply, integer, m_ExpressionTranslation.getCTypeOfPointerComponents(),
 					mMemoryHandler.calculateSizeOf(valueType, loc), m_ExpressionTranslation.getCTypeOfPointerComponents(), loc);
-
 		}
 		final Expression sum = m_ExpressionTranslation.createArithmeticExpression(operator, 
 				pointerOffset, m_ExpressionTranslation.getCTypeOfPointerComponents(),
