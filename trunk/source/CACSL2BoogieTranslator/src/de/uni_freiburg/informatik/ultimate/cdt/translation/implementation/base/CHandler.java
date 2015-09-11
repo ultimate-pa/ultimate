@@ -1324,14 +1324,14 @@ public class CHandler implements ICHandler {
 			ResultExpression operandToInt = ConvExpr.rexBoolToIntIfNecessary(loc, operand, m_ExpressionTranslation);
 			m_ExpressionTranslation.doIntegerPromotion(loc, operand);
 			CPrimitive resultType = (CPrimitive) operandToInt.lrVal.getCType();
+			ResultExpression result = ResultExpression.copyStmtDeclAuxvarOverapprox(operand);
+			if (op == IASTUnaryExpression.op_minus && resultType.isIntegerType()) {
+				addIntegerBoundsCheck(main, loc, result, resultType, op,  operandToInt.lrVal.getValue());
+			}
 			Expression bwexpr = m_ExpressionTranslation.constructUnaryExpression(loc, 
 					op, operandToInt.lrVal.getValue(), resultType) ;
-			ResultExpression result = ResultExpression.copyStmtDeclAuxvarOverapprox(operand);
 			RValue rval = new RValue(bwexpr, resultType, false);
 			result.lrVal = rval;
-			if (op == IASTUnaryExpression.op_minus && resultType.isIntegerType()) {
-				checkIntegerBounds(main, loc, result);
-			}
 			return result;
 		default:
 			throw new IllegalArgumentException("not a unary arithmetic operator " + op);
@@ -1740,7 +1740,7 @@ public class CHandler implements ICHandler {
 	}
 	
 	/**
-	 * Add to rExp a check if divisior is zero.
+	 * Add to divisorExpRes a check if divisior is zero.
 	 */
 	private void addDivisionByZeroCheck(Dispatcher main, ILocation loc, 
 			ResultExpression divisorExpRes) {
@@ -2097,137 +2097,32 @@ public class CHandler implements ICHandler {
 		}
 	}
 	
-	public int getNonAssignmentOperator(int op) {
-		switch (op) {
-		case IASTBinaryExpression.op_shiftLeftAssign:
-			return IASTBinaryExpression.op_shiftLeft;
-		case IASTBinaryExpression.op_shiftRightAssign:
-			return IASTBinaryExpression.op_shiftRight;
-		case IASTBinaryExpression.op_binaryAndAssign:
-			return IASTBinaryExpression.op_binaryAnd;
-		case IASTBinaryExpression.op_binaryOrAssign:
-			return IASTBinaryExpression.op_binaryOr;
-		case IASTBinaryExpression.op_binaryXorAssign:
-			return IASTBinaryExpression.op_binaryXor;
-		case IASTBinaryExpression.op_binaryAnd:
-		case IASTBinaryExpression.op_binaryOr:
-		case IASTBinaryExpression.op_binaryXor:
-		case IASTBinaryExpression.op_shiftLeft:
-		case IASTBinaryExpression.op_shiftRight:
-			throw new IllegalArgumentException("already nonAssignment operator " + op);
-		default:
-			throw new UnsupportedOperationException("unknown operator " + op);
-		}
-	}
 	
-//	public void doIntOverflowTreatmentInComparisonIfApplicable(Dispatcher main,
-//			ILocation loc, ResultExpression left,
-//			ResultExpression right) {
-//		if (main.cHandler.getUnsignedTreatment() == UNSIGNED_TREATMENT.IGNORE)
-//			return;
-//		
-//		boolean isLeftUnsigned = left.lrVal.cType instanceof CPrimitive
-//				&& ((CPrimitive) left.lrVal.cType).isUnsigned()
-//				&& !left.lrVal.isIntFromPointer;
-//		boolean isRightUnsigned = right.lrVal.cType instanceof CPrimitive
-//				&& ((CPrimitive) right.lrVal.cType).isUnsigned()
-//				&& !right.lrVal.isIntFromPointer;
-//
-//		//if one is unsigned, we convert the other to unsigned
-//		// --> C99: "usual conversions"
-//		if (isLeftUnsigned || isRightUnsigned) {
-//			CastAndConversionHandler.doIntOverflowTreatment(main, mMemoryHandler, loc, left);
-//			CastAndConversionHandler.doIntOverflowTreatment(main, mMemoryHandler, loc, right);
-//		}
-//		
-//	}
-
-//	public void doIntOverflowTreatmentIfApplicable(Dispatcher main,
-//			ILocation loc, ResultExpression rex) {
-//		if (main.cHandler.getUnsignedTreatment() == UNSIGNED_TREATMENT.IGNORE)
-//			return;
-//		
-//		boolean isRexUnsigned = rex.lrVal.cType instanceof CPrimitive
-//				&& ((CPrimitive) rex.lrVal.cType).isUnsigned()
-//				&& !rex.lrVal.isIntFromPointer;
-//		
-//		if (isRexUnsigned)
-//			doIntOverflowTreatment(main, loc, rex);
-//	}
-//	
-//	public void doIntOverflowTreatment(Dispatcher main, ILocation loc,
-//			ResultExpression rex) {
-//		//FIXME  it is not always correct to take the size of rex's lrval's ctype, in case of a comparison we may need to take the
-//		// size of the other value's type
-//
-//		//special treatment for unsigned integer types
-//		int exponentInBytes = -1; 
-//		if (rex.lrVal.cType.getUnderlyingType() instanceof CEnum) {
-//			exponentInBytes = mMemoryHandler.typeSizeConstants.sizeOfEnumType;
-//		} else {
-//			//should be primitive
-//			exponentInBytes = mMemoryHandler.typeSizeConstants
-//				.CPrimitiveToTypeSizeConstant.get(((CPrimitive) rex.lrVal.cType.getUnderlyingType()).getType());
-//		}
-//		BigInteger maxValue = new BigInteger("2")
-//			.pow(exponentInBytes * 8);
-//
-//		if (main.cHandler.getUnsignedTreatment() == UNSIGNED_TREATMENT.ASSUME_ALL) {
-//			AssumeStatement assumeGeq0 = new AssumeStatement(loc, new BinaryExpression(loc, BinaryExpression.Operator.COMPGEQ,
-//					rex.lrVal.getValue(), new IntegerLiteral(loc, SFO.NR0)));
-//			rex.stmt.add(assumeGeq0);
-//
-//			AssumeStatement assumeLtMax = new AssumeStatement(loc, new BinaryExpression(loc, BinaryExpression.Operator.COMPLT,
-//					rex.lrVal.getValue(), new IntegerLiteral(loc, maxValue.toString())));
-//			rex.stmt.add(assumeLtMax);
-//		} else if (main.cHandler.getUnsignedTreatment() == UNSIGNED_TREATMENT.WRAPAROUND) {
-//			rex.lrVal = new RValue(new BinaryExpression(loc, BinaryExpression.Operator.ARITHMOD, 
-//					rex.lrVal.getValue(), 
-//					new IntegerLiteral(loc, maxValue.toString())), 
-//					rex.lrVal.cType, 
-//					rex.lrVal.isBoogieBool,
-//					false);
-//		}
-//	}
-
 	/**
-	 * Takes a ResultExpression coming from an arithmetic expression, and, if the corresponding preference
-	 * is set, adds asserts that check that no integer over-/underflow occurs.
-	 * Does that only if the corresponding preference is set.
+	 * Add checks for integer overflows.
+	 * Construct arithmetic operation and add an assert statement that checks 
+	 * if the result is in the range of the corresponding C data type (i.e. 
+	 * check for overflow wrt. max and min value). 
+	 * Note that we do not check if a given expression is in the range. We
+	 * explicitly construct a new expression for the arithmetic operation
+	 * in this check because we possibly have to adjust the data type used in
+	 * boogie. E.g., if we use 32bit bitvectors in Boogie we are unable to
+	 * express an overflow check for a 32bit integer addition in C. Instead, we 
+	 * have to use a 33bit bit bitvector in Boogie.
 	 */
-	@Deprecated
-	private void checkIntegerBounds(Dispatcher main, ILocation loc, ResultExpression rex) {
-		checkIntegerBounds(main, loc, (RValue) rex.lrVal, rex.stmt);
-	}
-
-	@Deprecated
-	private void checkIntegerBounds(Dispatcher main, ILocation loc, RValue rVal, ArrayList<Statement> stmt) {
-		if (main.mPreferences.getBoolean(CACSLPreferenceInitializer.LABEL_CHECK_SIGNED_INTEGER_BOUNDS)
-				&& rVal.getCType() instanceof CPrimitive
-				&& ((CPrimitive) rVal.getCType()).getGeneralType() == GENERALPRIMITIVE.INTTYPE
-				&& !((CPrimitive) rVal.getCType()).isUnsigned()) {
-			Check check = new Check(Spec.INTEGER_OVERFLOW);
-			AssertStatement smallerMaxInt = new AssertStatement(loc, new BinaryExpression(loc, BinaryExpression.Operator.COMPLT, rVal.getValue(), 
-					new IntegerLiteral(loc, main.getTypeSizes().getMaxValueOfPrimitiveType((CPrimitive) rVal.getCType().getUnderlyingType()).toString())));
-			check.addToNodeAnnot(smallerMaxInt);
-			stmt.add(smallerMaxInt);
-			AssertStatement biggerMinInt = new AssertStatement(loc, new BinaryExpression(loc, BinaryExpression.Operator.COMPGEQ, rVal.getValue(), 
-					new IntegerLiteral(loc, main.getTypeSizes().getMinValueOfPrimitiveType((CPrimitive) rVal.getCType().getUnderlyingType()).toString())));
-			check.addToNodeAnnot(biggerMinInt);
-			stmt.add(biggerMinInt);
-		}
-	}
-	
-	private void addIntegerBoundsCheck(Dispatcher main, ILocation loc, ResultExpression rex, CPrimitive resultType, int operation, Expression... operands) {
+	private void addIntegerBoundsCheck(Dispatcher main, ILocation loc, ResultExpression rex, 
+			CPrimitive resultType, int operation, Expression... operands) {
 		if (main.mPreferences.getBoolean(CACSLPreferenceInitializer.LABEL_CHECK_SIGNED_INTEGER_BOUNDS)
 				&& resultType.isIntegerType()
 				&& !resultType.isUnsigned()) {
 			Check check = new Check(Spec.INTEGER_OVERFLOW);
 			final Expression operationResult;
 			if (operands.length == 1) {
-				operationResult = m_ExpressionTranslation.constructUnaryExpression(loc, operation, operands[0], resultType);
+				operationResult = m_ExpressionTranslation.constructUnaryExpression(
+						loc, operation, operands[0], resultType);
 			} else if (operands.length == 2) {
-				operationResult = m_ExpressionTranslation.createArithmeticExpression(operation, operands[0], resultType, operands[1], resultType, loc);
+				operationResult = m_ExpressionTranslation.createArithmeticExpression(
+						operation, operands[0], resultType, operands[1], resultType, loc);
 			} else {
 				throw new AssertionError("no such operation");
 			}
