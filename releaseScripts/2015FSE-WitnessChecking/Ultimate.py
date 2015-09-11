@@ -5,7 +5,7 @@ import fnmatch
 
 # current z3 version z3-4.3.3.f50a8b0a59ff-x64-debian-7.7.zip
 
-svnRevNumber = '12950'
+svnRevNumber = '14438'
 ultimateBin = './Ultimate'
 writeUltimateOutputToFile = True
 outputFileName = 'Ultimate.log'
