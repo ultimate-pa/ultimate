@@ -9,11 +9,11 @@
 
 int main(void) {
 	int x = 7;
-	int y = x++;
-	//@ assert y == 7;
+	int y = x++ + 5;
+	//@ assert y == 12;
 	//@ assert x == 8;
-	int z = x--;
-	//@ assert z == 8;
+	int z = x-- + 11;
+	//@ assert z == 19;
 	//@ assert x == 7;
 	printf("%d\n", x);
 	return 0;
