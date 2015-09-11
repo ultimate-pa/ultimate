@@ -5,22 +5,22 @@
  * Date: 02.7.2015
  */
 
-function{:builtin "bvsub"} BV3_SUB(x:bv3, y:bv3) returns (bv3);
-function{:builtin "bvsge"} BV3_SGE(x:bv3, y:bv3) returns (bool);
+function{:builtin "bvsub"} BV3_SUB(x:bv64, y:bv64) returns (bv64);
+function{:builtin "bvsge"} BV3_SGE(x:bv64, y:bv64) returns (bool);
 
 procedure Main() {
-  var n:bv3;
-  var p:bv3;
+  var n:bv64;
+  var p:bv64;
 
-  assume p != 0bv3;
+  assume p != 0bv64;
 
-  while (BV3_SGE(n, 0bv3)) {
-    assert(p != 0bv3);
+  while (BV3_SGE(n, 0bv64)) {
+    assert(p != 0bv64);
 
-    if (n == 0bv3) {
-      p := 0bv3;
+    if (n == 0bv64) {
+      p := 0bv64;
     }
 
-    n := BV3_SUB(n, 1bv3);
+    n := BV3_SUB(n, 1bv64);
   }
 }
