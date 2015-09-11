@@ -14,7 +14,7 @@ while (<>) {
      next if $_ =~ /^\(set-option :print-success true\)/;
      next if $_ =~ /^\(exit\)/;
   if (/^\(set-info :source .*/) {
-     print "(set-info :source |\n";
+     print "(set-info :source |";
   } elsif (/^\)/) {
      print "|)\n";
   } elsif (/^.*SMT script generated on.*/) {

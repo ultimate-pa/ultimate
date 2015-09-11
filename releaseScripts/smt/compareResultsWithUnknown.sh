@@ -10,9 +10,9 @@ if [ ! -e "$examplesFolder" ]; then
 fi
 
 solvers[0]="z3"
-solvers[1]="SMTInterpol"
-solvers[2]="Mathsat"
-solvers[3]="CVC4"
+solvers[1]="princess"
+solvers[2]="cvc4"
+solvers[3]="smtinterpol"
 #solvers[0]="z3"
 echo "Solvers: ${solvers[*]}"
 

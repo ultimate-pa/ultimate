@@ -10,14 +10,16 @@ if [ ! -e "$examplesFolder" ]; then
 fi
 
 solvers[0]="z3"
-solvers[1]="SMTInterpol"
+solvers[1]="cvc4"
+solvers[2]="princess"
+solvers[3]="smtinterpol"
 #solvers[2]="Mathsat"
 #solvers[2]="CVC4"
 #solvers[0]="z3"
 echo "Solvers: ${solvers[*]}"
 #solverCommands[1]="z3 SMTLIB2_COMPLIANT=true -t:5000"
 #solverCommands[2]="java -jar /opt/SMTInterpol/smtinterpol.jar -q -no-success"
-solverCommands[0]="veriT"
+# solverCommands[0]="veriT"
 
 
 for f in `find "$examplesFolder" -name "*.smt2"`;
@@ -33,22 +35,26 @@ if [ ! -s "$resultFileFirstSolver" ]; then
     exit
 fi
 
+resultCounter=1
 for((i=1;i<${#solvers[@]};i++))
 do
     #echo Solver ${solvers[$i]}
     solver=${solvers[$i]}
     resultFileOtherSolver="$f".${solvers[i]}_results.txt
     if [ ! -e "$resultFileOtherSolver" ]; then
-        echo "File $resultFileOtherSolver does not exist"
+#         echo "File $resultFileOtherSolver does not exist"
+		sleep 0;
         #exit
     else 
       differ=`diff "$resultFileFirstSolver" "$resultFileOtherSolver"`
       if [ "$differ" ]; then
-          echo "$solver" does not agree on result for "$f"
+#           echo "$solver" does not agree on result for "$f"
+		sleep 0;
       else 
           resultFile="$f".results.txt
-          echo writing "$resultFile"
+#           echo writing "$resultFile"
           cp "$resultFileFirstSolver" "$resultFile"
+          resultCounter=$[$resultCounter + 1]
       fi
     fi
     
@@ -62,8 +68,12 @@ do
 #       echo "$solverCommand $f"
 #       eval $solverCommand "$f" |grep -v success > "$resultFile"
 #   fi
-    done;
-
+done;
+    if [ $resultCounter -gt 1 ]; then
+        echo "$resultCounter" tools agreed on result for "$f"
+    else
+        echo for "$f" I only have result from "$resultCounter" tool
+    fi
 
 done;
 
