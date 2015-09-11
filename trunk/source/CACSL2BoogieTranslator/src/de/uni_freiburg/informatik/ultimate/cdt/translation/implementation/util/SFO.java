@@ -38,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 
 /**
  * @author Markus Lindenmann
+ * @author Matthias Heizmann
  * @date 16.08.2012
  */
 public final class SFO {
@@ -201,11 +202,16 @@ public final class SFO {
 		 * Auxiliary variable used to get some value nondeterministically.
 		 */
 		NONDET("nondet"),
+		
+		/**
+		 * Auxiliary variable used to represent the value after a prefix 
+		 * increment or prefix decrement (e.g., <code>++x</code>).
+		 */
+		PRE_MOD("pre"),
 
 		/**
-		 * Auxiliary variable used to represent the value before a postincrement
-		 * or postdecrement. E.g., the <i>t</i> in the sequence of Statements
-		 * t:=x;x:=x+1;y:=x+1; which we obtain by translating the statement x++.
+		 * Auxiliary variable used to represent the value before a postfix 
+		 * increment or postfix decrement (e.g., <code>x++</code>).
 		 */
 		POST_MOD("post"),
 
