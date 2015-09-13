@@ -110,9 +110,8 @@ public class BitvectorTranslationTest extends AbstractTraceAbstractionTestSuite 
 	
 	
 	private static final String[] m_UltimateRepository = {
-		"examples/programs/MapReduce/single",
-//		"examples/programs/regression",
-//		"examples/programs/bitvector",
+		"examples/programs/regression",
+		"examples/programs/bitvector",
 //		"examples/programs/quantifier/regression",
 //		"examples/programs/quantifier",
 //		"examples/programs/recursivePrograms",
@@ -128,7 +127,7 @@ public class BitvectorTranslationTest extends AbstractTraceAbstractionTestSuite 
 	 * 
 	 */
 	private static final String[] m_Settings = {
-//		"automizer/BitvectorTranslation.epf",
+		"automizer/BitvectorTranslation.epf",
 		"svcomp2015/svComp-64bit-precise-Automizer.epf",
 	};
 	
