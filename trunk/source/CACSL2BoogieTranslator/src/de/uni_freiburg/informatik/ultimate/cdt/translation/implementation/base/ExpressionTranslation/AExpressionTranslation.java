@@ -47,7 +47,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultExpression;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.ISOIEC9899TC3;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
@@ -79,7 +79,7 @@ public abstract class AExpressionTranslation {
 		this.m_FunctionDeclarations = new FunctionDeclarations(typeHandler, m_TypeSizes);
 	}
 
-	public ResultExpression translateLiteral(Dispatcher main, IASTLiteralExpression node) {
+	public ExpressionResult translateLiteral(Dispatcher main, IASTLiteralExpression node) {
 		ILocation loc = LocationFactory.createCLocation(node);
 
 		switch (node.getKind()) {
@@ -87,7 +87,7 @@ public abstract class AExpressionTranslation {
 		{
 			String val = new String(node.getValue());
 			val = ISOIEC9899TC3.handleFloatConstant(val, loc, main);
-			return new ResultExpression(new RValue(new RealLiteral(loc, val), new CPrimitive(PRIMITIVE.FLOAT)));
+			return new ExpressionResult(new RValue(new RealLiteral(loc, val), new CPrimitive(PRIMITIVE.FLOAT)));
 		}
 		case IASTLiteralExpression.lk_char_constant:
 			throw new AssertionError("To be handled by subclass");
@@ -95,7 +95,7 @@ public abstract class AExpressionTranslation {
 		{
 			String val = new String(node.getValue());
 			RValue rVal = translateIntegerLiteral(loc, val);
-			return new ResultExpression(rVal);
+			return new ExpressionResult(rVal);
 		}
 		case IASTLiteralExpression.lk_string_literal:
 			// Translate string to uninitialized char pointer
@@ -107,11 +107,11 @@ public abstract class AExpressionTranslation {
 			decls.add(tVarDecl);
 			Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<VariableDeclaration, ILocation>();
 			auxVars.put(tVarDecl, loc);
-			return new ResultExpression(new ArrayList<Statement>(), rvalue, decls, auxVars);
+			return new ExpressionResult(new ArrayList<Statement>(), rvalue, decls, auxVars);
 		case IASTLiteralExpression.lk_false:
-			return new ResultExpression(new RValue(new BooleanLiteral(loc, false), new CPrimitive(PRIMITIVE.INT)));
+			return new ExpressionResult(new RValue(new BooleanLiteral(loc, false), new CPrimitive(PRIMITIVE.INT)));
 		case IASTLiteralExpression.lk_true:
-			return new ResultExpression(new RValue(new BooleanLiteral(loc, true), new CPrimitive(PRIMITIVE.INT)));
+			return new ExpressionResult(new RValue(new BooleanLiteral(loc, true), new CPrimitive(PRIMITIVE.INT)));
 		default:
 			String msg = "Unknown or unsupported kind of IASTLiteralExpression";
 			throw new UnsupportedSyntaxException(loc, msg);
@@ -191,7 +191,7 @@ public abstract class AExpressionTranslation {
 	 * Fixing this will be postponed until we want to support complex types.
 	 */
 	public void usualArithmeticConversions(Dispatcher main, ILocation loc, 
-			ResultExpression leftRex, ResultExpression rightRex) {
+			ExpressionResult leftRex, ExpressionResult rightRex) {
 		leftRex.replaceEnumByInt();
 		rightRex.replaceEnumByInt();
 		final CPrimitive leftPrimitive = getCorrespondingPrimitiveType(leftRex.lrVal.getCType());
@@ -223,7 +223,7 @@ public abstract class AExpressionTranslation {
 	 * Convert ResultExpression to resultType if its type is not already
 	 * resultType.
 	 */
-	private void convertIfNecessary(ILocation loc, ResultExpression operand,
+	private void convertIfNecessary(ILocation loc, ExpressionResult operand,
 			CPrimitive resultType) {
 		if (operand.lrVal.getCType().equals(resultType)) {
 			// do nothing
@@ -282,13 +282,13 @@ public abstract class AExpressionTranslation {
 		}
 	}
 
-	public abstract void convert(ILocation loc, ResultExpression operand, CPrimitive resultType);
+	public abstract void convert(ILocation loc, ExpressionResult operand, CPrimitive resultType);
 	
 	/**
 	 * Perform the integer promotions a specified in C11 6.3.1.1.2 on the
 	 * operand.
 	 */
-	public abstract void doIntegerPromotion(ILocation loc, ResultExpression operand);
+	public abstract void doIntegerPromotion(ILocation loc, ExpressionResult operand);
 	
 	public boolean integerPromotionNeeded(CPrimitive cPrimitive) {
 		if (cPrimitive.getType().equals(CPrimitive.PRIMITIVE.CHAR) || cPrimitive.getType().equals(CPrimitive.PRIMITIVE.CHAR16) ||
@@ -340,7 +340,7 @@ public abstract class AExpressionTranslation {
 		return new CPrimitive(PRIMITIVE.INT);
 	}
 
-	public void convertPointerToInt(Dispatcher main, ILocation loc, ResultExpression rexp,
+	public void convertPointerToInt(Dispatcher main, ILocation loc, ExpressionResult rexp,
 			CPrimitive newType) {
 		String prefixedFunctionName = declareConvertPointerToIntFunction(main,
 				loc, newType);
@@ -363,7 +363,7 @@ public abstract class AExpressionTranslation {
 		return prefixedFunctionName;
 	}
 	
-	public void convertIntToPointer(Dispatcher main, ILocation loc, ResultExpression rexp,
+	public void convertIntToPointer(Dispatcher main, ILocation loc, ExpressionResult rexp,
 			CPointer newType) {
 		String prefixedFunctionName = declareConvertIntToPointerFunction(main, loc, (CPrimitive) rexp.lrVal.getCType());
 		Expression intExpression = rexp.lrVal.getValue();

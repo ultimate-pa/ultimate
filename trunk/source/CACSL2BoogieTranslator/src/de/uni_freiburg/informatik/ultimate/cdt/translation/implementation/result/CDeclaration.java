@@ -35,7 +35,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher
 public class CDeclaration {
 	CType  mType;
 	String mName;
-	ResultExpression mInitializer;
+	ExpressionResult mInitializer;
 	IASTInitializer mCAstInitializer;
 
 	boolean mIsOnHeap;
@@ -58,7 +58,7 @@ public class CDeclaration {
 	 * @param initializer
 	 * @param onHeap
 	 */
-	public CDeclaration(CType type, String name, IASTInitializer cAstInitializer, ResultExpression initializer, boolean onHeap) {
+	public CDeclaration(CType type, String name, IASTInitializer cAstInitializer, ExpressionResult initializer, boolean onHeap) {
 		mType = type;
 		mName = name;
 		mCAstInitializer = cAstInitializer;
@@ -93,7 +93,7 @@ public class CDeclaration {
 	public String getName() {
 		return mName;
 	}
-	public ResultExpression getInitializer() {
+	public ExpressionResult getInitializer() {
 		if (!mIsInitializerTranslated)
 			throw new AssertionError("Initializer must have been translated (with method CDeclaration.translateInitializer()) before this is called.");
 		return mInitializer;
@@ -123,7 +123,7 @@ public class CDeclaration {
 		assert !mIsInitializerTranslated : "initializer has already been translated";
 		if (mCAstInitializer != null) {
 			assert mInitializer == null;
-			mInitializer = (ResultExpression) main.dispatch(mCAstInitializer);
+			mInitializer = (ExpressionResult) main.dispatch(mCAstInitializer);
 		}
 		mIsInitializerTranslated = true;
 	}

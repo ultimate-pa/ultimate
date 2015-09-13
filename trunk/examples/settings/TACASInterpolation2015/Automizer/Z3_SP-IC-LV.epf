@@ -17,6 +17,7 @@ file_export_version=3.0
 @de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder=0.0.1
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Convert\ code\ blocks\ to\ CNF=true
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Size\ of\ a\ code\ block=SequenceOfStatements
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Command\ for\ external\ solver=z3 -memory\:4024 -smt2 -in -t\:12000 auto_config\=false smt.mbqi\=false
 #Wed Jan 15 21:36:24 CET 2014
 file_export_version=3.0
 @de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction=0.0.1

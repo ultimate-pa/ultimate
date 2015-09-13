@@ -42,7 +42,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultExpression;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.ISOIEC9899TC3;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
@@ -64,7 +64,7 @@ public class BitvectorTranslation extends AExpressionTranslation {
 	}
 
 	@Override
-	public ResultExpression translateLiteral(Dispatcher main, IASTLiteralExpression node) {
+	public ExpressionResult translateLiteral(Dispatcher main, IASTLiteralExpression node) {
 		ILocation loc = LocationFactory.createCLocation(node);
 
 		switch (node.getKind()) {
@@ -73,7 +73,7 @@ public class BitvectorTranslation extends AExpressionTranslation {
 			String val = ISOIEC9899TC3.handleCharConstant(new String(node.getValue()), loc, main);
 			CPrimitive cprimitive = new CPrimitive(PRIMITIVE.CHAR);
 			int bitlength = 8 * m_TypeSizes.getSize(PRIMITIVE.CHAR);
-			return new ResultExpression(new RValue(new BitvecLiteral(loc, val, bitlength), cprimitive));
+			return new ExpressionResult(new RValue(new BitvecLiteral(loc, val, bitlength), cprimitive));
 		}
 		default:
 			return super.translateLiteral(main, node);
@@ -307,7 +307,7 @@ public class BitvectorTranslation extends AExpressionTranslation {
 	}
 
 	@Override
-	public void convert(ILocation loc, ResultExpression operand, CPrimitive resultType) {
+	public void convert(ILocation loc, ExpressionResult operand, CPrimitive resultType) {
 		if (!(resultType instanceof CPrimitive)) {
 			throw new UnsupportedOperationException("non-primitive types not supported yet");
 		}
@@ -333,7 +333,7 @@ public class BitvectorTranslation extends AExpressionTranslation {
 		operand.lrVal.setCType(resultType);
 	}
 
-	private void extend(ILocation loc, ResultExpression operand, CType resultType, CPrimitive resultPrimitive, int resultLength, int operandLength) {
+	private void extend(ILocation loc, ExpressionResult operand, CType resultType, CPrimitive resultPrimitive, int resultLength, int operandLength) {
 		int[] indices = new int[]{resultLength - operandLength};
 		String smtlibFunctionName;
 		if (((CPrimitive) operand.lrVal.getCType()).isUnsigned()) {
@@ -350,7 +350,7 @@ public class BitvectorTranslation extends AExpressionTranslation {
 	}
 
 	@Override
-	public void doIntegerPromotion(ILocation loc, ResultExpression operand) {
+	public void doIntegerPromotion(ILocation loc, ExpressionResult operand) {
 		if (!integerPromotionNeeded((CPrimitive) operand.lrVal.getCType())) {
 			return;
 		}

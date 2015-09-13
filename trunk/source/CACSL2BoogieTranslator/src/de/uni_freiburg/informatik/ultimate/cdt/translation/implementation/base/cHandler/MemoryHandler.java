@@ -59,7 +59,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LRValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LocalLValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultExpression;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
@@ -1064,13 +1064,13 @@ public class MemoryHandler {
      *            Location for errors and new nodes in the AST.
      * @return a function call expression for ~malloc(size).
      */
-    public ResultExpression getMallocCall(Dispatcher main, FunctionHandler fh,
+    public ExpressionResult getMallocCall(Dispatcher main, FunctionHandler fh,
             Expression size, ILocation loc) {
     	String tmpId = main.nameHandler.getTempVarUID(SFO.AUXVAR.MALLOC);
         VariableDeclaration tVarDecl = SFO.getTempVarVariableDeclaration(tmpId, main.typeHandler.constructPointerType(loc), loc);
         
         LocalLValue llVal = new LocalLValue(new VariableLHS(loc, tmpId), new CPointer(new CPrimitive(PRIMITIVE.VOID)));
-        ResultExpression mallocRex = new ResultExpression(llVal);
+        ExpressionResult mallocRex = new ExpressionResult(llVal);
         
         mallocRex.stmt.add(getMallocCall(main, fh, size, llVal, loc));
         mallocRex.auxVars.put(tVarDecl, loc);
@@ -1313,7 +1313,7 @@ public class MemoryHandler {
      * @return all declarations and statements required to perform the read,
      *         plus an identifierExpression holding the read value.
      */
-    public ResultExpression getReadCall(Dispatcher main,
+    public ExpressionResult getReadCall(Dispatcher main,
     		RValue address) {
         ArrayList<Statement> stmt = new ArrayList<Statement>();
         ArrayList<Declaration> decl = new ArrayList<Declaration>();
@@ -1344,7 +1344,7 @@ public class MemoryHandler {
         }
         stmt.add(call);
 		assert (CHandler.isAuxVarMapcomplete(main, decl, auxVars));
-        return new ResultExpression(stmt, 
+        return new ExpressionResult(stmt, 
         		new RValue(new IdentifierExpression(loc, tmpId), address.getCType()),
         		decl, auxVars, overappr);
     }

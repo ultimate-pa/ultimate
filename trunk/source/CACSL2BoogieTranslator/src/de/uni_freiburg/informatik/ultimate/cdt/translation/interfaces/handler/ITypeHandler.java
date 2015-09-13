@@ -51,7 +51,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.Symbol
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultTypes;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.TypesResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.IHandler;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
@@ -219,12 +219,12 @@ public interface ITypeHandler extends IHandler {
     /**
      * Return the map of type aliases coming from C-typedefs.
      */
-	LinkedScopedHashMap<String, ResultTypes> getDefinedTypes();
+	LinkedScopedHashMap<String, TypesResult> getDefinedTypes();
 
 	ASTType ctype2asttype(ILocation loc, CType cType, boolean wrappedInt,
 			boolean isBool);
 
-	void addDefinedType(String id, ResultTypes type);
+	void addDefinedType(String id, TypesResult type);
 
 	ASTType constructPointerType(ILocation loc);
 }

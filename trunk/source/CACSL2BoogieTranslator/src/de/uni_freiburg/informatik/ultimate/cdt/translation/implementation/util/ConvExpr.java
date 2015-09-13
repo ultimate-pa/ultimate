@@ -36,7 +36,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.PRIMITIVE;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultExpression;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
@@ -133,24 +133,24 @@ public class ConvExpr {
 	 * int <code>x</code> of form <code>y ? 1 : 0</code> becomes
 	 * <code>!y ? 1 : 0</code>
 	/** int <code>x</code> becomes <code>x == 0 ? 1 : 0</code> */	
-	public static ResultExpression rexIntToBoolIfNecessary(ILocation loc, ResultExpression rl, 
+	public static ExpressionResult rexIntToBoolIfNecessary(ILocation loc, ExpressionResult rl, 
 			AExpressionTranslation expressionTranslation) {
-		ResultExpression rlToBool = null;
+		ExpressionResult rlToBool = null;
 		if (rl.lrVal.isBoogieBool()) {
 			rlToBool = rl;
 		} else {
-			rlToBool = new ResultExpression(ConvExpr.toBoolean(loc, (RValue) rl.lrVal, expressionTranslation));
+			rlToBool = new ExpressionResult(ConvExpr.toBoolean(loc, (RValue) rl.lrVal, expressionTranslation));
 			rlToBool.addAll(rl);
 		}
 		return rlToBool;
 	}
 
 	/** boolean <code>p</code> becomes <code>!p ? 1 : 0</code> */
-	public static ResultExpression rexBoolToIntIfNecessary(ILocation loc, ResultExpression rl, 
+	public static ExpressionResult rexBoolToIntIfNecessary(ILocation loc, ExpressionResult rl, 
 			AExpressionTranslation expressionTranslation) {
-		ResultExpression rlToInt = null;
+		ExpressionResult rlToInt = null;
 		if (rl.lrVal.isBoogieBool()) {
-			rlToInt = new ResultExpression(ConvExpr.boolToInt(loc, (RValue) rl.lrVal, expressionTranslation));
+			rlToInt = new ExpressionResult(ConvExpr.boolToInt(loc, (RValue) rl.lrVal, expressionTranslation));
 			rlToInt.addAll(rl);
 		} else {
 			rlToInt = rl;

@@ -72,10 +72,10 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.except
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.CDeclaration;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultDeclaration;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultExpression;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultSkip;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultTypes;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.DeclarationResult;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.SkipResult;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.TypesResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.BoogieASTUtil;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
@@ -109,7 +109,7 @@ public class TypeHandler implements ITypeHandler {
      * Maps the cIdentifier of a struct, enumeration, or union (when this is
      *  implemented) to the ResultType that represents this type at the moment
      */
-    private final LinkedScopedHashMap<String, ResultTypes> m_DefinedTypes;
+    private final LinkedScopedHashMap<String, TypesResult> m_DefinedTypes;
     /**
      * Undefined struct types.
      */
@@ -153,7 +153,7 @@ public class TypeHandler implements ITypeHandler {
      */
     public TypeHandler(boolean useIntForAllIntegerTypes) {
     	this.m_UseIntForAllIntegerTypes = useIntForAllIntegerTypes;
-        this.m_DefinedTypes = new LinkedScopedHashMap<String, ResultTypes>();
+        this.m_DefinedTypes = new LinkedScopedHashMap<String, TypesResult>();
         this.m_IncompleteType = new LinkedHashSet<String>();
     }
 
@@ -188,7 +188,7 @@ public class TypeHandler implements ITypeHandler {
 
     @Override
     public Result visit(Dispatcher main, IASTSimpleDeclSpecifier node) {
-        ResultTypes result;
+        TypesResult result;
         CPrimitive cvar = new CPrimitive(node);
         // we have model.boogie.ast.PrimitiveType, which should
         // only contain BOOL, INT, REAL ...
@@ -197,7 +197,7 @@ public class TypeHandler implements ITypeHandler {
             case IASTSimpleDeclSpecifier.t_void:
                 // there is no void in Boogie,
                 // so we simply have no result variable.
-                result = (new ResultTypes(null, false, true, cvar));
+                result = (new TypesResult(null, false, true, cvar));
                 break;
             case IASTSimpleDeclSpecifier.t_unspecified:
             {
@@ -210,20 +210,20 @@ public class TypeHandler implements ITypeHandler {
                 // so int is also a primitive type
                 // NOTE: in a extended implementation we should
                 // handle here different types of int (short, long,...)
-                result = (new ResultTypes(cPrimitive2asttype(loc, cvar), node.isConst(), false, cvar));
+                result = (new TypesResult(cPrimitive2asttype(loc, cvar), node.isConst(), false, cvar));
                 break;
             case IASTSimpleDeclSpecifier.t_double:
             case IASTSimpleDeclSpecifier.t_float:
                 // floating point number are not supported by Ultimate,
                 // somehow we treat it here as REALs
-                result = (new ResultTypes(new PrimitiveType(loc, SFO.REAL), node.isConst(), false, cvar));
+                result = (new TypesResult(new PrimitiveType(loc, SFO.REAL), node.isConst(), false, cvar));
                 break;
             default:
                 // long, long long, and short are the same as int, iff there are
                 // no restrictions / asserts in boogie
                 if (node.isLongLong() || node.isLong() || node.isShort()
                         || node.isUnsigned()) {
-                    result = (new ResultTypes(new PrimitiveType(
+                    result = (new TypesResult(new PrimitiveType(
                             loc, SFO.INT), node.isConst(),
                             false, cvar));
                     break;
@@ -243,7 +243,7 @@ public class TypeHandler implements ITypeHandler {
             node = (CASTTypedefNameSpecifier) node;
             String cId = node.getName().toString();
             String bId = main.cHandler.getSymbolTable().get(cId, loc).getBoogieName();
-            return new ResultTypes(new NamedType(loc, bId, null), false, false, //TODO: replace constants
+            return new TypesResult(new NamedType(loc, bId, null), false, false, //TODO: replace constants
             		new CNamed(bId, m_DefinedTypes.get(bId).cType));
         }
         String msg = "Unknown or unsupported type! " + node.toString();
@@ -263,7 +263,7 @@ public class TypeHandler implements ITypeHandler {
             IASTEnumerator e = node.getEnumerators()[i];
             fNames[i] = e.getName().toString();
             if (e.getValue() != null) {
-            	ResultExpression rex = (ResultExpression) main.dispatch(e.getValue());
+            	ExpressionResult rex = (ExpressionResult) main.dispatch(e.getValue());
             	fValues[i] = (Expression) rex.lrVal.getValue();
 //            	assert (fValues[i] instanceof IntegerLiteral) || 
 //            		(fValues[i] instanceof BitvecLiteral) : 
@@ -275,12 +275,12 @@ public class TypeHandler implements ITypeHandler {
         CEnum cEnum = new CEnum(enumId, fNames, fValues);
         CPrimitive intType = new CPrimitive(PRIMITIVE.INT);
         ASTType at = cPrimitive2asttype(loc, intType); 
-        ResultTypes result = new ResultTypes(at, false, false, cEnum);
+        TypesResult result = new TypesResult(at, false, false, cEnum);
        
         String incompleteTypeName = "ENUM~" + cId;
         if (m_IncompleteType.contains(incompleteTypeName)) {
             m_IncompleteType.remove(incompleteTypeName);
-            ResultTypes incompleteType = m_DefinedTypes.get(cId);
+            TypesResult incompleteType = m_DefinedTypes.get(cId);
             CEnum incompleteEnum = (CEnum) incompleteType.cType;
             //search for any typedefs that were made for the incomplete type
             //typedefs are made globally, so the CHandler has to do this
@@ -306,14 +306,14 @@ public class TypeHandler implements ITypeHandler {
     		
 
     		//            if (m_DefinedTypes.containsKey(type)) {
-    		ResultTypes originalType = m_DefinedTypes.get(type);
+    		TypesResult originalType = m_DefinedTypes.get(type);
 //    		if (originalType == null && node.getKind() == IASTElaboratedTypeSpecifier.k_enum)
 //    			// --> we have an incomplete enum --> do nothing 
 //    			//(i cannot think of an effect of an incomplete enum declaration right now..)
 //    			return new ResultSkip();
     		if (originalType != null) {
     			// --> we have a normal struct, union or enum declaration
-    			ResultTypes withoutBoogieTypedef = new ResultTypes(
+    			TypesResult withoutBoogieTypedef = new TypesResult(
     					originalType.getType(), originalType.isConst, 
     					originalType.isVoid, originalType.cType);
     			return withoutBoogieTypedef;
@@ -340,7 +340,7 @@ public class TypeHandler implements ITypeHandler {
     			} else {
     				ctype = new CEnum(type);
     			}
-    			ResultTypes r = new ResultTypes(new NamedType(loc, incompleteTypeName,
+    			TypesResult r = new TypesResult(new NamedType(loc, incompleteTypeName,
     					new ASTType[0]), false, false, ctype);
 
 
@@ -366,15 +366,15 @@ public class TypeHandler implements ITypeHandler {
         structCounter++;
         for (IASTDeclaration dec : node.getDeclarations(false)) {
             Result r = main.dispatch(dec);
-            if (r instanceof ResultDeclaration) {
-            	ResultDeclaration rdec = (ResultDeclaration) r;
+            if (r instanceof DeclarationResult) {
+            	DeclarationResult rdec = (DeclarationResult) r;
             	for (CDeclaration declaration : rdec.getDeclarations()) {
             		fNames.add(declaration.getName());
             		fTypes.add(declaration.getType());
             		fields.add(new VarList(loc, new String[] {declaration.getName()},
             				this.ctype2asttype(loc, declaration.getType())));
             	}
-            } else if (r instanceof ResultSkip) { // skip ;)
+            } else if (r instanceof SkipResult) { // skip ;)
             } else {
                 String msg = "Unexpected syntax in struct declaration!";
                 throw new UnsupportedSyntaxException(loc, msg);
@@ -397,11 +397,11 @@ public class TypeHandler implements ITypeHandler {
         } else {
         	throw new UnsupportedOperationException();
         }
-        ResultTypes result = new ResultTypes(type, false, false, cvar);
+        TypesResult result = new TypesResult(type, false, false, cvar);
        
         if (m_IncompleteType.contains(name)) {
             m_IncompleteType.remove(name);
-            ResultTypes incompleteType = m_DefinedTypes.get(cId);
+            TypesResult incompleteType = m_DefinedTypes.get(cId);
             CStruct incompleteStruct = (CStruct) incompleteType.cType;
             //search for any typedefs that were made for the incomplete type
             //typedefs are made globally, so the CHandler has to do this
@@ -521,7 +521,7 @@ public class TypeHandler implements ITypeHandler {
     }
     
     @Override
-    public  LinkedScopedHashMap<String,ResultTypes> getDefinedTypes() {
+    public  LinkedScopedHashMap<String,TypesResult> getDefinedTypes() {
         return m_DefinedTypes;
     }
     
@@ -595,7 +595,7 @@ public class TypeHandler implements ITypeHandler {
     }
     
     @Override
-    public void addDefinedType(String id, ResultTypes type) {
+    public void addDefinedType(String id, TypesResult type) {
     	m_DefinedTypes.put(id, type);
     }
 

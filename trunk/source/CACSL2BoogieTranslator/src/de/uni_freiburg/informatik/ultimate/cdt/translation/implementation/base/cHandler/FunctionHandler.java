@@ -70,9 +70,9 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LocalLValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultContract;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultExpression;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultSkip;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ContractResult;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.SkipResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.ConvExpr;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.TarjanSCC;
@@ -202,7 +202,7 @@ public class FunctionHandler {
 
 		addAProcedure(main, loc, contract, methodName, funcType);
 
-		return new ResultSkip();
+		return new SkipResult();
 	}
 
 	/**
@@ -408,7 +408,7 @@ public class FunctionHandler {
 		// The ReturnValue could be empty!
 		ILocation loc = LocationFactory.createCLocation(node);
 		VarList[] outParams = this.currentProcedure.getOutParams();
-		ResultExpression rExp = new ResultExpression(stmt, null, decl, auxVars, overApp);
+		ExpressionResult rExp = new ExpressionResult(stmt, null, decl, auxVars, overApp);
 		if (methodsCalledBeforeDeclared.contains(currentProcedure.getIdentifier()) && currentProcedureIsVoid) {
 			// void method that was assumed to be returning int! -> return int
 			String id = outParams[0].getIdentifiers()[0];
@@ -416,7 +416,7 @@ public class FunctionHandler {
 			Statement havoc = new HavocStatement(loc, new VariableLHS[] { lhs });
 			stmt.add(havoc);
 		} else if (node.getReturnValue() != null) {
-			ResultExpression exprResult = ((ResultExpression) main.dispatch(node.getReturnValue()))
+			ExpressionResult exprResult = ((ExpressionResult) main.dispatch(node.getReturnValue()))
 					.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
 			exprResult = ConvExpr.rexBoolToIntIfNecessary(loc, exprResult, m_ExpressionTranslation);
 
@@ -675,7 +675,7 @@ public class FunctionHandler {
 		ArrayList<Expression> args = new ArrayList<Expression>();
 		for (int i = 0; i < inParams.length; i++) {
 			IASTInitializerClause inParam = inParams[i];
-			ResultExpression in = ((ResultExpression) main.dispatch(inParam));
+			ExpressionResult in = ((ExpressionResult) main.dispatch(inParam));
 					
 			if (in.lrVal.getCType().getUnderlyingType() instanceof CArray) {
 				//arrays are passed as pointers --> switch to RValue would make a boogie array..
@@ -760,11 +760,11 @@ public class FunctionHandler {
 		if (methodName.equals("malloc") || methodName.equals("alloca") || methodName.equals("__builtin_alloca")) {//TODO: add calloc
 			assert arguments.length == 1;
 			Result sizeRes = main.dispatch(arguments[0]);
-			assert sizeRes instanceof ResultExpression;
-			ResultExpression rex = ((ResultExpression) sizeRes).switchToRValueIfNecessary(main, memoryHandler,
+			assert sizeRes instanceof ExpressionResult;
+			ExpressionResult rex = ((ExpressionResult) sizeRes).switchToRValueIfNecessary(main, memoryHandler,
 					structHandler, loc);
 
-			ResultExpression mallocRex = memoryHandler.getMallocCall(main, this, rex.lrVal.getValue(), loc);
+			ExpressionResult mallocRex = memoryHandler.getMallocCall(main, this, rex.lrVal.getValue(), loc);
 
 			rex.addAll(mallocRex);
 			rex.lrVal = mallocRex.lrVal;
@@ -783,8 +783,8 @@ public class FunctionHandler {
 		} else if (methodName.equals("free")) {
 			assert arguments.length == 1;
 			Result pRes = main.dispatch(arguments[0]);
-			assert pRes instanceof ResultExpression;
-			ResultExpression pRex = ((ResultExpression) pRes).switchToRValueIfNecessary(main, memoryHandler,
+			assert pRes instanceof ExpressionResult;
+			ExpressionResult pRex = ((ExpressionResult) pRes).switchToRValueIfNecessary(main, memoryHandler,
 					structHandler, loc);
 			pRex.stmt.add(memoryHandler.getFreeCall(main, this, pRex.lrVal, loc));
 			return pRex;
@@ -800,7 +800,7 @@ public class FunctionHandler {
 			StructHandler structHandler, IASTExpression functionName, IASTInitializerClause[] arguments) {
 
 		assert (main instanceof PRDispatcher) || ((MainDispatcher) main).getFunctionToIndex().size() > 0;
-		ResultExpression funcNameRex = (ResultExpression) main.dispatch(functionName);
+		ExpressionResult funcNameRex = (ExpressionResult) main.dispatch(functionName);
 		RValue calledFuncRVal = (RValue) funcNameRex.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc).lrVal;
 		CType calledFuncType = calledFuncRVal.getCType().getUnderlyingType();
 		if (!(calledFuncType instanceof CFunction)) {
@@ -818,7 +818,7 @@ public class FunctionHandler {
 		if (calledFuncCFunction.getParameterTypes().length == 0 && arguments.length > 0) {
 			CDeclaration[] paramDecsFromCall = new CDeclaration[arguments.length];
 			for (int i = 0; i < arguments.length; i++) {
-				ResultExpression rex = (ResultExpression) main.dispatch(arguments[i]);
+				ExpressionResult rex = (ExpressionResult) main.dispatch(arguments[i]);
 				paramDecsFromCall[i] = new CDeclaration(rex.lrVal.getCType(), "#param" + i); // TODO:
 																						// SFO?
 			}
@@ -865,8 +865,8 @@ public class FunctionHandler {
 				// where ids of function parameters differ from is in ACSL
 				// expression
 				Result retranslateRes = main.dispatch(contract.get(i));
-				assert (retranslateRes instanceof ResultContract);
-				ResultContract resContr = (ResultContract) retranslateRes;
+				assert (retranslateRes instanceof ContractResult);
+				ContractResult resContr = (ContractResult) retranslateRes;
 				specList.addAll(Arrays.asList(resContr.specs));
 			}
 			spec = specList.toArray(new Specification[0]);
@@ -986,7 +986,7 @@ public class FunctionHandler {
 					// dereference
 					HeapLValue hlv = new HeapLValue(llv.getValue(), cvar);
 
-					ResultExpression assign = ((CHandler) main.cHandler).makeAssignment(main, igLoc, stmt, hlv,
+					ExpressionResult assign = ((CHandler) main.cHandler).makeAssignment(main, igLoc, stmt, hlv,
 							// convention: if a variable is put on heap or not,
 							// its ctype stays the same
 							new RValue(rhsId, cvar), new ArrayList<Declaration>(), new LinkedHashMap<VariableDeclaration, ILocation>(),
@@ -1248,7 +1248,7 @@ public class FunctionHandler {
 			return new Body(loc, decl.toArray(new VariableDeclaration[decl.size()]), stmt.toArray(new Statement[stmt
 					.size()]));		
 		} else if (fittingFunctions.size() == 1) {
-			ResultExpression rex = (ResultExpression) makeTheFunctionCallItself(main, loc, fittingFunctions.get(0),
+			ExpressionResult rex = (ExpressionResult) makeTheFunctionCallItself(main, loc, fittingFunctions.get(0),
 					new ArrayList<Statement>(), new ArrayList<Declaration>(),
 					new LinkedHashMap<VariableDeclaration, ILocation>(), new ArrayList<Overapprox>(), args);
 			funcCallResult = (IdentifierExpression) rex.lrVal.getValue();
@@ -1279,7 +1279,7 @@ public class FunctionHandler {
 				funcCallResult = new IdentifierExpression(loc, tmpId);
 			}
 
-			ResultExpression firstElseRex = (ResultExpression) makeTheFunctionCallItself(main, loc,
+			ExpressionResult firstElseRex = (ExpressionResult) makeTheFunctionCallItself(main, loc,
 					fittingFunctions.get(0), new ArrayList<Statement>(), new ArrayList<Declaration>(),
 					new LinkedHashMap<VariableDeclaration, ILocation>(), new ArrayList<Overapprox>(), args);
 			for (Declaration dec : firstElseRex.decl)
@@ -1296,7 +1296,7 @@ public class FunctionHandler {
 			IfStatement currentIfStmt = null;
 
 			for (int i = 1; i < fittingFunctions.size(); i++) {
-				ResultExpression currentRex = (ResultExpression) makeTheFunctionCallItself(main, loc,
+				ExpressionResult currentRex = (ExpressionResult) makeTheFunctionCallItself(main, loc,
 						fittingFunctions.get(i), new ArrayList<Statement>(), new ArrayList<Declaration>(),
 						new LinkedHashMap<VariableDeclaration, ILocation>(), new ArrayList<Overapprox>(), args);
 				for (Declaration dec : currentRex.decl)
@@ -1383,7 +1383,7 @@ public class FunctionHandler {
 		CType returnCType = methodsCalledBeforeDeclared.contains(methodName) ? new CPrimitive(PRIMITIVE.INT)
 				: procedureToCFunctionType.get(methodName).getResultType();
 		assert (CHandler.isAuxVarMapcomplete(main, decl, auxVars));
-		return new ResultExpression(stmt, new RValue(expr, returnCType), decl, auxVars, overappr);
+		return new ExpressionResult(stmt, new RValue(expr, returnCType), decl, auxVars, overappr);
 	}
 
 	/**

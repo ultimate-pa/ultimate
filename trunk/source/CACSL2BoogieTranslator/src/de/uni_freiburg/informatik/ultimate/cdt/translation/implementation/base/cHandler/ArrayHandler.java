@@ -43,7 +43,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.HeapLValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LocalLValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultExpression;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayLHS;
@@ -82,32 +82,32 @@ public class ArrayHandler {
 	 * into nested subscripts recursively a ResultExpression is pushed for each subscript.
 	 * When going up again the ResultExpressions are popped/used.
 	 */
-	Stack<ResultExpression> mCollectedSubscripts = new Stack<ResultExpression>();
+	Stack<ExpressionResult> mCollectedSubscripts = new Stack<ExpressionResult>();
 	
 	
-	public ResultExpression handleArraySubscriptExpression(Dispatcher main,
+	public ExpressionResult handleArraySubscriptExpression(Dispatcher main,
 			MemoryHandler memoryHandler, StructHandler structHandler,
 			IASTArraySubscriptExpression node) {		
 		ILocation loc = LocationFactory.createCLocation(node);
 		
-		ResultExpression subscript = (ResultExpression) main.dispatch(node.getArgument());
-		ResultExpression subscriptR = subscript.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
+		ExpressionResult subscript = (ExpressionResult) main.dispatch(node.getArgument());
+		ExpressionResult subscriptR = subscript.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
 		mCollectedSubscripts.push(subscriptR);
 		
 		//have we arrived at the innermost array subscript? (i.e. a[i] instead of a[j][i])
 		boolean innerMostSubscript = 
 				!(node.getArrayExpression() instanceof IASTArraySubscriptExpression);
-		ResultExpression innerResult = null;
+		ExpressionResult innerResult = null;
 		if (innerMostSubscript) {
-			innerResult = ((ResultExpression) main.dispatch(node.getArrayExpression()));
+			innerResult = ((ExpressionResult) main.dispatch(node.getArrayExpression()));
 		} else {
 			innerResult = handleArraySubscriptExpression(main, memoryHandler, 
 					structHandler, (IASTArraySubscriptExpression) node.getArrayExpression());
 		}
 		
-		ResultExpression result = new ResultExpression(innerResult);
+		ExpressionResult result = new ExpressionResult(innerResult);
 		
-		ResultExpression currentSubscriptRex = mCollectedSubscripts.pop();
+		ExpressionResult currentSubscriptRex = mCollectedSubscripts.pop();
 		result.stmt.addAll(currentSubscriptRex.stmt);
 		result.decl.addAll(currentSubscriptRex.decl);
 		result.auxVars.putAll(currentSubscriptRex.auxVars);

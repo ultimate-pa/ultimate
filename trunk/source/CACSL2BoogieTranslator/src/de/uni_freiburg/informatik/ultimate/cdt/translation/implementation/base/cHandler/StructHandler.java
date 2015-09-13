@@ -50,8 +50,8 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LocalLValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultExpression;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultExpressionListRec;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionListRecResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.model.annotation.Overapprox;
@@ -91,7 +91,7 @@ public class StructHandler {
 		ILocation loc = LocationFactory.createCLocation(node);
 		String field = node.getFieldName().toString();
 		
-		ResultExpression fieldOwner = (ResultExpression) main.dispatch(node.getFieldOwner());
+		ExpressionResult fieldOwner = (ExpressionResult) main.dispatch(node.getFieldOwner());
 
 		LRValue newValue = null;
 		Map<StructLHS, CType> unionFieldToCType = fieldOwner.unionFieldIdToCType;
@@ -106,9 +106,9 @@ public class StructHandler {
 		CType cFieldType = cStructType.getFieldType(field);
 
 		if (node.isPointerDereference()) {
-			ResultExpression rFieldOwnerRex = fieldOwner.switchToRValueIfNecessary(main, memoryHandler, this, loc);
+			ExpressionResult rFieldOwnerRex = fieldOwner.switchToRValueIfNecessary(main, memoryHandler, this, loc);
 			Expression address = rFieldOwnerRex.lrVal.getValue();
-			fieldOwner = new ResultExpression(rFieldOwnerRex.stmt, new HeapLValue(address, rFieldOwnerRex.lrVal.getCType()), 
+			fieldOwner = new ExpressionResult(rFieldOwnerRex.stmt, new HeapLValue(address, rFieldOwnerRex.lrVal.getCType()), 
 					rFieldOwnerRex.decl, rFieldOwnerRex.auxVars, rFieldOwnerRex.overappr);
 		}
 
@@ -157,7 +157,7 @@ public class StructHandler {
 			}
 		}
 	
-		return new ResultExpression(fieldOwner.stmt, newValue, fieldOwner.decl, fieldOwner.auxVars, 
+		return new ExpressionResult(fieldOwner.stmt, newValue, fieldOwner.decl, fieldOwner.auxVars, 
 				fieldOwner.overappr, unionFieldToCType);
 	}
 
@@ -186,7 +186,7 @@ public class StructHandler {
 
 		RValue newAddress = new RValue(newPointer, resultType, false, false);
 		
-		ResultExpression call = 
+		ExpressionResult call = 
 				memoryHandler.getReadCall(main, 
 					newAddress);	
 		ArrayList<Statement> stmt = new ArrayList<Statement>();
@@ -198,7 +198,7 @@ public class StructHandler {
 		decl.addAll(call.decl);
 		auxVars.putAll(call.auxVars);
 		overappr.addAll(call.overappr);
-		ResultExpression result = new ResultExpression(stmt,
+		ExpressionResult result = new ExpressionResult(stmt,
 		        new RValue(call.lrVal.getValue(), resultType), decl, auxVars,
 		        overappr);
 		return result;
@@ -262,22 +262,22 @@ public class StructHandler {
 		CASTFieldDesignator fr = (CASTFieldDesignator) node.getDesignators()[0];
 		String id = fr.getName().toString();
 		Result r = main.dispatch(node.getOperand());
-		if (r instanceof ResultExpressionListRec) {
-			ResultExpressionListRec relr = (ResultExpressionListRec) r;
+		if (r instanceof ExpressionListRecResult) {
+			ExpressionListRecResult relr = (ExpressionListRecResult) r;
 			if (!relr.list.isEmpty()) {
 				assert relr.stmt.isEmpty();
 				//                assert relr.expr == null;//TODO??
 				assert relr.lrVal == null;
 				assert relr.decl.isEmpty();
-				ResultExpressionListRec named = new ResultExpressionListRec(id);
+				ExpressionListRecResult named = new ExpressionListRecResult(id);
 				named.list.addAll(relr.list);
 				return named;
 			}
-			return new ResultExpressionListRec(id, relr.stmt, relr.lrVal,
+			return new ExpressionListRecResult(id, relr.stmt, relr.lrVal,
 					relr.decl, relr.auxVars, relr.overappr).switchToRValueIfNecessary(
 					        main, memoryHandler, structHandler, loc);
-		} else if (r instanceof ResultExpression) {
-			ResultExpression rex = (ResultExpression) r;
+		} else if (r instanceof ExpressionResult) {
+			ExpressionResult rex = (ExpressionResult) r;
 			return rex.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
 		} else {
 			String msg = "Unexpected result";

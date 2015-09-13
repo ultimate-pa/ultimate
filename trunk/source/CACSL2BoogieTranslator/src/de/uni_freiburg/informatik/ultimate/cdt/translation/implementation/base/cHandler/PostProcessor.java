@@ -48,7 +48,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.GENERALPRIMITIVE;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.CDeclaration;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LocalLValue;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultExpression;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.BoogieASTUtil;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
@@ -322,7 +322,7 @@ public class PostProcessor {
 			if (en.getKey() instanceof TypeDeclaration || en.getKey() instanceof ConstDeclaration)
 				continue;
 			ILocation currentDeclsLoc = en.getKey().getLocation();
-			ResultExpression initializer = en.getValue().getInitializer();
+			ExpressionResult initializer = en.getValue().getInitializer();
 
 			for (VarList vl  : ((VariableDeclaration) en.getKey()).getVariables()) {
 				for (String id : vl.getIdentifiers()) {
@@ -335,7 +335,7 @@ public class PostProcessor {
 					//					if (initializer != null) {
 					//						assert ((VariableDeclaration)en.getKey()).getVariables().length == 1 
 					//								&& ((VariableDeclaration)en.getKey()).getVariables()[0].getIdentifiers().length == 1;
-					ResultExpression initRex = 
+					ExpressionResult initRex = 
 							main.cHandler.getInitHandler().initVar(currentDeclsLoc, main, 
 									new VariableLHS(currentDeclsLoc, id), en.getValue().getType(), initializer);
 					initStatements.addAll(initRex.stmt);

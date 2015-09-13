@@ -31,7 +31,7 @@ import java.util.ListIterator;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.ArrayHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultExpression;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 
@@ -63,9 +63,9 @@ public class SVCompArrayHandler extends ArrayHandler {
      *            a result.
      * @return a filtered result.
      */
-    private static ResultExpression filterAsserts(final Result r) {
-        assert r instanceof ResultExpression;
-        ResultExpression rex = (ResultExpression) r;
+    private static ExpressionResult filterAsserts(final Result r) {
+        assert r instanceof ExpressionResult;
+        ExpressionResult rex = (ExpressionResult) r;
         for (ListIterator<Statement> iter = rex.stmt.listIterator(rex.stmt
                 .size()); iter.hasPrevious();) {
             if (iter.previous() instanceof AssertStatement)

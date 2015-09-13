@@ -136,13 +136,13 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LocalLValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultContract;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultDeclaration;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultExpression;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultExpressionList;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultExpressionListRec;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultSkip;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultTypes;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ContractResult;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.DeclarationResult;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionListResult;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionListRecResult;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.SkipResult;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.TypesResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.BoogieASTUtil;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.ConvExpr;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
@@ -303,7 +303,7 @@ public class CHandler implements ICHandler {
 	 * PointerDeclarator contains an ArrayDeclarator contains a Pointer contains
 	 * a function.
 	 */
-	protected ArrayDeque<ResultTypes> mCurrentDeclaredTypes;
+	protected ArrayDeque<TypesResult> mCurrentDeclaredTypes;
 
 	/**
 	 * Stores the labels of the loops we are currently inside. (For translation
@@ -354,7 +354,7 @@ public class CHandler implements ICHandler {
 		this.mInnerMostLoopLabel = new Stack<String>();
 
 		this.mBoogieIdsOfHeapVars = new LinkedHashSet<String>();
-		this.mCurrentDeclaredTypes = new ArrayDeque<ResultTypes>();
+		this.mCurrentDeclaredTypes = new ArrayDeque<TypesResult>();
 		
 		this.mGlobAcslExtractors = new ArrayList<>();
 		
@@ -398,7 +398,7 @@ public class CHandler implements ICHandler {
 
 		for (IASTPreprocessorStatement preS : node.getAllPreprocessorStatements()) {
 			Result r = main.dispatch(preS);
-			if (!(r instanceof ResultSkip)) {
+			if (!(r instanceof SkipResult)) {
 				throw new UnsupportedOperationException("Not yet implemented");
 			}
 		}
@@ -418,14 +418,14 @@ public class CHandler implements ICHandler {
 			checkForACSL(main, null, decl, child, null);
 			Result childRes = main.dispatch(child);
 
-			if (childRes instanceof ResultDeclaration) {
+			if (childRes instanceof DeclarationResult) {
 				// we have to add a global variable
-				ResultDeclaration rd = (ResultDeclaration) childRes;
+				DeclarationResult rd = (DeclarationResult) childRes;
 				for (CDeclaration cd : rd.getDeclarations()) {
 					mDeclarationsGlobalInBoogie.put(mSymbolTable.getBoogieDeclOfResultDecl(cd), cd);
 				}
 			} else {
-				if (childRes instanceof ResultSkip)
+				if (childRes instanceof SkipResult)
 					continue;
 				assert childRes.getClass() == Result.class;
 				assert childRes.node != null;
@@ -489,7 +489,7 @@ public class CHandler implements ICHandler {
 			Map<String, LTLPropertyCheck.CheckableExpression> checkableAtomicPropositions = new LinkedHashMap<String, LTLPropertyCheck.CheckableExpression>();
 
 			for (Entry<String, de.uni_freiburg.informatik.ultimate.model.acsl.ast.Expression> en : ex.getAP2SubExpressionMap().entrySet()) {
-				ResultExpression r = (ResultExpression) main.dispatch(en.getValue());
+				ExpressionResult r = (ExpressionResult) main.dispatch(en.getValue());
 				//TODO: some switchToRValue and handling of sideeffects?
 				checkableAtomicPropositions.put(en.getKey(), new CheckableExpression(r.lrVal.getValue(), null));
 			}
@@ -505,13 +505,13 @@ public class CHandler implements ICHandler {
 		LinkedHashSet<IASTDeclaration> reachableDecs = ((MainDispatcher) main).getReachableDeclarationsOrDeclarators();
 		if (reachableDecs != null) {
 			if (!reachableDecs.contains(node))
-				return new ResultSkip();
+				return new SkipResult();
 		}
 
-		ResultTypes resType = (ResultTypes) main.dispatch(node.getDeclSpecifier());
+		TypesResult resType = (TypesResult) main.dispatch(node.getDeclSpecifier());
 
 		mCurrentDeclaredTypes.push(resType);
-		ResultDeclaration declResult = (ResultDeclaration) main.dispatch(node.getDeclarator());
+		DeclarationResult declResult = (DeclarationResult) main.dispatch(node.getDeclarator());
 		mCurrentDeclaredTypes.pop();
 		return mFunctionHandler.handleFunctionDefinition(main, mMemoryHandler, node, declResult.getDeclarations().get(0),
 				mContract);
@@ -532,8 +532,8 @@ public class CHandler implements ICHandler {
 		for (IASTNode child : node.getChildren()) {
 			checkForACSL(main, stmt, decl, child, null);
 			Result r = main.dispatch(child);
-			if (r instanceof ResultExpression) {
-				ResultExpression res = (ResultExpression) r;
+			if (r instanceof ExpressionResult) {
+				ExpressionResult res = (ExpressionResult) r;
 				// assert (res.auxVars.isEmpty()) : "unhavoced auxvars";
 				for (Declaration d : res.decl) {
 					if (d instanceof VariableDeclaration) {
@@ -594,7 +594,7 @@ public class CHandler implements ICHandler {
 					if (reachableDecs.contains(node.getDeclSpecifier()))
 						skip = false;
 					if (skip)
-						return new ResultSkip();
+						return new SkipResult();
 				}
 			}
 		}
@@ -603,7 +603,7 @@ public class CHandler implements ICHandler {
 		if (node.getDeclSpecifier() == null) {
 			String msg = "This statement can be removed!";
 			main.warn(loc, msg);
-			return new ResultSkip();
+			return new SkipResult();
 		}
 
 		// enum case
@@ -612,12 +612,12 @@ public class CHandler implements ICHandler {
 		}
 
 		Result r = main.dispatch(node.getDeclSpecifier());
-		assert r instanceof ResultSkip || r instanceof ResultTypes;
-		if (r instanceof ResultSkip)
+		assert r instanceof SkipResult || r instanceof TypesResult;
+		if (r instanceof SkipResult)
 			return r;
-		if (r instanceof ResultTypes) {
-			ResultTypes resType = (ResultTypes) r;
-			Result result = new ResultSkip(); // Skip will be overwritten in
+		if (r instanceof TypesResult) {
+			TypesResult resType = (TypesResult) r;
+			Result result = new SkipResult(); // Skip will be overwritten in
 												// case of a global or a local
 												// initialized variable
 
@@ -635,7 +635,7 @@ public class CHandler implements ICHandler {
 //				if (d instanceof IASTFieldDeclarator)
 //					throw new UnsupportedSyntaxException(loc, "bitfields are not supported at the moment");
 	
-				ResultDeclaration declResult = (ResultDeclaration) main.dispatch(d);
+				DeclarationResult declResult = (DeclarationResult) main.dispatch(d);
 
 				// the ResultDeclaration from one Declarator always only
 				// contains one CDeclaration, right?
@@ -678,7 +678,7 @@ public class CHandler implements ICHandler {
 
 				if (storageClass == StorageClass.TYPEDEF) {
 					boogieDec = new TypeDeclaration(loc, new Attribute[0], false, bId, new String[0], translatedType);
-					main.typeHandler.addDefinedType(bId, new ResultTypes(new NamedType(loc, cDec.getName(), null),
+					main.typeHandler.addDefinedType(bId, new TypesResult(new NamedType(loc, cDec.getName(), null),
 							false, false, cDec.getType()));
 					// TODO: add a sizeof-constant for the type??
 					globalInBoogie = true;
@@ -697,7 +697,7 @@ public class CHandler implements ICHandler {
 					 * size. We do not want to treat this like other initializers (call initVar and so).
 					 */
 					boolean hasRealInitializer = cDec.hasInitializer() && 
-							!(cDec.getType() instanceof CArray && !(cDec.getInitializer() instanceof ResultExpressionListRec));
+							!(cDec.getType() instanceof CArray && !(cDec.getInitializer() instanceof ExpressionListRecResult));
 
 					if (!hasRealInitializer && !mFunctionHandler.noCurrentProcedure()
 							&& !mTypeHandler.isStructDeclaration()) {
@@ -709,28 +709,28 @@ public class CHandler implements ICHandler {
 						// ..except if OnHeap. Then it is malloced instead.
 						// (--> this is done below this ite-branching by
 						// memoryHandler.addVariableToBeMallocedAndFreed(...))
-						assert result instanceof ResultSkip || result instanceof ResultExpression;
+						assert result instanceof SkipResult || result instanceof ExpressionResult;
 
-						if (result instanceof ResultSkip)
-							result = new ResultExpression((LRValue) null);
+						if (result instanceof SkipResult)
+							result = new ExpressionResult((LRValue) null);
 
 						VariableLHS lhs = new VariableLHS(loc, bId);
 
 						if (cDec.hasInitializer()) { //must be a non-real initializer for variable length array size --> need to pass this on
-								((ResultExpression) result).decl.addAll(cDec.getInitializer().decl);
-								((ResultExpression) result).stmt.addAll(cDec.getInitializer().stmt);
-								((ResultExpression) result).auxVars.putAll(cDec.getInitializer().auxVars);
+								((ExpressionResult) result).decl.addAll(cDec.getInitializer().decl);
+								((ExpressionResult) result).stmt.addAll(cDec.getInitializer().stmt);
+								((ExpressionResult) result).auxVars.putAll(cDec.getInitializer().auxVars);
 						}
 							
 						//no initializer --> essentially needs to be havoced f.i. in each loop iteration
 						if (!onHeap) {
-							((ResultExpression) result).stmt.add(
+							((ExpressionResult) result).stmt.add(
 									new HavocStatement(loc, new VariableLHS[] { lhs }));
 						} else {
 							LocalLValue llVal = new LocalLValue(lhs, cDec.getType());
 							//old solution: havoc via an auxvar, new solution (below): 
 							//just malloc at the right place (much shorter for arrays and structs..)
-							((ResultExpression) result).stmt.add(mMemoryHandler.getMallocCall(main, mFunctionHandler, 
+							((ExpressionResult) result).stmt.add(mMemoryHandler.getMallocCall(main, mFunctionHandler, 
 									llVal , loc));
 							mMemoryHandler.addVariableToBeFreed(main, 
 									new LocalLValueILocationPair(llVal, LocationFactory.createIgnoreLocation(loc)));
@@ -738,26 +738,26 @@ public class CHandler implements ICHandler {
 					} else if (hasRealInitializer && !mFunctionHandler.noCurrentProcedure() && !mTypeHandler.isStructDeclaration()) { 
 						//in case of a local variable declaration with an initializer, the statements and delcs
 						// necessary for the initialization are the result
-						assert result instanceof ResultSkip || result instanceof ResultExpression;
+						assert result instanceof SkipResult || result instanceof ExpressionResult;
 						VariableLHS lhs = new VariableLHS(loc, bId);
-						ResultExpression initRex = 
+						ExpressionResult initRex = 
 								mInitHandler.initVar(loc, main, 
 										lhs, cDec.getType(),
 										cDec.getInitializer());
-						if (result instanceof ResultSkip)
-							result = new ResultExpression((LRValue) null);
+						if (result instanceof SkipResult)
+							result = new ExpressionResult((LRValue) null);
 						
 						if (onHeap) {
 							LocalLValue llVal = new LocalLValue(lhs, cDec.getType());
 							mMemoryHandler.addVariableToBeFreed(main, new LocalLValueILocationPair(llVal, loc));
-							((ResultExpression) result).stmt.add(mMemoryHandler.getMallocCall(main, mFunctionHandler,
+							((ExpressionResult) result).stmt.add(mMemoryHandler.getMallocCall(main, mFunctionHandler,
 									llVal, loc));
 						}
 
-						((ResultExpression) result).stmt.addAll(initRex.stmt);
-						((ResultExpression) result).stmt.addAll(createHavocsForAuxVars(initRex.auxVars));
-						((ResultExpression) result).decl.addAll(initRex.decl);
-						((ResultExpression) result).overappr.addAll(initRex.overappr);
+						((ExpressionResult) result).stmt.addAll(initRex.stmt);
+						((ExpressionResult) result).stmt.addAll(createHavocsForAuxVars(initRex.auxVars));
+						((ExpressionResult) result).decl.addAll(initRex.decl);
+						((ExpressionResult) result).overappr.addAll(initRex.overappr);
 					} else {
 						// in case of global variables, the result is the
 						// declaration, initialization is
@@ -765,10 +765,10 @@ public class CHandler implements ICHandler {
 						// in case this simpleDeclaration is part of a struct
 						// definition, we also need the
 						// Declarations as a result
-						assert result instanceof ResultSkip || result instanceof ResultDeclaration;
-						if (result instanceof ResultSkip)
-							result = new ResultDeclaration();
-						((ResultDeclaration) result).addDeclaration(cDec);
+						assert result instanceof SkipResult || result instanceof DeclarationResult;
+						if (result instanceof SkipResult)
+							result = new DeclarationResult();
+						((DeclarationResult) result).addDeclaration(cDec);
 					}
 					boogieDec = new VariableDeclaration(loc, new Attribute[0], new VarList[] { new VarList(loc,
 							new String[] { bId }, translatedType) });
@@ -781,9 +781,9 @@ public class CHandler implements ICHandler {
 			}
 			mCurrentDeclaredTypes.pop();
 			
-			if (result instanceof ResultExpression)
-				((ResultExpression) result).stmt.addAll(
-						createHavocsForAuxVars(((ResultExpression) result).auxVars));
+			if (result instanceof ExpressionResult)
+				((ExpressionResult) result).stmt.addAll(
+						createHavocsForAuxVars(((ExpressionResult) result).auxVars));
 			return result;
 		}
 		String msg = "Unknown result type: " + r.getClass();
@@ -792,10 +792,10 @@ public class CHandler implements ICHandler {
 
 	@Override
 	public Result visit(Dispatcher main, IASTParameterDeclaration node) {
-		ResultTypes resType = (ResultTypes) main.dispatch(node.getDeclSpecifier());
+		TypesResult resType = (TypesResult) main.dispatch(node.getDeclSpecifier());
 
 		mCurrentDeclaredTypes.push(resType);
-		ResultDeclaration declResult = (ResultDeclaration) main.dispatch(node.getDeclarator());
+		DeclarationResult declResult = (DeclarationResult) main.dispatch(node.getDeclarator());
 		mCurrentDeclaredTypes.pop();
 		return declResult;
 	}
@@ -803,8 +803,8 @@ public class CHandler implements ICHandler {
 	@Override
 	public Result visit(Dispatcher main, IASTDeclarator node) {
 		ILocation loc = LocationFactory.createCLocation(node);
-		ResultTypes resType = mCurrentDeclaredTypes.peek();
-		ResultTypes newResType = new ResultTypes(resType);
+		TypesResult resType = mCurrentDeclaredTypes.peek();
+		TypesResult newResType = new TypesResult(resType);
 
 		newResType.isOnHeap |= main instanceof MainDispatcher 
 				? ((MainDispatcher) main).getVariablesForHeap().contains(node)
@@ -814,7 +814,7 @@ public class CHandler implements ICHandler {
 		for (int i = 0; i < pointerOps.length; i++) {
 			newResType.cType = new CPointer(newResType.cType);
 		}
-		ResultExpression variableLengthArrayAuxVarInitializer = null;
+		ExpressionResult variableLengthArrayAuxVarInitializer = null;
 		if (node instanceof IASTArrayDeclarator) {
 			IASTArrayDeclarator arrDecl = (IASTArrayDeclarator) node;
 
@@ -822,9 +822,9 @@ public class CHandler implements ICHandler {
 			ArrayList<Expression> sizeConstants = new ArrayList<Expression>();
 			Expression overallSize = new IntegerLiteral(loc, "1");
 			for (IASTArrayModifier am : arrDecl.getArrayModifiers()) {
-				ResultExpression constEx = null;
+				ExpressionResult constEx = null;
 				if (am.getConstantExpression() != null) {
-					constEx = (ResultExpression) main.
+					constEx = (ExpressionResult) main.
 							dispatch(am.getConstantExpression());
 				//the innermost array modifier may be empty, if there is an initializer; like int a[1][2][] = {...}
 				} else if (am.getConstantExpression() == null && 
@@ -834,13 +834,13 @@ public class CHandler implements ICHandler {
 						IASTEqualsInitializer eqInit = ((IASTEqualsInitializer) arrDecl.getInitializer());
 						assert eqInit.getInitializerClause() instanceof IASTInitializerList;
 						IASTInitializerList initList = (IASTInitializerList) eqInit.getInitializerClause();
-						constEx = new ResultExpression(new RValue(new IntegerLiteral(loc, new Integer(
+						constEx = new ExpressionResult(new RValue(new IntegerLiteral(loc, new Integer(
 								initList.getSize()).toString()), new CPrimitive(PRIMITIVE.INT)));
 					} else { // we have an incomplete array type without an
 								// initializer -- this may happen in a function
 								// parameter..
 						variableLength = true;
-						constEx = new ResultExpression(new RValue(new IntegerLiteral(loc, "-1"), new CPrimitive(
+						constEx = new ExpressionResult(new RValue(new IntegerLiteral(loc, "-1"), new CPrimitive(
 								PRIMITIVE.INT)));
 					}
 				} else {
@@ -887,7 +887,7 @@ public class CHandler implements ICHandler {
 					}
 
 
-					variableLengthArrayAuxVarInitializer = new ResultExpression(initStmts, 
+					variableLengthArrayAuxVarInitializer = new ExpressionResult(initStmts, 
 							null, initDecls, initAuxVars);
 	
 					arrayType = new CArray(sizeExpressions.toArray(new Expression[sizeExpressions.size()]), newResType.cType);
@@ -905,7 +905,7 @@ public class CHandler implements ICHandler {
 			IASTParameterDeclaration[] paramDecls = funcDecl.getParameters();
 			CDeclaration[] paramsParsed = new CDeclaration[paramDecls.length];
 			for (int i = 0; i < paramDecls.length; i++) {
-				ResultDeclaration decl = (ResultDeclaration) main.dispatch(paramDecls[i]);
+				DeclarationResult decl = (DeclarationResult) main.dispatch(paramDecls[i]);
 				if (decl.getDeclarations().size() != 1)
 					throw new UnsupportedSyntaxException(loc, "Multiple names in parameter declaration");
 				if (decl.getDeclarations().get(0).getName() == ""
@@ -926,7 +926,7 @@ public class CHandler implements ICHandler {
 		}
 		if (node.getNestedDeclarator() != null) {
 			mCurrentDeclaredTypes.push(newResType);
-			ResultDeclaration result = (ResultDeclaration) main.dispatch(node.getNestedDeclarator());
+			DeclarationResult result = (DeclarationResult) main.dispatch(node.getNestedDeclarator());
 			mCurrentDeclaredTypes.pop();
 			if (node.getInitializer() != null) {
 				assert result.getDeclarations().size() == 1;
@@ -943,7 +943,7 @@ public class CHandler implements ICHandler {
 			}
 			return result;
 		} else {
-			ResultDeclaration result = new ResultDeclaration();
+			DeclarationResult result = new DeclarationResult();
 			result.addDeclaration(newResType.cType, node.getName().toString(), node.getInitializer(),
 					variableLengthArrayAuxVarInitializer, newResType.isOnHeap);
 			return result;
@@ -962,7 +962,7 @@ public class CHandler implements ICHandler {
 
 		//deal with builtin constants
 		if (cId.equals("NULL")) {
-			return new ResultExpression(new RValue(new IdentifierExpression(loc, SFO.NULL), 
+			return new ExpressionResult(new RValue(new IdentifierExpression(loc, SFO.NULL), 
 					new CPointer(new CPrimitive(PRIMITIVE.VOID))));
 		} else if (node.getName().toString().equals("__func__")){
 			String tId = main.nameHandler.getTempVarUID(SFO.AUXVAR.NONDET);
@@ -973,7 +973,7 @@ public class CHandler implements ICHandler {
 			decls.add(tVarDecl);
 			Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<VariableDeclaration, ILocation>();
 			auxVars.put(tVarDecl, loc);
-			return new ResultExpression(new ArrayList<Statement>(), rvalue, decls, auxVars);
+			return new ExpressionResult(new ArrayList<Statement>(), rvalue, decls, auxVars);
 		}
 
 		final String bId;
@@ -1011,12 +1011,12 @@ public class CHandler implements ICHandler {
 			VariableLHS idLhs = new VariableLHS(loc, bId);
 			lrVal = new LocalLValue(idLhs, cType, false, intFromPtr);
 		}
-		return new ResultExpression(lrVal);
+		return new ExpressionResult(lrVal);
 	}
 
 	@Override
 	public Result visit(Dispatcher main, IASTUnaryExpression node) {
-		ResultExpression o = (ResultExpression) main.dispatch(node.getOperand());
+		ExpressionResult o = (ExpressionResult) main.dispatch(node.getOperand());
 		ILocation loc = LocationFactory.createCLocation(node);
 
 		// for the cases we know that it's an RValue..
@@ -1032,7 +1032,7 @@ public class CHandler implements ICHandler {
 		case IASTUnaryExpression.op_not:
 		case IASTUnaryExpression.op_plus:
 		case IASTUnaryExpression.op_tilde: {
-			ResultExpression rop = o.switchToRValueIfNecessary(main, mMemoryHandler, mStructHandler, loc);
+			ExpressionResult rop = o.switchToRValueIfNecessary(main, mMemoryHandler, mStructHandler, loc);
 			return handleUnaryArithmeticOperators(main, loc, node.getOperator(), rop);
 		}
 		case IASTUnaryExpression.op_postFixIncr:
@@ -1047,10 +1047,10 @@ public class CHandler implements ICHandler {
 			return o;
 		case IASTUnaryExpression.op_sizeof:
 			Map<VariableDeclaration, ILocation> emptyAuxVars = new LinkedHashMap<VariableDeclaration, ILocation>(0);
-			return new ResultExpression(new RValue(mMemoryHandler.calculateSizeOf(oType, loc), new CPrimitive(
+			return new ExpressionResult(new RValue(mMemoryHandler.calculateSizeOf(oType, loc), new CPrimitive(
 					PRIMITIVE.INT)), emptyAuxVars);
 		case IASTUnaryExpression.op_star: {
-			ResultExpression rop = o.switchToRValueIfNecessary(main, mMemoryHandler, mStructHandler, loc);
+			ExpressionResult rop = o.switchToRValueIfNecessary(main, mMemoryHandler, mStructHandler, loc);
 			rop.replaceCFunctionByCPointer();
 			Expression addr = rop.lrVal.getValue();
 			if (rop.lrVal.getCType() instanceof CArray) {
@@ -1063,7 +1063,7 @@ public class CHandler implements ICHandler {
 					newCType = arrayCType.getValueType();
 				else
 					newCType = new CArray(dims.toArray(new Expression[0]), arrayCType.getValueType());
-				return new ResultExpression(rop.stmt, new HeapLValue(addr, newCType), rop.decl, rop.auxVars,
+				return new ExpressionResult(rop.stmt, new HeapLValue(addr, newCType), rop.decl, rop.auxVars,
 						rop.overappr);
 			} else {
 				assert rop.lrVal.getCType().getUnderlyingType() instanceof CPointer : "type error: expected pointer , got "
@@ -1073,14 +1073,14 @@ public class CHandler implements ICHandler {
 				if (pointedType.isIncomplete())
 					throw new IncorrectSyntaxException(loc, "Pointer dereference of incomplete type");
 
-				return new ResultExpression(rop.stmt, new HeapLValue(addr, pointedType),
+				return new ExpressionResult(rop.stmt, new HeapLValue(addr, pointedType),
 						rop.decl, rop.auxVars, rop.overappr);
 			}
 		}
 		case IASTUnaryExpression.op_amper:
 			if (o.lrVal instanceof HeapLValue) {
 				Expression addr = ((HeapLValue) o.lrVal).getAddress();
-				return new ResultExpression(o.stmt, new RValue(addr, new CPointer(o.lrVal.getCType())), o.decl, o.auxVars,
+				return new ExpressionResult(o.stmt, new RValue(addr, new CPointer(o.lrVal.getCType())), o.decl, o.auxVars,
 						o.overappr);
 			} else if (o.lrVal instanceof RValue && o.lrVal.getValue() instanceof IntegerLiteral) {
 				assert node.getOperand() instanceof IASTIdExpression : "this is a function pointer, right??";
@@ -1099,7 +1099,7 @@ public class CHandler implements ICHandler {
 	 * Handle prefix increment and decrement operators according to 
 	 * Section 6.5.3.1 of C11.
 	 * We translate the expression <code>++LV</code> to an auxiliary variable
-	 * <code>t~pre</code> and add to the resulting {@link ResultExpression}
+	 * <code>t~pre</code> and add to the resulting {@link ExpressionResult}
 	 * the two assignments <code>t~pre := LV+1</code> and 
 	 * <code>LV := t~pre</code>.
 	 * Hence, the auxiliary variable <code>t~pre</code> stores the new value of 
@@ -1114,11 +1114,11 @@ public class CHandler implements ICHandler {
 	 * are considered.
 	 */
 	private Result handlePrefixIncrementAndDecrement(Dispatcher main,
-			int prefixOp, ILocation loc, ResultExpression exprRes) {
+			int prefixOp, ILocation loc, ExpressionResult exprRes) {
 		assert !exprRes.lrVal.isBoogieBool();
 		final LRValue modifiedLValue = exprRes.lrVal;
 		exprRes = exprRes.switchToRValueIfNecessary(main, mMemoryHandler, mStructHandler, loc);
-		final ResultExpression result = ResultExpression.copyStmtDeclAuxvarOverapprox(exprRes);
+		final ExpressionResult result = ExpressionResult.copyStmtDeclAuxvarOverapprox(exprRes);
 		
 		// In this case we need a temporary variable for the new value
 		final String tmpName = main.nameHandler.getTempVarUID(SFO.AUXVAR.PRE_MOD);
@@ -1151,7 +1151,7 @@ public class CHandler implements ICHandler {
 		result.stmt.add(assignStmt);
 		
 		final RValue rhs = new RValue(valueXcremented, oType, false, false);
-		final ResultExpression assign = makeAssignment(main, loc, result.stmt, 
+		final ExpressionResult assign = makeAssignment(main, loc, result.stmt, 
 				modifiedLValue, rhs, result.decl, result.auxVars, result.overappr);
 		
 		final RValue tmpRValue = new RValue(new IdentifierExpression(loc, tmpName), oType);
@@ -1163,18 +1163,18 @@ public class CHandler implements ICHandler {
 	 * Handle postfix increment and decrement operators according to 
 	 * Section 6.5.2.4 of C11.
 	 * We translate the expression <code>LV++</code> to an auxiliary variable
-	 * <code>t~post</code> and add to the resulting {@link ResultExpression}
+	 * <code>t~post</code> and add to the resulting {@link ExpressionResult}
 	 * the two assignments <code>t~post := LV</code> and 
 	 * <code>LV := t~post + 1</code>.
 	 * Hence the auxiliary variable <code>t~post</code> stores the old value of 
 	 * the object to which the lvalue <code>LV</code> refers. 
 	 */
 	private Result handlePostfixIncrementAndDecrement(Dispatcher main,
-			ILocation loc, int postfixOp, ResultExpression exprRes) {
+			ILocation loc, int postfixOp, ExpressionResult exprRes) {
 		assert !exprRes.lrVal.isBoogieBool();
 		final LRValue modifiedLValue = exprRes.lrVal;
 		exprRes = exprRes.switchToRValueIfNecessary(main, mMemoryHandler, mStructHandler, loc);
-		final ResultExpression result = ResultExpression.copyStmtDeclAuxvarOverapprox(exprRes);
+		final ExpressionResult result = ExpressionResult.copyStmtDeclAuxvarOverapprox(exprRes);
 
 		// In this case we need a temporary variable for the old value
 		final String tmpName = main.nameHandler.getTempVarUID(SFO.AUXVAR.POST_MOD);
@@ -1208,7 +1208,7 @@ public class CHandler implements ICHandler {
 				result, oType, op, tmpRValue.getValue());
 		
 		final RValue rhs = new RValue(valueXcremented, oType, false, false);
-		final ResultExpression assign = makeAssignment(main, loc, result.stmt, 
+		final ExpressionResult assign = makeAssignment(main, loc, result.stmt, 
 				modifiedLValue, rhs, result.decl, result.auxVars, result.overappr);
 		assign.lrVal = tmpRValue;
 		return assign;
@@ -1227,7 +1227,7 @@ public class CHandler implements ICHandler {
 	 * an check if the pointer arithmetic was legal.
 	 */
 	private Expression constructXcrementedValue(Dispatcher main, ILocation loc,
-			final ResultExpression result, final CType ctype, final int op,
+			final ExpressionResult result, final CType ctype, final int op,
 			final Expression value) {
 		assert (op == IASTBinaryExpression.op_plus || op == IASTBinaryExpression.op_minus) : 
 			"has to be either minus or plus";
@@ -1258,8 +1258,8 @@ public class CHandler implements ICHandler {
 	 * Requires that the {@link LRValue} of operands is an {@link RValue}
 	 * (i.e., switchToRValueIfNecessary was applied if needed).
 	 */
-	ResultExpression handleUnaryArithmeticOperators(Dispatcher main, ILocation loc,
-			int op, ResultExpression operand) {
+	ExpressionResult handleUnaryArithmeticOperators(Dispatcher main, ILocation loc,
+			int op, ExpressionResult operand) {
 		assert (operand.lrVal instanceof RValue) : "no RValue";
 		CType inputType = operand.lrVal.getCType().getUnderlyingType();
 
@@ -1297,7 +1297,7 @@ public class CHandler implements ICHandler {
 				 negated = new BinaryExpression(loc, Operator.COMPEQ, 
 						 operand.lrVal.getValue(), rhsOfComparison);
 			}
-			ResultExpression result = ResultExpression.copyStmtDeclAuxvarOverapprox(operand);
+			ExpressionResult result = ExpressionResult.copyStmtDeclAuxvarOverapprox(operand);
 			// C11 6.5.3.3.5 The result has type int.
 			CPrimitive resultType = new CPrimitive(PRIMITIVE.INT);
 			// type of Operator.COMPEQ expression is bool
@@ -1321,10 +1321,10 @@ public class CHandler implements ICHandler {
 			if (!inputType.isArithmeticType()) {
 				throw new UnsupportedOperationException("arithmetic type required");
 			}
-			ResultExpression operandToInt = ConvExpr.rexBoolToIntIfNecessary(loc, operand, m_ExpressionTranslation);
+			ExpressionResult operandToInt = ConvExpr.rexBoolToIntIfNecessary(loc, operand, m_ExpressionTranslation);
 			m_ExpressionTranslation.doIntegerPromotion(loc, operand);
 			CPrimitive resultType = (CPrimitive) operandToInt.lrVal.getCType();
-			ResultExpression result = ResultExpression.copyStmtDeclAuxvarOverapprox(operand);
+			ExpressionResult result = ExpressionResult.copyStmtDeclAuxvarOverapprox(operand);
 			if (op == IASTUnaryExpression.op_minus && resultType.isIntegerType()) {
 				addIntegerBoundsCheck(main, loc, result, resultType, op,  operandToInt.lrVal.getValue());
 			}
@@ -1349,11 +1349,11 @@ public class CHandler implements ICHandler {
 		ILocation loc = LocationFactory.createCLocation(node);
 		List<Overapprox> overappr = new ArrayList<Overapprox>();
 
-		ResultExpression l = (ResultExpression) main.dispatch(node.getOperand1());
-		ResultExpression r = (ResultExpression) main.dispatch(node.getOperand2());
+		ExpressionResult l = (ExpressionResult) main.dispatch(node.getOperand1());
+		ExpressionResult r = (ExpressionResult) main.dispatch(node.getOperand2());
 
-		ResultExpression rl = l.switchToRValueIfNecessary(main, mMemoryHandler, mStructHandler, loc);
-		ResultExpression rr = r.switchToRValueIfNecessary(main, mMemoryHandler, mStructHandler, loc);
+		ExpressionResult rl = l.switchToRValueIfNecessary(main, mMemoryHandler, mStructHandler, loc);
+		ExpressionResult rr = r.switchToRValueIfNecessary(main, mMemoryHandler, mStructHandler, loc);
 
 		CType lType = l.lrVal.getCType().getUnderlyingType();
 		CType rType = r.lrVal.getCType().getUnderlyingType();
@@ -1386,15 +1386,15 @@ public class CHandler implements ICHandler {
 				decl.addAll(rr.decl);
 				auxVars.putAll(rr.auxVars);
 				overappr.addAll(rr.overappr);
-				ResultExpression rrToInt = ConvExpr.rexBoolToIntIfNecessary(loc, rr, m_ExpressionTranslation);
+				ExpressionResult rrToInt = ConvExpr.rexBoolToIntIfNecessary(loc, rr, m_ExpressionTranslation);
 				return makeAssignment(main, loc, stmt, l.lrVal, (RValue) rrToInt.lrVal, decl, auxVars, overappr,
 						l.unionFieldIdToCType);
 			}
 		}
 		case IASTBinaryExpression.op_equals:
 		case IASTBinaryExpression.op_notequals: {
-			ResultExpression rrToInt = ConvExpr.rexBoolToIntIfNecessary(loc, rr, m_ExpressionTranslation);
-			ResultExpression rlToInt = ConvExpr.rexBoolToIntIfNecessary(loc, rl, m_ExpressionTranslation);
+			ExpressionResult rrToInt = ConvExpr.rexBoolToIntIfNecessary(loc, rr, m_ExpressionTranslation);
+			ExpressionResult rlToInt = ConvExpr.rexBoolToIntIfNecessary(loc, rl, m_ExpressionTranslation);
 			return handleEqualityOperators(main, loc, node.getOperator(), rlToInt, rrToInt);
 		}
 		case IASTBinaryExpression.op_greaterEqual:
@@ -1405,8 +1405,8 @@ public class CHandler implements ICHandler {
 		}
 
 		case IASTBinaryExpression.op_logicalAnd: {
-			ResultExpression rlToBool = ConvExpr.rexIntToBoolIfNecessary(loc, rl, m_ExpressionTranslation);
-			ResultExpression rrToBool = ConvExpr.rexIntToBoolIfNecessary(loc, rr, m_ExpressionTranslation);
+			ExpressionResult rlToBool = ConvExpr.rexIntToBoolIfNecessary(loc, rl, m_ExpressionTranslation);
+			ExpressionResult rrToBool = ConvExpr.rexIntToBoolIfNecessary(loc, rr, m_ExpressionTranslation);
 			
 
 			stmt.addAll(rlToBool.stmt);
@@ -1426,7 +1426,7 @@ public class CHandler implements ICHandler {
 						rlToBool.lrVal.getValue(), rrToBool.lrVal.getValue()),
 						new CPrimitive(CPrimitive.PRIMITIVE.INT), true);
 
-				return new ResultExpression(stmt, newRVal, decl, auxVars, overappr);
+				return new ExpressionResult(stmt, newRVal, decl, auxVars, overappr);
 			}
 			// create and add tmp var #t~AND~UID
 			String resName = main.nameHandler.getTempVarUID(SFO.AUXVAR.SHORTCIRCUIT);
@@ -1459,11 +1459,11 @@ public class CHandler implements ICHandler {
 //				annots.put(Overapprox.getIdentifier(), overapprItem);
 //			}
 			stmt.add(ifStatement);
-			return new ResultExpression(stmt, resRval, decl, auxVars, overappr);
+			return new ExpressionResult(stmt, resRval, decl, auxVars, overappr);
 		}
 		case IASTBinaryExpression.op_logicalOr: {
-			ResultExpression rlToBool = ConvExpr.rexIntToBoolIfNecessary(loc, rl, m_ExpressionTranslation);
-			ResultExpression rrToBool = ConvExpr.rexIntToBoolIfNecessary(loc, rr, m_ExpressionTranslation);
+			ExpressionResult rlToBool = ConvExpr.rexIntToBoolIfNecessary(loc, rl, m_ExpressionTranslation);
+			ExpressionResult rrToBool = ConvExpr.rexIntToBoolIfNecessary(loc, rr, m_ExpressionTranslation);
 
 			stmt.addAll(rlToBool.stmt);
 			// NOTE: no rr.stmt
@@ -1477,7 +1477,7 @@ public class CHandler implements ICHandler {
 			if (rrToBool.stmt.isEmpty()) {
 				// no auxVar in operands, hence no side effects in operands
 				// we can directly combine operands with LOGICOR
-				return new ResultExpression(stmt, new RValue(new BinaryExpression(loc,
+				return new ExpressionResult(stmt, new RValue(new BinaryExpression(loc,
 						BinaryExpression.Operator.LOGICOR, rlToBool.lrVal.getValue(), rrToBool.lrVal.getValue()),
 						new CPrimitive(CPrimitive.PRIMITIVE.INT), true), decl, auxVars, overappr);
 			}
@@ -1511,59 +1511,59 @@ public class CHandler implements ICHandler {
 				annots.put(Overapprox.getIdentifier(), overapprItem);
 			}
 			stmt.add(ifStatement);
-			return new ResultExpression(stmt, resRval, decl, auxVars, overappr);
+			return new ExpressionResult(stmt, resRval, decl, auxVars, overappr);
 		}
 		case IASTBinaryExpression.op_modulo:
 		case IASTBinaryExpression.op_multiply:
 		case IASTBinaryExpression.op_divide: {
-			ResultExpression rlToInt = ConvExpr.rexBoolToIntIfNecessary(loc, rl, m_ExpressionTranslation);
-			ResultExpression rrToInt = ConvExpr.rexBoolToIntIfNecessary(loc, rr, m_ExpressionTranslation);
+			ExpressionResult rlToInt = ConvExpr.rexBoolToIntIfNecessary(loc, rl, m_ExpressionTranslation);
+			ExpressionResult rrToInt = ConvExpr.rexBoolToIntIfNecessary(loc, rr, m_ExpressionTranslation);
 			return handleMultiplicativeOperation(main, loc, null, node.getOperator(), rlToInt, rrToInt);
 		}
 		case IASTBinaryExpression.op_moduloAssign:
 		case IASTBinaryExpression.op_multiplyAssign:
 		case IASTBinaryExpression.op_divideAssign: {
-			ResultExpression rlToInt = ConvExpr.rexBoolToIntIfNecessary(loc, rl, m_ExpressionTranslation);
-			ResultExpression rrToInt = ConvExpr.rexBoolToIntIfNecessary(loc, rr, m_ExpressionTranslation);
+			ExpressionResult rlToInt = ConvExpr.rexBoolToIntIfNecessary(loc, rl, m_ExpressionTranslation);
+			ExpressionResult rrToInt = ConvExpr.rexBoolToIntIfNecessary(loc, rr, m_ExpressionTranslation);
 			return handleMultiplicativeOperation(main, loc, l.lrVal, node.getOperator(), rlToInt, rrToInt);
 		}
 		case IASTBinaryExpression.op_plus:
 		case IASTBinaryExpression.op_minus: {
-			ResultExpression rlToInt = ConvExpr.rexBoolToIntIfNecessary(loc, rl, m_ExpressionTranslation);
-			ResultExpression rrToInt = ConvExpr.rexBoolToIntIfNecessary(loc, rr, m_ExpressionTranslation);
+			ExpressionResult rlToInt = ConvExpr.rexBoolToIntIfNecessary(loc, rl, m_ExpressionTranslation);
+			ExpressionResult rrToInt = ConvExpr.rexBoolToIntIfNecessary(loc, rr, m_ExpressionTranslation);
 			return handleAdditiveOperation(main, loc, null, node.getOperator(), rlToInt, rrToInt);
 		}
 		case IASTBinaryExpression.op_plusAssign:
 		case IASTBinaryExpression.op_minusAssign: {
-			ResultExpression rlToInt = ConvExpr.rexBoolToIntIfNecessary(loc, rl, m_ExpressionTranslation);
-			ResultExpression rrToInt = ConvExpr.rexBoolToIntIfNecessary(loc, rr, m_ExpressionTranslation);
+			ExpressionResult rlToInt = ConvExpr.rexBoolToIntIfNecessary(loc, rl, m_ExpressionTranslation);
+			ExpressionResult rrToInt = ConvExpr.rexBoolToIntIfNecessary(loc, rr, m_ExpressionTranslation);
 			return handleAdditiveOperation(main, loc, l.lrVal, node.getOperator(), rlToInt, rrToInt);
 		}
 		case IASTBinaryExpression.op_binaryAnd:
 		case IASTBinaryExpression.op_binaryOr:
 		case IASTBinaryExpression.op_binaryXor: {
-			ResultExpression rlToInt = ConvExpr.rexBoolToIntIfNecessary(loc, rl, m_ExpressionTranslation);
-			ResultExpression rrToInt = ConvExpr.rexBoolToIntIfNecessary(loc, rr, m_ExpressionTranslation);
+			ExpressionResult rlToInt = ConvExpr.rexBoolToIntIfNecessary(loc, rl, m_ExpressionTranslation);
+			ExpressionResult rrToInt = ConvExpr.rexBoolToIntIfNecessary(loc, rr, m_ExpressionTranslation);
 			return handleBitwiseArithmeticOperation(main, loc, null, node.getOperator(), rlToInt, rrToInt);
 		}
 		case IASTBinaryExpression.op_binaryAndAssign:
 		case IASTBinaryExpression.op_binaryOrAssign:
 		case IASTBinaryExpression.op_binaryXorAssign: {
-			ResultExpression rlToInt = ConvExpr.rexBoolToIntIfNecessary(loc, rl, m_ExpressionTranslation);
-			ResultExpression rrToInt = ConvExpr.rexBoolToIntIfNecessary(loc, rr, m_ExpressionTranslation);
+			ExpressionResult rlToInt = ConvExpr.rexBoolToIntIfNecessary(loc, rl, m_ExpressionTranslation);
+			ExpressionResult rrToInt = ConvExpr.rexBoolToIntIfNecessary(loc, rr, m_ExpressionTranslation);
 			return handleBitwiseArithmeticOperation(main, loc, l.lrVal, node.getOperator(), rlToInt, rrToInt);
 		}
 		case IASTBinaryExpression.op_shiftLeft:
 		case IASTBinaryExpression.op_shiftRight: {
-			ResultExpression rlToInt = ConvExpr.rexBoolToIntIfNecessary(loc, rl, m_ExpressionTranslation);
-			ResultExpression rrToInt = ConvExpr.rexBoolToIntIfNecessary(loc, rr, m_ExpressionTranslation);
+			ExpressionResult rlToInt = ConvExpr.rexBoolToIntIfNecessary(loc, rl, m_ExpressionTranslation);
+			ExpressionResult rrToInt = ConvExpr.rexBoolToIntIfNecessary(loc, rr, m_ExpressionTranslation);
 			return handleBitshiftOperation(main, loc, null, node.getOperator(), rlToInt, rrToInt);
 
 		}
 		case IASTBinaryExpression.op_shiftLeftAssign:
 		case IASTBinaryExpression.op_shiftRightAssign: {
-			ResultExpression rlToInt = ConvExpr.rexBoolToIntIfNecessary(loc, rl, m_ExpressionTranslation);
-			ResultExpression rrToInt = ConvExpr.rexBoolToIntIfNecessary(loc, rr, m_ExpressionTranslation);
+			ExpressionResult rlToInt = ConvExpr.rexBoolToIntIfNecessary(loc, rl, m_ExpressionTranslation);
+			ExpressionResult rrToInt = ConvExpr.rexBoolToIntIfNecessary(loc, rr, m_ExpressionTranslation);
 			return handleBitshiftOperation(main, loc, l.lrVal, node.getOperator(), rlToInt, rrToInt);
 		}
 		
@@ -1582,8 +1582,8 @@ public class CHandler implements ICHandler {
 	 * Requires that the {@link LRValue} of operands is an {@link RValue}
 	 * (i.e., switchToRValueIfNecessary was applied if needed).
 	 */
-	ResultExpression handleRelationalOperators(Dispatcher main, ILocation loc,
-			int op, ResultExpression left, ResultExpression right) {
+	ExpressionResult handleRelationalOperators(Dispatcher main, ILocation loc,
+			int op, ExpressionResult left, ExpressionResult right) {
 		assert (left.lrVal instanceof RValue) : "no RValue";
 		assert (right.lrVal instanceof RValue) : "no RValue";
 		left.replaceEnumByInt();
@@ -1593,7 +1593,7 @@ public class CHandler implements ICHandler {
 		final CType lType = left.lrVal.getCType().getUnderlyingType();
 		final CType rType = right.lrVal.getCType().getUnderlyingType();
 
-		final ResultExpression result = ResultExpression.copyStmtDeclAuxvarOverapprox(left, right);
+		final ExpressionResult result = ExpressionResult.copyStmtDeclAuxvarOverapprox(left, right);
 		final Expression expr;
 		if (lType instanceof CPrimitive && rType instanceof CPrimitive) {
 			assert lType.isRealType() && rType.isRealType() : "no real type";
@@ -1682,8 +1682,8 @@ public class CHandler implements ICHandler {
 	 * non-boolean representation of these results 
 	 * (i.e., rexBoolToIntIfNecessary() has already been applied if needed).
 	 */
-	ResultExpression handleMultiplicativeOperation(Dispatcher main, ILocation loc, 
-			LRValue lhs, int op, ResultExpression left, ResultExpression right) {
+	ExpressionResult handleMultiplicativeOperation(Dispatcher main, ILocation loc, 
+			LRValue lhs, int op, ExpressionResult left, ExpressionResult right) {
 		assert (left.lrVal instanceof RValue) : "no RValue";
 		assert (right.lrVal instanceof RValue) : "no RValue";
 		final CType lType = left.lrVal.getCType().getUnderlyingType();
@@ -1698,7 +1698,7 @@ public class CHandler implements ICHandler {
 		final CPrimitive typeOfResult = (CPrimitive) left.lrVal.getCType();
 		assert typeOfResult.equals(right.lrVal.getCType());
 
-		ResultExpression result = ResultExpression.copyStmtDeclAuxvarOverapprox(left, right);
+		ExpressionResult result = ExpressionResult.copyStmtDeclAuxvarOverapprox(left, right);
 		switch (op) {
 		case IASTBinaryExpression.op_multiply:
 		case IASTBinaryExpression.op_divide:
@@ -1743,7 +1743,7 @@ public class CHandler implements ICHandler {
 	 * Add to divisorExpRes a check if divisior is zero.
 	 */
 	private void addDivisionByZeroCheck(Dispatcher main, ILocation loc, 
-			ResultExpression divisorExpRes) {
+			ExpressionResult divisorExpRes) {
 		final Expression divisor = divisorExpRes.lrVal.getValue();
 		final CPrimitive divisorType = (CPrimitive) divisorExpRes.lrVal.getCType();
 		if (main.getTranslationSettings().getDivisionByZero() == POINTER_CHECKMODE.IGNORE) {
@@ -1783,27 +1783,27 @@ public class CHandler implements ICHandler {
 	 * non-boolean representation of these results 
 	 * (i.e., rexBoolToIntIfNecessary() has already been applied if needed).
 	 */
-	ResultExpression handleAdditiveOperation(Dispatcher main, ILocation loc, 
-			LRValue lhs, int op, ResultExpression left, ResultExpression right) {
+	ExpressionResult handleAdditiveOperation(Dispatcher main, ILocation loc, 
+			LRValue lhs, int op, ExpressionResult left, ExpressionResult right) {
 		assert (left.lrVal instanceof RValue) : "no RValue";
 		assert (right.lrVal instanceof RValue) : "no RValue";
 		final CType lType = left.lrVal.getCType().getUnderlyingType();
 		final CType rType = right.lrVal.getCType().getUnderlyingType();
-		ResultExpression result;
+		ExpressionResult result;
 		final Expression expr;
 		final CType typeOfResult;
 		if (lType.isArithmeticType() && rType.isArithmeticType()) {
 			m_ExpressionTranslation.usualArithmeticConversions(main, loc, left, right);
 			typeOfResult = left.lrVal.getCType();
 			assert typeOfResult.equals(right.lrVal.getCType());
-			result = ResultExpression.copyStmtDeclAuxvarOverapprox(left, right);
+			result = ExpressionResult.copyStmtDeclAuxvarOverapprox(left, right);
 			addIntegerBoundsCheck(main, loc, result, (CPrimitive)  typeOfResult, op, left.lrVal.getValue(), right.lrVal.getValue());
 			expr = m_ExpressionTranslation.createArithmeticExpression(
 				op, left.lrVal.getValue(), (CPrimitive)  typeOfResult, right.lrVal.getValue(), (CPrimitive)  typeOfResult, loc);
 		} else if ((lType instanceof CPointer) && rType.isArithmeticType()) {
 			typeOfResult = left.lrVal.getCType();
 			CType pointsToType = ((CPointer) typeOfResult).pointsToType;
-			result = ResultExpression.copyStmtDeclAuxvarOverapprox(left, right);
+			result = ExpressionResult.copyStmtDeclAuxvarOverapprox(left, right);
 			expr = doPointerArith(main, op, loc, left.lrVal.getValue(), right.lrVal.getValue(), pointsToType);
 			checkOffsetInBounds(main, loc, expr, result);
 		} else if (lType.isArithmeticType() && (rType instanceof CPointer)) {
@@ -1812,7 +1812,7 @@ public class CHandler implements ICHandler {
 			}
 			typeOfResult = right.lrVal.getCType();
 			CType pointsToType = ((CPointer) typeOfResult).pointsToType;
-			result = ResultExpression.copyStmtDeclAuxvarOverapprox(left, right);
+			result = ExpressionResult.copyStmtDeclAuxvarOverapprox(left, right);
 			expr = doPointerArith(main, op, loc, right.lrVal.getValue(), left.lrVal.getValue(), pointsToType);
 			checkOffsetInBounds(main, loc, expr, result);
 		} else if ((lType instanceof CPointer) && (rType instanceof CPointer)) {
@@ -1826,7 +1826,7 @@ public class CHandler implements ICHandler {
 			// We randomly choose the type whose Boogie translation we use to 
 			// represent pointer components.
 			typeOfResult = m_ExpressionTranslation.getCTypeOfPointerComponents();
-			result = ResultExpression.copyStmtDeclAuxvarOverapprox(left, right);
+			result = ExpressionResult.copyStmtDeclAuxvarOverapprox(left, right);
 			CType pointsToType;
 			{
 				CType leftPointsToType = ((CPointer) lType).pointsToType;
@@ -1875,11 +1875,11 @@ public class CHandler implements ICHandler {
 	 * 
 	 * @param leftPtr Boogie {@link Expression} that represents the left pointer.
 	 * @param rightPtr Boogie {@link Expression} that represents the right pointer.
-	 * @param result {@link ResultExpression} to which the additional statements
+	 * @param result {@link ExpressionResult} to which the additional statements
 	 * are added.
 	 */
 	private void checkBaseEquality(Dispatcher main, ILocation loc,
-			Expression leftPtr, Expression rightPtr, ResultExpression result) {
+			Expression leftPtr, Expression rightPtr, ExpressionResult result) {
 		if (mMemoryHandler.getPointerSubtractionAndComparisonValidityCheckMode() == POINTER_CHECKMODE.IGNORE) {
 			// do not check anything
 			return;
@@ -1954,11 +1954,11 @@ public class CHandler implements ICHandler {
 	 * </ul>
 	 * 
 	 * @param ptr Boogie {@link Expression} that represents the pointer.
-	 * @param result {@link ResultExpression} to which the additional statements
+	 * @param result {@link ExpressionResult} to which the additional statements
 	 * are added.
 	 */
 	private void checkOffsetInBounds(Dispatcher main, ILocation loc,
-			Expression ptr, ResultExpression result) {
+			Expression ptr, ExpressionResult result) {
 		//TODO: Matthias 2015-09-08 implement this
 		// maybe additional parameters are required.
 	}
@@ -1972,8 +1972,8 @@ public class CHandler implements ICHandler {
 	 * non-boolean representation of these results 
 	 * (i.e., rexBoolToIntIfNecessary() has already been applied if needed).
 	 */
-	ResultExpression handleEqualityOperators(Dispatcher main, ILocation loc,
-			int op, ResultExpression left, ResultExpression right) {
+	ExpressionResult handleEqualityOperators(Dispatcher main, ILocation loc,
+			int op, ExpressionResult left, ExpressionResult right) {
 		assert (left.lrVal instanceof RValue) : "no RValue";
 		assert (right.lrVal instanceof RValue) : "no RValue";
 		{
@@ -2003,7 +2003,7 @@ public class CHandler implements ICHandler {
 				loc, op, left.lrVal.getValue(), left.lrVal.getCType(), 
 				right.lrVal.getValue(), right.lrVal.getCType());
 		final RValue rval = new RValue(expr,typeOfResult, true, false);
-		final ResultExpression result = ResultExpression.copyStmtDeclAuxvarOverapprox(left, right);
+		final ExpressionResult result = ExpressionResult.copyStmtDeclAuxvarOverapprox(left, right);
 		result.lrVal = rval;
 		return result;
 	}
@@ -2017,8 +2017,8 @@ public class CHandler implements ICHandler {
 	 * non-boolean representation of these results 
 	 * (i.e., rexBoolToIntIfNecessary() has already been applied if needed).
 	 */
-	ResultExpression handleBitshiftOperation(Dispatcher main, ILocation loc, 
-			LRValue lhs, int op, ResultExpression left, ResultExpression right) {
+	ExpressionResult handleBitshiftOperation(Dispatcher main, ILocation loc, 
+			LRValue lhs, int op, ExpressionResult left, ExpressionResult right) {
 		assert (left.lrVal instanceof RValue) : "no RValue";
 		assert (right.lrVal instanceof RValue) : "no RValue";
 		final CType lType = left.lrVal.getCType().getUnderlyingType();
@@ -2036,14 +2036,14 @@ public class CHandler implements ICHandler {
 		case IASTBinaryExpression.op_shiftLeft:
 		case IASTBinaryExpression.op_shiftRight: {
 			assert lhs == null : "no assignment";
-			final ResultExpression result = ResultExpression.copyStmtDeclAuxvarOverapprox(left, right);
+			final ExpressionResult result = ExpressionResult.copyStmtDeclAuxvarOverapprox(left, right);
 			result.lrVal = rval;
 			return result;
 		}
 		case IASTBinaryExpression.op_shiftLeftAssign:
 		case IASTBinaryExpression.op_shiftRightAssign: {
-			final ResultExpression copy = ResultExpression.copyStmtDeclAuxvarOverapprox(left, right);
-			final ResultExpression result = makeAssignment(main, loc, copy.stmt, lhs, rval, copy.decl, copy.auxVars, copy.overappr);
+			final ExpressionResult copy = ExpressionResult.copyStmtDeclAuxvarOverapprox(left, right);
+			final ExpressionResult result = makeAssignment(main, loc, copy.stmt, lhs, rval, copy.decl, copy.auxVars, copy.overappr);
 			return result;
 		}
 		default:
@@ -2061,8 +2061,8 @@ public class CHandler implements ICHandler {
 	 * non-boolean representation of these results 
 	 * (i.e., rexBoolToIntIfNecessary() has already been applied if needed).
 	 */
-	ResultExpression handleBitwiseArithmeticOperation(Dispatcher main, ILocation loc, 
-			LRValue lhs, int op, ResultExpression left, ResultExpression right) {
+	ExpressionResult handleBitwiseArithmeticOperation(Dispatcher main, ILocation loc, 
+			LRValue lhs, int op, ExpressionResult left, ExpressionResult right) {
 		assert (left.lrVal instanceof RValue) : "no RValue";
 		assert (right.lrVal instanceof RValue) : "no RValue";
 		final CType lType = left.lrVal.getCType().getUnderlyingType();
@@ -2081,15 +2081,15 @@ public class CHandler implements ICHandler {
 		case IASTBinaryExpression.op_binaryXor:
 		case IASTBinaryExpression.op_binaryOr: {
 			assert lhs == null : "no assignment";
-			final ResultExpression result = ResultExpression.copyStmtDeclAuxvarOverapprox(left, right);
+			final ExpressionResult result = ExpressionResult.copyStmtDeclAuxvarOverapprox(left, right);
 			result.lrVal = rval;
 			return result;
 		}
 		case IASTBinaryExpression.op_binaryAndAssign:
 		case IASTBinaryExpression.op_binaryXorAssign:
 		case IASTBinaryExpression.op_binaryOrAssign: {
-			final ResultExpression copy = ResultExpression.copyStmtDeclAuxvarOverapprox(left, right);
-			final ResultExpression result = makeAssignment(main, loc, copy.stmt, lhs, rval, copy.decl, copy.auxVars, copy.overappr);
+			final ExpressionResult copy = ExpressionResult.copyStmtDeclAuxvarOverapprox(left, right);
+			final ExpressionResult result = makeAssignment(main, loc, copy.stmt, lhs, rval, copy.decl, copy.auxVars, copy.overappr);
 			return result;
 		}
 		default:
@@ -2110,7 +2110,7 @@ public class CHandler implements ICHandler {
 	 * express an overflow check for a 32bit integer addition in C. Instead, we 
 	 * have to use a 33bit bit bitvector in Boogie.
 	 */
-	private void addIntegerBoundsCheck(Dispatcher main, ILocation loc, ResultExpression rex, 
+	private void addIntegerBoundsCheck(Dispatcher main, ILocation loc, ExpressionResult rex, 
 			CPrimitive resultType, int operation, Expression... operands) {
 		if (main.mPreferences.getBoolean(CACSLPreferenceInitializer.LABEL_CHECK_SIGNED_INTEGER_BOUNDS)
 				&& resultType.isIntegerType()
@@ -2155,8 +2155,8 @@ public class CHandler implements ICHandler {
 	@Override
 	public Result visit(Dispatcher main, IASTExpressionStatement node) {
 		Result r = main.dispatch(node.getExpression());
-		if (r instanceof ResultExpression) {
-			ResultExpression rExp = (ResultExpression) r;
+		if (r instanceof ExpressionResult) {
+			ExpressionResult rExp = (ExpressionResult) r;
 			if (!rExp.stmt.isEmpty()) {
 				ArrayList<Statement> stmt = new ArrayList<Statement>(rExp.stmt);
 				ArrayList<Declaration> decl = new ArrayList<Declaration>(rExp.decl);
@@ -2165,18 +2165,18 @@ public class CHandler implements ICHandler {
 				stmt.addAll(createHavocsForAuxVars(rExp.auxVars));
 				overappr.addAll(rExp.overappr);
 				Map<VariableDeclaration, ILocation> emptyAuxVars = new LinkedHashMap<VariableDeclaration, ILocation>(0);
-				return new ResultExpression(stmt, null, decl, emptyAuxVars, overappr);
+				return new ExpressionResult(stmt, null, decl, emptyAuxVars, overappr);
 			} else {
 				String msg = "This statement has no effect and will be dropped: " + node.getRawSignature();
 				main.warn(LocationFactory.createCLocation(node), msg);
-				return new ResultSkip();
+				return new SkipResult();
 			}
-		} else if (r instanceof ResultExpressionList) {
+		} else if (r instanceof ExpressionListResult) {
 			ArrayList<Statement> stmt = new ArrayList<Statement>();
 			ArrayList<Declaration> decl = new ArrayList<Declaration>();
 			List<Overapprox> overappr = new ArrayList<Overapprox>();
 			Map<VariableDeclaration, ILocation> emptyAuxVars = new LinkedHashMap<VariableDeclaration, ILocation>(0);
-			for (ResultExpression res : ((ResultExpressionList) r).list) {
+			for (ExpressionResult res : ((ExpressionListResult) r).list) {
 				if (!res.stmt.isEmpty()) {
 					stmt.addAll(res.stmt);
 					decl.addAll(res.decl);
@@ -2186,8 +2186,8 @@ public class CHandler implements ICHandler {
 				}
 			}
 
-			return new ResultExpression(stmt, null, decl, emptyAuxVars, overappr);
-		} else if (r instanceof ResultSkip) {
+			return new ExpressionResult(stmt, null, decl, emptyAuxVars, overappr);
+		} else if (r instanceof SkipResult) {
 			return r;
 		}
 		String msg = "We always convert to AssignmentStatement, other options raise this error!";
@@ -2203,7 +2203,7 @@ public class CHandler implements ICHandler {
 		List<Overapprox> overappr = new ArrayList<Overapprox>();
 		Map<VariableDeclaration, ILocation> emptyAuxVars = new LinkedHashMap<VariableDeclaration, ILocation>();
 
-		ResultExpression condResult = (ResultExpression) main.dispatch(node.getConditionExpression());
+		ExpressionResult condResult = (ExpressionResult) main.dispatch(node.getConditionExpression());
 		condResult = condResult.switchToRValueIfNecessary(main, mMemoryHandler, mStructHandler, loc);
 		condResult = ConvExpr.rexIntToBoolIfNecessary(loc, condResult, m_ExpressionTranslation);
 		RValue cond = (RValue) condResult.lrVal;
@@ -2215,8 +2215,8 @@ public class CHandler implements ICHandler {
 		Result thenResult = main.dispatch(node.getThenClause());
 		List<Statement> thenStmt = new ArrayList<Statement>();
 		thenStmt.addAll(havocs);
-		if (thenResult instanceof ResultExpression) {
-			ResultExpression re = (ResultExpression) thenResult;
+		if (thenResult instanceof ExpressionResult) {
+			ExpressionResult re = (ExpressionResult) thenResult;
 			decl.addAll(re.decl);
 			thenStmt.addAll(re.stmt);
 		} else if (thenResult instanceof Result) {
@@ -2224,7 +2224,7 @@ public class CHandler implements ICHandler {
 				Body thenPart = (Body) (thenResult.node);
 				thenStmt.addAll(Arrays.asList(thenPart.getBlock()));
 				decl.addAll(Arrays.asList(thenPart.getLocalVars()));
-			} else if (thenResult instanceof ResultSkip) {
+			} else if (thenResult instanceof SkipResult) {
 				//add no statements or declarations
 			} else {
 				String msg = "Error: unexpected dispatch result";
@@ -2236,8 +2236,8 @@ public class CHandler implements ICHandler {
 		elseStmt.addAll(havocs);
 		if (node.getElseClause() != null) {
 			Result elseResult = main.dispatch(node.getElseClause());
-			if (elseResult instanceof ResultExpression) {
-				ResultExpression re = (ResultExpression) elseResult;
+			if (elseResult instanceof ExpressionResult) {
+				ExpressionResult re = (ExpressionResult) elseResult;
 				decl.addAll(re.decl);
 				elseStmt.addAll(re.stmt);
 			} else if (elseResult instanceof Result) {
@@ -2261,13 +2261,13 @@ public class CHandler implements ICHandler {
 			annots.put(Overapprox.getIdentifier(), overapprItem);
 		}
 		stmt.add(ifStmt);
-		return new ResultExpression(stmt, null, decl, emptyAuxVars, overappr);
+		return new ExpressionResult(stmt, null, decl, emptyAuxVars, overappr);
 	}
 
 
 	@Override
 	public Result visit(Dispatcher main, IASTWhileStatement node) {
-		ResultExpression condResult = (ResultExpression) main.dispatch(node.getCondition());
+		ExpressionResult condResult = (ExpressionResult) main.dispatch(node.getCondition());
 		String loopLabel = main.nameHandler.getGloballyUniqueIdentifier(SFO.LOOPLABEL);
 		mInnerMostLoopLabel.push(loopLabel);
 		Result bodyResult = main.dispatch(node.getBody());
@@ -2283,7 +2283,7 @@ public class CHandler implements ICHandler {
 
 	@Override
 	public Result visit(Dispatcher main, IASTDoStatement node) {
-		ResultExpression condResult = (ResultExpression) main.dispatch(node.getCondition());
+		ExpressionResult condResult = (ExpressionResult) main.dispatch(node.getCondition());
 		String loopLabel = main.nameHandler.getGloballyUniqueIdentifier(SFO.LOOPLABEL);
 		mInnerMostLoopLabel.push(loopLabel);
 		Result bodyResult = main.dispatch(node.getBody());
@@ -2296,17 +2296,17 @@ public class CHandler implements ICHandler {
 		ILocation loc = LocationFactory.createCLocation(cs);
 		ArrayList<Statement> stmt = new ArrayList<Statement>();
 		stmt.add(new GotoStatement(loc, new String[] { mInnerMostLoopLabel.peek() }));
-		ResultExpression contResult = new ResultExpression(stmt, null);
+		ExpressionResult contResult = new ExpressionResult(stmt, null);
 		return contResult;
 	}
 
 	@Override
 	public Result visit(Dispatcher main, IASTExpressionList node) {
-		ResultExpressionList result = new ResultExpressionList();
+		ExpressionListResult result = new ExpressionListResult();
 		for (IASTExpression expr : node.getExpressions()) {
 			Result r = main.dispatch(expr);
-			assert r instanceof ResultExpression;
-			result.list.add((ResultExpression) r);
+			assert r instanceof ExpressionResult;
+			result.list.add((ExpressionResult) r);
 		}
 		return result;
 	}
@@ -2318,15 +2318,15 @@ public class CHandler implements ICHandler {
 			throw new IllegalArgumentException("You might have parsed your code with "
 					+ "ITranslationUnit.AST_SKIP_TRIVIAL_EXPRESSIONS_IN_AGGREGATE_INITIALIZERS!");
 		}
-		ResultExpressionListRec result = new ResultExpressionListRec();
+		ExpressionListRecResult result = new ExpressionListRecResult();
 		for (IASTInitializerClause i : node.getClauses()) {
 			Result r = main.dispatch(i);
-			if (r instanceof ResultExpressionListRec) {
-				result.list.add((ResultExpressionListRec) r);
-			} else if (r instanceof ResultExpression) {
-				ResultExpression rex = (ResultExpression) r;
+			if (r instanceof ExpressionListRecResult) {
+				result.list.add((ExpressionListRecResult) r);
+			} else if (r instanceof ExpressionResult) {
+				ExpressionResult rex = (ExpressionResult) r;
 				rex = rex.switchToRValueIfNecessary(main, mMemoryHandler, mStructHandler, loc);
-				result.list.add(new ResultExpressionListRec(rex.stmt, rex.lrVal, rex.decl, rex.auxVars, rex.overappr));
+				result.list.add(new ExpressionListRecResult(rex.stmt, rex.lrVal, rex.decl, rex.auxVars, rex.overappr));
 //				result.auxVars.putAll(((ResultExpression) r).auxVars);//what for??
 			} else {
 				String msg = "Unexpected result";
@@ -2361,12 +2361,12 @@ public class CHandler implements ICHandler {
 	public Result visit(Dispatcher main, IASTBreakStatement node) {
 		ArrayList<Statement> stmt = new ArrayList<Statement>();
 		stmt.add(new BreakStatement(LocationFactory.createCLocation(node)));
-		return new ResultExpression(stmt, null);
+		return new ExpressionResult(stmt, null);
 	}
 
 	@Override
 	public Result visit(Dispatcher main, IASTNullStatement node) {
-		return new ResultSkip();
+		return new SkipResult();
 	}
 
 	@Override
@@ -2383,8 +2383,8 @@ public class CHandler implements ICHandler {
 		List<Overapprox> overappr = new ArrayList<Overapprox>();
 		Map<VariableDeclaration, ILocation> emptyAuxVars = new LinkedHashMap<VariableDeclaration, ILocation>();
 		Result switchParam = main.dispatch(node.getControllerExpression());
-		assert switchParam instanceof ResultExpression;
-		ResultExpression l = ((ResultExpression) switchParam).switchToRValueIfNecessary(main, mMemoryHandler,
+		assert switchParam instanceof ExpressionResult;
+		ExpressionResult l = ((ExpressionResult) switchParam).switchToRValueIfNecessary(main, mMemoryHandler,
 				mStructHandler, loc);
 		stmt.addAll(l.stmt);
 		decl.addAll(l.decl);
@@ -2412,7 +2412,7 @@ public class CHandler implements ICHandler {
 			//ILocation locC = LocationFactory.createCLocation(child);
 			checkForACSL(main, ifBlock, decl, child, null);
 			if (child instanceof IASTCaseStatement || child instanceof IASTDefaultStatement) {
-				ResultExpression res = (ResultExpression) main.dispatch(child);
+				ExpressionResult res = (ExpressionResult) main.dispatch(child);
 				if (locC != null) {
 					IfStatement ifStmt = new IfStatement(locC, new IdentifierExpression(locC, switchFlag), ifBlock.toArray(new Statement[0]),
 									new Statement[0]);
@@ -2453,8 +2453,8 @@ public class CHandler implements ICHandler {
 			} else {
 				Result r = main.dispatch(child);
 
-				if (r instanceof ResultExpression) {
-					ResultExpression res = (ResultExpression) r;
+				if (r instanceof ExpressionResult) {
+					ExpressionResult res = (ExpressionResult) r;
 					decl.addAll(res.decl);
 					auxVars.putAll(res.auxVars);
 					overappr.addAll(res.overappr);
@@ -2501,12 +2501,12 @@ public class CHandler implements ICHandler {
 		// TODO: Havoc the switchFlag
 
 		this.endScope();
-		return new ResultExpression(stmt, null, decl, emptyAuxVars, overappr);
+		return new ExpressionResult(stmt, null, decl, emptyAuxVars, overappr);
 	}	
 
 	@Override
 	public Result visit(Dispatcher main, IASTCaseStatement node) {
-		ResultExpression c = (ResultExpression) main.dispatch(node.getExpression());
+		ExpressionResult c = (ExpressionResult) main.dispatch(node.getExpression());
 		return c.switchToRValueIfNecessary(main, mMemoryHandler, mStructHandler, LocationFactory.createCLocation(node));
 	}
 
@@ -2516,7 +2516,7 @@ public class CHandler implements ICHandler {
 		ArrayList<Declaration> decl = new ArrayList<Declaration>();
 		Map<VariableDeclaration, ILocation> emptyAuxVars = new LinkedHashMap<VariableDeclaration, ILocation>(0);
 		List<Overapprox> overappr = new ArrayList<Overapprox>();
-		return new ResultExpression(stmt, new RValue(new BooleanLiteral(LocationFactory.createCLocation(node), true), new CPrimitive(
+		return new ExpressionResult(stmt, new RValue(new BooleanLiteral(LocationFactory.createCLocation(node), true), new CPrimitive(
 				PRIMITIVE.INT)), decl, emptyAuxVars, overappr);
 	}
 
@@ -2534,14 +2534,14 @@ public class CHandler implements ICHandler {
 		}
 		stmt.add(new Label(loc, label));
 		Result r = main.dispatch(node.getNestedStatement());
-		if (r instanceof ResultExpression) {
-			ResultExpression res = (ResultExpression) r;
+		if (r instanceof ExpressionResult) {
+			ExpressionResult res = (ExpressionResult) r;
 			decl.addAll(res.decl);
 			stmt.addAll(res.stmt);
 			overappr.addAll(res.overappr);
-			return new ResultExpression(stmt, res.lrVal, decl, emptyAuxVars, overappr);
-		} else if (r instanceof ResultSkip) {
-			return new ResultExpression(stmt, null, decl, emptyAuxVars);
+			return new ExpressionResult(stmt, res.lrVal, decl, emptyAuxVars, overappr);
+		} else if (r instanceof SkipResult) {
+			return new ExpressionResult(stmt, null, decl, emptyAuxVars);
 		} else { // r instanceof Result ...
 			RValue expr = null;
 			if (r.node instanceof Statement) {
@@ -2559,7 +2559,7 @@ public class CHandler implements ICHandler {
 				String msg = "Unexpected boogie AST node type: " + r.node.getClass();
 				throw new UnsupportedSyntaxException(loc, msg);
 			}
-			return new ResultExpression(stmt, expr, decl, emptyAuxVars);
+			return new ExpressionResult(stmt, expr, decl, emptyAuxVars);
 		}
 	}
 
@@ -2568,7 +2568,7 @@ public class CHandler implements ICHandler {
 		ArrayList<Statement> stmt = new ArrayList<Statement>();
 		String[] name = new String[] { node.getName().toString() };
 		stmt.add(new GotoStatement(LocationFactory.createCLocation(node), name));
-		return new ResultExpression(stmt, null);
+		return new ExpressionResult(stmt, null);
 	}
 
 	@Override
@@ -2577,15 +2577,15 @@ public class CHandler implements ICHandler {
 
 		// TODO: check validity of cast?
 
-		ResultTypes resTypes = (ResultTypes) main.dispatch(node.getTypeId().getDeclSpecifier());
+		TypesResult resTypes = (TypesResult) main.dispatch(node.getTypeId().getDeclSpecifier());
 
 		mCurrentDeclaredTypes.push(resTypes);
-		ResultDeclaration declResult = (ResultDeclaration) main.dispatch(node.getTypeId().getAbstractDeclarator());
+		DeclarationResult declResult = (DeclarationResult) main.dispatch(node.getTypeId().getAbstractDeclarator());
 		assert declResult.getDeclarations().size() == 1;
 		CType newCType = declResult.getDeclarations().get(0).getType();
 		mCurrentDeclaredTypes.pop();
 		
-		ResultExpression expr = (ResultExpression) main.dispatch(node.getOperand()); 
+		ExpressionResult expr = (ExpressionResult) main.dispatch(node.getOperand()); 
 		if (expr.lrVal.getCType().getUnderlyingType() instanceof CArray
 				&& newCType.getUnderlyingType() instanceof CPointer) {
 			CType valueType = ((CArray) expr.lrVal.getCType().getUnderlyingType()).getValueType().getUnderlyingType();
@@ -2644,20 +2644,20 @@ public class CHandler implements ICHandler {
 		ILocation loc = LocationFactory.createCLocation(node);
 		assert node.getChildren().length == 3;
 		Result resLocCond = main.dispatch(node.getLogicalConditionExpression());
-		assert resLocCond instanceof ResultExpression;
-		ResultExpression reLocCond = (ResultExpression) resLocCond;
+		assert resLocCond instanceof ExpressionResult;
+		ExpressionResult reLocCond = (ExpressionResult) resLocCond;
 		reLocCond = reLocCond.switchToRValueIfNecessary(main, mMemoryHandler, mStructHandler, loc);
 		reLocCond = ConvExpr.rexIntToBoolIfNecessary(loc, reLocCond, m_ExpressionTranslation);
 
 		Result rPositive = main.dispatch(node.getPositiveResultExpression());
-		assert rPositive instanceof ResultExpression;
-		ResultExpression rePositive = (ResultExpression) rPositive;
+		assert rPositive instanceof ExpressionResult;
+		ExpressionResult rePositive = (ExpressionResult) rPositive;
 		rePositive = rePositive.switchToRValueIfNecessary(main, mMemoryHandler, mStructHandler, loc);
 		rePositive = ConvExpr.rexBoolToIntIfNecessary(loc, rePositive, m_ExpressionTranslation);
 
 		Result rNegative = main.dispatch(node.getNegativeResultExpression());
-		assert rNegative instanceof ResultExpression;
-		ResultExpression reNegative = (ResultExpression) rNegative;
+		assert rNegative instanceof ExpressionResult;
+		ExpressionResult reNegative = (ExpressionResult) rNegative;
 		reNegative = reNegative.switchToRValueIfNecessary(main, mMemoryHandler, mStructHandler, loc);
 		reNegative = ConvExpr.rexBoolToIntIfNecessary(loc, reNegative, m_ExpressionTranslation);
 		
@@ -2733,7 +2733,7 @@ public class CHandler implements ICHandler {
 		stmt.add(ifStatement);
 
 		IdentifierExpression tmpExpr = new IdentifierExpression(loc, tmpName);
-		return new ResultExpression(stmt, new RValue(tmpExpr, rePositive.lrVal.getCType()), decl, auxVars, overappr);
+		return new ExpressionResult(stmt, new RValue(tmpExpr, rePositive.lrVal.getCType()), decl, auxVars, overappr);
 	}
 
 	@Override
@@ -2745,8 +2745,8 @@ public class CHandler implements ICHandler {
 	public Result visit(Dispatcher main, IASTInitializerClause node) {
 		assert node.getChildren().length == 1;
 		Result r = main.dispatch(node.getChildren()[0]);
-		assert r instanceof ResultExpression;
-		ResultExpression rex = (ResultExpression) r;
+		assert r instanceof ExpressionResult;
+		ExpressionResult rex = (ExpressionResult) r;
 		return rex.switchToRValueIfNecessary(main, mMemoryHandler, mStructHandler, LocationFactory.createCLocation(node));
 	}
 
@@ -2801,11 +2801,11 @@ public class CHandler implements ICHandler {
 		ILocation loc = LocationFactory.createCLocation(node);
 		switch (node.getOperator()) {
 		case IASTTypeIdExpression.op_sizeof:
-			ResultTypes rt = (ResultTypes) main.dispatch(node.getTypeId().getDeclSpecifier());
-			ResultTypes checked = checkForPointer(main, node.getTypeId().getAbstractDeclarator().getPointerOperators(),
+			TypesResult rt = (TypesResult) main.dispatch(node.getTypeId().getDeclSpecifier());
+			TypesResult checked = checkForPointer(main, node.getTypeId().getAbstractDeclarator().getPointerOperators(),
 					rt, false);
 
-			return new ResultExpression(new RValue(mMemoryHandler.calculateSizeOf(checked.cType, loc), new CPrimitive(
+			return new ExpressionResult(new RValue(mMemoryHandler.calculateSizeOf(checked.cType, loc), new CPrimitive(
 					PRIMITIVE.INT)));
 			// }
 		default:
@@ -2876,13 +2876,13 @@ public class CHandler implements ICHandler {
 		return result;
 	}
 
-	public ResultExpression makeAssignment(Dispatcher main, ILocation loc, ArrayList<Statement> stmt, LRValue lrVal,
+	public ExpressionResult makeAssignment(Dispatcher main, ILocation loc, ArrayList<Statement> stmt, LRValue lrVal,
 			RValue rVal, ArrayList<Declaration> decl, Map<VariableDeclaration, ILocation> auxVars,
 			List<Overapprox> overappr) {
 		return makeAssignment(main, loc, stmt, lrVal, rVal, decl, auxVars, overappr, null);
 	}
 
-	public ResultExpression makeAssignment(Dispatcher main, ILocation loc, ArrayList<Statement> stmtOld, LRValue lrVal,
+	public ExpressionResult makeAssignment(Dispatcher main, ILocation loc, ArrayList<Statement> stmtOld, LRValue lrVal,
 			RValue rVal, ArrayList<Declaration> declOld, Map<VariableDeclaration, ILocation> auxVarsOld,
 			List<Overapprox> overapprOld, Map<StructLHS, CType> unionFieldsToCType) {
 		//we do not want to edit the stmt and so on we are given --> make copies
@@ -2892,7 +2892,7 @@ public class CHandler implements ICHandler {
 		ArrayList<Overapprox> overappr = new ArrayList<>(overapprOld);
 		
 		//do implicit cast -- assume the types are compatible
-		ResultExpression rExp = new ResultExpression(stmt, rVal, decl, auxVars, overappr);
+		ExpressionResult rExp = new ExpressionResult(stmt, rVal, decl, auxVars, overappr);
 		castToType(main, loc, rExp, lrVal.getCType());
 		RValue rightHandSide = (RValue) rExp.lrVal;
 		
@@ -2923,7 +2923,7 @@ public class CHandler implements ICHandler {
 
 			stmt.addAll(mMemoryHandler.getWriteCall(loc, hlv, rightHandSide));
 
-			return new ResultExpression(stmt, rightHandSide, decl, auxVars, overappr);
+			return new ExpressionResult(stmt, rightHandSide, decl, auxVars, overappr);
 		} else if (lrVal instanceof LocalLValue) {
 			LocalLValue lValue = (LocalLValue) lrVal;
 			AssignmentStatement assignStmt = new AssignmentStatement(loc, new LeftHandSide[] { lValue.getLHS() },
@@ -2996,7 +2996,7 @@ public class CHandler implements ICHandler {
 
 			if (!mFunctionHandler.noCurrentProcedure())
 				mFunctionHandler.checkIfModifiedGlobal(main, BoogieASTUtil.getLHSId(lValue.getLHS()), loc);
-			return new ResultExpression(stmt, lValue, decl, auxVars, overappr);
+			return new ExpressionResult(stmt, lValue, decl, auxVars, overappr);
 		} else
 			throw new AssertionError("Type error: trying to assign to an RValue in Statement" + loc.toString());
 	}
@@ -3054,10 +3054,10 @@ public class CHandler implements ICHandler {
 								&& parent.getFileLocation().getStartingLineNumber() <= acslNode
 								.getStartingLineNumber()) {
 							Result acslResult = main.dispatch(acslNode);
-							if (acslResult instanceof ResultExpression) {
-								decl.addAll(((ResultExpression) acslResult).decl);
-								stmt.addAll(((ResultExpression) acslResult).stmt);
-								stmt.addAll(createHavocsForAuxVars(((ResultExpression) acslResult).auxVars));
+							if (acslResult instanceof ExpressionResult) {
+								decl.addAll(((ExpressionResult) acslResult).decl);
+								stmt.addAll(((ExpressionResult) acslResult).stmt);
+								stmt.addAll(createHavocsForAuxVars(((ExpressionResult) acslResult).auxVars));
 								try {
 									mAcsl = main.nextACSLStatement();
 								} catch (ParseException e1) {
@@ -3089,9 +3089,9 @@ public class CHandler implements ICHandler {
 							mContract.add(acslNode);
 						} else if (acslNode instanceof CodeAnnot) {
 							Result acslResult = main.dispatch(acslNode);
-							if (acslResult instanceof ResultExpression) {
+							if (acslResult instanceof ExpressionResult) {
 								// thrax93
-								ResultExpression re = (ResultExpression) acslResult;
+								ExpressionResult re = (ExpressionResult) acslResult;
 								stmt.addAll(re.stmt);
 								decl.addAll(re.decl);
 							} else {
@@ -3123,7 +3123,7 @@ public class CHandler implements ICHandler {
 	}
 
 	@Override
-	public ResultTypes checkForPointer(Dispatcher main, IASTPointerOperator[] pointerOps, ResultTypes resType,
+	public TypesResult checkForPointer(Dispatcher main, IASTPointerOperator[] pointerOps, TypesResult resType,
 			boolean putOnHeap) {
 		if (putOnHeap || pointerOps.length != 0) {
 			// TODO : not sure, if this is enough!
@@ -3132,7 +3132,7 @@ public class CHandler implements ICHandler {
 			// String typeId = resType.cvar.toString();
 			ASTType t = main.typeHandler.constructPointerType(null);
 			CType cvar = new CPointer(resType.cType);
-			return new ResultTypes(t, resType.isConst, resType.isVoid, cvar);
+			return new TypesResult(t, resType.isConst, resType.isVoid, cvar);
 		}
 		return resType;
 	}
@@ -3438,7 +3438,7 @@ public class CHandler implements ICHandler {
 	 * @param loopLabel
 	 * @return a result object holding the translated loop (i.e. a while loop)
 	 */
-	private Result handleLoops(Dispatcher main, IASTStatement node, Result bodyResult, ResultExpression condResult,
+	private Result handleLoops(Dispatcher main, IASTStatement node, Result bodyResult, ExpressionResult condResult,
 			String loopLabel) {
 		int scopeDepth = mSymbolTable.getActiveScopeNum();
 		assert node instanceof IASTWhileStatement || node instanceof IASTDoStatement
@@ -3459,12 +3459,12 @@ public class CHandler implements ICHandler {
 			if (cInitStmt != null) {
 				this.beginScope();
 				Result initializer = main.dispatch(cInitStmt);
-				if (initializer instanceof ResultExpression) {
-					ResultExpression rExp = (ResultExpression) initializer;
+				if (initializer instanceof ExpressionResult) {
+					ExpressionResult rExp = (ExpressionResult) initializer;
 					stmt.addAll(rExp.stmt);
 					decl.addAll(rExp.decl);
 					overappr.addAll(rExp.overappr);
-				} else if (initializer instanceof ResultSkip) {
+				} else if (initializer instanceof SkipResult) {
 					// this is an empty statement in the C Code. We will skip it
 				} else {
 					String msg = "Uninplemented type of for loop initialization: " + initializer.getClass();
@@ -3480,9 +3480,9 @@ public class CHandler implements ICHandler {
 			// translate condition
 			IASTExpression cCondExpr = forStmt.getConditionExpression();
 			if (cCondExpr != null)
-				condResult = (ResultExpression) main.dispatch(cCondExpr);
+				condResult = (ExpressionResult) main.dispatch(cCondExpr);
 			else
-				condResult = new ResultExpression(new RValue((new BooleanLiteral(loc, true)), new CPrimitive(
+				condResult = new ExpressionResult(new RValue((new BooleanLiteral(loc, true)), new CPrimitive(
 						PRIMITIVE.BOOL), true), new LinkedHashMap<VariableDeclaration, ILocation>(0));
 
 			mInnerMostLoopLabel.push(loopLabel);
@@ -3492,8 +3492,8 @@ public class CHandler implements ICHandler {
 		assert (isAuxVarMapcomplete(main, condResult.decl, condResult.auxVars));
 
 		ArrayList<Statement> bodyBlock = new ArrayList<Statement>();
-		if (bodyResult instanceof ResultExpression) {
-			ResultExpression re = (ResultExpression) bodyResult;
+		if (bodyResult instanceof ExpressionResult) {
+			ExpressionResult re = (ExpressionResult) bodyResult;
 			decl.addAll(re.decl);
 			overappr.addAll(re.overappr);
 			bodyBlock.addAll(re.stmt);
@@ -3502,7 +3502,7 @@ public class CHandler implements ICHandler {
 				Body body = (Body) (bodyResult.node);
 				bodyBlock.addAll(Arrays.asList(body.getBlock()));
 				decl.addAll(Arrays.asList(body.getLocalVars()));
-			} else if (bodyResult instanceof ResultSkip) {
+			} else if (bodyResult instanceof SkipResult) {
 				// do nothing - this is the special case where the loop does
 				// not have a body.
 			} else {
@@ -3514,15 +3514,15 @@ public class CHandler implements ICHandler {
 		if (node instanceof IASTForStatement && iterator != null) {
 			bodyBlock.add(new Label(loc, loopLabel));
 			// add iterator statements of this for loop
-			if (iterator instanceof ResultExpressionList) {
-				for (ResultExpression el : ((ResultExpressionList) iterator).list) {
+			if (iterator instanceof ExpressionListResult) {
+				for (ExpressionResult el : ((ExpressionListResult) iterator).list) {
 					bodyBlock.addAll(el.stmt);
 					decl.addAll(el.decl);
 					assert (isAuxVarMapcomplete(main, el.decl, el.auxVars));
 					bodyBlock.addAll(createHavocsForAuxVars(el.auxVars));
 				}
-			} else if (iterator instanceof ResultExpression) {
-				ResultExpression iteratorRE = (ResultExpression) iterator;
+			} else if (iterator instanceof ExpressionResult) {
+				ExpressionResult iteratorRE = (ExpressionResult) iterator;
 				bodyBlock.addAll(iteratorRE.stmt);
 				decl.addAll(iteratorRE.decl);
 				overappr.addAll(iteratorRE.overappr);
@@ -3570,8 +3570,8 @@ public class CHandler implements ICHandler {
 					// where ids of function parameters differ from is in ACSL
 					// expression
 					Result retranslateRes = main.dispatch(mContract.get(i));
-					if (retranslateRes instanceof ResultContract) {
-						ResultContract resContr = (ResultContract) retranslateRes;
+					if (retranslateRes instanceof ContractResult) {
+						ContractResult resContr = (ContractResult) retranslateRes;
 						assert resContr.specs.length == 1;
 						for (Specification cSpec : resContr.specs) {
 							specList.add((LoopInvariantSpecification) cSpec);
@@ -3607,7 +3607,7 @@ public class CHandler implements ICHandler {
 		stmt.add(whileStmt);
 
 		assert (mSymbolTable.getActiveScopeNum() == scopeDepth);
-		return new ResultExpression(stmt, null, decl, emptyAuxVars, overappr);
+		return new ExpressionResult(stmt, null, decl, emptyAuxVars, overappr);
 	}
 
 	@Override
@@ -3647,8 +3647,8 @@ public class CHandler implements ICHandler {
 	 */
 	protected void handleEnumDeclaration(Dispatcher main, IASTSimpleDeclaration node) {
 		Result r = main.dispatch(node.getDeclSpecifier());
-		assert r instanceof ResultTypes;
-		ResultTypes rt = (ResultTypes) r;
+		assert r instanceof TypesResult;
+		TypesResult rt = (TypesResult) r;
 		assert rt.cType instanceof CEnum;
 		CEnum cEnum = (CEnum) rt.cType;
 		ILocation loc = LocationFactory.createCLocation(node);
@@ -3702,14 +3702,14 @@ public class CHandler implements ICHandler {
 		String label = node.getName().toString();
 		stmt.add(new Label(loc, label));
 		Result r = main.dispatch(node.getNestedStatement());
-		if (r instanceof ResultExpression) {
-			ResultExpression res = (ResultExpression) r;
+		if (r instanceof ExpressionResult) {
+			ExpressionResult res = (ExpressionResult) r;
 			decl.addAll(res.decl);
 			stmt.addAll(res.stmt);
 			overappr.addAll(res.overappr);
-			return new ResultExpression(stmt, res.lrVal, decl, emptyAuxVars, overappr);
-		} else if (r instanceof ResultSkip) {
-			return new ResultExpression(stmt, null, decl, emptyAuxVars, overappr);
+			return new ExpressionResult(stmt, res.lrVal, decl, emptyAuxVars, overappr);
+		} else if (r instanceof SkipResult) {
+			return new ExpressionResult(stmt, null, decl, emptyAuxVars, overappr);
 		} else { // r instanceof Result ...
 			RValue expr = null;
 			if (r.node instanceof Statement) {
@@ -3727,7 +3727,7 @@ public class CHandler implements ICHandler {
 				String msg = "Unexpected boogie AST node type: " + r.node.getClass();
 				throw new UnsupportedSyntaxException(loc, msg);
 			}
-			return new ResultExpression(stmt, expr, decl, emptyAuxVars, overappr);
+			return new ExpressionResult(stmt, expr, decl, emptyAuxVars, overappr);
 		}
 	}
 
@@ -3810,7 +3810,7 @@ public class CHandler implements ICHandler {
 	}
 
 	@Override
-	public void castToType(Dispatcher main, ILocation loc, ResultExpression rexp, CType newTypeRaw) {
+	public void castToType(Dispatcher main, ILocation loc, ExpressionResult rexp, CType newTypeRaw) {
 		//TODO: don't do this by reference but return a new ResultExpression
 
 		RValue rValIn = (RValue) rexp.lrVal;

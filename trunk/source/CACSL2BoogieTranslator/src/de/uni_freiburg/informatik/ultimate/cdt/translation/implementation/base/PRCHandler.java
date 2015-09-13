@@ -91,11 +91,11 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LocalLValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultDeclaration;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultExpression;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultExpressionListRec;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultSkip;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultTypes;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.DeclarationResult;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionListRecResult;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.SkipResult;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.TypesResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
@@ -144,7 +144,7 @@ public class PRCHandler extends CHandler {
 		this.mMemoryHandler = new MemoryHandler(mFunctionHandler, false, main.getTypeSizes(), m_ExpressionTranslation);
 		this.mSymbolTable = new SymbolTable(main);
 		this.mContract = new ArrayList<ACSLNode>();
-		this.mCurrentDeclaredTypes = new ArrayDeque<ResultTypes>();
+		this.mCurrentDeclaredTypes = new ArrayDeque<TypesResult>();
 	}
 	
 	@Override
@@ -165,13 +165,13 @@ public class PRCHandler extends CHandler {
 		LinkedHashSet<IASTDeclaration> reachableDecs = ((PRDispatcher) main).getReachableDeclarationsOrDeclarators();
 		if (reachableDecs != null) {
 			if (!reachableDecs.contains(node))
-				return new ResultSkip();
+				return new SkipResult();
 		}
 
-		ResultTypes resType = (ResultTypes) main.dispatch(node.getDeclSpecifier());
+		TypesResult resType = (TypesResult) main.dispatch(node.getDeclSpecifier());
 
 		mCurrentDeclaredTypes.push(resType);
-		ResultDeclaration declResult = (ResultDeclaration) main.dispatch(node.getDeclarator());
+		DeclarationResult declResult = (DeclarationResult) main.dispatch(node.getDeclarator());
 		mCurrentDeclaredTypes.pop();
 		return mFunctionHandler.handleFunctionDefinition(main, mMemoryHandler, node, declResult.getDeclarations().get(0),
 				mContract);
@@ -214,7 +214,7 @@ public class PRCHandler extends CHandler {
 					if (reachableDecs.contains(node.getDeclSpecifier()))
 						skip = false;
 					if (skip)
-						return new ResultSkip();
+						return new SkipResult();
 				}
 			}
 		}
@@ -224,7 +224,7 @@ public class PRCHandler extends CHandler {
 		if (node.getDeclSpecifier() == null) {
 			String msg = "This statement can be removed!";
 			main.warn(loc, msg);
-			return new ResultSkip();
+			return new SkipResult();
 		}
 
 		// enum case
@@ -233,12 +233,12 @@ public class PRCHandler extends CHandler {
 		}
 
 		Result r = main.dispatch(node.getDeclSpecifier());
-		assert r instanceof ResultSkip || r instanceof ResultTypes;
-		if (r instanceof ResultSkip)
+		assert r instanceof SkipResult || r instanceof TypesResult;
+		if (r instanceof SkipResult)
 			return r;
-		if (r instanceof ResultTypes) {
-			ResultTypes resType = (ResultTypes) r;
-			Result result = new ResultSkip(); // Skip will be overwritten in
+		if (r instanceof TypesResult) {
+			TypesResult resType = (TypesResult) r;
+			Result result = new SkipResult(); // Skip will be overwritten in
 												// case of a global or a local
 												// initialized variable
 
@@ -257,7 +257,7 @@ public class PRCHandler extends CHandler {
 //					throw new UnsupportedSyntaxException(loc, "bitfields are not supported at the moment");
 				
 				
-				ResultDeclaration declResult = (ResultDeclaration) main.dispatch(d);
+				DeclarationResult declResult = (DeclarationResult) main.dispatch(d);
 
 				// the ResultDeclaration from one Declarator always only
 				// contains one CDeclaration, right?
@@ -306,7 +306,7 @@ public class PRCHandler extends CHandler {
 
 				if (storageClass == StorageClass.TYPEDEF) {
 					boogieDec = new TypeDeclaration(loc, new Attribute[0], false, bId, new String[0], translatedType);
-					main.typeHandler.addDefinedType(bId, new ResultTypes(new NamedType(loc, cDec.getName(), null),
+					main.typeHandler.addDefinedType(bId, new TypesResult(new NamedType(loc, cDec.getName(), null),
 							false, false, cDec.getType()));
 					// TODO: add a sizeof-constant for the type??
 					globalInBoogie = true;
@@ -323,7 +323,7 @@ public class PRCHandler extends CHandler {
 					 * size. We do not want to treat this like other initializers (call initVar and so).
 					 */
 					boolean hasRealInitializer = cDec.hasInitializer() && 
-							!(cDec.getType() instanceof CArray && !(cDec.getInitializer() instanceof ResultExpressionListRec));
+							!(cDec.getType() instanceof CArray && !(cDec.getInitializer() instanceof ExpressionListRecResult));
 
 					if (!hasRealInitializer && !mFunctionHandler.noCurrentProcedure()
 							&& !mTypeHandler.isStructDeclaration()) {
@@ -337,10 +337,10 @@ public class PRCHandler extends CHandler {
 					
 
 					} else {
-						assert result instanceof ResultSkip || result instanceof ResultDeclaration;
-						if (result instanceof ResultSkip)
-							result = new ResultDeclaration();
-						((ResultDeclaration) result).addDeclaration(cDec);	
+						assert result instanceof SkipResult || result instanceof DeclarationResult;
+						if (result instanceof SkipResult)
+							result = new DeclarationResult();
+						((DeclarationResult) result).addDeclaration(cDec);	
 					
 					}
 					boogieDec = new VariableDeclaration(loc, new Attribute[0], new VarList[] { new VarList(loc,
@@ -354,9 +354,9 @@ public class PRCHandler extends CHandler {
 			}
 			mCurrentDeclaredTypes.pop();
 			
-			if (result instanceof ResultExpression)
-				((ResultExpression) result).stmt.addAll(
-						createHavocsForAuxVars(((ResultExpression) result).auxVars));
+			if (result instanceof ExpressionResult)
+				((ExpressionResult) result).stmt.addAll(
+						createHavocsForAuxVars(((ExpressionResult) result).auxVars));
 			return result;
 		}
 		String msg = "Unknown result type: " + r.getClass();
@@ -381,8 +381,8 @@ public class PRCHandler extends CHandler {
 
 		switch (node.getOperator()) {
 		case IASTBinaryExpression.op_assign: 
-			ResultExpression l = (ResultExpression) main.dispatch(node.getOperand1());
-			ResultExpression r = (ResultExpression) main.dispatch(node.getOperand2());
+			ExpressionResult l = (ExpressionResult) main.dispatch(node.getOperand1());
+			ExpressionResult r = (ExpressionResult) main.dispatch(node.getOperand2());
 			return makeAssignment(main, loc, l.lrVal, r.lrVal);
 			default:
 				return super.visit(main, node);
@@ -394,7 +394,7 @@ public class PRCHandler extends CHandler {
 	public Result visit(Dispatcher main, IASTUnaryExpression node) {
 		switch (node.getOperator()) {
 		case IASTUnaryExpression.op_amper:
-			ResultExpression o = (ResultExpression) main.dispatch(node.getOperand());
+			ExpressionResult o = (ExpressionResult) main.dispatch(node.getOperand());
 			//can't really addressof at this point, returning the value instead but wiht pointer type
 //			ResultExpression rop = o.switchToRValueIfNecessary(main, mMemoryHandler, mStructHandler, loc);
 			RValue ad = null;
@@ -403,13 +403,13 @@ public class PRCHandler extends CHandler {
 			else 
 				ad = new RValue(o.lrVal.getValue(), new CPointer(o.lrVal.getCType()));
 
-			return new ResultExpression(ad);
+			return new ExpressionResult(ad);
 			default:
 				return super.visit(main, node);
 		}
 	}
 
-	private Result handleLoops(Dispatcher main, IASTStatement node, Result bodyResult, ResultExpression condResult,
+	private Result handleLoops(Dispatcher main, IASTStatement node, Result bodyResult, ExpressionResult condResult,
 			String loopLabel) {
 		int scopeDepth = mSymbolTable.getActiveScopeNum();
 		assert node instanceof IASTWhileStatement || node instanceof IASTDoStatement
@@ -434,7 +434,7 @@ public class PRCHandler extends CHandler {
 				main.dispatch(cItExpr);
 			IASTExpression cCondExpr = forStmt.getConditionExpression();
 			if (cCondExpr != null)
-				condResult = (ResultExpression) main.dispatch(cCondExpr);
+				condResult = (ExpressionResult) main.dispatch(cCondExpr);
 
 			bodyResult = main.dispatch(forStmt.getBody());
 		}
@@ -447,7 +447,7 @@ public class PRCHandler extends CHandler {
 		}
 
 		assert (mSymbolTable.getActiveScopeNum() == scopeDepth);
-		return new ResultExpression(stmt, null, decl, emptyAuxVars, overappr);
+		return new ExpressionResult(stmt, null, decl, emptyAuxVars, overappr);
 	}
 
 	@Override
@@ -477,13 +477,13 @@ public class PRCHandler extends CHandler {
 		main.dispatch(node.getThenClause());
 		if (node.getElseClause() != null)
 			main.dispatch(node.getElseClause());
-		return new ResultExpression(new RValue(new IdentifierExpression(LocationFactory.createIgnoreCLocation(), SFO.NULL), 
+		return new ExpressionResult(new RValue(new IdentifierExpression(LocationFactory.createIgnoreCLocation(), SFO.NULL), 
 				new CPointer(new CPrimitive(PRIMITIVE.VOID))));
 	}
 
 	@Override
 	public Result visit(Dispatcher main, IASTWhileStatement node) {
-		ResultExpression condResult = (ResultExpression) main.dispatch(node.getCondition());
+		ExpressionResult condResult = (ExpressionResult) main.dispatch(node.getCondition());
 		String loopLabel = main.nameHandler.getGloballyUniqueIdentifier(SFO.LOOPLABEL);
 //		mInnerMostLoopLabel.push(loopLabel);
 		Result bodyResult = main.dispatch(node.getBody());
@@ -498,7 +498,7 @@ public class PRCHandler extends CHandler {
 
 	@Override
 	public Result visit(Dispatcher main, IASTDoStatement node) {
-		ResultExpression condResult = (ResultExpression) main.dispatch(node.getCondition());
+		ExpressionResult condResult = (ExpressionResult) main.dispatch(node.getCondition());
 		String loopLabel = main.nameHandler.getGloballyUniqueIdentifier(SFO.LOOPLABEL);
 //		mInnerMostLoopLabel.push(loopLabel);
 		Result bodyResult = main.dispatch(node.getBody());
@@ -527,7 +527,7 @@ public class PRCHandler extends CHandler {
 
 	@Override
 	public Result visit(Dispatcher main, IASTCaseStatement node) {
-		ResultExpression c = (ResultExpression) main.dispatch(node.getExpression());
+		ExpressionResult c = (ExpressionResult) main.dispatch(node.getExpression());
 		return c.switchToRValueIfNecessary(main, mMemoryHandler, mStructHandler, LocationFactory.createCLocation(node));
 	}
 
@@ -537,7 +537,7 @@ public class PRCHandler extends CHandler {
 		ArrayList<Declaration> decl = new ArrayList<Declaration>();
 		Map<VariableDeclaration, ILocation> emptyAuxVars = new LinkedHashMap<VariableDeclaration, ILocation>(0);
 		List<Overapprox> overappr = new ArrayList<Overapprox>();
-		return new ResultExpression(stmt, new RValue(new BooleanLiteral(LocationFactory.createCLocation(node), true), new CPrimitive(
+		return new ExpressionResult(stmt, new RValue(new BooleanLiteral(LocationFactory.createCLocation(node), true), new CPrimitive(
 				PRIMITIVE.INT)), decl, emptyAuxVars, overappr);
 	}
 
@@ -555,16 +555,16 @@ public class PRCHandler extends CHandler {
 
 	@Override
 	public Result visit(Dispatcher main, IASTCastExpression node) {
-		ResultExpression expr = (ResultExpression) main.dispatch(node.getOperand()); 
+		ExpressionResult expr = (ExpressionResult) main.dispatch(node.getOperand()); 
 		ILocation loc = LocationFactory.createCLocation(node); 
-		ResultExpression switchedRexpr = expr.switchToRValueIfNecessary(main, mMemoryHandler, mStructHandler, loc);
+		ExpressionResult switchedRexpr = expr.switchToRValueIfNecessary(main, mMemoryHandler, mStructHandler, loc);
 
 		// TODO: check validity of cast?
 
-		ResultTypes resTypes = (ResultTypes) main.dispatch(node.getTypeId().getDeclSpecifier());
+		TypesResult resTypes = (TypesResult) main.dispatch(node.getTypeId().getDeclSpecifier());
 
 		mCurrentDeclaredTypes.push(resTypes);
-		ResultDeclaration declResult = (ResultDeclaration) main.dispatch(node.getTypeId().getAbstractDeclarator());
+		DeclarationResult declResult = (DeclarationResult) main.dispatch(node.getTypeId().getAbstractDeclarator());
 		assert declResult.getDeclarations().size() == 1;
 		CType newCType = declResult.getDeclarations().get(0).getType();
 		mCurrentDeclaredTypes.pop();
@@ -617,11 +617,11 @@ public class PRCHandler extends CHandler {
 		ILocation loc = LocationFactory.createCLocation(node);
 		switch (node.getOperator()) {
 		case IASTTypeIdExpression.op_sizeof:
-			ResultTypes rt = (ResultTypes) main.dispatch(node.getTypeId().getDeclSpecifier());
-			ResultTypes checked = checkForPointer(main, node.getTypeId().getAbstractDeclarator().getPointerOperators(),
+			TypesResult rt = (TypesResult) main.dispatch(node.getTypeId().getDeclSpecifier());
+			TypesResult checked = checkForPointer(main, node.getTypeId().getAbstractDeclarator().getPointerOperators(),
 					rt, false);
 
-			return new ResultExpression(new RValue(mMemoryHandler.calculateSizeOf(checked.cType, loc), new CPrimitive(
+			return new ExpressionResult(new RValue(mMemoryHandler.calculateSizeOf(checked.cType, loc), new CPrimitive(
 					PRIMITIVE.INT)));
 			// }
 		default:
@@ -642,7 +642,7 @@ public class PRCHandler extends CHandler {
 //		return makeAssignment(main, loc, stmt, lrVal, rVal, decl, auxVars, overappr, null);
 //	}
 
-	public ResultExpression makeAssignment(Dispatcher main, ILocation loc,  LRValue lrVal,
+	public ExpressionResult makeAssignment(Dispatcher main, ILocation loc,  LRValue lrVal,
 			LRValue rVal) {
 		LRValue rightHandSide = rVal; //we may change the content of the right hand side later
 
@@ -665,7 +665,7 @@ public class PRCHandler extends CHandler {
 			HeapLValue hlv = (HeapLValue) lrVal;
 //			stmt.addAll(mMemoryHandler.getWriteCall(loc, hlv, rightHandSide));
 //			return new ResultExpression(rightHandSide);
-			return new ResultExpression(hlv);
+			return new ExpressionResult(hlv);
 		} else if (lrVal instanceof LocalLValue) {
 			LocalLValue lValue = (LocalLValue) lrVal;
 //			AssignmentStatement assignStmt = new AssignmentStatement(loc, new LeftHandSide[] { lValue.getLHS() },
@@ -704,7 +704,7 @@ public class PRCHandler extends CHandler {
 //
 //			if (!mFunctionHandler.noCurrentProcedure())
 //				mFunctionHandler.checkIfModifiedGlobal(main, BoogieASTUtil.getLHSId(lValue.getLHS()), loc);
-			return new ResultExpression(lValue);
+			return new ExpressionResult(lValue);
 		} else
 			throw new AssertionError("Type error: trying to assign to an RValue in Statement" + loc.toString());
 	}

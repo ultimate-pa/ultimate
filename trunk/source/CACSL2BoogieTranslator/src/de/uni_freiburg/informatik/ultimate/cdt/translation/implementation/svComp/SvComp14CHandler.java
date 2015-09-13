@@ -61,8 +61,8 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.except
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LRValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultExpression;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultSkip;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.SkipResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.svComp.cHandler.SVCompArrayHandler;
 //import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.svComp.cHandler.SVCompFunctionHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.ConvExpr;
@@ -165,12 +165,12 @@ public class SvComp14CHandler extends CHandler {
 				check.addToNodeAnnot(assertStmt);
 				stmt.add(assertStmt);
 			} 
-			return new ResultExpression(stmt, returnValue, decl, auxVars, overappr);
+			return new ExpressionResult(stmt, returnValue, decl, auxVars, overappr);
 		}
 		if (methodName.equals(ASSUME_STRING)) {
 			ArrayList<Expression> args = new ArrayList<Expression>();
 			for (IASTInitializerClause inParam : node.getArguments()) {
-				ResultExpression in = ((ResultExpression) main.dispatch(inParam)).switchToRValueIfNecessary(main,
+				ExpressionResult in = ((ExpressionResult) main.dispatch(inParam)).switchToRValueIfNecessary(main,
 						mMemoryHandler, mStructHandler, loc);
 				if (in.lrVal.getValue() == null) {
 					String msg = "Incorrect or invalid in-parameter! " + loc.toString();
@@ -189,7 +189,7 @@ public class SvComp14CHandler extends CHandler {
 				stmt.add(new AssumeStatement(loc, a));
 			}
 			assert (isAuxVarMapcomplete(main, decl, auxVars));
-			return new ResultExpression(stmt, returnValue, decl, auxVars, overappr);
+			return new ExpressionResult(stmt, returnValue, decl, auxVars, overappr);
 		}
 		for (String t : NONDET_TYPE_STRINGS)
 			if (methodName.equals(NONDET_STRING + t)) {
@@ -244,13 +244,13 @@ public class SvComp14CHandler extends CHandler {
 					}
 				}
 				assert (isAuxVarMapcomplete(main, decl, auxVars));
-				return new ResultExpression(stmt, returnValue, decl, auxVars, overappr);
+				return new ExpressionResult(stmt, returnValue, decl, auxVars, overappr);
 			}
 		if (methodName.equals("printf")) {
 			// skip if parent of parent is CompoundStatement
 			// otherwise, replace by havoced variable
 			if (node.getParent().getParent() instanceof IASTCompoundStatement) {
-				return new ResultSkip();
+				return new SkipResult();
 			}
 			ASTType tempType = new PrimitiveType(loc, SFO.INT);
 			String tId = main.nameHandler.getTempVarUID(SFO.AUXVAR.NONDET);
@@ -261,7 +261,7 @@ public class SvComp14CHandler extends CHandler {
 			stmt.add(new HavocStatement(loc, new VariableLHS[] { new VariableLHS(loc, tId) }));
 			returnValue = new RValue(new IdentifierExpression(loc, tId), null);
 			assert (isAuxVarMapcomplete(main, decl, auxVars));
-			return new ResultExpression(stmt, returnValue, decl, auxVars, overappr);
+			return new ExpressionResult(stmt, returnValue, decl, auxVars, overappr);
 		}
 //		this is a gcc-builtin function that helps with branch prediction, it always returns the first argument.
 		if (methodName.equals("__builtin_expect")) { 
@@ -272,9 +272,9 @@ public class SvComp14CHandler extends CHandler {
 			((CHandler) main.cHandler).mMemoryHandler.setDeclareMemCpy();
 
 			assert node.getArguments().length == 3;
-			ResultExpression destRex = (ResultExpression) main.dispatch(node.getArguments()[0]);
-			ResultExpression srcRex = (ResultExpression) main.dispatch(node.getArguments()[1]);
-			ResultExpression sizeRex = (ResultExpression) main.dispatch(node.getArguments()[2]);
+			ExpressionResult destRex = (ExpressionResult) main.dispatch(node.getArguments()[0]);
+			ExpressionResult srcRex = (ExpressionResult) main.dispatch(node.getArguments()[1]);
+			ExpressionResult sizeRex = (ExpressionResult) main.dispatch(node.getArguments()[2]);
 			
 			destRex = destRex.switchToRValueIfNecessary(main, mMemoryHandler, mStructHandler, loc);
 			srcRex = srcRex.switchToRValueIfNecessary(main, mMemoryHandler, mStructHandler, loc);
@@ -309,13 +309,13 @@ public class SvComp14CHandler extends CHandler {
 			}
 			mFunctionHandler.getCallGraph().get(mFunctionHandler.getCurrentProcedureID()).add(SFO.MEMCPY);
 			
-			return new ResultExpression(stmt, new RValue(new IdentifierExpression(loc, tId), 
+			return new ExpressionResult(stmt, new RValue(new IdentifierExpression(loc, tId), 
 					destRex.lrVal.getCType()), decl, auxVars, overappr);
 		}
 		
 		if (methodName.equals("__builtin_object_size")) {
 			main.warn(loc, "used trivial implementation of __builtin_object_size");
-			return new ResultExpression(new RValue(new IntegerLiteral(loc, SFO.NR0), 
+			return new ExpressionResult(new RValue(new IntegerLiteral(loc, SFO.NR0), 
 					new CPrimitive(PRIMITIVE.INT)));
 		}
 
@@ -326,12 +326,12 @@ public class SvComp14CHandler extends CHandler {
 		 */
 		if (methodName.equals("__builtin_prefetch")) {
 			main.warn(loc, "ignored call to __builtin_prefetch");
-			return new ResultSkip();
+			return new SkipResult();
 		}
 
 		if (methodName.equals("abort")) {
 			stmt.add(new AssumeStatement(loc, new BooleanLiteral(loc, false)));
-			return new ResultExpression(stmt, null, decl, auxVars, overappr);
+			return new ExpressionResult(stmt, null, decl, auxVars, overappr);
 		}
 
 		return super.visit(main, node);
@@ -360,7 +360,7 @@ public class SvComp14CHandler extends CHandler {
 	public Result visit(Dispatcher main, IASTIdExpression node) {
 		ILocation loc = LocationFactory.createCLocation(node);
 		if (node.getName().toString().equals("null")) {
-			return new ResultExpression(
+			return new ExpressionResult(
 					new RValue(new IdentifierExpression(loc, SFO.NULL),
 					new CPointer(new CPrimitive(PRIMITIVE.VOID))));
 		}
@@ -374,7 +374,7 @@ public class SvComp14CHandler extends CHandler {
 			decls.add(tVarDecl);
 			Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<VariableDeclaration, ILocation>();
 			auxVars.put(tVarDecl, loc);
-			return new ResultExpression(new ArrayList<Statement>(), rvalue, decls, auxVars);
+			return new ExpressionResult(new ArrayList<Statement>(), rvalue, decls, auxVars);
 		}
 		return super.visit(main, node);
 	}
@@ -388,8 +388,8 @@ public class SvComp14CHandler extends CHandler {
 		if (node.getOperator() == IASTBinaryExpression.op_divide
 				|| node.getOperator() == IASTBinaryExpression.op_divideAssign) {
 			// remove division by zero asserts
-			assert r instanceof ResultExpression;
-			ResultExpression rex = (ResultExpression) r;
+			assert r instanceof ExpressionResult;
+			ExpressionResult rex = (ExpressionResult) r;
 			Iterator<Statement> it = rex.stmt.iterator();
 			while (it.hasNext())
 				if (it.next() instanceof AssertStatement)
@@ -401,7 +401,7 @@ public class SvComp14CHandler extends CHandler {
 	@Override
 	public Result visit(Dispatcher main, IASTASMDeclaration node) {
 		//workaround for now: ignore inline assembler instructions
-		return new ResultSkip();
+		return new SkipResult();
 	}
 
 }

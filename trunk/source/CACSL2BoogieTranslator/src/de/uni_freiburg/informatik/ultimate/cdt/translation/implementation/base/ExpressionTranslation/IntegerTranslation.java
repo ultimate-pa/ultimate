@@ -44,7 +44,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultExpression;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.ISOIEC9899TC3;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
@@ -76,20 +76,20 @@ public class IntegerTranslation extends AExpressionTranslation {
 	}
 
 	@Override
-	public ResultExpression translateLiteral(Dispatcher main, IASTLiteralExpression node) {
+	public ExpressionResult translateLiteral(Dispatcher main, IASTLiteralExpression node) {
 		ILocation loc = LocationFactory.createCLocation(node);
 
 		switch (node.getKind()) {
 		case IASTLiteralExpression.lk_char_constant:
 		{
 			String val = ISOIEC9899TC3.handleCharConstant(new String(node.getValue()), loc, main);
-			return new ResultExpression(new RValue(new IntegerLiteral(loc, val), new CPrimitive(PRIMITIVE.CHAR)));
+			return new ExpressionResult(new RValue(new IntegerLiteral(loc, val), new CPrimitive(PRIMITIVE.CHAR)));
 		}
 		case IASTLiteralExpression.lk_integer_constant:
 		{
 			String val = new String(node.getValue());
 			RValue rVal = translateIntegerLiteral(loc, val);
-			return new ResultExpression(rVal);
+			return new ExpressionResult(rVal);
 		}
 		default:
 			return super.translateLiteral(main, node);
@@ -492,7 +492,7 @@ public class IntegerTranslation extends AExpressionTranslation {
 	
 
 	@Override
-	public void convert(ILocation loc, ResultExpression operand,
+	public void convert(ILocation loc, ExpressionResult operand,
 			CPrimitive resultType) {
 		if (resultType.isIntegerType()) {
 			convertToIntegerType(loc, operand, resultType);
@@ -503,7 +503,7 @@ public class IntegerTranslation extends AExpressionTranslation {
 		operand.lrVal.setCType(resultType);
 	}
 
-	private void convertToIntegerType(ILocation loc, ResultExpression operand,
+	private void convertToIntegerType(ILocation loc, ExpressionResult operand,
 			CPrimitive resultType) {
 		assert resultType.isIntegerType();
 		CPrimitive oldType = (CPrimitive) operand.lrVal.getCType();
@@ -537,7 +537,7 @@ public class IntegerTranslation extends AExpressionTranslation {
 	}
 
 	@Override
-	public void doIntegerPromotion(ILocation loc, ResultExpression operand) {
+	public void doIntegerPromotion(ILocation loc, ExpressionResult operand) {
 		if (!integerPromotionNeeded((CPrimitive) operand.lrVal.getCType())) {
 			return;
 		}
@@ -559,7 +559,7 @@ public class IntegerTranslation extends AExpressionTranslation {
 
 	@Override
 	public void convertPointerToInt(Dispatcher main, ILocation loc,
-			ResultExpression rexp, CPrimitive newType) {
+			ExpressionResult rexp, CPrimitive newType) {
 		assert (newType.isIntegerType());
 		assert (rexp.lrVal.getCType() instanceof CPointer);
 		if (m_OverapproximateIntPointerConversion) {
@@ -587,7 +587,7 @@ public class IntegerTranslation extends AExpressionTranslation {
 
 	@Override
 	public void convertIntToPointer(Dispatcher main, ILocation loc,
-			ResultExpression rexp, CPointer newType) {
+			ExpressionResult rexp, CPointer newType) {
 		if (m_OverapproximateIntPointerConversion) {
 			super.convertIntToPointer(main, loc, rexp, newType);
 		} else {
