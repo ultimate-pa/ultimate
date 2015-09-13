@@ -50,7 +50,7 @@ public class AutomizerRegressionTest extends AbstractTraceAbstractionTestSuite {
 	};
 	
 	private static final String[] m_UltimateRepository_TreeInterpolation = {
-//		"examples/programs/regression",
+		"examples/programs/regression",
 //		"examples/programs/quantifier",
 //		"examples/programs/recursivePrograms",
 //		"examples/programs/toy",
