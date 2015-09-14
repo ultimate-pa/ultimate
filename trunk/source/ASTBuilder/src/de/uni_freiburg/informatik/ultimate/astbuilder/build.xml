@@ -1,7 +1,7 @@
 <project name="proj1" default="generate_ast" basedir=".">
-    <property name="astbuilderDir" location="${workspacedir}/ASTBuilder/bin"/>
-    <property name="astbuilderJar" location="${workspacedir}/JavaCup/ast-builder.jar"/>
-    <property name="cupDir" location="${workspacedir}/JavaCup/bin/"/>
+    <property name="astbuilderDir" location="../../../../../../../ASTBuilder/bin"/>
+    <property name="astbuilderJar" location="../../../../../../../JavaCup/ast-builder.jar"/>
+    <property name="cupDir" location="../../../../../../../JavaCup/bin/"/>
     <description>
         Build File for Compiler Project
     </description>
