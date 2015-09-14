@@ -168,9 +168,6 @@
 
 /trunk/source/ASTBuilder/src/de/uni_freiburg/informatik/ultimate/astbuilder/parser.java
 /trunk/source/ASTBuilder/src/de/uni_freiburg/informatik/ultimate/astbuilder/sym.java
-/trunk/source/ASTBuilder/src/de/uni_freiburg/informatik/ultimate/astbuilder/Grammar.java
-/trunk/source/ASTBuilder/src/de/uni_freiburg/informatik/ultimate/astbuilder/Node.java
-/trunk/source/ASTBuilder/src/de/uni_freiburg/informatik/ultimate/astbuilder/Parameter.java
 
 /trunk/source/AutomataScriptParser/src/de/uni_freiburg/informatik/ultimate/plugins/source/automatascriptparser/Lexer.java
 /trunk/source/AutomataScriptParser/src/de/uni_freiburg/informatik/ultimate/plugins/source/automatascriptparser/Lexer.java~
