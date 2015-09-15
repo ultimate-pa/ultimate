@@ -242,9 +242,15 @@ public class ExpressionResult extends Result {
 			if (!(main instanceof PRDispatcher) && (lrVal.getCType() instanceof CArray)) {
 				throw new AssertionError("on-heap/off-heap bug: array " + lrVal.toString() + " has to be on-heap");
 			}
-			CType underlyingType = this.lrVal.getCType().getUnderlyingType();
+			final CType underlyingType = this.lrVal.getCType().getUnderlyingType();
+			final CType resultType;
+			if (underlyingType instanceof CArray) {
+				resultType = new CPointer(((CArray) underlyingType).getValueType());
+			} else {
+				resultType = underlyingType;
+			}
 			RValue newRVal = new RValue(((LocalLValue) lrVal).getValue(),
-					underlyingType, lrVal.isBoogieBool());
+					resultType, lrVal.isBoogieBool());
 			result = new ExpressionResult(
 					this.stmt, newRVal, this.decl, this.auxVars,
 					        this.overappr, this.unionFieldIdToCType);

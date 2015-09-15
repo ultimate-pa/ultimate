@@ -26,6 +26,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result;
 
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CFunction;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 
@@ -41,7 +43,7 @@ public class RValue extends LRValue {
 	 */
 	public RValue(Expression value, CType cType) {
 		this(value, cType, false);
-//		this(value, cType, false, false, false);
+		checkType(cType);
 	}
 	
 	/**
@@ -52,25 +54,31 @@ public class RValue extends LRValue {
 	 */
 	public RValue(Expression value, CType cType, boolean boogieBool) {
 		this(value, cType, boogieBool, false);
-//	public RValue(Expression value, CType cType, boolean wrappedBool, boolean isPointer, boolean isOnHeap) {
-//		this.value = value;
-//		this.cType = cType;
-//		this.isBoogieBool = boogieBool;
-		//this.isPointer = isPointer;
+		checkType(cType);
 	}
 	
 	public RValue(RValue rval) {
 		this(rval.value, rval.getCType(), rval.isBoogieBool(), rval.isIntFromPointer());
-//		this(rval.value, rval.cType, rval.isWrappedBool, rval.isPointer, rval.isOnHeap);
 	}
 
 	public RValue(Expression value, CType cType,
 			boolean isBoogieBool, boolean isIntFromPointer) {
 		super(cType, isBoogieBool, isIntFromPointer);
+		checkType(cType);
 		this.value = value;
 	}
 
 	public Expression getValue() {
 		return this.value;
+	}
+	
+	public void checkType(CType type) {
+		if (type instanceof CArray) {
+			throw new IllegalArgumentException("RValues cannot have array type");
+		}
+		if (type instanceof CFunction) {
+			throw new IllegalArgumentException("RValues cannot have function type");
+		}
+
 	}
 }
