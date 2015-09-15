@@ -4,9 +4,14 @@
  * Date: 24.08.2015
  */
 
+extern void __VERIFIER_error() __attribute__ ((__noreturn__));
+
 int main() {
   unsigned char a = 128U;
   unsigned char b = 1U;
   int i = a << b;
-  //@ assert i == 256;
+
+  if (i != 256) {
+    ERROR: __VERIFIER_error();
+  }
 }

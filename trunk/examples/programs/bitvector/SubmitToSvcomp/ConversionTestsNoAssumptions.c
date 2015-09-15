@@ -4,6 +4,8 @@
  * Date: 18.08.2015
  */
 
+extern void __VERIFIER_error() __attribute__ ((__noreturn__));
+
 int main() {
   /* signed int to unsigned int */
   signed int a = -1;
@@ -11,21 +13,23 @@ int main() {
   unsigned int limit2 = 100U;
 
   if (b <= limit2) {
-    //@ assert \false;
+    ERROR: __VERIFIER_error();
   }
 
   /* unsigned int to signed int (fitting) */
   unsigned int c = 100U;
   signed int d = c;
 
-  //@assert(d == 100);
+  if (d != 100) {
+    ERROR: __VERIFIER_error();
+  }
 
   /* signed int to signed long long */
   signed int e = -1;
   signed long long f = e;
 
   if (f != -1LL) {
-    //@assert(\false);
+    ERROR: __VERIFIER_error();
   }
 
   /* signed int to unsigned long long */
@@ -34,7 +38,7 @@ int main() {
   unsigned long long limit3 = 100ULL;
 
   if (h <= limit3) {
-    //@ assert \false;
+    ERROR: __VERIFIER_error();
   }
 
   /* unsigned int to signed long long */
@@ -42,7 +46,7 @@ int main() {
   signed long long l = k;
 
   if (l != 100LL) {
-    //@assert(\false);
+    ERROR: __VERIFIER_error();
   }
 
   /* unsigned int to unsigned long long */
@@ -50,6 +54,6 @@ int main() {
   unsigned long long n = m;
 
   if (n != 100ULL) {
-    //@assert(\false);
+    ERROR: __VERIFIER_error();
   }
 }

@@ -4,19 +4,27 @@
  * Date: 24.08.2015
  */
 
+extern void __VERIFIER_error() __attribute__ ((__noreturn__));
+
 int main() {
 	/* bitwise complement */
 	{
 		int x = 0;
 		int y = ~x;
-		//@ assert y == -1;
+
+        if (y != -1) {
+          ERROR: __VERIFIER_error();
+        }
 	}
 
     /* left shift */
     {
         int x = 2;
         int y = x << 2;
-        //@ assert y == 8;
+
+        if (y != 8) {
+          ERROR: __VERIFIER_error();
+        }
     }
 
     /* unsigned right shift */
@@ -24,7 +32,7 @@ int main() {
         unsigned int x = 16U;
         unsigned int y = x >> 2U;
         if (y != 4U) {
-          //@ assert \false;
+          ERROR: __VERIFIER_error();
         }
     }
 
@@ -32,6 +40,9 @@ int main() {
     {
         int x = 16;
         int y = x >> 2;
-        //@ assert y == 4;
+
+        if (y != 4) {
+          ERROR: __VERIFIER_error();
+        }
     }
 }

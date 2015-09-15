@@ -6,13 +6,17 @@
  * Date: 18.08.2015
  */
 
+extern void __VERIFIER_error() __attribute__ ((__noreturn__));
+
 int main() {
   /* unsigned long long to signed int */
   if (sizeof(long long) > 4) {
     unsigned long long a = 4294967295ULL;
     signed int b = a;
 
-    //@assert(b == -1);
+    if (b != -1) {
+      ERROR: __VERIFIER_error();
+    }
   }
 
   /* signed long long to signed int */
@@ -20,7 +24,9 @@ int main() {
     signed long long c = -9223372034707292161;
     signed int d = c;
 
-    //@assert(d == 2147483647);
+    if (d != 2147483647) {
+      ERROR: __VERIFIER_error();
+    }
   }
 
   /* unsigned int to signed int */
@@ -28,6 +34,8 @@ int main() {
     unsigned int e = 4294967295U;
     signed int f = e;
 
-    //@assert(f == -1);
+    if (f != -1) {
+      ERROR: __VERIFIER_error();
+    }
   }
 }

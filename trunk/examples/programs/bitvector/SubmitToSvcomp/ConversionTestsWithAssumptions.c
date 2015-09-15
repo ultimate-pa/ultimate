@@ -8,6 +8,8 @@
  * Date: 18.08.2015
  */
 
+extern void __VERIFIER_error() __attribute__ ((__noreturn__));
+
 int main() {
   /* unsigned long long to unsigned int */
   if (sizeof(long long) > 4 && sizeof(int) == 4) {
@@ -15,7 +17,7 @@ int main() {
     unsigned int b = a;
 
     if (b != 0U) {
-      //@assert(\false);
+      ERROR: __VERIFIER_error();
     }
   }
 
@@ -25,7 +27,7 @@ int main() {
     unsigned int d = c;
 
     if (d != 0U) {
-      //@assert(\false);
+      ERROR: __VERIFIER_error();
     }
   }
 
@@ -35,7 +37,7 @@ int main() {
     signed long long f = e;
 
     if (f < 0) {
-      //@ assert \false;
+      ERROR: __VERIFIER_error();
     }
   }
 }

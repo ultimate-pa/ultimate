@@ -4,11 +4,16 @@
  * Date: 24.08.2015
  */
 
+extern void __VERIFIER_error() __attribute__ ((__noreturn__));
+
 int main() {
 	/* bitwise complement */
 	{
 		int x = 5;
 		int y = ~x;
-		//@ assert y == -5;
+
+        if (y != -5) {
+          ERROR: __VERIFIER_error();
+        }
 	}
 }
