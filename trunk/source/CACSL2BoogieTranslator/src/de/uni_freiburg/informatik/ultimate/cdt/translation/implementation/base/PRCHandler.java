@@ -34,7 +34,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.lang3.NotImplementedException;
 import org.apache.log4j.Logger;
 import org.eclipse.cdt.core.dom.ast.IASTArraySubscriptExpression;
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
@@ -86,14 +85,14 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.CDeclaration;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.DeclarationResult;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionListRecResult;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.HeapLValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LRValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LocalLValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.DeclarationResult;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionListRecResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.SkipResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.TypesResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
@@ -575,7 +574,7 @@ public class PRCHandler extends CHandler {
 				variablesOnHeap.add(d);
 			} else {
 				//TODO: handle f.i. something like "(int *) a[2]" where a is two-dimensional (thus a[2] is an array)
-				throw new NotImplementedException("");
+				throw new UnsupportedOperationException("determine on-heap/off-heap for nested arrays");
 			}
 			return switchedRexpr;
 		}
