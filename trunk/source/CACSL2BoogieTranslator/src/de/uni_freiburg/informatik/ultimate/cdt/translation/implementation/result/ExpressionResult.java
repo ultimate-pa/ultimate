@@ -261,39 +261,35 @@ public class ExpressionResult extends Result {
 				underlyingType = new CPrimitive(PRIMITIVE.INT);
 			}
 		
-			//has the type of what lies at that address
-			RValue addressRVal = new RValue(hlv.getAddress(), underlyingType,
-					hlv.isBoogieBool(), hlv.isIntFromPointer());
-
 			final RValue newValue;
 			if (underlyingType instanceof CPrimitive) {
-				ExpressionResult rex = memoryHandler.getReadCall(main, addressRVal);
+				ExpressionResult rex = memoryHandler.getReadCall(main, hlv.getAddress(), underlyingType);
 				result = copyStmtDeclAuxvarOverapprox(this, rex);
 				newValue = (RValue) rex.lrVal;
 			} else if (underlyingType instanceof CPointer) {
-				ExpressionResult rex = memoryHandler.getReadCall(main, addressRVal);
+				ExpressionResult rex = memoryHandler.getReadCall(main, hlv.getAddress(), underlyingType);
 				result = copyStmtDeclAuxvarOverapprox(this, rex);				
 				newValue = (RValue) rex.lrVal;
 			} else if (underlyingType instanceof CArray) {
 				CArray cArray = (CArray) underlyingType;
 				ExpressionResult rex = readArrayFromHeap(main, structHandler,
-						memoryHandler, loc, addressRVal, cArray);
+						memoryHandler, loc, hlv.getAddress(), cArray);
 				result = copyStmtDeclAuxvarOverapprox(this, rex);	
-				newValue = new RValue(rex.lrVal.getValue(), new CPointer(cArray.getValueType()), 
-						rex.lrVal.isBoogieBool(), rex.lrVal.isIntFromPointer());
+				newValue = new RValue(hlv.getAddress(), new CPointer(cArray.getValueType()), 
+						false, false);
 			} else if (underlyingType instanceof CEnum) {
 				throw new AssertionError("handled above");
 			} else if (underlyingType instanceof CStruct) {
 				ExpressionResult rex = readStructFromHeap(main, structHandler, memoryHandler, loc, 
-						addressRVal);
+						hlv.getAddress(), (CStruct) underlyingType);
 				result = copyStmtDeclAuxvarOverapprox(this, rex);				
 				newValue = (RValue) rex.lrVal;
 			} else if (underlyingType instanceof CNamed) {
 				throw new AssertionError("This should not be the case as we took the underlying type.");
 			} else if (underlyingType instanceof CFunction) {
 				result = copyStmtDeclAuxvarOverapprox(this);	
-				newValue = new RValue(addressRVal.getValue(), new CPointer(underlyingType), 
-						addressRVal.isBoogieBool(), addressRVal.isIntFromPointer());
+				newValue = new RValue(hlv.getAddress(), new CPointer(underlyingType), 
+						false, false);
 			} else {
 				throw new UnsupportedSyntaxException(loc, "..");
 			}
@@ -329,10 +325,7 @@ public class ExpressionResult extends Result {
 	 */
 	ExpressionResult readStructFromHeap(Dispatcher main, 
 			StructHandler structHandler, MemoryHandler memoryHandler, ILocation loc,
-			RValue address) {
-		
-		Expression structOnHeapAddress = address.getValue();
-		CStruct structType = (CStruct) address.getCType().getUnderlyingType();
+			Expression structOnHeapAddress, CStruct structType) {
 		
 		ExpressionResult result = null;
 		
@@ -369,30 +362,30 @@ public class ExpressionResult extends Result {
 				underlyingType = fieldTypes[i];
 
 //			ResultExpression fieldRead = null; 
-			RValue fieldRVal = null;
+			final LRValue fieldLRVal;
 			if(underlyingType instanceof CPrimitive) {
 				ExpressionResult fieldRead = (ExpressionResult) structHandler.readFieldInTheStructAtAddress(
 						main, memoryHandler, loc, fieldIds[i], 
-						address);
-				fieldRVal = (RValue) fieldRead.lrVal;
+						structOnHeapAddress, structType);
+				fieldLRVal = (RValue) fieldRead.lrVal;
 				newStmt.addAll(fieldRead.stmt);
 				newDecl.addAll(fieldRead.decl);
 				newAuxVars.putAll(fieldRead.auxVars);
 			} else if (underlyingType instanceof CPointer) {
 				ExpressionResult fieldRead = (ExpressionResult) structHandler.readFieldInTheStructAtAddress(
 						main, memoryHandler, loc, fieldIds[i], 
-						address);
-				fieldRVal = (RValue) fieldRead.lrVal;
+						structOnHeapAddress, structType);
+				fieldLRVal = (RValue) fieldRead.lrVal;
 				newStmt.addAll(fieldRead.stmt);
 				newDecl.addAll(fieldRead.decl);
 				newAuxVars.putAll(fieldRead.auxVars);
 			} else if (underlyingType instanceof CArray) {
 				
 				ExpressionResult xres1 = readArrayFromHeap(main, structHandler,
-						memoryHandler, loc, address, (CArray) underlyingType);
+						memoryHandler, loc, structOnHeapAddress, (CArray) underlyingType);
 				ExpressionResult xres = xres1;
 				
-				fieldRVal = (RValue) xres.lrVal;
+				fieldLRVal = (HeapLValue) xres.lrVal;
 				newStmt.addAll(xres.stmt);
 				newDecl.addAll(xres.decl);
 				newAuxVars.putAll(xres.auxVars);
@@ -409,8 +402,8 @@ public class ExpressionResult extends Result {
 				//like CPrimitive..
 				ExpressionResult fieldRead = (ExpressionResult) structHandler.readFieldInTheStructAtAddress(
 						main, memoryHandler, loc, fieldIds[i], 
-						address);
-				fieldRVal = (RValue) fieldRead.lrVal;
+						structOnHeapAddress, structType);
+				fieldLRVal = (RValue) fieldRead.lrVal;
 				newStmt.addAll(fieldRead.stmt);
 				newDecl.addAll(fieldRead.decl);
 				newAuxVars.putAll(fieldRead.auxVars);
@@ -424,17 +417,15 @@ public class ExpressionResult extends Result {
 								innerStructOffset),
 								loc);
 				
-				RValue newAddress = new RValue(innerStructAddress, underlyingType, false, false);
-
 				ExpressionResult fieldRead = readStructFromHeap(main, structHandler, memoryHandler, 
-						loc, newAddress);
+						loc, innerStructAddress, (CStruct) underlyingType);
 
-				fieldRVal = (RValue) fieldRead.lrVal;
+				fieldLRVal = (RValue) fieldRead.lrVal;
 				newStmt.addAll(fieldRead.stmt);
 				newDecl.addAll(fieldRead.decl);
 				newAuxVars.putAll(fieldRead.auxVars);
 			} else if (underlyingType instanceof CNamed) {
-				assert false : "This should not be the case as we took the underlying type.";
+				throw new AssertionError("This should not be the case as we took the underlying type.");
 			} else {
 				throw new UnsupportedSyntaxException(loc, "..");
 			}	
@@ -442,7 +433,14 @@ public class ExpressionResult extends Result {
 
 //			assert fieldRead.lrVal instanceof RValue; //should be guaranteed by readFieldInTheStructAtAddress(..)
 //			fieldValues.add(((RValue) fieldRead.lrVal).getValue());
-			fieldValues.add(fieldRVal.getValue());
+			if (fieldLRVal instanceof RValue) {
+				fieldValues.add(fieldLRVal.getValue());
+			} else if (fieldLRVal instanceof HeapLValue) {
+				fieldValues.add(((HeapLValue) fieldLRVal).getAddress());
+			} else {
+				throw new UnsupportedOperationException();
+			}
+			
 
 		}
 		StructConstructor sc = new StructConstructor(loc, 
@@ -457,8 +455,8 @@ public class ExpressionResult extends Result {
 
 	public ExpressionResult readArrayFromHeap(Dispatcher main,
 			StructHandler structHandler, MemoryHandler memoryHandler,
-			ILocation loc, RValue address, CArray arrayType) {
-		RValue xfieldRVal = null;
+			ILocation loc, Expression address, CArray arrayType) {
+		HeapLValue xfieldHeapLValue = null;
 		ArrayList<Declaration> decl = new ArrayList<>();
 		ArrayList<Statement> stmt = new ArrayList<>();
 		Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<>();
@@ -473,13 +471,13 @@ public class ExpressionResult extends Result {
 					new ArrayType(loc, new String[0], new ASTType[] { new PrimitiveType(loc, SFO.INT) }, 
 							main.typeHandler.ctype2asttype(loc, arrayType.getValueType())));
 			VariableDeclaration newArrayDec = new VariableDeclaration(loc, new Attribute[0], new VarList[] { newArrayVl });
-			xfieldRVal = new RValue(new IdentifierExpression(loc, newArrayId), arrayType);
+			xfieldHeapLValue = new HeapLValue(new IdentifierExpression(loc, newArrayId), arrayType);
 			
 			decl.add(newArrayDec);
 			auxVars.put(newArrayDec, loc);
 			
 			
-			Expression arrayStartAddress = address.getValue();
+			Expression arrayStartAddress = address;
 			Expression newStartAddressBase = null;
 			Expression newStartAddressOffset = null;
 			if (arrayStartAddress instanceof StructConstructor) {
@@ -499,12 +497,11 @@ public class ExpressionResult extends Result {
 				ExpressionResult readRex;
 				Expression readAddress = MemoryHandler.constructPointerFromBaseAndOffset(newStartAddressBase, arrayEntryAddressOffset, loc);
 				if (arrayType.getValueType().getUnderlyingType() instanceof CStruct) {
-					readRex = readStructFromHeap(main, structHandler, memoryHandler, loc, 
-							new RValue(readAddress, arrayType.getValueType().getUnderlyingType()));
+					readRex = readStructFromHeap(main, structHandler, memoryHandler, loc,
+							readAddress, (CStruct) arrayType.getValueType().getUnderlyingType());
 				} else {
-					readRex = memoryHandler.getReadCall(main, new RValue(
-							readAddress, 
-							arrayType.getValueType()));
+					readRex = memoryHandler.getReadCall(main, readAddress, 
+							arrayType.getValueType());
 				}
 				decl.addAll(readRex.decl);
 				stmt.addAll(readRex.stmt);
@@ -526,7 +523,7 @@ public class ExpressionResult extends Result {
 		} else {
 			throw new UnsupportedSyntaxException(loc, "we need to generalize this to nested and/or variable length arrays");
 		}
-		ExpressionResult xres1 = new ExpressionResult(stmt, xfieldRVal, decl, auxVars, overApp);
+		ExpressionResult xres1 = new ExpressionResult(stmt, xfieldHeapLValue, decl, auxVars, overApp);
 		return xres1;
 	}
 	

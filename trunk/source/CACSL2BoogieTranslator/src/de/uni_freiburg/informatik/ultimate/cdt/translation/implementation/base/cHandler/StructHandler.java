@@ -164,13 +164,10 @@ public class StructHandler {
 
 	public Result readFieldInTheStructAtAddress(Dispatcher main,
 			MemoryHandler memoryHandler, ILocation loc, String field,
-			RValue address) {
+			Expression structAddress, CStruct structType) {
 		Expression addressBaseOfFieldOwner;
 		Expression addressOffsetOfFieldOwner;
 		
-		Expression structAddress = address.getValue();
-		CStruct structType = (CStruct) address.getCType().getUnderlyingType();
-
 		addressBaseOfFieldOwner = new StructAccessExpression(loc, 
 				structAddress, SFO.POINTER_BASE);
 		addressOffsetOfFieldOwner = new StructAccessExpression(loc, 
@@ -184,11 +181,8 @@ public class StructHandler {
 
 		CType resultType = structType.getFieldType(field);
 
-		RValue newAddress = new RValue(newPointer, resultType, false, false);
-		
 		ExpressionResult call = 
-				memoryHandler.getReadCall(main, 
-					newAddress);	
+				memoryHandler.getReadCall(main, newPointer, resultType);
 		ArrayList<Statement> stmt = new ArrayList<Statement>();
 		ArrayList<Declaration> decl = new ArrayList<Declaration>();
 		Map<VariableDeclaration, ILocation> auxVars = 

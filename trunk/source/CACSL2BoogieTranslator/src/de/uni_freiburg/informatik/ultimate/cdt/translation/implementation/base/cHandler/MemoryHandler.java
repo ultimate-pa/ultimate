@@ -1313,16 +1313,16 @@ public class MemoryHandler {
      * @return all declarations and statements required to perform the read,
      *         plus an identifierExpression holding the read value.
      */
-    public ExpressionResult getReadCall(Dispatcher main,
-    		RValue address) {
+    public ExpressionResult getReadCall(Dispatcher main, Expression address,
+    		CType resultType) {
         ArrayList<Statement> stmt = new ArrayList<Statement>();
         ArrayList<Declaration> decl = new ArrayList<Declaration>();
 		Map<VariableDeclaration, ILocation> auxVars = 
 				new LinkedHashMap<VariableDeclaration, ILocation>();
 		ArrayList<Overapprox> overappr = new ArrayList<Overapprox>();
-        ILocation loc = (ILocation) address.getValue().getLocation();
+        ILocation loc = (ILocation) address.getLocation();
         
-        ASTType heapType = getHeapTypeOfLRVal(main, loc, address);
+        ASTType heapType = getHeapTypeOfLRVal(main, loc, resultType);
         
         String heapTypeName;
         if (InferredType.isPointerType(heapType)) {
@@ -1337,7 +1337,7 @@ public class MemoryHandler {
         decl.add(tVarDecl);
         VariableLHS[] lhs = new VariableLHS[] { new VariableLHS(loc, tmpId) };
         CallStatement call = new CallStatement(loc, false, lhs, "read~" + heapTypeName,//heapType.toString(),
-                new Expression[] { address.getValue(), this.calculateSizeOf(address.getCType(), loc) });
+                new Expression[] { address, this.calculateSizeOf(resultType, loc) });
         for (Overapprox overapprItem : overappr) {
             call.getPayload().getAnnotations().put(Overapprox.getIdentifier(),
                     overapprItem);
@@ -1345,15 +1345,11 @@ public class MemoryHandler {
         stmt.add(call);
 		assert (CHandler.isAuxVarMapcomplete(main, decl, auxVars));
         return new ExpressionResult(stmt, 
-        		new RValue(new IdentifierExpression(loc, tmpId), address.getCType()),
+        		new RValue(new IdentifierExpression(loc, tmpId), resultType),
         		decl, auxVars, overappr);
     }
     
-    ASTType getHeapTypeOfLRVal(Dispatcher main, ILocation loc, LRValue lrVal) {
-    	CType ct = lrVal.getCType();
-    	
-    	if (lrVal.isBoogieBool())
-    		return new PrimitiveType(lrVal.getValue().getLocation(), SFO.BOOL);
+    ASTType getHeapTypeOfLRVal(Dispatcher main, ILocation loc, CType ct) {
     	
     	CType ut = ct;
     	if (ut instanceof CNamed)
@@ -1364,10 +1360,10 @@ public class MemoryHandler {
 			switch (cp.getGeneralType()) {
 			case INTTYPE:
 				isIntArrayRequiredInMM = true;
-				return new PrimitiveType(lrVal.getValue().getLocation(), SFO.INT);
+				return new PrimitiveType(loc, SFO.INT);
 			case FLOATTYPE:
 				isFloatArrayRequiredInMM = true;
-				return new PrimitiveType(lrVal.getValue().getLocation(), SFO.REAL);
+				return new PrimitiveType(loc, SFO.REAL);
 			default:
 				throw new UnsupportedSyntaxException(null, "unsupported cType " + ct);
 			}
@@ -1387,7 +1383,7 @@ public class MemoryHandler {
 		} else if (ut instanceof CEnum) { 
 			//enum is treated like an int
 			isIntArrayRequiredInMM = true;
-			return new PrimitiveType(lrVal.getValue().getLocation(), SFO.INT);
+			return new PrimitiveType(loc, SFO.INT);
 		} else {
 			throw new UnsupportedSyntaxException(null, "non-heap type?: " + ct);
 		}
