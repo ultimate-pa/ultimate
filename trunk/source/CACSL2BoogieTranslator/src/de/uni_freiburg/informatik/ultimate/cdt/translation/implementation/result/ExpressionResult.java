@@ -40,8 +40,8 @@ import java.util.Map;
 
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.PRDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.MemoryHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.StructHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
@@ -50,9 +50,9 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CNamed;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.PRIMITIVE;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStruct;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.PRIMITIVE;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
@@ -115,24 +115,6 @@ public class ExpressionResult extends Result {
 	 */
 	public final Map<StructLHS, CType> unionFieldIdToCType;
 	
-	/**
-	 * Use this to lock this ResultExpression. If the ResultExpression is locked
-	 * its fields should not obtain new elements any more.
-	 * (alex:) The purpose is that once we have read those fields --> and added them to another
-	 * ResultExpression <-- we want to be sure that they are not changed anymore in this,
-	 * as then the other expression might contain too few/many entries in these fields.
-	 * TODO: implement this consequently, make fields private
-	 */
-	private boolean m_Locked = false;
-	
-	/**
-	 * Lock this ResultExpression after usage to forbid that someone switches
-	 * to RValue.
-	 */
-	public void lock() {
-		m_Locked = true;
-	}
-
 	/**
      * Constructor.
      * 
@@ -237,6 +219,9 @@ public class ExpressionResult extends Result {
 			decl.addAll(resExpr.decl);
 			auxVars.putAll(resExpr.auxVars);
 			overappr.addAll(resExpr.overappr);
+			if (resExpr.unionFieldIdToCType != null && !resExpr.unionFieldIdToCType.isEmpty()) {
+				throw new AssertionError("TODO: Matthias implement this!");
+			}
 		}
     	return new ExpressionResult(stmt, null, decl, auxVars, overappr, null);
     }
@@ -244,158 +229,68 @@ public class ExpressionResult extends Result {
 
 	public ExpressionResult switchToRValueIfNecessary(Dispatcher main, MemoryHandler memoryHandler, 
 			StructHandler structHandler, ILocation loc) {
-		ExpressionResult toReturn = null;
+		final ExpressionResult result;
 		if (lrVal == null) {
-			toReturn =  this;
+			result =  this;
 		} else if (lrVal instanceof RValue) {
-			toReturn =  this;
+			result =  this;
 		} else if (lrVal instanceof LocalLValue) {
+			if (!(main instanceof PRDispatcher) && (lrVal.getCType() instanceof CArray)) {
+				throw new AssertionError("on-heap/off-heap bug: array " + lrVal.toString() + " has to be on-heap");
+			}
 			RValue newRVal = new RValue(((LocalLValue) lrVal).getValue(),
 					        lrVal.getCType(), lrVal.isBoogieBool());
-			toReturn = new ExpressionResult(
+			result = new ExpressionResult(
 					this.stmt, newRVal, this.decl, this.auxVars,
 					        this.overappr, this.unionFieldIdToCType);
 		} else if (lrVal instanceof HeapLValue) {
-			if (m_Locked) {
-				throw new AssertionError("this ResultExpression is already locked");
-			}
 			HeapLValue hlv = (HeapLValue) lrVal;
-			
-			//retain already created stmt, decl, auxVars
-			ArrayList<Statement> newStmt = new ArrayList<Statement>(this.stmt);
-			ArrayList<Declaration> newDecl = new ArrayList<Declaration>(this.decl);
-			LinkedHashMap<VariableDeclaration, ILocation> newAuxVars = 
-					new LinkedHashMap<VariableDeclaration, ILocation>(this.auxVars); 
-			RValue newValue = null;
-
 			CType underlyingType = this.lrVal.getCType().getUnderlyingType();
-		
-			//a pointer to a function is a special case..
-			if (underlyingType instanceof CPointer 
-					&& ((CPointer) underlyingType).pointsToType instanceof CFunction) {
-				underlyingType = ((CPointer) underlyingType).pointsToType;
+			if (underlyingType instanceof CEnum) {
+				underlyingType = new CPrimitive(PRIMITIVE.INT);
 			}
-
+		
 			//has the type of what lies at that address
 			RValue addressRVal = new RValue(hlv.getAddress(), hlv.getCType(),
 					hlv.isBoogieBool(), hlv.isIntFromPointer());
 
+			final RValue newValue;
 			if (underlyingType instanceof CPrimitive) {
-				CPrimitive cp = (CPrimitive) underlyingType;
-				switch (cp.getGeneralType()) {
-				case INTTYPE: {
-					ExpressionResult rex = memoryHandler.getReadCall(
-							main, addressRVal);
-					newStmt.addAll(rex.stmt);
-					newDecl.addAll(rex.decl);
-					newAuxVars.putAll(rex.auxVars);	
-					newValue = (RValue) rex.lrVal;
-					break;
-				}
-				case FLOATTYPE: {
-					ExpressionResult rex = memoryHandler.getReadCall(
-							main, addressRVal);
-					newStmt.addAll(rex.stmt);
-					newDecl.addAll(rex.decl);
-					newAuxVars.putAll(rex.auxVars);	
-					newValue = (RValue) rex.lrVal;	
-					break;
-				}
-				case VOID:
-					//(in this case we return nothing, because this should not be read anyway..)
-					break;
-				default:
-					throw new UnsupportedSyntaxException(loc, "..");
-				}
+				ExpressionResult rex = memoryHandler.getReadCall(main, addressRVal);
+				result = copyStmtDeclAuxvarOverapprox(this, rex);
+				newValue = (RValue) rex.lrVal;
 			} else if (underlyingType instanceof CPointer) {
-				ExpressionResult rex = memoryHandler.getReadCall(
-						main, addressRVal);
-				newStmt.addAll(rex.stmt);
-				newDecl.addAll(rex.decl);
-				newAuxVars.putAll(rex.auxVars);	
+				ExpressionResult rex = memoryHandler.getReadCall(main, addressRVal);
+				result = copyStmtDeclAuxvarOverapprox(this, rex);				
 				newValue = (RValue) rex.lrVal;
 			} else if (underlyingType instanceof CArray) {
-				//						return null; //"you can't assign arrays in C"
-				//						throw new AssertionError("you can't assign arrays in C");
-				// if it is a HeapLValue, it must be on heap -> treat it as a pointer
-									ExpressionResult	rex = readArrayFromHeap(main, structHandler,
-											memoryHandler, loc, addressRVal, (CArray) addressRVal.getCType());
-										newStmt.addAll(rex.stmt);
-										newDecl.addAll(rex.decl);
-										newAuxVars.putAll(rex.auxVars);	
-										newValue = (RValue) rex.lrVal;
-//				newStmt.addAll(this.stmt);
-//				newDecl.addAll(this.decl);
-//				newAuxVars.putAll(this.auxVars);	
-//				newValue = new RValue(hlv.getAddress(), this.lrVal.cType);
-			} else if (underlyingType instanceof CEnum) { //same as for an int
-				ExpressionResult rex = memoryHandler.getReadCall(
-						main, addressRVal);
-				newStmt.addAll(rex.stmt);
-				newDecl.addAll(rex.decl);
-				newAuxVars.putAll(rex.auxVars);	
-				newValue = (RValue) rex.lrVal;
+				CArray cArray = (CArray) underlyingType;
+				ExpressionResult rex = readArrayFromHeap(main, structHandler,
+						memoryHandler, loc, addressRVal, cArray);
+				result = copyStmtDeclAuxvarOverapprox(this, rex);	
+				newValue = new RValue(rex.lrVal.getValue(), new CPointer(cArray.getValueType()), 
+						rex.lrVal.isBoogieBool(), rex.lrVal.isIntFromPointer());
+			} else if (underlyingType instanceof CEnum) {
+				throw new AssertionError("handled above");
 			} else if (underlyingType instanceof CStruct) {
 				ExpressionResult rex = readStructFromHeap(main, structHandler, memoryHandler, loc, 
 						addressRVal);
-				newStmt.addAll(rex.stmt);
-				newDecl.addAll(rex.decl);
-				newAuxVars.putAll(rex.auxVars);	
-				newValue = (RValue) rex.lrVal;	
+				result = copyStmtDeclAuxvarOverapprox(this, rex);				
+				newValue = (RValue) rex.lrVal;
 			} else if (underlyingType instanceof CNamed) {
 				throw new AssertionError("This should not be the case as we took the underlying type.");
 			} else if (underlyingType instanceof CFunction) {
-				newValue = addressRVal;
+				result = copyStmtDeclAuxvarOverapprox(this);	
+				newValue = new RValue(addressRVal.getValue(), new CPointer(underlyingType), 
+						addressRVal.isBoogieBool(), addressRVal.isIntFromPointer());
 			} else {
 				throw new UnsupportedSyntaxException(loc, "..");
 			}
-			newValue.setBoogieBool(lrVal.isBoogieBool());
-			toReturn = new ExpressionResult(newStmt, newValue, newDecl,
-					newAuxVars, this.overappr, this.unionFieldIdToCType);
+			result.lrVal = newValue;
 		} else {
 			throw new AssertionError("an LRValue that is not null, and no LocalLValue, RValue or HeapLValue???");
 		}
-		
-		if(toReturn != null
-				&& toReturn.lrVal != null)
-			toReturn.lrVal.setIntFromPointer(this.lrVal.isIntFromPointer()); //FIXME niceer
-		
-//		//special treatment for unsigned integer types
-//		if (main.cHandler.getUnsignedTreatment() != UNSIGNED_TREATMENT.IGNORE
-//				&& toReturn != null
-//				&& toReturn.lrVal != null 
-//				&& !toReturn.lrVal.isIntFromPointer
-//				&& toReturn.lrVal.cType instanceof CPrimitive 
-//				&& ((CPrimitive) toReturn.lrVal.cType).isUnsigned()) {
-//			int exponentInBytes = memoryHandler.typeSizeConstants
-//						.CPrimitiveToTypeSizeConstant.get(((CPrimitive) toReturn.lrVal.cType).getType());
-//			BigInteger maxValue = new BigInteger("2")
-//					.pow(exponentInBytes * 8);
-//
-//			if (main.cHandler.getUnsignedTreatment() == UNSIGNED_TREATMENT.ASSUME_ALL) {
-//				AssumeStatement assumeGeq0 = new AssumeStatement(loc, new BinaryExpression(loc, BinaryExpression.Operator.COMPGEQ,
-//						toReturn.lrVal.getValue(), new IntegerLiteral(loc, SFO.NR0)));
-//				toReturn.stmt.add(assumeGeq0);
-//				
-//				AssumeStatement assumeLtMax = new AssumeStatement(loc, new BinaryExpression(loc, BinaryExpression.Operator.COMPLT,
-//						toReturn.lrVal.getValue(), new IntegerLiteral(loc, maxValue.toString())));
-//				toReturn.stmt.add(assumeLtMax);
-//			} else if (main.cHandler.getUnsignedTreatment() == UNSIGNED_TREATMENT.WRAPAROUND) {
-//				toReturn.lrVal = new RValue(new BinaryExpression(loc, BinaryExpression.Operator.ARITHMOD, 
-//							toReturn.lrVal.getValue(), 
-//							new IntegerLiteral(loc, maxValue.toString())), 
-//						toReturn.lrVal.cType, 
-//						toReturn.lrVal.isBoogieBool,
-//						false);
-//			}
-//		}
-
-		//FIXME: this is a workaround integrate switch to underlying type 
-		// properly in this method
-		if (toReturn.lrVal != null) {
-			toReturn.lrVal.setCType(lrVal.getCType().getUnderlyingType());
-		}
-		return toReturn;
+		return result;
 	}
 
 //	private ResultExpression readArrayFromHeap(Dispatcher main,
@@ -634,7 +529,6 @@ public class ExpressionResult extends Result {
 		this.stmt.addAll(re.stmt);
 		this.auxVars.putAll(re.auxVars);
 		this.overappr.addAll(overappr);
-		re.lock();
 	}
 	
 	

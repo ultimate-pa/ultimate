@@ -76,20 +76,10 @@ public abstract class LRValue {
 		return isBoogieBool;
 	}
 
-	@Deprecated
-	public void setBoogieBool(boolean isBoogieBool) {
-		this.isBoogieBool = isBoogieBool;
-	}
-
 	public boolean isIntFromPointer() {
 		return isIntFromPointer;
 	}
 
-	@Deprecated
-	public void setIntFromPointer(boolean isIntFromPointer) {
-		this.isIntFromPointer = isIntFromPointer;
-	}
-	
 	public final String toString() {
 		if (this instanceof HeapLValue)
 			return "address: " + ((HeapLValue) this).getAddress();
