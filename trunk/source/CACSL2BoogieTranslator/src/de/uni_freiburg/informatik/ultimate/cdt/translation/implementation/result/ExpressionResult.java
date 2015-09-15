@@ -210,20 +210,24 @@ public class ExpressionResult extends Result {
      * any more.
      */
     public static ExpressionResult copyStmtDeclAuxvarOverapprox(ExpressionResult... resExprs) {
-		ArrayList<Declaration> decl = new ArrayList<Declaration>();
-		ArrayList<Statement> stmt = new ArrayList<Statement>();
-		Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<VariableDeclaration, ILocation>();
-		List<Overapprox> overappr = new ArrayList<Overapprox>();
+		final ArrayList<Declaration> decl = new ArrayList<Declaration>();
+		final ArrayList<Statement> stmt = new ArrayList<Statement>();
+		final Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<VariableDeclaration, ILocation>();
+		final List<Overapprox> overappr = new ArrayList<Overapprox>();
+		Map<StructLHS, CType> unionFieldIdToCType = new LinkedHashMap<StructLHS, CType>();
 		for (ExpressionResult resExpr : resExprs) {
 			stmt.addAll(resExpr.stmt);
 			decl.addAll(resExpr.decl);
 			auxVars.putAll(resExpr.auxVars);
 			overappr.addAll(resExpr.overappr);
-			if (resExpr.unionFieldIdToCType != null && !resExpr.unionFieldIdToCType.isEmpty()) {
-				throw new AssertionError("TODO: Matthias implement this!");
+			if (resExpr.unionFieldIdToCType != null) {
+				unionFieldIdToCType.putAll(resExpr.unionFieldIdToCType);
 			}
 		}
-    	return new ExpressionResult(stmt, null, decl, auxVars, overappr, null);
+		if (unionFieldIdToCType.isEmpty()) {
+			unionFieldIdToCType = null;
+		}
+    	return new ExpressionResult(stmt, null, decl, auxVars, overappr, unionFieldIdToCType);
     }
     
 
@@ -238,8 +242,9 @@ public class ExpressionResult extends Result {
 			if (!(main instanceof PRDispatcher) && (lrVal.getCType() instanceof CArray)) {
 				throw new AssertionError("on-heap/off-heap bug: array " + lrVal.toString() + " has to be on-heap");
 			}
+			CType underlyingType = this.lrVal.getCType().getUnderlyingType();
 			RValue newRVal = new RValue(((LocalLValue) lrVal).getValue(),
-					        lrVal.getCType(), lrVal.isBoogieBool());
+					underlyingType, lrVal.isBoogieBool());
 			result = new ExpressionResult(
 					this.stmt, newRVal, this.decl, this.auxVars,
 					        this.overappr, this.unionFieldIdToCType);
@@ -251,7 +256,7 @@ public class ExpressionResult extends Result {
 			}
 		
 			//has the type of what lies at that address
-			RValue addressRVal = new RValue(hlv.getAddress(), hlv.getCType(),
+			RValue addressRVal = new RValue(hlv.getAddress(), underlyingType,
 					hlv.isBoogieBool(), hlv.isIntFromPointer());
 
 			final RValue newValue;
