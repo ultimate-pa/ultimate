@@ -497,7 +497,7 @@ public class IntegerTranslation extends AExpressionTranslation {
 		if (resultType.isIntegerType()) {
 			convertToIntegerType(loc, operand, resultType);
 		} else {
-			throw new UnsupportedOperationException("not yet supported");
+			throw new UnsupportedOperationException("not yet supported: conversion to " + resultType);
 		}
 		// set the type of the operand to resultType
 		operand.lrVal.setCType(resultType);
