@@ -104,7 +104,7 @@ public class CPrimitive extends CType {
     	VOID
     }
     
-    private boolean isUnsigned = false;
+    private final boolean isUnsigned;
 
     /**
      * The C type of the variable.
@@ -115,15 +115,17 @@ public class CPrimitive extends CType {
      * more general type, i.e. inttype, floattype, void -- is derived from
      * type
      */
-    private GENERALPRIMITIVE generalType;
+    private final GENERALPRIMITIVE generalType;
     
     public CPrimitive(PRIMITIVE type) {
         super(false, false, false, false); //FIXME: integrate those flags
     	this.type = type;
-    	setGeneralType(type);
+    	generalType = getGeneralType(type);
+    	isUnsigned = isUnsigned();
     }
 
-	private void setGeneralType(PRIMITIVE type) throws AssertionError {
+	private GENERALPRIMITIVE getGeneralType(PRIMITIVE type) throws AssertionError {
+		final GENERALPRIMITIVE generalType;
 		switch (type) {
 		case COMPLEX_FLOAT:
 		case COMPLEX_DOUBLE:
@@ -133,14 +135,12 @@ public class CPrimitive extends CType {
 		case LONGDOUBLE:
 			generalType = GENERALPRIMITIVE.FLOATTYPE;
 			break;
+		case BOOL:
 		case UCHAR:
 		case UINT:
 		case ULONG:
 		case ULONGLONG:
 		case USHORT:
-			this.isUnsigned = true;
-			//fallthrough
-		case BOOL:
 		case CHAR:
 		case CHAR16:
 		case CHAR32:
@@ -155,6 +155,40 @@ public class CPrimitive extends CType {
 		case VOID:
 			generalType = GENERALPRIMITIVE.VOID;
 			break;
+		default:
+			throw new AssertionError("case missing");
+    	}
+		return generalType;
+	}
+	
+	private boolean isUnsigned(PRIMITIVE type) throws AssertionError {
+		switch (type) {
+		case BOOL:
+		case UCHAR:
+		case UINT:
+		case ULONG:
+		case ULONGLONG:
+		case USHORT:
+			return true;
+		case CHAR :
+			//FIXME: this should be a setting
+			return true;
+		case COMPLEX_FLOAT:
+		case COMPLEX_DOUBLE:
+		case COMPLEX_LONGDOUBLE:
+		case FLOAT:
+		case DOUBLE:
+		case LONGDOUBLE:
+		case CHAR16:
+		case CHAR32:
+		case INT:
+		case LONG:
+		case LONGLONG:
+		case SCHAR:
+		case SHORT:
+		case WCHAR:
+		case VOID:
+			return false;
 		default:
 			throw new AssertionError("case missing");
     	}
@@ -253,7 +287,8 @@ public class CPrimitive extends CType {
         } else {
             throw new IllegalArgumentException("Unknown C Declaration!");
         }
-    	setGeneralType(type);
+    	generalType = getGeneralType(type);
+    	isUnsigned = isUnsigned();
     }
     
     public boolean isUnsigned() {
@@ -307,5 +342,31 @@ public class CPrimitive extends CType {
         } else {
             return false;
         }
+	}
+	
+	public CPrimitive getCorrespondingUnsignedType() {
+		if (!this.isIntegerType()) {
+			throw new IllegalArgumentException("no integer type " + this);
+		}
+		if (this.isUnsigned()) {
+			throw new IllegalArgumentException("already unsigned " + this);
+		}
+		switch (this.getType()) {
+		case CHAR:
+			throw new UnsupportedOperationException("is char signed or not? implement this");
+		case INT:
+			return new CPrimitive(PRIMITIVE.UINT);
+		case LONG:
+			return new CPrimitive(PRIMITIVE.ULONG);
+		case LONGLONG:
+			return new CPrimitive(PRIMITIVE.ULONGLONG);
+		case SCHAR:
+			return new CPrimitive(PRIMITIVE.UCHAR);
+		case SHORT:
+			return new CPrimitive(PRIMITIVE.USHORT);
+		default:
+			throw new IllegalArgumentException("unsupported type " + this);
+		}
+		
 	}
 }
