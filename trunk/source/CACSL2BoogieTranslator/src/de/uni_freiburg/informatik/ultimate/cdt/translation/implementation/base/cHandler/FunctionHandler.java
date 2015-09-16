@@ -715,6 +715,10 @@ public class FunctionHandler {
 						&& ((CPrimitive) expectedParamType).getGeneralType() == GENERALPRIMITIVE.INTTYPE) {
 					in = ConvExpr.rexBoolToIntIfNecessary(loc, in, m_ExpressionTranslation);
 				}
+				if (expectedParamType instanceof CFunction) {
+					// workaround - better: make this conversion already in declaration
+					expectedParamType = new CPointer(expectedParamType);
+				}
 				// implicit casts
 				main.cHandler.castToType(main, loc, in, expectedParamType);
 			}
@@ -801,8 +805,8 @@ public class FunctionHandler {
 
 		assert (main instanceof PRDispatcher) || ((MainDispatcher) main).getFunctionToIndex().size() > 0;
 		ExpressionResult funcNameRex = (ExpressionResult) main.dispatch(functionName);
-		RValue calledFuncRVal = (RValue) funcNameRex.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc).lrVal;
-		CType calledFuncType = calledFuncRVal.getCType().getUnderlyingType();
+//		RValue calledFuncRVal = (RValue) funcNameRex.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc).lrVal;
+		CType calledFuncType = funcNameRex.lrVal.getCType();
 		if (!(calledFuncType instanceof CFunction)) {
 			// .. because function pointers don't need to be dereferenced in
 			// order to be called

@@ -309,22 +309,11 @@ public class InitializationHandler {
 		//carry over
 		ExpressionResult initializer = null;
 		if (initializerRaw != null) {
-			if (initializerRaw.lrVal != null
-					&& initializerRaw.lrVal.getCType().getUnderlyingType() instanceof CArray) {
-				assert cType instanceof CPointer;
-				// case where we assign an array (not an arrayaccessExpression) to a pointer on initialization
-				// --> then we can assume it has been put on heap, and we just take the address for assignment
-				//   analogous to the solution in makeAssignment..
-				initializer = new ExpressionResult(initializerRaw);
-				initializer.lrVal = new RValue(((HeapLValue) initializer.lrVal).getAddress(), initializer.lrVal.getCType());
-			} else {
-				initializer = 
-						initializerRaw.switchToRValueIfNecessary(main, mMemoryHandler, mStructHandler, loc);
-				stmt.addAll(initializer.stmt);
-				decl.addAll(initializer.decl);
-				overappr.addAll(initializer.overappr);
-				auxVars.putAll(initializer.auxVars);
-			}
+			initializer = initializerRaw.switchToRValueIfNecessary(main, mMemoryHandler, mStructHandler, loc);
+			stmt.addAll(initializer.stmt);
+			decl.addAll(initializer.decl);
+			overappr.addAll(initializer.overappr);
+			auxVars.putAll(initializer.auxVars);
 		}
 
 		VariableLHS lhs = null;
@@ -357,7 +346,7 @@ public class InitializationHandler {
 			if (onHeap) {
 				stmt.addAll(mMemoryHandler.getWriteCall(loc,
 						(HeapLValue) var,
-						new RValue(rhs, cType)));
+						rhs, cType));
 			} else {
 				assert lhs != null;
 				AssignmentStatement assignment = new AssignmentStatement(loc, 
@@ -388,7 +377,7 @@ public class InitializationHandler {
 				}
 			}
 			if (onHeap) {
-				stmt.addAll(mMemoryHandler.getWriteCall(loc, (HeapLValue) var, new RValue(rhs, lCType)));
+				stmt.addAll(mMemoryHandler.getWriteCall(loc, (HeapLValue) var, rhs, lCType));
 			} else {
 				assert lhs != null;
 				AssignmentStatement assignment = new AssignmentStatement(loc, 
@@ -492,7 +481,7 @@ public class InitializationHandler {
 			if (onHeap) {
 				stmt.addAll(mMemoryHandler.getWriteCall(loc,
 						(HeapLValue) var,
-						new RValue(rhs, cType)));
+						rhs, cType));
 			} else {
 				assert lhs != null;
 				Statement assignment = new AssignmentStatement(loc, 
@@ -577,7 +566,7 @@ public class InitializationHandler {
 //				TODO: we may need to pass statements, decls, ...
 				if (list != null && list.size() > i && list.get(i).lrVal != null) {
 					val = (RValue) list.get(i).lrVal; 
-					stmt.addAll(mMemoryHandler.getWriteCall(loc, new HeapLValue(writeLocation, valueType), val));
+					stmt.addAll(mMemoryHandler.getWriteCall(loc, new HeapLValue(writeLocation, valueType), val.getValue(), val.getCType()));
 				} else {
 					if (valueType instanceof CArray) {
 						throw new AssertionError("this should not be the case as we are in the inner/outermost array right??");
@@ -595,7 +584,7 @@ public class InitializationHandler {
 								(VariableLHS) null, valueType, null);
 						assert pInit.stmt.isEmpty() && pInit.decl.isEmpty() && pInit.auxVars.isEmpty();
 						val = (RValue) pInit.lrVal;
-						stmt.addAll(mMemoryHandler.getWriteCall(loc, new HeapLValue(writeLocation, valueType), val));
+						stmt.addAll(mMemoryHandler.getWriteCall(loc, new HeapLValue(writeLocation, valueType), val.getValue(), val.getCType()));
 					} else {
 						throw new UnsupportedSyntaxException(loc, "trying to init unknown type");
 					}
@@ -774,7 +763,7 @@ public class InitializationHandler {
 		if (rerl.lrVal != null) {//we have an identifier (or sth else too?)
 			ExpressionResult writes = new ExpressionResult((RValue) null);
 			ArrayList<Statement> writeCalls = mMemoryHandler.getWriteCall(loc,
-					new HeapLValue(startAddress, rerl.lrVal.getCType()), (RValue) rerl.lrVal);
+					new HeapLValue(startAddress, rerl.lrVal.getCType()), ((RValue) rerl.lrVal).getValue(), rerl.lrVal.getCType());
 			writes.stmt.addAll(writeCalls);
 			return writes;
 		}
@@ -839,7 +828,7 @@ public class InitializationHandler {
 					fieldWrites = new ExpressionResult((RValue) null);
 					fieldWrites.stmt.addAll(mMemoryHandler.getWriteCall(loc,
 							fieldHlv,
-							new RValue(new IdentifierExpression(loc, tmpId), underlyingFieldType)));
+							new IdentifierExpression(loc, tmpId), underlyingFieldType));
 					VariableDeclaration auxVarDec = new VariableDeclaration(loc, new Attribute[0], 
 							new VarList[] { new VarList(loc, new String[] { tmpId }, 
 									main.typeHandler.ctype2asttype(loc, underlyingFieldType)) } );

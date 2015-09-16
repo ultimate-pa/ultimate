@@ -246,6 +246,8 @@ public class ExpressionResult extends Result {
 			final CType resultType;
 			if (underlyingType instanceof CArray) {
 				resultType = new CPointer(((CArray) underlyingType).getValueType());
+			} else if (underlyingType instanceof CFunction) {
+				resultType = new CPointer(underlyingType);
 			} else {
 				resultType = underlyingType;
 			}

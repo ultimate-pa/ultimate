@@ -1401,48 +1401,48 @@ public class MemoryHandler {
      *            the value to write.
      * @return the required Statements to perform the write.
      */
-    public ArrayList<Statement> getWriteCall(ILocation loc, HeapLValue hlv, RValue rval) {
+    public ArrayList<Statement> getWriteCall(ILocation loc, HeapLValue hlv, 
+    		Expression value, CType valueType) {
 //        ILocation loc = hlv.getAddress().getLocation();
         ArrayList<Statement> stmt = new ArrayList<Statement>();
         
-        CType rType = rval.getCType();
-        if (rType instanceof CNamed)
-        	rType = ((CNamed) rType).getUnderlyingType();
+        if (valueType instanceof CNamed)
+        	valueType = ((CNamed) valueType).getUnderlyingType();
         
-        if (rType instanceof CPrimitive) {
-        	switch (((CPrimitive) rType).getGeneralType()) {
+        if (valueType instanceof CPrimitive) {
+        	switch (((CPrimitive) valueType).getGeneralType()) {
         	case INTTYPE:
         		isIntArrayRequiredInMM = true;
         		m_functionHandler.getModifiedGlobals().
         			get(m_functionHandler.getCurrentProcedureID()).add(SFO.MEMORY_INT);
         		stmt.add(new CallStatement(loc, false, new VariableLHS[0], "write~" + SFO.INT,
-        				new Expression[] { rval.getValue(), hlv.getAddress(), this.calculateSizeOf(hlv.getCType(), loc)}));
+        				new Expression[] { value, hlv.getAddress(), this.calculateSizeOf(hlv.getCType(), loc)}));
         		break;
         	case FLOATTYPE:
         		isFloatArrayRequiredInMM = true;
         		m_functionHandler.getModifiedGlobals().
         			get(m_functionHandler.getCurrentProcedureID()).add(SFO.MEMORY_REAL);
         		stmt.add(new CallStatement(loc, false, new VariableLHS[0], "write~" + SFO.REAL,
-        				new Expression[] { rval.getValue(), hlv.getAddress(), this.calculateSizeOf(hlv.getCType(), loc) }));
+        				new Expression[] { value, hlv.getAddress(), this.calculateSizeOf(hlv.getCType(), loc) }));
         		break;	
         	default:
         		throw new UnsupportedSyntaxException(loc, "we don't recognize this type");
         	}
-        } else if (rType instanceof CEnum) {
+        } else if (valueType instanceof CEnum) {
         	//treat like INT
         	isIntArrayRequiredInMM = true;
         	m_functionHandler.getModifiedGlobals().
         	get(m_functionHandler.getCurrentProcedureID()).add(SFO.MEMORY_INT);
         	stmt.add(new CallStatement(loc, false, new VariableLHS[0], "write~" + SFO.INT,
-        			new Expression[] { rval.getValue(), hlv.getAddress(), this.calculateSizeOf(hlv.getCType(), loc)}));
-        } else if (rType instanceof CPointer) {
+        			new Expression[] { value, hlv.getAddress(), this.calculateSizeOf(hlv.getCType(), loc)}));
+        } else if (valueType instanceof CPointer) {
         	isPointerArrayRequiredInMM = true;
         	m_functionHandler.getModifiedGlobals().
         			get(m_functionHandler.getCurrentProcedureID()).add(SFO.MEMORY_POINTER);
         	stmt.add(new CallStatement(loc, false, new VariableLHS[0], "write~" + SFO.POINTER,
-        			new Expression[] { rval.getValue(), hlv.getAddress(), this.calculateSizeOf(hlv.getCType(), loc) }));
-        } else if (rType instanceof CStruct) {
-        	CStruct rStructType = (CStruct) rType;
+        			new Expression[] { value, hlv.getAddress(), this.calculateSizeOf(hlv.getCType(), loc) }));
+        } else if (valueType instanceof CStruct) {
+        	CStruct rStructType = (CStruct) valueType;
         	for (String fieldId : rStructType.getFieldIds()) {
         		Expression startAddress = hlv.getAddress();
     			Expression newStartAddressBase = null;
@@ -1457,7 +1457,7 @@ public class MemoryHandler {
         		
         		CType fieldType = rStructType.getFieldType(fieldId);
         		StructAccessExpression sae = new StructAccessExpression(loc, 
-        				rval.getValue(), fieldId);
+        				value, fieldId);
         		Expression fieldOffset = 
 						StructHandler.getStructOrUnionOffsetConstantExpression(loc, this, fieldId, rStructType);
         		Expression newOffset = CHandler.createArithmeticExpression(IASTBinaryExpression.op_plus, 
@@ -1466,10 +1466,10 @@ public class MemoryHandler {
         		HeapLValue fieldHlv = new HeapLValue(
         				constructPointerFromBaseAndOffset(newStartAddressBase,
         				newOffset, loc), fieldType);
-        		stmt.addAll(getWriteCall(loc, fieldHlv, new RValue(sae, fieldType)));
+        		stmt.addAll(getWriteCall(loc, fieldHlv, sae, fieldType));
         	}
         	
-        } else if (rType instanceof CArray) {
+        } else if (valueType instanceof CArray) {
 //        	stmt.add(new AssignmentStatement(loc, new LeftHandSide[] { 
 //        			new VariableLHS(loc, ((IdentifierExpression )hlv.getAddress()).getIdentifier()) }, 
 //        			new Expression[] { rval.getValue()}) );
@@ -1477,7 +1477,7 @@ public class MemoryHandler {
         	m_functionHandler.getModifiedGlobals().
         			get(m_functionHandler.getCurrentProcedureID()).add(SFO.MEMORY_POINTER);
         	
-        	CArray arrayType = (CArray) rType;
+        	CArray arrayType = (CArray) valueType;
         	Expression arrayStartAddress = hlv.getAddress();
         	Expression newStartAddressBase = null;
         	Expression newStartAddressOffset = null;
@@ -1514,12 +1514,12 @@ public class MemoryHandler {
 //						} else {
 							arrayAccRVal = new RValue(
 									new ArrayAccessExpression(loc, 
-											rval.getValue(), 
+											value, 
 											new Expression[] { new IntegerLiteral(loc, new Integer(pos).toString()) }), arrayType.getValueType());
 //						}
 						stmt.addAll(getWriteCall(loc, 
 								new HeapLValue(constructPointerFromBaseAndOffset(newStartAddressBase, arrayEntryAddressOffset, loc), arrayType.getValueType()), 
-								arrayAccRVal));
+								arrayAccRVal.getValue(), arrayAccRVal.getCType()));
 						arrayEntryAddressOffset = CHandler.createArithmeticExpression(IASTBinaryExpression.op_plus, 
 								arrayEntryAddressOffset, valueTypeSize, loc);
 					}
