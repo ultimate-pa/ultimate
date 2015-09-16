@@ -13,7 +13,7 @@ int main() {
 		int y = ~x;
 
         if (y != -5) {
-          ERROR: __VERIFIER_error();
+          __VERIFIER_error();
         }
 	}
 }

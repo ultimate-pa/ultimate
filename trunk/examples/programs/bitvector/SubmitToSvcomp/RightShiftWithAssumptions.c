@@ -12,7 +12,7 @@ int main() {
     unsigned int b = a >> 1;
 
     if (b != 1073741824U) {       // 2^30
-      ERROR: __VERIFIER_error();
+      __VERIFIER_error();
     }
   }
 }

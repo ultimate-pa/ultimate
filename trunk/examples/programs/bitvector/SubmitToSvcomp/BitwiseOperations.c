@@ -13,7 +13,7 @@ int main() {
 		int y = ~x;
 
         if (y != -1) {
-          ERROR: __VERIFIER_error();
+          __VERIFIER_error();
         }
 	}
 
@@ -23,7 +23,7 @@ int main() {
         int y = x << 2;
 
         if (y != 8) {
-          ERROR: __VERIFIER_error();
+          __VERIFIER_error();
         }
     }
 
@@ -32,7 +32,7 @@ int main() {
         unsigned int x = 16U;
         unsigned int y = x >> 2U;
         if (y != 4U) {
-          ERROR: __VERIFIER_error();
+          __VERIFIER_error();
         }
     }
 
@@ -42,7 +42,7 @@ int main() {
         int y = x >> 2;
 
         if (y != 4) {
-          ERROR: __VERIFIER_error();
+          __VERIFIER_error();
         }
     }
 }

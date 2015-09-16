@@ -11,6 +11,6 @@ int main() {
   signed int i = ~c;
 
   if (i >= 0) {
-    ERROR: __VERIFIER_error();
+    __VERIFIER_error();
   }  
 }

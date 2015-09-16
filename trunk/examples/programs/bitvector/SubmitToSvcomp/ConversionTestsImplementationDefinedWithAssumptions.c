@@ -15,7 +15,7 @@ int main() {
     signed int b = a;
 
     if (b != -1) {
-      ERROR: __VERIFIER_error();
+      __VERIFIER_error();
     }
   }
 
@@ -25,7 +25,7 @@ int main() {
     signed int d = c;
 
     if (d != 2147483647) {
-      ERROR: __VERIFIER_error();
+      __VERIFIER_error();
     }
   }
 
@@ -35,7 +35,7 @@ int main() {
     signed int f = e;
 
     if (f != -1) {
-      ERROR: __VERIFIER_error();
+      __VERIFIER_error();
     }
   }
 }

@@ -21,7 +21,7 @@ int main() {
     int c = a * b;
     printf("%d\n", c);
     if (c != 256) {
-        ERROR: __VERIFIER_error();
+        __VERIFIER_error();
     }
   }
   
@@ -32,7 +32,7 @@ int main() {
     int c = a / b;
     printf("%d\n", c);
     if (c != -2) {
-        ERROR: __VERIFIER_error();
+        __VERIFIER_error();
     }
   }
 
@@ -43,7 +43,7 @@ int main() {
     int c = a % b;
     printf("%d\n", c);
     if (c != 6) {
-        ERROR: __VERIFIER_error();
+        __VERIFIER_error();
     }
   }
 
@@ -54,7 +54,7 @@ int main() {
     int c = a + b;
     printf("%d\n", c);
     if (c != 256) {
-        ERROR: __VERIFIER_error();
+        __VERIFIER_error();
     }
   }
   
@@ -65,7 +65,7 @@ int main() {
     int c = a - b;
     printf("%d\n", c);
     if (c != -6) {
-        ERROR: __VERIFIER_error();
+        __VERIFIER_error();
     }
   }
 
@@ -74,7 +74,7 @@ int main() {
     unsigned char a = 1;
     signed char b = -1;
     if (a < b) {
-        ERROR: __VERIFIER_error();
+        __VERIFIER_error();
     } else {
         printf("not less\n");
     }
@@ -86,7 +86,7 @@ int main() {
     unsigned char a = 255;
     signed char b = -1;
     if (a == b) {
-        ERROR: __VERIFIER_error();
+        __VERIFIER_error();
     } else {
         printf("not equal\n");
     }
@@ -99,7 +99,7 @@ int main() {
     int c = a | b;
     printf("%d\n", c);
     if (c != -1) {
-       ERROR: __VERIFIER_error();
+       __VERIFIER_error();
     }
   }
 
@@ -110,7 +110,7 @@ int main() {
     int c = a ^ b;
     printf("%d\n", c);
     if (c != -256) {
-        ERROR: __VERIFIER_error();
+        __VERIFIER_error();
     }
   }
     
@@ -121,7 +121,7 @@ int main() {
     int c = (0 ? a : b);
     printf("%d\n", -1);
     if (c != -1) {
-        ERROR: __VERIFIER_error();
+        __VERIFIER_error();
     }
   }
 }

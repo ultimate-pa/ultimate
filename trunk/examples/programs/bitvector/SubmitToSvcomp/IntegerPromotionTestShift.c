@@ -12,6 +12,6 @@ int main() {
   int i = a << b;
 
   if (i != 256) {
-    ERROR: __VERIFIER_error();
+    __VERIFIER_error();
   }
 }

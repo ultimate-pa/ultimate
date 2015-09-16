@@ -11,15 +11,15 @@ int main() {
 
   if (sizeof(char) < sizeof(int)) {
     if (sizeof(+c) != sizeof(int)) {
-      ERROR: __VERIFIER_error();
+      __VERIFIER_error();
     }
 
     if (sizeof(-c) != sizeof(int)) {
-      ERROR: __VERIFIER_error();
+      __VERIFIER_error();
     }
 
     if (sizeof(~c) != sizeof(int)) {
-      ERROR: __VERIFIER_error();
+      __VERIFIER_error();
     }
   }
 }

@@ -13,7 +13,7 @@ int main() {
   unsigned int limit2 = 100U;
 
   if (b <= limit2) {
-    ERROR: __VERIFIER_error();
+    __VERIFIER_error();
   }
 
   /* unsigned int to signed int (fitting) */
@@ -21,7 +21,7 @@ int main() {
   signed int d = c;
 
   if (d != 100) {
-    ERROR: __VERIFIER_error();
+    __VERIFIER_error();
   }
 
   /* signed int to signed long long */
@@ -29,7 +29,7 @@ int main() {
   signed long long f = e;
 
   if (f != -1LL) {
-    ERROR: __VERIFIER_error();
+    __VERIFIER_error();
   }
 
   /* signed int to unsigned long long */
@@ -38,7 +38,7 @@ int main() {
   unsigned long long limit3 = 100ULL;
 
   if (h <= limit3) {
-    ERROR: __VERIFIER_error();
+    __VERIFIER_error();
   }
 
   /* unsigned int to signed long long */
@@ -46,7 +46,7 @@ int main() {
   signed long long l = k;
 
   if (l != 100LL) {
-    ERROR: __VERIFIER_error();
+    __VERIFIER_error();
   }
 
   /* unsigned int to unsigned long long */
@@ -54,6 +54,6 @@ int main() {
   unsigned long long n = m;
 
   if (n != 100ULL) {
-    ERROR: __VERIFIER_error();
+    __VERIFIER_error();
   }
 }

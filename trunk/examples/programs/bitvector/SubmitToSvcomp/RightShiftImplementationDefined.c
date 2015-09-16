@@ -11,6 +11,6 @@ int main() {
   int b = a >> 1;
 
   if (b != -1) {
-    ERROR: __VERIFIER_error();
+    __VERIFIER_error();
   }
 }

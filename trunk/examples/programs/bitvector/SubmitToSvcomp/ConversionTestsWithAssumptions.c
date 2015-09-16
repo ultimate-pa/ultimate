@@ -17,7 +17,7 @@ int main() {
     unsigned int b = a;
 
     if (b != 0U) {
-      ERROR: __VERIFIER_error();
+      __VERIFIER_error();
     }
   }
 
@@ -27,7 +27,7 @@ int main() {
     unsigned int d = c;
 
     if (d != 0U) {
-      ERROR: __VERIFIER_error();
+      __VERIFIER_error();
     }
   }
 
@@ -37,7 +37,7 @@ int main() {
     signed long long f = e;
 
     if (f < 0) {
-      ERROR: __VERIFIER_error();
+      __VERIFIER_error();
     }
   }
 }
