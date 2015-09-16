@@ -69,6 +69,7 @@ public class TypeSizes {
 	private final int sizeOfComplexDoubleType;
 	private final int sizeOfLongDoubleType;
 	private final int sizeOfComplexLongDoubleType;
+	private final boolean charIsSigned = true;
 	final int sizeOfEnumType; //something like sizeof(enum s)
 	/**
 	 * Fixme: 2015-07-22 Matthias: I cannot find the default type size in the
@@ -169,6 +170,10 @@ public class TypeSizes {
 		} else {
 			return result;
 		}
+	}
+	
+	public boolean isCharSigned() {
+		return charIsSigned;
 	}
 	
 	public BigInteger getMaxValueOfPrimitiveType(CPrimitive cPrimitive) {
