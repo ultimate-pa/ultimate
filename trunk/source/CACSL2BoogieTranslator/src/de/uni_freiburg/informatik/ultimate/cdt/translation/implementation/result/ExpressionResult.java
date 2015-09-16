@@ -248,6 +248,8 @@ public class ExpressionResult extends Result {
 				resultType = new CPointer(((CArray) underlyingType).getValueType());
 			} else if (underlyingType instanceof CFunction) {
 				resultType = new CPointer(underlyingType);
+			} else  if (underlyingType instanceof CEnum) {
+				resultType = new CPrimitive(PRIMITIVE.INT);
 			} else {
 				resultType = underlyingType;
 			}

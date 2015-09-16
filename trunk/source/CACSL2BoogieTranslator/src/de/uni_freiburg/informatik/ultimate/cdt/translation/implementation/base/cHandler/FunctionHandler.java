@@ -806,7 +806,7 @@ public class FunctionHandler {
 		assert (main instanceof PRDispatcher) || ((MainDispatcher) main).getFunctionToIndex().size() > 0;
 		ExpressionResult funcNameRex = (ExpressionResult) main.dispatch(functionName);
 //		RValue calledFuncRVal = (RValue) funcNameRex.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc).lrVal;
-		CType calledFuncType = funcNameRex.lrVal.getCType();
+		CType calledFuncType = funcNameRex.lrVal.getCType().getUnderlyingType();
 		if (!(calledFuncType instanceof CFunction)) {
 			// .. because function pointers don't need to be dereferenced in
 			// order to be called
