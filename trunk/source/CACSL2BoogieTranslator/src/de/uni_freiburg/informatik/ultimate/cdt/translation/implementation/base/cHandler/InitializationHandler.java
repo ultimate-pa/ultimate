@@ -989,7 +989,7 @@ public class InitializationHandler {
 						arrayInitRerl = rerl.list.get(i);
 
 					Expression fieldEx = new IdentifierExpression(loc, tmpId);
-					RValue lrVal = new RValue(fieldEx, underlyingFieldType);
+					HeapLValue lrVal = new HeapLValue(fieldEx, underlyingFieldType);
 
 					VariableDeclaration tVarDecl = SFO.getTempVarVariableDeclaration(tmpId, 
 							main.typeHandler.ctype2asttype(loc, underlyingFieldType),
@@ -1030,8 +1030,13 @@ public class InitializationHandler {
 			newDecl.addAll(fieldContents.decl);
 			newAuxVars.putAll(fieldContents.auxVars);
 			newOverappr.addAll(fieldContents.overappr);
-			assert fieldContents.lrVal instanceof RValue; //should be guaranteed by readFieldInTheStructAtAddress(..)
-			fieldValues.add(((RValue) fieldContents.lrVal).getValue());
+			if (fieldContents.lrVal instanceof HeapLValue) {
+				fieldValues.add(((HeapLValue) fieldContents.lrVal).getAddress());
+			} else if (fieldContents.lrVal instanceof RValue) {
+				fieldValues.add(((RValue) fieldContents.lrVal).getValue());
+			} else {
+				throw new AssertionError();
+			}
 		}
 		StructConstructor sc = new StructConstructor(loc, new InferredType(Type.Struct),
 				fieldIdentifiers.toArray(new String[0]), 
