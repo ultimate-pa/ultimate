@@ -719,6 +719,10 @@ public class FunctionHandler {
 					// workaround - better: make this conversion already in declaration
 					expectedParamType = new CPointer(expectedParamType);
 				}
+				if (expectedParamType instanceof CArray) {
+					// workaround - better: make this conversion already in declaration
+					expectedParamType = new CPointer(((CArray) expectedParamType).getValueType());
+				}
 				// implicit casts
 				main.cHandler.castToType(main, loc, in, expectedParamType);
 			}
