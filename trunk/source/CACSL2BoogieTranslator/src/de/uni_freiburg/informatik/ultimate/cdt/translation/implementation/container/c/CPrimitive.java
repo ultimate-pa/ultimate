@@ -121,7 +121,7 @@ public class CPrimitive extends CType {
         super(false, false, false, false); //FIXME: integrate those flags
     	this.type = type;
     	generalType = getGeneralType(type);
-    	isUnsigned = isUnsigned();
+    	isUnsigned = isUnsigned(type);
     }
 
 	private GENERALPRIMITIVE getGeneralType(PRIMITIVE type) throws AssertionError {
@@ -288,7 +288,7 @@ public class CPrimitive extends CType {
             throw new IllegalArgumentException("Unknown C Declaration!");
         }
     	generalType = getGeneralType(type);
-    	isUnsigned = isUnsigned();
+    	isUnsigned = isUnsigned(type);
     }
     
     public boolean isUnsigned() {
