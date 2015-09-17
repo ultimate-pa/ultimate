@@ -508,29 +508,65 @@ public class IntegerTranslation extends AExpressionTranslation {
 		assert resultType.isIntegerType();
 		CPrimitive oldType = (CPrimitive) operand.lrVal.getCType();
 		if (oldType.isIntegerType()) {
+			final Expression newExpression;
 			if (resultType.isUnsigned()) {
+				final Expression old_WrapedIfNeeded;
+				if (oldType.isUnsigned() && 
+						m_TypeSizes.getSize(resultType.getType()) > m_TypeSizes.getSize(oldType.getType())) {
+					// required for sound Nutz transformation 
+					// (see examples/programs/regression/c/NutzTransformation03.c)
+					old_WrapedIfNeeded = applyWraparound(loc, m_TypeSizes, oldType, operand.lrVal.getValue());
+				} else {
+					old_WrapedIfNeeded = operand.lrVal.getValue();
+				}
 				if (m_UnsignedTreatment == UNSIGNED_TREATMENT.ASSUME_ALL) {
 					BigInteger maxValuePlusOne = m_TypeSizes.getMaxValueOfPrimitiveType((CPrimitive) resultType).add(BigInteger.ONE);
 					AssumeStatement assumeGeq0 = new AssumeStatement(loc, new BinaryExpression(loc, BinaryExpression.Operator.COMPGEQ,
-							operand.lrVal.getValue(), new IntegerLiteral(loc, SFO.NR0)));
+							old_WrapedIfNeeded, new IntegerLiteral(loc, SFO.NR0)));
 					operand.stmt.add(assumeGeq0);
 
 					AssumeStatement assumeLtMax = new AssumeStatement(loc, new BinaryExpression(loc, BinaryExpression.Operator.COMPLT,
-							operand.lrVal.getValue(), new IntegerLiteral(loc, maxValuePlusOne.toString())));
+							old_WrapedIfNeeded, new IntegerLiteral(loc, maxValuePlusOne.toString())));
 					operand.stmt.add(assumeLtMax);
 				} else {
 					// do nothing
 				}
+				newExpression = old_WrapedIfNeeded;
 			} else {
-				// required for sound Nutz transformation 
-				// (see examples/programs/regression/c/NutzTransformation01.c)
-				if (oldType.isUnsigned() && !resultType.isUnsigned()) {
-					Expression oldExpr = operand.lrVal.getValue(); 
-					Expression newExpr = applyWraparound(loc, m_TypeSizes, oldType, oldExpr);
-					RValue newRValue = new RValue(newExpr, resultType, false, false);
-					operand.lrVal = newRValue;
+				assert !resultType.isUnsigned();
+				final Expression old_WrapedIfUnsigned;
+				if (oldType.isUnsigned()) {
+					// required for sound Nutz transformation 
+					// (see examples/programs/regression/c/NutzTransformation01.c)
+					old_WrapedIfUnsigned = applyWraparound(loc, m_TypeSizes, oldType, operand.lrVal.getValue());
+				} else {
+					old_WrapedIfUnsigned = operand.lrVal.getValue();
 				}
+				if (m_TypeSizes.getSize(resultType.getType()) > m_TypeSizes.getSize(oldType.getType()) || 
+						m_TypeSizes.getSize(resultType.getType()) == m_TypeSizes.getSize(oldType.getType()) && !oldType.isUnsigned() ) {
+					newExpression = old_WrapedIfUnsigned;
+				} else {
+					// According to C11 6.3.1.3.3 the result is implementation-defined
+					// it the value cannot be represented by the new type
+					// We have chosen an implementation that is similar to 
+					// taking the lowest bits in a two's complement representation:
+					// First we take the value modulo the cardinality of the
+					// data range (which is 2*(MAX_VALUE+1) for signed )
+					// If the number is strictly larger than MAX_VALUE we 
+					// subtract the cardinality of the data range.
+					CPrimitive correspondingUnsignedType = resultType.getCorrespondingUnsignedType(); 
+					Expression wrapped = applyWraparound(loc, m_TypeSizes, correspondingUnsignedType, old_WrapedIfUnsigned);
+					Expression maxValue = constructLiteralForIntegerType(loc, oldType, m_TypeSizes.getMaxValueOfPrimitiveType(resultType));
+					Expression condition = new BinaryExpression(loc, Operator.COMPLEQ, wrapped, maxValue);
+					Expression range = constructLiteralForIntegerType(loc, oldType, m_TypeSizes.getMaxValueOfPrimitiveType(correspondingUnsignedType).add(BigInteger.ONE));
+					newExpression = new IfThenElseExpression(loc, condition, 
+							wrapped, 
+							new BinaryExpression(loc, Operator.ARITHMINUS, wrapped, range));
+				}
+
 			}
+			RValue newRValue = new RValue(newExpression, resultType, false, false);
+			operand.lrVal = newRValue;
 		} else {
 			throw new UnsupportedOperationException("not yet supported");
 		}
