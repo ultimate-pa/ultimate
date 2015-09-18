@@ -16,7 +16,7 @@ int main() {
 	}
 }
 
-static int foo(static int i) {
+static int foo(int i) {
 
 }
 

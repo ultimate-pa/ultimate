@@ -5,7 +5,7 @@
 int main();
 int bar(int i);
 
-int main(int x) {
+int main(void) {
 	bar(3);
 }
 
