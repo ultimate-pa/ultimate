@@ -734,9 +734,16 @@ public class InitializationHandler {
 				CArray innerArrayType = new CArray(innerDims.toArray(new Expression[0]), 
 						arrayType.getValueType());
 
+				final ArrayList<ExpressionListRecResult> listRecCall;
+				if (list == null) {
+					listRecCall = null;
+				} else if (list.size()-1 < i) {
+					listRecCall = null;
+				} else {
+					listRecCall = list.get(i).list;
+				}
 				ExpressionResult initRex = initBoogieArray(main, 
-								loc,
-								list != null ? list.get(i).list : null,
+								loc, listRecCall,
 										new ArrayLHS(loc, newLHS, newIndices), innerArrayType); 
 				stmt.addAll(initRex.stmt);
 				decl.addAll(initRex.decl);
