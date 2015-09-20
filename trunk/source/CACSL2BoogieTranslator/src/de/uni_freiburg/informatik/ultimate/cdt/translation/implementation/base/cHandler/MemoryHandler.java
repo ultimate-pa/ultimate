@@ -1603,4 +1603,13 @@ public class MemoryHandler {
 	public Expression constructNullPointer(ILocation loc) {
 		return new IdentifierExpression(loc, SFO.NULL);
 	}
+	
+	/**
+	 * Get the CType that represents <em> size_t </em>.
+	 * TODO: Currently hard-coded to uint. Should probably be a setting. 
+	 * TODO: maybe the MemoryHandler is not the right place. 
+	 */
+	public CPrimitive getSize_T() {
+		return new CPrimitive(PRIMITIVE.UINT);
+	}
 }

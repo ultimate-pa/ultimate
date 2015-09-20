@@ -1905,7 +1905,7 @@ public class CHandler implements ICHandler {
 			throw new AssertionError("unknown value");
 		}
 	}
-
+	
 	/**
 	 * Subtract two pointers.
 	 * @param leftPtr Boogie {@link Expression} that represents the left pointer.
@@ -3185,15 +3185,30 @@ public class CHandler implements ICHandler {
 		if (valueType == null) {
 			timesSizeOf = integer;
 		} else {
-			timesSizeOf = m_ExpressionTranslation.createArithmeticExpression(
-					IASTBinaryExpression.op_multiply, integer, m_ExpressionTranslation.getCTypeOfPointerComponents(),
-					mMemoryHandler.calculateSizeOf(valueType, loc), m_ExpressionTranslation.getCTypeOfPointerComponents(), loc);
+			timesSizeOf = multiplyWithSizeOfAnotherType(loc, valueType, integer, 
+					m_ExpressionTranslation.getCTypeOfPointerComponents());
 		}
 		final Expression sum = m_ExpressionTranslation.createArithmeticExpression(operator, 
 				pointerOffset, m_ExpressionTranslation.getCTypeOfPointerComponents(),
 				timesSizeOf, m_ExpressionTranslation.getCTypeOfPointerComponents(), loc);
 		final StructConstructor newPointer = MemoryHandler.constructPointerFromBaseAndOffset(pointerBase, sum, loc);
 		return newPointer;
+	}
+
+	
+	/**
+	 * Multiply an integerExpresion with the size of another type.
+	 * @param integerExpresionType {@link CType} whose translation is the Boogie 
+	 * 		type of integerExpression and the result.
+	 * @return An {@link Expression} that represents <i>integerExpression * sizeof(valueType)</i>
+	 */
+	public Expression multiplyWithSizeOfAnotherType(ILocation loc, CType valueType, Expression integerExpression,
+			CPrimitive integerExpresionType) {
+		final Expression timesSizeOf;
+		timesSizeOf = m_ExpressionTranslation.createArithmeticExpression(
+				IASTBinaryExpression.op_multiply, integerExpression, integerExpresionType,
+				mMemoryHandler.calculateSizeOf(valueType, loc), integerExpresionType, loc);
+		return timesSizeOf;
 	}
 
 	@Deprecated

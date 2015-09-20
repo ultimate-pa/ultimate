@@ -28,6 +28,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Stack;
@@ -39,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.Locati
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.HeapLValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LocalLValue;
@@ -54,6 +56,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression.Ope
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.LeftHandSide;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer;
@@ -157,28 +160,11 @@ public class ArrayHandler {
 					newLLVal.lhs = new ArrayLHS(loc, 
 							innerArrayLHS, new Expression[] { currentSubscriptRex.lrVal.getValue() });	
 				}
-				
-				if (m_checkArrayAccessOffHeap == POINTER_CHECKMODE.ASSERTandASSUME
-						|| m_checkArrayAccessOffHeap == POINTER_CHECKMODE.ASSUME) {
-					Expression notTooBig = new BinaryExpression(loc, Operator.COMPLEQ, 
-							new BinaryExpression(loc, Operator.ARITHMUL,
-									currentSubscriptRex.lrVal.getValue(), 
-									memoryHandler.calculateSizeOf(newCType, loc)),
-									new BinaryExpression(loc, Operator.ARITHMINUS,
-											memoryHandler.calculateSizeOf(innerResult.lrVal.getCType(), loc),
-											memoryHandler.calculateSizeOf(newCType, loc)));
-					Expression nonNegative = new BinaryExpression(loc, Operator.COMPGEQ,
-							currentSubscriptRex.lrVal.getValue(),
-							new IntegerLiteral(loc, "0"));
-					Expression inRange = new BinaryExpression(loc, Operator.LOGICAND, 
-							nonNegative, notTooBig);
-					if (m_checkArrayAccessOffHeap == POINTER_CHECKMODE.ASSERTandASSUME) {
-						Check check = new Check(Spec.ARRAY_INDEX);
-						ILocation locationWithCheck = LocationFactory.createCLocation(node, check);
-						result.stmt.add(new AssertStatement(locationWithCheck, inRange));
-					}
-					result.stmt.add(new AssumeStatement(loc, inRange));
-				}
+				Expression index = currentSubscriptRex.lrVal.getValue();
+				CArray arrayType = (CArray) innerResult.lrVal.getCType();
+				CType valueType = newCType;
+				CPrimitive indexType = (CPrimitive) currentSubscriptRex.lrVal.getCType();
+				addArrayBoundsCheck(main, memoryHandler, loc, index, indexType, arrayType, valueType, result);
 				
 				newLLVal.setCType(newCType);
 				result.lrVal = newLLVal;
@@ -189,4 +175,83 @@ public class ArrayHandler {
 		
 		return result;
 	}
+	
+	
+	/**
+	 * Add to exprResult a check that the index is within the bounds of an array.
+	 * Depending on the preferences of this plugin we
+	 * <ul> 
+	 *  <li> assert that the index is in the range of the bounds,
+	 *  <li> assume that the index is in the range of the bounds, or
+	 *  <li> add nothing.
+	 * </ul>
+	 * @param index {@link Expression} that represents the index
+	 * @param indexType C type of the index
+	 * @param arrayType type of the array
+	 * @param valueType type the the array's elements
+	 */
+	private void addArrayBoundsCheck(Dispatcher main, MemoryHandler memoryHandler, ILocation loc, 
+			Expression index, CPrimitive indexType, 
+			CArray arrayType, CType valueType, ExpressionResult exprResult) {
+		if (m_checkArrayAccessOffHeap  == POINTER_CHECKMODE.IGNORE) {
+			// do not check anything
+			return;
+		}
+		CHandler cHandler = (CHandler) main.cHandler;
+		final Expression inRange;
+		// 2015-09-20 Matthias:
+		// before we checked   (index <= length - sizeof(valueType))   this lead
+		// to various problems with wrap-arounds and is unsound if we e.g., 
+		// read chars from an int array now we check
+		//     (index + sizeof(valueType)) <= length)
+		// which is equivalent to
+		//     (index + sizeof(valueType))-1 < length)
+		// that has to be checked.
+		{
+			Expression indexPosition = cHandler.multiplyWithSizeOfAnotherType(loc, valueType, index, indexType);
+			Expression zero = cHandler.getExpressionTranslation().constructLiteralForIntegerType(loc, indexType, BigInteger.ZERO);
+			Expression nonNegative = cHandler.getExpressionTranslation().constructBinaryComparisonExpression(
+					loc, IASTBinaryExpression.op_lessEqual, zero, indexType, 
+					indexPosition, indexType);
+			Expression firstInvalidPosition = memoryHandler.calculateSizeOf(arrayType, loc);
+			// using the index type here is a hack and might lead to problems
+			// with the bitvector translation
+			Expression indexPositionPlusTypeSizeOfValue = cHandler.getExpressionTranslation().createArithmeticExpression(
+					IASTBinaryExpression.op_plus, 
+					indexPosition, indexType, 
+					memoryHandler.calculateSizeOf(valueType, loc), indexType, loc);
+			assert main.getTypeSizes().getSize(indexType.getType()) == 
+					main.getTypeSizes().getSize(memoryHandler.getSize_T().getType()) : 
+						"different typesizes, this will fail with bitvector translation";
+			//TODO: 2015-09-20: Matthias this is not correct. We have to 
+			// convert indexType and size_t to a common type that can take 
+			// both values. 
+			// I postponed to devise a solution, this a problem for the
+			// bitvector translation bitlength of size_t is different from
+			// bitlength of index
+			Expression notTooBig = cHandler.getExpressionTranslation().constructBinaryComparisonExpression(
+					loc, IASTBinaryExpression.op_lessEqual, indexPositionPlusTypeSizeOfValue, indexType, 
+					firstInvalidPosition, indexType);
+			inRange = new BinaryExpression(loc, Operator.LOGICAND, nonNegative, notTooBig);
+		}
+		switch (m_checkArrayAccessOffHeap) {
+		case ASSERTandASSUME:
+			Statement assertStm = new AssertStatement(loc, inRange);
+			Check chk = new Check(Spec.ARRAY_INDEX);
+			chk.addToNodeAnnot(assertStm);
+			exprResult.stmt.add(assertStm);
+			break;
+		case ASSUME:
+			Statement assumeStm = new AssumeStatement(loc, inRange);
+			exprResult.stmt.add(assumeStm);
+			break;
+		case IGNORE:
+			throw new AssertionError("case handled before");
+		default:
+			throw new AssertionError("unknown value");
+		}
+	}
+
+
+
 }
