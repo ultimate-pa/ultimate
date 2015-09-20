@@ -781,9 +781,11 @@ public class CHandler implements ICHandler {
 			}
 			mCurrentDeclaredTypes.pop();
 			
-			if (result instanceof ExpressionResult)
-				((ExpressionResult) result).stmt.addAll(
-						createHavocsForAuxVars(((ExpressionResult) result).auxVars));
+//			Matthias 19-09-2015: I commented the following. Havoc'ing here is
+//			too early.			
+//			if (result instanceof ExpressionResult)
+//				((ExpressionResult) result).stmt.addAll(
+//						createHavocsForAuxVars(((ExpressionResult) result).auxVars));
 			return result;
 		}
 		String msg = "Unknown result type: " + r.getClass();
