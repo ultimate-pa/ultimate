@@ -1239,7 +1239,7 @@ public class CHandler implements ICHandler {
 			Expression one = m_ExpressionTranslation.constructLiteralForIntegerType(
 					loc, m_ExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ONE);
 			valueIncremented = doPointerArith(main, op, loc, value, one, cPointer.pointsToType);
-			checkOffsetInBounds(main, loc, valueIncremented, result);
+			addOffsetInBoundsCheck(main, loc, valueIncremented, result);
 		}
 		else if (ctype instanceof CPrimitive) {
 			CPrimitive cPrimitive = (CPrimitive) ctype;
@@ -1807,7 +1807,7 @@ public class CHandler implements ICHandler {
 			CType pointsToType = ((CPointer) typeOfResult).pointsToType;
 			result = ExpressionResult.copyStmtDeclAuxvarOverapprox(left, right);
 			expr = doPointerArith(main, op, loc, left.lrVal.getValue(), right.lrVal.getValue(), pointsToType);
-			checkOffsetInBounds(main, loc, expr, result);
+			addOffsetInBoundsCheck(main, loc, expr, result);
 		} else if (lType.isArithmeticType() && (rType instanceof CPointer)) {
 			if (op != IASTBinaryExpression.op_plus && op != IASTBinaryExpression.op_plusAssign) {
 				throw new AssertionError("lType arithmetic, rType CPointer only legal if op is plus");
@@ -1816,7 +1816,7 @@ public class CHandler implements ICHandler {
 			CType pointsToType = ((CPointer) typeOfResult).pointsToType;
 			result = ExpressionResult.copyStmtDeclAuxvarOverapprox(left, right);
 			expr = doPointerArith(main, op, loc, right.lrVal.getValue(), left.lrVal.getValue(), pointsToType);
-			checkOffsetInBounds(main, loc, expr, result);
+			addOffsetInBoundsCheck(main, loc, expr, result);
 		} else if ((lType instanceof CPointer) && (rType instanceof CPointer)) {
 			if (op != IASTBinaryExpression.op_minus && op != IASTBinaryExpression.op_minusAssign) {
 				throw new AssertionError("lType arithmetic, rType CPointer only legal if op is minus");
@@ -1841,7 +1841,7 @@ public class CHandler implements ICHandler {
 				}
 				pointsToType = leftPointsToType;
 			}
-			checkBaseEquality(main, loc, left.lrVal.getValue(), right.lrVal.getValue(), result);
+			addBaseEqualityCheck(main, loc, left.lrVal.getValue(), right.lrVal.getValue(), result);
 			expr = doPointerSubtraction(main, loc, left.lrVal.getValue(), right.lrVal.getValue(), pointsToType);
 		} else {
 			throw new UnsupportedOperationException("non-standard case of pointer arithmetic");
@@ -1880,7 +1880,7 @@ public class CHandler implements ICHandler {
 	 * @param result {@link ExpressionResult} to which the additional statements
 	 * are added.
 	 */
-	private void checkBaseEquality(Dispatcher main, ILocation loc,
+	private void addBaseEqualityCheck(Dispatcher main, ILocation loc,
 			Expression leftPtr, Expression rightPtr, ExpressionResult result) {
 		if (mMemoryHandler.getPointerSubtractionAndComparisonValidityCheckMode() == POINTER_CHECKMODE.IGNORE) {
 			// do not check anything
@@ -1959,7 +1959,7 @@ public class CHandler implements ICHandler {
 	 * @param result {@link ExpressionResult} to which the additional statements
 	 * are added.
 	 */
-	private void checkOffsetInBounds(Dispatcher main, ILocation loc,
+	private void addOffsetInBoundsCheck(Dispatcher main, ILocation loc,
 			Expression ptr, ExpressionResult result) {
 		//TODO: Matthias 2015-09-08 implement this
 		// maybe additional parameters are required.
