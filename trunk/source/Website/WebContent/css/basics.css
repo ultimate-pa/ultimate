@@ -1485,21 +1485,6 @@ div.msg-description {
 /*****************************************************************************/
 /********************************* HOME **************************************/
 /*****************************************************************************/
-#uni-logo {
-  position: fixed;
-  right: 0px;
-  top: 1px;
-
-  height: 116px;
-  width: 81px;
-  
-  background: url(../img/alu_logo.png) bottom no-repeat;
-  background-size: 81px 116px;
-  
-  pointer-events: none;
-  
-  opacity: .6;
-}
 
 .toolchains {
   display: table;
