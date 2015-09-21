@@ -31,7 +31,6 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Stack;
 
 import org.eclipse.cdt.core.dom.ast.IASTArraySubscriptExpression;
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
@@ -42,10 +41,10 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.HeapLValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LocalLValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayLHS;
@@ -54,7 +53,6 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
@@ -81,53 +79,45 @@ public class ArrayHandler {
 	}
 
 	/**
-	 * This stack stack collects ResultExpressions from subscripts. When going down
-	 * into nested subscripts recursively a ResultExpression is pushed for each subscript.
-	 * When going up again the ResultExpressions are popped/used.
+	 * Handle array subscript expression according to Sections 6.5.2.1 of C11.
+	 * For a[i] we will <b>not</b> return the object a[i] as an {@link RValue}
+	 * instead, we return the address of the object a[i] as a {@link HeapLValue}
+	 * or a {@link LocalLValue}.
 	 */
-	Stack<ExpressionResult> mCollectedSubscripts = new Stack<ExpressionResult>();
-	
-	
 	public ExpressionResult handleArraySubscriptExpression(Dispatcher main,
 			MemoryHandler memoryHandler, StructHandler structHandler,
 			IASTArraySubscriptExpression node) {		
-		ILocation loc = LocationFactory.createCLocation(node);
+		final ILocation loc = LocationFactory.createCLocation(node);
 		
 		ExpressionResult subscript = (ExpressionResult) main.dispatch(node.getArgument());
-		ExpressionResult subscriptR = subscript.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
-		mCollectedSubscripts.push(subscriptR);
+		subscript = subscript.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
+		assert subscript.lrVal.getCType().isIntegerType();
+		ExpressionResult leftExpRes = ((ExpressionResult) main.dispatch(node.getArrayExpression()));
 		
-		//have we arrived at the innermost array subscript? (i.e. a[i] instead of a[j][i])
-		boolean innerMostSubscript = 
-				!(node.getArrayExpression() instanceof IASTArraySubscriptExpression);
-		ExpressionResult innerResult = null;
-		if (innerMostSubscript) {
-			innerResult = ((ExpressionResult) main.dispatch(node.getArrayExpression()));
+		final ExpressionResult result;
+		final CType cTypeLeft = leftExpRes.lrVal.getCType();
+		if (cTypeLeft instanceof CPointer) {
+			// if p is a pointer, then p[42] is equivalent to *(p + 42)
+			leftExpRes = leftExpRes.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
+			assert cTypeLeft.equals(leftExpRes.lrVal.getCType());
+			Expression ptrAddress = leftExpRes.lrVal.getValue();
+			Expression integer = subscript.lrVal.getValue();
+			CType valueType = ((CPointer) cTypeLeft).pointsToType;;
+			Expression address = ((CHandler) main.cHandler).doPointerArith(main, 
+					IASTBinaryExpression.op_plus, loc, ptrAddress, integer, valueType);
+			result = ExpressionResult.copyStmtDeclAuxvarOverapprox(leftExpRes, subscript);
+			HeapLValue lValue = new HeapLValue(address, valueType, false);
+			result.lrVal = lValue;
 		} else {
-			innerResult = handleArraySubscriptExpression(main, memoryHandler, 
-					structHandler, (IASTArraySubscriptExpression) node.getArrayExpression());
-		}
-		
-		ExpressionResult result = new ExpressionResult(innerResult);
-		
-		ExpressionResult currentSubscriptRex = mCollectedSubscripts.pop();
-		result.stmt.addAll(currentSubscriptRex.stmt);
-		result.decl.addAll(currentSubscriptRex.decl);
-		result.auxVars.putAll(currentSubscriptRex.auxVars);
-		result.overappr.addAll(currentSubscriptRex.overappr);
-		
-		if (result.lrVal.getCType() instanceof CPointer) {
-			//we have a pointer that is accessed like an array
-			result = result.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
-			CType pointedType = ((CPointer) result.lrVal.getCType()).pointsToType;
-			RValue address = ((CHandler) main.cHandler).doPointerArithPointerAndInteger(
-					main, IASTBinaryExpression.op_plus, loc, 
-					(RValue) result.lrVal, 
-					(RValue) currentSubscriptRex.lrVal,
-					pointedType);
-			result.lrVal  = new HeapLValue(address.getValue(), pointedType);
-		} else {
-			assert result.lrVal.getCType().getUnderlyingType() instanceof CArray : "cType not instanceof CArray";
+			assert cTypeLeft.getUnderlyingType() instanceof CArray : "cType not instanceof CArray";
+			//TODO: revise this else branch
+			result = new ExpressionResult(leftExpRes);
+			
+			result.stmt.addAll(subscript.stmt);
+			result.decl.addAll(subscript.decl);
+			result.auxVars.putAll(subscript.auxVars);
+			result.overappr.addAll(subscript.overappr);
+			
 			ArrayList<Expression> newDimensions = 
 					new ArrayList<Expression>(Arrays.asList(((CArray) result.lrVal.getCType().getUnderlyingType())
 							.getDimensions()));
@@ -145,7 +135,7 @@ public class ArrayHandler {
 				result.lrVal = new HeapLValue(((CHandler) main.cHandler).doPointerArith(
 						main, IASTBinaryExpression.op_plus, loc, 
 						((HeapLValue) result.lrVal).getAddress(),
-						currentSubscriptRex.lrVal.getValue(),
+						subscript.lrVal.getValue(),
 						newCType), newCType);
 			} else if (result.lrVal instanceof LocalLValue) {
 				LocalLValue newLLVal = new LocalLValue((LocalLValue) result.lrVal);
@@ -153,17 +143,17 @@ public class ArrayHandler {
 				if (innerArrayLHS instanceof ArrayLHS) {
 					ArrayList<Expression> innerIndices = new ArrayList<Expression>(
 							Arrays.asList(((ArrayLHS) innerArrayLHS).getIndices()));
-					innerIndices.add(currentSubscriptRex.lrVal.getValue());
+					innerIndices.add(subscript.lrVal.getValue());
 					newLLVal.lhs = new ArrayLHS(loc, 
 							((ArrayLHS) innerArrayLHS).getArray(), innerIndices.toArray(new Expression[0]));
 				} else {
 					newLLVal.lhs = new ArrayLHS(loc, 
-							innerArrayLHS, new Expression[] { currentSubscriptRex.lrVal.getValue() });	
+							innerArrayLHS, new Expression[] { subscript.lrVal.getValue() });	
 				}
-				Expression index = currentSubscriptRex.lrVal.getValue();
-				CArray arrayType = (CArray) innerResult.lrVal.getCType();
+				Expression index = subscript.lrVal.getValue();
+				CArray arrayType = (CArray) leftExpRes.lrVal.getCType();
 				CType valueType = newCType;
-				CPrimitive indexType = (CPrimitive) currentSubscriptRex.lrVal.getCType();
+				CPrimitive indexType = (CPrimitive) subscript.lrVal.getCType();
 				addArrayBoundsCheck(main, memoryHandler, loc, index, indexType, arrayType, valueType, result);
 				
 				newLLVal.setCType(newCType);
