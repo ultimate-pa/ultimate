@@ -3166,6 +3166,7 @@ public class CHandler implements ICHandler {
 	 * @return a pointer of the form: {base: ptr.base, offset: ptr.offset +
 	 *         integer * sizeof(valueType)}
 	 */
+	@Deprecated
 	public RValue doPointerArithPointerAndInteger(Dispatcher main, int operator, ILocation loc, RValue ptr,
 			RValue integer, CType valueType) {
 		Expression ptrAddress = ptr.getValue();
