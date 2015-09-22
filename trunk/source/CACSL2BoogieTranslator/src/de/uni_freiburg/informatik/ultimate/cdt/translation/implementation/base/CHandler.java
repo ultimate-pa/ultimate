@@ -3909,6 +3909,13 @@ public class CHandler implements ICHandler {
 	}
 
 	@Override
+	@Deprecated
+	/* Matthias 2015-09-21: "premature optimization is the root of all evil"
+	 * I think, by now we should not use this method and better live with
+	 * long expressions.
+	 * However, I don't want to delete this method, we might want to use
+	 * it in the future.
+	 */
 	public BigInteger computeConstantValue(Expression value) {
 		if (value instanceof IntegerLiteral) {
 			return new BigInteger(((IntegerLiteral) value).getValue());
