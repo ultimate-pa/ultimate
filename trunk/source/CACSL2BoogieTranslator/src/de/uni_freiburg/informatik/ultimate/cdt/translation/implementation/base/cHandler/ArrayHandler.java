@@ -100,63 +100,66 @@ public class ArrayHandler {
 			// if p is a pointer, then p[42] is equivalent to *(p + 42)
 			leftExpRes = leftExpRes.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
 			assert cTypeLeft.equals(leftExpRes.lrVal.getCType());
-			Expression ptrAddress = leftExpRes.lrVal.getValue();
+			Expression oldAddress = leftExpRes.lrVal.getValue();
 			Expression integer = subscript.lrVal.getValue();
 			CType valueType = ((CPointer) cTypeLeft).pointsToType;;
-			Expression address = ((CHandler) main.cHandler).doPointerArith(main, 
-					IASTBinaryExpression.op_plus, loc, ptrAddress, integer, valueType);
+			Expression newAddress = ((CHandler) main.cHandler).doPointerArith(main, 
+					IASTBinaryExpression.op_plus, loc, oldAddress, integer, valueType);
 			result = ExpressionResult.copyStmtDeclAuxvarOverapprox(leftExpRes, subscript);
-			HeapLValue lValue = new HeapLValue(address, valueType, false);
+			HeapLValue lValue = new HeapLValue(newAddress, valueType, false);
 			result.lrVal = lValue;
 		} else {
 			assert cTypeLeft.getUnderlyingType() instanceof CArray : "cType not instanceof CArray";
-			//TODO: revise this else branch
-			result = new ExpressionResult(leftExpRes);
+			final CArray cArray = (CArray) cTypeLeft.getUnderlyingType();
+
 			
-			result.stmt.addAll(subscript.stmt);
-			result.decl.addAll(subscript.decl);
-			result.auxVars.putAll(subscript.auxVars);
-			result.overappr.addAll(subscript.overappr);
-			
-			ArrayList<Expression> newDimensions = 
-					new ArrayList<Expression>(Arrays.asList(((CArray) result.lrVal.getCType().getUnderlyingType())
-							.getDimensions()));
-			CType newCType = null;
-			if (newDimensions.size() == 1) {
-				newCType = ((CArray) result.lrVal.getCType().getUnderlyingType()).getValueType();
+			final CType resultCType;
+			if (cArray.getDimensions().length == 1) {
+				assert isOutermostSubscriptExpression(node) : "not outermost";
+				resultCType = cArray.getValueType();
 			} else {
-				newDimensions.remove(0);
-				newCType = new CArray(newDimensions.toArray(new Expression[0]), 
-						((CArray) result.lrVal.getCType().getUnderlyingType()).getValueType()
-						);
+				Expression[] newDimensions = Arrays.copyOfRange(
+						cArray.getDimensions(), 1, cArray.getDimensions().length);
+				assert newDimensions.length + 1 == cArray.getDimensions().length;
+				resultCType = new CArray(newDimensions, cArray.getValueType());
 			}
 
-			if (result.lrVal instanceof HeapLValue) {
-				result.lrVal = new HeapLValue(((CHandler) main.cHandler).doPointerArith(
-						main, IASTBinaryExpression.op_plus, loc, 
-						((HeapLValue) result.lrVal).getAddress(),
-						subscript.lrVal.getValue(),
-						newCType), newCType);
-			} else if (result.lrVal instanceof LocalLValue) {
+			if (leftExpRes.lrVal instanceof HeapLValue) {
+				Expression oldAddress = ((HeapLValue) leftExpRes.lrVal).getAddress();
+				Expression index = subscript.lrVal.getValue();
+				Expression newAddress = ((CHandler) main.cHandler).doPointerArith(
+						main, IASTBinaryExpression.op_plus, loc, oldAddress, index,	resultCType);
+				result = ExpressionResult.copyStmtDeclAuxvarOverapprox(leftExpRes, subscript);
+				HeapLValue lValue = new HeapLValue(newAddress, resultCType, false);
+				result.lrVal = lValue;
+			} else if (leftExpRes.lrVal instanceof LocalLValue) {
+				//TODO: revise this else branch
+				result = new ExpressionResult(leftExpRes);
+				
+				result.stmt.addAll(subscript.stmt);
+				result.decl.addAll(subscript.decl);
+				result.auxVars.putAll(subscript.auxVars);
+				result.overappr.addAll(subscript.overappr);
 				LocalLValue newLLVal = new LocalLValue((LocalLValue) result.lrVal);
 				LeftHandSide innerArrayLHS = ((LocalLValue) result.lrVal).getLHS();
+				Expression index = subscript.lrVal.getValue();
 				if (innerArrayLHS instanceof ArrayLHS) {
 					ArrayList<Expression> innerIndices = new ArrayList<Expression>(
 							Arrays.asList(((ArrayLHS) innerArrayLHS).getIndices()));
-					innerIndices.add(subscript.lrVal.getValue());
+					innerIndices.add(index);
 					newLLVal.lhs = new ArrayLHS(loc, 
 							((ArrayLHS) innerArrayLHS).getArray(), innerIndices.toArray(new Expression[0]));
 				} else {
+					assert isInnermostSubscriptExpression(node) : "not innermost";
 					newLLVal.lhs = new ArrayLHS(loc, 
-							innerArrayLHS, new Expression[] { subscript.lrVal.getValue() });	
+							innerArrayLHS, new Expression[] { index });	
 				}
-				Expression index = subscript.lrVal.getValue();
-				CArray arrayType = (CArray) leftExpRes.lrVal.getCType();
-				CType valueType = newCType;
+
+				CType valueType = resultCType;
 				CPrimitive indexType = (CPrimitive) subscript.lrVal.getCType();
-				addArrayBoundsCheck(main, memoryHandler, loc, index, indexType, arrayType, valueType, result);
+				addArrayBoundsCheck(main, memoryHandler, loc, index, indexType, cArray, valueType, result);
 				
-				newLLVal.setCType(newCType);
+				newLLVal.setCType(resultCType);
 				result.lrVal = newLLVal;
 			} else {
 				throw new AssertionError("should not happen");
@@ -165,6 +168,15 @@ public class ArrayHandler {
 		
 		return result;
 	}
+	
+	private boolean isInnermostSubscriptExpression(IASTArraySubscriptExpression node) {
+		return !(node.getArrayExpression() instanceof IASTArraySubscriptExpression);
+	}
+	
+	private boolean isOutermostSubscriptExpression(IASTArraySubscriptExpression node) {
+		return !(node.getParent() instanceof IASTArraySubscriptExpression);
+	}
+
 	
 	
 	/**
