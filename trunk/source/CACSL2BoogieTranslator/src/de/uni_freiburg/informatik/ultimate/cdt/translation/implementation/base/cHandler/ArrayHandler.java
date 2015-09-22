@@ -103,9 +103,9 @@ public class ArrayHandler {
 			leftExpRes = leftExpRes.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
 			assert cTypeLeft.equals(leftExpRes.lrVal.getCType());
 			Expression oldAddress = leftExpRes.lrVal.getValue();
-			Expression integer = subscript.lrVal.getValue();
+			RValue integer = (RValue) subscript.lrVal;
 			CType valueType = ((CPointer) cTypeLeft).pointsToType;;
-			Expression newAddress = ((CHandler) main.cHandler).doPointerArith(main, 
+			Expression newAddress = ((CHandler) main.cHandler).doPointerArithmetic(main, 
 					IASTBinaryExpression.op_plus, loc, oldAddress, integer, valueType);
 			result = ExpressionResult.copyStmtDeclAuxvarOverapprox(leftExpRes, subscript);
 			HeapLValue lValue = new HeapLValue(newAddress, valueType, false);
@@ -142,8 +142,8 @@ public class ArrayHandler {
 				// the "remaining" array as pointsToType, i.e., we compute
 				//     addressOf(a) + 2 * sizeof(resultCType)
 				Expression oldAddress = ((HeapLValue) leftExpRes.lrVal).getAddress();
-				Expression index = subscript.lrVal.getValue();
-				Expression newAddress = ((CHandler) main.cHandler).doPointerArith(
+				RValue index = (RValue) subscript.lrVal;
+				Expression newAddress = ((CHandler) main.cHandler).doPointerArithmetic(
 						main, IASTBinaryExpression.op_plus, loc, oldAddress, index,	resultCType);
 				HeapLValue lValue = new HeapLValue(newAddress, resultCType, false);
 				result = ExpressionResult.copyStmtDeclAuxvarOverapprox(leftExpRes, subscript);

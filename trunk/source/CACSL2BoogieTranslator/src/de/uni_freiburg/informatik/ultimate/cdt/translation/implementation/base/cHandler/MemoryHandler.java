@@ -350,21 +350,21 @@ public class MemoryHandler {
 		ArrayList<Statement> bodyStmt = new ArrayList<>();
 
 		//make the assigments on the arrays
-		RValue currentDest = ((CHandler) main.cHandler).doPointerArithPointerAndInteger(main, IASTBinaryExpression.op_plus, ignoreLoc, 
-					new RValue(new IdentifierExpression(ignoreLoc, SFO.MEMCPY_DEST), new CPointer(new CPrimitive(PRIMITIVE.VOID))), 
+		Expression currentDest = ((CHandler) main.cHandler).doPointerArithmetic(main, IASTBinaryExpression.op_plus, ignoreLoc, 
+					new IdentifierExpression(ignoreLoc, SFO.MEMCPY_DEST), 
 					new RValue(ctrIdex, new CPrimitive(PRIMITIVE.INT)), 
-					null);
-		RValue currentSrc = ((CHandler) main.cHandler).doPointerArithPointerAndInteger(main, IASTBinaryExpression.op_plus, ignoreLoc, 
-					new RValue(new IdentifierExpression(ignoreLoc, SFO.MEMCPY_SRC), new CPointer(new CPrimitive(PRIMITIVE.VOID))), 
+					new CPrimitive(PRIMITIVE.VOID));
+		Expression currentSrc = ((CHandler) main.cHandler).doPointerArithmetic(main, IASTBinaryExpression.op_plus, ignoreLoc, 
+					new IdentifierExpression(ignoreLoc, SFO.MEMCPY_SRC), 
 					new RValue(ctrIdex, new CPrimitive(PRIMITIVE.INT)), 
-					null);
+					new CPrimitive(PRIMITIVE.VOID));
 
 		// handle modifies
 		ArrayList<VariableLHS> modifiesLHSs = new ArrayList<>();
 		for (String name : namesOfAllMemoryArrayTypes) {
 			String memArrayName = SFO.MEMORY + "_" + name;
-			ArrayAccessExpression srcAcc = new ArrayAccessExpression(ignoreLoc, new IdentifierExpression(ignoreLoc, memArrayName), new Expression[] { currentSrc.getValue() });
-			ArrayLHS destAcc = new ArrayLHS(ignoreLoc, new VariableLHS(ignoreLoc, memArrayName), new Expression[] { currentDest.getValue() });
+			ArrayAccessExpression srcAcc = new ArrayAccessExpression(ignoreLoc, new IdentifierExpression(ignoreLoc, memArrayName), new Expression[] { currentSrc });
+			ArrayLHS destAcc = new ArrayLHS(ignoreLoc, new VariableLHS(ignoreLoc, memArrayName), new Expression[] { currentDest });
 			bodyStmt.add(new AssignmentStatement(ignoreLoc, new LeftHandSide[] { destAcc }, new Expression[] { srcAcc }));
 			modifiesLHSs.add(new VariableLHS(ignoreLoc, memArrayName));
 
