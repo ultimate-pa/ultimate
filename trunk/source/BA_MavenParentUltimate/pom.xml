@@ -7,9 +7,9 @@
 	<packaging>pom</packaging>
 	<url>https://ultimate.informatik.uni-freiburg.de</url>
 	<scm>
-		<connection>scm:svn:https://sotec.informatik.uni-freiburg.de/svn/ultimate/trunk/source/BA_MavenParentUltimate</connection>
-		<developerConnection>scm:svn:https://sotec.informatik.uni-freiburg.de/svn/ultimate/trunk/source/BA_MavenParentUltimate</developerConnection>
-		<url>https://sotec.informatik.uni-freiburg.de/svn/ultimate/trunk/source/BA_MavenParentUltimate</url>
+		<connection>scm:git:https://github.com/ultimate-pa/ultimate.git/ultimate/trunk/source/BA_MavenParentUltimate</connection>
+		<developerConnection>scm:git:https://github.com/ultimate-pa/ultimate.git/ultimate/trunk/source/BA_MavenParentUltimate</developerConnection>
+		<url>https://github.com/ultimate-pa/ultimate.git/ultimate/trunk/source/BA_MavenParentUltimate</url>
 	</scm>
 
 	<properties>
