@@ -264,6 +264,8 @@
 		<module>../BoogieProcedureInliner</module>
 		<module>../SpaceExParser</module>
 		<module>../AbstractInterpretationV2</module>
+		<module>../Library-soot</module>
+		<module>../Library-soottocfg</module>
 	</modules>
 
 	<profiles>
