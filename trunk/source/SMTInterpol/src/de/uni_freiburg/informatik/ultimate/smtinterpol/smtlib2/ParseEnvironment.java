@@ -174,9 +174,7 @@ public class ParseEnvironment {
 			mOut.print('(');
 			pt.append(mOut, me.getKey());
 			mOut.print(' ');
-			pt.append(mOut, me.getValue().getTheory().getLogic().isIRA()
-					? new IRAConstantFormatter().transform(me.getValue())
-							: me.getValue());
+			pt.append(mOut, me.getValue());
 			mOut.print(')');
 			sep = itemSep;
 		}
