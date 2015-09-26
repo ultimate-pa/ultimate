@@ -344,7 +344,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 					m_PredicateFactoryInterpolantAutomata, mLogger);
 			iab.analyze();
 			m_InterpolAutomaton = iab.getInterpolantAutomaton();
-			mLogger.info("Interpolatants " + m_InterpolAutomaton.getStates());
+			mLogger.info("Interpolants " + m_InterpolAutomaton.getStates());
 
 			// m_CegarLoopBenchmark.addBackwardCoveringInformation(iab.getBackwardCoveringInformation());
 			BackwardCoveringInformation bci = TraceCheckerUtils.computeCoverageCapability(m_Services, m_InterpolantGenerator,
