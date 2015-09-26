@@ -472,13 +472,18 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 					break;
 				case PREDICATE_ABSTRACTION:
 				case PREDICATE_ABSTRACTION_CONSERVATIVE:
+				case PREDICATE_ABSTRACTION_CANNIBALIZE:
 					if (m_Pref.differenceSenwa()) {
 						throw new UnsupportedOperationException();
 					} else {
-						boolean conservativeSuccessorCandidateSelection = (m_Pref.interpolantAutomatonEnhancement() == InterpolantAutomatonEnhancement.PREDICATE_ABSTRACTION_CONSERVATIVE);
+						boolean conservativeSuccessorCandidateSelection = 
+								(m_Pref.interpolantAutomatonEnhancement() == InterpolantAutomatonEnhancement.PREDICATE_ABSTRACTION_CONSERVATIVE);
+						boolean cannibalize = 
+								(m_Pref.interpolantAutomatonEnhancement() == InterpolantAutomatonEnhancement.PREDICATE_ABSTRACTION_CANNIBALIZE);
 						DeterministicInterpolantAutomaton determinized = new DeterministicInterpolantAutomaton(
 								m_Services, m_SmtManager, m_ModGlobVarManager, htc, oldAbstraction, interpolAutomaton,
-								m_InterpolantGenerator.getPredicateUnifier(), mLogger, conservativeSuccessorCandidateSelection);
+								m_InterpolantGenerator.getPredicateUnifier(), mLogger, 
+								conservativeSuccessorCandidateSelection, cannibalize);
 						// NondeterministicInterpolantAutomaton determinized =
 						// new NondeterministicInterpolantAutomaton(
 						// m_Services, m_SmtManager, m_ModGlobVarManager, htc,

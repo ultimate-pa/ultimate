@@ -733,7 +733,7 @@ public class BuchiCegarLoop {
 		IHoareTripleChecker htc = new EfficientHoareTripleChecker(solverHtc, modGlobVarManager, traceChecker.getPredicateUnifier(), m_SmtManager);
 		
 		DeterministicInterpolantAutomaton determinized = new DeterministicInterpolantAutomaton(m_Services, m_SmtManager, modGlobVarManager, htc,
-				m_Abstraction, m_InterpolAutomaton, traceChecker.getPredicateUnifier(), mLogger, false);
+				m_Abstraction, m_InterpolAutomaton, traceChecker.getPredicateUnifier(), mLogger, false, false);
 		PowersetDeterminizer<CodeBlock, IPredicate> psd = new PowersetDeterminizer<CodeBlock, IPredicate>(determinized,
 				true, m_DefaultStateFactory);
 		Difference<CodeBlock, IPredicate> diff = null;

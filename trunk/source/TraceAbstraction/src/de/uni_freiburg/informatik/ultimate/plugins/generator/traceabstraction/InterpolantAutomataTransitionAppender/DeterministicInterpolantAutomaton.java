@@ -77,7 +77,7 @@ public class DeterministicInterpolantAutomaton extends BasicAbstractInterpolantA
 	 * First experiments on few examples showed that this is decreasing the
 	 * performance.
 	 */
-	private final boolean m_Cannibalize = false;
+	private final boolean m_Cannibalize;
 	private final boolean m_SplitNumericEqualities = true;
 	private final boolean m_DivisibilityPredicates = false;
 	private final boolean m_ConservativeSuccessorCandidateSelection;
@@ -90,10 +90,12 @@ public class DeterministicInterpolantAutomaton extends BasicAbstractInterpolantA
 			INestedWordAutomaton<CodeBlock, IPredicate> abstraction, 
 			NestedWordAutomaton<CodeBlock, IPredicate> interpolantAutomaton, 
 			PredicateUnifier predicateUnifier, Logger logger, 
-			boolean conservativeSuccessorCandidateSelection) {
+			boolean conservativeSuccessorCandidateSelection,
+			boolean cannibalize) {
 		super(services, smtManager, hoareTripleChecker, true, abstraction, 
 				predicateUnifier, 
 				interpolantAutomaton, logger);
+		m_Cannibalize = cannibalize;
 		m_ConservativeSuccessorCandidateSelection = conservativeSuccessorCandidateSelection;
 		if (m_ConservativeSuccessorCandidateSelection && m_Cannibalize) {
 			throw new IllegalArgumentException("ConservativeSuccessorCandidateSelection and Cannibalize are incompatible");

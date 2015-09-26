@@ -154,7 +154,9 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 		// 3. Determinize the finite automaton from step 2. 
 		DeterministicInterpolantAutomaton interpolantAutomatonDeterminized = new DeterministicInterpolantAutomaton(
 				m_Services, m_SmtManager, m_ModifiedGlobals, htc, pathprogramautomaton, interpolantAutomaton,
-				m_PredicateUnifier, m_Logger, false); // PREDICATE_ABSTRACTION_CONSERVATIVE = false (default)
+				m_PredicateUnifier, m_Logger, false ,// PREDICATE_ABSTRACTION_CONSERVATIVE = false (default) 
+				false //PREDICATE_ABSTRACTION_CANNIBALIZE = false  (default) 
+				); 
 		
 		 
 		PredicateFactoryForInterpolantConsolidation pfconsol = new PredicateFactoryForInterpolantConsolidation(m_SmtManager, m_TaPrefs);

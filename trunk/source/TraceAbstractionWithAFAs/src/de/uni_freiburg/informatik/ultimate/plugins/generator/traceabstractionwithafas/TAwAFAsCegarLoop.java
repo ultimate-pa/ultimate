@@ -484,7 +484,7 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 
 		DeterministicInterpolantAutomaton determinized = new DeterministicInterpolantAutomaton(
 				m_Services, m_SmtManager, m_ModGlobVarManager, htc, oldAbstraction, m_InterpolAutomaton,
-				this.m_PredicateUnifier, mLogger, false);//change to CegarLoopConcurrentAutomata
+				this.m_PredicateUnifier, mLogger, false, false);//change to CegarLoopConcurrentAutomata
 		// ComplementDeterministicNwa<CodeBlock, IPredicate>
 		// cdnwa = new ComplementDeterministicNwa<>(dia);
 		PowersetDeterminizer<CodeBlock, IPredicate> psd2 = new PowersetDeterminizer<CodeBlock, IPredicate>(
