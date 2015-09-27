@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstractionco
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.log4j.Logger;
@@ -64,6 +65,7 @@ import de.uni_freiburg.informatik.ultimate.result.CounterExampleResult;
 import de.uni_freiburg.informatik.ultimate.result.IResult;
 import de.uni_freiburg.informatik.ultimate.result.PositiveResult;
 import de.uni_freiburg.informatik.ultimate.result.TimeoutResultAtElement;
+import de.uni_freiburg.informatik.ultimate.result.UnprovabilityReason;
 import de.uni_freiburg.informatik.ultimate.result.UnprovableResult;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
 
@@ -233,7 +235,7 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 
 	private void reportCounterexampleResult(RcfgProgramExecution pe) {
 		if (!pe.getOverapproximations().isEmpty()) {
-			reportUnproveableResult(pe, pe.getOverapproximations());
+			reportUnproveableResult(pe, pe.getUnprovabilityReasons());
 			return;
 		}
 		reportResult(new CounterExampleResult<RcfgElement, CodeBlock, Expression>(getErrorPP(pe),
@@ -253,10 +255,10 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 		}
 	}
 
-	private void reportUnproveableResult(RcfgProgramExecution pe, Map<String, ILocation> overapproximations) {
+	private void reportUnproveableResult(RcfgProgramExecution pe, List<UnprovabilityReason> unproabilityReasons) {
 		ProgramPoint errorPP = getErrorPP(pe);
 		UnprovableResult<RcfgElement, CodeBlock, Expression> uknRes = new UnprovableResult<RcfgElement, CodeBlock, Expression>(
-				Activator.s_PLUGIN_NAME, errorPP, m_Services.getBacktranslationService(), pe, overapproximations);
+				Activator.s_PLUGIN_NAME, errorPP, m_Services.getBacktranslationService(), pe, unproabilityReasons);
 		reportResult(uknRes);
 	}
 	
