@@ -46,110 +46,87 @@ import org.joogie.util.Util;
  */
 public class BoogieProgram {
 
-	private LinkedList<BoogieAxiom> boogieAxioms = new LinkedList<BoogieAxiom>();
+	private LinkedList<BoogieAxiom> mBoogieAxioms = new LinkedList<BoogieAxiom>();
+	private HashSet<BoogieProcedure> mBoogieProcedures = new HashSet<BoogieProcedure>();
+	private HashSet<Variable> mGlobalsVars = new HashSet<Variable>();
+	private HashSet<Variable> mTypeVariables = new HashSet<Variable>();
 
-	private HashSet<BoogieProcedure> boogieProcedures = new HashSet<BoogieProcedure>();
-	private HashSet<Variable> globalsVars = new HashSet<Variable>();
-	private HashSet<Variable> typeVariables = new HashSet<Variable>();
+	private Variable mNull;
+	private Variable mNullIntArray;
+	private Variable mNullRealArray;
+	private Variable mNullRefArray;
+	private Variable mSizeArrayInt;
+	private Variable mSizeArrayReal;
+	private Variable mSizeArrayRef;
+	private Variable stringSize;
+	private Variable arrSizeIdx;
+	private Variable heapVariable;
 
-	public HashSet<BoogieProcedure> getProcedures() {
-		return this.boogieProcedures;
-	}
+	public BoogieProgram() {
 
-	public HashSet<Variable> getTypeVariables() {
-		return this.typeVariables;
-	}
+		mNull = new Variable("$null", BoogieBaseTypes.getRefType(), true);
+		mNullIntArray = new Variable("$intArrNull", BoogieBaseTypes.getIntArrType(), true);
+		mNullRealArray = new Variable("$realArrNull", BoogieBaseTypes.getRealArrType(), true);
+		mNullRefArray = new Variable("$refArrNull", BoogieBaseTypes.getRefArrType(), true);
+		mSizeArrayInt = new Variable("$intArrSize",
+				new BoogieArrayType("$intarrsizetype", BoogieBaseTypes.getIntType(), BoogieBaseTypes.getIntType()),
+				true);
+		mSizeArrayReal = new Variable("$realArrSize",
+				new BoogieArrayType("$realarrsizetype", BoogieBaseTypes.getRealType(), BoogieBaseTypes.getIntType()),
+				true);
+		mSizeArrayRef = new Variable("$refArrSize",
+				new BoogieArrayType("$refarrsizetype", BoogieBaseTypes.getRefType(), BoogieBaseTypes.getIntType()),
+				true);
+		stringSize = new Variable("$stringSize",
+				new BoogieArrayType("$stringsizetype", BoogieBaseTypes.getRefType(), BoogieBaseTypes.getIntType()),
+				true);
+		arrSizeIdx = new Variable("$arrSizeIdx", BoogieBaseTypes.getIntType(), true);
+		heapVariable = new Variable("$HeapVar", new HeapType());
 
-	public void addProcedure(BoogieProcedure proc) {
-		this.boogieProcedures.add(proc);
-	}
-
-	public void addProcedures(Collection<BoogieProcedure> procs) {
-		this.boogieProcedures.addAll(procs);
-	}
-
-	public void addGlobalVar(Variable v) {
-		this.globalsVars.add(v);
-	}
-
-	public void addTypeVariable(Variable v) {
-		this.typeVariables.add(v);
-	}
-
-	private Variable nullVariable = new Variable("$null", BoogieBaseTypes.getRefType(), true);
-
-	private Variable intArrNullVariable = new Variable("$intArrNull", BoogieBaseTypes.getIntArrType(), true);
-	private Variable realArrNullVariable = new Variable("$realArrNull", BoogieBaseTypes.getRealArrType(), true);
-	private Variable refArrNullVariable = new Variable("$refArrNull", BoogieBaseTypes.getRefArrType(), true);
-
-	public Variable intArrSize = new Variable("$intArrSize",
-			new BoogieArrayType("$intarrsizetype", BoogieBaseTypes.getIntType(), BoogieBaseTypes.getIntType()), true);
-
-	public Variable realArrSize = new Variable("$realArrSize",
-			new BoogieArrayType("$realarrsizetype", BoogieBaseTypes.getRealType(), BoogieBaseTypes.getIntType()), true);
-
-	public Variable refArrSize = new Variable("$refArrSize",
-			new BoogieArrayType("$refarrsizetype", BoogieBaseTypes.getRefType(), BoogieBaseTypes.getIntType()), true);
-
-	public Variable stringSize = new Variable("$stringSize",
-			new BoogieArrayType("$stringsizetype", BoogieBaseTypes.getRefType(), BoogieBaseTypes.getIntType()), true);
-
-	private Variable arrSizeIdx = new Variable("$arrSizeIdx", BoogieBaseTypes.getIntType(), true);
-
-	/**
-	 * in the javascript tranlator, the heapvariable is overwritten by the one
-	 * given by the simplified javascript
-	 */
-	public Variable heapVariable = new Variable("$HeapVar", new HeapType());
-
-	/**
-	 * C-tor
-	 */
-	private BoogieProgram() {
 		// setup the BoogieAxioms
 
 		// axiom ($arrSizeIdx==-1); : array size is stored outside the usable
 		// bounds
 		BoogieAxiom ba = new BoogieAxiom(new BinOpExpression(Operator.Eq, arrSizeIdx, new UboundedIntConstant(-1L)));
-		this.boogieAxioms.add(ba);
+		this.mBoogieAxioms.add(ba);
 
 	}
 
-	/**
-	 * Singleton object
-	 */
-	private static BoogieProgram instance = null;
-
-	/**
-	 * Returns the Singleton object
-	 * 
-	 * @return Singleton object
-	 */
-	public static BoogieProgram v() {
-		if (null == instance) {
-			instance = new BoogieProgram();
-		}
-		return instance;
+	public HashSet<BoogieProcedure> getProcedures() {
+		return this.mBoogieProcedures;
 	}
 
-	/**
-	 * Resets the Singleton object
-	 */
-	public static void resetInstance() {
-		instance = null;
+	public HashSet<Variable> getTypeVariables() {
+		return this.mTypeVariables;
+	}
+
+	public void addProcedure(BoogieProcedure proc) {
+		this.mBoogieProcedures.add(proc);
+	}
+
+	public void addProcedures(Collection<BoogieProcedure> procs) {
+		this.mBoogieProcedures.addAll(procs);
+	}
+
+	public void addGlobalVar(Variable v) {
+		this.mGlobalsVars.add(v);
+	}
+
+	public void addTypeVariable(Variable v) {
+		this.mTypeVariables.add(v);
 	}
 
 	public void addBoogieAxiom(BoogieAxiom axiom) {
-		boogieAxioms.add(axiom);
+		mBoogieAxioms.add(axiom);
 	}
 
 	public List<BoogieAxiom> getAxioms() {
-		return boogieAxioms;
+		return mBoogieAxioms;
 	}
 
 	// TODO: this has to be moved to the different translators!!!!
 	public Variable getNullReference() {
-		return nullVariable;
+		return mNull;
 	}
 
 	// TODO: this has to be moved to the different translators!!!!
@@ -157,15 +134,15 @@ public class BoogieProgram {
 		Expression ret = null;
 		BoogieType t = arrvar.getType();
 		if (t == BoogieBaseTypes.getIntArrType()) {
-			ret = new ArrayReadExpression(this.intArrSize, new ArrayReadExpression(arrvar, arrSizeIdx));
+			ret = new ArrayReadExpression(this.mSizeArrayInt, new ArrayReadExpression(arrvar, arrSizeIdx));
 		} else if (t == BoogieBaseTypes.getRealArrType()) {
-			ret = new ArrayReadExpression(this.realArrSize, new ArrayReadExpression(arrvar, arrSizeIdx));
+			ret = new ArrayReadExpression(this.mSizeArrayReal, new ArrayReadExpression(arrvar, arrSizeIdx));
 		} else if (t instanceof RefArrayType) {
-			ret = new ArrayReadExpression(this.refArrSize, new ArrayReadExpression(arrvar, arrSizeIdx));
+			ret = new ArrayReadExpression(this.mSizeArrayRef, new ArrayReadExpression(arrvar, arrSizeIdx));
 		} else if (t instanceof ArrArrayType) {
 			Log.error("MultiArraySize is not implemented");
 			Variable tmp = new Variable("$fresh" + (++Util.runningNumber).toString(), BoogieBaseTypes.getIntType());
-			this.globalsVars.add(tmp);
+			this.mGlobalsVars.add(tmp);
 			ret = tmp;
 		} else {
 			Log.error(t.toBoogie());
@@ -181,15 +158,15 @@ public class BoogieProgram {
 	// TODO: this has to be moved to the different translators!!!!
 	public Expression getArrayNullReference(BoogieType nestedArrayType) {
 		if (nestedArrayType == BoogieBaseTypes.getIntType()) {
-			return intArrNullVariable;
+			return mNullIntArray;
 		} else if (nestedArrayType == BoogieBaseTypes.getRealType()) {
-			return realArrNullVariable;
+			return mNullRealArray;
 		} else if (nestedArrayType instanceof BoogieObjectType) {
-			return refArrNullVariable;
+			return mNullRefArray;
 		} else if (nestedArrayType instanceof BoogieArrayType) {
 			Log.error("Multi Arrays are not implementd");
 			Variable tmp = new Variable("$fresh" + (++Util.runningNumber).toString(), nestedArrayType);
-			this.globalsVars.add(tmp);
+			this.mGlobalsVars.add(tmp);
 			return tmp;
 		}
 		return null;
@@ -208,24 +185,22 @@ public class BoogieProgram {
 		}
 		sb.append("\n");
 
-		sb.append("const unique " + nullVariable.toBoogie() + " : " + nullVariable.getType().toBoogie() + " ;\n");
+		sb.append("const unique " + mNull.toBoogie() + " : " + mNull.getType().toBoogie() + " ;\n");
 
 		if (heapmode == HeapMode.Default) {
-			sb.append("const unique " + intArrNullVariable.toBoogie() + " : " + intArrNullVariable.getType().toBoogie()
-					+ " ;\n");
-			sb.append("const unique " + realArrNullVariable.toBoogie() + " : "
-					+ realArrNullVariable.getType().toBoogie() + " ;\n");
-			sb.append("const unique " + refArrNullVariable.toBoogie() + " : " + refArrNullVariable.getType().toBoogie()
-					+ " ;\n");
+			sb.append("const unique " + mNullIntArray.toBoogie() + " : " + mNullIntArray.getType().toBoogie() + " ;\n");
+			sb.append(
+					"const unique " + mNullRealArray.toBoogie() + " : " + mNullRealArray.getType().toBoogie() + " ;\n");
+			sb.append("const unique " + mNullRefArray.toBoogie() + " : " + mNullRefArray.getType().toBoogie() + " ;\n");
 			sb.append("\n");
 		}
 
 		sb.append("const unique " + arrSizeIdx.toBoogie() + " : " + arrSizeIdx.getType().toBoogie() + ";\n");
 
 		if (heapmode == HeapMode.Default) {
-			sb.append("var " + intArrSize.toBoogie() + " : " + intArrSize.getType().toBoogie() + ";\n");
-			sb.append("var " + realArrSize.toBoogie() + " : " + realArrSize.getType().toBoogie() + ";\n");
-			sb.append("var " + refArrSize.toBoogie() + " : " + refArrSize.getType().toBoogie() + ";\n");
+			sb.append("var " + mSizeArrayInt.toBoogie() + " : " + mSizeArrayInt.getType().toBoogie() + ";\n");
+			sb.append("var " + mSizeArrayReal.toBoogie() + " : " + mSizeArrayReal.getType().toBoogie() + ";\n");
+			sb.append("var " + mSizeArrayRef.toBoogie() + " : " + mSizeArrayRef.getType().toBoogie() + ";\n");
 			sb.append("\n");
 			sb.append("var " + stringSize.toBoogie() + " : " + stringSize.getType().toBoogie() + ";\n");
 		}
@@ -233,7 +208,7 @@ public class BoogieProgram {
 		sb.append("\n");
 
 		sb.append("//built-in axioms \n");
-		for (BoogieAxiom axiom : boogieAxioms) {
+		for (BoogieAxiom axiom : mBoogieAxioms) {
 			sb.append(axiom.toBoogie());
 			sb.append(";\n");
 		}
@@ -242,14 +217,14 @@ public class BoogieProgram {
 		sb.append("//note: new version doesn't put helpers in the perlude anymore");
 		sb.append("//Prelude finished \n");
 
-		for (Variable v : typeVariables) {
+		for (Variable v : mTypeVariables) {
 			sb.append("const unique " + v.toBoogie() + " : " + v.getType().toBoogie() + " ;\n");
 		}
 		sb.append("\n");
 
 		sb.append("\n\n");
 
-		for (Variable v : globalsVars) {
+		for (Variable v : mGlobalsVars) {
 			if (v.isConstUnique()) {
 				sb.append("const unique ");
 			} else {
@@ -264,7 +239,7 @@ public class BoogieProgram {
 
 		sb.append("\n\n");
 
-		for (BoogieProcedure p : boogieProcedures) {
+		for (BoogieProcedure p : mBoogieProcedures) {
 			sb.append(p.toBoogie());
 			sb.append("\n\n");
 		}

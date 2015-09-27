@@ -266,6 +266,8 @@
 		<module>../AbstractInterpretationV2</module>
 		<module>../Library-soot</module>
 		<module>../Library-soottocfg</module>
+		<module>../Library-joogie</module>
+		<module>../Java2Boogie</module>
 	</modules>
 
 	<profiles>
