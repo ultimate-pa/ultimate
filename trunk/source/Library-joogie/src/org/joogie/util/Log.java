@@ -28,10 +28,15 @@ import org.apache.log4j.Logger;
  */
 public class Log {
 
-	/**
-	 * log4j's Logger object
-	 */
-	private static Logger logger = null;
+	private static Logger sLogger;
+
+	public static void init(final Logger logger) {
+		if (logger != null) {
+			throw new IllegalStateException("Logger already initialized");
+		}
+		assert logger != null;
+		sLogger = logger;
+	}
 
 	/**
 	 * Singleton method
@@ -39,12 +44,10 @@ public class Log {
 	 * @return Logger object
 	 */
 	public static Logger v() {
-		if (null == logger) {
-			// create logger
-			logger = Logger.getRootLogger();
+		if (null == sLogger) {
+			throw new IllegalStateException("Logger not initialized");
 		}
-
-		return logger;
+		return sLogger;
 	}
 
 	/**

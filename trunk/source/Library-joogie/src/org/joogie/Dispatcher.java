@@ -19,6 +19,7 @@
 
 package org.joogie;
 
+import org.apache.log4j.Logger;
 import org.joogie.runners.SootRunner;
 import org.joogie.util.Log;
 
@@ -38,14 +39,17 @@ public final class Dispatcher {
 	private final String mClasspath;
 
 	public Dispatcher(final String input, final String sourceFolder, final String output, final HeapMode mode,
-			String scope, String classPath) {
+			final String scope, final String classPath, final Logger logger) {
+		Log.init(logger);
+
 		mInput = input;
 		mSourceFolder = sourceFolder;
 		mOutput = output;
-		mSootRunner = new SootRunner();
 		mHeapMode = mode;
 		mScope = scope;
 		mClasspath = classPath;
+
+		mSootRunner = new SootRunner();
 	}
 
 	public void run() {
@@ -69,9 +73,5 @@ public final class Dispatcher {
 			// run with class file
 			mSootRunner.runWithClass(mInput, mSourceFolder, mOutput, mHeapMode, mScope);
 		}
-	}
-
-	public SootRunner getSootRunner() {
-		return mSootRunner;
 	}
 }

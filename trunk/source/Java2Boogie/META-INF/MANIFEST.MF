@@ -1,0 +1,13 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: Java2Boogie Plug-in
+Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.source.java;singleton:=true
+Bundle-Version: 0.0.1
+Bundle-Activator: de.uni_freiburg.informatik.ultimate.source.java.Activator
+Bundle-Vendor: https://github.com/ultimate-pa/ultimate
+Require-Bundle: UltimateCore,
+ Library-log4j,
+ Library-joogie,
+ Library-soottocfg
+Bundle-ActivationPolicy: lazy
+Bundle-RequiredExecutionEnvironment: JavaSE-1.8

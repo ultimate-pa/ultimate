@@ -49,15 +49,9 @@ import soot.Transform;
  */
 public class SootRunner extends Runner {
 
-	/**
-	 * stderr print stream
-	 */
-	private PrintStream stderr;
+	private PrintStream mStdErr;
 
-	/**
-	 * stdout print stream
-	 */
-	private PrintStream stdout;
+	private PrintStream mStdOut;
 
 	/**
 	 * Runs Soot by using a JAR file
@@ -363,8 +357,8 @@ public class SootRunner extends Runner {
 	 */
 	protected void initStream() {
 		// backup stderr and stdout
-		stderr = System.err;
-		stdout = System.out;
+		mStdErr = System.err;
+		mStdOut = System.out;
 
 		// redirect stderr and stdout
 		// if there is at least one receiver registered
@@ -380,8 +374,8 @@ public class SootRunner extends Runner {
 	 */
 	protected void resetStream() {
 		// restore stderr and stdout
-		System.setErr(stderr);
-		System.setOut(stdout);
+		System.setErr(mStdErr);
+		System.setOut(mStdOut);
 	}
 
 	/**
@@ -391,12 +385,6 @@ public class SootRunner extends Runner {
 	 */
 	class FilteredStream extends FilterOutputStream {
 
-		/**
-		 * C-tor
-		 * 
-		 * @param stream
-		 *            OutputStream
-		 */
 		public FilteredStream(OutputStream stream) {
 			super(stream);
 		}
