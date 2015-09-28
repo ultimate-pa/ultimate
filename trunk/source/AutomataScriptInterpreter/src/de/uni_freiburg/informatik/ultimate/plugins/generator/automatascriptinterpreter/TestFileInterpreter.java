@@ -54,7 +54,8 @@ import java.util.Set;
 import org.apache.log4j.Logger;
 import org.eclipse.core.runtime.FileLocator;
 
-import de.uni_freiburg.informatik.ultimate.automata.AtsDefinitionPrinter;
+import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
+import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter.Format;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
@@ -1071,7 +1072,6 @@ public class TestFileInterpreter implements IMessagePrinter {
 			result = arguments.get(0);
 			if (result instanceof Boolean) {
 				if ((Boolean) result) {
-
 					mResultOfAssertStatements.add(new GenericResultAtElement<AtsASTNode>(oe, Activator.s_PLUGIN_ID,
 							mServices.getBacktranslationService(), s_AssertionHoldsMessage, oe.getAsString(),
 							Severity.INFO));
@@ -1087,24 +1087,30 @@ public class TestFileInterpreter implements IMessagePrinter {
 			String argsAsString = children.get(0).getAsString();
 			// ILocation loc = children.get(0).getLocation();
 			reportToLogger(LoggerSeverity.INFO, "Printing " + argsAsString);
-			for (Object o : arguments) {
-				final String text;
-				if (o instanceof IAutomaton) {
-					mLastPrintedAutomaton = (IAutomaton<?, ?>) o;
-					text = (new AtsDefinitionPrinter<String, String>(mServices, "automaton", o))
-							.getDefinitionAsString();
+			final String text;
+			if (arguments.get(0) instanceof IAutomaton) {
+				if (arguments.size() > 1) {
+					throw new InterpreterException(oe.getLocation(), "print command needs single argument here");
 				} else {
-					text = String.valueOf(o);
+					mLastPrintedAutomaton = (IAutomaton<?, ?>) arguments.get(0);
+					text = (new AutomatonDefinitionPrinter<String, String>(mServices, "automaton", Format.ATS, arguments.get(0)))
+							.getDefinitionAsString();
 				}
-				printMessage(Severity.INFO, LoggerSeverity.INFO, text, oe.getAsString(), oe);
-				if (mPrintAutomataToFile) {
-					String comment = "/* " + oe.getAsString() + " */";
-					mPrintWriter.println(comment);
-					mPrintWriter.println(text);
+			} else {
+				if (arguments.size() > 1) {
+					throw new InterpreterException(oe.getLocation(), 
+							"if first argument of print command is not an "
+							+ "automaton not second argument allowed");
+				} else {
+					text = String.valueOf(arguments.get(0));
 				}
-
 			}
-
+			printMessage(Severity.INFO, LoggerSeverity.INFO, text, oe.getAsString(), oe);
+			if (mPrintAutomataToFile) {
+				String comment = "/* " + oe.getAsString() + " */";
+				mPrintWriter.println(comment);
+				mPrintWriter.println(text);
+			}
 		} else {
 			IOperation<String, String> op = getAutomataOperation(oe, arguments);
 			if (op != null) {

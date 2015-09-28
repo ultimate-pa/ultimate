@@ -57,7 +57,8 @@ import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvide
 
 
 /**
- * Writes an automaton definition in the .ats format for a given automaton.
+ * Writes an automaton definition in for a given automaton.
+ * 
  * if Labeling == TOSTRING
  * The String representation of LETTER and STATE is used.
  * if Labeling == QUOTED
@@ -70,9 +71,31 @@ import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvide
  * @author heizmann@informatik.uni-freiburg.de
  */
 
-public class AtsDefinitionPrinter<LETTER,STATE> {
+public class AutomatonDefinitionPrinter<LETTER,STATE> {
 
-		public enum Labeling { NUMERATE, TOSTRING, QUOTED, BA_FORMAT };
+		public enum Format {
+			/**
+			 * Automata script.
+			 * The toString() representation of LETTER and STATE is used.
+			 */
+			ATS,
+			/**
+			 * Automata script.
+			 * The String representations of LETTER and STATE are ignored.
+			 * The TestFileWriter introduces new names, e.g. the letters of 
+			 * the alphabet are a0, ..., an.
+			 */
+			ATS_NUMERATE, 
+			/**
+			 * Automata script.
+			 * The String representation of LETTER and STATE plus the hashcode() is used.
+			 */
+			ATS_QUOTED,
+			/**
+			 * The BA format, that is also used by some tools of Yu-Fang Chen.
+			 */
+			BA
+		};
 		
 		private final IUltimateServiceProvider m_Services;
 		private final Logger m_Logger;
@@ -97,8 +120,8 @@ public class AtsDefinitionPrinter<LETTER,STATE> {
 		}
 		
 		
-		public AtsDefinitionPrinter(IUltimateServiceProvider services,
-				String automatonName, String filename, Labeling labels, String message, Object... automata) {
+		public AutomatonDefinitionPrinter(IUltimateServiceProvider services,
+				String automatonName, String filename, Format labels, String message, Object... automata) {
 			m_Services = services;
 			m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 			m_Logger.warn("Dumping Testfile");
@@ -116,12 +139,12 @@ public class AtsDefinitionPrinter<LETTER,STATE> {
 		}
 		
 		
-		public AtsDefinitionPrinter(IUltimateServiceProvider services, String name, Object automaton) {
+		public AutomatonDefinitionPrinter(IUltimateServiceProvider services, String name, Format format, Object automaton) {
 			m_Services = services;
 			m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 			m_StringWriter = new StringWriter();
 			m_printWriter = new PrintWriter(m_StringWriter);
-			printAutomaton(name, automaton, Labeling.TOSTRING);
+			printAutomaton(name, automaton, Format.ATS);
 		}
 		
 		public String getDefinitionAsString() {
@@ -134,7 +157,7 @@ public class AtsDefinitionPrinter<LETTER,STATE> {
 		
 		
 		@SuppressWarnings("unchecked")
-		private void printAutomaton(String name, Object automaton, Labeling labels) {
+		private void printAutomaton(String name, Object automaton, Format format) {
 			if (automaton instanceof INestedWordAutomatonSimple) {
 				INestedWordAutomaton<LETTER,STATE> nwa;
 				if (automaton instanceof INestedWordAutomaton) {
@@ -147,30 +170,27 @@ public class AtsDefinitionPrinter<LETTER,STATE> {
 					}
 				}
 					
-				if (labels == Labeling.TOSTRING) {
+				if (format == Format.ATS) {
 					new NwaTestFileWriterToString(name, nwa);
-				} else if (labels == Labeling.QUOTED) {
+				} else if (format == Format.ATS_QUOTED) {
 					new NwaTestFileWriterToStringWithHash(name, nwa);
-				
-				} else if (labels == Labeling.NUMERATE) {
+				} else if (format == Format.ATS_NUMERATE) {
 					new NwaTestFileWriter(name, nwa);
-				} else if (labels == Labeling.BA_FORMAT) {
+				} else if (format == Format.BA) {
 					new BaFormatWriter(nwa);
-				}
-				
-				else {
+				} else {
 					throw new AssertionError("unsupported labeling");
 				}
 			}
 			
 			else if (automaton instanceof IPetriNet) {
 				IPetriNet<LETTER,STATE> net = (IPetriNet<LETTER,STATE>) automaton;
-				if (labels == Labeling.TOSTRING) {
+				if (format == Format.ATS) {
 					new NetTestFileWriterToString(net);
-				} else if (labels == Labeling.QUOTED) {
+				} else if (format == Format.ATS_QUOTED) {
 					new NetTestFileWriterToStringWithUniqueNumber(net);
 				
-				} else if (labels == Labeling.NUMERATE) {
+				} else if (format == Format.ATS_NUMERATE) {
 					new NetTestFileWriter(net);
 				} else {
 					throw new AssertionError("unsupported labeling");
