@@ -19,10 +19,12 @@
 
 package org.joogie.boogie;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.Stack;
@@ -45,107 +47,117 @@ import org.joogie.boogie.types.BoogieType;
  */
 public class BoogieProcedure {
 	// Call graph successors
-	public HashSet<BoogieProcedure> calledProcedures = new HashSet<BoogieProcedure>();
+	private final Set<BoogieProcedure> mCalledProcedures;
 	// Call graph predecessors
-	public HashSet<BoogieProcedure> callingProcedures = new HashSet<BoogieProcedure>();
+	private final Set<BoogieProcedure> mCallingProcedures;
 
 	// TODO: this should be refactored to somewhere else
 	// SSA should not write fields within the procedure
 	// better create a wrapper around the procedure
-	private HashMap<Variable, LinkedList<Variable>> varIncarnationMap = new HashMap<Variable, LinkedList<Variable>>();
+	private final Map<Variable, LinkedList<Variable>> mVarIncarnationMap;
 
-	private BasicBlock rootBlock = null;
-	private BasicBlock exitBlock = null;
-	private String procedureName = "";
+	private final Set<Variable> mLocalVars;
 
-	private Variable thisVariable = null;
-
-	private HashSet<Variable> localVars = new HashSet<Variable>();
-
-	private Variable returnVariable = null;
 	// The exceptions that can be returned by this procedure
-	private HashMap<BoogieType, Expression> exceptionReturnExpressions = new HashMap<BoogieType, Expression>();
+	private final Map<BoogieType, Expression> mExceptionReturnExpressions;
 
-	public void addLocal(Variable v) {
-		this.localVars.add(v);
-	}
-
-	/**
-	 * @return the localMap
-	 */
-	private HashSet<Variable> tmpLocals = new HashSet<Variable>();
-
-	/**
-	 * @return the tmpLocals
-	 */
-	public Set<Variable> getTmpLocals() {
-		return tmpLocals;
-	}
-
-	private LinkedList<Variable> parameterList = new LinkedList<Variable>();
+	private final List<Variable> mParameterList;
 
 	// The set of all globals modified in the body (including the ones modified
 	// by the called procedures)
 	// this is computed in the BoogieExceptionAnalysis (not a good style, but no
 	// need to waste time here)
-	public HashSet<Variable> modifiesGlobals = new HashSet<Variable>();
-
-	private boolean isPure = false;
-	private LocationTag locationTag = null;
-	private String signatureString = "";
+	private final Set<Variable> mModifiesGlobals;
 
 	// Procedure contracts
-	private List<Expression> requires = new LinkedList<Expression>();
-	private List<Expression> ensures = new LinkedList<Expression>();
+	private final List<Expression> mRequires;
+	private final List<Expression> mEnsures;
 
-	private void createReturnVar(BoogieType rettype) {
-		// only create it once
-		if (returnVariable != null)
-			return;
-		if (rettype == null) {
-			returnVariable = null;
-		} else {
-			returnVariable = new Variable("__ret", rettype, false);
-		}
+	private final Set<Variable> tmpLocals;
+
+	private final boolean mIsPure;
+	private final LocationTag mLocationTag;
+	private final String mSignatureString;
+
+	private final BasicBlock mExitBlock;
+	private final String mProcedureName;
+
+	private final Variable mThisVariable;
+	private final Variable mReturnVariable;
+
+	private BasicBlock mRootBlock;
+
+	private BoogieProcedure(final String procname, final Variable returnVar, final Variable thisVar,
+			final boolean isPure, final List<Variable> parameterList, final LocationTag locationTag,
+			final String signature, final BasicBlock rootAndExitBlock) {
+		tmpLocals = new HashSet<Variable>();
+		mRequires = new LinkedList<Expression>();
+		mEnsures = new LinkedList<Expression>();
+		mModifiesGlobals = new HashSet<Variable>();
+		mParameterList = parameterList == null ? new LinkedList<Variable>() : parameterList;
+
+		mCalledProcedures = new HashSet<BoogieProcedure>();
+		mCallingProcedures = new HashSet<BoogieProcedure>();
+
+		mVarIncarnationMap = new HashMap<Variable, LinkedList<Variable>>();
+		mExceptionReturnExpressions = new HashMap<BoogieType, Expression>();
+		mLocalVars = new HashSet<Variable>();
+
+		mLocationTag = locationTag;
+		mSignatureString = signature;
+		mRootBlock = rootAndExitBlock;
+		mExitBlock = rootAndExitBlock;
+
+		mIsPure = isPure;
+		mProcedureName = procname;
+		mThisVariable = thisVar;
+		mReturnVariable = returnVar;
 	}
 
-	// This constructor should only be called to create helper functions for
-	// BinOps
-	public BoogieProcedure(String name, BoogieType rettype, List<BoogieType> parameters, boolean ispure) {
-		procedureName = name;
-		createReturnVar(rettype);
-		Integer i = 0;
-		for (BoogieType bt : parameters) {
-			parameterList.add(getFreshLocalVariable("$param" + (i++).toString(), bt));
-		}
-		thisVariable = null;
-		this.isPure = ispure;
-	}
-
-	/*
+	/**
 	 * This constructor is only used to create prelude functions. it takes an
 	 * expression as input (e.g., IteExpression) and generates the list of
 	 * parameters from the variables used in that expression. Then, it creates
 	 * one block which has only one ExpressionStatement for this expression.
 	 */
-	public BoogieProcedure(String name, BoogieType rettype, Expression retexpression) {
-		procedureName = name;
-		createReturnVar(rettype);
-		this.isPure = true;
+	public BoogieProcedure(String name, BoogieType rettype, Expression retexpression, String uid) {
+		this(name, createReturnVar(rettype), null, true, null, null, "", new BasicBlock("root", uid));
 		for (Variable v : retexpression.getUsedVariables()) {
-			if (!parameterList.contains(v))
-				parameterList.add(v);
+			if (!mParameterList.contains(v))
+				mParameterList.add(v);
 		}
-		this.rootBlock = new BasicBlock("root");
-		this.rootBlock.addStatement(new ExpressionStatement(retexpression));
-		this.exitBlock = this.rootBlock;
-		thisVariable = null;
+		mRootBlock.addStatement(new ExpressionStatement(retexpression));
 	}
 
-	// This constructor should be called to manually create empty procedures
-	// (originally for EFG)
+	public BoogieProcedure(String name, Variable retVar, LocationTag tag, String nameInSource,
+			List<Variable> parameterList, Variable thisVar) {
+		this(name, retVar, thisVar, false, parameterList, tag, nameInSource, null);
+	}
+
+	public BoogieProcedure(String name, BoogieType returnType, LocationTag tag, String nameInSource,
+			LinkedList<BoogieType> parameterList2) {
+		this(name, createReturnVar(returnType), new Variable("__this", BoogieBaseTypes.getRefType(), false), false,
+				null, tag, nameInSource, null);
+		int i = 0;
+		for (BoogieType typ : parameterList2) {
+			mParameterList.add(new Variable("param" + (i++), BoogieBaseTypes.getRefType(), false));
+		}
+
+	}
+
+	// This constructor should only be called to create helper functions for
+	// BinOps
+	public BoogieProcedure(String name, BoogieType rettype, List<BoogieType> parameters, boolean ispure) {
+		this(name, createReturnVar(rettype), null, ispure, null, null, "", null);
+		int i = 0;
+		for (BoogieType bt : parameters) {
+			mParameterList.add(getFreshLocalVariable("$param" + String.valueOf(i++), bt));
+		}
+	}
+
 	/**
-	 * Constructs a new empty procedure
+	 * Constructs a new empty procedure. This constructor should be called to
+	 * manually create empty procedures (originally for EFG).
 	 * 
 	 * @param name
 	 *            the name of the procedure
@@ -157,88 +169,71 @@ public class BoogieProcedure {
 	 *            true if the procedure takes a "this" reference as parameter.
 	 */
 	public BoogieProcedure(String name, BoogieType rettype, boolean ispure, boolean thisref) {
-		procedureName = name;
-		createReturnVar(rettype);
-
-		if (thisref)
-			thisVariable = new Variable("__this", BoogieBaseTypes.getRefType(), false);
-		this.isPure = ispure;
+		this(name, createReturnVar(rettype),
+				thisref ? new Variable("__this", BoogieBaseTypes.getRefType(), false) : null, ispure, null, null, "",
+				null);
 	}
 
-	public BoogieProcedure(String procName, Variable retVar, LocationTag tag, String nameInSource,
-			LinkedList<Variable> parameterList2, Variable thisVariable2) {
-		this.procedureName = procName;
-		this.returnVariable = retVar;
-		this.locationTag = tag;
-		this.signatureString = nameInSource;
-		this.parameterList = parameterList2;
-		this.thisVariable = thisVariable2;
+	public void addLocal(Variable v) {
+		this.mLocalVars.add(v);
 	}
 
-	public BoogieProcedure(String procName, BoogieType t, LocationTag tag, String nameInSource,
-			LinkedList<BoogieType> parameterList2) {
-		this.procedureName = procName;
-		createReturnVar(t);
-		this.locationTag = tag;
-		this.signatureString = nameInSource;
-		this.parameterList = new LinkedList<Variable>();
-		int i = 0;
-		for (BoogieType typ : parameterList2) {
-			this.parameterList.add(new Variable("param" + (i++), BoogieBaseTypes.getRefType(), false));
+	/**
+	 * @return the tmpLocals
+	 */
+	public Set<Variable> getTmpLocals() {
+		return tmpLocals;
+	}
+
+	private static Variable createReturnVar(BoogieType rettype) {
+		if (rettype == null) {
+			return null;
+		} else {
+			return new Variable("__ret", rettype, false);
 		}
-
-		thisVariable = new Variable("__this", BoogieBaseTypes.getRefType(), false);
 	}
 
 	public boolean isStatic() {
-		return thisVariable == null;
+		return mThisVariable == null;
 	}
 
 	public String getName() {
-		return this.procedureName;
+		return this.mProcedureName;
 	}
 
 	public String getJavaName() {
-		return this.signatureString;
-	}
-
-	public void setJavaName(String s) {
-		this.signatureString = s;
+		return this.mSignatureString;
 	}
 
 	public BasicBlock getRootBlock() {
-		return rootBlock;
+		return mRootBlock;
 	}
 
 	public void setBodyRoot(BasicBlock root) {
-		if (rootBlock == null) {
-			rootBlock = root;
+		if (mRootBlock == null) {
+			mRootBlock = root;
 		} else {
-			rootBlock.connectToSuccessor(root);
+			mRootBlock.connectToSuccessor(root);
 		}
 	}
 
-	public List<Variable> getParameterList() {
-		return this.parameterList;
+	public Collection<Variable> getParameterList() {
+		return mParameterList;
 	}
 
 	public BasicBlock getExitBlock() {
-		return exitBlock;
-	}
-
-	public void setExitBlock(BasicBlock exit) {
-		exitBlock = exit;
+		return mExitBlock;
 	}
 
 	public Variable getReturnVariable() {
-		return returnVariable;
+		return mReturnVariable;
 	}
 
 	public Variable getThisVariable() {
-		if (thisVariable == null) {
+		if (mThisVariable == null) {
 			assert(false);
 		}
-		return thisVariable;
+		return mThisVariable;
 	}
 
 	public Variable getFreshLocalVariable(String prefix, BoogieType t) {
@@ -248,10 +243,10 @@ public class BoogieProcedure {
 	}
 
 	public Variable lookupParameter(Integer idx) {
-		if (parameterList.size() <= idx) {
+		if (mParameterList.size() <= idx) {
 			assert(false);
 		}
-		return parameterList.get(idx);
+		return mParameterList.get(idx);
 	}
 
 	// public Expression getExceptionalReturnVariables() {
@@ -259,27 +254,27 @@ public class BoogieProcedure {
 	// }
 
 	public Expression getExceptionalReturnVariable(BoogieType t) {
-		if (exceptionReturnExpressions.containsKey(t))
-			return exceptionReturnExpressions.get(t);
+		if (mExceptionReturnExpressions.containsKey(t))
+			return mExceptionReturnExpressions.get(t);
 		return null;
 	}
 
 	// TODO: this must not be a set because the ordering is important when
 	// generating the exception variables on the caller side.
 	public Set<BoogieType> getUncaughtTypes() {
-		return exceptionReturnExpressions.keySet();
+		return mExceptionReturnExpressions.keySet();
 	}
 
 	public void addExceptionalReturnVariable(BoogieType t, Expression v) {
-		exceptionReturnExpressions.put(t, v);
+		mExceptionReturnExpressions.put(t, v);
 	}
 
 	public String toBoogie() {
 		StringBuilder sb = new StringBuilder();
 
-		if (locationTag != null) {
-			sb.append(locationTag);
-			sb.append("// " + signatureString + "\n");
+		if (mLocationTag != null) {
+			sb.append(mLocationTag);
+			sb.append("// " + mSignatureString + "\n");
 		} else {
 			sb.append("// procedure is generated by joogie.\n");
 		}
@@ -289,43 +284,43 @@ public class BoogieProcedure {
 		} else {
 			sb.append("procedure ");
 		}
-		sb.append(procedureName + "(");
+		sb.append(mProcedureName + "(");
 
 		boolean firstround = true;
 
 		// If the method is not static, add a this variable to the list of
 		// parameters
-		if (thisVariable != null) {
-			sb.append(thisVariable.toBoogie());
+		if (mThisVariable != null) {
+			sb.append(mThisVariable.toBoogie());
 			sb.append(" : ");
-			sb.append(thisVariable.getType().toBoogie());
+			sb.append(mThisVariable.getType().toBoogie());
 			firstround = false;
 		}
 
-		for (int i = 0; i < parameterList.size(); i++) {
+		for (int i = 0; i < mParameterList.size(); i++) {
 			if (firstround) {
 				firstround = false;
 			} else {
 				sb.append(", ");
 			}
-			Variable v = parameterList.get(i);
+			Variable v = mParameterList.get(i);
 			sb.append(v.toBoogie());
 			sb.append(" : ");
 			sb.append(v.getType().toBoogie());
 		}
 		sb.append(")");
-		if (returnVariable != null || exceptionReturnExpressions.size() > 0) {
+		if (mReturnVariable != null || mExceptionReturnExpressions.size() > 0) {
 			sb.append(" returns (");
 		}
 
 		firstround = true;
-		if (returnVariable != null) {
-			sb.append(returnVariable.toBoogie());
+		if (mReturnVariable != null) {
+			sb.append(mReturnVariable.toBoogie());
 			sb.append(" : ");
-			sb.append(returnVariable.getType().toBoogie());
+			sb.append(mReturnVariable.getType().toBoogie());
 			firstround = false;
 		}
-		for (Entry<BoogieType, Expression> en : exceptionReturnExpressions.entrySet()) {
+		for (Entry<BoogieType, Expression> en : mExceptionReturnExpressions.entrySet()) {
 			if (!firstround) {
 				sb.append(", ");
 			} else {
@@ -335,17 +330,17 @@ public class BoogieProcedure {
 			sb.append(" : ");
 			sb.append(en.getKey().toBoogie());
 		}
-		if (returnVariable != null || exceptionReturnExpressions.size() > 0) {
+		if (mReturnVariable != null || mExceptionReturnExpressions.size() > 0) {
 			sb.append(")");
 		}
 
 		if (!isPure()) {
 
-			if (this.modifiesGlobals.size() > 0) {
+			if (this.getModifiesGlobals().size() > 0) {
 				sb.append("\n  modifies ");
 
 				firstround = true;
-				for (Variable v : this.modifiesGlobals) {
+				for (Variable v : this.getModifiesGlobals()) {
 					if (!firstround) {
 						sb.append(", ");
 					} else
@@ -356,9 +351,9 @@ public class BoogieProcedure {
 			}
 		}
 
-		if (this.rootBlock != null) {
-			if (!requires.isEmpty()) {
-				for (Expression e : requires) {
+		if (this.mRootBlock != null) {
+			if (!mRequires.isEmpty()) {
+				for (Expression e : mRequires) {
 					if (e instanceof BinOpExpression)
 						sb.append("  requires (" + e.toBoogie() + ");\n");
 					else
@@ -366,8 +361,8 @@ public class BoogieProcedure {
 				}
 			}
 
-			if (!ensures.isEmpty()) {
-				for (Expression e : ensures) {
+			if (!mEnsures.isEmpty()) {
+				for (Expression e : mEnsures) {
 					if (e instanceof BinOpExpression)
 						sb.append("  ensures (" + e.toBoogie() + ");\n");
 					else
@@ -376,14 +371,14 @@ public class BoogieProcedure {
 			}
 		}
 
-		if (this.rootBlock == null) {
+		if (this.mRootBlock == null) {
 			sb.append(";\n\n");
 			return sb.toString();
 		}
 
 		sb.append(" {\n");
 
-		for (Variable v : localVars) {
+		for (Variable v : mLocalVars) {
 			sb.append("var ");
 			sb.append(v.toBoogie());
 			sb.append(" : ");
@@ -395,7 +390,7 @@ public class BoogieProcedure {
 			sb.append("\n //temp local variables \n");
 			for (Variable v : this.tmpLocals) {
 				boolean alreadyDeclared = false;
-				for (Expression e : exceptionReturnExpressions.values()) {
+				for (Expression e : mExceptionReturnExpressions.values()) {
 					if (e instanceof Variable && ((Variable) e).toBoogie().equals(v.toBoogie())) {
 						alreadyDeclared = true;
 						break;
@@ -422,9 +417,9 @@ public class BoogieProcedure {
 		 * re-engineering... this may be done later, when we replace soot by
 		 * something else.
 		 */
-		if (this.isPure) {
-			if (rootBlock != null) {
-				List<Statement> stmts = rootBlock.getStatements();
+		if (this.mIsPure) {
+			if (mRootBlock != null) {
+				List<Statement> stmts = mRootBlock.getStatements();
 				if (stmts.size() == 1) { // There should be only one
 											// ExpressionStatement in a pure
 											// function
@@ -433,17 +428,17 @@ public class BoogieProcedure {
 				}
 			}
 		} else {
-			if (rootBlock != null) {
+			if (mRootBlock != null) {
 				LinkedList<BasicBlock> todo = new LinkedList<BasicBlock>();
 				LinkedList<BasicBlock> done = new LinkedList<BasicBlock>();
-				todo.add(rootBlock);
+				todo.add(mRootBlock);
 				BasicBlock current = null;
 				while (!todo.isEmpty()) {
 					current = todo.pollFirst();
 
 					done.add(current);
 					sb.append(current.toBoogie());
-					for (BasicBlock suc : current.Successors) {
+					for (BasicBlock suc : current.getSuccessors()) {
 						if (!todo.contains(suc) && !done.contains(suc)) {
 							todo.addLast(suc);
 						}
@@ -456,47 +451,42 @@ public class BoogieProcedure {
 	}
 
 	public boolean isPure() {
-		return isPure;
+		return mIsPure;
 	}
 
 	@Override
 	public String toString() {
-		return this.procedureName;
+		return this.mProcedureName;
 	}
 
 	public void renameParametersForInlining() {
-		for (Variable p : parameterList) {
+		for (Variable p : mParameterList) {
 			p.setName(this.getName() + p.getName());
 		}
-		thisVariable.setName(this.getName() + "$" + thisVariable.getName());
+		mThisVariable.setName(this.getName() + "$" + mThisVariable.getName());
 		for (Variable v : tmpLocals) {
 			v.setName(this.getName() + v.getName());
 		}
 	}
 
 	public void addRequires(Expression e) {
-		requires.add(e);
+		mRequires.add(e);
 	}
 
 	public void addEnsures(Expression e) {
-		ensures.add(e);
+		mEnsures.add(e);
 	}
 
 	public List<Expression> getRequires() {
-		return requires;
+		return mRequires;
 	}
 
 	public List<Expression> getEnsures() {
-		return ensures;
+		return mEnsures;
 	}
 
-	// TODO: this map is a hack
-	// I only put it here to get the experiments implemented
-	// more quickly.
-	public HashMap<BasicBlock, Variable> vstteMap = null;
-
-	public HashMap<Variable, LinkedList<Variable>> getVarIncarnationMap() {
-		return varIncarnationMap;
+	public Map<Variable, LinkedList<Variable>> getVarIncarnationMap() {
+		return mVarIncarnationMap;
 	}
 
 	public void pruneUnreachable() {
@@ -509,7 +499,7 @@ public class BoogieProcedure {
 		while (!todo.empty()) {
 			BasicBlock current = todo.pop();
 			done.add(current);
-			for (BasicBlock suc : current.Successors) {
+			for (BasicBlock suc : current.getSuccessors()) {
 				if (!done.contains(suc) && !todo.contains(suc) && suc != null) {
 					todo.add(suc);
 				}
@@ -518,12 +508,24 @@ public class BoogieProcedure {
 
 		for (BasicBlock b : done) {
 			HashSet<BasicBlock> newPre = new HashSet<BasicBlock>();
-			for (BasicBlock pre : b.Predecessors) {
+			for (BasicBlock pre : b.getPredecessors()) {
 				if (done.contains(pre))
 					newPre.add(pre);
 			}
-			b.Predecessors = newPre;
+			b.getPredecessors().clear();
+			b.getPredecessors().addAll(newPre);
 		}
 	}
 
+	public Set<BoogieProcedure> getCalledProcedures() {
+		return mCalledProcedures;
+	}
+
+	public Set<BoogieProcedure> getCallingProcedures() {
+		return mCallingProcedures;
+	}
+
+	public Set<Variable> getModifiesGlobals() {
+		return mModifiesGlobals;
+	}
 }

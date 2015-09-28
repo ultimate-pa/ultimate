@@ -24,6 +24,7 @@ import java.util.Map;
 
 import org.joogie.HeapMode;
 import org.joogie.boogie.BoogieProcedure;
+import org.joogie.soot.helper.BoogieProgramConstructionDecorator;
 import org.joogie.util.Log;
 
 import soot.Body;
@@ -43,10 +44,12 @@ public class BoogieBodyTransformer extends BodyTransformer {
 
 	private final String mScope;
 	private final HeapMode mHeapmode;
+	private final BoogieProgramConstructionDecorator mProgDecl;
 
-	public BoogieBodyTransformer(final String scope, HeapMode heapmode) {
+	public BoogieBodyTransformer(final String scope, HeapMode heapmode, BoogieProgramConstructionDecorator progDecl) {
 		mScope = scope;
 		mHeapmode = heapmode;
+		mProgDecl = progDecl;
 	}
 
 	@Override
@@ -77,9 +80,9 @@ public class BoogieBodyTransformer extends BodyTransformer {
 	private void transformStmtList(Body body) {
 		boolean firstblock = true;
 
-		BoogieProcedure proc = GlobalsCache.v().lookupProcedure(body.getMethod(), mHeapmode);
-		BoogieHelpers.currentProcedure = proc;
-		BoogieStmtSwitch bss = new BoogieStmtSwitch(proc, mHeapmode);
+		BoogieProcedure proc = mProgDecl.getCache().lookupProcedure(body.getMethod(), mHeapmode);
+		mProgDecl.setCurrentProcedure(proc);
+		BoogieStmtSwitch bss = new BoogieStmtSwitch(proc, mHeapmode, mProgDecl);
 
 		Chain<Unit> units = body.getUnits();
 		Iterator<Unit> stmtIt = units.snapshotIterator();

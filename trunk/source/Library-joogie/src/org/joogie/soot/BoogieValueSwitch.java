@@ -24,7 +24,6 @@ import java.util.Stack;
 
 import org.joogie.HeapMode;
 import org.joogie.boogie.BoogieProcedure;
-import org.joogie.boogie.BoogieProgram;
 import org.joogie.boogie.constants.TypeExpression;
 import org.joogie.boogie.expressions.ArrayReadExpression;
 import org.joogie.boogie.expressions.Expression;
@@ -32,10 +31,8 @@ import org.joogie.boogie.statements.AssertStatement;
 import org.joogie.boogie.statements.Statement;
 import org.joogie.boogie.types.BoogieBaseTypes;
 import org.joogie.boogie.types.BoogieObjectType;
-import org.joogie.soot.factories.BoogieConstantFactory;
-import org.joogie.soot.factories.BoogieTypeFactory;
-import org.joogie.soot.factories.BoogieVariableFactory;
-import org.joogie.soot.factories.OperatorFunctionFactory;
+import org.joogie.soot.helper.BoogieProcedureInfo;
+import org.joogie.soot.helper.BoogieProgramConstructionDecorator;
 import org.joogie.util.Log;
 
 import soot.Local;
@@ -96,43 +93,53 @@ import soot.jimple.XorExpr;
  */
 public class BoogieValueSwitch implements JimpleValueSwitch {
 
-	private BoogieProcedure currentProcedure = null;
-	private Stack<Expression> expressionStack = new Stack<Expression>();
+	private BoogieProcedure mCurrentProcedure;
+	private Stack<Expression> mExpressionStack;
 
-	private LinkedList<Statement> guardingStatements = new LinkedList<Statement>();
+	private LinkedList<Statement> mGuardingStatements;
 	private HeapMode mHeapMode;
+	private BoogieProgramConstructionDecorator mProgDecl;
+
+	public BoogieValueSwitch(BoogieProgramConstructionDecorator progDecl) {
+		super();
+		mProgDecl = progDecl;
+		mCurrentProcedure = null;
+		mExpressionStack = new Stack<Expression>();
+		mGuardingStatements = new LinkedList<Statement>();
+	}
 
 	public LinkedList<Statement> getGuardingStatements() {
-		LinkedList<Statement> ret = guardingStatements;
-		guardingStatements = new LinkedList<Statement>();
+		LinkedList<Statement> ret = mGuardingStatements;
+		mGuardingStatements = new LinkedList<Statement>();
 		return ret;
 	}
 
 	private void assertNonNull(Expression e) {
 		// TODO Replace assertion by throwing exception
-		Expression guard = BoogieHelpers.isNotNull(e);
-		guardingStatements.add(new AssertStatement(guard));
+		Expression guard = mProgDecl.getOperatorFunctionFactory().isNotNull(e);
+		mGuardingStatements.add(new AssertStatement(guard));
 	}
 
 	private void assertInBounds(Expression e, Expression idx) {
-		guardingStatements.add(new AssertStatement(
-				OperatorFunctionFactory.v().createBinOp(">=", idx, BoogieConstantFactory.createConst(0))));
-		Expression arrsize = BoogieProgram.v().getArraySizeExpression(e);
+		mGuardingStatements.add(new AssertStatement(mProgDecl.getOperatorFunctionFactory().createBinOp(">=", idx,
+				mProgDecl.getConstantFactory().createConst(0))));
+		Expression arrsize = mProgDecl.getProgram().getArraySizeExpression(e);
 		if (arrsize != null) {
-			guardingStatements.add(new AssertStatement(OperatorFunctionFactory.v().createBinOp("<", idx, arrsize)));
+			mGuardingStatements
+					.add(new AssertStatement(mProgDecl.getOperatorFunctionFactory().createBinOp("<", idx, arrsize)));
 		}
 	}
 
 	public BoogieValueSwitch(BoogieProcedure proc, BoogieStmtSwitch stmtswitch) {
-		currentProcedure = proc;
+		mCurrentProcedure = proc;
 		// TODO: the current procedure should not be
 		// kept in 2 different places. This causes bugs
-		BoogieHelpers.currentProcedure = proc;
+		mProgDecl.setCurrentProcedure(proc);
 	}
 
 	public Expression getExpression() {
-		Expression e = expressionStack.pop();
-		assert(expressionStack.isEmpty());
+		Expression e = mExpressionStack.pop();
+		assert(mExpressionStack.isEmpty());
 		return e;
 	}
 
@@ -140,13 +147,13 @@ public class BoogieValueSwitch implements JimpleValueSwitch {
 		arg0.getOp1().apply(this);
 		arg0.getOp2().apply(this);
 
-		Expression right = expressionStack.pop();
-		Expression left = expressionStack.pop();
-		expressionStack.push(OperatorFunctionFactory.v().createBinOp(arg0.getSymbol(), left, right));
+		Expression right = mExpressionStack.pop();
+		Expression left = mExpressionStack.pop();
+		mExpressionStack.push(mProgDecl.getOperatorFunctionFactory().createBinOp(arg0.getSymbol(), left, right));
 
 		if (arg0.getSymbol().contains(" / ") && right.getType() == BoogieBaseTypes.getIntType()) {
-			this.guardingStatements.add(new AssertStatement(
-					OperatorFunctionFactory.v().createBinOp("!=", right, BoogieConstantFactory.createConst(0))));
+			this.mGuardingStatements.add(new AssertStatement(mProgDecl.getOperatorFunctionFactory().createBinOp("!=",
+					right, mProgDecl.getConstantFactory().createConst(0))));
 		}
 
 	}
@@ -164,7 +171,7 @@ public class BoogieValueSwitch implements JimpleValueSwitch {
 				// if the this var is not a reference we do a brute force cast
 				// this is a hack but should be sound
 				Log.error("WARNING - more testing requried for translateInvokeExpr");
-				thisvar = OperatorFunctionFactory.v().castIfNecessary(thisvar, BoogieBaseTypes.getRefType());
+				thisvar = mProgDecl.getOperatorFunctionFactory().castIfNecessary(thisvar, BoogieBaseTypes.getRefType());
 			}
 
 			assertNonNull(thisvar);
@@ -182,464 +189,259 @@ public class BoogieValueSwitch implements JimpleValueSwitch {
 			args.addLast(this.getExpression());
 		}
 
-		BoogieProcedure callee = GlobalsCache.v().lookupProcedure(arg0.getMethod(), mHeapMode);
+		BoogieProcedure callee = mProgDecl.getCache().lookupProcedure(arg0.getMethod(), mHeapMode);
 
-		expressionStack.push(BoogieHelpers.createInvokeExpression(callee, args));
+		mExpressionStack.push(mProgDecl.getOperatorFunctionFactory().createInvokeExpression(callee, args));
 	}
 
-	// private void tmp_pushEmptyConstant() {
-	// Expression c = new Constant();
-	// expressionStack.push(c);
-	// }
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * soot.jimple.ConstantSwitch#caseClassConstant(soot.jimple.ClassConstant)
-	 */
 	@Override
 	public void caseClassConstant(ClassConstant arg0) {
-		expressionStack.push(BoogieConstantFactory.createConst(arg0));
+		mExpressionStack.push(mProgDecl.getConstantFactory().createConst(arg0));
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * soot.jimple.ConstantSwitch#caseDoubleConstant(soot.jimple.DoubleConstant)
-	 */
 	@Override
 	public void caseDoubleConstant(DoubleConstant arg0) {
-		expressionStack.push(BoogieConstantFactory.createConst(arg0));
+		mExpressionStack.push(mProgDecl.getConstantFactory().createConst(arg0));
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * soot.jimple.ConstantSwitch#caseFloatConstant(soot.jimple.FloatConstant)
-	 */
 	@Override
 	public void caseFloatConstant(FloatConstant arg0) {
-		expressionStack.push(BoogieConstantFactory.createConst(arg0));
+		mExpressionStack.push(mProgDecl.getConstantFactory().createConst(arg0));
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see soot.jimple.ConstantSwitch#caseIntConstant(soot.jimple.IntConstant)
-	 */
 	@Override
 	public void caseIntConstant(IntConstant arg0) {
-		expressionStack.push(BoogieConstantFactory.createConst(arg0));
+		mExpressionStack.push(mProgDecl.getConstantFactory().createConst(arg0));
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * soot.jimple.ConstantSwitch#caseLongConstant(soot.jimple.LongConstant)
-	 */
 	@Override
 	public void caseLongConstant(LongConstant arg0) {
-		expressionStack.push(BoogieConstantFactory.createConst(arg0));
+		mExpressionStack.push(mProgDecl.getConstantFactory().createConst(arg0));
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * soot.jimple.ConstantSwitch#caseNullConstant(soot.jimple.NullConstant)
-	 */
 	@Override
 	public void caseNullConstant(NullConstant arg0) {
-		expressionStack.push(BoogieProgram.v().getNullReference());
+		mExpressionStack.push(mProgDecl.getProgram().getNullReference());
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * soot.jimple.ConstantSwitch#caseStringConstant(soot.jimple.StringConstant)
-	 */
 	@Override
 	public void caseStringConstant(StringConstant arg0) {
-		Expression stringvar = BoogieConstantFactory.createConst(arg0);
+		Expression stringvar = mProgDecl.getConstantFactory().createConst(arg0);
 		switch (mHeapMode) {
 		case Default:
-			guardingStatements.push(BoogieHelpers.createAssignment(BoogieProgram.v().getStringLenExpression(stringvar),
-					BoogieConstantFactory.createConst(arg0.value.length())));
+			mGuardingStatements.push(mProgDecl.getOperatorFunctionFactory().createAssignment(
+					mProgDecl.getProgram().getStringLenExpression(stringvar),
+					mProgDecl.getConstantFactory().createConst(arg0.value.length())));
 			// TODO not sure, if this is the right place for this
 			// actually, it should be handled during computation of modifies
 			// clauses but then, it depends on the way we translate strings, so
 			// this variable is actually not part of the original program
-			BoogieHelpers.currentProcedure.modifiesGlobals.add(BoogieProgram.v().stringSize);
+			mProgDecl.getCurrentProcedure().getModifiesGlobals().add(mProgDecl.getProgram().getStringSize());
 			break;
 		case SimpleHeap:
 			// Just make sure the $stringSize array is not used.
 		}
-		expressionStack.push(stringvar);
+		mExpressionStack.push(stringvar);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see soot.jimple.ConstantSwitch#defaultCase(java.lang.Object)
-	 */
 	@Override
 	public void defaultCase(Object arg0) {
 		Log.error("BoogieValueSwitch: case not covered");
 		assert(false);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see soot.jimple.ExprSwitch#caseAddExpr(soot.jimple.AddExpr)
-	 */
 	@Override
 	public void caseAddExpr(AddExpr arg0) {
 		translateBinOp(arg0);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see soot.jimple.ExprSwitch#caseAndExpr(soot.jimple.AndExpr)
-	 */
 	@Override
 	public void caseAndExpr(AndExpr arg0) {
 		translateBinOp(arg0);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see soot.jimple.ExprSwitch#caseCastExpr(soot.jimple.CastExpr)
-	 */
 	@Override
 	public void caseCastExpr(CastExpr arg0) {
 		Log.debug("Cast " + arg0.getOp().getType() + " to type " + arg0.getCastType() + " not implemented");
 		arg0.getOp().apply(this);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see soot.jimple.ExprSwitch#caseCmpExpr(soot.jimple.CmpExpr)
-	 */
 	@Override
 	public void caseCmpExpr(CmpExpr arg0) {
 		translateBinOp(arg0);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see soot.jimple.ExprSwitch#caseCmpgExpr(soot.jimple.CmpgExpr)
-	 */
 	@Override
 	public void caseCmpgExpr(CmpgExpr arg0) {
 		translateBinOp(arg0);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see soot.jimple.ExprSwitch#caseCmplExpr(soot.jimple.CmplExpr)
-	 */
 	@Override
 	public void caseCmplExpr(CmplExpr arg0) {
 		translateBinOp(arg0);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see soot.jimple.ExprSwitch#caseDivExpr(soot.jimple.DivExpr)
-	 */
 	@Override
 	public void caseDivExpr(DivExpr arg0) {
 		translateBinOp(arg0);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see soot.jimple.ExprSwitch#caseEqExpr(soot.jimple.EqExpr)
-	 */
 	@Override
 	public void caseEqExpr(EqExpr arg0) {
 		translateBinOp(arg0);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see soot.jimple.ExprSwitch#caseGeExpr(soot.jimple.GeExpr)
-	 */
 	@Override
 	public void caseGeExpr(GeExpr arg0) {
 		translateBinOp(arg0);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see soot.jimple.ExprSwitch#caseGtExpr(soot.jimple.GtExpr)
-	 */
 	@Override
 	public void caseGtExpr(GtExpr arg0) {
 		translateBinOp(arg0);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * soot.jimple.ExprSwitch#caseInstanceOfExpr(soot.jimple.InstanceOfExpr)
-	 */
 	@Override
 	public void caseInstanceOfExpr(InstanceOfExpr arg0) {
 		arg0.getOp().apply(this);
 		Expression te;
 		if (arg0.getCheckType() instanceof RefType) {
-			te = OperatorFunctionFactory.v().createBinOp("instanceof", getExpression(),
-					new TypeExpression(GlobalsCache.v().lookupTypeVariable((RefType) arg0.getCheckType())));
+			
+			te = mProgDecl.getOperatorFunctionFactory().createBinOp("instanceof", getExpression(),
+					new TypeExpression(mProgDecl.getCache().lookupTypeVariable((RefType) arg0.getCheckType())));
 		} else {
 			// arg0 checks an ArrayType not a RefType...
 			Log.error("caseInstanceOfExpr is not fully implemented");
-			te = BoogieVariableFactory.v().getFreshGlobalConstant(BoogieBaseTypes.getIntType());
+			te = mProgDecl.getFreshGlobalConstant(BoogieBaseTypes.getIntType());
 		}
-		expressionStack.add(te);
+		mExpressionStack.add(te);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see soot.jimple.ExprSwitch#caseInterfaceInvokeExpr(soot.jimple.
-	 * InterfaceInvokeExpr)
-	 */
 	@Override
 	public void caseInterfaceInvokeExpr(InterfaceInvokeExpr arg0) {
 		translateInvokeExpr(arg0, arg0.getBase());
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see soot.jimple.ExprSwitch#caseLeExpr(soot.jimple.LeExpr)
-	 */
 	@Override
 	public void caseLeExpr(LeExpr arg0) {
 		translateBinOp(arg0);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see soot.jimple.ExprSwitch#caseLengthExpr(soot.jimple.LengthExpr)
-	 */
 	@Override
 	public void caseLengthExpr(LengthExpr arg0) {
 		arg0.getOp().apply(this);
 		Expression exp = this.getExpression();
-		Expression lenexp = BoogieProgram.v().getArraySizeExpression(exp);
+		Expression lenexp = mProgDecl.getProgram().getArraySizeExpression(exp);
 		if (lenexp == null) {
 			Log.error(arg0.getOp().getType().toString());
 			Log.error(">> " + exp.toBoogie() + " :: " + exp.getType().toBoogie());
 
 			Log.error("BUG");
 		}
-		expressionStack.push(lenexp);
+		mExpressionStack.push(lenexp);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see soot.jimple.ExprSwitch#caseLtExpr(soot.jimple.LtExpr)
-	 */
 	@Override
 	public void caseLtExpr(LtExpr arg0) {
 		translateBinOp(arg0);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see soot.jimple.ExprSwitch#caseMulExpr(soot.jimple.MulExpr)
-	 */
 	@Override
 	public void caseMulExpr(MulExpr arg0) {
 		translateBinOp(arg0);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see soot.jimple.ExprSwitch#caseNeExpr(soot.jimple.NeExpr)
-	 */
 	@Override
 	public void caseNeExpr(NeExpr arg0) {
 		translateBinOp(arg0);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see soot.jimple.ExprSwitch#caseNegExpr(soot.jimple.NegExpr)
-	 */
 	@Override
 	public void caseNegExpr(NegExpr arg0) {
 		arg0.getOp().apply(this);
-		expressionStack.push(OperatorFunctionFactory.v().createNegOp(getExpression()));
+		mExpressionStack.push(mProgDecl.getOperatorFunctionFactory().createNegOp(getExpression()));
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see soot.jimple.ExprSwitch#caseNewArrayExpr(soot.jimple.NewArrayExpr)
-	 */
 	@Override
 	public void caseNewArrayExpr(NewArrayExpr arg0) {
 		switch (mHeapMode) {
 		case Default:
-			expressionStack.push(BoogieVariableFactory.v().getFreshHeapField(arg0.getType()));
+			mExpressionStack.push(mProgDecl.getOperatorFunctionFactory().getFreshHeapField(arg0.getType()));
 			break;
 		case SimpleHeap:
 			Log.error("Warning: Arrays are not supported by the theorem prover");
 			Log.error("At: " + arg0);
-			expressionStack.push(BoogieVariableFactory.v()
-					.getFreshGlobalConstant(BoogieTypeFactory.lookupBoogieType(arg0.getType())));
+			mExpressionStack.push(mProgDecl
+					.getFreshGlobalConstant(mProgDecl.getTypeFactory().lookupBoogieType(arg0.getType())));
 		}
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see soot.jimple.ExprSwitch#caseNewExpr(soot.jimple.NewExpr)
-	 */
 	@Override
 	public void caseNewExpr(NewExpr arg0) {
 		switch (mHeapMode) {
 		case Default:
-			expressionStack.push(BoogieVariableFactory.v().getFreshHeapField(arg0.getType()));
+			mExpressionStack.push(mProgDecl.getOperatorFunctionFactory().getFreshHeapField(arg0.getType()));
 			break;
 		case SimpleHeap:
-			expressionStack.push(BoogieVariableFactory.v()
-					.getFreshGlobalConstant(BoogieTypeFactory.lookupBoogieType(arg0.getType())));
+			mExpressionStack.push(mProgDecl
+					.getFreshGlobalConstant(mProgDecl.getTypeFactory().lookupBoogieType(arg0.getType())));
 		}
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see soot.jimple.ExprSwitch#caseNewMultiArrayExpr(soot.jimple.
-	 * NewMultiArrayExpr )
-	 */
 	@Override
 	public void caseNewMultiArrayExpr(NewMultiArrayExpr arg0) {
 		switch (mHeapMode) {
 		case Default:
-			expressionStack.push(BoogieVariableFactory.v().getFreshHeapField(arg0.getType()));
+			mExpressionStack.push(mProgDecl.getOperatorFunctionFactory().getFreshHeapField(arg0.getType()));
 			break;
 		case SimpleHeap:
 			Log.error("Warning: Multiarrays are not supported by the theorem prover.");
 			Log.error("At: " + arg0);
-			expressionStack.push(BoogieVariableFactory.v()
-					.getFreshGlobalConstant(BoogieTypeFactory.lookupBoogieType(arg0.getType())));
+			mExpressionStack.push(mProgDecl
+					.getFreshGlobalConstant(mProgDecl.getTypeFactory().lookupBoogieType(arg0.getType())));
 		}
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see soot.jimple.ExprSwitch#caseOrExpr(soot.jimple.OrExpr)
-	 */
 	@Override
 	public void caseOrExpr(OrExpr arg0) {
 		translateBinOp(arg0);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see soot.jimple.ExprSwitch#caseRemExpr(soot.jimple.RemExpr)
-	 */
 	@Override
 	public void caseRemExpr(RemExpr arg0) {
 		translateBinOp(arg0);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see soot.jimple.ExprSwitch#caseShlExpr(soot.jimple.ShlExpr)
-	 */
 	@Override
 	public void caseShlExpr(ShlExpr arg0) {
 		translateBinOp(arg0);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see soot.jimple.ExprSwitch#caseShrExpr(soot.jimple.ShrExpr)
-	 */
 	@Override
 	public void caseShrExpr(ShrExpr arg0) {
 		translateBinOp(arg0);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see soot.jimple.ExprSwitch#caseSpecialInvokeExpr(soot.jimple.
-	 * SpecialInvokeExpr )
-	 */
 	@Override
 	public void caseSpecialInvokeExpr(SpecialInvokeExpr arg0) {
 		translateInvokeExpr(arg0, arg0.getBase());
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * soot.jimple.ExprSwitch#caseStaticInvokeExpr(soot.jimple.StaticInvokeExpr)
-	 */
 	@Override
 	public void caseStaticInvokeExpr(StaticInvokeExpr arg0) {
 		translateInvokeExpr(arg0, null);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see soot.jimple.ExprSwitch#caseSubExpr(soot.jimple.SubExpr)
-	 */
 	@Override
 	public void caseSubExpr(SubExpr arg0) {
 		translateBinOp(arg0);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see soot.jimple.ExprSwitch#caseUshrExpr(soot.jimple.UshrExpr)
-	 */
 	@Override
 	public void caseUshrExpr(UshrExpr arg0) {
 		translateBinOp(arg0);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see soot.jimple.ExprSwitch#caseVirtualInvokeExpr(soot.jimple.
-	 * VirtualInvokeExpr )
-	 */
 	@Override
 	public void caseVirtualInvokeExpr(VirtualInvokeExpr arg0) {
 		translateInvokeExpr(arg0, arg0.getBase());
@@ -651,21 +453,11 @@ public class BoogieValueSwitch implements JimpleValueSwitch {
 		translateInvokeExpr(arg0, null);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see soot.jimple.ExprSwitch#caseXorExpr(soot.jimple.XorExpr)
-	 */
 	@Override
 	public void caseXorExpr(XorExpr arg0) {
 		translateBinOp(arg0);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see soot.jimple.RefSwitch#caseArrayRef(soot.jimple.ArrayRef)
-	 */
 	@Override
 	public void caseArrayRef(ArrayRef arg0) {
 		arg0.getBase().apply(this);
@@ -674,26 +466,14 @@ public class BoogieValueSwitch implements JimpleValueSwitch {
 		Expression idx = this.getExpression();
 		// TODO Replace assertion by throwing exceptions
 		assertInBounds(arr, idx);
-		expressionStack.push(new ArrayReadExpression(arr, idx));
+		mExpressionStack.push(new ArrayReadExpression(arr, idx));
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see soot.jimple.RefSwitch#caseCaughtExceptionRef(soot.jimple.
-	 * CaughtExceptionRef )
-	 */
 	@Override
 	public void caseCaughtExceptionRef(CaughtExceptionRef arg0) {
 		Log.error("THIS CASE MUST BE HANDELED IN STMTSWITCH!");
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * soot.jimple.RefSwitch#caseInstanceFieldRef(soot.jimple.InstanceFieldRef)
-	 */
 	@Override
 	public void caseInstanceFieldRef(InstanceFieldRef arg0) {
 		switch (mHeapMode) {
@@ -701,54 +481,34 @@ public class BoogieValueSwitch implements JimpleValueSwitch {
 			arg0.getBase().apply(this);
 			Expression instance = this.getExpression();
 			assertNonNull(instance);
-			expressionStack.push(OperatorFunctionFactory.v().createSimpleHeapAccess(instance,
-					GlobalsCache.v().lookupField(arg0.getField())));
+			mExpressionStack.push(mProgDecl.getOperatorFunctionFactory().createSimpleHeapAccess(instance,
+					mProgDecl.getCache().lookupField(arg0.getField())));
 			break;
 		case SimpleHeap:
 			// Do a static reference
-			expressionStack.push(GlobalsCache.v().lookupStaticField(arg0.getField()));
+			mExpressionStack.push(mProgDecl.getCache().lookupStaticField(arg0.getField()));
 		}
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see soot.jimple.RefSwitch#caseParameterRef(soot.jimple.ParameterRef)
-	 */
 	@Override
 	public void caseParameterRef(ParameterRef arg0) {
-		expressionStack.push(currentProcedure.lookupParameter(arg0.getIndex()));
+		mExpressionStack.push(mCurrentProcedure.lookupParameter(arg0.getIndex()));
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see soot.jimple.RefSwitch#caseStaticFieldRef(soot.jimple.StaticFieldRef)
-	 */
 	@Override
 	public void caseStaticFieldRef(StaticFieldRef arg0) {
-		expressionStack.push(GlobalsCache.v().lookupStaticField(arg0.getField()));
+		mExpressionStack.push(mProgDecl.getCache().lookupStaticField(arg0.getField()));
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see soot.jimple.RefSwitch#caseThisRef(soot.jimple.ThisRef)
-	 */
 	@Override
 	public void caseThisRef(ThisRef arg0) {
-		expressionStack.push(currentProcedure.getThisVariable());
+		mExpressionStack.push(mCurrentProcedure.getThisVariable());
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see soot.jimple.JimpleValueSwitch#caseLocal(soot.Local)
-	 */
 	@Override
 	public void caseLocal(Local arg0) {
-		BoogieProcedureInfo info = GlobalsCache.v().getProcedureInfo(this.currentProcedure);
-		expressionStack.push(info.lookupLocal(arg0));
+		BoogieProcedureInfo info = mProgDecl.getCache().getProcedureInfo(this.mCurrentProcedure);
+		mExpressionStack.push(info.lookupLocal(arg0));
 	}
 
 	@Override

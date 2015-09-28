@@ -35,7 +35,8 @@ import java.util.jar.JarFile;
 import org.joogie.HeapMode;
 import org.joogie.boogie.BoogieProgram;
 import org.joogie.soot.BoogieBodyTransformer;
-import org.joogie.soot.factories.OperatorFunctionFactory;
+import org.joogie.soot.helper.BoogieProgramConstructionDecorator;
+import org.joogie.soot.helper.OperatorFunctionFactory;
 import org.joogie.util.FileIO;
 import org.joogie.util.Log;
 
@@ -198,25 +199,27 @@ public class SootRunner extends Runner {
 			initStream();
 
 			// init the boogie program and the prelude
-			BoogieProgram.v().addProcedures(OperatorFunctionFactory.v().getPreludProcedures());
+			BoogieProgram prog = new BoogieProgram();
+			BoogieProgramConstructionDecorator progDec = BoogieProgramConstructionDecorator.create(prog);
+			OperatorFunctionFactory opFuncFac = progDec.getOperatorFunctionFactory();
+			prog.addProcedures(opFuncFac.getPreludeProcedures());
 
 			// reset & init Soot
 			soot.G.reset();
 			PackManager.v().getPack("jtp")
-					.add(new Transform("jtp.myTransform", new BoogieBodyTransformer(scope, mode)));
+					.add(new Transform("jtp.myTransform", new BoogieBodyTransformer(scope, mode, progDec)));
 
 			// Finally, run Soot
 			soot.Main.main(args.toArray(new String[] {}));
 
 			// get Boogie program and save to file
 			if (boogieFile != null && boogieFile != "") {
-				String boogieProgram = BoogieProgram.v().toBoogie(mode);
+				String boogieProgram = prog.toBoogie(mode);
 				FileIO.toFile(boogieProgram, boogieFile);
 			}
 
 		} catch (Exception e) {
 			e.printStackTrace();
-			BoogieProgram.resetInstance();
 		} finally {
 			// reset stream redirection
 			resetStream();

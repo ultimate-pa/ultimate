@@ -17,19 +17,17 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-package org.joogie.soot;
+package org.joogie.soot.helper;
 
 import java.util.ArrayList;
 import java.util.HashSet;
 
 import org.joogie.HeapMode;
 import org.joogie.boogie.BoogieProcedure;
-import org.joogie.boogie.BoogieProgram;
 import org.joogie.boogie.expressions.Variable;
 import org.joogie.boogie.types.BoogieBaseTypes;
 import org.joogie.boogie.types.BoogieType;
 import org.joogie.boogie.types.RefArrayType;
-import org.joogie.soot.factories.BoogieTypeFactory;
 import org.joogie.util.Log;
 
 import soot.ArrayType;
@@ -55,7 +53,136 @@ import soot.toolkits.graph.UnitGraph;
  */
 public class BoogieExceptionAnalysis {
 
-	private static Trap returnNestedTrap(Trap a, Trap b, UnitGraph ug) {
+	private final BoogieProgramConstructionDecorator mProgDecl;
+
+	BoogieExceptionAnalysis(BoogieProgramConstructionDecorator progDecl) {
+		mProgDecl = progDecl;
+	}
+
+	public void addUncaughtExceptionsAndModifiesClause(SootMethod m, HashSet<SootMethod> visited, HeapMode heapmode) {
+		visited.add(m);
+		if (!m.hasActiveBody()) {
+			for (SootClass c : m.getExceptions()) {
+				BoogieProcedure proc = mProgDecl.getCache().lookupProcedure(m, heapmode);
+				mProgDecl.getCache().getProcedureInfo(proc)
+						.addUncaughtException(mProgDecl.getTypeFactory().lookupBoogieType(c.getType()));
+			}
+			return;
+		}
+
+		// recompute the possible exceptions (more precisely)
+		// m.setExceptions(new ArrayList<SootClass>());
+		Body b = m.getActiveBody();
+		// TODO not sure if this it the right type
+		ExceptionalUnitGraph tug = new ExceptionalUnitGraph(b);
+		BoogieProcedure proc = mProgDecl.getCache().lookupProcedure(m, heapmode);
+
+		for (Unit u : b.getUnits()) {
+
+			if (u instanceof ThrowStmt) {
+				ThrowStmt st = (ThrowStmt) u;
+				if (st.getOp().getType() instanceof RefType) {
+					RefType rt = (RefType) st.getOp().getType();
+					Trap catchblock = findCatchBlock(st, rt.getSootClass(), tug);
+					if (catchblock == null) {
+						m.addExceptionIfAbsent(rt.getSootClass());
+						mProgDecl.getCache().getProcedureInfo(proc).addUncaughtException(
+								mProgDecl.getTypeFactory().lookupBoogieType(rt.getSootClass().getType()));
+					} else {
+						mProgDecl.getCache().getProcedureInfo(proc).addCaughtException(st, catchblock);
+					}
+				} else {
+					Log.error("This should not happen");
+					assert(false);
+				}
+			} else if (u instanceof Stmt) {
+				if (u instanceof AssignStmt) {
+					Value lhs = ((AssignStmt) u).getLeftOp();
+					Value rhs = ((AssignStmt) u).getRightOp();
+					if (lhs instanceof StaticFieldRef) {
+						StaticFieldRef arg = (StaticFieldRef) ((AssignStmt) u).getLeftOp();
+						Variable v = mProgDecl.getCache().lookupStaticField(arg.getField());
+						proc.getModifiesGlobals().add(v);
+					}
+					if (lhs instanceof InstanceFieldRef) {
+						switch (heapmode) {
+						case Default:
+							proc.getModifiesGlobals().add(mProgDecl.getProgram().getHeapVariable());
+							break;
+						case SimpleHeap:
+							Variable v = mProgDecl.getCache().lookupStaticField(((InstanceFieldRef) lhs).getField());
+							proc.getModifiesGlobals().add(v);
+						}
+					}
+					if (lhs.getType().toString().contains("java.lang.String")) {
+						// TODO maybe this should be moved to the string
+						// handling as it is only a helper var
+						switch (heapmode) {
+						case Default:
+							proc.getModifiesGlobals().add(mProgDecl.getProgram().getStringSize());
+							break;
+						case SimpleHeap:
+						}
+
+					}
+					if (rhs instanceof NewArrayExpr) {
+						// TODO maybe this should be moved to the array handling
+						// as it is only a helper var
+						BoogieType t = mProgDecl.getTypeFactory().lookupBoogieArrayType((ArrayType) rhs.getType());
+						if (t == BoogieBaseTypes.getIntArrType()) {
+							proc.getModifiesGlobals().add(mProgDecl.getProgram().getIntArraySize());
+						} else if (t == BoogieBaseTypes.getRealArrType()) {
+							proc.getModifiesGlobals().add(mProgDecl.getProgram().getRealArraySize());
+						} else if (t instanceof RefArrayType) {
+							proc.getModifiesGlobals().add(mProgDecl.getProgram().getRefArraySize());
+						} else {
+							// TODO this has to be changed once mulitarrays are
+							// handled
+							proc.getModifiesGlobals().add(mProgDecl.getProgram().getRefArraySize());
+						}
+					}
+					if (rhs instanceof NewMultiArrayExpr) {
+						// TODO maybe this should be moved to the array handling
+						// as it is only a helper var
+						// proc.modifiesGlobals.add(mProgDecl.getProgram().refArrSize);
+					}
+
+				}
+				Stmt st = (Stmt) u;
+				if (st.containsInvokeExpr()) {
+					SootMethod called = st.getInvokeExpr().getMethod();
+					if (!visited.contains(called)) {
+						addUncaughtExceptionsAndModifiesClause(called, visited, heapmode);
+					}
+					// TODO check if this recursion works for large programs
+					BoogieProcedure cproc = mProgDecl.getCache().lookupProcedure(called, heapmode);
+
+					// build the call graph
+					proc.getCalledProcedures().add(cproc);
+					cproc.getCallingProcedures().add(proc);
+
+					// Note that we cannot compute the the modifies clause
+					// directly due to recursion.
+					// hence, we add create a hashmap which we can use later on
+					// to lookup the final modifies clause.
+					mProgDecl.getCallDependencyMap().get(proc).addAll(mProgDecl.getCallDependencyMap().get(cproc));
+
+					for (SootClass e : called.getExceptions()) {
+						Trap catchblock = findCatchBlock(st, e, tug);
+						if (catchblock == null) {
+							m.addExceptionIfAbsent(e);
+							mProgDecl.getCache().getProcedureInfo(proc)
+									.addUncaughtException(mProgDecl.getTypeFactory().lookupBoogieType(e.getType()));
+						} else {
+							mProgDecl.getCache().getProcedureInfo(proc).addCaughtException(st, catchblock);
+						}
+					}
+				}
+			}
+		}
+	}
+
+	private Trap returnNestedTrap(Trap a, Trap b, UnitGraph ug) {
 		if (getTryBlock(ug, a.getBeginUnit(), a.getEndUnit(), new ArrayList<Unit>())
 				.containsAll(getTryBlock(ug, b.getBeginUnit(), b.getEndUnit(), new ArrayList<Unit>()))) {
 			return b;
@@ -67,7 +194,7 @@ public class BoogieExceptionAnalysis {
 		return null;
 	}
 
-	private static HashSet<Stmt> getTryBlock(UnitGraph ug, Unit current, Unit endOfTry, ArrayList<Unit> visited) {
+	private HashSet<Stmt> getTryBlock(UnitGraph ug, Unit current, Unit endOfTry, ArrayList<Unit> visited) {
 		HashSet<Stmt> ret = new HashSet<Stmt>();
 		if (visited.contains(current))
 			return ret;
@@ -86,14 +213,14 @@ public class BoogieExceptionAnalysis {
 		return ret;
 	}
 
-	private static Trap findCatchBlock(Stmt stmt, SootClass throwntype, UnitGraph ug) {
+	private Trap findCatchBlock(Stmt stmt, SootClass throwntype, UnitGraph ug) {
 		Trap currentCatch = null;
 		// Log.info("find trap for " + throwntype.toString());
 		ug.getBody().validateTraps();
 		for (Trap t : ug.getBody().getTraps()) {
 			// check if the current trap can handle exceptions of type
 			// throwntype or a superclass of it
-			if (BoogieTypeFactory.compareTypes(throwntype.getType(), t.getException().getType()) >= 0) {
+			if (mProgDecl.getTypeFactory().compareTypes(throwntype.getType(), t.getException().getType()) >= 0) {
 				// Log.error(throwntype.toString() + " cannot handle " +
 				// t.getException().getType().toString());
 				continue;
@@ -113,129 +240,4 @@ public class BoogieExceptionAnalysis {
 		}
 		return currentCatch;
 	}
-
-	public static void addUncaughtExceptionsAndModifiesClause(SootMethod m, HashSet<SootMethod> visited,
-			HeapMode heapmode) {
-		visited.add(m);
-		if (!m.hasActiveBody()) {
-			for (SootClass c : m.getExceptions()) {
-				BoogieProcedure proc = GlobalsCache.v().lookupProcedure(m, heapmode);
-				GlobalsCache.v().getProcedureInfo(proc)
-						.addUncaughtException(BoogieTypeFactory.lookupBoogieType(c.getType()));
-			}
-			return;
-		}
-
-		// recompute the possible exceptions (more precisely)
-		// m.setExceptions(new ArrayList<SootClass>());
-		Body b = m.getActiveBody();
-		// TODO not sure if this it the right type
-		ExceptionalUnitGraph tug = new ExceptionalUnitGraph(b);
-		BoogieProcedure proc = GlobalsCache.v().lookupProcedure(m, heapmode);
-
-		for (Unit u : b.getUnits()) {
-
-			if (u instanceof ThrowStmt) {
-				ThrowStmt st = (ThrowStmt) u;
-				if (st.getOp().getType() instanceof RefType) {
-					RefType rt = (RefType) st.getOp().getType();
-					Trap catchblock = findCatchBlock(st, rt.getSootClass(), tug);
-					if (catchblock == null) {
-						m.addExceptionIfAbsent(rt.getSootClass());
-						GlobalsCache.v().getProcedureInfo(proc)
-								.addUncaughtException(BoogieTypeFactory.lookupBoogieType(rt.getSootClass().getType()));
-					} else {
-						GlobalsCache.v().getProcedureInfo(proc).addCaughtException(st, catchblock);
-					}
-				} else {
-					Log.error("This should not happen");
-					assert(false);
-				}
-			} else if (u instanceof Stmt) {
-				if (u instanceof AssignStmt) {
-					Value lhs = ((AssignStmt) u).getLeftOp();
-					Value rhs = ((AssignStmt) u).getRightOp();
-					if (lhs instanceof StaticFieldRef) {
-						StaticFieldRef arg = (StaticFieldRef) ((AssignStmt) u).getLeftOp();
-						Variable v = GlobalsCache.v().lookupStaticField(arg.getField());
-						proc.modifiesGlobals.add(v);
-					}
-					if (lhs instanceof InstanceFieldRef) {
-						switch (heapmode) {
-						case Default:
-							proc.modifiesGlobals.add(BoogieProgram.v().heapVariable);
-							break;
-						case SimpleHeap:
-							Variable v = GlobalsCache.v().lookupStaticField(((InstanceFieldRef) lhs).getField());
-							proc.modifiesGlobals.add(v);
-						}
-					}
-					if (lhs.getType().toString().contains("java.lang.String")) {
-						// TODO maybe this should be moved to the string
-						// handling as it is only a helper var
-						switch (heapmode) {
-						case Default:
-							proc.modifiesGlobals.add(BoogieProgram.v().stringSize);
-							break;
-						case SimpleHeap:
-						}
-
-					}
-					if (rhs instanceof NewArrayExpr) {
-						// TODO maybe this should be moved to the array handling
-						// as it is only a helper var
-						BoogieType t = BoogieTypeFactory.lookupBoogieArrayType((ArrayType) rhs.getType());
-						if (t == BoogieBaseTypes.getIntArrType()) {
-							proc.modifiesGlobals.add(BoogieProgram.v().intArrSize);
-						} else if (t == BoogieBaseTypes.getRealArrType()) {
-							proc.modifiesGlobals.add(BoogieProgram.v().realArrSize);
-						} else if (t instanceof RefArrayType) {
-							proc.modifiesGlobals.add(BoogieProgram.v().refArrSize);
-						} else {
-							// TODO this has to be changed once mulitarrays are
-							// handled
-							proc.modifiesGlobals.add(BoogieProgram.v().refArrSize);
-						}
-					}
-					if (rhs instanceof NewMultiArrayExpr) {
-						// TODO maybe this should be moved to the array handling
-						// as it is only a helper var
-						// proc.modifiesGlobals.add(BoogieProgram.v().refArrSize);
-					}
-
-				}
-				Stmt st = (Stmt) u;
-				if (st.containsInvokeExpr()) {
-					SootMethod called = st.getInvokeExpr().getMethod();
-					if (!visited.contains(called)) {
-						addUncaughtExceptionsAndModifiesClause(called, visited, heapmode);
-					}
-					// TODO check if this recursion works for large programs
-					BoogieProcedure cproc = GlobalsCache.v().lookupProcedure(called, heapmode);
-
-					// build the call graph
-					proc.calledProcedures.add(cproc);
-					cproc.callingProcedures.add(proc);
-
-					// Note that we cannot compute the the modifies clause
-					// directly due to recursion.
-					// hence, we add create a hashmap which we can use later on
-					// to lookup the final modifies clause.
-					BoogieHelpers.callDependencyMap.get(proc).addAll(BoogieHelpers.callDependencyMap.get(cproc));
-
-					for (SootClass e : called.getExceptions()) {
-						Trap catchblock = findCatchBlock(st, e, tug);
-						if (catchblock == null) {
-							m.addExceptionIfAbsent(e);
-							GlobalsCache.v().getProcedureInfo(proc)
-									.addUncaughtException(BoogieTypeFactory.lookupBoogieType(e.getType()));
-						} else {
-							GlobalsCache.v().getProcedureInfo(proc).addCaughtException(st, catchblock);
-						}
-					}
-				}
-			}
-		}
-	}
-
 }

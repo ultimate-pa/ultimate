@@ -40,7 +40,7 @@ public class BoogieProcedure2Dot {
 		while (!todo.empty()) {
 			BasicBlock current = todo.pop();
 			done.add(current);
-			for (BasicBlock suc : current.Successors) {
+			for (BasicBlock suc : current.getSuccessors()) {
 				if (!todo.contains(suc) && !done.contains(suc))
 					todo.add(suc);
 			}
@@ -50,7 +50,7 @@ public class BoogieProcedure2Dot {
 
 		sb.append("digraph johndoe {\n");
 		for (BasicBlock b : done) {			
-			for (BasicBlock b_ : b.Successors) {
+			for (BasicBlock b_ : b.getSuccessors()) {
 				sb.append("\"" + block2NodeName(b) + "\"->\"" + block2NodeName(b_)
 						+ "\";\n");
 			}

@@ -19,8 +19,8 @@
 
 package org.joogie.util;
 
+import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -43,8 +43,7 @@ public final class Util {
 	 *            A map (key -> value)
 	 * @return The reverse map (value -> key)
 	 */
-	public static Map<BasicBlock, BasicBlock> reverseMap(
-			Map<BasicBlock, BasicBlock> m) {
+	public static Map<BasicBlock, BasicBlock> reverseMap(Map<BasicBlock, BasicBlock> m) {
 		Map<BasicBlock, BasicBlock> result = new HashMap<BasicBlock, BasicBlock>();
 		for (Entry<BasicBlock, BasicBlock> e : m.entrySet())
 			result.put(e.getValue(), e.getKey());
@@ -60,7 +59,7 @@ public final class Util {
 	 *            List of tags
 	 * @return Line number
 	 */
-	public static int findLineNumber(List<Tag> tags) {
+	public static int findLineNumber(Collection<Tag> tags) {
 		int lineNumber = 0;
 		for (Tag tag : tags) {
 			if (tag instanceof LineNumberTag) {

@@ -17,11 +17,12 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-package org.joogie.soot.factories;
+package org.joogie.soot.helper;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 
 import org.joogie.boogie.expressions.Variable;
@@ -57,32 +58,30 @@ import soot.VoidType;
  */
 public class BoogieTypeFactory {
 
-	private static HashMap<Type, BoogieType> collectedTypes = new HashMap<Type, BoogieType>();
-	private static HashMap<BoogieType, BoogieFieldType> fieldTypes = new HashMap<BoogieType, BoogieFieldType>();
-	private static HashMap<BoogieType, BoogieArrayType> arrayTypes = new HashMap<BoogieType, BoogieArrayType>();
+	private final Map<Type, BoogieType> mCollectedTypes;
+	private final Map<BoogieType, BoogieFieldType> mFieldTypes;
+	private final Map<BoogieType, BoogieArrayType> mArrayTypes;
+	private final TypeHierarchy mTypeHierarchy;
 
-
-	private static TypeHierarchy typeHierarchy = new TypeHierarchy();
-
-	public static void resetFactory() {
-		typeHierarchy = new TypeHierarchy();
-		collectedTypes = new HashMap<Type, BoogieType>();
-		fieldTypes = new HashMap<BoogieType, BoogieFieldType>();
-		arrayTypes = new HashMap<BoogieType, BoogieArrayType>();
+	BoogieTypeFactory() {
+		mCollectedTypes = new HashMap<Type, BoogieType>();
+		mFieldTypes = new HashMap<BoogieType, BoogieFieldType>();
+		mArrayTypes = new HashMap<BoogieType, BoogieArrayType>();
+		mTypeHierarchy = new TypeHierarchy();
 	}
 
 	// returns -1 if a is subclass of b, 1 if b is subclass of a, 0 otherwise
-	public static int compareTypes(RefType a, RefType b) {
-		return typeHierarchy.compareTypes(a, b);
+	public int compareTypes(RefType a, RefType b) {
+		return mTypeHierarchy.compareTypes(a, b);
 	}
 
-	public static int compareTypes(BoogieType a, BoogieType b) {
-		return typeHierarchy.compareTypes(a, b);
+	public int compareTypes(BoogieType a, BoogieType b) {
+		return mTypeHierarchy.compareTypes(a, b);
 	}
 
-	public static BoogieType lookupBoogieArrayType(ArrayType t) {
+	public BoogieType lookupBoogieArrayType(ArrayType t) {
 		BoogieType bt = lookupBoogieType(t.getArrayElementType());
-		if (!arrayTypes.containsKey(bt)) {
+		if (!mArrayTypes.containsKey(bt)) {
 			BoogieArrayType newtype = null;
 			if (bt == BoogieBaseTypes.getIntType()) {
 				newtype = BoogieBaseTypes.getIntArrType();
@@ -98,32 +97,32 @@ public class BoogieTypeFactory {
 				Log.error("      - maybe reflections are not handeled");
 				// newtype = BoogieTypeFactory.getRefType();
 			}
-			arrayTypes.put(bt, newtype);
+			mArrayTypes.put(bt, newtype);
 		}
-		return arrayTypes.get(bt);
+		return mArrayTypes.get(bt);
 	}
 
-	public static BoogieType lookupBoogieFieldType(Type t) {
+	public BoogieType lookupBoogieFieldType(Type t) {
 		BoogieType bt = lookupBoogieType(t);
-		if (!fieldTypes.containsKey(bt)) {
-			fieldTypes.put(bt, new BoogieFieldType("field", bt));
+		if (!mFieldTypes.containsKey(bt)) {
+			mFieldTypes.put(bt, new BoogieFieldType("field", bt));
 		}
-		return fieldTypes.get(bt);
+		return mFieldTypes.get(bt);
 	}
 
-	public static BoogieType lookupBoogieType(Type t) {
-		if (!collectedTypes.containsKey(t)) {
-			collectedTypes.put(t, createBoogieType(t));
+	public BoogieType lookupBoogieType(Type t) {
+		if (!mCollectedTypes.containsKey(t)) {
+			mCollectedTypes.put(t, createBoogieType(t));
 		}
-		return collectedTypes.get(t);
+		return mCollectedTypes.get(t);
 	}
 
-	private static BoogieType createBoogieType(Type t) {
+	private BoogieType createBoogieType(Type t) {
 		BoogieType ret = null;
 		if (t instanceof PrimType) {
 			ret = lookupPrimitiveType((PrimType) t);
 		} else if (t instanceof RefType) {
-			ret = typeHierarchy.lookupType((RefType) t);
+			ret = mTypeHierarchy.lookupType((RefType) t);
 		} else if (t instanceof ArrayType) {
 			ret = lookupBoogieArrayType((ArrayType) t);
 		} else if (t == NullType.v()) {
@@ -131,35 +130,31 @@ public class BoogieTypeFactory {
 		} else if (t instanceof VoidType) {
 			ret = BoogieBaseTypes.getVoidType();
 		} else {
-			Log.error("Unknown Type " + t.toString()
-					+ ": BoogieTypeFactory.lookupPrimitiveType");
+			Log.error("Unknown Type " + t.toString() + ": BoogieTypeFactory.lookupPrimitiveType");
 			ret = null;
 		}
 		return ret;
 	}
 
-	private static BoogiePrimitiveType lookupPrimitiveType(PrimType t) {
+	private BoogiePrimitiveType lookupPrimitiveType(PrimType t) {
 		BoogiePrimitiveType ret = null;
 		if (t instanceof DoubleType || t instanceof FloatType) {
 			ret = BoogieBaseTypes.getRealType();
-		} else if (t instanceof IntType || t instanceof LongType
-				|| t instanceof ByteType || t instanceof CharType
+		} else if (t instanceof IntType || t instanceof LongType || t instanceof ByteType || t instanceof CharType
 				|| t instanceof ShortType || t instanceof BooleanType) {
 			ret = BoogieBaseTypes.getIntType();
 		} else {
-			Log.error("Unknown PrimType " + t.toString()
-					+ ": BoogieTypeFactory.lookupPrimitiveType");
+			Log.error("Unknown PrimType " + t.toString() + ": BoogieTypeFactory.lookupPrimitiveType");
 			ret = new BoogiePrimitiveType("PTYPENOTKNOWN" + t.toString());
 		}
 		return ret;
 	}
 
-	public static Variable createTypeVariable(RefType t) {
-		return typeHierarchy.createTypeVariable(t);
+	public Variable createTypeVariable(RefType t) {
+		return mTypeHierarchy.createTypeVariable(t);
 	}
 
-
-	private static class TypeHierarchy {
+	private class TypeHierarchy {
 		private HashMap<RefType, TypeNode> usedTypes = new HashMap<RefType, TypeNode>();
 		private HashMap<BoogieType, TypeNode> boogie2Nodes = new HashMap<BoogieType, TypeNode>();
 
@@ -229,11 +224,9 @@ public class BoogieTypeFactory {
 				return usedTypes.get(t);
 			} else {
 				if (t.getSootClass().hasSuperclass()) {
-					TypeNode supertype = registerType(t.getSootClass()
-							.getSuperclass().getType());
+					TypeNode supertype = registerType(t.getSootClass().getSuperclass().getType());
 					ret = new TypeNode(((RefType) t).getClassName());
-					String shortname = t.getSootClass().getShortName()
-							+ t.getNumber();
+					String shortname = t.getSootClass().getShortName() + t.getNumber();
 					ret.Value = new BoogieObjectType(shortname);
 					ret.Parent = supertype;
 					supertype.Children.add(ret);
@@ -242,8 +235,7 @@ public class BoogieTypeFactory {
 					return ret;
 				} else {
 					ret = new TypeNode(((RefType) t).getClassName());
-					ret.Value = new BoogieObjectType(
-							((RefType) t).getClassName());
+					ret.Value = new BoogieObjectType(((RefType) t).getClassName());
 					usedTypes.put(t, ret);
 					boogie2Nodes.put(ret.Value, ret);
 					// rootNode = ret;

@@ -19,6 +19,7 @@
 
 package org.joogie.boogie;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -26,7 +27,6 @@ import java.util.Map;
 import java.util.Set;
 
 import org.joogie.boogie.statements.Statement;
-import org.joogie.soot.GlobalsCache;
 
 /**
  * this is only a stub an might be replaced by other boogie parser/cfg
@@ -36,32 +36,37 @@ import org.joogie.soot.GlobalsCache;
  */
 public class BasicBlock {
 
-	private LocationTag locationTag = null;
+	private final String mBlockName;
+	private final HashSet<BasicBlock> mSuccessors;
+	private final HashSet<BasicBlock> mPredecessors;
+	private final LinkedList<Statement> mStatements;
 
-	private String blockName;
-	public HashSet<BasicBlock> Successors = new HashSet<BasicBlock>();
-	public HashSet<BasicBlock> Predecessors = new HashSet<BasicBlock>();
+	private boolean mIsLoopHead;
+	private LocationTag mLocationTag;
 
-	private LinkedList<Statement> Statements = new LinkedList<Statement>();
-
-	public boolean IsLoopHead = false;
-
-	public BasicBlock(String prefix, LocationTag tag) {
-		this.locationTag = tag;
-		blockName = prefix + "Block"
-				+ GlobalsCache.v().getUniqueNumber().toString();
+	public BasicBlock(String prefix, LocationTag tag, String uid) {
+		this(prefix + "Block " + uid, tag);
 	}
 
-	public BasicBlock(String prefix) {
-		this(prefix, null);		
+	public BasicBlock(String prefix, String uid) {
+		this(prefix, null, uid);
 	}
 
-	public BasicBlock(LocationTag tag) {
-		this("", tag);		
+	public BasicBlock(LocationTag tag, String uid) {
+		this("", tag, uid);
 	}
-	
-	public BasicBlock() {
-		this("", null);
+
+//	public BasicBlock(String uid) {
+//		this("", null, uid);
+//	}
+
+	private BasicBlock(String name, LocationTag tag) {
+		mLocationTag = tag;
+		mBlockName = name;
+		mSuccessors = new HashSet<>();
+		mPredecessors = new HashSet<>();
+		mStatements = new LinkedList<>();
+		mIsLoopHead = false;
 	}
 
 	public void addStatement(Statement s) {
@@ -76,34 +81,34 @@ public class BasicBlock {
 		 * s.getModifiedVariables()
 		 */
 		if (addToFront) {
-			this.Statements.addFirst(s);
+			this.mStatements.addFirst(s);
 		} else {
-			this.Statements.addLast(s);
+			this.mStatements.addLast(s);
 		}
 	}
 
 	public void connectToSuccessor(BasicBlock succ) {
-		if (!this.Successors.contains(succ))
-			this.Successors.add(succ);
-		if (!succ.Predecessors.contains(this))
-			succ.Predecessors.add(this);		
+		if (!this.mSuccessors.contains(succ))
+			this.mSuccessors.add(succ);
+		if (!succ.mPredecessors.contains(this))
+			succ.mPredecessors.add(this);
 	}
 
 	public void disconnectFromSuccessor(BasicBlock succ) {
-		this.Successors.remove(succ);
-		succ.Predecessors.remove(this);
+		this.mSuccessors.remove(succ);
+		succ.mPredecessors.remove(this);
 	}
 
 	public String getName() {
-		return blockName;
+		return mBlockName;
 	}
 
 	public void setLocationTag(LocationTag lt) {
-		locationTag = lt;
+		mLocationTag = lt;
 	}
 
 	public LocationTag getLocationTag() {
-		return locationTag;
+		return mLocationTag;
 	}
 
 	// Note that the cloned block has a different name
@@ -114,12 +119,8 @@ public class BasicBlock {
 	}
 
 	public BasicBlock clone(String prefix) {
-		BasicBlock clone;
-		if (prefix != null)
-			clone = new BasicBlock(prefix);
-		else
-			clone = new BasicBlock();
-		clone.IsLoopHead = this.IsLoopHead;
+		BasicBlock clone = new BasicBlock(mBlockName, mLocationTag);
+		clone.mIsLoopHead = this.mIsLoopHead;
 		clone.setStatements(new LinkedList<Statement>());
 		for (Statement s : this.getStatements()) {
 			clone.addStatement(s.clone());
@@ -156,7 +157,7 @@ public class BasicBlock {
 	public BasicBlock deepClone(String prefix, Map<BasicBlock, BasicBlock> map) {
 		BasicBlock result = this.clone(prefix);
 		map.put(this, result);
-		for (BasicBlock b : this.Successors) {
+		for (BasicBlock b : this.mSuccessors) {
 			if (map.containsKey(b)) {
 				result.connectToSuccessor(map.get(b));
 			} else {
@@ -174,17 +175,17 @@ public class BasicBlock {
 
 	public String toBoogie() {
 		StringBuilder sb = new StringBuilder();
-		if (locationTag != null) {
-			sb.append(locationTag.toString());
+		if (mLocationTag != null) {
+			sb.append(mLocationTag.toString());
 		}
-		sb.append(blockName + ":\n");
+		sb.append(mBlockName + ":\n");
 		for (Statement s : getStatements()) {
 			sb.append(s.toBoogie() + ";\n");
 		}
-		if (Successors.size() > 0) {
+		if (mSuccessors.size() > 0) {
 			sb.append("\t goto ");
 			boolean firstgoto = true;
-			for (BasicBlock b : Successors) {
+			for (BasicBlock b : mSuccessors) {
 				if (firstgoto) {
 					firstgoto = false;
 				} else {
@@ -200,12 +201,12 @@ public class BasicBlock {
 	}
 
 	public LinkedList<Statement> getStatements() {
-		return Statements;
+		return mStatements;
 	}
 
 	public void setStatements(LinkedList<Statement> statements) {
 		// TODO: flush all information about SSA (once this is implemented)
-		this.Statements.clear();
+		this.mStatements.clear();
 		for (Statement s : statements) {
 			this.addStatement(s);
 		}
@@ -223,16 +224,25 @@ public class BasicBlock {
 	}
 
 	private Set<BasicBlock> getFinalSuccessors(Set<BasicBlock> visitedBlocks) {
+		// TODO: May lead to stackoverflows
 		Set<BasicBlock> result = new HashSet<BasicBlock>();
-		if (this.Successors.isEmpty()) {
+		if (mSuccessors.isEmpty()) {
 			result.add(this);
 		} else {
 			visitedBlocks.add(this);
-			for (BasicBlock b : this.Successors)
+			for (BasicBlock b : this.mSuccessors)
 				if (!visitedBlocks.contains(b))
 					result.addAll(b.getFinalSuccessors(visitedBlocks));
 		}
 		return result;
+	}
+
+	public Collection<BasicBlock> getSuccessors() {
+		return mSuccessors;
+	}
+
+	public Collection<BasicBlock> getPredecessors() {
+		return mPredecessors;
 	}
 
 }
