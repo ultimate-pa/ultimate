@@ -48,6 +48,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Ret
 import de.uni_freiburg.informatik.ultimate.result.AtomicTraceElement;
 import de.uni_freiburg.informatik.ultimate.result.AtomicTraceElement.StepInfo;
 import de.uni_freiburg.informatik.ultimate.result.IProgramExecution;
+import de.uni_freiburg.informatik.ultimate.result.UnprovabilityReason;
 
 public class RcfgProgramExecution implements IProgramExecution<CodeBlock, Expression> {
 
@@ -217,6 +218,14 @@ public class RcfgProgramExecution implements IProgramExecution<CodeBlock, Expres
 	@Override
 	public String getSVCOMPWitnessString() {
 		return null;
+	}
+	
+	public List<UnprovabilityReason> getUnprovabilityReasons() {
+		List<UnprovabilityReason> unproabilityReasons = new ArrayList<UnprovabilityReason>();
+		for (Entry<String, ILocation> entry : m_Overapproximations.entrySet()) {
+			unproabilityReasons.add(new UnprovabilityReason(entry.getKey(), entry.getValue()));
+		}
+		return unproabilityReasons;
 	}
 
 }
