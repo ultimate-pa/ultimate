@@ -57,7 +57,7 @@ public class InvokeExpression extends Expression {
 	}
 
 	public Collection<Variable> getModifiedVars() {
-		return this.invokedProcedure.modifiesGlobals;
+		return this.invokedProcedure.getModifiesGlobals();
 	}
 
 	public List<Expression> getArguments() {
