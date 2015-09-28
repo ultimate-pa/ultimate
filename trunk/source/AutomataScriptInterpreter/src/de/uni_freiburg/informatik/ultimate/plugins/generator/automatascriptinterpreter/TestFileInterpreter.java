@@ -705,6 +705,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 			ats = (AutomataTestFileAST) node;
 		}
 		Finished interpretationFinished = Finished.FINISHED;
+		String errorMessage = null;
 		reportToLogger(LoggerSeverity.DEBUG, "Interpreting automata definitions...");
 		// Interpret automata definitions
 		try {
@@ -715,6 +716,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 			reportToLogger(LoggerSeverity.INFO, "Interpretation of testfile cancelled.");
 			reportToUltimate(Severity.ERROR, e.getMessage() + " Interpretation of testfile cancelled.", "Error", node);
 			interpretationFinished = Finished.ERROR;
+			errorMessage = e.getMessage();
 		}
 
 		if (interpretationFinished == Finished.FINISHED) {
@@ -733,6 +735,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 				}
 				reportToUltimate(Severity.ERROR, e.getLongDescription(), shortDescription, node);
 				interpretationFinished = Finished.ERROR;
+				errorMessage = e.getLongDescription();
 			}
 		}
 
@@ -753,6 +756,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 						interpretationFinished = Finished.OUTOFMEMORY;
 					} else {
 						interpretationFinished = Finished.ERROR;
+						errorMessage = e.getLongDescription();
 					}
 					printMessage(Severity.ERROR, LoggerSeverity.INFO, e.getLongDescription(),
 							"Interpretation of ats file failed", node);
@@ -760,7 +764,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 			}
 		}
 		reportToLogger(LoggerSeverity.DEBUG, "Reporting results...");
-		reportResult(interpretationFinished);
+		reportResult(interpretationFinished, errorMessage);
 		if (mPrintAutomataToFile) {
 			mPrintWriter.close();
 		}
@@ -1249,8 +1253,9 @@ public class TestFileInterpreter implements IMessagePrinter {
 	/**
 	 * Reports the results of assert statements to the Logger and to Ultimate as
 	 * a GenericResult.
+	 * @param errorMessage 
 	 */
-	private void reportResult(Finished finished) {
+	private void reportResult(Finished finished, String errorMessage) {
 		mLogger.info("----------------- Test Summary -----------------");
 		boolean oneOrMoreAssertionsFailed = false;
 		for (GenericResultAtElement<AtsASTNode> test : mResultOfAssertStatements) {
@@ -1284,7 +1289,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 		} else {
 			throw new AssertionError();
 		}
-		IResult result = new AutomataScriptInterpreterOverallResult(Activator.s_PLUGIN_ID, overallResult);
+		IResult result = new AutomataScriptInterpreterOverallResult(Activator.s_PLUGIN_ID, overallResult, errorMessage);
 		mServices.getResultService().reportResult(Activator.s_PLUGIN_ID, result);
 		reportToLogger(loggerSeverity, result.getLongDescription());
 	}
