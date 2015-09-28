@@ -1089,13 +1089,29 @@ public class TestFileInterpreter implements IMessagePrinter {
 			reportToLogger(LoggerSeverity.INFO, "Printing " + argsAsString);
 			final String text;
 			if (arguments.get(0) instanceof IAutomaton) {
-				if (arguments.size() > 1) {
-					throw new InterpreterException(oe.getLocation(), "print command needs single argument here");
+				final Format format;
+				if (arguments.size() == 1) {
+					format = Format.ATS;
+				} else if (arguments.size() == 2) {
+					if (arguments.get(1) instanceof String) {
+						format = Format.valueOf((String) arguments.get(1));
+						if (format == null) {
+							throw new InterpreterException(oe.getLocation(), 
+									"unknown format " + (String) arguments.get(1));
+						}
+					} else {
+						throw new InterpreterException(oe.getLocation(), 
+								"if first argument of print command is an "
+								+ "automaton second argument has to be a String that defines a output format");
+					}
 				} else {
-					mLastPrintedAutomaton = (IAutomaton<?, ?>) arguments.get(0);
-					text = (new AutomatonDefinitionPrinter<String, String>(mServices, "automaton", Format.ATS, arguments.get(0)))
-							.getDefinitionAsString();
+					throw new InterpreterException(oe.getLocation(), 
+							"if first argument of print command is an "
+							+ "automaton only two arguments are allowed");
 				}
+				mLastPrintedAutomaton = (IAutomaton<?, ?>) arguments.get(0);
+				text = (new AutomatonDefinitionPrinter<String, String>(mServices, "automaton", Format.ATS, arguments.get(0)))
+							.getDefinitionAsString();
 			} else {
 				if (arguments.size() > 1) {
 					throw new InterpreterException(oe.getLocation(), 
