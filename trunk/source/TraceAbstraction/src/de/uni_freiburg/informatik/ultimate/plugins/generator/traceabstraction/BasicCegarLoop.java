@@ -361,13 +361,48 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		case TOTALINTERPOLATION:
 			throw new AssertionError("not supported by this CegarLoop");
 		case TWOTRACK: {
-			if (!(m_InterpolantGenerator instanceof TraceCheckerSpWp)) {
-				throw new AssertionError("TWOTRACK only for TraceCheckerSpWp");
+			if (!(m_InterpolantGenerator instanceof TraceCheckerSpWp) && 
+					!(m_InterpolantGenerator instanceof InterpolantConsolidation)) {
+				throw new AssertionError("TWOTRACK only for TraceCheckerSpWp or InterpolantConsolidation");
 			}
-			TraceCheckerSpWp traceChecker = (TraceCheckerSpWp) m_InterpolantGenerator;
-			TwoTrackInterpolantAutomatonBuilder ttiab = new TwoTrackInterpolantAutomatonBuilder(m_Services,
-					m_Counterexample, m_SmtManager, traceChecker, m_Abstraction);
-			m_InterpolAutomaton = ttiab.getResult();
+			IPredicate[] predicatesA = null;
+			IPredicate[] predicatesB = null;
+			boolean build2TrackAutomaton = false;
+			if (m_InterpolantGenerator instanceof TraceCheckerSpWp) {
+				TraceCheckerSpWp traceChecker = (TraceCheckerSpWp) m_InterpolantGenerator;
+				predicatesA = traceChecker.getForwardPredicates();
+				predicatesB = traceChecker.getBackwardPredicates();
+				build2TrackAutomaton = true;
+			} else if (!((InterpolantConsolidation) m_InterpolantGenerator).consolidationSuccessful()) {
+				// if consolidation wasn't successful, then build a 2-Track-Automaton
+				InterpolantConsolidation ic = (InterpolantConsolidation) m_InterpolantGenerator;
+				predicatesA = ic.getInterpolantsOfType_I();
+				predicatesB = ic.getInterpolantsOfType_II();
+				build2TrackAutomaton = true;
+			} 
+			if (build2TrackAutomaton) {
+				TwoTrackInterpolantAutomatonBuilder ttiab = new TwoTrackInterpolantAutomatonBuilder(m_Services,
+						m_Counterexample, m_SmtManager, predicatesA, predicatesB,
+						m_InterpolantGenerator.getPrecondition(),
+						m_InterpolantGenerator.getPostcondition(),
+						m_Abstraction);
+				m_InterpolAutomaton = ttiab.getResult();
+			} else {
+				// Case of Canonical_Automaton, i.e. if the consolidation was successful 
+				// FIXME: The case TWOTRACK from the switch is not nice. Should be refactored!
+				List<ProgramPoint> programPoints = CoverageAnalysis.extractProgramPoints(m_Counterexample);
+				CanonicalInterpolantAutomatonBuilder iab = new CanonicalInterpolantAutomatonBuilder(m_Services,
+						m_InterpolantGenerator, programPoints, new InCaReAlphabet<CodeBlock>(m_Abstraction), m_SmtManager,
+						m_PredicateFactoryInterpolantAutomata, mLogger);
+				iab.analyze();
+				m_InterpolAutomaton = iab.getInterpolantAutomaton();
+				mLogger.info("Interpolants " + m_InterpolAutomaton.getStates());
+
+				// m_CegarLoopBenchmark.addBackwardCoveringInformation(iab.getBackwardCoveringInformation());
+				BackwardCoveringInformation bci = TraceCheckerUtils.computeCoverageCapability(m_Services, m_InterpolantGenerator,
+						programPoints, mLogger);
+				m_CegarLoopBenchmark.addBackwardCoveringInformation(bci);
+			}
 			break;
 		}
 		case TOTALINTERPOLATION2: {
