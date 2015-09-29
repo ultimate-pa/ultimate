@@ -94,7 +94,11 @@ public class AutomatonDefinitionPrinter<LETTER,STATE> {
 			/**
 			 * The BA format, that is also used by some tools of Yu-Fang Chen.
 			 */
-			BA
+			BA,
+			/**
+			 * The Hanoi Omega Automaton Format
+			 */
+			HOA,
 		};
 		
 		private final IUltimateServiceProvider m_Services;
@@ -178,6 +182,8 @@ public class AutomatonDefinitionPrinter<LETTER,STATE> {
 					new NwaTestFileWriter(name, nwa);
 				} else if (format == Format.BA) {
 					new BaFormatWriter(nwa);
+				} else if (format == Format.HOA) {
+					new HanoiFormatWriter(nwa);
 				} else {
 					throw new AssertionError("unsupported labeling");
 				}
@@ -711,9 +717,17 @@ public class AutomatonDefinitionPrinter<LETTER,STATE> {
 		
 		private class BaFormatWriter {
 
+			private final Map<LETTER, String> m_AlphabetMapping;
+			private final Map<STATE, String> m_StateMapping;
+
 			public BaFormatWriter(INestedWordAutomaton<LETTER, STATE> nwa) {
-				Map<LETTER, String> alphabetMapping = computeAlphabetMapping(nwa.getInternalAlphabet());
-				Map<STATE, String> stateMapping = computeStateMapping(nwa.getStates());
+				m_AlphabetMapping = computeAlphabetMapping(nwa.getInternalAlphabet());
+				m_StateMapping = computeStateMapping(nwa.getStates());
+				doPrint(nwa, m_AlphabetMapping, m_StateMapping);
+			}
+
+			protected void doPrint(INestedWordAutomaton<LETTER, STATE> nwa, Map<LETTER, String> alphabetMapping,
+					Map<STATE, String> stateMapping) {
 				StringBuilder initStateSb = computeStateString(nwa.getInitialStates(), stateMapping);
 				StringBuilder transSb = computeTransitionString(nwa, stateMapping, alphabetMapping);
 				StringBuilder finalStateSb = computeStateString(nwa.getFinalStates(), stateMapping);
@@ -753,7 +767,7 @@ public class AutomatonDefinitionPrinter<LETTER,STATE> {
 
 			
 			
-			protected Map<LETTER,String> computeAlphabetMapping(Collection<LETTER> alphabet) {
+			private Map<LETTER,String> computeAlphabetMapping(Collection<LETTER> alphabet) {
 				Integer counter = 0;
 				Map<LETTER,String> alphabetMapping = new HashMap<LETTER,String>();
 				for (LETTER letter : alphabet) {
@@ -763,7 +777,7 @@ public class AutomatonDefinitionPrinter<LETTER,STATE> {
 				return alphabetMapping;
 			}
 
-			protected Map<STATE,String> computeStateMapping(Collection<STATE> states) {
+			private Map<STATE,String> computeStateMapping(Collection<STATE> states) {
 				Integer counter = 0;
 				Map<STATE,String> stateMapping = new HashMap<STATE,String>();
 				for (STATE state : states) {
@@ -775,6 +789,21 @@ public class AutomatonDefinitionPrinter<LETTER,STATE> {
 			
 		}
 		
+		
+		private class HanoiFormatWriter extends BaFormatWriter {
+
+			public HanoiFormatWriter(INestedWordAutomaton<LETTER, STATE> nwa) {
+				super(nwa);
+			}
+
+			@Override
+			protected void doPrint(INestedWordAutomaton<LETTER, STATE> nwa, Map<LETTER, String> alphabetMapping,
+					Map<STATE, String> stateMapping) {
+				m_printWriter.print("hello");
+			}
+			
+			
+		}
 
 	}
 
