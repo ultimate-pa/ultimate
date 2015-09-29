@@ -24,7 +24,6 @@ import java.util.List;
 
 import org.joogie.boogie.types.BoogieFieldType;
 import org.joogie.boogie.types.BoogieType;
-import org.joogie.util.Log;
 
 /**
  * @author schaef
@@ -58,14 +57,8 @@ public class SimpleHeapAccess extends Expression {
 		return this.fieldReference;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.joogie.boogie.expressions.Expression#toBoogie()
-	 */
 	@Override
 	public String toBoogie() {
-		// TODO Auto-generated method stub
 		StringBuilder sb = new StringBuilder();
 		sb.append(this.heapVariable.toBoogie() + "[");
 		sb.append(baseExpression.toBoogie());
@@ -79,10 +72,10 @@ public class SimpleHeapAccess extends Expression {
 		if (fieldReference.getType() instanceof BoogieFieldType) {
 			return ((BoogieFieldType) fieldReference.getType()).getNestedType();
 		} else {
-			Log.error("SimpleHeapAccess.java: " + fieldReference.toBoogie() + " : " + fieldReference.getType().getName()
-					+ " is not a valid heap field");
+			throw new UnsupportedOperationException(fieldReference.toBoogie() + " : "
+					+ fieldReference.getType().getName() + " is not a valid heap field");
 		}
-		return fieldReference.getType();
+		// return fieldReference.getType();
 	}
 
 	public List<Variable> getUsedVariables() {

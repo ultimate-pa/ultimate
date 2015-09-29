@@ -489,6 +489,10 @@ public class BoogieProcedure {
 		return mVarIncarnationMap;
 	}
 
+	public Map<BoogieType, Expression> getExceptionalReturnVariables() {
+		return mExceptionReturnExpressions;
+	}
+
 	public void pruneUnreachable() {
 		BasicBlock root = this.getRootBlock();
 		Stack<BasicBlock> todo = new Stack<BasicBlock>();

@@ -34,6 +34,9 @@ import java.util.List;
 
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
+import org.joogie.Dispatcher;
+import org.joogie.HeapMode;
+import org.joogie.boogie.BoogieProgram;
 
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.services.IToolchainStorage;
@@ -45,15 +48,20 @@ import de.uni_freiburg.informatik.ultimate.model.Payload;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Unit;
 import de.uni_freiburg.informatik.ultimate.model.structure.WrapperNode;
 
+/**
+ * 
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ *
+ */
 public final class Java2Boogie implements ISource {
-	protected String[] mFileTypes;
-	protected Logger mLogger;
-	protected List<String> mFileNames;
-	protected Unit mPreludeUnit;
+	private final String[] mFileTypes;
+
+	private List<String> mFileNames;
+	private Logger mLogger;
 	private IUltimateServiceProvider mServices;
 
 	public Java2Boogie() {
-		mFileTypes = new String[] { "bpl" };
+		mFileTypes = new String[] { "class", "java", "jar" };
 		mFileNames = new ArrayList<String>();
 	}
 
@@ -73,34 +81,26 @@ public final class Java2Boogie implements ISource {
 	}
 
 	@Override
-	public IElement parseAST(File[] files) throws IOException {
-		WrapperNode dirRoot = new WrapperNode(null, null, new Payload(null, "PROJECT"));
+	public IElement parseAST(final File[] files) throws IOException {
+		final WrapperNode dirRoot = new WrapperNode(null, null, new Payload(null, "PROJECT"));
 
-		for (File f : files) {
-			Unit node = parseFile(f);
+		for (final File file : files) {
+			Unit node = (Unit) parseAST(file);
 			dirRoot.addOutgoing(new WrapperNode(dirRoot, node));
 		}
 		return dirRoot;
 	}
 
 	@Override
-	public IElement parseAST(File file) throws IOException {
-		if (file.isDirectory()) {
-			return parseAST(file.listFiles());
-		} else {
-			return parseFile(file);
-		}
-	}
-
-	private Unit parseFile(File file) throws IOException {
-		mLogger.info("Parsing: '" + file.getAbsolutePath() + "'");
-		mFileNames.add(file.getAbsolutePath());
-		return null;
+	public IElement parseAST(final File file) throws IOException {
+		final Dispatcher dispatch = new Dispatcher(file.getAbsolutePath(), HeapMode.Default, null, null, mLogger);
+		final BoogieProgram boogieprog = dispatch.run();
+		return new Joogie2BoogieTranslator(boogieprog, mServices, file.getAbsolutePath()).getUnit();
 	}
 
 	@Override
 	public boolean parseable(File[] files) {
-		for (File f : files) {
+		for (final File f : files) {
 			if (!parseable(f)) {
 				return false;
 			}
@@ -110,8 +110,8 @@ public final class Java2Boogie implements ISource {
 
 	@Override
 	public boolean parseable(File file) {
-		for (String s : getFileTypes()) {
-			if (file.getName().endsWith(s))
+		for (final String ending : getFileTypes()) {
+			if (file.getName().endsWith(ending))
 				return true;
 		}
 		return false;
@@ -125,7 +125,7 @@ public final class Java2Boogie implements ISource {
 	@Override
 	public GraphType getOutputDefinition() {
 		try {
-			return new GraphType(getPluginID(), GraphType.Type.AST, this.mFileNames);
+			return new GraphType(getPluginID(), GraphType.Type.AST, mFileNames);
 		} catch (Exception ex) {
 			mLogger.log(Level.FATAL, "syntax error: " + ex.getMessage());
 			return null;

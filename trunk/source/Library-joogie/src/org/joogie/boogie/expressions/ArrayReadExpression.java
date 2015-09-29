@@ -24,7 +24,6 @@ import java.util.List;
 
 import org.joogie.boogie.types.BoogieArrayType;
 import org.joogie.boogie.types.BoogieType;
-import org.joogie.util.Log;
 
 /**
  * @author schaef
@@ -70,17 +69,14 @@ public class ArrayReadExpression extends Expression {
 	@Override
 	public BoogieType getType() {
 		if (baseExpression.getType() instanceof BoogieArrayType) {
-			return ((BoogieArrayType) (baseExpression.getType()))
-					.getNestedType();
+			return ((BoogieArrayType) (baseExpression.getType())).getNestedType();
 		}
-		Log.error("Cannot resolve ArrayType");
-		return null;
+		throw new UnsupportedOperationException("Cannot resolve array type");
 	}
 
 	@Override
 	public Expression clone() {
-		return new ArrayReadExpression(baseExpression.clone(),
-				idxExpression.clone());
+		return new ArrayReadExpression(baseExpression.clone(), idxExpression.clone());
 	}
 
 	@Override

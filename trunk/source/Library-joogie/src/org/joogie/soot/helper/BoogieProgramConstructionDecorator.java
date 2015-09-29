@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.log4j.Logger;
 import org.joogie.boogie.BasicBlock;
 import org.joogie.boogie.BoogieProcedure;
 import org.joogie.boogie.BoogieProgram;
@@ -68,13 +69,13 @@ public class BoogieProgramConstructionDecorator {
 		setCurrentProcedure(null);
 	}
 
-	public static BoogieProgramConstructionDecorator create(BoogieProgram prog) {
+	public static BoogieProgramConstructionDecorator create(final BoogieProgram prog, final Logger logger) {
 		BoogieProgramConstructionDecorator progDec = new BoogieProgramConstructionDecorator(prog);
 
-		progDec.mFacFunc = new OperatorFunctionFactory(progDec);
+		progDec.mCache = new GlobalsCache(progDec);
+		progDec.mFacFunc = new OperatorFunctionFactory(progDec, logger);
 		progDec.mFacConst = new BoogieConstantFactory(progDec);
 		progDec.mFacType = new BoogieTypeFactory();
-		progDec.mCache = new GlobalsCache(progDec);
 		progDec.mExceptionAnalysis = new BoogieExceptionAnalysis(progDec);
 
 		return progDec;

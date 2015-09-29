@@ -24,6 +24,7 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 
+import org.apache.log4j.Logger;
 import org.joogie.HeapMode;
 import org.joogie.boogie.BoogieProcedure;
 import org.joogie.boogie.BoogieProgram;
@@ -36,18 +37,18 @@ import org.joogie.boogie.expressions.IteExpression;
 import org.joogie.boogie.expressions.SimpleHeapAccess;
 import org.joogie.boogie.expressions.UnaryExpression;
 import org.joogie.boogie.expressions.UnaryExpression.UnaryOperator;
-import org.joogie.boogie.statements.AssignStatement;
 import org.joogie.boogie.expressions.Variable;
+import org.joogie.boogie.statements.AssignStatement;
 import org.joogie.boogie.types.ArrArrayType;
 import org.joogie.boogie.types.BoogieArrayType;
 import org.joogie.boogie.types.BoogieBaseTypes;
 import org.joogie.boogie.types.BoogieObjectType;
 import org.joogie.boogie.types.BoogieType;
 import org.joogie.boogie.types.RefArrayType;
-import org.joogie.util.Log;
 
 /**
  * @author schaef
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * 
  */
 public class OperatorFunctionFactory {
@@ -76,7 +77,10 @@ public class OperatorFunctionFactory {
 
 	private LinkedList<BoogieProcedure> intOperators, refOperators, realOperators;
 
-	OperatorFunctionFactory(BoogieProgramConstructionDecorator progDec) {
+	private final Logger mLogger;
+
+	OperatorFunctionFactory(final BoogieProgramConstructionDecorator progDec, final Logger logger) {
+		mLogger = logger;
 		mProgDec = progDec;
 		mOperatorProcs = new HashSet<BoogieProcedure>();
 
@@ -379,7 +383,7 @@ public class OperatorFunctionFactory {
 			args.add(right);
 			exp = createInvokeExpression(instanceofOp, args);
 		} else {
-			Log.error(">>>>>>>>>>" + op + "<");
+			throw new UnsupportedOperationException("Operator not handled: " + op);
 		}
 		return exp;
 	}
@@ -420,8 +424,8 @@ public class OperatorFunctionFactory {
 				return createNegOp(compareArrayEquality(l, r));
 			}
 		} else {
-			Log.error("Types don't match: " + l.getType().getName() + " and " + r.getType().getName());
-			return null;
+			throw new UnsupportedOperationException(
+					"Types don't match: " + l.getType().getName() + " and " + r.getType().getName());
 		}
 		BoogieProcedure proc = findProcedureWithPrefix(opcode, proctype);
 		if (mHeapmode == HeapMode.SimpleHeap) {
@@ -500,10 +504,10 @@ public class OperatorFunctionFactory {
 		} else if (l.getType() instanceof RefArrayType) {
 			return createInvokeExpression(eqRefArray, args);
 		} else if (l.getType() instanceof ArrArrayType) {
-			Log.error("compareArrayEquality: CASE not implemented");
+			mLogger.error("compareArrayEquality: CASE not implemented");
 			return mProgDec.getFreshGlobalConstant(BoogieBaseTypes.getIntType());
 		}
-		Log.error("compareArrayEquality: Type not implemented");
+		mLogger.error("compareArrayEquality: Type not implemented");
 		return mProgDec.getFreshGlobalConstant(BoogieBaseTypes.getIntType());
 	}
 
@@ -516,8 +520,8 @@ public class OperatorFunctionFactory {
 				return proc;
 		}
 
-		Log.error("TODO!!! " + prefix); // TODO remove if there are no bugs
-										// caused by this method
+		mLogger.error("TODO!!! " + prefix); // TODO remove if there are no bugs
+		// caused by this method
 		return null;
 	}
 
@@ -544,7 +548,7 @@ public class OperatorFunctionFactory {
 
 	private boolean compareTypes(BoogieType a, BoogieType b) {
 		if (b instanceof BoogieObjectType && a instanceof RefArrayType) {
-			Log.debug("comparing array with object type. this could be a bug");
+			mLogger.debug("comparing array with object type. this could be a bug");
 		}
 
 		if (a == b) {
@@ -572,7 +576,7 @@ public class OperatorFunctionFactory {
 				// special case if exp is a null constant:
 				if (exp == mProgDec.getProgram().getNullReference()) {
 					if (targetType instanceof ArrArrayType) {
-						Log.debug("castIfNecessary: MultiArray not implemented - sound abstraction");
+						mLogger.debug("castIfNecessary: MultiArray not implemented - sound abstraction");
 						return mProgDec.getFreshGlobalConstant(targetType);
 					} else {
 						return mProgDec.getProgram()
@@ -582,10 +586,7 @@ public class OperatorFunctionFactory {
 					return castToArray(mProgDec.getProgram(), exp, targetType);
 				}
 			} else {
-				Log.error("FATAL ERROR!!!");
-				Log.error("++ " + exp.toBoogie());
-				Log.error("++ " + targetType.toBoogie());
-				return null;
+				throw new AssertionError("Cannot cast " + exp.toBoogie() + " to " + targetType.toBoogie());
 			}
 		}
 	}
@@ -627,12 +628,12 @@ public class OperatorFunctionFactory {
 			} else if (arrtype instanceof RefArrayType) {
 				return createInvokeExpression(refToRefArr, args);
 			} else if (arrtype instanceof ArrArrayType) {
-				Log.error("castToArray: multiarrays are not really implemented");
+				mLogger.error("castToArray: multiarrays are not really implemented");
 				return mProgDec.getFreshGlobalConstant(arrtype);
 			}
 		}
-		Log.error("castToArray: case is not implemented");
-		Log.error("  cast from " + exp.getType().toString() + " to " + arrtype.toString());
+		mLogger.error("castToArray: case is not implemented");
+		mLogger.error("  cast from " + exp.getType().toString() + " to " + arrtype.toString());
 		return mProgDec.getFreshGlobalConstant(arrtype);
 	}
 
@@ -647,7 +648,7 @@ public class OperatorFunctionFactory {
 		} else if (arrtype instanceof RefArrayType) {
 			return createInvokeExpression(refArrToRef, args);
 		} else {
-			Log.error("castToArray: case is not implemented");
+			mLogger.error("castToArray: case is not implemented");
 			return mProgDec.getFreshGlobalConstant(BoogieBaseTypes.getRefType());
 		}
 	}
@@ -693,8 +694,8 @@ public class OperatorFunctionFactory {
 	public AssignStatement createAssignment(Expression lhs, Expression rhs) {
 		Expression rhsExpression = castIfNecessary(rhs, lhs.getType());
 		if (rhsExpression == null) {
-			Log.error(rhs.toBoogie() + " cannot be casted");
-			Log.error("from: " + rhs.getType().toBoogie() + " to: " + lhs.getType().toBoogie());
+			mLogger.error(rhs.toBoogie() + " cannot be casted");
+			mLogger.error("from: " + rhs.getType().toBoogie() + " to: " + lhs.getType().toBoogie());
 		}
 		return new AssignStatement(lhs, rhsExpression);
 	}

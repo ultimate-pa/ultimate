@@ -24,7 +24,6 @@ import java.util.List;
 
 import org.joogie.boogie.types.BoogieBaseTypes;
 import org.joogie.boogie.types.BoogieType;
-import org.joogie.util.Log;
 
 /**
  * WARNING, this is only a Hack. It is only supposed to be used in BoogieAxioms.
@@ -44,8 +43,8 @@ public class BinOpExpression extends Expression {
 	private Expression rhs;
 
 	public enum Operator {
-		Eq("=="), Neq("!="), Lt("<"), Le("<="), Gt(">"), Ge(">="), Implies("=>"), LAnd(
-				"&&"), LOr("||"), Plus("+"), Minus("-"), Mul("*"), Div("/");
+		Eq("=="), Neq("!="), Lt("<"), Le("<="), Gt(">"), Ge(">="), Implies("=>"), LAnd("&&"), LOr("||"), Plus(
+				"+"), Minus("-"), Mul("*"), Div("/");
 		private String description;
 
 		Operator(String des) {
@@ -116,8 +115,7 @@ public class BinOpExpression extends Expression {
 		case Plus:
 			return this.lhs.getType();
 		default:
-			Log.error("Type resolution failed: " + this.toString());
-			return null;
+			throw new UnsupportedOperationException("Type resolution failed: " + this.toString());
 		}
 	}
 
