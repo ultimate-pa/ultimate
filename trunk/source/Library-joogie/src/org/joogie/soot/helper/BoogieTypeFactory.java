@@ -34,7 +34,6 @@ import org.joogie.boogie.types.BoogieObjectType;
 import org.joogie.boogie.types.BoogiePrimitiveType;
 import org.joogie.boogie.types.BoogieType;
 import org.joogie.boogie.types.RefArrayType;
-import org.joogie.util.Log;
 
 import soot.ArrayType;
 import soot.BooleanType;
@@ -93,9 +92,8 @@ public class BoogieTypeFactory {
 				BoogieArrayType arrt = (BoogieArrayType) bt;
 				newtype = new ArrArrayType("arrarr", arrt);
 			} else {
-				Log.error("ERROR - Case not implemented: " + bt.toString());
-				Log.error("      - maybe reflections are not handeled");
 				// newtype = BoogieTypeFactory.getRefType();
+				throw new UnsupportedOperationException("Case not implemented (maybe reflections?): " + bt.toString());
 			}
 			mArrayTypes.put(bt, newtype);
 		}
@@ -130,8 +128,8 @@ public class BoogieTypeFactory {
 		} else if (t instanceof VoidType) {
 			ret = BoogieBaseTypes.getVoidType();
 		} else {
-			Log.error("Unknown Type " + t.toString() + ": BoogieTypeFactory.lookupPrimitiveType");
 			ret = null;
+			throw new UnsupportedOperationException("Unknown Type " + t.toString() + ": BoogieTypeFactory.lookupPrimitiveType");
 		}
 		return ret;
 	}
@@ -144,8 +142,7 @@ public class BoogieTypeFactory {
 				|| t instanceof ShortType || t instanceof BooleanType) {
 			ret = BoogieBaseTypes.getIntType();
 		} else {
-			Log.error("Unknown PrimType " + t.toString() + ": BoogieTypeFactory.lookupPrimitiveType");
-			ret = new BoogiePrimitiveType("PTYPENOTKNOWN" + t.toString());
+			throw new UnsupportedOperationException("Unknown PrimType " + t.toString() + ": BoogieTypeFactory.lookupPrimitiveType");
 		}
 		return ret;
 	}

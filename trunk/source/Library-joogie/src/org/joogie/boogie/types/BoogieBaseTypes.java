@@ -59,5 +59,4 @@ public class BoogieBaseTypes {
 	public static BoogieObjectType getVoidType() {
 		return voidType;
 	}
-	
 }

@@ -28,7 +28,6 @@ import org.joogie.boogie.expressions.Variable;
 import org.joogie.boogie.types.BoogieBaseTypes;
 import org.joogie.boogie.types.BoogieType;
 import org.joogie.boogie.types.RefArrayType;
-import org.joogie.util.Log;
 
 import soot.ArrayType;
 import soot.Body;
@@ -92,8 +91,7 @@ public class BoogieExceptionAnalysis {
 						mProgDecl.getCache().getProcedureInfo(proc).addCaughtException(st, catchblock);
 					}
 				} else {
-					Log.error("This should not happen");
-					assert(false);
+					throw new AssertionError();
 				}
 			} else if (u instanceof Stmt) {
 				if (u instanceof AssignStmt) {

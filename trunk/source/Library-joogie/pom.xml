@@ -8,8 +8,8 @@
 		<relativePath>../BA_MavenParentUltimate/pom.xml</relativePath>
 	</parent>
   
-  <groupId>Library-soottocfg</groupId>
-  <artifactId>Library-soottocfg</artifactId>
-  <version>0.0.1</version>
+  <groupId>Library-joogie</groupId>
+  <artifactId>Library-joogie</artifactId>
+  <version>1.0.1</version>
   <packaging>eclipse-plugin</packaging>
 </project>

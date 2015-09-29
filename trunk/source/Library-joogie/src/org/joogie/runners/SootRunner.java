@@ -32,13 +32,12 @@ import java.util.jar.Attributes;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
+import org.apache.log4j.Logger;
 import org.joogie.HeapMode;
 import org.joogie.boogie.BoogieProgram;
 import org.joogie.soot.BoogieBodyTransformer;
 import org.joogie.soot.helper.BoogieProgramConstructionDecorator;
 import org.joogie.soot.helper.OperatorFunctionFactory;
-import org.joogie.util.FileIO;
-import org.joogie.util.Log;
 
 import soot.PackManager;
 import soot.Transform;
@@ -51,8 +50,12 @@ import soot.Transform;
 public class SootRunner extends Runner {
 
 	private PrintStream mStdErr;
-
 	private PrintStream mStdOut;
+	private final Logger mLogger;
+
+	public SootRunner(Logger logger) {
+		mLogger = logger;
+	}
 
 	/**
 	 * Runs Soot by using a JAR file
@@ -60,12 +63,11 @@ public class SootRunner extends Runner {
 	 * @param jarFile
 	 *            JAR file
 	 * @param scope
-	 * @param boogieFile
-	 *            Boogie file
 	 * @param report
 	 *            Report
+	 * @return
 	 */
-	public void runWithJar(String jarFile, String classPath, String scope, String boogieFile, HeapMode mode) {
+	public BoogieProgram runWithJar(String jarFile, String classPath, String scope, HeapMode mode) {
 		try {
 			// command-line arguments for Soot
 			List<String> args = new ArrayList<String>();
@@ -88,11 +90,12 @@ public class SootRunner extends Runner {
 			enumClasses(new File(jarFile), args, scope);
 
 			// finally, run soot
-			run(args, boogieFile, mode, scope);
+			return run(args, mode, scope);
 
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+		return null;
 	}
 
 	private String getClassPathString(String classPath, List<File> jarFiles) {
@@ -110,14 +113,13 @@ public class SootRunner extends Runner {
 	 *            Class file
 	 * @param sourceFolder
 	 *            Source folder
-	 * @param boogieFile
-	 *            Boogie file
 	 * @param mode
 	 * @param scope
 	 * @param report
 	 *            Report
+	 * @return
 	 */
-	public void runWithClass(String classFile, String sourceFolder, String boogieFile, HeapMode mode, String scope) {
+	public BoogieProgram runWithClass(String classFile, String sourceFolder, HeapMode mode, String scope) {
 		assert sourceFolder != null;
 		try {
 			// dependent JAR files
@@ -134,11 +136,12 @@ public class SootRunner extends Runner {
 			args.add(classFile);
 
 			// finally, run soot
-			run(args, boogieFile, mode, scope);
+			return run(args, mode, scope);
 
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+		return null;
 	}
 
 	/**
@@ -147,13 +150,13 @@ public class SootRunner extends Runner {
 	 * @param sourceFile
 	 *            Source file
 	 * @param classPath
-	 * @param boogieFile
 	 * @param mode
 	 * @param scope
 	 * @param report
 	 *            Report
+	 * @return
 	 */
-	public void runWithSource(String sourceFile, String classPath, String boogieFile, HeapMode mode, String scope) {
+	public BoogieProgram runWithSource(String sourceFile, String classPath, HeapMode mode, String scope) {
 		try {
 			// command-line arguments for Soot
 			List<String> args = new ArrayList<String>();
@@ -174,11 +177,12 @@ public class SootRunner extends Runner {
 			args.add(sourceFile.substring(0, sourceFile.lastIndexOf(".java")));
 
 			// finally, run soot
-			run(args, boogieFile, mode, scope);
+			return run(args, mode, scope);
 
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+		return null;
 	}
 
 	/**
@@ -186,40 +190,32 @@ public class SootRunner extends Runner {
 	 * 
 	 * @param args
 	 *            Command-line arguments
-	 * @param boogieFile
-	 *            Boogie file
 	 * @param mode
 	 * @param scope
 	 * @param report
 	 *            Report
 	 */
-	protected void run(List<String> args, String boogieFile, HeapMode mode, String scope) {
+	protected BoogieProgram run(List<String> args, HeapMode mode, String scope) {
 		try {
 			// init stream redirection
 			initStream();
 
 			// init the boogie program and the prelude
-			BoogieProgram prog = new BoogieProgram();
-			BoogieProgramConstructionDecorator progDec = BoogieProgramConstructionDecorator.create(prog);
+			BoogieProgram prog = new BoogieProgram(mLogger);
+			BoogieProgramConstructionDecorator progDec = BoogieProgramConstructionDecorator.create(prog, mLogger);
 			OperatorFunctionFactory opFuncFac = progDec.getOperatorFunctionFactory();
 			prog.addProcedures(opFuncFac.getPreludeProcedures());
 
 			// reset & init Soot
 			soot.G.reset();
 			PackManager.v().getPack("jtp")
-					.add(new Transform("jtp.myTransform", new BoogieBodyTransformer(scope, mode, progDec)));
+					.add(new Transform("jtp.myTransform", new BoogieBodyTransformer(scope, mode, progDec, mLogger)));
 
 			// Finally, run Soot
 			soot.Main.main(args.toArray(new String[] {}));
 
-			// get Boogie program and save to file
-			if (boogieFile != null && boogieFile != "") {
-				String boogieProgram = prog.toBoogie(mode);
-				FileIO.toFile(boogieProgram, boogieFile);
-			}
+			return prog;
 
-		} catch (Exception e) {
-			e.printStackTrace();
 		} finally {
 			// reset stream redirection
 			resetStream();
@@ -300,7 +296,7 @@ public class SootRunner extends Runner {
 			for (String classPathItem : classPathItems) {
 				if (classPathItem.endsWith(".jar")) {
 					// add jar
-					Log.debug("Adding " + classPathItem + " to Soot's class path");
+					mLogger.debug("Adding " + classPathItem + " to Soot's class path");
 					jarFiles.add(new File(file.getParent(), classPathItem));
 				}
 			}
@@ -321,7 +317,7 @@ public class SootRunner extends Runner {
 	protected void enumClasses(File file, List<String> classes, String scope) {
 		try {
 			// open JAR file
-			Log.debug("Opening jar " + file.getPath());
+			mLogger.debug("Opening jar " + file.getPath());
 			JarFile jarFile = new JarFile(file);
 			Enumeration<JarEntry> entries = jarFile.entries();
 
@@ -343,7 +339,7 @@ public class SootRunner extends Runner {
 					}
 
 					// add class
-					Log.debug("Adding class " + className);
+					mLogger.debug("Adding class " + className);
 					classes.add(className);
 				}
 			}

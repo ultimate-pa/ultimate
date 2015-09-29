@@ -22,6 +22,7 @@ package org.joogie.soot;
 import java.util.LinkedList;
 import java.util.Stack;
 
+import org.apache.log4j.Logger;
 import org.joogie.HeapMode;
 import org.joogie.boogie.BoogieProcedure;
 import org.joogie.boogie.constants.TypeExpression;
@@ -33,7 +34,6 @@ import org.joogie.boogie.types.BoogieBaseTypes;
 import org.joogie.boogie.types.BoogieObjectType;
 import org.joogie.soot.helper.BoogieProcedureInfo;
 import org.joogie.soot.helper.BoogieProgramConstructionDecorator;
-import org.joogie.util.Log;
 
 import soot.Local;
 import soot.RefType;
@@ -99,13 +99,23 @@ public class BoogieValueSwitch implements JimpleValueSwitch {
 	private LinkedList<Statement> mGuardingStatements;
 	private HeapMode mHeapMode;
 	private BoogieProgramConstructionDecorator mProgDecl;
+	private final Logger mLogger;
 
-	public BoogieValueSwitch(BoogieProgramConstructionDecorator progDecl) {
+	public BoogieValueSwitch(final BoogieProgramConstructionDecorator progDecl, final Logger logger) {
 		super();
 		mProgDecl = progDecl;
 		mCurrentProcedure = null;
 		mExpressionStack = new Stack<Expression>();
 		mGuardingStatements = new LinkedList<Statement>();
+		mLogger = logger;
+	}
+
+	public BoogieValueSwitch(BoogieProcedure proc, BoogieStmtSwitch stmtswitch, final Logger logger) {
+		mCurrentProcedure = proc;
+		// TODO: the current procedure should not be
+		// kept in 2 different places. This causes bugs
+		mProgDecl.setCurrentProcedure(proc);
+		mLogger = logger;
 	}
 
 	public LinkedList<Statement> getGuardingStatements() {
@@ -128,13 +138,6 @@ public class BoogieValueSwitch implements JimpleValueSwitch {
 			mGuardingStatements
 					.add(new AssertStatement(mProgDecl.getOperatorFunctionFactory().createBinOp("<", idx, arrsize)));
 		}
-	}
-
-	public BoogieValueSwitch(BoogieProcedure proc, BoogieStmtSwitch stmtswitch) {
-		mCurrentProcedure = proc;
-		// TODO: the current procedure should not be
-		// kept in 2 different places. This causes bugs
-		mProgDecl.setCurrentProcedure(proc);
 	}
 
 	public Expression getExpression() {
@@ -170,7 +173,7 @@ public class BoogieValueSwitch implements JimpleValueSwitch {
 			if (!(thisvar.getType() instanceof BoogieObjectType)) {
 				// if the this var is not a reference we do a brute force cast
 				// this is a hack but should be sound
-				Log.error("WARNING - more testing requried for translateInvokeExpr");
+				mLogger.error("WARNING - more testing requried for translateInvokeExpr");
 				thisvar = mProgDecl.getOperatorFunctionFactory().castIfNecessary(thisvar, BoogieBaseTypes.getRefType());
 			}
 
@@ -246,7 +249,7 @@ public class BoogieValueSwitch implements JimpleValueSwitch {
 
 	@Override
 	public void defaultCase(Object arg0) {
-		Log.error("BoogieValueSwitch: case not covered");
+		mLogger.error("BoogieValueSwitch: case not covered");
 		assert(false);
 	}
 
@@ -262,7 +265,7 @@ public class BoogieValueSwitch implements JimpleValueSwitch {
 
 	@Override
 	public void caseCastExpr(CastExpr arg0) {
-		Log.debug("Cast " + arg0.getOp().getType() + " to type " + arg0.getCastType() + " not implemented");
+		mLogger.debug("Cast " + arg0.getOp().getType() + " to type " + arg0.getCastType() + " not implemented");
 		arg0.getOp().apply(this);
 	}
 
@@ -306,12 +309,12 @@ public class BoogieValueSwitch implements JimpleValueSwitch {
 		arg0.getOp().apply(this);
 		Expression te;
 		if (arg0.getCheckType() instanceof RefType) {
-			
+
 			te = mProgDecl.getOperatorFunctionFactory().createBinOp("instanceof", getExpression(),
 					new TypeExpression(mProgDecl.getCache().lookupTypeVariable((RefType) arg0.getCheckType())));
 		} else {
 			// arg0 checks an ArrayType not a RefType...
-			Log.error("caseInstanceOfExpr is not fully implemented");
+			mLogger.error("caseInstanceOfExpr is not fully implemented");
 			te = mProgDecl.getFreshGlobalConstant(BoogieBaseTypes.getIntType());
 		}
 		mExpressionStack.add(te);
@@ -333,10 +336,10 @@ public class BoogieValueSwitch implements JimpleValueSwitch {
 		Expression exp = this.getExpression();
 		Expression lenexp = mProgDecl.getProgram().getArraySizeExpression(exp);
 		if (lenexp == null) {
-			Log.error(arg0.getOp().getType().toString());
-			Log.error(">> " + exp.toBoogie() + " :: " + exp.getType().toBoogie());
+			mLogger.error(arg0.getOp().getType().toString());
+			mLogger.error(">> " + exp.toBoogie() + " :: " + exp.getType().toBoogie());
 
-			Log.error("BUG");
+			mLogger.error("BUG");
 		}
 		mExpressionStack.push(lenexp);
 	}
@@ -369,10 +372,10 @@ public class BoogieValueSwitch implements JimpleValueSwitch {
 			mExpressionStack.push(mProgDecl.getOperatorFunctionFactory().getFreshHeapField(arg0.getType()));
 			break;
 		case SimpleHeap:
-			Log.error("Warning: Arrays are not supported by the theorem prover");
-			Log.error("At: " + arg0);
-			mExpressionStack.push(mProgDecl
-					.getFreshGlobalConstant(mProgDecl.getTypeFactory().lookupBoogieType(arg0.getType())));
+			mLogger.error("Warning: Arrays are not supported by the theorem prover");
+			mLogger.error("At: " + arg0);
+			mExpressionStack.push(
+					mProgDecl.getFreshGlobalConstant(mProgDecl.getTypeFactory().lookupBoogieType(arg0.getType())));
 		}
 	}
 
@@ -383,8 +386,8 @@ public class BoogieValueSwitch implements JimpleValueSwitch {
 			mExpressionStack.push(mProgDecl.getOperatorFunctionFactory().getFreshHeapField(arg0.getType()));
 			break;
 		case SimpleHeap:
-			mExpressionStack.push(mProgDecl
-					.getFreshGlobalConstant(mProgDecl.getTypeFactory().lookupBoogieType(arg0.getType())));
+			mExpressionStack.push(
+					mProgDecl.getFreshGlobalConstant(mProgDecl.getTypeFactory().lookupBoogieType(arg0.getType())));
 		}
 	}
 
@@ -395,10 +398,10 @@ public class BoogieValueSwitch implements JimpleValueSwitch {
 			mExpressionStack.push(mProgDecl.getOperatorFunctionFactory().getFreshHeapField(arg0.getType()));
 			break;
 		case SimpleHeap:
-			Log.error("Warning: Multiarrays are not supported by the theorem prover.");
-			Log.error("At: " + arg0);
-			mExpressionStack.push(mProgDecl
-					.getFreshGlobalConstant(mProgDecl.getTypeFactory().lookupBoogieType(arg0.getType())));
+			mLogger.error("Warning: Multiarrays are not supported by the theorem prover.");
+			mLogger.error("At: " + arg0);
+			mExpressionStack.push(
+					mProgDecl.getFreshGlobalConstant(mProgDecl.getTypeFactory().lookupBoogieType(arg0.getType())));
 		}
 	}
 
@@ -471,7 +474,7 @@ public class BoogieValueSwitch implements JimpleValueSwitch {
 
 	@Override
 	public void caseCaughtExceptionRef(CaughtExceptionRef arg0) {
-		Log.error("THIS CASE MUST BE HANDELED IN STMTSWITCH!");
+		mLogger.error("THIS CASE MUST BE HANDELED IN STMTSWITCH!");
 	}
 
 	@Override

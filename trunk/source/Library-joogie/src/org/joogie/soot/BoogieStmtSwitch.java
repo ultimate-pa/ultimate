@@ -25,6 +25,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 
+import org.apache.log4j.Logger;
 import org.joogie.HeapMode;
 import org.joogie.boogie.BasicBlock;
 import org.joogie.boogie.BoogieProcedure;
@@ -37,7 +38,6 @@ import org.joogie.boogie.statements.InvokeStatement;
 import org.joogie.boogie.statements.Statement;
 import org.joogie.boogie.types.BoogieType;
 import org.joogie.soot.helper.BoogieProgramConstructionDecorator;
-import org.joogie.util.Log;
 
 import soot.Trap;
 import soot.Value;
@@ -99,15 +99,19 @@ public class BoogieStmtSwitch implements StmtSwitch {
 
 	private final BoogieProgramConstructionDecorator mProgDecl;
 
-	public BoogieStmtSwitch(BoogieProcedure proc, HeapMode mode, BoogieProgramConstructionDecorator progDecl) {
+	private final Logger mLogger;
+
+	public BoogieStmtSwitch(BoogieProcedure proc, HeapMode mode, BoogieProgramConstructionDecorator progDecl,
+			Logger logger) {
 		mProgDecl = progDecl;
 		currentProcedure = proc;
+		mLogger = logger;
 
 		// check if there is a rootblock already (e.g., because exception vars
 		// are initialized)
 		currentBlock = proc.getRootBlock();
 
-		valueSwitch = new BoogieValueSwitch(proc, this);
+		valueSwitch = new BoogieValueSwitch(proc, this, mLogger);
 
 		// TODO: the current procedure should not be
 		// kept in 2 different places. This causes bugs
@@ -183,8 +187,8 @@ public class BoogieStmtSwitch implements StmtSwitch {
 				rightVal = arg0.getRightOp();
 				rhs = mProgDecl.getCache().getProcedureInfo(currentProcedure).findCatchVar(st);
 				if (rhs == null) {
-					Log.error("Catch block cannot be identified - skipping command");
-					Log.error(arg0.toString());
+					mLogger.error("Catch block cannot be identified - skipping command");
+					mLogger.error(arg0.toString());
 					return;
 				}
 				arg0.getLeftOp().apply(valueSwitch);
@@ -207,7 +211,7 @@ public class BoogieStmtSwitch implements StmtSwitch {
 			rhs = valueSwitch.getExpression();
 			lhs = currentProcedure.getReturnVariable();
 		} else {
-			Log.error("BoogieStmtSwitch.java: this is not an assignment!");
+			mLogger.error("BoogieStmtSwitch.java: this is not an assignment!");
 			return;
 		}
 
@@ -216,7 +220,8 @@ public class BoogieStmtSwitch implements StmtSwitch {
 		addStatement(currentBlock, asgn, false);
 
 		if (rightVal instanceof NewExpr) {
-			addStatement(currentBlock, new AssumeStatement(mProgDecl.getOperatorFunctionFactory().isNotNull(rhs)), false);
+			addStatement(currentBlock, new AssumeStatement(mProgDecl.getOperatorFunctionFactory().isNotNull(rhs)),
+					false);
 		} else if (rightVal instanceof NewArrayExpr) {
 
 			Expression arrsize = mProgDecl.getProgram().getArraySizeExpression(rhs);
@@ -231,7 +236,8 @@ public class BoogieStmtSwitch implements StmtSwitch {
 						false);
 			}
 		} else if (rightVal instanceof NewMultiArrayExpr) {
-			addStatement(currentBlock, new AssumeStatement(mProgDecl.getOperatorFunctionFactory().isNotNull(rhs)), false);
+			addStatement(currentBlock, new AssumeStatement(mProgDecl.getOperatorFunctionFactory().isNotNull(rhs)),
+					false);
 		}
 	}
 
@@ -261,7 +267,7 @@ public class BoogieStmtSwitch implements StmtSwitch {
 		 */
 		if (SUPRESS_FALSE_POSITIVES) {
 			if (callExpr.getMethod().getSignature().contains("<java.lang.System: void exit(int)>")) {
-				Log.info("Surppressing false positive from call to System.exit");
+				mLogger.info("Surppressing false positive from call to System.exit");
 				currentBlock = null;
 				nextStmtIsNewBlock = true;
 				return;
@@ -290,8 +296,7 @@ public class BoogieStmtSwitch implements StmtSwitch {
 				returntargets.addFirst(valueSwitch.getExpression());
 			} else {
 				if (proc.getReturnVariable() != null) {
-					returntargets.addFirst(
-							mProgDecl.getFreshLocalVariable(proc.getReturnVariable().getType()));
+					returntargets.addFirst(mProgDecl.getFreshLocalVariable(proc.getReturnVariable().getType()));
 				}
 			}
 			InvokeStatement invoke = new InvokeStatement(ivk, returntargets);
@@ -315,7 +320,6 @@ public class BoogieStmtSwitch implements StmtSwitch {
 				for (Expression exc : exceptionvariables) {
 					// also check if the Trap catches this exception.
 
-					
 					BasicBlock catchBlock = mProgDecl.createBasicBlock(currentBlock.getLocationTag());
 					addStatement(catchBlock, new AssumeStatement(mProgDecl.getOperatorFunctionFactory().isNotNull(exc)),
 							true);
@@ -364,7 +368,7 @@ public class BoogieStmtSwitch implements StmtSwitch {
 		if (exret != null) {
 			addStatement(retblock, mProgDecl.getOperatorFunctionFactory().createAssignment(exret, exception), false);
 		} else {
-			Log.debug("translateExceptionHandling not fully implemented - does not affect soundness");
+			mLogger.debug("translateExceptionHandling not fully implemented - does not affect soundness");
 		}
 		b.connectToSuccessor(retblock);
 
@@ -405,7 +409,7 @@ public class BoogieStmtSwitch implements StmtSwitch {
 
 	@Override
 	public void caseBreakpointStmt(BreakpointStmt arg0) {
-		Log.error("Breakpoint: " + arg0.toString());
+		mLogger.error("Breakpoint: " + arg0.toString());
 		assert(false);
 	}
 
@@ -515,7 +519,7 @@ public class BoogieStmtSwitch implements StmtSwitch {
 	@Override
 	public void caseNopStmt(NopStmt arg0) {
 		// TODO Auto-generated method stub
-		Log.error("NopStmt: " + arg0.toString());
+		mLogger.error("NopStmt: " + arg0.toString());
 		assert(false);
 	}
 

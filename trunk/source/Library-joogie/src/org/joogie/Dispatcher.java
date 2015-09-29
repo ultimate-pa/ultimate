@@ -20,58 +20,75 @@
 package org.joogie;
 
 import org.apache.log4j.Logger;
+import org.joogie.boogie.BoogieProgram;
 import org.joogie.runners.SootRunner;
-import org.joogie.util.Log;
 
 /**
- * Dispatcher
+ * Dispatcher.
  * 
  * @author arlt
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ * 
  */
 public final class Dispatcher {
 
 	private final String mInput;
-	private final String mSourceFolder;
-	private final String mOutput;
 	private final SootRunner mSootRunner;
 	private final HeapMode mHeapMode;
 	private final String mScope;
 	private final String mClasspath;
+	private final Logger mLogger;
 
-	public Dispatcher(final String input, final String sourceFolder, final String output, final HeapMode mode,
-			final String scope, final String classPath, final Logger logger) {
-		Log.init(logger);
-
+	/**
+	 * Create a dispatcher to run the java-to-soot-to-boogie transformation of
+	 * Joogie.
+	 * 
+	 * We use the current JRE as source for Java jars.
+	 * 
+	 * @param input
+	 *            The path to a single input file (.java or .jar, .apk soonish).
+	 * @param mode
+	 *            The heap mode (as per Joogie spec)
+	 * @param scope
+	 *            A scope that can be used to exclude parts of the input from
+	 *            the translation / analysis. May be null.
+	 * @param classPath
+	 *            Additions to the classpath in the soot format. May be null.
+	 * @param logger
+	 *            A logger instance that will be used throughout the run.
+	 */
+	public Dispatcher(final String input, final HeapMode mode, final String scope, final String classPath,
+			final Logger logger) {
+		mLogger = logger;
 		mInput = input;
-		mSourceFolder = sourceFolder;
-		mOutput = output;
 		mHeapMode = mode;
 		mScope = scope;
 		mClasspath = classPath;
-
-		mSootRunner = new SootRunner();
+		mSootRunner = new SootRunner(mLogger);
 	}
 
-	public void run() {
+	public BoogieProgram run() {
 		try {
-			Log.debug("Running Soot: Java Bytecode to Boogie representation");
-			runSoot();
-			Log.debug("Done");
+			mLogger.debug("Running Soot: Java Bytecode to Boogie representation");
+			final BoogieProgram prog = runSoot();
+			mLogger.debug("Done");
+			return prog;
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+		return null;
 	}
 
-	private void runSoot() {
+	private BoogieProgram runSoot() {
 		if (mInput.endsWith(".jar")) {
 			// run with JAR file
-			mSootRunner.runWithJar(mInput, mClasspath, mScope, mOutput, mHeapMode);
+			return mSootRunner.runWithJar(mInput, mClasspath, mScope, mHeapMode);
 		} else if (mInput.endsWith(".java")) {
 			// run with Source file
-			mSootRunner.runWithSource(mInput, mClasspath, mOutput, mHeapMode, mScope);
+			return mSootRunner.runWithSource(mInput, mClasspath, mHeapMode, mScope);
 		} else {
 			// run with class file
-			mSootRunner.runWithClass(mInput, mSourceFolder, mOutput, mHeapMode, mScope);
+			return mSootRunner.runWithClass(mInput, mClasspath, mHeapMode, mScope);
 		}
 	}
 }

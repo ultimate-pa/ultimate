@@ -22,10 +22,10 @@ package org.joogie.soot;
 import java.util.Iterator;
 import java.util.Map;
 
+import org.apache.log4j.Logger;
 import org.joogie.HeapMode;
 import org.joogie.boogie.BoogieProcedure;
 import org.joogie.soot.helper.BoogieProgramConstructionDecorator;
-import org.joogie.util.Log;
 
 import soot.Body;
 import soot.BodyTransformer;
@@ -45,11 +45,13 @@ public class BoogieBodyTransformer extends BodyTransformer {
 	private final String mScope;
 	private final HeapMode mHeapmode;
 	private final BoogieProgramConstructionDecorator mProgDecl;
+	private final Logger mLogger;
 
-	public BoogieBodyTransformer(final String scope, HeapMode heapmode, BoogieProgramConstructionDecorator progDecl) {
+	public BoogieBodyTransformer(final String scope, HeapMode heapmode, BoogieProgramConstructionDecorator progDecl,final Logger logger) {
 		mScope = scope;
 		mHeapmode = heapmode;
 		mProgDecl = progDecl;
+		mLogger = logger;
 	}
 
 	@Override
@@ -66,8 +68,6 @@ public class BoogieBodyTransformer extends BodyTransformer {
 		}
 
 		// add method to report
-		SootMethod sootMethod = arg0.getMethod();
-		Log.debug("METHOD: " + sootMethod);
 		transformStmtList(arg0);
 	}
 
@@ -82,7 +82,7 @@ public class BoogieBodyTransformer extends BodyTransformer {
 
 		BoogieProcedure proc = mProgDecl.getCache().lookupProcedure(body.getMethod(), mHeapmode);
 		mProgDecl.setCurrentProcedure(proc);
-		BoogieStmtSwitch bss = new BoogieStmtSwitch(proc, mHeapmode, mProgDecl);
+		BoogieStmtSwitch bss = new BoogieStmtSwitch(proc, mHeapmode, mProgDecl,mLogger);
 
 		Chain<Unit> units = body.getUnits();
 		Iterator<Unit> stmtIt = units.snapshotIterator();

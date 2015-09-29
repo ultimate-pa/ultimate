@@ -23,7 +23,6 @@ import java.util.LinkedList;
 import java.util.List;
 
 import org.joogie.boogie.types.BoogieType;
-import org.joogie.util.Log;
 
 /**
  * WARNING, this is only a Hack. It is only supposed to be used in BoogieAxioms.
@@ -44,8 +43,7 @@ public class IteExpression extends Expression {
 
 	public IteExpression(Expression c, Expression t, Expression e) {
 		if (c == null || t == null || e == null) {
-			Log.error(c + " " + t + " " + e);
-			throw new RuntimeException();
+			throw new UnsupportedOperationException(c + " " + t + " " + e);
 		}
 
 		this.conditional = c;
@@ -89,16 +87,13 @@ public class IteExpression extends Expression {
 	 */
 	@Override
 	public Expression clone() {
-		return new IteExpression(this.conditional.clone(),
-				this.thenResult.clone(), this.elseResult.clone());
+		return new IteExpression(this.conditional.clone(), this.thenResult.clone(), this.elseResult.clone());
 	}
 
 	@Override
 	public BoogieType getType() {
 		// TODO: this check is for debugging purpose only, can be removed later
-		if (this.thenResult.getType() != this.elseResult.getType()) {
-			Log.debug("Types do not match in IteExpression");
-		}
+		assert this.thenResult.getType() != this.elseResult.getType() : "Types do not match in IteExpression";
 		return this.thenResult.getType();
 	}
 

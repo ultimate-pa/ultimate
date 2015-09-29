@@ -39,7 +39,7 @@ public class UnaryExpression extends Expression {
 	/**
 	 * @return the expression
 	 */
-	protected Expression getExpression() {
+	public Expression getExpression() {
 		return exp;
 	}
 
@@ -54,7 +54,7 @@ public class UnaryExpression extends Expression {
 	/**
 	 * @return the operator
 	 */
-	protected UnaryOperator getOperator() {
+	public UnaryOperator getOperator() {
 		return op;
 	}
 

@@ -23,7 +23,9 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 
+import org.apache.log4j.Logger;
 import org.joogie.HeapMode;
 import org.joogie.boogie.constants.UboundedIntConstant;
 import org.joogie.boogie.expressions.ArrayReadExpression;
@@ -38,7 +40,6 @@ import org.joogie.boogie.types.BoogieObjectType;
 import org.joogie.boogie.types.BoogieType;
 import org.joogie.boogie.types.HeapType;
 import org.joogie.boogie.types.RefArrayType;
-import org.joogie.util.Log;
 import org.joogie.util.Util;
 
 /**
@@ -47,9 +48,9 @@ import org.joogie.util.Util;
 public class BoogieProgram {
 
 	private LinkedList<BoogieAxiom> mBoogieAxioms;
-	private HashSet<BoogieProcedure> mBoogieProcedures;
-	private HashSet<Variable> mGlobalsVars;
-	private HashSet<Variable> mTypeVariables;
+	private Set<BoogieProcedure> mBoogieProcedures;
+	private Set<Variable> mGlobalsVars;
+	private Set<Variable> mTypeVariables;
 
 	private Variable mNull;
 	private Variable mNullIntArray;
@@ -61,9 +62,10 @@ public class BoogieProgram {
 	private Variable mSizeString;
 	private Variable mSizeArrayIndex;
 	private Variable mHeapVariable;
+	private final Logger mLogger;
 
-	public BoogieProgram() {
-
+	public BoogieProgram(Logger logger) {
+		mLogger = logger;
 		mBoogieAxioms = new LinkedList<BoogieAxiom>();
 		mBoogieProcedures = new HashSet<BoogieProcedure>();
 		mGlobalsVars = new HashSet<Variable>();
@@ -98,12 +100,12 @@ public class BoogieProgram {
 
 	}
 
-	public HashSet<BoogieProcedure> getProcedures() {
-		return this.mBoogieProcedures;
+	public Set<BoogieProcedure> getProcedures() {
+		return mBoogieProcedures;
 	}
 
-	public HashSet<Variable> getTypeVariables() {
-		return this.mTypeVariables;
+	public Set<Variable> getTypeVariables() {
+		return mTypeVariables;
 	}
 
 	public void addProcedure(BoogieProcedure proc) {
@@ -150,13 +152,14 @@ public class BoogieProgram {
 		} else if (t instanceof RefArrayType) {
 			ret = new ArrayReadExpression(this.mSizeArrayRef, new ArrayReadExpression(arrvar, mSizeArrayIndex));
 		} else if (t instanceof ArrArrayType) {
-			Log.error("MultiArraySize is not implemented");
+			mLogger.error("MultiArraySize is not implemented");
 			Variable tmp = new Variable("$fresh" + (++Util.runningNumber).toString(), BoogieBaseTypes.getIntType());
 			this.mGlobalsVars.add(tmp);
 			ret = tmp;
 		} else {
-			Log.error(t.toBoogie());
-			Log.error("Size of of non-array: [" + arrvar.toBoogie() + "] type: [" + arrvar.getType().toBoogie() + "]");
+			mLogger.error(t.toBoogie());
+			mLogger.error(
+					"Size of of non-array: [" + arrvar.toBoogie() + "] type: [" + arrvar.getType().toBoogie() + "]");
 		}
 		return ret;
 	}
@@ -178,7 +181,7 @@ public class BoogieProgram {
 		} else if (nestedArrayType instanceof BoogieObjectType) {
 			return mNullRefArray;
 		} else if (nestedArrayType instanceof BoogieArrayType) {
-			Log.error("Multi Arrays are not implementd");
+			mLogger.error("Multi Arrays are not implementd");
 			Variable tmp = new Variable("$fresh" + (++Util.runningNumber).toString(), nestedArrayType);
 			this.mGlobalsVars.add(tmp);
 			return tmp;
@@ -186,7 +189,7 @@ public class BoogieProgram {
 		return null;
 	}
 
-	public String toBoogie(HeapMode heapmode) {
+	public String toLegacyBoogie(HeapMode heapmode) {
 		StringBuilder sb = new StringBuilder();
 
 		sb.append("type " + BoogieBaseTypes.getRefType().toBoogie() + ";\n");
@@ -272,4 +275,41 @@ public class BoogieProgram {
 	public Variable getRefArraySize() {
 		return mSizeArrayRef;
 	}
+
+	public Variable getNullIntArray() {
+		return mNullIntArray;
+	}
+
+	public Variable getNullRealArray() {
+		return mNullRealArray;
+	}
+
+	public Variable getNullRefArray() {
+		return mNullRefArray;
+	}
+
+	public Variable getSizeIndexArray() {
+		return mSizeArrayIndex;
+	}
+
+	public Variable getSizeArrayInt() {
+		return mSizeArrayInt;
+	}
+
+	public Variable getSizeArrayReal() {
+		return mSizeArrayReal;
+	}
+
+	public Variable getSizeArrayRef() {
+		return mSizeArrayRef;
+	}
+
+	public Variable getSizeString() {
+		return mSizeString;
+	}
+
+	public Set<Variable> getGlobalVariables() {
+		return mGlobalsVars;
+	}
+
 }
