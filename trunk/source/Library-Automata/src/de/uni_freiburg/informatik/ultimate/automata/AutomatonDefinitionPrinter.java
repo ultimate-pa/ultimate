@@ -803,7 +803,8 @@ public class AutomatonDefinitionPrinter<LETTER,STATE> {
 				m_printWriter.print(header);
 				String bodyToken = "--BODY--";
 				m_printWriter.print(bodyToken);
-				String body = constructHeader();
+				m_printWriter.print(System.lineSeparator());
+				String body = constructBody();
 				m_printWriter.print(body);
 				String endToken = "--END--";
 				m_printWriter.print(endToken);
@@ -824,12 +825,12 @@ public class AutomatonDefinitionPrinter<LETTER,STATE> {
 				
 				sb.append("AP: " + m_Nwa.getInternalAlphabet().size());
 				for (LETTER letter : m_Nwa.getInternalAlphabet()) {
-					sb.append(" " + letter);
+					sb.append(" \"" + letter + "\"");
 				}
 				sb.append(System.lineSeparator());
 				
 				sb.append("Acceptance: " + m_Nwa.getFinalStates().size());
-				sb.append("Inf(" + 0 + ")");
+				sb.append(" Inf(" + 0 + ")");
 //				boolean first = true;
 //				for (STATE state : m_Nwa.getFinalStates()) {
 //					if (first) {
@@ -846,10 +847,34 @@ public class AutomatonDefinitionPrinter<LETTER,STATE> {
 				sb.append("acc-name: Buchi");
 				sb.append(System.lineSeparator());
 				
-				sb.append("tool: Ultimate");
+				sb.append("tool: \"Ultimate Automata Library\"");
 				sb.append(System.lineSeparator());
 				
-				return null;
+				return sb.toString();
+			}
+			
+			private String constructBody() {
+				StringBuilder sb = new StringBuilder();
+
+				String accSig = "{0}";
+				for (STATE state : m_Nwa.getStates()) {
+					sb.append("State: " + m_StateMapping.get(state) + " \"" + state + "\"");
+					if (m_Nwa.isFinal(state)) {
+						sb.append(" " + accSig);
+					}
+					sb.append(System.lineSeparator());
+					for (LETTER letter : m_Nwa.lettersInternal(state)) {
+						for (OutgoingInternalTransition<LETTER, STATE> tes : m_Nwa.internalSuccessors(state, letter)) {
+							sb.append("[");
+							sb.append(m_AlphabetMapping.get(tes.getLetter()));
+							sb.append("] ");
+							sb.append(m_StateMapping.get(tes.getSucc()));
+							sb.append(System.lineSeparator());
+						}
+					}
+					
+				}
+				return sb.toString();
 			}
 			
 			
