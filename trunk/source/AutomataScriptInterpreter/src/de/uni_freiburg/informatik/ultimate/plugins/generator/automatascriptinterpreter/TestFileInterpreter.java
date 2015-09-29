@@ -1103,7 +1103,8 @@ public class TestFileInterpreter implements IMessagePrinter {
 					} else {
 						throw new InterpreterException(oe.getLocation(), 
 								"if first argument of print command is an "
-								+ "automaton second argument has to be a String that defines a output format");
+								+ "automaton second argument has to be a string "
+								+ "that defines an output format");
 					}
 				} else {
 					throw new InterpreterException(oe.getLocation(), 
@@ -1117,7 +1118,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 				if (arguments.size() > 1) {
 					throw new InterpreterException(oe.getLocation(), 
 							"if first argument of print command is not an "
-							+ "automaton not second argument allowed");
+							+ "automaton no second argument allowed");
 				} else {
 					text = String.valueOf(arguments.get(0));
 				}
