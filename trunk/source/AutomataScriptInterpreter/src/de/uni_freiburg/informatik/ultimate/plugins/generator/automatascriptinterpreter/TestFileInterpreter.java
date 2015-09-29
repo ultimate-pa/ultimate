@@ -1094,8 +1094,9 @@ public class TestFileInterpreter implements IMessagePrinter {
 					format = Format.ATS;
 				} else if (arguments.size() == 2) {
 					if (arguments.get(1) instanceof String) {
-						format = Format.valueOf((String) arguments.get(1));
-						if (format == null) {
+						try {
+							format = Format.valueOf((String) arguments.get(1));
+						} catch (Exception e) {
 							throw new InterpreterException(oe.getLocation(), 
 									"unknown format " + (String) arguments.get(1));
 						}
@@ -1110,7 +1111,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 							+ "automaton only two arguments are allowed");
 				}
 				mLastPrintedAutomaton = (IAutomaton<?, ?>) arguments.get(0);
-				text = (new AutomatonDefinitionPrinter<String, String>(mServices, "automaton", Format.ATS, arguments.get(0)))
+				text = (new AutomatonDefinitionPrinter<String, String>(mServices, "automaton", format, arguments.get(0)))
 							.getDefinitionAsString();
 			} else {
 				if (arguments.size() > 1) {

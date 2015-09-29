@@ -144,7 +144,7 @@ public class AutomatonDefinitionPrinter<LETTER,STATE> {
 			m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 			m_StringWriter = new StringWriter();
 			m_printWriter = new PrintWriter(m_StringWriter);
-			printAutomaton(name, automaton, Format.ATS);
+			printAutomaton(name, automaton, format);
 		}
 		
 		public String getDefinitionAsString() {
