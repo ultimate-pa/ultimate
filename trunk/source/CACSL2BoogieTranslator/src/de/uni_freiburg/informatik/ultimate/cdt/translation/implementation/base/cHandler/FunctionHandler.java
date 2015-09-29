@@ -525,12 +525,10 @@ public class FunctionHandler {
 					predSCCs.add(sccCaller);
 					updateGraph.put(sccCallee, predSCCs);
 				}
-				//incomingEdges.put(sccCaller, incomingEdges.get(sccCaller) + 1);//--> BUG (*)
 				deadEnds.remove(sccCaller);
 			}
 		}
 		
-		//Bugfix: incoming edge count was wrong because the callgraph is not on sccs
 		// incoming edges must be computed on a graph that has Sccs as nodes (updategraph), not just the functions (callgraph)
 		for (LinkedHashSet<String> calleeScc : updateGraph.keySet()) {
 			for (LinkedHashSet<String> callerScc : updateGraph.get(calleeScc)) {
@@ -584,15 +582,12 @@ public class FunctionHandler {
 				assert functionNameToScc.get(mId) != null;
 				LinkedHashSet<String> currModClause = sccToModifiedGlobals.get(functionNameToScc.get(mId));
 				assert currModClause != null : "No modifies clause proc " + mId;
-//				if (currModClause == null) {
-//					currModClause = new LinkedHashSet<>();
-//				}
-//				modifiedGlobals.put(mId, currModClause);
-				modifiedGlobals.get(mId).addAll(currModClause);//TODO Hack --> understand what's going on, makes a difference in ntdrivers/parport_false..
+
+				modifiedGlobals.get(mId).addAll(currModClause);
 				int nrSpec = spec.length;
 				spec = Arrays.copyOf(spec, nrSpec + 1);
 				LinkedHashSet<String> modifySet = new LinkedHashSet<>();
-//				for (String var : currModClause) {
+
 				for (String var : modifiedGlobals.get(mId)) {
 					modifySet.add(var);
 				}
