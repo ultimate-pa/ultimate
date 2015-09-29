@@ -57,6 +57,7 @@ import de.uni_freiburg.informatik.ultimate.util.relation.Pair;
  * @author Markus Lindenmann
  * @author Stefan Wissert
  * @author Oleksii Saukh
+ * @author Matthias Heizmann
  * @date 02.01.2012
  * 
  * @param <ELEM>
@@ -72,7 +73,7 @@ public class UnprovableResult<ELEM extends IElement, TE extends IElement, E> ext
 	private final Check mCheckedSpecification;
 	private final IProgramExecution<TE, E> mProgramExecution;
 	private final List<ILocation> mFailurePath;
-	private final String mOverapproximationMessage;
+	private final List<UnprovabilityReason> mUnprovabilityReasons;
 
 	/**
 	 * Constructor.
@@ -81,7 +82,7 @@ public class UnprovableResult<ELEM extends IElement, TE extends IElement, E> ext
 	 *            the Location
 	 */
 	public UnprovableResult(String plugin, ELEM position, IBacktranslationService translatorSequence,
-			IProgramExecution<TE, E> programExecution, Map<String, ILocation> overapproximations) {
+			IProgramExecution<TE, E> programExecution, List<UnprovabilityReason> unprovabilityReasons) {
 		super(position, plugin, translatorSequence);
 		Check check = ResultUtil.getCheckedSpecification(position);
 		if (check == null) {
@@ -91,34 +92,9 @@ public class UnprovableResult<ELEM extends IElement, TE extends IElement, E> ext
 		}
 		mProgramExecution = programExecution;
 		mFailurePath = ResultUtil.getLocationSequence(programExecution);
-		if (overapproximations == null || overapproximations.isEmpty()) {
-			mOverapproximationMessage = "";
-		} else {
-			mOverapproximationMessage = generateOverapproximationMessage(overapproximations);
-		}
-		
+		mUnprovabilityReasons = unprovabilityReasons;
 	}
 	
-	private static String generateOverapproximationMessage(Map<String, ILocation> overapproximations) {
-		List<Pair<String, ILocation>> pairs = new ArrayList<>();
-		for (Entry<String, ILocation> entry : overapproximations.entrySet()) {
-			pairs.add(new Pair<String, ILocation>(entry.getKey(), entry.getValue()));
-		}
-		StringBuilder sb = new StringBuilder();
-		sb.append(" because the following operations were overapproximated: ");
-		for (int i=0; i<pairs.size(); i++) {
-			sb.append(pairs.get(i).getFirst());
-			sb.append(" in line ");
-			sb.append(pairs.get(i).getSecond().getStartLine());
-			if (i==pairs.size()-1) {
-				sb.append(". ");
-			} else {
-				sb.append(", ");
-			}
-		}
-		return sb.toString();
-	}
-
 	public Check getCheckedSpecification() {
 		return mCheckedSpecification;
 	}
@@ -130,7 +106,7 @@ public class UnprovableResult<ELEM extends IElement, TE extends IElement, E> ext
 
 	@Override
 	public String getLongDescription() {
-		return "Unable to prove that " + mCheckedSpecification.getPositiveMessage() + mOverapproximationMessage;
+		return "Unable to prove that " + mCheckedSpecification.getPositiveMessage() + getReasons();
 	}
 
 	/**
@@ -144,5 +120,23 @@ public class UnprovableResult<ELEM extends IElement, TE extends IElement, E> ext
 
 	public IProgramExecution<TE, E> getProgramExecution() {
 		return mProgramExecution;
+	}
+	
+	/**
+	 * @return a description of the reasons for unprovability.
+	 */
+	public String getReasons() {
+		StringBuilder sb = new StringBuilder();
+		sb.append(" Reason:");
+		for (int i=0; i<mUnprovabilityReasons.size(); i++) {
+			sb.append(" overapproximation of ");
+			sb.append(mUnprovabilityReasons.get(i));
+			if (i==mUnprovabilityReasons.size()-1) {
+				sb.append(". ");
+			} else {
+				sb.append(", ");
+			}
+		}
+		return sb.toString();
 	}
 }

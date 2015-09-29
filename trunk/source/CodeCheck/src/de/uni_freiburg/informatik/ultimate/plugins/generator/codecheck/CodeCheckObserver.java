@@ -98,6 +98,7 @@ import de.uni_freiburg.informatik.ultimate.result.IResultWithSeverity.Severity;
 import de.uni_freiburg.informatik.ultimate.result.PositiveResult;
 import de.uni_freiburg.informatik.ultimate.result.ResultUtil;
 import de.uni_freiburg.informatik.ultimate.result.TimeoutResultAtElement;
+import de.uni_freiburg.informatik.ultimate.result.UnprovabilityReason;
 import de.uni_freiburg.informatik.ultimate.result.UnprovableResult;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProvider;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
@@ -582,7 +583,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 
 	private void reportCounterexampleResult(RcfgProgramExecution pe) {
 		if (!pe.getOverapproximations().isEmpty()) {
-			reportUnproveableResult(pe, pe.getOverapproximations());
+			reportUnproveableResult(pe, pe.getUnprovabilityReasons());
 			return;
 		}
 
@@ -590,10 +591,10 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 				mServices.getBacktranslationService(), pe));
 	}
 
-	private void reportUnproveableResult(RcfgProgramExecution pe, Map<String, ILocation> overapproximations) {
+	private void reportUnproveableResult(RcfgProgramExecution pe, List<UnprovabilityReason> unproabilityReasons) {
 		ProgramPoint errorPP = getErrorPP(pe);
 		UnprovableResult<RcfgElement, CodeBlock, Expression> uknRes = new UnprovableResult<RcfgElement, CodeBlock, Expression>(
-				Activator.s_PLUGIN_NAME, errorPP, mServices.getBacktranslationService(), pe, overapproximations);
+				Activator.s_PLUGIN_NAME, errorPP, mServices.getBacktranslationService(), pe, unproabilityReasons);
 		reportResult(uknRes);
 	}
 

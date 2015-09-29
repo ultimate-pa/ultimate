@@ -134,20 +134,21 @@ public class BuchiAutomizerBlaStTests extends
 //		"buchiAutomizer/stagedblastForwardPredicatesNonlinear.epf",
 //		"buchiAutomizer/tabablastForwardPredicatesNonlinear.epf",
 //		"buchiAutomizer/tabarankbasedForwardPredicatesNonlinear.epf",
-		"buchiAutomizer/stagedblastCraigLinear.epf",
-		"buchiAutomizer/stagedCraigLinear.epf",
-//		"buchiAutomizer/stagedForwardPredicatesLinear.epf",
+//		"buchiAutomizer/stagedblastCraigLinear.epf",
+//		"buchiAutomizer/stagedCraigLinear.epf",
+		"buchiAutomizer/stagedForwardPredicatesLinear.epf",
+		"buchiAutomizer/stagedblastForwardPredicatesLinear.epf",
 	};
 	
 	
 	private static final String[] m_BoogieToolchains = {
-		"BuchiAutomizerBplWithBlockEncoding.xml",
-//		"BuchiAutomizerBplInlineWithBlockEncoding.xml",
+//		"BuchiAutomizerBplWithBlockEncoding.xml",
+		"BuchiAutomizerBplInlineWithBlockEncoding.xml",
 	};
 	
 	private static final String[] m_CToolchains = {
-		"BuchiAutomizerCWithBlockEncoding.xml",
-//		"BuchiAutomizerCInlineWithBlockEncoding.xml",
+//		"BuchiAutomizerCWithBlockEncoding.xml",
+		"BuchiAutomizerCInlineWithBlockEncoding.xml",
 	};
 
 	

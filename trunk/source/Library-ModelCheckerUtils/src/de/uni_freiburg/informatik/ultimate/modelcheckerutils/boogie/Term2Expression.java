@@ -144,6 +144,8 @@ public class Term2Expression implements Serializable {
 			return translateSelect(term);
 		} else if (symb.isIntern() && symb.getName().equals("store")) {
 			return translateStore(term);
+		} else if (symb.isIntern() && symb.getName().startsWith("bv") && symb.getIndices().length == 1) {
+			return translateBitvectorConstant(term);
 		}
 		Expression[] params = new Expression[termParams.length];
 		for (int i=0; i<termParams.length; i++) {
@@ -217,6 +219,20 @@ public class Term2Expression implements Serializable {
 		}
 	}
 	
+	/**
+	 * Translate term in case it is a bitvector constant as defined as an 
+	 * extension of the BV logic.
+	 */
+	private Expression translateBitvectorConstant(ApplicationTerm term) {
+		assert term.getSort().getIndices().length == 1;
+		String name = term.getFunction().getName();
+		assert name.startsWith("bv");
+		String decimalValue = name.substring(2, name.length());
+		IType type = m_TypeSortTranslator.getType(term.getSort());
+		BigInteger length = term.getSort().getIndices()[0];
+		return new BitvecLiteral(null, type , decimalValue, length.intValue());
+	}
+
 	private Expression mod(Expression[] params) {
 		if (params.length != 2) {
 			throw new AssertionError("mod has two parameters");

@@ -131,16 +131,16 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.CDeclaration;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ContractResult;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.DeclarationResult;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionListRecResult;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionListResult;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.HeapLValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LRValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LocalLValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ContractResult;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.DeclarationResult;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionListResult;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionListRecResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.SkipResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.TypesResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.BoogieASTUtil;
@@ -1236,9 +1236,11 @@ public class CHandler implements ICHandler {
 		final Expression valueIncremented;
 		if (ctype instanceof CPointer) {
 			CPointer cPointer = (CPointer) ctype; 
-			Expression one = m_ExpressionTranslation.constructLiteralForIntegerType(
+			Expression oneEpr = m_ExpressionTranslation.constructLiteralForIntegerType(
 					loc, m_ExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ONE);
-			valueIncremented = doPointerArith(main, op, loc, value, one, cPointer.pointsToType);
+			CPrimitive oneType = m_ExpressionTranslation.getCTypeOfPointerComponents();
+			RValue one = new RValue(oneEpr, oneType);
+			valueIncremented = doPointerArithmetic(main, op, loc, value, one, cPointer.pointsToType);
 			addOffsetInBoundsCheck(main, loc, valueIncremented, result);
 		}
 		else if (ctype instanceof CPrimitive) {
@@ -1806,7 +1808,7 @@ public class CHandler implements ICHandler {
 			typeOfResult = left.lrVal.getCType();
 			CType pointsToType = ((CPointer) typeOfResult).pointsToType;
 			result = ExpressionResult.copyStmtDeclAuxvarOverapprox(left, right);
-			expr = doPointerArith(main, op, loc, left.lrVal.getValue(), right.lrVal.getValue(), pointsToType);
+			expr = doPointerArithmetic(main, op, loc, left.lrVal.getValue(), (RValue) right.lrVal, pointsToType);
 			addOffsetInBoundsCheck(main, loc, expr, result);
 		} else if (lType.isArithmeticType() && (rType instanceof CPointer)) {
 			if (op != IASTBinaryExpression.op_plus && op != IASTBinaryExpression.op_plusAssign) {
@@ -1815,7 +1817,7 @@ public class CHandler implements ICHandler {
 			typeOfResult = right.lrVal.getCType();
 			CType pointsToType = ((CPointer) typeOfResult).pointsToType;
 			result = ExpressionResult.copyStmtDeclAuxvarOverapprox(left, right);
-			expr = doPointerArith(main, op, loc, right.lrVal.getValue(), left.lrVal.getValue(), pointsToType);
+			expr = doPointerArithmetic(main, op, loc, right.lrVal.getValue(), (RValue) left.lrVal, pointsToType);
 			addOffsetInBoundsCheck(main, loc, expr, result);
 		} else if ((lType instanceof CPointer) && (rType instanceof CPointer)) {
 			if (op != IASTBinaryExpression.op_minus && op != IASTBinaryExpression.op_minusAssign) {
@@ -3150,14 +3152,11 @@ public class CHandler implements ICHandler {
 		return !(env instanceof IASTForStatement) && !(env instanceof IASTFunctionDefinition);
 	}
 
+
 	/**
-	 * Add up a Pointer and an integer (both given as RValues) to a new Pointer
+	 * Add or subtract a Pointer and an integer.
 	 * 
-	 * @param main
-	 *            The MainDispatcher
-	 * @param operator
-	 * @param loc
-	 * @param ptr
+	 * @param operator Either plus or minus.
 	 * @param integer
 	 * @param valueType
 	 *            The value type the pointer points to (we need it because we
@@ -3166,35 +3165,22 @@ public class CHandler implements ICHandler {
 	 * @return a pointer of the form: {base: ptr.base, offset: ptr.offset +
 	 *         integer * sizeof(valueType)}
 	 */
-	public RValue doPointerArithPointerAndInteger(Dispatcher main, int operator, ILocation loc, RValue ptr,
+	public Expression doPointerArithmetic(Dispatcher main, int operator, ILocation loc, Expression ptrAddress,
 			RValue integer, CType valueType) {
-		Expression ptrAddress = ptr.getValue();
-		Expression newPointer = doPointerArith(main, operator, loc, ptrAddress, integer.getValue(), valueType);
-		return new RValue(newPointer, ptr.getCType());
-	}
-
-	/**
-	 * Like doPointerArtih(... RValue ptr, RValue integer, ...) but with
-	 * Expressions instead of RValues.
-	 */
-	public Expression doPointerArith(Dispatcher main, int operator, ILocation loc, Expression ptrAddress,
-			Expression integer, CType valueType) {
+		if (main.getTypeSizes().getSize(((CPrimitive) integer.getCType()).getType()) != 
+				main.getTypeSizes().getSize(m_ExpressionTranslation.getCTypeOfPointerComponents().getType())) {
+			throw new UnsupportedOperationException("not yet implemented, conversion is needed");
+		}
 		final Expression pointerBase = MemoryHandler.getPointerBaseAddress(ptrAddress, loc);
 		final Expression pointerOffset = MemoryHandler.getPointerOffset(ptrAddress, loc);
-		final Expression timesSizeOf;
-		if (valueType == null) {
-			timesSizeOf = integer;
-		} else {
-			timesSizeOf = multiplyWithSizeOfAnotherType(loc, valueType, integer, 
+		final Expression timesSizeOf = multiplyWithSizeOfAnotherType(loc, valueType, integer.getValue(), 
 					m_ExpressionTranslation.getCTypeOfPointerComponents());
-		}
 		final Expression sum = m_ExpressionTranslation.createArithmeticExpression(operator, 
 				pointerOffset, m_ExpressionTranslation.getCTypeOfPointerComponents(),
 				timesSizeOf, m_ExpressionTranslation.getCTypeOfPointerComponents(), loc);
 		final StructConstructor newPointer = MemoryHandler.constructPointerFromBaseAndOffset(pointerBase, sum, loc);
 		return newPointer;
 	}
-
 	
 	/**
 	 * Multiply an integerExpresion with the size of another type.
@@ -3908,6 +3894,13 @@ public class CHandler implements ICHandler {
 	}
 
 	@Override
+	@Deprecated
+	/* Matthias 2015-09-21: "premature optimization is the root of all evil"
+	 * I think, by now we should not use this method and better live with
+	 * long expressions.
+	 * However, I don't want to delete this method, we might want to use
+	 * it in the future.
+	 */
 	public BigInteger computeConstantValue(Expression value) {
 		if (value instanceof IntegerLiteral) {
 			return new BigInteger(((IntegerLiteral) value).getValue());
@@ -3957,4 +3950,6 @@ public class CHandler implements ICHandler {
 	public InitializationHandler getInitHandler() {
 		return mInitHandler;
 	}
+
+
 }

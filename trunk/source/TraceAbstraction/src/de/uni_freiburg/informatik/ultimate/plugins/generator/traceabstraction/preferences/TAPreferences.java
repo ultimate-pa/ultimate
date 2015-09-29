@@ -27,7 +27,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences;
 
-import de.uni_freiburg.informatik.ultimate.automata.AtsDefinitionPrinter.Labeling;
+import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter.Format;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.HoareTripleChecks;
@@ -44,7 +44,7 @@ public class TAPreferences {
 	private final INTERPOLATION m_Interpolation;
 	private final InterpolantAutomaton m_InterpolantAutomaton;
 	private final boolean m_DumpAutomata;
-	private final Labeling m_AutomataFormat;
+	private final Format m_AutomataFormat;
 	private final String m_DumpPath;
 	private final InterpolantAutomatonEnhancement m_Determiniation;
 	private final Minimization m_Minimize;
@@ -62,7 +62,8 @@ public class TAPreferences {
 	public enum InterpolantAutomatonEnhancement {
 		NONE, BESTAPPROXIMATION_DEPRECATED, SELFLOOP, EAGER, EAGER_CONSERVATIVE, 
 		NO_SECOND_CHANCE, 
-		PREDICATE_ABSTRACTION, PREDICATE_ABSTRACTION_CONSERVATIVE,
+		PREDICATE_ABSTRACTION, PREDICATE_ABSTRACTION_CONSERVATIVE, 
+		PREDICATE_ABSTRACTION_CANNIBALIZE,
 	}
 
 
@@ -101,7 +102,7 @@ public class TAPreferences {
 		
 		m_AutomataFormat = m_Prefs.getEnum(
 				TraceAbstractionPreferenceInitializer.LABEL_AUTOMATAFORMAT,
-				Labeling.class);
+				Format.class);
 
 		m_DumpPath = m_Prefs.getString(TraceAbstractionPreferenceInitializer.LABEL_DUMPPATH);
 
@@ -184,7 +185,7 @@ public class TAPreferences {
 		return m_DumpAutomata;
 	}
 	
-	public Labeling getAutomataFormat() {
+	public Format getAutomataFormat() {
 		return m_AutomataFormat;
 	}
 

@@ -29,7 +29,6 @@
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler;
 
 import java.math.BigInteger;
-import java.util.ArrayList;
 import java.util.Arrays;
 
 import org.eclipse.cdt.core.dom.ast.IASTArraySubscriptExpression;
@@ -40,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.C
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.PRIMITIVE;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.HeapLValue;
@@ -65,7 +65,7 @@ import de.uni_freiburg.informatik.ultimate.result.Check.Spec;
 /**
  * Class that handles translation of arrays.
  * 
- * @author Markus Lindenmann
+ * @author Markus Lindenmann, Matthias Heizmann
  * @date 12.10.2012
  */
 public class ArrayHandler {
@@ -98,74 +98,85 @@ public class ArrayHandler {
 		final CType cTypeLeft = leftExpRes.lrVal.getCType();
 		if (cTypeLeft instanceof CPointer) {
 			// if p is a pointer, then p[42] is equivalent to *(p + 42)
+			assert (isInnermostSubscriptExpression(node) && isOutermostSubscriptExpression(node))
+					: "in this case nested subscript expressions are impossible"; 
 			leftExpRes = leftExpRes.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
 			assert cTypeLeft.equals(leftExpRes.lrVal.getCType());
-			Expression ptrAddress = leftExpRes.lrVal.getValue();
-			Expression integer = subscript.lrVal.getValue();
+			Expression oldAddress = leftExpRes.lrVal.getValue();
+			RValue integer = (RValue) subscript.lrVal;
 			CType valueType = ((CPointer) cTypeLeft).pointsToType;;
-			Expression address = ((CHandler) main.cHandler).doPointerArith(main, 
-					IASTBinaryExpression.op_plus, loc, ptrAddress, integer, valueType);
+			Expression newAddress = ((CHandler) main.cHandler).doPointerArithmetic(main, 
+					IASTBinaryExpression.op_plus, loc, oldAddress, integer, valueType);
 			result = ExpressionResult.copyStmtDeclAuxvarOverapprox(leftExpRes, subscript);
-			HeapLValue lValue = new HeapLValue(address, valueType, false);
+			HeapLValue lValue = new HeapLValue(newAddress, valueType, false);
 			result.lrVal = lValue;
 		} else {
 			assert cTypeLeft.getUnderlyingType() instanceof CArray : "cType not instanceof CArray";
-			//TODO: revise this else branch
-			result = new ExpressionResult(leftExpRes);
-			
-			result.stmt.addAll(subscript.stmt);
-			result.decl.addAll(subscript.decl);
-			result.auxVars.putAll(subscript.auxVars);
-			result.overappr.addAll(subscript.overappr);
-			
-			ArrayList<Expression> newDimensions = 
-					new ArrayList<Expression>(Arrays.asList(((CArray) result.lrVal.getCType().getUnderlyingType())
-							.getDimensions()));
-			CType newCType = null;
-			if (newDimensions.size() == 1) {
-				newCType = ((CArray) result.lrVal.getCType().getUnderlyingType()).getValueType();
+			final CArray cArray = (CArray) cTypeLeft.getUnderlyingType();
+
+			// The result type will be an array where the first dimension is
+			// missing. E.g., if the input is a (int x int -> float) array
+			// the resulting array will be an (int -> float) array.
+			final CType resultCType;
+			if (cArray.getDimensions().length == 1) {
+				assert isOutermostSubscriptExpression(node) : "not outermost";
+				resultCType = cArray.getValueType();
 			} else {
-				newDimensions.remove(0);
-				newCType = new CArray(newDimensions.toArray(new Expression[0]), 
-						((CArray) result.lrVal.getCType().getUnderlyingType()).getValueType()
-						);
+				Expression[] newDimensions = Arrays.copyOfRange(
+						cArray.getDimensions(), 1, cArray.getDimensions().length);
+				assert newDimensions.length == cArray.getDimensions().length - 1;
+				resultCType = new CArray(newDimensions, cArray.getValueType());
 			}
 
-			if (result.lrVal instanceof HeapLValue) {
-				result.lrVal = new HeapLValue(((CHandler) main.cHandler).doPointerArith(
-						main, IASTBinaryExpression.op_plus, loc, 
-						((HeapLValue) result.lrVal).getAddress(),
-						subscript.lrVal.getValue(),
-						newCType), newCType);
-			} else if (result.lrVal instanceof LocalLValue) {
-				LocalLValue newLLVal = new LocalLValue((LocalLValue) result.lrVal);
-				LeftHandSide innerArrayLHS = ((LocalLValue) result.lrVal).getLHS();
-				if (innerArrayLHS instanceof ArrayLHS) {
-					ArrayList<Expression> innerIndices = new ArrayList<Expression>(
-							Arrays.asList(((ArrayLHS) innerArrayLHS).getIndices()));
-					innerIndices.add(subscript.lrVal.getValue());
-					newLLVal.lhs = new ArrayLHS(loc, 
-							((ArrayLHS) innerArrayLHS).getArray(), innerIndices.toArray(new Expression[0]));
+			if (leftExpRes.lrVal instanceof HeapLValue) {
+				// If the left hand side is an array represented as HeapLValue
+				// we use pointer arithmetic to compute the result.
+				// E.g., a[23] becomes addressOf(a) + 23 * sizeof(valueType)
+				// Note that the computation is not trivial if the array is
+				// multidimensional. Let's assume we have an array whose 
+				// declaration is a[3][5][7] and we are processing the innermost
+				// of a nested subscript expression a[2].
+				// Then the resulting address will be 
+				//     addressOf(a) + 2 * 5 * 7 * sizeof(valueType)
+				// We achieve this by doing pointer arithmetic where we use
+				// the "remaining" array as pointsToType, i.e., we compute
+				//     addressOf(a) + 2 * sizeof(resultCType)
+				Expression oldAddress = ((HeapLValue) leftExpRes.lrVal).getAddress();
+				RValue index = (RValue) subscript.lrVal;
+				Expression newAddress = ((CHandler) main.cHandler).doPointerArithmetic(
+						main, IASTBinaryExpression.op_plus, loc, oldAddress, index,	resultCType);
+				HeapLValue lValue = new HeapLValue(newAddress, resultCType, false);
+				result = ExpressionResult.copyStmtDeclAuxvarOverapprox(leftExpRes, subscript);
+				result.lrVal = lValue;
+			} else if (leftExpRes.lrVal instanceof LocalLValue) {
+				// If the left hand side is an array represented as LocalLValue
+				// we return a copy of this LocalLValue where we added the
+				// current index.
+				final LeftHandSide oldInnerArrayLHS = ((LocalLValue) leftExpRes.lrVal).getLHS();
+				final Expression index = subscript.lrVal.getValue();
+				final ArrayLHS newInnerArrayLHS;
+				if (oldInnerArrayLHS instanceof ArrayLHS) {
+					Expression[] oldIndices = ((ArrayLHS) oldInnerArrayLHS).getIndices();
+					Expression[] newIndices = new Expression[oldIndices.length + 1];
+					System.arraycopy(oldIndices, 0, newIndices, 0, oldIndices.length);
+					newIndices[newIndices.length-1] = index;
+					newInnerArrayLHS = new ArrayLHS(loc, 
+							((ArrayLHS) oldInnerArrayLHS).getArray(), newIndices);
 				} else {
-					newLLVal.lhs = new ArrayLHS(loc, 
-							innerArrayLHS, new Expression[] { subscript.lrVal.getValue() });	
+					assert isInnermostSubscriptExpression(node) : "not innermost";
+					newInnerArrayLHS = new ArrayLHS(loc, oldInnerArrayLHS, new Expression[] { index });	
 				}
-				Expression index = subscript.lrVal.getValue();
-				CArray arrayType = (CArray) leftExpRes.lrVal.getCType();
-				CType valueType = newCType;
-				CPrimitive indexType = (CPrimitive) subscript.lrVal.getCType();
-				addArrayBoundsCheck(main, memoryHandler, loc, index, indexType, arrayType, valueType, result);
-				
-				newLLVal.setCType(newCType);
-				result.lrVal = newLLVal;
+				LocalLValue lValue = new LocalLValue(newInnerArrayLHS, resultCType, false, false);
+				result = ExpressionResult.copyStmtDeclAuxvarOverapprox(leftExpRes, subscript);
+				result.lrVal = lValue;
+				addArrayBoundsCheckForCurrentIndex(main, loc, index, cArray.getDimensions()[0], result);
 			} else {
-				throw new AssertionError("should not happen");
+				throw new AssertionError("result.lrVal has to be either HeapLValue or LocalLValue");
 			}
 		}
 		
 		return result;
 	}
-	
 	
 	/**
 	 * Add to exprResult a check that the index is within the bounds of an array.
@@ -175,53 +186,38 @@ public class ArrayHandler {
 	 *  <li> assume that the index is in the range of the bounds, or
 	 *  <li> add nothing.
 	 * </ul>
-	 * @param index {@link Expression} that represents the index
-	 * @param indexType C type of the index
-	 * @param arrayType type of the array
-	 * @param valueType type the the array's elements
+	 * For multidimensional arrays, this check has to be done separately for
+	 * each index.
+	 * This simple check ignores the typesize of the value, compares only
+	 * the index with the dimension and is hence only applicable if the
+	 * array is represented as a {@link LocalLValue}.
+	 * @param currentIndex {@link Expression} that represents the index
+	 * @param currentDimension {@link Expression} that represents the dimension
+	 * 		that corresponds to the index
 	 */
-	private void addArrayBoundsCheck(Dispatcher main, MemoryHandler memoryHandler, ILocation loc, 
-			Expression index, CPrimitive indexType, 
-			CArray arrayType, CType valueType, ExpressionResult exprResult) {
+	private void addArrayBoundsCheckForCurrentIndex(Dispatcher main, 
+			ILocation loc, Expression currentIndex,
+			Expression currentDimension, ExpressionResult exprResult) {
 		if (m_checkArrayAccessOffHeap  == POINTER_CHECKMODE.IGNORE) {
 			// do not check anything
 			return;
 		}
 		CHandler cHandler = (CHandler) main.cHandler;
 		final Expression inRange;
-		// 2015-09-20 Matthias:
-		// before we checked   (index <= length - sizeof(valueType))   this lead
-		// to various problems with wrap-arounds and is unsound if we e.g., 
-		// read chars from an int array now we check
-		//     (index + sizeof(valueType)) <= length)
-		// which is equivalent to
-		//     (index + sizeof(valueType))-1 < length)
-		// that has to be checked.
+		// 2015-09-21 Matthias:
+		// This check will fail in the bitvector translation if the typesize 
+		// of the index is different than the typesize of the dimension.
+		// as a workaround we assume int for both.
 		{
-			Expression indexPosition = cHandler.multiplyWithSizeOfAnotherType(loc, valueType, index, indexType);
-			Expression zero = cHandler.getExpressionTranslation().constructLiteralForIntegerType(loc, indexType, BigInteger.ZERO);
+			CPrimitive indexType = new CPrimitive(PRIMITIVE.INT);
+			Expression zero = cHandler.getExpressionTranslation().constructLiteralForIntegerType(
+					loc, indexType, BigInteger.ZERO);
 			Expression nonNegative = cHandler.getExpressionTranslation().constructBinaryComparisonExpression(
 					loc, IASTBinaryExpression.op_lessEqual, zero, indexType, 
-					indexPosition, indexType);
-			Expression firstInvalidPosition = memoryHandler.calculateSizeOf(arrayType, loc);
-			// using the index type here is a hack and might lead to problems
-			// with the bitvector translation
-			Expression indexPositionPlusTypeSizeOfValue = cHandler.getExpressionTranslation().createArithmeticExpression(
-					IASTBinaryExpression.op_plus, 
-					indexPosition, indexType, 
-					memoryHandler.calculateSizeOf(valueType, loc), indexType, loc);
-			assert main.getTypeSizes().getSize(indexType.getType()) == 
-					main.getTypeSizes().getSize(memoryHandler.getSize_T().getType()) : 
-						"different typesizes, this will fail with bitvector translation";
-			//TODO: 2015-09-20: Matthias this is not correct. We have to 
-			// convert indexType and size_t to a common type that can take 
-			// both values. 
-			// I postponed to devise a solution, this a problem for the
-			// bitvector translation bitlength of size_t is different from
-			// bitlength of index
+					currentIndex, indexType);
 			Expression notTooBig = cHandler.getExpressionTranslation().constructBinaryComparisonExpression(
-					loc, IASTBinaryExpression.op_lessEqual, indexPositionPlusTypeSizeOfValue, indexType, 
-					firstInvalidPosition, indexType);
+					loc, IASTBinaryExpression.op_lessThan, currentIndex, indexType, 
+					currentDimension, indexType);
 			inRange = new BinaryExpression(loc, Operator.LOGICAND, nonNegative, notTooBig);
 		}
 		switch (m_checkArrayAccessOffHeap) {
@@ -240,8 +236,15 @@ public class ArrayHandler {
 		default:
 			throw new AssertionError("unknown value");
 		}
+		
 	}
 
-
-
+	private boolean isInnermostSubscriptExpression(IASTArraySubscriptExpression node) {
+		return !(node.getArrayExpression() instanceof IASTArraySubscriptExpression);
+	}
+	
+	private boolean isOutermostSubscriptExpression(IASTArraySubscriptExpression node) {
+		return !(node.getParent() instanceof IASTArraySubscriptExpression);
+	}
+	
 }

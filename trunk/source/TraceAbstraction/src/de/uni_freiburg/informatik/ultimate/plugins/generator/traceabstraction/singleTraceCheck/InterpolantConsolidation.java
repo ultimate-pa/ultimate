@@ -88,7 +88,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  * @author musab@informatik.uni-freiburg.de
  */
 public class InterpolantConsolidation implements IInterpolantGenerator {
-	
 	private InterpolatingTraceChecker m_InterpolatingTraceChecker;
 	private final IPredicate m_Precondition;
 	private final IPredicate m_Postcondition;
@@ -104,6 +103,7 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 
 	protected final InterpolantConsolidationBenchmarkGenerator m_InterpolantConsolidationBenchmarkGenerator;
 	private boolean m_printDebugInformation = false;
+	private boolean m_InterpolantsConsolidationSuccessful = false;
 	
 	public InterpolantConsolidation(IPredicate precondition,
 			IPredicate postcondition,
@@ -151,13 +151,15 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 		
 		// 2. Build the finite automaton (former interpolant path automaton) for the given Floyd-Hoare annotation
 		NestedWordAutomaton<CodeBlock, IPredicate> interpolantAutomaton = constructInterpolantAutomaton(m_Trace, m_SmtManager, m_TaPrefs, m_Services, m_InterpolatingTraceChecker); // siehe BasicCegarLoop
-		// 3. Determinize the finite automaton from step 2. 
+		// 3. Determinize the finite automaton from step 2.
 		DeterministicInterpolantAutomaton interpolantAutomatonDeterminized = new DeterministicInterpolantAutomaton(
 				m_Services, m_SmtManager, m_ModifiedGlobals, htc, pathprogramautomaton, interpolantAutomaton,
-				m_PredicateUnifier, m_Logger, false); // PREDICATE_ABSTRACTION_CONSERVATIVE = false (default)
+				m_PredicateUnifier, m_Logger, false ,// PREDICATE_ABSTRACTION_CONSERVATIVE = false (default) 
+				false //PREDICATE_ABSTRACTION_CANNIBALIZE = false  (default) 
+				); 
 		
 		 
-		PredicateFactoryForInterpolantConsolidation pfconsol = new PredicateFactoryForInterpolantConsolidation(m_SmtManager, m_TaPrefs);
+	PredicateFactoryForInterpolantConsolidation pfconsol = new PredicateFactoryForInterpolantConsolidation(m_SmtManager, m_TaPrefs);
 		
 		PredicateFactory predicateFactoryInterpolantAutomata = new PredicateFactory(m_SmtManager, m_TaPrefs);
 		
@@ -250,6 +252,7 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 		assert TraceCheckerUtils.checkInterpolantsInductivityForward(m_ConsolidatedInterpolants, 
 				m_Trace, m_Precondition, m_Postcondition, m_PendingContexts, "CP", 
 				m_SmtManager, m_ModifiedGlobals, m_Logger) : "invalid Hoare triple in consolidated interpolants";
+		m_InterpolantsConsolidationSuccessful = true;
 		
 		if (m_printDebugInformation ) {
 			m_Logger.debug("Interpolants before consolidation:");
@@ -264,7 +267,6 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 													 htc.getEdgeCheckerBenchmark());
 		// Stop the time for interpolant consolidation
 		m_InterpolantConsolidationBenchmarkGenerator.stop(InterpolantConsolidationBenchmarkType.s_TimeOfConsolidation);
-
 	}
 	
 	
@@ -275,6 +277,36 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 		
 	}
 
+	public IPredicate[] getInterpolantsOfType_I() {
+		if (m_InterpolatingTraceChecker instanceof TraceCheckerSpWp) {
+			TraceCheckerSpWp tcspwp = (TraceCheckerSpWp) m_InterpolatingTraceChecker;
+			if (tcspwp.forwardsPredicatesComputed()) {
+				return tcspwp.getForwardPredicates();
+			} else {
+				return tcspwp.getInterpolants();
+			}
+		} else {
+			return m_InterpolatingTraceChecker.getInterpolants();
+		}
+	}
+	
+	public IPredicate[] getInterpolantsOfType_II() {
+		if (m_InterpolatingTraceChecker instanceof TraceCheckerSpWp) {
+			TraceCheckerSpWp tcspwp = (TraceCheckerSpWp) m_InterpolatingTraceChecker;
+			if (tcspwp.backwardsPredicatesComputed()) {
+				return tcspwp.getBackwardPredicates();
+			} else {
+				return tcspwp.getInterpolants();
+			}
+		} else {
+			return m_InterpolatingTraceChecker.getInterpolants();
+		}
+	}
+	
+	public boolean consolidationSuccessful() {
+		return m_InterpolantsConsolidationSuccessful;
+	}
+	
 	/**
 	 * Construct a finite automaton for the given Floyd-Hoare annotation.
 	 * @param trace - the trace from which the automaton is constructed.
