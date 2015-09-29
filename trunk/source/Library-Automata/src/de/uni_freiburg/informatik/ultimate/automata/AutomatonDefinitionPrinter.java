@@ -717,20 +717,21 @@ public class AutomatonDefinitionPrinter<LETTER,STATE> {
 		
 		private class BaFormatWriter {
 
-			private final Map<LETTER, String> m_AlphabetMapping;
-			private final Map<STATE, String> m_StateMapping;
+			protected final Map<LETTER, String> m_AlphabetMapping;
+			protected final Map<STATE, String> m_StateMapping;
+			protected final INestedWordAutomaton<LETTER, STATE> m_Nwa;
 
 			public BaFormatWriter(INestedWordAutomaton<LETTER, STATE> nwa) {
 				m_AlphabetMapping = computeAlphabetMapping(nwa.getInternalAlphabet());
 				m_StateMapping = computeStateMapping(nwa.getStates());
-				doPrint(nwa, m_AlphabetMapping, m_StateMapping);
+				m_Nwa = nwa;
+				doPrint();
 			}
 
-			protected void doPrint(INestedWordAutomaton<LETTER, STATE> nwa, Map<LETTER, String> alphabetMapping,
-					Map<STATE, String> stateMapping) {
-				StringBuilder initStateSb = computeStateString(nwa.getInitialStates(), stateMapping);
-				StringBuilder transSb = computeTransitionString(nwa, stateMapping, alphabetMapping);
-				StringBuilder finalStateSb = computeStateString(nwa.getFinalStates(), stateMapping);
+			protected void doPrint() {
+				StringBuilder initStateSb = computeStateString(m_Nwa.getInitialStates(), m_StateMapping);
+				StringBuilder transSb = computeTransitionString(m_Nwa, m_StateMapping, m_AlphabetMapping);
+				StringBuilder finalStateSb = computeStateString(m_Nwa.getFinalStates(), m_StateMapping);
 				m_printWriter.print(initStateSb);
 				m_printWriter.print(transSb);
 				m_printWriter.print(finalStateSb);
@@ -797,9 +798,58 @@ public class AutomatonDefinitionPrinter<LETTER,STATE> {
 			}
 
 			@Override
-			protected void doPrint(INestedWordAutomaton<LETTER, STATE> nwa, Map<LETTER, String> alphabetMapping,
-					Map<STATE, String> stateMapping) {
-				m_printWriter.print("hello");
+			protected void doPrint() {
+				String header = constructHeader();
+				m_printWriter.print(header);
+				String bodyToken = "--BODY--";
+				m_printWriter.print(bodyToken);
+				String body = constructHeader();
+				m_printWriter.print(body);
+				String endToken = "--END--";
+				m_printWriter.print(endToken);
+			}
+
+			private String constructHeader() {
+				StringBuilder sb = new StringBuilder();
+				sb.append("HOA: v1");
+				sb.append(System.lineSeparator());
+				
+				sb.append("States: " + m_Nwa.getStates().size());
+				sb.append(System.lineSeparator());
+				
+				for (STATE state : m_Nwa.getInitialStates()) {
+					sb.append("Start: " + m_StateMapping.get(state));
+					sb.append(System.lineSeparator());
+				}
+				
+				sb.append("AP: " + m_Nwa.getInternalAlphabet().size());
+				for (LETTER letter : m_Nwa.getInternalAlphabet()) {
+					sb.append(" " + letter);
+				}
+				sb.append(System.lineSeparator());
+				
+				sb.append("Acceptance: " + m_Nwa.getFinalStates().size());
+				sb.append("Inf(" + 0 + ")");
+//				boolean first = true;
+//				for (STATE state : m_Nwa.getFinalStates()) {
+//					if (first) {
+//						sb.append(" ");
+//						first = false;
+//					} else {
+//						sb.append(" | ");
+//					}
+//					sb.append("Inf(" + m_StateMapping.get(state) + ")");
+//				}
+				sb.append(System.lineSeparator());
+				
+				
+				sb.append("acc-name: Buchi");
+				sb.append(System.lineSeparator());
+				
+				sb.append("tool: Ultimate");
+				sb.append(System.lineSeparator());
+				
+				return null;
 			}
 			
 			
