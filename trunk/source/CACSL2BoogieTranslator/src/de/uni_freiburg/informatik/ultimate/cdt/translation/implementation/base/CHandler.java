@@ -998,7 +998,7 @@ public class CHandler implements ICHandler {
 			useHeap = true;
 			intFromPtr = false;
 		} else if (main.getFunctionToIndex().containsKey(cId)) {
-			throw new AssertionError("function not known by function handler");
+			throw new AssertionError("function not known to function handler");
 		} else {
 			throw new UnsupportedSyntaxException(loc, "identifier is not declared (neither a variable nor a function name)");
 		}
