@@ -151,8 +151,8 @@ public class ExpressionTranslator extends JoogieExpressionTransformer<Expression
 
 	@Override
 	protected Expression visit(QuantifiedExpression expr) {
-		final List<VarList> parameters = expr.getBoundVariables().stream()
-				.map(bv -> new VarList(mLocation, new String[] { bv.getName() }, Joogie2BoogieUtil.getASTType(bv)))
+		final List<VarList> parameters = expr.getBoundVariables().stream().map(bv -> new VarList(mLocation,
+				new String[] { bv.getName() }, Joogie2BoogieUtil.getASTType(bv, mLocation)))
 				.collect(Collectors.toList());
 		return new QuantifierExpression(mLocation, expr.getQuantifier() == Quantifier.ForAll, null,
 				parameters.toArray(new VarList[parameters.size()]), null, visit(expr.getExpression()));

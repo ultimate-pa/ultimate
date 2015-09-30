@@ -19,9 +19,12 @@
 
 package org.joogie;
 
+import java.io.IOException;
+
 import org.apache.log4j.Logger;
 import org.joogie.boogie.BoogieProgram;
 import org.joogie.runners.SootRunner;
+import org.joogie.runners.receivers.Receiver;
 
 /**
  * Dispatcher.
@@ -67,19 +70,36 @@ public final class Dispatcher {
 		mSootRunner = new SootRunner(mLogger);
 	}
 
-	public BoogieProgram run() {
-		try {
-			mLogger.debug("Running Soot: Java Bytecode to Boogie representation");
-			final BoogieProgram prog = runSoot();
-			mLogger.debug("Done");
-			return prog;
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		return null;
+	public BoogieProgram run() throws IOException {
+		mLogger.debug("Running Soot: Java Bytecode to Boogie representation");
+		final StringBuilder sootOutput = new StringBuilder();
+		final Receiver receiver = new Receiver() {
+
+			@Override
+			public void receive(String text) {
+				sootOutput.append(text);
+			}
+
+			@Override
+			public void onEnd() {
+
+			}
+
+			@Override
+			public void onBegin() {
+
+			}
+		};
+		mSootRunner.addReceiver(receiver);
+		final BoogieProgram prog = runSoot();
+		mSootRunner.clearReceivers();
+		mLogger.debug("Done");
+		mLogger.info("Soot output:");
+		mLogger.info(sootOutput);
+		return prog;
 	}
 
-	private BoogieProgram runSoot() {
+	private BoogieProgram runSoot() throws IOException {
 		if (mInput.endsWith(".jar")) {
 			// run with JAR file
 			return mSootRunner.runWithJar(mInput, mClasspath, mScope, mHeapMode);

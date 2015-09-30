@@ -100,6 +100,10 @@ public class BoogieProgram {
 
 	}
 
+	public boolean isEmpty(){
+		return mBoogieProcedures.isEmpty();
+	}
+	
 	public Set<BoogieProcedure> getProcedures() {
 		return mBoogieProcedures;
 	}

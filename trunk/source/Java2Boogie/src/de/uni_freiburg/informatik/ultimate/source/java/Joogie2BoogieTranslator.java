@@ -181,13 +181,13 @@ public class Joogie2BoogieTranslator {
 			ASTType type = null;
 			if (proc.getReturnVariable() != null) {
 				identifiers.add(proc.getReturnVariable().getName());
-				type = Joogie2BoogieUtil.getASTType(proc.getReturnVariable());
+				type = Joogie2BoogieUtil.getASTType(proc.getReturnVariable(), mLoc);
 			}
 
 			for (final Entry<BoogieType, org.joogie.boogie.expressions.Expression> entry : proc
 					.getExceptionalReturnVariables().entrySet()) {
 				identifiers.add(((Variable) entry.getValue()).getName());
-				type = Joogie2BoogieUtil.getASTType(entry.getKey());
+				type = Joogie2BoogieUtil.getASTType(entry.getKey(), mLoc);
 			}
 			assert type != null;
 			outParam = new VarList(mLoc, identifiers.toArray(new String[identifiers.size()]), type);
@@ -229,7 +229,7 @@ public class Joogie2BoogieTranslator {
 	}
 
 	private VarList makeVarList(Variable var) {
-		return new VarList(getLocation(), new String[] { var.getName() }, Joogie2BoogieUtil.getASTType(var));
+		return new VarList(getLocation(), new String[] { var.getName() }, Joogie2BoogieUtil.getASTType(var, mLoc));
 	}
 
 }

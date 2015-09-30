@@ -66,42 +66,38 @@ public class SootRunner extends Runner {
 	 * @param report
 	 *            Report
 	 * @return
+	 * @throws IOException
 	 */
-	public BoogieProgram runWithJar(String jarFile, String classPath, String scope, HeapMode mode) {
-		try {
-			// command-line arguments for Soot
-			List<String> args = new ArrayList<String>();
-			fillSootArgs(args);
+	public BoogieProgram runWithJar(String jarFile, String classPath, String scope, HeapMode mode) throws IOException {
+		// command-line arguments for Soot
+		List<String> args = new ArrayList<String>();
+		fillSootArgs(args);
 
-			// extract dependent JARs
-			List<File> jarFiles = new ArrayList<File>();
-			extractClassPath(new File(jarFile), jarFiles);
-			jarFiles.add(new File(jarFile));
-			fillClassPath(jarFiles);
+		// extract dependent JARs
+		List<File> jarFiles = new ArrayList<File>();
+		extractClassPath(new File(jarFile), jarFiles);
+		jarFiles.add(new File(jarFile));
+		fillClassPath(jarFiles);
 
-			// additional classpath available?
-			String cp = getClassPathString(classPath, jarFiles);
+		// additional classpath available?
+		String cp = getClassPathString(classPath, jarFiles);
 
-			// set soot-class-path
-			args.add("-cp");
-			args.add(cp);
+		// set soot-class-path
+		args.add("-cp");
+		args.add(cp);
 
-			// set classes
-			enumClasses(new File(jarFile), args, scope);
+		// set classes
+		enumClasses(new File(jarFile), args, scope);
 
-			// finally, run soot
-			return run(args, mode, scope);
-
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		return null;
+		// finally, run soot
+		return run(args, mode, scope);
 	}
 
 	private String getClassPathString(String classPath, List<File> jarFiles) {
 		String cp = buildClassPath(jarFiles);
 		if (classPath != null) {
-			cp += File.pathSeparator + classPath;
+			// cp += File.pathSeparator + "\"" + classPath + "\"";
+			cp += File.pathSeparator + classPath + File.pathSeparator;
 		}
 		return cp;
 	}
@@ -111,7 +107,7 @@ public class SootRunner extends Runner {
 	 * 
 	 * @param classFile
 	 *            Class file
-	 * @param sourceFolder
+	 * @param classPath
 	 *            Source folder
 	 * @param mode
 	 * @param scope
@@ -119,29 +115,23 @@ public class SootRunner extends Runner {
 	 *            Report
 	 * @return
 	 */
-	public BoogieProgram runWithClass(String classFile, String sourceFolder, HeapMode mode, String scope) {
-		assert sourceFolder != null;
-		try {
-			// dependent JAR files
-			List<File> jarFiles = new ArrayList<File>();
-			fillClassPath(jarFiles);
+	public BoogieProgram runWithClass(String classFile, String classPath, HeapMode mode, String scope) {
+		assert classPath != null;
+		// dependent JAR files
+		List<File> jarFiles = new ArrayList<File>();
+		fillClassPath(jarFiles);
 
-			// command-line arguments for Soot
-			List<String> args = new ArrayList<String>();
-			fillSootArgs(args);
+		// command-line arguments for Soot
+		List<String> args = new ArrayList<String>();
+		fillSootArgs(args);
 
-			// add soot-class-path
-			args.add("-cp");
-			args.add(buildClassPath(jarFiles));
-			args.add(classFile);
+		// add soot-class-path
+		args.add("-cp");
+		args.add(getClassPathString(classPath, jarFiles));
+		args.add(classFile);
 
-			// finally, run soot
-			return run(args, mode, scope);
-
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		return null;
+		// finally, run soot
+		return run(args, mode, scope);
 	}
 
 	/**
@@ -157,32 +147,27 @@ public class SootRunner extends Runner {
 	 * @return
 	 */
 	public BoogieProgram runWithSource(String sourceFile, String classPath, HeapMode mode, String scope) {
-		try {
-			// command-line arguments for Soot
-			List<String> args = new ArrayList<String>();
-			fillSootArgs(args);
+		// command-line arguments for Soot
+		List<String> args = new ArrayList<String>();
+		fillSootArgs(args);
 
-			// add standard classpath
-			List<File> jarFiles = new ArrayList<File>();
-			fillClassPath(jarFiles);
+		// add standard classpath
+		List<File> jarFiles = new ArrayList<File>();
+		fillClassPath(jarFiles);
 
-			// add additional classpath
-			String cp = getClassPathString(classPath, jarFiles);
+		// add additional classpath
+		String cp = getClassPathString(classPath, jarFiles);
 
-			// add classpath to soot arguments
-			args.add("-cp");
-			args.add(cp);
+		// add classpath to soot arguments
+		args.add("-cp");
+		args.add(cp);
+		final String filename = new File(sourceFile).getName();
+		// add source file
+		args.add(filename.substring(0, filename.lastIndexOf(".java")));
+		// args.add(sourceFile);
 
-			// add source file
-			args.add(sourceFile.substring(0, sourceFile.lastIndexOf(".java")));
-
-			// finally, run soot
-			return run(args, mode, scope);
-
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		return null;
+		// finally, run soot
+		return run(args, mode, scope);
 	}
 
 	/**
@@ -208,12 +193,13 @@ public class SootRunner extends Runner {
 
 			// reset & init Soot
 			soot.G.reset();
-			PackManager.v().getPack("jtp")
-					.add(new Transform("jtp.myTransform", new BoogieBodyTransformer(scope, mode, progDec, mLogger)));
+			final Transform transform = new Transform("jtp.myTransform",
+					new BoogieBodyTransformer(scope, mode, progDec, mLogger));
+			PackManager.v().getPack("jtp").add(transform);
 
 			// Finally, run Soot
-			soot.Main.main(args.toArray(new String[] {}));
-
+			mLogger.info("Running soot with " + String.join(" ", args));
+			soot.Main.main(args.toArray(new String[args.size()]));
 			return prog;
 
 		} finally {
@@ -262,8 +248,10 @@ public class SootRunner extends Runner {
 	protected String buildClassPath(List<File> files) {
 		StringBuilder sb = new StringBuilder();
 		for (File file : files) {
-			sb.append(file.getPath() + File.pathSeparator);
+			// sb.append("\"" + file.getPath() + "\"" + File.pathSeparator);
+			sb.append(file.getPath()).append(File.pathSeparator);
 		}
+		sb.delete(sb.length() - File.pathSeparator.length(), sb.length());
 		return sb.toString();
 	}
 
@@ -274,35 +262,31 @@ public class SootRunner extends Runner {
 	 *            JAR file object
 	 * @param jarFiles
 	 *            List of dependent JARs
+	 * @throws IOException
 	 */
-	protected void extractClassPath(File file, List<File> jarFiles) {
-		try {
-			// open JAR file
-			JarFile jarFile = new JarFile(file);
+	protected void extractClassPath(File file, List<File> jarFiles) throws IOException {
+		// open JAR file
+		JarFile jarFile = new JarFile(file);
 
-			// get manifest and their main attributes
-			Attributes mainAttributes = jarFile.getManifest().getMainAttributes();
-			String classPath = mainAttributes.getValue(Attributes.Name.CLASS_PATH);
+		// get manifest and their main attributes
+		Attributes mainAttributes = jarFile.getManifest().getMainAttributes();
+		String classPath = mainAttributes.getValue(Attributes.Name.CLASS_PATH);
 
-			// close JAR file
-			jarFile.close();
+		// close JAR file
+		jarFile.close();
 
-			// empty class path?
-			if (null == classPath)
-				return;
+		// empty class path?
+		if (null == classPath)
+			return;
 
-			// look for dependent JARs
-			String[] classPathItems = classPath.split(" ");
-			for (String classPathItem : classPathItems) {
-				if (classPathItem.endsWith(".jar")) {
-					// add jar
-					mLogger.debug("Adding " + classPathItem + " to Soot's class path");
-					jarFiles.add(new File(file.getParent(), classPathItem));
-				}
+		// look for dependent JARs
+		String[] classPathItems = classPath.split(" ");
+		for (String classPathItem : classPathItems) {
+			if (classPathItem.endsWith(".jar")) {
+				// add jar
+				mLogger.debug("Adding " + classPathItem + " to Soot's class path");
+				jarFiles.add(new File(file.getParent(), classPathItem));
 			}
-
-		} catch (IOException e) {
-			e.printStackTrace();
 		}
 	}
 
@@ -313,42 +297,39 @@ public class SootRunner extends Runner {
 	 *            JAR file object
 	 * @param classes
 	 *            List of classes
+	 * @throws IOException
 	 */
-	protected void enumClasses(File file, List<String> classes, String scope) {
-		try {
-			// open JAR file
-			mLogger.debug("Opening jar " + file.getPath());
-			JarFile jarFile = new JarFile(file);
-			Enumeration<JarEntry> entries = jarFile.entries();
+	protected void enumClasses(File file, List<String> classes, String scope) throws IOException {
+		// open JAR file
+		mLogger.debug("Opening jar " + file.getPath());
+		JarFile jarFile = new JarFile(file);
+		Enumeration<JarEntry> entries = jarFile.entries();
 
-			// iterate JAR entries
-			while (entries.hasMoreElements()) {
-				JarEntry entry = entries.nextElement();
-				String entryName = entry.getName();
+		// iterate JAR entries
+		while (entries.hasMoreElements()) {
+			JarEntry entry = entries.nextElement();
+			String entryName = entry.getName();
 
-				if (entryName.endsWith(".class")) {
-					// get class
-					String className = entryName.substring(0, entryName.length() - ".class".length());
-					className = className.replace('/', '.');
+			if (entryName.endsWith(".class")) {
+				// get class
+				String className = entryName.substring(0, entryName.length() - ".class".length());
+				className = className.replace('/', '.');
 
-					// is class in scope?
-					if (scope != null) {
-						if (!className.startsWith(scope)) {
-							continue;
-						}
+				// is class in scope?
+				if (scope != null) {
+					if (!className.startsWith(scope)) {
+						continue;
 					}
-
-					// add class
-					mLogger.debug("Adding class " + className);
-					classes.add(className);
 				}
-			}
 
-			// close JAR file
-			jarFile.close();
-		} catch (IOException e) {
-			e.printStackTrace();
+				// add class
+				mLogger.debug("Adding class " + className);
+				classes.add(className);
+			}
 		}
+
+		// close JAR file
+		jarFile.close();
 	}
 
 	/**

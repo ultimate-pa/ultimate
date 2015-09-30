@@ -44,6 +44,10 @@ public class BoogieArrayType extends BoogieType {
 	public BoogieType getNestedType() {
 		return nestedType;
 	}
+	
+	public BoogieType getIndexType() {
+		return indexType;
+	}
 
 	@Override
 	public String toBoogie() {

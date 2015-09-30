@@ -85,13 +85,13 @@ public class BoogieStmtSwitch implements StmtSwitch {
 	 */
 	private BasicBlock elseBlockHack = null;
 
-	private BoogieProcedure currentProcedure = null;
+	private BoogieProcedure mCurrentProcedure = null;
 
-	private BasicBlock currentBlock = null;
+	private BasicBlock mCurrentBlock = null;
 
 	private HashMap<Stmt, BasicBlock> stmtBlockMap = new HashMap<Stmt, BasicBlock>();
 
-	private BoogieValueSwitch valueSwitch = null;
+	private BoogieValueSwitch mValueSwitch = null;
 
 	private boolean nextStmtIsNewBlock = true;
 
@@ -104,19 +104,20 @@ public class BoogieStmtSwitch implements StmtSwitch {
 	public BoogieStmtSwitch(BoogieProcedure proc, HeapMode mode, BoogieProgramConstructionDecorator progDecl,
 			Logger logger) {
 		mProgDecl = progDecl;
-		currentProcedure = proc;
+		mCurrentProcedure = proc;
 		mLogger = logger;
-
+		mHeapMode = mode;
+		
 		// check if there is a rootblock already (e.g., because exception vars
 		// are initialized)
-		currentBlock = proc.getRootBlock();
+		mCurrentBlock = proc.getRootBlock();
 
-		valueSwitch = new BoogieValueSwitch(proc, this, mLogger);
+		mValueSwitch = new BoogieValueSwitch(mProgDecl, proc, this, mLogger, mHeapMode);
 
 		// TODO: the current procedure should not be
 		// kept in 2 different places. This causes bugs
 		mProgDecl.setCurrentProcedure(proc);
-		mHeapMode = mode;
+		
 	}
 
 	public void prepareCurrentBlock(Stmt stmt) {
@@ -137,10 +138,10 @@ public class BoogieStmtSwitch implements StmtSwitch {
 					stmtBlockMap.get(stmt).addStatement(s, true);
 				}
 			} else {
-				if (currentBlock != null)
-					currentBlock.connectToSuccessor(stmtBlockMap.get(stmt));
+				if (mCurrentBlock != null)
+					mCurrentBlock.connectToSuccessor(stmtBlockMap.get(stmt));
 			}
-			currentBlock = stmtBlockMap.get(stmt);
+			mCurrentBlock = stmtBlockMap.get(stmt);
 		} else {
 			// if there is a goto jumping to this stmt, it has to be a
 			// separate block in the boogie program.
@@ -149,12 +150,12 @@ public class BoogieStmtSwitch implements StmtSwitch {
 				if (this.elseBlockHack == null) {
 					BasicBlock nextBlock = mProgDecl.createBasicBlock(stmt.getTags());
 					stmtBlockMap.put(stmt, nextBlock);
-					if (currentBlock != null)
-						currentBlock.connectToSuccessor(nextBlock);
-					currentBlock = nextBlock;
+					if (mCurrentBlock != null)
+						mCurrentBlock.connectToSuccessor(nextBlock);
+					mCurrentBlock = nextBlock;
 				} else {
 					stmtBlockMap.put(stmt, this.elseBlockHack);
-					this.currentBlock = this.elseBlockHack;
+					this.mCurrentBlock = this.elseBlockHack;
 				}
 			}
 		}
@@ -162,11 +163,11 @@ public class BoogieStmtSwitch implements StmtSwitch {
 	}
 
 	public BasicBlock getCurrentBlock() {
-		return currentBlock;
+		return mCurrentBlock;
 	}
 
 	private void addStatement(BasicBlock b, Statement s, boolean front) {
-		for (Statement g : valueSwitch.getGuardingStatements()) {
+		for (Statement g : mValueSwitch.getGuardingStatements()) {
 			b.addStatement(g, front);
 		}
 		b.addStatement(s, front);
@@ -185,20 +186,20 @@ public class BoogieStmtSwitch implements StmtSwitch {
 				return;
 			} else if (arg0.getRightOp() instanceof CaughtExceptionRef) {
 				rightVal = arg0.getRightOp();
-				rhs = mProgDecl.getCache().getProcedureInfo(currentProcedure).findCatchVar(st);
+				rhs = mProgDecl.getCache().getProcedureInfo(mCurrentProcedure).findCatchVar(st);
 				if (rhs == null) {
 					mLogger.error("Catch block cannot be identified - skipping command");
 					mLogger.error(arg0.toString());
 					return;
 				}
-				arg0.getLeftOp().apply(valueSwitch);
-				lhs = valueSwitch.getExpression();
+				arg0.getLeftOp().apply(mValueSwitch);
+				lhs = mValueSwitch.getExpression();
 			} else {
 				rightVal = arg0.getRightOp();
-				rightVal.apply(valueSwitch);
-				rhs = valueSwitch.getExpression();
-				arg0.getLeftOp().apply(valueSwitch);
-				lhs = valueSwitch.getExpression();
+				rightVal.apply(mValueSwitch);
+				rhs = mValueSwitch.getExpression();
+				arg0.getLeftOp().apply(mValueSwitch);
+				lhs = mValueSwitch.getExpression();
 			}
 		} else if (st instanceof ReturnStmt || st instanceof RetStmt) {
 			if (st instanceof ReturnStmt) {
@@ -207,9 +208,9 @@ public class BoogieStmtSwitch implements StmtSwitch {
 				// TODO not tested yet!
 				rightVal = ((RetStmt) st).getStmtAddress();
 			}
-			rightVal.apply(valueSwitch);
-			rhs = valueSwitch.getExpression();
-			lhs = currentProcedure.getReturnVariable();
+			rightVal.apply(mValueSwitch);
+			rhs = mValueSwitch.getExpression();
+			lhs = mCurrentProcedure.getReturnVariable();
 		} else {
 			mLogger.error("BoogieStmtSwitch.java: this is not an assignment!");
 			return;
@@ -217,26 +218,26 @@ public class BoogieStmtSwitch implements StmtSwitch {
 
 		AssignStatement asgn = mProgDecl.getOperatorFunctionFactory().createAssignment(lhs, rhs);
 		asgn.setLocationTag(mProgDecl.getCache().createLocationTag(st.getTags()));
-		addStatement(currentBlock, asgn, false);
+		addStatement(mCurrentBlock, asgn, false);
 
 		if (rightVal instanceof NewExpr) {
-			addStatement(currentBlock, new AssumeStatement(mProgDecl.getOperatorFunctionFactory().isNotNull(rhs)),
+			addStatement(mCurrentBlock, new AssumeStatement(mProgDecl.getOperatorFunctionFactory().isNotNull(rhs)),
 					false);
 		} else if (rightVal instanceof NewArrayExpr) {
 
 			Expression arrsize = mProgDecl.getProgram().getArraySizeExpression(rhs);
 			if (arrsize != null) {
 				NewArrayExpr narr = (NewArrayExpr) rightVal;
-				narr.getSize().apply(valueSwitch);
-				Expression narrsize = valueSwitch.getExpression();
+				narr.getSize().apply(mValueSwitch);
+				Expression narrsize = mValueSwitch.getExpression();
 				AssignStatement sizeasgn = mProgDecl.getOperatorFunctionFactory().createAssignment(arrsize, narrsize);
 				asgn.setLocationTag(mProgDecl.getCache().createLocationTag(st.getTags()));
-				addStatement(currentBlock, sizeasgn, false);
-				addStatement(currentBlock, new AssumeStatement(mProgDecl.getOperatorFunctionFactory().isNotNull(rhs)),
+				addStatement(mCurrentBlock, sizeasgn, false);
+				addStatement(mCurrentBlock, new AssumeStatement(mProgDecl.getOperatorFunctionFactory().isNotNull(rhs)),
 						false);
 			}
 		} else if (rightVal instanceof NewMultiArrayExpr) {
-			addStatement(currentBlock, new AssumeStatement(mProgDecl.getOperatorFunctionFactory().isNotNull(rhs)),
+			addStatement(mCurrentBlock, new AssumeStatement(mProgDecl.getOperatorFunctionFactory().isNotNull(rhs)),
 					false);
 		}
 	}
@@ -246,18 +247,18 @@ public class BoogieStmtSwitch implements StmtSwitch {
 		// java.lang.String.length is treated as a special case:
 		if (callExpr.getMethod().getSignature().contains("<java.lang.String: int length()>") && assigns != null) {
 			if (callExpr instanceof SpecialInvokeExpr) {
-				((SpecialInvokeExpr) callExpr).getBase().apply(valueSwitch);
+				((SpecialInvokeExpr) callExpr).getBase().apply(mValueSwitch);
 			} else if (callExpr instanceof VirtualInvokeExpr) {
-				((VirtualInvokeExpr) callExpr).getBase().apply(valueSwitch);
+				((VirtualInvokeExpr) callExpr).getBase().apply(mValueSwitch);
 			} else {
 				// TODO: may report an error here?
 				return;
 			}
-			Expression strExpr = valueSwitch.getExpression();
+			Expression strExpr = mValueSwitch.getExpression();
 			Expression rhs = mProgDecl.getProgram().getStringLenExpression(strExpr);
-			assigns.apply(valueSwitch);
-			Expression lhs = valueSwitch.getExpression();
-			addStatement(currentBlock, mProgDecl.getOperatorFunctionFactory().createAssignment(lhs, rhs), false);
+			assigns.apply(mValueSwitch);
+			Expression lhs = mValueSwitch.getExpression();
+			addStatement(mCurrentBlock, mProgDecl.getOperatorFunctionFactory().createAssignment(lhs, rhs), false);
 			return;
 		}
 
@@ -268,14 +269,14 @@ public class BoogieStmtSwitch implements StmtSwitch {
 		if (SUPRESS_FALSE_POSITIVES) {
 			if (callExpr.getMethod().getSignature().contains("<java.lang.System: void exit(int)>")) {
 				mLogger.info("Surppressing false positive from call to System.exit");
-				currentBlock = null;
+				mCurrentBlock = null;
 				nextStmtIsNewBlock = true;
 				return;
 			}
 		}
 
-		callExpr.apply(valueSwitch);
-		Expression e = valueSwitch.getExpression();
+		callExpr.apply(mValueSwitch);
+		Expression e = mValueSwitch.getExpression();
 
 		if (e instanceof InvokeExpression) {
 			InvokeExpression ivk = (InvokeExpression) e;
@@ -286,14 +287,14 @@ public class BoogieStmtSwitch implements StmtSwitch {
 			BoogieProcedure proc = mProgDecl.getCache().lookupProcedure(callExpr.getMethod(), mHeapMode);
 
 			for (BoogieType t : mProgDecl.getCache().getProcedureInfo(proc).getUncaughtExceptionTypes()) {
-				Expression exp = mProgDecl.getCache().getProcedureInfo(currentProcedure).lookupInvokeExceptionVar(t);
+				Expression exp = mProgDecl.getCache().getProcedureInfo(mCurrentProcedure).lookupInvokeExceptionVar(t);
 				returntargets.addLast(exp);
 				exceptionvariables.add(exp);
 			}
 
 			if (assigns != null) {
-				assigns.apply(valueSwitch);
-				returntargets.addFirst(valueSwitch.getExpression());
+				assigns.apply(mValueSwitch);
+				returntargets.addFirst(mValueSwitch.getExpression());
 			} else {
 				if (proc.getReturnVariable() != null) {
 					returntargets.addFirst(mProgDecl.getFreshLocalVariable(proc.getReturnVariable().getType()));
@@ -301,7 +302,7 @@ public class BoogieStmtSwitch implements StmtSwitch {
 			}
 			InvokeStatement invoke = new InvokeStatement(ivk, returntargets);
 			invoke.setLocationTag(mProgDecl.getCache().createLocationTag(st.getTags()));
-			addStatement(currentBlock, invoke, false);
+			addStatement(mCurrentBlock, invoke, false);
 
 			// if
 			// (mProgDecl.getCache().getProcedureInfo(currentProcedure).getSootMethod().getSignature()
@@ -316,24 +317,24 @@ public class BoogieStmtSwitch implements StmtSwitch {
 			// be thrown in two places: in exception variables and in the traps
 			// of the procedure
 			if (exceptionvariables.size() > 0) {
-				LinkedList<Trap> traps = mProgDecl.getCache().getProcedureInfo(currentProcedure).getAssociatedTrap(st);
+				LinkedList<Trap> traps = mProgDecl.getCache().getProcedureInfo(mCurrentProcedure).getAssociatedTrap(st);
 				for (Expression exc : exceptionvariables) {
 					// also check if the Trap catches this exception.
 
-					BasicBlock catchBlock = mProgDecl.createBasicBlock(currentBlock.getLocationTag());
+					BasicBlock catchBlock = mProgDecl.createBasicBlock(mCurrentBlock.getLocationTag());
 					addStatement(catchBlock, new AssumeStatement(mProgDecl.getOperatorFunctionFactory().isNotNull(exc)),
 							true);
 					translateExceptionHandling(catchBlock, traps, exc);
-					currentBlock.connectToSuccessor(catchBlock);
-					mProgDecl.getCache().getProcedureInfo(currentProcedure).addExceptionBlock(catchBlock);
+					mCurrentBlock.connectToSuccessor(catchBlock);
+					mProgDecl.getCache().getProcedureInfo(mCurrentProcedure).addExceptionBlock(catchBlock);
 
-					BasicBlock nothrownBlock = mProgDecl.createBasicBlock(currentBlock.getLocationTag());
+					BasicBlock nothrownBlock = mProgDecl.createBasicBlock(mCurrentBlock.getLocationTag());
 					addStatement(nothrownBlock, new AssumeStatement(mProgDecl.getOperatorFunctionFactory().isNull(exc)),
 							true);
-					currentBlock.connectToSuccessor(nothrownBlock);
+					mCurrentBlock.connectToSuccessor(nothrownBlock);
 
-					currentBlock = mProgDecl.createBasicBlock(currentBlock.getLocationTag());
-					nothrownBlock.connectToSuccessor(currentBlock);
+					mCurrentBlock = mProgDecl.createBasicBlock(mCurrentBlock.getLocationTag());
+					nothrownBlock.connectToSuccessor(mCurrentBlock);
 
 				}
 
@@ -351,7 +352,7 @@ public class BoogieStmtSwitch implements StmtSwitch {
 				// trap will handle the exception
 				addStatement(b,
 						mProgDecl.getOperatorFunctionFactory().createAssignment(
-								mProgDecl.getCache().getProcedureInfo(currentProcedure).lookupLocalExceptionVar(trap),
+								mProgDecl.getCache().getProcedureInfo(mCurrentProcedure).lookupLocalExceptionVar(trap),
 								exception),
 						false);
 				BasicBlock catchblock = lookupBlock((Stmt) trap.getHandlerUnit());
@@ -362,7 +363,7 @@ public class BoogieStmtSwitch implements StmtSwitch {
 
 		// The trap is not able to handle the exception, so the exception
 		// has to be returned.
-		Expression exret = currentProcedure.getExceptionalReturnVariable(exception.getType());
+		Expression exret = mCurrentProcedure.getExceptionalReturnVariable(exception.getType());
 
 		BasicBlock retblock = mProgDecl.createBasicBlock(b.getLocationTag());
 		if (exret != null) {
@@ -375,7 +376,7 @@ public class BoogieStmtSwitch implements StmtSwitch {
 	}
 
 	private void translateSwitchCase(Stmt s, Expression lhs, Expression rhs) {
-		BasicBlock caseBlock = currentBlock;
+		BasicBlock caseBlock = mCurrentBlock;
 		BasicBlock caseEnterBlock = mProgDecl.createBasicBlock(s.getTags());
 		AssumeStatement asm = new AssumeStatement(mProgDecl.getOperatorFunctionFactory().createBinOp("==", lhs, rhs));
 		asm.setLocationTag(mProgDecl.getCache().createLocationTag(s.getTags()));
@@ -390,8 +391,8 @@ public class BoogieStmtSwitch implements StmtSwitch {
 		asm.setLocationTag(mProgDecl.getCache().createLocationTag(s.getTags()));
 		addStatement(caseSkipBlock, asm, true);
 		caseBlock.connectToSuccessor(caseSkipBlock);
-		currentBlock = mProgDecl.createBasicBlock(s.getTags());
-		caseSkipBlock.connectToSuccessor(currentBlock);
+		mCurrentBlock = mProgDecl.createBasicBlock(s.getTags());
+		caseSkipBlock.connectToSuccessor(mCurrentBlock);
 	}
 
 	private BasicBlock lookupBlock(Stmt stmt) {
@@ -432,8 +433,8 @@ public class BoogieStmtSwitch implements StmtSwitch {
 	@Override
 	public void caseGotoStmt(GotoStmt arg0) {
 		BasicBlock targetBlock = lookupBlock((Stmt) arg0.getTarget());
-		currentBlock.connectToSuccessor(targetBlock);
-		currentBlock = null;
+		mCurrentBlock.connectToSuccessor(targetBlock);
+		mCurrentBlock = null;
 		nextStmtIsNewBlock = true;
 	}
 
@@ -446,19 +447,19 @@ public class BoogieStmtSwitch implements StmtSwitch {
 	public void caseIfStmt(IfStmt arg0) {
 
 		// Translate the conditional expression
-		arg0.getCondition().apply(valueSwitch);
-		Expression expr = valueSwitch.getExpression();
+		arg0.getCondition().apply(mValueSwitch);
+		Expression expr = mValueSwitch.getExpression();
 
 		// Create a new block which only contains the conditional
 		BasicBlock conditional = lookupBlock((Stmt) arg0);
-		if (conditional != currentBlock) {
-			currentBlock.connectToSuccessor(conditional);
-			currentBlock = conditional;
+		if (conditional != mCurrentBlock) {
+			mCurrentBlock.connectToSuccessor(conditional);
+			mCurrentBlock = conditional;
 		}
 
 		// Create a stub of the ThenBlock to be used later.
 		BasicBlock thenConditionBlock = mProgDecl.createBasicBlock(arg0.getTags());
-		currentBlock.connectToSuccessor(thenConditionBlock);
+		mCurrentBlock.connectToSuccessor(thenConditionBlock);
 
 		AssumeStatement asm = new AssumeStatement(expr);
 		asm.setLocationTag(mProgDecl.getCache().createLocationTag(arg0.getTags()));
@@ -479,8 +480,8 @@ public class BoogieStmtSwitch implements StmtSwitch {
 
 		// this.elseBlockHack = elseBlock;
 
-		currentBlock.connectToSuccessor(elseBlock);
-		currentBlock = elseBlock;
+		mCurrentBlock.connectToSuccessor(elseBlock);
+		mCurrentBlock = elseBlock;
 
 	}
 
@@ -493,11 +494,11 @@ public class BoogieStmtSwitch implements StmtSwitch {
 	@Override
 	public void caseLookupSwitchStmt(LookupSwitchStmt arg0) {
 		BasicBlock fanout = lookupBlock((Stmt) arg0);
-		currentBlock.connectToSuccessor(fanout);
-		currentBlock = fanout;
+		mCurrentBlock.connectToSuccessor(fanout);
+		mCurrentBlock = fanout;
 
-		arg0.getKey().apply(valueSwitch);
-		Expression lhs = valueSwitch.getExpression();
+		arg0.getKey().apply(mValueSwitch);
+		Expression lhs = mValueSwitch.getExpression();
 
 		// create nested IfThenElse for Switch
 		// WARNING: Only works because of a translation done by soot before.
@@ -510,9 +511,9 @@ public class BoogieStmtSwitch implements StmtSwitch {
 			translateSwitchCase(s, lhs, rhs);
 		}
 		BasicBlock defaultBlock = lookupBlock((Stmt) arg0.getDefaultTarget());
-		currentBlock.connectToSuccessor(defaultBlock);
+		mCurrentBlock.connectToSuccessor(defaultBlock);
 
-		currentBlock = null;
+		mCurrentBlock = null;
 		nextStmtIsNewBlock = true;
 	}
 
@@ -527,7 +528,7 @@ public class BoogieStmtSwitch implements StmtSwitch {
 	public void caseRetStmt(RetStmt arg0) {
 		// TODO find testcase
 		translateAssigningStatement(arg0);
-		currentBlock = null;
+		mCurrentBlock = null;
 		nextStmtIsNewBlock = true;
 		assert(false);
 	}
@@ -535,13 +536,13 @@ public class BoogieStmtSwitch implements StmtSwitch {
 	@Override
 	public void caseReturnStmt(ReturnStmt arg0) {
 		translateAssigningStatement(arg0);
-		currentBlock = null;
+		mCurrentBlock = null;
 		nextStmtIsNewBlock = true;
 	}
 
 	@Override
 	public void caseReturnVoidStmt(ReturnVoidStmt arg0) {
-		currentBlock = null;
+		mCurrentBlock = null;
 		nextStmtIsNewBlock = true;
 	}
 
@@ -553,14 +554,14 @@ public class BoogieStmtSwitch implements StmtSwitch {
 	public void caseTableSwitchStmt(TableSwitchStmt arg0) {
 		BasicBlock fanout = lookupBlock((Stmt) arg0);
 
-		currentBlock.connectToSuccessor(fanout);
-		currentBlock = fanout;
+		mCurrentBlock.connectToSuccessor(fanout);
+		mCurrentBlock = fanout;
 
 		int lowidx = arg0.getLowIndex();
 		int highidx = arg0.getHighIndex();
 
-		arg0.getKey().apply(valueSwitch);
-		Expression lhs = valueSwitch.getExpression();
+		arg0.getKey().apply(mValueSwitch);
+		Expression lhs = mValueSwitch.getExpression();
 
 		// create nested IfThenElse for Switch
 		// WARNING: Only works because of a translation done by soot before.
@@ -572,23 +573,23 @@ public class BoogieStmtSwitch implements StmtSwitch {
 		}
 
 		BasicBlock defaultBlock = lookupBlock((Stmt) arg0.getDefaultTarget());
-		currentBlock.connectToSuccessor(defaultBlock);
+		mCurrentBlock.connectToSuccessor(defaultBlock);
 
-		currentBlock = null;
+		mCurrentBlock = null;
 		nextStmtIsNewBlock = true;
 	}
 
 	@Override
 	public void caseThrowStmt(ThrowStmt arg0) {
-		arg0.getOp().apply(valueSwitch);
-		Expression e = valueSwitch.getExpression();
+		arg0.getOp().apply(mValueSwitch);
+		Expression e = mValueSwitch.getExpression();
 		// this one contains the variable the exception is assigned to in the
 		// trap.
-		LinkedList<Trap> traps = mProgDecl.getCache().getProcedureInfo(currentProcedure).getAssociatedTrap(arg0);
+		LinkedList<Trap> traps = mProgDecl.getCache().getProcedureInfo(mCurrentProcedure).getAssociatedTrap(arg0);
 
-		translateExceptionHandling(currentBlock, traps, e);
+		translateExceptionHandling(mCurrentBlock, traps, e);
 
-		currentBlock = null;
+		mCurrentBlock = null;
 		nextStmtIsNewBlock = true;
 	}
 

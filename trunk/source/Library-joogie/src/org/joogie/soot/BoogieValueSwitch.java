@@ -94,28 +94,31 @@ import soot.jimple.XorExpr;
 public class BoogieValueSwitch implements JimpleValueSwitch {
 
 	private BoogieProcedure mCurrentProcedure;
-	private Stack<Expression> mExpressionStack;
+	private final Stack<Expression> mExpressionStack;
 
 	private LinkedList<Statement> mGuardingStatements;
 	private HeapMode mHeapMode;
-	private BoogieProgramConstructionDecorator mProgDecl;
+	private final BoogieProgramConstructionDecorator mProgDecl;
 	private final Logger mLogger;
 
-	public BoogieValueSwitch(final BoogieProgramConstructionDecorator progDecl, final Logger logger) {
+	public BoogieValueSwitch(final BoogieProgramConstructionDecorator progDecl, final Logger logger,
+			final HeapMode heapmode) {
 		super();
 		mProgDecl = progDecl;
 		mCurrentProcedure = null;
 		mExpressionStack = new Stack<Expression>();
 		mGuardingStatements = new LinkedList<Statement>();
 		mLogger = logger;
+		mHeapMode = heapmode;
 	}
 
-	public BoogieValueSwitch(BoogieProcedure proc, BoogieStmtSwitch stmtswitch, final Logger logger) {
+	public BoogieValueSwitch(final BoogieProgramConstructionDecorator progDecl, BoogieProcedure proc,
+			BoogieStmtSwitch stmtswitch, final Logger logger, final HeapMode heapmode) {
+		this(progDecl, logger, heapmode);
 		mCurrentProcedure = proc;
 		// TODO: the current procedure should not be
 		// kept in 2 different places. This causes bugs
 		mProgDecl.setCurrentProcedure(proc);
-		mLogger = logger;
 	}
 
 	public LinkedList<Statement> getGuardingStatements() {
