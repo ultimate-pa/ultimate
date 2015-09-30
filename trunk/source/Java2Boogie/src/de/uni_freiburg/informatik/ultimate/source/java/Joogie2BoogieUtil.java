@@ -37,7 +37,7 @@ public final class Joogie2BoogieUtil {
 			return new PrimitiveType(loc, joogieType.getName());
 		} else if (joogieType instanceof HeapType) {
 			// Note: HeapType is a Joogie Hack! "<x>[ref, Field x]x"
-			return new ArrayType(loc, null,
+			return new ArrayType(loc, new String[] { "x" },
 					new ASTType[] { new NamedType(loc, "ref", null),
 							new NamedType(loc, "Field", new ASTType[] { new NamedType(loc, "x", null) }) },
 					new NamedType(loc, "x", null));

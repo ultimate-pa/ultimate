@@ -178,6 +178,10 @@ public class BoogieProcedure {
 		this.mLocalVars.add(v);
 	}
 
+	public Set<Variable> getLocalVars() {
+		return mLocalVars;
+	}
+
 	/**
 	 * @return the tmpLocals
 	 */
@@ -230,9 +234,6 @@ public class BoogieProcedure {
 	}
 
 	public Variable getThisVariable() {
-		if (mThisVariable == null) {
-			assert(false);
-		}
 		return mThisVariable;
 	}
 
@@ -531,5 +532,12 @@ public class BoogieProcedure {
 
 	public Set<Variable> getModifiesGlobals() {
 		return mModifiesGlobals;
+	}
+
+	public List<Statement> getStatements() {
+		if (mRootBlock == null) {
+			return null;
+		}
+		return mRootBlock.getStatements();
 	}
 }

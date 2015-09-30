@@ -43,15 +43,20 @@ public class ExpressionTranslator extends JoogieExpressionTransformer<Expression
 	private final Expression mExpression;
 	private final ILocation mLocation;
 
-	public ExpressionTranslator(Logger logger, ILocation location,
+	private ExpressionTranslator(Logger logger, ILocation location,
 			org.joogie.boogie.expressions.Expression expression) {
 		mLogger = logger;
 		mLocation = location;
 		mExpression = visit(expression);
 	}
 
-	public Expression getTranslation() {
+	private Expression getTranslation() {
 		return mExpression;
+	}
+
+	public static Expression translate(Logger logger, ILocation location,
+			org.joogie.boogie.expressions.Expression expression) {
+		return new ExpressionTranslator(logger, location, expression).getTranslation();
 	}
 
 	@Override
